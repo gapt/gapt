@@ -13,6 +13,8 @@ package object expr {
   type ClosedUnderSub[T] = Substitutable[Substitution, T, T]
   type ClosedUnderFOLSub[T] = Substitutable[FOLSubstitution, T, T]
 
+  type ClosedUnderReplacement[T] = Replaceable[T, T]
+
   implicit class ExprNameGenerator( private val nameGen: NameGenerator ) extends AnyVal {
     def fresh( v: Var ): Var = Var( nameGen.fresh( v.name ), v.ty )
     def fresh( v: FOLVar ): FOLVar = FOLVar( nameGen.fresh( v.name ) )

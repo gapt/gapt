@@ -5,13 +5,13 @@ import java.io.{ FileWriter, PrintWriter }
 import ammonite.ops._
 import at.logic.gapt.cutintro._
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
-import at.logic.gapt.expr.{ All, And, TBase }
+import at.logic.gapt.expr._
 import at.logic.gapt.formats.babel.BabelParser
 import at.logic.gapt.formats.leancop.LeanCoPParser
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.formats.tptp.{ TptpParser, resolveIncludes }
 import at.logic.gapt.formats.verit.VeriTParser
-import at.logic.gapt.proofs.ceres.CERES
+import at.logic.gapt.proofs.ceres._
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.gaptic.{ ProofState, now }
 import at.logic.gapt.proofs.lk._
@@ -57,12 +57,6 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
 
     ctx.check( proof ) --? "checking proof against context"
 
-    makeInductionExplicit( proof ) --? "makeInductionExplicit" foreach { proofWithExplicitInduction =>
-      LKToExpansionProof( proofWithExplicitInduction ) --? "expansion proof of explicit induction proof" foreach { exp =>
-        Z3.isValid( exp.deep ) !-- "validity of deep formula of expansion proof of explicit induction proof"
-      }
-    }
-
     extractRecSchem( proof ) --? "extract recursion scheme"
 
     LKToND( proof ) --? "LKToND"
@@ -72,9 +66,32 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
       generate( lower = 2, upper = 3, num = 1 ).head --- "random instance term"
     val instProof = instanceProof( proof, instanceTerms )
 
-    val indFreeProof = ReductiveCutElimination.eliminateInduction( instProof ) --- "eliminate inductions in instance proof"
-    indFreeProof.endSequent.multiSetEquals( instProof.endSequent ) !-- "induction elimination does not modify end-sequent"
-    isInductionFree( indFreeProof ) !-- "induction elimination returns induction free proof"
+    val proofName @ Apps( proofNameC @ Const( proofNameStr, _, _ ), _ ) = Atom( ctx.newNameGenerator.fresh( "proof" ), variables )
+    ArithmeticInductionToSchema( proof, proofName ) --? "induction to schema" foreach { _ =>
+      ProofLink( proofName ) --? "create schema proof link"
+      instantiateProof.Instantiate( proofNameC( instanceTerms ) ) --? "schema instance"
+      SchematicStruct( proofNameStr ).get --? "schematic struct" foreach { schemaStruct =>
+        CharFormPRP.PR( CharFormPRP( schemaStruct ) ) --? "characteristic formula"
+        InstanceOfSchematicStruct( CLS( proofNameC( instanceTerms ), proof.endSequent.map( _ => false ) ), schemaStruct ) --? "struct instance"
+      }
+    }
+
+    LKToExpansionProof( proof ) --? "LKToExpansionProof" foreach { expansion =>
+      deskolemizeET( expansion ) --? "deskolemization" foreach { desk =>
+        desk.shallow.isSubsetOf( expansion.shallow ) !-- "shallow sequent of deskolemization"
+        Z3.isValid( desk.deep ) !-- "deskolemized deep formula validity"
+        ExpansionProofToLK( desk ).get --? "ExpansionProofToLK on deskolemization" foreach { deskLK =>
+          deskLK.conclusion.isSubsetOf( proof.conclusion ) !-- "conclusion of ExpansionProofToLK"
+          ctx.check( deskLK ) --? "context check of ExpansionProofToLK"
+          LKToND( deskLK ) --? "LKToND (deskolemization)"
+        }
+      }
+    }
+
+    ReductiveCutElimination.eliminateInduction( instProof ) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
+      indFreeProof.endSequent.multiSetEquals( instProof.endSequent ) !-- "induction elimination does not modify end-sequent"
+      isInductionFree( indFreeProof ) !-- "induction elimination returns induction free proof"
+    }
   }
 
   private def isInductionFree( proof: LKProof ) =
@@ -203,7 +220,7 @@ class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
 }
 
 // Usage: RegressionTests [<test number limit>]
-object RegressionTests extends App {
+object RegressionTests extends scala.App {
   def prover9Proofs = ls.rec( pwd / "testing" / "TSTP" / "prover9" ).filter( _.ext == "s" )
   def leancopProofs = ls.rec( pwd / "testing" / "TSTP" / "leanCoP" ).filter( _.ext == "s" )
   def veritProofs = ls.rec( pwd / "testing" / "veriT-SMT-LIB" ).filter( _.ext == "proof_flat" )

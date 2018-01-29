@@ -37,7 +37,7 @@ case class InductionBUP( grammar: InductionGrammar, enc: InstanceTermEncoding, g
 
     val sequent: HOLSequent = indFormulaInstances ++: theoryFormulas :+ goal
 
-    val formula: Formula = All( grammar.alpha, sequent.toImplication )
+    val formula: Formula = All.Block( grammar.alpha +: grammar.gamma, sequent.toImplication )
   }
 
   val indCases: Vector[IndCase] =

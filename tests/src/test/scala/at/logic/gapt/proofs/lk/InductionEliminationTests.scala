@@ -3,7 +3,6 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr._
 import at.logic.gapt.examples.tip.isaplanner.{ prop_08, prop_15, prop_59 }
 import at.logic.gapt.expr.Substitution
-import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.{ Context, MutableContext, Sequent, SequentMatchers }
 import at.logic.gapt.proofs.gaptic.{ Lemma, ProofState, allR, cut, escargot, induction, insert, refl, rewrite }
 import org.specs2.mutable.Specification
@@ -22,41 +21,27 @@ class InductionEliminationTests extends Specification with SequentMatchers {
       case _                        => false
     }
 
-  private def requireTip( test: => Any ) = {
-    if ( TipSmtParser.isInstalled ) {
-      test
-    } else {
-      "tip not installed" in skipped( "tip tool is not installed" )
-    }
+  "isaplanner prop_08: induction should be eliminated" in {
+    implicit val ctx = prop_08.ctx
+    val proof = regularize( prop_08.proof1 )
+    val term_n = le"S(S(S(Z)))"
+    val term_m = le"S(S(S(S(S(Z)))))"
+    val term_k = le"S(S(S(S(S(S(S(Z)))))))"
+    val instProof = instanceProof( proof, term_n :: term_m :: term_k :: Nil )
+    val inductionFree = ReductiveCutElimination.eliminateInduction( instProof )
+    isInductionFree( inductionFree ) must_== true
+    instProof.conclusion must beSetEqual( inductionFree.conclusion )
   }
 
-  requireTip {
-    "isaplanner prop_08: induction should be eliminated" in {
-      implicit val ctx = prop_08.ctx
-      val proof = regularize( prop_08.proof1 )
-      val term_n = le"S(S(S(Z)))"
-      val term_m = le"S(S(S(S(S(Z)))))"
-      val term_k = le"S(S(S(S(S(S(S(Z)))))))"
-      val instProof = instanceProof( proof, term_n :: term_m :: term_k :: Nil )
-      val inductionFree = ReductiveCutElimination.eliminateInduction( instProof )
-      isInductionFree( inductionFree ) must_== true
-      instProof.conclusion must beSetEqual( inductionFree.conclusion )
-    }
-  }
-
-  requireTip {
-    "isaplanner prop_15: induction should be eliminated" in {
-      implicit val ctx = prop_15.ctx
-      val proof = regularize( prop_15.proof.subProofAt( 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: Nil ) )
-      val term_x = le"S(S(S(S(S(S(S(Z)))))))"
-      val term_xs = le"cons(S(S(S(Z))), cons(S(S(S(S(S(Z))))),nil))"
-      val sigma1Proof = LKProofSubstitutableDefault.applySubstitution(
-        new Substitution( Map( hov"x:Nat" -> term_x, hov"xs:list" -> term_xs ) ),
-        proof )
-      val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
-      isInductionFree( inductionFree ) must_== true
-      sigma1Proof.conclusion must beSetEqual( inductionFree.conclusion )
-    }
+  "isaplanner prop_15: induction should be eliminated" in {
+    implicit val ctx = prop_15.ctx
+    val proof = regularize( prop_15.proof.subProofAt( 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: Nil ) )
+    val term_x = le"S(S(S(S(S(S(S(Z)))))))"
+    val term_xs = le"cons(S(S(S(Z))), cons(S(S(S(S(S(Z))))),nil))"
+    val sigma1Proof = Substitution( hov"x:Nat" -> term_x, hov"xs:list" -> term_xs )( proof )
+    val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
+    isInductionFree( inductionFree ) must_== true
+    sigma1Proof.conclusion must beSetEqual( inductionFree.conclusion )
   }
 
   "all inductions should be eliminated" in {
@@ -101,8 +86,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
     val term_x = le"s(0)"
     val term_y = le"s(0)"
 
-    val sigma1Proof = LKProofSubstitutableDefault.applySubstitution(
-      new Substitution( Map( hov"x:nat" -> term_x, hov"y:nat" -> term_y ) ),
+    val sigma1Proof = Substitution( hov"x:nat" -> term_x, hov"y:nat" -> term_y )(
       proof.subProofAt( 0 :: 0 :: Nil ) )
     val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
     isInductionFree( inductionFree ) must_== true
@@ -110,7 +94,6 @@ class InductionEliminationTests extends Specification with SequentMatchers {
   }
 
   "several unfolding steps are required" in {
-    skipped( "takes too long" )
     implicit val ctx = MutableContext.default()
     ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     ctx += hoc"'+': nat>nat>nat"
@@ -168,23 +151,19 @@ class InductionEliminationTests extends Specification with SequentMatchers {
     val term_x = le"s(0)"
     val term_y = le"s(0)"
 
-    val sigma1Proof = LKProofSubstitutableDefault.applySubstitution(
-      new Substitution( Map( hov"x:nat" -> term_x, hov"y:nat" -> term_y ) ),
+    val sigma1Proof = Substitution( hov"x:nat" -> term_x, hov"y:nat" -> term_y )(
       proof.subProofAt( 0 :: 0 :: Nil ) )
     val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
 
     isInductionFree( inductionFree ) must_== true
   }
 
-  requireTip {
-    "induction elimination isaplanner/prop_59" in {
-      skipped( "takes too long" )
-      implicit val ctx = prop_59.ctx
-      val inductiveProof = prop_59.proof_1
-      val instProof = instanceProof( inductiveProof, le"nil" :: le"nil" :: Nil )
-      val indFreeProof = ReductiveCutElimination.eliminateInduction( instProof )
-      indFreeProof.conclusion must beMultiSetEqual( instProof.conclusion )
-      isInductionFree( indFreeProof ) must_== true
-    }
+  "induction elimination isaplanner prop_59" in {
+    implicit val ctx = prop_59.ctx
+    val inductiveProof = prop_59.proof_1
+    val instProof = instanceProof( inductiveProof, le"nil" :: le"nil" :: Nil )
+    val indFreeProof = ReductiveCutElimination.eliminateInduction( instProof )
+    indFreeProof.conclusion must beMultiSetEqual( instProof.conclusion )
+    isInductionFree( indFreeProof ) must_== true
   }
 }

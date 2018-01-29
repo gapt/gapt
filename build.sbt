@@ -45,7 +45,7 @@ lazy val scalariformSettings =
     .setPreference( DoubleIndentConstructorArguments, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "4.0.1"
+val specs2Version = "4.0.2"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   javaOptions in Test += "-Xmx2g",
@@ -78,7 +78,9 @@ lazy val root = project.in( file( "." ) ).
       "-doc-title", "gapt",
       "-doc-version", version.value,
       "-doc-source-url", s"https://github.com/gapt/gapt/blob/${"git rev-parse HEAD" !!}/€{FILE_PATH}.scala",
+      "-doc-root-content", ( baseDirectory.value / "doc" / "rootdoc.txt" ).getAbsolutePath,
       "-sourcepath", baseDirectory.value.getAbsolutePath,
+      "-skip-packages", "ammonite:ammonite.ops",
       "-diagrams",
       "-implicits", "-implicits-show-all",
       "-skip-packages", "scala" ),
@@ -96,6 +98,7 @@ lazy val root = project.in( file( "." ) ).
         mkScript( target.value / "run" ),
         mkScript( target.value / "test-cut-intro", "at.logic.gapt.testing.testCutIntro" ),
         mkScript( target.value / "test-pi2-cut-intro", "at.logic.gapt.testing.testPi2CutIntro" ),
+        mkScript( target.value / "test-induction", "at.logic.gapt.testing.testInduction" ),
         mkScript( target.value / "viper", "at.logic.gapt.provers.viper.Viper" ),
         mkScript( target.value / "escargot", "at.logic.gapt.provers.escargot.Escargot" ),
         mkScript( target.value / "cli", "at.logic.gapt.cli.CLIMain" ) )
@@ -166,6 +169,8 @@ lazy val core = project.in( file( "core" ) ).
     name := "gapt",
     description := "General Architecture for Proof Theory",
 
+    scalacOptions in Compile += "-Xfatal-warnings",
+
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.6",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
@@ -174,7 +179,7 @@ lazy val core = project.in( file( "core" ) ).
       "com.lihaoyi" %% "sourcecode" % "0.1.4",
       "org.typelevel" %% "cats" % "0.9.0",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
-      "org.apache.commons" % "commons-lang3" % "3.6",
+      "org.apache.commons" % "commons-lang3" % "3.7",
       "com.lihaoyi" %% "ammonite-ops" % "1.0.3",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5" ),

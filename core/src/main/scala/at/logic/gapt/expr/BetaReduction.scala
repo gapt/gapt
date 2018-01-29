@@ -15,16 +15,16 @@ case class ReductionRule( lhs: Expr, rhs: Expr ) {
     } which are not in the left hand side:\n"
       + ( lhs === rhs ) )
 
-  val Apps( lhsHead @ Const( lhsHeadName, _ ), lhsArgs ) = lhs
+  val Apps( lhsHead @ Const( lhsHeadName, _, _ ), lhsArgs ) = lhs
   val lhsArgsSize = lhsArgs.size
 
   val isNonLinear: Boolean = {
     val seen = mutable.Set[Var]()
     def go( e: Expr ): Boolean =
       e match {
-        case App( a, b )   => go( a ) || go( b )
-        case Abs( _, _ )   => true
-        case Const( _, _ ) => false
+        case App( a, b )      => go( a ) || go( b )
+        case Abs( _, _ )      => true
+        case Const( _, _, _ ) => false
         case v: Var =>
           seen( v ) || { seen += v; false }
       }
@@ -90,7 +90,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
       case Abs.Block( vs, hd_ ) if vs.nonEmpty && as.nonEmpty =>
         val n = math.min( as.size, vs.size )
         Some( Apps( Substitution( vs.take( n ) zip as.take( n ) )( Abs.Block( vs.drop( n ), hd_ ) ), as.drop( n ) ) )
-      case hd @ Const( c, _ ) =>
+      case hd @ Const( c, _, _ ) =>
         headMap.get( c ).flatMap {
           case ( rs, whnfArgs, normalizeArgs ) =>
             val as_ = as.zipWithIndex.map {

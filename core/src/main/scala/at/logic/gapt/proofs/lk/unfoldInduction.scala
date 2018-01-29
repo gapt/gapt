@@ -47,9 +47,7 @@ object unfoldInduction {
    */
   private def inductionStepProof( arguments: Seq[Expr], inductionCase: InductionCase ): LKProof = {
     val InductionCase( proof, _, _, eigenVariables, _ ) = inductionCase
-    val substitution = new Substitution(
-      Map[Var, Expr]( eigenVariables.zip( arguments ): _* ) )
-    LKProofSubstitutableDefault.applySubstitution( substitution, proof )
+    Substitution( eigenVariables zip arguments )( proof )
   }
 
 }

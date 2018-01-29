@@ -58,6 +58,6 @@ object prop_27 extends TacticsProof {
     insert( lemma_22_proof )
     cut( "cong_1", hof"!xs !ys append(rev(xs),ys) = qrev(xs, ys)" )
     insert( cong_1_proof )
-    allR; induction( hov"x:list" ); decompose.onAllSubGoals; repeat( escargot )
+    allR; induction( hov"x:list" ); escargot.withDeskolemization.onAllSubGoals
   }
 }

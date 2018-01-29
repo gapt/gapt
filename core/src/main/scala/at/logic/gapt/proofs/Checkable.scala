@@ -5,6 +5,8 @@ import at.logic.gapt.proofs.expansion.ExpansionProof
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution.ResolutionProof
 
+import scala.collection.mutable
+
 trait Checkable[-T] {
   def check( obj: T )( implicit ctx: Context ): Unit
 }
@@ -16,12 +18,14 @@ object Checkable {
     def check( elem: Context.Update )( implicit context: Context ): Unit = elem( context )
   }
 
-  implicit object typeIsCheckable extends Checkable[Ty] {
-    override def check( ty: Ty )( implicit context: Context ): Unit =
+  class ExpressionChecker( implicit ctx: Context ) {
+    private val validTy = mutable.Set[Ty]()
+    def check( ty: Ty ): Unit = {
+      if ( validTy.contains( ty ) ) return
       ty match {
         case ty @ TBase( name, params ) =>
           require(
-            context.isType( ty ),
+            ctx.isType( ty ),
             s"Unknown base type: $name" )
           params.foreach( check )
         case TVar( _ ) =>
@@ -29,16 +33,17 @@ object Checkable {
           check( in )
           check( out )
       }
-  }
+      validTy += ty
+    }
 
-  implicit object expressionIsCheckable extends Checkable[Expr] {
-    def check( expr: Expr )( implicit context: Context ): Unit =
+    private val validExpr = mutable.Set[Expr]()
+    def check( expr: Expr ): Unit = {
+      if ( validExpr( expr ) ) return
       expr match {
-        case c @ Const( name, _ ) =>
-          require(
-            context.constant( name ).exists( defC => syntacticMatching( defC, c ).isDefined ),
-            s"Unknown constant: $c" )
-        case Var( _, t ) => context.check( t )
+        case c @ Const( name, _, params ) =>
+          require( ctx.constant( name, params ).contains( c ), s"Unknown constant: $c" )
+        case Var( _, t ) =>
+          check( t )
         case Abs( v, e ) =>
           check( v )
           check( e )
@@ -46,6 +51,18 @@ object Checkable {
           check( a )
           check( b )
       }
+      validExpr += expr
+    }
+  }
+
+  implicit object typeIsCheckable extends Checkable[Ty] {
+    override def check( ty: Ty )( implicit context: Context ): Unit =
+      new ExpressionChecker().check( ty )
+  }
+
+  implicit object expressionIsCheckable extends Checkable[Expr] {
+    def check( expr: Expr )( implicit context: Context ): Unit =
+      new ExpressionChecker().check( expr )
   }
 
   implicit def sequentIsCheckable[T: Checkable] = new Checkable[Sequent[T]] {
@@ -61,12 +78,17 @@ object Checkable {
       p.subProofs.foreach {
         case ForallLeftRule( _, _, a, t, v )  => ctx.check( t )
         case ExistsRightRule( _, _, a, t, v ) => ctx.check( t )
-        case q: EqualityRule                  =>
+        case q: EqualityRule =>
+          ctx.check( q.replacementContext )
         case q @ InductionRule( cases, formula, term ) =>
           ctx.check( formula )
           ctx.check( term )
-          val Some( ctrs ) = ctx.getConstructors( q.indTy.asInstanceOf[TBase] )
-          require( q.cases.map( _.constructor ) == ctrs )
+          val Some( ctrsInCtx ) = ctx.getConstructors( q.indTy.asInstanceOf[TBase] )
+          val ctrsInProof = cases.map( _.constructor )
+          require(
+            ctrsInProof == ctrsInCtx,
+            s"Induction rule has incorrect constructors: ${ctrsInProof.mkString( ", " )}\n" +
+              s"Expected: ${ctrsInCtx.mkString( ", " )}" )
         case sk: SkolemQuantifierRule =>
           require( ctx.skolemDef( sk.skolemConst ).contains( sk.skolemDef ) )
           ctx.check( sk.skolemTerm )
@@ -75,7 +97,7 @@ object Checkable {
         case ProofLink( name, sequent ) =>
           val declSeq = ctx.get[Context.ProofNames].lookup( name )
           require( declSeq.nonEmpty, s"Proof name $name does not exist in context" )
-          require( declSeq.get isSubsetOf sequent, s"$declSeq\nis not a subsequent of\n$sequent" )
+          require( declSeq.get == sequent, s"$declSeq\nis not equal to \n$sequent" )
         case TopAxiom | BottomAxiom
           | _: NegLeftRule | _: NegRightRule
           | _: AndLeftRule | _: AndRightRule

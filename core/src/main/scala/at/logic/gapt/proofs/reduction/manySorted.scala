@@ -48,7 +48,7 @@ case class CombinedReduction[-P1, P2, +P3, +S1, S2, -S3](
 
 private class ErasureReductionHelper( constants: Set[Const] ) {
   val termErasure = constants map {
-    case c @ Const( name, FunctionType( _, argTypes ) ) =>
+    case c @ Const( name, FunctionType( _, argTypes ), _ ) =>
       c -> FOLFunctionConst( s"f_$name", argTypes.size )
   } toMap
   val termReification = termErasure map { _.swap }
@@ -108,7 +108,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
       case Eq( a: FOLVar, b: FOLVar ) => i( b, i( a, Ti ) ) // hope for the best...
       case Apps( c: FOLAtomConst, args ) =>
         predicateReification( c ) match {
-          case Const( _, FunctionType( _, argTypes ) ) =>
+          case Const( _, FunctionType( _, argTypes ), _ ) =>
             for ( ( a: FOLTerm, t ) <- args zip argTypes )
               i( a, t )
         }
@@ -123,7 +123,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
         expected
       case Apps( c: FOLFunctionConst, args ) =>
         termReification( c ) match {
-          case Const( _, FunctionType( retType, argTypes ) ) =>
+          case Const( _, FunctionType( retType, argTypes ), _ ) =>
             for ( ( a: FOLTerm, t ) <- args zip argTypes )
               i( a, t )
             retType
@@ -160,7 +160,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
           case v @ FOLVar( name ) =>
             v -> Var( name, subst( v ) match {
               case Apps( head: FOLFunctionConst, _ ) =>
-                termReification( head ) match { case Const( _, FunctionType( retType, _ ) ) => retType }
+                termReification( head ) match { case Const( _, FunctionType( retType, _ ), _ ) => retType }
               case u: FOLVar => vars( u ).ty
             } )
         }.toMap
@@ -272,12 +272,12 @@ case object ErasureReductionET extends Reduction_[HOLSequent, ExpansionProof] {
 private class PredicateReductionHelper( constants: Set[Const] ) {
   private val nameGen = rename awayFrom constants
 
-  val baseTypes = constants flatMap { case Const( _, FunctionType( ret, args ) ) => ret +: args }
+  val baseTypes = constants flatMap { case Const( _, FunctionType( ret, args ), _ ) => ret +: args }
   val predicateForType = baseTypes.map { ty => ty -> HOLAtomConst( nameGen fresh s"is_$ty", ty ) }.toMap
   val predicates = predicateForType.values.toSet
 
   val predicateAxioms = constants.map {
-    case c @ Const( _, FunctionType( retType, argTypes ) ) =>
+    case c @ Const( _, FunctionType( retType, argTypes ), _ ) =>
       val args = argTypes.zipWithIndex map { case ( t, i ) => Var( s"x$i", t ) }
       And( args map { a => predicateForType( a.ty )( a ) } ) --> predicateForType( retType )( c( args: _* ) )
   }
@@ -397,7 +397,7 @@ private object definitionIntroducingBackReplacement {
         p.conclusion match {
           case Sequent( Seq(), Seq( Eq( t, t_ ) ) ) if t == t_ =>
             Refl( t )
-          case Sequent( Seq(), Seq( And( Imp( f @ Apps( c: HOLAtomConst, args ), g ), Imp( g_, f_ ) ) ) ) if f == f_ && g == g_ && defs.contains( c ) =>
+          case Sequent( Seq(), Seq( Iff( f @ Apps( c: HOLAtomConst, args ), g ) ) ) if defs.contains( c ) =>
             var defn: ResolutionProof = Defn( c, defs( c ) )
             for ( ev <- args ) defn = AllR( defn, Suc( 0 ), ev.asInstanceOf[Var] )
             defn
@@ -547,20 +547,20 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
   val partialApplicationFuns =
     for {
       ( partialAppType, funType @ FunctionType( ret, argTypes ) ) <- partialAppTypes
-      g @ Const( _, FunctionType( `ret`, gArgTypes ) ) <- names
+      g @ Const( _, FunctionType( `ret`, gArgTypes ), _ ) <- names
       if gArgTypes endsWith argTypes
     } yield ( Const(
       nameGen freshWithIndex "partial",
       FunctionType( partialAppType, gArgTypes.dropRight( argTypes.size ) map reduceArgTy ) ), g, funType )
 
   val newConstants = names.collect {
-    case c @ Const( n, t ) => c -> Const( n, reduceFunTy( t ) )
+    case c @ Const( n, t, ps ) => c -> Const( n, reduceFunTy( t ), ps.map( reduceFunTy ) )
   }.toMap
 
   val extraAxioms = if ( !addExtraAxioms ) Set() else
     for {
-      f @ Const( _, FunctionType( ret, ( partialAppType: TBase ) :: argTypes ) ) <- applyFunctions.values
-      ( partialApplicationFun @ Const( _, FunctionType( `partialAppType`, pappArgTypes ) ), g, _ ) <- partialApplicationFuns
+      f @ Const( _, FunctionType( ret, ( partialAppType: TBase ) :: argTypes ), _ ) <- applyFunctions.values
+      ( partialApplicationFun @ Const( _, FunctionType( `partialAppType`, pappArgTypes ), _ ), g, _ ) <- partialApplicationFuns
     } yield {
       val varGen = rename.awayFrom( Set[Var]() )
       val gArgVars = pappArgTypes map { Var( varGen freshWithIndex "x", _ ) }

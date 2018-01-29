@@ -19,7 +19,19 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
    * @param proof The proof to apply the substitution to.
    * @return The substituted proof.
    */
-  override def applySubstitution( substitution: Substitution, proof: LKProof ): LKProof = proof match {
+  override def applySubstitution( substitution: Substitution, proof: LKProof ): LKProof =
+    if ( substitution.isIdentity ) proof else {
+      val sub1 = if ( substitution.typeMap.isEmpty ) substitution else {
+        Substitution(
+          freeVariablesLK( proof ).diff( substitution.domain ).map( v => v -> substitution( v ).asInstanceOf[Var] )
+            ++ substitution.map,
+          substitution.typeMap )
+      }
+      go( sub1, proof )
+    }
+
+  // if sub.typeMap.nonEmpty, then every free variable must in the domain of sub
+  private def go( substitution: Substitution, proof: LKProof ): LKProof = proof match {
     case _ if substitution isIdentity => proof
 
     case ProofLink( referencedProof, linkquent ) =>
@@ -32,59 +44,59 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
     case ReflexivityAxiom( t ) => ReflexivityAxiom( betaNormalize( substitution( t ) ) )
 
     case WeakeningLeftRule( subProof, f ) =>
-      val subProofNew = applySubstitution( substitution, subProof )
+      val subProofNew = go( substitution, subProof )
       WeakeningLeftRule( subProofNew, betaNormalize( substitution( f ) ) )
 
     case WeakeningRightRule( subProof, f ) =>
-      val subProofNew = applySubstitution( substitution, subProof )
+      val subProofNew = go( substitution, subProof )
       WeakeningRightRule( subProofNew, betaNormalize( substitution( f ) ) )
 
     case ContractionLeftRule( subProof, aux1, aux2 ) =>
-      val subProofNew = applySubstitution( substitution, subProof )
+      val subProofNew = go( substitution, subProof )
       ContractionLeftRule( subProofNew, aux1, aux2 )
 
     case ContractionRightRule( subProof, aux1, aux2 ) =>
-      val subProofNew = applySubstitution( substitution, subProof )
+      val subProofNew = go( substitution, subProof )
       ContractionRightRule( subProofNew, aux1, aux2 )
 
     case CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      val ( leftSubProofNew, rightSubProofNew ) = ( applySubstitution( substitution, leftSubProof ), applySubstitution( substitution, rightSubProof ) )
+      val ( leftSubProofNew, rightSubProofNew ) = ( go( substitution, leftSubProof ), go( substitution, rightSubProof ) )
       CutRule( leftSubProofNew, aux1, rightSubProofNew, aux2 )
 
     case NegLeftRule( subProof, aux ) =>
-      val subProofNew = applySubstitution( substitution, subProof )
+      val subProofNew = go( substitution, subProof )
       NegLeftRule( subProofNew, aux )
 
     case NegRightRule( subProof, aux ) =>
-      val subProofNew = applySubstitution( substitution, subProof )
+      val subProofNew = go( substitution, subProof )
       NegRightRule( subProofNew, aux )
 
     case AndLeftRule( subProof, aux1, aux2 ) =>
-      val subProofNew = applySubstitution( substitution, subProof )
+      val subProofNew = go( substitution, subProof )
       AndLeftRule( subProofNew, aux1, aux2 )
 
     case AndRightRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      val ( leftSubProofNew, rightSubProofNew ) = ( applySubstitution( substitution, leftSubProof ), applySubstitution( substitution, rightSubProof ) )
+      val ( leftSubProofNew, rightSubProofNew ) = ( go( substitution, leftSubProof ), go( substitution, rightSubProof ) )
       AndRightRule( leftSubProofNew, aux1, rightSubProofNew, aux2 )
 
     case OrLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      val ( leftSubProofNew, rightSubProofNew ) = ( applySubstitution( substitution, leftSubProof ), applySubstitution( substitution, rightSubProof ) )
+      val ( leftSubProofNew, rightSubProofNew ) = ( go( substitution, leftSubProof ), go( substitution, rightSubProof ) )
       OrLeftRule( leftSubProofNew, aux1, rightSubProofNew, aux2 )
 
     case OrRightRule( subProof, aux1, aux2 ) =>
-      val subProofNew = applySubstitution( substitution, subProof )
+      val subProofNew = go( substitution, subProof )
       OrRightRule( subProofNew, aux1, aux2 )
 
     case ImpLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      val ( leftSubProofNew, rightSubProofNew ) = ( applySubstitution( substitution, leftSubProof ), applySubstitution( substitution, rightSubProof ) )
+      val ( leftSubProofNew, rightSubProofNew ) = ( go( substitution, leftSubProof ), go( substitution, rightSubProof ) )
       ImpLeftRule( leftSubProofNew, aux1, rightSubProofNew, aux2 )
 
     case ImpRightRule( subProof, aux1, aux2 ) =>
-      val subProofNew = applySubstitution( substitution, subProof )
+      val subProofNew = go( substitution, subProof )
       ImpRightRule( subProofNew, aux1, aux2 )
 
     case p @ ForallLeftRule( subProof, aux, f, term, v ) =>
-      val subProofNew = applySubstitution( substitution, subProof )
+      val subProofNew = go( substitution, subProof )
       val All( newV, newF ) = substitution( p.mainFormula )
       ForallLeftRule( subProofNew, aux, betaNormalize( newF ), betaNormalize( substitution( term ) ), newV )
 
@@ -97,7 +109,9 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
 
     case p @ ForallRightRule( subProof, aux, eigen, quant ) =>
       val All( newQuant, _ ) = substitution( p.mainFormula )
-      ForallRightRule( applySubstitution( Substitution( substitution.map - eigen ), subProof ), aux, eigen, newQuant )
+      val newEigen = Var( eigen.name, substitution( eigen.ty ) )
+      val newSubst = Substitution( substitution.map + ( eigen -> newEigen ), substitution.typeMap )
+      ForallRightRule( go( newSubst, subProof ), aux, newEigen, newQuant )
 
     case ExistsLeftRule( subProof, aux, eigen, quant ) if substitution.range contains eigen =>
       require( !preserveEigenvariables, s"Cannot apply substitution: Eigenvariable $eigen is in range of substitution" )
@@ -108,25 +122,27 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
 
     case p @ ExistsLeftRule( subProof, aux, eigen, quant ) =>
       val Ex( newQuant, _ ) = substitution( p.mainFormula )
-      ExistsLeftRule( applySubstitution( Substitution( substitution.map - eigen ), subProof ), aux, eigen, newQuant )
+      val newEigen = Var( eigen.name, substitution( eigen.ty ) )
+      val newSubst = Substitution( substitution.map + ( eigen -> newEigen ), substitution.typeMap )
+      ExistsLeftRule( go( newSubst, subProof ), aux, newEigen, newQuant )
 
     case p @ ExistsRightRule( subProof, aux, f, term, v ) =>
-      val subProofNew = applySubstitution( substitution, subProof )
+      val subProofNew = go( substitution, subProof )
       val Ex( newV, newF ) = substitution( p.mainFormula )
       ExistsRightRule( subProofNew, aux, betaNormalize( newF ), betaNormalize( substitution( term ) ), newV )
 
     case p @ ExistsSkLeftRule( subProof, aux, main, skT, skD ) =>
-      ExistsSkLeftRule( applySubstitution( substitution, subProof ), aux, BetaReduction.betaNormalize( substitution( main ) ), substitution( skT ), skD )
+      ExistsSkLeftRule( go( substitution, subProof ), aux, BetaReduction.betaNormalize( substitution( main ) ), substitution( skT ), skD )
 
     case p @ ForallSkRightRule( subProof, aux, main, skT, skD ) =>
-      ForallSkRightRule( applySubstitution( substitution, subProof ), aux, BetaReduction.betaNormalize( substitution( main ) ), substitution( skT ), skD )
+      ForallSkRightRule( go( substitution, subProof ), aux, BetaReduction.betaNormalize( substitution( main ) ), substitution( skT ), skD )
 
     case EqualityLeftRule( subProof, eq, aux, con ) =>
-      val subProofNew = applySubstitution( substitution, subProof )
+      val subProofNew = go( substitution, subProof )
       EqualityLeftRule( subProofNew, eq, aux, substitution( con ).asInstanceOf[Abs] )
 
     case EqualityRightRule( subProof, eq, aux, con ) =>
-      val subProofNew = applySubstitution( substitution, subProof )
+      val subProofNew = go( substitution, subProof )
       EqualityRightRule( subProofNew, eq, aux, substitution( con ).asInstanceOf[Abs] )
 
     case InductionRule( cases, main, term ) =>
@@ -135,17 +151,17 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
       }, substitution( main ).asInstanceOf[Abs], substitution( term ) )
 
     case DefinitionLeftRule( subProof, aux, main ) =>
-      val subProofNew = applySubstitution( substitution, subProof )
+      val subProofNew = go( substitution, subProof )
       DefinitionLeftRule( subProofNew, aux, substitution( main ) )
 
     case DefinitionRightRule( subProof, aux, main ) =>
-      val subProofNew = applySubstitution( substitution, subProof )
+      val subProofNew = go( substitution, subProof )
       DefinitionRightRule( subProofNew, aux, substitution( main ) )
   }
 
   private def indCase( subst: Substitution, c: InductionCase ): InductionCase =
     if ( subst.domain intersect c.eigenVars.toSet nonEmpty ) {
-      indCase( Substitution( subst.map -- c.eigenVars.toSet ), c )
+      indCase( Substitution( subst.map -- c.eigenVars.toSet, subst.typeMap ), c )
     } else if ( subst.range intersect c.eigenVars.toSet nonEmpty ) {
       require( !preserveEigenvariables )
       val renaming = rename( c.eigenVars, freeVariables( c.proof.endSequent ) -- c.eigenVars ++ subst.range )
@@ -153,7 +169,11 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
         applySubstitution( Substitution( renaming ), c.proof ),
         eigenVars = c.eigenVars map renaming ) )
     } else {
-      c.copy( applySubstitution( subst, c.proof ) )
+      val newEigens = subst( c.eigenVars ).map( _.asInstanceOf[Var] )
+      c.copy(
+        go( Substitution( subst.map ++ ( c.eigenVars zip newEigens ), subst.typeMap ), c.proof ),
+        constructor = subst( c.constructor ).asInstanceOf[Const],
+        eigenVars = newEigens )
     }
 }
 

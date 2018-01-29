@@ -47,8 +47,8 @@ class VeriT extends OneShotProver with ExternalProgram {
 
     VeriTParser.getExpansionProof( new StringReader( output ) ) map { renamedExpansion =>
       val undoRenaming = renaming.map {
-        case ( from, to @ Const( smtName, FunctionType( TBase( "Bool", Nil ), argTypes ) ) ) => FOLAtomConst( smtName, argTypes.size ) -> from
-        case ( from, to @ Const( smtName, FunctionType( _, argTypes ) ) )                    => FOLFunctionConst( smtName, argTypes.size ) -> from
+        case ( from, to @ Const( smtName, FunctionType( TBase( "Bool", Nil ), argTypes ), _ ) ) => FOLAtomConst( smtName, argTypes.size ) -> from
+        case ( from, to @ Const( smtName, FunctionType( _, argTypes ), _ ) )                    => FOLFunctionConst( smtName, argTypes.size ) -> from
       } ++ Map( FOLConst( "false" ) -> Bottom(), FOLConst( "true" ) -> Top() )
       val exp_seq = for ( et <- renamedExpansion ) yield TermReplacement( et, undoRenaming.toMap[Expr, Expr] )
 

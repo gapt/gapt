@@ -28,17 +28,18 @@ object EquationVerifier {
           //println("no result")
           None
       }
-      case _ => throw new Exception( "Error checking for term replacement in " + e1 + " and " + e2 + ": " + eq + " is not an Eq!" )
+      case _ => throw new Exception(
+        "Error checking for term replacement in " + e1 + " and " + e2 + ": " + eq + " is not an Eq!" )
     }
   }
 
   def checkReplacement( s: Expr, t: Expr, e1: Expr, e2: Expr ): ReplacementResult = {
     //trace("matching "+e1+" against "+e2+" for "+s+" -> "+t)
     ( e1, e2 ) match {
-      case _ if e1 == e2                    => Equal
-      case _ if ( e1 == s ) && ( e2 == t )  => EqualModuloEquality( Nil )
-      case ( Var( _, _ ), Var( _, _ ) )     => Different
-      case ( Const( _, _ ), Const( _, _ ) ) => Different
+      case _ if e1 == e2                          => Equal
+      case _ if ( e1 == s ) && ( e2 == t )        => EqualModuloEquality( Nil )
+      case ( Var( _, _ ), Var( _, _ ) )           => Different
+      case ( Const( _, _, _ ), Const( _, _, _ ) ) => Different
       case ( App( l1, r1 ), App( l2, r2 ) ) =>
         ( checkReplacement( s, t, l1, l2 ), checkReplacement( s, t, r1, r2 ) ) match {
           case ( Equal, Equal )                       => Equal
@@ -50,7 +51,9 @@ object EquationVerifier {
         if ( expt1 != expt2 )
           Different
         else {
-          val vn = renameLambda( v1, freeVariables( s ).toList ++ freeVariables( t ).toList ++ freeVariables( t1 ).toList ++ freeVariables( t2 ).toList ) //TODO: pass the list on instead of recreating it
+          val vn = renameLambda( v1, freeVariables( s ).toList ++ freeVariables( t ).toList ++
+            freeVariables( t1 ).toList ++ freeVariables( t2 ).toList )
+          //TODO: pass the list on instead of recreating it
           checkReplacement( s, t, SubstitutionLambda( v1, vn )( t1 ), SubstitutionLambda( v2, vn )( t2 ) )
         }
       case _ => Different

@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.Context
 
 private object getAtHOLPosition {
   def apply( et: ExpansionTree, pos: HOLPosition ): Set[ExpansionTree] =
-    if ( pos.isEmpty ) Set( et ) else ( et, pos.head ) match {
+    if ( pos.isEmpty ) Set( et ) else ( ( et, pos.head ): @unchecked ) match {
       case ( ETMerge( a, b ), _ )                   => apply( a, pos ) union apply( b, pos )
 
       case ( ETNeg( ch ), 1 )                       => apply( ch, pos.tail )
@@ -105,7 +105,7 @@ object commuteReplacementCtxWithDefEq {
       case _ =>
         // imitate
         a match {
-          case Apps( fn2 @ Const( _, _ ), as2 ) =>
+          case Apps( fn2: Const, as2 ) =>
             val pat = fn2( for ( ( a, i ) <- as2.zipWithIndex ) yield Var( s"x$i", a.ty ) )
             syntacticMatching( ctx.normalize( pat ), ctx.normalize( c ) ) match {
               case Some( subst ) =>

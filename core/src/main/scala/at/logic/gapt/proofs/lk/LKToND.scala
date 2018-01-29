@@ -11,7 +11,8 @@ object LKToND {
    * Converts an LKProof π into a natural deduction proof.
    *
    * @param proof The proof π.
-   * @param focus The index in the LK succedent of the formula to be proved in the ND proof, or None if the succedent is empty.
+   * @param focus The index in the LK succedent of the formula to be proved in the ND proof,
+   *              or None if the succedent is empty.
    * @return The natural deduction proof translate(π).
    */
 
@@ -30,7 +31,8 @@ object LKToND {
       assert( lk.endSequent( focus.get ) == nd.endSequent( Suc( 0 ) ) )
     }
     assert( lk.endSequent.antecedent.forall( nd.endSequent.antecedent.contains( _ ) ) )
-    assert( lk.endSequent.succedent.filter( _ != nd.endSequent( Suc( 0 ) ) ).forall( x => nd.endSequent.antecedent.contains( Neg( x ) ) ) )
+    assert( lk.endSequent.succedent.filter( _ != nd.endSequent( Suc( 0 ) ) ).forall( x =>
+      nd.endSequent.antecedent.contains( Neg( x ) ) ) )
   }
 
   private def exchange( subProof: NDProof, mainFormula: Option[Formula] ): NDProof =
@@ -72,7 +74,7 @@ object LKToND {
             qed
         }
 
-        val i = pr2.endSequent.indexOfPolOption( negMain, Polarity.InAntecedent )
+        val i = pr2.endSequent.indexOfOption( negMain, Polarity.InAntecedent )
         ExcludedMiddleRule( ax1, Ant( 0 ), pr2, i.get )
       } else {
         // Negated main formula not in antecedent
@@ -128,7 +130,7 @@ object LKToND {
             qed
         }
 
-        val i = pr2.endSequent.indexOfPolOption( mainFormula, Polarity.InAntecedent )
+        val i = pr2.endSequent.indexOfOption( mainFormula, Polarity.InAntecedent )
         ExcludedMiddleRule( pr2, i.get, ax1, Ant( 0 ) )
       } else {
         // Main formula not in antecedent
@@ -184,7 +186,7 @@ object LKToND {
             qed
         }
 
-        val i = pr2.endSequent.indexOfPolOption( negMain, Polarity.InAntecedent )
+        val i = pr2.endSequent.indexOfOption( negMain, Polarity.InAntecedent )
         ExcludedMiddleRule( ax1, Ant( 0 ), pr2, i.get )
       } else {
         // Negated main formula not in antecedent
@@ -219,7 +221,7 @@ object LKToND {
         nd.LogicalAxiom( f )
 
       case lk.ProofLink( prf, seq ) =>
-        val Apps( Const( proofName, _ ), _ ) = prf
+        val Apps( Const( proofName, _, _ ), _ ) = prf
         val ( genprf, genseq ) = ctx.get[ProofNames].names( proofName )
         val Apps( _, vs ) = genprf
         val Apps( _, args ) = prf
@@ -281,8 +283,10 @@ object LKToND {
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
           // Pick arbitrary focus
           val ndProof = translate( subProof, heuristicIndex( subProof ) )
-          // This check solves a bug that occured when WeakeningRightRule was applied after BottomAxiom (cf. classical pairing test case)
-          if ( proof.endSequent.forall( f => proof.endSequent.filter( _ == f ).size == ndProof.endSequent.filter( _ == f ).size ) )
+          // This check solves a bug that occured when WeakeningRightRule
+          // was applied after BottomAxiom (cf. classical pairing test case)
+          if ( proof.endSequent.forall( f => proof.endSequent.filter( _ == f ).size ==
+            ndProof.endSequent.filter( _ == f ).size ) )
             ndProof
           else
             exchange( WeakeningRule( ndProof, hof"-$formula" ), p.mainFormula )
@@ -299,14 +303,14 @@ object LKToND {
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
           val l = subProof.endSequent( aux1 )
           val t = translate( subProof, Some( aux1 ) )
-          val il = t.endSequent.indexOfPol( hof"-$l", Polarity.InAntecedent )
+          val il = t.endSequent.indexOf( hof"-$l", Polarity.InAntecedent )
           nd.ProofBuilder.
             c( nd.LogicalAxiom( l ) ).
             c( t ).
             b( ExcludedMiddleRule( _, Ant( 0 ), _, il ) ).
             qed
         } else {
-          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          val focusMain = p.endSequent.indexOf( p.mainFormula, Polarity.InSuccedent )
           exchange( translate( proof, Some( focusMain ) ), focus.map( p.endSequent.apply ) )
         }
 
@@ -314,9 +318,13 @@ object LKToND {
 
         val tl = translate( leftSubProof, Some( aux1 ) )
 
-        val tr = translate( rightSubProof, if ( rightSubProof.endSequent.succedent.nonEmpty ) Some( p.getRightSequentConnector.parentOption( focus.get ).getOrElse( Suc( 0 ) ) ) else None )
+        val tr = translate(
+          rightSubProof,
+          if ( rightSubProof.endSequent.succedent.nonEmpty )
+            Some( p.getRightSequentConnector.parentOption( focus.get ).getOrElse( Suc( 0 ) ) )
+          else None )
 
-        val i = tr.endSequent.indexOfPol( rightSubProof.endSequent( aux2 ), Polarity.InAntecedent )
+        val i = tr.endSequent.indexOf( rightSubProof.endSequent( aux2 ), Polarity.InAntecedent )
 
         val partialProof = nd.ProofBuilder.
           c( tr ).
@@ -329,7 +337,7 @@ object LKToND {
       // Propositional rules
       case p @ NegLeftRule( subProof, aux ) =>
         val Neg( a ) = p.mainFormula
-        val focusMain = subProof.endSequent.indexOfPol( a, Polarity.InSuccedent )
+        val focusMain = subProof.endSequent.indexOf( a, Polarity.InSuccedent )
         val t = nd.ProofBuilder.
           c( nd.LogicalAxiom( p.mainFormula ) ).
           c( translate( subProof, Some( focusMain ) ) ).
@@ -347,13 +355,17 @@ object LKToND {
           //val t2 = NegElimRule( nd.LogicalAxiom( Neg( t.endSequent( Suc( 0 ) ) ) ), t )
           //NegIntroRule( t2, a )
         } else {
-          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          val focusMain = p.endSequent.indexOf( p.mainFormula, Polarity.InSuccedent )
           exchange( translate( proof, Some( focusMain ) ), focus.map( p.endSequent.apply ) )
         }
 
       case p @ AndLeftRule( subProof, aux1, aux2 ) =>
 
-        val t = translate( subProof, if ( p.endSequent.succedent.nonEmpty ) Some( p.getSequentConnector.parent( focus.get ) ) else None )
+        val t = translate(
+          subProof,
+          if ( p.endSequent.succedent.nonEmpty )
+            Some( p.getSequentConnector.parent( focus.get ) )
+          else None )
 
         val And( a, b ) = p.mainFormula
 
@@ -378,25 +390,37 @@ object LKToND {
 
           AndIntroRule( tl, tr )
         } else {
-          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          val focusMain = p.endSequent.indexOf( p.mainFormula, Polarity.InSuccedent )
           exchange( translate( proof, Some( focusMain ) ), focus.map( p.endSequent.apply ) )
         }
 
       case p @ OrLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
 
-        val tl = translate( leftSubProof, if ( leftSubProof.endSequent.succedent.nonEmpty ) Some( p.getLeftSequentConnector.parentOption( focus.get ).getOrElse( Suc( 0 ) ) ) else None )
-        val wtl = if ( p.endSequent.succedent.nonEmpty && p.getLeftSequentConnector.parentOption( focus.get ) == None ) {
+        val tl = translate(
+          leftSubProof,
+          if ( leftSubProof.endSequent.succedent.nonEmpty )
+            Some( p.getLeftSequentConnector.parentOption( focus.get ).getOrElse( Suc( 0 ) ) )
+          else None )
+        val wtl = if ( p.endSequent.succedent.nonEmpty &&
+          p.getLeftSequentConnector.parentOption( focus.get ) == None ) {
           exchange( WeakeningRule( tl, Neg( p.endSequent( focus.get ) ) ), focus.map( p.endSequent.apply ) )
         } else tl
 
-        val tr = translate( rightSubProof, if ( rightSubProof.endSequent.succedent.nonEmpty ) Some( p.getRightSequentConnector.parentOption( focus.get ).getOrElse( Suc( 0 ) ) ) else None )
-        val wtr = if ( p.endSequent.succedent.nonEmpty && p.getRightSequentConnector.parentOption( focus.get ) == None ) {
+        val tr = translate(
+          rightSubProof,
+          if ( rightSubProof.endSequent.succedent.nonEmpty )
+            Some( p.getRightSequentConnector.parentOption( focus.get ).getOrElse( Suc( 0 ) ) )
+          else None )
+        val wtr = if ( p.endSequent.succedent.nonEmpty &&
+          p.getRightSequentConnector.parentOption( focus.get ) == None ) {
           exchange( WeakeningRule( tr, Neg( p.endSequent( focus.get ) ) ), focus.map( p.endSequent.apply ) )
         } else tr
 
         OrElimRule( nd.LogicalAxiom( p.mainFormula ), wtl, wtr )
 
-      case p @ OrRightRule( subProof1 @ WeakeningRightRule( subProof2, f ), aux1, aux2 ) if f == subProof1.endSequent( aux1 ) || f == subProof1.endSequent( aux2 ) =>
+      case p @ OrRightRule(
+        subProof1 @ WeakeningRightRule( subProof2, f ), aux1, aux2
+        ) if f == subProof1.endSequent( aux1 ) || f == subProof1.endSequent( aux2 ) =>
 
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
           val Or( a, b ) = p.mainFormula
@@ -415,7 +439,7 @@ object LKToND {
                 qed
           }
         } else {
-          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          val focusMain = p.endSequent.indexOf( p.mainFormula, Polarity.InSuccedent )
           exchange( translate( proof, Some( focusMain ) ), focus.map( p.endSequent.apply ) )
         }
 
@@ -433,10 +457,10 @@ object LKToND {
             u( OrIntro1Rule( _, b ) ).
             qed
 
-          val i = rp.endSequent.indexOfPol( Neg( a ), Polarity.InAntecedent )
+          val i = rp.endSequent.indexOf( Neg( a ), Polarity.InAntecedent )
           ExcludedMiddleRule( lp, Ant( 0 ), rp, i )
         } else {
-          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          val focusMain = p.endSequent.indexOf( p.mainFormula, Polarity.InSuccedent )
           exchange( translate( proof, Some( focusMain ) ), focus.map( p.endSequent.apply ) )
         }
 
@@ -444,10 +468,14 @@ object LKToND {
 
         val tl = translate( leftSubProof, Some( aux1 ) )
 
-        val tr = translate( rightSubProof, if ( rightSubProof.endSequent.succedent.nonEmpty ) Some( p.getRightSequentConnector.parentOption( focus.get ).getOrElse( Suc( 0 ) ) ) else None )
+        val tr = translate(
+          rightSubProof,
+          if ( rightSubProof.endSequent.succedent.nonEmpty )
+            Some( p.getRightSequentConnector.parentOption( focus.get ).getOrElse( Suc( 0 ) ) )
+          else None )
 
         val Imp( _, b ) = p.mainFormula
-        val i = tr.endSequent.indexOfPol( b, Polarity.InAntecedent )
+        val i = tr.endSequent.indexOf( b, Polarity.InAntecedent )
 
         val partialProof = nd.ProofBuilder.
           c( tr ).
@@ -469,16 +497,20 @@ object LKToND {
             u( ImpIntroRule( _, a ) ).
             qed
         } else {
-          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          val focusMain = p.endSequent.indexOf( p.mainFormula, Polarity.InSuccedent )
           exchange( translate( proof, Some( focusMain ) ), focus.map( p.endSequent.apply ) )
         }
 
       // Quantifier rules
       case p @ ForallLeftRule( subProof, aux, a: Formula, term: Expr, v: Var ) =>
 
-        val t = translate( subProof, if ( p.endSequent.succedent.nonEmpty ) Some( p.getSequentConnector.parent( focus.get ) ) else None )
+        val t = translate(
+          subProof,
+          if ( p.endSequent.succedent.nonEmpty )
+            Some( p.getSequentConnector.parent( focus.get ) )
+          else None )
 
-        val i = t.endSequent.indexOfPol( Substitution( v, term )( a ), Polarity.InAntecedent )
+        val i = t.endSequent.indexOf( Substitution( v, term )( a ), Polarity.InAntecedent )
         nd.ProofBuilder.
           c( t ).
           u( ImpIntroRule( _, i ) ).
@@ -495,19 +527,25 @@ object LKToND {
             u( ForallIntroRule( _, p.mainFormula, eigen ) ).
             qed
         } else {
-          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          val focusMain = p.endSequent.indexOf( p.mainFormula, Polarity.InSuccedent )
           exchange( translate( proof, Some( focusMain ) ), focus.map( p.endSequent.apply ) )
         }
 
       case ForallSkRightRule( subProof, aux, main, skT, skD ) =>
-        throw new LKToNDTranslationException( "ForallSkRightRule", "LK proofs containing skolem functions are not supported." )
+        throw new LKToNDTranslationException(
+          "ForallSkRightRule",
+          "LK proofs containing skolem functions are not supported." )
 
       case p @ ExistsLeftRule( subProof, aux, eigen, v ) =>
 
-        val t = translate( subProof, if ( p.endSequent.succedent.nonEmpty ) Some( p.getSequentConnector.parent( focus.get ) ) else None )
+        val t = translate(
+          subProof,
+          if ( p.endSequent.succedent.nonEmpty )
+            Some( p.getSequentConnector.parent( focus.get ) )
+          else None )
 
         val Ex( _, a ) = p.mainFormula
-        val i = t.endSequent.indexOfPol( Substitution( v, eigen )( a ), Polarity.InAntecedent )
+        val i = t.endSequent.indexOf( Substitution( v, eigen )( a ), Polarity.InAntecedent )
         nd.ProofBuilder.
           c( nd.LogicalAxiom( p.mainFormula ) ).
           c( t ).
@@ -515,7 +553,9 @@ object LKToND {
           qed
 
       case ExistsSkLeftRule( subProof, aux, main, skT, skD ) =>
-        throw new LKToNDTranslationException( "ExistsSkLeftRule", "LK proofs containing skolem functions are not supported." )
+        throw new LKToNDTranslationException(
+          "ExistsSkLeftRule",
+          "LK proofs containing skolem functions are not supported." )
 
       case p @ ExistsRightRule( subProof, aux, _, t, _ ) =>
 
@@ -525,14 +565,18 @@ object LKToND {
             u( ExistsIntroRule( _, p.mainFormula, t ) ).
             qed
         } else {
-          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          val focusMain = p.endSequent.indexOf( p.mainFormula, Polarity.InSuccedent )
           exchange( translate( proof, Some( focusMain ) ), focus.map( p.endSequent.apply ) )
         }
 
       // Equality rules
       case p @ EqualityLeftRule( subProof, eq, aux, replacementContext ) =>
 
-        val t = translate( subProof, if ( p.endSequent.succedent.nonEmpty ) Some( p.getSequentConnector.parent( focus.get ) ) else None )
+        val t = translate(
+          subProof,
+          if ( p.endSequent.succedent.nonEmpty )
+            Some( p.getSequentConnector.parent( focus.get ) )
+          else None )
 
         val Abs( x, term ) = replacementContext
 
@@ -556,7 +600,7 @@ object LKToND {
             u( ContractionRule( _, subProof.endSequent( eq ) ) ).
             qed
         } else {
-          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          val focusMain = p.endSequent.indexOf( p.mainFormula, Polarity.InSuccedent )
           exchange( translate( proof, Some( focusMain ) ), focus.map( p.endSequent.apply ) )
         }
 
@@ -585,7 +629,7 @@ object LKToND {
             u( nd.DefinitionRule( _, main ) ).
             qed
         } else {
-          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          val focusMain = p.endSequent.indexOf( p.mainFormula, Polarity.InSuccedent )
           exchange( translate( proof, Some( focusMain ) ), focus.map( p.endSequent.apply ) )
         }
     }
@@ -594,4 +638,5 @@ object LKToND {
   }
 }
 
-class LKToNDTranslationException( name: String, message: String ) extends Exception( s"Cannot translate $name: " + message )
+class LKToNDTranslationException( name: String, message: String )
+  extends Exception( s"Cannot translate $name: " + message )

@@ -6,7 +6,8 @@ package at.logic.gapt.expr.fol
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.containsQuantifier
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.{ Context, HOLSequent }
+
 import scala.collection.{ GenTraversable, mutable }
 
 object isFOLFunction {
@@ -232,4 +233,13 @@ object naive extends CountingFormulas {
 
   }
 
+}
+
+object natMaker {
+  def apply( i: Int, thevar: Expr = Const( "0", Ti ) )( implicit ctx: Context ): Expr = {
+    val suc = ctx.get[Context.Constants].constants.getOrElse( "s", { throw new Exception( "nat not defined" ) } )
+    if ( i > 0 ) Apps( suc, Seq( natMaker( i - 1, thevar ) ) )
+    else if ( thevar.equals( Const( "0", Ti ) ) ) ctx.get[Context.Constants].constants.getOrElse( "0", { throw new Exception( "nat not defined" ) } )
+    else thevar
+  }
 }

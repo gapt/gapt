@@ -16,7 +16,8 @@ import scala.swing._
  * @param proof The proof to be displayed.
  * @tparam T The type of dag proof.
  */
-abstract class DagProofViewer[T <: DagProof[T]]( name: String, proof: DagProof[T] ) extends ScrollableProofToolViewer[DagProof[T]]( name, proof ) {
+abstract class DagProofViewer[T <: DagProof[T]]( name: String, proof: DagProof[T] )
+  extends ScrollableProofToolViewer[DagProof[T]]( name, proof ) {
   override val content = proof
 
 }
@@ -29,7 +30,9 @@ abstract class DagProofViewer[T <: DagProof[T]]( name: String, proof: DagProof[T
  * @tparam F
  * @tparam T The type of sequent proof.
  */
-class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: SequentProof[F, T], sequent_element_renderer: F => String ) extends DagProofViewer[T]( name, proof ) with ContainsSequentProof {
+class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: SequentProof[F, T],
+                                                      sequent_element_renderer: F => String )
+  extends DagProofViewer[T]( name, proof ) with ContainsSequentProof {
   override type MainComponentType = DrawSequentProof[F, T]
   override def createMainComponent = new DrawSequentProof(
     this,
@@ -41,7 +44,10 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
 
   scrollPane.border = Swing.EmptyBorder( 0, 0, 10, 0 )
 
-  override def viewMenuContents = super.viewMenuContents ++ Seq( removeAllMarkingsButton, new Separator(), sunburstViewButton, new Separator(), hideContextsButton )
+  override def viewMenuContents = super.viewMenuContents ++ Seq(
+    removeAllMarkingsButton, new Separator(),
+    sunburstViewButton, new Separator(),
+    hideContextsButton )
 
   def hideSequentContext() = publisher.publish( HideSequentContexts )
 
@@ -130,10 +136,14 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
  * @param name The name to be displayed at the top.
  * @param proof The proof to be displayed.
  */
-class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[Formula, LKProof]( name, proof, LatexExporter( _ ) ) with Savable[LKProof] with ContainsLKProof {
+class LKProofViewer( name: String, proof: LKProof )
+  extends SequentProofViewer[Formula, LKProof]( name, proof, LatexExporter( _ ) )
+  with Savable[LKProof] with ContainsLKProof {
   override val content: LKProof = proof
   override def fileMenuContents = Seq( openButton, saveAsButton, new Separator, exportToPDFButton, exportToPNGButton )
-  override def viewMenuContents = super.viewMenuContents ++ Seq( hideStructuralRulesButton, markCutAncestorsButton, new Separator(), viewExpansionProofButton )
+  override def viewMenuContents = super.viewMenuContents ++ Seq(
+    hideStructuralRulesButton, markCutAncestorsButton, new Separator(),
+    viewExpansionProofButton )
 
   /**
    * Displays the expansion proof of proof in a new window.
@@ -187,7 +197,8 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[F
   }
 
   // New menu buttons
-  def saveAsButton = MenuButtons.saveAsButton[LKProof]( this.asInstanceOf[ProofToolViewer[LKProof] with Savable[LKProof]] )
+  def saveAsButton = MenuButtons.saveAsButton[LKProof](
+    this.asInstanceOf[ProofToolViewer[LKProof] with Savable[LKProof]] )
 
   def markCutAncestorsButton = MenuButtons.marCutAncestorsButton( this )
 

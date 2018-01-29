@@ -13,9 +13,9 @@ import cats.instances.all._
 object guessLabels {
   def suggestLabel( formula: Formula, idx: SequentIndex, nameGen: NameGenerator ): String =
     formula match {
-      case Const( name, _ ) => nameGen.fresh( name )
-      case _ if idx.isSuc   => nameGen.fresh( "g" )
-      case _ if idx.isAnt   => nameGen.freshWithIndex( "h" )
+      case Const( name, _, _ ) => nameGen.fresh( name )
+      case _ if idx.isSuc      => nameGen.fresh( "g" )
+      case _ if idx.isAnt      => nameGen.freshWithIndex( "h" )
     }
 
   def apply( sequent: HOLSequent ): Sequent[( String, Formula )] = {
@@ -57,7 +57,8 @@ case class ProofState private (
       throw new IllegalArgumentException( s"Cannot replace non-existing open subgoal: $index" ) )
     require(
       proofSegment.conclusion isSubsetOf subGoal.conclusion,
-      s"Conclusion of proof segment is not a subset of subgoal:\n${proofSegment.conclusion}\nis not a subset of\n${subGoal.conclusion}" )
+      s"Conclusion of proof segment is not a subset of subgoal:\n${proofSegment.conclusion}\nis not a subset of\n${subGoal.conclusion}\n"
+        + s"Extra formulas:\n${proofSegment.conclusion.distinct.diff( subGoal.conclusion )}" )
 
     if ( subGoal == proofSegment ) return this
 
@@ -89,7 +90,7 @@ case class ProofState private (
           require( subProof.conclusion multiSetEquals segment.conclusion )
           val segment_ = WeakeningContractionMacroRule( subProof, p.conclusion )
           require( segment_.conclusion multiSetEquals p.conclusion )
-          ( segment_, SequentConnector.guessInjection( segment_.conclusion, p.conclusion ).inv )
+          ( segment_, SequentConnector.guessInjection( fromLower = p.conclusion, toUpper = segment_.conclusion ).inv )
         case None if failOnMissingSubgoal  => throw new IllegalArgumentException( s"Subgoal still open: $p" )
         case None if !failOnMissingSubgoal => super.visitOpenAssumption( p, dummy )
       }

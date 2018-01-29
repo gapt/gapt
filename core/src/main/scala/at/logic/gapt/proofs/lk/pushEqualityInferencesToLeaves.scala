@@ -37,19 +37,19 @@ object pushEqualityInferencesToLeaves {
         case equality @ EqualityLeftRule( weakening @ WeakeningLeftRule( _, _ ), _, _, _ ) if weakening.mainIndices.head == equality.eq =>
           val ( newSubProof, connector ) = pushSingleWeakeningToLeaves.withConnector( weakening )
           val ( newProof, _ ) = recurse( EqualityLeftRule( newSubProof, connector.child( equality.eq ), connector.child( equality.aux ), equality.replacementContext ), () )
-          ( newProof, SequentConnector.guessInjection( newProof.conclusion, proof.conclusion ).inv )
+          ( newProof, SequentConnector.guessInjection( proof.conclusion, newProof.conclusion ).inv )
 
         case equality @ EqualityRightRule( weakening @ WeakeningLeftRule( _, _ ), _, _, _ ) if weakening.mainIndices.head == equality.eq =>
           val ( newSubProof, connector ) = pushSingleWeakeningToLeaves.withConnector( weakening )
           val ( newProof, _ ) = recurse( EqualityRightRule( newSubProof, connector.child( equality.eq ), connector.child( equality.aux ), equality.replacementContext ), () )
-          ( newProof, SequentConnector.guessInjection( newProof.conclusion, proof.conclusion ).inv )
+          ( newProof, SequentConnector.guessInjection( proof.conclusion, newProof.conclusion ).inv )
 
         case EqualityLeftRule( _, _, _, _ ) | EqualityRightRule( _, _, _, _ ) =>
           val ( reducedProof, connector ) = super.recurse( proof, () )
           equalityReduction( reducedProof ) match {
             case Some( ( newProof, _, _ ) ) =>
               val ( finalProof, _ ) = super.recurse( newProof, () )
-              ( finalProof, SequentConnector.guessInjection( finalProof.conclusion, proof.conclusion ).inv )
+              ( finalProof, SequentConnector.guessInjection( proof.conclusion, finalProof.conclusion ).inv )
             case None => ( reducedProof, connector )
           }
         case _ => super.recurse( proof, () )

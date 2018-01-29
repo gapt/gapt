@@ -125,7 +125,7 @@ private[lk] class extractRecSchem( includeTheoryAxioms: Boolean, includeEqTheory
       rules1 ++ rules2
     case p @ InductionRule( cases, main, term ) =>
       val symbol = ( startSymbol, p.formula ) match {
-        case ( Apps( Const( _, ty ), args ), Abs( _, All.Block( vs, _ ) ) ) =>
+        case ( Apps( Const( _, ty, _ ), args ), Abs( _, All.Block( vs, _ ) ) ) =>
           Const( mkFreshSymbol(), ty )( args.dropRight( vs.size + 1 ) )
       }
 

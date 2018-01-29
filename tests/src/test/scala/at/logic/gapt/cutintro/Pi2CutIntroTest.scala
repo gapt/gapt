@@ -2,7 +2,7 @@ package at.logic.gapt.cutintro
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.{ Context, MutableContext }
+import at.logic.gapt.proofs.MutableContext
 import at.logic.gapt.proofs.lk.CutRule
 import at.logic.gapt.provers.maxsat.OpenWBO
 import org.specs2.mutable.Specification

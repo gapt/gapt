@@ -1,7 +1,7 @@
 package at.logic.gapt.integration_tests
 
-import at.logic.gapt.expr.{ Eq, FOLAtom }
-import at.logic.gapt.proofs.SequentMatchers
+import at.logic.gapt.expr.{ Eq, Expr, FOLAtom }
+import at.logic.gapt.proofs.{ Context, HOLSequent, SequentMatchers }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.provers.escargot.Escargot
@@ -21,7 +21,7 @@ class TapeTest extends Specification with SequentMatchers {
       //println( LatexLLKExporter( proof_sk, true ) )
 
       //      println( proof_sk )
-      val s = StructCreators.extract( proof_sk )
+      val s = StructCreators.extract( proof_sk )( Context() )
 
       //      println( s"struct: $s" )
       val cs_ = CharacteristicClauseSet( s )

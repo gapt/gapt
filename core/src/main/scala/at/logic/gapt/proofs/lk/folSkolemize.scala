@@ -1,12 +1,27 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.SkolemSymbolFactory
-import at.logic.gapt.proofs.{ Ant, HOLSequent, Sequent }
-import at.logic.gapt.utils.StreamUtils
+import at.logic.gapt.proofs.{ HOLSequent, Sequent }
+import at.logic.gapt.utils.{ NameGenerator, StreamUtils }
 import StreamUtils._
 
 object folSkolemize {
+  private[lk] class SkolemSymbolFactory( usedConstants: Iterable[Const] ) {
+    private var skolem_symbol_stream = new NameGenerator( usedConstants map { _.name } ).freshStream( "s" )
+
+    def getSkolemSymbols = {
+      val stream = even( skolem_symbol_stream )
+      skolem_symbol_stream = odd( skolem_symbol_stream )
+      stream
+    }
+
+    def getSkolemSymbol = {
+      val sym = skolem_symbol_stream.head
+      skolem_symbol_stream = skolem_symbol_stream.tail
+      sym
+    }
+  }
+
   def apply( formula: Formula, pol: Polarity, context: Seq[Expr], skolemSymbols: Stream[String] ): Formula = formula match {
     case Bottom() | Top() | Atom( _, _ ) =>
       formula

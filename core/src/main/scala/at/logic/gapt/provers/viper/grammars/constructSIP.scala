@@ -27,9 +27,7 @@ object constructSIP {
       state += cut( s"eq_$i", lem )
       state += forget( "g" )
       state += decompose
-      val proof = prover.getLKProof( state.currentSubGoalOption.get.conclusion ).
-        getOrElse( throw new Exception( s"Theory equation $eq is unprovable:\n${state.currentSubGoalOption.get.toPrettyString}" ) )
-      state += insert( proof )
+      state += resolutionProver( prover )
     }
 
     state += allR( g.alpha )
@@ -46,17 +44,13 @@ object constructSIP {
       state += haveInstances( bupCase.indHyps.map( substF ) :- Nil )
       state += haveInstance( substF( bupCase.indConcl ), Polarity.InSuccedent )
       state += forget( ( l, f ) => !l.startsWith( "eq_" ) && containsQuantifierOnLogicalLevel( f ) )
-      val proof = prover.getLKProof( state.currentSubGoalOption.get.conclusion ).
-        getOrElse( throw new Exception( s"Induction case for $ctr is not provable:\n${state.currentSubGoalOption.get.toPrettyString}" ) )
-      state += insert( proof )
+      state += resolutionProver( prover )
     }
 
     state += haveInstances( bup.endCut.theoryFormulas )
     state += haveInstances( bup.endCut.indFormulaInstances.map( substF ) :- Nil )
     state += forget( ( l, f ) => !l.startsWith( "eq_" ) && containsQuantifierOnLogicalLevel( f ) )
-    val proof = prover.getLKProof( state.currentSubGoalOption.get.conclusion ).
-      getOrElse( throw new Exception( s"End cut is not provable:\n${state.currentSubGoalOption.get.toPrettyString}" ) )
-    state += insert( proof )
+    state += resolutionProver( prover )
 
     cleanStructuralRules( state.result )
   }

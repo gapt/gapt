@@ -3,8 +3,8 @@ package at.logic.gapt.provers
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.resolution.{ Clausifier, Input, ResolutionProof, ResolutionToExpansionProof, ResolutionToLKProof, eliminateSplitting, mapInputClauses, structuralCNF }
 import at.logic.gapt.proofs.{ Context, ContextSection, HOLClause, HOLSequent, MutableContext, Sequent, withSection }
-import at.logic.gapt.proofs.expansion.ExpansionProof
-import at.logic.gapt.proofs.lk.{ LKProof, WeakeningContractionMacroRule }
+import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, deskolemizeET }
+import at.logic.gapt.proofs.lk.{ LKProof, LKToExpansionProof, WeakeningContractionMacroRule }
 import at.logic.gapt.utils.{ Maybe, NameGenerator }
 
 trait ResolutionProver extends OneShotProver { self =>
@@ -120,6 +120,25 @@ trait ResolutionProver extends OneShotProver { self =>
     }
 
     override def toString = s"$self.extendToManySortedViaErasure"
+  }
+
+  def withDeskolemization = new ResolutionProver {
+    override def isValid( sequent: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean =
+      self.isValid( sequent )
+
+    override def getExpansionProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] =
+      self.getExpansionProof( sequent ).map( deskolemizeET( _ ) )
+
+    override def getLKProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] =
+      getExpansionProof( sequent ).flatMap( ep => ExpansionProofToLK( ep ) match {
+        case Right( lk ) => Some( lk )
+        case Left( _ )   => None
+      } )
+
+    override def getResolutionProof( seq: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] =
+      self.getResolutionProof( seq )
+
+    override def toString = s"$self.withDeskolemization"
   }
 
 }

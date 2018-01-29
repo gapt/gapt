@@ -14,8 +14,21 @@ import scala.util.{ Failure, Success, Try }
  */
 sealed abstract class SExpression
 
-case class LAtom( name: String ) extends SExpression {
-  override def toString = name
+sealed abstract class LAtom extends SExpression
+
+case class LKeyword( name: String ) extends LAtom {
+  override def toString = s":$name"
+}
+
+case class LSymbol( name: String ) extends LAtom {
+  override def toString =
+    if ( name == "" ) {
+      s"|$name|"
+    } else if ( name.matches( ".*[\n\r\t\f \")(;:|\\\\].*" ) ) {
+      "|" + name.replace( "\\", "\\\\" ).replace( "|", "\\|" ) + "|"
+    } else {
+      name
+    }
 }
 
 case class LList( elements: SExpression* ) extends SExpression {
@@ -24,18 +37,22 @@ case class LList( elements: SExpression* ) extends SExpression {
 
   override def toString = "(" + elements.mkString( " " ) + ")"
 }
+object LList {
+  def apply( elements: Iterable[SExpression] ): LList =
+    LList( elements.toSeq: _* )
+}
 object LFun {
   def apply( head: String, args: SExpression* ): LList =
-    LList( ( LAtom( head ) +: args ): _* )
+    LList( ( LSymbol( head ) +: args ): _* )
   def unapplySeq( list: LList ): Option[( String, Seq[SExpression] )] = list match {
-    case LList( LAtom( head ), args @ _* ) => Some( head, args )
-    case _                                 => None
+    case LList( LSymbol( head ), args @ _* ) => Some( head, args )
+    case _                                   => None
   }
 }
 object LFunOrAtom {
   def unapplySeq( expression: SExpression ): Option[( String, Seq[SExpression] )] = expression match {
     case LFun( name, args @ _* ) => Some( name, args )
-    case LAtom( name )           => Some( name, Seq() )
+    case LSymbol( name )         => Some( name, Seq() )
     case _                       => None
   }
 }
@@ -64,8 +81,8 @@ class SExpressionParser( val input: ParserInput ) extends Parser {
 
   def WhiteSpace = rule { zeroOrMore( anyOf( " \n\r\t\f" ) | ( ';' ~ zeroOrMore( noneOf( "\n" ) ) ) ) }
 
-  def Str = rule { '"' ~ capture( zeroOrMore( noneOf( "\"" ) ) ) ~ '"' ~ WhiteSpace ~> lisp.LAtom }
-  def Atom = rule { capture( oneOrMore( noneOf( "() |\n\r\t\f;\"" ) ) ) ~ WhiteSpace ~> lisp.LAtom }
+  def Str = rule { '"' ~ capture( zeroOrMore( noneOf( "\"" ) ) ) ~ '"' ~ WhiteSpace ~> lisp.LSymbol }
+  def Symbol = rule { capture( noneOf( ":() |\n\r\t\f;\"" ) ~ zeroOrMore( noneOf( "() |\n\r\t\f;\"" ) ) ) ~ WhiteSpace ~> lisp.LSymbol }
 
   def QuotedSymbolEscapeSequence: Rule0 = rule { '\\' ~ ( ch( '|' ) | '\\' ) }
 
@@ -76,11 +93,15 @@ class SExpressionParser( val input: ParserInput ) extends Parser {
   }
 
   def QuotedSymbol = rule {
-    '|' ~ QuotedSymbolBody ~ '|' ~ WhiteSpace ~> lisp.LAtom
+    '|' ~ QuotedSymbolBody ~ '|' ~ WhiteSpace ~> lisp.LSymbol
+  }
+
+  def Keyword = rule {
+    ':' ~ capture( oneOrMore( noneOf( ":() |\n\r\t\f;\"" ) ) ) ~ WhiteSpace ~> lisp.LKeyword
   }
 
   def SExpr: Rule1[lisp.SExpression] = rule {
-    ( Str | QuotedSymbol | Atom | Parens )
+    ( Str | QuotedSymbol | Symbol | Keyword | Parens )
   }
 
   def Parens = rule {

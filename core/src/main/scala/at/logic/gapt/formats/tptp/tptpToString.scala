@@ -42,12 +42,12 @@ object tptpToString {
     case GeneralColon( a, b ) =>
       s"${expression( a, prio.term )}:${expression( b, prio.term )}"
 
-    case And( Imp( a, b ), Imp( b_, a_ ) ) if a == a_ && b == b_ =>
+    case Iff( a, b ) =>
       binExpr( a, b, p, prio.binary_formula, "<=>" )
 
     case Top()                              => "$true"
     case Bottom()                           => "$false"
-    case Const( c, _ )                      => atomic_word( c )
+    case Const( c, _, _ )                   => atomic_word( c )
     case Var( name, _ )                     => variable( name )
     case Neg( Eq( a, b ) )                  => binExpr( a, b, p, prio.infix_formula, "!=" )
     case Neg( f )                           => parenIf( p, prio.unitary_formula, s"~ ${expression( f, prio.unitary_formula + 1 )}" )
@@ -57,7 +57,7 @@ object tptpToString {
     case Imp( a, b )                        => binExpr( a, b, p, prio.binary_formula, "=>" )
     case All.Block( vs, bd ) if vs.nonEmpty => quant( vs, bd, p, "!" )
     case Ex.Block( vs, bd ) if vs.nonEmpty  => quant( vs, bd, p, "?" )
-    case Apps( Const( hd, _ ), args ) if expr.ty.isInstanceOf[TBase] =>
+    case Apps( Const( hd, _, _ ), args ) if expr.ty.isInstanceOf[TBase] =>
       s"${atomic_word( hd )}(${args map expression mkString ", "})"
     case App( a, b ) => binExpr( a, b, p, prio.term, s"@" )
   }
@@ -77,6 +77,8 @@ object tptpToString {
     val newVars = for ( fv <- vars ) yield nameGen.fresh( renameVar( fv ) )
     ( newVars, Substitution( vars zip newVars )( body ) )
   }
+  def renameVars( f: Formula ): Formula =
+    renameVars( freeVariables( f ).toSeq, f )._2.asInstanceOf[Formula]
 
   private val lowerWordRegex = "[a-z][A-Za-z0-9_]*".r
   private val definedOrSystemWord = "[$][$]?[A-Za-z0-9_]*".r

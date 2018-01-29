@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Context, Sequent }
+import at.logic.gapt.proofs.{ Ant, Context, Sequent }
 import at.logic.gapt.proofs.expansion._
 
 object LKToExpansionProof {
@@ -9,13 +9,11 @@ object LKToExpansionProof {
   /**
    * Extracts an expansion sequent Ex(π) from an LKProof π.
    *
-   * The induction rule is not supported!
-   *
    * @param proof The proof π.
    * @return The expansion proof Ex(π).
    */
   def apply( proof: LKProof )( implicit ctx: Context = Context() ): ExpansionProof = {
-    val ( theory, expansionSequent ) = extract( regularize( AtomicExpansion( proof ) ) )
+    val ( theory, expansionSequent ) = extract( regularize( AtomicExpansion( makeInductionExplicit( proof ) ) ) )
     val theory_ = ETMerge.byShallowFormula( theory )
     eliminateMerges( moveDefsUpward( ExpansionProof( theory_ ++: expansionSequent ) ) )
   }
@@ -150,5 +148,9 @@ object LKToExpansionProof {
       val ( subCuts, subSequent ) = extract( subProof )
 
       ( subCuts, subSequent.delete( aux ) :+ ETDefinition( main, subSequent( aux ) ) )
+
+    case p @ InductionRule( _, _, _ ) =>
+      // TODO: remove makeInductionExplicit and construct expansion tree here
+      ???
   }
 }

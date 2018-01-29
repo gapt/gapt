@@ -18,10 +18,12 @@ case class InductionGrammar(
     gamma:       List[Var],
     productions: Vector[Production] ) {
 
-  for ( Production( lhs, rhs ) <- productions ) {
-    require( lhs == List( tau ) || lhs == gamma )
+  for ( prod @ Production( lhs, rhs ) <- productions ) {
+    require( lhs == List( tau ) || lhs == gamma, s"$lhs is not a nonterminal" )
     val fvs = freeVariables( rhs )
-    require( nus.values.exists( n => fvs.subsetOf( Set( alpha ) ++ gamma ++ n ) ) )
+    require(
+      nus.values.exists( n => fvs.subsetOf( Set( alpha ) ++ gamma ++ n ) ),
+      s"production violates variable condition: $prod" )
   }
 
   def nonTerminals: Vector[NonTerminalVect] =
@@ -69,6 +71,9 @@ case class InductionGrammar(
   def filterProductions( pred: Production => Boolean ): InductionGrammar =
     copy( productions = productions.filter( pred ) )
 
+  def gammaProductions: Vector[Production] =
+    productions.filter( _.lhs == gamma )
+
   override def toString: String =
     new IndGExporter( unicode = true, this ).export
 
@@ -78,7 +83,7 @@ object InductionGrammar {
   type NonTerminalVect = List[Var]
 
   case class Production( lhs: NonTerminalVect, rhs: List[Expr] ) {
-    require( lhs.size == rhs.size )
+    require( lhs.size == rhs.size, s"sides of production have nonequal size: $this" )
     for ( ( l, r ) <- lhs zip rhs ) require( l.ty == r.ty )
 
     def zipped: List[( Var, Expr )] = lhs zip rhs
@@ -117,7 +122,7 @@ object InductionGrammar {
       for ( nt <- g.nonTerminals; x <- nt ) ctx.check( x )
       val Some( ctrs ) = ctx.getConstructors( g.indTy )
       require( g.nus.keySet == ctrs.toSet )
-      for ( ctr @ Const( _, FunctionType( _, argTypes ) ) <- ctrs ) {
+      for ( ctr @ Const( _, FunctionType( _, argTypes ), _ ) <- ctrs ) {
         val nu = g.nus( ctr )
         require( nu.size == argTypes.size )
         for ( ( nui, argType ) <- nu zip argTypes )
@@ -137,7 +142,8 @@ object InductionGrammar {
       val prodCase = correspondingCase( prod )
       subterms.flatMap {
         case st @ Apps( c: Const, ss ) if prodCase.forall( _ == c ) =>
-          val rhs = Substitution( List( alpha -> term ) ++ ( nus( c ) zip ss ) ++ ( gamma zip instGammas( st ) ) )( prod.rhs )
+          val rhs = Substitution( List( alpha -> term ) ++ ( nus( c ) zip ss ) ++
+            ( gamma zip instGammas( st ) ) )( prod.rhs )
           prod.lhs match {
             case List( `tau` )          => List( List( tau ) -> rhs )
             case g if containsOnlyAlpha => List( instGammas( st ) -> rhs )
@@ -161,7 +167,7 @@ object InductionGrammar {
     val tau = nameGen.fresh( Var( "τ", tauTy ) )
     val alpha = nameGen.fresh( Var( "α", indTy ) )
     val nus = Map() ++ ctx.getConstructors( indTy ).get.map {
-      case ctr @ Const( _, FunctionType( _, argTypes ) ) =>
+      case ctr @ Const( _, FunctionType( _, argTypes ), _ ) =>
         ctr -> argTypes.map( argTy => nameGen.fresh( Var( "ν", argTy ) ) )
     }
     InductionGrammar( tau, alpha, nus, gamma, Vector() )

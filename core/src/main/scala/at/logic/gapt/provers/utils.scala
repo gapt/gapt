@@ -40,6 +40,9 @@ object renameConstantsToFi {
     }.toMap
   }
 
+  def apply[I, O]( input: I )( implicit ev: Replaceable[I, O] ): O =
+    TermReplacement( input, getRenaming( input ).toMap )
+
   def wrap[I1, O1, I2, O2]( input: I1 )( func: ( Map[Const, Const], O1 ) => I2 )( implicit ev1: Replaceable[I1, O1], ev2: Replaceable[I2, O2] ): O2 = {
     val renaming = getRenaming( input )
     val renamedInput = TermReplacement( input, renaming.toMap )
@@ -51,7 +54,10 @@ object renameConstantsToFi {
 object groundFreeVariables {
   def getGroundingMap( vars: Set[Var], consts: Set[Const] ): Seq[( Var, Const )] = {
     val nameGen = rename.awayFrom( consts )
-    vars.toSeq map { v => v -> Const( nameGen fresh v.name, v.ty ) }
+    vars.toSeq map { v =>
+      val tvs = typeVariables( v ).toList
+      v -> Const( nameGen fresh v.name, v.ty, tvs )
+    }
   }
 
   def getGroundingMap( seq: HOLSequent ): Seq[( Var, Const )] =

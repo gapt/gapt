@@ -5,14 +5,20 @@ import at.logic.gapt.proofs.{ FOLClause, Sequent }
 
 /**
  * Schematic extended Herbrand sequent for schematic Pi-2 grammars
- * @param reducedRepresentation The schematic extended Herbrand sequent without placeholder for the cut ( F[x\U_1] |- G[y\U_2] )
- * @param universalEigenvariable The variable that is introduced for the universally quantified variable of the cut formula (alpha)
- * @param existentialEigenvariables The variables that are introduced for the existentially quantified variable of the cut
+ * @param reducedRepresentation The schematic extended Herbrand sequent without placeholder
+ *                              for the cut ( F[x\U_1] |- G[y\U_2] )
+ * @param universalEigenvariable The variable that is introduced for the universally
+ *                               quantified variable of the cut formula (alpha)
+ * @param existentialEigenvariables The variables that are introduced for the existentially
+ *                                  quantified variable of the cut
  *                                  formula (beta_1,...,beta_m)
- * @param substitutionsForAlpha The terms (except from the eigenvariable) that are introduced for the universally quantified variable of
+ * @param substitutionsForAlpha The terms (except from the eigenvariable) that are introduced
+ *                              for the universally quantified variable of
  *                              the cut formula (r_1,...,r_m)
- * @param substitutionsForBetaWithAlpha The terms (except from the eigenvariables) that are introduced for the existentially quantified variable
- *                                      of the cut formula independent from the existential eigenvariables (t_1(alpha),...,t_p(alpha))
+ * @param substitutionsForBetaWithAlpha The terms (except from the eigenvariables) that are
+ *                                      introduced for the existentially quantified variable
+ *                                      of the cut formula independent from the existential
+ *                                      eigenvariables (t_1(alpha),...,t_p(alpha))
  */
 case class Pi2SeHs(
     reducedRepresentation:         Sequent[Formula], // F[x\U_1] |- G[y\U_2]
@@ -29,13 +35,15 @@ case class Pi2SeHs(
    */
   val multiplicityOfAlpha: Int = substitutionsForAlpha.length
   /**
-   * Number of substitutions for the eigenvariables of the existentially quantified variable independent from the substitution of the universal
+   * Number of substitutions for the eigenvariables of the existentially quantified variable independent
+   * from the substitution of the universal
    * eigenvariable (p)
    */
   val multiplicityOfBeta: Int = substitutionsForBetaWithAlpha.length
 
   /**
-   * Pairs of the universal eigenvariable with the substitutions for the universal eigenvariable ((alpha,r_1),...,(alpha,r_m))
+   * Pairs of the universal eigenvariable with the substitutions for the universal eigenvariable
+   * ((alpha,r_1),...,(alpha,r_m))
    */
   val substitutionPairsAlpha: List[( Expr, Expr )] = {
 
@@ -92,7 +100,8 @@ case class Pi2SeHs(
 
     require( 1 <= index && index <= this.multiplicityOfAlpha )
     val subs: Substitution = Substitution( universalEigenvariable, substitutionsForAlpha( index - 1 ) )
-    substitutionsForBetaWithAlpha.map( instanceB => Substitution( existentialEigenvariables( index - 1 ), subs( instanceB ) ) )
+    substitutionsForBetaWithAlpha.map( instanceB =>
+      Substitution( existentialEigenvariables( index - 1 ), subs( instanceB ) ) )
   }
 
   private def substituteRightSideOnce( sequent: Sequent[Formula], index: Int ): Sequent[Formula] = {
@@ -149,7 +158,9 @@ case class Pi2SeHs(
     val sequent: Sequent[Formula] = herbrandSequent
 
     for ( indexM <- 0 until multiplicityOfAlpha ) {
-      herbrandSequent = substituteLeftSideOnce( herbrandSequent.antecedent ++: Sequent(), multiplicityOfAlpha - indexM ) :++ sequent.succedent
+      herbrandSequent = substituteLeftSideOnce(
+        herbrandSequent.antecedent ++: Sequent(),
+        multiplicityOfAlpha - indexM ) :++ sequent.succedent
     }
 
     herbrandSequent
@@ -171,7 +182,8 @@ case class Pi2SeHs(
     val DNTA = scala.collection.mutable.Set[Sequent[Formula]]()
 
     CNFp( this.reducedRepresentationToFormula ).foreach( clause => if ( !clause.isTaut ) {
-      val NTAClause: Sequent[Formula] = clause.succedent.map( literal => Neg( literal ) ) ++: clause.antecedent ++: Sequent()
+      val NTAClause: Sequent[Formula] =
+        clause.succedent.map( literal => Neg( literal ) ) ++: clause.antecedent ++: Sequent()
       val DNTABuffer = DNTA.toList
       var dontAdd: Boolean = false
       DNTABuffer.foreach( DNTAClause => {
@@ -206,9 +218,12 @@ case class Pi2SeHs(
   }
 
   /**
-   * Three sets A,B,N containing all atoms occurring in the leaves of the reduced representation (the atoms are negated if they occur on
-   * the right side of the sequent) such that in all atoms (literals) of N no eigenvariables occur, in all atoms (literals) of A only the
-   * universal eigenvariable occur, and in all atoms (literals) of B only the existential eigenvariables occur
+   * Three sets A,B,N containing all atoms occurring in the leaves of the reduced
+   * representation (the atoms are negated if they occur on
+   * the right side of the sequent) such that in all atoms (literals) of N no
+   * eigenvariables occur, in all atoms (literals) of A only the
+   * universal eigenvariable occur, and in all atoms (literals) of B only the
+   * existential eigenvariables occur
    */
   val literalsInTheDNTAs: ( Set[Formula], Set[Formula], Set[Formula] ) = {
 
@@ -286,7 +301,8 @@ case class Pi2SeHs(
   }
 
   /**
-   * Computes two sets of atoms P,N for a given set of literals such that P contains all positive literals and N all atoms of the negative literals
+   * Computes two sets of atoms P,N for a given set of literals such that P contains
+   * all positive literals and N all atoms of the negative literals
    * @param literals
    * @return
    */
@@ -320,13 +336,17 @@ class LeafIndex(
     val oneToPList: Set[Int] ) {}
 
 /**
- * Supposed to contain the data of a unified literal and whether it makes a non-tautological leaf of the reduced representation true
+ * Supposed to contain the data of a unified literal and whether it makes a non-tautological
+ * leaf of the reduced representation true
  * @param literal
- * @param leafIndexList Supposed to contain the data which leaf of the reduced representation becomes true for which substitution of the literal
+ * @param leafIndexList Supposed to contain the data which leaf of the reduced representation
+ *                      becomes true for which substitution of the literal
  * @param numberOfDNTAs
- * @param foundNonEmptyPList Supposed to be true if there is a at least one leaf of the reduced representation and one substitution of the
+ * @param foundNonEmptyPList Supposed to be true if there is a at least one leaf of the
+ *                           reduced representation and one substitution of the
  *                           form (xCut->alpha,yCut->t_i(alpha)) such that the leaf becomes true
- * @param foundEmptyMList Supposed to be true if there is a at least one leaf of the reduced representation and one substitution of the
+ * @param foundEmptyMList Supposed to be true if there is a at least one leaf of the
+ *                        reduced representation and one substitution of the
  *                        form (xCut->r_j,yCut->beta_j) such that the leaf becomes true
  */
 class LiteralWithIndexLists(
@@ -339,7 +359,8 @@ class LiteralWithIndexLists(
 }
 
 /**
- * Combined data of many unified literals in a clause and whether the clause is a potential part of a formula in disjunctive normal form
+ * Combined data of many unified literals in a clause and whether the clause is a
+ * potential part of a formula in disjunctive normal form
  * that makes all leaves of the reduced representation true
  * @param literals
  */
@@ -351,7 +372,8 @@ class ClauseWithIndexLists(
   def numberOfDNTAs: Int = this.literals.head.numberOfDNTAs
 
   /**
-   * Computes an 'average' LeafIndex for the whole clause, i.e. the new oneToMList is the union of all oneToMLists of each literal and the new
+   * Computes an 'average' LeafIndex for the whole clause, i.e. the new oneToMList is
+   * the union of all oneToMLists of each literal and the new
    * oneToPList is the intersection of all oneToPLists of each literal
    */
   val leafIndexListClause: List[LeafIndex] = {
@@ -365,7 +387,8 @@ class ClauseWithIndexLists(
         var leafIndexListClauseBufferP = this.literals.head.leafIndexList( leafNumber ).oneToPList
         this.literals.tail.foreach( literal => {
           leafIndexListClauseBufferM = leafIndexListClauseBufferM.union( literal.leafIndexList( leafNumber ).oneToMList )
-          leafIndexListClauseBufferP = leafIndexListClauseBufferP.intersect( literal.leafIndexList( leafNumber ).oneToPList )
+          leafIndexListClauseBufferP = leafIndexListClauseBufferP.intersect(
+            literal.leafIndexList( leafNumber ).oneToPList )
         } )
         val leafIn = new LeafIndex( leafIndexListClauseBufferM, leafIndexListClauseBufferP )
         leafIndexListClauseBuffer = leafIndexListClauseBuffer :+ leafIn
@@ -426,7 +449,8 @@ class ClauseWithIndexLists(
 }
 
 /**
- * Combined data of many clauses in a set of clauses and whether the clauses translate to a formula in disjunctive normal form
+ * Combined data of many clauses in a set of clauses and whether the clauses translate
+ * to a formula in disjunctive normal form
  * that makes all leaves of the reduced representation true
  * @param clauses
  */
@@ -434,7 +458,8 @@ class ClausesWithIndexLists(
     val clauses: List[ClauseWithIndexLists] ) {
 
   /**
-   * Computes an 'average' LeafIndex for the whole set of clauses, i.e. the new oneToMList is the intersection of all oneToMLists of each clause
+   * Computes an 'average' LeafIndex for the whole set of clauses, i.e. the new oneToMList
+   * is the intersection of all oneToMLists of each clause
    * and the new oneToPList is the union of all oneToPLists of each clause
    * @return
    */
@@ -450,8 +475,10 @@ class ClausesWithIndexLists(
         var leafIndexListClausesBufferP = this.clauses.head.leafIndexListClause( leafNumber ).oneToPList
         this.clauses.tail.foreach( clause => {
           if ( !emptyList ) {
-            leafIndexListClausesBufferM = leafIndexListClausesBufferM.intersect( clause.leafIndexListClause( leafNumber ).oneToMList )
-            leafIndexListClausesBufferP = leafIndexListClausesBufferP.union( clause.leafIndexListClause( leafNumber ).oneToPList )
+            leafIndexListClausesBufferM = leafIndexListClausesBufferM.intersect(
+              clause.leafIndexListClause( leafNumber ).oneToMList )
+            leafIndexListClausesBufferP = leafIndexListClausesBufferP.union(
+              clause.leafIndexListClause( leafNumber ).oneToPList )
           }
           if ( leafIndexListClausesBufferM.isEmpty ) {
             emptyList = true
@@ -520,20 +547,23 @@ object introducePi2Cut {
     nameOfExistentialVariable: Var     = fov"yCut",
     nameOfUniversalVariable:   Var     = fov"xCut" ): ( Option[Formula], Var, Var ) = {
 
-    val nameOfExistentialVariableChecked = rename.awayFrom( freeVariables( seHs.reducedRepresentationToFormula ) ).fresh( nameOfExistentialVariable )
-    val nameOfUniversalVariableChecked = rename.awayFrom( freeVariables( seHs.reducedRepresentationToFormula ) ).fresh( nameOfUniversalVariable )
+    val nameOfExistentialVariableChecked =
+      rename.awayFrom( freeVariables( seHs.reducedRepresentationToFormula ) ).fresh( nameOfExistentialVariable )
+    val nameOfUniversalVariableChecked =
+      rename.awayFrom( freeVariables( seHs.reducedRepresentationToFormula ) ).fresh( nameOfUniversalVariable )
 
     val unifiedLiterals: Set[Formula] = gStarUnify(
       seHs,
       nameOfExistentialVariableChecked,
       nameOfUniversalVariableChecked )
 
-    val literalsWithIndexListsOrAndSolution: ( Set[LiteralWithIndexLists], Option[Formula] ) = computeTheIndexListsForTheLiterals(
-      unifiedLiterals,
-      seHs.dualNonTautologicalAxioms,
-      seHs,
-      nameOfExistentialVariableChecked,
-      nameOfUniversalVariableChecked )
+    val literalsWithIndexListsOrAndSolution: ( Set[LiteralWithIndexLists], Option[Formula] ) =
+      computeTheIndexListsForTheLiterals(
+        unifiedLiterals,
+        seHs.dualNonTautologicalAxioms,
+        seHs,
+        nameOfExistentialVariableChecked,
+        nameOfUniversalVariableChecked )
 
     val ( literalsWithIndexLists, optionSolution1 ) = literalsWithIndexListsOrAndSolution
 
@@ -550,9 +580,10 @@ object introducePi2Cut {
 
     if ( literalsWithIndexLists.size > 1 ) {
 
-      val allowedClausesWithIndexListsOrAndSolution: ( Set[ClauseWithIndexLists], Option[Formula] ) = checkAndBuildAllowedClausesHead(
-        literalsWithIndexLists,
-        seHs )
+      val allowedClausesWithIndexListsOrAndSolution: ( Set[ClauseWithIndexLists], Option[Formula] ) =
+        checkAndBuildAllowedClausesHead(
+          literalsWithIndexLists,
+          seHs )
 
       val ( allowedClausesWithIndexLists, optionSolution2 ) = allowedClausesWithIndexListsOrAndSolution
 
@@ -571,7 +602,10 @@ object introducePi2Cut {
         for ( subset <- allowedClausesWithIndexLists.subsets( numberOfClauses ) ) {
           val clausesWithIndexLists = new ClausesWithIndexLists( subset.toList )
           if ( clausesWithIndexLists.isSolution ) {
-            return ( Option( clausesWithIndexLists.formula ), nameOfExistentialVariableChecked, nameOfUniversalVariableChecked )
+            return (
+              Option( clausesWithIndexLists.formula ),
+              nameOfExistentialVariableChecked,
+              nameOfUniversalVariableChecked )
           }
 
           /// Only for additional data ///
@@ -614,7 +648,8 @@ object introducePi2Cut {
 
     for ( literalWithIndexLists <- literalsWithIndexLists ) {
       val clause = new ClauseWithIndexLists( List( literalWithIndexLists ) )
-      val ( clauseIsUnnecessary, listOfUnnecessaryClauses ) = checkNecessityOfNewAndOldClause( clause, allowedClausesWithIndexListsMutable.toList )
+      val ( clauseIsUnnecessary, listOfUnnecessaryClauses ) =
+        checkNecessityOfNewAndOldClause( clause, allowedClausesWithIndexListsMutable.toList )
       if ( !clauseIsUnnecessary ) {
         allowedClausesWithIndexListsMutable += clause
         if ( !clause.isAllowedAtLeastAsSubformula && !clause.isAllowed ) {
@@ -645,7 +680,8 @@ object introducePi2Cut {
     for ( subset <- literalsWithIndexLists.subsets( subsetSize ) ) {
       val clauseWithIndexLists = new ClauseWithIndexLists( subset.toList )
       if ( clauseWithIndexLists.isAllowed ) {
-        val ( clauseIsUnnecessary, listOfUnnecessaryClauses ) = checkNecessityOfNewAndOldClause( clauseWithIndexLists, allowedClausesWithIndexLists.toList )
+        val ( clauseIsUnnecessary, listOfUnnecessaryClauses ) =
+          checkNecessityOfNewAndOldClause( clauseWithIndexLists, allowedClausesWithIndexLists.toList )
         if ( !clauseIsUnnecessary ) {
           allowedClausesWithIndexLists += clauseWithIndexLists
           val clausesWithIndexLists = new ClausesWithIndexLists( List( clauseWithIndexLists ) )
@@ -692,9 +728,13 @@ object introducePi2Cut {
       var leafOfIndexList: List[LeafIndex] = Nil
 
       val substitutedLiteralAsSequentListAlpha = for ( existsIndex <- 0 until seHs.multiplicityOfBeta )
-        yield existsIndex -> ( Substitution( ( x, seHs.universalEigenvariable ), ( y, seHs.substitutionsForBetaWithAlpha( existsIndex ) ) )( literal ) +: Sequent() )
+        yield existsIndex -> ( Substitution(
+        ( x, seHs.universalEigenvariable ),
+        ( y, seHs.substitutionsForBetaWithAlpha( existsIndex ) ) )( literal ) +: Sequent() )
       val substitutedLiteralAsSequentListBeta = for ( forallIndex <- 0 until seHs.multiplicityOfAlpha )
-        yield forallIndex -> ( Neg( Substitution( ( x, seHs.substitutionsForAlpha( forallIndex ) ), ( y, seHs.existentialEigenvariables( forallIndex ) ) )( literal ) ) +: Sequent() )
+        yield forallIndex -> ( Neg( Substitution(
+        ( x, seHs.substitutionsForAlpha( forallIndex ) ),
+        ( y, seHs.existentialEigenvariables( forallIndex ) ) )( literal ) ) +: Sequent() )
 
       for ( leaf <- nonTautologicalLeaves ) {
 
@@ -704,7 +744,8 @@ object introducePi2Cut {
         /*
         for ( existsIndex <- 0 until seHs.multiplicityOfBeta ) {
 
-          val subs = Substitution( ( x, seHs.universalEigenvariable ), ( y, seHs.substitutionsForBetaWithAlpha( existsIndex ) ) )
+          val subs = Substitution( ( x, seHs.universalEigenvariable ),
+           ( y, seHs.substitutionsForBetaWithAlpha( existsIndex ) ) )
           val subsetSequent: Sequent[Formula] = subs( literal ).asInstanceOf[Formula] +: Sequent()
           if ( subsetSequent.isSubsetOf( leaf ) ) {
             leafIndexP += existsIndex
@@ -723,7 +764,9 @@ object introducePi2Cut {
 
         for ( forallIndex <- 0 until seHs.multiplicityOfAlpha ) {
 
-          val subs: Substitution = Substitution( ( x, seHs.substitutionsForAlpha( forallIndex ) ), ( y, seHs.existentialEigenvariables( forallIndex ) ) )
+          val subs: Substitution = Substitution(
+            ( x, seHs.substitutionsForAlpha( forallIndex ) ),
+            ( y, seHs.existentialEigenvariables( forallIndex ) ) )
           val subsetSequent: Sequent[Formula] = Neg( subs( literal ) ) +: Sequent()
           if ( !leaf.intersect( subsetSequent ).isEmpty ) {
             leafIndexM += forallIndex
@@ -788,15 +831,19 @@ object introducePi2Cut {
         ) {
 
           if ( !clauseIsNotSubsetOfI( oldClauses.indexOf( oldClause ) ) ) {
-            if ( !newClause.leafIndexListClause( leafNumber ).oneToMList.subsetOf( oldClause.leafIndexListClause( leafNumber ).oneToMList ) ||
-              !newClause.leafIndexListClause( leafNumber ).oneToPList.subsetOf( oldClause.leafIndexListClause( leafNumber ).oneToPList ) ) {
+            if ( !newClause.leafIndexListClause( leafNumber ).oneToMList.subsetOf(
+              oldClause.leafIndexListClause( leafNumber ).oneToMList ) ||
+              !newClause.leafIndexListClause( leafNumber ).oneToPList.subsetOf(
+                oldClause.leafIndexListClause( leafNumber ).oneToPList ) ) {
               clauseIsNotSubsetOfI( oldClauses.indexOf( oldClause ) ) = true
             }
           }
 
           if ( !iIsNotSubsetOfClause( oldClauses.indexOf( oldClause ) ) ) {
-            if ( !oldClause.leafIndexListClause( leafNumber ).oneToMList.subsetOf( newClause.leafIndexListClause( leafNumber ).oneToMList ) ||
-              !oldClause.leafIndexListClause( leafNumber ).oneToPList.subsetOf( newClause.leafIndexListClause( leafNumber ).oneToPList ) ) {
+            if ( !oldClause.leafIndexListClause( leafNumber ).oneToMList.subsetOf(
+              newClause.leafIndexListClause( leafNumber ).oneToMList ) ||
+              !oldClause.leafIndexListClause( leafNumber ).oneToPList.subsetOf(
+                newClause.leafIndexListClause( leafNumber ).oneToPList ) ) {
               iIsNotSubsetOfClause( oldClauses.indexOf( oldClause ) ) = true
             }
           }

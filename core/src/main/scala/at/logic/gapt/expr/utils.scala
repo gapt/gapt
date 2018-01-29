@@ -56,14 +56,20 @@ object toVNF {
 
 /**
  * Returns the set of all variables occurring in the given argument (including
- * vacuously bound variables).
+ * bound variables).
  */
 object variables {
-  def apply( e: Expr ): Set[Var] = e match {
-    case v: Var      => Set( v )
-    case c: Const    => Set()
-    case App( s, t ) => apply( s ) ++ apply( t )
-    case Abs( v, t ) => apply( v ) ++ apply( t )
+  def apply( e: Expr ): Set[Var] = {
+    val vs = mutable.Set[Var]()
+    def go( e: Expr ): Unit = e match {
+      case v: Var   => vs += v
+      case _: Const =>
+      case App( a, b ) =>
+        go( a ); go( b )
+      case Abs( v, t ) => vs += v; go( t )
+    }
+    go( e )
+    vs.toSet
   }
 
   def apply( t: FOLExpression ): Set[FOLVar] = apply( t.asInstanceOf[Expr] ).asInstanceOf[Set[FOLVar]]
@@ -80,17 +86,19 @@ object freeVariables {
   def apply( e: Expr ): Set[Var] = freeVariables( Some( e ) )
 
   def apply( es: TraversableOnce[Expr] ): Set[Var] = {
-    val fvs = Set.newBuilder[Var]
-    def f( e: Expr ): Unit = e match {
-      case v: Var => fvs += v
+    val free = Set.newBuilder[Var]
+    def visit( e: Expr, bound: Set[Var] ): Unit = e match {
+      case v: Var =>
+        if ( !bound( v ) ) free += v
       case App( a, b ) =>
-        f( a )
-        f( b )
-      case Abs( x, a ) => fvs ++= freeVariables( a ) - x
-      case _           =>
+        visit( a, bound )
+        visit( b, bound )
+      case Abs( x, a ) =>
+        visit( a, bound + x )
+      case _: Const =>
     }
-    es foreach f
-    fvs.result()
+    es.foreach( visit( _, Set() ) )
+    free.result()
   }
 
   def apply( seq: HOLSequent ): Set[Var] = apply( seq.elements )
@@ -109,10 +117,10 @@ object typeVariables {
   }
 
   def apply( e: Expr ): Set[TVar] = e match {
-    case Const( _, t ) => apply( t )
-    case Var( _, t )   => apply( t )
-    case App( a, b )   => apply( a ) ++ apply( b )
-    case Abs( v, s )   => apply( s ) ++ apply( v )
+    case Const( _, t, ps ) => apply( t ) ++ ps.flatMap( apply )
+    case Var( _, t )       => apply( t )
+    case App( a, b )       => apply( a ) ++ apply( b )
+    case Abs( v, s )       => apply( s ) ++ apply( v )
   }
 }
 
@@ -145,17 +153,17 @@ object constants {
  */
 object subTerms {
   def apply( e: Expr ): Set[Expr] = e match {
-    case Var( _, _ ) | Const( _, _ ) => Set( e )
-    case Abs( _, e0 )                => apply( e0 ) + e
-    case App( e1, e2 )               => ( apply( e1 ) ++ apply( e2 ) ) + e
+    case Var( _, _ ) | Const( _, _, _ ) => Set( e )
+    case Abs( _, e0 )                   => apply( e0 ) + e
+    case App( e1, e2 )                  => ( apply( e1 ) ++ apply( e2 ) ) + e
   }
 }
 
 object expressionSize {
   def apply( e: Expr ): Int = e match {
-    case Var( _, _ ) | Const( _, _ ) => 1
-    case Abs( _, f )                 => 1 + expressionSize( f )
-    case App( a, b )                 => 1 + expressionSize( a ) + expressionSize( b )
+    case Var( _, _ ) | Const( _, _, _ ) => 1
+    case Abs( _, f )                    => 1 + expressionSize( f )
+    case App( a, b )                    => 1 + expressionSize( a ) + expressionSize( b )
   }
 }
 

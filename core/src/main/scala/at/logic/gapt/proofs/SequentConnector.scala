@@ -15,8 +15,11 @@ import scala.collection.mutable
  * @param parentsSequent A sequent of lists of indices such that for each index i of lowerSequent, parentsSequent(i)
  *                       is the list of indices of the parents of i in upperSequent.
  */
-case class SequentConnector( lowerSizes: ( Int, Int ), upperSizes: ( Int, Int ), parentsSequent: Sequent[Seq[SequentIndex]] ) {
-  require( parentsSequent.sizes == lowerSizes, s"Sizes ${parentsSequent.sizes} of parents sequent $parentsSequent don't agree with lower sizes $lowerSizes." )
+case class SequentConnector( lowerSizes: ( Int, Int ), upperSizes: ( Int, Int ),
+                             parentsSequent: Sequent[Seq[SequentIndex]] ) {
+  require(
+    parentsSequent.sizes == lowerSizes,
+    s"Sizes ${parentsSequent.sizes} of parents sequent $parentsSequent don't agree with lower sizes $lowerSizes." )
   require( parentsSequent.elements.flatten.forall { _ withinSizes upperSizes } )
 
   val ( antL, sucL ) = lowerSizes
@@ -30,7 +33,8 @@ case class SequentConnector( lowerSizes: ( Int, Int ), upperSizes: ( Int, Int ),
   def childrenSequent: Sequent[Seq[SequentIndex]] = Sequent( antU, sucU ) map children
 
   /**
-   * Given a SequentIndex for the lower sequent, this returns the list of parents of that occurrence in the upper sequent (if defined).
+   * Given a SequentIndex for the lower sequent, this returns the list of parents of that occurrence in
+   * the upper sequent (if defined).
    *
    * @param idx An index of lowerSequent.
    * @return The list of parents of idx.
@@ -45,9 +49,11 @@ case class SequentConnector( lowerSizes: ( Int, Int ), upperSizes: ( Int, Int ),
    * @return The unique parent of idx.
    */
   def parent( idx: SequentIndex ): SequentIndex = parents( idx ) match {
-    case Seq()    => throw new NoSuchElementException( s"When calling parent on SequentConnector $this: Index $idx has no parent in $parentsSequent." )
+    case Seq() => throw new NoSuchElementException(
+      s"When calling parent on SequentConnector $this: Index $idx has no parent in $parentsSequent." )
     case Seq( p ) => p
-    case _        => throw new Exception( s"When calling parent on SequentConnector $this: Index $idx has more than one parent in $parentsSequent." )
+    case _ => throw new Exception(
+      s"When calling parent on SequentConnector $this: Index $idx has more than one parent in $parentsSequent." )
   }
 
   /**
@@ -87,8 +93,12 @@ case class SequentConnector( lowerSizes: ( Int, Int ), upperSizes: ( Int, Int ),
       case _        => default
     }
 
+  def child[T]( upperTs: Sequent[T], default: => T = ??? ): Sequent[T] =
+    inv.parent( upperTs, default )
+
   /**
-   * Given a SequentIndex for the upper sequent, this returns the list of children of that occurrence in the lower sequent (if defined).
+   * Given a SequentIndex for the upper sequent, this returns the list of children of that occurrence in
+   * the lower sequent (if defined).
    *
    * @param idx An index of upperSequent.
    * @return The list of children of idx.
@@ -107,9 +117,11 @@ case class SequentConnector( lowerSizes: ( Int, Int ), upperSizes: ( Int, Int ),
    * @return The unique child of idx.
    */
   def child( idx: SequentIndex ): SequentIndex = children( idx ) match {
-    case Seq()    => throw new NoSuchElementException( s"When calling child on SequentConnector $this: Index $idx has no child in $parentsSequent." )
+    case Seq() => throw new NoSuchElementException(
+      s"When calling child on SequentConnector $this: Index $idx has no child in $parentsSequent." )
     case Seq( c ) => c
-    case _        => throw new Exception( s"When calling child on SequentConnector $this: Index $idx has more than one child in $parentsSequent." )
+    case _ => throw new Exception(
+      s"When calling child on SequentConnector $this: Index $idx has more than one child in $parentsSequent." )
   }
 
   /**
@@ -139,7 +151,8 @@ case class SequentConnector( lowerSizes: ( Int, Int ), upperSizes: ( Int, Int ),
   def +( that: SequentConnector ) = {
     require( this.lowerSizes == that.lowerSizes )
     require( this.upperSizes == that.upperSizes )
-    SequentConnector( lowerSizes, upperSizes, Sequent( antL, sucL ) map { i => this.parents( i ) ++ that.parents( i ) distinct } )
+    SequentConnector( lowerSizes, upperSizes, Sequent( antL, sucL ).map( i =>
+      this.parents( i ) ++ that.parents( i ) distinct ) )
   }
 
   /**
@@ -177,34 +190,44 @@ object SequentConnector {
    * @param sequent A sequent.
    * @return An SequentConnector that connects every index of sequent to itself.
    */
-  def apply( sequent: Sequent[_] ): SequentConnector = SequentConnector( sequent, sequent, sequent.indicesSequent map { Seq( _ ) } )
+  def apply( sequent: Sequent[_] ): SequentConnector = SequentConnector( sequent, sequent,
+    sequent.indicesSequent map { Seq( _ ) } )
 
   /**
    * Connects two given sequents via a given parentsSequent.
    */
-  def apply( lowerSequent: Sequent[_], upperSequent: Sequent[_], parentsSequent: Sequent[Seq[SequentIndex]] ): SequentConnector = SequentConnector( lowerSequent.sizes, upperSequent.sizes, parentsSequent )
+  def apply( lowerSequent: Sequent[_], upperSequent: Sequent[_],
+             parentsSequent: Sequent[Seq[SequentIndex]] ): SequentConnector =
+    SequentConnector( lowerSequent.sizes, upperSequent.sizes, parentsSequent )
 
   /**
-   * Creates an SequentConnector that connects all occurrences of an object in the antecedents of two sequents, and analogously
+   * Creates an SequentConnector that connects all occurrences of an object in the antecedents of
+   * two sequents, and analogously
    * for the succedents.
    */
   def findEquals[A]( firstSequent: Sequent[A], secondSequent: Sequent[A] ): SequentConnector = {
-    val parentsSequent = firstSequent map ( x => secondSequent.indicesWhere( _ == x ) filter { _.isAnt }, x => secondSequent.indicesWhere( _ == x ) filter { _.isSuc } )
+    val parentsSequent = firstSequent.map(
+      x => secondSequent.indicesWhere( _ == x ) filter { _.isAnt },
+      x => secondSequent.indicesWhere( _ == x ) filter { _.isSuc } )
 
     SequentConnector( firstSequent, secondSequent, parentsSequent )
   }
 
   /**
-   * Guesses an SequentConnector, such that each element in lowerSequent gets connected to a different element in upperSequent.
+   * Guesses a SequentConnector, such that each element in lower gets connected to a different element in upper.
    */
-  def guessInjection[A]( upperSequent: Sequent[A], lowerSequent: Sequent[A] ): SequentConnector = {
+  def guessInjection[A]( fromLower: Sequent[A], toUpper: Sequent[A] ): SequentConnector = {
     val alreadyUsedOldIndices = mutable.Set[SequentIndex]()
-    SequentConnector( lowerSequent, upperSequent, lowerSequent.zipWithIndex.map {
+    SequentConnector( fromLower, toUpper, fromLower.zipWithIndex.map {
       case ( atom, newIdx ) =>
-        val oldIdx = upperSequent.indicesWhere( _ == atom ).
+        val oldIdx = toUpper.indicesWhere( _ == atom ).
           filterNot( alreadyUsedOldIndices.contains ).
-          filter( newIdx.sameSideAs ).
-          head
+          find( newIdx.sameSideAs ).
+          getOrElse( throw new IllegalArgumentException(
+            s"Cannot find $atom in ${
+              toUpper.zipWithIndex
+                .filterNot( alreadyUsedOldIndices contains _._2 ).map( _._1 )
+            }" ) )
         alreadyUsedOldIndices += oldIdx
         Seq( oldIdx )
     } )
@@ -219,6 +242,7 @@ object guessPermutation {
    * @return A pair consisting of `newProof` and a sequent connector which describes the new
    *         positions of the formulas in `oldProof.conclusion` with respect to `newProof`.
    */
+  // FIXME: this is just broken
   def apply( oldProof: LKProof, newProof: LKProof ): ( LKProof, SequentConnector ) =
-    ( newProof, SequentConnector.guessInjection( newProof.conclusion, oldProof.conclusion ).inv )
+    ( newProof, SequentConnector.guessInjection( toUpper = newProof.conclusion, fromLower = oldProof.conclusion ).inv )
 }

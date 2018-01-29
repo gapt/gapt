@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.expansion.InstanceTermEncoding
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import at.logic.gapt.utils.logger._
-import at.logic.gapt.utils.metrics
+import at.logic.gapt.utils.logger
 
 object pi2GrammarToSEHS {
   def apply( g: Pi2Grammar, encoding: InstanceTermEncoding ): Pi2SeHs = {
@@ -28,19 +28,19 @@ object Pi2CutIntroduction {
     val grounding = Substitution( freeVariables( exp.deep ).map( v => v -> Const( v.name, v.ty ) ) )
     val ( lang, enc ) = InstanceTermEncoding( grounding( exp ) )
     info( s"Language size: ${lang.size}" )
-    metrics.value( "lang_trivial", lang.size == lang.map { case Apps( r, _ ) => r }.size )
-    metrics.value( "langsize", lang.size )
+    logger.metric( "lang_trivial", lang.size == lang.map { case Apps( r, _ ) => r }.size )
+    logger.metric( "langsize", lang.size )
     findMinimalPi2Grammar( lang, alpha, betas, solver ).flatMap { grammar =>
       info( s"Found grammar of size: ${grammar.size}\n$grammar" )
-      metrics.value( "grammarsize", grammar.size )
-      metrics.value( "alpha_prods", grammar.productions.count( _._1 == grammar.alpha ) )
-      metrics.value( "pi1_grammarsize", grammar.tratg.size )
-      metrics.value( "genlangsize", grammar.language.size )
+      logger.metric( "grammarsize", grammar.size )
+      logger.metric( "alpha_prods", grammar.productions.count( _._1 == grammar.alpha ) )
+      logger.metric( "pi1_grammarsize", grammar.tratg.size )
+      logger.metric( "genlangsize", grammar.language.size )
       val sehs = pi2GrammarToSEHS( grammar, enc )
       val ( cutFormulaOpt, x, y ) = introducePi2Cut( sehs )
       cutFormulaOpt.flatMap { cutFormula =>
-        metrics.value( "cutformula", cutFormula.toString )
-        metrics.value( "cutformula_lcomp", lcomp( cutFormula ) )
+        logger.metric( "cutformula", cutFormula.toString )
+        logger.metric( "cutformula_lcomp", lcomp( cutFormula ) )
         info( s"Cut formula: $cutFormula" )
         proveWithPi2Cut.giveProof( cutFormula, sehs, exp.shallow, x, y )
       }.orElse {

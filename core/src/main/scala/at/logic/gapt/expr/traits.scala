@@ -94,7 +94,7 @@ trait FOLFormula extends FOLPartialFormula with Formula with FOLExpression {
   def |( that: FOLFormula ): FOLFormula = Or( this, that )
   override def unary_- : FOLFormula = Neg( this )
   def -->( that: FOLFormula ): FOLFormula = Imp( this, that )
-  def <->( that: FOLFormula ) = And( Imp( this, that ), Imp( that, this ) )
+  def <->( that: FOLFormula ) = Iff( this, that ).asInstanceOf[FOLFormula]
 }
 trait FOLAtom extends FOLPartialAtom with Atom with FOLFormula {
   private[expr] override val numberOfArguments: Int = 0
@@ -131,28 +131,28 @@ private[expr] object determineTraits {
     case _                      => new Var( sym, exptype )
   }
 
-  private class Const_with_FOLQuantifier( s: String, t: Ty ) extends Const( s, t ) with FOLQuantifier
-  private class Const_with_LogicalConstant( s: String, t: Ty ) extends Const( s, t ) with LogicalConstant
-  private class Const_with_PropConnective_with_PropFormula( s: String, t: Ty ) extends Const( s, t ) with PropConnective with PropFormula
-  private class Const_with_FOLConst( s: String, t: Ty ) extends Const( s, t ) with FOLConst
-  private class Const_with_PropAtom( s: String, t: Ty ) extends Const( s, t ) with PropAtom
-  private class Const_with_PropConnective( s: String, t: Ty, override val numberOfArguments: Int ) extends Const( s, t ) with PropConnective
-  private class Const_with_PropPartialFormula( s: String, t: Ty, override val numberOfArguments: Int ) extends Const( s, t ) with PropPartialFormula
-  private class Const_with_FOLFunctionConst( s: String, t: Ty, override val numberOfArguments: Int ) extends Const( s, t ) with FOLFunctionConst
-  private class Const_with_FOLAtomConst( s: String, t: Ty, override val numberOfArguments: Int ) extends Const( s, t ) with FOLAtomConst
-  private class Const_with_HOLAtomConst( s: String, t: Ty, override val numberOfArguments: Int ) extends Const( s, t ) with HOLAtomConst
-  def forConst( sym: String, exptype: Ty ): Const = ( sym, exptype ) match {
-    case ForallC( Ti ) | ExistsC( Ti ) => new Const_with_FOLQuantifier( sym, exptype )
-    case ForallC( _ ) | ExistsC( _ )   => new Const_with_LogicalConstant( sym, exptype )
-    case AndC() | OrC() | ImpC()       => new Const_with_PropConnective( sym, exptype, 2 )
-    case NegC()                        => new Const_with_PropConnective( sym, exptype, 1 )
-    case TopC() | BottomC()            => new Const_with_PropConnective_with_PropFormula( sym, exptype )
-    case ( _, Ti )                     => new Const_with_FOLConst( sym, exptype )
-    case ( _, To )                     => new Const_with_PropAtom( sym, exptype )
-    case ( _, FOLHeadType( Ti, n ) )   => new Const_with_FOLFunctionConst( sym, exptype, n )
-    case ( _, FOLHeadType( To, n ) )   => new Const_with_FOLAtomConst( sym, exptype, n )
-    case ( _, FunctionType( To, ts ) ) => new Const_with_HOLAtomConst( sym, exptype, ts.length )
-    case _                             => new Const( sym, exptype )
+  private class Const_with_FOLQuantifier( s: String, t: Ty, ps: List[Ty] ) extends Const( s, t, ps ) with FOLQuantifier
+  private class Const_with_LogicalConstant( s: String, t: Ty, ps: List[Ty] ) extends Const( s, t, ps ) with LogicalConstant
+  private class Const_with_PropConnective_with_PropFormula( s: String, t: Ty, ps: List[Ty] ) extends Const( s, t, ps ) with PropConnective with PropFormula
+  private class Const_with_FOLConst( s: String, t: Ty, ps: List[Ty] ) extends Const( s, t, ps ) with FOLConst
+  private class Const_with_PropAtom( s: String, t: Ty, ps: List[Ty] ) extends Const( s, t, ps ) with PropAtom
+  private class Const_with_PropConnective( s: String, t: Ty, ps: List[Ty], override val numberOfArguments: Int ) extends Const( s, t, ps ) with PropConnective
+  private class Const_with_PropPartialFormula( s: String, t: Ty, ps: List[Ty], override val numberOfArguments: Int ) extends Const( s, t, ps ) with PropPartialFormula
+  private class Const_with_FOLFunctionConst( s: String, t: Ty, ps: List[Ty], override val numberOfArguments: Int ) extends Const( s, t, ps ) with FOLFunctionConst
+  private class Const_with_FOLAtomConst( s: String, t: Ty, ps: List[Ty], override val numberOfArguments: Int ) extends Const( s, t, ps ) with FOLAtomConst
+  private class Const_with_HOLAtomConst( s: String, t: Ty, ps: List[Ty], override val numberOfArguments: Int ) extends Const( s, t, ps ) with HOLAtomConst
+  def forConst( sym: String, exptype: Ty, ps: List[Ty] ): Const = ( sym, exptype, ps ) match {
+    case ForallC( Ti ) | ExistsC( Ti )    => new Const_with_FOLQuantifier( sym, exptype, ps )
+    case ForallC( _ ) | ExistsC( _ )      => new Const_with_LogicalConstant( sym, exptype, ps )
+    case AndC() | OrC() | ImpC()          => new Const_with_PropConnective( sym, exptype, ps, 2 )
+    case NegC()                           => new Const_with_PropConnective( sym, exptype, ps, 1 )
+    case TopC() | BottomC()               => new Const_with_PropConnective_with_PropFormula( sym, exptype, ps )
+    case ( _, Ti, _ )                     => new Const_with_FOLConst( sym, exptype, ps )
+    case ( _, To, _ )                     => new Const_with_PropAtom( sym, exptype, ps )
+    case ( _, FOLHeadType( To, n ), _ )   => new Const_with_FOLAtomConst( sym, exptype, ps, n )
+    case ( _, FOLHeadType( Ti, n ), _ )   => new Const_with_FOLFunctionConst( sym, exptype, ps, n )
+    case ( _, FunctionType( To, ts ), _ ) => new Const_with_HOLAtomConst( sym, exptype, ps, ts.length )
+    case _                                => new Const( sym, exptype, ps )
   }
 
   private class App_with_PropFormula( f: Expr, a: Expr ) extends App( f, a ) with PropFormula
@@ -224,14 +224,19 @@ private[expr] class FOLHead( ret: Ty ) {
   def apply( sym: String, arity: Int ): Const =
     Const( sym, FOLHeadType( ret, arity ) )
   def unapply( e: Expr ): Option[( String, Int )] = e match {
-    case NonLogicalConstant( sym, FOLHeadType( `ret`, arity ) ) => Some( ( sym, arity ) )
+    case NonLogicalConstant( sym, FOLHeadType( `ret`, arity ), Nil ) => Some( ( sym, arity ) )
     case _ => None
   }
 }
 
 object FOLAtomConst extends FOLHead( To ) {
   override def apply( sym: String, arity: Int ): FOLAtomConst =
-    super.apply( sym, arity ).asInstanceOf[FOLAtomConst]
+    if ( sym == "=" && arity == 2 ) EqC( Ti ).asInstanceOf[FOLAtomConst] else
+      super.apply( sym, arity ).asInstanceOf[FOLAtomConst]
+  override def unapply( e: Expr ): Option[( String, Int )] = e match {
+    case EqC( Ti ) => Some( "=", 2 )
+    case _         => super.unapply( e )
+  }
 }
 object FOLFunctionConst extends FOLHead( Ti ) {
   override def apply( sym: String, arity: Int ): FOLFunctionConst =
@@ -259,7 +264,7 @@ object HOLAtomConst {
     Const( name, FunctionType( To, argTypes ) ).asInstanceOf[HOLAtomConst]
 
   def unapply( e: Const with HOLPartialAtom ): Option[( String, Seq[Ty] )] = e match {
-    case Const( name, FunctionType( To, argTypes ) ) => Some( name -> argTypes )
+    case Const( name, FunctionType( To, argTypes ), _ ) => Some( name -> argTypes )
   }
 }
 
@@ -275,7 +280,7 @@ object Atom {
     Apps( head, args ).asInstanceOf[Atom]
 
   def unapply( e: Atom ): Option[( Expr, List[Expr] )] = e match {
-    case Apps( head @ ( NonLogicalConstant( _, _ ) | Var( _, _ ) ), args ) if e.ty == To => Some( head, args )
+    case Apps( head @ ( NonLogicalConstant( _, _, _ ) | Var( _, _ ) ), args ) if e.ty == To => Some( head, args )
     case _ => None
   }
 }
@@ -284,7 +289,10 @@ object Atom {
  * Matches constants and variables, but nothing else.
  */
 object VarOrConst {
-  def unapply( e: VarOrConst ): Some[( String, Ty )] =
-    Some( e.name -> e.ty )
+  def unapply( e: VarOrConst ): Some[( String, Ty, List[Ty] )] =
+    e match {
+      case Const( n, t, p ) => Some( n, t, p )
+      case Var( n, t )      => Some( n, t, Nil )
+    }
 }
 

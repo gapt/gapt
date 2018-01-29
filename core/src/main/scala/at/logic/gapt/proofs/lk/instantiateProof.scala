@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.SequentConnector.guessInjection
 import at.logic.gapt.proofs._
 
 object instantiateProof {
@@ -12,19 +13,34 @@ object instantiateProof {
    *
    * @param proofName The name of the linkProof
    */
-  def apply( proofName: Expr )( implicit ctx: Context ): LKProof =
-    ctx.get[Context.ProofDefinitions].find( proofName ).headOption match {
-      case Some( ( defPrf, subst ) ) => apply( subst( defPrf ) )
-      case None                      => ProofLink( proofName, ctx.get[Context.ProofNames].lookup( proofName ).get )
-    }
+  def Instantiate( proofName: Expr )( implicit ctx: Context ): LKProof = regularize( eliminateDefinitions( instantiateProof( proofName )( ctx ) ) )
 
+  def apply( proofName: Expr )( implicit ctx: Context ): LKProof = withConnector( proofName )._2
+
+  /**
+   * Given a proof name, returns a maximally instantiated proof.
+   *
+   * @return Connector from instantiated proof to the declared sequent of the proof name,
+   *         together with the instantiated proof
+   */
+  def withConnector( proofName: Expr )( implicit ctx: Context ): ( SequentConnector, LKProof ) = {
+    ctx.get[Context.ProofDefinitions].findWithConnector( proofName ).headOption match {
+      case Some( ( connDefPrf2Link, subst, defPrf ) ) =>
+        val ( instPrf, connInstPrf2SubstDefPrf ) = buildProof.withSequentConnector( subst( defPrf ), ctx )
+        connInstPrf2SubstDefPrf * connDefPrf2Link -> instPrf
+      case None =>
+        val Some( sequent ) = ctx.get[Context.ProofNames].lookup( proofName )
+        SequentConnector( sequent ) -> ProofLink( proofName, sequent )
+    }
+  }
   def apply( proof: LKProof )( implicit ctx: Context ): LKProof =
     buildProof( proof, ctx )
 
   private object buildProof extends LKVisitor[Context] {
-    override def visitProofLink( proof: ProofLink, otherArg: Context ): ( LKProof, SequentConnector ) = {
-      val upProof = instantiateProof( proof.referencedProof )( otherArg )
-      ( upProof, SequentConnector.guessInjection( upProof.endSequent, proof.conclusion ).inv )
+    override def visitProofLink( link: ProofLink, otherArg: Context ): ( LKProof, SequentConnector ) = {
+      val ( _, instProof ) = instantiateProof.withConnector( link.referencedProof )( otherArg )
+      val finProof = WeakeningMacroRule( instProof, link.referencedSequent )
+      ( finProof, guessInjection( finProof.endSequent, link.referencedSequent ) )
     }
   }
 

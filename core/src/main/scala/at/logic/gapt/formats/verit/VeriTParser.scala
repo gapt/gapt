@@ -178,9 +178,11 @@ object VeriTParser extends RegexParsers {
     parseAll( proof, reader ) match {
       case Success( r, _ ) => r
       case Failure( msg, next ) =>
-        throw new VeriTParserException( "VeriT parsing: syntax failure " + msg + nLine + "at line " + next.pos.line + " and column " + next.pos.column )
+        throw new VeriTParserException(
+          s"VeriT parsing: syntax failure $msg\nat line ${next.pos.line} and column ${next.pos.column}" )
       case Error( msg, next ) =>
-        throw new VeriTParserException( "VeriT parsing: syntax error " + msg + nLine + "at line " + next.pos.line + " and column " + next.pos.column )
+        throw new VeriTParserException(
+          s"VeriT parsing: syntax error $msg\nat line ${next.pos.line} and column ${next.pos.column}" )
     }
   }
 
@@ -190,9 +192,11 @@ object VeriTParser extends RegexParsers {
     parseAll( parseUnsat, reader ) match {
       case Success( r, _ ) => r
       case Failure( msg, next ) =>
-        throw new VeriTParserException( "VeriT parsing: syntax failure " + msg + nLine + "at line " + next.pos.line + " and column " + next.pos.column )
+        throw new VeriTParserException(
+          s"VeriT parsing: syntax failure $msg\nat line ${next.pos.line} and column ${next.pos.column}" )
       case Error( msg, next ) =>
-        throw new VeriTParserException( "VeriT parsing: syntax error " + msg + nLine + "at line " + next.pos.line + " and column " + next.pos.column )
+        throw new VeriTParserException(
+          s"VeriT parsing: syntax error $msg\nat line ${next.pos.line} and column ${next.pos.column}" )
     }
   }
 
@@ -229,7 +233,8 @@ object VeriTParser extends RegexParsers {
       Some( axiomET ++: inputET ++: Sequent() )
   }
 
-  def parseUnsat: Parser[Boolean] = title ~ rep( success ) ~> ( unsat ^^ { case s => true } | sat ^^ { case s => false } ) <~ rep( success )
+  def parseUnsat: Parser[Boolean] = title ~ rep( success ) ~>
+    ( unsat ^^ ( _ => true ) | sat ^^ ( _ => false ) ) <~ rep( success )
 
   def label: Parser[String] = ".c" ~ """\d+""".r ^^ { case s1 ~ s2 => s1 ++ s2 }
 
@@ -242,7 +247,8 @@ object VeriTParser extends RegexParsers {
   def msg: Parser[String] = "Formula is Satisfiable"
 
   // INPUT PROCESSING RULES
-  def preprocess: Parser[( String, List[FOLFormula] )] = "(set" ~> label ~ "(" ~ rulePreProc <~ "))" ^^ { case l ~ "(" ~ r => ( l, r ) }
+  def preprocess: Parser[( String, List[FOLFormula] )] =
+    "(set" ~> label ~ "(" ~ rulePreProc <~ "))" ^^ { case l ~ "(" ~ r => ( l, r ) }
   def rulePreProc: Parser[List[FOLFormula]] = input | tmp_distinct_elim | tmp_alphaconv | tmp_let_elim
   def input: Parser[List[FOLFormula]] = "input" ~> conclusion
   def tmp_distinct_elim: Parser[List[FOLFormula]] = "tmp_distinct_elim" ~ premises ~> conclusion
@@ -252,7 +258,9 @@ object VeriTParser extends RegexParsers {
   // RESOLUTION RULES AND EQUALITY AXIOMS
   // Inner rules return the labels of the clauses used and equality axioms returns the axiom and its instances
   def rules: Parser[( List[String], Option[Instances] )] = "(set" ~ label ~ "(" ~> rule <~ "))"
-  def rule: Parser[( List[String], Option[Instances] )] = eqAxiom ^^ { case i => ( Nil, Some( i ) ) } | innerRule ^^ { case s => ( s, None ) }
+  def rule: Parser[( List[String], Option[Instances] )] =
+    eqAxiom ^^ ( i => ( Nil, Some( i ) ) ) |
+      innerRule ^^ ( s => ( s, None ) )
   def eqAxiom: Parser[Instances] = eq_reflexive | eq_transitive | eq_congruence | eq_congruence_pred
   def eq_reflexive: Parser[Instances] = "eq_reflexive" ~> conclusion ^^ {
     case c =>
@@ -271,7 +279,10 @@ object VeriTParser extends RegexParsers {
       getEqCongrPredInstances( c )
   }
 
-  def innerRule: Parser[List[String]] = resolution | and | and_pos | and_neg | or | or_pos | or_neg | implies | implies_pos | implies_neg1 | implies_neg2 | not_implies1 | not_implies2 | not_and | not_or | equiv1 | equiv2 | true_ | false_
+  def innerRule: Parser[List[String]] =
+    resolution | and | and_pos | and_neg | or | or_pos | or_neg |
+      implies | implies_pos | implies_neg1 | implies_neg2 | not_implies1 | not_implies2 |
+      not_and | not_or | equiv1 | equiv2 | true_ | false_
   // Rules that I don't care except if they use some clause (collecting their labels)
   def resolution: Parser[List[String]] = "resolution" ~> premises <~ conclusion
   def and: Parser[List[String]] = "and" ~> premises <~ conclusion

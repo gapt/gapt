@@ -12,7 +12,8 @@ import cats.syntax.either._
 
 sealed abstract class BabelParseError( message: String ) extends IllegalArgumentException( message )
 case class BabelElabError( reason: String ) extends BabelParseError( reason )
-case class BabelParsingError( parseError: fastparse.all.Parsed.Failure ) extends BabelParseError( ParseError( parseError ).getMessage )
+case class BabelParsingError( parseError: fastparse.all.Parsed.Failure )
+  extends BabelParseError( ParseError( parseError ).getMessage )
 
 object BabelLexical {
   import fastparse.all._
@@ -55,8 +56,11 @@ object BabelParserCombinators {
 
   val Expr: P[preExpr.Expr] = P( Lam )
 
-  val BoundVar: P[preExpr.Ident] = P( Ident | ( "(" ~ Name ~ ":" ~ Type ~ ")" ).map( x => preExpr.Ident( x._1, x._2 ) ) )
-  val Lam: P[preExpr.Expr] = PE( ( ( "^" | "λ" ) ~/ BoundVar ~ Lam ).map( x => preExpr.Abs( x._1, x._2 ) ) | TypeAnnotation )
+  val BoundVar: P[preExpr.Ident] = P(
+    Name.map( preExpr.Ident( _, preExpr.freshMetaType(), None ) ) |
+      ( "(" ~ Name ~ ":" ~ Type ~ ")" ).map( x => preExpr.Ident( x._1, x._2, None ) ) )
+  val Lam: P[preExpr.Expr] = PE( ( ( "^" | "λ" ) ~/ BoundVar ~ Lam ).
+    map( x => preExpr.Abs( x._1, x._2 ) ) | TypeAnnotation )
 
   val TypeAnnotation: P[preExpr.Expr] = PE( ( Impl ~/ ( ":" ~ Type ).? ) map {
     case ( expr, Some( ty ) ) => preExpr.TypeAnnotation( expr, ty )
@@ -88,18 +92,26 @@ object BabelParserCombinators {
         case ( a, "!=", b ) => preExpr.Neg( preExpr.Eq( a, b ) )
         case ( a, "=", b )  => preExpr.Eq( a, b )
         case ( a, r, b ) =>
-          preExpr.TypeAnnotation( preExpr.App( preExpr.App( preExpr.Ident( r, preExpr.freshMetaType() ), a ), b ), preExpr.Bool )
+          preExpr.TypeAnnotation(
+            preExpr.App( preExpr.App( preExpr.Ident( r, preExpr.freshMetaType(), None ), a ), b ),
+            preExpr.Bool )
       }.reduceLeft( preExpr.And )
   } )
 
   val PlusMinus = PE( ( TimesDiv ~/ ( ( "+" | "-" ).! ~ TimesDiv ).rep ) map {
     case ( first, rest ) =>
-      rest.foldLeft( first ) { case ( a, ( o, b ) ) => preExpr.App( preExpr.App( preExpr.Ident( o, preExpr.freshMetaType() ), a ), b ) }
+      rest.foldLeft( first ) {
+        case ( a, ( o, b ) ) =>
+          preExpr.App( preExpr.App( preExpr.Ident( o, preExpr.freshMetaType(), None ), a ), b )
+      }
   } )
 
   val TimesDiv = PE( ( App ~/ ( ( "*" | "/" ).! ~ App ).rep ) map {
     case ( first, rest ) =>
-      rest.foldLeft( first ) { case ( a, ( o, b ) ) => preExpr.App( preExpr.App( preExpr.Ident( o, preExpr.freshMetaType() ), a ), b ) }
+      rest.foldLeft( first ) {
+        case ( a, ( o, b ) ) =>
+          preExpr.App( preExpr.App( preExpr.Ident( o, preExpr.freshMetaType(), None ), a ), b )
+      }
   } )
 
   val Tuple: P[Seq[preExpr.Expr]] = P( "(" ~/ Expr.rep( sep = "," ) ~ ")" )
@@ -116,13 +128,18 @@ object BabelParserCombinators {
   val Var = P( Name ~ ":" ~ Type ) map {
     case ( name, ty ) => real.Var( name, preExpr.toRealType( ty, Map() ) )
   }
-  val Const = P( Name ~ ":" ~ Type ) map {
-    case ( name, ty ) => real.Const( name, preExpr.toRealType( ty, Map() ) )
+  val TyParams = P( "{" ~ Type.rep ~ "}" )
+  val Const = P( Name ~ TyParams.? ~ ":" ~ Type ) map {
+    case ( name, ps, ty ) => real.Const( name, preExpr.toRealType( ty, Map() ),
+      ps.getOrElse( Nil ).toList.map( preExpr.toRealType( _, Map() ) ) )
   }
   val VarLiteral = PE( ( "#v(" ~/ Var ~ ")" ).map { preExpr.QuoteBlackbox } )
   val ConstLiteral = PE( ( "#c(" ~/ Const ~ ")" ).map { preExpr.QuoteBlackbox } )
 
-  val Ident: P[preExpr.Ident] = P( Name.map( preExpr.Ident( _, preExpr.freshMetaType() ) ) )
+  val Ident: P[preExpr.Ident] = P( ( Name ~ TyParams.? ).map {
+    case ( n, ps ) =>
+      preExpr.Ident( n, preExpr.freshMetaType(), ps.map( _.toList ) )
+  } )
 
   val TypeParens: P[preExpr.Type] = P( "(" ~/ Type ~ ")" )
   val TypeBase: P[preExpr.Type] = P( Name ~ TypeAtom.rep ).map { case ( n, ps ) => preExpr.BaseType( n, ps.toList ) }
@@ -145,7 +162,9 @@ object BabelParser {
   import BabelParserCombinators._
   import fastparse.all._
 
-  private def ppElabError( text: String, err: preExpr.ElabError )( implicit sig: BabelSignature ): BabelParseError = BabelElabError {
+  private def ppElabError( text: String, err: preExpr.ElabError )(
+    implicit
+    sig: BabelSignature ): BabelParseError = BabelElabError {
     import preExpr._
 
     val Location( begin, endAfterWS ) = err.loc.getOrElse( Location( 0, text.size ) )
@@ -182,7 +201,9 @@ object BabelParser {
    * @param astTransformer  Function to apply to the Babel AST before type inference.
    * @param sig  Babel signature that specifies which free variables are constants.
    */
-  def tryParse( text: String, astTransformer: preExpr.Expr => preExpr.Expr = identity )( implicit sig: BabelSignature ): Either[BabelParseError, Expr] = {
+  def tryParse(
+    text:           String,
+    astTransformer: preExpr.Expr => preExpr.Expr = identity )( implicit sig: BabelSignature ): Either[BabelParseError, Expr] = {
     ExprAndNothingElse.parse( text ) match {
       case Parsed.Success( expr, _ ) =>
         val transformedExpr = astTransformer( expr )
@@ -208,7 +229,11 @@ object BabelParser {
     }
   }
 
-  def tryParseSequent( text: String, astTransformer: preExpr.Expr => preExpr.Expr = identity )( implicit sig: BabelSignature ): Either[BabelParseError, Sequent[Expr]] = {
+  def tryParseSequent(
+    text:           String,
+    astTransformer: preExpr.Expr => preExpr.Expr = identity )(
+    implicit
+    sig: BabelSignature ): Either[BabelParseError, Sequent[Expr]] = {
     SequentAndNothingElse.parse( text ) match {
       case Parsed.Success( exprSequent, _ ) =>
         val transformed = exprSequent.map( astTransformer )
@@ -222,20 +247,26 @@ object BabelParser {
     }
   }
 
-  def tryParseLabelledSequent( text: String, astTransformer: preExpr.Expr => preExpr.Expr = identity )( implicit sig: BabelSignature ): Either[BabelParseError, Sequent[( String, Formula )]] = {
+  def tryParseLabelledSequent(
+    text:           String,
+    astTransformer: preExpr.Expr => preExpr.Expr = identity )(
+    implicit
+    sig: BabelSignature ): Either[BabelParseError, Sequent[( String, Formula )]] = {
     LabelledSequentAndNothingElse.parse( text ) match {
       case Parsed.Success( exprSequent, _ ) =>
-        val transformed = for ( ( l, f ) <- exprSequent ) yield l -> preExpr.TypeAnnotation( astTransformer( f ), preExpr.Bool )
-        preExpr.toRealExprs( transformed.elements.map( _._2 ), sig ).leftMap( ppElabError( text, _ ) ).map { sequentElements =>
-          val ( ant, suc ) = exprSequent.map( _._1 ).elements.
-            zip( sequentElements.map( _.asInstanceOf[Formula] ) ).
-            splitAt( exprSequent.antecedent.size )
-          val nameGen = new NameGenerator( exprSequent.elements.view.flatMap( _._1 ).toSet )
-          HOLSequent( ant, suc ).zipWithIndex.map {
-            case ( ( Some( l ), f ), _ ) => l -> f
-            case ( ( None, f ), i )      => guessLabels.suggestLabel( f, i, nameGen ) -> f
+        val transformed = for ( ( l, f ) <- exprSequent )
+          yield l -> preExpr.TypeAnnotation( astTransformer( f ), preExpr.Bool )
+        preExpr.toRealExprs( transformed.elements.map( _._2 ), sig )
+          .leftMap( ppElabError( text, _ ) ).map { sequentElements =>
+            val ( ant, suc ) = exprSequent.map( _._1 ).elements.
+              zip( sequentElements.map( _.asInstanceOf[Formula] ) ).
+              splitAt( exprSequent.antecedent.size )
+            val nameGen = new NameGenerator( exprSequent.elements.view.flatMap( _._1 ).toSet )
+            HOLSequent( ant, suc ).zipWithIndex.map {
+              case ( ( Some( l ), f ), _ ) => l -> f
+              case ( ( None, f ), i )      => guessLabels.suggestLabel( f, i, nameGen ) -> f
+            }
           }
-        }
       case parseError @ Parsed.Failure( _, _, _ ) =>
         Left( BabelParsingError( parseError ) )
     }

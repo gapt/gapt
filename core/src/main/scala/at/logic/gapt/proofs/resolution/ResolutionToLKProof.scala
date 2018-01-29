@@ -23,18 +23,20 @@ object ResolutionToLKProof {
   }
 
   def asDerivation( proof: ResolutionProof ): LKProof =
-    apply( proof, in => TheoryAxiom( in.sequent.map( _.asInstanceOf[Atom] ) ) )
+    apply( proof, in => ProofLink( FOLAtom( "resolutionInput" ), in.sequent ) )
 
   def apply( proof: ResolutionProof, input: Input => LKProof ): LKProof = {
     val memo = mutable.Map[ResolutionProof, LKProof]()
 
     def reducef( p: PropositionalResolutionRule )( func: Formula => LKProof ) = {
       val q = f( p.subProof )
-      reduceAxiom( q, q.conclusion.indexOfPol( p.subProof.conclusion( p.idx ), p.idx.polarity ) )( func )
+      reduceAxiom( q, q.conclusion.indexOf( p.subProof.conclusion( p.idx ), p.idx.polarity ) )( func )
     }
 
     def contract( p: ResolutionProof, q: LKProof ) =
-      ContractionMacroRule( q, ( ( p.conclusion ++ p.assertions ) diff q.endSequent.distinct ) ++ q.endSequent.distinct )
+      ContractionMacroRule(
+        q,
+        ( ( p.conclusion ++ p.assertions ) diff q.endSequent.distinct ) ++ q.endSequent.distinct )
 
     def f( p: ResolutionProof ): LKProof = memo.getOrElseUpdate( p, contract( p, p match {
       case in: Input       => input( in )
@@ -187,7 +189,7 @@ object ResolutionToLKProof {
             }
             // FIXME: do this properly
             val proof4 = ReductiveCutElimination( proof3 )
-            ( proof4, SequentConnector.guessInjection( proof3.conclusion, proof4.conclusion ) * conn )
+            ( proof4, SequentConnector.guessInjection( toUpper = proof3.conclusion, fromLower = proof4.conclusion ) * conn )
           } else {
             val ( proofNew, conn ) = super.recurse( proof, isAncestor )
             contract( proofNew, conn )

@@ -4,7 +4,7 @@ import ammonite.ops._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.folTermSize
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
-import at.logic.gapt.formats.{ InputFile, StringInputFile }
+import at.logic.gapt.formats.{ InputFile, StdinInputFile }
 import at.logic.gapt.grammars.InductionGrammar
 import at.logic.gapt.proofs.{ HOLSequent, MutableContext }
 import at.logic.gapt.proofs.gaptic._
@@ -23,7 +23,6 @@ import at.logic.gapt.provers.viper.grammars._
 import at.logic.gapt.utils.{ LogHandler, TimeOutException, withTimeout }
 
 import scala.concurrent.duration.Duration
-import scala.io.StdIn
 import scala.util.{ Failure, Success, Try }
 
 case class AipOptions( axioms: AxiomFactory = SequentialInductionAxioms(), prover: ResolutionProver = Escargot )
@@ -95,18 +94,24 @@ object ViperOptions {
       case "--onquant" :: i :: rest => parseTreeGrammar( rest, opts.copy( goalQuantifier = i.toInt ) )
       case "--prover" :: prover :: rest => parseTreeGrammar(
         rest,
-        opts.copy( instanceProver = provers.getOrElse( prover, throw new IllegalArgumentException( s"unknown prover: $prover" ) ) ) )
+        opts.copy( instanceProver = provers.getOrElse(
+          prover,
+          throw new IllegalArgumentException( s"unknown prover: $prover" ) ) ) )
       case "--instnum" :: instNum :: rest => parseTreeGrammar( rest, opts.copy( instanceNumber = instNum.toInt ) )
       case "--instsize" :: a :: b :: rest => parseTreeGrammar( rest, opts.copy( instanceSize = a.toFloat -> b.toFloat ) )
-      case "--qtys" :: qtys :: rest       => parseTreeGrammar( rest, opts.copy( quantTys = Some( qtys.split( "," ).toSeq.filter( _.nonEmpty ) ) ) )
+      case "--qtys" :: qtys :: rest => parseTreeGrammar(
+        rest,
+        opts.copy( quantTys = Some( qtys.split( "," ).toSeq.filter( _.nonEmpty ) ) ) )
       case "--gramw" :: w :: rest =>
         val f: InductionGrammar.Production => Int = w match {
           case "scomp" => r => folTermSize( r.lhs ) + folTermSize( r.rhs )
           case "nprods" => _ => 1
         }
         parseTreeGrammar( rest, opts.copy( grammarWeighting = f ) )
-      case "--tchknum" :: num :: rest       => parseTreeGrammar( rest, opts.copy( tautCheckNumber = num.toInt ) )
-      case "--tchksize" :: a :: b :: rest   => parseTreeGrammar( rest, opts.copy( tautCheckSize = a.toFloat -> b.toFloat ) )
+      case "--tchknum" :: num :: rest => parseTreeGrammar( rest, opts.copy( tautCheckNumber = num.toInt ) )
+      case "--tchksize" :: a :: b :: rest => parseTreeGrammar(
+        rest,
+        opts.copy( tautCheckSize = a.toFloat -> b.toFloat ) )
       case "--cansolsize" :: a :: b :: rest => parseTreeGrammar( rest, opts.copy( canSolSize = a.toFloat -> b.toFloat ) )
       case _                                => ( args, opts )
     }
@@ -126,7 +131,8 @@ object Viper {
           10.seconds -> AnalyticInductionTactic( SequentialInductionAxioms(), Escargot ).aka( "analytic sequential" ),
           10.seconds -> AnalyticInductionTactic( IndependentInductionAxioms(), Escargot ).aka( "analytic independent" ) ) ++
           ( 0 until numVars ).toList.map( i => 20.seconds -> introUnivsExcept( i ).andThen(
-            new TreeGrammarInductionTactic( opts.treeGrammarProverOptions.copy( quantTys = Some( Seq() ) ) ) ).aka( s"treegrammar without quantifiers $i" ) ) ++
+            new TreeGrammarInductionTactic( opts.treeGrammarProverOptions.copy( quantTys = Some( Seq() ) ) ) )
+            .aka( s"treegrammar without quantifiers $i" ) ) ++
           ( 0 until numVars ).toList.map( i => 60.seconds -> introUnivsExcept( i ).andThen(
             new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ) ).aka( s"treegrammar $i" ) )
       case "treegrammar" =>
@@ -204,7 +210,7 @@ object Viper {
   def main( args: Array[String] ): Unit = {
     val ( fileNames, opts ) = ViperOptions.parse( args.toList, ViperOptions( fixup = TipSmtParser.isInstalled ) )
     val files = fileNames.map {
-      case "-" => StringInputFile( Stream.continually( StdIn.readLine() ).takeWhile( _ != null ).mkString )
+      case "-" => StdinInputFile()
       case fn  => InputFile.fromPath( FilePath( fn ) )
     }
 

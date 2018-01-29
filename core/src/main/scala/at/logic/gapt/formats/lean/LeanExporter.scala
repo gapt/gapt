@@ -90,9 +90,9 @@ class LeanExporter {
     case Imp( x, y )   => s"(${export( x )} -> ${export( y )})"
     case Apps( hd, as ) if as.nonEmpty =>
       s"(${export( hd )} ${as.map( export ).mkString( " " )})"
-    case Abs( x, sub ) => exportBinder( "λ", x, sub )
-    case Const( n, _ ) => nameMap.getLeanName( n, CONST )
-    case Var( n, _ )   => nameMap.getLeanName( n, VAR )
+    case Abs( x, sub )    => exportBinder( "λ", x, sub )
+    case Const( n, _, _ ) => nameMap.getLeanName( n, CONST )
+    case Var( n, _ )      => nameMap.getLeanName( n, VAR )
   }
 
   def mkSequentFormula( sequent: HOLSequent ): Formula = sequent match {
@@ -112,7 +112,7 @@ class LeanExporter {
       nameMap.register( TopC.name, CONST, "true" )
       nameMap.register( BottomC.name, CONST, "false" )
       ""
-    case Context.ConstDecl( c @ Const( "=", _ ) ) =>
+    case Context.ConstDecl( c @ Const( "=", _, _ ) ) =>
       nameMap.register( c.name, CONST, "eq" ); ""
     case Context.ConstDecl( c @ NegC() ) =>
       nameMap.register( c.name, CONST, "not" ); ""
@@ -130,18 +130,18 @@ class LeanExporter {
       s"def $all {a : Type} (P : a -> Prop) := ∀x, P x\n\n"
     case Context.Sort( sort ) =>
       s"constant ${nameMap.getLeanName( sort.name, TY )} : Type\n\n"
-    case Definition( Const( n, ty ), by ) =>
+    case Definition( Const( n, ty, _ ), by ) =>
       val what = nameMap.getLeanName( n, CONST )
       s"def $what : ${export( ty )} := ${export( by )}\n\n"
     //    case Context.Axiom( ax ) =>
     //      val axName = nameMap.nameGenerator.fresh( "ax" )
     //      axiomNames( ax ) = axName
     //      s"axiom $axName : ${export( universalClosure( mkSequentFormula( ax ) ) )}\n\n"
-    case Context.ConstDecl( Const( n, t ) ) =>
+    case Context.ConstDecl( Const( n, t, _ ) ) =>
       s"constant ${nameMap.getLeanName( n, CONST )} : ${export( t )}\n\n"
     case Context.InductiveType( ty, ctrs ) =>
       s"inductive ${nameMap.getLeanName( ty.name, TY )} : Type\n" +
-        ctrs.map { case Const( n, t ) => s"| ${nameMap.getLeanName( n, CONST )} : ${export( t )}\n" }.mkString +
+        ctrs.map { case Const( n, t, _ ) => s"| ${nameMap.getLeanName( n, CONST )} : ${export( t )}\n" }.mkString +
         s"open ${nameMap.getLeanName( ty.name, TY )}\n\n"
   }
 
@@ -257,7 +257,7 @@ object LeanChecker extends ExternalProgram {
 
   def apply( code: String ): Either[String, Unit] =
     withTempFile.fromString( code ) { inputFile =>
-      runProcess.withExitValue( Seq( executable, "-j0", inputFile.toString ), catchStderr = true ) match {
+      ( runProcess.withExitValue( Seq( executable, "-j0", inputFile.toString ), catchStderr = true ): @unchecked ) match {
         case ( 0, _ )   => Right( () )
         case ( _, out ) => Left( out )
       }

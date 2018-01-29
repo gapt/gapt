@@ -16,8 +16,8 @@ class Glucose( command: String* ) extends ExternalSATSolver( command: _* ) with 
           // Glucose segfaults when run with -certified on a satisfiable problem
           case ( 10 | 139, _ ) => /* SAT */ None
           case ( 20 | 134, _ ) => /* UNSAT */ Some( read ! dimacsOutputFile )
-          case ( 1, str ) =>
-            throw new Exception( s"Error executing external sat prover $command: $str" )
+          case ( _, str ) =>
+            throw new Exception( s"Error executing external sat prover $command:\n$str" )
         }
       }
     }

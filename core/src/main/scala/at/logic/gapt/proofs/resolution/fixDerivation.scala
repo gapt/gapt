@@ -44,7 +44,7 @@ object fixDerivation {
       }
 
       for ( ( ( a, true ), i ) <- p.conclusion zip needToFlip zipWithIndex )
-        p = Flip( p, p.conclusion.indexOfPol( a, i.polarity ) )
+        p = Flip( p, p.conclusion.indexOf( a, i.polarity ) )
 
       p = Factor( p )
       p

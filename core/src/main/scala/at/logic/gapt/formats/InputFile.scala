@@ -2,6 +2,8 @@ package at.logic.gapt.formats
 
 import ammonite.ops._
 
+import scala.sys.process
+
 trait InputFile {
   def read: String
   def fileName: String
@@ -22,6 +24,14 @@ case class StringInputFile( content: String ) extends InputFile {
 case class OnDiskInputFile( file: Path ) extends InputFile {
   def fileName = file.toString
   def read = ammonite.ops.read ! file
+}
+
+case class StdinInputFile( content: String ) extends InputFile {
+  def fileName = "<stdin>"
+  def read = content
+}
+object StdinInputFile {
+  def apply(): StdinInputFile = StdinInputFile( read( process.stdin ) )
 }
 
 case class ClasspathInputFile( fileName: String, classLoader: ClassLoader ) extends InputFile {

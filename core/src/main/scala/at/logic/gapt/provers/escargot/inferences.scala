@@ -12,6 +12,10 @@ trait PreprocessingRule {
   def preprocess( newlyInferred: Set[Cls], existing: Set[Cls] ): Set[Cls]
 }
 
+/**
+ * An operation that looks at the given clause, and the set of worked off clauses;
+ * it returns a set of new clauses, plus a set of clauses that should be discarded.
+ */
 trait InferenceRule extends PreprocessingRule {
   def apply( given: Cls, existing: Set[Cls] ): ( Set[Cls], Set[( Cls, HOLClause )] )
 
@@ -263,7 +267,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
           if termOrdering.lt( subst( s_ ), subterm )
         } {
           p = Paramod( Subst( c1.proof, subst ), Suc( 0 ), leftToRight,
-            p, i, replacementContext( t_.ty, p.conclusion( i ), pos ) )
+            p, i, replacementContext( subst( t_.ty ), p.conclusion( i ), pos ) )
           reason = ( reason ++ c1.assertion ).distinct
           didRewrite = true
         }
@@ -370,14 +374,15 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
   object AvatarSplitting extends InferenceRule {
 
-    var componentCache = mutable.Map[Formula, FOLAtom]()
+    var componentCache = mutable.Map[Formula, Atom]()
     def boxComponent( comp: HOLSequent ): AvatarNonGroundComp = {
       val definition @ All.Block( vs, _ ) = universalClosure( comp.toDisjunction )
       AvatarNonGroundComp(
         componentCache.getOrElseUpdate( definition, {
-          val c = PropAtom( nameGen.freshWithIndex( "split" ) )
+          val tvs = typeVariables( definition ).toList
+          val c = Const( nameGen.freshWithIndex( "split" ), To, tvs )
           state.ctx += Definition( c, definition )
-          c
+          c.asInstanceOf[Atom]
         } ), definition, vs )
     }
 

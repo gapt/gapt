@@ -19,15 +19,24 @@ object CERESExpansionExampleProof {
 
   val proof = {
 
-    val p5 = ImpLeftRule( LogicalAxiom( fof"P(c)" ), fof"P(c)", ImpLeftRule( LogicalAxiom( fof"P(g(c))" ), fof"P(g(c))", LogicalAxiom( fof"P(g(g(c)))" ), fof"P(g(g(c)))" ), fof"P(g(c))" )
+    val p5 = ImpLeftRule( LogicalAxiom( fof"P(c)" ), fof"P(c)",
+      ImpLeftRule( LogicalAxiom( fof"P(g(c))" ), fof"P(g(c))", LogicalAxiom( fof"P(g(g(c)))" ), fof"P(g(g(c)))" ),
+      fof"P(g(c))" )
 
-    val p8 = ContractionLeftRule( ForallLeftRule( ForallLeftRule( p5, fof"!x (P(x)->P(g(x)))", c ), fof"!x (P(x)->P(g(x)))", g( c ) ), fof"!x (P(x)->P(g(x)))" )
+    val p8 = ContractionLeftRule(
+      ForallLeftRule(
+        ForallLeftRule( p5, fof"!x (P(x)->P(g(x)))", c ), fof"!x (P(x)->P(g(x)))", g( c ) ),
+      fof"!x (P(x)->P(g(x)))" )
 
-    val p11 = ParamodulationRightRule( TheoryAxiom( seq ), ax1, LogicalAxiom( fof"P(f(f(z)))" ), fof"P(f(f(z)))", fof"P(g(z))" )
+    val p11 = ParamodulationRightRule( TheoryAxiom( seq ), ax1, LogicalAxiom( fof"P(f(f(z)))" ),
+      fof"P(f(f(z)))", fof"P(g(z))" )
 
-    val p15 = ImpLeftRule( LogicalAxiom( fof"P(z)" ), fof"P(z)", ImpLeftRule( LogicalAxiom( fof"P(f(z))" ), fof"P(f(z))", p11, fof"P(f(f(z)))" ), fof"P(f(z))" )
+    val p15 = ImpLeftRule( LogicalAxiom( fof"P(z)" ), fof"P(z)",
+      ImpLeftRule( LogicalAxiom( fof"P(f(z))" ), fof"P(f(z))", p11, fof"P(f(f(z)))" ), fof"P(f(z))" )
 
-    val p18 = ContractionLeftRule( ForallLeftRule( ForallLeftRule( p15, fof"!x (P(x)->P(f(x)))", z ), fof"!x (P(x)->P(f(x)))", f( z ) ), fof"!x (P(x)->P(f(x)))" )
+    val p18 = ContractionLeftRule( ForallLeftRule(
+      ForallLeftRule( p15, fof"!x (P(x)->P(f(x)))", z ),
+      fof"!x (P(x)->P(f(x)))", f( z ) ), fof"!x (P(x)->P(f(x)))" )
 
     val p19 = ImpRightRule( p18, fof"P(z)", fof"P(g(z))" )
 

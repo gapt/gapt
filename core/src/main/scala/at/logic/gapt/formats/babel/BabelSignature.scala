@@ -1,7 +1,7 @@
 package at.logic.gapt.formats.babel
 
 import at.logic.gapt.expr.preExpr._
-import at.logic.gapt.expr.{ Ty, preExpr }
+import at.logic.gapt.expr.{ Const, Ty, preExpr }
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.{ expr => real }
 
@@ -32,7 +32,7 @@ object BabelSignature {
 
     def signatureLookup( s: String ): VarConst =
       Context.default.constant( s ) match {
-        case Some( c ) => IsConst( c.ty )
+        case Some( c ) => IsConst( c )
         case None =>
           s match {
             case varPattern() => IsVar
@@ -47,7 +47,7 @@ object BabelSignature {
   /** Constant without known type. */
   case object IsUnknownConst extends VarConst( false )
   /** Constant with known type. */
-  case class IsConst( ty: Ty ) extends VarConst( false )
+  case class IsConst( c: Const ) extends VarConst( false )
 }
 
 /**
@@ -55,7 +55,7 @@ object BabelSignature {
  *
  * @param map A map from strings to types.
  */
-case class MapBabelSignature( map: Map[String, Ty] ) extends BabelSignature {
+case class MapBabelSignature( map: Map[String, Const] ) extends BabelSignature {
   def signatureLookup( x: String ): BabelSignature.VarConst =
     if ( map contains x )
       BabelSignature.IsConst( map( x ) )
@@ -64,5 +64,5 @@ case class MapBabelSignature( map: Map[String, Ty] ) extends BabelSignature {
 }
 object MapBabelSignature {
   def apply( consts: Iterable[real.Const] ): MapBabelSignature =
-    MapBabelSignature( consts.view map { c => c.name -> c.ty } toMap )
+    MapBabelSignature( Map() ++ consts.view.map { c => c.name -> c } )
 }

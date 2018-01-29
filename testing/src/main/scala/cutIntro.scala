@@ -35,10 +35,20 @@ class MetricsPrinter extends LogHandler {
     case s          => JString( s toString )
   }
 
-  override def time( key: String, desc: String, duration: Duration ): Unit = {
+  val phaseStack: mutable.Buffer[String] = mutable.Buffer()
+  override def timeBegin( key: String, desc: String ): Unit = {
+    phaseStack += key
     value( "phase", key )
-    value( s"time_$key", duration.toMillis )
+    value( s"started_$phase", true )
+    value( s"in_$phase", true )
   }
+  override def time( key: String, desc: String, duration: Duration ): Unit = {
+    value( s"time_$key", duration.toMillis )
+    value( s"in_$phase", false )
+    value( s"ended_$phase", true )
+    phaseStack.trimEnd( 1 )
+  }
+  def phase: String = phaseStack.last
 
   override def metric( key: String, desc: String, v: => Any ): Unit =
     value( key, v )
@@ -73,48 +83,48 @@ object testCutIntro extends App {
 
   val metricsPrinter = new MetricsPrinter
   LogHandler.current.value = metricsPrinter
-  metrics.value( "file", fileName )
-  metrics.value( "method", methodName )
+  logger.metric( "file", fileName )
+  logger.metric( "method", methodName )
 
   val proofSeqRegex = """(\w+)\((\d+)\)""".r
   def loadProofForCutIntro( fileName: String ) = fileName match {
     case proofSeqRegex( name, n ) =>
       val p = proofSequences.find( _.name == name ).get( n.toInt )
-      metrics.value( "lkinf_input", rulesNumber( p ) )
+      logger.metric( "lkinf_input", rulesNumber( p ) )
       CutIntroduction.InputProof.fromLK( p )
     case _ =>
       val ( exp, bgTh ) = loadExpansionProof.withBackgroundTheory( FilePath( fileName ) )
       CutIntroduction.InputProof( exp, bgTh )
   }
 
-  metrics.time( "total" ) {
-    val inputProof = try metrics.time( "parse" ) {
+  logger.time( "total" ) {
+    val inputProof = try logger.time( "parse" ) {
       loadProofForCutIntro( fileName )
     } catch {
       case e: Throwable =>
-        metrics.value( "status", e match {
+        logger.metric( "status", e match {
           case _: OutOfMemoryError   => "parsing_out_of_memory"
           case _: StackOverflowError => "parsing_stack_overflow"
           case _: Throwable          => "parsing_other_exception"
         } )
-        metrics.value( "exception", e.toString )
+        logger.metric( "exception", e.toString )
         throw e
     }
 
-    metrics.value( "has_equality", inputProof.backgroundTheory.hasEquality )
-    try metrics.time( "cutintro" ) {
+    logger.metric( "has_equality", inputProof.backgroundTheory.hasEquality )
+    try logger.time( "cutintro" ) {
       CutIntroduction( inputProof, method = parseMethod( methodName ) ) match {
-        case Some( _ ) => metrics.value( "status", "ok" )
+        case Some( _ ) => logger.metric( "status", "ok" )
         case None =>
           if ( metricsPrinter.data( "termset_trivial" ) == true )
-            metrics.value( "status", "cutintro_termset_trivial" )
+            logger.metric( "status", "cutintro_termset_trivial" )
           else
-            metrics.value( "status", "cutintro_uncompressible" )
+            logger.metric( "status", "cutintro_uncompressible" )
       }
     }
     catch {
       case e: Throwable =>
-        metrics.value( "status", e match {
+        logger.metric( "status", e match {
           case _: OutOfMemoryError => "cutintro_out_of_memory"
           case _: StackOverflowError => "cutintro_stack_overflow"
           case _: CutIntroduction.UnprovableException => "cutintro_ehs_unprovable"
@@ -123,7 +133,7 @@ object testCutIntro extends App {
           case _: ExternalSmtlibProgram.UnexpectedTerminationException => s"timeout_${metricsPrinter.data( "phase" )}"
           case _: Throwable => "cutintro_other_exception"
         } )
-        metrics.value( "exception", e.toString )
+        logger.metric( "exception", e.toString )
         throw e
     }
   }
@@ -135,52 +145,52 @@ object testPi2CutIntro extends App {
 
   val metricsPrinter = new MetricsPrinter
   LogHandler.current.value = metricsPrinter
-  metrics.value( "file", fileName )
-  metrics.value( "num_betas", numBetas )
+  logger.metric( "file", fileName )
+  logger.metric( "num_betas", numBetas )
 
   val proofSeqRegex = """(\w+)\((\d+)\)""".r
   def loadProofForCutIntro( fileName: String ) = fileName match {
     case proofSeqRegex( name, n ) =>
       val p = proofSequences.find( _.name == name ).get( n.toInt )
-      metrics.value( "lkinf_input", rulesNumber( p ) )
+      logger.metric( "lkinf_input", rulesNumber( p ) )
       CutIntroduction.InputProof.fromLK( p )
     case _ =>
       val ( exp, bgTh ) = loadExpansionProof.withBackgroundTheory( FilePath( fileName ) )
       CutIntroduction.InputProof( exp, bgTh )
   }
 
-  metrics.time( "total" ) {
-    val inputProof = try metrics.time( "parse" ) {
+  logger.time( "total" ) {
+    val inputProof = try logger.time( "parse" ) {
       loadProofForCutIntro( fileName )
     } catch {
       case e: Throwable =>
-        metrics.value( "status", e match {
+        logger.metric( "status", e match {
           case _: OutOfMemoryError   => "parsing_out_of_memory"
           case _: StackOverflowError => "parsing_stack_overflow"
           case _: Throwable          => "parsing_other_exception"
         } )
-        metrics.value( "exception", e.toString )
+        logger.metric( "exception", e.toString )
         throw e
     }
 
     if ( inputProof.backgroundTheory.hasEquality ) {
-      metrics.value( "status", "has_equality" )
+      logger.metric( "status", "has_equality" )
     } else {
-      try metrics.time( "cutintro" ) {
+      try logger.time( "cutintro" ) {
         val alpha = FOLVar( "x" )
         val betas = for ( i <- 1 to numBetas.toInt ) yield FOLVar( s"y$i" )
         Pi2CutIntroduction( inputProof, alpha, betas.toVector, OpenWBO ) match {
-          case Some( _ ) => metrics.value( "status", "ok" )
+          case Some( _ ) => logger.metric( "status", "ok" )
           case None =>
             if ( metricsPrinter.data( "lang_trivial" ) == true )
-              metrics.value( "status", "cutintro_lang_trivial" )
+              logger.metric( "status", "cutintro_lang_trivial" )
             else
-              metrics.value( "status", "cutintro_uncompressible" )
+              logger.metric( "status", "cutintro_uncompressible" )
         }
       }
       catch {
         case e: Throwable =>
-          metrics.value( "status", e match {
+          logger.metric( "status", e match {
             case _: OutOfMemoryError => "cutintro_out_of_memory"
             case _: StackOverflowError => "cutintro_stack_overflow"
             case _: CutIntroduction.UnprovableException => "cutintro_ehs_unprovable"
@@ -189,7 +199,7 @@ object testPi2CutIntro extends App {
             case _: ExternalSmtlibProgram.UnexpectedTerminationException => s"timeout_${metricsPrinter.data( "phase" )}"
             case _: Throwable => "cutintro_other_exception"
           } )
-          metrics.value( "exception", e.toString )
+          logger.metric( "exception", e.toString )
           throw e
       }
     }
@@ -200,11 +210,17 @@ object collectExperimentResults extends App {
   val metricsLineRegex = """METRICS (.*)""".r
 
   def parseOut( fn: Path ) =
-    JObject( read.lines( fn ).collect {
-      case metricsLineRegex( json ) => parse( json )
-    }.collect {
-      case JObject( map ) => map
-    }.flatten.toList )
+    JObject(
+      read.lines( fn ).collect {
+        case metricsLineRegex( json ) => parse( json )
+      }.collect {
+        case JObject( map ) => map
+      }.flatten
+        .groupBy( _._1 ).map {
+          case ( k, vs ) if k.startsWith( "time_" ) =>
+            k -> JInt( vs.collect { case ( _, JInt( x ) ) => x }.sum )
+          case ( k, vs ) => k -> vs.last._2
+        }.toList )
 
   val allResults = JArray( ls.rec( pwd ).filter( _.last == "stdout" ).map( parseOut ).toList )
   print( compact( render( allResults ) ) )

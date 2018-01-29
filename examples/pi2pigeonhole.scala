@@ -20,7 +20,7 @@ object Pi2Pigeonhole extends TacticsProof {
     cut( "I0", hof"∀x ∃y (x <= y  ∧  f y = 0)" )
     cut( "I1", hof"∀x ∃y (x <= y  ∧  f y = s 0)" )
 
-    forget( "t" ); decompose; escargot
+    forget( "t" ); escargot.withDeskolemization
 
     allL( "I1", le"0" ); decompose
     allL( "I1", le"s y" ); decompose
@@ -48,7 +48,7 @@ object Pi3Pigeonhole extends TacticsProof {
     cut( "I", hof"∃z ∀x ∃y (x <= y  ∧  f y = z)" )
 
     exR( "I", le"0" ); exR( "I", le"s 0" )
-    forget( "t", "I" ); decompose; escargot
+    forget( "t", "I" ); escargot.withDeskolemization
 
     decompose
     allL( "I", le"0" ); decompose

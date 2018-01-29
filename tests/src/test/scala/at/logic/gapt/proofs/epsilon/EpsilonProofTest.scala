@@ -43,8 +43,8 @@ class EpsilonProofTest extends Specification with SatMatchers {
 
   "many sorted 2" in {
     implicit val ctx: MutableContext = MutableContext.default()
-    ctx += Context.InductiveType( ty"list ?a", hoc"nil : list ?a", hoc"cons : ?a > list ?a > list ?a" )
-    ctx += hoc"P: list ?a > o"
+    ctx += Context.InductiveType( ty"list ?a", hoc"nil{?a} : list ?a", hoc"cons{?a} : ?a > list ?a > list ?a" )
+    ctx += hoc"P{?a}: list ?a > o"
     ctx += Context.Sort( "i" ) // TODO(gabriel): escargot fails when proving the goal with list ?a
     val f = hof"!xs!x (P xs -> P (cons x xs)) -> P nil -> !x P (cons x nil : list i)"
     Escargot.getEpsilonProof( f ) must beLike {

@@ -34,6 +34,11 @@ class TraitsTest extends Specification {
     }
   }
 
+  "atoms" in {
+    val x = FOLVar( "x" )
+    Eq( x, x ) must beAnInstanceOf[FOLAtom]
+  }
+
   "FOL terms" should {
     val f = Const( "f", FOLHeadType( Ti, 1 ) )
 

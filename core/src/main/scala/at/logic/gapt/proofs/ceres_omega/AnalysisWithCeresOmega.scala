@@ -1,7 +1,6 @@
 package at.logic.gapt.proofs.ceres_omega
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.formats.tptp.TPTPHOLExporter
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
@@ -12,6 +11,7 @@ import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
 import at.logic.gapt.proofs.resolution.{ Resolution2RalWithAbstractions, ResolutionToLKProof }
 import at.logic.gapt.provers.eprover.EProver
 import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.renameConstantsToFi
 import at.logic.gapt.utils.{ TimeOutException, withTimeout }
 
 import scala.concurrent.duration.Duration
@@ -214,8 +214,8 @@ abstract class AnalysisWithCeresOmega {
   /**
    * The proof of the deep formula of the [[expansion_proof]].
    */
-  lazy val reproved_deep = {
-    EProver getResolutionProof expansion_proof_fol_deep match {
+  lazy val reproved_deep = renameConstantsToFi.wrap( expansion_proof_fol_deep ) { ( _, mangled: Formula ) =>
+    EProver getResolutionProof mangled match {
       case None      => throw new Exception( "Could not reprove deep formula!" )
       case Some( p ) => p
     }

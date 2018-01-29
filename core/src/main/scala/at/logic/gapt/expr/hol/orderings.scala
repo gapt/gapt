@@ -15,7 +15,7 @@ class HOLOrdering extends Ordering[Expr] {
         case x => x
       }
 
-    case ( Const( s1, t1 ), Const( s2, t2 ) ) =>
+    case ( Const( s1, t1, _ ), Const( s2, t2, _ ) ) =>
       s1.toString() compare s2.toString() match {
         case 0 => TAOrdering.compare( t1, t2 )
         case x => x
@@ -33,21 +33,21 @@ class HOLOrdering extends Ordering[Expr] {
         case x => x
       }
 
-    case ( Var( _, _ ), _ )             => -1
+    case ( Var( _, _ ), _ )                => -1
 
-    case ( Const( _, _ ), Var( _, _ ) ) => 1
-    case ( Const( _, _ ), _ )           => -1
+    case ( Const( _, _, _ ), Var( _, _ ) ) => 1
+    case ( Const( _, _, _ ), _ )           => -1
 
-    case ( App( _, _ ), Var( _, _ ) )   => 1
-    case ( App( _, _ ), Const( _, _ ) ) => 1
-    case ( App( _, _ ), _ )             => -1
+    case ( App( _, _ ), Var( _, _ ) )      => 1
+    case ( App( _, _ ), Const( _, _, _ ) ) => 1
+    case ( App( _, _ ), _ )                => -1
 
-    case ( Abs( _, _ ), Var( _, _ ) )   => 1
-    case ( Abs( _, _ ), Const( _, _ ) ) => 1
-    case ( Abs( _, _ ), App( _, _ ) )   => 1
-    case ( Abs( _, _ ), _ )             => -1
+    case ( Abs( _, _ ), Var( _, _ ) )      => 1
+    case ( Abs( _, _ ), Const( _, _, _ ) ) => 1
+    case ( Abs( _, _ ), App( _, _ ) )      => 1
+    case ( Abs( _, _ ), _ )                => -1
 
-    case _                              => throw new Exception( "Unhandled comparision of hol epxressions: " + x + " ? " + y )
+    case _                                 => throw new Exception( "Unhandled comparision of hol epxressions: " + x + " ? " + y )
   }
 }
 

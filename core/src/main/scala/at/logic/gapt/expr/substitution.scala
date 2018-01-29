@@ -96,9 +96,9 @@ class Substitution( map: Map[Var, Expr], typeMap: Map[TVar, Ty] = Map() ) extend
       val images = ( dom - x ).map( apply( _ ) )
       def solve( term: Expr ): Boolean =
         images( term ) || ( term match {
-          case Const( _, _ ) => true
-          case App( a, b )   => solve( a ) && solve( b )
-          case Var( _, _ )   => false
+          case Const( _, _, _ ) => true
+          case App( a, b )      => solve( a ) && solve( b )
+          case Var( _, _ )      => false
         } )
       !solve( map( x ) )
     }

@@ -22,14 +22,14 @@ class StandardClauseSet {
    * @param contract if contract is set, duplicate formulas will not be added to the clause during a merge (default: true)
    * @return
    */
-  def apply( struct: Struct[_], contract: Boolean = true ): Set[HOLSequent] = struct match {
-    case A( Top(), _ )    => Set()
-    case A( Bottom(), _ ) => Set( Sequent( Nil, Nil ) )
-    case A( fo, _ ) =>
+  def apply( struct: Struct, contract: Boolean = true ): Set[HOLSequent] = struct match {
+    case A( Top() )    => Set()
+    case A( Bottom() ) => Set( Sequent( Nil, Nil ) )
+    case A( fo ) =>
       Set( Sequent( Nil, List( fo ) ) )
-    case Dual( A( Top(), _ ) )    => Set( Sequent( Nil, Nil ) )
-    case Dual( A( Bottom(), _ ) ) => Set()
-    case Dual( A( fo, _ ) ) =>
+    case Dual( A( Top() ) )    => Set( Sequent( Nil, Nil ) )
+    case Dual( A( Bottom() ) ) => Set()
+    case Dual( A( fo ) ) =>
       Set( Sequent( List( fo ), Nil ) )
     case EmptyPlusJunction()            => Set()
     case EmptyTimesJunction()           => Set( Sequent( Nil, Nil ) )
@@ -37,13 +37,13 @@ class StandardClauseSet {
     case Plus( x, EmptyPlusJunction() ) => apply( x )
     case Plus( x, y ) =>
       apply( x ) ++ apply( y )
-    case Times( EmptyTimesJunction(), x, _ ) => apply( x )
-    case Times( x, EmptyTimesJunction(), _ ) => apply( x )
-    case Times( A( f1, _ ), Dual( A( f2, _ ) ), _ ) if f1 == f2 => //would result in a tautology f :- f
+    case Times( EmptyTimesJunction(), x ) => apply( x )
+    case Times( x, EmptyTimesJunction() ) => apply( x )
+    case Times( A( f1 ), Dual( A( f2 ) ) ) if f1 == f2 => //would result in a tautology f :- f
       Set()
-    case Times( Dual( A( f2, _ ) ), A( f1, _ ), _ ) if f1 == f2 => //would result in a tautology f :- f
+    case Times( Dual( A( f2 ) ), A( f1 ) ) if f1 == f2 => //would result in a tautology f :- f
       Set()
-    case Times( x, y, _ ) =>
+    case Times( x, y ) =>
       val xs = apply( x )
       val ys = apply( y )
       xs.flatMap( x1 => ys.flatMap( y1 => {

@@ -31,7 +31,7 @@ object enumerateTerms {
       tys.toList.traverse( t => terms.filter( _.ty == t ).toList )
     def iterate() =
       nonConstantCtrs.flatMap {
-        case ctr @ Const( _, FunctionType( _, argTypes ) ) =>
+        case ctr @ Const( _, FunctionType( _, argTypes ), _ ) =>
           take( argTypes ).map( ctr( _ ) ).map( normalizeFreeVars )
       }
 

@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.{ Context, ImmutableContext, Sequent }
 case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
   val FunctionType( datatype, fieldTypes ) = constr.ty
   require( fieldTypes.size == projectors.size )
-  projectors foreach { case Const( _, FunctionType( to, from ) ) => require( from == Seq( datatype ) ) }
+  projectors foreach { case Const( _, FunctionType( to, from ), _ ) => require( from == Seq( datatype ) ) }
 
   def arity = projectors size
 

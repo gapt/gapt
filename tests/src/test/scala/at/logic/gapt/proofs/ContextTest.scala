@@ -19,20 +19,24 @@ class ContextTest extends Specification {
       implicit val ctx: MutableContext = MutableContext.default()
       ctx += Context.InductiveType(
         ty"list ?a",
-        hoc"nil: list ?a",
-        hoc"cons: ?a > list ?a > list ?a" )
-      ctx += hof"xs + (x : ?a) = cons x xs"
+        hoc"nil{?a}: list ?a",
+        hoc"cons{?a}: ?a > list ?a > list ?a" )
+      ctx += hof"'+'{?a} xs x = cons{?a} x xs"
       ctx += Context.Sort( "i" )
       ctx ++= Seq( hoc"0: i", hoc"1: i", hoc"2: i" )
       val e = le"nil + 3 + 2 + 1: list i"
       ctx.check( e )
       ctx.normalize( e ) must_== le"cons 1 (cons 2 (cons 3 nil))"
     }
+
+    "nonemptiness" in {
+      default + InductiveType( "conat", hoc"s: conat>conat" ) must throwAn[IllegalArgumentException]
+    }
   }
 
   "polymorphic definitions" in {
     implicit val ctx: MutableContext = MutableContext.default()
-    ctx += hof"const (f: ?a > ?b) = (!x!y f x = f y)"
+    ctx += hof"const{?a ?b} (f: ?a > ?b) = (!x!y f x = f y)"
 
     ctx += Context.Sort( "i" )
     ctx += hoc"0 : i"
@@ -57,7 +61,7 @@ class ContextTest extends Specification {
 
   "ite" in {
     implicit val ctx: MutableContext = MutableContext.default()
-    ctx += PrimRecFun( hoc"ite: o > ?a > ?a > ?a", "ite true a b = a", "ite false a b = b" )
+    ctx += PrimRecFun( hoc"ite{?a}: o > ?a > ?a > ?a", "ite true a b = a", "ite false a b = b" )
 
     ctx += Ti; ctx += hoc"a: i"; ctx += hoc"b: i"
     ctx.whnf( le"ite true a b" ) must_== le"a"
@@ -78,6 +82,25 @@ class ContextTest extends Specification {
       quasiprop.onAllSubGoals
     }
     ok
+  }
+
+  "proof definitions" in {
+    import at.logic.gapt.proofs.lk._
+    implicit val ctx: MutableContext = MutableContext.default()
+    ctx += Ti; ctx += hoc"c: i"
+    ctx += hoc"a: i>o"; ctx += hoc"b: i>o"
+    ctx += hoc"p: i>o"; ctx += ProofNameDeclaration( le"p x", hos"a x :- b x" )
+
+    ctx += hoc"sorry: o"; ctx += ProofNameDeclaration( le"sorry", hos":-" )
+    def proofOf( sequent: HOLSequent ): LKProof = WeakeningMacroRule( ProofLink( le"sorry" ), sequent )
+
+    ctx += ProofDefinitionDeclaration( le"p c", proofOf( hos"a c :- b c" ) )
+    ctx += ProofDefinitionDeclaration( le"p c", proofOf( hos":- b c" ) )
+
+    ( ctx += ProofDefinitionDeclaration( le"p c", proofOf( hos"a c :- b c, b c" ) ) ) must throwAn[IllegalArgumentException]
+    ( ctx += ProofDefinitionDeclaration( le"p c", proofOf( hos"a c :- b c, a c" ) ) ) must throwAn[IllegalArgumentException]
+    ( ctx += ProofDefinitionDeclaration( le"p c", proofOf( hos":- a c, b c" ) ) ) must throwAn[IllegalArgumentException]
+    ( ctx += ProofDefinitionDeclaration( le"p x", proofOf( hos":- b c" ) ) ) must throwAn[IllegalArgumentException]
   }
 
 }

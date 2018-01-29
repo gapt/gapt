@@ -2,13 +2,15 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.instantiate
+import at.logic.gapt.proofs.IndexOrFormula.{ IsFormula, IsIndex }
 import at.logic.gapt.proofs._
 
 import scala.collection.mutable
 
 abstract class LKProof extends SequentProof[Formula, LKProof] {
 
-  def LKRuleCreationException( message: String ): LKRuleCreationException = new LKRuleCreationException( longName, message )
+  protected def LKRuleCreationException( message: String ): LKRuleCreationException =
+    new LKRuleCreationException( longName, message )
 
   /**
    * The end-sequent of the rule.
@@ -22,7 +24,9 @@ abstract class LKProof extends SequentProof[Formula, LKProof] {
    * @param antecedentIndices Indices that should be in the antecedent.
    * @param succedentIndices Indices that should be in the succedent.
    */
-  protected def validateIndices( premise: HOLSequent, antecedentIndices: Seq[SequentIndex], succedentIndices: Seq[SequentIndex] ): Unit = {
+  protected def validateIndices(
+    premise:           HOLSequent,
+    antecedentIndices: Seq[SequentIndex], succedentIndices: Seq[SequentIndex] ): Unit = {
     val antSet = mutable.HashSet[SequentIndex]()
     val sucSet = mutable.HashSet[SequentIndex]()
 
@@ -167,6 +171,10 @@ case class ProofLink( referencedProof: Expr, referencedSequent: Sequent[Formula]
   override def name = "link"
   override def conclusion = referencedSequent
 }
+object ProofLink {
+  def apply( referencedProof: Expr )( implicit ctx: Context ): ProofLink =
+    ProofLink( referencedProof, ctx.get[Context.ProofNames].lookup( referencedProof ).get )
+}
 
 /**
  * An LKProof consisting of a single sequent:
@@ -290,7 +298,8 @@ case class ContractionLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: Seq
 
 object ContractionLeftRule extends ConvenienceConstructor( "ContractionLeftRule" ) {
   /**
-   * Convenience constructor for c:l that, given a formula to contract on the left, will automatically pick the first two occurrences of that formula.
+   * Convenience constructor for c:l that, given a formula to contract on the left,
+   * will automatically pick the first two occurrences of that formula.
    *
    * @param subProof The subproof π.
    * @param f The formula to contract.
@@ -336,7 +345,8 @@ case class ContractionRightRule( subProof: LKProof, aux1: SequentIndex, aux2: Se
 
 object ContractionRightRule extends ConvenienceConstructor( "ContractionRightRule" ) {
   /**
-   * Convenience constructor for c:r that, given a formula to contract on the right, will automatically pick the first two occurrences of that formula.
+   * Convenience constructor for c:r that, given a formula to contract on the right,
+   * will automatically pick the first two occurrences of that formula.
    *
    * @param subProof The subproof π.
    * @param f The formula to contract.
@@ -416,7 +426,8 @@ case class CutRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LK
   validateIndices( rightPremise, Seq( aux2 ), Seq() )
 
   if ( leftPremise( aux1 ) != rightPremise( aux2 ) )
-    throw LKRuleCreationException( s"Auxiliary formulas are not the same:\n${leftPremise( aux1 )}\n${rightPremise( aux2 )}" )
+    throw LKRuleCreationException(
+      s"Auxiliary formulas are not the same:\n${leftPremise( aux1 )}\n${rightPremise( aux2 )}" )
 
   def cutFormula = leftPremise( aux1 )
 
@@ -440,7 +451,8 @@ object CutRule extends ConvenienceConstructor( "CutRule" ) {
    * @param rightCutFormula Index of the right cut formula or the formula itself.
    * @return
    */
-  def apply( leftSubProof: LKProof, leftCutFormula: IndexOrFormula, rightSubProof: LKProof, rightCutFormula: IndexOrFormula ): CutRule = {
+  def apply( leftSubProof: LKProof, leftCutFormula: IndexOrFormula,
+             rightSubProof: LKProof, rightCutFormula: IndexOrFormula ): CutRule = {
     val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
 
     val ( _, sucIndices ) = findAndValidate( leftPremise )( Seq(), Seq( leftCutFormula ) )
@@ -595,7 +607,7 @@ object AndLeftRule extends ConvenienceConstructor( "AndLeftRule" ) {
    * @param rightConjunct Index of the right conjunct or the conjunct itself.
    * @return
    */
-  def apply( subProof: LKProof, leftConjunct: Either[SequentIndex, Formula], rightConjunct: Either[SequentIndex, Formula] ): AndLeftRule = {
+  def apply( subProof: LKProof, leftConjunct: IndexOrFormula, rightConjunct: IndexOrFormula ): AndLeftRule = {
     val premise = subProof.endSequent
 
     val ( indices, _ ) = findAndValidate( premise )( Seq( leftConjunct, rightConjunct ), Seq() )
@@ -665,7 +677,8 @@ object AndRightRule extends ConvenienceConstructor( "AndRightRule" ) {
    * @param rightConjunct Index of the right conjunct or the conjunct itself.
    * @return
    */
-  def apply( leftSubProof: LKProof, leftConjunct: IndexOrFormula, rightSubProof: LKProof, rightConjunct: IndexOrFormula ): AndRightRule = {
+  def apply( leftSubProof: LKProof, leftConjunct: IndexOrFormula,
+             rightSubProof: LKProof, rightConjunct: IndexOrFormula ): AndRightRule = {
     val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
 
     val ( _, leftIndices ) = findAndValidate( leftPremise )( Seq(), Seq( leftConjunct ) )
@@ -683,7 +696,8 @@ object AndRightRule extends ConvenienceConstructor( "AndRightRule" ) {
    * @param mainFormula The formula to be inferred. Must be of the form A ∧ B.
    * @return
    */
-  def apply( leftSubProof: LKProof, rightSubProof: LKProof, mainFormula: Formula ): AndRightRule = mainFormula match {
+  def apply( leftSubProof: LKProof, rightSubProof: LKProof,
+             mainFormula: Formula ): AndRightRule = mainFormula match {
     case And( f, g ) =>
       val p = apply( leftSubProof, f, rightSubProof, g )
       assert( p.mainFormula == mainFormula )
@@ -737,7 +751,8 @@ object OrLeftRule extends ConvenienceConstructor( "OrLeftRule" ) {
    * @param rightDisjunct Index of the right disjunct or the disjunct itself.
    * @return
    */
-  def apply( leftSubProof: LKProof, leftDisjunct: IndexOrFormula, rightSubProof: LKProof, rightDisjunct: IndexOrFormula ): OrLeftRule = {
+  def apply( leftSubProof: LKProof, leftDisjunct: IndexOrFormula,
+             rightSubProof: LKProof, rightDisjunct: IndexOrFormula ): OrLeftRule = {
     val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
 
     val ( leftIndices, _ ) = findAndValidate( leftPremise )( Seq( leftDisjunct ), Seq() )
@@ -814,7 +829,8 @@ object OrRightRule extends ConvenienceConstructor( "OrRightRule" ) {
   }
 
   /**
-   * Convenience constructor for ∨:r that, given a proposed main formula A ∨ B, will attempt to create an inference with this main formula.
+   * Convenience constructor for ∨:r that, given a proposed main formula A ∨ B,
+   * will attempt to create an inference with this main formula.
    *
    * @param subProof The subproof.
    * @param mainFormula The formula to be inferred. Must be of the form A ∨ B.
@@ -874,7 +890,8 @@ object ImpLeftRule extends ConvenienceConstructor( "ImpLeftRule" ) {
    * @param impConclusion Index of the conclusion of the implication or the conclusion itself.
    * @return
    */
-  def apply( leftSubProof: LKProof, impPremise: IndexOrFormula, rightSubProof: LKProof, impConclusion: IndexOrFormula ): ImpLeftRule = {
+  def apply( leftSubProof: LKProof, impPremise: IndexOrFormula,
+             rightSubProof: LKProof, impConclusion: IndexOrFormula ): ImpLeftRule = {
     val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
 
     val ( _, leftIndices ) = findAndValidate( leftPremise )( Seq(), Seq( impPremise ) )
@@ -951,7 +968,8 @@ object ImpRightRule extends ConvenienceConstructor( "ImpRightRule" ) {
   }
 
   /**
-   * Convenience constructor for →:r that, given a proposed main formula A → B, will attempt to create an inference with this main formula.
+   * Convenience constructor for →:r that, given a proposed main formula A → B,
+   * will attempt to create an inference with this main formula.
    *
    * @param subProof The subproof.
    * @param mainFormula The formula to be inferred. Must be of the form A → B.
@@ -990,7 +1008,8 @@ trait SkolemQuantifierRule extends UnaryLKProof with CommonRule {
   {
     val expectedAux = BetaReduction.betaNormalize( instantiate( mainFormula, skolemTerm ) )
     if ( expectedAux != auxFormula )
-      throw LKRuleCreationException( s"Aux formula should be $subFormula[$quantifiedVariable\\$skolemTerm] = $expectedAux, but is $auxFormula." )
+      throw LKRuleCreationException(
+        s"Aux formula should be $subFormula[$quantifiedVariable\\$skolemTerm] = $expectedAux, but is $auxFormula." )
   }
 }
 
@@ -1028,7 +1047,8 @@ case class ForallLeftRule( subProof: LKProof, aux: SequentIndex, A: Formula, ter
 
 object ForallLeftRule extends ConvenienceConstructor( "ForallLeftRule" ) {
   /**
-   * Convenience constructor for ∀:l that, given a main formula and a term, will try to construct an inference with that instantiation.
+   * Convenience constructor for ∀:l that, given a main formula and a term,
+   * will try to construct an inference with that instantiation.
    *
    * @param subProof The subproof.
    * @param mainFormula The formula to be inferred. Must be of the form ∀x.A.
@@ -1108,7 +1128,10 @@ case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable:
   val subFormula = BetaReduction.betaNormalize( Substitution( eigenVariable, quantifiedVariable )( auxFormula ) )
 
   if ( BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) ) != auxFormula )
-    throw LKRuleCreationException( s"Aux formula should be $subFormula[$quantifiedVariable\\$eigenVariable] = ${BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) )}, but is $auxFormula." )
+    throw LKRuleCreationException(
+      s"Aux formula should be $subFormula[$quantifiedVariable\\$eigenVariable] = " +
+        BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) ) +
+        s", but is $auxFormula." )
 
   val mainFormula = BetaReduction.betaNormalize( All( quantifiedVariable, subFormula ) )
 
@@ -1122,7 +1145,8 @@ case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable:
 object ForallRightRule extends ConvenienceConstructor( "ForallRightRule" ) {
 
   /**
-   * Convenience constructor for ∀:r that, given a main formula and an eigenvariable, will try to construct an inference with that instantiation.
+   * Convenience constructor for ∀:r that, given a main formula and an eigenvariable,
+   * will try to construct an inference with that instantiation.
    *
    * @param subProof The subproof.
    * @param mainFormula The formula to be inferred. Must be of the form ∀x.A.
@@ -1189,7 +1213,8 @@ object ForallRightRule extends ConvenienceConstructor( "ForallRightRule" ) {
  * @param skolemTerm The Skolem term s(...)
  * @param skolemDef The Skolem definition, see [[at.logic.gapt.expr.hol.SkolemFunctions]]
  */
-case class ForallSkRightRule( subProof: LKProof, aux: SequentIndex, mainFormula: Formula, skolemTerm: Expr, skolemDef: Expr )
+case class ForallSkRightRule( subProof: LKProof, aux: SequentIndex, mainFormula: Formula,
+                              skolemTerm: Expr, skolemDef: Expr )
   extends SkolemQuantifierRule {
 
   validateIndices( premise, Seq(), Seq( aux ) )
@@ -1206,7 +1231,8 @@ case class ForallSkRightRule( subProof: LKProof, aux: SequentIndex, mainFormula:
 object ForallSkRightRule extends ConvenienceConstructor( "ForallSkRightRule" ) {
 
   /**
-   * Convenience constructor for ∀sk:r that, given a Skolem term and Skolem definition, will try to construct an inference with that instantiation.
+   * Convenience constructor for ∀sk:r that, given a Skolem term and Skolem definition,
+   * will try to construct an inference with that instantiation.
    *
    * @param subProof The subproof.
    * @return
@@ -1253,7 +1279,10 @@ case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: 
   val subFormula = BetaReduction.betaNormalize( Substitution( eigenVariable, quantifiedVariable )( auxFormula ) )
 
   if ( BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) ) != auxFormula )
-    throw LKRuleCreationException( s"Aux formula should be $subFormula[$quantifiedVariable\\$eigenVariable] = ${BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) )}, but is $auxFormula." )
+    throw LKRuleCreationException(
+      s"Aux formula should be $subFormula[$quantifiedVariable\\$eigenVariable] = " +
+        BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) ) +
+        s", but is $auxFormula." )
 
   val mainFormula = BetaReduction.betaNormalize( Ex( quantifiedVariable, subFormula ) )
 
@@ -1267,7 +1296,8 @@ case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: 
 object ExistsLeftRule extends ConvenienceConstructor( "ExistsLeftRule" ) {
 
   /**
-   * Convenience constructor for ∃:l that, given a main formula and an eigenvariable, will try to construct an inference with that instantiation.
+   * Convenience constructor for ∃:l that, given a main formula and an eigenvariable,
+   * will try to construct an inference with that instantiation.
    *
    * @param subProof The subproof.
    * @param mainFormula The formula to be inferred. Must be of the form ∃x.A.
@@ -1330,7 +1360,8 @@ object ExistsLeftRule extends ConvenienceConstructor( "ExistsLeftRule" ) {
  * @param skolemTerm The Skolem term s(...)
  * @param skolemDef The Skolem definition, see [[at.logic.gapt.expr.hol.SkolemFunctions]]
  */
-case class ExistsSkLeftRule( subProof: LKProof, aux: SequentIndex, mainFormula: Formula, skolemTerm: Expr, skolemDef: Expr )
+case class ExistsSkLeftRule( subProof: LKProof, aux: SequentIndex, mainFormula: Formula,
+                             skolemTerm: Expr, skolemDef: Expr )
   extends SkolemQuantifierRule {
 
   validateIndices( premise, Seq( aux ), Seq() )
@@ -1347,7 +1378,8 @@ case class ExistsSkLeftRule( subProof: LKProof, aux: SequentIndex, mainFormula: 
 object ExistsSkLeftRule extends ConvenienceConstructor( "ExistsSkLeftRule" ) {
 
   /**
-   * Convenience constructor for ∃sk:l that, given a Skolem term and Skolem definition, will try to construct an inference with that instantiation.
+   * Convenience constructor for ∃sk:l that, given a Skolem term and Skolem definition,
+   * will try to construct an inference with that instantiation.
    *
    * @param subProof The subproof.
    * @return
@@ -1362,6 +1394,13 @@ object ExistsSkLeftRule extends ConvenienceConstructor( "ExistsSkLeftRule" ) {
     val ( indices, _ ) = findAndValidate( premise )( Seq( auxFormula ), Seq() )
 
     ExistsSkLeftRule( subProof, Ant( indices( 0 ) ), mainFormula, skolemTerm, skolemDef )
+  }
+
+  def apply( subProof: LKProof, skolemTerm: Expr )( implicit ctx: Context ): ExistsSkLeftRule = {
+    val Apps( skC: Const, _ ) = skolemTerm
+    val skD = ctx.skolemDef( skC ).getOrElse(
+      throw new IllegalArgumentException( s"not a defined Skolem function: $skC" ) )
+    apply( subProof, skolemTerm, skD )
   }
 }
 
@@ -1400,7 +1439,8 @@ case class ExistsRightRule( subProof: LKProof, aux: SequentIndex, A: Formula, te
 object ExistsRightRule extends ConvenienceConstructor( "ExistsRightRule" ) {
 
   /**
-   * Convenience constructor for ∃:r that, given a main formula and a term, will try to construct an inference with that instantiation.
+   * Convenience constructor for ∃:r that, given a main formula and a term,
+   * will try to construct an inference with that instantiation.
    *
    * @param subProof The subproof.
    * @param mainFormula The formula to be inferred. Must be of the form ∃x.A.
@@ -1528,8 +1568,6 @@ abstract class EqualityRule extends UnaryLKProof with CommonRule {
  *
  * </pre>
  *
- * In either case, the rule only replaces term occurrences at parallel positions. These positions are given by the positions argument.
- *
  * @param subProof The subproof π.
  * @param eq The index of s = t.
  * @param aux The index of the formula in which the replacement is to be performed.
@@ -1558,7 +1596,8 @@ object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
    * @param replacementContext A term λx.A[x] that designates the positions to be replaced.
    * @return
    */
-  def apply( subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula, replacementContext: Abs ): EqualityLeftRule = {
+  def apply( subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula,
+             replacementContext: Abs ): EqualityLeftRule = {
     val premise = subProof.endSequent
 
     val ( indices, _ ) = findAndValidate( premise )( Seq( eqFormula, auxFormula ), Seq() )
@@ -1595,7 +1634,8 @@ object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
           EqualityLeftRule( subProof, eq, aux, repContext )
 
         } else if ( s == t && auxFormula != mainFormula ) {
-          throw LKRuleCreationException( s"Eq is trivial, but aux formula $auxFormula and main formula $mainFormula differ." )
+          throw LKRuleCreationException(
+            s"Eq is trivial, but aux formula $auxFormula and main formula $mainFormula differ." )
 
         } else if ( s != t && auxFormula == mainFormula ) {
           throw LKRuleCreationException( "Nontrivial equation, but aux and main formula are equal." )
@@ -1610,9 +1650,11 @@ object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
           if ( restS.find( vS ).isEmpty && restT.find( vT ).isEmpty )
             throw LKRuleCreationException( s"Neither $s nor $t found in formula $auxFormula." )
 
-          val p = if ( BetaReduction.betaNormalize( App( contextS, t ) ) == BetaReduction.betaNormalize( mainFormula ) ) {
+          val p = if ( BetaReduction.betaNormalize( App( contextS, t ) ) ==
+            BetaReduction.betaNormalize( mainFormula ) ) {
             EqualityLeftRule( subProof, eq, aux, contextS )
-          } else if ( BetaReduction.betaNormalize( App( contextT, s ) ) == BetaReduction.betaNormalize( mainFormula ) ) {
+          } else if ( BetaReduction.betaNormalize( App( contextT, s ) ) ==
+            BetaReduction.betaNormalize( mainFormula ) ) {
             EqualityLeftRule( subProof, eq, aux, contextT )
           } else throw LKRuleCreationException( "Replacement in neither direction leads to proposed main formula." )
 
@@ -1635,8 +1677,6 @@ object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
  *   ---------------------eq:r      ---------------------eq:r
  *    s = t, Γ :- Δ, A[t]            s = t, Γ :- Δ, A[s]
  * </pre>
- *
- * In either case, the rule only replaces term occurrences at parallel positions. These positions are given by the positions argument.
  *
  * @param subProof The subproof π.
  * @param eq The index of s = t.
@@ -1666,7 +1706,8 @@ object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
    * @param replacementContext A term λx.A[x] that designates the positions to be replaced.
    * @return
    */
-  def apply( subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula, replacementContext: Abs ): EqualityRightRule = {
+  def apply( subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula,
+             replacementContext: Abs ): EqualityRightRule = {
     val premise = subProof.endSequent
 
     val ( indicesAnt, indicesSuc ) = findAndValidate( premise )( Seq( eqFormula ), Seq( auxFormula ) )
@@ -1718,9 +1759,11 @@ object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
           if ( restS.find( vS ).isEmpty && restT.find( vT ).isEmpty )
             throw LKRuleCreationException( s"Neither $s nor $t found in formula $auxFormula." )
 
-          val p = if ( BetaReduction.betaNormalize( App( contextS, t ) ) == BetaReduction.betaNormalize( mainFormula ) ) {
+          val p = if ( BetaReduction.betaNormalize( App( contextS, t ) ) ==
+            BetaReduction.betaNormalize( mainFormula ) ) {
             EqualityRightRule( subProof, eq, aux, contextS )
-          } else if ( BetaReduction.betaNormalize( App( contextT, s ) ) == BetaReduction.betaNormalize( mainFormula ) ) {
+          } else if ( BetaReduction.betaNormalize( App( contextT, s ) ) ==
+            BetaReduction.betaNormalize( mainFormula ) ) {
             EqualityRightRule( subProof, eq, aux, contextT )
           } else throw LKRuleCreationException( "Replacement in neither direction leads to proposed main formula." )
 
@@ -1741,13 +1784,15 @@ object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
  * F(x,,1,,), F(x,,2,,), ..., F(x,,n,,), Γ :- Δ, F(c(x,,1,,,...,x,,n,,,y,,1,,,...,y,,n,,))
  * </pre>
  *
- * The variables x,,i,, and y,,i,, are eigenvariables; x,,i,, are the eigenvariables of the same type as the inductive data
- * type, y,,i,, are the other arguments of the constructor c.  They can come in any order in the constructor.
+ * The variables x,,i,, and y,,i,, are eigenvariables; x,,i,, are the eigenvariables of the
+ * same type as the inductive data type, y,,i,, are the other arguments of the constructor c.
+ * They can come in any order in the constructor.
  *
  * @param proof  The LKProof ending in the sequent of this case.
  * @param constructor  The constructor c of the inductive data type that we're considering.
  * @param hypotheses  Indices of F(x,,1,,), ..., F(x,,n,,)
- * @param eigenVars  The eigenvariables of this case: x,,1,,, ..., x,,n,,, y,,1,,, ..., y,,n,,  (these need to correspond to the order in c)
+ * @param eigenVars  The eigenvariables of this case: x,,1,,, ..., x,,n,,, y,,1,,, ..., y,,n,,
+ *                   (these need to correspond to the order in c)
  * @param conclusion  Index of F(c(x,,1,,,...,x,,n,,,y,,1,,,...,y,,n,,))
  */
 case class InductionCase( proof: LKProof, constructor: Const,
@@ -1778,8 +1823,8 @@ case class InductionCase( proof: LKProof, constructor: Const,
  * </pre>
  *
  * This induction rule can handle inductive data types.
- * The cases are proofs that the various type constructors preserve the formula we want to prove. They are provided via the
- * [[InductionCase]] class.
+ * The cases are proofs that the various type constructors preserve the formula we want to prove.
+ * They are provided via the [[InductionCase]] class.
  *
  * @param cases A sequence of proofs showing that each type constructor preserves the validity of the main formula.
  * @param formula The formula we want to prove via induction.
@@ -1969,34 +2014,36 @@ object consoleString {
  * @param longName The long name of the rule.
  */
 class ConvenienceConstructor( val longName: String ) {
-  type IndexOrFormula = Either[SequentIndex, Formula]
-
   /**
-   * Create an LKRuleCreationException with a message starting with "Cannot create $longName: ..."
+   * Create an LKRuleCreationException with a message starting
+   * with "Cannot create longName: ..."
    *
    * @param text The rest of the message.
    * @return
    */
-  protected def LKRuleCreationException( text: String ): LKRuleCreationException = new LKRuleCreationException( longName, text )
+  protected def LKRuleCreationException( text: String ): LKRuleCreationException =
+    new LKRuleCreationException( longName, text )
 
-  def findIndicesOrFormulasInPremise( premise: HOLSequent )( antIndicesFormulas: Seq[IndexOrFormula], sucIndicesFormulas: Seq[IndexOrFormula] ): ( Seq[Formula], Seq[Int], Seq[Formula], Seq[Int] ) = {
+  def findIndicesOrFormulasInPremise( premise: HOLSequent )(
+    antIndicesFormulas: Seq[IndexOrFormula],
+    sucIndicesFormulas: Seq[IndexOrFormula] ): ( Seq[Formula], Seq[Int], Seq[Formula], Seq[Int] ) = {
     val antReservedIndices = ( scala.collection.mutable.HashSet.empty[Int] /: antIndicesFormulas ) { ( acc, e ) =>
       e match {
-        case Left( Ant( i ) ) => acc + i
-        case Left( i: Suc )   => throw LKRuleCreationException( s"Index $i should be in the antecedent." )
-        case Right( _ )       => acc
+        case IsIndex( Ant( i ) ) => acc + i
+        case IsIndex( i: Suc )   => throw LKRuleCreationException( s"Index $i should be in the antecedent." )
+        case IsFormula( _ )      => acc
       }
     }
 
     val ant = for ( e <- antIndicesFormulas ) yield {
       e match {
-        case Left( idx @ Ant( i ) ) =>
+        case IsIndex( idx @ Ant( i ) ) =>
           antReservedIndices += i
           val f = premise( idx )
 
           ( f, i )
 
-        case Right( f: Formula ) =>
+        case IsFormula( f ) =>
           var i = premise.antecedent.indexOf( f )
 
           while ( antReservedIndices contains i )
@@ -2007,26 +2054,26 @@ class ConvenienceConstructor( val longName: String ) {
 
           ( f, i )
 
-        case Left( i: Suc ) => throw LKRuleCreationException( s"Index $i should be in the antecedent." )
+        case IsIndex( i: Suc ) => throw LKRuleCreationException( s"Index $i should be in the antecedent." )
       }
     }
 
     val sucReservedIndices = ( scala.collection.mutable.HashSet.empty[Int] /: sucIndicesFormulas ) { ( acc, e ) =>
       e match {
-        case Left( Suc( i ) ) => acc + i
-        case Left( i: Ant )   => throw LKRuleCreationException( s"Index $i should be in the succedent." )
-        case Right( _ )       => acc
+        case IsIndex( Suc( i ) ) => acc + i
+        case IsIndex( i: Ant )   => throw LKRuleCreationException( s"Index $i should be in the succedent." )
+        case IsFormula( _ )      => acc
       }
     }
 
     val suc = for ( e <- sucIndicesFormulas ) yield {
       e match {
-        case Left( Suc( i: Int ) ) =>
+        case IsIndex( Suc( i: Int ) ) =>
           sucReservedIndices += i
 
           ( premise( Suc( i ) ), i )
 
-        case Right( f: Formula ) =>
+        case IsFormula( f ) =>
           var i = premise.succedent.indexOf( f )
 
           while ( sucReservedIndices contains i )
@@ -2037,7 +2084,7 @@ class ConvenienceConstructor( val longName: String ) {
 
           ( f, i )
 
-        case Left( i: Ant ) => throw LKRuleCreationException( s"Index $i should be in the succedent." )
+        case IsIndex( i: Ant ) => throw LKRuleCreationException( s"Index $i should be in the succedent." )
       }
     }
 
@@ -2058,7 +2105,8 @@ class ConvenienceConstructor( val longName: String ) {
    * @param sucIndices The list indices corresponding to sucFormulas.
    * @return
    */
-  protected def validateIndices( premise: HOLSequent )( antFormulas: Seq[Formula], antIndices: Seq[Int], sucFormulas: Seq[Formula], sucIndices: Seq[Int] ) = {
+  protected def validateIndices( premise: HOLSequent )( antFormulas: Seq[Formula], antIndices: Seq[Int],
+                                                        sucFormulas: Seq[Formula], sucIndices: Seq[Int] ) = {
     val antMap = scala.collection.mutable.HashMap.empty[Formula, Int]
     val sucMap = scala.collection.mutable.HashMap.empty[Formula, Int]
 
@@ -2083,19 +2131,23 @@ class ConvenienceConstructor( val longName: String ) {
   }
 
   /**
-   * Combines findIndicesOrFormulasInPremise and validateIndices. That is, it will return a pair of lists of indices and throw an exception if either
-   * list contains a -1.
+   * Combines findIndicesOrFormulasInPremise and validateIndices. That is, it will return a pair
+   * of lists of indices and throw an exception if either list contains a -1.
    *
    * @param premise The sequent in question.
    * @param antIndicesFormulas The list of indices or formulas in the antecedent.
    * @param sucIndicesFormulas The list of indices or formulas in the succedent.
    * @return
    */
-  protected def findAndValidate( premise: HOLSequent )( antIndicesFormulas: Seq[IndexOrFormula], sucIndicesFormulas: Seq[IndexOrFormula] ): ( Seq[Int], Seq[Int] ) = {
-    val ( antFormulas, antIndices, sucFormulas, sucIndices ) = findIndicesOrFormulasInPremise( premise )( antIndicesFormulas, sucIndicesFormulas )
+  protected def findAndValidate( premise: HOLSequent )(
+    antIndicesFormulas: Seq[IndexOrFormula],
+    sucIndicesFormulas: Seq[IndexOrFormula] ): ( Seq[Int], Seq[Int] ) = {
+    val ( antFormulas, antIndices, sucFormulas, sucIndices ) =
+      findIndicesOrFormulasInPremise( premise )( antIndicesFormulas, sucIndicesFormulas )
     validateIndices( premise )( antFormulas, antIndices, sucFormulas, sucIndices )
     ( antIndices, sucIndices )
   }
 }
 
-class LKRuleCreationException( name: String, message: String ) extends Exception( s"Cannot create $name: " + message )
+class LKRuleCreationException( name: String, message: String )
+  extends Exception( s"Cannot create $name: " + message )

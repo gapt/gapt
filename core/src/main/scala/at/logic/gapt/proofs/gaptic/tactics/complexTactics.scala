@@ -3,10 +3,10 @@ package at.logic.gapt.proofs.gaptic.tactics
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.expansion.ExpansionProofToLK
+import at.logic.gapt.proofs.expansion.{ ExpansionProofToLK, deskolemizeET }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.provers.ResolutionProver
+import at.logic.gapt.provers.{ Prover, ResolutionProver }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.viper.aip.AnalyticInductionProver
@@ -192,7 +192,7 @@ case class UnfoldTactic( target: String, definitions: Seq[String], maxSteps: Opt
     def normalize( expr: Expr, remainingSteps: Int ): ( Expr, Int ) = {
       val Apps( hd, as ) = expr
       ( hd match {
-        case Const( n, _ ) =>
+        case Const( n, _, _ ) =>
           if ( !definitions.contains( n ) )
             ( None, remainingSteps )
           else if ( remainingSteps == 0 )
@@ -243,26 +243,28 @@ case object QuasiPropTactic extends Tactic[Unit] {
       map( () -> _ )
 }
 
-/**
- * Calls prover9 on the subgoal.
- */
-case class Prover9Tactic()( implicit ctx: MutableContext ) extends Tactic[Unit] {
-  override def apply( goal: OpenAssumption ) =
-    Prover9.getLKProof( goal.conclusion ) match {
+case class ResolutionProverTactic(
+    prover:            Prover,
+    viaExpansionProof: Boolean = true,
+    deskolemize:       Boolean = false )( implicit ctx: MutableContext ) extends Tactic[Unit] {
+  def withDeskolemization: ResolutionProverTactic = copy( deskolemize = true )
+
+  override def apply( goal: OpenAssumption ): Either[TacticalFailure, ( Unit, LKProof )] = {
+    val proofOption: Option[LKProof] =
+      if ( deskolemize )
+        prover.getExpansionProof( goal.conclusion )
+          .map( deskolemizeET( _ ) )
+          .map( ExpansionProofToLK( _ ).right.get )
+      else if ( viaExpansionProof )
+        prover.getExpansionProof( goal.conclusion )
+          .map( ExpansionProofToLK( _ ).right.get )
+      else
+        prover.getLKProof( goal.conclusion )
+    proofOption match {
       case None       => Left( TacticalFailure( this, "search failed" ) )
       case Some( lk ) => Right( () -> lk )
     }
-}
-
-/**
- * Calls Escargot on the subgoal.
- */
-case class EscargotTactic()( implicit ctx: MutableContext ) extends Tactic[Unit] {
-  override def apply( goal: OpenAssumption ) =
-    Escargot.getExpansionProof( goal.conclusion ) match {
-      case None              => Left( TacticalFailure( this, "search failed" ) )
-      case Some( expansion ) => Right( () -> ExpansionProofToLK( expansion ).right.get )
-    }
+  }
 }
 
 object AnalyticInductionTactic {

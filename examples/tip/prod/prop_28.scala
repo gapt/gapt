@@ -74,6 +74,6 @@ object prop_28 extends TacticsProof {
     insert( lemma_22_proof )
     cut( "cong_2", hof"!xs !ys append(revflat(xs),ys) = qrevflat(xs, ys)" )
     insert( cong_2_proof )
-    allR; induction( hov"x:list" ); decompose.onAllSubGoals; repeat( escargot )
+    allR; induction( hov"x:list" ); escargot.withDeskolemization.onAllSubGoals
   }
 }

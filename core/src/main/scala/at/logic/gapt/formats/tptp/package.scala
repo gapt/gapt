@@ -33,8 +33,8 @@ package object tptp {
     def apply( sym: String, args: Expr* )( implicit dummyImplicit: DummyImplicit ): Expr =
       TptpTerm( sym, args )
     def unapplySeq( expr: Expr ): Option[( String, Seq[Expr] )] = expr match {
-      case Apps( Const( sym, _ ), args ) => Some( ( sym, args ) )
-      case _                             => None
+      case Apps( Const( sym, _, _ ), args ) => Some( ( sym, args ) )
+      case _                                => None
     }
   }
   def TptpAtom( sym: String, args: Seq[Expr] ): Atom =
@@ -48,16 +48,16 @@ package object tptp {
     def apply( elems: Seq[GeneralTerm] ): Expr = TptpTerm( name, elems )
     def apply( elems: GeneralTerm* )( implicit dummyImplicit: DummyImplicit ): Expr = TptpTerm( name, elems )
     def unapplySeq( expr: Expr ): Option[Seq[Expr]] = expr match {
-      case Apps( Const( `name`, _ ), elems ) => Some( elems )
-      case _                                 => None
+      case Apps( Const( `name`, _, _ ), elems ) => Some( elems )
+      case _                                    => None
     }
   }
   object GeneralColon {
     val name = "$general_colon"
     def apply( a: GeneralTerm, b: GeneralTerm ): Expr = TptpTerm( name, a, b )
     def unapplySeq( expr: Expr ): Option[Seq[Expr]] = expr match {
-      case Apps( Const( `name`, _ ), elems ) => Some( elems )
-      case _                                 => None
+      case Apps( Const( `name`, _, _ ), elems ) => Some( elems )
+      case _                                    => None
     }
   }
 }

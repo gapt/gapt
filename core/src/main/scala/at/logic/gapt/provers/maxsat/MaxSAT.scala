@@ -5,7 +5,7 @@ import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.dimacs._
 import at.logic.gapt.models.PropositionalModel
 import at.logic.gapt.proofs.HOLClause
-import at.logic.gapt.utils.metrics
+import at.logic.gapt.utils.logger
 import at.logic.gapt.utils.logger._
 
 /**
@@ -41,7 +41,7 @@ abstract class MaxSATSolver {
    */
   def solve( hard: Formula, soft: TraversableOnce[( Formula, Int )] ): Option[PropositionalModel] = {
     solve(
-      metrics.time( "tseitin" ) { fastStructuralCNF()( hard )._1 },
+      logger.time( "tseitin" ) { fastStructuralCNF()( hard )._1 },
       soft.map( s => CNFp( s._1 ).map( f => ( f, s._2 ) ) ).flatten )
   }
 }

@@ -62,6 +62,6 @@ object prop_08 extends TacticsProof {
     insert( lemma_ldca_proof )
     cut( "lemma_4", hof"∀y ∀zs ∀x ∀z drop(S(x), drop(y,cons(z,zs))) = drop(x, drop(y,zs))" )
     insert( lemma_4_proof )
-    allR; induction( hov"x:Nat" ); decompose.onAllSubGoals; repeat( escargot )
+    allR; induction( hov"x:Nat" ).onAll( escargot.withDeskolemization )
   }
 }
