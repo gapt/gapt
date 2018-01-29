@@ -8,27 +8,27 @@ import at.logic.gapt.utils.NameGenerator
 
 object MRealizability {
 
-  implicit var systemT = Context()
+  /*implicit var systemT = Context()
   systemT += InductiveType(
     ty"conj ?a  ?b",
-    hoc"pair: ?a > ?b > conj ?a ?b " )
+    hoc"pair{?a ?b}: ?a > ?b > conj ?a ?b " )
   systemT += PrimRecFun(
-    hoc"pi1: (conj ?a ?b) > ?a",
+    hoc"pi1{?a ?b}: (conj ?a ?b) > ?a",
     "pi1(pair(x,y)) = x" )
   systemT += PrimRecFun(
-    hoc"pi2: (conj ?a ?b) > ?b",
+    hoc"pi2{?a ?b}: (conj ?a ?b) > ?b",
     "pi2(pair(x,y)) = y" )
   systemT += InductiveType(
     ty"nat",
     hoc"0 : nat",
     hoc"s : nat > nat" )
   systemT += PrimRecFun(
-    hoc"R: (nat > ?a > ?a) > ?a > nat > ?a",
+    hoc"R{?a}: (nat > ?a > ?a) > ?a > nat > ?a",
     "R(x,y,0) = y",
     "R(x,y,s(z)) = x(z,R(x,y,z))" )
   systemT += InductiveType(
     ty"1",
-    hoc"i : 1" )
+    hoc"i : 1" )*/
 
   def addRecursors( implicit ctx: Context ): Context = {
     var ctxx = Context.empty
@@ -44,7 +44,8 @@ object MRealizability {
         ngTermVariableNames.fresh( "x" ),
         argTypes( x ).foldRight( resultVariable: Ty )( ( y, z ) => if ( y == typ ) typ ->: resultVariable ->: z else y ->: z ) ) ) toMap
 
-      val recursor = Const( name + "Rec", constructors.foldRight( typ ->: resultVariable: Ty )( ( x, y ) => constrVars( x ).ty ->: y ) )
+      val recursortype = constructors.foldRight( typ ->: resultVariable: Ty )( ( x, y ) => constrVars( x ).ty ->: y )
+      val recursor = Const( name + "Rec", recursortype, typeVariables( recursortype ).toList )
       val argVars = argTypes.map( x => x._1 -> x._2.map( y => Var( ngTermVariableNames.fresh( "x" ), y ) ) )
 
       val equations = constructors.map( x =>
@@ -52,7 +53,7 @@ object MRealizability {
           App( recursor, constrVars.values.toVector :+ App( x, argVars( x ) ) ),
           argVars( x ).foldLeft( constrVars( x ): Expr )( ( y, z ) => if ( z.ty == typ ) App( App( y, z ), App( recursor, constrVars.values.toVector :+ z ) ) else App( y, z ) ) ) )
 
-      ctxx += PrimRecFun( recursor, constructors.size + 1, constructors.size, equations )
+      ctxx += PrimRecFun( List( ( recursor, equations ) ) )
     }
     ctxx
   }

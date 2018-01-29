@@ -15,15 +15,15 @@ object addRecorsorExamples extends Script {
     hoc"s : nat > nat" )
   ctx += InductiveType(
     ty"conj ?c  ?b",
-    hoc"pair: ?c > ?b > conj ?c ?b" )
+    hoc"pair{?c ?b}: ?c > ?b > conj ?c ?b" )
   ctx += InductiveType(
     ty"list ?a",
-    hoc"nil: list ?a",
-    hoc"cons: ?a > list ?a > list ?a" )
+    hoc"nil{?a}: list ?a",
+    hoc"cons{?a}: ?a > list ?a > list ?a" )
   ctx += InductiveType(
     ty"bitree ?a",
-    hoc"leaf: ?a > bitree ?a",
-    hoc"node: bitree ?a > bitree ?a > bitree ?a" )
+    hoc"leaf{?a}: ?a > bitree ?a",
+    hoc"node{?a}: bitree ?a > bitree ?a > bitree ?a" )
 
   println( MRealizability.addRecursors )
 }
