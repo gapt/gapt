@@ -1,6 +1,7 @@
 package at.logic.gapt.examples
 
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.babel.{ Notation, Precedence }
 import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.proofs.gaptic._
 
@@ -19,6 +20,9 @@ object tapeUrban extends TacticsProof {
   ctx += hoc"0: i"
   ctx += hof"1 = s 0"
 
+  ctx += Notation.Infix( "<=", Precedence.infixRel )
+  ctx += Notation.Infix( "<", Precedence.infixRel )
+
   ctx += hof"A = (∀x (f(x)=0 ∨ f(x)=1))"
   ctx += hof"P = (∃n ∃m (n < m ∧ f(n) = f(m)))"
   ctx += hof"T = (∀i ∀x ∀y (f(y) = i ∧ f(x) = i ⊃ f(x) = f(y)))"
@@ -31,9 +35,9 @@ object tapeUrban extends TacticsProof {
     ( "M_1" -> hof"M_1" ) +: ( "M_2" -> hof"M_2" ) +: ( "A" -> hof"A" ) +:
       Sequent() :+ ( "I0" -> hof"I 0" ) :+ ( "I1" -> hof"I 1" ) ) {
       unfold( "I" ) in "I1"
-      allR( "I1", hov"n_" )
+      allR( "I1", fov"n_" )
       unfold( "I" ) in "I0"
-      allR( "I0", hov"n" )
+      allR( "I0", fov"n" )
       exR( "I0", le"max n n_" )
       exR( "I1", le"max n n_" )
       forget( "I0", "I1" )
@@ -58,12 +62,12 @@ object tapeUrban extends TacticsProof {
       Sequent() :+ ( "P" -> hof"P" ) ) {
       unfold( "I" ) in "Ii"
       allL( "Ii", le"0" )
-      exL( "Ii_0", hov"n" )
+      exL( "Ii_0", fov"n" )
       allL( "Ii", le"s n" )
-      exL( "Ii_1", hov"m" )
+      exL( "Ii_1", fov"m" )
       forget( "Ii" )
       unfold( "P" ) in "P"
-      exR( "P", le"n", le"m" )
+      exR( "P", fov"n", fov"m" )
       forget( "P" )
       andL( "Ii_0" )
       andL( "Ii_1" )

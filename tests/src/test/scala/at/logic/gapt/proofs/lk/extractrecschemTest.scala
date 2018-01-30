@@ -3,6 +3,7 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.examples.{ Pi2Pigeonhole, tape, tapeUrban }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Numeral
+import at.logic.gapt.formats.babel.{ Notation, Precedence }
 import at.logic.gapt.grammars.RecursionScheme
 import at.logic.gapt.proofs.Context.Sort
 import at.logic.gapt.proofs.gaptic._
@@ -73,8 +74,8 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
         Sequent()
         :+ ( "conj" -> hof"∃x P(c, x, d)" ) ) {
         cut( "cut", hof"∀x ∃y ∀z P(x, y, z)" )
-        forget( "conj" ); decompose; exR( le"x" ).forget; decompose; chain( "hyp" )
-        forget( "hyp" ); allL( le"c" ).forget; decompose; exR( le"y" ).forget; chain( "cut" )
+        forget( "conj" ); decompose; exR( fov"x" ).forget; decompose; chain( "hyp" )
+        forget( "hyp" ); allL( le"c" ).forget; decompose; exR( fov"y" ).forget; chain( "cut" )
       }
 
     val recschem = extractRecSchem( p )
@@ -113,6 +114,8 @@ class Pi2FactorialPOC extends Specification with SatMatchers {
 
   ctx += hoc"'+': i>i>i"
   ctx += hoc"'*': i>i>i"
+  ctx += Notation.Infix( "+", Precedence.plusMinus )
+  ctx += Notation.Infix( "*", Precedence.timesDiv )
   ctx += hoc"f: i>i"
   ctx += hoc"g: i>i>i"
 

@@ -64,7 +64,7 @@ class CeresTest extends Specification with SequentMatchers with SatMatchers {
   "second-order definitions" in {
     implicit val ctx = MutableContext.default()
     ctx += Context.Sort( "i" )
-    ctx += hof"in x X = (X x: o)"
+    ctx += hof"in (x:i) X = (X x: o)"
     ctx ++= Seq( hoc"P:i>i>o", hoc"c:i", hoc"f:i>i", hoc"g:i>i" )
     ctx += hof"Q x = (∃y P x y)"
 

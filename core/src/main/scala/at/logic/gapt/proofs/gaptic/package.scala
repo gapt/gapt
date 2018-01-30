@@ -39,4 +39,16 @@ package object gaptic extends TacticCommands {
       override def toString = s"$option.toTactical"
     }
   }
+
+  implicit class TacticalEitherOps[T, E]( either: Either[E, T] ) {
+    def toTactical: Tactical[T] = new Tactical[T] {
+      override def apply( proofState: ProofState ) =
+        either match {
+          case Left( error )  => Left( TacticalFailure( this, proofState, error.toString ) )
+          case Right( value ) => Right( value -> proofState )
+        }
+
+      override def toString = s"$either.toTactical"
+    }
+  }
 }

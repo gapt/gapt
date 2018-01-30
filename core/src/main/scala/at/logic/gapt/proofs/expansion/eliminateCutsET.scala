@@ -5,7 +5,7 @@ import at.logic.gapt.utils.generatedUpperSetInPO
 import scala.collection.mutable
 
 object eliminateCutsET {
-  def apply( expansionProof: ExpansionProof ): ExpansionProof = {
+  def apply( expansionProof: ExpansionProof, maxCutInsts: Int = Integer.MAX_VALUE ): ExpansionProof = {
     if ( expansionProof.cuts.isEmpty ) return ExpansionProof( expansionProof.nonCutPart )
 
     def simplifiedEPWC( cuts: Seq[ETImp], es: ExpansionSequent ) =
@@ -15,7 +15,8 @@ object eliminateCutsET {
 
     while ( true ) {
       val cuts = epwc.cuts
-      cuts.view.flatMap {
+      cuts.sortBy( numCutInsts ).view.flatMap {
+        case cut if numCutInsts( cut ) > maxCutInsts => None
         case cut @ ETImp( cut1, cut2 ) =>
           singleStep( cut1, cut2, cuts.filterNot( _ == cut ), epwc.nonCutPart,
             epwc.eigenVariables union freeVariables( epwc.deep ),
@@ -29,6 +30,13 @@ object eliminateCutsET {
     }
     throw new IllegalStateException
   }
+
+  private def numCutInsts( cut: ETImp ): Int =
+    cut match {
+      case ETImp( ETWeakQuantifierBlock( _, n, insts ), _ ) if n > 0 => insts.size
+      case ETImp( _, ETWeakQuantifierBlock( _, n, insts ) ) if n > 0 => insts.size
+      case _ => 0
+    }
 
   private def safeMerge( ets: Seq[ExpansionTree] ): ExpansionTree =
     ets.sortBy {

@@ -16,7 +16,7 @@ object fol2 {
   val p2 = NegRightRule( p1, hof"P" )
   val p3 = NegLeftRule( p2, hof"-P" )
   val p4 = OrLeftRule( ax, hof"P", p3, hof"-P" )
-  val cut_right = ImpRightRule( p4, hof"--P", hof"P" )
+  val cut_right = ImpRightRule( p4, hof"- -P", hof"P" )
 
   val p5 = NegLeftRule( ax, hof"P" )
   val p6 = NegRightRule( p5, hof"P" )

@@ -2,6 +2,7 @@ package at.logic.gapt.examples
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.CNFp
+import at.logic.gapt.formats.babel.{ Notation, Precedence }
 import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.proofs.gaptic._
 
@@ -17,6 +18,7 @@ object lattice extends TacticsProof {
   ctx += "cup_assoc" -> hcl":- cup (cup x y) z = cup x (cup y z)"
   ctx += "cup_idem" -> hcl":- cup x x = x"
 
+  ctx += Notation.Infix( "<=", Precedence.infixRel )
   ctx += hof"(x <= y) = (cap x y = x)"
   ctx += hof"L1 = (∀x∀y (cap x y = x <-> cup x y = y))"
   ctx += hof"L2 = (∀x∀y cup (cap x y) x = x ∧ ∀x∀y cap (cup x y) x = x)"
@@ -35,19 +37,19 @@ object lattice extends TacticsProof {
   // show that join is _least_ upper bound for \leq
   val p_6 = Lemma( hols"L1 :- ∀z (x_0 <= z ∧ y_0 <= z ⊃ cup x_0 y_0 <= z)" ) {
     unfold( "<=" ) in "g"
-    allR( hov"z_0" )
+    allR( fov"z_0" )
     impR
     andL
     unfold( "L1" ) in "L1"
-    allL( "L1", le"x_0", le"z_0" )
+    allL( "L1", fov"x_0", fov"z_0" )
     andL( "L1_0" )
     impL( "L1_0_0" )
     prop
-    allL( "L1", le"y_0", le"z_0" )
+    allL( "L1", fov"y_0", fov"z_0" )
     andL( "L1_1" )
     impL( "L1_1_0" )
     prop
-    allL( "L1", le"cup x_0 y_0", le"z_0" )
+    allL( "L1", le"cup x_0 y_0", fov"z_0" )
     andL( "L1_2" )
     impL( "L1_2_1" )
     foTheory
@@ -58,7 +60,7 @@ object lattice extends TacticsProof {
   val p_5_1 = Lemma( hols"L1 :- x <= cup x y" ) {
     unfold( "<=" ) in "g"
     unfold( "L1" ) in "L1"
-    allL( "L1", le"x", le"cup x y" )
+    allL( "L1", fov"x", le"cup x y" )
     andL
     impL( "L1_0_1" )
     foTheory
@@ -68,8 +70,8 @@ object lattice extends TacticsProof {
   // show that join is upper bound for \leq
   val p_5 = Lemma( hols"L1 :- LUB" ) {
     unfold( "LUB" ) in "LUB"
-    allR( "LUB", hov"x_0" )
-    allR( "LUB", hov"y_0" )
+    allR( "LUB", fov"x_0" )
+    allR( "LUB", fov"y_0" )
     andR
     andR
     insert( p_5_1 )
@@ -142,7 +144,7 @@ object lattice extends TacticsProof {
   // finishes r_2
   val r_2_1 = Lemma( hols"LUB :- x_0 <= cup x_0 y_0" ) {
     unfold( "LUB" ) in "LUB"
-    allL( "LUB", hov"x_0", hov"y_0" )
+    allL( "LUB", fov"x_0", fov"y_0" )
     andL
     andL
     axiomLog
@@ -152,12 +154,12 @@ object lattice extends TacticsProof {
   val r_2 = Lemma(
     hols"""LUB, R, ∀z (z <= cup x_0 y_0 ∧ z <= x_0 ⊃ z <= cap (cup x_0 y_0) x_0) :-
       x_0 <= cap (cup x_0 y_0) x_0""" ) {
-      allL( "h_0", le"x_0" )
+      allL( "h_0", fov"x_0" )
       impL
       andR
       insert( r_2_1 )
       unfold( "R" ) in "R"
-      allL( "R", le"x_0" )
+      allL( "R", fov"x_0" )
       axiomLog
       prop
     }
@@ -165,7 +167,7 @@ object lattice extends TacticsProof {
   // apply anti-symmetry to show absorption law 2 (+ easy direction)
   val q_2 = Lemma( hols"GLB, LUB, R, AS :- ∀x∀y cap (cup x y) x = x" ) {
     decompose
-    unfold( "GLB" ) in "GLB"; allL( "GLB", le"cup x y", le"x" ); decompose
+    unfold( "GLB" ) in "GLB"; allL( "GLB", le"cup x y", fov"x" ); decompose
     unfold( "AS" ) in "AS"; chain( "AS" )
     trivial
     insert( r_2 )
@@ -174,7 +176,7 @@ object lattice extends TacticsProof {
   // finishes r_1
   val r_1_1 = Lemma( hols"GLB :- cap x_0 y_0 <= x_0" ) {
     unfold( "GLB" ) in "GLB"
-    allL( "GLB", le"x_0", le"y_0" )
+    allL( "GLB", fov"x_0", fov"y_0" )
     forget( "GLB" )
     andL( "GLB_0" )
     andL( "GLB_0_0" )
@@ -196,11 +198,11 @@ object lattice extends TacticsProof {
   val q_1 = Lemma( hols"GLB, LUB, R, AS :- ∀x∀y (cup (cap x y) x = x)" ) {
     decompose
     unfold( "AS" ) in "AS"
-    allL( "AS", le"cup (cap x y) x", le"x" )
+    allL( "AS", le"cup (cap x y) x", fov"x" )
     forget( "AS" )
     impL( "AS_0" )
     unfold( "LUB" ) in "LUB"
-    allL( "LUB", le"cap x y", le"x" )
+    allL( "LUB", le"cap x y", fov"x" )
     forget( "LUB" )
     andL( "LUB_0" )
     andL( "LUB_0_0" )

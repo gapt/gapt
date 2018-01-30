@@ -2,6 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.examples
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.babel.{ Notation, Precedence }
 import at.logic.gapt.proofs.nd.NDProof
 import at.logic.gapt.proofs.{ Ant, Context, SequentIndex, SequentMatchers, Suc }
 import at.logic.gapt.utils.SatMatchers
@@ -786,6 +787,8 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       ctx += hoc"'1': i"
       ctx += hoc"'3': i"
       ctx += hoc"'ax': i>i>i"
+      ctx += Notation.Infix( "<", Precedence.infixRel )
+      ctx += Notation.Infix( "+", Precedence.plusMinus )
       ctx += ( "ax", hos"x + 1 < y :- x < y" )
       val lk = ProofLink( le"ax 1 3", hos"1 + 1 < 3 :- 1 < 3" )
       ctx.check( lk )
@@ -804,6 +807,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       ctx += hoc"'2': i"
       ctx += hoc"'3': i"
       ctx += hoc"'ax': i>i>i>i"
+      ctx += Notation.Infix( "<", Precedence.infixRel )
       ctx += ( "ax", hos"x < y, y < z :- x < z" )
       val lk = ProofLink( le"ax 1 2 3", hos"1 < 2, 2 < 3 :- 1 < 3" )
       ctx.check( lk )
@@ -822,6 +826,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       ctx += hoc"'2': i"
       ctx += hoc"'3': i"
       ctx += hoc"'ax': i>i>i>i>i"
+      ctx += Notation.Infix( "<", Precedence.infixRel )
       ctx += ( "ax", hos"x < y, y < z :- x < z, x < a, a < a" )
       val lk = ProofLink( le"ax 1 1 2 3", hos"1 < 2, 2 < 3 :- 1 < 3, 1 < 1, 1 < 1" )
       ctx.check( lk )

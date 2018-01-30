@@ -7,6 +7,7 @@ import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.examples.Formulas._
+import at.logic.gapt.formats.babel.{ Notation, Precedence }
 
 trait ProofSequence {
   def apply( n: Int ): LKProof
@@ -230,8 +231,8 @@ object LinearEqExampleProof extends TacticsProof with ProofSequence with Explici
 
   def apply( n: Int ) =
     Proof(
-      ( "refl" -> hof"∀x x=x" ) +:
-        ( "trans" -> hof"∀x∀y∀z (x=y ∧ y=z ⊃ x=z)" ) +:
+      ( "refl" -> hof"∀(x:i) x=x" ) +:
+        ( "trans" -> hof"∀(x:i)∀y∀z (x=y ∧ y=z ⊃ x=z)" ) +:
         ( "id" -> hof"∀x f(x)=x" ) +: Sequent()
         :+ ( "goal" -> hof"${fk( n )} = a" ) ) {
         repeat( explicitRewriteLeft( "id", "goal" ) )
@@ -244,11 +245,12 @@ object SumOfOnesF2ExampleProof extends TacticsProof with ProofSequence with Expl
   ctx += hoc"s: i>i"
   ctx += hoc"0: i"
   ctx += hoc"'+': i>i>i"
+  ctx += Notation.Infix( "+", Precedence.plusMinus )
   ctx += hoc"f: i>i"
 
   def apply( n: Int ) =
     Proof(
-      ( "trans" -> hof"∀x∀y∀z (x=y ∧ y=z ⊃ x=z)" ) +:
+      ( "trans" -> hof"∀(x:i)∀y∀z (x=y ∧ y=z ⊃ x=z)" ) +:
         ( "congplusleft" -> hof"∀x∀y∀z (y=z ⊃ y+x = z+x)" ) +:
         ( "plus1" -> hof"∀x x + s(0) = s(x)" ) +:
         ( "fs" -> hof"∀x f(s(x)) = f(x) + s(0)" ) +:
@@ -268,11 +270,12 @@ object SumOfOnesFExampleProof extends TacticsProof with ProofSequence with Expli
   ctx += hoc"s: i>i"
   ctx += hoc"0: i"
   ctx += hoc"'+': i>i>i"
+  ctx += Notation.Infix( "+", Precedence.plusMinus )
   ctx += hoc"f: i>i"
 
   def apply( n: Int ) =
     Proof(
-      ( "trans" -> hof"∀x∀y∀z (x=y ∧ y=z ⊃ x=z)" ) +:
+      ( "trans" -> hof"∀(x:i)∀y∀z (x=y ∧ y=z ⊃ x=z)" ) +:
         ( "congsuc" -> hof"∀x ∀y (x = y ⊃ s(x) = s(y))" ) +:
         ( "plus1" -> hof"∀x x + s(0) = s(x)" ) +:
         ( "fs" -> hof"∀x f(s(x)) = f(x) + s(0)" ) +:

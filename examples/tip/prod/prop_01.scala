@@ -1,12 +1,14 @@
 package at.logic.gapt.examples.tip.prod
 
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.babel.{ Notation, Precedence }
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.gaptic._
 
 object prop_01 extends TacticsProof {
   ctx += Context.InductiveType( ty"nat", hoc"0: nat", hoc"S: nat>nat" )
   ctx += hoc"'+': nat>nat>nat"
+  ctx += Notation.Infix( "+", Precedence.plusMinus )
   ctx += hoc"d: nat>nat"
 
   val sequent =

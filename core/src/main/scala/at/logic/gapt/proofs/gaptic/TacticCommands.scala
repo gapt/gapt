@@ -2,11 +2,13 @@ package at.logic.gapt.proofs.gaptic
 
 import tactics._
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.Context.ProofNames
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.simp.SimpTactic
 import at.logic.gapt.provers.viper.aip.axioms.StandardInductionAxioms
 import at.logic.gapt.provers.viper.grammars.TreeGrammarInductionTactic
 
@@ -496,6 +498,10 @@ trait TacticCommands {
     } yield ()
   }
 
+  def include( labels: String* )( implicit ctx: Context ): Tactical[Unit] = Tactical(
+    Tactical.sequence( for ( l <- labels ) yield include( l, ProofLink( l ) ) )
+      andThen TacticalMonad.pure( () ) )
+
   /**
    * Solves the current subgoal as a first-order consequence of the background theory. This
    * closes the goal.
@@ -715,6 +721,16 @@ trait TacticCommands {
   def analyticInduction( implicit ctx: MutableContext ) = AnalyticInductionTactic(
     StandardInductionAxioms(), Escargot )
 
+  def anaInd( implicit ctx: Context ): Tactical[Unit] = {
+    implicit val mutCtx = ctx.newMutable
+    repeat( allR ) andThen AnalyticInductionTactic( StandardInductionAxioms(), Escargot.withDeskolemization )
+  }
+
+  def escrgt( implicit ctx: Context ): Tactical[Unit] = {
+    implicit val mutCtx = ctx.newMutable
+    escargot.withDeskolemization
+  }
+
   def introUnivsExcept( i: Int ): Tactical[Unit] = Tactical {
     for {
       goal <- currentGoal
@@ -725,4 +741,35 @@ trait TacticCommands {
       _ <- insert( ForallRightBlock( CutRule( newGoal, ForallLeftRule( LogicalAxiom( f ), All( xs( i ), f ) ), All( xs( i ), f ) ), q, xs ) )
     } yield ()
   }
+
+  def generalize( vs: Var* ): Tactical[Unit] = Tactical {
+    for {
+      goal <- currentGoal
+      _ <- Tactical.guard( goal.conclusion.succedent.nonEmpty, "no formula in succedent" )
+      q = goal.conclusion.succedent.head
+      q_ = All.Block( vs, q )
+      newGoal = OpenAssumption( goal.labelledSequent.updated( Suc( 0 ), goal.labelledSequent.succedent.head._1 -> q_ ) )
+      _ <- insert( CutRule( newGoal, ForallLeftBlock( LogicalAxiom( q ), q_, vs ), q_ ) )
+    } yield ()
+  }
+
+  def revert( hyps: String* ): Tactical[Unit] = Tactical {
+    for {
+      goal <- currentGoal
+      _ <- Tactical.guard( goal.conclusion.succedent.nonEmpty, "no formula in succedent" )
+      q = goal.conclusion.succedent.head
+      hypFs = goal.labelledSequent.filter( hyps contains _._1 ).map( _._2 )
+      q_ = hypFs.toNegConjunction --> q
+      newGoal = OpenAssumption( goal.labelledSequent.updated( Suc( 0 ), goal.labelledSequent.succedent.head._1 -> q_ ).
+        filterNot( hyps contains _._1 ) )
+      p <- solvePropositional( q_ +: hypFs :+ q ).toTactical
+      _ <- insert( CutRule( newGoal, p, q_ ) )
+    } yield ()
+  }
+
+  def simp( implicit ctx: Context ): SimpTactic = SimpTactic()
+
+  /** `by { tac1; tac2; ...; tacn }` solves the first goal using the provided tactic block, and fails otherwise */
+  def by: TacticBlockArgument[Tactical[Unit]] =
+    tac => tac.focused
 }

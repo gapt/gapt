@@ -3,7 +3,7 @@ package at.logic.gapt.grammars
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ folSubTerms, folTermSize }
 import at.logic.gapt.expr.hol.atoms
-import at.logic.gapt.formats.babel.{ BabelExporter, MapBabelSignature }
+import at.logic.gapt.formats.babel.{ BabelExporter, MapBabelSignature, Precedence }
 import at.logic.gapt.grammars.InductionGrammar._
 import at.logic.gapt.proofs.{ Checkable, Context }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
@@ -180,7 +180,7 @@ private class IndGExporter( unicode: Boolean, g: InductionGrammar )
 
   def csep( docs: List[Doc] ): Doc = wordwrap( docs, "," )
 
-  def showNt( nt: Var ): Doc = show( nt, false, Set(), Map(), prio.max )._1
+  def showNt( nt: Var ): Doc = show( nt, false, Set(), Map() )._1.inPrec( 0 )
   def showNt( nt: List[Var] ): Doc = csep( nt.map( showNt ) )
 
   def export: String = {
@@ -191,7 +191,7 @@ private class IndGExporter( unicode: Boolean, g: InductionGrammar )
         "Parameter: " <> showNt( g.alpha ) <> line <>
         "Quantifiers: " <> showNt( g.gamma ) <> line <>
         "Constructors: " <> csep( g.nus.toList.map {
-          case ( c, nu ) => show( c( nu ), true, Set(), knownTypes, prio.max )._1
+          case ( c, nu ) => show( c( nu ), true, Set(), knownTypes )._1.inPrec( 0 )
         } )
 
     val prods = stack( g.productions.toList
@@ -199,8 +199,8 @@ private class IndGExporter( unicode: Boolean, g: InductionGrammar )
       map { p =>
         group( csep( p.zipped.map {
           case ( a, t ) =>
-            group( group( show( a, false, Set(), knownTypes, prio.impl )._1 </> "→" ) </> nest(
-              show( t, true, Set(), knownTypes, prio.impl )._1 ) )
+            group( group( show( a, false, Set(), knownTypes )._1.inPrec( Precedence.impl ) </> "→" ) </> nest(
+              show( t, true, Set(), knownTypes )._1.inPrec( Precedence.impl ) ) )
         } ) ) <> line
       } )
 

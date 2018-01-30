@@ -347,7 +347,7 @@ prefixes make sure that the expression is of type $o$ (Boolean).  If no
 particular type is required, we default to $\iota$:
 \begin{clilisting}
 gapt> hof"!x?y!z x(z) = y(y(z))"
-res2: at.logic.gapt.expr.Formula = ∀x ∃y ∀z x(z) = y(y(z))
+res2: at.logic.gapt.expr.Formula = ∀x ∃y ∀z (x(z): i) = y(y(z): i)
 
 \end{clilisting}
 
@@ -356,7 +356,7 @@ input is of course supported as well---you can paste any of the output right
 back in:
 \begin{clilisting}
 gapt> hof"∀x ∃y ∀z x(z) = y(y(z))"
-res3: at.logic.gapt.expr.Formula = ∀x ∃y ∀z x(z) = y(y(z))
+res3: at.logic.gapt.expr.Formula = ∀x ∃y ∀z (x(z): i) = y(y(z): i)
 
 \end{clilisting}
 
@@ -933,7 +933,7 @@ The following example shows the use of the \cli{trivial} tactic to end the proof
 val axiomEx =
   Lemma(Sequent(Nil,
       Seq("D" -> fof"?x (P x -> !y P y)"))) {
-    exR(fot"c")
+    exR(fov"c")
     impR
     allR
     exR(fov"y")
@@ -956,8 +956,8 @@ work if the direction is unambiguous.
 \begin{tacticslisting}
 val eqEx = Lemma(Sequent(
     Seq("c" -> fof"P(y) & Q(y)",
-        "eq1" -> fof"u = v",
-        "eq2" -> fof"y = x",
+        "eq1" -> fof"u = (v:i)",
+        "eq2" -> fof"y = (x:i)",
         "a" -> fof"P(u) -> Q(u)"),
     Seq("b" -> fof"P(x) & Q(x)"))) {
   eql("eq1", "a").yielding(fof"P(v) -> Q(v)")
@@ -982,11 +982,11 @@ automatically removed.
 val quantEx = Lemma(Sequent(
     Seq("D" -> fof"(!x (P(x) & (?y -P(y))))"),
     Nil)) {
-  allL(fot"c")
+  allL(fot"c:i")
   andL
   exL(fov"y_0")
   negL
-  allL(fot"y_0")
+  allL(fov"y_0")
   andL
   exL(fov"y_1")
   negL
@@ -1032,20 +1032,20 @@ val cutEx = Lemma(Sequent(
 at.logic.gapt.proofs.gaptic.QedFailureException: Proof not completed. There are still 3 open sub goals:
 A: A
 :-
-C: ∃x ∃y (¬x = y ∧ f(x) = f(y))
+C: ∃x ∃y (x != y ∧ f(x) = f(y))
 I1: I(1)
 I0: I(0)
 
 I0: I(0)
 A: A
 :-
-C: ∃x ∃y (¬x = y ∧ f(x) = f(y))
+C: ∃x ∃y (x != y ∧ f(x) = f(y))
 I1: I(1)
 
 I1: I(1)
 A: A
 :-
-C: ∃x ∃y (¬x = y ∧ f(x) = f(y))
+C: ∃x ∃y (x != y ∧ f(x) = f(y))
 
   at at.logic.gapt.proofs.gaptic.Lemma$.finish(language.scala:18)
   at at.logic.gapt.proofs.gaptic.Lemma$.finish(language.scala:22)
@@ -1067,6 +1067,7 @@ ctx += Context.InductiveType("list",
 // Declare a constant denoting concatenation.
 // We will axiomatize its definition in the end-sequent.
 ctx += hoc"'+': list>list>list"
+ctx += Notation.Infix("+", Precedence.plusMinus)
 
 val catassoc =
   Lemma(
@@ -1175,8 +1176,8 @@ sequent by converting to an expansion proof:
 gapt> LKToExpansionProof(q)
 res10: at.logic.gapt.proofs.expansion.ExpansionProof =
 ∀x ∀y ((s(x:nat): nat) + (y:nat): nat) = s(x + y)
-  +^{0} (∀y s(0) + y = s(0 + y) +^{0} (s(0) + 0 = s(0 + 0))-)
-  +^{s(0)} (∀y s(s(0)) + y = s(s(0) + y) +^{0} (s(s(0)) + 0 = s(s(0) + 0))-),
+  +^{0} ∀y s(0) + y = s(0 + y) +^{0} (s(0) + 0 = s(0 + 0))-
+  +^{s(0)} ∀y s(s(0)) + y = s(s(0) + y) +^{0} (s(s(0)) + 0 = s(s(0) + 0))-,
 ∀x ((0:nat) + (x:nat): nat) = x
   +^{0} (0 + 0 = 0)-
   +^{s(0)} (0 + s(0) = s(0))-
@@ -1385,14 +1386,15 @@ expansion: at.logic.gapt.proofs.expansion.ExpansionProof =
 ∀X (X ⊃ X)
   +^{∀x ∃y (¬P(x, y) ∨ Q(x, y))}
     (∀x ∃y (¬P(x, y) ∨ Q(x, y)) +ev^{x}
-        (∃y (¬P(x, y) ∨ Q(x, y)) +^{a} (¬P(x, a)- ∨ Q(x, a)+)) ⊃
+        ∃y (¬P(x, y) ∨ Q(x, y))
+        +^{a} (¬P(x, a)- ∨ Q(x, a)+) ⊃
       ∀x ∃y (¬P(x, y) ∨ Q(x, y))
-        +^{b} (∃y (¬P(b, y) ∨ Q(b, y)) +ev^{y} (¬P(b, y)+ ∨ Q(b, y)-))),
+        +^{b} ∃y (¬P(b, y) ∨ Q(b, y)) +ev^{y} (¬P(b, y)+ ∨ Q(b, y)-)),
 ∀x ∀y (P(x, y) ⊃ Q(x, y))
-  +^{x} (∀y (P(x, y) ⊃ Q(x, y)) +^{a} (P(x, a)+ ⊃ Q(x, a)-))
+  +^{x} ∀y (P(x, y) ⊃ Q(x, y)) +^{a} (P(x, a)+ ⊃ Q(x, a)-)
 :-
 ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
-  +^{b} (∃y (¬Q(b, y) ⊃ ¬P(b, y)) +^{y} (¬Q(b, y)+ ⊃ ¬P(b, y)-))
+  +^{b} ∃y (¬Q(b, y) ⊃ ¬P(b, y)) +^{y} (¬Q(b, y)+ ⊃ ¬P(b, y)-)
 
 \end{clilisting}
 
@@ -1426,10 +1428,10 @@ in~\cite{Hetzl2013Expansion}:
 gapt> eliminateCutsET(expansion)
 res20: at.logic.gapt.proofs.expansion.ExpansionProof =
 ∀x ∀y (P(x, y) ⊃ Q(x, y))
-  +^{b} (∀y (P(b, y) ⊃ Q(b, y)) +^{a} (P(b, a)+ ⊃ Q(b, a)-))
+  +^{b} ∀y (P(b, y) ⊃ Q(b, y)) +^{a} (P(b, a)+ ⊃ Q(b, a)-)
 :-
 ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
-  +^{b} (∃y (¬Q(b, y) ⊃ ¬P(b, y)) +^{a} (¬Q(b, a)+ ⊃ ¬P(b, a)-))
+  +^{b} ∃y (¬Q(b, y) ⊃ ¬P(b, y)) +^{a} (¬Q(b, a)+ ⊃ ¬P(b, a)-)
 
 \end{clilisting}
 
@@ -1547,8 +1549,8 @@ gapt> Prover9 getExpansionProof hof"?x!y p x y -> !y?x p x y"
 res28: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(
 :-
-∃x ∀y p(x, y) +sk^{s_0} (∀y p(s_0, y) +^{s_1} p(s_0, s_1)-) ⊃
-  ∀y ∃x p(x, y) +sk^{s_1} (∃x p(x, s_1) +^{s_0} p(s_0, s_1)+))
+∃x ∀y p(x, y) +sk^{s_0} ∀y p(s_0, y) +^{s_1} p(s_0, s_1)- ⊃
+  ∀y ∃x p(x, y) +sk^{s_1} ∃x p(x, s_1) +^{s_0} p(s_0, s_1)+)
 
 \end{clilisting}
 
@@ -1606,7 +1608,7 @@ gapt> val reduction = PredicateReductionET |> ErasureReductionET
 reduction: at.logic.gapt.proofs.reduction.Reduction[at.logic.gapt.proofs.HOLSequent,at.logic.gapt.proofs.HOLSequent,at.logic.gapt.proofs.expansion.ExpansionProof,at.logic.gapt.proofs.expansion.ExpansionProof] = PredicateReductionET |> ErasureReductionET
 
 gapt> val problem = hos"!(x:a)!y x=y, !x f(f(x:b))=x :- ?y c=f(y)"
-problem: at.logic.gapt.proofs.HOLSequent = ∀x ∀y (x:a) = y, ∀x f(f(x:b): b) = x ⊢ ∃y (c:b) = f(y)
+problem: at.logic.gapt.proofs.HOLSequent = ∀x ∀y (x:a) = (y:a), ∀x f(f(x:b): b) = x ⊢ ∃y (c:b) = f(y)
 
 gapt> val (firstOrderProblem, back) = reduction forward problem
 firstOrderProblem: at.logic.gapt.proofs.HOLSequent =
@@ -1627,7 +1629,7 @@ gapt> Escargot getExpansionProof firstOrderProblem map back
 res32: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(∀x f(f(x:b): b) = x +^{c} (f(f(c)) = c)-
 :-
-∃y (c:b) = f(y:b) +^{f(c)} (c = f(f(c)))+)
+∃y (c:b) = (f(y:b): b) +^{f(c)} (c = f(f(c)))+)
 
 \end{clilisting}
 
@@ -1685,12 +1687,14 @@ gapt> val Some(expansionProof) = VeriT getExpansionProof f
 expansionProof: at.logic.gapt.proofs.expansion.ExpansionProof =
 ∀x ∀y (x = y ⊃ y = x)
   +^{a}
-    (∀y (a = y ⊃ y = a) +^{b} ((a = b)+ ⊃ (b = a)-) +^{c} ((a = c)+ ⊃ (c = a)-)),
+    ∀y (a = y ⊃ y = a)
+    +^{b} ((a = b)+ ⊃ (b = a)-)
+    +^{c} ((a = c)+ ⊃ (c = a)-),
 ∀x1 ∀y1 (x1 = y1 ∧ P(x1) ⊃ P(y1))
-  +^{b} (∀y1 (b = y1 ∧ P(b) ⊃ P(y1)) +^{a} ((b = a)+ ∧ P(b)+ ⊃ P(a)-))
-  +^{c} (∀y1 (c = y1 ∧ P(c) ⊃ P(y1)) +^{a} ((c = a)+ ∧ P(c)+ ⊃ P(a)-))
+  +^{b} ∀y1 (b = y1 ∧ P(b) ⊃ P(y1)) +^{a} ((b = a)+ ∧ P(b)+ ⊃ P(a)-)
+  +^{c} ∀y1 (c = y1 ∧ P(c) ⊃ P(y1)) +^{a} ((c = a)+ ∧ P(c)+ ⊃ P(a)-)
 :-
-(((a = b)- ∨ (a = c)-) ∧ P(c)-) ∧ P(b)- ⊃ P(a)+
+((a = b)- ∨ (a = c)-) ∧ P(c)- ∧ P(b)- ⊃ P(a)+
 
 gapt> extractInstances(expansionProof) foreach println
 a = b ⊃ b = a
@@ -1949,10 +1953,10 @@ Some(
 P(nil:list)- ∧
     (∀x ∀y ∀z (P(x) ⊃ P(cons(y:nat, cons(z:nat, x): list)))
       +^{nil}
-        (∀y ∀z (P(nil) ⊃ P(cons(y, cons(z, nil))))
-          +^{0}
-            (∀z (P(nil) ⊃ P(cons(0, cons(z, nil))))
-              +^{s(0)} (P(nil)+ ⊃ P(cons(0, cons(s(0), nil)))-)))) ⊃
+        ∀y ∀z (P(nil) ⊃ P(cons(y, cons(z, nil))))
+        +^{0}
+          ∀z (P(nil) ⊃ P(cons(0, cons(z, nil))))
+          +^{s(0)} (P(nil)+ ⊃ P(cons(0, cons(s(0), nil)))-)) ⊃
   P(cons(0, cons(s(0), nil)))+)
 
 \end{clilisting}
@@ -1989,7 +1993,7 @@ problem: at.logic.gapt.formats.tip.TipProblem =
 ∀z ∀x2 '-2'(S(z), S(x2)) = '-2'(z, x2),
 ∀y '+2'(Z, y) = y,
 ∀z ∀y '+2'(S(z), y) = S('+2'(z, y)),
-∀y0 ¬Z = S(y0)
+∀y0 Z != S(y0)
 ⊢
 ∀n ∀m '-2'(n, '+2'(n, m)) = Z
 
@@ -1997,7 +2001,7 @@ gapt> val Some(proof) = Viper(problem, ViperOptions(verbosity=0))
 proof: at.logic.gapt.proofs.lk.LKProof =
 [p169] ∀z ('-2'(S(z:Nat): Nat, #c(Z: Nat)): Nat) = S(z),
 ∀x0 ('proj1-S'(S(x0)): Nat) = x0,
-∀y0 ¬#c(Z: Nat) = S(y0),
+∀y0 #c(Z: Nat) != S(y0),
 ∀y ('+2'(#c(Z: Nat), y:Nat): Nat) = y,
 ∀y '-2'(#c(Z: Nat), y) = #c(Z: Nat),
 ∀z ∀x2 '-2'(S(z), S(x2)) = '-2'(z, x2),
@@ -2006,15 +2010,15 @@ proof: at.logic.gapt.proofs.lk.LKProof =
 ∀n ∀m '-2'(n, '+2'(n, m)) = #c(Z: Nat)    (CutRule(p21, Suc(0), p168, Ant(3)))
 [p168] ∀z ('-2'(S(z:Nat): Nat, #c(Z: Nat)): Nat) = S(z),
 ∀x0 ('proj1-S'(S(x0)): Nat) = x0,
-∀y0 ¬#c(Z: Nat) = S(y0),
+∀y0 #c(Z: Nat) != S(y0),
 (⊤ ⊃ ∀m '-2'(#c(Z: Nat), '+2'(#c(Z: Nat), m:Nat)) = #c(Z: Nat)) ∧
     ∀n_0
-      (∀m '-2'(n_0, '+2'(n_0, m)) = #c(Z: Nat) ⊃
-        ∀m '-2'(S(n_0), '+2'(S(n_0), m)) = #c(Z: Nat)) ⊃
+    (∀m '-2'(n_0, '+2'(n_0, m)) = #c(Z: Nat) ⊃
+      ∀m '-2'(S(n_0), '+2'(S(n_0), m)) = #c(Z: Nat)) ⊃
   ∀n ∀m '-2'(n, '+2'(n, m)) = #c(Z: Nat),
 ∀y '+2'(#c(Z: Nat), y) = y,
 ∀y '-2'(#c(Z: Nat), y) = #c(Z: Nat),
-∀z ...
+∀z ∀x2 ...
 
 \end{clilisting}
 
@@ -2118,19 +2122,19 @@ gapt> val et = LKToExpansionProof(acnf)
 et: at.logic.gapt.proofs.expansion.ExpansionProof =
 ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
   +^{M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))),
-      s(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))), x_3)))}
+        s(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))), x_3)))}
     ((f(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))),
-            s(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))), x_3)))) =
-        0)- ∨
+                  s(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))), x_3)))) =
+          0)- ∨
       (f(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))),
-            s(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))), x_3)))) =
-        s(0))-)
+                  s(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))), x_3)))) =
+          s(0))-)
   +^{M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))), x_3)}
     ((f(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))), x_3)) = 0)- ∨
       (f(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))), x_3)) = s(0))-)
   +^{M(s(M(x_1, x_2)), s(M(s(M(x_1, x_2)), x_3)))}
     ((f(M(s(M(x_1, x_2)), s(M(s(M(x_1, x_2)), x_3)))) = 0)- ∨
-      (f(M(s(M(x_1, x_2)), s(M(s(M(x_1, x_2)), x_3)))) = s(0))-)...
+      (f(M(s(M(x_1, x_2)), s(M(s(M(x_1, x_2)),...
 
 gapt> prooftool(et)
 
@@ -2211,7 +2215,7 @@ lang: scala.collection.immutable.IndexedSeq[at.logic.gapt.expr.FOLTerm] = Vector
 gapt> val grammar = findMinimalVTRATG(lang.toSet, 2)
 grammar: at.logic.gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
-Terminals: 0, s:i>i
+Terminals: 0, s
 
 x_0 → s(s(s(s(x_1))))
 
@@ -2239,7 +2243,7 @@ You can also find minimal sub-grammars that still generate certain terms:
 gapt> minimizeVTRATG(grammar, (1 to 5).map(Numeral(_)).toSet)
 res60: at.logic.gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
-Terminals: 0, s:i>i
+Terminals: 0, s
 
 x_0 → s(s(s(s(x_1))))
 

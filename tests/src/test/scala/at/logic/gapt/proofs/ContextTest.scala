@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs
 
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.babel.{ Notation, Precedence }
 import org.specs2.mutable.Specification
 
 class ContextTest extends Specification {
@@ -22,6 +23,7 @@ class ContextTest extends Specification {
         hoc"nil{?a}: list ?a",
         hoc"cons{?a}: ?a > list ?a > list ?a" )
       ctx += hof"'+'{?a} xs x = cons{?a} x xs"
+      ctx += Notation.Infix( "+", Precedence.plusMinus )
       ctx += Context.Sort( "i" )
       ctx ++= Seq( hoc"0: i", hoc"1: i", hoc"2: i" )
       val e = le"nil + 3 + 2 + 1: list i"
@@ -54,6 +56,7 @@ class ContextTest extends Specification {
   "recursive functions" in {
     implicit val ctx: MutableContext = MutableContext.default()
     ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    ctx += Notation.Infix( "+", Precedence.plusMinus )
     ctx += PrimRecFun( hoc"'+': nat>nat>nat", "0 + x = x", "s(x) + y = s(x + y)" )
     ctx += hof"1 = s(0)"; ctx += hof"2 = s(1)"; ctx += hof"3 = s(2)"; ctx += hof"4 = s(3)"
     ctx.normalize( le"2 + 2" ) must_== ctx.normalize( le"4" )

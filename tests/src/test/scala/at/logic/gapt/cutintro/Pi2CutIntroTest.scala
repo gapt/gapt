@@ -24,7 +24,7 @@ class Pi2CutIntroTest extends Specification {
       cut( "c", hof"!x?y P x y" )
 
       forget( "g" ); decompose
-      allL( "h", le"x" ).forget
+      allL( "h", fov"x" ).forget
       destruct( "h" )
       destruct( "h" )
       exR( le"f x" ); prop
@@ -33,9 +33,9 @@ class Pi2CutIntroTest extends Specification {
 
       forget( "h" )
       allL( le"c" ); decompose
-      allL( le"y" ); decompose
-      allL( le"y_0" ); decompose
-      exR( le"c", le"y", le"y_0", le"y_1" ).forget
+      allL( fov"y" ); decompose
+      allL( fov"y_0" ); decompose
+      exR( le"c", fov"y", fov"y_0", fov"y_1" ).forget
       prop
     }
 

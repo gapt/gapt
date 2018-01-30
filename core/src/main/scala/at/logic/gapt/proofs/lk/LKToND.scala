@@ -56,7 +56,7 @@ object LKToND {
     if ( mainFormula == subProof.endSequent( Suc( 0 ) ) ) {
       subProof
     } else {
-      val negMain = hof"-$mainFormula"
+      val negMain = -mainFormula
       if ( subProof.endSequent.antecedent.contains( negMain ) ) {
         // Negated main formula in antecedent:
         // Move it using LEM
@@ -64,11 +64,11 @@ object LKToND {
 
         val ax1 = nd.LogicalAxiom( mainFormula )
 
-        val pr2 = if ( subProof.endSequent( Suc( 0 ) ) == hof"⊥" ) {
+        val pr2 = if ( subProof.endSequent( Suc( 0 ) ) == Bottom() ) {
           BottomElimRule( subProof, mainFormula )
         } else {
           nd.ProofBuilder.
-            c( nd.LogicalAxiom( hof"-$r" ) ).
+            c( nd.LogicalAxiom( -r ) ).
             u( NegElimRule( _, subProof ) ).
             u( BottomElimRule( _, mainFormula ) ).
             qed
@@ -81,11 +81,11 @@ object LKToND {
         // Use BottomElimRule to add main formula to succedent
         val r = subProof.endSequent( Suc( 0 ) )
 
-        if ( subProof.endSequent( Suc( 0 ) ) == hof"⊥" ) {
+        if ( subProof.endSequent( Suc( 0 ) ) == Bottom() ) {
           BottomElimRule( subProof, mainFormula )
         } else {
           nd.ProofBuilder.
-            c( nd.LogicalAxiom( hof"-$r" ) ).
+            c( nd.LogicalAxiom( -r ) ).
             u( NegElimRule( _, subProof ) ).
             u( BottomElimRule( _, mainFormula ) ).
             qed
@@ -109,7 +109,7 @@ object LKToND {
    * @return The natural deduction proof after exchanging A and B.
    */
   private def exchange2( subProof: NDProof, mainFormula: Formula ): NDProof = {
-    val negMain = hof"-$mainFormula"
+    val negMain = -mainFormula
     if ( negMain == subProof.endSequent( Suc( 0 ) ) ) {
       subProof
     } else {
@@ -120,11 +120,11 @@ object LKToND {
 
         val ax1 = nd.LogicalAxiom( negMain )
 
-        val pr2 = if ( subProof.endSequent( Suc( 0 ) ) == hof"⊥" ) {
+        val pr2 = if ( subProof.endSequent( Suc( 0 ) ) == Bottom() ) {
           BottomElimRule( subProof, negMain )
         } else {
           nd.ProofBuilder.
-            c( nd.LogicalAxiom( hof"-$r" ) ).
+            c( nd.LogicalAxiom( -r ) ).
             u( NegElimRule( _, subProof ) ).
             u( BottomElimRule( _, negMain ) ).
             qed
@@ -137,11 +137,11 @@ object LKToND {
         // Use BottomElimRule to add negated main formula to succedent
         val r = subProof.endSequent( Suc( 0 ) )
 
-        if ( subProof.endSequent( Suc( 0 ) ) == hof"⊥" ) {
+        if ( subProof.endSequent( Suc( 0 ) ) == Bottom() ) {
           BottomElimRule( subProof, negMain )
         } else {
           nd.ProofBuilder.
-            c( nd.LogicalAxiom( hof"-$r" ) ).
+            c( nd.LogicalAxiom( -r ) ).
             u( NegElimRule( _, subProof ) ).
             u( BottomElimRule( _, negMain ) ).
             qed
@@ -168,7 +168,7 @@ object LKToND {
     if ( mainFormula == subProof.endSequent( Suc( 0 ) ) ) {
       subProof
     } else {
-      val negMain = hof"-$mainFormula"
+      val negMain = -mainFormula
       if ( subProof.endSequent.antecedent.contains( negMain ) ) {
         // Negated main formula in antecedent:
         // Move it using LEM
@@ -176,11 +176,11 @@ object LKToND {
 
         val ax1 = nd.LogicalAxiom( mainFormula )
 
-        val pr2 = if ( subProof.endSequent( Suc( 0 ) ) == hof"⊥" ) {
+        val pr2 = if ( subProof.endSequent( Suc( 0 ) ) == Bottom() ) {
           BottomElimRule( subProof, mainFormula )
         } else {
           nd.ProofBuilder.
-            c( nd.LogicalAxiom( hof"$r" ) ).
+            c( nd.LogicalAxiom( r ) ).
             u( NegElimRule( subProof, _ ) ).
             u( BottomElimRule( _, mainFormula ) ).
             qed
@@ -193,11 +193,11 @@ object LKToND {
         // Use BottomElimRule to add main formula to succedent
         val Neg( r ) = subProof.endSequent( Suc( 0 ) )
 
-        if ( subProof.endSequent( Suc( 0 ) ) == hof"⊥" ) {
+        if ( subProof.endSequent( Suc( 0 ) ) == Bottom() ) {
           BottomElimRule( subProof, mainFormula )
         } else {
           nd.ProofBuilder.
-            c( nd.LogicalAxiom( hof"$r" ) ).
+            c( nd.LogicalAxiom( r ) ).
             u( NegElimRule( subProof, _ ) ).
             u( BottomElimRule( _, mainFormula ) ).
             qed
@@ -229,14 +229,14 @@ object LKToND {
         def handleSuccedent( seq: Vector[Formula], toProve: Formula ): NDProof = {
           if ( seq.size == 1 ) {
             nd.ProofBuilder.
-              c( nd.LogicalAxiom( hof"-${seq.last}" ) ).
+              c( nd.LogicalAxiom( -seq.last ) ).
               c( nd.LogicalAxiom( seq.last ) ).
               b( NegElimRule( _, _ ) ).
               u( BottomElimRule( _, toProve ) ).
               qed
           } else {
             nd.ProofBuilder.
-              c( nd.LogicalAxiom( hof"-${seq.last}" ) ).
+              c( nd.LogicalAxiom( -seq.last ) ).
               c( nd.LogicalAxiom( Or( seq ) ) ).
               c( handleSuccedent( seq.reverse.tail.reverse, seq.last ) ).
               c( nd.LogicalAxiom( seq.last ) ).
@@ -272,7 +272,7 @@ object LKToND {
         nd.TopIntroRule()
 
       case BottomAxiom =>
-        nd.LogicalAxiom( hof"⊥" )
+        nd.LogicalAxiom( Bottom() )
 
       // Structural rules
       case WeakeningLeftRule( subProof, formula ) =>
@@ -289,10 +289,10 @@ object LKToND {
             ndProof.endSequent.filter( _ == f ).size ) )
             ndProof
           else
-            exchange( WeakeningRule( ndProof, hof"-$formula" ), p.mainFormula )
+            exchange( WeakeningRule( ndProof, -formula ), p.mainFormula )
         } else {
           // simply weaken with negated formula on the left
-          WeakeningRule( translate( subProof, focus.map( p.getSequentConnector.parent ) ), hof"-$formula" )
+          WeakeningRule( translate( subProof, focus.map( p.getSequentConnector.parent ) ), -formula )
         }
 
       case p @ ContractionLeftRule( subProof, aux1, aux2 ) =>
@@ -303,7 +303,7 @@ object LKToND {
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
           val l = subProof.endSequent( aux1 )
           val t = translate( subProof, Some( aux1 ) )
-          val il = t.endSequent.indexOf( hof"-$l", Polarity.InAntecedent )
+          val il = t.endSequent.indexOf( -l, Polarity.InAntecedent )
           nd.ProofBuilder.
             c( nd.LogicalAxiom( l ) ).
             c( t ).
@@ -617,7 +617,7 @@ object LKToND {
         val t = translate( subProof, focus )
         val partialProof = nd.ProofBuilder.
           c( exchange2( t, subProof.endSequent( aux ) ) ).
-          u( nd.DefinitionRule( _, hof"-$main" ) ).
+          u( nd.DefinitionRule( _, -main ) ).
           qed
         exchange3( partialProof, t.endSequent( Suc( 0 ) ) )
 

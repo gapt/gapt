@@ -46,7 +46,7 @@ class EpsilonProofTest extends Specification with SatMatchers {
     ctx += Context.InductiveType( ty"list ?a", hoc"nil{?a} : list ?a", hoc"cons{?a} : ?a > list ?a > list ?a" )
     ctx += hoc"P{?a}: list ?a > o"
     ctx += Context.Sort( "i" ) // TODO(gabriel): escargot fails when proving the goal with list ?a
-    val f = hof"!xs!x (P xs -> P (cons x xs)) -> P nil -> !x P (cons x nil : list i)"
+    val f = hof"!xs!(x:i) (P xs -> P (cons x xs)) -> P (nil: list i) -> !x P (cons x nil : list i)"
     Escargot.getEpsilonProof( f ) must beLike {
       case Some( p ) =>
         p.deep must beValidSequent

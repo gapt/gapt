@@ -1,13 +1,16 @@
 package at.logic.gapt.examples
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Context, Sequent }
+import at.logic.gapt.formats.babel.{ Notation, Precedence }
+import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.gaptic._
 
 object primediv extends TacticsProof {
   ctx += Context.Sort( "nat" )
   ctx += hoc"'*': nat>nat>nat"
+  ctx += Notation.Infix( "*", Precedence.timesDiv )
   ctx += hoc"1: nat"
   ctx += hoc"'<': nat>nat>o"
+  ctx += Notation.Infix( "<", Precedence.infixRel )
 
   val theory = hols"""
       assoc: ∀x∀y∀z x*(y*z) = (x*y)*z,
@@ -19,6 +22,7 @@ object primediv extends TacticsProof {
   ctx += hof"LNP = (∀X (∃y X y ⊃ ∃y (X y ∧ ∀z (z < y ⊃ ¬X z))))"
   ctx += hof"IND = (∀X ((∀y (∀z (z < y ⊃ X z) ⊃ X y)) ⊃ ∀y X y))"
   ctx += hof"D w y = (∃z w*z = y)"
+  ctx += Notation.Infix( ">", Precedence.infixRel )
   ctx += hof"(x > y) = (y < x)"
   ctx += hof"PRIME w = (w > 1 ∧ ∀z (D z w ⊃ z=1 ∨ z=w))"
   ctx += hof"PD w y = (PRIME w ∧ D w y)"

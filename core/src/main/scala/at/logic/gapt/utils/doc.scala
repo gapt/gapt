@@ -59,6 +59,14 @@ sealed trait Doc {
     out.result()
   }
 
+  def firstChar: Option[Char] = this match {
+    case Concat( a, _ ) => a.firstChar
+    case Nest( _, d )   => d.firstChar
+    case Text( t )      => t.headOption
+    case Line( _ )      => None
+    case Group( a )     => a.firstChar
+  }
+
 }
 
 object Doc {
