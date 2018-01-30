@@ -1,16 +1,15 @@
 package at.logic.gapt.examples.theories
 
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.babel.Precedence
 import at.logic.gapt.proofs.gaptic._
 
 object nat extends Theory( logic, props ) {
   indTy( ty"nat", hoc"0: nat", hoc"s: nat>nat" )
 
-  infix( "+", 24 )
-  infix( "-", 24 )
-  infix( "*", 26 )
-  infix( "<=", 22 )
-  infix( "<", 22 )
+  infix( "+", Precedence.plusMinus ); infix( "-", Precedence.plusMinus )
+  infix( "*", Precedence.timesDiv )
+  infix( "<=", Precedence.infixRel ); infix( "<", Precedence.infixRel )
 
   fun( hoc"p: nat>nat", "p(s(x)) = x", "p(0) = 0" )
   fun( hoc"'+': nat>nat>nat", "x+0 = x", "x+s(y)=s(x+y)" )
@@ -181,21 +180,23 @@ object natdivision extends Theory( natorder ) {
     generalize( hov"r1:nat", hov"r2:nat", hov"d1:nat", hov"d2:nat" ); induction( hov"a:nat" ); escrgt
     repeat( allR ); induction( hov"r1: nat" ).onAll( induction( hov"r2: nat" ) ).onAll( escrgt )
   }
-  infix( "/", 26 )
+  infix( "/", Precedence.timesDiv )
+  infix( "%", Precedence.timesDiv, const = "mod" )
   indfn( "/", hof"!a!b?d (b!=0 -> ?r (r<b & d*b+r=a))" ) { include( "divmodgtot" ); escrgt }
   indfn( "mod", hof"!a!b?r (b!=0 -> r<b & (a/b)*b+r=a)" ) { include( "div" ); escrgt }
-  val divmod = lemma( hof"b!=0 | 0<b -> mod(a,b)<b & (a/b)*b+mod(a,b)=a", "simp" ) { include( "mod", "lt0r" ); escrgt }
-  val divmoduniq = lemma( hof"r<b & d*b+r=a -> a/b=d & mod a b=r" ) { include( "divmod", "lt0r", "divmodgpfn" ); escrgt }
-  val divmodiff = lemma( hof"r<b & d*b+r=a <-> b!=0 & d=a/b & r=mod a b" ) { include( "divmod", "divmoduniq", "lt0r" ); escrgt }
-  val divmodlt = lemma( hof"a<b -> a/b=0 & mod a b = a", "simp" ) { include( "divmodiff", "mul0l", "add0l" ); escrgt }
-  val divmod0 = lemma( hof"b!=0 -> 0/b=0 & mod 0 b = 0", "simp" ) { include( "divmodlt", "sor0", "lt0s" ); escrgt }
-  val divmodge = lemma( hof"b!=0&b<=a -> a/b=s((a-b)/b) & mod a b = mod (a-b) b", "simp" ) {
+  val divmod = lemma( hof"b!=0 | 0<b -> a%b<b & (a/b)*b+a%b=a", "simp" ) { include( "mod", "lt0r" ); escrgt }
+  println( divmod.formula.toSigRelativeString )
+  val divmoduniq = lemma( hof"r<b & d*b+r=a -> a/b=d & a%b=r" ) { include( "divmod", "lt0r", "divmodgpfn" ); escrgt }
+  val divmodiff = lemma( hof"r<b & d*b+r=a <-> b!=0 & d=a/b & r=a%b" ) { include( "divmod", "divmoduniq", "lt0r" ); escrgt }
+  val divmodlt = lemma( hof"a<b -> a/b=0 & a%b = a", "simp" ) { include( "divmodiff", "mul0l", "add0l" ); escrgt }
+  val divmod0 = lemma( hof"b!=0 -> 0/b=0 & 0%b = 0", "simp" ) { include( "divmodlt", "sor0", "lt0s" ); escrgt }
+  val divmodge = lemma( hof"b!=0&b<=a -> a/b=s((a-b)/b) & a%b = (a-b)%b", "simp" ) {
     impR
     include( "divmoduniq" ); chain( "divmoduniq" ) onAll forget( "divmoduniq" ); simp.h
-    cut( "", hof"(a - b) / b * b + mod(a - b, b) + b = a" ); by { forget( "g_1" ); simp.h }
+    cut( "", hof"(a-b)/b*b + (a-b)%b + b = a" ); by { forget( "g_1" ); simp.h }
     simp.h; include( "addassoc", "addcomm" ); escrgt
   }
-  val divmodmul = lemma( hof"b!=0 -> (b*a)/b=a & mod(b*a,b)=0", "simp" ) {
+  val divmodmul = lemma( hof"b!=0 -> (b*a)/b=a & (b*a)%b=0", "simp" ) {
     decompose; include( "divmoduniq" ); chain( "divmoduniq" ) onAll forget( "divmoduniq" )
     simp.h.on( "g_1" ); include( "mulcomm", "add" ); escrgt
   }
@@ -203,7 +204,7 @@ object natdivision extends Theory( natorder ) {
 
 object natdivisible extends Theory( natdivision ) {
   dfn( hof"dvd x y = (?z y = x*z)" )
-  val dvdmod = lemma( hof"x!=0 -> dvd x y <-> mod(y,x)=0" ) {
+  val dvdmod = lemma( hof"x!=0 -> dvd x y <-> y%x=0" ) {
     simp.w( "dvd" ); decompose; andR onAll impR; decompose; simp.h
     exR( le"y/x" ).forget; simp.h; include( "divmod", "mulcomm", "add" ); escrgt
   }
@@ -256,7 +257,7 @@ object natdivisible extends Theory( natdivision ) {
     }
   }
 
-  val muldiv = lemma( hof"y!=0 & mod x y = 0 -> y*(x/y)=x", "simp" ) { include( "mod", "mulcomm", "add" ); escrgt }
+  val muldiv = lemma( hof"y!=0 & x%y=0 -> y*(x/y)=x", "simp" ) { include( "mod", "mulcomm", "add" ); escrgt }
 
   val dvdprime__ = lemma( hof"prime y -> y*z=x*(y*w) <-> z=x*w" ) {
     include( "mulcomm", "mulinjr", "mulassoc", "mulcomm", "notprime0" ); escrgt
@@ -289,18 +290,18 @@ object natdivisible extends Theory( natdivision ) {
 
     cut( "yx", hof"~dvd y x" ); by { negR( "yx" ); simp.w( "prime" ).on( "g_0" ); escrgt }
 
-    cut( "m0", hof"mod x y != 0" ); by { simp.w( "dvd" ).on( "yx" ); allL( "yx", le"x/y" ).forget; simp.h.on( "yx" ) }
+    cut( "m0", hof"x%y != 0" ); by { simp.w( "dvd" ).on( "yx" ); allL( "yx", le"x/y" ).forget; simp.h.on( "yx" ) }
 
-    cut( "a1", hof"y*z = ((x/y)*y + mod(x,y))*a" ); by { include( "mod" ); escrgt }
-    cut( "a2", hof"y*z - ((x/y)*y)*a = mod(x,y)*a" ); by { include( "addmul", "addcomm", "subadd" ); escrgt }
-    cut( "a3", hof"y*(z - (x/y)*a) = mod(x,y)*a" ); by { include( "mulsub", "mulcomm", "mulassoc" ); escrgt }
+    cut( "a1", hof"y*z = ((x/y)*y + x%y)*a" ); by { include( "mod" ); escrgt }
+    cut( "a2", hof"y*z - ((x/y)*y)*a = (x%y)*a" ); by { include( "addmul", "addcomm", "subadd" ); escrgt }
+    cut( "a3", hof"y*(z - (x/y)*a) = (x%y)*a" ); by { include( "mulsub", "mulcomm", "mulassoc" ); escrgt }
 
-    cut( "dam", hof"dvd y (mod x y * a)" ); by { simp.w( "dvd" ).on( "dam" ); exR( "dam", le"z - (x/y)*a" ).forget; quasiprop }
+    cut( "dam", hof"dvd y (x%y * a)" ); by { simp.w( "dvd" ).on( "dam" ); exR( "dam", le"z - (x/y)*a" ).forget; quasiprop }
 
-    allL( "g_1_0", le"y:nat", le"mod x y", le"a:nat" ).forget; simp.h.on( "g_1_0" )
+    allL( "g_1_0", le"y:nat", le"x%y", le"a:nat" ).forget; simp.h.on( "g_1_0" )
 
-    cut( "mxyy", hof"mod x y < y" ); by { include( "mod" ); escrgt }
-    cut( "ymxy", hof"y <= mod x y" ); by { simp.h.w( "dvdle" ).on( "ymxy" ) }
+    cut( "mxyy", hof"x%y < y" ); by { include( "mod" ); escrgt }
+    cut( "ymxy", hof"y <= x%y" ); by { simp.h.w( "dvdle" ).on( "ymxy" ) }
 
     simp.w( "lt", "lesl" ).on( "mxyy" ); include( "leantisymm" ); escrgt
   }
