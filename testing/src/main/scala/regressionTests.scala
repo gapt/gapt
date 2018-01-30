@@ -26,6 +26,8 @@ import at.logic.gapt.provers.viper.grammars.EnumeratingInstanceGenerator
 import at.logic.gapt.provers.viper.{ Viper, ViperOptions }
 import at.logic.gapt.utils._
 import EitherHelpers._
+import at.logic.gapt.examples.theories.Theory
+import at.logic.gapt.proofs.Context.ProofNames
 
 import scala.concurrent.duration._
 import scala.util.Random
@@ -99,6 +101,69 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
       case InductionRule( _, _, _ ) => false
       case _                        => true
     }
+}
+
+object TheoryTestCase {
+  import at.logic.gapt.examples.theories._
+  object AllTheories extends Theory(
+    logic,
+    props,
+    nat,
+    natdivisible,
+    natdivision,
+    natorder,
+    list,
+    listlength,
+    listfold,
+    listdrop,
+    natlists,
+    fta )
+}
+class TheoryTestCase( name: String ) extends RegressionTestCase( name ) {
+  override def timeout = Some( 2 minutes )
+
+  override protected def test( implicit testRun: TestRun ): Unit = {
+    import TheoryTestCase.AllTheories._
+    val lemmaHandle = LemmaHandle( ctx.get[ProofNames].names( name )._1 )
+    val proof = lemmaHandle.proof --- "proof"
+
+    LKToND( proof ) --? "LKToND"
+
+    LKToExpansionProof( proof ) --? "LKToExpansionProof" foreach { expansion =>
+      deskolemizeET( expansion ) --? "deskolemization" foreach { desk =>
+        desk.shallow.isSubsetOf( expansion.shallow ) !-- "shallow sequent of deskolemization"
+        Z3.isValid( desk.deep ) !-- "deskolemized deep formula validity"
+        ExpansionProofToLK( desk ).get --? "ExpansionProofToLK on deskolemization" foreach { deskLK =>
+          deskLK.conclusion.isSubsetOf( proof.conclusion ) !-- "conclusion of ExpansionProofToLK"
+          ctx.check( deskLK ) --? "context check of ExpansionProofToLK"
+          LKToND( deskLK ) --? "LKToND (deskolemization)"
+        }
+      }
+    }
+
+    val All.Block( variables, _ ) = proof.endSequent.succedent.head
+    val instanceTerms = new EnumeratingInstanceGenerator( variables.map( _.ty.asInstanceOf[TBase] ), ctx ).
+      generate( lower = 2, upper = 3, num = 1 ).head --- "random instance term"
+    val instProof = instanceProof( proof, instanceTerms )
+
+    {
+      implicit val mctx: MutableContext = ctx.newMutable
+      val proofName @ Apps( proofNameC @ Const( proofNameStr, _, _ ), _ ) =
+        Atom( mctx.newNameGenerator.fresh( "proof" ), variables )
+      ArithmeticInductionToSchema( proof, proofName ) --? "induction to schema" foreach { _ =>
+        ProofLink( proofName ) --? "create schema proof link"
+        instantiateProof.Instantiate( proofNameC( instanceTerms ) ) --? "schema instance"
+        SchematicStruct( proofNameStr ).get --? "schematic struct" foreach { schemaStruct =>
+          CharFormPRP.PR( CharFormPRP( schemaStruct ) ) --? "characteristic formula"
+          InstanceOfSchematicStruct( CLS( proofNameC( instanceTerms ), proof.endSequent.map( _ => false ) ), schemaStruct ) --? "struct instance"
+        }
+      }
+    }
+
+    ReductiveCutElimination.eliminateInduction( instProof ) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
+      indFreeProof.endSequent.multiSetEquals( instProof.endSequent ) !-- "induction elimination does not modify end-sequent"
+    }
+  }
 }
 
 class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile.getName ) {
@@ -232,8 +297,15 @@ object RegressionTests extends scala.App {
   def veritTestCases = veritProofs map { fn => new VeriTTestCase( fn.toIO ) }
   def tptpTestCases = tptpProblems.map { fn => new TptpTestCase( fn.toIO ) }
   def tipTestCases = tipProblems.map { fn => new TipTestCase( fn.toIO ) }
+  def theoryTestCases = TheoryTestCase.AllTheories.allProofs.map( _._1 ).map( new TheoryTestCase( _ ) )
 
-  def allTestCases = prover9TestCases ++ leancopTestCases ++ veritTestCases ++ tptpTestCases ++ tipTestCases
+  def allTestCases =
+    prover9TestCases ++
+      leancopTestCases ++
+      veritTestCases ++
+      tptpTestCases ++
+      tipTestCases ++
+      theoryTestCases
 
   def findTestCase( pat: String ) = allTestCases.find( _.toString.contains( pat ) ).get
 
