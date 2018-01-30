@@ -13,6 +13,7 @@ lazy val commonSettings = Seq(
   licenses += ( "GPL-3.0" -> url( "http://www.gnu.org/licenses/gpl-3.0.html" ) ),
   startYear := Some( 2008 ),
   version := Version,
+  autoAPIMappings := true,
 
   scmInfo := Some( ScmInfo(
     browseUrl = url( "https://github.com/gapt/gapt" ),
@@ -73,7 +74,6 @@ lazy val root = project.in( file( "." ) ).
     includeFilter in ( BuildSbtConfig, scalariformFormat ) := ( "*.sbt": FileFilter ),
 
     apiURL := Some( url( "https://logic.at/gapt/api/" ) ),
-    autoAPIMappings := true,
     scalacOptions in ( ScalaUnidoc, unidoc ) ++= Seq(
       "-doc-title", "gapt",
       "-doc-version", version.value,

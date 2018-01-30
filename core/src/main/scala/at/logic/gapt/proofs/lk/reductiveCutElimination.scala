@@ -212,8 +212,7 @@ class ReductiveCutElimination {
    */
   def unfoldInductions( proof: LKProof, cleanStructRules: Boolean = true )( implicit ctx: Context ): LKProof = {
 
-    /**
-     * Reduces a given induction inference.
+    /* Reduces a given induction inference.
      * @param proof The induction to be reduced
      * @return A proof and a sequent connector obtained by applying an induction unfolding, or None
      *         if the inference rule is not an induction inference with induction term in constructor form.
@@ -224,8 +223,7 @@ class ReductiveCutElimination {
       case _ => None
     }
 
-    /**
-     * @return Returns true if and only if there is no more induction inference to be unfolded.
+    /* @return Returns true if and only if there is no more induction inference to be unfolded.
      */
     def terminateReduction( global: LKProof ): Boolean = {
       !global.subProofs.exists( reduction( _ ).nonEmpty )
@@ -895,7 +893,7 @@ object inductionUnfoldingReduction {
   /**
    * Tries to apply the reduction.
    *
-   * @param induction See [[inductionUnfoldingReduction.apply(induction: InductionRule)]]
+   * @param induction See `inductionUnfoldingReduction$.apply(induction:InductionRule)(ctx:Context):Option[LKProof]`
    * @param ctx Defines constants, types, etc.
    * @return If the induction rule could be unfolded a proof of the same end-sequent and a sequent connector
    *         is returned, otherwise None is returned.
@@ -908,7 +906,7 @@ object inductionUnfoldingReduction {
    * @param proof The induction unfolding reduction is tried to applied to the last inference of this proof.
    * @param ctx Defines constants, types, etc.
    * @return None if the proof does not end with an induction inference, otherwise see
-   *         [[inductionUnfoldingReduction.apply(induction: InductionRule)]].
+   *         `inductionUnfoldingReduction.apply(InductionRule)(Context): Option[LKProof]`.
    */
   def apply( proof: LKProof )( implicit ctx: Context ): Option[LKProof] = proof match {
     case ind @ InductionRule( _, _, _ ) => apply( ind )

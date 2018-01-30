@@ -11,8 +11,8 @@ import at.logic.gapt.utils.logger._
  * Sometimes, types have to be guessed and the code is poorly tested, so it is unclear
  * how general it is. It works (and is necessary) during the acnf creation of the n-tape proof.
  *
- * To extract a signature, use the [[undoHol2Fol.getSignature]], to to the back translation use
- * [[undoHol2Fol.backtranslate]].
+ * To extract a signature, use the `undoHol2Fol.getSignature`, to to the back translation use
+ * `undoHol2Fol.backtranslate`.
  */
 object undoHol2Fol {
   type Signature = ( Map[String, Set[Const]], Map[String, Set[Var]] )

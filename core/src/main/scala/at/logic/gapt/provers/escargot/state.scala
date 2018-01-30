@@ -67,7 +67,7 @@ class Cls( val state: EscargotState, val proof: ResolutionProof, val index: Int 
  * but the subsumed clauses in usable are returned as discarded.
  *
  * Avatar splitting: Escargot employs the Avatar splitting regime [2].  Clauses are annotated with
- * propositional assertions, see [[ResolutionProof]] for the syntax.  We always have a propositional
+ * propositional assertions, see [[at.logic.gapt.proofs.resolution.ResolutionProof]] for the syntax.  We always have a propositional
  * model (avatarModel), and only consider clauses whose assertions are true in this model (called "active" here).
  * Clauses whose assertions are false in the model are stored in locked.  Whenever we derive an empty clause,
  * we call the SAT solver to obtain a model in which every empty clause has a false assertion.
