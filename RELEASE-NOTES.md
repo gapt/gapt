@@ -1,6 +1,6 @@
 # Release notes for GAPT
 
-## Version 2.9 (unreleased)
+## Version 2.9 (released on 2018-01-30)
 
 * Support for the current (yet unreleased) TIP format
 * Rewrite of the tree grammar-based induction prover
