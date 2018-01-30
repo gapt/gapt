@@ -44,6 +44,7 @@ object list extends Theory( logic ) {
   val revapp = lemma( hof"rev (app x y) = app (rev y) (rev x)" ) {
     generalize( hov"y:list?a" ); induction( hov"x:list?a" ) onAll simp.h
   }
+  val revrev = lemma( hof"rev (rev x) = x", "simp" ) { induction( hov"x:list?a" ) onAll simp.h( "revapp" ) }
   val revmap = lemma( hof"rev (map f x) = map f (rev x)" ) {
     induction( hov"x:list?a_0" ) onAll simp.h
   }
@@ -66,7 +67,7 @@ object listlength extends Theory( list, nat ) {
   val lenmap = lemma( hof"len (map f x) = len x", "simp" ) { induction( hov"x:list?a_0" ) onAll simp.h }
   val lenrev = lemma( hof"len (rev x) = len x", "simp" ) { induction( hov"x:list?a" ) onAll simp.h }
 
-  dfn( hof"cnt{?a} (x:?a) ys = len (filter ('=' x) ys)" )
+  dfn( hof"cnt{?a} (x:?a) ys = len (filter (x=) ys)" )
   val cntnil = lemma( hof"cnt x nil = 0", "simp" ) { simp.w( "cnt", "filter" ) }
   val cntconseq = lemma( hof"cnt x (cons x ys) = s (cnt x ys)", "simp" ) { simp.w( "cnt", "filter" ) }
   val cntconsne = lemma( hof"x != y -> cnt x (cons y ys) = cnt x ys", "simp" ) { decompose; simp.h( "cnt", "filter" ) }
@@ -109,6 +110,38 @@ object listlength extends Theory( list, nat ) {
   val elemnil = lemma( hof"~elem nil x", "simp" ) { simp.w( "elem" ) }
   val elemcons = lemma( hof"elem (cons y ys) x <-> (x=y | elem ys x)", "simp" ) {
     cut( "", hof"x=(y:?a)" ) onAll simp.h.w( "elem" )
+  }
+  val elemapp = lemma( hof"elem (app ys zs) x <-> elem ys x | elem zs x", "simp" ) { simp.w( "elem" ) }
+  val elemrev = lemma( hof"elem (rev ys) x <-> elem ys x", "simp" ) { simp.w( "elem" ) }
+}
+
+object listdrop extends Theory( listlength ) {
+  fun(
+    hoc"drop{?a}: nat > list?a > list?a",
+    "drop 0 xs = xs",
+    "drop (s n) xs = drop n (tail xs)" )
+  attr( "simp" )( "drop0", "drops" )
+  val dropnil = lemma( hof"drop n nil = nil", "simp" ) { induction( hov"n:nat" ) onAll simp }
+  val dropdrop = lemma( hof"drop m (drop n xs) = drop (m+n) xs", "simp" ) {
+    generalize( hov"xs:list?a" ); induction( hov"n:nat" ) onAll simp.h
+  }
+
+  fun(
+    hoc"take{?a}: nat > list?a > list?a",
+    "take 0 xs = nil",
+    "take (s n) xs = ite (xs=nil) nil (cons (head xs) (take n (tail xs)))" )
+  attr( "simp" )( "take0" )
+  val takenil = lemma( hof"take n nil = nil", "simp" ) { induction( hov"n:nat" ) onAll simp.w( "takes" ) }
+  val takecons = lemma( hof"take (s n) (cons x xs) = cons x (take n xs)", "simp" ) { simp.w( "takes" ) }
+
+  val takedrop = lemma( hof"app (take n xs) (drop n xs) = xs" ) {
+    generalize( hov"xs:list?a" ); induction( hov"n:nat" ) onAll allR; by( simp ); by {
+      induction( hov"xs:list?a" ); by( simp ); forget( "IHxs_0" ); by( simp.h )
+    }
+  }
+  val droptake = lemma( hof"drop n (take n xs) = nil", "simp" ) {
+    generalize( hov"xs:list?a" ); induction( hov"n:nat" ); by( simp ); allR; induction( hov"xs:list?a" ); by( simp )
+    forget( "IHxs_0" ); by { simp.h }
   }
 }
 
