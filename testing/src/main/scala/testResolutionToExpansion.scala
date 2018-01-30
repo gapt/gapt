@@ -8,10 +8,11 @@ import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.{ Context, MutableContext }
 import at.logic.gapt.provers.prover9.Prover9Importer
-import at.logic.gapt.utils.LogHandler
+import at.logic.gapt.utils.{ LogHandler, Logger }
 
 object testResolutionToExpansion extends scala.App {
-  import at.logic.gapt.utils.logger._
+  val logger = Logger( "testResolutionToExpansion" )
+  import logger._
 
   val metricsPrinter = new MetricsPrinter
   LogHandler.current.value = metricsPrinter

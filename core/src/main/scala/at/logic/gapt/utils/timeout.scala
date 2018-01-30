@@ -23,6 +23,8 @@ class TimeOutException( cause: Throwable, val duration: Duration )
  * }
  */
 object withTimeout {
+  val logger = Logger( "withTimeout" )
+
   @deprecated( "Use Durations as argument", "2015-05-15" )
   def apply[T]( to: Long )( f: => T ): T = apply( to millis )( f )
 

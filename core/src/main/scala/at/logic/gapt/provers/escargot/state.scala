@@ -7,7 +7,9 @@ import at.logic.gapt.proofs.{ HOLClause, HOLSequent, MutableContext, Sequent }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.escargot.{ LPO, TermOrdering }
 import at.logic.gapt.provers.sat.Sat4j
-import at.logic.gapt.utils.logger._
+import at.logic.gapt.utils.Logger
+
+object EscargotLogger extends Logger( "escargot" ); import EscargotLogger._
 
 import scala.collection.mutable
 
@@ -224,7 +226,7 @@ class EscargotState( val ctx: MutableContext ) {
           return Some( cls.proof )
         Sat4j.solve( emptyClauses.keys ) match {
           case Some( newModel ) =>
-            debug( s"sat splitting model: ${avatarModel.trueAtoms.toSeq.sortBy( _.toString ).mkString( ", " )}".replace( '\n', ' ' ) )
+            info( s"sat splitting model: ${avatarModel.trueAtoms.toSeq.sortBy( _.toString ).mkString( ", " )}".replace( '\n', ' ' ) )
             switchToNewModel( newModel )
           case None =>
             return Some( emptyClauses.get( Sequent() ).map( _.proof ).getOrElse {
@@ -240,7 +242,7 @@ class EscargotState( val ctx: MutableContext ) {
 
       val discarded = inferenceComputation( given )
 
-      debug( s"[wo=${workedOff.size},us=${usable.size}] ${if ( discarded ) "discarded" else "kept"}: $given".replace( '\n', ' ' ) )
+      info( s"[wo=${workedOff.size},us=${usable.size}] ${if ( discarded ) "discarded" else "kept"}: $given".replace( '\n', ' ' ) )
 
       preprocessing()
       clauseProcessing()

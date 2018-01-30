@@ -3,7 +3,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ folSubTerms, thresholds }
 import at.logic.gapt.expr.hol.{ lcomp, simplify, toNNF }
 import at.logic.gapt.provers.maxsat.MaxSATSolver
-import at.logic.gapt.utils.logger
+import at.logic.gapt.utils.Logger
 
 /**
  * This is a slightly batshit insane and completely wrong formalization of grammars for proofs with a single Π₂-cut.
@@ -88,6 +88,8 @@ object stablePi2Grammar {
 }
 
 object minimizePi2Grammar {
+  val logger = Logger( "minimizePi2Grammar" )
+
   def apply( g: Pi2PreGrammar, lang: Traversable[Expr], solver: MaxSATSolver ): Option[Pi2Grammar] = {
     def prodinc( p: ( Var, Expr ) ): Atom = Atom( "prodinc2", p._1, p._2 )
 
@@ -149,6 +151,8 @@ object minimizePi2Grammar {
 }
 
 object findMinimalPi2Grammar {
+  val logger = minimizePi2Grammar.logger
+
   def apply( lang: Traversable[Expr], alpha: Var, betas: Vector[Var], solver: MaxSATSolver ): Option[Pi2Grammar] = {
     require( freeVariables( lang ).isEmpty )
     val startSymbol = rename( Var( "x0", lang.head.ty ), alpha +: betas )

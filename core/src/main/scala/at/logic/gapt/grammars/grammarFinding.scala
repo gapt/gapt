@@ -5,7 +5,7 @@ import at.logic.gapt.expr.fol.folSubTerms
 import at.logic.gapt.expr.fol.thresholds._
 import at.logic.gapt.expr.hol.{ atoms, lcomp, simplify, toNNF }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
-import at.logic.gapt.utils.logger
+import at.logic.gapt.utils.Logger
 
 import scala.collection.{ GenTraversable, mutable }
 
@@ -178,6 +178,8 @@ object stableVTRATG {
 }
 
 object minimizeVTRATG {
+  val logger = Logger( "minimizeVTRATG" )
+
   def apply( g: VTRATG, lang: Set[Expr], maxSATSolver: MaxSATSolver = bestAvailableMaxSatSolver,
              weight: VTRATG.Production => Int = _ => 1 ): VTRATG = {
     val formula = new VectGrammarMinimizationFormula( g )
@@ -210,6 +212,8 @@ object VtratgParameter {
 }
 
 object findMinimalVTRATG {
+  val logger = minimizeVTRATG.logger
+
   def apply( lang: Set[Expr], aritiesOfNonTerminals: VtratgParameter,
              maxSATSolver: MaxSATSolver             = bestAvailableMaxSatSolver,
              weight:       VTRATG.Production => Int = _ => 1 ) = {

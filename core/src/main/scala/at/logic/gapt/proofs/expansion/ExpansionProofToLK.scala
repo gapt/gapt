@@ -4,6 +4,7 @@ import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
 import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.utils.quiet
 
 object ExpansionProofToLK extends ExpansionProofToLK( Escargot.getAtomicLKProof ) {
   def withTheory( implicit ctx: Context ) = new ExpansionProofToLK( FOTheoryMacroRule.option( _ ) )
@@ -52,7 +53,7 @@ class ExpansionProofToLK(
   }
 
   private def tryTheory( theory: Theory, expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
-    theorySolver( expSeq collect { case ETAtom( atom, _ ) => atom } ).map {
+    quiet( theorySolver( expSeq collect { case ETAtom( atom, _ ) => atom } ) ).map {
       Right( _ )
     }
 

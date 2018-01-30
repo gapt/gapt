@@ -6,7 +6,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ HOLSequent, Sequent, SequentConnector, SequentIndex }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.formats.babel.BabelSignature
-import at.logic.gapt.utils.NameGenerator
+import at.logic.gapt.utils.{ Logger, NameGenerator }
 import cats.syntax.all._
 import cats.instances.all._
 
@@ -286,6 +286,25 @@ trait Tactical[+T] { self =>
       at.logic.gapt.utils.verbose { self( proofState ) }
 
     override def toString: String = s"${self.toString}.verbose"
+  }
+  def verboseOnly( loggers: Logger* ): Tactical[T] = new Tactical[T] {
+    override def apply( proofState: ProofState ) =
+      at.logic.gapt.utils.verbose.only( loggers: _* ) { self( proofState ) }
+
+    override def toString: String = s"${self.toString}.verboseOnly(${loggers.mkString( "," )})"
+  }
+
+  def quiet: Tactical[T] = new Tactical[T] {
+    override def apply( proofState: ProofState ) =
+      at.logic.gapt.utils.quiet { self( proofState ) }
+
+    override def toString: String = s"${self.toString}.quiet"
+  }
+  def quietOnly( loggers: Logger* ): Tactical[T] = new Tactical[T] {
+    override def apply( proofState: ProofState ) =
+      at.logic.gapt.utils.quiet.only( loggers: _* ) { self( proofState ) }
+
+    override def toString: String = s"${self.toString}.quietOnly(${loggers.mkString( "," )})"
   }
 }
 object Tactical {

@@ -11,7 +11,10 @@ import at.logic.gapt.proofs.sketch.RefutationSketchToResolution
 import at.logic.gapt.provers.{ ResolutionProver, renameConstantsToFi }
 import at.logic.gapt.utils._
 
-object EProver extends EProver( Seq() )
+object EProver extends EProver( Seq() ) {
+  val logger = Logger( "eprover" )
+}
+import EProver.logger
 class EProver( extraArgs: Seq[String] ) extends ResolutionProver with ExternalProgram {
   override def getResolutionProof( seq: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] =
     renameConstantsToFi.wrap( seq.toSeq )(

@@ -3,7 +3,7 @@ package at.logic.gapt.expr.fol
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.{ Ti, To, Ty }
 import at.logic.gapt.proofs.SequentProof
-import at.logic.gapt.utils.logger._
+import at.logic.gapt.utils.Logger
 
 /**
  * This is implements some heuristics to convert a fol formula obtained by
@@ -15,6 +15,8 @@ import at.logic.gapt.utils.logger._
  * `undoHol2Fol.backtranslate`.
  */
 object undoHol2Fol {
+  val logger = Logger( "undoHol2fol" )
+
   type Signature = ( Map[String, Set[Const]], Map[String, Set[Var]] )
 
   /**
@@ -109,7 +111,7 @@ object undoHol2Fol {
         val head = sig_consts( name )( 0 ) //we have to pick a candidate somehow, lets go for the first
         head
       case Var( ivy_varname( name ), Ti ) =>
-        debug( "Guessing that the variable " + name + " comes from ivy, assigning type i." )
+        logger.debug( "Guessing that the variable " + name + " comes from ivy, assigning type i." )
         Var( name, Ti ).asInstanceOf[Var]
       case Var( name, Ti ) =>
         throw new Exception( "No signature information for variable " + e )

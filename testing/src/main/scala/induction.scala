@@ -12,9 +12,10 @@ import at.logic.gapt.provers.smtlib.CVC4
 import at.logic.gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, SequentialInductionAxioms, UntrustedFunctionalInductionAxioms }
 import at.logic.gapt.provers.viper.grammars.TreeGrammarProverOptions.Passthru
 import at.logic.gapt.provers.viper.grammars.{ TreeGrammarInductionTactic, TreeGrammarProverOptions }
-import at.logic.gapt.utils.{ LogHandler, logger }
+import at.logic.gapt.utils.{ LogHandler, Logger }
 
 object testInduction extends App {
+  val logger = Logger( "testInduction" )
 
   class StrategyNotApplicable extends Exception
 

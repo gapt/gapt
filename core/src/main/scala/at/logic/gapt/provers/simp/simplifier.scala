@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, form
 import at.logic.gapt.proofs.gaptic.{ OpenAssumption, Tactic, TacticalFailure }
 import at.logic.gapt.provers.OneShotProver
 import at.logic.gapt.provers.escargot.impl.getFOPositions
-import at.logic.gapt.utils.{ Maybe, logger }
+import at.logic.gapt.utils.{ Logger, Maybe }
 
 sealed trait SimpIffResult {
   def proof: LKProof
@@ -252,7 +252,7 @@ case class Simplifier( lemmas: Seq[SimpProc] ) {
         }
     require( ress.lhs == f )
     require( ress.pol == pol )
-    logger.info( s"${ress.lhs.toUntypedString} --> ${ress.rhs.toUntypedString}" )
+    Simplifier.logger.info( s"${ress.lhs.toUntypedString} --> ${ress.rhs.toUntypedString}" )
     ress
   }
 
@@ -343,6 +343,9 @@ case class Simplifier( lemmas: Seq[SimpProc] ) {
       case _        => None
     }
   }
+}
+object Simplifier {
+  val logger = Logger( "simp" )
 }
 
 object SimpProver extends OneShotProver {
@@ -450,7 +453,7 @@ case class SimpTactic(
     val goalLabels = goal.labelledSequent.map( _._1 ).elements.toSet
     for ( l <- extraLemmasList if !goalLabels.contains( l ) )
       sls ++= SimpLemmas.collectFromLemma( l )
-    logger.info( "simp lemmas:\n" + sls.mkString( "\n" ) )
+    Simplifier.logger.info( "simp lemmas:\n" + sls.mkString( "\n" ) )
     sls
   }
 

@@ -1,29 +1,40 @@
 package at.logic.gapt.utils
 
+import at.logic.gapt.utils.LogHandler.VerbosityLevel
+
 import scala.concurrent.duration._
 import scala.util.DynamicVariable
 
-sealed trait LogSeverity
-object LogSeverity {
-  case object Warn extends LogSeverity
-  case object Info extends LogSeverity
-  case object Debug extends LogSeverity
-}
-import LogSeverity._
-
 trait LogHandler {
-  def message( severity: LogSeverity, msg: => Any ): Unit
+  import LogHandler._
 
-  def metric( key: String, desc: String, value: => Any ): Unit =
-    message( Info, s"$desc: $value" )
+  def message( domain: String, verbosity: VerbosityLevel, msg: => Any ): Unit
 
-  def timeBegin( key: String, desc: String ): Unit = ()
+  def metric( domain: String, verbosity: VerbosityLevel, key: String, desc: String, value: => Any ): Unit =
+    message( domain, verbosity, s"$desc: $value" )
 
-  def time( key: String, desc: String, duration: Duration ): Unit =
-    message( Info, s"$desc took ${LogHandler.formatTime( duration )}" )
+  def timeBegin( domain: String, verbosity: VerbosityLevel, key: String, desc: String ): Unit = ()
+
+  def time( domain: String, verbosity: VerbosityLevel, key: String, desc: String, duration: Duration ): Unit =
+    message( domain, verbosity, s"$desc took ${LogHandler.formatTime( duration )}" )
 }
 object LogHandler {
   val current = new DynamicVariable[LogHandler]( default )
+
+  type VerbosityLevel = Int
+  val Warn = 0
+  val Info = 1
+  val Debug = 2
+  case class Verbosity( general: VerbosityLevel, specialCases: Map[String, VerbosityLevel] ) {
+    def get( domain: String ): VerbosityLevel = general + specialCases.getOrElse( domain, 0 )
+    def get( domain: String, verbosityLevel: VerbosityLevel ): VerbosityLevel = verbosityLevel - get( domain )
+    def increase( level: VerbosityLevel ): Verbosity = copy( general = general + level )
+    def increase( domains: Iterable[String], level: VerbosityLevel ): Verbosity =
+      copy( specialCases = specialCases ++ domains.map( d => ( d, specialCases.getOrElse( d, 0 ) + level ) ) )
+    def increase( domains: Iterable[Logger], level: VerbosityLevel )( implicit dummy: DummyImplicit ): Verbosity =
+      increase( domains.map( _.domain ), level )
+  }
+  val verbosity = new DynamicVariable[Verbosity]( Verbosity( 0, Map() ) )
 
   def use[T]( handler: LogHandler )( f: => T ): T =
     current.withValue( handler )( f )
@@ -41,48 +52,59 @@ object LogHandler {
     }
 
   object silent extends LogHandler {
-    def message( severity: LogSeverity, msg: => Any ): Unit = ()
+    def message( domain: String, level: VerbosityLevel, msg: => Any ): Unit = ()
   }
 
   object default extends LogHandler {
-    def message( severity: LogSeverity, msg: => Any ): Unit =
-      if ( severity == Warn ) Console.err.println( msg )
+    def message( domain: String, level: VerbosityLevel, msg: => Any ): Unit =
+      if ( level <= Warn ) Console.err.println( s"[$domain] $msg" )
   }
 
-  object verbose extends LogHandler {
-    def message( severity: LogSeverity, msg: => Any ): Unit =
-      if ( severity == Warn ) Console.err.println( msg )
-      else Console.out.println( msg )
-  }
-
-  object tstpVerbose extends LogHandler {
-    def message( severity: LogSeverity, msg: => Any ): Unit =
-      Console.out.println( s"% ${msg.toString.replace( '\n', ' ' ).replace( '\r', ' ' )}" )
+  object tstp extends LogHandler {
+    def message( domain: String, level: VerbosityLevel, msg: => Any ): Unit =
+      if ( level <= Warn ) Console.out.println( s"% $msg" )
   }
 }
 
-object logger {
-  def handler: LogHandler = LogHandler.current.value
-
-  def warn( msg: => Any ): Unit = handler.message( Warn, msg )
-  def info( msg: => Any ): Unit = handler.message( Info, msg )
-  def debug( msg: => Any ): Unit = handler.message( Debug, msg )
+case class Logger( domain: String ) {
+  import Logger._
+  import LogHandler._
+  def warn( msg: => Any ): Unit = message( domain, Warn, msg )
+  def info( msg: => Any ): Unit = message( domain, Info, msg )
+  def debug( msg: => Any ): Unit = message( domain, Debug, msg )
   def time[T]( key: String )( f: => T ): T = time( key, key )( f )
   def time[T]( key: String, desc: String )( f: => T ): T = {
-    handler.timeBegin( key, desc )
+    handler.timeBegin( domain, Info, key, desc )
     val a = System.nanoTime
     try f finally {
       val b = System.nanoTime
-      handler.time( key, desc, ( b - a ).nanos )
+      handler.time( domain, Info, key, desc, ( b - a ).nanos )
     }
   }
   def metric( key: String, value: => Any ): Unit = metric( key, key, value )
   def metric( key: String, desc: String, value: => Any ): Unit =
-    handler.metric( key, desc, value )
+    handler.metric( domain, Debug, key, desc, value )
+}
+object Logger extends LogHandler {
+  def handler: LogHandler = LogHandler.current.value
+  def verbositySetting: LogHandler.Verbosity = LogHandler.verbosity.value
+
+  override def message( domain: String, verbosity: VerbosityLevel, msg: => Any ): Unit =
+    handler.message( domain, verbositySetting.get( domain, verbosity ), msg )
+  override def metric( domain: String, verbosity: VerbosityLevel, key: String, desc: String, value: => Any ): Unit =
+    handler.metric( domain, verbositySetting.get( domain, verbosity ), key, desc, value )
+  override def timeBegin( domain: String, verbosity: VerbosityLevel, key: String, desc: String ): Unit =
+    handler.timeBegin( domain, verbositySetting.get( domain, verbosity ), key, desc )
+  override def time( domain: String, verbosity: VerbosityLevel, key: String, desc: String, duration: Duration ): Unit =
+    handler.time( domain, verbositySetting.get( domain, verbosity ), key, desc, duration )
 }
 
-object verbose {
+private[utils] abstract class VerbosityChanger( by: Int ) {
   def apply[T]( f: => T ): T =
-    LogHandler.use( LogHandler.verbose )( f )
+    LogHandler.verbosity.withValue( LogHandler.verbosity.value.increase( by ) )( f )
+  def only[T]( loggers: Logger* )( f: => T ): T =
+    LogHandler.verbosity.withValue( LogHandler.verbosity.value.increase( loggers.map( _.domain ), by ) )( f )
 }
+object verbose extends VerbosityChanger( 1 )
+object quiet extends VerbosityChanger( -1 )
 

@@ -9,10 +9,11 @@ import at.logic.gapt.proofs.expansion.{ ExpansionProof, addSymmetry }
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, ResolutionToExpansionProof, containsEquationalReasoning, numberOfLogicalInferencesRes, simplifyResolutionProof }
 import at.logic.gapt.proofs.sketch.RefutationSketchToResolution
 import at.logic.gapt.provers.prover9.Prover9Importer
-import at.logic.gapt.utils.logger
+import at.logic.gapt.utils.Logger
 import ammonite.ops._
 
 object loadExpansionProof {
+  val logger = Logger( "loadExpansionProof" )
 
   def apply( file: InputFile ): ExpansionProof = withBackgroundTheory( file )._1
 

@@ -178,7 +178,7 @@ object Viper {
              strategies: List[( Duration, Tactical[_] )] )(
     implicit
     ctx: MutableContext ): Option[LKProof] = LogHandler.scope {
-    if ( verbosity >= 3 ) LogHandler.current.value = LogHandler.verbose
+    LogHandler.verbosity.value = LogHandler.verbosity.value.increase( math.max( 0, verbosity - 2 ) )
 
     if ( verbosity >= 2 ) println( sequent.toSigRelativeString )
 

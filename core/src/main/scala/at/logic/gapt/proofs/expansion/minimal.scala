@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.expansion
 
 import at.logic.gapt.provers.Prover
-import at.logic.gapt.utils.logger._
+import at.logic.gapt.utils.Logger
 
 import scala.collection.mutable
 
@@ -10,6 +10,8 @@ import scala.collection.mutable
  * sequents below S that are valid and minimal.
  */
 object minimalExpansionSequents {
+  val logger = minimalExpansionSequent.logger
+
   /**
    * Applies the algorithm to a ExpansionSequent.
    * @param sequent The ExpansionSequent to be evaluated.
@@ -26,6 +28,8 @@ object minimalExpansionSequents {
  * faster than the one implemented in minimalExpansionSequents.
  */
 object minimalExpansionSequent {
+  val logger = Logger( "minimalExpansionSequent" )
+
   /**
    * Applies the algorithm to a ExpansionSequent.
    * @param sequent The ExpansionSequent to be evaluated.
@@ -45,6 +49,7 @@ object minimalExpansionSequent {
  * @param prover The prover used for the evaluation.
  */
 private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: Prover ) {
+  import minimalExpansionSequent.logger._
 
   // This assigns to each ExpansionSequent S the maximum of all numbers n with the following property:
   // S can be obtained from a ExpansionSequent S' by removing the nth instance of S'.
