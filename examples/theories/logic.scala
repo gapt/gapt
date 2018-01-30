@@ -3,7 +3,7 @@ package at.logic.gapt.examples.theories
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ instantiate, simplify, universalClosure }
 import at.logic.gapt.formats.babel.Notation
-import at.logic.gapt.proofs.Context.{ InductiveType, PrimRecFun, SkolemFun }
+import at.logic.gapt.proofs.Context.{ InductiveType, PrimRecFun, ProofNames, SkolemFun }
 import at.logic.gapt.proofs.epsilon.EpsilonC
 import at.logic.gapt.proofs.{ Context, HOLSequent, ImmutableContext, Sequent, SequentConnector, Suc }
 import at.logic.gapt.proofs.gaptic._
@@ -231,6 +231,31 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
     val Apps( Const( name, _, _ ), _ ) = proofName
 
     def proof: LKProof = combined( excluded = _ => true )
+    def formula: Formula = ctx.get[ProofNames].lookup( proofName ).get.succedent.head
+
+    def usedLemmas: Seq[LemmaHandle] =
+      allProofs.toMap.apply( name ).value.inst( proofName ).usedLemmas.map( l => LemmaHandle( l._1 ) )
+    def transitivelyUsedLemmas: Set[LemmaHandle] = {
+      val used = mutable.Set[LemmaHandle]()
+      def go( h: LemmaHandle ): Unit =
+        if ( !used( h ) ) { used += h; h.usedLemmas.foreach( go ) }
+      go( this )
+      used.toSet
+    }
+
+    def graphviz: String = {
+      val res = new mutable.StringBuilder
+      res ++= "digraph {\n"
+      val edges = for {
+        h <- transitivelyUsedLemmas + this
+        d <- h.usedLemmas
+      } yield h.name -> d.name
+      for ( ( a, b ) <- edges ) res ++=
+        s"""  "$a" -> "$b";
+"""
+      res ++= "}\n"
+      res.result()
+    }
 
     def combined( excluded: ( String => Boolean ) = Set(), included: ( String => Boolean ) = Set() ): LKProof = {
       val nocombine = ctx.get[Attributes].lemmasWith( "nocombine" )
