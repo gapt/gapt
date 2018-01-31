@@ -6,7 +6,6 @@ import at.logic.gapt.proofs.expansion.ExpansionProofToLK
 import at.logic.gapt.proofs.lk.{ LKToND, containsEqualityReasoning }
 import at.logic.gapt.proofs.loadExpansionProof
 import at.logic.gapt.proofs.nd.ExcludedMiddleRule
-import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.utils.{ LogHandler, Logger }
 
 // TODO: run on TPTP problems (not proofs), and do deskolemization
@@ -42,8 +41,6 @@ object testLKToND extends scala.App {
       case em: ExcludedMiddleRule if containsQuantifierOnLogicalLevel( em.formulaA ) => true
       case _ => false
     } )
-
-    prooftool( nd )
 
     metric( "status", "ok" )
 
