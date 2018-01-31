@@ -5,9 +5,9 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.Context.InductiveType
 
-object addRecorsorExamples extends Script {
+object addRecorsorsExamples extends Script {
 
-  implicit var ctx = Context()
+  var ctx = Context()
 
   ctx += InductiveType(
     ty"nat",
@@ -25,7 +25,26 @@ object addRecorsorExamples extends Script {
     hoc"leaf{?a}: ?a > bitree ?a",
     hoc"node{?a}: bitree ?a > bitree ?a > bitree ?a" )
 
-  println( MRealizability.addRecursors )
+  implicit var ctxx = MRealizability.addRecursors( ctx )
+
+  println( ctxx )
+
+  ctxx += Definition( Const( "length", ty"list ?a > nat", List( ty"?a" ) ), le"listRec(0,^(z1:?a)^(z2: list ?a)^(z3:nat) s(z3))" )
+  ctxx += Definition( Const( "mirror", ty"bitree ?a > bitree ?a", List( ty"?a" ) ), le"bitreeRec( (^(x:?a)leaf(x)), (^(z1:bitree ?a)^(z2:bitree ?a)^(z3:bitree ?a)^(z4:bitree ?a) node(z4,z2)) )" )
+
+  val plus = le"natRec(s(s(0)))(^z1 ^z2 (s(z2)))"
+  println( normalize( App( plus, le"s(s(0))" ) ) )
+
+  val pluspair = le"conjRec (^x ^y natRec(x,(^z1 ^z2 (s(z2))),y))"
+  println( normalize( App( pluspair, le"pair(s(0),s(s(0)))" ) ) )
+
+  println( normalize( le"length( cons(nil,cons(nil,cons(nil,nil))) )" ) )
+
+  println( normalize( le"mirror( node( leaf(0) , leaf(s(0)) ) )" ) )
+
+  val sum = le"bitreeRec((^x x),(^t1 ^y1 ^t2 ^y2 (natRec(y1,(^z1 ^z2 (s(z2))),y2))))"
+  println( normalize( App( sum, le"node(leaf(0),node(leaf(s(0)),leaf(s(s(0)))))" ) ) )
+
 }
 
 //  \x^{i}\x^{1}.x^{1}
