@@ -6,13 +6,16 @@ import at.logic.gapt.expr._
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.utils.quiet
 
-object ExpansionProofToLK extends ExpansionProofToLK( Escargot.getAtomicLKProof ) {
+object ExpansionProofToLK extends ExpansionProofToLK( Escargot.getAtomicLKProof, intuitionisticHeuristics = false ) {
+  object withIntuitionisticHeuristics extends ExpansionProofToLK(
+    Escargot.getAtomicLKProof, intuitionisticHeuristics = true )
   def withTheory( implicit ctx: Context ) = new ExpansionProofToLK( FOTheoryMacroRule.option( _ ) )
 }
 object PropositionalExpansionProofToLK extends ExpansionProofToLK( _ => None )
 
 class ExpansionProofToLK(
-    theorySolver: HOLClause => Option[LKProof] ) extends SolveUtils {
+    theorySolver:             HOLClause => Option[LKProof],
+    intuitionisticHeuristics: Boolean                      = false ) extends SolveUtils {
   case class Theory( cuts: Seq[ETImp], inductions: Seq[ETInduction.Induction] ) {
     def getExpansionTrees: Seq[ETImp] = cuts ++ inductions.map( i => ETImp( i.hyps, i.suc ) )
   }
@@ -32,10 +35,11 @@ class ExpansionProofToLK(
       orElse( tryNullary( theory, expSeq ) ).
       orElse( tryStrongQ( theory, expSeq ) ).
       orElse( tryWeakQ( theory, expSeq ) ).
-      orElse( tryUnary( theory, expSeq ) ).
+      orElse( tryUnary( theory, expSeq, intuitionisticHeuristics ) ).
       orElse( tryCut( theory, expSeq ) ).
       orElse( tryInduction( theory, expSeq ) ).
       orElse( tryBinary( theory, expSeq ) ).
+      orElse( if ( intuitionisticHeuristics ) tryUnary( theory, expSeq ) else None ).
       orElse( tryTheory( theory, expSeq ) ).
       getOrElse( Left( theory -> expSeq ) ).
       map {
@@ -84,23 +88,25 @@ class ExpansionProofToLK(
       case ( ETBottom( _ ), i: Suc )  => solve( theory, expSeq delete i )
     }
 
-  private def tryUnary( theory: Theory, expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
+  private def tryUnary( theory: Theory, expSeq: ExpansionSequent,
+                        tryNotToIntroduceFormulasInSuccedent: Boolean = false ): Option[UnprovableOrLKProof] =
     expSeq.zipWithIndex.elements collectFirst {
-      case ( ETNeg( f ), i: Ant ) => mapIf( solve( theory, expSeq.delete( i ) :+ f ), f.shallow, !i.polarity ) {
-        NegLeftRule( _, f.shallow )
-      }
+      case ( ETNeg( f ), i: Ant ) if !tryNotToIntroduceFormulasInSuccedent =>
+        mapIf( solve( theory, expSeq.delete( i ) :+ f ), f.shallow, !i.polarity ) {
+          NegLeftRule( _, f.shallow )
+        }
       case ( ETNeg( f ), i: Suc ) => mapIf( solve( theory, f +: expSeq.delete( i ) ), f.shallow, !i.polarity ) {
         NegRightRule( _, f.shallow )
       }
-      case ( e @ ETAnd( f, g ), i: Ant ) =>
+      case ( ETAnd( f, g ), i: Ant ) =>
         mapIf( solve( theory, f +: g +: expSeq.delete( i ) ), f.shallow, i.polarity, g.shallow, i.polarity ) {
           AndLeftMacroRule( _, f.shallow, g.shallow )
         }
-      case ( e @ ETOr( f, g ), i: Suc ) =>
+      case ( ETOr( f, g ), i: Suc ) =>
         mapIf( solve( theory, expSeq.delete( i ) :+ f :+ g ), f.shallow, i.polarity, g.shallow, i.polarity ) {
           OrRightMacroRule( _, f.shallow, g.shallow )
         }
-      case ( e @ ETImp( f, g ), i: Suc ) =>
+      case ( ETImp( f, g ), i: Suc ) =>
         mapIf( solve( theory, f +: expSeq.delete( i ) :+ g ), f.shallow, !i.polarity, g.shallow, i.polarity ) {
           ImpRightMacroRule( _, f.shallow, g.shallow )
         }
@@ -117,7 +123,7 @@ class ExpansionProofToLK(
         }
       }
 
-    expSeq.zipWithIndex.elements collectFirst {
+    expSeq.zipWithIndex.swapped.elements collectFirst {
       case ( e @ ETAnd( f, g ), i: Suc ) => handle( i, e, f, g, AndRightRule( _, _, _ ) )
       case ( e @ ETOr( f, g ), i: Ant )  => handle( i, e, f, g, OrLeftRule( _, _, _ ) )
       case ( e @ ETImp( f, g ), i: Ant ) => handle( i, e, f, g, ImpLeftRule( _, _, _ ) )
