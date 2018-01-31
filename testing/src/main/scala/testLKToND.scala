@@ -29,6 +29,7 @@ object testLKToND extends scala.App {
     metric( "size_lk", lk.treeLike.size )
     metric( "equational", containsEqualityReasoning( lk ) )
     metric( "lk_max_succ_size", lk.subProofs.map( _.endSequent.succedent.size ).max )
+    metric( "lk_max_succ_set_size", lk.subProofs.map( _.endSequent.succedent.toSet.size ).max )
 
     val nd = time( "lk2nd" ) { LKToND( lk ) }
     metric( "size_nd", nd.treeLike.size )
