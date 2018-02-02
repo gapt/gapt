@@ -55,11 +55,7 @@ object nat extends Theory( logic, props ) {
     prop
   }
   val muleq1 = lemma( hof"s(0)=x*y <-> x=s(0) & y=s(0)", "simp" ) { include( "mul1eq" ); escrgt }
-  val mulinj = lemma( hof"x!=0 -> x*y=x*z <-> y=z", "simp" ) {
-    include( "sor0", "sne0", "mul", "mul0eq", "addinjr" )
-    // TODO: anaInd doesn't find this
-    generalize( hov"z: nat" ); induction( hov"y: nat" ).onAll( escrgt )
-  }
+  val mulinj = lemma( hof"x!=0 -> x*y=x*z <-> y=z", "simp" ) { include( "sor0", "sne0", "mul", "mul0eq", "addinjr" ); anaIndG }
   val mulinjr = lemma( hof"x!=0 & y*x=z*x -> y=z" ) { include( "mulcomm", "mulinj" ); escrgt }
   val mulid = lemma( hof"x=x*y <-> y=1|x=0" ) { induction( hov"y:nat" ) onAll simp; prop }
 

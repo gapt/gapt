@@ -9,7 +9,7 @@ import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.simp.SimpTactic
-import at.logic.gapt.provers.viper.aip.axioms.StandardInductionAxioms
+import at.logic.gapt.provers.viper.aip.axioms.{ GeneralInductionAxioms, StandardInductionAxioms }
 import at.logic.gapt.provers.viper.grammars.TreeGrammarInductionTactic
 
 /**
@@ -724,6 +724,10 @@ trait TacticCommands {
   def anaInd( implicit ctx: Context ): Tactical[Unit] = {
     implicit val mutCtx = ctx.newMutable
     repeat( allR ) andThen AnalyticInductionTactic( StandardInductionAxioms(), Escargot.withDeskolemization )
+  }
+  def anaIndG( implicit ctx: Context ): Tactical[Unit] = {
+    implicit val mutCtx = ctx.newMutable
+    repeat( allR ) andThen AnalyticInductionTactic( GeneralInductionAxioms(), Escargot.withDeskolemization )
   }
 
   def escrgt( implicit ctx: Context ): Tactical[Unit] = {
