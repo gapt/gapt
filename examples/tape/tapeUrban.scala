@@ -73,26 +73,28 @@ object tapeUrban extends TacticsProof {
       andL( "Ii_1" )
       forget( "Ii_0_0" )
       andR( "P_0" )
-
-      forget( "Ii_1_1", "Ii_0_1", "T" )
-      unfold( "S" ) in "S"
-      chain( "S" )
-      trivial
-
-      forget( "Ii_1_0", "S" )
-      unfold( "T" ) in "T"
-      chain( "T" )
-      trivial
-      trivial
+      by {
+        forget( "Ii_1_1", "Ii_0_1", "T" )
+        unfold( "S" ) in "S"
+        chain( "S" )
+        trivial
+      }
+      by {
+        forget( "Ii_1_0", "S" )
+        unfold( "T" ) in "T"
+        chain( "T" )
+        trivial
+        trivial
+      }
     }
 
   val sigma = Lemma(
     ( "M_1" -> hof"M_1" ) +: ( "M_2" -> hof"M_2" ) +: ( "S" -> hof"S" ) +: ( "T" -> hof"T" ) +: ( "A" -> hof"A" ) +:
       Sequent() :+ ( "P" -> hof"P" ) ) {
-      cut( "I0", hof"I 0" )
-      cut( "I1", hof"I 1" )
-      insert( tau )
-      insert( epsilon_i )
+      cut( "I0", hof"I 0" ) left by {
+        cut( "I1", hof"I 1" ) left insert( tau )
+        insert( epsilon_i )
+      }
       insert( epsilon_i )
     }
 

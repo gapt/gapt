@@ -23,18 +23,20 @@ case class euclid( k: Int ) extends PrimeDefinitions {
         unfold( "DIV" ) in "div"
         unfold( "prod" ).atMost( 1 ) in "div"
         destruct( "linp" )
-
-        include( "IH", ldivprod( i - 1 ) )
-        unfold( "DIV" ) in "IH"
-        decompose
-        exR( le"m * p $i" ).forget
-        rewrite rtl "IH"
-        theory
-
-        unfold( "set_1" ) in "linp"
-        exR( le"prod ${i - 1}" ).forget
-        rewrite ltr "linp" in "div"
-        theory
+        by {
+          include( "IH", ldivprod( i - 1 ) )
+          unfold( "DIV" ) in "IH"
+          decompose
+          exR( le"m * p $i" ).forget
+          rewrite rtl "IH"
+          theory
+        }
+        by {
+          unfold( "set_1" ) in "linp"
+          exR( le"prod ${i - 1}" ).forget
+          rewrite ltr "linp" in "div"
+          theory
+        }
       }
   }
 

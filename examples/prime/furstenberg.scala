@@ -52,34 +52,36 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
     decompose
     andR
 
-    forget( "h_1" )
-    unfold( "subset" ) in "h_0"
-    allL( "h_0", hov"n:nat" ).forget
-    impL right trivial
+    by {
+      forget( "h_1" )
+      unfold( "subset" ) in "h_0"
+      allL( "h_0", hov"n:nat" ).forget
+      impL right trivial
 
-    forget( "g_1_1" )
-    unfold( "ν" ) in ( "g_1_0", "h_0" )
-    exL
-    exR( le"n_0 * (l_1 + 1)" ).forget
-    theory
+      forget( "g_1_1" )
+      unfold( "ν" ) in ( "g_1_0", "h_0" )
+      exL
+      exR( le"n_0 * (l_1 + 1)" ).forget
+      theory
+    }
 
-    forget( "h_0" )
-    unfold( "subset" ) in "h_1"
-    allL( "h_1", hov"n:nat" ).forget
-    impL right trivial
+    by {
+      forget( "h_0" )
+      unfold( "subset" ) in "h_1"
+      allL( "h_1", hov"n:nat" ).forget
+      impL right trivial
 
-    forget( "g_1_1" )
-    unfold( "ν" ) in ( "g_1_0", "h_1" )
-    exL
-    exR( le"n_0 * (l_0 + 1)" ).forget
-    theory
+      forget( "g_1_1" )
+      unfold( "ν" ) in ( "g_1_0", "h_1" )
+      exL
+      exR( le"n_0 * (l_0 + 1)" ).forget
+      theory
+    }
   }
 
   val unionClosed = Lemma( hols"C(X : nat>o), C(Y), EXT :- C(union X Y)" ) {
     unfold( "C" ) in ( "h_0", "h_1", "g" )
-    cut( "CF", hof" compN(union (X : nat>o) Y) = intersection(compN X)(compN Y)" )
-
-    insert( deMorgan1 )
+    cut( "CF", hof" compN(union (X : nat>o) Y) = intersection(compN X)(compN Y)" ) left insert( deMorgan1 )
 
     eql( "CF", "g" )
     forget( "CF" )
@@ -87,51 +89,55 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
   }
 
   val progClosed = Lemma( hols"PRE, REM, '0<l': 0 < l, EXT :- C(ν 0 l)" ) {
+    cut( "CF", hof" U(0,l) = compN(ν 0 l)" ) left by {
+      forget( "PRE", "g" )
+      unfold( "EXT" ).in( "EXT" ); chain( "EXT" ); forget( "EXT" )
+      allR
+      andR
+
+      by {
+        forget( "REM" )
+        unfold( "compN", "U" ) in "CF"
+        decompose
+        unfold( "ν" ) in ( "CF_0_1", "CF_1" )
+        exL( "CF_0_1" )
+        exL( "CF_1" )
+        eql( "CF_0_1", "CF_1" )
+        forget( "CF_0_1" )
+        cut( "tri", hof"¬0 = i" ) left by {
+          forget( "CF_0_0_0", "CF_1", "0<l" )
+          decompose
+          quasiprop
+        }
+
+        forget( "CF_0_0_1" )
+        decompose
+        theory
+      }
+
+      by {
+        impR
+        unfold( "REM" ) in "REM"
+        allL( hov"l:nat" ).forget
+        impL left trivial
+
+        forget( "0<l" )
+        allL( hov"x:nat" ).forget
+        decompose
+        unfold( "U" ) in "CF_1"
+        exR( hov"k:nat" ).forget
+        andR right trivial
+
+        andR left trivial
+
+        unfold( "compN" ) in "CF_0"
+        decompose
+        eql( "CF_1", "REM_1" )
+        trivial
+      }
+    }
+
     unfold( "C" ) in "g"
-    cut( "CF", hof" U(0,l) = compN(ν 0 l)" )
-
-    forget( "PRE", "g" )
-    unfold( "EXT" ).in( "EXT" ); chain( "EXT" ); forget( "EXT" )
-    allR
-    andR
-
-    forget( "REM" )
-    unfold( "compN", "U" ) in "CF"
-    decompose
-    unfold( "ν" ) in ( "CF_0_1", "CF_1" )
-    exL( "CF_0_1" )
-    exL( "CF_1" )
-    eql( "CF_0_1", "CF_1" )
-    forget( "CF_0_1" )
-    cut( "tri", hof"¬0 = i" )
-
-    forget( "CF_0_0_0", "CF_1", "0<l" )
-    decompose
-    quasiprop
-
-    forget( "CF_0_0_1" )
-    decompose
-    theory
-
-    impR
-    unfold( "REM" ) in "REM"
-    allL( hov"l:nat" ).forget
-    impL left trivial
-
-    forget( "0<l" )
-    allL( hov"x:nat" ).forget
-    decompose
-    unfold( "U" ) in "CF_1"
-    exR( hov"k:nat" ).forget
-    andR right trivial
-
-    andR left trivial
-
-    unfold( "compN" ) in "CF_0"
-    decompose
-    eql( "CF_1", "REM_1" )
-    trivial
-
     forget( "REM", "EXT" )
     eql( "CF", "g" )
     forget( "CF" )
@@ -153,14 +159,16 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
     exR( hov"i:nat" ).forget
     andR
 
-    andR; trivial; prop
+    by { andR; trivial; prop }
 
-    forget( "g_0_0_0", "g_0_0_1" )
-    unfold( "ν" ) in ( "g_0_1", "g_1_0", "g_1_1" )
-    decompose
-    exR( le"n_0 + n_1" ).forget
-    rewrite.many ltr ( "g_0_1", "g_1_0" )
-    theory
+    by {
+      forget( "g_0_0_0", "g_0_0_1" )
+      unfold( "ν" ) in ( "g_0_1", "g_1_0", "g_1_1" )
+      decompose
+      exR( le"n_0 + n_1" ).forget
+      rewrite.many ltr ( "g_0_1", "g_1_0" )
+      theory
+    }
   }
 
   // Proof that complement(complement(X)) = X (under hof"EXT").
@@ -174,11 +182,11 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
   // Proof that if complement(X) is closed, X is open (under hof"EXT").
   val openClosedProof = Lemma( hols"EXT, C: C(compN(X : nat>o)) :- O: O(X)" ) {
     unfold( "C" ) in "C"
-    cut( "CF", hof" compN(compN(X: nat>o)) = X" )
-
-    //Left subproof of the cut:
-    forget( "C", "O" )
-    insert( compCompProof )
+    cut( "CF", hof" compN(compN(X: nat>o)) = X" ) left by {
+      //Left subproof of the cut:
+      forget( "C", "O" )
+      insert( compCompProof )
+    }
 
     //Right subproof of the cut:
     forget( "EXT" )
@@ -227,7 +235,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
 
     forget( "nonempty" )
     exL
-    cut( "CF", hof"INF(ν(n, l+1))" )
+    cut( "CF", hof"INF(ν(n, l+1))" ) right insert( infiniteSubset )
 
     // Left subproof: ν(n, l+1) is infinite
     forget( "open", "infinite" )
@@ -237,9 +245,6 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
     unfold( "ν" ) in "CF"
     exR( le"n +(k + 1)" ).forget
     theory
-
-    // Right subproof:
-    insert( infiniteSubset )
   }
 
   /**
@@ -255,52 +260,59 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
           exR( le"p 0" ).forget
           andR
 
-          unfold( "P", "set_1" ) in "g"
-          trivial
+          by {
+            unfold( "P", "set_1" ) in "g"
+            trivial
+          }
 
-          unfold( "ν" ) in ( "h_0", "g" )
-          exL
-          exR( hov"n:nat" ).forget
-          trivial
+          by {
+            unfold( "ν" ) in ( "h_0", "g" )
+            exL
+            exR( hov"n:nat" ).forget
+            trivial
+          }
         }
 
       case _ =>
         Proof( endSequent ) {
           unfold( "S", "union" ).atMost( 2 ) in "h_0"
           orL
+          by {
+            cut( "CF", hof"∃y (P ${n - 1} y ∧ ν 0 y x)" ) left insert( varrho2( n - 1 ) )
 
-          cut( "CF", hof"∃y (P ${n - 1} y ∧ ν 0 y x)" )
-
-          forget( "g" )
-          insert( varrho2( n - 1 ) )
-
-          forget( "h_0" )
-          exL
-          exR( hov"y:nat" ).forget
-          andR
-
-          unfold( "P" ).atMost( 1 ) in "g"
-          unfold( "union", "set_1" ) in "g"
-          prop
-
-          andL
-          unfold( "ν" ) in ( "CF_1", "g" )
-          exL
-          exR( "g", hov"n:nat" ).forget
-          trivial
-
-          exR( le"p $n" ).forget
-          andR
-
-          forget( "h_0" )
-          unfold( "P", "union", "set_1" ) in "g"
-          orR
-          trivial
-
-          unfold( "ν" ) in ( "h_0", "g" )
-          exL
-          exR( "g", hov"n:nat" ).forget
-          trivial
+            forget( "h_0" )
+            exL
+            exR( hov"y:nat" ).forget
+            andR
+            by {
+              unfold( "P" ).atMost( 1 ) in "g"
+              unfold( "union", "set_1" ) in "g"
+              prop
+            }
+            by {
+              andL
+              unfold( "ν" ) in ( "CF_1", "g" )
+              exL
+              exR( "g", hov"n:nat" ).forget
+              trivial
+            }
+          }
+          by {
+            exR( le"p $n" ).forget
+            andR
+            by {
+              forget( "h_0" )
+              unfold( "P", "union", "set_1" ) in "g"
+              orR
+              trivial
+            }
+            by {
+              unfold( "ν" ) in ( "h_0", "g" )
+              exL
+              exR( "g", hov"n:nat" ).forget
+              trivial
+            }
+          }
         }
 
     }
@@ -311,32 +323,29 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
     Lemma( hols"h: F $k :- S $k x -> compN(set_1(1))(x)" ) {
       decompose
       unfold( "compN" ) in "g_1"
-      cut( "CF", hof"¬x = 1" )
+      cut( "CF", hof"¬x = 1" ) left by {
+        forget( "g_1" )
+        cut( "CF2", hof" ∃y (P $k y ∧ ν(0,y)(x))" ) left insert( varrho2( k ) )
 
-      forget( "g_1" )
-      cut( "CF2", hof" ∃y (P $k y ∧ ν(0,y)(x))" )
+        forget( "g_0" )
+        unfold( "F" ) in "h"
+        decompose
+        allL( "h", hov"y:nat" )
+        decompose
+        forget( "h_0_0", "h" )
+        impL left by {
+          unfold( "P" ) in ( "CF2_0", "h_0_1" )
+          unfold( "union", "set_1" ) in ( "CF2_0", "h_0_1" )
+          prop
+        }
 
-      forget( "h", "CF" )
-      insert( varrho2( k ) )
-
-      forget( "g_0" )
-      unfold( "F" ) in "h"
-      decompose
-      allL( "h", hov"y:nat" )
-      decompose
-      forget( "h_0_0", "h" )
-      impL
-
-      unfold( "P" ) in ( "CF2_0", "h_0_1" )
-      unfold( "union", "set_1" ) in ( "CF2_0", "h_0_1" )
-      prop
-
-      unfold( "PRIME" ) in "h_0_1"
-      decompose
-      forget( "h_0_1_1" )
-      unfold( "ν" ) in "CF2_1"
-      decompose
-      theory
+        unfold( "PRIME" ) in "h_0_1"
+        decompose
+        forget( "h_0_1_1" )
+        unfold( "ν" ) in "CF2_1"
+        decompose
+        theory
+      }
 
       unfold( "set_1" ) in "g_1"
       decompose
@@ -394,10 +403,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
     Lemma( hols"Fk: F $k, 'Prime-Div': 'PRIME-DIV' :- compN(set_1(1))(x) -> S $k x" ) {
       decompose
       unfold( "compN", "set_1" ) in "g_0"
-      cut( "CF", hof"∃y (P $k y ∧ ν 0 y x)" )
-
-      unfold( "F" ) in "Fk"
-      insert( Pi_1 )
+      cut( "CF", hof"∃y (P $k y ∧ ν 0 y x)" ) left by { unfold( "F" ).in( "Fk" ); insert( Pi_1 ) }
 
       forget( "Prime-Div", "Fk", "g_0" )
       decompose
@@ -408,10 +414,8 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
     unfold( "EXT" ) in "EXT"; chain( "EXT" ); forget( "EXT" )
     allR( "g" )
     andR( "g" )
-
-    insert( psi1Left )
-
-    insert( psi1Right )
+    by { insert( psi1Left ) }
+    by { insert( psi1Right ) }
   }
 
   val FR: LKProof = Lemma( hols"Fk: F $k :- Rk: R $k" ) {
@@ -441,23 +445,20 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
       case _ =>
         Proof( endSequent ) {
           unfold( "Q" ).atMost( 1 ) in "Qn"
-          cut( "Rn1", hof"R ${n - 1}" )
+          cut( "Rn1", hof"R ${n - 1}" ) left by {
+            unfold( "R" ) in "Rn1"
+            allR
+            impR
+            unfold( "R" ) in "Rn"
+            allL( hov"y:nat" ).forget
+            impL right trivial
 
-          //forget( "Suc" )
-          unfold( "R" ) in "Rn1"
-          allR
-          impR
-          unfold( "R" ) in "Rn"
-          allL( hov"y:nat" ).forget
-          impL right trivial
+            unfold( "P" ).atMost( 1 ) in "Rn"
+            unfold( "union" ) in "Rn"
+            prop
+          }
 
-          unfold( "P" ).atMost( 1 ) in "Rn"
-          unfold( "union" ) in "Rn"
-          prop
-
-          andR
-
-          insert( RQ( n - 1 ) )
+          andR left insert( RQ( n - 1 ) )
 
           forget( "Rn1" )
           unfold( "R" ) in "Rn"
@@ -473,27 +474,23 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
   }
 
   val FQ: LKProof = Lemma( hols"F $k :- Q $k" ) {
-    cut( s"Rk", hof"R $k" )
-    insert( FR )
+    cut( s"Rk", hof"R $k" ) left insert( FR )
     insert( RQ( k ) )
   }
 
   val pgt0: LKProof = Lemma( hols"prime: PRIME(n) :- pos: 0 < n" ) {
-    cut( "CF", hof" 1 < n" )
-
-    forget( "pos" )
-    unfold( "PRIME" ) in "prime"
-    andL
-    trivial
+    cut( "CF", hof" 1 < n" ) left by {
+      forget( "pos" )
+      unfold( "PRIME" ) in "prime"
+      andL
+      trivial
+    }
 
     forget( "prime" )
-    cut( "CF2", hof" 0 + 1 = 1" )
-
-    theory
+    cut( "CF2", hof" 0 + 1 = 1" ) left theory
 
     eql( "CF2", "CF" )
     theory
-
   }
 
   def psi2Right( n: Int ): LKProof = {
@@ -503,9 +500,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
       case 0 =>
         Proof( endSequent ) {
           unfold( "Q" ) in "Qn"
-          cut( "zero_lt_p0", hof" 0 < p 0" )
-
-          insert( pgt0 )
+          cut( "zero_lt_p0", hof" 0 < p 0" ) left insert( pgt0 )
 
           unfold( "S" ) in "C"
           insert( progClosed )
@@ -515,39 +510,31 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
         Proof( endSequent ) {
           unfold( "Q" ) atMost 1 in "Qn"
           andL
-          cut( s"zero_lt_pn", hof" 0 < p $n" )
-
-          insert( pgt0 )
+          cut( s"zero_lt_pn", hof" 0 < p $n" ) left insert( pgt0 )
 
           unfold( "S" ) atMost 1 in "C"
-          cut( "CF", hof" C(ν 0 (p $n))" )
+          cut( "CF", hof" C(ν 0 (p $n))" ) left insert( progClosed )
 
-          insert( progClosed )
+          cut( "CF2", hof" C(S ${n - 1})" ) left insert( psi2Right( n - 1 ) )
 
-          cut( "CF2", hof" C(S ${n - 1})" )
-          insert( psi2Right( n - 1 ) )
           insert( unionClosed )
         }
     }
   }
 
   val psi2: LKProof = Lemma( hols"F $k, REM, EXT, PRE :- C (S $k)" ) {
-    cut( "Q", hof"Q $k" )
-
-    insert( FQ )
+    cut( "Q", hof"Q $k" ) left insert( FQ )
     insert( psi2Right( k ) )
   }
 
   val proof: LKProof =
     Lemma( hols"EXT, F $k, REM, PRE, 'PRIME-DIV' :-" ) {
       cut( "INF {1}", hof" INF (set_1 1)" ) right insert( singletonFinite )
-      cut( "nonempty {1}", hof" ¬ empty (set_1 1)" )
-      insert( singletonNonempty )
+      cut( "nonempty {1}", hof" ¬ empty (set_1 1)" ) left insert( singletonNonempty )
 
       cut( "O {1}", hof" O (set_1 1)" ) right insert( phi2 )
       cut( "C compN{1}", hof" C (compN(set_1 1))" ) right insert( openClosedProof )
-      cut( "CF", hof" S $k = compN(set_1 1)" )
-      insert( psi1 )
+      cut( "CF", hof" S $k = compN(set_1 1)" ) left insert( psi1 )
 
       eql( "CF", "C compN{1}" )
       forget( "CF" )

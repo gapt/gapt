@@ -393,13 +393,13 @@ trait BinaryTactic[+T] extends Tactic[T] {
   /**
    * Synonym for `andThen`.
    */
-  def left( that: Tactic[Unit] ): Tactic[Unit] = this andThen that
+  def left( that: Tactic[Unit] ): Tactic[Unit] = this andThen that.focused
 
   /**
    * Creates a new Tactical by first applying `this` to the current subgoal and then `that` to the new right subgoal.
    * @param that A Tactical.
    */
-  def right( that: Tactic[Unit] ): Tactic[Unit] = this andThen focus( 1 ) andThen that
+  def right( that: Tactic[Unit] ): Tactic[Unit] = this andThen focus( 1 ) andThen that.focused
 }
 
 /**
