@@ -27,6 +27,7 @@ object list extends Theory( logic ) {
     "map f nil = nil" )
   attr( "simp" )( "map" )
   val mapapp = lemma( hof"map f (app x y) = app (map f x) (map f y)", "simp" ) { induction( hov"x:list?a_0" ) onAll simp.h }
+  val mapmap = lemma( hof"map f (map g x) = map (compose f g) x" ) { induction( hov"x:list?a_1" ) onAll simp.h }
 
   fun(
     hoc"filter{?a}: (?a>o) > list?a>list?a",

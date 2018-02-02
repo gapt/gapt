@@ -319,6 +319,9 @@ object logic extends Theory {
   val iteneg = lemma( hof"-p -> ite p a b = b", "simp", "nocombine" ) { induction( hov"p:o" ) onAll simp.w( "ite" ) }
   val iteeq = lemma( hof"ite p a a = a", "simp" ) { cut( "", hof"p:o" ).onAll( simp.h ) }
 
+  dfn( hof"compose{?a?b?c} (g:?b>?c) (f:?a>?b) x = g (f x)" )
+  attr( "simp" )( "compose" )
+
 }
 
 object props extends Theory( logic ) {
