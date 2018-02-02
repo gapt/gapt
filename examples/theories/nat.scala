@@ -185,7 +185,6 @@ object natdivision extends Theory( natorder ) {
   indfn( "/", hof"!a!b?d (b!=0 -> ?r (r<b & d*b+r=a))" ) { include( "divmodgtot" ); escrgt }
   indfn( "mod", hof"!a!b?r (b!=0 -> r<b & (a/b)*b+r=a)" ) { include( "div" ); escrgt }
   val divmod = lemma( hof"b!=0 | 0<b -> a%b<b & (a/b)*b+a%b=a", "simp" ) { include( "mod", "lt0r" ); escrgt }
-  println( divmod.formula.toSigRelativeString )
   val divmoduniq = lemma( hof"r<b & d*b+r=a -> a/b=d & a%b=r" ) { include( "divmod", "lt0r", "divmodgpfn" ); escrgt }
   val divmodiff = lemma( hof"r<b & d*b+r=a <-> b!=0 & d=a/b & r=a%b" ) { include( "divmod", "divmoduniq", "lt0r" ); escrgt }
   val divmodlt = lemma( hof"a<b -> a/b=0 & a%b = a", "simp" ) { include( "divmodiff", "mul0l", "add0l" ); escrgt }
