@@ -435,20 +435,25 @@ object SimpLemmas {
 }
 
 case class SimpTactic(
-    onLabel:         Option[String] = None,
-    extraLemmasList: Seq[String]    = Seq(),
-    useAssumptions:  Boolean        = false )( implicit ctx: Context ) extends Tactic[Unit] {
+    onLabel:            Option[String] = None,
+    extraLemmasList:    Seq[String]    = Seq(),
+    excludedLemmasList: Set[String]    = Set(),
+    useAssumptions:     Boolean        = false )( implicit ctx: Context ) extends Tactic[Unit] {
   def h = copy( useAssumptions = true )
   def on( label: String ) = copy( onLabel = Some( label ) )
   def apply( lemmas: String* ) = copy( extraLemmasList = extraLemmasList ++ lemmas )
   def w( lemmas: String* ) = apply( lemmas: _* )
+  def wo( lemmas: String* ) = copy( excludedLemmasList = excludedLemmasList ++ lemmas )
 
   private def mkSimpLemmas( goal: OpenAssumption ): Seq[SimpProc] = {
     var sls: Seq[SimpProc] = Seq( QPropSimpProc )
-    sls ++= ctx.get[Attributes].lemmasWith( "simp" ).flatMap( SimpLemmas.collectFromLemma )
+    sls ++= ctx.get[Attributes].lemmasWith( "simp" ).
+      filterNot( excludedLemmasList ).
+      flatMap( SimpLemmas.collectFromLemma )
     sls ++= SimpLemmas.collect( goal.labelledSequent.filter {
       case ( l, _ ) =>
-        !onLabel.contains( l ) && ( useAssumptions || extraLemmasList.contains( l ) )
+        !onLabel.contains( l ) && !excludedLemmasList( l ) &&
+          ( useAssumptions || extraLemmasList.contains( l ) )
     }.map( _._2 ) )
     val goalLabels = goal.labelledSequent.map( _._1 ).elements.toSet
     for ( l <- extraLemmasList if !goalLabels.contains( l ) )

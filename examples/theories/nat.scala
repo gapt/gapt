@@ -77,10 +77,7 @@ object nat extends Theory( logic, props ) {
     generalize( hov"z:nat" ); induction( hov"x:nat" ) onAll simp.h; decompose
     induction( hov"z:nat" ) onAll simp.h
   }
-  val addsubsub = lemma( hof"a+b-c-b = a-c", "simp" ) {
-    induction( hov"b:nat" ) onAll simp.h
-    include( "subpl", "ps" ); escrgt // TODO: exclude lemmas from simp
-  }
+  val addsubsub = lemma( hof"a+b-c-b = a-c", "simp" ) { induction( hov"b:nat" ) onAll simp.h.wo( "subpl" ) }
   val mulsub = lemma( hof"x*(y-z) = x*y - x*z", "simp" ) {
     generalize( hov"y:nat" ); induction( hov"z:nat" ) onAll allR; simp
     induction( hov"y:nat" ); simp; forget( "IHy_0" ); simp.h
