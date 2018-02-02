@@ -31,17 +31,9 @@ object withTimeout {
   def apply[T]( duration: Duration )( f: => T ): T = if ( !duration.isFinite ) f else {
     var result: Either[Throwable, T] = Left( new TimeOutException( null, duration ) )
 
-    case class DynamicVariableCopier[S]( variable: DynamicVariable[S] ) {
-      val currentValue: S = variable.value
-      def copyHere(): Unit = variable.value = currentValue
-    }
-    val dynamicsToCopy: Vector[DynamicVariableCopier[_]] =
-      Vector( DynamicVariableCopier( LogHandler.current ) )
-
     trait StoppableWithoutDeprecationWarning { def stop(): Unit }
     val t = new Thread with StoppableWithoutDeprecationWarning {
       override def run(): Unit = {
-        for ( dc <- dynamicsToCopy ) dc.copyHere()
         result = try Right( f ) catch {
           case e: ThreadDeath => Left( new TimeOutException( e, duration ) )
           case t: Throwable   => Left( t )
