@@ -279,6 +279,9 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
       p
     }
   }
+  object LemmaHandle {
+    implicit val substitutable: ClosedUnderSub[LemmaHandle] = ( sub, h ) => LemmaHandle( sub( h.proofName ) )
+  }
 
   protected case class lemma( openFormula: Formula, attributes: String* ) extends LemmaHelper[LemmaHandle] {
     val fvs = freeVariables( openFormula ).toSeq.sortBy( _.name )
