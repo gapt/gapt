@@ -85,16 +85,21 @@ trait ExprSubstitutable2 extends ExprSubstitutable1 {
 }
 
 trait ExprSubstitutable3 extends ExprSubstitutable2 {
+  implicit val ConstClosedUnderSub: ClosedUnderSub[Const] =
+    ( sub, x ) => applySub( sub, x ).asInstanceOf[Const]
+}
+
+trait ExprSubstitutable4 extends ExprSubstitutable3 {
   implicit val FOLExpressionClosedUnderFOLSub: ClosedUnderFOLSub[FOLExpression] =
     ( sub, x ) => applySub( sub, x ).asInstanceOf[FOLExpression]
 }
 
-trait ExprSubstitutable4 extends ExprSubstitutable3 {
+trait ExprSubstitutable5 extends ExprSubstitutable4 {
   implicit val FOLAtomSubstitutable: Substitutable[Substitution, FOLAtom, Atom] =
     ( sub, x ) => applySub( sub, x ).asInstanceOf[Atom]
 }
 
-trait ExprSubstitutable5 extends ExprSubstitutable4 {
+trait ExprSubstitutable6 extends ExprSubstitutable5 {
   implicit val FOLTermClosedUnderFOLSub: ClosedUnderFOLSub[FOLTerm] =
     ( sub, x ) => applySub( sub, x ).asInstanceOf[FOLTerm]
 
@@ -102,7 +107,7 @@ trait ExprSubstitutable5 extends ExprSubstitutable4 {
     ( sub, x ) => applySub( sub, x ).asInstanceOf[FOLFormula]
 }
 
-trait ExprSubstitutable6 extends ExprSubstitutable5 {
+trait ExprSubstitutable7 extends ExprSubstitutable6 {
   implicit val FOLAtomClosedUnderFOLSub: ClosedUnderFOLSub[FOLAtom] =
     ( sub, x ) => applySub( sub, x ).asInstanceOf[FOLAtom]
 }
@@ -112,7 +117,7 @@ trait SeqSubstitutable {
     ( sub, seq ) => seq.map( ev.applySubstitution( sub, _ ) )
 }
 
-object Substitutable extends ExprSubstitutable6 with SeqSubstitutable {
+object Substitutable extends ExprSubstitutable7 with SeqSubstitutable {
   /**
    * Testifies that a Set of substitutable objects is itself substitutable (by mapping over it).
    */
