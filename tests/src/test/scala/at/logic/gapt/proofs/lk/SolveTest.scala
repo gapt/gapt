@@ -128,18 +128,20 @@ class SolveTest extends Specification with SequentMatchers {
       }
     }
 
-    "induction in pluscomm" in {
-      val example = examples.induction.numbers.pluscomm
-      val exp = LKToExpansionProof( example )( examples.induction.numbers.ctx )
-      ExpansionProofToLK( exp )( examples.induction.numbers.ctx ) must beLike {
+    "induction in addcomm" in {
+      import examples.theories.nat._
+      val example = addcomm.proof
+      val exp = LKToExpansionProof( example )
+      ExpansionProofToLK( exp ) must beLike {
         case Right( p ) => p.conclusion must beMultiSetEqual( example.conclusion )
       }
     }
 
-    "induction in maprev" in {
-      val example = examples.induction.lists.maprev
-      val exp = LKToExpansionProof( example )( examples.induction.lists.ctx )
-      ExpansionProofToLK( exp )( examples.induction.lists.ctx ) must beLike {
+    "induction in revmap" in {
+      import examples.theories.list._
+      val example = revmap.proof
+      val exp = LKToExpansionProof( example )
+      ExpansionProofToLK( exp ) must beLike {
         case Right( p ) => p.conclusion must beMultiSetEqual( example.conclusion )
       }
     }

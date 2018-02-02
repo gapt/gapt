@@ -875,7 +875,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
     }
 
     "translate InductionRule with changing hypothesis index" in {
-      val lk = examples.induction.numbers.pluscomm
+      val lk = examples.theories.nat.addcomm.proof
 
       val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )

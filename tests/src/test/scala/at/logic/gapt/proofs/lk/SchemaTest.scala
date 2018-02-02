@@ -3,11 +3,10 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr._
 import at.logic.gapt.examples._
 import at.logic.gapt.proofs.ceres._
-import at.logic.gapt.examples.induction.numbers.pluscomm
 import at.logic.gapt.expr.fol.natMaker
 import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.proofs.Context._
-import at.logic.gapt.proofs.{ ImmutableContext, Sequent }
+import at.logic.gapt.proofs.{ ImmutableContext, MutableContext, Sequent }
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable.Specification
 import at.logic.gapt.proofs.gaptic._
@@ -248,12 +247,14 @@ class SchemaTest extends Specification {
     }
 
     "Test if PlusComm induction proof is K-simple" in {
-      IsKSimple( pluscomm ) must_== false
+      import at.logic.gapt.examples.theories.nat._
+      IsKSimple( addcomm.proof ) must_== false
     }
 
     "Test if K-simple PlusComm induction proof is K-simple" in {
+      import at.logic.gapt.examples.theories.nat._
       val result: LKProof = {
-        val proofs = pluscomm.subProofs.toList.foldRight( List[LKProof]() )( ( a, z ) => {
+        val proofs = addcomm.proof.subProofs.toList.foldRight( List[LKProof]() )( ( a, z ) => {
           a match {
             case p: InductionRule =>
               val succ: Var = p.cases.foldRight( Var( "wrong", p.indTy ): Var )( ( a, z ) => {
@@ -277,7 +278,7 @@ class SchemaTest extends Specification {
             val InductionRule( _, _, x: Var ) = proofs.head
             ForallRightRule( nonq, nonq.mainIndices.head, x, Var( "x", x.ty ) )
           } else proofs.head
-        } else pluscomm
+        } else addcomm.proof
       }
       IsKSimple( result ) must_== true
     }
@@ -345,19 +346,19 @@ class SchemaTest extends Specification {
   }
 
   {
-    import at.logic.gapt.examples.induction.numbers.ctx
+    import at.logic.gapt.examples.theories.nat._
     "Constructing schematic pluscomm proof" in {
-      val ccon = ctx.newMutable
-      ArithmeticInductionToSchema( pluscomm, Const( "Commutativity", TBase( "nat" ) ) )( ccon )
+      implicit val ccon: MutableContext = ctx.newMutable
+      ArithmeticInductionToSchema( addcomm.combined(), Const( "Commutativity", TBase( "nat" ) ) )
       val res = ccon.get[ProofDefinitions].components.keySet.map( x => ccon.get[ProofDefinitions].components.getOrElse( x, Set() ) ).foldLeft( 0 )( ( x, y ) => x + y.size )
-      res must_== 10
+      res must_== 7
     }
 
     "Instantiating schematic pluscomm proof" in {
-      val ccon = ctx.newMutable
-      ArithmeticInductionToSchema( pluscomm, Const( "Commutativity", TBase( "nat" ) ) )( ccon )
+      implicit val ccon: MutableContext = ctx.newMutable
+      ArithmeticInductionToSchema( addcomm.combined(), Const( "Commutativity", TBase( "nat" ) ) )
       val P = hoc"Proof: nat>nat"
-      val proof = instantiateProof.Instantiate( le"$P ${natMaker( 10 )}" )( ccon )
+      val proof = regularize( instantiateProof( le"$P ${natMaker( 10 )}" ) )
       ctx.check( proof )
       ok
     }
