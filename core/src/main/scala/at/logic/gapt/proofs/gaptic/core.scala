@@ -1,7 +1,5 @@
 package at.logic.gapt.proofs.gaptic
 
-import java.util.Locale
-
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ HOLSequent, Sequent, SequentConnector, SequentIndex }
 import at.logic.gapt.proofs.lk._

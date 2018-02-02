@@ -290,6 +290,7 @@ object natdivisible extends Theory( natdivision ) {
 
     cut( "dam", hof"dvd y (x%y * a)" ); by { simp.w( "dvd" ).on( "dam" ); exR( "dam", le"z - (x/y)*a" ).forget; quasiprop }
 
+    // dvd x (y*z)
     allL( "g_1_0", le"y:nat", le"x%y", le"a:nat" ).forget; simp.h.on( "g_1_0" )
 
     cut( "mxyy", hof"x%y < y" ); by { include( "mod" ); escrgt }

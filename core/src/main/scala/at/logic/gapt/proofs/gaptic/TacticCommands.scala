@@ -2,6 +2,7 @@ package at.logic.gapt.proofs.gaptic
 
 import tactics._
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.babel.BabelSignature
 import at.logic.gapt.proofs.Context.ProofNames
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
@@ -776,4 +777,7 @@ trait TacticCommands {
   /** `by { tac1; tac2; ...; tacn }` solves the first goal using the provided tactic block, and fails otherwise */
   def by: TacticBlockArgument[Tactical[Unit]] =
     tac => tac.focused
+
+  def trace( implicit sig: BabelSignature ): Tactical[Unit] =
+    Tactical( currentGoal.map { g => println( g.toPrettyString ); () } )
 }
