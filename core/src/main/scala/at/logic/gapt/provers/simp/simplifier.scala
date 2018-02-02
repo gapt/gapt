@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.Context.ProofNames
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, formulaToExpansionTree }
-import at.logic.gapt.proofs.gaptic.{ OpenAssumption, Tactic, TacticalFailure }
+import at.logic.gapt.proofs.gaptic.{ OpenAssumption, Tactic, TacticFailure, Tactical1 }
 import at.logic.gapt.provers.OneShotProver
 import at.logic.gapt.provers.escargot.impl.getFOPositions
 import at.logic.gapt.utils.{ Logger, Maybe }
@@ -438,7 +438,7 @@ case class SimpTactic(
     onLabel:            Option[String] = None,
     extraLemmasList:    Seq[String]    = Seq(),
     excludedLemmasList: Set[String]    = Set(),
-    useAssumptions:     Boolean        = false )( implicit ctx: Context ) extends Tactic[Unit] {
+    useAssumptions:     Boolean        = false )( implicit ctx: Context ) extends Tactical1[Unit] {
   def h = copy( useAssumptions = true )
   def on( label: String ) = copy( onLabel = Some( label ) )
   def apply( lemmas: String* ) = copy( extraLemmasList = extraLemmasList ++ lemmas )
@@ -462,10 +462,10 @@ case class SimpTactic(
     sls
   }
 
-  override def apply( goal: OpenAssumption ): Either[TacticalFailure, ( Unit, LKProof )] =
+  override def apply( goal: OpenAssumption ): Tactic[Unit] =
     onLabel match {
       case None =>
-        if ( goal.conclusion.succedent.isEmpty ) Left( TacticalFailure( this, "no formula in succedent" ) )
+        if ( goal.conclusion.succedent.isEmpty ) TacticFailure( this, "no formula in succedent" )
         else copy( onLabel = Some( goal.labelledSequent.succedent.head._1 ) ).apply( goal )
       case Some( target ) if goal.labelledSequent.exists( _._1 == target ) =>
         val Some( target ) = onLabel
@@ -487,10 +487,10 @@ case class SimpTactic(
               newSeqF.succedent.collectFirst {
                 case Eq( t, t_ ) if t == t_ => ReflexivityAxiom( t )
               }.getOrElse( OpenAssumption( newSeq ) ), newSeqF )
-        Right( (), ContractionMacroRule( if ( idx.isAnt )
+        replace( ContractionMacroRule( if ( idx.isAnt )
           CutRule( res.proof, newSeqProof, res.rhs )
         else
           CutRule( newSeqProof, res.proof, res.rhs ) ) )
-      case Some( target ) => Left( TacticalFailure( this, s"label $target not found" ) )
+      case Some( target ) => TacticFailure( this, s"label $target not found" )
     }
 }

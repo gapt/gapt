@@ -8,6 +8,7 @@ import at.logic.gapt.grammars.{ InductionGrammar, findMinimalInductionGrammar }
 import at.logic.gapt.grammars.InductionGrammar.Production
 import at.logic.gapt.proofs.Context.StructurallyInductiveTypes
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, minimalExpansionSequent }
+import at.logic.gapt.proofs.gaptic.Tactical1
 import at.logic.gapt.proofs.lk.{ EquationalLKProver, LKProof }
 import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent, withSection }
 import at.logic.gapt.provers.escargot.Escargot
@@ -250,7 +251,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
 
 }
 
-class TreeGrammarInductionTactic( options: TreeGrammarProverOptions = TreeGrammarProverOptions() )( implicit ctx: Context ) extends at.logic.gapt.proofs.gaptic.Tactic[Unit] {
+class TreeGrammarInductionTactic( options: TreeGrammarProverOptions = TreeGrammarProverOptions() )( implicit ctx: Context ) extends Tactical1[Unit] {
   import at.logic.gapt.proofs.gaptic._
 
   def copy( options: TreeGrammarProverOptions ) = new TreeGrammarInductionTactic( options )
@@ -269,19 +270,17 @@ class TreeGrammarInductionTactic( options: TreeGrammarProverOptions = TreeGramma
   def equationalTheory( equations: Formula* ) = copy( options.copy( equationalTheory = equations ) )
   def maxsatSolver( solver: MaxSATSolver ) = copy( options.copy( maxSATSolver = solver ) )
 
-  override def apply( goal: OpenAssumption ): Either[TacticalFailure, ( Unit, LKProof )] = {
+  override def apply( goal: OpenAssumption ): Tactic[Unit] = {
     implicit val ctx2: MutableContext = ctx.newMutable
-    withSection { section =>
+    try replace( withSection { section =>
       val groundGoal = section.groundSequent( goal.conclusion )
       val viper = new TreeGrammarProver( ctx2, groundGoal, options )
-      try {
-        Right( () -> viper.solve() )
-      } catch {
-        case t: TimeOutException => throw t
-        case t: ThreadDeath      => throw t
-        case t: Throwable =>
-          Left( TacticalFailure( this, ExceptionUtils.getStackTrace( t ) ) )
-      }
+      viper.solve()
+    } ) catch {
+      case t: TimeOutException => throw t
+      case t: ThreadDeath      => throw t
+      case t: Throwable =>
+        TacticFailure( this, ExceptionUtils.getStackTrace( t ) )
     }
   }
 

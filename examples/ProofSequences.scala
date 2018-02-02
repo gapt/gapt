@@ -187,7 +187,7 @@ trait ExplicitEqualityTactics {
       All.Block( _, Imp.Block( _, Eq( eqL, eqR ) ) ) = goal( equation )
       Eq( tgtL, tgtR ) = goal( targetEq )
       subst <- syntacticMatching( eqL, tgtL ).
-        toTactical( s"cannot match equation $equation to formula $targetEq" )
+        toTactic( s"cannot match equation $equation to formula $targetEq" )
       _ <- chain( transitivity ).at( targetEq ).subst( transVar -> subst( eqR ) )
       _ <- chain( equation ).at( targetEq )
     } yield ()
@@ -205,7 +205,7 @@ trait ExplicitEqualityTactics {
       All.Block( _, Imp.Block( _, Eq( eqL, eqR ) ) ) = goal( equation )
       Eq( tgtL, tgtR ) = goal( targetEq )
       subst <- syntacticMatching( eqR, tgtR ).
-        toTactical( s"cannot match equation $equation to formula $targetEq" )
+        toTactic( s"cannot match equation $equation to formula $targetEq" )
       _ <- chain( transitivity ).at( targetEq ).subst( transVar -> subst( eqL ) )
       _ <- focus( 1 )
       _ <- chain( equation ).at( targetEq )

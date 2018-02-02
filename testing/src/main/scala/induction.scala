@@ -2,10 +2,10 @@ package at.logic.gapt.testing
 
 import ammonite.ops.FilePath
 import at.logic.gapt.expr.{ All, Eq, Var }
-import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
-import at.logic.gapt.proofs.{ Ant, Context, MutableContext }
+import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic
-import at.logic.gapt.proofs.gaptic.{ ProofState, Tactical }
+import at.logic.gapt.proofs.gaptic.{ ProofState, Tactic }
+import at.logic.gapt.proofs.{ Ant, Context, MutableContext }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.maxsat.OpenWBO
 import at.logic.gapt.provers.smtlib.CVC4
@@ -19,7 +19,7 @@ object testInduction extends App {
 
   class StrategyNotApplicable extends Exception
 
-  def pickQuant( i: Int )( implicit ctx: Context ): Tactical[Unit] = {
+  def pickQuant( i: Int )( implicit ctx: Context ): Tactic[Unit] = {
     import at.logic.gapt.proofs.gaptic._
     currentGoal.flatMap { goal =>
       val Some( All.Block( vs, _ ) ) = goal.conclusion.succedent.headOption
@@ -28,7 +28,7 @@ object testInduction extends App {
     }
   }
 
-  def resolveStrategy( strategyName: String )( implicit ctx: MutableContext ): Tactical[_] =
+  def resolveStrategy( strategyName: String )( implicit ctx: MutableContext ): Tactic[_] =
     strategyName match {
       case "ana_indep"  => AnalyticInductionTactic( IndependentInductionAxioms(), Escargot )
       case "ana_seq"    => AnalyticInductionTactic( SequentialInductionAxioms(), Escargot )

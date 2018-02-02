@@ -20,7 +20,7 @@ object MonoidCancellation extends TacticsProof {
   ctx += "mul_comm" -> hcl":- x*y = y*x"
   ctx += "one_mul" -> hcl":- 1*x = x"
 
-  val setup: Tactical[Unit] = {
+  val setup: Tactic[Unit] = {
     def mkAux( formula: Formula ) =
       Proof( Sequent() :+ ( "goal" -> universalClosure( formula ) ) ) {
         decompose
@@ -39,7 +39,7 @@ object MonoidCancellation extends TacticsProof {
 
     val plus_cancel = mkAux( hof"a = c -> b = d -> a * b = c * d" )
 
-    Tactical {
+    Tactic {
       include( "plus_unit_p", plus_unit_p ) andThen
         include( "plus_assoc_p1", plus_assoc_p1 ) andThen
         include( "plus_assoc_p2", plus_assoc_p2 ) andThen
@@ -53,25 +53,25 @@ object MonoidCancellation extends TacticsProof {
     }
   }
 
-  lazy val iterRight: Tactical[Unit] = Tactical {
+  lazy val iterRight: Tactic[Unit] = Tactic {
     chain( "plus_unit_c" ) orElse
       chain( "plus_assoc_c1" ).andThen( iterRight ) orElse
       chain( "plus_assoc_c2" ).andThen( iterRight ) orElse
       chain( "plus_cancel" ).andThen( refl )
   }
 
-  lazy val iterLeft: Tactical[Unit] = Tactical {
+  lazy val iterLeft: Tactic[Unit] = Tactic {
     chain( "plus_unit_p" ) orElse
       chain( "plus_assoc_p1" ).andThen( iterRight ) orElse
       chain( "plus_assoc_p2" ).andThen( iterRight ) orElse
       iterRight orElse chain( "plus_comm_p" ).andThen( iterRight )
   }
 
-  lazy val cancel: Tactical[Unit] = Tactical {
+  lazy val cancel: Tactic[Unit] = Tactic {
     iterLeft orElse chain( "plus_comm_c" ).andThen( iterLeft )
   }
 
-  val solve: Tactical[Unit] = Tactical {
+  val solve: Tactic[Unit] = Tactic {
     setup andThen
       repeat( refl orElse cancel )
   }

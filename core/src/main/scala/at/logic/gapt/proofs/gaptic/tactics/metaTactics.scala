@@ -5,20 +5,19 @@ import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk._
 
 /**
- * Applies the given [[Tactical]] to the proof state until it fails.
+ * Applies the given [[Tactic]] to the proof state until it fails.
  *
  * Note that the tactical is not required to succeed at least once, i.e. it might
  * fail immediately.
  *
- * @param tact The [[Tactical]] to be repeated.
+ * @param tact The [[Tactic]] to be repeated.
  */
-case class RepeatTactic[T]( tact: Tactical[T] ) extends Tactical[Unit] {
-  override def apply( proofState: ProofState ) = {
+case class RepeatTactic[T]( tact: Tactic[T] ) extends Tactic[Unit] {
+  def apply( proofState: ProofState ): Either[TacticFailure, ( Unit, ProofState )] =
     tact( proofState ) match {
       case Right( ( _, newState ) ) => apply( newState )
       case Left( _ )                => Right( (), proofState )
     }
-  }
 }
 
 /**
@@ -26,38 +25,37 @@ case class RepeatTactic[T]( tact: Tactical[T] ) extends Tactical[Unit] {
  *
  * @param insertion The [[at.logic.gapt.proofs.lk.LKProof]] to be inserted. Its end sequent must subsume the current goal.
  */
-case class InsertTactic( insertion: LKProof ) extends Tactic[Unit] {
+case class InsertTactic( insertion: LKProof ) extends Tactical1[Unit] {
   def apply( goal: OpenAssumption ) = {
-    clauseSubsumption( insertion.endSequent, goal.endSequent ) match {
-      case Some( _ ) if insertion.endSequent.isSubsetOf( goal.endSequent ) =>
-        Right( () -> insertion )
+    if ( insertion.endSequent.isSubsetOf( goal.endSequent ) ) replace( insertion )
+    else clauseSubsumption( insertion.endSequent, goal.endSequent ) match {
       case Some( sub ) =>
-        Right( (), sub( insertion ) )
+        replace( sub( insertion ) )
       case None =>
-        Left( TacticalFailure( this, "goal is not subsumed by provided proof" ) )
+        TacticFailure( this, "goal is not subsumed by provided proof" )
     }
   }
 
   override def toString = s"insert(${insertion.conclusion})"
 }
 
-case class RenameTactic( oldLabel: String, newLabel: String ) extends Tactic[Unit] {
+case class RenameTactic( oldLabel: String, newLabel: String ) extends Tactical1[Unit] {
   def apply( goal: OpenAssumption ) =
     goal.labelledSequent.find( _._1 == oldLabel ) match {
       case Some( idx ) =>
-        Right( () -> OpenAssumption( goal.labelledSequent.updated( idx, newLabel -> goal.conclusion( idx ) ) ) )
-      case None => Left( TacticalFailure( this, s"Old label $oldLabel not found" ) )
+        replace( OpenAssumption( goal.labelledSequent.updated( idx, newLabel -> goal.conclusion( idx ) ) ) )
+      case None => TacticFailure( this, s"Old label $oldLabel not found" )
     }
 
   def to( newLabel: String ) = copy( newLabel = newLabel )
 }
 
-case class FocusTactical( index: Either[Int, OpenAssumptionIndex] ) extends Tactical[Unit] {
+case class FocusTactic( index: Either[Int, OpenAssumptionIndex] ) extends Tactic[Unit] {
   def apply( proofState: ProofState ) =
     index match {
       case Left( i ) if 0 <= i && i < proofState.subGoals.size =>
         Right( () -> proofState.focus( proofState.subGoals( i ).index ) )
       case Right( i ) => Right( () -> proofState.focus( i ) )
-      case _          => Left( TacticalFailure( this, proofState, s"Cannot find subgoal $index" ) )
+      case _          => Left( TacticFailure( this, proofState, s"Cannot find subgoal $index" ) )
     }
 }

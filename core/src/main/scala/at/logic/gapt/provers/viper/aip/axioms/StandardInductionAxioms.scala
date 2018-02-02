@@ -64,8 +64,7 @@ case class StandardInductionAxioms(
          */
         def proof = {
           val inductiveCaseProofs = constructors map { inductiveCaseProof( _ ) }
-          var proofState = ProofState(
-            Sequent( Nil, formula :: Nil ) )
+          var proofState = ProofState( formula )
           proofState += repeat( allR )
           proofState += impR
           proofState += allR( inductionVariable )

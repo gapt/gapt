@@ -38,11 +38,11 @@ case class euclid( k: Int ) extends PrimeDefinitions {
       }
   }
 
-  def splitgt0( label: String ): Tactical[Unit] = Tactical {
+  def splitgt0( label: String ): Tactic[Unit] = Tactic {
     for {
       goal <- currentGoal
       subst <- syntacticMatching( hof"a*b + 1 = 1", goal( label ) ).
-        toTactical( s"$label is no product" )
+        toTactic( s"$label is no product" )
       l = NewLabel( goal.labelledSequent, label )
       _ <- cut( l, subst( hof"a+1=1 ∨ b+1=1" ) )
       _ <- destruct( l ); _ <- theory
@@ -58,7 +58,7 @@ case class euclid( k: Int ) extends PrimeDefinitions {
 
     unfold( "F" ) in "fk"
     allL( "fk", le"p $i" ).forget; decompose; destruct( "fk_1" )
-    Tactical.sequence( for ( j <- i to k reverse ) yield unfold( "P", "union", "set_1" ) in "fk_1" )
+    Tactic.sequence( for ( j <- i to k reverse ) yield unfold( "P", "union", "set_1" ) in "fk_1" )
     decompose; trivial
     unfold( "PRIME" ) in "fk_1"; decompose
 
