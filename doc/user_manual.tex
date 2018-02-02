@@ -1127,45 +1127,44 @@ GAPT can also eliminate induction inferences in a restricted class of proofs
 with quantifier-free conclusions.
 
 \begin{clilisting}
-gapt> val p = instanceProof(examples.induction.numbers.pluscomm,                                     Seq(le"s (s 0 : nat)", le"0 : nat"))
+gapt> val p = instanceProof(examples.theories.nat.addcomm.combined(),                                     Seq(le"s (s 0 : nat)", le"0 : nat"))
 p: at.logic.gapt.proofs.lk.LKProof =
-[p67] ∀x ∀y ((s(x:nat): nat) + (y:nat): nat) = s(x + y),
-∀x 0 + x = x
+[p127] ∀x ((x:nat) + (0:nat): nat) = x,
+∀x ∀y x + s(y:nat) = s(x + y)
 ⊢
-s(s(0)) + 0 = 0 + s(s(0))    (CutRule(p63, Suc(0), p66, Ant(0)))
-[p66] ∀x ∀y ((x:nat) + (y:nat): nat) = y + x ⊢ s(s(0:nat): nat) + 0 = 0 + s(s(0))    (ForallLeftRule(p65, Ant(0), ∀y ((x:nat) + (y:nat): nat) = y + x, s(s(0:nat): nat), x:nat))
-[p65] ∀y (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (ForallLeftRule(p64, Ant(0), (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)), 0:nat, y:nat))
-[p64] (s(s(0:nat): nat) + 0: nat) = 0 + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (LogicalAxiom((s(s(0:nat): nat) + 0: nat) = 0 + s(s(0))))
-[p63] ∀x ∀y ((s(x:nat): nat) + (y:nat): nat) = s(x + y),
-∀x 0 + x = x
+s(s(0)) + 0 = 0 + s(s(0))    (CutRule(p123, Suc(0), p126, Ant(0)))
+[p126] ∀x ∀y ((x:nat) + (y:nat): nat) = y + x ⊢ s(s(0:nat): nat) + 0 = 0 + s(s(0))    (ForallLeftRule(p125, Ant(0), ∀y ((x:nat) + (y:nat): nat) = y + x, s(s(0:nat): nat), x:nat))
+[p125] ∀y (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (ForallLeftRule(p124, Ant(0), (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)), 0:nat, y:nat))
+[p124] (s(s(0:nat): nat) + 0: nat) = 0 + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (LogicalAxiom((s(s(0:nat): nat) + 0: nat) = 0 + s(s(0))))
+[p123] ∀x ((x:nat) + (0:nat): nat) = x,
+∀x ∀y x + s(y:nat) = s(x + y)
 ⊢
-∀x ∀y x + y = y + x    (ContractionLeftRule(p62, Ant(2),...
+∀x ∀y x + y = y + x    (CutRule(p3, Suc(0), p122,...
 
-gapt> val q = ReductiveCutElimination.eliminateInduction(p)(                                         examples.induction.numbers.ctx)
+gapt> val q = ReductiveCutElimination.eliminateInduction(p)(                                         examples.theories.nat.ctx)
 q: at.logic.gapt.proofs.lk.LKProof =
-[p48] ∀x ∀y ((s(x:nat): nat) + (y:nat): nat) = s(x + y),
-∀x 0 + x = x
+[p43] ∀x_1 ∀y_0 ((x_1:nat) + (s(y_0:nat): nat): nat) = s(x_1 + y_0),
+∀x_1 x_1 + 0 = x_1
 ⊢
-s(s(0)) + 0 = 0 + s(s(0))    (ContractionLeftRule(p47, Ant(2), Ant(1)))
-[p47] ∀x ((0:nat) + (x:nat): nat) = x,
-∀x ∀y s(x:nat) + y = s(x + y),
-∀x ∀y s(x) + y = s(x + y)
+s(s(0)) + 0 = 0 + s(s(0))    (ContractionLeftRule(p42, Ant(1), Ant(2)))
+[p42] ∀x_1 ((x_1:nat) + (0:nat): nat) = x_1,
+∀x_1 ∀y_0 x_1 + s(y_0:nat) = s(x_1 + y_0),
+∀x_1 ∀y_0 x_1 + s(y_0) = s(x_1 + y_0)
 ⊢
-s(s(0)) + 0 = 0 + s(s(0))    (ContractionLeftRule(p46, Ant(0), Ant(2)))
-[p46] ∀x ((0:nat) + (x:nat): nat) = x,
-∀x ∀y s(x:nat) + y = s(x + y),
-∀x 0 + x = x,
-∀x ∀y s(x) + y = s(x + y)
+s(s(0)) + 0 = 0 + s(s(0))    (ContractionLeftRule(p41, Ant(1), Ant(0)))
+[p41] ∀x_1 ((x_1:nat) + (0:nat): nat) = x_1,
+∀x_1 x_1 + 0 = x_1,
+∀x_1 ∀y_0 x_1 + s(y_0:nat) = s(x_1 + y_0),
+∀x_1 ∀y_0 x_1 + s(y_0) = s(x_1 + y_0)
 ⊢
-s(s(0)) + 0 = 0 + s(s(0))    (ContractionLeftRule(p45, Ant(3), Ant(2)))
-[p45] ∀x ∀y ((s(x:nat): nat) + (y:nat): nat) = s(x + y),
-∀x 0 + x = x,
-∀x 0 + x = x,
-∀x 0 + x = x,
-∀x ∀y s(x) + y = s(x + y)
+s(s(0)) + 0 = 0 + s(s(0))    (ContractionLeftRule(p40, Ant(2), Ant(3)))
+[p40] ∀x_1 ((x_1:nat) + (0:nat): nat) = x_1,
+∀x_1 ∀y_0 x_1 + s(y_0:nat) = s(x_1 + y_0),
+∀x_1 x_1 + 0 = x_1,
+∀x_1 x_1 + 0 = x_1,
+∀x_1 ∀y_0 x_1 + s(y_0) = s(x_1 + y_0)
 ⊢
-s(s(0)) + 0 = 0 + s(s(0))    (ForallLeftRule(p44, Ant(0), ∀y ((s(x:nat): nat) + (y:nat): nat) = s(x + y), s(0:nat): nat, x:nat))
-[p44] ...
+s(s(0)) + ...
 
 \end{clilisting}
 
@@ -1175,13 +1174,15 @@ sequent by converting to an expansion proof:
 \begin{clilisting}
 gapt> LKToExpansionProof(q)
 res10: at.logic.gapt.proofs.expansion.ExpansionProof =
-∀x ∀y ((s(x:nat): nat) + (y:nat): nat) = s(x + y)
-  +^{0} ∀y s(0) + y = s(0 + y) +^{0} (s(0) + 0 = s(0 + 0))-
-  +^{s(0)} ∀y s(s(0)) + y = s(s(0) + y) +^{0} (s(s(0)) + 0 = s(s(0) + 0))-,
-∀x ((0:nat) + (x:nat): nat) = x
+∀x_1 ∀y_0 ((x_1:nat) + (s(y_0:nat): nat): nat) = s(x_1 + y_0)
+  +^{0}
+    ∀y_0 0 + s(y_0) = s(0 + y_0)
+    +^{0} (0 + s(0) = s(0 + 0))-
+    +^{s(0)} (0 + s(s(0)) = s(0 + s(0)))-,
+∀x_1 ((x_1:nat) + (0:nat): nat) = x_1
   +^{0} (0 + 0 = 0)-
-  +^{s(0)} (0 + s(0) = s(0))-
-  +^{s(s(0))} (0 + s(s(0)) = s(s(0)))-
+  +^{s(0)} (s(0) + 0 = s(0))-
+  +^{s(s(0))} (s(s(0)) + 0 = s(s(0)))-
 :-
 ((s(s(0:nat): nat) + 0: nat) = 0 + s(s(0)))+
 
