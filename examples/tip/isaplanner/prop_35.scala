@@ -20,12 +20,12 @@ object prop_35 extends TacticsProof {
           def_head: ∀x0 ∀x1 (head(cons(x0:sk, x1:list): list): sk) = x0,
           def_tail: ∀x0 ∀x1 (tail(cons(x0:sk, x1:list): list): list) = x1,
           def_dropWhile_1: ∀x (dropWhile(x:fun1, nil:list): list) = nil,
-          def_dropWhile_2: ∀x ∀z ∀xs (¬apply1(x:fun1, z:sk) ⊃
+          def_dropWhile_2: ∀x ∀z ∀xs (¬apply1(x:fun1, z:sk) →
             (dropWhile(x, cons(z, xs:list): list): list) = cons(z, xs)),
-          def_dropWhile_3: ∀x ∀z ∀xs (apply1(x:fun1, z:sk) ⊃
+          def_dropWhile_3: ∀x ∀z ∀xs (apply1(x:fun1, z:sk) →
             (dropWhile(x, cons(z, xs:list): list): list) = dropWhile(x, xs)),
           ax_list: ∀y0 ∀y1 ¬(nil:list) = cons(y0:sk, y1:list),
-          def_apply1_1: ∀x ((apply1(lam:fun1, x:sk) ⊃ ⊥) ∧ (⊥ ⊃ apply1(lam, x)))
+          def_apply1_1: ∀x ((apply1(lam:fun1, x:sk) → ⊥) ∧ (⊥ → apply1(lam, x)))
           :-
           goal: ∀xs (dropWhile(lam:fun1, xs:list): list) = xs
         """

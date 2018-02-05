@@ -40,7 +40,7 @@ class LeanNames(
       replace( ">=", "_ge_" ).
       replace( "<=", "_le_" ).
       replace( "=", "_eq_" ).
-      replace( "⊃", "_imp_" ).
+      replace( "→", "_imp_" ).
       replace( "∀", "_all_" ).
       replace( "__", "_" ).
       filter( c => c == '_' || Character.isAlphabetic( c ) || Character.isDigit( c ) ).

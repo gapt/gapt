@@ -25,8 +25,8 @@ object tapeUrban extends TacticsProof {
 
   ctx += hof"A = (∀x (f(x)=0 ∨ f(x)=1))"
   ctx += hof"P = (∃n ∃m (n < m ∧ f(n) = f(m)))"
-  ctx += hof"T = (∀i ∀x ∀y (f(y) = i ∧ f(x) = i ⊃ f(x) = f(y)))"
-  ctx += hof"S = (∀x ∀y (s x <= y ⊃ x < y))"
+  ctx += hof"T = (∀i ∀x ∀y (f(y) = i ∧ f(x) = i → f(x) = f(y)))"
+  ctx += hof"S = (∀x ∀y (s x <= y → x < y))"
   ctx += hof"M_1 = (∀y ∀x x <= max x y)"
   ctx += hof"M_2 = (∀y ∀x y <= max x y)"
   ctx += hof"I i = (∀n ∃k (n <= k ∧ f(k) = i))"

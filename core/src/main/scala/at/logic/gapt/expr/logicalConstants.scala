@@ -49,7 +49,7 @@ class QuantifierC( name: String ) extends LogicalC( name ) {
 
 object AndC extends MonomorphicLogicalC( "∧", To ->: To ->: To )
 object OrC extends MonomorphicLogicalC( "∨", To ->: To ->: To )
-object ImpC extends MonomorphicLogicalC( "⊃", To ->: To ->: To )
+object ImpC extends MonomorphicLogicalC( "→", To ->: To ->: To )
 object NegC extends MonomorphicLogicalC( "¬", To ->: To )
 object BottomC extends MonomorphicLogicalC( "⊥", To )
 object TopC extends MonomorphicLogicalC( "⊤", To )

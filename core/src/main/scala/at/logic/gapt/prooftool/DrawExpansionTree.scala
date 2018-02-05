@@ -97,7 +97,7 @@ abstract class DrawExpansionTree(
         contents += parenthesis._2
       case Imp( f1, f2 ) =>
         val parenthesis = connectedParentheses()
-        val conn = label( "⊃" )
+        val conn = label( "→" )
         val subF1 = drawFormula( f1 )
         val subF2 = drawFormula( f2 )
         this.listenTo( conn.mouse.moves, parenthesis._1.mouse.moves, parenthesis._2.mouse.moves )
@@ -500,7 +500,7 @@ class DrawETNonQuantifier(
 
     case ETImp( t1, t2 ) =>
       val parentheses = connectedParentheses()
-      val conn = label( "⊃" )
+      val conn = label( "→" )
       val subF1 = DrawExpansionTree( main, t1, outerQuantifier )
       val subF2 = DrawExpansionTree( main, t2, outerQuantifier )
       this.listenTo( conn.mouse.moves, parentheses._1.mouse.moves, parentheses._2.mouse.moves )

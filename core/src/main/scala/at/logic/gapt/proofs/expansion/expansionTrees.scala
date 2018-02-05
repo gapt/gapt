@@ -168,7 +168,7 @@ case class ETOr( child1: ExpansionTree, child2: ExpansionTree ) extends BinaryEx
 }
 
 /**
- * A tree representing A ⊃ B.
+ * A tree representing A → B.
  * @param child1 A tree representing A.
  * @param child2 A tree representing B.
  */
@@ -180,7 +180,7 @@ case class ETImp( child1: ExpansionTree, child2: ExpansionTree ) extends BinaryE
 }
 
 object ETCut {
-  val cutAxiom = hof"∀X (X ⊃ X)"
+  val cutAxiom = hof"∀X (X → X)"
   def apply( child1: ExpansionTree, child2: ExpansionTree ): ExpansionTree =
     ETWeakQuantifier.withMerge( cutAxiom, List( child1.shallow -> ETImp( child1, child2 ) ) )
   def apply( cuts: Iterable[ETImp] ): ExpansionTree =

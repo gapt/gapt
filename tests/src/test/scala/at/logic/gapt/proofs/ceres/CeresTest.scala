@@ -70,10 +70,10 @@ class CeresTest extends Specification with SequentMatchers with SatMatchers {
 
     import gaptic._
     val p = Lemma(
-      ( "pc" -> hof"∀y P(c, y)" ) +: ( "pf" -> hof"∀x ∀y (P(x, g y) ⊃ P(f x, y))" ) +:
+      ( "pc" -> hof"∀y P(c, y)" ) +: ( "pf" -> hof"∀x ∀y (P(x, g y) → P(f x, y))" ) +:
         Sequent()
         :+ ( "goal" -> hof"in(f(f(f(f(c)))), Q)" ) ) {
-        cut( "cut", hof"∀x ∀y (P(x, g(g y)) ⊃ P(f(f x), y))" ); forget( "goal" )
+        cut( "cut", hof"∀x ∀y (P(x, g(g y)) → P(f(f x), y))" ); forget( "goal" )
         decompose; repeat( chain( "pf" ) ); trivial
 
         unfold( "in", "Q" ) in "goal"

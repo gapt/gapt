@@ -563,7 +563,7 @@ trait TacticCommands {
    * - `¬:l` and `¬:r`
    * - `∧:l`
    * - `∨:r`
-   * - `⊃:r`
+   * - `→:r`
    * - `∀:r`
    * - `∃:l`
    */

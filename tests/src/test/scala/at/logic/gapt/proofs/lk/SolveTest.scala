@@ -38,12 +38,12 @@ class SolveTest extends Specification with SequentMatchers {
     "not refute top" in { solvePropositional( Top() +: Sequent() ).toOption must beNone }
     "refute bottom" in { solvePropositional( Bottom() +: Sequent() ).toOption must beSome }
 
-    "prove ( p ∨ p ) ⊃ ( p ∧ p )" in {
+    "prove ( p ∨ p ) → ( p ∧ p )" in {
       val F = hof"p|p -> p&p"
       solvePropositional( F ).toOption must beSome
     }
 
-    "prove ( p ∧ p ) ⊃ ( p ∨ p )" in {
+    "prove ( p ∧ p ) → ( p ∨ p )" in {
       val F = hof"p&p -> p|p"
       solvePropositional( F ).toOption must beSome
     }
@@ -73,7 +73,7 @@ class SolveTest extends Specification with SequentMatchers {
 
     "cuts" in {
       val es = ETAtom( hoa"p 0", Polarity.InAntecedent ) +:
-        ETWeakQuantifier( hof"∀x (p x ⊃ p (s x))", Map(
+        ETWeakQuantifier( hof"∀x (p x → p (s x))", Map(
           le"z" -> ETImp(
             ETAtom( hoa"p z", Polarity.InSuccedent ),
             ETAtom( hoa"p (s z)", Polarity.InAntecedent ) ),
@@ -82,7 +82,7 @@ class SolveTest extends Specification with SequentMatchers {
             ETAtom( hoa"p (s (s z))", Polarity.InAntecedent ) ) ) ) +:
         Sequent() :+
         ETAtom( hoa"p (s (s (s (s 0))))", Polarity.InSuccedent )
-      val cutf = hof"∀x (p x ⊃ p (s (s x)))"
+      val cutf = hof"∀x (p x → p (s (s x)))"
       val cut = ETCut(
         ETStrongQuantifier( cutf, hov"z",
           ETImp(

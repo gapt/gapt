@@ -232,7 +232,7 @@ object LinearEqExampleProof extends TacticsProof with ProofSequence with Explici
   def apply( n: Int ) =
     Proof(
       ( "refl" -> hof"∀(x:i) x=x" ) +:
-        ( "trans" -> hof"∀(x:i)∀y∀z (x=y ∧ y=z ⊃ x=z)" ) +:
+        ( "trans" -> hof"∀(x:i)∀y∀z (x=y ∧ y=z → x=z)" ) +:
         ( "id" -> hof"∀x f(x)=x" ) +: Sequent()
         :+ ( "goal" -> hof"${fk( n )} = a" ) ) {
         repeat( explicitRewriteLeft( "id", "goal" ) )
@@ -250,8 +250,8 @@ object SumOfOnesF2ExampleProof extends TacticsProof with ProofSequence with Expl
 
   def apply( n: Int ) =
     Proof(
-      ( "trans" -> hof"∀(x:i)∀y∀z (x=y ∧ y=z ⊃ x=z)" ) +:
-        ( "congplusleft" -> hof"∀x∀y∀z (y=z ⊃ y+x = z+x)" ) +:
+      ( "trans" -> hof"∀(x:i)∀y∀z (x=y ∧ y=z → x=z)" ) +:
+        ( "congplusleft" -> hof"∀x∀y∀z (y=z → y+x = z+x)" ) +:
         ( "plus1" -> hof"∀x x + s(0) = s(x)" ) +:
         ( "fs" -> hof"∀x f(s(x)) = f(x) + s(0)" ) +:
         ( "f0" -> hof"f 0 = 0" ) +:
@@ -275,8 +275,8 @@ object SumOfOnesFExampleProof extends TacticsProof with ProofSequence with Expli
 
   def apply( n: Int ) =
     Proof(
-      ( "trans" -> hof"∀(x:i)∀y∀z (x=y ∧ y=z ⊃ x=z)" ) +:
-        ( "congsuc" -> hof"∀x ∀y (x = y ⊃ s(x) = s(y))" ) +:
+      ( "trans" -> hof"∀(x:i)∀y∀z (x=y ∧ y=z → x=z)" ) +:
+        ( "congsuc" -> hof"∀x ∀y (x = y → s(x) = s(y))" ) +:
         ( "plus1" -> hof"∀x x + s(0) = s(x)" ) +:
         ( "fs" -> hof"∀x f(s(x)) = f(x) + s(0)" ) +:
         ( "f0" -> hof"f 0 = 0" ) +:

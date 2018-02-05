@@ -314,10 +314,10 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
     val axioms = Seq(
       "ae1" -> hof"equal(0, 0)",
-      "ae4" -> hof"∀x2 ∀y2 ((equal(s(x2), s(y2)) ⊃ equal(x2, y2)) ∧ (equal(x2, y2) ⊃ equal(s(x2), s(y2))))",
+      "ae4" -> hof"∀x2 ∀y2 ((equal(s(x2), s(y2)) → equal(x2, y2)) ∧ (equal(x2, y2) → equal(s(x2), s(y2))))",
       "al1" -> hof"∀y le(0, y)",
-      "al3" -> hof"∀z ∀x2 ((le(s(z), s(x2)) ⊃ le(z, x2)) ∧ (le(z, x2) ⊃ le(s(z), s(x2))))",
-      "ael" -> hof"!x !y (equal(x,y) ⊃ le(x,y))" )
+      "al3" -> hof"∀z ∀x2 ((le(s(z), s(x2)) → le(z, x2)) ∧ (le(z, x2) → le(s(z), s(x2))))",
+      "ael" -> hof"!x !y (equal(x,y) → le(x,y))" )
 
     val baseCase = Lemma( axioms ++: Sequent() :+ ( "goal" -> hof"equal(0,0)" ) ) {
       axiomLog

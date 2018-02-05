@@ -36,7 +36,7 @@ object prop_48 extends TacticsProof {
         constr_inj_0: ∀y0 ¬#c(Z: Nat) = S(y0:Nat),
         constr_inj_1: ∀y0 ∀y1 ¬(nil:list) = cons(y0:Nat, y1:list)
         :-
-        goal: ∀xs   (¬null(xs:list) ⊃     (append(butlast(xs): list, cons(last(xs): Nat, nil:list): list): list) = xs)
+        goal: ∀xs   (¬null(xs:list) →     (append(butlast(xs): list, cons(last(xs): Nat, nil:list): list): list) = xs)
   """
 
   val dca_goal = hof"!xs (xs = nil ∨ ?x ?xss xs = cons(x, xss))"

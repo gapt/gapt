@@ -455,6 +455,6 @@ object inductionPrinciple {
       }.foldRight( pred( constr( vars: _* ) ) )( ( v, f ) => pred( v ) --> f ) )
     }
 
-    hof"∀X (${And( hyps )} ⊃ ∀x $pred x)"
+    hof"∀X (${And( hyps )} → ∀x $pred x)"
   }
 }
