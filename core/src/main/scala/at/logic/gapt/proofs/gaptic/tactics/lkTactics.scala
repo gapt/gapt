@@ -335,7 +335,7 @@ case class CutTactic( cutLabel: String, cutFormula: Formula ) extends Tactical1[
  * @param targetFormula If `Some(f)`, the tactic will attempt to produce `f` through application of the equality. Otherwise
  *                      it will replace as many occurrences as possible according to `leftToRight`.
  */
-case class EqualityTactic( equationLabel: String, formulaLabel: String, leftToRight: Option[Boolean] = None, targetFormula: Option[Formula] = None ) extends Tactical1[Unit] {
+case class EqualityTactic( equationLabel: String, formulaLabel: String, private val leftToRight: Option[Boolean] = None, private val targetFormula: Option[Formula] = None ) extends Tactical1[Unit] {
 
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.labelledSequent
@@ -436,9 +436,9 @@ case class EqualityTactic( equationLabel: String, formulaLabel: String, leftToRi
     }
   }
 
-  def fromLeftToRight = new EqualityTactic( equationLabel, formulaLabel, leftToRight = Some( true ) )
+  def fromLeftToRight = EqualityTactic( equationLabel, formulaLabel, leftToRight = Some( true ) )
 
-  def fromRightToLeft = new EqualityTactic( equationLabel, formulaLabel, leftToRight = Some( false ) )
+  def fromRightToLeft = EqualityTactic( equationLabel, formulaLabel, leftToRight = Some( false ) )
 
-  def yielding( targetFormula: Formula ) = new EqualityTactic( equationLabel, formulaLabel, targetFormula = Some( targetFormula ) )
+  def yielding( targetFormula: Formula ) = EqualityTactic( equationLabel, formulaLabel, targetFormula = Some( targetFormula ) )
 }
