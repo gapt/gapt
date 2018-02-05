@@ -2,7 +2,7 @@ package at.logic.gapt.examples
 
 import at.logic.gapt.proofs.nd._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context
+import at.logic.gapt.proofs.{ Ant, Context }
 import at.logic.gapt.proofs.Context.InductiveType
 
 object addRecorsorsExamples extends Script {
@@ -185,7 +185,13 @@ object impElimRule extends Script {
 }
 
 object impIntroRule extends Script {
-
+  val a1 = LogicalAxiom( hof"0 = 0" )
+  val a2 = WeakeningRule( a1, hof"s(0) = s(0)" )
+  val a3 = ImpIntroRule( a2, Ant( 0 ) )
+  val m1 = MRealizability.mrealize( a2 )
+  print( m1 ); print( " of type" ); println( m1.ty )
+  val m2 = MRealizability.mrealize( a3 )
+  print( m2 ); print( " of type" ); println( m2.ty )
 }
 
 object bottomElimRule extends Script {

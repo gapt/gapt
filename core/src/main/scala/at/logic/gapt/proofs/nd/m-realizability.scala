@@ -61,37 +61,34 @@ object MRealizability {
   def mrealize( proof: NDProof ): Expr = normalize( proof match {
     case WeakeningRule( subProof, formula ) =>
       Abs(
-        ( freeVariables( proof.conclusion ).toSeq :+ Var( "z", flat( formula ) ) ) ++ variablesAntPremise( proof, 0 ).values,
-        App( mrealize( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ).values ) )
+        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
+        App( mrealize( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) ) )
 
     case ContractionRule( subProof, aux1, aux2 ) =>
       Abs(
-        ( freeVariables( proof.conclusion ).toSeq :+ Var( "z", flat( subProof.conclusion.apply( aux1 ) ) ) ) ++ variablesAntPremise( proof, 0 ).-( aux1, aux2 ).values,
-        App( mrealize( subProof ), ( ( freeVariables( subProof.conclusion ).toSeq :+
-          Var( "z", flat( subProof.conclusion.apply( aux1 ) ) ) ) :+
-          Var( "z", flat( subProof.conclusion.apply( aux1 ) ) ) ) ++
-          variablesAntPremise( proof, 0 ).-( aux1, aux2 ).values ) )
+        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
+        App( mrealize( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) ) )
 
     case LogicalAxiom( formula ) =>
       Abs( freeVariables( proof.conclusion ).toSeq :+ Var( "x", flat( formula ) ), Var( "x", flat( formula ) ) )
 
     case AndElim1Rule( subProof ) =>
       Abs(
-        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ).values,
-        le"pi1(${App( mrealize( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ).values )})" )
+        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
+        le"pi1(${App( mrealize( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) )})" )
 
     case AndElim2Rule( subProof ) =>
       Abs(
-        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ).values,
-        le"pi2(${App( mrealize( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ).values )})" )
+        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
+        le"pi2(${App( mrealize( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) )})" )
 
     case AndIntroRule( leftSubproof, rightSubproof ) =>
       Abs(
-        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ).values,
+        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
         le"pair(${
-          App( mrealize( leftSubproof ), freeVariables( leftSubproof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ).values )
+          App( mrealize( leftSubproof ), freeVariables( leftSubproof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) )
         },${
-          App( mrealize( rightSubproof ), freeVariables( rightSubproof.conclusion ).toSeq ++ variablesAntPremise( proof, 1 ).values )
+          App( mrealize( rightSubproof ), freeVariables( rightSubproof.conclusion ).toSeq ++ variablesAntPremise( proof, 1 ) )
         })" )
 
     case OrElimRule( leftSubProof, middleSubProof, aux1, rightSubProof, aux2 ) =>
@@ -105,17 +102,18 @@ object MRealizability {
 
     case ImpElimRule( leftSubProof, rightSubProof ) =>
       Abs(
-        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ).values,
+        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
         App(
-          normalize( App( mrealize( leftSubProof ), freeVariables( leftSubProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ).values ) ),
-          normalize( App( mrealize( rightSubProof ), freeVariables( rightSubProof.conclusion ).toSeq ++ variablesAntPremise( proof, 1 ).values ) ) ) )
+          App( mrealize( leftSubProof ), freeVariables( leftSubProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) ),
+          App( mrealize( rightSubProof ), freeVariables( rightSubProof.conclusion ).toSeq ++ variablesAntPremise( proof, 1 ) ) ) )
 
     case ImpIntroRule( subProof, aux ) =>
+      val extraVar = Var( "z", flat( subProof.conclusion( aux ) ) )
       Abs(
-        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ).values,
+        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
         Abs(
-          Var( "z", flat( subProof.conclusion( aux ) ) ),
-          App( mrealize( subProof ), ( freeVariables( subProof.conclusion ).toSeq :+ Var( "z", flat( subProof.conclusion( aux ) ) ) ) ++ variablesAntPremise( proof, 0 ).values ) ) )
+          extraVar,
+          App( mrealize( subProof ), freeVariables( subProof.conclusion ).toSeq ++ insertIndex( variablesAntPremise( proof, 0 ), aux, extraVar ) ) ) )
 
     case NegElimRule( leftSubProof, rightSubProof ) =>
       throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
@@ -127,7 +125,7 @@ object MRealizability {
       throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
 
     case BottomElimRule( subProof, mainFormula ) =>
-      Abs( freeVariables( proof.conclusion ).toSeq.diff( freeVariables( subProof.conclusion ).toSeq ), mrealize( subProof ) )
+      throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
 
     case ForallIntroRule( subProof, eigenVariable, quantifiedVariable ) =>
       throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
@@ -170,14 +168,20 @@ object MRealizability {
     case All( variable, subformula ) => variable.ty ->: flat( subformula )
   }
 
-  def variablesAntConclusion( proof: NDProof ): Map[SequentIndex, Var] =
-    proof.conclusion.zipWithIndex.antecedent.map( x => ( x._2, Var( s"x${x._2.toInt}", flat( x._1 ) ) ) ).toMap
+  def insertIndex( sequence: Vector[Var], index: SequentIndex, value: Expr ): Vector[Expr] =
+    ( sequence.take( index.toInt.abs - 1 ) :+ value ) ++ sequence.takeRight( sequence.length - ( index.toInt.abs - 1 ) )
 
-  def variablesAntPremise( proof: NDProof, premiseNumber: Int ): Map[SequentIndex, Var] = {
-    val positions = proof.occConnectors( premiseNumber ).childrenSequent.antecedent.flatten
-    variablesAntConclusion( proof ).filterKeys( positions.contains( _ ) )
+  def variablesAntConclusion( proof: NDProof ): Vector[Var] = {
+    variablesAntConclusionWithIndex( proof ).map( _._2 )
   }
 
+  def variablesAntPremise( proof: NDProof, premiseNumber: Int ): Vector[Var] = {
+    val positions = proof.occConnectors( premiseNumber ).childrenSequent.antecedent.flatten
+    positions.flatMap( variablesAntConclusionWithIndex( proof ).toMap get )
+  }
+
+  private def variablesAntConclusionWithIndex( proof: NDProof ): Vector[( SequentIndex, Var )] =
+    proof.conclusion.zipWithIndex.antecedent.map( x => ( x._2, Var( s"x${x._2.toInt}", flat( x._1 ) ) ) )
 }
 
 class MRealizerCreationException( name: String, message: String ) extends Exception( s"Cannot create an m-realizer for $name: " + message )
