@@ -136,8 +136,10 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     t0:        Map[String, VarOrConst] ): ( IdentShowMode, Map[String, VarOrConst] ) = {
     val name = expr.name
     val ty = expr.ty
+    val isAliased = sig.notationsForToken( expr.name ).exists( not => not.const != expr.name )
     sig.signatureLookup( name ) match {
       case _ if omitTypes                          => Bare -> t0
+      case _ if isAliased                          => Safe -> t0
       case _ if t0.get( name ).exists( _ != expr ) => Safe -> t0
       // Now: t0.get(name).forall(_ == expr)
       case BabelSignature.IsConst( c ) if !bound( name ) =>

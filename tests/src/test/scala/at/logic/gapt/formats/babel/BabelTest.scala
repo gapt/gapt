@@ -50,6 +50,10 @@ class BabelTest extends Specification {
     }
   }
 
+  "true constant" in {
+    hof"#c(true:o)".toString must_== "#c(true: o)"
+  }
+
   "variable and constant literals" in {
     BabelParser.parse( "#c(x : o > o > o) #v(c : o) x" ) must_==
       Apps( Const( "x", To ->: To ->: To ), Var( "c", To ), Var( "x", To ) )
@@ -73,6 +77,7 @@ class BabelTest extends Specification {
       "'-2' = (-2)",
       "''",
       "'\\u0000'",
+      "#c(true: o)",
       "true", "'true'", "'all' x" )
     Fragments.foreach( strings ) { string =>
       string in {
