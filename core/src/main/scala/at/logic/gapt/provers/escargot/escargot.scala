@@ -64,14 +64,13 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
   }
 
   def main( args: Array[String] ): Unit = {
-    LogHandler.current.value = LogHandler.silent
+    LogHandler.current.value = LogHandler.tstp
 
     val tptpInputFile = args.toSeq match {
       case Seq() =>
         println( "Usage: escargot [-v] tptp-problem.p" )
         sys.exit( 1 )
       case Seq( "-v", file ) =>
-        LogHandler.current.value = LogHandler.tstp
         LogHandler.verbosity.value = LogHandler.verbosity.value.increase( Seq( EscargotLogger ), 2 )
         file
       case Seq( file ) => file
