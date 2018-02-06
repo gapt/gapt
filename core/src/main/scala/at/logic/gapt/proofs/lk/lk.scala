@@ -874,7 +874,7 @@ case class ImpLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof
 
   def auxIndices = Seq( Seq( aux1 ), Seq( aux2 ) )
 
-  override def name = "\u2283:l"
+  override def name = "→:l"
 
   override def mainFormulaSequent = mainFormula +: Sequent()
 }
@@ -944,7 +944,7 @@ case class ImpRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInd
 
   override def auxIndices = Seq( Seq( aux1, aux2 ) )
 
-  override def name = "\u2283:r"
+  override def name = "→:r"
 
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
