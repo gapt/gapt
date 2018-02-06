@@ -8,28 +8,6 @@ import at.logic.gapt.utils.NameGenerator
 
 object MRealizability {
 
-  /*implicit var systemT = Context()
-  systemT += InductiveType(
-    ty"conj ?a  ?b",
-    hoc"pair{?a ?b}: ?a > ?b > conj ?a ?b " )
-  systemT += PrimRecFun(
-    hoc"pi1{?a ?b}: (conj ?a ?b) > ?a",
-    "pi1(pair(x,y)) = x" )
-  systemT += PrimRecFun(
-    hoc"pi2{?a ?b}: (conj ?a ?b) > ?b",
-    "pi2(pair(x,y)) = y" )
-  systemT += InductiveType(
-    ty"nat",
-    hoc"0 : nat",
-    hoc"s : nat > nat" )
-  systemT += PrimRecFun(
-    hoc"R{?a}: (nat > ?a > ?a) > ?a > nat > ?a",
-    "R(x,y,0) = y",
-    "R(x,y,s(z)) = x(z,R(x,y,z))" )
-  systemT += InductiveType(
-    ty"1",
-    hoc"i : 1" )*/
-
   def addRecursors( implicit ctx: Context ): Context = {
     var ctxx = Context.empty
 
@@ -58,99 +36,140 @@ object MRealizability {
     ctxx
   }
 
-  def mrealize( proof: NDProof ): Expr = normalize( proof match {
-    case WeakeningRule( subProof, formula ) =>
-      Abs(
-        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
-        App( mrealize( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) ) )
+  def mrealize( proof: NDProof )( implicit ctx: Context ): Expr = {
 
-    case ContractionRule( subProof, aux1, aux2 ) =>
-      Abs(
-        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
-        App( mrealize( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) ) )
+    var systemT = addRecursors( ctx )
 
-    case LogicalAxiom( formula ) =>
-      Abs( freeVariables( proof.conclusion ).toSeq :+ Var( "x", flat( formula ) ), Var( "x", flat( formula ) ) )
+    val a = TVar( "a" )
+    val b = TVar( "b" )
+    val conj = TBase( "conj", a, b )
+    val pair = Const( "pair", a ->: b ->: conj, List( a, b ) )
+    systemT += InductiveType( conj, pair )
 
-    case AndElim1Rule( subProof ) =>
-      Abs(
-        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
-        le"pi1(${App( mrealize( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) )})" )
+    val pi1 = Const( "pi1", conj ->: a, List( a, b ) )
+    val pi2 = Const( "pi2", conj ->: b, List( a, b ) )
+    val x: Expr = Var( "x", a )
+    val y: Expr = Var( "y", b )
+    systemT += PrimRecFun( List(
+      ( pi1, List(
+        ( App( pi1, App( pair, List( x, y ) ) ), x ) ) ) ) )( systemT )
+    systemT += PrimRecFun( List(
+      ( pi2, List(
+        ( App( pi2, App( pair, List( x, y ) ) ), y ) ) ) ) )( systemT )
 
-    case AndElim2Rule( subProof ) =>
-      Abs(
-        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
-        le"pi2(${App( mrealize( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) )})" )
+    /*systemT += InductiveType(
+      ty"conj ?a  ?b",
+      hoc"pair{?a ?b}: ?a > ?b > conj ?a ?b " )
+    systemT += PrimRecFun(
+      hoc"pi1{?a ?b}: (conj ?a ?b) > ?a",
+      "pi1(pair(x,y)) = x" )
+    systemT += PrimRecFun(
+      hoc"pi2{?a ?b}: (conj ?a ?b) > ?b",
+      "pi2(pair(x,y)) = y" )*/
 
-    case AndIntroRule( leftSubproof, rightSubproof ) =>
-      Abs(
-        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
-        le"pair(${
-          App( mrealize( leftSubproof ), freeVariables( leftSubproof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) )
-        },${
-          App( mrealize( rightSubproof ), freeVariables( rightSubproof.conclusion ).toSeq ++ variablesAntPremise( proof, 1 ) )
-        })" )
+    systemT += InductiveType(
+      ty"1",
+      hoc"i : 1" )
 
-    case OrElimRule( leftSubProof, middleSubProof, aux1, rightSubProof, aux2 ) =>
-      throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+    mrealizeCases( proof )( systemT )
+  }
 
-    case OrIntro1Rule( subProof, rightDisjunct ) =>
-      throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+  def mrealizeCases( proof: NDProof )( implicit ctx: Context ): Expr = {
 
-    case OrIntro2Rule( subProof, leftDisjunct ) =>
-      throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
-
-    case ImpElimRule( leftSubProof, rightSubProof ) =>
-      Abs(
-        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
-        App(
-          App( mrealize( leftSubProof ), freeVariables( leftSubProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) ),
-          App( mrealize( rightSubProof ), freeVariables( rightSubProof.conclusion ).toSeq ++ variablesAntPremise( proof, 1 ) ) ) )
-
-    case ImpIntroRule( subProof, aux ) =>
-      val extraVar = Var( "z", flat( subProof.conclusion( aux ) ) )
-      Abs(
-        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
+    normalize( proof match {
+      case WeakeningRule( subProof, formula ) =>
         Abs(
-          extraVar,
-          App( mrealize( subProof ), freeVariables( subProof.conclusion ).toSeq ++ insertIndex( variablesAntPremise( proof, 0 ), aux, extraVar ) ) ) )
+          freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
+          App( mrealizeCases( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) ) )
 
-    case NegElimRule( leftSubProof, rightSubProof ) =>
-      throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+      case ContractionRule( subProof, aux1, aux2 ) =>
+        Abs(
+          freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
+          App( mrealizeCases( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) ) )
 
-    case NegIntroRule( subProof, aux ) =>
-      throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+      case LogicalAxiom( formula ) =>
+        Abs( freeVariables( proof.conclusion ).toSeq :+ Var( "x", flat( formula ) ), Var( "x", flat( formula ) ) )
 
-    case TopIntroRule() =>
-      throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+      case AndElim1Rule( subProof ) =>
+        Abs(
+          freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
+          le"pi1(${App( mrealizeCases( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) )})" )
 
-    case BottomElimRule( subProof, mainFormula ) =>
-      throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+      case AndElim2Rule( subProof ) =>
+        Abs(
+          freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
+          le"pi2(${App( mrealizeCases( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) )})" )
 
-    case ForallIntroRule( subProof, eigenVariable, quantifiedVariable ) =>
-      throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+      case AndIntroRule( leftSubproof, rightSubproof ) =>
+        Abs(
+          freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
+          le"pair(${
+            App( mrealizeCases( leftSubproof ), freeVariables( leftSubproof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) )
+          },${
+            App( mrealizeCases( rightSubproof ), freeVariables( rightSubproof.conclusion ).toSeq ++ variablesAntPremise( proof, 1 ) )
+          })" )
 
-    case ForallElimRule( subProof, variable ) =>
-      throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+      case OrElimRule( leftSubProof, middleSubProof, aux1, rightSubProof, aux2 ) =>
+        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
 
-    case ExistsIntroRule( subProof, formula, term, variable ) =>
-      throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+      case OrIntro1Rule( subProof, rightDisjunct ) =>
+        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
 
-    case ExistsElimRule( leftSubProof, rightSubProof, aux, eigenVariable ) =>
-      throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+      case OrIntro2Rule( subProof, leftDisjunct ) =>
+        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
 
-    case TheoryAxiom( mainFormula ) =>
-      throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+      case ImpElimRule( leftSubProof, rightSubProof ) =>
+        Abs(
+          freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
+          App(
+            App( mrealizeCases( leftSubProof ), freeVariables( leftSubProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) ),
+            App( mrealizeCases( rightSubProof ), freeVariables( rightSubProof.conclusion ).toSeq ++ variablesAntPremise( proof, 1 ) ) ) )
 
-    case EqualityElimRule( leftSubProof, rightSubProof, formulaA, variablex ) =>
-      throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+      case ImpIntroRule( subProof, aux ) =>
+        val extraVar = Var( "z", flat( subProof.conclusion( aux ) ) )
+        Abs(
+          freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
+          Abs(
+            extraVar,
+            App( mrealizeCases( subProof ), freeVariables( subProof.conclusion ).toSeq ++ insertIndex( variablesAntPremise( proof, 0 ), aux, extraVar ) ) ) )
 
-    case EqualityIntroRule( term ) =>
-      Abs( freeVariables( proof.conclusion ).toSeq, le"i" )
+      case NegElimRule( leftSubProof, rightSubProof ) =>
+        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
 
-    case ExcludedMiddleRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      throw new MRealizerCreationException( proof.longName, "This rule is not admitted in Heyting Arithmetic." )
-  } )
+      case NegIntroRule( subProof, aux ) =>
+        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+
+      case TopIntroRule() =>
+        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+
+      case BottomElimRule( subProof, mainFormula ) =>
+        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+
+      case ForallIntroRule( subProof, eigenVariable, quantifiedVariable ) =>
+        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+
+      case ForallElimRule( subProof, variable ) =>
+        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+
+      case ExistsIntroRule( subProof, formula, term, variable ) =>
+        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+
+      case ExistsElimRule( leftSubProof, rightSubProof, aux, eigenVariable ) =>
+        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+
+      case TheoryAxiom( mainFormula ) =>
+        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+
+      case EqualityElimRule( leftSubProof, rightSubProof, formulaA, variablex ) =>
+        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+
+      case EqualityIntroRule( term ) =>
+        Abs( freeVariables( proof.conclusion ).toSeq, le"i" )
+
+      case ExcludedMiddleRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+        throw new MRealizerCreationException( proof.longName, "This rule is not admitted in Heyting Arithmetic." )
+    } )
+  }
 
   def flat( formula: Formula ): Ty = formula match {
     case Bottom() => ty"1"
