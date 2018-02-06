@@ -11,7 +11,7 @@ import at.logic.gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, mi
 import at.logic.gapt.proofs.gaptic.Tactical1
 import at.logic.gapt.proofs.lk.{ EquationalLKProver, LKProof }
 import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent, withSection }
-import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.provers.escargot.{ Escargot, QfUfEscargot }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.provers.{ OneShotProver, Prover }
@@ -23,8 +23,7 @@ import scala.collection.mutable
 
 object DefaultProvers {
   val firstOrder: Prover = Escargot
-  val smtEscargot = new Escargot( splitting = true, propositional = true, equality = true )
-  val smt: Prover = if ( VeriT.isInstalled ) VeriT else smtEscargot
+  val smt: Prover = if ( VeriT.isInstalled ) VeriT else QfUfEscargot
 }
 
 import TreeGrammarProverOptions._

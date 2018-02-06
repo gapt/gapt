@@ -90,6 +90,7 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
   }
 }
 object NonSplittingEscargot extends Escargot( splitting = false, equality = true, propositional = false )
+object QfUfEscargot extends Escargot( splitting = true, propositional = true, equality = true )
 
 class Escargot( splitting: Boolean, equality: Boolean, propositional: Boolean ) extends ResolutionProver {
   override def getResolutionProof( cnf: Traversable[HOLClause] )( implicit ctx0: Maybe[MutableContext] ): Option[ResolutionProof] = {

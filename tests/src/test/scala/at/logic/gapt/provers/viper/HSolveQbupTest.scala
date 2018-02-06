@@ -5,7 +5,7 @@ import at.logic.gapt.formats.babel.{ Notation, Precedence }
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext }
 import at.logic.gapt.provers.OneShotProver
-import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.provers.escargot.{ Escargot, QfUfEscargot }
 import at.logic.gapt.provers.viper.grammars.hSolveQBUP
 import at.logic.gapt.utils.{ Maybe, SatMatchers }
 import org.specs2.mutable.Specification
@@ -20,10 +20,8 @@ class HSolveQbupTest extends Specification with SatMatchers {
         throw new NotImplementedError
 
       override def isValid( seq: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean =
-        escargotSmt.isValid( seq.map( normalizer.normalize( _ ).asInstanceOf[Formula] ) )
+        QfUfEscargot.isValid( seq.map( normalizer.normalize( _ ).asInstanceOf[Formula] ) )
     }
-
-  val escargotSmt = new Escargot( equality = true, propositional = true, splitting = true )
 
   "double" in {
     implicit val ctx: MutableContext = MutableContext.default()
@@ -41,7 +39,7 @@ class HSolveQbupTest extends Specification with SatMatchers {
              ∀n (X(n, n) -> d(n) = n+n)
            )
          """
-    val Some( sol ) = hSolveQBUP( qbupMatrix, hof"$x(n, s(0))", escargotSmt )
+    val Some( sol ) = hSolveQBUP( qbupMatrix, hof"$x(n, s(0))", QfUfEscargot )
     skolemize( BetaReduction.betaNormalize( instantiate( qbup, sol ) ) ) must beEValid
   }
 
