@@ -8,8 +8,9 @@ import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, formulaToExpansionTree }
 import at.logic.gapt.proofs.gaptic.{ OpenAssumption, Tactic, TacticFailure, Tactical1 }
 import at.logic.gapt.provers.OneShotProver
-import at.logic.gapt.provers.escargot.impl.getFOPositions
 import at.logic.gapt.utils.{ Logger, Maybe }
+
+import scala.collection.mutable
 
 sealed trait SimpIffResult {
   def proof: LKProof
@@ -303,6 +304,21 @@ case class Simplifier( lemmas: Seq[SimpProc] ) {
     res
   }
 
+  def getLambdaPositions( exp: Expr ): Map[Expr, Seq[LambdaPosition]] = {
+    val poss = mutable.Map[Expr, Seq[LambdaPosition]]().withDefaultValue( Seq() )
+    def walk( exp: Expr, pos: List[Int] ): Unit = {
+      poss( exp ) :+= LambdaPosition( pos.reverse )
+      exp match {
+        case App( a, b ) =>
+          walk( a, 1 :: pos )
+          walk( b, 2 :: pos )
+        case _ =>
+      }
+    }
+    walk( exp, Nil )
+    poss.toMap
+  }
+
   def simpEq( formula: Formula, pol: Polarity ): SimpIffResult =
     formula match { case a: Atom => simpEq( a, pol ) case _ => SimpIffResult.Refl( formula, pol ) }
   def simpEq( f0: Atom, pol: Polarity ): SimpIffResult = {
@@ -312,7 +328,7 @@ case class Simplifier( lemmas: Seq[SimpProc] ) {
     while ( didRewrite ) {
       didRewrite = false
       for {
-        ( subterm, pos ) <- getFOPositions( f ) if !didRewrite
+        ( subterm, pos ) <- getLambdaPositions( f ) if !didRewrite
         lem <- lemmas if !didRewrite
         SimpEqResult.Prf( lemP, _, subterm_ ) <- Some( lem.simpEq( subterm ) ) if !didRewrite
         ctx = replacementContext( subterm_.ty, f, pos )

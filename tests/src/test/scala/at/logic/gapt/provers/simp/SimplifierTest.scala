@@ -29,4 +29,8 @@ class SimplifierTest extends Specification {
     check( hos"!x (x!=0 -> x/0*x=x), a!=0 :- a=a/0*a" )
   }
 
+  "partially applied functions" in {
+    check( hos"f = g, g(c) :- f(c)" )
+  }
+
 }
