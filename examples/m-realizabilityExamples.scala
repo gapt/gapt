@@ -2,7 +2,7 @@ package at.logic.gapt.examples
 
 import at.logic.gapt.proofs.nd._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Ant, Context }
+import at.logic.gapt.proofs.{ Ant, Context, Sequent }
 import at.logic.gapt.proofs.Context.{ InductiveType, PrimRecFun }
 
 object addRecorsorsExamples extends Script {
@@ -239,7 +239,70 @@ object examplesImplication extends Script {
   val a22 = WeakeningRule( a11, hof"s(0) = s(0)" )
   val a33 = ImpIntroRule( a22, Ant( 0 ) )
   val m22 = MRealizability.mrealize( a33 )
-  print( a33 ); print( m22 ); print( " of type" ); println( m22.ty ); println()
+  print( a33 ); print( m22 ); print( " of type " ); println( m22.ty ); println()
+}
+
+object exampleForallIntro extends Script {
+
+  implicit var ctx = Context()
+
+  ctx += InductiveType(
+    ty"nat",
+    hoc"0 : nat",
+    hoc"s : nat > nat" )
+  ctx += PrimRecFun(
+    hoc"'+': nat>nat>nat",
+    "0 + x = x",
+    "s(x) + y = s(x + y)" )
+
+  val a1 = EqualityIntroRule( le"x + s(y)" )
+  val a2 = ForallIntroRule( a1, Var( "x", ty"nat" ), Var( "z", ty"nat" ) )
+  val a3 = ForallIntroRule( a2, Var( "y", ty"nat" ), Var( "y", ty"nat" ) )
+  val m1 = MRealizability.mrealize( a2 )
+  print( a2 ); print( m1 ); print( " of type " ); println( m1.ty ); println()
+
+}
+
+object exampleExistsElim extends Script {
+
+  implicit var ctx = Context()
+
+  ctx += InductiveType(
+    ty"nat",
+    hoc"0 : nat",
+    hoc"s : nat > nat" )
+  ctx += PrimRecFun(
+    hoc"'+': nat>nat>nat",
+    "0 + x = x",
+    "s(x) + y = s(x + y)" )
+
+  val a1 = LogicalAxiom( hof"?(x:nat) (x = 0)" )
+  val a2 = EqualityIntroRule( le"0" )
+  val a3 = WeakeningRule( a2, hof"y = 0" )
+  val a4 = ExistsElimRule( a1, a3, Var( "y", ty"nat" ) )
+  val m1 = MRealizability.mrealize( a4 )
+  print( a4 ); print( m1 ); print( " of type " ); println( m1.ty ); println()
+}
+
+object exampleEqualityElimRule extends Script {
+
+  implicit var ctx = Context()
+
+  ctx += InductiveType(
+    ty"nat",
+    hoc"0 : nat",
+    hoc"s : nat > nat" )
+  ctx += PrimRecFun(
+    hoc"'+': nat>nat>nat",
+    "0 + x = x",
+    "s(x) + y = s(x + y)" )
+
+  val a1 = LogicalAxiom( hof"!(x0:nat)!(x1:nat) (s(x2)=x2+s(0))" )
+  val a2 = LogicalAxiom( hof"(x2:nat)=x3" )
+  val a3 = EqualityElimRule( a2, a1 )
+  val m1 = MRealizability.mrealize( a3 )
+  print( a3 ); print( m1 ); print( " of type " ); println( m1.ty ); println()
+
 }
 
 /*

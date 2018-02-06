@@ -146,7 +146,9 @@ object MRealizability {
         throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
 
       case ForallIntroRule( subProof, eigenVariable, quantifiedVariable ) =>
-        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+        Abs(
+          freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ) :+ eigenVariable,
+          App( mrealizeCases( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) ) )
 
       case ForallElimRule( subProof, variable ) =>
         throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
@@ -155,13 +157,22 @@ object MRealizability {
         throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
 
       case ExistsElimRule( leftSubProof, rightSubProof, aux, eigenVariable ) =>
-        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+        Abs( freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ), App(
+          mrealizeCases( rightSubProof ),
+          freeVariables( rightSubProof.conclusion ).toSeq.map {
+            case `eigenVariable` =>
+              le"pi1(${App( mrealizeCases( leftSubProof ), freeVariables( leftSubProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) )})"
+            case x => x
+          } ++ insertIndex( variablesAntPremise( proof, 1 ), aux,
+            le"pi2(${App( mrealizeCases( leftSubProof ), freeVariables( leftSubProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) )})" ) ) )
 
       case TheoryAxiom( mainFormula ) =>
         throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
 
       case EqualityElimRule( leftSubProof, rightSubProof, formulaA, variablex ) =>
-        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+        Abs(
+          freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
+          App( mrealizeCases( rightSubProof ), freeVariables( rightSubProof.conclusion ).toSeq ++ variablesAntPremise( proof, 1 ) ) )
 
       case EqualityIntroRule( term ) =>
         Abs( freeVariables( proof.conclusion ).toSeq, le"i" )
