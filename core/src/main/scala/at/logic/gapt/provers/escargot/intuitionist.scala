@@ -78,7 +78,7 @@ object IEscargot {
     val tptp = TptpParser.load( FilePath( opts.files.head ) )
     val tptpSequent = tptp.toSequent
     implicit val ctx = MutableContext.guess( tptpSequent )
-    Escargot.getExpansionProof( tptpSequent ) match {
+    opts.backend.getExpansionProof( tptpSequent ) match {
       case Some( expansion ) =>
         println( "% found classical proof" )
         expansionProofToLJ( expansion, showInProoftool = opts.prooftool ) match {
