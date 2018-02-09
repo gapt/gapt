@@ -14,8 +14,8 @@ object addRecorsorsExamples extends Script {
     hoc"0 : nat",
     hoc"s : nat > nat" )
   ctx += InductiveType(
-    ty"conj ?c  ?b",
-    hoc"pair{?c ?b}: ?c > ?b > conj ?c ?b" )
+    ty"conjj ?c  ?b",
+    hoc"pairr{?c ?b}: ?c > ?b > conjj ?c ?b" )
   ctx += InductiveType(
     ty"list ?a",
     hoc"nil{?a}: list ?a",
@@ -25,18 +25,18 @@ object addRecorsorsExamples extends Script {
     hoc"leaf{?a}: ?a > bitree ?a",
     hoc"node{?a}: bitree ?a > bitree ?a > bitree ?a" )
 
-  implicit var ctxx = MRealizability.addRecursors( ctx )
+  MRealizability.setSystemT( ctx )
+  implicit var systemT = MRealizability.systemT
+  println( systemT )
 
-  println( ctxx )
-
-  ctxx += Definition( Const( "length", ty"list ?a > nat", List( ty"?a" ) ), le"listRec(0,^(z1:?a)^(z2: list ?a)^(z3:nat) s(z3))" )
-  ctxx += Definition( Const( "mirror", ty"bitree ?a > bitree ?a", List( ty"?a" ) ), le"bitreeRec( (^(x:?a)leaf(x)), (^(z1:bitree ?a)^(z2:bitree ?a)^(z3:bitree ?a)^(z4:bitree ?a) node(z4,z2)) )" )
+  systemT += Definition( Const( "length", ty"list ?a > nat", List( ty"?a" ) ), le"listRec(0,^(z1:?a)^(z2: list ?a)^(z3:nat) s(z3))" )
+  systemT += Definition( Const( "mirror", ty"bitree ?a > bitree ?a", List( ty"?a" ) ), le"bitreeRec( (^(x:?a)leaf(x)), (^(z1:bitree ?a)^(z2:bitree ?a)^(z3:bitree ?a)^(z4:bitree ?a) node(z4,z2)) )" )
 
   val plus = le"natRec(s(s(0)))(^z1 ^z2 (s(z2)))"
   println( normalize( App( plus, le"s(s(0))" ) ) )
 
-  val pluspair = le"conjRec (^x ^y natRec(x,(^z1 ^z2 (s(z2))),y))"
-  println( normalize( App( pluspair, le"pair(s(0),s(s(0)))" ) ) )
+  val pluspair = le"conjjRec (^x ^y natRec(x,(^z1 ^z2 (s(z2))),y))"
+  println( normalize( App( pluspair, le"pairr(s(0),s(s(0)))" ) ) )
 
   println( normalize( le"length( cons(nil,cons(nil,cons(nil,nil))) )" ) )
 

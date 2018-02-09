@@ -8,15 +8,18 @@ import at.logic.gapt.utils.NameGenerator
 
 object MRealizability {
 
-  def addRecursors( implicit ctx: Context ): Context = {
-    var ctxx = Context.empty
+  implicit var systemT: Context = Context.empty
 
-    for ( ( name, constructors ) <- ctx.get[StructurallyInductiveTypes].constructors.filter( _._1 != "o" ) ) {
-      val typ = ctx.get[BaseTypes].baseTypes( name )
-      ctxx += InductiveType( typ, constructors )
+  def setSystemT( ctx: Context ): Unit = {
+
+    systemT = ctx
+
+    // add recursors for all inductive types
+    for ( ( name, constructors ) <- systemT.get[StructurallyInductiveTypes].constructors.filter( _._1 != "o" ) ) {
+      val typ = systemT.get[BaseTypes].baseTypes( name )
       val argTypes = constructors.map( x => x -> FunctionType.unapply( x.ty ).get._2 ) toMap
       val resultVariable = TVar( new NameGenerator( typeVariables( typ ) map ( _.name ) ).fresh( "a" ) )
-      val ngTermVariableNames = new NameGenerator( ctx.constants map ( _.name ) )
+      val ngTermVariableNames = new NameGenerator( systemT.constants map ( _.name ) )
 
       val constrVars = constructors.map( x => x -> Var(
         ngTermVariableNames.fresh( "x" ),
@@ -31,21 +34,15 @@ object MRealizability {
           App( recursor, constrVars.values.toVector :+ App( x, argVars( x ) ) ),
           argVars( x ).foldLeft( constrVars( x ): Expr )( ( y, z ) => if ( z.ty == typ ) App( App( y, z ), App( recursor, constrVars.values.toVector :+ z ) ) else App( y, z ) ) ) )
 
-      ctxx += PrimRecFun( List( ( recursor, equations ) ) )
+      systemT += PrimRecFun( List( ( recursor, equations ) ) )
     }
-    ctxx
-  }
 
-  def mrealize( proof: NDProof )( implicit ctx: Context ): Expr = {
-
-    var systemT = addRecursors( ctx )
-
+    // add conjuctive type, pairs, projections and their reduction rules
     val a = TVar( "a" )
     val b = TVar( "b" )
     val conj = TBase( "conj", a, b )
     val pair = Const( "pair", a ->: b ->: conj, List( a, b ) )
     systemT += InductiveType( conj, pair )
-
     val pi1 = Const( "pi1", conj ->: a, List( a, b ) )
     val pi2 = Const( "pi2", conj ->: b, List( a, b ) )
     val x: Expr = Var( "x", a )
@@ -57,24 +54,21 @@ object MRealizability {
       ( pi2, List(
         ( App( pi2, App( pair, List( x, y ) ) ), y ) ) ) ) )( systemT )
 
-    /*systemT += InductiveType(
-      ty"conj ?a  ?b",
-      hoc"pair{?a ?b}: ?a > ?b > conj ?a ?b " )
-    systemT += PrimRecFun(
-      hoc"pi1{?a ?b}: (conj ?a ?b) > ?a",
-      "pi1(pair(x,y)) = x" )
-    systemT += PrimRecFun(
-      hoc"pi2{?a ?b}: (conj ?a ?b) > ?b",
-      "pi2(pair(x,y)) = y" )*/
-
+    // add a term+type to represent the empty program
     systemT += InductiveType(
       ty"1",
       hoc"i : 1" )
-
-    mrealizeCases( proof )( systemT )
   }
 
-  def mrealizeCases( proof: NDProof )( implicit ctx: Context ): Expr = {
+  def mrealize( proof: NDProof )( implicit ctx: Context ): Expr = {
+
+    setSystemT( ctx )
+
+    mrealizeCases( proof )
+
+  }
+
+  def mrealizeCases( proof: NDProof ): Expr = {
 
     normalize( proof match {
       case WeakeningRule( subProof, formula ) =>
