@@ -305,6 +305,46 @@ object exampleEqualityElimRule extends Script {
 
 }
 
+object exampleForallElimRule extends Script {
+
+  implicit var ctx = Context()
+
+  ctx += InductiveType(
+    ty"nat",
+    hoc"0 : nat",
+    hoc"s : nat > nat" )
+  ctx += PrimRecFun(
+    hoc"'+': nat>nat>nat",
+    "0 + x = x",
+    "s(x) + y = s(x + y)" )
+
+  val a1 = LogicalAxiom( hof"!(x:nat) ?(y:nat) x = s(y)" )
+  val a2 = ForallElimRule( a1, le"s(s(0))" )
+  val m1 = MRealizability.mrealize( a2 )
+  print( a2 ); print( m1 ); print( " of type " ); println( m1.ty )
+
+}
+
+object exampleExistsIntroRule extends Script {
+
+  implicit var ctx = Context()
+
+  ctx += InductiveType(
+    ty"nat",
+    hoc"0 : nat",
+    hoc"s : nat > nat" )
+  ctx += PrimRecFun(
+    hoc"'+': nat>nat>nat",
+    "0 + x = x",
+    "s(x) + y = s(x + y)" )
+
+  val a1 = EqualityIntroRule( le"s(s(x))" )
+  val a2 = ExistsIntroRule( a1, hof"y = s(s(x))", le"s(s(x))", Var( "y", ty"nat" ) )
+  val m1 = MRealizability.mrealize( a2 )
+  print( a2 ); print( m1 ); print( " of type " ); println( m1.ty )
+
+}
+
 /*
 object theoryAxiom1 extends Script {
   val a1 = TheoryAxiom( hof"!z (s(z) = 0 -> ⊥)" )

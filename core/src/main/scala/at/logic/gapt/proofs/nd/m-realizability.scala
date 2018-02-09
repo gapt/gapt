@@ -144,11 +144,15 @@ object MRealizability {
           freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ) :+ eigenVariable,
           App( mrealizeCases( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) ) )
 
-      case ForallElimRule( subProof, variable ) =>
-        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+      case ForallElimRule( subProof, term ) =>
+        Abs(
+          freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
+          App( mrealizeCases( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) :+ term ) )
 
       case ExistsIntroRule( subProof, formula, term, variable ) =>
-        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+        Abs(
+          freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
+          le"pair($term,${App( mrealizeCases( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) )})" )
 
       case ExistsElimRule( leftSubProof, rightSubProof, aux, eigenVariable ) =>
         Abs( freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ), App(
