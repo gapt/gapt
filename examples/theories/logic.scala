@@ -26,7 +26,7 @@ object Theory {
       DelayedProofResult( proofNameInst, subst( usedLemmas ), subst( proof ) )
     }
 
-    def usedLemmaNames = usedLemmas.map { case ( Apps( Const( n, _, _ ), _ ), _ ) => n }
+    def usedLemmaNames: Seq[String] = usedLemmas.map { case ( Apps( Const( n, _, _ ), _ ), _ ) => n }
 
     def proofWithLinks: LKProof = {
       var p = proof
@@ -80,6 +80,12 @@ class Theory0( val imports: List[Theory] ) {
   }
 }
 
+/**
+ * Models a mathematical theory, i.e. definitions of
+ * data types, sorts, constants, etc. (contained in a [[at.logic.gapt.proofs.Context]]),
+ * together with proofs about these objects.
+ * @param imports A list of theories that this theory is based upon.
+ */
 class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
   val transitiveImports: Vector[Theory] =
     ( imports.view.flatMap( _.transitiveImports ) ++ imports ).distinct.toVector
@@ -227,14 +233,24 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
     }
   }
 
+  /**
+   * Captures an LKProof together with the set of previous lemmas used in it.
+   */
   case class LemmaHandle( proofName: Expr ) {
     val Apps( Const( name, _, _ ), _ ) = proofName
 
     def proof: LKProof = combined( excluded = _ => true )
     def formula: Formula = ctx.get[ProofNames].lookup( proofName ).get.succedent.head
 
-    def usedLemmas: Seq[LemmaHandle] =
-      allProofs.toMap.apply( name ).value.inst( proofName ).usedLemmas.map( l => LemmaHandle( l._1 ) )
+    /**
+     * The set of previous lemmas used in the proof of this lemma.
+     */
+    def usedLemmas: Set[LemmaHandle] =
+      allProofs.toMap.apply( name ).value.inst( proofName ).usedLemmas.map( l => LemmaHandle( l._1 ) ).toSet
+
+    /**
+     * The transitive closure of the set of previous lemmas used in the proof of this lemma.
+     */
     def transitivelyUsedLemmas: Set[LemmaHandle] = {
       val used = mutable.Set[LemmaHandle]()
       def go( h: LemmaHandle ): Unit =
@@ -257,6 +273,15 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
       res.result()
     }
 
+    /**
+     * Inserts the proofs of previous lemmas into its proof.
+     *
+     * By default, all lemmas will be included, except those marked with the "nocombine" attribute.
+     * To include lemmas marked with "nocombine", use the `included` parameter.
+     * To exclude lemmas that would otherwise be included, use the `excluded` parameter.
+     * @param excluded Proofs for which this evaluates to true will not be included.
+     * @param included Proofs for which this is true will be included, unless excluded is also true.
+     */
     def combined( excluded: ( String => Boolean ) = Set(), included: ( String => Boolean ) = Set() ): LKProof = {
       val nocombine = ctx.get[Attributes].lemmasWith( "nocombine" )
       val Theory.DelayedProofResult( _, used0, p0 ) = allProofs.toMap.apply( name ).value.inst( proofName )
@@ -294,15 +319,32 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
     }
   }
 
+  /**
+   * Adds a constant to this theory's context.
+   */
   protected def const( c: Const ): Unit = addNow( c )
 
+  /**
+   * Adds a formula to this theory as an axiom.
+   */
   protected def axiom( f: Formula )( implicit name: sourcecode.Name ): Unit =
     addProofNameDecl( name.value, Sequent() :+ f )
 
+  /**
+   * Adds a list of attributes to a list of lemmas.
+   */
   protected def attr( attrNames: String* )( lemmaNames: String* ): Unit =
     for ( an <- attrNames; ln <- lemmaNames )
       addNow( Attributes.AddAttributeUpdate( ln, an ) )
 
+  /**
+   * Adds an operator as infix notation for an existing constant.
+   * @param operator The operator to add.
+   * @param precedence The precedence of the operator.
+   * @param leftAssociative Whether the operator associates to the left.
+   * @param const The constant which the operator denotes. If nothing is supplied,
+   *              it will assumed to have the same name as the operator.
+   */
   protected def infix( operator: String, precedence: Int, leftAssociative: Boolean = true, const: String = null ) =
     addNow( Notation.Infix( operator, if ( const == null ) operator else const, precedence, leftAssociative ) )
 

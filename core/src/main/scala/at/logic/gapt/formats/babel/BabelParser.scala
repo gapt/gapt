@@ -38,7 +38,7 @@ object BabelLexical {
 
   val Whitespace = NoTrace( CharsWhile( _.isWhitespace, min = 0 ) )
 
-  val OpChar = CharIn( "-<>⊂⊃&@.;~|∨∧?∃∀¬=!+*/~⊤⊥%∪∩→↔" )
+  val OpChar = CharIn( "-<>⊂⊃&@.;~|∨∧?∃∀¬=!+*/~⊤⊥%∪∩→↔∈" )
   val RestOpChar = OpChar | CharIn( "_" ) | CharPred( isUnquotNameChar )
   val Operator: P[String] = P( ( OpChar.rep( 1 ) ~ ( "_" ~ RestOpChar.rep ).? ).! )
   val OperatorAndNothingElse = Operator ~ End
