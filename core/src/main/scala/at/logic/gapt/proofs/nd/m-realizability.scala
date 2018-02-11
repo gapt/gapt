@@ -175,8 +175,15 @@ object MRealizability {
       case EqualityIntroRule( term ) =>
         Abs( freeVariables( proof.conclusion ).toSeq, le"i" )
 
+      // Works only for the type of natural numbers at the moment
+      // Assumes that the induction cases for the constructors are in the same order as the inductive type definition in the context.
       case InductionRule( cases, formula, term ) =>
-        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+        val extraVar = Var( "z", flat( proof.conclusion( Suc( 0 ) ) ) )
+        val mrealizerBaseCase = App( mrealizeCases( cases( 0 ).proof ), freeVariables( cases( 0 ).proof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) )
+        val mrealizerInductionCase = Abs( cases( 1 ).eigenVars :+ extraVar, App(
+          mrealizeCases( cases( 1 ).proof ),
+          freeVariables( cases( 1 ).proof.conclusion ).toSeq ++ insertIndex( variablesAntPremise( proof, 1 ), cases( 1 ).hypotheses( 0 ), extraVar ) ) )
+        Abs( freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ), le"natRec($mrealizerBaseCase,$mrealizerInductionCase,$term)" )
 
       case ExcludedMiddleRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
         throw new MRealizerCreationException( proof.longName, "This rule is not admitted in Heyting Arithmetic." )

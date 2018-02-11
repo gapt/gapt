@@ -366,6 +366,35 @@ object exampleBotElimRule extends Script {
 
 }
 
+object exampleInductionRule extends Script {
+
+  implicit var ctx = Context()
+
+  ctx += InductiveType(
+    ty"nat",
+    hoc"0 : nat",
+    hoc"s : nat > nat" )
+  ctx += PrimRecFun(
+    hoc"'+': nat>nat>nat",
+    "0 + x = x",
+    "s(x) + y = s(x + y)" )
+
+  val b1 = LogicalAxiom( hof"!x x + 0 = x" )
+  val b2 = ForallElimRule( b1, le"0" )
+  val s1 = LogicalAxiom( hof"!x !y s(x) + y = s(x + y)" )
+  val s2 = ForallElimRule( s1, le"x0: nat" )
+  val s3 = ForallElimRule( s2, le"0" )
+  val s4 = LogicalAxiom( hof"x0 + 0 = x0" )
+  val s5 = EqualityElimRule( s4, s3, hof"s(x0) + 0 = s(z)", hov"z: nat" )
+  val cases = Seq(
+    InductionCase( b2, hoc"0", Seq.empty, Seq.empty ),
+    InductionCase( s5, hoc"s", Seq( Ant( 0 ) ), Seq( hov"x0: nat" ) ) )
+  val p = InductionRule( cases, Abs( Var( "x", TBase( "nat" ) ), hof"x + 0 = x" ), le"x : nat" )
+  val m1 = MRealizability.mrealize( p )
+
+  print( p ); print( m1 ); print( " of type " ); println( m1.ty )
+}
+
 /*
 object theoryAxiom1 extends Script {
   val a1 = TheoryAxiom( hof"!z (s(z) = 0 -> ⊥)" )
