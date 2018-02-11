@@ -137,7 +137,7 @@ object MRealizability {
         throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
 
       case BottomElimRule( subProof, mainFormula ) =>
-        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+        Abs( freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ), Var( "z", flat( mainFormula ) ) )
 
       case ForallIntroRule( subProof, eigenVariable, quantifiedVariable ) =>
         Abs(
@@ -174,6 +174,9 @@ object MRealizability {
 
       case EqualityIntroRule( term ) =>
         Abs( freeVariables( proof.conclusion ).toSeq, le"i" )
+
+      case InductionRule( cases, formula, term ) =>
+        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
 
       case ExcludedMiddleRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
         throw new MRealizerCreationException( proof.longName, "This rule is not admitted in Heyting Arithmetic." )

@@ -345,6 +345,27 @@ object exampleExistsIntroRule extends Script {
 
 }
 
+object exampleBotElimRule extends Script {
+
+  implicit var ctx = Context()
+
+  ctx += InductiveType(
+    ty"nat",
+    hoc"0 : nat",
+    hoc"s : nat > nat" )
+  ctx += PrimRecFun(
+    hoc"'+': nat>nat>nat",
+    "0 + x = x",
+    "s(x) + y = s(x + y)" )
+
+  val a1 = LogicalAxiom( hof"⊥" )
+  val a2 = WeakeningRule( a1, hof"!x ?y ( y = s(x) )" )
+  val a3 = BottomElimRule( a2, hof"!x ?y (x = s(y) )" )
+  val m1 = MRealizability.mrealize( a3 )
+  print( a3 ); print( m1 ); print( " of type " ); println( m1.ty )
+
+}
+
 /*
 object theoryAxiom1 extends Script {
   val a1 = TheoryAxiom( hof"!z (s(z) = 0 -> ⊥)" )
