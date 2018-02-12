@@ -104,14 +104,37 @@ object MRealizability {
           })" )
 
       case OrElimRule( leftSubProof, middleSubProof, aux1, rightSubProof, aux2 ) =>
-        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+        val realizerAOrB = App( mrealizeCases( leftSubProof ), freeVariables( leftSubProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) )
+        Abs(
+          freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
+          le"natRec(${
+            App( mrealizeCases( middleSubProof ), freeVariables( middleSubProof.conclusion ).toSeq ++ insertIndex( variablesAntPremise( proof, 1 ), aux1,
+              App( le"pi1(pi2($realizerAOrB))", le"i" ) ) )
+          },${
+            Abs( Var( "z", ty"nat" ), Abs(
+              Var( "z", flat( proof.conclusion.succedent( 0 ) ) ),
+              App( mrealizeCases( rightSubProof ), freeVariables( rightSubProof.conclusion ).toSeq ++ insertIndex( variablesAntPremise( proof, 2 ), aux2,
+                App( le"pi2(pi2($realizerAOrB))", Abs( Var( "z", ty"1" ), le"i" ) ) ) ) ) )
+          },pi1($realizerAOrB))" )
 
       case OrIntro1Rule( subProof, rightDisjunct ) =>
-        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+        Abs(
+          freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
+          le"pair(0,pair(${
+            Abs( Var( "z", ty"1" ), App( mrealizeCases( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) ) )
+          }, ${
+            Abs( Var( "z", ty"1>1" ), Var( "z", flat( rightDisjunct ) ) )
+          }))" )
 
       case OrIntro2Rule( subProof, leftDisjunct ) =>
-        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
-
+        Abs(
+          freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
+          le"pair(s(0),pair(${
+            Abs( Var( "z", ty"1" ), Var( "z", flat( leftDisjunct ) ) )
+          }, ${
+            Abs( Var( "z", ty"1 > 1" ), App( mrealizeCases( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) ) )
+          }))" )
+        
       case ImpElimRule( leftSubProof, rightSubProof ) =>
         Abs(
           freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
@@ -128,13 +151,21 @@ object MRealizability {
             App( mrealizeCases( subProof ), freeVariables( subProof.conclusion ).toSeq ++ insertIndex( variablesAntPremise( proof, 0 ), aux, extraVar ) ) ) )
 
       case NegElimRule( leftSubProof, rightSubProof ) =>
-        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+        Abs(
+          freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
+          App(
+            App( mrealizeCases( leftSubProof ), freeVariables( leftSubProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) ),
+            App( mrealizeCases( rightSubProof ), freeVariables( rightSubProof.conclusion ).toSeq ++ variablesAntPremise( proof, 1 ) ) ) )
 
       case NegIntroRule( subProof, aux ) =>
-        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+        val extraVar = Var( "z", flat( subProof.conclusion( aux ) ) )
+        Abs( freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ), Abs(
+          extraVar,
+          App( mrealizeCases( subProof ), freeVariables( subProof.conclusion ).toSeq ++ insertIndex( variablesAntPremise( proof, 0 ), aux, extraVar ) ) ) )
 
       case TopIntroRule() =>
-        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+        val varr = Var( "z", ty"1" )
+        Abs( varr, varr )
 
       case BottomElimRule( subProof, mainFormula ) =>
         Abs( freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ), Var( "z", flat( mainFormula ) ) )
@@ -191,19 +222,16 @@ object MRealizability {
   }
 
   def flat( formula: Formula ): Ty = formula match {
-    case Bottom() => ty"1"
-    case Top() =>
-      throw new FlattenException( formula.toString, "Not implemented yet." )
+    case Bottom()                         => ty"1"
+    case Top()                            => flat( Imp( Bottom(), Bottom() ) )
     case Eq( _, _ )                       => ty"1"
     case Atom( _, _ )                     => ty"1"
     case And( leftformula, rightformula ) => TBase( "conj", flat( leftformula ), flat( rightformula ) )
-    case Or( _, _ ) =>
-      throw new FlattenException( formula.toString, "Not implemented yet." )
+    case Or( leftformula, rightformula )  => flat( Ex( Var( "x", ty"nat" ), And( Imp( Eq( Var( "x", ty"nat" ), le"0" ), leftformula ), Imp( Neg( Eq( Var( "x", ty"nat" ), le"0" ) ), rightformula ) ) ) )
     case Imp( leftformula, rightformula ) => flat( leftformula ) ->: flat( rightformula )
-    case Neg( subformula ) =>
-      throw new FlattenException( formula.toString, "Not implemented yet." )
-    case Ex( variable, subformula )  => TBase( "conj", variable.ty, flat( subformula ) )
-    case All( variable, subformula ) => variable.ty ->: flat( subformula )
+    case Neg( subformula )                => flat( Imp( subformula, Bottom() ) )
+    case Ex( variable, subformula )       => TBase( "conj", variable.ty, flat( subformula ) )
+    case All( variable, subformula )      => variable.ty ->: flat( subformula )
   }
 
   def insertIndex( sequence: Vector[Var], index: SequentIndex, value: Expr ): Vector[Expr] =

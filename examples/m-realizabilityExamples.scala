@@ -395,6 +395,74 @@ object exampleInductionRule extends Script {
   print( p ); print( m1 ); print( " of type " ); println( m1.ty )
 }
 
+object exampleTopIntroRule extends Script {
+
+  implicit var ctx = Context()
+
+  val a1 = TopIntroRule()
+  val m1 = MRealizability.mrealize( a1 )
+  print( a1 ); print( m1 ); print( " of type " ); print( m1.ty )
+}
+
+object examplesNegationRules extends Script {
+
+  implicit var ctx = Context()
+
+  val a1 = LogicalAxiom( hof"¬a" )
+  val a2 = LogicalAxiom( hof"a" )
+  val a3 = NegElimRule( a1, a2 )
+  val m1 = MRealizability.mrealize( a3 )
+  print( a3 ); print( m1 ); print( " of type " ); println( m1.ty )
+
+  val a4 = NegIntroRule( a3, Ant( 0 ) )
+  val m2 = MRealizability.mrealize( a4 )
+  print( a4 ); print( m2 ); print( " of type " ); print( m2.ty )
+
+}
+
+object examplesOrIntroRule extends Script {
+
+  implicit var ctx = Context()
+
+  ctx += InductiveType(
+    ty"nat",
+    hoc"0 : nat",
+    hoc"s : nat > nat" )
+  ctx += PrimRecFun(
+    hoc"'+': nat>nat>nat",
+    "0 + x = x",
+    "s(x) + y = s(x + y)" )
+
+  val a1 = EqualityIntroRule( le"0" )
+  val a2 = OrIntro1Rule( a1, hof"s(0) = 0" )
+  val m1 = MRealizability.mrealize( a2 )
+  print( a2 ); print( m1 ); print( " of type " ); println( m1.ty )
+  val a3 = OrIntro2Rule( a1, hof"s(0) = 0" )
+  val m2 = MRealizability.mrealize( a3 )
+  print( a3 ); print( m2 ); print( " of type " ); println( m2.ty )
+
+}
+
+object exampleOrElimRule extends Script {
+
+  implicit var ctx = Context()
+
+  ctx += InductiveType(
+    ty"nat",
+    hoc"0 : nat",
+    hoc"s : nat > nat" )
+
+  val b1 = LogicalAxiom( hof"x=0 & x=s(0)" )
+  val b2 = AndElim1Rule( b1 )
+  val b3 = LogicalAxiom( hof"x=0 & x=s(s(0))" )
+  val b4 = AndElim1Rule( b3 )
+  val b5 = LogicalAxiom( hof"(x=0 & x=s(0)) | (x=0 & x=s(s(0)))" )
+  val b6 = OrElimRule( b5, b2, b4 )
+  val m1 = MRealizability.mrealize( b6 )
+
+  print( b6 ); print( m1 ); print( " of type " ); println( m1.ty )
+}
+
 /*
 object theoryAxiom1 extends Script {
   val a1 = TheoryAxiom( hof"!z (s(z) = 0 -> ⊥)" )
