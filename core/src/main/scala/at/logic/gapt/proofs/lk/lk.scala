@@ -1494,7 +1494,7 @@ object ExistsRightRule extends ConvenienceConstructor( "ExistsRightRule" ) {
 }
 
 object WeakQuantifierRule {
-  def unapply( p: LKProof ) = p match {
+  def unapply( p: UnaryLKProof ) = p match {
     case ForallLeftRule( subProof, aux, f, t, v ) =>
       Some( ( subProof, aux, f, t, v, false ) )
     case ExistsRightRule( subProof, aux, f, t, v ) =>
@@ -1504,7 +1504,7 @@ object WeakQuantifierRule {
 }
 
 object StrongQuantifierRule {
-  def unapply( p: LKProof ) = p match {
+  def unapply( p: UnaryLKProof ) = p match {
     case ExistsLeftRule( subProof, aux, eigen, quant ) =>
       Some( ( subProof, aux, eigen, quant, false ) )
     case ForallRightRule( subProof, aux, eigen, quant ) =>

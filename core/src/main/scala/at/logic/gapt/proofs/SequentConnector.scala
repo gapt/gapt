@@ -109,6 +109,9 @@ case class SequentConnector( lowerSizes: ( Int, Int ), upperSizes: ( Int, Int ),
     else
       throw new IndexOutOfBoundsException
 
+  def children[T]( upperTs: Sequent[T] ): Sequent[Seq[T]] =
+    inv.parents( upperTs )
+
   /**
    * Given a SequentIndex for the upper sequent, this returns the child of that occurrence in the lower sequent
    * (if there is exactly one).
