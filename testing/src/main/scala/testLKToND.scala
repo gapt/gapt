@@ -112,6 +112,6 @@ object testLKToND2 extends scala.App {
   } catch {
     case t: Throwable =>
       metric( "status", "exception" )
-      metric( "exception", t.getMessage )
+      metric( "exception", t.getMessage.take( 100 ) )
   }
 }
