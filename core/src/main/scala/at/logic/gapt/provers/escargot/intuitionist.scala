@@ -3,7 +3,7 @@ package at.logic.gapt.provers.escargot
 import ammonite.ops.FilePath
 import at.logic.gapt.formats.tptp.TptpParser
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, deskolemizeET }
-import at.logic.gapt.proofs.lk.LKProof
+import at.logic.gapt.proofs.lk.{ LKProof, isMaeharaMG3i }
 import at.logic.gapt.proofs.{ Context, MutableContext }
 import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.Prover
@@ -14,14 +14,16 @@ import at.logic.gapt.provers.vampire.Vampire
 import at.logic.gapt.utils.{ LogHandler, quiet }
 
 object IEscargot {
-  def expansionProofToLJ( expProofWithSk: ExpansionProof, showInProoftool: Boolean = false )( implicit ctx: Context ): Option[LKProof] = {
+  def expansionProofToMG3i( expProofWithSk: ExpansionProof, showInProoftool: Boolean = false )( implicit ctx: Context ): Option[LKProof] = {
     val deskExpProof = deskolemizeET( expProofWithSk )
     quiet( ExpansionProofToLK.withIntuitionisticHeuristics( deskExpProof ) ) match {
       case Right( lk ) =>
         if ( showInProoftool ) prooftool( lk )
         val maxSuccSize = lk.subProofs.map( _.endSequent.succedent.toSet.size ).max
         EscargotLogger.warn( s"classical proof has maximum succedent size $maxSuccSize" )
-        if ( maxSuccSize <= 1 ) Some( lk ) else None
+        val inMG3i = isMaeharaMG3i( lk )
+        EscargotLogger.warn( s"classical proof is in mG3i: $inMG3i" )
+        if ( inMG3i ) Some( lk ) else None
       case Left( _ ) =>
         EscargotLogger.warn( s"deskolemization failed" )
         None
@@ -81,7 +83,7 @@ object IEscargot {
     opts.backend.getExpansionProof( tptpSequent ) match {
       case Some( expansion ) =>
         println( "% found classical proof" )
-        expansionProofToLJ( expansion, showInProoftool = opts.prooftool ) match {
+        expansionProofToMG3i( expansion, showInProoftool = opts.prooftool ) match {
           case Some( lj ) =>
             require( lj.endSequent.isSubsetOf( tptpSequent ) )
             println( "% SZS status Theorem" )
