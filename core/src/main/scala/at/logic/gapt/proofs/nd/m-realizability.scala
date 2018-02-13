@@ -134,7 +134,7 @@ object MRealizability {
           }, ${
             Abs( Var( "z", ty"1 > 1" ), App( mrealizeCases( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) ) )
           }))" )
-        
+
       case ImpElimRule( leftSubProof, rightSubProof ) =>
         Abs(
           freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
@@ -195,8 +195,9 @@ object MRealizability {
           } ++ insertIndex( variablesAntPremise( proof, 1 ), aux,
             le"pi2(${App( mrealizeCases( leftSubProof ), freeVariables( leftSubProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) )})" ) ) )
 
+      // only to be used when mainFormula is an equation
       case TheoryAxiom( mainFormula ) =>
-        throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
+        Abs( freeVariables( mainFormula ).toSeq , le"i : 1" )
 
       case EqualityElimRule( leftSubProof, rightSubProof, formulaA, variablex ) =>
         Abs(

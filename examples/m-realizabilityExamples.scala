@@ -463,16 +463,27 @@ object exampleOrElimRule extends Script {
   print( b6 ); print( m1 ); print( " of type " ); println( m1.ty )
 }
 
-/*
-object theoryAxiom1 extends Script {
-  val a1 = TheoryAxiom( hof"!z (s(z) = 0 -> ⊥)" )
-  val m1 = MRealizability.mrealize( a1 )
-  print( m1 ); print( " of type: " ); println( m1.ty )
-}
+object examplesTheoryAxiom extends Script {
 
-object theoryAxiom2 extends Script {
-  val a1 = TheoryAxiom( hof"!y (y*0 = 0)" )
+  implicit var ctx = Context()
+
+  ctx += InductiveType(
+    ty"nat",
+    hoc"0 : nat",
+    hoc"s : nat > nat" )
+  ctx += PrimRecFun(
+    hoc"'+': nat>nat>nat",
+    "0 + x = x",
+    "s(x) + y = s(x + y)" )
+
+  //val a1 = TheoryAxiom( hof"!y (y+0 = 0)" )
+  val a1 = TheoryAxiom( hof" (y+0 = 0)" )
   val m1 = MRealizability.mrealize( a1 )
-  print( m1 ); print( " of type: " ); println( m1.ty )
+  print(a1) ; print( m1 ); print( " of type: " ); println( m1.ty )
+
+  //val a2 = TheoryAxiom( hof"!z ¬(s(z) = 0)" )
+  val a2 = TheoryAxiom( hof" ¬(s(z) = 0)" )
+  val m2 = MRealizability.mrealize( a2 )
+  print(a2) ; print( m2 ); print( " of type: " ); println( m2.ty )
+
 }
-*/ 
