@@ -197,7 +197,7 @@ object MRealizability {
 
       // only to be used when mainFormula is an equation
       case TheoryAxiom( mainFormula ) =>
-        Abs( freeVariables( mainFormula ).toSeq , le"i : 1" )
+        Abs( freeVariables( mainFormula ).toSeq, le"i : 1" )
 
       case EqualityElimRule( leftSubProof, rightSubProof, formulaA, variablex ) =>
         Abs(
