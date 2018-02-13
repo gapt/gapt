@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.nd
 
-import at.logic.gapt.expr.{ App, typeVariables, _ }
+import at.logic.gapt.expr.{ App, typeVariables, Ty, _ }
 import at.logic.gapt.proofs.Context.{ BaseTypes, InductiveType, PrimRecFun, StructurallyInductiveTypes }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.nd._
@@ -226,13 +226,73 @@ object MRealizability {
     case Bottom()                         => ty"1"
     case Top()                            => flat( Imp( Bottom(), Bottom() ) )
     case Eq( _, _ )                       => ty"1"
-    case Atom( _, _ )                     => ty"1"
+    case Atom( _, _ )                     => ty"1" // ?
     case And( leftformula, rightformula ) => TBase( "conj", flat( leftformula ), flat( rightformula ) )
     case Or( leftformula, rightformula )  => flat( Ex( Var( "x", ty"nat" ), And( Imp( Eq( Var( "x", ty"nat" ), le"0" ), leftformula ), Imp( Neg( Eq( Var( "x", ty"nat" ), le"0" ) ), rightformula ) ) ) )
     case Imp( leftformula, rightformula ) => flat( leftformula ) ->: flat( rightformula )
     case Neg( subformula )                => flat( Imp( subformula, Bottom() ) )
     case Ex( variable, subformula )       => TBase( "conj", variable.ty, flat( subformula ) )
     case All( variable, subformula )      => variable.ty ->: flat( subformula )
+  }
+
+  // removes all occurences of the empty program i : 1 from term, or is i : 1 itself
+  // only for recursors for natural numbers now
+  def removeEmptyProgram( term: Expr ): Expr = {
+
+    val empty = hoc"i"
+    val emptyType = ty"1"
+
+    term match {
+      case Var( name, typee ) =>
+        if ( removeEmptyProgramType( typee ) == emptyType ) empty
+        else Var( name, removeEmptyProgramType( typee ) )
+      case Const( "natRec", _, params ) => {
+        val parameter = removeEmptyProgramType( params.head )
+        if ( parameter == emptyType ) empty
+        else Const( "natRec", parameter ->: ( ty"nat" ->: parameter ->: parameter ) ->: ty"nat" ->: parameter, List( parameter ) )
+      }
+      case Abs( variable, termm ) => {
+        if ( removeEmptyProgram( termm ) == empty ) empty
+        else if ( removeEmptyProgramType( variable.ty ) == emptyType ) removeEmptyProgram( termm )
+        else Abs( Var( variable.name, removeEmptyProgramType( variable.ty ) ), removeEmptyProgram( termm ) )
+      }
+      case App( App( Const( "pair", conjtype, params ), left ), right ) =>
+        if ( removeEmptyProgram( right ) == empty ) removeEmptyProgram( left )
+        else if ( removeEmptyProgram( left ) == empty ) removeEmptyProgram( right )
+        else App( App( Const( "pair", removeEmptyProgramType( conjtype ), params.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgram( left ) ), removeEmptyProgram( right ) )
+      case App( Const( "pi1", TArr( TBase( "conj", typeparams ), termmtype ), params ), termm ) =>
+        if ( removeEmptyProgramType( typeparams( 0 ) ) == emptyType ) empty
+        else if ( removeEmptyProgramType( typeparams( 1 ) ) == emptyType ) removeEmptyProgram( termm )
+        else App( Const( "pi1", TArr( TBase( "conj", typeparams.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgramType( termmtype ) ), params.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgram( termm ) )
+      case App( Const( "pi2", TArr( TBase( "conj", typeparams ), termmtype ), params ), termm ) =>
+        if ( removeEmptyProgramType( typeparams( 1 ) ) == emptyType ) empty
+        else if ( removeEmptyProgramType( typeparams( 0 ) ) == emptyType ) removeEmptyProgram( termm )
+        else App( Const( "pi2", TArr( TBase( "conj", typeparams.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgramType( termmtype ) ), params.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgram( termm ) )
+      case App( term1, term2 ) => {
+        if ( removeEmptyProgram( term1 ) == empty ) empty
+        else if ( removeEmptyProgram( term2 ) == empty ) removeEmptyProgram( term1 )
+        else App( removeEmptyProgram( term1 ), removeEmptyProgram( term2 ) )
+      }
+      case _ => term
+    }
+  }
+
+  // similar but for types
+  def removeEmptyProgramType( typee: Ty ): Ty = {
+
+    val empty = ty"1"
+
+    typee match {
+      case TBase( "conj", params ) =>
+        if ( removeEmptyProgramType( params( 0 ) ) == empty ) removeEmptyProgramType( params( 1 ) )
+        else if ( removeEmptyProgramType( params( 1 ) ) == empty ) removeEmptyProgramType( params( 0 ) )
+        else TBase( "conj", removeEmptyProgramType( params( 0 ) ), removeEmptyProgramType( params( 1 ) ) )
+      case TArr( in, out ) =>
+        if ( removeEmptyProgramType( out ) == empty ) empty
+        else if ( removeEmptyProgramType( in ) == empty ) removeEmptyProgramType( out )
+        else TArr( removeEmptyProgramType( in ), removeEmptyProgramType( out ) )
+      case _ => typee
+    }
   }
 
   def insertIndex( sequence: Vector[Var], index: SequentIndex, value: Expr ): Vector[Expr] =
