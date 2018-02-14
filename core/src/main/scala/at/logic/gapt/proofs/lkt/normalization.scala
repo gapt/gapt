@@ -3,6 +3,7 @@ package at.logic.gapt.proofs.lkt
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.proofs.Context
+import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.utils.Maybe
 
 class Normalizer[LC <: ALCtx[LC]] {
@@ -119,9 +120,15 @@ class NormalizerWithDebugging( implicit ctx: Maybe[Context] ) extends Normalizer
   }
 }
 
-object normalize {
+class normalize {
   def apply( p: LKt ): LKt =
     new Normalizer[FakeLocalCtx]().normalize( p, FakeLocalCtx )
+  def withDebug( p: LKProof )( implicit ctx: Maybe[Context] ): LKt = {
+    val ( t, lctx ) = LKToLKt( p )
+    withDebug( t, lctx )
+  }
   def withDebug( p: LKt, lctx: LocalCtx )( implicit ctx: Maybe[Context] ): LKt =
     new NormalizerWithDebugging().normalize( p, lctx )
 }
+object normalize extends normalize
+object normalizeLKt extends normalize
