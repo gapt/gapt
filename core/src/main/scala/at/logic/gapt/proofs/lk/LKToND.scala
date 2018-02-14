@@ -579,14 +579,28 @@ object LKToND {
           else None )
 
         val Abs( x, term ) = replacementContext
+        val Eq( v, w ) = subProof.endSequent( eq )
+
+        val substitution1 = Substitution( x, v )
+        val substitution2 = Substitution( x, w )
+
+        val mainFormula = if ( subProof.endSequent( aux ) == BetaReduction.betaNormalize( substitution1( term.asInstanceOf[Formula] ) ) )
+          BetaReduction.betaNormalize( substitution2( term.asInstanceOf[Formula] ) )
+        else if ( term.asInstanceOf[Formula] == BetaReduction.betaNormalize( substitution2( term.asInstanceOf[Formula] ) ) )
+          BetaReduction.betaNormalize( substitution1( term.asInstanceOf[Formula] ) )
+        else
+          throw new LKToNDTranslationException( "EqualityLeftRule",
+            s"Formula ${subProof.endSequent( aux )} is not equal to ${term.asInstanceOf[Formula]} with either " +
+              s"substitution $substitution1 or $substitution2 applied to it." )
 
         nd.ProofBuilder.
           c( nd.LogicalAxiom( subProof.endSequent( eq ) ) ).
           c( t ).
-          u( exchange2( _, subProof.endSequent( aux ) ) ).
-          b( EqualityElimRule( _, _, Neg( term.asInstanceOf[Formula] ), x ) ).
+          u( ImpIntroRule( _, subProof.endSequent( aux ) ) ).
+          b( EqualityElimRule( _, _, Imp( term.asInstanceOf[Formula], t.endSequent( Suc( 0 ) ) ), x ) ).
+          c( nd.LogicalAxiom( mainFormula ) ).
+          b( ImpElimRule( _, _ ) ).
           u( ContractionRule( _, subProof.endSequent( eq ) ) ).
-          u( exchange3( _, t.endSequent( Suc( 0 ) ) ) ).
           qed
 
       case p @ EqualityRightRule( subProof, eq, aux, replacementContext ) =>
