@@ -579,26 +579,13 @@ object LKToND {
           else None )
 
         val Abs( x, term ) = replacementContext
-        val Eq( v, w ) = subProof.endSequent( eq )
-
-        val substitution1 = Substitution( x, v )
-        val substitution2 = Substitution( x, w )
-
-        val mainFormula = if ( subProof.endSequent( aux ) == BetaReduction.betaNormalize( substitution1( term.asInstanceOf[Formula] ) ) )
-          BetaReduction.betaNormalize( substitution2( term.asInstanceOf[Formula] ) )
-        else if ( term.asInstanceOf[Formula] == BetaReduction.betaNormalize( substitution2( term.asInstanceOf[Formula] ) ) )
-          BetaReduction.betaNormalize( substitution1( term.asInstanceOf[Formula] ) )
-        else
-          throw new LKToNDTranslationException( "EqualityLeftRule",
-            s"Formula ${subProof.endSequent( aux )} is not equal to ${term.asInstanceOf[Formula]} with either " +
-              s"substitution $substitution1 or $substitution2 applied to it." )
 
         nd.ProofBuilder.
           c( nd.LogicalAxiom( subProof.endSequent( eq ) ) ).
           c( t ).
           u( ImpIntroRule( _, subProof.endSequent( aux ) ) ).
           b( EqualityElimRule( _, _, Imp( term.asInstanceOf[Formula], t.endSequent( Suc( 0 ) ) ), x ) ).
-          c( nd.LogicalAxiom( mainFormula ) ).
+          c( nd.LogicalAxiom( p.mainFormula ) ).
           b( ImpElimRule( _, _ ) ).
           u( ContractionRule( _, subProof.endSequent( eq ) ) ).
           qed
@@ -629,11 +616,13 @@ object LKToND {
 
       case p @ DefinitionLeftRule( subProof: LKProof, aux: SequentIndex, main: Formula ) =>
         val t = translate( subProof, focus )
-        val partialProof = nd.ProofBuilder.
-          c( exchange2( t, subProof.endSequent( aux ) ) ).
-          u( nd.DefinitionRule( _, -main ) ).
+        nd.ProofBuilder.
+          c( t ).
+          u( ImpIntroRule( _, subProof.endSequent( aux ) ) ).
+          u( nd.DefinitionRule( _, Imp( main, t.endSequent( Suc( 0 ) ) ) ) ).
+          c( nd.LogicalAxiom( main ) ).
+          b( ImpElimRule( _, _ ) ).
           qed
-        exchange3( partialProof, t.endSequent( Suc( 0 ) ) )
 
       case p @ DefinitionRightRule( subProof, aux, main ) =>
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
