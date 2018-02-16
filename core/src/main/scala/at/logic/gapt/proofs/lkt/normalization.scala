@@ -9,7 +9,7 @@ import at.logic.gapt.utils.Maybe
 class Normalizer[LC <: ALCtx[LC]] {
   protected def doCheck( p: LKt, lctx: LC ): Unit = ()
 
-  case class Subst( hyp: Hyp, byF: Formula, by: Bound1 ) {
+  case class ProofSubst( hyp: Hyp, byF: Formula, by: Bound1 ) {
     def apply( bnd: Bound1, lctx: B1[LC] ): Bound1 =
       if ( bnd.aux == hyp ) bnd
       else if ( !by.freeHyps( bnd.aux ) ) Bound1( bnd.aux, apply( bnd.p, lctx( bnd.aux ) ) )
@@ -83,9 +83,9 @@ class Normalizer[LC <: ALCtx[LC]] {
     case Link( _, _ ) => p
   }
 
-  protected def inst( q: Bound1, byF: Formula, by: Bound1, lctx: LC ): LKt = Subst( q.aux, byF, by ).apply( q.p, lctx )
+  protected def inst( q: Bound1, byF: Formula, by: Bound1, lctx: LC ): LKt = ProofSubst( q.aux, byF, by ).apply( q.p, lctx )
   protected def inst1( q: Bound2, byF: Formula, by: Bound1, lctx: LC, g1: Formula, g2: Formula ): Bound1 =
-    Subst( q.aux1, byF, by ).apply( Bound1( q.aux2, q.p ), lctx.upS( g1 )( q.aux1 ).upS( g2 ) )
+    ProofSubst( q.aux1, byF, by ).apply( Bound1( q.aux2, q.p ), lctx.upS( g1 )( q.aux1 ).upS( g2 ) )
 
   def evalCut( lctx: LC, f: Formula, q1: Bound1, q2: Bound1 ): LKt =
     evalCut( Cut( f, q1, q2 ), lctx )
@@ -105,30 +105,30 @@ class Normalizer[LC <: ALCtx[LC]] {
       case ( _, Ax( h2, c2 ), _ ) if h2 == q2.aux => q1.inst( c2 )
       case ( NegR( m1, r1 ), NegL( m2, r2 ), Neg( g ) ) if m1 == q1.aux && m2 == q2.aux =>
         evalCut( lctx, g,
-          Subst( m2, f, q1 ).apply( r2, lctx2.up1_( q2.p ) ),
-          Subst( m1, f, q2 ).apply( r1, lctx1.up1_( q1.p ) ) )
+          ProofSubst( m2, f, q1 ).apply( r2, lctx2.up1_( q2.p ) ),
+          ProofSubst( m1, f, q2 ).apply( r1, lctx1.up1_( q1.p ) ) )
       case ( AndR( m1, r11, r12 ), AndL( m2, r2 ), And( g1, g2 ) ) if m1 == q1.aux && m2 == q2.aux =>
         evalCut( lctx, g2,
-          Subst( m1, f, q2 ).apply( r12, lctx1.up2_( q1.p ) ),
+          ProofSubst( m1, f, q2 ).apply( r12, lctx1.up2_( q1.p ) ),
           inst1(
-            Subst( m2, f, q1 ).apply( r2, lctx2.up12_( q2.p ) ),
-            g1, Subst( m1, f, q2 ).apply( r11, lctx1.up1_( q1.p ) ),
+            ProofSubst( m2, f, q1 ).apply( r2, lctx2.up12_( q2.p ) ),
+            g1, ProofSubst( m1, f, q2 ).apply( r11, lctx1.up1_( q1.p ) ),
             lctx2, g1, g2 ) )
       case ( AndL( m1, r1 ), AndR( m2, r21, r22 ), BinConn( g1, g2 ) ) if m1 == q1.aux && m2 == q2.aux =>
-        val r1_ = Subst( m1, f, q2 ).apply( r1, lctx1.up12_( q1.p ) )
-        val r21_ = Subst( m2, f, q1 ).apply( r21, lctx2.up1_( q2.p ) )
-        val r22_ = Subst( m2, f, q1 ).apply( r22, lctx2.up2_( q2.p ) )
+        val r1_ = ProofSubst( m1, f, q2 ).apply( r1, lctx1.up12_( q1.p ) )
+        val r21_ = ProofSubst( m2, f, q1 ).apply( r21, lctx2.up1_( q2.p ) )
+        val r22_ = ProofSubst( m2, f, q1 ).apply( r22, lctx2.up2_( q2.p ) )
         evalCut( lctx, g2, inst1( r1_, g1, r21_, lctx, g1, g2 ), r22_ )
       case ( AllR( m1, ev, r1 ), AllL( m2, t, r2 ), _ ) if m1 == q1.aux && m2 == q2.aux =>
         val inst = BetaReduction.betaNormalize( instantiate( f, t ) )
         evalCut( lctx, inst,
-          Subst( m1, f, q2 ).apply( Substitution( ev -> t )( r1 ), lctx1.upS( inst ) ),
-          Subst( m2, f, q1 ).apply( r2, lctx2.up1_( q2.p ) ) )
+          ProofSubst( m1, f, q2 ).apply( Substitution( ev -> t )( r1 ), lctx1.upS( inst ) ),
+          ProofSubst( m2, f, q1 ).apply( r2, lctx2.up1_( q2.p ) ) )
       case ( AllL( m1, t, r1 ), AllR( m2, ev, r2 ), _ ) if m1 == q1.aux && m2 == q2.aux =>
         val inst = BetaReduction.betaNormalize( instantiate( f, t ) )
         evalCut( lctx, inst,
-          Subst( m1, f, q2 ).apply( r1, lctx1.up1_( q1.p ) ),
-          Subst( m2, f, q1 ).apply( Substitution( ev -> t )( r2 ), lctx2.upS( inst ) ) )
+          ProofSubst( m1, f, q2 ).apply( r1, lctx1.up1_( q1.p ) ),
+          ProofSubst( m2, f, q1 ).apply( Substitution( ev -> t )( r2 ), lctx2.upS( inst ) ) )
 
       case ( _, _, _ ) if !q2.p.mainHyps.contains( q2.aux ) => inst( q2, f, q1, lctx2 )
       case ( _, _, _ ) if !q1.p.mainHyps.contains( q1.aux ) => inst( q1, f, q2, lctx1 )
