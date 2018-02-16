@@ -652,3 +652,15 @@ object classicalPairing extends Script {
 
   println( nd )
 }
+
+object issue687 extends Script {
+  import at.logic.gapt.proofs.gaptic._
+  val lk = Proof( hols"A ∨ B, C → ¬B, C ⊢ A" ) {
+    orL left trivial
+    impL left trivial
+    negL; trivial
+  }
+  println( lk )
+  val nd = LKToND( lk )
+  println( nd )
+}
