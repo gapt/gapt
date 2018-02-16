@@ -217,6 +217,10 @@ object MRealizability {
           freeVariables( cases( 1 ).proof.conclusion ).toSeq ++ insertIndex( variablesAntPremise( proof, 1 ), cases( 1 ).hypotheses( 0 ), extraVar ) ) )
         Abs( freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ), le"natRec($mrealizerBaseCase,$mrealizerInductionCase,$term)" )
 
+      // assuming that the defintionrule is applied according to rewrite rules of the original context
+      case DefinitionRule( subProof, mainFormula ) =>
+        mrealizeCases( subProof )
+
       case ExcludedMiddleRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
         throw new MRealizerCreationException( proof.longName, "This rule is not admitted in Heyting Arithmetic." )
     } )
