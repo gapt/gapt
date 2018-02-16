@@ -12,6 +12,10 @@ case class Hyp( idx: Int ) extends AnyVal {
   def toDoc: Doc = toString
   override def toString = if ( idx < 0 ) idx.toString else "+" + idx.toString
 }
+object Hyp {
+  def mk( idx: Int, polarity: Polarity ): Hyp = mk( idx, polarity.inSuc )
+  def mk( idx: Int, inSuc: Boolean ): Hyp = if ( inSuc ) Hyp( idx ) else Hyp( -idx )
+}
 
 trait Bound {
   def freeHyps: Set[Hyp]
@@ -51,6 +55,21 @@ final case class Bound2( aux1: Hyp, aux2: Hyp, p: LKt ) extends Bound {
   def toDoc( implicit sig: BabelSignature ): Doc =
     aux1.toDoc <> ":" <+> aux2.toDoc <> ":" <+> p.toDoc
 }
+final case class BoundN( auxs: List[Hyp], p: LKt ) extends Bound {
+  def freeHyps: Set[Hyp] = p.freeHyps -- auxs
+  def rename( awayFrom: Iterable[Hyp] ): BoundN = {
+    val free = p.freeHyps ++ awayFrom ++ auxs
+    val auxs_ = free.freshSameSide( auxs )
+    BoundN( auxs_, auxs.view.zip( auxs_ ).foldLeft( p )( ( p_, a ) => p_.replace( a._1, a._2 ) ) )
+  }
+  def replace( a: Hyp, b: Hyp ): BoundN =
+    if ( auxs.contains( a ) ) this
+    else if ( auxs.contains( b ) ) rename( Set( b ) ).replace( a, b )
+    else BoundN( auxs, p.replace( a, b ) )
+
+  def toDoc( implicit sig: BabelSignature ): Doc =
+    Doc.spread( auxs.map( aux => aux.toDoc <> ":" ) :+ p.toDoc )
+}
 
 sealed trait LKt {
   def replace( a: Hyp, b: Hyp ): LKt =
@@ -67,6 +86,10 @@ sealed trait LKt {
       case AllL( main, term, q )          => AllL( main.replace( a, b ), term, q.replace( a, b ) )
       case AllR( main, ev, q )            => AllR( main.replace( a, b ), ev, q.replace( a, b ) )
       case Eql( main, eq, ltr, rwCtx, q ) => Eql( main.replace( a, b ), eq.replace( a, b ), ltr, rwCtx, q.replace( a, b ) )
+      case AllSk( main, term, skDef, q )  => AllSk( main.replace( a, b ), term, skDef, q.replace( a, b ) )
+      case Def( main, f, q )              => Def( main.replace( a, b ), f, q.replace( a, b ) )
+      case Ind( main, f, t, cs )          => Ind( main.replace( a, b ), f, t, cs.map( c => c.copy( q = c.q.replace( a, b ) ) ) )
+      case Link( mains, name )            => Link( mains.map( _.replace( a, b ) ), name )
     }
 
   def mainHyps: Seq[Hyp] = this match {
@@ -81,6 +104,10 @@ sealed trait LKt {
     case AllL( main, _, _ )       => Seq( main )
     case AllR( main, _, _ )       => Seq( main )
     case Eql( main, eq, _, _, _ ) => Seq( main, eq )
+    case AllSk( main, _, _, _ )   => Seq( main )
+    case Def( main, _, _ )        => Seq( main )
+    case Ind( main, _, _, _ )     => Seq( main )
+    case Link( mains, _ )         => mains
   }
 
   val freeHyps: Set[Hyp] = this match {
@@ -95,6 +122,10 @@ sealed trait LKt {
     case AllL( main, _, q )       => q.freeHyps + main
     case AllR( main, _, q )       => q.freeHyps + main
     case Eql( main, eq, _, _, q ) => q.freeHyps + main + eq
+    case AllSk( main, _, _, q )   => q.freeHyps + main
+    case Def( main, _, q )        => q.freeHyps + main
+    case Ind( main, _, _, cs )    => cs.view.flatMap( _.q.freeHyps ).toSet + main
+    case Link( mains, _ )         => mains.toSet
   }
 
   val hasCuts: Boolean = this match {
@@ -107,6 +138,10 @@ sealed trait LKt {
     case AllL( _, _, q )                   => q.p.hasCuts
     case AllR( _, _, q )                   => q.p.hasCuts
     case Eql( _, _, _, _, q )              => q.p.hasCuts
+    case AllSk( _, _, _, q )               => q.p.hasCuts
+    case Def( _, _, q )                    => q.p.hasCuts
+    case Ind( _, _, _, cs )                => cs.exists( _.q.p.hasCuts )
+    case Link( _, _ )                      => false
   }
 
   val freeVars: Set[Var] = this match {
@@ -119,6 +154,10 @@ sealed trait LKt {
     case AllL( _, term, q )                => q.p.freeVars union freeVariables( term )
     case AllR( _, ev, q )                  => q.p.freeVars - ev
     case Eql( _, _, _, rwCtx, q )          => q.p.freeVars union freeVariables( rwCtx )
+    case AllSk( _, _, _, q )               => q.p.freeVars
+    case Def( _, f, q )                    => q.p.freeVars union freeVariables( f )
+    case Ind( _, _, _, cs )                => cs.view.flatMap( c => c.q.p.freeVars -- c.evs ).toSet
+    case Link( _, name )                   => freeVariables( name )
   }
 
   def toDoc( implicit sig: BabelSignature ): Doc = {
@@ -132,6 +171,11 @@ sealed trait LKt {
         case hyp: Hyp   => hyp.toDoc
         case p: LKt     => p.toDoc
         case b: Boolean => b.toString: Doc
+        case s: Seq[_] => Doc.wordwrap2( s.map {
+          case h: Hyp => h.toDoc
+          case IndCase( ctr, evs, q ) =>
+            ( ( ctr +: evs ).map( _.name: Doc ) :+ q.toDoc ).reduce( _ <> ": " <> _ )
+        }, "," )
       }, "," ) <> ")" ).nest( 1 )
   }
 
@@ -153,6 +197,10 @@ sealed trait LKt {
         case AllL( _, _, q )      => gather( q.p )
         case AllR( _, _, q )      => gather( q.p )
         case Eql( _, _, _, _, q ) => gather( q.p )
+        case AllSk( _, _, _, q )  => gather( q.p )
+        case Def( _, _, q )       => gather( q.p )
+        case Ind( _, _, _, cs )   => for ( c <- cs ) gather( c.q.p )
+        case Link( _, _ )         =>
       }
     }
     gather( this )
@@ -172,12 +220,31 @@ case class AndL( main: Hyp, q: Bound2 ) extends LKt
 case class AllL( main: Hyp, term: Expr, q: Bound1 ) extends LKt
 case class AllR( main: Hyp, ev: Var, q: Bound1 ) extends LKt
 case class Eql( main: Hyp, eq: Hyp, ltr: Boolean, rwCtx: Expr, q: Bound1 ) extends LKt
+case class AllSk( main: Hyp, term: Expr, skDef: Expr, q: Bound1 ) extends LKt
+case class Def( main: Hyp, f: Formula, q: Bound1 ) extends LKt
+case class IndCase( ctr: Const, evs: List[Var], q: BoundN )
+case class Ind( main: Hyp, f: Abs, term: Expr, cases: List[IndCase] ) extends LKt {
+  def indTy = f.variable.ty
+}
+case class Link( mains: List[Hyp], name: Expr ) extends LKt
 
 trait ImplicitInstances {
   implicit val closedUnderSubstitutionBound1: ClosedUnderSub[Bound1] =
     ( sub: Substitution, bnd: Bound1 ) => bnd.copy( p = sub( bnd.p ) )
   implicit val closedUnderSubstitutionBound2: ClosedUnderSub[Bound2] =
     ( sub: Substitution, bnd: Bound2 ) => bnd.copy( p = sub( bnd.p ) )
+  implicit val closedUnderSubstitutionBoundN: ClosedUnderSub[BoundN] =
+    ( sub, bnd ) => bnd.copy( p = sub( bnd.p ) )
+  implicit val closedUnderSubstitutionIndCase: ClosedUnderSub[IndCase] =
+    ( sub, indCase ) =>
+      if ( sub.domain.intersect( indCase.evs.toSet ).nonEmpty )
+        Substitution( sub.map -- indCase.evs, sub.typeMap )( indCase )
+      else if ( sub.range.intersect( indCase.evs.toSet ).nonEmpty ) {
+        val renaming = rename( indCase.evs, indCase.q.p.freeVars union sub.range union sub.domain )
+        IndCase( indCase.ctr, indCase.evs.map( renaming ),
+          Substitution( sub.map ++ renaming, sub.typeMap )( indCase.q ) )
+      } else
+        indCase.copy( q = sub( indCase.q ) )
   implicit val closedUnderSubstitution: ClosedUnderSub[LKt] =
     ( sub: Substitution, p: LKt ) => p match {
       case Cut( f, q1, q2 )                  => Cut( sub( f ), sub( q1 ), sub( q2 ) )
@@ -194,6 +261,10 @@ trait ImplicitInstances {
         AllR( main, ev_, Substitution( sub.map + ( ev -> ev_ ), sub.typeMap )( q ) )
       case AllR( main, ev, q )            => AllR( main, ev, sub( q ) )
       case Eql( main, eq, ltr, rwCtx, q ) => Eql( main, eq, ltr, sub( rwCtx ), sub( q ) )
+      case AllSk( main, term, skDef, q )  => AllSk( main, sub( term ), skDef, sub( q ) )
+      case Def( main, f, q )              => Def( main, sub( f ), sub( q ) )
+      case Ind( main, f, term, cases )    => Ind( main, sub( f ).asInstanceOf[Abs], sub( term ), sub( cases ) )
+      case Link( mains, name )            => Link( mains, sub( name ) )
     }
 
   implicit object replaceableBnd1 extends ClosedUnderReplacement[Bound1] {
@@ -205,6 +276,20 @@ trait ImplicitInstances {
     def replace( bnd: Bound2, repl: PartialFunction[Expr, Expr] ): Bound2 =
       bnd.copy( p = TermReplacement( bnd.p, repl )( replaceable ) )
     def names( bnd: Bound2 ): Set[VarOrConst] = containedNames( bnd.p )
+  }
+  implicit object replaceableBndN extends ClosedUnderReplacement[BoundN] {
+    def replace( bnd: BoundN, repl: PartialFunction[Expr, Expr] ): BoundN =
+      bnd.copy( p = TermReplacement( bnd.p, repl )( replaceable ) )
+    def names( bnd: BoundN ): Set[VarOrConst] = containedNames( bnd.p )
+  }
+  implicit object replaceableIndCase extends ClosedUnderReplacement[IndCase] {
+    def replace( indCase: IndCase, repl: PartialFunction[Expr, Expr] ): IndCase =
+      IndCase(
+        TermReplacement( indCase.ctr, repl ).asInstanceOf[Const],
+        TermReplacement( indCase.evs, repl ).map( _.asInstanceOf[Var] ),
+        TermReplacement( indCase.q, repl ) )
+    def names( indCase: IndCase ): Set[VarOrConst] =
+      containedNames( indCase.q ) ++ indCase.evs + indCase.ctr
   }
   implicit object replaceable extends ClosedUnderReplacement[LKt] {
     override def replace( p: LKt, repl: PartialFunction[Expr, Expr] ): LKt =
@@ -218,6 +303,10 @@ trait ImplicitInstances {
         case AllL( main, term, q )             => AllL( main, TermReplacement( term, repl ), TermReplacement( q, repl ) )
         case AllR( main, ev, q )               => AllR( main, TermReplacement( ev, repl ).asInstanceOf[Var], TermReplacement( q, repl ) )
         case Eql( main, eq, ltr, rwCtx, q )    => Eql( main, eq, ltr, TermReplacement( rwCtx, repl ).asInstanceOf[Abs], TermReplacement( q, repl ) )
+        case AllSk( main, term, skDef, q )     => AllSk( main, TermReplacement( term, repl ), TermReplacement( skDef, repl ), TermReplacement( q, repl ) )
+        case Def( main, f, q )                 => Def( main, TermReplacement( f, repl ), TermReplacement( q, repl ) )
+        case Ind( main, f, t, cases )          => Ind( main, TermReplacement( f, repl ).asInstanceOf[Abs], TermReplacement( t, repl ), TermReplacement( cases, repl ) )
+        case Link( mains, name )               => Link( mains, TermReplacement( name, repl ) )
       }
     override def names( p: LKt ): Set[VarOrConst] =
       p match {
@@ -230,6 +319,10 @@ trait ImplicitInstances {
         case AllL( _, term, q )                => containedNames( q ) union containedNames( term )
         case AllR( _, ev, q )                  => containedNames( q ) + ev
         case Eql( _, _, _, rwCtx, q )          => containedNames( q ) union containedNames( rwCtx )
+        case AllSk( _, term, skDef, q )        => containedNames( q ) union containedNames( term ) union containedNames( skDef )
+        case Def( _, f, q )                    => containedNames( q ) union containedNames( f )
+        case Ind( _, f, t, cases )             => containedNames( cases ) union containedNames( f ) union containedNames( t )
+        case Link( _, name )                   => containedNames( name )
       }
   }
 }

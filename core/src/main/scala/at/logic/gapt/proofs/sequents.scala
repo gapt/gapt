@@ -408,6 +408,12 @@ case class Sequent[+A]( antecedent: Vector[A], succedent: Vector[A] ) {
     case Suc( j ) => Sequent( antecedent, succedent.updated( j, elem ) )
   }
 
+  def updated[B >: A]( updates: Iterable[( SequentIndex, B )] ): Sequent[B] = {
+    var res: Sequent[B] = this
+    for ( ( i, b ) <- updates ) res = res.updated( i, b )
+    res
+  }
+
   def indexOfOption[B >: A]( elem: B ): Option[SequentIndex] = find( _ == elem )
   def indexOf[B >: A]( elem: B ): SequentIndex = indexOfOption( elem ) get
 

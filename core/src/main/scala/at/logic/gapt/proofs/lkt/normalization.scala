@@ -7,6 +7,8 @@ import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.utils.Maybe
 
 class Normalizer[LC <: ALCtx[LC]] {
+  protected def doCheck( p: LKt, lctx: LC ): Unit = ()
+
   case class Subst( hyp: Hyp, byF: Formula, by: Bound1 ) {
     def apply( bnd: Bound1, lctx: B1[LC] ): Bound1 =
       if ( bnd.aux == hyp ) bnd
@@ -16,6 +18,11 @@ class Normalizer[LC <: ALCtx[LC]] {
       if ( bnd.aux1 == hyp || bnd.aux2 == hyp ) bnd
       else if ( !by.freeHyps( bnd.aux1 ) && !by.freeHyps( bnd.aux2 ) )
         Bound2( bnd.aux1, bnd.aux2, apply( bnd.p, lctx( bnd.aux1, bnd.aux2 ) ) )
+      else apply( bnd.rename( by.freeHyps ), lctx )
+    def apply( bnd: BoundN, lctx: BN[LC] ): BoundN =
+      if ( bnd.auxs.contains( hyp ) ) bnd
+      else if ( by.freeHyps.intersect( bnd.auxs.toSet ).isEmpty )
+        BoundN( bnd.auxs, apply( bnd.p, lctx( bnd.auxs ) ) )
       else apply( bnd.rename( by.freeHyps ), lctx )
 
     def apply( p: LKt, lctx: LC ): LKt = p match {
@@ -40,6 +47,13 @@ class Normalizer[LC <: ALCtx[LC]] {
         }
       case Eql( main, eq, ltr, rwCtx, q ) if main != hyp && eq != hyp =>
         Eql( main, eq, ltr, rwCtx, apply( q, lctx.up1_( p ) ) )
+      case AllSk( main, term, skDef, q ) if main != hyp =>
+        AllSk( main, term, skDef, apply( q, lctx.up1_( p ) ) )
+      case Def( main, f, q ) if main != hyp =>
+        Def( main, f, apply( q, lctx.up1_( p ) ) )
+      case Ind( main, f, t, cases ) if main != hyp =>
+        Ind( main, f, t, for ( ( c, n ) <- cases.zipWithIndex ) yield c.copy( q = apply( c.q, lctx.upn_( p, n ) ) ) )
+      case Link( mains, _ ) if !mains.contains( hyp ) => p
       case _ =>
         if ( hyp.inSuc ) evalCut( lctx, byF, Bound1( hyp, p ), by )
         else evalCut( lctx, byF, by, Bound1( hyp, p ) )
@@ -48,6 +62,7 @@ class Normalizer[LC <: ALCtx[LC]] {
 
   def normalize( bnd: Bound1, lctx: LC ): Bound1 = Bound1( bnd.aux, normalize( bnd.p, lctx ) )
   def normalize( bnd: Bound2, lctx: LC ): Bound2 = Bound2( bnd.aux1, bnd.aux2, normalize( bnd.p, lctx ) )
+  def normalize( bnd: BoundN, lctx: LC ): BoundN = BoundN( bnd.auxs, normalize( bnd.p, lctx ) )
   def normalize( p: LKt, lctx: LC ): LKt = p match {
     case _ if !p.hasCuts => p
     case Cut( f, q1, q2 ) =>
@@ -60,17 +75,26 @@ class Normalizer[LC <: ALCtx[LC]] {
     case AllL( main, term, q )             => AllL( main, term, normalize( q, lctx.up1( p ) ) )
     case AllR( main, ev, q )               => AllR( main, ev, normalize( q, lctx.up1( p ) ) )
     case Eql( main, eq, ltr, rwCtx, q )    => Eql( main, eq, ltr, rwCtx, normalize( q, lctx.up1( p ) ) )
+    case AllSk( main, term, skDef, q )     => AllSk( main, term, skDef, normalize( q, lctx.up1( p ) ) )
+    case Def( main, f, q )                 => Def( main, f, normalize( q, lctx.up1( p ) ) )
+    case Ind( main, f, t, cases ) =>
+      Ind( main, f, t, for ( ( c, i ) <- cases.zipWithIndex )
+        yield c.copy( q = normalize( c.q, lctx.upn( p, i ) ) ) )
+    case Link( _, _ ) => p
   }
 
-  def inst( q: Bound1, byF: Formula, by: Bound1, lctx: LC ): LKt = Subst( q.aux, byF, by ).apply( q.p, lctx )
-  def inst1( q: Bound2, byF: Formula, by: Bound1, lctx: LC, g1: Formula, g2: Formula ): Bound1 =
+  protected def inst( q: Bound1, byF: Formula, by: Bound1, lctx: LC ): LKt = Subst( q.aux, byF, by ).apply( q.p, lctx )
+  protected def inst1( q: Bound2, byF: Formula, by: Bound1, lctx: LC, g1: Formula, g2: Formula ): Bound1 =
     Subst( q.aux1, byF, by ).apply( Bound1( q.aux2, q.p ), lctx.upS( g1 )( q.aux1 ).upS( g2 ) )
 
   def evalCut( lctx: LC, f: Formula, q1: Bound1, q2: Bound1 ): LKt =
     evalCut( Cut( f, q1, q2 ), lctx )
 
   def evalCut( c: Cut, lctx: LC ): LKt = {
+    doCheck( c, lctx )
     val Cut( f, q1, q2 ) = c
+    if ( q2.freeHyps( q1.aux ) ) return evalCut( Cut( f, q1.rename( q2.freeHyps ), q2 ), lctx )
+    if ( q1.freeHyps( q2.aux ) ) return evalCut( Cut( f, q1, q2.rename( q1.freeHyps ) ), lctx )
     val lctx1 = lctx.up1( c )
     val lctx2 = lctx.up2( c )
     ( q1.p, q2.p, f ) match {
@@ -114,10 +138,7 @@ class Normalizer[LC <: ALCtx[LC]] {
 }
 
 class NormalizerWithDebugging( implicit ctx: Maybe[Context] ) extends Normalizer[LocalCtx] {
-  override def evalCut( c: Cut, lctx: LocalCtx ): LKt = {
-    check( c, lctx )
-    super.evalCut( c, lctx )
-  }
+  override def doCheck( p: LKt, lctx: LocalCtx ): Unit = check( p, lctx )
 }
 
 class normalize {

@@ -31,8 +31,8 @@ object LKToLKt {
       case p: lk.BinaryLKProof =>
         val hyp = hyps( p.mainIndices.head )
         val Seq( Seq( a1 ), Seq( a2 ) ) = p.auxIndices
-        val aux1 = if ( a1.isSuc ) Hyp( idx ) else Hyp( -idx )
-        val aux2 = if ( a2.isSuc ) Hyp( idx ) else Hyp( -idx )
+        val aux1 = Hyp.mk( idx, a1.polarity )
+        val aux2 = Hyp.mk( idx, a2.polarity )
         val b1 = Bound1( aux1, go( p.leftSubProof, idx + 1, p.getLeftSequentConnector.parent( hyps ).updated( a1, aux1 ) ) )
         val b2 = Bound1( aux2, go( p.rightSubProof, idx + 1, p.getRightSequentConnector.parent( hyps ).updated( a2, aux2 ) ) )
         p match {
@@ -41,7 +41,7 @@ object LKToLKt {
         }
       case p: lk.EqualityRule =>
         val main = hyps( p.auxInConclusion )
-        val aux = if ( main.inSuc ) Hyp( idx ) else Hyp( -idx )
+        val aux = Hyp.mk( idx, main.polarity )
         val eq = hyps( p.eqInConclusion )
         Eql( main, eq, !p.leftToRight, p.replacementContext, Bound1(
           aux,
@@ -49,8 +49,8 @@ object LKToLKt {
             updated( p.aux, aux ).updated( p.eq, eq ) ) ) )
       case p: lk.UnaryLKProof if p.auxIndices.head.size == 2 =>
         val Seq( a1, a2 ) = p.auxIndices.head
-        val aux1 = if ( a1.isSuc ) Hyp( idx ) else Hyp( -idx )
-        val aux2 = if ( a2.isSuc ) Hyp( idx + 1 ) else Hyp( -( idx + 1 ) )
+        val aux1 = Hyp.mk( idx, a1.polarity )
+        val aux2 = Hyp.mk( idx + 1, a2.polarity )
         val b = Bound2( aux1, aux2,
           go( p.subProof, idx + 2,
             p.getSequentConnector.parent( hyps ).updated( a1, aux1 ).updated( a2, aux2 ) ) )
@@ -60,15 +60,39 @@ object LKToLKt {
             AndL( main, b )
         }
       case p @ lk.WeakQuantifierRule( p1, a1, _, t, _, isEx ) =>
-        val aux = if ( isEx ) Hyp( idx ) else Hyp( -idx )
+        val aux = Hyp.mk( idx, inSuc = isEx )
         AllL( hyps( p.mainIndices.head ), t, Bound1(
           aux,
           go( p1, idx + 1, p.getSequentConnector.parent( hyps ).updated( a1, aux ) ) ) )
       case p @ lk.StrongQuantifierRule( p1, a1, ev, _, isAll ) =>
-        val aux = if ( isAll ) Hyp( idx ) else Hyp( -idx )
+        val aux = Hyp.mk( idx, inSuc = isAll )
         AllR( hyps( p.mainIndices.head ), ev, Bound1(
           aux,
           go( p1, idx + 1, p.getSequentConnector.parent( hyps ).updated( a1, aux ) ) ) )
+      case p: lk.SkolemQuantifierRule =>
+        val aux = Hyp.mk( idx, p.aux.polarity )
+        AllSk( hyps( p.mainIndices.head ), p.skolemTerm, p.skolemDef, Bound1(
+          aux,
+          go( p.subProof, idx + 1, p.getSequentConnector.parent( hyps ).updated( p.aux, aux ) ) ) )
+      case p: lk.DefinitionRule =>
+        val aux = Hyp.mk( idx, p.aux.polarity )
+        Def( hyps( p.mainIndices.head ), p.auxFormula, Bound1(
+          aux,
+          go( p.subProof, idx + 1, p.getSequentConnector.parent( hyps ).updated( p.aux, aux ) ) ) )
+      case p: lk.InductionRule =>
+        Ind( hyps( p.mainIndices.head ), p.formula, p.term,
+          p.cases.zipWithIndex.toList.map {
+            case ( c, i ) =>
+              val goal = Hyp( idx )
+              val ihs = for ( ( i, h ) <- Stream.from( idx + 1 ).zip( c.hypotheses ).toList ) yield Hyp.mk( i, h.polarity )
+              IndCase( c.constructor, c.eigenVars.toList, BoundN(
+                goal +: ihs,
+                go( c.proof, idx + 1 + ihs.size,
+                  p.occConnectors( i ).parent( hyps ).
+                    updated( ( c.conclusion -> goal ) +: c.hypotheses.zip( ihs ) ) ) ) )
+          } )
+      case lk.ProofLink( refProof, _ ) =>
+        Link( hyps.elements.toList, refProof )
     }
     //    check( res, LocalCtx( hyps.zip( p.endSequent ).elements.toMap, Substitution() ) )
     res
@@ -96,6 +120,7 @@ object LKtToLK {
 
   private def withMap( b: Bound1, lctx: LocalCtx ): ( LKProof, Sequent[Hyp] ) = withMap( b.p, lctx, b.aux )
   private def withMap( b: Bound2, lctx: LocalCtx ): ( LKProof, Sequent[Hyp] ) = withMap( b.p, lctx, b.aux1, b.aux2 )
+  private def withMap( b: BoundN, lctx: LocalCtx ): ( LKProof, Sequent[Hyp] ) = withMap( b.p, lctx, b.auxs: _* )
   private def withMap( p: LKt, lctx: LocalCtx, toBeWeakenedIn: Hyp* ): ( LKProof, Sequent[Hyp] ) =
     toBeWeakenedIn match {
       case h +: hs =>
@@ -183,6 +208,31 @@ object LKtToLK {
           if ( main.inAnt ) lk.EqualityLeftRule( r2, s2.indexOf( eq ), s2.indexOf( q1.aux ), rwCtx.asInstanceOf[Abs] )
           else lk.EqualityRightRule( r2, s2.indexOf( eq ), s2.indexOf( q1.aux ), rwCtx.asInstanceOf[Abs] )
         r -> r.getSequentConnector.child( s2, main ).updated( r.eqInConclusion, eq ).updated( r.auxInConclusion, main )
+      case Def( main, _, q1 ) =>
+        val ( r1, s1 ) = withMap( q1, lctx.up1( p ) )
+        down( lk.DefinitionRule( r1, s1.indexOf( q1.aux ), lctx( main ) ), s1, main )
+      case AllSk( main, term, skDef, q1 ) =>
+        val ( r1, s1 ) = withMap( q1, lctx.up1( p ) )
+        val r2 = lctx( main ) match {
+          case All( _, _ ) => lk.ForallSkRightRule( r1, s1.indexOf( q1.aux ), lctx( main ), term, skDef )
+          case Ex( _, _ )  => lk.ExistsSkLeftRule( r1, s1.indexOf( q1.aux ), lctx( main ), term, skDef )
+        }
+        down( r2, s1, main )
+      case Ind( main, f, t, cases ) =>
+        val ( rs, ss ) = cases.zipWithIndex.map {
+          case ( IndCase( ctr, evs, q ), i ) =>
+            val ( r1, s1 ) = withMap( q, lctx.upn( p, i ) )
+            val goal +: ihs = q.auxs
+            lk.InductionCase( r1, ctr, ihs.map( s1.indexOf ), evs, s1.indexOf( goal ) ) -> s1
+        }.unzip
+        val r2 = lk.InductionRule( rs, f, t )
+        val s2 = r2.endSequent.indicesSequent.map( i =>
+          if ( i == r2.mainIndices.head ) main
+          else ss.zipWithIndex.flatMap { case ( s, j ) => r2.occConnectors( j ).parentOption( i ).map( s( _ ) ) }.head )
+        ( r2, s2 )
+      case Link( mains, name ) =>
+        val hypsSeq = Sequent( for ( m <- mains ) yield m -> m.polarity )
+        ( lk.ProofLink( name, hypsSeq.map( lctx( _ ) ) ), hypsSeq )
     } )
 
   def apply( p: LKt, lctx: LocalCtx ): LKProof = withMap( p, lctx )._1
