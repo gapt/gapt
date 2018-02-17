@@ -111,28 +111,28 @@ object MRealizability {
             App( mrealizeCases( middleSubProof ), freeVariables( middleSubProof.conclusion ).toSeq ++ insertIndex( variablesAntPremise( proof, 1 ), aux1,
               App( le"pi1(pi2($realizerAOrB))", le"i" ) ) )
           },${
-            Abs( Var( "z", ty"nat" ), Abs(
-              Var( "z", flat( proof.conclusion.succedent( 0 ) ) ),
+            Abs( Var( "a", ty"nat" ), Abs(
+              Var( "b", flat( proof.conclusion.succedent( 0 ) ) ),
               App( mrealizeCases( rightSubProof ), freeVariables( rightSubProof.conclusion ).toSeq ++ insertIndex( variablesAntPremise( proof, 2 ), aux2,
-                App( le"pi2(pi2($realizerAOrB))", Abs( Var( "z", ty"1" ), le"i" ) ) ) ) ) )
+                App( le"pi2(pi2($realizerAOrB))", Abs( Var( "c", ty"1" ), le"i" ) ) ) ) ) )
           },pi1($realizerAOrB))" )
 
       case OrIntro1Rule( subProof, rightDisjunct ) =>
         Abs(
           freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
           le"pair(0,pair(${
-            Abs( Var( "z", ty"1" ), App( mrealizeCases( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) ) )
+            Abs( Var( "w", ty"1" ), App( mrealizeCases( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) ) )
           }, ${
-            Abs( Var( "z", ty"1>1" ), Var( "z", flat( rightDisjunct ) ) )
+            Abs( Var( "w", ty"1>1" ), Var( "w0", flat( rightDisjunct ) ) )
           }))" )
 
       case OrIntro2Rule( subProof, leftDisjunct ) =>
         Abs(
           freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ),
           le"pair(s(0),pair(${
-            Abs( Var( "z", ty"1" ), Var( "z", flat( leftDisjunct ) ) )
+            Abs( Var( "v", ty"1" ), Var( "v0", flat( leftDisjunct ) ) )
           }, ${
-            Abs( Var( "z", ty"1 > 1" ), App( mrealizeCases( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) ) )
+            Abs( Var( "v", ty"1 > 1" ), App( mrealizeCases( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ) ) )
           }))" )
 
       case ImpElimRule( leftSubProof, rightSubProof ) =>
