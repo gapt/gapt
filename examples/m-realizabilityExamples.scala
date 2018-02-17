@@ -609,12 +609,11 @@ object exampleSuccessorFunction extends Script {
   print( b4 ); print( m2 ); print( " of type " ); println( m2.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m2 ) )
 }
 
-
 object mrealizerDivisionByTwo extends Script {
 
   implicit val ctx = divisionByTwo.ctx
 
-  val m1 = MRealizability.mrealize( divisionByTwo.proof)
+  val m1 = MRealizability.mrealize( divisionByTwo.proof )
   val m1n = MRealizability.removeEmptyProgram( m1 )
 
   print( divisionByTwo.proof ); print( m1 ); print( " of type " ); println( m1.ty )
@@ -622,7 +621,7 @@ object mrealizerDivisionByTwo extends Script {
 
   println()
 
-  def test( x: Expr ) = println(x + " divided by 2 is: " + MRealizability.systemT.normalize( App( m1n, x ) ) )
+  def test( x: Expr ) = println( x + " divided by 2 is: " + MRealizability.systemT.normalize( App( m1n, x ) ) )
   test( le"0" )
   test( le"s(0)" )
   test( le"s(s(0))" )
