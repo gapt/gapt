@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.examples
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.babel.{ Notation, Precedence }
-import at.logic.gapt.proofs.nd.NDProof
+import at.logic.gapt.proofs.nd.{ ExcludedMiddleRule, NDProof }
 import at.logic.gapt.proofs.{ Ant, Context, SequentIndex, SequentMatchers, Suc }
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
@@ -899,6 +899,24 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
+    }
+
+    "translate issue687 intuitionistically" in {
+      import at.logic.gapt.proofs.gaptic._
+      val lk = Proof( hols"A ∨ B, C → ¬B, C ⊢ A" ) {
+        orL left trivial
+        impL left trivial
+        negL; trivial
+      }
+      val focus = Some( Suc( 0 ) )
+      val nd = LKToND( lk, focus )
+      checkEquality( nd, lk, focus )
+
+      val containsEM = nd.treeLike.postOrder.exists {
+        case _: ExcludedMiddleRule => true
+        case _                     => false
+      }
+      containsEM mustEqual false
     }
 
   }
