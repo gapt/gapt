@@ -475,11 +475,11 @@ object LKToND {
         val Abs( x, term ) = replacementContext
 
         nd.ProofBuilder.
-          c( nd.LogicalAxiom( subProof.endSequent( eq ) ) ).
           c( t ).
           u( ImpIntroRule( _, subProof.endSequent( aux ) ) ).
-          b( EqualityElimRule( _, _, Imp( term.asInstanceOf[Formula], t.endSequent( Suc( 0 ) ) ), x ) ).
+          c( nd.LogicalAxiom( subProof.endSequent( eq ) ) ).
           c( nd.LogicalAxiom( p.mainFormula ) ).
+          b( EqualityElimRule( _, _, term.asInstanceOf[Formula], x ) ).
           b( ImpElimRule( _, _ ) ).
           u( ContractionRule( _, subProof.endSequent( eq ) ) ).
           qed

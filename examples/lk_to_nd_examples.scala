@@ -671,5 +671,7 @@ object issue688 extends Script {
     u( WeakeningLeftRule( _, hof"x=y" ) ).
     u( EqualityLeftRule( _, Ant( 0 ), Ant( 1 ), le"^x (P x: o)".asInstanceOf[Abs] ) ).
     qed
-  LKToND( lk )
+  println( lk )
+  val nd = LKToND( lk )
+  println( nd )
 }

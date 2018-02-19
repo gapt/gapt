@@ -919,6 +919,16 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       containsEM mustEqual false
     }
 
+    "translate issue688" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"P(x)" ) ).
+        u( WeakeningLeftRule( _, hof"x=y" ) ).
+        u( EqualityLeftRule( _, Ant( 0 ), Ant( 1 ), le"^x (P x: o)".asInstanceOf[Abs] ) ).
+        qed
+      val focus = Some( Suc( 0 ) )
+      val nd = LKToND( lk, focus )
+      checkEquality( nd, lk, focus )
+    }
   }
 }
 
