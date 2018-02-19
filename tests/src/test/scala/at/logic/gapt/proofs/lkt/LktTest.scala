@@ -26,14 +26,16 @@ class LktTest extends Specification with SequentMatchers {
 
   def beGood( implicit ctx: Maybe[Context] ): Matcher[LKProof] = beLike {
     case lk =>
-      val ( p, lctx ) = LKToLKt( lk )
-      check( p, lctx )
-      val q = normalize.withDebug( p, lctx )
-      check( q, lctx )
-      q must beMostlyCutFree
-      val lk2 = LKtToLK( q, lctx )
-      lk2.endSequent must beMultiSetEqual( lk.endSequent )
-      ctx.foreach( _.check( lk2 ) )
+      val ( p0, lctx ) = LKToLKt( lk )
+      check( p0, lctx )
+      val p1 = atomizeEquality( p0, lctx )
+      check( p1, lctx )
+      val p2 = normalize.withDebug( p1, lctx )
+      check( p2, lctx )
+      p2 must beMostlyCutFree
+      val p3 = LKtToLK( p2, lctx )
+      p3.endSequent must beMultiSetEqual( lk.endSequent )
+      ctx.foreach( _.check( p3 ) )
       ok
   }
 
