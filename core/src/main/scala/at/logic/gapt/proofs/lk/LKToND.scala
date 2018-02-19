@@ -109,10 +109,9 @@ object LKToND {
         nd.LogicalAxiom( f )
 
       case lk.ProofLink( prf, seq ) =>
-        val Apps( Const( proofName, _, _ ), _ ) = prf
+        val Apps( Const( proofName, _, _ ), args ) = prf
         val ( genprf, genseq ) = ctx.get[ProofNames].names( proofName )
         val Apps( _, vs ) = genprf
-        val Apps( _, args ) = prf
 
         def handleSuccedent( seq: Vector[Formula], toProve: Formula ): NDProof = {
           if ( seq.size == 1 ) {
@@ -268,7 +267,8 @@ object LKToND {
           c( ax ).
           u( AndElim2Rule( _ ) ).
           b( ImpElimRule( _, _ ) ).
-          u( ContractionRule( _, p.mainFormula ) ).qed
+          u( ContractionRule( _, p.mainFormula ) ).
+          qed
 
       case p @ AndRightRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
 
@@ -291,7 +291,10 @@ object LKToND {
           else None )
         val wtl = if ( p.endSequent.succedent.nonEmpty &&
           p.getLeftSequentConnector.parentOption( focus.get ) == None ) {
-          exchange( WeakeningRule( tl, Neg( p.endSequent( focus.get ) ) ), focus.map( p.endSequent.apply ) )
+          if ( tl.endSequent( Suc( 0 ) ) == Bottom() )
+            BottomElimRule( tl, p.endSequent( focus.get ) )
+          else
+            exchange( WeakeningRule( tl, Neg( p.endSequent( focus.get ) ) ), focus.map( p.endSequent.apply ) )
         } else tl
 
         val tr = translate(
@@ -301,7 +304,10 @@ object LKToND {
           else None )
         val wtr = if ( p.endSequent.succedent.nonEmpty &&
           p.getRightSequentConnector.parentOption( focus.get ) == None ) {
-          exchange( WeakeningRule( tr, Neg( p.endSequent( focus.get ) ) ), focus.map( p.endSequent.apply ) )
+          if ( tr.endSequent( Suc( 0 ) ) == Bottom() )
+            BottomElimRule( tr, p.endSequent( focus.get ) )
+          else
+            exchange( WeakeningRule( tr, Neg( p.endSequent( focus.get ) ) ), focus.map( p.endSequent.apply ) )
         } else tr
 
         OrElimRule( nd.LogicalAxiom( p.mainFormula ), wtl, wtr )
