@@ -324,4 +324,12 @@ class NDTest extends Specification with SatMatchers {
     }
   }
 
+  "ExistsIntro 4" in {
+    val a4 = LogicalAxiom( hof"P a b" )
+    val a5 = ExistsIntroRule( a4, hof"?x P x b" )
+    val a6 = ExistsIntroRule( a5, hof"?y ?x P x y", hoc"b : i" )
+
+    a6.conclusion mustEqual Seq( hof"P a b" ) ++: Sequent() :+ hof"?y ?x P x y"
+  }
+
 }
