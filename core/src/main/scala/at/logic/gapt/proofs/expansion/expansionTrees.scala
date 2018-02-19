@@ -332,9 +332,9 @@ object ETWeakQuantifierBlock {
         case ETWeakening( _, _ ) =>
       }
 
-    val numberQuants = ( et.polarity, et.shallow ) match {
-      case ( Polarity.InSuccedent, Ex.Block( vs, _ ) )   => vs.size
-      case ( Polarity.InAntecedent, All.Block( vs, _ ) ) => vs.size
+    val numberQuants = et.shallow match {
+      case Ex.Block( vs, _ ) if et.polarity.inSuc  => vs.size
+      case All.Block( vs, _ ) if et.polarity.inAnt => vs.size
     }
 
     walk( et, Seq(), numberQuants )

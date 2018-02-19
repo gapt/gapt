@@ -60,12 +60,12 @@ object LKToLKt {
             AndL( main, b )
         }
       case p @ lk.WeakQuantifierRule( p1, a1, _, t, _, isEx ) =>
-        val aux = Hyp.mk( idx, inSuc = isEx )
+        val aux = Hyp.mk( idx, if ( isEx ) Polarity.InSuccedent else Polarity.InAntecedent )
         AllL( hyps( p.mainIndices.head ), t, Bound1(
           aux,
           go( p1, idx + 1, p.getSequentConnector.parent( hyps ).updated( a1, aux ) ) ) )
       case p @ lk.StrongQuantifierRule( p1, a1, ev, _, isAll ) =>
-        val aux = Hyp.mk( idx, inSuc = isAll )
+        val aux = Hyp.mk( idx, if ( isAll ) Polarity.InSuccedent else Polarity.InAntecedent )
         AllR( hyps( p.mainIndices.head ), ev, Bound1(
           aux,
           go( p1, idx + 1, p.getSequentConnector.parent( hyps ).updated( a1, aux ) ) ) )

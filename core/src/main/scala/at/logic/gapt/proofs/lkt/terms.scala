@@ -5,16 +5,15 @@ import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature }
 import at.logic.gapt.utils.Doc
 
 case class Hyp( idx: Int ) extends AnyVal {
-  def inAnt = idx < 0
-  def inSuc = !inAnt
-  def polarity = if ( inAnt ) Polarity.InAntecedent else Polarity.InSuccedent
+  def polarity = if ( idx < 0 ) Polarity.InAntecedent else Polarity.InSuccedent
+  def inAnt = polarity.inAnt
+  def inSuc = polarity.inSuc
   def replace( a: Hyp, b: Hyp ): Hyp = if ( this == a ) b else this
   def toDoc: Doc = toString
-  override def toString = if ( idx < 0 ) idx.toString else "+" + idx.toString
+  override def toString = if ( inAnt ) idx.toString else "+" + idx.toString
 }
 object Hyp {
-  def mk( idx: Int, polarity: Polarity ): Hyp = mk( idx, polarity.inSuc )
-  def mk( idx: Int, inSuc: Boolean ): Hyp = if ( inSuc ) Hyp( idx ) else Hyp( -idx )
+  def mk( idx: Int, polarity: Polarity ): Hyp = if ( polarity.inSuc ) Hyp( idx ) else Hyp( -idx )
 }
 
 trait Bound {

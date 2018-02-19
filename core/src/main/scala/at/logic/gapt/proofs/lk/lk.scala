@@ -1866,10 +1866,11 @@ abstract class DefinitionRule extends UnaryLKProof with CommonRule {
 object DefinitionRule extends ConvenienceConstructor( "DefinitionRule" ) {
   def apply( subProof: LKProof, aux: SequentIndex, main: Formula ): LKProof =
     apply( subProof, aux, main, aux.polarity )
-  def apply( subProof: LKProof, aux: IndexOrFormula, main: Formula, polarity: Polarity ): LKProof = polarity match {
-    case Polarity.InSuccedent  => DefinitionRightRule( subProof, aux, main )
-    case Polarity.InAntecedent => DefinitionLeftRule( subProof, aux, main )
-  }
+  def apply( subProof: LKProof, aux: IndexOrFormula, main: Formula, polarity: Polarity ): LKProof =
+    if ( polarity.inSuc )
+      DefinitionRightRule( subProof, aux, main )
+    else
+      DefinitionLeftRule( subProof, aux, main )
 }
 
 /**

@@ -50,10 +50,7 @@ sealed abstract class SequentIndex extends Ordered[SequentIndex] {
 }
 object SequentIndex {
   def apply( polarity: Polarity, k: Int ): SequentIndex =
-    polarity match {
-      case Positive => Suc( k )
-      case Negative => Ant( k )
-    }
+    if ( polarity.inSuc ) Suc( k ) else Ant( k )
 }
 
 case class Ant( k: Int ) extends SequentIndex {
@@ -307,10 +304,7 @@ case class Sequent[+A]( antecedent: Vector[A], succedent: Vector[A] ) {
    */
   def contains[B]( el: B ): Boolean = elements contains el
 
-  def cedent( polarity: Polarity ) = polarity match {
-    case Positive => succedent
-    case Negative => antecedent
-  }
+  def cedent( polarity: Polarity ) = if ( polarity.inSuc ) succedent else antecedent
 
   def contains[B]( el: B, polarity: Polarity ): Boolean =
     cedent( polarity ).contains( el )
