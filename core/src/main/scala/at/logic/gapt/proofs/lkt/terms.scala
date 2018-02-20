@@ -77,6 +77,7 @@ final case class BoundN( auxs: List[Hyp], p: LKt ) extends Bound {
 sealed trait LKt {
   def replace( a: Hyp, b: Hyp ): LKt =
     this match {
+      case _ if a == b                    => this
       case _ if !freeHyps( a )            => this
       case Cut( f, q1, q2 )               => Cut( f, q1.replace( a, b ), q2.replace( a, b ) )
       case Ax( main1, main2 )             => Ax( main1.replace( a, b ), main2.replace( a, b ) )
@@ -210,6 +211,45 @@ sealed trait LKt {
     out.result()
   }
 
+  def containedHyps: Set[Hyp] = {
+    val out = Set.newBuilder[Hyp]
+    def gather1( bnd: Bound ): Unit = {
+      out ++= bnd.auxs
+      gather( bnd.p )
+    }
+    def gather( p: LKt ): Unit = p match {
+      case Cut( _, q1, q2 )         =>
+        gather1( q1 ); gather1( q2 )
+      case Ax( main1, main2 )       =>
+        out += main1; out += main2
+      case Rfl( main )              => out += main
+      case TopR( main )             => out += main
+      case NegR( main, q )          =>
+        out += main; gather1( q )
+      case NegL( main, q )          =>
+        out += main; gather1( q )
+      case AndR( main, q1, q2 )     =>
+        out += main; gather1( q1 ); gather1( q2 )
+      case AndL( main, q )          =>
+        out += main; gather1( q )
+      case AllL( main, _, q )       =>
+        out += main; gather1( q )
+      case AllR( main, _, q )       =>
+        out += main; gather1( q )
+      case Eql( main, eq, _, _, q ) =>
+        out += main; out += eq; gather1( q )
+      case AllSk( main, _, _, q )   =>
+        out += main; gather1( q )
+      case Def( main, _, q )        =>
+        out += main; gather1( q )
+      case Ind( main, _, _, cases ) =>
+        out += main; cases.foreach( c => gather1( c.q ) )
+      case Link( mains, _ )         => out ++= mains
+    }
+    gather( this )
+    out.result()
+  }
+
   override def toString = toDoc.render( 80 )
 }
 case class Cut( f: Formula, q1: Bound1, q2: Bound1 ) extends LKt
@@ -230,6 +270,21 @@ case class Ind( main: Hyp, f: Abs, term: Expr, cases: List[IndCase] ) extends LK
   def indTy = f.variable.ty
 }
 case class Link( mains: List[Hyp], name: Expr ) extends LKt
+
+object AllLBlock {
+  def apply( m: Hyp, terms: Seq[Expr], b: Bound1 ): LKt =
+    terms match {
+      case Seq()   => b.inst( m )
+      case t +: ts => AllL( m, t, Bound1( b.aux, AllLBlock( b.aux, ts, b ) ) )
+    }
+}
+object AllRBlock {
+  def apply( m: Hyp, terms: Seq[Var], b: Bound1 ): LKt =
+    terms match {
+      case Seq()   => b.inst( m )
+      case t +: ts => AllR( m, t, Bound1( b.aux, AllRBlock( b.aux, ts, b ) ) )
+    }
+}
 
 trait ImplicitInstances {
   implicit val closedUnderSubstitutionBound1: ClosedUnderSub[Bound1] =

@@ -14,6 +14,7 @@ object BinConn {
 
 case class LocalCtx( hyps: Map[Hyp, Formula], subst: Substitution ) extends ALCtx[LocalCtx] {
   def updated( hyp: Hyp, f: Formula ): LocalCtx = copy( hyps.updated( hyp, f ) )
+  def updated( hs: Iterable[( Hyp, Formula )] ): LocalCtx = copy( hyps = hyps ++ hs )
   def renamed( a: Hyp, b: Hyp ): LocalCtx = copy( hyps = hyps - a + ( b -> hyps( a ) ) )
   def apply( hyp: Hyp ) = hyps( hyp )
   def formulas = hyps.values

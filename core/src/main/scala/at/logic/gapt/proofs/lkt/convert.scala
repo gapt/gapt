@@ -15,7 +15,8 @@ trait FreshHyp {
   def freshAnt() = fresh( Polarity.InAntecedent )
   def freshSuc() = fresh( Polarity.InSuccedent )
 
-  def markUsed( h: Hyp ) = idx = math.max( idx, math.abs( h.idx ) + 1 )
+  def markUsed( h: Hyp ): Unit = idx = math.max( idx, math.abs( h.idx ) + 1 )
+  def markUsed( p: LKt ): Unit = p.containedHyps.foreach( markUsed )
 }
 
 class LKToLKt( debugging: Boolean ) extends FreshHyp {
