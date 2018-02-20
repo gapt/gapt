@@ -5,7 +5,7 @@ import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.lk
 import lk.LKProof
 
-class LKToLKt( debugging: Boolean ) {
+trait FreshHyp {
   private var idx = 0
 
   def fresh( pol: Polarity ): Hyp = {
@@ -15,6 +15,10 @@ class LKToLKt( debugging: Boolean ) {
   def freshAnt() = fresh( Polarity.InAntecedent )
   def freshSuc() = fresh( Polarity.InSuccedent )
 
+  def markUsed( h: Hyp ) = idx = math.max( idx, math.abs( h.idx ) + 1 )
+}
+
+class LKToLKt( debugging: Boolean ) extends FreshHyp {
   def go( p: lk.LKProof, hyps: Sequent[Hyp] ): LKt = {
     val result = p match {
       case p: lk.ContractionRule              => go( p.subProof, p.getSequentConnector.parent( hyps ) )
