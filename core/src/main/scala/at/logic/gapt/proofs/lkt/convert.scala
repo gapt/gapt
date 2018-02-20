@@ -5,54 +5,68 @@ import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.lk
 import lk.LKProof
 
-object LKToLKt {
-  private def go( p: lk.LKProof, idx: Int, hyps: Sequent[Hyp] ): LKt = {
-    val res = p match {
-      case p: lk.ContractionRule              => go( p.subProof, idx, p.getSequentConnector.parent( hyps ) )
-      case p @ lk.WeakeningLeftRule( p1, _ )  => go( p1, idx, p.getSequentConnector.parent( hyps ) )
-      case p @ lk.WeakeningRightRule( p1, _ ) => go( p1, idx, p.getSequentConnector.parent( hyps ) )
+class LKToLKt( debugging: Boolean ) {
+  private var idx = 0
+
+  def fresh( pol: Polarity ): Hyp = {
+    idx += 1
+    if ( pol.inSuc ) Hyp( idx ) else Hyp( -idx )
+  }
+  def freshAnt() = fresh( Polarity.InAntecedent )
+  def freshSuc() = fresh( Polarity.InSuccedent )
+
+  def go( p: lk.LKProof, hyps: Sequent[Hyp] ): LKt = {
+    val result = p match {
+      case p: lk.ContractionRule              => go( p.subProof, p.getSequentConnector.parent( hyps ) )
+      case p @ lk.WeakeningLeftRule( p1, _ )  => go( p1, p.getSequentConnector.parent( hyps ) )
+      case p @ lk.WeakeningRightRule( p1, _ ) => go( p1, p.getSequentConnector.parent( hyps ) )
       case p @ lk.CutRule( p1, _, p2, _ ) =>
+        val aux1 = freshSuc()
+        val aux2 = freshAnt()
         Cut(
           p.cutFormula,
-          Bound1( Hyp( idx ), go( p1, idx + 1, p.getLeftSequentConnector.parent( hyps, Hyp( idx ) ) ) ),
-          Bound1( Hyp( -idx ), go( p2, idx + 1, p.getRightSequentConnector.parent( hyps, Hyp( -idx ) ) ) ) )
+          Bound1( aux1, go( p1, p.getLeftSequentConnector.parent( hyps, aux1 ) ) ),
+          Bound1( aux2, go( p2, p.getRightSequentConnector.parent( hyps, aux2 ) ) ) )
       case lk.LogicalAxiom( _ )     => Ax( hyps.antecedent.head, hyps.succedent.head )
       case lk.ReflexivityAxiom( _ ) => Rfl( hyps.succedent.head )
       case lk.TopAxiom              => TopR( hyps.succedent.head )
       case lk.BottomAxiom           => TopR( hyps.antecedent.head )
       case p @ lk.NegRightRule( p1, a1 ) =>
+        val aux = freshAnt()
         NegR( hyps( p.mainIndices.head ), Bound1(
-          Hyp( -idx ),
-          go( p1, idx + 1, p.getSequentConnector.parent( hyps ).updated( a1, Hyp( -idx ) ) ) ) )
+          aux,
+          go( p1, p.getSequentConnector.parent( hyps ).updated( a1, aux ) ) ) )
       case p @ lk.NegLeftRule( p1, a1 ) =>
+        val aux = freshSuc()
         NegL( hyps( p.mainIndices.head ), Bound1(
-          Hyp( idx ),
-          go( p1, idx + 1, p.getSequentConnector.parent( hyps ).updated( a1, Hyp( idx ) ) ) ) )
+          aux,
+          go( p1, p.getSequentConnector.parent( hyps ).updated( a1, aux ) ) ) )
       case p: lk.BinaryLKProof =>
         val hyp = hyps( p.mainIndices.head )
         val Seq( Seq( a1 ), Seq( a2 ) ) = p.auxIndices
-        val aux1 = Hyp.mk( idx, a1.polarity )
-        val aux2 = Hyp.mk( idx, a2.polarity )
-        val b1 = Bound1( aux1, go( p.leftSubProof, idx + 1, p.getLeftSequentConnector.parent( hyps ).updated( a1, aux1 ) ) )
-        val b2 = Bound1( aux2, go( p.rightSubProof, idx + 1, p.getRightSequentConnector.parent( hyps ).updated( a2, aux2 ) ) )
+        val aux1 = fresh( a1.polarity )
+        val aux2 = fresh( a2.polarity )
+        val b1 = Bound1( aux1, go( p.leftSubProof, p.getLeftSequentConnector.parent( hyps ).updated( a1, aux1 ) ) )
+        val b2 = Bound1( aux2, go( p.rightSubProof, p.getRightSequentConnector.parent( hyps ).updated( a2, aux2 ) ) )
         p match {
           case lk.AndRightRule( _, _, _, _ ) | lk.OrLeftRule( _, _, _, _ ) | lk.ImpLeftRule( _, _, _, _ ) =>
             AndR( hyp, b1, b2 )
         }
       case p: lk.EqualityRule =>
         val main = hyps( p.auxInConclusion )
-        val aux = Hyp.mk( idx, main.polarity )
+        val aux = fresh( main.polarity )
         val eq = hyps( p.eqInConclusion )
         Eql( main, eq, !p.leftToRight, p.replacementContext, Bound1(
           aux,
-          go( p.subProof, idx + 1, p.getSequentConnector.parents( hyps ).map( _.head ).
+          go( p.subProof, p.getSequentConnector.parents( hyps ).map( _.head ).
             updated( p.aux, aux ).updated( p.eq, eq ) ) ) )
       case p: lk.UnaryLKProof if p.auxIndices.head.size == 2 =>
         val Seq( a1, a2 ) = p.auxIndices.head
-        val aux1 = Hyp.mk( idx, a1.polarity )
-        val aux2 = Hyp.mk( idx + 1, a2.polarity )
+        val aux1 = fresh( a1.polarity )
+        val aux2 = fresh( a2.polarity )
         val b = Bound2( aux1, aux2,
-          go( p.subProof, idx + 2,
+          go(
+            p.subProof,
             p.getSequentConnector.parent( hyps ).updated( a1, aux1 ).updated( a2, aux2 ) ) )
         val main = hyps( p.mainIndices.head )
         p match {
@@ -60,51 +74,51 @@ object LKToLKt {
             AndL( main, b )
         }
       case p @ lk.WeakQuantifierRule( p1, a1, _, t, _, isEx ) =>
-        val aux = Hyp.mk( idx, if ( isEx ) Polarity.InSuccedent else Polarity.InAntecedent )
+        val aux = fresh( if ( isEx ) Polarity.InSuccedent else Polarity.InAntecedent )
         AllL( hyps( p.mainIndices.head ), t, Bound1(
           aux,
-          go( p1, idx + 1, p.getSequentConnector.parent( hyps ).updated( a1, aux ) ) ) )
+          go( p1, p.getSequentConnector.parent( hyps ).updated( a1, aux ) ) ) )
       case p @ lk.StrongQuantifierRule( p1, a1, ev, _, isAll ) =>
-        val aux = Hyp.mk( idx, if ( isAll ) Polarity.InSuccedent else Polarity.InAntecedent )
+        val aux = fresh( if ( isAll ) Polarity.InSuccedent else Polarity.InAntecedent )
         AllR( hyps( p.mainIndices.head ), ev, Bound1(
           aux,
-          go( p1, idx + 1, p.getSequentConnector.parent( hyps ).updated( a1, aux ) ) ) )
+          go( p1, p.getSequentConnector.parent( hyps ).updated( a1, aux ) ) ) )
       case p: lk.SkolemQuantifierRule =>
-        val aux = Hyp.mk( idx, p.aux.polarity )
+        val aux = fresh( p.aux.polarity )
         AllSk( hyps( p.mainIndices.head ), p.skolemTerm, p.skolemDef, Bound1(
           aux,
-          go( p.subProof, idx + 1, p.getSequentConnector.parent( hyps ).updated( p.aux, aux ) ) ) )
+          go( p.subProof, p.getSequentConnector.parent( hyps ).updated( p.aux, aux ) ) ) )
       case p: lk.DefinitionRule =>
-        val aux = Hyp.mk( idx, p.aux.polarity )
+        val aux = fresh( p.aux.polarity )
         Def( hyps( p.mainIndices.head ), p.auxFormula, Bound1(
           aux,
-          go( p.subProof, idx + 1, p.getSequentConnector.parent( hyps ).updated( p.aux, aux ) ) ) )
+          go( p.subProof, p.getSequentConnector.parent( hyps ).updated( p.aux, aux ) ) ) )
       case p: lk.InductionRule =>
         Ind( hyps( p.mainIndices.head ), p.formula, p.term,
           p.cases.zipWithIndex.toList.map {
             case ( c, i ) =>
-              val goal = Hyp( idx )
-              val ihs = for ( ( i, h ) <- Stream.from( idx + 1 ).zip( c.hypotheses ).toList ) yield Hyp.mk( i, h.polarity )
+              val goal = freshSuc()
+              val ihs = for ( h <- c.hypotheses.toList ) yield fresh( h.polarity )
               IndCase( c.constructor, c.eigenVars.toList, BoundN(
                 goal +: ihs,
-                go( c.proof, idx + 1 + ihs.size,
+                go(
+                  c.proof,
                   p.occConnectors( i ).parent( hyps ).
                     updated( ( c.conclusion -> goal ) +: c.hypotheses.zip( ihs ) ) ) ) )
           } )
       case lk.ProofLink( refProof, _ ) =>
         Link( hyps.elements.toList, refProof )
     }
-    //    check( res, LocalCtx( hyps.zip( p.endSequent ).elements.toMap, Substitution() ) )
-    res
+    if ( debugging ) check( result, LocalCtx( hyps.zip( p.endSequent ).elements.toMap, Substitution() ) )
+    result
   }
+}
 
-  def apply( p: LKProof ): ( LKt, LocalCtx ) = {
-    var idx = 0
-    val hyps = p.endSequent.indicesSequent.map { i =>
-      idx += 1
-      if ( i.isSuc ) Hyp( idx ) else Hyp( -idx )
-    }
-    go( p, idx + 1, hyps ) -> LocalCtx( hyps.zip( p.endSequent ).elements.toMap, Substitution() )
+object LKToLKt {
+  def apply( p: LKProof, debugging: Boolean = false ): ( LKt, LocalCtx ) = {
+    val conv = new LKToLKt( debugging )
+    val hyps = p.endSequent.indicesSequent.map( i => conv.fresh( i.polarity ) )
+    conv.go( p, hyps ) -> LocalCtx( hyps.zip( p.endSequent ).elements.toMap, Substitution() )
   }
 }
 
