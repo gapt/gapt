@@ -1,12 +1,12 @@
 package at.logic.gapt.proofs.lkt
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.instantiate
+import at.logic.gapt.expr.hol.{ containsQuantifierOnLogicalLevel, instantiate, isAtom }
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.utils.Maybe
 
-class Normalizer[LC <: ALCtx[LC]] {
+class Normalizer[LC <: ALCtx[LC]]( skipAtomicCuts: Boolean = false, skipPropositionalCuts: Boolean = false ) {
   protected def doCheck( p: LKt, lctx: LC ): Unit = ()
 
   case class ProofSubst( hyp: Hyp, byF: Formula, by: Bound1 ) {
@@ -93,6 +93,8 @@ class Normalizer[LC <: ALCtx[LC]] {
   def evalCut( c: Cut, lctx: LC ): LKt = {
     doCheck( c, lctx )
     val Cut( f, q1, q2 ) = c
+    if ( skipAtomicCuts && isAtom( f ) ) return c
+    if ( skipPropositionalCuts && !containsQuantifierOnLogicalLevel( f ) ) return c
     if ( q2.freeHyps( q1.aux ) ) return evalCut( Cut( f, q1.rename( q2.freeHyps ), q2 ), lctx )
     if ( q1.freeHyps( q2.aux ) ) return evalCut( Cut( f, q1, q2.rename( q1.freeHyps ) ), lctx )
     val lctx1 = lctx.up1( c )
@@ -142,8 +144,9 @@ class NormalizerWithDebugging( implicit ctx: Maybe[Context] ) extends Normalizer
 }
 
 class normalize {
-  def apply( p: LKt ): LKt =
-    new Normalizer[FakeLocalCtx]().normalize( p, FakeLocalCtx )
+  def apply( p: LKt, skipAtomicCuts: Boolean = false, skipPropositionalCuts: Boolean = false ): LKt =
+    new Normalizer[FakeLocalCtx]( skipAtomicCuts, skipPropositionalCuts ) {}.
+      normalize( p, FakeLocalCtx )
   def withDebug( p: LKProof )( implicit ctx: Maybe[Context] ): LKt = {
     val ( t, lctx ) = LKToLKt( p )
     withDebug( t, lctx )
