@@ -664,3 +664,14 @@ object issue687 extends Script {
   val nd = LKToND( lk )
   println( nd )
 }
+
+object issue688 extends Script {
+  val lk = ProofBuilder.
+    c( LogicalAxiom( hof"P(x)" ) ).
+    u( WeakeningLeftRule( _, hof"x=y" ) ).
+    u( EqualityLeftRule( _, Ant( 0 ), Ant( 1 ), le"^x (P x: o)".asInstanceOf[Abs] ) ).
+    qed
+  println( lk )
+  val nd = LKToND( lk )
+  println( nd )
+}
