@@ -78,7 +78,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
     }
   }
 
-  val unionClosed = Lemma( hols"C(X : nat>o), C(Y), EXT :- C(union X Y)" ) {
+  val unionClosed = Lemma( hols"C(X : nat>o), C(Y) :- C(union X Y)" ) {
     unfold( "C" ) in ( "h_0", "h_1", "g" )
     cut( "CF", hof" compN(union (X : nat>o) Y) =_s intersection(compN X)(compN Y)" ) left insert( deMorgan1 )
 
@@ -140,7 +140,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
     }
 
     unfold( "C" ) in "g"
-    forget( "REM", "EXT" )
+    forget( "REM" )
 
     // TODO: congruence lemmas
     cut( "g_2", hof"O(U 0 l)" ) right by {
@@ -188,7 +188,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
     prop
   }
 
-  // Proof that if complement(X) is closed, X is open (under hof"EXT").
+  // Proof that if complement(X) is closed, X is open
   val openClosedProof = Lemma( hols"C: C(compN(X)) :- O: O(X)" ) {
     unfold( "C" ) in "C"
     cut( "CF", hof" compN(compN(X: nat>o)) =_s X" ) left by {
@@ -502,7 +502,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
   }
 
   def psi2Right( n: Int ): LKProof = {
-    val endSequent = hols"EXT, PRE, Qn: Q $n, REM :- C: C (S $n)"
+    val endSequent = hols"PRE, Qn: Q $n, REM :- C: C (S $n)"
 
     n match {
       case 0 =>
