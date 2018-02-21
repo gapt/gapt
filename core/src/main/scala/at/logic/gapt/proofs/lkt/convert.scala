@@ -237,13 +237,17 @@ object LKtToLK {
           case Ex( _, _ )  => lk.ExistsSkLeftRule( r1, s1.indexOf( q1.aux ), lctx( main ), term, skDef )
         }
         down( r2, s1, main )
-      case Ind( main, f, t, cases ) =>
+      case Ind( main, f0, t0, cases ) =>
         val ( rs, ss ) = cases.zipWithIndex.map {
-          case ( IndCase( ctr, evs, q ), i ) =>
-            val ( r1, s1 ) = withMap( q, lctx.upn( p, i ) )
+          case ( IndCase( ctr, evs0, q ), i ) =>
+            val lctxn = lctx.upn( p, i )
+            val evs = evs0.map( lctxn.subst( _ ).asInstanceOf[Var] )
+            val ( r1, s1 ) = withMap( q, lctxn )
             val goal +: ihs = q.auxs
             lk.InductionCase( r1, ctr, ihs.map( s1.indexOf ), evs, s1.indexOf( goal ) ) -> s1
         }.unzip
+        val f = lctx.subst( f0 ).asInstanceOf[Abs]
+        val t = lctx.subst( t0 )
         val r2 = lk.InductionRule( rs, f, t )
         val s2 = r2.endSequent.indicesSequent.map( i =>
           if ( i == r2.mainIndices.head ) main
