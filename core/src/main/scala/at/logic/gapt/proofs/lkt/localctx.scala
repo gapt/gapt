@@ -9,6 +9,7 @@ object BinConn {
       case And( g1, g2 ) => Some( g1, g2 )
       case Or( g1, g2 )  => Some( g1, g2 )
       case Imp( g1, g2 ) => Some( g1, g2 )
+      case _             => None
     }
 }
 
