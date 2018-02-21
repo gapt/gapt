@@ -218,33 +218,33 @@ sealed trait LKt {
       gather( bnd.p )
     }
     def gather( p: LKt ): Unit = p match {
-      case Cut( _, q1, q2 )         =>
+      case Cut( _, q1, q2 ) =>
         gather1( q1 ); gather1( q2 )
-      case Ax( main1, main2 )       =>
+      case Ax( main1, main2 ) =>
         out += main1; out += main2
-      case Rfl( main )              => out += main
-      case TopR( main )             => out += main
-      case NegR( main, q )          =>
+      case Rfl( main )  => out += main
+      case TopR( main ) => out += main
+      case NegR( main, q ) =>
         out += main; gather1( q )
-      case NegL( main, q )          =>
+      case NegL( main, q ) =>
         out += main; gather1( q )
-      case AndR( main, q1, q2 )     =>
+      case AndR( main, q1, q2 ) =>
         out += main; gather1( q1 ); gather1( q2 )
-      case AndL( main, q )          =>
+      case AndL( main, q ) =>
         out += main; gather1( q )
-      case AllL( main, _, q )       =>
+      case AllL( main, _, q ) =>
         out += main; gather1( q )
-      case AllR( main, _, q )       =>
+      case AllR( main, _, q ) =>
         out += main; gather1( q )
       case Eql( main, eq, _, _, q ) =>
         out += main; out += eq; gather1( q )
-      case AllSk( main, _, _, q )   =>
+      case AllSk( main, _, _, q ) =>
         out += main; gather1( q )
-      case Def( main, _, q )        =>
+      case Def( main, _, q ) =>
         out += main; gather1( q )
       case Ind( main, _, _, cases ) =>
         out += main; cases.foreach( c => gather1( c.q ) )
-      case Link( mains, _ )         => out ++= mains
+      case Link( mains, _ ) => out ++= mains
     }
     gather( this )
     out.result()
