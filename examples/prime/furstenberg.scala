@@ -4,7 +4,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.formats.babel.{ Notation, Precedence }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk.LKProof
-import at.logic.gapt.proofs._
 
 /**
  * Furstenberg's topological proof of the infinitude of primes.
