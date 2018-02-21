@@ -1341,10 +1341,9 @@ res15: at.logic.gapt.proofs.lk.LKProof =
 
 gapt> LKToND( examples.gapticExamples.lemma, Some( Suc( 0 ) ) )
 res16: at.logic.gapt.proofs.nd.NDProof =
-[p16] A → B ⊢ A ∧ B ∨ ¬A    (ExcludedMiddleRule(p2, Ant(0), p15, Ant(0)))
-[p15] ¬(A ∧ B), A → B ⊢ A ∧ B ∨ ¬A    (OrIntro2Rule(p14, A ∧ B))
-[p14] ¬(A ∧ B), A → B ⊢ ¬A    (NegIntroRule(p13, Ant(1)))
-[p13] ¬(A ∧ B), A, A → B ⊢ ⊥    (BottomElimRule(p12, ⊥))
+[p15] A → B ⊢ A ∧ B ∨ ¬A    (ExcludedMiddleRule(p2, Ant(0), p14, Ant(0)))
+[p14] ¬(A ∧ B), A → B ⊢ A ∧ B ∨ ¬A    (OrIntro2Rule(p13, A ∧ B))
+[p13] ¬(A ∧ B), A → B ⊢ ¬A    (NegIntroRule(p12, Ant(1)))
 [p12] ¬(A ∧ B), A, A → B ⊢ ⊥    (NegElimRule(p3, p11))
 [p11] A, A → B ⊢ A ∧ B    (ContractionRule(p10, Ant(0), Ant(2)))
 [p10] A, A → B, A ⊢ A ∧ B    (AndIntroRule(p4, p9))
@@ -1355,7 +1354,8 @@ res16: at.logic.gapt.proofs.nd.NDProof =
 [p5] B ⊢ B    (LogicalAxiom(B:o))
 [p4] A ⊢ A    (LogicalAxiom(A:o))
 [p3] ¬(A ∧ B) ⊢ ¬(A ∧ B)    (LogicalAxiom(¬(A ∧ B)))
-[p2] A ∧ B ⊢ A ∧ B ∨ ¬A    (OrIntro...
+[p2] A ∧ B ⊢ A ∧ B ∨ ¬A    (OrIntro1Rule(p1, ¬A))
+[p1] A ∧ B ⊢ A ∧ B    (LogicalAxiom(A ∧ B))
 
 \end{clilisting}
 The \cli{LKToND} function takes an \cli{LKProof}, and optionally an
