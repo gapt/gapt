@@ -26,7 +26,7 @@ object furstenbergWitness {
         case ( k, n ) => s"$k^$n"
       }.mkString( "{", ",", "}" )
   }
-  case class ZZMPolynomial[V] private(coeffsMap: Map[Multiset[V], Int] ) {
+  case class ZZMPolynomial[V] private ( coeffsMap: Map[Multiset[V], Int] ) {
     def coeff( v: Multiset[V] ): Int = coeffsMap.getOrElse( v, 0 )
     def +( that: ZZMPolynomial[V] ): ZZMPolynomial[V] = ZZMPolynomial {
       for ( m <- this.coeffsMap.keySet union that.coeffsMap.keySet )
@@ -104,7 +104,7 @@ object furstenbergWitness {
 
     val witness2 = witness match {
       case App( c @ Const( "primediv_of", _, _ ), arg ) =>
-        App( c, toExprP(toMPolynomial(arg)) )
+        App( c, toExprP( toMPolynomial( arg ) ) )
     }
 
     ( witness2, ctx.toImmutable )
