@@ -20,6 +20,7 @@ trait Bound {
   def auxs: List[Hyp]
   def p: LKt
   def freeHyps: Set[Hyp]
+  def isConst: Boolean
   def toDoc( implicit sig: BabelSignature ): Doc
 }
 final case class Bound1( aux: Hyp, p: LKt ) extends Bound {
@@ -54,6 +55,7 @@ final case class Bound2( aux1: Hyp, aux2: Hyp, p: LKt ) extends Bound {
     if ( a == aux1 || a == aux2 ) this
     else if ( b == aux1 || b == aux2 ) rename( Set( b ) ).replace( a, b )
     else Bound2( aux1, aux2, p.replace( a, b ) )
+  def isConst = !p.freeHyps( aux1 ) && !p.freeHyps( aux2 )
 
   def toDoc( implicit sig: BabelSignature ): Doc =
     aux1.toDoc <> ":" <+> aux2.toDoc <> ":" <+> p.toDoc
@@ -69,6 +71,7 @@ final case class BoundN( auxs: List[Hyp], p: LKt ) extends Bound {
     if ( auxs.contains( a ) ) this
     else if ( auxs.contains( b ) ) rename( Set( b ) ).replace( a, b )
     else BoundN( auxs, p.replace( a, b ) )
+  def isConst: Boolean = !auxs.exists( p.freeHyps )
 
   def toDoc( implicit sig: BabelSignature ): Doc =
     Doc.spread( auxs.map( aux => aux.toDoc <> ":" ) :+ p.toDoc )
@@ -270,6 +273,41 @@ case class Ind( main: Hyp, f: Abs, term: Expr, cases: List[IndCase] ) extends LK
   def indTy = f.variable.ty
 }
 case class Link( mains: List[Hyp], name: Expr ) extends LKt
+
+object Cut {
+  def f( f: Formula, q1: Bound1, q2: Bound1 ): LKt =
+    if ( q1.isConst ) q1.p else if ( q2.isConst ) q2.p else Cut( f, q1, q2 )
+}
+object NegR {
+  def f( main: Hyp, q: Bound1 ): LKt = if ( q.isConst ) q.p else NegR( main, q )
+}
+object NegL {
+  def f( main: Hyp, q: Bound1 ): LKt = if ( q.isConst ) q.p else NegL( main, q )
+}
+object AndR {
+  def f( main: Hyp, q1: Bound1, q2: Bound1 ): LKt =
+    if ( q1.isConst ) q1.p else if ( q2.isConst ) q2.p else AndR( main, q1, q2 )
+}
+object AndL {
+  def f( main: Hyp, q: Bound2 ): LKt = if ( q.isConst ) q.p else AndL( main, q )
+}
+object AllL {
+  def f( main: Hyp, term: Expr, q: Bound1 ): LKt = if ( q.isConst ) q.p else AllL( main, term, q )
+}
+object AllR {
+  def f( main: Hyp, ev: Var, q: Bound1 ): LKt = if ( q.isConst ) q.p else AllR( main, ev, q )
+}
+object Eql {
+  def f( main: Hyp, eq: Hyp, ltr: Boolean, rwCtx: Expr, q: Bound1 ): LKt =
+    if ( q.isConst ) q.p else Eql( main, eq, ltr, rwCtx, q )
+}
+object AllSk {
+  def f( main: Hyp, term: Expr, skDef: Expr, q: Bound1 ): LKt =
+    if ( q.isConst ) q.p else AllSk( main, term, skDef, q )
+}
+object Def {
+  def f( main: Hyp, f: Formula, q: Bound1 ): LKt = if ( q.isConst ) q.p else Def( main, f, q )
+}
 
 object AllLBlock {
   def apply( m: Hyp, terms: Seq[Expr], b: Bound1 ): LKt =

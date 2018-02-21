@@ -27,30 +27,30 @@ class Normalizer[LC <: ALCtx[LC]]( skipAtomicCuts: Boolean = false, skipProposit
 
     def apply( p: LKt, lctx: LC ): LKt = p match {
       case _ if !p.freeHyps( hyp ) => p
-      case Cut( f, q1, q2 )        => Cut( f, apply( q1, lctx.up1_( p ) ), apply( q2, lctx.up2_( p ) ) )
+      case Cut( f, q1, q2 )        => Cut.f( f, apply( q1, lctx.up1_( p ) ), apply( q2, lctx.up2_( p ) ) )
       case Ax( m1, m2 ) =>
         if ( hyp == m1 ) by.inst( m2 )
         else if ( hyp == m2 ) by.inst( m1 )
         else p
       case Rfl( main ) if main != hyp     => p
       case TopR( cohyp ) if cohyp != hyp  => p
-      case NegR( main, q ) if main != hyp => NegR( main, apply( q, lctx.up1_( p ) ) )
-      case NegL( main, q ) if main != hyp => NegL( main, apply( q, lctx.up1_( p ) ) )
+      case NegR( main, q ) if main != hyp => NegR.f( main, apply( q, lctx.up1_( p ) ) )
+      case NegL( main, q ) if main != hyp => NegL.f( main, apply( q, lctx.up1_( p ) ) )
       case AndR( main, q1, q2 ) if main != hyp =>
-        AndR( main, apply( q1, lctx.up1_( p ) ), apply( q2, lctx.up2_( p ) ) )
-      case AndL( main, q ) if main != hyp       => AndL( main, apply( q, lctx.up12_( p ) ) )
-      case AllL( main, term, q ) if main != hyp => AllL( main, term, apply( q, lctx.up1_( p ) ) )
+        AndR.f( main, apply( q1, lctx.up1_( p ) ), apply( q2, lctx.up2_( p ) ) )
+      case AndL( main, q ) if main != hyp       => AndL.f( main, apply( q, lctx.up12_( p ) ) )
+      case AllL( main, term, q ) if main != hyp => AllL.f( main, term, apply( q, lctx.up1_( p ) ) )
       case AllR( main, ev, q ) if main != hyp =>
-        if ( !by.p.freeVars( ev ) ) AllR( main, ev, apply( q, lctx.up1_( p ) ) ) else {
+        if ( !by.p.freeVars( ev ) ) AllR.f( main, ev, apply( q, lctx.up1_( p ) ) ) else {
           val ev_ = rename( ev, by.p.freeVars union p.freeVars )
-          apply( AllR( main, ev_, Substitution( ev -> ev_ )( q ) ), lctx )
+          apply( AllR.f( main, ev_, Substitution( ev -> ev_ )( q ) ), lctx )
         }
       case Eql( main, eq, ltr, rwCtx, q ) if main != hyp && eq != hyp =>
-        Eql( main, eq, ltr, rwCtx, apply( q, lctx.up1_( p ) ) )
+        Eql.f( main, eq, ltr, rwCtx, apply( q, lctx.up1_( p ) ) )
       case AllSk( main, term, skDef, q ) if main != hyp =>
-        AllSk( main, term, skDef, apply( q, lctx.up1_( p ) ) )
+        AllSk.f( main, term, skDef, apply( q, lctx.up1_( p ) ) )
       case Def( main, f, q ) if main != hyp =>
-        Def( main, f, apply( q, lctx.up1_( p ) ) )
+        Def.f( main, f, apply( q, lctx.up1_( p ) ) )
       case Ind( main, f, t, cases ) if main != hyp =>
         Ind( main, f, t, for ( ( c, n ) <- cases.zipWithIndex ) yield c.copy( q = apply( c.q, lctx.upn_( p, n ) ) ) )
       case Link( mains, _ ) if !mains.contains( hyp ) => p
@@ -68,15 +68,15 @@ class Normalizer[LC <: ALCtx[LC]]( skipAtomicCuts: Boolean = false, skipProposit
     case Cut( f, q1, q2 ) =>
       evalCut( lctx, f, normalize( q1, lctx.up1( p ) ), normalize( q2, lctx.up2( p ) ) )
     case Ax( _, _ ) | Rfl( _ ) | TopR( _ ) => p
-    case NegR( main, q )                   => NegR( main, normalize( q, lctx.up1( p ) ) )
-    case NegL( main, q )                   => NegL( main, normalize( q, lctx.up1( p ) ) )
-    case AndR( main, q1, q2 )              => AndR( main, normalize( q1, lctx.up1( p ) ), normalize( q2, lctx.up2( p ) ) )
-    case AndL( main, q )                   => AndL( main, normalize( q, lctx.up1( p ) ) )
-    case AllL( main, term, q )             => AllL( main, term, normalize( q, lctx.up1( p ) ) )
-    case AllR( main, ev, q )               => AllR( main, ev, normalize( q, lctx.up1( p ) ) )
-    case Eql( main, eq, ltr, rwCtx, q )    => Eql( main, eq, ltr, rwCtx, normalize( q, lctx.up1( p ) ) )
-    case AllSk( main, term, skDef, q )     => AllSk( main, term, skDef, normalize( q, lctx.up1( p ) ) )
-    case Def( main, f, q )                 => Def( main, f, normalize( q, lctx.up1( p ) ) )
+    case NegR( main, q )                   => NegR.f( main, normalize( q, lctx.up1( p ) ) )
+    case NegL( main, q )                   => NegL.f( main, normalize( q, lctx.up1( p ) ) )
+    case AndR( main, q1, q2 )              => AndR.f( main, normalize( q1, lctx.up1( p ) ), normalize( q2, lctx.up2( p ) ) )
+    case AndL( main, q )                   => AndL.f( main, normalize( q, lctx.up1( p ) ) )
+    case AllL( main, term, q )             => AllL.f( main, term, normalize( q, lctx.up1( p ) ) )
+    case AllR( main, ev, q )               => AllR.f( main, ev, normalize( q, lctx.up1( p ) ) )
+    case Eql( main, eq, ltr, rwCtx, q )    => Eql.f( main, eq, ltr, rwCtx, normalize( q, lctx.up1( p ) ) )
+    case AllSk( main, term, skDef, q )     => AllSk.f( main, term, skDef, normalize( q, lctx.up1( p ) ) )
+    case Def( main, f, q )                 => Def.f( main, f, normalize( q, lctx.up1( p ) ) )
     case Ind( main, f, t, cases ) =>
       Ind( main, f, t, for ( ( c, i ) <- cases.zipWithIndex )
         yield c.copy( q = normalize( c.q, lctx.upn( p, i ) ) ) )
@@ -93,6 +93,8 @@ class Normalizer[LC <: ALCtx[LC]]( skipAtomicCuts: Boolean = false, skipProposit
   def evalCut( c: Cut, lctx: LC ): LKt = {
     doCheck( c, lctx )
     val Cut( f, q1, q2 ) = c
+    if ( q1.isConst ) return q1.p
+    if ( q2.isConst ) return q2.p
     if ( skipAtomicCuts && isAtom( f ) ) return c
     if ( skipPropositionalCuts && !containsQuantifierOnLogicalLevel( f ) ) return c
     if ( q2.freeHyps( q1.aux ) ) return evalCut( Cut( f, q1.rename( q2.freeHyps ), q2 ), lctx )
@@ -100,9 +102,6 @@ class Normalizer[LC <: ALCtx[LC]]( skipAtomicCuts: Boolean = false, skipProposit
     val lctx1 = lctx.up1( c )
     val lctx2 = lctx.up2( c )
     ( q1.p, q2.p, f ) match {
-      case ( _, _, _ ) if q1.isConst              => q1.p
-      case ( _, _, _ ) if q2.isConst              => q2.p
-
       case ( Ax( h1, c1 ), _, _ ) if c1 == q1.aux => q2.inst( h1 )
       case ( _, Ax( h2, c2 ), _ ) if h2 == q2.aux => q1.inst( c2 )
       case ( NegR( m1, r1 ), NegL( m2, r2 ), Neg( g ) ) if m1 == q1.aux && m2 == q2.aux =>
