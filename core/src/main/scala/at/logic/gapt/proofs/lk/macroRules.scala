@@ -396,7 +396,7 @@ object ForallLeftBlock {
    */
   def withSequentConnector( subProof: LKProof, main: Formula, terms: Seq[Expr] ): ( LKProof, SequentConnector ) = {
     val partiallyInstantiatedMains = ( 0 to terms.length ).toList.reverse.
-      map( n => instantiate( main, terms.take( n ) ) )
+      map( n => BetaReduction.betaNormalize( instantiate( main, terms.take( n ) ) ) )
 
     val series = terms.reverse.foldLeft(
       ( subProof, partiallyInstantiatedMains, SequentConnector( subProof.endSequent ) ) ) { ( acc, ai ) =>

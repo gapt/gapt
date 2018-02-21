@@ -1,9 +1,9 @@
 package at.logic.gapt.examples.prime
 
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.babel.{ Notation, Precedence }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk.LKProof
-import at.logic.gapt.proofs._
 
 /**
  * Furstenberg's topological proof of the infinitude of primes.
@@ -12,17 +12,16 @@ import at.logic.gapt.proofs._
  */
 case class furstenberg( k: Int ) extends PrimeDefinitions {
 
-  // The paper says X = Y <-> X subset Y ∧ Y subset X, but the current proof uses the definition
-  // X = Y <-> ∀x (x ∈ X <-> x ∈ Y). Taking the latter for now.
-  ctx += hof"EXT = (∀(X:nat>o) ∀Y ((∀x (X x <-> Y x)) -> X = Y))"
+  ctx += Notation.Infix( "=_s", Precedence.infixRel )
+  ctx += hof"(A =_s B) = (∀(x:nat) (A x ↔ B x))"
 
   /* -------------
    * | Subproofs |
    * -------------
    */
 
-  val deMorgan1 = Lemma( hols"EXT :- compN(union (X:nat>o) Y) = intersection(compN X)(compN Y)" ) {
-    unfold( "EXT" ) in "EXT"; chain( "EXT" ); forget( "EXT" )
+  val deMorgan1 = Lemma( hols":- compN(union (X:nat>o) Y) =_s intersection(compN X)(compN Y)" ) {
+    unfold( "=_s" ).in( "g" )
     allR
     unfold( "compN", "intersection", "union" ) in "g"
     prop
@@ -79,19 +78,22 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
     }
   }
 
-  val unionClosed = Lemma( hols"C(X : nat>o), C(Y), EXT :- C(union X Y)" ) {
+  val unionClosed = Lemma( hols"C(X : nat>o), C(Y) :- C(union X Y)" ) {
     unfold( "C" ) in ( "h_0", "h_1", "g" )
-    cut( "CF", hof" compN(union (X : nat>o) Y) = intersection(compN X)(compN Y)" ) left insert( deMorgan1 )
+    cut( "CF", hof" compN(union (X : nat>o) Y) =_s intersection(compN X)(compN Y)" ) left insert( deMorgan1 )
 
-    eql( "CF", "g" )
-    forget( "CF" )
-    insert( intersectionOpen )
+    cut( "g_2", hof"O(intersection (compN X) (compN Y))" ) left by { insert( intersectionOpen ) }
+
+    // TODO: prove congruence lemmas
+    unfold( "=_s" ).in( "CF" )
+    unfold( "O", "subset" ).in( "g", "g_2" )
+    simp.w( "CF" ).on( "g" )
   }
 
-  val progClosed = Lemma( hols"PRE, REM, '0<l': 0 < l, EXT :- C(ν 0 l)" ) {
-    cut( "CF", hof" U(0,l) = compN(ν 0 l)" ) left by {
+  val progClosed = Lemma( hols"PRE, REM, '0<l': 0 < l :- C(ν 0 l)" ) {
+    cut( "CF", hof" U(0,l) =_s compN(ν 0 l)" ) left by {
       forget( "PRE", "g" )
-      unfold( "EXT" ).in( "EXT" ); chain( "EXT" ); forget( "EXT" )
+      unfold( "=_s" ).in( "CF" )
       allR
       andR
 
@@ -138,8 +140,16 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
     }
 
     unfold( "C" ) in "g"
-    forget( "REM", "EXT" )
-    eql( "CF", "g" )
+    forget( "REM" )
+
+    // TODO: congruence lemmas
+    cut( "g_2", hof"O(U 0 l)" ) right by {
+      unfold( "O", "subset" ).in( "g", "g_2" )
+      unfold( "=_s" ).in( "CF" )
+      simp.w( "CF" ).on( "g_2" )
+    }
+    forget( "g" ); renameLabel( "g_2" ).to( "g" )
+
     forget( "CF" )
     unfold( "O" ) in "g"
     decompose
@@ -171,29 +181,27 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
     }
   }
 
-  // Proof that complement(complement(X)) = X (under hof"EXT").
-  val compCompProof = Lemma( hols"EXT :- comp: compN(compN(X : nat>o)) = X" ) {
-    unfold( "EXT" ) in "EXT"; chain( "EXT" ); forget( "EXT" )
+  val compCompProof = Lemma( hols":- comp: compN(compN(X)) =_s X" ) {
+    unfold( "=_s" ).in( "comp" )
     allR( "comp", hov"x:nat" )
     unfold( "compN" ) in "comp"
     prop
   }
 
-  // Proof that if complement(X) is closed, X is open (under hof"EXT").
-  val openClosedProof = Lemma( hols"EXT, C: C(compN(X : nat>o)) :- O: O(X)" ) {
+  // Proof that if complement(X) is closed, X is open
+  val openClosedProof = Lemma( hols"C: C(compN(X)) :- O: O(X)" ) {
     unfold( "C" ) in "C"
-    cut( "CF", hof" compN(compN(X: nat>o)) = X" ) left by {
+    cut( "CF", hof" compN(compN(X: nat>o)) =_s X" ) left by {
       //Left subproof of the cut:
       forget( "C", "O" )
       insert( compCompProof )
     }
 
     //Right subproof of the cut:
-    forget( "EXT" )
-    eql( "CF", "C" ).fromLeftToRight
-    forget( "CF" )
-    unfold( "O", "ν", "subset" ) in ( "O", "C" )
-    trivial
+    // TODO: congruence lemmas
+    unfold( "=_s" ).in( "CF" )
+    unfold( "O", "subset" ).in( "C", "O" )
+    simp.w( "CF" ).on( "C" )
   }
 
   // Proof that {1} is nonempty
@@ -409,9 +417,9 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
       decompose
       insert( lambda( k ) )
     }
-  // Proof of EXT, F[k], PRIME-DIV :- S[k] = comp({1})
-  val psi1: LKProof = Lemma( hols"EXT, Fk: F $k, 'Prime-Div': 'PRIME-DIV' :- S $k = compN(set_1 1)" ) {
-    unfold( "EXT" ) in "EXT"; chain( "EXT" ); forget( "EXT" )
+  // Proof of F[k], PRIME-DIV :- S[k] = comp({1})
+  val psi1: LKProof = Lemma( hols"Fk: F $k, 'Prime-Div': 'PRIME-DIV' :- S $k =_s compN(set_1 1)" ) {
+    unfold( "=_s" ).in( "g" )
     allR( "g" )
     andR( "g" )
     by { insert( psi1Left ) }
@@ -494,7 +502,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
   }
 
   def psi2Right( n: Int ): LKProof = {
-    val endSequent = hols"EXT, PRE, Qn: Q $n, REM :- C: C (S $n)"
+    val endSequent = hols"PRE, Qn: Q $n, REM :- C: C (S $n)"
 
     n match {
       case 0 =>
@@ -522,22 +530,29 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
     }
   }
 
-  val psi2: LKProof = Lemma( hols"F $k, REM, EXT, PRE :- C (S $k)" ) {
+  val psi2: LKProof = Lemma( hols"F $k, REM, PRE :- C (S $k)" ) {
     cut( "Q", hof"Q $k" ) left insert( FQ )
     insert( psi2Right( k ) )
   }
 
   val proof: LKProof =
-    Lemma( hols"EXT, F $k, REM, PRE, 'PRIME-DIV' :-" ) {
+    Lemma( hols"F $k, REM, PRE, 'PRIME-DIV' :-" ) {
       cut( "INF {1}", hof" INF (set_1 1)" ) right insert( singletonFinite )
       cut( "nonempty {1}", hof" ¬ empty (set_1 1)" ) left insert( singletonNonempty )
 
       cut( "O {1}", hof" O (set_1 1)" ) right insert( phi2 )
       cut( "C compN{1}", hof" C (compN(set_1 1))" ) right insert( openClosedProof )
-      cut( "CF", hof" S $k = compN(set_1 1)" ) left insert( psi1 )
+      cut( "CF", hof" S $k =_s compN(set_1 1)" ) left insert( psi1 )
 
-      eql( "CF", "C compN{1}" )
-      forget( "CF" )
+      // TODO: congruence lemmas
+      cut( "C", hof"C (S $k)" ) right by {
+        unfold( "=_s", "compN" ).in( "CF" )
+        unfold( "C", "O", "subset", "compN" ).in( "C", "C compN{1}" )
+        simp.w( "CF" ).on( "C" )
+        simp.on( "C compN{1}" )
+      }
+      forget( "C compN{1}" ); renameLabel( "C" ).to( "C compN{1}" )
+
       insert( psi2 )
     }
 }

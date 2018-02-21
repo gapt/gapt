@@ -46,7 +46,7 @@ lazy val scalariformSettings =
     .setPreference( DoubleIndentConstructorArguments, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "4.0.2"
+val specs2Version = "4.0.3"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   javaOptions in Test += "-Xmx2g",
@@ -173,13 +173,13 @@ lazy val core = project.in( file( "core" ) ).
     scalacOptions in Compile += "-Xfatal-warnings",
 
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.6",
+      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.0",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.parboiled" %% "parboiled" % "2.1.4",
       "com.lihaoyi" %% "fastparse" % "1.0.0",
       "com.lihaoyi" %% "sourcecode" % "0.1.4",
       "org.typelevel" %% "cats" % "0.9.0",
-      "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
+      "org.scala-lang.modules" %% "scala-xml" % "1.1.0",
       "org.apache.commons" % "commons-lang3" % "3.7",
       "com.lihaoyi" %% "ammonite-ops" % "1.0.3",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
@@ -187,8 +187,8 @@ lazy val core = project.in( file( "core" ) ).
 
     // UI
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-swing" % "2.0.1",
-      "com.itextpdf" % "itextpdf" % "5.5.12",
+      "org.scala-lang.modules" %% "scala-swing" % "2.0.2",
+      "com.itextpdf" % "itextpdf" % "5.5.13",
       "org.scilab.forge" % "jlatexmath" % "1.0.6" ) )
 
 lazy val examples = project.in( file( "examples" ) ).

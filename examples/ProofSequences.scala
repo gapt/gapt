@@ -3,7 +3,7 @@ package at.logic.gapt.examples
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ Numeral, Utils }
 import at.logic.gapt.expr.hol.{ instantiate, universalClosure }
-import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent }
+import at.logic.gapt.proofs.{ Ant, Context, HOLSequent, Sequent, Suc }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.examples.Formulas._
@@ -36,6 +36,40 @@ object LinearExampleProof extends ProofSequence {
     val pn = foa"P($num)"
     Proof( Sequent( Seq( "P0" -> p0, "Ax" -> ax ), Seq( "Pn" -> pn ) ) ) {
       repeat( chain( "Ax" ) )
+      prop
+    }
+  }
+}
+
+/**
+ * Constructs short FOL LK proofs of the sequents
+ *
+ * P(0), ∀x. P(x) → P(s(x)) :- P(s^2 ^n^ ^(0))
+ *
+ * where n is an Integer parameter >= 0.
+ */
+object LinearCutExampleProof extends ProofSequence {
+  private val ax = fof"!x (P x -> P (s x))"
+  private def s( n: Int )( x: FOLTerm ): FOLTerm =
+    if ( n == 0 ) x else s( n - 1 )( FOLFunction( "s", x ) )
+  private def lemma( n: Int ): LKProof =
+    Proof( hols"h: !x (P(x) -> P(${s( 1 << ( n - 1 ) )( fov"x" )})) :- !x (P(x) -> P(${s( 1 << n )( fov"x" )}))" ) {
+      allR; impR; repeat( chain( "h" ) ); trivial
+    }
+  private def lemmas( n: Int ): LKProof =
+    if ( n == 0 ) LogicalAxiom( ax )
+    else if ( n == 1 ) lemma( 1 )
+    else CutRule( lemmas( n - 1 ), Suc( 0 ), lemma( n ), Ant( 0 ) )
+
+  /**
+   * @param n An integer >= 0.
+   * @return A proof of P(0), ∀x. P(x) → P(s(x)) :- P(s^2 ^m^ ^(0))
+   */
+  def apply( n: Int ): LKProof = {
+    require( n >= 0, "n must be nonnegative" )
+    Proof( hols"p0: P(0), ax: $ax :- g: P(${s( 1 << n )( foc"0" )})" ) {
+      include( "lem", lemmas( n ) )
+      chain( "lem" )
       prop
     }
   }

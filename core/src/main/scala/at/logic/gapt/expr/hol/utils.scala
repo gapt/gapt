@@ -294,7 +294,8 @@ object instantiate {
     case Ex( v, form ) =>
       val sub = Substitution( v, t )
       sub( form )
-    case _ => throw new Exception( "ERROR: trying to replace variables in a formula without quantifier." )
+    case _ =>
+      throw new Exception( "ERROR: trying to replace variables in a formula without quantifier." )
   }
 
   /**

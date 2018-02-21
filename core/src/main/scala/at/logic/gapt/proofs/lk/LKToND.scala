@@ -235,12 +235,18 @@ object LKToND {
       case p @ NegRightRule( subProof, aux ) =>
 
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
-          // TODO: Can this be done better?
           val Neg( a ) = p.mainFormula
           val t = translate( subProof, heuristicIndex( subProof ) )
-          NegIntroRule( exchange( t, Bottom() ), a )
-          //val t2 = NegElimRule( nd.LogicalAxiom( Neg( t.endSequent( Suc( 0 ) ) ) ), t )
-          //NegIntroRule( t2, a )
+          if ( t.endSequent( Suc( 0 ) ) == Bottom() ) {
+            NegIntroRule( t, a )
+          } else {
+            nd.ProofBuilder.
+              c( nd.LogicalAxiom( -t.endSequent( Suc( 0 ) ) ) ).
+              c( t ).
+              b( NegElimRule( _, _ ) ).
+              u( NegIntroRule( _, a ) ).
+              qed
+          }
         } else {
           val focusMain = p.endSequent.indexOf( p.mainFormula, Polarity.InSuccedent )
           exchange( translate( proof, Some( focusMain ) ), focus.map( p.endSequent.apply ) )

@@ -28,6 +28,7 @@ import at.logic.gapt.utils._
 import EitherHelpers._
 import at.logic.gapt.examples.theories.Theory
 import at.logic.gapt.proofs.Context.ProofNames
+import at.logic.gapt.proofs.lkt.{ LKToLKt, normalizeLKt }
 
 import scala.concurrent.duration._
 import scala.util.Random
@@ -128,6 +129,7 @@ class TheoryTestCase( name: String ) extends RegressionTestCase( name ) {
     val proof = lemmaHandle.proof --- "proof"
 
     LKToND( proof ) --? "LKToND"
+    normalizeLKt.withDebug( proof ) --? "lkt cut-elim"
 
     LKToExpansionProof( proof ) --? "LKToExpansionProof" foreach { expansion =>
       deskolemizeET( expansion ) --? "deskolemization" foreach { desk =>
@@ -136,6 +138,7 @@ class TheoryTestCase( name: String ) extends RegressionTestCase( name ) {
         ExpansionProofToLK( desk ).get --? "ExpansionProofToLK on deskolemization" foreach { deskLK =>
           deskLK.conclusion.isSubsetOf( proof.conclusion ) !-- "conclusion of ExpansionProofToLK"
           ctx.check( deskLK ) --? "context check of ExpansionProofToLK"
+          normalizeLKt.withDebug( deskLK ) --? "lkt cut-elim (desk)"
           LKToND( deskLK ) --? "LKToND (deskolemization)"
         }
       }
@@ -214,6 +217,7 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
       }
 
     ReductiveCutElimination( p ) --? "cut-elim (input)"
+    normalizeLKt.withDebug( p ) --? "lkt cut-elim (input)"
 
     cleanStructuralRules( p ) --? "cleanStructuralRules"
 
@@ -223,6 +227,7 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
         LKToND( q, focus ) --? "LKToND (cut-intro)"
 
         ReductiveCutElimination( q ) --? "cut-elim (cut-intro)"
+        normalizeLKt.withDebug( q ) --? "lkt cut-elim (cut-intro)"
         CERES( q ) --? "CERES (cut-intro)"
         CERES.CERESExpansionProof( q ) --? "CERESExpansionProof"
 

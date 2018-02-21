@@ -1,6 +1,5 @@
 package at.logic.gapt.proofs.expansion
 
-import at.logic.gapt.expr.Polarity.{ Negative, Positive }
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature, Precedence }
 import at.logic.gapt.utils.Doc
@@ -11,10 +10,7 @@ class ExpansionTreePrettyPrinter( sig: BabelSignature ) extends BabelExporter( u
     group( show( et, Map[String, VarOrConst]() )._1.inPrec( 0 ) ).render( lineWidth )
 
   def addPol( doc: Doc, pol: Polarity ) =
-    pol match {
-      case Positive => doc <> "+"
-      case Negative => doc <> "-"
-    }
+    doc <> ( if ( pol.positive ) "+" else "-" )
 
   def show( et: ExpansionTree, t0: Map[String, VarOrConst] ): ( Parenable, Map[String, VarOrConst] ) = et match {
     case ETTop( pol )    => ( Parenable( Precedence.max, addPol( "⊤", pol ) ), t0 )
