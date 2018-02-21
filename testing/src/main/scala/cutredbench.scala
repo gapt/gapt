@@ -7,13 +7,13 @@ import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.ceres.CERES
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, eliminateCutsET }
 import at.logic.gapt.proofs.lk.{ LKProof, LKToExpansionProof, ReductiveCutElimination, eliminateDefinitions }
-import at.logic.gapt.proofs.lkt.{ LKToLKt, LKt, normalizeLKt }
+import at.logic.gapt.proofs.lkt.{ LKToLKt, LKt, LKtToLK, normalizeLKt }
 import at.logic.gapt.proofs.resolution.ResolutionToLKProof
 import at.logic.gapt.provers.escargot.Escargot
 
 import scala.concurrent.duration._
 
-object cutReductionBenchmark extends Script {
+object CutReductionBenchmarkTools {
   def measure( f: => Unit ): Duration = {
     val begin = System.nanoTime()
     f
@@ -66,6 +66,10 @@ object cutReductionBenchmark extends Script {
   case object LKtNormA extends AbstractLKtNorm( skipAtomicCuts = true )
   case object LKtNormP extends AbstractLKtNorm( skipPropositionalCuts = true )
   val methods = List( LKReductive, LKCERES, CERESEXP, BogoElim, ExpCutElim, LKtNorm, LKtNormA, LKtNormP )
+}
+
+object cutReductionBenchmark extends Script {
+  import CutReductionBenchmarkTools._
 
   def turnEqualityIntoPredicate[A: ClosedUnderReplacement]( a: A ): A =
     TermReplacement( a, { case EqC( t ) => Const( "E", t ->: t ->: To ) } )
@@ -105,5 +109,29 @@ object cutReductionBenchmark extends Script {
   }
 
   for ( n <- 0 to 8 ) bench( "linear", n, LinearCutExampleProof( n ) )
+}
 
+object primeCutElimBench extends Script {
+  import CutReductionBenchmarkTools._
+
+  def furstenbergProof( n: Int ): LKProof = {
+    import at.logic.gapt.proofs.lkt._
+    val primeInst = at.logic.gapt.examples.prime.furstenberg( n )
+    import primeInst._
+    val p0 = eliminateDefinitions( proof )
+    val ( p1, lctx ) = LKToLKt( p0 )
+    val p2 = atomizeEquality( p1, lctx )
+    LKtToLK( p2, lctx )
+  }
+
+  val lktMethods = List( LKtNorm, LKtNormA, LKtNormP )
+  // warmup
+  for ( m <- lktMethods ) m.robustlyMeasureElimination( LinearCutExampleProof( 3 ) )
+
+  println( "n," + lktMethods.mkString( "," ) )
+  for ( i <- 0 to 9 ) {
+    val p = furstenbergProof( i )
+    val times = lktMethods.map( _.robustlyMeasureElimination( p ).toUnit( SECONDS ).toString )
+    println( s"$i," + times.mkString( "," ) )
+  }
 }
