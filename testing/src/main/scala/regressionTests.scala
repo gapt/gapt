@@ -109,6 +109,7 @@ object TheoryTestCase {
   import at.logic.gapt.examples.theories._
   object AllTheories extends Theory(
     logic,
+    set,
     props,
     nat,
     natdivisible,

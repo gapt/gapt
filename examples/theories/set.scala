@@ -1,3 +1,4 @@
+package at.logic.gapt.examples.theories
 import at.logic.gapt.expr._
 import at.logic.gapt.examples.theories.{ Theory, logic }
 import at.logic.gapt.formats.babel.Precedence
