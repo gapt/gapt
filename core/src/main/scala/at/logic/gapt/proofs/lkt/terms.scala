@@ -186,72 +186,77 @@ sealed trait LKt {
       }, "," ) <> ")" ).nest( 1 )
   }
 
+  def foreach( f: LKt => Unit ): Unit = {
+    f( this )
+    this match {
+      case Cut( _, q1, q2 ) =>
+        q1.p.foreach( f ); q2.p.foreach( f )
+      case Ax( _, _ )   =>
+      case Rfl( _ )     =>
+      case TopR( _ )    =>
+      case NegR( _, q ) => q.p.foreach( f )
+      case NegL( _, q ) => q.p.foreach( f )
+      case AndR( _, q1, q2 ) =>
+        q1.p.foreach( f ); q2.p.foreach( f )
+      case AndL( _, q )         => q.p.foreach( f )
+      case AllL( _, _, q )      => q.p.foreach( f )
+      case AllR( _, _, q )      => q.p.foreach( f )
+      case Eql( _, _, _, _, q ) => q.p.foreach( f )
+      case AllSk( _, _, _, q )  => q.p.foreach( f )
+      case Def( _, _, q )       => q.p.foreach( f )
+      case Ind( _, _, _, cs )   => for ( c <- cs ) c.q.p.foreach( f )
+      case Link( _, _ )         =>
+    }
+  }
+
   def subProofs: Vector[LKt] = {
     val out = Vector.newBuilder[LKt]
-    def gather( p: LKt ): Unit = {
-      out += p
-      p match {
-        case Cut( _, q1, q2 ) =>
-          gather( q1.p ); gather( q2.p )
-        case Ax( _, _ )   =>
-        case Rfl( _ )     =>
-        case TopR( _ )    =>
-        case NegR( _, q ) => gather( q.p )
-        case NegL( _, q ) => gather( q.p )
-        case AndR( _, q1, q2 ) =>
-          gather( q1.p ); gather( q2.p )
-        case AndL( _, q )         => gather( q.p )
-        case AllL( _, _, q )      => gather( q.p )
-        case AllR( _, _, q )      => gather( q.p )
-        case Eql( _, _, _, _, q ) => gather( q.p )
-        case AllSk( _, _, _, q )  => gather( q.p )
-        case Def( _, _, q )       => gather( q.p )
-        case Ind( _, _, _, cs )   => for ( c <- cs ) gather( c.q.p )
-        case Link( _, _ )         =>
-      }
-    }
-    gather( this )
+    foreach( out += _ )
     out.result()
   }
 
   def containedHyps: Set[Hyp] = {
     val out = Set.newBuilder[Hyp]
-    def gather1( bnd: Bound ): Unit = {
-      out ++= bnd.auxs
-      gather( bnd.p )
-    }
-    def gather( p: LKt ): Unit = p match {
+    foreach {
       case Cut( _, q1, q2 ) =>
-        gather1( q1 ); gather1( q2 )
+        out += q1.aux; out += q2.aux
       case Ax( main1, main2 ) =>
         out += main1; out += main2
       case Rfl( main )  => out += main
       case TopR( main ) => out += main
       case NegR( main, q ) =>
-        out += main; gather1( q )
+        out += main; out += q.aux
       case NegL( main, q ) =>
-        out += main; gather1( q )
+        out += main; out += q.aux
       case AndR( main, q1, q2 ) =>
-        out += main; gather1( q1 ); gather1( q2 )
+        out += main; out += q1.aux; out += q2.aux
       case AndL( main, q ) =>
-        out += main; gather1( q )
+        out += main; out ++= q.auxs
       case AllL( main, _, q ) =>
-        out += main; gather1( q )
+        out += main; out += q.aux
       case AllR( main, _, q ) =>
-        out += main; gather1( q )
+        out += main; out += q.aux
       case Eql( main, eq, _, _, q ) =>
-        out += main; out += eq; gather1( q )
+        out += main; out += eq; out += q.aux
       case AllSk( main, _, _, q ) =>
-        out += main; gather1( q )
+        out += main; out += q.aux
       case Def( main, _, q ) =>
-        out += main; gather1( q )
+        out += main; out += q.aux
       case Ind( main, _, _, cases ) =>
-        out += main; cases.foreach( c => gather1( c.q ) )
+        out += main; cases.foreach( c => out ++= c.q.auxs )
       case Link( mains, _ ) => out ++= mains
     }
-    gather( this )
     out.result()
   }
+
+  class TreeLikeOps {
+    def size: Int = {
+      var s = 0
+      foreach( _ => s += 1 )
+      s
+    }
+  }
+  def treeLike = new TreeLikeOps
 
   override def toString = toDoc.render( 80 )
 }
