@@ -4,7 +4,7 @@ import at.logic.gapt.cutintro.CutIntroduction
 import at.logic.gapt.examples.{ LinearExampleProof, Pi2Pigeonhole, Pi3Pigeonhole, nTape4 }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.containsQuantifierOnLogicalLevel
-import at.logic.gapt.proofs.lk.{ LKProof, eliminateDefinitions, solvePropositional }
+import at.logic.gapt.proofs.lk.{ LKProof, eliminateDefinitions, instanceProof, solvePropositional }
 import at.logic.gapt.proofs.{ Context, SequentMatchers, lk }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.utils.Maybe
@@ -38,6 +38,20 @@ class LktTest extends Specification with SequentMatchers {
       ctx.foreach( _.check( p3 ) )
       ok
   }
+  def beInductivelyGood( implicit ctx: Context ): Matcher[LKProof] = beLike {
+    case lk =>
+      val ( p0, lctx ) = LKToLKt( lk )
+      check( p0, lctx )
+      val p1 = atomizeEquality( p0, lctx )
+      check( p1, lctx )
+      val p2 = normalizeLKt.inductionWithDebug( p1, lctx )
+      check( p2, lctx )
+      p2 must beMostlyCutFree
+      val p3 = LKtToLK( p2, lctx )
+      p3.endSequent must beMultiSetEqual( lk.endSequent )
+      ctx.check( p3 )
+      ok
+  }
 
   "reduce 1" in {
     val Right( l ) = solvePropositional( hos"a & (a -> b) :- ~ ~b" )
@@ -62,6 +76,14 @@ class LktTest extends Specification with SequentMatchers {
   "theory 1" in {
     import at.logic.gapt.examples.theories.nat._
     addcomm.combined() must beGood
+  }
+  "theory 2" in {
+    import at.logic.gapt.examples.theories.nat._
+    instanceProof( add0l.combined(), le"s 0" ) must beInductivelyGood
+  }
+  "theory 3" in {
+    import at.logic.gapt.examples.theories.nat._
+    instanceProof( addcomm.combined(), le"s 0", le"s (s 0)" ) must beInductivelyGood
   }
 
 }

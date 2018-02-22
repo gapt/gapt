@@ -91,6 +91,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
       }
     }
 
+    normalizeLKt.inductionWithDebug( instProof ) --? "eliminate inductions in instance proof using lkt"
     ReductiveCutElimination.eliminateInduction( instProof ) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
       indFreeProof.endSequent.multiSetEquals( instProof.endSequent ) !-- "induction elimination does not modify end-sequent"
       isInductionFree( indFreeProof ) !-- "induction elimination returns induction free proof"
@@ -164,6 +165,7 @@ class TheoryTestCase( name: String, combined: Boolean )
       }
     }
 
+    normalizeLKt.inductionWithDebug( instProof ) --? "eliminate inductions in instance proof using lkt"
     ReductiveCutElimination.eliminateInduction( instProof ) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
       indFreeProof.endSequent.multiSetEquals( instProof.endSequent ) !-- "induction elimination does not modify end-sequent"
     }

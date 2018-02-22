@@ -83,6 +83,17 @@ class Normalizer[LC <: ALCtx[LC]]( skipAtomicCuts: Boolean = false, skipProposit
     case Link( _, _ ) => p
   }
 
+  def normalizeWithInduction( p: LKt, lctx: LC )( implicit ctx: Context ): LKt = {
+    val p2 = normalize( p, lctx )
+    unfoldInduction( p2 ) match {
+      case Some( p3 ) =>
+        doCheck( p3, lctx )
+        normalizeWithInduction( p3, lctx )
+      case None =>
+        p2
+    }
+  }
+
   protected def inst( q: Bound1, byF: Formula, by: Bound1, lctx: LC ): LKt = ProofSubst( q.aux, byF, by ).apply( q.p, lctx )
   protected def inst1( q: Bound2, byF: Formula, by: Bound1, lctx: LC, g1: Formula, g2: Formula ): Bound1 =
     ProofSubst( q.aux1, byF, by ).apply( Bound1( q.aux2, q.p ), lctx.upS( g1 )( q.aux1 ).upS( g2 ) )
@@ -152,6 +163,16 @@ class normalize {
   }
   def withDebug( p: LKt, lctx: LocalCtx )( implicit ctx: Maybe[Context] ): LKt =
     new NormalizerWithDebugging().normalize( p, lctx )
+
+  def induction( p: LKt, skipAtomicCuts: Boolean = false, skipPropositionalCuts: Boolean = false )( implicit ctx: Context ): LKt =
+    new Normalizer[FakeLocalCtx]( skipAtomicCuts, skipPropositionalCuts ) {}.
+      normalizeWithInduction( p, FakeLocalCtx )
+  def inductionWithDebug( p: LKt, lctx: LocalCtx )( implicit ctx: Context ): LKt =
+    new NormalizerWithDebugging().normalizeWithInduction( p, lctx )
+  def inductionWithDebug( p: LKProof )( implicit ctx: Context ): LKt = {
+    val ( t, lctx ) = LKToLKt( p )
+    inductionWithDebug( t, lctx )
+  }
 }
 object normalize extends normalize
 object normalizeLKt extends normalize
