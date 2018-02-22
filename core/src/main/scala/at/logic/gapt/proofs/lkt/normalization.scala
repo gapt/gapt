@@ -175,8 +175,10 @@ class normalize {
       new Normalizer[FakeLocalCtx]( skipAtomicCuts, skipPropositionalCuts ) {}.
         normalizeWithInduction( p, FakeLocalCtx, simpAdapter )
   }
-  def inductionWithDebug( p: LKt, lctx: LocalCtx )( implicit ctx: Context ): LKt =
-    induction( p, lctx )
+  def inductionWithDebug( p: LKProof )( implicit ctx: Context ): LKt = {
+    val ( lkt, lctx ) = LKToLKt( p )
+    induction( lkt, lctx )
+  }
 }
 object normalize extends normalize
 object normalizeLKt extends normalize

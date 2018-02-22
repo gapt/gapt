@@ -44,7 +44,7 @@ class LktTest extends Specification with SequentMatchers {
       check( p0, lctx )
       val p1 = atomizeEquality( p0, lctx )
       check( p1, lctx )
-      val p2 = normalizeLKt.inductionWithDebug( p1, lctx )
+      val p2 = normalizeLKt.induction( p1, lctx, debugging = true )
       check( p2, lctx )
       p2 must beMostlyCutFree
       val p3 = LKtToLK( p2, lctx )
