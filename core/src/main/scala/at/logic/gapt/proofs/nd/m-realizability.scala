@@ -128,7 +128,7 @@ object MRealizability {
 
       case ImpIntroRule( subProof, aux ) =>
         val extraVar = Var( "z", flat( subProof.conclusion( aux ) ) )
-        Abs( variablesAntConclusion( proof ), Abs( extraVar, App( mrealizeCases( subProof ), insertIndex( variablesAntPremise( proof, 0 ), aux, extraVar ) ) ) )
+        Abs( variablesAntConclusion( proof ) :+ extraVar, App( mrealizeCases( subProof ), insertIndex( variablesAntPremise( proof, 0 ), aux, extraVar ) ) )
 
       case NegElimRule( leftSubProof, rightSubProof ) =>
         Abs(
