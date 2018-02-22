@@ -25,8 +25,7 @@ object addRecorsorsExamples extends Script {
     hoc"leaf{?a}: ?a > bitree ?a",
     hoc"node{?a}: bitree ?a > bitree ?a > bitree ?a" )
 
-  MRealizability.setSystemT( ctx )
-  implicit var systemT = MRealizability.systemT
+  implicit var systemT = MRealizability.systemT( ctx )
   println( systemT )
 
   systemT += Definition( Const( "length", ty"list ?a > nat", List( ty"?a" ) ), le"listRec(0,^(z1:?a)^(z2: list ?a)^(z3:nat) s(z3))" )
@@ -47,6 +46,15 @@ object addRecorsorsExamples extends Script {
 
 }
 
+object test {
+  def apply( proof: NDProof )( implicit ctx: Context ): Unit = {
+    val m1 = MRealizability.mrealize( proof, false )
+    val m1n = MRealizability.mrealize( proof )
+    print( proof ); print( m1 ); print( " of type " ); println( m1.ty ); print( "normalized: " ); print( m1n )
+    println(); println()
+  }
+}
+
 object examplesLogicalAxiom extends Script {
 
   implicit var ctx = Context()
@@ -61,51 +69,28 @@ object examplesLogicalAxiom extends Script {
     "s(x) + y = s(x + y)" )
 
   val a1 = LogicalAxiom( hof"P(x)" )
-  val m1 = MRealizability.mrealize( a1 )
-  print( a1 ); print( m1 ); print( " of type " ); println( m1.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m1 ) )
-
-  println(); println()
+  test( a1 )
 
   val a2 = LogicalAxiom( hof"x = y" )
-  val m2 = MRealizability.mrealize( a2 )
-  print( a2 ); print( m2 ); print( " of type " ); println( m2.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m2 ) )
-
-  println(); println()
+  test( a2 )
 
   val a3 = LogicalAxiom( hof"(x:nat) = y" )
-  val m3 = MRealizability.mrealize( a3 )
-  print( a3 ); print( m3 ); print( " of type " ); println( m3.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m3 ) )
-
-  println(); println()
+  test( a3 )
 
   val a4 = LogicalAxiom( hof"x = 0 & y = 0" )
-  val m4 = MRealizability.mrealize( a4 )
-  print( a4 ); print( m4 ); print( " of type " ); println( m4.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m4 ) )
-
-  println(); println()
+  test( a4 )
 
   val a5 = LogicalAxiom( hof" 0 + 0 = 0" )
-  val m5 = MRealizability.mrealize( a5 )
-  print( a5 ); print( m5 ); print( " of type " ); println( m5.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m5 ) )
-
-  println(); println()
+  test( a5 )
 
   val a6 = LogicalAxiom( hof"!x ?y x + y = s(x)" )
-  val m6 = MRealizability.mrealize( a6 )
-  print( a6 ); print( m6 ); print( " of type " ); println( m6.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m6 ) )
-
-  println(); println()
+  test( a6 )
 
   val a7 = EqualityIntroRule( le"s(s(s(0)))" )
-  val m7 = MRealizability.mrealize( a7 )
-  print( a7 ); print( m7 ); print( " of type " ); println( m7.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m7 ) )
-
-  println(); println()
+  test( a7 )
 
   val a8 = EqualityIntroRule( le"x + s(y + z)" )
-  val m8 = MRealizability.mrealize( a8 )
-  print( a8 ); print( m8 ); print( " of type " ); println( m8.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m8 ) )
-
+  test( a8 )
 }
 
 object examplesEqualityIntroRule extends Script {
@@ -122,15 +107,10 @@ object examplesEqualityIntroRule extends Script {
     "s(x) + y = s(x + y)" )
 
   val a1 = EqualityIntroRule( le"s(s(s(0)))" )
-  val m1 = MRealizability.mrealize( a1 )
-  print( a1 ); print( m1 ); print( " of type " ); println( m1.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m1 ) )
-
-  println(); println()
+  test( a1 )
 
   val a2 = EqualityIntroRule( le"x + s(y + z)" )
-  val m2 = MRealizability.mrealize( a2 )
-  print( a2 ); print( m2 ); print( " of type: " ); println( m2.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m2 ) )
-
+  test( a2 )
 }
 
 object examplesWeakeningRule extends Script {
@@ -148,34 +128,20 @@ object examplesWeakeningRule extends Script {
 
   val a1 = EqualityIntroRule( le"s(s(y))" )
   val a11 = WeakeningRule( a1, hof"!x x = x + (0 + s(z))" )
-  val m1 = MRealizability.mrealize( a11 )
-  print( a11 ); print( m1 ); print( " of type " ); println( m1.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m1 ) )
-
-  println(); println()
+  test( a11 )
 
   val a2 = LogicalAxiom( hof"s(x) = s(s(y))" )
   val a22 = WeakeningRule( a2, hof"!x x = x + (0 + s(z))" )
-  val m2 = MRealizability.mrealize( a22 )
-  print( a22 ); print( m2 ); print( " of type " ); println( m2.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m2 ) )
-
-  println(); println()
+  test( a22 )
 
   val a3 = LogicalAxiom( hof"(x : nat) = y" )
-  val m3 = MRealizability.mrealize( a3 )
-  print( a3 ); print( m3 ); print( " of type " ); println( m3.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m3 ) )
-
-  println(); println()
+  test( a3 )
 
   val a33 = WeakeningRule( a3, hof"!(x:nat) x = z" )
-  val m33 = MRealizability.mrealize( a33 )
-  print( a33 ); print( m33 ); print( " of type " ); println( m33.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m33 ) )
-
-  println(); println()
+  test( a33 )
 
   val a333 = WeakeningRule( a33, hof"?(x : nat) x = y" )
-  val m333 = MRealizability.mrealize( a333 )
-  print( a333 ); print( m333 ); print( " of type " ); println( m333.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m333 ) )
-
+  test( a333 )
 }
 
 object exampleContractionRule extends Script {
@@ -188,33 +154,19 @@ object exampleContractionRule extends Script {
     hoc"s : nat > nat" )
 
   val a1 = LogicalAxiom( hof"x = 0" )
-  val m1 = MRealizability.mrealize( a1 )
-  print( a1 ); print( m1 ); print( " of type " ); println( m1.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m1 ) )
-
-  println(); println()
+  test( a1 )
 
   val a2 = WeakeningRule( a1, hof"(x:nat) = z" )
-  val m2 = MRealizability.mrealize( a2 )
-  print( a2 ); print( m2 ); print( " of type " ); println( m2.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m2 ) )
-
-  println(); println()
+  test( a2 )
 
   val a3 = WeakeningRule( a2, hof"(x:nat) = y" )
-  val m3 = MRealizability.mrealize( a3 )
-  print( a3 ); print( m3 ); print( " of type " ); println( m3.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m3 ) )
-
-  println(); println()
+  test( a3 )
 
   val a4 = WeakeningRule( a3, hof"(x:nat) = y" )
-  val m4 = MRealizability.mrealize( a4 )
-  print( a4 ); print( m4 ); print( " of type " ); println( m4.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m4 ) )
-
-  println(); println()
+  test( a4 )
 
   val a5 = ContractionRule( a4, hof"(x:nat) = y" )
-  val m5 = MRealizability.mrealize( a5 )
-  print( a5 ); print( m5 ); print( " of type " ); println( m5.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m5 ) )
-
+  test( a5 )
 }
 
 object examplesConjuctionRules extends Script {
@@ -228,34 +180,17 @@ object examplesConjuctionRules extends Script {
 
   val a1 = LogicalAxiom( hof"0 = 0 & s(0) = s(0)" )
   val a2 = AndElim1Rule( a1 )
-  val m1 = MRealizability.mrealize( a2 )
-  print( a2 ); print( m1 ); print( " of type " ); println( m1.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m1 ) )
-
-  println(); println()
+  test( a2 )
 
   val a11 = LogicalAxiom( hof"x = 0 & y = 0" )
   val a22 = AndElim2Rule( a11 )
-  val m11 = MRealizability.mrealize( a22 )
-  print( a22 ); print( m11 ); print( " of type " ); println( m11.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m11 ) )
-
-  println(); println()
+  test( a22 )
 
   val a111 = LogicalAxiom( hof"x = 0" )
   val a222 = LogicalAxiom( hof"s(0) = s(0)" )
   val a3 = AndIntroRule( a111, a222 )
   val a4 = AndElim1Rule( a3 )
-  val m111 = MRealizability.mrealize( a4 )
-  print( a4 ); print( m111 ); print( " of type " ); println( m111.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m111 ) )
-
-  println(); println()
-
-  val a1111 = LogicalAxiom( hof"x = 0" )
-  val a2222 = LogicalAxiom( hof"s(0) = s(0)" )
-  val a33 = AndIntroRule( a1111, a2222 )
-  val a44 = AndElim2Rule( a33 )
-  val m1111 = MRealizability.mrealize( a44 )
-  print( a44 ); print( m1111 ); print( " of type " ); println( m1111.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m1111 ) )
-
+  test( a4 )
 }
 
 object examplesImplicationRules extends Script {
@@ -270,17 +205,12 @@ object examplesImplicationRules extends Script {
   val a1 = LogicalAxiom( hof"s(0) = s(0) -> 0 = 0" )
   val a2 = LogicalAxiom( hof"s(0) = s(0)" )
   val a3 = ImpElimRule( a1, a2 )
-  val m1 = MRealizability.mrealize( a3 )
-  print( a3 ); print( m1 ); print( " of type" ); println( m1.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m1 ) )
-
-  println(); println()
+  test( a3 )
 
   val a11 = LogicalAxiom( hof"0 = 0" )
   val a22 = WeakeningRule( a11, hof"s(0) = s(0)" )
   val a33 = ImpIntroRule( a22, Ant( 0 ) )
-  val m22 = MRealizability.mrealize( a33 )
-  print( a33 ); print( m22 ); print( " of type " ); println( m22.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m22 ) )
-
+  test( a33 )
 }
 
 object examplesForallIntroRules extends Script {
@@ -298,15 +228,10 @@ object examplesForallIntroRules extends Script {
 
   val a1 = EqualityIntroRule( le"x + s(y)" )
   val a2 = ForallIntroRule( a1, hov"x:nat", hov"z:nat" )
-  val m1 = MRealizability.mrealize( a2 )
-  print( a2 ); print( m1 ); print( " of type " ); println( m1.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m1 ) )
-
-  println(); println()
+  test( a2 )
 
   val a3 = ForallIntroRule( a2, hov"y:nat", hov"y:nat" )
-  val m2 = MRealizability.mrealize( a3 )
-  print( a3 ); print( m2 ); print( " of type " ); println( m2.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m2 ) )
-
+  test( a3 )
 }
 
 object exampleExistsElimRule extends Script {
@@ -322,9 +247,7 @@ object exampleExistsElimRule extends Script {
   val a2 = EqualityIntroRule( le"0" )
   val a3 = WeakeningRule( a2, hof"y = 0" )
   val a4 = ExistsElimRule( a1, a3, hov"y:nat" )
-  val m1 = MRealizability.mrealize( a4 )
-  print( a4 ); print( m1 ); print( " of type " ); println( m1.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m1 ) )
-
+  test( a4 )
 }
 
 object examplesEqualityElimRule extends Script {
@@ -343,19 +266,14 @@ object examplesEqualityElimRule extends Script {
   val a1 = LogicalAxiom( hof"!(x0:nat) !(x1:nat) s(x2) = x2 + s(0)" )
   val a2 = LogicalAxiom( hof"(x2:nat) = x3" )
   val a3 = EqualityElimRule( a2, a1 )
-  val m1 = MRealizability.mrealize( a3 )
-  print( a3 ); print( m1 ); print( " of type " ); println( m1.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m1 ) )
-
-  println(); println()
+  test( a3 )
 
   val b1 = LogicalAxiom( hof"s(x) = x + s(0)" )
   val b2 = LogicalAxiom( hof"!z s(x) = z" )
   val b3 = EqualityElimRule( b1, b2 )
   val b4 = LogicalAxiom( hof"s(0) = 0 + s(0)" )
   val b5 = EqualityElimRule( b4, b3 )
-  val m2 = MRealizability.mrealize( b5 )
-  print( b5 ); print( m2 ); print( " of type " ); println( m2.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m2 ) )
-
+  test( b5 )
 }
 
 object exampleForallElimRule extends Script {
@@ -369,9 +287,7 @@ object exampleForallElimRule extends Script {
 
   val a1 = LogicalAxiom( hof"!x ?y x = s(y)" )
   val a2 = ForallElimRule( a1, le"s(s(0))" )
-  val m1 = MRealizability.mrealize( a2 )
-  print( a2 ); print( m1 ); print( " of type " ); println( m1.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m1 ) )
-
+  test( a2 )
 }
 
 object exampleExistsIntroRule extends Script {
@@ -385,9 +301,7 @@ object exampleExistsIntroRule extends Script {
 
   val a1 = EqualityIntroRule( le"s(s(x))" )
   val a2 = ExistsIntroRule( a1, hof"y = s(s(x))", le"s(s(x))", hov"y:nat" )
-  val m1 = MRealizability.mrealize( a2 )
-  print( a2 ); print( m1 ); print( " of type " ); println( m1.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m1 ) )
-
+  test( a2 )
 }
 
 object exampleBotElimRule extends Script {
@@ -402,9 +316,7 @@ object exampleBotElimRule extends Script {
   val a1 = LogicalAxiom( hof"⊥" )
   val a2 = WeakeningRule( a1, hof"!x ?y y = s(x)" )
   val a3 = BottomElimRule( a2, hof"!x ?y x = s(y)" )
-  val m1 = MRealizability.mrealize( a3 )
-  print( a3 ); print( m1 ); print( " of type " ); println( m1.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m1 ) )
-
+  test( a3 )
 }
 
 object examplesInductionRule extends Script {
@@ -431,10 +343,7 @@ object examplesInductionRule extends Script {
     InductionCase( s01, hoc"0", Seq.empty, Seq.empty ),
     InductionCase( s5, hoc"s", Seq( Ant( 0 ) ), Seq( hov"x0: nat" ) ) )
   val p = InductionRule( cases, Abs( Var( "x", TBase( "nat" ) ), hof"x + 0 = x" ), le"x : nat" )
-  val m1 = MRealizability.mrealize( p )
-  print( p ); print( m1 ); print( " of type " ); println( m1.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m1 ) )
-
-  println(); println()
+  test( p )
 
   val a1 = LogicalAxiom( hof"P(0)" )
   val b1 = LogicalAxiom( hof"!x (P(x) -> P(s(x)))" )
@@ -448,9 +357,7 @@ object examplesInductionRule extends Script {
   val d1 = ForallIntroRule( c3, hov"x:nat", hov"x:nat" )
   val d2 = ImpIntroRule( d1, Ant( 0 ) )
   val d3 = ImpIntroRule( d2 )
-  val m2 = MRealizability.mrealize( d3 )
-  print( d3 ); print( m2 ); print( " of type " ); println( m2.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m2 ) )
-
+  test( d3 )
 }
 
 object exampleTopIntroRule extends Script {
@@ -458,9 +365,7 @@ object exampleTopIntroRule extends Script {
   implicit var ctx = Context()
 
   val a1 = TopIntroRule()
-  val m1 = MRealizability.mrealize( a1 )
-  print( a1 ); print( m1 ); print( " of type " ); println( m1.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m1 ) )
-
+  test( a1 )
 }
 
 object examplesNegationRules extends Script {
@@ -470,15 +375,10 @@ object examplesNegationRules extends Script {
   val a1 = LogicalAxiom( hof"¬a" )
   val a2 = LogicalAxiom( hof"a" )
   val a3 = NegElimRule( a1, a2 )
-  val m1 = MRealizability.mrealize( a3 )
-  print( a3 ); print( m1 ); print( " of type " ); println( m1.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m1 ) )
-
-  println(); println()
+  test( a3 )
 
   val a4 = NegIntroRule( a3, Ant( 0 ) )
-  val m2 = MRealizability.mrealize( a4 )
-  print( a4 ); print( m2 ); print( " of type " ); println( m2.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m2 ) )
-
+  test( a4 )
 }
 
 object examplesOrIntroRules extends Script {
@@ -492,15 +392,10 @@ object examplesOrIntroRules extends Script {
 
   val a1 = EqualityIntroRule( le"0" )
   val a2 = OrIntro1Rule( a1, hof"s(0) = 0" )
-  val m1 = MRealizability.mrealize( a2 )
-  print( a2 ); print( m1 ); print( " of type " ); println( m1.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m1 ) )
-
-  println(); println()
+  test( a2 )
 
   val a3 = OrIntro2Rule( a1, hof"s(0) = 0" )
-  val m2 = MRealizability.mrealize( a3 )
-  print( a3 ); print( m2 ); print( " of type " ); println( m2.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m2 ) )
-
+  test( a3 )
 }
 
 object exampleOrElimRule extends Script {
@@ -518,9 +413,7 @@ object exampleOrElimRule extends Script {
   val b4 = AndElim1Rule( b3 )
   val b5 = LogicalAxiom( hof"(x = 0 & x = s(0)) | (x = 0 & x = s(s(0)))" )
   val b6 = OrElimRule( b5, b2, b4 )
-  val m1 = MRealizability.mrealize( b6 )
-  print( b6 ); print( m1 ); print( " of type " ); println( m1.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m1 ) )
-
+  test( b6 )
 }
 
 object examplesTheoryAxiom extends Script {
@@ -538,16 +431,11 @@ object examplesTheoryAxiom extends Script {
 
   //val a1 = TheoryAxiom( hof"!y (y+0 = 0)" )
   val a1 = TheoryAxiom( hof"y + 0 = 0" )
-  val m1 = MRealizability.mrealize( a1 )
-  print( a1 ); print( m1 ); print( " of type " ); println( m1.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m1 ) )
-
-  println(); println()
+  test( a1 )
 
   //val a2 = TheoryAxiom( hof"!z ¬(s(z) = 0)" )
   val a2 = TheoryAxiom( hof"¬ s(z) = 0" )
-  val m2 = MRealizability.mrealize( a2 )
-  print( a2 ); print( m2 ); print( " of type " ); println( m2.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m2 ) )
-
+  test( a2 )
 }
 
 object emptyProgramType extends Script {
@@ -574,7 +462,6 @@ object emptyProgramType extends Script {
   print( c ); print( " normalized: " ); println( MRealizability.removeEmptyProgramType( c ) )
   val d = TArr( one, b )
   print( d ); print( " normalized: " ); println( MRealizability.removeEmptyProgramType( d ) )
-
 }
 
 object exampleSuccessorFunction extends Script {
@@ -593,35 +480,29 @@ object exampleSuccessorFunction extends Script {
   val a1 = EqualityIntroRule( le"x + s(0)" )
   val a2 = ExistsIntroRule( a1, hof"y = x + s(0)", le"x + s(0)", hov"y:nat" )
   val a3 = ForallIntroRule( a2, hov"x:nat", hov"x:nat" )
-  val m1 = MRealizability.mrealize( a3 )
-
-  print( a3 ); print( m1 ); print( " of type " ); println( m1.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m1 ) )
-
-  println(); println()
+  test( a3 )
 
   val b1 = EqualityIntroRule( le"s(x)" )
   val b2 = DefinitionRule( b1, hof"s(x) = x + s(0)" )
   Checkable.requireDefEq( b1.conclusion.succedent( 0 ), b2.conclusion.succedent( 0 ) )
   val b3 = ExistsIntroRule( b2, hof"y = x + s(0)", le"s(x)", hov"y:nat" )
   val b4 = ForallIntroRule( b3, hov"x:nat", hov"x:nat" )
-  val m2 = MRealizability.mrealize( b4 )
-
-  print( b4 ); print( m2 ); print( " of type " ); println( m2.ty ); print( "normalized: " ); print( MRealizability.removeEmptyProgram( m2 ) )
+  test( b4 )
 }
 
 object mrealizerDivisionByTwo extends Script {
 
-  implicit val ctx = divisionByTwo.ctx
+  val m1 = MRealizability.mrealize( divisionByTwo.proof, false )( divisionByTwo.ctx )
+  val m1n = MRealizability.mrealize( divisionByTwo.proof )( divisionByTwo.ctx )
 
-  val m1 = MRealizability.mrealize( divisionByTwo.proof )
-  val m1n = MRealizability.removeEmptyProgram( m1 )
+  implicit var systemT = MRealizability.systemT( divisionByTwo.ctx )
 
   print( divisionByTwo.proof ); print( m1 ); print( " of type " ); println( m1.ty )
   print( "normalized: " ); print( m1n ); print( " of type " ); println( m1n.ty )
 
   println()
 
-  def test( x: Expr ) = println( x + " divided by 2 is: " + MRealizability.systemT.normalize( App( m1n, x ) ) )
+  def test( x: Expr ) = println( x + " divided by 2 is: " + normalize( App( m1n, x ) ) )
   test( le"0" )
   test( le"s(0)" )
   test( le"s(s(0))" )
@@ -629,7 +510,6 @@ object mrealizerDivisionByTwo extends Script {
   test( le"s(s(s(s(0))))" )
   test( le"s(s(s(s(s(0)))))" )
   test( le"s(s(s(s(s(s(0))))))" )
-
 }
 
 object divisionByTwo {
@@ -688,6 +568,5 @@ object divisionByTwo {
   val cases = Seq( InductionCase( b4, hoc"0", Seq(), Seq() ), InductionCase( i4, hoc"s", Seq( Ant( 0 ) ), Seq( hov"x:nat" ) ) )
   val a1 = InductionRule( cases, Abs( hov"x:nat", hof"?y (x = s(s(0)) * y | x = (s(s(0)) * y) + s(0))" ), hov"x:nat" )
   val proof = ForallIntroRule( a1, hov"x:nat", hov"x:nat" )
-
 }
 

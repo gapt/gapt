@@ -8,11 +8,9 @@ import at.logic.gapt.utils.NameGenerator
 
 object MRealizability {
 
-  implicit var systemT: Context = Context.empty
+  def systemT( ctx: Context ): Context = {
 
-  def setSystemT( ctx: Context ): Unit = {
-
-    systemT = ctx
+    implicit var systemT = ctx
 
     // add recursors for all inductive types
     for ( ( name, constructors ) <- systemT.get[StructurallyInductiveTypes].constructors.filter( _._1 != "o" ) ) {
@@ -58,17 +56,19 @@ object MRealizability {
     systemT += InductiveType(
       ty"1",
       hoc"i : 1" )
+
+    systemT
   }
 
-  def mrealize( proof: NDProof )( implicit ctx: Context ): Expr = {
+  def mrealize( proof: NDProof, re: Boolean = true )( implicit ctx: Context ): Expr = {
 
-    setSystemT( ctx )
+    val context = systemT( ctx )
+    val mrealizer = mrealizeCases( proof )( context )
 
-    mrealizeCases( proof )
-
+    if ( re ) removeEmptyProgram( mrealizer )( context ) else mrealizer
   }
 
-  def mrealizeCases( proof: NDProof ): Expr = {
+  def mrealizeCases( proof: NDProof )( implicit systemT: Context ): Expr = {
 
     BetaReduction.betaNormalize( proof match {
       case WeakeningRule( subProof, formula ) =>
@@ -189,7 +189,7 @@ object MRealizability {
     } )
   }
 
-  def flat( formula: Formula ): Ty = formula match {
+  def flat( formula: Formula )( implicit systemT: Context ): Ty = formula match {
     case Bottom()                         => ty"1"
     case Top()                            => flat( Imp( Bottom(), Bottom() ) )
     case Eq( _, _ )                       => ty"1"
@@ -204,7 +204,7 @@ object MRealizability {
 
   // removes all occurences of the empty program i : 1 from term, or is i : 1 itself
   // only for recursors for natural numbers now
-  def removeEmptyProgram( term: Expr ): Expr = {
+  def removeEmptyProgram( term: Expr )( implicit systemT: Context ): Expr = {
 
     val empty = hoc"i"
     val emptyType = ty"1"
@@ -245,7 +245,7 @@ object MRealizability {
   }
 
   // similar but for types
-  def removeEmptyProgramType( typee: Ty ): Ty = {
+  def removeEmptyProgramType( typee: Ty )( implicit systemT: Context ): Ty = {
 
     val empty = ty"1"
 
@@ -265,16 +265,16 @@ object MRealizability {
   def insertIndex( sequence: Vector[Var], index: SequentIndex, value: Expr ): Vector[Expr] =
     ( sequence.take( index.toInt.abs - 1 ) :+ value ) ++ sequence.takeRight( sequence.length - ( index.toInt.abs - 1 ) )
 
-  def variablesAntConclusion( proof: NDProof ): Vector[Var] = {
+  def variablesAntConclusion( proof: NDProof )( implicit systemT: Context ): Vector[Var] = {
     variablesAntConclusionWithIndex( proof ).map( _._2 )
   }
 
-  def variablesAntPremise( proof: NDProof, premiseNumber: Int ): Vector[Var] = {
+  def variablesAntPremise( proof: NDProof, premiseNumber: Int )( implicit systemT: Context ): Vector[Var] = {
     val positions = proof.occConnectors( premiseNumber ).childrenSequent.antecedent.flatten
     positions.flatMap( variablesAntConclusionWithIndex( proof ).toMap get )
   }
 
-  private def variablesAntConclusionWithIndex( proof: NDProof ): Vector[( SequentIndex, Var )] =
+  private def variablesAntConclusionWithIndex( proof: NDProof )( implicit systemT: Context ): Vector[( SequentIndex, Var )] =
     proof.conclusion.zipWithIndex.antecedent.map( x => ( x._2, Var( s"x${x._2.toInt}", flat( x._1 ) ) ) )
 }
 
