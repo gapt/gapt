@@ -120,13 +120,14 @@ object TheoryTestCase {
     natlists,
     fta )
 }
-class TheoryTestCase( name: String ) extends RegressionTestCase( name ) {
-  override def timeout = Some( 2 minutes )
+class TheoryTestCase( name: String, combined: Boolean )
+  extends RegressionTestCase( name + ( if ( combined ) "-combined" else "" ) ) {
+  override def timeout = Some( 5 minutes )
 
   override protected def test( implicit testRun: TestRun ): Unit = {
     import TheoryTestCase.AllTheories._
     val lemmaHandle = LemmaHandle( ctx.get[ProofNames].names( name )._1 )
-    val proof = lemmaHandle.proof --- "proof"
+    val proof = ( if ( combined ) lemmaHandle.combined() else lemmaHandle.proof ) --- "proof"
 
     LKToND( proof ) --? "LKToND"
     normalizeLKt.withDebug( proof ) --? "lkt cut-elim"
@@ -302,7 +303,11 @@ object RegressionTests extends scala.App {
   def veritTestCases = veritProofs map { fn => new VeriTTestCase( fn.toIO ) }
   def tptpTestCases = tptpProblems.map { fn => new TptpTestCase( fn.toIO ) }
   def tipTestCases = tipProblems.map { fn => new TipTestCase( fn.toIO ) }
-  def theoryTestCases = TheoryTestCase.AllTheories.allProofs.map( _._1 ).map( new TheoryTestCase( _ ) )
+  def theoryTestCases =
+    for {
+      ( n, _ ) <- TheoryTestCase.AllTheories.allProofs
+      combined <- Seq( false, true )
+    } yield new TheoryTestCase( n, combined )
 
   def allTestCases =
     prover9TestCases ++
