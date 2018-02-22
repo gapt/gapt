@@ -47,6 +47,7 @@ class EscargotTest extends Specification {
   "large cnf" in { Escargot getResolutionProof CountingEquivalence( 5 ) must beSome }
 
   "drinker" in { Escargot getResolutionProof hof"?x (p(x) -> !y p(y))" must beSome }
+  "unicode drinker" in { Escargot.getResolutionProof( hof"∃ 🙋 (🍷 🙋 → ∀ 🙍 (🍷 🙍))" ) must beSome }
   "barber" in { Escargot getResolutionProof hof"- ?x !y (shaves(x,y) <-> -shaves(y,y))" must beSome }
 
   "two plus two" in { test( "x + 0 = x", "x + s(y) = s(x+y)", "s(s(0)) + s(s(0)) != s(s(s(s(0))))" ) must beSome }

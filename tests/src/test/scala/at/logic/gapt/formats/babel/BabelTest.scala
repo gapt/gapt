@@ -17,12 +17,6 @@ class BabelTest extends Specification {
     }
   }
 
-  "equation chain" in {
-    BabelParser.parse( "!P ?x !y P x y + 1 = y = P(x)(y) + 1 = P(x,y) + 1" ) must beLike {
-      case All( _, Ex( _, All( _, _ ) ) ) => ok
-    }
-  }
-
   "quoted names" in {
     BabelParser.parse(
       """
@@ -74,6 +68,7 @@ class BabelTest extends Specification {
       "true & p(#c('⊤': i))",
       "^('⊤': i) #c('⊤': o) & p('⊤': i)",
       "c = c{}", "c = c{?a}", "c{?a} = c{?b}",
+      "∃ 🙋 (🍷 🙋 → ∀ 🙍 (🍷 🙍))",
       "'-2' = (-2)",
       "''",
       "'\\u0000'",

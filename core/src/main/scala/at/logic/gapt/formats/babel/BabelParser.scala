@@ -38,14 +38,22 @@ object BabelLexical {
 
   val Whitespace = NoTrace( CharsWhile( _.isWhitespace, min = 0 ) )
 
-  val OpChar = CharIn( "-<>⊂⊃&@.;~|∨∧?∃∀¬=!+*/~⊤⊥%∪∩→↔∈" )
+  def isOpChar( c: Char ) =
+    c != 'λ' && c != '⊢' && c != ',' && c != '(' && c != ')' && c != '\'' && c != '#' && c != ':' &&
+      !isUnquotNameChar( c ) && {
+        val ty = c.getType
+        ty != Character.SPACE_SEPARATOR && (
+          ty == Character.MATH_SYMBOL || ty == Character.OTHER_SYMBOL || ( '\u0020' <= c && c <= '\u007e' ) )
+      }
+  val OpChar = CharPred( isOpChar )
   val RestOpChar = OpChar | CharIn( "_" ) | CharPred( isUnquotNameChar )
   val Operator: P[String] = P( ( OpChar.rep( 1 ) ~ ( "_" ~ RestOpChar.rep ).? ).! )
   val OperatorAndNothingElse = Operator ~ End
 
   val Name: P[String] = P( Operator | UnquotedName | QuotedName )
   val TyName: P[String] = P( UnquotedName | QuotedName )
-  def isUnquotNameChar( c: Char ) = ( c.isLetterOrDigit || c == '_' || c == '$' ) && c != 'λ'
+  def isEmoji( c: Char ) = ( '\ud83c' <= c && c <= '\udbff' ) || ( '\udc00' <= c && c <= '\udfff' )
+  def isUnquotNameChar( c: Char ) = ( c.isUnicodeIdentifierPart || isEmoji( c ) || c == '_' || c == '$' ) && c != 'λ'
   val UnquotedName: P[String] = P( CharsWhile( isUnquotNameChar ).! )
   val QuotedName: P[String] = P( "'" ~ QuotedNameChar.rep ~ "'" ).map( _.mkString )
   val QuotedNameChar: P[String] = P(
