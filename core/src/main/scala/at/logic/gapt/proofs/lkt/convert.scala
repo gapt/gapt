@@ -125,6 +125,13 @@ object LKToLKt {
     val hyps = p.endSequent.indicesSequent.map( i => conv.fresh( i.polarity ) )
     conv.go( p, hyps ) -> LocalCtx( hyps.zip( p.endSequent ).elements.toMap, Substitution() )
   }
+
+  def forLCtx( p: LKProof, lctx: LocalCtx, debugging: Boolean = false ) = {
+    val conv = new LKToLKt( debugging )
+    val hyps = for ( ( f, i ) <- p.endSequent.zipWithIndex )
+      yield lctx.hyps.collectFirst { case ( h, g ) if f == g && h.polarity == i.polarity => h }.get
+    conv.go( p, hyps )
+  }
 }
 
 object LKtToLK {

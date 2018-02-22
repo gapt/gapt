@@ -344,6 +344,28 @@ case class Simplifier( lemmas: Seq[SimpProc] ) {
     else SimpIffResult.Prf( p, f0, f, pol )
   }
 
+  def simpEqToEql( t0: Expr ): SimpEqResult = {
+    var p: LKProof = ReflexivityAxiom( t0 )
+    var t = t0
+    var didRewrite = true
+    while ( didRewrite ) {
+      didRewrite = false
+      for {
+        ( subterm, pos ) <- getLambdaPositions( t ) if !didRewrite
+        lem <- lemmas if !didRewrite
+        SimpEqResult.Prf( lemP, _, subterm_ ) <- Some( lem.simpEq( subterm ) ) if !didRewrite
+        ctx = replacementContext( subterm_.ty, t0 === t, pos.map( 2 :: _ ) )
+      } {
+        p = ContractionMacroRule(
+          ParamodulationRightRule( lemP, subterm === subterm_, p, t0 === t, ctx ) )
+        t = Substitution( ctx.variable -> subterm_ )( ctx.term( LambdaPosition( 2 ) ) )
+        didRewrite = true
+      }
+    }
+    if ( t == t0 ) SimpEqResult.Refl( t0 )
+    else SimpEqResult.Prf( p, t0, t )
+  }
+
   def prove( f: Formula ): Option[LKProof] = {
     val res = simpIff( f, Polarity.InSuccedent )
     res.rhs match {
@@ -438,6 +460,9 @@ object SimpLemmas {
     val formula = link.conclusion.succedent.head
     collect( SimpLemmaProjection( CutRule( link, LogicalAxiom( formula ), formula ), Sequent(), Suc( 0 ), PreSubstitution() ) )
   }
+
+  def collectFromAnt( seq: HOLSequent ): Set[SimpProc] =
+    collect( Sequent( seq.antecedent, Seq() ) )
 
   def collect( seq: HOLSequent ): Set[SimpProc] = {
     val fixed = new PreSubstitution(

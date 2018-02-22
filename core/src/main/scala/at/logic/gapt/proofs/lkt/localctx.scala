@@ -2,6 +2,7 @@ package at.logic.gapt.proofs.lkt
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.instantiate
+import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 
 object BinConn {
   def unapply( f: Formula ): Option[( Formula, Formula )] =
@@ -14,6 +15,8 @@ object BinConn {
 }
 
 case class LocalCtx( hyps: Map[Hyp, Formula], subst: Substitution ) extends ALCtx[LocalCtx] {
+  def toSequent: HOLSequent = Sequent { for ( ( h, f ) <- hyps ) yield f -> h.polarity }
+
   def updated( hyp: Hyp, f: Formula ): LocalCtx = copy( hyps.updated( hyp, f ) )
   def updated( hs: Iterable[( Hyp, Formula )] ): LocalCtx = copy( hyps = hyps ++ hs )
   def renamed( a: Hyp, b: Hyp ): LocalCtx = copy( hyps = hyps - a + ( b -> hyps( a ) ) )

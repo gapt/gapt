@@ -4,6 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ containsQuantifierOnLogicalLevel, instantiate, isAtom }
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.lk.LKProof
+import at.logic.gapt.provers.simp.{ SimpLemmas, Simplifier }
 import at.logic.gapt.utils.Maybe
 
 class Normalizer[LC <: ALCtx[LC]]( skipAtomicCuts: Boolean = false, skipPropositionalCuts: Boolean = false ) {
@@ -83,12 +84,12 @@ class Normalizer[LC <: ALCtx[LC]]( skipAtomicCuts: Boolean = false, skipProposit
     case Link( _, _ ) => p
   }
 
-  def normalizeWithInduction( p: LKt, lctx: LC )( implicit ctx: Context ): LKt = {
+  def normalizeWithInduction( p: LKt, lctx: LC, simpAdapter: SimpAdapter )( implicit ctx: Context ): LKt = {
     val p2 = normalize( p, lctx )
-    unfoldInduction( p2 ) match {
+    unfoldInduction( p2, simpAdapter ) match {
       case Some( p3 ) =>
         doCheck( p3, lctx )
-        normalizeWithInduction( p3, lctx )
+        normalizeWithInduction( p3, lctx, simpAdapter )
       case None =>
         p2
     }
@@ -164,15 +165,18 @@ class normalize {
   def withDebug( p: LKt, lctx: LocalCtx )( implicit ctx: Maybe[Context] ): LKt =
     new NormalizerWithDebugging().normalize( p, lctx )
 
-  def induction( p: LKt, skipAtomicCuts: Boolean = false, skipPropositionalCuts: Boolean = false )( implicit ctx: Context ): LKt =
-    new Normalizer[FakeLocalCtx]( skipAtomicCuts, skipPropositionalCuts ) {}.
-      normalizeWithInduction( p, FakeLocalCtx )
-  def inductionWithDebug( p: LKt, lctx: LocalCtx )( implicit ctx: Context ): LKt =
-    new NormalizerWithDebugging().normalizeWithInduction( p, lctx )
-  def inductionWithDebug( p: LKProof )( implicit ctx: Context ): LKt = {
-    val ( t, lctx ) = LKToLKt( p )
-    inductionWithDebug( t, lctx )
+  def induction( p: LKt, lctx: LocalCtx, useSimp: Boolean = true, debugging: Boolean = false,
+                 skipAtomicCuts: Boolean = false, skipPropositionalCuts: Boolean = false )( implicit ctx: Context ): LKt = {
+    val simpAdapter = if ( !useSimp ) NoopSimpAdapter else SimplifierSimpAdapter(
+      Simplifier( SimpLemmas.collectFromAnt( lctx.toSequent ).toSeq ), lctx )
+    if ( debugging )
+      new NormalizerWithDebugging().normalizeWithInduction( p, lctx, simpAdapter )
+    else
+      new Normalizer[FakeLocalCtx]( skipAtomicCuts, skipPropositionalCuts ) {}.
+        normalizeWithInduction( p, FakeLocalCtx, simpAdapter )
   }
+  def inductionWithDebug( p: LKt, lctx: LocalCtx )( implicit ctx: Context ): LKt =
+    induction( p, lctx )
 }
 object normalize extends normalize
 object normalizeLKt extends normalize
