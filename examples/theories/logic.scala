@@ -346,7 +346,10 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
    *              it will assumed to have the same name as the operator.
    */
   protected def infix( operator: String, precedence: Int, leftAssociative: Boolean = true, const: String = null ) =
-    addNow( Notation.Infix( operator, if ( const == null ) operator else const, precedence, leftAssociative ) )
+    addNow( Notation.Infix(
+      operator,
+      Notation.RealConst( if ( const == null ) operator else const ),
+      precedence, leftAssociative ) )
 
 }
 

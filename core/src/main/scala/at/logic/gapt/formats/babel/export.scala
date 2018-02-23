@@ -4,6 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.utils.Doc
 import Doc._
+import at.logic.gapt.formats.babel.Notation.RealConst
 
 /**
  * Exports lambda expressions in the Babel format.
@@ -136,7 +137,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     t0:        Map[String, VarOrConst] ): ( IdentShowMode, Map[String, VarOrConst] ) = {
     val name = expr.name
     val ty = expr.ty
-    val isAliased = sig.notationsForToken( expr.name ).exists( not => not.const != expr.name )
+    val isAliased = sig.notationsForToken( expr.name ).exists( not => not.const != RealConst( expr.name ) )
     sig.signatureLookup( name ) match {
       case _ if omitTypes                          => Bare -> t0
       case _ if isAliased                          => Safe -> t0
@@ -180,10 +181,10 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     else if ( c1.params.size != c2.params.size ) None
     else syntacticMatching( List(), ( c1.ty -> c2.ty ) :: ( c1.params zip c2.params ), PreSubstitution() ).headOption
 
-  def unicodeSafe( n: String ): Boolean =
-    unicode || n.forall( _ < 127 )
+  def unicodeSafe( n: Notation.Token ): Boolean =
+    unicode || n.token.forall( _ < 127 )
 
-  def notationForConst( const: String ): Option[Notation] =
+  def notationForConst( const: Notation.ConstName ): Option[Notation] =
     sig.notationsForConst( const ).find( not => unicodeSafe( not.token ) )
 
   def showTyParams( params: List[Ty], always: Boolean = false ): Doc =
@@ -192,12 +193,12 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
 
   def showFakeBin(
     expr:      Expr,
-    fakeConst: String, a: Expr, b: Expr,
+    fakeConst: Notation.ConstName, a: Expr, b: Expr,
     knownType: Boolean,
     bound:     Set[String],
     t0:        Map[String, VarOrConst] ): ( Parenable, Map[String, VarOrConst] ) = {
     notationForConst( fakeConst ) match {
-      case Some( Notation.Infix( tok, _, prec, leftAssociative ) ) =>
+      case Some( Notation.Infix( Notation.Token( tok ), _, prec, _ ) ) =>
         val ( a_, t1 ) = show( a, knownType, bound, t0 )
         val ( b_, t2 ) = show( b, knownType, bound, t1 )
         ( Parenable( prec, a_.inPrec( prec + 1 ) <+> tok </> b_.inPrec( prec + 1 ) ), t2 )
@@ -217,7 +218,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       case Var( n, _ )      => Some( n )
       case _                => None
     }
-    val notation = hdSym.flatMap( notationForConst )
+    val notation = hdSym.flatMap( h => notationForConst( RealConst( h ) ) )
     ( notation, args ) match {
       case ( Some( Notation.Quantifier( tok, _, prec ) ), Seq( Abs( v, e ) ) ) =>
         // FIXME
@@ -228,7 +229,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
             showName( vn )
           else
             parens( showName( vn ) <> ":" <> show( vt, false ) )
-        return ( Parenable( prec, tok <> v_ </> e_.inPrec( prec ) ),
+        return ( Parenable( prec, tok.token <> v_ </> e_.inPrec( prec ) ),
           t1 - vn ++ t0.get( vn ).map { vn -> _ } )
       case _ =>
     }
@@ -273,7 +274,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       case hd: VarOrConst =>
         val ( hdMode, t2 ) = getIdentShowMode( hd, knownType = true, bound, t1 )
         ( notation, args_ ) match {
-          case ( Some( Notation.Prefix( tok, _, prec ) ), Seq( arg ) ) if hdMode == Bare =>
+          case ( Some( Notation.Prefix( Notation.Token( tok ), _, prec ) ), Seq( arg ) ) if hdMode == Bare =>
             val argDoc = arg.inPrec( prec )
             val needSpace = argDoc.firstChar.forall { c =>
               tok match {
@@ -313,6 +314,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
 
   val safeChars = """[A-Za-z0-9 ~!@#$%^&*()_=+{}|;:,./<>?-]|\[|\]""".r
   val asciiUnquotName = """[A-Za-z0-9_]+""".r
+  def showName( token: Notation.Token )( implicit dummyImplicit: DummyImplicit ): Doc = showName( token.token )
   def showName( name: String ): Doc =
     name match {
       case BabelLexical.OperatorAndNothingElse( _ ) if unicodeSafe( name ) =>

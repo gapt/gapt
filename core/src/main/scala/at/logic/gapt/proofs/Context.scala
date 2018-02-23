@@ -130,8 +130,8 @@ sealed trait Context extends BabelSignature {
       case Some( c ) => BabelSignature.IsConst( c )
       case None      => BabelSignature.IsVar
     }
-  def notationsForToken( token: String ): Option[Notation] = get[Notations].byToken.get( token )
-  def notationsForConst( const: String ): List[Notation] = get[Notations].byConst( const )
+  def notationsForToken( token: Notation.Token ): Option[Notation] = get[Notations].byToken.get( token )
+  def notationsForConst( const: Notation.ConstName ): List[Notation] = get[Notations].byConst( const )
   def defaultTypeToI: Boolean = false
 
   def check[T: Checkable]( t: T ): Unit =
@@ -302,33 +302,33 @@ object Context {
 
   val default = empty ++ Seq(
     InductiveType( To, Top(), Bottom() ),
-    Notation.Alias( "true", TopC.name ), Notation.Alias( "⊤", TopC.name ),
-    Notation.Alias( "false", BottomC.name ), Notation.Alias( "⊥", BottomC.name ),
+    Notation.Alias( "true", TopC ), Notation.Alias( "⊤", TopC ),
+    Notation.Alias( "false", BottomC ), Notation.Alias( "⊥", BottomC ),
     ConstDecl( NegC() ),
-    Notation.Prefix( "-", NegC.name, Precedence.neg ),
-    Notation.Prefix( "~", NegC.name, Precedence.neg ),
-    Notation.Prefix( "¬", NegC.name, Precedence.neg ),
+    Notation.Prefix( "-", NegC, Precedence.neg ),
+    Notation.Prefix( "~", NegC, Precedence.neg ),
+    Notation.Prefix( "¬", NegC, Precedence.neg ),
     ConstDecl( AndC() ),
-    Notation.Infix( "&", AndC.name, Precedence.conj ),
-    Notation.Infix( "∧", AndC.name, Precedence.conj ),
+    Notation.Infix( "&", AndC, Precedence.conj ),
+    Notation.Infix( "∧", AndC, Precedence.conj ),
     ConstDecl( OrC() ),
-    Notation.Infix( "|", OrC.name, Precedence.disj ),
-    Notation.Infix( "∨", OrC.name, Precedence.disj ),
+    Notation.Infix( "|", OrC, Precedence.disj ),
+    Notation.Infix( "∨", OrC, Precedence.disj ),
     ConstDecl( ImpC() ),
-    Notation.Infix( "->", ImpC.name, Precedence.impl, leftAssociative = false ),
-    Notation.Infix( "⊃", ImpC.name, Precedence.impl, leftAssociative = false ),
-    Notation.Infix( "→", ImpC.name, Precedence.impl, leftAssociative = false ),
-    Notation.Infix( "<->", Notation.fakeIffConst, Precedence.iff ),
-    Notation.Infix( "↔", Notation.fakeIffConst, Precedence.iff ),
+    Notation.Infix( "->", ImpC, Precedence.impl, leftAssociative = false ),
+    Notation.Infix( "⊃", ImpC, Precedence.impl, leftAssociative = false ),
+    Notation.Infix( "→", ImpC, Precedence.impl, leftAssociative = false ),
+    Notation.Infix( Notation.Token( "<->" ), Notation.IffName, Precedence.iff ),
+    Notation.Infix( Notation.Token( "↔" ), Notation.IffName, Precedence.iff ),
     ConstDecl( ForallC( TVar( "x" ) ) ),
-    Notation.Quantifier( "!", ForallC.name, Precedence.quant ),
-    Notation.Quantifier( "∀", ForallC.name, Precedence.quant ),
+    Notation.Quantifier( Notation.Token( "!" ), ForallC, Precedence.quant ),
+    Notation.Quantifier( Notation.Token( "∀" ), ForallC, Precedence.quant ),
     ConstDecl( ExistsC( TVar( "x" ) ) ),
-    Notation.Quantifier( "?", ExistsC.name, Precedence.quant ),
-    Notation.Quantifier( "∃", ExistsC.name, Precedence.quant ),
+    Notation.Quantifier( Notation.Token( "?" ), ExistsC, Precedence.quant ),
+    Notation.Quantifier( Notation.Token( "∃" ), ExistsC, Precedence.quant ),
     ConstDecl( EqC( TVar( "x" ) ) ),
-    Notation.Infix( "=", EqC.name, Precedence.infixRel ),
-    Notation.Infix( "!=", Notation.fakeNeqConst, Precedence.infixRel ) )
+    Notation.Infix( "=", EqC, Precedence.infixRel ),
+    Notation.Infix( "!=", Notation.NeqName, Precedence.infixRel ) )
 
   case class ProofNames( names: Map[String, ( Expr, HOLSequent )] ) {
     def +( name: String, referencedExpression: Expr, referencedSequent: HOLSequent ) = copy( names + ( ( name, ( referencedExpression, referencedSequent ) ) ) )

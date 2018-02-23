@@ -315,19 +315,23 @@ object preExpr {
       case Nil => elabError( "empty expression" )
       case ( Left( ( n, idLoc ) ) :: children_ ) =>
         val expr = LocAnnotation( Ident( n, freshMetaType(), None ), idLoc )
-        sig.notationsForToken( n ) match {
+        sig.notationsForToken( Notation.Token( n ) ) match {
           case Some( not ) if not.precedence < minPrec => elabError( "missing expression before", expr )
           case Some( not ) if not.precedence >= minPrec =>
-            val fn = LocAnnotation( Ident( not.const, freshMetaType(), None ), idLoc )
+            val fn = not.const match {
+              case Notation.RealConst( c ) =>
+                Some( LocAnnotation( Ident( c, freshMetaType(), None ), idLoc ) )
+              case _ => None
+            }
             not match {
-              case _ if children_.isEmpty => Monad[Elab].pure( fn -> Nil )
+              case _ if children_.isEmpty => Monad[Elab].pure( fn.get -> Nil )
               case Notation.Alias( _, _ ) =>
-                parseFlatOpRest( children_, fn, env, minPrec )
+                parseFlatOpRest( children_, fn.get, env, minPrec )
               case Notation.Prefix( _, _, prec ) =>
-                if ( children_.isEmpty ) Monad[Elab].pure( fn -> Nil ) else for {
+                if ( children_.isEmpty ) Monad[Elab].pure( fn.get -> Nil ) else for {
                   res <- parseFlatOpFirst( children_, env, math.max( prec, minPrec ) )
                   ( arg, children__ ) = res
-                  res2 <- parseFlatOpRest( children__, App( fn, arg ), env, minPrec )
+                  res2 <- parseFlatOpRest( children__, App( fn.get, arg ), env, minPrec )
                 } yield res2
               case Notation.Quantifier( _, _, prec ) =>
                 for {
@@ -335,15 +339,15 @@ object preExpr {
                   env1 = env + ( v.name -> v.ty )
                   res <- parseFlatOpFirst( children_.tail, env1, math.max( prec, minPrec ) )
                   ( body, children__ ) = res
-                  res2 <- parseFlatOpRest( children__, App( fn, Abs( v, body ) ), env, minPrec )
+                  res2 <- parseFlatOpRest( children__, App( fn.get, Abs( v, body ) ), env, minPrec )
                 } yield res2
-              case _ if Notation.isFakeConst( not.const ) =>
+              case _ if fn.isEmpty =>
                 elabError( s"${not.token} needs argument on the left", expr )
               case _ =>
                 for {
                   res <- parseFlatOpFirst( children_, env, not.precedence )
                   ( arg, children__ ) = res
-                  res2 <- parseFlatOpRest( children__, App( fn, arg ), env, minPrec )
+                  res2 <- parseFlatOpRest( children__, App( fn.get, arg ), env, minPrec )
                 } yield res2
             }
           case None =>
@@ -353,11 +357,11 @@ object preExpr {
         parseFlatOpRest( children_, expr, env, minPrec )
     }
 
-  def mkBinOp( c: String, fn: Expr, arg1: Expr, arg2: Expr ): Expr =
+  def mkBinOp( c: Notation.ConstName, fn: Option[Expr], arg1: Expr, arg2: Expr ): Expr =
     c match {
       case Notation.fakeIffConst => Iff( arg1, arg2 )
       case Notation.fakeNeqConst => Neg( Eq( arg1, arg2 ) )
-      case _                     => App( App( fn, arg1 ), arg2 )
+      case _                     => App( App( fn.get, arg1 ), arg2 )
     }
 
   def parseFlatOpRest( flatOpsChildren: List[FlatOpsChild], lhsExpr: Expr, env: Env, minPrec: Int )( implicit loc: Option[Location], sig: BabelSignature ): Elab[( Expr, List[FlatOpsChild] )] =
@@ -365,11 +369,15 @@ object preExpr {
       case Nil => Monad[Elab].pure( lhsExpr -> Nil )
       case ( Left( ( n, idLoc ) ) :: children_ ) =>
         val expr = LocAnnotation( Ident( n, freshMetaType(), None ), idLoc )
-        sig.notationsForToken( n ) match {
+        sig.notationsForToken( Notation.Token( n ) ) match {
           case Some( not ) if not.precedence < minPrec =>
             Monad[Elab].pure( lhsExpr -> flatOpsChildren )
           case Some( not ) if not.precedence >= minPrec =>
-            val fn = LocAnnotation( Ident( not.const, freshMetaType(), None ), idLoc )
+            val fn = not.const match {
+              case Notation.RealConst( c ) =>
+                Some( LocAnnotation( Ident( c, freshMetaType(), None ), idLoc ) )
+              case _ => None
+            }
             not match {
               case Notation.Infix( _, _, prec, leftAssoc ) =>
                 if ( children_.nonEmpty )
@@ -381,17 +389,17 @@ object preExpr {
                 else if ( Notation.isFakeConst( not.const ) )
                   elabError( s"${not.token} needs argument on the right", expr )
                 else
-                  Monad[Elab].pure( App( fn, lhsExpr ) -> Nil )
+                  Monad[Elab].pure( App( fn.get, lhsExpr ) -> Nil )
               case Notation.Prefix( _, _, prec ) =>
                 for {
                   res <- parseFlatOpFirst( children_, env, prec )
                   ( arg, children__ ) = res
-                  res2 <- parseFlatOpRest( children__, App( lhsExpr, App( fn, arg ) ), env, minPrec )
+                  res2 <- parseFlatOpRest( children__, App( lhsExpr, App( fn.get, arg ) ), env, minPrec )
                 } yield res2
               case Notation.Postfix( _, _, _ ) =>
-                parseFlatOpRest( children_, App( fn, lhsExpr ), env, minPrec )
+                parseFlatOpRest( children_, App( fn.get, lhsExpr ), env, minPrec )
               case Notation.Alias( _, _ ) =>
-                parseFlatOpRest( children_, App( lhsExpr, fn ), env, minPrec )
+                parseFlatOpRest( children_, App( lhsExpr, fn.get ), env, minPrec )
               case _ =>
                 for {
                   res <- parseFlatOpFirst( flatOpsChildren, env, minPrec )

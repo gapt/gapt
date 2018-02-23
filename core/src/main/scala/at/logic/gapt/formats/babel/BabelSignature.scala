@@ -1,6 +1,8 @@
 package at.logic.gapt.formats.babel
 
-import at.logic.gapt.expr.Const
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock
+
+import at.logic.gapt.expr.{ Const, LogicalC }
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.Context.Facet
 import at.logic.gapt.{ expr => real }
@@ -17,8 +19,8 @@ trait BabelSignature {
    */
   def signatureLookup( s: String ): BabelSignature.VarConst
 
-  def notationsForToken( token: String ): Option[Notation]
-  def notationsForConst( const: String ): List[Notation]
+  def notationsForToken( token: Notation.Token ): Option[Notation]
+  def notationsForConst( const: Notation.ConstName ): List[Notation]
 
   def defaultTypeToI: Boolean
 }
@@ -46,12 +48,12 @@ object BabelSignature {
       }
 
     val notations = Context.default.get[Notations] ++
-      Seq( "<=", ">=", "<", ">" ).map( c => Notation.Infix( c, c, 22 ) ) ++
-      Seq( "+" ).map( c => Notation.Infix( c, c, 24 ) ) ++
-      Seq( "*", "/" ).map( c => Notation.Infix( c, c, 26 ) )
+      Seq( "<=", ">=", "<", ">" ).map( c => Notation.Infix( c, Precedence.infixRel ) ) ++
+      Seq( "+" ).map( c => Notation.Infix( c, Precedence.plusMinus ) ) ++
+      Seq( "*", "/" ).map( c => Notation.Infix( c, Precedence.timesDiv ) )
 
-    def notationsForToken( token: String ): Option[Notation] = notations.byToken.get( token )
-    def notationsForConst( const: String ): List[Notation] = notations.byConst( const )
+    def notationsForToken( token: Notation.Token ): Option[Notation] = notations.byToken.get( token )
+    def notationsForConst( const: Notation.ConstName ): List[Notation] = notations.byConst( const )
 
     def defaultTypeToI: Boolean = true
   }
@@ -67,30 +69,45 @@ object BabelSignature {
 
 sealed trait Notation extends Context.Update {
   def precedence: Int
-  def token: String
-  def const: String
+  def token: Notation.Token
+  def const: Notation.ConstName
 
   override def apply( ctx: Context ): Context.State =
     ctx.state.update[Notations]( _ + this )
 }
 object Notation {
-  case class Alias( token: String, const: String ) extends Notation { def precedence = Integer.MAX_VALUE }
-  case class Prefix( token: String, const: String, precedence: Int ) extends Notation
-  case class Infix( token: String, const: String, precedence: Int, leftAssociative: Boolean ) extends Notation
+  case class Alias( token: Token, const: ConstName ) extends Notation { def precedence = Integer.MAX_VALUE }
+  case class Prefix( token: Token, const: ConstName, precedence: Int ) extends Notation
+  case class Infix( token: Token, const: ConstName, precedence: Int, leftAssociative: Boolean ) extends Notation
   object Infix {
-    def apply( token: String, const: String, precedence: Int ): Infix = Infix( token, const, precedence, leftAssociative = true )
-    def apply( token: String, precedence: Int, leftAssociative: Boolean ): Infix = Infix( token, token, precedence, leftAssociative )
-    def apply( token: String, precedence: Int ): Infix = Infix( token, token, precedence )
+    def apply( token: Token, const: ConstName, precedence: Int ): Infix = Infix( token, const, precedence, leftAssociative = true )
+    def apply( token: String, precedence: Int, leftAssociative: Boolean ): Infix =
+      Infix( Token( token ), RealConst( token ), precedence, leftAssociative )
+    def apply( token: String, precedence: Int ): Infix =
+      Infix( Token( token ), RealConst( token ), precedence )
   }
-  case class Postfix( token: String, const: String, precedence: Int ) extends Notation
-  case class Quantifier( token: String, const: String, precedence: Int ) extends Notation
+  case class Postfix( token: Token, const: ConstName, precedence: Int ) extends Notation
+  case class Quantifier( token: Token, const: ConstName, precedence: Int ) extends Notation
 
-  val fakeIffConst = "\u0000iff"
-  val fakeNeqConst = "\u0000neq"
-  def isFakeConst( const: String ): Boolean = const.startsWith( "\u0000" )
+  case class Token( token: String ) extends AnyVal
+  object Token {
+    implicit def fromString( token: String ): Token = Token( token )
+  }
+  sealed trait ConstName
+  object ConstName {
+    implicit def fromLogicalC( logicalC: LogicalC ): RealConst =
+      RealConst( logicalC.name )
+  }
+  case class RealConst( name: String ) extends ConstName
+  case object IffName extends ConstName
+  case object NeqName extends ConstName
+
+  val fakeIffConst = IffName
+  val fakeNeqConst = NeqName
+  def isFakeConst( const: ConstName ): Boolean = !const.isInstanceOf[RealConst]
 }
 
-case class Notations( byToken: Map[String, Notation], byConst: Map[String, List[Notation]] ) {
+case class Notations( byToken: Map[Notation.Token, Notation], byConst: Map[Notation.ConstName, List[Notation]] ) {
   def ++( notations: Iterable[Notation] ): Notations =
     notations.foldLeft( this )( _ + _ )
 
@@ -116,8 +133,8 @@ case class MapBabelSignature( map: Map[String, Const] ) extends BabelSignature {
     else
       BabelSignature.IsVar
 
-  def notationsForToken( token: String ): Option[Notation] = None
-  def notationsForConst( const: String ): List[Notation] = Nil
+  def notationsForToken( token: Notation.Token ): Option[Notation] = None
+  def notationsForConst( const: Notation.ConstName ): List[Notation] = Nil
   def defaultTypeToI: Boolean = true
 }
 object MapBabelSignature {
