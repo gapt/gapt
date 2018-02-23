@@ -47,6 +47,7 @@ trait PrimeDefinitions extends TacticsProof {
   ctx += "neq_one" -> hcl"1<y, x=0+z*y, x=1 :-"
   ctx += "add_comm_zero" -> hcl"y*z=x :- x=0+z*y"
   ctx += "distrib2" -> hcl":- x + y1*z + y2*z = x + (y1+y2)*z"
+  ctx += "ring1" -> hcl":- k + (n + (k + 1) * l + 1) = n + (k + 1) * (l + 1)"
 
   //Definitions
   ctx += hof" set_1{?a}(k : ?a) = ( λl l = k )"

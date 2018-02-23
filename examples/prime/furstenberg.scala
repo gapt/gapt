@@ -249,9 +249,10 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
     forget( "open", "infinite" )
     unfold( "INF" ) in "CF"
     allR
-    exR( le" n * (l + (1 + 1)) + l * (k+1)" ).forget
-    unfold( "ν" ) in "CF"
-    exR( le"n +(k + 1)" ).forget
+    unfold( "ν" ).in( "CF" )
+    exR( le"n + (k+1)*l", le"k+1" ).forget
+    // TODO(gabriel): the following instances change the witness
+    // exR( le"n * (l + (1 + 1)) + l * (k+1)", le"n + (k + 1)" ).forget
     theory
   }
 
