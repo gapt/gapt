@@ -23,14 +23,16 @@ One of the many features GAPT supports is an implementation of [Herbrand's
 theorem](https://en.wikipedia.org/wiki/Herbrand%27s_theorem).  Here is how you can
 automatically generate a Herbrand disjunction in GAPT:
 ```scala
-Prover9 getExpansionProof fof"P(c) ∨ P(d) → ∃x P(x)" map { _.deep }
+Escargot.getExpansionProof(fof"P(c) ∨ P(d) → ∃x P(x)").map(_.deep)
 ```
 which returns the following Herbrand disjunction (the quantifier on the right
 has been expanded):
 ```
-Some( :- P(c) ∨ P(d) → P(d) ∨ P(c))
+Some( ⊢ P(c) ∨ P(d) → P(c) ∨ P(d))
 ```
 
+You can also use `Prover9`, `Vampire`, `EProver`, and lots of other provers
+instead of the built-in `Escargot` prover, if you have them installed.
 There are many more examples in the [user
 manual](http://logic.at/gapt/downloads/gapt-user-manual.pdf), and you can look
 into the [API documentation](http://logic.at/gapt/api/) for reference as well.
