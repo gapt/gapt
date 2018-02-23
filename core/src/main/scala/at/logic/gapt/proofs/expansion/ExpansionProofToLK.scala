@@ -228,7 +228,7 @@ class ExpansionProofToLK(
                   val All( v, f ) = suc.shallow
                   val freshVar = Var( rename.awayFrom( freeVariables( p.conclusion ) ).fresh( v.name ), v.ty )
                   ProofBuilder
-                    .c( InductionRule( lkCases, Abs( v, f ), freshVar ) )
+                    .c( InductionRule( lkCases.reverse, Abs( v, f ), freshVar ) )
                     .u( ForallRightRule( _, suc.shallow, freshVar ) )
                     .u( CutRule( _, p, suc.shallow ) )
                     .qed
