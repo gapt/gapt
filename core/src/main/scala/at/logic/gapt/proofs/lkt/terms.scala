@@ -329,7 +329,25 @@ object AllRBlock {
     }
 }
 
+trait ExprSubstWithβ0 {
+  implicit val exprSubstWithβ: ClosedUnderSub[Expr] =
+    ( sub, expr ) =>
+      if ( sub.map.values.exists( _.isInstanceOf[Abs] ) )
+        BetaReduction.betaNormalize( sub( expr )( Substitutable.ExprClosedUnderSub ) )
+      else
+        sub( expr )( Substitutable.ExprClosedUnderSub )
+}
+trait ExprSubstWithβ extends ExprSubstWithβ0 {
+  implicit val formulaSubstWithβ: ClosedUnderSub[Formula] =
+    ( sub, formula ) => sub( formula: Expr ).asInstanceOf[Formula]
+  implicit val absSubstWithβ: ClosedUnderSub[Abs] =
+    ( sub, abs ) => sub( abs: Expr ).asInstanceOf[Abs]
+}
+object ExprSubstWithβ extends ExprSubstWithβ
+
 trait ImplicitInstances {
+  import ExprSubstWithβ._
+
   implicit val closedUnderSubstitutionBound1: ClosedUnderSub[Bound1] =
     ( sub: Substitution, bnd: Bound1 ) => bnd.copy( p = sub( bnd.p ) )
   implicit val closedUnderSubstitutionBound2: ClosedUnderSub[Bound2] =
@@ -364,7 +382,7 @@ trait ImplicitInstances {
       case Eql( main, eq, ltr, rwCtx, q ) => Eql( main, eq, ltr, sub( rwCtx ), sub( q ) )
       case AllSk( main, term, skDef, q )  => AllSk( main, sub( term ), skDef, sub( q ) )
       case Def( main, f, q )              => Def( main, sub( f ), sub( q ) )
-      case Ind( main, f, term, cases )    => Ind( main, sub( f ).asInstanceOf[Abs], sub( term ), sub( cases ) )
+      case Ind( main, f, term, cases )    => Ind( main, sub( f ), sub( term ), sub( cases ) )
       case Link( mains, name )            => Link( mains, sub( name ) )
     }
 

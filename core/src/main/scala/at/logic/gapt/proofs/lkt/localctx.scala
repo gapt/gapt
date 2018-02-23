@@ -15,6 +15,8 @@ object BinConn {
 }
 
 case class LocalCtx( hyps: Map[Hyp, Formula], subst: Substitution ) extends ALCtx[LocalCtx] {
+  import ExprSubstWithβ._
+
   def toSequent: HOLSequent = Sequent { for ( ( h, f ) <- hyps ) yield f -> h.polarity }
 
   def updated( hyp: Hyp, f: Formula ): LocalCtx = copy( hyps.updated( hyp, f ) )
@@ -35,7 +37,7 @@ case class LocalCtx( hyps: Map[Hyp, Formula], subst: Substitution ) extends ALCt
   def upS( f1: Formula, f2: Formula ): LC2 = up( subst( f1 ), subst( f2 ) )
 
   def up1_( p: LKt ): LC1 = ( p: @unchecked ) match {
-    case Cut( f, _, _ )     => up( BetaReduction.betaNormalize( subst( f ) ) )
+    case Cut( f, _, _ )     => up( subst( f ) )
     case AndR( main, _, _ ) => up( hyps( main ) match { case BinConn( g, _ ) => g } )
     case NegR( main, _ )    => up( hyps( main ) match { case Neg( g ) => g } )
     case NegL( main, _ )    => up( hyps( main ) match { case Neg( g ) => g } )
@@ -51,7 +53,7 @@ case class LocalCtx( hyps: Map[Hyp, Formula], subst: Substitution ) extends ALCt
           up( instantiate( hyps( p.main ), ev ) )
       }
     case AllSk( main, term, _, _ ) => up( instantiate( hyps( main ), subst( term ) ) )
-    case Def( _, f, _ )            => up( BetaReduction.betaNormalize( subst( f ) ) )
+    case Def( _, f, _ )            => up( subst( f ) )
   }
   def up12_( p: LKt ): LC2 = ( p: @unchecked ) match {
     case AndL( main, _ ) => hyps( main ) match { case BinConn( f, g ) => up( f, g ) }
@@ -62,7 +64,7 @@ case class LocalCtx( hyps: Map[Hyp, Formula], subst: Substitution ) extends ALCt
   }
   def upn_( p: LKt, n: Int ): LCN = ( p: @unchecked ) match {
     case p @ Ind( _, f0, _, cases ) =>
-      val f = subst( f0 ).asInstanceOf[Abs]
+      val f = subst( f0 )
       val c = cases( n )
       if ( c.evs.toSet.intersect( subst.domain ).nonEmpty ) {
         copy( subst = Substitution( subst.map -- c.evs, subst.typeMap ) ).upn_( p, n )
