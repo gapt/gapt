@@ -3,6 +3,7 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.gaptic.{ Lemma, OpenAssumption, allL, andL, axiomLog, cut, impL, insert }
 import at.logic.gapt.proofs.{ Ant, Context, MutableContext, Sequent, SequentMatchers, Suc }
+import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 
 class ReductiveCutEliminationTest extends Specification with SequentMatchers {
@@ -459,6 +460,12 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     val reduction = gradeReduction( proof.asInstanceOf[CutRule] ).get
     proof.conclusion must beMultiSetEqual( reduction.conclusion )
     reduction.subProofAt( 0 :: Nil ) must beAnInstanceOf[OpenAssumption]
+  }
+
+  "issue 684" in {
+    val Some( p ) = Escargot.getLKProof( hof"¬(∀x x = c0 ∧ ∃x f0(x) != f1(x))" )
+    val q = ReductiveCutElimination( p )
+    isCutFree( q ) must_== false
   }
 
   def isCutFree( proof: LKProof ): Boolean =
