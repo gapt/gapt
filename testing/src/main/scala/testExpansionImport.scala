@@ -7,10 +7,11 @@ import at.logic.gapt.proofs.MutableContext
 import at.logic.gapt.proofs.expansion.{ eliminateCutsET, eliminateDefsET }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.eprover.EProver
-import at.logic.gapt.utils.LogHandler
+import at.logic.gapt.utils.{ LogHandler, Logger }
 
 object testExpansionImport extends scala.App {
-  import at.logic.gapt.utils.logger._
+  val logger = Logger( "testExpansionImport" )
+  import logger._
 
   val metricsPrinter = new MetricsPrinter
   LogHandler.current.value = metricsPrinter
@@ -50,7 +51,7 @@ object testExpansionImport extends scala.App {
   } catch {
     case t: Throwable =>
       metric( "status", "exception" )
-      metric( "exception", t.getMessage )
+      metric( "exception", t.getMessage.take( 100 ) )
   }
 
 }

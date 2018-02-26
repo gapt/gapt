@@ -19,7 +19,7 @@ object prop_21 extends TacticsProof {
       def_plus_2: ∀z ∀y (plus(S(z:Nat): Nat, y:Nat): Nat) = S(plus(z, y)),
       def_le_1: ∀y le(#c(Z: Nat), y:Nat),
       def_le_2: ∀z ¬le(S(z:Nat): Nat, #c(Z: Nat)),
-      def_le_3: ∀z ∀x2 ((le(S(z:Nat): Nat, S(x2)) ⊃ le(z, x2)) ∧ (le(z, x2) ⊃ le(S(z), S(x2)))),
+      def_le_3: ∀z ∀x2 ((le(S(z:Nat): Nat, S(x2)) → le(z, x2)) ∧ (le(z, x2) → le(S(z), S(x2)))),
       ax_nat: ∀x ¬Z = S(x)
       :-
       goal: ∀n ∀m le(n:Nat, plus(n, m:Nat): Nat)

@@ -221,7 +221,7 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
     val proof = ( ProofBuilder
       c OpenAssumption( ( "" -> hof"s=t" ) +: ( "" -> hof"A(s)" ) +: Sequent() :+ ( "" -> hof"B(s)" ) )
       u ( ImpRightRule( _, Ant( 1 ), Suc( 0 ) ) )
-      u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), Abs( hov"x", le"(A(x)⊃B(x)):o" ) ) ) qed )
+      u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), Abs( hov"x", le"(A(x)→B(x)):o" ) ) ) qed )
     val ( reduction, weakeningIntro ) = equalityRightReduction( proof.asInstanceOf[EqualityRightRule] ).get
     reduction.conclusion must beMultiSetEqual( proof.conclusion )
     reduction must beAnInstanceOf[ImpRightRule]
@@ -555,7 +555,7 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
       c OpenAssumption( Sequent() :+ ( "" -> hof"A(s)" ) )
       c OpenAssumption( ( "" -> hof"B(s)" ) +: ( "" -> hof"s=t" ) +: Sequent() )
       b ( ImpLeftRule( _, Suc( 0 ), _, Ant( 0 ) ) )
-      u ( EqualityLeftRule( _, Ant( 1 ), Ant( 0 ), Abs( hov"y", le"A(y) ⊃ B(y):o" ) ) ) qed )
+      u ( EqualityLeftRule( _, Ant( 1 ), Ant( 0 ), Abs( hov"y", le"A(y) → B(y):o" ) ) ) qed )
     val ( reduction, weakeningIntro ) = equalityLeftReduction( proof.asInstanceOf[EqualityLeftRule] ).get
     reduction.conclusion must beMultiSetEqual( proof.conclusion )
     reduction must beAnInstanceOf[ContractionLeftRule]
@@ -655,14 +655,16 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
     implicit var context = Context()
     context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     context += hoc"F:nat>o"
+    context += Ti
+    context += hoc"A:i>o"
     val proof = ( ProofBuilder
-      c OpenAssumption( ( "" -> hof"r=t" ) +: Sequent() :+ ( "" -> hof"F(0)" ) )
+      c OpenAssumption( ( "" -> hof"r=(t:i)" ) +: Sequent() :+ ( "" -> hof"F(0)" ) )
       c OpenAssumption( ( "" -> hof"A(r)" ) +: ( "" -> hof"F(x)" ) +: Sequent() :+ ( "" -> hof"F(s(x))" ) )
       b ( ( left, right ) => InductionRule(
         InductionCase( left, hoc"0:nat", Nil, Nil, Suc( 0 ) ) ::
           InductionCase( right, hoc"s:nat>nat", Ant( 1 ) :: Nil, hov"x:nat" :: Nil, Suc( 0 ) ) :: Nil,
         Abs( hov"x:nat", le"F(x)" ), hov"z:nat" ) )
-      u ( EqualityLeftRule( _, Ant( 0 ), Ant( 1 ), Abs( hov"x:i", le"A(x):o" ) ) ) qed )
+      u ( EqualityLeftRule( _, Ant( 0 ), Ant( 1 ), le"^x A(x)".asInstanceOf[Abs] ) ) qed )
     val ( reduction, weakeningIntro ) = equalityLeftReduction( proof.asInstanceOf[EqualityLeftRule] ).get
     reduction.conclusion must beMultiSetEqual( proof.conclusion )
     reduction must beAnInstanceOf[ContractionLeftRule]
@@ -672,14 +674,16 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
     implicit var context = Context()
     context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     context += hoc"F:nat>o"
+    context += Ti
+    context += hoc"A:i>o"
     val proof = ( ProofBuilder
-      c OpenAssumption( ( "" -> hof"r=t" ) +: Sequent() :+ ( "" -> hof"F(0)" ) )
+      c OpenAssumption( ( "" -> hof"r=(t:i)" ) +: Sequent() :+ ( "" -> hof"F(0)" ) )
       c OpenAssumption( ( "" -> hof"F(x)" ) +: Sequent() :+ ( "" -> hof"F(s(x))" ) :+ ( "" -> hof"A(r)" ) )
       b ( ( left, right ) => InductionRule(
         InductionCase( left, hoc"0:nat", Nil, Nil, Suc( 0 ) ) ::
           InductionCase( right, hoc"s:nat>nat", Ant( 0 ) :: Nil, hov"x:nat" :: Nil, Suc( 0 ) ) :: Nil,
         Abs( hov"x:nat", le"F(x)" ), hov"z:nat" ) )
-      u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), Abs( hov"x:i", le"A(x):o" ) ) ) qed )
+      u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), le"^x A(x)".asInstanceOf[Abs] ) ) qed )
     val ( reduction, weakeningIntro ) = equalityRightReduction( proof.asInstanceOf[EqualityRightRule] ).get
     reduction.conclusion must beMultiSetEqual( proof.conclusion )
     reduction must beAnInstanceOf[ContractionLeftRule]

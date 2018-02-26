@@ -9,7 +9,9 @@ import at.logic.gapt.proofs.lk._
 
 import scala.annotation.tailrec
 import EquationVerifier._
-import at.logic.gapt.utils.logger._
+import at.logic.gapt.utils.Logger
+
+private object LLKLogger extends Logger( "llk" ); import LLKLogger._
 
 object LLKFormatter {
   /* formats a sequent */

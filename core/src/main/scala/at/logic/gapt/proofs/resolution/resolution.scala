@@ -74,7 +74,7 @@ trait ResolutionProof extends SequentProof[Formula, ResolutionProof] with DagPro
   /**
    * All definitions introduced by any subproof.
    *
-   * @throws Exception if inconsistent definitions are used
+   * throws java.lang.Exception if inconsistent definitions are used
    */
   def definitions = {
     val builder = mutable.Map[HOLAtomConst, Expr]()

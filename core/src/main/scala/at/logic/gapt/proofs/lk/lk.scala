@@ -174,6 +174,8 @@ case class ProofLink( referencedProof: Expr, referencedSequent: Sequent[Formula]
 object ProofLink {
   def apply( referencedProof: Expr )( implicit ctx: Context ): ProofLink =
     ProofLink( referencedProof, ctx.get[Context.ProofNames].lookup( referencedProof ).get )
+  def apply( name: String )( implicit ctx: Context ): ProofLink =
+    ProofLink( ctx.get[Context.ProofNames].names( name )._1 )
 }
 
 /**
@@ -872,7 +874,7 @@ case class ImpLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof
 
   def auxIndices = Seq( Seq( aux1 ), Seq( aux2 ) )
 
-  override def name = "\u2283:l"
+  override def name = "→:l"
 
   override def mainFormulaSequent = mainFormula +: Sequent()
 }
@@ -942,7 +944,7 @@ case class ImpRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInd
 
   override def auxIndices = Seq( Seq( aux1, aux2 ) )
 
-  override def name = "\u2283:r"
+  override def name = "→:r"
 
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
@@ -1492,7 +1494,7 @@ object ExistsRightRule extends ConvenienceConstructor( "ExistsRightRule" ) {
 }
 
 object WeakQuantifierRule {
-  def unapply( p: LKProof ) = p match {
+  def unapply( p: UnaryLKProof ) = p match {
     case ForallLeftRule( subProof, aux, f, t, v ) =>
       Some( ( subProof, aux, f, t, v, false ) )
     case ExistsRightRule( subProof, aux, f, t, v ) =>
@@ -1502,7 +1504,7 @@ object WeakQuantifierRule {
 }
 
 object StrongQuantifierRule {
-  def unapply( p: LKProof ) = p match {
+  def unapply( p: UnaryLKProof ) = p match {
     case ExistsLeftRule( subProof, aux, eigen, quant ) =>
       Some( ( subProof, aux, eigen, quant, false ) )
     case ForallRightRule( subProof, aux, eigen, quant ) =>
@@ -1864,10 +1866,11 @@ abstract class DefinitionRule extends UnaryLKProof with CommonRule {
 object DefinitionRule extends ConvenienceConstructor( "DefinitionRule" ) {
   def apply( subProof: LKProof, aux: SequentIndex, main: Formula ): LKProof =
     apply( subProof, aux, main, aux.polarity )
-  def apply( subProof: LKProof, aux: IndexOrFormula, main: Formula, polarity: Polarity ): LKProof = polarity match {
-    case Polarity.InSuccedent  => DefinitionRightRule( subProof, aux, main )
-    case Polarity.InAntecedent => DefinitionLeftRule( subProof, aux, main )
-  }
+  def apply( subProof: LKProof, aux: IndexOrFormula, main: Formula, polarity: Polarity ): LKProof =
+    if ( polarity.inSuc )
+      DefinitionRightRule( subProof, aux, main )
+    else
+      DefinitionLeftRule( subProof, aux, main )
 }
 
 /**

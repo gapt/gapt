@@ -27,10 +27,10 @@ object prop_39 extends TacticsProof {
           def_equal_1: equal(#c(Z: Nat), #c(Z: Nat)): o,
           def_equal_2: ∀z ¬equal(#c(Z: Nat), S(z:Nat): Nat),
           def_equal_3: ∀x2 ¬equal(S(x2:Nat): Nat, #c(Z: Nat)),
-          def_equal_4: ∀x2 ∀y2 ((equal(S(x2:Nat): Nat, S(y2)) ⊃ equal(x2, y2)) ∧ (equal(x2, y2) ⊃ equal(S(x2), S(y2)))),
+          def_equal_4: ∀x2 ∀y2 ((equal(S(x2:Nat): Nat, S(y2)) → equal(x2, y2)) ∧ (equal(x2, y2) → equal(S(x2), S(y2)))),
           def_count_1: ∀x (count(x:Nat, nil:list): Nat) = #c(Z: Nat),
-          def_count_2: ∀x ∀z ∀ys (¬equal(x:Nat, z:Nat) ⊃ (count(x, cons(z, ys:list): list): Nat) = count(x, ys)),
-          def_count_3: ∀x ∀z ∀ys (equal(x:Nat, z:Nat) ⊃ (count(x, cons(z, ys:list): list): Nat) = S(count(x, ys))),
+          def_count_2: ∀x ∀z ∀ys (¬equal(x:Nat, z:Nat) → (count(x, cons(z, ys:list): list): Nat) = count(x, ys)),
+          def_count_3: ∀x ∀z ∀ys (equal(x:Nat, z:Nat) → (count(x, cons(z, ys:list): list): Nat) = S(count(x, ys))),
           ax_nat: ∀y0 ¬#c(Z: Nat) = S(y0:Nat),
           ax_list: ∀y0 ∀y1 ¬(nil:list) = cons(y0:Nat, y1:list)
           :-

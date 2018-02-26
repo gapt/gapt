@@ -18,9 +18,10 @@ object Prover9TermParserLadrStyle extends Prover9TermParserA {
 }
 
 /**
- * Parser for first order formulas in the prover 9 format.
+ * Parser for first order formulas in the prover9 format.
  *
  * See [[http://www.cs.unm.edu/~mccune/mace4/manual/2009-11A/syntax.html]]
+ * {{{
  * Right associative, infix operators: &, |, all, exists
  * Infix operators: =, !=, <, >, , <=, >=, ->, <-, <->
  * Operator precedence (higher up in the list means binds weaker i.e. operator is closer to the root):
@@ -31,7 +32,7 @@ object Prover9TermParserLadrStyle extends Prover9TermParserA {
  * Operators missing: +,*,@,/,\, /\, \/,'
  * Unhandled cases prover9 accepts (extended as exceptions are encountered):
  *    (all 1 P(1))
- *
+ * }}}
  */
 trait Prover9TermParserA extends RegexParsers with PackratParsers {
   /* these two rules are abstract since the variable style decides the regexp for a variable */

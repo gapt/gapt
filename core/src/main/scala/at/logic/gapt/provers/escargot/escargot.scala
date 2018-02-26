@@ -6,7 +6,7 @@ import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables }
-import at.logic.gapt.provers.escargot.impl.{ EscargotState, StandardInferences }
+import at.logic.gapt.provers.escargot.impl.{ EscargotLogger, EscargotState, StandardInferences }
 import at.logic.gapt.utils.{ LogHandler, Maybe }
 import ammonite.ops._
 
@@ -64,14 +64,14 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
   }
 
   def main( args: Array[String] ): Unit = {
-    LogHandler.current.value = LogHandler.silent
+    LogHandler.current.value = LogHandler.tstp
 
     val tptpInputFile = args.toSeq match {
       case Seq() =>
         println( "Usage: escargot [-v] tptp-problem.p" )
         sys.exit( 1 )
       case Seq( "-v", file ) =>
-        LogHandler.current.value = LogHandler.tstpVerbose
+        LogHandler.verbosity.value = LogHandler.verbosity.value.increase( Seq( EscargotLogger ), 2 )
         file
       case Seq( file ) => file
     }
@@ -89,6 +89,7 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
   }
 }
 object NonSplittingEscargot extends Escargot( splitting = false, equality = true, propositional = false )
+object QfUfEscargot extends Escargot( splitting = true, propositional = true, equality = true )
 
 class Escargot( splitting: Boolean, equality: Boolean, propositional: Boolean ) extends ResolutionProver {
   override def getResolutionProof( cnf: Traversable[HOLClause] )( implicit ctx0: Maybe[MutableContext] ): Option[ResolutionProof] = {

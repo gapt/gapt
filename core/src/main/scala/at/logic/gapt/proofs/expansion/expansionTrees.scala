@@ -168,7 +168,7 @@ case class ETOr( child1: ExpansionTree, child2: ExpansionTree ) extends BinaryEx
 }
 
 /**
- * A tree representing A ⊃ B.
+ * A tree representing A → B.
  * @param child1 A tree representing A.
  * @param child2 A tree representing B.
  */
@@ -180,7 +180,7 @@ case class ETImp( child1: ExpansionTree, child2: ExpansionTree ) extends BinaryE
 }
 
 object ETCut {
-  val cutAxiom = hof"∀X (X ⊃ X)"
+  val cutAxiom = hof"∀X (X → X)"
   def apply( child1: ExpansionTree, child2: ExpansionTree ): ExpansionTree =
     ETWeakQuantifier.withMerge( cutAxiom, List( child1.shallow -> ETImp( child1, child2 ) ) )
   def apply( cuts: Iterable[ETImp] ): ExpansionTree =
@@ -207,15 +207,15 @@ object ETInduction {
   case class Case( constr: Const, evs: Seq[Var], auxiliary: ExpansionSequent )
   case class Induction( constructorsSteps: Seq[Case], hyps: ExpansionTree, suc: ExpansionTree )
 
-  def indAxioms( implicit ctx: Context ) =
+  def indAxioms( implicit ctx: Context ): Map[Formula, Vector[Const]] =
     ctx.get[StructurallyInductiveTypes].constructors.map {
       case ( s, cs ) => ( inductionPrinciple( TBase( s, cs.head.params ), cs ), cs )
     }
 
   def isInductionAxiomExpansion( tree: ExpansionTree )( implicit ctx: Context ): Boolean =
-    indAxioms.contains( tree.shallow )
+    indAxioms.exists { case ( p, _ ) => syntacticMatching( p, tree.shallow ).isDefined }
 
-  def unapply( et: ExpansionTree )( implicit ctx: Context ) = {
+  def unapply( et: ExpansionTree )( implicit ctx: Context ): Option[Set[Induction]] = {
 
     def getETs( et: ExpansionTree, sz: Int ): Seq[ExpansionTree] = {
       et match {
@@ -236,23 +236,21 @@ object ETInduction {
         case ( constr, indCase ) =>
           val FunctionType( indTy, argTypes ) = constr.ty
           val ( ch, evs ) = getEvs( indCase, argTypes.length )
-          val ets = getETs( ch, argTypes.filter( _ == indTy ).length )
+          val ets = getETs( ch, argTypes.count( _ == indTy ) )
           val ( hyps, suc ) = ets.splitAt( ets.length - 1 )
           Case( constr, evs, ExpansionSequent( hyps, suc ) )
       }
     }
 
-    if ( isInductionAxiomExpansion( et ) ) {
-      val constrs = indAxioms.get( et.shallow ).get
-      Some {
-        for {
-          sequent <- et( HOLPosition( 1 ) )
-          hyps <- sequent( HOLPosition( 1 ) )
-          suc <- sequent( HOLPosition( 2 ) )
-        } yield Induction( toCase( hyps, constrs ), hyps, suc )
-      }
-    } else
-      None
+    ( for {
+      ( p0, constrs0 ) <- indAxioms
+      subst <- syntacticMatching( p0, et.shallow )
+      constrs = subst( constrs0 )
+    } yield for {
+      sequent <- et( HOLPosition( 1 ) )
+      hyps <- sequent( HOLPosition( 1 ) )
+      suc <- sequent( HOLPosition( 2 ) )
+    } yield Induction( toCase( hyps, constrs ), hyps, suc ) ).headOption
   }
 }
 
@@ -334,9 +332,9 @@ object ETWeakQuantifierBlock {
         case ETWeakening( _, _ ) =>
       }
 
-    val numberQuants = ( et.polarity, et.shallow ) match {
-      case ( Polarity.InSuccedent, Ex.Block( vs, _ ) )   => vs.size
-      case ( Polarity.InAntecedent, All.Block( vs, _ ) ) => vs.size
+    val numberQuants = et.shallow match {
+      case Ex.Block( vs, _ ) if et.polarity.inSuc  => vs.size
+      case All.Block( vs, _ ) if et.polarity.inAnt => vs.size
     }
 
     walk( et, Seq(), numberQuants )

@@ -123,8 +123,6 @@ class ReductiveCutElimination {
    * Transforms a proof by applying a reduction until some specified criterion is satisfied.
    *
    * @param proof The proof to which the transformation is applied.
-   * @param terminateReduction A predicate which decides on the current global proof whether the transformation
-   *                           has reached its final state.
    * @param reduction A local reduction function.
    * @param cleanStructRules Indicates whether structural rules are cleaned after each step.
    * @return A proof that is obtained from the given proof by applying the reduction function iteratively and
@@ -132,28 +130,29 @@ class ReductiveCutElimination {
    *         satisfied.
    */
   def apply(
-    proof:              LKProof,
-    terminateReduction: LKProof => Boolean,
-    reduction:          LKProof => Option[( LKProof, SequentConnector )],
-    cleanStructRules:   Boolean                                          = true ): LKProof = {
+    proof:            LKProof,
+    reduction:        LKProof => Option[( LKProof, SequentConnector )],
+    cleanStructRules: Boolean                                          = true ): LKProof = {
     steps += proof
     var pr = proof
+    var didReduce = false
     do {
-      val p = recursor( pr, reduction )
+      didReduce = false
+      val p = new LKVisitor[Unit] {
+        override def recurse( proof: LKProof, u: Unit ): ( LKProof, SequentConnector ) = {
+          reduction( proof ) match {
+            case Some( ( proof2, conn2 ) ) =>
+              didReduce = true
+              ( proof2, conn2 )
+            case None => super.recurse( proof, u )
+          }
+        }
+      }.apply( pr, () )
       pr = if ( cleanStructRules ) cleanStructuralRules( p ) else p
       if ( recordSteps ) steps += pr
-    } while ( !terminateReduction( pr ) )
+    } while ( didReduce )
     if ( !recordSteps ) steps += pr
     pr
-  }
-
-  /**
-   * Applies a reduction function simultaneously to every lowermost redex in the given proof.
-   */
-  private object recursor extends LKVisitor[LKProof => Option[( LKProof, SequentConnector )]] {
-    override protected def recurse( proof: LKProof, reduction: LKProof => Option[( LKProof, SequentConnector )] ) = {
-      reduction( proof ) getOrElse super.recurse( proof, reduction )
-    }
   }
 
   /**
@@ -177,9 +176,7 @@ class ReductiveCutElimination {
       case _ => None
     }
 
-    def terminateReduction( proof: LKProof ): Boolean = isCutFree( proof )
-
-    this( proof, terminateReduction, reduction, cleanStructRules )
+    this( proof, reduction, cleanStructRules )
   }
 
   /**
@@ -212,8 +209,7 @@ class ReductiveCutElimination {
    */
   def unfoldInductions( proof: LKProof, cleanStructRules: Boolean = true )( implicit ctx: Context ): LKProof = {
 
-    /**
-     * Reduces a given induction inference.
+    /* Reduces a given induction inference.
      * @param proof The induction to be reduced
      * @return A proof and a sequent connector obtained by applying an induction unfolding, or None
      *         if the inference rule is not an induction inference with induction term in constructor form.
@@ -224,14 +220,7 @@ class ReductiveCutElimination {
       case _ => None
     }
 
-    /**
-     * @return Returns true if and only if there is no more induction inference to be unfolded.
-     */
-    def terminateReduction( global: LKProof ): Boolean = {
-      !global.subProofs.exists( reduction( _ ).nonEmpty )
-    }
-
-    this( proof, terminateReduction, reduction, cleanStructRules )
+    this( proof, reduction, cleanStructRules )
   }
 
   /**
@@ -245,8 +234,6 @@ class ReductiveCutElimination {
    */
   def eliminateToACNFByUppermost( proof: LKProof, cleanStructRules: Boolean = true ): LKProof = {
 
-    def terminateReduction( proof: LKProof ): Boolean = isACNF( proof )
-
     def reduction( proof: LKProof ): Option[( LKProof, SequentConnector )] = proof match {
       case cut @ CutRule( lsb, l, rsb, _ ) if !isAtom( lsb.endSequent( l ) ) && isACNF( lsb ) && isACNF( rsb ) =>
         if ( isAtom( lsb.endSequent( l ) ) )
@@ -258,7 +245,7 @@ class ReductiveCutElimination {
             .orElse( rightRankReduction.applyWithSequentConnector( cut ) )
       case _ => None
     }
-    this( proof, terminateReduction, reduction, cleanStructRules )
+    this( proof, reduction, cleanStructRules )
   }
   /**
    * This algorithm implements a generalization of the Gentzen method which
@@ -289,9 +276,7 @@ class ReductiveCutElimination {
       case _ => None
     }
 
-    def terminateReduction( proof: LKProof ): Boolean = isACNFTop( proof )
-
-    this( pushAllWeakeningsToLeaves( proof ), terminateReduction, reduction, cleanStructRules )
+    this( pushAllWeakeningsToLeaves( proof ), reduction, cleanStructRules )
   }
 }
 
@@ -895,7 +880,7 @@ object inductionUnfoldingReduction {
   /**
    * Tries to apply the reduction.
    *
-   * @param induction See [[inductionUnfoldingReduction.apply(induction: InductionRule)]]
+   * @param induction See `inductionUnfoldingReduction$.apply(induction:InductionRule)(ctx:Context):Option[LKProof]`
    * @param ctx Defines constants, types, etc.
    * @return If the induction rule could be unfolded a proof of the same end-sequent and a sequent connector
    *         is returned, otherwise None is returned.
@@ -908,7 +893,7 @@ object inductionUnfoldingReduction {
    * @param proof The induction unfolding reduction is tried to applied to the last inference of this proof.
    * @param ctx Defines constants, types, etc.
    * @return None if the proof does not end with an induction inference, otherwise see
-   *         [[inductionUnfoldingReduction.apply(induction: InductionRule)]].
+   *         `inductionUnfoldingReduction.apply(InductionRule)(Context): Option[LKProof]`.
    */
   def apply( proof: LKProof )( implicit ctx: Context ): Option[LKProof] = proof match {
     case ind @ InductionRule( _, _, _ ) => apply( ind )

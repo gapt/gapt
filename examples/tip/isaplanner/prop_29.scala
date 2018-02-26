@@ -28,12 +28,12 @@ object prop_29 extends TacticsProof {
       def_equal_1: equal(Z, Z),
       def_equal_2: ∀x ¬equal(Z, S(x)),
       def_equal_3: ∀x ¬equal(S(x), Z),
-      def_equal_4: ∀x ∀y ((equal(S(x), S(y)) ⊃ equal(x, y)) ∧ (equal(x, y) ⊃ equal(S(x), S(y)))),
+      def_equal_4: ∀x ∀y ((equal(S(x), S(y)) → equal(x, y)) ∧ (equal(x, y) → equal(S(x), S(y)))),
       def_ins_1: ∀x (ins1(x:Nat, nil:list): list) = cons(x, nil),
-      def_ins_2: ∀x ∀z ∀xs (¬equal(x:Nat, z:Nat) ⊃ (ins1(x, cons(z, xs:list): list): list) = cons(z, ins1(x, xs))),
-      def_ins_3: ∀x ∀z ∀xs (equal(x:Nat, z:Nat) ⊃ (ins1(x, cons(z, xs:list): list): list) = cons(z, xs)),
+      def_ins_2: ∀x ∀z ∀xs (¬equal(x:Nat, z:Nat) → (ins1(x, cons(z, xs:list): list): list) = cons(z, ins1(x, xs))),
+      def_ins_3: ∀x ∀z ∀xs (equal(x:Nat, z:Nat) → (ins1(x, cons(z, xs:list): list): list) = cons(z, xs)),
       def_elem_1: ∀x ¬elem(x:Nat, nil:list),
-      def_elem_2: ∀x ∀z ∀xs ((elem(x:Nat, cons(z:Nat, xs:list): list) ⊃ equal(x, z) ∨ elem(x, xs)) ∧ (equal(x, z) ∨ elem(x, xs) ⊃ elem(x, cons(z, xs)))),
+      def_elem_2: ∀x ∀z ∀xs ((elem(x:Nat, cons(z:Nat, xs:list): list) → equal(x, z) ∨ elem(x, xs)) ∧ (equal(x, z) ∨ elem(x, xs) → elem(x, cons(z, xs)))),
       ax_nat: ∀x ¬Z = S(x),
       ax_list: ∀y0 ∀y1 ¬(nil:list) = cons(y0:Nat, y1:list)
       :-

@@ -5,13 +5,17 @@ import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.dimacs._
 import at.logic.gapt.models.PropositionalModel
 import at.logic.gapt.proofs.HOLClause
-import at.logic.gapt.utils.logger
-import at.logic.gapt.utils.logger._
+import at.logic.gapt.utils.Logger
+
+object MaxSATSolver {
+  val logger = Logger( "maxsat" )
+}
 
 /**
  * Solver for Weighted Partial MaxSAT problems.
  */
 abstract class MaxSATSolver {
+  import MaxSATSolver.logger._
 
   /**
    * Solves a weighted partial MaxSAT problem.
@@ -41,7 +45,7 @@ abstract class MaxSATSolver {
    */
   def solve( hard: Formula, soft: TraversableOnce[( Formula, Int )] ): Option[PropositionalModel] = {
     solve(
-      logger.time( "tseitin" ) { fastStructuralCNF()( hard )._1 },
+      time( "tseitin" ) { fastStructuralCNF()( hard )._1 },
       soft.map( s => CNFp( s._1 ).map( f => ( f, s._2 ) ) ).flatten )
   }
 }

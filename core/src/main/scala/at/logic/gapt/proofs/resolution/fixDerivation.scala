@@ -5,7 +5,6 @@ import at.logic.gapt.expr.hol.CNFn
 import at.logic.gapt.proofs._
 import at.logic.gapt.provers.escargot.{ Escargot, NonSplittingEscargot }
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables }
-import at.logic.gapt.utils.logger._
 
 import scala.collection.immutable.HashMap
 

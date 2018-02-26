@@ -3,11 +3,10 @@ package at.logic.gapt.grammars
 import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature, MapBabelSignature }
+import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature, MapBabelSignature, Precedence }
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
-import at.logic.gapt.utils.Doc
-import at.logic.gapt.utils.logger._
+import at.logic.gapt.utils.{ Doc, Logger }
 
 import scala.collection.mutable
 
@@ -35,17 +34,17 @@ private class RecursionSchemeExporter( unicode: Boolean, rs: RecursionScheme )
   def export(): String = {
     val nonTerminals = rs.startSymbol +: ( rs.nonTerminals - rs.startSymbol ).toList.sortBy { _.name }
     val ntDecl = group( "Non-terminals:" <> nest( line <> csep(
-      nonTerminals map { show( _, false, Set(), Map(), prio.max )._1 } ) ) )
+      nonTerminals map { show( _, false, Set(), Map() )._1.inPrec( 0 ) } ) ) )
 
     val tDecl = group( "Terminals:" <> nest( line <> csep(
-      rs.terminals.toList.sortBy { _.name } map { show( _, false, Set(), Map(), prio.max )._1 } ) ) )
+      rs.terminals.toList.sortBy { _.name } map { show( _, false, Set(), Map() )._1.inPrec( 0 ) } ) ) )
 
     val knownTypes = ( rs.nonTerminals union rs.terminals ).map { c => c.name -> c }.toMap
 
     val rules = group( stack( rs.rules.toList sortBy { _.toString } map {
       case Rule( lhs, rhs ) =>
-        group( show( lhs, false, Set(), knownTypes, prio.impl )._1 </> nest( "→" </>
-          show( rhs, true, Set(), knownTypes, prio.impl )._1 ) )
+        group( show( lhs, false, Set(), knownTypes )._1.inPrec( Precedence.impl ) </> nest( "→" </>
+          show( rhs, true, Set(), knownTypes )._1.inPrec( Precedence.impl ) ) )
     } ) )
 
     group( ntDecl </> tDecl <> line </> rules <> line ).render( lineWidth )
@@ -215,6 +214,8 @@ class RecSchemGenLangFormula(
 }
 
 object minimizeRecursionScheme {
+  val logger = Logger( "minimizeRecursionScheme" ); import logger._
+
   def apply( recSchem: RecursionScheme, targets: Traversable[( Expr, Expr )],
              targetFilter: TargetFilter.Type = TargetFilter.default,
              solver:       MaxSATSolver      = bestAvailableMaxSatSolver,

@@ -5,7 +5,7 @@ import at.logic.gapt.formats.babel.BabelSignature
 import language.experimental.macros
 
 trait LemmaHelper[T] {
-  def apply[U]( tacticsProof: => Tactical[U] ): T = macro LemmaMacros.helperImpl
+  def apply[U]( tacticsProof: => Tactic[U] ): T = macro LemmaMacros.helperImpl
 
   // Implementations need to define a function with the following signature:
   // (Overloading is implemented ad-hoc since we allow subclasses to add implicit arguments.)
@@ -15,7 +15,7 @@ trait LemmaHelper[T] {
 
 object LemmaMacros {
 
-  def use[T]( proofState: ProofState, tactical: Tactical[T] )( implicit sig: BabelSignature ): ProofState =
+  def use[T]( proofState: ProofState, tactical: Tactic[T] )( implicit sig: BabelSignature ): ProofState =
     ( try tactical( proofState ) catch {
       case t: Throwable =>
         throw new TacticFailureException(
@@ -25,7 +25,7 @@ object LemmaMacros {
     } ) match {
       case Right( ( _, newState ) ) => newState
       case Left( error ) =>
-        throw new TacticFailureException( error.toSigRelativeString )
+        throw TacticFailureFailureException( error.defaultState( proofState ) )
     }
 
   import reflect.macros._

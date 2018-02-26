@@ -2,12 +2,15 @@ package at.logic.gapt.proofs.gaptic
 
 import tactics._
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.babel.BabelSignature
+import at.logic.gapt.proofs.Context.ProofNames
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.prover9.Prover9
-import at.logic.gapt.provers.viper.aip.axioms.StandardInductionAxioms
+import at.logic.gapt.provers.simp.SimpTactic
+import at.logic.gapt.provers.viper.aip.axioms.{ GeneralInductionAxioms, StandardInductionAxioms }
 import at.logic.gapt.provers.viper.grammars.TreeGrammarInductionTactic
 
 /**
@@ -51,7 +54,7 @@ trait TacticCommands {
   /**
    * Attempts to apply the tactics `axiomTop`, `axiomBot`, `axiomRefl`, and `axiomLog`.
    */
-  def trivial: Tactical[Unit] = Tactical { axiomTop orElse axiomBot orElse axiomRefl orElse axiomLog }.
+  def trivial: Tactic[Unit] = Tactic { axiomTop orElse axiomBot orElse axiomRefl orElse axiomLog }.
     cut( "Not a valid initial sequent" )
 
   /**
@@ -486,7 +489,7 @@ trait TacticCommands {
    * @param proof The proof to insert as a lemma by a cut.
    * @param label the label for φ in the subgoal
    */
-  def include( label: String, proof: LKProof ): Tactical[Unit] = Tactical {
+  def include( label: String, proof: LKProof ): Tactic[Unit] = Tactic {
     for {
       goal <- currentGoal
       diff = proof.conclusion diff goal.conclusion
@@ -496,16 +499,20 @@ trait TacticCommands {
     } yield ()
   }
 
+  def include( labels: String* )( implicit ctx: Context ): Tactic[Unit] = Tactic(
+    Tactic.sequence( for ( l <- labels ) yield include( l, ProofLink( l ) ) )
+      andThen TacticMonad.pure( () ) )
+
   /**
    * Solves the current subgoal as a first-order consequence of the background theory. This
    * closes the goal.
    * @param ctx A [[at.logic.gapt.proofs.Context]]. The current subgoal must be contained in its background theory.
    */
-  def foTheory( implicit ctx: Context ): Tactical[Unit] = Tactical {
+  def foTheory( implicit ctx: Context ): Tactic[Unit] = Tactic {
     for {
       goal <- currentGoal
       theoryAxiom <- FOTheoryMacroRule.option( goal.conclusion collect { case a: Atom => a } ).
-        toTactical( "does not follow from theory" )
+        toTactic( "does not follow from theory" )
       _ <- insert( theoryAxiom )
     } yield ()
   }
@@ -515,11 +522,11 @@ trait TacticCommands {
    * closes the goal.
    * @param ctx A [[at.logic.gapt.proofs.Context]]. The current subgoal must be contained in its background theory.
    */
-  def theory( implicit ctx: Context ): Tactical[Unit] = Tactical {
+  def theory( implicit ctx: Context ): Tactic[Unit] = Tactic {
     for {
       goal <- currentGoal
       proofLinkName <- ctx.get[Context.ProofNames].find( goal.conclusion ).
-        toTactical( "does not follow from theory" )
+        toTactic( "does not follow from theory" )
       _ <- insert( ProofLink( proofLinkName ) )
     } yield ()
   }
@@ -528,13 +535,13 @@ trait TacticCommands {
    * Repeats a tactical until it fails.
    * @param t A tactical.
    */
-  def repeat[T]( t: Tactical[T] ) = RepeatTactic( t )
+  def repeat[T]( t: Tactic[T] ) = RepeatTactic( t )
 
   /**
    * Leaves a hole in the current proof by inserting a dummy proof of the empty sequent.
    */
   @deprecated( "Proof not finished!", since = "the dawn of time" )
-  def sorry: Tactical[Unit] = Tactical {
+  def sorry: Tactic[Unit] = Tactic {
     for {
       goal <- currentGoal
       _ <- insert( ProofLink( foc"sorry", goal.conclusion ) )
@@ -544,8 +551,8 @@ trait TacticCommands {
   /**
    * Tactic that immediately fails.
    */
-  def fail = new Tactical[Nothing] {
-    def apply( proofState: ProofState ) = Left( TacticalFailure( this, Some( proofState ), "explicit fail" ) )
+  def fail = new Tactic[Nothing] {
+    def apply( proofState: ProofState ) = Left( TacticFailure( this, Some( proofState ), "explicit fail" ) )
     override def toString = "fail"
   }
 
@@ -556,11 +563,11 @@ trait TacticCommands {
    * - `¬:l` and `¬:r`
    * - `∧:l`
    * - `∨:r`
-   * - `⊃:r`
+   * - `→:r`
    * - `∀:r`
    * - `∃:l`
    */
-  def decompose: Tactical[Unit] = Tactical {
+  def decompose: Tactic[Unit] = Tactic {
     repeat {
       NegLeftTactic( AnyFormula ) orElse NegRightTactic( AnyFormula ) orElse
         AndLeftTactic( AnyFormula ) orElse OrRightTactic( AnyFormula ) orElse ImpRightTactic( AnyFormula ) orElse
@@ -568,7 +575,7 @@ trait TacticCommands {
     }
   }
 
-  def destruct( label: String ): Tactical[Any] = Tactical {
+  def destruct( label: String ): Tactic[Any] = Tactic {
     allR( label ) orElse exL( label ) orElse
       andL( label ) orElse andR( label ) orElse
       orL( label ) orElse orR( label ) orElse
@@ -604,10 +611,10 @@ trait TacticCommands {
    * @param ls The labels `L,,1,,`,...,`,,Ln,,`.
    *
    */
-  def forget( ls: String* ): Tactical[Unit] =
-    Tactical( Tactical.sequence( ls map { label => WeakeningLeftTactic( label ) orElse WeakeningRightTactic( label ) } ).map( _ => () ) )
+  def forget( ls: String* ): Tactic[Unit] =
+    Tactic( forget( ( l, _ ) => ls.contains( l ) ) )
 
-  def forget( pred: ( String, Formula ) => Boolean ): Tactical[Unit] = Tactical {
+  def forget( pred: ( String, Formula ) => Boolean ): Tactic[Unit] = Tactic {
     for {
       goal <- currentGoal
       _ <- insert( OpenAssumption( goal.labelledSequent.filterNot( lf => pred( lf._1, lf._2 ) ) ) )
@@ -618,13 +625,13 @@ trait TacticCommands {
    * Moves the specified goal to the front of the goal list.
    * @param indexOfSubGoal The index of the goal.
    */
-  def focus( indexOfSubGoal: Int ) = FocusTactical( Left( indexOfSubGoal ) )
+  def focus( indexOfSubGoal: Int ) = FocusTactic( Left( indexOfSubGoal ) )
 
   /**
    * Moves the specified goal to the front of the goal list.
    * @param indexOfSubGoal The index of the goal.
    */
-  def focus( indexOfSubGoal: OpenAssumptionIndex ) = FocusTactical( Right( indexOfSubGoal ) )
+  def focus( indexOfSubGoal: OpenAssumptionIndex ) = FocusTactic( Right( indexOfSubGoal ) )
 
   /**
    * Changes the provided label. Syntax:
@@ -668,25 +675,24 @@ trait TacticCommands {
   /**
    * Does nothing.
    */
-  def skip: Tactical[Unit] = Tactical { proofState => Right( ( (), proofState ) ) }
+  def skip: Tactic[Unit] = Tactic.pure( () ).aka( "skip" )
 
-  def now: Tactical[Unit] = new Tactical[Unit] {
+  def now: Tactic[Unit] = new Tactic[Unit] {
     override def apply( proofState: ProofState ) =
       if ( proofState.isFinished ) Right( () -> proofState )
-      else Left( TacticalFailure( this, Some( proofState ), "not finished" ) )
+      else Left( TacticFailure( this, Some( proofState ), "not finished" ) )
     override def toString: String = "now"
   }
 
   /**
    * Retrieves the current subgoal.
    */
-  def currentGoal: Tactic[OpenAssumption] = new Tactic[OpenAssumption] {
-    def apply( goal: OpenAssumption ) = Right( goal -> goal )
-    override def toString = "currentGoal"
+  case object currentGoal extends Tactical1[OpenAssumption] {
+    def apply( goal: OpenAssumption ) = Tactic.pure( goal )
   }
 
   /** Instantiates prenex quantifiers to obtain a formula in a given polarity. */
-  def haveInstance( formula: Formula, polarity: Polarity ): Tactical[String] = Tactical {
+  def haveInstance( formula: Formula, polarity: Polarity ): Tactic[String] = Tactic {
     def findInstances( labelledSequent: Sequent[( String, Formula )] ): Seq[( String, Seq[Expr] )] = {
       val quantifiedFormulas = labelledSequent.zipWithIndex.collect {
         case ( ( l, Ex.Block( vs, m ) ), i ) if i.isSuc && polarity.inSuc  => ( l, vs, m )
@@ -701,28 +707,76 @@ trait TacticCommands {
     for {
       goal <- currentGoal
       inst <- findInstances( goal.labelledSequent ).headOption.
-        toTactical( s"Could not find instance $formula in " + ( if ( polarity.inSuc ) "succedent" else "antecedent" ) )
+        toTactic( s"Could not find instance $formula in " + ( if ( polarity.inSuc ) "succedent" else "antecedent" ) )
       ( label, terms ) = inst
-      newLabel <- if ( terms.isEmpty ) TacticalMonad.pure( label ) else if ( polarity.inSuc ) exR( label, terms: _* ) else allL( label, terms: _* )
+      newLabel <- if ( terms.isEmpty ) TacticMonad.pure( label ) else if ( polarity.inSuc ) exR( label, terms: _* ) else allL( label, terms: _* )
     } yield newLabel
   }
 
-  def haveInstances( sequent: HOLSequent ): Tactical[Sequent[String]] =
-    Tactical.sequence( for ( ( f, i ) <- sequent.zipWithIndex ) yield haveInstance( f, i.polarity ) )
+  def haveInstances( sequent: HOLSequent ): Tactic[Sequent[String]] =
+    Tactic.sequence( for ( ( f, i ) <- sequent.zipWithIndex ) yield haveInstance( f, i.polarity ) )
 
   def treeGrammarInduction( implicit ctx: Context ): TreeGrammarInductionTactic = new TreeGrammarInductionTactic
 
   def analyticInduction( implicit ctx: MutableContext ) = AnalyticInductionTactic(
     StandardInductionAxioms(), Escargot )
 
-  def introUnivsExcept( i: Int ): Tactical[Unit] = Tactical {
+  def anaInd( implicit ctx: Context ): Tactic[Unit] = {
+    implicit val mutCtx = ctx.newMutable
+    repeat( allR ) andThen AnalyticInductionTactic( StandardInductionAxioms(), Escargot.withDeskolemization )
+  }
+  def anaIndG( implicit ctx: Context ): Tactic[Unit] = {
+    implicit val mutCtx = ctx.newMutable
+    repeat( allR ) andThen AnalyticInductionTactic( GeneralInductionAxioms(), Escargot.withDeskolemization )
+  }
+
+  def escrgt( implicit ctx: Context ): Tactic[Unit] = {
+    implicit val mutCtx = ctx.newMutable
+    escargot.withDeskolemization
+  }
+
+  def introUnivsExcept( i: Int ): Tactic[Unit] = Tactic {
     for {
       goal <- currentGoal
-      _ <- Tactical.guard( goal.conclusion.succedent.nonEmpty, "no formula in succedent" )
+      _ <- Tactic.guard( goal.conclusion.succedent.nonEmpty, "no formula in succedent" )
       q @ All.Block( xs, f ) = goal.conclusion.succedent.head
-      _ <- Tactical.guard( i < xs.size, s"less than $i quantifiers" )
+      _ <- Tactic.guard( i < xs.size, s"less than $i quantifiers" )
       newGoal = OpenAssumption( goal.labelledSequent.updated( Suc( 0 ), goal.labelledSequent( Suc( 0 ) )._1 -> All( xs( i ), f ) ) )
       _ <- insert( ForallRightBlock( CutRule( newGoal, ForallLeftRule( LogicalAxiom( f ), All( xs( i ), f ) ), All( xs( i ), f ) ), q, xs ) )
     } yield ()
   }
+
+  def generalize( vs: Var* ): Tactic[Unit] = Tactic {
+    for {
+      goal <- currentGoal
+      _ <- Tactic.guard( goal.conclusion.succedent.nonEmpty, "no formula in succedent" )
+      q = goal.conclusion.succedent.head
+      q_ = All.Block( vs, q )
+      newGoal = OpenAssumption( goal.labelledSequent.updated( Suc( 0 ), goal.labelledSequent.succedent.head._1 -> q_ ) )
+      _ <- insert( CutRule( newGoal, ForallLeftBlock( LogicalAxiom( q ), q_, vs ), q_ ) )
+    } yield ()
+  }
+
+  def revert( hyps: String* ): Tactic[Unit] = Tactic {
+    for {
+      goal <- currentGoal
+      _ <- Tactic.guard( goal.conclusion.succedent.nonEmpty, "no formula in succedent" )
+      q = goal.conclusion.succedent.head
+      hypFs = goal.labelledSequent.filter( hyps contains _._1 ).map( _._2 )
+      q_ = hypFs.toNegConjunction --> q
+      newGoal = OpenAssumption( goal.labelledSequent.updated( Suc( 0 ), goal.labelledSequent.succedent.head._1 -> q_ ).
+        filterNot( hyps contains _._1 ) )
+      p <- solvePropositional( q_ +: hypFs :+ q ).toTactic
+      _ <- insert( CutRule( newGoal, p, q_ ) )
+    } yield ()
+  }
+
+  def simp( implicit ctx: Context ): SimpTactic = SimpTactic()
+
+  /** `by { tac1; tac2; ...; tacn }` solves the first goal using the provided tactic block, and fails otherwise */
+  def by: TacticBlockArgument[Tactic[Unit]] =
+    tac => tac.focused
+
+  def trace( implicit sig: BabelSignature ): Tactic[Unit] =
+    Tactic( currentGoal.map { g => println( g.toPrettyString ); () } )
 }

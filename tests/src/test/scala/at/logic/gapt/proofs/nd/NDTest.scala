@@ -8,7 +8,7 @@ import org.specs2.mutable._
 class NDTest extends Specification with SatMatchers {
 
   "doubleNegationElim" in {
-    val a1 = LogicalAxiom( hof"¬¬A" )
+    val a1 = LogicalAxiom( hof"¬ ¬A" )
     val a2 = LogicalAxiom( hof"¬A" )
     val a3 = NegElimRule( a1, a2 )
     val a4 = BottomElimRule( a3, hof"A" )
@@ -128,7 +128,7 @@ class NDTest extends Specification with SatMatchers {
     val d2 = ImpIntroRule( d1, Ant( 0 ) )
     val d3 = ImpIntroRule( d2 )
 
-    d3.conclusion mustEqual Seq() ++: Sequent() :+ hof"∀x (P(x:nat) ⊃ P(s(x))) ⊃ P(0) ⊃ ∀x P(x)"
+    d3.conclusion mustEqual Seq() ++: Sequent() :+ hof"∀x (P(x:nat) → P(s(x))) → P(0) → ∀x P(x)"
   }
 
   "ImpElim" in {
@@ -322,6 +322,14 @@ class NDTest extends Specification with SatMatchers {
       val p1 = nd.TheoryAxiom( fof"P(y,y)" )
       nd.ForallIntroRule( p1, fof"!x P(x,y)", fov"y" ) must throwAn[NDRuleCreationException]
     }
+  }
+
+  "ExistsIntro 4" in {
+    val a4 = LogicalAxiom( hof"P a b" )
+    val a5 = ExistsIntroRule( a4, hof"?x P x b" )
+    val a6 = ExistsIntroRule( a5, hof"?y ?x P x y", hoc"b : i" )
+
+    a6.conclusion mustEqual Seq( hof"P a b" ) ++: Sequent() :+ hof"?y ?x P x y"
   }
 
 }

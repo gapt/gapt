@@ -79,7 +79,7 @@ class syntacticMatching extends MatchingAlgorithm {
           val v2_ = Var( v1_.name, v2.ty )
           apply(
             ( v1_ -> v2_ ) :: ( Substitution( v1 -> v1_ )( e1 ) -> Substitution( v2 -> v2_ )( e2 ) ) :: rest,
-            tyPairs, alreadyFixedSubst ).map { subst => Substitution( subst.map - v1_ ) }
+            tyPairs, alreadyFixedSubst ).map { subst => Substitution( subst.map - v1_, subst.typeMap ) }
 
         case ( v: Var, exp ) if alreadyFixedSubst.map.get( v ).contains( exp ) =>
           apply( rest, tyPairs, alreadyFixedSubst )

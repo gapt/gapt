@@ -106,9 +106,9 @@ class ExpansionProofDefinitionEliminationTest extends Specification with SatMatc
           ETImp(
             ETAtom( hoa"D c", Polarity.InSuccedent ),
             ETAnd( ETWeakening( hof"P c", Polarity.InAntecedent ), ETAtom( hoa"P (f c)", Polarity.InAntecedent ) ) ),
-          ETWeakening( hof"P c ∧ P (f c) ⊃ D c", Polarity.InAntecedent ) ) ) )
+          ETWeakening( hof"P c ∧ P (f c) → D c", Polarity.InAntecedent ) ) ) )
     val f = ETWeakQuantifier(
-      hof"∃x (P x ∧ P (f x) ⊃ P (f x))",
+      hof"∃x (P x ∧ P (f x) → P (f x))",
       Map( le"c" ->
         ETImp(
           ETDefinition( hof"P c & P (f c)", ETAtom( hoa"D c", Polarity.InAntecedent ) ),

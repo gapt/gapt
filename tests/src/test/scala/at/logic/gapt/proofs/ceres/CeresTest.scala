@@ -64,16 +64,16 @@ class CeresTest extends Specification with SequentMatchers with SatMatchers {
   "second-order definitions" in {
     implicit val ctx = MutableContext.default()
     ctx += Context.Sort( "i" )
-    ctx += hof"in x X = (X x: o)"
+    ctx += hof"in (x:i) X = (X x: o)"
     ctx ++= Seq( hoc"P:i>i>o", hoc"c:i", hoc"f:i>i", hoc"g:i>i" )
     ctx += hof"Q x = (∃y P x y)"
 
     import gaptic._
     val p = Lemma(
-      ( "pc" -> hof"∀y P(c, y)" ) +: ( "pf" -> hof"∀x ∀y (P(x, g y) ⊃ P(f x, y))" ) +:
+      ( "pc" -> hof"∀y P(c, y)" ) +: ( "pf" -> hof"∀x ∀y (P(x, g y) → P(f x, y))" ) +:
         Sequent()
         :+ ( "goal" -> hof"in(f(f(f(f(c)))), Q)" ) ) {
-        cut( "cut", hof"∀x ∀y (P(x, g(g y)) ⊃ P(f(f x), y))" ); forget( "goal" )
+        cut( "cut", hof"∀x ∀y (P(x, g(g y)) → P(f(f x), y))" ); forget( "goal" )
         decompose; repeat( chain( "pf" ) ); trivial
 
         unfold( "in", "Q" ) in "goal"

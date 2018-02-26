@@ -7,6 +7,7 @@ import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.escargot.impl.getFOPositions
+import at.logic.gapt.utils.quiet
 
 import scala.collection.mutable
 
@@ -117,7 +118,7 @@ object hSolveQBUP {
 
     val searchConds = qbupSequents.flatMap( mkSearchCond( Set(), _ ) )
 
-    val conseqs = findConseq( start, searchConds, prover, equations )
+    val conseqs = quiet( findConseq( start, searchConds, prover, equations ) )
 
     val xGenArgs = for ( ( a, i ) <- xInstArgs.zipWithIndex ) yield Var( s"x$i", a.ty )
     val xGen = x( xGenArgs: _* )

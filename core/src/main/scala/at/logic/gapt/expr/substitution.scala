@@ -88,7 +88,7 @@ class Substitution( map: Map[Var, Expr], typeMap: Map[TVar, Ty] = Map() ) extend
       ( this.typeMap.keySet ++ that.typeMap.keySet ).map( v => ( v, this( that( v ) ) ) ) )
 
   def restrict( newDomain: Iterable[Var] ): Substitution =
-    Substitution( newDomain.view.map( v => v -> this( v ) ) )
+    Substitution( newDomain.view.map( v => v -> this( v ) ), typeMap )
 
   def isInjectiveOnDomain: Boolean = isInjective( domain )
   def isInjective( dom: Set[Var] ): Boolean =

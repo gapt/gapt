@@ -27,7 +27,7 @@ object constructSIP {
       state += cut( s"eq_$i", lem )
       state += forget( "g" )
       state += decompose
-      state += resolutionProver( prover )
+      state += resolutionProver( prover ).quiet
     }
 
     state += allR( g.alpha )
@@ -44,7 +44,7 @@ object constructSIP {
       state += haveInstances( bupCase.indHyps.map( substF ) :- Nil )
       state += haveInstance( substF( bupCase.indConcl ), Polarity.InSuccedent )
       state += forget( ( l, f ) => !l.startsWith( "eq_" ) && containsQuantifierOnLogicalLevel( f ) )
-      state += resolutionProver( prover )
+      state += resolutionProver( prover ).quiet
     }
 
     state += haveInstances( bup.endCut.theoryFormulas )

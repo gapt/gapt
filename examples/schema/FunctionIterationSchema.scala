@@ -25,25 +25,29 @@ object FunctionIterationSchema extends TacticsProof {
       "Ant_0" -> hof"P(a)" ),
     Seq( "Suc_0" -> hof"P(if(s(n),a))" ) )
   val phiSc = Lemma( esPhiSc ) {
-    cut( "cut", hof"!x (-P(x) | P(f(x)))" )
-    allR( "cut", fov"A" )
-    allL( "Ant_1", fov"A" )
-    orL
-    orR
-    negL
-    negR
-    trivial
-    orR
-    trivial
+    cut( "cut", hof"!x (-P(x) | P(f(x)))" ) left by {
+      allR( "cut", fov"A" )
+      allL( "Ant_1", fov"A" )
+      orL
+      orR
+      negL
+      negR
+      trivial
+      orR
+      trivial
+    }
     allL( "cut", le"(if n a)" )
     orL
-    forget( "Suc_0" )
-    forget( "cut" )
-    negL
-    ref( "phi" )
-    unfold( "if" ) atMost 1 in "Suc_0"
-    trivial
-
+    by {
+      forget( "Suc_0" )
+      forget( "cut" )
+      negL
+      ref( "phi" )
+    }
+    by {
+      unfold( "if" ) atMost 1 in "Suc_0"
+      trivial
+    }
   }
   ctx += Context.ProofDefinitionDeclaration( le"phi (s n)", phiSc )
   val esPhiBc = Sequent(

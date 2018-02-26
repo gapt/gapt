@@ -41,7 +41,7 @@ object EventuallyConstantSchema extends TacticsProof {
       Seq( "Ant_0" -> hof"!x POR(0,x)" ),
       Seq( "Suc_0" -> hof"?x (iLEQ(x,g(x)) -> E(f(x), f(g(x))))" ) )
   val omegaBc = Lemma( esOmegaBc ) {
-    cut( "cut", hof"?x !y ((iLEQ(x,y) -> E(0,f(y))) | LE(f(y),0))" )
+    cut( "cut", hof"?x !y ((iLEQ(x,y) -> E(0,f(y))) | LE(f(y),0))" ) right ref( "phi" )
     exR( "cut", hoc"z" )
     allR( "cut_0", fov"a" )
     orR
@@ -49,7 +49,6 @@ object EventuallyConstantSchema extends TacticsProof {
     allL( "Ant_0", fov"a" )
     unfold( "POR" ) atMost 1 in "Ant_0_0"
     trivial
-    ref( "phi" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"omega 0", omegaBc )
   val esOmegaSc =
@@ -57,18 +56,14 @@ object EventuallyConstantSchema extends TacticsProof {
       Seq( "Ant_0" -> hof"!x POR(s(n),x)" ),
       Seq( "Suc_0" -> hof"?x (iLEQ(x,g(x)) -> E(f(x), f(g(x))))" ) )
   val omegaSc = Lemma( esOmegaSc ) {
-    cut( "cut", hof"?x !y ((iLEQ(x,y) -> E(s(n),f(y))) | LE(f(y),s(n)))" )
+    cut( "cut", hof"?x !y ((iLEQ(x,y) -> E(s(n),f(y))) | LE(f(y),s(n)))" ) right ref( "phi" )
     exR( "cut", hoc"z" )
     allR( "cut_0", fov"a" )
     orR
     impR
     allL( "Ant_0", fov"a" )
     unfold( "POR" ) atMost 1 in "Ant_0_0"
-    orL
-    trivial
-    foTheory
-    ref( "phi" )
-
+    orL left trivial; foTheory
   }
   ctx += Context.ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
   val esPhiBc =
@@ -81,18 +76,18 @@ object EventuallyConstantSchema extends TacticsProof {
     allL( le"(g a)" )
     exR( fov"a" )
     impR
-    orL( "Ant_0_0" )
-    orL( "Ant_0_1" )
-    impL( "Ant_0_0" )
-    impL( "Ant_0_1" )
-    foTheory
-    foTheory
-    impL( "Ant_0_1" )
-    trivial
-    foTheory
-    foTheory
-    foTheory
+    orL( "Ant_0_0" ) right foTheory
+    orL( "Ant_0_1" ) right foTheory
 
+    impL( "Ant_0_0" )
+    by {
+      impL( "Ant_0_1" ) left foTheory
+      foTheory
+    }
+    by {
+      impL( "Ant_0_1" ) left trivial
+      foTheory
+    }
   }
   ctx += Context.ProofDefinitionDeclaration( le"phi 0", phiBc )
   val esPhiSc =
@@ -100,42 +95,37 @@ object EventuallyConstantSchema extends TacticsProof {
       Seq( "Ant_0" -> hof"?x !y ((iLEQ(x,y) -> E(s(n),f(y))) | LE(f(y),s(n)))" ),
       Seq( "Suc_0" -> hof"?x (iLEQ(x,g(x)) -> E(f(x), f(g(x))) )" ) )
   val phiSc = Lemma( esPhiSc ) {
-    cut( "cut", hof"?x !y ((iLEQ(x,y) -> E(n,f(y))) | LE(f(y),n))" )
-    cut( "cut1", hof"?x !y ( iLEQ(x,y) -> E(s(n),f(y)) )" )
-    cut( "cut2", hof"?x ( LE(f(x),s(n)) )" )
-    forget( "cut" )
-    exL( fov"a" )
-    exR( "cut1", fov"a" )
-    allR( "cut1_0", fov"b" )
-    allL( fov"b" )
-    exR( "cut2", fov"b" )
-    impR
-    orL
-    impL
-    trivial
-    trivial
-    trivial
-    exL( "cut2", fov"a" )
-    exR( "cut", fov"a" )
-    allR( fov"b" )
-    orR
-    impR
-    foTheory
+    cut( "cut", hof"?x !y ((iLEQ(x,y) -> E(n,f(y))) | LE(f(y),n))" ) right ref( "phi" )
+    cut( "cut1", hof"?x !y ( iLEQ(x,y) -> E(s(n),f(y)) )" ) left by {
+      cut( "cut2", hof"?x ( LE(f(x),s(n)) )" ) left by {
+        forget( "cut" )
+        exL( fov"a" )
+        exR( "cut1", fov"a" )
+        allR( "cut1_0", fov"b" )
+        allL( fov"b" )
+        exR( "cut2", fov"b" )
+        prop
+      }
+      by {
+        exL( "cut2", fov"a" )
+        exR( "cut", fov"a" )
+        allR( fov"b" )
+        orR
+        impR
+        foTheory
+      }
+    }
+
     exL( "cut1", fov"a" )
     allL( fov"a" )
     allL( le"(g a)" )
     exR( "Suc_0", fov"a" )
-    impL( "cut1_1" )
-    impL
-    impR
-    trivial
-    impR
-    trivial
-    impL( "cut1_0" )
-    foTheory
+    impL( "cut1_1" ) left {
+      impL onAll by { impR; trivial }
+    }
+    impL( "cut1_0" ) left foTheory
     impR
     foTheory
-    ref( "phi" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"phi (s n)", phiSc )
 

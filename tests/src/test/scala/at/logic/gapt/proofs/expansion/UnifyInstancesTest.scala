@@ -22,8 +22,8 @@ class UnifyInstancesTest extends Specification {
 
       destruct( "conj" )
       // two instance vectors:
-      allL( le"x", le"c" ); prop
-      allL( le"c", le"y" ); prop
+      allL( fov"x", le"c" ); prop
+      allL( le"c", fov"y" ); prop
     }
 
     val exp = LKToExpansionProof( lk )

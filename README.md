@@ -23,14 +23,16 @@ One of the many features GAPT supports is an implementation of [Herbrand's
 theorem](https://en.wikipedia.org/wiki/Herbrand%27s_theorem).  Here is how you can
 automatically generate a Herbrand disjunction in GAPT:
 ```scala
-Prover9 getExpansionProof fof"P(c) ∨ P(d) ⊃ ∃x P(x)" map { _.deep }
+Escargot.getExpansionProof(fof"P(c) ∨ P(d) → ∃x P(x)").map(_.deep)
 ```
 which returns the following Herbrand disjunction (the quantifier on the right
 has been expanded):
 ```
-Some( :- P(c) ∨ P(d) ⊃ P(d) ∨ P(c))
+Some( ⊢ P(c) ∨ P(d) → P(c) ∨ P(d))
 ```
 
+You can also use `Prover9`, `Vampire`, `EProver`, and lots of other provers
+instead of the built-in `Escargot` prover, if you have them installed.
 There are many more examples in the [user
 manual](http://logic.at/gapt/downloads/gapt-user-manual.pdf), and you can look
 into the [API documentation](http://logic.at/gapt/api/) for reference as well.
@@ -40,9 +42,9 @@ into the [API documentation](http://logic.at/gapt/api/) for reference as well.
 There are [binary distributions](https://logic.at/gapt) available, you only
 need to have Java installed to run them:
 ```
-wget https://logic.at/gapt/downloads/gapt-2.8.tar.gz
-tar xf gapt-2.8.tar.gz
-cd gapt-2.8
+wget https://logic.at/gapt/downloads/gapt-2.9.tar.gz
+tar xf gapt-2.9.tar.gz
+cd gapt-2.9
 ./gapt.sh
 ```
 This will drop you into a scala REPL with GAPT pre-loaded.
@@ -51,7 +53,7 @@ If you want to use GAPT in your project, all you have to do is add two lines to
 your SBT build file:
 ```scala
 resolvers += Resolver.jcenterRepo
-libraryDependencies += "at.logic.gapt" %% "gapt" % "2.8"
+libraryDependencies += "at.logic.gapt" %% "gapt" % "2.9"
 ```
 
 If you want to use the unstable git version of GAPT, you can use `sbt

@@ -46,7 +46,7 @@ object LatexExporter {
       binExpr( a, b, p - 3, prio.infixRel, relOps( n ) )
 
     case Iff( a, b ) =>
-      binExpr( a, b, p, prio.bicond, "\\equiv" )
+      binExpr( a, b, p, prio.bicond, "\\leftrightarrow" )
 
     case n: VarOrConst => escapeName( n.name )
 
@@ -55,7 +55,7 @@ object LatexExporter {
     case Neg( f )      => "\\neg " + expr( f, prio.quantOrNeg + 1 )
     case And( a, b )   => binExpr( a, b, p, prio.conj, "\\land" )
     case Or( a, b )    => binExpr( a, b, p, prio.disj, "\\lor" )
-    case Imp( a, b )   => binExpr( a, b, p, prio.impl, "\\supset" )
+    case Imp( a, b )   => binExpr( a, b, p, prio.impl, "\\to" )
 
     case All( v, f )   => quant( f, v, p, "\\forall" )
     case Ex( v, f )    => quant( f, v, p, "\\exists" )

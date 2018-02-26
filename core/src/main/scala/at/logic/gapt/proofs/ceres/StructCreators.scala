@@ -1,11 +1,9 @@
 package at.logic.gapt.proofs.ceres
 
-import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.expr.{ Apps, Const, _ }
 import at.logic.gapt.proofs.Context.{ ProofDefinitions, ProofNames }
-import at.logic.gapt.utils.logger._
 
 /**
  * Algorithms extracting structs from LK proofs, preparing them for gui code etc.

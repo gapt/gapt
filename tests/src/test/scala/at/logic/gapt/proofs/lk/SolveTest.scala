@@ -38,12 +38,12 @@ class SolveTest extends Specification with SequentMatchers {
     "not refute top" in { solvePropositional( Top() +: Sequent() ).toOption must beNone }
     "refute bottom" in { solvePropositional( Bottom() +: Sequent() ).toOption must beSome }
 
-    "prove ( p ∨ p ) ⊃ ( p ∧ p )" in {
+    "prove ( p ∨ p ) → ( p ∧ p )" in {
       val F = hof"p|p -> p&p"
       solvePropositional( F ).toOption must beSome
     }
 
-    "prove ( p ∧ p ) ⊃ ( p ∨ p )" in {
+    "prove ( p ∧ p ) → ( p ∨ p )" in {
       val F = hof"p&p -> p|p"
       solvePropositional( F ).toOption must beSome
     }
@@ -73,7 +73,7 @@ class SolveTest extends Specification with SequentMatchers {
 
     "cuts" in {
       val es = ETAtom( hoa"p 0", Polarity.InAntecedent ) +:
-        ETWeakQuantifier( hof"∀x (p x ⊃ p (s x))", Map(
+        ETWeakQuantifier( hof"∀x (p x → p (s x))", Map(
           le"z" -> ETImp(
             ETAtom( hoa"p z", Polarity.InSuccedent ),
             ETAtom( hoa"p (s z)", Polarity.InAntecedent ) ),
@@ -82,7 +82,7 @@ class SolveTest extends Specification with SequentMatchers {
             ETAtom( hoa"p (s (s z))", Polarity.InAntecedent ) ) ) ) +:
         Sequent() :+
         ETAtom( hoa"p (s (s (s (s 0))))", Polarity.InSuccedent )
-      val cutf = hof"∀x (p x ⊃ p (s (s x)))"
+      val cutf = hof"∀x (p x → p (s (s x)))"
       val cut = ETCut(
         ETStrongQuantifier( cutf, hov"z",
           ETImp(
@@ -128,18 +128,20 @@ class SolveTest extends Specification with SequentMatchers {
       }
     }
 
-    "induction in pluscomm" in {
-      val example = examples.induction.numbers.pluscomm
-      val exp = LKToExpansionProof( example )( examples.induction.numbers.ctx )
-      ExpansionProofToLK( exp )( examples.induction.numbers.ctx ) must beLike {
+    "induction in addcomm" in {
+      import examples.theories.nat._
+      val example = addcomm.proof
+      val exp = LKToExpansionProof( example )
+      ExpansionProofToLK( exp ) must beLike {
         case Right( p ) => p.conclusion must beMultiSetEqual( example.conclusion )
       }
     }
 
-    "induction in maprev" in {
-      val example = examples.induction.lists.maprev
-      val exp = LKToExpansionProof( example )( examples.induction.lists.ctx )
-      ExpansionProofToLK( exp )( examples.induction.lists.ctx ) must beLike {
+    "induction in revmap" in {
+      import examples.theories.list._
+      val example = revmap.proof
+      val exp = LKToExpansionProof( example )
+      ExpansionProofToLK( exp ) must beLike {
         case Right( p ) => p.conclusion must beMultiSetEqual( example.conclusion )
       }
     }

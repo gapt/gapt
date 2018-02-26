@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs
 
 import at.logic.gapt.expr._
-import at.logic.gapt.formats.babel.{ BabelParser, BabelSignature }
+import at.logic.gapt.formats.babel._
 import Context._
 import at.logic.gapt.expr.fol.folSubTerms
 import at.logic.gapt.expr.hol.SkolemFunctions
@@ -130,6 +130,9 @@ sealed trait Context extends BabelSignature {
       case Some( c ) => BabelSignature.IsConst( c )
       case None      => BabelSignature.IsVar
     }
+  def notationsForToken( token: Notation.Token ): Option[Notation] = get[Notations].byToken.get( token )
+  def notationsForConst( const: Notation.ConstName ): List[Notation] = get[Notations].byConst( const )
+  def defaultTypeToI: Boolean = false
 
   def check[T: Checkable]( t: T ): Unit =
     implicitly[Checkable[T]].check( t )( this )
@@ -297,11 +300,35 @@ object Context {
   def apply( updates: Traversable[Update] ): ImmutableContext =
     empty ++ updates
 
-  val withoutEquality = empty ++ Seq(
-    InductiveType( "o", Top(), Bottom() ),
-    ConstDecl( NegC() ), ConstDecl( AndC() ), ConstDecl( OrC() ), ConstDecl( ImpC() ),
-    ConstDecl( ForallC( TVar( "x" ) ) ), ConstDecl( ExistsC( TVar( "x" ) ) ) )
-  val default = withoutEquality + ConstDecl( EqC( TVar( "x" ) ) )
+  val default = empty ++ Seq(
+    InductiveType( To, Top(), Bottom() ),
+    Notation.Alias( "true", TopC ), Notation.Alias( "⊤", TopC ),
+    Notation.Alias( "false", BottomC ), Notation.Alias( "⊥", BottomC ),
+    ConstDecl( NegC() ),
+    Notation.Prefix( "-", NegC, Precedence.neg ),
+    Notation.Prefix( "~", NegC, Precedence.neg ),
+    Notation.Prefix( "¬", NegC, Precedence.neg ),
+    ConstDecl( AndC() ),
+    Notation.Infix( "&", AndC, Precedence.conj ),
+    Notation.Infix( "∧", AndC, Precedence.conj ),
+    ConstDecl( OrC() ),
+    Notation.Infix( "|", OrC, Precedence.disj ),
+    Notation.Infix( "∨", OrC, Precedence.disj ),
+    ConstDecl( ImpC() ),
+    Notation.Infix( "->", ImpC, Precedence.impl, leftAssociative = false ),
+    Notation.Infix( "⊃", ImpC, Precedence.impl, leftAssociative = false ),
+    Notation.Infix( "→", ImpC, Precedence.impl, leftAssociative = false ),
+    Notation.Infix( Notation.Token( "<->" ), Notation.IffName, Precedence.iff ),
+    Notation.Infix( Notation.Token( "↔" ), Notation.IffName, Precedence.iff ),
+    ConstDecl( ForallC( TVar( "x" ) ) ),
+    Notation.Quantifier( Notation.Token( "!" ), ForallC, Precedence.quant ),
+    Notation.Quantifier( Notation.Token( "∀" ), ForallC, Precedence.quant ),
+    ConstDecl( ExistsC( TVar( "x" ) ) ),
+    Notation.Quantifier( Notation.Token( "?" ), ExistsC, Precedence.quant ),
+    Notation.Quantifier( Notation.Token( "∃" ), ExistsC, Precedence.quant ),
+    ConstDecl( EqC( TVar( "x" ) ) ),
+    Notation.Infix( "=", EqC, Precedence.infixRel ),
+    Notation.Infix( "!=", Notation.NeqName, Precedence.infixRel ) )
 
   case class ProofNames( names: Map[String, ( Expr, HOLSequent )] ) {
     def +( name: String, referencedExpression: Expr, referencedSequent: HOLSequent ) = copy( names + ( ( name, ( referencedExpression, referencedSequent ) ) ) )
@@ -530,23 +557,13 @@ object Context {
 
   object PrimRecFun {
 
-    private def useLiteralConst( p: preExpr.Expr, c: Const ): preExpr.Expr = {
-      import preExpr._
-      p match {
-        case LocAnnotation( expr, loc )            => LocAnnotation( useLiteralConst( expr, c ), loc )
-        case TypeAnnotation( expr, ty )            => TypeAnnotation( useLiteralConst( expr, c ), ty )
-        case Ident( name, _, _ ) if name == c.name => Quoted( c, liftTypeMono( c.ty ), Map() )
-        case Abs( v, sub )                         => Abs( v, useLiteralConst( sub, c ) )
-        case App( a, b )                           => App( useLiteralConst( a, c ), useLiteralConst( b, c ) )
-        case _: Quoted | _: Ident                  => p
-      }
-    }
-
-    private def parseEqn( c: Const, eqn: String )( implicit ctx: Context ): ( Expr, Expr ) =
-      BabelParser.tryParse( eqn, p => preExpr.TypeAnnotation( useLiteralConst( p, c ), preExpr.Bool ) ).
+    private def parseEqn( c: Const, eqn: String )( implicit ctx: Context ): ( Expr, Expr ) = {
+      BabelParser.tryParse( eqn, p => preExpr.TypeAnnotation( p, preExpr.Bool ) ).
         fold( throw _, identity ) match {
-          case Eq( lhs, rhs ) => lhs -> rhs
+          case Eq( lhs @ Apps( c_, _ ), rhs ) =>
+            syntacticMatching( c_, c ).get( lhs -> rhs )
         }
+    }
 
     def apply( c: Const, equations: String* )( implicit ctx: Context ): PrimRecFunBatch = {
       apply( ( c, equations ) )
@@ -587,7 +604,7 @@ object Context {
     override def apply( ctx: Context ): State = {
       endSequent.foreach( ctx.check( _ ) )
       val Apps( Const( c, _, ps ), vs ) = lhs
-      require( !ctx.get[ProofNames].names.keySet.contains( c ) )
+      require( !ctx.get[ProofNames].names.keySet.contains( c ), s"proof already defined: $lhs" )
       require( vs == vs.distinct )
       require( vs.forall( _.isInstanceOf[Var] ) )
       require( ps.forall( _.isInstanceOf[TVar] ) )

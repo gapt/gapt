@@ -59,6 +59,14 @@ sealed trait Doc {
     out.result()
   }
 
+  def firstChar: Option[Char] = this match {
+    case Concat( a, _ ) => a.firstChar
+    case Nest( _, d )   => d.firstChar
+    case Text( t )      => t.headOption
+    case Line( _ )      => None
+    case Group( a )     => a.firstChar
+  }
+
 }
 
 object Doc {
@@ -82,4 +90,6 @@ object Doc {
     ds.view.zipWithIndex.
       map { case ( d, i ) => if ( i == 0 ) d else ( sep <> line <> d ).group }.
       reduceLeftOption( _ <> _ ).getOrElse( "" )
+  def wordwrap2( ds: Iterable[Doc], sep: Doc = "" ): Doc =
+    ds.reduceLeftOption( ( a, b ) => ( a <> sep </> b ).group ).getOrElse( "" )
 }

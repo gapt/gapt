@@ -5,7 +5,7 @@ import at.logic.gapt.formats.lisp._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.InputFile
 import at.logic.gapt.proofs._
-import at.logic.gapt.utils.logger._
+import at.logic.gapt.utils.Logger
 
 import scala.collection.mutable
 
@@ -15,13 +15,15 @@ import scala.collection.mutable
 
 /* Constructor object, takes a filename and tries to parse as a lisp_file  */
 object IvyParser {
+  val logger = Logger( "IvyParser" )
+
   //calls the sexpression parser on the given file and parses it, needs a naming convention
   def apply( fn: InputFile ): IvyResolutionProof =
     parse( SExpressionParser( fn ) )
 
   def parse( exp: Seq[SExpression] ): IvyResolutionProof = {
     require( exp.length >= 1, "An ivy proof must contain at least one proof object, not " + exp.length + "! " )
-    if ( exp.length > 1 ) warn( "WARNING: Ivy proof contains more than one proof, taking the first one." )
+    if ( exp.length > 1 ) logger.warn( "WARNING: Ivy proof contains more than one proof, taking the first one." )
     parse( exp( 0 ) )
   }
 

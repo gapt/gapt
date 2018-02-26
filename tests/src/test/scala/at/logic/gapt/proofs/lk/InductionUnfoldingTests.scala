@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.babel.{ Notation, Precedence }
 import at.logic.gapt.proofs.gaptic.{ ProofState, _ }
 import at.logic.gapt.proofs.{ Context, Sequent }
 import org.specs2.mutable._
@@ -14,6 +15,7 @@ class InductionUnfoldingOnTreesTest extends Specification {
     ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     ctx += Context.InductiveType( "tree", hoc"leaf: tree", hoc"node:tree>tree>nat>tree" )
     ctx += hoc"'+': nat>nat>nat"
+    ctx += Notation.Infix( "+", Precedence.plusMinus )
     ctx += hoc"mirror: tree>tree"
     ctx += hoc"size: tree>nat"
 

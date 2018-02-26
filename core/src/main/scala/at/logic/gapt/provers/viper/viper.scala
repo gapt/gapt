@@ -119,7 +119,7 @@ object ViperOptions {
 
 object Viper {
 
-  def getStrategies( sequent: HOLSequent, opts: ViperOptions )( implicit ctx: MutableContext ): List[( Duration, Tactical[_] )] =
+  def getStrategies( sequent: HOLSequent, opts: ViperOptions )( implicit ctx: MutableContext ): List[( Duration, Tactic[_] )] =
     opts.mode match {
       case "untrusted_funind" =>
         List( Duration.Inf -> AnalyticInductionTactic( UntrustedFunctionalInductionAxioms, Escargot )
@@ -175,10 +175,10 @@ object Viper {
     apply( sequent, opts.verbosity, getStrategies( sequent, opts ) )
 
   def apply( sequent: HOLSequent, verbosity: Int,
-             strategies: List[( Duration, Tactical[_] )] )(
+             strategies: List[( Duration, Tactic[_] )] )(
     implicit
     ctx: MutableContext ): Option[LKProof] = LogHandler.scope {
-    if ( verbosity >= 3 ) LogHandler.current.value = LogHandler.verbose
+    LogHandler.verbosity.value = LogHandler.verbosity.value.increase( math.max( 0, verbosity - 2 ) )
 
     if ( verbosity >= 2 ) println( sequent.toSigRelativeString )
 

@@ -7,10 +7,7 @@ import at.logic.gapt.proofs.Sequent
 
 object prenexifyET {
   private def weakQuantifier( polarity: Polarity ) =
-    polarity match {
-      case Positive => Ex
-      case Negative => All
-    }
+    if ( polarity.inSuc ) Ex else All
 
   private def handleBinary(
     f1: Formula, f2: Formula,

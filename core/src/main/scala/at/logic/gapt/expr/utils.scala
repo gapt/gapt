@@ -116,12 +116,18 @@ object typeVariables {
     case t: TVar        => Set( t )
   }
 
+  def apply( ts: Iterable[Ty] ): Set[TVar] =
+    ts.view.flatMap( apply ).toSet
+
   def apply( e: Expr ): Set[TVar] = e match {
     case Const( _, t, ps ) => apply( t ) ++ ps.flatMap( apply )
     case Var( _, t )       => apply( t )
     case App( a, b )       => apply( a ) ++ apply( b )
     case Abs( v, s )       => apply( s ) ++ apply( v )
   }
+
+  def apply( es: Iterable[Expr] )( implicit dummyImplicit: DummyImplicit ): Set[TVar] =
+    es.view.flatMap( apply ).toSet
 }
 
 /**

@@ -3,7 +3,6 @@ package at.logic.gapt.expr
 import at.logic.gapt.expr.ExpressionParseHelper.Splice
 import at.logic.gapt.formats.babel._
 import at.logic.gapt.proofs.{ FOLClause, FOLSequent, HOLClause, HOLSequent, Sequent }
-import fastparse.core.ParseError
 
 object ExpressionParseHelper {
   abstract class Splice[+ForType] {
@@ -26,13 +25,13 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
   private implicit def _sig = sig
 
   private def interpolateHelper( expressions: Seq[Splice[Expr]] ): ( String, preExpr.Expr => preExpr.Expr ) = {
+    def repls( name: String ): preExpr.Expr =
+      expressions( name.drop( placeholder.length ).toInt ).spliceIn
     def repl( expr: preExpr.Expr ): preExpr.Expr = expr match {
-      case preExpr.LocAnnotation( e, loc ) => preExpr.LocAnnotation( repl( e ), loc )
-      case preExpr.TypeAnnotation( e, ty ) => preExpr.TypeAnnotation( repl( e ), ty )
-      case preExpr.Ident( name, _, _ ) if name startsWith placeholder =>
-        val i = name.drop( placeholder.length ).toInt
-        expressions( i ).spliceIn
-      case expr: preExpr.Ident => expr
+      case preExpr.LocAnnotation( e, loc )                            => preExpr.LocAnnotation( repl( e ), loc )
+      case preExpr.TypeAnnotation( e, ty )                            => preExpr.TypeAnnotation( repl( e ), ty )
+      case preExpr.Ident( name, _, _ ) if name startsWith placeholder => repls( name )
+      case expr: preExpr.Ident                                        => expr
       case preExpr.Abs( v, sub ) =>
         repl( v ) match {
           case vNew @ preExpr.Ident( _, _, _ ) => // If repl(v) = v.
@@ -44,9 +43,14 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
         }
       case preExpr.App( a, b )  => preExpr.App( repl( a ), repl( b ) )
       case expr: preExpr.Quoted => expr
+      case preExpr.FlatOps( children ) => preExpr.FlatOps( children.map {
+        case Left( ( n, loc ) ) if n.startsWith( placeholder ) => Right( preExpr.LocAnnotation( repls( n ), loc ) )
+        case tok @ Left( _ )                                   => tok
+        case Right( e )                                        => Right( repl( e ) )
+      } )
     }
 
-    ( sc.parts.init.zipWithIndex.map { case ( s, i ) => s ++ placeholder + i }.mkString ++ sc.parts.last, repl )
+    ( sc.parts.init.zipWithIndex.map { case ( s, i ) => s + " " + placeholder + i + " " }.mkString ++ sc.parts.last, repl )
   }
 
   private def interpolate( args: Seq[Splice[Expr]], baseAstTransformer: preExpr.Expr => preExpr.Expr ): Expr = {
@@ -177,8 +181,8 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
    * @param args
    * @return
    */
-  def fov( args: Splice[FOLTerm]* ): FOLVar = fot( args: _* ) match {
-    case v: FOLVar => v
+  def fov( args: Splice[FOLTerm]* ): FOLVar = le( args: _* ) match {
+    case Var( n, _ ) => FOLVar( n )
     case expr =>
       throw new IllegalArgumentException( s"Term $expr cannot be read as a FOL variable. Parse it with fot." )
   }

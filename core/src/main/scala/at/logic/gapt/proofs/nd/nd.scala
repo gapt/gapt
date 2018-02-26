@@ -1019,12 +1019,17 @@ object ExistsIntroRule extends ConvenienceConstructor( "ExistsIntroRule" ) {
    * Convenience constructor for ∃:i that, given a main formula, will try to construct an inference with that formula.
    *
    * @param subProof    The subproof.
-   * @param mainFormula The formula to be inferred. Must be of the form ∃x.A. The premise must contain A.
+   * @param mainFormula The formula to be inferred. Must be of the form ∃x.A[t\x]. The premise must contain A[t].
    * @return
    */
   def apply( subProof: NDProof, mainFormula: Formula ): ExistsIntroRule = mainFormula match {
     case Ex( v, subFormula ) =>
-      val p = apply( subProof, mainFormula, v )
+      val pos = subFormula.find( v ).head
+      val t = if ( subProof.endSequent( Suc( 0 ) ).isDefinedAt( pos ) )
+        subProof.endSequent( Suc( 0 ) ).get( pos ).get
+      else
+        throw NDRuleCreationException( s"Premise is not defined at $pos." )
+      val p = apply( subProof, mainFormula, t )
       assert( p.mainFormula == mainFormula )
       p
 

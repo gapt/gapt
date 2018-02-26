@@ -29,7 +29,7 @@ object prop_20 extends TacticsProof {
         def_length_1: ∀y ∀xs (length(cons(y:sk, xs:list): list): Nat) = S(length(xs)),
         def_even_0: even(#c(Z: Nat)): o,
         def_even_1: ¬even(S(#c(Z: Nat)): Nat),
-        def_even_2: ∀z ((even(S(S(z:Nat): Nat)) ⊃ even(z)) ∧ (even(z) ⊃ even(S(S(z))))),
+        def_even_2: ∀z ((even(S(S(z:Nat): Nat)) → even(z)) ∧ (even(z) → even(S(S(z))))),
         def_append_0: ∀y (append(nil:list, y:list): list) = y,
         def_append_1: ∀z   ∀xs   ∀y   (append(cons(z:sk, xs:list): list, y:list): list) = cons(z, append(xs, y)),
         constr_inj_0: ∀y0 ∀y1 ¬(nil:list) = cons(y0:sk, y1:list),

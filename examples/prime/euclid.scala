@@ -23,26 +23,28 @@ case class euclid( k: Int ) extends PrimeDefinitions {
         unfold( "DIV" ) in "div"
         unfold( "prod" ).atMost( 1 ) in "div"
         destruct( "linp" )
-
-        include( "IH", ldivprod( i - 1 ) )
-        unfold( "DIV" ) in "IH"
-        decompose
-        exR( le"m * p $i" ).forget
-        rewrite rtl "IH"
-        theory
-
-        unfold( "set_1" ) in "linp"
-        exR( le"prod ${i - 1}" ).forget
-        rewrite ltr "linp" in "div"
-        theory
+        by {
+          include( "IH", ldivprod( i - 1 ) )
+          unfold( "DIV" ) in "IH"
+          decompose
+          exR( le"m * p $i" ).forget
+          rewrite rtl "IH"
+          theory
+        }
+        by {
+          unfold( "set_1" ) in "linp"
+          exR( le"prod ${i - 1}" ).forget
+          rewrite ltr "linp" in "div"
+          theory
+        }
       }
   }
 
-  def splitgt0( label: String ): Tactical[Unit] = Tactical {
+  def splitgt0( label: String ): Tactic[Unit] = Tactic {
     for {
       goal <- currentGoal
       subst <- syntacticMatching( hof"a*b + 1 = 1", goal( label ) ).
-        toTactical( s"$label is no product" )
+        toTactic( s"$label is no product" )
       l = NewLabel( goal.labelledSequent, label )
       _ <- cut( l, subst( hof"a+1=1 ∨ b+1=1" ) )
       _ <- destruct( l ); _ <- theory
@@ -58,7 +60,7 @@ case class euclid( k: Int ) extends PrimeDefinitions {
 
     unfold( "F" ) in "fk"
     allL( "fk", le"p $i" ).forget; decompose; destruct( "fk_1" )
-    Tactical.sequence( for ( j <- i to k reverse ) yield unfold( "P", "union", "set_1" ) in "fk_1" )
+    Tactic.sequence( for ( j <- i to k reverse ) yield unfold( "P", "union", "set_1" ) in "fk_1" )
     decompose; trivial
     unfold( "PRIME" ) in "fk_1"; decompose
 

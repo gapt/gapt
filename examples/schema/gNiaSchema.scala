@@ -102,9 +102,7 @@ object gniaSchema extends TacticsProof {
     exR( "Suc_0_0", fov"A" )
     andL( "Ant_2_1" )
     andL
-    andR
-    foTheory
-    foTheory
+    andR onAll foTheory
   }
   ctx += Context.ProofDefinitionDeclaration( le"mubase 0", mubaseBc )
 
@@ -123,11 +121,9 @@ object gniaSchema extends TacticsProof {
     exR( "Suc_0_0", fov"A" )
     andL( "Ant_2_1" )
     andL
-    andR
-    andR
+    andR right foTheory
+    andR right foTheory
     ref( "nu" )
-    foTheory
-    foTheory
   }
   ctx += Context.ProofDefinitionDeclaration( le"mubase (s m)", mubaseSc )
   //The base case of  nu
@@ -142,9 +138,7 @@ object gniaSchema extends TacticsProof {
     exL( fov"B" )
     exR( fov"B" )
     andL
-    andR
-    foTheory
-    foTheory
+    andR onAll foTheory
   }
   ctx += Context.ProofDefinitionDeclaration( le"nu 0 n A", NuBc )
 
@@ -160,11 +154,9 @@ object gniaSchema extends TacticsProof {
     exL( fov"B" )
     exR( fov"B" )
     andL
-    andR
-    andR
+    andR right foTheory
+    andR right foTheory
     ref( "nu" )
-    foTheory
-    foTheory
   }
   ctx += Context.ProofDefinitionDeclaration( le"nu (s m) n  A", NuSc )
 
@@ -180,8 +172,7 @@ object gniaSchema extends TacticsProof {
     exL( fov"B" )
     exR( fov"B" )
     andL
-    andR
-    foTheory
+    andR left foTheory
     unfold( "POR" ) atMost 1 in "Ant_3_0_1"
     foTheory
   }
@@ -200,12 +191,9 @@ object gniaSchema extends TacticsProof {
     exR( fov"B" )
     andL
     unfold( "POR" ) atMost 1 in "Ant_3_0_1"
-    andR
-    andR
+    andR right foTheory
+    andR right foTheory
     ref( "nuPrime" )
-    foTheory
-    foTheory
-
   }
   ctx += Context.ProofDefinitionDeclaration( le"nuPrime (s m) A", NuPrimeSc )
 
@@ -224,9 +212,7 @@ object gniaSchema extends TacticsProof {
     exR( "Suc_0_0", fov"A" )
     andL( "Ant_2_1" )
     andL
-    andR
-    foTheory
-    foTheory
+    andR onAll foTheory
   }
   ctx += Context.ProofDefinitionDeclaration( le"mu 0 n", muBc )
 
@@ -245,12 +231,9 @@ object gniaSchema extends TacticsProof {
     exR( "Suc_0_0", fov"A" )
     andL( "Ant_2_1" )
     andL
-    andR
-    andR
+    andR right foTheory
+    andR right foTheory
     ref( "nu" )
-    foTheory
-    foTheory
-
   }
   ctx += Context.ProofDefinitionDeclaration( le"mu (s m) n ", muSc )
 
@@ -277,8 +260,7 @@ object gniaSchema extends TacticsProof {
     unfold( "POR" ) atMost 1 in "Suc_0"
     unfold( "POR" ) atMost 1 in "Ant_2"
     orR
-    orL
-    trivial
+    orL left trivial
     ref( "chi" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"chi (s n) a", chiSc )
@@ -307,8 +289,8 @@ object gniaSchema extends TacticsProof {
       "Ant_2" -> hof"!x?y (LEQ(x,y) & POR(s(n),y))" ),
     Seq( "Suc_0" -> hof"?p Ech(m,p)" ) )
   val phiSc = Lemma( esphiSc ) {
-    cut( "cut", hof"!x?y (LEQ(x,y) & E(f(y),s(n)))" )
-    cut( "cut1", hof"!x?y (LEQ(x,y) & POR(n,y))" )
+    cut( "cut", hof"!x?y (LEQ(x,y) & E(f(y),s(n)))" ) right ref( "mu" )
+    cut( "cut1", hof"!x?y (LEQ(x,y) & POR(n,y))" ) right ref( "phi" )
     allR( "cut", fov"B" )
     allR( "cut1", fov"A" )
     allL( "Ant_2", le"max(A,B)" )
@@ -316,25 +298,13 @@ object gniaSchema extends TacticsProof {
     exR( "cut", fov"C" )
     exR( "cut1", fov"C" )
     andL
-    andR( "cut_0" )
-    andR( "cut1_0" )
-    foTheory
-    foTheory
+    andR( "cut_0" ) left by {
+      andR( "cut1_0" ) onAll foTheory
+    }
     unfold( "POR" ) atMost 1 in "Ant_2_0_1"
-    orL
-    trivial
-    andR( "cut1_0" )
-    foTheory
-    forget( "Ant_2_0_0" )
-    forget( "Ant_2" )
-    forget( "Suc_0" )
-    forget( "cut" )
-    forget( "cut1" )
-    forget( "cut_0" )
+    orL left trivial
+    andR( "cut1_0" ) left foTheory
     ref( "chi" )
-    focus( 1 )
-    ref( "mu" )
-    ref( "phi" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"phi (s n) m", phiSc )
 
@@ -344,15 +314,12 @@ object gniaSchema extends TacticsProof {
       ( "Ant_2" -> hof"!x POR(0,x)" ) ),
     Seq( ( "Suc_0" -> hof"?p Ech(m,p)" ) ) )
   val omegaBc = Lemma( esOmegaBc ) {
-    cut( "cut", hof"!x?y (LEQ(x,y) & E(f(y),0))" )
+    cut( "cut", hof"!x?y (LEQ(x,y) & E(f(y),0))" ) right ref( "mubase" )
     allR( fov"A" )
     allL( "Ant_2", fov"A" )
     exR( "cut", fov"A" )
     unfold( "POR" ) atMost 1 in "Ant_2_0"
-    andR
-    foTheory
-    trivial
-    ref( "mubase" )
+    andR; foTheory; trivial
   }
   ctx += Context.ProofDefinitionDeclaration( le"omega 0 m", omegaBc )
 
@@ -362,14 +329,12 @@ object gniaSchema extends TacticsProof {
       ( "Ant_2" -> hof"!x POR(s(n),x)" ) ),
     Seq( ( "Suc_0" -> hof"?p Ech(m,p)" ) ) )
   val omegaSc = Lemma( esOmegaSc ) {
-    cut( "cut", hof"!x?y (LEQ(x,y) & POR(s(n),y))" )
+    cut( "cut", hof"!x?y (LEQ(x,y) & POR(s(n),y))" ) right ref( "phi" )
     allR( fov"A" )
     allL( "Ant_2", fov"A" )
     exR( "cut", fov"A" )
-    andR
-    foTheory
+    andR left foTheory
     ref( "chi" )
-    ref( "phi" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"omega (s n) m", omegaSc )
 }

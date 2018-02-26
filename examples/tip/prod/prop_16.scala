@@ -25,7 +25,7 @@ object prop_16 extends TacticsProof {
         def_plus_1: ∀z ∀y (plus(S(z:Nat): Nat, y:Nat): Nat) = S(plus(z, y)),
         def_even_0: even(#c(Z: Nat)): o,
         def_even_1: ¬even(S(#c(Z: Nat)): Nat),
-        def_even_2: ∀z ((even(S(S(z:Nat): Nat)) ⊃ even(z)) ∧ (even(z) ⊃ even(S(S(z))))),
+        def_even_2: ∀z ((even(S(S(z:Nat): Nat)) → even(z)) ∧ (even(z) → even(S(S(z))))),
         constr_inj_0: ∀y0 ¬#c(Z: Nat) = S(y0:Nat)
         :-
         goal: ∀x even(plus(x:Nat, x): Nat)
