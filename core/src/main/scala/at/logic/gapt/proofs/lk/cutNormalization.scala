@@ -15,6 +15,12 @@ trait Reduction {
       def reduce( proof: LKProof ) =
         Reduction.this.reduce( proof ) flatMap reduction.reduce
     }
+
+  def isRedex(proof: LKProof): Boolean =
+    reduce(proof).nonEmpty
+
+  def redexes(proof: LKProof): Seq[LKProof] =
+    proof.subProofs.filter { isRedex(_) }.toSeq
 }
 
 trait CutReduction extends Reduction {
@@ -23,11 +29,14 @@ trait CutReduction extends Reduction {
       case cut @ CutRule( _, _, _, _ ) => reduce( cut )
       case _                           => None
     }
+
   def reduce( proof: CutRule ): Option[LKProof]
+
   def orElse( reduction: CutReduction ): CutReduction =
     new CutReduction {
       def reduce( cut: CutRule ) = CutReduction.this.reduce( cut ) orElse reduction.reduce( cut )
     }
+
   def andThen( reduction: CutReduction ): CutReduction =
     new CutReduction {
       def reduce( cut: CutRule ) = CutReduction.this.reduce( cut ) flatMap reduction.reduce
@@ -35,7 +44,7 @@ trait CutReduction extends Reduction {
 }
 
 trait ReductionStrategy {
-  def transform( reduction: Reduction, proof: LKProof ): LKProof
+  def run( proof: LKProof ): LKProof
 }
 
 class UppermostRedexReduction( reduction: Reduction ) extends Reduction {
@@ -46,15 +55,12 @@ class UppermostRedexReduction( reduction: Reduction ) extends Reduction {
     }
   }
   private def hasUpperRedex( proof: LKProof ) = {
-    proof.immediateSubProofs.exists( isRedex( _, reduction ) )
+    proof.immediateSubProofs.flatMap(_.subProofs).exists( reduction.isRedex( _ ) )
   }
-
-  private def isRedex( proof: LKProof, reduction: Reduction ): Boolean =
-    reduction.reduce( proof ).nonEmpty
 }
 
-object uppermostFirstStrategy extends ReductionStrategy {
-  def transform( reduction: Reduction, proof: LKProof ): LKProof = {
+class UppermostFirstStrategy(reduction: Reduction) extends ReductionStrategy {
+  def run( proof: LKProof ): LKProof = {
     new LKVisitor[Unit] {
       override def recurse( proof: LKProof, u: Unit ): ( LKProof, SequentConnector ) = {
         val ( intermediaryProof, intermediaryConnector ): ( LKProof, SequentConnector ) = super.recurse( proof, u )
@@ -71,58 +77,61 @@ object uppermostFirstStrategy extends ReductionStrategy {
   }
 }
 
-object iterativeParallelStrategy extends ReductionStrategy {
-  override def transform( reduction: Reduction, proof: LKProof ): LKProof = {
+class IterativeParallelStrategy(reduction: Reduction) extends ReductionStrategy {
+  override def run( proof: LKProof ): LKProof = {
     var intermediaryProof = proof
-    var reduced = false
+    val reducer = (new LowerMostRedexReducer(reduction))
     do {
-      reduced = false
-      intermediaryProof = new LKVisitor[Unit] {
-        override def recurse( proof: LKProof, u: Unit ): ( LKProof, SequentConnector ) = {
-          reduction.reduce( proof ) match {
-            case Some( finalProof ) =>
-              reduced = true
-              ( finalProof, SequentConnector.guessInjection(
-                fromLower = proof.conclusion, toUpper = finalProof.conclusion ).inv )
-            case _ => super.recurse( proof, u )
-          }
-        }
-      }.apply( intermediaryProof, () )
-    } while ( reduced )
+      reducer.foundRedex = false
+      intermediaryProof = reducer.apply( intermediaryProof, () )
+
+    } while ( reducer.foundRedex )
     intermediaryProof
   }
 }
+trait RedexReducer {
+  def foundRedex: Boolean
+}
 
-class IterativeSelectiveStrategy( selector: (LKProof, Reduction) => Option[Reduction] ) extends ReductionStrategy {
-  override def transform( reduction: Reduction, proof: LKProof ): LKProof = {
+class LowerMostRedexReducer(reduction: Reduction) extends LKVisitor[Unit] with RedexReducer {
+
+  var foundRedex: Boolean = false
+
+  override def recurse( proof: LKProof, u: Unit ): ( LKProof, SequentConnector ) = {
+    reduction.reduce( proof ) match {
+      case Some( finalProof ) =>
+        foundRedex = true
+        ( finalProof, SequentConnector.guessInjection(
+          fromLower = proof.conclusion, toUpper = finalProof.conclusion ).inv )
+      case _ => super.recurse( proof, u )
+    }
+  }
+}
+
+trait Selector {
+  def createSelectorReduction(proof: LKProof): Option[Reduction]
+}
+
+class IterativeSelectiveStrategy( selector: Selector ) extends ReductionStrategy {
+  override def run( proof: LKProof ): LKProof = {
     var intermediaryProof = proof
     var continue = false
     do {
       continue = false
-        selector(intermediaryProof, reduction) match {
+        selector.createSelectorReduction(intermediaryProof) match {
         case Some( selectorReduction ) =>
           continue = true
-          intermediaryProof = new LKVisitor[Unit] {
-            override def recurse( proof: LKProof, u: Unit ): ( LKProof, SequentConnector ) = {
-              selectorReduction.reduce( proof ) match {
-                case Some( finalProof ) =>
-                  ( finalProof, SequentConnector.guessInjection(
-                    fromLower = proof.conclusion, toUpper = finalProof.conclusion ).inv )
-                case _ => super.recurse( proof, u )
-              }
-            }
-          }.apply( intermediaryProof, () )
+          intermediaryProof = (new LowerMostRedexReducer(selectorReduction)).apply( intermediaryProof, () )
         case None =>
       }
     } while ( continue )
     intermediaryProof
   }
-
 }
 
 object cutElimination {
   def apply( proof: LKProof ): LKProof =
-    uppermostFirstStrategy.transform( nonCommutingCutReduction, proof )
+    (new UppermostFirstStrategy(nonCommutingCutReduction)).run( proof )
 }
 
 object logicalComplexity {
@@ -148,36 +157,40 @@ object logicalComplexity {
   }
 }
 
-object maximumGradeSelector {
-  def apply(proof: LKProof, reduction: Reduction): Option[Reduction] = {
+class MaximumGradeSelector(reduction: CutReduction) extends Selector {
+  override def createSelectorReduction(proof: LKProof): Option[Reduction] = {
     maximumGrade(reduction, proof) match {
-      case Some(maxGrade) => Some(new CutReduction {
-        override def reduce(cut: CutRule): Option[LKProof] =
-          if (logicalComplexity(cut.cutFormula) == maxGrade) {
-            reduction.reduce(cut)
-          } else {
-            None
-          }
-      })
+      case Some(maxGrade) => Some(new MaxGradeReduction(maxGrade, reduction))
       case _ => None
     }
+  }
+
+  class MaxGradeReduction(grade: Int, reduction: CutReduction) extends CutReduction {
+      override def reduce(cut: CutRule): Option[LKProof] =
+        if (logicalComplexity(cut.cutFormula) == grade) {
+          reduction.reduce(cut)
+        } else {
+          None
+        }
   }
 }
 
 object maximumGrade {
-  def apply(reduction: Reduction, proof: LKProof) : Option[Int] = {
-    val grades: Set[Int] = proof.subProofs.filter { isRedex(_, reduction) } map { proof =>
-      val cut @ CutRule(_,_,_,_) = proof
-      logicalComplexity(cut.cutFormula)
+  def apply(reduction: CutReduction, proof: LKProof) : Option[Int] = {
+    val cuts: Seq[CutRule] = reduction.redexes(proof) map {
+      _ match {
+        case cut @ CutRule(_, _, _, _) => cut
+      }
     }
-    if (grades.isEmpty) {
-      None
-    } else {
-      Some(grades.max)
+    maxGrade(cuts)
+  }
+
+  def maxGrade(cuts: Seq[CutRule]): Option[Int] = {
+    cuts match {
+      case Seq() => None
+      case _     => Some(cuts map { cut => logicalComplexity(cut.cutFormula)} max)
     }
   }
-  private def isRedex( proof: LKProof, reduction: Reduction ): Boolean =
-    reduction.reduce( proof ).nonEmpty
 }
 
 object nonCommutingCutReduction extends CutReduction {
