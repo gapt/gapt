@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.lk
 
+import at.logic.gapt.expr.{All, And, Const, Ex, FOLAtom, Formula, Neg, Or, To}
 import at.logic.gapt.proofs.SequentConnector
 
 trait Reduction {
@@ -92,44 +93,91 @@ object iterativeParallelStrategy extends ReductionStrategy {
   }
 }
 
-class IterativeSelectiveStrategy( selector: ( LKProof ) => Option[LKProof] ) extends ReductionStrategy {
+class IterativeSelectiveStrategy( selector: (LKProof, Reduction) => Option[Reduction] ) extends ReductionStrategy {
   override def transform( reduction: Reduction, proof: LKProof ): LKProof = {
     var intermediaryProof = proof
     var continue = false
     do {
       continue = false
-      selector( intermediaryProof ) match {
-        case Some( redex ) =>
+        selector(intermediaryProof, reduction) match {
+        case Some( selectorReduction ) =>
           continue = true
-          intermediaryProof = new SelectiveProofReducer( reduction, redex ).apply( intermediaryProof, () )
+          intermediaryProof = new LKVisitor[Unit] {
+            override def recurse( proof: LKProof, u: Unit ): ( LKProof, SequentConnector ) = {
+              selectorReduction.reduce( proof ) match {
+                case Some( finalProof ) =>
+                  ( finalProof, SequentConnector.guessInjection(
+                    fromLower = proof.conclusion, toUpper = finalProof.conclusion ).inv )
+                case _ => super.recurse( proof, u )
+              }
+            }
+          }.apply( intermediaryProof, () )
         case None =>
       }
     } while ( continue )
     intermediaryProof
   }
 
-  // todo: This might reduce several redexes at once.
-  // We want to select an occurrence of a cut and not a cut itself.
-  // Hence it might be better to use the path to the cut.
-  private class SelectiveProofReducer( reduction: Reduction, redex: LKProof ) extends LKVisitor[Unit] {
-    override def recurse( proof: LKProof, u: Unit ): ( LKProof, SequentConnector ) = {
-      if ( proof == redex ) {
-        reduction.reduce( proof ) match {
-          case Some( newProof ) =>
-            ( newProof, SequentConnector.guessInjection(
-              fromLower = proof.conclusion, toUpper = newProof.conclusion ).inv )
-          case _ => throw new IllegalStateException( "redex must be reducible" )
-        }
-      } else {
-        super.recurse( proof, u )
-      }
-    }
-  }
 }
 
 object cutElimination {
   def apply( proof: LKProof ): LKProof =
     uppermostFirstStrategy.transform( nonCommutingCutReduction, proof )
+}
+
+object logicalComplexity {
+  def apply(formula: Formula): Int = {
+    formula match {
+      case PropAtom(_) => 0
+      case FOLAtom(_,_) => 0
+      case All(_, subformula) => 1 + logicalComplexity(subformula)
+      case Ex(_,subformula) => 1 + logicalComplexity(subformula)
+      case And(f1, f2) => 1 + logicalComplexity(f1) + logicalComplexity(f2)
+      case Or(f1,f2) => 1 + logicalComplexity(f1) + logicalComplexity(f2)
+      case Neg(f1) => 1 + logicalComplexity(f1)
+    }
+  }
+  
+  object PropAtom {
+    def unapply(arg: Formula): Option[String] = {
+      arg match {
+        case Const(sym, To, _) => Some(sym)
+        case _ => None
+      }
+    }
+  }
+}
+
+object maximumGradeSelector {
+  def apply(proof: LKProof, reduction: Reduction): Option[Reduction] = {
+    maximumGrade(reduction, proof) match {
+      case Some(maxGrade) => Some(new CutReduction {
+        override def reduce(cut: CutRule): Option[LKProof] =
+          if (logicalComplexity(cut.cutFormula) == maxGrade) {
+            reduction.reduce(cut)
+          } else {
+            None
+          }
+      })
+      case _ => None
+    }
+  }
+}
+
+object maximumGrade {
+  def apply(reduction: Reduction, proof: LKProof) : Option[Int] = {
+    val grades: Set[Int] = proof.subProofs.filter { isRedex(_, reduction) } map { proof =>
+      val cut @ CutRule(_,_,_,_) = proof
+      logicalComplexity(cut.cutFormula)
+    }
+    if (grades.isEmpty) {
+      None
+    } else {
+      Some(grades.max)
+    }
+  }
+  private def isRedex( proof: LKProof, reduction: Reduction ): Boolean =
+    reduction.reduce( proof ).nonEmpty
 }
 
 object nonCommutingCutReduction extends CutReduction {
