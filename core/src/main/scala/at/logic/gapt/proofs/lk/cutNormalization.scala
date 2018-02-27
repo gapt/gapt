@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.lk
 
+import at.logic.gapt.expr.hol.{containsQuantifier, isAtom}
 import at.logic.gapt.expr.{All, And, Const, Ex, FOLAtom, Formula, Neg, Or, To}
 import at.logic.gapt.proofs.SequentConnector
 
@@ -56,6 +57,16 @@ class UppermostRedexReduction( reduction: Reduction ) extends Reduction {
   }
   private def hasUpperRedex( proof: LKProof ) = {
     proof.immediateSubProofs.flatMap(_.subProofs).exists( reduction.isRedex( _ ) )
+  }
+}
+
+class NonPropositionalCutReduction( reduction: CutReduction ) extends CutReduction {
+  override def reduce( cut: CutRule ): Option[LKProof] = {
+    reduction.reduce(cut) match {
+      case result @ Some(_) if !containsQuantifier(cut.cutFormula) =>
+        result
+      case _ => None
+    }
   }
 }
 
@@ -221,3 +232,97 @@ object nonCommutingCutReduction extends CutReduction {
     RightRankEqualityLeftReduction orElse
     RightRankEqualityRightReduction orElse leftRankReduction
 }
+
+object ACNFReduction extends CutReduction {
+  /**
+    * This algorithm implements a generalization of the Gentzen method which
+    * reduces all cuts to atomic cuts.
+    *
+    * @param proof            The proof to subject to cut-elimination.
+    * @return The cut-free proof.
+    */
+  def reduce(proof: CutRule): Option[LKProof] = proof match {
+    case cut@CutRule(lsb, l, rsb, _) if !isAtom(lsb.endSequent(l)) && isACNF(lsb) && isACNF(rsb) =>
+      if (isAtom(lsb.endSequent(l)))
+        (leftRankReduction orElse rightRankReduction).reduce(cut)
+      else
+        (gradeReduction orElse leftRankReduction orElse rightRankReduction).reduce(cut)
+    case _ => None
+  }
+}
+
+object ACNFTopReduction extends CutReduction {
+
+  import at.logic.gapt.expr.hol.isAtom
+
+  def reduce(proof: CutRule): Option[LKProof] =
+    proof match {
+      case cut@CutRule(lsb, l, rsb, r) if isAtomicCut(cut) =>
+        if (!(introOrCut(lsb, lsb.endSequent(l)) && introOrCut(rsb, rsb.endSequent(r)))) {
+          if (introOrCut(lsb, lsb.endSequent(l)))
+            rightRankReduction.reduce(cut)
+          else
+            (leftRankReduction orElse rightRankReduction).reduce(cut)
+        } else {
+          None
+        }
+      case cut@CutRule(lsb, _, rsb, _) if isACNFTop(lsb) && isACNFTop(rsb) =>
+        (gradeReduction orElse leftRankReduction orElse rightRankReduction).reduce(cut)
+      case _ => None
+    }
+
+  private def isAtomicCut(cut: CutRule): Boolean = isAtom(cut.cutFormula)
+}
+
+object isACNF {
+  /**
+    * This method checks whether a proof is in ACNF
+    *
+    * @param proof The proof to check for in ACNF.
+    * @return True if proof is in ACNF, False otherwise.
+    */
+  def apply(proof: LKProof): Boolean = proof match {
+    case InitialSequent(_) => true
+    case CutRule(lsb, l, rsb, r) =>
+      if (isAtom(lsb.endSequent(l))) isACNF(lsb) && isACNF(rsb)
+      else false
+    case _ => proof.immediateSubProofs.forall(isACNF(_))
+  }
+}
+
+  object isACNFTop {
+    /**
+      * This method checks whether a proof is in ACNF top
+      *
+      * @param proof The proof to check for in ACNF top.
+      * @return True if proof is in ACNF,  False otherwise.
+      */
+    def apply(proof: LKProof): Boolean = proof match {
+      case InitialSequent(_) => true
+      case CutRule(lsb, l, rsb, r) =>
+        if (isAtom(lsb.endSequent(l)))
+          if (introOrCut(lsb, lsb.endSequent(l)) && introOrCut(rsb, rsb.endSequent(r)))
+            isACNFTop(lsb) && isACNFTop(rsb)
+          else false
+        else false
+      case _ => proof.immediateSubProofs.forall(isACNFTop(_))
+    }
+  }
+
+  object introOrCut {
+    /**
+      * Checks if the last rule in proof is a leaf, a cut rule, or a weakening rule on
+      * the given formula.
+      *
+      * @param proof   The proof we are checking.
+      * @param formula The formula we are checking.
+      * @return True is structure is correct or false if not.
+      */
+    def apply(proof: LKProof, formula: Formula): Boolean = proof match {
+      case LogicalAxiom(_) => true
+      case CutRule(lsb, l, rsb, r) => true
+      case WeakeningRightRule(_, main) => if (main == formula) true else false
+      case WeakeningLeftRule(_, main) => if (main == formula) true else false
+      case _ => false
+    }
+  }
