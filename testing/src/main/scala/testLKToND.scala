@@ -4,12 +4,44 @@ import ammonite.ops.FilePath
 import at.logic.gapt.expr.hol.containsQuantifierOnLogicalLevel
 import at.logic.gapt.formats.tptp.TptpParser
 import at.logic.gapt.proofs.expansion.{ ExpansionProofToLK, deskolemizeET }
-import at.logic.gapt.proofs.lk.{ LKToND, containsEqualityReasoning, isMaeharaMG3i }
-import at.logic.gapt.proofs.{ MutableContext, loadExpansionProof }
-import at.logic.gapt.proofs.nd.ExcludedMiddleRule
+import at.logic.gapt.proofs.lk.{ LKProof, LKToND, OrRightRule, WeakeningRightRule, containsEqualityReasoning, isMaeharaMG3i }
+import at.logic.gapt.proofs.nd.{ ExcludedMiddleRule, NDProof }
 import at.logic.gapt.proofs.resolution.{ ResolutionToExpansionProof, structuralCNF }
+import at.logic.gapt.proofs.{ MutableContext, loadExpansionProof }
 import at.logic.gapt.provers.eprover.EProver
 import at.logic.gapt.utils.{ LogHandler, Logger }
+
+private object lkStats {
+  def apply( lk: LKProof, logger: Logger ): Unit = {
+    import logger._
+    metric( "size_lk", lk.treeLike.size )
+    metric( "equational", containsEqualityReasoning( lk ) )
+    metric( "lk_max_succ_size", lk.subProofs.map( _.endSequent.succedent.size ).max )
+    metric( "lk_max_succ_set_size", lk.subProofs.map( _.endSequent.succedent.toSet.size ).max )
+    metric( "lk_in_mg3i", isMaeharaMG3i( lk ) )
+
+    metric( "lk_disj_right", lk.subProofs.count( _.isInstanceOf[OrRightRule] ) )
+    metric( "lk_disj_right_after_weak", lk.subProofs.count {
+      case OrRightRule( WeakeningRightRule( _, _ ), _, _ ) => true
+      case _ => false
+    } )
+  }
+}
+private object ndStats {
+  def apply( nd: NDProof, logger: Logger ): Unit = {
+    import logger._
+    metric( "size_nd", nd.treeLike.size )
+
+    metric( "num_excl_mid", nd.treeLike.postOrder.count {
+      case _: ExcludedMiddleRule => true
+      case _                     => false
+    } )
+    metric( "num_quant_excl_mid", nd.treeLike.postOrder.count {
+      case em: ExcludedMiddleRule if containsQuantifierOnLogicalLevel( em.formulaA ) => true
+      case _ => false
+    } )
+  }
+}
 
 object testLKToND extends scala.App {
   val logger = Logger( "testLKToND" )
@@ -27,23 +59,10 @@ object testLKToND extends scala.App {
     metric( "size_exp", expansion.size )
 
     val Right( lk ) = time( "exp2lk" ) { ExpansionProofToLK.withIntuitionisticHeuristics( expansion ) }
-    metric( "size_lk", lk.treeLike.size )
-    metric( "equational", containsEqualityReasoning( lk ) )
-    metric( "lk_max_succ_size", lk.subProofs.map( _.endSequent.succedent.size ).max )
-    metric( "lk_max_succ_set_size", lk.subProofs.map( _.endSequent.succedent.toSet.size ).max )
-    metric( "lk_in_mg3i", isMaeharaMG3i( lk ) )
+    lkStats( lk, logger )
 
     val nd = time( "lk2nd" ) { LKToND( lk ) }
-    metric( "size_nd", nd.treeLike.size )
-
-    metric( "num_excl_mid", nd.treeLike.postOrder.count {
-      case _: ExcludedMiddleRule => true
-      case _                     => false
-    } )
-    metric( "num_quant_excl_mid", nd.treeLike.postOrder.count {
-      case em: ExcludedMiddleRule if containsQuantifierOnLogicalLevel( em.formulaA ) => true
-      case _ => false
-    } )
+    ndStats( nd, logger )
 
     metric( "status", "ok" )
 
@@ -81,23 +100,10 @@ object testLKToND2 extends scala.App {
 
         time( "exp2lk" ) { ExpansionProofToLK.withIntuitionisticHeuristics( desk ) } match {
           case Right( lk ) =>
-            metric( "size_lk", lk.treeLike.size )
-            metric( "equational", containsEqualityReasoning( lk ) )
-            metric( "lk_max_succ_size", lk.subProofs.map( _.endSequent.succedent.size ).max )
-            metric( "lk_max_succ_set_size", lk.subProofs.map( _.endSequent.succedent.toSet.size ).max )
-            metric( "lk_in_mg3i", isMaeharaMG3i( lk ) )
+            lkStats( lk, logger )
 
             val nd = time( "lk2nd" ) { LKToND( lk ) }
-            metric( "size_nd", nd.treeLike.size )
-
-            metric( "num_excl_mid", nd.treeLike.postOrder.count {
-              case _: ExcludedMiddleRule => true
-              case _                     => false
-            } )
-            metric( "num_quant_excl_mid", nd.treeLike.postOrder.count {
-              case em: ExcludedMiddleRule if containsQuantifierOnLogicalLevel( em.formulaA ) => true
-              case _ => false
-            } )
+            ndStats( nd, logger )
 
             metric( "status", "ok" )
 
