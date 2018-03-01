@@ -12,7 +12,6 @@ object ClassicalExtraction {
 
     implicit var systemT = ctx
 
-    val tmp = systemT.get[StructurallyInductiveTypes].constructors.filter( _._1 != "o" )
     // add recursors for all inductive types
     for ( ( name, constructors ) <- systemT.get[StructurallyInductiveTypes].constructors.filter( _._1 != "o" ) ) {
       val typ = systemT.get[BaseTypes].baseTypes( name )
@@ -59,25 +58,19 @@ object ClassicalExtraction {
     systemT += InductiveType( sum, inl, inr )
     val c = TVar( "c" )
     val ite = Const( "ite", sum ->: ( a ->: c ) ->: ( b ->: c ) ->: c, List( a, b, c ) )
-    val v: Expr = Var( "v", c )
-    val w: Expr = Var( "w", c )
-    val s: Expr = Var( "s", sum )
-    /*    systemT += PrimRecFun( List(
-      ( ite, List(
-        (App ( ite, App( sum, List(x,y))),c)
-      ) )
-    ))(systemT)*/
+    val w1: Expr = Var( "w1", c )
+    val w2: Expr = Var( "w2", c )
 
     systemT += PrimRecFun( List(
       ( ite, List(
         (
-          App( ite, App( inl, List( x ) ) ), // lhs
-          App( Abs( x.asInstanceOf[Var], s ), x ) ), // rhs
-
+          App( ite, List( App( inl, List( x ) ), Abs( x.asInstanceOf[Var], w1 ), Abs( y.asInstanceOf[Var], w2 ) ) ), // lhs
+          App( Abs( x.asInstanceOf[Var], w1 ), x ) // rhs
+        ),
         (
-          App( ite, App( inr, List( y ) ) ), // lhs
-          App( Abs( y.asInstanceOf[Var], s ), y ) ) // rhs
-      ) ) ) )( systemT )
+          App( ite, List( App( inr, List( y ) ), Abs( x.asInstanceOf[Var], w1 ), Abs( y.asInstanceOf[Var], w2 ) ) ), // lhs
+          App( Abs( y.asInstanceOf[Var], w2 ), y ) // rhs
+        ) ) ) ) )( systemT )
 
     // add a term+type to represent the empty program
     systemT += InductiveType(
