@@ -46,11 +46,9 @@ object ClassicalExtraction {
     val x: Expr = Var( "x", a )
     val y: Expr = Var( "y", b )
     systemT += PrimRecFun( List(
-      ( pi1, List(
-        ( App( pi1, App( pair, List( x, y ) ) ), x ) ) ) ) )( systemT )
+      ( pi1, List( ( le"$pi1( $pair( $x, $y ) )", x ) ) ) ) )( systemT )
     systemT += PrimRecFun( List(
-      ( pi2, List(
-        ( App( pi2, App( pair, List( x, y ) ) ), y ) ) ) ) )( systemT )
+      ( pi2, List( ( le"$pi2( $pair( $x, $y ) )", y ) ) ) ) )( systemT )
 
     val sum = TBase( "sum", a, b )
     val inl = Const( "inl", a ->: sum, List( a, b ) )
@@ -64,13 +62,11 @@ object ClassicalExtraction {
     systemT += PrimRecFun( List(
       ( matchSum, List(
         (
-          App( matchSum, List( App( inl, x ), w1, w2 ) ), // lhs
-          App( w1, x ) // rhs
-        ),
+          le"$matchSum( $inl( $x ), $w1, $w2 )",
+          le"$w1( $x )" ),
         (
-          App( matchSum, List( App( inr, y ), w1, w2 ) ), // lhs
-          App( w2, y ) // rhs
-        ) ) ) ) )( systemT )
+          le"$matchSum( $inr( $y ), $w1, $w2 )",
+          le"$w2( $y )" ) ) ) ) )( systemT )
 
     // add a term+type to represent the empty program
     systemT += InductiveType(
