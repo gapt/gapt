@@ -63,12 +63,14 @@ object ClassicalExtraction {
 
     systemT += PrimRecFun( List(
       ( matchSum, List(
-        ( App( matchSum, List( App( inl, List( x ) ), w1, w2 ) ), // lhs
-          App( w1, x ) ), // rhs
-        ( App( matchSum, List( App( inr, List( y ) ), w1, w2 ) ), // lhs
-          App( w2, y ) ) // rhs
-      ) ) )
-    )( systemT )
+        (
+          App( matchSum, List( App( inl, x ), w1, w2 ) ), // lhs
+          App( w1, x ) // rhs
+        ),
+        (
+          App( matchSum, List( App( inr, y ), w1, w2 ) ), // lhs
+          App( w2, y ) // rhs
+        ) ) ) ) )( systemT )
 
     // add a term+type to represent the empty program
     systemT += InductiveType(
