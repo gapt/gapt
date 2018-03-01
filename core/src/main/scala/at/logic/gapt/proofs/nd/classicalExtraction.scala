@@ -57,20 +57,18 @@ object ClassicalExtraction {
     val inr = Const( "inr", b ->: sum, List( a, b ) )
     systemT += InductiveType( sum, inl, inr )
     val c = TVar( "c" )
-    val ite = Const( "ite", sum ->: ( a ->: c ) ->: ( b ->: c ) ->: c, List( a, b, c ) )
-    val w1: Expr = Var( "w1", c )
-    val w2: Expr = Var( "w2", c )
+    val matchSum = Const( "matchSum", sum ->: ( a ->: c ) ->: ( b ->: c ) ->: c, List( a, b, c ) )
+    val w1: Expr = Var( "w1", a ->: c )
+    val w2: Expr = Var( "w2", b ->: c )
 
     systemT += PrimRecFun( List(
-      ( ite, List(
-        (
-          App( ite, List( App( inl, List( x ) ), Abs( x.asInstanceOf[Var], w1 ), Abs( y.asInstanceOf[Var], w2 ) ) ), // lhs
-          App( Abs( x.asInstanceOf[Var], w1 ), x ) // rhs
-        ),
-        (
-          App( ite, List( App( inr, List( y ) ), Abs( x.asInstanceOf[Var], w1 ), Abs( y.asInstanceOf[Var], w2 ) ) ), // lhs
-          App( Abs( y.asInstanceOf[Var], w2 ), y ) // rhs
-        ) ) ) ) )( systemT )
+      ( matchSum, List(
+        ( App( matchSum, List( App( inl, List( x ) ), w1, w2 ) ), // lhs
+          App( w1, x ) ), // rhs
+        ( App( matchSum, List( App( inr, List( y ) ), w1, w2 ) ), // lhs
+          App( w2, y ) ) // rhs
+      ) ) )
+    )( systemT )
 
     // add a term+type to represent the empty program
     systemT += InductiveType(
