@@ -135,15 +135,11 @@ class TheoryTestCase( name: String, combined: Boolean )
     normalizeLKt.withDebug( proof ) --? "lkt cut-elim"
 
     LKToExpansionProof( proof ) --? "LKToExpansionProof" foreach { expansion =>
-      deskolemizeET( expansion ) --? "deskolemization" foreach { desk =>
-        desk.shallow.isSubsetOf( expansion.shallow ) !-- "shallow sequent of deskolemization"
-        Z3.isValid( desk.deep ) !-- "deskolemized deep formula validity"
-        ExpansionProofToLK( desk ).get --? "ExpansionProofToLK on deskolemization" foreach { deskLK =>
-          deskLK.conclusion.isSubsetOf( proof.conclusion ) !-- "conclusion of ExpansionProofToLK"
-          ctx.check( deskLK ) --? "context check of ExpansionProofToLK"
-          normalizeLKt.withDebug( deskLK ) --? "lkt cut-elim (desk)"
-          LKToND( deskLK ) --? "LKToND (deskolemization)"
-        }
+      ExpansionProofToLK( expansion ).get --? "ExpansionProofToLK" foreach { expansionLK =>
+        expansionLK.conclusion.isSubsetOf( proof.conclusion ) !-- "conclusion of ExpansionProofToLK"
+        ctx.check( expansionLK ) --? "context check of ExpansionProofToLK"
+        normalizeLKt.withDebug( expansionLK ) --? "lkt cut-elim (expansion)"
+        LKToND( expansionLK ) --? "LKToND (expansion)"
       }
     }
 
