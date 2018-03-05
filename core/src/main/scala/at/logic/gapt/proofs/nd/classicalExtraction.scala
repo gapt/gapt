@@ -46,9 +46,9 @@ object ClassicalExtraction {
     val x: Expr = Var( "x", a )
     val y: Expr = Var( "y", b )
     systemT += PrimRecFun( List(
-      ( pi1, List( ( le"$pi1( $pair( $x, $y ) )", x ) ) ) ) )( systemT )
+      ( pi1, List( ( pi1( pair( x, y ) ) -> x ) ) ) ) )( systemT )
     systemT += PrimRecFun( List(
-      ( pi2, List( ( le"$pi2( $pair( $x, $y ) )", y ) ) ) ) )( systemT )
+      ( pi2, List( ( pi2( pair( x, y ) ) -> y ) ) ) ) )( systemT )
 
     val sum = TBase( "sum", a, b )
     val inl = Const( "inl", a ->: sum, List( a, b ) )
@@ -58,15 +58,26 @@ object ClassicalExtraction {
     val matchSum = Const( "matchSum", sum ->: ( a ->: c ) ->: ( b ->: c ) ->: c, List( a, b, c ) )
     val w1: Expr = Var( "w1", a ->: c )
     val w2: Expr = Var( "w2", b ->: c )
-
     systemT += PrimRecFun( List(
       ( matchSum, List(
-        (
-          le"$matchSum( $inl( $x ), $w1, $w2 )",
-          le"$w1( $x )" ),
-        (
-          le"$matchSum( $inr( $y ), $w1, $w2 )",
-          le"$w2( $y )" ) ) ) ) )( systemT )
+        ( matchSum( inl( x ), w1, w2 ) -> w1( x ) ),
+        ( matchSum( inr( y ), w1, w2 ) -> w2( y ) ) ) ) ) )( systemT )
+
+    val exn = TBase( "exn", a )
+    val exception = Const( "exception", a ->: exn, List( a ) )
+    systemT += InductiveType( exn, exception )
+    val raise = Const( "raise", exn ->: b, List( a, b ) )
+    systemT += raise
+    /*
+    val e: Expr = Var( "e", exn )
+    systemT += PrimRecFun( List(
+      ( raise, List(
+        //( raise( e )( y ) -> raise( e ) ) ) ) ) )( systemT )
+        ( raise( raise( e ) ) -> raise( e ) ) ) ) ) )( systemT )
+    */
+
+    val handle = Const( "handle", ( ( a ->: exn ) ->: c ) ->: ( a ->: c ) ->: c, List( a, c ) )
+    systemT += handle
 
     // add a term+type to represent the empty program
     systemT += InductiveType(
@@ -108,34 +119,19 @@ object ClassicalExtraction {
           le"pair(${App( mrealizeCases( leftSubproof ), variablesAntPremise( proof, 0 ) )},${App( mrealizeCases( rightSubproof ), variablesAntPremise( proof, 1 ) )})" )
 
       case OrElimRule( leftSubProof, middleSubProof, aux1, rightSubProof, aux2 ) =>
-        val realizerAOrB = App( mrealizeCases( leftSubProof ), variablesAntPremise( proof, 0 ) )
         Abs(
           variablesAntConclusion( proof ),
-          le"natRec(${
-            App( mrealizeCases( middleSubProof ), insertIndex( variablesAntPremise( proof, 1 ), aux1, App( le"pi1(pi2($realizerAOrB))", le"i" ) ) )
-          }, ${
-            Abs( Var( "a", ty"nat" ), Abs(
-              Var( "b", flat( proof.conclusion.succedent( 0 ) ) ),
-              App( mrealizeCases( rightSubProof ), insertIndex( variablesAntPremise( proof, 2 ), aux2, App( le"pi2(pi2($realizerAOrB))", Abs( Var( "c", ty"1" ), le"i" ) ) ) ) ) )
-          },pi1($realizerAOrB))" )
+          le"""matchSum(
+            ${App( mrealizeCases( leftSubProof ), variablesAntPremise( proof, 0 ) )},
+            ${App( mrealizeCases( middleSubProof ), variablesAntPremise( proof, 1 ) )},
+            ${App( mrealizeCases( rightSubProof ), variablesAntPremise( proof, 2 ) )}
+          )""" )
 
       case OrIntro1Rule( subProof, rightDisjunct ) =>
-        Abs(
-          variablesAntConclusion( proof ),
-          le"pair(0,pair(${
-            Abs( Var( "w", ty"1" ), App( mrealizeCases( subProof ), variablesAntPremise( proof, 0 ) ) )
-          }, ${
-            Abs( Var( "w", ty"1>1" ), Var( "w0", flat( rightDisjunct ) ) )
-          }))" )
+        Abs( variablesAntConclusion( proof ), le"inr(${App( mrealizeCases( subProof ), variablesAntPremise( proof, 0 ) )})" )
 
       case OrIntro2Rule( subProof, leftDisjunct ) =>
-        Abs(
-          variablesAntConclusion( proof ),
-          le"pair(s(0),pair(${
-            Abs( Var( "v", ty"1" ), Var( "v0", flat( leftDisjunct ) ) )
-          }, ${
-            Abs( Var( "v", ty"1 > 1" ), App( mrealizeCases( subProof ), variablesAntPremise( proof, 0 ) ) )
-          }))" )
+        Abs( variablesAntConclusion( proof ), le"inl(${App( mrealizeCases( subProof ), variablesAntPremise( proof, 0 ) )})" )
 
       case ImpElimRule( leftSubProof, rightSubProof ) =>
         Abs(
@@ -211,7 +207,7 @@ object ClassicalExtraction {
     case Eq( _, _ )                       => ty"1"
     case Atom( _, _ )                     => ty"1" // ?
     case And( leftformula, rightformula ) => TBase( "conj", flat( leftformula ), flat( rightformula ) )
-    case Or( leftformula, rightformula )  => flat( Ex( Var( "x", ty"nat" ), And( Imp( Eq( Var( "x", ty"nat" ), le"0" ), leftformula ), Imp( Neg( Eq( Var( "x", ty"nat" ), le"0" ) ), rightformula ) ) ) )
+    case Or( leftformula, rightformula )  => TBase( "sum", flat( leftformula ), flat( rightformula ) )
     case Imp( leftformula, rightformula ) => flat( leftformula ) ->: flat( rightformula )
     case Neg( subformula )                => flat( Imp( subformula, Bottom() ) )
     case Ex( variable, subformula )       => TBase( "conj", variable.ty, flat( subformula ) )

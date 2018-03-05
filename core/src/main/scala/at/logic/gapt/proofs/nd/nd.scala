@@ -506,7 +506,7 @@ case class OrElimRule(
   val rightC = rightPremise( Suc( 0 ) )
 
   val mainFormula = if ( middleC == rightC ) middleC else
-    throw NDRuleCreationException( s"Formulas $middleC an $rightC are not the same." )
+    throw NDRuleCreationException( s"Formulas $middleC and $rightC are not the same." )
 
   def auxIndices = Seq( Seq( Suc( 0 ) ), Seq( aux1, Suc( 0 ) ), Seq( aux2, Suc( 0 ) ) )
 
