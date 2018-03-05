@@ -3,7 +3,8 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.proofs.lk.ReductiveCutElimination._
-import at.logic.gapt.proofs.{ Context, SequentConnector, guessPermutation }
+import at.logic.gapt.proofs.lk.reductions._
+import at.logic.gapt.proofs.{Context, SequentConnector, guessPermutation}
 
 import scala.collection.mutable
 
@@ -280,22 +281,22 @@ class ReductiveCutElimination {
   }
 }
 
-object inductionReduction {
-
-  def applyWithSequentConnector( cut: CutRule )( implicit ctx: Context ): Option[( LKProof, SequentConnector )] =
-    this( cut ) map { guessPermutation( cut, _ ) }
-
-  /**
-   * Reduces the complexity with respect to cut inferences and induction inferences.
-   * @param cut The cut that is to be reduced.
-   * @param ctx The context of the proof.
-   * @return If the given cut can be reduced w.r.t. some induction rule, then
-   *         a proof with a lower complexity is returned. Otherwise None is returned.
-   */
-  def apply( cut: CutRule )( implicit ctx: Context ): Option[LKProof] = {
-    inductionRightReduction( cut ) orElse inductionLeftReduction( cut )
-  }
-}
+//object inductionReduction {
+//
+//  def applyWithSequentConnector( cut: CutRule )( implicit ctx: Context ): Option[( LKProof, SequentConnector )] =
+//    this( cut ) map { guessPermutation( cut, _ ) }
+//
+//  /**
+//   * Reduces the complexity with respect to cut inferences and induction inferences.
+//   * @param cut The cut that is to be reduced.
+//   * @param ctx The context of the proof.
+//   * @return If the given cut can be reduced w.r.t. some induction rule, then
+//   *         a proof with a lower complexity is returned. Otherwise None is returned.
+//   */
+//  def apply( cut: CutRule )( implicit ctx: Context ): Option[LKProof] = {
+//    inductionRightReduction( cut ) orElse inductionLeftReduction( cut )
+//  }
+//}
 
 private object inductionEigenvariables {
   /**
@@ -305,147 +306,6 @@ private object inductionEigenvariables {
    */
   def apply( induction: InductionRule ) =
     induction.cases.flatMap( _.eigenVars ).toSet
-}
-
-object inductionRightReduction extends CutReduction {
-
-  override def reduce( cut: CutRule ): Option[LKProof] = apply( cut )
-
-  def applyWithSequentConnector( cut: CutRule ): Option[( LKProof, SequentConnector )] =
-    this( cut ) map { guessPermutation( cut, _ ) }
-
-  /**
-   * Reduces the complexity of a cut w.r.t. to an induction inference by
-   * moving the cut over the induction inference.
-   * @param cut The cut that is to be reduced.
-   * @return A reduced proof if the cut is reducible, otherwise None.
-   */
-  def apply( cut: CutRule ): Option[LKProof] = {
-
-    cut.rightSubProof match {
-
-      case ind @ InductionRule( _, _, _
-        ) if contextVariables( cut ) intersect inductionEigenvariables( ind ) nonEmpty =>
-        val newEigenvariables = rename( inductionEigenvariables( ind ), contextVariables( cut ) )
-        val newInductionCases = ind.cases map { inductionCase =>
-          val newCaseEigenvariables = inductionCase.eigenVars.map( newEigenvariables )
-          val renaming = Substitution( inductionCase.eigenVars.map { ev => ( ev, newEigenvariables( ev ) ) } )
-          inductionCase.copy( proof = renaming( inductionCase.proof ), eigenVars = newCaseEigenvariables )
-        }
-        val newRightSubProof = ind.copy( cases = newInductionCases )
-        apply( cut.copy( rightSubProof = newRightSubProof ) )
-
-      case ind @ InductionRule( _, indFormula, indTerm ) =>
-        val targetCase = ind.cases.filter( _.proof.endSequent.antecedent.contains( cut.cutFormula ) ).head
-        val newIndCases = ind.cases map {
-          indCase =>
-            if ( indCase == targetCase ) {
-              val subProof = CutRule( cut.leftSubProof, indCase.proof, cut.cutFormula )
-              val hypIndices = indCase.hypotheses.map( subProof.getRightSequentConnector.child( _ ) )
-              val conclIndex = subProof.getRightSequentConnector.child( indCase.conclusion )
-              InductionCase( subProof, indCase.constructor, hypIndices, indCase.eigenVars, conclIndex )
-            } else {
-              indCase
-            }
-        }
-        Some( InductionRule( newIndCases, indFormula, indTerm ) )
-      case _ => None
-    }
-  }
-
-  private def contextVariables( cut: CutRule ) =
-    freeVariables( cut.rightSubProof.endSequent ) ++ freeVariables( cut.leftSubProof.endSequent )
-}
-
-object inductionUnfoldingReduction {
-
-  /**
-   * Tries to apply the reduction.
-   *
-   * @param induction See `inductionUnfoldingReduction$.apply(induction:InductionRule)(ctx:Context):Option[LKProof]`
-   * @param ctx Defines constants, types, etc.
-   * @return If the induction rule could be unfolded a proof of the same end-sequent and a sequent connector
-   *         is returned, otherwise None is returned.
-   */
-  def applyWithSequentConnector( induction: InductionRule )( implicit ctx: Context ): Option[( LKProof, SequentConnector )] =
-    this( induction ) map { guessPermutation( induction, _ ) }
-
-  /**
-   * Tries to apply the induction unfolding reduction to a given inference.
-   * @param proof The induction unfolding reduction is tried to applied to the last inference of this proof.
-   * @param ctx Defines constants, types, etc.
-   * @return None if the proof does not end with an induction inference, otherwise see
-   *         `inductionUnfoldingReduction.apply(InductionRule)(Context): Option[LKProof]`.
-   */
-  def apply( proof: LKProof )( implicit ctx: Context ): Option[LKProof] = proof match {
-    case ind @ InductionRule( _, _, _ ) => apply( ind )
-    case _: LKProof                     => None
-  }
-
-  /**
-   * Tries to unfold an induction inference.
-   *
-   * @param induction The induction inference to be unfolded.
-   * @param ctx Defines constants, types, etc.
-   * @return If the given induction's term is in constructor form a proof of the same end-sequent for
-   *         which the induction inference has been unfolded is returned, otherwise None.
-   */
-  def apply( induction: InductionRule )( implicit ctx: Context ): Option[LKProof] = {
-    if ( isConstructorForm( induction.term ) ) {
-      Some( unfoldInduction( induction ) )
-    } else {
-      None
-    }
-  }
-}
-
-object inductionLeftReduction {
-
-  def applyWithSequentConnector( cut: CutRule )( implicit ctx: Context ): Option[( LKProof, SequentConnector )] =
-    this( cut ) map { guessPermutation( cut, _ ) }
-
-  /**
-   * Reduces a cut by moving the cut towards the proof's leaves.
-   * @param cut The cut to be reduced.
-   * @param ctx The proof's context.
-   * @return A reduced proof if the given cut is reducible w.r.t to some induction inference,
-   *         otherwise None.
-   */
-  def apply( cut: CutRule )( implicit ctx: Context ): Option[LKProof] = {
-
-    cut.leftSubProof match {
-      case ind @ InductionRule( _, _, _ ) if ind.mainIndices.head != cut.aux1 &&
-        ( contextVariables( cut ) intersect inductionEigenvariables( ind ) nonEmpty ) =>
-        val newEigenvariables = rename( inductionEigenvariables( ind ), contextVariables( cut ) )
-        val newInductionCases = ind.cases map { inductionCase =>
-          val newCaseEigenvariables = inductionCase.eigenVars.map( newEigenvariables )
-          val renaming = Substitution( inductionCase.eigenVars.map { ev => ( ev, newEigenvariables( ev ) ) } )
-          inductionCase.copy( proof = renaming( inductionCase.proof ), eigenVars = newCaseEigenvariables )
-        }
-        val newLeftSubProof = ind.copy( cases = newInductionCases )
-        apply( cut.copy( leftSubProof = newLeftSubProof ) )
-
-      case ind @ InductionRule( inductionCases, inductionFormula, inductionTerm
-        ) if ind.mainIndices.head != cut.aux1 =>
-        val newInductionCases = inductionCases zip ind.occConnectors map {
-          case ( inductionCase, connector ) =>
-            if ( connector.parentOption( cut.aux1 ).nonEmpty ) {
-              val subProof = CutRule(
-                inductionCase.proof, connector.parent( cut.aux1 ), cut.rightSubProof, cut.aux2 )
-              val hypotheses = inductionCase.hypotheses map { subProof.getLeftSequentConnector.child( _ ) }
-              val conclusion = subProof.getLeftSequentConnector.child( inductionCase.conclusion )
-              inductionCase.copy( proof = subProof, hypotheses = hypotheses, conclusion = conclusion )
-            } else {
-              inductionCase
-            }
-        }
-        Some( InductionRule( newInductionCases, inductionFormula, inductionTerm ) )
-      case _ => None
-    }
-  }
-
-  private def contextVariables( cut: CutRule ) =
-    freeVariables( cut.rightSubProof.endSequent ) ++ freeVariables( cut.leftSubProof.endSequent )
 }
 
 object freeCutElimination {
@@ -505,7 +365,7 @@ class FreeCutElimination( implicit val ctx: Context ) {
       rightRankReduction( cut ) map { super.recurse( _, () ) }
 
     private def recurseInductionReduction( cut: CutRule ): Option[( LKProof, SequentConnector )] =
-      inductionReduction( cut ) map { super.recurse( _, () ) }
+      (LeftRankInductionReduction orElse RightRankInductionReduction ).reduce( cut ) map { super.recurse( _, () ) }
 
     private def reduction( proof: LKProof ): Option[( LKProof, SequentConnector )] = {
       val cut @ CutRule( _, _, _, _ ) = proof

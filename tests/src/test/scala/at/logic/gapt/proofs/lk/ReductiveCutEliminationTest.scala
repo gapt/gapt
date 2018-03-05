@@ -2,6 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.gaptic.{ Lemma, OpenAssumption, allL, andL, axiomLog, cut, impL, insert }
+import at.logic.gapt.proofs.lk.reductions.{ gradeReduction, leftRankReduction, rightRankReduction }
 import at.logic.gapt.proofs.{ Ant, Context, MutableContext, Sequent, SequentMatchers, Suc }
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._

@@ -1,10 +1,11 @@
-package at.logic.gapt.proofs.lk
+package at.logic.gapt.proofs.lk.reductions
 
 import at.logic.gapt.expr.{ Bottom, Substitution, Top }
-import at.logic.gapt.proofs.{ SequentConnector, guessPermutation }
+import at.logic.gapt.proofs.lk.{ AndLeftRule, AndRightRule, BottomAxiom, CutReduction, CutRule, DefinitionLeftRule, DefinitionRightRule, EqualityLeftRule, EqualityRightRule, ExistsLeftRule, ExistsRightRule, ForallLeftRule, ForallRightRule, ImpLeftRule, ImpRightRule, LKProof, LogicalAxiom, NegLeftRule, NegRightRule, OrLeftRule, OrRightRule, TopAxiom, WeakeningLeftRule, WeakeningMacroRule, WeakeningRightRule }
+import at.logic.gapt.proofs.{ Context, SequentConnector, guessPermutation }
 
 object GradeReductionAxiomLeft extends CutReduction {
-  override def reduce( cut: CutRule ): Option[LKProof] =
+  override def reduce( cut: CutRule )( implicit ctx: Context ): Option[LKProof] =
     ( cut.leftSubProof, cut.rightSubProof ) match {
       case ( LogicalAxiom( _ ), _ ) => Some( cut.rightSubProof )
       case _                        => None
@@ -12,7 +13,7 @@ object GradeReductionAxiomLeft extends CutReduction {
 }
 
 object GradeReductionAxiomRight extends CutReduction {
-  override def reduce( cut: CutRule ): Option[LKProof] =
+  override def reduce( cut: CutRule )( implicit ctx: Context ): Option[LKProof] =
     ( cut.leftSubProof, cut.rightSubProof ) match {
       case ( _, LogicalAxiom( _ ) ) => Some( cut.leftSubProof )
       case _                        => None
@@ -20,7 +21,7 @@ object GradeReductionAxiomRight extends CutReduction {
 }
 
 object GradeReductionAxiomTop extends CutReduction {
-  override def reduce( cut: CutRule ): Option[LKProof] =
+  override def reduce( cut: CutRule )( implicit ctx: Context ): Option[LKProof] =
     ( cut.leftSubProof, cut.rightSubProof ) match {
       case ( TopAxiom, WeakeningLeftRule( subProof, Top() ) ) if cut.rightSubProof.mainIndices.head == cut.aux2 =>
         Some( subProof )
@@ -29,7 +30,7 @@ object GradeReductionAxiomTop extends CutReduction {
 }
 
 object GradeReductionAxiomBottom extends CutReduction {
-  override def reduce( cut: CutRule ): Option[LKProof] =
+  override def reduce( cut: CutRule )( implicit ctx: Context ): Option[LKProof] =
     ( cut.leftSubProof, cut.rightSubProof ) match {
       case ( WeakeningRightRule( subProof, Bottom() ), BottomAxiom ) if cut.leftSubProof.mainIndices.head == cut.aux1 =>
         Some( subProof )
@@ -38,7 +39,7 @@ object GradeReductionAxiomBottom extends CutReduction {
 }
 
 object GradeReductionWeakeningRight extends CutReduction {
-  override def reduce( cut: CutRule ): Option[LKProof] =
+  override def reduce( cut: CutRule )( implicit ctx: Context ): Option[LKProof] =
     ( cut.leftSubProof, cut.rightSubProof ) match {
       case ( l @ WeakeningRightRule( subProof, main ), r ) if l.mainIndices.head == cut.aux1 =>
         // The left cut formula is introduced by weakening
@@ -48,7 +49,7 @@ object GradeReductionWeakeningRight extends CutReduction {
 }
 
 object GradeReductionWeakeningLeft extends CutReduction {
-  override def reduce( cut: CutRule ): Option[LKProof] =
+  override def reduce( cut: CutRule )( implicit ctx: Context ): Option[LKProof] =
     ( cut.leftSubProof, cut.rightSubProof ) match {
       case ( l, r @ WeakeningLeftRule( subProof, main ) ) if cut.aux2 == cut.rightSubProof.mainIndices.head =>
         // The right cut formula is introduced by weakening
@@ -58,7 +59,7 @@ object GradeReductionWeakeningLeft extends CutReduction {
 }
 
 object GradeReductionAnd extends CutReduction {
-  override def reduce( cut: CutRule ): Option[LKProof] =
+  override def reduce( cut: CutRule )( implicit ctx: Context ): Option[LKProof] =
     ( cut.leftSubProof, cut.rightSubProof ) match {
       case ( AndRightRule( llSubProof, a1, lrSubProof, a2 ), AndLeftRule( rSubProof, a3, a4 )
         ) if cut.leftSubProof.mainIndices.head == cut.aux1 && cut.rightSubProof.mainIndices.head == cut.aux2 =>
@@ -71,7 +72,7 @@ object GradeReductionAnd extends CutReduction {
 }
 
 object GradeReductionOr extends CutReduction {
-  override def reduce( cut: CutRule ): Option[LKProof] =
+  override def reduce( cut: CutRule )( implicit ctx: Context ): Option[LKProof] =
     ( cut.leftSubProof, cut.rightSubProof ) match {
       case ( OrRightRule( lSubProof, a1, a2 ), OrLeftRule( rlSubProof, a3, rrSubProof, a4 )
         ) if cut.leftSubProof.mainIndices.head == cut.aux1 && cut.rightSubProof.mainIndices.head == cut.aux2 =>
@@ -83,7 +84,7 @@ object GradeReductionOr extends CutReduction {
 }
 
 object GradeReductionImp extends CutReduction {
-  override def reduce( cut: CutRule ): Option[LKProof] =
+  override def reduce( cut: CutRule )( implicit ctx: Context ): Option[LKProof] =
     ( cut.leftSubProof, cut.rightSubProof ) match {
       case ( ImpRightRule( lSubProof, a1, a2 ), ImpLeftRule( rlSubProof, a3, rrSubProof, a4 )
         ) if cut.leftSubProof.mainIndices.head == cut.aux1 && cut.rightSubProof.mainIndices.head == cut.aux2 =>
@@ -94,7 +95,7 @@ object GradeReductionImp extends CutReduction {
 }
 
 object GradeReductionNeg extends CutReduction {
-  override def reduce( cut: CutRule ): Option[LKProof] =
+  override def reduce( cut: CutRule )( implicit ctx: Context ): Option[LKProof] =
     ( cut.leftSubProof, cut.rightSubProof ) match {
       case ( NegRightRule( lSubProof, a1 ), NegLeftRule( rSubProof, a2 )
         ) if cut.leftSubProof.mainIndices.head == cut.aux1 && cut.rightSubProof.mainIndices.head == cut.aux2 =>
@@ -105,7 +106,7 @@ object GradeReductionNeg extends CutReduction {
 }
 
 object GradeReductionForall extends CutReduction {
-  override def reduce( cut: CutRule ): Option[LKProof] =
+  override def reduce( cut: CutRule )( implicit ctx: Context ): Option[LKProof] =
     ( cut.leftSubProof, cut.rightSubProof ) match {
       case ( ForallRightRule( lSubProof, a1, eigen, _ ), ForallLeftRule( rSubProof, a2, f, term, _ )
         ) if cut.leftSubProof.mainIndices.head == cut.aux1 && cut.rightSubProof.mainIndices.head == cut.aux2 =>
@@ -116,7 +117,7 @@ object GradeReductionForall extends CutReduction {
 }
 
 object GradeReductionExists extends CutReduction {
-  override def reduce( cut: CutRule ): Option[LKProof] =
+  override def reduce( cut: CutRule )( implicit ctx: Context ): Option[LKProof] =
     ( cut.leftSubProof, cut.rightSubProof ) match {
       case ( ExistsRightRule( lSubProof, a2, f, term, _ ), ExistsLeftRule( rSubProof, a1, eigen, _ )
         ) if cut.leftSubProof.mainIndices.head == cut.aux1 && cut.rightSubProof.mainIndices.head == cut.aux2 =>
@@ -127,7 +128,7 @@ object GradeReductionExists extends CutReduction {
 }
 
 object GradeReductionDefinition extends CutReduction {
-  override def reduce( cut: CutRule ): Option[LKProof] =
+  override def reduce( cut: CutRule )( implicit ctx: Context ): Option[LKProof] =
     ( cut.leftSubProof, cut.rightSubProof ) match {
       case ( DefinitionRightRule( lSubProof, a1, definition1 ), DefinitionLeftRule( rSubProof, a2, definition2 )
         ) if cut.leftSubProof.mainIndices.head == cut.aux1 && cut.rightSubProof.mainIndices.head == cut.aux2 =>
@@ -137,7 +138,7 @@ object GradeReductionDefinition extends CutReduction {
 }
 
 object GradeReductionEquality extends CutReduction {
-  override def reduce( cut: CutRule ): Option[LKProof] =
+  override def reduce( cut: CutRule )( implicit ctx: Context ): Option[LKProof] =
     ( cut.leftSubProof, cut.rightSubProof ) match {
       case ( eqL @ EqualityRightRule( _, _, _, _ ), eqR @ EqualityLeftRule( _, _, _, _ )
         ) if eqL.mainIndices.head == cut.aux1 && eqR.mainIndices.head == cut.aux2 && eqL.auxFormula == eqR.auxFormula =>
@@ -148,8 +149,8 @@ object GradeReductionEquality extends CutReduction {
 
 object gradeReduction extends CutReduction {
 
-  def applyWithSequentConnector( cut: CutRule ): Option[( LKProof, SequentConnector )] =
-    this( cut ) map { guessPermutation( cut, _ ) }
+  def applyWithSequentConnector( cut: CutRule )(implicit ctx: Context): Option[( LKProof, SequentConnector )] =
+    this( cut )(ctx) map { guessPermutation( cut, _ ) }
 
   /**
    * Reduces the logical complexity of the cut formula or removes the cut.
@@ -157,7 +158,7 @@ object gradeReduction extends CutReduction {
    * @param cut The proof to which the reduction is applied.
    * @return A reduced proof or None if the reduction could not be applied to the given proof.
    */
-  def apply( cut: CutRule ): Option[LKProof] =
+  def apply( cut: CutRule )(implicit ctx: Context): Option[LKProof] =
     GradeReductionAxiomLeft.reduce( cut ) orElse
       GradeReductionAxiomRight.reduce( cut ) orElse
       GradeReductionAxiomTop.reduce( cut ) orElse
@@ -173,5 +174,5 @@ object gradeReduction extends CutReduction {
       GradeReductionDefinition.reduce( cut ) orElse
       GradeReductionEquality.reduce( cut )
 
-  override def reduce( proof: CutRule ): Option[LKProof] = apply( proof )
+  override def reduce( proof: CutRule )( implicit ctx: Context ): Option[LKProof] = apply( proof )
 }
