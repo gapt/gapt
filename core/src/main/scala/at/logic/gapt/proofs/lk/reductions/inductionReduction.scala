@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.lk.reductions
 
 import at.logic.gapt.expr.isConstructorForm
 import at.logic.gapt.proofs.{ Context, SequentConnector, guessPermutation }
-import at.logic.gapt.proofs.lk.{ InductionRule, LKProof, Reduction, unfoldInduction }
+import at.logic.gapt.proofs.lk.{ InductionRule, LKProof, unfoldInduction }
 
 object inductionUnfoldingReduction extends Reduction {
 

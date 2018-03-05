@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk.reductions
 
 import at.logic.gapt.expr.{ Bottom, Substitution, Top }
-import at.logic.gapt.proofs.lk.{ AndLeftRule, AndRightRule, BottomAxiom, CutReduction, CutRule, DefinitionLeftRule, DefinitionRightRule, EqualityLeftRule, EqualityRightRule, ExistsLeftRule, ExistsRightRule, ForallLeftRule, ForallRightRule, ImpLeftRule, ImpRightRule, LKProof, LogicalAxiom, NegLeftRule, NegRightRule, OrLeftRule, OrRightRule, TopAxiom, WeakeningLeftRule, WeakeningMacroRule, WeakeningRightRule }
+import at.logic.gapt.proofs.lk.{ AndLeftRule, AndRightRule, BottomAxiom, CutRule, DefinitionLeftRule, DefinitionRightRule, EqualityLeftRule, EqualityRightRule, ExistsLeftRule, ExistsRightRule, ForallLeftRule, ForallRightRule, ImpLeftRule, ImpRightRule, LKProof, LogicalAxiom, NegLeftRule, NegRightRule, OrLeftRule, OrRightRule, TopAxiom, WeakeningLeftRule, WeakeningMacroRule, WeakeningRightRule }
 import at.logic.gapt.proofs.{ Context, SequentConnector, guessPermutation }
 
 object GradeReductionAxiomLeft extends CutReduction {

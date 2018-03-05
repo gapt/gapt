@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk.reductions
 
 import at.logic.gapt.expr.{ Substitution, freeVariables, rename }
-import at.logic.gapt.proofs.lk.{ AndLeftRule, AndRightRule, ContractionLeftRule, ContractionMacroRule, ContractionRightRule, CutReduction, CutRule, DefinitionLeftRule, DefinitionRightRule, EqualityLeftRule, EqualityRightRule, ExistsLeftRule, ExistsRightRule, ExistsSkLeftRule, ForallLeftRule, ForallRightRule, ForallSkRightRule, ImpLeftRule, ImpRightRule, InductionCase, InductionRule, LKProof, NegLeftRule, NegRightRule, OrLeftRule, OrRightRule, WeakeningLeftRule, WeakeningMacroRule, WeakeningRightRule, inductionEigenvariables }
+import at.logic.gapt.proofs.lk.{ AndLeftRule, AndRightRule, ContractionLeftRule, ContractionMacroRule, ContractionRightRule, CutRule, DefinitionLeftRule, DefinitionRightRule, EqualityLeftRule, EqualityRightRule, ExistsLeftRule, ExistsRightRule, ExistsSkLeftRule, ForallLeftRule, ForallRightRule, ForallSkRightRule, ImpLeftRule, ImpRightRule, InductionCase, InductionRule, LKProof, NegLeftRule, NegRightRule, OrLeftRule, OrRightRule, WeakeningLeftRule, WeakeningMacroRule, WeakeningRightRule, inductionEigenvariables }
 import at.logic.gapt.proofs.{ Context, SequentConnector, guessPermutation }
 
 object LeftRankWeakeningLeftReduction extends CutReduction {
