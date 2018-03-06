@@ -7,6 +7,10 @@ trait ReductionStrategy {
   def run( proof: LKProof ): LKProof
 }
 
+/**
+ * Applies the given reduction exhaustively to uppermost redexes.
+ * @param reduction The reduction to be used by this reduction strategy.
+ */
 class UppermostFirstStrategy( reduction: Reduction ) extends ReductionStrategy {
   def run( proof: LKProof ): LKProof = {
     new LKVisitor[Unit] {
@@ -25,6 +29,10 @@ class UppermostFirstStrategy( reduction: Reduction ) extends ReductionStrategy {
   }
 }
 
+/**
+ * Applies the given reduction exhaustively to lowermost redexes.
+ * @param reduction The reduction to be used by this reduction strategy.
+ */
 class IterativeParallelStrategy( reduction: Reduction ) extends ReductionStrategy {
   private var foundRedex = false
   override def run( proof: LKProof ): LKProof = {
@@ -40,10 +48,17 @@ class IterativeParallelStrategy( reduction: Reduction ) extends ReductionStrateg
   def appliedReduction: Boolean = foundRedex
 }
 
+/**
+ * Describes objects that can apply a reduction to redexes.
+ */
 trait RedexReducer {
   def foundRedex: Boolean
 }
 
+/**
+ * Applies a given reduction to the lowermost redexes.
+ * @param reduction The reduction to be applied to the lowermost redexes.
+ */
 class LowerMostRedexReducer( reduction: Reduction ) extends LKVisitor[Unit] with RedexReducer {
 
   var foundRedex: Boolean = false

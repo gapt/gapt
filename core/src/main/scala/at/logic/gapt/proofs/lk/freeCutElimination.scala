@@ -4,7 +4,17 @@ import at.logic.gapt.proofs.{ Context, SequentConnector }
 import at.logic.gapt.proofs.lk.reductions._
 
 object inductionFree {
-  def apply( proof: LKProof, cleanStructRules: Boolean = true )( implicit ctx: Context ): LKProof = {
+  /**
+   * Transforms a proof to a proof without induction inferences.
+   *
+   * @param proof The proof to which the transformation is applied.
+   * @param ctx Defines constants, types, etc.
+   * @return A proof obtained by repeated application of induction unfolding; equality reduction and free-cut
+   *         elimination. The reduction ends if there is no more unfoldable induction i.e. there is no induction
+   *         inference with constructor form induction term. If the input proof does not have a sigma 1 end-sequent,
+   *         or contains Skolem quantifier inferences, then the returned proof may contain induction inferences.
+   */
+  def apply( proof: LKProof )( implicit ctx: Context ): LKProof = {
     var newProof = proof
     var done = false
     do {
@@ -36,7 +46,8 @@ class FreeCutElimination( implicit val ctx: Context ) {
   /**
    * Eliminates free-cuts with respect to induction inferences and equality rules.
    * @param proof The proof to which the transformation is applied.
-   * @return A proof which does not contain any free-cuts.
+   * @return A proof which does not contain any free-cuts, if the input proof does
+   *         not contain Skolem quantifier inferences.
    */
   def apply( proof: LKProof ): LKProof = visitor.apply( proof, () )
 
@@ -104,6 +115,12 @@ class FreeCutElimination( implicit val ctx: Context ) {
 
 class UnfoldInductions( implicit ctx: Context ) {
   val reductionStrategy = new IterativeParallelStrategy( new InductionUnfoldingReduction() )
+
+  /**
+   * Unfolds all unfoldable induction inferences.
+   * @param proof The proof in which the induction inferences are unfolded.
+   * @return A proof which does not contain unfoldable induction inferences.
+   */
   def apply( proof: LKProof ): LKProof =
     reductionStrategy.run( proof )
   def unfoldedInduction = reductionStrategy.appliedReduction

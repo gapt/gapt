@@ -1,6 +1,5 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.lk.reductions._
 
 /**
@@ -8,15 +7,25 @@ import at.logic.gapt.proofs.lk.reductions._
  * proof for our sequent calculus LK. For details, please
  * refer to the documentation of the apply methods.
  */
-
 object cutFree {
 
+  /**
+   * Applies Gentzen's reductive cut-elimination to a proof.
+   * @param proof The proof that is subject to cut-elimination.
+   * @param cleanStructuralRules If true structural rules are cleaned after every reduction step.
+   * @return If the input proof is an LK proof, then a cut-free proof is returned, otherwise the resulting proof
+   *         may not be cut-free.
+   */
   def apply( proof: LKProof, cleanStructuralRules: Boolean = false ): LKProof =
     if ( cleanStructuralRules )
       new IterativeParallelCsrStrategy( nonCommutingCutReduction ) run proof
     else
       new UppermostFirstStrategy( nonCommutingCutReduction ) run proof
 
+  /**
+   * Implements a iterative parallel reduction, that cleans structural rules after each iteration.
+   * @param reduction The reduction to be used by this strategy
+   */
   private class IterativeParallelCsrStrategy( reduction: Reduction ) extends ReductionStrategy {
     override def run( proof: LKProof ): LKProof = {
       var intermediaryProof = proof
@@ -82,7 +91,7 @@ object isCutFree {
   /**
    * This method checks whether a proof is cut-free.
    * @param proof The proof to check for cut-freeness.
-   * @return True if proof does not contain the cut rule, False otherwise.
+   * @return true if proof does not contain the cut rule, false otherwise.
    */
   def apply( proof: LKProof ): Boolean = proof match {
     case InitialSequent( _ ) => true
