@@ -161,3 +161,35 @@ object instanceProof {
   }
 }
 
+object inductionEigenvariables {
+  /**
+    * Retrieves all of the eigenvariables of a given induction rule.
+    * @param induction The induction rule.
+    * @return All the eigenvariables of the induction rule.
+    */
+  def apply( induction: InductionRule ) =
+    induction.cases.flatMap( _.eigenVars ).toSet
+}
+
+object logicalComplexity {
+  def apply( formula: FOLFormula ): Int = {
+    formula match {
+      case PropAtom( _ )  | FOLAtom( _, _ ) => 0
+      case All( _, subformula ) => 1 + logicalComplexity( subformula )
+      case Ex( _, subformula )  => 1 + logicalComplexity( subformula )
+      case And( f1, f2 )        => 1 + logicalComplexity( f1 ) + logicalComplexity( f2 )
+      case Or( f1, f2 )         => 1 + logicalComplexity( f1 ) + logicalComplexity( f2 )
+      case Imp( f1, f2 )        => 1 + logicalComplexity( f1 ) + logicalComplexity( f2 )
+      case Neg( f1 )            => 1 + logicalComplexity( f1 )
+    }
+  }
+
+  private object PropAtom {
+    def unapply( arg: Formula ): Option[String] = {
+      arg match {
+        case Const( sym, To, _ ) => Some( sym )
+        case _                   => None
+      }
+    }
+  }
+}
