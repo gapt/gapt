@@ -4,7 +4,7 @@ import at.logic.gapt.expr.isConstructorForm
 import at.logic.gapt.proofs.{ Context, SequentConnector, guessPermutation }
 import at.logic.gapt.proofs.lk.{ InductionRule, LKProof, unfoldInduction }
 
-object inductionUnfoldingReduction extends Reduction {
+class InductionUnfoldingReduction(implicit val ctx: Context) extends Reduction {
 
   /**
    * Tries to apply the reduction.
@@ -14,7 +14,7 @@ object inductionUnfoldingReduction extends Reduction {
    * @return If the induction rule could be unfolded a proof of the same end-sequent and a sequent connector
    *         is returned, otherwise None is returned.
    */
-  def applyWithSequentConnector( induction: InductionRule )( implicit ctx: Context ): Option[( LKProof, SequentConnector )] =
+  def applyWithSequentConnector( induction: InductionRule ): Option[( LKProof, SequentConnector )] =
     this( induction ) map { guessPermutation( induction, _ ) }
 
   /**
@@ -24,7 +24,7 @@ object inductionUnfoldingReduction extends Reduction {
    * @return None if the proof does not end with an induction inference, otherwise see
    *         `inductionUnfoldingReduction.apply(InductionRule)(Context): Option[LKProof]`.
    */
-  def apply( proof: LKProof )( implicit ctx: Context ): Option[LKProof] = proof match {
+  def apply( proof: LKProof ): Option[LKProof] = proof match {
     case ind @ InductionRule( _, _, _ ) => apply( ind )
     case _: LKProof                     => None
   }
@@ -37,7 +37,7 @@ object inductionUnfoldingReduction extends Reduction {
    * @return If the given induction's term is in constructor form a proof of the same end-sequent for
    *         which the induction inference has been unfolded is returned, otherwise None.
    */
-  def apply( induction: InductionRule )( implicit ctx: Context ): Option[LKProof] = {
+  def apply( induction: InductionRule ): Option[LKProof] = {
     if ( isConstructorForm( induction.term ) ) {
       Some( unfoldInduction( induction ) )
     } else {
@@ -45,7 +45,7 @@ object inductionUnfoldingReduction extends Reduction {
     }
   }
 
-  override def reduce( proof: LKProof )( implicit ctx: Context ): Option[LKProof] =
+  override def reduce( proof: LKProof ): Option[LKProof] =
     proof match {
       case ind @ InductionRule( _, _, _ ) => apply( ind )
       case _                              => None

@@ -7,12 +7,12 @@ trait ReductionStrategy {
   def run( proof: LKProof ): LKProof
 }
 
-class UppermostFirstStrategy( reduction: Reduction, ctx: Context ) extends ReductionStrategy {
+class UppermostFirstStrategy( reduction: Reduction ) extends ReductionStrategy {
   def run( proof: LKProof ): LKProof = {
     new LKVisitor[Unit] {
       override def recurse( proof: LKProof, u: Unit ): ( LKProof, SequentConnector ) = {
         val ( intermediaryProof, intermediaryConnector ): ( LKProof, SequentConnector ) = super.recurse( proof, u )
-        reduction.reduce( intermediaryProof )(ctx) match {
+        reduction.reduce( intermediaryProof ) match {
           case Some( intermediaryProof2 ) => {
             val ( finalProof, _ ): ( LKProof, SequentConnector ) = recurse( intermediaryProof2, u )
             ( finalProof, SequentConnector.guessInjection(
@@ -25,10 +25,10 @@ class UppermostFirstStrategy( reduction: Reduction, ctx: Context ) extends Reduc
   }
 }
 
-class IterativeParallelStrategy( reduction: Reduction, ctx: Context ) extends ReductionStrategy {
+class IterativeParallelStrategy( reduction: Reduction ) extends ReductionStrategy {
   override def run( proof: LKProof ): LKProof = {
     var intermediaryProof = proof
-    val reducer = ( new LowerMostRedexReducer( reduction, ctx ) )
+    val reducer = ( new LowerMostRedexReducer( reduction ) )
     do {
       reducer.foundRedex = false
       intermediaryProof = reducer.apply( intermediaryProof, () )
@@ -42,12 +42,12 @@ trait RedexReducer {
   def foundRedex: Boolean
 }
 
-class LowerMostRedexReducer( reduction: Reduction, ctx: Context ) extends LKVisitor[Unit] with RedexReducer {
+class LowerMostRedexReducer( reduction: Reduction ) extends LKVisitor[Unit] with RedexReducer {
 
   var foundRedex: Boolean = false
 
   override def recurse( proof: LKProof, u: Unit ): ( LKProof, SequentConnector ) = {
-    reduction.reduce( proof )(ctx) match {
+    reduction.reduce( proof ) match {
       case Some( finalProof ) =>
         foundRedex = true
         ( finalProof, SequentConnector.guessInjection(
@@ -61,7 +61,7 @@ trait Selector {
   def createSelectorReduction( proof: LKProof ): Option[Reduction]
 }
 
-class IterativeSelectiveStrategy( selector: Selector, ctx: Context ) extends ReductionStrategy {
+class IterativeSelectiveStrategy( selector: Selector ) extends ReductionStrategy {
   override def run( proof: LKProof ): LKProof = {
     var intermediaryProof = proof
     var continue = false
@@ -70,7 +70,7 @@ class IterativeSelectiveStrategy( selector: Selector, ctx: Context ) extends Red
       selector.createSelectorReduction( intermediaryProof ) match {
         case Some( selectorReduction ) =>
           continue = true
-          intermediaryProof = ( new LowerMostRedexReducer( selectorReduction, ctx ) ).apply( intermediaryProof, () )
+          intermediaryProof = ( new LowerMostRedexReducer( selectorReduction ) ).apply( intermediaryProof, () )
         case None =>
       }
     } while ( continue )

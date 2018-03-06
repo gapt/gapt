@@ -5,7 +5,7 @@ import at.logic.gapt.proofs.lk.{CutRule, LKProof}
 
 object nonCommutingCutReduction extends CutReduction {
 
-  override def reduce( cut: CutRule )( implicit ctx: Context ): Option[LKProof] = reduction.reduce( cut )
+  override def reduce( cut: CutRule ): Option[LKProof] = reduction.reduce( cut )
 
   def reduction = gradeReduction orElse
     RightRankWeakeningLeftReduction orElse

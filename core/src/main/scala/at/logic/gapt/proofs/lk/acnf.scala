@@ -6,8 +6,8 @@ import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.lk.reductions.{CutReduction, gradeReduction, leftRankReduction, rightRankReduction}
 
 object acnf {
-  def apply(proof: LKProof)(implicit ctx: Context) =
-    ( new UppermostFirstStrategy( AcnfReduction, ctx ) ).run( proof )
+  def apply(proof: LKProof) =
+    ( new UppermostFirstStrategy( AcnfReduction ) ).run( proof )
 }
 
 object AcnfReduction extends CutReduction {
@@ -18,7 +18,7 @@ object AcnfReduction extends CutReduction {
     * @param proof            The proof to subject to cut-elimination.
     * @return The cut-free proof.
     */
-  def reduce( proof: CutRule )( implicit ctx: Context ): Option[LKProof] = proof match {
+  def reduce( proof: CutRule ): Option[LKProof] = proof match {
     case cut @ CutRule( lsb, l, rsb, _ ) if !isAtom( lsb.endSequent( l ) ) && isAcnf( lsb ) && isAcnf( rsb ) =>
       if ( isAtom( lsb.endSequent( l ) ) )
         ( leftRankReduction orElse rightRankReduction ).reduce( cut )
@@ -45,15 +45,15 @@ object isAcnf {
 }
 
 object acnfTop {
-  def apply(proof: LKProof)(implicit ctx: Context) =
-    (new UppermostFirstStrategy( AcnfTopReduction, ctx ) ).run( proof )
+  def apply(proof: LKProof) =
+    (new UppermostFirstStrategy( AcnfTopReduction ) ).run( proof )
 }
 
 object AcnfTopReduction extends CutReduction {
 
   import at.logic.gapt.expr.hol.isAtom
 
-  def reduce( proof: CutRule )( implicit ctx: Context ): Option[LKProof] =
+  def reduce( proof: CutRule ): Option[LKProof] =
     proof match {
       case cut @ CutRule( lsb, l, rsb, r ) if isAtomicCut( cut ) =>
         if ( !( introOrCut( lsb, lsb.endSequent( l ) ) && introOrCut( rsb, rsb.endSequent( r ) ) ) ) {
