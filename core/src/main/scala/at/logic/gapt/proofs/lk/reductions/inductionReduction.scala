@@ -4,7 +4,7 @@ import at.logic.gapt.expr.isConstructorForm
 import at.logic.gapt.proofs.{ Context, SequentConnector, guessPermutation }
 import at.logic.gapt.proofs.lk.{ InductionRule, LKProof, unfoldInduction }
 
-class InductionUnfoldingReduction(implicit val ctx: Context) extends Reduction {
+class InductionUnfoldingReduction( implicit val ctx: Context ) extends Reduction {
 
   /**
    * Tries to apply the reduction.

@@ -2,9 +2,9 @@ package at.logic.gapt.proofs.lk.reductions
 
 import at.logic.gapt.expr.FOLFormula
 import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.lk.{CutRule, LKProof, Selector, logicalComplexity}
+import at.logic.gapt.proofs.lk.{ CutRule, LKProof, Selector, logicalComplexity }
 
-class MaximumGradeSelector( reduction: CutReduction) extends Selector {
+class MaximumGradeSelector( reduction: CutReduction ) extends Selector {
   override def createSelectorReduction( proof: LKProof ): Option[Reduction] = {
     maximumGrade( reduction, proof ) match {
       case Some( maxGrade ) => Some( new MaxGradeReduction( maxGrade, reduction ) )

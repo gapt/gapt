@@ -1,32 +1,43 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.proofs.{Context, SequentConnector}
+import at.logic.gapt.proofs.{ Context, SequentConnector }
 import at.logic.gapt.proofs.lk.reductions._
+
+object inductionFree {
+  def apply( proof: LKProof, cleanStructRules: Boolean = true )( implicit ctx: Context ): LKProof = {
+    var newProof = proof
+    var done = false
+    do {
+      newProof = pushEqualityInferencesToLeaves( newProof )
+      newProof = freeCutFree( newProof )
+      val inductionUnfolder = new UnfoldInductions
+      newProof = inductionUnfolder( newProof )
+      done = inductionUnfolder.unfoldedInduction
+    } while ( !done )
+    newProof
+  }
+}
 
 object freeCutFree {
   /**
-    * See [[FreeCutElimination.apply]]
-    */
+   * See [[FreeCutElimination.apply]]
+   */
   def apply( proof: LKProof )( implicit ctx: Context ) = {
     ( new FreeCutElimination ).apply( proof )
   }
 }
 
-object isFreeCutFree {
-  def apply(proof: LKProof): Boolean = ???
-}
-
 /**
-  * Free-cut elimination for proofs with equality and induction.
-  * @param ctx Defines constants, types, etc.
-  */
+ * Free-cut elimination for proofs with equality and induction.
+ * @param ctx Defines constants, types, etc.
+ */
 class FreeCutElimination( implicit val ctx: Context ) {
 
   /**
-    * Eliminates free-cuts with respect to induction inferences and equality rules.
-    * @param proof The proof to which the transformation is applied.
-    * @return A proof which does not contain any free-cuts.
-    */
+   * Eliminates free-cuts with respect to induction inferences and equality rules.
+   * @param proof The proof to which the transformation is applied.
+   * @return A proof which does not contain any free-cuts.
+   */
   def apply( proof: LKProof ): LKProof = visitor.apply( proof, () )
 
   private object visitor extends LKVisitor[Unit] {
@@ -70,16 +81,16 @@ class FreeCutElimination( implicit val ctx: Context ) {
       val cut @ CutRule( _, _, _, _ ) = proof
       ( cut.leftSubProof, cut.rightSubProof ) match {
         case ( EqualityLeftRule( _, _, _, _ ), EqualityLeftRule( _, _, _, _ ) )
-             | ( EqualityLeftRule( _, _, _, _ ), EqualityRightRule( _, _, _, _ ) )
-             | ( EqualityRightRule( _, _, _, _ ), EqualityLeftRule( _, _, _, _ ) )
-             | ( EqualityRightRule( _, _, _, _ ), EqualityRightRule( _, _, _, _ )
-               ) if weakeningEqualityOnlyTree( cut.leftSubProof ) && weakeningEqualityOnlyTree( cut.rightSubProof ) =>
+          | ( EqualityLeftRule( _, _, _, _ ), EqualityRightRule( _, _, _, _ ) )
+          | ( EqualityRightRule( _, _, _, _ ), EqualityLeftRule( _, _, _, _ ) )
+          | ( EqualityRightRule( _, _, _, _ ), EqualityRightRule( _, _, _, _ )
+            ) if weakeningEqualityOnlyTree( cut.leftSubProof ) && weakeningEqualityOnlyTree( cut.rightSubProof ) =>
           recurseGradeReduction( cut )
         case ( EqualityLeftRule( _, _, _, _ ), _ )
-             | ( EqualityRightRule( _, _, _, _ ), _ ) if weakeningEqualityOnlyTree( cut.leftSubProof ) =>
+          | ( EqualityRightRule( _, _, _, _ ), _ ) if weakeningEqualityOnlyTree( cut.leftSubProof ) =>
           recurseGradeReduction( cut ) orElse recurseRightRankReduction( cut ) orElse recurseInductionReduction( cut )
         case ( _, EqualityLeftRule( _, _, _, _ ) )
-             | ( _, EqualityRightRule( _, _, _, _ ) ) if weakeningEqualityOnlyTree( cut.rightSubProof ) =>
+          | ( _, EqualityRightRule( _, _, _, _ ) ) if weakeningEqualityOnlyTree( cut.rightSubProof ) =>
           recurseGradeReduction( cut ) orElse recurseLeftRankReduction( cut ) orElse recurseInductionReduction( cut )
         case ( _, _ ) =>
           recurseGradeReduction( cut )
@@ -91,7 +102,9 @@ class FreeCutElimination( implicit val ctx: Context ) {
   }
 }
 
-object unfoldInductions {
-  def apply( proof: LKProof )( implicit ctx: Context ): LKProof =
-    (new IterativeParallelStrategy(new InductionUnfoldingReduction())).run(proof)
+class UnfoldInductions( implicit ctx: Context ) {
+  val reductionStrategy = new IterativeParallelStrategy( new InductionUnfoldingReduction() )
+  def apply( proof: LKProof ): LKProof =
+    reductionStrategy.run( proof )
+  def unfoldedInduction = reductionStrategy.appliedReduction
 }

@@ -44,11 +44,11 @@ class MiscTest extends Specification {
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 9)" in {
       val p = LinearExampleProof( 9 )
       val Some( pi ) = CutIntroduction( p, method = DeltaTableMethod() )
-      val pe = ReductiveCutElimination( pi )
+      val pe = cutFree( pi )
 
-      ReductiveCutElimination.isCutFree( p ) must beEqualTo( true )
-      ReductiveCutElimination.isCutFree( pi ) must beEqualTo( false )
-      ReductiveCutElimination.isCutFree( pe ) must beEqualTo( true )
+      isCutFree( p ) must beEqualTo( true )
+      isCutFree( pi ) must beEqualTo( false )
+      isCutFree( pe ) must beEqualTo( true )
     }
 
     "load Prover9 proof without equality reasoning, introduce a cut and eliminate it via Gentzen" in {
@@ -56,10 +56,10 @@ class MiscTest extends Specification {
 
       val p1 = lkProofFromClasspath( "SYN726-1.out" )
       val Some( p2 ) = CutIntroduction( p1, method = DeltaTableMethod() )
-      val p3 = ReductiveCutElimination( p2 )
+      val p3 = cutFree( p2 )
 
-      ReductiveCutElimination.isCutFree( p2 ) must beEqualTo( false )
-      ReductiveCutElimination.isCutFree( p3 ) must beEqualTo( true )
+      isCutFree( p2 ) must beEqualTo( false )
+      isCutFree( p3 ) must beEqualTo( true )
     }
 
     "extract expansion tree from tape proof" in {
@@ -103,9 +103,9 @@ class MiscTest extends Specification {
       if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
 
       val p = lkProofFromClasspath( "PUZ002-1.out" )
-      val q = ReductiveCutElimination( p )
+      val q = cutFree( p )
 
-      ReductiveCutElimination.isCutFree( q ) must beEqualTo( true )
+      isCutFree( q ) must beEqualTo( true )
     }
 
     "load veriT proofs pi and verify the validity of Deep(pi) using sat4j" in {

@@ -92,7 +92,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
     }
 
     normalizeLKt.inductionWithDebug( instProof ) --? "eliminate inductions in instance proof using lkt"
-    ReductiveCutElimination.eliminateInduction( instProof ) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
+    inductionFree( instProof ) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
       indFreeProof.endSequent.multiSetEquals( instProof.endSequent ) !-- "induction elimination does not modify end-sequent"
       isInductionFree( indFreeProof ) !-- "induction elimination returns induction free proof"
     }
@@ -167,7 +167,7 @@ class TheoryTestCase( name: String, combined: Boolean )
     }
 
     normalizeLKt.inductionWithDebug( instProof ) --? "eliminate inductions in instance proof using lkt"
-    ReductiveCutElimination.eliminateInduction( instProof ) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
+    inductionFree( instProof ) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
       indFreeProof.endSequent.multiSetEquals( instProof.endSequent ) !-- "induction elimination does not modify end-sequent"
     }
   }
@@ -220,7 +220,7 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
         Z3.isUnsat( And( recSchem.languageWithDummyParameters ) ) !-- "extractRecSchem language validity"
       }
 
-    ReductiveCutElimination( p ) --? "cut-elim (input)"
+    cutFree( p ) --? "cut-elim (input)"
     normalizeLKt.withDebug( p ) --? "lkt cut-elim (input)"
 
     cleanStructuralRules( p ) --? "cleanStructuralRules"
@@ -230,7 +230,7 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
         val focus = if ( p.endSequent.succedent.isEmpty ) None else Some( Suc( 0 ) )
         LKToND( q, focus ) --? "LKToND (cut-intro)"
 
-        ReductiveCutElimination( q ) --? "cut-elim (cut-intro)"
+        cutFree( q ) --? "cut-elim (cut-intro)"
         normalizeLKt.withDebug( q ) --? "lkt cut-elim (cut-intro)"
         CERES( q ) --? "CERES (cut-intro)"
         CERES.CERESExpansionProof( q ) --? "CERESExpansionProof"

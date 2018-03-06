@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk.reductions
 
 import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.lk.{CutRule, LKProof}
+import at.logic.gapt.proofs.lk.{ CutRule, LKProof }
 
 trait CutReduction extends Reduction {
   def reduce( proof: LKProof ): Option[LKProof] =

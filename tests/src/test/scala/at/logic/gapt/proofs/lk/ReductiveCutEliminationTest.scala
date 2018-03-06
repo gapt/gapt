@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.gaptic.{ Lemma, OpenAssumption, allL, andL, axiomLog, cut, impL, insert }
-import at.logic.gapt.proofs.lk.reductions.{ gradeReduction, leftRankReduction, rightRankReduction }
+import at.logic.gapt.proofs.lk.reductions._
 import at.logic.gapt.proofs.{ Ant, Context, MutableContext, Sequent, SequentMatchers, Suc }
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
@@ -27,7 +27,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
       b ( CutRule( _, Suc( 0 ), _, Ant( 1 ) ) ) qed )
 
-    val proof_ = ReductiveCutElimination( proof )
+    val proof_ = cutFree( proof )
 
     proof_.endSequent must beMultiSetEqual( proof.endSequent )
   }
@@ -35,8 +35,8 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     val P1 = LogicalAxiom( fof"P" )
     val P2 = LogicalAxiom( fof"P" )
     val Proof = CutRule( P1, Suc( 0 ), P2, Ant( 0 ) )
-    ReductiveCutElimination.isACNF( Proof ) mustEqual true
-    ReductiveCutElimination.isACNFTop( Proof ) mustEqual true
+    isAcnf( Proof ) mustEqual true
+    isAcnfTop( Proof ) mustEqual true
 
   }
 
@@ -48,8 +48,8 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     val PQ1 = AndRightRule( P1, fof"P", Q1, fof"Q" )
     val PQ2 = AndLeftRule( wQ, fof"P", fof"Q" )
     val Proof = CutRule( PQ1, Suc( 0 ), PQ2, Ant( 0 ) )
-    ReductiveCutElimination.isACNF( Proof ) mustEqual false
-    ReductiveCutElimination.isACNFTop( Proof ) mustEqual false
+    isAcnf( Proof ) mustEqual false
+    isAcnfTop( Proof ) mustEqual false
 
   }
 
@@ -60,7 +60,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     val PQ = OrLeftRule( P1, fof"P", Q1, fof"Q" )
     val PQneg = NegLeftRule( PQ, fof"Q" )
     val Proof = CutRule( PQneg, Suc( 0 ), P2, Ant( 0 ) )
-    ReductiveCutElimination.isACNFTop( Proof ) mustEqual false
+    isAcnfTop( Proof ) mustEqual false
 
   }
 
@@ -212,12 +212,12 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     val ProofFinC1 = CutRule( ProofC1, Suc( 0 ), LeftProofComp, Ant( 2 ) )
     val ProofFinC1C2 = CutRule( ProofC2, Suc( 0 ), ProofFinC1, Ant( 6 ) )
     val Proof: LKProof = CutRule( ProofC3, Suc( 0 ), ProofFinC1C2, Ant( 10 ) )
-    val R = new ReductiveCutElimination()
-    val ACNFProof = R.eliminateToACNFByUppermost( Proof, false )
-    val ACNFTopProof = R.eliminateToACNFTopByUppermost( Proof, false )
-    ReductiveCutElimination.isACNFTop( ACNFProof ) mustEqual false
-    ReductiveCutElimination.isACNFTop( ACNFTopProof ) mustEqual true
-    ReductiveCutElimination.isACNF( ACNFTopProof ) mustEqual true
+
+    val ACNFProof = acnf( Proof )
+    val ACNFTopProof = acnfTop( Proof )
+    isAcnfTop( ACNFProof ) mustEqual false
+    isAcnfTop( ACNFTopProof ) mustEqual true
+    isAcnf( ACNFTopProof ) mustEqual true
   }
 
   "right cut formula introduced by weakening" in {
@@ -266,7 +266,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
         hov"x:nat" ) )
       c LogicalAxiom( hof"A" )
       b ( CutRule( _, _, hof"A" ) ) qed )
-    val reduced = inductionLeftReduction( proof.asInstanceOf[CutRule] ).get
+    val reduced = LeftRankInductionReduction( proof.asInstanceOf[CutRule] ).get
 
     if ( !reduced.endSequent.multiSetEquals( proof.endSequent ) ) {
       failure( "the reduced proof does not prove the same end-sequent" )
@@ -297,7 +297,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
         Abs( hov"x:nat", le"F(x)" ),
         hov"x:nat" ) )
       b ( CutRule( _, _, hof"A" ) ) qed )
-    val reduced = inductionRightReduction( proof.asInstanceOf[CutRule] ).get
+    val reduced = RightRankInductionReduction( proof.asInstanceOf[CutRule] ).get
 
     if ( !reduced.endSequent.multiSetEquals( proof.endSequent ) ) {
       failure( "the reduced proof does not prove the same end-sequent" )
@@ -346,7 +346,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       axiomLog
     }
 
-    val cutFree = freeCutElimination( proof )
+    val cutFree = freeCutFree( proof )
 
     if ( !isCutFree( cutFree ) ) {
       failure( "the generated proof is not cut free" )
@@ -465,7 +465,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "issue 684" in {
     val Some( p ) = Escargot.getLKProof( hof"¬(∀x x = c0 ∧ ∃x f0(x) != f1(x))" )
-    val q = ReductiveCutElimination( p )
+    val q = cutFree( p )
     isCutFree( q ) must_== false
   }
 

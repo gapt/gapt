@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.proofs.lk.reductions.Reduction
-import at.logic.gapt.proofs.{Context, SequentConnector}
+import at.logic.gapt.proofs.{ Context, SequentConnector }
 
 trait ReductionStrategy {
   def run( proof: LKProof ): LKProof
@@ -26,16 +26,18 @@ class UppermostFirstStrategy( reduction: Reduction ) extends ReductionStrategy {
 }
 
 class IterativeParallelStrategy( reduction: Reduction ) extends ReductionStrategy {
+  private var foundRedex = false
   override def run( proof: LKProof ): LKProof = {
     var intermediaryProof = proof
     val reducer = ( new LowerMostRedexReducer( reduction ) )
     do {
       reducer.foundRedex = false
       intermediaryProof = reducer.apply( intermediaryProof, () )
-
+      if ( reducer.foundRedex ) foundRedex = true
     } while ( reducer.foundRedex )
     intermediaryProof
   }
+  def appliedReduction: Boolean = foundRedex
 }
 
 trait RedexReducer {

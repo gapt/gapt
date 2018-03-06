@@ -29,9 +29,9 @@ class InductionEliminationTests extends Specification with SequentMatchers {
     val term_m = le"S(S(S(S(S(Z)))))"
     val term_k = le"S(S(S(S(S(S(S(Z)))))))"
     val instProof = instanceProof( proof, term_n :: term_m :: term_k :: Nil )
-    val inductionFree = ReductiveCutElimination.eliminateInduction( instProof )
-    isInductionFree( inductionFree ) must_== true
-    instProof.conclusion must beSetEqual( inductionFree.conclusion )
+    val inductionFreeProof = inductionFree( instProof )
+    isInductionFree( inductionFreeProof ) must_== true
+    instProof.conclusion must beSetEqual( inductionFreeProof.conclusion )
   }
 
   "isaplanner prop_15: induction should be eliminated" in {
@@ -40,9 +40,9 @@ class InductionEliminationTests extends Specification with SequentMatchers {
     val term_x = le"S(S(S(S(S(S(S(Z)))))))"
     val term_xs = le"cons(S(S(S(Z))), cons(S(S(S(S(S(Z))))),nil))"
     val sigma1Proof = Substitution( hov"x:Nat" -> term_x, hov"xs:list" -> term_xs )( proof )
-    val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
-    isInductionFree( inductionFree ) must_== true
-    sigma1Proof.conclusion must beSetEqual( inductionFree.conclusion )
+    val inductionFreeProof = inductionFree( sigma1Proof )
+    isInductionFree( inductionFreeProof ) must_== true
+    sigma1Proof.conclusion must beSetEqual( inductionFreeProof.conclusion )
   }
 
   "all inductions should be eliminated" in {
@@ -90,9 +90,9 @@ class InductionEliminationTests extends Specification with SequentMatchers {
 
     val sigma1Proof = Substitution( hov"x:nat" -> term_x, hov"y:nat" -> term_y )(
       proof.subProofAt( 0 :: 0 :: Nil ) )
-    val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
-    isInductionFree( inductionFree ) must_== true
-    sigma1Proof.conclusion must beSetEqual( inductionFree.conclusion )
+    val inductionFreeProof = inductionFree( sigma1Proof )
+    isInductionFree( inductionFreeProof ) must_== true
+    sigma1Proof.conclusion must beSetEqual( inductionFreeProof.conclusion )
   }
 
   "several unfolding steps are required" in {
@@ -156,16 +156,16 @@ class InductionEliminationTests extends Specification with SequentMatchers {
 
     val sigma1Proof = Substitution( hov"x:nat" -> term_x, hov"y:nat" -> term_y )(
       proof.subProofAt( 0 :: 0 :: Nil ) )
-    val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
+    val inductionFreeProof = inductionFree( sigma1Proof )
 
-    isInductionFree( inductionFree ) must_== true
+    isInductionFree( inductionFreeProof ) must_== true
   }
 
   "induction elimination isaplanner prop_59" in {
     implicit val ctx = prop_59.ctx
     val inductiveProof = prop_59.proof_1
     val instProof = instanceProof( inductiveProof, le"nil" :: le"nil" :: Nil )
-    val indFreeProof = ReductiveCutElimination.eliminateInduction( instProof )
+    val indFreeProof = inductionFree( instProof )
     indFreeProof.conclusion must beMultiSetEqual( instProof.conclusion )
     isInductionFree( indFreeProof ) must_== true
   }

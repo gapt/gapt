@@ -3,21 +3,21 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr.Formula
 import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.lk.reductions.{CutReduction, gradeReduction, leftRankReduction, rightRankReduction}
+import at.logic.gapt.proofs.lk.reductions.{ CutReduction, gradeReduction, leftRankReduction, rightRankReduction }
 
 object acnf {
-  def apply(proof: LKProof) =
+  def apply( proof: LKProof ) =
     ( new UppermostFirstStrategy( AcnfReduction ) ).run( proof )
 }
 
 object AcnfReduction extends CutReduction {
   /**
-    * This algorithm implements a generalization of the Gentzen method which
-    * reduces all cuts to atomic cuts.
-    *
-    * @param proof            The proof to subject to cut-elimination.
-    * @return The cut-free proof.
-    */
+   * This algorithm implements a generalization of the Gentzen method which
+   * reduces all cuts to atomic cuts.
+   *
+   * @param proof            The proof to subject to cut-elimination.
+   * @return The cut-free proof.
+   */
   def reduce( proof: CutRule ): Option[LKProof] = proof match {
     case cut @ CutRule( lsb, l, rsb, _ ) if !isAtom( lsb.endSequent( l ) ) && isAcnf( lsb ) && isAcnf( rsb ) =>
       if ( isAtom( lsb.endSequent( l ) ) )
@@ -30,11 +30,11 @@ object AcnfReduction extends CutReduction {
 
 object isAcnf {
   /**
-    * This method checks whether a proof is in ACNF
-    *
-    * @param proof The proof to check for in ACNF.
-    * @return True if proof is in ACNF, False otherwise.
-    */
+   * This method checks whether a proof is in ACNF
+   *
+   * @param proof The proof to check for in ACNF.
+   * @return True if proof is in ACNF, False otherwise.
+   */
   def apply( proof: LKProof ): Boolean = proof match {
     case InitialSequent( _ ) => true
     case CutRule( lsb, l, rsb, r ) =>
@@ -45,8 +45,8 @@ object isAcnf {
 }
 
 object acnfTop {
-  def apply(proof: LKProof) =
-    (new UppermostFirstStrategy( AcnfTopReduction ) ).run( proof )
+  def apply( proof: LKProof ) =
+    ( new UppermostFirstStrategy( AcnfTopReduction ) ).run( proof )
 }
 
 object AcnfTopReduction extends CutReduction {
@@ -72,11 +72,11 @@ object AcnfTopReduction extends CutReduction {
 
 object isAcnfTop {
   /**
-    * This method checks whether a proof is in ACNF top
-    *
-    * @param proof The proof to check for in ACNF top.
-    * @return True if proof is in ACNF,  False otherwise.
-    */
+   * This method checks whether a proof is in ACNF top
+   *
+   * @param proof The proof to check for in ACNF top.
+   * @return True if proof is in ACNF,  False otherwise.
+   */
   def apply( proof: LKProof ): Boolean = proof match {
     case InitialSequent( _ ) => true
     case CutRule( lsb, l, rsb, r ) =>
@@ -90,18 +90,18 @@ object isAcnfTop {
 }
 
 object isAtomicCut {
-  def apply(cut: CutRule ): Boolean = isAtom( cut.cutFormula )
+  def apply( cut: CutRule ): Boolean = isAtom( cut.cutFormula )
 }
 
 object introOrCut {
   /**
-    * Checks if the last rule in proof is a leaf, a cut rule, or a weakening rule on
-    * the given formula.
-    *
-    * @param proof   The proof we are checking.
-    * @param formula The formula we are checking.
-    * @return True is structure is correct or false if not.
-    */
+   * Checks if the last rule in proof is a leaf, a cut rule, or a weakening rule on
+   * the given formula.
+   *
+   * @param proof   The proof we are checking.
+   * @param formula The formula we are checking.
+   * @return True is structure is correct or false if not.
+   */
   def apply( proof: LKProof, formula: Formula ): Boolean = proof match {
     case LogicalAxiom( _ )             => true
     case CutRule( lsb, l, rsb, r )     => true
