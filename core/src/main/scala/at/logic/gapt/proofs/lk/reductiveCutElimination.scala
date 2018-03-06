@@ -10,8 +10,72 @@ import at.logic.gapt.proofs.lk.reductions._
  */
 
 object cutFree {
-  def apply( proof: LKProof ): LKProof =
-    ( new UppermostFirstStrategy( nonCommutingCutReduction ) ).run( proof )
+
+  def apply( proof: LKProof, cleanStructuralRules:Boolean = false ): LKProof =
+    if (cleanStructuralRules)
+      new IterativeParallelCsrStrategy( nonCommutingCutReduction ) run proof
+    else
+       new UppermostFirstStrategy( nonCommutingCutReduction ) run proof
+
+  private class IterativeParallelCsrStrategy( reduction: Reduction ) extends ReductionStrategy {
+    override def run( proof: LKProof ): LKProof = {
+      var intermediaryProof = proof
+      val reducer = ( new LowerMostRedexReducer( (new UppermostRedexFilter).filter(reduction) ) )
+      do {
+        reducer.foundRedex = false
+        intermediaryProof = reducer.apply( intermediaryProof, () )
+        intermediaryProof = cleanStructuralRules(intermediaryProof)
+      } while ( reducer.foundRedex )
+      intermediaryProof
+    }
+  }
+
+  private val nonCommutingCutReduction =
+    gradeReduction orElse
+    RightRankWeakeningLeftReduction orElse
+    RightRankWeakeningRightReduction orElse
+    RightRankContractionLeftReduction orElse
+    RightRankContractionRightReduction orElse
+    RightRankDefinitionLeftReduction orElse
+    RightRankDefinitionRightReduction orElse
+    RightRankAndLeftReduction orElse
+    RightRankAndRightReduction orElse
+    RightRankOrLeftReduction orElse
+    RightRankOrRightReduction orElse
+    RightRankImpLeftReduction orElse
+    RightRankImpRightReduction orElse
+    RightRankNegLeftReduction orElse
+    RightRankNegRightReduction orElse
+    RightRankForallLeftReduction orElse
+    RightRankForallRightReduction orElse
+    RightRankForallSkRightReduction orElse
+    RightRankExistsLeftReduction orElse
+    RightRankExistsSkLeftReduction orElse
+    RightRankExistsRightReduction orElse
+    RightRankEqualityLeftReduction orElse
+    RightRankEqualityRightReduction orElse
+    LeftRankWeakeningLeftReduction orElse
+    LeftRankWeakeningRightReduction orElse
+    LeftRankContractionLeftReduction orElse
+    LeftRankContractionRightReduction orElse
+    LeftRankDefinitionLeftReduction orElse
+    LeftRankDefinitionRightReduction orElse
+    LeftRankAndLeftReduction orElse
+    LeftRankAndRightReduction orElse
+    LeftRankOrLeftReduction orElse
+    LeftRankOrRightReduction orElse
+    LeftRankImpLeftReduction orElse
+    LeftRankImpRightReduction orElse
+    LeftRankNegLeftReduction orElse
+    LeftRankNegRightReduction orElse
+    LeftRankForallLeftReduction orElse
+    LeftRankForallRightReduction orElse
+    LeftRankForallSkRightReduction orElse
+    LeftRankExistsLeftReduction orElse
+    LeftRankExistsSkLeftReduction orElse
+    LeftRankExistsRightReduction orElse
+    LeftRankEqualityLeftReduction orElse
+    LeftRankEqualityRightReduction
 }
 
 object isCutFree {
