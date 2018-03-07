@@ -54,3 +54,19 @@ object example3 extends Script {
   val b6 = OrElimRule( b2, b1, b1 )
   classicalExtractionTest( b6 )
 }
+
+object example4 extends Script {
+
+  implicit var ctx = Context()
+
+  ctx += InductiveType(
+    ty"nat",
+    hoc"0 : nat",
+    hoc"s : nat > nat" )
+
+  val b1 = LogicalAxiom( hof"-(x = 0)" )
+  val b2 = LogicalAxiom( hof"x = 0" )
+  val b3 = NegElimRule( b1, b2 )
+  val b6 = BottomElimRule( b3, hof"x = 0" )
+  classicalExtractionTest( b6 )
+}

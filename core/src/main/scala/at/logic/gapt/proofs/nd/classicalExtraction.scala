@@ -1,9 +1,8 @@
 package at.logic.gapt.proofs.nd
 
-import at.logic.gapt.expr.{ App, typeVariables, Ty, _ }
+import at.logic.gapt.expr.{ App, Ty, typeVariables, _ }
 import at.logic.gapt.proofs.Context.{ BaseTypes, InductiveType, PrimRecFun, StructurallyInductiveTypes }
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.nd._
 import at.logic.gapt.utils.NameGenerator
 
 object ClassicalExtraction {
@@ -55,19 +54,18 @@ object ClassicalExtraction {
     val inr = hoc"inr{?a ?b}: ?b > (sum ?a ?b)"
     systemT += InductiveType( sum, inl, inr )
 
-    val c = TVar( "c" )
     val matchSum = hoc"matchSum{?a ?b ?c}: (sum ?a ?b) > (?a > ?c) > (?b > ?c) > ?c"
-    val w1: Expr = Var( "w1", a ->: c )
-    val w2: Expr = Var( "w2", b ->: c )
+    val w1: Expr = hov"w1: ?a > ?c"
+    val w2: Expr = hov"w2: ?b > ?c"
     systemT += PrimRecFun( List(
       ( matchSum, List(
         ( matchSum( inl( x ), w1, w2 ) -> w1( x ) ),
         ( matchSum( inr( y ), w1, w2 ) -> w2( y ) ) ) ) ) )( systemT )
 
-    val exn = TBase( "exn", a )
-    val exception = Const( "exception", a ->: exn, List( a ) )
+    val exn = ty"exn ?a"
+    val exception = hoc"exception{?a}: ?a > (exn ?a)"
     systemT += InductiveType( exn, exception )
-    val raise = Const( "raise", exn ->: b, List( a, b ) )
+    val raise = hoc"raise{?a ?b}: (exn ?a) > ?b"
     systemT += raise
     /*
     val e: Expr = Var( "e", exn )
@@ -77,7 +75,7 @@ object ClassicalExtraction {
         ( raise( raise( e ) ) -> raise( e ) ) ) ) ) )( systemT )
     */
 
-    val handle = Const( "handle", ( ( a ->: exn ) ->: c ) ->: ( a ->: c ) ->: c, List( a, c ) )
+    val handle = hoc"handle{?a ?b}: ((exn ?a) > ?b) > (?a > ?b) > ?b"
     systemT += handle
 
     // add a term+type to represent the empty program
@@ -150,20 +148,38 @@ object ClassicalExtraction {
         Abs( variablesAntConclusion( proof ) :+ extraVar, App( mrealizeCases( subProof ), insertIndex( variablesAntPremise( proof, 0 ), aux, extraVar ) ) )
 
       case NegElimRule( leftSubProof, rightSubProof ) =>
+        val app1 = App( mrealizeCases( leftSubProof ), variablesAntPremise( proof, 0 ) )
+        val app2 = App( mrealizeCases( rightSubProof ), variablesAntPremise( proof, 1 ) )
         Abs(
-          variablesAntConclusion( proof ),
-          App( App( mrealizeCases( leftSubProof ), variablesAntPremise( proof, 0 ) ), App( mrealizeCases( rightSubProof ), variablesAntPremise( proof, 1 ) ) ) )
+          variablesAntConclusion( proof ), App( app1, app2 ) )
 
       case NegIntroRule( subProof, aux ) =>
         val extraVar = Var( "z", flat( subProof.conclusion( aux ) ) )
-        Abs( variablesAntConclusion( proof ) :+ extraVar, App( mrealizeCases( subProof ), insertIndex( variablesAntPremise( proof, 0 ), aux, extraVar ) ) )
+        Abs( variablesAntConclusion( proof ) :+ extraVar, le"exception(${App( mrealizeCases( subProof ), insertIndex( variablesAntPremise( proof, 0 ), aux, extraVar ) )})" )
 
       case TopIntroRule() =>
         val varr = Var( "z", ty"1" )
         Abs( varr, varr )
 
       case BottomElimRule( subProof, mainFormula ) =>
-        Abs( variablesAntConclusion( proof ), Var( "z", flat( mainFormula ) ) )
+        val subProofRealizer = mrealizeCases( subProof )
+        // TODO is this true in general?
+        val exnTypeParameter = subProofRealizer.ty match {
+          case _ ->: _ ->: TBase( "exn", param :: Nil ) => param
+          case _                                        => throw new Exception( "Realizer must be of type exn ?a." )
+        }
+        /*
+        val exnTypeParameter = subProofRealizer match {
+          case Abs.Block( _, e ) =>
+            e.ty match {
+              case TBase( "exn", param :: Nil ) => param
+              case _                            => throw new Exception( "Realizer must be of type exn ?a." )
+            }
+        }
+        */
+        val raisedType = flat( mainFormula )
+        val raise = systemT.constant( "raise", List( exnTypeParameter, raisedType ) ).get
+        Abs( variablesAntConclusion( proof ), raise( App( subProofRealizer, variablesAntPremise( proof, 0 ) ) ) )
 
       case ForallIntroRule( subProof, eigenVariable, quantifiedVariable ) =>
         Abs( variablesAntConclusion( proof ) :+ eigenVariable, App( mrealizeCases( subProof ), variablesAntPremise( proof, 0 ) ) )
@@ -216,7 +232,7 @@ object ClassicalExtraction {
     case And( leftformula, rightformula ) => TBase( "conj", flat( leftformula ), flat( rightformula ) )
     case Or( leftformula, rightformula )  => TBase( "sum", flat( leftformula ), flat( rightformula ) )
     case Imp( leftformula, rightformula ) => flat( leftformula ) ->: flat( rightformula )
-    case Neg( subformula )                => flat( Imp( subformula, Bottom() ) )
+    case Neg( subformula )                => flat( subformula ) ->: TBase( "exn", flat( subformula ) )
     case Ex( variable, subformula )       => TBase( "conj", variable.ty, flat( subformula ) )
     case All( variable, subformula )      => variable.ty ->: flat( subformula )
   }
