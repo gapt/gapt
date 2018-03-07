@@ -50,12 +50,13 @@ object ClassicalExtraction {
     systemT += PrimRecFun( List(
       ( pi2, List( ( pi2( pair( x, y ) ) -> y ) ) ) ) )( systemT )
 
-    val sum = TBase( "sum", a, b )
-    val inl = Const( "inl", a ->: sum, List( a, b ) )
-    val inr = Const( "inr", b ->: sum, List( a, b ) )
+    val sum = ty"sum ?a ?b"
+    val inl = hoc"inl{?a ?b}: ?a > (sum ?a ?b)"
+    val inr = hoc"inr{?a ?b}: ?b > (sum ?a ?b)"
     systemT += InductiveType( sum, inl, inr )
+
     val c = TVar( "c" )
-    val matchSum = Const( "matchSum", sum ->: ( a ->: c ) ->: ( b ->: c ) ->: c, List( a, b, c ) )
+    val matchSum = hoc"matchSum{?a ?b ?c}: (sum ?a ?b) > (?a > ?c) > (?b > ?c) > ?c"
     val w1: Expr = Var( "w1", a ->: c )
     val w2: Expr = Var( "w2", b ->: c )
     systemT += PrimRecFun( List(
@@ -121,17 +122,23 @@ object ClassicalExtraction {
       case OrElimRule( leftSubProof, middleSubProof, aux1, rightSubProof, aux2 ) =>
         Abs(
           variablesAntConclusion( proof ),
-          le"""matchSum(
-            ${App( mrealizeCases( leftSubProof ), variablesAntPremise( proof, 0 ) )},
-            ${App( mrealizeCases( middleSubProof ), variablesAntPremise( proof, 1 ) )},
+          le"""matchSum
+            ${App( mrealizeCases( leftSubProof ), variablesAntPremise( proof, 0 ) )}
+            ${App( mrealizeCases( middleSubProof ), variablesAntPremise( proof, 1 ) )}
             ${App( mrealizeCases( rightSubProof ), variablesAntPremise( proof, 2 ) )}
-          )""" )
+          """ )
 
       case OrIntro1Rule( subProof, rightDisjunct ) =>
-        Abs( variablesAntConclusion( proof ), le"inr(${App( mrealizeCases( subProof ), variablesAntPremise( proof, 0 ) )})" )
+        val leftType = flat( subProof.endSequent( Suc( 0 ) ) )
+        val rightType = flat( rightDisjunct )
+        val inl = systemT.constant( "inl", List( leftType, rightType ) ).get
+        Abs( variablesAntConclusion( proof ), inl( App( mrealizeCases( subProof ), variablesAntPremise( proof, 0 ) ) ) )
 
       case OrIntro2Rule( subProof, leftDisjunct ) =>
-        Abs( variablesAntConclusion( proof ), le"inl(${App( mrealizeCases( subProof ), variablesAntPremise( proof, 0 ) )})" )
+        val leftType = flat( leftDisjunct )
+        val rightType = flat( subProof.endSequent( Suc( 0 ) ) )
+        val inr = systemT.constant( "inr", List( leftType, rightType ) ).get
+        Abs( variablesAntConclusion( proof ), inr( App( mrealizeCases( subProof ), variablesAntPremise( proof, 0 ) ) ) )
 
       case ImpElimRule( leftSubProof, rightSubProof ) =>
         Abs(
