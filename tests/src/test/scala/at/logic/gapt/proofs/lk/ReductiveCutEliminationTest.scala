@@ -601,6 +601,62 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     newProof.subProofAt(0::1::Nil) must beAnInstanceOf[CutRule]
   }
 
+  "stuck cut left forall-sk should reduce" in {
+    val proof = ( ProofBuilder
+      c OpenAssumption(Sequent() :+ ("" -> hof"A(s)") :+ ("" -> hof"B"))
+      u (ForallSkRightRule(_, Suc(0), hof"!x A(x)", le"s", hof"!x A(x)"))
+      c OpenAssumption(("" -> hof"!x A(x)") +: Sequent())
+      b (CutRule(_,_,hof"!x A(x)"))
+      c OpenAssumption(("" -> hof"B") +: Sequent())
+      b (CutRule(_,_,hof"B"))
+      qed)
+    val Some(newProof) = LeftRankCutForallSkReduction reduce proof
+    newProof.endSequent must beMultiSetEqual(proof.endSequent)
+    newProof.subProofAt(0::0::Nil) must beAnInstanceOf[CutRule]
+  }
+
+  "stuck cut left exists-sk should reduce" in {
+    val proof = ( ProofBuilder
+      c OpenAssumption(Sequent() :+ ("" -> hof"?x A(x)"))
+      c OpenAssumption(("" -> hof"A(s)") +: Sequent() :+ ("" -> hof"B"))
+      u (ExistsSkLeftRule(_, Ant(0), hof"?x A(x)", le"s", hof"?x A(x)"))
+      b (CutRule(_,_,hof"?x A(x)"))
+      c OpenAssumption(("" -> hof"B") +: Sequent())
+      b (CutRule(_,_,hof"B"))
+      qed)
+    val Some(newProof) = LeftRankCutExistsSkReduction reduce proof
+    newProof.endSequent must beMultiSetEqual(proof.endSequent)
+    newProof.subProofAt(0::1::Nil) must beAnInstanceOf[CutRule]
+  }
+
+  "stuck cut right forall-sk should reduce" in {
+    val proof = ( ProofBuilder
+      c OpenAssumption(Sequent() :+ ("" -> hof"B") )
+      c OpenAssumption(("" -> hof"B") +: Sequent() :+ ("" -> hof"A(s)"))
+      u (ForallSkRightRule(_, Suc(0), hof"!x A(x)", le"s", hof"!x A(x)"))
+      c OpenAssumption(("" -> hof"!x A(x)") +: Sequent())
+      b (CutRule(_,_,hof"!x A(x)"))
+      b (CutRule(_,_,hof"B"))
+      qed)
+    val Some(newProof) = RightRankCutForallSkReduction reduce proof
+    newProof.endSequent must beMultiSetEqual(proof.endSequent)
+    newProof.subProofAt(0::0::Nil) must beAnInstanceOf[CutRule]
+  }
+
+  "stuck cut right exists-sk should reduce" in {
+    val proof = ( ProofBuilder
+      c OpenAssumption(Sequent() :+ ("" -> hof"B"))
+      c OpenAssumption(Sequent() :+ ("" -> hof"?x A(x)"))
+      c OpenAssumption(("" -> hof"B") +: ("" -> hof"A(s)") +: Sequent())
+      u (ExistsSkLeftRule(_, Ant(1), hof"?x A(x)", le"s", hof"?x A(x)"))
+      b (CutRule(_,_,hof"?x A(x)"))
+      b (CutRule(_,_,hof"B"))
+      qed)
+    val Some(newProof) = RightRankCutExistsSkReduction reduce proof
+    newProof.endSequent must beMultiSetEqual(proof.endSequent)
+    newProof.subProofAt(0::1::Nil) must beAnInstanceOf[CutRule]
+  }
+
   def isCutFree( proof: LKProof ): Boolean =
     !proof.subProofs.exists( subProof => subProof match {
       case CutRule( _, _, _, _ ) => true
