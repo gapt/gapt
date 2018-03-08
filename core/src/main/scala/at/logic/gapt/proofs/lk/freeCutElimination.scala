@@ -275,6 +275,47 @@ object RightRankCutCutEqualityRightReduction extends CutReduction {
   }
 }
 
+object LeftRankCutForallSkReduction extends CutReduction {
+  override def reduce(cut: CutRule): Option[LKProof] = {
+    cut.leftSubProof match {
+      case CutRule(ForallSkRightRule(_,_,_,_,_),_,_,_) =>
+        val Some(step1: LKProof) = LeftRankCutReduction reduce cut
+        Some(new ParallelAtDepthStrategy(LeftRankForallSkRightReduction, 1) run step1)
+    }
+  }
+}
+
+object LeftRankCutExistsSkReduction extends CutReduction {
+  override def reduce(cut: CutRule): Option[LKProof] = {
+    cut.leftSubProof match {
+      case CutRule(_,_,ExistsSkLeftRule(_,_,_,_,_),_) =>
+        val Some(step1: LKProof) = LeftRankCutReduction reduce cut
+        Some(new ParallelAtDepthStrategy(LeftRankExistsSkLeftReduction, 1) run step1)
+    }
+  }
+}
+
+object RightRankCutForallSkReduction extends CutReduction {
+  override def reduce(cut: CutRule): Option[LKProof] = {
+    cut.rightSubProof match {
+      case CutRule(ForallSkRightRule(_,_,_,_,_),_,_,_) =>
+        val Some(step1: LKProof) = RightRankCutReduction reduce cut
+        Some(new ParallelAtDepthStrategy(RightRankForallSkRightReduction, 1) run step1)
+    }
+  }
+}
+
+object RightRankCutExistsSkReduction extends CutReduction {
+  override def reduce(cut: CutRule): Option[LKProof] = {
+    cut.rightSubProof match {
+      case CutRule(_,_,ExistsSkLeftRule(_,_,_,_,_),_) =>
+        val Some(step1: LKProof) = RightRankCutReduction reduce cut
+        Some(new ParallelAtDepthStrategy(RightRankExistsSkLeftReduction, 1) run step1)
+    }
+  }
+}
+
+
 // todo: skolem quantifier rules
 
 class UnfoldInductions( implicit ctx: Context ) {
