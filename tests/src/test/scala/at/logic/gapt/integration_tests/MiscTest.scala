@@ -44,7 +44,7 @@ class MiscTest extends Specification {
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 9)" in {
       val p = LinearExampleProof( 9 )
       val Some( pi ) = CutIntroduction( p, method = DeltaTableMethod() )
-      val pe = cutFree( pi )
+      val pe = cutNormal( pi )
 
       isCutFree( p ) must beEqualTo( true )
       isCutFree( pi ) must beEqualTo( false )
@@ -56,7 +56,7 @@ class MiscTest extends Specification {
 
       val p1 = lkProofFromClasspath( "SYN726-1.out" )
       val Some( p2 ) = CutIntroduction( p1, method = DeltaTableMethod() )
-      val p3 = cutFree( p2 )
+      val p3 = cutNormal( p2 )
 
       isCutFree( p2 ) must beEqualTo( false )
       isCutFree( p3 ) must beEqualTo( true )
@@ -103,7 +103,7 @@ class MiscTest extends Specification {
       if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
 
       val p = lkProofFromClasspath( "PUZ002-1.out" )
-      val q = cutFree( p )
+      val q = cutNormal( p )
 
       isCutFree( q ) must beEqualTo( true )
     }

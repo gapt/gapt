@@ -4,11 +4,18 @@ import at.logic.gapt.expr.isConstructorForm
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.lk.reductions._
 
-object freeCutFree {
-  def apply( proof: LKProof )( implicit ctx: Context ) = ( new FreeCutReduction ).apply( proof )
+object cutNormal {
+  def apply(
+    proof:                LKProof,
+    cleanStructuralRules: Boolean = false )( implicit ctx: Context = Context.default ) =
+    ( new ReductiveCutNormalization ).apply( proof, cleanStructuralRules )
 }
 
-class FreeCutReduction( implicit val ctx: Context ) {
+/**
+ * This class implements a version of Gentzen's cut-reduction
+ * procedure for our sequent calculus LK.
+ */
+class ReductiveCutNormalization( implicit val ctx: Context ) {
 
   val nonCommutingRightRankReduction =
     RightRankWeakeningLeftReduction orElse
@@ -84,7 +91,36 @@ class FreeCutReduction( implicit val ctx: Context ) {
       commutingCutReduction orElse
       new LeftRankInductionUnfoldingReduction
 
-  def apply( proof: LKProof ): LKProof = new UppermostFirstStrategy( cutReduction ) run proof
+  /**
+   * Applies Gentzen's reductive cut-elimination to a proof.
+   * @param proof The proof that is subject to cut-elimination.
+   * @param cleanStructuralRules If true structural rules are cleaned after every reduction step.
+   * @return If the input proof is an LK proof, then a cut-free proof is returned, otherwise the resulting proof
+   *         may not be cut-free.
+   */
+  def apply( proof: LKProof, cleanStructuralRules: Boolean = false ): LKProof = {
+    if ( cleanStructuralRules )
+      new IterativeParallelCsrStrategy( cutReduction ) run proof
+    else
+      new UppermostFirstStrategy( cutReduction ) run proof
+  }
+
+  /**
+   * Implements an iterative parallel reduction, that cleans structural rules after each iteration.
+   * @param reduction The reduction to be used by this strategy
+   */
+  private class IterativeParallelCsrStrategy( reduction: Reduction ) extends ReductionStrategy {
+    override def run( proof: LKProof ): LKProof = {
+      var intermediaryProof = proof
+      val reducer = ( new LowerMostRedexReducer( ( new UppermostRedexFilter ).filter( reduction ) ) )
+      do {
+        reducer.foundRedex = false
+        intermediaryProof = reducer.apply( intermediaryProof, () )
+        intermediaryProof = cleanStructuralRules( intermediaryProof )
+      } while ( reducer.foundRedex )
+      intermediaryProof
+    }
+  }
 }
 
 class LeftRankInductionUnfoldingReduction( implicit ctx: Context ) extends CutReduction {
@@ -286,8 +322,6 @@ object RightRankCutExistsSkReduction extends CutReduction {
     }
   }
 }
-
-// todo: skolem quantifier rules
 
 class UnfoldInductions( implicit ctx: Context ) {
 

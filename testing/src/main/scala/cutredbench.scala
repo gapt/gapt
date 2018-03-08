@@ -6,7 +6,7 @@ import at.logic.gapt.expr.fol.Numeral
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.ceres.CERES
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, eliminateCutsET }
-import at.logic.gapt.proofs.lk.{ LKProof, LKToExpansionProof, cutFree, eliminateDefinitions }
+import at.logic.gapt.proofs.lk.{ LKProof, LKToExpansionProof, cutNormal, eliminateDefinitions }
 import at.logic.gapt.proofs.lkt.{ LKToLKt, LKt, normalizeLKt }
 import at.logic.gapt.proofs.resolution.ResolutionToLKProof
 import at.logic.gapt.provers.escargot.Escargot
@@ -44,7 +44,7 @@ object CutReductionBenchmarkTools {
     type P = LKProof
     def convert( p: LKProof ): P = p
   }
-  case object LKReductive extends LKMethod { def eliminate( p: LKProof ): Unit = cutFree( p ) }
+  case object LKReductive extends LKMethod { def eliminate( p: LKProof ): Unit = cutNormal( p ) }
   case object LKCERES extends LKMethod { def eliminate( p: LKProof ): Unit = CERES( p ) }
   case object CERESEXP extends LKMethod { def eliminate( p: LKProof ): Unit = CERES.CERESExpansionProof( p ) }
   case object BogoElim extends Method {

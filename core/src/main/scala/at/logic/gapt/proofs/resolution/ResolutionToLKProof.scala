@@ -188,7 +188,7 @@ object ResolutionToLKProof {
               recurse( proof2, proof2.getLeftSequentConnector.inv.parent( isAncestor, true ) )
             }
             // FIXME: do this properly
-            val proof4 = cutFree( proof3 )
+            val proof4 = cutNormal( proof3 )
             ( proof4, SequentConnector.guessInjection( toUpper = proof3.conclusion, fromLower = proof4.conclusion ) * conn )
           } else {
             val ( proofNew, conn ) = super.recurse( proof, isAncestor )

@@ -17,7 +17,7 @@ object inductionNormalForm {
     do {
       continue = false
       newProof = pushEqualityInferencesToLeaves( newProof )
-      newProof = freeCutFree( newProof )
+      newProof = cutNormal( newProof )
       val inductionUnfolder = new UnfoldInductions
       newProof = inductionUnfolder( newProof )
       continue = inductionUnfolder.unfoldedInduction

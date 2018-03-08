@@ -219,7 +219,7 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
         Z3.isUnsat( And( recSchem.languageWithDummyParameters ) ) !-- "extractRecSchem language validity"
       }
 
-    cutFree( p ) --? "cut-elim (input)"
+    cutNormal( p ) --? "cut-elim (input)"
     normalizeLKt.withDebug( p ) --? "lkt cut-elim (input)"
 
     cleanStructuralRules( p ) --? "cleanStructuralRules"
@@ -229,7 +229,7 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
         val focus = if ( p.endSequent.succedent.isEmpty ) None else Some( Suc( 0 ) )
         LKToND( q, focus ) --? "LKToND (cut-intro)"
 
-        cutFree( q ) --? "cut-elim (cut-intro)"
+        cutNormal( q ) --? "cut-elim (cut-intro)"
         normalizeLKt.withDebug( q ) --? "lkt cut-elim (cut-intro)"
         CERES( q ) --? "CERES (cut-intro)"
         CERES.CERESExpansionProof( q ) --? "CERESExpansionProof"

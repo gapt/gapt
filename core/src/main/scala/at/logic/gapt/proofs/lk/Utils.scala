@@ -193,3 +193,16 @@ object logicalComplexity {
     }
   }
 }
+
+object isCutFree {
+  /**
+   * This method checks whether a proof is cut-free.
+   * @param proof The proof to check for cut-freeness.
+   * @return true if proof does not contain the cut rule, false otherwise.
+   */
+  def apply( proof: LKProof ): Boolean = proof match {
+    case InitialSequent( _ ) => true
+    case p: CutRule          => false
+    case _                   => proof.immediateSubProofs.forall( this( _ ) )
+  }
+}
