@@ -94,3 +94,27 @@ class IterativeSelectiveStrategy( selector: Selector ) extends ReductionStrategy
     intermediaryProof
   }
 }
+
+class ParallelAtDepthStrategy(reduction: Reduction, depth: Int) extends ReductionStrategy {
+  override def run(proof: LKProof): LKProof = {
+    recursor.apply(proof, depth)
+  }
+
+  private object recursor extends LKVisitor[Int] {
+
+    override def recurse(proof: LKProof, depth: Int) : (LKProof, SequentConnector) = {
+      if (depth <= 0) {
+        reduction.reduce(proof) match {
+          case Some(newProof) =>
+            ( newProof, SequentConnector.guessInjection(
+              fromLower = proof.conclusion, toUpper = newProof.conclusion).inv)
+          case _ => withIdentitySequentConnector(proof)
+        }
+      } else {
+        super.recurse(proof, depth - 1)
+      }
+    }
+
+    // override def transportToSubProof(depth: Int, proof: LKProof, subProofIdx: Int): Int = depth - 1
+  }
+}

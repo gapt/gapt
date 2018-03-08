@@ -469,6 +469,138 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     isCutFree( q ) must_== false
   }
 
+  "cut left equality-right left" in {
+    val proof = ( ProofBuilder
+      c OpenAssumption( ( "" -> hof"s=t" ) +: Sequent() :+ ( "" -> hof"B(s)" ) :+ ( "" -> hof"A" ) )
+      u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), Abs( hov"x", le"B(x):o" ) ) )
+      c OpenAssumption( ( "" -> hof"B(t)" ) +: Sequent())
+      b ( CutRule(_, _, hof"B(t)"))
+      c OpenAssumption(  ( "" -> hof"A" ) +: Sequent() )
+      b (CutRule(_,_,hof"A") )
+      qed )
+    val Some(newProof) = LeftRankCutEqualityRightLeftReduction.reduce(proof)
+    newProof.endSequent must beMultiSetEqual(proof.endSequent)
+    newProof.subProofAt(0::0::Nil) must beAnInstanceOf[CutRule]
+  }
+
+  "cut left equality-right right should reduce" in {
+    val proof = ( ProofBuilder
+      c OpenAssumption(  Sequent() :+ ( "" -> hof"s=t" ) )
+      c OpenAssumption( ( "" -> hof"s=t" ) +: Sequent() :+ ( "" -> hof"B(s)" ) :+ ( "" -> hof"A" ) )
+      u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), Abs( hov"x", le"B(x):o" ) ) )
+      b ( CutRule(_, _, hof"s=t"))
+      c OpenAssumption(  ( "" -> hof"A" ) +: Sequent() )
+      b (CutRule(_,_,hof"A") )
+      qed )
+    val Some(newProof) = LeftRankCutEqualityRightRightReduction.reduce(proof)
+    newProof.endSequent must beMultiSetEqual (proof.endSequent)
+    newProof.subProofAt(0::1::Nil) must beAnInstanceOf[CutRule]
+  }
+
+  "cut left equality-left right should not reduce" in {
+    val proof = ( ProofBuilder
+      c OpenAssumption(  Sequent() :+ ( "" -> hof"s=t" ) )
+      c OpenAssumption( ( "" -> hof"s=t" ) +: Sequent() :+ ( "" -> hof"B(s)" ) :+ ( "" -> hof"A" ) )
+      u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), Abs( hov"x", le"B(x):o" ) ) )
+      b ( CutRule(_, _, hof"s=t"))
+      c OpenAssumption(  ( "" -> hof"B(t)" ) +: Sequent() )
+      b (CutRule(_,_,hof"B(t)") )
+      qed )
+    LeftRankCutEqualityRightRightReduction.reduce(proof).isEmpty must_== true
+  }
+
+  "cut left equality-left left should reduce" in {
+    val proof = ( ProofBuilder
+      c OpenAssumption( Sequent() :+ ("" -> hof"s=t"))
+      c OpenAssumption( ( "" -> hof"s=t" ) +: ( "" -> hof"B(s)" ) +: Sequent() :+ ( "" -> hof"A" ) )
+      u ( EqualityLeftRule( _, Ant( 0 ), Ant( 1 ), Abs( hov"x", le"B(x):o" ) ) )
+      b ( CutRule(_, _, hof"s=t"))
+      c OpenAssumption(  ( "" -> hof"A" ) +: Sequent() )
+      b (CutRule(_,_,hof"A") )
+      qed )
+    val Some(newProof) = LeftRankCutEqualityLeftRightReduction reduce proof
+    newProof.endSequent must beMultiSetEqual(proof.endSequent)
+    newProof.subProofAt(0::1::Nil) must beAnInstanceOf[CutRule]
+  }
+
+  "cut right equality-left right should not reduce 1" in {
+    val proof = ( ProofBuilder
+      c OpenAssumption( Sequent() :+ ("" -> hof"B(t)"))
+      c OpenAssumption( Sequent() :+ ("" -> hof"s=t"))
+      c OpenAssumption( ( "" -> hof"s=t" ) +: ( "" -> hof"B(s)" ) +: Sequent() )
+      u (EqualityLeftRule(_, Ant(0), Ant(1), Abs(hov"x", le"B(x):o")))
+      b (CutRule(_,_,hof"s=t"))
+      b (CutRule(_,_,hof"B(t)"))
+      qed )
+    RightRankCutEqualityLeftRightReduction.reduce(proof).isEmpty must_== true
+  }
+
+  "cut right equality-left right should not reduce 2" in {
+    val proof = ( ProofBuilder
+      c OpenAssumption( Sequent() :+ ("" -> hof"s=t"))
+      c OpenAssumption( Sequent() :+ ("" -> hof"B(t)"))
+      c OpenAssumption( ( "" -> hof"s=t" ) +: ( "" -> hof"B(s)" ) +: Sequent() )
+      u (EqualityLeftRule(_, Ant(0), Ant(1), Abs(hov"x", le"B(x):o")))
+      b (CutRule(_,_,hof"B(t)"))
+      b (CutRule(_,_,hof"s=t"))
+      qed )
+    RightRankCutEqualityLeftRightReduction.reduce(proof).isEmpty must_== true
+  }
+
+  "cut right equality-left right should reduce" in {
+    val proof = ( ProofBuilder
+      c OpenAssumption( Sequent() :+ ("" -> hof"A"))
+      c OpenAssumption( Sequent() :+ ("" -> hof"B(t)"))
+      c OpenAssumption( ("" -> hof"A") +: ( "" -> hof"s=t" ) +: ( "" -> hof"B(s)" ) +: Sequent() )
+      u (EqualityLeftRule(_, Ant(1), Ant(2), Abs(hov"x", le"B(x):o")))
+      b (CutRule(_,_,hof"B(t)"))
+      b (CutRule(_,_,hof"A"))
+      qed )
+    val Some(newProof) = RightRankCutEqualityLeftRightReduction reduce proof
+    newProof.endSequent must beMultiSetEqual(proof.endSequent)
+    newProof.subProofAt(0::1::Nil) must beAnInstanceOf[CutRule]
+  }
+
+  "cut right equality-right left should not reduce" in {
+    val proof = ( ProofBuilder
+      c OpenAssumption( Sequent() :+ ("" -> hof"s=t"))
+      c OpenAssumption( ( "" -> hof"s=t" ) +: Sequent() :+ ( "" -> hof"B(s)" ) )
+      u (EqualityRightRule(_, Ant(0), Suc(0), Abs(hov"x", le"B(x):o")))
+      c OpenAssumption( ("" -> hof"B(t)") +: Sequent() )
+      b (CutRule(_,_,hof"B(t)"))
+      b (CutRule(_,_,hof"s=t"))
+      qed )
+    RightRankCutEqualityRightLeftReduction.reduce(proof).isEmpty must_== true
+  }
+
+  "cut right equality-right left should reduce" in {
+    val proof = ( ProofBuilder
+      c OpenAssumption( Sequent() :+ ("" -> hof"A"))
+      c OpenAssumption( ("" -> hof"A") +: ( "" -> hof"s=t" ) +: Sequent() :+ ( "" -> hof"B(s)" ) )
+      u (EqualityRightRule(_, Ant(1), Suc(0), Abs(hov"x", le"B(x):o")))
+      c OpenAssumption( ("" -> hof"B(t)") +: Sequent() )
+      b (CutRule(_,_,hof"B(t)"))
+      b (CutRule(_,_,hof"A"))
+      qed )
+    val Some(newProof) = RightRankCutEqualityRightLeftReduction reduce proof
+    newProof.endSequent must beMultiSetEqual(proof.endSequent)
+    newProof.subProofAt(0::0::Nil) must beAnInstanceOf[CutRule]
+  }
+
+  "cut right equality-right right should reduce" in {
+    val proof = ( ProofBuilder
+      c OpenAssumption( Sequent() :+ ("" -> hof"A"))
+      c OpenAssumption( Sequent() :+ ("" -> hof"s=t"))
+      c OpenAssumption( ("" -> hof"A") +: ( "" -> hof"s=t" ) +: Sequent() :+ ( "" -> hof"B(s)" ) )
+      u (EqualityRightRule(_, Ant(1), Suc(0), Abs(hov"x", le"B(x):o")))
+      b (CutRule(_,_,hof"s=t"))
+      b (CutRule(_,_,hof"A"))
+      qed )
+    val Some(newProof) = RightRankCutEqualityRightRightReduction reduce proof
+    newProof.endSequent must beMultiSetEqual (proof.endSequent)
+    newProof.subProofAt(0::1::Nil) must beAnInstanceOf[CutRule]
+  }
+
   def isCutFree( proof: LKProof ): Boolean =
     !proof.subProofs.exists( subProof => subProof match {
       case CutRule( _, _, _, _ ) => true
