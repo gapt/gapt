@@ -29,7 +29,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
     val term_m = le"S(S(S(S(S(Z)))))"
     val term_k = le"S(S(S(S(S(S(S(Z)))))))"
     val instProof = instanceProof( proof, term_n :: term_m :: term_k :: Nil )
-    val inductionFreeProof = inductionFree( instProof )
+    val inductionFreeProof = inductionNormalForm( instProof )
     isInductionFree( inductionFreeProof ) must_== true
     instProof.conclusion must beSetEqual( inductionFreeProof.conclusion )
   }
@@ -40,7 +40,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
     val term_x = le"S(S(S(S(S(S(S(Z)))))))"
     val term_xs = le"cons(S(S(S(Z))), cons(S(S(S(S(S(Z))))),nil))"
     val sigma1Proof = Substitution( hov"x:Nat" -> term_x, hov"xs:list" -> term_xs )( proof )
-    val inductionFreeProof = inductionFree( sigma1Proof )
+    val inductionFreeProof = inductionNormalForm( sigma1Proof )
     isInductionFree( inductionFreeProof ) must_== true
     sigma1Proof.conclusion must beSetEqual( inductionFreeProof.conclusion )
   }
@@ -90,7 +90,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
 
     val sigma1Proof = Substitution( hov"x:nat" -> term_x, hov"y:nat" -> term_y )(
       proof.subProofAt( 0 :: 0 :: Nil ) )
-    val inductionFreeProof = inductionFree( sigma1Proof )
+    val inductionFreeProof = inductionNormalForm( sigma1Proof )
     isInductionFree( inductionFreeProof ) must_== true
     sigma1Proof.conclusion must beSetEqual( inductionFreeProof.conclusion )
   }
@@ -156,7 +156,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
 
     val sigma1Proof = Substitution( hov"x:nat" -> term_x, hov"y:nat" -> term_y )(
       proof.subProofAt( 0 :: 0 :: Nil ) )
-    val inductionFreeProof = inductionFree( sigma1Proof )
+    val inductionFreeProof = inductionNormalForm( sigma1Proof )
 
     isInductionFree( inductionFreeProof ) must_== true
   }
@@ -165,7 +165,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
     implicit val ctx = prop_59.ctx
     val inductiveProof = prop_59.proof_1
     val instProof = instanceProof( inductiveProof, le"nil" :: le"nil" :: Nil )
-    val indFreeProof = inductionFree( instProof )
+    val indFreeProof = inductionNormalForm( instProof )
     indFreeProof.conclusion must beMultiSetEqual( instProof.conclusion )
     isInductionFree( indFreeProof ) must_== true
   }
