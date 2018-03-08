@@ -122,7 +122,6 @@ class LeftRankInductionUnfoldingReduction(implicit ctx: Context) extends CutRedu
   override def reduce(cut: CutRule): Option[LKProof] = {
     cut.leftSubProof match {
       case ind @ InductionRule(_,_,_) if isConstructorForm(ind.term) =>
-        println("unfolded induction")
         Some(new ParallelAtDepthStrategy(new InductionUnfoldingReduction(), 1) run cut)
       case _ => None
     }
@@ -171,7 +170,7 @@ object LeftRankCutEqualityRightRightReduction extends CutReduction {
   override def reduce(cut: CutRule): Option[LKProof] = {
     cut.leftSubProof match {
       case cut2 @ CutRule(_,_, eq @ EqualityRightRule(_,_,_,_),_
-      ) if (cut2.getRightSequentConnector.parent(cut.aux1) != eq.auxInConclusion) => {
+      ) if (cut2.getRightSequentConnector.child(eq.auxInConclusion) != cut.aux1) => {
         val Some(step1 : LKProof) = LeftRankCutReduction reduce cut
         Some(new ParallelAtDepthStrategy(LeftRankEqualityRightReduction, 1) run step1)
       }
@@ -196,8 +195,8 @@ object RightRankCutEqualityLeftRightReduction extends CutReduction {
   override def reduce(cut: CutRule):Option[LKProof] = {
     cut.rightSubProof match {
       case cut2@CutRule(_, _, eq@EqualityLeftRule(_, _, _, _), _
-      ) if (cut2.getRightSequentConnector.parent(cut.aux2) != eq.eqInConclusion &&
-        cut2.getRightSequentConnector.parent(cut.aux2) != eq.auxInConclusion) =>
+      ) if cut2.getRightSequentConnector.child(eq.eqInConclusion) != cut.aux2 &&
+        cut2.getRightSequentConnector.child(eq.auxInConclusion) != cut.aux2 =>
         val Some(step1 : LKProof) = RightRankCutReduction reduce cut
         Some(new ParallelAtDepthStrategy(RightRankEqualityLeftReduction,1) run step1)
       case _ => None
@@ -209,7 +208,7 @@ object RightRankCutEqualityRightLeftReduction extends CutReduction {
   override def reduce(cut: CutRule) :Option[LKProof] = {
     cut.rightSubProof match {
       case cut2@CutRule(eq@EqualityRightRule(_, _, _, _), _, _, _
-      ) if (cut2.getLeftSequentConnector.parent(cut.aux2) != eq.eqInConclusion) =>
+      ) if (cut2.getLeftSequentConnector.child(eq.eqInConclusion) != cut.aux2) =>
         val Some(step1: LKProof) = RightRankCutReduction reduce cut
         Some(new ParallelAtDepthStrategy(RightRankEqualityRightReduction, 1) run step1)
       case _ => None
@@ -278,7 +277,7 @@ object RightRankCutCutEqualityRightReduction extends CutReduction {
     }
   }
 }
-// todo: remaining cases
+
 // todo: skolem quantifier rules
 
 /**
