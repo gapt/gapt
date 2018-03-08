@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.proofs.{ Context, SequentConnector }
+import at.logic.gapt.proofs.lk.cutFree.nonCommutingCutReduction
+import at.logic.gapt.proofs.{Context, SequentConnector}
 import at.logic.gapt.proofs.lk.reductions._
 
 object inductionFree {
@@ -88,12 +89,28 @@ class FreeCutReduction( implicit val ctx: Context) {
     LeftRankEqualityRightReduction
 
   val commutingCutReduction =
-    ???
+    LeftRankCutInductionReduction orElse
+  RightRankCutInductionReduction orElse
+  LeftRankCutEqualityRightLeftReduction orElse
+  LeftRankCutEqualityRightRightReduction orElse
+  LeftRankCutEqualityLeftRightReduction orElse
+  RightRankCutEqualityLeftRightReduction orElse
+  RightRankCutEqualityRightLeftReduction orElse
+  RightRankCutEqualityRightRightReduction orElse
+  LeftRankCutCutEqualityRightReduction orElse
+  LeftRankCutCutEqualityLeftReduction orElse
+  RightRankCutCutEqualityLeftReduction
+
 
   val nonCommutingCutReduction =
+    gradeReduction orElse
     nonCommutingLeftRankReduction orElse
-    nonCommutingRightRankReduction orElse
-    gradeReduction
+    nonCommutingRightRankReduction
+
+  val cutReduction = nonCommutingCutReduction orElse commutingCutReduction
+
+  def apply(proof: LKProof): LKProof
+    = new UppermostFirstStrategy( cutReduction ) run proof
 }
 
 object LeftRankCutInductionReduction extends CutReduction {
@@ -195,6 +212,43 @@ object RightRankCutEqualityRightRightReduction extends CutReduction {
   }
 }
 
+object LeftRankCutCutEqualityRightReduction extends CutReduction {
+  override def reduce(cut: CutRule): Option[LKProof] = {
+    cut.leftSubProof match {
+      case CutRule(CutRule(_,_,EqualityRightRule(_,_,_,_),_),_,_,_) |
+           CutRule(_,_,CutRule(EqualityRightRule(_,_,_,_),_,_,_),_) => {
+        val Some(step1 : LKProof) = LeftRankCutReduction reduce cut
+        val step2: LKProof = new ParallelAtDepthStrategy(LeftRankCutReduction, 1) run step1
+        Some (new ParallelAtDepthStrategy(LeftRankEqualityRightReduction, 2) run step2)
+      }
+      case _ => None
+    }
+  }
+}
+
+object LeftRankCutCutEqualityLeftReduction extends CutReduction {
+  override def reduce(cut: CutRule) : Option[LKProof] = {
+    cut.leftSubProof match {
+      case CutRule(_,_,CutRule(_,_,EqualityLeftRule(_,_,_,_),_),_) =>
+        val Some(step1: LKProof) = LeftRankCutReduction reduce cut
+        val step2 : LKProof = new ParallelAtDepthStrategy(LeftRankCutReduction, 1) run step1
+        Some( new ParallelAtDepthStrategy(LeftRankEqualityLeftReduction, 2) run step2)
+      case _ => None
+    }
+  }
+}
+
+object RightRankCutCutEqualityLeftReduction extends CutReduction {
+  override def reduce(cut: CutRule): Option[LKProof] = {
+    cut.rightSubProof match {
+      case CutRule(_,_,CutRule(_,_,EqualityLeftRule(_,_,_,_),_),_) =>
+        val Some(step1: LKProof) = RightRankCutReduction reduce cut
+        val step2 : LKProof = new ParallelAtDepthStrategy(RightRankCutReduction, 1) run step1
+        Some(new ParallelAtDepthStrategy(RightRankEqualityLeftReduction, 2) run step2)
+      case _ => None
+    }
+  }
+}
 // todo: remaining cases
 // todo: skolem quantifier rules
 
