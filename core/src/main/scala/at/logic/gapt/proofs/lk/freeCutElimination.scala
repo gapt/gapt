@@ -167,7 +167,7 @@ object LeftRankCutEqualityRightRightReduction extends CutReduction {
   override def reduce(cut: CutRule): Option[LKProof] = {
     cut.leftSubProof match {
       case cut2 @ CutRule(_,_, eq @ EqualityRightRule(_,_,_,_),_
-      ) if (cut2.getRightSequentConnector.child(eq.auxInConclusion) != cut.aux1) => {
+      ) if ! cut2.getRightSequentConnector.children(eq.auxInConclusion).contains(cut.aux1) => {
         val Some(step1 : LKProof) = LeftRankCutReduction reduce cut
         Some(new ParallelAtDepthStrategy(LeftRankEqualityRightReduction, 1) run step1)
       }
@@ -192,8 +192,8 @@ object RightRankCutEqualityLeftRightReduction extends CutReduction {
   override def reduce(cut: CutRule):Option[LKProof] = {
     cut.rightSubProof match {
       case cut2@CutRule(_, _, eq@EqualityLeftRule(_, _, _, _), _
-      ) if cut2.getRightSequentConnector.child(eq.eqInConclusion) != cut.aux2 &&
-        cut2.getRightSequentConnector.child(eq.auxInConclusion) != cut.aux2 =>
+      ) if !cut2.getRightSequentConnector.children(eq.eqInConclusion).contains(cut.aux2) &&
+        !cut2.getRightSequentConnector.children(eq.auxInConclusion).contains(cut.aux2) =>
         val Some(step1 : LKProof) = RightRankCutReduction reduce cut
         Some(new ParallelAtDepthStrategy(RightRankEqualityLeftReduction,1) run step1)
       case _ => None
@@ -205,7 +205,7 @@ object RightRankCutEqualityRightLeftReduction extends CutReduction {
   override def reduce(cut: CutRule) :Option[LKProof] = {
     cut.rightSubProof match {
       case cut2@CutRule(eq@EqualityRightRule(_, _, _, _), _, _, _
-      ) if (cut2.getLeftSequentConnector.child(eq.eqInConclusion) != cut.aux2) =>
+      ) if ! cut2.getLeftSequentConnector.children(eq.eqInConclusion).contains(cut.aux2) =>
         val Some(step1: LKProof) = RightRankCutReduction reduce cut
         Some(new ParallelAtDepthStrategy(RightRankEqualityRightReduction, 1) run step1)
       case _ => None
