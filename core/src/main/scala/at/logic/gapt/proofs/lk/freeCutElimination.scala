@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.lk
 
+import at.logic.gapt.expr.isConstructorForm
 import at.logic.gapt.proofs.lk.cutFree.nonCommutingCutReduction
 import at.logic.gapt.proofs.{Context, SequentConnector}
 import at.logic.gapt.proofs.lk.reductions._
@@ -62,7 +63,8 @@ class FreeCutReduction( implicit val ctx: Context) {
     RightRankExistsSkLeftReduction orElse
     RightRankExistsRightReduction orElse
     RightRankEqualityLeftReduction orElse
-    RightRankEqualityRightReduction
+    RightRankEqualityRightReduction orElse
+    RightRankInductionReduction
 
   val nonCommutingLeftRankReduction =
     LeftRankWeakeningLeftReduction orElse
@@ -86,7 +88,8 @@ class FreeCutReduction( implicit val ctx: Context) {
     LeftRankExistsSkLeftReduction orElse
     LeftRankExistsRightReduction orElse
     LeftRankEqualityLeftReduction orElse
-    LeftRankEqualityRightReduction
+    LeftRankEqualityRightReduction orElse
+    LeftRankInductionReduction
 
   val commutingCutReduction =
     LeftRankCutInductionReduction orElse
@@ -99,7 +102,8 @@ class FreeCutReduction( implicit val ctx: Context) {
   RightRankCutEqualityRightRightReduction orElse
   LeftRankCutCutEqualityRightReduction orElse
   LeftRankCutCutEqualityLeftReduction orElse
-  RightRankCutCutEqualityLeftReduction
+  RightRankCutCutEqualityLeftReduction orElse
+  RightRankCutCutEqualityRightReduction
 
 
   val nonCommutingCutReduction =
@@ -107,10 +111,22 @@ class FreeCutReduction( implicit val ctx: Context) {
     nonCommutingLeftRankReduction orElse
     nonCommutingRightRankReduction
 
-  val cutReduction = nonCommutingCutReduction orElse commutingCutReduction
+  val cutReduction =
+    nonCommutingCutReduction orElse commutingCutReduction orElse (new LeftRankInductionUnfoldingReduction())
 
   def apply(proof: LKProof): LKProof
     = new UppermostFirstStrategy( cutReduction ) run proof
+}
+
+class LeftRankInductionUnfoldingReduction(implicit ctx: Context) extends CutReduction {
+  override def reduce(cut: CutRule): Option[LKProof] = {
+    cut.leftSubProof match {
+      case ind @ InductionRule(_,_,_) if isConstructorForm(ind.term) =>
+        println("unfolded induction")
+        Some(new ParallelAtDepthStrategy(new InductionUnfoldingReduction(), 1) run cut)
+      case _ => None
+    }
+  }
 }
 
 object LeftRankCutInductionReduction extends CutReduction {
@@ -127,7 +143,7 @@ object LeftRankCutInductionReduction extends CutReduction {
 
 object RightRankCutInductionReduction extends CutReduction {
   override def reduce(cut: CutRule): Option[LKProof] = {
-    cut.leftSubProof match {
+    cut.rightSubProof match {
       case CutRule(_, _, InductionRule(_, _, _), _) => {
         val Some(step1 : LKProof) = RightRankCutReduction reduce cut
         Some(new ParallelAtDepthStrategy(RightRankInductionReduction, 1) run step1 )
@@ -245,6 +261,19 @@ object RightRankCutCutEqualityLeftReduction extends CutReduction {
         val Some(step1: LKProof) = RightRankCutReduction reduce cut
         val step2 : LKProof = new ParallelAtDepthStrategy(RightRankCutReduction, 1) run step1
         Some(new ParallelAtDepthStrategy(RightRankEqualityLeftReduction, 2) run step2)
+      case _ => None
+    }
+  }
+}
+
+object RightRankCutCutEqualityRightReduction extends CutReduction {
+  override def reduce(cut: CutRule): Option[LKProof] = {
+    cut.rightSubProof match {
+      case CutRule(CutRule(_,_,EqualityRightRule(_,_,_,_),_),_,_,_) |
+           CutRule(_,_,CutRule(EqualityRightRule(_,_,_,_),_,_,_),_) =>
+        val Some(step1: LKProof) = RightRankCutReduction reduce cut
+        val step2: LKProof = new ParallelAtDepthStrategy(RightRankCutReduction, 1) run step1
+        Some(new ParallelAtDepthStrategy(RightRankEqualityRightReduction, 2) run step2)
       case _ => None
     }
   }
