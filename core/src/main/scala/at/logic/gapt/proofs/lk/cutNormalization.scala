@@ -148,7 +148,7 @@ object LeftRankCutInductionReduction extends CutReduction {
 object RightRankCutInductionReduction extends CutReduction {
   override def reduce( cut: CutRule ): Option[LKProof] = {
     cut.rightSubProof match {
-      case CutRule( _, _, InductionRule( _, _, _ ), _ ) => {
+      case CutRule( InductionRule( _, _, _ ), _, _, _ ) => {
         val Some( step1: LKProof ) = RightRankCutReduction reduce cut
         Some( new ParallelAtDepthStrategy( RightRankInductionReduction, 1 ) run step1 )
       }
