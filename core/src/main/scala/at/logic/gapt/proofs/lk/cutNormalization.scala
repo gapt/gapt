@@ -7,15 +7,18 @@ import at.logic.gapt.proofs.lk.reductions._
 object cutNormal {
   def apply(
     proof:                LKProof,
-    cleanStructuralRules: Boolean = false )( implicit ctx: Context = Context.default ) =
-    ( new ReductiveCutNormalization ).apply( proof, cleanStructuralRules )
+    cleanStructuralRules: Boolean = false,
+    unfoldInductions:     Boolean = false )( implicit ctx: Context = Context.default ) =
+    ( new ReductiveCutNormalization( cleanStructuralRules, unfoldInductions ) ).apply( proof )
 }
 
 /**
  * This class implements a version of Gentzen's cut-reduction
  * procedure for our sequent calculus LK.
  */
-class ReductiveCutNormalization( implicit val ctx: Context ) {
+class ReductiveCutNormalization(
+    cleanStructuralRules: Boolean = false,
+    unfoldInduction:      Boolean = false )( implicit val ctx: Context ) {
 
   val nonCommutingRightRankReduction =
     RightRankWeakeningLeftReduction orElse
@@ -88,17 +91,24 @@ class ReductiveCutNormalization( implicit val ctx: Context ) {
 
   val cutReduction =
     nonCommutingCutReduction orElse
-      commutingCutReduction orElse
-      new LeftRankInductionUnfoldingReduction
+      commutingCutReduction orElse (
+      if (unfoldInduction)
+        new LeftRankInductionUnfoldingReduction
+      else
+        emptyCutReduction
+      )
+
+  object emptyCutReduction extends CutReduction {
+    override def reduce(proof: CutRule): Option[LKProof] = None
+  }
 
   /**
    * Applies Gentzen's reductive cut-elimination to a proof.
    * @param proof The proof that is subject to cut-elimination.
-   * @param cleanStructuralRules If true structural rules are cleaned after every reduction step.
    * @return If the input proof is an LK proof, then a cut-free proof is returned, otherwise the resulting proof
    *         may not be cut-free.
    */
-  def apply( proof: LKProof, cleanStructuralRules: Boolean = false ): LKProof = {
+  def apply( proof: LKProof ): LKProof = {
     if ( cleanStructuralRules )
       new IterativeParallelCsrStrategy( cutReduction ) run proof
     else
@@ -116,7 +126,7 @@ class ReductiveCutNormalization( implicit val ctx: Context ) {
       do {
         reducer.foundRedex = false
         intermediaryProof = reducer.apply( intermediaryProof, () )
-        intermediaryProof = cleanStructuralRules( intermediaryProof )
+        intermediaryProof = at.logic.gapt.proofs.lk.cleanStructuralRules( intermediaryProof )
       } while ( reducer.foundRedex )
       intermediaryProof
     }
