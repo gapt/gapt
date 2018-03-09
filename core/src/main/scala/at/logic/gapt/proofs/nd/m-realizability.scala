@@ -68,85 +68,95 @@ object MRealizability {
 
     val context = systemT( ctx )
 
-    val variables = proof.conclusion.zipWithIndex.antecedent.map( x => ( x._2, Var( s"x${x._2.toInt}", flat( x._1 ) ) ) ).toMap
+    // should actually be free variables of whole proof - need to implement this
+    val ng = new NameGenerator( freeVariables( proof.conclusion ).map( _.name ) )
+    val varsAnt = proof.conclusion.zipWithIndex.antecedent.map( x => ( x._2, Var( ng.fresh( "y" ), flat( x._1 ) ) ) ).toMap
 
-    val mrealizer = mrealizeCases( proof, variables )( context )
+    val mrealizer = mrealizeCases( proof, varsAnt, ng )( context )
 
+    // by default: remove occurences of the empty program
     if ( re )
-      ( variables map ( x => ( x._1, Var( x._2.name, removeEmptyProgramType( x._2.ty )( context ) ) ) ),
+      ( varsAnt map ( x => ( x._1, Var( x._2.name, removeEmptyProgramType( x._2.ty )( context ) ) ) ),
         removeEmptyProgram( mrealizer )( context ) )
-    else ( variables, mrealizer )
+    else ( varsAnt, mrealizer )
   }
 
-  def mrealizeCases( proof: NDProof, variables: Map[SequentIndex, Var] )( implicit systemT: Context ): Expr = {
+  def mrealizeCases( proof: NDProof, variables: Map[SequentIndex, Var], ng: NameGenerator )( implicit systemT: Context ): Expr = {
 
     proof match {
       case WeakeningRule( subProof, formula ) =>
-        mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) )
+        mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ), ng )
 
       case ContractionRule( subProof, aux1, aux2 ) =>
-        mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) )
+        mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ), ng )
 
       case LogicalAxiom( formula ) =>
         variables.head._2
 
       case AndElim1Rule( subProof ) =>
-        le"pi1(${mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) )})"
+        le"pi1(${mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ), ng )})"
 
       case AndElim2Rule( subProof ) =>
-        le"pi2(${mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) )})"
+        le"pi2(${mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ), ng )})"
 
       case AndIntroRule( leftSubProof, rightSubProof ) =>
-        le"pair(${mrealizeCases( leftSubProof, varsAntPrem( proof, variables, 0 ) )},${mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ) )})"
+        le"pair(${
+          mrealizeCases( leftSubProof, varsAntPrem( proof, variables, 0 ), ng )
+        },${
+          mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ), ng )
+        })"
 
       case OrElimRule( leftSubProof, middleSubProof, aux1, rightSubProof, aux2 ) =>
-        val realizerAOrB = mrealizeCases( leftSubProof, varsAntPrem( proof, variables, 0 ) )
+        val realizerAOrB = mrealizeCases( leftSubProof, varsAntPrem( proof, variables, 0 ), ng )
 
-        val varsA = varsAntPrem( proof, variables, 1 ) + ( aux1 -> Var( "xa", flat( middleSubProof.conclusion( aux1 ) ) ) )
-        val varsB = varsAntPrem( proof, variables, 2 ) + ( aux2 -> Var( "xb", flat( rightSubProof.conclusion( aux2 ) ) ) )
+        val varA = Var( ng.fresh( "y" ), flat( middleSubProof.conclusion( aux1 ) ) )
+        val varB = Var( ng.fresh( "y" ), flat( rightSubProof.conclusion( aux2 ) ) )
 
-        val sub1 = Substitution( varsA( aux1 ), App( le"pi1(pi2($realizerAOrB))", le"i" ) )
-        val sub2 = Substitution( varsB( aux2 ), App( le"pi2(pi2($realizerAOrB))", Abs( Var( "c", ty"1" ), le"i" ) ) )
+        val varsMiddle = varsAntPrem( proof, variables, 1 ) + ( aux1 -> varA )
+        val varsRight = varsAntPrem( proof, variables, 2 ) + ( aux2 -> varB )
+
+        val sub1 = Substitution( varA, App( le"pi1(pi2($realizerAOrB))", le"i" ) )
+        val sub2 = Substitution( varB, App( le"pi2(pi2($realizerAOrB))", Abs( Var( ng.fresh( "u" ), ty"1" ), le"i" ) ) )
 
         le"natRec(${
-          sub1( mrealizeCases( middleSubProof, varsA ) )
+          sub1( mrealizeCases( middleSubProof, varsMiddle, ng ) )
         }, ${
-          Abs( Var( "a", ty"nat" ), Abs(
-            Var( "b", flat( proof.conclusion.succedent( 0 ) ) ),
-            sub2( mrealizeCases( rightSubProof, varsB ) ) ) )
+          Abs( Var( ng.fresh( "u" ), ty"nat" ), Abs(
+            Var( ng.fresh( "u" ), flat( proof.conclusion.succedent( 0 ) ) ),
+            sub2( mrealizeCases( rightSubProof, varsRight, ng ) ) ) )
         },pi1($realizerAOrB))"
 
       case OrIntro1Rule( subProof, rightDisjunct ) =>
         le"pair(0,pair(${
-          Abs( Var( "w", ty"1" ), mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) ) )
+          Abs( Var( ng.fresh( "w" ), ty"1" ), mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ), ng ) )
         }, ${
-          Abs( Var( "w", ty"1>1" ), Var( "w0", flat( rightDisjunct ) ) )
+          Abs( Var( ng.fresh( "w" ), ty"1>1" ), Var( ng.fresh( "w" ), flat( rightDisjunct ) ) )
         }))"
 
       case OrIntro2Rule( subProof, leftDisjunct ) =>
         le"pair(s(0),pair(${
-          Abs( Var( "v", ty"1" ), Var( "v0", flat( leftDisjunct ) ) )
+          Abs( Var( ng.fresh( "v" ), ty"1" ), Var( ng.fresh( "v" ), flat( leftDisjunct ) ) )
         }, ${
-          Abs( Var( "v", ty"1 > 1" ), mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) ) )
+          Abs( Var( ng.fresh( "v" ), ty"1>1" ), mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ), ng ) )
         }))"
 
       case ImpElimRule( leftSubProof, rightSubProof ) =>
         App(
-          mrealizeCases( leftSubProof, varsAntPrem( proof, variables, 0 ) ),
-          mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ) ) )
+          mrealizeCases( leftSubProof, varsAntPrem( proof, variables, 0 ), ng ),
+          mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ), ng ) )
 
       case ImpIntroRule( subProof, aux ) =>
-        val extraVar = Var( "h", flat( subProof.conclusion( aux ) ) )
-        Abs( extraVar, mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) + ( aux -> extraVar ) ) )
+        val extraVar = Var( ng.fresh( "y" ), flat( subProof.conclusion( aux ) ) )
+        Abs( extraVar, mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) + ( aux -> extraVar ), ng ) )
 
       case NegElimRule( leftSubProof, rightSubProof ) =>
         App(
-          mrealizeCases( leftSubProof, varsAntPrem( proof, variables, 0 ) ),
-          mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ) ) )
+          mrealizeCases( leftSubProof, varsAntPrem( proof, variables, 0 ), ng ),
+          mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ), ng ) )
 
       case NegIntroRule( subProof, aux ) =>
-        val extraVar = Var( "n", flat( subProof.conclusion( aux ) ) )
-        Abs( extraVar, mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) + ( aux -> extraVar ) ) )
+        val extraVar = Var( ng.fresh( "y" ), flat( subProof.conclusion( aux ) ) )
+        Abs( extraVar, mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) + ( aux -> extraVar ), ng ) )
 
       case TopIntroRule() =>
         val varr = Var( "t", ty"1" )
@@ -156,27 +166,27 @@ object MRealizability {
         Var( "b", flat( mainFormula ) )
 
       case ForallIntroRule( subProof, eigenVariable, quantifiedVariable ) =>
-        Abs( eigenVariable, mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) ) )
+        Abs( eigenVariable, mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ), ng ) )
 
       case ForallElimRule( subProof, term ) =>
-        App( mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) ), term )
+        App( mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ), ng ), term )
 
       case ExistsIntroRule( subProof, formula, term, variable ) =>
-        le"pair($term,${mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) )})"
+        le"pair($term,${mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ), ng )})"
 
       case ExistsElimRule( leftSubProof, rightSubProof, aux, eigenVariable ) =>
-        val mrealizerLeft = mrealizeCases( leftSubProof, varsAntPrem( proof, variables, 0 ) )
+        val mrealizerLeft = mrealizeCases( leftSubProof, varsAntPrem( proof, variables, 0 ), ng )
         val sub1 = Substitution( eigenVariable, le"pi1($mrealizerLeft)" )
         val varsRight = varsAntPrem( proof, variables, 1 ) + ( aux -> Var( "u", flat( rightSubProof.conclusion( aux ) ) ) )
         val sub2 = Substitution( varsRight( aux ), le"pi2($mrealizerLeft)" )
-        sub1( sub2( mrealizeCases( rightSubProof, varsRight ) ) )
+        sub1( sub2( mrealizeCases( rightSubProof, varsRight, ng ) ) )
 
       // only to be used when mainFormula is an equation
       case TheoryAxiom( mainFormula ) =>
         le"i"
 
       case EqualityElimRule( leftSubProof, rightSubProof, formulaA, variablex ) =>
-        mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ) )
+        mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ), ng )
 
       case EqualityIntroRule( term ) =>
         le"i"
@@ -184,16 +194,16 @@ object MRealizability {
       // Works only for the type of natural numbers at the moment
       // Assumes that the induction cases for the constructors are in the same order as the inductive type definition in the context.
       case InductionRule( cases, formula, term ) =>
-        val extraVar = Var( "e", flat( proof.conclusion( Suc( 0 ) ) ) )
-        val mrealizerBaseCase = mrealizeCases( cases( 0 ).proof, varsAntPrem( proof, variables, 0 ) )
+        val extraVar = Var( ng.fresh( "y" ), flat( proof.conclusion( Suc( 0 ) ) ) )
+        val mrealizerBaseCase = mrealizeCases( cases( 0 ).proof, varsAntPrem( proof, variables, 0 ), ng )
         val mrealizerInductionCase = Abs(
           cases( 1 ).eigenVars :+ extraVar,
-          mrealizeCases( cases( 1 ).proof, varsAntPrem( proof, variables, 1 ) + ( cases( 1 ).hypotheses( 0 ) -> extraVar ) ) )
+          mrealizeCases( cases( 1 ).proof, varsAntPrem( proof, variables, 1 ) + ( cases( 1 ).hypotheses( 0 ) -> extraVar ), ng ) )
         le"natRec($mrealizerBaseCase,$mrealizerInductionCase,$term)"
 
       // assuming that the definitionrule is applied according to rewrite rules of the original context
       case DefinitionRule( subProof, mainFormula ) =>
-        mrealizeCases( subProof, variables )
+        mrealizeCases( subProof, variables, ng )
 
       case ExcludedMiddleRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
         throw new MRealizerCreationException( proof.longName, "This rule is not admitted in Heyting Arithmetic." )

@@ -217,6 +217,8 @@ object examplesImplicationRules extends Script {
   val a22 = WeakeningRule( a11, hof"s(0) = s(0)" )
   val a33 = ImpIntroRule( a22, Ant( 0 ) )
   test( a33 )
+  val a44 = ImpIntroRule( a33 )
+  test( a44 )
 }
 
 object examplesForallIntroRules extends Script {
@@ -362,8 +364,8 @@ object examplesInductionRule extends Script {
   val c3 = InductionRule( casess, Abs( hov"x:nat", hof"P(x:nat)" ), le"x:nat" )
   val d1 = ForallIntroRule( c3, hov"x:nat", hov"x:nat" )
   val d2 = ImpIntroRule( d1, Ant( 0 ) )
-  //val d3 = ImpIntroRule( d2 )
-  test( d2 )
+  val d3 = ImpIntroRule( d2 )
+  test( d3 )
 }
 
 object exampleTopIntroRule extends Script {
