@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.nd
 
-import at.logic.gapt.expr.{ App, typeVariables, Ty, _ }
+import at.logic.gapt.expr
+import at.logic.gapt.expr.{ App, Ty, typeVariables, Substitution, _ }
 import at.logic.gapt.proofs.Context.{ BaseTypes, InductiveType, PrimRecFun, StructurallyInductiveTypes }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.nd._
@@ -60,112 +61,122 @@ object MRealizability {
     systemT
   }
 
-  def mrealize( proof: NDProof, re: Boolean = true )( implicit ctx: Context ): Expr = {
+  // Creates a term M for the conclusion of the proof such that:
+  // if M1,...,Mk are m-realizers for the formulas in the antecedent,
+  // then M[M1/x1]...[Mk/xk] m-realizes the succedent of the conclusion
+  def mrealize( proof: NDProof, re: Boolean = true )( implicit ctx: Context ): ( Map[SequentIndex, Var], Expr ) = {
 
     val context = systemT( ctx )
-    val mrealizer = mrealizeCases( proof )( context )
 
-    if ( re ) removeEmptyProgram( mrealizer )( context ) else mrealizer
+    val variables = proof.conclusion.zipWithIndex.antecedent.map( x => ( x._2, Var( s"x${x._2.toInt}", flat( x._1 ) ) ) ).toMap
+
+    val mrealizer = mrealizeCases( proof, variables )( context )
+
+    if ( re )
+      ( variables map ( x => ( x._1, Var( x._2.name, removeEmptyProgramType( x._2.ty )( context ) ) ) ),
+        removeEmptyProgram( mrealizer )( context ) )
+    else ( variables, mrealizer )
   }
 
-  def mrealizeCases( proof: NDProof )( implicit systemT: Context ): Expr = {
+  def mrealizeCases( proof: NDProof, variables: Map[SequentIndex, Var] )( implicit systemT: Context ): Expr = {
 
-    BetaReduction.betaNormalize( proof match {
+    proof match {
       case WeakeningRule( subProof, formula ) =>
-        Abs( variablesAntConclusion( proof ), App( mrealizeCases( subProof ), variablesAntPremise( proof, 0 ) ) )
+        mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) )
 
       case ContractionRule( subProof, aux1, aux2 ) =>
-        Abs( variablesAntConclusion( proof ), App( mrealizeCases( subProof ), variablesAntPremise( proof, 0 ) ) )
+        mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) )
 
       case LogicalAxiom( formula ) =>
-        Abs( Var( "x", flat( formula ) ), Var( "x", flat( formula ) ) )
+        variables.head._2
 
       case AndElim1Rule( subProof ) =>
-        Abs( variablesAntConclusion( proof ), le"pi1(${App( mrealizeCases( subProof ), variablesAntPremise( proof, 0 ) )})" )
+        le"pi1(${mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) )})"
 
       case AndElim2Rule( subProof ) =>
-        Abs( variablesAntConclusion( proof ), le"pi2(${App( mrealizeCases( subProof ), variablesAntPremise( proof, 0 ) )})" )
+        le"pi2(${mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) )})"
 
-      case AndIntroRule( leftSubproof, rightSubproof ) =>
-        Abs(
-          variablesAntConclusion( proof ),
-          le"pair(${App( mrealizeCases( leftSubproof ), variablesAntPremise( proof, 0 ) )},${App( mrealizeCases( rightSubproof ), variablesAntPremise( proof, 1 ) )})" )
+      case AndIntroRule( leftSubProof, rightSubProof ) =>
+        le"pair(${mrealizeCases( leftSubProof, varsAntPrem( proof, variables, 0 ) )},${mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ) )})"
 
       case OrElimRule( leftSubProof, middleSubProof, aux1, rightSubProof, aux2 ) =>
-        val realizerAOrB = App( mrealizeCases( leftSubProof ), variablesAntPremise( proof, 0 ) )
-        Abs(
-          variablesAntConclusion( proof ),
-          le"natRec(${
-            App( mrealizeCases( middleSubProof ), insertIndex( variablesAntPremise( proof, 1 ), aux1, App( le"pi1(pi2($realizerAOrB))", le"i" ) ) )
-          }, ${
-            Abs( Var( "a", ty"nat" ), Abs(
-              Var( "b", flat( proof.conclusion.succedent( 0 ) ) ),
-              App( mrealizeCases( rightSubProof ), insertIndex( variablesAntPremise( proof, 2 ), aux2, App( le"pi2(pi2($realizerAOrB))", Abs( Var( "c", ty"1" ), le"i" ) ) ) ) ) )
-          },pi1($realizerAOrB))" )
+        val realizerAOrB = mrealizeCases( leftSubProof, varsAntPrem( proof, variables, 0 ) )
+
+        val varsA = varsAntPrem( proof, variables, 1 ) + ( aux1 -> Var( "xa", flat( middleSubProof.conclusion( aux1 ) ) ) )
+        val varsB = varsAntPrem( proof, variables, 2 ) + ( aux2 -> Var( "xb", flat( rightSubProof.conclusion( aux2 ) ) ) )
+
+        val sub1 = Substitution( varsA( aux1 ), App( le"pi1(pi2($realizerAOrB))", le"i" ) )
+        val sub2 = Substitution( varsB( aux2 ), App( le"pi2(pi2($realizerAOrB))", Abs( Var( "c", ty"1" ), le"i" ) ) )
+
+        le"natRec(${
+          sub1( mrealizeCases( middleSubProof, varsA ) )
+        }, ${
+          Abs( Var( "a", ty"nat" ), Abs(
+            Var( "b", flat( proof.conclusion.succedent( 0 ) ) ),
+            sub2( mrealizeCases( rightSubProof, varsB ) ) ) )
+        },pi1($realizerAOrB))"
 
       case OrIntro1Rule( subProof, rightDisjunct ) =>
-        Abs(
-          variablesAntConclusion( proof ),
-          le"pair(0,pair(${
-            Abs( Var( "w", ty"1" ), App( mrealizeCases( subProof ), variablesAntPremise( proof, 0 ) ) )
-          }, ${
-            Abs( Var( "w", ty"1>1" ), Var( "w0", flat( rightDisjunct ) ) )
-          }))" )
+        le"pair(0,pair(${
+          Abs( Var( "w", ty"1" ), mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) ) )
+        }, ${
+          Abs( Var( "w", ty"1>1" ), Var( "w0", flat( rightDisjunct ) ) )
+        }))"
 
       case OrIntro2Rule( subProof, leftDisjunct ) =>
-        Abs(
-          variablesAntConclusion( proof ),
-          le"pair(s(0),pair(${
-            Abs( Var( "v", ty"1" ), Var( "v0", flat( leftDisjunct ) ) )
-          }, ${
-            Abs( Var( "v", ty"1 > 1" ), App( mrealizeCases( subProof ), variablesAntPremise( proof, 0 ) ) )
-          }))" )
+        le"pair(s(0),pair(${
+          Abs( Var( "v", ty"1" ), Var( "v0", flat( leftDisjunct ) ) )
+        }, ${
+          Abs( Var( "v", ty"1 > 1" ), mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) ) )
+        }))"
 
       case ImpElimRule( leftSubProof, rightSubProof ) =>
-        Abs(
-          variablesAntConclusion( proof ),
-          App( App( mrealizeCases( leftSubProof ), variablesAntPremise( proof, 0 ) ), App( mrealizeCases( rightSubProof ), variablesAntPremise( proof, 1 ) ) ) )
+        App(
+          mrealizeCases( leftSubProof, varsAntPrem( proof, variables, 0 ) ),
+          mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ) ) )
 
       case ImpIntroRule( subProof, aux ) =>
-        val extraVar = Var( "z", flat( subProof.conclusion( aux ) ) )
-        Abs( variablesAntConclusion( proof ) :+ extraVar, App( mrealizeCases( subProof ), insertIndex( variablesAntPremise( proof, 0 ), aux, extraVar ) ) )
+        val extraVar = Var( "h", flat( subProof.conclusion( aux ) ) )
+        Abs( extraVar, mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) + ( aux -> extraVar ) ) )
 
       case NegElimRule( leftSubProof, rightSubProof ) =>
-        Abs(
-          variablesAntConclusion( proof ),
-          App( App( mrealizeCases( leftSubProof ), variablesAntPremise( proof, 0 ) ), App( mrealizeCases( rightSubProof ), variablesAntPremise( proof, 1 ) ) ) )
+        App(
+          mrealizeCases( leftSubProof, varsAntPrem( proof, variables, 0 ) ),
+          mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ) ) )
 
       case NegIntroRule( subProof, aux ) =>
-        val extraVar = Var( "z", flat( subProof.conclusion( aux ) ) )
-        Abs( variablesAntConclusion( proof ) :+ extraVar, App( mrealizeCases( subProof ), insertIndex( variablesAntPremise( proof, 0 ), aux, extraVar ) ) )
+        val extraVar = Var( "n", flat( subProof.conclusion( aux ) ) )
+        Abs( extraVar, mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) + ( aux -> extraVar ) ) )
 
       case TopIntroRule() =>
-        val varr = Var( "z", ty"1" )
+        val varr = Var( "t", ty"1" )
         Abs( varr, varr )
 
       case BottomElimRule( subProof, mainFormula ) =>
-        Abs( variablesAntConclusion( proof ), Var( "z", flat( mainFormula ) ) )
+        Var( "b", flat( mainFormula ) )
 
       case ForallIntroRule( subProof, eigenVariable, quantifiedVariable ) =>
-        Abs( variablesAntConclusion( proof ) :+ eigenVariable, App( mrealizeCases( subProof ), variablesAntPremise( proof, 0 ) ) )
+        Abs( eigenVariable, mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) ) )
 
       case ForallElimRule( subProof, term ) =>
-        Abs( variablesAntConclusion( proof ), App( mrealizeCases( subProof ), variablesAntPremise( proof, 0 ) :+ term ) )
+        App( mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) ), term )
 
       case ExistsIntroRule( subProof, formula, term, variable ) =>
-        Abs( variablesAntConclusion( proof ), le"pair($term,${App( mrealizeCases( subProof ), variablesAntPremise( proof, 0 ) )})" )
+        le"pair($term,${mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) )})"
 
       case ExistsElimRule( leftSubProof, rightSubProof, aux, eigenVariable ) =>
-        Abs( variablesAntConclusion( proof ), App(
-          Substitution( eigenVariable, le"pi1(${App( mrealizeCases( leftSubProof ), variablesAntPremise( proof, 0 ) )})" )( mrealizeCases( rightSubProof ) ),
-          insertIndex( variablesAntPremise( proof, 1 ), aux, le"pi2(${App( mrealizeCases( leftSubProof ), variablesAntPremise( proof, 0 ) )})" ) ) )
+        val mrealizerLeft = mrealizeCases( leftSubProof, varsAntPrem( proof, variables, 0 ) )
+        val sub1 = Substitution( eigenVariable, le"pi1($mrealizerLeft)" )
+        val varsRight = varsAntPrem( proof, variables, 1 ) + ( aux -> Var( "u", flat( rightSubProof.conclusion( aux ) ) ) )
+        val sub2 = Substitution( varsRight( aux ), le"pi2($mrealizerLeft)" )
+        sub1( sub2( mrealizeCases( rightSubProof, varsRight ) ) )
 
       // only to be used when mainFormula is an equation
       case TheoryAxiom( mainFormula ) =>
         le"i"
 
       case EqualityElimRule( leftSubProof, rightSubProof, formulaA, variablex ) =>
-        Abs( variablesAntConclusion( proof ), App( mrealizeCases( rightSubProof ), variablesAntPremise( proof, 1 ) ) )
+        mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ) )
 
       case EqualityIntroRule( term ) =>
         le"i"
@@ -173,22 +184,23 @@ object MRealizability {
       // Works only for the type of natural numbers at the moment
       // Assumes that the induction cases for the constructors are in the same order as the inductive type definition in the context.
       case InductionRule( cases, formula, term ) =>
-        val extraVar = Var( "z", flat( proof.conclusion( Suc( 0 ) ) ) )
-        val mrealizerBaseCase = App( mrealizeCases( cases( 0 ).proof ), variablesAntPremise( proof, 0 ) )
+        val extraVar = Var( "e", flat( proof.conclusion( Suc( 0 ) ) ) )
+        val mrealizerBaseCase = mrealizeCases( cases( 0 ).proof, varsAntPrem( proof, variables, 0 ) )
         val mrealizerInductionCase = Abs(
           cases( 1 ).eigenVars :+ extraVar,
-          App( mrealizeCases( cases( 1 ).proof ), insertIndex( variablesAntPremise( proof, 1 ), cases( 1 ).hypotheses( 0 ), extraVar ) ) )
-        Abs( variablesAntConclusion( proof ), le"natRec($mrealizerBaseCase,$mrealizerInductionCase,$term)" )
+          mrealizeCases( cases( 1 ).proof, varsAntPrem( proof, variables, 1 ) + ( cases( 1 ).hypotheses( 0 ) -> extraVar ) ) )
+        le"natRec($mrealizerBaseCase,$mrealizerInductionCase,$term)"
 
-      // assuming that the defintionrule is applied according to rewrite rules of the original context
+      // assuming that the definitionrule is applied according to rewrite rules of the original context
       case DefinitionRule( subProof, mainFormula ) =>
-        mrealizeCases( subProof )
+        mrealizeCases( subProof, variables )
 
       case ExcludedMiddleRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
         throw new MRealizerCreationException( proof.longName, "This rule is not admitted in Heyting Arithmetic." )
-    } )
+    }
   }
 
+  // computes the type of a potential m-realizer for the formula
   def flat( formula: Formula )( implicit systemT: Context ): Ty = formula match {
     case Bottom()                         => ty"1"
     case Top()                            => flat( Imp( Bottom(), Bottom() ) )
@@ -213,16 +225,14 @@ object MRealizability {
       case Var( name, typee ) =>
         if ( removeEmptyProgramType( typee ) == emptyType ) empty
         else Var( name, removeEmptyProgramType( typee ) )
-      case Const( "natRec", _, params ) => {
+      case Const( "natRec", _, params ) =>
         val parameter = removeEmptyProgramType( params.head )
         if ( parameter == emptyType ) empty
         else Const( "natRec", parameter ->: ( ty"nat" ->: parameter ->: parameter ) ->: ty"nat" ->: parameter, List( parameter ) )
-      }
-      case Abs( variable, termm ) => {
+      case Abs( variable, termm ) =>
         if ( removeEmptyProgram( termm ) == empty ) empty
         else if ( removeEmptyProgramType( variable.ty ) == emptyType ) removeEmptyProgram( termm )
         else Abs( Var( variable.name, removeEmptyProgramType( variable.ty ) ), removeEmptyProgram( termm ) )
-      }
       case App( App( Const( "pair", conjtype, params ), left ), right ) =>
         if ( removeEmptyProgram( right ) == empty ) removeEmptyProgram( left )
         else if ( removeEmptyProgram( left ) == empty ) removeEmptyProgram( right )
@@ -235,11 +245,10 @@ object MRealizability {
         if ( removeEmptyProgramType( typeparams( 1 ) ) == emptyType ) empty
         else if ( removeEmptyProgramType( typeparams( 0 ) ) == emptyType ) removeEmptyProgram( termm )
         else App( Const( "pi2", TArr( TBase( "conj", typeparams.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgramType( termmtype ) ), params.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgram( termm ) )
-      case App( term1, term2 ) => {
+      case App( term1, term2 ) =>
         if ( removeEmptyProgram( term1 ) == empty ) empty
         else if ( removeEmptyProgram( term2 ) == empty ) removeEmptyProgram( term1 )
         else App( removeEmptyProgram( term1 ), removeEmptyProgram( term2 ) )
-      }
       case _ => term
     }
   }
@@ -262,20 +271,15 @@ object MRealizability {
     }
   }
 
-  def insertIndex( sequence: Vector[Var], index: SequentIndex, value: Expr ): Vector[Expr] =
-    ( sequence.take( index.toInt.abs - 1 ) :+ value ) ++ sequence.takeRight( sequence.length - ( index.toInt.abs - 1 ) )
-
-  def variablesAntConclusion( proof: NDProof )( implicit systemT: Context ): Vector[Var] = {
-    variablesAntConclusionWithIndex( proof ).map( _._2 )
+  // Given a proof and variables for the formulas in the antecedent of the conlusion,
+  // returns those variables that occur as well in the antecedent of the conclusion of the premise at premisenumber.
+  def varsAntPrem( proof: NDProof, varsAntConcl: Map[SequentIndex, Var], premiseNumber: Int ): Map[SequentIndex, Var] = {
+    val positions: Vector[( Seq[SequentIndex], SequentIndex )] = proof.occConnectors( premiseNumber ).childrenSequent.zipWithIndex.antecedent
+    val variables: Vector[( Seq[Option[Var]], SequentIndex )] = positions.map( x => ( x._1.map( y => varsAntConcl.get( y ) ), x._2 ) )
+    val flattened: Vector[( Seq[Var], SequentIndex )] = variables.map( x => ( x._1.flatten, x._2 ) )
+    flattened.flatMap( x => x._1.map( y => ( x._2, y ) ) ).toMap
   }
 
-  def variablesAntPremise( proof: NDProof, premiseNumber: Int )( implicit systemT: Context ): Vector[Var] = {
-    val positions = proof.occConnectors( premiseNumber ).childrenSequent.antecedent.flatten
-    positions.flatMap( variablesAntConclusionWithIndex( proof ).toMap get )
-  }
-
-  private def variablesAntConclusionWithIndex( proof: NDProof )( implicit systemT: Context ): Vector[( SequentIndex, Var )] =
-    proof.conclusion.zipWithIndex.antecedent.map( x => ( x._2, Var( s"x${x._2.toInt}", flat( x._1 ) ) ) )
 }
 
 class MRealizerCreationException( name: String, message: String ) extends Exception( s"Cannot create an m-realizer for $name: " + message )

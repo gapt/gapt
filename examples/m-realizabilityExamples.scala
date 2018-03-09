@@ -43,14 +43,14 @@ object addRecorsorsExamples extends Script {
 
   val sum = le"bitreeRec((^x x),(^t1 ^y1 ^t2 ^y2 (natRec(y1,(^z1 ^z2 (s(z2))),y2))))"
   println( normalize( App( sum, le"node(leaf(0),node(leaf(s(0)),leaf(s(s(0)))))" ) ) )
-
 }
 
 object test {
   def apply( proof: NDProof )( implicit ctx: Context ): Unit = {
     val m1 = MRealizability.mrealize( proof, false )
     val m1n = MRealizability.mrealize( proof )
-    print( proof ); print( m1 ); print( " of type " ); println( m1.ty ); print( "normalized: " ); print( m1n )
+    print( proof ); print( m1 ); print( " of type " ); println( m1._2.ty )
+    print( "normalized with respect to the empty program: " ); print( m1n )
     println(); println()
   }
 }
@@ -85,12 +85,6 @@ object examplesLogicalAxiom extends Script {
 
   val a6 = LogicalAxiom( hof"!x ?y x + y = s(x)" )
   test( a6 )
-
-  val a7 = EqualityIntroRule( le"s(s(s(0)))" )
-  test( a7 )
-
-  val a8 = EqualityIntroRule( le"x + s(y + z)" )
-  test( a8 )
 }
 
 object examplesEqualityIntroRule extends Script {
@@ -111,6 +105,12 @@ object examplesEqualityIntroRule extends Script {
 
   val a2 = EqualityIntroRule( le"x + s(y + z)" )
   test( a2 )
+
+  val a3 = EqualityIntroRule( le"s(s(s(0)))" )
+  test( a3 )
+
+  val a4 = EqualityIntroRule( le"x + s(y + z)" )
+  test( a4 )
 }
 
 object examplesWeakeningRule extends Script {
@@ -167,6 +167,12 @@ object exampleContractionRule extends Script {
 
   val a5 = ContractionRule( a4, hof"(x:nat) = y" )
   test( a5 )
+
+  val a55 = ContractionRule( a4, Ant( 1 ), Ant( 0 ) )
+  test( a55 )
+
+  val a6 = WeakeningRule( a5, hof"0 = 0" )
+  test( a6 )
 }
 
 object examplesConjuctionRules extends Script {
@@ -356,8 +362,8 @@ object examplesInductionRule extends Script {
   val c3 = InductionRule( casess, Abs( hov"x:nat", hof"P(x:nat)" ), le"x:nat" )
   val d1 = ForallIntroRule( c3, hov"x:nat", hov"x:nat" )
   val d2 = ImpIntroRule( d1, Ant( 0 ) )
-  val d3 = ImpIntroRule( d2 )
-  test( d3 )
+  //val d3 = ImpIntroRule( d2 )
+  test( d2 )
 }
 
 object exampleTopIntroRule extends Script {
@@ -497,12 +503,12 @@ object mrealizerDivisionByTwo extends Script {
 
   implicit var systemT = MRealizability.systemT( divisionByTwo.ctx )
 
-  print( divisionByTwo.proof ); print( m1 ); print( " of type " ); println( m1.ty )
-  print( "normalized: " ); print( m1n ); print( " of type " ); println( m1n.ty )
+  print( divisionByTwo.proof ); print( m1 ); print( " of type " ); println( m1._2.ty )
+  print( "normalized: " ); print( m1n ); print( " of type " ); println( m1n._2.ty )
 
   println()
 
-  def test( x: Expr ) = println( x + " divided by 2 is: " + normalize( App( m1n, x ) ) )
+  def test( x: Expr ) = println( x + " divided by 2 is: " + normalize( App( m1n._2, x ) ) )
   test( le"0" )
   test( le"s(0)" )
   test( le"s(s(0))" )
@@ -569,4 +575,3 @@ object divisionByTwo {
   val a1 = InductionRule( cases, Abs( hov"x:nat", hof"?y (x = s(s(0)) * y | x = (s(s(0)) * y) + s(0))" ), hov"x:nat" )
   val proof = ForallIntroRule( a1, hov"x:nat", hov"x:nat" )
 }
-
