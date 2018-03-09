@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.lk.reductions._
 object cutNormal {
   def apply(
     proof:                LKProof,
-    cleanStructuralRules: Boolean = false,
+    cleanStructuralRules: Boolean = true,
     unfoldInductions:     Boolean = false )( implicit ctx: Context = Context.default ) =
     ( new ReductiveCutNormalization( cleanStructuralRules, unfoldInductions ) ).apply( proof )
 }
