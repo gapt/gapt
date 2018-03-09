@@ -1,39 +1,38 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.expr.{ Apps, Expr, Formula, Substitution, Var }
-import at.logic.gapt.proofs.{ Sequent, SequentConnector }
+import at.logic.gapt.expr.{ Apps, Expr, Substitution }
+import at.logic.gapt.proofs.SequentIndex
 
 object unfoldInduction {
-
   /**
    * Unfolds an induction induction inference.
    *
-   * @param proof A regular proof with an induction inference as its last inference.
+   * @param induction A regular proof with an induction inference as its last inference.
    *              The induction must be a ground term in constructor form.
    * @return
    */
-  def apply( proof: InductionRule ): LKProof = {
-    val InductionRule( inductionCases, inductionFormula, inductionTerm ) = proof
-    val inductionType = inductionTerm.ty
-    val Apps( constructor, arguments ) = inductionTerm
-    val ( primaryArguments, _ ) = arguments.partition(
-      argument => {
-        argument.ty == inductionType
-      } )
-    val argumentProofs = primaryArguments map (
-      argument => {
-        unfoldInduction( InductionRule( inductionCases, inductionFormula, argument ) )
-      } )
+  def apply( induction: InductionRule ) = ( new UnfoldInduction( induction ) ).apply
+}
 
-    val Seq( inductionCase ) = inductionCases filter { _.constructor == constructor }
+class UnfoldInduction( induction: InductionRule ) {
 
-    val proofWithRedundancy = argumentProofs.foldRight( inductionStepProof( arguments, inductionCase ) )(
-      ( argumentProof, mainProof ) => {
-        CutRule( argumentProof, mainProof, argumentProof.endSequent.succedent.last )
-      } )
+  def apply = {
+    val ( unfoldedProof, _ ) = constructInstanceProof( induction.term )
     WeakeningMacroRule(
-      ContractionMacroRule( proofWithRedundancy, proof.endSequent, false ),
-      proof.endSequent, false )
+      ContractionMacroRule( unfoldedProof, induction.endSequent, false ),
+      induction.endSequent, false )
+  }
+
+  private def constructInstanceProof( term: Expr ): ( LKProof, SequentIndex ) = {
+    val Apps( constructor, arguments ) = term
+    val inductiveArguments = arguments filter { _.ty == induction.term.ty }
+    val Seq( stepProof ) = induction.cases.filter { _.constructor == constructor }
+    val instanceProofs: List[( ( LKProof, SequentIndex ), SequentIndex )] =
+      inductiveArguments.map( constructInstanceProof ).zipWithIndex map {
+        case ( ( proof, hypIndexSuc ), index ) => ( ( proof, hypIndexSuc ), stepProof.hypotheses( index ) )
+      }
+    val stepProofInstance = instantiateProof( arguments, stepProof )
+    cutInductionHypotheses( instanceProofs, stepProofInstance, stepProof.conclusion )
   }
 
   /**
@@ -45,10 +44,31 @@ object unfoldInduction {
    *         of the eigenvariables and the terms, i.e. the first eigenvariable is substituted by the first term, and
    *         so on.
    */
-  private def inductionStepProof( arguments: Seq[Expr], inductionCase: InductionCase ): LKProof = {
+  private def instantiateProof( arguments: Seq[Expr], inductionCase: InductionCase ): LKProof = {
     val InductionCase( proof, _, _, eigenVariables, _ ) = inductionCase
     Substitution( eigenVariables zip arguments )( proof )
   }
+}
 
+private object cutInductionHypotheses {
+  def apply(
+    cuts:            Seq[( ( LKProof, SequentIndex ), SequentIndex )],
+    stepProof:       LKProof,
+    conclusionIndex: SequentIndex ): ( LKProof, SequentIndex ) = {
+    cuts match {
+      case Seq( cut, rest @ _* ) =>
+        val ( ( proofHypothesis, hypothesisInSuc ), hypothesisInAnt ) = cut
+        val intermediaryProof = CutRule( proofHypothesis, hypothesisInSuc, stepProof, hypothesisInAnt )
+        // keep track of indices for remaining cuts
+        val remainingCuts = rest map {
+          case ( hyp, hypInAnt ) => ( hyp, intermediaryProof.getRightSequentConnector.child( hypInAnt ) )
+        }
+        cutInductionHypotheses(
+          remainingCuts,
+          intermediaryProof,
+          intermediaryProof.getRightSequentConnector.child( conclusionIndex ) )
+      case _ => ( stepProof, conclusionIndex )
+    }
+  }
 }
 
