@@ -496,6 +496,7 @@ object exampleSuccessorFunction extends Script {
   val b3 = ExistsIntroRule( b2, hof"y = x + s(0)", le"s(x)", hov"y:nat" )
   val b4 = ForallIntroRule( b3, hov"x:nat", hov"x:nat" )
   test( b4 )
+
 }
 
 object mrealizerDivisionByTwo extends Script {
@@ -510,7 +511,7 @@ object mrealizerDivisionByTwo extends Script {
 
   println()
 
-  def test( x: Expr ) = println( x + " divided by 2 is: " + normalize( App( m1n._2, x ) ) )
+  def test( x: Expr ) = println( x + " divided by 2 is: " + normalize( App( m1._2, x ) ) )
   test( le"0" )
   test( le"s(0)" )
   test( le"s(s(0))" )

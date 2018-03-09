@@ -39,19 +39,32 @@ object MRealizability {
     // add conjuctive type, pairs, projections and their reduction rules
     val a = TVar( "a" )
     val b = TVar( "b" )
-    val conj = TBase( "conj", a, b )
-    val pair = Const( "pair", a ->: b ->: conj, List( a, b ) )
+    val conj = ty"conj ?a ?b"
+    val pair = hoc"pair{?a ?b}: ?a > ?b > (conj ?a ?b)"
     systemT += InductiveType( conj, pair )
-    val pi1 = Const( "pi1", conj ->: a, List( a, b ) )
-    val pi2 = Const( "pi2", conj ->: b, List( a, b ) )
-    val x: Expr = Var( "x", a )
-    val y: Expr = Var( "y", b )
+    val pi1 = hoc"pi1{?a ?b}: (conj ?a ?b) > ?a"
+    val pi2 = hoc"pi2{?a ?b}: (conj ?a ?b) > ?b"
+    val x: Expr = hov"x : ?a"
+    val y: Expr = hov"y : ?b"
     systemT += PrimRecFun( List(
       ( pi1, List(
-        ( App( pi1, App( pair, List( x, y ) ) ), x ) ) ) ) )( systemT )
+        ( pi1( pair( x, y ) ) -> x ) ) ) ) )( systemT )
     systemT += PrimRecFun( List(
       ( pi2, List(
-        ( App( pi2, App( pair, List( x, y ) ) ), y ) ) ) ) )( systemT )
+        ( pi2( pair( x, y ) ) -> y ) ) ) ) )( systemT )
+
+    // add sum type
+    val sum = ty"sum ?a ?b"
+    val inl = hoc"inl{?a ?b}: ?a > (sum ?a ?b)"
+    val inr = hoc"inr{?a ?b}: ?b > (sum ?a ?b)"
+    systemT += InductiveType( sum, inl, inr )
+    val matchSum = hoc"matchSum{?a ?b ?c}: (sum ?a ?b) > (?a > ?c) > (?b > ?c) > ?c"
+    val w1: Expr = hov"w1: ?a > ?c"
+    val w2: Expr = hov"w2: ?b > ?c"
+    systemT += PrimRecFun( List(
+      ( matchSum, List(
+        ( matchSum( inl( x ), w1, w2 ) -> w1( x ) ),
+        ( matchSum( inr( y ), w1, w2 ) -> w2( y ) ) ) ) ) )( systemT )
 
     // add a term+type to represent the empty program
     systemT += InductiveType(
@@ -107,38 +120,31 @@ object MRealizability {
         })"
 
       case OrElimRule( leftSubProof, middleSubProof, aux1, rightSubProof, aux2 ) =>
-        val realizerAOrB = mrealizeCases( leftSubProof, varsAntPrem( proof, variables, 0 ), ng )
-
         val varA = Var( ng.fresh( "y" ), flat( middleSubProof.conclusion( aux1 ) ) )
         val varB = Var( ng.fresh( "y" ), flat( rightSubProof.conclusion( aux2 ) ) )
-
-        val varsMiddle = varsAntPrem( proof, variables, 1 ) + ( aux1 -> varA )
-        val varsRight = varsAntPrem( proof, variables, 2 ) + ( aux2 -> varB )
-
-        val sub1 = Substitution( varA, App( le"pi1(pi2($realizerAOrB))", le"i" ) )
-        val sub2 = Substitution( varB, App( le"pi2(pi2($realizerAOrB))", Abs( Var( ng.fresh( "u" ), ty"1" ), le"i" ) ) )
-
-        le"natRec(${
-          sub1( mrealizeCases( middleSubProof, varsMiddle, ng ) )
-        }, ${
-          Abs( Var( ng.fresh( "u" ), ty"nat" ), Abs(
-            Var( ng.fresh( "u" ), flat( proof.conclusion.succedent( 0 ) ) ),
-            sub2( mrealizeCases( rightSubProof, varsRight, ng ) ) ) )
-        },pi1($realizerAOrB))"
+        println( middleSubProof )
+        println( "Realizer:" + Abs( varA, mrealizeCases( middleSubProof, varsAntPrem( proof, variables, 1 ) + ( aux1 -> varA ), ng ) ) )
+        println( rightSubProof )
+        println( Abs( varB, mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 2 ) + ( aux2 -> varB ), ng ) ) )
+        le"matchSum( ${
+          mrealizeCases( leftSubProof, varsAntPrem( proof, variables, 0 ), ng )
+        },${
+          Abs( varA, mrealizeCases( middleSubProof, varsAntPrem( proof, variables, 1 ) + ( aux1 -> varA ), ng ) )
+        },${
+          Abs( varB, mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 2 ) + ( aux2 -> varB ), ng ) )
+        })"
 
       case OrIntro1Rule( subProof, rightDisjunct ) =>
-        le"pair(0,pair(${
-          Abs( Var( ng.fresh( "w" ), ty"1" ), mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ), ng ) )
-        }, ${
-          Abs( Var( ng.fresh( "w" ), ty"1>1" ), Var( ng.fresh( "w" ), flat( rightDisjunct ) ) )
-        }))"
+        val leftType = flat( subProof.endSequent( Suc( 0 ) ) )
+        val rightType = flat( rightDisjunct )
+        val inl = systemT.constant( "inl", List( leftType, rightType ) ).get
+        inl( mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ), ng ) )
 
       case OrIntro2Rule( subProof, leftDisjunct ) =>
-        le"pair(s(0),pair(${
-          Abs( Var( ng.fresh( "v" ), ty"1" ), Var( ng.fresh( "v" ), flat( leftDisjunct ) ) )
-        }, ${
-          Abs( Var( ng.fresh( "v" ), ty"1>1" ), mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ), ng ) )
-        }))"
+        val leftType = flat( leftDisjunct )
+        val rightType = flat( subProof.endSequent( Suc( 0 ) ) )
+        val inr = systemT.constant( "inr", List( leftType, rightType ) ).get
+        inr( mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ), ng ) )
 
       case ImpElimRule( leftSubProof, rightSubProof ) =>
         App(
@@ -159,11 +165,11 @@ object MRealizability {
         Abs( extraVar, mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) + ( aux -> extraVar ), ng ) )
 
       case TopIntroRule() =>
-        val varr = Var( "t", ty"1" )
+        val varr = Var( ng.fresh( "y" ), ty"1" )
         Abs( varr, varr )
 
       case BottomElimRule( subProof, mainFormula ) =>
-        Var( "b", flat( mainFormula ) )
+        Var( ng.fresh( "y" ), flat( mainFormula ) )
 
       case ForallIntroRule( subProof, eigenVariable, quantifiedVariable ) =>
         Abs( eigenVariable, mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ), ng ) )
@@ -177,9 +183,9 @@ object MRealizability {
       case ExistsElimRule( leftSubProof, rightSubProof, aux, eigenVariable ) =>
         val mrealizerLeft = mrealizeCases( leftSubProof, varsAntPrem( proof, variables, 0 ), ng )
         val sub1 = Substitution( eigenVariable, le"pi1($mrealizerLeft)" )
-        val varsRight = varsAntPrem( proof, variables, 1 ) + ( aux -> Var( "u", flat( rightSubProof.conclusion( aux ) ) ) )
-        val sub2 = Substitution( varsRight( aux ), le"pi2($mrealizerLeft)" )
-        sub1( sub2( mrealizeCases( rightSubProof, varsRight, ng ) ) )
+        val extraVar = Var( ng.fresh( "y" ), flat( rightSubProof.conclusion( aux ) ) )
+        val sub2 = Substitution( extraVar, le"pi2($mrealizerLeft)" )
+        sub1( sub2( mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ) + ( aux -> extraVar ), ng ) ) )
 
       // only to be used when mainFormula is an equation
       case TheoryAxiom( mainFormula ) =>
@@ -217,7 +223,7 @@ object MRealizability {
     case Eq( _, _ )                       => ty"1"
     case Atom( _, _ )                     => ty"1" // ?
     case And( leftformula, rightformula ) => TBase( "conj", flat( leftformula ), flat( rightformula ) )
-    case Or( leftformula, rightformula )  => flat( Ex( Var( "x", ty"nat" ), And( Imp( Eq( Var( "x", ty"nat" ), le"0" ), leftformula ), Imp( Neg( Eq( Var( "x", ty"nat" ), le"0" ) ), rightformula ) ) ) )
+    case Or( leftformula, rightformula )  => TBase( "sum", flat( leftformula ), flat( rightformula ) )
     case Imp( leftformula, rightformula ) => flat( leftformula ) ->: flat( rightformula )
     case Neg( subformula )                => flat( Imp( subformula, Bottom() ) )
     case Ex( variable, subformula )       => TBase( "conj", variable.ty, flat( subformula ) )
@@ -255,6 +261,21 @@ object MRealizability {
         if ( removeEmptyProgramType( typeparams( 1 ) ) == emptyType ) empty
         else if ( removeEmptyProgramType( typeparams( 0 ) ) == emptyType ) removeEmptyProgram( termm )
         else App( Const( "pi2", TArr( TBase( "conj", typeparams.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgramType( termmtype ) ), params.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgram( termm ) )
+      case App( Const( "inl", TArr( termmtype, TBase( "sum", typeparams ) ), params ), termm ) =>
+        //if ( removeEmptyProgramType( typeparams( 0 ) ) == emptyType ) empty
+        //else if ( removeEmptyProgramType( typeparams( 1 ) ) == emptyType ) removeEmptyProgram( termm )
+        //else
+        App( Const( "inl", TArr( removeEmptyProgramType( termmtype ), TBase( "sum", typeparams.map( removeEmptyProgramType( _ ) ) ) ), params.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgram( termm ) )
+      case App( Const( "inr", TArr( termmtype, TBase( "sum", typeparams ) ), params ), termm ) =>
+        //if ( removeEmptyProgramType( typeparams( 1 ) ) == emptyType ) empty
+        //else if ( removeEmptyProgramType( typeparams( 0 ) ) == emptyType ) removeEmptyProgram( termm )
+        //else
+        App( Const( "inr", TArr( removeEmptyProgramType( termmtype ), TBase( "sum", typeparams.map( removeEmptyProgramType( _ ) ) ) ), params.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgram( termm ) )
+      case App( App( App( Const( "matchSum", sumtype, params ), in ), left ), right ) =>
+        //if ( removeEmptyProgram( left ) == empty ) empty
+        //else if ( removeEmptyProgram( in ) == empty ) removeEmptyProgram( left(empty) )
+        //else
+        App( App( App( Const( "matchSum", removeEmptyProgramType( sumtype ), params.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgram( in ) ), removeEmptyProgram( left ) ), removeEmptyProgram( right ) )
       case App( term1, term2 ) =>
         if ( removeEmptyProgram( term1 ) == empty ) empty
         else if ( removeEmptyProgram( term2 ) == empty ) removeEmptyProgram( term1 )
@@ -273,6 +294,11 @@ object MRealizability {
         if ( removeEmptyProgramType( params( 0 ) ) == empty ) removeEmptyProgramType( params( 1 ) )
         else if ( removeEmptyProgramType( params( 1 ) ) == empty ) removeEmptyProgramType( params( 0 ) )
         else TBase( "conj", removeEmptyProgramType( params( 0 ) ), removeEmptyProgramType( params( 1 ) ) )
+      case TBase( "sum", params ) =>
+        //if ( removeEmptyProgramType( params( 0 ) ) == empty ) empty
+        //else if ( removeEmptyProgramType( params( 1 ) ) == empty ) empty
+        //else
+        TBase( "sum", removeEmptyProgramType( params( 0 ) ), removeEmptyProgramType( params( 1 ) ) )
       case TArr( in, out ) =>
         if ( removeEmptyProgramType( out ) == empty ) empty
         else if ( removeEmptyProgramType( in ) == empty ) removeEmptyProgramType( out )
