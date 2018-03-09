@@ -92,14 +92,13 @@ class ReductiveCutNormalization(
   val cutReduction =
     nonCommutingCutReduction orElse
       commutingCutReduction orElse (
-      if (unfoldInduction)
-        new LeftRankInductionUnfoldingReduction
-      else
-        emptyCutReduction
-      )
+        if ( unfoldInduction )
+          new LeftRankInductionUnfoldingReduction
+        else
+          emptyCutReduction )
 
   object emptyCutReduction extends CutReduction {
-    override def reduce(proof: CutRule): Option[LKProof] = None
+    override def reduce( proof: CutRule ): Option[LKProof] = None
   }
 
   /**
