@@ -200,9 +200,23 @@ object isCutFree {
    * @param proof The proof to check for cut-freeness.
    * @return true if proof does not contain the cut rule, false otherwise.
    */
-  def apply( proof: LKProof ): Boolean = proof match {
-    case InitialSequent( _ ) => true
-    case p: CutRule          => false
-    case _                   => proof.immediateSubProofs.forall( this( _ ) )
-  }
+  def apply( proof: LKProof ): Boolean =
+    !proof.subProofs.exists {
+      case CutRule( _, _, _, _ ) => true
+      case _                     => false
+    }
+
+}
+
+object isInductionFree {
+  /**
+   * Checks whether a proof contains induction inferences.
+   * @param proof The proof to be checked.
+   * @return true if the proof does not contain induction inferences, false otherwise.
+   */
+  def apply( proof: LKProof ): Boolean =
+    !proof.subProofs.exists {
+      case InductionRule( _, _, _ ) => true
+      case _                        => false
+    }
 }
