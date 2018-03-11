@@ -122,10 +122,6 @@ object MRealizability {
       case OrElimRule( leftSubProof, middleSubProof, aux1, rightSubProof, aux2 ) =>
         val varA = Var( ng.fresh( "y" ), flat( middleSubProof.conclusion( aux1 ) ) )
         val varB = Var( ng.fresh( "y" ), flat( rightSubProof.conclusion( aux2 ) ) )
-        println( middleSubProof )
-        println( "Realizer:" + Abs( varA, mrealizeCases( middleSubProof, varsAntPrem( proof, variables, 1 ) + ( aux1 -> varA ), ng ) ) )
-        println( rightSubProof )
-        println( Abs( varB, mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 2 ) + ( aux2 -> varB ), ng ) ) )
         le"matchSum( ${
           mrealizeCases( leftSubProof, varsAntPrem( proof, variables, 0 ), ng )
         },${
@@ -230,8 +226,9 @@ object MRealizability {
     case All( variable, subformula )      => variable.ty ->: flat( subformula )
   }
 
-  // removes all occurences of the empty program i : 1 from term, or is i : 1 itself
-  // only for recursors for natural numbers now
+  // removes all occurences of the empty program i : 1 from term, or is i : 1 itself,
+  // except for match and inl and inr term: sometimes not possible to remove all occurences.
+  // works only for recursors for natural numbers now
   def removeEmptyProgram( term: Expr )( implicit systemT: Context ): Expr = {
 
     val empty = hoc"i"
@@ -239,43 +236,57 @@ object MRealizability {
 
     term match {
       case Var( name, typee ) =>
-        if ( removeEmptyProgramType( typee ) == emptyType ) empty
-        else Var( name, removeEmptyProgramType( typee ) )
+        val typeeR = removeEmptyProgramType( typee )
+        if ( typeeR == emptyType ) empty
+        else Var( name, typeeR )
       case Const( "natRec", _, params ) =>
         val parameter = removeEmptyProgramType( params.head )
         if ( parameter == emptyType ) empty
         else Const( "natRec", parameter ->: ( ty"nat" ->: parameter ->: parameter ) ->: ty"nat" ->: parameter, List( parameter ) )
       case Abs( variable, termm ) =>
-        if ( removeEmptyProgram( termm ) == empty ) empty
-        else if ( removeEmptyProgramType( variable.ty ) == emptyType ) removeEmptyProgram( termm )
-        else Abs( Var( variable.name, removeEmptyProgramType( variable.ty ) ), removeEmptyProgram( termm ) )
+        val termmR = removeEmptyProgram( termm )
+        if ( termmR == empty ) empty
+        else if ( removeEmptyProgramType( variable.ty ) == emptyType ) termmR
+        else Abs( Var( variable.name, removeEmptyProgramType( variable.ty ) ), termmR )
       case App( App( Const( "pair", conjtype, params ), left ), right ) =>
-        if ( removeEmptyProgram( right ) == empty ) removeEmptyProgram( left )
-        else if ( removeEmptyProgram( left ) == empty ) removeEmptyProgram( right )
-        else App( App( Const( "pair", removeEmptyProgramType( conjtype ), params.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgram( left ) ), removeEmptyProgram( right ) )
+        val leftR = removeEmptyProgram( left )
+        val rightR = removeEmptyProgram( right )
+        if ( rightR == empty ) leftR
+        else if ( leftR == empty ) rightR
+        else Const( "pair", removeEmptyProgramType( conjtype ), params.map( removeEmptyProgramType( _ ) ) )( leftR, rightR )
       case App( Const( "pi1", TArr( TBase( "conj", typeparams ), termmtype ), params ), termm ) =>
         if ( removeEmptyProgramType( typeparams( 0 ) ) == emptyType ) empty
         else if ( removeEmptyProgramType( typeparams( 1 ) ) == emptyType ) removeEmptyProgram( termm )
-        else App( Const( "pi1", TArr( TBase( "conj", typeparams.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgramType( termmtype ) ), params.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgram( termm ) )
+        else Const(
+          "pi1",
+          TArr( TBase( "conj", typeparams.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgramType( termmtype ) ),
+          params.map( removeEmptyProgramType( _ ) ) )( removeEmptyProgram( termm ) )
       case App( Const( "pi2", TArr( TBase( "conj", typeparams ), termmtype ), params ), termm ) =>
         if ( removeEmptyProgramType( typeparams( 1 ) ) == emptyType ) empty
         else if ( removeEmptyProgramType( typeparams( 0 ) ) == emptyType ) removeEmptyProgram( termm )
-        else App( Const( "pi2", TArr( TBase( "conj", typeparams.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgramType( termmtype ) ), params.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgram( termm ) )
+        else Const(
+          "pi2",
+          TArr( TBase( "conj", typeparams.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgramType( termmtype ) ),
+          params.map( removeEmptyProgramType( _ ) ) )( removeEmptyProgram( termm ) )
       case App( Const( "inl", TArr( termmtype, TBase( "sum", typeparams ) ), params ), termm ) =>
-        //if ( removeEmptyProgramType( typeparams( 0 ) ) == emptyType ) empty
-        //else if ( removeEmptyProgramType( typeparams( 1 ) ) == emptyType ) removeEmptyProgram( termm )
-        //else
-        App( Const( "inl", TArr( removeEmptyProgramType( termmtype ), TBase( "sum", typeparams.map( removeEmptyProgramType( _ ) ) ) ), params.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgram( termm ) )
+        Const(
+          "inl",
+          TArr( removeEmptyProgramType( termmtype ), TBase( "sum", typeparams.map( removeEmptyProgramType( _ ) ) ) ),
+          params.map( removeEmptyProgramType( _ ) ) )( removeEmptyProgram( termm ) )
       case App( Const( "inr", TArr( termmtype, TBase( "sum", typeparams ) ), params ), termm ) =>
-        //if ( removeEmptyProgramType( typeparams( 1 ) ) == emptyType ) empty
-        //else if ( removeEmptyProgramType( typeparams( 0 ) ) == emptyType ) removeEmptyProgram( termm )
-        //else
-        App( Const( "inr", TArr( removeEmptyProgramType( termmtype ), TBase( "sum", typeparams.map( removeEmptyProgramType( _ ) ) ) ), params.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgram( termm ) )
-      case App( App( App( Const( "matchSum", sumtype, params ), in ), left ), right ) =>
-        //if ( removeEmptyProgram( left ) == empty ) empty
-        //else if ( removeEmptyProgram( in ) == empty ) removeEmptyProgram( left(empty) )
-        //else
-        App( App( App( Const( "matchSum", removeEmptyProgramType( sumtype ), params.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgram( in ) ), removeEmptyProgram( left ) ), removeEmptyProgram( right ) )
+        Const(
+          "inr",
+          TArr( removeEmptyProgramType( termmtype ), TBase( "sum", typeparams.map( removeEmptyProgramType( _ ) ) ) ),
+          params.map( removeEmptyProgramType( _ ) ) )( removeEmptyProgram( termm ) )
+      case App( App( App( Const( "matchSum", TArr( TBase( "sum", leftright ), TArr( leftType, TArr( rightType, resultType ) ) ), params ), in ), left ), right ) =>
+        val resultTypeR = removeEmptyProgramType( resultType )
+        val leftR = removeEmptyProgram( left )
+        val rightR = removeEmptyProgram( right )
+        val leftRN = if ( removeEmptyProgramType( leftright( 0 ) ) == emptyType ) Abs( Var( "x", ty"1" ), leftR ) else leftR
+        val rightRN = if ( removeEmptyProgramType( leftright( 1 ) ) == emptyType ) Abs( Var( "x", ty"1" ), rightR ) else rightR
+        if ( resultTypeR == emptyType ) empty
+        else Const( "matchSum", TArr( removeEmptyProgramType( TBase( "sum", leftright ) ), TArr( leftRN.ty, TArr( rightRN.ty, resultTypeR ) ) ),
+          params.map( removeEmptyProgramType( _ ) ) )( removeEmptyProgram( in ), leftRN, rightRN )
       case App( term1, term2 ) =>
         if ( removeEmptyProgram( term1 ) == empty ) empty
         else if ( removeEmptyProgram( term2 ) == empty ) removeEmptyProgram( term1 )
@@ -295,10 +306,7 @@ object MRealizability {
         else if ( removeEmptyProgramType( params( 1 ) ) == empty ) removeEmptyProgramType( params( 0 ) )
         else TBase( "conj", removeEmptyProgramType( params( 0 ) ), removeEmptyProgramType( params( 1 ) ) )
       case TBase( "sum", params ) =>
-        //if ( removeEmptyProgramType( params( 0 ) ) == empty ) empty
-        //else if ( removeEmptyProgramType( params( 1 ) ) == empty ) empty
-        //else
-        TBase( "sum", removeEmptyProgramType( params( 0 ) ), removeEmptyProgramType( params( 1 ) ) )
+        TBase( "sum", List( removeEmptyProgramType( params( 0 ) ), removeEmptyProgramType( params( 1 ) ) ) )
       case TArr( in, out ) =>
         if ( removeEmptyProgramType( out ) == empty ) empty
         else if ( removeEmptyProgramType( in ) == empty ) removeEmptyProgramType( out )
