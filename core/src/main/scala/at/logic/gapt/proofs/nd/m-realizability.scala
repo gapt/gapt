@@ -89,8 +89,8 @@ object MRealizability {
 
     // by default: remove occurences of the empty program
     if ( re )
-      ( varsAnt map ( x => ( x._1, Var( x._2.name, removeEmptyProgramType( x._2.ty )( context ) ) ) ),
-        removeEmptyProgram( mrealizer )( context ) )
+      ( varsAnt map ( x => ( x._1, Var( x._2.name, remEmpProgType( x._2.ty )( context ) ) ) ),
+        remEmpProg( mrealizer )( context ) )
     else ( varsAnt, mrealizer )
   }
 
@@ -229,91 +229,120 @@ object MRealizability {
   // removes all occurences of the empty program i : 1 from term, or is i : 1 itself,
   // except for match and inl and inr term: sometimes not possible to remove all occurences.
   // works only for recursors for natural numbers now
-  def removeEmptyProgram( term: Expr )( implicit systemT: Context ): Expr = {
+  def remEmpProg( term: Expr )( implicit systemT: Context ): Expr = {
 
     val empty = hoc"i"
     val emptyType = ty"1"
 
     term match {
+
       case Var( name, typee ) =>
-        val typeeR = removeEmptyProgramType( typee )
+        val typeeR = remEmpProgType( typee )
         if ( typeeR == emptyType ) empty
         else Var( name, typeeR )
+
       case Const( "natRec", _, params ) =>
-        val parameter = removeEmptyProgramType( params.head )
+        val parameter = remEmpProgType( params.head )
         if ( parameter == emptyType ) empty
         else Const( "natRec", parameter ->: ( ty"nat" ->: parameter ->: parameter ) ->: ty"nat" ->: parameter, List( parameter ) )
+
       case Abs( variable, termm ) =>
-        val termmR = removeEmptyProgram( termm )
+        val termmR = remEmpProg( termm )
         if ( termmR == empty ) empty
-        else if ( removeEmptyProgramType( variable.ty ) == emptyType ) termmR
-        else Abs( Var( variable.name, removeEmptyProgramType( variable.ty ) ), termmR )
+        else if ( remEmpProgType( variable.ty ) == emptyType ) termmR
+        else Abs( Var( variable.name, remEmpProgType( variable.ty ) ), termmR )
+
       case App( App( Const( "pair", conjtype, params ), left ), right ) =>
-        val leftR = removeEmptyProgram( left )
-        val rightR = removeEmptyProgram( right )
+        val leftR = remEmpProg( left )
+        val rightR = remEmpProg( right )
         if ( rightR == empty ) leftR
         else if ( leftR == empty ) rightR
-        else Const( "pair", removeEmptyProgramType( conjtype ), params.map( removeEmptyProgramType( _ ) ) )( leftR, rightR )
+        else Const( "pair", remEmpProgType( conjtype ), remEmpProgTypes( params ) )( leftR, rightR )
+
       case App( Const( "pi1", TArr( TBase( "conj", typeparams ), termmtype ), params ), termm ) =>
-        if ( removeEmptyProgramType( typeparams( 0 ) ) == emptyType ) empty
-        else if ( removeEmptyProgramType( typeparams( 1 ) ) == emptyType ) removeEmptyProgram( termm )
+        if ( remEmpProgType( typeparams( 0 ) ) == emptyType ) empty
+        else if ( remEmpProgType( typeparams( 1 ) ) == emptyType ) remEmpProg( termm )
         else Const(
           "pi1",
-          TArr( TBase( "conj", typeparams.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgramType( termmtype ) ),
-          params.map( removeEmptyProgramType( _ ) ) )( removeEmptyProgram( termm ) )
+          TArr( TBase( "conj", remEmpProgTypes( typeparams ) ), remEmpProgType( termmtype ) ),
+          remEmpProgTypes( params ) )( remEmpProg( termm ) )
+
       case App( Const( "pi2", TArr( TBase( "conj", typeparams ), termmtype ), params ), termm ) =>
-        if ( removeEmptyProgramType( typeparams( 1 ) ) == emptyType ) empty
-        else if ( removeEmptyProgramType( typeparams( 0 ) ) == emptyType ) removeEmptyProgram( termm )
+        if ( remEmpProgType( typeparams( 1 ) ) == emptyType ) empty
+        else if ( remEmpProgType( typeparams( 0 ) ) == emptyType ) remEmpProg( termm )
         else Const(
           "pi2",
-          TArr( TBase( "conj", typeparams.map( removeEmptyProgramType( _ ) ) ), removeEmptyProgramType( termmtype ) ),
-          params.map( removeEmptyProgramType( _ ) ) )( removeEmptyProgram( termm ) )
+          TArr( TBase( "conj", remEmpProgTypes( typeparams ) ), remEmpProgType( termmtype ) ),
+          remEmpProgTypes( params ) )( remEmpProg( termm ) )
+
       case App( Const( "inl", TArr( termmtype, TBase( "sum", typeparams ) ), params ), termm ) =>
         Const(
           "inl",
-          TArr( removeEmptyProgramType( termmtype ), TBase( "sum", typeparams.map( removeEmptyProgramType( _ ) ) ) ),
-          params.map( removeEmptyProgramType( _ ) ) )( removeEmptyProgram( termm ) )
+          TArr( remEmpProgType( termmtype ), TBase( "sum", remEmpProgTypes( typeparams ) ) ),
+          remEmpProgTypes( params ) )( remEmpProg( termm ) )
+
       case App( Const( "inr", TArr( termmtype, TBase( "sum", typeparams ) ), params ), termm ) =>
         Const(
           "inr",
-          TArr( removeEmptyProgramType( termmtype ), TBase( "sum", typeparams.map( removeEmptyProgramType( _ ) ) ) ),
-          params.map( removeEmptyProgramType( _ ) ) )( removeEmptyProgram( termm ) )
-      case App( App( App( Const( "matchSum", TArr( TBase( "sum", leftright ), TArr( leftType, TArr( rightType, resultType ) ) ), params ), in ), left ), right ) =>
-        val resultTypeR = removeEmptyProgramType( resultType )
-        val leftR = removeEmptyProgram( left )
-        val rightR = removeEmptyProgram( right )
-        val leftRN = if ( removeEmptyProgramType( leftright( 0 ) ) == emptyType ) Abs( Var( "x", ty"1" ), leftR ) else leftR
-        val rightRN = if ( removeEmptyProgramType( leftright( 1 ) ) == emptyType ) Abs( Var( "x", ty"1" ), rightR ) else rightR
+          TArr( remEmpProgType( termmtype ), TBase( "sum", remEmpProgTypes( typeparams ) ) ),
+          remEmpProgTypes( params ) )( remEmpProg( termm ) )
+
+      case App( App( App( Const( "matchSum", TArr( TBase( "sum", sumparams ), TArr( leftType, TArr( rightType, resultType ) ) ), params ), in ), left ), right ) =>
+        val leftR = remEmpProg( left )
+        val rightR = remEmpProg( right )
+        val ng = new NameGenerator( ( freeVariables( left ) ++ freeVariables( right ) ) map ( _.name ) )
+        val leftRN = if ( remEmpProgType( sumparams( 0 ) ) == emptyType ) Abs( Var( ng.fresh( "x" ), ty"1" ), leftR ) else leftR
+        val rightRN = if ( remEmpProgType( sumparams( 1 ) ) == emptyType ) Abs( Var( ng.fresh( "x" ), ty"1" ), rightR ) else rightR
+        val resultTypeR = remEmpProgType( resultType )
         if ( resultTypeR == emptyType ) empty
-        else Const( "matchSum", TArr( removeEmptyProgramType( TBase( "sum", leftright ) ), TArr( leftRN.ty, TArr( rightRN.ty, resultTypeR ) ) ),
-          params.map( removeEmptyProgramType( _ ) ) )( removeEmptyProgram( in ), leftRN, rightRN )
+        else Const(
+          "matchSum",
+          TArr( remEmpProgType( TBase( "sum", sumparams ) ), TArr( leftRN.ty, TArr( rightRN.ty, resultTypeR ) ) ),
+          remEmpProgTypes( params ) )( remEmpProg( in ), leftRN, rightRN )
+
       case App( term1, term2 ) =>
-        if ( removeEmptyProgram( term1 ) == empty ) empty
-        else if ( removeEmptyProgram( term2 ) == empty ) removeEmptyProgram( term1 )
-        else App( removeEmptyProgram( term1 ), removeEmptyProgram( term2 ) )
+        val term1R = remEmpProg( term1 )
+        val term2R = remEmpProg( term2 )
+        if ( term1R == empty ) empty
+        else if ( term2R == empty ) term1R
+        else App( term1R, term2R )
+
       case _ => term
     }
   }
 
   // similar but for types
-  def removeEmptyProgramType( typee: Ty )( implicit systemT: Context ): Ty = {
+  def remEmpProgType( typee: Ty )( implicit systemT: Context ): Ty = {
 
     val empty = ty"1"
 
     typee match {
+
       case TBase( "conj", params ) =>
-        if ( removeEmptyProgramType( params( 0 ) ) == empty ) removeEmptyProgramType( params( 1 ) )
-        else if ( removeEmptyProgramType( params( 1 ) ) == empty ) removeEmptyProgramType( params( 0 ) )
-        else TBase( "conj", removeEmptyProgramType( params( 0 ) ), removeEmptyProgramType( params( 1 ) ) )
+        val leftconj = remEmpProgType( params( 0 ) )
+        val rightconj = remEmpProgType( params( 1 ) )
+        if ( leftconj == empty ) rightconj
+        else if ( rightconj == empty ) leftconj
+        else TBase( "conj", leftconj, rightconj )
+
       case TBase( "sum", params ) =>
-        TBase( "sum", List( removeEmptyProgramType( params( 0 ) ), removeEmptyProgramType( params( 1 ) ) ) )
+        val leftsum = remEmpProgType( params( 0 ) )
+        val rightsum = remEmpProgType( params( 1 ) )
+        TBase( "sum", leftsum, rightsum )
+
       case TArr( in, out ) =>
-        if ( removeEmptyProgramType( out ) == empty ) empty
-        else if ( removeEmptyProgramType( in ) == empty ) removeEmptyProgramType( out )
-        else TArr( removeEmptyProgramType( in ), removeEmptyProgramType( out ) )
+        val inR = remEmpProgType( in )
+        val outR = remEmpProgType( out )
+        if ( outR == empty ) empty
+        else if ( inR == empty ) outR
+        else TArr( inR, outR )
+
       case _ => typee
     }
   }
+
+  def remEmpProgTypes( types: List[Ty] )( implicit systemT: Context ): List[Ty] =
+    types.map( remEmpProgType( _ ) )
 
   // Given a proof and variables for the formulas in the antecedent of the conlusion,
   // returns those variables that occur as well in the antecedent of the conclusion of the premise at premisenumber.

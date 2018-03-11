@@ -459,17 +459,17 @@ object emptyProgramType extends Script {
     hoc"i : 1" )
 
   val natToNat = ty"nat > nat"
-  print( natToNat ); print( " normalized: " ); println( MRealizability.removeEmptyProgramType( natToNat ) )
+  print( natToNat ); print( " normalized: " ); println( MRealizability.remEmpProgType( natToNat ) )
   val one = ty"1"
-  print( one ); print( " normalized: " ); println( MRealizability.removeEmptyProgramType( one ) )
+  print( one ); print( " normalized: " ); println( MRealizability.remEmpProgType( one ) )
   val a = TBase( "conj", natToNat, one )
-  print( a ); print( " normalized: " ); println( MRealizability.removeEmptyProgramType( a ) )
+  print( a ); print( " normalized: " ); println( MRealizability.remEmpProgType( a ) )
   val b = TArr( a, a )
-  print( b ); print( " normalized: " ); println( MRealizability.removeEmptyProgramType( b ) )
+  print( b ); print( " normalized: " ); println( MRealizability.remEmpProgType( b ) )
   val c = TArr( b, one )
-  print( c ); print( " normalized: " ); println( MRealizability.removeEmptyProgramType( c ) )
+  print( c ); print( " normalized: " ); println( MRealizability.remEmpProgType( c ) )
   val d = TArr( one, b )
-  print( d ); print( " normalized: " ); println( MRealizability.removeEmptyProgramType( d ) )
+  print( d ); print( " normalized: " ); println( MRealizability.remEmpProgType( d ) )
 }
 
 object exampleSuccessorFunction extends Script {
