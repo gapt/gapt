@@ -22,7 +22,10 @@ object eliminateDefinitions {
    * @param ctx An implicit context. Definitions in this will be removed from proof.
    */
   def apply( proof: LKProof )( implicit ctx: Context ): LKProof =
-    new eliminateDefinitions( ctx.normalizer ).apply( proof )
+    apply( proof, ctx.normalizer )
+
+  def apply( proof: LKProof, normalizer: Normalizer ): LKProof =
+    new eliminateDefinitions( normalizer ).apply( proof )
 }
 
 /**
