@@ -43,14 +43,14 @@ object addRecorsorsExamples extends Script {
 
   val sum = le"bitreeRec((^x x),(^t1 ^y1 ^t2 ^y2 (natRec(y1,(^z1 ^z2 (s(z2))),y2))))"
   println( normalize( App( sum, le"node(leaf(0),node(leaf(s(0)),leaf(s(s(0)))))" ) ) )
-
 }
 
 object test {
   def apply( proof: NDProof )( implicit ctx: Context ): Unit = {
     val m1 = MRealizability.mrealize( proof, false )
+    print( proof ); print( m1 ); print( " of type " ); println( m1._2.ty )
     val m1n = MRealizability.mrealize( proof )
-    print( proof ); print( m1 ); print( " of type " ); println( m1.ty ); print( "normalized: " ); print( m1n )
+    print( "normalized with respect to the empty program: " ); print( m1n )
     println(); println()
   }
 }
@@ -85,12 +85,6 @@ object examplesLogicalAxiom extends Script {
 
   val a6 = LogicalAxiom( hof"!x ?y x + y = s(x)" )
   test( a6 )
-
-  val a7 = EqualityIntroRule( le"s(s(s(0)))" )
-  test( a7 )
-
-  val a8 = EqualityIntroRule( le"x + s(y + z)" )
-  test( a8 )
 }
 
 object examplesEqualityIntroRule extends Script {
@@ -111,6 +105,12 @@ object examplesEqualityIntroRule extends Script {
 
   val a2 = EqualityIntroRule( le"x + s(y + z)" )
   test( a2 )
+
+  val a3 = EqualityIntroRule( le"s(s(s(0)))" )
+  test( a3 )
+
+  val a4 = EqualityIntroRule( le"x + s(y + z)" )
+  test( a4 )
 }
 
 object examplesWeakeningRule extends Script {
@@ -167,6 +167,12 @@ object exampleContractionRule extends Script {
 
   val a5 = ContractionRule( a4, hof"(x:nat) = y" )
   test( a5 )
+
+  val a55 = ContractionRule( a4, Ant( 1 ), Ant( 0 ) )
+  test( a55 )
+
+  val a6 = WeakeningRule( a5, hof"0 = 0" )
+  test( a6 )
 }
 
 object examplesConjuctionRules extends Script {
@@ -211,6 +217,8 @@ object examplesImplicationRules extends Script {
   val a22 = WeakeningRule( a11, hof"s(0) = s(0)" )
   val a33 = ImpIntroRule( a22, Ant( 0 ) )
   test( a33 )
+  val a44 = ImpIntroRule( a33 )
+  test( a44 )
 }
 
 object examplesForallIntroRules extends Script {
@@ -451,17 +459,17 @@ object emptyProgramType extends Script {
     hoc"i : 1" )
 
   val natToNat = ty"nat > nat"
-  print( natToNat ); print( " normalized: " ); println( MRealizability.removeEmptyProgramType( natToNat ) )
+  print( natToNat ); print( " normalized: " ); println( MRealizability.remEmpProgType( natToNat ) )
   val one = ty"1"
-  print( one ); print( " normalized: " ); println( MRealizability.removeEmptyProgramType( one ) )
+  print( one ); print( " normalized: " ); println( MRealizability.remEmpProgType( one ) )
   val a = TBase( "conj", natToNat, one )
-  print( a ); print( " normalized: " ); println( MRealizability.removeEmptyProgramType( a ) )
+  print( a ); print( " normalized: " ); println( MRealizability.remEmpProgType( a ) )
   val b = TArr( a, a )
-  print( b ); print( " normalized: " ); println( MRealizability.removeEmptyProgramType( b ) )
+  print( b ); print( " normalized: " ); println( MRealizability.remEmpProgType( b ) )
   val c = TArr( b, one )
-  print( c ); print( " normalized: " ); println( MRealizability.removeEmptyProgramType( c ) )
+  print( c ); print( " normalized: " ); println( MRealizability.remEmpProgType( c ) )
   val d = TArr( one, b )
-  print( d ); print( " normalized: " ); println( MRealizability.removeEmptyProgramType( d ) )
+  print( d ); print( " normalized: " ); println( MRealizability.remEmpProgType( d ) )
 }
 
 object exampleSuccessorFunction extends Script {
@@ -497,12 +505,12 @@ object mrealizerDivisionByTwo extends Script {
 
   implicit var systemT = MRealizability.systemT( divisionByTwo.ctx )
 
-  print( divisionByTwo.proof ); print( m1 ); print( " of type " ); println( m1.ty )
-  print( "normalized: " ); print( m1n ); print( " of type " ); println( m1n.ty )
+  print( divisionByTwo.proof ); print( m1 ); print( " of type " ); println( m1._2.ty )
+  print( "normalized: " ); print( m1n ); print( " of type " ); println( m1n._2.ty )
 
   println()
 
-  def test( x: Expr ) = println( x + " divided by 2 is: " + normalize( App( m1n, x ) ) )
+  def test( x: Expr ) = println( x + " divided by 2 is: " + normalize( le"pi1(${App( m1._2, x )})" ) )
   test( le"0" )
   test( le"s(0)" )
   test( le"s(s(0))" )
@@ -569,4 +577,3 @@ object divisionByTwo {
   val a1 = InductionRule( cases, Abs( hov"x:nat", hof"?y (x = s(s(0)) * y | x = (s(s(0)) * y) + s(0))" ), hov"x:nat" )
   val proof = ForallIntroRule( a1, hov"x:nat", hov"x:nat" )
 }
-
