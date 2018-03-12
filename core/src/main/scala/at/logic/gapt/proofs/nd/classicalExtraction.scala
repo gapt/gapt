@@ -174,10 +174,11 @@ object ClassicalExtraction {
 
       // TODO: I think NegIntroRule should produce a term of type ?a > (exn ?a)
       case NegIntroRule( subProof, aux ) =>
-        val subProofRealizer = mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ), ng )
         val extraVar = Var( "z", flat( subProof.conclusion( aux ) ) )
+        val subProofRealizer = mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) + ( aux -> extraVar ), ng )
         val exception = systemT.constant( "exception", List( extraVar.ty ) ).get
         //val tmp = App( subProofRealizer, insertIndex( variablesAntPremise( proof, 0 ), aux, extraVar ) )
+        // TODO
         val tmp = exception( extraVar )
         //Abs( variablesAntConclusion( proof ) :+ extraVar, App( subProofRealizer, variablesAntConclusion( proof ) ) )
         Abs( extraVar, tmp )
