@@ -18,7 +18,7 @@ object classicalExtractionTest {
   def apply( proof: NDProof )( implicit ctx: Context ): Unit = {
     val m1 = ClassicalExtraction.mrealize( proof, false )
     //val m1n = ClassicalExtraction.mrealize( proof )
-    print( proof ); print( m1 ); print( " of type " ); println( m1.ty ); //print( "normalized: " ); print( m1n )
+    print( proof ); print( m1 ); print( " of type " ); println( m1._2.ty ); //print( "normalized: " ); print( m1n )
     println(); println()
   }
 }
@@ -69,4 +69,59 @@ object example4 extends Script {
   val b3 = NegElimRule( b1, b2 )
   val b6 = BottomElimRule( b3, hof"x = 0" )
   classicalExtractionTest( b6 )
+}
+
+object example5 extends Script {
+
+  implicit var ctx = Context()
+
+  ctx += InductiveType(
+    ty"nat",
+    hoc"0 : nat",
+    hoc"s : nat > nat" )
+
+  val b1 = LogicalAxiom( hof"-(x = 0)" )
+  val b2 = LogicalAxiom( hof"x = 0" )
+  val b3 = NegElimRule( b1, b2 )
+  val b4 = NegIntroRule( b3, Ant( 1 ) )
+  val b5 = NegElimRule( b4, b2 )
+  val b6 = BottomElimRule( b5, hof"x = 0" )
+  classicalExtractionTest( b3 )
+  classicalExtractionTest( b4 )
+  classicalExtractionTest( b5 )
+  classicalExtractionTest( b6 )
+}
+
+object example6 extends Script {
+
+  implicit var ctx = Context()
+
+  ctx += InductiveType(
+    ty"nat",
+    hoc"0 : nat",
+    hoc"s : nat > nat" )
+
+  val a1 = LogicalAxiom( hof"-(x = 0)" )
+  val a2 = LogicalAxiom( hof"x = 0" )
+  val a3 = NegElimRule( a1, a2 )
+  val a4 = BottomElimRule( a3, hof"x = 0" )
+  val a5 = ExcludedMiddleRule( a2, Ant( 0 ), a4, Ant( 0 ) )
+  classicalExtractionTest( a5 )
+}
+
+object example7 extends Script {
+
+  implicit var ctx = Context()
+
+  ctx += InductiveType(
+    ty"nat",
+    hoc"0 : nat",
+    hoc"s : nat > nat" )
+
+  val a1 = LogicalAxiom( hof"-(x = 0)" )
+  val a2 = LogicalAxiom( hof"x = 0" )
+  val a3 = NegElimRule( a1, a2 )
+  val a4 = BottomElimRule( a3, hof"-(x = 0)" )
+  val a5 = ExcludedMiddleRule( a4, Ant( 1 ), a1, Ant( 0 ) )
+  classicalExtractionTest( a5 )
 }
