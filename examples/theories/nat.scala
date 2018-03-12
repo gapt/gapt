@@ -1,8 +1,8 @@
-package at.logic.gapt.examples.theories
+package gapt.examples.theories
 
-import at.logic.gapt.expr._
-import at.logic.gapt.formats.babel.Precedence
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.formats.babel.Precedence
+import gapt.proofs.gaptic._
 
 object nat extends Theory( logic, props ) {
   indTy( ty"nat", hoc"0: nat", hoc"s: nat>nat" )

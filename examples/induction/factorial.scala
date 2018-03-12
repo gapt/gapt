@@ -1,10 +1,10 @@
-package at.logic.gapt.examples.induction
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context.InductiveType
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.provers.prover9.Prover9
-import at.logic.gapt.provers.smtlib.CVC4
-import at.logic.gapt.provers.viper.grammars.TreeGrammarProverOptions.Passthru
+package gapt.examples.induction
+import gapt.expr._
+import gapt.proofs.Context.InductiveType
+import gapt.proofs.gaptic._
+import gapt.provers.prover9.Prover9
+import gapt.provers.smtlib.CVC4
+import gapt.provers.viper.grammars.TreeGrammarProverOptions.Passthru
 
 object factorial extends TacticsProof {
   ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )

@@ -1,14 +1,14 @@
-package at.logic.gapt.examples.theories
+package gapt.examples.theories
 
-import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ instantiate, simplify, universalClosure }
-import at.logic.gapt.formats.babel.Notation
-import at.logic.gapt.proofs.Context.{ InductiveType, PrimRecFun, ProofNames, SkolemFun }
-import at.logic.gapt.proofs.epsilon.EpsilonC
-import at.logic.gapt.proofs.{ Context, HOLSequent, ImmutableContext, Sequent, SequentConnector, Suc }
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.utils.LogHandler
+import gapt.expr._
+import gapt.expr.hol.{ instantiate, simplify, universalClosure }
+import gapt.formats.babel.Notation
+import gapt.proofs.Context.{ InductiveType, PrimRecFun, ProofNames, SkolemFun }
+import gapt.proofs.epsilon.EpsilonC
+import gapt.proofs.{ Context, HOLSequent, ImmutableContext, Sequent, SequentConnector, Suc }
+import gapt.proofs.gaptic._
+import gapt.proofs.lk._
+import gapt.utils.LogHandler
 import cats.{ Eval, Later }
 
 import scala.collection.mutable
@@ -82,7 +82,7 @@ class Theory0( val imports: List[Theory] ) {
 
 /**
  * Models a mathematical theory, i.e. definitions of
- * data types, sorts, constants, etc. (contained in a [[at.logic.gapt.proofs.Context]]),
+ * data types, sorts, constants, etc. (contained in a [[gapt.proofs.Context]]),
  * together with proofs about these objects.
  * @param imports A list of theories that this theory is based upon.
  */

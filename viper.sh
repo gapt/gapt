@@ -2,4 +2,4 @@
 basedir="$(dirname "$0")"
 . "$basedir/include.sh"
 
-run_gapt at.logic.gapt.provers.viper.Viper "$@"
+run_gapt gapt.provers.viper.Viper "$@"

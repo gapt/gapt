@@ -1,7 +1,7 @@
-package at.logic.gapt.examples
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.gaptic._
+package gapt.examples
+import gapt.expr._
+import gapt.proofs.Sequent
+import gapt.proofs.gaptic._
 
 object gapticExamples {
 

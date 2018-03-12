@@ -1,10 +1,10 @@
-package at.logic.gapt.examples
+package gapt.examples
 
 import java.io._
 
-import at.logic.gapt.formats.llk.short._
-import at.logic.gapt.formats.tptp.TPTPHOLExporter
-import at.logic.gapt.proofs.HOLSequent
+import gapt.formats.llk.short._
+import gapt.formats.tptp.TPTPHOLExporter
+import gapt.proofs.HOLSequent
 
 /**
  * The object nTape6 generates hard problems for higher order theorem provers containing an axiomatization of

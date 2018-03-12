@@ -1,12 +1,12 @@
-package at.logic.gapt.examples.recschem
+package gapt.examples.recschem
 
-import at.logic.gapt.examples.Script
-import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.Numeral
-import at.logic.gapt.expr.hol.{ lcomp, simplify, toNNF }
-import at.logic.gapt.grammars._
-import at.logic.gapt.provers.maxsat.bestAvailableMaxSatSolver
-import at.logic.gapt.utils.{ LogHandler, time, verbose }
+import gapt.examples.Script
+import gapt.expr._
+import gapt.expr.fol.Numeral
+import gapt.expr.hol.{ lcomp, simplify, toNNF }
+import gapt.grammars._
+import gapt.provers.maxsat.bestAvailableMaxSatSolver
+import gapt.utils.{ LogHandler, time, verbose }
 
 object vtrat_comparison extends Script {
   verbose {
