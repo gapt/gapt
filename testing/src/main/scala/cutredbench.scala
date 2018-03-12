@@ -1,15 +1,15 @@
-package at.logic.gapt.testing
-import at.logic.gapt.cutintro.CutIntroduction
-import at.logic.gapt.expr._
-import at.logic.gapt.examples._
-import at.logic.gapt.expr.fol.Numeral
-import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.ceres.CERES
-import at.logic.gapt.proofs.expansion.{ ExpansionProof, eliminateCutsET }
-import at.logic.gapt.proofs.lk.{ LKProof, LKToExpansionProof, ReductiveCutElimination, eliminateDefinitions }
-import at.logic.gapt.proofs.lkt.{ LKToLKt, LKt, LKtToLK, normalizeLKt }
-import at.logic.gapt.proofs.resolution.ResolutionToLKProof
-import at.logic.gapt.provers.escargot.Escargot
+package gapt.testing
+import gapt.cutintro.CutIntroduction
+import gapt.expr._
+import gapt.examples._
+import gapt.expr.fol.Numeral
+import gapt.proofs.HOLSequent
+import gapt.proofs.ceres.CERES
+import gapt.proofs.expansion.{ ExpansionProof, eliminateCutsET }
+import gapt.proofs.lk.{ LKProof, LKToExpansionProof, ReductiveCutElimination, eliminateDefinitions }
+import gapt.proofs.lkt.{ LKToLKt, LKt, LKtToLK, normalizeLKt }
+import gapt.proofs.resolution.ResolutionToLKProof
+import gapt.provers.escargot.Escargot
 
 import scala.concurrent.duration._
 
@@ -91,7 +91,7 @@ object cutReductionBenchmark extends Script {
   bench( "pi3pigeon", -1, Pi3Pigeonhole.proof )
 
   {
-    import at.logic.gapt.examples.lattice._
+    import gapt.examples.lattice._
     bench( "lattice", -1, eliminateDefinitions( p ), exclude = Set( LKReductive, BogoElim ) )
   }
 
@@ -115,8 +115,8 @@ object primeCutElimBench extends Script {
   import CutReductionBenchmarkTools._
 
   def furstenbergProof( n: Int ): LKProof = {
-    import at.logic.gapt.proofs.lkt._
-    val primeInst = at.logic.gapt.examples.prime.furstenberg( n )
+    import gapt.proofs.lkt._
+    val primeInst = gapt.examples.prime.furstenberg( n )
     import primeInst._
     val p0 = eliminateDefinitions( proof )
     val ( p1, lctx ) = LKToLKt( p0 )

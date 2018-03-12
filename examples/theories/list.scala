@@ -1,7 +1,7 @@
-package at.logic.gapt.examples.theories
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.lk.ProofLink
+package gapt.examples.theories
+import gapt.expr._
+import gapt.proofs.gaptic._
+import gapt.proofs.lk.ProofLink
 
 object list extends Theory( logic ) {
 

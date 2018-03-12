@@ -1,8 +1,8 @@
-package at.logic.gapt.examples.tip.isaplanner
+package gapt.examples.tip.isaplanner
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context.InductiveType
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.proofs.Context.InductiveType
+import gapt.proofs.gaptic._
 
 object prop_59 extends TacticsProof {
 

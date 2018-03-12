@@ -1,8 +1,8 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Context, Sequent }
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.gaptic._
 
 object fol1 extends TacticsProof {
   ctx += Context.Sort( "i" )

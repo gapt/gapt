@@ -1,10 +1,10 @@
-package at.logic.gapt.examples
-import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.universalClosure
-import at.logic.gapt.formats.babel.{ Notation, Precedence }
-import at.logic.gapt.proofs.{ Context, Sequent }
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.lk.LKProof
+package gapt.examples
+import gapt.expr._
+import gapt.expr.hol.universalClosure
+import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.gaptic._
+import gapt.proofs.lk.LKProof
 
 /**
  * Monoid cancellation benchmark from

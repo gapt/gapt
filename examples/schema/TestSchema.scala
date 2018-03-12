@@ -1,10 +1,10 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context._
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.Sequent
+import gapt.expr._
+import gapt.proofs.Context._
+import gapt.proofs.gaptic._
+import gapt.proofs.Context
+import gapt.proofs.Sequent
 object tautSchema extends TacticsProof {
   ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
   ctx += hoc"P: nat>o"
