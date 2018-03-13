@@ -26,6 +26,8 @@ trait Bound {
 final case class Bound1( aux: Hyp, p: LKt ) extends Bound {
   def auxs: List[Hyp] = List( aux )
   def freeHyps: Set[Hyp] = p.freeHyps - aux
+  def rename_( awayFrom: Set[Hyp] ): Bound1 =
+    if ( awayFrom.contains( aux ) ) rename( awayFrom ) else this
   def rename( awayFrom: Iterable[Hyp] ): Bound1 = {
     val aux_ = ( p.freeHyps ++ awayFrom ).freshSameSide( aux )
     Bound1( aux_, p.replace( aux, aux_ ) )
@@ -45,6 +47,8 @@ final case class Bound2( aux1: Hyp, aux2: Hyp, p: LKt ) extends Bound {
   require( aux1 != aux2 )
   def auxs: List[Hyp] = List( aux1, aux2 )
   def freeHyps: Set[Hyp] = p.freeHyps - aux1 - aux2
+  def rename_( awayFrom: Set[Hyp] ): Bound2 =
+    if ( awayFrom.contains( aux1 ) || awayFrom.contains( aux2 ) ) rename( awayFrom ) else this
   def rename( awayFrom: Iterable[Hyp] ): Bound2 = {
     val free = p.freeHyps ++ awayFrom + aux1 + aux2
     val aux1_ = free.freshSameSide( aux1 )
@@ -62,6 +66,8 @@ final case class Bound2( aux1: Hyp, aux2: Hyp, p: LKt ) extends Bound {
 }
 final case class BoundN( auxs: List[Hyp], p: LKt ) extends Bound {
   def freeHyps: Set[Hyp] = p.freeHyps -- auxs
+  def rename_( awayFrom: Set[Hyp] ): BoundN =
+    if ( auxs.exists( awayFrom ) ) rename( awayFrom ) else this
   def rename( awayFrom: Iterable[Hyp] ): BoundN = {
     val free = p.freeHyps ++ awayFrom ++ auxs
     val auxs_ = free.freshSameSide( auxs )
