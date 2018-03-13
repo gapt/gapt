@@ -22,7 +22,8 @@ case class SimplifierSimpAdapter( simp: Simplifier, lctx: LocalCtx ) extends Sim
       case SimpEqResult.Prf( lk, lhs, rhs ) =>
         val eqHyp = lctx.hyps.keySet.freshSuc
         val lctx2 = lctx.updated( eqHyp, lhs === rhs )
-        val lkt = LKToLKt.forLCtx( lk, lctx2 )
+        val lkt = LKToLKt.forLCtx( lk, lctx2, debugging = true )
+        check( lkt, lctx2 )
         Some( Bound1( eqHyp, lkt ), rhs )
     }
   }
@@ -60,8 +61,9 @@ class unfoldInduction( simp: SimpAdapter, ctx0: ImmutableContext ) {
     case AllSk( main, term, skDef, q )                    => AllSk( main, term, skDef, apply( q ) )
     case Def( main, f, q )                                => Def( main, f, apply( q ) )
     case p @ Ind( main, f, term, cases0 ) =>
-      val cases = cases0.map( c => c.copy( q = c.q.rename( simpHyps ) ) )
+      val cases = cases0.map( c => c.copy( q = c.q.rename( simpHyps union p.freeHyps ) ) )
       val Some( ctrs ) = ctx.getConstructors( p.indTy )
+      assert( !simpHyps( main ) )
       term match {
         case Apps( ctr: Const, as ) if ctrs.contains( ctr ) =>
           unfolded = true
@@ -78,11 +80,11 @@ class unfoldInduction( simp: SimpAdapter, ctx0: ImmutableContext ) {
         case _ =>
           simp.simpEq( term ) match {
             case Some( ( simpPrf, newTerm ) ) =>
-              val eqHyp = p.freeHyps.freshAnt
+              val eqHyp = ( p.freeHyps union simpHyps ).freshAnt
               Cut( term === newTerm, simpPrf,
                 Bound1(
                   eqHyp,
-                  Eql( main, eqHyp, ltr = false, f,
+                  Eql( main, eqHyp, ltr = true, f,
                     Bound1( main, apply( Ind( main, f, newTerm, cases ) ) ) ) ) )
             case _ =>
               Ind( main, f, term, cases.map( c => c.copy( q = apply( c.q ) ) ) )

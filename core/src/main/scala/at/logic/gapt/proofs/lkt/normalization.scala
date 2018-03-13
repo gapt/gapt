@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ containsQuantifierOnLogicalLevel, instantiate, isAtom }
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.lk.LKProof
-import at.logic.gapt.provers.simp.{ SimpLemmas, Simplifier }
+import at.logic.gapt.provers.simp.{ QPropSimpProc, SimpLemmas, Simplifier }
 import at.logic.gapt.utils.Maybe
 
 class Normalizer[LC <: ALCtx[LC]]( skipAtomicCuts: Boolean = false, skipPropositionalCuts: Boolean = false ) {
@@ -168,7 +168,7 @@ class normalize {
   def induction( p: LKt, lctx: LocalCtx, useSimp: Boolean = true, debugging: Boolean = false,
                  skipAtomicCuts: Boolean = false, skipPropositionalCuts: Boolean = false )( implicit ctx: Context ): LKt = {
     val simpAdapter = if ( !useSimp ) NoopSimpAdapter else SimplifierSimpAdapter(
-      Simplifier( SimpLemmas.collectFromAnt( lctx.toSequent ).toSeq ), lctx )
+      Simplifier( SimpLemmas.collectFromAnt( lctx.toSequent ).toSeq :+ QPropSimpProc ), lctx )
     if ( debugging )
       new NormalizerWithDebugging().normalizeWithInduction( p, lctx, simpAdapter )
     else
