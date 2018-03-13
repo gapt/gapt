@@ -317,6 +317,7 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
     }
   }
   object LemmaHandle {
+    def apply( name: String ): LemmaHandle = LemmaHandle( ctx.get[ProofNames].names( name )._1 )
     implicit val substitutable: ClosedUnderSub[LemmaHandle] = ( sub, h ) => LemmaHandle( sub( h.proofName ) )
   }
 
