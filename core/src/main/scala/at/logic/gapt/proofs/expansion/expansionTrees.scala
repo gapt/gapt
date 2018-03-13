@@ -213,7 +213,7 @@ object ETInduction {
     }
 
   def isInductionAxiomExpansion( tree: ExpansionTree )( implicit ctx: Context ): Boolean =
-    indAxioms.exists { case ( p, _ ) => syntacticMatching( p, tree.shallow ).isDefined }
+    indAxioms.exists { case ( All.Block( _, p ), _ ) => syntacticMatching( p, tree.shallow ).isDefined }
 
   def unapply( et: ExpansionTree )( implicit ctx: Context ): Option[Set[Induction]] = {
 
@@ -232,6 +232,7 @@ object ETInduction {
       }
     }
     def toCase( et: ExpansionTree, constrs: Seq[Const] ): Seq[Case] = {
+      val eisp = et.immediateSubProofs
       constrs.zip( et.immediateSubProofs ).map {
         case ( constr, indCase ) =>
           val FunctionType( indTy, argTypes ) = constr.ty
@@ -243,13 +244,12 @@ object ETInduction {
     }
 
     ( for {
-      ( p0, constrs0 ) <- indAxioms
+      ( All.Block( _, p0 ), constrs0 ) <- indAxioms
       subst <- syntacticMatching( p0, et.shallow )
       constrs = subst( constrs0 )
     } yield for {
-      sequent <- et( HOLPosition( 1 ) )
-      hyps <- sequent( HOLPosition( 1 ) )
-      suc <- sequent( HOLPosition( 2 ) )
+      hyps <- et( HOLPosition( 1 ) )
+      suc <- et( HOLPosition( 2 ) )
     } yield Induction( toCase( hyps, constrs ), hyps, suc ) ).headOption
   }
 }
