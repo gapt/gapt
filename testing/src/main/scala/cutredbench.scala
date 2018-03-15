@@ -193,7 +193,7 @@ object indElimBench extends Script {
 
   bench( "filterrev", for ( i <- 0 to 4 ) yield Seq( le"P:?a>o", mkList( i, "x" ) ), exclude = Set( IndLKReductive ) )
   bench( "primedecex", for ( i <- 0 to 2 ) yield Seq( mkNum( i ) ), exclude = Set( IndLKReductive, BogoElim ) )
-  bench( "primecomp", for ( i <- 0 to 10 ) yield Seq( mkNum( i ) ), exclude = Set( IndLKReductive, BogoElim ) )
+  bench( "divmodgtot", for ( i <- 0 to 3 ) yield Seq( mkNum( i ) ), exclude = Set( IndLKReductive, BogoElim ) )
   bench( "ltirrefl", for ( i <- 0 to 10 ) yield Seq( mkNum( i ) ), exclude = Set( IndLKReductive, BogoElim ) )
   bench( "mul1", for ( i <- 0 to 15 ) yield Seq( mkNum( i ) ) )
   bench( "add0l", for ( i <- 0 to 15 ) yield Seq( mkNum( i ) ) )
