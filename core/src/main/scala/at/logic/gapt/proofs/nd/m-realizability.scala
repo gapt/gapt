@@ -16,22 +16,26 @@ object MRealizability {
     // add recursors for all inductive types
     for ( ( name, constructors ) <- systemT.get[StructurallyInductiveTypes].constructors.filter( _._1 != "o" ) ) {
       val typ = systemT.get[BaseTypes].baseTypes( name )
-      val argTypes = constructors.map( x => x -> FunctionType.unapply( x.ty ).get._2 ) toMap
+      val argTypes = constructors.zip( constructors.map { case Const( _, FunctionType( _, constrArgTys ), _ ) => constrArgTys } ) toMap
+
       val resultVariable = TVar( new NameGenerator( typeVariables( typ ) map ( _.name ) ).fresh( "a" ) )
       val ngTermVariableNames = new NameGenerator( systemT.constants map ( _.name ) )
 
-      val constrVars = constructors.map( x => x -> Var(
-        ngTermVariableNames.fresh( "x" ),
-        argTypes( x ).foldRight( resultVariable: Ty )( ( y, z ) => if ( y == typ ) typ ->: resultVariable ->: z else y ->: z ) ) ) toMap
+      val constrWithVars = constructors.map( constr => constr -> Var( ngTermVariableNames.fresh( "x" ), FunctionType(
+        resultVariable,
+        argTypes( constr ).flatMap( argTy => if ( argTy == typ ) Seq( typ, resultVariable ) else Seq( argTy ) ) ) ) )
+      val constrVarsMap = constrWithVars toMap
+      val constrVars = constrWithVars.map( _._2 )
 
-      val recursortype = constructors.foldRight( typ ->: resultVariable: Ty )( ( x, y ) => constrVars( x ).ty ->: y )
-      val recursor = Const( name + "Rec", recursortype, typeVariables( recursortype ).toList )
-      val argVars = argTypes.map( x => x._1 -> x._2.map( y => Var( ngTermVariableNames.fresh( "x" ), y ) ) )
+      val recursortype = FunctionType( resultVariable, constructors.map( constrVarsMap( _ ).ty ) :+ typ )
+      val recursor = Const( name + "Rec", recursortype, typ.params :+ resultVariable )
 
-      val equations = constructors.map( x =>
+      val argVars = argTypes.map( x => x._1 -> x._2.map( argTyps => Var( ngTermVariableNames.fresh( "x" ), argTyps ) ) )
+      val equations = constructors.map( constr =>
         (
-          App( recursor, constrVars.values.toVector :+ App( x, argVars( x ) ) ),
-          argVars( x ).foldLeft( constrVars( x ): Expr )( ( y, z ) => if ( z.ty == typ ) App( App( y, z ), App( recursor, constrVars.values.toVector :+ z ) ) else App( y, z ) ) ) )
+          recursor( constrVars :+ constr( argVars( constr ) ) ),
+          constrVarsMap( constr )( argVars( constr ).flatMap( argVar =>
+            if ( argVar.ty == typ ) Seq( argVar, recursor( constrVars :+ argVar ) ) else Seq( argVar ) ) ) ) )
 
       systemT += PrimRecFun( List( ( recursor, equations ) ) )
     }
