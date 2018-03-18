@@ -197,15 +197,20 @@ object MRealizability {
       case EqualityIntroRule( term ) =>
         le"i"
 
-      // Works only for the type of natural numbers at the moment
       // Assumes that the induction cases for the constructors are in the same order as the inductive type definition in the context.
       case InductionRule( cases, formula, term ) =>
-        val extraVar = Var( ng.fresh( "y" ), flat( proof.conclusion( Suc( 0 ) ) ) )
-        val mrealizerBaseCase = mrealizeCases( cases( 0 ).proof, varsAntPrem( proof, variables, 0 ), ng )
-        val mrealizerInductionCase = Abs(
-          cases( 1 ).eigenVars :+ extraVar,
-          mrealizeCases( cases( 1 ).proof, varsAntPrem( proof, variables, 1 ) + ( cases( 1 ).hypotheses( 0 ) -> extraVar ), ng ) )
-        le"natRec($mrealizerBaseCase,$mrealizerInductionCase,$term)"
+        val typ @ TBase( name, params ) = term.ty
+        val resultType = flat( proof.conclusion( Suc( 0 ) ) )
+        def mrealizerConstrCase( cas: InductionCase, index: Int ): Expr = {
+          val eigenvarsIndTy = cas.eigenVars.filter( _.ty == typ ).zip( cas.hypotheses.map( _ -> Var( ng.fresh( "y" ), resultType ) ) ) toMap
+          val mrealizerCase = mrealizeCases( cas.proof, varsAntPrem( proof, variables, index ) ++ eigenvarsIndTy.values, ng )
+          val abstractedVrs = cas.eigenVars.flatMap( eigenVar => if ( eigenVar.ty == typ ) Seq( eigenVar, eigenvarsIndTy( eigenVar )._2 ) else Seq( eigenVar ) )
+          Abs( abstractedVrs, mrealizerCase )
+        }
+        val mrealizersConstrCases = cases.zipWithIndex.map( caseInd => mrealizerConstrCase( caseInd._1, caseInd._2 ) )
+        val recursortype = FunctionType( resultType, mrealizersConstrCases.map( _.ty ) :+ typ )
+        val recursor = Const( name + "Rec", recursortype, typ.params :+ resultType )
+        recursor( mrealizersConstrCases :+ term )
 
       // assuming that the definitionrule is applied according to rewrite rules of the original context
       case DefinitionRule( subProof, mainFormula ) =>
@@ -246,6 +251,7 @@ object MRealizability {
         else Var( name, typeeR )
 
       case Const( "natRec", _, params ) =>
+
         val parameter = remEmpProgType( params.head )
         if ( parameter == emptyType ) empty
         else Const( "natRec", parameter ->: ( ty"nat" ->: parameter ->: parameter ) ->: ty"nat" ->: parameter, List( parameter ) )

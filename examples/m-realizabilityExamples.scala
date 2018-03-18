@@ -327,7 +327,7 @@ object exampleBotElimRule extends Script {
   test( a3 )
 }
 
-object examplesInductionRule extends Script {
+object examplesInductionRuleNat extends Script {
 
   implicit var ctx = Context()
 
@@ -365,6 +365,66 @@ object examplesInductionRule extends Script {
   val d1 = ForallIntroRule( c3, hov"x:nat", hov"x:nat" )
   val d2 = ImpIntroRule( d1, Ant( 0 ) )
   val d3 = ImpIntroRule( d2 )
+  test( d3 )
+}
+
+object exampleInductionRuleList extends Script {
+
+  implicit var ctx = Context()
+
+  ctx += InductiveType(
+    ty"list ?a",
+    hoc"nil{?a}: list ?a",
+    hoc"cons{?a}: ?a > list ?a > list ?a" )
+  ctx += PrimRecFun(
+    hoc"'+'{?a}: list ?a > list ?a > list ?a",
+    "nil{?a} + x = x",
+    "cons{?a}(x,y) + z = cons{?a}(x,y+z)" )
+
+  val s0 = LogicalAxiom( hof"!x x + nil = x" )
+  val s01 = ForallElimRule( s0, le"nil" )
+  val s1 = LogicalAxiom( hof"!a !x !y cons(a,x) + y = cons(a,x + y)" )
+  val s11 = ForallElimRule( s1, le"a : i" )
+  val s2 = ForallElimRule( s11, le"x0 : list i" )
+  val s3 = ForallElimRule( s2, le"nil" )
+  val s4 = LogicalAxiom( hof"x0 + nil = x0" )
+  val s5 = EqualityElimRule( s4, s3, hof"cons(a, x0) + nil = cons(a, z)", hov"z: list i" )
+  val cases = Seq(
+    InductionCase( s01, hoc"nil", Seq.empty, Seq.empty ),
+    InductionCase( s5, hoc"cons", Seq( Ant( 0 ) ), Seq( hov"a : i", hov"x0: list i" ) ) )
+  val p = InductionRule( cases, Abs( Var( "x", ty"list i" ), hof"x + nil = x" ), le"x : list i" )
+  test( p )
+}
+
+object exampleInductionRuleTree extends Script {
+
+  implicit var ctx = Context()
+
+  ctx += InductiveType(
+    ty"bitree ?a",
+    hoc"leaf{?a}: ?a > bitree ?a",
+    hoc"node{?a}: bitree ?a > bitree ?a > bitree ?a" )
+
+  val a1 = LogicalAxiom( hof"!a P(leaf{?a}(a))" )
+  val a11 = ForallElimRule( a1, le"a:?a" )
+
+  val b1 = LogicalAxiom( hof"!x !y (P(x) -> (P(y) -> P(node{?a}(x,y))))" )
+  val b2 = ForallElimRule( b1, le"x:bitree ?a" )
+  val b22 = ForallElimRule( b2, le"y:bitree ?a" )
+  val b3 = LogicalAxiom( hof"P(x:bitree ?a)" )
+  val b33 = LogicalAxiom( hof"P(y:bitree ?a)" )
+  val b4 = ImpElimRule( b22, b3 )
+  val b44 = ImpElimRule( b4, b33 )
+
+  val casess = Seq(
+    InductionCase( a11, hoc"leaf{?a}", Seq(), Seq( hov"a:?a" ) ),
+    InductionCase( b44, hoc"node{?a}", Seq( Ant( 1 ), Ant( 2 ) ), Seq( hov"x:bitree ?a", hov"y:bitree ?a" ) ) )
+
+  val c3 = InductionRule( casess, Abs( hov"x:bitree ?a", hof"P(x:bitree ?a)" ), le"x:bitree ?a" )
+  val d1 = ForallIntroRule( c3, hov"x:bitree ?a", hov"x:bitree ?a" )
+  val d2 = ImpIntroRule( d1, Ant( 0 ) )
+  val d3 = ImpIntroRule( d2 )
+
   test( d3 )
 }
 
