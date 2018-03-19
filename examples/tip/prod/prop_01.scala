@@ -34,6 +34,8 @@ object prop_01 extends TacticsProof {
     rewrite.many ltr ( "ps", "ds", "lem", "IHx_0" ); refl // IS
   }
 
+  val openind = proof
+
   val singleInduction = Lemma( sequent ) {
     cut( "lem", hof"!x!y (x + S y = S (x + y) & d x = x + x)" ); forget( "g" )
     allR; induction( hov"x:nat" ).onAll( allR andThen destruct( "lem" ) )

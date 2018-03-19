@@ -43,4 +43,21 @@ object prop_16 extends TacticsProof {
     insert( lemma_1_proof )
     allR; induction( hov"x:Nat" ); escargot.withDeskolemization.onAllSubGoals
   }
+
+  val lemma_1_proof_openind = Lemma( lemma_1 ) {
+    allR; allR; induction( hov"x:Nat" )
+    //- BC
+    rewrite.many ltr "ap1"
+    refl
+    //- SC
+    rewrite.many ltr "ap2"
+    rewrite ltr "IHx_0"
+    refl
+  }
+
+  val openind = Lemma( sequent ) {
+    cut( "lemma_1", hof"∀x ∀y plus(x, S(y)) = S(plus(x,y))" )
+    insert( lemma_1_proof_openind )
+    allR; induction( hov"x:Nat" ); escargot.withDeskolemization.onAllSubGoals
+  }
 }
