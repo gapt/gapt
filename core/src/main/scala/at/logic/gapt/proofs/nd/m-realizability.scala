@@ -9,35 +9,44 @@ import at.logic.gapt.utils.NameGenerator
 
 object MRealizability {
 
-  def systemT( ctx: Context ): Context = {
+  // recursor constant for indType with resultType
+  def recursor( indType: TBase, resultType: Ty )( implicit ctx: Context ): Const = {
+    val Some( constructors ) = ctx.getConstructors( indType )
+    val recTypes = constructors.map {
+      case constr @ Const( _, FunctionType( _, constrArgTypes ), _ ) =>
+        FunctionType( resultType, constrArgTypes.flatMap( argType => if ( argType == indType ) Seq( indType, resultType ) else Seq( argType ) ) )
+    }
+    val recursorType = FunctionType( resultType, recTypes :+ indType )
+    Const( indType.name + "Rec", recursorType, indType.params :+ resultType )
+  }
 
+  // system T context based on ctx, by adding recursors, pair, and sumtypes and the empty program
+  def systemT( ctx: Context ): Context = {
     implicit var systemT = ctx
 
     // add recursors for all inductive types
     for ( ( name, constructors ) <- systemT.get[StructurallyInductiveTypes].constructors.filter( _._1 != "o" ) ) {
-      val typ = systemT.get[BaseTypes].baseTypes( name )
-      val argTypes = constructors.zip( constructors.map { case Const( _, FunctionType( _, constrArgTys ), _ ) => constrArgTys } ) toMap
+      val indType = systemT.get[BaseTypes].baseTypes( name )
 
-      val resultVariable = TVar( new NameGenerator( typeVariables( typ ) map ( _.name ) ).fresh( "a" ) )
+      val resultTypeVariable = TVar( new NameGenerator( typeVariables( indType ) map ( _.name ) ).fresh( "a" ) )
+      val rec @ Const( _, FunctionType( _, recCaseTypes :+ _ ), _ ) = recursor( indType, resultTypeVariable )( ctx )
+
       val ngTermVariableNames = new NameGenerator( systemT.constants map ( _.name ) )
 
-      val constrWithVars = constructors.map( constr => constr -> Var( ngTermVariableNames.fresh( "x" ), FunctionType(
-        resultVariable,
-        argTypes( constr ).flatMap( argTy => if ( argTy == typ ) Seq( typ, resultVariable ) else Seq( argTy ) ) ) ) )
-      val constrVarsMap = constrWithVars toMap
-      val constrVars = constrWithVars.map( _._2 )
+      val constrArgVars = constructors.map {
+        case constr @ Const( _, FunctionType( _, argTypes ), _ ) =>
+          constr -> argTypes.map( argType => Var( ngTermVariableNames.fresh( "x" ), argType ) )
+      } toMap
 
-      val recursortype = FunctionType( resultVariable, constructors.map( constrVarsMap( _ ).ty ) :+ typ )
-      val recursor = Const( name + "Rec", recursortype, typ.params :+ resultVariable )
+      val recCaseVars = recCaseTypes.map( recCaseType => Var( ngTermVariableNames.fresh( "x" ), recCaseType ) )
+      val constr_recCaseVars = constructors.zip( recCaseVars ) toMap
 
-      val argVars = argTypes.map( x => x._1 -> x._2.map( argTyps => Var( ngTermVariableNames.fresh( "x" ), argTyps ) ) )
-      val equations = constructors.map( constr =>
-        (
-          recursor( constrVars :+ constr( argVars( constr ) ) ),
-          constrVarsMap( constr )( argVars( constr ).flatMap( argVar =>
-            if ( argVar.ty == typ ) Seq( argVar, recursor( constrVars :+ argVar ) ) else Seq( argVar ) ) ) ) )
+      val equations = constructors.map( constr => (
+        rec( recCaseVars :+ constr( constrArgVars( constr ) ) ),
+        constr_recCaseVars( constr )( constrArgVars( constr ).flatMap( argVar =>
+          if ( argVar.ty == indType ) Seq( argVar, rec( recCaseVars :+ argVar ) ) else Seq( argVar ) ) ) ) )
 
-      systemT += PrimRecFun( List( ( recursor, equations ) ) )
+      systemT += PrimRecFun( List( ( rec, equations ) ) )
     }
 
     // add conjuctive type, pairs, projections and their reduction rules
@@ -199,20 +208,18 @@ object MRealizability {
 
       // Assumes that the induction cases for the constructors are in the same order as the inductive type definition in the context.
       case InductionRule( cases, formula, term ) =>
-        val typ @ TBase( name, params ) = term.ty
+        val indType @ TBase( name, params ) = term.ty
         val resultType = flat( proof.conclusion( Suc( 0 ) ) )
         def mrealizerConstrCase( cas: InductionCase, index: Int ): Expr = {
-          val eigenvarsIndTy = cas.eigenVars.filter( _.ty == typ ).zip( cas.hypotheses.map( _ -> Var( ng.fresh( "y" ), resultType ) ) ) toMap
+          val eigenvarsIndTy = cas.eigenVars.filter( _.ty == indType ).zip( cas.hypotheses.map( _ -> Var( ng.fresh( "y" ), resultType ) ) ) toMap
           val mrealizerCase = mrealizeCases( cas.proof, varsAntPrem( proof, variables, index ) ++ eigenvarsIndTy.values, ng )
-          val abstractedVrs = cas.eigenVars.flatMap( eigenVar => if ( eigenVar.ty == typ ) Seq( eigenVar, eigenvarsIndTy( eigenVar )._2 ) else Seq( eigenVar ) )
+          val abstractedVrs = cas.eigenVars.flatMap( eigenVar => if ( eigenVar.ty == indType ) Seq( eigenVar, eigenvarsIndTy( eigenVar )._2 ) else Seq( eigenVar ) )
           Abs( abstractedVrs, mrealizerCase )
         }
-        val mrealizersConstrCases = cases.zipWithIndex.map( caseInd => mrealizerConstrCase( caseInd._1, caseInd._2 ) )
-        val recursortype = FunctionType( resultType, mrealizersConstrCases.map( _.ty ) :+ typ )
-        val recursor = Const( name + "Rec", recursortype, typ.params :+ resultType )
-        recursor( mrealizersConstrCases :+ term )
+        val rec = recursor( indType, resultType )
+        rec( cases.zipWithIndex.map( caseInd => mrealizerConstrCase( caseInd._1, caseInd._2 ) ) :+ term )
 
-      // assuming that the definitionrule is applied according to rewrite rules of the original context
+      // Assumes that the definition rule is applied according to rewrite rules of the original context.
       case DefinitionRule( subProof, mainFormula ) =>
         mrealizeCases( subProof, variables, ng )
 
