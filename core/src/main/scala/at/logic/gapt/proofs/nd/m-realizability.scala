@@ -244,7 +244,6 @@ object MRealizability {
 
   // removes all occurences of the empty program i : 1 from term, or is i : 1 itself,
   // except for match and inl and inr term: sometimes not possible to remove all occurences.
-  // works only for recursors for natural numbers now
   def remEmpProg( term: Expr )( implicit systemT: Context ): Expr = {
 
     val empty = hoc"i"
@@ -257,11 +256,11 @@ object MRealizability {
         if ( typeeR == emptyType ) empty
         else Var( name, typeeR )
 
-      case Const( "natRec", _, params ) =>
-
-        val parameter = remEmpProgType( params.head )
-        if ( parameter == emptyType ) empty
-        else Const( "natRec", parameter ->: ( ty"nat" ->: parameter ->: parameter ) ->: ty"nat" ->: parameter, List( parameter ) )
+      // if term is only a constant, it is a recursor (other constants are catched by applications to them)
+      case Const( recName, FunctionType( resultType, recTypes :+ indType ), params ) =>
+        val resultTypeR = remEmpProgType( resultType )
+        if ( resultTypeR == emptyType ) empty
+        else Const( recName, FunctionType( resultTypeR, remEmpProgTypes( recTypes ) :+ indType ), remEmpProgTypes( params ) )
 
       case Abs( variable, termm ) =>
         val termmR = remEmpProg( termm )
@@ -373,5 +372,3 @@ object MRealizability {
 }
 
 class MRealizerCreationException( name: String, message: String ) extends Exception( s"Cannot create an m-realizer for $name: " + message )
-
-class FlattenException( name: String, message: String ) extends Exception( s"Cannot flatten $name: " + message )
