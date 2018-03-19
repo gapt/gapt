@@ -1,6 +1,6 @@
 # Release notes for GAPT
 
-## Version 2.10 (unreleased)
+## Version 2.10 (released on 2018-03-19)
 
 * Emoji support in formulas
 * Implication is now → (instead of ⊃)
