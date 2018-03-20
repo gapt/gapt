@@ -83,3 +83,63 @@ trait TipProblemDefinition {
     TipProblem( ctx, sorts, datatypes, uninterpretedConsts, functions, assumptions, goal )
   }
 }
+
+object tipScalaEncoding {
+
+  private def compileConst( const: Const ): String = {
+    "hoc" + "\"" + stripNewlines( "'" + const.name + "' :" + const.ty.toString ) + "\""
+  }
+
+  def apply( problem: TipProblem ): String = {
+    compileSorts( problem ) + "\n" +
+      compileInductiveTypes( problem ) + "\n" +
+      compileConstants( problem ) + "\n" +
+      compileFunctionConstants( problem ) + "\n\n" +
+      s"""|val sequent =
+          |  hols\"\"\"
+          |    ${( problem.datatypes.flatMap( _.constructors ).flatMap( _.projectors ).map( _.name ) zip problem.datatypes.flatMap( _.constructors ).flatMap( _.projectorDefinitions ) ) map { case ( n, d ) => s"def_$n: ${stripNewlines( universalClosure( d ).toString() )}" } mkString ( ",\n" )},
+          |    ${problem.functions.flatMap { f => f.definitions.zipWithIndex.map { case ( d, i ) => s"def_${f.fun.name}_$i: ${stripNewlines( universalClosure( d ).toString() )}" } } mkString ( "", ",\n", "" )},
+          |    ${problem.constructorInjectivity.zipWithIndex.map { case ( ci, i ) => s"constr_inj_$i: ${stripNewlines( universalClosure( ci ).toString() )}" } mkString ( "", ",\n", "" )}
+          |    ${problem.assumptions.zipWithIndex.map { case ( a, i ) => s"assumption_$i: ${stripNewlines( a.toString() )}" } mkString ( "", ",\n", "" )}
+          |    :-
+          |    goal: ${stripNewlines( problem.goal.toString )}
+          |  \"\"\"
+      """.stripMargin
+  }
+
+  private def compileFunctionConstants( problem: TipProblem ): String = {
+    "\n//Function constants\n" +
+      ( problem.functions map { f => "ctx += " + compileConst( f.fun ) } mkString ( "\n" ) )
+  }
+
+  private def compileConstants( problem: TipProblem ): String = {
+    "\n//Constants\n" +
+      ( "" )
+  }
+
+  private def compileInductiveTypes( problem: TipProblem ): String = {
+    "\n// Inductive types\n" +
+      ( problem.datatypes.tail map ( compileInductiveType ) mkString ( "\n" ) )
+  }
+
+  private def compileInductiveType( datatype: TipDatatype ): String = {
+    s"ctx += InductiveType(ty${"\"" + datatype.t.name + "\""}, ${datatype.constructors.map { c => compileConst( c.constr ) } mkString ( ", " )})" + "\n" +
+      compileProjectors( datatype.constructors.flatMap( _.projectors ) )
+  }
+
+  private def compileProjectors( projectors: Seq[Const] ): String = {
+    projectors.map { compileProjector } mkString ( "", "\n", "" )
+  }
+
+  private def compileProjector( projector: Const ): String = {
+    s"ctx += ${compileConst( projector )}"
+  }
+
+  private def compileSorts( problem: TipProblem ): String = {
+    "// Sorts\n" +
+      ( problem.sorts map { sort => s"ctx += TBase(${"\"" + sort.name + "\""})" } mkString ( "\n" ) )
+  }
+
+  private def stripNewlines( s: String ): String =
+    s.map( c => if ( c == '\n' ) ' ' else c )
+}
