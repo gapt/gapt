@@ -2,6 +2,7 @@ package at.logic.gapt.formats.tip
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ existentialClosure, universalClosure }
+import at.logic.gapt.formats.InputFile
 import at.logic.gapt.proofs.{ Context, ImmutableContext, Sequent }
 
 case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
@@ -91,20 +92,53 @@ object tipScalaEncoding {
   }
 
   def apply( problem: TipProblem ): String = {
-    compileSorts( problem ) + "\n" +
-      compileInductiveTypes( problem ) + "\n" +
+    "// Sorts\n" +
+      compileSorts( problem ).mkString( "\n" ) + "\n\n" +
+      "// Inductive types\n" +
+      compileInductiveTypes( problem ).mkString( "\n\n" ) + "\n" +
       compileConstants( problem ) + "\n" +
       compileFunctionConstants( problem ) + "\n\n" +
       s"""|val sequent =
           |  hols\"\"\"
-          |    ${( problem.datatypes.flatMap( _.constructors ).flatMap( _.projectors ).map( _.name ) zip problem.datatypes.flatMap( _.constructors ).flatMap( _.projectorDefinitions ) ) map { case ( n, d ) => s"def_$n: ${stripNewlines( universalClosure( d ).toString() )}" } mkString ( ",\n" )},
-          |    ${problem.functions.flatMap { f => f.definitions.zipWithIndex.map { case ( d, i ) => s"def_${f.fun.name}_$i: ${stripNewlines( universalClosure( d ).toString() )}" } } mkString ( "", ",\n", "" )},
-          |    ${problem.constructorInjectivity.zipWithIndex.map { case ( ci, i ) => s"constr_inj_$i: ${stripNewlines( universalClosure( ci ).toString() )}" } mkString ( "", ",\n", "" )}
-          |    ${problem.assumptions.zipWithIndex.map { case ( a, i ) => s"assumption_$i: ${stripNewlines( a.toString() )}" } mkString ( "", ",\n", "" )}
+          |    ${
+        ( compileProjectorDefinitions( problem ) ++
+          compileFunctionDefinitions( problem ) ++
+          compileConstructorInjectivityAxioms( problem ) ++
+          compileProblemAssumptions( problem ) ) mkString ( "", ",\n    ", "" )
+      }
           |    :-
           |    goal: ${stripNewlines( problem.goal.toString )}
           |  \"\"\"
       """.stripMargin
+  }
+
+  private def compileProblemAssumptions( problem: TipProblem ): Seq[String] = {
+    problem.assumptions.zipWithIndex.map {
+      case ( assumption, index ) => s"assumption_$index: ${stripNewlines( assumption.toString() )}"
+    }
+  }
+
+  private def compileConstructorInjectivityAxioms( problem: TipProblem ): Seq[String] = {
+    problem.constructorInjectivity.zipWithIndex.map {
+      case ( axiom, index ) => s"constr_inj_$index: ${stripNewlines( universalClosure( axiom ).toString() )}"
+    }
+  }
+
+  private def compileFunctionDefinitions( problem: TipProblem ): Seq[String] = {
+    problem.functions.flatMap {
+      function =>
+        function.definitions.zipWithIndex.map {
+          case ( definition, index ) =>
+            s"def_${function.fun.name}_$index: ${stripNewlines( universalClosure( definition ).toString() )}"
+        }
+    }
+  }
+
+  private def compileProjectorDefinitions( problem: TipProblem ): Seq[String] = {
+    val constructors = problem.datatypes.flatMap( _.constructors )
+    ( constructors.flatMap( _.projectors ).map( _.name ) zip
+      constructors.flatMap( _.projectorDefinitions ) ) map
+      { case ( name, definition ) => s"def_$name: ${stripNewlines( universalClosure( definition ).toString() )}" }
   }
 
   private def compileFunctionConstants( problem: TipProblem ): String = {
@@ -117,14 +151,14 @@ object tipScalaEncoding {
       ( "" )
   }
 
-  private def compileInductiveTypes( problem: TipProblem ): String = {
-    "\n// Inductive types\n" +
-      ( problem.datatypes.tail map ( compileInductiveType ) mkString ( "\n" ) )
+  private def compileInductiveTypes( problem: TipProblem ): Seq[String] = {
+    problem.datatypes.tail map compileInductiveType
   }
 
   private def compileInductiveType( datatype: TipDatatype ): String = {
-    s"ctx += InductiveType(ty${"\"" + datatype.t.name + "\""}, ${datatype.constructors.map { c => compileConst( c.constr ) } mkString ( ", " )})" + "\n" +
-      compileProjectors( datatype.constructors.flatMap( _.projectors ) )
+    val constructors = datatype.constructors.map { c => compileConst( c.constr ) } mkString ( ", " )
+    val projectors = compileProjectors( datatype.constructors.flatMap( _.projectors ) )
+    s"ctx += InductiveType(ty${"\"" + datatype.t.name + "\""}, ${constructors})" + "\n" + projectors
   }
 
   private def compileProjectors( projectors: Seq[Const] ): String = {
@@ -135,10 +169,10 @@ object tipScalaEncoding {
     s"ctx += ${compileConst( projector )}"
   }
 
-  private def compileSorts( problem: TipProblem ): String = {
-    "// Sorts\n" +
-      ( problem.sorts map { sort => s"ctx += TBase(${"\"" + sort.name + "\""})" } mkString ( "\n" ) )
-  }
+  private def compileSorts( problem: TipProblem ): Seq[String] =
+    problem.sorts map {
+      sort => s"ctx += TBase(${"\"" + sort.name + "\""})"
+    }
 
   private def stripNewlines( s: String ): String =
     s.map( c => if ( c == '\n' ) ' ' else c )
