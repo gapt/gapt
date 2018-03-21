@@ -128,6 +128,7 @@ object LKToLKt {
 
   def forLCtx( p: LKProof, lctx: LocalCtx, debugging: Boolean = false ) = {
     val conv = new LKToLKt( debugging )
+    lctx.hyps.keys.foreach( conv.markUsed )
     val hyps = for ( ( f, i ) <- p.endSequent.zipWithIndex )
       yield lctx.hyps.collectFirst { case ( h, g ) if f == g && h.polarity == i.polarity => h }.get
     conv.go( p, hyps )

@@ -6,8 +6,8 @@ import at.logic.gapt.expr.fol.Numeral
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.ceres.CERES
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, eliminateCutsET }
-import at.logic.gapt.proofs.lk.{ LKProof, LKToExpansionProof, cutNormal, eliminateDefinitions }
-import at.logic.gapt.proofs.lkt.{ LKToLKt, LKt, normalizeLKt }
+import at.logic.gapt.proofs.lk.{ LKProof, LKToExpansionProof, cutNormal, eliminateDefinitions, inductionNormalForm, instanceProof }
+import at.logic.gapt.proofs.lkt.{ LKToLKt, LKt, LocalCtx, normalizeLKt }
 import at.logic.gapt.proofs.resolution.ResolutionToLKProof
 import at.logic.gapt.provers.escargot.Escargot
 
@@ -134,4 +134,68 @@ object primeCutElimBench extends Script {
     val times = lktMethods.map( _.robustlyMeasureElimination( p ).toUnit( SECONDS ).toString )
     println( s"$i," + times.mkString( "," ) )
   }
+}
+
+object indElimBench extends Script {
+  import at.logic.gapt.examples.theories._
+  object AllTheories extends Theory(
+    logic, set, props, nat, natdivisible, natdivision, natorder, list, listlength, listfold, listdrop, natlists, fta )
+  import AllTheories._
+  import CutReductionBenchmarkTools._
+
+  class AbstractIndLKtNorm( skipAtomicCuts: Boolean = false, skipPropositionalCuts: Boolean = false ) extends Method {
+    type P = ( LKt, LocalCtx )
+    def convert( p: LKProof ): P = LKToLKt( p )
+    def eliminate( p: ( LKt, LocalCtx ) ): Unit =
+      normalizeLKt.induction( p._1, p._2,
+        skipAtomicCuts = skipAtomicCuts,
+        skipPropositionalCuts = skipPropositionalCuts )
+  }
+  case object IndLKtNorm extends AbstractIndLKtNorm
+  case object IndLKtNormA extends AbstractIndLKtNorm( skipAtomicCuts = true )
+  case object IndLKtNormP extends AbstractIndLKtNorm( skipPropositionalCuts = true )
+  case object IndLKReductive extends LKMethod {
+    def eliminate( p: LKProof ): Unit = inductionNormalForm( p )
+  }
+  case object BogoElim extends Method {
+    // TODO: remove once context guessing works
+    type P = HOLSequent
+    def convert( p: LKProof ): P = p.endSequent
+    def eliminate( p: P ): Unit = {
+      implicit val mctx = ctx.newMutable
+      Escargot.getExpansionProof( p ).get
+    }
+  }
+
+  val indMethods = Seq( IndLKReductive, BogoElim, IndLKtNorm, IndLKtNormA, IndLKtNormP )
+
+  def mkNum( n: Int ): Expr = if ( n == 0 ) le"0" else le"s ${mkNum( n - 1 )}"
+  def mkList( n: Int, x: String ): Expr = if ( n == 0 ) le"nil:list ?a" else le"cons ${Var( s"${x}n", ty"?a" )} ${mkList( n - 1, x )}"
+
+  def benchn( name: String, lk: LKProof, n: Int, exclude: Set[Method] = Set() ): Unit = {
+    val times = indMethods.map {
+      case m if exclude( m ) => "NaN"
+      case m                 => m.robustlyMeasureElimination( lk ).toUnit( SECONDS ).toString
+    }
+    println( s"$name,$n," + times.mkString( "," ) )
+  }
+  def bench( name: String, terms: Seq[Seq[Expr]], exclude: Set[Method] = Set() ): Unit = {
+    val hnd = LemmaHandle( name )
+    val p = hnd.combined()
+    for ( ( ts, i ) <- terms.zipWithIndex ) benchn( hnd.name, instanceProof( p, ts ), i, exclude )
+  }
+  println( "proof,n," + indMethods.mkString( "," ) )
+
+  // warmup
+  {
+    val p = instanceProof( LemmaHandle( "add0l" ).combined(), mkNum( 2 ) )
+    for ( m <- indMethods ) m.robustlyMeasureElimination( p )
+  }
+
+  bench( "filterrev", for ( i <- 0 to 4 ) yield Seq( le"P:?a>o", mkList( i, "x" ) ), exclude = Set( IndLKReductive ) )
+  bench( "primedecex", for ( i <- 0 to 2 ) yield Seq( mkNum( i ) ), exclude = Set( IndLKReductive, BogoElim ) )
+  bench( "divmodgtot", for ( i <- 0 to 3 ) yield Seq( mkNum( i ) ), exclude = Set( IndLKReductive, BogoElim ) )
+  bench( "ltirrefl", for ( i <- 0 to 10 ) yield Seq( mkNum( i ) ), exclude = Set( IndLKReductive, BogoElim ) )
+  bench( "mul1", for ( i <- 0 to 15 ) yield Seq( mkNum( i ) ) )
+  bench( "add0l", for ( i <- 0 to 15 ) yield Seq( mkNum( i ) ) )
 }

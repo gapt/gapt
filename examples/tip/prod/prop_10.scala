@@ -45,4 +45,17 @@ object prop_10 extends TacticsProof {
     insert( lemma_8_proof )
     allR; induction( hov"x:list" ); escargot.withDeskolemization.onAllSubGoals
   }
+
+  val lemma_8_openind_proof = Lemma( lemma_8 ) {
+    allR; allR; induction( hov"xs:list" )
+    escargot //-IB
+    escargot //-IC
+  }
+
+  val openind = Lemma( sequent ) {
+    cut( "lemma_8", hof"∀xs ∀x rev(append(xs, cons(x,nil))) = append(cons(x,nil), rev(xs))" )
+    insert( lemma_8_openind_proof )
+    allR; induction( hov"x:list" ); escargot.withDeskolemization.onAllSubGoals
+  }
+
 }

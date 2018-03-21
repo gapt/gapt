@@ -180,14 +180,14 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
     }
   }
 
-  private def auxEqnLemma( name: String, constName: String, lhs: Expr, rhs: Expr ): Expr = {
+  private def auxEqnLemma( name: String, constName: String, lhs: Expr, rhs: Expr, nocombine: Boolean = false ): Expr = {
     val proofName = auxLemma( name, universalClosure(
       if ( lhs.ty == To ) simplify( lhs <-> rhs ) else lhs === rhs ) ) {
       decompose
       unfold( constName ).in( "g" )
       if ( lhs.ty == To ) prop else refl
     }
-    attr( "nocombine" )( name )
+    if ( nocombine ) attr( "nocombine" )( name )
     proofName
   }
 
@@ -205,7 +205,7 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
     val ( _, _, _, eqns ) = prf.prfDefinitions.head
     val Some( ctrs ) = ctx.getConstructors( prf.recTypes( c ) )
     val lems = for ( ( ctr, ( lhs, rhs ) ) <- ctrs zip eqns )
-      yield auxEqnLemma( s"${asciify( c.name )}${ctr.name}", c.name, lhs, rhs )
+      yield auxEqnLemma( s"${asciify( c.name )}${ctr.name}", c.name, lhs, rhs, nocombine = true )
     val auxP = lems.map( ProofLink( _ ) ).
       reduce[LKProof]( AndRightRule( _, Suc( 0 ), _, Suc( 0 ) ) )
     auxLemma( asciify( c.name ), auxP.endSequent.succedent.head, auxP )
@@ -218,7 +218,8 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
       val skDef = Abs.Block( xs, Ex( y, f ) )
       addNow( SkolemFun( skC, skDef ) )
       val spec = All.Block( xs, Substitution( y -> skC( xs ) )( f ) )
-      auxLemma( asciify( constName ), spec ) {
+      val lemName = asciify( constName )
+      auxLemma( lemName, spec ) {
         insert {
           val exProof = Lemma.finish( block( ProofState( desc ) ), incompleteOk = false )
           ProofBuilder.
@@ -230,6 +231,7 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
             qed
         }
       }
+      attr( "nocombine" )( lemName )
     }
   }
 
@@ -282,7 +284,9 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
      * @param excluded Proofs for which this evaluates to true will not be included.
      * @param included Proofs for which this is true will be included, unless excluded is also true.
      */
-    def combined( excluded: ( String => Boolean ) = Set(), included: ( String => Boolean ) = Set() ): LKProof = {
+    def combined(
+      excluded: ( String => Boolean ) = Set(),
+      included: ( String => Boolean ) = Set() ): LKProof = {
       val nocombine = ctx.get[Attributes].lemmasWith( "nocombine" )
       val Theory.DelayedProofResult( _, used0, p0 ) = allProofs.toMap.apply( name ).value.inst( proofName )
       val used: mutable.Map[String, Set[Expr]] = mutable.Map().withDefaultValue( Set() )
@@ -301,10 +305,19 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
         }
         used( n ) = Set()
       }
+
+      val toUnfold = for {
+        c @ Const( _, _, _ ) <- containedNames( p )
+        by <- ctx.definition( c )
+        if !excluded( asciify( c.name ) )
+      } yield c -> by: ReductionRule
+      p = eliminateDefinitions( p, Normalizer( toUnfold ) )
+
       p
     }
   }
   object LemmaHandle {
+    def apply( name: String ): LemmaHandle = LemmaHandle( ctx.get[ProofNames].names( name )._1 )
     implicit val substitutable: ClosedUnderSub[LemmaHandle] = ( sub, h ) => LemmaHandle( sub( h.proofName ) )
   }
 

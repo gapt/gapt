@@ -67,4 +67,6 @@ object prop_15 extends TacticsProof {
     eql( "IHxs_0", "goal" ).fromLeftToRight
     refl
   }
+
+  val openind = proof
 }
