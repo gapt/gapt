@@ -4,19 +4,21 @@ import java.io.{ FileWriter, PrintWriter }
 
 import ammonite.ops._
 import at.logic.gapt.cutintro._
-import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.formats.babel.BabelParser
 import at.logic.gapt.formats.leancop.LeanCoPParser
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.formats.tptp.{ TptpParser, resolveIncludes }
 import at.logic.gapt.formats.verit.VeriTParser
+import at.logic.gapt.proofs.Context.ProofNames
 import at.logic.gapt.proofs.ceres._
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.gaptic.{ ProofState, now }
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.{ MutableContext, Suc, loadExpansionProof }
+import at.logic.gapt.proofs.lkt.normalizeLKt
 import at.logic.gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
+import at.logic.gapt.proofs.{ MutableContext, Suc, loadExpansionProof }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.provers.sat.{ MiniSAT, Sat4j }
@@ -24,11 +26,8 @@ import at.logic.gapt.provers.smtlib.Z3
 import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.provers.viper.grammars.EnumeratingInstanceGenerator
 import at.logic.gapt.provers.viper.{ Viper, ViperOptions }
+import at.logic.gapt.utils.EitherHelpers._
 import at.logic.gapt.utils._
-import EitherHelpers._
-import at.logic.gapt.examples.theories.Theory
-import at.logic.gapt.proofs.Context.ProofNames
-import at.logic.gapt.proofs.lkt.{ LKToLKt, normalizeLKt }
 
 import scala.concurrent.duration._
 import scala.util.Random
@@ -92,7 +91,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
     }
 
     normalizeLKt.inductionWithDebug( instProof ) --? "eliminate inductions in instance proof using lkt"
-    ReductiveCutElimination.eliminateInduction( instProof ) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
+    inductionNormalForm( instProof ) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
       indFreeProof.endSequent.multiSetEquals( instProof.endSequent ) !-- "induction elimination does not modify end-sequent"
       isInductionFree( indFreeProof ) !-- "induction elimination returns induction free proof"
     }
@@ -163,7 +162,7 @@ class TheoryTestCase( name: String, combined: Boolean )
     }
 
     normalizeLKt.inductionWithDebug( instProof ) --? "eliminate inductions in instance proof using lkt"
-    ReductiveCutElimination.eliminateInduction( instProof ) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
+    inductionNormalForm( instProof ) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
       indFreeProof.endSequent.multiSetEquals( instProof.endSequent ) !-- "induction elimination does not modify end-sequent"
     }
   }
@@ -216,7 +215,7 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
         Z3.isUnsat( And( recSchem.languageWithDummyParameters ) ) !-- "extractRecSchem language validity"
       }
 
-    ReductiveCutElimination( p ) --? "cut-elim (input)"
+    cutNormal( p ) --? "cut-elim (input)"
     normalizeLKt.withDebug( p ) --? "lkt cut-elim (input)"
 
     cleanStructuralRules( p ) --? "cleanStructuralRules"
@@ -226,7 +225,7 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
         val focus = if ( p.endSequent.succedent.isEmpty ) None else Some( Suc( 0 ) )
         LKToND( q, focus ) --? "LKToND (cut-intro)"
 
-        ReductiveCutElimination( q ) --? "cut-elim (cut-intro)"
+        cutNormal( q ) --? "cut-elim (cut-intro)"
         normalizeLKt.withDebug( q ) --? "lkt cut-elim (cut-intro)"
         CERES( q ) --? "CERES (cut-intro)"
         CERES.CERESExpansionProof( q ) --? "CERESExpansionProof"

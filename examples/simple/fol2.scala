@@ -25,6 +25,6 @@ object fol2 {
 
   val proof = CutRule( cut_left, cut_right, hof"P | -P" )
 
-  lazy val ceres_cutfree = ReductiveCutElimination( CERES( proof ) )
-  lazy val reductive_cutfree = ReductiveCutElimination( proof )
+  lazy val ceres_cutfree = cutNormal( CERES( proof ) )
+  lazy val reductive_cutfree = cutNormal( proof )
 }

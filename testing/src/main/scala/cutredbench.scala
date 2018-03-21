@@ -1,13 +1,13 @@
 package at.logic.gapt.testing
 import at.logic.gapt.cutintro.CutIntroduction
-import at.logic.gapt.expr._
 import at.logic.gapt.examples._
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Numeral
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.ceres.CERES
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, eliminateCutsET }
-import at.logic.gapt.proofs.lk.{ LKProof, LKToExpansionProof, ReductiveCutElimination, eliminateDefinitions, instanceProof }
-import at.logic.gapt.proofs.lkt.{ LKToLKt, LKt, LKtToLK, LocalCtx, normalizeLKt }
+import at.logic.gapt.proofs.lk.{ LKProof, LKToExpansionProof, cutNormal, eliminateDefinitions, inductionNormalForm, instanceProof }
+import at.logic.gapt.proofs.lkt.{ LKToLKt, LKt, LocalCtx, normalizeLKt }
 import at.logic.gapt.proofs.resolution.ResolutionToLKProof
 import at.logic.gapt.provers.escargot.Escargot
 
@@ -44,7 +44,7 @@ object CutReductionBenchmarkTools {
     type P = LKProof
     def convert( p: LKProof ): P = p
   }
-  case object LKReductive extends LKMethod { def eliminate( p: LKProof ): Unit = ReductiveCutElimination( p ) }
+  case object LKReductive extends LKMethod { def eliminate( p: LKProof ): Unit = cutNormal( p ) }
   case object LKCERES extends LKMethod { def eliminate( p: LKProof ): Unit = CERES( p ) }
   case object CERESEXP extends LKMethod { def eliminate( p: LKProof ): Unit = CERES.CERESExpansionProof( p ) }
   case object BogoElim extends Method {
@@ -140,7 +140,8 @@ object indElimBench extends Script {
   import at.logic.gapt.examples.theories._
   object AllTheories extends Theory(
     logic, set, props, nat, natdivisible, natdivision, natorder, list, listlength, listfold, listdrop, natlists, fta )
-  import AllTheories._, CutReductionBenchmarkTools._
+  import AllTheories._
+  import CutReductionBenchmarkTools._
 
   class AbstractIndLKtNorm( skipAtomicCuts: Boolean = false, skipPropositionalCuts: Boolean = false ) extends Method {
     type P = ( LKt, LocalCtx )
@@ -154,7 +155,7 @@ object indElimBench extends Script {
   case object IndLKtNormA extends AbstractIndLKtNorm( skipAtomicCuts = true )
   case object IndLKtNormP extends AbstractIndLKtNorm( skipPropositionalCuts = true )
   case object IndLKReductive extends LKMethod {
-    def eliminate( p: LKProof ): Unit = ReductiveCutElimination.eliminateInduction( p )
+    def eliminate( p: LKProof ): Unit = inductionNormalForm( p )
   }
   case object BogoElim extends Method {
     // TODO: remove once context guessing works
