@@ -1,9 +1,9 @@
-package at.logic.gapt.examples.tip.prod
+package gapt.examples.tip.prod
 
-import at.logic.gapt.expr._
-import at.logic.gapt.formats.babel.{ Notation, Precedence }
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.Context
+import gapt.proofs.gaptic._
 
 object prop_01 extends TacticsProof {
   ctx += Context.InductiveType( ty"nat", hoc"0: nat", hoc"S: nat>nat" )

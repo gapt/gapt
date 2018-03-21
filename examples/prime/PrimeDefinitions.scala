@@ -1,12 +1,12 @@
-package at.logic.gapt.examples.prime
+package gapt.examples.prime
 
-import at.logic.gapt.expr.ExpressionParseHelper.Splice
-import at.logic.gapt.expr.hol.CNFp
-import at.logic.gapt.expr._
-import at.logic.gapt.formats.babel.{ Notation, Precedence }
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.Context.PrimRecFun
-import at.logic.gapt.proofs.gaptic.TacticsProof
+import gapt.expr.ExpressionParseHelper.Splice
+import gapt.expr.hol.CNFp
+import gapt.expr._
+import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.Context
+import gapt.proofs.Context.PrimRecFun
+import gapt.proofs.gaptic.TacticsProof
 
 /**
  * Contains definitions for Euclid's and Furstenberg's prime proofs.

@@ -96,13 +96,13 @@ lazy val root = project.in( file( "." ) ).
       }
       (
         mkScript( target.value / "run" ),
-        mkScript( target.value / "test-cut-intro", "at.logic.gapt.testing.testCutIntro" ),
-        mkScript( target.value / "test-pi2-cut-intro", "at.logic.gapt.testing.testPi2CutIntro" ),
-        mkScript( target.value / "test-induction", "at.logic.gapt.testing.testInduction" ),
-        mkScript( target.value / "viper", "at.logic.gapt.provers.viper.Viper" ),
-        mkScript( target.value / "escargot", "at.logic.gapt.provers.escargot.Escargot" ),
-        mkScript( target.value / "iescargot", "at.logic.gapt.provers.escargot.IEscargot" ),
-        mkScript( target.value / "cli", "at.logic.gapt.cli.CLIMain" ) )
+        mkScript( target.value / "test-cut-intro", "gapt.testing.testCutIntro" ),
+        mkScript( target.value / "test-pi2-cut-intro", "gapt.testing.testPi2CutIntro" ),
+        mkScript( target.value / "test-induction", "gapt.testing.testInduction" ),
+        mkScript( target.value / "viper", "gapt.provers.viper.Viper" ),
+        mkScript( target.value / "escargot", "gapt.provers.escargot.Escargot" ),
+        mkScript( target.value / "iescargot", "gapt.provers.escargot.IEscargot" ),
+        mkScript( target.value / "cli", "gapt.cli.CLIMain" ) )
     },
 
     // Release stuff
@@ -150,7 +150,7 @@ lazy val root = project.in( file( "." ) ).
     evalUserManual := {
       val userManFn = "doc/user_manual.tex"
       val out = new ByteArrayOutputStream
-      val exitVal = new Fork( "java", Some( "at.logic.gapt.testing.evalCodeSnippetsInLatex" ) ).fork(
+      val exitVal = new Fork( "java", Some( "gapt.testing.evalCodeSnippetsInLatex" ) ).fork(
         ForkOptions(
           javaHome = javaHome.value,
           outputStrategy = Some( CustomOutput( out ) ),
@@ -225,7 +225,7 @@ lazy val cli = project.in( file( "cli" ) ).
   dependsOn( core, examples ).
   settings( commonSettings: _* ).
   settings(
-    mainClass := Some( "at.logic.cli.CLIMain" ),
+    mainClass := Some( "gapt.cli.CLIMain" ),
 
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value ),

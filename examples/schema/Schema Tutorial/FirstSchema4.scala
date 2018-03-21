@@ -1,10 +1,10 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context._
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.Sequent
+import gapt.expr._
+import gapt.proofs.Context._
+import gapt.proofs.gaptic._
+import gapt.proofs.Context
+import gapt.proofs.Sequent
 
 object FirstSchema4 extends TacticsProof {
   //Type
@@ -57,13 +57,13 @@ object FirstSchema4 extends TacticsProof {
   //You should get the following:
   /*
 gapt> FirstSchema.chiBc
-at.logic.gapt.proofs.gaptic.QedFailureException: Proof not completed. There are still 1 open sub goals:
+gapt.proofs.gaptic.QedFailureException: Proof not completed. There are still 1 open sub goals:
 Ant_0: POR(0, a)
 :-
 Suc_0: E(f(a), 0)
 
-  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finish(language.scala:45)
-  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishLemma(language.scala:55)
+  at gapt.proofs.gaptic.LemmaMacros$.finish(language.scala:45)
+  at gapt.proofs.gaptic.LemmaMacros$.finishLemma(language.scala:55)
   ... 28 elided
 */
 

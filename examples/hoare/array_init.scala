@@ -1,13 +1,13 @@
-package at.logic.gapt.examples.hoare
+package gapt.examples.hoare
 
-import at.logic.gapt.examples.Script
-import at.logic.gapt.expr.{ FOLAtom, Neg }
-import at.logic.gapt.formats.hoare.ProgramParser
-import at.logic.gapt.proofs.expansion.extractInstances
-import at.logic.gapt.proofs.hoare.{ ForLoop, SimpleLoopProblem }
-import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
-import at.logic.gapt.proofs.lk.LKToExpansionProof
-import at.logic.gapt.provers.prover9.Prover9
+import gapt.examples.Script
+import gapt.expr.{ FOLAtom, Neg }
+import gapt.formats.hoare.ProgramParser
+import gapt.proofs.expansion.extractInstances
+import gapt.proofs.hoare.{ ForLoop, SimpleLoopProblem }
+import gapt.formats.prover9.Prover9TermParserLadrStyle._
+import gapt.proofs.lk.LKToExpansionProof
+import gapt.provers.prover9.Prover9
 
 object array_init extends Script {
   val p = ProgramParser.parseProgram( "for y < z do x := set(x, s(y), get(x, y)) od" )

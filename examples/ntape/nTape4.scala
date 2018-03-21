@@ -1,12 +1,12 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.expr.hol.freeHOVariables
-import at.logic.gapt.expr.{ Eq, Ti, Var }
-import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.formats.llk.loadLLK
-import at.logic.gapt.proofs.ceres.{ deleteTautologies, subsumedClausesRemoval }
-import at.logic.gapt.proofs.{ HOLSequent, Sequent }
-import at.logic.gapt.proofs.ceres_omega.AnalysisWithCeresOmega
+import gapt.expr.hol.freeHOVariables
+import gapt.expr.{ Eq, Ti, Var }
+import gapt.formats.ClasspathInputFile
+import gapt.formats.llk.loadLLK
+import gapt.proofs.ceres.{ deleteTautologies, subsumedClausesRemoval }
+import gapt.proofs.{ HOLSequent, Sequent }
+import gapt.proofs.ceres_omega.AnalysisWithCeresOmega
 
 /**
  * Version 3 of the higher-order n-Tape proof.

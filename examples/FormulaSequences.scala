@@ -1,7 +1,7 @@
-package at.logic.gapt.examples
-import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.{ naive, thresholds }
-import at.logic.gapt.proofs.{ FOLClause, HOLSequent }
+package gapt.examples
+import gapt.expr._
+import gapt.expr.fol.{ naive, thresholds }
+import gapt.proofs.{ FOLClause, HOLSequent }
 
 /**
  * Creates the n-th formula of a sequence where distributivity-based

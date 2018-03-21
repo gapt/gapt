@@ -1,15 +1,15 @@
-package at.logic.gapt.testing
+package gapt.testing
 
 import ammonite.ops.FilePath
-import at.logic.gapt.expr.hol.containsQuantifierOnLogicalLevel
-import at.logic.gapt.formats.tptp.TptpParser
-import at.logic.gapt.proofs.expansion.{ ExpansionProofToLK, deskolemizeET }
-import at.logic.gapt.proofs.lk.{ LKProof, LKToND, OrRightRule, WeakeningRightRule, containsEqualityReasoning, isMaeharaMG3i }
-import at.logic.gapt.proofs.nd.{ ExcludedMiddleRule, NDProof }
-import at.logic.gapt.proofs.resolution.{ ResolutionToExpansionProof, structuralCNF }
-import at.logic.gapt.proofs.{ MutableContext, loadExpansionProof }
-import at.logic.gapt.provers.eprover.EProver
-import at.logic.gapt.utils.{ LogHandler, Logger }
+import gapt.expr.hol.containsQuantifierOnLogicalLevel
+import gapt.formats.tptp.TptpParser
+import gapt.proofs.expansion.{ ExpansionProofToLK, deskolemizeET }
+import gapt.proofs.lk.{ LKProof, LKToND, OrRightRule, WeakeningRightRule, containsEqualityReasoning, isMaeharaMG3i }
+import gapt.proofs.nd.{ ExcludedMiddleRule, NDProof }
+import gapt.proofs.resolution.{ ResolutionToExpansionProof, structuralCNF }
+import gapt.proofs.{ MutableContext, loadExpansionProof }
+import gapt.provers.eprover.EProver
+import gapt.utils.{ LogHandler, Logger }
 
 private object lkStats {
   def apply( lk: LKProof, logger: Logger ): Unit = {

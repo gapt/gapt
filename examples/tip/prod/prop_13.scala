@@ -1,9 +1,9 @@
-package at.logic.gapt.examples.tip.prod
+package gapt.examples.tip.prod
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context.InductiveType
-import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.gaptic.{ Lemma, TacticsProof, _ }
+import gapt.expr._
+import gapt.proofs.Context.InductiveType
+import gapt.proofs.Sequent
+import gapt.proofs.gaptic.{ Lemma, TacticsProof, _ }
 
 object prop_13 extends TacticsProof {
 

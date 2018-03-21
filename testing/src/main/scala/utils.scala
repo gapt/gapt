@@ -1,9 +1,9 @@
-package at.logic.gapt.testing
+package gapt.testing
 
 import java.io._
 import java.nio.channels.ClosedByInterruptException
 
-import at.logic.gapt.utils.{ TimeOutException, runProcess, withTempFile, withTimeout }
+import gapt.utils.{ TimeOutException, runProcess, withTempFile, withTimeout }
 import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.collection.mutable

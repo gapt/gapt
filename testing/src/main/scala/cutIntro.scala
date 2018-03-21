@@ -1,18 +1,18 @@
-package at.logic.gapt.testing
+package gapt.testing
 
 import java.io.PrintWriter
 
-import at.logic.gapt.cutintro._
-import at.logic.gapt.examples._
-import at.logic.gapt.expr.{ Apps, FOLVar }
-import at.logic.gapt.grammars.DeltaTableMethod
-import at.logic.gapt.proofs.expansion._
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.loadExpansionProof
-import at.logic.gapt.provers.maxsat.OpenWBO
-import at.logic.gapt.provers.prover9.Prover9Importer
-import at.logic.gapt.provers.smtlib.ExternalSmtlibProgram
-import at.logic.gapt.utils._
+import gapt.cutintro._
+import gapt.examples._
+import gapt.expr.{ Apps, FOLVar }
+import gapt.grammars.DeltaTableMethod
+import gapt.proofs.expansion._
+import gapt.proofs.lk._
+import gapt.proofs.loadExpansionProof
+import gapt.provers.maxsat.OpenWBO
+import gapt.provers.prover9.Prover9Importer
+import gapt.provers.smtlib.ExternalSmtlibProgram
+import gapt.utils._
 import org.json4s._
 import org.json4s.native.JsonMethods._
 
@@ -20,7 +20,7 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
 import ammonite.ops._
-import at.logic.gapt.utils.LogHandler.VerbosityLevel
+import gapt.utils.LogHandler.VerbosityLevel
 
 class MetricsPrinter extends LogHandler {
   val data: mutable.Map[String, Any] = mutable.Map[String, Any]()

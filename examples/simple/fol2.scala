@@ -1,8 +1,8 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.ceres.CERES
-import at.logic.gapt.proofs.lk._
+import gapt.expr._
+import gapt.proofs.ceres.CERES
+import gapt.proofs.lk._
 
 /**
  * Provides a simple intuitionistic proof of ¬p ∨ p ⊢ ¬¬p → p. Applying the CERES method will create a

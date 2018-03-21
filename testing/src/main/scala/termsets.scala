@@ -1,8 +1,8 @@
-package at.logic.gapt.testing
+package gapt.testing
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.expansion.InstanceTermEncoding
-import at.logic.gapt.proofs.loadExpansionProof
+import gapt.expr._
+import gapt.proofs.expansion.InstanceTermEncoding
+import gapt.proofs.loadExpansionProof
 
 import scala.App
 import ammonite.ops._
