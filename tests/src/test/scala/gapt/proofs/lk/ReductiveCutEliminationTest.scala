@@ -811,4 +811,46 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     newProof.endSequent must beMultiSetEqual( proof.endSequent )
     newProof.subProofAt( 1 :: 0 :: Nil ) must beAnInstanceOf[CutRule]
   }
+
+  "cut should reduce over multiple stuck cuts 1" in {
+    val proof = ( ProofBuilder
+      c OpenAssumption( hols":- e:E" )
+      c OpenAssumption( hols":- c:C" )
+      c OpenAssumption( hols":- a:A" )
+      c OpenAssumption( hols"a: A, c:C :- b:B, d:D" )
+      u ( WeakeningLeftRule( _, hof"E" ) )
+      b ( CutRule( _, _, hof"A" ) )
+      c OpenAssumption( hols"b: B :-" )
+      b ( CutRule( _, _, hof"B" ) )
+      b ( CutRule( _, _, hof"C" ) )
+      c OpenAssumption( hols"d:D :-" )
+      b ( CutRule( _, _, hof"D" ) )
+      b ( CutRule( _, _, hof"E" ) ) qed )
+    val newProof = cutNormal( proof )
+    proof.endSequent must beMultiSetEqual( newProof.endSequent )
+    ( proof.subProofs.filter( _.isInstanceOf[CutRule] ).size >
+      newProof.subProofs.filter( _.isInstanceOf[CutRule] ).size ) must_== true
+  }
+
+  "cut should reduce over multiple stuck cuts 2" in {
+    val proof = ( ProofBuilder
+      c OpenAssumption( hols":- e:E" )
+      c OpenAssumption( hols":- c:C" )
+      c OpenAssumption( hols":- a:A" )
+      c OpenAssumption( hols"a: A, c:C, e:E :- b:B, d:D" )
+      u ( WeakeningRightRule( _, hof"F" ) )
+      b ( CutRule( _, _, hof"A" ) )
+      c OpenAssumption( hols"b: B :-" )
+      b ( CutRule( _, _, hof"B" ) )
+      b ( CutRule( _, _, hof"C" ) )
+      c OpenAssumption( hols"d:D :-" )
+      b ( CutRule( _, _, hof"D" ) )
+      b ( CutRule( _, _, hof"E" ) )
+      c OpenAssumption( hols"f:F :- x:X" )
+      b ( CutRule( _, _, hof"F" ) ) qed )
+    val newProof = cutNormal( proof )
+    proof.endSequent must beMultiSetEqual( newProof.endSequent )
+    ( proof.subProofs.filter( _.isInstanceOf[CutRule] ).size >
+      newProof.subProofs.filter( _.isInstanceOf[CutRule] ).size ) must_== true
+  }
 }

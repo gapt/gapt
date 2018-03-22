@@ -176,6 +176,6 @@ class InductionEliminationTests extends Specification with SequentMatchers {
     val p = instanceProof(
       examples.theories.nat.addcomm.combined(),
       Seq( le"s (s 0 : nat)", le"0 : nat" ) )
-    isInductionFree(inductionNormalForm( p )) must_== true
+    isInductionFree( inductionNormalForm( p ) ) must_== true
   }
 }
