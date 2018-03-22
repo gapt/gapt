@@ -83,3 +83,96 @@ trait TipProblemDefinition {
     TipProblem( ctx, sorts, datatypes, uninterpretedConsts, functions, assumptions, goal )
   }
 }
+
+object tipScalaEncoding {
+
+  private def compileConst( const: Const ): String = {
+    "hoc" + "\"" + stripNewlines( "'" + const.name + "' :" + const.ty.toString ) + "\""
+  }
+
+  def apply( problem: TipProblem ): String = {
+    "// Sorts\n" +
+      compileSorts( problem ).mkString( "\n" ) + "\n\n" +
+      "// Inductive types\n" +
+      compileInductiveTypes( problem ).mkString( "\n\n" ) + "\n" +
+      compileConstants( problem ) + "\n" +
+      compileFunctionConstants( problem ) + "\n\n" +
+      s"""|val sequent =
+          |  hols\"\"\"
+          |    ${
+        ( compileProjectorDefinitions( problem ) ++
+          compileFunctionDefinitions( problem ) ++
+          compileConstructorInjectivityAxioms( problem ) ++
+          compileProblemAssumptions( problem ) ) mkString ( "", ",\n    ", "" )
+      }
+          |    :-
+          |    goal: ${stripNewlines( problem.goal.toString )}
+          |  \"\"\"
+      """.stripMargin
+  }
+
+  private def compileProblemAssumptions( problem: TipProblem ): Seq[String] = {
+    problem.assumptions.zipWithIndex.map {
+      case ( assumption, index ) => s"assumption_$index: ${stripNewlines( assumption.toString() )}"
+    }
+  }
+
+  private def compileConstructorInjectivityAxioms( problem: TipProblem ): Seq[String] = {
+    problem.constructorInjectivity.zipWithIndex.map {
+      case ( axiom, index ) => s"constr_inj_$index: ${stripNewlines( universalClosure( axiom ).toString() )}"
+    }
+  }
+
+  private def compileFunctionDefinitions( problem: TipProblem ): Seq[String] = {
+    problem.functions.flatMap {
+      function =>
+        function.definitions.zipWithIndex.map {
+          case ( definition, index ) =>
+            s"def_${function.fun.name}_$index: ${stripNewlines( universalClosure( definition ).toString() )}"
+        }
+    }
+  }
+
+  private def compileProjectorDefinitions( problem: TipProblem ): Seq[String] = {
+    val constructors = problem.datatypes.flatMap( _.constructors )
+    ( constructors.flatMap( _.projectors ).map( _.name ) zip
+      constructors.flatMap( _.projectorDefinitions ) ) map
+      { case ( name, definition ) => s"def_$name: ${stripNewlines( universalClosure( definition ).toString() )}" }
+  }
+
+  private def compileFunctionConstants( problem: TipProblem ): String = {
+    "\n//Function constants\n" +
+      ( problem.functions map { f => "ctx += " + compileConst( f.fun ) } mkString ( "\n" ) )
+  }
+
+  private def compileConstants( problem: TipProblem ): String = {
+    "\n//Constants\n" +
+      ( "" )
+  }
+
+  private def compileInductiveTypes( problem: TipProblem ): Seq[String] = {
+    problem.datatypes.tail map compileInductiveType
+  }
+
+  private def compileInductiveType( datatype: TipDatatype ): String = {
+    val constructors = datatype.constructors.map { c => compileConst( c.constr ) } mkString ( ", " )
+    val projectors = compileProjectors( datatype.constructors.flatMap( _.projectors ) )
+    s"ctx += InductiveType(ty${"\"" + datatype.t.name + "\""}, ${constructors})" + "\n" + projectors
+  }
+
+  private def compileProjectors( projectors: Seq[Const] ): String = {
+    projectors.map { compileProjector } mkString ( "", "\n", "" )
+  }
+
+  private def compileProjector( projector: Const ): String = {
+    s"ctx += ${compileConst( projector )}"
+  }
+
+  private def compileSorts( problem: TipProblem ): Seq[String] =
+    problem.sorts map {
+      sort => s"ctx += TBase(${"\"" + sort.name + "\""})"
+    }
+
+  private def stripNewlines( s: String ): String =
+    s.map( c => if ( c == '\n' ) ' ' else c )
+}
