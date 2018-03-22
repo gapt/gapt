@@ -1558,7 +1558,7 @@ Some(
 The LeanCoP interface supports \cli{getExpansionProof} as well:
 \begin{clilisting}[LeanCoP.isInstalled]
 gapt> LeanCoP getExpansionProof sequent
-res29: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+res29: Option[gapt.proofs.expansion.ExpansionProof] =
 Some(∀x (p(x) → p(s(x))) +^{0} (p(0)+ → p(s(0))-) +^{s(0)} (p(s(0))+ → p(s(s(0)))-),
 p(0)-
 :-
@@ -2212,10 +2212,10 @@ able to automatically find a (V)TRATG that covers this language:
 
 \begin{clilisting}[OpenWBO.isInstalled]
 gapt> val lang = 1 to 18 map { Numeral(_) }
-lang: scala.collection.immutable.IndexedSeq[at.logic.gapt.expr.FOLTerm] = Vector(s(0), s(s(0)), s(s(s(0))), s(s(s(s(0)))), s(s(s(s(s(0))))), s(s(s(s(s(s(0)))))), s(s(s(s(s(s(s(0))))))), s(s(s(s(s(s(s(s(0)))))))), s(s(s(s(s(s(s(s(s(0))))))))), s(s(s(s(s(s(s(s(s(s(0)))))))))), s(s(s(s(s(s(s(s(s(s(s(0))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))))))
+lang: scala.collection.immutable.IndexedSeq[gapt.expr.FOLTerm] = Vector(s(0), s(s(0)), s(s(s(0))), s(s(s(s(0)))), s(s(s(s(s(0))))), s(s(s(s(s(s(0)))))), s(s(s(s(s(s(s(0))))))), s(s(s(s(s(s(s(s(0)))))))), s(s(s(s(s(s(s(s(s(0))))))))), s(s(s(s(s(s(s(s(s(s(0)))))))))), s(s(s(s(s(s(s(s(s(s(s(0))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))))))
 
 gapt> val grammar = findMinimalVTRATG(lang.toSet, 2)
-grammar: at.logic.gapt.grammars.VTRATG =
+grammar: gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s
 
@@ -2243,7 +2243,7 @@ res59: Boolean = true
 You can also find minimal sub-grammars that still generate certain terms:
 \begin{clilisting}[OpenWBO.isInstalled]
 gapt> minimizeVTRATG(grammar, (1 to 5).map(Numeral(_)).toSet)
-res60: at.logic.gapt.grammars.VTRATG =
+res60: gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s
 
