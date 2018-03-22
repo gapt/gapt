@@ -169,4 +169,13 @@ class InductionEliminationTests extends Specification with SequentMatchers {
     indFreeProof.conclusion must beMultiSetEqual( instProof.conclusion )
     isInductionFree( indFreeProof ) must_== true
   }
+
+  "issue #699" in {
+    import gapt.examples
+    implicit val ctx = examples.theories.nat.ctx
+    val p = instanceProof(
+      examples.theories.nat.addcomm.combined(),
+      Seq( le"s (s 0 : nat)", le"0 : nat" ) )
+    isInductionFree(inductionNormalForm( p )) must_== true
+  }
 }
