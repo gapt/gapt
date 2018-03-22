@@ -1,9 +1,8 @@
 package gapt.proofs.lk
 
-import gapt.expr.{ Polarity, isConstructorForm }
-import gapt.proofs.{ Context, SequentConnector, SequentIndex }
+import gapt.expr.isConstructorForm
 import gapt.proofs.lk.reductions._
-import gapt.prooftool.prooftool
+import gapt.proofs.{ Context, SequentIndex }
 
 object cutNormal {
   def apply(
@@ -160,26 +159,36 @@ object StuckCutReduction {
               newProof <- moveCut(
                 polarity, left, aux, parentFormulaIndex, cut.leftSubProof )
             } yield {
-              val newConnector = SequentConnector.guessInjection(
-                fromLower = newProof.conclusion, toUpper = cut.leftSubProof.conclusion )
-              CutRule( newProof, newConnector.child( cut.aux1 ), cut.rightSubProof, cut.aux2 )
+              CutRule( newProof, cut.rightSubProof, cut.cutFormula )
             }
           case None =>
             for {
               newProof <- moveCut(
                 polarity, left, aux, cut.getRightSequentConnector.parent( rightCutFormulaIndex ), cut.rightSubProof )
             } yield {
-              val newConnector =
-                SequentConnector.guessInjection(
-                  fromLower = newProof.conclusion, toUpper = cut.rightSubProof.conclusion )
-              CutRule( cut.leftSubProof, cut.aux1, newProof, newConnector.child( cut.aux2 ) )
+              CutRule( cut.leftSubProof, newProof, cut.cutFormula )
             }
         }
-      case p @ _ => cutNormal.nonCommutingCutReduction.reduce(
+      case p @ _ => {
         polarity match {
-          case false => CutRule( left, aux, p, rightCutFormulaIndex )
-          case true  => CutRule( p, rightCutFormulaIndex, left, aux )
-        } )
+          // cut from left side [=> A] A,X => Y
+          case false =>
+            val cut = CutRule( left, aux, p, rightCutFormulaIndex )
+            for {
+              newProof <- cutNormal.nonCommutingCutReduction.reduce( cut )
+            } yield {
+              newProof
+            }
+          // cut from right side X => Y, A [A =>]
+          case true =>
+            val cut = CutRule( p, rightCutFormulaIndex, left, aux )
+            for {
+              newProof <- cutNormal.nonCommutingCutReduction.reduce( cut )
+            } yield {
+              newProof
+            }
+        }
+      }
     }
   }
 }
