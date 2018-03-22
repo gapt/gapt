@@ -1,9 +1,9 @@
-package at.logic.gapt.examples.prime
+package gapt.examples.prime
 
-import at.logic.gapt.expr._
-import at.logic.gapt.formats.babel.{ Notation, Precedence }
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.lk.LKProof
+import gapt.expr._
+import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.gaptic._
+import gapt.proofs.lk.LKProof
 
 /**
  * Furstenberg's topological proof of the infinitude of primes.

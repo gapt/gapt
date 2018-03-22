@@ -1,11 +1,11 @@
-package at.logic.gapt.examples.tip.isaplanner
+package gapt.examples.tip.isaplanner
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context.InductiveType
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.viper.aip.axioms.IndependentInductionAxioms
-import at.logic.gapt.provers.viper.aip.{ AnalyticInductionProver, ProverOptions }
+import gapt.expr._
+import gapt.proofs.Context.InductiveType
+import gapt.proofs.gaptic._
+import gapt.provers.escargot.Escargot
+import gapt.provers.viper.aip.axioms.IndependentInductionAxioms
+import gapt.provers.viper.aip.{ AnalyticInductionProver, ProverOptions }
 
 object prop_44 extends TacticsProof {
 

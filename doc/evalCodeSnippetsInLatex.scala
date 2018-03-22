@@ -1,8 +1,8 @@
-package at.logic.gapt.testing
+package gapt.testing
 
 import java.io.Writer
 
-import at.logic.gapt.cli.CLIMain
+import gapt.cli.CLIMain
 
 import scala.sys.process
 import scala.tools.nsc.Settings
@@ -40,7 +40,7 @@ object evalCodeSnippetsInLatex {
       repl command CLIMain.imports
 
       // don't open prooftool
-      repl command "def prooftool[T: at.logic.gapt.prooftool.ProoftoolViewable](x: T, name: String = \"\"): Unit = ()"
+      repl command "def prooftool[T: gapt.prooftool.ProoftoolViewable](x: T, name: String = \"\"): Unit = ()"
 
       // don't open help
       repl command "def help(x: Any*): Unit = ()"
@@ -103,9 +103,9 @@ object evalCodeSnippetsInLatex {
 
     val code = new StringBuilder
     code ++= "val () = {\n"
-    if ( !bare ) code ++= "new at.logic.gapt.proofs.gaptic.TacticsProof {\n"
-    code ++= "import at.logic.gapt.proofs.gaptic._\n"
-    code ++= "import at.logic.gapt.formats.babel._\n"
+    if ( !bare ) code ++= "new gapt.proofs.gaptic.TacticsProof {\n"
+    code ++= "import gapt.proofs.gaptic._\n"
+    code ++= "import gapt.formats.babel._\n"
     if ( !nosig ) code ++=
       """
           ctx += Context.Sort("i")

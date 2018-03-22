@@ -1,9 +1,9 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.cutintro.{ CutIntroduction, ReforestMethod }
-import at.logic.gapt.grammars.reforest.Reforest
-import at.logic.gapt.proofs.expansion.InstanceTermEncoding
-import at.logic.gapt.utils.verbose
+import gapt.cutintro.{ CutIntroduction, ReforestMethod }
+import gapt.grammars.reforest.Reforest
+import gapt.proofs.expansion.InstanceTermEncoding
+import gapt.utils.verbose
 
 object ReforestDemo extends Script {
   val ( lang, _ ) = InstanceTermEncoding(

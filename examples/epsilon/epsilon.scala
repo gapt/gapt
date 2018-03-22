@@ -1,8 +1,8 @@
-package at.logic.gapt.examples
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.epsilon.epsilonize
-import at.logic.gapt.proofs.reduction.{ HOFunctionReduction, LambdaEliminationReduction }
-import at.logic.gapt.provers.escargot.Escargot
+package gapt.examples
+import gapt.expr._
+import gapt.proofs.epsilon.epsilonize
+import gapt.proofs.reduction.{ HOFunctionReduction, LambdaEliminationReduction }
+import gapt.provers.escargot.Escargot
 
 object epsilon extends Script {
   println( "Exercises for the lecture on epsilon calculus at the TU Wien:\n" )

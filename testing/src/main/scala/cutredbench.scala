@@ -1,15 +1,15 @@
-package at.logic.gapt.testing
-import at.logic.gapt.cutintro.CutIntroduction
-import at.logic.gapt.expr._
-import at.logic.gapt.examples._
-import at.logic.gapt.expr.fol.Numeral
-import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.ceres.CERES
-import at.logic.gapt.proofs.expansion.{ ExpansionProof, eliminateCutsET }
-import at.logic.gapt.proofs.lk.{ LKProof, LKToExpansionProof, ReductiveCutElimination, eliminateDefinitions, instanceProof }
-import at.logic.gapt.proofs.lkt.{ LKToLKt, LKt, LKtToLK, LocalCtx, normalizeLKt }
-import at.logic.gapt.proofs.resolution.ResolutionToLKProof
-import at.logic.gapt.provers.escargot.Escargot
+package gapt.testing
+import gapt.cutintro.CutIntroduction
+import gapt.examples._
+import gapt.expr._
+import gapt.expr.fol.Numeral
+import gapt.proofs.HOLSequent
+import gapt.proofs.ceres.CERES
+import gapt.proofs.expansion.{ ExpansionProof, eliminateCutsET }
+import gapt.proofs.lk.{ LKProof, LKToExpansionProof, cutNormal, eliminateDefinitions, inductionNormalForm, instanceProof }
+import gapt.proofs.lkt.{ LKToLKt, LKt, LocalCtx, normalizeLKt }
+import gapt.proofs.resolution.ResolutionToLKProof
+import gapt.provers.escargot.Escargot
 
 import scala.concurrent.duration._
 
@@ -44,7 +44,7 @@ object CutReductionBenchmarkTools {
     type P = LKProof
     def convert( p: LKProof ): P = p
   }
-  case object LKReductive extends LKMethod { def eliminate( p: LKProof ): Unit = ReductiveCutElimination( p ) }
+  case object LKReductive extends LKMethod { def eliminate( p: LKProof ): Unit = cutNormal( p ) }
   case object LKCERES extends LKMethod { def eliminate( p: LKProof ): Unit = CERES( p ) }
   case object CERESEXP extends LKMethod { def eliminate( p: LKProof ): Unit = CERES.CERESExpansionProof( p ) }
   case object BogoElim extends Method {
@@ -91,7 +91,7 @@ object cutReductionBenchmark extends Script {
   bench( "pi3pigeon", -1, Pi3Pigeonhole.proof )
 
   {
-    import at.logic.gapt.examples.lattice._
+    import gapt.examples.lattice._
     bench( "lattice", -1, eliminateDefinitions( p ), exclude = Set( LKReductive, BogoElim ) )
   }
 
@@ -115,8 +115,8 @@ object primeCutElimBench extends Script {
   import CutReductionBenchmarkTools._
 
   def furstenbergProof( n: Int ): LKProof = {
-    import at.logic.gapt.proofs.lkt._
-    val primeInst = at.logic.gapt.examples.prime.furstenberg( n )
+    import gapt.proofs.lkt._
+    val primeInst = gapt.examples.prime.furstenberg( n )
     import primeInst._
     val p0 = eliminateDefinitions( proof )
     val ( p1, lctx ) = LKToLKt( p0 )
@@ -137,10 +137,11 @@ object primeCutElimBench extends Script {
 }
 
 object indElimBench extends Script {
-  import at.logic.gapt.examples.theories._
+  import gapt.examples.theories._
   object AllTheories extends Theory(
     logic, set, props, nat, natdivisible, natdivision, natorder, list, listlength, listfold, listdrop, natlists, fta )
-  import AllTheories._, CutReductionBenchmarkTools._
+  import AllTheories._
+  import CutReductionBenchmarkTools._
 
   class AbstractIndLKtNorm( skipAtomicCuts: Boolean = false, skipPropositionalCuts: Boolean = false ) extends Method {
     type P = ( LKt, LocalCtx )
@@ -154,7 +155,7 @@ object indElimBench extends Script {
   case object IndLKtNormA extends AbstractIndLKtNorm( skipAtomicCuts = true )
   case object IndLKtNormP extends AbstractIndLKtNorm( skipPropositionalCuts = true )
   case object IndLKReductive extends LKMethod {
-    def eliminate( p: LKProof ): Unit = ReductiveCutElimination.eliminateInduction( p )
+    def eliminate( p: LKProof ): Unit = inductionNormalForm( p )
   }
   case object BogoElim extends Method {
     // TODO: remove once context guessing works

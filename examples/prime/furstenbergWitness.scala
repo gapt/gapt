@@ -1,10 +1,10 @@
-package at.logic.gapt.examples.prime
+package gapt.examples.prime
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.ImmutableContext
-import at.logic.gapt.proofs.expansion.ETWeakQuantifier
-import at.logic.gapt.proofs.lk.{ LKToExpansionProof, eliminateDefinitions, skolemizeLK }
-import at.logic.gapt.proofs.lkt._
+import gapt.expr._
+import gapt.proofs.ImmutableContext
+import gapt.proofs.expansion.ETWeakQuantifier
+import gapt.proofs.lk.{ LKToExpansionProof, eliminateDefinitions, skolemizeLK }
+import gapt.proofs.lkt._
 
 object furstenbergWitness {
   case class Multiset[T]( countingMap: Map[T, Int] = Map[T, Int]() ) extends ( T => Int ) {

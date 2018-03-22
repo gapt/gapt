@@ -1,9 +1,9 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context.Sort
-import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.proofs.Context.Sort
+import gapt.proofs.Sequent
+import gapt.proofs.gaptic._
 
 object drinker extends TacticsProof {
   ctx += Sort( "i" )

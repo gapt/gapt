@@ -1,14 +1,14 @@
-package at.logic.gapt.examples.poset
+package gapt.examples.poset
 
-import at.logic.gapt.cutintro.CutIntroduction
-import at.logic.gapt.examples.Script
-import at.logic.gapt.expr._
-import at.logic.gapt.grammars.DeltaTableMethod
-import at.logic.gapt.proofs.expansion._
-import at.logic.gapt.proofs.lk.LKToExpansionProof
-import at.logic.gapt.provers.prover9.Prover9
-import at.logic.gapt.provers.sat.Sat4j
-import at.logic.gapt.utils.verbose
+import gapt.cutintro.CutIntroduction
+import gapt.examples.Script
+import gapt.expr._
+import gapt.grammars.DeltaTableMethod
+import gapt.proofs.expansion._
+import gapt.proofs.lk.LKToExpansionProof
+import gapt.provers.prover9.Prover9
+import gapt.provers.sat.Sat4j
+import gapt.utils.verbose
 
 object cutintro extends Script {
 

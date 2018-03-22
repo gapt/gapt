@@ -1,18 +1,18 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.universalClosure
-import at.logic.gapt.formats.tptp.TPTPFOLExporter
-import at.logic.gapt.proofs.ceres.{ CharacteristicClauseSet, extractStruct }
-import at.logic.gapt.proofs.lk.{ AtomicExpansion, LKToExpansionProof }
-import at.logic.gapt.proofs.reduction._
-import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.expansion.eliminateCutsET
-import at.logic.gapt.proofs.resolution.{ Input, eliminateSplitting, simplifyResolutionProof }
-import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.groundFreeVariables
-import at.logic.gapt.provers.spass.SPASS
-import at.logic.gapt.provers.vampire.Vampire
+import gapt.expr._
+import gapt.expr.hol.universalClosure
+import gapt.formats.tptp.TPTPFOLExporter
+import gapt.proofs.ceres.{ CharacteristicClauseSet, extractStruct }
+import gapt.proofs.lk.{ AtomicExpansion, LKToExpansionProof }
+import gapt.proofs.reduction._
+import gapt.proofs.Sequent
+import gapt.proofs.expansion.eliminateCutsET
+import gapt.proofs.resolution.{ Input, eliminateSplitting, simplifyResolutionProof }
+import gapt.provers.escargot.Escargot
+import gapt.provers.groundFreeVariables
+import gapt.provers.spass.SPASS
+import gapt.provers.vampire.Vampire
 
 object ReductionDemo extends Script {
   //  val sequent = groundFreeVariables( nTape3.expansion_proof.deep )._1

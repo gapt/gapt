@@ -1,9 +1,9 @@
-package at.logic.gapt.examples.induction
+package gapt.examples.induction
 
-import at.logic.gapt.expr._
-import at.logic.gapt.formats.babel.{ Notation, Precedence }
-import at.logic.gapt.proofs.Context.InductiveType
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.Context.InductiveType
+import gapt.proofs.gaptic._
 
 object associativity extends TacticsProof {
   ctx += InductiveType( ty"nat", hoc"0: nat", hoc"s: nat>nat" )

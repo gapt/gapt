@@ -1,13 +1,13 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.{ Numeral, Utils }
-import at.logic.gapt.expr.hol.{ instantiate, universalClosure }
-import at.logic.gapt.proofs.{ Ant, Context, HOLSequent, Sequent, Suc }
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.examples.Formulas._
-import at.logic.gapt.formats.babel.{ Notation, Precedence }
+import gapt.expr._
+import gapt.expr.fol.{ Numeral, Utils }
+import gapt.expr.hol.{ instantiate, universalClosure }
+import gapt.proofs.{ Ant, Context, HOLSequent, Sequent, Suc }
+import gapt.proofs.lk._
+import gapt.proofs.gaptic._
+import gapt.examples.Formulas._
+import gapt.formats.babel.{ Notation, Precedence }
 
 trait ProofSequence {
   def apply( n: Int ): LKProof
@@ -912,7 +912,7 @@ object FactorialFunctionEqualityExampleProof extends ProofSequence {
 }
 
 object FactorialFunctionEqualityExampleProof2 extends ProofSequence {
-  import at.logic.gapt.expr.fol.Utils.{ numeral => num }
+  import gapt.expr.fol.Utils.{ numeral => num }
 
   val zero = FOLConst( "0" )
   val one = s( zero )

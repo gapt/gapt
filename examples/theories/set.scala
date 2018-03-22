@@ -1,7 +1,7 @@
-package at.logic.gapt.examples.theories
-import at.logic.gapt.expr._
-import at.logic.gapt.formats.babel.Precedence
-import at.logic.gapt.proofs.gaptic._
+package gapt.examples.theories
+import gapt.expr._
+import gapt.formats.babel.Precedence
+import gapt.proofs.gaptic._
 
 object set extends Theory( logic ) {
   dfn( hof" empty{?a} = (λ(x:?a) false)" )
