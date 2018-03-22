@@ -1,7 +1,7 @@
 package gapt.proofs.lk
 
 import gapt.expr.isConstructorForm
-import gapt.proofs.Context
+import gapt.proofs.{Context, SequentConnector, SequentIndex}
 import gapt.proofs.lk.reductions._
 
 object cutNormal {
@@ -109,7 +109,7 @@ class ReductiveCutNormalization(
    */
   def apply( proof: LKProof ): LKProof = {
     if ( cleanStructuralRules )
-      new IterativeParallelCsrStrategy( cutReduction ) run proof
+      new IterativeParallelCsrStrategy( cutReduction, 1002) run proof
     else
       new UppermostFirstStrategy( cutReduction ) run proof
   }
@@ -118,7 +118,7 @@ class ReductiveCutNormalization(
    * Implements an iterative parallel reduction, that cleans structural rules after each iteration.
    * @param reduction The reduction to be used by this strategy
    */
-  private class IterativeParallelCsrStrategy( reduction: Reduction ) extends ReductionStrategy {
+  private class IterativeParallelCsrStrategy( reduction: Reduction, var steps: Int ) extends ReductionStrategy {
     override def run( proof: LKProof ): LKProof = {
       var intermediaryProof = proof
       val reducer = ( new LowerMostRedexReducer( ( new UppermostRedexFilter ).filter( reduction ) ) )
@@ -126,11 +126,118 @@ class ReductiveCutNormalization(
         reducer.foundRedex = false
         intermediaryProof = reducer.apply( intermediaryProof, () )
         intermediaryProof = gapt.proofs.lk.cleanStructuralRules( intermediaryProof )
-      } while ( reducer.foundRedex )
+        steps-=1
+      } while ( reducer.foundRedex && steps > 0)
       intermediaryProof
     }
   }
 }
+
+object StuckRightCutReduction extends CutReduction {
+  override def reduce (cut: CutRule) : Option[LKProof] = {
+    cut.rightSubProof match {
+      case CutRule( _, _, _, _) =>
+        stuckRightCutReduction(cut.leftSubProof, cut.aux1, cut.aux2, cut.rightSubProof)
+      case _ => None
+    }
+  }
+
+  def stuckRightCutReduction(left: LKProof, aux1: SequentIndex, rightCutFormulaIndex: SequentIndex, stuckCuts: LKProof): Option[LKProof] = {
+      stuckCuts match {
+        case cut @ CutRule(_,_,_,_) =>
+          cut.getLeftSequentConnector.parentOption(rightCutFormulaIndex) match {
+            case Some(parentFormulaIndex) =>
+              for {
+                newProof <- stuckRightCutReduction(left, aux1, parentFormulaIndex, cut.leftSubProof)
+              } yield {
+                val newConnector = SequentConnector.guessInjection(
+                  fromLower = newProof.conclusion, toUpper = cut.leftSubProof.conclusion)
+                CutRule(newProof, newConnector.child(aux1), cut.rightSubProof, cut.aux2)
+              }
+            case None =>
+              for {
+                newProof <- stuckRightCutReduction(left, aux1, cut.getRightSequentConnector.parent(rightCutFormulaIndex), cut.rightSubProof)
+              } yield {
+                val newConnector =  SequentConnector.guessInjection(
+                  fromLower = newProof.conclusion, toUpper = cut.rightSubProof.conclusion)
+                CutRule(cut.leftSubProof, cut.aux1, newProof, newConnector.child(cut.aux2))
+              }
+          }
+        case p @ _ => nonCommutingCutReduction.reduce(CutRule(left, aux1, p, rightCutFormulaIndex))
+      }
+    }
+
+    val nonCommutingRightRankReduction =
+      RightRankWeakeningLeftReduction orElse
+        RightRankWeakeningRightReduction orElse
+        RightRankContractionLeftReduction orElse
+        RightRankContractionRightReduction orElse
+        RightRankDefinitionLeftReduction orElse
+        RightRankDefinitionRightReduction orElse
+        RightRankAndLeftReduction orElse
+        RightRankAndRightReduction orElse
+        RightRankOrLeftReduction orElse
+        RightRankOrRightReduction orElse
+        RightRankImpLeftReduction orElse
+        RightRankImpRightReduction orElse
+        RightRankNegLeftReduction orElse
+        RightRankNegRightReduction orElse
+        RightRankForallLeftReduction orElse
+        RightRankForallRightReduction orElse
+        RightRankForallSkRightReduction orElse
+        RightRankExistsLeftReduction orElse
+        RightRankExistsSkLeftReduction orElse
+        RightRankExistsRightReduction orElse
+        RightRankEqualityLeftReduction orElse
+        RightRankEqualityRightReduction orElse
+        RightRankInductionReduction
+
+    val nonCommutingLeftRankReduction =
+      LeftRankWeakeningLeftReduction orElse
+        LeftRankWeakeningRightReduction orElse
+        LeftRankContractionLeftReduction orElse
+        LeftRankContractionRightReduction orElse
+        LeftRankDefinitionLeftReduction orElse
+        LeftRankDefinitionRightReduction orElse
+        LeftRankAndLeftReduction orElse
+        LeftRankAndRightReduction orElse
+        LeftRankOrLeftReduction orElse
+        LeftRankOrRightReduction orElse
+        LeftRankImpLeftReduction orElse
+        LeftRankImpRightReduction orElse
+        LeftRankNegLeftReduction orElse
+        LeftRankNegRightReduction orElse
+        LeftRankForallLeftReduction orElse
+        LeftRankForallRightReduction orElse
+        LeftRankForallSkRightReduction orElse
+        LeftRankExistsLeftReduction orElse
+        LeftRankExistsSkLeftReduction orElse
+        LeftRankExistsRightReduction orElse
+        LeftRankEqualityLeftReduction orElse
+        LeftRankEqualityRightReduction orElse
+        LeftRankInductionReduction
+
+    val commutingCutReduction =
+      LeftRankCutInductionReduction orElse
+        RightRankCutInductionReduction orElse
+        LeftRankCutEqualityRightLeftReduction orElse
+        LeftRankCutEqualityRightRightReduction orElse
+        LeftRankCutEqualityLeftRightReduction orElse
+        RightRankCutEqualityLeftRightReduction orElse
+        RightRankCutEqualityRightLeftReduction orElse
+        RightRankCutEqualityRightRightReduction orElse
+        LeftRankCutCutEqualityRightReduction orElse
+        LeftRankCutCutEqualityLeftReduction orElse
+        RightRankCutCutEqualityLeftReduction orElse
+        RightRankCutCutEqualityRightReduction
+
+    val nonCommutingCutReduction =
+      gradeReduction orElse
+        nonCommutingLeftRankReduction orElse
+        nonCommutingRightRankReduction
+}
+
+
 
 class LeftRankInductionUnfoldingReduction( implicit ctx: Context ) extends CutReduction {
   override def reduce( cut: CutRule ): Option[LKProof] = {
@@ -223,6 +330,7 @@ object RightRankCutEqualityRightLeftReduction extends CutReduction {
     cut.rightSubProof match {
       case cut2 @ CutRule( eq @ EqualityRightRule( _, _, _, _ ), _, _, _
         ) if !cut2.getLeftSequentConnector.children( eq.eqInConclusion ).contains( cut.aux2 ) =>
+        println("did reduction")
         val Some( step1: LKProof ) = RightRankCutReduction reduce cut
         Some( new ParallelAtDepthStrategy( RightRankEqualityRightReduction, 1 ) run step1 )
       case _ => None
