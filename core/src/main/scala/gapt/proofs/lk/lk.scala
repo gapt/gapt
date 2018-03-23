@@ -1556,6 +1556,11 @@ abstract class EqualityRule extends UnaryLKProof with CommonRule {
   def auxInConclusion = mainIndices.head
   def eqInConclusion = getSequentConnector.child( eq )
 
+  def correctSequentConnector =
+    getSequentConnector.copy( parentsSequent = getSequentConnector.parentsSequent.
+      updated( auxInConclusion, Seq( aux ) ).
+      updated( eqInConclusion, Seq( eq ) ) )
+
 }
 
 /**
