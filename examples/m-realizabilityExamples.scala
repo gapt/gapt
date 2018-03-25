@@ -558,6 +558,33 @@ object exampleSuccessorFunction extends Script {
   test( b4 )
 }
 
+object exampleSumList extends Script {
+
+  implicit var ctx = Context()
+
+  ctx += InductiveType(
+    ty"nat",
+    hoc"0 : nat",
+    hoc"s : nat > nat" )
+  ctx += PrimRecFun(
+    hoc"'+': nat>nat>nat",
+    "x + 0 = x",
+    "x + s(y) = s(x + y)" )
+  ctx += InductiveType(
+    ty"list ?a",
+    hoc"nil{?a}: list ?a",
+    hoc"cons{?a}: ?a > list ?a > list ?a" )
+  ctx += PrimRecFun(
+    hoc"sum: list nat > nat",
+    "sum(nil) = 0",
+    "sum(cons(x,xs)) = x + (sum(xs))" )
+
+  val a1 = EqualityIntroRule( le"sum(x)" )
+  val a2 = ExistsIntroRule( a1, hof"y = sum(x)", le"sum(x)", hov"y:nat" )
+  val a3 = ForallIntroRule( a2, hov"x:nat", hov"x:nat" )
+  test( a3 )
+}
+
 object mrealizerDivisionByTwo extends Script {
 
   val m1 = MRealizability.mrealize( divisionByTwo.proof, false )( divisionByTwo.ctx )
