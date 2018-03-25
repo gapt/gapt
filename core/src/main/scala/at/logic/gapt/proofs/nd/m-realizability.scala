@@ -224,7 +224,7 @@ object MRealizability {
         mrealizeCases( subProof, variables, ng )
 
       case ExcludedMiddleRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-        throw new MRealizerCreationException( proof.longName, "This rule is not admitted in Heyting Arithmetic." )
+        throw new MRealizerCreationException( proof.longName, "This rule is not admitted in intuitionistic ND." )
     }
   }
 
