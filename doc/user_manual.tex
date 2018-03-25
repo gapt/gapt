@@ -2768,6 +2768,16 @@ The variable $y$ must not occur free in $\Gamma, A$ in case of $\forall$ introdu
 
 \end{multicols}
 
+\subsubsection*{Definition rule}
+\begin{center}
+	\AxiomCm{\Gamma \seq A}
+	\RightLabelm{(\mt{def})}
+	\UnaryInfCm{\Gamma \seq B}
+	\DisplayProof
+\end{center}
+The definition rule is extremely liberal, as it allows the replacement of any formula by any other formula.  When checking this rule against a context,
+we verify that both $A$ and $B$ normalize to the same normal form.
+
 \subsubsection*{Induction}
 The induction rule applies to arbitrary algebraic data types. Let $c_1,\dots,c_n$ be the constructors of a type and let $k_i$ be the arity of $c_i$. Let $F[x]$ be a formula with $x$ a free variable of the appropriate type. Then we call the sequent $\mathcal{S}_i := F[x_1],\dots,F[x_{k_i}], \Gamma_i \seq F[c_i(x_1,\dots,x_{k_i})]$ the $i$-th induction step. The induction rule then has the form
   \begin{prooftree}
