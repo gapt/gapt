@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.nd
 
+import at.logic.gapt.examples.Script
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.Context.{ InductiveType, PrimRecFun }
@@ -91,4 +92,33 @@ class MRealizabilityTest extends Specification {
 
   }
 
+  "empty" in {
+    "emptyType" in {
+      implicit var ctx = Context()
+
+      ctx += InductiveType(
+        ty"nat",
+        hoc"0 : nat",
+        hoc"s : nat > nat" )
+      ctx += InductiveType(
+        ty"1",
+        hoc"i : 1" )
+
+      val nat = ty"nat"
+      val one = ty"1"
+
+      MRealizability.remEmpProgType( one ) must_== one
+
+      val natToNat: Ty = nat ->: nat
+      val oneToNat: Ty = one ->: nat
+
+      MRealizability.remEmpProgType( natToNat ) must_== natToNat
+      MRealizability.remEmpProgType( oneToNat ) must_== nat
+      MRealizability.remEmpProgType( natToNat ->: one ) must_== one
+
+      val a = TBase( "conj", oneToNat, one )
+
+      MRealizability.remEmpProgType( a ) must_== nat
+    }
+  }
 }

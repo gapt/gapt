@@ -466,32 +466,6 @@ object examplesTheoryAxiom extends Script {
   test( a2 )
 }
 
-object emptyProgramType extends Script {
-
-  implicit var ctx = Context()
-
-  ctx += InductiveType(
-    ty"nat",
-    hoc"0 : nat",
-    hoc"s : nat > nat" )
-  ctx += InductiveType(
-    ty"1",
-    hoc"i : 1" )
-
-  val natToNat = ty"nat > nat"
-  print( natToNat ); print( " normalized: " ); println( MRealizability.remEmpProgType( natToNat ) )
-  val one = ty"1"
-  print( one ); print( " normalized: " ); println( MRealizability.remEmpProgType( one ) )
-  val a = TBase( "conj", natToNat, one )
-  print( a ); print( " normalized: " ); println( MRealizability.remEmpProgType( a ) )
-  val b = TArr( a, a )
-  print( b ); print( " normalized: " ); println( MRealizability.remEmpProgType( b ) )
-  val c = TArr( b, one )
-  print( c ); print( " normalized: " ); println( MRealizability.remEmpProgType( c ) )
-  val d = TArr( one, b )
-  print( d ); print( " normalized: " ); println( MRealizability.remEmpProgType( d ) )
-}
-
 object exampleSuccessorFunction extends Script {
 
   implicit var ctx = Context()
