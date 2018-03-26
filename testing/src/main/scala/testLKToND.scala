@@ -32,14 +32,15 @@ private object ndStats {
     import logger._
     metric( "size_nd", nd.treeLike.size )
 
-    metric( "num_excl_mid", nd.treeLike.postOrder.count {
-      case _: ExcludedMiddleRule => true
-      case _                     => false
-    } )
-    metric( "num_quant_excl_mid", nd.treeLike.postOrder.count {
-      case em: ExcludedMiddleRule if containsQuantifierOnLogicalLevel( em.formulaA ) => true
-      case _ => false
-    } )
+    val emFormulas = nd.treeLike.postOrder.collect {
+      case em: ExcludedMiddleRule => em.formulaA
+    }
+    val qEmFormulas = emFormulas.filter( containsQuantifierOnLogicalLevel( _ ) )
+
+    metric( "num_excl_mid", emFormulas.size )
+    metric( "num_quant_excl_mid", qEmFormulas.size )
+    metric( "num_excl_mid_distinct", emFormulas.toSet.size )
+    metric( "num_quant_excl_mid_distinct", qEmFormulas.toSet.size )
   }
 }
 
@@ -69,7 +70,7 @@ object testLKToND extends scala.App {
   } catch {
     case t: Throwable =>
       metric( "status", "exception" )
-      metric( "exception", t.getMessage )
+      metric( "exception", t.toString )
   }
 
 }
@@ -90,7 +91,7 @@ object testLKToND2 extends scala.App {
     val cnf = time( "clausifier" ) { structuralCNF( problem ) }
     time( "prover" ) {
       new EProver(
-        Seq( "--auto-schedule", "--soft-cpu-limit=60", "--memory-limit=2048" ) ).getResolutionProof( cnf )
+        Seq( "--auto-schedule", "--soft-cpu-limit=120", "--memory-limit=2048" ) ).getResolutionProof( cnf )
     } match {
       case Some( resolution ) =>
         val expansion = time( "res2exp" ) { ResolutionToExpansionProof( resolution ) }
@@ -118,6 +119,6 @@ object testLKToND2 extends scala.App {
   } catch {
     case t: Throwable =>
       metric( "status", "exception" )
-      metric( "exception", t.getMessage.take( 100 ) )
+      metric( "exception", t.toString.take( 100 ) )
   }
 }
