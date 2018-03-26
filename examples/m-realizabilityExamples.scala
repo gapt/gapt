@@ -5,46 +5,6 @@ import at.logic.gapt.expr.{ TBase, _ }
 import at.logic.gapt.proofs.{ Ant, Checkable, Context, Sequent }
 import at.logic.gapt.proofs.Context.{ InductiveType, PrimRecFun }
 
-object addRecorsorsExamples extends Script {
-
-  var ctx = Context()
-
-  ctx += InductiveType(
-    ty"nat",
-    hoc"0 : nat",
-    hoc"s : nat > nat" )
-  ctx += InductiveType(
-    ty"conjj ?c  ?b",
-    hoc"pairr{?c ?b}: ?c > ?b > conjj ?c ?b" )
-  ctx += InductiveType(
-    ty"list ?a",
-    hoc"nil{?a}: list ?a",
-    hoc"cons{?a}: ?a > list ?a > list ?a" )
-  ctx += InductiveType(
-    ty"bitree ?a",
-    hoc"leaf{?a}: ?a > bitree ?a",
-    hoc"node{?a}: bitree ?a > bitree ?a > bitree ?a" )
-
-  implicit var systemT = MRealizability.systemT( ctx )
-  println( systemT )
-
-  systemT += Definition( Const( "length", ty"list ?a > nat", List( ty"?a" ) ), le"listRec(0,^(z1:?a)^(z2: list ?a)^(z3:nat) s(z3))" )
-  systemT += Definition( Const( "mirror", ty"bitree ?a > bitree ?a", List( ty"?a" ) ), le"bitreeRec( (^(x:?a)leaf(x)), (^(z1:bitree ?a)^(z2:bitree ?a)^(z3:bitree ?a)^(z4:bitree ?a) node(z4,z2)) )" )
-
-  val plus = le"natRec(s(s(0)))(^z1 ^z2 (s(z2)))"
-  println( normalize( App( plus, le"s(s(0))" ) ) )
-
-  val pluspair = le"conjjRec (^x ^y natRec(x,(^z1 ^z2 (s(z2))),y))"
-  println( normalize( App( pluspair, le"pairr(s(0),s(s(0)))" ) ) )
-
-  println( normalize( le"length( cons(nil,cons(nil,cons(nil,nil))) )" ) )
-
-  println( normalize( le"mirror( node( leaf(0) , leaf(s(0)) ) )" ) )
-
-  val sum = le"bitreeRec((^x x),(^t1 ^y1 ^t2 ^y2 (natRec(y1,(^z1 ^z2 (s(z2))),y2))))"
-  println( normalize( App( sum, le"node(leaf(0),node(leaf(s(0)),leaf(s(s(0)))))" ) ) )
-}
-
 object test {
   def apply( proof: NDProof )( implicit ctx: Context ): Unit = {
     val m1 = MRealizability.mrealize( proof, false )
