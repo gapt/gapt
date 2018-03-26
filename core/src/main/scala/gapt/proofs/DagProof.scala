@@ -107,7 +107,7 @@ trait DagProof[Proof <: DagProof[Proof]] extends Product { self: Proof =>
 }
 
 object DagProof {
-  class TreeLikeOps[Proof <: DagProof[Proof]]( val self: Proof ) extends AnyVal {
+  class TreeLikeOps[Proof <: DagProof[Proof]]( private val self: Proof ) extends AnyVal {
 
     /**
      * Iterate over all sub-proofs including this in post-order.
@@ -153,7 +153,7 @@ object DagProof {
     }
   }
 
-  class DagLikeOps[Proof <: DagProof[Proof]]( val self: Proof ) extends AnyVal {
+  class DagLikeOps[Proof <: DagProof[Proof]]( private val self: Proof ) extends AnyVal {
 
     /**
      * Iterate over all sub-proofs including this in post-order, ignoring duplicates.

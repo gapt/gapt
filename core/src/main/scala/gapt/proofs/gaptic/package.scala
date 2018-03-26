@@ -28,7 +28,7 @@ package object gaptic extends TacticCommands {
     }
   }
 
-  implicit class TacticOptionOps[T]( option: Option[T] ) {
+  implicit class TacticOptionOps[T]( private val option: Option[T] ) extends AnyVal {
     def toTactic( errorMsg: String ): Tactic[T] = new Tactic[T] {
       override def apply( proofState: ProofState ) =
         option match {
@@ -40,7 +40,7 @@ package object gaptic extends TacticCommands {
     }
   }
 
-  implicit class TacticEitherOps[T, E]( either: Either[E, T] ) {
+  implicit class TacticEitherOps[T, E]( private val either: Either[E, T] ) extends AnyVal {
     def toTactic: Tactic[T] = new Tactic[T] {
       override def apply( proofState: ProofState ) =
         either match {

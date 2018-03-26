@@ -80,7 +80,7 @@ object ResolutionToExpansionProof {
     eliminateCutsET( eliminateDefsET( eliminateCutsET( expansionWithDefs ), !containsEquationalReasoning( proof ), defConsts ) )
   }
 
-  private implicit class RichPair[A, B]( val pair: ( A, B ) ) extends AnyVal {
+  private implicit class RichPair[A, B]( private val pair: ( A, B ) ) extends AnyVal {
     def map1[A_]( f: A => A_ ): ( A_, B ) = ( f( pair._1 ), pair._2 )
     def map2[B_]( f: B => B_ ): ( A, B_ ) = ( pair._1, f( pair._2 ) )
   }

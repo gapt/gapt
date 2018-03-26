@@ -8,7 +8,7 @@ package object proofs {
   val HOLSequent = Sequent
   type HOLSequent = Sequent[Formula]
 
-  implicit class RichFormulaSequent( val sequent: HOLSequent ) extends AnyVal {
+  implicit class RichFormulaSequent( private val sequent: HOLSequent ) extends AnyVal {
     def formulas = sequent.elements
 
     def toDisjunction = Or( sequent.map( -_, identity ).elements )
@@ -23,7 +23,7 @@ package object proofs {
     }
   }
 
-  implicit class RichFOLSequent( val sequent: FOLSequent ) extends AnyVal {
+  implicit class RichFOLSequent( private val sequent: FOLSequent ) extends AnyVal {
     def toDisjunction = ( sequent: HOLSequent ).toDisjunction.asInstanceOf[FOLFormula]
     def toConjunction = ( sequent: HOLSequent ).toConjunction.asInstanceOf[FOLFormula]
     def toNegConjunction = ( sequent: HOLSequent ).toNegConjunction.asInstanceOf[FOLFormula]
@@ -39,20 +39,20 @@ package object proofs {
   val FOLClause = Sequent
   type FOLClause = Clause[FOLAtom]
 
-  implicit class RichClause[+A]( val clause: Clause[A] ) {
+  implicit class RichClause[+A]( private val clause: Clause[A] ) extends AnyVal {
     def negative = clause.antecedent
     def positive = clause.succedent
   }
 
-  implicit class SeqWrapper[+A]( val s: Seq[A] ) extends AnyVal {
+  implicit class SeqWrapper[+A]( private val s: Seq[A] ) extends AnyVal {
     def :-[B >: A]( that: Seq[B] ): Sequent[B] = Sequent( s, that )
   }
 
   // The "S" suffixes are necessary to disambiguate from the flatten and flatMap member methods.
-  implicit class SequentFlattenOp[A]( val sequentCollection: Traversable[Sequent[A]] ) extends AnyVal {
+  implicit class SequentFlattenOp[A]( private val sequentCollection: Traversable[Sequent[A]] ) extends AnyVal {
     def flattenS: Sequent[A] = sequentCollection.fold( Sequent() )( _ ++ _ )
   }
-  implicit class SequentFlatMapOp[A]( val collection: Traversable[A] ) extends AnyVal {
+  implicit class SequentFlatMapOp[A]( private val collection: Traversable[A] ) extends AnyVal {
     def flatMapS[B]( f: A => Sequent[B] ) = collection.view.map( f ).flattenS
   }
 }
