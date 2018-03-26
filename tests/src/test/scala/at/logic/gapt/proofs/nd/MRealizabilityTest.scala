@@ -94,15 +94,14 @@ class MRealizabilityTest extends Specification {
 
   "empty" in {
     "emptyType" in {
-      implicit var ctx = Context()
+      var ctx = Context()
 
       ctx += InductiveType(
         ty"nat",
         hoc"0 : nat",
         hoc"s : nat > nat" )
-      ctx += InductiveType(
-        ty"1",
-        hoc"i : 1" )
+
+      implicit var systemT = MRealizability.systemT( ctx )
 
       val nat = ty"nat"
       val one = ty"1"
@@ -119,6 +118,28 @@ class MRealizabilityTest extends Specification {
       val a = TBase( "conj", oneToNat, one )
 
       MRealizability.remEmpProgType( a ) must_== nat
+    }
+    "emptyTerm" in {
+      var ctx = Context()
+
+      ctx += InductiveType(
+        ty"nat",
+        hoc"0 : nat",
+        hoc"s : nat > nat" )
+
+      implicit var systemT = MRealizability.systemT( ctx )
+
+      val nat = ty"nat"
+      val one = ty"1"
+      val empty = le"i"
+      val variable = Var( "x", nat ->: one )
+
+      MRealizability.remEmpProg( variable ) must_== empty
+      MRealizability.remEmpProg( le"inl($variable)" ) must_== le"inl($empty)"
+      MRealizability.remEmpProg( le"natRec(i, (^x^y y), s(0))" ) must_== empty
+      MRealizability.remEmpProg( le"natRec(0, (^x^y y), s(0))" ) must_== le"natRec(0, (^x^y y), s(0))"
+      MRealizability.remEmpProg( le"natRec(pair(0,i), (^x^y y), s(0))" ) must_== le"natRec(0, (^x^y y), s(0))"
+      MRealizability.remEmpProg( le"natRec(inr(i), (^x^y y), s(0))" ) must_== le"natRec(inr(i), (^x^y y), s(0))"
     }
   }
 }
