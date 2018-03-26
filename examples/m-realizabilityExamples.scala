@@ -28,12 +28,6 @@ object examplesLogicalAxiom extends Script {
     "0 + x = x",
     "s(x) + y = s(x + y)" )
 
-  val a1 = LogicalAxiom( hof"P(x)" )
-  test( a1 )
-
-  val a2 = LogicalAxiom( hof"x = y" )
-  test( a2 )
-
   val a3 = LogicalAxiom( hof"(x:nat) = y" )
   test( a3 )
 
@@ -65,12 +59,6 @@ object examplesEqualityIntroRule extends Script {
 
   val a2 = EqualityIntroRule( le"x + s(y + z)" )
   test( a2 )
-
-  val a3 = EqualityIntroRule( le"s(s(s(0)))" )
-  test( a3 )
-
-  val a4 = EqualityIntroRule( le"x + s(y + z)" )
-  test( a4 )
 }
 
 object examplesWeakeningRule extends Script {
@@ -95,11 +83,8 @@ object examplesWeakeningRule extends Script {
   test( a22 )
 
   val a3 = LogicalAxiom( hof"(x : nat) = y" )
-  test( a3 )
-
   val a33 = WeakeningRule( a3, hof"!(x:nat) x = z" )
   test( a33 )
-
   val a333 = WeakeningRule( a33, hof"?(x : nat) x = y" )
   test( a333 )
 }
@@ -114,14 +99,8 @@ object exampleContractionRule extends Script {
     hoc"s : nat > nat" )
 
   val a1 = LogicalAxiom( hof"x = 0" )
-  test( a1 )
-
   val a2 = WeakeningRule( a1, hof"(x:nat) = z" )
-  test( a2 )
-
   val a3 = WeakeningRule( a2, hof"(x:nat) = y" )
-  test( a3 )
-
   val a4 = WeakeningRule( a3, hof"(x:nat) = y" )
   test( a4 )
 
@@ -457,11 +436,9 @@ object examplesTheoryAxiom extends Script {
     "0 + x = x",
     "s(x) + y = s(x + y)" )
 
-  //val a1 = TheoryAxiom( hof"!y (y+0 = 0)" )
   val a1 = TheoryAxiom( hof"y + 0 = 0" )
   test( a1 )
 
-  //val a2 = TheoryAxiom( hof"!z ¬(s(z) = 0)" )
   val a2 = TheoryAxiom( hof"¬ s(z) = 0" )
   test( a2 )
 }
@@ -478,11 +455,6 @@ object exampleSuccessorFunction extends Script {
     hoc"'+': nat>nat>nat",
     "x + 0 = x",
     "x + s(y) = s(x + y)" )
-
-  val a1 = EqualityIntroRule( le"x + s(0)" )
-  val a2 = ExistsIntroRule( a1, hof"y = x + s(0)", le"x + s(0)", hov"y:nat" )
-  val a3 = ForallIntroRule( a2, hov"x:nat", hov"x:nat" )
-  test( a3 )
 
   val b1 = EqualityIntroRule( le"s(x)" )
   val b2 = DefinitionRule( b1, hof"s(x) = x + s(0)" )
