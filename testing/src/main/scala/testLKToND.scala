@@ -91,7 +91,7 @@ object testLKToND2 extends scala.App {
     val cnf = time( "clausifier" ) { structuralCNF( problem ) }
     time( "prover" ) {
       new EProver(
-        Seq( "--auto-schedule", "--soft-cpu-limit=120", "--memory-limit=2048" ) ).getResolutionProof( cnf )
+        Seq( "--auto-schedule", "--soft-cpu-limit=60", "--memory-limit=2048" ) ).getResolutionProof( cnf )
     } match {
       case Some( resolution ) =>
         val expansion = time( "res2exp" ) { ResolutionToExpansionProof( resolution ) }
