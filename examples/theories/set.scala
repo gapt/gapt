@@ -1,7 +1,8 @@
-package at.logic.gapt.examples.theories
-import at.logic.gapt.expr._
-import at.logic.gapt.formats.babel.Precedence
-import at.logic.gapt.proofs.gaptic._
+package gapt.examples.theories
+
+import gapt.expr._
+import gapt.formats.babel.Precedence
+import gapt.proofs.gaptic._
 
 object set extends Theory( logic ) {
   dfn( hof" empty{?a} = (λ(x:?a) false)" )
@@ -15,6 +16,8 @@ object set extends Theory( logic ) {
   dfn( hof" pairset{?a} (x: ?a) (y: ?a) = insert (insert empty x) y" )
   dfn( hof" bigunion{?a} (P: (?a > o) > o) = (λx ∃X (P(X) ∧ X(x)))" )
   dfn( hof" bigintersect{?a} (P: (?a > o) > o) = (λx ∀X (P(X) -> X(x)))" )
+  dfn( hof" preimg{?a ?b} (f: ?a > ?b) (X: ?b > o) = (λx X (f x))" )
+
   attr( "simp" )(
     "empty",
     "univ",
@@ -33,176 +36,224 @@ object set extends Theory( logic ) {
 
   val extAxiom = axiom( hof" ∀(X: ?a > o) ∀(Y: ?a > o) (X = Y <-> ∀(x: ?a) (X(x) <-> Y(x)))" )
 
-  val compcomp = lemma( hof"comp(comp(X)) = X", "simp" ) { simp.w( "extAxiom", "comp" ) }
+  val compComp = lemma( hof"comp(comp(X)) = X", "simp" ) { simp.w( "extAxiom", "comp" ) }
 
-  val subsetrefl = lemma( hof" X ⊂ X", "simp" ) { simp.w( "subset" ) }
+  val subsetRefl = lemma( hof" X ⊂ X", "simp" ) { simp.w( "subset" ) }
 
-  val subsettrans = lemma( hof" ((X ⊂ Y) ∧ (Y ⊂ Z)) -> X ⊂ Z" ) {
+  val subsetTrans = lemma( hof" ((X ⊂ Y) ∧ (Y ⊂ Z)) -> X ⊂ Z" ) {
     simp.w( "subset" )
     escrgt
   }
 
-  val eqsubset = lemma( hof" X = Y <-> ((X ⊂ Y) ∧ (Y ⊂ X))" ) {
+  val eqSubset = lemma( hof" X = Y <-> ((X ⊂ Y) ∧ (Y ⊂ X))" ) {
     simp.w( "extAxiom", "subset" )
     escrgt
   }
 
-  val emptyunique = lemma( hof"∀(x: ?a) ¬ X(x) -> X = empty" ) {
+  val emptyUnique = lemma( hof"∀(x: ?a) ¬ X(x) -> X = empty" ) {
     simp.w( "extAxiom" )
   }
 
-  val univunique = lemma( hof"∀(x: ?a) X(x) -> X = univ" ) {
+  val univUnique = lemma( hof"∀(x: ?a) X(x) -> X = univ" ) {
     simp.w( "extAxiom" )
   }
 
-  val emptycomp = lemma( hof" comp(empty) = univ", "simp" ) {
+  val emptyComp = lemma( hof" comp(empty) = univ", "simp" ) {
     simp.w( "extAxiom" )
   }
 
-  val emptysubset = lemma( hof"empty ⊂ X", "simp" ) {
+  val emptySubset = lemma( hof"empty ⊂ X", "simp" ) {
     simp.w( "subset" )
   }
 
-  val subsetuniv = lemma( hof" X ⊂ univ", "simp" ) {
+  val subsetUniv = lemma( hof" X ⊂ univ", "simp" ) {
     simp.w( "subset" )
   }
 
-  val unionunion = lemma( hof"X ∪ X = X", "simp" ) {
+  val unionUnion = lemma( hof"X ∪ X = X", "simp" ) {
     simp.w( "extAxiom" )
     allR
     prop
   }
 
-  val unionassoc = lemma( hof" X ∪ (Y ∪ Z) = (X ∪ Y) ∪ Z" ) {
+  val unionAssoc = lemma( hof" X ∪ (Y ∪ Z) = (X ∪ Y) ∪ Z" ) {
     simp.w( "extAxiom" )
     allR
     prop
   }
 
-  val unioncomm = lemma( hof"X ∪ Y = Y ∪ X" ) {
+  val unionComm = lemma( hof"X ∪ Y = Y ∪ X" ) {
     simp.w( "extAxiom" )
     allR
     prop
   }
 
-  val subsetunion = lemma( hof" X ∪ Y = Y <-> X ⊂ Y" ) {
+  val subsetUnion = lemma( hof" X ∪ Y = Y <-> X ⊂ Y" ) {
     simp.w( "subset", "extAxiom" )
     escrgt
   }
 
-  val subsetintersect = lemma( hof" X ∩ Y = X <-> X ⊂ Y" ) {
+  val unionSubset1 = lemma( hof" X ⊂ (X ∪ Y)", "simp" ) {
+    simp.w( "subset" )
+    allR
+    prop
+  }
+
+  val unionSubset2 = lemma( hof" Y ⊂ (X ∪ Y)", "simp" ) {
+    simp.w( "subset" )
+    allR
+    prop
+  }
+
+  val subsetIntersect = lemma( hof" X ∩ Y = X <-> X ⊂ Y" ) {
     simp.w( "subset", "extAxiom" )
     escrgt
   }
 
-  val intersectintersect = lemma( hof"X ∩ X = X", "simp" ) {
+  val intersectIntersect = lemma( hof"X ∩ X = X", "simp" ) {
     simp.w( "extAxiom" )
     allR
     prop
   }
 
-  val intersectassoc = lemma( hof" X ∩ (Y ∩ Z) = (X ∩ Y) ∩ Z" ) {
+  val intersectAssoc = lemma( hof" X ∩ (Y ∩ Z) = (X ∩ Y) ∩ Z" ) {
     simp.w( "extAxiom" )
     allR
     prop
   }
 
-  val intersectcomm = lemma( hof" X ∩ Y = Y ∩ X" ) {
+  val intersectComm = lemma( hof" X ∩ Y = Y ∩ X" ) {
     simp.w( "extAxiom" )
     allR
     prop
   }
 
-  val univunion1 = lemma( hof" X ∪ univ = univ", "simp" ) {
-    simp.w( "subsetunion" )
+  val intersectSubset1 = lemma( hof" (X ∩ Y) ⊂ X" ) {
+    simp.w( "subset" )
+    allR
+    prop
   }
 
-  val univunion2 = lemma( hof" univ ∪ X = univ", "simp" ) {
-    include( "unioncomm" )
-    rewrite ltr "unioncomm" in "g"
+  val intersectSubset2 = lemma( hof" (X ∩ Y) ⊂ Y" ) {
+    simp.w( "subset" )
+    allR
+    prop
+  }
+
+  val univUnion1 = lemma( hof" X ∪ univ = univ", "simp" ) {
+    simp.w( "subsetUnion" )
+  }
+
+  val univUnion2 = lemma( hof" univ ∪ X = univ", "simp" ) {
+    include( "unionComm" )
+    rewrite ltr "unionComm" in "g"
     simp
   }
 
-  val univintersect1 = lemma( hof" X ∩ univ = X", "simp" ) {
-    simp.w( "subsetintersect" )
+  val univIntersect1 = lemma( hof" X ∩ univ = X", "simp" ) {
+    simp.w( "subsetIntersect" )
   }
 
-  val univinterset2 = lemma( hof" univ ∩ X = X", "simp" ) {
-    include( "intersectcomm" )
-    rewrite ltr "intersectcomm" in "g"
+  val univIntersect2 = lemma( hof" univ ∩ X = X", "simp" ) {
+    include( "intersectComm" )
+    rewrite ltr "intersectComm" in "g"
     simp
   }
 
-  val emptyunion1 = lemma( hof" X ∪ empty = X", "simp" ) {
-    include( "unioncomm" )
-    rewrite ltr "unioncomm" in "g"
-    simp.w( "subsetunion" )
+  val emptyUnion1 = lemma( hof" X ∪ empty = X", "simp" ) {
+    include( "unionComm" )
+    rewrite ltr "unionComm" in "g"
+    simp.w( "subsetUnion" )
   }
 
-  val emptyunion2 = lemma( hof" empty ∪ X = X", "simp" ) {
-    simp.w( "subsetunion" )
+  val emptyUnion2 = lemma( hof" empty ∪ X = X", "simp" ) {
+    simp.w( "subsetUnion" )
   }
 
-  val emptyintersect1 = lemma( hof" X ∩ empty = empty", "simp" ) {
-    include( "intersectcomm" )
-    rewrite ltr "intersectcomm" in "g"
-    simp.w( "subsetintersect" )
+  val emptyIntersect1 = lemma( hof" X ∩ empty = empty", "simp" ) {
+    include( "intersectComm" )
+    rewrite ltr "intersectComm" in "g"
+    simp.w( "subsetIntersect" )
   }
 
-  val emptyintersect2 = lemma( hof" empty ∩ X = empty", "simp" ) {
-    simp.w( "subsetintersect" )
+  val emptyIntersect2 = lemma( hof" empty ∩ X = empty", "simp" ) {
+    simp.w( "subsetIntersect" )
   }
-  val demorgan1 = lemma( hof"comp(X ∪ Y) = comp(X) ∩ comp(Y)" ) { simp.w( "extAxiom" ) }
-  val demorgan2 = lemma( hof" comp(X ∩ Y) = comp(X) ∪ comp(Y)" ) { simp.w( "extAxiom" ) }
+  val deMorgan1 = lemma( hof"comp(X ∪ Y) = comp(X) ∩ comp(Y)" ) { simp.w( "extAxiom" ) }
 
-  val unionintersectdistrib = lemma( hof" (X ∪ Y) ∩ Z = (X ∩ Z) ∪ (Y ∩ Z)" ) {
+  val deMorgan2 = lemma( hof" comp(X ∩ Y) = comp(X) ∪ comp(Y)" ) { simp.w( "extAxiom" ) }
+
+  val unionIntersectDistrib = lemma( hof" (X ∪ Y) ∩ Z = (X ∩ Z) ∪ (Y ∩ Z)" ) {
     simp.w( "extAxiom" )
     escrgt
   }
 
-  val intersectuniondistrib = lemma( hof" (X ∩ Y) ∪ Z = (X ∪ Z) ∩ (Y ∪ Z)" ) {
+  val intersectUnionDistrib = lemma( hof" (X ∩ Y) ∪ Z = (X ∪ Z) ∩ (Y ∪ Z)" ) {
     simp.w( "extAxiom" )
     escrgt
   }
 
-  val insertuniv = lemma( hof" insert univ x = univ", "simp" ) {
+  val insertUniv = lemma( hof" insert univ x = univ", "simp" ) {
     simp.w( "extAxiom" )
   }
 
-  val insertunion = lemma( hof" bigunion (insert P x) = (bigunion P) ∪ x" ) {
-    simp.w( "extAxiom" )
-    escrgt
-  }
-
-  val insertintersect = lemma( hof" bigintersect (insert P x) = (bigintersect P) ∩ x" ) {
+  val insertUnion = lemma( hof" bigunion (insert P x) = (bigunion P) ∪ x" ) {
     simp.w( "extAxiom" )
     escrgt
   }
 
-  val pairsetunion = lemma( hof" bigunion (pairset X Y) = X ∪ Y", "simp" ) {
+  val insertIntersect = lemma( hof" bigintersect (insert P x) = (bigintersect P) ∩ x" ) {
     simp.w( "extAxiom" )
     escrgt
   }
 
-  val pairsetintersect = lemma( hof" bigintersect (pairset X Y) = X ∩ Y", "simp" ) {
-    simp.w( "extAxiom" )
+  val insertSubset = lemma( hof" X ⊂ insert X x", "simp" ) {
+    simp.w( "subset" )
     escrgt
   }
 
-  val bigunionempty = lemma( hof" bigunion empty = empty", "simp" ) {
-    simp.w( "extAxiom" )
-  }
-
-  val bigintersectempty = lemma( hof" bigintersect empty = univ", "simp" ) {
-    simp.w( "extAxiom" )
-  }
-
-  val pairsetelem1 = lemma( hof" (pairset x y) x", "simp" ) {
+  val insertElement = lemma( hof" (insert X x) x", "simp" ) {
     simp
   }
 
-  val pairsetelem2 = lemma( hof" (pairset x y) y", "simp" ) {
+  val pairsetUnion = lemma( hof" bigunion (pairset X Y) = X ∪ Y", "simp" ) {
+    simp.w( "extAxiom" )
+    escrgt
+  }
+
+  val pairsetIntersect = lemma( hof" bigintersect (pairset X Y) = X ∩ Y", "simp" ) {
+    simp.w( "extAxiom" )
+    escrgt
+  }
+
+  val bigunionEmpty = lemma( hof" bigunion empty = empty", "simp" ) {
+    simp.w( "extAxiom" )
+  }
+
+  val bigintersectEmpty = lemma( hof" bigintersect empty = univ", "simp" ) {
+    simp.w( "extAxiom" )
+  }
+
+  val pairsetElem1 = lemma( hof" (pairset x y) x", "simp" ) {
     simp
   }
 
+  val pairsetElem2 = lemma( hof"(pairset x y) y", "simp" ) {
+    simp
+  }
+
+  val preimgIntersect = lemma( hof" preimg f (X ∩ Y) = (preimg f X) ∩ (preimg f Y)" ) {
+    simp.w( "extAxiom", "preimg" )
+  }
+
+  val preimgUnion = lemma( hof" preimg f (X ∪ Y) = (preimg f X) ∪ (preimg f Y)" ) {
+    simp.w( "extAxiom", "preimg" )
+  }
+
+  val preimgEmpty = lemma( hof" preimg f empty = empty", "simp" ) {
+    simp.w( "preimg", "extAxiom" )
+  }
+  val preimgUniv = lemma( hof" preimg f univ = univ", "simp" ) {
+    simp.w( "preimg", "extAxiom" )
+  }
 }

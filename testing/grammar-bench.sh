@@ -24,5 +24,5 @@ parallel --timeout 60 \
   "java -cp $gapt_testing_jar \
   -Xmx1G -Xss40m \
   -XX:ParallelGCThreads=1 -XX:ConcGCThreads=1 \
-  at.logic.gapt.testing.loadAndCompress {1} {2} 2>&1" \
+  gapt.testing.loadAndCompress {1} {2} 2>&1" \
   ::: $methods ::: $@ || true

@@ -1,18 +1,18 @@
-package at.logic.gapt.testing
+package gapt.testing
 
 import ammonite.ops.FilePath
-import at.logic.gapt.expr.{ All, Eq, Var }
-import at.logic.gapt.formats.tip.TipSmtParser
-import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic
-import at.logic.gapt.proofs.gaptic.{ ProofState, Tactic }
-import at.logic.gapt.proofs.{ Ant, Context, MutableContext }
-import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.maxsat.OpenWBO
-import at.logic.gapt.provers.smtlib.CVC4
-import at.logic.gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, SequentialInductionAxioms, UntrustedFunctionalInductionAxioms }
-import at.logic.gapt.provers.viper.grammars.TreeGrammarProverOptions.Passthru
-import at.logic.gapt.provers.viper.grammars.{ TreeGrammarInductionTactic, TreeGrammarProverOptions }
-import at.logic.gapt.utils.{ LogHandler, Logger }
+import gapt.expr.{ All, Eq, Var }
+import gapt.formats.tip.TipSmtParser
+import gapt.proofs.gaptic.tactics.AnalyticInductionTactic
+import gapt.proofs.gaptic.{ ProofState, Tactic }
+import gapt.proofs.{ Ant, Context, MutableContext }
+import gapt.provers.escargot.Escargot
+import gapt.provers.maxsat.OpenWBO
+import gapt.provers.smtlib.CVC4
+import gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, SequentialInductionAxioms, UntrustedFunctionalInductionAxioms }
+import gapt.provers.viper.grammars.TreeGrammarProverOptions.Passthru
+import gapt.provers.viper.grammars.{ TreeGrammarInductionTactic, TreeGrammarProverOptions }
+import gapt.utils.{ LogHandler, Logger }
 
 object testInduction extends App {
   val logger = Logger( "testInduction" )
@@ -20,7 +20,7 @@ object testInduction extends App {
   class StrategyNotApplicable extends Exception
 
   def pickQuant( i: Int )( implicit ctx: Context ): Tactic[Unit] = {
-    import at.logic.gapt.proofs.gaptic._
+    import gapt.proofs.gaptic._
     currentGoal.flatMap { goal =>
       val Some( All.Block( vs, _ ) ) = goal.conclusion.succedent.headOption
       if ( i < vs.size && ctx.getConstructors( vs( i ).ty ).isDefined ) introUnivsExcept( i )
@@ -41,7 +41,7 @@ object testInduction extends App {
           new TreeGrammarInductionTactic( TreeGrammarProverOptions( maxSATSolver = OpenWBO ) ) )
       case s if s.startsWith( "treeg_eq_" ) =>
         val ( Vector( quant ), eqs ) = s.substring( "treeg_eq_".size ).split( "_" ).map( _.toInt ).toVector.splitAt( 1 )
-        import at.logic.gapt.proofs.gaptic._
+        import gapt.proofs.gaptic._
         for {
           goal <- currentGoal
           eqTheory = eqs.map( i => goal.conclusion( Ant( i ) ) ).collect { case All.Block( _, eq @ Eq( _, _ ) ) => eq }

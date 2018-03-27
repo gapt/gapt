@@ -1,9 +1,9 @@
-package at.logic.gapt.examples.prime
+package gapt.examples.prime
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.lk.LKProof
+import gapt.expr._
+import gapt.proofs.Sequent
+import gapt.proofs.gaptic._
+import gapt.proofs.lk.LKProof
 
 case class euclid( k: Int ) extends PrimeDefinitions {
   def ldivprod( i: Int ): LKProof = {

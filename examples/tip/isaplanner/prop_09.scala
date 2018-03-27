@@ -1,9 +1,9 @@
-package at.logic.gapt.examples.tip.isaplanner
+package gapt.examples.tip.isaplanner
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.provers.viper.aip.axioms.SequentialInductionAxioms
+import gapt.expr._
+import gapt.proofs.Context
+import gapt.proofs.gaptic._
+import gapt.provers.viper.aip.axioms.SequentialInductionAxioms
 
 object prop_09 extends TacticsProof {
 
@@ -66,7 +66,7 @@ object prop_09 extends TacticsProof {
     analyticInduction.withAxioms( SequentialInductionAxioms().forAllVariables.forLabel( "goal" ) )
   }
 
-  import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic.{ independentAxioms, sequentialAxioms }
+  import gapt.proofs.gaptic.tactics.AnalyticInductionTactic.{ independentAxioms, sequentialAxioms }
 
   val proof4 = Lemma( sequent ) {
     analyticInduction withAxioms

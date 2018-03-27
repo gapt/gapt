@@ -1,6 +1,6 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.expr._
+import gapt.expr._
 
 /**
  * Contains some commonly used formulas.

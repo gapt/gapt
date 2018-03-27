@@ -1,15 +1,15 @@
-package at.logic.gapt.testing
+package gapt.testing
 
 import ammonite.ops.FilePath
-import at.logic.gapt.expr.hol.containsQuantifierOnLogicalLevel
-import at.logic.gapt.formats.tptp.TptpParser
-import at.logic.gapt.proofs.expansion.{ ExpansionProofToLK, deskolemizeET }
-import at.logic.gapt.proofs.lk.{ LKProof, LKToND, OrRightRule, WeakeningRightRule, containsEqualityReasoning, isMaeharaMG3i }
-import at.logic.gapt.proofs.nd.{ ExcludedMiddleRule, NDProof }
-import at.logic.gapt.proofs.resolution.{ ResolutionToExpansionProof, structuralCNF }
-import at.logic.gapt.proofs.{ MutableContext, loadExpansionProof }
-import at.logic.gapt.provers.eprover.EProver
-import at.logic.gapt.utils.{ LogHandler, Logger }
+import gapt.expr.hol.containsQuantifierOnLogicalLevel
+import gapt.formats.tptp.TptpParser
+import gapt.proofs.expansion.{ ExpansionProofToLK, deskolemizeET }
+import gapt.proofs.lk.{ LKProof, LKToND, OrRightRule, WeakeningRightRule, containsEqualityReasoning, isMaeharaMG3i }
+import gapt.proofs.nd.{ ExcludedMiddleRule, NDProof }
+import gapt.proofs.resolution.{ ResolutionToExpansionProof, structuralCNF }
+import gapt.proofs.{ MutableContext, loadExpansionProof }
+import gapt.provers.eprover.EProver
+import gapt.utils.{ LogHandler, Logger }
 
 private object lkStats {
   def apply( lk: LKProof, logger: Logger ): Unit = {
@@ -32,14 +32,15 @@ private object ndStats {
     import logger._
     metric( "size_nd", nd.treeLike.size )
 
-    metric( "num_excl_mid", nd.treeLike.postOrder.count {
-      case _: ExcludedMiddleRule => true
-      case _                     => false
-    } )
-    metric( "num_quant_excl_mid", nd.treeLike.postOrder.count {
-      case em: ExcludedMiddleRule if containsQuantifierOnLogicalLevel( em.formulaA ) => true
-      case _ => false
-    } )
+    val emFormulas = nd.treeLike.postOrder.collect {
+      case em: ExcludedMiddleRule => em.formulaA
+    }
+    val qEmFormulas = emFormulas.filter( containsQuantifierOnLogicalLevel( _ ) )
+
+    metric( "num_excl_mid", emFormulas.size )
+    metric( "num_quant_excl_mid", qEmFormulas.size )
+    metric( "num_excl_mid_distinct", emFormulas.toSet.size )
+    metric( "num_quant_excl_mid_distinct", qEmFormulas.toSet.size )
   }
 }
 
@@ -69,7 +70,7 @@ object testLKToND extends scala.App {
   } catch {
     case t: Throwable =>
       metric( "status", "exception" )
-      metric( "exception", t.getMessage )
+      metric( "exception", t.toString )
   }
 
 }
@@ -84,7 +85,7 @@ object testLKToND2 extends scala.App {
     val Seq( fileName ) = args.toSeq
     metric( "file", fileName )
 
-    val tptp = time( "tptp" ) { TptpParser.parse( FilePath( fileName ) ) }
+    val tptp = time( "tptp" ) { TptpParser.load( FilePath( fileName ) ) }
     val problem = tptp.toSequent
     implicit val ctx = MutableContext.guess( problem )
     val cnf = time( "clausifier" ) { structuralCNF( problem ) }
@@ -118,6 +119,6 @@ object testLKToND2 extends scala.App {
   } catch {
     case t: Throwable =>
       metric( "status", "exception" )
-      metric( "exception", t.getMessage.take( 100 ) )
+      metric( "exception", t.toString.take( 100 ) )
   }
 }

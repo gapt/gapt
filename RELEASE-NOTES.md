@@ -1,6 +1,10 @@
 # Release notes for GAPT
 
-## Version 2.10 (unreleased)
+## Version 2.11 (unreleased)
+
+* Root package was renamed from `at.logic.gapt` to just `gapt`
+
+## Version 2.10 (released on 2018-03-19)
 
 * Emoji support in formulas
 * Implication is now → (instead of ⊃)
