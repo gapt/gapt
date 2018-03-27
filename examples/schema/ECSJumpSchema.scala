@@ -246,20 +246,20 @@ object ECSJumpSchema extends TacticsProof {
     orL( "Ant_0_0" )
     orL( "Ant_0_1" )
     impL( "Ant_0_0" )
-    foTheory
+    ref( "reflexivity" )
     impL( "Ant_0_1" )
     trivial
     allL( "Ant_1", le"(g a)" )
     unfold( "TopFuncDef" ) atMost 1 in "Ant_1_0"
     cut( "cut1", hof"E(0, f(s(0), g(a)))" )
-    foTheory
+    ref( "TransitivityE" )
     cut( "cut2", hof"E(0, f(s(0), a))" )
     allL( "Ant_1", le"a" )
     unfold( "TopFuncDef" ) atMost 1 in "Ant_1_1"
-    foTheory
-    foTheory
-    foTheory
-    foTheory
+    ref( "TransitivityE" )
+    ref( "NumericTransitivity" )
+    ref( "minimalElement" )
+    ref( "minimalElement" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"phi 0 0", phiBc )
 
@@ -292,7 +292,7 @@ object ECSJumpSchema extends TacticsProof {
     allR( "cut_0", fov"b" )
     orR
     impR
-    foTheory
+    ref( "ordCondition" )
     exL( "cut1", fov"a" )
     allL( "cut1", fov"a" )
     allL( "cut1", le"(g a)" )
@@ -304,17 +304,17 @@ object ECSJumpSchema extends TacticsProof {
     impR
     trivial
     impL( "cut1_0" )
-    foTheory
+    ref( "reflexivity" )
     impR
     allL( "Ant_1", le"(g a)" )
     unfold( "TopFuncDef" ) atMost 1 in "Ant_1_0"
-    cut( "cut1", hof"E(s(n), f(s(0), g(a)))" )
-    foTheory
-    cut( "cut2", hof"E(s(n), f(s(0), a))" )
+    cut( "cut11", hof"E(s(n), f(s(0), g(a)))" )
+    ref( "TransitivityE" )
+    cut( "cut22", hof"E(s(n), f(s(0), a))" )
     allL( "Ant_1", le"a" )
     unfold( "TopFuncDef" ) atMost 1 in "Ant_1_1"
-    foTheory
-    foTheory
+    ref( "TransitivityE" )
+    ref( "NumericTransitivity" )
     ref( "phi" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"phi (s n) 0", phiSc1 )
@@ -362,7 +362,7 @@ object ECSJumpSchema extends TacticsProof {
     allL( "Ant_1", le"(g a)" )
     ref( "zeta" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi (s n)  (s m)", phiSc3 )
+  ctx += Context.ProofDefinitionDeclaration( le"phi (s n) (s m)", phiSc3 )
 
   /*
              ****          ****
@@ -427,7 +427,7 @@ object ECSJumpSchema extends TacticsProof {
     allL( "Ant_0", fov"a" )
     orL
     trivial
-    foTheory
+    ref( "LEDefinition" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"mu 0 (s n) x", muBc )
 
@@ -448,7 +448,7 @@ object ECSJumpSchema extends TacticsProof {
     allL( "Ant_0_0", fov"a" )
     orL
     trivial
-    foTheory
+    ref( "LEDefinition" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"mu (s m) (s n) x", muSc )
 
@@ -481,11 +481,11 @@ object ECSJumpSchema extends TacticsProof {
     allL( "Ant_3", le"x" )
     orL
     impL
-    foTheory
+    ref( "reflexivity" )
     cut( "cut1", hof"E(0, f(k, x))" )
-    foTheory
-    foTheory
-    foTheory
+    ref( "TransitivityE" )
+    ref( "NumericTransitivity" )
+    ref( "minimalElement" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"theta 0 k 0 x", thetaBc )
 
@@ -504,13 +504,14 @@ object ECSJumpSchema extends TacticsProof {
     allL( "Ant_3_1", le"x" )
     orL( "Ant_3_1_0" )
     impL
-    foTheory
+    ref( "reflexivity" )
     orL
     cut( "cut1", hof"E(0, f(k, x))" )
-    foTheory
-    foTheory
+    ref( "TransitivityE" )
+    ref( "NumericTransitivity" )
     ref( "theta" )
-    foTheory
+    ref( "minimalElement" )
+
   }
   ctx += Context.ProofDefinitionDeclaration( le"theta (s m) k 0 x", thetaBc2 )
 
@@ -545,9 +546,9 @@ object ECSJumpSchema extends TacticsProof {
     impL
     trivial
     cut( "cut1", hof"E(0, f(k, (g x)))" )
-    foTheory
-    foTheory
-    foTheory
+    ref( "TransitivityE" )
+    ref( "NumericTransitivity" )
+    ref( "minimalElement" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"epsilon 0 k 0 x", EpsilonBc )
 
@@ -569,10 +570,11 @@ object ECSJumpSchema extends TacticsProof {
     trivial
     orL
     cut( "cut1", hof"E(0, f(k, (g x)))" )
-    foTheory
-    foTheory
+    ref( "TransitivityE" )
+    ref( "NumericTransitivity" )
     ref( "epsilon" )
-    foTheory
+    ref( "minimalElement" )
+
   }
   ctx += Context.ProofDefinitionDeclaration( le"epsilon (s m) k 0 x", EpsilonBc2 )
 
@@ -604,18 +606,18 @@ object ECSJumpSchema extends TacticsProof {
     allL( "Ant_3", le"x" )
     orL
     impL
-    foTheory
+    ref( "reflexivity" )
     cut( "cut1", hof"E(0, f(k, x))" )
-    foTheory
+    ref( "TransitivityE" )
     allL( "Ant_3", le"(g x)" )
     orL
     impL
     trivial
     cut( "cut2", hof"E(0, f(k, g(x)))" )
-    foTheory
-    foTheory
-    foTheory
-    foTheory
+    ref( "TransitivityE" )
+    ref( "NumericTransitivity" )
+    ref( "minimalElement" )
+    ref( "minimalElement" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"gamma 0 k 0 x", GammaBc )
 
@@ -643,29 +645,29 @@ object ECSJumpSchema extends TacticsProof {
     allL( "Ant_3_1", le"x" )
     orL
     impL
-    foTheory
+    ref( "reflexivity" )
     focus( 1 )
-    foTheory
+    ref( "minimalElement" )
     cut( "cut1", hof"E(0, f(k, x))" )
-    foTheory
+    ref( "TransitivityE" )
     ref( "epsilon" )
     unfold( "CutDistinct" ) atMost 1 in "Ant_3"
     andL
     allL( "Ant_3_1", le"x" )
     orL
     impL
-    foTheory
+    ref( "reflexivity" )
     allL( "Ant_3_1", le"(g x)" )
     orL
     impL
     trivial
     cut( "cut1", hof"E(0, f(k, x))" )
-    foTheory
+    ref( "TransitivityE" )
     cut( "cut2", hof"E(0, f(k,(g x)))" )
-    foTheory
-    foTheory
-    foTheory
-    foTheory
+    ref( "TransitivityE" )
+    ref( "NumericTransitivity" )
+    ref( "minimalElement" )
+    ref( "minimalElement" )
     unfold( "CutDistinct" ) atMost 1 in "Ant_3"
     andL
     allL( "Ant_3_1", le"(g x)" )
@@ -673,9 +675,9 @@ object ECSJumpSchema extends TacticsProof {
     impL
     trivial
     cut( "cut2", hof"E(0, f(k,(g x)))" )
-    foTheory
+    ref( "TransitivityE" )
     ref( "theta" )
-    foTheory
+    ref( "minimalElement" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"gamma (s m) k 0 x", GammaBc2 )
 
@@ -724,17 +726,17 @@ object ECSJumpSchema extends TacticsProof {
     allL( fov"c" )
     orL
     impL
-    foTheory
+    ref( "TransitivityiLEQ" )
     trivial
     exR( "Suc_2", fov"c" )
     ref( "pi" )
     allL( "Ant_0", fov"a" )
     orL
     impL
-    foTheory
+    ref( "reflexivity" )
     exR( "Suc_2", fov"b" )
     ref( "pi" )
-    foTheory
+    ref( "ordCondition" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"delta n 0 k a", deltaBc )
 
@@ -764,7 +766,7 @@ object ECSJumpSchema extends TacticsProof {
     allL( fov"c" )
     orL
     impL
-    foTheory
+    ref( "TransitivityiLEQ" )
     trivial
     exR( "Suc_2", fov"c" )
     ref( "pi" )
@@ -814,17 +816,6 @@ object ECSJumpSchema extends TacticsProof {
   }
   ctx += Context.ProofDefinitionDeclaration( le"pi 0 n 0 a", PiBc )
 
-  val esPiSc =
-    Sequent(
-      Seq( "Ant_0" -> hof"LE(f(m, a), n)" ),
-      Seq( "Suc_0" -> hof"CutLess(s(k), n, a)" ) )
-  val PiSc = Lemma( esPiSc ) {
-    unfold( "CutLess" ) atMost 1 in "Suc_0"
-    orR
-    ref( "pi" )
-  }
-  ctx += Context.ProofDefinitionDeclaration( le"pi (s k) n m  a", PiSc )
-
   val esPiBc2 =
     Sequent(
       Seq( "Ant_0" -> hof"LE(f(s(k), a), n)" ),
@@ -835,6 +826,17 @@ object ECSJumpSchema extends TacticsProof {
     trivial
   }
   ctx += Context.ProofDefinitionDeclaration( le"pi (s k) n (s k)  a", PiBc2 )
+
+  val esPiSc =
+    Sequent(
+      Seq( "Ant_0" -> hof"LE(f(m, a), n)" ),
+      Seq( "Suc_0" -> hof"CutLess(s(k), n, a)" ) )
+  val PiSc = Lemma( esPiSc ) {
+    unfold( "CutLess" ) atMost 1 in "Suc_0"
+    orR
+    ref( "pi" )
+  }
+  ctx += Context.ProofDefinitionDeclaration( le"pi (s k) n m  a", PiSc )
 
   /*
        *************************
@@ -870,7 +872,7 @@ object ECSJumpSchema extends TacticsProof {
     allL( fov"c" )
     orL
     impL
-    foTheory
+    ref( "TransitivityiLEQ" )
     trivial
     exR( fov"c" )
     ref( "pi" )
@@ -896,7 +898,7 @@ object ECSJumpSchema extends TacticsProof {
     allL( fov"c" )
     orL
     impL
-    foTheory
+    ref( "TransitivityiLEQ" )
     trivial
     exR( fov"c" )
     ref( "pi" )
@@ -984,15 +986,15 @@ object ECSJumpSchema extends TacticsProof {
     unfold( "TopFuncDef" ) atMost 1 in "Ant_3"
     allL( "Ant_0", fov"a" )
     impL
-    foTheory
+    ref( "reflexivity" )
     cut( "cut2", hof"E(n, f(k,a))" )
-    foTheory
+    ref( "TransitivityE" )
     allL( "Ant_0", le"(g a)" )
     impL
     trivial
     cut( "cut2", hof"E(n, f(k,g(a)))" )
-    foTheory
-    foTheory
+    ref( "TransitivityE" )
+    ref( "NumericTransitivity" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"zeta n 0 k a", ZetaBc )
 
@@ -1012,23 +1014,23 @@ object ECSJumpSchema extends TacticsProof {
     allL( "Ant_0_1", fov"a" )
     orL( "Ant_2" )
     impL
-    foTheory
+    ref( "reflexivity" )
     cut( "cut2", hof"E(n, f(k,a))" )
-    foTheory
+    ref( "TransitivityE" )
     orL
     allL( "Ant_0_1", le"(g a)" )
     impL
     trivial
     cut( "cut2", hof"E(n, f(k,g(a)))" )
-    foTheory
-    foTheory
+    ref( "TransitivityE" )
+    ref( "NumericTransitivity" )
     ref( "xi" )
     orL
     allL( "Ant_0_1", le"(g a)" )
     impL( "Ant_0_1_1" )
     trivial
     cut( "cut2", hof"E(n, f(k,g(a)))" )
-    foTheory
+    ref( "TransitivityE" )
     ref( "chi" )
     ref( "zeta" )
 
@@ -1050,8 +1052,8 @@ object ECSJumpSchema extends TacticsProof {
     impL
     trivial
     cut( "cut2", hof"E(n, f(k,g(a)))" )
-    foTheory
-    foTheory
+    ref( "TransitivityE" )
+    ref( "NumericTransitivity" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"xi n 0 k a", xiBc )
 
@@ -1072,8 +1074,8 @@ object ECSJumpSchema extends TacticsProof {
     impL
     trivial
     cut( "cut2", hof"E(n, f(k,g(a)))" )
-    foTheory
-    foTheory
+    ref( "TransitivityE" )
+    ref( "NumericTransitivity" )
     ref( "xi" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"xi n (s m) k a", xiSc )
@@ -1091,10 +1093,10 @@ object ECSJumpSchema extends TacticsProof {
     unfold( "TopFuncDef" ) atMost 1 in "Ant_3"
     allL( "Ant_0", le"a" )
     impL
-    foTheory
+    ref( "reflexivity" )
     cut( "cut2", hof"E(n, f(k,a))" )
-    foTheory
-    foTheory
+    ref( "TransitivityE" )
+    ref( "NumericTransitivity" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"chi n 0 k a", chiBc )
 
@@ -1113,10 +1115,10 @@ object ECSJumpSchema extends TacticsProof {
     orL
     allL( "Ant_0_1", le"a" )
     impL
-    foTheory
+    ref( "reflexivity" )
     cut( "cut2", hof"E(n, f(k,a))" )
-    foTheory
-    foTheory
+    ref( "TransitivityE" )
+    ref( "NumericTransitivity" )
     ref( "chi" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"chi n (s m) k a", chiSc )
@@ -1159,9 +1161,10 @@ object ECSJumpSchema extends TacticsProof {
         "Suc_1" -> hof"LE(f(m, b), n)" ) )
   val alphaBc = Lemma( esAlphaBc ) {
     unfold( "CutLess" ) atMost 1 in "Ant_0"
-    foTheory
+    ref( "ordCondition" )
+
   }
-  ctx += Context.ProofDefinitionDeclaration( le"alpha 0 n m  a b", alphaBc )
+  ctx += Context.ProofDefinitionDeclaration( le"alpha 0 n m a b", alphaBc )
 
   val esAlphaSc =
     Sequent(
@@ -1175,7 +1178,8 @@ object ECSJumpSchema extends TacticsProof {
     unfold( "CutLess" ) atMost 1 in "Ant_0"
     orL
     ref( "alpha" )
-    foTheory
+    ref( "ordCondition" )
+
   }
-  ctx += Context.ProofDefinitionDeclaration( le"alpha (s k) n m  a b", alphaSc )
+  ctx += Context.ProofDefinitionDeclaration( le"alpha (s k) n m a b", alphaSc )
 }
