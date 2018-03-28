@@ -6,7 +6,7 @@ package at.logic.gapt.examples
   import at.logic.gapt.proofs.gaptic.TacticsProof
   import at.logic.gapt.proofs.gaptic._
 
-  object MultiSuccessorStrictMonotoneSchema extends TacticsProof {
+  object VeryWeakPHPSequenceSchema extends TacticsProof {
     ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
     ctx += Context.Sort( "i" )
     ctx += hoc"f:nat>i>nat"
@@ -63,13 +63,16 @@ package at.logic.gapt.examples
       ref( "phi" )
     }
     ctx += Context.ProofDefinitionDeclaration( le"omega 0 0", omegaBc )
-    
+
     val esOmegaSc =
       Sequent(
-        Seq( "Ant_0" -> hof"!x POR(s(n),x)" ),
-        Seq( "Suc_0" -> hof"?x (E(f(x), f(suc(x))))" ) )
+        Seq( "Ant_0" -> hof"PAND(0,s(n))",
+             "Ant_1" -> hof"!x TopFuncDef(0,s(0),x)"),
+        Seq( "Suc_0" -> hof"?x (E(f(0,x), f(0,suc(x))))" ) )
     val omegaSc = Lemma( esOmegaSc ) {
-      cut( "cut", hof"?x ( E(s(n),f(x)) & E(s(n),f(suc(x)))) | !y (LE(f(y),s(n)))" )
+      cut( "cut", hof"?x CutDistinct(0,s(n),x)" )
+      unfold( "CutDistinct" ) atMost 1 in "cut"
+      unfold( "PAND" ) atMost 1 in "Ant_0"
       orR
       allR( "cut_1", fov"a" )
       exR( "cut_0", fov"a" )
@@ -87,7 +90,7 @@ package at.logic.gapt.examples
       ref( "phi" )
 
     }
-    ctx += Context.ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
+    ctx += Context.ProofDefinitionDeclaration( le"omega (s n) 0", omegaSc )
 
     val esPhiBc =
       Sequent(
