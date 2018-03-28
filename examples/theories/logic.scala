@@ -383,6 +383,12 @@ object logic extends Theory {
   dfn( hof"compose{?a?b?c} (g:?b>?c) (f:?a>?b) x = g (f x)" )
   attr( "simp" )( "compose" )
 
+  val propext = axiom( hof"!p!q ((p <-> q) -> p = q)" )
+  val funext = axiom( hof"!f!g (!x f(x) = g(x) -> f = g)" )
+
+  val propextiff = lemma( hof"(p = q) <-> (p <-> q)" ) { andR onAll impR onAll simp.h( "propext" ) }
+  val funextiff = lemma( hof"(f = g) <-> (!x f(x) = g(x))" ) { andR onAll impR onAll simp.h( "funext" ) }
+
 }
 
 object props extends Theory( logic ) {

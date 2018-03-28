@@ -34,7 +34,7 @@ object set extends Theory( logic ) {
   infix( "∪", Precedence.plusMinus, const = "union" )
   infix( "⊂", Precedence.infixRel, const = "subset" )
 
-  val extAxiom = axiom( hof" ∀(X: ?a > o) ∀(Y: ?a > o) (X = Y <-> ∀(x: ?a) (X(x) <-> Y(x)))" )
+  val extAxiom = lemma( hof"X = Y <-> ∀x (X(x) <-> Y(x))" ) { simp.w( "funextiff", "propextiff" ) }
 
   val compComp = lemma( hof"comp(comp(X)) = X", "simp" ) { simp.w( "extAxiom", "comp" ) }
 
