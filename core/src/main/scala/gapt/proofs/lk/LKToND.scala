@@ -223,14 +223,19 @@ object LKToND {
 
       // Propositional rules
       case p @ NegLeftRule( subProof, aux ) =>
-        val Neg( a ) = p.mainFormula
-        val focusMain = subProof.endSequent.indexOf( a, Polarity.InSuccedent )
-        val t = nd.ProofBuilder.
-          c( nd.LogicalAxiom( p.mainFormula ) ).
-          c( translate( subProof, Some( focusMain ) ) ).
-          b( NegElimRule( _, _ ) ).
-          qed
-        exchange( t, focus.map( p.endSequent.apply ) )
+        focus.map( p.endSequent.apply ) match {
+          case Some( f ) =>
+            val focusMain = subProof.endSequent.indexOf( f, Polarity.InSuccedent )
+            translate( subProof, Some( focusMain ) )
+          case None =>
+            val Neg( a ) = p.mainFormula
+            val focusMain = subProof.endSequent.indexOf( a, Polarity.InSuccedent )
+            nd.ProofBuilder.
+              c( nd.LogicalAxiom( p.mainFormula ) ).
+              c( translate( subProof, Some( focusMain ) ) ).
+              b( NegElimRule( _, _ ) ).
+              qed
+        }
 
       case p @ NegRightRule( subProof, aux ) =>
 
@@ -299,8 +304,14 @@ object LKToND {
           p.getLeftSequentConnector.parentOption( focus.get ) == None ) {
           if ( tl.endSequent( Suc( 0 ) ) == Bottom() )
             BottomElimRule( tl, p.endSequent( focus.get ) )
-          else
-            exchange( WeakeningRule( tl, Neg( p.endSequent( focus.get ) ) ), focus.map( p.endSequent.apply ) )
+          else {
+            nd.ProofBuilder.
+              c( nd.LogicalAxiom( -tl.endSequent( Suc( 0 ) ) ) ).
+              c( tl ).
+              b( NegElimRule( _, _ ) ).
+              u( BottomElimRule( _, p.endSequent( focus.get ) ) ).
+              qed
+          }
         } else tl
 
         val tr = translate(
@@ -312,8 +323,14 @@ object LKToND {
           p.getRightSequentConnector.parentOption( focus.get ) == None ) {
           if ( tr.endSequent( Suc( 0 ) ) == Bottom() )
             BottomElimRule( tr, p.endSequent( focus.get ) )
-          else
-            exchange( WeakeningRule( tr, Neg( p.endSequent( focus.get ) ) ), focus.map( p.endSequent.apply ) )
+          else {
+            nd.ProofBuilder.
+              c( nd.LogicalAxiom( -tr.endSequent( Suc( 0 ) ) ) ).
+              c( tr ).
+              b( NegElimRule( _, _ ) ).
+              u( BottomElimRule( _, p.endSequent( focus.get ) ) ).
+              qed
+          }
         } else tr
 
         OrElimRule( nd.LogicalAxiom( p.mainFormula ), wtl, wtr )
