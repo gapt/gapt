@@ -197,7 +197,7 @@ object MRealizability {
         sub1( sub2( mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ) + ( aux -> extraVar ), ng ) ) )
 
       case TheoryAxiom( mainFormula ) =>
-        Var(ng.fresh(s"mrealizer(${mainFormula})"),flat(mainFormula))
+        Var( ng.fresh( s"mrealizer(${mainFormula})" ), flat( mainFormula ) )
 
       case EqualityElimRule( leftSubProof, rightSubProof, formulaA, variablex ) =>
         mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ), ng )
