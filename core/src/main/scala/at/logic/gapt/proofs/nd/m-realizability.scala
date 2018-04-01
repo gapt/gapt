@@ -196,9 +196,8 @@ object MRealizability {
         val sub2 = Substitution( extraVar, le"pi2($mrealizerLeft)" )
         sub1( sub2( mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ) + ( aux -> extraVar ), ng ) ) )
 
-      // only to be used when mainFormula is an equation
       case TheoryAxiom( mainFormula ) =>
-        le"i"
+        Var(ng.fresh(s"mrealizer(${mainFormula})"),flat(mainFormula))
 
       case EqualityElimRule( leftSubProof, rightSubProof, formulaA, variablex ) =>
         mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ), ng )
