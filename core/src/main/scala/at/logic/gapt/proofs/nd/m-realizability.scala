@@ -223,7 +223,7 @@ object MRealizability {
         mrealizeCases( subProof, variables, ng )
 
       case ExcludedMiddleRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-        throw new MRealizerCreationException( proof.longName, "This rule is not admitted in intuitionistic ND." )
+        throw new Exception( "This rule is not admitted in intuitionistic ND." )
     }
   }
 
@@ -369,5 +369,3 @@ object MRealizability {
   }
 
 }
-
-class MRealizerCreationException( name: String, message: String ) extends Exception( s"Cannot create an m-realizer for $name: " + message )
