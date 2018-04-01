@@ -14,10 +14,8 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
   ctx += hoc"z:i"
   ctx += hoc"E: nat>nat>o"
   ctx += hoc"LE: nat>nat>o"
- //Needs to be reworked into exists x cutdistinct(m,n,x)
- //otherwise we run into eigenvariable problems :/
   ctx += hoc"omega: nat>nat>nat"
-  ctx += hoc"gamma: nat>nat>i>nat"
+  ctx += hoc"gamma: nat>nat>nat"
   ctx += hoc"phi: nat>nat>nat"
   ctx += hoc"mu: nat>nat>nat>nat"
   ctx += hoc"epsilon: nat>nat>nat>nat>nat"// prove
@@ -33,10 +31,10 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
   ctx += PrimRecFun( hoc"PAND:nat>nat>o", "(PAND 0 n)= (∀x (POR n 0 x))", "(PAND (s m) n) = ((∀x (POR n (s m) x)) & (PAND m n))" )
   ctx += PrimRecFun( hoc"TopFuncDef:nat>nat>i>o", "(TopFuncDef 0 k x)= (E (f 0 x) (f k x)) ", "(TopFuncDef (s m) k x)= ((E (f (s m) x) (f k x)) | (TopFuncDef m k x))" )
   ctx += PrimRecFun(
-    hoc"CutDistinct:nat>nat>i>o",
-    "(CutDistinct 0 n x) =  (  ((E n (f 0 x)) & (E n (f 0 (suc x))) ) | (∀y (LE (f 0 y) n)))",
-    "(CutDistinct (s m) n x) = (" +
-      "(CutDistinct m n x) & (  ((E n (f (s m) x)) & (E n (f (s m) (suc x))) ) | (∀y (LE (f (s m) y) n)))" +
+    hoc"CutDistinct:nat>nat>o",
+    "(CutDistinct 0 n) =  ( (∃x ((E n (f 0 x)) & (E n (f 0 (suc x)))) ) | (∀y (LE (f 0 y) n)))",
+    "(CutDistinct (s m) n ) = (" +
+      "(CutDistinct m n) & ( (∃x ((E n (f (s m) x)) & (E n (f (s m) (suc x)))) ) | (∀y (LE (f (s m) y) n)))" +
       ")" )
   ctx += "LEDefinition" -> hos"POR(n,m,a) :- LE(f(m,a), s(n))"
   ctx += "LEDefinition2" -> hos"POR(n,m, suc(a)) :- LE(f(m,a), s(n))"
@@ -54,29 +52,29 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
   ctx += Context.ProofNameDeclaration( le"omega n m", esOmega )
   val esGamma = Sequent(
     Seq(hof"PAND(m,n)"),
-    Seq(hof"CutDistinct(m,n,x)"))
-  ctx += Context.ProofNameDeclaration( le"gamma n m x", esGamma )
+    Seq(hof"CutDistinct(m,n)"))
+  ctx += Context.ProofNameDeclaration( le"gamma n m", esGamma )
   val esPhi = Sequent(
     Seq(
-      hof"?x CutDistinct(m,n,x)",
+      hof" CutDistinct(m,n)",
       hof"!x TopFuncDef(m,s(m),x)" ),
     Seq( hof"?x ( E(f(s(m),x), f(s(m),suc(x))) )" ) )
   ctx += Context.ProofNameDeclaration( le"phi n m", esPhi )
   val esMu = Sequent(
     Seq(
-      hof"?x CutDistinct(m,s(n),x)",
+      hof"CutDistinct(m,s(n))",
       hof"!x TopFuncDef(m,k,x)" ),
     Seq( hof"?x ( E(f(k,x), f(k,suc(x))) )",
-         hof"?x CutDistinct(m,n,x)") )
+         hof"CutDistinct(m,n)") )
   ctx += Context.ProofNameDeclaration( le"mu n m k", esMu )
   val esEpsilon = Sequent(
     Seq( hof"!x TopFuncDef(m, w,x)",
-        hof"?x CutDistinct(k,n, x)"),
+        hof"CutDistinct(k,n)"),
     Seq( hof"?x E(f(w, x), f(w, suc(x)))" ) )
   ctx += Context.ProofNameDeclaration( le"epsilon m k w n", esEpsilon )
   val esEpsilon2 = Sequent(
     Seq( hof"!x TopFuncDef(m,w,x)",
-      hof"?x CutDistinct(k,s(n),x)"),
+      hof"CutDistinct(k,s(n))"),
     Seq( hof"?x E(f(w, x), f(w, suc(x)))",
          hof"(E(n, f(m, y)) & E(n, f(m, suc(y))))",
          hof"LE(f(m, y), n)") )
@@ -84,36 +82,36 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
   val esEpsilon3 = Sequent(
     Seq( hof"TopFuncDef(m, k,suc(x))",
          hof"E(s(n), f(k, x))",
-         hof"?x CutDistinct(m,s(n),x)"),
+         hof"CutDistinct(m,s(n))"),
     Seq( hof"?x E(f(k, x), f(k, suc(x)))",
-         hof"?x CutDistinct(m,n,x)" ) )
+         hof" CutDistinct(m,n)" ) )
   ctx += Context.ProofNameDeclaration( le"epsilon3 m k n x", esEpsilon3 )
   val esEpsilon4 = Sequent(
     Seq( hof"TopFuncDef(m, k,x)",
       hof"E(s(n), f(k, suc(x)))",
-      hof"?x CutDistinct(m,s(n),x)"),
+      hof"CutDistinct(m,s(n))"),
     Seq( hof"?x E(f(k, x), f(k, suc(x)))",
-      hof"?x  CutDistinct(m,n,x)" ) )
+      hof" CutDistinct(m,n)" ) )
   ctx += Context.ProofNameDeclaration( le"epsilon4 m k n x", esEpsilon4 )
 
   val esEpsilon5 = Sequent(
     Seq( hof"TopFuncDef(m, k,x)",
          hof"TopFuncDef(m, k,suc(x))",
-         hof"?x CutDistinct(m,s(n),x)"),
+         hof"CutDistinct(m,s(n))"),
     Seq( hof"?x E(f(k, x), f(k, suc(x)))",
-      hof"?x CutDistinct(m,n,x)" ) )
+      hof"CutDistinct(m,n)" ) )
   ctx += Context.ProofNameDeclaration( le"epsilon5 m k n x", esEpsilon5)
 
   val eszeta = Sequent(
     Seq(
-      hof"?x CutDistinct(m,n,x)",
+      hof"CutDistinct(m,n)",
       hof"TopFuncDef(m, k, x)",
       hof"TopFuncDef(m, k, suc(x))" ),
     Seq( hof" E(f(k,x), f(k,suc(x))) " ) )
   ctx += Context.ProofNameDeclaration( le"zeta n m k x", eszeta )
   val espi = Sequent(
     Seq( hof"!x LE(f(k, x), s(n))" ),
-    Seq( hof"?x CutDistinct(m,n,x)" ) )
+    Seq( hof"CutDistinct(m,n)" ) )
   ctx += Context.ProofNameDeclaration( le"pi n m k", espi )
   //The base case of  omega
   val esOmegaBc =
@@ -123,11 +121,11 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
         "Ant_1" -> hof"!x TopFuncDef(0,s(0),x)" ),
       Seq( "Suc_0" -> hof"?x (E(f(s(0),x), f(s(0),suc(x))))" ) )
   val omegaBc = Lemma( esOmegaBc ) {
-    cut( "cut", hof"?x CutDistinct(0,0,x)" )
+    cut( "cut", hof"CutDistinct(0,0)" )
     unfold( "CutDistinct" ) atMost 1 in "cut"
     unfold( "PAND" ) atMost 1 in "Ant_0"
-    exR("cut",hoc"z")
     orR
+    exR("cut_0",hoc"z")
     andR
     allL( "Ant_0", hoc"z" )
      unfold( "POR" ) atMost 1 in "Ant_0_0"
@@ -147,27 +145,24 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
         "Ant_1" -> hof"!x TopFuncDef(s(m),s(s(m)),x)" ),
       Seq( "Suc_0" -> hof"?x (E(f(s(s(m)),x), f(s(s(m)),suc(x))))" ) )
   val omegaBc2 = Lemma( esOmegaBc2 ) {
-    cut( "cut", hof"?x CutDistinct(s(m),0,x)" )
+    cut( "cut", hof"CutDistinct(s(m),0)" )
     unfold( "CutDistinct" ) atMost 1 in "cut"
     unfold( "PAND" ) atMost 1 in "Ant_0"
     andL
-    exR("cut",hoc"z")
     andR
     ref( "gamma" )
     orR
     allR(fov"a")
-    exR("cut",fov"a")
-    andR("cut_1")
-    ref( "gamma" )
-    orR
+    exR("cut_0",fov"a")
+    andR
     allL("Ant_0_0",fov"a")
     unfold( "POR" ) atMost 1 in "Ant_0_0_0"
+    trivial
     allL("Ant_0_0",le"(suc a)")
-    unfold( "POR" ) atMost 1 in "Ant_0_0_1"
-    andR("cut_1_0")
-       trivial
-       trivial
-       ref( "phi" )
+    unfold( "POR" ) atMost 1 in "Ant_0_0_0"
+    trivial
+    ref( "phi" )
+
   }
   ctx += Context.ProofDefinitionDeclaration( le"omega 0 (s m)", omegaBc2 )
 
@@ -178,27 +173,24 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
         "Ant_1" -> hof"!x TopFuncDef(0,s(0),x)" ),
       Seq( "Suc_0" -> hof"?x (E(f(s(0),x), f(s(0),suc(x))))" ) )
   val omegaBc3 = Lemma( esOmegaBc3 ) {
-    cut( "cut", hof"?x CutDistinct(0,s(n),x)" )
+    cut( "cut", hof"CutDistinct(0,s(n))" )
     unfold( "CutDistinct" ) atMost 1 in "cut"
     unfold( "PAND" ) atMost 1 in "Ant_0"
-    exR( "cut", hoc"z" )
     orR
-    allR( "cut_0_1", fov"a" )
-    exR( "cut", fov"a"  )
-    orR
-
-     andR("cut_1_0")
-     allL( "Ant_0", fov"a" )
-     unfold( "POR" ) atMost 1 in "Ant_0_0"
-     orL
-     trivial
-     ref( "LEDefinition" )
-     allL( "Ant_0", le"(suc a)" )
-     unfold( "POR" ) atMost 1 in "Ant_0_0"
-     orL
-     trivial
-     ref( "LEDefinition2" )
-     ref( "phi" )
+    allR( "cut_1", fov"a" )
+    exR( "cut_0", fov"a"  )
+    allL( "Ant_0", fov"a" )
+    unfold( "POR" ) atMost 1 in "Ant_0_0"
+    orL
+    allL( "Ant_0", le"(suc a)" )
+    unfold( "POR" ) atMost 1 in "Ant_0_1"
+    orL
+    andR
+    trivial
+    trivial
+    ref( "LEDefinition2" )
+    ref( "LEDefinition" )
+    ref( "phi" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"omega (s n) 0", omegaBc3 )
 
@@ -210,55 +202,52 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
         "Ant_1" -> hof"!x TopFuncDef(s(m),s(s(m)),x)" ),
       Seq( "Suc_0" -> hof"?x (E(f(s(s(m)),x), f(s(s(m)),suc(x))))" ) )
   val OmegaSc = Lemma( esOmegaSc ) {
-    cut( "cut", hof"?x CutDistinct(s(m),s(n),x)" )
+    cut( "cut", hof"CutDistinct(s(m),s(n))" )
     unfold( "CutDistinct" ) atMost 1 in "cut"
     unfold( "PAND" ) atMost 1 in "Ant_0"
     andL
-    exR("cut",hoc"z")
     andR
     ref( "gamma" )
-     orR
-    allR(fov"a")
-    exR("cut",fov"a")
-    andR("cut_1")
-    ref( "gamma" )
     orR
-     allL("Ant_0_0",fov"a")
-     unfold( "POR" ) atMost 1 in "Ant_0_0_0"
-     allL("Ant_0_0",le"(suc a)")
-     unfold( "POR" ) atMost 1 in "Ant_0_0_1"
-     orL("Ant_0_0_0")
-     orL("Ant_0_0_1")
-     andR("cut_1_0")
-     trivial
-     trivial
-     ref( "LEDefinition2" )
-     ref( "LEDefinition" )
-     ref( "phi" )
+    allR(fov"a")
+    exR("cut_0",fov"a")
+    andR
+    allL("Ant_0_0",fov"a")
+    unfold( "POR" ) atMost 1 in "Ant_0_0_0"
+    orL("Ant_0_0_0")
+    trivial
+    ref( "LEDefinition" )
+    allL("Ant_0_0",le"(suc a)")
+    unfold( "POR" ) atMost 1 in "Ant_0_0_0"
+    orL("Ant_0_0_0")
+    trivial
+    ref( "LEDefinition2" )
+    ref( "phi" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"omega (s n) (s m)", OmegaSc )
 
   val esGammaBc =
     Sequent(
       Seq("Ant_0" -> hof"PAND(0,0)"),
-      Seq("Suc_0" -> hof" CutDistinct(0,0,x)") )
+      Seq("Suc_0" -> hof" CutDistinct(0,0)") )
   val gammaBc = Lemma( esGammaBc ) {
     unfold( "CutDistinct" ) atMost 1 in "Suc_0"
     unfold( "PAND" ) atMost 1 in "Ant_0"
     orR
     allR( "Suc_0_1", fov"a")
+    exR( "Suc_0_0", fov"a")
     unfold( "POR" ) atMost 1 in "Ant_0"
-    allL(fov"x")
-    allL(le"(suc x)")
+    allL(fov"a")
+    allL(le"(suc a)")
     andR
     trivial
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"gamma 0 0 x", gammaBc )
+  ctx += Context.ProofDefinitionDeclaration( le"gamma 0 0", gammaBc )
   val esGammaBc2 =
     Sequent(
       Seq("Ant_0" -> hof"PAND(s(m),0)"),
-      Seq("Suc_0" -> hof"CutDistinct(s(m),0,x)") )
+      Seq("Suc_0" -> hof"CutDistinct(s(m),0)") )
   val gammaBc2 = Lemma( esGammaBc2 ) {
     unfold( "CutDistinct" ) atMost 1 in "Suc_0"
     unfold( "PAND" ) atMost 1 in "Ant_0"
@@ -267,39 +256,41 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
     ref( "gamma" )
     orR
     allR( "Suc_0_1", fov"a")
+    exR( "Suc_0_0", fov"a")
     unfold( "POR" ) atMost 1 in "Ant_0_0"
-    allL(fov"x")
-    allL(le"(suc x)")
+    allL(fov"a")
+    allL(le"(suc a)")
     andR
     trivial
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"gamma 0 (s m) x", gammaBc2 )
+  ctx += Context.ProofDefinitionDeclaration( le"gamma 0 (s m)", gammaBc2 )
 
   val esGammaBc3 =
     Sequent(
       Seq("Ant_0" -> hof"PAND(0,s(n))"),
-      Seq("Suc_0" -> hof" CutDistinct(0,s(n),x)") )
+      Seq("Suc_0" -> hof" CutDistinct(0,s(n))") )
   val gammaBc3 = Lemma( esGammaBc3 ) {
     unfold( "CutDistinct" ) atMost 1 in "Suc_0"
     unfold( "PAND" ) atMost 1 in "Ant_0"
     orR
     allR( "Suc_0_1", fov"a")
+    exR( "Suc_0_0", fov"a")
     unfold( "POR" ) atMost 1 in "Ant_0"
-    allL(fov"x")
+    allL(fov"a")
     orL
-    allL(le"(suc x)")
-    orL
-    andR
-    trivial
-    trivial
-    allL(le"(suc x)")
+    allL(le"(suc a)")
     orL
     andR
     trivial
     trivial
- //   ref( "LEDefinition2" ) //FUCK!!!!!
- //   ref( "LEDefinition" )
+    allL(le"(suc a)")
+    orL
+    andR
+    trivial
+    trivial
+    ref( "LEDefinition2" )
+    ref( "LEDefinition" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"gamma (s n) 0", gammaBc3 )
 
@@ -307,7 +298,7 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
   val esGammaSc  =
     Sequent(
       Seq("Ant_0" -> hof"PAND(s(m),s(n))"),
-      Seq("Suc_0" -> hof"?x CutDistinct(s(m),s(n),x)") )
+      Seq("Suc_0" -> hof"CutDistinct(s(m),s(n))") )
   val gammaSc = Lemma( esGammaSc ) {
     unfold( "CutDistinct" ) atMost 1 in "Suc_0"
     unfold( "PAND" ) atMost 1 in "Ant_0"
@@ -337,7 +328,7 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
 
   val esPhiBc =
     Sequent(
-      Seq( "Ant_0" -> hof"?x CutDistinct(0,0,x)",
+      Seq( "Ant_0" -> hof"CutDistinct(0,0)",
            "Ant_1" -> hof"!x TopFuncDef(0,s(0),x)" ),
   Seq( "Suc_0" -> hof"?x (E(f(s(0),x), f(s(0),suc(x))) )" ) )
   val phiBc = Lemma( esPhiBc ) {
@@ -362,11 +353,11 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
 
   val esPhiBc2 =
     Sequent(
-      Seq( "Ant_0" -> hof"?x CutDistinct(0,s(n),x)",
+      Seq( "Ant_0" -> hof"CutDistinct(0,s(n))",
         "Ant_1" -> hof"!x TopFuncDef(0,s(0),x)" ),
       Seq( "Suc_0" -> hof"?x (E(f(s(0),x), f(s(0),suc(x))) )" ) )
   val phiBc2 = Lemma( esPhiBc2 ) {
-    cut("cut",hof"?x CutDistinct(0,n,x)")
+    cut("cut",hof"CutDistinct(0,n)")
     unfold( "CutDistinct" ) atMost 1 in "Ant_0"
     unfold( "CutDistinct" ) atMost 1 in "cut"
     orR
@@ -398,7 +389,7 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
 
   val esPhiBc3 =
     Sequent(
-      Seq( "Ant_0" -> hof"?x CutDistinct(s(m),0,x)",
+      Seq( "Ant_0" -> hof"CutDistinct(s(m),0)",
         "Ant_1" -> hof"!x TopFuncDef(s(m),s(s(m)),x)" ),
       Seq( "Suc_0" -> hof"?x (E(f(s(s(m)),x), f(s(s(m)),suc(x))) )" ) )
   val phiBc3 = Lemma( esPhiBc3 ) {
@@ -440,11 +431,11 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
 
   val esPhiSc =
     Sequent(
-      Seq( "Ant_0" -> hof"?x CutDistinct(s(m),s(n),x)",
+      Seq( "Ant_0" -> hof"CutDistinct(s(m),s(n))",
         "Ant_1" -> hof"!x TopFuncDef(s(m),s(s(m)),x)" ),
       Seq( "Suc_0" -> hof"?x (E(f(s(s(m)),x), f(s(s(m)),suc(x))) )" ) )
   val phiSc = Lemma( esPhiSc ) {
-    cut("cut",hof"?x CutDistinct(s(m),n,x)")
+    cut("cut",hof"CutDistinct(s(m),n)")
     ref( "mu" )
     ref( "phi")
   }
@@ -452,10 +443,10 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
 
   val esMuBc =
     Sequent(
-      Seq( "Ant_0" -> hof"?x CutDistinct(0,s(n),x)",
+      Seq( "Ant_0" -> hof"CutDistinct(0,s(n))",
         "Ant_1" -> hof"!x TopFuncDef(0,k,x)" ),
       Seq( "Suc_0" -> hof"?x (E(f(k,x), f(k,suc(x))) )",
-        "Suc_1" -> hof"?x CutDistinct(0,n,x)") )
+        "Suc_1" -> hof"CutDistinct(0,n)") )
   val muBc = Lemma( esMuBc ) {
     unfold( "CutDistinct" ) atMost 1 in "Ant_0"
     unfold( "CutDistinct" ) atMost 1 in "Suc_1"
@@ -486,10 +477,10 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
 
   val esMuSc =
     Sequent(
-      Seq( "Ant_0" -> hof"?x CutDistinct(s(m),s(n),x)",
+      Seq( "Ant_0" -> hof"CutDistinct(s(m),s(n))",
         "Ant_1" -> hof"!x TopFuncDef(s(m),k,x)" ),
       Seq( "Suc_0" -> hof"?x (E(f(k,x), f(k,suc(x))) )",
-           "Suc_1" -> hof"?x CutDistinct(s(m),n,x)") )
+           "Suc_1" -> hof"CutDistinct(s(m),n)") )
   val muSc = Lemma( esMuSc ) {
       unfold( "CutDistinct" ) atMost 1 in "Ant_0"
       unfold( "CutDistinct" ) atMost 1 in "Suc_1"
@@ -588,12 +579,12 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
         "Ant_0" -> hof"E(0, f(k, x))",
         "Ant_1" -> hof"TopFuncDef(0, k, g(x))",
         "Ant_2" -> hof"iLEQ(x, g(x))",
-        "Ant_3" -> hof"?x CutDistinct(0,0,x)" ),
+        "Ant_3" -> hof"CutDistinct(0,0)" ),
       Seq( "Suc_2" -> hof"E(f(k, x), f(k, g(x)))" ) )
   val EpsilonBc = Lemma( esEpsilonBc ) {
     unfold( "CutDistinct" ) atMost 1 in "Ant_3"
     unfold( "TopFuncDef" ) atMost 1 in "Ant_1"
-    allL( "Ant_3", le"(g x)" )
+    allL( "Ant_3", le"(suc x)" )
     orL
     impL
     trivial
@@ -606,12 +597,12 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
 
   Sequent(
     Seq( hof"!x TopFuncDef(m, w,x)",
-      hof"?x CutDistinct(k,n,x)"),
+      hof"CutDistinct(k,n)"),
     Seq( hof"?x E(f(w, x), f(w, suc(x)))" ) )
   val esEpsilonSc =
     Sequent(
       Seq("Ant_1" -> hof"!x TopFuncDef((s m), k, x)",
-        "Ant_3" -> hof"?x CutDistinct(k,0,x)" ),
+        "Ant_3" -> hof"CutDistinct(k,0)" ),
       Seq( "Suc_2" -> hof"?x E(f(k, x), f(k, g(x)))" ) )
   val EpsilonSc = Lemma( esEpsilonSc ) {
     unfold( "CutDistinct" ) atMost 1 in "Ant_3"
