@@ -9,7 +9,13 @@ import at.logic.gapt.utils.NameGenerator
 
 object MRealizability {
 
-  // recursor constant for indType with resultType
+  /**
+   * Gives a recursor constant for an inductive type.
+   * @param indType the inductive type that the recursor is for
+   * @param resultType type of the result of applying terms to the recursor
+   * @param ctx context that the inductive type is defined in
+   * @return recursor constant
+   */
   def recursor( indType: TBase, resultType: Ty )( implicit ctx: Context ): Const = {
     val Some( constructors ) = ctx.getConstructors( indType )
     val recTypes = constructors.map {
@@ -20,7 +26,11 @@ object MRealizability {
     Const( indType.name + "Rec", recursorType, indType.params :+ resultType )
   }
 
-  // system T context based on ctx, by adding recursors, pair, and sumtypes and the empty program
+  /**
+   * Transforms a context into system T.
+   * @param ctx original context
+   * @return original context with recursors for inductive types, pair and sum types and terms, and the empty program
+   */
   def systemT( ctx: Context ): Context = {
     implicit var systemT = ctx
 
@@ -87,9 +97,16 @@ object MRealizability {
     systemT
   }
 
-  // Creates a term M for the conclusion of the proof such that:
-  // if M1,...,Mk are m-realizers for the formulas in the antecedent,
-  // then M[M1/x1]...[Mk/xk] m-realizes the succedent of the conclusion
+  /**
+   * Extracts an mrealizer for a theorem from its proof.
+   * @param proof proof from which the realizer is extracted
+   * @param re boolean whether or not the result should be normalized with respect to the empty program (default) or not
+   * @param ctx system T
+   * @return a term M of system T, and
+   *         a map of sequentindices of the antecedent of the conclusion of the proof, to variables x1,...,xk, such that:
+   *         if M1,...,Mk are m-realizers for the formulas in the antecedent,
+   *         then M[M1/x1]...[Mk/xk] m-realizes the succedent of the conclusion
+   */
   def mrealize( proof: NDProof, re: Boolean = true )( implicit ctx: Context ): ( Map[SequentIndex, Var], Expr ) = {
 
     val context = systemT( ctx )
@@ -107,7 +124,7 @@ object MRealizability {
     else ( varsAnt, mrealizer )
   }
 
-  def mrealizeCases( proof: NDProof, variables: Map[SequentIndex, Var], ng: NameGenerator )( implicit systemT: Context ): Expr = {
+  private def mrealizeCases( proof: NDProof, variables: Map[SequentIndex, Var], ng: NameGenerator )( implicit systemT: Context ): Expr = {
 
     proof match {
       case WeakeningRule( subProof, formula ) =>
@@ -227,7 +244,9 @@ object MRealizability {
     }
   }
 
-  // computes the type of a potential m-realizer for the formula
+  /**
+   * computes the type of a potential m-realizer for the formula
+   */
   def flat( formula: Formula )( implicit systemT: Context ): Ty = formula match {
     case Bottom()                         => ty"1"
     case Top()                            => flat( Imp( Bottom(), Bottom() ) )
@@ -241,8 +260,10 @@ object MRealizability {
     case All( variable, subformula )      => variable.ty ->: flat( subformula )
   }
 
-  // removes all occurences of the empty program i : 1 from term, or is i : 1 itself,
-  // except for match and inl and inr term: sometimes not possible to remove all occurences.
+  /**
+   * removes all occurences of the empty program i : 1 from term, or is i : 1 itself,
+   * except for match and inl and inr term: sometimes not possible to remove all occurences.
+   */
   def remEmpProg( term: Expr )( implicit systemT: Context ): Expr = {
 
     val empty = hoc"i"
@@ -326,7 +347,10 @@ object MRealizability {
     }
   }
 
-  // similar but for types
+  /**
+   * removes all occurences of the empty program type 1 from term, or is 1 itself,
+   * except for the sum type.
+   */
   def remEmpProgType( typee: Ty )( implicit systemT: Context ): Ty = {
 
     val empty = ty"1"
@@ -361,7 +385,7 @@ object MRealizability {
 
   // Given a proof and variables for the formulas in the antecedent of the conlusion,
   // returns those variables that occur as well in the antecedent of the conclusion of the premise at premisenumber.
-  def varsAntPrem( proof: NDProof, varsAntConcl: Map[SequentIndex, Var], premiseNumber: Int ): Map[SequentIndex, Var] = {
+  private def varsAntPrem( proof: NDProof, varsAntConcl: Map[SequentIndex, Var], premiseNumber: Int ): Map[SequentIndex, Var] = {
     val positions: Vector[( Seq[SequentIndex], SequentIndex )] = proof.occConnectors( premiseNumber ).childrenSequent.zipWithIndex.antecedent
     val variables: Vector[( Seq[Option[Var]], SequentIndex )] = positions.map( x => ( x._1.map( y => varsAntConcl.get( y ) ), x._2 ) )
     val flattened: Vector[( Seq[Var], SequentIndex )] = variables.map( x => ( x._1.flatten, x._2 ) )
