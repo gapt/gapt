@@ -18,12 +18,17 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
   ctx += hoc"gamma: nat>nat>nat"
   ctx += hoc"phi: nat>nat>nat"
   ctx += hoc"mu: nat>nat>nat>nat"
-  ctx += hoc"epsilon: nat>nat>nat>nat>nat"// prove
-  ctx += hoc"epsilon2: nat>nat>nat>nat>i>nat"// prove
-  ctx += hoc"epsilon3: nat>nat>nat>i>nat"// prove
-  ctx += hoc"epsilon4: nat>nat>nat>i>nat"// prove
-  ctx += hoc"epsilon5: nat>nat>nat>i>nat"// prove
-  ctx += hoc"theta: nat>nat>nat>i>nat" // prove
+  ctx += hoc"epsilon: nat>nat>i>nat"
+  ctx += hoc"epsilon2: nat>nat>i>nat"// prove
+  ctx += hoc"epsilon3:  nat>nat>i>nat"// prove
+  ctx += hoc"epsilon4:  nat>nat>nat>i>nat"// prove
+  ctx += hoc"epsilon5:  nat>nat>nat>i>nat"// prove
+  ctx += hoc"epsilon6:  nat>nat>nat>i>nat"// prove
+
+  ctx += hoc"theta: nat>nat>nat>nat>i>i>nat" // prove
+  ctx += hoc"theta2: nat>nat>nat>nat>i>i>nat" // prove
+  ctx += hoc"theta3: nat>nat>nat>nat>i>i>nat" // prove
+
   ctx += hoc"zeta: nat>nat>nat>i>nat"// prove
   ctx += hoc"pi: nat>nat>nat>nat" // prove
 
@@ -40,9 +45,10 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
   ctx += "LEDefinition2" -> hos"POR(n,m, suc(a)) :- LE(f(m,a), s(n))"
   ctx += "NumericTransitivity" -> hos"E(n,f(m,a)),E(n,f(m,suc(a))) :- E(f(m,a), f(m,suc(a)))"
   ctx += "TransitivityE" -> hos"E(a,b),E(b,c) :- E(a,c)"
-  ctx += "minimalElement" -> hos"LE(f(m,z),0) :- "
+  ctx += "minimalElement" -> hos"LE(f(m,a),0) :- "
   ctx += "ordcon" -> hos"LE(f(m,a),s(n)) :- E(n,f(m,a)), LE(f(m,a),n)"
   ctx += "ordcon2" -> hos"LE(f(m,suc(a)),s(n)) :- E(n,f(m,suc(a))), LE(f(m,a),n)"
+  ctx += "FuncAssump" -> hos"E(n,f(k,x)) :- E(f(k, x), f(k, suc(x))), LE(f(k, suc(x)), n)"
 
   val esOmega = Sequent(
     Seq(
@@ -68,39 +74,68 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
          hof"CutDistinct(m,n)") )
   ctx += Context.ProofNameDeclaration( le"mu n m k", esMu )
   val esEpsilon = Sequent(
-    Seq( hof"!x TopFuncDef(m, w,x)",
-        hof"CutDistinct(k,n)"),
-    Seq( hof"?x E(f(w, x), f(w, suc(x)))" ) )
-  ctx += Context.ProofNameDeclaration( le"epsilon m k w n", esEpsilon )
+    Seq( hof"E(0, f(k, suc(x)))",
+         hof"TopFuncDef(m,k,x)",
+        hof"CutDistinct(m,0)"),
+    Seq( hof"E(f(k, x), f(k, suc(x)))" ) )
+  ctx += Context.ProofNameDeclaration( le"epsilon m k x", esEpsilon )
   val esEpsilon2 = Sequent(
-    Seq( hof"!x TopFuncDef(m,w,x)",
-      hof"CutDistinct(k,s(n))"),
-    Seq( hof"?x E(f(w, x), f(w, suc(x)))",
-         hof"(E(n, f(m, y)) & E(n, f(m, suc(y))))",
-         hof"LE(f(m, y), n)") )
-  ctx += Context.ProofNameDeclaration( le"epsilon2 m k w n y", esEpsilon2 )
+    Seq( hof"E(0, f(k, x))",
+      hof"TopFuncDef(m,k,suc(x))",
+      hof"CutDistinct(m,0)"),
+    Seq( hof"E(f(k, x), f(k, suc(x)))" ) )
+  ctx += Context.ProofNameDeclaration( le"epsilon2 m k x", esEpsilon2 )
   val esEpsilon3 = Sequent(
-    Seq( hof"TopFuncDef(m, k,suc(x))",
-         hof"E(s(n), f(k, x))",
-         hof"CutDistinct(m,s(n))"),
-    Seq( hof"?x E(f(k, x), f(k, suc(x)))",
-         hof" CutDistinct(m,n)" ) )
-  ctx += Context.ProofNameDeclaration( le"epsilon3 m k n x", esEpsilon3 )
+    Seq( hof"TopFuncDef(m,k,x)",
+      hof"TopFuncDef(m,k,suc(x))",
+      hof"CutDistinct(m,0)"),
+    Seq( hof"E(f(k, x), f(k, suc(x)))" ) )
+  ctx += Context.ProofNameDeclaration( le"epsilon3 m k x", esEpsilon3 )
   val esEpsilon4 = Sequent(
-    Seq( hof"TopFuncDef(m, k,x)",
-      hof"E(s(n), f(k, suc(x)))",
-      hof"CutDistinct(m,s(n))"),
-    Seq( hof"?x E(f(k, x), f(k, suc(x)))",
-      hof" CutDistinct(m,n)" ) )
-  ctx += Context.ProofNameDeclaration( le"epsilon4 m k n x", esEpsilon4 )
-
-  val esEpsilon5 = Sequent(
-    Seq( hof"TopFuncDef(m, k,x)",
-         hof"TopFuncDef(m, k,suc(x))",
+    Seq( hof"E(s(n), f(k, x))",
+         hof"TopFuncDef(m,k,suc(x))",
          hof"CutDistinct(m,s(n))"),
-    Seq( hof"?x E(f(k, x), f(k, suc(x)))",
-      hof"CutDistinct(m,n)" ) )
-  ctx += Context.ProofNameDeclaration( le"epsilon5 m k n x", esEpsilon5)
+    Seq( hof"E(f(k, x), f(k, suc(x)))",
+         hof"CutDistinct(m,n)") )
+  ctx += Context.ProofNameDeclaration( le"epsilon4 m k n x", esEpsilon4 )
+  val esEpsilon5 = Sequent(
+    Seq( hof"E(s(n), f(k, suc(x)))",
+      hof"TopFuncDef(m,k,x)",
+      hof"CutDistinct(m,s(n))"),
+    Seq( hof"E(f(k, x), f(k, suc(x)))",
+      hof"CutDistinct(m,n)") )
+  ctx += Context.ProofNameDeclaration( le"epsilon5 m k n x", esEpsilon5 )
+  val esEpsilon6 = Sequent(
+    Seq(hof"TopFuncDef(m,k,suc(x))",
+      hof"TopFuncDef(m,k,x)",
+      hof"CutDistinct(m,s(n))"),
+    Seq( hof"E(f(k, x), f(k, suc(x)))",
+      hof"CutDistinct(m,n)") )
+  ctx += Context.ProofNameDeclaration( le"epsilon6 m k n x", esEpsilon6 )
+  val esTheta = Sequent(
+    Seq( hof"E(s(n), f(k, y))",
+         hof"TopFuncDef(m,k,suc(y))",
+         hof"CutDistinct(m,s(n))"),
+    Seq( hof"E(f(k, y), f(k, suc(y)))",
+         hof"E(n, f(w, x)) & E(n, f(w, suc(x)))",
+         hof"LE(f(w, x), n)"  ) )
+  ctx += Context.ProofNameDeclaration( le"theta m k w n x y", esTheta )
+  val esTheta2 = Sequent(
+    Seq( hof"E(s(n), f(k, suc(y)))",
+         hof"TopFuncDef(m,k,y)",
+         hof"CutDistinct(m,s(n))"),
+    Seq( hof"E(f(k, y), f(k, suc(y)))",
+         hof"E(n, f(w, x)) & E(n, f(w, suc(x)))",
+         hof"LE(f(w, x), n)"  ) )
+  ctx += Context.ProofNameDeclaration( le"theta2 m k w n x y", esTheta2 )
+  val esTheta3 = Sequent(
+    Seq( hof"TopFuncDef(m,k,suc(y))",
+         hof"TopFuncDef(m,k,y)",
+         hof"CutDistinct(m,s(n))"),
+    Seq( hof"E(f(k, y), f(k, suc(y)))",
+      hof"E(n, f(w, x)) & E(n, f(w, suc(x)))",
+      hof"LE(f(w, x), n)"  ) )
+  ctx += Context.ProofNameDeclaration( le"theta3 m k w n x y", esTheta3 )
 
   val eszeta = Sequent(
     Seq(
@@ -393,38 +428,38 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
         "Ant_1" -> hof"!x TopFuncDef(s(m),s(s(m)),x)" ),
       Seq( "Suc_0" -> hof"?x (E(f(s(s(m)),x), f(s(s(m)),suc(x))) )" ) )
   val phiBc3 = Lemma( esPhiBc3 ) {
-    unfold( "CutDistinct" ) atMost 1 in "Ant_0"
+    unfold("CutDistinct") atMost 1 in "Ant_0"
     andL
     orL
     exL(fov"a")
     andL
     allL(fov"a")
-    unfold( "TopFuncDef" ) atMost 1 in "Ant_1_0"
+    unfold("TopFuncDef") atMost 1 in "Ant_1_0"
     orL
     allL(le"(suc a)")
-    unfold( "TopFuncDef" ) atMost 1 in "Ant_1_1"
+    unfold("TopFuncDef") atMost 1 in "Ant_1_1"
     orL
-    cut( "cut2", hof"E(0, f((s (s m)),a))" )
-    ref( "TransitivityE" )
-    cut( "cut1", hof"E(0, f((s (s m)),(suc a)))" )
-    ref( "TransitivityE" )
+    cut("cut2", hof"E(0, f((s (s m)),a))")
+    ref("TransitivityE")
+    cut("cut1", hof"E(0, f((s (s m)),(suc a)))")
+    ref("TransitivityE")
     exR(fov"a")
-    ref( "NumericTransitivity" )
-    cut( "cut2", hof"E(0, f((s (s m)),a))" )
-    ref( "TransitivityE" )
+    ref("NumericTransitivity")
+    cut("cut2", hof"E(0, f((s (s m)),a))")
+    ref("TransitivityE")
     exR(fov"a")
-    ref( "epsilon" )
+    ref("epsilon2")
     allL(le"(suc a)")
-    unfold( "TopFuncDef" ) atMost 1 in "Ant_1_1"
+    unfold("TopFuncDef") atMost 1 in "Ant_1_1"
     orL
-    cut( "cut1", hof"E(0, f((s (s m)),(suc a)))" )
-    ref( "TransitivityE" )
+    cut("cut1", hof"E(0, f((s (s m)),(suc a)))")
+    ref("TransitivityE")
     exR(fov"a")
-    ref( "epsilon" )
+    ref("epsilon")
     exR(fov"a")
-    ref( "epsilon" )
-     allL("Ant_0_1",hoc"z")
-     ref( "minimalElement" )
+    ref("epsilon3")
+    allL("Ant_0_1", hoc"z")
+    ref("minimalElement")
   }
   ctx += Context.ProofDefinitionDeclaration( le"phi 0 (s m)", phiBc3)
 
@@ -513,47 +548,47 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
       ref( "NumericTransitivity" )
       exR("Suc_0",fov"b")
       exR("Suc_1_0",fov"a")
-      ref( "epsilon2" )
+      ref( "theta" )
+
+   // cut( "cut1", hof"!x ( E(s(n), f(m,c)) -> ( LE(f(k, x), s(n)) | E(s(n), f(k,suc(x)))))" )
      allL(le"(suc b)")
      unfold( "TopFuncDef" ) atMost 1 in "Ant_1_1"
      orL
      cut( "cut1", hof"E(s(n), f(k,(suc b)))" )
      ref( "TransitivityE" )
+    exR("Suc_0",fov"b")
+     exR("Suc_1_0",fov"a")
+    ref( "theta2" )
      exR("Suc_0",fov"b")
      exR("Suc_1_0",fov"a")
-     ref( "epsilon2" )
-     exR("Suc_0",fov"b")
-     exR("Suc_1_0",fov"a")
-     ref( "epsilon2" )
-     orL
-     exL(fov"a")
-   andL
-   allL("Ant_1",fov"a")
-   unfold( "TopFuncDef" ) atMost 1 in "Ant_1_0"
-   orL
-   cut( "cut2", hof"E(s(n), f(k,a))" )
-   ref( "TransitivityE" )
-   allL("Ant_1",le"(suc a)")
-   unfold( "TopFuncDef" ) atMost 1 in "Ant_1_1"
-   orL
-   cut( "cut1", hof"E(s(n), f(k,suc(a)))" )
-   ref( "TransitivityE" )
-   exR("Suc_0",fov"a")
-   ref( "NumericTransitivity" )
-   cut( "cut2", hof"E(s(n), f(k,a))" )
-   ref( "TransitivityE" )
-   exR("Suc_0",fov"a")
-      ref( "epsilon3" )
-     allL("Ant_1",le"(suc a)")
-      unfold( "TopFuncDef" ) atMost 1 in "Ant_1_1"
+    ref( "theta3" )
+        orL
+        exL(fov"a")
+      andL
+      allL("Ant_1",fov"a")
+      unfold( "TopFuncDef" ) atMost 1 in "Ant_1_0"
       orL
-      cut( "cut1", hof"E(s(n), f(k,suc(a)))" )
-      ref( "TransitivityE" )
+       cut( "cut2", hof"E(s(n), f(k,a))" )
+       ref( "TransitivityE" )
+       allL("Ant_1",le"(suc a)")
+       unfold( "TopFuncDef" ) atMost 1 in "Ant_1_1"
+       orL
+       cut( "cut1", hof"E(s(n), f(k,suc(a)))" )
+       ref( "TransitivityE" )
+       exR("Suc_0",fov"a")
+       ref( "NumericTransitivity" )
+       exR("Suc_0",fov"a")
+       ref( "epsilon4" )
+          allL("Ant_1",le"(suc a)")
+           unfold( "TopFuncDef" ) atMost 1 in "Ant_1_1"
+           orL
+           cut( "cut1", hof"E(s(n), f(k,suc(a)))" )
+           ref( "TransitivityE" )
+           exR("Suc_0",fov"a")
+      ref( "epsilon5" )
       exR("Suc_0",fov"a")
-    ref( "epsilon4" )
-      exR("Suc_0",fov"a")
-     ref( "epsilon5" )
-     ref( "pi" )
+       ref( "epsilon6" )
+       ref( "pi" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"mu n (s m) k", muSc)
 
@@ -577,33 +612,36 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
     Sequent(
       Seq(
         "Ant_0" -> hof"E(0, f(k, x))",
-        "Ant_1" -> hof"TopFuncDef(0, k, g(x))",
-        "Ant_2" -> hof"iLEQ(x, g(x))",
+        "Ant_1" -> hof"TopFuncDef(0, k, suc(x))",
         "Ant_3" -> hof"CutDistinct(0,0)" ),
-      Seq( "Suc_2" -> hof"E(f(k, x), f(k, g(x)))" ) )
+      Seq( "Suc_2" -> hof"E(f(k, x), f(k, suc(x)))" ) )
   val EpsilonBc = Lemma( esEpsilonBc ) {
     unfold( "CutDistinct" ) atMost 1 in "Ant_3"
     unfold( "TopFuncDef" ) atMost 1 in "Ant_1"
-    allL( "Ant_3", le"(suc x)" )
     orL
-    impL
-    trivial
-    cut( "cut1", hof"E(0, f(k, (g x)))" )
-    ref( "TransitivityE" )
-    ref( "NumericTransitivity" )
+    exL(fov"b")
+    andL
+    cut( "cut1", hof"LE(f(k,suc(x)), 0) -> E(0, f(k,suc(x)))" )
+    impR
     ref( "minimalElement" )
-  }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon 0 k 0 x", EpsilonBc )
+    impL
+    ref( "FuncAssump" )
+    ref( "NumericTransitivity" )
+    allL(le"x")
+    ref( "minimalElement" )
 
-  Sequent(
-    Seq( hof"!x TopFuncDef(m, w,x)",
-      hof"CutDistinct(k,n)"),
-    Seq( hof"?x E(f(w, x), f(w, suc(x)))" ) )
+
+  }
+  ctx += Context.ProofDefinitionDeclaration( le"epsilon 0 k x", EpsilonBc )
+
+
   val esEpsilonSc =
     Sequent(
-      Seq("Ant_1" -> hof"!x TopFuncDef((s m), k, x)",
-        "Ant_3" -> hof"CutDistinct(k,0)" ),
-      Seq( "Suc_2" -> hof"?x E(f(k, x), f(k, g(x)))" ) )
+      Seq(
+        "Ant_0" -> hof"E(0, f(k, x))",
+        "Ant_1" -> hof"TopFuncDef(s(m), k, suc(x))",
+        "Ant_3" -> hof"CutDistinct(s(m),0)" ),
+      Seq( "Suc_2" -> hof"E(f(k, x), f(k, suc(x)))" ) )
   val EpsilonSc = Lemma( esEpsilonSc ) {
     unfold( "CutDistinct" ) atMost 1 in "Ant_3"
     unfold( "TopFuncDef" ) atMost 1 in "Ant_1"
@@ -620,7 +658,7 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
     ref( "minimalElement" )
 
   }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon (s m) k w n", EpsilonSc)
+  ctx += Context.ProofDefinitionDeclaration( le"epsilon (s m) k x", EpsilonSc)
 
 
 }
