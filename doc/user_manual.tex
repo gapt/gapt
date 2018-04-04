@@ -1460,7 +1460,33 @@ A window then opens that displays the shallow sequent of \cli{expansion}.  You
 can selectively expand quantifiers by clicking on them,
 see~\cite{Hetzl13Understanding} for a detailed description.
 
+\section{Modified realizability}
 
+The GAPT-system contains an implementation of modified realizability. This is a variant of realizability where the realizers are terms of system T: an extension of the simply typed lambda calculus with inductive types and recursors that allow for recursive computation over terms of those types. 
+
+The implementation extracts realizers for theorems from their proofs in the natural deduction calculus. If the conclusion of the proof depends on a number of hypothesis, i.e. there are formulas $A_1,...,A_n$ in the antecedent of the final sequent, the algorithm returns a term $M$ with free variables  $x_1,...,x_n$ such that $M[M_1/x_1]...[M_n/x_n]$ is a realizer for the succedent, where $M_i$ realizes $A_i$. The formulas in the conclusion are also allowed to have free variables. In this case, the substitution of free variables in both the formulas and its realizer by the same closed terms, gives a realizer for the resulting sentence.
+
+The natural deduction calculus contains two rules that are problematic for the extraction of realizers, namely the theorem axiom, which can be instantiated by any formula, and a rule for the lemma of the excluded middle. When these are used, a realizer can not be computed - it might not even exists. In the case of the theory axiom, we would need a realizer for the theorem that is introduced by the axiom, and for the excluded middle rule, we would need a realizer for $A \lor \neg A$ to compute the realizer for the conclusion of the rule. These rules therefore introduce free variables in the resulting realizers, that serve as placeholders for the realizers we need.
+
+Consider the following proof, that is made after defining up an implicit context containing the natural numbers and the primitive recursive function `+` : 
+
+\begin{clilisting}
+gapt> val p4 = nd.ForallIntroRule(p3,hov"x:nat",hov"x:nat")
+p4: at.logic.gapt.proofs.nd.ForallIntroRule = 
+[p4]  ⊢ ∀x ∃y (y:nat) = (x:nat) + (s(0:nat): nat)    (ForallIntroRule(p3, x:nat, x:nat))
+[p3]  ⊢ ∃y (y:nat) = (x:nat) + (s(0:nat): nat)    (ExistsIntroRule(p2, (y:nat) = (x:nat) + (s(0:nat): nat), s(x:nat): nat, y:nat))
+[p2]  ⊢ (s(x:nat): nat) = x + s(0)    (DefinitionRule(p1, (s(x:nat): nat) = x + s(0)))
+[p1]  ⊢ (s(x:nat): nat) = s(x)    (EqualityIntroRule(s(x:nat): nat))
+\end{clilisting}
+
+The implementation can then be used to extract a realizer in the following way:
+
+\begin{clilisting}
+gapt> val mr = nd.MRealizability.mrealize(p4)
+mr: (Map[at.logic.gapt.proofs.SequentIndex,at.logic.gapt.expr.Var], at.logic.gapt.expr.Expr) = (Map(),λx s(x:nat): nat)	
+\end{clilisting}
+
+Examples of proofs with from which more interesting realizers are extracted by the algorithm can be found in the file \cli{examples/m-realizabilityExamples.scala}. 
 
 \chapter{Interfaces to external theorem provers and solvers}
 
