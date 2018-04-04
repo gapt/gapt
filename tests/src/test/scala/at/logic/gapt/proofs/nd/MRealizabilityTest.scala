@@ -349,10 +349,43 @@ class MRealizabilityTest extends Specification {
     }
     "theoryaxiom" in {
       val p1 = TheoryAxiom( hof"y + 0 = 0" )
-      mrealizer( p1 ) must_== i
+      mrealizer( p1 ) must_== Var( s"mrealizer(${hof"y + 0 = 0"})", one )
 
       val p2 = TheoryAxiom( hof"¬ s(z) = 0" )
-      mrealizer( p2 ) must_== i
+      mrealizer( p2 ) must_== Var( s"mrealizer(${hof"¬ s(z) = 0"})", one ->: one )
+    }
+    "excludedmiddle" in {
+      val p1 = LogicalAxiom( hof"0=0" )
+      val p2 = LogicalAxiom( hof"¬0=0" )
+      val p3 = OrIntro1Rule( p1, hof"¬0=0" )
+      val p4 = OrIntro2Rule( p2, hof"0=0" )
+      val p5 = ExcludedMiddleRule( p3, Ant( 0 ), p4, Ant( 0 ) )
+      mrealizer( p5 ) must_== matchSum( one, one ->: one, sum( one, one ->: one ) )(
+        Var( s"mrealizer(${hof"0 = 0 ∨ ¬0 = 0"})", sum( one, one ->: one ) ),
+        Abs( Var( "y", one ), inl( one, one ->: one )( Var( "y", one ) ) ),
+        Abs( Var( "y_0", one ->: one ), inr( one, one ->: one )( Var( "y_0", one ->: one ) ) ) )
+
+      val a1 = LogicalAxiom( hof"¬¬0=0" )
+      val a2 = LogicalAxiom( hof"¬0=0" )
+      val a3 = NegElimRule( a1, a2 )
+      val a4 = BottomElimRule( a3, hof"0=0" )
+      val b1 = LogicalAxiom( hof"0=0" )
+      val c1 = LogicalAxiom( hof"0=0" )
+      val c2 = LogicalAxiom( hof"¬0=0" )
+      val c3 = OrIntro1Rule( c1, hof"¬0=0" )
+      val c4 = OrIntro2Rule( c2, hof"0=0" )
+      val c5 = ExcludedMiddleRule( c3, Ant( 0 ), c4, Ant( 0 ) )
+      val a5 = OrElimRule( c5, b1, a4 )
+      val a6 = ImpIntroRule( a5 )
+      mrealizer( a6 ) must_== Abs(
+        Var( "y", ( one ->: one ) ->: one ),
+        matchSum( one, one ->: one, one )(
+          matchSum( one, one ->: one, sum( one, one ->: one ) )(
+            Var( s"mrealizer(${hof"0 = 0 ∨ ¬0 = 0"})", sum( one, one ->: one ) ),
+            Abs( Var( "y", one ), inl( one, one ->: one )( Var( "y", one ) ) ),
+            Abs( Var( "y_0", one ->: one ), inr( one, one ->: one )( Var( "y_0", one ->: one ) ) ) ),
+          Abs( Var( "y_0", one ), Var( "y_0", one ) ),
+          Abs( Var( "y_1", one ->: one ), Var( "y_4", one ) ) ) )
     }
     "ind-nat" in {
       val s0 = LogicalAxiom( hof"!x x + 0 = x" )

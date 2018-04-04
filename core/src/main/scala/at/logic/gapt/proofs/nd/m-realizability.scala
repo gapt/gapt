@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.nd
 
 import at.logic.gapt.expr
-import at.logic.gapt.expr.{ App, Ty, typeVariables, Substitution, _ }
+import at.logic.gapt.expr.{ App, Substitution, Ty, Var, typeVariables, _ }
 import at.logic.gapt.proofs.Context.{ BaseTypes, InductiveType, PrimRecFun, StructurallyInductiveTypes }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.nd._
@@ -212,7 +212,7 @@ object MRealizability {
         sub1( sub2( mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ) + ( aux -> extraVar ), ng ) ) )
 
       case TheoryAxiom( mainFormula ) =>
-        Var( ng.fresh( s"mrealizer(${mainFormula})" ), flat( mainFormula ) )
+        Var( ng.fresh( s"mrealizer($mainFormula)" ), flat( mainFormula ) )
 
       case EqualityElimRule( leftSubProof, rightSubProof, formulaA, variablex ) =>
         mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ), ng )
@@ -238,7 +238,16 @@ object MRealizability {
         mrealizeCases( subProof, variables, ng )
 
       case ExcludedMiddleRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-        throw new Exception( "This rule is not admitted in intuitionistic ND." )
+        val A = leftSubProof.conclusion( aux1 )
+        val notA = rightSubProof.conclusion( aux2 )
+        val AorNotA = Or( A, notA )
+        val varA = Var( ng.fresh( "y" ), flat( A ) )
+        val varNotA = Var( ng.fresh( "y" ), flat( notA ) )
+        le"matchSum( ${Var( ng.fresh( s"mrealizer($AorNotA)" ), flat( AorNotA ) )},${
+          Abs( varA, mrealizeCases( leftSubProof, varsAntPrem( proof, variables, 0 ) + ( aux1 -> varA ), ng ) )
+        },${
+          Abs( varNotA, mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ) + ( aux2 -> varNotA ), ng ) )
+        })"
     }
   }
 
