@@ -111,13 +111,11 @@ object MRealizability {
 
     val context = systemT( ctx )
 
-    // should actually be free variables of whole proof - need to implement this
-    val ng = new NameGenerator( freeVariables( proof.conclusion ).map( _.name ) )
+    val ng = new NameGenerator( freeVariablesND( proof ).map( _.name ) )
     val varsAnt = proof.conclusion.zipWithIndex.antecedent.map( x => ( x._2, Var( ng.fresh( "y" ), flat( x._1 ) ) ) ).toMap
 
     val mrealizer = mrealizeCases( proof, varsAnt, ng )( context )
 
-    // by default: remove occurences of the empty program
     if ( re )
       ( varsAnt map ( x => ( x._1, Var( x._2.name, remEmpProgType( x._2.ty )( context ) ) ) ),
         remEmpProg( mrealizer )( context ) )
