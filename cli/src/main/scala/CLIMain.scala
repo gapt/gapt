@@ -1,7 +1,7 @@
-package at.logic.gapt.cli
+package gapt.cli
 
-import at.logic.gapt.examples.Script
-import at.logic.gapt.formats.ClasspathInputFile
+import gapt.examples.Script
+import gapt.formats.ClasspathInputFile
 
 import scala.tools.nsc.interpreter._
 import scala.tools.nsc.Settings

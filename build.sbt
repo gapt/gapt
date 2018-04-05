@@ -4,7 +4,7 @@ import org.apache.commons.compress.archivers.tar.{ TarArchiveEntry, TarArchiveOu
 import scalariform.formatter.preferences._
 import sys.process._
 
-val Version = "2.9-SNAPSHOT"
+val Version = "2.11-SNAPSHOT"
 
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
@@ -13,6 +13,7 @@ lazy val commonSettings = Seq(
   licenses += ( "GPL-3.0" -> url( "http://www.gnu.org/licenses/gpl-3.0.html" ) ),
   startYear := Some( 2008 ),
   version := Version,
+  autoAPIMappings := true,
 
   scmInfo := Some( ScmInfo(
     browseUrl = url( "https://github.com/gapt/gapt" ),
@@ -45,7 +46,7 @@ lazy val scalariformSettings =
     .setPreference( DoubleIndentConstructorArguments, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "4.0.2"
+val specs2Version = "4.0.3"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   javaOptions in Test += "-Xmx2g",
@@ -73,7 +74,6 @@ lazy val root = project.in( file( "." ) ).
     includeFilter in ( BuildSbtConfig, scalariformFormat ) := ( "*.sbt": FileFilter ),
 
     apiURL := Some( url( "https://logic.at/gapt/api/" ) ),
-    autoAPIMappings := true,
     scalacOptions in ( ScalaUnidoc, unidoc ) ++= Seq(
       "-doc-title", "gapt",
       "-doc-version", version.value,
@@ -96,12 +96,13 @@ lazy val root = project.in( file( "." ) ).
       }
       (
         mkScript( target.value / "run" ),
-        mkScript( target.value / "test-cut-intro", "at.logic.gapt.testing.testCutIntro" ),
-        mkScript( target.value / "test-pi2-cut-intro", "at.logic.gapt.testing.testPi2CutIntro" ),
-        mkScript( target.value / "test-induction", "at.logic.gapt.testing.testInduction" ),
-        mkScript( target.value / "viper", "at.logic.gapt.provers.viper.Viper" ),
-        mkScript( target.value / "escargot", "at.logic.gapt.provers.escargot.Escargot" ),
-        mkScript( target.value / "cli", "at.logic.gapt.cli.CLIMain" ) )
+        mkScript( target.value / "test-cut-intro", "gapt.testing.testCutIntro" ),
+        mkScript( target.value / "test-pi2-cut-intro", "gapt.testing.testPi2CutIntro" ),
+        mkScript( target.value / "test-induction", "gapt.testing.testInduction" ),
+        mkScript( target.value / "viper", "gapt.provers.viper.Viper" ),
+        mkScript( target.value / "escargot", "gapt.provers.escargot.Escargot" ),
+        mkScript( target.value / "iescargot", "gapt.provers.escargot.IEscargot" ),
+        mkScript( target.value / "cli", "gapt.cli.CLIMain" ) )
     },
 
     // Release stuff
@@ -149,7 +150,7 @@ lazy val root = project.in( file( "." ) ).
     evalUserManual := {
       val userManFn = "doc/user_manual.tex"
       val out = new ByteArrayOutputStream
-      val exitVal = new Fork( "java", Some( "at.logic.gapt.testing.evalCodeSnippetsInLatex" ) ).fork(
+      val exitVal = new Fork( "java", Some( "gapt.testing.evalCodeSnippetsInLatex" ) ).fork(
         ForkOptions(
           javaHome = javaHome.value,
           outputStrategy = Some( CustomOutput( out ) ),
@@ -172,22 +173,22 @@ lazy val core = project.in( file( "core" ) ).
     scalacOptions in Compile += "-Xfatal-warnings",
 
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.6",
+      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.0",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.parboiled" %% "parboiled" % "2.1.4",
       "com.lihaoyi" %% "fastparse" % "1.0.0",
       "com.lihaoyi" %% "sourcecode" % "0.1.4",
       "org.typelevel" %% "cats" % "0.9.0",
-      "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
+      "org.scala-lang.modules" %% "scala-xml" % "1.1.0",
       "org.apache.commons" % "commons-lang3" % "3.7",
-      "com.lihaoyi" %% "ammonite-ops" % "1.0.3",
+      "com.lihaoyi" %% "ammonite-ops" % "1.1.0",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5" ),
 
     // UI
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-swing" % "2.0.1",
-      "com.itextpdf" % "itextpdf" % "5.5.12",
+      "org.scala-lang.modules" %% "scala-swing" % "2.0.2",
+      "com.itextpdf" % "itextpdf" % "5.5.13",
       "org.scilab.forge" % "jlatexmath" % "1.0.6" ) )
 
 lazy val examples = project.in( file( "examples" ) ).
@@ -224,7 +225,7 @@ lazy val cli = project.in( file( "cli" ) ).
   dependsOn( core, examples ).
   settings( commonSettings: _* ).
   settings(
-    mainClass := Some( "at.logic.cli.CLIMain" ),
+    mainClass := Some( "gapt.cli.CLIMain" ),
 
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value ),

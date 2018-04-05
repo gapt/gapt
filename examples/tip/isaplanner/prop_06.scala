@@ -1,14 +1,17 @@
-package at.logic.gapt.examples.tip.isaplanner
+package gapt.examples.tip.isaplanner
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.gaptic.{ TacticsProof, _ }
-import at.logic.gapt.proofs.{ Context, Sequent }
-import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, SequentialInductionAxioms, StandardInductionAxioms }
-import at.logic.gapt.provers.viper.aip.{ AnalyticInductionProver, ProverOptions }
+import gapt.expr._
+import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.gaptic.{ TacticsProof, _ }
+import gapt.proofs.{ Context, Sequent }
+import gapt.provers.escargot.Escargot
+import gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, SequentialInductionAxioms, StandardInductionAxioms }
+import gapt.provers.viper.aip.{ AnalyticInductionProver, ProverOptions }
 
 object prop_06 extends TacticsProof {
   ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+  ctx += Notation.Infix( "+", Precedence.plusMinus )
+  ctx += Notation.Infix( "-", Precedence.plusMinus )
   ctx += hoc"'+': nat>nat>nat"
   ctx += hoc"'-': nat>nat>nat"
 

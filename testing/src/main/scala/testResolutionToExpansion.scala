@@ -1,17 +1,18 @@
-package at.logic.gapt.testing
+package gapt.testing
 
 import ammonite.ops.FilePath
-import at.logic.gapt.expr.hol.CNFn
-import at.logic.gapt.expr.{ Atom, Const }
-import at.logic.gapt.proofs.expansion.{ eliminateCutsET, eliminateDefsET }
-import at.logic.gapt.proofs.lk.LKToExpansionProof
-import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.{ Context, MutableContext }
-import at.logic.gapt.provers.prover9.Prover9Importer
-import at.logic.gapt.utils.LogHandler
+import gapt.expr.hol.CNFn
+import gapt.expr.{ Atom, Const }
+import gapt.proofs.expansion.{ eliminateCutsET, eliminateDefsET }
+import gapt.proofs.lk.LKToExpansionProof
+import gapt.proofs.resolution._
+import gapt.proofs.{ Context, MutableContext }
+import gapt.provers.prover9.Prover9Importer
+import gapt.utils.{ LogHandler, Logger }
 
 object testResolutionToExpansion extends scala.App {
-  import at.logic.gapt.utils.logger._
+  val logger = Logger( "testResolutionToExpansion" )
+  import logger._
 
   val metricsPrinter = new MetricsPrinter
   LogHandler.current.value = metricsPrinter

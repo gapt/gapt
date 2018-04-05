@@ -1,31 +1,33 @@
-package at.logic.gapt.testing
+package gapt.testing
 
 import java.io.{ FileWriter, PrintWriter }
 
 import ammonite.ops._
-import at.logic.gapt.cutintro._
-import at.logic.gapt.expr.fol.isFOLPrenexSigma1
-import at.logic.gapt.expr._
-import at.logic.gapt.formats.babel.BabelParser
-import at.logic.gapt.formats.leancop.LeanCoPParser
-import at.logic.gapt.formats.tip.TipSmtParser
-import at.logic.gapt.formats.tptp.{ TptpParser, resolveIncludes }
-import at.logic.gapt.formats.verit.VeriTParser
-import at.logic.gapt.proofs.ceres._
-import at.logic.gapt.proofs.expansion._
-import at.logic.gapt.proofs.gaptic.{ ProofState, now }
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.{ MutableContext, Suc, loadExpansionProof }
-import at.logic.gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
-import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.prover9.Prover9Importer
-import at.logic.gapt.provers.sat.{ MiniSAT, Sat4j }
-import at.logic.gapt.provers.smtlib.Z3
-import at.logic.gapt.provers.verit.VeriT
-import at.logic.gapt.provers.viper.grammars.EnumeratingInstanceGenerator
-import at.logic.gapt.provers.viper.{ Viper, ViperOptions }
-import at.logic.gapt.utils._
-import EitherHelpers._
+import gapt.cutintro._
+import gapt.expr._
+import gapt.expr.fol.isFOLPrenexSigma1
+import gapt.formats.babel.BabelParser
+import gapt.formats.leancop.LeanCoPParser
+import gapt.formats.tip.TipSmtParser
+import gapt.formats.tptp.{ TptpParser, resolveIncludes }
+import gapt.formats.verit.VeriTParser
+import gapt.proofs.Context.ProofNames
+import gapt.proofs.ceres._
+import gapt.proofs.expansion._
+import gapt.proofs.gaptic.{ ProofState, now }
+import gapt.proofs.lk._
+import gapt.proofs.lkt.normalizeLKt
+import gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
+import gapt.proofs.{ MutableContext, Suc, loadExpansionProof }
+import gapt.provers.escargot.Escargot
+import gapt.provers.prover9.Prover9Importer
+import gapt.provers.sat.{ MiniSAT, Sat4j }
+import gapt.provers.smtlib.Z3
+import gapt.provers.verit.VeriT
+import gapt.provers.viper.grammars.EnumeratingInstanceGenerator
+import gapt.provers.viper.{ Viper, ViperOptions }
+import gapt.utils.EitherHelpers._
+import gapt.utils._
 
 import scala.concurrent.duration._
 import scala.util.Random
@@ -66,7 +68,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
       generate( lower = 2, upper = 3, num = 1 ).head --- "random instance term"
     val instProof = instanceProof( proof, instanceTerms )
 
-    val proofName @ Apps( proofNameC @ Const( proofNameStr, _ ), _ ) = Atom( ctx.newNameGenerator.fresh( "proof" ), variables )
+    val proofName @ Apps( proofNameC @ Const( proofNameStr, _, _ ), _ ) = Atom( ctx.newNameGenerator.fresh( "proof" ), variables )
     ArithmeticInductionToSchema( proof, proofName ) --? "induction to schema" foreach { _ =>
       ProofLink( proofName ) --? "create schema proof link"
       instantiateProof.Instantiate( proofNameC( instanceTerms ) ) --? "schema instance"
@@ -88,7 +90,8 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
       }
     }
 
-    ReductiveCutElimination.eliminateInduction( instProof ) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
+    normalizeLKt.inductionWithDebug( instProof ) --? "eliminate inductions in instance proof using lkt"
+    inductionNormalForm( instProof ) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
       indFreeProof.endSequent.multiSetEquals( instProof.endSequent ) !-- "induction elimination does not modify end-sequent"
       isInductionFree( indFreeProof ) !-- "induction elimination returns induction free proof"
     }
@@ -99,6 +102,70 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
       case InductionRule( _, _, _ ) => false
       case _                        => true
     }
+}
+
+object TheoryTestCase {
+  import gapt.examples.theories._
+  object AllTheories extends Theory(
+    logic,
+    set,
+    props,
+    nat,
+    natdivisible,
+    natdivision,
+    natorder,
+    list,
+    listlength,
+    listfold,
+    listdrop,
+    natlists,
+    fta )
+}
+class TheoryTestCase( name: String, combined: Boolean )
+  extends RegressionTestCase( name + ( if ( combined ) "-combined" else "" ) ) {
+  override def timeout = Some( 5 minutes )
+
+  override protected def test( implicit testRun: TestRun ): Unit = {
+    import TheoryTestCase.AllTheories._
+    val lemmaHandle = LemmaHandle( ctx.get[ProofNames].names( name )._1 )
+    val proof = ( if ( combined ) lemmaHandle.combined() else lemmaHandle.proof ) --- "proof"
+
+    LKToND( proof ) --? "LKToND"
+    normalizeLKt.withDebug( proof ) --? "lkt cut-elim"
+
+    LKToExpansionProof( proof ) --? "LKToExpansionProof" foreach { expansion =>
+      ExpansionProofToLK( expansion ).get --? "ExpansionProofToLK" foreach { expansionLK =>
+        expansionLK.conclusion.isSubsetOf( proof.conclusion ) !-- "conclusion of ExpansionProofToLK"
+        ctx.check( expansionLK ) --? "context check of ExpansionProofToLK"
+        normalizeLKt.withDebug( expansionLK ) --? "lkt cut-elim (expansion)"
+        LKToND( expansionLK ) --? "LKToND (expansion)"
+      }
+    }
+
+    val All.Block( variables, _ ) = proof.endSequent.succedent.head
+    val instanceTerms = new EnumeratingInstanceGenerator( variables.map( _.ty.asInstanceOf[TBase] ), ctx ).
+      generate( lower = 2, upper = 3, num = 1 ).head --- "random instance term"
+    val instProof = instanceProof( proof, instanceTerms )
+
+    {
+      implicit val mctx: MutableContext = ctx.newMutable
+      val proofName @ Apps( proofNameC @ Const( proofNameStr, _, _ ), _ ) =
+        Atom( mctx.newNameGenerator.fresh( "proof" ), variables )
+      ArithmeticInductionToSchema( proof, proofName ) --? "induction to schema" foreach { _ =>
+        ProofLink( proofName ) --? "create schema proof link"
+        instantiateProof.Instantiate( proofNameC( instanceTerms ) ) --? "schema instance"
+        SchematicStruct( proofNameStr ).get --? "schematic struct" foreach { schemaStruct =>
+          CharFormPRP.PR( CharFormPRP( schemaStruct ) ) --? "characteristic formula"
+          InstanceOfSchematicStruct( CLS( proofNameC( instanceTerms ), proof.endSequent.map( _ => false ) ), schemaStruct ) --? "struct instance"
+        }
+      }
+    }
+
+    normalizeLKt.inductionWithDebug( instProof ) --? "eliminate inductions in instance proof using lkt"
+    inductionNormalForm( instProof ) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
+      indFreeProof.endSequent.multiSetEquals( instProof.endSequent ) !-- "induction elimination does not modify end-sequent"
+    }
+  }
 }
 
 class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile.getName ) {
@@ -148,7 +215,8 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
         Z3.isUnsat( And( recSchem.languageWithDummyParameters ) ) !-- "extractRecSchem language validity"
       }
 
-    ReductiveCutElimination( p ) --? "cut-elim (input)"
+    cutNormal( p ) --? "cut-elim (input)"
+    normalizeLKt.withDebug( p ) --? "lkt cut-elim (input)"
 
     cleanStructuralRules( p ) --? "cleanStructuralRules"
 
@@ -157,7 +225,8 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
         val focus = if ( p.endSequent.succedent.isEmpty ) None else Some( Suc( 0 ) )
         LKToND( q, focus ) --? "LKToND (cut-intro)"
 
-        ReductiveCutElimination( q ) --? "cut-elim (cut-intro)"
+        cutNormal( q ) --? "cut-elim (cut-intro)"
+        normalizeLKt.withDebug( q ) --? "lkt cut-elim (cut-intro)"
         CERES( q ) --? "CERES (cut-intro)"
         CERES.CERESExpansionProof( q ) --? "CERESExpansionProof"
 
@@ -232,8 +301,19 @@ object RegressionTests extends scala.App {
   def veritTestCases = veritProofs map { fn => new VeriTTestCase( fn.toIO ) }
   def tptpTestCases = tptpProblems.map { fn => new TptpTestCase( fn.toIO ) }
   def tipTestCases = tipProblems.map { fn => new TipTestCase( fn.toIO ) }
+  def theoryTestCases =
+    for {
+      ( n, _ ) <- TheoryTestCase.AllTheories.allProofs
+      combined <- Seq( false, true )
+    } yield new TheoryTestCase( n, combined )
 
-  def allTestCases = prover9TestCases ++ leancopTestCases ++ veritTestCases ++ tptpTestCases ++ tipTestCases
+  def allTestCases =
+    prover9TestCases ++
+      leancopTestCases ++
+      veritTestCases ++
+      tptpTestCases ++
+      tipTestCases ++
+      theoryTestCases
 
   def findTestCase( pat: String ) = allTestCases.find( _.toString.contains( pat ) ).get
 

@@ -1,8 +1,8 @@
-package at.logic.gapt.examples.tip.isaplanner
+package gapt.examples.tip.isaplanner
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.proofs.Context
+import gapt.proofs.gaptic._
 
 object prop_14 extends TacticsProof {
 
@@ -20,8 +20,8 @@ object prop_14 extends TacticsProof {
                       def_head: ∀x ∀xs head(cons(x, xs)) = x,
                       def_tail: ∀x ∀xs tail(cons(x, xs)) = xs,
                       def_filter_1: ∀x (filter(x:fun1, nil:list): list) = nil,
-                      def_filter_2: ∀x ∀z ∀xs (¬apply1(x:fun1, z:sk) ⊃ (filter(x, cons(z, xs:list): list): list) = filter(x, xs)),
-                      def_filter_3: ∀x ∀z ∀xs (apply1(x:fun1, z:sk) ⊃ (filter(x, cons(z, xs:list): list): list) = cons(z, filter(x, xs))),
+                      def_filter_2: ∀x ∀z ∀xs (¬apply1(x:fun1, z:sk) → (filter(x, cons(z, xs:list): list): list) = filter(x, xs)),
+                      def_filter_3: ∀x ∀z ∀xs (apply1(x:fun1, z:sk) → (filter(x, cons(z, xs:list): list): list) = cons(z, filter(x, xs))),
                       def_append_1: ∀y (append(nil:list, y:list): list) = y,
                       def_append_2: ∀z ∀xs ∀y (append(cons(z:sk, xs:list): list, y:list): list) = cons(z, append(xs, y)),
                       ax_list: ∀x ∀xs ¬nil = cons(x, xs)

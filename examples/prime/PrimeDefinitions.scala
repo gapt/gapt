@@ -1,11 +1,12 @@
-package at.logic.gapt.examples.prime
+package gapt.examples.prime
 
-import at.logic.gapt.expr.ExpressionParseHelper.Splice
-import at.logic.gapt.expr.hol.CNFp
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.Context.PrimRecFun
-import at.logic.gapt.proofs.gaptic.TacticsProof
+import gapt.expr.ExpressionParseHelper.Splice
+import gapt.expr.hol.CNFp
+import gapt.expr._
+import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.Context
+import gapt.proofs.Context.PrimRecFun
+import gapt.proofs.gaptic.TacticsProof
 
 /**
  * Contains definitions for Euclid's and Furstenberg's prime proofs.
@@ -21,8 +22,11 @@ trait PrimeDefinitions extends TacticsProof {
 
   // Constants
   ctx += hoc"'+': nat>nat>nat"
+  ctx += Notation.Infix( "+", Precedence.plusMinus )
   ctx += hoc"'*': nat>nat>nat"
+  ctx += Notation.Infix( "*", Precedence.timesDiv )
   ctx += hoc"'<': nat>nat>o"
+  ctx += Notation.Infix( "<", Precedence.infixRel )
 
   // Theory axioms
   ctx += "distrib1" -> hcl":- (x + 1) * y + x + 1 = (x + 1) * (y + 1)"
@@ -43,18 +47,19 @@ trait PrimeDefinitions extends TacticsProof {
   ctx += "neq_one" -> hcl"1<y, x=0+z*y, x=1 :-"
   ctx += "add_comm_zero" -> hcl"y*z=x :- x=0+z*y"
   ctx += "distrib2" -> hcl":- x + y1*z + y2*z = x + (y1+y2)*z"
+  ctx += "ring1" -> hcl":- k + (n + (k + 1) * l + 1) = n + (k + 1) * (l + 1)"
 
   //Definitions
-  ctx += hof" set_1(k : ?a) = ( λl l = k )"
+  ctx += hof" set_1{?a}(k : ?a) = ( λl l = k )"
   ctx += hof" ν(k,l) = ( λm ∃n m = k + n * l )"
   ctx += hof" U k l = ( λm ∃i ((i < l ∧ ¬i = k ) ∧ ν(i,l,m)) )"
   ctx += hof" DIV l k = ( ∃m l * m = k )"
   ctx += hof" PRIME k = ( 1 < k ∧ ∀l(DIV(l,k) -> (l = 1 ∨ l = k)) )"
-  ctx += hof" subset (X : ?a > o) Y = ( ∀n (X(n) -> Y(n)) )"
-  ctx += hof" empty (X : ?a > o) = ( ¬∃n X(n) )"
-  ctx += hof" compN (X : ?a > o) = ( λx ¬X(x) )"
-  ctx += hof" union (X : ?a > o) Y = ( λx (X(x) ∨ Y(x)) )"
-  ctx += hof" intersection (X : ?a > o) Y = ( λx (X(x) ∧ Y(x)) )"
+  ctx += hof" subset{?a} (X : ?a > o) Y = ( ∀n (X(n) -> Y(n)) )"
+  ctx += hof" empty{?a} (X : ?a > o) = ( ¬ ∃n X(n) )"
+  ctx += hof" compN{?a} (X : ?a > o) = ( λx ¬X(x) )"
+  ctx += hof" union{?a} (X : ?a > o) Y = ( λx (X(x) ∨ Y(x)) )"
+  ctx += hof" intersection{?a} (X : ?a > o) Y = ( λx (X(x) ∧ Y(x)) )"
   ctx += hof" O X = ( ∀m (X(m) -> ∃l subset(ν(m, l+1), X)) )"
   ctx += hof" C X = ( O(compN(X)) )"
   ctx += hof" INF X = ( ∀k ∃l X(k+(l + 1)) )"

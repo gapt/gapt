@@ -1,8 +1,8 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Context, Sequent }
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.gaptic._
 
 object fol1 extends TacticsProof {
   ctx += Context.Sort( "i" )
@@ -17,7 +17,7 @@ object fol1 extends TacticsProof {
     // left subproof
     allR( "C" )
     exR( "C", fot"a" )
-    allL( "L", fot"x", fot"a" )
+    allL( "L", fov"x", fot"a" )
     decompose
     destruct( "L_0" )
     repeat( axiomLog )
@@ -25,7 +25,7 @@ object fol1 extends TacticsProof {
     // right subproof
     allL( "C", fot"b" )
     exL( "C_0" )
-    exR( "R", fot"b", fot"y" )
+    exR( "R", fot"b", fov"y" )
     destruct( "C_0" )
     repeat( decompose andThen axiomLog )
   }

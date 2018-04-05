@@ -1,18 +1,18 @@
-package at.logic.gapt.testing
+package gapt.testing
 
 import java.io.PrintWriter
 
-import at.logic.gapt.cutintro._
-import at.logic.gapt.examples._
-import at.logic.gapt.expr.{ Apps, FOLVar }
-import at.logic.gapt.grammars.DeltaTableMethod
-import at.logic.gapt.proofs.expansion._
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.loadExpansionProof
-import at.logic.gapt.provers.maxsat.OpenWBO
-import at.logic.gapt.provers.prover9.Prover9Importer
-import at.logic.gapt.provers.smtlib.ExternalSmtlibProgram
-import at.logic.gapt.utils._
+import gapt.cutintro._
+import gapt.examples._
+import gapt.expr.{ Apps, FOLVar }
+import gapt.grammars.DeltaTableMethod
+import gapt.proofs.expansion._
+import gapt.proofs.lk._
+import gapt.proofs.loadExpansionProof
+import gapt.provers.maxsat.OpenWBO
+import gapt.provers.prover9.Prover9Importer
+import gapt.provers.smtlib.ExternalSmtlibProgram
+import gapt.utils._
 import org.json4s._
 import org.json4s.native.JsonMethods._
 
@@ -20,6 +20,7 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
 import ammonite.ops._
+import gapt.utils.LogHandler.VerbosityLevel
 
 class MetricsPrinter extends LogHandler {
   val data: mutable.Map[String, Any] = mutable.Map[String, Any]()
@@ -36,13 +37,13 @@ class MetricsPrinter extends LogHandler {
   }
 
   val phaseStack: mutable.Buffer[String] = mutable.Buffer()
-  override def timeBegin( key: String, desc: String ): Unit = {
+  override def timeBegin( domain: String, level: VerbosityLevel, key: String, desc: String ): Unit = {
     phaseStack += key
     value( "phase", key )
     value( s"started_$phase", true )
     value( s"in_$phase", true )
   }
-  override def time( key: String, desc: String, duration: Duration ): Unit = {
+  override def time( domain: String, level: VerbosityLevel, key: String, desc: String, duration: Duration ): Unit = {
     value( s"time_$key", duration.toMillis )
     value( s"in_$phase", false )
     value( s"ended_$phase", true )
@@ -50,7 +51,7 @@ class MetricsPrinter extends LogHandler {
   }
   def phase: String = phaseStack.last
 
-  override def metric( key: String, desc: String, v: => Any ): Unit =
+  override def metric( domain: String, level: VerbosityLevel, key: String, desc: String, v: => Any ): Unit =
     value( key, v )
 
   def value( key: String, value: => Any ) = {
@@ -58,7 +59,7 @@ class MetricsPrinter extends LogHandler {
     println( s"METRICS ${compact( render( JObject( key -> jsonify( data( key ) ) ) ) )}" )
   }
 
-  override def message( severity: LogSeverity, msg: => Any ): Unit = ()
+  override def message( domain: String, level: VerbosityLevel, msg: => Any ): Unit = ()
 }
 
 object parseMethod {
@@ -78,6 +79,7 @@ object parseMethod {
 }
 
 object testCutIntro extends App {
+  val logger = Logger( "testCutIntro" )
 
   val Array( fileName: String, methodName: String ) = args
 
@@ -140,6 +142,7 @@ object testCutIntro extends App {
 }
 
 object testPi2CutIntro extends App {
+  val logger = Logger( "testPi2CutIntro" )
 
   val Array( fileName: String, numBetas: String ) = args
 

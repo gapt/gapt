@@ -1,9 +1,9 @@
-package at.logic.gapt.examples.tip.isaplanner
+package gapt.examples.tip.isaplanner
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.{ Context, Sequent }
-import at.logic.gapt.provers.viper.aip.axioms.{ SequentialInductionAxioms, StandardInductionAxioms }
+import gapt.expr._
+import gapt.proofs.gaptic._
+import gapt.proofs.{ Context, Sequent }
+import gapt.provers.viper.aip.axioms.{ SequentialInductionAxioms, StandardInductionAxioms }
 import cats.syntax.all._
 
 object prop_03 extends TacticsProof {
@@ -27,14 +27,14 @@ object prop_03 extends TacticsProof {
           def_tail: ∀x ∀xs tail(cons(x, xs)) = xs,
           def_le_1: ∀x le(Z, x),
           def_le_2: ∀x ¬le(S(x), Z),
-          def_le_3: ∀x ∀y ((le(S(x), S(y)) ⊃ le(x, y)) ∧ (le(x, y) ⊃ le(S(x), S(y)))),
+          def_le_3: ∀x ∀y ((le(S(x), S(y)) → le(x, y)) ∧ (le(x, y) → le(S(x), S(y)))),
           def_eq_1: equal(Z, Z),
           def_eq_2: ∀x ¬equal(Z, S(x)),
           def_eq_3: ∀x ¬equal(S(x), Z),
-          def_eq_4: ∀x ∀y ((equal(S(x), S(y)) ⊃ equal(x, y)) ∧ (equal(x, y) ⊃ equal(S(x), S(y)))),
+          def_eq_4: ∀x ∀y ((equal(S(x), S(y)) → equal(x, y)) ∧ (equal(x, y) → equal(S(x), S(y)))),
           def_count_1: ∀x count(x, nil) = Z,
-          def_count_2: ∀x ∀y ∀xs (¬equal(x, y) ⊃ (count(x, cons(y, xs))) = count(x, xs)),
-          def_count_3: ∀x ∀y ∀xs (equal(x, y) ⊃ (count(x, cons(y, xs))) = S(count(x, xs))),
+          def_count_2: ∀x ∀y ∀xs (¬equal(x, y) → (count(x, cons(y, xs))) = count(x, xs)),
+          def_count_3: ∀x ∀y ∀xs (equal(x, y) → (count(x, cons(y, xs))) = S(count(x, xs))),
           def_append_1: ∀xs append(nil, xs) = xs,
           def_append_2: ∀x ∀xs ∀ys append(cons(x, xs), ys) = cons(x, append(xs, ys)),
           ax_nat: ∀x ¬Z = S(x),

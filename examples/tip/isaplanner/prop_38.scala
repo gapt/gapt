@@ -1,8 +1,8 @@
-package at.logic.gapt.examples.tip.isaplanner
+package gapt.examples.tip.isaplanner
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.proofs.Context
+import gapt.proofs.gaptic._
 
 /* This proof is not a s.i.p. because of the subinduction required
  * to prove equal(n,n).
@@ -28,10 +28,10 @@ object prop_38 extends TacticsProof {
           def_equal_1: equal(#c(Z: Nat), #c(Z: Nat)): o,
           def_equal_2: ∀z ¬equal(#c(Z: Nat), S(z:Nat): Nat),
           def_equal_3: ∀x2 ¬equal(S(x2:Nat): Nat, #c(Z: Nat)),
-          def_equal_4: ∀x2 ∀y2 ((equal(S(x2:Nat): Nat, S(y2)) ⊃ equal(x2, y2)) ∧ (equal(x2, y2) ⊃ equal(S(x2), S(y2)))),
+          def_equal_4: ∀x2 ∀y2 ((equal(S(x2:Nat): Nat, S(y2)) → equal(x2, y2)) ∧ (equal(x2, y2) → equal(S(x2), S(y2)))),
           def_count_1: ∀x (count(x:Nat, nil:list): Nat) = #c(Z: Nat),
-          def_count_2: ∀x ∀z ∀ys (¬equal(x:Nat, z:Nat) ⊃ (count(x, cons(z, ys:list): list): Nat) = count(x, ys)),
-          def_count_3: ∀x ∀z ∀ys (equal(x:Nat, z:Nat) ⊃ (count(x, cons(z, ys:list): list): Nat) = S(count(x, ys))),
+          def_count_2: ∀x ∀z ∀ys (¬equal(x:Nat, z:Nat) → (count(x, cons(z, ys:list): list): Nat) = count(x, ys)),
+          def_count_3: ∀x ∀z ∀ys (equal(x:Nat, z:Nat) → (count(x, cons(z, ys:list): list): Nat) = S(count(x, ys))),
           def_append_1: ∀y (append(nil:list, y:list): list) = y,
           def_append_2: ∀z ∀xs ∀y (append(cons(z:Nat, xs:list): list, y:list): list) = cons(z, append(xs, y)),
           ax_nat: ∀y0 ¬#c(Z: Nat) = S(y0:Nat),

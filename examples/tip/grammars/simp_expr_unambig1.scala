@@ -1,9 +1,9 @@
-package at.logic.gapt.examples.tip.grammars
+package gapt.examples.tip.grammars
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context.InductiveType
-import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.proofs.Context.InductiveType
+import gapt.proofs.Sequent
+import gapt.proofs.gaptic._
 
 object simp_expr_unambig1 extends TacticsProof {
 
@@ -44,7 +44,7 @@ object simp_expr_unambig1 extends TacticsProof {
         constr_inj_12: ∀x0 ∀x1 ¬(Plus(x0:E, x1:E): E) = EY,
         constr_inj_13: ¬(EX:E) = EY
         :-
-        goal: ∀u ∀v ((lin(u:E): list) = lin(v) ⊃ u = v)
+        goal: ∀u ∀v ((lin(u:E): list) = lin(v) → u = v)
   """
 
   val theory = Sequent( sequent.antecedent, Nil )

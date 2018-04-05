@@ -1,10 +1,10 @@
-package at.logic.gapt.examples.tip.isaplanner
+package gapt.examples.tip.isaplanner
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context.InductiveType
-import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic._
+import gapt.expr._
+import gapt.proofs.Context.InductiveType
+import gapt.proofs.Sequent
+import gapt.proofs.gaptic._
+import gapt.proofs.gaptic.tactics.AnalyticInductionTactic._
 
 object prop_48 extends TacticsProof {
 
@@ -36,7 +36,7 @@ object prop_48 extends TacticsProof {
         constr_inj_0: ∀y0 ¬#c(Z: Nat) = S(y0:Nat),
         constr_inj_1: ∀y0 ∀y1 ¬(nil:list) = cons(y0:Nat, y1:list)
         :-
-        goal: ∀xs   (¬null(xs:list) ⊃     (append(butlast(xs): list, cons(last(xs): Nat, nil:list): list): list) = xs)
+        goal: ∀xs   (¬null(xs:list) →     (append(butlast(xs): list, cons(last(xs): Nat, nil:list): list): list) = xs)
   """
 
   val dca_goal = hof"!xs (xs = nil ∨ ?x ?xss xs = cons(x, xss))"

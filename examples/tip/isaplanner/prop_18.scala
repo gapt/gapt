@@ -1,8 +1,8 @@
-package at.logic.gapt.examples.tip.isaplanner
+package gapt.examples.tip.isaplanner
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.proofs.Context
+import gapt.proofs.gaptic._
 
 object prop_18 extends TacticsProof {
 
@@ -19,7 +19,7 @@ object prop_18 extends TacticsProof {
           def_plus_2: ∀z ∀y (plus(S(z:Nat): Nat, y:Nat): Nat) = S(plus(z, y)),
           def_lt_1: ∀x ¬lt(x:Nat, #c(Z: Nat)),
           def_lt_2: ∀z lt(#c(Z: Nat), S(z:Nat): Nat),
-          def_lt_3: ∀x2 ∀z ((lt(S(x2:Nat): Nat, S(z)) ⊃ lt(x2, z)) ∧ (lt(x2, z) ⊃ lt(S(x2), S(z)))),
+          def_lt_3: ∀x2 ∀z ((lt(S(x2:Nat): Nat, S(z)) → lt(x2, z)) ∧ (lt(x2, z) → lt(S(x2), S(z)))),
           ax_nat: ∀x ¬Z = S(x)
           :-
           goal: ∀i ∀m lt(i:Nat, S(plus(i, m:Nat): Nat): Nat)

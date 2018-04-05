@@ -1,14 +1,15 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.CNFp
-import at.logic.gapt.proofs.{ Context, Sequent }
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.gaptic._
 
 object tape extends TacticsProof {
   ctx += Context.Sort( "i" )
   ctx += hoc"f: i>i"
   ctx += hoc"'+': i>i>i"
+  ctx += Notation.Infix( "+", Precedence.plusMinus )
   ctx += hoc"0: i"; ctx += hoc"1: i"
   ctx += hof"A = (∀x (f(x) = 0 ∨ f(x) = 1))"
   ctx += hof"I(v) = (∀x ∃y f(x+y) = v)"
@@ -23,9 +24,9 @@ object tape extends TacticsProof {
     unfold( "I" ) in ( "I0", "I1" )
     allR( "I0", FOLVar( "x_0" ) )
     allR( "I1", FOLVar( "x_1" ) )
-    exR( "I0", fot"x_1" )
+    exR( "I0", fov"x_1" )
     forget( "I0" )
-    exR( "I1", fot"x_0" )
+    exR( "I1", fov"x_0" )
     forget( "I1" )
     unfold( "A" ) in "A"
     allL( fot"x_0 + x_1" )
@@ -43,7 +44,7 @@ object tape extends TacticsProof {
     allL( fot"y_0 + 1" )
     forget( "Iv" )
     exL( "Iv_1", fov"y_1" )
-    exR( "C", fot"y_0", fot"(y_0 + y_1) + 1" )
+    exR( "C", fov"y_0", fot"(y_0 + y_1) + 1" )
     forget( "C" )
     destruct( "C_0" )
     negR
@@ -54,9 +55,8 @@ object tape extends TacticsProof {
 
   val proof = Lemma( ( "A" -> fof"A" ) +: Sequent()
     :+ ( "C" -> fof"?x?y (x != y & f x = f y)" ) ) {
-    cut( "I1", fof"I(1)" )
-    cut( "I0", fof"I(0)" )
+    cut( "I1", fof"I(1)" ) right insert( rhs )
+    cut( "I0", fof"I(0)" ) right insert( rhs )
     insert( lhs )
-    repeat( insert( rhs ) )
   }
 }
