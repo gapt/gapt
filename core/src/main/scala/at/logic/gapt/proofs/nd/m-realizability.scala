@@ -11,6 +11,7 @@ object MRealizability {
 
   /**
    * Gives a recursor constant for an inductive type.
+   *
    * @param indType the inductive type that the recursor is for
    * @param resultType type of the result of applying terms to the recursor
    * @param ctx context that the inductive type is defined in
@@ -28,6 +29,7 @@ object MRealizability {
 
   /**
    * Transforms a context into system T.
+   *
    * @param ctx original context
    * @return original context with recursors for inductive types, pair and sum types and terms, and the empty program
    */
@@ -99,6 +101,7 @@ object MRealizability {
 
   /**
    * Extracts an mrealizer for a theorem from its proof.
+   *
    * @param proof proof from which the realizer is extracted
    * @param re boolean whether or not the result should be normalized with respect to the empty program (default) or not
    * @param ctx system T
@@ -206,10 +209,11 @@ object MRealizability {
 
       case ExistsElimRule( leftSubProof, rightSubProof, aux, eigenVariable ) =>
         val mrealizerLeft = mrealizeCases( leftSubProof, varsAntPrem( proof, variables, 0 ), ng )
-        val sub1 = Substitution( eigenVariable, le"pi1($mrealizerLeft)" )
         val extraVar = Var( ng.fresh( "y" ), flat( rightSubProof.conclusion( aux ) ) )
-        val sub2 = Substitution( extraVar, le"pi2($mrealizerLeft)" )
-        sub1( sub2( mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ) + ( aux -> extraVar ), ng ) ) )
+        val sub = Substitution(
+          eigenVariable -> le"pi1($mrealizerLeft)",
+          extraVar -> le"pi2($mrealizerLeft)" )
+        sub( mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ) + ( aux -> extraVar ), ng ) )
 
       case TheoryAxiom( mainFormula ) =>
         Var( ng.fresh( s"mrealizer($mainFormula)" ), flat( mainFormula ) )
@@ -393,10 +397,10 @@ object MRealizability {
   // Given a proof and variables for the formulas in the antecedent of the conlusion,
   // returns those variables that occur as well in the antecedent of the conclusion of the premise at premisenumber.
   private def varsAntPrem( proof: NDProof, varsAntConcl: Map[SequentIndex, Var], premiseNumber: Int ): Map[SequentIndex, Var] = {
-    val positions: Vector[( Seq[SequentIndex], SequentIndex )] = proof.occConnectors( premiseNumber ).childrenSequent.zipWithIndex.antecedent
-    val variables: Vector[( Seq[Option[Var]], SequentIndex )] = positions.map( x => ( x._1.map( y => varsAntConcl.get( y ) ), x._2 ) )
-    val flattened: Vector[( Seq[Var], SequentIndex )] = variables.map( x => ( x._1.flatten, x._2 ) )
-    flattened.flatMap( x => x._1.map( y => ( x._2, y ) ) ).toMap
+    varsAntConcl.flatMap {
+      case ( index, variable ) =>
+        proof.occConnectors( premiseNumber ).parents( index ).map( pindex => pindex -> variable )
+    }
   }
 
 }

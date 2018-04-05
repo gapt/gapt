@@ -232,6 +232,13 @@ class MRealizabilityTest extends Specification {
       val p6 = WeakeningRule( p5, hof"0 = 0" )
       mrealizer( p6 ) must_== Var( "y_3", one )
     }
+    "contraction2" in {
+      val p1 = LogicalAxiom( hof"0=0" )
+      val p2 = LogicalAxiom( hof"0=0" )
+      val p3 = AndIntroRule( p1, p2 )
+      val p4 = ContractionRule( p3, hof"0=0" )
+      mrealizer( p4 ) must_== pair( one, one )( Var( "y", one ), Var( "y", one ) )
+    }
     "andelim1" in {
       val p1 = LogicalAxiom( hof"0 = 0 & s(0) = s(0)" )
       val p2 = AndElim1Rule( p1 )
