@@ -1,11 +1,12 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context.PrimRecFun
-import at.logic.gapt.proofs.{ Context, Sequent }
-import at.logic.gapt.proofs.ceres._
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.lk.LKProof
+import gapt.expr._
+import gapt.proofs.Context._
+import gapt.proofs.Context
+import gapt.proofs.Sequent
+import gapt.proofs.gaptic._
+import gapt.proofs.ceres.{ CLS, CharFormPRN, SchematicStruct, Struct }
+import gapt.proofs.lk.LKProof
 
 object VeryWeakPHPRefutation extends TacticsProof( VeryWeakPHPSchema.ctx ) {
   val SCS: Map[CLS, ( Struct, Set[Var] )] = SchematicStruct( "omega" ).getOrElse( Map() )
