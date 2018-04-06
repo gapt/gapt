@@ -1,9 +1,9 @@
-package at.logic.gapt.proofs.nd
+package gapt.proofs.nd
 
-import at.logic.gapt.examples.Script
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Ant, Checkable, Context }
-import at.logic.gapt.proofs.Context.{ InductiveType, PrimRecFun }
+import gapt.examples.Script
+import gapt.expr._
+import gapt.proofs.{ Ant, Checkable, Context }
+import gapt.proofs.Context.{ InductiveType, PrimRecFun }
 import org.specs2.mutable.Specification
 
 class MRealizabilityTest extends Specification {

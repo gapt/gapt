@@ -1,6 +1,6 @@
-package at.logic.gapt.proofs.nd
+package gapt.proofs.nd
 
-import at.logic.gapt.expr.{ Var, freeVariables }
+import gapt.expr.{ Var, freeVariables }
 
 object freeVariablesND {
   def apply( p: NDProof ): Set[Var] = p match {

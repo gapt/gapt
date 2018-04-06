@@ -1,11 +1,11 @@
-package at.logic.gapt.proofs.nd
+package gapt.proofs.nd
 
-import at.logic.gapt.expr
-import at.logic.gapt.expr.{ App, Substitution, Ty, Var, typeVariables, _ }
-import at.logic.gapt.proofs.Context.{ BaseTypes, InductiveType, PrimRecFun, StructurallyInductiveTypes }
-import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.nd._
-import at.logic.gapt.utils.NameGenerator
+import gapt.expr
+import gapt.expr.{ App, Substitution, Ty, Var, typeVariables, _ }
+import gapt.proofs.Context.{ BaseTypes, InductiveType, PrimRecFun, StructurallyInductiveTypes }
+import gapt.proofs._
+import gapt.proofs.nd._
+import gapt.utils.NameGenerator
 
 object MRealizability {
 

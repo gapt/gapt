@@ -1477,7 +1477,7 @@ Consider the following proof:
 
 \begin{clilisting}
 gapt> val p = examples.successor.proof
-p: at.logic.gapt.proofs.nd.ForallIntroRule =
+p: gapt.proofs.nd.ForallIntroRule =
 [p4]  ⊢ ∀x ∃y (y:nat) = (s(0:nat): nat) + (x:nat)    (ForallIntroRule(p3, x:nat, x:nat))
 [p3]  ⊢ ∃y (y:nat) = (s(0:nat): nat) + (x:nat)    (ExistsIntroRule(p2, (y:nat) = (s(0:nat): nat) + (x:nat), s(x:nat): nat, y:nat))
 [p2]  ⊢ (s(x:nat): nat) = s(0) + x    (DefinitionRule(p1, (s(x:nat): nat) = s(0) + x))
@@ -1488,7 +1488,7 @@ The implementation can then be used to extract a realizer in the following way:
 
 \begin{clilisting}
 gapt> val mr = nd.MRealizability.mrealize(p)(examples.successor.ctx)
-mr: (Map[at.logic.gapt.proofs.SequentIndex,at.logic.gapt.expr.Var], at.logic.gapt.expr.Expr) = (Map(),λx s(x:nat): nat)	
+mr: (Map[gapt.proofs.SequentIndex,gapt.expr.Var], gapt.expr.Expr) = (Map(),λx s(x:nat): nat)	
 \end{clilisting}
 
 Examples of proofs with from which more interesting realizers are extracted by the algorithm can be found in the file \cli{examples/m-realizabilityExamples.scala}. 
