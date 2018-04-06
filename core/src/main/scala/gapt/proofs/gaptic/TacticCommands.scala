@@ -499,9 +499,12 @@ trait TacticCommands {
     } yield ()
   }
 
-  def include( labels: String* )( implicit ctx: Context ): Tactic[Unit] = Tactic(
-    Tactic.sequence( for ( l <- labels ) yield include( l, ProofLink( l ) ) )
+  def include( names: Expr* )( implicit ctx: Context ): Tactic[Unit] = Tactic(
+    Tactic.sequence( for ( l @ Apps( Const( n, _, _ ), _ ) <- names ) yield include( n, ProofLink( l ) ) )
       andThen TacticMonad.pure( () ) )
+
+  def include( labels: String* )( implicit ctx: Context, dummyImplicit: DummyImplicit ): Tactic[Unit] =
+    Tactic( include( labels.map( ProofLink( _ ).referencedProof ): _* ) )
 
   /**
    * Solves the current subgoal as a first-order consequence of the background theory. This
