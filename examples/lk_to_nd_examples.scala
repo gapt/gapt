@@ -1,8 +1,8 @@
-package at.logic.gapt.examples.nd
-import at.logic.gapt.examples.Script
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.lk._
+package gapt.examples.nd
+import gapt.examples.Script
+import gapt.expr._
+import gapt.proofs._
+import gapt.proofs.lk._
 
 // Example 0.1.6
 object ex0_1_6 extends Script {
@@ -650,5 +650,28 @@ object classicalPairing extends Script {
   val focus = Some( Suc( 0 ) )
   val nd = LKToND( lk, focus )
 
+  println( nd )
+}
+
+object issue687 extends Script {
+  import gapt.proofs.gaptic._
+  val lk = Proof( hols"A ∨ B, C → ¬B, C ⊢ A" ) {
+    orL left trivial
+    impL left trivial
+    negL; trivial
+  }
+  println( lk )
+  val nd = LKToND( lk )
+  println( nd )
+}
+
+object issue688 extends Script {
+  val lk = ProofBuilder.
+    c( LogicalAxiom( hof"P(x)" ) ).
+    u( WeakeningLeftRule( _, hof"x=y" ) ).
+    u( EqualityLeftRule( _, Ant( 0 ), Ant( 1 ), le"^x (P x: o)".asInstanceOf[Abs] ) ).
+    qed
+  println( lk )
+  val nd = LKToND( lk )
   println( nd )
 }

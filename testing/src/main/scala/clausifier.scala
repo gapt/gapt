@@ -1,9 +1,9 @@
-package at.logic.gapt.testing
+package gapt.testing
 
-import at.logic.gapt.formats.{ InputFile, StdinInputFile }
-import at.logic.gapt.formats.tptp._
+import gapt.formats.{ InputFile, StdinInputFile }
+import gapt.formats.tptp._
 import ammonite.ops._
-import at.logic.gapt.proofs.resolution.structuralCNF
+import gapt.proofs.resolution.structuralCNF
 
 object clausifier extends App {
   val input: InputFile = args match {

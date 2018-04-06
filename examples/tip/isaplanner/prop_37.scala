@@ -1,8 +1,8 @@
-package at.logic.gapt.examples.tip.isaplanner
+package gapt.examples.tip.isaplanner
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.proofs.Context
+import gapt.proofs.gaptic._
 
 object prop_37 extends TacticsProof {
 
@@ -24,12 +24,12 @@ object prop_37 extends TacticsProof {
           def_equal_1: equal(#c(Z: Nat), #c(Z: Nat)): o,
           def_equal_2: ∀z ¬equal(#c(Z: Nat), S(z:Nat): Nat),
           def_equal_3: ∀x2 ¬equal(S(x2:Nat): Nat, #c(Z: Nat)),
-          def_equal_4: ∀x2 ∀y2 ((equal(S(x2:Nat): Nat, S(y2)) ⊃ equal(x2, y2)) ∧ (equal(x2, y2) ⊃ equal(S(x2), S(y2)))),
+          def_equal_4: ∀x2 ∀y2 ((equal(S(x2:Nat): Nat, S(y2)) → equal(x2, y2)) ∧ (equal(x2, y2) → equal(S(x2), S(y2)))),
           def_elem_1: ∀x ¬elem(x:Nat, nil:list),
-          def_elem_2: ∀x ∀z ∀xs ((elem(x:Nat, cons(z:Nat, xs:list): list) ⊃ equal(x, z) ∨ elem(x, xs)) ∧ (equal(x, z) ∨ elem(x, xs) ⊃ elem(x, cons(z, xs)))),
+          def_elem_2: ∀x ∀z ∀xs ((elem(x:Nat, cons(z:Nat, xs:list): list) → equal(x, z) ∨ elem(x, xs)) ∧ (equal(x, z) ∨ elem(x, xs) → elem(x, cons(z, xs)))),
           def_delete_1: ∀x (delete(x:Nat, nil:list): list) = nil,
-          def_delete_2: ∀x ∀z ∀xs (¬equal(x:Nat, z:Nat) ⊃ (delete(x, cons(z, xs:list): list): list) = cons(z, delete(x, xs))),
-          def_delete_3: ∀x ∀z ∀xs (equal(x:Nat, z:Nat) ⊃ (delete(x, cons(z, xs:list): list): list) = delete(x, xs)),
+          def_delete_2: ∀x ∀z ∀xs (¬equal(x:Nat, z:Nat) → (delete(x, cons(z, xs:list): list): list) = cons(z, delete(x, xs))),
+          def_delete_3: ∀x ∀z ∀xs (equal(x:Nat, z:Nat) → (delete(x, cons(z, xs:list): list): list) = delete(x, xs)),
           ax_nat: ∀y0 ¬#c(Z: Nat) = S(y0:Nat),
           ax_list: ∀y0 ∀y1 ¬(nil:list) = cons(y0:Nat, y1:list)
           :-

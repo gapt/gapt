@@ -1,8 +1,8 @@
-package at.logic.gapt.examples.tip.isaplanner
+package gapt.examples.tip.isaplanner
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.proofs.Context
+import gapt.proofs.gaptic._
 
 /* This proof is not a s.i.p. because of the subinductions */
 object prop_33 extends TacticsProof {
@@ -22,14 +22,14 @@ object prop_33 extends TacticsProof {
       def_min2_3: ∀z ∀y2 (min2(S(z:Nat): Nat, S(y2)): Nat) = S(min2(z, y2)),
       def_le_1: ∀y le(#c(Z: Nat), y:Nat),
       def_le_2: ∀z ¬le(S(z:Nat): Nat, #c(Z: Nat)),
-      def_le_3: ∀z ∀x2 ((le(S(z:Nat): Nat, S(x2)) ⊃ le(z, x2)) ∧ (le(z, x2) ⊃ le(S(z), S(x2)))),
+      def_le_3: ∀z ∀x2 ((le(S(z:Nat): Nat, S(x2)) → le(z, x2)) ∧ (le(z, x2) → le(S(z), S(x2)))),
       def_equal_1: equal(Z, Z),
       def_equal_2: ∀x ¬equal(Z, S(x)),
       def_equal_3: ∀x ¬equal(S(x), Z),
-      def_equal_4: ∀x ∀y ((equal(S(x), S(y)) ⊃ equal(x, y)) ∧ (equal(x, y) ⊃ equal(S(x), S(y)))),
+      def_equal_4: ∀x ∀y ((equal(S(x), S(y)) → equal(x, y)) ∧ (equal(x, y) → equal(S(x), S(y)))),
       ax_nat: ∀x ¬Z = S(x)
       :-
-      goal: ∀a ∀b ((equal(min2(a:Nat, b:Nat): Nat, a) ⊃ le(a, b)) ∧ (le(a, b) ⊃ equal(min2(a, b), a)))
+      goal: ∀a ∀b ((equal(min2(a:Nat, b:Nat): Nat, a) → le(a, b)) ∧ (le(a, b) → equal(min2(a, b), a)))
     """
 
   val proof = Lemma( sequent ) {

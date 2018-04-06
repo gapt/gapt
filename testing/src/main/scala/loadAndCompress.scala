@@ -1,8 +1,8 @@
-package at.logic.gapt.testing
+package gapt.testing
 
-import at.logic.gapt.proofs.expansion.InstanceTermEncoding
-import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
-import at.logic.gapt.proofs.loadExpansionProof
+import gapt.proofs.expansion.InstanceTermEncoding
+import gapt.formats.prover9.Prover9TermParserLadrStyle._
+import gapt.proofs.loadExpansionProof
 import ammonite.ops._
 
 object loadAndCompress extends App {

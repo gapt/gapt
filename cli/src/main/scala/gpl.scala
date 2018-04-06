@@ -1,4 +1,4 @@
-package at.logic.gapt.cli
+package gapt.cli
 
 /**
  * An object evaluating to the text of the GPL 3.

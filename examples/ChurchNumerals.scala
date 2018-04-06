@@ -1,6 +1,6 @@
-package at.logic.gapt.examples.church_numerals
+package gapt.examples.church_numerals
 
-import at.logic.gapt.expr._
+import gapt.expr._
 
 import scala.annotation.tailrec
 

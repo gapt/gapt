@@ -1,10 +1,10 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context.PrimRecFun
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.proofs.Context.PrimRecFun
+import gapt.proofs.Context
+import gapt.proofs.Sequent
+import gapt.proofs.gaptic._
 
 object NdiffSchema extends TacticsProof {
   ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
@@ -61,8 +61,8 @@ object NdiffSchema extends TacticsProof {
     Seq( "Suc_0" -> hof"?p DIFF(0,p)" ) )
   val omegaBc = Lemma( esOmegaBc ) {
     cut( "cut", hof"?x ?y (LEQ(AP(s(0),x),y) &  E(f(y),s(0)))" )
-    allL( "Ant_0", le"K" )
-    exR( "cut", le"K" )
+    allL( "Ant_0", fov"K" )
+    exR( "cut", fov"K" )
     unfold( "bloc" ) atMost 1 in "Ant_0_0"
     exR( "cut_0", le"AP(s(0), K)" )
     andR
@@ -93,7 +93,7 @@ object NdiffSchema extends TacticsProof {
   val phiSc = Lemma( esphiSc ) {
     cut( "cut", hof"?x ?y (LEQ(AP(n,x),y) &  E(f(y),n))" )
     unfold( "bloc" ) atMost 1 in "Ant_1"
-    allL( "Ant_1", le"t" )
+    allL( "Ant_1", fov"t" )
     andL( "Ant_1_0" )
     andL( "Ant_1_0_0" )
     andL( "Ant_1_0_0_0" )
@@ -106,7 +106,7 @@ object NdiffSchema extends TacticsProof {
     ref( "chi" )
     unfold( "DIFF" ) atMost 1 in "Suc_0"
     unfold( "bloc" ) atMost 1 in "Ant_1"
-    allL( "Ant_1", le"t" )
+    allL( "Ant_1", fov"t" )
     andL( "Ant_1_0" )
     andL( "Ant_1_0_0" )
     andL( "Ant_1_0_0_0" )

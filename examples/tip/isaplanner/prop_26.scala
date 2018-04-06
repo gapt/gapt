@@ -1,8 +1,8 @@
-package at.logic.gapt.examples.tip.isaplanner
+package gapt.examples.tip.isaplanner
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.proofs.Context
+import gapt.proofs.gaptic._
 
 object prop_26 extends TacticsProof {
 
@@ -25,15 +25,15 @@ object prop_26 extends TacticsProof {
       def_equal_1: equal(Z, Z),
       def_equal_2: ∀x ¬equal(Z, S(x)),
       def_equal_3: ∀x ¬equal(S(x), Z),
-      def_equal_4: ∀x ∀y ((equal(S(x), S(y)) ⊃ equal(x, y)) ∧ (equal(x, y) ⊃ equal(S(x), S(y)))),
+      def_equal_4: ∀x ∀y ((equal(S(x), S(y)) → equal(x, y)) ∧ (equal(x, y) → equal(S(x), S(y)))),
       def_elem_1: ∀x ¬elem(x:Nat, nil:list),
-      def_elem_2: ∀x ∀z ∀xs ((elem(x:Nat, cons(z:Nat, xs:list): list) ⊃ equal(x, z) ∨ elem(x, xs)) ∧ (equal(x, z) ∨ elem(x, xs) ⊃ elem(x, cons(z, xs)))),
+      def_elem_2: ∀x ∀z ∀xs ((elem(x:Nat, cons(z:Nat, xs:list): list) → equal(x, z) ∨ elem(x, xs)) ∧ (equal(x, z) ∨ elem(x, xs) → elem(x, cons(z, xs)))),
       def_append_1: ∀y (append(nil:list, y:list): list) = y,
       def_append_2: ∀z ∀xs ∀y (append(cons(z:Nat, xs:list): list, y:list): list) = cons(z, append(xs, y)) ,
       ax_nat: ∀x ¬Z = S(x),
       ax_list: ∀y0 ∀y1 ¬(nil:list) = cons(y0:Nat, y1:list)
       :-
-      goal: ∀x ∀xs ∀ys (elem(x:Nat, xs:list) ⊃ elem(x, append(xs, ys:list)))
+      goal: ∀x ∀xs ∀ys (elem(x:Nat, xs:list) → elem(x, append(xs, ys:list)))
     """
 
   val proof = Lemma( sequent ) {

@@ -1,12 +1,14 @@
-package at.logic.gapt.examples.tip.prod
+package gapt.examples.tip.prod
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.Context
+import gapt.proofs.gaptic._
 
 object prop_01 extends TacticsProof {
   ctx += Context.InductiveType( ty"nat", hoc"0: nat", hoc"S: nat>nat" )
   ctx += hoc"'+': nat>nat>nat"
+  ctx += Notation.Infix( "+", Precedence.plusMinus )
   ctx += hoc"d: nat>nat"
 
   val sequent =
@@ -31,6 +33,8 @@ object prop_01 extends TacticsProof {
     rewrite.many ltr ( "p0", "d0" ); refl // IB
     rewrite.many ltr ( "ps", "ds", "lem", "IHx_0" ); refl // IS
   }
+
+  val openind = proof
 
   val singleInduction = Lemma( sequent ) {
     cut( "lem", hof"!x!y (x + S y = S (x + y) & d x = x + x)" ); forget( "g" )

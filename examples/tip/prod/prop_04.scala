@@ -1,9 +1,9 @@
-package at.logic.gapt.examples.tip.prod
+package gapt.examples.tip.prod
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context.InductiveType
-import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.proofs.Context.InductiveType
+import gapt.proofs.Sequent
+import gapt.proofs.gaptic._
 
 object prop_04 extends TacticsProof {
 
@@ -58,6 +58,37 @@ object prop_04 extends TacticsProof {
   val proof = Lemma( sequent ) {
     cut( "lemma", lem_2 )
     insert( lem_2_proof )
+    allR; induction( hov"x:list" )
+    //- BC
+    rewrite ltr "def_append_0" in "goal"
+    rewrite.many ltr "def_length_0" in "goal"
+    rewrite ltr "def_double_0" in "goal"
+    refl
+    //- IC
+    rewrite ltr "lemma" in "goal"
+    rewrite ltr "def_append_1" in "goal"
+    rewrite.many ltr "def_length_1" in "goal"
+    rewrite ltr "def_double_1" in "goal"
+    rewrite ltr "IHx_0" in "goal"
+    refl
+  }
+
+  val lem_2_proof_openind = Lemma( theory :+ ( "l2" -> lem_2 ) ) {
+    allR; allR; allR; induction( hov"xs:list" )
+    //- BC
+    rewrite.many ltr "def_append_0" in "l2"
+    rewrite.many ltr "def_length_1" in "l2"
+    refl
+    //- IC
+    rewrite.many ltr "def_append_1" in "l2"
+    rewrite.many ltr "def_length_1" in "l2"
+    rewrite.many ltr "IHxs_0" in "l2"
+    refl
+  }
+
+  val openind = Lemma( sequent ) {
+    cut( "lemma", lem_2 )
+    insert( lem_2_proof_openind )
     allR; induction( hov"x:list" )
     //- BC
     rewrite ltr "def_append_0" in "goal"

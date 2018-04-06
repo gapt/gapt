@@ -1,6 +1,22 @@
 # Release notes for GAPT
 
-## Version 2.9 (unreleased)
+## Version 2.11 (unreleased)
+
+* Root package was renamed from `at.logic.gapt` to just `gapt`
+
+## Version 2.10 (released on 2018-03-19)
+
+* Emoji support in formulas
+* Implication is now → (instead of ⊃)
+* LKt: proof terms for high performance cut normalization
+* IEscargot prototype: an effective prover for first-order intuitionist logic
+* User-defined operators in Babel (the formula parser)
+* Simplifier tactic
+* Formalization of the Fundamental Theorem of Arithmetic
+* Hierarchical logging levels
+* Many bugfixes for parametric polymorphism
+
+## Version 2.9 (released on 2018-01-30)
 
 * Support for the current (yet unreleased) TIP format
 * Rewrite of the tree grammar-based induction prover

@@ -1,12 +1,14 @@
-package at.logic.gapt.examples.induction
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.provers.spass.SPASS
+package gapt.examples.induction
+import gapt.expr._
+import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.Context
+import gapt.proofs.gaptic._
+import gapt.provers.spass.SPASS
 
 object associativitySpecialCase extends TacticsProof {
   ctx += Context.InductiveType( ty"nat", hoc"0: nat", hoc"s: nat>nat" )
   ctx += hoc"'+': nat>nat>nat"
+  ctx += Notation.Infix( "+", Precedence.plusMinus )
 
   def tac = // FIXME(gabriel): WTF, this causes a syntax error when inlined??!?!
     treeGrammarInduction

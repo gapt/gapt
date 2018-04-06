@@ -1,8 +1,8 @@
-package at.logic.gapt.examples.tip.isaplanner
+package gapt.examples.tip.isaplanner
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.proofs.Context
+import gapt.proofs.gaptic._
 
 object prop_16 extends TacticsProof {
 
@@ -25,7 +25,7 @@ object prop_16 extends TacticsProof {
                       ax_nat_1:∀y0 ¬#c(Z: Nat) = S(y0:Nat),
                       ax_list_1:∀y0 ∀y1 ¬(nil:list) = cons(y0:Nat, y1:list)
                       :-
-                      goal: ∀x ∀xs ((xs:list) = nil ⊃ (last(cons(x:Nat, xs): list): Nat) = x)
+                      goal: ∀x ∀xs ((xs:list) = nil → (last(cons(x:Nat, xs): list): Nat) = x)
     """
 
   val proof = Lemma( sequent ) {

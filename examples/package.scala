@@ -1,8 +1,9 @@
-package at.logic.gapt
+package gapt
 
 package object examples {
   val proofSequences = Seq[ProofSequence](
     LinearExampleProof,
+    LinearCutExampleProof,
     LinearEqExampleProof,
     SquareDiagonalExampleProof,
     SquareEdgesExampleProof,

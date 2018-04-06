@@ -1,10 +1,10 @@
-package at.logic.gapt.examples.tip.prod
+package gapt.examples.tip.prod
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context.InductiveType
-import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.provers.viper.aip.AnalyticInductionProver
+import gapt.expr._
+import gapt.proofs.Context.InductiveType
+import gapt.proofs.Sequent
+import gapt.proofs.gaptic._
+import gapt.provers.viper.aip.AnalyticInductionProver
 
 object prop_10 extends TacticsProof {
 
@@ -45,4 +45,17 @@ object prop_10 extends TacticsProof {
     insert( lemma_8_proof )
     allR; induction( hov"x:list" ); escargot.withDeskolemization.onAllSubGoals
   }
+
+  val lemma_8_openind_proof = Lemma( lemma_8 ) {
+    allR; allR; induction( hov"xs:list" )
+    escargot //-IB
+    escargot //-IC
+  }
+
+  val openind = Lemma( sequent ) {
+    cut( "lemma_8", hof"∀xs ∀x rev(append(xs, cons(x,nil))) = append(cons(x,nil), rev(xs))" )
+    insert( lemma_8_openind_proof )
+    allR; induction( hov"x:list" ); escargot.withDeskolemization.onAllSubGoals
+  }
+
 }

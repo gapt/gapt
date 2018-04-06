@@ -1,8 +1,8 @@
-package at.logic.gapt.examples.tip.isaplanner
+package gapt.examples.tip.isaplanner
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.proofs.Context
+import gapt.proofs.gaptic._
 
 object prop_17 extends TacticsProof {
 
@@ -17,14 +17,14 @@ object prop_17 extends TacticsProof {
           def_p: ∀x p(S(x)) = x,
           def_le_1: ∀x le(Z, x),
           def_le_2: ∀x ¬le(S(x), Z),
-          def_le_3: ∀x ∀y ((le(S(x), S(y)) ⊃ le(x, y)) ∧ (le(x, y) ⊃ le(S(x), S(y)))),
+          def_le_3: ∀x ∀y ((le(S(x), S(y)) → le(x, y)) ∧ (le(x, y) → le(S(x), S(y)))),
           def_equal_1: equal(Z, Z),
           def_equal_2: ∀x ¬equal(Z, S(x)),
           def_equal_3: ∀x ¬equal(S(x), Z),
-          def_equal_4: ∀x ∀y ((equal(S(x), S(y)) ⊃ equal(x, y)) ∧ (equal(x, y) ⊃ equal(S(x), S(y)))),
+          def_equal_4: ∀x ∀y ((equal(S(x), S(y)) → equal(x, y)) ∧ (equal(x, y) → equal(S(x), S(y)))),
           ax_nat: ∀x ¬Z = S(x)
           :-
-          goal: ∀n ((le(n:Nat, #c(Z: Nat)) ⊃ equal(n, #c(Z: Nat))) ∧ (equal(n, #c(Z: Nat)) ⊃ le(n, #c(Z: Nat))))
+          goal: ∀n ((le(n:Nat, #c(Z: Nat)) → equal(n, #c(Z: Nat))) ∧ (equal(n, #c(Z: Nat)) → le(n, #c(Z: Nat))))
         """
 
   val proof = Lemma( sequent ) {

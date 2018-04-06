@@ -1,9 +1,9 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.expr.FOLAtom
-import at.logic.gapt.proofs.{ Suc, Ant }
-import at.logic.gapt.proofs.ceres.Projections
-import at.logic.gapt.proofs.lk._
+import gapt.expr.FOLAtom
+import gapt.proofs.{ Suc, Ant }
+import gapt.proofs.ceres.Projections
+import gapt.proofs.lk._
 
 object philsci {
   def apply(): ( LKProof, LKProof ) = {
