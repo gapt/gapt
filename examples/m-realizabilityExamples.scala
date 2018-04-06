@@ -5,6 +5,26 @@ import at.logic.gapt.expr.{ Abs, TBase, _ }
 import at.logic.gapt.proofs.{ Ant, Checkable, Context, Sequent, nd }
 import at.logic.gapt.proofs.Context.{ InductiveType, PrimRecFun }
 
+object successor {
+
+  implicit var ctx = Context()
+
+  ctx += InductiveType(
+    ty"nat",
+    hoc"0 : nat",
+    hoc"s : nat > nat" )
+  ctx += PrimRecFun(
+    hoc"'+': nat>nat>nat",
+    "0 + x = x",
+    "s(x) + y = s(x + y)" )
+
+  val p1 = EqualityIntroRule( le"s(x)" )
+  val p2 = DefinitionRule( p1, hof"s(x) = s(0) + x" )
+  Checkable.requireDefEq( p1.conclusion.succedent( 0 ), p2.conclusion.succedent( 0 ) )
+  val p3 = ExistsIntroRule( p2, hof"y = s(0) + x", le"s(x)", hov"y:nat" )
+  val proof = ForallIntroRule( p3, hov"x:nat", hov"x:nat" )
+}
+
 object divisionByTwo {
 
   implicit var ctx = Context()

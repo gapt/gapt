@@ -1470,21 +1470,21 @@ The natural deduction calculus contains two rules that are problematic for the e
 
 Any other free variable occurring in an extracted realizer, that is not the result of any of the above situations, must be understood to mean that it may be replaced by any term of the type of the variable.
 
-Consider the following proof, that is made after defining an implicit context containing the natural numbers and the primitive recursive function $+$ : 
+Consider the following proof: 
 
 \begin{clilisting}
-gapt> val p4 = nd.ForallIntroRule(p3,hov"x:nat",hov"x:nat")
-p4: at.logic.gapt.proofs.nd.ForallIntroRule = 
-[p4]  ⊢ ∀x ∃y (y:nat) = (x:nat) + (s(0:nat): nat)    (ForallIntroRule(p3, x:nat, x:nat))
-[p3]  ⊢ ∃y (y:nat) = (x:nat) + (s(0:nat): nat)    (ExistsIntroRule(p2, (y:nat) = (x:nat) + (s(0:nat): nat), s(x:nat): nat, y:nat))
-[p2]  ⊢ (s(x:nat): nat) = x + s(0)    (DefinitionRule(p1, (s(x:nat): nat) = x + s(0)))
+gapt> val p = examples.successor.proof
+p: at.logic.gapt.proofs.nd.ForallIntroRule =
+[p4]  ⊢ ∀x ∃y (y:nat) = (s(0:nat): nat) + (x:nat)    (ForallIntroRule(p3, x:nat, x:nat))
+[p3]  ⊢ ∃y (y:nat) = (s(0:nat): nat) + (x:nat)    (ExistsIntroRule(p2, (y:nat) = (s(0:nat): nat) + (x:nat), s(x:nat): nat, y:nat))
+[p2]  ⊢ (s(x:nat): nat) = s(0) + x    (DefinitionRule(p1, (s(x:nat): nat) = s(0) + x))
 [p1]  ⊢ (s(x:nat): nat) = s(x)    (EqualityIntroRule(s(x:nat): nat))
 \end{clilisting}
 
 The implementation can then be used to extract a realizer in the following way:
 
 \begin{clilisting}
-gapt> val mr = nd.MRealizability.mrealize(p4)
+gapt> val mr = nd.MRealizability.mrealize(p)(examples.successor.ctx)
 mr: (Map[at.logic.gapt.proofs.SequentIndex,at.logic.gapt.expr.Var], at.logic.gapt.expr.Expr) = (Map(),λx s(x:nat): nat)	
 \end{clilisting}
 
