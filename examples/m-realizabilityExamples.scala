@@ -2,7 +2,7 @@ package gapt.examples
 
 import gapt.proofs.nd._
 import gapt.expr.{ Abs, TBase, _ }
-import gapt.proofs.{ Ant, Checkable, Context, Sequent, nd }
+import gapt.proofs.{ Ant, Checkable, Context, Sequent }
 import gapt.proofs.Context.{ InductiveType, PrimRecFun }
 
 object successor {
