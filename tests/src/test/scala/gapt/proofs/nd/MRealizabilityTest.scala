@@ -2,6 +2,7 @@ package gapt.proofs.nd
 
 import gapt.examples.Script
 import gapt.expr._
+import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.{ Ant, Checkable, Context }
 import gapt.proofs.Context.{ InductiveType, PrimRecFun }
 import org.specs2.mutable.Specification
@@ -30,6 +31,7 @@ class MRealizabilityTest extends Specification {
         ty"nat",
         hoc"0 : nat",
         hoc"s : nat > nat" )
+      ctx += Notation.Infix( "+", Precedence.plusMinus )
       ctx += PrimRecFun(
         hoc"'+': nat>nat>nat",
         "0 + x = x",
@@ -68,6 +70,7 @@ class MRealizabilityTest extends Specification {
         ty"nat",
         hoc"0 : nat",
         hoc"s : nat > nat" )
+      ctx += Notation.Infix( "+", Precedence.plusMinus )
       ctx += PrimRecFun(
         hoc"'+': nat>nat>nat",
         "0 + x = x",
@@ -125,6 +128,7 @@ class MRealizabilityTest extends Specification {
       ty"nat",
       hoc"0 : nat",
       hoc"s : nat > nat" )
+    ctx += Notation.Infix( "+", Precedence.plusMinus )
     ctx += PrimRecFun(
       hoc"'+': nat>nat>nat",
       "0 + x = x",
@@ -372,7 +376,7 @@ class MRealizabilityTest extends Specification {
         Abs( Var( "y", one ), inl( one, one ->: one )( Var( "y", one ) ) ),
         Abs( Var( "y_0", one ->: one ), inr( one, one ->: one )( Var( "y_0", one ->: one ) ) ) )
 
-      val a1 = LogicalAxiom( hof"¬¬0=0" )
+      val a1 = LogicalAxiom( hof"¬ ¬0=0" )
       val a2 = LogicalAxiom( hof"¬0=0" )
       val a3 = NegElimRule( a1, a2 )
       val a4 = BottomElimRule( a3, hof"0=0" )
@@ -432,24 +436,24 @@ class MRealizabilityTest extends Specification {
       val s0 = LogicalAxiom( hof"!x app(x,nil) = x" )
       val s01 = ForallElimRule( s0, le"nil" )
       val s1 = LogicalAxiom( hof"!a !x !y app(cons(a,x),y) = cons(a,app(x,y))" )
-      val s11 = ForallElimRule( s1, le"a : i" )
-      val s2 = ForallElimRule( s11, le"x0 : list i" )
+      val s11 = ForallElimRule( s1, le"a" )
+      val s2 = ForallElimRule( s11, le"x0 : list ?a" )
       val s3 = ForallElimRule( s2, le"nil" )
       val s4 = LogicalAxiom( hof"app(x0,nil) = x0" )
-      val s5 = EqualityElimRule( s4, s3, hof"app(cons(a, x0),nil) = cons(a, z)", hov"z: list i" )
+      val s5 = EqualityElimRule( s4, s3, hof"app(cons(a, x0),nil) = cons(a, z)", hov"z: list ?a" )
       val cases = Seq(
         InductionCase( s01, hoc"nil", Seq.empty, Seq.empty ),
-        InductionCase( s5, hoc"cons", Seq( Ant( 0 ) ), Seq( hov"a : i", hov"x0: list i" ) ) )
-      val p = InductionRule( cases, Abs( Var( "x", ty"list i" ), hof"app(x,nil) = x" ), le"x : list i" )
+        InductionCase( s5, hoc"cons", Seq( Ant( 0 ) ), Seq( hov"a : ?a", hov"x0: list ?a" ) ) )
+      val p = InductionRule( cases, Abs( Var( "x", ty"list ?a" ), hof"app(x,nil) = x" ), le"x : list ?a" )
 
-      val y = Var( "y", list( Ti ) ->: one )
-      val a = Var( "a", Ti )
-      val x0 = Var( "x0", list( Ti ) )
+      val y = Var( "y", list( TVar( "a" ) ) ->: one )
+      val a = Var( "a", TVar( "a" ) )
+      val x0 = Var( "x0", list( TVar( "a" ) ) )
       val y1 = Var( "y_1", one )
-      val y0 = Var( "y_0", Ti ->: list( Ti ) ->: list( Ti ) ->: one )
-      val x = Var( "x", list( Ti ) )
+      val y0 = Var( "y_0", TVar( "a" ) ->: list( TVar( "a" ) ) ->: list( TVar( "a" ) ) ->: one )
+      val x = Var( "x", list( TVar( "a" ) ) )
 
-      mrealizer( p ) must_== listRec( Ti, one )( y( nil( Ti ) ), Abs( Seq( a, x0, y1 ), y0( a, x0, nil( Ti ) ) ), x )
+      mrealizer( p ) must_== listRec( TVar( "a" ), one )( y( nil( TVar( "a" ) ) ), Abs( Seq( a, x0, y1 ), y0( a, x0, nil( TVar( "a" ) ) ) ), x )
     }
     "ind-bitree" in {
       val a1 = LogicalAxiom( hof"!a P(leaf{?a}(a))" )
