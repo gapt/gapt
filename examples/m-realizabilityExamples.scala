@@ -5,10 +5,9 @@ import gapt.expr.{ Abs, _ }
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.{ Ant, Checkable, Context }
 import gapt.proofs.Context.{ InductiveType, PrimRecFun }
+import gapt.proofs.gaptic.TacticsProof
 
-object successor {
-
-  implicit var ctx = Context()
+object successor extends TacticsProof {
 
   ctx += InductiveType(
     ty"nat",
@@ -27,9 +26,7 @@ object successor {
   val proof = ForallIntroRule( p3, hov"x:nat", hov"x:nat" )
 }
 
-object divisionByTwo {
-
-  implicit var ctx = Context()
+object divisionByTwo extends TacticsProof {
 
   ctx += InductiveType(
     ty"nat",
@@ -87,9 +84,7 @@ object divisionByTwo {
   val proof = ForallIntroRule( a1, hov"x:nat", hov"x:nat" )
 }
 
-object elemAtIndex {
-
-  implicit var ctx = Context()
+object elemAtIndex extends TacticsProof {
 
   ctx += InductiveType(
     ty"nat",
