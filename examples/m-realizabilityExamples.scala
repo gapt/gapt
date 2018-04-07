@@ -1,8 +1,9 @@
 package gapt.examples
 
 import gapt.proofs.nd._
-import gapt.expr.{ Abs, TBase, _ }
-import gapt.proofs.{ Ant, Checkable, Context, Sequent, nd }
+import gapt.expr.{ Abs, _ }
+import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.{ Ant, Checkable, Context }
 import gapt.proofs.Context.{ InductiveType, PrimRecFun }
 
 object successor {
@@ -13,6 +14,7 @@ object successor {
     ty"nat",
     hoc"0 : nat",
     hoc"s : nat > nat" )
+  ctx += Notation.Infix( "+", Precedence.plusMinus )
   ctx += PrimRecFun(
     hoc"'+': nat>nat>nat",
     "0 + x = x",
@@ -33,10 +35,12 @@ object divisionByTwo {
     ty"nat",
     hoc"0 : nat",
     hoc"s : nat > nat" )
+  ctx += Notation.Infix( "+", Precedence.plusMinus )
   ctx += PrimRecFun(
     hoc"'+': nat>nat>nat",
     "x + 0 = x",
     "x + s(y) = s(x + y)" )
+  ctx += Notation.Infix( "*", Precedence.timesDiv )
   ctx += PrimRecFun(
     hoc"'*': nat>nat>nat",
     "x * 0 = 0",
@@ -91,6 +95,7 @@ object elemAtIndex {
     ty"nat",
     hoc"0 : nat",
     hoc"s : nat > nat" )
+  ctx += Notation.Infix( "+", Precedence.plusMinus )
   ctx += PrimRecFun(
     hoc"'+': nat>nat>nat",
     "0 + x = x",
@@ -132,16 +137,16 @@ object elemAtIndex {
   val b1 = LogicalAxiom( hof"xs0 = app(ys,cons(x,zs)) & length(ys) = n0" )
   val b2 = AndElim1Rule( b1 )
   val b3 = EqualityIntroRule( le"cons(x0,xs0)" )
-  val b4 = EqualityElimRule( b2, b3, hof"cons(x0,xs0) = cons(x0,x)", hov"x:list i" )
+  val b4 = EqualityElimRule( b2, b3, hof"cons(x0,xs0) = cons(x0,x)", hov"x:list ?a" )
   Checkable.requireDefEq( le"cons(x0,app(ys,cons(x,zs)))", le"app(cons(x0,ys),cons(x,zs))" )
   val b5 = DefinitionRule( b4, hof"cons(x0,xs0) = app(cons(x0,ys),cons(x,zs))" )
 
   val c1 = LogicalAxiom( hof"?zs (xs0 = app(ys,cons(x,zs)) & length(ys) = n0)" )
   val c2 = AndIntroRule( b5, a5 )
   val c3 = ContractionRule( c2, Ant( 0 ), Ant( 1 ) )
-  val c4 = ExistsIntroRule( c3, hof"cons(x0,xs0) = app(cons(x0,ys),cons(x,zs)) & length(cons(x0,ys)) = s(n0)", le"zs:list i", hov"zs:list i" )
+  val c4 = ExistsIntroRule( c3, hof"cons(x0,xs0) = app(cons(x0,ys),cons(x,zs)) & length(cons(x0,ys)) = s(n0)", le"zs:list ?a", hov"zs:list ?a" )
   val c5 = ExistsElimRule( c1, c4 )
-  val c6 = ExistsIntroRule( c5, hof"?zs (cons(x0,xs0) = app(ys,cons(x,zs)) & length(ys) = s(n0))", le"cons(x0,ys)", hov"ys:list i" )
+  val c6 = ExistsIntroRule( c5, hof"?zs (cons(x0,xs0) = app(ys,cons(x,zs)) & length(ys) = s(n0))", le"cons(x0,ys)", hov"ys:list ?a" )
 
   val x1 = TheoryAxiom( hof"!x !y (s(x)=s(y) -> x=y)" )
   val x2 = ForallElimRule( x1, le"length(xs0)" )
@@ -162,61 +167,61 @@ object elemAtIndex {
   val ii7 = ImpIntroRule( ii6, Ant( 1 ) )
   val ii8 = ExistsIntroRule( ii7, hof"?x (?n length(cons(x0,xs0)) = s(s(n0)) + n -> ?ys ?zs ( cons(x0,xs0) = app(ys,cons(x,zs)) & length(ys) = s(n0) ) )" )
   val ii9 = LogicalAxiom( hof"!xs ?x (?n length(xs) = s(n0) + n -> ?ys ?zs ( xs = app(ys,cons(x,zs)) & length(ys) = n0 ) )" )
-  val ii10 = ForallElimRule( ii9, le"xs0 : list i" )
+  val ii10 = ForallElimRule( ii9, le"xs0 : list ?a" )
   val ii11 = ExistsElimRule( ii10, ii8 )
   val ii = WeakeningRule( ii11, hof"?x (?n length(xs0) = s(s(n0)) + n -> ?ys ?zs ( xs0 = app(ys,cons(x,zs)) & length(ys) = s(n0) ) )" )
 
   val ib1 = LogicalAxiom( hof"?n (0 = s(s(n0)) + n)" )
   val ib2 = ForallElimRule( s, le"s(n0)" )
   val ib3 = NegElimRule( ib2, ib1 )
-  val ib4 = BottomElimRule( ib3, hof"?ys ?zs (nil = app(ys,cons(x,zs)) & length(ys) = s(n0))" )
+  val ib4 = BottomElimRule( ib3, hof"?ys ?zs (nil{?a} = app(ys,cons(x,zs)) & length(ys) = s(n0))" )
   val ib5 = ImpIntroRule( ib4 )
-  val ib6 = ExistsIntroRule( ib5, hof"?n (0 = s(s(n0)) + n) -> ?ys ?zs (nil = app(ys,cons(x,zs)) & length(ys) = s(n0))", le"x:i", hov"x:i" )
-  Checkable.requireDefEq( le"length(nil)", le"0" )
-  val ib = DefinitionRule( ib6, hof"?x (?n length(nil) = s(s(n0)) + n -> ?ys ?zs (nil = app(ys,cons(x,zs)) & length(ys) = s(n0)))" )
+  val ib6 = ExistsIntroRule( ib5, hof"?n (0 = s(s(n0)) + n) -> ?ys ?zs (nil = app(ys,cons(x,zs)) & length(ys) = s(n0))", le"x:?a", hov"x:?a" )
+  Checkable.requireDefEq( le"length(nil{?a})", le"0" )
+  val ib = DefinitionRule( ib6, hof"?x (?n length(nil{?a}) = s(s(n0)) + n -> ?ys ?zs (nil{?a} = app(ys,cons(x,zs)) & length(ys) = s(n0)))" )
 
   val bi1 = EqualityIntroRule( le"cons(x0,xs0)" )
   val bi2 = EqualityIntroRule( le"0" )
   val bi3 = AndIntroRule( bi1, bi2 )
-  val bi4 = ExistsIntroRule( bi3, hof"cons(x0,xs0) = cons(x0,zs) & 0 = 0", le"xs0 : list i", hov"zs : list i" )
-  Checkable.requireDefEq( le"cons(x0,zs)", le"app(nil,cons(x0,zs))" )
-  val bi5 = DefinitionRule( bi4, hof"?zs (cons(x0,xs0) = app(nil,cons(x0,zs)) & 0 = 0)" )
-  Checkable.requireDefEq( le"0", le"length(nil)" )
-  val bi6 = DefinitionRule( bi5, hof"?zs (cons(x0,xs0) = app(nil,cons(x0,zs)) & length(nil) = 0)" )
-  val bi7 = ExistsIntroRule( bi6, hof"?zs (cons(x0,xs0) = app(ys,cons(x0,zs)) & length(ys) = 0)", le"nil", hov"ys : list i" )
+  val bi4 = ExistsIntroRule( bi3, hof"cons(x0,xs0) = cons(x0,zs) & 0 = 0", le"xs0 : list ?a", hov"zs : list ?a" )
+  Checkable.requireDefEq( le"cons(x0,zs)", le"app(nil{?a},cons(x0,zs))" )
+  val bi5 = DefinitionRule( bi4, hof"?zs (cons(x0,xs0) = app(nil{?a},cons(x0,zs)) & 0 = 0)" )
+  Checkable.requireDefEq( le"0", le"length(nil{?a})" )
+  val bi6 = DefinitionRule( bi5, hof"?zs (cons(x0,xs0) = app(nil{?a},cons(x0,zs)) & length(nil{?a}) = 0)" )
+  val bi7 = ExistsIntroRule( bi6, hof"?zs (cons(x0,xs0) = app(ys,cons(x0,zs)) & length(ys) = 0)", le"nil{?a}", hov"ys : list ?a" )
   val bi8 = WeakeningRule( bi7, hof"?n length(cons(x0,xs0)) = s(0) + n" )
   val bi9 = ImpIntroRule( bi8 )
-  val bi10 = ExistsIntroRule( bi9, hof"?n length(cons(x0,xs0)) = s(0) + n -> ?ys ?zs (cons(x0,xs0) = app(ys,cons(x,zs)) & length(ys) = 0)", le"x0 : i", hov"x : i" )
+  val bi10 = ExistsIntroRule( bi9, hof"?n length(cons(x0,xs0)) = s(0) + n -> ?ys ?zs (cons(x0,xs0) = app(ys,cons(x,zs)) & length(ys) = 0)", le"x0 : ?a", hov"x : ?a" )
   val bi = WeakeningRule( bi10, hof"?x (?n length(xs0) = s(0) + n -> ?ys ?zs (xs0 = app(ys,cons(x,zs)) & length(ys) = 0))" )
 
   val bb1 = LogicalAxiom( hof"?n 0 = s(0) + n" )
   val bb2 = ForallElimRule( s, le"0" )
   val bb3 = NegElimRule( bb2, bb1 )
-  val bb4 = BottomElimRule( bb3, hof"?ys ?zs (nil = app(ys,cons(x,zs)) & length(ys) = 0)" )
+  val bb4 = BottomElimRule( bb3, hof"?ys ?zs (nil{?a} = app(ys,cons(x,zs)) & length(ys) = 0)" )
   val bb5 = ImpIntroRule( bb4 )
-  val bb6 = ExistsIntroRule( bb5, hof"?n 0 = s(0) + n -> ?ys ?zs (nil = app(ys,cons(x,zs)) & length(ys) = 0)", le"x : i", hov"x : i" )
-  Checkable.requireDefEq( le"0", le"length(nil)" )
-  val bb = DefinitionRule( bb6, hof"?x (?n length(nil) = s(0) + n -> ?ys ?zs (nil = app(ys,cons(x,zs)) & length(ys) = 0))" )
+  val bb6 = ExistsIntroRule( bb5, hof"?n 0 = s(0) + n -> ?ys ?zs (nil{?a} = app(ys,cons(x,zs)) & length(ys) = 0)", le"x : ?a", hov"x : ?a" )
+  Checkable.requireDefEq( le"0", le"length(nil{?a})" )
+  val bb = DefinitionRule( bb6, hof"?x (?n length(nil{?a}) = s(0) + n -> ?ys ?zs (nil{?a} = app(ys,cons(x,zs)) & length(ys) = 0))" )
 
   val i1 = InductionRule(
     Seq(
-      InductionCase( ib, hoc"nil", Seq(), Seq() ),
-      InductionCase( ii, hoc"cons", Seq( Ant( 0 ) ), Seq( hov"x0 : i", hov"xs0 : list i" ) ) ),
-    Abs( hov"xs : list i", hof"?x (?n length(xs) = s(s(n0)) + n -> ?ys ?zs (xs = app(ys,cons(x,zs)) & length(ys) = s(n0)))" ),
-    hov"xs : list i" )
-  val i2 = ForallIntroRule( i1, hov"xs : list i", hov"xs : list i" )
+      InductionCase( ib, hoc"nil{?a}", Seq(), Seq() ),
+      InductionCase( ii, hoc"cons", Seq( Ant( 0 ) ), Seq( hov"x0 : ?a", hov"xs0 : list ?a" ) ) ),
+    Abs( hov"xs : list ?a", hof"?x (?n length(xs) = s(s(n0)) + n -> ?ys ?zs (xs = app(ys,cons(x,zs)) & length(ys) = s(n0)))" ),
+    hov"xs : list ?a" )
+  val i2 = ForallIntroRule( i1, hov"xs : list ?a", hov"xs : list ?a" )
   val i3 = InductionRule(
     Seq(
-      InductionCase( bb, hoc"nil", Seq(), Seq() ),
-      InductionCase( bi, hoc"cons", Seq( Ant( 0 ) ), Seq( hov"x0 : i", hov"xs0 : list i" ) ) ),
-    Abs( hov"xs : list i", hof"?x (?n length(xs) = s(0) + n -> ?ys ?zs (xs = app(ys,cons(x,zs)) & length(ys) = 0))" ),
-    hov"xs : list i" )
-  val i4 = ForallIntroRule( i3, hov"xs : list i", hov"xs : list i" )
+      InductionCase( bb, hoc"nil{?a}", Seq(), Seq() ),
+      InductionCase( bi, hoc"cons", Seq( Ant( 0 ) ), Seq( hov"x0 : ?a", hov"xs0 : list ?a" ) ) ),
+    Abs( hov"xs : list ?a", hof"?x (?n length(xs) = s(0) + n -> ?ys ?zs (xs = app(ys,cons(x,zs)) & length(ys) = 0))" ),
+    hov"xs : list ?a" )
+  val i4 = ForallIntroRule( i3, hov"xs : list ?a", hov"xs : list ?a" )
   val i5 = InductionRule(
     Seq(
       InductionCase( i4, hoc"0", Seq(), Seq() ),
       InductionCase( i2, hoc"s", Seq( Ant( 0 ) ), Seq( hov"n0:nat" ) ) ),
     Abs( hov"n0 : nat", hof"!xs ?x (?n length(xs) = s(n0) + n -> ?ys ?zs (xs = app(ys,cons(x,zs)) & length(ys) = n0))" ),
     hov"n0 : nat" )
-  val i = ForallIntroRule( i5, hov"n0:nat", hov"n0:nat" )
+  val proof = ForallIntroRule( i5, hov"n0:nat", hov"n0:nat" )
 }
