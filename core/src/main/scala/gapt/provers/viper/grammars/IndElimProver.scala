@@ -18,10 +18,13 @@ case class IndElimProver(
   val xs = freeVariables( goal ).toSeq
   val quantSequent = instSeq.copy( succedent = Vector( All.Block( xs, goal ) ) )
 
-  def apply( ts: Seq[Expr] ): LKt =
-    normalizeLKt.induction( Substitution( xs zip ts )( proofTerm ), lctx )( ctx )
+  def apply( ts: Seq[Expr] ): ( LKt, LocalCtx ) = {
+    val subst = Substitution( xs zip ts )
+    val lctx1 = subst( lctx )
+    normalizeLKt.induction( subst( proofTerm ), lctx1 )( ctx ) -> lctx1
+  }
 
-  def getLKtProof( seq: HOLSequent ): LKt = {
+  def getLKtProof( seq: HOLSequent ): ( LKt, LocalCtx ) = {
     val Some( subst ) = syntacticMatching( goal, seq( Suc( 0 ) ) )
     require( subst( instSeq ) isSubsetOf seq )
     apply( subst( xs ) )
@@ -29,8 +32,10 @@ case class IndElimProver(
 
   override def getExpansionProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] =
     getLKProof( seq ).map( LKToExpansionProof( _ ) )
-  override def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] =
-    Some( LKtToLK( getLKtProof( seq ), lctx ) )
+  override def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = {
+    val ( q, lctx1 ) = getLKtProof( seq )
+    Some( LKtToLK.apply( q, lctx1 ) )
+  }
 }
 
 object IndElimProver {
