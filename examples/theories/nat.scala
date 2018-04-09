@@ -133,7 +133,6 @@ object natorder extends Theory( nat ) {
   val addlecancell = lemma( hof"y+x<=z+x <-> y<=z", "simp" ) { include( "addlecancelr", "addcomm" ); escrgt }
   val subeq0 = lemma( hof"x<=y -> x-y=0", "simp" ) {
     induction( hov"y:nat" ) onAll simp.w( "lesl", "lesr" ) onAll decompose; destruct( "g_0" ) onAll simp.h
-    forget( "g_0", "IHy_0" ); induction( hov"y_0:nat" ) onAll simp.h
   }
 
   val ltirrefl = lemma( hof"~(x<x)", "simp" ) { include( "lt", "add", "addlecancelr", "les0" ); escrgt }
