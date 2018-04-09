@@ -109,7 +109,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     else options.smtEquationMode.adapt( options.equationalTheory, options.smtSolver )
 
   def solve(): LKProof = time( "ceggr" ) {
-    info( sequent )
+    info( sequent.toSigRelativeString )
 
     val instanceProofs = mutable.Map[Instance, ExpansionProof]()
     for ( Seq( inst ) <- instanceGen.generate( options.instanceSize._1, options.instanceSize._2, options.instanceNumber ) )
