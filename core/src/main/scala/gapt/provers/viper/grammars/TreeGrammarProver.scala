@@ -73,6 +73,9 @@ object TreeGrammarProverOptions {
 
 object TreeGrammarProver {
   val logger = Logger( "TreeGrammarProver" )
+
+  def apply( sequent: HOLSequent, options: TreeGrammarProverOptions = TreeGrammarProverOptions() )( implicit ctx: Context ): LKProof =
+    new TreeGrammarProver( ctx, sequent, options ).solve()
 }
 
 class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options: TreeGrammarProverOptions ) {
