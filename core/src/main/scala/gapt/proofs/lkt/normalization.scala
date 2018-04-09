@@ -155,6 +155,10 @@ class NormalizerWithDebugging( implicit ctx: Maybe[Context] ) extends Normalizer
 }
 
 class normalize {
+  def lk( p: LKProof, skipAtomicCuts: Boolean = false, skipPropositionalCuts: Boolean = false ): LKProof = {
+    val ( q, lctx ) = LKToLKt( p )
+    LKtToLK( apply( q, skipAtomicCuts, skipPropositionalCuts ), lctx )
+  }
   def apply( p: LKt, skipAtomicCuts: Boolean = false, skipPropositionalCuts: Boolean = false ): LKt =
     new Normalizer[FakeLocalCtx]( skipAtomicCuts, skipPropositionalCuts ) {}.
       normalize( p, FakeLocalCtx )
