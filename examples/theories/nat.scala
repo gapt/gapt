@@ -70,6 +70,7 @@ object nat extends Theory( logic, props ) {
 
   val subadd = lemma( hof"(x+y)-y=x", "simp" ) { include( "add", "sub", "p" ); anaInd }
   val sub0l = lemma( hof"0-x=0", "simp" ) { induction( hov"x:nat" ) onAll simp.h }
+  val subself = lemma( hof"x-x=0", "simp" ) { induction( hov"x:nat" ) onAll simp.h }
   val subpl = lemma( hof"p(x)-y=p(x-y)", "simp" ) { generalize( hov"x:nat" ); induction( hov"y:nat" ) onAll simp.h }
   val subps = lemma( hof"p(s(x)-y)=x-y", "simp" ) { include( "subpl", "p" ); escrgt }
   val subaddr = lemma( hof"x-(y+z)=x-y-z", "simp" ) { induction( hov"z:nat" ) onAll simp.h }
