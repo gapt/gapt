@@ -16,7 +16,7 @@ object constructSIP {
              bup: InductionBUP, solution: Expr, prover: Prover )( implicit ctx: MutableContext ): LKProof = {
     val g = bup.grammar
     val subst = Substitution( bup.X -> solution )
-    def substF( formula: Formula ): Formula = normalize( subst( formula ) ).asInstanceOf[Formula]
+    def substF( formula: Formula ): Formula = BetaReduction.betaNormalize( subst( formula ) )
 
     val nu = rename( Var( "ν", g.indTy ), containedNames( bup.formula ) ++ containedNames( solution ) )
 
@@ -31,7 +31,9 @@ object constructSIP {
     }
 
     state += allR( g.alpha )
-    state += cut( "lem", All.Block( nu +: g.gamma, normalize( solution( g.alpha, nu )( g.gamma: _* ) ).asInstanceOf[Formula] ) )
+    state += cut( "lem", All.Block(
+      nu +: g.gamma,
+      BetaReduction.betaNormalize( solution( g.alpha, nu )( g.gamma: _* ) ).asInstanceOf[Formula] ) )
 
     state += forget( "g" )
     state += allR( nu )
