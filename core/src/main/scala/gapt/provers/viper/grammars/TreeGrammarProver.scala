@@ -32,6 +32,7 @@ case class TreeGrammarProverOptions(
     instanceNumber:   Int                 = 10,
     instanceSize:     FloatRange          = ( 0, 2 ),
     instanceProver:   Prover              = DefaultProvers.firstOrder,
+    minInstProof:     Boolean             = true,
     smtSolver:        Prover              = DefaultProvers.smt,
     smtEquationMode:  SmtEquationMode     = AddNormalizedFormula,
     quantTys:         Option[Seq[String]] = None,
@@ -236,7 +237,8 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     val instProof0 = quiet( options.instanceProver.getExpansionProof( instanceSequent ) ).getOrElse {
       throw new IllegalArgumentException( s"Cannot prove:\n$instanceSequent" )
     }
-    val Some( instProof ) = minimalExpansionSequent( instProof0, smtSolver )
+    val Some( instProof ) = if ( !options.minInstProof ) Some( instProof0 )
+    else minimalExpansionSequent( instProof0, smtSolver )
     require(
       smtSolver.isValid( instProof.deep ),
       s"Instance proof has invalid deep formula:\n${instProof.deep.toSigRelativeString}" )
