@@ -7,7 +7,7 @@ import gapt.proofs.lk.LKProof
 import gapt.provers.simp.{ QPropSimpProc, SimpLemmas, Simplifier }
 import gapt.utils.Maybe
 
-class Normalizer[LC <: ALCtx[LC]]( skipAtomicCuts: Boolean = false, skipPropositionalCuts: Boolean = false ) {
+class Normalizer[LC <: ALCtx[LC]]( skipCut: Formula => Boolean ) {
   protected def doCheck( p: LKt, lctx: LC ): Unit = ()
 
   case class ProofSubst( hyp: Hyp, byF: Formula, by: Bound1 ) {
@@ -107,8 +107,7 @@ class Normalizer[LC <: ALCtx[LC]]( skipAtomicCuts: Boolean = false, skipProposit
     val Cut( f, q1, q2 ) = c
     if ( q1.isConst ) return q1.p
     if ( q2.isConst ) return q2.p
-    if ( skipAtomicCuts && isAtom( f ) ) return c
-    if ( skipPropositionalCuts && !containsQuantifierOnLogicalLevel( f ) ) return c
+    if ( skipCut( f ) ) return c
     if ( q2.freeHyps( q1.aux ) ) return evalCut( Cut( f, q1.rename( q2.freeHyps ), q2 ), lctx )
     if ( q1.freeHyps( q2.aux ) ) return evalCut( Cut( f, q1, q2.rename( q1.freeHyps ) ), lctx )
     val lctx1 = lctx.up1( c )
@@ -150,18 +149,17 @@ class Normalizer[LC <: ALCtx[LC]]( skipAtomicCuts: Boolean = false, skipProposit
   }
 }
 
-class NormalizerWithDebugging( implicit ctx: Maybe[Context] ) extends Normalizer[LocalCtx] {
+class NormalizerWithDebugging( implicit ctx: Maybe[Context] ) extends Normalizer[LocalCtx]( skipCut = _ => false ) {
   override def doCheck( p: LKt, lctx: LocalCtx ): Unit = check( p, lctx )
 }
 
 class normalize {
-  def lk( p: LKProof, skipAtomicCuts: Boolean = false, skipPropositionalCuts: Boolean = false ): LKProof = {
+  def lk( p: LKProof, skipCut: Formula => Boolean = _ => false ): LKProof = {
     val ( q, lctx ) = LKToLKt( p )
-    LKtToLK( apply( q, skipAtomicCuts, skipPropositionalCuts ), lctx )
+    LKtToLK( apply( q, skipCut ), lctx )
   }
-  def apply( p: LKt, skipAtomicCuts: Boolean = false, skipPropositionalCuts: Boolean = false ): LKt =
-    new Normalizer[FakeLocalCtx]( skipAtomicCuts, skipPropositionalCuts ) {}.
-      normalize( p, FakeLocalCtx )
+  def apply( p: LKt, skipCut: Formula => Boolean = _ => false ): LKt =
+    new Normalizer[FakeLocalCtx]( skipCut ) {}.normalize( p, FakeLocalCtx )
   def withDebug( p: LKProof )( implicit ctx: Maybe[Context] ): LKt = {
     val ( t, lctx ) = LKToLKt( p )
     withDebug( t, lctx )
@@ -170,13 +168,13 @@ class normalize {
     new NormalizerWithDebugging().normalize( p, lctx )
 
   def induction( p: LKt, lctx: LocalCtx, useSimp: Boolean = true, debugging: Boolean = false,
-                 skipAtomicCuts: Boolean = false, skipPropositionalCuts: Boolean = false )( implicit ctx: Context ): LKt = {
+                 skipCut: Formula => Boolean = _ => false )( implicit ctx: Context ): LKt = {
     val simpAdapter = if ( !useSimp ) NoopSimpAdapter else SimplifierSimpAdapter(
       Simplifier( SimpLemmas.collectFromAnt( lctx.toSequent ).toSeq :+ QPropSimpProc ), lctx )
     if ( debugging )
       new NormalizerWithDebugging().normalizeWithInduction( p, lctx, simpAdapter )
     else
-      new Normalizer[FakeLocalCtx]( skipAtomicCuts, skipPropositionalCuts ) {}.
+      new Normalizer[FakeLocalCtx]( skipCut ) {}.
         normalizeWithInduction( p, FakeLocalCtx, simpAdapter )
   }
   def inductionWithDebug( p: LKProof )( implicit ctx: Context ): LKt = {
