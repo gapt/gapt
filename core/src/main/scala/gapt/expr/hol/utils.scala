@@ -124,6 +124,18 @@ object containsQuantifierOnLogicalLevel {
   }
 }
 
+object containsHOQuantifier {
+  def apply( f: Formula ): Boolean = f match {
+    case Top() | Bottom() | _: Atom                     => false
+    case Neg( x )                                       => apply( x )
+    case And( x, y )                                    => apply( x ) || apply( y )
+    case Or( x, y )                                     => apply( x ) || apply( y )
+    case Imp( x, y )                                    => apply( x ) || apply( y )
+    case Quant( Var( _, FunctionType( To, _ ) ), _, _ ) => true // TODO: check if variable occurs as atom
+    case Quant( _, sub, _ )                             => apply( sub )
+  }
+}
+
 object containsStrongQuantifier {
   def apply( f: Formula, pol: Polarity ): Boolean = f match {
     case Top() | Bottom() => false
