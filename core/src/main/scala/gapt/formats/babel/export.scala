@@ -88,7 +88,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       case Abs( v @ Var( vn, vt ), e ) =>
         val ( e_, t1 ) = show( e, knownType, bound + vn, t0 - vn )
         val v_ =
-          if ( vt == Ti || t1.get( vn ).contains( v ) )
+          if ( vt == Ti || t1.get( vn ).contains( v ) || omitTypes )
             showName( vn )
           else
             parens( showName( vn ) <> ":" <> show( vt, false ) )
@@ -225,7 +225,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
         val Var( vn, vt ) = v
         val ( e_, t1 ) = show( e, true, bound + vn, t0 - vn )
         val v_ =
-          if ( vt == Ti || t1.get( vn ).contains( v ) )
+          if ( vt == Ti || t1.get( vn ).contains( v ) || omitTypes )
             showName( vn )
           else
             parens( showName( vn ) <> ":" <> show( vt, false ) )
