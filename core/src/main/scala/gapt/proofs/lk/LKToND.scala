@@ -102,6 +102,16 @@ object LKToND {
     assert( focus.forall( _ => proof.endSequent.succedent.nonEmpty ) )
     assert( focus.forall( _.isSuc ) )
 
+    // Optimization when the end-sequent has the form :- ¬A, A with focus ¬A, then just return ¬A :- ¬A
+    focus match {
+      case Some( i ) =>
+        proof.endSequent( i ) match {
+          case Neg( f ) if ( proof.endSequent.size == 2 && proof.endSequent.delete( i ).forall( _ == f ) ) => return nd.LogicalAxiom( Neg( f ) )
+          case _ => ()
+        }
+      case _ => ()
+    }
+
     val ndProof = proof match {
 
       // Axioms
