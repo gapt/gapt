@@ -21,13 +21,13 @@ trait SatMatchers extends OptionMatchers {
   def beValid = beUnsat ^^ { ( f: Formula ) => -f }
   def beValidSequent = beValid ^^ { ( sequent: HOLSequent ) => sequent.toDisjunction }
 
-  def beEUnsat =
+  def beEValid =
     beSome ^^ { ( f: Formula ) =>
-      renameConstantsToFi.wrap( -f )( ( _, mangled: Formula ) =>
+      renameConstantsToFi.wrap( f )( ( _, mangled: Formula ) =>
         new Escargot( splitting = false, equality = true, propositional = true )
           .getResolutionProof( mangled ) )
     }
-  def beEValid = beEUnsat ^^ { ( f: Formula ) => -f }
+  def beEUnsat = beEValid ^^ { ( f: Formula ) => -f }
   def beEValidSequent = beEValid ^^ { ( sequent: HOLSequent ) => sequent.toDisjunction }
 
 }

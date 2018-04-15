@@ -9,8 +9,9 @@ import gapt.expr._
  * Then replace each [[ETSkolemQuantifier]] by [[ETStrongQuantifier]], and each skolem term within, by a fresh eigenvariable.
  */
 object deskolemizeET {
-  def apply( expansionProof: ExpansionProof ): ExpansionProof = {
-    val skolemsAboveCuts = eliminateMerges( moveSkolemNodesToCuts( expansionProof ) )
+  def apply( expansionProof: ExpansionProof, removeCongruences: Boolean = true ): ExpansionProof = {
+    val woCongrs = if ( removeCongruences ) removeSkolemCongruences( expansionProof ) else expansionProof
+    val skolemsAboveCuts = eliminateMerges( moveSkolemNodesToCuts( woCongrs ) )
     val deskolemized = replaceByEigenvariables( skolemsAboveCuts )
     eliminateCutsET( deskolemized )
   }
