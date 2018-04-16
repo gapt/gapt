@@ -13,6 +13,7 @@ object removeSkolemCongruences {
       case ( ETTop( _ ) | ETBottom( _ ), _ ) => et
       case ( ETAtom( _, pol ), newSh: Atom ) => ETAtom( newSh, pol )
       case ( ETWeakening( _, pol ), _ )      => ETWeakening( newSh, pol )
+      case ( ETMerge( a, b ), _ )            => ETMerge( repl( m, a, newSh ), repl( m, b, newSh ) )
       case ( ETNeg( a ), Neg( f ) )          => ETNeg( repl( m, a, f ) )
       case ( ETAnd( a, b ), And( f, g ) )    => ETAnd( repl( m, a, f ), repl( m, b, g ) )
       case ( ETOr( a, b ), Or( f, g ) )      => ETOr( repl( m, a, f ), repl( m, b, g ) )
