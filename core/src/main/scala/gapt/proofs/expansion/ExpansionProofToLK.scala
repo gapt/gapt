@@ -35,14 +35,15 @@ class ExpansionProofToLK(
       orElse( tryNullary( theory, expSeq ) ).
       orElse( tryStrongQ( theory, expSeq ) ).
       orElse( tryWeakQ( theory, expSeq, intuitionisticHeuristics ) ).
-      orElse( tryUnary( theory, expSeq, intuitionisticHeuristics ) ).
+      orElse( tryUnary( theory, expSeq, if ( intuitionisticHeuristics ) 0 else 2 ) ).
       orElse( tryCut( theory, expSeq ) ).
       orElse( tryInduction( theory, expSeq ) ).
       orElse( tryBinary( theory, expSeq, intuitionisticHeuristics ) ).
       orElse( if ( intuitionisticHeuristics ) tryIntuitionisticImpLeft( theory, expSeq ) else None ).
       orElse( if ( intuitionisticHeuristics ) tryWeakQ( theory, expSeq, intuitionistic = false ) else None ).
       orElse( if ( intuitionisticHeuristics ) tryBinary( theory, expSeq, intuitionistic = false ) else None ).
-      orElse( if ( intuitionisticHeuristics ) tryUnary( theory, expSeq ) else None ).
+      orElse( if ( intuitionisticHeuristics ) tryUnary( theory, expSeq, 1 ) else None ).
+      orElse( if ( intuitionisticHeuristics ) tryUnary( theory, expSeq, 2 ) else None ).
       orElse( tryTheory( theory, expSeq ) ).
       getOrElse( Left( theory -> expSeq ) ).
       map {
@@ -92,9 +93,9 @@ class ExpansionProofToLK(
     }
 
   private def tryUnary( theory: Theory, expSeq: ExpansionSequent,
-                        tryNotToIntroduceFormulasInSuccedent: Boolean = false ): Option[UnprovableOrLKProof] =
+                        classical: Int ): Option[UnprovableOrLKProof] =
     expSeq.zipWithIndex.elements collectFirst {
-      case ( ETNeg( f ), i: Ant ) if !tryNotToIntroduceFormulasInSuccedent =>
+      case ( ETNeg( f ), i: Ant ) if classical >= 2 =>
         mapIf( solve( theory, expSeq.delete( i ) :+ f ), f.shallow, !i.polarity ) {
           NegLeftRule( _, f.shallow )
         }
@@ -105,7 +106,8 @@ class ExpansionProofToLK(
         mapIf( solve( theory, f +: g +: expSeq.delete( i ) ), f.shallow, i.polarity, g.shallow, i.polarity ) {
           AndLeftMacroRule( _, f.shallow, g.shallow )
         }
-      case ( ETOr( f, g ), i: Suc ) =>
+      case ( ETOr( f, g ), i: Suc ) if classical >= 1
+        || f.isInstanceOf[ETWeakening] || g.isInstanceOf[ETWeakening] =>
         mapIf( solve( theory, expSeq.delete( i ) :+ f :+ g ), f.shallow, i.polarity, g.shallow, i.polarity ) {
           OrRightMacroRule( _, f.shallow, g.shallow )
         }
