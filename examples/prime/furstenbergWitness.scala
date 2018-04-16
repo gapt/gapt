@@ -1,10 +1,10 @@
-package at.logic.gapt.examples.prime
+package gapt.examples.prime
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.ImmutableContext
-import at.logic.gapt.proofs.expansion.ETWeakQuantifier
-import at.logic.gapt.proofs.lk.{ LKToExpansionProof, eliminateDefinitions, skolemizeLK }
-import at.logic.gapt.proofs.lkt._
+import gapt.expr._
+import gapt.proofs.ImmutableContext
+import gapt.proofs.expansion.ETWeakQuantifier
+import gapt.proofs.lk.{ LKToExpansionProof, eliminateDefinitions, skolemizeLK }
+import gapt.proofs.lkt._
 
 object furstenbergWitness {
   case class Multiset[T]( countingMap: Map[T, Int] = Map[T, Int]() ) extends ( T => Int ) {
@@ -77,6 +77,9 @@ object furstenbergWitness {
         }
     }
 
+    def lowerBound( p: ZZMPolynomial[Expr] ): Int =
+      p.coeffsMap.map { case ( _, c ) => require( c >= 0 ); c }.sum
+
     def toMPolynomial( e: Expr ): ZZMPolynomial[Expr] =
       e match {
         case App( Const( "p", _, _ ), _ ) => e
@@ -85,7 +88,9 @@ object furstenbergWitness {
         case Apps( Const( "+", _, _ ), Seq( a, b ) ) =>
           toMPolynomial( a ) + toMPolynomial( b )
         case Apps( Const( "pred", _, _ ), Seq( a ) ) =>
-          toMPolynomial( a ) + ( -1 )
+          val sub = toMPolynomial( a )
+          require( lowerBound( sub ) >= 1, s"not positive: $sub\ncould be: ${lowerBound( sub )}" )
+          sub + ( -1 )
         case Apps( Const( "s", _, _ ), Seq( a ) ) =>
           toMPolynomial( a ) + 1
         case Const( "0", _, _ ) => 0

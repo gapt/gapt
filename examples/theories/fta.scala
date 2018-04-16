@@ -1,6 +1,6 @@
-package at.logic.gapt.examples.theories
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.gaptic._
+package gapt.examples.theories
+import gapt.expr._
+import gapt.proofs.gaptic._
 
 object fta extends Theory( natlists, listlength, natdivisible ) {
   dfn( hof"primedec l n = (lall prime l & n = prod l)" )

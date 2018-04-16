@@ -4,7 +4,7 @@ import org.apache.commons.compress.archivers.tar.{ TarArchiveEntry, TarArchiveOu
 import scalariform.formatter.preferences._
 import sys.process._
 
-val Version = "2.10-SNAPSHOT"
+val Version = "2.11-SNAPSHOT"
 
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
@@ -96,13 +96,13 @@ lazy val root = project.in( file( "." ) ).
       }
       (
         mkScript( target.value / "run" ),
-        mkScript( target.value / "test-cut-intro", "at.logic.gapt.testing.testCutIntro" ),
-        mkScript( target.value / "test-pi2-cut-intro", "at.logic.gapt.testing.testPi2CutIntro" ),
-        mkScript( target.value / "test-induction", "at.logic.gapt.testing.testInduction" ),
-        mkScript( target.value / "viper", "at.logic.gapt.provers.viper.Viper" ),
-        mkScript( target.value / "escargot", "at.logic.gapt.provers.escargot.Escargot" ),
-        mkScript( target.value / "iescargot", "at.logic.gapt.provers.escargot.IEscargot" ),
-        mkScript( target.value / "cli", "at.logic.gapt.cli.CLIMain" ) )
+        mkScript( target.value / "test-cut-intro", "gapt.testing.testCutIntro" ),
+        mkScript( target.value / "test-pi2-cut-intro", "gapt.testing.testPi2CutIntro" ),
+        mkScript( target.value / "test-induction", "gapt.testing.testInduction" ),
+        mkScript( target.value / "viper", "gapt.provers.viper.Viper" ),
+        mkScript( target.value / "escargot", "gapt.provers.escargot.Escargot" ),
+        mkScript( target.value / "iescargot", "gapt.provers.escargot.IEscargot" ),
+        mkScript( target.value / "cli", "gapt.cli.CLIMain" ) )
     },
 
     // Release stuff
@@ -150,7 +150,7 @@ lazy val root = project.in( file( "." ) ).
     evalUserManual := {
       val userManFn = "doc/user_manual.tex"
       val out = new ByteArrayOutputStream
-      val exitVal = new Fork( "java", Some( "at.logic.gapt.testing.evalCodeSnippetsInLatex" ) ).fork(
+      val exitVal = new Fork( "java", Some( "gapt.testing.evalCodeSnippetsInLatex" ) ).fork(
         ForkOptions(
           javaHome = javaHome.value,
           outputStrategy = Some( CustomOutput( out ) ),
@@ -181,7 +181,7 @@ lazy val core = project.in( file( "core" ) ).
       "org.typelevel" %% "cats" % "0.9.0",
       "org.scala-lang.modules" %% "scala-xml" % "1.1.0",
       "org.apache.commons" % "commons-lang3" % "3.7",
-      "com.lihaoyi" %% "ammonite-ops" % "1.0.3",
+      "com.lihaoyi" %% "ammonite-ops" % "1.1.0",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5" ),
 
@@ -225,7 +225,7 @@ lazy val cli = project.in( file( "cli" ) ).
   dependsOn( core, examples ).
   settings( commonSettings: _* ).
   settings(
-    mainClass := Some( "at.logic.cli.CLIMain" ),
+    mainClass := Some( "gapt.cli.CLIMain" ),
 
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value ),

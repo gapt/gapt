@@ -1,8 +1,8 @@
-package at.logic.gapt.examples.tip.isaplanner
+package gapt.examples.tip.isaplanner
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.proofs.Context
+import gapt.proofs.gaptic._
 
 object prop_15 extends TacticsProof {
 
@@ -67,4 +67,6 @@ object prop_15 extends TacticsProof {
     eql( "IHxs_0", "goal" ).fromLeftToRight
     refl
   }
+
+  val openind = proof
 }

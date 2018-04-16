@@ -1,11 +1,11 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.expr.fol.{ Counter, replaceAbstractions }
-import at.logic.gapt.expr.{ Abs, Const, Atom, Expr, To }
-import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.proofs.ceres_omega.AnalysisWithCeresOmega
-import at.logic.gapt.formats.llk.loadLLK
-import at.logic.gapt.proofs.expansion.{ ETAnd, ETImp, ETSkolemQuantifier, ETWeakQuantifier, ExpansionProof, ExpansionTree }
+import gapt.expr.fol.{ Counter, replaceAbstractions }
+import gapt.expr.{ Abs, Const, Atom, Expr, To }
+import gapt.formats.ClasspathInputFile
+import gapt.proofs.ceres_omega.AnalysisWithCeresOmega
+import gapt.formats.llk.loadLLK
+import gapt.proofs.expansion.{ ETAnd, ETImp, ETSkolemQuantifier, ETWeakQuantifier, ExpansionProof, ExpansionTree }
 
 /**
  * Version 2 of the higher-order n-Tape proof.
@@ -64,7 +64,7 @@ object nTapeInstances {
         ( base, step )
     }
 
-    ( ind1base, ind1step, ind2base, ind2step ) match {
+    ( ( ind1base, ind1step, ind2base, ind2step ): @unchecked ) match {
       case ( Abs( xb, sb ), Abs( xs, ss ), Abs( yb, tb ), Abs( ys, ts ) ) =>
         val map = Map[Expr, String]()
         val counter = new Counter

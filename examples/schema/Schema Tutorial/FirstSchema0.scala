@@ -1,9 +1,9 @@
-package at.logic.gapt.examples
-import at.logic.gapt.expr._ //Used to construct terms
-import at.logic.gapt.proofs.Context._ //Provides access to various parts of the context
-import at.logic.gapt.proofs.gaptic._ //The tactics language used for constructing proofs
-import at.logic.gapt.proofs.Context //The actual context object
-import at.logic.gapt.proofs.Sequent // needed for constructing sequents
+package gapt.examples
+import gapt.expr._ //Used to construct terms
+import gapt.proofs.Context._ //Provides access to various parts of the context
+import gapt.proofs.gaptic._ //The tactics language used for constructing proofs
+import gapt.proofs.Context //The actual context object
+import gapt.proofs.Sequent // needed for constructing sequents
 
 object FirstSchema0 extends TacticsProof {
 

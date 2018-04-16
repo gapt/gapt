@@ -1,8 +1,8 @@
-package at.logic.gapt.examples.tip.prod
-import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.folTermSize
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.gaptic._
+package gapt.examples.tip.prod
+import gapt.expr._
+import gapt.expr.fol.folTermSize
+import gapt.proofs.Context
+import gapt.proofs.gaptic._
 
 object prop_31 extends TacticsProof {
   ctx += Ti // TODO(gabriel): support parametrically polymorphic types in TreeGrammarProver

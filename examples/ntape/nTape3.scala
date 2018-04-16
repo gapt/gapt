@@ -1,8 +1,8 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.proofs.ceres_omega.AnalysisWithCeresOmega
-import at.logic.gapt.formats.llk.loadLLK
+import gapt.formats.ClasspathInputFile
+import gapt.proofs.ceres_omega.AnalysisWithCeresOmega
+import gapt.formats.llk.loadLLK
 
 /**
  * Version 3 of the higher-order n-Tape proof.

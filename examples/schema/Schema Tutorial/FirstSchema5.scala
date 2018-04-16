@@ -1,10 +1,10 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context._
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.Sequent
+import gapt.expr._
+import gapt.proofs.Context._
+import gapt.proofs.gaptic._
+import gapt.proofs.Context
+import gapt.proofs.Sequent
 
 object FirstSchema5 extends TacticsProof {
   //Type
@@ -50,7 +50,7 @@ object FirstSchema5 extends TacticsProof {
   //If, after loading the file, we run  FirstSchema.chiBc we should get a proof.
   /*
 gapt> FirstSchema.chiBc
-res1: at.logic.gapt.proofs.lk.LKProof =
+res1: gapt.proofs.lk.LKProof =
 [p3] POR(0:nat, #v(a: i)) ⊢ POR(0, #v(a: i))    (DefinitionRightRule(p2, Suc(0), POR(0:nat, #v(a: i)): o))
 [p2] POR(0:nat, #v(a: i)) ⊢ E(f(#v(a: i)): nat, 0)    (DefinitionLeftRule(p1, Ant(0), POR(0:nat, #v(a: i)): o))
 [p1] E(f(#v(a: i)): nat, 0:nat) ⊢ E(f(#v(a: i)), 0)    (LogicalAxiom(E(f(#v(a: i)): nat, 0:nat): o))
@@ -83,7 +83,7 @@ res1: at.logic.gapt.proofs.lk.LKProof =
   //output as before, but this time we have more open goals because orL generates two branches. Also context is duplicated.
 
   /*
-at.logic.gapt.proofs.gaptic.QedFailureException: Proof not completed. There are still 2 open sub goals:
+gapt.proofs.gaptic.QedFailureException: Proof not completed. There are still 2 open sub goals:
 Ant_0: E(f(a), s(n))
 :-
 Suc_0_0: E(f(a), s(n))
@@ -94,8 +94,8 @@ Ant_0: POR(n, a)
 Suc_0_0: E(f(a), s(n))
 Suc_0_1: POR(n, a)
 
-  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finish(language.scala:45)
-  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishLemma(language.scala:55)
+  at gapt.proofs.gaptic.LemmaMacros$.finish(language.scala:45)
+  at gapt.proofs.gaptic.LemmaMacros$.finishLemma(language.scala:55)
   ... 28 elided
 
 */

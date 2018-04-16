@@ -1,8 +1,8 @@
-package at.logic.gapt.examples.tip.isaplanner
+package gapt.examples.tip.isaplanner
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.{ Context, Sequent }
+import gapt.expr._
+import gapt.proofs.gaptic._
+import gapt.proofs.{ Context, Sequent }
 
 object prop_35 extends TacticsProof {
 

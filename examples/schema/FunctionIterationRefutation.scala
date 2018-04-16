@@ -1,10 +1,10 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.proofs.{ Context, Sequent }
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.ceres.{ CLS, CharFormPRN, SchematicStruct, Struct }
-import at.logic.gapt.proofs.lk.LKProof
+import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.proofs.ceres.{ CLS, CharFormPRN, SchematicStruct, Struct }
+import gapt.proofs.lk.LKProof
 
 object FunctionIterationRefutation extends TacticsProof( FunctionIterationSchema.ctx ) {
   val SCS: Map[CLS, ( Struct, Set[Var] )] = SchematicStruct( "phi" ).getOrElse( Map() )

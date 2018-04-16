@@ -1,7 +1,7 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.formats.llk.loadLLK
+import gapt.formats.ClasspathInputFile
+import gapt.formats.llk.loadLLK
 
 /**
  * Version 5 of the higher-order n-Tape proof, where if-then-else is directly axiomatized i.e. it has 2 additional
