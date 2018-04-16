@@ -34,11 +34,14 @@ class ExpansionProofToLK(
       orElse( tryWeakening( theory, expSeq ) ).
       orElse( tryNullary( theory, expSeq ) ).
       orElse( tryStrongQ( theory, expSeq ) ).
-      orElse( tryWeakQ( theory, expSeq ) ).
+      orElse( tryWeakQ( theory, expSeq, intuitionisticHeuristics ) ).
       orElse( tryUnary( theory, expSeq, intuitionisticHeuristics ) ).
       orElse( tryCut( theory, expSeq ) ).
       orElse( tryInduction( theory, expSeq ) ).
-      orElse( tryBinary( theory, expSeq ) ).
+      orElse( tryBinary( theory, expSeq, intuitionisticHeuristics ) ).
+      orElse( if ( intuitionisticHeuristics ) tryIntuitionisticImpLeft( theory, expSeq ) else None ).
+      orElse( if ( intuitionisticHeuristics ) tryWeakQ( theory, expSeq, intuitionistic = false ) else None ).
+      orElse( if ( intuitionisticHeuristics ) tryBinary( theory, expSeq, intuitionistic = false ) else None ).
       orElse( if ( intuitionisticHeuristics ) tryUnary( theory, expSeq ) else None ).
       orElse( tryTheory( theory, expSeq ) ).
       getOrElse( Left( theory -> expSeq ) ).
@@ -112,7 +115,7 @@ class ExpansionProofToLK(
         }
     }
 
-  private def tryBinary( theory: Theory, expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] = {
+  private def tryBinary( theory: Theory, expSeq: ExpansionSequent, intuitionistic: Boolean ): Option[UnprovableOrLKProof] = {
     def handle( i: SequentIndex, e: ExpansionTree, f: ExpansionTree, g: ExpansionTree,
                 rule: ( LKProof, LKProof, Formula ) => LKProof ) =
       solve( theory, if ( f.polarity.inSuc ) expSeq.delete( i ) :+ f else f +: expSeq.delete( i ) ) flatMap { p1 =>
@@ -124,11 +127,25 @@ class ExpansionProofToLK(
       }
 
     expSeq.zipWithIndex.swapped.elements collectFirst {
-      case ( e @ ETAnd( f, g ), i: Suc ) => handle( i, e, f, g, AndRightRule( _, _, _ ) )
-      case ( e @ ETOr( f, g ), i: Ant )  => handle( i, e, f, g, OrLeftRule( _, _, _ ) )
-      case ( e @ ETImp( f, g ), i: Ant ) => handle( i, e, f, g, ImpLeftRule( _, _, _ ) )
+      case ( e @ ETAnd( f, g ), i: Suc )                    => handle( i, e, f, g, AndRightRule( _, _, _ ) )
+      case ( e @ ETOr( f, g ), i: Ant )                     => handle( i, e, f, g, OrLeftRule( _, _, _ ) )
+      case ( e @ ETImp( f, g ), i: Ant ) if !intuitionistic => handle( i, e, f, g, ImpLeftRule( _, _, _ ) )
     }
   }
+
+  private def tryIntuitionisticImpLeft( theory: Theory, expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
+    expSeq.zipWithIndex.antecedent.view.flatMap {
+      case ( e @ ETImp( f, g ), i: Ant ) =>
+        val expSeq_ = Sequent( expSeq.antecedent.filter { case ETImp( _, _ ) => false case _ => true }, Vector( f ) )
+        solve( theory, expSeq_ ).map { p1 =>
+          if ( !p1.conclusion.contains( f.shallow, f.polarity ) ) Right( p1 )
+          else solve( theory, expSeq.updated( i, g ) ).map { p2 =>
+            if ( !p2.conclusion.contains( g.shallow, g.polarity ) ) p2
+            else ImpLeftRule( p1, p2, e.shallow )
+          }
+        }.right.toSeq
+      case _ => Nil
+    }.headOption
 
   private def tryStrongQ( theory: Theory, expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
     expSeq.zipWithIndex.elements collectFirst {
@@ -150,7 +167,8 @@ class ExpansionProofToLK(
         }
     }
 
-  private def tryWeakQ( theory: Theory, expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] = {
+  private def tryWeakQ( theory: Theory, expSeq: ExpansionSequent,
+                        intuitionistic: Boolean ): Option[UnprovableOrLKProof] = {
     lazy val upcomingEVs = ( for {
       et <- theory.getExpansionTrees ++ expSeq.elements
       ETStrongQuantifier( _, ev, _ ) <- et.subProofs
@@ -158,7 +176,10 @@ class ExpansionProofToLK(
     def possibleInsts( insts: Map[Expr, ExpansionTree] ) =
       Map() ++ insts.filterKeys( t => freeVariables( t ) intersect upcomingEVs isEmpty )
 
-    for ( ( ETWeakQuantifier( sh, insts ), i ) <- expSeq.zipWithIndex.elements ) {
+    for {
+      ( ETWeakQuantifier( sh, insts ), i ) <- expSeq.zipWithIndex.elements
+      if !intuitionistic || i.isAnt || ( insts.size <= 1 )
+    } {
       val insts_ = possibleInsts( insts )
 
       if ( insts_.nonEmpty ) {
