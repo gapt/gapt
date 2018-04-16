@@ -3,6 +3,8 @@
 ## Version 2.11 (unreleased)
 
 * Root package was renamed from `at.logic.gapt` to just `gapt`
+* Modified realizability
+* New reductive cut-elimination implementation for LK
 
 ## Version 2.10 (released on 2018-03-19)
 
