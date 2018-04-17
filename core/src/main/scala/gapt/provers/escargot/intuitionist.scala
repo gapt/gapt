@@ -5,7 +5,7 @@ import gapt.formats.tptp.TptpParser
 import gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, deskolemizeET }
 import gapt.proofs.lk.{ LKProof, isMaeharaMG3i }
 import gapt.proofs.{ Context, MutableContext }
-import gapt.prooftool.prooftool
+import gapt.prooftool.{ LKProofViewer, prooftool }
 import gapt.provers.Prover
 import gapt.provers.eprover.EProver
 import gapt.provers.escargot.impl.EscargotLogger
@@ -18,7 +18,11 @@ object IEscargot {
     val deskExpProof = deskolemizeET( expProofWithSk )
     quiet( ExpansionProofToLK.withIntuitionisticHeuristics( deskExpProof ) ) match {
       case Right( lk ) =>
-        if ( showInProoftool ) prooftool( lk )
+        if ( showInProoftool ) {
+          val viewer = new LKProofViewer( "LK proof", lk )
+          viewer.markNonIntuitionisticInferences()
+          viewer.showFrame()
+        }
         val maxSuccSize = lk.subProofs.map( _.endSequent.succedent.toSet.size ).max
         EscargotLogger.warn( s"classical proof has maximum succedent size $maxSuccSize" )
         val inMG3i = isMaeharaMG3i( lk )
