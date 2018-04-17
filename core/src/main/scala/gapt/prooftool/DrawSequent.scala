@@ -131,11 +131,7 @@ class DrawSequentInProof[F, T <: SequentProof[F, T]](
       for ( i <- cutAncestorIndices )
         elementLabelSequent( i ).unmark()
 
-    case MarkAncestors( p, is ) if p == pos =>
-      for ( i <- is )
-        elementLabelSequent( i ).mark()
-
-    case MarkDescendants( p, is ) if p == pos =>
+    case MarkOccurrences( p, is ) if p == pos =>
       for ( i <- is )
         elementLabelSequent( i ).mark()
 

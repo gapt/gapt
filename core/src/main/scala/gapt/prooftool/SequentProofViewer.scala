@@ -79,7 +79,7 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
    * @param is A set of indices in the end sequent of the subproof at pos.
    */
   def markAncestors( pos: List[Int], is: Set[SequentIndex] ): Unit = {
-    publisher.publish( MarkAncestors( pos, is ) )
+    publisher.publish( MarkOccurrences( pos, is ) )
     val p = proof.subProofAt( pos )
 
     for ( j <- p.immediateSubProofs.indices ) {
@@ -96,7 +96,7 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
    * @param is A set of indices in the end sequent of the subproof at pos.
    */
   def markDescendants( pos: List[Int], is: Set[SequentIndex] ): Unit = {
-    publisher.publish( MarkDescendants( pos, is ) )
+    publisher.publish( MarkOccurrences( pos, is ) )
 
     val p = proof.subProofAt( pos )
 

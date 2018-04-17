@@ -23,8 +23,7 @@ case object HideSequentContexts extends Event
 case object ShowAllFormulas extends Event
 case object MarkCutAncestors extends Event
 case object UnmarkCutAncestors extends Event
-case class MarkAncestors( p: List[Int], is: Set[SequentIndex] ) extends Event
-case class MarkDescendants( p: List[Int], is: Set[SequentIndex] ) extends Event
+case class MarkOccurrences( p: List[Int], is: Set[SequentIndex] ) extends Event
 case object UnmarkAllFormulas extends Event
 case object FontChanged extends Event
 case object AlignmentChanged extends Event
