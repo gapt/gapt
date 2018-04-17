@@ -1447,8 +1447,8 @@ res21: gapt.proofs.lk.LKProof =
 [p18] ∃y (¬P(b, y) ∨ Q(b, y)) ⊢ ∃y (¬Q(b, y) → ¬P(b, y))    (ExistsLeftRule(p17, Ant(0), y, y))
 [p17] ¬P(b, y) ∨ Q(b, y) ⊢ ∃y (¬Q(b, y) → ¬P(b, y))    (ExistsRightRule(p16, Suc(0), ¬Q(b, y) → ¬P(b, y), y, y))
 [p16] ¬P(b, y) ∨ Q(b, y) ⊢ ¬Q(b, y) → ¬P(b, y)    (ImpRightRule(p15, Ant(0), Suc(0)))
-[p15] ¬Q(b, y), ¬P(b, y) ∨ Q(b, y) ⊢ ¬P(b, y)    (NegLeftRule(p14, Suc(0)))
-[p14] ¬P(b, y) ∨ Q(b, y) ⊢ Q(b, y), ¬P(b, y) ...
+[p15] ¬Q(b, y), ¬P(b, y) ∨ Q(b, y) ⊢ ¬P(b, y)    (NegRightRule(p14, Ant(2)))
+[p14] ¬Q(b, y), ¬P(b, y) ∨ Q(b, y), P(b, y) ...
 
 \end{clilisting}
 
