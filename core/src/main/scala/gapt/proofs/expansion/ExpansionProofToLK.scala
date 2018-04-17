@@ -35,15 +35,14 @@ class ExpansionProofToLK(
       orElse( tryNullary( theory, expSeq ) ).
       orElse( tryStrongQ( theory, expSeq ) ).
       orElse( tryWeakQ( theory, expSeq, intuitionisticHeuristics ) ).
-      orElse( tryUnary( theory, expSeq, if ( intuitionisticHeuristics ) 0 else 2 ) ).
+      orElse( tryUnary( theory, expSeq, intuitionisticHeuristics ) ).
       orElse( tryCut( theory, expSeq ) ).
       orElse( tryInduction( theory, expSeq ) ).
       orElse( tryBinary( theory, expSeq, intuitionisticHeuristics ) ).
       orElse( if ( intuitionisticHeuristics ) tryIntuitionisticImpLeft( theory, expSeq ) else None ).
       orElse( if ( intuitionisticHeuristics ) tryWeakQ( theory, expSeq, intuitionistic = false ) else None ).
       orElse( if ( intuitionisticHeuristics ) tryBinary( theory, expSeq, intuitionistic = false ) else None ).
-      orElse( if ( intuitionisticHeuristics ) tryUnary( theory, expSeq, 1 ) else None ).
-      orElse( if ( intuitionisticHeuristics ) tryUnary( theory, expSeq, 2 ) else None ).
+      orElse( if ( intuitionisticHeuristics ) tryUnary( theory, expSeq, intuitionistic = false ) else None ).
       orElse( tryTheory( theory, expSeq ) ).
       getOrElse( Left( theory -> expSeq ) ).
       map {
@@ -93,25 +92,25 @@ class ExpansionProofToLK(
     }
 
   private def tryUnary( theory: Theory, expSeq: ExpansionSequent,
-                        classical: Int ): Option[UnprovableOrLKProof] =
-    expSeq.zipWithIndex.elements collectFirst {
-      case ( ETNeg( f ), i: Ant ) if classical >= 2 =>
+                        intuitionistic: Boolean ): Option[UnprovableOrLKProof] =
+    expSeq.zipWithIndex.elements.reverseIterator collectFirst {
+      case ( ETNeg( f ), i: Ant ) if !intuitionistic =>
         mapIf( solve( theory, expSeq.delete( i ) :+ f ), f.shallow, !i.polarity ) {
           NegLeftRule( _, f.shallow )
         }
-      case ( ETNeg( f ), i: Suc ) => mapIf( solve( theory, f +: expSeq.delete( i ) ), f.shallow, !i.polarity ) {
-        NegRightRule( _, f.shallow )
-      }
+      case ( ETNeg( f ), i: Suc ) if !intuitionistic || expSeq.succedent.size <= 1 =>
+        mapIf( solve( theory, f +: expSeq.delete( i ) ), f.shallow, !i.polarity ) {
+          NegRightRule( _, f.shallow )
+        }
       case ( ETAnd( f, g ), i: Ant ) =>
         mapIf( solve( theory, f +: g +: expSeq.delete( i ) ), f.shallow, i.polarity, g.shallow, i.polarity ) {
           AndLeftMacroRule( _, f.shallow, g.shallow )
         }
-      case ( ETOr( f, g ), i: Suc ) if classical >= 1
-        || f.isInstanceOf[ETWeakening] || g.isInstanceOf[ETWeakening] =>
+      case ( ETOr( f, g ), i: Suc ) =>
         mapIf( solve( theory, expSeq.delete( i ) :+ f :+ g ), f.shallow, i.polarity, g.shallow, i.polarity ) {
           OrRightMacroRule( _, f.shallow, g.shallow )
         }
-      case ( ETImp( f, g ), i: Suc ) =>
+      case ( ETImp( f, g ), i: Suc ) if !intuitionistic || expSeq.succedent.size <= 1 =>
         mapIf( solve( theory, f +: expSeq.delete( i ) :+ g ), f.shallow, !i.polarity, g.shallow, i.polarity ) {
           ImpRightMacroRule( _, f.shallow, g.shallow )
         }
