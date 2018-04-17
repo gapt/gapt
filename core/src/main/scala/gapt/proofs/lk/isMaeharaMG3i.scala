@@ -16,13 +16,13 @@ object isMaeharaMG3i {
       // These are the restrictions listed in Maehara's paper
       case NegRightRule( q, _ ) =>
         if ( q.conclusion.succedent.isEmpty ) Right( () )
-        else Left( p.conclusion.indices.dropRight( 1 ) )
+        else Left( p.conclusion.indicesSequent.succedent.dropRight( 1 ) )
       case ImpRightRule( q, _, _ ) =>
         if ( q.conclusion.succedent.size <= 1 ) Right( () )
-        else Left( p.conclusion.indices.dropRight( 1 ) )
+        else Left( p.conclusion.indicesSequent.succedent.dropRight( 1 ) )
       case ForallRightRule( q, _, _, _ ) =>
         if ( q.conclusion.succedent.size <= 1 ) Right( () )
-        else Left( p.conclusion.indices.dropRight( 1 ) )
+        else Left( p.conclusion.indicesSequent.succedent.dropRight( 1 ) )
 
       // The soundness proof is easy enough:
       // we can convert any mG3i-proof of Γ :- Δ into an LJ-proof of Γ :- ∨∆.
