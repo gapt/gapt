@@ -41,8 +41,8 @@ class ExpansionProofToLK(
       orElse( tryBinary( theory, expSeq, intuitionisticHeuristics ) ).
       orElse( if ( intuitionisticHeuristics ) tryIntuitionisticImpLeft( theory, expSeq ) else None ).
       orElse( if ( intuitionisticHeuristics ) tryWeakQ( theory, expSeq, intuitionistic = false ) else None ).
-      orElse( if ( intuitionisticHeuristics ) tryBinary( theory, expSeq, intuitionistic = false ) else None ).
       orElse( if ( intuitionisticHeuristics ) tryUnary( theory, expSeq, intuitionistic = false ) else None ).
+      orElse( if ( intuitionisticHeuristics ) tryBinary( theory, expSeq, intuitionistic = false ) else None ).
       orElse( tryTheory( theory, expSeq ) ).
       getOrElse( Left( theory -> expSeq ) ).
       map {
@@ -137,7 +137,7 @@ class ExpansionProofToLK(
   private def tryIntuitionisticImpLeft( theory: Theory, expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
     expSeq.zipWithIndex.antecedent.view.flatMap {
       case ( e @ ETImp( f, g ), i: Ant ) =>
-        val expSeq_ = Sequent( expSeq.antecedent.filter { case ETImp( _, _ ) => false case _ => true }, Vector( f ) )
+        val expSeq_ = Sequent( expSeq.antecedent.filter( _.isInstanceOf[ETAtom] ), Vector( f ) )
         solve( theory, expSeq_ ).map { p1 =>
           if ( !p1.conclusion.contains( f.shallow, f.polarity ) ) Right( p1 )
           else solve( theory, expSeq.updated( i, g ) ).map { p2 =>
