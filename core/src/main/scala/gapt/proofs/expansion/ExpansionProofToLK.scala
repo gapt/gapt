@@ -34,13 +34,12 @@ class ExpansionProofToLK(
       orElse( tryWeakening( theory, expSeq ) ).
       orElse( tryNullary( theory, expSeq ) ).
       orElse( tryStrongQ( theory, expSeq ) ).
-      orElse( tryWeakQ( theory, expSeq, intuitionisticHeuristics ) ).
+      orElse( tryWeakQ( theory, expSeq ) ).
       orElse( tryUnary( theory, expSeq, intuitionisticHeuristics ) ).
       orElse( tryCut( theory, expSeq ) ).
       orElse( tryInduction( theory, expSeq ) ).
       orElse( tryBinary( theory, expSeq, intuitionisticHeuristics ) ).
       orElse( if ( intuitionisticHeuristics ) tryIntuitionisticImpLeft( theory, expSeq ) else None ).
-      orElse( if ( intuitionisticHeuristics ) tryWeakQ( theory, expSeq, intuitionistic = false ) else None ).
       orElse( if ( intuitionisticHeuristics ) tryUnary( theory, expSeq, intuitionistic = false ) else None ).
       orElse( if ( intuitionisticHeuristics ) tryBinary( theory, expSeq, intuitionistic = false ) else None ).
       orElse( tryTheory( theory, expSeq ) ).
@@ -168,8 +167,7 @@ class ExpansionProofToLK(
         }
     }
 
-  private def tryWeakQ( theory: Theory, expSeq: ExpansionSequent,
-                        intuitionistic: Boolean ): Option[UnprovableOrLKProof] = {
+  private def tryWeakQ( theory: Theory, expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] = {
     lazy val upcomingEVs = ( for {
       et <- theory.getExpansionTrees ++ expSeq.elements
       ETStrongQuantifier( _, ev, _ ) <- et.subProofs
@@ -177,10 +175,7 @@ class ExpansionProofToLK(
     def possibleInsts( insts: Map[Expr, ExpansionTree] ) =
       Map() ++ insts.filterKeys( t => freeVariables( t ) intersect upcomingEVs isEmpty )
 
-    for {
-      ( ETWeakQuantifier( sh, insts ), i ) <- expSeq.zipWithIndex.elements
-      if !intuitionistic || i.isAnt || ( insts.size <= 1 )
-    } {
+    for ( ( ETWeakQuantifier( sh, insts ), i ) <- expSeq.zipWithIndex.elements ) {
       val insts_ = possibleInsts( insts )
 
       if ( insts_.nonEmpty ) {
