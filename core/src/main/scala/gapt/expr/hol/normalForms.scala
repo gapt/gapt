@@ -70,6 +70,12 @@ object simplify {
       case Bottom() => Top()
       case s        => Neg( s )
     }
+    case Quant( x, g, isAll ) =>
+      simplify( g ) match {
+        case Top()    => Top()
+        case Bottom() => Bottom()
+        case g_       => Quant( x, g_, isAll )
+      }
     case _ => f
   }
 
