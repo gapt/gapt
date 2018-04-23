@@ -9,6 +9,7 @@ import gapt.provers.escargot.Escargot
 import org.sat4j.minisat.SolverFactory
 import org.sat4j.specs._
 import gapt.provers.sat.Sat4j._
+import gapt.utils.quiet
 import org.sat4j.core.VecInt
 import org.sat4j.tools.SearchListenerAdapter
 
@@ -107,7 +108,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
 
       def tryEquational(): Option[Result] = {
         if ( !atomModel.exists( Eq.unapply( _ ).isDefined ) ) None else
-          Escargot.getAtomicLKProof( atomModel ) match {
+          quiet( Escargot.getAtomicLKProof( atomModel ) ) match {
             case Some( p ) =>
               addClause( p )
               Some( Right( () ) )
