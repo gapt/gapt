@@ -30,7 +30,7 @@ object removeSkolemCongruences {
           insts.view.map {
             case ( t, ch ) =>
               val newT = TermReplacement( t, m )
-              newT -> repl( m, ch, instantiate( newSh, newT ) )
+              newT -> repl( m, ch, BetaReduction.betaNormalize( instantiate( newSh, newT ) ) )
           } )
     }
 
