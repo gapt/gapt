@@ -1130,17 +1130,17 @@ with quantifier-free conclusions.
 \begin{clilisting}
 gapt> val p = instanceProof(examples.theories.nat.addcomm.combined(),                                     Seq(le"s (s 0 : nat)", le"0 : nat"))
 p: gapt.proofs.lk.LKProof =
-[p127] ∀x ((x:nat) + (0:nat): nat) = x,
+[p128] ∀x ((x:nat) + (0:nat): nat) = x,
 ∀x ∀y x + s(y:nat) = s(x + y)
 ⊢
-s(s(0)) + 0 = 0 + s(s(0))    (CutRule(p123, Suc(0), p126, Ant(0)))
-[p126] ∀x ∀y ((x:nat) + (y:nat): nat) = y + x ⊢ s(s(0:nat): nat) + 0 = 0 + s(s(0))    (ForallLeftRule(p125, Ant(0), ∀y ((x:nat) + (y:nat): nat) = y + x, s(s(0:nat): nat), x:nat))
-[p125] ∀y (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (ForallLeftRule(p124, Ant(0), (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)), 0:nat, y:nat))
-[p124] (s(s(0:nat): nat) + 0: nat) = 0 + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (LogicalAxiom((s(s(0:nat): nat) + 0: nat) = 0 + s(s(0))))
-[p123] ∀x ((x:nat) + (0:nat): nat) = x,
+s(s(0)) + 0 = 0 + s(s(0))    (CutRule(p124, Suc(0), p127, Ant(0)))
+[p127] ∀x ∀y ((x:nat) + (y:nat): nat) = y + x ⊢ s(s(0:nat): nat) + 0 = 0 + s(s(0))    (ForallLeftRule(p126, Ant(0), ∀y ((x:nat) + (y:nat): nat) = y + x, s(s(0:nat): nat), x:nat))
+[p126] ∀y (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (ForallLeftRule(p125, Ant(0), (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)), 0:nat, y:nat))
+[p125] (s(s(0:nat): nat) + 0: nat) = 0 + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (LogicalAxiom((s(s(0:nat): nat) + 0: nat) = 0 + s(s(0))))
+[p124] ∀x ((x:nat) + (0:nat): nat) = x,
 ∀x ∀y x + s(y:nat) = s(x + y)
 ⊢
-∀x ∀y x + y = y + x    (CutRule(p3, Suc(0), p122, Ant(0)))...
+∀x ∀y x + y = y + x    (CutRule(p3, Suc(0), p123, Ant(0)))...
 
 gapt> val q = inductionNormalForm(p)(                                         examples.theories.nat.ctx)
 q: gapt.proofs.lk.LKProof =
@@ -1278,9 +1278,9 @@ gapt> deskolemizeET(p)
 res13: gapt.proofs.expansion.ExpansionProof =
 
 :-
-∃x (drinks(x) → ∀y_0 drinks(y_0))
-  +^{x} (wk-{drinks(x)} → ∀y_0 drinks(y_0) +ev^{y} drinks(y)+)
-  +^{y} (drinks(y)- → wk+{∀y_0 drinks(y_0)})
+∃x (drinks(x) → ∀y drinks(y))
+  +^{v} (drinks(v)- → wk+{∀y drinks(y)})
+  +^{x} (wk-{drinks(x)} → ∀y drinks(y) +ev^{v} drinks(v)+)
 
 \end{clilisting}
 
@@ -2120,53 +2120,53 @@ if necessary.
 gapt> prooftool(Pi2Pigeonhole.proof)
 
 gapt> cutFormulas(Pi2Pigeonhole.proof) filter {containsQuantifier(_)} foreach println
-∀x_1 ∃y (x_1 <= y ∧ f(y) = s(0))
-∀x_1 ∃y (x_1 <= y ∧ f(y) = 0)
+∀x ∃y (x <= y ∧ f(y) = s(0))
+∀x ∃y (x <= y ∧ f(y) = 0)
 
 gapt> val acnf = CERES(Pi2Pigeonhole.proof)
 acnf: gapt.proofs.lk.LKProof =
-[p477] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
-∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0))
+[p474] ∀x (f(x) = 0 ∨ f(x) = s(0)),
+∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0))
 ⊢
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (CutRule(p1, Suc(0), p476, Ant(2)))
-[p476] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
-∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (CutRule(p1, Suc(0), p473, Ant(2)))
+[p473] ∀x (f(x) = 0 ∨ f(x) = s(0)),
+∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0)),
 0 = 0
 ⊢
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionRightRule(p475, Suc(1), Suc(0)))
-[p475] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
-∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionRightRule(p472, Suc(1), Suc(0)))
+[p472] ∀x (f(x) = 0 ∨ f(x) = s(0)),
+∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0)),
 0 = 0
 ⊢
-∃x_1 ∃y_1 (s(x_1) <= y_1 ∧ f(x_1) = f(y_1)),
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p474, Ant(3), Ant(1)))
-[p474] ∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
-∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p471, Ant(3), Ant(1)))
+[p471] ∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0)),
+∀x (f(x) = 0 ∨ f(x) = s(0)),
 0 = 0,
-∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
+∀x (f(x) = 0 ∨ f(x) = s(0))
 ⊢
-∃x_1 ∃y_1 (s(x_1) <= y_1 ∧ f(x_1)...
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(...
 
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
 et: gapt.proofs.expansion.ExpansionProof =
-∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
-  +^{M(s(M(x_1, s(M(s(M(x_2, x_3)), x_0)))), s(M(s(M(x_2, x_3)), x_0)))}
-    ((f(M(s(M(x_1, s(M(s(M(x_2, x_3)), x_0)))), s(M(s(M(x_2, x_3)), x_0)))) =
-          0)- ∨
-      (f(M(s(M(x_1, s(M(s(M(x_2, x_3)), x_0)))), s(M(s(M(x_2, x_3)), x_0)))) =
+∀x (f(x) = 0 ∨ f(x) = s(0))
+  +^{M(s(M(v_1, s(M(s(M(v_2, v_3)), v)))), s(M(s(M(v_2, v_3)), v)))}
+    ((f(M(s(M(v_1, s(M(s(M(v_2, v_3)), v)))), s(M(s(M(v_2, v_3)), v)))) = 0)- ∨
+      (f(M(s(M(v_1, s(M(s(M(v_2, v_3)), v)))), s(M(s(M(v_2, v_3)), v)))) =
           s(0))-)
-  +^{M(s(M(x_1, s(M(x, s(M(s(M(x_2, x_3)), x_0)))))),
-        s(M(s(M(x_2, x_3)), x_0)))}
-    ((f(M(s(M(x_1, s(M(x, s(M(s(M(x_2, x_3)), x_0)))))),
-                  s(M(s(M(x_2, x_3)), x_0)))) =
+  +^{M(s(M(v_1, s(M(v_0, s(M(s(M(v_2, v_3)), v)))))), s(M(s(M(v_2, v_3)), v)))}
+    ((f(M(s(M(v_1, s(M(v_0, s(M(s(M(v_2, v_3)), v)))))),
+                  s(M(s(M(v_2, v_3)), v)))) =
           0)- ∨
-      (f(M(s(M(x_1, s(M(x, s(M(s(M(x_2, x_3)), x_0)))))),
-                  s(M(s(M(x_2, x_3)), x_0)))) =
+      (f(M(s(M(v_1, s(M(v_0, s(M(s(M(v_2, v_3)), v)))))),
+                  s(M(s(M(v_2, v_3)), v)))) =
           s(0))-)
-  +^{M(s(M(x_1, s(M(x, s(M(x_2, x_3)))))), s(M(x_2, x_3)))}
-    ((f(M(s(M(x_1, s(M(x, s(M(x_2, x_3)))))), s(M(x_2, x_3)))...
+  +^{M(s(M(v_1, s(M(v_0, s(M(v_2, v_3)))))), s(M(v_2, v_3)))}
+    ((f(M(s(M(v_1, s(M(v_0, s(M(v_2, v_3)))))), s(M(v_2, v_3)))) = 0)- ∨
+      (f(M(s(M(v_1, s(M(v_0,...
 
 gapt> prooftool(et)
 
