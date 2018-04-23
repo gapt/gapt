@@ -8,12 +8,12 @@ import cats.{ Eval, Later, Now }
 import scala.collection.mutable
 
 sealed abstract class DrupProofLine extends Product {
-  def clause: HOLClause
+  def clause: HOLSequent
   override def toString = s"[${productPrefix.stripPrefix( "Drup" ).toLowerCase}] $clause"
 }
 
 /** Input clause in a DRUP proof. */
-case class DrupInput( clause: HOLClause ) extends DrupProofLine
+case class DrupInput( clause: HOLSequent ) extends DrupProofLine
 /**
  * Derived clause in a DRUP proof.
  *
@@ -23,14 +23,14 @@ case class DrupInput( clause: HOLClause ) extends DrupProofLine
  * Given a set of clauses Γ and a clause C, then C has the property RUP with regard to Γ iff
  * Γ, ¬C can be refuted with only unit propagation.
  */
-case class DrupDerive( clause: HOLClause ) extends DrupProofLine
+case class DrupDerive( clause: HOLSequent ) extends DrupProofLine
 /**
  * Forgets a clause in a DRUP proof.
  *
  * This inference is not necessary for completeness, it is mainly a
  * performance optimization since it speeds up the unit propagation in [[DrupDerive]].
  */
-case class DrupForget( clause: HOLClause ) extends DrupProofLine
+case class DrupForget( clause: HOLSequent ) extends DrupProofLine
 
 /**
  * DRUP proof.
@@ -42,7 +42,7 @@ case class DrupProof( refutation: Seq[DrupProofLine] ) {
   override def toString = refutation.reverse.mkString( "\n" )
 }
 object DrupProof {
-  def apply( cnf: Iterable[HOLClause], refutation: Seq[DrupProofLine] ): DrupProof =
+  def apply( cnf: Iterable[HOLSequent], refutation: Seq[DrupProofLine] ): DrupProof =
     DrupProof( cnf.map( DrupInput ).toSeq ++ refutation )
 }
 
@@ -119,26 +119,29 @@ object DrupToResolutionProof {
     emptyClause.get._2.value
   }
 
-  def unitPropagationReplay( cnf: Iterable[ResolutionProof], toDerive: HOLClause ): ResolutionProof = {
+  def unitPropagationReplay( cnf: Iterable[ResolutionProof], toDerive: HOLSequent ): ResolutionProof = {
     val inputClauses = for ( p <- cnf ) yield p.conclusion -> Now( p )
     val negatedUnitClauses =
       for {
         ( a, i ) <- toDerive.zipWithIndex.elements
-        concl = if ( i.isSuc ) Seq( a ) :- Seq() else Seq() :- Seq( a )
+        concl = if ( i.isSuc ) Seq( a ) :- Seq() else Seq[Formula]() :- Seq( a )
       } yield concl -> Later( Taut( a ) )
     unitPropagationProver( inputClauses ++ negatedUnitClauses )
   }
 
-  def apply( drup: DrupProof ): ResolutionProof = {
-    val cnf = mutable.Set[ResolutionProof]()
+  def replay( drup: DrupProof ): mutable.Map[HOLSequent, ResolutionProof] = {
+    val cnf = mutable.Map[HOLSequent, ResolutionProof]()
     drup.refutation foreach {
       case DrupInput( clause ) =>
-        cnf += Input( clause )
+        cnf.getOrElseUpdate( clause, Input( clause ) )
       case DrupDerive( clause ) =>
-        cnf += unitPropagationReplay( cnf, clause )
+        cnf.getOrElseUpdate( clause, unitPropagationReplay( cnf.values, clause ) )
       case DrupForget( clause ) =>
-        cnf.retain( !_.conclusion.multiSetEquals( clause ) )
+        cnf.remove( clause )
     }
-    simplifyResolutionProof( cnf.find( _.conclusion.isEmpty ).get )
+    cnf
   }
+
+  def apply( drup: DrupProof ): ResolutionProof =
+    simplifyResolutionProof( replay( drup )( Sequent() ) )
 }
