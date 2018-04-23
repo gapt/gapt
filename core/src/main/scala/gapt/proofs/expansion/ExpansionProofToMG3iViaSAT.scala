@@ -1,6 +1,7 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
+import gapt.expr.hol.lcomp
 import gapt.proofs.drup._
 import gapt.proofs.lk._
 import gapt.proofs.resolution.{ ResolutionToLKProof, simplifyResolutionProof }
@@ -62,7 +63,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
     solver.addClause( clause( lower ) )
   }
 
-  expansionProof.subProofs.foreach {
+  expansionProof.subProofs.toSeq.sortBy( e => lcomp( e.shallow ) ).foreach {
     case ETWeakening( _, _ )              =>
     case ETMerge( _, _ ) | ETAtom( _, _ ) => // implicit because shallow formulas are the same
     case ETTop( _ )                       => addClause( TopAxiom )
@@ -92,9 +93,10 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
     case e @ ETNeg( _ ) if e.polarity.inSuc =>
   }
 
-  type Result = Either[HOLSequent, Unit]
+  type CounterExample = Set[Int] // just the assumptions
+  type Result = Either[CounterExample, Unit]
 
-  val unprovable = mutable.Buffer[( Set[Int], HOLSequent )]()
+  val unprovable = mutable.Buffer[( Set[Int], CounterExample )]()
   def solve( assumptions: Set[Int] ): Result = {
     unprovable.collectFirst { case ( ass, s ) if assumptions.subsetOf( ass ) => s } match {
       case Some( s ) =>
@@ -152,7 +154,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
             addClause( lower = modelSequent( lower ), upper = modelSequent( upper ) )( transform )
             Right( () )
           case None =>
-            Left( modelSequent( model ) )
+            Left( assumptions )
         }
       }
 
@@ -178,7 +180,21 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
       case _: ContradictionException =>
         Right( () )
     } ) match {
-      case Left( reason ) => Left( reason )
+      case Left( reason ) =>
+        require( solver.isSatisfiable( reason ) )
+        val model = solver.model().toSet
+        require( reason.subsetOf( model ) )
+        def build( model: Set[Int], todo: List[Int] ): Set[Int] =
+          todo match {
+            case Nil => model
+            case lit :: todos =>
+              if ( solver.isSatisfiable( model + -lit ) )
+                build( model + -lit, todos )
+              else
+                build( model, todos )
+          }
+        val niceModel = build( Set(), model.toList.sortBy( math.abs ) )
+        Left( modelSequent( niceModel ) )
       case Right( () ) =>
         val goal = expansionProof.expansionSequent.shallow.copy( antecedent = Vector() )
         val drupP = DrupProof( drup :+ DrupDerive( goal ) )
