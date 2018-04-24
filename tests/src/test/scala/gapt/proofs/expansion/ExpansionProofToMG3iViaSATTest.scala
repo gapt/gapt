@@ -28,6 +28,6 @@ class ExpansionProofToMG3iViaSATTest extends Specification with SequentMatchers 
   "not p iff not p" in { ep( hof"~(p <-> ~p)" ) must beGood }
   "not iff imp false" in { ep( hof"~p <-> (p -> false)" ) must beGood }
   "not not imp lem" in { ep( hof"~ ~ (E -> p | ~p)" ) must beGood }
-  "linear" in { ep( hof"!x P(x,0) & !x!y (!z P(f(x,z),y) -> P(x,s(y))) -> !x P(x,s(s(0)))" ) must beGood }
+  "linear" in { ep( hof"!x P(x,0) & !x!y (!z P(f(x,z),y) -> P(x,s(y))) -> !x P(x,s(s(s(0))))" ) must beGood }
 
 }

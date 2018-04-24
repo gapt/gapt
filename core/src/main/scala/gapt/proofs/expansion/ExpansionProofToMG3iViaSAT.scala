@@ -91,10 +91,20 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
     case ETStrongQuantifier( _, _, _ ) =>
   }
 
-  type CounterExample = Set[Int] // just the assumptions
-  type Result = Either[CounterExample, Unit]
+  type Counterexample = Set[Int] // just the assumptions
+  type Result = Either[Counterexample, Unit]
 
-  def solve( assumptions: Set[Int] ): Result = {
+  val unprovable = mutable.Buffer[( Set[Var], Counterexample )]()
+
+  def solve( eigenVariables: Set[Var], assumptions: Set[Int] ): Result = {
+    unprovable.find {
+      case ( evs, ass ) => evs.subsetOf( eigenVariables ) && assumptions.subsetOf( ass )
+    } match {
+      case Some( ( _, ass ) ) =>
+        return Left( ass )
+      case _ =>
+    }
+
     while ( solver.isSatisfiable( assumptions ) ) {
       val model = solver.model(): Seq[Int]
       val atomModel = modelSequent( model ).collect { case a: Atom => a }
@@ -113,13 +123,13 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
       def checkEVCond( e: ExpansionTree ): Boolean =
         freeVariables( e.shallow ).
           intersect( expansionProof.eigenVariables ).
-          forall( v => assumptionsAnt.contains( atom( v ) ) )
+          subsetOf( eigenVariables )
 
       def tryInvertible(): Option[Result] =
         model.filter( _ > 0 ).flatMap( atomToET ).filter( checkEVCond ).collectFirst {
-          case e @ ETStrongQuantifier( sh, ev, a ) if e.polarity.inAnt && !assumptions.contains( atom( ev ) ) =>
-            val upper = assumptions + atom( ev ) + atom( a )
-            val provable = solve( upper )
+          case e @ ETStrongQuantifier( sh, ev, a ) if e.polarity.inAnt && !eigenVariables.contains( ev ) =>
+            val upper = assumptions + atom( a )
+            val provable = solve( eigenVariables + ev, upper )
             if ( provable.isRight ) addClause(
               lower = modelSequent( assumptions + atom( e ) ),
               upper = modelSequent( upper ) )( p =>
@@ -131,22 +141,24 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
       def tryNonInvertible(): Result = {
         val nextSteps = model.filter( _ < 0 ).map( -_ ).flatMap( atomToET ).filter( checkEVCond ).collect {
           case e @ ETNeg( a ) if e.polarity.inSuc && !assumptions.contains( atom( a ) ) =>
-            ( assumptionsAnt + atom( a ), assumptionsAnt + -atom( e ), ( p: LKProof ) =>
+            ( assumptionsAnt + atom( a ), eigenVariables, assumptionsAnt + -atom( e ), ( p: LKProof ) =>
               if ( !p.endSequent.antecedent.contains( a.shallow ) ) p else
                 NegRightRule( p, a.shallow ) )
           case e @ ETImp( a, b ) if e.polarity.inSuc && !assumptions.contains( atom( a ) ) =>
-            ( assumptionsAnt + atom( a ) + -atom( b ), assumptionsAnt + -atom( e ),
+            ( assumptionsAnt + atom( a ) + -atom( b ),
+              eigenVariables, assumptionsAnt + -atom( e ),
               ImpRightMacroRule( _: LKProof, a.shallow, b.shallow ) )
-          case e @ ETStrongQuantifier( _, ev, a ) if e.polarity.inSuc && !assumptions.contains( atom( ev ) ) =>
-            ( assumptionsAnt + atom( ev ) + -atom( a ), assumptionsAnt + -atom( e ), ( p: LKProof ) =>
+          case e @ ETStrongQuantifier( _, ev, a ) if e.polarity.inSuc && !eigenVariables.contains( ev ) =>
+            ( assumptionsAnt + -atom( a ), eigenVariables + ev, assumptionsAnt + -atom( e ), ( p: LKProof ) =>
               if ( !p.endSequent.succedent.contains( a.shallow ) ) p else
                 ForallRightRule( p, e.shallow, ev ) )
         }
-        nextSteps.find( s => solve( s._1 ).isRight ) match {
-          case Some( ( upper, lower, transform ) ) =>
+        nextSteps.find( s => solve( s._2, s._1 ).isRight ) match {
+          case Some( ( upper, _, lower, transform ) ) =>
             addClause( lower = modelSequent( lower ), upper = modelSequent( upper ) )( transform )
             Right( () )
           case None =>
+            unprovable += ( ( eigenVariables, assumptions ) )
             Left( assumptions )
         }
       }
@@ -168,7 +180,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
     ( try {
       for ( e <- expansionProof.expansionSequent.antecedent )
         addClause( LogicalAxiom( e.shallow ), Sequent() :+ e.shallow )
-      solve( expansionProof.expansionSequent.succedent.map( -atom( _ ) ).toSet )
+      solve( Set(), expansionProof.expansionSequent.succedent.map( -atom( _ ) ).toSet )
     } catch {
       case _: ContradictionException =>
         Right( () )
