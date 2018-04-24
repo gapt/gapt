@@ -183,7 +183,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         case Right( _ ) => // next model
           require( !solver.isSatisfiable( model ) )
         case reason @ Left( _ ) =>
-          unprovable += ( ( eigenVariables, assumptions ) )
+          unprovable += ( ( eigenVariables, assumptions ++ model.filter( _ < 0 ) ) )
           return reason
       }
     }
