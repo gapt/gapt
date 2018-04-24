@@ -203,7 +203,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
             input => proofs( input.sequent ) match {
               case Left( p ) => p
               case Right( ( upper, f ) ) =>
-                f( toLK( upper ) )
+                WeakeningMacroRule( f( toLK( upper ) ), input.sequent, strict = false )
             } )
         val lk = toLK( goal )
         Right( lk )
