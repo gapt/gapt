@@ -1,10 +1,10 @@
 package gapt.provers.escargot
 
-import gapt.expr.{ Atom, Expr, Formula, HOLAtomConst, Polarity, PropAtom, containedNames, rename }
+import gapt.expr._
 import gapt.models.PropositionalModel
 import gapt.proofs.lk.LKProof
 import gapt.proofs._
-import gapt.proofs.resolution.{ AvatarComponent, AvatarDefinition, AvatarGroundComp, Input, ResolutionProof, ResolutionProofVisitor, UnitResolutionToLKProof }
+import gapt.proofs.resolution._
 import gapt.provers.escargot.impl.EscargotState
 import gapt.provers.escargot.impl.EscargotLogger._
 import gapt.provers.groundFreeVariables
@@ -54,7 +54,9 @@ class EscargotChaud( allowedAtoms: Seq[Atom] ) {
   }
 
   def getAtomicLKProof( atomicSequent: HOLClause ): Option[LKProof] =
-    getResolutionProof( atomicSequent ).map( UnitResolutionToLKProof( _ ) )
+    getResolutionProof( atomicSequent ).
+      map( UnitResolutionToLKProof( _ ) ).
+      map( TermReplacement.hygienic( _, renaming ) )
 
   @tailrec final def singleModelLoop(): Option[ResolutionProof] = {
     preprocessing()
