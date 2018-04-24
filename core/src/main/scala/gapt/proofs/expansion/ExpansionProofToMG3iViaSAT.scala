@@ -23,11 +23,11 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
   implicit def clause2sat4j( clause: Iterable[Int] ): IVecInt =
     new VecInt( clause.toArray )
 
-  val evAtoms = expansionProof.eigenVariables.view.map( ev => ev -> newVar() ).toMap
-  val atomToEv = evAtoms.map( _.swap )
-  def atom( v: Var ): Int = evAtoms( v )
-
-  val shAtoms = expansionProof.subProofs.view.map( et => et.shallow -> newVar() ).toMap
+  val shAtoms = expansionProof.subProofs.
+    map( _.shallow ).
+    toSeq.sortBy( lcomp( _ ) ).
+    map( sh => sh -> newVar() ).
+    toMap
   def atom( f: Formula ): Int = shAtoms( f )
   def atom( e: ExpansionTree ): Int = atom( e.shallow )
 
@@ -65,7 +65,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
       solver.addClause( clause( lower ) )
     }
 
-  expansionProof.subProofs.toSeq.sortBy( e => lcomp( e.shallow ) ).foreach {
+  expansionProof.subProofs.foreach {
     case ETWeakening( _, _ )              =>
     case ETMerge( _, _ ) | ETAtom( _, _ ) => // implicit because shallow formulas are the same
     case ETTop( _ )                       => addClause( TopAxiom )
@@ -188,20 +188,9 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
       case Left( reason ) =>
         require( solver.isSatisfiable( reason ) )
         val model = solver.model().toSet
-        require( reason.subsetOf( model ) )
-        def build( model: Set[Int], todo: List[Int] ): Set[Int] =
-          todo match {
-            case Nil => model
-            case lit :: todos =>
-              if ( solver.isSatisfiable( model + -lit ) )
-                build( model + -lit, todos )
-              else
-                build( model, todos )
-          }
-        val niceModel = build( Set(), model.toList.sortBy( math.abs ) )
-        Left( modelSequent( niceModel ) )
+        Left( modelSequent( model.toSeq.sortBy( -_ ) ) )
       case Right( () ) =>
-        val goal = expansionProof.expansionSequent.shallow.copy( antecedent = Vector() )
+        val goal = expansionProof.expansionSequent.shallow
         val drupP = DrupProof( drup :+ DrupDerive( goal ) )
         val replayed = Map() ++ DrupToResolutionProof.replay( drupP ).mapValues( simplifyResolutionProof( _ ) )
         def toLK( clause: HOLSequent ): LKProof =
