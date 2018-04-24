@@ -49,19 +49,21 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
 
   val proofs = mutable.Map[HOLSequent, Either[LKProof, ( HOLSequent, LKProof => LKProof )]]()
   def clause( seq: HOLSequent ): Seq[Int] = seq.map( -atom( _ ), atom ).elements
-  def addClause( p: LKProof ): IConstr = addClause( p, p.endSequent )
-  def addClause( p: LKProof, seq: HOLSequent ): IConstr = {
-    proofs( seq ) = Left( p )
-    drup += DrupInput( seq )
-    solver.addClause( clause( seq ) )
-  }
-  def addClause( lower: HOLSequent, upper: HOLSequent )( p: LKProof => LKProof ): IConstr = {
-    require( !solver.isSatisfiable( clause( upper ).map( -_ ) ) )
-    drup += DrupDerive( upper )
-    proofs( lower ) = Right( ( upper, p ) )
-    drup += DrupInput( lower )
-    solver.addClause( clause( lower ) )
-  }
+  def addClause( p: LKProof ): Unit = addClause( p, p.endSequent )
+  def addClause( p: LKProof, seq: HOLSequent ): Unit =
+    if ( !proofs.contains( seq ) ) {
+      proofs( seq ) = Left( p )
+      drup += DrupInput( seq )
+      solver.addClause( clause( seq ) )
+    }
+  def addClause( lower: HOLSequent, upper: HOLSequent )( p: LKProof => LKProof ): Unit =
+    if ( !proofs.contains( lower ) ) {
+      require( !solver.isSatisfiable( clause( upper ).map( -_ ) ) )
+      drup += DrupDerive( upper )
+      proofs( lower ) = Right( ( upper, p ) )
+      drup += DrupInput( lower )
+      solver.addClause( clause( lower ) )
+    }
 
   expansionProof.subProofs.toSeq.sortBy( e => lcomp( e.shallow ) ).foreach {
     case ETWeakening( _, _ )              =>
