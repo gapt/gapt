@@ -70,14 +70,12 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
     case ETMerge( _, _ ) | ETAtom( _, _ ) => // implicit because shallow formulas are the same
     case ETTop( _ )                       => addClause( TopAxiom )
     case ETBottom( _ )                    => addClause( BottomAxiom )
-    case e @ ETAnd( a, b ) if e.polarity.inAnt =>
+    case ETAnd( a, b ) =>
       addClause( AndLeftMacroRule( LogicalAxiom( a.shallow ), a.shallow, b.shallow ) )
       addClause( AndLeftMacroRule( LogicalAxiom( b.shallow ), a.shallow, b.shallow ) )
-    case e @ ETAnd( a, b ) if e.polarity.inSuc =>
       addClause( AndRightRule( LogicalAxiom( a.shallow ), Suc( 0 ), LogicalAxiom( b.shallow ), Suc( 0 ) ) )
-    case e @ ETOr( a, b ) if e.polarity.inAnt =>
+    case ETOr( a, b ) =>
       addClause( OrLeftRule( LogicalAxiom( a.shallow ), Ant( 0 ), LogicalAxiom( b.shallow ), Ant( 0 ) ) )
-    case e @ ETOr( a, b ) if e.polarity.inSuc =>
       addClause( OrRightMacroRule( LogicalAxiom( a.shallow ), a.shallow, b.shallow ) )
       addClause( OrRightMacroRule( LogicalAxiom( b.shallow ), a.shallow, b.shallow ) )
     case e @ ETWeakQuantifier( sh, insts ) =>
@@ -85,14 +83,12 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         if ( e.polarity.inSuc ) ExistsRightRule( LogicalAxiom( a.shallow ), sh, inst )
         else ForallLeftRule( LogicalAxiom( a.shallow ), sh, inst )
       }
-    case e @ ETNeg( a ) if e.polarity.inAnt =>
+    case ETNeg( a ) =>
       addClause( NegLeftRule( LogicalAxiom( a.shallow ), a.shallow ) )
-    case e @ ETImp( a, b ) if e.polarity.inAnt =>
+    case ETImp( a, b ) =>
       addClause( ImpLeftRule( LogicalAxiom( a.shallow ), Suc( 0 ), LogicalAxiom( b.shallow ), Ant( 0 ) ) )
-    case e @ ETImp( a, b ) if e.polarity.inSuc =>
       addClause( ImpRightMacroRule( LogicalAxiom( b.shallow ), a.shallow, b.shallow ) )
-    case ETStrongQuantifier( _, _, _ )      =>
-    case e @ ETNeg( _ ) if e.polarity.inSuc =>
+    case ETStrongQuantifier( _, _, _ ) =>
   }
 
   type CounterExample = Set[Int] // just the assumptions
