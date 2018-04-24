@@ -207,7 +207,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
       case Right( () ) =>
         val goal = expansionProof.expansionSequent.shallow
         val drupP = DrupProof( drup :+ DrupDerive( goal ) )
-        val replayed = Map() ++ DrupToResolutionProof.replay( drupP ).mapValues( simplifyResolutionProof( _ ) )
+        val replayed = DrupToResolutionProof.replay( drupP ).mapValues( simplifyResolutionProof( _ ) )
         def toLK( clause: HOLSequent ): LKProof =
           ResolutionToLKProof(
             replayed( clause ),
