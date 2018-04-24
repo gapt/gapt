@@ -2,7 +2,7 @@ package gapt.provers.escargot
 
 import ammonite.ops.FilePath
 import gapt.expr.hol.containsQuantifierOnLogicalLevel
-import gapt.formats.tptp.TptpParser
+import gapt.formats.tptp.{ TptpParser, sequentProofToTptp }
 import gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, ExpansionProofToMG3i, ExpansionProofToMG3iViaSAT, deskolemizeET, formulaToExpansionTree }
 import gapt.proofs.lk.{ LKProof, isMaeharaMG3i }
 import gapt.proofs.{ Context, MutableContext }
@@ -111,10 +111,10 @@ object IEscargot {
         println( "% found classical proof" )
         expansionProofToMG3i( expansion, filename = opts.files.head, mg4ip = opts.mg4ip,
           mg3isat = opts.mg3isat, showInProoftool = opts.prooftool ) match {
-          case Some( lj ) =>
-            require( lj.endSequent.isSubsetOf( tptpSequent ) )
+          case Some( lk ) =>
+            require( lk.endSequent.isSubsetOf( tptpSequent ) )
             println( "% SZS status Theorem" )
-            lj.toString.lines.map( "% " + _ ).foreach( println )
+            print( sequentProofToTptp( lk ) )
           case None =>
             println( "% SZS status Unknown" )
             println( "% constructivization failed" )
