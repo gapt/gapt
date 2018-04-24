@@ -128,8 +128,10 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
             val upper = assumptions + atom( ev ) + atom( a )
             val provable = solve( upper )
             if ( provable.isRight ) addClause(
-              lower = modelSequent( assumptions + -atom( e ) ),
-              upper = modelSequent( upper ) )( ExistsRightRule( _, sh, ev ) )
+              lower = modelSequent( assumptions + atom( e ) ),
+              upper = modelSequent( upper ) )( p =>
+                if ( !p.endSequent.antecedent.contains( a.shallow ) ) p
+                else ExistsLeftRule( p, sh, ev ) )
             provable
         }
 
