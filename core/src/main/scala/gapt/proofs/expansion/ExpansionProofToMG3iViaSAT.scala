@@ -172,20 +172,20 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
             addClauseWithCtx( assumptionsAnt, upper, lower )( transform )
             Right( () )
           case None =>
-            unprovable += ( ( eigenVariables, assumptions ) )
             Left( assumptions )
         }
       }
 
-      None.
-        orElse( tryInvertible() ).
-        orElse( tryEquational() ).
-        getOrElse( tryNonInvertible() ) match {
-          case Right( _ ) => // next model
-            require( !solver.isSatisfiable( model ) )
-          case reason @ Left( _ ) =>
-            return reason
-        }
+      tryInvertible().getOrElse( tryNonInvertible() match {
+        case ok @ Right( _ )    => ok
+        case reason @ Left( _ ) => tryEquational().getOrElse( reason )
+      } ) match {
+        case Right( _ ) => // next model
+          require( !solver.isSatisfiable( model ) )
+        case reason @ Left( _ ) =>
+          unprovable += ( ( eigenVariables, assumptions ) )
+          return reason
+      }
     }
     Right( () )
   }
