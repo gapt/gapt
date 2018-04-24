@@ -8,14 +8,8 @@ import scala.collection.mutable
 
 class sequentProofToTptp[Proof <: SequentProof[Formula, Proof]] {
 
-  def line( label: String, role: FormulaRole, inf: Proof, annotations: Seq[GeneralTerm] ): TptpInput = {
-    val matrix = inf.conclusion match {
-      case Sequent( Seq(), succ ) => Or( succ )
-      case Sequent( ant, Seq() )  => -And( ant )
-      case sequent                => sequent.toImplication
-    }
-    AnnotatedFormula( "fof", label, role, universalClosure( matrix ), annotations )
-  }
+  def line( label: String, role: FormulaRole, inf: Proof, annotations: Seq[GeneralTerm] ): TptpInput =
+    AnnotatedFormula( "fof", label, role, universalClosure( inf.conclusion.toFormula ), annotations )
 
   private def convertInference(
     labelMap: collection.Map[Proof, String],
