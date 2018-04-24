@@ -104,7 +104,7 @@ object IEscargot {
       opts.backend.getExpansionProof( tptpSequent )
     else
       Some( tptpSequent ).
-        filter( Sat4j.isValid ).
+        filter( QfUfEscargot.isValid ).
         map( formulaToExpansionTree( _ ) ).
         map( ExpansionProof ) ) match {
       case Some( expansion ) =>
