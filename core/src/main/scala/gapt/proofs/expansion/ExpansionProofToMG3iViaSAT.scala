@@ -94,14 +94,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
   type CounterExample = Set[Int] // just the assumptions
   type Result = Either[CounterExample, Unit]
 
-  val unprovable = mutable.Buffer[( Set[Int], CounterExample )]()
   def solve( assumptions: Set[Int] ): Result = {
-    unprovable.collectFirst { case ( ass, s ) if assumptions.subsetOf( ass ) => s } match {
-      case Some( s ) =>
-        return Left( s )
-      case None =>
-    }
-
     while ( solver.isSatisfiable( assumptions ) ) {
       val model = solver.model(): Seq[Int]
       val atomModel = modelSequent( model ).collect { case a: Atom => a }
@@ -163,8 +156,8 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         orElse( tryEquational() ).
         getOrElse( tryNonInvertible() ) match {
           case Right( _ ) => // next model
-          case reason @ Left( m ) =>
-            unprovable += ( assumptions -> m )
+            require( !solver.isSatisfiable( model ) )
+          case reason @ Left( _ ) =>
             return reason
         }
     }
