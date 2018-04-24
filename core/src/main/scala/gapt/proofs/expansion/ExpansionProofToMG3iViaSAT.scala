@@ -6,7 +6,7 @@ import gapt.proofs.drup._
 import gapt.proofs.lk._
 import gapt.proofs.resolution.{ ResolutionToLKProof, simplifyResolutionProof }
 import gapt.proofs._
-import gapt.provers.escargot.Escargot
+import gapt.provers.escargot.EscargotChaud
 import org.sat4j.minisat.SolverFactory
 import org.sat4j.specs._
 import gapt.provers.sat.Sat4j._
@@ -91,6 +91,8 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
     case ETStrongQuantifier( _, _, _ ) =>
   }
 
+  val escargot = new EscargotChaud( shAtoms.keys.collect { case a: Atom => a }.toSeq )
+
   type Counterexample = Set[Int] // just the assumptions
   type Result = Either[Counterexample, Unit]
 
@@ -111,7 +113,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
 
       def tryEquational(): Option[Result] = {
         if ( !atomModel.exists( Eq.unapply( _ ).isDefined ) ) None else
-          quiet( Escargot.getAtomicLKProof( atomModel ) ) match {
+          quiet( escargot.getAtomicLKProof( atomModel ) ) match {
             case Some( p ) =>
               addClause( p )
               Some( Right( () ) )
