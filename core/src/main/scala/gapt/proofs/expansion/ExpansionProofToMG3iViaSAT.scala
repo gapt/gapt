@@ -2,7 +2,7 @@ package gapt.proofs.expansion
 
 import gapt.expr._
 import gapt.expr.hol.lcomp
-import gapt.proofs.drup._
+import gapt.proofs.rup._
 import gapt.proofs.lk._
 import gapt.proofs.resolution.{ ResolutionToLKProof, simplifyResolutionProof }
 import gapt.proofs._
@@ -41,29 +41,34 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
   def expSeq( lits: Traversable[Int] ): ExpansionSequent =
     Sequent( lits.flatMap( l => atomToET( math.abs( l ) ).map( e => e -> e.polarity ) ) )
 
-  val drup = mutable.Buffer[DrupProofLine]()
+  val drup = mutable.Buffer[RupProof.Line]()
   solver.setSearchListener( new SearchListenerAdapter[ISolverService] {
-    override def learnUnit( p: Int ) = drup += DrupDerive( implication( Seq( p ) ) )
-    override def learn( c: IConstr ) = drup += DrupDerive( implication( c ) )
+    override def learnUnit( p: Int ) = drup += RupProof.Rup( Set( p ) )
+    override def learn( c: IConstr ) = drup += RupProof.Rup( c.toSet )
   } )
 
-  val proofs = mutable.Map[HOLSequent, Either[LKProof, ( HOLSequent, LKProof => LKProof )]]()
+  val proofs = mutable.Map[Set[Int], Either[LKProof, ( Set[Int], LKProof => LKProof )]]()
   def clause( seq: HOLSequent ): Seq[Int] = seq.map( -atom( _ ), atom ).elements
   def addClause( p: LKProof ): Unit = addClause( p, p.endSequent )
-  def addClause( p: LKProof, seq: HOLSequent ): Unit =
-    if ( !proofs.contains( seq ) ) {
-      proofs( seq ) = Left( p )
-      drup += DrupInput( seq )
-      solver.addClause( clause( seq ) )
+  def addClause( p: LKProof, seq: HOLSequent ): Unit = {
+    val cls = clause( seq ).toSet
+    if ( !proofs.contains( cls ) ) {
+      proofs( cls ) = Left( p )
+      drup += RupProof.Input( cls )
+      solver.addClause( cls )
     }
-  def addClause( lower: HOLSequent, upper: HOLSequent )( p: LKProof => LKProof ): Unit =
-    if ( !proofs.contains( lower ) ) {
-      require( !solver.isSatisfiable( clause( upper ).map( -_ ) ) )
-      drup += DrupDerive( upper )
-      proofs( lower ) = Right( ( upper, p ) )
-      drup += DrupInput( lower )
-      solver.addClause( clause( lower ) )
+  }
+  def addClause( lower: HOLSequent, upper: HOLSequent )( p: LKProof => LKProof ): Unit = {
+    val lowerC = clause( lower ).toSet
+    val upperC = clause( upper ).toSet
+    if ( !proofs.contains( lowerC ) ) {
+      require( !solver.isSatisfiable( upperC.map( -_ ) ) )
+      drup += RupProof.Rup( upperC )
+      proofs( lowerC ) = Right( ( upperC, p ) )
+      drup += RupProof.Input( lowerC )
+      solver.addClause( lowerC )
     }
+  }
 
   expansionProof.subProofs.foreach {
     case ETWeakening( _, _ )              =>
@@ -205,17 +210,15 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         val model = solver.model().toSet
         Left( modelSequent( model.toSeq.sortBy( -_ ) ) )
       case Right( () ) =>
-        val goal = expansionProof.expansionSequent.shallow
-        val drupP = DrupProof( drup :+ DrupDerive( goal ) )
-        val replayed = DrupToResolutionProof.replay( drupP ).mapValues( simplifyResolutionProof( _ ) )
-        def toLK( clause: HOLSequent ): LKProof =
-          ResolutionToLKProof(
-            replayed( clause ),
-            input => proofs( input.sequent ) match {
-              case Left( p ) => p
-              case Right( ( upper, f ) ) =>
-                WeakeningMacroRule( f( toLK( upper ) ), input.sequent, strict = false )
-            } )
+        val goal = clause( expansionProof.expansionSequent.shallow ).toSet
+        val drupP = RupProof( drup.toVector :+ RupProof.Rup( goal ) )
+        val replayed = ( drupP.lines.map( _.clause ) zip drupP.toResProofs ).reverse.toMap
+        def toLK( clause: Set[Int] ): LKProof =
+          replayed( clause ).toLK( atomToSh, cls => proofs( cls ) match {
+            case Left( p ) => p
+            case Right( ( upper, f ) ) =>
+              WeakeningMacroRule( f( toLK( upper ) ), implication( cls ), strict = false )
+          } )
         val lk = toLK( goal )
         Right( lk )
     }
