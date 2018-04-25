@@ -109,8 +109,8 @@ class Rup2Res extends UnitPropagationListener {
   }
 
   def getFromPool( dimacsVar: Int ): Int = {
-    if ( 2 * math.abs( dimacsVar ) > proofs.size() )
-      proofs.growTo( math.max( 2 * math.abs( dimacsVar ), 2 * proofs.size() ), null )
+    if ( 2 * math.abs( dimacsVar ) + 2 > proofs.size() )
+      proofs.growTo( math.max( 2 * math.abs( dimacsVar ) + 2, 2 * proofs.size() ), null )
 
     voc.getFromPool( dimacsVar )
   }
