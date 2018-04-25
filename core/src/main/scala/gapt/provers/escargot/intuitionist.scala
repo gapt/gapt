@@ -10,7 +10,6 @@ import gapt.prooftool.LKProofViewer
 import gapt.provers.Prover
 import gapt.provers.eprover.EProver
 import gapt.provers.escargot.impl.EscargotLogger
-import gapt.provers.sat.Sat4j
 import gapt.provers.spass.SPASS
 import gapt.provers.vampire.Vampire
 import gapt.utils.{ LogHandler, quiet }
@@ -23,22 +22,23 @@ object IEscargot {
     mg4ip:           Boolean,
     showInProoftool: Boolean )( implicit ctx: Context ): Option[LKProof] = {
     val deskExpProof = deskolemizeET( expProofWithSk )
-    EscargotLogger.warn( "deskolemization finished" )
+    EscargotLogger.warn( "converting expansion proof to mG3i" )
     quiet {
       if ( mg3isat ) ExpansionProofToMG3iViaSAT( deskExpProof )
       else if ( mg4ip ) ExpansionProofToMG3i( deskExpProof )
       else ExpansionProofToLK.withIntuitionisticHeuristics( deskExpProof )
     } match {
       case Right( lk ) =>
+        EscargotLogger.warn( s"classical proof has ${lk.dagLike.size} inferences" )
+        val maxSuccSize = lk.subProofs.map( _.endSequent.succedent.toSet.size ).max
+        EscargotLogger.warn( s"classical proof has maximum succedent size $maxSuccSize" )
+        val inMG3i = isMaeharaMG3i( lk )
+        EscargotLogger.warn( s"classical proof is in mG3i: $inMG3i" )
         if ( showInProoftool ) {
           val viewer = new LKProofViewer( filename, lk )
           viewer.markNonIntuitionisticInferences()
           viewer.showFrame()
         }
-        val maxSuccSize = lk.subProofs.map( _.endSequent.succedent.toSet.size ).max
-        EscargotLogger.warn( s"classical proof has maximum succedent size $maxSuccSize" )
-        val inMG3i = isMaeharaMG3i( lk )
-        EscargotLogger.warn( s"classical proof is in mG3i: $inMG3i" )
         if ( inMG3i ) Some( lk ) else None
       case Left( ( _, unprovable ) ) =>
         EscargotLogger.warn( s"stuck at: $unprovable" )

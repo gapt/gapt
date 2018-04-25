@@ -4,7 +4,6 @@ import gapt.expr._
 import gapt.expr.hol.lcomp
 import gapt.proofs.rup._
 import gapt.proofs.lk._
-import gapt.proofs.resolution.{ ResolutionToLKProof, simplifyResolutionProof }
 import gapt.proofs._
 import gapt.provers.escargot.EscargotChaud
 import org.sat4j.minisat.SolverFactory
