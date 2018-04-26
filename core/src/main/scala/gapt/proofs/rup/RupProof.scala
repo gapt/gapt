@@ -182,7 +182,8 @@ case class RupProof( lines: Vector[Line] ) {
         val p = Res.Input( c )
         rup2res.addClause( p )
         p
-      case RupProof.Rup( c ) => rup2res.deriveRup( c )
+      case RupProof.Rup( c )    => rup2res.deriveRup( c )
+      case RupProof.Delete( c ) => rup2res.deriveRup( c )
     }
   }
 
@@ -190,8 +191,9 @@ case class RupProof( lines: Vector[Line] ) {
 
   override def toString: String =
     lines.view.map {
-      case RupProof.Input( cls ) => "I " + cls.mkString( " " ) + " 0"
-      case RupProof.Rup( cls )   => cls.mkString( " " ) + " 0"
+      case RupProof.Input( cls )  => "c input " + cls.mkString( " " ) + " 0"
+      case RupProof.Rup( cls )    => cls.mkString( " " ) + " 0"
+      case RupProof.Delete( cls ) => "d " + cls.mkString( " " ) + " 0"
     }.mkString( "\n" )
 }
 
@@ -211,12 +213,18 @@ object RupProof {
    * with regard to Γ iff Γ, ¬C can be refuted with only unit propagation.
    */
   case class Rup( clause: Clause ) extends Line
+  /** Forgets a clause.  Following clauses may not depend on the clause anymore. */
+  case class Delete( clause: Clause ) extends Line
 
-  def apply( cnf: DIMACS.CNF, p: DIMACS.DRUP ): RupProof = {
-    import DIMACS._
-    RupProof( Vector() ++
-      cnf.view.map( cls => Input( cls.toSet ) ) ++
-      p.view.collect { case DrupDerive( cls ) => Rup( cls.toSet ) } )
+  def apply( lines: Iterable[Line] ): RupProof = RupProof( lines.toVector )
+  object Input {
+    def apply( clause: Iterable[Int] ): Input = Input( clause.toSet )
+  }
+  object Rup {
+    def apply( clause: Iterable[Int] ): Rup = Rup( clause.toSet )
+  }
+  object Delete {
+    def apply( clause: Iterable[Int] ): Delete = Delete( clause.toSet )
   }
 }
 

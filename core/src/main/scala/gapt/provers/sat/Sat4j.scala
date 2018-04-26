@@ -1,7 +1,7 @@
 package gapt.provers.sat
 
 import gapt.formats.dimacs.DIMACS
-import gapt.formats.dimacs.DIMACS.{ CNF, DRUP }
+import gapt.proofs.rup.RupProof
 import org.sat4j.core.{ LiteralsUtils, Vec, VecInt }
 import org.sat4j.minisat.SolverFactory
 import org.sat4j.specs._
@@ -28,18 +28,21 @@ class Sat4j extends DrupSolver {
   }
 
   class RupListener extends SearchListenerAdapter[ISolverService] {
-    val drup = Seq.newBuilder[DIMACS.DrupInference]
+    val drup = Seq.newBuilder[RupProof.Line]
 
-    override def learnUnit( p: Int ) = drup += DIMACS.DrupDerive( Seq( p ) )
-    override def learn( c: IConstr ) = drup += DIMACS.DrupDerive( c )
+    override def learnUnit( p: Int ) = drup += RupProof.Rup( Set( p ) )
+    override def learn( c: IConstr ) = drup += RupProof.Rup( c )
 
     override def end( result: Lbool ) =
-      if ( result == Lbool.FALSE ) drup += DIMACS.DrupDerive( Seq() )
+      if ( result == Lbool.FALSE ) drup += RupProof.Rup( Set() )
+
+    def result() = RupProof( drup.result() )
   }
 
-  override def getDrupProof( cnf: CNF ): Option[DRUP] = {
+  override def getDrupProof( cnf: DIMACS.CNF ): Option[RupProof] = {
     val solver = SolverFactory.newDefault()
     val listener = new RupListener
+    listener.drup ++= cnf.view.map( RupProof.Input( _ ) )
     solver.setSearchListener( listener )
     solver.newVar( DIMACS maxAtom cnf )
 
@@ -49,12 +52,12 @@ class Sat4j extends DrupSolver {
       if ( solver.isSatisfiable ) {
         None
       } else {
-        Some( listener.drup.result() )
+        Some( listener.result() )
       }
     } catch {
       case _: ContradictionException =>
         listener.end( Lbool.FALSE )
-        Some( listener.drup.result() )
+        Some( listener.result() )
     }
   }
 }

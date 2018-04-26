@@ -43,7 +43,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
   val drup = mutable.Buffer[RupProof.Line]()
   solver.setSearchListener( new SearchListenerAdapter[ISolverService] {
     override def learnUnit( p: Int ) = drup += RupProof.Rup( Set( p ) )
-    override def learn( c: IConstr ) = drup += RupProof.Rup( c.toSet )
+    override def learn( c: IConstr ) = drup += RupProof.Rup( c )
   } )
 
   val proofs = mutable.Map[Set[Int], Either[LKProof, ( Set[Int], LKProof => LKProof )]]()
@@ -210,7 +210,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         Left( modelSequent( model.toSeq.sortBy( -_ ) ) )
       case Right( () ) =>
         val goal = clause( expansionProof.expansionSequent.shallow ).toSet
-        val drupP = RupProof( drup.toVector :+ RupProof.Rup( goal ) )
+        val drupP = RupProof( drup :+ RupProof.Rup( goal ) )
         val replayed = ( drupP.lines.map( _.clause ) zip drupP.toResProofs ).reverse.toMap
         def toLK( clause: Set[Int] ): LKProof =
           replayed( clause ).toLK( atomToSh, cls => proofs( cls ) match {

@@ -2,7 +2,7 @@ package gapt.formats.dimacs
 
 import gapt.expr._
 import gapt.models.PropositionalModel
-import gapt.proofs.drup.{ DrupDerive, DrupForget, DrupProof, DrupProofLine }
+import gapt.proofs.rup.RupProof
 import gapt.proofs.{ Clause, HOLClause }
 
 import scala.collection.mutable
@@ -13,17 +13,6 @@ object DIMACS {
   type Clause = Seq[Literal]
   type CNF = Seq[Clause]
   type Model = Seq[Literal]
-
-  /**
-   * Inference in a DRUP proof in DIMACS encoding.
-   *
-   * This is the same proof system as in [[gapt.proofs.drup.DrupProof]],
-   * except that we store the atoms in DIMACS encoding here.
-   */
-  sealed abstract class DrupInference
-  case class DrupDerive( clause: Clause ) extends DrupInference
-  case class DrupDelete( clause: Clause ) extends DrupInference
-  type DRUP = Seq[DrupInference]
 
   def maxAtom( cnf: CNF ) = {
     val atoms = cnf.flatten.map( math.abs )
@@ -65,12 +54,6 @@ class DIMACSEncoding {
       case l if l < 0 => decodeAtomOption( -l ) map { _ -> false }
     } )
 
-  def decodeProof( drupProof: DIMACS.DRUP ): Seq[DrupProofLine] =
-    drupProof map {
-      case DIMACS.DrupDelete( cls ) => DrupForget( decodeClause( cls ) )
-      case DIMACS.DrupDerive( cls ) => DrupDerive( decodeClause( cls ) )
-    }
-
   override def toString = s"DIMACSEncoding(${atomMap.map( x => s"${x._1} -> ${x._2}" ).mkString( ", " )})"
 }
 
@@ -95,7 +78,10 @@ object writeDIMACS {
 }
 
 object readDRUP {
-  def apply( drupOutput: String ): DIMACS.DRUP =
+  def apply( cnf: DIMACS.CNF, drupOutput: String ): RupProof =
+    RupProof( cnf.map( RupProof.Input( _ ) ) ++ apply( drupOutput ) )
+
+  def apply( drupOutput: String ): Seq[RupProof.Line] =
     drupOutput.trim.split( "\n" ).toSeq flatMap {
       case line if line startsWith "s "    => None
       case line if line startsWith "%RUPD" => None
@@ -104,9 +90,9 @@ object readDRUP {
       case "f DRUP"                        => None
       case "o proof DRUP"                  => None
       case line if line.startsWith( "d " ) =>
-        Some( DIMACS.DrupDelete( line.substring( 2 ).split( " " ).toSeq.map( _.toInt ).dropRight( 1 ) ) )
+        Some( RupProof.Delete( line.substring( 2 ).split( " " ).toSeq.map( _.toInt ).dropRight( 1 ) ) )
       case line =>
-        Some( DIMACS.DrupDerive( line.split( " " ).map( _.toInt ).toSeq.dropRight( 1 ) ) )
+        Some( RupProof.Rup( line.split( " " ).map( _.toInt ).toSeq.dropRight( 1 ) ) )
     }
 }
 

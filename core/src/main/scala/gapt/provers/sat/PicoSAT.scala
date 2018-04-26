@@ -5,8 +5,8 @@ import java.io.IOException
 import gapt.expr.Top
 import gapt.formats.dimacs.{ DIMACS, readDIMACS, readDRUP, writeDIMACS }
 import gapt.utils.{ ExternalProgram, runProcess, withTempFile }
-
 import ammonite.ops._
+import gapt.proofs.rup.RupProof
 
 private object picoSatHelper {
   def getDefaultExecutableName() =
@@ -49,9 +49,9 @@ class PicoSAT( command: String* ) extends DrupSolver with ExternalProgram {
   override val isInstalled: Boolean =
     try getDrupProof( Top() ).isDefined catch { case _: IOException => false }
 
-  def getDrupProof( cnf: DIMACS.CNF ): Option[DIMACS.DRUP] =
+  def getDrupProof( cnf: DIMACS.CNF ): Option[RupProof] =
     runProgram( writeDIMACS( cnf ) ) match {
-      case Left( proof )  => Some( readDRUP( proof ) )
+      case Left( proof )  => Some( readDRUP( cnf, proof ) )
       case Right( model ) => None
     }
 
