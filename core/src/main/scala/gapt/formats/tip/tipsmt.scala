@@ -10,6 +10,66 @@ import gapt.utils.{ ExternalProgram, NameGenerator, runProcess }
 
 import scala.collection.mutable
 
+sealed trait TipSmtAst
+
+case class TipSmtKeyword(
+    name:     String,
+    argument: Option[String] ) extends TipSmtAst
+
+case class TipSmtSortDeclaration(
+    name:     String,
+    keywords: Seq[TipSmtKeyword] ) extends TipSmtAst
+
+case class TipSmtConstructor(
+    name:     String,
+    keywords: Seq[TipSmtKeyword],
+    fields:   Seq[TipSmtConstructorField] )
+
+case class TipSmtConstructorField(
+    name: String,
+    typ:  TipSmtType )
+
+case class TipSmtType(
+    typename: String ) extends TipSmtAst
+
+case class TipSmtDatatype(
+    name:         String,
+    keywords:     Seq[TipSmtKeyword],
+    constructors: Seq[TipSmtConstructor] ) extends TipSmtAst
+
+case class TipSmtDatatypesDeclaration(
+    datatypes: Seq[TipSmtDatatype] ) extends TipSmtAst
+
+case class TipSmtConstantDeclaration(
+    name:     String,
+    keywords: Seq[TipSmtKeyword],
+    typ:      TipSmtType ) extends TipSmtAst
+
+case class TipSmtFunctionDeclaration(
+    name:          String,
+    keywords:      Seq[TipSmtKeyword],
+    argumentTypes: Seq[TipSmtType],
+    returnType:    TipSmtType ) extends TipSmtAst
+
+case class TipSmtFunctionDefinition(
+    name:       String,
+    keywords:   Seq[TipSmtKeyword],
+    parameters: Seq[TipSmtFormalParameter],
+    returnType: TipSmtType,
+    body:       SExpression ) extends TipSmtAst
+
+case class TipSmtAssertion(
+    expr: TipSmtExpression ) extends TipSmtAst
+
+case class TipSmtGoal(
+    expr: TipSmtExpression ) extends TipSmtAst
+
+case class TipSmtFormalParameter(
+    name: String, typ: TipSmtType )
+
+case class TipSmtExpression(
+    keywords: Seq[TipSmtKeyword], expr: SExpression ) extends TipSmtAst
+
 class TipSmtParser {
   var ctx = Context()
 
@@ -25,231 +85,245 @@ class TipSmtParser {
   val goals = mutable.Buffer[Formula]()
 
   typeDecls( "Bool" ) = To
-  datatypes += TipDatatype( To, Seq( TipConstructor( TopC(), Seq() ), TipConstructor( BottomC(), Seq() ) ) )
+  datatypes += TipDatatype(
+    To,
+    Seq( TipConstructor( TopC(), Seq() ), TipConstructor( BottomC(), Seq() ) ) )
 
-  case class TipSmtParserException( message: String ) extends Exception( message )
+  case class TipSmtParserException(
+      message: String ) extends Exception( message )
 
-  private def checkKeywords( keywords: Seq[SExpression] ): Unit = keywords match {
-    case Seq( LKeyword( _ ), LSymbol( _ ), rest @ _* ) => checkKeywords( rest )
-    case Seq( LKeyword( _ ), rest @ _* ) => checkKeywords( rest )
-    case Seq() =>
-    case _ => throw TipSmtParserException( "invalid keyword sequence" )
-  }
-
-  private object SortDeclaration {
-    def unapply( sexps: Seq[SExpression] ): Option[( SExpression, Seq[SExpression], SExpression )] = {
-      if ( sexps.size < 2 )
-        None
-      else
-        Some( sexps.head, sexps.tail.init, sexps.last )
+  private def parseKeywords( sexps: Seq[SExpression] ): Seq[TipSmtKeyword] =
+    sexps match {
+      case Seq( LKeyword( keyword ), LSymbol( argument ), rest @ _* ) =>
+        Seq( TipSmtKeyword( keyword, Some( argument ) ) ) ++
+          parseKeywords( rest )
+      case Seq( LKeyword( keyword ), kw @ LKeyword( _ ), rest @ _* ) =>
+        Seq( TipSmtKeyword( keyword, None ) ) ++ parseKeywords( kw +: rest )
+      case Seq( LKeyword( keyword ) ) =>
+        Seq( TipSmtKeyword( keyword, None ) )
+      case Seq() =>
+        Seq()
+      case _ => throw TipSmtParserException( "" )
     }
+
+  private def parseSortDeclaration(
+    sexps: Seq[SExpression] ): TipSmtSortDeclaration =
+    sexps match {
+      case Seq( LSymbol( sortName ), rest @ _* ) =>
+        if ( rest.isEmpty )
+          throw TipSmtParserException( "" )
+        rest.last match {
+          case LSymbol( "0" ) =>
+            TipSmtSortDeclaration( sortName, parseKeywords( rest.init ) )
+          case _ => throw new TipSmtParserException( "" )
+        }
+      case _ => throw new TipSmtParserException( "" )
+    }
+
+  private def parseDatatype( sexps: SExpression ): TipSmtDatatype =
+    sexps match {
+      case LList( LSymbol( datatypeName ), rest @ _* ) =>
+        val ( keywords, constructors ) = rest.partition(
+          !_.isInstanceOf[LList] )
+        TipSmtDatatype(
+          datatypeName,
+          parseKeywords( keywords ),
+          parseConstructors( constructors ) )
+      case _ => throw TipSmtParserException( "" )
+    }
+
+  private def parseDatatypesDeclaration(
+    sexps: Seq[SExpression] ): TipSmtDatatypesDeclaration = sexps match {
+    case Seq( LList(), LList( datatypes @ _* ) ) =>
+      TipSmtDatatypesDeclaration( datatypes.map { parseDatatype( _ ) } )
+    case _ => throw TipSmtParserException( "" )
   }
 
-  private def declareBaseType( sort: String ) = {
-    val baseType = TBase( sort )
-    declare( baseType )
-    ctx += baseType
+  private def parseTypename( sexp: SExpression ): TipSmtType = sexp match {
+    case LSymbol( typename ) =>
+      TipSmtType( typename )
+    case _ => throw TipSmtParserException( "" )
   }
 
-  private def parseSortDeclaration( sexps: Seq[SExpression] ): Unit = {
+  private def parseConstantDeclaration(
+    sexps: Seq[SExpression] ): TipSmtConstantDeclaration = sexps match {
+    case Seq( LSymbol( constantName ), rest @ _* ) =>
+      if ( rest.isEmpty )
+        throw TipSmtParserException( "" )
+      TipSmtConstantDeclaration(
+        constantName,
+        parseKeywords( rest.init ),
+        parseTypename( rest.last ) )
+  }
 
-    val SortDeclaration( LSymbol( sort ), keywords, LSymbol( "0" ) ) = sexps
+  private def parseArgumentTypeList( sexp: SExpression ): Seq[TipSmtType] =
+    sexp match {
+      case LList( types @ _* ) => types map { parseTypename( _ ) }
+      case _                   => throw TipSmtParserException( "" )
+    }
 
-    checkKeywords( keywords )
+  private def parseFunctionDeclaration(
+    sexps: Seq[SExpression] ): TipSmtFunctionDeclaration = sexps match {
+    case Seq( LSymbol( functionName ), rest @ _* ) =>
+      if ( rest.size < 2 )
+        throw new TipSmtParserException( "" )
+      TipSmtFunctionDeclaration(
+        functionName,
+        parseKeywords( rest.init.init ),
+        parseArgumentTypeList( rest.init.last ),
+        parseTypename( rest.last ) )
+  }
+
+  private def parseFormalParameter(
+    sexpr: SExpression ): TipSmtFormalParameter =
+    sexpr match {
+      case LList( LSymbol( parameter ), paraType ) =>
+        TipSmtFormalParameter( parameter, parseTypename( paraType ) )
+      case _ => throw TipSmtParserException( "" )
+    }
+
+  private def parseFormalParameterList(
+    sexp: SExpression ): Seq[TipSmtFormalParameter] = sexp match {
+    case LList( parameters @ _* ) =>
+      parameters map { parseFormalParameter( _ ) }
+    case _ =>
+      throw TipSmtParserException( "" )
+  }
+
+  private def parseFunctionDefinition(
+    sexps: Seq[SExpression] ): TipSmtFunctionDefinition = sexps match {
+    case Seq( LSymbol( functionName ), rest @ _* ) =>
+      if ( rest.size < 3 )
+        throw new TipSmtParserException( "" )
+      TipSmtFunctionDefinition(
+        functionName,
+        parseKeywords( rest.init.init.init ),
+        parseFormalParameterList( rest.init.init.last ),
+        parseTypename( rest.init.last ),
+        rest.last )
+  }
+
+  private def parseConstructorFields(
+    sexps: Seq[SExpression] ): Seq[TipSmtConstructorField] =
+    sexps map { parseConstructorField( _ ) }
+
+  private def parseConstructorField(
+    sexps: SExpression ): TipSmtConstructorField = sexps match {
+    case LList( LSymbol( fieldName ), fieldType ) =>
+      TipSmtConstructorField( fieldName, parseTypename( fieldType ) )
+    case _ => throw new TipSmtParserException( "" )
+  }
+
+  private def parseConstructors(
+    sexps: Seq[SExpression] ): Seq[TipSmtConstructor] =
+    sexps map { parseConstructor( _ ) }
+
+  private def parseConstructor( sexp: SExpression ): TipSmtConstructor =
+    sexp match {
+      case LList( LSymbol( constructorName ), rest @ _* ) =>
+        val ( keywords, fields ) = rest partition { !_.isInstanceOf[LList] }
+        TipSmtConstructor(
+          constructorName,
+          parseKeywords( keywords ),
+          parseConstructorFields( fields ) )
+      case _ => throw TipSmtParserException( "" )
+    }
+
+  private def parseTipSmtExpression(
+    sexps: Seq[SExpression] ): TipSmtExpression = {
+    if ( sexps.isEmpty )
+      throw TipSmtParserException( "" )
+    TipSmtExpression( parseKeywords( sexps.init ), sexps.last )
+  }
+
+  private def parseAssertion( sexps: Seq[SExpression] ): TipSmtAssertion =
+    TipSmtAssertion( parseTipSmtExpression( sexps ) )
+
+  private def parseGoal( sexps: Seq[SExpression] ): TipSmtGoal =
+    TipSmtGoal( parseTipSmtExpression( sexps ) )
+
+  private def compileSortDeclaration(
+    tipSmtSortDeclaration: TipSmtSortDeclaration ): Unit = {
+
+    val TipSmtSortDeclaration( sort, keywords ) = tipSmtSortDeclaration
 
     declareBaseType( sort )
   }
 
-  private object Datatype {
-    def unapply( sexps: Seq[SExpression] ): Option[( SExpression, Seq[SExpression], Seq[SExpression] )] =
-      if ( sexps.size < 2 )
-        None
-      else
-        Some(
-          sexps.head,
-          sexps.tail.takeWhile( !_.isInstanceOf[LList] ),
-          sexps.tail.dropWhile( !_.isInstanceOf[LList] ) )
+  private def compileDatatypesDeclaration(
+    tipSmtDatatypesDeclaration: TipSmtDatatypesDeclaration ): Unit = {
+
+    val TipSmtDatatypesDeclaration( datatypes ) = tipSmtDatatypesDeclaration
+
+    datatypes map { declareDatatype( _ ) }
   }
 
-  private object DatatypeDeclaration {
-    def unapply( sexps: Seq[SExpression] ): Option[( SExpression, Seq[SExpression], SExpression, Seq[SExpression] )] =
-      if ( sexps.size < 2 )
-        None
-      else
-        sexps.last match {
-          case LList( LList( expressions @ _* ) ) =>
-            val Datatype( typename, keywords, constructors ) = expressions
-            Some( sexps.head, keywords, typename, constructors )
-          case _ => None
-        }
+  private def compileConstantDeclaration(
+    tipSmtConstantDeclaration: TipSmtConstantDeclaration ): Unit = {
+
+    val TipSmtConstantDeclaration(
+      constantName, keywords, typ ) = tipSmtConstantDeclaration
+
+    declareConstant( constantName, typ.typename )
   }
 
-  private def declareDatatype( typename: String, constructors: Seq[SExpression] ): Unit = {
-    val t = TBase( typename )
-    declare( t )
-    val dt = TipDatatype( t, constructors map { parseConstructor( _, t ) } )
-    ctx += Context.InductiveType( t, dt.constructors.map( _.constr ): _* )
-    datatypes += dt
-    dt.constructors foreach { ctr =>
-      declare( ctr.constr )
-      for ( proj <- ctr.projectors ) {
-        declare( proj )
-        ctx += proj
-      }
-    }
-  }
+  private def compileFunctionDeclaration(
+    tipSmtFunctionDeclaration: TipSmtFunctionDeclaration ): Unit = {
 
-  private def parseDatatypeDeclaration( sexps: Seq[SExpression] ): Unit = {
-
-    val DatatypeDeclaration( LList(), keywords, LSymbol( typename ), constructors ) = sexps
-
-    checkKeywords( keywords )
-
-    declareDatatype( typename, constructors )
-  }
-
-  private object ConstantDeclaration {
-    def unapply( sexps: Seq[SExpression] ): Option[( SExpression, Seq[SExpression], SExpression )] =
-      if ( sexps.size < 2 )
-        None
-      else
-        Some( ( sexps.head, sexps.tail.init, sexps.last ) )
-  }
-
-  private def declareConstant( constantName: String, typeName: String ): Unit = {
-    val c = Const( constantName, typeDecls( typeName ) )
-    declare( c )
-    ctx += c
-  }
-
-  private def parseConstantDeclaration( sexps: Seq[SExpression] ): Unit = {
-
-    val ConstantDeclaration( LSymbol( constantName ), keywords, LSymbol( typeName ) ) = sexps
-
-    checkKeywords( keywords )
-
-    declareConstant( constantName, typeName )
-  }
-
-  private object FunctionDeclaration {
-    def unapply( sexps: Seq[SExpression] ): Option[( SExpression, Seq[SExpression], SExpression, SExpression )] =
-      if ( sexps.size < 3 )
-        None
-      else
-        Some( ( sexps.head, sexps.tail.init.init, sexps.reverse( 1 ), sexps.reverse( 0 ) ) )
-  }
-
-  private def declareFunction( functionName: String, argumentTypes: Seq[SExpression], returnType: String ): Unit = {
-    val f = Const( functionName, FunctionType(
-      typeDecls( returnType ),
-      argumentTypes.asInstanceOf[Seq[LSymbol]].map { case LSymbol( argType ) => typeDecls( argType ) } ) )
-    declare( f )
-    ctx += f
-  }
-
-  private def parseFunctionDeclaration( sexps: Seq[SExpression] ): Unit = {
-
-    val FunctionDeclaration( LSymbol( functionName ), keywords, LList( argTypes @ _* ), LSymbol( returnType ) ) = sexps
-
-    checkKeywords( keywords )
+    val TipSmtFunctionDeclaration(
+      functionName,
+      keywords,
+      argTypes,
+      returnType ) = tipSmtFunctionDeclaration
 
     declareFunction( functionName, argTypes, returnType )
   }
 
-  private object FunctionDefinition {
-    def unapply( sexps: Seq[SExpression] ): Option[( SExpression, Seq[SExpression], SExpression, SExpression, SExpression )] =
-      if ( sexps.size < 4 )
-        None
-      else
-        Some( ( sexps.head, sexps.tail.init.init.init, sexps.reverse( 2 ), sexps.reverse( 1 ), sexps.reverse( 0 ) ) )
+  private def compileFunctionDefinition(
+    tipSmtFunctionDefinition: TipSmtFunctionDefinition ): Unit = {
+
+    val TipSmtFunctionDefinition(
+      functionName,
+      _,
+      formalParameters,
+      returnType,
+      body ) = tipSmtFunctionDefinition
+
+    defineFunction( functionName, formalParameters, returnType, body )
   }
 
-  private def defineFunction(
-    functionName: String,
-    arguments:    Seq[SExpression],
-    returnType:   String,
-    body:         SExpression ): Unit = {
-    val argVars = for (
-      LFun( argName, LSymbol( argType ) ) <- arguments
-    ) yield Var( argName, typeDecls( argType ) )
-    val funConst = Const( functionName, FunctionType( typeDecls( returnType ), argVars.map( _.ty ) ) )
-    declare( funConst )
-    ctx += funConst
-    functions += TipFun(
-      funConst,
-      parseFunctionBody( body, funConst( argVars: _* ), argVars.map { v => v.name -> v }.toMap ) )
+  private def compileAssertion( tipSmtAssertion: TipSmtAssertion ): Unit = {
+
+    val TipSmtAssertion( TipSmtExpression( _, formula ) ) = tipSmtAssertion
+
+    assumptions += compileExpression( formula, Map() ).asInstanceOf[Formula]
   }
 
-  private def parseFunctionDefinition( sexps: Seq[SExpression] ): Unit = {
+  private def compileGoal( tipSmtGoal: TipSmtGoal ): Unit = {
 
-    val FunctionDefinition( LSymbol( functionName ), keywords, LList( args @ _* ), LSymbol( retType ), body ) = sexps
+    val TipSmtGoal( TipSmtExpression( _, formula ) ) = tipSmtGoal
 
-    checkKeywords( keywords )
-
-    defineFunction( functionName, args, retType, body )
+    goals += compileExpression( formula, Map() ).asInstanceOf[Formula]
   }
 
-  private object Formula {
-    def unapply( sexps: Seq[SExpression] ): Option[( Seq[SExpression], SExpression )] =
-      if ( sexps.size < 1 )
-        None
-      else
-        Some( ( sexps.init, sexps.last ) )
+  private def compileConstructorField(
+    field: TipSmtConstructorField, ofType: Ty ): Const =
+    Const( field.name, ofType ->: typeDecls( field.typ.typename ) )
+
+  private def compileTipSmtConstructor(
+    constructor: TipSmtConstructor, ofType: Ty ): TipConstructor = {
+    val destructors = constructor.fields map {
+      compileConstructorField( _, ofType )
+    }
+    val fieldTypes = constructor.fields map { field =>
+      typeDecls( field.typ.typename )
+    }
+    TipConstructor(
+      Const( constructor.name, FunctionType( ofType, fieldTypes ) ),
+      destructors )
   }
 
-  private def parseAssertion( sexps: Seq[SExpression] ): Unit = {
-
-    val Formula( keywords, formula ) = sexps
-
-    checkKeywords( keywords )
-
-    assumptions += parseExpression( formula, Map() ).asInstanceOf[Formula]
-  }
-
-  private def parseGoal( sexps: Seq[SExpression] ): Unit = {
-
-    val Formula( keywords, formula ) = sexps
-
-    checkKeywords( keywords )
-
-    goals += parseExpression( formula, Map() ).asInstanceOf[Formula]
-  }
-
-  private val tipExpressionParsers: Map[String, ( Seq[SExpression] ) => Unit] =
-    Map(
-      ( "declare-sort", parseSortDeclaration( _ ) ),
-      ( "declare-datatypes", parseDatatypeDeclaration( _ ) ),
-      ( "declare-const", parseConstantDeclaration( _ ) ),
-      ( "declare-fun", parseFunctionDeclaration( _ ) ),
-      ( "define-fun", parseFunctionDefinition( _ ) ),
-      ( "define-fun-rec", parseFunctionDefinition( _ ) ),
-      ( "assert", parseAssertion( _ ) ),
-      ( "assert-not", parseGoal( _ ) ),
-      ( "prove", parseGoal( _ ) ),
-      ( "check-sat", ( sexps: Seq[SExpression] ) => () ) )
-
-  def parse( sexp: SExpression ): Unit = sexp match {
-    case LFun( head, declaration @ _* ) => tipExpressionParsers( head )( declaration )
-  }
-
-  def parseConstructor( sexp: SExpression, ofType: Ty ): TipConstructor = sexp match {
-    case LFun( constructorName, LKeyword( _ ), LSymbol( _ ), rest @ _* ) =>
-      parseConstructor( LFun( constructorName, rest: _* ), ofType )
-    case LFun( constructorName, LKeyword( _ ), rest @ _* ) =>
-      parseConstructor( LFun( constructorName, rest: _* ), ofType )
-
-    case LFun( name, fields @ _* ) =>
-      val projectors = fields map { parseField( _, ofType ) }
-      val fieldTypes = projectors map { _.ty } map { case FunctionType( to, _ ) => to }
-      TipConstructor( Const( name, FunctionType( ofType, fieldTypes ) ), projectors )
-  }
-
-  def parseField( sexp: SExpression, ofType: Ty ) = sexp match {
-    case LFun( projector, LSymbol( typename ) ) =>
-      Const( projector, ofType ->: typeDecls( typename ) )
-  }
-
-  def parseFunctionBody( sexp: SExpression, lhs: Expr, freeVars: Map[String, Expr] ): Seq[Formula] = sexp match {
+  def compileFunctionBody( sexp: SExpression, lhs: Expr, freeVars: Map[String, Expr] ): Seq[Formula] = sexp match {
     case LFun( "match", LSymbol( varName ), cases @ _* ) =>
       def handleCase( cas: SExpression ): Seq[Formula] = cas match {
         case LFun( "case", LSymbol( "default" ), body ) =>
@@ -273,43 +347,139 @@ class TipSmtParser {
           require( constrArgTypes.size == argNames.size )
           val args = for ( ( LSymbol( name ), ty ) <- argNames zip constrArgTypes ) yield Var( name, ty )
           val subst = Substitution( freeVars( varName ).asInstanceOf[Var] -> constr( args: _* ) )
-          parseFunctionBody(
+          compileFunctionBody(
             body,
             subst( lhs ),
             freeVars.mapValues( subst( _ ) ) ++ args.map { v => v.name -> v } )
       }
       cases flatMap handleCase
     case LFun( "ite", cond, ifTrue, ifFalse ) =>
-      parseFunctionBody( ifFalse, lhs, freeVars ).map( -parseExpression( cond, freeVars ) --> _ ) ++
-        parseFunctionBody( ifTrue, lhs, freeVars ).map( parseExpression( cond, freeVars ) --> _ )
+      compileFunctionBody( ifFalse, lhs, freeVars ).map( -compileExpression( cond, freeVars ) --> _ ) ++
+        compileFunctionBody( ifTrue, lhs, freeVars ).map( compileExpression( cond, freeVars ) --> _ )
     case LSymbol( "true" )  => Seq( lhs.asInstanceOf[Formula] )
     case LSymbol( "false" ) => Seq( -lhs )
     case _ =>
-      val expr = parseExpression( sexp, freeVars )
+      val expr = compileExpression( sexp, freeVars )
       Seq( if ( lhs.ty == To ) lhs <-> expr else lhs === expr )
   }
 
-  def parseExpression( sexp: SExpression, freeVars: Map[String, Expr] ): Expr = sexp match {
+  def compileExpression( sexp: SExpression, freeVars: Map[String, Expr] ): Expr = sexp match {
     case LSymbol( name ) if freeVars contains name => freeVars( name )
     case LSymbol( "false" )                        => Bottom()
     case LSymbol( "true" )                         => Top()
     case LSymbol( name )                           => funDecls( name )
     case LFun( "forall", LList( varNames @ _* ), formula ) =>
       val vars = for ( LFun( name, LSymbol( typeName ) ) <- varNames ) yield Var( name, typeDecls( typeName ) )
-      All.Block( vars, parseExpression( formula, freeVars ++ vars.map { v => v.name -> v } ) )
+      All.Block( vars, compileExpression( formula, freeVars ++ vars.map { v => v.name -> v } ) )
     case LFun( "exists", LList( varNames @ _* ), formula ) =>
       val vars = for ( LFun( name, LSymbol( typeName ) ) <- varNames ) yield Var( name, typeDecls( typeName ) )
-      Ex.Block( vars, parseExpression( formula, freeVars ++ vars.map { v => v.name -> v } ) )
+      Ex.Block( vars, compileExpression( formula, freeVars ++ vars.map { v => v.name -> v } ) )
     case LFun( "=", sexps @ _* ) =>
-      val exprs = sexps map { parseExpression( _, freeVars ) }
+      val exprs = sexps map { compileExpression( _, freeVars ) }
       And( for ( ( a, b ) <- exprs zip exprs.tail )
         yield if ( exprs.head.ty == To ) a <-> b else a === b )
-    case LFun( "and", sexps @ _* ) => And( sexps map { parseExpression( _, freeVars ).asInstanceOf[Formula] } )
-    case LFun( "or", sexps @ _* )  => Or( sexps map { parseExpression( _, freeVars ).asInstanceOf[Formula] } )
-    case LFun( "not", sexp_ )      => Neg( parseExpression( sexp_, freeVars ) )
-    case LFun( "=>", sexps @ _* )  => sexps map { parseExpression( _, freeVars ) } reduceRight { _ --> _ }
+    case LFun( "and", sexps @ _* ) => And( sexps map { compileExpression( _, freeVars ).asInstanceOf[Formula] } )
+    case LFun( "or", sexps @ _* )  => Or( sexps map { compileExpression( _, freeVars ).asInstanceOf[Formula] } )
+    case LFun( "not", sexp_ )      => Neg( compileExpression( sexp_, freeVars ) )
+    case LFun( "=>", sexps @ _* )  => sexps map { compileExpression( _, freeVars ) } reduceRight { _ --> _ }
     case LFun( name, args @ _* ) =>
-      funDecls( name )( args map { parseExpression( _, freeVars ) }: _* )
+      funDecls( name )( args map { compileExpression( _, freeVars ) }: _* )
+  }
+
+  private def declareBaseType( sort: String ) = {
+    val baseType = TBase( sort )
+    declare( baseType )
+    ctx += baseType
+  }
+
+  private def declareDatatype( tipSmtDatatype: TipSmtDatatype ): Unit = {
+    val t = TBase( tipSmtDatatype.name )
+    declare( t )
+    val dt = TipDatatype(
+      t,
+      tipSmtDatatype.constructors.map { compileTipSmtConstructor( _, t ) } )
+    ctx += Context.InductiveType( t, dt.constructors.map( _.constr ): _* )
+    datatypes += dt
+    dt.constructors foreach { ctr =>
+      declare( ctr.constr )
+      for ( proj <- ctr.projectors ) {
+        declare( proj )
+        ctx += proj
+      }
+    }
+  }
+
+  private def declareConstant(
+    constantName: String, typeName: String ): Unit = {
+    val c = Const( constantName, typeDecls( typeName ) )
+    declare( c )
+    ctx += c
+  }
+
+  private def declareFunction(
+    functionName:  String,
+    argumentTypes: Seq[TipSmtType],
+    returnType:    TipSmtType ): Unit = {
+    val f = Const(
+      functionName,
+      FunctionType(
+        typeDecls( returnType.typename ),
+        argumentTypes map { argType => typeDecls( argType.typename ) } ) )
+    declare( f )
+    ctx += f
+  }
+
+  private def defineFunction(
+    functionName: String,
+    arguments:    Seq[TipSmtFormalParameter],
+    returnType:   TipSmtType,
+    body:         SExpression ): Unit = {
+    val argVars = for (
+      TipSmtFormalParameter( argName, argType ) <- arguments
+    ) yield Var( argName, typeDecls( argType.typename ) )
+    val funConst = Const(
+      functionName,
+      FunctionType( typeDecls( returnType.typename ), argVars.map( _.ty ) ) )
+    declare( funConst )
+    ctx += funConst
+    functions += TipFun(
+      funConst,
+      compileFunctionBody(
+        body, funConst( argVars: _* ), argVars.map { v => v.name -> v }.toMap ) )
+  }
+
+  private val tipExpressionCompilers: Map[String, ( Seq[SExpression] ) => Unit] = Map(
+    ( "declare-sort", { sexps =>
+      compileSortDeclaration( parseSortDeclaration( sexps ) )
+    } ),
+    ( "declare-datatypes", { sexps =>
+      compileDatatypesDeclaration( parseDatatypesDeclaration( sexps ) )
+    } ),
+    ( "declare-const", { sexps =>
+      compileConstantDeclaration( parseConstantDeclaration( sexps ) )
+    } ),
+    ( "declare-fun", { sexps =>
+      compileFunctionDeclaration( parseFunctionDeclaration( sexps ) )
+    } ),
+    ( "define-fun", { sexps =>
+      compileFunctionDefinition( parseFunctionDefinition( sexps ) )
+    } ),
+    ( "define-fun-rec", { sexps =>
+      compileFunctionDefinition( parseFunctionDefinition( sexps ) )
+    } ),
+    ( "assert", { sexps =>
+      compileAssertion( parseAssertion( sexps ) )
+    } ),
+    ( "assert-not", { sexps =>
+      compileGoal( parseGoal( sexps ) )
+    } ),
+    ( "prove", { sexps =>
+      compileGoal( parseGoal( sexps ) )
+    } ),
+    ( "check-sat", ( sexps: Seq[SExpression] ) => () ) )
+
+  def parse( sexp: SExpression ): Unit = sexp match {
+    case LFun( head, declaration @ _* ) => tipExpressionCompilers( head )( declaration )
   }
 
   def toProblem: TipProblem =
