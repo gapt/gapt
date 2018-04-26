@@ -15,7 +15,23 @@ import org.sat4j.specs.{ IConstr, UnitPropagationListener }
 
 import scala.collection.mutable
 
-class Rup2Res extends UnitPropagationListener {
+/**
+ * Simple forward RUP-to-resolution converter based on Sat4j's unit propagation code.
+ *
+ * Whenever a unit propagation is performed, we compute a resolution
+ * proof of the assigned literal.  There two modes:
+ *
+ *  - At decision level 0, we add clauses for which we already have complete
+ *  proofs (given as input proofs, or already derived via RUP).  The proofs
+ *  we associate to the propagated literals have the corresponding unit
+ *  clause as conclusion.
+ *
+ *  - At decision level 1, we want to derive a new clause via RUP.  Here, the
+ *  conclusion of a proof associated with a propagated literal may also include
+ *  literals from the derived clause.  As an optimization, we do store tautology
+ *  proofs as null.
+ */
+private class Rup2Res extends UnitPropagationListener {
   val ds = new MixedDataStructureDanielWL
   ds.setUnitPropagationListener( this )
   val voc = ds.getVocabulary
@@ -154,6 +170,7 @@ class Rup2Res extends UnitPropagationListener {
   }
 }
 
+/** Reverse unit propagation proof. */
 case class RupProof( lines: Vector[Line] ) {
   def maxVar: Int = ( 0 +: lines.view.flatMap( _.clause ) ).max
 
@@ -181,10 +198,18 @@ case class RupProof( lines: Vector[Line] ) {
 object RupProof {
   type Clause = Set[Int]
 
+  /** Inference in a [[RupProof]] */
   sealed trait Line {
     def clause: Clause
   }
+  /** Input clause. */
   case class Input( clause: Clause ) extends Line
+  /**
+   * Clause derived from the previous ones via RUP.
+   *
+   * Given a set of clauses Γ and a clause C, then C has the property RUP
+   * with regard to Γ iff Γ, ¬C can be refuted with only unit propagation.
+   */
   case class Rup( clause: Clause ) extends Line
 
   def apply( cnf: DIMACS.CNF, p: DIMACS.DRUP ): RupProof = {
@@ -195,6 +220,7 @@ object RupProof {
   }
 }
 
+/** Resolution proofs in DIMACS format. */
 sealed trait Res extends DagProof[Res] {
   def clause: Clause
 
