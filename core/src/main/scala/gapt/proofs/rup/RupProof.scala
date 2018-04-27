@@ -42,7 +42,8 @@ private class Rup2Res extends UnitPropagationListener {
   var queueHead = 0
   var conflict: Option[Res] = None
 
-  val constrProofs = new util.IdentityHashMap[IConstr, Res]()
+  val constrProofs = new util.IdentityHashMap[Constr, Res]()
+  val constrs = new mutable.AnyRefMap[Clause, Constr]()
 
   import LiteralsUtils._
 
@@ -151,13 +152,20 @@ private class Rup2Res extends UnitPropagationListener {
         OriginalWLClause.brandNewClause( this, voc, cls )
 
     constrProofs.put( constr, p )
+    constrs( p0.clause ) = constr
 
     if ( cls.size() == 1 ) enqueue( cls.last(), constr )
 
     propagate()
   }
 
-  def deriveRup( cls: Clause ): Res = {
+  def addClause( cls: Clause ): Res = {
+    val p = Res.Input( cls )
+    addClause( p )
+    p
+  }
+
+  def rupDerive( cls: Clause ): Res = {
     assume()
     cls.forall( i =>
       enqueue( getFromPool( -i ) ) ) &&
@@ -165,9 +173,24 @@ private class Rup2Res extends UnitPropagationListener {
     val Some( p ) = conflict
     cancel()
     require( p.clause subsetOf cls )
+    p
+  }
+
+  def rupDeriveAndAdd( cls: Clause ): Res = {
+    val p = rupDerive( cls )
     addClause( p )
     p
   }
+
+  def deleteClause( cls: Clause ): Res =
+    constrs.remove( cls ) match {
+      case Some( constr ) =>
+        constr.remove( this )
+        constrProofs.remove( constr )
+      case None =>
+        rupDerive( cls )
+    }
+
 }
 
 /** Reverse unit propagation proof. */
@@ -178,12 +201,9 @@ case class RupProof( lines: Vector[Line] ) {
     val rup2res = new Rup2Res
     lines.map {
       case _ if rup2res.conflict.isDefined => rup2res.conflict.get
-      case RupProof.Input( c ) =>
-        val p = Res.Input( c )
-        rup2res.addClause( p )
-        p
-      case RupProof.Rup( c )    => rup2res.deriveRup( c )
-      case RupProof.Delete( c ) => rup2res.deriveRup( c )
+      case RupProof.Input( c )             => rup2res.addClause( c )
+      case RupProof.Rup( c )               => rup2res.rupDeriveAndAdd( c )
+      case RupProof.Delete( c )            => rup2res.deleteClause( c )
     }
   }
 
