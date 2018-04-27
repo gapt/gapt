@@ -401,9 +401,11 @@ class TipSmtParser {
     tipSmtConstantDeclaration: TipSmtConstantDeclaration ): Unit = {
 
     val TipSmtConstantDeclaration(
-      constantName, keywords, typ ) = tipSmtConstantDeclaration
+      constantName, _, typ ) = tipSmtConstantDeclaration
 
-    declareConstant( constantName, typ.typename )
+    val c = Const( constantName, typeDecls( typ.typename ) )
+    declare( c )
+    ctx += c
   }
 
   private def compileFunctionDeclaration(
@@ -411,11 +413,17 @@ class TipSmtParser {
 
     val TipSmtFunctionDeclaration(
       functionName,
-      keywords,
-      argTypes,
+      _,
+      argumentTypes,
       returnType ) = tipSmtFunctionDeclaration
 
-    declareFunction( functionName, argTypes, returnType )
+    val f = Const(
+      functionName,
+      FunctionType(
+        typeDecls( returnType.typename ),
+        argumentTypes map { argType => typeDecls( argType.typename ) } ) )
+    declare( f )
+    ctx += f
   }
 
   private def compileFunctionDefinition(
@@ -428,7 +436,22 @@ class TipSmtParser {
       returnType,
       body ) = tipSmtFunctionDefinition
 
-    defineFunction( functionName, formalParameters, returnType, body )
+    val argVars = for (
+      TipSmtFormalParameter( argName, argType ) <- formalParameters
+    ) yield Var( argName, typeDecls( argType.typename ) )
+
+    val funConst = Const(
+      functionName,
+      FunctionType( typeDecls( returnType.typename ), argVars.map( _.ty ) ) )
+
+    declare( funConst )
+    ctx += funConst
+    functions += TipFun(
+      funConst,
+      compileFunctionBody(
+        body,
+        funConst( argVars: _* ),
+        argVars.map { v => v.name -> v }.toMap ) )
   }
 
   private def compileAssertion( tipSmtAssertion: TipSmtAssertion ): Unit = {
@@ -627,45 +650,6 @@ class TipSmtParser {
         ctx += proj
       }
     }
-  }
-
-  private def declareConstant(
-    constantName: String, typeName: String ): Unit = {
-    val c = Const( constantName, typeDecls( typeName ) )
-    declare( c )
-    ctx += c
-  }
-
-  private def declareFunction(
-    functionName:  String,
-    argumentTypes: Seq[TipSmtType],
-    returnType:    TipSmtType ): Unit = {
-    val f = Const(
-      functionName,
-      FunctionType(
-        typeDecls( returnType.typename ),
-        argumentTypes map { argType => typeDecls( argType.typename ) } ) )
-    declare( f )
-    ctx += f
-  }
-
-  private def defineFunction(
-    functionName: String,
-    arguments:    Seq[TipSmtFormalParameter],
-    returnType:   TipSmtType,
-    body:         TipSmtExpr ): Unit = {
-    val argVars = for (
-      TipSmtFormalParameter( argName, argType ) <- arguments
-    ) yield Var( argName, typeDecls( argType.typename ) )
-    val funConst = Const(
-      functionName,
-      FunctionType( typeDecls( returnType.typename ), argVars.map( _.ty ) ) )
-    declare( funConst )
-    ctx += funConst
-    functions += TipFun(
-      funConst,
-      compileFunctionBody(
-        body, funConst( argVars: _* ), argVars.map { v => v.name -> v }.toMap ) )
   }
 
   private val tipExpressionCompilers: Map[String, ( Seq[SExpression] ) => Unit] = Map(
