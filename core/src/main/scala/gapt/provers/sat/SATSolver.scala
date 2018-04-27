@@ -15,7 +15,7 @@ trait SATSolver extends OneShotProver {
 
   def solve( cnf: DIMACS.CNF ): Option[DIMACS.Model]
 
-  def solve( cnf: TraversableOnce[HOLClause] ): Option[PropositionalModel] = {
+  def solve( cnf: Traversable[HOLClause] ): Option[PropositionalModel] = {
     val encoding = new DIMACSEncoding
     solve( encoding.encodeCNF( cnf ) ) map { dimacsModel =>
       encoding.decodeModel( dimacsModel )

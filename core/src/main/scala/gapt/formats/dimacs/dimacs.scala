@@ -39,7 +39,7 @@ class DIMACSEncoding {
   def encodeClause( clause: HOLClause ): DIMACS.Clause =
     clause.map( encodeAtom ).map( -_, +_ ).elements
 
-  def encodeCNF( cnf: TraversableOnce[HOLClause] ): DIMACS.CNF =
+  def encodeCNF( cnf: Traversable[HOLClause] ): DIMACS.CNF =
     cnf.map( encodeClause ).toSeq
 
   def decodeAtom( i: DIMACS.Atom ) = reverseAtomMap( i )
