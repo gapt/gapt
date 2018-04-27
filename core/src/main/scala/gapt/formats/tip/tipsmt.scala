@@ -205,7 +205,7 @@ class TipSmtParser {
     case _ => throw TipSmtParserException( "" )
   }
 
-  private def parseTypename( sexp: SExpression ): TipSmtType = sexp match {
+  private def parseType( sexp: SExpression ): TipSmtType = sexp match {
     case LSymbol( typename ) =>
       TipSmtType( typename )
     case _ => throw TipSmtParserException( "" )
@@ -219,12 +219,12 @@ class TipSmtParser {
       TipSmtConstantDeclaration(
         constantName,
         parseKeywords( rest.init ),
-        parseTypename( rest.last ) )
+        parseType( rest.last ) )
   }
 
   private def parseArgumentTypeList( sexp: SExpression ): Seq[TipSmtType] =
     sexp match {
-      case LList( types @ _* ) => types map { parseTypename( _ ) }
+      case LList( types @ _* ) => types map { parseType( _ ) }
       case _                   => throw TipSmtParserException( "" )
     }
 
@@ -237,14 +237,14 @@ class TipSmtParser {
         functionName,
         parseKeywords( rest.init.init ),
         parseArgumentTypeList( rest.init.last ),
-        parseTypename( rest.last ) )
+        parseType( rest.last ) )
   }
 
   private def parseFormalParameter(
     sexpr: SExpression ): TipSmtFormalParameter =
     sexpr match {
       case LList( LSymbol( parameter ), paraType ) =>
-        TipSmtFormalParameter( parameter, parseTypename( paraType ) )
+        TipSmtFormalParameter( parameter, parseType( paraType ) )
       case _ => throw TipSmtParserException( "" )
     }
 
@@ -265,7 +265,7 @@ class TipSmtParser {
         functionName,
         parseKeywords( rest.init.init.init ),
         parseFormalParameterList( rest.init.init.last ),
-        parseTypename( rest.init.last ),
+        parseType( rest.init.last ),
         parseExpr( rest.last ) )
   }
 
@@ -276,7 +276,7 @@ class TipSmtParser {
   private def parseConstructorField(
     sexps: SExpression ): TipSmtConstructorField = sexps match {
     case LList( LSymbol( fieldName ), fieldType ) =>
-      TipSmtConstructorField( fieldName, parseTypename( fieldType ) )
+      TipSmtConstructorField( fieldName, parseType( fieldType ) )
     case _ => throw new TipSmtParserException( "" )
   }
 
@@ -377,7 +377,7 @@ class TipSmtParser {
 
   def parseTipSmtVarDecl( sexp: SExpression ): TipSmtVariableDecl = sexp match {
     case LList( LSymbol( variableName ), variableType ) =>
-      TipSmtVariableDecl( variableName, parseTypename( variableType ) )
+      TipSmtVariableDecl( variableName, parseType( variableType ) )
     case _ => throw TipSmtParserException( "" )
   }
 
