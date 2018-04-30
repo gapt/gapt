@@ -1,9 +1,9 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.proofs.nd._
-import at.logic.gapt.expr.{ TBase, _ }
-import at.logic.gapt.proofs.{ Ant, Checkable, Context, Sequent }
-import at.logic.gapt.proofs.Context.{ InductiveType, PrimRecFun }
+import gapt.proofs.nd._
+import gapt.expr.{ TBase, _ }
+import gapt.proofs.{ Ant, Checkable, Context, Sequent }
+import gapt.proofs.Context.{ InductiveType, PrimRecFun }
 
 object example1 extends Script {
 
@@ -22,6 +22,17 @@ object classicalExtractionTest {
     println(); println()
   }
 }
+
+/*
+object classicalExtractionTest {
+  def apply( proof: NDProof )( implicit ctx: Context ): Unit = {
+    val m1 = ClassicalExtraction.extractCases( proof )
+    //val m1n = ClassicalExtraction.mrealize( proof )
+    print( proof ); print( m1 ); print( " of type " ); print( m1.ty )
+    println(); println()
+  }
+}
+*/
 
 object example2 extends Script {
 
@@ -112,7 +123,6 @@ object example6 extends Script {
 object example7 extends Script {
 
   implicit var ctx = Context()
-
   ctx += InductiveType(
     ty"nat",
     hoc"0 : nat",
@@ -124,4 +134,47 @@ object example7 extends Script {
   val a4 = BottomElimRule( a3, hof"-(x = 0)" )
   val a5 = ExcludedMiddleRule( a4, Ant( 1 ), a1, Ant( 0 ) )
   classicalExtractionTest( a5 )
+}
+
+object example8 extends Script {
+
+  implicit var ctx = Context()
+  ctx += InductiveType(
+    ty"nat",
+    hoc"0 : nat",
+    hoc"s : nat > nat" )
+  ctx += hoc"P: nat > o"
+
+  val l = ProofBuilder.
+    c( LogicalAxiom( hof"!x P x" ) ).
+    u( ForallElimRule( _, le"n: nat" ) ).
+    u( ExistsIntroRule( _, hof"?x P x" ) ).
+    u( OrIntro1Rule( _, hof"?x -(P x)" ) ).
+    qed
+  classicalExtractionTest( l )
+
+  val r = ProofBuilder.
+    c( LogicalAxiom( hof"?x -(P x)" ) ).
+    u( OrIntro2Rule( _, hof"?x P x" ) ).
+    qed
+  classicalExtractionTest( r )
+}
+
+object example9 extends Script {
+
+  implicit var ctx = Context()
+  ctx += InductiveType(
+    ty"nat",
+    hoc"0 : nat",
+    hoc"s : nat > nat" )
+  ctx += hoc"P: nat > o"
+
+  val p = ProofBuilder.
+    c( LogicalAxiom( hof"?x P x" ) ).
+    u( OrIntro1Rule( _, hof"-(?x P x)" ) ).
+    c( LogicalAxiom( hof"-(?x P x)" ) ).
+    u( OrIntro2Rule( _, hof"?x P x" ) ).
+    b( ExcludedMiddleRule( _, Ant( 0 ), _, Ant( 0 ) ) ).
+    qed
+  classicalExtractionTest( p )
 }
