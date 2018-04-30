@@ -1,5 +1,7 @@
 # Release notes for GAPT
 
+## Version 2.12 (unreleased)
+
 ## Version 2.11 (released on 2018-04-30)
 
 * Deskolemization of proofs with equational reasoning
