@@ -4,7 +4,7 @@ import org.apache.commons.compress.archivers.tar.{ TarArchiveEntry, TarArchiveOu
 import scalariform.formatter.preferences._
 import sys.process._
 
-val Version = "2.11-SNAPSHOT"
+val Version = "2.11"
 
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
