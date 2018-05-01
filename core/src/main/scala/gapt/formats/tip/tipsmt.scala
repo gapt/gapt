@@ -155,6 +155,15 @@ class TipSmtParser {
   case class TipSmtParserException(
       message: String ) extends Exception( message )
 
+  /**
+   * Parses a sequence of keywords.
+   *
+   * A keyword sequence is a list of s-expressions of the form:
+   * keyword_sequence ::= { keyword [ symbol ] }.
+   *
+   * @param sexps The keyword sequence.
+   * @return A list of parsed keywords.
+   */
   private def parseKeywords( sexps: Seq[SExpression] ): Seq[TipSmtKeyword] =
     sexps match {
       case Seq( LKeyword( keyword ), LSymbol( argument ), rest @ _* ) =>
@@ -170,6 +179,17 @@ class TipSmtParser {
         "malformed sequence of keywords: " + sexps )
     }
 
+  /**
+   * Parses an smt2 sort declaration.
+   *
+   * The accepted sort declarations are of the form:
+   * sort_declaration ::= sort keyword_sequence num
+   * where sort is a symbol, keywords a keyword sequence and num a symbol
+   * representing an integer value.
+   *
+   * @param sexps The elements of the sort declaration.
+   * @return A parsed sort declaration.
+   */
   private def parseSortDeclaration(
     sexps: Seq[SExpression] ): TipSmtSortDeclaration =
     sexps match {
@@ -185,6 +205,16 @@ class TipSmtParser {
       case _ => throw new TipSmtParserException( "malformed sort declaration" )
     }
 
+  /**
+   * Parses an SMT2 datatype declaration.
+   *
+   * Accepted datatype declarations are s-expressions of the form:
+   * datatype_declaration
+   *     ::= type_name keyword_sequence { constructor_declaration }
+   * where type_name is a symbol.
+   * @param sexps The elements of the datatype declaration.
+   * @return A parsed datatype declaration.
+   */
   private def parseDatatype( sexps: SExpression ): TipSmtDatatype =
     sexps match {
       case LList( LSymbol( datatypeName ), rest @ _* ) =>
@@ -197,6 +227,12 @@ class TipSmtParser {
       case _ => throw TipSmtParserException( "malformed datatype expression" )
     }
 
+  /**
+   * Parses a sequence of datatype declaration.
+   *
+   * @param sexps The datatype declarations to be parsed.
+   * @return The parsed datatype declarations.
+   */
   private def parseDatatypesDeclaration(
     sexps: Seq[SExpression] ): TipSmtDatatypesDeclaration = sexps match {
     case Seq( LList(), LList( datatypes @ _* ) ) =>
@@ -204,6 +240,16 @@ class TipSmtParser {
     case _ => throw TipSmtParserException( "malformed datatype declaration" )
   }
 
+  /**
+   * Parses an SMT2 type expression.
+   *
+   * Accepted type expressions are of the form:
+   * type ::= type_name,
+   * where type_name is a symbol.
+   *
+   * @param sexp The type expression to be parsed.
+   * @return The parsed type expression.
+   */
   private def parseType( sexp: SExpression ): TipSmtType = sexp match {
     case LSymbol( typename ) =>
       TipSmtType( typename )
@@ -211,6 +257,16 @@ class TipSmtParser {
       "malformed type expression: " + sexp )
   }
 
+  /**
+   * Parses an SMT2 constant declaration.
+   *
+   * Accepted constant declarations are of the form:
+   * constant_declaration ::= constant_name keyword_sequence type,
+   * where constant_name is a symbol.
+   *
+   * @param sexps The elements of the constant declaration.
+   * @return The parsed constant expression.
+   */
   private def parseConstantDeclaration(
     sexps: Seq[SExpression] ): TipSmtConstantDeclaration = sexps match {
     case Seq( LSymbol( constantName ), rest @ _* ) =>
@@ -223,6 +279,15 @@ class TipSmtParser {
     case _ => throw TipSmtParserException( "malformed constant declaration" )
   }
 
+  /**
+   * Parses a parameter type list.
+   *
+   * Accepted parameter type lists are s-expressions of the form:
+   * param_types ::= '(' { type } ')'.
+   *
+   * @param sexp The expression to be parsed.
+   * @return The parsed parameter types.
+   */
   private def parseArgumentTypeList( sexp: SExpression ): Seq[TipSmtType] =
     sexp match {
       case LList( types @ _* ) =>
@@ -231,6 +296,18 @@ class TipSmtParser {
         throw TipSmtParserException( "malformed argument types: " + sexp )
     }
 
+  /**
+   * Parses a function declaration.
+   *
+   * Accepted function declarations are s-expressions of the form:
+   * function_declaration ::=
+   *   function_name keywords parameter_types ret_type,
+   *   ret_type :: = type,
+   * where function_name is a symbol.
+   *
+   * @param sexps The elements of the expression to be parsed.
+   * @return The parsed function declaration.
+   */
   private def parseFunctionDeclaration(
     sexps: Seq[SExpression] ): TipSmtFunctionDeclaration = sexps match {
     case Seq( LSymbol( functionName ), rest @ _* ) =>
@@ -244,6 +321,16 @@ class TipSmtParser {
     case _ => throw TipSmtParserException( "malformed function declaration" )
   }
 
+  /**
+   * Parses a formal parameter.
+   *
+   * Formal parameters are s-expressions of the form:
+   * formal_param ::= '(' param_name type ')',
+   * param_name   ::= symbol.
+   *
+   * @param sexpr The expression to be parsed.
+   * @return The parsed formal parameter.
+   */
   private def parseFormalParameter(
     sexpr: SExpression ): TipSmtFormalParameter =
     sexpr match {
@@ -253,6 +340,15 @@ class TipSmtParser {
         "malformed formal parameter: " + sexpr )
     }
 
+  /**
+   * Parses a formal parameter list.
+   *
+   * A formal parameter list is an s-expression of the form:
+   * formal_param_list ::= '(' formal_param ')'.
+   *
+   * @param sexp The expression to be parsed.
+   * @return The parsed formal parameter list.
+   */
   private def parseFormalParameterList(
     sexp: SExpression ): Seq[TipSmtFormalParameter] = sexp match {
     case LList( parameters @ _* ) =>
@@ -261,6 +357,17 @@ class TipSmtParser {
       throw TipSmtParserException( "malformed formal parameter list: " + sexp )
   }
 
+  /**
+   * Parses a function definition.
+   *
+   * A function definition is an s-expression of the form:
+   * function_definition
+   *     ::= function_name keywords formal_param_list ret_type expression,
+   * function_name ::= symbol.
+   *
+   * @param sexps The elements of the expression to be parsed
+   * @return The parsed function definition.
+   */
   private def parseFunctionDefinition(
     sexps: Seq[SExpression] ): TipSmtFunctionDefinition = sexps match {
     case Seq( LSymbol( functionName ), rest @ _* ) =>
@@ -275,22 +382,57 @@ class TipSmtParser {
     case _ => throw TipSmtParserException( "malformed function definition" )
   }
 
+  /**
+   * Parses a sequence of constructor fields.
+   *
+   * @param sexps The expressions to be parsed
+   * @return The parsed constructor fields
+   */
   private def parseConstructorFields(
     sexps: Seq[SExpression] ): Seq[TipSmtConstructorField] =
     sexps map { parseConstructorField( _ ) }
 
+  /**
+   * Parses a constructor field.
+   *
+   * A constructor field is an s-expression of the form:
+   * field ::= '(' field_name field_type ')',
+   * field_name ::= symbol,
+   * field_type ::= type.
+   *
+   * @param sexp The expression to be parsed.
+   * @return The parsed constructor field. Throws an exception if sexp is
+   *         not an expression of the form described above.
+   */
   private def parseConstructorField(
-    sexps: SExpression ): TipSmtConstructorField = sexps match {
+    sexp: SExpression ): TipSmtConstructorField = sexp match {
     case LList( LSymbol( fieldName ), fieldType ) =>
       TipSmtConstructorField( fieldName, parseType( fieldType ) )
     case _ => throw new TipSmtParserException(
-      "malformed constructor field: " + sexps )
+      "malformed constructor field: " + sexp )
   }
 
+  /**
+   * Parses a sequence of constructor.
+   *
+   * @param sexps The expressions to be parsed.
+   * @return The parsed constructors. Throws an expression if one of the
+   *         expressions is not a constructor.
+   */
   private def parseConstructors(
     sexps: Seq[SExpression] ): Seq[TipSmtConstructor] =
     sexps map { parseConstructor( _ ) }
 
+  /**
+   * Parses a constructor.
+   *
+   * A constructor is an expression of the form:
+   * constructor ::= constructor_name keyword_sequence { field },
+   * constructor_name ::= symbol.
+   *
+   * @param sexp The expression to be parsed.
+   * @return The parsed constructor.
+   */
   private def parseConstructor( sexp: SExpression ): TipSmtConstructor =
     sexp match {
       case LList( LSymbol( constructorName ), rest @ _* ) =>
@@ -302,6 +444,12 @@ class TipSmtParser {
       case _ => throw TipSmtParserException( "malformed constructor: " + sexp )
     }
 
+  /**
+   * Parses an expression.
+   *
+   * @param sexps The elements of the expression.
+   * @return The parsed expression.
+   */
   private def parseTipSmtExpression(
     sexps: Seq[SExpression] ): TipSmtExpression = {
     if ( sexps.isEmpty )
@@ -309,6 +457,12 @@ class TipSmtParser {
     TipSmtExpression( parseKeywords( sexps.init ), parseExpr( sexps.last ) )
   }
 
+  /**
+   * Parses an assertion.
+   *
+   * @param sexps The elements of the assertion.
+   * @return The parsed assertion.
+   */
   private def parseAssertion( sexps: Seq[SExpression] ): TipSmtAssertion =
     TipSmtAssertion( parseTipSmtExpression( sexps ) )
 
