@@ -56,36 +56,35 @@ case class TipSmtFunctionDefinition(
     keywords:   Seq[TipSmtKeyword],
     parameters: Seq[TipSmtFormalParameter],
     returnType: TipSmtType,
-    body:       TipSmtExpr ) extends TipSmtAst
+    body:       TipSmtExpression ) extends TipSmtAst
 
 case class TipSmtAssertion(
-    expr: TipSmtExpression ) extends TipSmtAst
+    keywords: Seq[TipSmtKeyword],
+    expr:     TipSmtExpression ) extends TipSmtAst
 
 case class TipSmtGoal(
-    expr: TipSmtExpression ) extends TipSmtAst
+    keywords: Seq[TipSmtKeyword],
+    expr:     TipSmtExpression ) extends TipSmtAst
 
 case class TipSmtFormalParameter(
     name: String, typ: TipSmtType ) extends TipSmtAst
 
-case class TipSmtExpression(
-    keywords: Seq[TipSmtKeyword], expr: TipSmtExpr ) extends TipSmtAst
-
 case object TipSmtCheckSat extends TipSmtAst
 
-sealed trait TipSmtExpr extends TipSmtAst
+sealed trait TipSmtExpression extends TipSmtAst
 
 case class TipSmtMatch(
-    expr:  TipSmtExpr,
-    cases: Seq[TipSmtCase] ) extends TipSmtExpr
+    expr:  TipSmtExpression,
+    cases: Seq[TipSmtCase] ) extends TipSmtExpression
 
 case class TipSmtCase(
     pattern: TipSmtPattern,
-    expr:    TipSmtExpr )
+    expr:    TipSmtExpression )
 
 case class TipSmtIte(
-    cond: TipSmtExpr,
-    the:  TipSmtExpr,
-    els:  TipSmtExpr ) extends TipSmtExpr
+    cond: TipSmtExpression,
+    the:  TipSmtExpression,
+    els:  TipSmtExpression ) extends TipSmtExpression
 
 sealed trait TipSmtPattern
 
@@ -95,43 +94,43 @@ case class TipSmtConstructorPattern(
     constructor: TipSmtIdentifier,
     identifiers: Seq[TipSmtIdentifier] ) extends TipSmtPattern
 
-case object TipSmtTrue extends TipSmtExpr
+case object TipSmtTrue extends TipSmtExpression
 
-case object TipSmtFalse extends TipSmtExpr
+case object TipSmtFalse extends TipSmtExpression
 
 case class TipSmtIdentifier(
-    name: String ) extends TipSmtExpr
+    name: String ) extends TipSmtExpression
 
 case class TipSmtForall(
     variables: Seq[TipSmtVariableDecl],
-    formula:   TipSmtExpr ) extends TipSmtExpr
+    formula:   TipSmtExpression ) extends TipSmtExpression
 
 case class TipSmtExists(
     variables: Seq[TipSmtVariableDecl],
-    formula:   TipSmtExpr ) extends TipSmtExpr
+    formula:   TipSmtExpression ) extends TipSmtExpression
 
 case class TipSmtEq(
-    exprs: Seq[TipSmtExpr] ) extends TipSmtExpr
+    exprs: Seq[TipSmtExpression] ) extends TipSmtExpression
 
 case class TipSmtAnd(
-    exprs: Seq[TipSmtExpr] ) extends TipSmtExpr
+    exprs: Seq[TipSmtExpression] ) extends TipSmtExpression
 
 case class TipSmtOr(
-    exprs: Seq[TipSmtExpr] ) extends TipSmtExpr
+    exprs: Seq[TipSmtExpression] ) extends TipSmtExpression
 
 case class TipSmtNot(
-    expr: TipSmtExpr ) extends TipSmtExpr
+    expr: TipSmtExpression ) extends TipSmtExpression
 
 case class TipSmtImp(
-    exprs: Seq[TipSmtExpr] ) extends TipSmtExpr
+    exprs: Seq[TipSmtExpression] ) extends TipSmtExpression
 
 case class TipSmtFun(
     name:      String,
-    arguments: Seq[TipSmtExpr] ) extends TipSmtExpr
+    arguments: Seq[TipSmtExpression] ) extends TipSmtExpression
 
 case class TipSmtVariableDecl(
     name: String,
-    typ:  TipSmtType ) extends TipSmtExpr
+    typ:  TipSmtType ) extends TipSmtExpression
 
 class TipSmtParser {
   var ctx = Context()
@@ -378,7 +377,7 @@ class TipSmtParser {
         parseKeywords( rest.init.init.init ),
         parseFormalParameterList( rest.init.init.last ),
         parseType( rest.init.last ),
-        parseExpr( rest.last ) )
+        parseExpression( rest.last ) )
     case _ => throw TipSmtParserException( "malformed function definition" )
   }
 
@@ -445,46 +444,42 @@ class TipSmtParser {
     }
 
   /**
-   * Parses an expression.
-   *
-   * @param sexps The elements of the expression.
-   * @return The parsed expression.
-   */
-  private def parseTipSmtExpression(
-    sexps: Seq[SExpression] ): TipSmtExpression = {
-    if ( sexps.isEmpty )
-      throw TipSmtParserException( "malformed expression" )
-    TipSmtExpression( parseKeywords( sexps.init ), parseExpr( sexps.last ) )
-  }
-
-  /**
    * Parses an assertion.
    *
    * @param sexps The elements of the assertion.
    * @return The parsed assertion.
    */
-  private def parseAssertion( sexps: Seq[SExpression] ): TipSmtAssertion =
-    TipSmtAssertion( parseTipSmtExpression( sexps ) )
+  private def parseAssertion( sexps: Seq[SExpression] ): TipSmtAssertion = {
+    if ( sexps.isEmpty )
+      throw TipSmtParserException( "malformed assertion" )
+    TipSmtAssertion( parseKeywords( sexps.init ), parseExpression( sexps.last ) )
+  }
 
-  private def parseGoal( sexps: Seq[SExpression] ): TipSmtGoal =
-    TipSmtGoal( parseTipSmtExpression( sexps ) )
+  private def parseGoal( sexps: Seq[SExpression] ): TipSmtGoal = {
+    if ( sexps.isEmpty )
+      throw TipSmtParserException( "malformed goal" )
+    TipSmtGoal( parseKeywords( sexps.init ), parseExpression( sexps.last ) )
+  }
 
   def parseIte( sexp: SExpression ): TipSmtIte = sexp match {
     case LFun( "ite", cond, the, els ) =>
-      TipSmtIte( parseExpr( cond ), parseExpr( the ), parseExpr( els ) )
+      TipSmtIte(
+        parseExpression( cond ),
+        parseExpression( the ),
+        parseExpression( els ) )
     case _ => throw TipSmtParserException( "malformed ite-expression: " + sexp )
   }
 
   def parseMatch( sexp: SExpression ): TipSmtMatch = sexp match {
     case LFun( "match", expr, cases @ _* ) =>
-      TipSmtMatch( parseExpr( expr ), cases map { parseCase( _ ) } )
+      TipSmtMatch( parseExpression( expr ), cases map { parseCase( _ ) } )
     case _ => throw TipSmtParserException(
       "malformed match-expression: " + sexp )
   }
 
   def parseCase( sexp: SExpression ): TipSmtCase = sexp match {
     case LFun( "case", pattern, expr ) =>
-      TipSmtCase( parsePattern( pattern ), parseExpr( expr ) )
+      TipSmtCase( parsePattern( pattern ), parseExpression( expr ) )
     case _ => throw TipSmtParserException(
       "malformed case-expression: " + sexp )
   }
@@ -509,7 +504,7 @@ class TipSmtParser {
       throw TipSmtParserException( "malformed identifier: " + sexp )
   }
 
-  def parseExpr( sexp: SExpression ): TipSmtExpr = sexp match {
+  def parseExpression( sexp: SExpression ): TipSmtExpression = sexp match {
     case LFun( "match", _* ) =>
       parseMatch( sexp )
     case LFun( "ite", _* ) =>
@@ -521,23 +516,23 @@ class TipSmtParser {
     case LFun( "forall", LList( variables @ _* ), formula ) =>
       TipSmtForall(
         variables map { parseTipSmtVarDecl( _ ) },
-        parseExpr( formula ) )
+        parseExpression( formula ) )
     case LFun( "exists", LList( variables @ _* ), formula ) =>
       TipSmtExists(
         variables map { parseTipSmtVarDecl( _ ) },
-        parseExpr( formula ) )
+        parseExpression( formula ) )
     case LFun( "and", exprs @ _* ) =>
-      TipSmtAnd( exprs map { parseExpr( _ ) } )
+      TipSmtAnd( exprs map { parseExpression( _ ) } )
     case LFun( "or", exprs @ _* ) =>
-      TipSmtOr( exprs map { parseExpr( _ ) } )
+      TipSmtOr( exprs map { parseExpression( _ ) } )
     case LFun( "=", exprs @ _* ) =>
-      TipSmtEq( exprs map { parseExpr( _ ) } )
+      TipSmtEq( exprs map { parseExpression( _ ) } )
     case LFun( "=>", exprs @ _* ) =>
-      TipSmtImp( exprs map { parseExpr( _ ) } )
+      TipSmtImp( exprs map { parseExpression( _ ) } )
     case LSymbol( name ) =>
       TipSmtIdentifier( name )
     case LFun( name, args @ _* ) =>
-      TipSmtFun( name, args map { parseExpr( _ ) } )
+      TipSmtFun( name, args map { parseExpression( _ ) } )
     case _ => throw TipSmtParserException( "malformed expression: " + sexp )
   }
 
@@ -623,14 +618,14 @@ class TipSmtParser {
 
   private def compileAssertion( tipSmtAssertion: TipSmtAssertion ): Unit = {
 
-    val TipSmtAssertion( TipSmtExpression( _, formula ) ) = tipSmtAssertion
+    val TipSmtAssertion( _, formula ) = tipSmtAssertion
 
     assumptions += compileExpression( formula, Map() ).asInstanceOf[Formula]
   }
 
   private def compileGoal( tipSmtGoal: TipSmtGoal ): Unit = {
 
-    val TipSmtGoal( TipSmtExpression( _, formula ) ) = tipSmtGoal
+    val TipSmtGoal( _, formula ) = tipSmtGoal
 
     goals += compileExpression( formula, Map() ).asInstanceOf[Formula]
   }
@@ -653,7 +648,7 @@ class TipSmtParser {
   }
 
   def compileFunctionBody(
-    sexp:     TipSmtExpr,
+    sexp:     TipSmtExpression,
     lhs:      Expr,
     freeVars: Map[String, Expr] ): Seq[Formula] = sexp match {
     case TipSmtMatch( TipSmtIdentifier( varName ), cases ) =>
@@ -718,7 +713,7 @@ class TipSmtParser {
   }
 
   def compileExpression(
-    expr: TipSmtExpr, freeVars: Map[String, Expr] ): Expr = expr match {
+    expr: TipSmtExpression, freeVars: Map[String, Expr] ): Expr = expr match {
     case TipSmtIdentifier( name ) if freeVars contains name => freeVars( name )
     case TipSmtFalse                                        => Bottom()
     case TipSmtTrue                                         => Top()
