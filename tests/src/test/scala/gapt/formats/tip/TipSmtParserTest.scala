@@ -24,9 +24,8 @@ class TipSmtParserTest extends Specification {
     "(declare-datatypes () ((t (c))))" ).SExpr.run().get
 
   "constant declaration should succeed" in {
-    val tipSmtParser = new TipSmtParser()
-    tipSmtParser.parse( dummyDatatype )
-    tipSmtParser.parse( constantDeclaration )
+    parser.TipSmtParser.parse( Seq( dummyDatatype ) )
+    parser.TipSmtParser.parse( Seq( constantDeclaration ) )
     success
   }
 
@@ -34,7 +33,7 @@ class TipSmtParserTest extends Specification {
     "(declare-sort sort :attr1 :attr2 val2 :attr3 0)" ).SExpr.run().get
 
   "sort declaration should succeed" in {
-    new TipSmtParser().parse( sortDeclaration )
+    parser.TipSmtParser.parse( Seq( sortDeclaration ) )
     success
   }
 
@@ -42,7 +41,7 @@ class TipSmtParserTest extends Specification {
     "(declare-datatypes () ((nat :attr1 val1 (z :attr2) (s :attr3 val3 :attr4 (p nat) ) )) )" ).SExpr.run().get
 
   "datatype declaration should succeed" in {
-    new TipSmtParser().parse( datatypeDeclaration )
+    parser.TipSmtParser.parse( Seq( datatypeDeclaration ) )
     success
   }
 
@@ -50,9 +49,8 @@ class TipSmtParserTest extends Specification {
     "(define-fun-rec fun :attr1 val1 :attr2 :attr3 val3 () t c)" ).SExpr.run().get
 
   "recursive function definition should succeed" in {
-    val tipSmtParser = new TipSmtParser()
-    tipSmtParser.parse( dummyDatatype )
-    tipSmtParser.parse( recursiveFunctionDefinition )
+    parser.TipSmtParser.parse( Seq( dummyDatatype ) )
+    parser.TipSmtParser.parse( Seq( recursiveFunctionDefinition ) )
     success
   }
 
@@ -60,9 +58,8 @@ class TipSmtParserTest extends Specification {
     "(define-fun fun :attr1 val1 :attr2 :attr3 val3 () t c)" ).SExpr.run().get
 
   "function definition" in {
-    val tipSmtParser = new TipSmtParser()
-    tipSmtParser.parse( dummyDatatype )
-    tipSmtParser.parse( functionDefinition )
+    parser.TipSmtParser.parse( Seq( dummyDatatype ) )
+    parser.TipSmtParser.parse( Seq( functionDefinition ) )
     success
   }
 
@@ -70,9 +67,8 @@ class TipSmtParserTest extends Specification {
     "(declare-fun fun :attr1 () t)" ).SExpr.run().get
 
   "function declaration should succeed" in {
-    val tipSmtParser = new TipSmtParser()
-    tipSmtParser.parse( dummyDatatype )
-    tipSmtParser.parse( functionDeclaration )
+    parser.TipSmtParser.parse( Seq( dummyDatatype ) )
+    parser.TipSmtParser.parse( Seq( functionDeclaration ) )
     success
   }
 
@@ -84,11 +80,11 @@ class TipSmtParserTest extends Specification {
 
   "parsing assertions should succeed" in {
     "assert assertion" in {
-      new TipSmtParser().parse( assertion1 )
+      parser.TipSmtParser.parse( Seq( assertion1 ) )
       success
     }
     "prove assertion" in {
-      new TipSmtParser().parse( assertion2 )
+      parser.TipSmtParser.parse( Seq( assertion2 ) )
       success
     }
   }
