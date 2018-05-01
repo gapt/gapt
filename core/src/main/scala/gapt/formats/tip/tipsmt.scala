@@ -182,17 +182,17 @@ class TipSmtParser {
    * Parses an smt2 sort declaration.
    *
    * The accepted sort declarations are of the form:
-   * sort_declaration ::= sort keyword_sequence num
-   * where sort is a symbol, keywords a keyword sequence and num a symbol
-   * representing an integer value.
+   * sort_declaration ::= '(' "declare-sort" sort_name keyword_sequence num ')',
+   * sort_name ::= symbol,
+   * where num is a symbol representing an integer value.
    *
-   * @param sexps The elements of the sort declaration.
+   * @param sexp The expression to be parsed.
    * @return A parsed sort declaration.
    */
   private def parseSortDeclaration(
-    sexps: Seq[SExpression] ): TipSmtSortDeclaration =
-    sexps match {
-      case Seq( LSymbol( sortName ), rest @ _* ) =>
+    sexp: SExpression ): TipSmtSortDeclaration =
+    sexp match {
+      case LFun( "declare-sort", LSymbol( sortName ), rest @ _* ) =>
         if ( rest.isEmpty )
           throw TipSmtParserException( "" )
         rest.last match {
@@ -211,11 +211,11 @@ class TipSmtParser {
    * datatype_declaration
    *     ::= type_name keyword_sequence { constructor_declaration }
    * where type_name is a symbol.
-   * @param sexps The elements of the datatype declaration.
+   * @param sexp The expression to be parsed.
    * @return A parsed datatype declaration.
    */
-  private def parseDatatype( sexps: SExpression ): TipSmtDatatype =
-    sexps match {
+  private def parseDatatype( sexp: SExpression ): TipSmtDatatype =
+    sexp match {
       case LList( LSymbol( datatypeName ), rest @ _* ) =>
         val ( keywords, constructors ) = rest.partition(
           !_.isInstanceOf[LList] )
@@ -227,16 +227,19 @@ class TipSmtParser {
     }
 
   /**
-   * Parses a sequence of datatype declaration.
+   * Parses a datatypes declaration.
    *
-   * @param sexps The datatype declarations to be parsed.
+   * A datatypes declaration is of the form:
+   * datatypes_declaration ::= '(' "declare-datatypes" '(' ')' { datatype } ')'.
+   *
+   * @param sexp The expression to be parsed.
    * @return The parsed datatype declarations.
    */
   private def parseDatatypesDeclaration(
-    sexps: Seq[SExpression] ): TipSmtDatatypesDeclaration = sexps match {
-    case Seq( LList(), LList( datatypes @ _* ) ) =>
+    sexp: SExpression ): TipSmtDatatypesDeclaration = sexp match {
+    case LFun( "declare-datatypes", LList(), LList( datatypes @ _* ) ) =>
       TipSmtDatatypesDeclaration( datatypes.map { parseDatatype( _ ) } )
-    case _ => throw TipSmtParserException( "malformed datatype declaration" )
+    case _ => throw TipSmtParserException( "malformed datatypes declaration" )
   }
 
   /**
@@ -260,15 +263,16 @@ class TipSmtParser {
    * Parses an SMT2 constant declaration.
    *
    * Accepted constant declarations are of the form:
-   * constant_declaration ::= constant_name keyword_sequence type,
+   * constant_declaration
+   *     ::= '(' "declare-const" constant_name keyword_sequence type ')',
    * where constant_name is a symbol.
    *
-   * @param sexps The elements of the constant declaration.
+   * @param sexp The expression to be parsed.
    * @return The parsed constant expression.
    */
   private def parseConstantDeclaration(
-    sexps: Seq[SExpression] ): TipSmtConstantDeclaration = sexps match {
-    case Seq( LSymbol( constantName ), rest @ _* ) =>
+    sexp: SExpression ): TipSmtConstantDeclaration = sexp match {
+    case LFun( "declare-const", LSymbol( constantName ), rest @ _* ) =>
       if ( rest.isEmpty )
         throw TipSmtParserException( "malformed constant declaration" )
       TipSmtConstantDeclaration(
@@ -300,16 +304,16 @@ class TipSmtParser {
    *
    * Accepted function declarations are s-expressions of the form:
    * function_declaration ::=
-   *   function_name keywords parameter_types ret_type,
+   *   '(' "declare-fun" function_name keywords parameter_types ret_type ')',
    *   ret_type :: = type,
    * where function_name is a symbol.
    *
-   * @param sexps The elements of the expression to be parsed.
+   * @param sexp The expression to be parsed.
    * @return The parsed function declaration.
    */
   private def parseFunctionDeclaration(
-    sexps: Seq[SExpression] ): TipSmtFunctionDeclaration = sexps match {
-    case Seq( LSymbol( functionName ), rest @ _* ) =>
+    sexp: SExpression ): TipSmtFunctionDeclaration = sexp match {
+    case LFun( "declare-fun", LSymbol( functionName ), rest @ _* ) =>
       if ( rest.size < 2 )
         throw new TipSmtParserException( "malformed function declaration" )
       TipSmtFunctionDeclaration(
@@ -360,18 +364,18 @@ class TipSmtParser {
    * Parses a function definition.
    *
    * A function definition is an s-expression of the form:
-   * function_definition
-   *     ::= function_name keywords formal_param_list ret_type expression,
+   * function_definition ::= '(' "define-fun" function_name keywords
+   * formal_param_list ret_type expression ')',
    * function_name ::= symbol.
    *
-   * @param sexps The elements of the expression to be parsed
+   * @param sexp The expression to be parsed.
    * @return The parsed function definition.
    */
   private def parseFunctionDefinition(
-    sexps: Seq[SExpression] ): TipSmtFunctionDefinition = sexps match {
-    case Seq( LSymbol( functionName ), rest @ _* ) =>
-      if ( rest.size < 3 )
-        throw new TipSmtParserException( "" )
+    sexp: SExpression ): TipSmtFunctionDefinition = sexp match {
+    case LFun(
+      "define-fun" | "define-fun-rec", LSymbol( functionName ), rest @ _*
+      ) if rest.size >= 3 =>
       TipSmtFunctionDefinition(
         functionName,
         parseKeywords( rest.init.init.init ),
@@ -446,19 +450,25 @@ class TipSmtParser {
   /**
    * Parses an assertion.
    *
-   * @param sexps The elements of the assertion.
+   * @param sexp The expression to be parsed.
    * @return The parsed assertion.
    */
-  private def parseAssertion( sexps: Seq[SExpression] ): TipSmtAssertion = {
-    if ( sexps.isEmpty )
-      throw TipSmtParserException( "malformed assertion" )
-    TipSmtAssertion( parseKeywords( sexps.init ), parseExpression( sexps.last ) )
+  private def parseAssertion(
+    sexp: SExpression ): TipSmtAssertion = sexp match {
+    case LFun( "assert", rest @ _* ) if rest.nonEmpty =>
+      TipSmtAssertion(
+        parseKeywords( rest.init ),
+        parseExpression( rest.last ) )
+    case _ => throw TipSmtParserException( "malformed assertion" )
   }
 
-  private def parseGoal( sexps: Seq[SExpression] ): TipSmtGoal = {
-    if ( sexps.isEmpty )
-      throw TipSmtParserException( "malformed goal" )
-    TipSmtGoal( parseKeywords( sexps.init ), parseExpression( sexps.last ) )
+  private def parseGoal(
+    sexp: SExpression ): TipSmtGoal = sexp match {
+    case LFun( "prove" | "assert-not", rest @ _* ) if rest.nonEmpty =>
+      TipSmtGoal(
+        parseKeywords( rest.init ),
+        parseExpression( rest.last ) )
+    case _ => throw TipSmtParserException( "malformed assertion" )
   }
 
   def parseIte( sexp: SExpression ): TipSmtIte = sexp match {
@@ -787,39 +797,39 @@ class TipSmtParser {
     }
   }
 
-  private val tipExpressionCompilers: Map[String, ( Seq[SExpression] ) => Unit] = Map(
-    ( "declare-sort", { sexps =>
-      compileSortDeclaration( parseSortDeclaration( sexps ) )
+  private val tipExpressionCompilers: Map[String, ( SExpression ) => Unit] = Map(
+    ( "declare-sort", { sexp =>
+      compileSortDeclaration( parseSortDeclaration( sexp ) )
     } ),
-    ( "declare-datatypes", { sexps =>
-      compileDatatypesDeclaration( parseDatatypesDeclaration( sexps ) )
+    ( "declare-datatypes", { sexp =>
+      compileDatatypesDeclaration( parseDatatypesDeclaration( sexp ) )
     } ),
-    ( "declare-const", { sexps =>
-      compileConstantDeclaration( parseConstantDeclaration( sexps ) )
+    ( "declare-const", { sexp =>
+      compileConstantDeclaration( parseConstantDeclaration( sexp ) )
     } ),
-    ( "declare-fun", { sexps =>
-      compileFunctionDeclaration( parseFunctionDeclaration( sexps ) )
+    ( "declare-fun", { sexp =>
+      compileFunctionDeclaration( parseFunctionDeclaration( sexp ) )
     } ),
-    ( "define-fun", { sexps =>
-      compileFunctionDefinition( parseFunctionDefinition( sexps ) )
+    ( "define-fun", { sexp =>
+      compileFunctionDefinition( parseFunctionDefinition( sexp ) )
     } ),
-    ( "define-fun-rec", { sexps =>
-      compileFunctionDefinition( parseFunctionDefinition( sexps ) )
+    ( "define-fun-rec", { sexp =>
+      compileFunctionDefinition( parseFunctionDefinition( sexp ) )
     } ),
-    ( "assert", { sexps =>
-      compileAssertion( parseAssertion( sexps ) )
+    ( "assert", { sexp =>
+      compileAssertion( parseAssertion( sexp ) )
     } ),
-    ( "assert-not", { sexps =>
-      compileGoal( parseGoal( sexps ) )
+    ( "assert-not", { sexp =>
+      compileGoal( parseGoal( sexp ) )
     } ),
-    ( "prove", { sexps =>
-      compileGoal( parseGoal( sexps ) )
+    ( "prove", { sexp =>
+      compileGoal( parseGoal( sexp ) )
     } ),
-    ( "check-sat", ( sexps: Seq[SExpression] ) => () ) )
+    ( "check-sat", ( sexp: SExpression ) => () ) )
 
   def parse( sexp: SExpression ): Unit = sexp match {
     case LFun( head, declaration @ _* ) =>
-      tipExpressionCompilers( head )( declaration )
+      tipExpressionCompilers( head )( sexp )
   }
 
   def toProblem: TipProblem =
