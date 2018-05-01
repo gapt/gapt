@@ -450,6 +450,9 @@ class TipSmtParser {
   /**
    * Parses an assertion.
    *
+   * An assertion is an s-expression of the form:
+   * assertion ::= '(' "assert" keyword_sequence expression ')'.
+   *
    * @param sexp The expression to be parsed.
    * @return The parsed assertion.
    */
@@ -462,6 +465,15 @@ class TipSmtParser {
     case _ => throw TipSmtParserException( "malformed assertion" )
   }
 
+  /**
+   * Parses a goal.
+   *
+   * A goal is an s-expression of the form:
+   * goal ::= '(' ("prove | "assert-not") keyword_sequence expression ')'.
+   *
+   * @param sexp The expression to be parsed.
+   * @return The parsed goal.
+   */
   private def parseGoal(
     sexp: SExpression ): TipSmtGoal = sexp match {
     case LFun( "prove" | "assert-not", rest @ _* ) if rest.nonEmpty =>
@@ -471,6 +483,15 @@ class TipSmtParser {
     case _ => throw TipSmtParserException( "malformed assertion" )
   }
 
+  /**
+   * Parses an if-then-else expression.
+   *
+   * An if-then-else expression is an s-expression of the form:
+   * ite_expr ::= '(' "ite" expr expr expr ')'.
+   *
+   * @param sexp The expression to be parsed.
+   * @return The parsed if-then-else expression.
+   */
   def parseIte( sexp: SExpression ): TipSmtIte = sexp match {
     case LFun( "ite", cond, the, els ) =>
       TipSmtIte(
@@ -480,6 +501,15 @@ class TipSmtParser {
     case _ => throw TipSmtParserException( "malformed ite-expression: " + sexp )
   }
 
+  /**
+   * Parses a match expression.
+   *
+   * A match expression is an s-expression of the form:
+   * match_expr ::= '(' "match" symbol { case_expr } ')'.
+   *
+   * @param sexp The expression to be parsed
+   * @return The parsed match expression.
+   */
   def parseMatch( sexp: SExpression ): TipSmtMatch = sexp match {
     case LFun( "match", expr, cases @ _* ) =>
       TipSmtMatch( parseExpression( expr ), cases map { parseCase( _ ) } )
@@ -487,6 +517,15 @@ class TipSmtParser {
       "malformed match-expression: " + sexp )
   }
 
+  /**
+   * Parses a case expression.
+   *
+   * A case expression is an s-expression of the form:
+   * case_expr ::= '(' "case" pattern expression ')'.
+   *
+   * @param sexp The expression to be parsed.
+   * @return The parsed case expression.
+   */
   def parseCase( sexp: SExpression ): TipSmtCase = sexp match {
     case LFun( "case", pattern, expr ) =>
       TipSmtCase( parsePattern( pattern ), parseExpression( expr ) )
@@ -494,6 +533,15 @@ class TipSmtParser {
       "malformed case-expression: " + sexp )
   }
 
+  /**
+   * Parses a pattern.
+   *
+   * A pattern is an s-expression of the form:
+   * pattern ::= "default" | symbol | '(' symbol { symbol } ')'.
+   *
+   * @param sexp The expression to be parsed.
+   * @return The parsed pattern.
+   */
   def parsePattern( sexp: SExpression ): TipSmtPattern = sexp match {
     case LSymbol( "default" ) =>
       TipSmtDefault
@@ -506,6 +554,14 @@ class TipSmtParser {
     case _ => throw TipSmtParserException( "malformed pattern: " + sexp )
   }
 
+  /**
+   * Parses an identifier.
+   *
+   * An identifier is a symbol.
+   *
+   * @param sexp The expression to be parsed.
+   * @return The parsed identifier.
+   */
   def parseTipSmtIdentifier(
     sexp: SExpression ): TipSmtIdentifier = sexp match {
     case LSymbol( identifier ) =>
@@ -514,6 +570,28 @@ class TipSmtParser {
       throw TipSmtParserException( "malformed identifier: " + sexp )
   }
 
+  /**
+   * Parses an expression.
+   *
+   * An expression is an s-expression of the form:
+   * expression ::= true
+   * | false
+   * | ite_expr
+   * | match_expr
+   * | forall_expr
+   * | exists_expr
+   * | '(' "or" expression expression ')'
+   * | '(' "and" expression expression ')'
+   * | '(' "=>" expression expression ')'
+   * | '(' "=" expression expression ')'
+   * | identifier
+   * | function_call,
+   * function_call ::= '(' function_name { expression } ')',
+   * function_name ::= symbol.
+   *
+   * @param sexp The expression to be parsed.
+   * @return The parsed expression.
+   */
   def parseExpression( sexp: SExpression ): TipSmtExpression = sexp match {
     case LFun( "match", _* ) =>
       parseMatch( sexp )
@@ -546,6 +624,15 @@ class TipSmtParser {
     case _ => throw TipSmtParserException( "malformed expression: " + sexp )
   }
 
+  /**
+   * Parses a variable declaration.
+   *
+   * A variable declaration is an s-expression of the form:
+   * variable_declaration ::= '(' symbol type ')'.
+   *
+   * @param sexp The expression to be parsed.
+   * @return The parsed variable declaration.
+   */
   def parseTipSmtVarDecl( sexp: SExpression ): TipSmtVariableDecl = sexp match {
     case LList( LSymbol( variableName ), variableType ) =>
       TipSmtVariableDecl( variableName, parseType( variableType ) )
