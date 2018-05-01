@@ -91,10 +91,7 @@ sealed trait TipSmtPattern
 
 case object TipSmtDefault extends TipSmtPattern
 
-case class TipSmtVariablePattern(
-    identifier: TipSmtIdentifier ) extends TipSmtPattern
-
-case class TipSmtComplexPattern(
+case class TipSmtConstructorPattern(
     constructor: TipSmtIdentifier,
     identifiers: Seq[TipSmtIdentifier] ) extends TipSmtPattern
 
@@ -342,19 +339,19 @@ class TipSmtParser {
     case LSymbol( "default" ) =>
       TipSmtDefault
     case p @ LSymbol( _ ) =>
-      TipSmtVariablePattern( parseTipSmtIdentifier( p ) )
+      TipSmtConstructorPattern( parseTipSmtIdentifier( p ), Seq() )
     case LFun( constructor, identifiers @ _* ) =>
-      TipSmtComplexPattern(
+      TipSmtConstructorPattern(
         TipSmtIdentifier( constructor ),
         identifiers map { parseTipSmtIdentifier( _ ) } )
-    case _ => throw TipSmtParserException( "malformed pattern: " + sexp)
+    case _ => throw TipSmtParserException( "malformed pattern: " + sexp )
   }
 
   def parseTipSmtIdentifier(
     sexp: SExpression ): TipSmtIdentifier = sexp match {
     case LSymbol( identifier ) =>
       TipSmtIdentifier( identifier )
-    case _                     =>
+    case _ =>
       throw TipSmtParserException( "malformed identifier: " + sexp )
   }
 
@@ -510,9 +507,7 @@ class TipSmtParser {
       def handleCase( cas: TipSmtCase ): Seq[Formula] = cas match {
         case TipSmtCase( TipSmtDefault, body ) =>
           val coveredConstructors = cases collect {
-            case TipSmtCase( TipSmtVariablePattern( constr ), _ ) =>
-              funDecls( constr.name )
-            case TipSmtCase( TipSmtComplexPattern( constr, Seq() ), _ ) =>
+            case TipSmtCase( TipSmtConstructorPattern( constr, Seq() ), _ ) =>
               funDecls( constr.name )
           }
           val missingConstructors = datatypes.find(
@@ -527,37 +522,12 @@ class TipSmtParser {
             val newVariables = for ( t <- ts ) yield nameGen fresh "x"
             handleCase(
               TipSmtCase(
-                TipSmtComplexPattern(
+                TipSmtConstructorPattern(
                   TipSmtIdentifier( ctr.name ),
                   newVariables map { TipSmtIdentifier( _ ) } ), body ) )
           }
 
-        case TipSmtCase( TipSmtVariablePattern( constructor ), body ) =>
-
-          val arguments: Seq[TipSmtIdentifier] = Seq()
-
-          require(
-            freeVars( varName ).isInstanceOf[Var],
-            s"${freeVars( varName )} is not a variable" )
-
-          val constr = funDecls( constructor.name )
-          val FunctionType( _, constrArgTypes ) = constr.ty
-
-          require( constrArgTypes.size == arguments.size )
-
-          val args = for {
-            ( name, ty ) <- arguments.map( _.name ) zip constrArgTypes
-          } yield Var( name, ty )
-
-          val subst = Substitution(
-            freeVars( varName ).asInstanceOf[Var] -> constr( args: _* ) )
-
-          compileFunctionBody(
-            body,
-            subst( lhs ),
-            freeVars.mapValues( subst( _ ) ) ++ args.map { v => v.name -> v } )
-
-        case TipSmtCase( TipSmtComplexPattern( constructor, arguments ), body ) =>
+        case TipSmtCase( TipSmtConstructorPattern( constructor, arguments ), body ) =>
 
           require(
             freeVars( varName ).isInstanceOf[Var],
