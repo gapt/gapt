@@ -14,6 +14,7 @@ object example1 extends Script {
 
 }
 
+/*
 object classicalExtractionTest {
   def apply( proof: NDProof )( implicit ctx: Context ): Unit = {
     val m1 = ClassicalExtraction.mrealize( proof, false )
@@ -22,8 +23,8 @@ object classicalExtractionTest {
     println(); println()
   }
 }
+*/
 
-/*
 object classicalExtractionTest {
   def apply( proof: NDProof )( implicit ctx: Context ): Unit = {
     val m1 = ClassicalExtraction.extractCases( proof )
@@ -32,7 +33,6 @@ object classicalExtractionTest {
     println(); println()
   }
 }
-*/
 
 object example2 extends Script {
 
