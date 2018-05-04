@@ -1,5 +1,6 @@
 package gapt.proofs.nd
 
+import gapt.expr.hol.containsQuantifierOnLogicalLevel
 import gapt.expr.{ App, Substitution, Ty, typeVariables, _ }
 import gapt.proofs.Context.{ BaseTypes, InductiveType, PrimRecFun, StructurallyInductiveTypes }
 import gapt.proofs._
@@ -361,7 +362,9 @@ object ClassicalExtraction {
   }
   def extractCases( proof: NDProof )( implicit ctx: Context ): Expr = {
     val ng = new NameGenerator( freeVariables( proof.conclusion ).map( _.name ) )
-    extractCases( proof, ng )( systemT( ctx ) )( Suc( 0 ) )
+    val res = extractCases( proof, ng )( systemT( ctx ) )
+    println( res )
+    res( Suc( 0 ) )
   }
 
   def extractCases( proof: NDProof, ng: NameGenerator )( implicit systemT: Context ): Sequent[Expr] = {
@@ -371,39 +374,44 @@ object ClassicalExtraction {
         case WeakeningRule( subProof, formula ) =>
           val s = extractCases( subProof, ng )
           val v = Var( ng.fresh( "y" ), flat( formula ) )
-          println( "weakening " + v )
           val res = v +: s
-          println( "Weakening" )
+          println( "Weakening, fresh " + v )
           res
 
         case ContractionRule( subProof, aux1, aux2 ) =>
           val s = extractCases( subProof, ng )
-          println( "contracting " + s( aux2 ) )
           val v = s( aux1 )
           val res = v +: s.delete( List( aux1, aux2 ) )
           println( "Contraction" )
           res
 
-        case LogicalAxiom( formula @ All( x, f ) ) =>
-          println( "Axiom case All" )
+        case LogicalAxiom( formula @ All( x, f ) ) if x.ty == ty"i" =>
           // TODO:
-          val v = Var( ng.fresh( "y" ), flat( formula ) )
-          val res = v +: Sequent() :+ v
-          println( "Axiom All" )
+          val a = Var( ng.fresh( "a" ), flat( formula ) )
+          val h = Const( ng.fresh( "H" ), flat( formula ) )
+          val res = a +: Sequent() :+ h
+          println( "Axiom All " + formula + ", fresh a " + a + " fresh H " + h )
           res
 
-        case LogicalAxiom( formula @ Ex( x, Neg( f ) ) ) =>
-          println( "Axiom case Ex" )
+        case LogicalAxiom( formula @ Ex( x, Neg( f ) ) ) if x.ty == ty"i" =>
           // TODO:
-          val v = Var( ng.fresh( "y" ), flat( formula ) )
-          val res = v +: Sequent() :+ v
-          println( "Axiom Ex" )
+          val a = Var( ng.fresh( "a" ), flat( formula ) )
+          val w = Const( ng.fresh( "W" ), flat( formula ) )
+          val res = a +: Sequent() :+ w
+          println( "Axiom Ex Neg " + formula + ", fresh a " + a + " fresh W " + w )
+          res
+
+        case LogicalAxiom( formula ) if !containsQuantifierOnLogicalLevel( formula ) =>
+          val a = Var( ng.fresh( "a" ), flat( formula ) )
+          val h = Const( ng.fresh( "H" ), flat( formula ) )
+          val res = a +: Sequent() :+ h
+          println( "LogicalAxiom propositional " + formula + ", fresh a " + a + " fresh H " + h )
           res
 
         case LogicalAxiom( formula ) =>
-          val v = Var( ng.fresh( "y" ), flat( formula ) )
+          val v = Var( ng.fresh( "v" ), flat( formula ) )
           val res = v +: Sequent() :+ v
-          println( "LogicalAxiom" )
+          println( "LogicalAxiom " + formula + ", fresh v " + v )
           res
 
         case AndElim1Rule( subProof ) =>
@@ -484,7 +492,7 @@ object ClassicalExtraction {
 
           mainFormulaSequent.antecedent ++: contexts.flattenS :++ mainFormulaSequent.succedent
           */
-          println( "ImpIntro deleting: " + s( aux ) + " of type " + s( aux ).ty )
+          //println( "ImpIntro deleting: " + s( aux ) + " of type " + s( aux ).ty )
           val res = s.delete( aux ).antecedent ++: Sequent() :+ Abs( extraVar, s( Suc( 0 ) ) )
           println( "ImpIntro" )
           res
@@ -612,15 +620,19 @@ object ClassicalExtraction {
           val inductionCase = extractCases( cases( 1 ).proof, ng )
           // TODO same for base case, should be empty in our case
           val inductionCaseDel = inductionCase.delete( cases( 1 ).hypotheses )
+          /*
           println( "free vars inductionCase ant 0: " + freeVariables( inductionCase( cases( 1 ).hypotheses ).filter( e => e.ty == ty"i" ) ) )
           println( "free vars inductionCase suc 0: " + freeVariables( inductionCase( Suc( 0 ) ) ) )
+          */
           val varsH = inductionCase( cases( 1 ).hypotheses ).asInstanceOf[Seq[Var]]
+          /*
           println( "inductionCase hyps: " + inductionCase( cases( 1 ).hypotheses ) )
           println( "baseCase suc 0: " + baseCase( Suc( 0 ) ) )
           println( "inductionCase suc 0: " + inductionCase( Suc( 0 ) ) )
           println( "term: " + term )
           println( "cases 0: " + cases( 0 ).proof.endSequent )
           println( "cases 1: " + cases( 1 ).proof.endSequent )
+          */
           val res = baseCase.antecedent ++: inductionCaseDel.antecedent ++: Sequent() :+
             le"iRec(${baseCase( Suc( 0 ) )},${Abs( cases( 1 ).eigenVars, Abs( varsH, inductionCase( Suc( 0 ) ) ) )},$term)"
           println( "InductionRule" )
@@ -672,21 +684,26 @@ object ClassicalExtraction {
                 c( right ).
                 b( ImpElimRule( _, _ ) ).
                 qed
+              /*
               println( "right Suc 0: " + right.conclusion( Suc( 0 ) ) )
               println( "rightSubProof aux2 " + rightSubProof.conclusion( aux2 ) )
               println( "tr: " + tr )
               //println( "right: " + extractCases( right, ng ) )
               println( "flat right" + flat( right.conclusion( Suc( 0 ) ) ) )
+              */
               val tmp1 = nd.ProofBuilder.
                 c( rightSubProof ).
                 u( ImpIntroRule( _, aux2 ) ).
                 qed
               //println( "tmp1: " + extractCases( tmp1, ng ) )
+              /*
               println( "flat tmp1" + flat( tmp1.conclusion( Suc( 0 ) ) ) )
+              */
               val r = extractCases( tr, ng )
               val varL = l( Ant( 0 ) ).asInstanceOf[Var]
               val varR = r.antecedent.last.asInstanceOf[Var]
 
+              /*
               println( "l.antecedent: " + l.antecedent )
               println( "r.antecedent: " + r.antecedent )
               println( "deleting l(aux1): " + l( aux1 ) )
@@ -695,7 +712,9 @@ object ClassicalExtraction {
               println( "leftSubProof size: " + leftSubProof.endSequent.size )
               println( "tl size: " + tl.endSequent.size )
               println( "l size: " + l.size )
+              */
               val delL = l.delete( Ant( 0 ) ).antecedent
+              /*
               println( "delL size: " + delL.size )
 
               println( "rightSubProof size: " + rightSubProof.endSequent.size )
@@ -703,15 +722,20 @@ object ClassicalExtraction {
               println( "r size: " + r.size )
               println( "r indices: " + r.indices )
               println( "r indices last: " + r.indicesSequent.antecedent.last )
+              */
 
               // TODO find index to delete somehow
               val delR = r.delete( r.indicesSequent.antecedent.last ).antecedent
+              /*
               println( "delR size: " + delR.size )
+              */
 
               // TODO check indices used: varA, varB, aux1, aux2
               val res = delL ++: delR ++: Sequent() :+ le"bar2 ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
               println( "EM1" )
+              /*
               println( "res size: " + res.size )
+              */
               res
 
             case _ =>

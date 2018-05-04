@@ -1,5 +1,6 @@
 package gapt.examples
 
+import com.sun.org.apache.bcel.internal.generic.AllocationInstruction
 import gapt.proofs.nd._
 import gapt.expr.{ TBase, _ }
 import gapt.proofs.{ Ant, Checkable, Context, Sequent }
@@ -29,7 +30,8 @@ object classicalExtractionTest {
   def apply( proof: NDProof )( implicit ctx: Context ): Unit = {
     val m1 = ClassicalExtraction.extractCases( proof )
     //val m1n = ClassicalExtraction.mrealize( proof )
-    print( proof ); print( m1 ); print( " of type " ); print( m1.ty )
+    //print( proof ); print( m1 ); print( " of type " ); print( m1.ty ); println()
+    println( "free vars: " + freeVariables( m1 ) )
     println(); println()
   }
 }
@@ -175,6 +177,19 @@ object example9 extends Script {
     c( LogicalAxiom( hof"-(?x P x)" ) ).
     u( OrIntro2Rule( _, hof"?x P x" ) ).
     b( ExcludedMiddleRule( _, Ant( 0 ), _, Ant( 0 ) ) ).
+    qed
+  classicalExtractionTest( p )
+}
+
+object example10 extends Script {
+  implicit var ctx = Context()
+  ctx += TBase( "i" )
+  ctx += hoc"P: i > o"
+
+  val p = ProofBuilder.
+    c( LogicalAxiom( hof"!x P x" ) ).
+    u( ForallElimRule( _, hov"v: i" ) ).
+    u( ForallIntroRule( _, hof"!y P y", hov"v: i" ) ).
     qed
   classicalExtractionTest( p )
 }
