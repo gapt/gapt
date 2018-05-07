@@ -1,8 +1,8 @@
-package gapt.proofs.congruence2
+package gapt.provers.congruence
 
 import gapt.expr.{ App, Atom, Eq, Expr, subTerms }
-import gapt.proofs.congruence2.MutCC._
 import gapt.proofs.{ HOLClause, Sequent }
+import gapt.provers.congruence.MutCC._
 
 import scala.collection.mutable
 
@@ -182,6 +182,11 @@ class CC( mutCC0: MutCC, val termToIdx: Map[Expr, Int], val idxToTerm: Map[Int, 
     for ( e @ App( a, b ) <- subExprs ) cc.addEqn( tti( a ), tti( b ), tti( e ) )
     new CC( cc, tti, tti.map( _.swap ) )
   }
+  def internAndMerge( exprs: Iterable[Expr] ): CC =
+    intern( exprs ).merge( exprs )
+
+  def isEq( a: Expr, b: Expr ): Boolean =
+    mutCC0.isEq( termToIdx( a ), termToIdx( b ) )
 
   def explain( clause: HOLClause ): Option[HOLClause] = {
     val expl = mutCC0.explain

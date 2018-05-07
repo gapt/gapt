@@ -5,7 +5,7 @@ import gapt.expr.hol.lcomp
 import gapt.proofs.rup._
 import gapt.proofs.lk._
 import gapt.proofs._
-import gapt.proofs.congruence2.CC
+import gapt.provers.congruence.CC
 import gapt.provers.escargot.Escargot
 import org.sat4j.minisat.SolverFactory
 import org.sat4j.specs._
