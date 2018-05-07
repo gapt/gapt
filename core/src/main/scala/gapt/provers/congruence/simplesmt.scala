@@ -23,7 +23,7 @@ object SimpleSmtSolver extends OneShotProver {
           cc.merge( model.toCube.antecedent ).
             explain( model.toCube ) match {
               case Some( core ) =>
-                cnf += core.asInstanceOf[HOLClause]
+                cnf += core
               case None => return false
             }
         case None => return true

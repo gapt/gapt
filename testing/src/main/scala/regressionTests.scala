@@ -19,6 +19,7 @@ import gapt.proofs.lk._
 import gapt.proofs.lkt.normalizeLKt
 import gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
 import gapt.proofs.{ MutableContext, Suc, loadExpansionProof }
+import gapt.provers.congruence.SimpleSmtSolver
 import gapt.provers.escargot.Escargot
 import gapt.provers.prover9.Prover9Importer
 import gapt.provers.sat.{ MiniSAT, Sat4j }
@@ -209,6 +210,7 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
     }
     ExpansionProofToLK( E ).isRight !-- "expansionProofToLKProof"
     Z3.isValid( deep ) !-- "validity of deep formula"
+    SimpleSmtSolver.isValid( deep ) !-- "SimpleSmtSolver on deep formula"
 
     if ( isFOLPrenexSigma1( p.endSequent ) )
       extractRecSchem( p ) --? "extractRecSchem" map { recSchem =>
