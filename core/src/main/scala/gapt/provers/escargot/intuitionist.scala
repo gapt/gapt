@@ -8,6 +8,7 @@ import gapt.proofs.lk.{ LKProof, isMaeharaMG3i }
 import gapt.proofs.{ Context, MutableContext }
 import gapt.prooftool.LKProofViewer
 import gapt.provers.Prover
+import gapt.provers.congruence.SimpleSmtSolver
 import gapt.provers.eprover.EProver
 import gapt.provers.escargot.impl.EscargotLogger
 import gapt.provers.spass.SPASS
@@ -104,7 +105,7 @@ object IEscargot {
       opts.backend.getExpansionProof( tptpSequent )
     else
       Some( tptpSequent ).
-        filter( QfUfEscargot.isValid ).
+        filter( SimpleSmtSolver.isValid ).
         map( formulaToExpansionTree( _ ) ).
         map( ExpansionProof ) ) match {
       case Some( expansion ) =>
