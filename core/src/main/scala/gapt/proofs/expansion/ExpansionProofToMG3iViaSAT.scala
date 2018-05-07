@@ -183,10 +183,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         }
       }
 
-      tryInvertible().getOrElse( tryNonInvertible() match {
-        case ok @ Right( _ )    => ok
-        case reason @ Left( _ ) => tryEquational().getOrElse( reason )
-      } ) match {
+      tryInvertible().orElse( tryEquational() ).getOrElse( tryNonInvertible() ) match {
         case Right( _ ) => // next model
           require( !solver.isSatisfiable( model ) )
         case reason @ Left( _ ) =>
