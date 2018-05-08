@@ -161,18 +161,31 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         }
 
       def tryNonInvertible(): Result = {
-        val nextSteps = model.filter( _ < 0 ).map( -_ ).flatMap( atomToET ).filter( checkEVCond ).collect {
-          case e @ ETNeg( a ) if e.polarity.inSuc && !assumptions.contains( atom( a ) ) =>
-            ( Set( atom( a ) ), Set( -atom( e ) ), eigenVariables, ( p: LKProof ) =>
-              if ( !p.endSequent.antecedent.contains( a.shallow ) ) p else
-                NegRightRule( p, a.shallow ) )
-          case e @ ETImp( a, b ) if e.polarity.inSuc && !assumptions.contains( atom( a ) ) =>
-            ( Set( atom( a ), -atom( b ) ), Set( -atom( e ) ), eigenVariables,
-              ImpRightMacroRule( _: LKProof, a.shallow, b.shallow ) )
-          case e @ ETStrongQuantifier( _, ev, a ) if e.polarity.inSuc && !eigenVariables.contains( ev ) =>
-            ( Set( -atom( a ) ), Set( -atom( e ) ), eigenVariables + ev, ( p: LKProof ) =>
-              if ( !p.endSequent.succedent.contains( a.shallow ) ) p else
-                ForallRightRule( p, e.shallow, ev ) )
+        def handleBlock( e: ExpansionTree, upper: Set[Int], eigenVariables: Set[Var],
+                         back: LKProof => LKProof ): ( Set[Int], Set[Var], LKProof => LKProof ) =
+          e match {
+            case ETNeg( a ) =>
+              ( upper + atom( a ), eigenVariables, p =>
+                back( if ( !p.endSequent.antecedent.contains( a.shallow ) ) p else
+                  NegRightRule( p, a.shallow ) ) )
+            case ETImp( a, b ) =>
+              handleBlock( b, upper + atom( a ), eigenVariables, p => back(
+                ImpRightMacroRule( p, a.shallow, b.shallow ) ) )
+            case ETStrongQuantifier( _, ev, a ) =>
+              handleBlock( a, upper, eigenVariables + ev, p => back(
+                if ( !p.endSequent.succedent.contains( a.shallow ) ) p else
+                  ForallRightRule( p, e.shallow, ev ) ) )
+            case _ =>
+              ( upper + -atom( e ), eigenVariables, back )
+          }
+        val candidates = model.filter( _ < 0 ).map( -_ ).flatMap( atomToET ).filter( checkEVCond ).collect {
+          case e @ ETNeg( a ) if e.polarity.inSuc && !assumptions.contains( atom( a ) )                 => e
+          case e @ ETImp( a, _ ) if e.polarity.inSuc && !assumptions.contains( atom( a ) )              => e
+          case e @ ETStrongQuantifier( _, ev, _ ) if e.polarity.inSuc && !eigenVariables.contains( ev ) => e
+        }
+        val nextSteps = candidates.map { e =>
+          val ( upper, evs, transform ) = handleBlock( e, Set.empty, eigenVariables, identity )
+          ( upper, Set( -atom( e ) ), evs, transform )
         }
         nextSteps.find( s => solve( s._3, assumptionsAnt ++ s._1 ).isRight ) match {
           case Some( ( upper, lower, _, transform ) ) =>
