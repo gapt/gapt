@@ -82,41 +82,42 @@ object computeSymbolTable {
   }
 }
 
-object reconstructDatatypes {
+class ReconstructDatatypes(problem: TipSmtProblem) {
 
-  def apply( tipProblem: TipSmtProblem ): TipSmtProblem = {
-    val symbolTable = computeSymbolTable( tipProblem )
-    tipProblem.definitions foreach {
+  val symbolTable = computeSymbolTable( problem )
+
+  def apply( ): TipSmtProblem = {
+
+    problem.definitions foreach {
       case TipSmtFunctionDefinition( _, _, parameters, _, body ) =>
         val context = parameters map {
           case TipSmtFormalParameter( name, typ ) =>
             name -> Datatype( typ.typename )
         }
-        reconstructTypes( body, symbolTable, Map( context: _* ) )
+        reconstructTypes( body, Map( context: _* ) )
       case TipSmtAssertion( _, expression ) =>
-        reconstructTypes( expression, symbolTable, Map() )
+        reconstructTypes( expression, Map() )
       case TipSmtGoal( _, expression ) =>
-        reconstructTypes( expression, symbolTable, Map() )
+        reconstructTypes( expression, Map() )
       case _ =>
     }
-    tipProblem
+    problem
   }
 
   private def reconstructTypes(
     expression:  TipSmtExpression,
-    symbolTable: SymbolTable,
     variables:   Map[String, Datatype] ): Unit = expression match {
     case TipSmtAnd( subexpressions ) =>
-      subexpressions foreach { reconstructTypes( _, symbolTable, variables ) }
+      subexpressions foreach { reconstructTypes( _, variables ) }
       expression.datatype = Some( Datatype( "bool" ) )
     case TipSmtOr( subexpressions ) =>
-      subexpressions foreach { reconstructTypes( _, symbolTable, variables ) }
+      subexpressions foreach { reconstructTypes( _, variables ) }
       expression.datatype = Some( Datatype( "bool" ) )
     case TipSmtImp( subexpressions ) =>
-      subexpressions foreach { reconstructTypes( _, symbolTable, variables ) }
+      subexpressions foreach { reconstructTypes( _, variables ) }
       expression.datatype = Some( Datatype( "bool" ) )
     case TipSmtNot( subexpression ) =>
-      reconstructTypes( subexpression, symbolTable, variables )
+      reconstructTypes( subexpression, variables )
       expression.datatype = Some( Datatype( "bool" ) )
     case TipSmtForall( vars, subexpression ) =>
       val context: Seq[( String, Datatype )] = vars map {
@@ -124,7 +125,7 @@ object reconstructDatatypes {
           v.name -> Datatype( v.typ.typename )
       }
       reconstructTypes(
-        subexpression, symbolTable, Map( context: _* ) ++ variables )
+        subexpression, Map( context: _* ) ++ variables )
       expression.datatype = Some( Datatype( "bool" ) )
 
     case TipSmtExists( vars, subexpression ) =>
@@ -133,7 +134,7 @@ object reconstructDatatypes {
           v.name -> Datatype( v.typ.typename )
       }
       reconstructTypes(
-        subexpression, symbolTable, Map( context: _* ) ++ variables )
+        subexpression, Map( context: _* ) ++ variables )
       expression.datatype = Some( Datatype( "bool" ) )
 
     case TipSmtIdentifier( identifier ) =>
@@ -141,7 +142,7 @@ object reconstructDatatypes {
         .getOrElse( identifier, symbolTable.symbols( identifier ).returnType ) )
 
     case TipSmtFun( functionName, arguments ) =>
-      arguments foreach { arg => reconstructTypes( arg, symbolTable, variables ) }
+      arguments foreach { arg => reconstructTypes( arg, variables ) }
       expression.datatype = Some( symbolTable.symbols( functionName ).returnType )
 
     case TipSmtTrue =>
@@ -151,19 +152,19 @@ object reconstructDatatypes {
       expression.datatype = Some( Datatype( "bool" ) )
 
     case TipSmtIte( expr1, expr2, expr3 ) =>
-      reconstructTypes( expr1, symbolTable, variables )
-      reconstructTypes( expr3, symbolTable, variables )
-      reconstructTypes( expr3, symbolTable, variables )
+      reconstructTypes( expr1, variables )
+      reconstructTypes( expr3, variables )
+      reconstructTypes( expr3, variables )
       expression.datatype = expr2.datatype
 
     case TipSmtEq( subexpressions ) =>
-      subexpressions foreach { reconstructTypes( _, symbolTable, variables ) }
+      subexpressions foreach { reconstructTypes( _, variables ) }
       expression.datatype = Some( Datatype( "bool" ) )
 
     case TipSmtMatch( expr, cases ) =>
-      reconstructTypes( expr, symbolTable, variables )
+      reconstructTypes( expr, variables )
       cases foreach {
-        reconstructTypesCase( expr.datatype.get, _, symbolTable, variables )
+        reconstructTypesCase( expr.datatype.get, _, variables )
       }
       expression.datatype = cases.head.expr.datatype
   }
@@ -171,11 +172,10 @@ object reconstructDatatypes {
   private def reconstructTypesCase(
     matchedType: Datatype,
     tipSmtCase:  TipSmtCase,
-    symbolTable: SymbolTable,
     variables:   Map[String, Datatype] ): Unit = {
     tipSmtCase.pattern match {
       case TipSmtDefault =>
-        reconstructTypes( tipSmtCase.expr, symbolTable, variables )
+        reconstructTypes( tipSmtCase.expr, variables )
       case TipSmtConstructorPattern( constructor, identifiers ) =>
         val constructorType = symbolTable.symbols( constructor.name )
         val matchVariables = identifiers.zipWithIndex.filter {
@@ -187,76 +187,71 @@ object reconstructDatatypes {
             ( identifier.name, constructorType.argumentTypes( index ) )
         }
         reconstructTypes(
-          tipSmtCase.expr, symbolTable, Map( context: _* ) ++ variables )
+          tipSmtCase.expr, Map( context: _* ) ++ variables )
     }
   }
 }
 
-object tipSmtDesugar {
+class TipSmtDesugar(problem: TipSmtProblem) {
 
-  def apply(tipProblem: TipSmtProblem): Unit = {
-    val symbolTable = computeSymbolTable(tipProblem)
-    tipProblem.definitions foreach {
+  val symbolTable = computeSymbolTable(problem)
+
+  def apply(): Unit = {
+
+    problem.definitions foreach {
       case TipSmtFunctionDefinition(_,_,parameters,_,body) =>
         val context = parameters map {
           _.name
         }
-        desugarExpression(tipProblem, body, symbolTable, context)
+        desugarExpression( body,  context)
       case TipSmtGoal(_, expression) =>
-        desugarExpression(tipProblem, expression, symbolTable, Seq())
+        desugarExpression(expression,  Seq())
       case TipSmtAssertion(_, expression) =>
-        desugarExpression(tipProblem, expression, symbolTable, Seq())
+        desugarExpression( expression, Seq())
       case _ =>
     }
   }
 
   private def desugarExpression(
-    problem: TipSmtProblem,
     expr: TipSmtExpression,
-    symbolTable: SymbolTable,
     visibleVariables: Seq[String]): Unit = expr match {
     case TipSmtAnd( subexpressions ) =>
       subexpressions foreach {
-        desugarExpression(problem, _, symbolTable, visibleVariables)
+        desugarExpression(_ , visibleVariables)
       }
     case TipSmtOr( subexpressions ) =>
       subexpressions foreach {
-        desugarExpression(problem, _, symbolTable, visibleVariables)
+        desugarExpression( _, visibleVariables)
       }
     case TipSmtImp( subexpressions ) =>
       subexpressions foreach {
-        desugarExpression(problem, _, symbolTable, visibleVariables)
+        desugarExpression( _, visibleVariables)
       }
     case TipSmtFun(_, arguments ) =>
       arguments foreach {
-        desugarExpression(problem, _, symbolTable, visibleVariables)
+        desugarExpression( _, visibleVariables)
       }
     case TipSmtForall( vars, subexpression) =>
       desugarExpression(
-        problem,
         subexpression,
-        symbolTable,
         visibleVariables ++ vars.map(_.name))
     case TipSmtExists( vars, subexpression) =>
       desugarExpression(
-        problem,
         subexpression,
-        symbolTable,
         visibleVariables ++ vars.map(_.name))
     case matchExpr @ TipSmtMatch(_, _) =>
-      expandDefaultPattern(problem, matchExpr, symbolTable, visibleVariables)
+      expandDefaultPattern(matchExpr , visibleVariables)
       matchExpr.cases foreach {
-        desugarCaseStatement(problem, _,  symbolTable, visibleVariables)
+        desugarCaseStatement( _,  symbolTable, visibleVariables)
       }
     case TipSmtIte( expr1, expr2, expr3) =>
-      desugarExpression(problem, expr1, symbolTable, visibleVariables)
-      desugarExpression(problem, expr2, symbolTable, visibleVariables)
-      desugarExpression(problem, expr3, symbolTable, visibleVariables)
+      desugarExpression( expr1, visibleVariables)
+      desugarExpression( expr2, visibleVariables)
+      desugarExpression( expr3, visibleVariables)
     case _ =>
   }
 
   private def desugarCaseStatement(
-    problem: TipSmtProblem,
     cas: TipSmtCase,
     symbolTable: SymbolTable,
     visibleVariables: Seq[String]): Unit = {
@@ -265,22 +260,20 @@ object tipSmtDesugar {
         val variableFields =
           fields map { _.name } filter { ! symbolTable.symbols.contains( _ ) }
         desugarExpression(
-          problem, cas.expr, symbolTable, visibleVariables ++ variableFields)
+           cas.expr, visibleVariables ++ variableFields)
       case _ => throw new IllegalStateException()
     }
   }
 
   private def expandDefaultPattern(
-    tipProblem: TipSmtProblem,
     tipSmtMatch:      TipSmtMatch,
-    symbolTable:      SymbolTable,
     visibleVariables: Seq[String] ): Unit =  {
     val TipSmtMatch( matchedExpression, cases) = tipSmtMatch
     val Some( matchedType ) = tipSmtMatch.expr.datatype
     val coveredConstructors: Seq[String] =
       coveredConstrs(cases,symbolTable)
     val missingConstructors =
-      retrieveDatatypes(tipProblem, matchedType.name)
+      retrieveDatatypes(problem, matchedType.name)
         .constructors
           .filter {
             constructor => ! coveredConstructors.contains(constructor.name)
