@@ -69,11 +69,15 @@ case class TipSmtFormalParameter(
 
 case class TipSmtCheckSat() extends TipSmtCommand
 
-sealed trait TipSmtExpression extends TipSmtAst
+case class Datatype( name: String )
+
+sealed trait TipSmtExpression extends TipSmtAst {
+  var datatype: Option[Datatype] = None
+}
 
 case class TipSmtMatch(
     expr:  TipSmtExpression,
-    cases: Seq[TipSmtCase] ) extends TipSmtExpression
+    var cases: Seq[TipSmtCase] ) extends TipSmtExpression
 
 case class TipSmtCase(
     pattern: TipSmtPattern,
@@ -128,7 +132,7 @@ case class TipSmtFun(
 
 case class TipSmtVariableDecl(
     name: String,
-    typ:  TipSmtType ) extends TipSmtExpression
+    typ:  TipSmtType )
 
 case class TipSmtParserException(
     message: String ) extends Exception( message )

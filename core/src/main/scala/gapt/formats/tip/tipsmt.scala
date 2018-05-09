@@ -10,6 +10,188 @@ import gapt.utils.{ ExternalProgram, NameGenerator, runProcess }
 
 import scala.collection.mutable
 
+object retrieveDatatypes {
+  def apply( problemAst: TipSmtProblem ): Seq[TipSmtDatatype] = {
+    problemAst.definitions flatMap {
+      _ match {
+        case TipSmtDatatypesDeclaration( datatypes ) => datatypes
+        case _                                       => Seq()
+      }
+    }
+  }
+  def apply( problemAst: TipSmtProblem, datatype: String): TipSmtDatatype = {
+    println(datatype)
+    apply(problemAst).find( _.name == datatype ).get
+  }
+}
+
+case class Type(
+    argumentTypes: Seq[Datatype],
+    returnType:    Datatype )
+
+case class SymbolTable(
+    symbols: Map[String, Type] )
+
+object computeSymbolTable {
+  def apply( tipSmtProblem: TipSmtProblem ): SymbolTable = {
+    var symbols: Map[String, Type] = Map()
+    tipSmtProblem.definitions foreach {
+      _ match {
+        case TipSmtFunctionDeclaration(
+          functionName, _, argumentTypes, returnType
+          ) =>
+          val argTypes = argumentTypes.map {
+            argType => Datatype( argType.typename )
+          }
+          symbols +=
+            ( functionName -> Type( argTypes, Datatype( returnType.typename ) ) )
+
+        case TipSmtFunctionDefinition(
+          functionName, _, formalParameters, returnType, _
+          ) =>
+          val argTypes = formalParameters map { param =>
+            Datatype( param.typ.typename )
+          }
+          symbols +=
+            ( functionName -> Type( argTypes, Datatype( returnType.typename ) ) )
+
+        case TipSmtConstantDeclaration( constantName, _, typ ) =>
+          symbols += ( constantName -> Type( Seq(), Datatype( typ.typename ) ) )
+
+        case TipSmtDatatypesDeclaration( datatypes ) =>
+          datatypes.foreach { symbols ++= datatypeSymbols( _ ) }
+
+        case _ =>
+      }
+    }
+    SymbolTable( symbols )
+  }
+
+  private def datatypeSymbols(
+    tipSmtDatatype: TipSmtDatatype ): Map[String, Type] = {
+    val symbols: Seq[( String, Type )] =
+      tipSmtDatatype.constructors map {
+        case TipSmtConstructor( constructorName, _, fields ) =>
+          val fieldTypes: Seq[Datatype] = fields map {
+            field => Datatype( field.typ.typename )
+          }
+          constructorName -> Type(
+            fieldTypes, Datatype( tipSmtDatatype.name ) )
+      }
+    Map( symbols: _* )
+  }
+}
+
+object reconstructDatatypes {
+
+  def apply( tipProblem: TipSmtProblem ): TipSmtProblem = {
+    val symbolTable = computeSymbolTable( tipProblem )
+    tipProblem.definitions foreach {
+      case TipSmtFunctionDefinition( _, _, parameters, _, body ) =>
+        val context = parameters map {
+          case TipSmtFormalParameter( name, typ ) =>
+            name -> Datatype( typ.typename )
+        }
+        reconstructTypes( body, symbolTable, Map( context: _* ) )
+      case TipSmtAssertion( _, expression ) =>
+        reconstructTypes( expression, symbolTable, Map() )
+      case TipSmtGoal( _, expression ) =>
+        reconstructTypes( expression, symbolTable, Map() )
+      case _ =>
+    }
+    tipProblem
+  }
+
+  private def reconstructTypes(
+    expression:  TipSmtExpression,
+    symbolTable: SymbolTable,
+    variables:   Map[String, Datatype] ): Unit = expression match {
+    case TipSmtAnd( subexpressions ) =>
+      subexpressions foreach { reconstructTypes( _, symbolTable, variables ) }
+      expression.datatype = Some( Datatype( "bool" ) )
+    case TipSmtOr( subexpressions ) =>
+      subexpressions foreach { reconstructTypes( _, symbolTable, variables ) }
+      expression.datatype = Some( Datatype( "bool" ) )
+    case TipSmtImp( subexpressions ) =>
+      subexpressions foreach { reconstructTypes( _, symbolTable, variables ) }
+      expression.datatype = Some( Datatype( "bool" ) )
+    case TipSmtNot( subexpression ) =>
+      reconstructTypes( subexpression, symbolTable, variables )
+      expression.datatype = Some( Datatype( "bool" ) )
+    case TipSmtForall( vars, subexpression ) =>
+      val context: Seq[( String, Datatype )] = vars map {
+        v =>
+          v.name -> Datatype( v.typ.typename )
+      }
+      reconstructTypes(
+        subexpression, symbolTable, Map( context: _* ) ++ variables )
+      expression.datatype = Some( Datatype( "bool" ) )
+
+    case TipSmtExists( vars, subexpression ) =>
+      val context: Seq[( String, Datatype )] = vars map {
+        v =>
+          v.name -> Datatype( v.typ.typename )
+      }
+      reconstructTypes(
+        subexpression, symbolTable, Map( context: _* ) ++ variables )
+      expression.datatype = Some( Datatype( "bool" ) )
+
+    case TipSmtIdentifier( identifier ) =>
+      expression.datatype = Some( variables
+        .getOrElse( identifier, symbolTable.symbols( identifier ).returnType ) )
+
+    case TipSmtFun( functionName, arguments ) =>
+      arguments foreach { arg => reconstructTypes( arg, symbolTable, variables ) }
+      expression.datatype = Some( symbolTable.symbols( functionName ).returnType )
+
+    case TipSmtTrue =>
+      expression.datatype = Some( Datatype( "bool" ) )
+
+    case TipSmtFalse =>
+      expression.datatype = Some( Datatype( "bool" ) )
+
+    case TipSmtIte( expr1, expr2, expr3 ) =>
+      reconstructTypes( expr1, symbolTable, variables )
+      reconstructTypes( expr3, symbolTable, variables )
+      reconstructTypes( expr3, symbolTable, variables )
+      expression.datatype = expr2.datatype
+
+    case TipSmtEq( subexpressions ) =>
+      subexpressions foreach { reconstructTypes( _, symbolTable, variables ) }
+      expression.datatype = Some( Datatype( "bool" ) )
+
+    case TipSmtMatch( expr, cases ) =>
+      reconstructTypes( expr, symbolTable, variables )
+      cases foreach {
+        reconstructTypesCase( expr.datatype.get, _, symbolTable, variables )
+      }
+      expression.datatype = cases.head.expr.datatype
+  }
+
+  private def reconstructTypesCase(
+    matchedType: Datatype,
+    tipSmtCase:  TipSmtCase,
+    symbolTable: SymbolTable,
+    variables:   Map[String, Datatype] ): Unit = {
+    tipSmtCase.pattern match {
+      case TipSmtDefault =>
+        reconstructTypes( tipSmtCase.expr, symbolTable, variables )
+      case TipSmtConstructorPattern( constructor, identifiers ) =>
+        val constructorType = symbolTable.symbols( constructor.name )
+        val matchVariables = identifiers.zipWithIndex.filter {
+          case ( identifier, _ ) =>
+            !symbolTable.symbols.contains( identifier.name )
+        }
+        val context = matchVariables map {
+          case ( identifier, index ) =>
+            ( identifier.name, constructorType.argumentTypes( index ) )
+        }
+        reconstructTypes(
+          tipSmtCase.expr, symbolTable, Map( context: _* ) ++ variables )
+    }
+  }
+}
+
 class TipSmtParser {
   var ctx = Context()
 
