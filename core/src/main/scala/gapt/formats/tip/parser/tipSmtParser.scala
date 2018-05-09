@@ -76,7 +76,7 @@ sealed trait TipSmtExpression extends TipSmtAst {
 }
 
 case class TipSmtMatch(
-    expr:  TipSmtExpression,
+    expr:      TipSmtExpression,
     var cases: Seq[TipSmtCase] ) extends TipSmtExpression
 
 case class TipSmtCase(
