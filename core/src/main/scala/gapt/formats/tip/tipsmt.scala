@@ -192,6 +192,138 @@ object reconstructDatatypes {
   }
 }
 
+object tipSmtDesugar {
+
+  def apply(tipProblem: TipSmtProblem): Unit = {
+    val symbolTable = computeSymbolTable(tipProblem)
+    tipProblem.definitions foreach {
+      case TipSmtFunctionDefinition(_,_,parameters,_,body) =>
+        val context = parameters map {
+          _.name
+        }
+        desugarExpression(tipProblem, body, symbolTable, context)
+      case TipSmtGoal(_, expression) =>
+        desugarExpression(tipProblem, expression, symbolTable, Seq())
+      case TipSmtAssertion(_, expression) =>
+        desugarExpression(tipProblem, expression, symbolTable, Seq())
+      case _ =>
+    }
+  }
+
+  private def desugarExpression(
+    problem: TipSmtProblem,
+    expr: TipSmtExpression,
+    symbolTable: SymbolTable,
+    visibleVariables: Seq[String]): Unit = expr match {
+    case TipSmtAnd( subexpressions ) =>
+      subexpressions foreach {
+        desugarExpression(problem, _, symbolTable, visibleVariables)
+      }
+    case TipSmtOr( subexpressions ) =>
+      subexpressions foreach {
+        desugarExpression(problem, _, symbolTable, visibleVariables)
+      }
+    case TipSmtImp( subexpressions ) =>
+      subexpressions foreach {
+        desugarExpression(problem, _, symbolTable, visibleVariables)
+      }
+    case TipSmtFun(_, arguments ) =>
+      arguments foreach {
+        desugarExpression(problem, _, symbolTable, visibleVariables)
+      }
+    case TipSmtForall( vars, subexpression) =>
+      desugarExpression(
+        problem,
+        subexpression,
+        symbolTable,
+        visibleVariables ++ vars.map(_.name))
+    case TipSmtExists( vars, subexpression) =>
+      desugarExpression(
+        problem,
+        subexpression,
+        symbolTable,
+        visibleVariables ++ vars.map(_.name))
+    case matchExpr @ TipSmtMatch(_, _) =>
+      expandDefaultPattern(problem, matchExpr, symbolTable, visibleVariables)
+      matchExpr.cases foreach {
+        desugarCaseStatement(problem, _,  symbolTable, visibleVariables)
+      }
+    case TipSmtIte( expr1, expr2, expr3) =>
+      desugarExpression(problem, expr1, symbolTable, visibleVariables)
+      desugarExpression(problem, expr2, symbolTable, visibleVariables)
+      desugarExpression(problem, expr3, symbolTable, visibleVariables)
+    case _ =>
+  }
+
+  private def desugarCaseStatement(
+    problem: TipSmtProblem,
+    cas: TipSmtCase,
+    symbolTable: SymbolTable,
+    visibleVariables: Seq[String]): Unit = {
+    cas.pattern match {
+      case TipSmtConstructorPattern( _, fields) =>
+        val variableFields =
+          fields map { _.name } filter { ! symbolTable.symbols.contains( _ ) }
+        desugarExpression(
+          problem, cas.expr, symbolTable, visibleVariables ++ variableFields)
+      case _ => throw new IllegalStateException()
+    }
+  }
+
+  private def expandDefaultPattern(
+    tipProblem: TipSmtProblem,
+    tipSmtMatch:      TipSmtMatch,
+    symbolTable:      SymbolTable,
+    visibleVariables: Seq[String] ): Unit =  {
+    val TipSmtMatch( matchedExpression, cases) = tipSmtMatch
+    val Some( matchedType ) = tipSmtMatch.expr.datatype
+    val coveredConstructors: Seq[String] =
+      coveredConstrs(cases,symbolTable)
+    val missingConstructors =
+      retrieveDatatypes(tipProblem, matchedType.name)
+        .constructors
+          .filter {
+            constructor => ! coveredConstructors.contains(constructor.name)
+          }
+    val defaultExpr = cases.filter {
+      case TipSmtCase(TipSmtDefault,_) => true
+      case _ => false
+    }.head.expr
+    val generatedCases = missingConstructors map {
+      generateCase(_, visibleVariables, defaultExpr )
+    }
+    tipSmtMatch.cases = tipSmtMatch.cases filter { _.pattern != TipSmtDefault }
+    tipSmtMatch.cases ++= generatedCases
+  }
+
+  private def generateCase(
+    tipSmtConstructor: TipSmtConstructor,
+    visibleVariables: Seq[String],
+    defaultExpression: TipSmtExpression): TipSmtCase = {
+    val nameGenerator = new NameGenerator(visibleVariables)
+    TipSmtCase(
+      TipSmtConstructorPattern(
+        TipSmtIdentifier(tipSmtConstructor.name),
+        tipSmtConstructor.fields.map{
+          _ => TipSmtIdentifier(nameGenerator.fresh("x"))}),
+      defaultExpression
+    )
+  }
+
+  private def coveredConstrs(
+    cases: Seq[TipSmtCase], symbolTable: SymbolTable): Seq[String] = {
+    cases map {_.pattern } filter {
+      case TipSmtDefault => false
+      case TipSmtConstructorPattern(constructor,_) =>
+        symbolTable.symbols.contains(constructor.name)
+    } map {
+      case TipSmtConstructorPattern(constructor,_) =>
+        constructor.name
+      case _ => throw new IllegalStateException()
+    }
+  }
+}
+
 class TipSmtParser {
   var ctx = Context()
 
