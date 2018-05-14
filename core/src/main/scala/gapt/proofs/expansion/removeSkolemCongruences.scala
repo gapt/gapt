@@ -35,7 +35,7 @@ object removeSkolemCongruences {
     }
 
   def remove1( m: Map[Expr, Expr], ep: ExpansionProof ): ExpansionProof =
-    eliminateMerges( ExpansionProof( ep.expansionSequent.
+    ExpansionProof( eliminateMerges.unsafe( ep.expansionSequent.
       map( et => ETMerge( et, repl( m, et, et.shallow ) ) ) ) )
 
   def getAllPossibleCongruences( ep: ExpansionProof ): Vector[( Expr, Expr )] = {
