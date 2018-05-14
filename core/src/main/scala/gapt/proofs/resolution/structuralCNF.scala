@@ -187,7 +187,7 @@ class Clausifier(
   // both the abbreviated sequent, and (the necessary part of) the definition.
   def abbrev( p: ResolutionProof, i: SequentIndex ): DefIntro = {
     val f = p.conclusion( i )
-    val fvs = if ( propositional ) Nil else freeVariables( f ).toList
+    val fvs = freeVariables( f ).toList
     val definedFormula = Abs( fvs, f )
     val const = defs.getOrElseUpdate( definedFormula, ctx.addDefinition( definedFormula, mkAbbrevSym() ).asInstanceOf[HOLAtomConst] )
     expandDef( const, fvs, i.polarity )
