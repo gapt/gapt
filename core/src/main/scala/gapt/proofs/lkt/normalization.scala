@@ -84,12 +84,13 @@ class Normalizer[LC <: ALCtx[LC]]( skipCut: Formula => Boolean ) {
     case Link( _, _ ) => p
   }
 
-  def normalizeWithInduction( p: LKt, lctx: LC, simpAdapter: SimpAdapter )( implicit ctx: Context ): LKt = {
-    val p2 = normalize( p, lctx )
+  def normalizeWithInduction( p: LKt, lctx: LC, realLCtx: LocalCtx, simpAdapter: SimpAdapter )( implicit ctx: Context ): LKt = {
+    val p1 = atomizeEquality( p, realLCtx )
+    val p2 = normalize( p1, lctx )
     unfoldInduction( p2, simpAdapter ) match {
       case Some( p3 ) =>
         doCheck( p3, lctx )
-        normalizeWithInduction( p3, lctx, simpAdapter )
+        normalizeWithInduction( p3, lctx, realLCtx, simpAdapter )
       case None =>
         p2
     }
@@ -172,10 +173,10 @@ class normalize {
     val simpAdapter = if ( !useSimp ) NoopSimpAdapter else SimplifierSimpAdapter(
       Simplifier( SimpLemmas.collectFromAnt( lctx.toSequent ).toSeq :+ QPropSimpProc ), lctx )
     if ( debugging )
-      new NormalizerWithDebugging().normalizeWithInduction( p, lctx, simpAdapter )
+      new NormalizerWithDebugging().normalizeWithInduction( p, lctx, lctx, simpAdapter )
     else
       new Normalizer[FakeLocalCtx]( skipCut ) {}.
-        normalizeWithInduction( p, FakeLocalCtx, simpAdapter )
+        normalizeWithInduction( p, FakeLocalCtx, lctx, simpAdapter )
   }
   def inductionWithDebug( p: LKProof )( implicit ctx: Context ): LKt = {
     val ( lkt, lctx ) = LKToLKt( p )
