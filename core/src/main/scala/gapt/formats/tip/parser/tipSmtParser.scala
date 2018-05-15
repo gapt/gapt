@@ -687,6 +687,8 @@ object TipSmtParser {
       TipSmtEq( exprs map { parseExpression( _ ) } )
     case LFun( "=>", exprs @ _* ) =>
       TipSmtImp( exprs map { parseExpression( _ ) } )
+    case LFun( "not", expr ) =>
+      TipSmtNot( parseExpression(expr) )
     case LSymbol( name ) =>
       TipSmtIdentifier( name )
     case LFun( name, args @ _* ) =>
