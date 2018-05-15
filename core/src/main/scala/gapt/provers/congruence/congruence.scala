@@ -65,8 +65,8 @@ final class MutCC private (
       repr = repr ++ ( n until newN ),
       klass = klass ++ ( n until newN ).view.map( i => Vector( i ) ),
       use = use ++ ( n until newN ).view.map( _ => Vector.empty[Eqn] ),
-      lookup = lookup,
-      pending = pending,
+      lookup = lookup.clone(),
+      pending = pending.clone(),
       parent = parent ++ ( n until newN ),
       reason = reason ++ ( n until newN ).view.map( _ => null ) )
 
