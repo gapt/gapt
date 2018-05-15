@@ -20,6 +20,11 @@ object MutCC {
   }
 }
 
+/**
+ * Congruence closure implementation closely following [1]
+ *
+ * [1] R. Nieuwenhuis and A. Oliveras, Fast congruence closure and extensions, Information and Computation 205.4 (2007), 557-580.
+ */
 final class MutCC private (
     val n:       Int,
     val repr:    Array[Int],
