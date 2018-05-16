@@ -127,6 +127,8 @@ object ClassicalExtraction {
     if ( !freeVariables( res ).isEmpty ) {
       //throw new Exception( s"free variables: ${freeVariables( res )}" )
     }
+    println( res )
+    println( permuteEM( res ) )
     res
   }
 
@@ -138,14 +140,14 @@ object ClassicalExtraction {
           val s = extractCases( subProof, ng )
           val v = getVar( "v", formula, ng ) //Var( ng.fresh( "y" ), flat( formula ) )
           val res = v +: s
-          println( "Weakening, fresh " + v )
+          //println( "Weakening, fresh " + v )
           res
 
         case ContractionRule( subProof, aux1, aux2 ) =>
           val s = extractCases( subProof, ng )
           val v = s( aux1 )
           val res = v +: s.delete( List( aux1, aux2 ) )
-          println( "Contraction" )
+          //println( "Contraction" )
           res
 
         /*
@@ -154,7 +156,7 @@ object ClassicalExtraction {
           val a = Var( ng.fresh( "a" ), flat( formula ) )
           val h = Const( ng.fresh( "H" ), flat( formula ) )
           val res = a +: Sequent() :+ h
-          println( "Axiom All " + formula + ", fresh a " + a + " fresh H " + h )
+          //println( "Axiom All " + formula + ", fresh a " + a + " fresh H " + h )
           res
 
         case LogicalAxiom( formula @ Ex( x, Neg( f ) ) ) if x.ty == ty"i" =>
@@ -162,14 +164,14 @@ object ClassicalExtraction {
           val a = Var( ng.fresh( "a" ), flat( formula ) )
           val w = Const( ng.fresh( "W" ), flat( formula ) )
           val res = a +: Sequent() :+ w
-          println( "Axiom Ex Neg " + formula + ", fresh a " + a + " fresh W " + w )
+          //println( "Axiom Ex Neg " + formula + ", fresh a " + a + " fresh W " + w )
           res
 
         case LogicalAxiom( formula ) if !containsQuantifierOnLogicalLevel( formula ) =>
           val a = Var( ng.fresh( "a" ), flat( formula ) )
           val h = Const( ng.fresh( "H" ), flat( formula ) )
           val res = a +: Sequent() :+ h
-          println( "LogicalAxiom propositional " + formula + ", fresh a " + a + " fresh H " + h )
+          //println( "LogicalAxiom propositional " + formula + ", fresh a " + a + " fresh H " + h )
           res
         */
 
@@ -177,19 +179,19 @@ object ClassicalExtraction {
           //val v = Var( ng.fresh( "v" ), flat( formula ) )
           val v = getVar( "v", formula, ng ) //Var( ng.fresh( "y" ), flat( formula ) )
           val res = v +: Sequent() :+ v
-          println( "LogicalAxiom " + formula + ", fresh v " + v )
+          //println( "LogicalAxiom " + formula + ", fresh v " + v )
           res
 
         case AndElim1Rule( subProof ) =>
           val s = extractCases( subProof, ng )
           val res = s.replaceAt( Suc( 0 ), le"pi1(${s( Suc( 0 ) )})" )
-          println( "AndElim1" )
+          //println( "AndElim1" )
           res
 
         case AndElim2Rule( subProof ) =>
           val s = extractCases( subProof, ng )
           val res = s.replaceAt( Suc( 0 ), le"pi2(${s( Suc( 0 ) )})" )
-          println( "AndElim2" )
+          //println( "AndElim2" )
           res
 
         case AndIntroRule( leftSubProof, rightSubProof ) =>
@@ -197,7 +199,7 @@ object ClassicalExtraction {
           val r = extractCases( rightSubProof, ng )
           // TODO: order
           val res = l.antecedent ++: r.antecedent ++: Sequent() :+ le"pair(${l( Suc( 0 ) )},${r( Suc( 0 ) )})"
-          println( "AndIntro" )
+          //println( "AndIntro" )
           res
 
         case OrElimRule( leftSubProof, middleSubProof, aux1, rightSubProof, aux2 ) =>
@@ -215,7 +217,7 @@ object ClassicalExtraction {
             },${
               Abs( varB, r( Suc( 0 ) ) )
             })"
-          println( "OrElim" )
+          //println( "OrElim" )
           res
 
         case OrIntro1Rule( subProof, rightDisjunct ) =>
@@ -224,7 +226,7 @@ object ClassicalExtraction {
           val inl = systemT.constant( "inl", List( leftType, rightType ) ).get
           val s = extractCases( subProof, ng )
           val res = s.replaceAt( Suc( 0 ), inl( s( Suc( 0 ) ) ) )
-          println( "OrIntro1" )
+          //println( "OrIntro1" )
           res
 
         case OrIntro2Rule( subProof, leftDisjunct ) =>
@@ -233,7 +235,7 @@ object ClassicalExtraction {
           val inr = systemT.constant( "inr", List( leftType, rightType ) ).get
           val s = extractCases( subProof, ng )
           val res = s.replaceAt( Suc( 0 ), inr( s( Suc( 0 ) ) ) )
-          println( "OrIntro2" )
+          //println( "OrIntro2" )
           res
 
         case ImpElimRule( leftSubProof, rightSubProof ) =>
@@ -241,7 +243,7 @@ object ClassicalExtraction {
           val r = extractCases( rightSubProof, ng )
 
           val res = l.antecedent ++: r.antecedent ++: Sequent() :+ App( l( Suc( 0 ) ), r( Suc( 0 ) ) )
-          println( "ImpElim" )
+          //println( "ImpElim" )
           res
 
         case ImpIntroRule( subProof, aux ) =>
@@ -260,14 +262,14 @@ object ClassicalExtraction {
           */
           //println( "ImpIntro deleting: " + s( aux ) + " of type " + s( aux ).ty )
           val res = s.delete( aux ).antecedent ++: Sequent() :+ Abs( extraVar, s( Suc( 0 ) ) )
-          println( "ImpIntro" )
+          //println( "ImpIntro" )
           res
 
         case NegElimRule( leftSubProof, rightSubProof ) =>
           val l = extractCases( leftSubProof, ng )
           val r = extractCases( rightSubProof, ng )
           val res = l.antecedent ++: r.antecedent ++: Sequent() :+ App( l( Suc( 0 ) ), r( Suc( 0 ) ) )
-          println( "NegElim" )
+          //println( "NegElim" )
           res
 
         // TODO: I think NegIntroRule should produce a term of type ?a > (exn ?a)
@@ -275,7 +277,7 @@ object ClassicalExtraction {
           val s = extractCases( subProof, ng )
           val extraVar = s( aux ).asInstanceOf[Var]
           val res = s.delete( aux ).antecedent ++: Sequent() :+ Abs( extraVar, s( Suc( 0 ) ) )
-          println( "NegIntro" )
+          //println( "NegIntro" )
           res
         /*
         val extraVar = Var( "z", flat( subProof.conclusion( aux ) ) )
@@ -320,25 +322,25 @@ object ClassicalExtraction {
           // TODO reverse makes App in ExcludedMiddle realizer fail (example7)
           //Abs( variablesAntConclusion( proof ).reverse, raise( App( subProofRealizer, variablesAntPremise( proof, 0 ) ) ) )
           val res = s.replaceAt( Suc( 0 ), efq( s( Suc( 0 ) ) ) )
-          println( "BottomElim" )
+          //println( "BottomElim" )
           res
 
         case ForallIntroRule( subProof, eigenVariable, quantifiedVariable ) =>
           val s = extractCases( subProof, ng )
           val res = s.replaceAt( Suc( 0 ), Abs( eigenVariable, s( Suc( 0 ) ) ) )
-          println( "AllIntro" )
+          //println( "AllIntro" )
           res
 
         case ForallElimRule( subProof, term ) =>
           val s = extractCases( subProof, ng )
           val res = s.replaceAt( Suc( 0 ), App( s( Suc( 0 ) ), term ) )
-          println( "AllElim" )
+          //println( "AllElim" )
           res
 
         case ExistsIntroRule( subProof, formula, term, variable ) =>
           val s = extractCases( subProof, ng )
           val res = s.replaceAt( Suc( 0 ), le"pair($term,${s( Suc( 0 ) )})" )
-          println( "ExIntro" )
+          //println( "ExIntro" )
           res
 
         case ExistsElimRule( leftSubProof, rightSubProof, aux, eigenVariable ) =>
@@ -351,7 +353,7 @@ object ClassicalExtraction {
           val extraVar = r( aux ).asInstanceOf[Var]
           val sub2 = Substitution( extraVar, le"pi2(${l( Suc( 0 ) )})" )
           val res = l.antecedent ++: r.delete( aux ).antecedent ++: Sequent() :+ sub1( sub2( r( Suc( 0 ) ) ) )
-          println( "ExElim extraVar " + extraVar )
+          //println( "ExElim extraVar " + extraVar )
           res
 
         // only to be used when mainFormula is an equation
@@ -359,7 +361,7 @@ object ClassicalExtraction {
           // TODO
           //???
           val res = Sequent() :+ le"i"
-          println( "TheoryAxiom" )
+          //println( "TheoryAxiom" )
           res
 
         case EqualityElimRule( leftSubProof, rightSubProof, formulaA, variablex ) =>
@@ -369,14 +371,14 @@ object ClassicalExtraction {
           val l = extractCases( leftSubProof, ng )
           val r = extractCases( rightSubProof, ng )
           val res = l.antecedent ++: r.antecedent ++: Sequent() :++ r.succedent
-          println( "EqElim" )
+          //println( "EqElim" )
           res
 
         case EqualityIntroRule( term ) =>
           // TODO
           //???
           val res = Sequent() :+ le"i"
-          println( "EqIntro" )
+          //println( "EqIntro" )
           res
 
         // Works only for the type of natural numbers at the moment
@@ -400,14 +402,14 @@ object ClassicalExtraction {
           println( "cases 1: " + cases( 1 ).proof.endSequent )
           */
           val res = baseCase.antecedent ++: inductionCaseDel.antecedent ++: Sequent() :+
-            le"iRec(${baseCase( Suc( 0 ) )},${Abs( cases( 1 ).eigenVars, Abs( varsH, inductionCase( Suc( 0 ) ) ) )},$term)"
-          println( "InductionRule" )
+            le"iRec(${baseCase( Suc( 0 ) )})(${Abs( cases( 1 ).eigenVars, Abs( varsH, inductionCase( Suc( 0 ) ) ) )})($term)"
+          //println( "InductionRule" )
           res
 
         // assuming that the definitionrule is applied according to rewrite rules of the original context
         case DefinitionRule( subProof, mainFormula ) =>
           val res = extractCases( subProof, ng )
-          println( "DefinitionRule" )
+          //println( "DefinitionRule" )
           res
 
         case ExcludedMiddleRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
@@ -540,6 +542,26 @@ object ClassicalExtraction {
     case Neg( subformula )                => flat( subformula ) ->: ty"exn" //TBase( "exn", flat( subformula ) ) //flat( Imp( subformula, Bottom() ) )
     case Ex( variable, subformula )       => TBase( "conj", variable.ty, flat( subformula ) )
     case All( variable, subformula )      => variable.ty ->: flat( subformula )
+  }
+
+  def permuteEM( term: Expr )( implicit ctx: Context ): Expr = {
+    term match {
+      case App( App( App( App( Const( "bar2", _, _ ), p ), u ), v ), w ) =>
+        val wPermuted = permuteEM( w )
+        le"bar2 $p (${permuteEM( u )}$wPermuted) (${permuteEM( v )}$wPermuted)"
+      case App( Const( "pi1", _, _ ), App( App( App( Const( "bar2", _, _ ), p ), u ), v ) ) =>
+        le"bar2 $p (pi1 ${permuteEM( u )}) (pi1 ${permuteEM( v )})"
+      case App( Const( "pi2", _, _ ), App( App( App( Const( "bar2", _, _ ), p ), u ), v ) ) =>
+        le"bar2 $p (pi2 ${permuteEM( u )}) (pi2 ${permuteEM( v )})"
+      case App( App( App( Const( "matchSum", _, _ ), App( App( App( Const( "bar2", _, _ ), p ), u ), v ) ), x ), y ) =>
+        val uPermuted = permuteEM( u )
+        val vPermuted = permuteEM( v )
+        val xPermuted = permuteEM( x )
+        val yPermuted = permuteEM( y )
+        le"bar2 $p (matchSum $uPermuted $xPermuted $yPermuted) (matchSum $vPermuted $xPermuted $yPermuted)"
+      // Last case described in Federico's paper handled by substitution in ExistsElimRule case of extraction
+      case _ => term
+    }
   }
 
   // removes all occurences of the empty program i : 1 from term, or is i : 1 itself,

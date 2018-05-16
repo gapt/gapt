@@ -7,6 +7,7 @@ import gapt.expr.{ TBase, _ }
 import gapt.proofs.{ Ant, Checkable, Context, Sequent, Suc }
 import gapt.proofs.Context.{ InductiveType, PrimRecFun }
 import gapt.proofs.lk._
+import org.sat4j.pb.tools.DisjunctionRHS
 
 object example1 extends Script {
 
@@ -169,10 +170,10 @@ object example9 extends Script {
 
   implicit var ctx = Context()
   ctx += InductiveType(
-    ty"nat",
-    hoc"0 : nat",
-    hoc"s : nat > nat" )
-  ctx += hoc"P: nat > o"
+    ty"i",
+    hoc"0 : i",
+    hoc"s : i > i" )
+  ctx += hoc"P: i > o"
 
   val p = gapt.proofs.nd.ProofBuilder.
     c( gapt.proofs.nd.LogicalAxiom( hof"?x P x" ) ).
@@ -180,6 +181,11 @@ object example9 extends Script {
     c( gapt.proofs.nd.LogicalAxiom( hof"-(?x P x)" ) ).
     u( OrIntro2Rule( _, hof"?x P x" ) ).
     b( ExcludedMiddleRule( _, Ant( 0 ), _, Ant( 0 ) ) ).
+    c( gapt.proofs.nd.LogicalAxiom( hof"?x P x" ) ).
+    u( OrIntro1Rule( _, hof"-(?x P x)" ) ).
+    c( gapt.proofs.nd.LogicalAxiom( hof"-(?x P x)" ) ).
+    u( OrIntro2Rule( _, hof"?x P x" ) ).
+    t( OrElimRule( _, _, _ ) ).
     qed
   classicalExtractionTest( p )
 }
