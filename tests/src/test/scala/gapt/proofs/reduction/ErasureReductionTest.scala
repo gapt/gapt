@@ -63,6 +63,13 @@ class ErasureReductionTest extends Specification with SatMatchers {
 
     red.back( firstOrderEP, sequent ).deep must beValidSequent
   }
+
+  "strong quantifiers" in {
+    Escargot.withDeskolemization.extendToManySortedViaErasure.
+      getExpansionProof( hof"!x P(x:nat) -> !x P(x)" ).
+      get.deep must beEValidSequent
+    ok
+  }
 }
 
 class ReductionTest extends Specification {
