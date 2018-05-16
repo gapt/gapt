@@ -830,7 +830,12 @@ object find {
   }
 }
 
-class TipSmtParser {
+class TipSmtParser( problem: TipSmtProblem ) {
+
+  val symbolTable = computeSymbolTable( problem )
+
+  ( new ReconstructDatatypes( problem ) )()
+
   var ctx = Context()
 
   val typeDecls = mutable.Map[String, TBase]()
@@ -1020,10 +1025,17 @@ class TipSmtParser {
 
   def compileExpression(
     expr: TipSmtExpression, freeVars: Map[String, Expr] ): Expr = expr match {
-    case TipSmtIdentifier( name ) if freeVars contains name => freeVars( name )
-    case TipSmtFalse                                        => Bottom()
-    case TipSmtTrue                                         => Top()
-    case TipSmtIdentifier( name )                           => funDecls( name )
+    case TipSmtIdentifier( name ) if freeVars contains name =>
+      freeVars( name )
+
+    case TipSmtFalse =>
+      Bottom()
+
+    case TipSmtTrue =>
+      Top()
+
+    case TipSmtIdentifier( name ) =>
+      funDecls( name )
 
     case TipSmtForall( variables, formula ) =>
       val vars = variables map {
@@ -1068,6 +1080,71 @@ class TipSmtParser {
 
     case TipSmtFun( name, args ) =>
       funDecls( name )( args map { compileExpression( _, freeVars ) }: _* )
+
+    case TipSmtIte( cond, ifTrue, ifFalse ) =>
+      val compiledCondition = compileExpression( cond, freeVars )
+      And(
+        ( compiledCondition --> compileExpression( ifTrue, freeVars ) ),
+        ( -compiledCondition --> compileExpression( ifFalse, freeVars ) ) )
+
+    case TipSmtMatch( matchedExpression, cases ) =>
+      val compiledMatchedExpression =
+        compileExpression( matchedExpression, freeVars )
+
+      And( cases map {
+        compileCase( _, compiledMatchedExpression, freeVars )
+      } )
+
+  }
+
+  private def compileCase(
+    tipSmtCase:        TipSmtCase,
+    matchedExpression: Expr,
+    freeVars:          Map[String, Expr] ): Expr = {
+    val TipSmtConstructorPattern( constructor, fields ) = tipSmtCase.pattern
+    val constructorType = symbolTable.symbols( constructor.name )
+    val boundVariables =
+      fields
+        .zip( constructorType.argumentTypes )
+        .filter { case ( field, _ ) => isVariable( field ) }
+        .map { case ( field, ty ) => Var( field.name, typeDecls( ty.name ) ) }
+
+    val newFreeVars = freeVars ++ boundVariables.map { v => v.name -> v }
+
+    val compiledPattern =
+      Apps(
+        compileConstructorSymbol( constructor ),
+        compileFields( fields.zip( constructorType.argumentTypes ) ) )
+
+    All.Block(
+      boundVariables,
+      ( matchedExpression === compiledPattern ) -->
+        compileExpression( tipSmtCase.expr, newFreeVars ) )
+  }
+
+  private def compileFields(
+    fields: Seq[( TipSmtIdentifier, Datatype )] ): Seq[Expr] = {
+    fields map {
+      case ( f, ty ) =>
+        if ( isVariable( f ) ) {
+          Var( f.name, typeDecls( ty.name ) )
+        } else {
+          Const( f.name, typeDecls( ty.name ) )
+        }
+    }
+  }
+
+  private def compileConstructorSymbol( id: TipSmtIdentifier ): Expr = {
+    val constructorType = symbolTable.symbols( id.name )
+    Const(
+      id.name,
+      FunctionType(
+        typeDecls( constructorType.returnType.name ),
+        constructorType.argumentTypes.map { dt => typeDecls( dt.name ) }.toList ) )
+  }
+
+  private def isVariable( id: TipSmtIdentifier ): Boolean = {
+    !symbolTable.symbols.keys.exists( _ == id.name )
   }
 
   private def declareBaseType( sort: String ) = {
@@ -1101,8 +1178,8 @@ class TipSmtParser {
       functions,
       assumptions, And( goals ) )
 
-  def compileTipProblem( tipProblem: TipSmtProblem ): TipSmtParser = {
-    tipProblem.definitions.map { command =>
+  def compileTipProblem(): TipSmtParser = {
+    problem.definitions.map { command =>
       command match {
         case c @ TipSmtConstantDeclaration( _, _, _ ) =>
           compileConstantDeclaration( c )
@@ -1128,8 +1205,8 @@ class TipSmtParser {
 object TipSmtParser extends ExternalProgram {
 
   def parse( tipBench: InputFile ): TipProblem = {
-    ( new TipSmtParser )
-      .compileTipProblem( parser.TipSmtParser.parse( tipBench ) )
+    ( new TipSmtParser( parser.TipSmtParser.parse( tipBench ) ) )
+      .compileTipProblem()
       .toProblem
   }
 
