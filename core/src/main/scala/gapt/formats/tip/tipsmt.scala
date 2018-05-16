@@ -240,7 +240,9 @@ class TipSmtDesugar( problem: TipSmtProblem ) {
         subexpression,
         visibleVariables ++ vars.map( _.name ) )
     case matchExpr @ TipSmtMatch( _, _ ) =>
-      expandDefaultPattern( matchExpr, visibleVariables )
+      if ( containsDefaultPattern( matchExpr ) ) {
+        expandDefaultPattern( matchExpr, visibleVariables )
+      }
       matchExpr.cases foreach {
         desugarCaseStatement( _, symbolTable, visibleVariables )
       }
@@ -263,6 +265,10 @@ class TipSmtDesugar( problem: TipSmtProblem ) {
           cas.expr, visibleVariables ++ variableFields )
       case _ => throw new IllegalStateException()
     }
+  }
+
+  private def containsDefaultPattern( tipSmtMatch: TipSmtMatch ): Boolean = {
+    tipSmtMatch.cases.exists { _.pattern == TipSmtDefault }
   }
 
   private def expandDefaultPattern(
