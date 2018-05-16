@@ -95,13 +95,13 @@ class CeresTest extends Specification with SequentMatchers with SatMatchers {
   "extraction of expansions from projections" should {
     "work for simple fol proofs" in {
       val p = fol1.proof
-      val e = CERES.CERESExpansionProof( p, Escargot )
+      val e = CERES.expansionProof( p, Escargot )
       e.deep must beValidSequent
     }
 
     "work for proofs with equality" in {
       val p = Pi2Pigeonhole.proof
-      val e = CERES.CERESExpansionProof( p, Escargot )
+      val e = CERES.expansionProof( p, Escargot )
       e.deep must beEValidSequent
     }
   }

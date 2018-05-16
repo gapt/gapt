@@ -230,7 +230,7 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
         cutNormal( q ) --? "cut-elim (cut-intro)"
         normalizeLKt.withDebug( q ) --? "lkt cut-elim (cut-intro)"
         CERES( q ) --? "CERES (cut-intro)"
-        CERES.CERESExpansionProof( q ) --? "CERESExpansionProof"
+        CERES.expansionProof( q ) --? "CERESExpansionProof"
 
         LKToExpansionProof( q ) --? "LKToExpansionProof (cut-intro)" foreach { expQ =>
           Z3.isValid( expQ.deep ) !-- "expansion tree validity with cut (cut-intro)"
