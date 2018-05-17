@@ -3,7 +3,8 @@ package gapt.provers.viper
 import ammonite.ops._
 import gapt.expr._
 import gapt.expr.fol.folTermSize
-import gapt.formats.tip.{ TipProblem, TipSmtParser }
+import gapt.formats.tip.TipProblem
+import gapt.formats.tip.TipSmtImporter
 import gapt.formats.{ InputFile, StdinInputFile }
 import gapt.grammars.InductionGrammar
 import gapt.proofs.{ HOLSequent, MutableContext }
@@ -208,7 +209,7 @@ object Viper {
   }
 
   def main( args: Array[String] ): Unit = {
-    val ( fileNames, opts ) = ViperOptions.parse( args.toList, ViperOptions( fixup = TipSmtParser.isInstalled ) )
+    val ( fileNames, opts ) = ViperOptions.parse( args.toList, ViperOptions( fixup = TipSmtImporter.isInstalled ) )
     val files = fileNames.map {
       case "-" => StdinInputFile()
       case fn  => InputFile.fromPath( FilePath( fn ) )
@@ -217,7 +218,7 @@ object Viper {
     if ( opts.mode == "help" || files.size != 1 ) return print( ViperOptions.usage )
     val file = files.head
 
-    val problem = if ( opts.fixup ) TipSmtParser.fixupAndParse( file ) else TipSmtParser.parse( file )
+    val problem = if ( opts.fixup ) TipSmtImporter.fixupAndParse( file ) else TipSmtImporter.parse( file )
     implicit val ctx: MutableContext = problem.ctx.newMutable
 
     apply( problem.toSequent, opts ) match {

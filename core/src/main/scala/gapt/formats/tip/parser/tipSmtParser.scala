@@ -1,7 +1,13 @@
 package gapt.formats.tip.parser
 
+import gapt.formats.lisp.LFun
+import gapt.formats.lisp.LKeyword
+import gapt.formats.lisp.LList
+import gapt.formats.lisp.LSymbol
+import gapt.formats.lisp.SExpression
+import gapt.formats.lisp.SExpressionParser
 import gapt.formats.{ InputFile, StringInputFile }
-import gapt.formats.lisp._
+import gapt.formats.tip.analysis.SymbolTable
 
 sealed trait TipSmtAst
 
@@ -41,7 +47,9 @@ case class TipSmtFunctionDefinition(
     body:       TipSmtExpression ) extends TipSmtCommand
 
 case class TipSmtProblem(
-    definitions: Seq[TipSmtCommand] )
+    definitions: Seq[TipSmtCommand] ) {
+  var symbolTable: Option[SymbolTable] = None
+}
 
 case class TipSmtKeyword(
     name:     String,
@@ -688,7 +696,7 @@ object TipSmtParser {
     case LFun( "=>", exprs @ _* ) =>
       TipSmtImp( exprs map { parseExpression( _ ) } )
     case LFun( "not", expr ) =>
-      TipSmtNot( parseExpression(expr) )
+      TipSmtNot( parseExpression( expr ) )
     case LSymbol( name ) =>
       TipSmtIdentifier( name )
     case LFun( name, args @ _* ) =>
