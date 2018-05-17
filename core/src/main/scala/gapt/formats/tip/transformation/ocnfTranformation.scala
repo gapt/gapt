@@ -1,6 +1,5 @@
 package gapt.formats.tip.transformation
 
-import gapt.formats.tip.find
 import gapt.formats.tip.parser.TipSmtAnd
 import gapt.formats.tip.parser.TipSmtAssertion
 import gapt.formats.tip.parser.TipSmtCase
@@ -20,6 +19,7 @@ import gapt.formats.tip.parser.TipSmtNot
 import gapt.formats.tip.parser.TipSmtOr
 import gapt.formats.tip.parser.TipSmtProblem
 import gapt.formats.tip.parser.TipSmtTrue
+import gapt.formats.tip.util.find
 import gapt.formats.tip.util.tipRename
 import gapt.formats.tip.util.freeVariables
 

@@ -9,21 +9,6 @@ import gapt.formats.tip.parser.TipSmtParser
 import gapt.utils.ExternalProgram
 import gapt.utils.runProcess
 
-object find {
-  def apply[T](
-    elements: Seq[T], p: ( T ) => Boolean ): Option[( Seq[T], T, Seq[T] )] = {
-    val index = elements.indexWhere( p )
-    if ( index == -1 ) {
-      None
-    } else {
-      Some( (
-        elements.take( index ),
-        elements( index ),
-        elements.drop( index + 1 ) ) )
-    }
-  }
-}
-
 object TipSmtImporter extends ExternalProgram {
 
   def parse( tipBench: InputFile ): TipProblem = {
