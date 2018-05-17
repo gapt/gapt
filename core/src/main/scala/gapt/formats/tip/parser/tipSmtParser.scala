@@ -6,7 +6,8 @@ import gapt.formats.lisp.LList
 import gapt.formats.lisp.LSymbol
 import gapt.formats.lisp.SExpression
 import gapt.formats.lisp.SExpressionParser
-import gapt.formats.{ InputFile, StringInputFile }
+import gapt.formats.InputFile
+import gapt.formats.StringInputFile
 import gapt.formats.tip.analysis.SymbolTable
 
 sealed trait TipSmtAst

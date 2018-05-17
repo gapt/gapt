@@ -1,6 +1,13 @@
 package gapt.formats.tip.analysis
 
-import gapt.formats.tip.parser._
+import gapt.formats.tip.parser.Datatype
+import gapt.formats.tip.parser.TipSmtConstantDeclaration
+import gapt.formats.tip.parser.TipSmtConstructor
+import gapt.formats.tip.parser.TipSmtDatatype
+import gapt.formats.tip.parser.TipSmtDatatypesDeclaration
+import gapt.formats.tip.parser.TipSmtFunctionDeclaration
+import gapt.formats.tip.parser.TipSmtFunctionDefinition
+import gapt.formats.tip.parser.TipSmtProblem
 
 object retrieveDatatypes {
   def apply( problemAst: TipSmtProblem ): Seq[TipSmtDatatype] = {

@@ -1,6 +1,22 @@
 package gapt.formats.tip.util
 
-import gapt.formats.tip.parser._
+import gapt.formats.tip.parser.TipSmtAnd
+import gapt.formats.tip.parser.TipSmtCase
+import gapt.formats.tip.parser.TipSmtConstructorPattern
+import gapt.formats.tip.parser.TipSmtEq
+import gapt.formats.tip.parser.TipSmtExists
+import gapt.formats.tip.parser.TipSmtExpression
+import gapt.formats.tip.parser.TipSmtFalse
+import gapt.formats.tip.parser.TipSmtForall
+import gapt.formats.tip.parser.TipSmtFun
+import gapt.formats.tip.parser.TipSmtIdentifier
+import gapt.formats.tip.parser.TipSmtImp
+import gapt.formats.tip.parser.TipSmtIte
+import gapt.formats.tip.parser.TipSmtMatch
+import gapt.formats.tip.parser.TipSmtNot
+import gapt.formats.tip.parser.TipSmtOr
+import gapt.formats.tip.parser.TipSmtTrue
+import gapt.formats.tip.parser.TipSmtVariableDecl
 import gapt.utils.NameGenerator
 
 object tipRename {
