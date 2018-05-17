@@ -4,7 +4,6 @@ import java.io.IOException
 
 import gapt.expr._
 import gapt.formats.tip.parser._
-import gapt.formats.tip.tipOcnf._
 import gapt.formats.{ InputFile, StringInputFile }
 import gapt.proofs.Context
 import gapt.utils.{ ExternalProgram, NameGenerator, runProcess }
@@ -45,7 +44,8 @@ object computeSymbolTable {
             argType => Datatype( argType.typename )
           }
           symbols +=
-            ( functionName -> Type( argTypes, Datatype( returnType.typename ) ) )
+            ( functionName ->
+              Type( argTypes, Datatype( returnType.typename ) ) )
 
         case TipSmtFunctionDefinition(
           functionName, _, formalParameters, returnType, _
@@ -54,7 +54,8 @@ object computeSymbolTable {
             Datatype( param.typ.typename )
           }
           symbols +=
-            ( functionName -> Type( argTypes, Datatype( returnType.typename ) ) )
+            ( functionName ->
+              Type( argTypes, Datatype( returnType.typename ) ) )
 
         case TipSmtConstantDeclaration( constantName, _, typ ) =>
           symbols += ( constantName -> Type( Seq(), Datatype( typ.typename ) ) )
@@ -144,7 +145,8 @@ class ReconstructDatatypes( problem: TipSmtProblem ) {
 
     case TipSmtFun( functionName, arguments ) =>
       arguments foreach { arg => reconstructTypes( arg, variables ) }
-      expression.datatype = Some( symbolTable.symbols( functionName ).returnType )
+      expression.datatype = Some(
+        symbolTable.symbols( functionName ).returnType )
 
     case TipSmtTrue =>
       expression.datatype = Some( Datatype( "bool" ) )
@@ -332,7 +334,11 @@ object tipRename {
     tipSmtCase: TipSmtCase,
     blacklist:  Seq[String] ): TipSmtCase = {
     val TipSmtConstructorPattern( constructor, fields ) = tipSmtCase.pattern
-    val conflictVariables = ( constructor +: fields ).map { _.name }.toSet.intersect( blacklist.toSet )
+    val conflictVariables =
+      ( constructor +: fields )
+        .map { _.name }
+        .toSet
+        .intersect( blacklist.toSet )
     awayFrom( tipSmtCase, conflictVariables.toSeq, blacklist )
   }
 
@@ -340,8 +346,10 @@ object tipRename {
     tipSmtCase: TipSmtCase,
     variables:  Seq[String],
     blacklist:  Seq[String] ): TipSmtCase = {
-    val TipSmtConstructorPattern( constructor, identifiers ) = tipSmtCase.pattern
-    val nameGenerator = new NameGenerator( constructor.name +: ( identifiers.map { _.name } ++ blacklist ) )
+    val TipSmtConstructorPattern( constructor, identifiers ) =
+      tipSmtCase.pattern
+    val nameGenerator = new NameGenerator(
+      constructor.name +: ( identifiers.map { _.name } ++ blacklist ) )
     val renaming = variables map { v => ( v, nameGenerator.fresh( v ) ) }
     renaming.foldRight( tipSmtCase )( {
       case ( ( oldName, newName ), cas ) =>
@@ -349,7 +357,10 @@ object tipRename {
     } )
   }
 
-  def apply( expr: TipSmtExpression, oldName: String, newName: String ): TipSmtExpression = {
+  def apply(
+    expr:    TipSmtExpression,
+    oldName: String,
+    newName: String ): TipSmtExpression = {
     expr match {
       case expr @ TipSmtAnd( _ ) =>
         TipSmtAnd( expr.exprs map { tipRename( _, oldName, newName ) } )
@@ -368,7 +379,8 @@ object tipRename {
         if ( quantifiedVariables.contains( oldName ) ) {
           TipSmtForall( expr.variables, expr.formula )
         } else if ( quantifiedVariables.contains( newName ) ) {
-          val nameGenerator = new NameGenerator( quantifiedVariables ++ Seq( oldName, newName ) )
+          val nameGenerator =
+            new NameGenerator( quantifiedVariables ++ Seq( oldName, newName ) )
           val newQuantifiedName = nameGenerator.fresh( newName )
           val newQuantifiedVariables = expr.variables.map { v =>
             if ( v.name == newName )
@@ -382,7 +394,8 @@ object tipRename {
               tipRename( expr.formula, newName, newQuantifiedName ) )
           tipRename( newExpression, oldName, newName )
         } else {
-          TipSmtForall( expr.variables, tipRename( expr.formula, oldName, newName ) )
+          TipSmtForall(
+            expr.variables, tipRename( expr.formula, oldName, newName ) )
         }
 
       case expr @ TipSmtExists( _, _ ) =>
@@ -390,7 +403,8 @@ object tipRename {
         if ( quantifiedVariables.contains( oldName ) ) {
           TipSmtExists( expr.variables, expr.formula )
         } else if ( quantifiedVariables.contains( newName ) ) {
-          val nameGenerator = new NameGenerator( quantifiedVariables ++ Seq( oldName, newName ) )
+          val nameGenerator =
+            new NameGenerator( quantifiedVariables ++ Seq( oldName, newName ) )
           val newQuantifiedName = nameGenerator.fresh( newName )
           val newQuantifiedVariables = expr.variables.map { v =>
             if ( v.name == newName )
@@ -404,7 +418,8 @@ object tipRename {
               tipRename( expr.formula, newName, newQuantifiedName ) )
           tipRename( newExpression, oldName, newName )
         } else {
-          TipSmtExists( expr.variables, tipRename( expr.formula, oldName, newName ) )
+          TipSmtExists(
+            expr.variables, tipRename( expr.formula, oldName, newName ) )
         }
 
       case expr @ TipSmtIte( _, _, _ ) =>
@@ -445,7 +460,8 @@ object tipRename {
     if ( boundNames.contains( oldName ) ) {
       cas
     } else if ( boundNames.contains( newName ) ) {
-      val nameGenerator = new NameGenerator( boundNames ++ Seq( oldName, newName ) )
+      val nameGenerator =
+        new NameGenerator( boundNames ++ Seq( oldName, newName ) )
       val newBoundName = nameGenerator.fresh( newName )
       caseChangeVariableName( cas, newName, newBoundName )
     } else {
@@ -473,7 +489,9 @@ object tipRename {
 }
 
 object freeVariables {
-  def apply( expression: TipSmtExpression, symbolTable: SymbolTable ): Set[String] = {
+  def apply(
+    expression:  TipSmtExpression,
+    symbolTable: SymbolTable ): Set[String] = {
     expression match {
       case expr @ TipSmtAnd( _ ) =>
         expr.exprs.flatMap( freeVariables( _, symbolTable ) ).toSet
@@ -523,9 +541,14 @@ object freeVariables {
     }
   }
 
-  def freeVariablesCase( tipSmtCase: TipSmtCase, symbolTable: SymbolTable ): Set[String] = {
+  def freeVariablesCase(
+    tipSmtCase:  TipSmtCase,
+    symbolTable: SymbolTable ): Set[String] = {
     val TipSmtConstructorPattern( constructor, fields ) = tipSmtCase.pattern
-    val boundVariables = ( constructor.name +: fields.map( _.name ) ).filter( isVariable( _, symbolTable ) ).toSet
+    val boundVariables =
+      ( constructor.name +: fields.map( _.name ) )
+        .filter( isVariable( _, symbolTable ) )
+        .toSet
     freeVariables( tipSmtCase.expr, symbolTable ).diff( boundVariables )
   }
 
@@ -631,7 +654,8 @@ class TipOcnf( problem: TipSmtProblem ) {
           TipSmtIte( c.els, expression.the, expression.els ) )
         TipSmtIte( c.cond, newIfTrue, newIfFalse )
       case m @ TipSmtMatch( _, _ ) =>
-        val matchExpr = captureAvoiding( m, Seq( expression.the, expression.els ) )
+        val matchExpr =
+          captureAvoiding( m, Seq( expression.the, expression.els ) )
         val newCases = matchExpr.cases map { c =>
           TipSmtCase(
             c.pattern,
@@ -639,7 +663,10 @@ class TipOcnf( problem: TipSmtProblem ) {
         }
         TipSmtMatch( matchExpr.expr, newCases )
       case _ =>
-        TipSmtIte( newCond, tipOcnf( expression.the ), tipOcnf( expression.els ) )
+        TipSmtIte(
+          newCond,
+          tipOcnf( expression.the ),
+          tipOcnf( expression.els ) )
     }
   }
 
@@ -732,7 +759,8 @@ class TipOcnf( problem: TipSmtProblem ) {
   }
 
   private def captureAvoiding(
-    tipSmtMatch: TipSmtMatch, expressions: Seq[TipSmtExpression] ): TipSmtMatch = {
+    tipSmtMatch: TipSmtMatch,
+    expressions: Seq[TipSmtExpression] ): TipSmtMatch = {
     val blacklist = expressions.flatMap( freeVariables( _, symbolTable ) )
     TipSmtMatch( tipSmtMatch.expr, tipSmtMatch.cases map { c =>
       tipRename.awayFrom( c, blacklist )
@@ -912,7 +940,8 @@ class TipSmtParser( problem: TipSmtProblem ) {
                   newVariables map { TipSmtIdentifier( _ ) } ), body ) )
           }
 
-        case TipSmtCase( TipSmtConstructorPattern( constructor, arguments ), body ) =>
+        case TipSmtCase(
+          TipSmtConstructorPattern( constructor, arguments ), body ) =>
 
           require(
             freeVars( varName ).isInstanceOf[Var],
@@ -938,8 +967,10 @@ class TipSmtParser( problem: TipSmtProblem ) {
       cases flatMap handleCase
 
     case TipSmtIte( cond, ifTrue, ifFalse ) =>
-      compileFunctionBody( ifFalse, lhs, freeVars ).map( -compileExpression( cond, freeVars ) --> _ ) ++
-        compileFunctionBody( ifTrue, lhs, freeVars ).map( compileExpression( cond, freeVars ) --> _ )
+      compileFunctionBody( ifFalse, lhs, freeVars )
+        .map( -compileExpression( cond, freeVars ) --> _ ) ++
+        compileFunctionBody( ifTrue, lhs, freeVars )
+        .map( compileExpression( cond, freeVars ) --> _ )
 
     case TipSmtTrue  => Seq( lhs.asInstanceOf[Formula] )
     case TipSmtFalse => Seq( -lhs )
@@ -1065,7 +1096,8 @@ class TipSmtParser( problem: TipSmtProblem ) {
       id.name,
       FunctionType(
         typeDecls( constructorType.returnType.name ),
-        constructorType.argumentTypes.map { dt => typeDecls( dt.name ) }.toList ) )
+        constructorType.argumentTypes
+          .map { dt => typeDecls( dt.name ) }.toList ) )
   }
 
   private def isVariable( id: TipSmtIdentifier ): Boolean = {
