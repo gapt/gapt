@@ -29,64 +29,71 @@ case class Type(
     argumentTypes: Seq[Datatype],
     returnType:    Datatype )
 
-case class SymbolTable(
-    symbols: Map[String, Type] )
+case class SymbolTable( problem: TipSmtProblem ) {
 
-object computeSymbolTable {
-  def apply( tipSmtProblem: TipSmtProblem ): SymbolTable = {
+  private val symbols: Map[String, Type] = computeSymbols()
+
+  def typeOf(symbol: String): Type = symbols(symbol)
+  def contains( symbol: String) : Boolean = symbols.contains(symbol)
+
+  private def computeSymbols(): Map[String, Type] = {
+
     var symbols: Map[String, Type] = Map()
-    tipSmtProblem.definitions foreach {
+
+    problem.definitions foreach {
       _ match {
         case TipSmtFunctionDeclaration(
-          functionName, _, argumentTypes, returnType
-          ) =>
+        functionName, _, argumentTypes, returnType
+        ) =>
           val argTypes = argumentTypes.map {
-            argType => Datatype( argType.typename )
+            argType => Datatype(argType.typename)
           }
           symbols +=
-            ( functionName ->
-              Type( argTypes, Datatype( returnType.typename ) ) )
+            (functionName ->
+              Type(argTypes, Datatype(returnType.typename)))
 
         case TipSmtFunctionDefinition(
-          functionName, _, formalParameters, returnType, _
-          ) =>
+        functionName, _, formalParameters, returnType, _
+        ) =>
           val argTypes = formalParameters map { param =>
-            Datatype( param.typ.typename )
+            Datatype(param.typ.typename)
           }
           symbols +=
-            ( functionName ->
-              Type( argTypes, Datatype( returnType.typename ) ) )
+            (functionName ->
+              Type(argTypes, Datatype(returnType.typename)))
 
-        case TipSmtConstantDeclaration( constantName, _, typ ) =>
-          symbols += ( constantName -> Type( Seq(), Datatype( typ.typename ) ) )
+        case TipSmtConstantDeclaration(constantName, _, typ) =>
+          symbols += (constantName -> Type(Seq(), Datatype(typ.typename)))
 
-        case TipSmtDatatypesDeclaration( datatypes ) =>
-          datatypes.foreach { symbols ++= datatypeSymbols( _ ) }
+        case TipSmtDatatypesDeclaration(datatypes) =>
+          datatypes.foreach {
+            symbols ++= datatypeSymbols(_)
+          }
 
         case _ =>
       }
     }
-    SymbolTable( symbols )
+    symbols
   }
 
   private def datatypeSymbols(
-    tipSmtDatatype: TipSmtDatatype ): Map[String, Type] = {
-    val symbols: Seq[( String, Type )] =
+                               tipSmtDatatype: TipSmtDatatype): Map[String, Type] = {
+    val symbols: Seq[(String, Type)] =
       tipSmtDatatype.constructors map {
-        case TipSmtConstructor( constructorName, _, fields ) =>
+        case TipSmtConstructor(constructorName, _, fields) =>
           val fieldTypes: Seq[Datatype] = fields map {
-            field => Datatype( field.typ.typename )
+            field => Datatype(field.typ.typename)
           }
           constructorName -> Type(
-            fieldTypes, Datatype( tipSmtDatatype.name ) )
+            fieldTypes, Datatype(tipSmtDatatype.name))
       }
-    Map( symbols: _* )
+    Map(symbols: _*)
   }
 }
 
 class ReconstructDatatypes( problem: TipSmtProblem ) {
 
-  val symbolTable = computeSymbolTable( problem )
+  problem.symbolTable = Some( new SymbolTable(problem) )
 
   def apply(): TipSmtProblem = {
 
@@ -141,12 +148,12 @@ class ReconstructDatatypes( problem: TipSmtProblem ) {
 
     case TipSmtIdentifier( identifier ) =>
       expression.datatype = Some( variables
-        .getOrElse( identifier, symbolTable.symbols( identifier ).returnType ) )
+        .getOrElse( identifier, problem.symbolTable.get.typeOf( identifier ).returnType ) )
 
     case TipSmtFun( functionName, arguments ) =>
       arguments foreach { arg => reconstructTypes( arg, variables ) }
       expression.datatype = Some(
-        symbolTable.symbols( functionName ).returnType )
+        problem.symbolTable.get.typeOf( functionName ).returnType )
 
     case TipSmtTrue =>
       expression.datatype = Some( Datatype( "bool" ) )
@@ -180,10 +187,10 @@ class ReconstructDatatypes( problem: TipSmtProblem ) {
       case TipSmtDefault =>
         reconstructTypes( tipSmtCase.expr, variables )
       case TipSmtConstructorPattern( constructor, identifiers ) =>
-        val constructorType = symbolTable.symbols( constructor.name )
+        val constructorType = problem.symbolTable.get.typeOf( constructor.name )
         val matchVariables = identifiers.zipWithIndex.filter {
           case ( identifier, _ ) =>
-            !symbolTable.symbols.contains( identifier.name )
+            !problem.symbolTable.get.contains( identifier.name )
         }
         val context = matchVariables map {
           case ( identifier, index ) =>
@@ -196,8 +203,6 @@ class ReconstructDatatypes( problem: TipSmtProblem ) {
 }
 
 class TipSmtDesugar( problem: TipSmtProblem ) {
-
-  val symbolTable = computeSymbolTable( problem )
 
   def apply(): Unit = {
 
@@ -247,7 +252,7 @@ class TipSmtDesugar( problem: TipSmtProblem ) {
         expandDefaultPattern( matchExpr, visibleVariables )
       }
       matchExpr.cases foreach {
-        desugarCaseStatement( _, symbolTable, visibleVariables )
+        desugarCaseStatement( _, visibleVariables )
       }
     case TipSmtIte( expr1, expr2, expr3 ) =>
       desugarExpression( expr1, visibleVariables )
@@ -258,12 +263,12 @@ class TipSmtDesugar( problem: TipSmtProblem ) {
 
   private def desugarCaseStatement(
     cas:              TipSmtCase,
-    symbolTable:      SymbolTable,
     visibleVariables: Seq[String] ): Unit = {
     cas.pattern match {
       case TipSmtConstructorPattern( _, fields ) =>
-        val variableFields =
-          fields map { _.name } filter { !symbolTable.symbols.contains( _ ) }
+        val variableFields = fields
+          .map { _.name }
+          .filter { !problem.symbolTable.get.contains( _ ) }
         desugarExpression(
           cas.expr, visibleVariables ++ variableFields )
       case _ => throw new IllegalStateException()
@@ -280,7 +285,7 @@ class TipSmtDesugar( problem: TipSmtProblem ) {
     val TipSmtMatch( matchedExpression, cases ) = tipSmtMatch
     val Some( matchedType ) = tipSmtMatch.expr.datatype
     val coveredConstructors: Seq[String] =
-      coveredConstrs( cases, symbolTable )
+      coveredConstrs( cases )
     val missingConstructors =
       retrieveDatatypes( problem, matchedType.name )
         .constructors
@@ -313,11 +318,11 @@ class TipSmtDesugar( problem: TipSmtProblem ) {
   }
 
   private def coveredConstrs(
-    cases: Seq[TipSmtCase], symbolTable: SymbolTable ): Seq[String] = {
+    cases: Seq[TipSmtCase] ): Seq[String] = {
     cases map { _.pattern } filter {
       case TipSmtDefault => false
       case TipSmtConstructorPattern( constructor, _ ) =>
-        symbolTable.symbols.contains( constructor.name )
+        problem.symbolTable.get.contains( constructor.name )
     } map {
       case TipSmtConstructorPattern( constructor, _ ) =>
         constructor.name
@@ -490,48 +495,55 @@ object tipRename {
 
 object freeVariables {
   def apply(
-    expression:  TipSmtExpression,
-    symbolTable: SymbolTable ): Set[String] = {
+    problem: TipSmtProblem,
+    expression: TipSmtExpression): Set[String] = {
+    (new FreeVariables(problem)).freeVariables(expression)
+  }
+}
+
+class FreeVariables(problem: TipSmtProblem ){
+  def freeVariables(
+    expression:  TipSmtExpression): Set[String] = {
     expression match {
       case expr @ TipSmtAnd( _ ) =>
-        expr.exprs.flatMap( freeVariables( _, symbolTable ) ).toSet
+        expr.exprs.flatMap( freeVariables ).toSet
 
       case expr @ TipSmtOr( _ ) =>
-        expr.exprs.flatMap( freeVariables( _, symbolTable ) ).toSet
+        expr.exprs.flatMap( freeVariables ).toSet
 
       case expr @ TipSmtImp( _ ) =>
-        expr.exprs.flatMap( freeVariables( _, symbolTable ) ).toSet
+        expr.exprs.flatMap( freeVariables ).toSet
 
       case expr @ TipSmtEq( _ ) =>
-        expr.exprs.flatMap( freeVariables( _, symbolTable ) ).toSet
+        expr.exprs.flatMap( freeVariables ).toSet
 
       case expr @ TipSmtForall( boundVariables, formula ) =>
-        freeVariables( formula, symbolTable ).diff( boundVariables.map {
+        freeVariables( formula ).diff( boundVariables.map {
           _.name
         } toSet )
 
       case expr @ TipSmtExists( boundVariables, formula ) =>
-        freeVariables( formula, symbolTable ).diff( boundVariables.map {
+        freeVariables( formula ).diff( boundVariables.map {
           _.name
         } toSet )
 
       case expr @ TipSmtIte( _, _, _ ) =>
-        freeVariables( expr.cond, symbolTable ) ++
-          freeVariables( expr.the, symbolTable ) ++
-          freeVariables( expr.els, symbolTable )
+        freeVariables( expr.cond ) ++
+          freeVariables( expr.the ) ++
+          freeVariables( expr.els )
 
       case expr @ TipSmtMatch( matchedExpression, cases ) =>
-        freeVariables( matchedExpression, symbolTable ) ++
-          cases.flatMap( freeVariablesCase( _, symbolTable ) )
+        freeVariables( matchedExpression ) ++
+          cases.flatMap( freeVariablesCase )
 
       case expr @ TipSmtFun( _, _ ) =>
-        expr.arguments.flatMap( freeVariables( _, symbolTable ) ).toSet
+        expr.arguments.flatMap( freeVariables ).toSet
 
       case expr @ TipSmtNot( _ ) =>
-        freeVariables( expr.expr, symbolTable )
+        freeVariables( expr.expr )
 
       case expr @ TipSmtIdentifier( _ ) =>
-        if ( symbolTable.symbols.contains( expr.name ) )
+        if ( problem.symbolTable.get.contains( expr.name ) )
           Set()
         else
           Set( expr.name )
@@ -542,18 +554,17 @@ object freeVariables {
   }
 
   def freeVariablesCase(
-    tipSmtCase:  TipSmtCase,
-    symbolTable: SymbolTable ): Set[String] = {
+    tipSmtCase:  TipSmtCase ): Set[String] = {
     val TipSmtConstructorPattern( constructor, fields ) = tipSmtCase.pattern
     val boundVariables =
       ( constructor.name +: fields.map( _.name ) )
-        .filter( isVariable( _, symbolTable ) )
+        .filter( isVariable )
         .toSet
-    freeVariables( tipSmtCase.expr, symbolTable ).diff( boundVariables )
+    freeVariables( tipSmtCase.expr ).diff( boundVariables )
   }
 
-  def isVariable( name: String, symbolTable: SymbolTable ): Boolean =
-    !symbolTable.symbols.contains( name )
+  def isVariable( name: String ): Boolean =
+    !problem.symbolTable.get.contains( name )
 }
 
 object tipOcnf {
@@ -562,8 +573,6 @@ object tipOcnf {
 }
 
 class TipOcnf( problem: TipSmtProblem ) {
-
-  val symbolTable = computeSymbolTable( problem )
 
   def apply(): TipSmtProblem = {
     val newDefinitions = problem.definitions map { definition =>
@@ -761,7 +770,7 @@ class TipOcnf( problem: TipSmtProblem ) {
   private def captureAvoiding(
     tipSmtMatch: TipSmtMatch,
     expressions: Seq[TipSmtExpression] ): TipSmtMatch = {
-    val blacklist = expressions.flatMap( freeVariables( _, symbolTable ) )
+    val blacklist = expressions.flatMap( freeVariables( problem, _) )
     TipSmtMatch( tipSmtMatch.expr, tipSmtMatch.cases map { c =>
       tipRename.awayFrom( c, blacklist )
     } )
@@ -784,8 +793,6 @@ object find {
 }
 
 class TipSmtParser( problem: TipSmtProblem ) {
-
-  val symbolTable = computeSymbolTable( problem )
 
   ( new ReconstructDatatypes( problem ) )()
 
@@ -1058,7 +1065,7 @@ class TipSmtParser( problem: TipSmtProblem ) {
     matchedExpression: Expr,
     freeVars:          Map[String, Expr] ): Expr = {
     val TipSmtConstructorPattern( constructor, fields ) = tipSmtCase.pattern
-    val constructorType = symbolTable.symbols( constructor.name )
+    val constructorType = problem.symbolTable.get.typeOf( constructor.name )
     val boundVariables =
       fields
         .zip( constructorType.argumentTypes )
@@ -1091,7 +1098,7 @@ class TipSmtParser( problem: TipSmtProblem ) {
   }
 
   private def compileConstructorSymbol( id: TipSmtIdentifier ): Expr = {
-    val constructorType = symbolTable.symbols( id.name )
+    val constructorType = problem.symbolTable.get.typeOf( id.name )
     Const(
       id.name,
       FunctionType(
@@ -1101,7 +1108,7 @@ class TipSmtParser( problem: TipSmtProblem ) {
   }
 
   private def isVariable( id: TipSmtIdentifier ): Boolean = {
-    !symbolTable.symbols.keys.exists( _ == id.name )
+    !problem.symbolTable.get.contains( id.name )
   }
 
   private def declareBaseType( sort: String ) = {
