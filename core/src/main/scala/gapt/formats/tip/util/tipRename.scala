@@ -66,63 +66,18 @@ object tipRename {
         TipSmtEq( expr.exprs map { tipRename( _, oldName, newName ) } )
 
       case expr @ TipSmtForall( _, _ ) =>
-        val quantifiedVariables = expr.variables.map { _.name }
-        if ( quantifiedVariables.contains( oldName ) ) {
-          TipSmtForall( expr.variables, expr.formula )
-        } else if ( quantifiedVariables.contains( newName ) ) {
-          val nameGenerator =
-            new NameGenerator( quantifiedVariables ++ Seq( oldName, newName ) )
-          val newQuantifiedName = nameGenerator.fresh( newName )
-          val newQuantifiedVariables = expr.variables.map { v =>
-            if ( v.name == newName )
-              TipSmtVariableDecl( newQuantifiedName, v.typ )
-            else
-              v
-          }
-          val newExpression =
-            TipSmtForall(
-              newQuantifiedVariables,
-              tipRename( expr.formula, newName, newQuantifiedName ) )
-          tipRename( newExpression, oldName, newName )
-        } else {
-          TipSmtForall(
-            expr.variables, tipRename( expr.formula, oldName, newName ) )
-        }
+        renameQuantifiedExpression(
+          oldName, newName, expr.variables, expr.formula, TipSmtExists )
 
       case expr @ TipSmtExists( _, _ ) =>
-        val quantifiedVariables = expr.variables.map { _.name }
-        if ( quantifiedVariables.contains( oldName ) ) {
-          TipSmtExists( expr.variables, expr.formula )
-        } else if ( quantifiedVariables.contains( newName ) ) {
-          val nameGenerator =
-            new NameGenerator( quantifiedVariables ++ Seq( oldName, newName ) )
-          val newQuantifiedName = nameGenerator.fresh( newName )
-          val newQuantifiedVariables = expr.variables.map { v =>
-            if ( v.name == newName )
-              TipSmtVariableDecl( newQuantifiedName, v.typ )
-            else
-              v
-          }
-          val newExpression =
-            TipSmtExists(
-              newQuantifiedVariables,
-              tipRename( expr.formula, newName, newQuantifiedName ) )
-          tipRename( newExpression, oldName, newName )
-        } else {
-          TipSmtExists(
-            expr.variables, tipRename( expr.formula, oldName, newName ) )
-        }
+        renameQuantifiedExpression(
+          oldName, newName, expr.variables, expr.formula, TipSmtExists )
 
       case expr @ TipSmtIte( _, _, _ ) =>
-        TipSmtIte(
-          tipRename( expr.cond, oldName, newName ),
-          tipRename( expr.the, oldName, newName ),
-          tipRename( expr.els, oldName, newName ) )
+        renameIteExpression(oldName, newName, expr)
 
       case expr @ TipSmtMatch( _, _ ) =>
-        TipSmtMatch(
-          tipRename( expr.expr, oldName, newName ),
-          expr.cases map { renameCase( _, oldName, newName ) } )
+        renameMatchExpression(oldName, newName, expr)
 
       case TipSmtFun( funName, arguments ) =>
         TipSmtFun( funName, arguments map { tipRename( _, oldName, newName ) } )
@@ -141,6 +96,52 @@ object tipRename {
 
       case TipSmtFalse =>
         TipSmtFalse
+    }
+  }
+
+  private def renameMatchExpression(
+    oldName: String, newName: String, expr: TipSmtMatch): TipSmtExpression =
+    TipSmtMatch(
+      tipRename( expr.expr, oldName, newName ),
+      expr.cases map { renameCase( _, oldName, newName ) } )
+
+  private def renameIteExpression(
+    oldName: String, newName: String, expr: TipSmtIte): TipSmtExpression =
+    TipSmtIte(
+      tipRename( expr.cond, oldName, newName ),
+      tipRename( expr.the, oldName, newName ),
+      tipRename( expr.els, oldName, newName ) )
+
+  type QuantifiedExpressionConstructor = //
+  ( Seq[TipSmtVariableDecl], TipSmtExpression ) => TipSmtExpression
+
+  private def renameQuantifiedExpression(
+    oldName:    String,
+    newName:    String,
+    variables:  Seq[TipSmtVariableDecl],
+    formula:    TipSmtExpression,
+    quantifier: QuantifiedExpressionConstructor ): TipSmtExpression = {
+    val quantifiedVariables = variables.map { _.name }
+    if ( quantifiedVariables.contains( oldName ) ) {
+      quantifier( variables, formula )
+    } else if ( quantifiedVariables.contains( newName ) ) {
+      val nameGenerator =
+        new NameGenerator( quantifiedVariables ++ Seq( oldName, newName ) )
+      val newQuantifiedName = nameGenerator.fresh( newName )
+      val newQuantifiedVariables = variables.map { v =>
+        if ( v.name == newName )
+          TipSmtVariableDecl( newQuantifiedName, v.typ )
+        else
+          v
+      }
+      val newExpression =
+        TipSmtExists(
+          newQuantifiedVariables,
+          tipRename( formula, newName, newQuantifiedName ) )
+      tipRename( newExpression, oldName, newName )
+    } else {
+      TipSmtExists(
+        variables, tipRename( formula, oldName, newName ) )
     }
   }
 
