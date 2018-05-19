@@ -21,8 +21,21 @@ import gapt.formats.tip.parser.TipSmtOr
 import gapt.formats.tip.parser.TipSmtProblem
 import gapt.utils.NameGenerator
 
+/**
+ * This class implements default pattern expansion for TIP problems.
+ *
+ * Default patterns expansion replaces default patterns by a case statement
+ * for each of the constructors that are covered by the default pattern.
+ *
+ * @param problem The problem whose default patterns are expanded. The problem
+ *               needs to be well-formed.
+ */
 class TipSmtDefaultPatternExpansion( problem: TipSmtProblem ) {
 
+  /**
+   * Expands all default patterns in the given problem. The expansion takes
+   * place in the input problem.
+   */
   def apply(): Unit = {
     problem.definitions foreach {
       case TipSmtFunctionDefinition( _, _, parameters, _, body ) =>
@@ -38,6 +51,13 @@ class TipSmtDefaultPatternExpansion( problem: TipSmtProblem ) {
     }
   }
 
+  /**
+   * Expands default patterns in the given expression.
+   *
+   * @param expr The expression in whose default patterns are expanded.
+   * @param visibleVariables The variables that are visible to the given
+   *                         expression
+   */
   private def expandDefaultPatterns(
     expr:             TipSmtExpression,
     visibleVariables: Seq[String] ): Unit = expr match {
@@ -79,6 +99,12 @@ class TipSmtDefaultPatternExpansion( problem: TipSmtProblem ) {
     case _ =>
   }
 
+  /**
+   * Expands default patterns in the given case statement.
+   *
+   * @param cas The case statement whose default patterns are expanded.
+   * @param visibleVariables The variables visible to this case statement.
+   */
   private def expandDefaultPatterns(
     cas:              TipSmtCase,
     visibleVariables: Seq[String] ): Unit = {
@@ -93,10 +119,24 @@ class TipSmtDefaultPatternExpansion( problem: TipSmtProblem ) {
     }
   }
 
+  /**
+   * Checks whether the given match-statement contains a default pattern.
+   *
+   * @param tipSmtMatch The match-expression to be checked.
+   * @return true if the given match-expression contains a default pattern,
+   *         false otherwise.
+   */
   private def containsDefaultPattern( tipSmtMatch: TipSmtMatch ): Boolean = {
     tipSmtMatch.cases.exists { _.pattern == TipSmtDefault }
   }
 
+  /**
+   * Expands the default pattern of the given match-expression.
+   *
+   * @param tipSmtMatch The match-expression whose default pattern is to be
+   *                    expanded.
+   * @param visibleVariables The variables visible to this match-expression.
+   */
   private def expandDefaultPattern(
     tipSmtMatch:      TipSmtMatch,
     visibleVariables: Seq[String] ): Unit = {
@@ -121,6 +161,17 @@ class TipSmtDefaultPatternExpansion( problem: TipSmtProblem ) {
     tipSmtMatch.cases ++= generatedCases
   }
 
+  /**
+   * Generates the case statement for the given constructor.
+   *
+   * @param tipSmtConstructor The constructor for which the case statement is
+   *                          to be generated.
+   * @param visibleVariables The variables visible to the generated case
+   *                         statement.
+   * @param defaultExpression The expression to be used by the case statement.
+   * @return A case-statement for the given constructor and the given
+   *         expression.
+   */
   private def generateCase(
     tipSmtConstructor: TipSmtConstructor,
     visibleVariables:  Seq[String],
@@ -135,6 +186,14 @@ class TipSmtDefaultPatternExpansion( problem: TipSmtProblem ) {
       defaultExpression )
   }
 
+  /**
+   * Retrieves the names of the constructors covered by the given case
+   * statements.
+   *
+   * @param cases The case statements whose covered constructors are to be
+   *              computed.
+   * @return The names of the covered constructors.
+   */
   private def coveredConstrs(
     cases: Seq[TipSmtCase] ): Seq[String] = {
     cases map { _.pattern } filter {
