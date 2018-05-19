@@ -29,40 +29,40 @@ class TipSmtDefaultPatternExpansion( problem: TipSmtProblem ) {
         val context = parameters map {
           _.name
         }
-        exandDefaultPatterns( body, context )
+        expandDefaultPatterns( body, context )
       case TipSmtGoal( _, expression ) =>
-        exandDefaultPatterns( expression, Seq() )
+        expandDefaultPatterns( expression, Seq() )
       case TipSmtAssertion( _, expression ) =>
-        exandDefaultPatterns( expression, Seq() )
+        expandDefaultPatterns( expression, Seq() )
       case _ =>
     }
   }
 
-  private def exandDefaultPatterns(
+  private def expandDefaultPatterns(
     expr:             TipSmtExpression,
     visibleVariables: Seq[String] ): Unit = expr match {
     case TipSmtAnd( subexpressions ) =>
       subexpressions foreach {
-        exandDefaultPatterns( _, visibleVariables )
+        expandDefaultPatterns( _, visibleVariables )
       }
     case TipSmtOr( subexpressions ) =>
       subexpressions foreach {
-        exandDefaultPatterns( _, visibleVariables )
+        expandDefaultPatterns( _, visibleVariables )
       }
     case TipSmtImp( subexpressions ) =>
       subexpressions foreach {
-        exandDefaultPatterns( _, visibleVariables )
+        expandDefaultPatterns( _, visibleVariables )
       }
     case TipSmtFun( _, arguments ) =>
       arguments foreach {
-        exandDefaultPatterns( _, visibleVariables )
+        expandDefaultPatterns( _, visibleVariables )
       }
     case TipSmtForall( vars, subexpression ) =>
-      exandDefaultPatterns(
+      expandDefaultPatterns(
         subexpression,
         visibleVariables ++ vars.map( _.name ) )
     case TipSmtExists( vars, subexpression ) =>
-      exandDefaultPatterns(
+      expandDefaultPatterns(
         subexpression,
         visibleVariables ++ vars.map( _.name ) )
     case matchExpr @ TipSmtMatch( _, _ ) =>
@@ -70,16 +70,16 @@ class TipSmtDefaultPatternExpansion( problem: TipSmtProblem ) {
         expandDefaultPattern( matchExpr, visibleVariables )
       }
       matchExpr.cases foreach {
-        expandDefaultPatternCaseStatement( _, visibleVariables )
+        expandDefaultPatterns( _, visibleVariables )
       }
     case TipSmtIte( expr1, expr2, expr3 ) =>
-      exandDefaultPatterns( expr1, visibleVariables )
-      exandDefaultPatterns( expr2, visibleVariables )
-      exandDefaultPatterns( expr3, visibleVariables )
+      expandDefaultPatterns( expr1, visibleVariables )
+      expandDefaultPatterns( expr2, visibleVariables )
+      expandDefaultPatterns( expr3, visibleVariables )
     case _ =>
   }
 
-  private def expandDefaultPatternCaseStatement(
+  private def expandDefaultPatterns(
     cas:              TipSmtCase,
     visibleVariables: Seq[String] ): Unit = {
     cas.pattern match {
@@ -87,7 +87,7 @@ class TipSmtDefaultPatternExpansion( problem: TipSmtProblem ) {
         val variableFields = fields
           .map { _.name }
           .filter { !problem.symbolTable.get.contains( _ ) }
-        exandDefaultPatterns(
+        expandDefaultPatterns(
           cas.expr, visibleVariables ++ variableFields )
       case _ => throw new IllegalStateException()
     }
