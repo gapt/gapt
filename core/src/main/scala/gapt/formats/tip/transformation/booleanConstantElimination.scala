@@ -41,13 +41,13 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
   }
 
   /**
-    * Eliminates boolean constants in the given expression.
-    *
-    * @param expression The expression in which the boolean constants are to be
-    *                   eliminated. This expression must only contain symbols of
-    *                   the given tip problem.
-    * @return A tip expression.
-    */
+   * Eliminates boolean constants in the given expression.
+   *
+   * @param expression The expression in which the boolean constants are to be
+   *                   eliminated. This expression must only contain symbols of
+   *                   the given tip problem.
+   * @return A tip expression.
+   */
   private def eliminateBooleanConstants(
     expression: TipSmtExpression ): TipSmtExpression = {
     expression match {
@@ -66,13 +66,13 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
   }
 
   /**
-    * Eliminates boolean constants in the given match-expression.
-    *
-    * @param smtMatch The expression in which the boolean constants are to be
-    *                 eliminated.
-    * @return A match-expression whose matched-expression and case statements
-    *         do not contain redundant boolean constants.
-    */
+   * Eliminates boolean constants in the given match-expression.
+   *
+   * @param smtMatch The expression in which the boolean constants are to be
+   *                 eliminated.
+   * @return A match-expression whose matched-expression and case statements
+   *         do not contain redundant boolean constants.
+   */
   private def eliminateBooleanConstants(
     smtMatch: TipSmtMatch ): TipSmtExpression = {
     smtMatch.copy( cases = smtMatch.cases.map { c =>
@@ -81,12 +81,12 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
   }
 
   /**
-    * Eliminates boolean constants in the given not-expression.
-    *
-    * @param not The expression in which the boolean constants are to be
-    *            eliminated.
-    * @return An expression without redundant boolean constants.
-    */
+   * Eliminates boolean constants in the given not-expression.
+   *
+   * @param not The expression in which the boolean constants are to be
+   *            eliminated.
+   * @return An expression without redundant boolean constants.
+   */
   private def eliminateBooleanConstants( not: TipSmtNot ): TipSmtExpression = {
     eliminateBooleanConstants( not.expr ) match {
       case TipSmtFalse => TipSmtTrue
@@ -96,12 +96,12 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
   }
 
   /**
-    * Eliminates boolean constants in the given and-expression.
-    *
-    * @param and The expression in which the boolean constants are to be
-    *            eliminated.
-    * @return An expression without redundant boolean constants.
-    */
+   * Eliminates boolean constants in the given and-expression.
+   *
+   * @param and The expression in which the boolean constants are to be
+   *            eliminated.
+   * @return An expression without redundant boolean constants.
+   */
   private def eliminateBooleanConstants( and: TipSmtAnd ): TipSmtExpression = {
     val remainingExpressions = and.exprs
       .map { eliminateBooleanConstants }
@@ -116,12 +116,12 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
   }
 
   /**
-    * Eliminates boolean constants in the given or-expression.
-    *
-    * @param or The expression in which the boolean constants are to be
-    *           eliminated.
-    * @return An expression without redundant boolean constants.
-    */
+   * Eliminates boolean constants in the given or-expression.
+   *
+   * @param or The expression in which the boolean constants are to be
+   *           eliminated.
+   * @return An expression without redundant boolean constants.
+   */
   private def eliminateBooleanConstants( or: TipSmtOr ): TipSmtExpression = {
     val remainingExpressions = or.exprs
       .map { eliminateBooleanConstants }
@@ -136,12 +136,12 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
   }
 
   /**
-    * Eliminates boolean constants in the given imp-expression.
-    *
-    * @param imp The expression in which the boolean constants are to be
-    *            eliminated.
-    * @return An expression without redundant boolean constants.
-    */
+   * Eliminates boolean constants in the given imp-expression.
+   *
+   * @param imp The expression in which the boolean constants are to be
+   *            eliminated.
+   * @return An expression without redundant boolean constants.
+   */
   private def eliminateBooleanConstants( imp: TipSmtImp ): TipSmtExpression = {
     val newExpressions = imp.exprs map { eliminateBooleanConstants }
     val finalExpressions =
@@ -164,12 +164,12 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
   }
 
   /**
-    * Eliminates boolean constants in the given forall-expression.
-    *
-    * @param forall The expression in which the boolean constants are to be
-    *               eliminated.
-    * @return An expression without redundant boolean constants.
-    */
+   * Eliminates boolean constants in the given forall-expression.
+   *
+   * @param forall The expression in which the boolean constants are to be
+   *               eliminated.
+   * @return An expression without redundant boolean constants.
+   */
   private def eliminateBooleanConstants(
     forall: TipSmtForall ): TipSmtExpression = {
     eliminateBooleanConstants( forall.formula ) match {
@@ -180,12 +180,12 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
   }
 
   /**
-    * Eliminates boolean constants in the given exists-expression.
-    *
-    * @param exists The expression in which the boolean constants are to be
-    *               eliminated.
-    * @return An expression without redundant boolean constants.
-    */
+   * Eliminates boolean constants in the given exists-expression.
+   *
+   * @param exists The expression in which the boolean constants are to be
+   *               eliminated.
+   * @return An expression without redundant boolean constants.
+   */
   private def eliminateBooleanConstants(
     exists: TipSmtExists ): TipSmtExpression = {
     eliminateBooleanConstants( exists.formula ) match {
@@ -196,12 +196,12 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
   }
 
   /**
-    * Eliminates boolean constants in the given ite-expression.
-    *
-    * @param ite The expression in which the boolean constants are to be
-    *            eliminated.
-    * @return An expression without redundant boolean constants.
-    */
+   * Eliminates boolean constants in the given ite-expression.
+   *
+   * @param ite The expression in which the boolean constants are to be
+   *            eliminated.
+   * @return An expression without redundant boolean constants.
+   */
   private def eliminateBooleanConstants(
     ite: TipSmtIte ): TipSmtExpression = {
     eliminateBooleanConstants( ite.cond ) match {
