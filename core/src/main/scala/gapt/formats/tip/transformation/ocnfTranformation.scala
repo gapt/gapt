@@ -1,5 +1,6 @@
 package gapt.formats.tip.transformation
 
+import gapt.formats.tip.analysis.SymbolTable
 import gapt.formats.tip.parser.TipSmtAnd
 import gapt.formats.tip.parser.TipSmtAssertion
 import gapt.formats.tip.parser.TipSmtCase
@@ -19,8 +20,8 @@ import gapt.formats.tip.parser.TipSmtNot
 import gapt.formats.tip.parser.TipSmtOr
 import gapt.formats.tip.parser.TipSmtProblem
 import gapt.formats.tip.parser.TipSmtTrue
+import gapt.formats.tip.util.TipSubstitute
 import gapt.formats.tip.util.find
-import gapt.formats.tip.util.tipRename
 import gapt.formats.tip.util.freeVariables
 
 object tipOcnf {
@@ -29,6 +30,8 @@ object tipOcnf {
 }
 
 class TipOcnf( problem: TipSmtProblem ) {
+
+  problem.symbolTable = Some( SymbolTable( problem ) )
 
   def apply(): TipSmtProblem = {
     val newDefinitions = problem.definitions map { definition =>
@@ -228,7 +231,7 @@ class TipOcnf( problem: TipSmtProblem ) {
     expressions: Seq[TipSmtExpression] ): TipSmtMatch = {
     val blacklist = expressions.flatMap( freeVariables( problem, _ ) )
     TipSmtMatch( tipSmtMatch.expr, tipSmtMatch.cases map { c =>
-      tipRename.awayFrom( c, blacklist )
+      new TipSubstitute( problem ).awayFrom( c, blacklist )
     } )
   }
 }
