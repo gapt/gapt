@@ -12,7 +12,6 @@ import gapt.expr.Formula
 import gapt.expr.FunctionType
 import gapt.expr.Neg
 import gapt.expr.Or
-import gapt.expr.Substitution
 import gapt.expr.TBase
 import gapt.expr.To
 import gapt.expr.Top
@@ -35,7 +34,6 @@ import gapt.formats.tip.parser.TipSmtConstructorField
 import gapt.formats.tip.parser.TipSmtConstructorPattern
 import gapt.formats.tip.parser.TipSmtDatatype
 import gapt.formats.tip.parser.TipSmtDatatypesDeclaration
-import gapt.formats.tip.parser.TipSmtDefault
 import gapt.formats.tip.parser.TipSmtEq
 import gapt.formats.tip.parser.TipSmtExists
 import gapt.formats.tip.parser.TipSmtExpression
@@ -57,7 +55,6 @@ import gapt.formats.tip.parser.TipSmtSortDeclaration
 import gapt.formats.tip.parser.TipSmtTrue
 import gapt.formats.tip.parser.TipSmtVariableDecl
 import gapt.proofs.Context
-import gapt.utils.NameGenerator
 
 import scala.collection.mutable
 
@@ -150,10 +147,7 @@ class TipSmtToTipProblemCompiler( problem: TipSmtProblem ) {
     ctx += funConst
     functions += TipFun(
       funConst,
-      compileFunctionBody(
-        body,
-        funConst( argVars: _* ),
-        argVars.map { v => v.name -> v }.toMap ) )
+      compileFunctionBody( body, argVars.map { v => v.name -> v }.toMap ) )
   }
 
   private def compileAssertion( tipSmtAssertion: TipSmtAssertion ): Unit = {
@@ -188,145 +182,153 @@ class TipSmtToTipProblemCompiler( problem: TipSmtProblem ) {
   }
 
   def compileFunctionBody(
-    sexp:     TipSmtExpression,
-    lhs:      Expr,
-    freeVars: Map[String, Expr] ): Seq[Formula] = sexp match {
-    case TipSmtMatch( TipSmtIdentifier( varName ), cases ) =>
-
-      def handleCase( cas: TipSmtCase ): Seq[Formula] = cas match {
-        case TipSmtCase( TipSmtDefault, body ) =>
-          val coveredConstructors = cases collect {
-            case TipSmtCase( TipSmtConstructorPattern( constr, Seq() ), _ ) =>
-              funDecls( constr.name )
-          }
-          val missingConstructors = datatypes.find(
-            _.t == freeVars( varName ).ty ).
-            get.
-            constructors.
-            map( _.constr ) diff coveredConstructors
-
-          missingConstructors flatMap { ctr =>
-            val FunctionType( _, ts ) = ctr.ty
-            val nameGen = new NameGenerator( freeVars.keys )
-            val newVariables = for ( t <- ts ) yield nameGen fresh "x"
-            handleCase(
-              TipSmtCase(
-                TipSmtConstructorPattern(
-                  TipSmtIdentifier( ctr.name ),
-                  newVariables map { TipSmtIdentifier( _ ) } ), body ) )
-          }
-
-        case TipSmtCase(
-          TipSmtConstructorPattern( constructor, arguments ), body ) =>
-
-          require(
-            freeVars( varName ).isInstanceOf[Var],
-            s"${freeVars( varName )} is not a variable" )
-
-          val constr = funDecls( constructor.name )
-          val FunctionType( _, constrArgTypes ) = constr.ty
-
-          require( constrArgTypes.size == arguments.size )
-
-          val args = for {
-            ( name, ty ) <- arguments.map( _.name ) zip constrArgTypes
-          } yield Var( name, ty )
-
-          val subst = Substitution(
-            freeVars( varName ).asInstanceOf[Var] -> constr( args: _* ) )
-
-          compileFunctionBody(
-            body,
-            subst( lhs ),
-            freeVars.mapValues( subst( _ ) ) ++ args.map { v => v.name -> v } )
-      }
-      cases flatMap handleCase
-
-    case TipSmtIte( cond, ifTrue, ifFalse ) =>
-      compileFunctionBody( ifFalse, lhs, freeVars )
-        .map( -compileExpression( cond, freeVars ) --> _ ) ++
-        compileFunctionBody( ifTrue, lhs, freeVars )
-        .map( compileExpression( cond, freeVars ) --> _ )
-
-    case TipSmtTrue  => Seq( lhs.asInstanceOf[Formula] )
-    case TipSmtFalse => Seq( -lhs )
-    case _ =>
-      val expr = compileExpression( sexp, freeVars )
-      Seq( if ( lhs.ty == To ) lhs <-> expr else lhs === expr )
+    body: TipSmtExpression, freeVars: Map[String, Expr] ): Seq[Formula] = {
+    body match {
+      case TipSmtAnd( conjuncts ) =>
+        conjuncts
+          .map { compileExpression( _, freeVars ) }
+          .map { _.asInstanceOf[Formula] }
+      case TipSmtIte( condition, ifTrue, ifFalse ) =>
+        val compiledCondition = compileExpression( condition, freeVars )
+        compileFunctionBody( ifTrue, freeVars )
+          .map { compiledCondition --> _ } ++
+          compileFunctionBody( ifFalse, freeVars )
+          .map { -compiledCondition --> _ }
+      case TipSmtForall( boundVars, formula ) =>
+        val bound = boundVars map { v =>
+          Var( v.name, typeDecls( v.typ.typename ) )
+        }
+        compileFunctionBody(
+          formula, freeVars ++ ( bound map { v => v.name -> v } ) )
+          .map { All.Block( bound, _ ) }
+      case _ => Seq( compileExpression( body, freeVars ).asInstanceOf[Formula] )
+    }
   }
 
   def compileExpression(
     expr: TipSmtExpression, freeVars: Map[String, Expr] ): Expr = expr match {
-    case TipSmtIdentifier( name ) if freeVars contains name =>
-      freeVars( name )
-
+    case expr @ TipSmtForall( _, _ ) =>
+      compileExpression( expr, freeVars )
+    case expr @ TipSmtExists( _, _ ) =>
+      compileExpression( expr, freeVars )
+    case expr @ TipSmtEq( _ ) =>
+      compileExpression( expr, freeVars )
+    case expr @ TipSmtIte( _, _, _ ) =>
+      compileExpression( expr, freeVars )
+    case expr @ TipSmtMatch( _, _ ) =>
+      compileExpression( expr, freeVars )
+    case expr @ TipSmtAnd( _ ) =>
+      compileExpression( expr, freeVars )
+    case expr @ TipSmtOr( _ ) =>
+      compileExpression( expr, freeVars )
+    case TipSmtNot( expr ) =>
+      compileExpression( expr, freeVars )
+    case TipSmtImp( _ ) =>
+      compileExpression( expr, freeVars )
+    case TipSmtIdentifier( _ ) =>
+      compileExpression( expr, freeVars )
+    case TipSmtIdentifier( _ ) =>
+      compileExpression( expr, freeVars )
+    case TipSmtFun( _, _ ) =>
+      compileExpression( expr, freeVars )
     case TipSmtFalse =>
       Bottom()
-
     case TipSmtTrue =>
       Top()
+  }
 
-    case TipSmtIdentifier( name ) =>
-      funDecls( name )
+  private def compileExpression(
+    tipSmtAnd: TipSmtAnd, freeVars: Map[String, Expr] ): Expr = {
+    And(
+      tipSmtAnd.exprs
+        .map { compileExpression( _, freeVars ).asInstanceOf[Formula] } )
+  }
 
-    case TipSmtForall( variables, formula ) =>
-      val vars = variables map {
-        case TipSmtVariableDecl( name, typ ) =>
-          Var( name, typeDecls( typ.typename ) )
-      }
-      All.Block(
-        vars,
-        compileExpression(
-          formula,
-          freeVars ++ vars.map { v => v.name -> v } ) )
+  private def compileExpression(
+    tipSmtOr: TipSmtOr, freeVars: Map[String, Expr] ): Expr = {
+    Or(
+      tipSmtOr.exprs
+        .map { compileExpression( _, freeVars ).asInstanceOf[Formula] } )
+  }
 
-    case TipSmtExists( variables, formula ) =>
-      val vars = variables map {
-        case TipSmtVariableDecl( name, typ ) =>
-          Var( name, typeDecls( typ.typename ) )
-      }
-      Ex.Block(
-        vars,
-        compileExpression(
-          formula,
-          freeVars ++ vars.map { v => v.name -> v } ) )
+  private def compileExpression(
+    tipSmtNot: TipSmtNot, freeVars: Map[String, Expr] ): Expr = {
+    Neg( compileExpression( tipSmtNot.expr, freeVars ) )
+  }
 
-    case TipSmtEq( eqs ) =>
-      val exprs = eqs map { compileExpression( _, freeVars ) }
-      And( for ( ( a, b ) <- exprs zip exprs.tail )
-        yield if ( exprs.head.ty == To ) a <-> b else a === b )
+  private def compileExpression(
+    tipSmtImp: TipSmtImp, freeVars: Map[String, Expr] ): Expr = {
+    tipSmtImp.exprs
+      .map { compileExpression( _, freeVars ) } reduceRight { _ --> _ }
+  }
 
-    case TipSmtAnd( exprs ) =>
-      And(
-        exprs map { compileExpression( _, freeVars ).asInstanceOf[Formula] } )
+  private def compileExpression(
+    tipSmtIdentifier: TipSmtIdentifier, freeVars: Map[String, Expr] ): Expr = {
+    if ( freeVars contains tipSmtIdentifier.name ) {
+      freeVars( tipSmtIdentifier.name )
+    } else {
+      funDecls( tipSmtIdentifier.name )
+    }
+  }
 
-    case TipSmtOr( exprs ) =>
-      Or(
-        exprs map { compileExpression( _, freeVars ).asInstanceOf[Formula] } )
+  private def compileExpression(
+    tipSmtFun: TipSmtFun, freeVars: Map[String, Expr] ): Expr = {
+    funDecls( tipSmtFun.name )(
+      tipSmtFun.arguments map { compileExpression( _, freeVars ) }: _* )
+  }
 
-    case TipSmtNot( expr ) =>
-      Neg( compileExpression( expr, freeVars ) )
+  private def compileExpression(
+    tipSmtMatch: TipSmtMatch, freeVars: Map[String, Expr] ): Expr = {
+    val TipSmtMatch( matchedExpression, cases ) = tipSmtMatch
+    val compiledMatchedExpression =
+      compileExpression( matchedExpression, freeVars )
+    And( cases map {
+      compileCase( _, compiledMatchedExpression, freeVars )
+    } )
+  }
 
-    case TipSmtImp( exprs ) =>
-      exprs map { compileExpression( _, freeVars ) } reduceRight { _ --> _ }
+  private def compileExpression(
+    tipSmtIte: TipSmtIte, freeVars: Map[String, Expr] ): Expr = {
+    val TipSmtIte( cond, ifTrue, ifFalse ) = tipSmtIte
+    val compiledCondition = compileExpression( cond, freeVars )
+    And(
+      compiledCondition --> compileExpression( ifTrue, freeVars ),
+      -compiledCondition --> compileExpression( ifFalse, freeVars ) )
+  }
 
-    case TipSmtFun( name, args ) =>
-      funDecls( name )( args map { compileExpression( _, freeVars ) }: _* )
+  private def compileExpression(
+    tipSmtEq: TipSmtEq, freeVars: Map[String, Expr] ): Expr = {
+    val exprs = tipSmtEq.exprs map { compileExpression( _, freeVars ) }
+    And( for ( ( a, b ) <- exprs zip exprs.tail )
+      yield if ( exprs.head.ty == To ) a <-> b else a === b )
+  }
 
-    case TipSmtIte( cond, ifTrue, ifFalse ) =>
-      val compiledCondition = compileExpression( cond, freeVars )
-      And(
-        ( compiledCondition --> compileExpression( ifTrue, freeVars ) ),
-        ( -compiledCondition --> compileExpression( ifFalse, freeVars ) ) )
+  private def compileExpression(
+    tipSmtForall: TipSmtForall, freeVars: Map[String, Expr] ): Expr = {
+    val TipSmtForall( variables, formula ) = tipSmtForall
+    val vars = variables map {
+      case TipSmtVariableDecl( name, typ ) =>
+        Var( name, typeDecls( typ.typename ) )
+    }
+    All.Block(
+      vars,
+      compileExpression(
+        formula,
+        freeVars ++ vars.map { v => v.name -> v } ) )
+  }
 
-    case TipSmtMatch( matchedExpression, cases ) =>
-      val compiledMatchedExpression =
-        compileExpression( matchedExpression, freeVars )
-
-      And( cases map {
-        compileCase( _, compiledMatchedExpression, freeVars )
-      } )
-
+  private def compileExpression(
+    tipSmtExists: TipSmtExists, freeVars: Map[String, Expr] ): Expr = {
+    val TipSmtExists( variables, formula ) = tipSmtExists
+    val vars = variables map {
+      case TipSmtVariableDecl( name, typ ) =>
+        Var( name, typeDecls( typ.typename ) )
+    }
+    Ex.Block(
+      vars,
+      compileExpression(
+        formula,
+        freeVars ++ vars.map { v => v.name -> v } ) )
   }
 
   private def compileCase(
