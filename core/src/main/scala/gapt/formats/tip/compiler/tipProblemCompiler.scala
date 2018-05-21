@@ -54,13 +54,28 @@ import gapt.formats.tip.parser.TipSmtProblem
 import gapt.formats.tip.parser.TipSmtSortDeclaration
 import gapt.formats.tip.parser.TipSmtTrue
 import gapt.formats.tip.parser.TipSmtVariableDecl
+import gapt.formats.tip.transformation.BooleanConstantElimination
+import gapt.formats.tip.transformation.EliminateUselessQuantifiers
+import gapt.formats.tip.transformation.TipSmtDefaultPatternExpansion
+import gapt.formats.tip.transformation.UseDefinitionEquations
+import gapt.formats.tip.transformation.VariableMatchExpansion
+import gapt.formats.tip.transformation.tipOcnf
 import gapt.proofs.Context
 
 import scala.collection.mutable
 
-class TipSmtToTipProblemCompiler( problem: TipSmtProblem ) {
+class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
 
   ( new ReconstructDatatypes( problem ) )()
+  ( new TipSmtDefaultPatternExpansion( problem ) )()
+
+  problem = new UseDefinitionEquations( problem )()
+
+  problem = tipOcnf( problem )
+
+  problem = new VariableMatchExpansion( problem )()
+  problem = new BooleanConstantElimination( problem )()
+  problem = new EliminateUselessQuantifiers( problem )()
 
   var ctx = Context()
 
@@ -154,14 +169,16 @@ class TipSmtToTipProblemCompiler( problem: TipSmtProblem ) {
 
     val TipSmtAssertion( _, formula ) = tipSmtAssertion
 
-    assumptions += compileExpression( formula, Map() ).asInstanceOf[Formula]
+    assumptions += compileExpression( formula, Map[String,Expr]() )
+      .asInstanceOf[Formula]
   }
 
   private def compileGoal( tipSmtGoal: TipSmtGoal ): Unit = {
 
     val TipSmtGoal( _, formula ) = tipSmtGoal
 
-    goals += compileExpression( formula, Map() ).asInstanceOf[Formula]
+    goals += compileExpression( formula, Map[String,Expr]() )
+      .asInstanceOf[Formula]
   }
 
   private def compileConstructorField(
@@ -186,8 +203,7 @@ class TipSmtToTipProblemCompiler( problem: TipSmtProblem ) {
     body match {
       case TipSmtAnd( conjuncts ) =>
         conjuncts
-          .map { compileExpression( _, freeVars ) }
-          .map { _.asInstanceOf[Formula] }
+          .flatMap { compileFunctionBody( _, freeVars ) }
       case TipSmtIte( condition, ifTrue, ifFalse ) =>
         val compiledCondition = compileExpression( condition, freeVars )
         compileFunctionBody( ifTrue, freeVars )
@@ -198,15 +214,17 @@ class TipSmtToTipProblemCompiler( problem: TipSmtProblem ) {
         val bound = boundVars map { v =>
           Var( v.name, typeDecls( v.typ.typename ) )
         }
-        compileFunctionBody(
+        val result = compileFunctionBody(
           formula, freeVars ++ ( bound map { v => v.name -> v } ) )
           .map { All.Block( bound, _ ) }
+        result
       case _ => Seq( compileExpression( body, freeVars ).asInstanceOf[Formula] )
     }
   }
 
   def compileExpression(
-    expr: TipSmtExpression, freeVars: Map[String, Expr] ): Expr = expr match {
+    expression: TipSmtExpression, freeVars: Map[String, Expr] ): Expr =
+    expression match {
     case expr @ TipSmtForall( _, _ ) =>
       compileExpression( expr, freeVars )
     case expr @ TipSmtExists( _, _ ) =>
@@ -221,15 +239,13 @@ class TipSmtToTipProblemCompiler( problem: TipSmtProblem ) {
       compileExpression( expr, freeVars )
     case expr @ TipSmtOr( _ ) =>
       compileExpression( expr, freeVars )
-    case TipSmtNot( expr ) =>
+    case expr @ TipSmtNot( _ ) =>
       compileExpression( expr, freeVars )
-    case TipSmtImp( _ ) =>
+    case expr @ TipSmtImp( _ ) =>
       compileExpression( expr, freeVars )
-    case TipSmtIdentifier( _ ) =>
+    case expr @ TipSmtIdentifier( _ ) =>
       compileExpression( expr, freeVars )
-    case TipSmtIdentifier( _ ) =>
-      compileExpression( expr, freeVars )
-    case TipSmtFun( _, _ ) =>
+    case expr @ TipSmtFun( _, _ ) =>
       compileExpression( expr, freeVars )
     case TipSmtFalse =>
       Bottom()
@@ -382,7 +398,7 @@ class TipSmtToTipProblemCompiler( problem: TipSmtProblem ) {
     !problem.symbolTable.get.contains( id.name )
   }
 
-  private def declareBaseType( sort: String ) = {
+  private def declareBaseType( sort: String ): Unit = {
     val baseType = TBase( sort )
     declare( baseType )
     ctx += baseType
@@ -414,8 +430,7 @@ class TipSmtToTipProblemCompiler( problem: TipSmtProblem ) {
       assumptions, And( goals ) )
 
   def compileTipProblem(): TipSmtToTipProblemCompiler = {
-    problem.definitions.map { command =>
-      command match {
+    problem.definitions.foreach {
         case c @ TipSmtConstantDeclaration( _, _, _ ) =>
           compileConstantDeclaration( c )
         case c @ TipSmtSortDeclaration( _, _ ) =>
@@ -431,7 +446,6 @@ class TipSmtToTipProblemCompiler( problem: TipSmtProblem ) {
         case c @ TipSmtCheckSat() =>
         case c @ TipSmtDatatypesDeclaration( _ ) =>
           compileDatatypesDeclaration( c )
-      }
     }
     this
   }
