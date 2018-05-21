@@ -82,7 +82,7 @@ class TipSubstitute( val problem: TipSmtProblem ) {
 
       case expr @ TipSmtForall( _, _ ) =>
         substituteQuantifiedExpression(
-          oldName, replacement, expr.variables, expr.formula, TipSmtExists )
+          oldName, replacement, expr.variables, expr.formula, TipSmtForall )
 
       case expr @ TipSmtExists( _, _ ) =>
         substituteQuantifiedExpression(
@@ -185,7 +185,7 @@ class TipSubstitute( val problem: TipSmtProblem ) {
       .nonEmpty ) {
       val nameGenerator =
         new NameGenerator(
-          quantifiedVariables ++
+          freeVariables(problem, formula) ++
             Seq( oldName ) ++
             freeVariables( problem, replacement ) )
 
@@ -229,7 +229,7 @@ class TipSubstitute( val problem: TipSmtProblem ) {
     oldName:     String,
     replacement: TipSmtExpression ): TipSmtCase = {
     val TipSmtConstructorPattern( constructor, identifiers ) = cas.pattern
-    val boundNames = constructor.name +: identifiers.map { _.name }
+    val boundNames = identifiers.map { _.name }
     if ( boundNames.contains( oldName ) ) {
       cas
     } else if ( boundNames
@@ -238,7 +238,7 @@ class TipSubstitute( val problem: TipSmtProblem ) {
       .nonEmpty ) {
       val nameGenerator =
         new NameGenerator(
-          boundNames ++
+          freeVariables(problem, cas.expr) ++
             Seq( oldName ) ++
             freeVariables( problem, replacement ) )
       val newBoundNames = boundNames map { boundName =>
