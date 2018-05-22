@@ -19,7 +19,6 @@ object retrieveDatatypes {
     }
   }
   def apply( problemAst: TipSmtProblem, datatype: String ): TipSmtDatatype = {
-    println( datatype )
     apply( problemAst ).find( _.name == datatype ).get
   }
 }
@@ -86,6 +85,14 @@ case class SymbolTable( problem: TipSmtProblem ) {
           constructorName -> Type(
             fieldTypes, Datatype( tipSmtDatatype.name ) )
       }
-    Map( symbols: _* )
+    val projectorSymbols: Seq[( String, Type )] =
+      tipSmtDatatype.constructors flatMap {
+        case TipSmtConstructor( _, _, fields ) =>
+          fields map { f =>
+            f.name -> Type(
+              Seq( Datatype( tipSmtDatatype.name ) ), Datatype( f.typ.typename ) )
+          }
+      }
+    Map( ( symbols ++ projectorSymbols ): _* )
   }
 }
