@@ -185,7 +185,7 @@ class TipSubstitute( val problem: TipSmtProblem ) {
       .nonEmpty ) {
       val nameGenerator =
         new NameGenerator(
-          freeVariables(problem, formula) ++
+          freeVariables( problem, formula ) ++
             Seq( oldName ) ++
             freeVariables( problem, replacement ) )
 
@@ -238,7 +238,7 @@ class TipSubstitute( val problem: TipSmtProblem ) {
       .nonEmpty ) {
       val nameGenerator =
         new NameGenerator(
-          freeVariables(problem, cas.expr) ++
+          freeVariables( problem, cas.expr ) ++
             Seq( oldName ) ++
             freeVariables( problem, replacement ) )
       val newBoundNames = boundNames map { boundName =>
