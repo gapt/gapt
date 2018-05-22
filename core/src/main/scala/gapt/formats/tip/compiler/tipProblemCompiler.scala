@@ -22,6 +22,7 @@ import gapt.formats.tip.TipConstructor
 import gapt.formats.tip.TipDatatype
 import gapt.formats.tip.TipFun
 import gapt.formats.tip.TipProblem
+import gapt.formats.tip.analysis.SymbolTable
 import gapt.formats.tip.decoration.ReconstructDatatypes
 import gapt.formats.tip.parser.Datatype
 import gapt.formats.tip.parser.TipSmtAnd
@@ -56,6 +57,7 @@ import gapt.formats.tip.parser.TipSmtTrue
 import gapt.formats.tip.parser.TipSmtVariableDecl
 import gapt.formats.tip.transformation.BooleanConstantElimination
 import gapt.formats.tip.transformation.EliminateUselessQuantifiers
+import gapt.formats.tip.transformation.MoveUniversalQuantifiersInwards
 import gapt.formats.tip.transformation.TipSmtDefaultPatternExpansion
 import gapt.formats.tip.transformation.UseDefinitionEquations
 import gapt.formats.tip.transformation.VariableMatchExpansion
@@ -75,7 +77,10 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
 
   problem = new VariableMatchExpansion( problem )()
   problem = new BooleanConstantElimination( problem )()
+  problem = new MoveUniversalQuantifiersInwards( problem )()
   problem = new EliminateUselessQuantifiers( problem )()
+
+  problem.symbolTable = Some( SymbolTable( problem ) )
 
   var ctx = Context()
 
@@ -169,7 +174,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
 
     val TipSmtAssertion( _, formula ) = tipSmtAssertion
 
-    assumptions += compileExpression( formula, Map[String,Expr]() )
+    assumptions += compileExpression( formula, Map[String, Expr]() )
       .asInstanceOf[Formula]
   }
 
@@ -177,7 +182,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
 
     val TipSmtGoal( _, formula ) = tipSmtGoal
 
-    goals += compileExpression( formula, Map[String,Expr]() )
+    goals += compileExpression( formula, Map[String, Expr]() )
       .asInstanceOf[Formula]
   }
 
@@ -225,33 +230,33 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
   def compileExpression(
     expression: TipSmtExpression, freeVars: Map[String, Expr] ): Expr =
     expression match {
-    case expr @ TipSmtForall( _, _ ) =>
-      compileExpression( expr, freeVars )
-    case expr @ TipSmtExists( _, _ ) =>
-      compileExpression( expr, freeVars )
-    case expr @ TipSmtEq( _ ) =>
-      compileExpression( expr, freeVars )
-    case expr @ TipSmtIte( _, _, _ ) =>
-      compileExpression( expr, freeVars )
-    case expr @ TipSmtMatch( _, _ ) =>
-      compileExpression( expr, freeVars )
-    case expr @ TipSmtAnd( _ ) =>
-      compileExpression( expr, freeVars )
-    case expr @ TipSmtOr( _ ) =>
-      compileExpression( expr, freeVars )
-    case expr @ TipSmtNot( _ ) =>
-      compileExpression( expr, freeVars )
-    case expr @ TipSmtImp( _ ) =>
-      compileExpression( expr, freeVars )
-    case expr @ TipSmtIdentifier( _ ) =>
-      compileExpression( expr, freeVars )
-    case expr @ TipSmtFun( _, _ ) =>
-      compileExpression( expr, freeVars )
-    case TipSmtFalse =>
-      Bottom()
-    case TipSmtTrue =>
-      Top()
-  }
+      case expr @ TipSmtForall( _, _ ) =>
+        compileExpression( expr, freeVars )
+      case expr @ TipSmtExists( _, _ ) =>
+        compileExpression( expr, freeVars )
+      case expr @ TipSmtEq( _ ) =>
+        compileExpression( expr, freeVars )
+      case expr @ TipSmtIte( _, _, _ ) =>
+        compileExpression( expr, freeVars )
+      case expr @ TipSmtMatch( _, _ ) =>
+        compileExpression( expr, freeVars )
+      case expr @ TipSmtAnd( _ ) =>
+        compileExpression( expr, freeVars )
+      case expr @ TipSmtOr( _ ) =>
+        compileExpression( expr, freeVars )
+      case expr @ TipSmtNot( _ ) =>
+        compileExpression( expr, freeVars )
+      case expr @ TipSmtImp( _ ) =>
+        compileExpression( expr, freeVars )
+      case expr @ TipSmtIdentifier( _ ) =>
+        compileExpression( expr, freeVars )
+      case expr @ TipSmtFun( _, _ ) =>
+        compileExpression( expr, freeVars )
+      case TipSmtFalse =>
+        Bottom()
+      case TipSmtTrue =>
+        Top()
+    }
 
   private def compileExpression(
     tipSmtAnd: TipSmtAnd, freeVars: Map[String, Expr] ): Expr = {
@@ -431,21 +436,21 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
 
   def compileTipProblem(): TipSmtToTipProblemCompiler = {
     problem.definitions.foreach {
-        case c @ TipSmtConstantDeclaration( _, _, _ ) =>
-          compileConstantDeclaration( c )
-        case c @ TipSmtSortDeclaration( _, _ ) =>
-          compileSortDeclaration( c )
-        case c @ TipSmtFunctionDeclaration( _, _, _, _ ) =>
-          compileFunctionDeclaration( c )
-        case c @ TipSmtGoal( _, _ ) =>
-          compileGoal( c )
-        case c @ TipSmtAssertion( _, _ ) =>
-          compileAssertion( c )
-        case c @ TipSmtFunctionDefinition( _, _, _, _, _ ) =>
-          compileFunctionDefinition( c )
-        case c @ TipSmtCheckSat() =>
-        case c @ TipSmtDatatypesDeclaration( _ ) =>
-          compileDatatypesDeclaration( c )
+      case c @ TipSmtConstantDeclaration( _, _, _ ) =>
+        compileConstantDeclaration( c )
+      case c @ TipSmtSortDeclaration( _, _ ) =>
+        compileSortDeclaration( c )
+      case c @ TipSmtFunctionDeclaration( _, _, _, _ ) =>
+        compileFunctionDeclaration( c )
+      case c @ TipSmtGoal( _, _ ) =>
+        compileGoal( c )
+      case c @ TipSmtAssertion( _, _ ) =>
+        compileAssertion( c )
+      case c @ TipSmtFunctionDefinition( _, _, _, _, _ ) =>
+        compileFunctionDefinition( c )
+      case c @ TipSmtCheckSat() =>
+      case c @ TipSmtDatatypesDeclaration( _ ) =>
+        compileDatatypesDeclaration( c )
     }
     this
   }
