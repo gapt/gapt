@@ -189,7 +189,7 @@ class TipOcnf( problem: TipSmtProblem ) {
     } else if ( newSubExpressions.exists( _.isInstanceOf[TipSmtMatch] ) ) {
       ocnfConnectiveMatch( connective, newSubExpressions )
     } else {
-      connective.copy( connective.subexpressions.map( tipOcnf ) )
+      connective.copy( newSubExpressions )
     }
   }
 
