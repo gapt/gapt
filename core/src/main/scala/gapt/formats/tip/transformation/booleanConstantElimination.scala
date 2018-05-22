@@ -57,7 +57,7 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
       case expr @ TipSmtForall( _, _ ) => eliminateBooleanConstants( expr )
       case expr @ TipSmtExists( _, _ ) => eliminateBooleanConstants( expr )
       case expr @ TipSmtIte( _, _, _ ) => eliminateBooleanConstants( expr )
-      case expr @ TipSmtEq( _ )        => expr
+      case expr @ TipSmtEq( _ )        => eliminateBooleanConstants( expr )
       case expr @ TipSmtFun( _, _ )    => expr
       case expr @ TipSmtNot( _ )       => eliminateBooleanConstants( expr )
       case expr @ TipSmtMatch( _, _ )  => eliminateBooleanConstants( expr )
@@ -78,6 +78,26 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
     smtMatch.copy( cases = smtMatch.cases.map { c =>
       c.copy( expr = eliminateBooleanConstants( c.expr ) )
     } )
+  }
+
+  /**
+   * Eliminates boolean constants in the given expression.
+   *
+   * @param smtEq The expression in which the boolean constants are to be
+   *              eliminated.
+   * @return An expression without redundant boolean constants.
+   */
+  private def eliminateBooleanConstants(
+    smtEq: TipSmtEq ): TipSmtExpression = {
+    val newSubExpressions = smtEq.exprs.map { eliminateBooleanConstants }
+    if ( newSubExpressions.contains( TipSmtTrue ) ) {
+      eliminateBooleanConstants( TipSmtAnd( newSubExpressions ) )
+    } else if ( newSubExpressions.contains( TipSmtFalse ) ) {
+      eliminateBooleanConstants(
+        TipSmtAnd( newSubExpressions.map { TipSmtNot } ) )
+    } else {
+      TipSmtEq( newSubExpressions )
+    }
   }
 
   /**
