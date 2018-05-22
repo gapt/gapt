@@ -211,7 +211,8 @@ object TipSmtParser {
             parseGoal( sexp )
           case "check-sat" =>
             parseCheckSat( sexp )
-          case _ => throw TipSmtParserException( "" )
+          case _ => throw TipSmtParserException(
+            "unknown head symbol: " + head )
         }
     }
   }
