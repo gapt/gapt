@@ -118,7 +118,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     for ( Seq( inst ) <- instanceGen.generate( options.instanceSize._1, options.instanceSize._2, options.instanceNumber ) )
       instanceProofs( inst ) = getInstanceProof( inst )
 
-    for ( iter <- Stream.from( 1 ) ) {
+    def loop( iter: Int ): LKProof = {
       metric( "ceggr_iters", iter )
       val bup = findBUP( instanceProofs )
 
@@ -133,13 +133,14 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
       findMinimalCounterexample( instanceProofs.keys, bup ) match {
         case Some( inst ) =>
           instanceProofs( inst ) = getInstanceProof( inst )
+          loop( iter + 1 )
 
         case None =>
           val solution = solveBUP( bup )
-          return constructProof( bup, solution )
+          constructProof( bup, solution )
       }
     }
-    throw new IllegalArgumentException
+    loop( 1 )
   }
 
   def findBUP( instanceProofs: Iterable[( Instance, ExpansionProof )] ): InductionBUP = time( "grammar" ) {
