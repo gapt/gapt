@@ -1,9 +1,12 @@
 package gapt.testing
 import cats.Later
+import gapt.examples.theories._
 import gapt.examples.tip._
 import gapt.expr._
+import gapt.proofs.Sequent
 import gapt.proofs.expansion._
 import gapt.proofs.lk._
+import gapt.proofs.lkt.normalizeLKt
 import gapt.provers.viper.grammars.{ TreeGrammarProver, TreeGrammarProverOptions, indElimReversal }
 import gapt.utils.verbose
 
@@ -102,7 +105,14 @@ object sipReconstruct extends scala.App {
       "prod.prop_32" -> Later( prod.prop_32.ctx -> prod.prop_32.proof ),
       "prod.prop_33" -> Later( prod.prop_33.ctx -> prod.prop_33.proof ),
       "prod.prop_34" -> Later( prod.prop_34.ctx -> prod.prop_34.proof ),
-      "prod.prop_35" -> Later( prod.prop_35.ctx -> prod.prop_35.proof ) )
+      "prod.prop_35" -> Later( prod.prop_35.ctx -> prod.prop_35.proof ) ) ++ {
+        val thy = new Theory(
+          nat, natorder
+        // list, listlength, listdrop, listfold
+        )
+        thy.allProofs.view.map( p =>
+          s"theory.${p._1}" -> Later( thy.ctx -> thy.LemmaHandle( p._1 ).proof ) )
+      }
 
   args.toList match {
     case Seq( "--list" ) => indProofs.keys.toSeq.sorted.foreach( println )
@@ -110,36 +120,29 @@ object sipReconstruct extends scala.App {
       val ( ctx0, proof ) = indProofs( name ).value
       implicit val ctx = ctx0.newMutable
 
-      val exp = eliminateCutsET( deskolemizeET( LKToExpansionProof( proof ) ) )
+      val Sequent( _, Seq( All.Block( xs, _ ) ) ) = proof.endSequent
+      val proof0 = normalizeLKt.lk( instanceProof( proof, xs ) )
+
+      val exp = eliminateCutsET( deskolemizeET( prenexifyET.exceptTheory( LKToExpansionProof( proof0 ) ) ) )
       val ETWeakQuantifier( _, insts ) = exp.inductions.head.suc
       val term = insts.head._1.asInstanceOf[Var]
 
-      val ETStrongQuantifierBlock( _, xs, _ ) = exp.expansionSequent.succedent.head
       require( xs.contains( term ) )
       val Right( proof1 ) = ExpansionProofToLK( exp )
-      val proof2 =
-        instanceProof( proof1, for ( x <- xs ) yield if ( x == term ) term else {
-          val c = Const( ctx.newNameGenerator.fresh( x.name ), x.ty )
-          ctx += c
-          c
-        } )
+      val proof2 = Substitution( for ( x <- xs if x != term ) yield x -> {
+        val c = Const( ctx.newNameGenerator.fresh( x.name ), x.ty )
+        ctx += c
+        c
+      } )( proof1 )
       val proof3 = ForallRightRule( proof2, All( term, proof2.endSequent.succedent.head ) )
       val p = proof3
 
-      val qtys =
-        try {
-          val indG = extractInductionGrammar( p )
-          println( s"SIP with induction grammar:\n$indG" )
-          Some( indG.gamma.map { case Var( _, TBase( n, _ ) ) => n } )
-        } catch {
-          case ex: Throwable =>
-            ex.printStackTrace()
-            None
-        }
+      val indG = extractInductionGrammar( p )
+      println( s"SIP with induction grammar:\n$indG" )
+      val qtys = Some( indG.gamma.map { case Var( _, TBase( n, _ ) ) => n } )
 
       verbose.only( TreeGrammarProver.logger ) {
         indElimReversal( p, TreeGrammarProverOptions( minInstProof = false, quantTys = qtys ) )
-        TreeGrammarProver( p.endSequent )
       }
   }
 
