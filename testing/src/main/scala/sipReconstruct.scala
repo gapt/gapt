@@ -8,7 +8,7 @@ import gapt.proofs.expansion._
 import gapt.proofs.lk._
 import gapt.proofs.lkt.normalizeLKt
 import gapt.provers.viper.grammars.{ TreeGrammarProver, TreeGrammarProverOptions, indElimReversal }
-import gapt.utils.verbose
+import gapt.utils.{ LogHandler, verbose }
 
 object sipReconstruct extends scala.App {
 
@@ -113,6 +113,8 @@ object sipReconstruct extends scala.App {
         thy.allProofs.view.map( p =>
           s"theory.${p._1}" -> Later( thy.ctx -> thy.LemmaHandle( p._1 ).proof ) )
       }
+
+  LogHandler.current.value = ( domain, level, msg ) => if ( level <= LogHandler.Warn ) println( msg )
 
   args.toList match {
     case Seq( "--list" ) => indProofs.keys.toSeq.sorted.foreach( println )
