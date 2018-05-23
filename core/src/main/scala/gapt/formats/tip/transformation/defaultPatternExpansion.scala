@@ -17,6 +17,7 @@ import gapt.formats.tip.parser.TipSmtIdentifier
 import gapt.formats.tip.parser.TipSmtImp
 import gapt.formats.tip.parser.TipSmtIte
 import gapt.formats.tip.parser.TipSmtMatch
+import gapt.formats.tip.parser.TipSmtMutualRecursiveFunctionDefinition
 import gapt.formats.tip.parser.TipSmtOr
 import gapt.formats.tip.parser.TipSmtProblem
 import gapt.utils.NameGenerator
@@ -38,17 +39,24 @@ class TipSmtDefaultPatternExpansion( problem: TipSmtProblem ) {
    */
   def apply(): Unit = {
     problem.definitions foreach {
-      case TipSmtFunctionDefinition( _, _, parameters, _, body ) =>
-        val context = parameters map {
-          _.name
-        }
-        expandDefaultPatterns( body, context )
+      case fun @ TipSmtFunctionDefinition( _, _, _, _, _ ) =>
+        apply( fun )
       case TipSmtGoal( _, expression ) =>
         expandDefaultPatterns( expression, Seq() )
+      case funDefs @ TipSmtMutualRecursiveFunctionDefinition( _ ) =>
+        funDefs.functions.foreach { apply }
       case TipSmtAssertion( _, expression ) =>
         expandDefaultPatterns( expression, Seq() )
       case _ =>
     }
+  }
+
+  private def apply(
+    fun: TipSmtFunctionDefinition ): Unit = {
+    val context = fun.parameters map {
+      _.name
+    }
+    expandDefaultPatterns( fun.body, context )
   }
 
   /**

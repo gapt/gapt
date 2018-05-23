@@ -36,6 +36,9 @@ case class TipSmtFunctionDeclaration(
     argumentTypes: Seq[TipSmtType],
     returnType:    TipSmtType ) extends TipSmtCommand
 
+case class TipSmtMutualRecursiveFunctionDefinition(
+    functions: Seq[TipSmtFunctionDefinition] ) extends TipSmtCommand
+
 case class TipSmtSortDeclaration(
     name:     String,
     keywords: Seq[TipSmtKeyword] ) extends TipSmtCommand
@@ -205,6 +208,8 @@ object TipSmtParser {
             parseFunctionDeclaration( sexp )
           case "define-fun" | "define-fun-rec" =>
             parseFunctionDefinition( sexp )
+          case "define-funs-rec" =>
+            parseMutuallyRecursiveFunctionDefinition( sexp )
           case "assert" =>
             parseAssertion( sexp )
           case "prove" | "assert-not" =>
@@ -463,6 +468,55 @@ object TipSmtParser {
         parseType( rest.init.last ),
         parseExpression( rest.last ) )
     case _ => throw TipSmtParserException( "malformed function definition" )
+  }
+
+  /**
+   * Parses a function definition of mutually recursive functions.
+   *
+   * A mutually recursive functions definition is an expression of the form:
+   * mutuall_recursive_functions_definition ::=
+   *  '(' "define-funs-rec" '(' { signature } ')' '(' { definition } ')' ')',
+   *  where
+   *  signature  ::= '(' function_name keywords formal_param_list ret_type ')',
+   *  definition ::= expression,
+   *
+   * @param expression The expression to be parsed.
+   * @return The parsed mutually recursive functions definition.
+   */
+  private def parseMutuallyRecursiveFunctionDefinition(
+    expression: SExpression ): TipSmtMutualRecursiveFunctionDefinition = {
+    def parseFunctionSignature( sexp: SExpression ): ( //
+    String, Seq[TipSmtKeyword], Seq[TipSmtFormalParameter], TipSmtType ) = {
+      sexp match {
+        case LFun( functionName, rest @ _* ) =>
+          (
+            functionName,
+            parseKeywords( rest.init.init ),
+            parseFormalParameterList( rest.init.last ),
+            parseType( rest.last ) )
+        case _ => throw TipSmtParserException(
+          "malformed function signature: " + sexp )
+      }
+    }
+    expression match {
+      case LFun(
+        "define-funs-rec", LList( signatures @ _* ), LList( definitions @ _* )
+        ) =>
+        val functions =
+          signatures
+            .map { parseFunctionSignature }
+            .zip( definitions.map { parseExpression } )
+            .map {
+              case ( //
+                ( functionName, keywords, formalParameters, returnType ),
+                body ) =>
+                TipSmtFunctionDefinition(
+                  functionName, keywords, formalParameters, returnType, body )
+            }
+        TipSmtMutualRecursiveFunctionDefinition( functions )
+      case _ => throw TipSmtParserException(
+        "malformed mutual recursive functions definition" )
+    }
   }
 
   /**

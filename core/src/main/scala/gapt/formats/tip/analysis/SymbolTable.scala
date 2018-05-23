@@ -7,6 +7,7 @@ import gapt.formats.tip.parser.TipSmtDatatype
 import gapt.formats.tip.parser.TipSmtDatatypesDeclaration
 import gapt.formats.tip.parser.TipSmtFunctionDeclaration
 import gapt.formats.tip.parser.TipSmtFunctionDefinition
+import gapt.formats.tip.parser.TipSmtMutualRecursiveFunctionDefinition
 import gapt.formats.tip.parser.TipSmtProblem
 
 object retrieveDatatypes {
@@ -50,15 +51,11 @@ case class SymbolTable( problem: TipSmtProblem ) {
             ( functionName ->
               Type( argTypes, Datatype( returnType.typename ) ) )
 
-        case TipSmtFunctionDefinition(
-          functionName, _, formalParameters, returnType, _
-          ) =>
-          val argTypes = formalParameters map { param =>
-            Datatype( param.typ.typename )
-          }
-          symbols +=
-            ( functionName ->
-              Type( argTypes, Datatype( returnType.typename ) ) )
+        case function @ TipSmtFunctionDefinition( _, _, _, _, _ ) =>
+          symbols += extractSymbols( function )
+
+        case TipSmtMutualRecursiveFunctionDefinition( functions ) =>
+          symbols ++= functions.map { extractSymbols }
 
         case TipSmtConstantDeclaration( constantName, _, typ ) =>
           symbols += ( constantName -> Type( Seq(), Datatype( typ.typename ) ) )
@@ -72,6 +69,15 @@ case class SymbolTable( problem: TipSmtProblem ) {
       }
     }
     symbols
+  }
+
+  private def extractSymbols( function: TipSmtFunctionDefinition ): ( String, Type ) = {
+    val TipSmtFunctionDefinition( functionName, _, formalParameters, returnType, _ ) = function
+    val argTypes = formalParameters map { param =>
+      Datatype( param.typ.typename )
+    }
+    functionName ->
+      Type( argTypes, Datatype( returnType.typename ) )
   }
 
   private def datatypeSymbols(

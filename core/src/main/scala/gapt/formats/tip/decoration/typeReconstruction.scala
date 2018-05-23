@@ -20,6 +20,7 @@ import gapt.formats.tip.parser.TipSmtIdentifier
 import gapt.formats.tip.parser.TipSmtImp
 import gapt.formats.tip.parser.TipSmtIte
 import gapt.formats.tip.parser.TipSmtMatch
+import gapt.formats.tip.parser.TipSmtMutualRecursiveFunctionDefinition
 import gapt.formats.tip.parser.TipSmtNot
 import gapt.formats.tip.parser.TipSmtOr
 import gapt.formats.tip.parser.TipSmtProblem
@@ -32,12 +33,10 @@ class ReconstructDatatypes( problem: TipSmtProblem ) {
   def apply(): TipSmtProblem = {
 
     problem.definitions foreach {
-      case TipSmtFunctionDefinition( _, _, parameters, _, body ) =>
-        val context = parameters map {
-          case TipSmtFormalParameter( name, typ ) =>
-            name -> Datatype( typ.typename )
-        }
-        reconstructTypes( body, Map( context: _* ) )
+      case fun @ TipSmtFunctionDefinition( _, _, _, _, _ ) =>
+        apply( fun )
+      case funDefs @ TipSmtMutualRecursiveFunctionDefinition( _ ) =>
+        funDefs.functions.foreach { apply }
       case TipSmtAssertion( _, expression ) =>
         reconstructTypes( expression, Map() )
       case TipSmtGoal( _, expression ) =>
@@ -45,6 +44,14 @@ class ReconstructDatatypes( problem: TipSmtProblem ) {
       case _ =>
     }
     problem
+  }
+
+  private def apply( fun: TipSmtFunctionDefinition ): Unit = {
+    val context = fun.parameters map {
+      case TipSmtFormalParameter( name, typ ) =>
+        name -> Datatype( typ.typename )
+    }
+    reconstructTypes( fun.body, Map( context: _* ) )
   }
 
   private def reconstructTypes(

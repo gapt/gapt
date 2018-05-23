@@ -13,6 +13,7 @@ import gapt.formats.tip.parser.TipSmtGoal
 import gapt.formats.tip.parser.TipSmtImp
 import gapt.formats.tip.parser.TipSmtIte
 import gapt.formats.tip.parser.TipSmtMatch
+import gapt.formats.tip.parser.TipSmtMutualRecursiveFunctionDefinition
 import gapt.formats.tip.parser.TipSmtNot
 import gapt.formats.tip.parser.TipSmtOr
 import gapt.formats.tip.parser.TipSmtProblem
@@ -34,10 +35,17 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
         goal.copy( expr = eliminateBooleanConstants( formula ) )
       case assertion @ TipSmtAssertion( _, formula ) =>
         assertion.copy( expr = eliminateBooleanConstants( formula ) )
-      case fun @ TipSmtFunctionDefinition( _, _, _, _, body ) =>
-        fun.copy( body = eliminateBooleanConstants( body ) )
+      case definition @ TipSmtFunctionDefinition( _, _, _, _, _ ) =>
+        apply( definition )
+      case funDefs @ TipSmtMutualRecursiveFunctionDefinition( _ ) =>
+        funDefs.copy( functions = funDefs.functions.map { apply } )
       case definition => definition
     } )
+  }
+
+  private def apply(
+    fun: TipSmtFunctionDefinition ): TipSmtFunctionDefinition = {
+    fun.copy( body = eliminateBooleanConstants( fun.body ) )
   }
 
   /**

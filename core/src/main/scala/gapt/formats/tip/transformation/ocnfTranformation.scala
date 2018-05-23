@@ -16,6 +16,7 @@ import gapt.formats.tip.parser.TipSmtIdentifier
 import gapt.formats.tip.parser.TipSmtImp
 import gapt.formats.tip.parser.TipSmtIte
 import gapt.formats.tip.parser.TipSmtMatch
+import gapt.formats.tip.parser.TipSmtMutualRecursiveFunctionDefinition
 import gapt.formats.tip.parser.TipSmtNot
 import gapt.formats.tip.parser.TipSmtOr
 import gapt.formats.tip.parser.TipSmtProblem
@@ -37,15 +38,22 @@ class TipOcnf( problem: TipSmtProblem ) {
     val newDefinitions = problem.definitions map { definition =>
       definition match {
         case funDef @ TipSmtFunctionDefinition( _, _, _, _, _ ) =>
-          funDef.copy( body = tipOcnf( funDef.body ) )
+          apply( funDef )
         case goal @ TipSmtGoal( _, _ ) =>
           goal.copy( expr = tipOcnf( goal.expr ) )
+        case funDefs @ TipSmtMutualRecursiveFunctionDefinition( _ ) =>
+          funDefs.copy( functions = funDefs.functions.map { apply } )
         case assertion @ TipSmtAssertion( _, _ ) =>
           assertion.copy( expr = tipOcnf( assertion.expr ) )
         case _ => definition
       }
     }
     TipSmtProblem( newDefinitions )
+  }
+
+  private def apply(
+    fun: TipSmtFunctionDefinition ): TipSmtFunctionDefinition = {
+    fun.copy( body = tipOcnf( fun.body ) )
   }
 
   private def tipOcnf( expression: TipSmtExpression ): TipSmtExpression = {

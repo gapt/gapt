@@ -6,6 +6,7 @@ import gapt.formats.tip.parser.TipSmtForall
 import gapt.formats.tip.parser.TipSmtFun
 import gapt.formats.tip.parser.TipSmtFunctionDefinition
 import gapt.formats.tip.parser.TipSmtIdentifier
+import gapt.formats.tip.parser.TipSmtMutualRecursiveFunctionDefinition
 import gapt.formats.tip.parser.TipSmtProblem
 import gapt.formats.tip.parser.TipSmtVariableDecl
 
@@ -32,13 +33,21 @@ class UseDefinitionEquations( problem: TipSmtProblem ) {
   def apply(): TipSmtProblem = {
     problem.copy( definitions = problem.definitions.map {
       case fun @ TipSmtFunctionDefinition( name, _, parameters, _, body ) =>
-        val boundVariables =
-          parameters.map { p => TipSmtVariableDecl( p.name, p.typ ) }
-        val arguments = parameters map { p => TipSmtIdentifier( p.name ) }
-        fun.copy( body = TipSmtForall(
-          boundVariables,
-          TipSmtEq( Seq( TipSmtFun( name, arguments ), body ) ) ) )
+        apply( fun )
+      case funDefs @ TipSmtMutualRecursiveFunctionDefinition( _ ) =>
+        funDefs.copy( functions = funDefs.functions map { apply } )
       case definition => definition
     } )
+  }
+
+  private def apply(
+    fun: TipSmtFunctionDefinition ): TipSmtFunctionDefinition = {
+    val TipSmtFunctionDefinition( name, _, parameters, _, body ) = fun
+    val boundVariables =
+      parameters.map { p => TipSmtVariableDecl( p.name, p.typ ) }
+    val arguments = parameters map { p => TipSmtIdentifier( p.name ) }
+    fun.copy( body = TipSmtForall(
+      boundVariables,
+      TipSmtEq( Seq( TipSmtFun( name, arguments ), body ) ) ) )
   }
 }

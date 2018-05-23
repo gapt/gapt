@@ -14,6 +14,7 @@ import gapt.formats.tip.parser.TipSmtGoal
 import gapt.formats.tip.parser.TipSmtImp
 import gapt.formats.tip.parser.TipSmtIte
 import gapt.formats.tip.parser.TipSmtMatch
+import gapt.formats.tip.parser.TipSmtMutualRecursiveFunctionDefinition
 import gapt.formats.tip.parser.TipSmtNot
 import gapt.formats.tip.parser.TipSmtOr
 import gapt.formats.tip.parser.TipSmtProblem
@@ -42,14 +43,21 @@ class EliminateUselessQuantifiers( problem: TipSmtProblem ) {
    */
   def apply(): TipSmtProblem = {
     problem.copy( definitions = problem.definitions map {
-      case fun @ TipSmtFunctionDefinition( _, _, _, _, body ) =>
-        fun.copy( body = this( body ) )
+      case fun @ TipSmtFunctionDefinition( _, _, _, _, _ ) =>
+        apply( fun )
       case goal @ TipSmtGoal( _, formula ) =>
         goal.copy( expr = this( formula ) )
+      case funDefs @ TipSmtMutualRecursiveFunctionDefinition( _ ) =>
+        funDefs.copy( functions = funDefs.functions map { apply } )
       case assertion @ TipSmtAssertion( _, formula ) =>
         assertion.copy( expr = this( formula ) )
       case definition => definition
     } )
+  }
+
+  private def apply(
+    fun: TipSmtFunctionDefinition ): TipSmtFunctionDefinition = {
+    fun.copy( body = this( fun.body ) )
   }
 
   /**

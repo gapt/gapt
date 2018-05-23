@@ -49,6 +49,7 @@ import gapt.formats.tip.parser.TipSmtIdentifier
 import gapt.formats.tip.parser.TipSmtImp
 import gapt.formats.tip.parser.TipSmtIte
 import gapt.formats.tip.parser.TipSmtMatch
+import gapt.formats.tip.parser.TipSmtMutualRecursiveFunctionDefinition
 import gapt.formats.tip.parser.TipSmtNot
 import gapt.formats.tip.parser.TipSmtOr
 import gapt.formats.tip.parser.TipSmtProblem
@@ -145,6 +146,31 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
     ctx += f
   }
 
+  private def toFunctionConstant(
+    tipSmtFunctionDefinition: TipSmtFunctionDefinition ): Const = {
+    val TipSmtFunctionDefinition(
+      functionName,
+      _,
+      formalParameters,
+      returnType,
+      body ) = tipSmtFunctionDefinition
+
+    val argVars = for (
+      TipSmtFormalParameter( argName, argType ) <- formalParameters
+    ) yield Var( argName, typeDecls( argType.typename ) )
+
+    Const(
+      functionName,
+      FunctionType( typeDecls( returnType.typename ), argVars.map( _.ty ) ) )
+  }
+
+  private def declareFunction(
+    tipSmtFunctionDefinition: TipSmtFunctionDefinition ): Unit = {
+    val functionConstant = toFunctionConstant( tipSmtFunctionDefinition )
+    declare( functionConstant )
+    ctx += functionConstant
+  }
+
   private def compileFunctionDefinition(
     tipSmtFunctionDefinition: TipSmtFunctionDefinition ): Unit = {
 
@@ -159,12 +185,8 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
       TipSmtFormalParameter( argName, argType ) <- formalParameters
     ) yield Var( argName, typeDecls( argType.typename ) )
 
-    val funConst = Const(
-      functionName,
-      FunctionType( typeDecls( returnType.typename ), argVars.map( _.ty ) ) )
+    val funConst = toFunctionConstant( tipSmtFunctionDefinition )
 
-    declare( funConst )
-    ctx += funConst
     functions += TipFun(
       funConst,
       compileFunctionBody( body, argVars.map { v => v.name -> v }.toMap ) )
@@ -447,10 +469,14 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
       case c @ TipSmtAssertion( _, _ ) =>
         compileAssertion( c )
       case c @ TipSmtFunctionDefinition( _, _, _, _, _ ) =>
+        declareFunction( c )
         compileFunctionDefinition( c )
       case c @ TipSmtCheckSat() =>
       case c @ TipSmtDatatypesDeclaration( _ ) =>
         compileDatatypesDeclaration( c )
+      case c @ TipSmtMutualRecursiveFunctionDefinition( functions ) =>
+        functions foreach { declareFunction }
+        functions foreach { compileFunctionDefinition }
     }
     this
   }
