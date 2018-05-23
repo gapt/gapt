@@ -35,6 +35,7 @@ import gapt.formats.tip.parser.TipSmtConstructorField
 import gapt.formats.tip.parser.TipSmtConstructorPattern
 import gapt.formats.tip.parser.TipSmtDatatype
 import gapt.formats.tip.parser.TipSmtDatatypesDeclaration
+import gapt.formats.tip.parser.TipSmtDistinct
 import gapt.formats.tip.parser.TipSmtEq
 import gapt.formats.tip.parser.TipSmtExists
 import gapt.formats.tip.parser.TipSmtExpression
@@ -57,6 +58,7 @@ import gapt.formats.tip.parser.TipSmtSortDeclaration
 import gapt.formats.tip.parser.TipSmtTrue
 import gapt.formats.tip.parser.TipSmtVariableDecl
 import gapt.formats.tip.transformation.BooleanConstantElimination
+import gapt.formats.tip.transformation.DesugarDistinctExpression
 import gapt.formats.tip.transformation.EliminateUselessQuantifiers
 import gapt.formats.tip.transformation.MoveUniversalQuantifiersInwards
 import gapt.formats.tip.transformation.TipSmtDefaultPatternExpansion
@@ -68,6 +70,8 @@ import gapt.proofs.Context
 import scala.collection.mutable
 
 class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
+
+  problem = new DesugarDistinctExpression( problem )()
 
   ( new ReconstructDatatypes( problem ) )()
   ( new TipSmtDefaultPatternExpansion( problem ) )()
@@ -278,6 +282,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
         Bottom()
       case TipSmtTrue =>
         Top()
+      case TipSmtDistinct( _ ) => throw new IllegalArgumentException
     }
 
   private def compileExpression(

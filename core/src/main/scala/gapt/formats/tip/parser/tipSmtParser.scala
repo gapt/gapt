@@ -100,6 +100,9 @@ case class TipSmtIte(
     the:  TipSmtExpression,
     els:  TipSmtExpression ) extends TipSmtExpression
 
+case class TipSmtDistinct(
+    expressions: Seq[TipSmtExpression] ) extends TipSmtExpression
+
 sealed trait TipSmtPattern
 
 case object TipSmtDefault extends TipSmtPattern
@@ -753,6 +756,8 @@ object TipSmtParser {
       TipSmtImp( exprs map { parseExpression( _ ) } )
     case LFun( "not", expr ) =>
       TipSmtNot( parseExpression( expr ) )
+    case LFun( "distinct", exprs @ _* ) =>
+      TipSmtDistinct( exprs.map { parseExpression } )
     case LSymbol( name ) =>
       TipSmtIdentifier( name )
     case LFun( name, args @ _* ) =>
