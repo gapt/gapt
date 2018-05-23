@@ -1,10 +1,9 @@
 package gapt.testing
 import cats.Later
 import gapt.examples.tip._
-import gapt.expr.{ All, Const, TBase, Var }
-import gapt.proofs.expansion.{ ETStrongQuantifierBlock, ETWeakQuantifier }
-import gapt.proofs.lk.{ ForallRightRule, LKToExpansionProof, extractInductionGrammar, instanceProof }
-import gapt.proofs.lkt.normalizeLKt
+import gapt.expr._
+import gapt.proofs.expansion._
+import gapt.proofs.lk._
 import gapt.provers.viper.grammars.{ TreeGrammarProver, TreeGrammarProverOptions, indElimReversal }
 import gapt.utils.verbose
 
@@ -109,13 +108,13 @@ object sipReconstruct extends scala.App {
       val ( ctx0, proof ) = indProofs( name ).value
       implicit val ctx = ctx0.newMutable
 
-      val proof1 = normalizeLKt.lk( proof )
-      val exp = LKToExpansionProof( proof1 )
+      val exp = eliminateCutsET( deskolemizeET( LKToExpansionProof( proof ) ) )
       val ETWeakQuantifier( _, insts ) = exp.inductions.head.suc
       val term = insts.head._1.asInstanceOf[Var]
 
       val ETStrongQuantifierBlock( _, xs, _ ) = exp.expansionSequent.succedent.head
       require( xs.contains( term ) )
+      val Right( proof1 ) = ExpansionProofToLK( exp )
       val proof2 =
         instanceProof( proof1, for ( x <- xs ) yield if ( x == term ) term else {
           val c = Const( ctx.newNameGenerator.fresh( x.name ), x.ty )
