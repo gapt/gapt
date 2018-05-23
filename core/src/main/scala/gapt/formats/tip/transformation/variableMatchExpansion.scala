@@ -43,6 +43,10 @@ class VariableMatchExpansion( problem: TipSmtProblem ) {
 
   problem.symbolTable = Some( SymbolTable( problem ) )
 
+  private sealed trait Polarity
+  private case object Forall extends Polarity
+  private case object Exists extends Polarity
+
   /**
    * Expands variable-match expressions in the given problem.
    *
@@ -59,9 +63,11 @@ class VariableMatchExpansion( problem: TipSmtProblem ) {
         case funDefs @ TipSmtMutualRecursiveFunctionDefinition( _ ) =>
           funDefs.copy( functions = funDefs.functions.map { apply } )
         case goal @ TipSmtGoal( _, formula ) =>
-          goal.copy( expr = expandVariableMatch( formula ) )
+          goal.copy( expr =
+            expandVariableMatch( formula, Map[String, Polarity]() ) )
         case assertion @ TipSmtAssertion( _, formula ) =>
-          assertion.copy( expr = expandVariableMatch( formula ) )
+          assertion.copy( expr =
+            expandVariableMatch( formula, Map[String, Polarity]() ) )
         case definition => definition
       }
     } )
@@ -69,7 +75,7 @@ class VariableMatchExpansion( problem: TipSmtProblem ) {
 
   private def apply(
     fun: TipSmtFunctionDefinition ): TipSmtFunctionDefinition = {
-    fun.copy( body = expandVariableMatch( fun.body ) )
+    fun.copy( body = expandVariableMatch( fun.body, Map[String, Polarity]() ) )
   }
 
   /**
@@ -79,33 +85,50 @@ class VariableMatchExpansion( problem: TipSmtProblem ) {
    *                   be expanded.
    * @return An expression without variable-match subexpressions.
    */
-  def expandVariableMatch( expression: TipSmtExpression ): TipSmtExpression = {
+  def expandVariableMatch(
+    expression: TipSmtExpression,
+    variables:  Map[String, Polarity] ): TipSmtExpression = {
     expression match {
       case expr @ TipSmtAnd( _ ) =>
-        expr.copy( expr.exprs.map { expandVariableMatch } )
+        expr.copy( expr.exprs.map { expandVariableMatch( _, variables ) } )
       case expr @ TipSmtOr( _ ) =>
-        expr.copy( expr.exprs.map { expandVariableMatch } )
+        expr.copy( expr.exprs.map { expandVariableMatch( _, variables ) } )
       case expr @ TipSmtImp( _ ) =>
-        expr.copy( expr.exprs.map { expandVariableMatch } )
+        expr.copy( expr.exprs.map { expandVariableMatch( _, variables ) } )
       case expr @ TipSmtEq( _ ) =>
-        expr.copy( expr.exprs.map { expandVariableMatch } )
+        expr.copy( expr.exprs.map { expandVariableMatch( _, variables ) } )
       case expr @ TipSmtFun( _, _ ) =>
-        expr.copy( arguments = expr.arguments.map { expandVariableMatch } )
+        expr.copy( arguments =
+          expr.arguments.map { expandVariableMatch( _, variables ) } )
       case expr @ TipSmtNot( _ ) =>
-        expr.copy( expandVariableMatch( expr.expr ) )
+        expr.copy( expandVariableMatch( expr.expr, variables ) )
       case expr @ TipSmtForall( _, _ ) =>
-        expr.copy( formula = expandVariableMatch( expr.formula ) )
+        expandVariableMatch( expr, variables )
       case expr @ TipSmtExists( _, _ ) =>
-        expr.copy( formula = expandVariableMatch( expr.formula ) )
+        expandVariableMatch( expr, variables )
       case expr @ TipSmtMatch( _, _ ) =>
-        expandVariableMatch( expr )
+        expandVariableMatch( expr, variables )
       case expr @ TipSmtIte( _, _, _ ) =>
         TipSmtIte(
-          expandVariableMatch( expr.cond ),
-          expandVariableMatch( expr.the ),
-          expandVariableMatch( expr.els ) )
+          expandVariableMatch( expr.cond, variables ),
+          expandVariableMatch( expr.the, variables ),
+          expandVariableMatch( expr.els, variables ) )
       case _ => expression
     }
+  }
+
+  private def expandVariableMatch(
+    forall:    TipSmtForall,
+    variables: Map[String, Polarity] ): TipSmtExpression = {
+    val newVariables = variables ++ forall.variables.map { _.name -> Forall }
+    forall.copy( formula = expandVariableMatch( forall.formula, newVariables ) )
+  }
+
+  private def expandVariableMatch(
+    exists:    TipSmtExists,
+    variables: Map[String, Polarity] ): TipSmtExpression = {
+    val newVariables = variables ++ exists.variables.map { _.name -> Exists }
+    exists.copy( formula = expandVariableMatch( exists.formula, newVariables ) )
   }
 
   /**
@@ -115,12 +138,21 @@ class VariableMatchExpansion( problem: TipSmtProblem ) {
    *                    be expanded.
    * @return An expression without variable-match subexpressions.
    */
-  def expandVariableMatch( tipSmtMatch: TipSmtMatch ): TipSmtExpression = {
+  def expandVariableMatch(
+    tipSmtMatch: TipSmtMatch,
+    variables:   Map[String, Polarity] ): TipSmtExpression = {
     tipSmtMatch.expr match {
-      case identifier @ TipSmtIdentifier( _ ) if isVariable( identifier ) =>
-        TipSmtAnd( tipSmtMatch.cases
-          .map { expandCaseStatement( identifier, _ ) }
-          .map { expandVariableMatch } )
+      case identifier @ TipSmtIdentifier( _ ) //
+      if variables.contains( identifier.name ) =>
+        val polarity = variables( identifier.name )
+        val connective = polarity match {
+          case Forall => TipSmtAnd
+          case Exists => TipSmtOr
+        }
+        connective( tipSmtMatch.cases
+          .map { expandCaseStatement( identifier, _, polarity ) }
+          .map { expandVariableMatch( _, variables ) } )
+
       case _ => tipSmtMatch.copy( cases = tipSmtMatch.cases map {
         expandVariableMatch
       } )
@@ -138,7 +170,8 @@ class VariableMatchExpansion( problem: TipSmtProblem ) {
    */
   def expandCaseStatement(
     variable:   TipSmtIdentifier,
-    tipSmtCase: TipSmtCase ): TipSmtExpression = {
+    tipSmtCase: TipSmtCase,
+    polarity:   Polarity ): TipSmtExpression = {
     val pattern @ TipSmtConstructorPattern( _, _ ) = tipSmtCase.pattern
     val boundVariables =
       problem
@@ -149,7 +182,11 @@ class VariableMatchExpansion( problem: TipSmtProblem ) {
           case ( ty, field ) =>
             TipSmtVariableDecl( field.name, TipSmtType( ty.name ) )
         }
-    TipSmtForall(
+    val quantifier = polarity match {
+      case Forall => TipSmtForall
+      case Exists => TipSmtExists
+    }
+    quantifier(
       boundVariables,
       ( new TipSubstitute( problem ) )(
         tipSmtCase.expr,
@@ -176,7 +213,8 @@ class VariableMatchExpansion( problem: TipSmtProblem ) {
    *         patterns.
    */
   def expandVariableMatch( tipSmtCase: TipSmtCase ): TipSmtCase =
-    tipSmtCase.copy( expr = expandVariableMatch( tipSmtCase.expr ) )
+    tipSmtCase.copy(
+      expr = expandVariableMatch( tipSmtCase.expr, Map[String, Polarity]() ) )
 
   /**
    * Checks whether the given identifier represents a variable.
