@@ -7,6 +7,7 @@ import gapt.formats.tip.parser.TipSmtAssertion
 import gapt.formats.tip.parser.TipSmtCase
 import gapt.formats.tip.parser.TipSmtConstructorPattern
 import gapt.formats.tip.parser.TipSmtDefault
+import gapt.formats.tip.parser.TipSmtDistinct
 import gapt.formats.tip.parser.TipSmtEq
 import gapt.formats.tip.parser.TipSmtExists
 import gapt.formats.tip.parser.TipSmtExpression
@@ -118,6 +119,10 @@ class ReconstructDatatypes( problem: TipSmtProblem ) {
         reconstructTypesCase( expr.datatype.get, _, variables )
       }
       expression.datatype = cases.head.expr.datatype
+
+    case TipSmtDistinct( expressions ) =>
+      expressions.foreach { reconstructTypes( _, variables ) }
+      expression.datatype = Some( Datatype( "bool" ) )
   }
 
   private def reconstructTypesCase(

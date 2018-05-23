@@ -4,6 +4,7 @@ import gapt.formats.tip.analysis.SymbolTable
 import gapt.formats.tip.parser.TipSmtAnd
 import gapt.formats.tip.parser.TipSmtAssertion
 import gapt.formats.tip.parser.TipSmtCase
+import gapt.formats.tip.parser.TipSmtDistinct
 import gapt.formats.tip.parser.TipSmtEq
 import gapt.formats.tip.parser.TipSmtExists
 import gapt.formats.tip.parser.TipSmtExpression
@@ -76,6 +77,7 @@ class TipOcnf( problem: TipSmtProblem ) {
       case TipSmtIdentifier( _ ) => expression
       case TipSmtTrue            => TipSmtTrue
       case TipSmtFalse           => TipSmtFalse
+      case TipSmtDistinct( _ )   => throw new IllegalArgumentException()
     }
   }
 

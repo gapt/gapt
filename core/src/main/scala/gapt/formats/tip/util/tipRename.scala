@@ -3,6 +3,7 @@ package gapt.formats.tip.util
 import gapt.formats.tip.parser.TipSmtAnd
 import gapt.formats.tip.parser.TipSmtCase
 import gapt.formats.tip.parser.TipSmtConstructorPattern
+import gapt.formats.tip.parser.TipSmtDistinct
 import gapt.formats.tip.parser.TipSmtEq
 import gapt.formats.tip.parser.TipSmtExists
 import gapt.formats.tip.parser.TipSmtExpression
@@ -79,6 +80,10 @@ class TipSubstitute( val problem: TipSmtProblem ) {
 
       case expr @ TipSmtEq( _ ) =>
         TipSmtEq( expr.exprs map { apply( _, oldName, replacement ) } )
+
+      case expr @ TipSmtDistinct( _ ) =>
+        TipSmtDistinct(
+          expr.expressions map { apply( _, oldName, replacement ) } )
 
       case expr @ TipSmtForall( _, _ ) =>
         substituteQuantifiedExpression(
