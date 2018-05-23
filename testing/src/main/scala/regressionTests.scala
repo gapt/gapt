@@ -8,7 +8,7 @@ import gapt.expr._
 import gapt.expr.fol.isFOLPrenexSigma1
 import gapt.formats.babel.BabelParser
 import gapt.formats.leancop.LeanCoPParser
-import gapt.formats.tip.TipSmtParser
+import gapt.formats.tip.TipSmtImporter
 import gapt.formats.tptp.{ TptpParser, resolveIncludes }
 import gapt.formats.verit.VeriTParser
 import gapt.proofs.Context.ProofNames
@@ -37,7 +37,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
   override def timeout = Some( 10 minutes )
 
   override protected def test( implicit testRun: TestRun ): Unit = {
-    val bench = TipSmtParser.fixupAndParse( f ) --- "tip parser"
+    val bench = TipSmtImporter.fixupAndParse( f ) --- "tip parser"
 
     implicit val ctx: MutableContext = bench.ctx.newMutable
     val sequent = bench.toSequent
