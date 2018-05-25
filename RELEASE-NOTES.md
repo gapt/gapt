@@ -2,6 +2,8 @@
 
 ## Version 2.12 (unreleased)
 
+* SMTInterpol interface
+
 ## Version 2.11 (released on 2018-04-30)
 
 * Deskolemization of proofs with equational reasoning
