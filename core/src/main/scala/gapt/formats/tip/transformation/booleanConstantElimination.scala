@@ -2,12 +2,18 @@ package gapt.formats.tip.transformation
 
 import gapt.formats.tip.parser.TipSmtAnd
 import gapt.formats.tip.parser.TipSmtAssertion
+import gapt.formats.tip.parser.TipSmtCheckSat
+import gapt.formats.tip.parser.TipSmtCommand
+import gapt.formats.tip.parser.TipSmtConstantDeclaration
+import gapt.formats.tip.parser.TipSmtDatatypesDeclaration
+import gapt.formats.tip.parser.TipSmtDefinitionVisitor
 import gapt.formats.tip.parser.TipSmtEq
 import gapt.formats.tip.parser.TipSmtExists
 import gapt.formats.tip.parser.TipSmtExpression
 import gapt.formats.tip.parser.TipSmtFalse
 import gapt.formats.tip.parser.TipSmtForall
 import gapt.formats.tip.parser.TipSmtFun
+import gapt.formats.tip.parser.TipSmtFunctionDeclaration
 import gapt.formats.tip.parser.TipSmtFunctionDefinition
 import gapt.formats.tip.parser.TipSmtGoal
 import gapt.formats.tip.parser.TipSmtImp
@@ -17,6 +23,7 @@ import gapt.formats.tip.parser.TipSmtMutualRecursiveFunctionDefinition
 import gapt.formats.tip.parser.TipSmtNot
 import gapt.formats.tip.parser.TipSmtOr
 import gapt.formats.tip.parser.TipSmtProblem
+import gapt.formats.tip.parser.TipSmtSortDeclaration
 import gapt.formats.tip.parser.TipSmtTrue
 
 class BooleanConstantElimination( problem: TipSmtProblem ) {
@@ -31,16 +38,52 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
    */
   def apply(): TipSmtProblem = {
     problem.copy( definitions = problem.definitions map {
-      case goal @ TipSmtGoal( _, formula ) =>
-        goal.copy( expr = eliminateBooleanConstants( formula ) )
-      case assertion @ TipSmtAssertion( _, formula ) =>
-        assertion.copy( expr = eliminateBooleanConstants( formula ) )
-      case definition @ TipSmtFunctionDefinition( _, _, _, _, _ ) =>
-        apply( definition )
-      case funDefs @ TipSmtMutualRecursiveFunctionDefinition( _ ) =>
-        funDefs.copy( functions = funDefs.functions.map { apply } )
-      case definition => definition
+      booleanConstantDefinitionVisitor.dispatch( _, () )
     } )
+  }
+
+  private object booleanConstantDefinitionVisitor
+    extends TipSmtDefinitionVisitor[Unit, TipSmtCommand] {
+
+    override def visit(
+      definition: TipSmtFunctionDefinition,
+      data:       Unit ): TipSmtCommand =
+      apply( definition )
+
+    override def visit(
+      definition: TipSmtDatatypesDeclaration,
+      data:       Unit ): TipSmtCommand = definition
+
+    override def visit(
+      definition: TipSmtSortDeclaration,
+      data:       Unit ): TipSmtCommand = definition
+
+    override def visit(
+      definition: TipSmtFunctionDeclaration,
+      data:       Unit ): TipSmtCommand = definition
+
+    override def visit(
+      definitions: TipSmtMutualRecursiveFunctionDefinition,
+      data:        Unit ): TipSmtCommand =
+      definitions.copy( functions = definitions.functions.map { apply } )
+
+    override def visit(
+      goal: TipSmtGoal,
+      data: Unit ): TipSmtCommand =
+      goal.copy( expr = eliminateBooleanConstants( goal.expr ) )
+
+    override def visit(
+      assertion: TipSmtAssertion,
+      data:      Unit ): TipSmtCommand =
+      assertion.copy( expr = eliminateBooleanConstants( assertion.expr ) )
+
+    override def visit(
+      definition: TipSmtCheckSat,
+      data:       Unit ): TipSmtCommand = definition
+
+    override def visit(
+      definition: TipSmtConstantDeclaration,
+      data:       Unit ): TipSmtCommand = definition
   }
 
   private def apply(
