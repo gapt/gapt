@@ -55,8 +55,8 @@ class FreeVariables( problem: TipSmtProblem ) {
 
       case expr @ TipSmtIte( _, _, _ ) =>
         freeVariables( expr.cond ) ++
-          freeVariables( expr.the ) ++
-          freeVariables( expr.els )
+          freeVariables( expr.ifTrue ) ++
+          freeVariables( expr.ifFalse )
 
       case TipSmtMatch( matchedExpression, cases ) =>
         freeVariables( matchedExpression ) ++

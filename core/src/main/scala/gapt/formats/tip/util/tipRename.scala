@@ -152,8 +152,8 @@ class TipSubstitute( val problem: TipSmtProblem ) {
     expr:        TipSmtIte ): TipSmtExpression =
     TipSmtIte(
       apply( expr.cond, oldName, replacement ),
-      apply( expr.the, oldName, replacement ),
-      apply( expr.els, oldName, replacement ) )
+      apply( expr.ifTrue, oldName, replacement ),
+      apply( expr.ifFalse, oldName, replacement ) )
 
   /**
    * Abstracts the constructors TipSmtForall and TipSmtExists.

@@ -85,8 +85,8 @@ class TipOcnf( problem: TipSmtProblem ) {
     val newSubExpression = tipOcnf( expression.expr )
     newSubExpression match {
       case c @ TipSmtIte( _, _, _ ) =>
-        val newIfTrue = tipOcnf( TipSmtNot( c.the ) )
-        val newIfFalse = tipOcnf( TipSmtNot( c.els ) )
+        val newIfTrue = tipOcnf( TipSmtNot( c.ifTrue ) )
+        val newIfFalse = tipOcnf( TipSmtNot( c.ifFalse ) )
         TipSmtIte( c.cond, newIfTrue, newIfFalse )
       case m @ TipSmtMatch( _, _ ) =>
         val newCases = m.cases map { c =>
@@ -102,8 +102,8 @@ class TipOcnf( problem: TipSmtProblem ) {
     val newMatchedExpr = tipOcnf( expression.expr )
     newMatchedExpr match {
       case c @ TipSmtIte( _, _, _ ) =>
-        val newIfTrue = tipOcnf( TipSmtMatch( c.the, expression.cases ) )
-        val newIfFalse = tipOcnf( TipSmtMatch( c.els, expression.cases ) )
+        val newIfTrue = tipOcnf( TipSmtMatch( c.ifTrue, expression.cases ) )
+        val newIfFalse = tipOcnf( TipSmtMatch( c.ifFalse, expression.cases ) )
         TipSmtIte( c.cond, newIfTrue, newIfFalse )
       case m @ TipSmtMatch( _, _ ) =>
         val matchExpr = captureAvoiding( m, Seq( expression ) )
@@ -127,24 +127,24 @@ class TipOcnf( problem: TipSmtProblem ) {
     newCond match {
       case c @ TipSmtIte( _, _, _ ) =>
         val newIfTrue = tipOcnf(
-          TipSmtIte( c.the, expression.the, expression.els ) )
+          TipSmtIte( c.ifTrue, expression.ifTrue, expression.ifFalse ) )
         val newIfFalse = tipOcnf(
-          TipSmtIte( c.els, expression.the, expression.els ) )
+          TipSmtIte( c.ifFalse, expression.ifTrue, expression.ifFalse ) )
         TipSmtIte( c.cond, newIfTrue, newIfFalse )
       case m @ TipSmtMatch( _, _ ) =>
         val matchExpr =
-          captureAvoiding( m, Seq( expression.the, expression.els ) )
+          captureAvoiding( m, Seq( expression.ifTrue, expression.ifFalse ) )
         val newCases = matchExpr.cases map { c =>
           TipSmtCase(
             c.pattern,
-            tipOcnf( TipSmtIte( c.expr, expression.the, expression.els ) ) )
+            tipOcnf( TipSmtIte( c.expr, expression.ifTrue, expression.ifFalse ) ) )
         }
         TipSmtMatch( matchExpr.expr, newCases )
       case _ =>
         TipSmtIte(
           newCond,
-          tipOcnf( expression.the ),
-          tipOcnf( expression.els ) )
+          tipOcnf( expression.ifTrue ),
+          tipOcnf( expression.ifFalse ) )
     }
   }
 

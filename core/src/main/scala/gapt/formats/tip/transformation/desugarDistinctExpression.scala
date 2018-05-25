@@ -62,8 +62,8 @@ class DesugarDistinctExpression( problem: TipSmtProblem ) {
       case e @ TipSmtIte( _, _, _ ) =>
         TipSmtIte(
           desugarDistinctConstruct( e.cond ),
-          desugarDistinctConstruct( e.the ),
-          desugarDistinctConstruct( e.els ) )
+          desugarDistinctConstruct( e.ifTrue ),
+          desugarDistinctConstruct( e.ifFalse ) )
       case e @ TipSmtMatch( _, _ ) =>
         e.copy( cases = e.cases map { desugarDistinctConstruct } )
       case e => e

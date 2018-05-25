@@ -96,9 +96,9 @@ case class TipSmtCase(
     expr:    TipSmtExpression )
 
 case class TipSmtIte(
-    cond: TipSmtExpression,
-    the:  TipSmtExpression,
-    els:  TipSmtExpression ) extends TipSmtExpression
+    cond:    TipSmtExpression,
+    ifTrue:  TipSmtExpression,
+    ifFalse: TipSmtExpression ) extends TipSmtExpression
 
 case class TipSmtDistinct(
     expressions: Seq[TipSmtExpression] ) extends TipSmtExpression

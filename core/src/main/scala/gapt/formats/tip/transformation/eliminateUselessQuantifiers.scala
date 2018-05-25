@@ -102,7 +102,10 @@ class EliminateUselessQuantifiers( problem: TipSmtProblem ) {
       case expr @ TipSmtFun( _, _ ) =>
         expr.copy( arguments = expr.arguments.map( this( _ ) ) )
       case expr @ TipSmtIte( _, _, _ ) =>
-        TipSmtIte( this( expr.cond ), this( expr.the ), this( expr.els ) )
+        TipSmtIte(
+          this( expr.cond ),
+          this( expr.ifTrue ),
+          this( expr.ifFalse ) )
       case expr @ TipSmtMatch( _, _ ) =>
         expr.copy( cases = expr.cases map { c =>
           TipSmtCase( c.pattern, this( c.expr ) )

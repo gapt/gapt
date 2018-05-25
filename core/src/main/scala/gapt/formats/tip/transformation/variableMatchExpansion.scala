@@ -111,8 +111,8 @@ class VariableMatchExpansion( problem: TipSmtProblem ) {
       case expr @ TipSmtIte( _, _, _ ) =>
         TipSmtIte(
           expandVariableMatch( expr.cond, variables ),
-          expandVariableMatch( expr.the, variables ),
-          expandVariableMatch( expr.els, variables ) )
+          expandVariableMatch( expr.ifTrue, variables ),
+          expandVariableMatch( expr.ifFalse, variables ) )
       case _ => expression
     }
   }

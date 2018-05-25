@@ -58,8 +58,8 @@ class MoveUniversalQuantifiersInwards( problem: TipSmtProblem ) {
     expression: TipSmtIte ): TipSmtExpression = {
     TipSmtIte(
       expression.cond,
-      moveUniversalQuantifiersInwards( expression.the ),
-      moveUniversalQuantifiersInwards( expression.els ) )
+      moveUniversalQuantifiersInwards( expression.ifTrue ),
+      moveUniversalQuantifiersInwards( expression.ifFalse ) )
   }
 
   private def moveUniversalQuantifiersInwards(

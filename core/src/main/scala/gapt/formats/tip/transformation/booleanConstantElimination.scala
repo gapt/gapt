@@ -233,12 +233,12 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
   private def eliminateBooleanConstants(
     ite: TipSmtIte ): TipSmtExpression = {
     eliminateBooleanConstants( ite.cond ) match {
-      case TipSmtTrue  => eliminateBooleanConstants( ite.the )
-      case TipSmtFalse => eliminateBooleanConstants( ite.els )
+      case TipSmtTrue  => eliminateBooleanConstants( ite.ifTrue )
+      case TipSmtFalse => eliminateBooleanConstants( ite.ifFalse )
       case newCond => TipSmtIte(
         newCond,
-        eliminateBooleanConstants( ite.the ),
-        eliminateBooleanConstants( ite.els ) )
+        eliminateBooleanConstants( ite.ifTrue ),
+        eliminateBooleanConstants( ite.ifFalse ) )
     }
   }
 }
