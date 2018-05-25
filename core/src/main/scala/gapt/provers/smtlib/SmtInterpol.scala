@@ -66,37 +66,42 @@ object SmtInterpolLogger extends Logger( "SMTInterpol" ) { l =>
   }
 }
 
-class SmtInterpolSession( script: Script ) extends SessionRunner {
+class SmtInterpolSession( val script: Script ) extends SessionRunner {
   def this() = this( new SMTInterpol( SmtInterpolLogger.proxy ) )
 
   val nameGen = new NameGenerator( Set() )
-  val funNames = mutable.Map[String, String]()
-  val sortNames = mutable.Map[String, String]()
+  val funNames = mutable.Map[Const, String]()
+  val sortNames = mutable.Map[Ty, String]()
+  val funNamesInv = mutable.Map[String, Const]()
+  val sortNamesInv = mutable.Map[String, Ty]()
 
-  sortNames( To.name ) = "Bool"
+  sortNames( To ) = "Bool"
 
   // hardcoded in SMTInterpol as interpreted functions
   for ( reserved <- Seq( "Int", "<=", "select" ) )
     nameGen.fresh( reserved )
 
-  private def declare[A]( n0: String, ns: mutable.Map[String, String], f: String => A ): A =
+  private def declare[T]( n0: String, t: T,
+                          ns:  mutable.Map[T, String],
+                          ins: mutable.Map[String, T],
+                          f:   String => Unit ): Unit =
     try {
       val n = nameGen.fresh( n0 )
-      val r = f( n )
-      ns( n0 ) = n
-      r
-    } catch { case _: SMTLIBException => declare( n0, ns, f ) }
+      f( n )
+      ns( t ) = n
+      ins( n ) = t
+    } catch { case _: SMTLIBException => declare( n0, t, ns, ins, f ) }
 
   import SessionCommand._
   protected def interpretCommand[A]( command: SessionCommand[A] ): A = command match {
     case Push => script.push( 1 )
     case Pop  => script.pop( 1 )
     case DeclareSort( sort ) =>
-      declare( sort.name, sortNames, script.declareSort( _, sort.params.size ) )
-    case DeclareFun( Const( fun, FunctionType( retType, argTypes ), _ ) ) =>
+      declare( sort.name, sort, sortNames, sortNamesInv, script.declareSort( _, sort.params.size ) )
+    case DeclareFun( c @ Const( fun, FunctionType( retType, argTypes ), _ ) ) =>
       val argSorts = argTypes.map( sort ).toArray
       val retSort = sort( retType )
-      declare( fun, funNames, script.declareFun( _, argSorts, retSort ) )
+      declare( fun, c, funNames, funNamesInv, script.declareFun( _, argSorts, retSort ) )
     case Assert( formula ) =>
       script.assertTerm( term( formula ) )
       ()
@@ -135,15 +140,34 @@ class SmtInterpolSession( script: Script ) extends SessionRunner {
       case Eq( a, b )  => script.term( "=", term( a ), term( b ) )
       case All( _, _ ) => ???
       case Ex( _, _ )  => ???
-      case Apps( Const( c, _, _ ), args ) =>
+      case Apps( c: Const, args ) =>
         script.term( funNames( c ), args.map( term ): _* )
     }
 
   def sort( t: Ty ): Sort =
+    script.sort( sortNames( t ) )
+
+  def expr( t: Term ): Expr =
     t match {
-      case TBase( n, ps ) => script.sort( sortNames( n ), ps.map( sort ): _* )
-      case TVar( n )      => script.sort( sortNames( n ) )
-      case TArr( _, _ )   => ???
+      case t: ApplicationTerm =>
+        val ps = t.getParameters.view.map( expr ).toList
+        t.getFunction.getName match {
+          case "true"  => Top()
+          case "false" => Bottom()
+          case "=" =>
+            val Seq( a, b ) = ps
+            if ( a.ty == To ) a <-> b else a === b
+          case "or"  => Or.nAry( ps: _* )
+          case "and" => And.nAry( ps: _* )
+          case "=>" =>
+            val Seq( a, b ) = ps
+            a --> b
+          case "not" =>
+            val Seq( p ) = ps
+            Neg( p )
+          case n =>
+            funNamesInv( n )( ps )
+        }
     }
 
 }
