@@ -1,6 +1,7 @@
 package gapt.formats.tip.transformation
 
 import gapt.formats.tip.analysis.retrieveDatatypes
+import gapt.formats.tip.decoration.ReconstructDatatypes
 import gapt.formats.tip.parser.TipSmtAnd
 import gapt.formats.tip.parser.TipSmtAssertion
 import gapt.formats.tip.parser.TipSmtCase
@@ -22,6 +23,11 @@ import gapt.formats.tip.parser.TipSmtOr
 import gapt.formats.tip.parser.TipSmtProblem
 import gapt.utils.NameGenerator
 
+object expandDefaultPatterns extends TipSmtProblemTransformation {
+  override def transform( problem: TipSmtProblem ): TipSmtProblem =
+    new TipSmtDefaultPatternExpansion( problem )()
+}
+
 /**
  * This class implements default pattern expansion for TIP problems.
  *
@@ -33,11 +39,13 @@ import gapt.utils.NameGenerator
  */
 class TipSmtDefaultPatternExpansion( problem: TipSmtProblem ) {
 
+  ( new ReconstructDatatypes( problem ) )()
+
   /**
    * Expands all default patterns in the given problem. The expansion takes
    * place in the input problem.
    */
-  def apply(): Unit = {
+  def apply(): TipSmtProblem = {
     problem.definitions foreach {
       case fun @ TipSmtFunctionDefinition( _, _, _, _, _ ) =>
         apply( fun )
@@ -49,6 +57,7 @@ class TipSmtDefaultPatternExpansion( problem: TipSmtProblem ) {
         expandDefaultPatterns( expression, Seq() )
       case _ =>
     }
+    problem
   }
 
   private def apply(

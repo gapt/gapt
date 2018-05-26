@@ -10,6 +10,11 @@ import gapt.formats.tip.parser.TipSmtMutualRecursiveFunctionDefinition
 import gapt.formats.tip.parser.TipSmtProblem
 import gapt.formats.tip.parser.TipSmtVariableDecl
 
+object useDefiningFormulas extends TipSmtProblemTransformation {
+  override def transform( problem: TipSmtProblem ): TipSmtProblem =
+    new UseDefinitionEquations( problem )()
+}
+
 /**
  * Replaces bodies of function definitions by a formula that defines the
  * function.

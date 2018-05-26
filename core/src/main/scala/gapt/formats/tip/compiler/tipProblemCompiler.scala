@@ -57,34 +57,33 @@ import gapt.formats.tip.parser.TipSmtProblem
 import gapt.formats.tip.parser.TipSmtSortDeclaration
 import gapt.formats.tip.parser.TipSmtTrue
 import gapt.formats.tip.parser.TipSmtVariableDecl
-import gapt.formats.tip.transformation.BooleanConstantElimination
-import gapt.formats.tip.transformation.DesugarDistinctExpression
-import gapt.formats.tip.transformation.EliminateUselessQuantifiers
-import gapt.formats.tip.transformation.MoveUniversalQuantifiersInwards
-import gapt.formats.tip.transformation.TipSmtDefaultPatternExpansion
-import gapt.formats.tip.transformation.UseDefinitionEquations
-import gapt.formats.tip.transformation.VariableMatchExpansion
-import gapt.formats.tip.transformation.tipOcnf
+import gapt.formats.tip.transformation.desugarDistinctExpressions
+import gapt.formats.tip.transformation.eliminateBooleanConstants
+import gapt.formats.tip.transformation.eliminateRedundantQuantifiers
+import gapt.formats.tip.transformation.expandDefaultPatterns
+import gapt.formats.tip.transformation.expandVariableMatchExpressions
+import gapt.formats.tip.transformation.moveUniversalQuantifiersInwards
+import gapt.formats.tip.transformation.toOuterConditionalNormalForm
+import gapt.formats.tip.transformation.useDefiningFormulas
 import gapt.proofs.Context
 
 import scala.collection.mutable
 
 class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
 
-  problem = new DesugarDistinctExpression( problem )()
+  val transformation =
+    desugarDistinctExpressions ->>:
+      expandDefaultPatterns ->>:
+      useDefiningFormulas ->>:
+      toOuterConditionalNormalForm ->>:
+      expandVariableMatchExpressions ->>:
+      eliminateBooleanConstants ->>:
+      moveUniversalQuantifiersInwards ->>:
+      eliminateRedundantQuantifiers
+
+  problem = problem >>: transformation
 
   ( new ReconstructDatatypes( problem ) )()
-  ( new TipSmtDefaultPatternExpansion( problem ) )()
-
-  problem = new UseDefinitionEquations( problem )()
-
-  problem = tipOcnf( problem )
-
-  problem = new VariableMatchExpansion( problem )()
-  problem = new BooleanConstantElimination( problem )()
-  problem = new MoveUniversalQuantifiersInwards( problem )()
-  problem = new EliminateUselessQuantifiers( problem )()
-
   problem.symbolTable = Some( SymbolTable( problem ) )
 
   var ctx = Context()

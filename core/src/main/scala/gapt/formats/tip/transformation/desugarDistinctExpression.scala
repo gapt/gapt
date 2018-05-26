@@ -19,6 +19,11 @@ import gapt.formats.tip.parser.TipSmtNot
 import gapt.formats.tip.parser.TipSmtOr
 import gapt.formats.tip.parser.TipSmtProblem
 
+object desugarDistinctExpressions extends TipSmtProblemTransformation {
+  override def transform( problem: TipSmtProblem ): TipSmtProblem =
+    new DesugarDistinctExpression( problem )()
+}
+
 class DesugarDistinctExpression( problem: TipSmtProblem ) {
 
   def apply(): TipSmtProblem = {

@@ -26,6 +26,11 @@ import gapt.formats.tip.parser.TipSmtProblem
 import gapt.formats.tip.parser.TipSmtSortDeclaration
 import gapt.formats.tip.parser.TipSmtTrue
 
+object eliminateBooleanConstants extends TipSmtProblemTransformation {
+  override def transform( problem: TipSmtProblem ): TipSmtProblem =
+    new BooleanConstantElimination( problem )()
+}
+
 class BooleanConstantElimination( problem: TipSmtProblem ) {
 
   /**

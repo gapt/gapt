@@ -26,8 +26,8 @@ import gapt.formats.tip.util.TipSubstitute
 import gapt.formats.tip.util.find
 import gapt.formats.tip.util.freeVariables
 
-object tipOcnf {
-  def apply( problem: TipSmtProblem ): TipSmtProblem =
+object toOuterConditionalNormalForm extends TipSmtProblemTransformation {
+  def transform( problem: TipSmtProblem ): TipSmtProblem =
     new TipOcnf( problem )()
 }
 

@@ -24,6 +24,11 @@ import gapt.formats.tip.parser.TipSmtType
 import gapt.formats.tip.parser.TipSmtVariableDecl
 import gapt.formats.tip.util.TipSubstitute
 
+object expandVariableMatchExpressions extends TipSmtProblemTransformation {
+  override def transform( problem: TipSmtProblem ): TipSmtProblem =
+    new VariableMatchExpansion( problem )()
+}
+
 /**
  * This class expands Boolean match-expressions whose matched expression is
  * a variable.

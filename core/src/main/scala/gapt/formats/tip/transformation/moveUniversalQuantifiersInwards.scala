@@ -8,6 +8,11 @@ import gapt.formats.tip.parser.TipSmtIte
 import gapt.formats.tip.parser.TipSmtMutualRecursiveFunctionDefinition
 import gapt.formats.tip.parser.TipSmtProblem
 
+object moveUniversalQuantifiersInwards extends TipSmtProblemTransformation {
+  override def transform( problem: TipSmtProblem ): TipSmtProblem =
+    new MoveUniversalQuantifiersInwards( problem )()
+}
+
 /**
  * This class moves outermost universal quantifiers in function definitions
  * inwards.

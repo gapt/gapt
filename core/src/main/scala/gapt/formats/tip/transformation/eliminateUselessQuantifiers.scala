@@ -20,6 +20,11 @@ import gapt.formats.tip.parser.TipSmtOr
 import gapt.formats.tip.parser.TipSmtProblem
 import gapt.formats.tip.util.freeVariables
 
+object eliminateRedundantQuantifiers extends TipSmtProblemTransformation {
+  override def transform( problem: TipSmtProblem ): TipSmtProblem =
+    new EliminateUselessQuantifiers( problem )()
+}
+
 /**
  * This class eliminates useless quantifiers in TIP problems.
  *
