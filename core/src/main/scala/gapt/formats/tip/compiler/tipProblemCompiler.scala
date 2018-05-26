@@ -56,6 +56,7 @@ import gapt.formats.tip.parser.TipSmtOr
 import gapt.formats.tip.parser.TipSmtProblem
 import gapt.formats.tip.parser.TipSmtSortDeclaration
 import gapt.formats.tip.parser.TipSmtTrue
+import gapt.formats.tip.parser.TipSmtType
 import gapt.formats.tip.parser.TipSmtVariableDecl
 import gapt.formats.tip.transformation.desugarDistinctExpressions
 import gapt.formats.tip.transformation.eliminateBooleanConstants
@@ -117,7 +118,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
 
     val TipSmtDatatypesDeclaration( datatypes ) = tipSmtDatatypesDeclaration
 
-    datatypes map { declareDatatype( _ ) }
+    datatypes foreach { declareDatatype }
   }
 
   private def compileConstantDeclaration(
@@ -133,39 +134,34 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
 
   private def compileFunctionDeclaration(
     tipSmtFunctionDeclaration: TipSmtFunctionDeclaration ): Unit = {
+    val functionConstant = toFunctionConstant( tipSmtFunctionDeclaration )
+    declare( functionConstant )
+    ctx += functionConstant
+  }
 
-    val TipSmtFunctionDeclaration(
-      functionName,
-      _,
-      argumentTypes,
-      returnType ) = tipSmtFunctionDeclaration
+  private def toFunctionConstant(
+    functionDeclaration: TipSmtFunctionDeclaration ): Const =
+    toFunctionConstant(
+      functionDeclaration.name,
+      functionDeclaration.argumentTypes,
+      functionDeclaration.returnType )
 
-    val f = Const(
+  private def toFunctionConstant(
+    functionDefinition: TipSmtFunctionDefinition ): Const =
+    toFunctionConstant(
+      functionDefinition.name,
+      functionDefinition.parameters map { _.typ },
+      functionDefinition.returnType )
+
+  private def toFunctionConstant(
+    functionName:  String,
+    argumentTypes: Seq[TipSmtType],
+    returnType:    TipSmtType ): Const =
+    Const(
       functionName,
       FunctionType(
         typeDecls( returnType.typename ),
         argumentTypes map { argType => typeDecls( argType.typename ) } ) )
-    declare( f )
-    ctx += f
-  }
-
-  private def toFunctionConstant(
-    tipSmtFunctionDefinition: TipSmtFunctionDefinition ): Const = {
-    val TipSmtFunctionDefinition(
-      functionName,
-      _,
-      formalParameters,
-      returnType,
-      body ) = tipSmtFunctionDefinition
-
-    val argVars = for (
-      TipSmtFormalParameter( argName, argType ) <- formalParameters
-    ) yield Var( argName, typeDecls( argType.typename ) )
-
-    Const(
-      functionName,
-      FunctionType( typeDecls( returnType.typename ), argVars.map( _.ty ) ) )
-  }
 
   private def declareFunction(
     tipSmtFunctionDefinition: TipSmtFunctionDefinition ): Unit = {
@@ -175,31 +171,29 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
   }
 
   private def compileFunctionDefinition(
-    tipSmtFunctionDefinition: TipSmtFunctionDefinition ): Unit = {
+    functionDefinition: TipSmtFunctionDefinition ): Unit = {
 
-    val TipSmtFunctionDefinition(
-      functionName,
-      _,
-      formalParameters,
-      returnType,
-      body ) = tipSmtFunctionDefinition
-
-    val argVars = for (
-      TipSmtFormalParameter( argName, argType ) <- formalParameters
+    val formalParameters: Seq[Var] = for (
+      TipSmtFormalParameter( argName, argType ) <- functionDefinition.parameters
     ) yield Var( argName, typeDecls( argType.typename ) )
 
-    val funConst = toFunctionConstant( tipSmtFunctionDefinition )
+    val functionConstant = toFunctionConstant( functionDefinition )
+
+    val compiledFunctionBody =
+      compileFunctionBody(
+        functionDefinition.body,
+        formalParameters.map { _.name } )
 
     functions += TipFun(
-      funConst,
-      compileFunctionBody( body, argVars.map { v => v.name -> v }.toMap ) )
+      functionConstant,
+      compiledFunctionBody )
   }
 
   private def compileAssertion( tipSmtAssertion: TipSmtAssertion ): Unit = {
 
     val TipSmtAssertion( _, formula ) = tipSmtAssertion
 
-    assumptions += compileExpression( formula, Map[String, Expr]() )
+    assumptions += compileExpression( formula, Nil )
       .asInstanceOf[Formula]
   }
 
@@ -207,7 +201,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
 
     val TipSmtGoal( _, formula ) = tipSmtGoal
 
-    goals += compileExpression( formula, Map[String, Expr]() )
+    goals += compileExpression( formula, Nil )
       .asInstanceOf[Formula]
   }
 
@@ -229,7 +223,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
   }
 
   def compileFunctionBody(
-    body: TipSmtExpression, freeVars: Map[String, Expr] ): Seq[Formula] = {
+    body: TipSmtExpression, freeVars: Seq[String] ): Seq[Formula] = {
     body match {
       case TipSmtAnd( conjuncts ) =>
         conjuncts
@@ -245,7 +239,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
           Var( v.name, typeDecls( v.typ.typename ) )
         }
         val result = compileFunctionBody(
-          formula, freeVars ++ ( bound map { v => v.name -> v } ) )
+          formula, freeVars ++ ( bound map { _.name } ) )
           .map { All.Block( bound, _ ) }
         result
       case _ => Seq( compileExpression( body, freeVars ).asInstanceOf[Formula] )
@@ -253,7 +247,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
   }
 
   def compileExpression(
-    expression: TipSmtExpression, freeVars: Map[String, Expr] ): Expr =
+    expression: TipSmtExpression, freeVars: Seq[String] ): Expr =
     expression match {
       case expr @ TipSmtForall( _, _ ) =>
         compileExpression( expr, freeVars )
@@ -285,47 +279,49 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
     }
 
   private def compileExpression(
-    tipSmtAnd: TipSmtAnd, freeVars: Map[String, Expr] ): Expr = {
+    tipSmtAnd: TipSmtAnd, freeVars: Seq[String] ): Expr = {
     And(
       tipSmtAnd.exprs
         .map { compileExpression( _, freeVars ).asInstanceOf[Formula] } )
   }
 
   private def compileExpression(
-    tipSmtOr: TipSmtOr, freeVars: Map[String, Expr] ): Expr = {
+    tipSmtOr: TipSmtOr, freeVars: Seq[String] ): Expr = {
     Or(
       tipSmtOr.exprs
         .map { compileExpression( _, freeVars ).asInstanceOf[Formula] } )
   }
 
   private def compileExpression(
-    tipSmtNot: TipSmtNot, freeVars: Map[String, Expr] ): Expr = {
+    tipSmtNot: TipSmtNot, freeVars: Seq[String] ): Expr = {
     Neg( compileExpression( tipSmtNot.expr, freeVars ) )
   }
 
   private def compileExpression(
-    tipSmtImp: TipSmtImp, freeVars: Map[String, Expr] ): Expr = {
+    tipSmtImp: TipSmtImp, freeVars: Seq[String] ): Expr = {
     tipSmtImp.exprs
       .map { compileExpression( _, freeVars ) } reduceRight { _ --> _ }
   }
 
   private def compileExpression(
-    tipSmtIdentifier: TipSmtIdentifier, freeVars: Map[String, Expr] ): Expr = {
+    tipSmtIdentifier: TipSmtIdentifier, freeVars: Seq[String] ): Expr = {
     if ( freeVars contains tipSmtIdentifier.name ) {
-      freeVars( tipSmtIdentifier.name )
+      Var(
+        tipSmtIdentifier.name,
+        typeDecls( tipSmtIdentifier.datatype.get.name ) )
     } else {
       funDecls( tipSmtIdentifier.name )
     }
   }
 
   private def compileExpression(
-    tipSmtFun: TipSmtFun, freeVars: Map[String, Expr] ): Expr = {
+    tipSmtFun: TipSmtFun, freeVars: Seq[String] ): Expr = {
     funDecls( tipSmtFun.name )(
       tipSmtFun.arguments map { compileExpression( _, freeVars ) }: _* )
   }
 
   private def compileExpression(
-    tipSmtMatch: TipSmtMatch, freeVars: Map[String, Expr] ): Expr = {
+    tipSmtMatch: TipSmtMatch, freeVars: Seq[String] ): Expr = {
     val TipSmtMatch( matchedExpression, cases ) = tipSmtMatch
     val compiledMatchedExpression =
       compileExpression( matchedExpression, freeVars )
@@ -335,7 +331,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
   }
 
   private def compileExpression(
-    tipSmtIte: TipSmtIte, freeVars: Map[String, Expr] ): Expr = {
+    tipSmtIte: TipSmtIte, freeVars: Seq[String] ): Expr = {
     val TipSmtIte( cond, ifTrue, ifFalse ) = tipSmtIte
     val compiledCondition = compileExpression( cond, freeVars )
     And(
@@ -344,14 +340,14 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
   }
 
   private def compileExpression(
-    tipSmtEq: TipSmtEq, freeVars: Map[String, Expr] ): Expr = {
+    tipSmtEq: TipSmtEq, freeVars: Seq[String] ): Expr = {
     val exprs = tipSmtEq.exprs map { compileExpression( _, freeVars ) }
     And( for ( ( a, b ) <- exprs zip exprs.tail )
       yield if ( exprs.head.ty == To ) a <-> b else a === b )
   }
 
   private def compileExpression(
-    tipSmtForall: TipSmtForall, freeVars: Map[String, Expr] ): Expr = {
+    tipSmtForall: TipSmtForall, freeVars: Seq[String] ): Expr = {
     val TipSmtForall( variables, formula ) = tipSmtForall
     val vars = variables map {
       case TipSmtVariableDecl( name, typ ) =>
@@ -361,11 +357,11 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
       vars,
       compileExpression(
         formula,
-        freeVars ++ vars.map { v => v.name -> v } ) )
+        freeVars ++ vars.map { _.name } ) )
   }
 
   private def compileExpression(
-    tipSmtExists: TipSmtExists, freeVars: Map[String, Expr] ): Expr = {
+    tipSmtExists: TipSmtExists, freeVars: Seq[String] ): Expr = {
     val TipSmtExists( variables, formula ) = tipSmtExists
     val vars = variables map {
       case TipSmtVariableDecl( name, typ ) =>
@@ -375,13 +371,13 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
       vars,
       compileExpression(
         formula,
-        freeVars ++ vars.map { v => v.name -> v } ) )
+        freeVars ++ vars.map { _.name } ) )
   }
 
   private def compileCase(
     tipSmtCase:        TipSmtCase,
     matchedExpression: Expr,
-    freeVars:          Map[String, Expr] ): Expr = {
+    freeVars:          Seq[String] ): Expr = {
     val TipSmtConstructorPattern( constructor, fields ) = tipSmtCase.pattern
     val constructorType = problem.symbolTable.get.typeOf( constructor.name )
     val boundVariables =
@@ -390,7 +386,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
         .filter { case ( field, _ ) => isVariable( field ) }
         .map { case ( field, ty ) => Var( field.name, typeDecls( ty.name ) ) }
 
-    val newFreeVars = freeVars ++ boundVariables.map { v => v.name -> v }
+    val newFreeVars = freeVars ++ boundVariables.map { _.name }
 
     val compiledPattern =
       Apps(
