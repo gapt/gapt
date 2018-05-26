@@ -43,24 +43,12 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
   }
 
   private object booleanConstantDefinitionVisitor
-    extends TipSmtDefinitionVisitor[Unit, TipSmtCommand] {
+    extends TipSmtDefinitionTransformation[Unit] {
 
     override def visit(
       definition: TipSmtFunctionDefinition,
       data:       Unit ): TipSmtCommand =
       apply( definition )
-
-    override def visit(
-      definition: TipSmtDatatypesDeclaration,
-      data:       Unit ): TipSmtCommand = definition
-
-    override def visit(
-      definition: TipSmtSortDeclaration,
-      data:       Unit ): TipSmtCommand = definition
-
-    override def visit(
-      definition: TipSmtFunctionDeclaration,
-      data:       Unit ): TipSmtCommand = definition
 
     override def visit(
       definitions: TipSmtMutualRecursiveFunctionDefinition,
@@ -76,14 +64,6 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
       assertion: TipSmtAssertion,
       data:      Unit ): TipSmtCommand =
       assertion.copy( expr = eliminateBooleanConstants( assertion.expr ) )
-
-    override def visit(
-      definition: TipSmtCheckSat,
-      data:       Unit ): TipSmtCommand = definition
-
-    override def visit(
-      definition: TipSmtConstantDeclaration,
-      data:       Unit ): TipSmtCommand = definition
   }
 
   private def apply(
