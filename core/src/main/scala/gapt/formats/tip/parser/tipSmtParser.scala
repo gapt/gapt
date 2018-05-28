@@ -364,7 +364,7 @@ object TipSmtParser {
     expression match {
       case LFun(
         "define-funs-rec", LList( signatures @ _* ), LList( definitions @ _* )
-        ) =>
+        ) if ( signatures.size == definitions.size ) =>
         val functions =
           signatures
             .map { parseFunctionSignature }
