@@ -42,9 +42,6 @@ class TipSmtParserTest extends Specification {
     Escargot getResolutionProof instanceSequent must beSome
   }
 
-  val dummyDatatype = new SExpressionParser(
-    "(declare-datatypes () ((t (c))))" ).SExpr.run().get
-
   "parsing constant declaration" in {
 
     "parsing well-formed constant declaration should succeed" in {
