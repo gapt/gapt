@@ -81,12 +81,22 @@ object parseMethod {
 object testCutIntro extends App {
   val logger = Logger( "testCutIntro" )
 
-  val Array( fileName: String, methodName: String ) = args
+  val ( fileName, methodName, solutionAlg ) =
+    args.toList match {
+      case Seq( f, m )    => ( f, m, "canonical" )
+      case Seq( f, m, s ) => ( f, m, s )
+    }
 
   val metricsPrinter = new MetricsPrinter
   LogHandler.current.value = metricsPrinter
   logger.metric( "file", fileName )
   logger.metric( "method", methodName )
+  logger.metric( "solutionalg", solutionAlg )
+
+  val useInterpolation = solutionAlg match {
+    case "interpolation" => true
+    case "canonical"     => false
+  }
 
   val proofSeqRegex = """(\w+)\((\d+)\)""".r
   def loadProofForCutIntro( fileName: String ) = fileName match {
@@ -115,7 +125,7 @@ object testCutIntro extends App {
 
     logger.metric( "has_equality", inputProof.backgroundTheory.hasEquality )
     try logger.time( "cutintro" ) {
-      CutIntroduction( inputProof, method = parseMethod( methodName ) ) match {
+      CutIntroduction( inputProof, method = parseMethod( methodName ), useInterpolation = useInterpolation ) match {
         case Some( _ ) => logger.metric( "status", "ok" )
         case None =>
           if ( metricsPrinter.data( "termset_trivial" ) == true )
