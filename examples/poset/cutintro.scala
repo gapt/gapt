@@ -16,7 +16,7 @@ object cutintro extends Script {
 
   verbose {
     CutIntroduction(
-      constructedProof,
+      CutIntroduction.InputProof( constructedProof, CutIntroduction.BackgroundTheory.PureFOL ),
       method = DeltaTableMethod( singleQuantifier = false, subsumedRowMerging = true, keyLimit = Some( 3 ) ) )
   }
 
