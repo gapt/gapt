@@ -3,26 +3,41 @@ package gapt.formats.tip
 import gapt.expr.hol.instantiate
 import gapt.expr.{ Const, TBase }
 import gapt.formats.ClasspathInputFile
+import gapt.formats.lisp.LSymbol
 import gapt.formats.lisp.SExpressionParser
+import gapt.formats.tip.parser.TipSmtAnd
 import gapt.formats.tip.parser.TipSmtAssertion
+import gapt.formats.tip.parser.TipSmtCase
 import gapt.formats.tip.parser.TipSmtCheckSat
 import gapt.formats.tip.parser.TipSmtConstantDeclaration
 import gapt.formats.tip.parser.TipSmtConstructor
 import gapt.formats.tip.parser.TipSmtConstructorField
+import gapt.formats.tip.parser.TipSmtConstructorPattern
 import gapt.formats.tip.parser.TipSmtDatatype
 import gapt.formats.tip.parser.TipSmtDatatypesDeclaration
+import gapt.formats.tip.parser.TipSmtDistinct
+import gapt.formats.tip.parser.TipSmtEq
+import gapt.formats.tip.parser.TipSmtExists
 import gapt.formats.tip.parser.TipSmtFalse
+import gapt.formats.tip.parser.TipSmtForall
 import gapt.formats.tip.parser.TipSmtFormalParameter
+import gapt.formats.tip.parser.TipSmtFun
 import gapt.formats.tip.parser.TipSmtFunctionDeclaration
 import gapt.formats.tip.parser.TipSmtFunctionDefinition
 import gapt.formats.tip.parser.TipSmtGoal
 import gapt.formats.tip.parser.TipSmtIdentifier
+import gapt.formats.tip.parser.TipSmtImp
+import gapt.formats.tip.parser.TipSmtIte
 import gapt.formats.tip.parser.TipSmtKeyword
+import gapt.formats.tip.parser.TipSmtMatch
 import gapt.formats.tip.parser.TipSmtMutualRecursiveFunctionDefinition
+import gapt.formats.tip.parser.TipSmtNot
+import gapt.formats.tip.parser.TipSmtOr
 import gapt.formats.tip.parser.TipSmtParserException
 import gapt.formats.tip.parser.TipSmtSortDeclaration
 import gapt.formats.tip.parser.TipSmtTrue
 import gapt.formats.tip.parser.TipSmtType
+import gapt.formats.tip.parser.TipSmtVariableDecl
 import gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 
@@ -464,6 +479,383 @@ class TipSmtParserTest extends Specification {
       "(check-sat)" ).SExpr.run().get
     parser.TipSmtParser.parseCommand( checkSat ) must
       beAnInstanceOf[TipSmtCheckSat]
+  }
+
+  "expression parser" in {
+    "parsing and-expression" in {
+      "parsing well-formed and-expression should succeed" in {
+        "non-empty list of arguments" in {
+          val input = new SExpressionParser(
+            "(and t1 t2)" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must_==
+            TipSmtAnd(
+              Seq( TipSmtIdentifier( "t1" ), TipSmtIdentifier( "t2" ) ) )
+        }
+        "empty list of arguments" in {
+          val input = new SExpressionParser(
+            "(and)" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must_==
+            TipSmtAnd( Seq() )
+        }
+      }
+      "parsing ill-formed and-expression should throw exception" in {
+        "subexpression is ill-formed" in {
+          val input = new SExpressionParser(
+            "(and t1 ())" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must
+            throwA[TipSmtParserException]
+        }
+      }
+    }
+    "parsing or-expression" in {
+      "parsing well-formed or-expression should succeed" in {
+        "non-empty list of arguments" in {
+          val input = new SExpressionParser(
+            "(or t1 t2)" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must_==
+            TipSmtOr(
+              Seq( TipSmtIdentifier( "t1" ), TipSmtIdentifier( "t2" ) ) )
+        }
+        "empty list of arguments" in {
+          val input = new SExpressionParser(
+            "(or)" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must_==
+            TipSmtOr( Seq() )
+        }
+      }
+      "parsing ill-formed or-expression should throw exception" in {
+        "subexpression is ill-formed" in {
+          val input = new SExpressionParser(
+            "(or t1 ())" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must
+            throwA[TipSmtParserException]
+        }
+      }
+    }
+    "parsing imp-expression" in {
+      "parsing well-formed imp-expression should succeed" in {
+        "non-empty list of arguments" in {
+          val input = new SExpressionParser(
+            "(=> t1 t2)" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must_==
+            TipSmtImp( Seq( TipSmtIdentifier( "t1" ), TipSmtIdentifier( "t2" ) ) )
+        }
+        "empty list of arguments" in {
+          val input = new SExpressionParser(
+            "(=>)" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must_==
+            TipSmtImp( Seq() )
+        }
+      }
+      "parsing ill-formed imp-expression should throw exception" in {
+        "subexpression is ill-formed" in {
+          val input = new SExpressionParser(
+            "(=> t1 ())" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must
+            throwA[TipSmtParserException]
+        }
+      }
+    }
+    "parsing eq-expression" in {
+      "parsing well-formed eq-expression should succeed" in {
+        "non-empty list of arguments" in {
+          val input = new SExpressionParser(
+            "(= t1 t2)" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must_==
+            TipSmtEq( Seq( TipSmtIdentifier( "t1" ), TipSmtIdentifier( "t2" ) ) )
+        }
+        "empty list of arguments" in {
+          val input = new SExpressionParser(
+            "(=)" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must_==
+            TipSmtEq( Seq() )
+        }
+      }
+      "parsing ill-formed eq-expression should throw exception" in {
+        "subexpression is ill-formed" in {
+          val input = new SExpressionParser(
+            "(= t1 ())" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must
+            throwA[TipSmtParserException]
+        }
+      }
+    }
+    "parsing forall-expression" in {
+      "parsing well-formed forall-expression should succeed" in {
+        "non-empty list of arguments" in {
+          val input = new SExpressionParser(
+            "(forall ((x1 a1)) t1)" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must_==
+            TipSmtForall(
+              Seq( TipSmtVariableDecl( "x1", TipSmtType( "a1" ) ) ),
+              TipSmtIdentifier( "t1" ) )
+        }
+        "empty list of variables" in {
+          val input = new SExpressionParser(
+            "(forall () t1)" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must_==
+            TipSmtForall( Seq(), TipSmtIdentifier( "t1" ) )
+        }
+      }
+      "parsing ill-formed forall-expression should throw exception" in {
+        "missing variable list" in {
+          val input = new SExpressionParser(
+            "(forall t1)" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must
+            throwA[TipSmtParserException]
+        }
+        "ill-formed variable list" in {
+          val input = new SExpressionParser(
+            "(forall vars t1)" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must
+            throwA[TipSmtParserException]
+        }
+        "missing expression" in {
+          val input = new SExpressionParser(
+            "(forall ())" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must
+            throwA[TipSmtParserException]
+        }
+        "subexpression is ill-formed" in {
+          val input = new SExpressionParser(
+            "(forall (x b) ())" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must
+            throwA[TipSmtParserException]
+        }
+      }
+    }
+    "parsing exists-expression" in {
+      "parsing well-formed exists-expression should succeed" in {
+        "non-empty list of arguments" in {
+          val input = new SExpressionParser(
+            "(exists ((x1 a1)) t1)" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must_==
+            TipSmtExists(
+              Seq( TipSmtVariableDecl( "x1", TipSmtType( "a1" ) ) ),
+              TipSmtIdentifier( "t1" ) )
+        }
+        "empty list of variables" in {
+          val input = new SExpressionParser(
+            "(exists () t1)" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must_==
+            TipSmtExists( Seq(), TipSmtIdentifier( "t1" ) )
+        }
+      }
+      "parsing ill-formed exists-expression should throw exception" in {
+        "missing variable list" in {
+          val input = new SExpressionParser(
+            "(exists t1)" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must
+            throwA[TipSmtParserException]
+        }
+        "ill-formed variable list" in {
+          val input = new SExpressionParser(
+            "(exists vars t1)" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must
+            throwA[TipSmtParserException]
+        }
+        "missing expression" in {
+          val input = new SExpressionParser(
+            "(exists ())" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must
+            throwA[TipSmtParserException]
+        }
+        "subexpression is ill-formed" in {
+          val input = new SExpressionParser(
+            "(exists (x b) ())" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must
+            throwA[TipSmtParserException]
+        }
+      }
+    }
+    "parsing distinct-expression" in {
+      "parsing well-formed distinct-expression should succeed" in {
+        "non-empty list of subexpressions" in {
+          val input = new SExpressionParser(
+            "(distinct t1 t2 t3)" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must_==
+            TipSmtDistinct(
+              Seq(
+                TipSmtIdentifier( "t1" ),
+                TipSmtIdentifier( "t2" ),
+                TipSmtIdentifier( "t3" ) ) )
+        }
+        "empty list of subexpressions" in {
+          val input = new SExpressionParser(
+            "(distinct)" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must_==
+            TipSmtDistinct( Seq() )
+        }
+      }
+      "parsing ill-formed distinct-expression should throw exception" in {
+        "ill-formed subexpression" in {
+          val input = new SExpressionParser(
+            "(distinct ())" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must
+            throwA[TipSmtParserException]
+        }
+      }
+    }
+  }
+  "parsing if-then-else-expression" in {
+    "parsing well-formed ite-expression should succeed" in {
+      val input = new SExpressionParser(
+        "(ite t1 t2 t3)" ).SExpr.run().get
+      parser.TipSmtParser.parseExpression( input ) must_==
+        TipSmtIte(
+          TipSmtIdentifier( "t1" ),
+          TipSmtIdentifier( "t2" ),
+          TipSmtIdentifier( "t3" ) )
+    }
+    "parsing ill-formed ite-expression should throw exception" in {
+      "ill-formed condition" in {
+        val input = new SExpressionParser(
+          "(ite () t2 t3)" ).SExpr.run().get
+        parser.TipSmtParser.parseExpression( input ) must
+          throwA[TipSmtParserException]
+      }
+      "ill-formed ifTrue" in {
+        val input = new SExpressionParser(
+          "(ite t1 () t3)" ).SExpr.run().get
+        parser.TipSmtParser.parseExpression( input ) must
+          throwA[TipSmtParserException]
+      }
+      "ill-formed ifFalse" in {
+        val input = new SExpressionParser(
+          "(ite t1 t2 ())" ).SExpr.run().get
+        parser.TipSmtParser.parseExpression( input ) must
+          throwA[TipSmtParserException]
+      }
+    }
+  }
+  "parsing not-expression" in {
+    "parsing well-formed not-expression should succeed" in {
+      val input = new SExpressionParser(
+        "(not t1)" ).SExpr.run().get
+      parser.TipSmtParser.parseExpression( input ) must_==
+        TipSmtNot( TipSmtIdentifier( "t1" ) )
+    }
+    "parsing ill-formed not-expression should throw exception" in {
+      "no subexpression" in {
+        val input = new SExpressionParser(
+          "(not)" ).SExpr.run().get
+        parser.TipSmtParser.parseExpression( input ) must
+          throwA[TipSmtParserException]
+      }
+      "more than one subexpression" in {
+        val input = new SExpressionParser(
+          "(not t1 t2)" ).SExpr.run().get
+        parser.TipSmtParser.parseExpression( input ) must
+          throwA[TipSmtParserException]
+      }
+      "ill-formed subexpression" in {
+        val input = new SExpressionParser(
+          "(not ())" ).SExpr.run().get
+        parser.TipSmtParser.parseExpression( input ) must
+          throwA[TipSmtParserException]
+      }
+    }
+  }
+  "parsing function call-expression" in {
+    "parsing well-formed function call-expression should succeed" in {
+      "empty argument list" in {
+        val input = new SExpressionParser(
+          "(f)" ).SExpr.run().get
+        parser.TipSmtParser.parseExpression( input ) must_==
+          TipSmtFun( "f", Seq() )
+      }
+      "non-empty argument list" in {
+        val input = new SExpressionParser(
+          "(f a1 a2 a3)" ).SExpr.run().get
+        parser.TipSmtParser.parseExpression( input ) must_==
+          TipSmtFun(
+            "f",
+            Seq(
+              TipSmtIdentifier( "a1" ),
+              TipSmtIdentifier( "a2" ),
+              TipSmtIdentifier( "a3" ) ) )
+      }
+      "parsing ill-formed fun. call-expr should not return fun. expr." in {
+        "ill-formed argument should throw exception" in {
+          val input = new SExpressionParser(
+            "(f a1 a2 ())" ).SExpr.run().get
+          parser.TipSmtParser.parseExpression( input ) must
+            throwA[TipSmtParserException]
+        }
+        "function name is reserved word should return other object or throw" in
+          {
+            val input = new SExpressionParser(
+              "(not a1 a2 a3)" ).SExpr.run().get
+            parser.TipSmtParser.parseExpression( input ) must
+              throwA[TipSmtParserException]
+
+          }
+      }
+    }
+  }
+  "parsing identifier-expression" in {
+    "non reserved identifier should succeed" in {
+      val input = new SExpressionParser( "f" ).SExpr.run().get
+      parser.TipSmtParser.parseExpression( input ) must_==
+        TipSmtIdentifier( "f" )
+    }
+  }
+  "parsing match-expression" in {
+    "parsing well-formed match-expression should succeed" in {
+      "non-empty sequence of cases" in {
+        val input = new SExpressionParser(
+          "(match t (case c1 e1) (case c2 e2))" ).SExpr.run().get
+        parser.TipSmtParser.parseExpression( input ) must_==
+          TipSmtMatch(
+            TipSmtIdentifier( "t" ),
+            Seq(
+              TipSmtCase(
+                TipSmtConstructorPattern( TipSmtIdentifier( "c1" ), Seq() ),
+                TipSmtIdentifier( "e1" ) ),
+              TipSmtCase(
+                TipSmtConstructorPattern( TipSmtIdentifier( "c2" ), Seq() ),
+                TipSmtIdentifier( "e2" ) ) ) )
+      }
+      "empty sequence of case statements" in {
+        val input = new SExpressionParser(
+          "(match t)" ).SExpr.run().get
+        parser.TipSmtParser.parseExpression( input ) must_==
+          TipSmtMatch( TipSmtIdentifier( "t" ), Seq() )
+      }
+    }
+    "parsing ill-formed match-expression should throw exception" in {
+      "ill-formed match expression" in {
+        val input = new SExpressionParser(
+          "(match () (case c1 e1) (case c2 e2))" ).SExpr.run().get
+        parser.TipSmtParser.parseExpression( input ) must
+          throwA[TipSmtParserException]
+      }
+      "ill-formed case statements" in {
+        val input = new SExpressionParser(
+          "(match t a)" ).SExpr.run().get
+        parser.TipSmtParser.parseExpression( input ) must
+          throwA[TipSmtParserException]
+      }
+      "ill-formed pattern" in {
+        val input = new SExpressionParser(
+          "(match t ( (case () e1) (case c2 e2) ))" ).SExpr.run().get
+        parser.TipSmtParser.parseExpression( input ) must
+          throwA[TipSmtParserException]
+      }
+      "ill-formed case expression" in {
+        val input = new SExpressionParser(
+          "(match t (case c1 e1) (case c2 (not a b)) )" ).SExpr.run().get
+        parser.TipSmtParser.parseExpression( input ) must
+          throwA[TipSmtParserException]
+      }
+    }
+  }
+  "parsing true should succeed" in {
+    parser.TipSmtParser.parseExpression( LSymbol( "true" ) ) must_== TipSmtTrue
+  }
+  "parsing false should succeed" in {
+    parser.TipSmtParser.parseExpression( LSymbol( "false" ) ) must_==
+      TipSmtFalse
   }
 }
 
