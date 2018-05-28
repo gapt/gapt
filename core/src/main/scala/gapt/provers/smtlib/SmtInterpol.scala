@@ -8,7 +8,7 @@ import gapt.formats.lisp.{ LFun, LList, LSymbol }
 import gapt.provers.IncrementalProver
 import gapt.provers.Session.Runners.SessionRunner
 import gapt.provers.Session._
-import gapt.utils.{ Logger, NameGenerator }
+import gapt.utils.{ Logger, NameGenerator, Tree }
 import cats.implicits._
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy
 
@@ -20,6 +20,31 @@ class SmtInterpol(
 
   override def runSession[A]( program: Session[A] ) =
     new SmtInterpolSession().run( setLogic( logic ) >> program )
+
+  def getInterpolant( tree: Tree[Formula] ): Option[Tree[Formula]] = {
+    val session = new SmtInterpolSession
+    session.run( setOption( "produce-proofs", "true" ) >> setLogic( logic ) )
+    session.run( declareSymbolsIn( containedNames( tree ) ) )
+    val labels = tree.map( _ => session.nameGen.freshWithIndex( "IP" ) )
+    labels.zip( tree ).foreach { case ( l, f ) => session.run( assert( f, l ) ) }
+    session.run( checkUnsat ) match {
+      case Right( true ) =>
+        val startOfSubtree = mutable.Buffer[Int]()
+        val terms = mutable.Buffer[Term]()
+        def g( t: Tree[String] ): Unit = {
+          val start = terms.size
+          for ( c <- t.children ) g( c )
+          terms += session.script.term( t.value )
+          startOfSubtree += start
+        }
+        g( labels )
+        val is = session.script.getInterpolants( terms.toArray, startOfSubtree.toArray )
+        val isMap = labels.postOrder.zip( is.map( session.expr( _ ).asInstanceOf[Formula] ) ).toMap
+        Some( labels.map( isMap.getOrElse( _, Bottom() ) ) )
+      case _ =>
+        None
+    }
+  }
 }
 object SmtInterpol extends SmtInterpol( "QF_UF", false )
 
