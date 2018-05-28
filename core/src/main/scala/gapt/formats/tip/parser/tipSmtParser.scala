@@ -351,7 +351,7 @@ object TipSmtParser {
     def parseFunctionSignature( sexp: SExpression ): ( //
     String, Seq[TipSmtKeyword], Seq[TipSmtFormalParameter], TipSmtType ) = {
       sexp match {
-        case LFun( functionName, rest @ _* ) =>
+        case LFun( functionName, rest @ _* ) if rest.size >= 2 =>
           (
             functionName,
             parseKeywords( rest.init.init ),
