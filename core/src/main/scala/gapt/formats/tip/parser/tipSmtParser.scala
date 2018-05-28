@@ -598,14 +598,10 @@ object TipSmtParser {
       TipSmtFalse
     case LSymbol( "true" ) =>
       TipSmtTrue
-    case LFun( "forall", LList( variables @ _* ), formula ) =>
-      TipSmtForall(
-        variables map { parseTipSmtVarDecl },
-        parseExpression( formula ) )
-    case LFun( "exists", LList( variables @ _* ), formula ) =>
-      TipSmtExists(
-        variables map { parseTipSmtVarDecl },
-        parseExpression( formula ) )
+    case expr @ LFun( "forall", _* ) =>
+      parseForallExpression( expr )
+    case expr @ LFun( "exists", _* ) =>
+      parseExistsExpression( expr )
     case LFun( "and", exprs @ _* ) =>
       TipSmtAnd( exprs map { parseExpression } )
     case LFun( "or", exprs @ _* ) =>
@@ -614,8 +610,8 @@ object TipSmtParser {
       TipSmtEq( exprs map { parseExpression } )
     case LFun( "=>", exprs @ _* ) =>
       TipSmtImp( exprs map { parseExpression } )
-    case LFun( "not", expr ) =>
-      TipSmtNot( parseExpression( expr ) )
+    case expr @ LFun( "not", _* ) =>
+      parseNotExpression( expr )
     case LFun( "distinct", exprs @ _* ) =>
       TipSmtDistinct( exprs.map { parseExpression } )
     case LSymbol( name ) =>
@@ -624,6 +620,34 @@ object TipSmtParser {
       TipSmtFun( name, args map { parseExpression } )
     case _ => throw TipSmtParserException( "malformed expression: " + sexp )
   }
+
+  private def parseNotExpression( sexp: SExpression ): TipSmtNot =
+    sexp match {
+      case LFun( "not", expr ) =>
+        TipSmtNot( parseExpression( expr ) )
+      case _ => throw TipSmtParserException(
+        "malformed not-expression: " + sexp )
+    }
+
+  private def parseExistsExpression( sexp: SExpression ): TipSmtExists =
+    sexp match {
+      case LFun( "exists", LList( variables @ _* ), formula ) =>
+        TipSmtExists(
+          variables map { parseTipSmtVarDecl },
+          parseExpression( formula ) )
+      case _ => throw TipSmtParserException(
+        "malformed exists-expression: " + sexp )
+    }
+
+  private def parseForallExpression( sexp: SExpression ): TipSmtForall =
+    sexp match {
+      case LFun( "forall", LList( variables @ _* ), formula ) =>
+        TipSmtForall(
+          variables map { parseTipSmtVarDecl },
+          parseExpression( formula ) )
+      case _ => throw TipSmtParserException(
+        "malformed forall expression: " + sexp )
+    }
 
   /**
    * Parses a variable declaration.
