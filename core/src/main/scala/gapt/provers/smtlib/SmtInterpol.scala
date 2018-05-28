@@ -188,6 +188,9 @@ class SmtInterpolSession( val script: Script ) extends SessionRunner {
           case "=>" =>
             val Seq( a, b ) = ps
             a --> b
+          case "ite" =>
+            val Seq( a, b, c ) = ps
+            ( a --> b ) & ( -a --> c )
           case "not" =>
             val Seq( p ) = ps
             Neg( p )
