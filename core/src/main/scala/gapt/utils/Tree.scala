@@ -14,6 +14,12 @@ case class Tree[+T]( value: T, children: Vector[Tree[T]] ) {
     children.foreach( _.foreach( f ) )
   }
 
+  def contains[S >: T]( t: S ): Boolean =
+    value == t || children.exists( _.contains( t ) )
+
+  def tails: Tree[Tree[T]] =
+    Tree( this, children.map( _.tails ) )
+
   def postOrder: Vector[T] = {
     val out = Vector.newBuilder[T]
     def g( t: Tree[T] ): Unit = {

@@ -8,9 +8,10 @@ import gapt.formats.lisp.{ LFun, LList, LSymbol }
 import gapt.provers.IncrementalProver
 import gapt.provers.Session.Runners.SessionRunner
 import gapt.provers.Session._
-import gapt.utils.{ Logger, NameGenerator, Tree }
+import gapt.utils.{ Logger, Maybe, NameGenerator, Tree }
 import cats.implicits._
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy
+import gapt.proofs.Context
 
 import scala.collection.mutable
 
@@ -21,7 +22,7 @@ class SmtInterpol(
   override def runSession[A]( program: Session[A] ) =
     new SmtInterpolSession().run( setLogic( logic ) >> program )
 
-  def getInterpolant( tree: Tree[Formula] ): Option[Tree[Formula]] = {
+  override def getInterpolant( tree: Tree[Formula] )( implicit ctx: Maybe[Context] ): Option[Tree[Formula]] = {
     val session = new SmtInterpolSession
     session.run( setOption( "produce-proofs", "true" ) >> setLogic( logic ) )
     session.run( declareSymbolsIn( containedNames( tree ) ) )
