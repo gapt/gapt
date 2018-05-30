@@ -209,13 +209,13 @@ class TipSubstitute( val problem: TipSmtProblem ) {
               apply( formula, oldName, TipSmtIdentifier( newName ) )
           }
 
-      val newExpression = TipSmtExists(
+      val newExpression = quantifier(
         newQuantifiedVariables,
         newFormula )
 
       apply( newExpression, oldName, replacement )
     } else {
-      TipSmtExists(
+      quantifier(
         variables, apply( formula, oldName, replacement ) )
     }
   }
