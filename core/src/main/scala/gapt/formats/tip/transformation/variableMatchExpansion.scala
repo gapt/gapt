@@ -191,12 +191,18 @@ class VariableMatchExpansion( problem: TipSmtProblem ) {
       case Forall => TipSmtForall
       case Exists => TipSmtExists
     }
-    quantifier(
-      boundVariables,
-      ( new TipSubstitute( problem ) )(
+    if ( boundVariables.isEmpty )
+      new TipSubstitute( problem )(
         tipSmtCase.expr,
         variable.name,
-        patternToExpression( pattern ) ) )
+        patternToExpression( pattern ) )
+    else
+      quantifier(
+        boundVariables,
+        ( new TipSubstitute( problem ) )(
+          tipSmtCase.expr,
+          variable.name,
+          patternToExpression( pattern ) ) )
   }
 
   /**
