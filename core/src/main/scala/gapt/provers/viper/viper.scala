@@ -34,7 +34,7 @@ case class ViperOptions(
     mode:                     String                   = "portfolio",
     fixup:                    Boolean                  = true,
     prooftool:                Boolean                  = false,
-    treeGrammarProverOptions: TreeGrammarProverOptions = TreeGrammarProverOptions(),
+    treeGrammarProverOptions: TreeGrammarProverOptions = TreeGrammarProverOptions( useInterpolation = true ),
     aipOptions:               AipOptions               = AipOptions() )
 object ViperOptions {
   val usage =

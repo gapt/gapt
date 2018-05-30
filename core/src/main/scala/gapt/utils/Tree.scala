@@ -20,6 +20,10 @@ case class Tree[+T]( value: T, children: Vector[Tree[T]] ) {
   def tails: Tree[Tree[T]] =
     Tree( this, children.map( _.tails ) )
 
+  private def zipWithDepth( i: Int ): Tree[( T, Int )] =
+    Tree( ( value, i ), children.map( _.zipWithDepth( i + 1 ) ) )
+  def zipWithDepth: Tree[( T, Int )] = zipWithDepth( 0 )
+
   def postOrder: Vector[T] = {
     val out = Vector.newBuilder[T]
     def g( t: Tree[T] ): Unit = {
