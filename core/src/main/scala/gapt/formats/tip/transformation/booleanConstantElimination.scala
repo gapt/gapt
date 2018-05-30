@@ -111,9 +111,11 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
    */
   private def eliminateBooleanConstants(
     smtMatch: TipSmtMatch ): TipSmtExpression = {
-    smtMatch.copy( cases = smtMatch.cases.map { c =>
-      c.copy( expr = eliminateBooleanConstants( c.expr ) )
-    } )
+    smtMatch.copy(
+      expr = eliminateBooleanConstants( smtMatch.expr ),
+      cases = smtMatch.cases.map { c =>
+        c.copy( expr = eliminateBooleanConstants( c.expr ) )
+      } )
   }
 
   /**
@@ -167,7 +169,10 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
     } else if ( remainingExpressions.isEmpty ) {
       TipSmtTrue
     } else {
-      TipSmtAnd( remainingExpressions )
+      if ( remainingExpressions.size == 1 )
+        remainingExpressions.head
+      else
+        TipSmtAnd( remainingExpressions )
     }
   }
 
@@ -187,7 +192,10 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
     } else if ( remainingExpressions.isEmpty ) {
       TipSmtFalse
     } else {
-      TipSmtOr( remainingExpressions )
+      remainingExpressions match {
+        case Seq( expr ) => expr
+        case _           => TipSmtOr( remainingExpressions )
+      }
     }
   }
 
