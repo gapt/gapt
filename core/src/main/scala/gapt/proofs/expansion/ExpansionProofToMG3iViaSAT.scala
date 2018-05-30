@@ -70,6 +70,8 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
     }
   }
 
+  val classical = newVar()
+
   expansionProof.subProofs.foreach {
     case ETWeakening( _, _ )              =>
     case ETMerge( _, _ ) | ETAtom( _, _ ) => // implicit because shallow formulas are the same
@@ -88,15 +90,19 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         if ( e.polarity.inSuc ) ExistsRightRule( LogicalAxiom( a.shallow ), sh, inst )
         else ForallLeftRule( LogicalAxiom( a.shallow ), sh, inst )
       }
-    case ETNeg( a ) =>
+    case e @ ETNeg( a ) =>
       addClause( NegLeftRule( LogicalAxiom( a.shallow ), a.shallow ) )
-    case ETImp( a, b ) =>
+      solver.addClause( Seq( -classical, atom( a.shallow ), atom( e.shallow ) ) )
+    case e @ ETImp( a, b ) =>
       addClause( ImpLeftRule( LogicalAxiom( a.shallow ), Suc( 0 ), LogicalAxiom( b.shallow ), Ant( 0 ) ) )
       addClause( ImpRightMacroRule( LogicalAxiom( b.shallow ), a.shallow, b.shallow ) )
-    case ETStrongQuantifier( _, _, _ ) =>
+      solver.addClause( Seq( -classical, atom( e.shallow ), atom( a.shallow ) ) )
+    case e @ ETStrongQuantifier( _, _, ch ) =>
+      val pol = if ( e.polarity.inSuc ) 1 else -1
+      solver.addClause( Seq( -classical, -pol * atom( ch.shallow ), pol * atom( e.shallow ) ) )
   }
 
-  val cc = CC().intern( shAtoms.keys )
+  val cc = CC().intern( shAtoms.keys.filter( _.isInstanceOf[Atom] ) )
 
   type Counterexample = Set[Int] // just the assumptions
   type Result = Either[Counterexample, Unit]
@@ -104,6 +110,19 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
   val unprovable = mutable.Buffer[( Set[Var], Counterexample )]()
 
   def solve( eigenVariables: Set[Var], assumptions: Set[Int] ): Result = {
+    def tryEquational( model: Seq[Int] ): Option[Result] = {
+      val atomModel = modelSequent( model ).collect { case a: Atom => a }
+      if ( !atomModel.exists( Eq.unapply( _ ).isDefined ) ) None else
+        cc.merge( atomModel.antecedent ).explain( atomModel ) match {
+          case Some( core ) =>
+            val Some( p ) = quiet( Escargot.getAtomicLKProof( core ) )
+            addClause( p )
+            Some( Right( () ) )
+          case None =>
+            None
+        }
+    }
+
     unprovable.find {
       case ( evs, ass ) => evs.subsetOf( eigenVariables ) && assumptions.subsetOf( ass )
     } match {
@@ -112,21 +131,16 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
       case _ =>
     }
 
+    while ( solver.isSatisfiable( assumptions + classical ) )
+      tryEquational( solver.model() ) match {
+        case Some( _ ) =>
+        case None =>
+          unprovable += ( ( eigenVariables, assumptions ) )
+          return Left( assumptions )
+      }
+
     while ( solver.isSatisfiable( assumptions ) ) {
       val model = solver.model(): Seq[Int]
-      val atomModel = modelSequent( model ).collect { case a: Atom => a }
-
-      def tryEquational(): Option[Result] = {
-        if ( !atomModel.exists( Eq.unapply( _ ).isDefined ) ) None else
-          cc.merge( atomModel.antecedent ).explain( atomModel ) match {
-            case Some( core ) =>
-              val Some( p ) = quiet( Escargot.getAtomicLKProof( core ) )
-              addClause( p )
-              Some( Right( () ) )
-            case None =>
-              None
-          }
-      }
 
       val assumptionsAnt = assumptions.filter( _ > 0 )
       def checkEVCond( e: ExpansionTree ): Boolean =
@@ -196,7 +210,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         }
       }
 
-      tryInvertible().orElse( tryEquational() ).getOrElse( tryNonInvertible() ) match {
+      tryInvertible().orElse( tryEquational( model ) ).getOrElse( tryNonInvertible() ) match {
         case Right( _ ) => // next model
           require( !solver.isSatisfiable( model ) )
         case reason @ Left( _ ) =>
@@ -223,7 +237,8 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         Left( modelSequent( model.toSeq.sortBy( -_ ) ) )
       case Right( () ) =>
         val goal = clause( expansionProof.expansionSequent.shallow ).toSet
-        val drupP = RupProof( drup :+ RupProof.Rup( goal ) )
+        val drupP = RupProof( ( drup :+ RupProof.Rup( goal ) ).
+          filterNot( _.clause.contains( -classical ) ) )
         val replayed = ( drupP.lines.map( _.clause ) zip drupP.toResProofs ).reverse.toMap
         def toLK( clause: Set[Int] ): LKProof =
           replayed( clause ).toLK( atomToSh, cls => proofs( cls ) match {
