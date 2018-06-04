@@ -8,7 +8,7 @@ import gapt.formats.tip.parser.TipSmtParser
 import gapt.formats.tip.transformation.expandVariableMatchExpressions
 import org.specs2.mutable.Specification
 
-class VariableMatchExpansion extends Specification {
+class VariableMatchExpansionTest extends Specification {
 
   "variable match-expressions should be expanded in all expressions" in {
 
