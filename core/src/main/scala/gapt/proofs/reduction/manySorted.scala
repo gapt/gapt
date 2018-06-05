@@ -205,7 +205,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
       case ( ETAnd( a, b ), And( sha, shb ) ) => eigenVariables( a, sha ) ++ eigenVariables( b, shb )
       case ( ETOr( a, b ), Or( sha, shb ) ) => eigenVariables( a, sha ) ++ eigenVariables( b, shb )
       case ( ETImp( a, b ), Imp( sha, shb ) ) => eigenVariables( a, sha ) ++ eigenVariables( b, shb )
-      case ( ETStrongQuantifier( _, ev: FOLVar, a ), All( shx, sha ) ) =>
+      case ( ETStrongQuantifier( _, ev: FOLVar, a ), Quant( shx, sha, _ ) ) =>
         eigenVariables( a, sha ) + ( ev -> Var( ev.name, shx.ty ) )
       case ( ETWeakQuantifier( _, insts ), Quant( x, sh, isForall ) ) =>
         insts.flatMap { case ( _, a ) => eigenVariables( a, sh ) }
@@ -220,7 +220,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
     case ( ETAnd( a, b ), And( sha, shb ) )  => ETAnd( back( a, sha, freeVars ), back( b, shb, freeVars ) )
     case ( ETOr( a, b ), Or( sha, shb ) )    => ETOr( back( a, sha, freeVars ), back( b, shb, freeVars ) )
     case ( ETImp( a, b ), Imp( sha, shb ) )  => ETImp( back( a, sha, freeVars ), back( b, shb, freeVars ) )
-    case ( ETStrongQuantifier( _, ev: FOLVar, a ), All( shx, _ ) ) =>
+    case ( ETStrongQuantifier( _, ev: FOLVar, a ), _ ) =>
       ETStrongQuantifier( shallow, freeVars( ev ), back( a, instantiate( shallow, freeVars( ev ) ), freeVars ) )
     case ( ETWeakQuantifier( _, insts ), Quant( x, sh, isForall ) ) =>
       ETWeakQuantifier(
