@@ -51,8 +51,12 @@ class UseDefinitionEquations( problem: TipSmtProblem ) {
     val boundVariables =
       parameters.map { p => TipSmtVariableDecl( p.name, p.typ ) }
     val arguments = parameters map { p => TipSmtIdentifier( p.name ) }
-    fun.copy( body = TipSmtForall(
-      boundVariables,
-      TipSmtEq( Seq( TipSmtFun( name, arguments ), body ) ) ) )
+    fun.copy( body =
+      if ( boundVariables.isEmpty )
+        TipSmtEq( Seq( TipSmtFun( name, arguments ), body ) )
+      else
+        TipSmtForall(
+          boundVariables,
+          TipSmtEq( Seq( TipSmtFun( name, arguments ), body ) ) ) )
   }
 }
