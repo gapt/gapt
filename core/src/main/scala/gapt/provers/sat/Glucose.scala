@@ -2,8 +2,8 @@ package gapt.provers.sat
 
 import gapt.formats.dimacs.{ DIMACS, readDRUP, writeDIMACS }
 import gapt.utils.{ runProcess, withTempFile }
-
 import ammonite.ops._
+import gapt.proofs.rup.RupProof
 
 object Glucose extends Glucose( "glucose" )
 class Glucose( command: String* ) extends ExternalSATSolver( command: _* ) with DrupSolver {
@@ -22,9 +22,9 @@ class Glucose( command: String* ) extends ExternalSATSolver( command: _* ) with 
       }
     }
 
-  def getDrupProof( cnf: DIMACS.CNF ): Option[DIMACS.DRUP] = {
+  def getDrupProof( cnf: DIMACS.CNF ): Option[RupProof] = {
     if ( cnf.isEmpty ) return None
-    runForProof( writeDIMACS( cnf ) ) map { readDRUP( _ ) }
+    runForProof( writeDIMACS( cnf ) ) map { readDRUP( cnf, _ ) }
   }
 
 }

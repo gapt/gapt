@@ -4,7 +4,7 @@ import ammonite.ops._
 import gapt.expr.Formula
 import gapt.formats.latex.LatexExporter
 import gapt.proofs._
-import gapt.proofs.lk.{ LKProof, LKToExpansionProof }
+import gapt.proofs.lk.{ LKProof, LKToExpansionProof, isMaeharaMG3i }
 import gapt.formats.llk.exportLLK
 
 import scala.swing._
@@ -79,7 +79,7 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
    * @param is A set of indices in the end sequent of the subproof at pos.
    */
   def markAncestors( pos: List[Int], is: Set[SequentIndex] ): Unit = {
-    publisher.publish( MarkAncestors( pos, is ) )
+    publisher.publish( MarkOccurrences( pos, is ) )
     val p = proof.subProofAt( pos )
 
     for ( j <- p.immediateSubProofs.indices ) {
@@ -96,7 +96,7 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
    * @param is A set of indices in the end sequent of the subproof at pos.
    */
   def markDescendants( pos: List[Int], is: Set[SequentIndex] ): Unit = {
-    publisher.publish( MarkDescendants( pos, is ) )
+    publisher.publish( MarkOccurrences( pos, is ) )
 
     val p = proof.subProofAt( pos )
 
@@ -142,7 +142,7 @@ class LKProofViewer( name: String, proof: LKProof )
   override val content: LKProof = proof
   override def fileMenuContents = Seq( openButton, saveAsButton, new Separator, exportToPDFButton, exportToPNGButton )
   override def viewMenuContents = super.viewMenuContents ++ Seq(
-    hideStructuralRulesButton, markCutAncestorsButton, new Separator(),
+    hideStructuralRulesButton, markCutAncestorsButton, markNonIntuitionisticInferencesButton, new Separator(),
     viewExpansionProofButton )
 
   /**
@@ -195,6 +195,20 @@ class LKProofViewer( name: String, proof: LKProof )
     publisher.publish( UnmarkCutAncestors )
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }
+
+  def markNonIntuitionisticInferences( p: LKProof, pos: List[Int] ): Unit = {
+    for ( is <- isMaeharaMG3i.checkInference( p ).left )
+      publisher.publish( MarkOccurrences( pos, is.toSet ) )
+
+    for ( ( q, j ) <- p.immediateSubProofs.zipWithIndex )
+      markNonIntuitionisticInferences( q, j :: pos )
+  }
+  def markNonIntuitionisticInferences(): Unit =
+    markNonIntuitionisticInferences( proof, Nil )
+  def markNonIntuitionisticInferencesButton =
+    new MenuItem( Action( "Mark non-intuitionistic inferences" ) {
+      markNonIntuitionisticInferences()
+    } )
 
   // New menu buttons
   def saveAsButton = MenuButtons.saveAsButton[LKProof](

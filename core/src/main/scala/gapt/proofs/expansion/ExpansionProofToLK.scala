@@ -34,16 +34,14 @@ class ExpansionProofToLK(
       orElse( tryWeakening( theory, expSeq ) ).
       orElse( tryNullary( theory, expSeq ) ).
       orElse( tryStrongQ( theory, expSeq ) ).
-      orElse( tryWeakQ( theory, expSeq, intuitionisticHeuristics ) ).
-      orElse( tryUnary( theory, expSeq, if ( intuitionisticHeuristics ) 0 else 2 ) ).
+      orElse( tryWeakQ( theory, expSeq ) ).
+      orElse( tryUnary( theory, expSeq, intuitionisticHeuristics ) ).
       orElse( tryCut( theory, expSeq ) ).
       orElse( tryInduction( theory, expSeq ) ).
       orElse( tryBinary( theory, expSeq, intuitionisticHeuristics ) ).
       orElse( if ( intuitionisticHeuristics ) tryIntuitionisticImpLeft( theory, expSeq ) else None ).
-      orElse( if ( intuitionisticHeuristics ) tryWeakQ( theory, expSeq, intuitionistic = false ) else None ).
+      orElse( if ( intuitionisticHeuristics ) tryUnary( theory, expSeq, intuitionistic = false ) else None ).
       orElse( if ( intuitionisticHeuristics ) tryBinary( theory, expSeq, intuitionistic = false ) else None ).
-      orElse( if ( intuitionisticHeuristics ) tryUnary( theory, expSeq, 1 ) else None ).
-      orElse( if ( intuitionisticHeuristics ) tryUnary( theory, expSeq, 2 ) else None ).
       orElse( tryTheory( theory, expSeq ) ).
       getOrElse( Left( theory -> expSeq ) ).
       map {
@@ -93,25 +91,25 @@ class ExpansionProofToLK(
     }
 
   private def tryUnary( theory: Theory, expSeq: ExpansionSequent,
-                        classical: Int ): Option[UnprovableOrLKProof] =
-    expSeq.zipWithIndex.elements collectFirst {
-      case ( ETNeg( f ), i: Ant ) if classical >= 2 =>
+                        intuitionistic: Boolean ): Option[UnprovableOrLKProof] =
+    expSeq.zipWithIndex.elements.reverseIterator collectFirst {
+      case ( ETNeg( f ), i: Ant ) if !intuitionistic =>
         mapIf( solve( theory, expSeq.delete( i ) :+ f ), f.shallow, !i.polarity ) {
           NegLeftRule( _, f.shallow )
         }
-      case ( ETNeg( f ), i: Suc ) => mapIf( solve( theory, f +: expSeq.delete( i ) ), f.shallow, !i.polarity ) {
-        NegRightRule( _, f.shallow )
-      }
+      case ( ETNeg( f ), i: Suc ) if !intuitionistic || expSeq.succedent.size <= 1 =>
+        mapIf( solve( theory, f +: expSeq.delete( i ) ), f.shallow, !i.polarity ) {
+          NegRightRule( _, f.shallow )
+        }
       case ( ETAnd( f, g ), i: Ant ) =>
         mapIf( solve( theory, f +: g +: expSeq.delete( i ) ), f.shallow, i.polarity, g.shallow, i.polarity ) {
           AndLeftMacroRule( _, f.shallow, g.shallow )
         }
-      case ( ETOr( f, g ), i: Suc ) if classical >= 1
-        || f.isInstanceOf[ETWeakening] || g.isInstanceOf[ETWeakening] =>
+      case ( ETOr( f, g ), i: Suc ) =>
         mapIf( solve( theory, expSeq.delete( i ) :+ f :+ g ), f.shallow, i.polarity, g.shallow, i.polarity ) {
           OrRightMacroRule( _, f.shallow, g.shallow )
         }
-      case ( ETImp( f, g ), i: Suc ) =>
+      case ( ETImp( f, g ), i: Suc ) if !intuitionistic || expSeq.succedent.size <= 1 =>
         mapIf( solve( theory, f +: expSeq.delete( i ) :+ g ), f.shallow, !i.polarity, g.shallow, i.polarity ) {
           ImpRightMacroRule( _, f.shallow, g.shallow )
         }
@@ -138,7 +136,7 @@ class ExpansionProofToLK(
   private def tryIntuitionisticImpLeft( theory: Theory, expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
     expSeq.zipWithIndex.antecedent.view.flatMap {
       case ( e @ ETImp( f, g ), i: Ant ) =>
-        val expSeq_ = Sequent( expSeq.antecedent.filter { case ETImp( _, _ ) => false case _ => true }, Vector( f ) )
+        val expSeq_ = Sequent( expSeq.antecedent.filter( _.isInstanceOf[ETAtom] ), Vector( f ) )
         solve( theory, expSeq_ ).map { p1 =>
           if ( !p1.conclusion.contains( f.shallow, f.polarity ) ) Right( p1 )
           else solve( theory, expSeq.updated( i, g ) ).map { p2 =>
@@ -169,8 +167,7 @@ class ExpansionProofToLK(
         }
     }
 
-  private def tryWeakQ( theory: Theory, expSeq: ExpansionSequent,
-                        intuitionistic: Boolean ): Option[UnprovableOrLKProof] = {
+  private def tryWeakQ( theory: Theory, expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] = {
     lazy val upcomingEVs = ( for {
       et <- theory.getExpansionTrees ++ expSeq.elements
       ETStrongQuantifier( _, ev, _ ) <- et.subProofs
@@ -178,10 +175,7 @@ class ExpansionProofToLK(
     def possibleInsts( insts: Map[Expr, ExpansionTree] ) =
       Map() ++ insts.filterKeys( t => freeVariables( t ) intersect upcomingEVs isEmpty )
 
-    for {
-      ( ETWeakQuantifier( sh, insts ), i ) <- expSeq.zipWithIndex.elements
-      if !intuitionistic || i.isAnt || ( insts.size <= 1 )
-    } {
+    for ( ( ETWeakQuantifier( sh, insts ), i ) <- expSeq.zipWithIndex.elements ) {
       val insts_ = possibleInsts( insts )
 
       if ( insts_.nonEmpty ) {

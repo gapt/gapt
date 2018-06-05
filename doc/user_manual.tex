@@ -160,7 +160,7 @@
 {\Huge User manual}
 
 \vspace*{10mm}
-{\Large Version 2.11-SNAPSHOT}
+{\Large Version 2.12-SNAPSHOT}
 \vspace*{10mm}
 
 {\Large \today}
@@ -229,7 +229,7 @@ sbt console
   two lines to your \verb,build.sbt,:
 \begin{lstlisting}
 resolvers += Resolver.jcenterRepo
-libraryDependencies += "at.logic.gapt" %% "gapt" % "2.10"
+libraryDependencies += "at.logic.gapt" %% "gapt" % "2.11"
 \end{lstlisting}
 
 \end{enumerate}
@@ -279,6 +279,7 @@ functionality of these systems will not be available.
   a development version as of September 11, 2017)
 \item VeriT (\url{http://www.verit-solver.org/})
 \item Z3 (\url{https://github.com/Z3Prover/z3})
+\item SMTInterpol (\url{https://ultimate.informatik.uni-freiburg.de/smtinterpol/})
 \item MiniSAT (\url{http://minisat.se/})
 \item Glucose (\url{http://www.labri.fr/perso/lsimon/glucose/})
 \item PicoSAT (\url{http://fmv.jku.at/picosat/})
@@ -1130,17 +1131,17 @@ with quantifier-free conclusions.
 \begin{clilisting}
 gapt> val p = instanceProof(examples.theories.nat.addcomm.combined(),                                     Seq(le"s (s 0 : nat)", le"0 : nat"))
 p: gapt.proofs.lk.LKProof =
-[p127] ∀x ((x:nat) + (0:nat): nat) = x,
+[p128] ∀x ((x:nat) + (0:nat): nat) = x,
 ∀x ∀y x + s(y:nat) = s(x + y)
 ⊢
-s(s(0)) + 0 = 0 + s(s(0))    (CutRule(p123, Suc(0), p126, Ant(0)))
-[p126] ∀x ∀y ((x:nat) + (y:nat): nat) = y + x ⊢ s(s(0:nat): nat) + 0 = 0 + s(s(0))    (ForallLeftRule(p125, Ant(0), ∀y ((x:nat) + (y:nat): nat) = y + x, s(s(0:nat): nat), x:nat))
-[p125] ∀y (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (ForallLeftRule(p124, Ant(0), (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)), 0:nat, y:nat))
-[p124] (s(s(0:nat): nat) + 0: nat) = 0 + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (LogicalAxiom((s(s(0:nat): nat) + 0: nat) = 0 + s(s(0))))
-[p123] ∀x ((x:nat) + (0:nat): nat) = x,
+s(s(0)) + 0 = 0 + s(s(0))    (CutRule(p124, Suc(0), p127, Ant(0)))
+[p127] ∀x ∀y ((x:nat) + (y:nat): nat) = y + x ⊢ s(s(0:nat): nat) + 0 = 0 + s(s(0))    (ForallLeftRule(p126, Ant(0), ∀y ((x:nat) + (y:nat): nat) = y + x, s(s(0:nat): nat), x:nat))
+[p126] ∀y (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (ForallLeftRule(p125, Ant(0), (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)), 0:nat, y:nat))
+[p125] (s(s(0:nat): nat) + 0: nat) = 0 + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (LogicalAxiom((s(s(0:nat): nat) + 0: nat) = 0 + s(s(0))))
+[p124] ∀x ((x:nat) + (0:nat): nat) = x,
 ∀x ∀y x + s(y:nat) = s(x + y)
 ⊢
-∀x ∀y x + y = y + x    (CutRule(p3, Suc(0), p122, Ant(0)))...
+∀x ∀y x + y = y + x    (CutRule(p3, Suc(0), p123, Ant(0)))...
 
 gapt> val q = inductionNormalForm(p)(                                         examples.theories.nat.ctx)
 q: gapt.proofs.lk.LKProof =
@@ -1278,9 +1279,9 @@ gapt> deskolemizeET(p)
 res13: gapt.proofs.expansion.ExpansionProof =
 
 :-
-∃x (drinks(x) → ∀y_0 drinks(y_0))
-  +^{x} (wk-{drinks(x)} → ∀y_0 drinks(y_0) +ev^{y} drinks(y)+)
-  +^{y} (drinks(y)- → wk+{∀y_0 drinks(y_0)})
+∃x (drinks(x) → ∀y drinks(y))
+  +^{v} (drinks(v)- → wk+{∀y drinks(y)})
+  +^{x} (wk-{drinks(x)} → ∀y drinks(y) +ev^{v} drinks(v)+)
 
 \end{clilisting}
 
@@ -1447,8 +1448,8 @@ res21: gapt.proofs.lk.LKProof =
 [p18] ∃y (¬P(b, y) ∨ Q(b, y)) ⊢ ∃y (¬Q(b, y) → ¬P(b, y))    (ExistsLeftRule(p17, Ant(0), y, y))
 [p17] ¬P(b, y) ∨ Q(b, y) ⊢ ∃y (¬Q(b, y) → ¬P(b, y))    (ExistsRightRule(p16, Suc(0), ¬Q(b, y) → ¬P(b, y), y, y))
 [p16] ¬P(b, y) ∨ Q(b, y) ⊢ ¬Q(b, y) → ¬P(b, y)    (ImpRightRule(p15, Ant(0), Suc(0)))
-[p15] ¬Q(b, y), ¬P(b, y) ∨ Q(b, y) ⊢ ¬P(b, y)    (NegLeftRule(p14, Suc(0)))
-[p14] ¬P(b, y) ∨ Q(b, y) ⊢ Q(b, y), ¬P(b, y) ...
+[p15] ¬Q(b, y), ¬P(b, y) ∨ Q(b, y) ⊢ ¬P(b, y)    (NegRightRule(p14, Ant(2)))
+[p14] ¬Q(b, y), ¬P(b, y) ∨ Q(b, y), P(b, y) ...
 
 \end{clilisting}
 
@@ -1804,18 +1805,18 @@ encoding: gapt.formats.dimacs.DIMACSEncoding = DIMACSEncoding()
 gapt> writeDIMACS(encoding encodeCNF cnf)
 res42: String =
 "p cnf 9 12
-1 2 3 0
 -4 -1 0
--5 -2 0
-4 5 6 0
--1 -7 0
--6 -8 0
 -6 -3 0
--2 -9 0
--5 -9 0
 7 9 8 0
--3 -8 0
+4 5 6 0
+1 2 3 0
+-6 -8 0
+-2 -9 0
 -4 -7 0
+-5 -9 0
+-3 -8 0
+-1 -7 0
+-5 -2 0
 "
 
 \end{clilisting}
@@ -1854,29 +1855,35 @@ res46: Boolean = true
 GAPT can import DRUP proofs from Sat4j, Glucose, and PicoSAT:
 \begin{clilisting}
 gapt> Sat4j getDrupProof PigeonHolePrinciple(4,3)
-res47: Option[gapt.proofs.drup.DrupProof] =
-Some([derive]  ⊢
-[derive] R(p_3, h_2) ⊢
-[derive]  ⊢ R(p_4, h_3)
-[derive] R(p_3, h_3) ⊢ R(p_2, h_1), R(p_1, h_1)
-[derive] R(p_4, h_2) ⊢ R(p_3, h_1)
-[derive] R(p_3, h_1) ⊢ R(p_4, h_3)
-[input] R(p_1, h_1), R(p_4, h_1) ⊢
-[input]  ⊢ R(p_1, h_1), R(p_1, h_2), R(p_1, h_3)
-[input] R(p_3, h_2), R(p_4, h_2) ⊢
-[input] R(p_1, h_1), R(p_2, h_1) ⊢
-[input] R(p_2, h_1), R(p_3, h_1) ⊢
-[input]  ⊢ R(p_2, h_1), R(p_2, h_2), R(p_2, h_3)
-[input] R(p_1, h_2), R(p_4, h_2) ⊢
-[input] R(p_3, h_3), R(p_2, h_3) ⊢
-[input] R(p_2, h_2), R(p_4, h_2) ⊢
-[input] R(p_3, h_3), R(p_4, h_3) ⊢
-[input] R(p_1, h_3), R(p_2, h_3) ⊢
-[input] R(p_3, h_1), R(p_4, h_1) ⊢
-[input] R(p_4, h_3), R(p_1, h_3) ⊢
-[input] R(p_2, h_2), R(p_3, h_2) ⊢
-[input] R(p_1, h_2), R(p_3, h_2) ⊢
-[input] R(p_1, h_1...
+res47: Option[gapt.proofs.rup.RupProof] =
+Some(c input -10 -6 0
+c input -11 -3 0
+c input -1 -3 0
+c input -11 -2 0
+c input -8 -4 0
+c input -6 -7 0
+c input -12 -5 0
+c input -8 -5 0
+c input 9 8 2 0
+c input -1 -2 0
+c input -2 -3 0
+c input -9 -7 0
+c input 11 6 12 0
+c input -9 -6 0
+c input -11 -1 0
+c input -10 -7 0
+c input -4 -12 0
+c input -9 -10 0
+c input 1 7 5 0
+c input -4 -5 0
+c input 10 4 3 0
+c input -8 -12 0
+-6 1 0
+-5 6 0
+-11 9 10 0
+1 0
+-12 0
+ 0)
 
 \end{clilisting}
 
@@ -1886,7 +1893,7 @@ format:
 \begin{clilisting}
 gapt> Sat4j getLKProof PigeonHolePrinciple(4,3)
 res48: Option[gapt.proofs.lk.LKProof] =
-Some([p571]
+Some([p566]
 ⊢
 (R(p_1, h_1) ∨ R(p_1, h_2) ∨ R(p_1, h_3)) ∧
     (R(p_2, h_1) ∨ R(p_2, h_2) ∨ R(p_2, h_3)) ∧
@@ -2120,53 +2127,56 @@ if necessary.
 gapt> prooftool(Pi2Pigeonhole.proof)
 
 gapt> cutFormulas(Pi2Pigeonhole.proof) filter {containsQuantifier(_)} foreach println
-∀x_1 ∃y (x_1 <= y ∧ f(y) = s(0))
-∀x_1 ∃y (x_1 <= y ∧ f(y) = 0)
+∀x ∃y (x <= y ∧ f(y) = s(0))
+∀x ∃y (x <= y ∧ f(y) = 0)
 
 gapt> val acnf = CERES(Pi2Pigeonhole.proof)
 acnf: gapt.proofs.lk.LKProof =
-[p477] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
-∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0))
+[p398] ∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0)),
+∀x (f(x) = 0 ∨ f(x) = s(0))
 ⊢
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (CutRule(p1, Suc(0), p476, Ant(2)))
-[p476] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
-∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (CutRule(p1, Suc(0), p397, Ant(2)))
+[p397] ∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0)),
+∀x (f(x) = 0 ∨ f(x) = s(0)),
 0 = 0
 ⊢
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionRightRule(p475, Suc(1), Suc(0)))
-[p475] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
-∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionRightRule(p396, Suc(1), Suc(0)))
+[p396] ∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0)),
+∀x (f(x) = 0 ∨ f(x) = s(0)),
 0 = 0
 ⊢
-∃x_1 ∃y_1 (s(x_1) <= y_1 ∧ f(x_1) = f(y_1)),
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p474, Ant(3), Ant(1)))
-[p474] ∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
-∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
+∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p395, Ant(3), Ant(1)))
+[p395] ∀x (f(x) = 0 ∨ f(x) = s(0)),
+∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0)),
 0 = 0,
-∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
+∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0))
 ⊢
-∃x_1 ∃y_1 (s(x_1) <= y_1 ∧ f(x_1)...
+∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (Cont...
 
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
 et: gapt.proofs.expansion.ExpansionProof =
-∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
-  +^{M(s(M(x_1, s(M(s(M(x_2, x_3)), x_0)))), s(M(s(M(x_2, x_3)), x_0)))}
-    ((f(M(s(M(x_1, s(M(s(M(x_2, x_3)), x_0)))), s(M(s(M(x_2, x_3)), x_0)))) =
-          0)- ∨
-      (f(M(s(M(x_1, s(M(s(M(x_2, x_3)), x_0)))), s(M(s(M(x_2, x_3)), x_0)))) =
-          s(0))-)
-  +^{M(s(M(x_1, s(M(x, s(M(s(M(x_2, x_3)), x_0)))))),
-        s(M(s(M(x_2, x_3)), x_0)))}
-    ((f(M(s(M(x_1, s(M(x, s(M(s(M(x_2, x_3)), x_0)))))),
-                  s(M(s(M(x_2, x_3)), x_0)))) =
-          0)- ∨
-      (f(M(s(M(x_1, s(M(x, s(M(s(M(x_2, x_3)), x_0)))))),
-                  s(M(s(M(x_2, x_3)), x_0)))) =
-          s(0))-)
-  +^{M(s(M(x_1, s(M(x, s(M(x_2, x_3)))))), s(M(x_2, x_3)))}
-    ((f(M(s(M(x_1, s(M(x, s(M(x_2, x_3)))))), s(M(x_2, x_3)))...
+∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0))
+  +^{s(M(v_0, s(M(v_2, v_3))))}
+    ∀y_0
+      (s(M(v_0, s(M(v_2, v_3)))) <= M(s(M(v_0, s(M(v_2, v_3)))), y_0) ∧
+        y_0 <= M(s(M(v_0, s(M(v_2, v_3)))), y_0))
+    +^{v}
+      (s(M(v_0, s(M(v_2, v_3)))) <= M(s(M(v_0, s(M(v_2, v_3)))), v))- ∧
+      wk-{v <= M(s(M(v_0, s(M(v_2, v_3)))), v)}
+  +^{s(M(v_1, s(M(v_0, s(M(v_2, v_3))))))}
+    ∀y_0
+      (s(M(v_1, s(M(v_0, s(M(v_2, v_3)))))) <=
+          M(s(M(v_1, s(M(v_0, s(M(v_2, v_3)))))), y_0) ∧
+        y_0 <= M(s(M(v_1, s(M(v_0, s(M(v_2, v_3)))))), y_0))
+    +^{s(M(s(M(v_0, s(M(v_2, v_3)))), v))}
+      (s(M(v_1, s(M(v_0, s(M(v_2, v_3)))))) <=
+          M(s(M(v_1, s(M(v_0, s(M(v_2, v_3)))))),
+              s(M(s(M(v_0, s(M(v_2, v_3)))), v))))- ∧
+      ...
 
 gapt> prooftool(et)
 
@@ -2249,21 +2259,21 @@ grammar: gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s
 
-x_0 → s(s(s(s(s(s(x_1))))))
-
-x_0 → s(s(s(x_1)))
+x_0 → s(x_1)
 
 x_0 → x_1
 
-x_1 → s(s(s(x_2)))
+x_1 → s(s(s(s(s(s(s(s(s(s(s(s(s(x_2)))))))))))))
 
-x_1 → s(s(x_2))
+x_1 → s(s(s(s(s(s(s(x_2)))))))
 
 x_1 → s(x_2)
 
 x_2 → 0
 
-x_2 → s(s(s(s(s(s(s(s(s(0)))))))))
+x_2 → s(s(0))
+
+x_2 → s(s(s(s(0))))
 
 gapt> lang.toSet subsetOf grammar.language
 res59: Boolean = true
@@ -2277,17 +2287,17 @@ res60: gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s
 
-x_0 → s(s(s(x_1)))
+x_0 → s(x_1)
 
 x_0 → x_1
-
-x_1 → s(s(s(x_2)))
-
-x_1 → s(s(x_2))
 
 x_1 → s(x_2)
 
 x_2 → 0
+
+x_2 → s(s(0))
+
+x_2 → s(s(s(s(0))))
 
 \end{clilisting}
 

@@ -30,12 +30,12 @@ object removeSkolemCongruences {
           insts.view.map {
             case ( t, ch ) =>
               val newT = TermReplacement( t, m )
-              newT -> repl( m, ch, instantiate( newSh, newT ) )
+              newT -> repl( m, ch, BetaReduction.betaNormalize( instantiate( newSh, newT ) ) )
           } )
     }
 
   def remove1( m: Map[Expr, Expr], ep: ExpansionProof ): ExpansionProof =
-    eliminateMerges( ExpansionProof( ep.expansionSequent.
+    ExpansionProof( eliminateMerges.unsafe( ep.expansionSequent.
       map( et => ETMerge( et, repl( m, et, et.shallow ) ) ) ) )
 
   def getAllPossibleCongruences( ep: ExpansionProof ): Vector[( Expr, Expr )] = {

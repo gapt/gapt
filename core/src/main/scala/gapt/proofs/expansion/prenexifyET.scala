@@ -3,7 +3,7 @@ package gapt.proofs.expansion
 import gapt.expr._
 import Polarity._
 import gapt.expr.hol.containsQuantifierOnLogicalLevel
-import gapt.proofs.Sequent
+import gapt.proofs.{ Context, Sequent }
 
 object prenexifyET {
   private def weakQuantifier( polarity: Polarity ) =
@@ -96,4 +96,8 @@ object prenexifyET {
       ep.expansionSequent.elements.
         flatMapS( toSequent ).
         map( apply ) ) )
+
+  def exceptTheory( ep: ExpansionProof )( implicit ctx: Context ): ExpansionProof =
+    eliminateMerges( ExpansionProof(
+      ep.theoryPart ++ ep.nonTheoryPart.elements.flatMapS( toSequent ).map( apply ) ) )
 }

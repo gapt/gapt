@@ -352,7 +352,9 @@ object Context {
       } yield subst( declName ) ).headOption
 
     override def toString: String =
-      names.map { case ( _, ( lhs, sequent ) ) => s"$lhs: $sequent" }.mkString( "\n" )
+      names.toSeq.sortBy( _._1 ).
+        map { case ( _, ( lhs, sequent ) ) => s"$lhs: $sequent" }.
+        mkString( "\n" )
   }
 
   implicit val ProofsFacet: Facet[ProofNames] = Facet( ProofNames( Map[String, ( Expr, HOLSequent )]() ) )
