@@ -55,62 +55,68 @@ class TipSubstitute( val problem: TipSmtProblem ) {
     caseChangeVariableNames( tipSmtCase, oldNames, newNames )
   }
 
+  type Substitution = Map[TipSmtIdentifier, TipSmtExpression]
+
+  def apply(
+    expr:     TipSmtExpression,
+    variable: String,
+    term:     TipSmtExpression ): TipSmtExpression =
+    apply( expr, Map( TipSmtIdentifier( variable ) -> term ) )
+
   /**
    * Substitutes a name by a given expression.
    *
    * @param expr The expression in which the substitution is to be carried out.
-   * @param oldName The name that is to be substituted for replacement
-   * @param replacement The expression that is to be inserted at free
-   *                    occurrences of oldName.
+   * @param substitution The substitution that is to be applied to the
+   * expression
    * @return An expression that is equivalent to expr[oldName/replacement].
    */
   def apply(
-    expr:        TipSmtExpression,
-    oldName:     String,
-    replacement: TipSmtExpression ): TipSmtExpression = {
+    expr:         TipSmtExpression,
+    substitution: Substitution ): TipSmtExpression = {
     expr match {
       case expr @ TipSmtAnd( _ ) =>
-        TipSmtAnd( expr.exprs map { apply( _, oldName, replacement ) } )
+        TipSmtAnd( expr.exprs map { apply( _, substitution ) } )
 
       case expr @ TipSmtOr( _ ) =>
-        TipSmtOr( expr.exprs map { apply( _, oldName, replacement ) } )
+        TipSmtOr( expr.exprs map { apply( _, substitution ) } )
 
       case expr @ TipSmtImp( _ ) =>
-        TipSmtImp( expr.exprs map { apply( _, oldName, replacement ) } )
+        TipSmtImp( expr.exprs map { apply( _, substitution ) } )
 
       case expr @ TipSmtEq( _ ) =>
-        TipSmtEq( expr.exprs map { apply( _, oldName, replacement ) } )
+        TipSmtEq( expr.exprs map { apply( _, substitution ) } )
 
       case expr @ TipSmtDistinct( _ ) =>
         TipSmtDistinct(
-          expr.expressions map { apply( _, oldName, replacement ) } )
+          expr.expressions map { apply( _, substitution ) } )
 
       case expr @ TipSmtForall( _, _ ) =>
         substituteQuantifiedExpression(
-          oldName, replacement, expr.variables, expr.formula, TipSmtForall )
+          substitution, expr.variables, expr.formula, TipSmtForall )
 
       case expr @ TipSmtExists( _, _ ) =>
         substituteQuantifiedExpression(
-          oldName, replacement, expr.variables, expr.formula, TipSmtExists )
+          substitution, expr.variables, expr.formula, TipSmtExists )
 
       case expr @ TipSmtIte( _, _, _ ) =>
-        substitute( oldName, replacement, expr )
+        substitute( substitution, expr )
 
       case expr @ TipSmtMatch( _, _ ) =>
-        substitute( oldName, replacement, expr )
+        substitute( substitution, expr )
 
       case TipSmtFun( funName, arguments ) =>
         TipSmtFun(
-          funName, arguments map { apply( _, oldName, replacement ) } )
+          funName, arguments map { apply( _, substitution ) } )
 
       case expr @ TipSmtNot( _ ) =>
-        TipSmtNot( apply( expr.expr, oldName, replacement ) )
+        TipSmtNot( apply( expr.expr, substitution ) )
 
-      case identifier @ TipSmtIdentifier( name ) =>
-        if ( name == oldName )
-          replacement
-        else
-          identifier
+      case identifier @ TipSmtIdentifier( _ ) =>
+        substitution.get( identifier ) match {
+          case Some( replacement ) => replacement
+          case _                   => identifier
+        }
 
       case TipSmtTrue =>
         TipSmtTrue
@@ -124,36 +130,32 @@ class TipSubstitute( val problem: TipSmtProblem ) {
    * Substitutes a name by a given expression.
    *
    * @param expr The expression in which the substitution is to be carried out.
-   * @param oldName The name that is to be substituted for replacement
-   * @param replacement The expression that is to be inserted at free
-   *                    occurrences of oldName.
+   * @param substitution The substitution that is to be applied to the
+   * expression
    * @return An expression that is equivalent to expr[oldName/replacement].
    */
   private def substitute(
-    oldName:     String,
-    replacement: TipSmtExpression,
-    expr:        TipSmtMatch ): TipSmtExpression =
+    substitution: Substitution,
+    expr:         TipSmtMatch ): TipSmtExpression =
     TipSmtMatch(
-      apply( expr.expr, oldName, replacement ),
-      expr.cases map { substCase( _, oldName, replacement ) } )
+      apply( expr.expr, substitution ),
+      expr.cases map { substCase( _, substitution ) } )
 
   /**
    * Substitutes a name by a given expression.
    *
    * @param expr The expression in which the substitution is to be carried out.
-   * @param oldName The name that is to be substituted for replacement
-   * @param replacement The expression that is to be inserted at free
-   *                    occurrences of oldName.
+   * @param substitution The substitution that is to be applied to the
+   * expression
    * @return An expression that is equivalent to expr[oldName/replacement].
    */
   private def substitute(
-    oldName:     String,
-    replacement: TipSmtExpression,
-    expr:        TipSmtIte ): TipSmtExpression =
+    substitution: Substitution,
+    expr:         TipSmtIte ): TipSmtExpression =
     TipSmtIte(
-      apply( expr.cond, oldName, replacement ),
-      apply( expr.ifTrue, oldName, replacement ),
-      apply( expr.ifFalse, oldName, replacement ) )
+      apply( expr.cond, substitution ),
+      apply( expr.ifTrue, substitution ),
+      apply( expr.ifFalse, substitution ) )
 
   /**
    * Abstracts the constructors TipSmtForall and TipSmtExists.
@@ -164,9 +166,8 @@ class TipSubstitute( val problem: TipSmtProblem ) {
   /**
    * Substitutes a name for an expression in a quantified expression.
    *
-   * @param oldName The name to be replaced by replacement.
-   * @param replacement The expression to be inserted at free occurrences of
-   *                    oldName.
+   * @param substitution The substitution that is to be applied to the
+   * expression
    * @param variables The variables bound by the quantifier.
    * @param formula The expression over which the quantifier ranges.
    * @param quantifier The quantifier's constructor.
@@ -176,90 +177,88 @@ class TipSubstitute( val problem: TipSmtProblem ) {
    *         the expression R.
    */
   private def substituteQuantifiedExpression(
-    oldName:     String,
-    replacement: TipSmtExpression,
-    variables:   Seq[TipSmtVariableDecl],
-    formula:     TipSmtExpression,
-    quantifier:  QuantifiedExpressionConstructor ): TipSmtExpression = {
-    val quantifiedVariables = variables.map { _.name }
-    if ( quantifiedVariables.contains( oldName ) ) {
-      quantifier( variables, formula )
-    } else if ( quantifiedVariables
-      .toSet
-      .intersect( freeVariables( problem, replacement ) )
-      .nonEmpty ) {
-      val nameGenerator =
-        new NameGenerator(
-          freeVariables( problem, formula ) ++
-            Seq( oldName ) ++
-            freeVariables( problem, replacement ) )
+    substitution: Substitution,
+    variables:    Seq[TipSmtVariableDecl],
+    formula:      TipSmtExpression,
+    quantifier:   QuantifiedExpressionConstructor ): TipSmtExpression = {
 
-      val newQuantifiedVariables = variables.map { v =>
-        if ( freeVariables( problem, replacement ).contains( v.name ) )
+    val newSubstitution: Substitution = substitution.filter {
+      case ( identifier, _ ) =>
+        !variables.map { _.name }.contains( identifier.name )
+    }
+
+    val substFreeVars: Set[String] =
+      newSubstitution.values.flatMap { freeVariables( problem, _ ) } toSet
+
+    val nameGenerator =
+      new NameGenerator(
+        substFreeVars ++
+          newSubstitution.keys.map { _.name } ++
+          freeVariables( problem, formula ) )
+
+    val newQuantifiedVariables = variables.map {
+      v =>
+        if ( substFreeVars.contains( v.name ) )
           TipSmtVariableDecl( nameGenerator.fresh( v.name ), v.typ )
         else
           v
-      }
-
-      val newFormula =
-        quantifiedVariables
-          .zip( newQuantifiedVariables.map { _.name } )
-          .foldRight( formula ) {
-            case ( ( oldName, newName ), formula ) =>
-              apply( formula, oldName, TipSmtIdentifier( newName ) )
-          }
-
-      val newExpression = quantifier(
-        newQuantifiedVariables,
-        newFormula )
-
-      apply( newExpression, oldName, replacement )
-    } else {
-      quantifier(
-        variables, apply( formula, oldName, replacement ) )
     }
+
+    val variableSubstitution: Substitution =
+      Map[TipSmtIdentifier, TipSmtExpression](
+        variables
+          .map { v => TipSmtIdentifier( v.name ) }
+          .zip(
+            newQuantifiedVariables
+              .map { v => TipSmtIdentifier( v.name ) } ): _* )
+
+    val newFormula = apply( formula, variableSubstitution )
+
+    apply( quantifier( newQuantifiedVariables, newFormula ), newSubstitution )
   }
 
   /**
    * Substitutes a name by a given expression.
    *
    * @param cas The expression in which the substitution is to be carried out.
-   * @param oldName The name that is to be substituted for replacement
-   * @param replacement The expression that is to be inserted at free
-   *                    occurrences of oldName.
+   * @param substitution The substitution that is to be applied to the
+   * case statement
    * @return An expression that is equivalent to expr[oldName/replacement].
    */
   private def substCase(
-    cas:         TipSmtCase,
-    oldName:     String,
-    replacement: TipSmtExpression ): TipSmtCase = {
-    val TipSmtConstructorPattern( constructor, identifiers ) = cas.pattern
-    val boundNames = identifiers.map { _.name }
-    if ( boundNames.contains( oldName ) ) {
-      cas
-    } else if ( boundNames
-      .toSet
-      .intersect( freeVariables( problem, replacement ) )
-      .nonEmpty ) {
-      val nameGenerator =
-        new NameGenerator(
-          freeVariables( problem, cas.expr ) ++
-            Seq( oldName ) ++
-            freeVariables( problem, replacement ) )
-      val newBoundNames = boundNames map { boundName =>
-        if ( freeVariables( problem, replacement ).contains( boundName ) ) {
-          nameGenerator.fresh( boundName )
-        } else {
-          boundName
-        }
-      }
-      substCase(
-        caseChangeVariableNames( cas, boundNames, newBoundNames ),
-        oldName,
-        replacement )
-    } else {
-      TipSmtCase( cas.pattern, apply( cas.expr, oldName, replacement ) )
+    cas:          TipSmtCase,
+    substitution: Substitution ): TipSmtCase = {
+    val TipSmtConstructorPattern( constructor, boundVariables ) = cas.pattern
+
+    val newSubstitution: Substitution = substitution.filter {
+      case ( identifier, _ ) => !boundVariables.contains( identifier )
     }
+
+    val substFreeVars: Set[String] =
+      newSubstitution.values.flatMap { freeVariables( problem, _ ) } toSet
+
+    val nameGenerator =
+      new NameGenerator(
+        substFreeVars ++
+          newSubstitution.keys.map { _.name } ++
+          freeVariables( problem, cas.expr ) )
+
+    val newBoundVariables = boundVariables map {
+      boundName =>
+        if ( substFreeVars.contains( boundName.name ) )
+          TipSmtIdentifier( nameGenerator.fresh( boundName.name ) )
+        else
+          boundName
+    }
+
+    val variableSubstitution: Substitution = Map(
+      boundVariables zip newBoundVariables: _* )
+
+    val newExpr = apply( cas.expr, variableSubstitution )
+
+    TipSmtCase(
+      TipSmtConstructorPattern( constructor, newBoundVariables ),
+      apply( newExpr, newSubstitution ) )
   }
 
   /**
@@ -280,11 +279,13 @@ class TipSubstitute( val problem: TipSmtProblem ) {
     val newPattern = TipSmtConstructorPattern(
       constructor,
       newBoundNames.map { TipSmtIdentifier } )
-    val newExpression = oldNames.zip( newBoundNames )
-      .foldRight( tipSmtCase.expr )( {
-        case ( ( oldName, newName ), cas ) =>
-          apply( cas, oldName, TipSmtIdentifier( newName ) )
-      } )
+    val newExpression =
+      apply(
+        tipSmtCase.expr,
+        Map(
+          oldNames
+            .map { TipSmtIdentifier }
+            .zip( newBoundNames map { TipSmtIdentifier } ): _* ) )
     TipSmtCase( newPattern, newExpression )
   }
 }
