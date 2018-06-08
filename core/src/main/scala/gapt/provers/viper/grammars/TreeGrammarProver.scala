@@ -7,7 +7,7 @@ import gapt.formats.babel.BabelSignature
 import gapt.grammars.{ InductionGrammar, findMinimalInductionGrammar }
 import gapt.grammars.InductionGrammar.Production
 import gapt.proofs.Context.StructurallyInductiveTypes
-import gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, minimalExpansionSequent }
+import gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, freeVariablesET, minimalExpansionSequent }
 import gapt.proofs.gaptic.Tactical1
 import gapt.proofs.lk.{ EquationalLKProver, LKProof }
 import gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent, withSection }
@@ -239,6 +239,9 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     proof
   }
 
+  def mkGroundTerm( ty: Ty ): Expr =
+    instanceGen.terms.view.map( _._1 ).find( _.ty == ty ).head
+
   def getInstanceProof( inst: Instance ): ExpansionProof = time( "instproof" ) {
     info( s"Proving instance ${inst.toSigRelativeString}" )
     val instanceSequent = sequent.map( identity, instantiate( _, inst ) )
@@ -255,7 +258,9 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     info( "Language:" )
     encoding.encode( instProof ).toSeq.map( _.toUntypedString( BabelSignature.defaultSignature ) ).sorted.foreach( info( _ ) )
 
-    instProof
+    // FIXME: still broken for uninterpreted sorts
+    val grounding = Substitution( freeVariablesET( instProof ).diff( freeVariables( inst ) ).map( v => v -> mkGroundTerm( v.ty ) ) )
+    grounding( instProof )
   }
 
 }
