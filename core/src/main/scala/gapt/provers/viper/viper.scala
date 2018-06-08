@@ -171,7 +171,7 @@ object Viper {
       case goal =>
         val cnf = structuralCNF( goal.endSequent.copy( succedent = Vector() ) )
         val cnfPs = cnf.map { cls =>
-          var p = ResolutionToLKProof( cls )
+          var p = ResolutionToLKProof.withDefs( cls )
           for ( a <- cls.conclusion.antecedent ) p = NegRightRule( p, a )
           p = OrRightMacroRule( p, cls.conclusion.map( -_, identity ).elements )
           val fvs = freeVariables( p.endSequent.succedent.head ).toSeq
