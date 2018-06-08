@@ -35,6 +35,26 @@ case class SymbolTable( problem: TipSmtProblem ) {
   def typeOf( symbol: String ): Type = symbols( symbol )
   def contains( symbol: String ): Boolean = symbols.contains( symbol )
 
+  /**
+   * Retrieves the problem's constructor symbols.
+   *
+   * @return The set of all constructor symbols that are declared in the
+   * problem.
+   */
+  def constructors: Set[String] =
+    problem.definitions flatMap {
+      case dtd @ TipSmtDatatypesDeclaration( _ ) => constructors( dtd )
+      case _                                     => Set[String]()
+    } toSet
+
+  private def constructors(
+    datatypesDeclaration: TipSmtDatatypesDeclaration ): Set[String] =
+    datatypesDeclaration.datatypes flatMap {
+      case TipSmtDatatype( _, _, constructors ) =>
+        constructors map { _.name } toSet
+      case _ => Set[String]()
+    } toSet
+
   private def computeSymbols(): Map[String, Type] = {
 
     var symbols: Map[String, Type] = Map()
