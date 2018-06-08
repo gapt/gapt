@@ -163,10 +163,10 @@ object Viper {
 
   def clausifyIfNotPrenex( implicit ctx: MutableContext ): Tactic[Unit] = Tactic {
     import gapt.proofs.gaptic._
-    def isPrenexSigma1( f: Formula ): Boolean =
-      f match { case Ex.Block( _, g ) => !containsQuantifierOnLogicalLevel( g ) }
+    def isPrenexPi1( f: Formula ): Boolean =
+      f match { case All.Block( _, g ) => !containsQuantifierOnLogicalLevel( g ) }
     currentGoal.flatMap {
-      case goal if goal.endSequent.antecedent.forall( isPrenexSigma1 ) =>
+      case goal if goal.endSequent.antecedent.forall( isPrenexPi1 ) =>
         skip
       case goal =>
         val cnf = structuralCNF( goal.endSequent.copy( succedent = Vector() ) )
