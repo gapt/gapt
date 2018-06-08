@@ -155,7 +155,11 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
       options.maxSATSolver, options.grammarWeighting )
       .getOrElse {
         metric( "uncoverable_grammar", true )
-        throw new Exception( "cannot cover termset" )
+        throw new Exception( s"cannot cover termset\n" +
+          indexedTermset.map {
+            case ( i, ts ) =>
+              s"${i.toUntypedString}\n" + ts.map( "  " + _.toUntypedString + "\n" ).mkString
+          }.mkString( "\n" ) )
       }
 
     info( s"Found grammar:\n$grammar\n" )
