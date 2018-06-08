@@ -61,6 +61,7 @@ import gapt.formats.tip.parser.TipSmtVariableDecl
 import gapt.formats.tip.transformation.desugarDistinctExpressions
 import gapt.formats.tip.transformation.eliminateBooleanConstants
 import gapt.formats.tip.transformation.eliminateRedundantQuantifiers
+import gapt.formats.tip.transformation.expandConstructorMatch
 import gapt.formats.tip.transformation.expandDefaultPatterns
 import gapt.formats.tip.transformation.expandVariableMatchExpressions
 import gapt.formats.tip.transformation.moveUniversalQuantifiersInwards
@@ -78,6 +79,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
       useDefiningFormulas ->>:
       toOuterConditionalNormalForm ->>:
       expandVariableMatchExpressions ->>:
+      expandConstructorMatch ->>:
       eliminateBooleanConstants ->>:
       moveUniversalQuantifiersInwards ->>:
       eliminateRedundantQuantifiers
