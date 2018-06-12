@@ -214,7 +214,7 @@ class TipSubstitute( val problem: TipSmtProblem ) {
 
     val newFormula = apply( formula, variableSubstitution )
 
-    apply( quantifier( newQuantifiedVariables, newFormula ), newSubstitution )
+    quantifier( newQuantifiedVariables, apply( newFormula, newSubstitution ) )
   }
 
   /**
