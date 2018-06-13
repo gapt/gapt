@@ -148,10 +148,25 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
         val substitution = Map( variables zip expressions: _* )
         val newExpression = new TipSubstitute( problem )( cas.expr, substitution )
         expandConstructorMatch( newExpression )
-
       case id @ TipSmtIdentifier( _ ) if isConstructor( id ) =>
-        retrieveCase( matchExpression, id ).expr
+        expandConstructorMatch( retrieveCase( matchExpression, id ).expr )
+      case _ =>
+        matchExpression.copy(
+          cases = matchExpression.cases map { expandConstructorMatch } )
     }
+
+  /**
+   * Expands constructor match-expressions.
+   *
+   * @param expr The case statement whose expression is to be subject to the
+   * constructor match-expression transformation.
+   * @return A case statement with the same pattern whose expression does not
+   * contain constructor match-expressions.
+   */
+  private def expandConstructorMatch(
+    expr: TipSmtCase ): TipSmtCase = {
+    expr.copy( expr = expandConstructorMatch( expr.expr ) )
+  }
 
   /**
    * Expands constructor match-expressions.
