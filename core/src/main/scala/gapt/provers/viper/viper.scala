@@ -34,7 +34,7 @@ case class ViperOptions(
     mode:                     String                   = "portfolio",
     fixup:                    Boolean                  = true,
     prooftool:                Boolean                  = false,
-    treeGrammarProverOptions: TreeGrammarProverOptions = TreeGrammarProverOptions( useInterpolation = true ),
+    treeGrammarProverOptions: TreeGrammarProverOptions = TreeGrammarProverOptions(),
     aipOptions:               AipOptions               = AipOptions() )
 object ViperOptions {
   val usage =
@@ -115,6 +115,7 @@ object ViperOptions {
         rest,
         opts.copy( tautCheckSize = a.toFloat -> b.toFloat ) )
       case "--cansolsize" :: a :: b :: rest => parseTreeGrammar( rest, opts.copy( canSolSize = a.toFloat -> b.toFloat ) )
+      case "--interp" :: rest               => parseTreeGrammar( rest, opts.copy( useInterpolation = true ) )
       case _                                => ( args, opts )
     }
 }
