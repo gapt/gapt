@@ -1,6 +1,7 @@
 package gapt.formats.lisp
 
 import gapt.formats.{ InputFile, lisp }
+import gapt.utils.Doc
 import org.parboiled2._
 
 import scala.util.{ Failure, Success, Try }
@@ -12,16 +13,19 @@ import scala.util.{ Failure, Success, Try }
  *
  * Printing a Datastructure should output valid Lisp.
  */
-sealed abstract class SExpression
+sealed abstract class SExpression {
+  def toDoc: Doc
+  override def toString: String = toDoc.render( 80 )
+}
 
 sealed abstract class LAtom extends SExpression
 
 case class LKeyword( name: String ) extends LAtom {
-  override def toString = s":$name"
+  def toDoc = Doc.text( s":$name" )
 }
 
 case class LSymbol( name: String ) extends LAtom {
-  override def toString =
+  def toDoc = Doc.text {
     if ( name == "" ) {
       s"|$name|"
     } else if ( name.matches( ".*[\n\r\t\f \")(;:|\\\\].*" ) ) {
@@ -29,13 +33,16 @@ case class LSymbol( name: String ) extends LAtom {
     } else {
       name
     }
+  }
 }
 
 case class LList( elements: SExpression* ) extends SExpression {
   def ::( head: SExpression ) = LList( head +: elements: _* )
   def ++( list2: LList ) = LList( elements ++ list2.elements: _* )
 
-  override def toString = "(" + elements.mkString( " " ) + ")"
+  def toDoc =
+    ( Doc.text( "(" ) <> Doc.wordwrap2( elements.map( _.toDoc ), "" ) <> ")" ).
+      nest( 2 ).group
 }
 object LList {
   def apply( elements: Iterable[SExpression] ): LList =
@@ -58,7 +65,7 @@ object LFunOrAtom {
 }
 
 case class LCons( car: SExpression, cdr: SExpression ) extends SExpression {
-  override def toString = "( " + car + " . " + cdr + ")"
+  def toDoc = ( Doc.text( "(" ) <> car.toDoc <+> "." </> cdr.toDoc <> ")" ).nest( 2 ).group
 }
 
 object SExpressionParser {
