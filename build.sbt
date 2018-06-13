@@ -190,7 +190,13 @@ lazy val core = project.in( file( "core" ) ).
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-swing" % "2.0.3",
       "com.itextpdf" % "itextpdf" % "5.5.13",
-      "org.scilab.forge" % "jlatexmath" % "1.0.7" ) )
+      "org.scilab.forge" % "jlatexmath" % "1.0.7" ),
+
+    // JSON serialization
+    libraryDependencies ++= Seq(
+      "io.circe" %% "circe-core",
+      "io.circe" %% "circe-generic",
+      "io.circe" %% "circe-parser" ).map( _ % "0.9.3" ) )
 
 lazy val examples = project.in( file( "examples" ) ).
   dependsOn( core ).
