@@ -35,6 +35,12 @@ object sipReconstruct extends Script {
   def getProd( name: String, proofs: String* ) =
     tip( s"prod.prop_$name", proofs: _* )
 
+  def inlineLast( thy: Theory )( lem: thy.LemmaHandle ): LKProof =
+    if ( lem.usedLemmas.isEmpty ) lem.proof else {
+      val n = lem.usedLemmas.maxBy( _.number ).name
+      lem.combined( included = Set( n ) )
+    }
+
   val indProofs = ( Map()
     ++ getIsaplanner( "03", "proof", "proof2", "proof3" )
     ++ getIsaplanner( "06", "proof1", "proof2", "proof3", "proof4", "proof5" )
@@ -102,11 +108,13 @@ object sipReconstruct extends Script {
     ++ getProd( "35", "proof" )
     ++ {
       val thy = new Theory(
-        nat, natorder
+        nat, natorder, natdivision, natdivisible
       // list, listlength, listdrop, listfold
       )
-      thy.allProofs.view.map( p =>
-        s"theory.${p._1}" -> Later( thy.ctx -> thy.LemmaHandle( p._1 ).proof ) )
+      import thy._
+      allProofs.view.flatMap( p => Seq(
+        s"theory.${p._1}" -> Later( ctx -> LemmaHandle( p._1 ).proof ),
+        s"theory1.${p._1}" -> Later( ctx -> inlineLast( thy )( LemmaHandle( p._1 ) ) ) ) )
     } )
 
   LogHandler.current.value = ( domain, level, msg ) => if ( level <= LogHandler.Warn ) println( msg )
