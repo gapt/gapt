@@ -235,9 +235,9 @@ object toSExpression {
       case e @ TipSmtDistinct( _ ) =>
         toSExpression( e )
       case e @ TipSmtTrue =>
-        toSExpression( e )
+        LSymbol( "true" )
       case e @ TipSmtFalse =>
-        toSExpression( e )
+        LSymbol( "false" )
       case e @ TipSmtFun( _, _ ) =>
         toSExpression( e )
       case e @ TipSmtIdentifier( _ ) =>
@@ -268,7 +268,10 @@ object toSExpression {
   }
 
   def apply( expression: TipSmtForall ): SExpression = {
-    LFun( "forall", LList( expression.variables map { toSExpression( _ ) } ) )
+    LFun(
+      "forall",
+      LList( expression.variables map { toSExpression( _ ) } ),
+      toSExpression( expression.formula ) )
   }
 
   def apply( variableDecl: TipSmtVariableDecl ): SExpression = {
@@ -276,7 +279,10 @@ object toSExpression {
   }
 
   def apply( expression: TipSmtExists ): SExpression = {
-    LFun( "exists", LList( expression.variables map { toSExpression( _ ) } ) )
+    LFun(
+      "exists",
+      LList( expression.variables map { toSExpression( _ ) } ),
+      toSExpression( expression.formula ) )
   }
 
   def apply( expression: TipSmtMatch ): SExpression = {
