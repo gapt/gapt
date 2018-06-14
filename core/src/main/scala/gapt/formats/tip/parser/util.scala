@@ -66,6 +66,107 @@ object toTipAst {
 
 object toSExpression {
 
+  def apply( problem: TipProblem ): Seq[SExpression] = {
+
+    def constructorToTipAst( constructor: TipConstructor ): TipSmtConstructor = {
+      TipSmtConstructor(
+        constructor.constr.name,
+        Seq(),
+        constructor
+          .projectors
+          .zip( constructor.fieldTypes )
+          .map { case ( p, f ) => projectorToTipAst( p, f ) } )
+    }
+
+    def projectorToTipAst(
+      projector: Const, fieldType: Ty ): TipSmtConstructorField = {
+      TipSmtConstructorField(
+        projector.name,
+        TipSmtType( fieldType.asInstanceOf[TBase].name ) )
+    }
+
+    val sortsDeclarations =
+      problem.sorts.map { s =>
+        TipSmtSortDeclaration( s.name, Seq() )
+      }
+
+    val constructors =
+      problem.datatypes.flatMap { _.constructors.map { _.constr } }
+    val destructors =
+      problem.datatypes.flatMap { _.constructors.flatMap { _.projectors } }
+
+    val constantDeclarations =
+      problem.uninterpretedConsts
+        .filter { !( constructors ++ destructors ).contains( _ ) }
+        .filter {
+          c =>
+            c.ty.isInstanceOf[TBase]
+        }.map {
+          c =>
+            TipSmtConstantDeclaration(
+              c.name,
+              Seq(),
+              TipSmtType( c.ty.asInstanceOf[TBase].name ) )
+        }
+
+    val functionConstantDeclarations =
+      problem.uninterpretedConsts
+        .filter { !( constructors ++ destructors ).contains( _ ) }
+        .filter {
+          c =>
+            !c.ty.isInstanceOf[TBase]
+        }.map {
+          f =>
+            val FunctionType( returnType, parameterTypes ) = f.ty
+            TipSmtFunctionDeclaration(
+              f.name,
+              Seq(),
+              parameterTypes.map { ty => TipSmtType( ty.asInstanceOf[TBase].name ) },
+              TipSmtType( returnType.asInstanceOf[TBase].name ) )
+        }
+
+    val datatypeDeclarations =
+      problem.datatypes
+        .filter { _.t != To }
+        .map {
+          dt =>
+            TipSmtDatatype(
+              dt.t.name, Seq(),
+              dt.constructors.map { constructorToTipAst } )
+        }
+
+    val functionDeclarations =
+      problem.functions
+        .map {
+          f =>
+            val FunctionType( TBase( returnType, _ ), parameterTypes ) = f.fun.ty
+            TipSmtFunctionDeclaration(
+              f.fun.name,
+              Seq(),
+              parameterTypes
+                .map { ty => TipSmtType( ty.asInstanceOf[TBase].name ) },
+              TipSmtType( returnType ) )
+        }
+
+    val goal = TipSmtGoal( Seq(), toTipAst( problem.goal ) )
+
+    val assumptions: Seq[TipSmtAssertion] = problem.assumptions.map {
+      a =>
+        TipSmtAssertion( Seq(), toTipAst( a ) )
+    } ++ problem.functions.flatMap {
+      f =>
+        f.definitions.map { d => TipSmtAssertion( Seq(), toTipAst( d ) ) }
+    }
+
+    sortsDeclarations.map { toSExpression( _ ) }
+      .:+( toSExpression( TipSmtDatatypesDeclaration( datatypeDeclarations ) ) )
+      .++( constantDeclarations.map { toSExpression( _ ) } )
+      .++( functionConstantDeclarations.map { toSExpression( _ ) } )
+      .++( functionDeclarations.map { toSExpression( _ ) } )
+      .:+( toSExpression( goal ) )
+      .++( assumptions.map { toSExpression( _ ) } )
+  }
+
   def apply( problem: TipSmtProblem ): Seq[SExpression] = {
     problem.definitions.map { toSExpression( _ ) }
   }
