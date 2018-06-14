@@ -5,9 +5,8 @@ import gapt.expr._
 import gapt.expr.fol.thresholds
 import gapt.expr.hol.CNFn
 import gapt.proofs.Context.SkolemFun
-import gapt.proofs.lk.ResolutionProofBuilder
 import gapt.provers.escargot.Escargot
-import gapt.proofs._
+import gapt.proofs.{ ProofBuilder, _ }
 import gapt.proofs.expansion.deskolemizeET
 import gapt.utils.SatMatchers
 import org.specs2.mutable._
@@ -77,7 +76,7 @@ class ResolutionToExpansionProofTest extends Specification with SatMatchers with
     ctx += Ti; ctx += hoc"P: i>o"; ctx += hoc"Q: i>o"
     ctx += hof"D = (!x (P x | Q x))"
     val Some( d ) = ctx.updates.collectFirst { case d: Definition => d }
-    val p = ResolutionProofBuilder
+    val p = ProofBuilder
       .c( Input( hos":- !x (P x | Q x)" ) )
       .u( DefIntro( _, Suc( 0 ), d, Seq() ) )
       .c( Input( hos"!x (P x | Q x) :-" ) )

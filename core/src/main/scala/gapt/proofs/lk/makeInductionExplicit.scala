@@ -1,7 +1,7 @@
 package gapt.proofs.lk
 import gapt.expr._
 import gapt.expr.hol.inductionPrinciple
-import gapt.proofs.{ Ant, SequentConnector }
+import gapt.proofs.{ Ant, ProofBuilder, SequentConnector }
 
 object makeInductionExplicit extends LKVisitor[Unit] {
 
