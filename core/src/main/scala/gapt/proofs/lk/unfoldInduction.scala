@@ -11,10 +11,10 @@ object unfoldInduction {
    *              The induction must be a ground term in constructor form.
    * @return
    */
-  def apply( induction: InductionRule ) = ( new UnfoldInduction( induction ) ).apply
+  def apply( induction: InductionRule ) = new unfoldInduction( induction ).apply
 }
 
-class UnfoldInduction( induction: InductionRule ) {
+class unfoldInduction( induction: InductionRule ) {
 
   def apply = {
     val ( unfoldedProof, _ ) = constructInstanceProof( induction.term )
