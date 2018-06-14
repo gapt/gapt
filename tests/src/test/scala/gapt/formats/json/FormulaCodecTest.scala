@@ -6,7 +6,9 @@ import io.circe.Json
 import io.circe.syntax._
 
 class FormulaCodecTest extends Specification {
+
   import FormulaCodec._
+
   "The formula serializer" should {
     "serialize A" in {
       hof"A".asJson must_== Json.fromString( "A:o" )
@@ -18,6 +20,24 @@ class FormulaCodecTest extends Specification {
 
     "serialize ∀x P(x)" in {
       hof"∀x P(x)".asJson must_== Json.fromString( "∀x P(x)" )
+    }
+  }
+
+  "The expression serializer" should {
+    "serialize A" in {
+      le"A:o".asJson must_== Json.fromString( "A:o" )
+    }
+
+    "serialize P → Q" in {
+      le"P → Q".asJson must_== Json.fromString( "P → Q" )
+    }
+
+    "serialize ∀x P(x)" in {
+      le"∀x P(x)".asJson must_== Json.fromString( "∀x P(x)" )
+    }
+
+    "serialize a non-formula expression" in {
+      le"f(x:i):i".asJson must_== Json.fromString( "f(x)" )
     }
   }
 
@@ -40,6 +60,28 @@ class FormulaCodecTest extends Specification {
 
     "fail to deserialize a non-formula" in {
       Json.fromString( "x:i" ).as[Formula] must beLeft
+    }
+  }
+
+  "The expression deserializer" should {
+    "deserialize A" in {
+      Json.fromString( "A:o" ).as[Expr] must beRight( le"A:o" )
+    }
+
+    "deserialize P → Q" in {
+      Json.fromString( "P → Q" ).as[Expr] must beRight( le"P → Q" )
+    }
+
+    "deserialize ∀x P(x)" in {
+      Json.fromString( "∀x P(x)" ).as[Expr] must beRight( le"∀x P(x)" )
+    }
+
+    "fail to deserialize nonsense" in {
+      Json.fromString( "O)))" ).as[Expr] must beLeft
+    }
+
+    "deserialize a non-formula expression" in {
+      Json.fromString( "f(x:i):i" ).as[Expr] must beRight( le"f(x)" )
     }
   }
 }
