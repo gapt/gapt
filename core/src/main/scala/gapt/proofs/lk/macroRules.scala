@@ -135,6 +135,13 @@ object OrRightMacroRule extends ConvenienceConstructor( "OrRightMacroRule" ) {
         ( proof, proof.getSequentConnector )
     }
   }
+
+  def apply( subProof: LKProof, disjuncts: Seq[Formula] ): LKProof =
+    disjuncts match {
+      case Seq()    => WeakeningRightRule( subProof, Bottom() )
+      case Seq( _ ) => subProof
+      case ds :+ d  => apply( apply( subProof, ds ), Or( ds ), d )
+    }
 }
 
 object ImpRightMacroRule extends ConvenienceConstructor( "ImpRightMacroRule" ) {

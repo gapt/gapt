@@ -9,8 +9,8 @@ import scala.collection.mutable
 
 object ResolutionToLKProof {
 
-  def apply( proof: ResolutionProof ): LKProof = {
-    val lk = apply( proof, in => in.sequent match {
+  def withDefs( proof: ResolutionProof ): LKProof =
+    apply( proof, in => in.sequent match {
       case Sequent( Seq(), Seq( f ) ) if freeVariables( f ).isEmpty => LogicalAxiom( f )
       case Sequent( Seq( f ), Seq() ) if freeVariables( f ).isEmpty => LogicalAxiom( f )
       case seq =>
@@ -18,6 +18,9 @@ object ResolutionToLKProof {
         val Right( proj ) = solvePropositional( seq.toDisjunction +: seq )
         ForallLeftBlock( proj, All.Block( fvs, seq.toDisjunction ), fvs )
     } )
+
+  def apply( proof: ResolutionProof ): LKProof = {
+    val lk = withDefs( proof )
     if ( proof.definitions.isEmpty ) lk
     else eliminateDefinitions( proof.definitions )( lk )
   }

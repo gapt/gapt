@@ -14,6 +14,7 @@ import gapt.utils.quiet
 import org.sat4j.core.VecInt
 import org.sat4j.tools.SearchListenerAdapter
 
+import scala.annotation.tailrec
 import scala.collection.mutable
 
 class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
@@ -70,6 +71,8 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
     }
   }
 
+  val classical = newVar()
+
   expansionProof.subProofs.foreach {
     case ETWeakening( _, _ )              =>
     case ETMerge( _, _ ) | ETAtom( _, _ ) => // implicit because shallow formulas are the same
@@ -88,15 +91,38 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         if ( e.polarity.inSuc ) ExistsRightRule( LogicalAxiom( a.shallow ), sh, inst )
         else ForallLeftRule( LogicalAxiom( a.shallow ), sh, inst )
       }
-    case ETNeg( a ) =>
+    case e @ ETNeg( a ) =>
       addClause( NegLeftRule( LogicalAxiom( a.shallow ), a.shallow ) )
-    case ETImp( a, b ) =>
+      solver.addClause( Seq( -classical, atom( a.shallow ), atom( e.shallow ) ) )
+    case e @ ETImp( a, b ) =>
       addClause( ImpLeftRule( LogicalAxiom( a.shallow ), Suc( 0 ), LogicalAxiom( b.shallow ), Ant( 0 ) ) )
       addClause( ImpRightMacroRule( LogicalAxiom( b.shallow ), a.shallow, b.shallow ) )
-    case ETStrongQuantifier( _, _, _ ) =>
+      solver.addClause( Seq( -classical, atom( e.shallow ), atom( a.shallow ) ) )
+    case e @ ETStrongQuantifier( sh, ev, ch ) =>
+      if ( e.polarity.inSuc )
+        addClause( ForallLeftRule( LogicalAxiom( ch.shallow ), Ant( 0 ), sh, ev ) )
+      else
+        addClause( ExistsRightRule( LogicalAxiom( ch.shallow ), Suc( 0 ), sh, ev ) )
+      val pol = if ( e.polarity.inSuc ) 1 else -1
+      solver.addClause( Seq( -classical, -pol * atom( ch.shallow ), pol * atom( e.shallow ) ) )
   }
 
-  val cc = CC().intern( shAtoms.keys )
+  val clausificationClauses = drup.toVector
+
+  val cc = CC().intern( shAtoms.keys.filter( _.isInstanceOf[Atom] ) )
+  val hasEquality = shAtoms.keys.exists { case Eq( _, _ ) => true case _ => false }
+  @tailrec final def isESatisfiable( assumptions: IVecInt ): Boolean =
+    if ( !solver.isSatisfiable( assumptions ) ) false
+    else if ( !hasEquality ) true
+    else cc.mergeAndExplain( modelSequent( solver.model() ).
+      collect { case a: Atom => a } ) match {
+      case Some( core ) =>
+        val Some( p ) = quiet( Escargot.getAtomicLKProof( core ) )
+        addClause( p )
+        isESatisfiable( assumptions )
+      case None =>
+        true
+    }
 
   type Counterexample = Set[Int] // just the assumptions
   type Result = Either[Counterexample, Unit]
@@ -112,21 +138,13 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
       case _ =>
     }
 
-    while ( solver.isSatisfiable( assumptions ) ) {
-      val model = solver.model(): Seq[Int]
-      val atomModel = modelSequent( model ).collect { case a: Atom => a }
+    if ( isESatisfiable( assumptions + classical ) ) {
+      unprovable += ( ( eigenVariables, assumptions ) )
+      return Left( assumptions )
+    }
 
-      def tryEquational(): Option[Result] = {
-        if ( !atomModel.exists( Eq.unapply( _ ).isDefined ) ) None else
-          cc.merge( atomModel.antecedent ).explain( atomModel ) match {
-            case Some( core ) =>
-              val Some( p ) = quiet( Escargot.getAtomicLKProof( core ) )
-              addClause( p )
-              Some( Right( () ) )
-            case None =>
-              None
-          }
-      }
+    while ( isESatisfiable( assumptions ) ) {
+      val model = solver.model(): Seq[Int]
 
       val assumptionsAnt = assumptions.filter( _ > 0 )
       def checkEVCond( e: ExpansionTree ): Boolean =
@@ -196,7 +214,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         }
       }
 
-      tryInvertible().orElse( tryEquational() ).getOrElse( tryNonInvertible() ) match {
+      tryInvertible().getOrElse( tryNonInvertible() ) match {
         case Right( _ ) => // next model
           require( !solver.isSatisfiable( model ) )
         case reason @ Left( _ ) =>
@@ -218,12 +236,35 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         Right( () )
     } ) match {
       case Left( reason ) =>
-        require( solver.isSatisfiable( reason ) )
+        require( solver.isSatisfiable( reason + ( -classical ) ) )
         val model = solver.model().toSet
-        Left( modelSequent( model.toSeq.sortBy( -_ ) ) )
+
+        val solver2 = SolverFactory.newDefault()
+        solver2.newVar( solver.nVars() )
+        for ( RupProof.Input( cls ) <- clausificationClauses )
+          solver2.addClause( cls )
+
+        def minimize( ls: List[Int], done: List[Int] ): List[Int] =
+          ls match {
+            case l :: ls_ =>
+              if ( !solver2.isSatisfiable( ( -l ) :: done ) )
+                minimize( ls_, done )
+              else
+                cc.mergeAndExplain( modelSequent( solver2.model() ).collect { case a: Atom => a } ) match {
+                  case Some( core ) =>
+                    solver2.addClause( clause( core ) )
+                    minimize( ls, done )
+                  case None =>
+                    minimize( ls_, l :: done )
+                }
+            case Nil => done
+          }
+
+        Left( modelSequent( minimize( model.toList.sortBy( l => math.abs( l ) ), Nil ) ) )
       case Right( () ) =>
         val goal = clause( expansionProof.expansionSequent.shallow ).toSet
-        val drupP = RupProof( drup :+ RupProof.Rup( goal ) )
+        val drupP = RupProof( ( drup :+ RupProof.Rup( goal ) ).
+          filterNot( _.clause.contains( -classical ) ) )
         val replayed = ( drupP.lines.map( _.clause ) zip drupP.toResProofs ).reverse.toMap
         def toLK( clause: Set[Int] ): LKProof =
           replayed( clause ).toLK( atomToSh, cls => proofs( cls ) match {

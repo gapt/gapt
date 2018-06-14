@@ -3,14 +3,16 @@ package gapt.provers.viper
 import ammonite.ops._
 import gapt.expr._
 import gapt.expr.fol.folTermSize
+import gapt.expr.hol.containsQuantifierOnLogicalLevel
 import gapt.formats.tip.TipProblem
 import gapt.formats.tip.TipSmtImporter
-import gapt.formats.{ InputFile, StdinInputFile }
+import gapt.formats.{InputFile, StdinInputFile}
 import gapt.grammars.InductionGrammar
-import gapt.proofs.{ HOLSequent, MutableContext }
+import gapt.proofs.{HOLSequent, MutableContext}
 import gapt.proofs.gaptic._
 import gapt.proofs.gaptic.tactics.AnalyticInductionTactic
-import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.{ContractionMacroRule, CutRule, ForallRightBlock, ForallRightRule, LKProof, NegRightRule, OrRightMacroRule}
+import gapt.proofs.resolution.{ResolutionToLKProof, structuralCNF}
 import gapt.prooftool.prooftool
 import gapt.provers.eprover.EProver
 import gapt.provers.escargot.Escargot
@@ -21,10 +23,10 @@ import gapt.provers.vampire.Vampire
 import gapt.provers.viper.aip.axioms._
 import gapt.provers.ResolutionProver
 import gapt.provers.viper.grammars._
-import gapt.utils.{ LogHandler, TimeOutException, withTimeout }
+import gapt.utils.{LogHandler, TimeOutException, withTimeout}
 
 import scala.concurrent.duration.Duration
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 case class AipOptions( axioms: AxiomFactory = SequentialInductionAxioms(), prover: ResolutionProver = Escargot )
 
@@ -114,6 +116,7 @@ object ViperOptions {
         rest,
         opts.copy( tautCheckSize = a.toFloat -> b.toFloat ) )
       case "--cansolsize" :: a :: b :: rest => parseTreeGrammar( rest, opts.copy( canSolSize = a.toFloat -> b.toFloat ) )
+      case "--interp" :: rest               => parseTreeGrammar( rest, opts.copy( useInterpolation = true ) )
       case _                                => ( args, opts )
     }
 }
@@ -160,6 +163,30 @@ object Viper {
     ( res, ( b - a ).milliseconds )
   }
 
+  def clausifyIfNotPrenex( implicit ctx: MutableContext ): Tactic[Unit] = Tactic {
+    import gapt.proofs.gaptic._
+    def isPrenexPi1( f: Formula ): Boolean =
+      f match { case All.Block( _, g ) => !containsQuantifierOnLogicalLevel( g ) }
+    currentGoal.flatMap {
+      case goal if goal.endSequent.antecedent.forall( isPrenexPi1 ) =>
+        skip
+      case goal =>
+        val cnf = structuralCNF( goal.endSequent.copy( succedent = Vector() ) )
+        val cnfPs = cnf.map { cls =>
+          var p = ResolutionToLKProof.withDefs( cls )
+          for ( a <- cls.conclusion.antecedent ) p = NegRightRule( p, a )
+          p = OrRightMacroRule( p, cls.conclusion.map( -_, identity ).elements )
+          val fvs = freeVariables( p.endSequent.succedent.head ).toSeq
+          p = ForallRightBlock( p, All.Block( fvs, p.endSequent.succedent.head ), fvs )
+          p
+        }
+        val newGoal = OpenAssumption( goal.labelledSequent.copy( antecedent =
+          for ( ( p, i ) <- cnfPs.toVector.zipWithIndex ) yield s"h_$i" -> p.endSequent.succedent.head ) )
+        insert( cnfPs.foldLeft[LKProof]( newGoal )( ( q, cnfP ) =>
+          ContractionMacroRule( CutRule( cnfP, q, cnfP.endSequent.succedent.head ) ) ) )
+    }
+  }
+
   def apply( problem: TipProblem ): Option[LKProof] =
     apply( problem.toSequent )( problem.ctx.newMutable )
 
@@ -183,7 +210,7 @@ object Viper {
 
     if ( verbosity >= 2 ) println( sequent.toSigRelativeString )
 
-    val state0 = ProofState( sequent )
+    val state0 = ProofState( sequent ) + clausifyIfNotPrenex
     strategies.view.flatMap {
       case ( duration, strategy ) =>
         if ( verbosity >= 2 ) println( s"trying $strategy" )

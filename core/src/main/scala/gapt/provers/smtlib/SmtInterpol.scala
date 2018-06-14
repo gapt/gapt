@@ -5,7 +5,7 @@ import de.uni_freiburg.informatik.ultimate.logic._
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol
 import gapt.expr._
 import gapt.formats.lisp.{ LFun, LList, LSymbol }
-import gapt.provers.IncrementalProver
+import gapt.provers.{ IncrementalProver, groundFreeVariables }
 import gapt.provers.Session.Runners.SessionRunner
 import gapt.provers.Session._
 import gapt.utils.{ Logger, Maybe, NameGenerator, Tree }
@@ -23,6 +23,14 @@ class SmtInterpol(
     new SmtInterpolSession().run( setLogic( logic ) >> program )
 
   override def getInterpolant( tree: Tree[Formula] )( implicit ctx: Maybe[Context] ): Option[Tree[Formula]] = {
+    val fvs = freeVariables( tree.postOrder )
+    if ( fvs.nonEmpty ) return {
+      val groundingMap = groundFreeVariables.getGroundingMap( fvs, constants( tree.postOrder ) )
+      TermReplacement.hygienic(
+        getInterpolant( Substitution( groundingMap )( tree ) ),
+        groundingMap.map( _.swap ).toMap )
+    }
+
     val session = new SmtInterpolSession
     session.run( setOption( "produce-proofs", "true" ) >> setLogic( logic ) )
     session.run( declareSymbolsIn( containedNames( tree ) ) )
@@ -104,7 +112,7 @@ class SmtInterpolSession( val script: Script ) extends SessionRunner {
   sortNames( To ) = "Bool"
 
   // hardcoded in SMTInterpol as interpreted functions
-  for ( reserved <- Seq( "Int", "<=", "select" ) )
+  for ( reserved <- Seq( "Int", "<=", "select", "+", "*", "0" ) )
     nameGen.fresh( reserved )
 
   private def declare[T]( n0: String, t: T,

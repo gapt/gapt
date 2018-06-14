@@ -21,7 +21,7 @@ lazy val commonSettings = Seq(
     devConnection = Some( "scm:git:git@github.com:gapt/gapt.git" ) ) ),
   bintrayOrganization := Some( "gapt" ),
 
-  scalaVersion := "2.12.4",
+  scalaVersion := "2.12.6",
   scalacOptions in Compile ++= Seq(
     "-Ypartial-unification",
     "-deprecation",
@@ -46,7 +46,7 @@ lazy val scalariformSettings =
     .setPreference( DoubleIndentConstructorArguments, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "4.0.3"
+val specs2Version = "4.2.0"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   javaOptions in Test += "-Xmx2g",
@@ -173,24 +173,24 @@ lazy val core = project.in( file( "core" ) ).
     scalacOptions in Compile += "-Xfatal-warnings",
 
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.0",
+      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.1",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.parboiled" %% "parboiled" % "2.1.4",
       "com.lihaoyi" %% "fastparse" % "1.0.0",
       "com.lihaoyi" %% "sourcecode" % "0.1.4",
-      "org.typelevel" %% "cats" % "0.9.0",
+      "org.typelevel" %% "cats-free" % "1.0.1",
       "org.scala-lang.modules" %% "scala-xml" % "1.1.0",
       "org.apache.commons" % "commons-lang3" % "3.7",
-      "com.lihaoyi" %% "ammonite-ops" % "1.1.0",
+      "com.lihaoyi" %% "ammonite-ops" % "1.1.2",
       "de.uni-freiburg.informatik.ultimate" % "smtinterpol" % "2.5-12-g3d15a15c",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5" ),
 
     // UI
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-swing" % "2.0.2",
+      "org.scala-lang.modules" %% "scala-swing" % "2.0.3",
       "com.itextpdf" % "itextpdf" % "5.5.13",
-      "org.scilab.forge" % "jlatexmath" % "1.0.6" ) )
+      "org.scilab.forge" % "jlatexmath" % "1.0.7" ) )
 
 lazy val examples = project.in( file( "examples" ) ).
   dependsOn( core ).
@@ -246,7 +246,7 @@ lazy val testing = project.in( file( "testing" ) ).
     bintrayReleaseOnPublish := false,
     packagedArtifacts := Map(),
 
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.5.3" )
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.5.4" )
 
 lazy val releaseDist = TaskKey[File]( "release-dist", "Creates the release tar ball." )
 

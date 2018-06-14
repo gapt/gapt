@@ -1704,7 +1704,10 @@ benchmark: String =
 (declare-fun f_P (t_i) Bool)
 (declare-fun f_c () t_i)
 (declare-fun f_a () t_i)
-(assert (not (=> (and (and (or (= f_a f_b) (= f_a f_c)) (f_P f_c)) (f_P f_b)) (f_P f_a))))
+(assert
+  (not
+    (=> (and (and (or (= f_a f_b) (= f_a f_c)) (f_P f_c)) (f_P f_b))
+      (f_P f_a))))
 (check-sat)
 "
 typeRenaming: Map[gapt.expr.TBase,gapt.expr.TBase] = Map(o -> Bool, i -> t_i)

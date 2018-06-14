@@ -1,5 +1,6 @@
 package gapt.proofs.lk
 
+import gapt.expr.To
 import gapt.proofs.SequentIndex
 
 /**
@@ -31,9 +32,13 @@ object isMaeharaMG3i {
       // At first, we might assume that we need to restrict induction as well,
       // since it implicitly uses an implication-right rule.  However, we can get around
       // this by changing the induction formula: we just do induction on the formula ∨Δ instead.
-      case InductionRule( _, _, _ ) => Right( () )
+      case InductionRule( _, _, t ) =>
+        if ( t.ty == To ) // let's just make sure we don't do induction on props...
+          Left( p.mainIndices )
+        else
+          Right( () )
 
-      case _                        => Right( () )
+      case _ => Right( () )
     }
 
   def apply( p: LKProof ): Boolean =

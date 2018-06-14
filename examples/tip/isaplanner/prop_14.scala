@@ -15,6 +15,7 @@ object prop_14 extends TacticsProof {
 
   ctx += hoc"'filter' :fun1>list>list"
   ctx += hoc"'append' :list>list>list"
+  ctx += hoc"apply1: fun1>sk>o"
 
   val sequent = hols"""
                       def_head: ∀x ∀xs head(cons(x, xs)) = x,

@@ -244,6 +244,8 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
     def proof: LKProof = combined( excluded = _ => true )
     def formula: Formula = ctx.get[ProofNames].lookup( proofName ).get.succedent.head
 
+    def number: Int = allProofs.indexWhere( _._1 == name )
+
     /**
      * The set of previous lemmas used in the proof of this lemma.
      */

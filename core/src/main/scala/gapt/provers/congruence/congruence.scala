@@ -214,14 +214,14 @@ class CC( mutCC0: MutCC, val termToIdx: Map[Expr, Int], val idxToTerm: Map[Int, 
       }
     if ( cores.isEmpty ) None else Some( cores.minBy( _._1 )._2() )
   }
+  def mergeAndExplain( clause: HOLClause ): Option[HOLClause] =
+    merge( clause.antecedent ).explain( clause )
 }
 
 object CC {
   def apply(): CC = new CC( new MutCC( 0 ), Map(), Map() )
 
   def isValid( clause: HOLClause ): Option[HOLClause] =
-    CC().intern( clause.elements ).
-      merge( clause.antecedent ).
-      explain( clause )
+    CC().intern( clause.elements ).mergeAndExplain( clause )
 }
 
