@@ -21,7 +21,7 @@ import gapt.formats.tip.parser.TipSmtOr
 import gapt.formats.tip.parser.TipSmtProblem
 import gapt.formats.tip.util.TipSubstitute
 
-object expandConstructorMatch extends TipSmtProblemTransformation {
+object expandConstructorMatchExpressions extends TipSmtProblemTransformation {
 
   /**
    * Expands constructor match-expressions in the given problem.

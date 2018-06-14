@@ -10,7 +10,7 @@ import gapt.formats.tip.parser.TipSmtProblem
 
 object moveUniversalQuantifiersInwards extends TipSmtProblemTransformation {
   override def transform( problem: TipSmtProblem ): TipSmtProblem =
-    new MoveUniversalQuantifiersInwards( problem )()
+    new MoveUniversalQuantifiersInwardsTransformation( problem )()
 }
 
 /**
@@ -24,7 +24,7 @@ object moveUniversalQuantifiersInwards extends TipSmtProblemTransformation {
  * @param problem The problem whose function definitions are subject to the
  *                transformation described above.
  */
-class MoveUniversalQuantifiersInwards( problem: TipSmtProblem ) {
+class MoveUniversalQuantifiersInwardsTransformation( problem: TipSmtProblem ) {
 
   def apply(): TipSmtProblem = {
     problem.copy( definitions = problem.definitions map {

@@ -23,11 +23,11 @@ object freeVariables {
   def apply(
     problem:    TipSmtProblem,
     expression: TipSmtExpression ): Set[String] = {
-    ( new FreeVariables( problem ) ).freeVariables( expression )
+    ( new FreeVariablesProblem( problem ) ).freeVariables( expression )
   }
 }
 
-class FreeVariables( problem: TipSmtProblem ) {
+class FreeVariablesProblem( problem: TipSmtProblem ) {
   def freeVariables(
     expression: TipSmtExpression ): Set[String] = {
     expression match {
