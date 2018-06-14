@@ -1,10 +1,68 @@
 package gapt.formats.tip.parser
 
+import gapt.expr.All
+import gapt.expr.And
+import gapt.expr.Apps
+import gapt.expr.Bottom
+import gapt.expr.Const
+import gapt.expr.Eq
+import gapt.expr.Ex
+import gapt.expr.Expr
+import gapt.expr.Formula
+import gapt.expr.FunctionType
+import gapt.expr.Imp
+import gapt.expr.Neg
+import gapt.expr.Or
+import gapt.expr.TBase
+import gapt.expr.To
+import gapt.expr.Top
+import gapt.expr.Ty
+import gapt.expr.Var
 import gapt.formats.lisp.LFun
 import gapt.formats.lisp.LKeyword
 import gapt.formats.lisp.LList
 import gapt.formats.lisp.LSymbol
 import gapt.formats.lisp.SExpression
+import gapt.formats.tip.TipConstructor
+import gapt.formats.tip.TipProblem
+
+object toTipAst {
+
+  def apply( expression: Expr ): TipSmtExpression = {
+    expression match {
+      case And( f1, f2 ) =>
+        TipSmtAnd( Seq( toTipAst( f1 ), toTipAst( f2 ) ) )
+      case Or( f1, f2 ) =>
+        TipSmtOr( Seq( toTipAst( f1 ), toTipAst( f2 ) ) )
+      case Imp( f1, f2 ) =>
+        TipSmtImp( Seq( toTipAst( f1 ), toTipAst( f2 ) ) )
+      case Eq( f1, f2 ) =>
+        TipSmtEq( Seq( toTipAst( f1 ), toTipAst( f2 ) ) )
+      case Neg( f ) =>
+        TipSmtNot( toTipAst( f ) )
+      case All( v, f ) =>
+        TipSmtForall(
+          Seq( TipSmtVariableDecl(
+            v.name,
+            TipSmtType( v.ty.asInstanceOf[TBase].name ) ) ), toTipAst( f ) )
+      case Ex( v, f ) =>
+        TipSmtExists(
+          Seq( TipSmtVariableDecl(
+            v.name,
+            TipSmtType( v.ty.asInstanceOf[TBase].name ) ) ), toTipAst( f ) )
+      case Bottom() =>
+        TipSmtFalse
+      case Top() =>
+        TipSmtTrue
+      case Var( name, _ ) =>
+        TipSmtIdentifier( name )
+      case Const( name, _, _ ) =>
+        TipSmtIdentifier( name )
+      case Apps( Const( name, _, _ ), exprs ) =>
+        TipSmtFun( name, exprs.map { toTipAst( _ ) } )
+    }
+  }
+}
 
 object toSExpression {
 
