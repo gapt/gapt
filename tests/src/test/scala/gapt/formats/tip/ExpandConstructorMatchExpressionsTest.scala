@@ -1,10 +1,10 @@
 package gapt.formats.tip
 
 import gapt.formats.tip.parser.TipSmtParser
-import gapt.formats.tip.transformation.expandConstructorMatch
+import gapt.formats.tip.transformation.expandConstructorMatchExpressions
 import org.specs2.mutable.Specification
 
-class ExpandConstructorMatchTest extends Specification {
+class expandConstructorMatchExpressionsTest extends Specification {
 
   "constructor match-expressions should be expanded everywhere" in {
     val originalProblem = TipSmtParser.parse(
@@ -46,7 +46,8 @@ class ExpandConstructorMatchTest extends Specification {
         | (assert a )
         | (assert-not a )
       """.stripMargin )
-    expandConstructorMatch.transform( originalProblem ) must_== expectedProblem
+    expandConstructorMatchExpressions.transform( originalProblem ) must_==
+      expectedProblem
   }
 
   "constructor match-expressions should expand properly" in {
@@ -69,7 +70,8 @@ class ExpandConstructorMatchTest extends Specification {
         |   (f1 (S a1 a2 a3))
         | )
       """.stripMargin )
-    expandConstructorMatch.transform( originalProblem ) must_== expectedProblem
+    expandConstructorMatchExpressions.transform( originalProblem ) must_==
+      expectedProblem
   }
 
   "constructor match-expression should expand from outside to inside" in {
@@ -97,7 +99,8 @@ class ExpandConstructorMatchTest extends Specification {
         |   a
         | )
       """.stripMargin )
-    expandConstructorMatch.transform( originalProblem ) must_== expectedProblem
+    expandConstructorMatchExpressions.transform( originalProblem ) must_==
+      expectedProblem
   }
 
   "constructor match-expressions should be expanded in subexpressions" in {
@@ -123,7 +126,7 @@ class ExpandConstructorMatchTest extends Specification {
           |   (and true b )
           | )
         """.stripMargin )
-      expandConstructorMatch.transform( originalProblem ) must_==
+      expandConstructorMatchExpressions.transform( originalProblem ) must_==
         expectedProblem
     }
     "or" in {
@@ -148,7 +151,7 @@ class ExpandConstructorMatchTest extends Specification {
           |   (or true b )
           | )
         """.stripMargin )
-      expandConstructorMatch.transform( originalProblem ) must_==
+      expandConstructorMatchExpressions.transform( originalProblem ) must_==
         expectedProblem
     }
     "imp" in {
@@ -173,7 +176,7 @@ class ExpandConstructorMatchTest extends Specification {
           |   (imp true b )
           | )
         """.stripMargin )
-      expandConstructorMatch.transform( originalProblem ) must_==
+      expandConstructorMatchExpressions.transform( originalProblem ) must_==
         expectedProblem
     }
     "eq" in {
@@ -198,7 +201,7 @@ class ExpandConstructorMatchTest extends Specification {
           |   (eq true b )
           | )
         """.stripMargin )
-      expandConstructorMatch.transform( originalProblem ) must_==
+      expandConstructorMatchExpressions.transform( originalProblem ) must_==
         expectedProblem
     }
     "forall" in {
@@ -223,7 +226,7 @@ class ExpandConstructorMatchTest extends Specification {
           |   (forall ((z nat)) true)
           | )
         """.stripMargin )
-      expandConstructorMatch.transform( originalProblem ) must_==
+      expandConstructorMatchExpressions.transform( originalProblem ) must_==
         expectedProblem
     }
     "exists" in {
@@ -248,7 +251,7 @@ class ExpandConstructorMatchTest extends Specification {
           |   (exists ((z nat)) true)
           | )
         """.stripMargin )
-      expandConstructorMatch.transform( originalProblem ) must_==
+      expandConstructorMatchExpressions.transform( originalProblem ) must_==
         expectedProblem
     }
     "match" in {
@@ -279,7 +282,7 @@ class ExpandConstructorMatchTest extends Specification {
           |   )
           | )
         """.stripMargin )
-      expandConstructorMatch.transform( originalProblem ) must_==
+      expandConstructorMatchExpressions.transform( originalProblem ) must_==
         expectedProblem
     }
     "ite" in {
@@ -305,7 +308,7 @@ class ExpandConstructorMatchTest extends Specification {
             |   (ite true b c)
             | )
           """.stripMargin )
-        expandConstructorMatch.transform( originalProblem ) must_==
+        expandConstructorMatchExpressions.transform( originalProblem ) must_==
           expectedProblem
       }
       "expand in ifTrue" in {
@@ -332,7 +335,7 @@ class ExpandConstructorMatchTest extends Specification {
             |   (ite b true c)
             | )
           """.stripMargin )
-        expandConstructorMatch.transform( originalProblem ) must_==
+        expandConstructorMatchExpressions.transform( originalProblem ) must_==
           expectedProblem
       }
       "expand in ifFalse" in {
@@ -359,7 +362,7 @@ class ExpandConstructorMatchTest extends Specification {
             |   (ite b c true)
             | )
           """.stripMargin )
-        expandConstructorMatch.transform( originalProblem ) must_==
+        expandConstructorMatchExpressions.transform( originalProblem ) must_==
           expectedProblem
       }
     }
@@ -385,7 +388,7 @@ class ExpandConstructorMatchTest extends Specification {
           |   (f1 true b )
           | )
         """.stripMargin )
-      expandConstructorMatch.transform( originalProblem ) must_==
+      expandConstructorMatchExpressions.transform( originalProblem ) must_==
         expectedProblem
     }
   }
