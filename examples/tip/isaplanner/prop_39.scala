@@ -19,22 +19,22 @@ object prop_39 extends TacticsProof {
 
   val sequent =
     hols"""
-          def_p: ∀x0 (p(S(x0:Nat): Nat): Nat) = x0,
-          def_head: ∀x0 ∀x1 (head(cons(x0:Nat, x1:list): list): Nat) = x0,
-          def_tail: ∀x0 ∀x1 (tail(cons(x0:Nat, x1:list): list): list) = x1,
-          def_plus_1: ∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
-          def_plus_2: ∀z ∀y (plus(S(z:Nat): Nat, y:Nat): Nat) = S(plus(z, y)),
-          def_equal_1: equal(#c(Z: Nat), #c(Z: Nat)): o,
-          def_equal_2: ∀z ¬equal(#c(Z: Nat), S(z:Nat): Nat),
-          def_equal_3: ∀x2 ¬equal(S(x2:Nat): Nat, #c(Z: Nat)),
-          def_equal_4: ∀x2 ∀y2 ((equal(S(x2:Nat): Nat, S(y2)) → equal(x2, y2)) ∧ (equal(x2, y2) → equal(S(x2), S(y2)))),
-          def_count_1: ∀x (count(x:Nat, nil:list): Nat) = #c(Z: Nat),
-          def_count_2: ∀x ∀z ∀ys (¬equal(x:Nat, z:Nat) → (count(x, cons(z, ys:list): list): Nat) = count(x, ys)),
-          def_count_3: ∀x ∀z ∀ys (equal(x:Nat, z:Nat) → (count(x, cons(z, ys:list): list): Nat) = S(count(x, ys))),
-          ax_nat: ∀y0 ¬#c(Z: Nat) = S(y0:Nat),
-          ax_list: ∀y0 ∀y1 ¬(nil:list) = cons(y0:Nat, y1:list)
+          def_p: ∀x0 p(S(x0)) = x0,
+          def_head: ∀x0 ∀x1 head(cons(x0, x1)) = x0,
+          def_tail: ∀x0 ∀x1 tail(cons(x0, x1)) = x1,
+          def_plus_1: ∀y (plus(Z, y)) = y,
+          def_plus_2: ∀z ∀y (plus(S(z), y)) = S(plus(z, y)),
+          def_equal_1: equal(Z, Z),
+          def_equal_2: ∀z ¬equal(Z, S(z)),
+          def_equal_3: ∀x2 ¬equal(S(x2), Z),
+          def_equal_4: ∀x2 ∀y2 (equal(S(x2), S(y2)) <-> equal(x2, y2)),
+          def_count_1: ∀x count(x, nil) = Z,
+          def_count_2: ∀x ∀z ∀ys (¬equal(x, z) → count(x, cons(z, ys)) = count(x, ys)),
+          def_count_3: ∀x ∀z ∀ys (equal(x, z) → count(x, cons(z, ys)) = S(count(x, ys))),
+          ax_nat: ∀y0 Z != S(y0),
+          ax_list: ∀y0 ∀y1 nil != cons(y0, y1)
           :-
-          goal: ∀n ∀x ∀xs (plus(count(n:Nat, cons(x:Nat, nil:list): list): Nat, count(n, xs)): Nat) = count(n, cons(x, xs))
+          goal: ∀n ∀x ∀xs plus(count(n, cons(x, nil)), count(n, xs)) = count(n, cons(x, xs))
         """
 
   val cutFormula = hof"∀xs ∀n ∀x plus(count(n, cons(x, nil)), count(n, xs)) = count(n, cons(x, xs))"
@@ -188,5 +188,7 @@ object prop_39 extends TacticsProof {
     allL( "c", le"xs:list", le"n:Nat", le"x:Nat" )
     axiomLog
   }
+
+  val proof2 = Lemma( sequent ) { escrgt }
 
 }

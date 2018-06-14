@@ -5,7 +5,8 @@ import gapt.expr.hol.lcomp
 import gapt.proofs.rup._
 import gapt.proofs.lk._
 import gapt.proofs._
-import gapt.provers.escargot.EscargotChaud
+import gapt.provers.congruence.CC
+import gapt.provers.escargot.Escargot
 import org.sat4j.minisat.SolverFactory
 import org.sat4j.specs._
 import gapt.provers.sat.Sat4j._
@@ -43,7 +44,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
   val drup = mutable.Buffer[RupProof.Line]()
   solver.setSearchListener( new SearchListenerAdapter[ISolverService] {
     override def learnUnit( p: Int ) = drup += RupProof.Rup( Set( p ) )
-    override def learn( c: IConstr ) = drup += RupProof.Rup( c.toSet )
+    override def learn( c: IConstr ) = drup += RupProof.Rup( c )
   } )
 
   val proofs = mutable.Map[Set[Int], Either[LKProof, ( Set[Int], LKProof => LKProof )]]()
@@ -95,7 +96,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
     case ETStrongQuantifier( _, _, _ ) =>
   }
 
-  val escargot = new EscargotChaud( shAtoms.keys.collect { case a: Atom => a }.toSeq )
+  val cc = CC().intern( shAtoms.keys )
 
   type Counterexample = Set[Int] // just the assumptions
   type Result = Either[Counterexample, Unit]
@@ -117,11 +118,13 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
 
       def tryEquational(): Option[Result] = {
         if ( !atomModel.exists( Eq.unapply( _ ).isDefined ) ) None else
-          quiet( escargot.getAtomicLKProof( atomModel ) ) match {
-            case Some( p ) =>
+          cc.merge( atomModel.antecedent ).explain( atomModel ) match {
+            case Some( core ) =>
+              val Some( p ) = quiet( Escargot.getAtomicLKProof( core ) )
               addClause( p )
               Some( Right( () ) )
-            case _ => None
+            case None =>
+              None
           }
       }
 
@@ -158,18 +161,31 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         }
 
       def tryNonInvertible(): Result = {
-        val nextSteps = model.filter( _ < 0 ).map( -_ ).flatMap( atomToET ).filter( checkEVCond ).collect {
-          case e @ ETNeg( a ) if e.polarity.inSuc && !assumptions.contains( atom( a ) ) =>
-            ( Set( atom( a ) ), Set( -atom( e ) ), eigenVariables, ( p: LKProof ) =>
-              if ( !p.endSequent.antecedent.contains( a.shallow ) ) p else
-                NegRightRule( p, a.shallow ) )
-          case e @ ETImp( a, b ) if e.polarity.inSuc && !assumptions.contains( atom( a ) ) =>
-            ( Set( atom( a ), -atom( b ) ), Set( -atom( e ) ), eigenVariables,
-              ImpRightMacroRule( _: LKProof, a.shallow, b.shallow ) )
-          case e @ ETStrongQuantifier( _, ev, a ) if e.polarity.inSuc && !eigenVariables.contains( ev ) =>
-            ( Set( -atom( a ) ), Set( -atom( e ) ), eigenVariables + ev, ( p: LKProof ) =>
-              if ( !p.endSequent.succedent.contains( a.shallow ) ) p else
-                ForallRightRule( p, e.shallow, ev ) )
+        def handleBlock( e: ExpansionTree, upper: Set[Int], eigenVariables: Set[Var],
+                         back: LKProof => LKProof ): ( Set[Int], Set[Var], LKProof => LKProof ) =
+          e match {
+            case ETNeg( a ) =>
+              ( upper + atom( a ), eigenVariables, p =>
+                back( if ( !p.endSequent.antecedent.contains( a.shallow ) ) p else
+                  NegRightRule( p, a.shallow ) ) )
+            case ETImp( a, b ) =>
+              handleBlock( b, upper + atom( a ), eigenVariables, p => back(
+                ImpRightMacroRule( p, a.shallow, b.shallow ) ) )
+            case ETStrongQuantifier( _, ev, a ) =>
+              handleBlock( a, upper, eigenVariables + ev, p => back(
+                if ( !p.endSequent.succedent.contains( a.shallow ) ) p else
+                  ForallRightRule( p, e.shallow, ev ) ) )
+            case _ =>
+              ( upper + -atom( e ), eigenVariables, back )
+          }
+        val candidates = model.filter( _ < 0 ).map( -_ ).flatMap( atomToET ).filter( checkEVCond ).collect {
+          case e @ ETNeg( a ) if e.polarity.inSuc && !assumptions.contains( atom( a ) )                 => e
+          case e @ ETImp( a, _ ) if e.polarity.inSuc && !assumptions.contains( atom( a ) )              => e
+          case e @ ETStrongQuantifier( _, ev, _ ) if e.polarity.inSuc && !eigenVariables.contains( ev ) => e
+        }
+        val nextSteps = candidates.map { e =>
+          val ( upper, evs, transform ) = handleBlock( e, Set.empty, eigenVariables, identity )
+          ( upper, Set( -atom( e ) ), evs, transform )
         }
         nextSteps.find( s => solve( s._3, assumptionsAnt ++ s._1 ).isRight ) match {
           case Some( ( upper, lower, _, transform ) ) =>
@@ -180,10 +196,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         }
       }
 
-      tryInvertible().getOrElse( tryNonInvertible() match {
-        case ok @ Right( _ )    => ok
-        case reason @ Left( _ ) => tryEquational().getOrElse( reason )
-      } ) match {
+      tryInvertible().orElse( tryEquational() ).getOrElse( tryNonInvertible() ) match {
         case Right( _ ) => // next model
           require( !solver.isSatisfiable( model ) )
         case reason @ Left( _ ) =>
@@ -210,7 +223,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         Left( modelSequent( model.toSeq.sortBy( -_ ) ) )
       case Right( () ) =>
         val goal = clause( expansionProof.expansionSequent.shallow ).toSet
-        val drupP = RupProof( drup.toVector :+ RupProof.Rup( goal ) )
+        val drupP = RupProof( drup :+ RupProof.Rup( goal ) )
         val replayed = ( drupP.lines.map( _.clause ) zip drupP.toResProofs ).reverse.toMap
         def toLK( clause: Set[Int] ): LKProof =
           replayed( clause ).toLK( atomToSh, cls => proofs( cls ) match {

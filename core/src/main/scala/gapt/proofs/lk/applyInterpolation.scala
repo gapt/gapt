@@ -5,6 +5,7 @@ import gapt.proofs.HOLSequent
 import gapt.proofs._
 import gapt.provers.Prover
 import gapt.provers.escargot.Escargot
+import gapt.utils.Tree
 
 class InterpolationException( msg: String ) extends Exception( msg )
 
@@ -14,6 +15,10 @@ object ExtractInterpolant {
 
   def apply( p: LKProof, positivePart: Seq[SequentIndex] ): Formula =
     Interpolate( p, p.conclusion.indicesSequent.map( positivePart.contains ) )._3
+
+  def apply( p: LKProof, negativeParts: Tree[SequentIndex] ): Tree[Formula] =
+    negativeParts.tails.map( neg =>
+      apply( p, p.conclusion.indicesSequent.map( !neg.contains( _ ) ) ) )
 
   /**
    * Given sequents negative: \Gamma |- \Delta and positive: \Pi |- \Lambda,

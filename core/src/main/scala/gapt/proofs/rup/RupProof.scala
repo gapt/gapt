@@ -15,7 +15,23 @@ import org.sat4j.specs.{ IConstr, UnitPropagationListener }
 
 import scala.collection.mutable
 
-class Rup2Res extends UnitPropagationListener {
+/**
+ * Simple forward RUP-to-resolution converter based on Sat4j's unit propagation code.
+ *
+ * Whenever a unit propagation is performed, we compute a resolution
+ * proof of the assigned literal.  There two modes:
+ *
+ *  - At decision level 0, we add clauses for which we already have complete
+ *  proofs (given as input proofs, or already derived via RUP).  The proofs
+ *  we associate to the propagated literals have the corresponding unit
+ *  clause as conclusion.
+ *
+ *  - At decision level 1, we want to derive a new clause via RUP.  Here, the
+ *  conclusion of a proof associated with a propagated literal may also include
+ *  literals from the derived clause.  As an optimization, we do store tautology
+ *  proofs as null.
+ */
+private class Rup2Res extends UnitPropagationListener {
   val ds = new MixedDataStructureDanielWL
   ds.setUnitPropagationListener( this )
   val voc = ds.getVocabulary
@@ -26,7 +42,8 @@ class Rup2Res extends UnitPropagationListener {
   var queueHead = 0
   var conflict: Option[Res] = None
 
-  val constrProofs = new util.IdentityHashMap[IConstr, Res]()
+  val constrProofs = new util.IdentityHashMap[Constr, Res]()
+  val constrs = new mutable.AnyRefMap[Clause, Constr]()
 
   import LiteralsUtils._
 
@@ -135,13 +152,20 @@ class Rup2Res extends UnitPropagationListener {
         OriginalWLClause.brandNewClause( this, voc, cls )
 
     constrProofs.put( constr, p )
+    constrs( p0.clause ) = constr
 
     if ( cls.size() == 1 ) enqueue( cls.last(), constr )
 
     propagate()
   }
 
-  def deriveRup( cls: Clause ): Res = {
+  def addClause( cls: Clause ): Res = {
+    val p = Res.Input( cls )
+    addClause( p )
+    p
+  }
+
+  def rupDerive( cls: Clause ): Res = {
     assume()
     cls.forall( i =>
       enqueue( getFromPool( -i ) ) ) &&
@@ -149,11 +173,27 @@ class Rup2Res extends UnitPropagationListener {
     val Some( p ) = conflict
     cancel()
     require( p.clause subsetOf cls )
+    p
+  }
+
+  def rupDeriveAndAdd( cls: Clause ): Res = {
+    val p = rupDerive( cls )
     addClause( p )
     p
   }
+
+  def deleteClause( cls: Clause ): Res =
+    constrs.remove( cls ) match {
+      case Some( constr ) =>
+        constr.remove( this )
+        constrProofs.remove( constr )
+      case None =>
+        rupDerive( cls )
+    }
+
 }
 
+/** Reverse unit propagation proof. */
 case class RupProof( lines: Vector[Line] ) {
   def maxVar: Int = ( 0 +: lines.view.flatMap( _.clause ) ).max
 
@@ -161,11 +201,9 @@ case class RupProof( lines: Vector[Line] ) {
     val rup2res = new Rup2Res
     lines.map {
       case _ if rup2res.conflict.isDefined => rup2res.conflict.get
-      case RupProof.Input( c ) =>
-        val p = Res.Input( c )
-        rup2res.addClause( p )
-        p
-      case RupProof.Rup( c ) => rup2res.deriveRup( c )
+      case RupProof.Input( c )             => rup2res.addClause( c )
+      case RupProof.Rup( c )               => rup2res.rupDeriveAndAdd( c )
+      case RupProof.Delete( c )            => rup2res.deleteClause( c )
     }
   }
 
@@ -173,28 +211,44 @@ case class RupProof( lines: Vector[Line] ) {
 
   override def toString: String =
     lines.view.map {
-      case RupProof.Input( cls ) => "I " + cls.mkString( " " ) + " 0"
-      case RupProof.Rup( cls )   => cls.mkString( " " ) + " 0"
+      case RupProof.Input( cls )  => "c input " + cls.mkString( " " ) + " 0"
+      case RupProof.Rup( cls )    => cls.mkString( " " ) + " 0"
+      case RupProof.Delete( cls ) => "d " + cls.mkString( " " ) + " 0"
     }.mkString( "\n" )
 }
 
 object RupProof {
   type Clause = Set[Int]
 
+  /** Inference in a [[RupProof]] */
   sealed trait Line {
     def clause: Clause
   }
+  /** Input clause. */
   case class Input( clause: Clause ) extends Line
+  /**
+   * Clause derived from the previous ones via RUP.
+   *
+   * Given a set of clauses Γ and a clause C, then C has the property RUP
+   * with regard to Γ iff Γ, ¬C can be refuted with only unit propagation.
+   */
   case class Rup( clause: Clause ) extends Line
+  /** Forgets a clause.  Following clauses may not depend on the clause anymore. */
+  case class Delete( clause: Clause ) extends Line
 
-  def apply( cnf: DIMACS.CNF, p: DIMACS.DRUP ): RupProof = {
-    import DIMACS._
-    RupProof( Vector() ++
-      cnf.view.map( cls => Input( cls.toSet ) ) ++
-      p.view.collect { case DrupDerive( cls ) => Rup( cls.toSet ) } )
+  def apply( lines: Iterable[Line] ): RupProof = RupProof( lines.toVector )
+  object Input {
+    def apply( clause: Iterable[Int] ): Input = Input( clause.toSet )
+  }
+  object Rup {
+    def apply( clause: Iterable[Int] ): Rup = Rup( clause.toSet )
+  }
+  object Delete {
+    def apply( clause: Iterable[Int] ): Delete = Delete( clause.toSet )
   }
 }
 
+/** Resolution proofs in DIMACS format. */
 sealed trait Res extends DagProof[Res] {
   def clause: Clause
 

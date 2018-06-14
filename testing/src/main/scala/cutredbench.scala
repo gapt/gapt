@@ -47,7 +47,7 @@ object CutReductionBenchmarkTools {
   }
   case object LKReductive extends LKMethod { def eliminate( p: LKProof ): Unit = cutNormal( p ) }
   case object LKCERES extends LKMethod { def eliminate( p: LKProof ): Unit = CERES( p ) }
-  case object CERESEXP extends LKMethod { def eliminate( p: LKProof ): Unit = CERES.CERESExpansionProof( p ) }
+  case object CERESEXP extends LKMethod { def eliminate( p: LKProof ): Unit = CERES.expansionProof( p ) }
   case object BogoElim extends Method {
     type P = HOLSequent
     def convert( p: LKProof ): P = p.endSequent

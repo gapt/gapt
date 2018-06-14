@@ -28,7 +28,7 @@ object Session {
    */
   sealed trait SessionCommand[A]
 
-  private object SessionCommand {
+  object SessionCommand {
 
     /**
      * Pushes the current assertions and declarations on the stack.

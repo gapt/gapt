@@ -14,7 +14,7 @@ import gapt.formats.latex._
 import gapt.formats.lean._
 import gapt.grammars._
 import gapt.proofs.reduction._
-import gapt.proofs.drup._
+import gapt.proofs.rup._
 import gapt.proofs.epsilon._
 import gapt.proofs.expansion._
 import gapt.proofs.hoare._

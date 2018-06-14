@@ -48,9 +48,8 @@ object IndElimProver {
       if ( !containsStrongQuantifier( proof1.endSequent ) ) proof1
       else skolemizeLK( proof1, proofTheoretic = false )
     val ( proofTerm0, lctx ) = LKToLKt( proof2 )
-    val proofTerm1 = atomizeEquality( proofTerm0, lctx )
-    val proofTerm2 = normalizeLKt( proofTerm1 )
-    IndElimProver( proofTerm2, lctx, mctx.toImmutable )
+    val proofTerm1 = normalizeLKt.induction( proofTerm0, lctx )
+    IndElimProver( proofTerm1, lctx, mctx.toImmutable )
   }
 }
 

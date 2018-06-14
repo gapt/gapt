@@ -93,7 +93,7 @@ object natorder extends Theory( nat ) {
   val le0r = lemma( hof"x<=0 <-> x=0", "simp" ) { include( "le", "add0eq", "le0l" ); escrgt }
   val les0 = lemma( hof"~(s(x)<=0)", "simp" ) { include( "le0r", "sne0" ); escrgt }
   val lesuc = lemma( hof"x<=s(x)", "simp" ) { include( "le", "add" ); escrgt }
-  val letrans = lemma( hof"x<=y & y<=z -> x<=z" ) { include( "le", "addassoc" ); anaInd }
+  val letrans = lemma( hof"x<=y & y<=z -> x<=z" ) { include( "le", "addassoc" ); escrgt }
   val leantisymm = lemma( hof"x<=y & y<=x -> x=y" ) { simp.w( "le" ); include( "add", "addassoc", "addinj", "add0eq" ); escrgt }
   val lesr = lemma( hof"x<=s(y) <-> (x<=y|x=s(y))" ) { simp.w( "le" ); include( "sor0", "sinj", "add", "p" ); escrgt }
   val letotal = lemma( hof"x<=y | y<=x" ) {
@@ -116,7 +116,7 @@ object natorder extends Theory( nat ) {
   val mulmon = lemma( hof"x1<=x2 & y1<=y2 -> x1*y1 <= x2*y2" ) { simp.w( "le" ); include( "addmul", "muladd", "addcomm", "addassoc" ); escrgt }
 
   val lesub = lemma( hof"x-y<=x", "simp" ) { induction( hov"y:nat" ) onAll simp.h( "lepl" ) }
-  val leadd = lemma( hof"x<=x+y", "simp" ) { induction( hov"y:nat" ) onAll simp.h }
+  val leadd = lemma( hof"x<=x+y" ) { simp }
   val leaddr = lemma( hof"x<=y+x", "simp" ) { include( "leadd", "addcomm" ); escrgt }
   val lemul = lemma( hof"y!=0 -> x<=x*y", "simp" ) { induction( hov"y:nat" ) onAll simp }
 

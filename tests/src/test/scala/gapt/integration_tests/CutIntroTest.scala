@@ -26,6 +26,12 @@ class CutIntroTest extends Specification {
     CutIntroduction( LinearExampleProof( 9 ), method = ReforestMethod ) must beSome
   }
 
+  "reforest method with interpolation" in {
+    CutIntroduction(
+      LinearExampleProof( 24 ),
+      method = ReforestMethod, useInterpolation = true ) must beSome
+  }
+
   "linear equality example" in {
     val Some( p ) = Escargot getLKProof hos"!x f (s x) = f x :- f ${Numeral( 9 )} = f 0"
     val Some( q ) = CutIntroduction( p )
@@ -33,6 +39,11 @@ class CutIntroTest extends Specification {
     cutFormulas must contain( atMost(
       hof"!x f (s (s (s x))) = f x",
       hof"!x f x = f (s (s (s x)))" ) )
+  }
+
+  "linear equality example with interpolation" in {
+    val Some( p ) = Escargot.getLKProof( hos"!x f (s x) = f x :- f ${Numeral( 9 )} = f 0" )
+    CutIntroduction( p, useInterpolation = true ) must beSome
   }
 
   "non-prenex proofs" in {

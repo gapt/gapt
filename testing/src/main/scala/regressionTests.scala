@@ -19,10 +19,11 @@ import gapt.proofs.lk._
 import gapt.proofs.lkt.normalizeLKt
 import gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
 import gapt.proofs.{ MutableContext, Suc, loadExpansionProof }
+import gapt.provers.congruence.SimpleSmtSolver
 import gapt.provers.escargot.Escargot
 import gapt.provers.prover9.Prover9Importer
 import gapt.provers.sat.{ MiniSAT, Sat4j }
-import gapt.provers.smtlib.Z3
+import gapt.provers.smtlib.{ SmtInterpol, Z3 }
 import gapt.provers.verit.VeriT
 import gapt.provers.viper.grammars.EnumeratingInstanceGenerator
 import gapt.provers.viper.{ Viper, ViperOptions }
@@ -209,6 +210,8 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
     }
     ExpansionProofToLK( E ).isRight !-- "expansionProofToLKProof"
     Z3.isValid( deep ) !-- "validity of deep formula"
+    SmtInterpol.isValid( deep ) !-- "validity of deep formula (SmtInterpol)"
+    SimpleSmtSolver.isValid( deep ) !-- "SimpleSmtSolver on deep formula"
 
     if ( isFOLPrenexSigma1( p.endSequent ) )
       extractRecSchem( p ) --? "extractRecSchem" map { recSchem =>
@@ -228,7 +231,7 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
         cutNormal( q ) --? "cut-elim (cut-intro)"
         normalizeLKt.withDebug( q ) --? "lkt cut-elim (cut-intro)"
         CERES( q ) --? "CERES (cut-intro)"
-        CERES.CERESExpansionProof( q ) --? "CERESExpansionProof"
+        CERES.expansionProof( q ) --? "CERESExpansionProof"
 
         LKToExpansionProof( q ) --? "LKToExpansionProof (cut-intro)" foreach { expQ =>
           Z3.isValid( expQ.deep ) !-- "expansion tree validity with cut (cut-intro)"

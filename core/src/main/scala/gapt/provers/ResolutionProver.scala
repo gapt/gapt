@@ -87,7 +87,7 @@ trait ResolutionProver extends OneShotProver { self =>
     override def getResolutionProof( seq: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] = {
       val reduction = PredicateReductionCNF |> ErasureReductionCNF
       val ( folProblem, back ) = reduction forward seq.toSet
-      self.getResolutionProof( folProblem ).map( back )
+      self.getResolutionProof( folProblem ).map( eliminateSplitting( _ ) ).map( back )
     }
 
     override def toString = s"$self.extendToManySortedViaPredicates"
@@ -116,7 +116,7 @@ trait ResolutionProver extends OneShotProver { self =>
     override def getResolutionProof( seq: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] = {
       val reduction = ErasureReductionCNF
       val ( folProblem, back ) = reduction forward seq.toSet
-      self.getResolutionProof( folProblem ).map( back )
+      self.getResolutionProof( folProblem ).map( eliminateSplitting( _ ) ).map( back )
     }
 
     override def toString = s"$self.extendToManySortedViaErasure"
