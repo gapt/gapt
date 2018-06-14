@@ -6,13 +6,13 @@ import gapt.expr.fol.folTermSize
 import gapt.expr.hol.containsQuantifierOnLogicalLevel
 import gapt.formats.tip.TipProblem
 import gapt.formats.tip.TipSmtImporter
-import gapt.formats.{InputFile, StdinInputFile}
+import gapt.formats.{ InputFile, StdinInputFile }
 import gapt.grammars.InductionGrammar
-import gapt.proofs.{HOLSequent, MutableContext}
+import gapt.proofs.{ HOLSequent, MutableContext }
 import gapt.proofs.gaptic._
 import gapt.proofs.gaptic.tactics.AnalyticInductionTactic
-import gapt.proofs.lk.{ContractionMacroRule, CutRule, ForallRightBlock, ForallRightRule, LKProof, NegRightRule, OrRightMacroRule}
-import gapt.proofs.resolution.{ResolutionToLKProof, structuralCNF}
+import gapt.proofs.lk.{ ContractionMacroRule, CutRule, ForallRightBlock, ForallRightRule, LKProof, NegRightRule, OrRightMacroRule }
+import gapt.proofs.resolution.{ ResolutionToLKProof, structuralCNF }
 import gapt.prooftool.prooftool
 import gapt.provers.eprover.EProver
 import gapt.provers.escargot.Escargot
@@ -23,10 +23,10 @@ import gapt.provers.vampire.Vampire
 import gapt.provers.viper.aip.axioms._
 import gapt.provers.ResolutionProver
 import gapt.provers.viper.grammars._
-import gapt.utils.{LogHandler, TimeOutException, withTimeout}
+import gapt.utils.{ LogHandler, TimeOutException, withTimeout }
 
 import scala.concurrent.duration.Duration
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 case class AipOptions( axioms: AxiomFactory = SequentialInductionAxioms(), prover: ResolutionProver = Escargot )
 
