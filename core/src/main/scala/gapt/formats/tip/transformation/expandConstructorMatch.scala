@@ -142,11 +142,13 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
   private def expandConstructorMatch(
     matchExpression: TipSmtMatch ): TipSmtExpression =
     matchExpression.expr match {
-      case TipSmtFun( identifier, expressions ) if isConstructor( identifier ) =>
+      case TipSmtFun( identifier, expressions ) //
+      if isConstructor( identifier ) =>
         val cas = retrieveCase( matchExpression, identifier )
         val TipSmtConstructorPattern( _, variables ) = cas.pattern
         val substitution = Map( variables zip expressions: _* )
-        val newExpression = new TipSubstitute( problem )( cas.expr, substitution )
+        val newExpression =
+          new TipSubstitute( problem )( cas.expr, substitution )
         expandConstructorMatch( newExpression )
       case id @ TipSmtIdentifier( _ ) if isConstructor( id ) =>
         expandConstructorMatch( retrieveCase( matchExpression, id ).expr )
@@ -286,7 +288,9 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
   private def retrieveCase(
     matchExpression: TipSmtMatch, constructor: String ): TipSmtCase =
     matchExpression.cases.filter {
-      case TipSmtCase( TipSmtConstructorPattern( TipSmtIdentifier( symbol ), _ ), _ ) if constructor == symbol => true
+      case TipSmtCase(
+        TipSmtConstructorPattern( TipSmtIdentifier( symbol ), _ ), _ ) //
+        if constructor == symbol => true
       case _ => false
     } head
 
