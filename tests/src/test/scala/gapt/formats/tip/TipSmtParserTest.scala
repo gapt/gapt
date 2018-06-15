@@ -1,8 +1,6 @@
 package gapt.formats.tip
 
-import gapt.expr.hol.instantiate
-import gapt.expr.{ Const, TBase }
-import gapt.formats.ClasspathInputFile
+import gapt.formats.StringInputFile
 import gapt.formats.lisp.LSymbol
 import gapt.formats.lisp.SExpressionParser
 import gapt.formats.tip.parser.TipSmtAnd
@@ -38,7 +36,6 @@ import gapt.formats.tip.parser.TipSmtSortDeclaration
 import gapt.formats.tip.parser.TipSmtTrue
 import gapt.formats.tip.parser.TipSmtType
 import gapt.formats.tip.parser.TipSmtVariableDecl
-import gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 
 class TipSmtParserTest extends Specification {
@@ -46,8 +43,8 @@ class TipSmtParserTest extends Specification {
   "parsing constant declaration" in {
 
     "parsing well-formed constant declaration should succeed" in {
-      val constantDeclaration = new SExpressionParser(
-        "(declare-const constant :attr1 t)" ).SExpr.run().get
+      val Seq( constantDeclaration ) = SExpressionParser( StringInputFile(
+        "(declare-const constant :attr1 t)" ) )
 
       val output = parser.TipSmtParser.parseCommand( constantDeclaration )
 
@@ -63,15 +60,15 @@ class TipSmtParserTest extends Specification {
     "parsing ill-formed constant declaration should throw exception" in {
 
       "type is missing" in {
-        val constantDeclaration = new SExpressionParser(
-          "(declare-const constant)" ).SExpr.run().get
+        val Seq( constantDeclaration ) = SExpressionParser(
+          StringInputFile( "(declare-const constant)" ) )
         parser.TipSmtParser.parseCommand( constantDeclaration ) must
           throwA[TipSmtParserException]
       }
 
       "name is missing" in {
-        val constantDeclaration = new SExpressionParser(
-          "(declare-const :attr1 t)" ).SExpr.run().get
+        val Seq( constantDeclaration ) = SExpressionParser(
+          StringInputFile( "(declare-const :attr1 t)" ) )
         parser.TipSmtParser.parseCommand( constantDeclaration ) must
           throwA[TipSmtParserException]
       }
@@ -80,8 +77,8 @@ class TipSmtParserTest extends Specification {
 
   "parsing sort declaration" in {
     "parsing well-formed sort declaration should succeed" in {
-      val sortDeclaration = new SExpressionParser(
-        "(declare-sort sort :attr1 :attr2 val2 :attr3 0)" ).SExpr.run().get
+      val Seq( sortDeclaration ) = SExpressionParser(
+        StringInputFile( "(declare-sort sort :attr1 :attr2 val2 :attr3 0)" ) )
 
       val output = parser.TipSmtParser.parseCommand( sortDeclaration )
 
@@ -97,20 +94,20 @@ class TipSmtParserTest extends Specification {
     }
     "parsing ill-formed sort declaration should throw exception" in {
       "sort number is missing" in {
-        val sortDeclaration = new SExpressionParser(
-          "(declare-sort sort :attr1 :attr2 val2 :attr3)" ).SExpr.run().get
+        val Seq( sortDeclaration ) = SExpressionParser(
+          StringInputFile( "(declare-sort sort :attr1 :attr2 val2 :attr3)" ) )
         parser.TipSmtParser.parseCommand( sortDeclaration ) must
           throwA[TipSmtParserException]
       }
       "sort number is not an integer" in {
-        val sortDeclaration = new SExpressionParser(
-          "(declare-sort sort :attr1 :attr2 val2 :attr3 a)" ).SExpr.run().get
+        val Seq( sortDeclaration ) = SExpressionParser(
+          StringInputFile( "(declare-sort sort :attr1 :attr2 val2 :attr3 a)" ) )
         parser.TipSmtParser.parseCommand( sortDeclaration ) must
           throwA[TipSmtParserException]
       }
       "sort name is missing" in {
-        val sortDeclaration = new SExpressionParser(
-          "(declare-sort :attr1 :attr2 val2 :attr3 0)" ).SExpr.run().get
+        val Seq( sortDeclaration ) = SExpressionParser(
+          StringInputFile( "(declare-sort :attr1 :attr2 val2 :attr3 0)" ) )
         parser.TipSmtParser.parseCommand( sortDeclaration ) must
           throwA[TipSmtParserException]
       }
@@ -119,11 +116,11 @@ class TipSmtParserTest extends Specification {
 
   "parsing datatype declaration" in {
     "parsing well-formed datatype declaration should succeed" in {
-      val datatypeDeclaration = new SExpressionParser(
+      val Seq( datatypeDeclaration ) = SExpressionParser( StringInputFile(
         """( declare-datatypes
           | ()
           | ((nat :attr1 val1 (z :attr2) (s :attr3 val3 :attr4 (p nat) ) ))
-          | )""".stripMargin ).SExpr.run().get
+          | )""".stripMargin ) )
       val output = parser.TipSmtParser.parseCommand( datatypeDeclaration )
 
       output must beAnInstanceOf[TipSmtDatatypesDeclaration]
@@ -147,22 +144,22 @@ class TipSmtParserTest extends Specification {
     }
     "parsing ill-formed datatype declaration should throw exception" in {
       "type parameter list is missing" in {
-        val datatypeDeclaration = new SExpressionParser(
+        val Seq( datatypeDeclaration ) = SExpressionParser( StringInputFile(
           """( declare-datatypes
             |
             | ((nat (z) (s (p nat) ) ))
-            | )""".stripMargin ).SExpr.run().get
+            | )""".stripMargin ) )
         parser
           .TipSmtParser
           .parseCommand( datatypeDeclaration ) must
           throwA[TipSmtParserException]
       }
       "some constructor is ill-formed" in {
-        val datatypeDeclaration = new SExpressionParser(
+        val Seq( datatypeDeclaration ) = SExpressionParser( StringInputFile(
           """( declare-datatypes
             |
             | ((nat () (s (p nat) ) ))
-            | )""".stripMargin ).SExpr.run().get
+            | )""".stripMargin ) )
         parser
           .TipSmtParser
           .parseCommand( datatypeDeclaration ) must
@@ -173,10 +170,11 @@ class TipSmtParserTest extends Specification {
 
   "parsing recursive function definition" in {
     "parsing well-formed recursive function definition should succeed" in {
-      val recursiveFunctionDefinition = new SExpressionParser(
-        """(define-fun-rec
+      val Seq( recursiveFunctionDefinition ) =
+        SExpressionParser( StringInputFile(
+          """(define-fun-rec
           | fun :attr1 val1 :attr2 :attr3 val3 ((x a) (y b)) t c)
-          |""".stripMargin ).SExpr.run().get
+          |""".stripMargin ) )
       val output =
         parser.TipSmtParser.parseCommand( recursiveFunctionDefinition )
       output must beAnInstanceOf[TipSmtFunctionDefinition]
@@ -196,26 +194,30 @@ class TipSmtParserTest extends Specification {
 
     "parsing ill-formed recursive function def. should throw exception" in {
       "function name is missing" in {
-        val recursiveFunctionDefinition = new SExpressionParser(
-          "(define-fun-rec ((x a) (y b)) t c)".stripMargin ).SExpr.run().get
+        val Seq( recursiveFunctionDefinition ) =
+          SExpressionParser( StringInputFile(
+            "(define-fun-rec ((x a) (y b)) t c)".stripMargin ) )
         parser.TipSmtParser.parseCommand( recursiveFunctionDefinition ) must
           throwA[TipSmtParserException]
       }
       "formal parameters are missing" in {
-        val recursiveFunctionDefinition = new SExpressionParser(
-          "(define-fun-rec fun t c)".stripMargin ).SExpr.run().get
+        val Seq( recursiveFunctionDefinition ) =
+          SExpressionParser( StringInputFile(
+            "(define-fun-rec fun t c)".stripMargin ) )
         parser.TipSmtParser.parseCommand( recursiveFunctionDefinition ) must
           throwA[TipSmtParserException]
       }
       "return type is missing" in {
-        val recursiveFunctionDefinition = new SExpressionParser(
-          "(define-fun-rec fun ((x a) (y b)) c)".stripMargin ).SExpr.run().get
+        val Seq( recursiveFunctionDefinition ) =
+          SExpressionParser( StringInputFile(
+            "(define-fun-rec fun ((x a) (y b)) c)".stripMargin ) )
         parser.TipSmtParser.parseCommand( recursiveFunctionDefinition ) must
           throwA[TipSmtParserException]
       }
       "body is missing" in {
-        val recursiveFunctionDefinition = new SExpressionParser(
-          "(define-fun-rec fun ((x a) (y b)) t)".stripMargin ).SExpr.run().get
+        val Seq( recursiveFunctionDefinition ) =
+          SExpressionParser( StringInputFile(
+            "(define-fun-rec fun ((x a) (y b)) t)".stripMargin ) )
         parser.TipSmtParser.parseCommand( recursiveFunctionDefinition ) must
           throwA[TipSmtParserException]
       }
@@ -224,8 +226,8 @@ class TipSmtParserTest extends Specification {
 
   "parsing function definition" in {
     "parsing well-formed function definition should succeed" in {
-      val functionDefinition = new SExpressionParser(
-        "(define-fun fun :attr1 val1 :attr2 :attr3 val3 ((x a) (y b)) t c)" ).SExpr.run().get
+      val Seq( functionDefinition ) = SExpressionParser( StringInputFile(
+        "(define-fun fun :attr1 val1 :attr2 :attr3 val3 ((x a) (y b)) t c)" ) )
       val output = parser.TipSmtParser.parseCommand( functionDefinition )
       output must beAnInstanceOf[TipSmtFunctionDefinition]
       val parsedFunctionDefinition =
@@ -243,26 +245,26 @@ class TipSmtParserTest extends Specification {
     }
     "parsing ill-formed recursive function def. should throw exception" in {
       "function name is missing" in {
-        val functionDefinition = new SExpressionParser(
-          "(define-fun-rec ((x a) (y b)) t c)".stripMargin ).SExpr.run().get
+        val Seq( functionDefinition ) = SExpressionParser( StringInputFile(
+          "(define-fun-rec ((x a) (y b)) t c)".stripMargin ) )
         parser.TipSmtParser.parseCommand( functionDefinition ) must
           throwA[TipSmtParserException]
       }
       "formal parameters are missing" in {
-        val functionDefinition = new SExpressionParser(
-          "(define-fun-rec fun t c)".stripMargin ).SExpr.run().get
+        val Seq( functionDefinition ) = SExpressionParser( StringInputFile(
+          "(define-fun-rec fun t c)".stripMargin ) )
         parser.TipSmtParser.parseCommand( functionDefinition ) must
           throwA[TipSmtParserException]
       }
       "return type is missing" in {
-        val functionDefinition = new SExpressionParser(
-          "(define-fun-rec fun ((x a) (y b)) c)".stripMargin ).SExpr.run().get
+        val Seq( functionDefinition ) = SExpressionParser( StringInputFile(
+          "(define-fun-rec fun ((x a) (y b)) c)".stripMargin ) )
         parser.TipSmtParser.parseCommand( functionDefinition ) must
           throwA[TipSmtParserException]
       }
       "body is missing" in {
-        val functionDefinition = new SExpressionParser(
-          "(define-fun-rec fun ((x a) (y b)) t)".stripMargin ).SExpr.run().get
+        val Seq( functionDefinition ) = SExpressionParser( StringInputFile(
+          "(define-fun-rec fun ((x a) (y b)) t)".stripMargin ) )
         parser.TipSmtParser.parseCommand( functionDefinition ) must
           throwA[TipSmtParserException]
       }
@@ -271,8 +273,8 @@ class TipSmtParserTest extends Specification {
 
   "parsing function declaration" in {
     "parsing well-formed function declaration should succeed" in {
-      val functionDeclaration = new SExpressionParser(
-        "(declare-fun fun :attr1 () t)" ).SExpr.run().get
+      val Seq( functionDeclaration ) = SExpressionParser( StringInputFile(
+        "(declare-fun fun :attr1 () t)" ) )
       val output = parser.TipSmtParser.parseCommand( functionDeclaration )
       output must beAnInstanceOf[TipSmtFunctionDeclaration]
       val parsedDeclaration = output.asInstanceOf[TipSmtFunctionDeclaration]
@@ -283,20 +285,20 @@ class TipSmtParserTest extends Specification {
     }
     "parsing ill-typed function decl. should throw exception" in {
       "function name is missing" in {
-        val functionDeclaration = new SExpressionParser(
-          "(declare-fun () t)" ).SExpr.run().get
+        val Seq( functionDeclaration ) = SExpressionParser( StringInputFile(
+          "(declare-fun () t)" ) )
         parser.TipSmtParser.parseCommand( functionDeclaration ) must
           throwA[TipSmtParserException]
       }
       "parameter type list is missing" in {
-        val functionDeclaration = new SExpressionParser(
-          "(declare-fun fun t)" ).SExpr.run().get
+        val Seq( functionDeclaration ) = SExpressionParser( StringInputFile(
+          "(declare-fun fun t)" ) )
         parser.TipSmtParser.parseCommand( functionDeclaration ) must
           throwA[TipSmtParserException]
       }
       "return type is missing" in {
-        val functionDeclaration = new SExpressionParser(
-          "(declare-fun fun ())" ).SExpr.run().get
+        val Seq( functionDeclaration ) = SExpressionParser( StringInputFile(
+          "(declare-fun fun ())" ) )
         parser.TipSmtParser.parseCommand( functionDeclaration ) must
           throwA[TipSmtParserException]
       }
@@ -305,8 +307,8 @@ class TipSmtParserTest extends Specification {
 
   "parsing assertion" in {
     "parsing well-formed assertion should succeed" in {
-      val assertion = new SExpressionParser(
-        "(assert :attr true)" ).SExpr.run().get
+      val Seq( assertion ) = SExpressionParser( StringInputFile(
+        "(assert :attr true)" ) )
       val output = parser.TipSmtParser.parseCommand( assertion )
       output must beAnInstanceOf[TipSmtAssertion]
       val parsedAssertion = output.asInstanceOf[TipSmtAssertion]
@@ -315,14 +317,14 @@ class TipSmtParserTest extends Specification {
     }
     "parsing ill-formed assertion should throw exception" in {
       "expression is missing" in {
-        val assertion = new SExpressionParser(
-          "(assert :attr)" ).SExpr.run().get
+        val Seq( assertion ) = SExpressionParser( StringInputFile(
+          "(assert :attr)" ) )
         parser.TipSmtParser.parseCommand( assertion ) must
           throwA[TipSmtParserException]
       }
       "expression is ill-formed" in {
-        val assertion = new SExpressionParser(
-          "(assert :attr ())" ).SExpr.run().get
+        val Seq( assertion ) = SExpressionParser( StringInputFile(
+          "(assert :attr ())" ) )
         parser.TipSmtParser.parseCommand( assertion ) must
           throwA[TipSmtParserException]
       }
@@ -331,8 +333,8 @@ class TipSmtParserTest extends Specification {
 
   "parsing goal" in {
     "parsing well-formed goal (assert-not) should succeed" in {
-      val goal = new SExpressionParser(
-        "(assert-not :attr false)" ).SExpr.run().get
+      val Seq( goal ) = SExpressionParser( StringInputFile(
+        "(assert-not :attr false)" ) )
       val output = parser.TipSmtParser.parseCommand( goal )
       output must beAnInstanceOf[TipSmtGoal]
       val parsedAssertion = output.asInstanceOf[TipSmtGoal]
@@ -340,8 +342,8 @@ class TipSmtParserTest extends Specification {
       parsedAssertion.expr must_== TipSmtFalse
     }
     "parsing well-formed goal (prove) should succeed" in {
-      val goal = new SExpressionParser(
-        "(prove :attr false)" ).SExpr.run().get
+      val Seq( goal ) = SExpressionParser( StringInputFile(
+        "(prove :attr false)" ) )
       val output = parser.TipSmtParser.parseCommand( goal )
       output must beAnInstanceOf[TipSmtGoal]
       val parsedAssertion = output.asInstanceOf[TipSmtGoal]
@@ -350,26 +352,26 @@ class TipSmtParserTest extends Specification {
     }
     "parsing ill-formed goal should throw exception" in {
       "expression is missing (prove)" in {
-        val goal = new SExpressionParser(
-          "(prove :attr)" ).SExpr.run().get
+        val Seq( goal ) = SExpressionParser( StringInputFile(
+          "(prove :attr)" ) )
         parser.TipSmtParser.parseCommand( goal ) must
           throwA[TipSmtParserException]
       }
       "expression is ill-formed (prove)" in {
-        val goal = new SExpressionParser(
-          "(prove :attr ())" ).SExpr.run().get
+        val Seq( goal ) = SExpressionParser( StringInputFile(
+          "(prove :attr ())" ) )
         parser.TipSmtParser.parseCommand( goal ) must
           throwA[TipSmtParserException]
       }
       "expression is missing (assert-not)" in {
-        val goal = new SExpressionParser(
-          "(assert-not :attr)" ).SExpr.run().get
+        val Seq( goal ) = SExpressionParser( StringInputFile(
+          "(assert-not :attr)" ) )
         parser.TipSmtParser.parseCommand( goal ) must
           throwA[TipSmtParserException]
       }
       "expression is ill-formed (assert-not)" in {
-        val goal = new SExpressionParser(
-          "(assert-not :attr ())" ).SExpr.run().get
+        val Seq( goal ) = SExpressionParser( StringInputFile(
+          "(assert-not :attr ())" ) )
         parser.TipSmtParser.parseCommand( goal ) must
           throwA[TipSmtParserException]
       }
@@ -377,82 +379,81 @@ class TipSmtParserTest extends Specification {
   }
 
   "parsing mutually recursive function definitions" in {
-    "parsing well-formed mutually recursive fun. defs. should succed" in {
-      val funDefs = new SExpressionParser(
-        """( define-funs-rec
+    "parsing well-formed mutually recursive function definitions should" +
+      " succeed" in {
+        val Seq( funDefs ) = SExpressionParser( StringInputFile(
+          """( define-funs-rec
             |(
             |(fun1 :attr1 val1 ((x a)) r1)
             |(fun2 ((y b)) r2))
-            |(t1 t2))""".stripMargin ).SExpr.run().get
-      val output = parser.TipSmtParser.parseCommand( funDefs )
-      output must beAnInstanceOf[TipSmtMutualRecursiveFunctionDefinition]
-      val parsedDefs =
-        output.asInstanceOf[TipSmtMutualRecursiveFunctionDefinition]
-      output must_== TipSmtMutualRecursiveFunctionDefinition(
-        Seq(
-          TipSmtFunctionDefinition(
-            "fun1",
-            Seq( TipSmtKeyword( "attr1", Some( "val1" ) ) ),
-            Seq( TipSmtFormalParameter( "x", TipSmtType( "a" ) ) ),
-            TipSmtType( "r1" ),
-            TipSmtIdentifier( "t1" ) ),
-          TipSmtFunctionDefinition(
-            "fun2",
-            Seq(),
-            Seq( TipSmtFormalParameter( "y", TipSmtType( "b" ) ) ),
-            TipSmtType( "r2" ),
-            TipSmtIdentifier( "t2" ) ) ) )
-    }
+            |(t1 t2))""".stripMargin ) )
+        val output = parser.TipSmtParser.parseCommand( funDefs )
+        output must beAnInstanceOf[TipSmtMutualRecursiveFunctionDefinition]
+        output must_== TipSmtMutualRecursiveFunctionDefinition(
+          Seq(
+            TipSmtFunctionDefinition(
+              "fun1",
+              Seq( TipSmtKeyword( "attr1", Some( "val1" ) ) ),
+              Seq( TipSmtFormalParameter( "x", TipSmtType( "a" ) ) ),
+              TipSmtType( "r1" ),
+              TipSmtIdentifier( "t1" ) ),
+            TipSmtFunctionDefinition(
+              "fun2",
+              Seq(),
+              Seq( TipSmtFormalParameter( "y", TipSmtType( "b" ) ) ),
+              TipSmtType( "r2" ),
+              TipSmtIdentifier( "t2" ) ) ) )
+      }
     "parsing ill-formed mutually rec. fun. defs. should throw exception" in {
       "ill-formed function signature" in {
         "function name is missing" in {
-          val funDefs = new SExpressionParser(
+          val Seq( funDefs ) = SExpressionParser( StringInputFile(
             """( define-funs-rec
               |(
               |( ((x a)) r1)
               |(fun2 ((y b)) r2))
-              |(t1 t2))""".stripMargin ).SExpr.run().get
+              |(t1 t2))""".stripMargin ) )
           parser.TipSmtParser.parseCommand( funDefs ) must
             throwA[TipSmtParserException]
         }
         "formal parameters are missing" in {
-          val funDefs = new SExpressionParser(
+          val Seq( funDefs ) = SExpressionParser( StringInputFile(
             """( define-funs-rec
               |(
               |(fun1 ((x a)) r1)
               |(fun2  r2))
-              |(t1 t2))""".stripMargin ).SExpr.run().get
+              |(t1 t2))""".stripMargin ) )
           parser.TipSmtParser.parseCommand( funDefs ) must
             throwA[TipSmtParserException]
         }
         "return type is missing" in {
-          val funDefs = new SExpressionParser(
+          val Seq( funDefs ) = SExpressionParser( StringInputFile(
             """( define-funs-rec
               |(
               |(fun1 ((x a)) )
               |(fun2 ((y b)) r2))
-              |(t1 t2))""".stripMargin ).SExpr.run().get
+              |(t1 t2))""".stripMargin ) )
           parser.TipSmtParser.parseCommand( funDefs ) must
             throwA[TipSmtParserException]
         }
       }
       "different number of signatures and definitions" in {
         "more signatures than definitions" in {
-          val funDefs = new SExpressionParser(
+          val Seq( funDefs ) = SExpressionParser( StringInputFile(
             """( define-funs-rec
               |(
               |(fun2 ((y b)) r2))
-              |(t1 t2))""".stripMargin ).SExpr.run().get
+              |(t1 t2))""".stripMargin ) )
           parser.TipSmtParser.parseCommand( funDefs ) must
             throwA[TipSmtParserException]
         }
         "more definitions than signatures" in {
-          val funDefs = new SExpressionParser(
+          val Seq( funDefs ) = SExpressionParser( StringInputFile(
             """( define-funs-rec
               |(
               |(fun1 ((x a)) r1)
               |(fun2 ((y b)) r2))
-              |(t1))""".stripMargin ).SExpr.run().get
+              |(t1))""".stripMargin ) )
           parser.TipSmtParser.parseCommand( funDefs ) must
             throwA[TipSmtParserException]
         }
@@ -461,8 +462,8 @@ class TipSmtParserTest extends Specification {
   }
 
   "parsing check-sat command should succed" in {
-    val checkSat = new SExpressionParser(
-      "(check-sat)" ).SExpr.run().get
+    val Seq( checkSat ) = SExpressionParser( StringInputFile(
+      "(check-sat)" ) )
     parser.TipSmtParser.parseCommand( checkSat ) must
       beAnInstanceOf[TipSmtCheckSat]
   }
@@ -471,23 +472,23 @@ class TipSmtParserTest extends Specification {
     "parsing and-expression" in {
       "parsing well-formed and-expression should succeed" in {
         "non-empty list of arguments" in {
-          val input = new SExpressionParser(
-            "(and t1 t2)" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(and t1 t2)" ) )
           parser.TipSmtParser.parseExpression( input ) must_==
             TipSmtAnd(
               Seq( TipSmtIdentifier( "t1" ), TipSmtIdentifier( "t2" ) ) )
         }
         "empty list of arguments" in {
-          val input = new SExpressionParser(
-            "(and)" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(and)" ) )
           parser.TipSmtParser.parseExpression( input ) must_==
             TipSmtAnd( Seq() )
         }
       }
       "parsing ill-formed and-expression should throw exception" in {
         "subexpression is ill-formed" in {
-          val input = new SExpressionParser(
-            "(and t1 ())" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(and t1 ())" ) )
           parser.TipSmtParser.parseExpression( input ) must
             throwA[TipSmtParserException]
         }
@@ -496,23 +497,23 @@ class TipSmtParserTest extends Specification {
     "parsing or-expression" in {
       "parsing well-formed or-expression should succeed" in {
         "non-empty list of arguments" in {
-          val input = new SExpressionParser(
-            "(or t1 t2)" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(or t1 t2)" ) )
           parser.TipSmtParser.parseExpression( input ) must_==
             TipSmtOr(
               Seq( TipSmtIdentifier( "t1" ), TipSmtIdentifier( "t2" ) ) )
         }
         "empty list of arguments" in {
-          val input = new SExpressionParser(
-            "(or)" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(or)" ) )
           parser.TipSmtParser.parseExpression( input ) must_==
             TipSmtOr( Seq() )
         }
       }
       "parsing ill-formed or-expression should throw exception" in {
         "subexpression is ill-formed" in {
-          val input = new SExpressionParser(
-            "(or t1 ())" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(or t1 ())" ) )
           parser.TipSmtParser.parseExpression( input ) must
             throwA[TipSmtParserException]
         }
@@ -521,22 +522,23 @@ class TipSmtParserTest extends Specification {
     "parsing imp-expression" in {
       "parsing well-formed imp-expression should succeed" in {
         "non-empty list of arguments" in {
-          val input = new SExpressionParser(
-            "(=> t1 t2)" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(=> t1 t2)" ) )
           parser.TipSmtParser.parseExpression( input ) must_==
-            TipSmtImp( Seq( TipSmtIdentifier( "t1" ), TipSmtIdentifier( "t2" ) ) )
+            TipSmtImp(
+              Seq( TipSmtIdentifier( "t1" ), TipSmtIdentifier( "t2" ) ) )
         }
         "empty list of arguments" in {
-          val input = new SExpressionParser(
-            "(=>)" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(=>)" ) )
           parser.TipSmtParser.parseExpression( input ) must_==
             TipSmtImp( Seq() )
         }
       }
       "parsing ill-formed imp-expression should throw exception" in {
         "subexpression is ill-formed" in {
-          val input = new SExpressionParser(
-            "(=> t1 ())" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(=> t1 ())" ) )
           parser.TipSmtParser.parseExpression( input ) must
             throwA[TipSmtParserException]
         }
@@ -545,22 +547,23 @@ class TipSmtParserTest extends Specification {
     "parsing eq-expression" in {
       "parsing well-formed eq-expression should succeed" in {
         "non-empty list of arguments" in {
-          val input = new SExpressionParser(
-            "(= t1 t2)" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(= t1 t2)" ) )
           parser.TipSmtParser.parseExpression( input ) must_==
-            TipSmtEq( Seq( TipSmtIdentifier( "t1" ), TipSmtIdentifier( "t2" ) ) )
+            TipSmtEq(
+              Seq( TipSmtIdentifier( "t1" ), TipSmtIdentifier( "t2" ) ) )
         }
         "empty list of arguments" in {
-          val input = new SExpressionParser(
-            "(=)" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(=)" ) )
           parser.TipSmtParser.parseExpression( input ) must_==
             TipSmtEq( Seq() )
         }
       }
       "parsing ill-formed eq-expression should throw exception" in {
         "subexpression is ill-formed" in {
-          val input = new SExpressionParser(
-            "(= t1 ())" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(= t1 ())" ) )
           parser.TipSmtParser.parseExpression( input ) must
             throwA[TipSmtParserException]
         }
@@ -569,42 +572,42 @@ class TipSmtParserTest extends Specification {
     "parsing forall-expression" in {
       "parsing well-formed forall-expression should succeed" in {
         "non-empty list of arguments" in {
-          val input = new SExpressionParser(
-            "(forall ((x1 a1)) t1)" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(forall ((x1 a1)) t1)" ) )
           parser.TipSmtParser.parseExpression( input ) must_==
             TipSmtForall(
               Seq( TipSmtVariableDecl( "x1", TipSmtType( "a1" ) ) ),
               TipSmtIdentifier( "t1" ) )
         }
         "empty list of variables" in {
-          val input = new SExpressionParser(
-            "(forall () t1)" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(forall () t1)" ) )
           parser.TipSmtParser.parseExpression( input ) must_==
             TipSmtForall( Seq(), TipSmtIdentifier( "t1" ) )
         }
       }
       "parsing ill-formed forall-expression should throw exception" in {
         "missing variable list" in {
-          val input = new SExpressionParser(
-            "(forall t1)" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(forall t1)" ) )
           parser.TipSmtParser.parseExpression( input ) must
             throwA[TipSmtParserException]
         }
         "ill-formed variable list" in {
-          val input = new SExpressionParser(
-            "(forall vars t1)" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(forall vars t1)" ) )
           parser.TipSmtParser.parseExpression( input ) must
             throwA[TipSmtParserException]
         }
         "missing expression" in {
-          val input = new SExpressionParser(
-            "(forall ())" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(forall ())" ) )
           parser.TipSmtParser.parseExpression( input ) must
             throwA[TipSmtParserException]
         }
         "subexpression is ill-formed" in {
-          val input = new SExpressionParser(
-            "(forall (x b) ())" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(forall (x b) ())" ) )
           parser.TipSmtParser.parseExpression( input ) must
             throwA[TipSmtParserException]
         }
@@ -613,42 +616,42 @@ class TipSmtParserTest extends Specification {
     "parsing exists-expression" in {
       "parsing well-formed exists-expression should succeed" in {
         "non-empty list of arguments" in {
-          val input = new SExpressionParser(
-            "(exists ((x1 a1)) t1)" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(exists ((x1 a1)) t1)" ) )
           parser.TipSmtParser.parseExpression( input ) must_==
             TipSmtExists(
               Seq( TipSmtVariableDecl( "x1", TipSmtType( "a1" ) ) ),
               TipSmtIdentifier( "t1" ) )
         }
         "empty list of variables" in {
-          val input = new SExpressionParser(
-            "(exists () t1)" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(exists () t1)" ) )
           parser.TipSmtParser.parseExpression( input ) must_==
             TipSmtExists( Seq(), TipSmtIdentifier( "t1" ) )
         }
       }
       "parsing ill-formed exists-expression should throw exception" in {
         "missing variable list" in {
-          val input = new SExpressionParser(
-            "(exists t1)" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(exists t1)" ) )
           parser.TipSmtParser.parseExpression( input ) must
             throwA[TipSmtParserException]
         }
         "ill-formed variable list" in {
-          val input = new SExpressionParser(
-            "(exists vars t1)" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(exists vars t1)" ) )
           parser.TipSmtParser.parseExpression( input ) must
             throwA[TipSmtParserException]
         }
         "missing expression" in {
-          val input = new SExpressionParser(
-            "(exists ())" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(exists ())" ) )
           parser.TipSmtParser.parseExpression( input ) must
             throwA[TipSmtParserException]
         }
         "subexpression is ill-formed" in {
-          val input = new SExpressionParser(
-            "(exists (x b) ())" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(exists (x b) ())" ) )
           parser.TipSmtParser.parseExpression( input ) must
             throwA[TipSmtParserException]
         }
@@ -657,8 +660,8 @@ class TipSmtParserTest extends Specification {
     "parsing distinct-expression" in {
       "parsing well-formed distinct-expression should succeed" in {
         "non-empty list of subexpressions" in {
-          val input = new SExpressionParser(
-            "(distinct t1 t2 t3)" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(distinct t1 t2 t3)" ) )
           parser.TipSmtParser.parseExpression( input ) must_==
             TipSmtDistinct(
               Seq(
@@ -667,16 +670,16 @@ class TipSmtParserTest extends Specification {
                 TipSmtIdentifier( "t3" ) ) )
         }
         "empty list of subexpressions" in {
-          val input = new SExpressionParser(
-            "(distinct)" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(distinct)" ) )
           parser.TipSmtParser.parseExpression( input ) must_==
             TipSmtDistinct( Seq() )
         }
       }
       "parsing ill-formed distinct-expression should throw exception" in {
         "ill-formed subexpression" in {
-          val input = new SExpressionParser(
-            "(distinct ())" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(distinct ())" ) )
           parser.TipSmtParser.parseExpression( input ) must
             throwA[TipSmtParserException]
         }
@@ -685,8 +688,8 @@ class TipSmtParserTest extends Specification {
   }
   "parsing if-then-else-expression" in {
     "parsing well-formed ite-expression should succeed" in {
-      val input = new SExpressionParser(
-        "(ite t1 t2 t3)" ).SExpr.run().get
+      val Seq( input ) = SExpressionParser( StringInputFile(
+        "(ite t1 t2 t3)" ) )
       parser.TipSmtParser.parseExpression( input ) must_==
         TipSmtIte(
           TipSmtIdentifier( "t1" ),
@@ -695,20 +698,20 @@ class TipSmtParserTest extends Specification {
     }
     "parsing ill-formed ite-expression should throw exception" in {
       "ill-formed condition" in {
-        val input = new SExpressionParser(
-          "(ite () t2 t3)" ).SExpr.run().get
+        val Seq( input ) = SExpressionParser( StringInputFile(
+          "(ite () t2 t3)" ) )
         parser.TipSmtParser.parseExpression( input ) must
           throwA[TipSmtParserException]
       }
       "ill-formed ifTrue" in {
-        val input = new SExpressionParser(
-          "(ite t1 () t3)" ).SExpr.run().get
+        val Seq( input ) = SExpressionParser( StringInputFile(
+          "(ite t1 () t3)" ) )
         parser.TipSmtParser.parseExpression( input ) must
           throwA[TipSmtParserException]
       }
       "ill-formed ifFalse" in {
-        val input = new SExpressionParser(
-          "(ite t1 t2 ())" ).SExpr.run().get
+        val Seq( input ) = SExpressionParser( StringInputFile(
+          "(ite t1 t2 ())" ) )
         parser.TipSmtParser.parseExpression( input ) must
           throwA[TipSmtParserException]
       }
@@ -716,27 +719,27 @@ class TipSmtParserTest extends Specification {
   }
   "parsing not-expression" in {
     "parsing well-formed not-expression should succeed" in {
-      val input = new SExpressionParser(
-        "(not t1)" ).SExpr.run().get
+      val Seq( input ) = SExpressionParser( StringInputFile(
+        "(not t1)" ) )
       parser.TipSmtParser.parseExpression( input ) must_==
         TipSmtNot( TipSmtIdentifier( "t1" ) )
     }
     "parsing ill-formed not-expression should throw exception" in {
       "no subexpression" in {
-        val input = new SExpressionParser(
-          "(not)" ).SExpr.run().get
+        val Seq( input ) = SExpressionParser( StringInputFile(
+          "(not)" ) )
         parser.TipSmtParser.parseExpression( input ) must
           throwA[TipSmtParserException]
       }
       "more than one subexpression" in {
-        val input = new SExpressionParser(
-          "(not t1 t2)" ).SExpr.run().get
+        val Seq( input ) = SExpressionParser( StringInputFile(
+          "(not t1 t2)" ) )
         parser.TipSmtParser.parseExpression( input ) must
           throwA[TipSmtParserException]
       }
       "ill-formed subexpression" in {
-        val input = new SExpressionParser(
-          "(not ())" ).SExpr.run().get
+        val Seq( input ) = SExpressionParser( StringInputFile(
+          "(not ())" ) )
         parser.TipSmtParser.parseExpression( input ) must
           throwA[TipSmtParserException]
       }
@@ -745,14 +748,14 @@ class TipSmtParserTest extends Specification {
   "parsing function call-expression" in {
     "parsing well-formed function call-expression should succeed" in {
       "empty argument list" in {
-        val input = new SExpressionParser(
-          "(f)" ).SExpr.run().get
+        val Seq( input ) = SExpressionParser( StringInputFile(
+          "(f)" ) )
         parser.TipSmtParser.parseExpression( input ) must_==
           TipSmtFun( "f", Seq() )
       }
       "non-empty argument list" in {
-        val input = new SExpressionParser(
-          "(f a1 a2 a3)" ).SExpr.run().get
+        val Seq( input ) = SExpressionParser( StringInputFile(
+          "(f a1 a2 a3)" ) )
         parser.TipSmtParser.parseExpression( input ) must_==
           TipSmtFun(
             "f",
@@ -763,15 +766,15 @@ class TipSmtParserTest extends Specification {
       }
       "parsing ill-formed fun. call-expr should not return fun. expr." in {
         "ill-formed argument should throw exception" in {
-          val input = new SExpressionParser(
-            "(f a1 a2 ())" ).SExpr.run().get
+          val Seq( input ) = SExpressionParser( StringInputFile(
+            "(f a1 a2 ())" ) )
           parser.TipSmtParser.parseExpression( input ) must
             throwA[TipSmtParserException]
         }
         "function name is reserved word should return other object or throw" in
           {
-            val input = new SExpressionParser(
-              "(not a1 a2 a3)" ).SExpr.run().get
+            val Seq( input ) = SExpressionParser( StringInputFile(
+              "(not a1 a2 a3)" ) )
             parser.TipSmtParser.parseExpression( input ) must
               throwA[TipSmtParserException]
 
@@ -781,7 +784,7 @@ class TipSmtParserTest extends Specification {
   }
   "parsing identifier-expression" in {
     "non reserved identifier should succeed" in {
-      val input = new SExpressionParser( "f" ).SExpr.run().get
+      val Seq( input ) = SExpressionParser( StringInputFile( "f" ) )
       parser.TipSmtParser.parseExpression( input ) must_==
         TipSmtIdentifier( "f" )
     }
@@ -789,8 +792,8 @@ class TipSmtParserTest extends Specification {
   "parsing match-expression" in {
     "parsing well-formed match-expression should succeed" in {
       "non-empty sequence of cases" in {
-        val input = new SExpressionParser(
-          "(match t (case c1 e1) (case c2 e2))" ).SExpr.run().get
+        val Seq( input ) = SExpressionParser( StringInputFile(
+          "(match t (case c1 e1) (case c2 e2))" ) )
         parser.TipSmtParser.parseExpression( input ) must_==
           TipSmtMatch(
             TipSmtIdentifier( "t" ),
@@ -803,34 +806,34 @@ class TipSmtParserTest extends Specification {
                 TipSmtIdentifier( "e2" ) ) ) )
       }
       "empty sequence of case statements" in {
-        val input = new SExpressionParser(
-          "(match t)" ).SExpr.run().get
+        val Seq( input ) = SExpressionParser( StringInputFile(
+          "(match t)" ) )
         parser.TipSmtParser.parseExpression( input ) must_==
           TipSmtMatch( TipSmtIdentifier( "t" ), Seq() )
       }
     }
     "parsing ill-formed match-expression should throw exception" in {
       "ill-formed match expression" in {
-        val input = new SExpressionParser(
-          "(match () (case c1 e1) (case c2 e2))" ).SExpr.run().get
+        val Seq( input ) = SExpressionParser( StringInputFile(
+          "(match () (case c1 e1) (case c2 e2))" ) )
         parser.TipSmtParser.parseExpression( input ) must
           throwA[TipSmtParserException]
       }
       "ill-formed case statements" in {
-        val input = new SExpressionParser(
-          "(match t a)" ).SExpr.run().get
+        val Seq( input ) = SExpressionParser( StringInputFile(
+          "(match t a)" ) )
         parser.TipSmtParser.parseExpression( input ) must
           throwA[TipSmtParserException]
       }
       "ill-formed pattern" in {
-        val input = new SExpressionParser(
-          "(match t ( (case () e1) (case c2 e2) ))" ).SExpr.run().get
+        val Seq( input ) = SExpressionParser( StringInputFile(
+          "(match t ( (case () e1) (case c2 e2) ))" ) )
         parser.TipSmtParser.parseExpression( input ) must
           throwA[TipSmtParserException]
       }
       "ill-formed case expression" in {
-        val input = new SExpressionParser(
-          "(match t (case c1 e1) (case c2 (not a b)) )" ).SExpr.run().get
+        val Seq( input ) = SExpressionParser( StringInputFile(
+          "(match t (case c1 e1) (case c2 (not a b)) )" ) )
         parser.TipSmtParser.parseExpression( input ) must
           throwA[TipSmtParserException]
       }
