@@ -28,6 +28,8 @@ import gapt.utils.NameGenerator
  */
 class TipSubstitute( val problem: TipSmtProblem ) {
 
+  private type Substitution = Map[TipSmtIdentifier, TipSmtExpression]
+
   /**
    * Renames the variables introduced by a case-statement away from
    * blacklisted names.
@@ -54,8 +56,6 @@ class TipSubstitute( val problem: TipSmtProblem ) {
       }
     caseChangeVariableNames( tipSmtCase, oldNames, newNames )
   }
-
-  type Substitution = Map[TipSmtIdentifier, TipSmtExpression]
 
   def apply(
     expr:     TipSmtExpression,
