@@ -21,6 +21,70 @@ import gapt.formats.tip.parser.TipSmtTrue
 import gapt.formats.tip.parser.TipSmtVariableDecl
 import gapt.utils.NameGenerator
 
+case class Substitution( map: ( TipSmtIdentifier, TipSmtExpression )* ) {
+
+  private val substitution = Map( map: _* )
+
+  /**
+   * Creates a new substitution.
+   *
+   * @param variable A variable with which a term is to be associated.
+   * @param term A term to be associated with the given variable.
+   * @return
+   */
+  def this( variable: TipSmtIdentifier, term: TipSmtExpression ) = {
+    this( variable -> term )
+  }
+
+  /**
+   * Filters the variable/term associations.
+   *
+   * @param predicate The predicate that is used to filter the substitution.
+   * @return A substitution containing only those variable/term associations
+   * for which the predicate has evaluated to true.
+   */
+  def filter(
+    predicate: ( TipSmtIdentifier, TipSmtExpression ) => Boolean ) //
+    : Substitution = {
+    Substitution(
+      substitution.filter { case ( v, t ) => predicate( v, t ) } toSeq: _* )
+  }
+
+  /**
+   * @return The set variables for which this substitution is defined.
+   */
+  def domain: Set[TipSmtIdentifier] = {
+    substitution.keySet
+  }
+
+  /**
+   * Retrieves the free variables of the expressions in this subsitutition.
+   *
+   * @param problem The problem with respect to which free variables are
+   * determined.
+   * @return The set of all free variables occurring the expressions of
+   * this substitution
+   */
+  def range( implicit problem: TipSmtProblem ): Set[TipSmtIdentifier] = {
+    substitution
+      .values
+      .flatMap { freeVariables( problem, _ ) }
+      .toSet
+      .map { TipSmtIdentifier( _ ) }
+  }
+
+  /**
+   * Retrieves the term associated with the given variable.
+   *
+   * @param variable The variable whose associated term is to be retrieved.
+   * @return The associated term if it exists, otherwise the variable is
+   * returned unmodified.
+   */
+  def get( variable: TipSmtIdentifier ): TipSmtExpression = {
+    substitution.getOrElse( variable, variable )
+  }
+}
+
 /**
  * This class implements substitution for TIP problems.
  *
@@ -28,7 +92,7 @@ import gapt.utils.NameGenerator
  */
 class TipSubstitute( val problem: TipSmtProblem ) {
 
-  private type Substitution = Map[TipSmtIdentifier, TipSmtExpression]
+  private implicit val p = problem
 
   /**
    * Renames the variables introduced by a case-statement away from
@@ -61,7 +125,7 @@ class TipSubstitute( val problem: TipSmtProblem ) {
     expr:     TipSmtExpression,
     variable: String,
     term:     TipSmtExpression ): TipSmtExpression =
-    apply( expr, Map( TipSmtIdentifier( variable ) -> term ) )
+    apply( expr, Substitution( TipSmtIdentifier( variable ) -> term ) )
 
   /**
    * Substitutes a name by a given expression.
@@ -113,10 +177,7 @@ class TipSubstitute( val problem: TipSmtProblem ) {
         TipSmtNot( apply( expr.expr, substitution ) )
 
       case identifier @ TipSmtIdentifier( _ ) =>
-        substitution.get( identifier ) match {
-          case Some( replacement ) => replacement
-          case _                   => identifier
-        }
+        substitution.get( identifier )
 
       case TipSmtTrue =>
         TipSmtTrue
@@ -187,13 +248,12 @@ class TipSubstitute( val problem: TipSmtProblem ) {
         !variables.map { _.name }.contains( identifier.name )
     }
 
-    val substFreeVars: Set[String] =
-      newSubstitution.values.flatMap { freeVariables( problem, _ ) } toSet
+    val substFreeVars: Set[String] = newSubstitution.range.map { _.name }
 
     val nameGenerator =
       new NameGenerator(
         substFreeVars ++
-          newSubstitution.keys.map { _.name } ++
+          newSubstitution.domain.map { _.name } ++
           freeVariables( problem, formula ) )
 
     val newQuantifiedVariables = variables.map {
@@ -205,7 +265,7 @@ class TipSubstitute( val problem: TipSmtProblem ) {
     }
 
     val variableSubstitution: Substitution =
-      Map[TipSmtIdentifier, TipSmtExpression](
+      Substitution(
         variables
           .map { v => TipSmtIdentifier( v.name ) }
           .zip(
@@ -234,13 +294,12 @@ class TipSubstitute( val problem: TipSmtProblem ) {
       case ( identifier, _ ) => !boundVariables.contains( identifier )
     }
 
-    val substFreeVars: Set[String] =
-      newSubstitution.values.flatMap { freeVariables( problem, _ ) } toSet
+    val substFreeVars: Set[String] = newSubstitution.range.map { _.name }
 
     val nameGenerator =
       new NameGenerator(
         substFreeVars ++
-          newSubstitution.keys.map { _.name } ++
+          newSubstitution.domain.map { _.name } ++
           freeVariables( problem, cas.expr ) )
 
     val newBoundVariables = boundVariables map {
@@ -251,8 +310,8 @@ class TipSubstitute( val problem: TipSmtProblem ) {
           boundName
     }
 
-    val variableSubstitution: Substitution = Map(
-      boundVariables zip newBoundVariables: _* )
+    val variableSubstitution: Substitution =
+      Substitution( boundVariables zip newBoundVariables: _* )
 
     val newExpr = apply( cas.expr, variableSubstitution )
 
@@ -282,7 +341,7 @@ class TipSubstitute( val problem: TipSmtProblem ) {
     val newExpression =
       apply(
         tipSmtCase.expr,
-        Map(
+        Substitution(
           oldNames
             .map { TipSmtIdentifier }
             .zip( newBoundNames map { TipSmtIdentifier } ): _* ) )

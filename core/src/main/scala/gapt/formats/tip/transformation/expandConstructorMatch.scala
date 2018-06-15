@@ -19,6 +19,7 @@ import gapt.formats.tip.parser.TipSmtMatch
 import gapt.formats.tip.parser.TipSmtMutualRecursiveFunctionDefinition
 import gapt.formats.tip.parser.TipSmtOr
 import gapt.formats.tip.parser.TipSmtProblem
+import gapt.formats.tip.util.Substitution
 import gapt.formats.tip.util.TipSubstitute
 
 object expandConstructorMatchExpressions extends TipSmtProblemTransformation {
@@ -146,7 +147,7 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
       if isConstructor( identifier ) =>
         val cas = retrieveCase( matchExpression, identifier )
         val TipSmtConstructorPattern( _, variables ) = cas.pattern
-        val substitution = Map( variables zip expressions: _* )
+        val substitution = Substitution( variables zip expressions: _* )
         val newExpression =
           new TipSubstitute( problem )( cas.expr, substitution )
         expandConstructorMatch( newExpression )
