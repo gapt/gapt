@@ -86,7 +86,7 @@ object EventuallyConstantSchemaRefutation extends TacticsProof( EventuallyConsta
     andL( "Ant_0_0_1" )
     andL
     andL
-    allL( "Ant_0_0_1_1_1_0", le"k" )
+    allL( "Ant_0_0_1_1_1_0", le"k:i" )
     orL( "Ant_0_0_1_1_1_0_0" )
     orL( "Ant_1" )
     escargot
@@ -97,7 +97,7 @@ object EventuallyConstantSchemaRefutation extends TacticsProof( EventuallyConsta
     allL( "Ant_0_0_0_1", le"(g (g k))" )
     allL( "Ant_0_0_0_1", le"(g k)" )
     allL( "Ant_0_0_0_1_0", le"(g k)" )
-    allL( "Ant_0_0_0_1_1", le"k" )
+    allL( "Ant_0_0_0_1_1", le"k:i" )
     orL( "Ant_0_0_0_1_1_0" )
     escargot
     orL( "Ant_0_0_0_1_0_0" )
@@ -108,9 +108,9 @@ object EventuallyConstantSchemaRefutation extends TacticsProof( EventuallyConsta
     escargot
     ref( "Next" )
     allL( "Ant_0_0_0_1", le"(g k)" )
-    allL( "Ant_0_0_0_1", le"k" )
-    allL( "Ant_0_0_0_1_0", le"k" )
-    allL( "Ant_0_0_0_1_1", le"k" )
+    allL( "Ant_0_0_0_1", le"k:i" )
+    allL( "Ant_0_0_0_1_0", le"k:i" )
+    allL( "Ant_0_0_0_1_1", le"k:i" )
     orL( "Ant_0_0_0_1_1_0" )
     escargot
     orL( "Ant_0_0_0_1_0_0" )
@@ -150,4 +150,28 @@ object EventuallyConstantSchemaRefutation extends TacticsProof( EventuallyConsta
   }
   ctx += Context.ProofDefinitionDeclaration( le"Next 0 k", PR2Bc )
 
+}
+
+object EventuallyConstantSchemaInductionRefutation extends TacticsProof( EventuallyConstantSchema.ctx ) {
+  import gapt.proofs.gaptic._
+  val Some( scs ) = SchematicStruct( "phi" )
+  val CFPRN = CharFormPRN( scs )
+  CharFormPRN.PR( CFPRN )
+
+  val next = Lemma( hof"!n!k ((E(n, f(g(k))) | LE(f(g(k)), n)) & (E(n, f(k)) | LE(f(k), n)) -> ~phiSFAT(n))" ) {
+    allR; induction( hov"n:nat" ) onAll unfold( "phiSFAT" ).in( "g" ) onAll escrgt
+  }
+
+  val prsc = Lemma( hof"!n ~phiSFAF(n)" ) {
+    allR; induction( hov"n:nat" ) onAll unfold( "phiSFAF" ).in( "g" )
+    by { escrgt }
+    by { include( "next", next ); escrgt }
+  }
+
+  // just a single induction
+  val prscs = Lemma( hof"!n ~phiSFAF(s(n))" ) {
+    unfold( "phiSFAF" ).in( "g" )
+    include( "next", next )
+    escrgt
+  }
 }
