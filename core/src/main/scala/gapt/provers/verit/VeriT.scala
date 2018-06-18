@@ -17,7 +17,7 @@ class VeriT extends OneShotProver with ExternalProgram {
   override def isValid( s: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean = {
 
     // Generate the input file for veriT
-    val veritInput = SmtLibExporter( groundFreeVariables( s )._1 )._1
+    val veritInput = SmtLibExporter( groundFreeVariables( s )._1, lineWidth = Int.MaxValue )._1
 
     val veritOutput = runProcess( Seq( "veriT" ), veritInput )
 
@@ -42,7 +42,7 @@ class VeriT extends OneShotProver with ExternalProgram {
    * merging them with the original end-sequent.
    */
   override def getExpansionProof( s: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = withGroundVariables2( s ) { s =>
-    val ( smtBenchmark, _, renaming ) = SmtLibExporter( s )
+    val ( smtBenchmark, _, renaming ) = SmtLibExporter( s, lineWidth = Int.MaxValue )
     val output = runProcess( Seq( "veriT", "--proof=-", "--proof-version=1" ), smtBenchmark )
 
     VeriTParser.getExpansionProof( new StringReader( output ) ) map { renamedExpansion =>

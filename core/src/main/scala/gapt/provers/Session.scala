@@ -7,7 +7,6 @@ import gapt.expr._
 import gapt.formats.StringInputFile
 import gapt.formats.lisp._
 import gapt.proofs.{ HOLSequent, Sequent }
-import gapt.provers.Session.{ Session, SessionCommand }
 import gapt.provers.smtlib.ExternalSmtlibProgram
 import gapt.utils.NameGenerator
 import cats.free.Free.liftF
@@ -331,12 +330,12 @@ object Session {
 
       protected def tell( input: SExpression ) = {
         if ( debug ) println( input )
-        in println input
+        in println input.toDoc.render( Int.MaxValue )
       }
 
       protected def ask( input: SExpression ) = {
         if ( debug ) println( input )
-        in println input
+        in println input.toDoc.render( Int.MaxValue )
         in.flush()
         val res = out.readLine()
         if ( debug ) println( s"-> $res" )
@@ -351,13 +350,12 @@ object Session {
      * Its `tell` simply writes to the string, while its `ask` writes
      * to the string and receives dummy replies.
      */
-    class BenchmarkRecorder extends SMTLibSessionRunner {
-      private val nLine = sys.props( "line.separator" )
-
+    class BenchmarkRecorder( lineWidth: Int = 80 ) extends SMTLibSessionRunner {
       private val benchmark = new StringBuilder
       def getBenchmark() = benchmark.result()
 
-      protected def tell( input: SExpression ) = benchmark append input append nLine
+      protected def tell( input: SExpression ) =
+        benchmark append ( input.toDoc <> "\n" ).render( lineWidth )
       protected def ask( input: SExpression ) = {
         tell( input )
         input match {
