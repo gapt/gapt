@@ -187,6 +187,7 @@ object example9 extends Script {
     u( OrIntro2Rule( _, hof"?x P x" ) ).
     t( OrElimRule( _, _, _ ) ).
     qed
+  println( p )
   classicalExtractionTest( p )
 }
 
@@ -228,3 +229,17 @@ object example12 extends Script {
     qed
   classicalExtractionTest( p )
 }
+
+object example13 extends Script {
+  implicit var ctx = Context()
+  ctx += InductiveType(
+    ty"nat",
+    hoc"0 : nat",
+    hoc"s : nat > nat" )
+
+}
+
+object extracted extends Script {
+
+}
+

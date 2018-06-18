@@ -96,8 +96,19 @@ def matchSum[$a,$b,$c](p1: Sum[$a,$b])(p2: $a => $c)(p3: $b => $c) = {
         case Const( "=", _, params ) =>
           val x = typeParamToString( params( 0 ) )
           s"def eq[$x](x: $x)(y: $x) = x == y"
+        // TODO
         case Const( "f", _, params ) =>
           s"def f(x: Int)(y: Int) = x < (y+1)*(y+1) && y*y <= x"
+        case Const( "natRec", _, params ) =>
+          val a = typeParamToString( params( 0 ) )
+          s"""
+def natRec[$a](p1: $a)(p2: Function2[Int, $a, $a])(p3: Int): $a = {
+if(p3 == 0) {
+  p1
+} else {
+  p2(p3-1, natRec(p1)(p2)(p3-1))
+}
+}"""
         case Const( "iRec", _, params ) =>
           val a = typeParamToString( params( 0 ) )
           s"""
@@ -136,6 +147,10 @@ if(p3 == 0) {
         | TBase( "i", Nil ) => "Int"
       case TBase( "o", Nil )       => "Boolean"
       case TBase( "exn", Nil )     => "Exception"
+      case TBase( "<", Nil )       => "Lt"
+      case TBase( "<=", Nil )      => "Leq"
+      case TBase( "eq", Nil )      => "Eq"
+      case TBase( "f", Nil )       => "F"
       case TBase( "conj", params ) => s"(${toScalaType( params( 0 ) )}, ${toScalaType( params( 1 ) )})"
       case TBase( "sum", params )  => s"Sum[${toScalaType( params( 0 ) )}, ${toScalaType( params( 1 ) )}]"
       case TArr( t1, t2 )          => s"(${toScalaType( t1 )} => ${toScalaType( t2 )})"

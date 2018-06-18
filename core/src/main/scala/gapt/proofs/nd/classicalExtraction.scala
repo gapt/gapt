@@ -107,13 +107,41 @@ object ClassicalExtraction {
     val bar = hoc"bar{?a ?b ?c}: (?a > ?c) > (?b > ?c) > ?c"
     systemT += bar
 
-    val bar2 = hoc"bar2{?p ?a ?b ?c}: (?p > o) > (?a > ?c) > (?b > ?c) > ?c"
+    val bar2 = hoc"bar2{?x ?a ?b ?c}: (?x > o) > (?a > ?c) > (?b > ?c) > ?c"
     systemT += bar2
 
     // add a term+type to represent the empty program
-    systemT += InductiveType(
-      ty"1",
-      hoc"i : 1" )
+    val ty1 = ty"1"
+    val tmi = hoc"i : 1"
+    systemT += InductiveType( ty1, tmi )
+
+    /*
+    // With dependent types:
+    val eq = ty"eq ?a"
+    val refl = hoc"refl{?a}: ?a > (eq ?a)"
+    systemT += InductiveType( eq, refl )
+    */
+    val eq = ty"eq"
+    val refl = hoc"refl: eq"
+    systemT += InductiveType( eq, refl )
+
+    /*
+    // With dependent types:
+    val subst = hoc"subst{?a}: (eq ?a) > ((?a > o) > (?a > o))"
+    val t1: Expr = hov"t1: ?a"
+    val t2: Expr = hov"t2: ?a > o"
+    systemT += PrimRecFun( List(
+      ( subst, List(
+        //( refl( p, refl( t1, t2 ) ) -> p( t2 ) ),
+        ( subst( refl( t1 ), t2 ) -> t2 ) ) ) ) )( systemT )
+    */
+    //val subst = hoc"subst{?a}: eq > (?a > ?a)"
+    val subst = hoc"subst{?a}: 1 > (?a > ?a)"
+    val t2: Expr = hov"t2: ?a"
+    systemT += PrimRecFun( List(
+      ( subst, List(
+        //( subst( refl, t2 ) -> t2 ) ) ) ) )( systemT )
+        ( subst( tmi, t2 ) -> t2 ) ) ) ) )( systemT )
 
     //println( "systemT" )
     //println( systemT )
@@ -128,8 +156,33 @@ object ClassicalExtraction {
       //throw new Exception( s"free variables: ${freeVariables( res )}" )
     }
     println( res )
-    println( permuteEM( res ) )
+    println( "permuted:" )
+    println( permuteEM( res )( systemT( ctx ) ) )
     res
+  }
+
+  def simplifyExpr( e: Expr )( implicit ctx: Context ): Expr = {
+    e match {
+      case t @ App( Const( "pi1", _, List( tyL, tyR ) ), arg ) =>
+        if ( tyL != ty"1" && tyR != ty"1" ) {
+          t
+        } else if ( tyL == ty"1" ) {
+          le"i"
+        } else {
+          arg
+        }
+      case t @ App( Const( "pi2", _, List( tyL, tyR ) ), arg ) =>
+        if ( tyL != ty"1" && tyR != ty"1" ) {
+          t
+        } else if ( tyR == ty"1" ) {
+          le"i"
+        } else {
+          arg
+        }
+      case t @ App( t1, t2 ) if t1.ty != ty"1" && t2.ty != ty"1" => t
+      case App( _, t2 ) if t2.ty == ty"1"                        => le"i"
+      case App( t1, t2 ) if t1.ty == ty"1" && t2.ty != ty"1"     => t1
+    }
   }
 
   def extractCases( proof: NDProof, ng: NameGenerator )( implicit systemT: Context ): Sequent[Expr] = {
@@ -242,7 +295,12 @@ object ClassicalExtraction {
           val l = extractCases( leftSubProof, ng )
           val r = extractCases( rightSubProof, ng )
 
-          val res = l.antecedent ++: r.antecedent ++: Sequent() :+ App( l( Suc( 0 ) ), r( Suc( 0 ) ) )
+          //val res = l.antecedent ++: r.antecedent ++: Sequent() :+ App( l( Suc( 0 ) ), r( Suc( 0 ) ) )
+          val t = App( l( Suc( 0 ) ), r( Suc( 0 ) ) )
+          val ts = simplifyExpr( t )
+          println( s"t: $t" )
+          println( s"ts: $ts" )
+          val res = l.antecedent ++: r.antecedent ++: Sequent() :+ ts
           //println( "ImpElim" )
           res
 
@@ -291,7 +349,8 @@ object ClassicalExtraction {
         */
 
         case TopIntroRule() =>
-          ???
+          // TODO
+          Sequent() :+ le"i"
         //val varr = Var( "z", ty"1" )
         //Abs( varr, varr )
 
@@ -356,28 +415,28 @@ object ClassicalExtraction {
           //println( "ExElim extraVar " + extraVar )
           res
 
-        // only to be used when mainFormula is an equation
         case TheoryAxiom( mainFormula ) =>
-          // TODO
-          //???
-          val res = Sequent() :+ le"i"
-          //println( "TheoryAxiom" )
+          val res = Sequent() :+ Var( ng.fresh( s"realizer($mainFormula)" ), flat( mainFormula ) )
           res
 
-        case EqualityElimRule( leftSubProof, rightSubProof, formulaA, variablex ) =>
+        case eq @ EqualityElimRule( leftSubProof, rightSubProof, formulaA, variablex ) =>
           // TODO
-          //???
           //mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ), ng )
           val l = extractCases( leftSubProof, ng )
           val r = extractCases( rightSubProof, ng )
-          val res = l.antecedent ++: r.antecedent ++: Sequent() :++ r.succedent
+          //val res = l.antecedent ++: r.antecedent ++: Sequent() :+ Var( ng.fresh( s"eq(${eq.mainFormula})" ), flat( eq.mainFormula ) )
+          val res = l.antecedent ++: r.antecedent ++: Sequent() :+ le"subst ${l( Suc( 0 ) )} ${r( Suc( 0 ) )}"
+          //le"eq(${l( Suc( 0 ) )}, ${r( Suc( 0 ) )})" // ), flat( eq.mainFormula ) )
           //println( "EqElim" )
           res
 
-        case EqualityIntroRule( term ) =>
+        case eq @ EqualityIntroRule( term ) =>
           // TODO
-          //???
+          //val res = Sequent() :+ Var( ng.fresh( s"True" ), flat( eq.mainFormula ) )
+          //val res = Sequent() :+ le"refl $term"
+          //val res = Sequent() :+ le"refl"
           val res = Sequent() :+ le"i"
+          //le"eq($term, $term)"
           //println( "EqIntro" )
           res
 
@@ -393,28 +452,32 @@ object ClassicalExtraction {
           println( "free vars inductionCase suc 0: " + freeVariables( inductionCase( Suc( 0 ) ) ) )
           */
           val varsH = inductionCase( cases( 1 ).hypotheses ).asInstanceOf[Seq[Var]]
-          /*
           println( "inductionCase hyps: " + inductionCase( cases( 1 ).hypotheses ) )
           println( "baseCase suc 0: " + baseCase( Suc( 0 ) ) )
           println( "inductionCase suc 0: " + inductionCase( Suc( 0 ) ) )
           println( "term: " + term )
           println( "cases 0: " + cases( 0 ).proof.endSequent )
           println( "cases 1: " + cases( 1 ).proof.endSequent )
+          /*
           */
           val res = baseCase.antecedent ++: inductionCaseDel.antecedent ++: Sequent() :+
-            le"iRec(${baseCase( Suc( 0 ) )})(${Abs( cases( 1 ).eigenVars, Abs( varsH, inductionCase( Suc( 0 ) ) ) )})($term)"
+            le"natRec(${baseCase( Suc( 0 ) )})(${Abs( cases( 1 ).eigenVars, Abs( varsH, inductionCase( Suc( 0 ) ) ) )})($term)"
           //println( "InductionRule" )
           res
 
         // assuming that the definitionrule is applied according to rewrite rules of the original context
         case DefinitionRule( subProof, mainFormula ) =>
+          ???
+        /*
           val res = extractCases( subProof, ng )
           //println( "DefinitionRule" )
           res
+          */
 
         case ExcludedMiddleRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
           leftSubProof.endSequent( aux1 ) match {
             case f @ Ex( x, g ) =>
+              /*
               val left = nd.ProofBuilder.
                 c( nd.LogicalAxiom( Ex( x, -( -g ) ) ) ).
                 c( nd.LogicalAxiom( g ) ).
@@ -432,9 +495,11 @@ object ClassicalExtraction {
                 c( left ).
                 b( ImpElimRule( _, _ ) ).
                 qed
+                */
               //val l = extractCases( tl, ng )
               val l = extractCases( leftSubProof, ng )
 
+              /*
               val right = nd.ProofBuilder.
                 c( nd.LogicalAxiom( Ex( x, g ) ) ).
                 c( nd.LogicalAxiom( -g ) ).
@@ -447,12 +512,14 @@ object ClassicalExtraction {
                 b( ExistsElimRule( _, _ ) ).
                 u( NegIntroRule( _, f ) ).
                 qed
+
               val tr = nd.ProofBuilder.
                 c( rightSubProof ).
                 u( ImpIntroRule( _, aux2 ) ).
                 c( right ).
                 b( ImpElimRule( _, _ ) ).
                 qed
+                */
               /*
               println( "right Suc 0: " + right.conclusion( Suc( 0 ) ) )
               println( "rightSubProof aux2 " + rightSubProof.conclusion( aux2 ) )
@@ -497,7 +564,9 @@ object ClassicalExtraction {
               */
 
               val res = delL ++: delR ++: Sequent() :+ le"bar2 ${Abs( x, g )} ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
+              println( s"EM1: ${f}, l(Suc(0)).ty: ${l( Suc( 0 ) ).ty}, r(Suc(0)).ty: ${r( Suc( 0 ) ).ty}" )
               println( s"EM1: ${f}, tyL: ${varL.ty}, tyR: ${varR.ty}" )
+              println( "res type: " + res( Suc( 0 ) ).ty )
               /*
               println( "res size: " + res.size )
               */
@@ -523,29 +592,72 @@ object ClassicalExtraction {
       throw new Exception( s"$res != ${proof.conclusion}" )
     }
     if ( !res.zipWithIndex.forall { case ( e, i ) => e.ty == flat( proof.conclusion( i ) ) } ) {
-      println( "BUG" )
-      res.zipWithIndex.filter { case ( e, i ) => e.ty != flat( proof.conclusion( i ) ) }.foreach { case ( e, i ) => println( s"$i\ne: ${e.ty}\nc: ${flat( proof.conclusion( i ) )}" ) }
+      println( "BUG (type of program term doesn't match flat(proof term))" )
+      res.zipWithIndex.filter { case ( e, i ) => e.ty != flat( proof.conclusion( i ) ) }.foreach { case ( e, i ) => println( s"$i\nactual: ${e.ty}\nexpected: ${flat( proof.conclusion( i ) )} (i.e. flat(${proof.conclusion( i )}))" ) }
+      println( "proof.conclusion : " + proof.conclusion )
+      println( "extracted program: " + res )
       throw new Exception()
     }
     res
   }
 
+  def normalForm( ty: Ty )( implicit ctx: Context ) = ty match {
+    case TBase( "conj", _ :: TBase( "1", Nil ) :: Nil )   => ty"1"
+    case TBase( "conj", TBase( "1", Nil ) :: tau :: Nil ) => tau
+    case _ ->: TBase( "1", Nil )                          => ty"1"
+    case TBase( "1", Nil ) ->: tau                        => tau
+  }
+
   // computes the type of a potential m-realizer for the formula
-  def flat( formula: Formula )( implicit systemT: Context ): Ty = formula match {
-    case Bottom()                         => ty"exn"
-    case Top()                            => flat( Imp( Bottom(), Bottom() ) )
-    case Eq( _, _ )                       => ty"1"
-    case Atom( _, _ )                     => ty"1" // ?
-    case And( leftformula, rightformula ) => TBase( "conj", flat( leftformula ), flat( rightformula ) )
-    case Or( leftformula, rightformula )  => TBase( "sum", flat( leftformula ), flat( rightformula ) )
-    case Imp( leftformula, rightformula ) => flat( leftformula ) ->: flat( rightformula )
-    case Neg( subformula )                => flat( subformula ) ->: ty"exn" //TBase( "exn", flat( subformula ) ) //flat( Imp( subformula, Bottom() ) )
-    case Ex( variable, subformula )       => TBase( "conj", variable.ty, flat( subformula ) )
-    case All( variable, subformula )      => variable.ty ->: flat( subformula )
+  def flat( formula: Formula )( implicit ctx: Context ): Ty = formula match {
+    case Bottom() => ty"exn"
+    case Top()    => ty"exn" ->: ty"exn"
+    //case Eq( s, t )                       => ty"1"
+    case Eq( s, _ ) =>
+      // With dependent types:
+      //TBase( "eq", TVar( s.toString ) )
+      // Losing information of dependent types:
+      //TBase( "eq" )
+      ty"1"
+    case Atom( e, es ) =>
+      // With dependent types:
+      //TBase( e.toUntypedString, es.map( x => TVar( x.toString ) ) )
+      //TBase( e.toUntypedString, es.map( x => TBase( x.toString ) ) )
+      // Losing information of dependent types:
+      //TBase( e.toUntypedString )
+      ty"1" // ?
+    case And( leftformula, rightformula ) =>
+      normalForm( TBase( "conj", flat( leftformula ), flat( rightformula ) ) )
+    case Or( leftformula, rightformula ) =>
+      normalForm( TBase( "sum", flat( leftformula ), flat( rightformula ) ) )
+    case Imp( leftformula, rightformula ) =>
+      normalForm( flat( leftformula ) ->: flat( rightformula ) )
+    case Neg( subformula ) =>
+      normalForm( flat( subformula ) ->: ty"exn" ) //TBase( "exn", flat( subformula ) ) //flat( Imp( subformula, Bottom() ) )
+    case Ex( variable, subformula ) =>
+      normalForm( TBase( "conj", variable.ty, flat( subformula ) ) )
+    case All( variable, subformula ) =>
+      normalForm( variable.ty ->: flat( subformula ) )
   }
 
   def permuteEM( term: Expr )( implicit ctx: Context ): Expr = {
     term match {
+      case App( App( App( Const( "bar", _, _ ), u ), v ), w ) =>
+        val wPermuted = permuteEM( w )
+        le"bar (${permuteEM( u )}$wPermuted) (${permuteEM( v )}$wPermuted)"
+      case App( Const( "pi1", _, _ ), App( App( Const( "bar2", _, _ ), u ), v ) ) =>
+        le"bar (pi1 ${permuteEM( u )}) (pi1 ${permuteEM( v )})"
+      case App( Const( "pi2", _, _ ), App( App( Const( "bar", _, _ ), u ), v ) ) =>
+        le"bar (pi2 ${permuteEM( u )}) (pi2 ${permuteEM( v )})"
+      case App( App( App( Const( "matchSum", _, _ ), App( App( Const( "bar", _, _ ), u ), v ) ), x ), y ) =>
+        val uPermuted = permuteEM( u )
+        val vPermuted = permuteEM( v )
+        val xPermuted = permuteEM( x )
+        val yPermuted = permuteEM( y )
+        val ms1 = le"(matchSum $uPermuted $xPermuted $yPermuted)"
+        val ms2 = le"(matchSum $vPermuted $xPermuted $yPermuted)"
+        le"bar $ms1 $ms2"
+      // Last case described in Federico's paper handled by substitution in ExistsElimRule case of extraction
       case App( App( App( App( Const( "bar2", _, _ ), p ), u ), v ), w ) =>
         val wPermuted = permuteEM( w )
         le"bar2 $p (${permuteEM( u )}$wPermuted) (${permuteEM( v )}$wPermuted)"
@@ -554,143 +666,26 @@ object ClassicalExtraction {
       case App( Const( "pi2", _, _ ), App( App( App( Const( "bar2", _, _ ), p ), u ), v ) ) =>
         le"bar2 $p (pi2 ${permuteEM( u )}) (pi2 ${permuteEM( v )})"
       case App( App( App( Const( "matchSum", _, _ ), App( App( App( Const( "bar2", _, _ ), p ), u ), v ) ), x ), y ) =>
-        val uPermuted = permuteEM( u )
-        val vPermuted = permuteEM( v )
+        println( s"term: $term" )
+        val Abs( uVar, uPermuted ) = permuteEM( u )
+        val Abs( vVar, vPermuted ) = permuteEM( v )
         val xPermuted = permuteEM( x )
         val yPermuted = permuteEM( y )
-        le"bar2 $p (matchSum $uPermuted $xPermuted $yPermuted) (matchSum $vPermuted $xPermuted $yPermuted)"
+
+        println( s"u: $u\np: $uPermuted" )
+        println( s"v: $v\np: $vPermuted" )
+        println( s"x: $x\np: $xPermuted" )
+        println( s"y: $y\np: $yPermuted" )
+        val ms1 = le"^$uVar (matchSum $uPermuted $xPermuted $yPermuted)"
+        val ms2 = le"^$vVar (matchSum $vPermuted $xPermuted $yPermuted)"
+        println( s"ms1: $ms1" )
+        println( s"ms2: $ms2" )
+        // TODO: bar2 p ms1 m1 type checks
+        le"bar2 $p $ms1 $ms2"
       // Last case described in Federico's paper handled by substitution in ExistsElimRule case of extraction
       case _ => term
     }
   }
-
-  // removes all occurences of the empty program i : 1 from term, or is i : 1 itself,
-  // except for match and inl and inr term: sometimes not possible to remove all occurences.
-  // works only for recursors for natural numbers now
-  def remEmpProg( term: Expr )( implicit systemT: Context ): Expr = {
-
-    val empty = hoc"i"
-    val emptyType = ty"1"
-
-    term match {
-
-      case Var( name, typee ) =>
-        val typeeR = remEmpProgType( typee )
-        if ( typeeR == emptyType ) empty
-        else Var( name, typeeR )
-
-      case Const( "natRec", _, params ) =>
-        val parameter = remEmpProgType( params.head )
-        if ( parameter == emptyType ) empty
-        else Const( "natRec", parameter ->: ( ty"nat" ->: parameter ->: parameter ) ->: ty"nat" ->: parameter, List( parameter ) )
-
-      case Abs( variable, termm ) =>
-        val termmR = remEmpProg( termm )
-        if ( termmR == empty ) empty
-        else if ( remEmpProgType( variable.ty ) == emptyType ) termmR
-        else Abs( Var( variable.name, remEmpProgType( variable.ty ) ), termmR )
-
-      case App( App( Const( "pair", conjtype, params ), left ), right ) =>
-        val leftR = remEmpProg( left )
-        val rightR = remEmpProg( right )
-        if ( rightR == empty ) leftR
-        else if ( leftR == empty ) rightR
-        else Const( "pair", remEmpProgType( conjtype ), remEmpProgTypes( params ) )( leftR, rightR )
-
-      case App( Const( "pi1", TArr( TBase( "conj", typeparams ), termmtype ), params ), termm ) =>
-        if ( remEmpProgType( typeparams( 0 ) ) == emptyType ) empty
-        else if ( remEmpProgType( typeparams( 1 ) ) == emptyType ) remEmpProg( termm )
-        else Const(
-          "pi1",
-          TArr( TBase( "conj", remEmpProgTypes( typeparams ) ), remEmpProgType( termmtype ) ),
-          remEmpProgTypes( params ) )( remEmpProg( termm ) )
-
-      case App( Const( "pi2", TArr( TBase( "conj", typeparams ), termmtype ), params ), termm ) =>
-        if ( remEmpProgType( typeparams( 1 ) ) == emptyType ) empty
-        else if ( remEmpProgType( typeparams( 0 ) ) == emptyType ) remEmpProg( termm )
-        else Const(
-          "pi2",
-          TArr( TBase( "conj", remEmpProgTypes( typeparams ) ), remEmpProgType( termmtype ) ),
-          remEmpProgTypes( params ) )( remEmpProg( termm ) )
-
-      case App( Const( "inl", TArr( termmtype, TBase( "sum", typeparams ) ), params ), termm ) =>
-        Const(
-          "inl",
-          TArr( remEmpProgType( termmtype ), TBase( "sum", remEmpProgTypes( typeparams ) ) ),
-          remEmpProgTypes( params ) )( remEmpProg( termm ) )
-
-      case App( Const( "inr", TArr( termmtype, TBase( "sum", typeparams ) ), params ), termm ) =>
-        Const(
-          "inr",
-          TArr( remEmpProgType( termmtype ), TBase( "sum", remEmpProgTypes( typeparams ) ) ),
-          remEmpProgTypes( params ) )( remEmpProg( termm ) )
-
-      case App( App( App( Const( "matchSum", TArr( TBase( "sum", sumparams ), TArr( leftType, TArr( rightType, resultType ) ) ), params ), in ), left ), right ) =>
-        val leftR = remEmpProg( left )
-        val rightR = remEmpProg( right )
-        val ng = new NameGenerator( ( freeVariables( left ) ++ freeVariables( right ) ) map ( _.name ) )
-        val leftRN = if ( remEmpProgType( sumparams( 0 ) ) == emptyType ) Abs( Var( ng.fresh( "x" ), ty"1" ), leftR ) else leftR
-        val rightRN = if ( remEmpProgType( sumparams( 1 ) ) == emptyType ) Abs( Var( ng.fresh( "x" ), ty"1" ), rightR ) else rightR
-        val resultTypeR = remEmpProgType( resultType )
-        if ( resultTypeR == emptyType ) empty
-        else Const(
-          "matchSum",
-          TArr( remEmpProgType( TBase( "sum", sumparams ) ), TArr( leftRN.ty, TArr( rightRN.ty, resultTypeR ) ) ),
-          remEmpProgTypes( params ) )( remEmpProg( in ), leftRN, rightRN )
-
-      case App( term1, term2 ) =>
-        val term1R = remEmpProg( term1 )
-        val term2R = remEmpProg( term2 )
-        if ( term1R == empty ) empty
-        else if ( term2R == empty ) term1R
-        else App( term1R, term2R )
-
-      case _ => term
-    }
-  }
-
-  // similar but for types
-  def remEmpProgType( typee: Ty )( implicit systemT: Context ): Ty = {
-
-    val empty = ty"1"
-
-    typee match {
-
-      case TBase( "conj", params ) =>
-        val leftconj = remEmpProgType( params( 0 ) )
-        val rightconj = remEmpProgType( params( 1 ) )
-        if ( leftconj == empty ) rightconj
-        else if ( rightconj == empty ) leftconj
-        else TBase( "conj", leftconj, rightconj )
-
-      case TBase( "sum", params ) =>
-        val leftsum = remEmpProgType( params( 0 ) )
-        val rightsum = remEmpProgType( params( 1 ) )
-        TBase( "sum", leftsum, rightsum )
-
-      case TArr( in, out ) =>
-        val inR = remEmpProgType( in )
-        val outR = remEmpProgType( out )
-        if ( outR == empty ) empty
-        else if ( inR == empty ) outR
-        else TArr( inR, outR )
-
-      case _ => typee
-    }
-  }
-
-  def remEmpProgTypes( types: List[Ty] )( implicit systemT: Context ): List[Ty] =
-    types.map( remEmpProgType( _ ) )
-
-  // Given a proof and variables for the formulas in the antecedent of the conlusion,
-  // returns those variables that occur as well in the antecedent of the conclusion of the premise at premisenumber.
-  def varsAntPrem( proof: NDProof, varsAntConcl: Map[SequentIndex, Var], premiseNumber: Int ): Map[SequentIndex, Var] = {
-    val positions: Vector[( Seq[SequentIndex], SequentIndex )] = proof.occConnectors( premiseNumber ).childrenSequent.zipWithIndex.antecedent
-    val variables: Vector[( Seq[Option[Var]], SequentIndex )] = positions.map( x => ( x._1.map( y => varsAntConcl.get( y ) ), x._2 ) )
-    val flattened: Vector[( Seq[Var], SequentIndex )] = variables.map( x => ( x._1.flatten, x._2 ) )
-    flattened.flatMap( x => x._1.map( y => ( x._2, y ) ) ).toMap
-  }
-
 }
 
 class ClassicalExtractionCreationException( name: String, message: String ) extends Exception( s"Cannot create an m-realizer for $name: " + message )
