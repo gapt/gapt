@@ -3,7 +3,7 @@ package gapt.formats.json
 import gapt.proofs.{ Ant, HOLSequent, SequentIndex, Suc }
 import io.circe._
 import io.circe.generic.semiauto._
-import FormulaCodec._
+import ExprCodec._
 
 object SequentCodec {
   implicit val sequentEncoder: Encoder[HOLSequent] = deriveEncoder[HOLSequent]

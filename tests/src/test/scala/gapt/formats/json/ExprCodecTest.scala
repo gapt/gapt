@@ -5,9 +5,9 @@ import gapt.expr._
 import io.circe.Json
 import io.circe.syntax._
 
-class FormulaCodecTest extends Specification {
+class ExprCodecTest extends Specification {
 
-  import FormulaCodec._
+  import ExprCodec._
 
   "The formula serializer" should {
     "serialize A" in {
@@ -82,6 +82,24 @@ class FormulaCodecTest extends Specification {
 
     "deserialize a non-formula expression" in {
       Json.fromString( "f(x:i):i" ).as[Expr] must beRight( le"f(x)" )
+    }
+  }
+
+  "The variable/constant/abs deserializers" should {
+    "function correctly" in {
+      val List( v, c, a ) = List( hov"v", hoc"c", le"λx.x" ).map( _.asJson )
+
+      v.as[Var] must beRight
+      v.as[Const] must beLeft
+      v.as[Abs] must beLeft
+
+      c.as[Var] must beLeft
+      c.as[Const] must beRight
+      c.as[Abs] must beLeft
+
+      a.as[Var] must beLeft
+      a.as[Const] must beLeft
+      a.as[Abs] must beRight
     }
   }
 }
