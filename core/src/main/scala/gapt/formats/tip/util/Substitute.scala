@@ -31,7 +31,7 @@ class Substitute( private val problem: TipSmtProblem ) {
 
   private val symbolTable = SymbolTable( problem )
 
-  private implicit val p = problem
+  private implicit val p: TipSmtProblem = problem
 
   private def createNameGenerator(
     blacklist: Iterable[String] ): NameGenerator = {
@@ -272,7 +272,7 @@ class Substitute( private val problem: TipSmtProblem ) {
     tipSmtCase:    TipSmtCase,
     oldNames:      Seq[String],
     newBoundNames: Seq[String] ): TipSmtCase = {
-    val TipSmtConstructorPattern( constructor, fields ) = tipSmtCase.pattern
+    val TipSmtConstructorPattern( constructor, _ ) = tipSmtCase.pattern
     val newPattern = TipSmtConstructorPattern(
       constructor,
       newBoundNames.map { TipSmtIdentifier } )
