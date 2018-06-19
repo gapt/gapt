@@ -90,7 +90,7 @@ case class Substitution( map: ( TipSmtIdentifier, TipSmtExpression )* ) {
  *
  * @param problem The problem in which substitutions are to be carried out.
  */
-class TipSubstitute( val problem: TipSmtProblem ) {
+class TipSubstitute( private val problem: TipSmtProblem ) {
 
   private implicit val p = problem
 
@@ -120,12 +120,6 @@ class TipSubstitute( val problem: TipSmtProblem ) {
       }
     caseChangeVariableNames( tipSmtCase, oldNames, newNames )
   }
-
-  def apply(
-    expr:     TipSmtExpression,
-    variable: String,
-    term:     TipSmtExpression ): TipSmtExpression =
-    apply( expr, Substitution( TipSmtIdentifier( variable ) -> term ) )
 
   /**
    * Substitutes a name by a given expression.
@@ -221,7 +215,7 @@ class TipSubstitute( val problem: TipSmtProblem ) {
   /**
    * Abstracts the constructors TipSmtForall and TipSmtExists.
    */
-  type QuantifiedExpressionConstructor = //
+  private type QuantifiedExpressionConstructor = //
   ( Seq[TipSmtVariableDecl], TipSmtExpression ) => TipSmtExpression
 
   /**
