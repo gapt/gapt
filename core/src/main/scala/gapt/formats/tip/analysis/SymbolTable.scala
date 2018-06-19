@@ -30,10 +30,12 @@ case class Type(
 
 case class SymbolTable( problem: TipSmtProblem ) {
 
-  private val symbols: Map[String, Type] = computeSymbols()
+  private val symbolMap: Map[String, Type] = computeSymbols()
 
-  def typeOf( symbol: String ): Type = symbols( symbol )
-  def contains( symbol: String ): Boolean = symbols.contains( symbol )
+  def typeOf( symbol: String ): Type = symbolMap( symbol )
+  def contains( symbol: String ): Boolean = symbolMap.contains( symbol )
+
+  val symbols: Set[String] = symbolMap.keySet
 
   /**
    * Retrieves the problem's constructor symbols.
