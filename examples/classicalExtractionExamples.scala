@@ -239,7 +239,75 @@ object example13 extends Script {
 
 }
 
+/*
 object extracted extends Script {
+def app[A, B]( f: A => B )( arg: A ): B = f( arg )
+def s( x: Int ) = x + 1
+def mul( x: Int )( y: Int ) = x * y
+def leq( x: Int )( y: Int ) = x <= y
 
+def pow2( x: Int ) = x * x
+def pi2[A, B]( p: ( A, B ) ) = p._2
+sealed trait Sum[A, B]
+final case class Inr[A, B]( v: B ) extends Sum[A, B]
+def inr[A, B]( v: B ): Sum[A, B] = new Inr( v )
+
+def matchSum[A, B, C]( p1: Sum[A, B] )( p2: A => C )( p3: B => C ) = {
+  p1 match {
+    case Inl( a ) => p2( a )
+    case Inr( b ) => p3( b )
+  }
 }
 
+def eq[X]( x: X )( y: X ) = x == y
+def lt( x: Int )( y: Int ) = x < y
+final case class Inl[A, B]( v: A ) extends Sum[A, B]
+def inl[A, B]( v: A ): Sum[A, B] = new Inl( v )
+def f( x: Int )( y: Int ) = x < ( y + 1 ) * ( y + 1 ) && y * y <= x
+
+def natRec[A]( p1: A )( p2: Function2[Int, A, A] )( p3: Int ): A = {
+  if ( p3 == 0 ) {
+    p1
+  } else {
+    p2( p3 - 1, natRec( p1 )( p2 )( p3 - 1 ) )
+  }
+}
+class NewException[A]( m: A ) extends Exception
+def exception[A]( p: A ) = { new NewException( p ) }
+
+def bar2[X, A, B]( p1: X => Boolean )( p2: A => Int )( p3: B => Int ): Int = {
+  0
+}
+
+def pi1[A, B]( p: ( A, B ) ) = p._1
+def bar[A, B, C]( p1: Boolean )( p2: A => C )( p3: B => C ): C = { ??? }
+
+def pair[A, B]( p0: A )( p1: B ) = ( p0, p1 )
+def efq( p: Throwable ) = { throw p }
+
+val prog: Int => Int = {
+  v_2: Int =>
+    app( {
+      v_0: ( Int => Int ) =>
+        app( {
+          v: Int => v
+        } )( app( v_0 )( v_2 ) )
+    } )( {
+      x: Int =>
+        app( app( app( natRec )( 0 ) )( {
+          v_0: Int =>
+            {
+              v_10: Int =>
+                app( app( app( bar2 )( {
+                  y: Int => app( app( f )( app( s )( v_0 ) ) )( y )
+                } ) )( {
+                  v_11: Int => v_11
+                } ) )( {
+                  v_13: ( Int => Exception ) => v_10
+                } )
+            }
+        } ) )( x )
+    } )
+}
+}
+*/

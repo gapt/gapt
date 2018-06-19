@@ -151,38 +151,17 @@ object ClassicalExtraction {
   def extractCases( proof: NDProof )( implicit ctx: Context ): Expr = {
     val ng = new NameGenerator( freeVariables( proof.conclusion ).map( _.name ) )
     val lambda = extractCases( proof, ng )( systemT( ctx ) )
+    //val res = lambda( Suc( 0 ) )
     val res = lambda.antecedent.fold( lambda( Suc( 0 ) ) )( ( agg, v ) => Abs( v.asInstanceOf[Var], agg ) )
     if ( !freeVariables( res ).isEmpty ) {
       //throw new Exception( s"free variables: ${freeVariables( res )}" )
     }
-    println( res )
-    println( "permuted:" )
-    println( permuteEM( res )( systemT( ctx ) ) )
-    res
-  }
-
-  def simplifyExpr( e: Expr )( implicit ctx: Context ): Expr = {
-    e match {
-      case t @ App( Const( "pi1", _, List( tyL, tyR ) ), arg ) =>
-        if ( tyL != ty"1" && tyR != ty"1" ) {
-          t
-        } else if ( tyL == ty"1" ) {
-          le"i"
-        } else {
-          arg
-        }
-      case t @ App( Const( "pi2", _, List( tyL, tyR ) ), arg ) =>
-        if ( tyL != ty"1" && tyR != ty"1" ) {
-          t
-        } else if ( tyR == ty"1" ) {
-          le"i"
-        } else {
-          arg
-        }
-      case t @ App( t1, t2 ) if t1.ty != ty"1" && t2.ty != ty"1" => t
-      case App( _, t2 ) if t2.ty == ty"1"                        => le"i"
-      case App( t1, t2 ) if t1.ty == ty"1" && t2.ty != ty"1"     => t1
-    }
+    //println( res )
+    //println( "permuted:" )
+    //println( permuteEM( res )( systemT( ctx ) ) )
+    permuteEM( remEmpProg( res ) )
+    //remEmpProg( res )
+    //res
   }
 
   def extractCases( proof: NDProof, ng: NameGenerator )( implicit systemT: Context ): Sequent[Expr] = {
@@ -295,12 +274,7 @@ object ClassicalExtraction {
           val l = extractCases( leftSubProof, ng )
           val r = extractCases( rightSubProof, ng )
 
-          //val res = l.antecedent ++: r.antecedent ++: Sequent() :+ App( l( Suc( 0 ) ), r( Suc( 0 ) ) )
-          val t = App( l( Suc( 0 ) ), r( Suc( 0 ) ) )
-          val ts = simplifyExpr( t )
-          println( s"t: $t" )
-          println( s"ts: $ts" )
-          val res = l.antecedent ++: r.antecedent ++: Sequent() :+ ts
+          val res = l.antecedent ++: r.antecedent ++: Sequent() :+ App( l( Suc( 0 ) ), r( Suc( 0 ) ) )
           //println( "ImpElim" )
           res
 
@@ -601,11 +575,38 @@ object ClassicalExtraction {
     res
   }
 
+  def simplifyExpr( e: Expr )( implicit ctx: Context ): Expr = {
+    e match {
+      case t @ App( Const( "pi1", _, List( tyL, tyR ) ), arg ) =>
+        if ( tyL != ty"1" && tyR != ty"1" ) {
+          t
+        } else if ( tyL == ty"1" ) {
+          le"i"
+        } else {
+          arg
+        }
+      case t @ App( Const( "pi2", _, List( tyL, tyR ) ), arg ) =>
+        if ( tyL != ty"1" && tyR != ty"1" ) {
+          t
+        } else if ( tyR == ty"1" ) {
+          le"i"
+        } else {
+          arg
+        }
+      case t @ App( t1, t2 ) if t1.ty != ty"1" && t2.ty != ty"1" => t
+      case App( _, t2 ) if t2.ty == ty"1"                        => le"i"
+      case App( t1, t2 ) if t1.ty == ty"1" && t2.ty != ty"1"     => t1
+    }
+  }
+
   def normalForm( ty: Ty )( implicit ctx: Context ) = ty match {
-    case TBase( "conj", _ :: TBase( "1", Nil ) :: Nil )   => ty"1"
+    case _ => ty
+    /*
+    case TBase( "conj", tau :: TBase( "1", Nil ) :: Nil ) => tau
     case TBase( "conj", TBase( "1", Nil ) :: tau :: Nil ) => tau
     case _ ->: TBase( "1", Nil )                          => ty"1"
     case TBase( "1", Nil ) ->: tau                        => tau
+    */
   }
 
   // computes the type of a potential m-realizer for the formula
@@ -639,6 +640,142 @@ object ClassicalExtraction {
     case All( variable, subformula ) =>
       normalForm( variable.ty ->: flat( subformula ) )
   }
+  /**
+   * removes all occurences of the empty program i : 1 from term, or is i : 1 itself,
+   * except for match and inl and inr term: sometimes not possible to remove all occurences.
+   */
+  def remEmpProg( term: Expr )( implicit systemT: Context ): Expr = {
+
+    val emptyType = ty"1"
+    val empty = hoc"i:1"
+
+    term match {
+
+      case Var( name, typee ) =>
+        val typeeR = remEmpProgType( typee )
+        if ( typeeR == emptyType ) empty
+        else Var( name, typeeR )
+
+      // if term is only a constant, it is a recursor (other constants are catched by applications to them)
+      case Const( recName, FunctionType( resultType, recTypes :+ indType ), params ) =>
+        val resultTypeR = remEmpProgType( resultType )
+        if ( resultTypeR == emptyType ) empty
+        else Const( recName, FunctionType( resultTypeR, remEmpProgTypes( recTypes ) :+ indType ), remEmpProgTypes( params ) )
+
+      case Abs( variable, termm ) =>
+        val termmR = remEmpProg( termm )
+        if ( termmR == empty ) empty
+        else if ( remEmpProgType( variable.ty ) == emptyType ) termmR
+        else Abs( Var( variable.name, remEmpProgType( variable.ty ) ), termmR )
+
+      case App( App( Const( "pair", conjtype, params ), left ), right ) =>
+        val leftR = remEmpProg( left )
+        val rightR = remEmpProg( right )
+        if ( rightR == empty ) leftR
+        else if ( leftR == empty ) rightR
+        else Const( "pair", remEmpProgType( conjtype ), remEmpProgTypes( params ) )( leftR, rightR )
+
+      case App( Const( "pi1", TArr( TBase( "conj", typeparams ), termmtype ), params ), termm ) =>
+        if ( remEmpProgType( typeparams( 0 ) ) == emptyType ) empty
+        else if ( remEmpProgType( typeparams( 1 ) ) == emptyType ) remEmpProg( termm )
+        else Const(
+          "pi1",
+          TArr( TBase( "conj", remEmpProgTypes( typeparams ) ), remEmpProgType( termmtype ) ),
+          remEmpProgTypes( params ) )( remEmpProg( termm ) )
+
+      case App( Const( "pi2", TArr( TBase( "conj", typeparams ), termmtype ), params ), termm ) =>
+        if ( remEmpProgType( typeparams( 1 ) ) == emptyType ) empty
+        else if ( remEmpProgType( typeparams( 0 ) ) == emptyType ) remEmpProg( termm )
+        else Const(
+          "pi2",
+          TArr( TBase( "conj", remEmpProgTypes( typeparams ) ), remEmpProgType( termmtype ) ),
+          remEmpProgTypes( params ) )( remEmpProg( termm ) )
+
+      case App( Const( "inl", TArr( termmtype, TBase( "sum", typeparams ) ), params ), termm ) =>
+        Const(
+          "inl",
+          TArr( remEmpProgType( termmtype ), TBase( "sum", remEmpProgTypes( typeparams ) ) ),
+          remEmpProgTypes( params ) )( remEmpProg( termm ) )
+
+      case App( Const( "inr", TArr( termmtype, TBase( "sum", typeparams ) ), params ), termm ) =>
+        Const(
+          "inr",
+          TArr( remEmpProgType( termmtype ), TBase( "sum", remEmpProgTypes( typeparams ) ) ),
+          remEmpProgTypes( params ) )( remEmpProg( termm ) )
+
+      case App( App( App( Const( "matchSum", TArr( TBase( "sum", sumparams ), TArr( leftType, TArr( rightType, resultType ) ) ), params ), in ), left ), right ) =>
+        val leftR = remEmpProg( left )
+        val rightR = remEmpProg( right )
+        val ng = new NameGenerator( ( freeVariables( left ) ++ freeVariables( right ) ) map ( _.name ) )
+        val leftRN = if ( remEmpProgType( sumparams( 0 ) ) == emptyType ) Abs( Var( ng.fresh( "x" ), ty"1" ), leftR ) else leftR
+        val rightRN = if ( remEmpProgType( sumparams( 1 ) ) == emptyType ) Abs( Var( ng.fresh( "x" ), ty"1" ), rightR ) else rightR
+        val resultTypeR = remEmpProgType( resultType )
+        if ( resultTypeR == emptyType ) empty
+        else Const(
+          "matchSum",
+          TArr( remEmpProgType( TBase( "sum", sumparams ) ), TArr( leftRN.ty, TArr( rightRN.ty, resultTypeR ) ) ),
+          remEmpProgTypes( params ) )( remEmpProg( in ), leftRN, rightRN )
+
+      case App( App( App( Const( "bar2", TArr( predType, TArr( leftType, TArr( rightType, resultType ) ) ), params ), pred ), left ), right ) =>
+        val leftR = remEmpProg( left )
+        val rightR = remEmpProg( right )
+        val ng = new NameGenerator( ( freeVariables( left ) ++ freeVariables( right ) ) map ( _.name ) )
+        val leftRN = if ( remEmpProgType( params( 1 ) ) == emptyType ) Abs( Var( ng.fresh( "x" ), ty"1" ), leftR ) else leftR
+        val rightRN = if ( remEmpProgType( params( 2 ) ) == emptyType ) Abs( Var( ng.fresh( "x" ), ty"1" ), rightR ) else rightR
+        val resultTypeR = remEmpProgType( resultType )
+        if ( resultTypeR == emptyType ) empty
+        else Const(
+          "bar2",
+          TArr( predType, TArr( leftRN.ty, TArr( rightRN.ty, resultTypeR ) ) ),
+          remEmpProgTypes( params ) )( remEmpProg( pred ), leftRN, rightRN )
+
+      case App( term1, term2 ) =>
+        val term1R = remEmpProg( term1 )
+        val term2R = remEmpProg( term2 )
+        if ( term1R == empty ) empty
+        else if ( term2R == empty ) term1R
+        else App( term1R, term2R )
+
+      case _ => term
+    }
+  }
+
+  /**
+   * removes all occurences of the empty program type 1 from term, or is 1 itself,
+   * except for the sum type.
+   */
+  def remEmpProgType( typee: Ty )( implicit systemT: Context ): Ty = {
+
+    val empty = ty"1"
+
+    typee match {
+
+      case TBase( "conj", params ) =>
+        val leftconj = remEmpProgType( params( 0 ) )
+        val rightconj = remEmpProgType( params( 1 ) )
+        if ( leftconj == empty ) rightconj
+        else if ( rightconj == empty ) leftconj
+        else TBase( "conj", leftconj, rightconj )
+
+      case TBase( "sum", params ) =>
+        val leftsum = remEmpProgType( params( 0 ) )
+        val rightsum = remEmpProgType( params( 1 ) )
+        if ( leftsum == empty && rightsum == empty ) empty
+        else TBase( "sum", leftsum, rightsum )
+
+      case TArr( in, out ) =>
+        val inR = remEmpProgType( in )
+        val outR = remEmpProgType( out )
+        if ( outR == empty ) empty
+        else if ( inR == empty ) outR
+        else TArr( inR, outR )
+
+      case _ => typee
+    }
+  }
+
+  def remEmpProgTypes( types: List[Ty] )( implicit systemT: Context ): List[Ty] =
+    types.map( remEmpProgType( _ ) )
 
   def permuteEM( term: Expr )( implicit ctx: Context ): Expr = {
     term match {
@@ -683,7 +820,9 @@ object ClassicalExtraction {
         // TODO: bar2 p ms1 m1 type checks
         le"bar2 $p $ms1 $ms2"
       // Last case described in Federico's paper handled by substitution in ExistsElimRule case of extraction
-      case _ => term
+      case Abs( x, t )   => Abs( x, permuteEM( t ) )
+      case App( t1, t2 ) => App( permuteEM( t1 ), permuteEM( t2 ) )
+      case _             => println( s"Fallthrough: $term" ); term
     }
   }
 }
