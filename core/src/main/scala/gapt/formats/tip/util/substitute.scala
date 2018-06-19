@@ -1,5 +1,6 @@
 package gapt.formats.tip.util
 
+import gapt.formats.tip.analysis.SymbolTable
 import gapt.formats.tip.parser.TipSmtAnd
 import gapt.formats.tip.parser.TipSmtCase
 import gapt.formats.tip.parser.TipSmtConstructorPattern
@@ -92,7 +93,14 @@ case class Substitution( map: ( TipSmtIdentifier, TipSmtExpression )* ) {
  */
 class TipSubstitute( private val problem: TipSmtProblem ) {
 
+  private val symbolTable = SymbolTable( problem )
+
   private implicit val p = problem
+
+  private def createNameGenerator(
+    blacklist: Iterable[String] ): NameGenerator = {
+    new NameGenerator( blacklist ++ symbolTable.symbols )
+  }
 
   /**
    * Renames the variables introduced by a case-statement away from
@@ -108,7 +116,7 @@ class TipSubstitute( private val problem: TipSmtProblem ) {
     blacklist:  Seq[String] ): TipSmtCase = {
     val TipSmtConstructorPattern( constructor, fields ) = tipSmtCase.pattern
     val oldNames = fields.map { _.name }
-    val nameGenerator = new NameGenerator(
+    val nameGenerator = createNameGenerator(
       constructor.name +: ( oldNames ++ blacklist ) )
     val newNames =
       oldNames map { oldName =>
@@ -245,7 +253,7 @@ class TipSubstitute( private val problem: TipSmtProblem ) {
     val substFreeVars: Set[String] = newSubstitution.range.map { _.name }
 
     val nameGenerator =
-      new NameGenerator(
+      createNameGenerator(
         substFreeVars ++
           newSubstitution.domain.map { _.name } ++
           freeVariables( problem, formula ) )
@@ -291,7 +299,7 @@ class TipSubstitute( private val problem: TipSmtProblem ) {
     val substFreeVars: Set[String] = newSubstitution.range.map { _.name }
 
     val nameGenerator =
-      new NameGenerator(
+      createNameGenerator(
         substFreeVars ++
           newSubstitution.domain.map { _.name } ++
           freeVariables( problem, cas.expr ) )
