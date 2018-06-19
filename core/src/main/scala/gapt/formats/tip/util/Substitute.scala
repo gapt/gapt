@@ -27,7 +27,7 @@ import gapt.utils.NameGenerator
  *
  * @param problem The problem in which substitutions are to be carried out.
  */
-class TipSubstitute( private val problem: TipSmtProblem ) {
+class Substitute( private val problem: TipSmtProblem ) {
 
   private val symbolTable = SymbolTable( problem )
 

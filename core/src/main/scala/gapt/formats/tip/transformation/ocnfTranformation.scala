@@ -22,7 +22,7 @@ import gapt.formats.tip.parser.TipSmtNot
 import gapt.formats.tip.parser.TipSmtOr
 import gapt.formats.tip.parser.TipSmtProblem
 import gapt.formats.tip.parser.TipSmtTrue
-import gapt.formats.tip.util.TipSubstitute
+import gapt.formats.tip.util.Substitute
 import gapt.formats.tip.util.find
 import gapt.formats.tip.util.freeVariables
 
@@ -241,7 +241,7 @@ class TipOcnf( problem: TipSmtProblem ) {
     expressions: Seq[TipSmtExpression] ): TipSmtMatch = {
     val blacklist = expressions.flatMap( freeVariables( problem, _ ) )
     TipSmtMatch( tipSmtMatch.expr, tipSmtMatch.cases map { c =>
-      new TipSubstitute( problem ).awayFrom( c, blacklist )
+      new Substitute( problem ).awayFrom( c, blacklist )
     } )
   }
 }
