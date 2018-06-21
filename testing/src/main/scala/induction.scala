@@ -2,7 +2,7 @@ package gapt.testing
 
 import ammonite.ops.FilePath
 import gapt.expr.{ All, Eq, Var }
-import gapt.formats.tip.TipSmtParser
+import gapt.formats.tip.TipSmtImporter
 import gapt.proofs.gaptic.tactics.AnalyticInductionTactic
 import gapt.proofs.gaptic.{ ProofState, Tactic }
 import gapt.proofs.{ Ant, Context, MutableContext }
@@ -63,7 +63,7 @@ object testInduction extends App {
   logger.metric( "filename", fileName )
   logger.metric( "strategy", strategyName )
   try logger.time( "total" ) {
-    val tipProblem = logger.time( "tip" ) { TipSmtParser.fixupAndParse( FilePath( fileName ) ) }
+    val tipProblem = logger.time( "tip" ) { TipSmtImporter.fixupAndParse( FilePath( fileName ) ) }
     implicit val ctx: MutableContext = tipProblem.ctx.newMutable
     logger.metric( "goal", tipProblem.goal.toSigRelativeString )
     val proof = logger.time( "prover" ) {
@@ -86,7 +86,7 @@ object computeStrategies extends scala.App {
 
   args foreach { fileName =>
     try {
-      val problem = TipSmtParser.fixupAndParse( FilePath( fileName ) )
+      val problem = TipSmtImporter.fixupAndParse( FilePath( fileName ) )
       import problem.ctx
       val sequent = problem.toSequent
       val All.Block( goalQuants, _ ) = sequent.succedent.head
