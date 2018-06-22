@@ -8,6 +8,7 @@ import gapt.proofs.lk.LKProof
 
 object EventuallyConstantSchemaRefutation extends TacticsProof( EventuallyConstantSchema.ctx ) {
   val SCS: Map[CLS, ( Struct, Set[Var] )] = SchematicStruct( "phi" ).getOrElse( Map() )
+  val projs = SchematicProjection( "phi" )
   val CFPRN = CharFormPRN( SCS )
   CharFormPRN.PR( CFPRN )
   ctx += hoc"Top:nat>nat"
@@ -86,7 +87,7 @@ object EventuallyConstantSchemaRefutation extends TacticsProof( EventuallyConsta
     andL( "Ant_0_0_1" )
     andL
     andL
-    allL( "Ant_0_0_1_1_1_0", le"k" )
+    allL( "Ant_0_0_1_1_1_0", le"k:i" )
     orL( "Ant_0_0_1_1_1_0_0" )
     orL( "Ant_1" )
     escargot
@@ -97,7 +98,7 @@ object EventuallyConstantSchemaRefutation extends TacticsProof( EventuallyConsta
     allL( "Ant_0_0_0_1", le"(g (g k))" )
     allL( "Ant_0_0_0_1", le"(g k)" )
     allL( "Ant_0_0_0_1_0", le"(g k)" )
-    allL( "Ant_0_0_0_1_1", le"k" )
+    allL( "Ant_0_0_0_1_1", le"k:i" )
     orL( "Ant_0_0_0_1_1_0" )
     escargot
     orL( "Ant_0_0_0_1_0_0" )
@@ -108,9 +109,9 @@ object EventuallyConstantSchemaRefutation extends TacticsProof( EventuallyConsta
     escargot
     ref( "Next" )
     allL( "Ant_0_0_0_1", le"(g k)" )
-    allL( "Ant_0_0_0_1", le"k" )
-    allL( "Ant_0_0_0_1_0", le"k" )
-    allL( "Ant_0_0_0_1_1", le"k" )
+    allL( "Ant_0_0_0_1", le"k:i" )
+    allL( "Ant_0_0_0_1_0", le"k:i" )
+    allL( "Ant_0_0_0_1_1", le"k:i" )
     orL( "Ant_0_0_0_1_1_0" )
     escargot
     orL( "Ant_0_0_0_1_0_0" )

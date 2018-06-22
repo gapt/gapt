@@ -1,6 +1,5 @@
 package gapt.examples
 
-
 import gapt.expr._
 import gapt.proofs.Context._
 import gapt.proofs.Context
