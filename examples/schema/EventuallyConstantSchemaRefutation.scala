@@ -8,7 +8,6 @@ import gapt.proofs.lk.LKProof
 
 object EventuallyConstantSchemaRefutation extends TacticsProof( EventuallyConstantSchema.ctx ) {
   val SCS: Map[CLS, ( Struct, Set[Var] )] = SchematicStruct( "phi" ).getOrElse( Map() )
-  val projs = SchematicProjection( "phi" )
   val CFPRN = CharFormPRN( SCS )
   CharFormPRN.PR( CFPRN )
   ctx += hoc"Top:nat>nat"

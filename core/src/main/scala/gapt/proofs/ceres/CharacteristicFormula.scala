@@ -8,8 +8,20 @@ import gapt.proofs.{ MutableContext, Sequent }
 object CharFormN extends StructVisitor[Formula, Unit] {
   def apply( struct: Struct ): Formula = {
     val csf = recurse( struct, StructTransformer[Formula, Unit](
-      { ( x, _ ) => x }, { ( x, y, _ ) => And( x, y ) }, Top(),
-      { ( x, y, _ ) => Or( x, y ) }, Bottom(), { ( x, _ ) => Neg( x ) },
+      { ( x, _ ) => x }, { ( x, y, _ ) =>
+        {
+          if ( x.equals( Top() ) ) y
+          else if ( y.equals( Top() ) ) x
+          else And( x, y )
+        }
+      }, Top(),
+      { ( x, y, _ ) =>
+        {
+          if ( x.equals( Bottom() ) ) y
+          else if ( y.equals( Bottom() ) ) x
+          else Or( x, y )
+        }
+      }, Bottom(), { ( x, _ ) => Neg( x ) },
       { ( _, _, _ ) => throw new Exception( "Should not contain CLS terms" ) } ), Unit )
     All.Block( freeVariables( csf ).toSeq, csf )
   }
@@ -26,8 +38,16 @@ object CharFormPRN {
 object CharFormP extends StructVisitor[Formula, Unit] {
   def apply( struct: Struct ): Formula = {
     val csf = recurse( struct, StructTransformer[Formula, Unit](
-      { ( x, _ ) => toNNF( Neg( x ) ) }, { ( x, y, _ ) => Or( x, y ) }, Bottom(),
-      { ( x, y, _ ) => And( x, y ) }, Top(), { ( x, _ ) => Neg( x ) },
+      { ( x, _ ) => toNNF( Neg( x ) ) }, { ( x, y, _ ) =>{
+        if ( x.equals( Bottom() ) ) y
+        else if ( y.equals( Bottom() ) ) x
+        else Or( x, y )
+      } }, Bottom(),
+      { ( x, y, _ ) =>  {
+        if ( x.equals( Top() ) ) y
+        else if ( y.equals( Top() ) ) x
+        else And( x, y )
+      }}, Top(), { ( x, _ ) => Neg( x ) },
       { ( _, _, _ ) => throw new Exception( "Should not contain CLS terms" ) } ), Unit )
     Ex.Block( freeVariables( csf ).toSeq, csf )
   }
