@@ -5,6 +5,16 @@ import gapt.expr.hol.toNNF
 import gapt.proofs.Context.PrimRecFun
 import gapt.proofs.{ MutableContext, Sequent }
 
+object Viperize {
+  def apply( top: Expr )( implicit ctx: MutableContext ): Sequent[Formula] = {
+    val newAnte = ctx.normalizer.rules.map( x => {
+      val matrix = Iff( x.lhs, x.rhs )
+      All.Block( freeVariables( matrix ).toSeq, matrix )
+    } )
+    val newSuc = All.Block( freeVariables( top ).toSeq, Imp( top, Bottom() ) )
+    Sequent( newAnte.toSeq, Seq( newSuc ) )
+  }
+}
 object CharFormN extends StructVisitor[Formula, Unit] {
   def apply( struct: Struct ): Formula = {
     val csf = recurse( struct, StructTransformer[Formula, Unit](
