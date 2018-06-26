@@ -30,26 +30,25 @@ object SingleProjection {
     proof match {
       /* Structural rules except cut */
       case InitialSequent( p )                    =>
-        val Stepone = p.antecedent.zip(cut_ancs.antecedent).foldLeft((proof,cut_ancs)){(update,pp)=>
+        val stepOne = p.antecedent.zip(cut_ancs.antecedent).foldLeft((proof,(cut_ancs,List[Formula]()))){(update,pp)=>
           if(pp._2){
             val up = NegRightRule(update._1,pp._1)
-            val new_cut_ancs = update._2.delete(p.indexOfInAnt(pp._1)).insertAt(up.endSequent.indexOfInSuc(up.mainFormula),true)
-            (up,new_cut_ancs)
+            val new_cut_ancs = update._2._1.delete(p.indexOfInAnt(pp._1)).insertAt(up.endSequent.indexOfInSuc(up.mainFormula),true)
+            (up,(new_cut_ancs,update._2._2.:+(up.mainFormula)))
           }
           else update
         }
-        val steptwo = Stepone._1.endSequent.succedent.zip(Stepone._2.succedent).foldLeft(Set[Formula]())(
+        val stepTwo = stepOne._1.endSequent.succedent.zip(stepOne._2._1.succedent).foldLeft(stepOne._2._2)(
           (cuts,pair) =>
-            if(pair._2)cuts+ pair._1
+            if(pair._2 && !stepOne._2._2.contains(pair._1) )cuts.:+(pair._1)
             else cuts
         )
-        if(steptwo.nonEmpty) {
-          val stepthree = steptwo.tail.foldLeft((Stepone, steptwo.head)) { (cf, i) =>
-            val update = OrRightRule(cf._1._1, cf._1._1.endSequent.indexOfInSuc(cf._2), cf._1._1.endSequent.indexOfInSuc(i))
-            val cutup: Sequent[Boolean] = cf._1._2.delete(cf._1._1.endSequent.indexOfInSuc(cf._2)).delete(cf._1._1.endSequent.indexOfInSuc(i)).insertAt(update.mainFormulaSequent.indexOfInSuc(update.mainFormula), true)
-            ((update.asInstanceOf[LKProof], cutup), update.mainFormula)
+        if(stepTwo.nonEmpty) {
+          val stepThree = stepTwo.tail.foldLeft((stepOne._1, stepTwo.head)) { (cf, i) =>
+            val update = OrRightRule(cf._1, cf._1.endSequent.indexOfInSuc(cf._2), cf._1.endSequent.indexOfInSuc(i))
+            (update, update.mainFormula)
           }
-          (Some(stepthree._1._1.endSequent.indexOfInSuc(stepthree._2)), stepthree._1._1)
+          (Some(stepThree._1.endSequent.indexOfInSuc(stepThree._2)), stepThree._1)
         }
         else (None, proof)
 
