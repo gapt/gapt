@@ -14,7 +14,7 @@ object SingleProjection {
 
   // This method computes the standard projections according to the original CERES definition.
   def apply( proof: LKProof ):LKProof =
-    apply( proof, proof.endSequent.map( _ => false ), x => true )._2
+    apply( proof, proof.endSequent.map( _ => false ), _ => true )._2
 
   def apply( proof: LKProof, pred: Formula => Boolean ):LKProof =
     apply( proof, proof.endSequent.map( _ => false ), pred )._2
@@ -24,7 +24,7 @@ object SingleProjection {
   }
 
   def apply_( proof: LKProof, cut_ancs: Sequent[Boolean], pred: Formula => Boolean ):(Option[SequentIndex],LKProof) = {
-    implicit val c_ancs = cut_ancs
+    implicit val c_ancs: Sequent[Boolean] = cut_ancs
     //proof.occConnectors
 
     proof match {
@@ -69,8 +69,8 @@ object SingleProjection {
       case ImpRightRule( p, a1, a2 )              => handleUnaryRule( proof, p, a1, a2, ImpRightRule.apply, pred )
 
       /* quantifier rules  */
-      case ForallRightRule( p, a, eigenv, qvar )  => handleStrongQuantRule( proof, p, ForallRightRule.apply, pred )
-      case ExistsLeftRule( p, a, eigenvar, qvar ) => handleStrongQuantRule( proof, p, ExistsLeftRule.apply, pred )
+      case ForallRightRule( p, _, _, _ )  => handleStrongQuantRule( proof, p, ForallRightRule.apply, pred )
+      case ExistsLeftRule( p, _, _, _ ) => handleStrongQuantRule( proof, p, ExistsLeftRule.apply, pred )
       case ForallLeftRule( p, a, f, t, v )        => handleWeakQuantRule( proof, p, a, f, t, v, ForallLeftRule.apply, pred )
       case ExistsRightRule( p, a, f, t, v )       => handleWeakQuantRule( proof, p, a, f, t, v, ExistsRightRule.apply, pred )
       case ForallSkRightRule( p, a, m, t, d )     => handleSkQuantRule( proof, p, a, m, t, d, ForallSkRightRule.apply, pred )
@@ -83,7 +83,7 @@ object SingleProjection {
       case rule @ CutRule( p1, a1, p2, a2 ) =>
         if ( pred( rule.cutFormula ) ) {
           /* this cut is taken into account */
-          val new_cut_ancs_left = mapToUpperProof( proof.occConnectors( 0 ), cut_ancs, default = true )
+          val new_cut_ancs_left = mapToUpperProof( proof.occConnectors.head, cut_ancs, default = true )
           val new_cut_ancs_right = mapToUpperProof( proof.occConnectors( 1 ), cut_ancs, default = true )
           require( new_cut_ancs_left.size == p1.endSequent.size, "Cut ancestor information does not fit to end-sequent!" )
           require( new_cut_ancs_right.size == p2.endSequent.size, "Cut ancestor information does not fit to end-sequent!" )
@@ -92,7 +92,7 @@ object SingleProjection {
           handleBinaryCutAnc( s1, s2)
         } else {
           /* this cut is skipped */
-          val new_cut_ancs_left = mapToUpperProof( proof.occConnectors( 0 ), cut_ancs, default = false )
+          val new_cut_ancs_left = mapToUpperProof( proof.occConnectors.head, cut_ancs, default = false )
           val new_cut_ancs_right = mapToUpperProof( proof.occConnectors( 1 ), cut_ancs, default = false )
           require( new_cut_ancs_left.size == p1.endSequent.size, "Cut ancestor information does not fit to end-sequent!" )
           require( new_cut_ancs_right.size == p2.endSequent.size, "Cut ancestor information does not fit to end-sequent!" )
@@ -123,7 +123,7 @@ object SingleProjection {
   }
 
   /* finds the cut ancestor sequent in the parent connected with the occurrence connector */
-  def copySetToAncestor( connector: SequentConnector, s: Sequent[Boolean] ) = {
+  def copySetToAncestor( connector: SequentConnector, s: Sequent[Boolean] ):Sequent[Boolean] = {
     connector.parents( s ).map( _.head )
   }
 
@@ -133,7 +133,7 @@ object SingleProjection {
     conn.parents( cut_occs ).map( _.headOption getOrElse default )
 
   def handleBinaryESAnc( proof: LKProof, parent1: LKProof, parent2: LKProof, s1:(Option[SequentIndex],LKProof), s2:(Option[SequentIndex],LKProof),
-                         constructor: ( LKProof, SequentIndex, LKProof, SequentIndex ) => LKProof ) ={
+                         constructor: ( LKProof, SequentIndex, LKProof, SequentIndex ) => LKProof ):(Option[SequentIndex],LKProof) ={
 
         val form1:Option[Formula] =
           if(s1._1.nonEmpty)
@@ -143,7 +143,7 @@ object SingleProjection {
           if(s2._1.nonEmpty)
             Some(s2._2.endSequent(s1._1.get))
           else None
-        val List( a1, a2 ) = pickrule( proof, List( parent1, parent2 ), List( s1._2, s2._2 ), List( proof.auxIndices( 0 )( 0 ), proof.auxIndices( 1 )( 0 ) ) )
+        val List( a1, a2 ) = pickrule( proof, List( parent1, parent2 ), List( s1._2, s2._2 ), List( proof.auxIndices.head.head, proof.auxIndices( 1 ).head ) )
         val preProof = constructor( s1._2, a1, s2._2, a2 )
         if(form1.nonEmpty)
           if(form2.nonEmpty) {
@@ -186,8 +186,8 @@ object SingleProjection {
                              a1: SequentIndex, a2: SequentIndex,
                              constructor: ( LKProof, SequentIndex, SequentIndex ) => LKProof,
                              pred:        Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ):(Option[SequentIndex],LKProof) = {
-    val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
-    if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
+    val s = apply( p, copySetToAncestor( proof.occConnectors.head , cut_ancs ), pred )
+    if ( cut_ancs( proof.mainIndices.head ) ) s
     else{
       val List( a1_, a2_ ) = pickrule( proof, List( p ), List( s._2 ), List( a1, a2 ) )
       val finproof = constructor(s._2, a1_, a2_ )
@@ -202,8 +202,8 @@ object SingleProjection {
   def handleUnaryRule[T]( proof: LKProof, p: LKProof, a1: SequentIndex, a2: SequentIndex,
                           constructor: ( LKProof, SequentIndex, SequentIndex ) => LKProof,
                           pred:        Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ):(Option[SequentIndex],LKProof) = {
-    val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
-    if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
+    val s = apply( p, copySetToAncestor( proof.occConnectors.head , cut_ancs ), pred )
+    if ( cut_ancs( proof.mainIndices.head  ) ) s
     else{
       val List( a1_, a2_ ) = pickrule( proof, List( p ), List( s._2 ), List( a1, a2 ) )
       val finproof = constructor( s._2, a1_, a2_ )
@@ -217,8 +217,8 @@ object SingleProjection {
   def handleWeakeningRule( proof: LKProof, p: LKProof, m: Formula,
                            constructor: ( LKProof, Formula ) => LKProof,
                            pred:        Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ):(Option[SequentIndex],LKProof) = {
-    val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
-    if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
+    val s = apply( p, copySetToAncestor( proof.occConnectors.head , cut_ancs ), pred )
+    if ( cut_ancs( proof.mainIndices.head  ) ) s
     else{
       val finproof = constructor( s._2, m )
       if(s._1.nonEmpty) {
@@ -231,8 +231,8 @@ object SingleProjection {
   def handleDefRule( proof: LKProof, p: LKProof, a: SequentIndex, m: Formula,
                      constructor: ( LKProof, SequentIndex, Formula ) => LKProof,
                      pred:        Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ):(Option[SequentIndex],LKProof) = {
-    val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
-    if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
+    val s = apply( p, copySetToAncestor( proof.occConnectors.head , cut_ancs ), pred )
+    if ( cut_ancs( proof.mainIndices.head  ) ) s
     else {
       val List( a_ ) = pickrule( proof, List( p ), List( s._2 ), List( a ) )
       val finproof = constructor( s._2, a_, m )
@@ -246,8 +246,8 @@ object SingleProjection {
   def handleNegRule( proof: LKProof, p: LKProof, a: SequentIndex,
                      constructor: ( LKProof, SequentIndex ) => LKProof,
                      pred:        Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ):(Option[SequentIndex],LKProof) = {
-    val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
-    if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
+    val s = apply( p, copySetToAncestor( proof.occConnectors.head , cut_ancs ), pred )
+    if ( cut_ancs( proof.mainIndices.head ) ) s
     else{
       val List( a_ ) = pickrule( proof, List( p ), List( s._2 ), List( a ) )
       val  finproof =  constructor( s._2, a_ )
@@ -261,8 +261,8 @@ object SingleProjection {
   def handleWeakQuantRule( proof: LKProof, p: LKProof, a: SequentIndex, f: Formula, t: Expr, qvar: Var,
                            constructor: ( LKProof, SequentIndex, Formula, Expr, Var ) => LKProof,
                            pred:        Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ):(Option[SequentIndex],LKProof) = {
-    val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
-    if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
+    val s = apply( p, copySetToAncestor( proof.occConnectors.head, cut_ancs ), pred )
+    if ( cut_ancs( proof.mainIndices.head ) ) s
     else {
       val List( a_ ) = pickrule( proof, List( p ), List( s._2 ), List( a ) )
       val  finproof = constructor( s._2, a_, f, t, qvar )
@@ -276,8 +276,8 @@ object SingleProjection {
   def handleSkQuantRule( proof: LKProof, p: LKProof, a: SequentIndex, m: Formula, t: Expr, d: Expr,
                          constructor: ( LKProof, SequentIndex, Formula, Expr, Expr ) => LKProof,
                          pred:        Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ):(Option[SequentIndex],LKProof) = {
-    val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
-    if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
+    val s = apply( p, copySetToAncestor( proof.occConnectors.head, cut_ancs ), pred )
+    if ( cut_ancs( proof.mainIndices.head ) ) s
     else {
       val List( a_ ) = pickrule( proof, List( p ), List( s._2 ), List( a ) )
       val  finproof = constructor( s._2, a_, m, t, d )
@@ -290,12 +290,12 @@ object SingleProjection {
 
   def handleBinaryRule( proof: LKProof, p1: LKProof, p2: LKProof, a1: SequentIndex, a2: SequentIndex,
                         constructor: ( LKProof, SequentIndex, LKProof, SequentIndex ) => LKProof,
-                        pred:        Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ) = {
-    val new_cut_ancs1 = copySetToAncestor( proof.occConnectors( 0 ), cut_ancs )
+                        pred:        Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ):(Option[SequentIndex],LKProof) = {
+    val new_cut_ancs1 = copySetToAncestor( proof.occConnectors.head, cut_ancs )
     val new_cut_ancs2 = copySetToAncestor( proof.occConnectors( 1 ), cut_ancs )
     val s1 = apply( p1, new_cut_ancs1, pred )
     val s2 = apply( p2, new_cut_ancs2, pred )
-    if ( cut_ancs( proof.mainIndices( 0 ) ) )
+    if ( cut_ancs( proof.mainIndices.head ) )
       handleBinaryCutAnc( s1, s2 )
     else
       handleBinaryESAnc( proof, p1, p2, s1, s2, constructor )
@@ -304,31 +304,30 @@ object SingleProjection {
   def handleEqRule( proof: LKProof, p: LKProof, e: SequentIndex, a: SequentIndex,
                     con: Abs, constructor: ( LKProof, SequentIndex, SequentIndex, Abs ) => LKProof,
                     pred: Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ):(Option[SequentIndex],LKProof )= {
-    val new_cut_ancs = copySetToAncestor( proof.occConnectors( 0 ), cut_ancs )
+    val new_cut_ancs = copySetToAncestor( proof.occConnectors.head, cut_ancs )
     val s1 = apply( p, new_cut_ancs, pred )
     /* distinguish on the cut-ancestorship of the equation (left component) and of the auxiliary formula (right component)
        since the rule does not give direct access to the occurence of e in the conclusion, we look at the premise
      */
-    val e_idx_conclusion = proof.occConnectors( 0 ).child( e )
+    val e_idx_conclusion = proof.occConnectors.head.child( e )
     //    require( cut_ancs( e_idx_conclusion ) == true, "This is not a proof from the old calculus!" )
-    val aux_ca = cut_ancs( proof.mainIndices( 0 ) )
+    val aux_ca = cut_ancs( proof.mainIndices.head )
     val eq_ca = cut_ancs( e_idx_conclusion )
-    val mainf = proof.endSequent( proof.mainIndices( 0 ) )
-    val eqf = proof.endSequent( e_idx_conclusion )
+ //   val mainf = proof.endSequent( proof.mainIndices( 0 ) )
+    //val eqf = proof.endSequent( e_idx_conclusion )
     ( aux_ca, eq_ca ) match {
       case ( true, true ) =>
         s1
       case ( true, false ) =>
-        val ef = p.endSequent( e )
-        val ax = LogicalAxiom( ef )
-        val main_e = proof.mainIndices( 0 )
-        val es = proof.endSequent.zipWithIndex.filter( x => x._2 != main_e &&
-          x._2 != e_idx_conclusion &&
-          !cut_ancs( x._2 ) ).map( _._1 )
+ //       val ef = p.endSequent( e )
+   //     val ax = LogicalAxiom( ef )
+   //     val main_e = proof.mainIndices( 0 )
+    //    val es = proof.endSequent.zipWithIndex.filter( x => x._2 != main_e &&
+   //       x._2 != e_idx_conclusion &&
+   //       !cut_ancs( x._2 ) ).map( _._1 )
       //  val wax = weakenESAncs( es, Set( ax ) ).
           s1
       case ( false, true ) =>
-        {
           //we first pick our aux formula
           val candidates = a match {
             case Ant( _ ) => s1._2.endSequent.zipWithIndex.antecedent
@@ -350,7 +349,6 @@ object SingleProjection {
             else None
           if(form.nonEmpty) (Some(finproof.endSequent.indexOfInSuc(form.get)), finproof)
           else  (None, finproof)
-        }
       case ( false, false ) =>
         val List( a1_, a2_ ) = pickrule( proof, List( p ), List( s1._2 ), List( e, a ) )
         val finproof  = constructor( s1._2, a1_, a2_, con )
@@ -368,8 +366,8 @@ object SingleProjection {
   def handleStrongQuantRule( proof: LKProof, p: LKProof,
                              constructor: ( LKProof, SequentIndex, Var, Var ) => LKProof,
                              pred:        Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ):(Option[SequentIndex],LKProof) = {
-    val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
-    if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
+    val s = apply( p, copySetToAncestor( proof.occConnectors.head, cut_ancs ), pred )
+    if ( cut_ancs( proof.mainIndices.head ) ) s
     else throw new Exception( "The proof is not skolemized!" )
   }
 }
