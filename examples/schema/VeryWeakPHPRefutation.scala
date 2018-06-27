@@ -5,13 +5,14 @@ import gapt.proofs.Context._
 import gapt.proofs.Context
 import gapt.proofs.Sequent
 import gapt.proofs.gaptic._
-import gapt.proofs.ceres.{ CLS, CharFormPRN, SchematicStruct, Struct }
+import gapt.proofs.ceres._
 import gapt.proofs.lk.LKProof
 
 object VeryWeakPHPRefutation extends TacticsProof( VeryWeakPHPSchema.ctx ) {
   val SCS: Map[CLS, ( Struct, Set[Var] )] = SchematicStruct( "omega" ).getOrElse( Map() )
   val CFPRN = CharFormPRN( SCS )
   CharFormPRN.PR( CFPRN )
+  def sequentForm( input: Expr ) = Viperize( le"omegaSFAF $input" )
   ctx += hoc"Top:nat>nat"
   ctx += hoc"Seq1Make:nat>nat>nat"
   ctx += hoc"Seq2Make:nat>nat>nat"

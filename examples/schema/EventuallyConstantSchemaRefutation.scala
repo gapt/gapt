@@ -10,6 +10,7 @@ object EventuallyConstantSchemaRefutation extends TacticsProof( EventuallyConsta
   val SCS: Map[CLS, ( Struct, Set[Var] )] = SchematicStruct( "phi" ).getOrElse( Map() )
   val CFPRN = CharFormPRN( SCS )
   CharFormPRN.PR( CFPRN )
+  def sequentForm( input: Expr ) = Viperize( le"phiSFAF $input" )
   val sequentForm = Viperize( le"phiSFAF n" )
   ctx += hoc"Top:nat>nat"
   ctx += hoc"Next:nat>i>nat"

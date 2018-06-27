@@ -5,14 +5,22 @@ import gapt.expr.hol.toNNF
 import gapt.proofs.Context.PrimRecFun
 import gapt.proofs.{ MutableContext, Sequent }
 
+import scala.util.matching.Regex
+
 object Viperize {
   def apply( top: Expr )( implicit ctx: MutableContext ): Sequent[Formula] = {
     val newAnte = ctx.normalizer.rules.map( x => {
-      val matrix = Iff( x.lhs, x.rhs )
-      All.Block( freeVariables( matrix ).toSeq, matrix )
+      val pattern = new Regex( "\\S+S[TF]*A[TF]*" )
+      if ( ( pattern findAllIn x.lhs.toString ).nonEmpty ) {
+        val matrix = Imp( x.lhs, x.rhs )
+        All.Block( freeVariables( matrix ).toSeq, matrix )
+      } else if ( x.lhs.ty.toString.matches( "i" ) ) {
+        val matrix = Eq( x.lhs, x.rhs )
+        All.Block( freeVariables( matrix ).toSeq, matrix )
+      } else Bottom()
     } )
     val newSuc = All.Block( freeVariables( top ).toSeq, Imp( top, Bottom() ) )
-    Sequent( newAnte.toSeq, Seq( newSuc ) )
+    Sequent( newAnte.toSeq filterNot ( x => x.alphaEquals( Bottom() ) ), Seq( newSuc ) )
   }
 }
 object CharFormN extends StructVisitor[Formula, Unit] {
