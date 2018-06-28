@@ -156,10 +156,11 @@ object ClassicalExtraction {
     if ( !freeVariables( res ).isEmpty ) {
       //throw new Exception( s"free variables: ${freeVariables( res )}" )
     }
-    //println( res )
+    println( s"before remove empty program and permute em:\n$res" )
     //println( "permuted:" )
     //println( permuteEM( res )( systemT( ctx ) ) )
-    permuteEM( remEmpProg( res ) )
+    //permuteEM( remEmpProg( res ) )
+    permuteEM( res )
     //remEmpProg( res )
     //res
   }
@@ -507,6 +508,7 @@ object ClassicalExtraction {
               val varL = l( aux1 ).asInstanceOf[Var]
               //val varR = r.antecedent.last.asInstanceOf[Var]
               val varR = r( aux2 ).asInstanceOf[Var]
+              assert( varL.ty ->: ty"exn" == varR.ty )
 
               /*
               println( "l.antecedent: " + l.antecedent )
@@ -519,6 +521,7 @@ object ClassicalExtraction {
               println( "l size: " + l.size )
               */
               //val delL = l.delete( Ant( 0 ) ).antecedent
+              println( s"EM1: l deleting @ index $aux1: ${l( aux1 )} (proof term: ${leftSubProof.endSequent( aux1 )})" )
               val delL = l.delete( aux1 ).antecedent
               /*
               println( "delL size: " + delL.size )
@@ -532,12 +535,17 @@ object ClassicalExtraction {
 
               // TODO find index to delete somehow
               //val delR = r.delete( r.indicesSequent.antecedent.last ).antecedent
+              println( s"EM1: r deleting @ index $aux2: ${r( aux2 )} (proof term: ${rightSubProof.endSequent( aux2 )})" )
               val delR = r.delete( aux2 ).antecedent
               /*
               println( "delR size: " + delR.size )
               */
 
+              println( s"EM1: g: $g" )
+              println( s"EM1: g type: ${g.ty}" )
               val res = delL ++: delR ++: Sequent() :+ le"bar2 ${Abs( x, g )} ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
+              println( s"EM1: l suc: ${l( Suc( 0 ) )} (proof term: ${leftSubProof.endSequent( Suc( 0 ) )})" )
+              println( s"EM1: r suc: ${r( Suc( 0 ) )} (proof term: ${rightSubProof.endSequent( Suc( 0 ) )})" )
               println( s"EM1: ${f}, l(Suc(0)).ty: ${l( Suc( 0 ) ).ty}, r(Suc(0)).ty: ${r( Suc( 0 ) ).ty}" )
               println( s"EM1: ${f}, tyL: ${varL.ty}, tyR: ${varR.ty}" )
               println( "res type: " + res( Suc( 0 ) ).ty )
@@ -551,6 +559,7 @@ object ClassicalExtraction {
               val r = extractCases( rightSubProof, ng )
               val varL = l( aux1 ).asInstanceOf[Var]
               val varR = r( aux2 ).asInstanceOf[Var]
+              assert( varL.ty ->: ty"exn" == varR.ty )
               val delL = l.delete( aux1 ).antecedent
               val delR = r.delete( aux2 ).antecedent
               val res = delL ++: delR ++: Sequent() :+ le"bar ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
@@ -692,16 +701,26 @@ object ClassicalExtraction {
           remEmpProgTypes( params ) )( remEmpProg( termm ) )
 
       case App( Const( "inl", TArr( termmtype, TBase( "sum", typeparams ) ), params ), termm ) =>
-        Const(
-          "inl",
-          TArr( remEmpProgType( termmtype ), TBase( "sum", remEmpProgTypes( typeparams ) ) ),
-          remEmpProgTypes( params ) )( remEmpProg( termm ) )
+        if ( remEmpProgType( typeparams( 0 ) ) == emptyType
+          && remEmpProgType( typeparams( 1 ) ) == emptyType ) {
+          empty
+        } else {
+          Const(
+            "inl",
+            TArr( remEmpProgType( termmtype ), TBase( "sum", remEmpProgTypes( typeparams ) ) ),
+            remEmpProgTypes( params ) )( remEmpProg( termm ) )
+        }
 
       case App( Const( "inr", TArr( termmtype, TBase( "sum", typeparams ) ), params ), termm ) =>
-        Const(
-          "inr",
-          TArr( remEmpProgType( termmtype ), TBase( "sum", remEmpProgTypes( typeparams ) ) ),
-          remEmpProgTypes( params ) )( remEmpProg( termm ) )
+        if ( remEmpProgType( typeparams( 0 ) ) == emptyType
+          && remEmpProgType( typeparams( 1 ) ) == emptyType ) {
+          empty
+        } else {
+          Const(
+            "inr",
+            TArr( remEmpProgType( termmtype ), TBase( "sum", remEmpProgTypes( typeparams ) ) ),
+            remEmpProgTypes( params ) )( remEmpProg( termm ) )
+        }
 
       case App( App( App( Const( "matchSum", TArr( TBase( "sum", sumparams ), TArr( leftType, TArr( rightType, resultType ) ) ), params ), in ), left ), right ) =>
         val leftR = remEmpProg( left )
@@ -715,6 +734,19 @@ object ClassicalExtraction {
           "matchSum",
           TArr( remEmpProgType( TBase( "sum", sumparams ) ), TArr( leftRN.ty, TArr( rightRN.ty, resultTypeR ) ) ),
           remEmpProgTypes( params ) )( remEmpProg( in ), leftRN, rightRN )
+
+      case App( App( Const( "bar", TArr( leftType, TArr( rightType, resultType ) ), params ), left ), right ) =>
+        val leftR = remEmpProg( left )
+        val rightR = remEmpProg( right )
+        val ng = new NameGenerator( ( freeVariables( left ) ++ freeVariables( right ) ) map ( _.name ) )
+        val leftRN = if ( remEmpProgType( params( 0 ) ) == emptyType ) Abs( Var( ng.fresh( "x" ), ty"1" ), leftR ) else leftR
+        val rightRN = if ( remEmpProgType( params( 1 ) ) == emptyType ) Abs( Var( ng.fresh( "x" ), ty"1" ), rightR ) else rightR
+        val resultTypeR = remEmpProgType( resultType )
+        if ( resultTypeR == emptyType ) empty
+        else Const(
+          "bar",
+          TArr( leftRN.ty, TArr( rightRN.ty, resultTypeR ) ),
+          remEmpProgTypes( params ) )( leftRN, rightRN )
 
       case App( App( App( Const( "bar2", TArr( predType, TArr( leftType, TArr( rightType, resultType ) ) ), params ), pred ), left ), right ) =>
         val leftR = remEmpProg( left )
@@ -778,6 +810,7 @@ object ClassicalExtraction {
     types.map( remEmpProgType( _ ) )
 
   def permuteEM( term: Expr )( implicit ctx: Context ): Expr = {
+    println( s"permuteEM: $term" )
     term match {
       case App( App( App( Const( "bar", _, _ ), u ), v ), w ) =>
         val wPermuted = permuteEM( w )
