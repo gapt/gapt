@@ -11,7 +11,7 @@ import gapt.proofs.ceres.Pickrule._
 import gapt.proofs.lk._
 import gapt.utils.NameGenerator
 
-object SingleProjection {
+object SingleProjectionWithQuantifiers {
 
   // This method computes the standard projections according to the original CERES definition.
   def apply( proof: LKProof ):LKProof =
@@ -21,7 +21,7 @@ object SingleProjection {
     apply( proof, proof.endSequent.map( _ => false ), pred )._2
 
   def apply( proof: LKProof, cut_ancs: Sequent[Boolean], pred: Formula => Boolean ):(Option[SequentIndex],LKProof) = {
-     apply_( proof, cut_ancs, pred )
+    apply_( proof, cut_ancs, pred )
   }
 
   def apply_( proof: LKProof, cut_ancs: Sequent[Boolean], pred: Formula => Boolean ):(Option[SequentIndex],LKProof) = {
@@ -136,23 +136,23 @@ object SingleProjection {
   def handleBinaryESAnc( proof: LKProof, parent1: LKProof, parent2: LKProof, s1:(Option[SequentIndex],LKProof), s2:(Option[SequentIndex],LKProof),
                          constructor: ( LKProof, SequentIndex, LKProof, SequentIndex ) => LKProof ):(Option[SequentIndex],LKProof) ={
 
-        val form1:Option[Formula] =
-          if(s1._1.nonEmpty)
-            Some(s1._2.endSequent(s1._1.get))
-          else None
-        val form2:Option[Formula] =
-          if(s2._1.nonEmpty)
-            Some(s2._2.endSequent(s1._1.get))
-          else None
-        val List( a1, a2 ) = pickrule( proof, List( parent1, parent2 ), List( s1._2, s2._2 ), List( proof.auxIndices.head.head, proof.auxIndices( 1 ).head ) )
-        val preProof = constructor( s1._2, a1, s2._2, a2 )
-        if(form1.nonEmpty)
-          if(form2.nonEmpty) {
-            val finproof = OrRightRule(preProof, preProof.endSequent.indexOfInSuc(form1.get), preProof.endSequent.indexOfInSuc(form2.get))
-            (Some(finproof.endSequent.indexOfInSuc(finproof.mainFormula)), finproof)
-          }else  (Some(preProof.endSequent.indexOfInSuc(form1.get)), preProof)
-        else if(form2.nonEmpty) (Some(preProof.endSequent.indexOfInSuc(form2.get)), preProof)
-        else (None, preProof)
+    val form1:Option[Formula] =
+      if(s1._1.nonEmpty)
+        Some(s1._2.endSequent(s1._1.get))
+      else None
+    val form2:Option[Formula] =
+      if(s2._1.nonEmpty)
+        Some(s2._2.endSequent(s1._1.get))
+      else None
+    val List( a1, a2 ) = pickrule( proof, List( parent1, parent2 ), List( s1._2, s2._2 ), List( proof.auxIndices.head.head, proof.auxIndices( 1 ).head ) )
+    val preProof = constructor( s1._2, a1, s2._2, a2 )
+    if(form1.nonEmpty)
+      if(form2.nonEmpty) {
+        val finproof = OrRightRule(preProof, preProof.endSequent.indexOfInSuc(form1.get), preProof.endSequent.indexOfInSuc(form2.get))
+        (Some(finproof.endSequent.indexOfInSuc(finproof.mainFormula)), finproof)
+      }else  (Some(preProof.endSequent.indexOfInSuc(form1.get)), preProof)
+    else if(form2.nonEmpty) (Some(preProof.endSequent.indexOfInSuc(form2.get)), preProof)
+    else (None, preProof)
   }
   def getESAncs( proof: LKProof, cut_ancs: Sequent[Boolean] ): HOLSequent =
   //use cut_ancs as characteristic function to filter the the cut-ancestors from the current sequent
@@ -160,11 +160,32 @@ object SingleProjection {
 
   // Handles the case of a binary rule operating on a cut-ancestor.
   def handleBinaryCutAnc(s1:(Option[SequentIndex],LKProof), s2:(Option[SequentIndex],LKProof),
-                         ):(Option[SequentIndex],LKProof) = {
+                        ):(Option[SequentIndex],LKProof) = {
     if(s1._1.nonEmpty){
       if(s2._1.nonEmpty) {
-        val (pL, posL) = (s1._2, s1._1.get)
-        val (pR, posR) = (s2._2,s2._1.get)
+        val Ng = new NameGenerator(s1._2.endSequent.succedent.map(x=>variables(x).map(x => x.name)).flatten++
+          s1._2.endSequent.antecedent.map(x=>variables(x).map(x => x.name)).flatten++
+          s2._2.endSequent.succedent.map(x=>variables(x).map(x => x.name)).flatten++
+          s2._2.endSequent.antecedent.map(x=>variables(x).map(x => x.name)).flatten)
+        val eNg = new ExprNameGenerator(Ng)
+        val (pL, posL) =
+          if (freeVariables(s1._2.endSequent(s1._1.get)).nonEmpty)
+            freeVariables(s1._2.endSequent(s1._1.get)).foldLeft((s1._2, s1._1.get))((preProof, curvar)
+            => {
+              val qproof = ForallRightRule(preProof._1, preProof._2, curvar,eNg.fresh(curvar))
+              (qproof,qproof.mainIndices.head)
+            })
+          else (s1._2, s1._1.get)
+
+        val (pR, posR) =
+          if (freeVariables(s2._2.endSequent(s2._1.get)).nonEmpty)
+            freeVariables(s2._2.endSequent(s2._1.get)).foldLeft((s2._2, s2._1.get))((preProof, curvar)
+            => {
+              val qproof = ForallRightRule(preProof._1, preProof._2, curvar,eNg.fresh(curvar))
+              (qproof,qproof.mainIndices.head)
+            })
+          else   (s2._2,s2._1.get)
+
         val proof = AndRightRule(pL,pL.endSequent(posL),pR, pR.endSequent(posR))
         (Some(proof.endSequent.indexOfInSuc(proof.mainFormula)),proof)
       }
@@ -315,49 +336,49 @@ object SingleProjection {
     //    require( cut_ancs( e_idx_conclusion ) == true, "This is not a proof from the old calculus!" )
     val aux_ca = cut_ancs( proof.mainIndices.head )
     val eq_ca = cut_ancs( e_idx_conclusion )
- //   val mainf = proof.endSequent( proof.mainIndices( 0 ) )
+    //   val mainf = proof.endSequent( proof.mainIndices( 0 ) )
     //val eqf = proof.endSequent( e_idx_conclusion )
     ( aux_ca, eq_ca ) match {
       case ( true, true ) =>
         s1
       case ( true, false ) =>
- //       val ef = p.endSequent( e )
-   //     val ax = LogicalAxiom( ef )
-   //     val main_e = proof.mainIndices( 0 )
-    //    val es = proof.endSequent.zipWithIndex.filter( x => x._2 != main_e &&
-   //       x._2 != e_idx_conclusion &&
-   //       !cut_ancs( x._2 ) ).map( _._1 )
-      //  val wax = weakenESAncs( es, Set( ax ) ).
-          s1
+        //       val ef = p.endSequent( e )
+        //     val ax = LogicalAxiom( ef )
+        //     val main_e = proof.mainIndices( 0 )
+        //    val es = proof.endSequent.zipWithIndex.filter( x => x._2 != main_e &&
+        //       x._2 != e_idx_conclusion &&
+        //       !cut_ancs( x._2 ) ).map( _._1 )
+        //  val wax = weakenESAncs( es, Set( ax ) ).
+        s1
       case ( false, true ) =>
-          //we first pick our aux formula
-          val candidates = a match {
-            case Ant( _ ) => s1._2.endSequent.zipWithIndex.antecedent
-            case Suc( _ ) => s1._2.endSequent.zipWithIndex.succedent
-          }
-          val aux = pick( p, a, candidates )
-          //then add the weakening
-          val wproof = WeakeningLeftRule( s1._2, p.endSequent( e ) )
-          //trace the aux formulas to the new rule
-          val conn = wproof.occConnectors( 0 )
-          val waux = conn.child( aux )
-          val weq = wproof.mainIndices( 0 )
-          require( waux != weq, "Aux formulas must be different!" )
-          //and apply it
-          val finproof = constructor( wproof, weq, waux, con )
-          val form:Option[Formula] =
-            if(s1._1.nonEmpty)
-              Some(s1._2.endSequent(s1._1.get))
-            else None
-          if(form.nonEmpty) (Some(finproof.endSequent.indexOfInSuc(form.get)), finproof)
-          else  (None, finproof)
+        //we first pick our aux formula
+        val candidates = a match {
+          case Ant( _ ) => s1._2.endSequent.zipWithIndex.antecedent
+          case Suc( _ ) => s1._2.endSequent.zipWithIndex.succedent
+        }
+        val aux = pick( p, a, candidates )
+        //then add the weakening
+        val wproof = WeakeningLeftRule( s1._2, p.endSequent( e ) )
+        //trace the aux formulas to the new rule
+        val conn = wproof.occConnectors( 0 )
+        val waux = conn.child( aux )
+        val weq = wproof.mainIndices( 0 )
+        require( waux != weq, "Aux formulas must be different!" )
+        //and apply it
+        val finproof = constructor( wproof, weq, waux, con )
+        val form:Option[Formula] =
+          if(s1._1.nonEmpty)
+            Some(s1._2.endSequent(s1._1.get))
+          else None
+        if(form.nonEmpty) (Some(finproof.endSequent.indexOfInSuc(form.get)), finproof)
+        else  (None, finproof)
       case ( false, false ) =>
         val List( a1_, a2_ ) = pickrule( proof, List( p ), List( s1._2 ), List( e, a ) )
         val finproof  = constructor( s1._2, a1_, a2_, con )
         val form:Option[Formula] =
-             if(s1._1.nonEmpty)
-               Some(s1._2.endSequent(s1._1.get))
-             else None
+          if(s1._1.nonEmpty)
+            Some(s1._2.endSequent(s1._1.get))
+          else None
         if(form.nonEmpty) (Some(finproof.endSequent.indexOfInSuc(form.get)), finproof)
         else  (None, finproof)
 
@@ -373,4 +394,5 @@ object SingleProjection {
     else throw new Exception( "The proof is not skolemized!" )
   }
 }
+
 

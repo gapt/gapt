@@ -12,7 +12,7 @@ object Viperize {
     val newAnte = ctx.normalizer.rules.map( x => {
       val pattern = new Regex( "\\S+S[TF]*A[TF]*" )
       if ( ( pattern findAllIn x.lhs.toString ).nonEmpty ) {
-        val matrix = Imp( x.lhs, x.rhs )
+        val matrix = Iff( x.lhs, x.rhs )
         All.Block( freeVariables( matrix ).toSeq, matrix )
       } else if ( x.lhs.ty.toString.matches( "i" ) ) {
         val matrix = Eq( x.lhs, x.rhs )
