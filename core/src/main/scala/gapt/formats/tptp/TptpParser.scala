@@ -17,6 +17,7 @@ class TptpParser( val input: ParserInput ) extends Parser {
   }
   def not_star_slash = rule { ( noneOf( "*" ).* ~ oneOrMore( "*" ) ~ noneOf( "/*" ) ).* ~ noneOf( "*" ).* }
   def Comma = rule { "," ~ Ws }
+  def Colon = rule { ":" ~ Ws }
 
   def TPTP_file: Rule1[TptpFile] = rule { Ws ~ TPTP_input.* ~ EOI ~> ( TptpFile( _ ) ) }
 
@@ -29,7 +30,8 @@ class TptpParser( val input: ParserInput ) extends Parser {
   def formula_role = rule { atomic_word }
   def annotations = rule { ( Comma ~ general_term ).* }
 
-  def formula = rule { logic_formula }
+  def formula = rule { typed_logic_formula }
+  def typed_logic_formula = rule { logic_formula } //add type annotation
   def logic_formula: Rule1[Formula] = rule { unitary_formula ~ ( binary_nonassoc_part | or_formula_part | and_formula_part ).? }
   def binary_nonassoc_part = rule { binary_connective ~ unitary_formula ~> ( ( a: Formula, c: ( Expr, Expr ) => Formula, b: Formula ) => c( a, b ) ) }
   def or_formula_part = rule { ( "|" ~ Ws ~ unitary_formula ).+ ~> ( ( a: Formula, as: Seq[Formula] ) => Or.leftAssociative( a +: as: _* ) ) }
@@ -104,6 +106,16 @@ class TptpParser( val input: ParserInput ) extends Parser {
   def do_char = rule { capture( do_char_pred ) | ( "\\\\" ~ push( "\\" ) ) | ( "\\\"" ~ push( "\"" ) ) }
   val sg_char_pred = CharPredicate( ' ' to '&', '(' to '[', ']' to '~' )
   def sg_char = rule { capture( sg_char_pred ) | ( "\\\\" ~ push( "\\" ) ) | ( "\\'" ~ push( "'" ) ) }
+
+  def complex_type = rule { basic_type | ( ">" ~ push( ( t1: Ty, t2: Ty ) => t1 -> t2 ) ) }
+  def basic_type = rule {
+    atomic_word ~> (
+      ( name ) => name match {
+        case "$o" => To
+        case "$i" => Ti
+        case name => TBase( name )
+      } )
+  }
 }
 
 object TptpParser {
