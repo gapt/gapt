@@ -1,8 +1,8 @@
-package at.logic.gapt.formats.tptp
+package gapt.formats.tptp
 
 import ammonite.ops.{ FilePath, Path, read }
-import at.logic.gapt.expr._
-import at.logic.gapt.formats.tptp.csv.{ CSVFile, CSVRow }
+import gapt.expr._
+import gapt.formats.tptp.csv.{ CSVFile, CSVRow }
 
 import scala.collection.mutable
 
