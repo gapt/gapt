@@ -3,15 +3,9 @@ package extraction
 import gapt.expr._
 import gapt.proofs.Context
 
-object CodeGenerator {
+object ScalaCodeGenerator extends CodeGenerator {
 
-  def apply( e: Expr, ctx: Context ) = {
-    println( ctx )
-    println( generateBoilerPlate( ctx ) )
-    println( translateLambda( e )( ctx ) )
-  }
-
-  private def generateBoilerPlate( context: Context ) = {
+  def generateBoilerPlate( implicit context: Context ): String = {
     def typeParamToString( param: Ty ) = param.toString.substring( 1 ).toUpperCase()
 
     var definedSumType = false
@@ -128,7 +122,7 @@ if(p3 == 0) {
     }.mkString( "\n" )
   }
 
-  private def toScalaName( c: Const ): String = {
+  def toTerm( c: Const ): String = {
     c match {
       //case Const( "i", _, _ )  => "null"
       case Const( "i", _, _ )  => "()"
@@ -137,22 +131,22 @@ if(p3 == 0) {
       case Const( "<", _, _ )  => "lt"
       case Const( "=", _, _ )  => "eq"
       case Const( "pi1", _, params ) =>
-        s"pi1[${params.map( toScalaType( _ ) ).mkString( "," )}]"
+        s"pi1[${params.map( toType( _ ) ).mkString( "," )}]"
       case Const( "pi2", _, params ) =>
-        s"pi2[${params.map( toScalaType( _ ) ).mkString( "," )}]"
+        s"pi2[${params.map( toType( _ ) ).mkString( "," )}]"
       case Const( "natRec", _, params ) =>
-        s"natRec[${params.map( toScalaType( _ ) ).mkString( "," )}]"
+        s"natRec[${params.map( toType( _ ) ).mkString( "," )}]"
       case Const( "pair", _, params ) =>
-        s"pair[${params.map( toScalaType( _ ) ).mkString( "," )}]"
+        s"pair[${params.map( toType( _ ) ).mkString( "," )}]"
       case Const( "inl", _, params ) =>
-        s"inl[${params.map( toScalaType( _ ) ).mkString( "," )}]"
+        s"inl[${params.map( toType( _ ) ).mkString( "," )}]"
       case Const( "inr", _, params ) =>
-        s"inr[${params.map( toScalaType( _ ) ).mkString( "," )}]"
+        s"inr[${params.map( toType( _ ) ).mkString( "," )}]"
       case _ => c.name
     }
   }
 
-  private def toScalaType( t: Ty ): String = {
+  def toType( t: Ty ): String = {
     t match {
       //case TBase( "1", Nil ) => "Null"
       case TBase( "1", Nil ) => "Unit"
@@ -160,45 +154,23 @@ if(p3 == 0) {
         | TBase( "i", Nil ) => "Int"
       case TBase( "o", Nil )       => "Boolean"
       case TBase( "exn", Nil )     => "Exception"
-      case TBase( "<", Nil )       => "Lt"
-      case TBase( "<=", Nil )      => "Leq"
-      case TBase( "eq", Nil )      => "Eq"
-      case TBase( "f", Nil )       => "F"
-      case TBase( "conj", params ) => s"(${toScalaType( params( 0 ) )}, ${toScalaType( params( 1 ) )})"
-      case TBase( "sum", params )  => s"Sum[${toScalaType( params( 0 ) )}, ${toScalaType( params( 1 ) )}]"
-      case TArr( t1, t2 )          => s"(${toScalaType( t1 )} => ${toScalaType( t2 )})"
+      case TBase( "conj", params ) => s"(${toType( params( 0 ) )}, ${toType( params( 1 ) )})"
+      case TBase( "sum", params )  => s"Sum[${toType( params( 0 ) )}, ${toType( params( 1 ) )}]"
+      case TArr( t1, t2 )          => s"(${toType( t1 )} => ${toType( t2 )})"
       case _                       => t.toString
     }
   }
 
-  private def translateLambda( e: Expr )( implicit ctx: Context ): String = {
+  def translate( e: Expr )( implicit ctx: Context ): String = {
     e match {
       case App( e1, e2 ) =>
-        /*
-        val e1ScalaType = toScalaType( e1.ty )
-        val e2ScalaType = toScalaType( e2.ty )
-        s"app[$e1ScalaType,$e2ScalaType](${translateLambda( e1 )})(${translateLambda( e2 )})"
-        */
-        s"${translateLambda( e1 )}(${translateLambda( e2 )})"
+        s"${translate( e1 )}(${translate( e2 )})"
       case Abs( v, e ) =>
-        val vScalaType = toScalaType( v.ty )
-        s"({\n  ${v.name} : $vScalaType => ${translateLambda( e )}})"
+        s"({\n  ${v.name} : ${toType( v.ty )} => ${translate( e )}})"
       case Var( name, _ ) =>
         name
       case c: Const =>
-        toScalaName( c )
-      case _ =>
-        ???
+        toTerm( c )
     }
   }
-
-  def app[A, B]( x: A => B )( arg: A ): B = x( arg )
-
-  def test( p: Int ): Int = {
-    val x: Null = null
-    val z = { x: Int => x }.apply( 1 )
-
-    app( { y: Int => y + 1 } )( 1 )
-  }
-
 }

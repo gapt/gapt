@@ -118,7 +118,7 @@ object ClassicalExtraction {
     /*
     // With dependent types:
     val eq = ty"eq ?a"
-    val refl = hoc"refl{?a}: ?a > (eq ?a)"
+    val refl = hoc"refl{?a}: ?a b (eq ?a)"
     systemT += InductiveType( eq, refl )
     */
     val eq = ty"eq"
@@ -149,18 +149,24 @@ object ClassicalExtraction {
   }
 
   def extractCases( proof: NDProof )( implicit ctx: Context ): Expr = {
-    val ng = new NameGenerator( freeVariables( proof.conclusion ).map( _.name ) )
+    val evs = proof.subProofs.collect {
+      case ForallIntroRule( _, ev, _ ) => Seq( ev )
+      case InductionRule( cases, _, _ ) => cases( 1 ).eigenVars
+    }.flatten.map( _.name )
+    val ng = new NameGenerator( evs )
     val lambda = extractCases( proof, ng )( systemT( ctx ) )
     //val res = lambda( Suc( 0 ) )
+    lambda.antecedent.foreach( e => println( s"abstracting ${e.asInstanceOf[Var]}" ) )
     val res = lambda.antecedent.fold( lambda( Suc( 0 ) ) )( ( agg, v ) => Abs( v.asInstanceOf[Var], agg ) )
     if ( !freeVariables( res ).isEmpty ) {
       //throw new Exception( s"free variables: ${freeVariables( res )}" )
     }
-    println( s"before remove empty program and permute em:\n$res" )
+    //println( s"before remove empty program and permute em:\n$res" )
     //println( "permuted:" )
     //println( permuteEM( res )( systemT( ctx ) ) )
     //permuteEM( remEmpProg( res ) )
-    permuteEM( res )
+    //permuteEM( res )
+    res
     //remEmpProg( res )
     //res
   }
@@ -362,7 +368,7 @@ object ClassicalExtraction {
         case ForallIntroRule( subProof, eigenVariable, quantifiedVariable ) =>
           val s = extractCases( subProof, ng )
           val res = s.replaceAt( Suc( 0 ), Abs( eigenVariable, s( Suc( 0 ) ) ) )
-          //println( "AllIntro" )
+          //println( s"AllIntro, $eigenVariable, $quantifiedVariable" )
           res
 
         case ForallElimRule( subProof, term ) =>
@@ -427,13 +433,13 @@ object ClassicalExtraction {
           println( "free vars inductionCase suc 0: " + freeVariables( inductionCase( Suc( 0 ) ) ) )
           */
           val varsH = inductionCase( cases( 1 ).hypotheses ).asInstanceOf[Seq[Var]]
+          /*
           println( "inductionCase hyps: " + inductionCase( cases( 1 ).hypotheses ) )
           println( "baseCase suc 0: " + baseCase( Suc( 0 ) ) )
           println( "inductionCase suc 0: " + inductionCase( Suc( 0 ) ) )
           println( "term: " + term )
           println( "cases 0: " + cases( 0 ).proof.endSequent )
           println( "cases 1: " + cases( 1 ).proof.endSequent )
-          /*
           */
           val res = baseCase.antecedent ++: inductionCaseDel.antecedent ++: Sequent() :+
             le"natRec(${baseCase( Suc( 0 ) )})(${Abs( cases( 1 ).eigenVars, Abs( varsH, inductionCase( Suc( 0 ) ) ) )})($term)"
@@ -521,7 +527,7 @@ object ClassicalExtraction {
               println( "l size: " + l.size )
               */
               //val delL = l.delete( Ant( 0 ) ).antecedent
-              println( s"EM1: l deleting @ index $aux1: ${l( aux1 )} (proof term: ${leftSubProof.endSequent( aux1 )})" )
+              //println( s"EM1: l deleting @ index $aux1: ${l( aux1 )} (proof term: ${leftSubProof.endSequent( aux1 )})" )
               val delL = l.delete( aux1 ).antecedent
               /*
               println( "delL size: " + delL.size )
@@ -535,21 +541,21 @@ object ClassicalExtraction {
 
               // TODO find index to delete somehow
               //val delR = r.delete( r.indicesSequent.antecedent.last ).antecedent
-              println( s"EM1: r deleting @ index $aux2: ${r( aux2 )} (proof term: ${rightSubProof.endSequent( aux2 )})" )
+              //println( s"EM1: r deleting @ index $aux2: ${r( aux2 )} (proof term: ${rightSubProof.endSequent( aux2 )})" )
               val delR = r.delete( aux2 ).antecedent
               /*
               println( "delR size: " + delR.size )
               */
 
-              println( s"EM1: g: $g" )
-              println( s"EM1: g type: ${g.ty}" )
+              //println( s"EM1: g: $g" )
+              //println( s"EM1: g type: ${g.ty}" )
               val res = delL ++: delR ++: Sequent() :+ le"bar2 ${Abs( x, g )} ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
+              /*
               println( s"EM1: l suc: ${l( Suc( 0 ) )} (proof term: ${leftSubProof.endSequent( Suc( 0 ) )})" )
               println( s"EM1: r suc: ${r( Suc( 0 ) )} (proof term: ${rightSubProof.endSequent( Suc( 0 ) )})" )
               println( s"EM1: ${f}, l(Suc(0)).ty: ${l( Suc( 0 ) ).ty}, r(Suc(0)).ty: ${r( Suc( 0 ) ).ty}" )
               println( s"EM1: ${f}, tyL: ${varL.ty}, tyR: ${varR.ty}" )
               println( "res type: " + res( Suc( 0 ) ).ty )
-              /*
               println( "res size: " + res.size )
               */
               res
@@ -564,7 +570,7 @@ object ClassicalExtraction {
               val delR = r.delete( aux2 ).antecedent
               val res = delL ++: delR ++: Sequent() :+ le"bar ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
               //val res = l.delete( aux1 ).antecedent ++: r.delete( aux2 ).antecedent ++: Sequent() :+ le"bar ${l( Suc( 0 ) )} ${r( Suc( 0 ) )}"
-              println( s"EM0: ${f}" )
+              //println( s"EM0: ${f}" )
               res
           }
       }
@@ -810,7 +816,6 @@ object ClassicalExtraction {
     types.map( remEmpProgType( _ ) )
 
   def permuteEM( term: Expr )( implicit ctx: Context ): Expr = {
-    println( s"permuteEM: $term" )
     term match {
       case App( App( App( Const( "bar", _, _ ), u ), v ), w ) =>
         val wPermuted = permuteEM( w )
