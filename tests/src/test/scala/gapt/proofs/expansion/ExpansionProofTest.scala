@@ -6,7 +6,7 @@ import gapt.expr._
 import gapt.formats.ClasspathInputFile
 import gapt.formats.llk.LLKProofParser
 import gapt.proofs.{ Context, Sequent, SequentMatchers }
-import gapt.proofs.lk.{ eliminateDefinitions, LKToExpansionProof }
+import gapt.proofs.lk.{ LKToExpansionProof, eliminateDefinitions }
 import gapt.provers.escargot.Escargot
 import gapt.provers.verit.VeriT
 import gapt.utils.SatMatchers
