@@ -5,7 +5,7 @@ import gapt.expr.hol.{ instantiate, simplify, universalClosure }
 import gapt.formats.babel.Notation
 import gapt.proofs.Context.{ InductiveType, PrimRecFun, ProofNames, SkolemFun }
 import gapt.proofs.epsilon.EpsilonC
-import gapt.proofs.{ Context, HOLSequent, ImmutableContext, Sequent, SequentConnector, Suc }
+import gapt.proofs.{ Context, HOLSequent, ImmutableContext, ProofBuilder, Sequent, SequentConnector, Suc }
 import gapt.proofs.gaptic._
 import gapt.proofs.lk._
 import gapt.utils.LogHandler
@@ -243,6 +243,8 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
 
     def proof: LKProof = combined( excluded = _ => true )
     def formula: Formula = ctx.get[ProofNames].lookup( proofName ).get.succedent.head
+
+    def number: Int = allProofs.indexWhere( _._1 == name )
 
     /**
      * The set of previous lemmas used in the proof of this lemma.

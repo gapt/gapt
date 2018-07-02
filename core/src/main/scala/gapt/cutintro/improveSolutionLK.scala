@@ -1,9 +1,9 @@
 package gapt.cutintro
 
 import gapt.expr._
-import gapt.expr.hol.{ CNFp, instantiate, lcomp, simplify }
+import gapt.expr.hol.{ CNFp, lcomp, simplify }
 import gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
-import gapt.proofs.{ FOLClause, RichFOLSequent, Sequent }
+import gapt.proofs.{ FOLClause, HOLClause, HOLSequent, RichFOLSequent, Sequent }
 import gapt.provers.Prover
 import gapt.provers.Session._
 import cats.implicits._
@@ -31,7 +31,10 @@ object improveSolutionLK {
         case ( ev, instanceTerms ) =>
           for ( terms <- instanceTerms ) yield FOLSubstitution( ev zip terms )
       }
-      formulasInImprovement( i ) = improve( context, formulasInImprovement( i ), instances toSet, prover, hasEquality, forgetOne )
+      formulasInImprovement( i ) =
+        improve( context, formulasInImprovement( i ),
+          instances.toSet, prover, hasEquality, forgetOne ).
+          asInstanceOf[FOLFormula]
     }
 
     if ( minimizeBack && formulasInImprovement.size == 1 ) {
@@ -52,16 +55,16 @@ object improveSolutionLK {
    * @param prover  Prover to check the validity of the constraint.
    * @param hasEquality  If set to true, use forgetful paramodulation in addition to resolution.
    */
-  private def improve( context: Sequent[FOLFormula], start: FOLFormula, instances: Set[FOLSubstitution], prover: Prover,
-                       hasEquality: Boolean, forgetOne: Boolean ): FOLFormula = {
+  def improve( context: HOLSequent, start: Formula, instances: Set[Substitution], prover: Prover,
+               hasEquality: Boolean, forgetOne: Boolean ): Formula = {
     val names = containedNames( instances ) ++ containedNames( start ) ++ containedNames( context.elements )
     val nameGen = rename.awayFrom( names )
     val grounding = Substitution( for ( v <- freeVariables( start +: context.elements ) ++ instances.flatMap( _.range ) )
       yield v -> Const( nameGen.fresh( v.name ), v.ty ) )
     val groundInstances = instances.map( grounding.compose )
-    val isSolution = mutable.Map[Set[FOLClause], Boolean]()
+    val isSolution = mutable.Map[Set[HOLClause], Boolean]()
 
-    def checkSolution( cnf: Set[FOLClause] ): Session[Unit] = when( !isSolution.contains( cnf ) ) {
+    def checkSolution( cnf: Set[HOLClause] ): Session[Unit] = when( !isSolution.contains( cnf ) ) {
       val clauses = for ( inst <- groundInstances; clause <- cnf ) yield inst( clause.toDisjunction )
 
       withScope( assert( clauses.toList ) >> checkUnsat ).flatMap { isSolOrUnknown =>

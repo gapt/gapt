@@ -2,7 +2,6 @@ package gapt.examples
 
 import gapt.examples.tip.grammars._
 import gapt.examples.tip.isaplanner._
-import gapt.formats.tip.TipSmtParser
 import gapt.provers.maxsat.OpenWBO
 import org.specs2.mutable.Specification
 

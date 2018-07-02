@@ -13,7 +13,7 @@ class Z3( val logic: String ) extends IncrementalProver with ExternalProgram {
 
   override def runSession[A]( program: Session[A] ) = {
     val runner = new ExternalSMTLibSessionRunner( "z3", "-smt2", "-in" )
-    val result = runner.run( setLogic( logic ) followedBy program )
+    val result = runner.run( setLogic( logic ) *> program )
     runner.process.destroy()
 
     result

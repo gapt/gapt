@@ -38,8 +38,4 @@ class FileParser( main: ProofToolViewer[_] ) {
 
   private var proofdb = ExtendedProofDatabase( Map(), Map(), Map() )
   private var resProofs: List[( String, ResolutionProof )] = Nil
-
-  object TermType extends Enumeration {
-    val ClauseTerm, ProjectionTerm, ResolutionTerm, Unknown = Value
-  }
 }

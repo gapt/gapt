@@ -22,7 +22,7 @@ class CVC4( val logic: String, val extraArgs: Seq[String] = Seq(),
 
   override def runSession[A]( program: Session[A] ) = {
     val runner = new ExternalSMTLibSessionRunner( Seq( "cvc4", "--lang", "smt", "--incremental" ) ++ extraArgs: _* )
-    val result = runner.run( setLogic( logic ) followedBy program )
+    val result = runner.run( setLogic( logic ) *> program )
     runner.process.destroy()
 
     result

@@ -13,7 +13,7 @@ object SmtLibExporter {
    * @param s Sequent to export.
    * @return SMT-LIB benchmark.
    */
-  def apply( s: HOLSequent ): ( String, Map[TBase, TBase], Map[Const, Const] ) = {
+  def apply( s: HOLSequent, lineWidth: Int = 80 ): ( String, Map[TBase, TBase], Map[Const, Const] ) = {
     val p = for {
       _ <- setLogic( "QF_UF" )
       _ <- declareSymbolsIn( s.elements )
@@ -21,7 +21,7 @@ object SmtLibExporter {
       _ <- checkSat
     } yield ()
 
-    val benchmarkRecorder = new BenchmarkRecorder
+    val benchmarkRecorder = new BenchmarkRecorder( lineWidth )
 
     benchmarkRecorder.run( p )
 

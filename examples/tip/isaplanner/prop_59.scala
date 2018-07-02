@@ -33,5 +33,6 @@ object prop_59 extends TacticsProof {
   val proof_1 = Lemma( sequent ) {
     introUnivsExcept( 0 )
     treeGrammarInduction
+      .useInterpolation
   }
 }
