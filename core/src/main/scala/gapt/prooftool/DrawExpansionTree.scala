@@ -12,6 +12,7 @@ import org.scilab.forge.jlatexmath.{ TeXConstants, TeXFormula }
 import java.awt.image.BufferedImage
 
 import gapt.formats.latex.LatexExporter
+import gapt.utils.ExceptionTag
 
 object ExpansionTreeState extends Enumeration {
   val Closed, Open, Expanded = Value
@@ -424,7 +425,7 @@ class DrawETQuantifierBlock(
  * Draws an expansion tree not beginning with a quantifier block.
  * @param main The main prooftool window that this belongs to.
  * @param expansionTree The expansion tree being displayed.
- * @param outerQuantifier The object drawing the quantifier imeediately outside this one (if any).
+ * @param outerQuantifier The object drawing the quantifier immediately outside this one (if any).
  */
 class DrawETNonQuantifier(
     main:            ProofToolViewer[_],
@@ -520,6 +521,32 @@ class DrawETNonQuantifier(
       contents += subF2
       contents += parentheses._2
       Vector( subF1, subF2 )
+
+    case ETMerge( t1, t2 ) =>
+      val parentheses = connectedParentheses()
+      val conn = label( "⊔" )
+      val subF1 = DrawExpansionTree( main, t1, outerQuantifier )
+      val subF2 = DrawExpansionTree( main, t2, outerQuantifier )
+      this.listenTo( conn.mouse.moves, parentheses._1.mouse.moves, parentheses._2.mouse.moves )
+      this.reactions += {
+        case _: MouseEntered =>
+          conn.foreground = highlightColor
+          parentheses._1.foreground = highlightColor
+          parentheses._2.foreground = highlightColor
+        case _: MouseExited =>
+          conn.foreground = Color.black
+          parentheses._1.foreground = Color.black
+          parentheses._2.foreground = Color.black
+      }
+      contents += parentheses._1
+      contents += subF1
+      contents += conn
+      contents += subF2
+      contents += parentheses._2
+      Vector( subF1, subF2 )
+
+    case x =>
+      throw new Exception( "Could not match an ET!" ) with ExceptionTag[ExpansionTree] { val tag = x }
   }
 }
 

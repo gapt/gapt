@@ -32,6 +32,7 @@ class ViperTest extends Specification with SequentMatchers {
         var opts0 = ViperOptions( fixup = false )
         if ( prob == "linear2par" ) skipped( "multi-parameter not integrated here" )
         if ( prob == "prod_prop_31" ) {
+          skipped( "tip tools horribly broken" )
           if ( !TipSmtImporter.isInstalled )
             skipped( "tip tool required for preprocessing" )
           opts0 = opts0.copy( fixup = true )
