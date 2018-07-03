@@ -49,23 +49,21 @@ object ProofCollectionCodec {
    * Decodes a proof collection.
    */
   def proofCollectionDecoder[P <: DagProof[P]]( decodeProof: ( String, ACursor, Decoder[P] ) => Result[P] ): Decoder[ProofCollection[P]] = Decoder.decodeMap[Int, Json] emap { jsonMap =>
-    var proofMap: Map[Int, Eval[Result[P]]] = Map.empty
-    val numDecoder: Decoder[P] = Decoder.decodeInt.emap { i =>
+    lazy val proofMap: Map[Int, Eval[Result[P]]] = jsonMap map { case ( i, j ) => ( i, Later( j.as[P] ) ) }
+    lazy val numDecoder: Decoder[P] = Decoder.decodeInt.emap { i =>
       proofMap.get( i ) match {
         case Some( e ) => e.value.leftMap( _.message )
         case None      => Left( s"Proof $i not found" )
       }
     }
 
-    implicit val proofDecoder: Decoder[P] = c => {
+    implicit lazy val proofDecoder: Decoder[P] = c => {
       val d = c.downField( "name" )
       d.as[String].flatMap { name =>
         val e = d.delete
         decodeProof( name, e, numDecoder )
       }
     }
-
-    proofMap = jsonMap map { case ( i, j ) => ( i, Later( j.as[P] ) ) }
 
     val forced: List[( Result[P], Int )] = proofMap.toList.map {
       case ( i, e ) => ( e.value, i )
