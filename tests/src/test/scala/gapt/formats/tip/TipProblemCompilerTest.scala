@@ -212,4 +212,21 @@ class TipProblemCompilerTest extends Specification {
       """.stripMargin ) ).compileTipProblem.toProblem
     inputProblem.ctx.constants.toSet must contain( hoc"a : o" )
   }
+
+  "Compiler should simplify constructor match-expressions" in {
+    val inputProblem = new TipSmtToTipProblemCompiler( TipSmtParser.parse(
+      """
+        |(declare-datatypes ()
+        |  ((Nat (Z) (S (P Nat)))))
+        |
+        |(prove
+        |      (match Z
+        |        (case Z true)
+        |         ( case (S x) false ) ) )
+      """.stripMargin ) ).compileTipProblem.toProblem
+
+    implicit val ctx = inputProblem.ctx
+
+    inputProblem.goal must_== hof"⊤"
+  }
 }

@@ -5,7 +5,7 @@ import gapt.expr.hol.{ instantiate, simplify, universalClosure }
 import gapt.formats.babel.Notation
 import gapt.proofs.Context.{ InductiveType, PrimRecFun, ProofNames, SkolemFun }
 import gapt.proofs.epsilon.EpsilonC
-import gapt.proofs.{ Context, HOLSequent, ImmutableContext, Sequent, SequentConnector, Suc }
+import gapt.proofs.{ Context, HOLSequent, ImmutableContext, ProofBuilder, Sequent, SequentConnector, Suc }
 import gapt.proofs.gaptic._
 import gapt.proofs.lk._
 import gapt.utils.LogHandler

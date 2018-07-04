@@ -29,8 +29,8 @@ object eliminateMerges {
       case tree: ETSkolemQuantifier => tree.copy( child = merge( tree.child ) )
     }
     def merge2( tree1: ExpansionTree, tree2: ExpansionTree ): ExpansionTree = ( tree1, tree2 ) match {
-      case ( _: ETWeakening, s ) => merge( s )
-      case ( t, _: ETWeakening ) => merge( t )
+      case ( t: ETWeakening, s ) => merge( s )
+      case ( t, s: ETWeakening ) => merge( t )
       case ( ETMerge( t1, t2 ), s ) if !s.isInstanceOf[ETSkolemQuantifier] =>
         merge2( t1, t2 ) match {
           case t: ETMerge => ETMerge( t, merge( s ) )
@@ -70,16 +70,24 @@ object eliminateMerges {
         skolemDefs += ( st2 -> sd2 )
         ETMerge( merge( tree2 ), merge( tree1 ) )
       case ( ETSkolemQuantifier( shallow, st1, sf1, t1 ), ETSkolemQuantifier( _, st2, sf2, t2 ) ) if st1 == st2 =>
+        // the st1 != st2 case is handled by the default case
         ETSkolemQuantifier( shallow, st1, sf1, merge2( t1, t2 ) )
       case ( ETMerges( ts0 ), s: ETSkolemQuantifier ) =>
-        val ts = ts0 :+ s
+        // Skolem quantifier inferences on different skolem terms s1 and s2 are preserved
+        // as ETMerge(s1, s2). Group skolem ETs by skolem term and merge; also merge
+        // non-skolem ETs. Return ETMerges( non_sk +: sk1 +: sk2 +: ... ) where non_sk is
+        // the non-skolem ET and sk1, sk2, ... have different skolem terms.
+        val ts = ( ts0 :+ s ).filterNot( _.isInstanceOf[ETWeakening] )
         ( ts.filterNot( _.isInstanceOf[ETSkolemQuantifier] ).reduceOption( merge2 ).toSeq ++
-          ts.collect { case t: ETSkolemQuantifier => t }.
-          groupBy( _.skolemTerm ).map {
+          ts.collect { case t @ ETSkolemQuantifier( _, _, _, _ ) => t }
+          .groupBy( _.skolemTerm ).map {
             case ( _, Vector( tree ) ) => merge( tree )
             case ( _, trees )          => trees.reduce( merge2 )
           } ).reduce( ETMerge( _, _ ) )
-      case ( t, s ) => ETMerge( merge( t ), merge( s ) )
+      case ( s: ETSkolemQuantifier, t @ ETMerges( ts0 ) ) =>
+        merge2( t, s )
+      case ( t, s ) =>
+        ETMerge( merge( t ), merge( s ) )
     }
 
     val mergedSequent = expansionSequent map merge

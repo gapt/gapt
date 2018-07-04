@@ -41,3 +41,11 @@ object numberOfInstancesET {
   def apply( s: ExpansionSequent ): Int = s.elements map apply sum
   def apply( ep: ExpansionProof ): Int = apply( ep.expansionSequent )
 }
+
+/**
+ * Extracts all merge ETs from an expansion proof.
+ */
+object findMerges {
+  def apply( t: ExpansionProof ): Set[ExpansionTree] =
+    t.subProofs.collect( { case x @ ETMerge( _, _ ) => x } )
+}

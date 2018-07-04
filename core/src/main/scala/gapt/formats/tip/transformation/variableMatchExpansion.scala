@@ -22,7 +22,8 @@ import gapt.formats.tip.parser.TipSmtOr
 import gapt.formats.tip.parser.TipSmtProblem
 import gapt.formats.tip.parser.TipSmtType
 import gapt.formats.tip.parser.TipSmtVariableDecl
-import gapt.formats.tip.util.TipSubstitute
+import gapt.formats.tip.util.Substitution
+import gapt.formats.tip.util.Substitute
 
 object expandVariableMatchExpressions extends TipSmtProblemTransformation {
   override def transform( problem: TipSmtProblem ): TipSmtProblem =
@@ -192,17 +193,16 @@ class VariableMatchExpansion( problem: TipSmtProblem ) {
       case Exists => TipSmtExists
     }
     if ( boundVariables.isEmpty )
-      new TipSubstitute( problem )(
+      new Substitute( problem )(
         tipSmtCase.expr,
-        variable.name,
-        patternToExpression( pattern ) )
+        Substitution( variable ->
+          patternToExpression( pattern ) ) )
     else
       quantifier(
         boundVariables,
-        ( new TipSubstitute( problem ) )(
+        ( new Substitute( problem ) )(
           tipSmtCase.expr,
-          variable.name,
-          patternToExpression( pattern ) ) )
+          Substitution( variable -> patternToExpression( pattern ) ) ) )
   }
 
   /**

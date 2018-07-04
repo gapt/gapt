@@ -2,7 +2,7 @@ package gapt.proofs.resolution
 
 import gapt.expr._
 import gapt.expr.hol.instantiate
-import gapt.proofs.{ Ant, SequentConnector, Sequent, SequentIndex, Suc }
+import gapt.proofs.{ Ant, ProofBuilder, Sequent, SequentConnector, SequentIndex, Suc }
 import gapt.proofs.lk._
 
 import scala.collection.mutable

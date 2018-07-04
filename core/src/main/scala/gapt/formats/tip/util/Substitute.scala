@@ -1,5 +1,6 @@
 package gapt.formats.tip.util
 
+import gapt.formats.tip.analysis.SymbolTable
 import gapt.formats.tip.parser.TipSmtAnd
 import gapt.formats.tip.parser.TipSmtCase
 import gapt.formats.tip.parser.TipSmtConstructorPattern
@@ -26,7 +27,16 @@ import gapt.utils.NameGenerator
  *
  * @param problem The problem in which substitutions are to be carried out.
  */
-class TipSubstitute( val problem: TipSmtProblem ) {
+class Substitute( private val problem: TipSmtProblem ) {
+
+  private val symbolTable = SymbolTable( problem )
+
+  private implicit val p: TipSmtProblem = problem
+
+  private def createNameGenerator(
+    blacklist: Iterable[String] ): NameGenerator = {
+    new NameGenerator( blacklist ++ symbolTable.symbols )
+  }
 
   /**
    * Renames the variables introduced by a case-statement away from
@@ -42,7 +52,7 @@ class TipSubstitute( val problem: TipSmtProblem ) {
     blacklist:  Seq[String] ): TipSmtCase = {
     val TipSmtConstructorPattern( constructor, fields ) = tipSmtCase.pattern
     val oldNames = fields.map { _.name }
-    val nameGenerator = new NameGenerator(
+    val nameGenerator = createNameGenerator(
       constructor.name +: ( oldNames ++ blacklist ) )
     val newNames =
       oldNames map { oldName =>
@@ -54,14 +64,6 @@ class TipSubstitute( val problem: TipSmtProblem ) {
       }
     caseChangeVariableNames( tipSmtCase, oldNames, newNames )
   }
-
-  type Substitution = Map[TipSmtIdentifier, TipSmtExpression]
-
-  def apply(
-    expr:     TipSmtExpression,
-    variable: String,
-    term:     TipSmtExpression ): TipSmtExpression =
-    apply( expr, Map( TipSmtIdentifier( variable ) -> term ) )
 
   /**
    * Substitutes a name by a given expression.
@@ -113,10 +115,7 @@ class TipSubstitute( val problem: TipSmtProblem ) {
         TipSmtNot( apply( expr.expr, substitution ) )
 
       case identifier @ TipSmtIdentifier( _ ) =>
-        substitution.get( identifier ) match {
-          case Some( replacement ) => replacement
-          case _                   => identifier
-        }
+        substitution.get( identifier )
 
       case TipSmtTrue =>
         TipSmtTrue
@@ -160,7 +159,7 @@ class TipSubstitute( val problem: TipSmtProblem ) {
   /**
    * Abstracts the constructors TipSmtForall and TipSmtExists.
    */
-  type QuantifiedExpressionConstructor = //
+  private type QuantifiedExpressionConstructor = //
   ( Seq[TipSmtVariableDecl], TipSmtExpression ) => TipSmtExpression
 
   /**
@@ -187,13 +186,12 @@ class TipSubstitute( val problem: TipSmtProblem ) {
         !variables.map { _.name }.contains( identifier.name )
     }
 
-    val substFreeVars: Set[String] =
-      newSubstitution.values.flatMap { freeVariables( problem, _ ) } toSet
+    val substFreeVars: Set[String] = newSubstitution.range.map { _.name }
 
     val nameGenerator =
-      new NameGenerator(
+      createNameGenerator(
         substFreeVars ++
-          newSubstitution.keys.map { _.name } ++
+          newSubstitution.domain.map { _.name } ++
           freeVariables( problem, formula ) )
 
     val newQuantifiedVariables = variables.map {
@@ -205,7 +203,7 @@ class TipSubstitute( val problem: TipSmtProblem ) {
     }
 
     val variableSubstitution: Substitution =
-      Map[TipSmtIdentifier, TipSmtExpression](
+      Substitution(
         variables
           .map { v => TipSmtIdentifier( v.name ) }
           .zip(
@@ -234,13 +232,12 @@ class TipSubstitute( val problem: TipSmtProblem ) {
       case ( identifier, _ ) => !boundVariables.contains( identifier )
     }
 
-    val substFreeVars: Set[String] =
-      newSubstitution.values.flatMap { freeVariables( problem, _ ) } toSet
+    val substFreeVars: Set[String] = newSubstitution.range.map { _.name }
 
     val nameGenerator =
-      new NameGenerator(
+      createNameGenerator(
         substFreeVars ++
-          newSubstitution.keys.map { _.name } ++
+          newSubstitution.domain.map { _.name } ++
           freeVariables( problem, cas.expr ) )
 
     val newBoundVariables = boundVariables map {
@@ -251,8 +248,8 @@ class TipSubstitute( val problem: TipSmtProblem ) {
           boundName
     }
 
-    val variableSubstitution: Substitution = Map(
-      boundVariables zip newBoundVariables: _* )
+    val variableSubstitution: Substitution =
+      Substitution( boundVariables zip newBoundVariables: _* )
 
     val newExpr = apply( cas.expr, variableSubstitution )
 
@@ -275,14 +272,14 @@ class TipSubstitute( val problem: TipSmtProblem ) {
     tipSmtCase:    TipSmtCase,
     oldNames:      Seq[String],
     newBoundNames: Seq[String] ): TipSmtCase = {
-    val TipSmtConstructorPattern( constructor, fields ) = tipSmtCase.pattern
+    val TipSmtConstructorPattern( constructor, _ ) = tipSmtCase.pattern
     val newPattern = TipSmtConstructorPattern(
       constructor,
       newBoundNames.map { TipSmtIdentifier } )
     val newExpression =
       apply(
         tipSmtCase.expr,
-        Map(
+        Substitution(
           oldNames
             .map { TipSmtIdentifier }
             .zip( newBoundNames map { TipSmtIdentifier } ): _* ) )
