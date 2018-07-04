@@ -11,20 +11,20 @@ import cats.implicits._
  * Wraps a map from proofs to integers. Each proof must be mapped to a
  * higher number than its subproofs.
  */
-class ProofCollection[P <: DagProof[P]] private ( val proofMap: Map[P, Int] ) extends AnyVal
+private[json] class ProofCollection[P <: DagProof[P]] private ( val proofMap: Map[P, Int] ) extends AnyVal
 
 object ProofCollection {
   /**
    * Creates a [[ProofCollection]] from a proof by
    * enumerating all its subproofs in post order, disregarding duplicates.
    */
-  def apply[P <: DagProof[P]]( p: P ): ProofCollection[P] = ProofCollection( p.dagLike.postOrder.zipWithIndex.toMap )
+  private[json] def apply[P <: DagProof[P]]( p: P ): ProofCollection[P] = ProofCollection( p.dagLike.postOrder.zipWithIndex.toMap )
 
   /**
    * Creates a [[ProofCollection]] from a map. Each proof
    * must be mapped to a higher number than its subproofs.
    */
-  def apply[P <: DagProof[P]]( m: Map[P, Int] ): ProofCollection[P] = {
+  private[json] def apply[P <: DagProof[P]]( m: Map[P, Int] ): ProofCollection[P] = {
     require( m.forall {
       case ( p, i ) =>
         p.immediateSubProofs.forall( q => m.contains( q ) && m( q ) < i )
@@ -38,7 +38,7 @@ object ProofCollectionCodec {
   /**
    * Encodes a proof collection
    */
-  def proofCollectionEncoder[P <: DagProof[P]]( encodeProof: Encoder[P] => Encoder[P] ): Encoder[ProofCollection[P]] = { coll =>
+  private[json] def proofCollectionEncoder[P <: DagProof[P]]( encodeProof: Encoder[P] => Encoder[P] ): Encoder[ProofCollection[P]] = { coll =>
     val numEncoder: Encoder[P] = p => Json.fromInt( coll.proofMap( p ) )
     val encodeProofWithName: Encoder[P] = p => encodeProof( numEncoder )( p ).mapObject( ( "name", Json.fromString( s"${p.longName}" ) ) +: _ )
 
@@ -48,7 +48,7 @@ object ProofCollectionCodec {
   /**
    * Decodes a proof collection.
    */
-  def proofCollectionDecoder[P <: DagProof[P]]( decodeProof: ( String, ACursor, Decoder[P] ) => Result[P] ): Decoder[ProofCollection[P]] = Decoder.decodeMap[Int, Json] emap { jsonMap =>
+  private[json] def proofCollectionDecoder[P <: DagProof[P]]( decodeProof: ( String, ACursor, Decoder[P] ) => Result[P] ): Decoder[ProofCollection[P]] = Decoder.decodeMap[Int, Json] emap { jsonMap =>
     lazy val proofMap: Map[Int, Eval[Result[P]]] = jsonMap map { case ( i, j ) => ( i, Later( j.as[P] ) ) }
     lazy val numDecoder: Decoder[P] = Decoder.decodeInt.emap { i =>
       proofMap.get( i ) match {

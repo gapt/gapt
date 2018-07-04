@@ -1,16 +1,20 @@
-package gapt.formats.json
+package gapt.formats.json.lk
+
+import gapt.formats.json.{ lkProofEncoder => _, lkProofDecoder => _, _ }
 import gapt.proofs.lk._
-import io.circe._
-import io.circe.syntax._
-import io.circe.generic.auto._
-import ExprCodec._
-import SequentCodec._
 import io.circe.Decoder.Result
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.syntax._
 
 object LKProofCodec {
-  implicit val lkCollectionEncoder: Encoder[ProofCollection[LKProof]] = ProofCollectionCodec.proofCollectionEncoder[LKProof]( encodeLK )
+  private[json] val lkCollectionEncoder: Encoder[ProofCollection[LKProof]] = ProofCollectionCodec.proofCollectionEncoder[LKProof]( encodeLK )
 
-  implicit val lkCollectionDecoder: Decoder[ProofCollection[LKProof]] = ProofCollectionCodec.proofCollectionDecoder[LKProof]( decodeLK )
+  private[json] val lkCollectionDecoder: Decoder[ProofCollection[LKProof]] = ProofCollectionCodec.proofCollectionDecoder[LKProof]( decodeLK )
+
+  private[json] val _lkProofEncoder = proofEncoder[LKProof]( lkCollectionEncoder )
+
+  private[json] val _lkProofDecoder = proofDecoder[LKProof]( lkCollectionDecoder )
 
   /**
    * Given an encoder for subproofs, this encodes a single LK proof.

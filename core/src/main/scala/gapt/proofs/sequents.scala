@@ -51,7 +51,7 @@ sealed abstract class SequentIndex extends Ordered[SequentIndex] {
 object SequentIndex {
   def apply( polarity: Polarity, k: Int ): SequentIndex =
     if ( polarity.inSuc ) Suc( k ) else Ant( k )
-  
+
   def fromSignedInt( k: Int ): SequentIndex = if ( k < 0 ) Ant( -k - 1 ) else Suc( k )
 }
 
