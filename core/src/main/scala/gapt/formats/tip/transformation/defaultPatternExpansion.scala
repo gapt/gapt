@@ -46,26 +46,31 @@ class TipSmtDefaultPatternExpansion( problem: TipSmtProblem ) {
    * place in the input problem.
    */
   def apply(): TipSmtProblem = {
-    problem.definitions foreach {
-      case fun @ TipSmtFunctionDefinition( _, _, _, _, _ ) =>
-        apply( fun )
-      case TipSmtGoal( _, expression ) =>
-        expandDefaultPatterns( expression, Seq() )
-      case funDefs @ TipSmtMutualRecursiveFunctionDefinition( _ ) =>
-        funDefs.functions.foreach { apply }
-      case TipSmtAssertion( _, expression ) =>
-        expandDefaultPatterns( expression, Seq() )
-      case _ =>
-    }
-    problem
+    problem.copy( definitions = problem.definitions map {
+      _ match {
+        case fun @ TipSmtFunctionDefinition( _, _, _, _, _ ) =>
+          apply( fun )
+
+        case d @ TipSmtGoal( _, _ ) =>
+          d.copy( expr = expandDefaultPatterns( d.expr, Seq() ) )
+
+        case funDefs @ TipSmtMutualRecursiveFunctionDefinition( _ ) =>
+          funDefs.copy( functions = funDefs.functions.map { apply } )
+
+        case d @ TipSmtAssertion( _, _ ) =>
+          d.copy( expr = expandDefaultPatterns( d.expr, Seq() ) )
+
+        case d => d
+      }
+    } )
   }
 
   private def apply(
-    fun: TipSmtFunctionDefinition ): Unit = {
+    fun: TipSmtFunctionDefinition ): TipSmtFunctionDefinition = {
     val context = fun.parameters map {
       _.name
     }
-    expandDefaultPatterns( fun.body, context )
+    fun.copy( body = expandDefaultPatterns( fun.body, context ) )
   }
 
   /**
@@ -77,43 +82,86 @@ class TipSmtDefaultPatternExpansion( problem: TipSmtProblem ) {
    */
   private def expandDefaultPatterns(
     expr:             TipSmtExpression,
-    visibleVariables: Seq[String] ): Unit = expr match {
-    case TipSmtAnd( subexpressions ) =>
-      subexpressions foreach {
-        expandDefaultPatterns( _, visibleVariables )
+    visibleVariables: Seq[String] ): TipSmtExpression = expr match {
+    case e @ TipSmtAnd( _ ) =>
+      expandDefaultPatterns( e, visibleVariables )
+    case e @ TipSmtOr( _ ) =>
+      expandDefaultPatterns( e, visibleVariables )
+    case e @ TipSmtImp( _ ) =>
+      expandDefaultPatterns( e, visibleVariables )
+    case e @ TipSmtFun( _, _ ) =>
+      expandDefaultPatterns( e, visibleVariables )
+    case e @ TipSmtForall( vars, subexpression ) =>
+      expandDefaultPatterns( e, visibleVariables )
+    case e @ TipSmtExists( vars, subexpression ) =>
+      expandDefaultPatterns( e, visibleVariables )
+    case e @ TipSmtMatch( _, _ ) =>
+      expandDefaultPatterns( e, visibleVariables )
+    case e @ TipSmtIte( _, _, _ ) =>
+      expandDefaultPatterns( e, visibleVariables )
+    case e => e
+  }
+
+  private def expandDefaultPatterns(
+    expr: TipSmtMatch, visibleVariables: Seq[String] ): TipSmtMatch = {
+    val newMatchExpr: TipSmtMatch =
+      if ( containsDefaultPattern( expr ) ) {
+        expandDefaultPattern( expr, visibleVariables )
+      } else {
+        expr
       }
-    case TipSmtOr( subexpressions ) =>
-      subexpressions foreach {
-        expandDefaultPatterns( _, visibleVariables )
-      }
-    case TipSmtImp( subexpressions ) =>
-      subexpressions foreach {
-        expandDefaultPatterns( _, visibleVariables )
-      }
-    case TipSmtFun( _, arguments ) =>
-      arguments foreach {
-        expandDefaultPatterns( _, visibleVariables )
-      }
-    case TipSmtForall( vars, subexpression ) =>
-      expandDefaultPatterns(
-        subexpression,
-        visibleVariables ++ vars.map( _.name ) )
-    case TipSmtExists( vars, subexpression ) =>
-      expandDefaultPatterns(
-        subexpression,
-        visibleVariables ++ vars.map( _.name ) )
-    case matchExpr @ TipSmtMatch( _, _ ) =>
-      if ( containsDefaultPattern( matchExpr ) ) {
-        expandDefaultPattern( matchExpr, visibleVariables )
-      }
-      matchExpr.cases foreach {
-        expandDefaultPatterns( _, visibleVariables )
-      }
-    case TipSmtIte( expr1, expr2, expr3 ) =>
-      expandDefaultPatterns( expr1, visibleVariables )
-      expandDefaultPatterns( expr2, visibleVariables )
-      expandDefaultPatterns( expr3, visibleVariables )
-    case _ =>
+    newMatchExpr.copy( cases =
+      newMatchExpr.cases.map { expandDefaultPatterns( _, visibleVariables ) } )
+  }
+
+  private def expandDefaultPatterns(
+    expr: TipSmtIte, visibleVariables: Seq[String] ): TipSmtExpression = {
+    TipSmtIte(
+      expandDefaultPatterns( expr.cond, visibleVariables ),
+      expandDefaultPatterns( expr.ifTrue, visibleVariables ),
+      expandDefaultPatterns( expr.ifFalse, visibleVariables ) )
+  }
+
+  private def expandDefaultPatterns(
+    expr: TipSmtExists, visibleVariables: Seq[String] ): TipSmtExpression = {
+    expr.copy( formula = expandDefaultPatterns(
+      expr.formula,
+      visibleVariables ++ expr.variables.map( _.name ) ) )
+  }
+
+  private def expandDefaultPatterns(
+    expr: TipSmtForall, visibleVariables: Seq[String] ): TipSmtExpression = {
+    expr.copy( formula = expandDefaultPatterns(
+      expr.formula,
+      visibleVariables ++ expr.variables.map( _.name ) ) )
+  }
+
+  private def expandDefaultPatterns(
+    expr: TipSmtOr, visibleVariables: Seq[String] ): TipSmtExpression = {
+    expr.copy( expr.exprs map {
+      expandDefaultPatterns( _, visibleVariables )
+    } )
+  }
+
+  private def expandDefaultPatterns(
+    expr: TipSmtAnd, visibleVariables: Seq[String] ): TipSmtExpression = {
+    expr.copy( expr.exprs map {
+      expandDefaultPatterns( _, visibleVariables )
+    } )
+  }
+
+  private def expandDefaultPatterns(
+    expr: TipSmtImp, visibleVariables: Seq[String] ): TipSmtExpression = {
+    expr.copy( expr.exprs map {
+      expandDefaultPatterns( _, visibleVariables )
+    } )
+  }
+
+  private def expandDefaultPatterns(
+    expr: TipSmtFun, visibleVariables: Seq[String] ): TipSmtExpression = {
+    expr.copy( arguments = expr.arguments map {
+      expandDefaultPatterns( _, visibleVariables )
+    } )
   }
 
   /**
@@ -124,14 +172,15 @@ class TipSmtDefaultPatternExpansion( problem: TipSmtProblem ) {
    */
   private def expandDefaultPatterns(
     cas:              TipSmtCase,
-    visibleVariables: Seq[String] ): Unit = {
+    visibleVariables: Seq[String] ): TipSmtCase = {
     cas.pattern match {
       case TipSmtConstructorPattern( _, fields ) =>
         val variableFields = fields
           .map { _.name }
           .filter { !problem.symbolTable.get.contains( _ ) }
-        expandDefaultPatterns(
-          cas.expr, visibleVariables ++ variableFields )
+        cas.copy( expr =
+          expandDefaultPatterns(
+            cas.expr, visibleVariables ++ variableFields ) )
       case _ => throw new IllegalStateException()
     }
   }
@@ -156,8 +205,8 @@ class TipSmtDefaultPatternExpansion( problem: TipSmtProblem ) {
    */
   private def expandDefaultPattern(
     tipSmtMatch:      TipSmtMatch,
-    visibleVariables: Seq[String] ): Unit = {
-    val TipSmtMatch( matchedExpression, cases ) = tipSmtMatch
+    visibleVariables: Seq[String] ): TipSmtMatch = {
+    val TipSmtMatch( _, cases ) = tipSmtMatch
     val Some( matchedType ) = tipSmtMatch.expr.datatype
     val coveredConstructors: Seq[String] =
       coveredConstrs( cases )
@@ -174,8 +223,9 @@ class TipSmtDefaultPatternExpansion( problem: TipSmtProblem ) {
     val generatedCases = missingConstructors map {
       generateCase( _, visibleVariables, defaultExpr )
     }
-    tipSmtMatch.cases = tipSmtMatch.cases filter { _.pattern != TipSmtDefault }
-    tipSmtMatch.cases ++= generatedCases
+    val oldCases = tipSmtMatch.cases filter { _.pattern != TipSmtDefault }
+
+    TipSmtMatch( tipSmtMatch.expr, oldCases ++ generatedCases )
   }
 
   /**
