@@ -126,4 +126,8 @@ class VampireTest extends Specification with SequentMatchers with SatMatchers {
     ok
   }
 
+  "casc mode" in {
+    VampireCASC.getResolutionProof( CountingEquivalence( 2 ) ) must beSome
+  }
+
 }
