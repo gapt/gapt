@@ -52,8 +52,15 @@ object TipSmtExporter {
       new SequentContextToTipProblemConverter( sequent, context ).convert )
   }
 
-  def export( sequent: HOLSequent )( implicit ctx: Context, dummyImplicit: DummyImplicit ): Doc = export( sequent, ctx )
-  def export( formula: Formula )( implicit ctx: Context ): Doc = export( Sequent() :+ formula )
+  def export( sequent: HOLSequent )(
+    implicit
+    ctx: Context, dummyImplicit: DummyImplicit ): Doc =
+    export( sequent, ctx )
+
+  def export( formula: Formula )(
+    implicit
+    ctx: Context ): Doc =
+    export( Sequent() :+ formula )
 
   private class SequentContextToTipProblemConverter(
       sequent: Sequent[Formula],
