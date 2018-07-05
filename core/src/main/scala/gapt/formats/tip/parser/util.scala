@@ -163,8 +163,8 @@ object toSExpression {
       .++( constantDeclarations.map { toSExpression( _ ) } )
       .++( functionConstantDeclarations.map { toSExpression( _ ) } )
       .++( functionDeclarations.map { toSExpression( _ ) } )
-      .:+( toSExpression( goal ) )
       .++( assumptions.map { toSExpression( _ ) } )
+      .:+( toSExpression( goal ) )
   }
 
   def apply( problem: TipSmtProblem ): Seq[SExpression] = {
