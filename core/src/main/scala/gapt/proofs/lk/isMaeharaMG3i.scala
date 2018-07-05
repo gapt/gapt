@@ -25,6 +25,9 @@ object isMaeharaMG3i {
         if ( q.conclusion.succedent.size <= 1 ) Right( () )
         else Left( p.conclusion.indicesSequent.succedent.dropRight( 1 ) )
 
+      case p: SkolemQuantifierRule =>
+        Left( p.mainIndices )
+
       // The soundness proof is easy enough:
       // we can convert any mG3i-proof of Γ :- Δ into an LJ-proof of Γ :- ∨∆.
       // (Straightforward induction on the derivation.)
