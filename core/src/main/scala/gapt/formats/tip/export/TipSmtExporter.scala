@@ -22,8 +22,7 @@ import gapt.formats.tip.TipConstructor
 import gapt.formats.tip.TipDatatype
 import gapt.formats.tip.TipProblem
 import gapt.proofs.Context.Definitions
-import gapt.proofs.Context
-import gapt.proofs.Sequent
+import gapt.proofs.{ Context, HOLSequent, Sequent }
 import gapt.utils.Doc
 
 object TipSmtExporter {
@@ -52,6 +51,9 @@ object TipSmtExporter {
     TipSmtExporter.export(
       new SequentContextToTipProblemConverter( sequent, context ).convert )
   }
+
+  def export( sequent: HOLSequent )( implicit ctx: Context, dummyImplicit: DummyImplicit ): Doc = export( sequent, ctx )
+  def export( formula: Formula )( implicit ctx: Context ): Doc = export( Sequent() :+ formula )
 
   private class SequentContextToTipProblemConverter(
       sequent: Sequent[Formula],
