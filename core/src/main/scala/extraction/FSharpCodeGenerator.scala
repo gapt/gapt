@@ -12,8 +12,6 @@ object FSharpCodeGenerator extends CodeGenerator {
 
     val prefix =
       """
-        |namespace Extraction
-        |
         |open System
         |
         |""".stripMargin

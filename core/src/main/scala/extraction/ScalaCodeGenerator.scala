@@ -10,8 +10,17 @@ object ScalaCodeGenerator extends CodeGenerator {
 
     var definedSumType = false
 
-    //"def app[A,B](f: A => B)(arg: A): B = f(arg)\n" +
-    context.constants.filter {
+    val prefix =
+      """
+        |object extracted extends App {
+        |""".stripMargin
+
+    val suffix =
+      """
+        |}
+        |""".stripMargin
+
+    val definitions = context.constants.filter {
       case Const( "i", _, _ )
         | Const( "0", _, _ ) => false
       case _ => true
@@ -31,7 +40,7 @@ object ScalaCodeGenerator extends CodeGenerator {
       case Const( "pair", _, params ) =>
         val a = typeParamToString( params( 0 ) )
         val b = typeParamToString( params( 1 ) )
-        s"def pair[$a,$b](p0: $a)(p1: $b) = (p0, p1)"
+        s"def pair[$a,$b](p0: $a)(p1: $b): Tuple2[$a,$b] = (p0, p1)"
       case Const( "pi1", _, params ) =>
         val a = typeParamToString( params( 0 ) )
         val b = typeParamToString( params( 1 ) )
@@ -104,27 +113,15 @@ if(p3 == 0) {
   p2(p3-1)(natRec(p1)(p2)(p3-1))
 }
 }"""
-      case Const( "iRec", _, params ) =>
-        val a = typeParamToString( params( 0 ) )
-        s"""
-def iRec[$a](p1: $a)(p2: Function2[Int, $a, $a])(p3: Int): $a = {
-if(p3 == 0) {
-  p1
-} else {
-  p2(p3-1, iRec(p1)(p2)(p3-1))
-}
-}"""
-      case Const( "subst", _, params ) =>
-        s"def subst[A,B](x: A)(y: B) : Unit = ()"
       case c @ _ =>
         ""
       //"not yet implemented: " + c.toString
     }.mkString( "\n" )
+    prefix + definitions + suffix
   }
 
   def toTerm( c: Const ): String = {
     c match {
-      //case Const( "i", _, _ )  => "null"
       case Const( "i", _, _ )  => "()"
       case Const( "*", _, _ )  => "mul"
       case Const( "<=", _, _ ) => "leq"
@@ -148,13 +145,12 @@ if(p3 == 0) {
 
   def toType( t: Ty ): String = {
     t match {
-      //case TBase( "1", Nil ) => "Null"
       case TBase( "1", Nil ) => "Unit"
       case TBase( "nat", Nil )
         | TBase( "i", Nil ) => "Int"
       case TBase( "o", Nil )       => "Boolean"
       case TBase( "exn", Nil )     => "Exception"
-      case TBase( "conj", params ) => s"(${toType( params( 0 ) )}, ${toType( params( 1 ) )})"
+      case TBase( "conj", params ) => s"Tuple2[${toType( params( 0 ) )}, ${toType( params( 1 ) )}]"
       case TBase( "sum", params )  => s"Sum[${toType( params( 0 ) )}, ${toType( params( 1 ) )}]"
       case TArr( t1, t2 )          => s"(${toType( t1 )} => ${toType( t2 )})"
       case _                       => t.toString

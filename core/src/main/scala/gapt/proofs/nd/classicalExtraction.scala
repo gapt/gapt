@@ -110,6 +110,9 @@ object ClassicalExtraction {
     val bar2 = hoc"bar2{?x ?a ?b ?c}: (?x > o) > (?a > ?c) > (?b > ?c) > ?c"
     systemT += bar2
 
+    val bar3 = hoc"bar3{?x ?a ?b ?c}: (?x > o) > (?a > ?c) > (?b > ?c) > ?c"
+    systemT += bar3
+
     // add a term+type to represent the empty program
     val ty1 = ty"1"
     val tmi = hoc"i : 1"
@@ -135,6 +138,7 @@ object ClassicalExtraction {
         //( refl( p, refl( t1, t2 ) ) -> p( t2 ) ),
         ( subst( refl( t1 ), t2 ) -> t2 ) ) ) ) )( systemT )
     */
+    /*
     //val subst = hoc"subst{?a}: eq > (?a > ?a)"
     val subst = hoc"subst{?a}: 1 > (?a > ?a)"
     val t2: Expr = hov"t2: ?a"
@@ -142,6 +146,7 @@ object ClassicalExtraction {
       ( subst, List(
         //( subst( refl, t2 ) -> t2 ) ) ) ) )( systemT )
         ( subst( tmi, t2 ) -> t2 ) ) ) ) )( systemT )
+    */
 
     //println( "systemT" )
     //println( systemT )
@@ -150,13 +155,13 @@ object ClassicalExtraction {
 
   def extractCases( proof: NDProof )( implicit ctx: Context ): Expr = {
     val evs = proof.subProofs.collect {
-      case ForallIntroRule( _, ev, _ ) => Seq( ev )
+      case ForallIntroRule( _, ev, _ )  => Seq( ev )
       case InductionRule( cases, _, _ ) => cases( 1 ).eigenVars
     }.flatten.map( _.name )
     val ng = new NameGenerator( evs )
     val lambda = extractCases( proof, ng )( systemT( ctx ) )
     //val res = lambda( Suc( 0 ) )
-    lambda.antecedent.foreach( e => println( s"abstracting ${e.asInstanceOf[Var]}" ) )
+    //lambda.antecedent.foreach( e => println( s"abstracting ${e.asInstanceOf[Var]}" ) )
     val res = lambda.antecedent.fold( lambda( Suc( 0 ) ) )( ( agg, v ) => Abs( v.asInstanceOf[Var], agg ) )
     if ( !freeVariables( res ).isEmpty ) {
       //throw new Exception( s"free variables: ${freeVariables( res )}" )
@@ -166,7 +171,8 @@ object ClassicalExtraction {
     //println( permuteEM( res )( systemT( ctx ) ) )
     //permuteEM( remEmpProg( res ) )
     //permuteEM( res )
-    res
+    //permuteEM( res )
+    normalize( res )
     //remEmpProg( res )
     //res
   }
@@ -406,7 +412,8 @@ object ClassicalExtraction {
           val l = extractCases( leftSubProof, ng )
           val r = extractCases( rightSubProof, ng )
           //val res = l.antecedent ++: r.antecedent ++: Sequent() :+ Var( ng.fresh( s"eq(${eq.mainFormula})" ), flat( eq.mainFormula ) )
-          val res = l.antecedent ++: r.antecedent ++: Sequent() :+ le"subst ${l( Suc( 0 ) )} ${r( Suc( 0 ) )}"
+          //val res = l.antecedent ++: r.antecedent ++: Sequent() :+ le"subst ${l( Suc( 0 ) )} ${r( Suc( 0 ) )}"
+          val res = l.antecedent ++: r.antecedent ++: Sequent() :+ le"i"
           //le"eq(${l( Suc( 0 ) )}, ${r( Suc( 0 ) )})" // ), flat( eq.mainFormula ) )
           //println( "EqElim" )
           res
@@ -448,116 +455,32 @@ object ClassicalExtraction {
 
         // assuming that the definitionrule is applied according to rewrite rules of the original context
         case DefinitionRule( subProof, mainFormula ) =>
-          ???
-        /*
-          val res = extractCases( subProof, ng )
-          //println( "DefinitionRule" )
-          res
-          */
+          throw new Exception( "DefinitionRule not supported in classical extraction, use \"eliminateDefinitions\"." )
 
         case ExcludedMiddleRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
           leftSubProof.endSequent( aux1 ) match {
-            case f @ Ex( x, g ) =>
-              /*
-              val left = nd.ProofBuilder.
-                c( nd.LogicalAxiom( Ex( x, -( -g ) ) ) ).
-                c( nd.LogicalAxiom( g ) ).
-                c( nd.LogicalAxiom( -( -( g ) ) ) ).
-                c( nd.LogicalAxiom( -g ) ).
-                b( NegElimRule( _, _ ) ).
-                u( BottomElimRule( _, g ) ).
-                b( ExcludedMiddleRule( _, Ant( 0 ), _, ( Ant( 1 ) ) ) ).
-                u( ExistsIntroRule( _, f ) ).
-                b( ExistsElimRule( _, _ ) ).
-                qed
-              val tl = nd.ProofBuilder.
-                c( leftSubProof ).
-                u( ImpIntroRule( _, aux1 ) ).
-                c( left ).
-                b( ImpElimRule( _, _ ) ).
-                qed
-                */
-              //val l = extractCases( tl, ng )
+            case f @ All( x1, Ex( x2, g ) ) if !containsQuantifierOnLogicalLevel( g ) =>
               val l = extractCases( leftSubProof, ng )
-
-              /*
-              val right = nd.ProofBuilder.
-                c( nd.LogicalAxiom( Ex( x, g ) ) ).
-                c( nd.LogicalAxiom( -g ) ).
-                c( nd.LogicalAxiom( g ) ).
-                b( NegElimRule( _, _ ) ).
-                u( ImpIntroRule( _, -g ) ).
-                c( nd.LogicalAxiom( All( x, -g ) ) ).
-                u( ForallElimRule( _, x ) ).
-                b( ImpElimRule( _, _ ) ).
-                b( ExistsElimRule( _, _ ) ).
-                u( NegIntroRule( _, f ) ).
-                qed
-
-              val tr = nd.ProofBuilder.
-                c( rightSubProof ).
-                u( ImpIntroRule( _, aux2 ) ).
-                c( right ).
-                b( ImpElimRule( _, _ ) ).
-                qed
-                */
-              /*
-              println( "right Suc 0: " + right.conclusion( Suc( 0 ) ) )
-              println( "rightSubProof aux2 " + rightSubProof.conclusion( aux2 ) )
-              println( "tr: " + tr )
-              //println( "right: " + extractCases( right, ng ) )
-              println( "flat right" + flat( right.conclusion( Suc( 0 ) ) ) )
-              */
-              //val r = extractCases( tr, ng )
               val r = extractCases( rightSubProof, ng )
-              //val varL = l( Ant( 0 ) ).asInstanceOf[Var]
               val varL = l( aux1 ).asInstanceOf[Var]
-              //val varR = r.antecedent.last.asInstanceOf[Var]
               val varR = r( aux2 ).asInstanceOf[Var]
               assert( varL.ty ->: ty"exn" == varR.ty )
-
-              /*
-              println( "l.antecedent: " + l.antecedent )
-              println( "r.antecedent: " + r.antecedent )
-              println( "deleting l(aux1): " + l( aux1 ) )
-              println( "deleting r(aux2): " + r( aux2 ) )
-
-              println( "leftSubProof size: " + leftSubProof.endSequent.size )
-              println( "tl size: " + tl.endSequent.size )
-              println( "l size: " + l.size )
-              */
-              //val delL = l.delete( Ant( 0 ) ).antecedent
-              //println( s"EM1: l deleting @ index $aux1: ${l( aux1 )} (proof term: ${leftSubProof.endSequent( aux1 )})" )
-              val delL = l.delete( aux1 ).antecedent
-              /*
-              println( "delL size: " + delL.size )
-
-              println( "rightSubProof size: " + rightSubProof.endSequent.size )
-              println( "tr size: " + tr.endSequent.size )
-              println( "r size: " + r.size )
-              println( "r indices: " + r.indices )
-              println( "r indices last: " + r.indicesSequent.antecedent.last )
-              */
-
               // TODO find index to delete somehow
-              //val delR = r.delete( r.indicesSequent.antecedent.last ).antecedent
-              //println( s"EM1: r deleting @ index $aux2: ${r( aux2 )} (proof term: ${rightSubProof.endSequent( aux2 )})" )
+              val delL = l.delete( aux1 ).antecedent
               val delR = r.delete( aux2 ).antecedent
-              /*
-              println( "delR size: " + delR.size )
-              */
-
-              //println( s"EM1: g: $g" )
-              //println( s"EM1: g type: ${g.ty}" )
+              // TODO
+              val res = delL ++: delR ++: Sequent() :+ le"bar3 ${Abs( x1, Ex( x2, g ) )} ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
+              res
+            case f @ Ex( x, g ) if !containsQuantifierOnLogicalLevel( g ) =>
+              val l = extractCases( leftSubProof, ng )
+              val r = extractCases( rightSubProof, ng )
+              val varL = l( aux1 ).asInstanceOf[Var]
+              val varR = r( aux2 ).asInstanceOf[Var]
+              assert( varL.ty ->: ty"exn" == varR.ty )
+              // TODO find index to delete somehow
+              val delL = l.delete( aux1 ).antecedent
+              val delR = r.delete( aux2 ).antecedent
               val res = delL ++: delR ++: Sequent() :+ le"bar2 ${Abs( x, g )} ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
-              /*
-              println( s"EM1: l suc: ${l( Suc( 0 ) )} (proof term: ${leftSubProof.endSequent( Suc( 0 ) )})" )
-              println( s"EM1: r suc: ${r( Suc( 0 ) )} (proof term: ${rightSubProof.endSequent( Suc( 0 ) )})" )
-              println( s"EM1: ${f}, l(Suc(0)).ty: ${l( Suc( 0 ) ).ty}, r(Suc(0)).ty: ${r( Suc( 0 ) ).ty}" )
-              println( s"EM1: ${f}, tyL: ${varL.ty}, tyR: ${varR.ty}" )
-              println( "res type: " + res( Suc( 0 ) ).ty )
-              println( "res size: " + res.size )
-              */
               res
 
             case f =>
