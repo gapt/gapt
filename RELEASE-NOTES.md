@@ -3,6 +3,7 @@
 ## Version 2.12 (unreleased)
 
 * SMTInterpol interface
+* Support for Vampire 4.2.2
 
 ## Version 2.11 (released on 2018-04-30)
 
