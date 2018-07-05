@@ -2,7 +2,7 @@ package gapt.formats
 
 import gapt.expr._
 import gapt.proofs.{ DagProof, HOLSequent, SequentIndex }
-import io.circe.{ Decoder, Encoder }
+import io.circe.{ Decoder, Encoder, KeyEncoder }
 import gapt.formats.json.lk.LKProofCodec._
 import gapt.proofs.lk.LKProof
 import gapt.formats.json.ExprCodec._
@@ -22,14 +22,22 @@ package object json {
   implicit val exprEncoder: Encoder[Expr] = _exprEncoder
   implicit val exprDecoder: Decoder[Expr] = _exprDecoder
 
+  implicit val exprKeyEncoder: KeyEncoder[Expr] = _exprKeyEncoder
+
   implicit val formulaEncoder: Encoder[Formula] = _formulaEncoder
   implicit val formulaDecoder: Decoder[Formula] = _formulaDecoder
+
+  implicit val atomEncoder: Encoder[Atom] = _atomEncoder
+  implicit val atomDecoder: Decoder[Atom] = _atomDecoder
 
   implicit val holSequentEncoder: Encoder[HOLSequent] = _holSequentEncoder
   implicit val holSequentDecoder: Decoder[HOLSequent] = _holSequentDecoder
 
   implicit val sequentIndexEncoder: Encoder[SequentIndex] = _sequentIndexEncoder
   implicit val sequentIndexDecoder: Decoder[SequentIndex] = _sequentIndexDecoder
+
+  implicit val polarityEncoder: Encoder[Polarity] = _polarityEncoder
+  implicit val polarityDecoder: Decoder[Polarity] = _polarityDecoder
 
   implicit val lkProofEncoder: Encoder[LKProof] = _lkProofEncoder
   implicit val lkProofDecoder: Decoder[LKProof] = _lkProofDecoder
