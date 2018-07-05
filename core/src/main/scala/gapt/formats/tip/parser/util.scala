@@ -75,6 +75,8 @@ object toSExpression {
       } )
     }
 
+    def constructorToTipAst(
+      constructor: TipConstructor ): TipSmtConstructor = {
       TipSmtConstructor(
         constructor.constr.name,
         Seq(),
