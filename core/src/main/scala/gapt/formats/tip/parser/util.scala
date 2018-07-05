@@ -68,7 +68,13 @@ object toSExpression {
 
   def apply( problem: TipProblem ): Seq[SExpression] = {
 
-    def constructorToTipAst( constructor: TipConstructor ): TipSmtConstructor = {
+    def baseTypeToTipType( baseType: TBase ): TipSmtType = {
+      TipSmtType( baseType.name match {
+        case "o" => "Bool"
+        case _   => baseType.name
+      } )
+    }
+
       TipSmtConstructor(
         constructor.constr.name,
         Seq(),
@@ -82,7 +88,7 @@ object toSExpression {
       projector: Const, fieldType: Ty ): TipSmtConstructorField = {
       TipSmtConstructorField(
         projector.name,
-        TipSmtType( fieldType.asInstanceOf[TBase].name ) )
+        baseTypeToTipType( fieldType.asInstanceOf[TBase] ) )
     }
 
     val sortsDeclarations =
@@ -106,7 +112,7 @@ object toSExpression {
             TipSmtConstantDeclaration(
               c.name,
               Seq(),
-              TipSmtType( c.ty.asInstanceOf[TBase].name ) )
+              baseTypeToTipType( c.ty.asInstanceOf[TBase] ) )
         }
 
     val functionConstantDeclarations =
@@ -121,8 +127,10 @@ object toSExpression {
             TipSmtFunctionDeclaration(
               f.name,
               Seq(),
-              parameterTypes.map { ty => TipSmtType( ty.asInstanceOf[TBase].name ) },
-              TipSmtType( returnType.asInstanceOf[TBase].name ) )
+              parameterTypes.map {
+                ty => baseTypeToTipType( ty.asInstanceOf[TBase] )
+              },
+              baseTypeToTipType( returnType.asInstanceOf[TBase] ) )
         }
 
     val datatypeDeclarations =
@@ -139,13 +147,15 @@ object toSExpression {
       problem.functions
         .map {
           f =>
-            val FunctionType( TBase( returnType, _ ), parameterTypes ) = f.fun.ty
+            val FunctionType( returnType @ TBase( _, _ ), parameterTypes ) =
+              f.fun.ty
+
             TipSmtFunctionDeclaration(
               f.fun.name,
               Seq(),
               parameterTypes
-                .map { ty => TipSmtType( ty.asInstanceOf[TBase].name ) },
-              TipSmtType( returnType ) )
+                .map { ty => baseTypeToTipType( ty.asInstanceOf[TBase] ) },
+              baseTypeToTipType( returnType ) )
         }
 
     val goal = TipSmtGoal( Seq(), toTipAst( problem.goal ) )
