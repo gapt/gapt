@@ -105,6 +105,10 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         addClause( ExistsRightRule( LogicalAxiom( ch.shallow ), Suc( 0 ), sh, ev ) )
       val pol = if ( e.polarity.inSuc ) 1 else -1
       solver.addClause( Seq( -classical, -pol * atom( ch.shallow ), pol * atom( e.shallow ) ) )
+    case ETDefinition( sh, ch ) =>
+      addClause( DefinitionRightRule( LogicalAxiom( ch.shallow ), ch.shallow, sh ) )
+      addClause( DefinitionLeftRule( LogicalAxiom( ch.shallow ), ch.shallow, sh ) )
+    case ETSkolemQuantifier( _, _, _, _ ) => throw new IllegalArgumentException
   }
 
   val clausificationClauses = drup.toVector
