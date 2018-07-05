@@ -35,7 +35,7 @@ class Substitute( private val problem: TipSmtProblem ) {
 
   private def createNameGenerator(
     blacklist: Iterable[String] ): NameGenerator = {
-    new NameGenerator( blacklist ++ symbolTable.symbols )
+    new TipNameGenerator( blacklist ++ symbolTable.symbols )
   }
 
   /**
