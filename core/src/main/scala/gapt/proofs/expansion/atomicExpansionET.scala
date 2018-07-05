@@ -12,8 +12,9 @@ object atomicExpansionET {
     et match {
       case ETDefinition( sh, ETAtom( at, pol ) ) =>
         f.lift( ( sh, at, pol ) ).getOrElse( et )
-
       case ETDefinition( sh, ETWeakening( _, pol ) ) => ETWeakening( sh, pol )
+      case ETDefinition( sh, ch ) =>
+        ETDefinition( sh, mapDefinedAtom( ch )( f ) )
       case ETAtom( _, _ ) | ETWeakening( _, _ ) | ETTop( _ ) | ETBottom( _ ) => et
       case ETMerge( a, b ) => ETMerge( mapDefinedAtom( a )( f ), mapDefinedAtom( b )( f ) )
       case ETNeg( e ) => ETNeg( mapDefinedAtom( e )( f ) )
