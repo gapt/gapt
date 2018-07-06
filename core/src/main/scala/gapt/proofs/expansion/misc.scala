@@ -2,8 +2,12 @@ package gapt.proofs.expansion
 
 import gapt.expr._
 import gapt.expr.hol.instantiate
+import gapt.proofs.HOLSequent
 
 object formulaToExpansionTree {
+  def apply( sequent: HOLSequent ): ExpansionSequent =
+    for ( ( f, i ) <- sequent.zipWithIndex ) yield formulaToExpansionTree( f, i.polarity )
+
   def apply( formula: Formula, pol: Polarity ): ExpansionTree =
     conv( formula, formula, Set(), pol )
 

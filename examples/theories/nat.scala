@@ -70,6 +70,7 @@ object nat extends Theory( logic, props ) {
 
   val subadd = lemma( hof"(x+y)-y=x", "simp" ) { include( "add", "sub", "p" ); anaInd }
   val sub0l = lemma( hof"0-x=0", "simp" ) { induction( hov"x:nat" ) onAll simp.h }
+  val subself = lemma( hof"x-x=0", "simp" ) { induction( hov"x:nat" ) onAll simp.h }
   val subpl = lemma( hof"p(x)-y=p(x-y)", "simp" ) { generalize( hov"x:nat" ); induction( hov"y:nat" ) onAll simp.h }
   val subps = lemma( hof"p(s(x)-y)=x-y", "simp" ) { include( "subpl", "p" ); escrgt }
   val subaddr = lemma( hof"x-(y+z)=x-y-z", "simp" ) { induction( hov"z:nat" ) onAll simp.h }
@@ -92,7 +93,7 @@ object natorder extends Theory( nat ) {
   val le0r = lemma( hof"x<=0 <-> x=0", "simp" ) { include( "le", "add0eq", "le0l" ); escrgt }
   val les0 = lemma( hof"~(s(x)<=0)", "simp" ) { include( "le0r", "sne0" ); escrgt }
   val lesuc = lemma( hof"x<=s(x)", "simp" ) { include( "le", "add" ); escrgt }
-  val letrans = lemma( hof"x<=y & y<=z -> x<=z" ) { include( "le", "addassoc" ); anaInd }
+  val letrans = lemma( hof"x<=y & y<=z -> x<=z" ) { include( "le", "addassoc" ); escrgt }
   val leantisymm = lemma( hof"x<=y & y<=x -> x=y" ) { simp.w( "le" ); include( "add", "addassoc", "addinj", "add0eq" ); escrgt }
   val lesr = lemma( hof"x<=s(y) <-> (x<=y|x=s(y))" ) { simp.w( "le" ); include( "sor0", "sinj", "add", "p" ); escrgt }
   val letotal = lemma( hof"x<=y | y<=x" ) {
@@ -115,7 +116,7 @@ object natorder extends Theory( nat ) {
   val mulmon = lemma( hof"x1<=x2 & y1<=y2 -> x1*y1 <= x2*y2" ) { simp.w( "le" ); include( "addmul", "muladd", "addcomm", "addassoc" ); escrgt }
 
   val lesub = lemma( hof"x-y<=x", "simp" ) { induction( hov"y:nat" ) onAll simp.h( "lepl" ) }
-  val leadd = lemma( hof"x<=x+y", "simp" ) { induction( hov"y:nat" ) onAll simp.h }
+  val leadd = lemma( hof"x<=x+y" ) { simp }
   val leaddr = lemma( hof"x<=y+x", "simp" ) { include( "leadd", "addcomm" ); escrgt }
   val lemul = lemma( hof"y!=0 -> x<=x*y", "simp" ) { induction( hov"y:nat" ) onAll simp }
 
@@ -132,7 +133,6 @@ object natorder extends Theory( nat ) {
   val addlecancell = lemma( hof"y+x<=z+x <-> y<=z", "simp" ) { include( "addlecancelr", "addcomm" ); escrgt }
   val subeq0 = lemma( hof"x<=y -> x-y=0", "simp" ) {
     induction( hov"y:nat" ) onAll simp.w( "lesl", "lesr" ) onAll decompose; destruct( "g_0" ) onAll simp.h
-    forget( "g_0", "IHy_0" ); induction( hov"y_0:nat" ) onAll simp.h
   }
 
   val ltirrefl = lemma( hof"~(x<x)", "simp" ) { include( "lt", "add", "addlecancelr", "les0" ); escrgt }

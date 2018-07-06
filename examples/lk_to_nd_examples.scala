@@ -275,6 +275,17 @@ object lem extends Script {
   println( nd )
 }
 
+object dne extends Script {
+  val s1 = LogicalAxiom( hof"A" )
+  val s2 = NegRightRule( s1, hof"A" )
+  val s3 = NegLeftRule( s2, hof"-A" )
+  val s4 = ImpRightRule( s3, hof"-(-A) -> A" )
+
+  println( s4 )
+  val nd = LKToND( s4, Some( Suc( 0 ) ) )
+  println( nd )
+}
+
 object weakeningRight1 extends Script {
   val p1 = LogicalAxiom( hof"A" )
   val p2 = WeakeningRightRule( p1, hof"A" )

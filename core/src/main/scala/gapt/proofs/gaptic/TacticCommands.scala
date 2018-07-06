@@ -499,9 +499,12 @@ trait TacticCommands {
     } yield ()
   }
 
-  def include( labels: String* )( implicit ctx: Context ): Tactic[Unit] = Tactic(
-    Tactic.sequence( for ( l <- labels ) yield include( l, ProofLink( l ) ) )
+  def include( names: Expr* )( implicit ctx: Context ): Tactic[Unit] = Tactic(
+    Tactic.sequence( for ( l @ Apps( Const( n, _, _ ), _ ) <- names ) yield include( n, ProofLink( l ) ) )
       andThen TacticMonad.pure( () ) )
+
+  def include( labels: String* )( implicit ctx: Context, dummyImplicit: DummyImplicit ): Tactic[Unit] =
+    Tactic( include( labels.map( ProofLink( _ ).referencedProof ): _* ) )
 
   /**
    * Solves the current subgoal as a first-order consequence of the background theory. This
@@ -779,4 +782,23 @@ trait TacticCommands {
 
   def trace( implicit sig: BabelSignature ): Tactic[Unit] =
     Tactic( currentGoal.map { g => println( g.toPrettyString ); () } )
+
+  def subst1: SubstTactic = SubstTactic( UniqueFormula )
+  def subst1( hyp: String ): SubstTactic = SubstTactic( OnLabel( hyp ) )
+  def substAll: Tactic[Unit] = Tactic( repeat( SubstTactic( AnyFormula ) ) )
+  def subst( hyps: String* ): Tactic[Unit] =
+    Tactic( Tactic.sequence( for ( hyp <- hyps ) yield subst1( hyp ) ) andThen skip )
+
+  def cases( lemma: String, terms: Expr* )( implicit ctx: Context ): Tactic[Unit] = casesW( lemma, lemma, terms: _* )
+  def casesW( label: String, lemma: String, terms: Expr* )( implicit ctx: Context ): Tactic[Unit] = Tactic {
+    def substOr( l: String ): Tactic[Unit] =
+      ( orL( l ) onAll substOr( l ) ) orElse
+        ( exL( l ) onAll substOr( l ) ) orElse
+        subst1( l ) orElse skip
+    for {
+      _ <- include( label, ProofLink( lemma ) )
+      _ <- allL( label, terms: _* ).forget
+      _ <- substOr( label )
+    } yield ()
+  }
 }

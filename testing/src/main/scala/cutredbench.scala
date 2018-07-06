@@ -3,6 +3,7 @@ import gapt.cutintro.CutIntroduction
 import gapt.examples._
 import gapt.expr._
 import gapt.expr.fol.Numeral
+import gapt.expr.hol.{ containsQuantifierOnLogicalLevel, isAtom }
 import gapt.proofs.HOLSequent
 import gapt.proofs.ceres.CERES
 import gapt.proofs.expansion.{ ExpansionProof, eliminateCutsET }
@@ -46,7 +47,7 @@ object CutReductionBenchmarkTools {
   }
   case object LKReductive extends LKMethod { def eliminate( p: LKProof ): Unit = cutNormal( p ) }
   case object LKCERES extends LKMethod { def eliminate( p: LKProof ): Unit = CERES( p ) }
-  case object CERESEXP extends LKMethod { def eliminate( p: LKProof ): Unit = CERES.CERESExpansionProof( p ) }
+  case object CERESEXP extends LKMethod { def eliminate( p: LKProof ): Unit = CERES.expansionProof( p ) }
   case object BogoElim extends Method {
     type P = HOLSequent
     def convert( p: LKProof ): P = p.endSequent
@@ -57,14 +58,14 @@ object CutReductionBenchmarkTools {
     def convert( p: LKProof ): P = LKToExpansionProof( p )
     def eliminate( p: P ): Unit = eliminateCutsET( p )
   }
-  class AbstractLKtNorm( skipAtomicCuts: Boolean = false, skipPropositionalCuts: Boolean = false ) extends Method {
+  class AbstractLKtNorm( skipCut: Formula => Boolean = _ => false ) extends Method {
     type P = LKt
     def convert( p: LKProof ): P = LKToLKt( p )._1
-    def eliminate( p: LKt ): Unit = normalizeLKt( p, skipAtomicCuts, skipPropositionalCuts )
+    def eliminate( p: LKt ): Unit = normalizeLKt( p, skipCut )
   }
   case object LKtNorm extends AbstractLKtNorm
-  case object LKtNormA extends AbstractLKtNorm( skipAtomicCuts = true )
-  case object LKtNormP extends AbstractLKtNorm( skipPropositionalCuts = true )
+  case object LKtNormA extends AbstractLKtNorm( isAtom( _ ) )
+  case object LKtNormP extends AbstractLKtNorm( !containsQuantifierOnLogicalLevel( _ ) )
   val methods = List( LKReductive, LKCERES, CERESEXP, BogoElim, ExpCutElim, LKtNorm, LKtNormA, LKtNormP )
 }
 
@@ -143,17 +144,15 @@ object indElimBench extends Script {
   import AllTheories._
   import CutReductionBenchmarkTools._
 
-  class AbstractIndLKtNorm( skipAtomicCuts: Boolean = false, skipPropositionalCuts: Boolean = false ) extends Method {
+  class AbstractIndLKtNorm( skipCut: Formula => Boolean = _ => false ) extends Method {
     type P = ( LKt, LocalCtx )
     def convert( p: LKProof ): P = LKToLKt( p )
     def eliminate( p: ( LKt, LocalCtx ) ): Unit =
-      normalizeLKt.induction( p._1, p._2,
-        skipAtomicCuts = skipAtomicCuts,
-        skipPropositionalCuts = skipPropositionalCuts )
+      normalizeLKt.induction( p._1, p._2, skipCut = skipCut )
   }
   case object IndLKtNorm extends AbstractIndLKtNorm
-  case object IndLKtNormA extends AbstractIndLKtNorm( skipAtomicCuts = true )
-  case object IndLKtNormP extends AbstractIndLKtNorm( skipPropositionalCuts = true )
+  case object IndLKtNormA extends AbstractIndLKtNorm( isAtom( _ ) )
+  case object IndLKtNormP extends AbstractIndLKtNorm( !containsQuantifierOnLogicalLevel( _ ) )
   case object IndLKReductive extends LKMethod {
     def eliminate( p: LKProof ): Unit = inductionNormalForm( p )
   }

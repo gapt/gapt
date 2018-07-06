@@ -57,6 +57,8 @@ case class ExpansionProof( expansionSequent: Sequent[ExpansionTree] ) {
   def nonCutPart: ExpansionSequent = expansionSequent.filterNot( ETCut.isCutExpansion )
   def nonTheoryPart( implicit ctx: Context ): ExpansionSequent =
     expansionSequent.filterNot( et => ETCut.isCutExpansion( et ) || ETInduction.isInductionAxiomExpansion( et ) )
+  def theoryPart( implicit ctx: Context ): ExpansionSequent =
+    expansionSequent.filter( et => ETCut.isCutExpansion( et ) || ETInduction.isInductionAxiomExpansion( et ) )
 
   override def toString = toSigRelativeString
   def toSigRelativeString( implicit sig: BabelSignature ) =

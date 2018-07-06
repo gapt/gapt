@@ -38,36 +38,71 @@ object tautAtomicExpansionET {
     }
 }
 
+object nonProofTheoreticSkolemTerms {
+  def apply( ep: ExpansionProof ): Set[Expr] = apply( ep.expansionSequent )
+  def apply( es: ExpansionSequent ): Set[Expr] = {
+    val occs = mutable.Map[Expr, Set[( List[Expr], List[Int] )]]().withDefaultValue( Set.empty )
+    def gatherOccs( et: ExpansionTree, weak: List[Expr], pos: List[Int] ): Unit =
+      et match {
+        case ETTop( _ ) | ETBottom( _ ) =>
+        case ETWeakening( _, _ )        =>
+        case ETAtom( _, _ )             =>
+        case ETMerge( a, b ) =>
+          gatherOccs( a, weak, 1 :: pos )
+          gatherOccs( b, weak, 2 :: pos )
+        case ETNeg( a ) => gatherOccs( a, weak, 1 :: pos )
+        case et: BinaryExpansionTree =>
+          gatherOccs( et.child1, weak, 1 :: pos )
+          gatherOccs( et.child2, weak, 2 :: pos )
+        case ETStrongQuantifier( _, _, ch ) =>
+          gatherOccs( ch, weak, 1 :: pos )
+        case ETWeakQuantifier( _, insts ) =>
+          for ( ( i, ch ) <- insts )
+            gatherOccs( ch, i :: weak, 1 :: pos )
+        case ETSkolemQuantifier( _, skT, skD, ch ) =>
+          gatherOccs( ch, weak, 1 :: pos )
+          occs( skT ) += ( ( weak, pos ) )
+      }
+
+    for ( ( e, i ) <- es.elements.zip( Stream.from( 1 ) ) ) gatherOccs( e, Nil, i :: Nil )
+
+    // Which Skolem terms occur more than once?
+    occs.collect { case ( skT, os ) if os.size > 1 => skT }.toSet
+  }
+}
+
 object moveSkolemNodesToCuts {
 
   def apply( ep: ExpansionProof ): ExpansionProof = {
     implicit val nameGen: NameGenerator = rename.awayFrom( ep.eigenVariables ++ freeVariablesET( ep ) )
+    val bad = nonProofTheoreticSkolemTerms( ep )
     val cuts = mutable.Buffer[ETImp]()
-    val es = ep.expansionSequent.map( apply( _, cuts ) )
+    def go( et: ExpansionTree ): ExpansionTree =
+      et match {
+        case _: ETWeakening | _: ETBottom | _: ETTop | _: ETAtom => et
+        case ETNeg( f ) => ETNeg( go( f ) )
+        case ETAnd( f, g ) => ETAnd( go( f ), go( g ) )
+        case ETOr( f, g ) => ETOr( go( f ), go( g ) )
+        case ETImp( f, g ) => ETImp( go( f ), go( g ) )
+        case ETDefinition( sh, f ) => ETDefinition( sh, go( f ) )
+        case ETMerge( f, g ) => ETMerge( go( f ), go( g ) )
+        case ETWeakQuantifier( sh, insts ) =>
+          ETWeakQuantifier( sh, for ( ( t, f ) <- insts ) yield t -> go( f ) )
+        case ETStrongQuantifier( sh, ev, f ) =>
+          ETStrongQuantifier( sh, ev, go( f ) )
+        case ETSkolemQuantifier( sh, t, d, f ) if !bad( t ) =>
+          ETSkolemQuantifier( sh, t, d, go( f ) )
+        case ETSkolemQuantifier( sh, t, d, f ) if et.polarity.inSuc =>
+          val ( a, b ) = tautAtomicExpansionET( sh )
+          cuts += ETImp( ETSkolemQuantifier( sh, t, d, go( f ) ), a )
+          b
+        case ETSkolemQuantifier( sh, t, d, f ) if et.polarity.inAnt =>
+          val ( a, b ) = tautAtomicExpansionET( sh )
+          cuts += ETImp( b, ETSkolemQuantifier( sh, t, d, go( f ) ) )
+          a
+      }
+    val es = ep.expansionSequent.map( go )
     ExpansionProof( ETCut( cuts ) +: es )
   }
-
-  def apply( et: ExpansionTree, cuts: mutable.Buffer[ETImp] )( implicit nameGen: NameGenerator ): ExpansionTree =
-    et match {
-      case _: ETWeakening | _: ETBottom | _: ETTop | _: ETAtom => et
-      case ETNeg( f ) => ETNeg( apply( f, cuts ) )
-      case ETAnd( f, g ) => ETAnd( apply( f, cuts ), apply( g, cuts ) )
-      case ETOr( f, g ) => ETOr( apply( f, cuts ), apply( g, cuts ) )
-      case ETImp( f, g ) => ETImp( apply( f, cuts ), apply( g, cuts ) )
-      case ETDefinition( sh, f ) => ETDefinition( sh, apply( f, cuts ) )
-      case ETMerge( f, g ) => ETMerge( apply( f, cuts ), apply( g, cuts ) )
-      case ETWeakQuantifier( sh, insts ) =>
-        ETWeakQuantifier( sh, for ( ( t, f ) <- insts ) yield t -> apply( f, cuts ) )
-      case ETStrongQuantifier( sh, ev, f ) =>
-        ETStrongQuantifier( sh, ev, apply( f, cuts ) )
-      case ETSkolemQuantifier( sh, t, d, f ) if et.polarity.inSuc =>
-        val ( a, b ) = tautAtomicExpansionET( sh )
-        cuts += ETImp( ETSkolemQuantifier( sh, t, d, apply( f, cuts ) ), a )
-        b
-      case ETSkolemQuantifier( sh, t, d, f ) if et.polarity.inAnt =>
-        val ( a, b ) = tautAtomicExpansionET( sh )
-        cuts += ETImp( b, ETSkolemQuantifier( sh, t, d, apply( f, cuts ) ) )
-        a
-    }
 
 }

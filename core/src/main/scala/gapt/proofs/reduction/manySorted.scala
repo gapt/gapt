@@ -197,6 +197,20 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
     f( proof, Map() )
   }
 
+  def eigenVariables( et: ExpansionTree, shallow: Formula ): Map[FOLVar, Var] =
+    ( et, shallow ) match {
+      case ( ETAtom( _, _ ) | ETWeakening( _, _ ) | ETBottom( _ ) | ETTop( _ ), _ ) => Map()
+      case ( ETMerge( a, b ), _ ) => eigenVariables( a, shallow ) ++ eigenVariables( b, shallow )
+      case ( ETNeg( a ), Neg( sha ) ) => eigenVariables( a, sha )
+      case ( ETAnd( a, b ), And( sha, shb ) ) => eigenVariables( a, sha ) ++ eigenVariables( b, shb )
+      case ( ETOr( a, b ), Or( sha, shb ) ) => eigenVariables( a, sha ) ++ eigenVariables( b, shb )
+      case ( ETImp( a, b ), Imp( sha, shb ) ) => eigenVariables( a, sha ) ++ eigenVariables( b, shb )
+      case ( ETStrongQuantifier( _, ev: FOLVar, a ), All( shx, sha ) ) =>
+        eigenVariables( a, sha ) + ( ev -> Var( ev.name, shx.ty ) )
+      case ( ETWeakQuantifier( _, insts ), Quant( x, sh, isForall ) ) =>
+        insts.flatMap { case ( _, a ) => eigenVariables( a, sh ) }
+    }
+
   def back( et: ExpansionTree, shallow: Formula, freeVars: Map[FOLVar, Var] ): ExpansionTree = ( et, shallow ) match {
     case ( ETAtom( atom: FOLAtom, pol ), _ ) => ETAtom( back( atom, freeVars ), pol )
     case ( ETWeakening( _, pol ), _ )        => ETWeakening( shallow, pol )
@@ -206,6 +220,8 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
     case ( ETAnd( a, b ), And( sha, shb ) )  => ETAnd( back( a, sha, freeVars ), back( b, shb, freeVars ) )
     case ( ETOr( a, b ), Or( sha, shb ) )    => ETOr( back( a, sha, freeVars ), back( b, shb, freeVars ) )
     case ( ETImp( a, b ), Imp( sha, shb ) )  => ETImp( back( a, sha, freeVars ), back( b, shb, freeVars ) )
+    case ( ETStrongQuantifier( _, ev: FOLVar, a ), All( shx, _ ) ) =>
+      ETStrongQuantifier( shallow, freeVars( ev ), back( a, instantiate( shallow, freeVars( ev ) ), freeVars ) )
     case ( ETWeakQuantifier( _, insts ), Quant( x, sh, isForall ) ) =>
       ETWeakQuantifier(
         shallow,
@@ -218,11 +234,17 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
 
   def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof = {
     require( expansionProof.shallow isSubsetOf endSequent.map( forward( _, Map[Var, FOLVar]() ) ) )
+    val evs = Map() ++ ( for {
+      et <- expansionProof.expansionSequent.elements
+      originalSh <- endSequent.elements
+      if forward( originalSh, Map[Var, FOLVar]() ) == et.shallow
+      ( ev, newEv ) <- eigenVariables( et, originalSh )
+    } yield ( ev, newEv ) )
     ExpansionProof( for {
       et <- expansionProof.expansionSequent
       originalSh <- endSequent.elements
       if forward( originalSh, Map[Var, FOLVar]() ) == et.shallow
-    } yield back( et, originalSh, Map() ) )
+    } yield back( et, originalSh, evs ) )
   }
 
   def back( t: FOLTerm, freeVars: Map[FOLVar, Var] ): Expr = t match {

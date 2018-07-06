@@ -5,11 +5,10 @@ import gapt.expr.hol.existentialClosure
 import gapt.proofs.epsilon.{ EpsilonProof, ExpansionProofToEpsilon }
 import gapt.proofs.expansion.{ ExpansionProof, eliminateCutsET }
 import gapt.proofs.{ Context, HOLClause, HOLSequent, MutableContext, Sequent }
-import gapt.proofs.lk.LKToExpansionProof
-import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.{ ContractionMacroRule, ExtractInterpolant, LKProof, LKToExpansionProof }
 import Session._
 import Runners._
-import gapt.utils.Maybe
+import gapt.utils.{ Maybe, Tree }
 
 /**
  * A prover that is able to refute HOL sequents/formulas (or subsets
@@ -71,6 +70,11 @@ trait Prover {
     getExpansionProof( seq ) map { ExpansionProofToEpsilon( _ ) }
   def getEpsilonProof( formula: Formula )( implicit ctx: Maybe[MutableContext] ): Option[EpsilonProof] =
     getEpsilonProof( Sequent() :+ formula )
+
+  def getInterpolant( tree: Tree[Formula] )( implicit ctx: Maybe[Context] ): Option[Tree[Formula]] =
+    getLKProof( tree.postOrder ++: Sequent() )( ctx.map( _.newMutable ) ).
+      map( ContractionMacroRule( _ ) ).
+      map( p => ExtractInterpolant( p, tree.map( p.conclusion.indexOf ) ) )
 
   /**
    * Method for running a session.

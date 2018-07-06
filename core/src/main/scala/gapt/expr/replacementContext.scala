@@ -16,7 +16,7 @@ object replacementContext {
    * @return
    */
   def apply( ty: Ty, exp: Expr, positions: Iterable[LambdaPosition] ): Abs = {
-    val x = rename( Var( "x", ty ), freeVariables( exp ) )
+    val x = rename( Var( "x", ty ), containedNames( exp ) )
     Abs( x, positions.foldLeft( exp ) { ( acc, p ) => acc.replace( p, x ) } )
   }
 

@@ -266,7 +266,7 @@ trait Tactic[+T] { self =>
     override def toString = s"$self.onAllSubGoals"
   }
 
-  def onAll[S]( t2: Tactic[S] ): Tactic[Unit] =
+  def onAll[S]( t2: => Tactic[S] ): Tactic[Unit] =
     flatMap( _ => t2.onAllSubGoals ).onCurrentSubGoal.aka( s"$this.onAll($t2)" )
 
   def aka( newName: => String ): Tactic[T] = new Tactic[T] {

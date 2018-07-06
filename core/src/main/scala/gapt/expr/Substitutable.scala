@@ -142,6 +142,8 @@ object Substitutable extends ExprSubstitutable7 with SeqSubstitutable {
   implicit def SubstitutableSequent[S <: Substitution, T, U]( implicit ev: Substitutable[S, T, U] ): Substitutable[S, Sequent[T], Sequent[U]] =
     ( sub, sequent ) => sequent map { ev.applySubstitution( sub, _ ) }
 
+  implicit val substitutableString: ClosedUnderSub[String] = ( _, str ) => str
+
   /**
    * Testifies that a pair of substitutable objects is substitutable (by applying the substitution to each element).
    */

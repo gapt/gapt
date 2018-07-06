@@ -38,8 +38,10 @@ class ExpansionProofToLK(
       orElse( tryUnary( theory, expSeq, intuitionisticHeuristics ) ).
       orElse( tryCut( theory, expSeq ) ).
       orElse( tryInduction( theory, expSeq ) ).
-      orElse( tryBinary( theory, expSeq ) ).
-      orElse( if ( intuitionisticHeuristics ) tryUnary( theory, expSeq ) else None ).
+      orElse( tryBinary( theory, expSeq, intuitionisticHeuristics ) ).
+      orElse( if ( intuitionisticHeuristics ) tryIntuitionisticImpLeft( theory, expSeq ) else None ).
+      orElse( if ( intuitionisticHeuristics ) tryUnary( theory, expSeq, intuitionistic = false ) else None ).
+      orElse( if ( intuitionisticHeuristics ) tryBinary( theory, expSeq, intuitionistic = false ) else None ).
       orElse( tryTheory( theory, expSeq ) ).
       getOrElse( Left( theory -> expSeq ) ).
       map {
@@ -89,15 +91,16 @@ class ExpansionProofToLK(
     }
 
   private def tryUnary( theory: Theory, expSeq: ExpansionSequent,
-                        tryNotToIntroduceFormulasInSuccedent: Boolean = false ): Option[UnprovableOrLKProof] =
-    expSeq.zipWithIndex.elements collectFirst {
-      case ( ETNeg( f ), i: Ant ) if !tryNotToIntroduceFormulasInSuccedent =>
+                        intuitionistic: Boolean ): Option[UnprovableOrLKProof] =
+    expSeq.zipWithIndex.elements.reverseIterator collectFirst {
+      case ( ETNeg( f ), i: Ant ) if !intuitionistic =>
         mapIf( solve( theory, expSeq.delete( i ) :+ f ), f.shallow, !i.polarity ) {
           NegLeftRule( _, f.shallow )
         }
-      case ( ETNeg( f ), i: Suc ) => mapIf( solve( theory, f +: expSeq.delete( i ) ), f.shallow, !i.polarity ) {
-        NegRightRule( _, f.shallow )
-      }
+      case ( ETNeg( f ), i: Suc ) if !intuitionistic || expSeq.succedent.size <= 1 =>
+        mapIf( solve( theory, f +: expSeq.delete( i ) ), f.shallow, !i.polarity ) {
+          NegRightRule( _, f.shallow )
+        }
       case ( ETAnd( f, g ), i: Ant ) =>
         mapIf( solve( theory, f +: g +: expSeq.delete( i ) ), f.shallow, i.polarity, g.shallow, i.polarity ) {
           AndLeftMacroRule( _, f.shallow, g.shallow )
@@ -106,13 +109,13 @@ class ExpansionProofToLK(
         mapIf( solve( theory, expSeq.delete( i ) :+ f :+ g ), f.shallow, i.polarity, g.shallow, i.polarity ) {
           OrRightMacroRule( _, f.shallow, g.shallow )
         }
-      case ( ETImp( f, g ), i: Suc ) =>
+      case ( ETImp( f, g ), i: Suc ) if !intuitionistic || expSeq.succedent.size <= 1 =>
         mapIf( solve( theory, f +: expSeq.delete( i ) :+ g ), f.shallow, !i.polarity, g.shallow, i.polarity ) {
           ImpRightMacroRule( _, f.shallow, g.shallow )
         }
     }
 
-  private def tryBinary( theory: Theory, expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] = {
+  private def tryBinary( theory: Theory, expSeq: ExpansionSequent, intuitionistic: Boolean ): Option[UnprovableOrLKProof] = {
     def handle( i: SequentIndex, e: ExpansionTree, f: ExpansionTree, g: ExpansionTree,
                 rule: ( LKProof, LKProof, Formula ) => LKProof ) =
       solve( theory, if ( f.polarity.inSuc ) expSeq.delete( i ) :+ f else f +: expSeq.delete( i ) ) flatMap { p1 =>
@@ -124,11 +127,25 @@ class ExpansionProofToLK(
       }
 
     expSeq.zipWithIndex.swapped.elements collectFirst {
-      case ( e @ ETAnd( f, g ), i: Suc ) => handle( i, e, f, g, AndRightRule( _, _, _ ) )
-      case ( e @ ETOr( f, g ), i: Ant )  => handle( i, e, f, g, OrLeftRule( _, _, _ ) )
-      case ( e @ ETImp( f, g ), i: Ant ) => handle( i, e, f, g, ImpLeftRule( _, _, _ ) )
+      case ( e @ ETAnd( f, g ), i: Suc )                    => handle( i, e, f, g, AndRightRule( _, _, _ ) )
+      case ( e @ ETOr( f, g ), i: Ant )                     => handle( i, e, f, g, OrLeftRule( _, _, _ ) )
+      case ( e @ ETImp( f, g ), i: Ant ) if !intuitionistic => handle( i, e, f, g, ImpLeftRule( _, _, _ ) )
     }
   }
+
+  private def tryIntuitionisticImpLeft( theory: Theory, expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
+    expSeq.zipWithIndex.antecedent.view.flatMap {
+      case ( e @ ETImp( f, g ), i: Ant ) =>
+        val expSeq_ = Sequent( expSeq.antecedent.filter( _.isInstanceOf[ETAtom] ), Vector( f ) )
+        solve( theory, expSeq_ ).map { p1 =>
+          if ( !p1.conclusion.contains( f.shallow, f.polarity ) ) Right( p1 )
+          else solve( theory, expSeq.updated( i, g ) ).map { p2 =>
+            if ( !p2.conclusion.contains( g.shallow, g.polarity ) ) p2
+            else ImpLeftRule( p1, p2, e.shallow )
+          }
+        }.right.toSeq
+      case _ => Nil
+    }.headOption
 
   private def tryStrongQ( theory: Theory, expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
     expSeq.zipWithIndex.elements collectFirst {

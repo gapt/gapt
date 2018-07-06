@@ -228,9 +228,13 @@ object CutIntroduction {
   }
 
   def compressToSolutionStructure(
-    inputProof: InputProof,
-    method:     GrammarFindingMethod = DeltaTableMethod() ): Option[SolutionStructure] = {
+    inputProof:       InputProof,
+    method:           GrammarFindingMethod = DeltaTableMethod(),
+    useInterpolation: Boolean              = false ): Option[SolutionStructure] = {
     val InputProof( ep, backgroundTheory ) = inputProof
+
+    if ( useInterpolation && !backgroundTheory.hasEquality )
+      return compressToSolutionStructure( InputProof( ep, BackgroundTheory.Equality ), method, useInterpolation )
 
     logger.metric( "quant_input", numberOfInstancesET( ep.expansionSequent ) )
 
@@ -282,7 +286,12 @@ object CutIntroduction {
 
       val grammar = vtratgToSEHS( encoding, vtratGrammar )
 
-      val canonicalSS = SolutionStructure( grammar, computeCanonicalSolution( grammar ) )
+      val canonicalSS = SolutionStructure(
+        grammar,
+        if ( useInterpolation )
+          solutionViaInterpolation( grammar )
+        else
+          computeCanonicalSolution( grammar ) )
       require( canonicalSS.isValid( backgroundTheory.prover ) )
       solStructMetrics( canonicalSS, "can" )
 
@@ -356,8 +365,17 @@ object CutIntroduction {
     proof
   }
 
-  def apply( inputProof: InputProof, method: GrammarFindingMethod = DeltaTableMethod() ): Option[LKProof] =
-    compressToSolutionStructure( inputProof, method ) map { constructLKProof( _, inputProof.backgroundTheory ) }
+  def apply(
+    inputProof:       InputProof,
+    method:           GrammarFindingMethod = DeltaTableMethod(),
+    useInterpolation: Boolean              = false ): Option[LKProof] =
+    if ( useInterpolation && !inputProof.backgroundTheory.hasEquality )
+      apply(
+        InputProof( inputProof.expansionProof, BackgroundTheory.Equality ),
+        method, useInterpolation )
+    else
+      compressToSolutionStructure( inputProof, method, useInterpolation ).
+        map( constructLKProof( _, inputProof.backgroundTheory ) )
 
   /**
    * Computes the modified canonical solution, where instances of

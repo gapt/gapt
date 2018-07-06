@@ -12,6 +12,11 @@ case class Attributes( attrs: Map[String, Set[String]] ) {
 
   def lemmasWith( attr: String ): Set[String] =
     ( for ( ( n, as ) <- attrs.view if as( attr ) ) yield n ).toSet
+
+  override def toString: String = {
+    for ( ( l, as ) <- attrs.toSeq.sortBy( _._1 ) )
+      yield s"$l: ${as.mkString( ", " )}"
+  }.mkString( "\n" )
 }
 
 object Attributes {

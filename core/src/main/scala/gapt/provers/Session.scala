@@ -28,7 +28,7 @@ object Session {
    */
   sealed trait SessionCommand[A]
 
-  private object SessionCommand {
+  object SessionCommand {
 
     /**
      * Pushes the current assertions and declarations on the stack.
@@ -154,7 +154,9 @@ object Session {
    */
   def tell( input: SExpression ) = liftF( Tell( input ) )
 
-  def skip: Session[Unit] = Free.pure[SessionCommand, Unit]( () )
+  def pure[T]( t: T ): Session[T] = Free.pure[SessionCommand, T]( t )
+
+  def skip: Session[Unit] = pure( () )
 
   /**
    * Asserts a list of formulas.

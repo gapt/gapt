@@ -7,7 +7,7 @@ import gapt.formats.babel.BabelSignature
 import gapt.grammars.{ InductionGrammar, findMinimalInductionGrammar }
 import gapt.grammars.InductionGrammar.Production
 import gapt.proofs.Context.StructurallyInductiveTypes
-import gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, minimalExpansionSequent }
+import gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, freeVariablesET, minimalExpansionSequent }
 import gapt.proofs.gaptic.Tactical1
 import gapt.proofs.lk.{ EquationalLKProver, LKProof }
 import gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent, withSection }
@@ -32,6 +32,7 @@ case class TreeGrammarProverOptions(
     instanceNumber:   Int                 = 10,
     instanceSize:     FloatRange          = ( 0, 2 ),
     instanceProver:   Prover              = DefaultProvers.firstOrder,
+    minInstProof:     Boolean             = true,
     smtSolver:        Prover              = DefaultProvers.smt,
     smtEquationMode:  SmtEquationMode     = AddNormalizedFormula,
     quantTys:         Option[Seq[String]] = None,
@@ -72,6 +73,9 @@ object TreeGrammarProverOptions {
 
 object TreeGrammarProver {
   val logger = Logger( "TreeGrammarProver" )
+
+  def apply( sequent: HOLSequent, options: TreeGrammarProverOptions = TreeGrammarProverOptions() )( implicit ctx: Context ): LKProof =
+    new TreeGrammarProver( ctx, sequent, options ).solve()
 }
 
 class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options: TreeGrammarProverOptions ) {
@@ -108,13 +112,13 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     else options.smtEquationMode.adapt( options.equationalTheory, options.smtSolver )
 
   def solve(): LKProof = time( "ceggr" ) {
-    info( sequent )
+    info( sequent.toSigRelativeString )
 
     val instanceProofs = mutable.Map[Instance, ExpansionProof]()
     for ( Seq( inst ) <- instanceGen.generate( options.instanceSize._1, options.instanceSize._2, options.instanceNumber ) )
       instanceProofs( inst ) = getInstanceProof( inst )
 
-    for ( iter <- Stream.from( 1 ) ) {
+    def loop( iter: Int ): LKProof = {
       metric( "ceggr_iters", iter )
       val bup = findBUP( instanceProofs )
 
@@ -129,13 +133,14 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
       findMinimalCounterexample( instanceProofs.keys, bup ) match {
         case Some( inst ) =>
           instanceProofs( inst ) = getInstanceProof( inst )
+          loop( iter + 1 )
 
         case None =>
           val solution = solveBUP( bup )
-          return constructProof( bup, solution )
+          constructProof( bup, solution )
       }
     }
-    throw new IllegalArgumentException
+    loop( 1 )
   }
 
   def findBUP( instanceProofs: Iterable[( Instance, ExpansionProof )] ): InductionBUP = time( "grammar" ) {
@@ -150,7 +155,11 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
       options.maxSATSolver, options.grammarWeighting )
       .getOrElse {
         metric( "uncoverable_grammar", true )
-        throw new Exception( "cannot cover termset" )
+        throw new Exception( s"cannot cover termset\n" +
+          indexedTermset.map {
+            case ( i, ts ) =>
+              s"${i.toUntypedString}\n" + ts.map( "  " + _.toUntypedString + "\n" ).mkString
+          }.mkString( "\n" ) )
       }
 
     info( s"Found grammar:\n$grammar\n" )
@@ -230,13 +239,17 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     proof
   }
 
+  def mkGroundTerm( ty: Ty ): Expr =
+    instanceGen.terms.view.map( _._1 ).find( _.ty == ty ).head
+
   def getInstanceProof( inst: Instance ): ExpansionProof = time( "instproof" ) {
     info( s"Proving instance ${inst.toSigRelativeString}" )
     val instanceSequent = sequent.map( identity, instantiate( _, inst ) )
     val instProof0 = quiet( options.instanceProver.getExpansionProof( instanceSequent ) ).getOrElse {
       throw new IllegalArgumentException( s"Cannot prove:\n$instanceSequent" )
     }
-    val Some( instProof ) = minimalExpansionSequent( instProof0, smtSolver )
+    val Some( instProof ) = if ( !options.minInstProof ) Some( instProof0 )
+    else minimalExpansionSequent( instProof0, smtSolver )
     require(
       smtSolver.isValid( instProof.deep ),
       s"Instance proof has invalid deep formula:\n${instProof.deep.toSigRelativeString}" )
@@ -245,7 +258,9 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     info( "Language:" )
     encoding.encode( instProof ).toSeq.map( _.toUntypedString( BabelSignature.defaultSignature ) ).sorted.foreach( info( _ ) )
 
-    instProof
+    // FIXME: still broken for uninterpreted sorts
+    val grounding = Substitution( freeVariablesET( instProof ).diff( freeVariables( inst ) ).map( v => v -> mkGroundTerm( v.ty ) ) )
+    grounding( instProof )
   }
 
 }

@@ -293,3 +293,37 @@ case class AnalyticInductionTactic( axioms: AxiomFactory, prover: ResolutionProv
     copy( prover = prover )
 }
 
+case class SubstTactic( mode: TacticApplyMode ) extends Tactical1[Unit] {
+
+  private object VEq {
+    def unapply( f: Formula ): Option[( Expr, Expr, Boolean )] =
+      f match {
+        case Eq( t: Var, s ) => Some( ( t, s, true ) )
+        case Eq( t, s: Var ) => Some( ( t, s, false ) )
+        case _               => None
+      }
+  }
+
+  private def mkProof( subst: Substitution, t: Expr, s: Expr, vLeft: Boolean, q: LKProof, todo: List[( Formula, Polarity )] ): LKProof =
+    todo match {
+      case Nil => q
+      case ( f, _ ) :: todo_ if freeVariables( f ).intersect( subst.domain ).isEmpty =>
+        mkProof( subst, t, s, vLeft, q, todo_ )
+      case ( f, pol ) :: todo_ if pol.inAnt =>
+        mkProof( subst, t, s, vLeft, EqualityLeftRule( q, t === s, subst( f ), f ), todo_ )
+      case ( f, pol ) :: todo_ if pol.inSuc =>
+        mkProof( subst, t, s, vLeft, EqualityRightRule( q, t === s, subst( f ), f ), todo_ )
+    }
+
+  def apply( goal: OpenAssumption ): Tactic[Unit] =
+    for {
+      ( existingLabel: String, VEq( t, s, vLeft ), i: Ant ) <- findFormula( goal, mode )
+      subst = Substitution( if ( vLeft ) t.asInstanceOf[Var] -> s else s.asInstanceOf[Var] -> t )
+      newGoal = subst( goal.labelledSequent.delete( i ) )
+      _ <- replace(
+        mkProof( subst, t, s, vLeft,
+          WeakeningLeftRule(
+            OpenAssumption( newGoal ), t === s ),
+          goal.endSequent.delete( i ).polarizedElements.toList ) )
+    } yield ()
+}

@@ -97,7 +97,10 @@ class ResolutionToExpansionProofTest extends Specification with SatMatchers with
     val cnf = structuralCNF( f, cse = true )
     val Some( res ) = Escargot.getResolutionProof( cnf )
     val exp = ResolutionToExpansionProof( res )
-    val desk = deskolemizeET( exp )
+    val desk = deskolemizeET(
+      exp,
+      removeCongruences = false // cut-elim becomes really slow
+    )
     desk.shallow must_== f
     desk.deep must beValidSequent
   }

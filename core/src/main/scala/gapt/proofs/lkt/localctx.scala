@@ -80,6 +80,10 @@ case class LocalCtx( hyps: Map[Hyp, Formula], subst: Substitution ) extends ALCt
   def eqLhs( p: Eql ) = hyps( p.eq ) match { case Eq( t, s ) => if ( p.ltr ) t else s }
   def eqRhs( p: Eql ) = hyps( p.eq ) match { case Eq( t, s ) => if ( p.ltr ) s else t }
 }
+object LocalCtx {
+  implicit val closedUnderSub: ClosedUnderSub[LocalCtx] =
+    ( sub, lctx ) => lctx.copy( hyps = lctx.hyps.map { case ( h, f ) => h -> sub( f ) } )
+}
 
 trait B1[LC <: ALCtx[LC]] { def apply( h: Hyp ): LC }
 trait B2[LC <: ALCtx[LC]] { def apply( h1: Hyp, h2: Hyp ): LC }

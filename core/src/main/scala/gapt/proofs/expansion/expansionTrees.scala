@@ -232,6 +232,7 @@ object ETInduction {
       }
     }
     def toCase( et: ExpansionTree, constrs: Seq[Const] ): Seq[Case] = {
+      val eisp = et.immediateSubProofs
       constrs.zip( et.immediateSubProofs ).map {
         case ( constr, indCase ) =>
           val FunctionType( indTy, argTypes ) = constr.ty

@@ -62,7 +62,7 @@ object LogHandler {
 
   object tstp extends LogHandler {
     def message( domain: String, level: VerbosityLevel, msg: => Any ): Unit =
-      if ( level <= Warn ) Console.out.println( s"% $msg" )
+      if ( level <= Warn ) Console.out.println( s"% ${msg.toString.replace( "\n", "\n% " )}" )
   }
 }
 

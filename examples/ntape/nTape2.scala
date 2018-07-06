@@ -64,7 +64,7 @@ object nTapeInstances {
         ( base, step )
     }
 
-    ( ind1base, ind1step, ind2base, ind2step ) match {
+    ( ( ind1base, ind1step, ind2base, ind2step ): @unchecked ) match {
       case ( Abs( xb, sb ), Abs( xs, ss ), Abs( yb, tb ), Abs( ys, ts ) ) =>
         val map = Map[Expr, String]()
         val counter = new Counter
