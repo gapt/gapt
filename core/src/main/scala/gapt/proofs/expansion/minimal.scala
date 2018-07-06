@@ -234,18 +234,22 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
    * @param tree The tree under consideration.
    * @return All trees that have exactly one fewer instance than the input.
    */
-  def generateSuccessorTrees( tree: ExpansionTree ): Seq[ExpansionTree] = tree match {
+  def generateSuccessorTrees( tree: ExpansionTree ): List[ExpansionTree] = tree match {
     case ETAtom( _, _ )      => Nil
     case ETWeakening( _, _ ) => Nil
     case ETTop( _ )          => Nil
     case ETBottom( _ )       => Nil
+    case ETMerge( left, right ) =>
+      val sLeft = generateSuccessorTrees( left )
+      val sRight = generateSuccessorTrees( right )
+      sLeft.map( ETMerge( _, right ) ) ++ sRight.map( ETMerge( left, _ ) )
     case ETDefinition( sh, child ) =>
       generateSuccessorTrees( child ).map( ETDefinition( sh, _ ) )
     case ETNeg( s ) => generateSuccessorTrees( s ).map( ETNeg.apply )
     case ETAnd( left, right ) =>
       val sLeft = generateSuccessorTrees( left )
       val sRight = generateSuccessorTrees( right )
-      sLeft.map( t => ETAnd( t, right ) ) ++ sRight.map( t => ETAnd( left, t ) )
+      sLeft.map( ETAnd( _, right ) ) ++ sRight.map( ETAnd( left, _ ) )
     case ETOr( left, right ) =>
       val sLeft = generateSuccessorTrees( left )
       val sRight = generateSuccessorTrees( right )
@@ -261,7 +265,7 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
       generateSuccessorTrees( sel ).map( ETSkolemQuantifier.apply( f, st, sf, _ ) )
 
     case ETWeakQuantifier( f, inst ) =>
-      inst.toSeq flatMap {
+      inst.toList flatMap {
         case ( term, child ) =>
           val containsWeakQ = child.subProofs exists {
             case ETWeakQuantifier( _, grandkids ) => grandkids.nonEmpty
@@ -272,7 +276,7 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
           } else {
             // In this case we are in a bottommost weak quantifier node,
             // which means that we will actually remove instances.
-            Seq( ETWeakQuantifier( f, inst - term ) )
+            List( ETWeakQuantifier( f, inst - term ) )
           }
       }
   }

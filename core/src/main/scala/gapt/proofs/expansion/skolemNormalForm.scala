@@ -54,6 +54,8 @@ object nonProofTheoreticSkolemTerms {
         case et: BinaryExpansionTree =>
           gatherOccs( et.child1, weak, 1 :: pos )
           gatherOccs( et.child2, weak, 2 :: pos )
+        case ETDefinition( _, ch ) =>
+          gatherOccs( ch, weak, 1 :: pos )
         case ETStrongQuantifier( _, _, ch ) =>
           gatherOccs( ch, weak, 1 :: pos )
         case ETWeakQuantifier( _, insts ) =>

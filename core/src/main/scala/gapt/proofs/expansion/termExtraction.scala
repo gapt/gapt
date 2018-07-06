@@ -19,15 +19,18 @@ object extractInstances {
     if ( !containsQuantifier( expansionTree.shallow ) )
       Set( expansionTree.shallow )
     else expansionTree match {
+      case ETMerge( t, s )     => extractInstances( t ) ++ extractInstances( s )
       case ETWeakening( _, _ ) => Set()
       case ETWeakQuantifier( _, instances ) =>
         instances flatMap { i => extractInstances( i._2 ) } toSet
-      case ETStrongQuantifier( _, _, t )    => extractInstances( t )
-      case ETSkolemQuantifier( _, _, _, t ) => extractInstances( t )
-      case ETAnd( t, s )                    => for ( ( ti, si ) <- apply( t, s ) ) yield ti & si
-      case ETOr( t, s )                     => for ( ( ti, si ) <- apply( t, s ) ) yield ti | si
-      case ETImp( t, s )                    => for ( ( ti, si ) <- apply( t, s ) ) yield ti --> si
-      case ETNeg( t )                       => for ( ti <- extractInstances( t ) ) yield -ti
+      case ETStrongQuantifier( _, _, t )               => extractInstances( t )
+      case ETSkolemQuantifier( _, _, _, t )            => extractInstances( t )
+      case ETAnd( t, s )                               => for ( ( ti, si ) <- apply( t, s ) ) yield ti & si
+      case ETOr( t, s )                                => for ( ( ti, si ) <- apply( t, s ) ) yield ti | si
+      case ETImp( t, s )                               => for ( ( ti, si ) <- apply( t, s ) ) yield ti --> si
+      case ETNeg( t )                                  => for ( ti <- extractInstances( t ) ) yield -ti
+      case ETDefinition( _, t )                        => extractInstances( t )
+      case ETAtom( _, _ ) | ETBottom( _ ) | ETTop( _ ) => throw new Exception( "Inconceivable!" )
     }
 
   private def apply( a: ExpansionTree, b: ExpansionTree ): Set[( Formula, Formula )] = {
