@@ -2,7 +2,7 @@ package gapt.formats.json
 
 import gapt.expr.{ Abs, Atom, Const, Expr, Formula, Polarity, Var, preExpr }
 import gapt.formats.babel.BabelParser
-import io.circe.{ Decoder, Encoder, KeyEncoder }
+import io.circe.{ Decoder, Encoder, KeyDecoder, KeyEncoder }
 
 /**
  * Json codecs for various kinds of expressions. An expression is encoded as its Babel string.
@@ -36,6 +36,7 @@ object ExprCodec {
   private[json] val _exprDecoder: Decoder[Expr] = Decoder.decodeString.emap( s => BabelParser.tryParse( s ).left.map( _.getMessage ) )
 
   private[json] val _exprKeyEncoder: KeyEncoder[Expr] = _.toString
+  private[json] val _exprKeyDecoder: KeyDecoder[Expr] = BabelParser.tryParse( _ ).toOption
 
   private[json] val _formulaEncoder: Encoder[Formula] = Encoder.encodeString.contramap[Formula]( _.toString )
   private[json] val _formulaDecoder: Decoder[Formula] = Decoder.decodeString.emap( s => BabelParser.tryParse( s, preExpr.TypeAnnotation( _, preExpr.Bool ) ) match {

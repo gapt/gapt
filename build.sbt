@@ -196,7 +196,8 @@ lazy val core = project.in( file( "core" ) ).
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
-      "io.circe" %% "circe-parser" ).map( _ % "0.9.3" ) )
+      "io.circe" %% "circe-parser",
+      "io.circe" %% "circe-generic-extras" ).map( _ % "0.9.3" ) )
 
 lazy val examples = project.in( file( "examples" ) ).
   dependsOn( core ).

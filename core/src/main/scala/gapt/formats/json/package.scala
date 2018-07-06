@@ -2,11 +2,13 @@ package gapt.formats
 
 import gapt.expr._
 import gapt.proofs.{ DagProof, HOLSequent, SequentIndex }
-import io.circe.{ Decoder, Encoder, KeyEncoder }
+import io.circe.{ Decoder, Encoder, KeyDecoder, KeyEncoder }
 import gapt.formats.json.lk.LKProofCodec._
+import gapt.formats.json.et.ExpansionTreeCodec._
 import gapt.proofs.lk.LKProof
 import gapt.formats.json.ExprCodec._
 import gapt.formats.json.SequentCodec._
+import gapt.proofs.expansion.{ ExpansionProof, ExpansionTree }
 
 package object json {
 
@@ -23,6 +25,7 @@ package object json {
   implicit val exprDecoder: Decoder[Expr] = _exprDecoder
 
   implicit val exprKeyEncoder: KeyEncoder[Expr] = _exprKeyEncoder
+  implicit val exprKeyDecoder: KeyDecoder[Expr] = _exprKeyDecoder
 
   implicit val formulaEncoder: Encoder[Formula] = _formulaEncoder
   implicit val formulaDecoder: Decoder[Formula] = _formulaDecoder
@@ -41,6 +44,12 @@ package object json {
 
   implicit val lkProofEncoder: Encoder[LKProof] = _lkProofEncoder
   implicit val lkProofDecoder: Decoder[LKProof] = _lkProofDecoder
+
+  implicit val expansionTreeEncoder: Encoder[ExpansionTree] = _expansionTreeEncoder
+  implicit val expansionTreeDecoder: Decoder[ExpansionTree] = _expansionTreeDecoder
+
+  implicit val expansionProofEncoder: Encoder[ExpansionProof] = _expansionProofEncoder
+  implicit val expansionProofDecoder: Decoder[ExpansionProof] = _expansionProofDecoder
 
   private[json] def proofEncoder[P <: DagProof[P]]( proofCollectionEncoder: Encoder[ProofCollection[P]] ): Encoder[P] = proofCollectionEncoder.contramap( ProofCollection( _ ) )
 
