@@ -14,7 +14,7 @@ object Viperize {
       if ( ( pattern findAllIn x.lhs.toString ).nonEmpty ) {
         val matrix = Iff( x.lhs, x.rhs )
         All.Block( freeVariables( matrix ).toSeq, matrix )
-      } else if ( x.lhs.ty.toString.matches( "i" ) ) {
+      } else if ( !(x.lhs.ty.toString.matches( "o" )) ) {
         val matrix = Eq( x.lhs, x.rhs )
         All.Block( freeVariables( matrix ).toSeq, matrix )
       } else Bottom()
