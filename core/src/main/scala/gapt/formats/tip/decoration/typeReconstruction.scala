@@ -105,7 +105,7 @@ class ReconstructDatatypes( problem: TipSmtProblem ) {
 
     case TipSmtIte( expr1, expr2, expr3 ) =>
       reconstructTypes( expr1, variables )
-      reconstructTypes( expr3, variables )
+      reconstructTypes( expr2, variables )
       reconstructTypes( expr3, variables )
       expression.datatype = expr2.datatype
 
