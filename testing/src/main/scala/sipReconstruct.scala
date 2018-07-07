@@ -35,6 +35,12 @@ object sipReconstruct extends Script {
   def getProd( name: String, proofs: String* ) =
     tip( s"prod.prop_$name", proofs: _* )
 
+  def inlineLast( thy: Theory )( lem: thy.LemmaHandle ): LKProof =
+    if ( lem.usedLemmas.isEmpty ) lem.proof else {
+      val n = lem.usedLemmas.maxBy( _.number ).name
+      lem.combined( included = Set( n ) )
+    }
+
   val indProofs = ( Map()
     ++ getIsaplanner( "03", "proof", "proof2", "proof3" )
     ++ getIsaplanner( "06", "proof1", "proof2", "proof3", "proof4", "proof5" )
@@ -102,45 +108,59 @@ object sipReconstruct extends Script {
     ++ getProd( "35", "proof" )
     ++ {
       val thy = new Theory(
-        nat, natorder
+        nat, natorder, natdivision, natdivisible
       // list, listlength, listdrop, listfold
       )
-      thy.allProofs.view.map( p =>
-        s"theory.${p._1}" -> Later( thy.ctx -> thy.LemmaHandle( p._1 ).proof ) )
+      import thy._
+      allProofs.view.flatMap( p => Seq(
+        s"theory.${p._1}" -> Later( ctx -> LemmaHandle( p._1 ).proof ),
+        s"theory1.${p._1}" -> Later( ctx -> inlineLast( thy )( LemmaHandle( p._1 ) ) ) ) )
     } )
 
   LogHandler.current.value = ( domain, level, msg ) => if ( level <= LogHandler.Warn ) println( msg )
 
   args.toList match {
-    case Seq( "--list" ) => indProofs.keys.toSeq.sorted.foreach( println )
-    case Seq( name ) =>
-      val ( ctx0, proof ) = indProofs( name ).value
-      implicit val ctx = ctx0.newMutable
+    case Seq( "--list" )   => indProofs.keys.toSeq.sorted.foreach( println )
+    case Seq( name )       => go( name, "cansol" )
+    case Seq( name, mode ) => go( name, mode )
+  }
 
-      val Sequent( _, Seq( All.Block( xs, _ ) ) ) = proof.endSequent
-      val proof0 = normalizeLKt.lk( instanceProof( proof, xs ) )
+  def go( name: String, mode: String ): Unit = {
+    val ( ctx0, proof ) = indProofs( name ).value
+    implicit val ctx = ctx0.newMutable
 
-      val exp = eliminateCutsET( deskolemizeET( prenexifyET.exceptTheory( LKToExpansionProof( proof0 ) ) ) )
-      val ETWeakQuantifier( _, insts ) = exp.inductions.head.suc
-      val term = insts.head._1.asInstanceOf[Var]
+    val Sequent( _, Seq( All.Block( xs, _ ) ) ) = proof.endSequent
+    val proof0 = normalizeLKt.lk( instanceProof( proof, xs ) )
 
-      require( xs.contains( term ) )
-      val Right( proof1 ) = ExpansionProofToLK( exp )
-      val proof2 = Substitution( for ( x <- xs if x != term ) yield x -> {
-        val c = Const( ctx.newNameGenerator.fresh( x.name ), x.ty )
-        ctx += c
-        c
-      } )( proof1 )
-      val proof3 = ForallRightRule( proof2, All( term, proof2.endSequent.succedent.head ) )
-      val p = proof3
+    val exp = eliminateCutsET( deskolemizeET( prenexifyET.exceptTheory( LKToExpansionProof( proof0 ) ) ) )
+    val ETWeakQuantifier( _, insts ) = exp.inductions.head.suc
+    val term = insts.head._1.asInstanceOf[Var]
 
-      val indG = extractInductionGrammar( p )
-      println( s"SIP with induction grammar:\n$indG" )
-      val qtys = Some( indG.gamma.map { case Var( _, TBase( n, _ ) ) => n } )
+    require( xs.contains( term ) )
+    val Right( proof1 ) = ExpansionProofToLK( exp )
+    val proof2 = Substitution( for ( x <- xs if x != term ) yield x -> {
+      val c = Const( ctx.newNameGenerator.fresh( x.name ), x.ty )
+      ctx += c
+      c
+    } )( proof1 )
+    val proof3 = ForallRightRule( proof2, All( term, proof2.endSequent.succedent.head ) )
+    val p = proof3
 
-      verbose.only( TreeGrammarProver.logger ) {
-        indElimReversal( p, TreeGrammarProverOptions( minInstProof = false, quantTys = qtys ) )
+    val indG = extractInductionGrammar( p )
+    println( s"SIP with induction grammar:\n$indG" )
+    val qtys = Some( indG.gamma.map { case Var( _, TBase( n, _ ) ) => n } )
+
+    verbose.only( TreeGrammarProver.logger ) {
+      mode match {
+        case "cansol" =>
+          indElimReversal( p, TreeGrammarProverOptions( minInstProof = false, quantTys = qtys ) )
+        case "interp" =>
+          indElimReversal( p, TreeGrammarProverOptions( minInstProof = false, quantTys = qtys,
+            useInterpolation = true ) )
+        case "atp" =>
+          TreeGrammarProver( p.endSequent, TreeGrammarProverOptions( quantTys = qtys ) )
       }
+    }
   }
 
 }

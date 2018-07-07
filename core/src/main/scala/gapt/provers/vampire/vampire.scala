@@ -12,6 +12,7 @@ import gapt.provers.{ ResolutionProver, extractIntroducedDefinitions, renameCons
 import gapt.utils.{ ExternalProgram, Maybe, runProcess }
 
 object Vampire extends Vampire( commandName = "vampire", extraArgs = Seq() )
+object VampireCASC extends Vampire( commandName = "vampire", extraArgs = Seq( "--mode", "casc" ) )
 class Vampire( commandName: String = "vampire", extraArgs: Seq[String] = Seq() ) extends ResolutionProver with ExternalProgram {
   override def getResolutionProof( seq: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] =
     renameConstantsToFi.wrap( seq.toSeq )(
@@ -21,7 +22,7 @@ class Vampire( commandName: String = "vampire", extraArgs: Seq[String] = Seq() )
         val output = runProcess.withTempInputFile(
           commandName +: "-p" +: "tptp" +: extraArgs,
           tptpIn ).split( "\n" )
-        if ( output.head startsWith "Refutation" ) {
+        if ( output.exists( l => l.startsWith( "Refutation" ) || l.startsWith( "% Refutation" ) ) ) {
           val sketch = TptpProofParser.parse( StringInputFile( output.drop( 1 ).takeWhile( !_.startsWith( "---" ) ).mkString( "\n" ) ) )._2
           val Right( resolution ) = RefutationSketchToResolution( sketch )
           Some( fixDerivation( resolution, cnf ) )

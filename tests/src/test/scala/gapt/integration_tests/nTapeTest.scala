@@ -2,6 +2,7 @@ package gapt.integration_tests
 
 import gapt.examples._
 import gapt.proofs.Sequent
+import gapt.proofs.expansion.{ eliminateMerges, findMerges }
 import gapt.provers.eprover.EProver
 import gapt.provers.prover9.Prover9
 import org.specs2.mutable._
@@ -59,6 +60,14 @@ class nTapeTest extends Specification {
       nTape6.sequents
       ok( "terms created" )
     }
+
+    "eliminateMerge removes all merges in n3Tape proof" in {
+      val merge_nodes =
+        findMerges( nTape3.expansion_proof )
+
+      merge_nodes must beEmpty
+    }
+
   }
 
 }

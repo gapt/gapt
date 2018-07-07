@@ -1,6 +1,7 @@
 package gapt.proofs.lk
 
 import gapt.expr.{ And, FOLAtom }
+import gapt.proofs.ProofBuilder
 import org.specs2.mutable._
 
 class ProofBuilderTest extends Specification {
@@ -57,7 +58,7 @@ class ProofBuilderTest extends Specification {
     }
 
     "refuse to return if there are too many or too few proofs on the stack" in {
-      ( ProofBuilder qed ) must throwAn[Exception]
+      ( ProofBuilder qed: AnyRef ) must throwAn[Exception]
       ( ProofBuilder
         c LogicalAxiom( A )
         c LogicalAxiom( B ) qed ) must throwAn[Exception]

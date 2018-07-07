@@ -4,7 +4,7 @@ import gapt.examples
 import gapt.expr._
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.nd.{ ExcludedMiddleRule, NDProof }
-import gapt.proofs.{ Ant, Context, SequentIndex, SequentMatchers, Suc }
+import gapt.proofs.{ Ant, Context, ProofBuilder, SequentIndex, SequentMatchers, Suc }
 import gapt.utils.SatMatchers
 import org.specs2.mutable._
 

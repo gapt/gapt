@@ -1,9 +1,7 @@
 package gapt.proofs.resolution
 
 import gapt.expr._
-import gapt.proofs.expansion._
-import gapt.proofs.lk.ResolutionProofBuilder
-import gapt.proofs.{ Ant, Clause, Sequent, Suc }
+import gapt.proofs.{ Ant, Clause, ProofBuilder, Sequent, Suc }
 import gapt.utils.SatMatchers
 import org.specs2.mutable._
 
@@ -81,14 +79,14 @@ class ResolutionTest extends Specification with SatMatchers {
 
   "Splitting" in {
     val in = Input( hof"!x!y (p x | q y) -> p c | q d" +: Sequent() )
-    val c1 = ResolutionProofBuilder.c( in ).
+    val c1 = ProofBuilder.c( in ).
       u( ImpL1( _, Ant( 0 ) ) ).
       u( AllR( _, Suc( 0 ), hov"x" ) ).
       u( AllR( _, Suc( 0 ), hov"y" ) ).
       u( OrR( _, Suc( 0 ) ) ).qed
-    val c2 = ResolutionProofBuilder.c( in ).
+    val c2 = ProofBuilder.c( in ).
       u( ImpL2( _, Ant( 0 ) ) ).u( OrL1( _, Ant( 0 ) ) ).qed
-    val c3 = ResolutionProofBuilder.c( in ).
+    val c3 = ProofBuilder.c( in ).
       u( ImpL2( _, Ant( 0 ) ) ).u( OrL2( _, Ant( 0 ) ) ).qed
 
     val comp1 = AvatarNonGroundComp( hoa"spl1", hof"!x p x", Seq( hov"x" ) )

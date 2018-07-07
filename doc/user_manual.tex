@@ -1704,7 +1704,10 @@ benchmark: String =
 (declare-fun f_P (t_i) Bool)
 (declare-fun f_c () t_i)
 (declare-fun f_a () t_i)
-(assert (not (=> (and (and (or (= f_a f_b) (= f_a f_c)) (f_P f_c)) (f_P f_b)) (f_P f_a))))
+(assert
+  (not
+    (=> (and (and (or (= f_a f_b) (= f_a f_c)) (f_P f_c)) (f_P f_b))
+      (f_P f_a))))
 (check-sat)
 "
 typeRenaming: Map[gapt.expr.TBase,gapt.expr.TBase] = Map(o -> Bool, i -> t_i)
@@ -2023,14 +2026,14 @@ $ ./viper.sh --treegrammar --cansolsize 2 3 --gramw scomp \
 
 You can also use Viper from within GAPT:
 \begin{clilisting}
-gapt> val problem = TipSmtParser.parse(FilePath("examples/tip/isaplanner/prop_06.smt2"))
+gapt> val problem = TipSmtImporter.parse(FilePath("examples/tip/isaplanner/prop_06.smt2"))
 problem: gapt.formats.tip.TipProblem =
 ∀x0 'proj1-S'(S(x0)) = x0,
 ∀y '-2'(Z, y) = Z,
 ∀z '-2'(S(z), Z) = S(z),
 ∀z ∀x2 '-2'(S(z), S(x2)) = '-2'(z, x2),
 ∀y '+2'(Z, y) = y,
-∀z ∀y '+2'(S(z), y) = S('+2'(z, y)),
+∀y ∀z '+2'(S(z), y) = S('+2'(z, y)),
 ∀y0 Z != S(y0)
 ⊢
 ∀n ∀m '-2'(n, '+2'(n, m)) = Z
@@ -2043,7 +2046,7 @@ proof: gapt.proofs.lk.LKProof =
 ∀y ('+2'(#c(Z: Nat), y:Nat): Nat) = y,
 ∀y '-2'(#c(Z: Nat), y) = #c(Z: Nat),
 ∀z ∀x2 '-2'(S(z), S(x2)) = '-2'(z, x2),
-∀z ∀y '+2'(S(z), y) = S('+2'(z, y))
+∀y ∀z '+2'(S(z), y) = S('+2'(z, y))
 ⊢
 ∀n ∀m '-2'(n, '+2'(n, m)) = #c(Z: Nat)    (CutRule(p21, Suc(0), p168, Ant(3)))
 [p168] ∀z ('-2'(S(z:Nat): Nat, #c(Z: Nat)): Nat) = S(z),

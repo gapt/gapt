@@ -2,7 +2,7 @@ package gapt.proofs.lk
 
 import gapt.expr._
 import gapt.proofs.Context.ProofNames
-import gapt.proofs.{ Ant, Context, HOLSequent, SequentIndex, Suc, lk, nd }
+import gapt.proofs.{ Ant, Context, HOLSequent, ProofBuilder, SequentIndex, Suc, lk, nd }
 import gapt.proofs.nd._
 
 object LKToND {
@@ -67,7 +67,7 @@ object LKToND {
         val pr2 = if ( subProof.endSequent( Suc( 0 ) ) == Bottom() ) {
           BottomElimRule( subProof, mainFormula )
         } else {
-          nd.ProofBuilder.
+          ProofBuilder.
             c( nd.LogicalAxiom( -r ) ).
             u( NegElimRule( _, subProof ) ).
             u( BottomElimRule( _, mainFormula ) ).
@@ -84,7 +84,7 @@ object LKToND {
         if ( subProof.endSequent( Suc( 0 ) ) == Bottom() ) {
           BottomElimRule( subProof, mainFormula )
         } else {
-          nd.ProofBuilder.
+          ProofBuilder.
             c( nd.LogicalAxiom( -r ) ).
             u( NegElimRule( _, subProof ) ).
             u( BottomElimRule( _, mainFormula ) ).
@@ -125,14 +125,14 @@ object LKToND {
 
         def handleSuccedent( seq: Vector[Formula], toProve: Formula ): NDProof = {
           if ( seq.size == 1 ) {
-            nd.ProofBuilder.
+            ProofBuilder.
               c( nd.LogicalAxiom( -seq.last ) ).
               c( nd.LogicalAxiom( seq.last ) ).
               b( NegElimRule( _, _ ) ).
               u( BottomElimRule( _, toProve ) ).
               qed
           } else {
-            nd.ProofBuilder.
+            ProofBuilder.
               c( nd.LogicalAxiom( -seq.last ) ).
               c( nd.LogicalAxiom( Or( seq ) ) ).
               c( handleSuccedent( seq.reverse.tail.reverse, seq.last ) ).
@@ -144,7 +144,7 @@ object LKToND {
           }
         }
 
-        val t = nd.ProofBuilder.
+        val t = ProofBuilder.
           c( nd.TheoryAxiom( All.Block( vs.asInstanceOf[List[Var]], genseq.toImplication ) ) ).
           u( nd.ForallElimBlock( _, args ) ).
           c( nd.LogicalAxiom( seq( Ant( 0 ) ) ) ).
@@ -152,7 +152,7 @@ object LKToND {
           b( ImpElimRule( _, _ ) ).
           qed
         val tsuc = if ( seq.succedent.size > 1 ) {
-          nd.ProofBuilder.
+          ProofBuilder.
             c( t ).
             c( handleSuccedent( seq.succedent.reverse.tail.reverse, seq.succedent.last ) ).
             c( nd.LogicalAxiom( seq.succedent.last ) ).
@@ -201,7 +201,7 @@ object LKToND {
           val l = subProof.endSequent( aux1 )
           val t = translate( subProof, Some( aux1 ) )
           val il = t.endSequent.indexOf( -l, Polarity.InAntecedent )
-          nd.ProofBuilder.
+          ProofBuilder.
             c( nd.LogicalAxiom( l ) ).
             c( t ).
             b( ExcludedMiddleRule( _, Ant( 0 ), _, il ) ).
@@ -223,7 +223,7 @@ object LKToND {
 
         val i = tr.endSequent.indexOf( rightSubProof.endSequent( aux2 ), Polarity.InAntecedent )
 
-        val partialProof = nd.ProofBuilder.
+        val partialProof = ProofBuilder.
           c( tr ).
           u( ImpIntroRule( _, i ) ).
           c( tl ).
@@ -240,7 +240,7 @@ object LKToND {
           case None =>
             val Neg( a ) = p.mainFormula
             val focusMain = subProof.endSequent.indexOf( a, Polarity.InSuccedent )
-            nd.ProofBuilder.
+            ProofBuilder.
               c( nd.LogicalAxiom( p.mainFormula ) ).
               c( translate( subProof, Some( focusMain ) ) ).
               b( NegElimRule( _, _ ) ).
@@ -255,7 +255,7 @@ object LKToND {
           if ( t.endSequent( Suc( 0 ) ) == Bottom() ) {
             NegIntroRule( t, a )
           } else {
-            nd.ProofBuilder.
+            ProofBuilder.
               c( nd.LogicalAxiom( -t.endSequent( Suc( 0 ) ) ) ).
               c( t ).
               b( NegElimRule( _, _ ) ).
@@ -278,7 +278,7 @@ object LKToND {
         val And( a, b ) = p.mainFormula
 
         val ax = nd.LogicalAxiom( p.mainFormula )
-        nd.ProofBuilder.
+        ProofBuilder.
           c( t ).
           u( ImpIntroRule( _, a ) ).
           c( ax ).
@@ -315,7 +315,7 @@ object LKToND {
           if ( tl.endSequent( Suc( 0 ) ) == Bottom() )
             BottomElimRule( tl, p.endSequent( focus.get ) )
           else {
-            nd.ProofBuilder.
+            ProofBuilder.
               c( nd.LogicalAxiom( -tl.endSequent( Suc( 0 ) ) ) ).
               c( tl ).
               b( NegElimRule( _, _ ) ).
@@ -334,7 +334,7 @@ object LKToND {
           if ( tr.endSequent( Suc( 0 ) ) == Bottom() )
             BottomElimRule( tr, p.endSequent( focus.get ) )
           else {
-            nd.ProofBuilder.
+            ProofBuilder.
               c( nd.LogicalAxiom( -tr.endSequent( Suc( 0 ) ) ) ).
               c( tr ).
               b( NegElimRule( _, _ ) ).
@@ -354,13 +354,13 @@ object LKToND {
           f match {
             case `b` =>
               val i = subProof1.getSequentConnector.parent( aux1 )
-              nd.ProofBuilder.
+              ProofBuilder.
                 c( translate( subProof2, Some( i ) ) ).
                 u( OrIntro1Rule( _, f ) ).
                 qed
             case `a` =>
               val i = subProof1.getSequentConnector.parent( aux2 )
-              nd.ProofBuilder.
+              ProofBuilder.
                 c( translate( subProof2, Some( i ) ) ).
                 u( OrIntro2Rule( _, f ) ).
                 qed
@@ -374,12 +374,12 @@ object LKToND {
 
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
           val Or( a, b ) = p.mainFormula
-          val rp = nd.ProofBuilder.
+          val rp = ProofBuilder.
             c( translate( subProof, Some( aux2 ) ) ).
             u( OrIntro2Rule( _, a ) ).
             qed
 
-          val lp = nd.ProofBuilder.
+          val lp = ProofBuilder.
             c( nd.LogicalAxiom( a ) ).
             u( OrIntro1Rule( _, b ) ).
             qed
@@ -404,7 +404,7 @@ object LKToND {
         val Imp( _, b ) = p.mainFormula
         val i = tr.endSequent.indexOf( b, Polarity.InAntecedent )
 
-        val partialProof = nd.ProofBuilder.
+        val partialProof = ProofBuilder.
           c( tr ).
           u( ImpIntroRule( _, i ) ).
           c( nd.LogicalAxiom( p.mainFormula ) ).
@@ -419,7 +419,7 @@ object LKToND {
 
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
           val Imp( a, _ ) = p.mainFormula
-          nd.ProofBuilder.
+          ProofBuilder.
             c( translate( subProof, Some( aux2 ) ) ).
             u( ImpIntroRule( _, a ) ).
             qed
@@ -438,7 +438,7 @@ object LKToND {
           else None )
 
         val i = t.endSequent.indexOf( Substitution( v, term )( a ), Polarity.InAntecedent )
-        nd.ProofBuilder.
+        ProofBuilder.
           c( t ).
           u( ImpIntroRule( _, i ) ).
           c( nd.LogicalAxiom( p.mainFormula ) ).
@@ -449,7 +449,7 @@ object LKToND {
       case p @ ForallRightRule( subProof, aux, eigen, _ ) =>
 
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
-          nd.ProofBuilder.
+          ProofBuilder.
             c( translate( subProof, Some( aux ) ) ).
             u( ForallIntroRule( _, p.mainFormula, eigen ) ).
             qed
@@ -473,7 +473,7 @@ object LKToND {
 
         val Ex( _, a ) = p.mainFormula
         val i = t.endSequent.indexOf( Substitution( v, eigen )( a ), Polarity.InAntecedent )
-        nd.ProofBuilder.
+        ProofBuilder.
           c( nd.LogicalAxiom( p.mainFormula ) ).
           c( t ).
           b( ExistsElimRule( _, _, i, eigen ) ).
@@ -487,7 +487,7 @@ object LKToND {
       case p @ ExistsRightRule( subProof, aux, _, t, _ ) =>
 
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
-          nd.ProofBuilder.
+          ProofBuilder.
             c( translate( subProof, Some( aux ) ) ).
             u( ExistsIntroRule( _, p.mainFormula, t ) ).
             qed
@@ -507,7 +507,7 @@ object LKToND {
 
         val Abs( x, term ) = replacementContext
 
-        nd.ProofBuilder.
+        ProofBuilder.
           c( t ).
           u( ImpIntroRule( _, subProof.endSequent( aux ) ) ).
           c( nd.LogicalAxiom( subProof.endSequent( eq ) ) ).
@@ -521,7 +521,7 @@ object LKToND {
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
           val Abs( x, term ) = replacementContext
 
-          nd.ProofBuilder.
+          ProofBuilder.
             c( nd.LogicalAxiom( subProof.endSequent( eq ) ) ).
             c( translate( subProof, Some( aux ) ) ).
             b( EqualityElimRule( _, _, term.asInstanceOf[Formula], x ) ).
@@ -543,7 +543,7 @@ object LKToND {
 
       case p @ DefinitionLeftRule( subProof: LKProof, aux: SequentIndex, main: Formula ) =>
         val t = translate( subProof, focus )
-        nd.ProofBuilder.
+        ProofBuilder.
           c( t ).
           u( ImpIntroRule( _, subProof.endSequent( aux ) ) ).
           u( nd.DefinitionRule( _, Imp( main, t.endSequent( Suc( 0 ) ) ) ) ).
@@ -554,7 +554,7 @@ object LKToND {
       case p @ DefinitionRightRule( subProof, aux, main ) =>
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
           val t = translate( subProof, focus )
-          nd.ProofBuilder.
+          ProofBuilder.
             c( t ).
             u( nd.DefinitionRule( _, main ) ).
             qed

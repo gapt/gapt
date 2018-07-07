@@ -153,3 +153,27 @@ object EventuallyConstantSchemaRefutation extends TacticsProof( EventuallyConsta
   ctx += Context.ProofDefinitionDeclaration( le"Next 0 k", PR2Bc )
 
 }
+
+object EventuallyConstantSchemaInductionRefutation extends TacticsProof( EventuallyConstantSchema.ctx ) {
+  import gapt.proofs.gaptic._
+  val Some( scs ) = SchematicStruct( "phi" )
+  val CFPRN = CharFormPRN( scs )
+  CharFormPRN.PR( CFPRN )
+
+  val next = Lemma( hof"!n!k ((E(n, f(g(k))) | LE(f(g(k)), n)) & (E(n, f(k)) | LE(f(k), n)) -> ~phiSFAT(n))" ) {
+    allR; induction( hov"n:nat" ) onAll unfold( "phiSFAT" ).in( "g" ) onAll escrgt
+  }
+
+  val prsc = Lemma( hof"!n ~phiSFAF(n)" ) {
+    allR; induction( hov"n:nat" ) onAll unfold( "phiSFAF" ).in( "g" )
+    by { escrgt }
+    by { include( "next", next ); escrgt }
+  }
+
+  // just a single induction
+  val prscs = Lemma( hof"!n ~phiSFAF(s(n))" ) {
+    unfold( "phiSFAF" ).in( "g" )
+    include( "next", next )
+    escrgt
+  }
+}

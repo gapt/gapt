@@ -2,7 +2,7 @@ package gapt.provers.viper
 
 import gapt.examples.induction._
 import gapt.formats.ClasspathInputFile
-import gapt.formats.tip.TipSmtParser
+import gapt.formats.tip.TipSmtImporter
 import gapt.proofs.{ Sequent, SequentMatchers }
 import gapt.provers.spass.SPASS
 import gapt.provers.viper.grammars.TreeGrammarProver
@@ -32,13 +32,14 @@ class ViperTest extends Specification with SequentMatchers {
         var opts0 = ViperOptions( fixup = false )
         if ( prob == "linear2par" ) skipped( "multi-parameter not integrated here" )
         if ( prob == "prod_prop_31" ) {
-          if ( !TipSmtParser.isInstalled )
+          skipped( "tip tools horribly broken" )
+          if ( !TipSmtImporter.isInstalled )
             skipped( "tip tool required for preprocessing" )
           opts0 = opts0.copy( fixup = true )
         }
         val file = ClasspathInputFile( s"induction/$prob.smt2" )
         val ( Nil, options ) = ViperOptions.parse( extractOptions( file.read ), opts0 )
-        val problem = if ( options.fixup ) TipSmtParser.fixupAndParse( file ) else TipSmtParser.parse( file )
+        val problem = if ( options.fixup ) TipSmtImporter.fixupAndParse( file ) else TipSmtImporter.parse( file )
         val lk = new TreeGrammarProver( problem.ctx, problem.toSequent, options.treeGrammarProverOptions ).solve()
         problem.ctx check lk
         lk.conclusion.distinct.diff( problem.toSequent ) must_== Sequent()

@@ -19,5 +19,6 @@ object comm extends TacticsProof {
     treeGrammarInduction
       .quantTys()
       .canSolSize( 1 )
+      .useInterpolation
   }
 }
