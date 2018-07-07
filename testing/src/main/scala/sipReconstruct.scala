@@ -7,7 +7,6 @@ import gapt.proofs.{ Context, Sequent }
 import gapt.proofs.expansion._
 import gapt.proofs.gaptic.TacticsProof
 import gapt.proofs.lk._
-import gapt.proofs.lkt.normalizeLKt
 import gapt.provers.viper.grammars.{ TreeGrammarProver, TreeGrammarProverOptions, indElimReversal }
 import gapt.utils.{ LogHandler, verbose }
 

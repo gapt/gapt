@@ -168,6 +168,13 @@ class normalize {
   def withDebug( p: LKt, lctx: LocalCtx )( implicit ctx: Maybe[Context] ): LKt =
     new NormalizerWithDebugging().normalize( p, lctx )
 
+  def equality( p: LKt, lctx: LocalCtx, simpCut: Formula => Boolean = _ => false ): LKt =
+    apply( atomizeEquality( p, lctx ) )
+  def equalityLK( p: LKProof, simpCut: Formula => Boolean = _ => false ): LKProof = {
+    val ( lkt, lctx ) = LKToLKt( p )
+    LKtToLK( equality( lkt, lctx ), lctx )
+  }
+
   def induction( p: LKt, lctx: LocalCtx, useSimp: Boolean = true, debugging: Boolean = false,
                  skipCut: Formula => Boolean = _ => false )( implicit ctx: Context ): LKt = {
     val simpAdapter = if ( !useSimp ) NoopSimpAdapter else SimplifierSimpAdapter(
@@ -178,10 +185,10 @@ class normalize {
       new Normalizer[FakeLocalCtx]( skipCut ) {}.
         normalizeWithInduction( p, FakeLocalCtx, lctx, simpAdapter )
   }
-  def inductionWithDebug( p: LKProof )( implicit ctx: Context ): LKt = {
+  def inductionLK( p: LKProof, useSimp: Boolean = true, debugging: Boolean = false,
+                   skipCut: Formula => Boolean = _ => false )( implicit ctx: Context ): LKProof = {
     val ( lkt, lctx ) = LKToLKt( p )
-    induction( lkt, lctx )
+    LKtToLK( induction( lkt, lctx, useSimp, debugging, skipCut ), lctx )
   }
 }
 object normalize extends normalize
-object normalizeLKt extends normalize
