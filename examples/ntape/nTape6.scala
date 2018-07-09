@@ -1,10 +1,10 @@
-package at.logic.gapt.examples
+package gapt.examples
 
 import java.io._
 
-import at.logic.gapt.formats.llk.short._
-import at.logic.gapt.formats.tptp.TPTPHOLExporter
-import at.logic.gapt.proofs.HOLSequent
+import gapt.formats.llk.short._
+import gapt.formats.tptp.TPTPHOLExporter
+import gapt.proofs.HOLSequent
 
 /**
  * The object nTape6 generates hard problems for higher order theorem provers containing an axiomatization of
@@ -25,7 +25,7 @@ import at.logic.gapt.proofs.HOLSequent
  * P1: f1, f2, f3, f4 :- conclusion1
  * P2: f1, f2, f3, f4 :- conclusion2
  *
- * The generated filenames are "ntape6-${i}-without-witness.tptp" for i = 0 to 2.
+ * The generated filenames are "ntape6-i-without-witness.tptp" for i = 0 to 2.
  *
  * To show that there are actual witnesses for the function h, we provide a witness, where the witness w1 can be used
  * for both W0 and W1:
@@ -34,7 +34,7 @@ import at.logic.gapt.proofs.HOLSequent
  * W1: { w1 :- } x P1
  * W2: { w2 :- } x P2
  *
- * The generated filenames are "ntape6-${i}-with-witness.tptp" for i = 0 to 2.
+ * The generated filenames are "ntape6-i-with-witness.tptp" for i = 0 to 2.
  */
 object nTape6 {
 
@@ -46,8 +46,7 @@ object nTape6 {
       sig(
         """var X:o; var U,V:i; var H:i>i; var x,y:i;
               const zero:i; const s:i>i;  const h:i>i;
-              const ite : o > (i > (i>i));"""
-      )
+              const ite : o > (i > (i>i));""" )
     val s1 = "(all X all U all V (X -> ite(X,U,V) = U))"
     val s2 = "(all X all U all V (-X -> ite(X,U,V) = V))"
     val s3 = "(all x -(s(x) = zero))"

@@ -1,12 +1,12 @@
-package at.logic.gapt.examples
-import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.universalClosure
-import at.logic.gapt.formats.babel.BabelParser.parseFormula
-import at.logic.gapt.proofs.expansion.{ ExpansionProofToLK, minimalExpansionSequent }
-import at.logic.gapt.proofs.resolution.{ expansionProofFromInstances, structuralCNF }
-import at.logic.gapt.proofs.{ FOLClause, Sequent }
-import at.logic.gapt.prooftool.prooftool
-import at.logic.gapt.provers.sat.Sat4j
+package gapt.examples
+import gapt.expr._
+import gapt.expr.hol.universalClosure
+import gapt.formats.babel.BabelParser.parseFormula
+import gapt.proofs.expansion.{ ExpansionProofToLK, minimalExpansionSequent }
+import gapt.proofs.resolution.{ expansionProofFromInstances, structuralCNF }
+import gapt.proofs.{ FOLClause, Sequent }
+import gapt.prooftool.prooftool
+import gapt.provers.sat.Sat4j
 
 import scala.collection.mutable
 
@@ -26,8 +26,7 @@ object instprover extends Script {
     if ( !done.contains( next ) ) for {
       clause2 <- done
       clause1 = FOLSubstitution(
-        rename( freeVariables( next ), freeVariables( clause2 ) )
-      )( next )
+        rename( freeVariables( next ), freeVariables( clause2 ) ) )( next )
       ( atom1, index1 ) <- clause1.zipWithIndex.elements
       ( atom2, index2 ) <- clause2.zipWithIndex.elements
       if !index2.sameSideAs( index1 )

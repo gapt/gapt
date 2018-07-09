@@ -1,9 +1,9 @@
-package at.logic.gapt.examples.induction
+package gapt.examples.induction
 
-import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.universalClosure
-import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.gaptic._
+import gapt.expr._
+import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs._
+import gapt.proofs.gaptic._
 
 object primeFactor extends TacticsProof {
   ctx += Context.Sort( "i" )
@@ -11,28 +11,25 @@ object primeFactor extends TacticsProof {
   ctx += Const( "0", Ti )
   ctx += Const( "1", Ti )
   ctx += Const( "2", Ti )
-  ctx += Const( "+", Ti -> ( Ti -> Ti ) )
-  ctx += Const( "*", Ti -> ( Ti -> Ti ) )
-  ctx += Const( "<", Ti -> ( Ti -> To ) )
+  ctx += Const( "+", Ti ->: Ti ->: Ti )
+  ctx += Notation.Infix( "+", Precedence.plusMinus )
+  ctx += Const( "*", Ti ->: Ti ->: Ti )
+  ctx += Notation.Infix( "*", Precedence.timesDiv )
+  ctx += Const( "<", Ti ->: Ti ->: To )
+  ctx += Notation.Infix( "<", Precedence.infixRel )
 
   ctx += hof" div l k = (∃m l * m = k)"
   ctx += hof" prime k = (1 < k ∧ ¬∃l(div(l,k) ∧ 1 < l ∧ l < k))"
 
-  val theoryAxioms = Seq(
-    fos" :- 1 < 2",
-    fos" :- n * 1 = n",
-    fos" 1 < l, l < 2 :- ",
-    fos" div(x, y), div(y, z) :- div(x, z)"
-  )
-
-  theoryAxioms foreach { ctx += _ }
-
-  val theoryFormulas = theoryAxioms map { s => universalClosure( s.toImplication ) }
+  ctx += "one_lt_two" -> fos" :- 1 < 2"
+  ctx += "mul_one" -> fos" :- n * 1 = n"
+  ctx += "one_lt_lt_two" -> fos" 1 < l, l < 2 :- "
+  ctx += "div_trans" -> fos" div(x, y), div(y, z) :- div(x, z)"
 
   val ax = hof" ∀n (n = 1 ∨ prime(n) ∨ ∃l (div(l,n) ∧ 1 < l ∧ l < n))"
   def primeDiv( n: FOLTerm ) = hof"∃k ($n < 2 ∨ (div(k,$n) ∧ prime(k)))"
 
-  val endSequent = Seq( "AX" -> ax, "IND" -> hof"∀z(z < n -> ${primeDiv( fov"z" )})" ) :- Seq( "GOAL" -> primeDiv( fov"n" ) )
+  val endSequent = hols"AX: $ax, IND: ∀z(z < n -> ${primeDiv( fov"z" )}) :- GOAL: ${primeDiv( fov"n" )}"
 
   val proof = Lemma( endSequent ) {
     allL( "AX", fov"n" ).forget

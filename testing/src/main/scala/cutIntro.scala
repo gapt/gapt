@@ -1,18 +1,18 @@
-package at.logic.gapt.testing
+package gapt.testing
 
 import java.io.PrintWriter
 
-import at.logic.gapt.cutintro._
-import at.logic.gapt.examples._
-import at.logic.gapt.expr.Apps
-import at.logic.gapt.grammars.DeltaTableMethod
-import at.logic.gapt.proofs.expansion._
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.loadExpansionProof
-import at.logic.gapt.provers.maxsat.OpenWBO
-import at.logic.gapt.provers.prover9.Prover9Importer
-import at.logic.gapt.provers.smtlib.ExternalSmtlibProgram
-import at.logic.gapt.utils.{ MetricsCollector, metrics, withTimeout }
+import gapt.cutintro._
+import gapt.examples._
+import gapt.expr.{ Apps, FOLVar }
+import gapt.grammars.DeltaTableMethod
+import gapt.proofs.expansion._
+import gapt.proofs.lk._
+import gapt.proofs.loadExpansionProof
+import gapt.provers.maxsat.OpenWBO
+import gapt.provers.prover9.Prover9Importer
+import gapt.provers.smtlib.ExternalSmtlibProgram
+import gapt.utils._
 import org.json4s._
 import org.json4s.native.JsonMethods._
 
@@ -20,9 +20,10 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
 import ammonite.ops._
+import gapt.utils.LogHandler.VerbosityLevel
 
-class MetricsPrinter extends MetricsCollector {
-  val data = mutable.Map[String, Any]()
+class MetricsPrinter extends LogHandler {
+  val data: mutable.Map[String, Any] = mutable.Map[String, Any]()
 
   def jsonify( v: Any ): JValue = v match {
     case l: Long    => JInt( l )
@@ -35,22 +36,30 @@ class MetricsPrinter extends MetricsCollector {
     case s          => JString( s toString )
   }
 
-  override def time[T]( phase: String )( f: => T ): T = {
-    value( "phase", phase )
-
-    val beginTime = System.currentTimeMillis()
-    val result = f
-    val endTime = System.currentTimeMillis()
-
-    value( s"time_$phase", endTime - beginTime )
-
-    result
+  val phaseStack: mutable.Buffer[String] = mutable.Buffer()
+  override def timeBegin( domain: String, level: VerbosityLevel, key: String, desc: String ): Unit = {
+    phaseStack += key
+    value( "phase", key )
+    value( s"started_$phase", true )
+    value( s"in_$phase", true )
   }
+  override def time( domain: String, level: VerbosityLevel, key: String, desc: String, duration: Duration ): Unit = {
+    value( s"time_$key", duration.toMillis )
+    value( s"in_$phase", false )
+    value( s"ended_$phase", true )
+    phaseStack.trimEnd( 1 )
+  }
+  def phase: String = phaseStack.last
 
-  override def value( key: String, value: => Any ) = {
+  override def metric( domain: String, level: VerbosityLevel, key: String, desc: String, v: => Any ): Unit =
+    value( key, v )
+
+  def value( key: String, value: => Any ) = {
     data( key ) = value
     println( s"METRICS ${compact( render( JObject( key -> jsonify( data( key ) ) ) ) )}" )
   }
+
+  override def message( domain: String, level: VerbosityLevel, msg: => Any ): Unit = ()
 }
 
 object parseMethod {
@@ -70,53 +79,64 @@ object parseMethod {
 }
 
 object testCutIntro extends App {
+  val logger = Logger( "testCutIntro" )
 
-  val Array( fileName: String, methodName: String ) = args
+  val ( fileName, methodName, solutionAlg ) =
+    args.toList match {
+      case Seq( f, m )    => ( f, m, "canonical" )
+      case Seq( f, m, s ) => ( f, m, s )
+    }
 
   val metricsPrinter = new MetricsPrinter
-  metrics.current.value = metricsPrinter
-  metrics.value( "file", fileName )
-  metrics.value( "method", methodName )
+  LogHandler.current.value = metricsPrinter
+  logger.metric( "file", fileName )
+  logger.metric( "method", methodName )
+  logger.metric( "solutionalg", solutionAlg )
+
+  val useInterpolation = solutionAlg match {
+    case "interpolation" => true
+    case "canonical"     => false
+  }
 
   val proofSeqRegex = """(\w+)\((\d+)\)""".r
   def loadProofForCutIntro( fileName: String ) = fileName match {
     case proofSeqRegex( name, n ) =>
       val p = proofSequences.find( _.name == name ).get( n.toInt )
-      metrics.value( "lkinf_input", rulesNumber( p ) )
+      logger.metric( "lkinf_input", rulesNumber( p ) )
       CutIntroduction.InputProof.fromLK( p )
     case _ =>
       val ( exp, bgTh ) = loadExpansionProof.withBackgroundTheory( FilePath( fileName ) )
       CutIntroduction.InputProof( exp, bgTh )
   }
 
-  metrics.time( "total" ) {
-    val inputProof = try metrics.time( "parse" ) {
+  logger.time( "total" ) {
+    val inputProof = try logger.time( "parse" ) {
       loadProofForCutIntro( fileName )
     } catch {
       case e: Throwable =>
-        metrics.value( "status", e match {
+        logger.metric( "status", e match {
           case _: OutOfMemoryError   => "parsing_out_of_memory"
           case _: StackOverflowError => "parsing_stack_overflow"
           case _: Throwable          => "parsing_other_exception"
         } )
-        metrics.value( "exception", e.toString )
+        logger.metric( "exception", e.toString )
         throw e
     }
 
-    metrics.value( "has_equality", inputProof.backgroundTheory.hasEquality )
-    try metrics.time( "cutintro" ) {
-      CutIntroduction( inputProof, method = parseMethod( methodName ) ) match {
-        case Some( _ ) => metrics.value( "status", "ok" )
+    logger.metric( "has_equality", inputProof.backgroundTheory.hasEquality )
+    try logger.time( "cutintro" ) {
+      CutIntroduction( inputProof, method = parseMethod( methodName ), useInterpolation = useInterpolation ) match {
+        case Some( _ ) => logger.metric( "status", "ok" )
         case None =>
           if ( metricsPrinter.data( "termset_trivial" ) == true )
-            metrics.value( "status", "cutintro_termset_trivial" )
+            logger.metric( "status", "cutintro_termset_trivial" )
           else
-            metrics.value( "status", "cutintro_uncompressible" )
+            logger.metric( "status", "cutintro_uncompressible" )
       }
     }
     catch {
       case e: Throwable =>
-        metrics.value( "status", e match {
+        logger.metric( "status", e match {
           case _: OutOfMemoryError => "cutintro_out_of_memory"
           case _: StackOverflowError => "cutintro_stack_overflow"
           case _: CutIntroduction.UnprovableException => "cutintro_ehs_unprovable"
@@ -125,8 +145,76 @@ object testCutIntro extends App {
           case _: ExternalSmtlibProgram.UnexpectedTerminationException => s"timeout_${metricsPrinter.data( "phase" )}"
           case _: Throwable => "cutintro_other_exception"
         } )
-        metrics.value( "exception", e.toString )
+        logger.metric( "exception", e.toString )
         throw e
+    }
+  }
+}
+
+object testPi2CutIntro extends App {
+  val logger = Logger( "testPi2CutIntro" )
+
+  val Array( fileName: String, numBetas: String ) = args
+
+  val metricsPrinter = new MetricsPrinter
+  LogHandler.current.value = metricsPrinter
+  logger.metric( "file", fileName )
+  logger.metric( "num_betas", numBetas )
+
+  val proofSeqRegex = """(\w+)\((\d+)\)""".r
+  def loadProofForCutIntro( fileName: String ) = fileName match {
+    case proofSeqRegex( name, n ) =>
+      val p = proofSequences.find( _.name == name ).get( n.toInt )
+      logger.metric( "lkinf_input", rulesNumber( p ) )
+      CutIntroduction.InputProof.fromLK( p )
+    case _ =>
+      val ( exp, bgTh ) = loadExpansionProof.withBackgroundTheory( FilePath( fileName ) )
+      CutIntroduction.InputProof( exp, bgTh )
+  }
+
+  logger.time( "total" ) {
+    val inputProof = try logger.time( "parse" ) {
+      loadProofForCutIntro( fileName )
+    } catch {
+      case e: Throwable =>
+        logger.metric( "status", e match {
+          case _: OutOfMemoryError   => "parsing_out_of_memory"
+          case _: StackOverflowError => "parsing_stack_overflow"
+          case _: Throwable          => "parsing_other_exception"
+        } )
+        logger.metric( "exception", e.toString )
+        throw e
+    }
+
+    if ( inputProof.backgroundTheory.hasEquality ) {
+      logger.metric( "status", "has_equality" )
+    } else {
+      try logger.time( "cutintro" ) {
+        val alpha = FOLVar( "x" )
+        val betas = for ( i <- 1 to numBetas.toInt ) yield FOLVar( s"y$i" )
+        Pi2CutIntroduction( inputProof, alpha, betas.toVector, OpenWBO ) match {
+          case Some( _ ) => logger.metric( "status", "ok" )
+          case None =>
+            if ( metricsPrinter.data( "lang_trivial" ) == true )
+              logger.metric( "status", "cutintro_lang_trivial" )
+            else
+              logger.metric( "status", "cutintro_uncompressible" )
+        }
+      }
+      catch {
+        case e: Throwable =>
+          logger.metric( "status", e match {
+            case _: OutOfMemoryError => "cutintro_out_of_memory"
+            case _: StackOverflowError => "cutintro_stack_overflow"
+            case _: CutIntroduction.UnprovableException => "cutintro_ehs_unprovable"
+            case _: CutIntroduction.NonCoveringGrammarException => "cutintro_noncovering_grammar"
+            case _: LKRuleCreationException => "lk_rule_creation_exception"
+            case _: ExternalSmtlibProgram.UnexpectedTerminationException => s"timeout_${metricsPrinter.data( "phase" )}"
+            case _: Throwable => "cutintro_other_exception"
+          } )
+          logger.metric( "exception", e.toString )
+          throw e
+      }
     }
   }
 }
@@ -135,11 +223,17 @@ object collectExperimentResults extends App {
   val metricsLineRegex = """METRICS (.*)""".r
 
   def parseOut( fn: Path ) =
-    JObject( read.lines( fn ).collect {
-      case metricsLineRegex( json ) => parse( json )
-    }.collect {
-      case JObject( map ) => map
-    }.flatten.toList )
+    JObject(
+      read.lines( fn ).collect {
+        case metricsLineRegex( json ) => parse( json )
+      }.collect {
+        case JObject( map ) => map
+      }.flatten
+        .groupBy( _._1 ).map {
+          case ( k, vs ) if k.startsWith( "time_" ) =>
+            k -> JInt( vs.collect { case ( _, JInt( x ) ) => x }.sum )
+          case ( k, vs ) => k -> vs.last._2
+        }.toList )
 
   val allResults = JArray( ls.rec( pwd ).filter( _.last == "stdout" ).map( parseOut ).toList )
   print( compact( render( allResults ) ) )

@@ -1,14 +1,15 @@
-package at.logic.gapt.testing
+package gapt.testing
 
 import ammonite.ops.FilePath
-import at.logic.gapt.proofs.expansion.numberOfInstancesET
-import at.logic.gapt.proofs.loadExpansionProof
-import at.logic.gapt.utils.{ PrintMetrics, metrics }
+import gapt.proofs.expansion.numberOfInstancesET
+import gapt.proofs.loadExpansionProof
+import gapt.utils.{ LogHandler, verbose }
 
 object testTstpImport extends App {
   val Array( filename ) = args
-  metrics.current.value = PrintMetrics
-  val exp = loadExpansionProof( FilePath( filename ) )
-  println( s"num_insts = ${numberOfInstancesET( exp )}" )
-  println( "OK" )
+  verbose {
+    val exp = loadExpansionProof( FilePath( filename ) )
+    println( s"num_insts = ${numberOfInstancesET( exp )}" )
+    println( "OK" )
+  }
 }

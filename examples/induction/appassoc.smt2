@@ -8,7 +8,6 @@
 
 (declare-const a list)
 (declare-const b list)
-(assert-not (forall ((x list))
+(prove (forall ((x list))
   (= (append (append x a) b)
      (append x (append a b)))))
-(check-sat)

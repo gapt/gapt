@@ -1,8 +1,8 @@
-package at.logic.gapt.testing
+package gapt.testing
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.expansion.InstanceTermEncoding
-import at.logic.gapt.proofs.loadExpansionProof
+import gapt.expr._
+import gapt.proofs.expansion.InstanceTermEncoding
+import gapt.proofs.loadExpansionProof
 
 import scala.App
 import ammonite.ops._
@@ -13,9 +13,9 @@ object dumpTermset extends App {
   val outputPath = Path( outputFileName, pwd )
 
   def simplifyNames( termset: Set[FOLTerm] ): Set[FOLTerm] = {
-    val renaming: Map[LambdaExpression, LambdaExpression] =
+    val renaming: Map[Expr, Expr] =
       ( constants( termset ).toSeq ++ freeVariables( termset ).toSeq ).sortBy( _.toString ).
-        zipWithIndex.map { case ( c, i ) => c -> Const( s"f$i", c.exptype ) }.
+        zipWithIndex.map { case ( c, i ) => c -> Const( s"f$i", c.ty ) }.
         toMap
     termset.map( TermReplacement( _, renaming ).asInstanceOf[FOLTerm] )
   }

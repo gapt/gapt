@@ -1,4 +1,4 @@
-; viper qtys
+; solve with: viper --treegrammar --onquant 1
 
 (declare-datatypes () ((nat (o) (s (p nat)))))
 
@@ -7,5 +7,4 @@
     (case o true)
     (case (s z) (P x y z))))
 
-(assert-not (forall ((x nat) (y nat)) (P x y y)))
-(check-sat)
+(prove (forall ((x nat) (y nat)) (P x y y)))

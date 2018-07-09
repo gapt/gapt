@@ -1,9 +1,10 @@
-package at.logic.gapt.examples
-import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.universalClosure
-import at.logic.gapt.proofs.{ Context, Sequent }
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.lk.LKProof
+package gapt.examples
+import gapt.expr._
+import gapt.expr.hol.universalClosure
+import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.gaptic._
+import gapt.proofs.lk.LKProof
 
 /**
  * Monoid cancellation benchmark from
@@ -12,15 +13,16 @@ import at.logic.gapt.proofs.lk.LKProof
 object MonoidCancellation extends TacticsProof {
   ctx += Context.Sort( "m" )
   ctx += hoc"'*': m>m>m"
+  ctx += Notation.Infix( "*", Precedence.timesDiv )
   ctx += hoc"1: m"
 
-  ctx += hcl":- (x*y)*z = x*(y*z)"
-  ctx += hcl":- x*y = y*x"
-  ctx += hcl":- 1*x = x"
+  ctx += "mul_assoc" -> hcl":- (x*y)*z = x*(y*z)"
+  ctx += "mul_comm" -> hcl":- x*y = y*x"
+  ctx += "one_mul" -> hcl":- 1*x = x"
 
-  val setup: Tactical[Unit] = {
-    def mkAux( formula: HOLFormula ) =
-      Lemma( Sequent() :+ ( "goal" -> universalClosure( formula ) ) ) {
+  val setup: Tactic[Unit] = {
+    def mkAux( formula: Formula ) =
+      Proof( Sequent() :+ ( "goal" -> universalClosure( formula ) ) ) {
         decompose
         foTheory
       }
@@ -37,7 +39,7 @@ object MonoidCancellation extends TacticsProof {
 
     val plus_cancel = mkAux( hof"a = c -> b = d -> a * b = c * d" )
 
-    Tactical {
+    Tactic {
       include( "plus_unit_p", plus_unit_p ) andThen
         include( "plus_assoc_p1", plus_assoc_p1 ) andThen
         include( "plus_assoc_p2", plus_assoc_p2 ) andThen
@@ -51,37 +53,37 @@ object MonoidCancellation extends TacticsProof {
     }
   }
 
-  lazy val iterRight: Tactical[Unit] = Tactical {
+  lazy val iterRight: Tactic[Unit] = Tactic {
     chain( "plus_unit_c" ) orElse
       chain( "plus_assoc_c1" ).andThen( iterRight ) orElse
       chain( "plus_assoc_c2" ).andThen( iterRight ) orElse
       chain( "plus_cancel" ).andThen( refl )
   }
 
-  lazy val iterLeft: Tactical[Unit] = Tactical {
+  lazy val iterLeft: Tactic[Unit] = Tactic {
     chain( "plus_unit_p" ) orElse
       chain( "plus_assoc_p1" ).andThen( iterRight ) orElse
       chain( "plus_assoc_p2" ).andThen( iterRight ) orElse
       iterRight orElse chain( "plus_comm_p" ).andThen( iterRight )
   }
 
-  lazy val cancel: Tactical[Unit] = Tactical {
+  lazy val cancel: Tactic[Unit] = Tactic {
     iterLeft orElse chain( "plus_comm_c" ).andThen( iterLeft )
   }
 
-  val solve: Tactical[Unit] = Tactical {
+  val solve: Tactic[Unit] = Tactic {
     setup andThen
       repeat( refl orElse cancel )
   }
 
-  Lemma( hols":- a*(b*c) = (b*a)*c" ) { solve }
+  Proof( hols":- a*(b*c) = (b*a)*c" ) { solve }
 
-  def benchmarkFormula( n: Int ): HOLFormula = {
-    def buildL( n: Int ): LambdaExpression = {
+  def benchmarkFormula( n: Int ): Formula = {
+    def buildL( n: Int ): Expr = {
       val x = Var( s"x$n", TBase( "m" ) )
       if ( n == 0 ) x else le"$x * ${buildL( n - 1 )}"
     }
-    def buildR( n: Int ): LambdaExpression = {
+    def buildR( n: Int ): Expr = {
       val x = Var( s"x$n", TBase( "m" ) )
       if ( n == 0 ) x else le"${buildL( n - 1 )} * $x"
     }
@@ -89,7 +91,7 @@ object MonoidCancellation extends TacticsProof {
   }
 
   def proveBenchmark( n: Int ): LKProof =
-    Lemma( hols":- ${benchmarkFormula( n )}" ) { solve }
+    Proof( hols":- ${benchmarkFormula( n )}" ) { solve }
 
   def runBenchmark( n: Int ): Unit =
     ctx.check( proveBenchmark( n ) )

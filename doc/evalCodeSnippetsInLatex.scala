@@ -1,8 +1,8 @@
-package at.logic.gapt.testing
+package gapt.testing
 
 import java.io.Writer
 
-import at.logic.gapt.cli.CLIMain
+import gapt.cli.CLIMain
 
 import scala.sys.process
 import scala.tools.nsc.Settings
@@ -35,13 +35,12 @@ object evalCodeSnippetsInLatex {
     repl.in = SimpleReader()
     repl.intp.initializeSynchronous()
     repl.intp.quietBind( NamedParam[IMain]( "$intp", repl.intp )( StdReplTags.tagOfIMain, reflect.classTag[IMain] ) )
-    repl.intp.setContextClassLoader()
 
     repl.intp.beQuietDuring {
       repl command CLIMain.imports
 
       // don't open prooftool
-      repl command "def prooftool[T: at.logic.gapt.prooftool.ProoftoolViewable](x: T, name: String = \"\"): Unit = ()"
+      repl command "def prooftool[T: gapt.prooftool.ProoftoolViewable](x: T, name: String = \"\"): Unit = ()"
 
       // don't open help
       repl command "def help(x: Any*): Unit = ()"
@@ -99,13 +98,31 @@ object evalCodeSnippetsInLatex {
   def processTacticsListing( listing: Seq[String], optionString: String, interp: ILoop ): Unit = {
     val options = if ( optionString == null ) Seq() else optionString.split( "," ).toSeq
 
+    val bare = options.contains( "bare" )
+    val nosig = bare || options.contains( "nosig" )
+
     val code = new StringBuilder
-    code ++= "val () = { new at.logic.gapt.proofs.gaptic.TacticsProof {\n"
-    code ++= "import at.logic.gapt.proofs.gaptic._\n"
-    if ( !options.contains( "nosig" ) )
-      code ++= "implicit def sig = at.logic.gapt.formats.babel.BabelSignature.defaultSignature\n"
+    code ++= "val () = {\n"
+    if ( !bare ) code ++= "new gapt.proofs.gaptic.TacticsProof {\n"
+    code ++= "import gapt.proofs.gaptic._\n"
+    code ++= "import gapt.formats.babel._\n"
+    if ( !nosig ) code ++=
+      """
+          ctx += Context.Sort("i")
+          ctx += hoc"P: i>o"
+          ctx += hoc"Q: i>o"
+          ctx += hoc"I: i>o"
+          ctx += hoc"a: i"
+          ctx += hoc"b: i"
+          ctx += hoc"0: i"
+          ctx += hoc"1: i"
+          ctx += hoc"f: i>i"
+          ctx += hoc"A: o"
+          ctx += hoc"B: o"
+        """
     for ( line <- listing ) { code ++= line; code += '\n' }
-    code ++= "}; () }"
+    if ( !bare ) code ++= "}; "
+    code ++= "() }"
 
     println( """\begin{tacticslisting}""" +
       ( if ( options.isEmpty ) "" else s"[${options.mkString( "," )}]" ) )

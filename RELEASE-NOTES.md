@@ -1,6 +1,66 @@
 # Release notes for GAPT
 
-## Version 2.6 (unreleased)
+## Version 2.12 (unreleased)
+
+* SMTInterpol interface
+* Support for Vampire 4.2.2
+
+## Version 2.11 (released on 2018-04-30)
+
+* Deskolemization of proofs with equational reasoning
+* Root package was renamed from `at.logic.gapt` to just `gapt`
+* Modified realizability
+* New reductive cut-elimination implementation for LK
+
+## Version 2.10 (released on 2018-03-19)
+
+* Emoji support in formulas
+* Implication is now → (instead of ⊃)
+* LKt: proof terms for high performance cut normalization
+* IEscargot prototype: an effective prover for first-order intuitionist logic
+* User-defined operators in Babel (the formula parser)
+* Simplifier tactic
+* Formalization of the Fundamental Theorem of Arithmetic
+* Hierarchical logging levels
+* Many bugfixes for parametric polymorphism
+
+## Version 2.9 (released on 2018-01-30)
+
+* Support for the current (yet unreleased) TIP format
+* Rewrite of the tree grammar-based induction prover
+* Atomic expansion for expansion proofs
+* Restructured user manual
+* The Scala operator for function types is now `->:` instead of `->`
+* Logback logging library was removed, use `verbose{...}` or `tactic.verbose` to enable logging
+* Schematic structs and characteristic formulas for CERES
+* Support for iProver 2.7
+* Induction support for ExpansionProofToLK, LKToExpansionProof
+* Constants now have an explicit list of type parameters
+
+## Version 2.8 (released on 2017-10-09)
+
+* Support for EProver 2.0
+* Support for Vampire 4.2
+* Experimental support for iProver (requires current development version)
+* MutableContext now keeps track of automatically generated Skolem functions
+* Cut-elimination no longer regularizes
+* deskolemizeET now supports inner Skolemization
+
+## Version 2.7 (released on 2017-07-05)
+
+* Conversion from LK to natural deduction
+* Induction elimination
+* Grammar generation for Π₂-cut introduction
+
+## Version 2.6 (released on 2017-04-03)
+
+* Natural deduction
+* Free monad for the SMT solver interface
+* Portfolio mode in new viper command-line interface
+* Skolemization with free variables support in ResolutionProver.getLKProof
+* Primitive recursive definitions
+* Proof schemata
+* ACNF support in reductive cut-elimination
 
 ## Version 2.5 (released on 2017-02-22)
 

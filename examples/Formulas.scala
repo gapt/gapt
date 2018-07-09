@@ -1,6 +1,6 @@
-package at.logic.gapt.examples
+package gapt.examples
 
-import at.logic.gapt.expr._
+import gapt.expr._
 
 /**
  * Contains some commonly used formulas.
@@ -8,85 +8,30 @@ import at.logic.gapt.expr._
 object Formulas {
   /**
    *
-   * @param rel A relation symbol
-   * @return A formula expressing the reflexivity of rel.
-   */
-  def Reflexivity( rel: String ): FOLFormula = {
-    val x = FOLVar( safeName( rel )( "x" ) )
-    All( x, FOLAtom( rel, x, x ) )
-  }
-
-  /**
-   *
    * @return A formula expressing the reflexivity of =.
    */
-  def ReflexivityEq: FOLFormula = Reflexivity( "=" )
-
-  /**
-   *
-   * @param rel A relation symbol
-   * @return A formula expressing the transitivity of rel.
-   */
-  def Transitivity( rel: String ): FOLFormula = {
-    val Seq( x, y, z ) = safeNames( rel )( "x", "y", "z" ) map { FOLVar( _ ) }
-    All.Block( Seq( x, y, z ), FOLAtom( rel, x, y ) --> ( FOLAtom( rel, y, z ) --> FOLAtom( rel, x, z ) ) )
-  }
+  val ReflexivityEq: FOLFormula = fof"!x x=x"
 
   /**
    *
    * @return A formula expressing the transitivity of =.
    */
-  def TransitivityEq: FOLFormula = Transitivity( "=" )
-
-  /**
-   *
-   * @param rel A relation symbol
-   * @return A formula expressing the symmetry of rel.
-   */
-  def Symmetry( rel: String ): FOLFormula = {
-    val Seq( x, y ) = safeNames( rel )( "x", "y" ) map { FOLVar( _ ) }
-    All.Block( Seq( x, y ), FOLAtom( rel, x, y ) --> FOLAtom( rel, y, x ) )
-  }
+  val TransitivityEq: FOLFormula = fof"!x!y!z (x=y -> y=z -> x=z)"
 
   /**
    *
    * @return A formula expressing the symmetry of =.
    */
-  def SymmetryEq: FOLFormula = Symmetry( "=" )
-
-  /**
-   *
-   * @param rel A relation symbol.
-   * @param f A function symbol.
-   * @return A formula expressing that rel is a congruence w.r.t. the unary function symbol f.
-   */
-  def CongUnary( rel: String, f: String ): FOLFormula = {
-    require( f != rel, "Cannot use same symbol for relation and function" )
-
-    val Seq( x, y ) = safeNames( rel, f )( "x", "y" ) map { FOLVar( _ ) }
-
-    All.Block( Seq( x, y ), FOLAtom( rel, x, y ) --> FOLAtom( rel, FOLFunction( f, x ), FOLFunction( f, y ) ) )
-  }
+  val SymmetryEq: FOLFormula = fof"!x!y (x=y -> y=x)"
 
   /**
    *
    * @param f A function symbol.
    * @return A formula expressing that = is a congruence w.r.t. the unary function symbol f.
    */
-  def CongUnaryEq( f: String ): FOLFormula = CongUnary( "=", f )
-
-  /**
-   *
-   * @param rel A relation symbol
-   * @param f A function symbol.
-   * @return A formula expressing that rel is a congruence w.r.t. the binary function symbol f.
-   */
-  def CongBinary( rel: String, f: String ): FOLFormula = {
-    require( f != rel, "Cannot use same symbol for relation and function" )
-
-    val Seq( x0, x1, y0, y1 ) = safeNames( rel, f )( "x_0", "x_1", "y0", "y_1" ) map { FOLVar( _ ) }
-
-    All.Block( Seq( x0, x1, y0, y1 ), FOLAtom( rel, x0, y0 ) --> ( FOLAtom( rel, x1, y1 ) --> FOLAtom( rel, FOLFunction( f, x0, x1 ), FOLFunction( f, y0, y1 ) ) ) )
+  def CongUnaryEq( f: String ): FOLFormula = {
+    val Seq( x, y ) = safeNames( "=", f )( "x", "y" ) map { FOLVar( _ ) }
+    All.Block( Seq( x, y ), Eq( x, y ) --> Eq( FOLFunction( f, x ), FOLFunction( f, y ) ) )
   }
 
   /**
@@ -94,7 +39,10 @@ object Formulas {
    * @param f A function symbol.
    * @return A formula expressing that = is a congruence w.r.t. the binary function symbol f.
    */
-  def CongBinaryEq( f: String ): FOLFormula = CongBinary( "=", f )
+  def CongBinaryEq( f: String ): FOLFormula = {
+    val Seq( x0, x1, y0, y1 ) = safeNames( "=", f )( "x_0", "x_1", "y0", "y_1" ) map { FOLVar( _ ) }
+    All.Block( Seq( x0, x1, y0, y1 ), Eq( x0, y0 ) --> ( Eq( x1, y1 ) --> Eq( FOLFunction( f, x0, x1 ), FOLFunction( f, y0, y1 ) ) ) )
+  }
 
   /**
    * Contains definitions related to arithmetic.

@@ -12,6 +12,5 @@
         (case o false)))
     (case o true)))
 
-(assert-not (forall ((x nat))
+(prove (forall ((x nat))
   (= (even1 x) (even2 x))))
-(check-sat)

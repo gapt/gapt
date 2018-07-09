@@ -1,20 +1,24 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.{ Context, Sequent }
+import gapt.expr._
+import gapt.formats.babel.Notation
+import gapt.formats.babel.Precedence
+import gapt.proofs.MutableContext
+import gapt.proofs.gaptic._
+import gapt.proofs.lk.EigenVariablesLK
+import gapt.proofs.{ Context, Sequent }
 import org.specs2.mutable._
 
 class eigenvariablesTest extends Specification {
 
-  implicit var ctx = Context()
+  implicit var ctx: MutableContext = Context().newMutable
   ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+  ctx += Notation.Infix( "+", Precedence.plusMinus )
   ctx += hoc"'+': nat>nat>nat"
 
   val plus_axioms = Seq(
     "ap1" -> hof"∀y 0+y = y",
-    "ap2" -> hof"∀x∀y s(x)+y = s(x+y)"
-  )
+    "ap2" -> hof"∀x∀y s(x)+y = s(x+y)" )
 
   val proof = Lemma( plus_axioms ++: Sequent() :+
     ( "goal" -> hof"!x x + (y + z) = (x + y) + z" ) ) {
@@ -29,7 +33,7 @@ class eigenvariablesTest extends Specification {
 
   "eigenvariables must return a proof's eigenvariables" in {
 
-    eigenvariables( proof ) must beEqualTo( Set( hov"x:nat", hov"x_0:nat" ) )
+    EigenVariablesLK( proof ) must beEqualTo( Set( hov"x:nat", hov"x_0:nat" ) )
 
   }
 }

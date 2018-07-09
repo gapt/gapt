@@ -2,8 +2,7 @@
 ; Andrew Ireland and Alan Bundy, JAR 1996
 
 ; for performance:
-; viper cansolsize 2,3
-; viper gramw scomp
+; solve with: viper --treegrammar --cansolsize 2 3 --gramw scomp
 
 (declare-sort sk 0)
 (declare-datatypes () ((list (nil) (cons (head sk) (tail list)))))
@@ -13,5 +12,4 @@
     (match x
       (case nil y)
       (case (cons z xs) (qrev xs (cons z y)))))
-(assert-not (forall ((x list)) (= (qrev (qrev x nil) nil) x)))
-(check-sat)
+(prove (forall ((x list)) (= (qrev (qrev x nil) nil) x)))

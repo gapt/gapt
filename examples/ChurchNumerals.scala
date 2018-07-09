@@ -1,6 +1,6 @@
-package at.logic.gapt.examples.church_numerals
+package gapt.examples.church_numerals
 
-import at.logic.gapt.expr._
+import gapt.expr._
 
 import scala.annotation.tailrec
 
@@ -10,7 +10,7 @@ import scala.annotation.tailrec
  */
 object num {
   @tailrec
-  def alpha( x: Var, a: LambdaExpression, n: Int, acc: LambdaExpression => LambdaExpression ): LambdaExpression = n match {
+  def alpha( x: Var, a: Expr, n: Int, acc: Expr => Expr ): Expr = n match {
     case 0          => acc( x );
     case n if n > 0 => alpha( x, a, n - 1, e => App( a, acc( e ) ) )
     case _          => throw new Exception( "Only positive church numerals allowed!" )
@@ -28,12 +28,12 @@ object num {
  */
 object int_of_num {
   @tailrec
-  def count_app( t: LambdaExpression, n: Int ): Int = t match {
+  def count_app( t: Expr, n: Int ): Int = t match {
     case App( _, t_ ) => count_app( t_, n + 1 );
     case Var( _, _ )  => n
   }
 
-  def apply( t: LambdaExpression ): Int = try {
+  def apply( t: Expr ): Int = try {
     t match {
       case Abs( _, Abs( _, t_ ) ) => count_app( t_, 0 )
     }
@@ -46,7 +46,7 @@ object int_of_num {
  * Checks if lambda expression is a Church numeral.
  */
 object is_num {
-  def apply( n: LambdaExpression ) = try {
+  def apply( n: Expr ) = try {
     int_of_num( n ); true
   } catch {
     case _: Exception => false
@@ -57,7 +57,7 @@ object is_num {
  * Addition of Church numerals. Does not check if the input is a church numeral.
  */
 object plus {
-  def apply( e1: LambdaExpression, e2: LambdaExpression ) =
+  def apply( e1: Expr, e2: Expr ) =
     BetaReduction.betaNormalize( le"^(x:i>i) ^(u:i) $e1 x ($e2 x u)" )
 }
 
@@ -65,7 +65,7 @@ object plus {
  * Multiplication of Church numerals. Does not check if the input is a church numeral.
  */
 object times {
-  def apply( e1: LambdaExpression, e2: LambdaExpression ) =
+  def apply( e1: Expr, e2: Expr ) =
     BetaReduction.betaNormalize( le"^u $e2 ($e1 u)" )
 }
 
@@ -73,6 +73,6 @@ object times {
  * Conditional if c = 0 then e1 else e2
  */
 object cond {
-  def apply( e1: LambdaExpression, e2: LambdaExpression, c: LambdaExpression ) =
+  def apply( e1: Expr, e2: Expr, c: Expr ) =
     BetaReduction.betaNormalize( le"^(u:i>i) ^(x:i) $c (^(y:i) $e2 u x) ($e1 u x)" )
 }

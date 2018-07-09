@@ -1,108 +1,99 @@
-package at.logic.gapt.examples
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.gaptic._
+package gapt.examples
+import gapt.expr._
+import gapt.proofs.Sequent
+import gapt.proofs.gaptic._
 
 object gapticExamples {
 
-  val decomposeLemma = Lemma(
+  val decomposeProof = Proof(
     ( "label1" -> hof"!x (p x & q x)" ) +:
       Sequent()
-      :+ ( "label2" -> hof"!y (p y -> q y | r y)" )
-  ) {
+      :+ ( "label2" -> hof"!y (p y -> q y | r y)" ) ) {
       decompose
       allL( fov"y" )
       decompose
       trivial
     }
 
-  val destructLemma = Lemma(
+  val destructProof = Proof(
     ( "label1" -> hof"a & (b & c)" ) +:
       Sequent()
-      :+ ( "label2" -> hof"a | (b | c)" )
-  ) {
+      :+ ( "label2" -> hof"a | (b | c)" ) ) {
       destruct( "label1" )
       destruct( "label2" )
       trivial
     }
 
-  val destructLemma2 = Lemma(
+  val destructProof2 = Proof(
     ( "noise1" -> hof"a" ) +:
       Sequent()
       :+ ( "noise2" -> hof"P(y)" )
       :+ ( "label1" -> hof"a | (b | c)" )
       :+ ( "noise3" -> hof"P(z)" )
-      :+ ( "label2" -> hof"a & (b & c)" )
-  ) {
+      :+ ( "label2" -> hof"a & (b & c)" ) ) {
       destruct( "label1" )
       destruct( "label2" )
       trivial
       trivial
     }
 
-  val chainLemma = Lemma(
+  val chainProof = Proof(
     ( "a" -> hof"q(f(c))" ) +:
       ( "hyp" -> hof"!x (q x -> p (f x))" ) +:
       Sequent()
-      :+ ( "target" -> hof"p(f(f(c)))" )
-  ) {
+      :+ ( "target" -> hof"p(f(f(c)))" ) ) {
       chain( "hyp" ).at( "target" )
       trivial
     }
 
-  val chainLemma2 = Lemma(
+  val chainProof2 = Proof(
     ( "hyp" -> hof"!x p (f x)" ) +:
       Sequent()
-      :+ ( "target" -> hof"p(f(f(c)))" )
-  ) {
+      :+ ( "target" -> hof"p(f(f(c)))" ) ) {
       chain( "hyp" )
     }
 
-  val chainLemma3 = Lemma(
+  val chainProof3 = Proof(
     ( "a" -> hof"r(f(c))" ) +:
       ( "b" -> hof"q(f(c))" ) +:
       ( "hyp" -> hof"!x (r x -> q x -> p (f x))" ) +:
       Sequent()
-      :+ ( "target" -> hof"p(f(f(c)))" )
-  ) {
+      :+ ( "target" -> hof"p(f(f(c)))" ) ) {
       chain( "hyp" )
       trivial
       trivial
     }
 
-  val chainLemma4 = Lemma(
+  val chainProof4 = Proof(
     ( "a" -> hof"r(f(c))" ) +:
       ( "b" -> hof"q(f(c))" ) +:
       ( "c" -> hof"w(f(c))" ) +:
       ( "hyp" -> hof"!x (r x & q x & w x -> p (f x))" ) +:
       Sequent()
-      :+ ( "target" -> hof"p(f(f(c)))" )
-  ) {
+      :+ ( "target" -> hof"p(f(f(c)))" ) ) {
       chain( "hyp" )
       trivial
       trivial
       trivial
     }
 
-  val eqLemma = Lemma(
+  val eqProof = Proof(
     ( "c" -> hof"P(y) & Q(y)" ) +:
       ( "eq1" -> hof"u = v" ) +:
       ( "eq2" -> hof"y = x" ) +:
       ( "a" -> hof"P(u) -> Q(u)" ) +:
       Sequent()
-      :+ ( "b" -> hof"P(x) & Q(x)" )
-  ) {
+      :+ ( "b" -> hof"P(x) & Q(x)" ) ) {
       eql( "eq1", "a" ) yielding hof"P(v) -> Q(v)"
       eql( "eq1", "a" ) yielding hof"P(v) -> Q(u)"
       eql( "eq2", "b" ).fromRightToLeft
       trivial
     }
 
-  val lemma = Lemma(
+  val lemma = Proof(
     ( "A" -> hof"A -> B" ) +:
       Sequent()
-      :+ ( "S" -> hof"A & B | -A" )
-  ) {
+      :+ ( "S" -> hof"A & B | -A" ) ) {
       orR
       negR
       andR
@@ -111,15 +102,14 @@ object gapticExamples {
       repeat( trivial )
     }
 
-  val lemma2 = Lemma(
+  val lemma2 = Proof(
     ( "A" -> hof"A -> B" ) +:
       Sequent()
-      :+ ( "S" -> hof"A & B | -A" )
-  ) {
+      :+ ( "S" -> hof"A & B | -A" ) ) {
       repeat( orR orElse negR orElse andR orElse impL orElse trivial )
     }
 
-  val drinker3 = Lemma( Sequent()
+  val drinker3 = Proof( Sequent()
     :+ ( "E" -> hof"B" )
     :+ ( "E" -> hof"A" )
     :+ ( "D" -> hof"?x (P x -> !y P y)" ) ) {
@@ -132,22 +122,20 @@ object gapticExamples {
     trivial
   }
 
-  val lemma3 = Lemma(
+  val lemma3 = Proof(
     ( "F" -> hof"A -> B" ) +:
       Sequent()
       :+ ( "E" -> hof"B" )
-      :+ ( "D" -> hof"?y (P y -> !z P z)" )
-  ) {
+      :+ ( "D" -> hof"?y (P y -> !z P z)" ) ) {
       impL
       insert( drinker3 )
       trivial
     }
 
-  val lemma_ = Lemma(
+  val lemma_ = Proof(
     ( "initAnt" -> hof"A -> B" ) +:
       Sequent()
-      :+ ( "initSuc" -> hof"A & B | -A" )
-  ) {
+      :+ ( "initSuc" -> hof"A & B | -A" ) ) {
       orR( "initSuc" )
       negR( "initSuc_1" )
       andR( "initSuc_0" )
@@ -157,11 +145,10 @@ object gapticExamples {
       axiomLog
     }
 
-  val lemma2_ = Lemma(
+  val lemma2_ = Proof(
     ( "initAnt" -> hof"A -> B" ) +:
       Sequent()
-      :+ ( "initSuc" -> hof"A & B | -A" )
-  ) {
+      :+ ( "initSuc" -> hof"A & B | -A" ) ) {
       orR( "initSuc" )
       negR( "initSuc_1" )
       andR( "initSuc_0" )
@@ -171,15 +158,13 @@ object gapticExamples {
       trivial
     }
 
-  val direct = Lemma(
-    ( "A" -> hof"A" ) +: ( "B" -> hof"B" ) +: Sequent() :+ ( "B_" -> hof"B" )
-  ) {
+  val direct = Proof(
+    ( "A" -> hof"A" ) +: ( "B" -> hof"B" ) +: Sequent() :+ ( "B_" -> hof"B" ) ) {
       trivial
     }
 
-  val lemmaProp = Lemma(
-    ( "a" -> hof"A -> B" ) +: Sequent() :+ ( "s" -> hof"A&B | -A" )
-  ) {
+  val lemmaProp = Proof(
+    ( "a" -> hof"A -> B" ) +: Sequent() :+ ( "s" -> hof"A&B | -A" ) ) {
       impL
       prop
       prop

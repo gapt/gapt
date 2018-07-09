@@ -1,20 +1,24 @@
-package at.logic.gapt.proofs.lk
+package gapt.proofs.lk
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.{ Context, Sequent }
+import gapt.expr._
+import gapt.formats.babel.Notation
+import gapt.formats.babel.Precedence
+import gapt.proofs.Context
+import gapt.proofs.MutableContext
+import gapt.proofs.Sequent
+import gapt.proofs.gaptic._
 import org.specs2.mutable.Specification
 
 class extractInductionAxiomsTest extends Specification {
 
-  implicit var ctx = Context()
+  implicit var ctx: MutableContext = Context().newMutable
   ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+  ctx += Notation.Infix( "+", Precedence.plusMinus )
   ctx += hoc"'+': nat>nat>nat"
 
   val plus_axioms = Seq(
     ( "ap1" -> hof"∀y 0+y = y" ),
-    ( "ap2" -> hof"∀x∀y s(x)+y = s(x+y)" )
-  )
+    ( "ap2" -> hof"∀x∀y s(x)+y = s(x+y)" ) )
 
   val plusCommutativityProof = Lemma( plus_axioms ++: Sequent() :+
     ( "goal" -> hof"∀x∀y x + y = y + x" ) ) {
@@ -52,12 +56,11 @@ class extractInductionAxiomsTest extends Specification {
       refl
     }
     freeVariables( extractInductionAxioms( proof )( ctx )( 0 ) ) must beEqualTo(
-      Set( hov"y:nat", hov"z:nat" )
-    )
+      Set( hov"y:nat", hov"z:nat" ) )
   }
 
   "eigenvariables should be bound" in {
-    val eigenVars = eigenvariables( plusCommutativityProof )
+    val eigenVars = EigenVariablesLK( plusCommutativityProof )
     val freeVars = extractInductionAxioms( plusCommutativityProof ).map( freeVariables( _ ) ).toSet.flatten
     eigenVars.foreach { ev =>
       if ( freeVars.contains( ev ) ) {
@@ -71,8 +74,7 @@ class extractInductionAxiomsTest extends Specification {
     val expectedAxioms = Seq(
       hof"(⊤ ⊃ !y 0 + y = y + 0) ∧ !x (!y x + y = y + x ⊃ !y s(x) + y = y + s(x)) ⊃ !x !y x + y = y + x",
       hof"(⊤ ⊃ 0 = 0 + 0) ∧ !y (y = y + 0 ⊃ s(y) = s(y) + 0) ⊃ !y y = y + 0",
-      hof"!x ((⊤ ⊃ s(x) + 0 = 0 + s(x)) ∧ !y (s(x) + y = y + s(x) ⊃ s(x) + s(y) = s(y) + s(x)) ⊃ !y s(x) + y = y + s(x))"
-    )
+      hof"(⊤ ⊃ s(x_1) + 0 = 0 + s(x_1)) ∧ !y (s(x_1) + y = y + s(x_1) ⊃ s(x_1) + s(y) = s(y) + s(x_1)) ⊃ !y s(x_1) + y = y + s(x_1)" )
     val axioms = extractInductionAxioms( plusCommutativityProof )
     if ( expectedAxioms.size != axioms.size ) {
       failure( "too many or too few axioms were extracted" )

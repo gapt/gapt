@@ -1,21 +1,20 @@
-package at.logic.gapt.cli
+package gapt.cli
 
-import at.logic.gapt.examples.Script
-import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.utils.Logger
+import gapt.examples.Script
+import gapt.formats.ClasspathInputFile
 
 import scala.tools.nsc.interpreter._
 import scala.tools.nsc.Settings
 import ammonite.ops._
 
-object CLIMain extends Logger {
+object CLIMain {
 
   val welcomeMessage = """
     *************************************
     *    Welcome to the GAPT shell!     *
     *************************************
 
- Copyright (C) 2009-2017  GAPT developers
+ Copyright (C) 2009-2018  GAPT developers
 
  This program comes with ABSOLUTELY NO WARRANTY. This is free
  software, and you are welcome to redistribute it under certain
@@ -43,8 +42,6 @@ object CLIMain extends Logger {
       // If invoked as ./gapt.sh script.scala,
       // then load script.scala and exit.
       case Array( scriptFile, scriptArgs @ _* ) =>
-        debug( "Initializing logging framework" )
-
         // Strip package declaration, the script compiler doesn't like it.
         val packageRegex = """(?s)package [A-Za-z.]+\n(.*)""".r
         val scriptSrc = read( Path( scriptFile, pwd ) ) match {
@@ -80,7 +77,6 @@ object CLIMain extends Logger {
           override def createInterpreter() = {
             in = InteractiveReader()
             intp = new ILoopInterpreter()
-            intp.setContextClassLoader()
             intp.beQuietDuring( intp.interpret( imports ) )
           }
           override def printWelcome() = print( welcomeMessage )

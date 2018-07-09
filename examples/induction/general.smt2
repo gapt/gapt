@@ -1,6 +1,4 @@
-; viper qtys witness
-; viper tchksize 0.5,1
-; viper cansolsize 2,2
+; solve with: viper --treegrammar --qtys witness --tchksize 0.5 1 --cansolsize 2 2
 (declare-datatypes () ((nat (o) (s (p nat)))))
 
 (declare-sort witness 0)
@@ -13,5 +11,4 @@
   (=> (and (P x (f y)) (P x (g y))) (P (s x) y))))
 
 (declare-const c witness)
-(assert-not (forall ((x nat)) (P x c)))
-(check-sat)
+(prove (forall ((x nat)) (P x c)))
