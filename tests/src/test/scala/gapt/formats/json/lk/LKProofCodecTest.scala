@@ -6,7 +6,7 @@ import org.specs2.mutable.Specification
 class LKProofCodecTest extends Specification {
   import gapt.formats.json.lk.LKProofCodec._
 
-  "The LK collection de/serializer" should {
+  "The LK proof de/serializer" should {
     "serialize and deserialize a small proof" in {
       val p: LKProof = gapt.examples.LinearExampleProof( 3 )
       val json = _lkProofEncoder( p )
