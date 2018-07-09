@@ -1,12 +1,18 @@
 package gapt.proofs.lkt
 
 import gapt.expr._
+import gapt.proofs.lk.LKProof
 
 object atomizeEquality {
 
   def apply( b: Bound1, lctx: LocalCtx ): Bound1 = b.copy( p = apply( b.p, lctx ) )
   def apply( b: Bound2, lctx: LocalCtx ): Bound2 = b.copy( p = apply( b.p, lctx ) )
   def apply( b: BoundN, lctx: LocalCtx ): BoundN = b.copy( p = apply( b.p, lctx ) )
+
+  def apply( p: LKProof ): LKProof = {
+    val ( q, lctx ) = LKToLKt( p )
+    LKtToLK( apply( q, lctx ), lctx )
+  }
 
   def apply( p: LKt, lctx: LocalCtx ): LKt = p match {
     case Cut( f, q1, q2 ) =>

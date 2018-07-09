@@ -4,7 +4,7 @@ import gapt.cutintro.CutIntroduction
 import gapt.examples.{ LinearExampleProof, Pi2Pigeonhole, Pi3Pigeonhole, nTape4 }
 import gapt.expr._
 import gapt.expr.hol.containsQuantifierOnLogicalLevel
-import gapt.proofs.lk.{ LKProof, eliminateDefinitions, instanceProof, solvePropositional }
+import gapt.proofs.lk.{ LKProof, eliminateDefinitions, instanceProof, normalizeLKt, solvePropositional }
 import gapt.proofs.{ Context, SequentMatchers, lk }
 import gapt.provers.escargot.Escargot
 import gapt.utils.Maybe

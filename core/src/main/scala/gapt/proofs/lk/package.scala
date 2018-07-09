@@ -16,4 +16,6 @@ package object lk {
         case p                       => containedNames( p.endSequent )
       }
   }
+
+  object normalizeLKt extends gapt.proofs.lkt.normalize
 }
