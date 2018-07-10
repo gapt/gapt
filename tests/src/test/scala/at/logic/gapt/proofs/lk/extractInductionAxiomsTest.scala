@@ -74,7 +74,7 @@ class extractInductionAxiomsTest extends Specification {
     val expectedAxioms = Seq(
       hof"(⊤ ⊃ !y 0 + y = y + 0) ∧ !x (!y x + y = y + x ⊃ !y s(x) + y = y + s(x)) ⊃ !x !y x + y = y + x",
       hof"(⊤ ⊃ 0 = 0 + 0) ∧ !y (y = y + 0 ⊃ s(y) = s(y) + 0) ⊃ !y y = y + 0",
-      hof"(⊤ ⊃ s(x_1) + 0 = 0 + s(x_1)) ∧ !y (s(x_1) + y = y + s(x_1) ⊃ s(x_1) + s(y) = s(y) + s(x_1)) ⊃ !y s(x_1) + y = y + s(x_1)" )
+      hof"!x_1 ((⊤ ⊃ s(x_1) + 0 = 0 + s(x_1)) ∧ !y (s(x_1) + y = y + s(x_1) ⊃ s(x_1) + s(y) = s(y) + s(x_1)) ⊃ !y s(x_1) + y = y + s(x_1))" )
     val axioms = extractInductionAxioms( plusCommutativityProof )
     if ( expectedAxioms.size != axioms.size ) {
       failure( "too many or too few axioms were extracted" )

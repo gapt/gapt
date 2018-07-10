@@ -34,7 +34,8 @@ object EigenVariablesLK {
     case StrongQuantifierRule( subProof, aux, eigen, quant, isSuc ) =>
       apply( subProof ) ++ Set( eigen )
     case InductionRule( cases, main, term ) =>
-      freeVariables( term ) ++ ( cases flatMap { c => apply( c.proof ) } )
+      cases.flatMap { c => c.eigenVars }.toSet ++
+        ( cases flatMap { c => apply( c.proof ) } )
     case _ =>
       p.immediateSubProofs.flatMap( apply ).toSet
   }
