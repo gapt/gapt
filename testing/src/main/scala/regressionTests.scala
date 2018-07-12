@@ -41,7 +41,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
 
     implicit val ctx: MutableContext = bench.ctx.newMutable
     val sequent = bench.toSequent
-    val proof = Viper.getStrategies( sequent, ViperOptions() ).reverse.view.flatMap {
+    val lkProofWithSk = Viper.getStrategies( sequent, ViperOptions() ).reverse.view.flatMap {
       case ( duration, strategy ) =>
         try {
           ( withTimeout( duration ) { strategy.andThen( now )( ProofState( sequent ) ) } match {
@@ -57,7 +57,15 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
         }
     }.headOption.getOrElse( throw new TimeOutException( null, Duration.Inf ) ) --- "viper"
 
-    ctx.check( proof ) --? "checking proof against context"
+    ctx.check( lkProofWithSk ) --? "checking proof against context"
+
+    val expProofWithSk = LKToExpansionProof( lkProofWithSk ) --- "LKToExpansionProof"
+    val expProofDesk = deskolemizeET( expProofWithSk ) --- "deskolemization"
+    expProofWithSk.shallow.isSubsetOf( expProofDesk.shallow ) !-- "shallow sequent of deskolemization"
+    Z3.isValid( expProofDesk.deep ) !-- "deskolemized deep formula validity"
+    val proof = ExpansionProofToLK( expProofDesk ).get --- "ExpansionProofToLK on deskolemization"
+
+    ctx.check( proof ) --? "checking deskolemized proof against context"
 
     extractRecSchem( proof ) --? "extract recursion scheme"
 
@@ -68,25 +76,16 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
       generate( lower = 2, upper = 3, num = 1 ).head --- "random instance term"
     val instProof = instanceProof( proof, instanceTerms )
 
-    val proofName @ Apps( proofNameC @ Const( proofNameStr, _, _ ), _ ) = Atom( ctx.newNameGenerator.fresh( "proof" ), variables )
+    val proofName @ Apps( proofNameC @ Const( proofNameStr, _, _ ), _ ) =
+      Atom( ctx.newNameGenerator.fresh( "proof" ), variables )
     ArithmeticInductionToSchema( proof, proofName ) --? "induction to schema" foreach { _ =>
       ProofLink( proofName ) --? "create schema proof link"
       instantiateProof.Instantiate( proofNameC( instanceTerms ) ) --? "schema instance"
       SchematicStruct( proofNameStr ).get --? "schematic struct" foreach { schemaStruct =>
         CharFormPRP.PR( CharFormPRP( schemaStruct ) ) --? "characteristic formula"
-        InstanceOfSchematicStruct( CLS( proofNameC( instanceTerms ), proof.endSequent.map( _ => false ) ), schemaStruct ) --? "struct instance"
-      }
-    }
-
-    LKToExpansionProof( proof ) --? "LKToExpansionProof" foreach { expansion =>
-      deskolemizeET( expansion ) --? "deskolemization" foreach { desk =>
-        desk.shallow.isSubsetOf( expansion.shallow ) !-- "shallow sequent of deskolemization"
-        Z3.isValid( desk.deep ) !-- "deskolemized deep formula validity"
-        ExpansionProofToLK( desk ).get --? "ExpansionProofToLK on deskolemization" foreach { deskLK =>
-          deskLK.conclusion.isSubsetOf( proof.conclusion ) !-- "conclusion of ExpansionProofToLK"
-          ctx.check( deskLK ) --? "context check of ExpansionProofToLK"
-          LKToND( deskLK ) --? "LKToND (deskolemization)"
-        }
+        InstanceOfSchematicStruct( CLS(
+          proofNameC( instanceTerms ),
+          proof.endSequent.map( _ => false ) ), schemaStruct ) --? "struct instance"
       }
     }
 

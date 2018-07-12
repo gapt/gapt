@@ -1,6 +1,7 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
+import gapt.proofs.lk.{ LKProof, LKToExpansionProof }
 
 /**
  * Deskolemization of expansion trees.
@@ -9,6 +10,9 @@ import gapt.expr._
  * Then replace each [[ETSkolemQuantifier]] by [[ETStrongQuantifier]], and each skolem term within, by a fresh eigenvariable.
  */
 object deskolemizeET {
+  def apply( lkProof: LKProof ): LKProof =
+    ExpansionProofToLK( deskolemizeET( LKToExpansionProof( lkProof ) ) ).right.get
+
   def apply( expansionProof: ExpansionProof, removeCongruences: Boolean = true ): ExpansionProof = {
     val woCongrs = if ( removeCongruences ) removeSkolemCongruences( expansionProof ) else expansionProof
     val skolemsAboveCuts = eliminateMerges( moveSkolemNodesToCuts( woCongrs ) )
