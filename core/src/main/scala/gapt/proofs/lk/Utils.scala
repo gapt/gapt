@@ -31,9 +31,9 @@ object containsDefinitionRules {
 
 object EigenVariablesLK {
   def apply( p: LKProof ): Set[Var] = p match {
-    case StrongQuantifierRule( subProof, aux, eigen, quant, isSuc ) =>
+    case StrongQuantifierRule( subProof, _, eigen, _, _ ) =>
       apply( subProof ) ++ Set( eigen )
-    case InductionRule( cases, main, term ) =>
+    case InductionRule( cases, _, _ ) =>
       cases.flatMap { c => c.eigenVars }.toSet ++
         ( cases flatMap { c => apply( c.proof ) } )
     case _ =>
@@ -43,9 +43,9 @@ object EigenVariablesLK {
 
 object freeVariablesLK {
   def apply( p: LKProof ): Set[Var] = p match {
-    case StrongQuantifierRule( subProof, aux, eigen, quant, isSuc ) =>
+    case StrongQuantifierRule( subProof, _, eigen, _, _ ) =>
       apply( subProof ) - eigen
-    case InductionRule( cases, main, term ) =>
+    case InductionRule( cases, _, term ) =>
       freeVariables( p.conclusion ) ++ freeVariables( term ) ++ ( cases flatMap { c =>
         apply( c.proof ) -- c.eigenVars
       } )
@@ -129,7 +129,7 @@ class regularize( nameGen: NameGenerator ) extends LKVisitor[Unit] {
   }
 
   protected override def visitInduction( proof: InductionRule, arg: Unit ) = {
-    val InductionRule( cases, main, term ) = proof
+    val InductionRule( cases, _, term ) = proof
 
     val newQuant = nameGen.fresh( proof.quant )
 
@@ -176,7 +176,7 @@ object extractInductionAxioms {
   private def extractAxioms(
     proof: LKProof, eigenVariables: Set[Var] )( implicit ctx: Context ): Seq[Formula] = {
     proof match {
-      case InductionRule( inductionCases, inductionFormula, term ) =>
+      case InductionRule( inductionCases, inductionFormula, _ ) =>
         val axiom = inductionAxiom( inductionFormula )
         All.Block(
           freeVariables( axiom ).filter { eigenVariables.contains( _ ) }.toSeq, axiom ) +: inductionCases.flatMap { ic => extractAxioms( ic.proof, eigenVariables ) }
