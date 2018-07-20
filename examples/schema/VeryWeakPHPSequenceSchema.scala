@@ -21,6 +21,7 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
   ctx += hoc"theta: nat>nat>i>nat"
   ctx += hoc"chi: nat>i>nat"
   ctx += hoc"epsilon: nat>nat>nat>i>nat"
+  ctx += hoc"delta: nat>nat>i>nat"
 
   ctx += hoc"phi: nat>nat>nat"
   ctx += PrimRecFun( hoc"POR:nat>i>o", "POR 0 x = E 0 (f x) ", "POR (s y) x = (E (s y) (f x) ∨ POR y x)" )
@@ -31,11 +32,9 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
   // ctx += "LEDefinition" -> hos"POR(n,iNum(m,a)) :- LE(f(a), s(n))"
   //Incorrect axiom which is inconsistent outside this proof
   ctx += "LEDefinitionSingle" -> hos" E(n,f(iNum(m,a))) :- LE(f(a), k)"
+  ctx += "NumericTransitivity" -> hos"E(n,f(a)),E(n,f(suc(a))) :- E(f(a), f(suc(a)))"
   ctx += "NumericTransitivityBase" -> hos"E(n,f(a)) :- E(f(a), f(a))"
-  // Correct axiom
-  //ctx += "NumericTransitivityStep" -> hos"E(n,f(iNum(s(k),a))), CSeq(k,n,a) :- E(f(a), f(iNum(s(k),a)))"
-  //Incorrect axiom which is inconsistent outside this proof
-  ctx += "NumericTransitivityStep" -> hos"E(n,f(iNum(s(k),a))) :- E(f(a), f(iNum(s(k),a)))"
+  ctx += "NumericTransitivityStep" -> hos"E(n,f(iNum(s(k),a))), E(n,f(iNum(k,a))), E(f(a), f(iNum(k,a))) :- E(f(a), f(iNum(s(k),a)))"
   ctx += "minimalElement" -> hos"LE(f(z),0) :- "
   ctx += "ordcon" -> hos"LE(f(iNum(m,a)),s(n)) :- E(n,f(iNum(m,a))), LE(f(a),n)"
 
@@ -68,6 +67,12 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
     Seq( hof" POR(n,iNum(m,a)) " ),
     Seq( hof" LE(f(a), k)" ) )
   ctx += Context.ProofNameDeclaration( le"epsilon n m k a", esEpsilon )
+  val esDelta = Sequent(
+    Seq(
+      hof" E(n, f(iNum(s(k), a)))",
+      hof"CSeq(k, n, a)" ),
+    Seq( hof"E(f(a), f(iNum(s(k), a)))" ) )
+  ctx += Context.ProofNameDeclaration( le"delta k n a", esDelta )
   //The base case of  nu
   val esNuBc1 =
     Sequent(
@@ -197,7 +202,7 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
     unfold( "EndSeq" ) atMost 1 in "Suc_0_0"
     andL
     andR
-    ref( "NumericTransitivityStep" )
+    ref( "delta" )
     ref( "mu" )
     allL( foc"z" )
     ref( "minimalElement" )
@@ -242,7 +247,7 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
     unfold( "EndSeq" ) atMost 1 in "Suc_0_0"
     andL
     andR
-    ref( "NumericTransitivityStep" )
+    ref( "delta" )
     ref( "mu" )
     allR( fov"b" )
     exR( "cut_0", fov"b" )
@@ -277,7 +282,7 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
     unfold( "EndSeq" ) atMost 1 in "Suc_0"
     andL
     andR
-    ref( "NumericTransitivityStep" )
+    ref( "delta" )
     ref( "mu" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"mu (s k) n a", muSc )
@@ -361,5 +366,35 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
     ref( "epsilon" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"epsilon (s n) m k a", epsilonSc )
+
+  val esDeltaBc = Sequent(
+    Seq(
+      "Ant_0" -> hof" E(n, f(iNum(s(0), a)))",
+      "Ant_1" -> hof"CSeq(0, n, a)" ),
+    Seq(
+      "Suc_0" -> hof"E(f(a), f(iNum(s(0), a)))" ) )
+  val deltaBc = Lemma( esDeltaBc ) {
+    unfold( "CSeq" ) atMost 1 in "Ant_1"
+    unfold( "iNum" ) atMost 1 in "Ant_1"
+    unfold( "iNum" ) in "Suc_0"
+    unfold( "iNum" ) in "Ant_0"
+
+    ref( "NumericTransitivity" )
+  }
+  ctx += Context.ProofDefinitionDeclaration( le"delta 0 n a", deltaBc )
+  val esDeltaSc = Sequent(
+    Seq(
+      "Ant_0" -> hof" E(n, f(iNum(s(s(k)), a)))",
+      "Ant_1" -> hof"CSeq(s(k), n, a)" ),
+    Seq(
+      "Suc_0" -> hof"E(f(a), f(iNum(s(s(k)), a)))" ) )
+  val deltaSc = Lemma( esDeltaSc ) {
+    unfold( "CSeq" ) atMost 1 in "Ant_1"
+    andL
+    cut( "cut", hof"E(f(a), f(iNum(s(k), a)))" )
+    ref( "delta" )
+    ref( "NumericTransitivityStep" )
+  }
+  ctx += Context.ProofDefinitionDeclaration( le"delta (s k) n a", deltaSc )
 }
 
