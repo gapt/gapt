@@ -8,7 +8,7 @@ import gapt.proofs.gaptic._
 import gapt.proofs.ceres._
 import gapt.proofs.lk.LKProof
 
-object VeryWeakPHPRefutation extends TacticsProof( VeryWeakPHPSchema.ctx ) {
+object OneStrictMonotoneRefutation extends TacticsProof( OneStrictMonotoneSchema.ctx ) {
   val SCS: Map[CLS, ( Struct, Set[Var] )] = SchematicStruct( "omega" ).getOrElse( Map() )
   val CFPRN = CharFormPRN( SCS )
   CharFormPRN.PR( CFPRN )

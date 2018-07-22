@@ -6,7 +6,7 @@ import gapt.proofs.Context
 import gapt.proofs.Sequent
 import gapt.proofs.gaptic._
 
-object VeryWeakPHPSchema extends TacticsProof {
+object OneStrictMonotoneSchema extends TacticsProof {
   ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
   ctx += Context.Sort( "i" )
   ctx += hoc"f:i>nat"
