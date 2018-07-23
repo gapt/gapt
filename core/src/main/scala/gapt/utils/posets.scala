@@ -4,9 +4,9 @@ import scala.collection.mutable
 
 object linearizeStrictPartialOrder {
   def apply[T]( set: Iterable[T], relation: Iterable[( T, T )] ): Either[Vector[T], Vector[T]] =
-    build( set.toSet, Map().withDefaultValue( Nil ) ++ relation.groupBy( _._1 ).mapValues( Nil ++ _.map( _._2 ) ) )
+    apply( set, Map().withDefaultValue( Nil ) ++ relation.groupBy( _._1 ).mapValues( Nil ++ _.map( _._2 ) ) )
 
-  private def build[T]( set: Set[T], relation: Map[T, List[T]] ): Either[Vector[T], Vector[T]] = {
+  def apply[T]( set: Iterable[T], relation: T => Iterable[T] ): Either[Vector[T], Vector[T]] = {
     val out = mutable.Buffer[T]()
     val printed = mutable.Set[T]()
 
