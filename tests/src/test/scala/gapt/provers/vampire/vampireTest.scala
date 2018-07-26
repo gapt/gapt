@@ -1,11 +1,14 @@
 package gapt.provers.vampire
 
 import gapt.examples.CountingEquivalence
-import gapt.expr.fol.{ naive, thresholds }
-import gapt.proofs.{ Clause, HOLSequent, MutableContext, Sequent, SequentMatchers }
-import org.specs2.mutable._
 import gapt.expr._
+import gapt.proofs.Clause
+import gapt.proofs.HOLSequent
+import gapt.proofs.MutableContext
+import gapt.proofs.Sequent
+import gapt.proofs.SequentMatchers
 import gapt.utils.SatMatchers
+import org.specs2.mutable._
 
 class VampireTest extends Specification with SequentMatchers with SatMatchers {
 

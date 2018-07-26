@@ -4,8 +4,8 @@ import gapt.expr._
 import gapt.expr.hol.containsStrongQuantifier
 import gapt.proofs.expansion.ExpansionProof
 import gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent, Suc }
-import gapt.proofs.lk.{ LKProof, LKToExpansionProof, instanceProof, skolemizeLK }
-import gapt.proofs.lkt.{ LKToLKt, LKt, LKtToLK, LocalCtx, atomizeEquality, normalizeLKt }
+import gapt.proofs.lk.{ LKProof, LKToExpansionProof, instanceProof, normalizeLKt, skolemizeLK }
+import gapt.proofs.lkt.{ LKToLKt, LKt, LKtToLK, LocalCtx }
 import gapt.provers.OneShotProver
 import gapt.utils.Maybe
 

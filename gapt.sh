@@ -16,4 +16,6 @@ while getopts "hm:" FLAG; do
   esac
 done
 
+shift $(expr $OPTIND - 1 )
+
 run_gapt gapt.cli.CLIMain "$@"

@@ -7,8 +7,8 @@ import gapt.expr.hol.{ containsQuantifierOnLogicalLevel, isAtom }
 import gapt.proofs.HOLSequent
 import gapt.proofs.ceres.CERES
 import gapt.proofs.expansion.{ ExpansionProof, eliminateCutsET }
-import gapt.proofs.lk.{ LKProof, LKToExpansionProof, cutNormal, eliminateDefinitions, inductionNormalForm, instanceProof }
-import gapt.proofs.lkt.{ LKToLKt, LKt, LocalCtx, normalizeLKt }
+import gapt.proofs.lk.{ LKProof, LKToExpansionProof, cutNormal, eliminateDefinitions, inductionNormalForm, instanceProof, normalizeLKt }
+import gapt.proofs.lkt.{ LKToLKt, LKt, LocalCtx }
 import gapt.proofs.resolution.ResolutionToLKProof
 import gapt.provers.escargot.Escargot
 

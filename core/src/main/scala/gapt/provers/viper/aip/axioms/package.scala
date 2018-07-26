@@ -1,6 +1,7 @@
 package gapt.provers.viper.aip
 
-import gapt.expr.{ All, And, Const => Con, FunctionType, Formula, Substitution, Var, freeVariables, rename }
+import gapt.expr.Expr
+import gapt.expr.{ All, And, Formula, FunctionType, Substitution, Var, freeVariables, rename, Const => Con }
 import gapt.proofs.{ Context, Sequent }
 
 package object axioms {
@@ -82,11 +83,33 @@ package object axioms {
     val nameGenerator = rename.awayFrom( freeVariables( formula ) )
     val newVariables = argumentTypes map {
       argumentType =>
-        nameGenerator.fresh(
-          if ( argumentType == freeVariable.ty )
-            freeVariable
-          else
-            Var( "x", argumentType ) )
+        val newName =
+          nameGenerator.fresh(
+            if ( argumentType == freeVariable.ty )
+              freeVariable.name
+            else
+              "x" )
+        Var( newName, argumentType )
+    }
+    val ( primaryVariables, secondaryVariables ) = newVariables partition {
+      _.ty == freeVariable.ty
+    }
+    ( primaryVariables, secondaryVariables, Substitution( freeVariable -> constructor( newVariables: _* ) )( formula ) )
+  }
+
+  def inductionCaseConclusion(
+    freeVariable: Var, constructor: Con, formula: Expr ): ( List[Var], List[Var], Expr ) = {
+    val FunctionType( _, argumentTypes ) = constructor.ty
+    val nameGenerator = rename.awayFrom( freeVariables( formula ) )
+    val newVariables = argumentTypes map {
+      argumentType =>
+        val newName =
+          nameGenerator.fresh(
+            if ( argumentType == freeVariable.ty )
+              freeVariable.name
+            else
+              "x" )
+        Var( newName, argumentType )
     }
     val ( primaryVariables, secondaryVariables ) = newVariables partition {
       _.ty == freeVariable.ty
