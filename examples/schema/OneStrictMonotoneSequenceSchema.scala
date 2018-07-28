@@ -14,6 +14,7 @@ object OneStrictMonotoneSequenceSchema extends TacticsProof {
   ctx += hoc"z:i"
   ctx += hoc"E: nat>nat>o"
   ctx += hoc"LE: nat>nat>o"
+  ctx += hoc"Top: nat>nat"
 
   ctx += hoc"omega: nat>nat>nat"
   ctx += hoc"nu: nat>nat>i>nat"
@@ -37,7 +38,11 @@ object OneStrictMonotoneSequenceSchema extends TacticsProof {
   ctx += "NumericTransitivityStep" -> hos"E(n,f(iNum(s(k),a))), E(n,f(iNum(k,a))), E(f(a), f(iNum(k,a))) :- E(f(a), f(iNum(s(k),a)))"
   ctx += "minimalElement" -> hos"LE(f(z),0) :- "
   ctx += "ordcon" -> hos"LE(f(iNum(m,a)),s(n)) :- E(n,f(iNum(m,a))), LE(f(a),n)"
-
+  val repeating = le"(s (s 0))"
+  val esTop = Sequent(
+    Seq( hof"!x POR(n,x)" ),
+    Seq( hof"?x ( EndSeq($repeating,x) )" ) )
+  ctx += Context.ProofNameDeclaration( le"Top n", esTop )
   val esOmega = Sequent(
     Seq( hof"!x POR(n,x)" ),
     Seq( hof"?x ( EndSeq(k,x) )" ) )
@@ -145,6 +150,24 @@ object OneStrictMonotoneSequenceSchema extends TacticsProof {
     ref( "nu" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"nu (s k) (s n) a", nuSc2 )
+  //The base case of  Top
+  val esTopBc =
+    Sequent(
+      Seq( "Ant_0" -> hof"!x POR(0,x)" ),
+      Seq( "Suc_0" -> hof"?x (EndSeq($repeating ,x))" ) )
+  val TopBc = Lemma( esTopBc ) {
+    ref( "omega" )
+  }
+  ctx += Context.ProofDefinitionDeclaration( le"Top 0", TopBc )
+  val esTopSc =
+    Sequent(
+      Seq( "Ant_0" -> hof"!x POR(s(n),x)" ),
+      Seq( "Suc_0" -> hof"?x (EndSeq($repeating ,x))" ) )
+  val TopSc = Lemma( esTopSc ) {
+    ref( "omega" )
+  }
+  ctx += Context.ProofDefinitionDeclaration( le"Top (s n)", TopSc )
+
   //The base case of  omega
   val esOmegaBc =
     Sequent(

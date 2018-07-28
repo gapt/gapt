@@ -6,7 +6,7 @@ import gapt.proofs.Context
 import gapt.proofs.Sequent
 import gapt.proofs.gaptic._
 
-object OneStrictMonotoneThreeFunctionSchema extends TacticsProof {
+object ThreeStrictMonotoneSchema extends TacticsProof {
 
   ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
   ctx += Context.Sort( "i" )
@@ -21,6 +21,8 @@ object OneStrictMonotoneThreeFunctionSchema extends TacticsProof {
   ctx += hoc"nu: nat>i>nat"
   ctx += hoc"chi: nat>i>nat"
   ctx += PrimRecFun( hoc"POR:nat>i>o", "POR 0 x = E 0 (f x) ", "POR (s y) x = (E (s y) (f x) ∨ POR y x)" )
+  ctx += PrimRecFun( hoc"JumpSeq:nat>i>o", "JumpSeq 0 x = (E (f x), (f (suc x))) ", "POR (s y) x = (E (f x), (f (suc x))) ∧ ∃p ( iLEQ(suc(x),suc(p)) ∧  (E (f p), (f (suc p))) )" )
+
   ctx += "LEDefinition" -> hos"POR(n,a) :- LE(f(a), s(n))"
   ctx += "LEDefinition2" -> hos"POR(n,suc(a)) :- LE(f(a), s(n))"
   ctx += "NumericTransitivity" -> hos"E(n,f(a)),E(n,f(suc(a))) :- E(f(a), f(suc(a)))"

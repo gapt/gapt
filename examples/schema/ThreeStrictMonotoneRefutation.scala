@@ -4,7 +4,7 @@ import gapt.expr._
 import gapt.proofs.gaptic._
 import gapt.proofs.ceres._
 
-object OneStrictMonotoneTwoFunctionRefutation extends TacticsProof( OneStrictMonotoneTwoFunctionSchema.ctx ) {
+object ThreeStrictMonotoneRefutation extends TacticsProof( ThreeStrictMonotoneSchema.ctx ) {
   val SCS: Map[CLS, ( Struct, Set[Var] )] = SchematicStruct( "omega" ).getOrElse( Map() )
   val CFPRN = CharFormPRN( SCS )
   CharFormPRN.PR( CFPRN )
