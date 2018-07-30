@@ -9,6 +9,7 @@ import java.io._
 
 import gapt.provers._
 import gapt.expr._
+import gapt.formats.smt.SmtLibExporter
 import gapt.proofs.lk.LKProof
 
 object VeriT extends VeriT

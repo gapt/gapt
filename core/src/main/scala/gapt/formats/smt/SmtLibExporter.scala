@@ -1,9 +1,9 @@
-package gapt.formats.verit
+package gapt.formats.smt
 
-import gapt.expr.{ TBase, Const }
+import gapt.expr.{ Const, TBase }
 import gapt.proofs.HOLSequent
-import gapt.provers.Session._
 import gapt.provers.Session.Runners._
+import gapt.provers.Session._
 
 object SmtLibExporter {
 
