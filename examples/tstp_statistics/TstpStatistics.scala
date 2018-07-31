@@ -2,9 +2,10 @@ package gapt.examples.tstp_statistics
 
 import ammonite.ops.FilePath
 import gapt.examples.tstp_statistics.Types.{ ClauseId, RuleName }
+import gapt.expr.{ Abs, App, Const, Expr, Substitution, Var }
 import gapt.formats.tptp.{ TptpFile, TptpParser, TptpProofParser }
 import gapt.proofs.HOLSequent
-import gapt.proofs.resolution.ResolutionProof
+import gapt.proofs.resolution.{ ResolutionProof, Subst }
 import gapt.proofs.sketch.RefutationSketchToResolution
 import gapt.utils.{ TimeOutException, withTimeout }
 
@@ -17,10 +18,45 @@ object Types {
 }
 
 case class Statistic(
-    min:    Int,
-    max:    Int,
-    avg:    Int,
-    median: Int )
+    n:      BigInt,
+    min:    BigInt,
+    max:    BigInt,
+    avg:    BigDecimal,
+    median: BigDecimal )
+
+object Statistic {
+  def apply( values: Seq[Int] ): Statistic = {
+    require( values.nonEmpty, "Need data to compute statistics" )
+
+    val sorted = values.sorted
+    val initial = sorted.head
+
+    val _n = values.size
+    var _min: BigInt = initial
+    var _max: BigInt = initial
+    var _sum: BigInt = initial
+
+    for ( data <- sorted.tail ) {
+      _min = _min.min( data )
+      _max = _max.max( data )
+      _sum = _sum + data
+    }
+    val _avg: BigDecimal = BigDecimal( _sum ) / BigDecimal( _n )
+    val _median: BigDecimal = _n % 2 match {
+      case 0 =>
+        val m1 = BigDecimal( sorted( _n / 2 ) )
+        val m2 = BigDecimal( sorted( ( _n / 2 ) - 1 ) )
+        ( m1 + m2 ) / 2
+      case 1 =>
+        BigDecimal( sorted( _n / 2 ) )
+      case _ =>
+        throw new IllegalArgumentException( "Result of % 2 should always be 0 or 1!" )
+    }
+
+    Statistic( _n, _min, _max, _avg, _median )
+  }
+
+}
 
 /*
    Invariants:
@@ -28,15 +64,16 @@ case class Statistic(
    dept <= size
  */
 case class RPProofStats(
-    name:             String,
-    dagSize:          BigInt,
-    treeSize:         BigInt,
-    depth:            Int,
-    rule_histogram:   Map[RuleName, Int],
-    clause_frequency: Map[ClauseId, ( RuleName, Int )],
-    subst_term_sizes: Statistic,
-    reused_axioms:    Map[RuleName, ( HOLSequent, Int )],
-    reused_derived:   Map[RuleName, ( HOLSequent, Int )] )
+    name:              String,
+    dagSize:           BigInt,
+    treeSize:          BigInt,
+    depth:             Int,
+    rule_histogram:    Map[RuleName, Int],
+    clause_frequency:  Map[ClauseId, ( RuleName, Int )],
+    subst_term_sizes:  Option[Statistic],
+    subst_term_depths: Option[Statistic],
+    reused_axioms:     Map[RuleName, ( HOLSequent, Int )],
+    reused_derived:    Map[RuleName, ( HOLSequent, Int )] )
 
 /*
    Invariants:
@@ -132,6 +169,25 @@ object TstpStatistics {
   private def fst_map[U, V, W, X]( m: mutable.Map[U, ( V, W, X )] ) =
     m.map( x => ( x._1, ( x._2._1, x._2._2 ) ) ).toMap
 
+  private def term_depth_size( t: Expr ): ( Int, Int ) = t match {
+    case Var( _, _ ) | Const( _, _, _ ) => ( 1, 1 )
+    case Abs( _, s ) =>
+      val d = term_depth_size( s )
+      ( d._1 + 1, d._2 + 1 )
+    case App( a, b ) =>
+      val ( d1a, d1b ) = term_depth_size( a )
+      val ( d2a, d2b ) = term_depth_size( b )
+      ( d1a.max( d2a ) + 1, d1b + d2b + 1 )
+  }
+
+  private def getSubstDepths( s: Substitution ) =
+    s.map.values.map( term_depth_size( _ ) )
+
+  private def getSubstStats( l: Seq[Int] ) = {
+    val filtered = l.filter( _ > 0 )
+    if ( filtered.nonEmpty ) Some( Statistic( filtered ) ) else None
+  }
+
   def getRPStats( name: String, rp: ResolutionProof ) = {
     val dagSize = rp.dagLike.size
     val treeSize = rp.treeLike.size
@@ -160,10 +216,17 @@ object TstpStatistics {
 
     val ( reused_axioms, reused_derived ) = reused_proofs.partition( _._2._3 )
 
-    val stats = RPProofStats( name, dagSize, treeSize, depth, hist.toMap, freq.toMap,
-      Statistic( 0, 0, 0, 0 ), fst_map( reused_axioms ), fst_map( reused_derived ) )
-    stats
+    val ( subst_depths, subst_sizes ) = rp.subProofs.toSeq.flatMap {
+      case Subst( _, subst ) =>
+        getSubstDepths( subst )
+      case _ => Seq()
+    }.unzip
 
+    val stats = RPProofStats( name, dagSize, treeSize, depth, hist.toMap, freq.toMap,
+      getSubstStats( subst_sizes ), getSubstStats( subst_depths ),
+      fst_map( reused_axioms ), fst_map( reused_derived ) )
+
+    stats
   }
 
 }
