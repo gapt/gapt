@@ -78,78 +78,7 @@ object OneStrictMonotoneSequenceSchema extends TacticsProof {
       hof"CSeq(k, n, a)" ),
     Seq( hof"E(f(a), f(iNum(s(k), a)))" ) )
   ctx += Context.ProofNameDeclaration( le"delta k n a", esDelta )
-  //The base case of  nu
-  val esNuBc1 =
-    Sequent(
-      Seq( "Ant_0" -> hof"!x POR(0,x)" ),
-      Seq(
-        "Suc_0" -> hof"CSeq(0,0,a)",
-        "Suc_1" -> hof"LE(f(a),0)" ) )
-  val nuBc1 = Lemma( esNuBc1 ) {
-    allL( "Ant_0", fov"a" )
-    unfold( "POR" ) atMost 1 in "Ant_0_0"
-    unfold( "CSeq" ) atMost 1 in "Suc_0"
-    unfold( "iNum" ) atMost 1 in "Suc_0"
-    trivial
-  }
-  ctx += Context.ProofDefinitionDeclaration( le"nu 0 0 a", nuBc1 )
 
-  val esNuBc2 =
-    Sequent(
-      Seq( "Ant_0" -> hof"!x POR(s(n),x)" ),
-      Seq(
-        "Suc_0" -> hof"CSeq(0,s(n),a)",
-        "Suc_1" -> hof"LE(f(a),s(n))" ) )
-  val nuBc2 = Lemma( esNuBc2 ) {
-    allL( "Ant_0", fov"a" )
-    unfold( "POR" ) atMost 1 in "Ant_0_0"
-    unfold( "CSeq" ) atMost 1 in "Suc_0"
-    unfold( "iNum" ) atMost 1 in "Suc_0"
-    orL
-    trivial
-    cut( "cut", hof"POR(n,iNum(0,a))" )
-    unfold( "iNum" ) atMost 1 in "cut"
-    ref( "chi" )
-    ref( "epsilon" )
-  }
-  ctx += Context.ProofDefinitionDeclaration( le"nu 0 (s n) a", nuBc2 )
-
-  //The step cases of nu
-  val esNuSc1 =
-    Sequent(
-      Seq( "Ant_0" -> hof"!x POR(0,x)" ),
-      Seq(
-        "Suc_0" -> hof"CSeq((s k),0,a)",
-        "Suc_1" -> hof"LE(f(a),0)" ) )
-  val nuSc1 = Lemma( esNuSc1 ) {
-    allL( "Ant_0", le"suc(iNum(k, a))" )
-    unfold( "POR" ) atMost 1 in "Ant_0_0"
-    unfold( "CSeq" ) atMost 1 in "Suc_0"
-    unfold( "iNum" ) atMost 1 in "Suc_0"
-    andR
-    trivial
-    ref( "nu" )
-  }
-  ctx += Context.ProofDefinitionDeclaration( le"nu (s k) 0 a", nuSc1 )
-
-  //The step cases of nu
-  val esNuSc2 =
-    Sequent(
-      Seq( "Ant_0" -> hof"!x POR(s(n),x)" ),
-      Seq(
-        "Suc_0" -> hof"CSeq(s(k),s(n),a)",
-        "Suc_1" -> hof"LE(f(a),s(n))" ) )
-  val nuSc2 = Lemma( esNuSc2 ) {
-    allL( "Ant_0", le"iNum(s(k), a)" )
-    unfold( "POR" ) atMost 1 in "Ant_0_0"
-    unfold( "CSeq" ) atMost 1 in "Suc_0"
-    andR
-    orL
-    trivial
-    ref( "epsilon" )
-    ref( "nu" )
-  }
-  ctx += Context.ProofDefinitionDeclaration( le"nu (s k) (s n) a", nuSc2 )
   //The base case of  Top
   val esTopBc =
     Sequent(
