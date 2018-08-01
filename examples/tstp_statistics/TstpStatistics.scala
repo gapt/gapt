@@ -10,6 +10,7 @@ import gapt.proofs.sketch.RefutationSketchToResolution
 import gapt.utils.{ TimeOutException, withTimeout }
 
 import scala.collection.mutable
+import scala.compat.Platform.StackOverflowError
 import scala.concurrent.duration._
 
 object Types {
@@ -32,15 +33,10 @@ object Statistic {
     val initial = sorted.head
 
     val _n = values.size
-    var _min: BigInt = initial
-    var _max: BigInt = initial
-    var _sum: BigInt = initial
+    val _min: BigInt = values.min
+    val _max: BigInt = values.max
+    val _sum: BigInt = values.sum
 
-    for ( data <- sorted.tail ) {
-      _min = _min.min( data )
-      _max = _max.max( data )
-      _sum = _sum + data
-    }
     val _avg: BigDecimal = BigDecimal( _sum ) / BigDecimal( _n )
     val _median: BigDecimal = _n % 2 match {
       case 0 =>
@@ -105,59 +101,92 @@ case class InputStats(
     median_arity:        Int )
 
 object TstpStatistics {
-  def applyAll( pfiles: Iterable[String] ) = {
 
-    for ( i <- pfiles ) {
-      val ( m1, m2 ) = TstpStatistics( i );
-      ( m1.isEmpty, m2.isEmpty ) match {
-        case ( true, _ )      => print( "o" )
-        case ( false, true )  => print( "x" )
-        case ( false, false ) => print( "." )
-      }
-    }
-  }
-
-  def apply( file: String ) = {
-    loadFile( file ) match {
+  def apply( file: String, print_statistics: Boolean = false ): ( Option[TptpFile], Either[String, RPProofStats] ) = {
+    loadFile( file, print_statistics ) match {
       case ( tstpo, rpo ) =>
         ( tstpo, rpo.map( getRPStats( file, _ ) ) )
 
     }
   }
 
-  def loadFile( v: String ): ( Option[TptpFile], Option[ResolutionProof] ) = {
+  def applyAll( pfiles: Iterable[String], print_statistics: Boolean = false ) = {
+
+    val ( tstps, rps ) = pfiles.par.map( i => {
+      val r @ ( m1, m2 ) = apply( i, print_statistics )
+      if ( print_statistics ) {
+        ( m1.isEmpty, m2.isLeft ) match {
+          case ( true, _ )      => print( "o" )
+          case ( false, true )  => print( "x" )
+          case ( false, false ) => print( "." )
+        }
+      }
+      r
+    } ).unzip
+
+    val rpmap = mutable.Map() ++ ( rps.flatMap {
+      case Right( stat ) => ( stat.name, stat ) :: Nil
+      case Left( _ )     => Nil
+    } )
+
+    val rperrormap = rps.flatMap {
+      case Right( _ )  => Nil
+      case Left( msg ) => msg :: Nil
+    }.toList
+
+    ( tstps.flatMap( ( x: Option[TptpFile] ) => x ), rpmap, rperrormap )
+
+  }
+
+  def loadFile( v: String, print_statistics: Boolean = false ): ( Option[TptpFile], Either[String, ResolutionProof] ) = {
     val tstpf_file: Option[TptpFile] = try {
       Some( TptpParser.load( FilePath( v ) ) )
 
     } catch {
       case e: Exception =>
-        println( s"can't load $v" );
+        if (print_statistics) {
+          println(s"can't load $v")
+        }
         None
     }
 
     tstpf_file match {
       case None =>
         //don't try to reconstruct the proof if we can't read it
-        ( None, None )
+        ( None, Left( s"can't load $v" ) )
       case _ =>
         try {
           withTimeout( 120.seconds ) {
             val ( formula, sketch ) = TptpProofParser.parse( FilePath( v ), true )
             RefutationSketchToResolution( sketch ) match {
               case Left( unprovable ) =>
-                println( s"can't reconstruct $v" )
-                ( tstpf_file, None )
+                if ( print_statistics ) {
+                  println(s"can't reconstruct $v")
+                }
+                ( tstpf_file, Left( s"can't reconstruct $v" ) )
               case Right( proof ) =>
-                ( tstpf_file, Some( proof ) )
+                ( tstpf_file, Right( proof ) )
             }
           }
         } catch {
           case e: TimeOutException =>
-            println( s"reconstruction timeout $v" )
-            ( tstpf_file, None )
-          case _: Exception =>
-            println( s"reconstruction error $v" )
-            ( tstpf_file, None )
+            if ( print_statistics ) {
+              println()
+              println( s"reconstruction timeout $v" )
+            }
+            ( tstpf_file, Left( s"reconstruction timeout $v" ) )
+          case e: Exception =>
+            if ( print_statistics ) {
+              println()
+              println( s"reconstruction error $v" )
+            }
+            ( tstpf_file, Left( s"reconstruction error $v ${e.getMessage}" ) )
+          case e: StackOverflowError =>
+            if ( print_statistics ) {
+              println()
+              println( s"reconstruction error $v (stack overflow)" )
+            }
+            ( tstpf_file, Left( s"reconstruction error $v (stack overflow)" ) )
         }
     }
   }
