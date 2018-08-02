@@ -18,38 +18,37 @@ object Types {
   type ClauseId = String
 }
 
-case class Statistic(
-    n:      BigInt,
-    min:    BigInt,
-    max:    BigInt,
+case class Statistic[T](
+    n:      Int,
+    min:    T,
+    max:    T,
     avg:    BigDecimal,
     median: BigDecimal )
 
 object Statistic {
-  def apply( values: Seq[Int] ): Statistic = {
+  def apply[T]( values: Seq[T] )( implicit num: Numeric[T], conv: T => BigDecimal ): Statistic[T] = {
     require( values.nonEmpty, "Need data to compute statistics" )
 
     val sorted = values.sorted
-    val initial = sorted.head
 
     val _n = values.size
-    val _min: BigInt = values.min
-    val _max: BigInt = values.max
-    val _sum: BigInt = values.sum
+    val _min: T = values.min
+    val _max: T = values.max
+    val _sum: BigDecimal = values.map( conv ).sum //convert to big numbers before summing up
 
-    val _avg: BigDecimal = BigDecimal( _sum ) / BigDecimal( _n )
+    val _avg: BigDecimal = _sum / BigDecimal( _n )
     val _median: BigDecimal = _n % 2 match {
       case 0 =>
-        val m1 = BigDecimal( sorted( _n / 2 ) )
-        val m2 = BigDecimal( sorted( ( _n / 2 ) - 1 ) )
+        val m1: BigDecimal = sorted( _n / 2 )
+        val m2: BigDecimal = sorted( ( _n / 2 ) - 1 )
         ( m1 + m2 ) / 2
       case 1 =>
-        BigDecimal( sorted( _n / 2 ) )
+        sorted( _n / 2 )
       case _ =>
         throw new IllegalArgumentException( "Result of % 2 should always be 0 or 1!" )
     }
 
-    Statistic( _n, _min, _max, _avg, _median )
+    new Statistic[T]( _n, _min, _max, _avg, _median )
   }
 
 }
@@ -66,8 +65,8 @@ case class RPProofStats(
     depth:             Int,
     rule_histogram:    Map[RuleName, Int],
     clause_frequency:  Map[ClauseId, ( RuleName, Int )],
-    subst_term_sizes:  Option[Statistic],
-    subst_term_depths: Option[Statistic],
+    subst_term_sizes:  Option[Statistic[Int]],
+    subst_term_depths: Option[Statistic[Int]],
     reused_axioms:     Map[RuleName, ( HOLSequent, Int )],
     reused_derived:    Map[RuleName, ( HOLSequent, Int )] )
 
@@ -144,8 +143,8 @@ object TstpStatistics {
 
     } catch {
       case e: Exception =>
-        if (print_statistics) {
-          println(s"can't load $v")
+        if ( print_statistics ) {
+          println( s"can't load $v" )
         }
         None
     }
@@ -161,7 +160,7 @@ object TstpStatistics {
             RefutationSketchToResolution( sketch ) match {
               case Left( unprovable ) =>
                 if ( print_statistics ) {
-                  println(s"can't reconstruct $v")
+                  println( s"can't reconstruct $v" )
                 }
                 ( tstpf_file, Left( s"can't reconstruct $v" ) )
               case Right( proof ) =>
