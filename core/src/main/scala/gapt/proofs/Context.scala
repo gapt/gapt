@@ -495,7 +495,6 @@ object Context {
   }
 
   case class PrimRecFunBatch( prfDefinitions: Seq[( Const, Int, Int, Vector[( Expr, Expr )] )] ) extends Update {
-
     for ( ( const, nArgs, recIdx, eqs ) <- prfDefinitions ) {
       validatePrimRecFunDef( const, nArgs, recIdx, eqs )
     }
@@ -545,8 +544,13 @@ object Context {
         val Apps( _: Const, ctrArgs ) = lhsArgs( recIdx )
 
         val matchVars = nonRecLhsArgs ++ ctrArgs
-        matchVars.foreach( a => require( a.isInstanceOf[Var] ) )
-        require( matchVars == matchVars.distinct )
+        //Not sure this needs to be here
+        /* matchVars.foreach( a => {
+          require( a.isInstanceOf[Var] )
+        } )*/
+        //   println( matchVars.toString )
+
+        //  require( matchVars == matchVars.distinct )
         folSubTerms( rhs ).foreach {
           case Apps( fn @ Const( `name`, _, _ ), args ) =>
             require( fn == c )

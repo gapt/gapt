@@ -16,6 +16,8 @@ object Viperize {
         All.Block( freeVariables( matrix ).toSeq, matrix )
       } else if ( !( x.lhs.ty.toString.matches( "o" ) ) ) {
         val matrix = Eq( x.lhs, x.rhs )
+        val App( name, args ) = x.lhs
+        println( name )
         All.Block( freeVariables( matrix ).toSeq, matrix )
       } else Bottom()
     } )

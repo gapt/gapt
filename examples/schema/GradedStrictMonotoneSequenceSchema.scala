@@ -25,6 +25,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
   ctx += hoc"psi: nat>nat>i>nat"
   ctx += hoc"zeta: nat>nat>i>nat"
   ctx += hoc"theta: nat>nat>i>nat"
+  ctx += hoc"xi: nat>nat>i>i>nat"
 
   ctx += PrimRecFun( hoc"POR:nat>i>o", "POR 0 x = E 0 (f x) ", "POR (s y) x = (E (s y) (f x) ∨ POR y x)" )
   ctx += PrimRecFun( hoc"iNum:nat>i>i", "iNum 0 x = x ", "iNum (s y) x = (suc (iNum y x))" )
@@ -87,6 +88,10 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     Seq( hof"!x LE(f(x),s(n))" ),
     Seq( hof"LE(f(a),n)", hof"CSeq(m,n,a)" ) )
   ctx += Context.ProofNameDeclaration( le"theta m n a", esTheta )
+  val esXi = Sequent(
+    Seq( hof"!y ( iLEQ(suc(a), suc(y)) & LE(f(y),s(n)))" ),
+    Seq( hof"LE(f(c),n)", hof"CSeq(m,n,c)" ) )
+  ctx += Context.ProofNameDeclaration( le"xi m n a c", esXi )
   //The base case of  omega
   val esOmegaBc =
     Sequent(
@@ -102,6 +107,12 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
   }
   ctx += Context.ProofDefinitionDeclaration( le"omega 0 k m", omegaBc )
 
+  /**
+   *
+   * The Parameter N is the size of the range
+   * The parameter K is the number of jumps
+   * The Parameter M is the number of equivalences in a plateau
+   */
   val esOmegaSc =
     Sequent(
       Seq( "Ant_0" -> hof"!x POR(s(n),x)" ),
@@ -462,6 +473,41 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     exL( fov"b" )
     unfold( "CSeq" ) atMost 1 in "Ant_0"
     andL
+    exR( "Suc_0", fov"b" )
+    andR
+    trivial
+    unfold( "JumpSeq" ) atMost 1 in "Suc_0_0"
+    unfold( "EndSeq" ) atMost 1 in "Suc_0_0"
+    unfold( "iNum" ) atMost 1 in "Ant_0_1"
+    ref( "NumericTransitivityBase" )
+
+    allR( fov"c" )
+    exR( "cut_0", fov"c" )
+    allL( le"(iNum 0 c)" )
+    unfold( "CSeq" ) atMost 1 in "cut_0_0"
+    andL
+    unfold( "iNum" ) atMost 1 in "Ant_0_0_0"
+    andR( "cut_1" )
+    trivial
+    andR( "cut_0_0" )
+    trivial
+    ref( "ordcon" )
+    forget( "Ant_0" )
+    ref( "chi" )
+  }
+  ctx += Context.ProofDefinitionDeclaration( le"chi (s n) 0 0 a", ChiSc )
+
+  val esChiScm =
+    Sequent(
+      Seq( "Ant_0" -> hof"?x (  iLEQ(suc(a),suc(x)) & CSeq(s(m),s(n),x) ) | !y (iLEQ(suc(a),suc(y)) & LE(f(y),s(n)))" ),
+      Seq( "Suc_0" -> hof"?x (  iLEQ(suc(a),suc(x)) & JumpSeq(0,s(m),x) )" ) )
+  val ChiScm = Lemma( esChiScm ) {
+    cut( "cut", hof"?x ( iLEQ(suc(a),suc(x)) & CSeq(s(m),n,x)) | !y (iLEQ(suc(a),suc(y)) & LE(f(y),n))" )
+    orR
+    orL
+    exL( fov"b" )
+    unfold( "CSeq" ) atMost 1 in "Ant_0"
+    andL
     andL
     exR( "Suc_0", fov"b" )
     andR
@@ -474,7 +520,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
 
     allR( fov"c" )
     exR( "cut_0", fov"c" )
-    allL( le"(iNum 0 c)" )
+    allL( le"(iNum (s m) c)" )
     unfold( "CSeq" ) atMost 1 in "cut_0_0"
     andL
     andR( "cut_1" )
@@ -487,22 +533,62 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     trivial
     andR
     ref( "ordcon" )
-    allL( le"(iNum (s 0) c)" )
+    ref( "xi" )
+    forget( "Ant_0" )
+    ref( "chi" )
+  }
+  ctx += Context.ProofDefinitionDeclaration( le"chi (s n) 0 (s m) a", ChiScm )
+
+  val esChi1Sc =
+    Sequent(
+      Seq( "Ant_0" -> hof"?x (  iLEQ(suc(a),suc(x)) & CSeq(0,s(n),x) ) | !y (iLEQ(suc(a),suc(y)) & LE(f(y),s(n)))" ),
+      Seq( "Suc_0" -> hof"?x ( iLEQ(suc(a),suc(x)) & JumpSeq(s(k),0,x))" ) )
+  val chi1Sc = Lemma( esChi1Sc ) {
+    cut( "cut", hof"?x ( iLEQ(suc(a),suc(x)) & CSeq(0,n,x)) | !y (iLEQ(suc(a),suc(y))& LE(f(y),n))" )
+    orR
+    orL
+    exL( fov"b" )
+    unfold( "CSeq" ) atMost 1 in "Ant_0"
+    andL
+    exR( "Suc_0", fov"b" )
+    andR
+    trivial
+    unfold( "JumpSeq" ) atMost 1 in "Suc_0_0"
+    unfold( "EndSeq" ) atMost 1 in "Suc_0_0"
+    andR
+    unfold( "iNum" ) atMost 1 in "Ant_0_1"
+    ref( "NumericTransitivityBase" )
+    cut( "cut2", hof"?x (iLEQ(suc(b),suc(x)) & CSeq(0,s(n),x) ) | !y (iLEQ(suc(b),suc(y)) & LE(f(y),s(n)))" )
+    orR
+    exR( "cut2_0", fov"b" )
+    andR
+    ref( "reflexive" )
+    unfold( "CSeq" ) atMost 1 in "cut2_0_0"
+    trivial
+    ref( "chi" )
+    allR( fov"b" )
+    allL( fov"b" )
+    andL
+    andR
+    trivial
+    exR( "cut_0", fov"b" )
+    allL( le"(iNum 0 b)" )
+    andL
+    andR
+    trivial
     unfold( "CSeq" ) atMost 1 in "cut_0_0"
-    allL( le"(iNum 0 c)" )
-    andL( "Ant_0_2" )
     ref( "ordcon" )
     forget( "Ant_0" )
     ref( "chi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi (s n) 0 a", ChiSc )
+  ctx += Context.ProofDefinitionDeclaration( le"chi (s n) (s k) 0 a", chi1Sc )
 
-  val esChi1Sc =
+  val esChi1Scm =
     Sequent(
-      Seq( "Ant_0" -> hof"?x (  iLEQ(suc(a),suc(x)) & CSeq(s(0),s(n),x) ) | !y (iLEQ(suc(a),suc(y)) & LE(f(y),s(n)))" ),
-      Seq( "Suc_0" -> hof"?x ( iLEQ(suc(a),suc(x)) & JumpSeq(s(k),s(0),x))" ) )
-  val chi1Sc = Lemma( esChi1Sc ) {
-    cut( "cut", hof"?x ( iLEQ(suc(a),suc(x)) & CSeq(s(0),n,x)) | !y (iLEQ(suc(a),suc(y))& LE(f(y),n))" )
+      Seq( "Ant_0" -> hof"?x (  iLEQ(suc(a),suc(x)) & CSeq(s(m),s(n),x) ) | !y (iLEQ(suc(a),suc(y)) & LE(f(y),s(n)))" ),
+      Seq( "Suc_0" -> hof"?x ( iLEQ(suc(a),suc(x)) & JumpSeq(s(k),s(m),x))" ) )
+  val chi1Scm = Lemma( esChi1Scm ) {
+    cut( "cut", hof"?x ( iLEQ(suc(a),suc(x)) & CSeq(s(m),n,x)) | !y (iLEQ(suc(a),suc(y))& LE(f(y),n))" )
     orR
     orL
     exL( fov"b" )
@@ -520,7 +606,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     andR
     ref( "delta" )
     ref( "mu" )
-    cut( "cut2", hof"?x (iLEQ(suc(b),suc(x)) & CSeq(s(0),s(n),x) ) | !y (iLEQ(suc(b),suc(y)) & LE(f(y),s(n)))" )
+    cut( "cut2", hof"?x (iLEQ(suc(b),suc(x)) & CSeq(s(m),s(n),x) ) | !y (iLEQ(suc(b),suc(y)) & LE(f(y),s(n)))" )
 
     orR
     exR( "cut2_0", fov"b" )
@@ -537,21 +623,18 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     andR
     trivial
     exR( "cut_0", fov"b" )
-    allL( le"(iNum (s 0) b)" )
+    allL( le"(iNum (s m) b)" )
     andL
     andR
     trivial
     unfold( "CSeq" ) atMost 1 in "cut_0_0"
     andR
     ref( "ordcon" )
-    allL( le"(iNum 0 b)" )
-    andL
-    unfold( "CSeq" ) atMost 1 in "cut_0_0"
-    ref( "ordcon" )
+    ref( "xi" )
     forget( "Ant_0" )
     ref( "chi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi (s n) (s k) a", chi1Sc )
+  ctx += Context.ProofDefinitionDeclaration( le"chi (s n) (s k) (s m) a", chi1Scm )
 
   val esDeltaBc = Sequent(
     Seq(
@@ -696,5 +779,120 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     ref( "nu" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"nu (s m) (s n) a", nuSc )
+
+  val esPsiBc = Sequent(
+    Seq(
+      "Ant_0" -> hof" E(n, f(iNum(s(0), a)))",
+      "Ant_1" -> hof"CSeq(0, n, a)" ),
+    Seq(
+      "Suc_0" -> hof"E(f(a), f(iNum(s(0), a)))" ) )
+  val psiBc = Lemma( esPsiBc ) {
+    unfold( "CSeq" ) atMost 1 in "Ant_1"
+    unfold( "iNum" ) atMost 1 in "Ant_1"
+    unfold( "iNum" ) in "Suc_0"
+    unfold( "iNum" ) in "Ant_0"
+
+    ref( "NumericTransitivity" )
+  }
+  ctx += Context.ProofDefinitionDeclaration( le"psi 0 n a", psiBc )
+  val esPsiSc = Sequent(
+    Seq(
+      "Ant_0" -> hof" E(n, f(iNum(s(s(k)), a)))",
+      "Ant_1" -> hof"CSeq(s(k), n, a)" ),
+    Seq(
+      "Suc_0" -> hof"E(f(a), f(iNum(s(s(k)), a)))" ) )
+  val psiSc = Lemma( esPsiSc ) {
+    unfold( "CSeq" ) atMost 1 in "Ant_1"
+    andL
+    cut( "cut", hof"E(f(a), f(iNum(s(k), a)))" )
+    ref( "delta" )
+    ref( "NumericTransitivityStep" )
+  }
+  ctx += Context.ProofDefinitionDeclaration( le"psi (s k) n a", psiSc )
+
+  val esZetaBc =
+    Sequent(
+      Seq( "Ant_0" -> hof"CSeq(0,n,a)" ),
+      Seq( "Suc_0" -> hof"EndSeq(0,a)" ) )
+  val zetaBc = Lemma( esZetaBc ) {
+    unfold( "CSeq" ) atMost 1 in "Ant_0"
+    unfold( "EndSeq" ) atMost 1 in "Suc_0"
+    unfold( "iNum" ) atMost 1 in "Suc_0"
+    unfold( "iNum" ) atMost 1 in "Ant_0"
+    ref( "NumericTransitivityBase" )
+  }
+  ctx += Context.ProofDefinitionDeclaration( le"zeta 0 n a", zetaBc )
+
+  val esZetaSc =
+    Sequent(
+      Seq( "Ant_0" -> hof"CSeq(s(k),n,a)" ),
+      Seq( "Suc_0" -> hof"EndSeq(s(k),a)" ) )
+  val zetaSc = Lemma( esZetaSc ) {
+    unfold( "CSeq" ) atMost 1 in "Ant_0"
+    unfold( "EndSeq" ) atMost 1 in "Suc_0"
+    andL
+    andR
+    ref( "delta" )
+    ref( "mu" )
+  }
+  ctx += Context.ProofDefinitionDeclaration( le"zeta (s k) n a", zetaSc )
+
+  val esThetaBc =
+    Sequent(
+      Seq( "Ant_0" -> hof"!x LE(f(x),s(n))" ),
+      Seq(
+        "Suc_0" -> hof"CSeq(0,n,a)",
+        "Suc_1" -> hof"LE(f(a),n)" ) )
+  val thetaBc = Lemma( esThetaBc ) {
+    unfold( "CSeq" ) atMost 1 in "Suc_0"
+    allL( le"(iNum 0 a)" )
+    ref( "ordcon" )
+  }
+  ctx += Context.ProofDefinitionDeclaration( le"theta 0 n a", thetaBc )
+
+  val esThetaSc =
+    Sequent(
+      Seq( "Ant_0" -> hof"!x LE(f(x),s(n))" ),
+      Seq(
+        "Suc_0" -> hof"CSeq(s(k),n,a)",
+        "Suc_1" -> hof"LE(f(a),n)" ) )
+  val thetaSc = Lemma( esThetaSc ) {
+    unfold( "CSeq" ) atMost 1 in "Suc_0"
+    andR
+    allL( le"(iNum (s k) a)" )
+    ref( "ordcon" )
+    ref( "theta" )
+  }
+  ctx += Context.ProofDefinitionDeclaration( le"theta (s k) n a", thetaSc )
+
+  val esXiBc =
+    Sequent(
+      Seq( "Ant_0" -> hof"!y ( iLEQ(suc(a), suc(y)) & LE(f(y),s(n)))" ),
+      Seq(
+        "Suc_0" -> hof"CSeq(0,n,c)",
+        "Suc_1" -> hof"LE(f(c),n)" ) )
+  val xiBc = Lemma( esXiBc ) {
+    unfold( "CSeq" ) atMost 1 in "Suc_0"
+    allL( le"(iNum 0 c)" )
+    andL
+    ref( "ordcon" )
+  }
+  ctx += Context.ProofDefinitionDeclaration( le"xi 0 n a c", xiBc )
+
+  val esXiSc =
+    Sequent(
+      Seq( "Ant_0" -> hof"!y ( iLEQ(suc(a), suc(y)) & LE(f(y),s(n)))" ),
+      Seq(
+        "Suc_0" -> hof"CSeq(s(k),n,c)",
+        "Suc_1" -> hof"LE(f(c),n)" ) )
+  val xiSc = Lemma( esXiSc ) {
+    unfold( "CSeq" ) atMost 1 in "Suc_0"
+    andR
+    allL( le"(iNum (s k) c)" )
+    andL
+    ref( "ordcon" )
+    ref( "xi" )
+  }
+  ctx += Context.ProofDefinitionDeclaration( le"xi (s k) n a c", xiSc )
 }
 
