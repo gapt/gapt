@@ -16,6 +16,7 @@ object ExponentialCompression extends TacticsProof {
   ctx += hoc"g:i>i"
   ctx += hoc"fn:nat>i>i"
 
+  ctx += hoc"omega: nat>nat"
   ctx += hoc"chi: nat>nat"
   ctx += hoc"phi: nat>i>nat"
   ctx += hoc"xhi: nat>i>i>nat>nat"
@@ -24,7 +25,7 @@ object ExponentialCompression extends TacticsProof {
 
   ctx += PrimRecFun(
     hoc"Disjunction: nat>i>o",
-    "( Disjunction 0 x ) = ( ( P x ( fn 0 x ) ) ∨ ( P x ( fn (s 0) x ) ) )",
+    "( Disjunction 0 x ) = ( ( P x ( fn 0 x ) ) )",
     "( Disjunction (s xn) x ) = ( ( Disjunction xn x ) ∨ ( P x ( fn (s xn) x ) ) )" )
   ctx += PrimRecFun(
     hoc"Conjunction: nat>i>o",
@@ -32,13 +33,19 @@ object ExponentialCompression extends TacticsProof {
     "( Conjunction (s xn) y ) = ( ∃z ( ( Conjunction xn y ) ∧ ( P ( f y ) ( f z ) ) ) )" )
 
   val endSequent = Sequent(
+    Seq(),
+    Seq( hof"( -(!y!z (Conjunction(n,y) -> P(f(y),g(z)))) ∨ -(!x (Disjunction(n,x))) ∨ -(!x!y (P(x,y) -> P(x,f(y)))) ∨ (∃x∃y (P(x,g(y)))) )" ) )
+
+  ctx += Context.ProofNameDeclaration( le"omega n", endSequent )
+
+  val intermediateEndSequent = Sequent(
     Seq(
       hof"!x (Disjunction(n,x))",
       hof"!y!z (Conjunction(n,z) -> P(f(y),g(z)))",
       hof"!x!y (P(x,y) -> P(x,f(y)))" ),
     Seq( hof"∃x∃y (P(x,g(y)))" ) )
 
-  ctx += Context.ProofNameDeclaration( le"chi n", endSequent )
+  ctx += Context.ProofNameDeclaration( le"chi n", intermediateEndSequent )
 
   val leftBranch = Sequent(
     Seq(
@@ -61,6 +68,38 @@ object ExponentialCompression extends TacticsProof {
       hof"Conjunction(n,beta2)" ) )
 
   ctx += Context.ProofNameDeclaration( le"xhi n beta1 beta2 na1", rightBranch )
+
+  val esOmegaBc = Sequent(
+    Seq(),
+    Seq( "Suc_0" -> hof"( -(!y!z (Conjunction(0,y) -> P(f(y),g(z)))) ∨ -(!x (Disjunction(0,x))) ∨ -(!x!y (P(x,y) -> P(x,f(y)))) ∨ (∃x∃y (P(x,g(y)))) )" ) )
+
+  val omegaBc = Lemma( esOmegaBc ) {
+    orR( "Suc_0" )
+    orR( "Suc_0_0" )
+    orR( "Suc_0_0_0" )
+    negR( "Suc_0_0_1" )
+    negR( "Suc_0_0_0_0" )
+    negR( "Suc_0_0_0_1" )
+    ref( "chi" )
+  }
+
+  ctx += Context.ProofDefinitionDeclaration( le"omega 0", omegaBc )
+
+  val esOmegaSc = Sequent(
+    Seq(),
+    Seq( "Suc_0" -> hof"( -(!y!z (Conjunction(s(n),y) -> P(f(y),g(z)))) ∨ -(!x (Disjunction(s(n),x))) ∨ -(!x!y (P(x,y) -> P(x,f(y)))) ∨ (∃x∃y (P(x,g(y)))) )" ) )
+
+  val omegaSc = Lemma( esOmegaSc ) {
+    orR( "Suc_0" )
+    orR( "Suc_0_0" )
+    orR( "Suc_0_0_0" )
+    negR( "Suc_0_0_1" )
+    negR( "Suc_0_0_0_0" )
+    negR( "Suc_0_0_0_1" )
+    ref( "chi" )
+  }
+
+  ctx += Context.ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
 
   val esChiBc = Sequent(
     Seq(
