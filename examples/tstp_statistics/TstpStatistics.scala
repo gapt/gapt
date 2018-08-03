@@ -53,13 +53,23 @@ object Statistic {
 
 }
 
+abstract class FileData {
+  def fileName: String
+}
+
+case class CASCResult( path: String, prover: String, problem: String, extension: String )
+  extends FileData {
+  def fileName = s"$path/$prover-$problem$extension"
+  override def toString() = fileName
+}
+
 /*
    Invariants:
    dagSize <= treeSize
    dept <= size
  */
 case class RPProofStats(
-    name:              String,
+    name:              FileData, // some class representing the input file
     dagSize:           BigInt,
     treeSize:          BigInt,
     depth:             Int,
@@ -75,8 +85,8 @@ case class RPProofStats(
    dagSize <= treeSize
    dept <= size
  */
-case class TstpProofStats(
-    name:             String,
+case class TstpProofStats[T](
+    name:             FileData,
     dagSize:          BigInt,
     treeSize:         BigInt,
     depth:            Int,
@@ -89,7 +99,7 @@ case class TstpProofStats(
     constants + unary_funs + binary_funs <= signature_size
  */
 case class InputStats(
-    name:                String,
+    name:                FileData,
     axiom_count:         Int,
     input_formula_count: Int,
     signature_size:      Int,
@@ -101,7 +111,7 @@ case class InputStats(
 
 object TstpStatistics {
 
-  def apply( file: String, print_statistics: Boolean = false ): ( Option[TptpFile], Either[String, RPProofStats] ) = {
+  def apply( file: FileData, print_statistics: Boolean = false ): ( Option[TptpFile], Either[String, RPProofStats] ) = {
     loadFile( file, print_statistics ) match {
       case ( tstpo, rpo ) =>
         ( tstpo, rpo.map( getRPStats( file, _ ) ) )
@@ -109,7 +119,7 @@ object TstpStatistics {
     }
   }
 
-  def applyAll( pfiles: Iterable[String], print_statistics: Boolean = false ) = {
+  def applyAll( pfiles: Iterable[FileData], print_statistics: Boolean = false ) = {
 
     val ( tstps, rps ) = pfiles.par.map( i => {
       val r @ ( m1, m2 ) = apply( i, print_statistics )
@@ -137,9 +147,9 @@ object TstpStatistics {
 
   }
 
-  def loadFile( v: String, print_statistics: Boolean = false ): ( Option[TptpFile], Either[String, ResolutionProof] ) = {
+  def loadFile( v: FileData, print_statistics: Boolean = false ): ( Option[TptpFile], Either[String, ResolutionProof] ) = {
     val tstpf_file: Option[TptpFile] = try {
-      Some( TptpParser.load( FilePath( v ) ) )
+      Some( TptpParser.load( FilePath( v.fileName ) ) )
 
     } catch {
       case e: Exception =>
@@ -156,7 +166,7 @@ object TstpStatistics {
       case _ =>
         try {
           withTimeout( 120.seconds ) {
-            val ( formula, sketch ) = TptpProofParser.parse( FilePath( v ), true )
+            val ( formula, sketch ) = TptpProofParser.parse( FilePath( v.fileName ), true )
             RefutationSketchToResolution( sketch ) match {
               case Left( unprovable ) =>
                 if ( print_statistics ) {
@@ -216,7 +226,7 @@ object TstpStatistics {
     if ( filtered.nonEmpty ) Some( Statistic( filtered ) ) else None
   }
 
-  def getRPStats( name: String, rp: ResolutionProof ) = {
+  def getRPStats( name: FileData, rp: ResolutionProof ) = {
     val dagSize = rp.dagLike.size
     val treeSize = rp.treeLike.size
     val depth = rp.depth
