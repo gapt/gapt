@@ -109,13 +109,19 @@ private object Support {
     case Neg( Atom( _, _ ) ) => Ex.Block( evar.intersect( freeVariables( f ) ).toSeq, f )
     case Neg( x )            => Neg( QuantIntroExists( x, evar ) )
   }
-  def add( chF: Map[Formula, ( Formula, Set[Var] )], qType: QuantifierC )( implicit ctx: MutableContext ): Unit =
-    ctx += PrimRecFun( {
-      for ( ( f @ Atom( newEx, _ ), ( form, vars ) ) <- chF.toList )
-        yield ( newEx.asInstanceOf[Const], ( f,
-        if ( qType.equals( ForallC ) ) QuantIntroForAll( form, vars )
-        else QuantIntroExists( form, vars ) ) )
-    }.groupBy( _._1 ).map { case ( pred, eqns ) => ( pred, eqns.map( _._2 ) ) } )
+  def add( chF: Map[Formula, ( Formula, Set[Var] )], qType: QuantifierC )( implicit ctx: MutableContext ): Unit = {
+
+    val primitiveRecursiveDefinitions =
+      PrimRecFun.batch(
+        {
+          for ( ( f @ Atom( newEx, _ ), ( form, vars ) ) <- chF.toList )
+            yield ( newEx.asInstanceOf[Const], ( f,
+            if ( qType.equals( ForallC ) ) QuantIntroForAll( form, vars )
+            else QuantIntroExists( form, vars ) ) )
+        }.groupBy( _._1 ).map { case ( pred, eqns ) => ( pred, eqns.map( _._2 ) ) } )
+
+    primitiveRecursiveDefinitions.foreach { ctx += _ }
+  }
   private def structNames( sss: Map[CLS, ( Struct, Set[Var] )] ): Map[( String, Sequent[Boolean] ), String] =
     sss.keySet.map {
       case CLS( Apps( Const( name, _, _ ), _ ), cc ) =>

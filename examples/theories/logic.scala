@@ -168,7 +168,7 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
     for ( ctr <- ctrs ) {
       val discr = Const( s"is_${ctr.name}", ty ->: To, ty.params )
       val eqns = ctrs.map( ctr2 => discr( freeTerms( ctr2 ) ) -> ( if ( ctr == ctr2 ) Top() else Bottom() ) )
-      addNow( Context.PrimRecFun( Seq( discr -> eqns ) ) )
+      addNow( Context.PrimRecFun( discr, eqns ) )
       val discrLemName = asciify( discr.name )
       auxLemma( discrLemName, universalClosure( simplify(
         And( eqns.map { case ( lhs, rhs ) => lhs <-> rhs } ) ) ) ) {
@@ -202,8 +202,8 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
   protected def fun( c: Const, equations: String* ): Unit = {
     val prf = PrimRecFun( c, equations: _* )
     addNow( prf )
-    val ( _, _, _, eqns ) = prf.prfDefinitions.head
-    val Some( ctrs ) = ctx.getConstructors( prf.recTypes( c ) )
+    val PrimRecFun( _, _, _, eqns ) = prf
+    val Some( ctrs ) = ctx.getConstructors( prf.recTy )
     val lems = for ( ( ctr, ( lhs, rhs ) ) <- ctrs zip eqns )
       yield auxEqnLemma( s"${asciify( c.name )}${ctr.name}", c.name, lhs, rhs, nocombine = true )
     val auxP = lems.map( ProofLink( _ ) ).
