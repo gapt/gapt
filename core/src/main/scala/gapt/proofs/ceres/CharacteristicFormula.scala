@@ -2,8 +2,9 @@ package gapt.proofs.ceres
 
 import gapt.expr._
 import gapt.expr.hol.toNNF
-import gapt.proofs.Context.PrimRecFun
-import gapt.proofs.{ MutableContext, Sequent }
+import gapt.proofs.Context.PrimitiveRecursiveFunctions
+import gapt.proofs.MutableContext
+import gapt.proofs.Sequent
 
 object CharFormN extends StructVisitor[Formula, Unit] {
   def apply( struct: Struct ): Formula = {
@@ -112,7 +113,7 @@ private object Support {
   def add( chF: Map[Formula, ( Formula, Set[Var] )], qType: QuantifierC )( implicit ctx: MutableContext ): Unit = {
 
     val primitiveRecursiveDefinitions =
-      PrimRecFun.batch(
+      PrimitiveRecursiveFunctions(
         {
           for ( ( f @ Atom( newEx, _ ), ( form, vars ) ) <- chF.toList )
             yield ( newEx.asInstanceOf[Const], ( f,

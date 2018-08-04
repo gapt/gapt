@@ -495,7 +495,12 @@ object Context {
     }
   }
 
-  case class PrimRecFun( c: Const, nArgs: Int, recIdx: Int, equations: Vector[( Expr, Expr )] ) extends Update {
+  case class PrimRecFun(
+      c:         Const,
+      nArgs:     Int,
+      recIdx:    Int,
+      equations: Vector[( Expr, Expr )] ) extends Update {
+
     val Const( name, FunctionType( _, argTypes ), _ ) = c
     val typeVars: Set[TVar] = typeVariables( c.ty )
     require( 0 <= recIdx && recIdx < nArgs && nArgs <= argTypes.size )
@@ -541,21 +546,27 @@ object Context {
 
   object PrimRecFun {
 
-    private def parseEqn( c: Const, eqn: String )( implicit ctx: Context ): ( Expr, Expr ) = {
-      BabelParser.tryParse( eqn, p => preExpr.TypeAnnotation( p, preExpr.Bool ) ).
-        fold( throw _, identity ) match {
-          case Eq( lhs @ Apps( c_, _ ), rhs ) =>
-            syntacticMatching( c_, c ).get( lhs -> rhs )
-        }
-    }
+    /**
+     * Constructs a primitive recursive function definition.
+     *
+     * @param c The constant that is to be defined primitive recursively.
+     * @param equations Oriented equations that define the constant c by
+     * primitive recursion.
+     * @param ctx The context in which the constant is to be defined.
+     * @return A primitive function definition if `c` and `euqations` represent
+     * a valid primitive function definition in the context `ctx`.
+     */
+    def apply(
+      constant:  Const,
+      equations: Iterable[( Expr, Expr )] )(
+      implicit
+      ctx: Context ): PrimRecFun = {
 
-    def toPrimRecFunDefinition( constant: Const, equations: String* )( implicit ctx: Context ): ( Const, Int, Int, Vector[( Expr, Expr )] ) =
-      toPrimRecFunDefinition( constant, equations map { parseEqn( constant, _ )( ctx ) } )
-
-    def toPrimRecFunDefinition( constant: Const, equations: Traversable[( Expr, Expr )] )( implicit ctx: Context ): ( Const, Int, Int, Vector[( Expr, Expr )] ) = {
-      val ( nArgs, recIdx ) = equations.head._1 match {
-        case Apps( _, args ) => args.size -> args.indexWhere( !_.isInstanceOf[Var] )
+      val ( arity, recIdx ) = equations.head._1 match {
+        case Apps( _, args ) =>
+          args.size -> args.indexWhere( !_.isInstanceOf[Var] )
       }
+
       val Const( _, FunctionType( _, argTys ), _ ) = constant
       val equationsByConst = equations.groupBy {
         case ( ( Apps( _, args ), _ ) ) =>
@@ -563,68 +574,89 @@ object Context {
           ctr
       }
       val Some( recCtrs ) = ctx.getConstructors( argTys( recIdx ) )
-      ( constant, nArgs, recIdx, recCtrs.map( equationsByConst( _ ).head ) )
+
+      PrimRecFun(
+        constant, arity, recIdx, recCtrs.map( equationsByConst( _ ).head ) )
     }
+
+    /**
+     * Constructs a primitive recursive function definition.
+     *
+     * @param c The constant that is to be defined primitive recursively.
+     * @param equations Oriented equations that define the constant c by
+     * primitive recursion.
+     * @param ctx The context in which the constant is to be defined.
+     * @return A primitive function definition if `c` and `euqations` represent
+     * a valid primitive function definition in the context `ctx`.
+     */
+    def apply(
+      c: Const, equations: String* )(
+      implicit
+      ctx: Context ): PrimRecFun = {
+      val temporaryContext = ctx + c
+      apply( c, equations.map { parseEqn( c, _ )( temporaryContext ) } )
+    }
+
+    private def parseEqn( c: Const, eqn: String )( implicit ctx: Context ): ( Expr, Expr ) = {
+      BabelParser.tryParse( eqn, p => preExpr.TypeAnnotation( p, preExpr.Bool ) ).
+        fold( throw _, identity ) match {
+          case Eq( lhs @ Apps( c_, _ ), rhs ) =>
+            syntacticMatching( c_, c ).get( lhs -> rhs )
+        }
+    }
+  }
+
+  case object PrimitiveRecursiveFunctions {
 
     def apply(
-      constant: Const, equations: Iterable[( Expr, Expr )] )( implicit ctx: Context ): PrimRecFun = {
-      val prfDefinition = toPrimRecFunDefinition( constant, equations )
-      PrimRecFun(
-        prfDefinition._1,
-        prfDefinition._2,
-        prfDefinition._3,
-        prfDefinition._4 )
-    }
-
-    def apply( c: Const, equations: String* )( implicit ctx: Context ): PrimRecFun = {
-      apply( List( ( c, equations ) ) ).head
-    }
-
-    def batch(
-      rawDefinitions: Iterable[( Const, Iterable[( Expr, Expr )] )] )( implicit ctx: Context ): Iterable[PrimRecFun] = {
+      rawDefinitions: Iterable[( Const, Iterable[( Expr, Expr )] )],
+      dummy:          Unit                                          = Unit )(
+      implicit
+      ctx: Context ): Iterable[PrimRecFun] = {
       val constants = rawDefinitions map { _._1 }
 
       val temporaryContext = ctx ++ constants.map { ConstDecl }
 
-      val parsedDefinitions: Iterable[( Const, Int, Int, Vector[( Expr, Expr )] )] =
+      val parsedDefinitions: Iterable[PrimRecFun] =
         rawDefinitions.map {
           case ( const, equations ) =>
-            toPrimRecFunDefinition( const, equations )( temporaryContext )
+            PrimRecFun( const, equations )( temporaryContext )
         }
 
-      val ordering = sortConstants( parsedDefinitions.map {
-        definition =>
-          ( definition._1, definition._4 )
-      } )
-      sortDefinitions( ordering, parsedDefinitions ).map {
-        case ( const, n, m, defs ) => PrimRecFun( const, n, m, defs )
-      }
+      batch( parsedDefinitions )
     }
 
     def apply(
-      rawDefinitions: Iterable[( Const, Seq[String] )] )(
-      implicit
-      ctx: Context ): Iterable[PrimRecFun] = {
-      val temporaryContext = ctx ++ rawDefinitions.map {
-        case ( constant, _ ) => ConstDecl( constant )
-      }
-      batch(
+      rawDefinitions: Iterable[( Const, Seq[String] )] )( implicit ctx: Context ): Iterable[PrimRecFun] = {
+
+      val temporaryContext = ctx ++ rawDefinitions.map { d => ConstDecl( d._1 ) }
+
+      val parsedDefinitions: Iterable[PrimRecFun] =
         rawDefinitions.map {
-          case ( constant, equations ) =>
-            ( constant, equations.map { parseEqn( constant, _ )( temporaryContext ) } )
-        } )
+          case ( const, equations ) =>
+            PrimRecFun( const, equations: _* )( temporaryContext )
+        }
+
+      batch( parsedDefinitions )
     }
 
-    private def parseEquations(
-      const: Const, equations: Seq[String] )(
+    private def batch(
+      parsedDefinitions: Iterable[PrimRecFun] )(
       implicit
-      ctx: Context ): ( Const, Seq[( Expr, Expr )] ) = {
-      ( const, equations.map { parseEqn( const, _ ) } )
+      ctx: Context ): Iterable[PrimRecFun] = {
+
+      val ordering = sortConstants(
+        parsedDefinitions.map {
+          definition =>
+            ( definition.c, definition.equations )
+        } )
+
+      sortDefinitions( ordering, parsedDefinitions )
     }
 
     private def sortDefinitions(
-      ordering: Iterable[Const], definitions: Iterable[( Const, Int, Int, Vector[( Expr, Expr )] )] ): Iterable[( Const, Int, Int, Vector[( Expr, Expr )] )] = {
-      ordering.map { constant => definitions.find( _._1 == constant ).get }
+      ordering: Iterable[Const], definitions: Iterable[PrimRecFun] ): Iterable[PrimRecFun] = {
+      ordering.map { constant => definitions.find( _.c == constant ).get }
     }
 
     private def sortConstants(
@@ -664,6 +696,7 @@ object Context {
         case _ => Set()
       }
     }
+
   }
 
   case class ProofNameDeclaration( lhs: Expr, endSequent: HOLSequent ) extends Update {
