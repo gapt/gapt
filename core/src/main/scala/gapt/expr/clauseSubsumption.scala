@@ -14,9 +14,6 @@ object clauseSubsumption {
         return None
     if ( from isEmpty ) return Some( alreadyFixed.toSubstitution )
     val chosenFrom = from.indices.head
-    println( from.antecedent.size )
-    println( from( chosenFrom ) )
-    println( alreadyFixed.toSubstitution )
     for {
       chosenTo <- to.indices if chosenTo sameSideAs chosenFrom
       newSubst <- matchingAlgorithm( List( from( chosenFrom ) -> to( chosenTo ) ), alreadyFixed )
@@ -27,7 +24,6 @@ object clauseSubsumption {
         multisetSubsumption,
         matchingAlgorithm )
     } return Some( subsumption )
-    println( "BLA" )
     None
   }
 }
