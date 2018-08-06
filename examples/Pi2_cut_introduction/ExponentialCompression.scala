@@ -306,9 +306,12 @@ object ExponentialCompression extends TacticsProof {
     exL( "Ant_0", fov"beta:i" )
     exR( "Suc_0", le"alpha:i" )
     andL( "Ant_0" )
+    exL( "Ant_0_1", fov"gamma" )
     exR( "Suc_0_0", le"gamma:i" )
     exR( "Suc_0_0_0", le"beta:i" )
-    escargot
+    andR( "Suc_0_0_0_0" )
+    trivial
+    trivial
   }
 
   ctx += Context.ProofDefinitionDeclaration( le"preXhi 0 na", preXhiBc )
@@ -324,9 +327,12 @@ object ExponentialCompression extends TacticsProof {
     exL( "Ant_0", fov"beta:i" )
     exR( "Suc_0", le"alpha:i" )
     andL( "Ant_0" )
+    exL( "Ant_0_1", fov"gamma" )
     exR( "Suc_0_0", le"gamma:i" )
     exR( "Suc_0_0_0", le"beta:i" )
-    escargot
+    andR( "Suc_0_0_0_0" )
+    trivial
+    trivial
   }
 
   ctx += Context.ProofDefinitionDeclaration( le"preXhi (s n) na", preXhiSc )
