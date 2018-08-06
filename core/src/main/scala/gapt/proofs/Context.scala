@@ -1,11 +1,25 @@
 package gapt.proofs
 
 import gapt.expr._
-import gapt.formats.babel._
-import Context._
 import gapt.expr.fol.folSubTerms
 import gapt.expr.hol.SkolemFunctions
-import gapt.proofs.lk.{ LKProof, ProofLink }
+import gapt.formats.babel.BabelParser
+import gapt.formats.babel.BabelSignature
+import gapt.formats.babel.Notation
+import gapt.formats.babel.Notations
+import gapt.formats.babel.Precedence
+import gapt.proofs.Context.BaseTypes
+import gapt.proofs.Context.Constants
+import gapt.proofs.Context.Definitions
+import gapt.proofs.Context.Facet
+import gapt.proofs.Context.Reductions
+import gapt.proofs.Context.SkolemFun
+import gapt.proofs.Context.Sort
+import gapt.proofs.Context.State
+import gapt.proofs.Context.StructurallyInductiveTypes
+import gapt.proofs.Context.Update
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.ProofLink
 import gapt.proofs.resolution.ResolutionProof
 import gapt.utils.NameGenerator
 import gapt.utils.linearizeStrictPartialOrder
@@ -501,37 +515,26 @@ object Context {
       recIdx:    Int,
       equations: Vector[( Expr, Expr )] ) extends Update {
 
-    val Const( name, FunctionType( _, argTypes ), _ ) = c
-    val typeVars: Set[TVar] = typeVariables( c.ty )
-    require( 0 <= recIdx && recIdx < nArgs && nArgs <= argTypes.size )
-    val recTy: TBase = argTypes( recIdx ).asInstanceOf[TBase]
+    PrimitiveRecursiveFunctionValidator.validate( this )
 
-    for ( ( lhs, rhs ) <- equations ) {
-      require( lhs.ty == rhs.ty )
-      require( typeVariables( lhs.ty ) subsetOf typeVars )
-      require( typeVariables( rhs.ty ) subsetOf typeVars )
+    private val Const( _, FunctionType( _, argTypes ), _ ) = c
 
-      val Apps( `c`, lhsArgs ) = lhs
-      require( lhsArgs.size == nArgs )
+    val recursionType: TBase = argTypes( recIdx ).asInstanceOf[TBase]
 
-      val nonRecLhsArgs = lhsArgs.zipWithIndex.filter( _._2 != recIdx ).map( _._1 )
-      val Apps( Const( _, _, _ ), ctrArgs ) = lhsArgs( recIdx )
-
-      val matchVars = nonRecLhsArgs ++ ctrArgs
-      matchVars.foreach( a => require( a.isInstanceOf[Var] ) )
-      require( matchVars == matchVars.distinct )
-
-      folSubTerms( rhs ).foreach {
-        case Apps( fn @ Const( `name`, _, _ ), args ) =>
-          require( fn == c )
-          require( ctrArgs.contains( args( recIdx ) ) )
-        case _ =>
-      }
-    }
-
-    def apply( ctx: Context ): State = {
+    /**
+     * Adds this primitive recursive function definition to a context.
+     *
+     * @param ctx The context to which this function definition is to be added.
+     * @return Returns the new context state resulting from the addition of
+     * this function definition to the current state of `ctx`. An exception is
+     * thrown if number of equations does not equal the number of constructors
+     * of the recursion type, or if the order of the equations does not
+     * correspond to the order of constructors of the recursion type.
+     */
+    override def apply( ctx: Context ): State = {
       val ctx_ = ctx + c
-      val ctrs = ctx.get[StructurallyInductiveTypes].constructors( recTy.name )
+      val ctrs =
+        ctx.get[StructurallyInductiveTypes].constructors( recursionType.name )
       require( equations.size == ctrs.size )
       for ( ( ( lhs @ Apps( _, lhsArgs ), rhs ), ctr ) <- equations.zip( ctrs ) ) {
         ctx_.check( lhs )
@@ -541,6 +544,58 @@ object Context {
       }
       ctx.state.update[Constants]( _ + c )
         .update[Reductions]( _ ++ equations.map( ReductionRule.apply ) )
+    }
+  }
+
+  object PrimitiveRecursiveFunctionValidator {
+
+    private type Equation = ( Expr, Expr )
+
+    /**
+     * Checks whether the given definition is syntactically well-formed.
+     *
+     * @param input The definition to be checked.
+     * @return Returns unit if the definition is well-formed, otherwise
+     *         an exception is thrown.
+     */
+    def validate( input: PrimRecFun ): Unit = {
+
+      val PrimRecFun( c, nArgs, recIdx, equations ) = input
+      val typeVars: Set[TVar] = typeVariables( c.ty )
+      val Const( name, FunctionType( _, argTypes ), _ ) = c
+
+      require( 0 <= recIdx && recIdx < nArgs && nArgs <= argTypes.size )
+
+      def validateEquation( input: Equation ): Unit = {
+
+        val ( lhs, rhs ) = input
+
+        require( lhs.ty == rhs.ty )
+        require( typeVariables( lhs.ty ) subsetOf typeVars )
+        require( typeVariables( rhs.ty ) subsetOf typeVars )
+
+        val Apps( `c`, lhsArgs ) = lhs
+        require( lhsArgs.size == nArgs )
+
+        val nonRecLhsArgs =
+          lhsArgs.zipWithIndex.filter( _._2 != recIdx ).map( _._1 )
+        val Apps( Const( _, _, _ ), ctrArgs ) = lhsArgs( recIdx )
+
+        val matchVars = nonRecLhsArgs ++ ctrArgs
+        matchVars.foreach( a => require( a.isInstanceOf[Var] ) )
+        require( matchVars == matchVars.distinct )
+
+        folSubTerms( rhs ).foreach {
+          case Apps( fn @ Const( `name`, _, _ ), args ) =>
+            require( fn == c )
+            require( ctrArgs.contains( args( recIdx ) ) )
+          case _ =>
+        }
+      }
+
+      for ( equation <- equations ) {
+        validateEquation( equation )
+      }
     }
   }
 
@@ -613,8 +668,8 @@ object Context {
       dummy:          Unit                                          = Unit )(
       implicit
       ctx: Context ): Iterable[PrimRecFun] = {
-      val constants = rawDefinitions map { _._1 }
 
+      val constants = rawDefinitions map { _._1 }
       val temporaryContext = ctx ++ constants.map { ConstDecl }
 
       val parsedDefinitions: Iterable[PrimRecFun] =

@@ -203,7 +203,7 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
     val prf = PrimRecFun( c, equations: _* )
     addNow( prf )
     val PrimRecFun( _, _, _, eqns ) = prf
-    val Some( ctrs ) = ctx.getConstructors( prf.recTy )
+    val Some( ctrs ) = ctx.getConstructors( prf.recursionType )
     val lems = for ( ( ctr, ( lhs, rhs ) ) <- ctrs zip eqns )
       yield auxEqnLemma( s"${asciify( c.name )}${ctr.name}", c.name, lhs, rhs, nocombine = true )
     val auxP = lems.map( ProofLink( _ ) ).
