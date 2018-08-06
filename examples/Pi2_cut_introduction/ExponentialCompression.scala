@@ -17,6 +17,7 @@ object ExponentialCompression extends TacticsProof {
   ctx += hoc"fn:nat>i>i"
 
   ctx += hoc"omega: nat>nat"
+  ctx += hoc"preOmega: nat>nat"
   ctx += hoc"chi: nat>nat"
   ctx += hoc"phi: nat>i>nat"
   ctx += hoc"xhi: nat>i>i>nat"
@@ -38,11 +39,17 @@ object ExponentialCompression extends TacticsProof {
   // endsequents of links:
   //
 
+  val certainlyTheEndSequentForRealTrustMeDude = Sequent(
+    Seq(),
+    Seq( hof"(∃x1∃x2∃x3∃x4∃x5∃x6∃x7( -( (Conjunction(n,x1,x2) -> P(f(x1),g(x2)))) ∨ -( (Disjunction(n,x3))) ∨ -( (P(x4,x5) -> P(x4,f(x5)))) ∨ ( (P(x6,g(x7)))) ))" ) )
+
+  ctx += Context.ProofNameDeclaration( le"omega n", certainlyTheEndSequentForRealTrustMeDude )
+
   val endSequent = Sequent(
     Seq(),
     Seq( hof"( -(!x!z (Conjunction(n,x,z) -> P(f(x),g(z)))) ∨ -(!x (Disjunction(n,x))) ∨ -(!x!y (P(x,y) -> P(x,f(y)))) ∨ (∃x∃y (P(x,g(y)))) )" ) )
 
-  ctx += Context.ProofNameDeclaration( le"omega n", endSequent )
+  ctx += Context.ProofNameDeclaration( le"preOmega n", endSequent )
 
   val conjunction = Sequent(
     Seq(
@@ -93,25 +100,157 @@ object ExponentialCompression extends TacticsProof {
 
   val esOmegaBc = Sequent(
     Seq(),
-    Seq( "Suc_0" -> hof"( -(!x!z (Conjunction(0,x,z) -> P(f(x),g(z)))) ∨ -(!x (Disjunction(0,x))) ∨ -(!x!y (P(x,y) -> P(x,f(y)))) ∨ (∃x∃y (P(x,g(y)))) )" ) )
+    Seq( "Suc_0" -> hof"(∃x1∃x2∃x3∃x4∃x5∃x6∃x7( -( (Conjunction(0,x1,x2) -> P(f(x1),g(x2)))) ∨ -( (Disjunction(0,x3))) ∨ -( (P(x4,x5) -> P(x4,f(x5)))) ∨ ( (P(x6,g(x7)))) ))" ) )
 
   val omegaBc = Lemma( esOmegaBc ) {
-    orR( "Suc_0" )
-    orR( "Suc_0_0" )
-    orR( "Suc_0_0_0" )
-    negR( "Suc_0_0_1" )
-    negR( "Suc_0_0_0_0" )
-    negR( "Suc_0_0_0_1" )
-    ref( "chi" )
+    cut( "Cut", hof"( -(!x!z (Conjunction(0,x,z) -> P(f(x),g(z)))) ∨ -(!x (Disjunction(0,x))) ∨ -(!x!y (P(x,y) -> P(x,f(y)))) ∨ (∃x∃y (P(x,g(y)))) )" )
+    ref( "preOmega" )
+    orL( "Cut" )
+    orL( "Cut" )
+    orL( "Cut" )
+    negL( "Cut" )
+    allR( "Cut", fov"alpha:i" )
+    allR( "Cut", fov"beta:i" )
+    exR( "Suc_0", le"alpha:i" )
+    exR( "Suc_0_0", le"beta:i" )
+    exR( "Suc_0_0_0", le"beta:i" )
+    exR( "Suc_0_0_0_0", le"beta:i" )
+    exR( "Suc_0_0_0_0_0", le"beta:i" )
+    exR( "Suc_0_0_0_0_0_0", le"beta:i" )
+    exR( "Suc_0_0_0_0_0_0_0", le"beta:i" )
+    orR( "Suc_0_0_0_0_0_0_0_0" )
+    orR( "Suc_0_0_0_0_0_0_0_0_0" )
+    orR( "Suc_0_0_0_0_0_0_0_0_0_0" )
+    negR( "Suc_0_0_0_0_0_0_0_0_0_0_0" )
+    impR( "Cut" )
+    impL( "Suc_0_0_0_0_0_0_0_0_0_0_0" )
+    trivial
+    trivial
+    negL( "Cut" )
+    allR( "Cut", fov"alpha:i" )
+    exR( "Suc_0", le"alpha:i" )
+    exR( "Suc_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0_0_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0_0_0_0_0", le"alpha:i" )
+    orR( "Suc_0_0_0_0_0_0_0_0" )
+    orR( "Suc_0_0_0_0_0_0_0_0_0" )
+    orR( "Suc_0_0_0_0_0_0_0_0_0_0" )
+    negR( "Suc_0_0_0_0_0_0_0_0_0_0_1" )
+    trivial
+    negL( "Cut" )
+    allR( "Cut", fov"alpha:i" )
+    allR( "Cut", fov"beta:i" )
+    exR( "Suc_0", le"alpha:i" )
+    exR( "Suc_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0_0_0", le"beta:i" )
+    exR( "Suc_0_0_0_0_0_0", le"beta:i" )
+    exR( "Suc_0_0_0_0_0_0_0", le"beta:i" )
+    orR( "Suc_0_0_0_0_0_0_0_0" )
+    orR( "Suc_0_0_0_0_0_0_0_0_0" )
+    negR( "Suc_0_0_0_0_0_0_0_0_0_1" )
+    impR( "Cut" )
+    impL( "Suc_0_0_0_0_0_0_0_0_0_1" )
+    trivial
+    trivial
+    exL( "Cut", fov"alpha:i" )
+    exL( "Cut", fov"beta:i" )
+    exR( "Suc_0", le"alpha:i" )
+    exR( "Suc_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0_0_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0_0_0_0_0", le"beta:i" )
+    orR( "Suc_0_0_0_0_0_0_0_0" )
+    trivial
   }
 
   ctx += Context.ProofDefinitionDeclaration( le"omega 0", omegaBc )
 
   val esOmegaSc = Sequent(
     Seq(),
-    Seq( "Suc_0" -> hof"( -(!x!z (Conjunction(s(n),x,z) -> P(f(x),g(z)))) ∨ -(!x (Disjunction(s(n),x))) ∨ -(!x!y (P(x,y) -> P(x,f(y)))) ∨ (∃x∃y (P(x,g(y)))) )" ) )
+    Seq( "Suc_0" -> hof"(∃x1∃x2∃x3∃x4∃x5∃x6∃x7( -( (Conjunction(s(n),x1,x2) -> P(f(x1),g(x2)))) ∨ -( (Disjunction(s(n),x3))) ∨ -( (P(x4,x5) -> P(x4,f(x5)))) ∨ ( (P(x6,g(x7)))) ))" ) )
 
   val omegaSc = Lemma( esOmegaSc ) {
+    cut( "Cut", hof"( -(!x!z (Conjunction(s(n),x,z) -> P(f(x),g(z)))) ∨ -(!x (Disjunction(s(n),x))) ∨ -(!x!y (P(x,y) -> P(x,f(y)))) ∨ (∃x∃y (P(x,g(y)))) )" )
+    ref( "preOmega" )
+    orL( "Cut" )
+    orL( "Cut" )
+    orL( "Cut" )
+    negL( "Cut" )
+    allR( "Cut", fov"alpha:i" )
+    allR( "Cut", fov"beta:i" )
+    exR( "Suc_0", le"alpha:i" )
+    exR( "Suc_0_0", le"beta:i" )
+    exR( "Suc_0_0_0", le"beta:i" )
+    exR( "Suc_0_0_0_0", le"beta:i" )
+    exR( "Suc_0_0_0_0_0", le"beta:i" )
+    exR( "Suc_0_0_0_0_0_0", le"beta:i" )
+    exR( "Suc_0_0_0_0_0_0_0", le"beta:i" )
+    orR( "Suc_0_0_0_0_0_0_0_0" )
+    orR( "Suc_0_0_0_0_0_0_0_0_0" )
+    orR( "Suc_0_0_0_0_0_0_0_0_0_0" )
+    negR( "Suc_0_0_0_0_0_0_0_0_0_0_0" )
+    impR( "Cut" )
+    impL( "Suc_0_0_0_0_0_0_0_0_0_0_0" )
+    trivial
+    trivial
+    negL( "Cut" )
+    allR( "Cut", fov"alpha:i" )
+    exR( "Suc_0", le"alpha:i" )
+    exR( "Suc_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0_0_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0_0_0_0_0", le"alpha:i" )
+    orR( "Suc_0_0_0_0_0_0_0_0" )
+    orR( "Suc_0_0_0_0_0_0_0_0_0" )
+    orR( "Suc_0_0_0_0_0_0_0_0_0_0" )
+    negR( "Suc_0_0_0_0_0_0_0_0_0_0_1" )
+    trivial
+    negL( "Cut" )
+    allR( "Cut", fov"alpha:i" )
+    allR( "Cut", fov"beta:i" )
+    exR( "Suc_0", le"alpha:i" )
+    exR( "Suc_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0_0_0", le"beta:i" )
+    exR( "Suc_0_0_0_0_0_0", le"beta:i" )
+    exR( "Suc_0_0_0_0_0_0_0", le"beta:i" )
+    orR( "Suc_0_0_0_0_0_0_0_0" )
+    orR( "Suc_0_0_0_0_0_0_0_0_0" )
+    negR( "Suc_0_0_0_0_0_0_0_0_0_1" )
+    impR( "Cut" )
+    impL( "Suc_0_0_0_0_0_0_0_0_0_1" )
+    trivial
+    trivial
+    exL( "Cut", fov"alpha:i" )
+    exL( "Cut", fov"beta:i" )
+    exR( "Suc_0", le"alpha:i" )
+    exR( "Suc_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0_0_0_0", le"alpha:i" )
+    exR( "Suc_0_0_0_0_0_0_0", le"beta:i" )
+    orR( "Suc_0_0_0_0_0_0_0_0" )
+    trivial
+  }
+
+  ctx += Context.ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
+
+  val esPreOmegaBc = Sequent(
+    Seq(),
+    Seq( "Suc_0" -> hof"( -(!x!z (Conjunction(0,x,z) -> P(f(x),g(z)))) ∨ -(!x (Disjunction(0,x))) ∨ -(!x!y (P(x,y) -> P(x,f(y)))) ∨ (∃x∃y (P(x,g(y)))) )" ) )
+
+  val preOmegaBc = Lemma( esPreOmegaBc ) {
     orR( "Suc_0" )
     orR( "Suc_0_0" )
     orR( "Suc_0_0_0" )
@@ -121,7 +260,23 @@ object ExponentialCompression extends TacticsProof {
     ref( "chi" )
   }
 
-  ctx += Context.ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
+  ctx += Context.ProofDefinitionDeclaration( le"preOmega 0", preOmegaBc )
+
+  val esPreOmegaSc = Sequent(
+    Seq(),
+    Seq( "Suc_0" -> hof"( -(!x!z (Conjunction(s(n),x,z) -> P(f(x),g(z)))) ∨ -(!x (Disjunction(s(n),x))) ∨ -(!x!y (P(x,y) -> P(x,f(y)))) ∨ (∃x∃y (P(x,g(y)))) )" ) )
+
+  val preOmegaSc = Lemma( esPreOmegaSc ) {
+    orR( "Suc_0" )
+    orR( "Suc_0_0" )
+    orR( "Suc_0_0_0" )
+    negR( "Suc_0_0_1" )
+    negR( "Suc_0_0_0_0" )
+    negR( "Suc_0_0_0_1" )
+    ref( "chi" )
+  }
+
+  ctx += Context.ProofDefinitionDeclaration( le"preOmega (s n)", preOmegaSc )
 
   val esTauBc = Sequent(
     Seq(
