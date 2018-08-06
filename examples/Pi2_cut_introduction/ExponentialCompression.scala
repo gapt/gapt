@@ -19,7 +19,8 @@ object ExponentialCompression extends TacticsProof {
   ctx += hoc"omega: nat>nat"
   ctx += hoc"chi: nat>nat"
   ctx += hoc"phi: nat>i>nat"
-  ctx += hoc"xhi: nat>i>i>nat>nat"
+  ctx += hoc"xhi: nat>i>i>nat"
+  ctx += hoc"preXhi: nat>i>i>nat"
   ctx += hoc"tau: nat>nat"
 
   ctx += hoc"P: i>i>o"
@@ -32,6 +33,14 @@ object ExponentialCompression extends TacticsProof {
     hoc"Conjunction: nat>i>i>o",
     "( Conjunction 0 y z ) = ( ( P ( f y ) ( f z ) ) )",
     "( Conjunction (s xn) x z ) = ( ∃y ( ( P ( f x ) ( f y ) ) ∧ ( Conjunction xn y z ) ) )" )
+  ctx += PrimRecFun(
+    hoc"Conjunction2: nat>i>o",
+    "( Conjunction2 0 x ) = ( ∃y ( P ( f x ) ( f y ) ) )",
+    "( Conjunction2 (s xn) x ) = ( ∃y ( ( P ( f x ) ( f y ) ) ∧ ( Conjunction xn y ) ) )" )
+
+  //
+  // endsequents of links:
+  //
 
   val endSequent = Sequent(
     Seq(),
@@ -40,12 +49,12 @@ object ExponentialCompression extends TacticsProof {
   ctx += Context.ProofNameDeclaration( le"omega n", endSequent )
 
   val conjunction = Sequent(
-    Seq(hof"!x (Disjunction(n,x))",
-      hof"!x!y (P(x,y) -> P(x,f(y)))"),
-    Seq(hof"?x?z (Conjunction(n,x,z))")
-  )
+    Seq(
+      hof"!x (Disjunction(n,x))",
+      hof"!x!y (P(x,y) -> P(x,f(y)))" ),
+    Seq( hof"∃x∃z (Conjunction(n,x,z))" ) )
 
-  ctx += Context.ProofNameDeclaration( le"tau n", conjunction)
+  ctx += Context.ProofNameDeclaration( le"tau n", conjunction )
 
   val intermediateEndSequent = Sequent(
     Seq(
@@ -61,22 +70,31 @@ object ExponentialCompression extends TacticsProof {
       hof"(Disjunction(n,alpha))",
       hof"!x!y (P(x,y) -> P(x,f(y)))" ),
     Seq(
-      hof"∃x∃y (P(x,g(y)))",
       hof"∃y (P(alpha,f(y)))" ) )
 
   ctx += Context.ProofNameDeclaration( le"phi n alpha", leftBranch )
 
+  val preRightBranch = Sequent(
+    Seq(
+      hof"(Conjunction2(n,alpha))" ),
+    Seq(
+      hof"(Conjunction(n,alpha,gamma))" ) )
+
+  ctx += Context.ProofNameDeclaration( le"preXhi n alpha gamma", preRightBranch )
+
   val rightBranch = Sequent(
     Seq(
       hof"∀x∃y (P(x,f(y)))",
-      hof"(P(f(a),f(beta1)))",
-      hof"(P(f(beta1),f(beta2)))",
-      hof"!x!z (Conjunction(na1,x,z) -> P(f(x),g(z)))" ),
+      hof"(P(f(beta1),f(beta2)))" ),
     Seq(
-      hof"∃x∃y (P(x,g(y)))",
-      hof"Conjunction(n,beta1,beta2)" ) )
+      hof"(Conjunction2(n,beta1))",
+      hof"∃x (Conjunction2(n,x))" ) )
 
-  ctx += Context.ProofNameDeclaration( le"xhi n beta1 beta2 na1", rightBranch )
+  ctx += Context.ProofNameDeclaration( le"xhi n beta1 beta2", rightBranch )
+
+  //
+  // proof pairs:
+  //
 
   val esOmegaBc = Sequent(
     Seq(),
@@ -111,32 +129,42 @@ object ExponentialCompression extends TacticsProof {
   ctx += Context.ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
 
   val esTauBc = Sequent(
-    Seq("Ant_0" -> hof"!x (Disjunction(0,x))",
-    "Ant_1" -> hof"!x!y (P(x,y) -> P(x,f(y)))"),
-    Seq( "Suc_0" -> hof"?x?z (Conjunction(0,x,z))" ) )
+    Seq(
+      "Ant_0" -> hof"!x (Disjunction(0,x))",
+      "Ant_1" -> hof"!x!y (P(x,y) -> P(x,f(y)))" ),
+    Seq( "Suc_0" -> hof"∃x∃z (Conjunction(0,x,z))" ) )
 
   val tauBc = Lemma( esTauBc ) {
     unfold( "Disjunction" ) atMost 1 in "Ant_0"
     unfold( "Conjunction" ) atMost 1 in "Suc_0"
-    allL( "Ant_0", fot"a")
-    allL( "Ant_1", fot"a")
-    allL( "Ant_1_0", le"fn 0 a")
-    exR( "Suc_0", fot"a")
-    exR( "Suc_0_0", le"f (fn 0 a)")
+    allL( "Ant_0", le"f a" )
+    allL( "Ant_1", le"f a" )
+    allL( "Ant_1_0", le"fn 0 (f a)" )
+    exR( "Suc_0", fot"a" )
+    exR( "Suc_0_0", le"fn 0 (f a)" )
+    impL( "Ant_1_0_0" )
+    trivial
+    trivial
   }
 
   ctx += Context.ProofDefinitionDeclaration( le"tau 0", tauBc )
 
   val esTauSc = Sequent(
-    Seq("Ant_0" -> hof"!x (Disjunction(s(n),x))",
-      "Ant_1" -> hof"!x!y (P(x,y) -> P(x,f(y)))"),
-    Seq( "Suc_0" -> hof"?x?z (Conjunction(s(n),x,z))" ) )
+    Seq(
+      "Ant_0" -> hof"!x (Disjunction(s(n),x))",
+      "Ant_1" -> hof"!x!y (P(x,y) -> P(x,f(y)))" ),
+    Seq( "Suc_0" -> hof"∃x∃z (Conjunction(s(n),x,z))" ) )
 
   val tauSc = Lemma( esTauSc ) {
     cut( "Cut", hof"∀x∃y (P(x,f(y)))" )
     allR( "Cut", fov"alpha:i" )
     allL( "Ant_0", fot"alpha:i" )
     ref( "phi" )
+    allL( "Cut", le"f a" )
+    exL( "Cut_0", fov"beta" )
+    exR( "Suc_0", foc"a" )
+    exR( "Suc_0_0", fov"beta" )
+    ref( "xhi" )
   }
 
   ctx += Context.ProofDefinitionDeclaration( le"tau (s n)", tauSc )
@@ -149,23 +177,21 @@ object ExponentialCompression extends TacticsProof {
     Seq( "Suc_0" -> hof"∃x∃y (P(x,g(y)))" ) )
 
   val chiBc = Lemma( esChiBc ) {
-    cut( "Cut", hof"∀x∃y (P(x,f(y)))" )
-    allR( "Cut", fov"alpha:i" )
-    allL( "Ant_0", fot"alpha:i" )
-    ref( "phi" )
-    allL( "Cut", le"f a" )
-    exL( "Cut_0", fov"beta:i" )
-    allL( "Cut", le"f beta:i" )
-    exL( "Cut_1", fov"beta2:i" )
-    allL( "Ant_1", foc"a" )
-    allL( "Ant_1_0", fov"beta2:i" )
-    allL( "Ant_1", fot"beta:i" )
+    cut( "Cut", hof"∃x∃z (Conjunction(0,x,z))" )
+    ref( "tau" )
+    exL( "Cut", fov"alpha:i" )
+    exL( "Cut", fov"beta:i" )
+    allL( "Ant_1", fov"alpha:i" )
+    allL( "Ant_1_0", fov"beta:i" )
     impL( "Ant_1_0_0" )
     focus( 1 )
-    exR( "Suc_0", le"f a" )
-    exR( "Suc_0_0", le"beta2:i" )
+    exR( "Suc_0", le"f alpha:i" )
+    exR( "Suc_0_0", le"beta:i" )
+    unfold( "Conjunction" ) atMost 1 in "Cut"
     trivial
-    ref( "xhi" )
+    unfold( "Conjunction" ) atMost 1 in "Cut"
+    unfold( "Conjunction" ) atMost 1 in "Ant_1_0_0"
+    trivial
   }
 
   ctx += Context.ProofDefinitionDeclaration( le"chi 0", chiBc )
@@ -178,23 +204,21 @@ object ExponentialCompression extends TacticsProof {
     Seq( "Suc_0" -> hof"∃x∃y (P(x,g(y)))" ) )
 
   val chiSc = Lemma( esChiSc ) {
-    cut( "Cut", hof"∀x∃y (P(x,f(y)))" )
-    allR( "Cut", fov"alpha:i" )
-    allL( "Ant_0", fot"alpha:i" )
-    ref( "phi" )
-    allL( "Cut", le"f a" )
-    exL( "Cut_0", fov"beta:i" )
-    allL( "Cut", le"f beta:i" )
-    exL( "Cut_1", fov"beta2:i" )
-    allL( "Ant_1", foc"a" )
-    allL( "Ant_1_0", fot"beta2:i" )
-    allL( "Ant_1", fot"beta:i" )
+    cut( "Cut", hof"∃x∃z (Conjunction(s(n),x,z))" )
+    ref( "tau" )
+    exL( "Cut", fov"alpha:i" )
+    exL( "Cut", fov"beta:i" )
+    allL( "Ant_1", fov"alpha:i" )
+    allL( "Ant_1_0", fov"beta:i" )
     impL( "Ant_1_0_0" )
     focus( 1 )
-    exR( "Suc_0", le"f a" )
-    exR( "Suc_0_0", fot"beta2:i" )
+    exR( "Suc_0", le"f alpha:i" )
+    exR( "Suc_0_0", le"beta:i" )
+    unfold( "Conjunction" ) atMost 1 in "Cut"
     trivial
-    ref( "xhi" )
+    unfold( "Conjunction" ) atMost 1 in "Cut"
+    unfold( "Conjunction" ) atMost 1 in "Ant_1_0_0"
+    trivial
   }
 
   ctx += Context.ProofDefinitionDeclaration( le"chi (s n)", chiSc )
@@ -240,44 +264,76 @@ object ExponentialCompression extends TacticsProof {
   val esXhiBc = Sequent(
     Seq(
       "CutF" -> hof"∀x∃y (P(x,f(y)))",
-      "CutF2" -> hof"(P(f(a),f(beta1:i)))",
-      "CutF1" -> hof"(P(f(beta1:i),f(beta2:i)))",
-      "Ant_1" -> hof"!x!z (Conjunction(na1:nat,x,z) -> P(f(x),g(z)))" ),
+      "CutF1" -> hof"(P(f(beta1:i),f(beta2:i)))" ),
     Seq(
-      "Suc_0" -> hof"∃x∃y (P(x,g(y)))",
-      "Suc_1" -> hof"Conjunction(0,beta1:i,beta2:i)" ) )
+      "Suc_0" -> hof"(Conjunction(0,beta1:i,beta2:i))",
+      "Suc_1" -> hof"∃x∃z (Conjunction(0,x,z))" ) )
 
   val xhiBc = Lemma( esXhiBc ) {
-    unfold( "Conjunction" ) atMost 1 in "Suc_1"
-    exR( "Suc_1", fot"beta1:i" )
+    unfold( "Conjunction" ) atMost 1 in "Suc_0"
     trivial
   }
 
-  ctx += Context.ProofDefinitionDeclaration( le"xhi 0 beta1 beta2 na1", xhiBc )
+  ctx += Context.ProofDefinitionDeclaration( le"xhi 0 beta1 beta2", xhiBc )
 
   val esXhiSc = Sequent(
     Seq(
       "CutF" -> hof"∀x∃y (P(x,f(y)))",
-      "CutF2" -> hof"(P(f(a),f(beta1:i)))",
-      "CutF1" -> hof"(P(f(beta1:i),f(beta2:i)))",
-      "Ant_1" -> hof"!x!z (Conjunction(na1:nat,x,z) -> P(f(x),g(z)))" ),
+      "CutF1" -> hof"(P(f(beta1:i),f(beta2:i)))" ),
     Seq(
-      "Suc_0" -> hof"∃x∃y (P(x,g(y)))",
-      "Suc_1" -> hof"Conjunction(s(n),beta1:i,beta2:i)" ) )
+      "Suc_0" -> hof"(Conjunction(s(n),beta1:i,beta2:i))",
+      "Suc_1" -> hof"∃x∃z (Conjunction(s(n),x,z))" ) )
 
   val xhiSc = Lemma( esXhiSc ) {
     allL( "CutF", le"f beta2:i" )
     exL( "CutF_0", fov"beta3:i" )
-    unfold( "Conjunction" ) atMost 1 in "Suc_1"
-    exR( "Suc_1", fot"beta3:i" )
-    andR( "Suc_1_0" )
-    focus( 1 )
-    exR( "Suc_0", le"f beta2:i" )
-    exR( "Suc_0_0", fot"beta3:i" )
+    unfold( "Conjunction" ) atMost 1 in "Suc_0"
+    exR( "Suc_1", fot"beta1:i" )
+    unfold( "Conjunction" ) atMost 1 in "Suc_1_0"
+    exR( "Suc_1_0", fot"beta3:i" )
+    exR( "Suc_1_0_0", fot"beta2:i" )
+    andR( "Suc_1_0_0_0" )
     trivial
     ref( "xhi" )
   }
 
-  ctx += Context.ProofDefinitionDeclaration( le"xhi (s n) beta1 beta2 na1", xhiSc )
+  ctx += Context.ProofDefinitionDeclaration( le"xhi (s n) beta1 beta2", xhiSc )
+
+  val esPreXhiBc = Sequent(
+    Seq(
+      "Ant_0" -> hof"(Conjunction2(0,alpha))" ),
+    Seq(
+      "Suc_0" -> hof"(Conjunction(0,alpha,gamma))",
+      "Suc_1" -> hof"(Conjunction(0,alpha,gamma))" ) )
+
+  val preXhiBc = Lemma( esPreXhiBc ) {
+    unfold( "Conjunction" ) atMost 1 in "Suc_0"
+    unfold( "Conjunction2" ) atMost 1 in "Ant_0"
+    exL( "Ant_0", fov"gamma" )
+    exR( "Suc_0", fot"alpha" )
+    exR( "Suc_0_0", fot"beta" )
+    trivial
+  }
+
+  ctx += Context.ProofDefinitionDeclaration( le"xhi 0", preXhiBc )
+
+  val esPreXhiSc = Sequent(
+    Seq(
+      "Ant_0" -> hof"∃x (Conjunction2(s(n),x,)" ),
+    Seq(
+      "Suc_0" -> hof"∃x∃z (Conjunction(s(n),x,z))" ) )
+
+  val preXhiSc = Lemma( esPreXhiSc ) {
+    unfold( "Conjunction" ) atMost 1 in "Suc_0"
+    unfold( "Conjunction2" ) atMost 1 in "Ant_0"
+    exL( "Ant_0", fov"alpha" )
+    exL( "Ant_0", fov"beta" )
+    exR( "Suc_0", fot"alpha" )
+    exR( "Suc_0_0", fot"beta" )
+    trivial
+    ref( "xhi" )
+  }
+
+  ctx += Context.ProofDefinitionDeclaration( le"preXhi (s n)", preXhiSc )
 
 }
