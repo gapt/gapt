@@ -8,7 +8,7 @@ import gapt.formats.tptp.{ TptpFile, TptpParser, TptpProofParser }
 import gapt.proofs.HOLSequent
 import gapt.proofs.resolution.{ ResolutionProof, Subst }
 import gapt.proofs.sketch.RefutationSketchToResolution
-import gapt.utils.{ TimeOutException, withTimeout }
+import gapt.utils.{ Statistic, TimeOutException, withTimeout }
 
 import scala.collection.mutable
 import scala.compat.Platform.StackOverflowError
@@ -19,53 +19,6 @@ object Types {
   type ClauseId = String
   type Prover = String
   type Problem = String
-}
-
-case class Statistic[T](
-    n:            Int,
-    min:          T,
-    max:          T,
-    avg:          BigDecimal,
-    median:       BigDecimal,
-    sigma_square: Option[BigDecimal] ) {
-  lazy val toCSV = List( n.toString, min.toString, max.toString, avg.toString, median.toString,
-    sigma_square.map( _.toString ).getOrElse( "NA" ) )
-}
-
-object Statistic {
-  def csv_header( tag: String ) = List( "min", "max", "avg", "median", "deviation" ).map( x => s"$tag-$x" )
-
-  def apply[T]( values: Seq[T] )( implicit num: Numeric[T], conv: T => BigDecimal ): Statistic[T] = {
-    require( values.nonEmpty, "Need data to compute statistics" )
-
-    val sorted = values.sorted
-
-    val _n = values.size
-    val _min: T = values.min
-    val _max: T = values.max
-    val _bdvalues = values.map( conv )
-    val _sum: BigDecimal = _bdvalues.sum //convert to big numbers before summing up
-
-    val _avg: BigDecimal = _sum / BigDecimal( _n )
-
-    val _sigma_square: Option[BigDecimal] =
-      if ( _n >= 2 ) Some( _bdvalues.map( x => ( _avg - x ) pow 2 ).sum / ( _n - 1 ) )
-      else None
-
-    val _median: BigDecimal = _n % 2 match {
-      case 0 =>
-        val m1: BigDecimal = sorted( _n / 2 )
-        val m2: BigDecimal = sorted( ( _n / 2 ) - 1 )
-        ( m1 + m2 ) / 2
-      case 1 =>
-        sorted( _n / 2 )
-      case _ =>
-        throw new IllegalArgumentException( "Result of % 2 should always be 0 or 1!" )
-    }
-
-    new Statistic[T]( _n, _min, _max, _avg, _median, _sigma_square )
-  }
-
 }
 
 abstract class FileData {
