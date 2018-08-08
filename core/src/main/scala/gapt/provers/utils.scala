@@ -1,10 +1,8 @@
 package gapt.provers
 
 import gapt.expr._
-import gapt.proofs.{ HOLSequent, MutableContext }
+import gapt.proofs.{ HOLSequent, MutableContext, Sequent }
 import gapt.utils.{ Maybe, NameGenerator }
-
-import scala.collection.mutable
 
 object mangleName {
   def apply( name: String, prefix: String = "f_" ): String = {
@@ -15,6 +13,9 @@ object mangleName {
       case '+' => "p"
       case '-' => "s"
       case '/' => "d"
+      case 'ν' => "n"
+      case 'α' => "a"
+      case 'γ' => "g"
       case c   => c.toString
     }
     n = n.filter {
@@ -68,6 +69,10 @@ object groundFreeVariables {
     val groundSeq = Substitution( groundingMap )( seq )
     val unground = groundingMap.map { case ( f, t ) => ( t, f ) }
     ( groundSeq, unground.toMap )
+  }
+  def apply( formula: Formula ): ( Formula, Map[Const, Var] ) = {
+    val ( Sequent( _, Seq( groundFormula ) ), unground ) = apply( Sequent() :+ formula )
+    ( groundFormula, unground )
   }
 
   def wrapWithConsts[I, O]( seq: HOLSequent )( f: ( HOLSequent, Set[Const] ) => Option[I] )( implicit ev: Replaceable[I, O] ): Option[O] = {

@@ -2,7 +2,9 @@ package gapt.proofs.lk
 
 import gapt.expr._
 import gapt.expr.hol.instantiate
-import gapt.proofs.{ Sequent, SequentConnector, SequentIndex }
+import gapt.proofs.Context
+import gapt.proofs.SequentConnector
+import gapt.provers.viper.aip
 import gapt.utils.NameGenerator
 
 object containsEqualityReasoning {
@@ -29,10 +31,11 @@ object containsDefinitionRules {
 
 object EigenVariablesLK {
   def apply( p: LKProof ): Set[Var] = p match {
-    case StrongQuantifierRule( subProof, aux, eigen, quant, isSuc ) =>
+    case StrongQuantifierRule( subProof, _, eigen, _, _ ) =>
       apply( subProof ) ++ Set( eigen )
-    case InductionRule( cases, main, term ) =>
-      freeVariables( term ) ++ ( cases flatMap { c => apply( c.proof ) } )
+    case InductionRule( cases, _, _ ) =>
+      cases.flatMap { c => c.eigenVars }.toSet ++
+        ( cases flatMap { c => apply( c.proof ) } )
     case _ =>
       p.immediateSubProofs.flatMap( apply ).toSet
   }
@@ -40,9 +43,9 @@ object EigenVariablesLK {
 
 object freeVariablesLK {
   def apply( p: LKProof ): Set[Var] = p match {
-    case StrongQuantifierRule( subProof, aux, eigen, quant, isSuc ) =>
+    case StrongQuantifierRule( subProof, _, eigen, _, _ ) =>
       apply( subProof ) - eigen
-    case InductionRule( cases, main, term ) =>
+    case InductionRule( cases, _, term ) =>
       freeVariables( p.conclusion ) ++ freeVariables( term ) ++ ( cases flatMap { c =>
         apply( c.proof ) -- c.eigenVars
       } )
@@ -126,7 +129,7 @@ class regularize( nameGen: NameGenerator ) extends LKVisitor[Unit] {
   }
 
   protected override def visitInduction( proof: InductionRule, arg: Unit ) = {
-    val InductionRule( cases, main, term ) = proof
+    val InductionRule( cases, _, term ) = proof
 
     val newQuant = nameGen.fresh( proof.quant )
 
@@ -144,6 +147,56 @@ class regularize( nameGen: NameGenerator ) extends LKVisitor[Unit] {
     ( proofNew, connector )
   }
 
+}
+
+object extractInductionAxioms {
+
+  /**
+   * Extracts all the inductions axioms from a proof.
+   *
+   * @param proof The proof from which induction axioms are to be extracted.
+   * @param ctx Defines constants, types, etc.
+   * @return A list of all induction axioms that represent the induction inferences that occur in the
+   *         proof. Note that the induction axioms are universally quantified if their corresponding
+   *         induction inference contains free variables that occur as eigenvariables in an inference
+   *         below the induction.
+   */
+  def apply( proof: LKProof )( implicit ctx: Context ): Seq[Formula] = {
+    val regularProof = regularize( proof )
+    extractAxioms( regularProof, EigenVariablesLK( regularProof ) )
+  }
+
+  /**
+   * Extracts induction axioms from a regular proof.
+   * @param proof A regular proof, see [[extractInductionAxioms.apply]].
+   * @param eigenVariables The set of eigenvariables of the proof.
+   * @param ctx see [[extractInductionAxioms.apply]].
+   * @return see [[extractInductionAxioms.apply]].
+   */
+  private def extractAxioms(
+    proof: LKProof, eigenVariables: Set[Var] )( implicit ctx: Context ): Seq[Formula] = {
+    proof match {
+      case InductionRule( inductionCases, inductionFormula, _ ) =>
+        val axiom = inductionAxiom( inductionFormula )
+        All.Block(
+          freeVariables( axiom ).filter { eigenVariables.contains( _ ) }.toSeq, axiom ) +: inductionCases.flatMap { ic => extractAxioms( ic.proof, eigenVariables ) }
+      case _ => proof.immediateSubProofs.flatMap { extractAxioms( _, eigenVariables ) }
+    }
+  }
+
+  /**
+   * Creates a standard induction axiom.
+   *
+   * @param abstraction The abstraction on which induction is carried out. The abstracted variable must
+   *                    be of inductive type and the lambda expression must be a formula.
+   * @param ctx Defines the constants, types, etc.
+   * @return A standard induction axiom for the given formula.
+   */
+  private def inductionAxiom( abstraction: Abs )( implicit ctx: Context ): Formula = {
+    val Abs( variable, formula ) = abstraction
+    val constructors = aip.getConstructors( variable.ty.asInstanceOf[TBase], ctx ).toOption.get
+    aip.axioms.inductionAxiom( variable, formula.asInstanceOf[Formula], constructors )
+  }
 }
 
 object instanceProof {

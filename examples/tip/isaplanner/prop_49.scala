@@ -1,6 +1,8 @@
 package gapt.examples.tip.isaplanner
 
 import gapt.expr._
+import gapt.formats.tip.TipConstructor
+import gapt.formats.tip.TipDatatype
 import gapt.proofs.Context.InductiveType
 import gapt.proofs.Sequent
 import gapt.proofs.gaptic._
@@ -79,6 +81,62 @@ object prop_49 extends TacticsProof {
     orL
     escargot
     escargot
+  }
+
+  val listType: TipDatatype = TipDatatype(
+    TBase( "list", Nil ),
+    Seq(
+      TipConstructor(
+        hoc"nil: list",
+        Seq() ),
+      TipConstructor(
+        hoc"cons: sk>list>list",
+        Seq( hoc"head: list>sk", hoc"tail: list>list" ) ) ) )
+
+  val list_domain_closure = hof"xs_0 = nil | ?v ?vs xs_0 = cons(v,vs)"
+
+  val proof_list_domain_closure =
+    Lemma( Sequent() :+ ( "goal" -> list_domain_closure ) ) {
+      induction( hov"xs_0: list" )
+      escargot
+      escargot
+    }
+
+  // simplified proof
+  val proof2 = Lemma( sequent ) {
+    allR;
+    allR
+    induction( hov"ys:list" )
+    // IB
+    rewrite ltr "def_butlastConcat_0" in "goal"
+    analyticInduction withAxioms sequentialAxioms.forVariables( hov"xs:list" ).forFormula( hof"!xs append(xs,nil) = xs" )
+    // IS
+    rewrite ltr "def_butlastConcat_1" in "goal"
+    induction( hov"xs:list" )
+    // IS - IB
+    escargot
+    // IS - IS
+    cut(
+      "list_domain_closure",
+      hof"xs_0 = nil | ?v ?vs xs_0 = cons(v,vs)" )
+    insert( proof_list_domain_closure )
+    orL( "list_domain_closure" )
+    // subgoal 1 ( xs_0 = nil )
+    rewrite.many ltr "list_domain_closure" in "goal"
+    rewrite.many ltr "def_append_0" in "goal"
+    escargot
+    // subgoal 2 ( ?v ?vs xs_0 = cons(v,vs) )
+    exL( "list_domain_closure" )
+    exL( "list_domain_closure" )
+    rewrite ltr "list_domain_closure" in "goal"
+    rewrite ltr "def_append_1" in "goal"
+    rewrite ltr "def_append_1" in "goal"
+    rewrite ltr "def_butlast_2" in "goal"
+    rewrite rtl "def_append_1" in "goal"
+    rewrite rtl "list_domain_closure" in "goal"
+    rewrite ltr "IHxs_0" in "goal"
+    rewrite rtl "def_append_1" in "goal"
+    refl
   }
 
   val append_inner_shift_goal = hof"!xs !ys !x append(xs, cons(x,ys)) = append(append(xs,cons(x,nil)),ys)"

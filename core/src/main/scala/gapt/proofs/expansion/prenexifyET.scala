@@ -1,7 +1,6 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
-import Polarity._
 import gapt.expr.hol.containsQuantifierOnLogicalLevel
 import gapt.proofs.{ Context, Sequent }
 
@@ -17,11 +16,11 @@ object prenexifyET {
     val f1_ = apply( f1, p1 )
     val f2_ = apply( f2, p2 )
 
-    val Some( ( vs1, matrix1 ) ) = weakQuantifier( p1 ).Block.unapply( f1_ )
+    val fvs = freeVariables( Seq( f1, f2 ) )
+    val Some( ( vs1_, matrix1_ ) ) = weakQuantifier( p1 ).Block.unapply( f1_ )
+    val ( vs1: List[Var] @unchecked, matrix1 ) = Substitution( rename( vs1_, fvs ) )( ( vs1_, matrix1_ ) )
     val Some( ( vs2_, matrix2_ ) ) = weakQuantifier( p2 ).Block.unapply( f2_ )
-    val renaming = rename( vs2_, vs1 )
-    val vs2 = vs2_.map( renaming )
-    val matrix2 = Substitution( renaming )( matrix2_ )
+    val ( vs2: List[Var] @unchecked, matrix2 ) = Substitution( rename( vs2_, fvs ++ vs1 ) )( ( vs2_, matrix2_ ) )
 
     weakQuantifier( newPol ).Block( vs1 ++ vs2, shConn( matrix1, matrix2 ) )
   }
@@ -45,11 +44,11 @@ object prenexifyET {
     val ETWeakQuantifierBlock( sh1, n1, insts1 ) = apply( et1 )
     val ETWeakQuantifierBlock( sh2, n2, insts2 ) = apply( et2 )
 
-    val Some( ( vs1, matrix1 ) ) = weakQuantifier( et1.polarity ).Block.unapply( sh1 )
+    val fvs = freeVariables( Seq( sh1, sh2 ) )
+    val Some( ( vs1_, matrix1_ ) ) = weakQuantifier( et1.polarity ).Block.unapply( sh1 )
+    val ( vs1: List[Var] @unchecked, matrix1 ) = Substitution( rename( vs1_, fvs ) )( ( vs1_, matrix1_ ) )
     val Some( ( vs2_, matrix2_ ) ) = weakQuantifier( et2.polarity ).Block.unapply( sh2 )
-    val renaming = rename( vs2_, vs1 )
-    val vs2 = vs2_.map( renaming )
-    val matrix2 = Substitution( renaming )( matrix2_ )
+    val ( vs2: List[Var] @unchecked, matrix2 ) = Substitution( rename( vs2_, fvs ++ vs1 ) )( ( vs2_, matrix2_ ) )
 
     val sh = weakQuantifier( newPol ).Block( vs1 ++ vs2, shConn( matrix1, matrix2 ) )
 
