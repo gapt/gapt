@@ -3,7 +3,7 @@ package gapt.formats.tptp.statistics
 import ammonite.ops.{ Path, exists }
 import gapt.expr._
 import gapt.formats.csv.CSVFile
-import gapt.formats.tptp.{ TptpFile, TptpParser, TptpProofParser }
+import gapt.formats.tptp._
 import gapt.proofs.resolution._
 import gapt.proofs.sketch.RefutationSketchToResolution
 import gapt.utils.{ Statistic, TimeOutException, withTimeout }
@@ -12,9 +12,37 @@ import scala.collection.mutable
 import scala.compat.Platform.StackOverflowError
 import scala.concurrent.duration._
 
+sealed abstract class TstpError[T <: FileData]( file: T )
+case class FileNotFound[T <: FileData]( file: T ) extends TstpError( file )
+case class MalformedFile[T <: FileData]( file: T ) extends TstpError( file )
+case class ParsingError[T <: FileData]( file: T ) extends TstpError( file )
+case class ReconstructionGaveUp[T <: FileData]( file: T ) extends TstpError( file )
+case class ReconstructionTimeout[T <: FileData]( file: T ) extends TstpError( file )
+case class ReconstructionError[T <: FileData]( file: T ) extends TstpError( file )
+case class StackOverflow[T <: FileData]( file: T ) extends TstpError( file )
+
+case class ErrorBags[T <: FileData](
+    nf: Iterable[FileNotFound[T]],
+    mf: Iterable[MalformedFile[T]],
+    pe: Iterable[ParsingError[T]],
+    rg: Iterable[ReconstructionGaveUp[T]],
+    rt: Iterable[ReconstructionTimeout[T]],
+    re: Iterable[ReconstructionError[T]],
+    so: Iterable[StackOverflow[T]] ) {
+  def printSizes() = {
+    print( s"file not found : ${nf.size}" )
+    print( s"malformed file : ${mf.size}" )
+    print( s"parsiong error : ${pe.size}" )
+    print( s"gave up        : ${rg.size}" )
+    print( s"timeout        : ${rt.size}" )
+    print( s"replay error   : ${re.size}" )
+    print( s"stack overflow : ${so.size}" )
+  }
+}
+
 object TstpStatistics {
 
-  def apply[T <: FileData]( file: T, print_statistics: Boolean = false ): ( Option[TptpFile], Either[( String, String ), RPProofStats[T]] ) = {
+  def apply[T <: FileData]( file: T, print_statistics: Boolean = false ): ( Option[TptpFile], Either[TstpError[T], RPProofStats[T]] ) = {
     loadFile( file, print_statistics ) match {
       case ( tstpo, rpo ) =>
         ( tstpo, rpo.map( getRPStats( file, _ ) ) )
@@ -58,61 +86,66 @@ object TstpStatistics {
 
   }
 
-  def loadFile( v: FileData, print_statistics: Boolean = false ): ( Option[TptpFile], Either[( String, String ), ResolutionProof] ) = {
-    val tstpf_file: Option[TptpFile] = try {
-      Some( TptpParser.load( v.file ) )
+  def loadFile[T <: FileData]( v: T, print_statistics: Boolean = false ): ( Option[TptpFile], Either[TstpError[T], ResolutionProof] ) = {
+    if ( exists( Path( v.fileName ) ) ) {
+      val tstpf_file: Option[TptpFile] = try {
+        Some( TptpParser.load( v.file ) )
 
-    } catch {
-      case e: Exception =>
-        if ( print_statistics ) {
-          println( s"parser error $v" )
-        }
-        None
-    }
-
-    tstpf_file match {
-      case None =>
-        //don't try to reconstruct the proof if we can't read it
-        ( None, Left( ( s"parser error", v.fileName ) ) )
-      case _ =>
-        try {
-          withTimeout( 120.seconds ) {
-            val ( formula, sketch ) = TptpProofParser.parse( v.file, true )
-            RefutationSketchToResolution( sketch ) match {
-              case Left( unprovable ) =>
-                if ( print_statistics ) {
-                  println( s"can't reconstruct $v" )
-                }
-                ( tstpf_file, Left( ( s"can't reconstruct", v.fileName ) ) )
-              case Right( proof ) =>
-                ( tstpf_file, Right( proof ) )
-            }
+      } catch {
+        case e: Exception =>
+          if ( print_statistics ) {
+            println( s"parser error $v" )
           }
-        } catch {
-          case e: TimeOutException =>
-            if ( print_statistics ) {
-              println()
-              println( s"reconstruction timeout $v" )
+          None
+      }
+
+      tstpf_file match {
+        case None =>
+          //don't try to reconstruct the proof if we can't read it
+          ( None, Left( ParsingError( v ) ) )
+        case _ =>
+          try {
+            withTimeout( 120.seconds ) {
+              val ( formula, sketch ) = TptpProofParser.parse( v.file, true )
+              RefutationSketchToResolution( sketch ) match {
+                case Left( unprovable ) =>
+                  if ( print_statistics ) {
+                    println( s"can't reconstruct $v" )
+                  }
+                  ( tstpf_file, Left( ReconstructionGaveUp( v ) ) )
+                case Right( proof ) =>
+                  ( tstpf_file, Right( proof ) )
+              }
             }
-            ( tstpf_file, Left( ( s"reconstruction timeout", v.fileName ) ) )
-          case e: Exception =>
-            if ( print_statistics ) {
-              println()
-              println( s"reconstruction error $v" )
-            }
-            if ( print_statistics ) {
-              print( s"bug reconstructing $v.filename" )
-              e.printStackTrace()
-            }
-            ( tstpf_file, Left( ( s"reconstruction bug ${e.getMessage}", v.fileName ) ) )
-          case e: StackOverflowError =>
-            if ( print_statistics ) {
-              println()
-              println( s"reconstruction error $v (stack overflow)" )
-            }
-            ( tstpf_file, Left( ( s"reconstruction error $v (stack overflow)", v.fileName ) ) )
-        }
-    }
+          } catch {
+            case e: TimeOutException =>
+              if ( print_statistics ) {
+                println()
+                println( s"reconstruction timeout $v" )
+              }
+              ( tstpf_file, Left( ReconstructionTimeout( v ) ) )
+            case e: MalformedInputFileException =>
+              if ( print_statistics ) {
+                println()
+                println( s"malformed input file $v" )
+              }
+              ( tstpf_file, Left( MalformedFile( v ) ) )
+            case e: Exception =>
+              if ( print_statistics ) {
+                println()
+                println( s"reconstruction error $v" )
+                e.printStackTrace()
+              }
+              ( tstpf_file, Left( ReconstructionError( v ) ) )
+            case e: StackOverflowError =>
+              if ( print_statistics ) {
+                println()
+                println( s"reconstruction error $v (stack overflow)" )
+              }
+              ( tstpf_file, Left( StackOverflow( v ) ) )
+          }
+      }
+    } else ( None, Left( FileNotFound( v ) ) )
   }
 
   def resultToCSV[T <: FileData]( rpstats: Iterable[RPProofStats[T]] ): Unit = {
@@ -136,6 +169,28 @@ object TstpStatistics {
     val allSolved = byProblem.filter( _._2.size == solver_count )
 
     ( byProver.toMap, byProblem.toMap, allSolved.toMap )
+  }
+
+  def bagErrors[T <: FileData]( errors: Iterable[TstpError[T]] ) = {
+    val nf = mutable.Set[FileNotFound[T]]()
+    val mf = mutable.Set[MalformedFile[T]]()
+    val pe = mutable.Set[ParsingError[T]]()
+    val rg = mutable.Set[ReconstructionGaveUp[T]]()
+    val rt = mutable.Set[ReconstructionTimeout[T]]()
+    val re = mutable.Set[ReconstructionError[T]]()
+    val so = mutable.Set[StackOverflow[T]]()
+
+    errors foreach {
+      case e @ FileNotFound( file )          => nf.add( e )
+      case e @ MalformedFile( file )         => mf.add( e )
+      case e @ ParsingError( file )          => pe.add( e )
+      case e @ ReconstructionGaveUp( file )  => rg.add( e )
+      case e @ ReconstructionTimeout( file ) => rt.add( e )
+      case e @ ReconstructionError( file )   => re.add( e )
+      case e @ StackOverflow( file )         => so.add( e )
+    }
+
+    ( nf, mf, pe, rg, rt, re, so )
   }
 
   private def inc_rule_count[T]( r: T, rule_histogram: mutable.Map[T, Int] ) = {
