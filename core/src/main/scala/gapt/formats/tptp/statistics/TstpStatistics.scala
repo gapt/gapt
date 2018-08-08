@@ -1,7 +1,8 @@
 package gapt.formats.tptp.statistics
 
-import ammonite.ops.{ FilePath, Path, exists }
+import ammonite.ops.{ Path, exists }
 import gapt.expr._
+import gapt.formats.csv.CSVFile
 import gapt.formats.tptp.{ TptpFile, TptpParser, TptpProofParser }
 import gapt.proofs.resolution._
 import gapt.proofs.sketch.RefutationSketchToResolution
@@ -19,24 +20,6 @@ object TstpStatistics {
         ( tstpo, rpo.map( getRPStats( file, _ ) ) )
 
     }
-  }
-
-  def filterExisting[T <: FileData, Q <: Iterable[T]]( coll: Q ) =
-    coll.filter( x => exists( Path( x.fileName ) ) )
-
-  def bagResults[T <: CASCResult]( m: Map[T, RPProofStats[T]] ) = {
-    val all_solvers = m.keySet.map( _.prover )
-    val solver_count = all_solvers.size
-
-    val byProver = mutable.Map[Prover, Set[RPProofStats[T]]]()
-    m.foreach { case ( k, v ) => byProver( k.prover ) = byProver.getOrElse( k.prover, Set() ) + v }
-
-    val byProblem = mutable.Map[Problem, Set[RPProofStats[T]]]()
-    m.foreach { case ( k, v ) => byProver( k.problem ) = byProver.getOrElse( k.problem, Set() ) + v }
-
-    val allSolved = byProblem.filter( _._2.size == solver_count )
-
-    ( byProver.toMap, byProblem.toMap, allSolved.toMap )
   }
 
   def applyAll[T <: FileData]( pfiles: Iterable[T], print_statistics: Boolean = false ) = {
@@ -77,7 +60,7 @@ object TstpStatistics {
 
   def loadFile( v: FileData, print_statistics: Boolean = false ): ( Option[TptpFile], Either[( String, String ), ResolutionProof] ) = {
     val tstpf_file: Option[TptpFile] = try {
-      Some( TptpParser.load( FilePath( v.fileName ) ) )
+      Some( TptpParser.load( v.file ) )
 
     } catch {
       case e: Exception =>
@@ -94,7 +77,7 @@ object TstpStatistics {
       case _ =>
         try {
           withTimeout( 120.seconds ) {
-            val ( formula, sketch ) = TptpProofParser.parse( FilePath( v.fileName ), true )
+            val ( formula, sketch ) = TptpProofParser.parse( v.file, true )
             RefutationSketchToResolution( sketch ) match {
               case Left( unprovable ) =>
                 if ( print_statistics ) {
@@ -130,6 +113,29 @@ object TstpStatistics {
             ( tstpf_file, Left( ( s"reconstruction error $v (stack overflow)", v.fileName ) ) )
         }
     }
+  }
+
+  def resultToCSV[T <: FileData]( rpstats: Iterable[RPProofStats[T]] ): Unit = {
+    CSVFile( RPProofStats.csv_header, rpstats.toSeq.map( _.toCSV ), CSVFile.defaultSep )
+  }
+
+  //some tools for pre- and postprocessing
+  def filterExisting[T <: FileData]( coll: Iterable[T] ) =
+    coll.filter( x => exists( Path( x.fileName ) ) )
+
+  def bagResults[T <: CASCResult]( m: Map[T, RPProofStats[T]] ) = {
+    val all_solvers = m.keySet.map( _.prover )
+    val solver_count = all_solvers.size
+
+    val byProver = mutable.Map[Prover, Set[RPProofStats[T]]]()
+    m.foreach { case ( k, v ) => byProver( k.prover ) = byProver.getOrElse( k.prover, Set() ) + v }
+
+    val byProblem = mutable.Map[Problem, Set[RPProofStats[T]]]()
+    m.foreach { case ( k, v ) => byProver( k.problem ) = byProver.getOrElse( k.problem, Set() ) + v }
+
+    val allSolved = byProblem.filter( _._2.size == solver_count )
+
+    ( byProver.toMap, byProblem.toMap, allSolved.toMap )
   }
 
   private def inc_rule_count[T]( r: T, rule_histogram: mutable.Map[T, Int] ) = {

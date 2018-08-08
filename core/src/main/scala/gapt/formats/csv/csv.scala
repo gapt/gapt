@@ -15,7 +15,6 @@ case class CSVRow[T]( cells: Seq[T] )
  * @tparam T the cell type
  */
 case class CSVFile[T]( header: CSVRow[T], rows: Seq[CSVRow[T]], sep: String ) {
-  val defaultSep = ", "
 
   override def toString(): String = {
     val sb = StringBuilder.newBuilder
@@ -26,4 +25,8 @@ case class CSVFile[T]( header: CSVRow[T], rows: Seq[CSVRow[T]], sep: String ) {
     sb.toString()
   }
 
+}
+
+object CSVFile {
+  val defaultSep = ", "
 }

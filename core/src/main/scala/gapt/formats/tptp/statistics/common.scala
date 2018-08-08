@@ -1,5 +1,6 @@
 package gapt.formats.tptp
 
+import ammonite.ops.FilePath
 import gapt.formats.csv.CSVRow
 import gapt.proofs.HOLSequent
 import gapt.utils.Statistic
@@ -13,8 +14,13 @@ package object statistics {
   type Prover = String
   type Problem = String
 
+  /**
+   * Easier representation of file paths data follow a certain schema
+   */
   abstract class FileData {
     def fileName: String
+
+    def file = FilePath( fileName )
   }
 
   case class CASCResult( path: String, prover: Prover, problem: String, extension: String )
@@ -42,15 +48,13 @@ package object statistics {
       reused_derived:    Map[RuleName, ( HOLSequent, Int )],
       clause_sizes:      Statistic[Int] ) {
 
-    val csv_header = CSVRow( List( "problem", "solver", "dagsize", "treesize", "sizeratio", "depth" ) )
-
     def sizeRatio() = BigDecimal( treeSize ) / BigDecimal( dagSize )
 
     def reused_statistics() = Statistic( reused_axioms.toList.map( _._2._2 ) )
 
     def derived_statistics() = Statistic( reused_derived.toList.map( _._2._2 ) )
 
-    def toCSV = {
+    def toCSV: CSVRow[String] = {
       val ( problem, solver ) = name match {
         case CASCResult( _, prover, problem, _ ) => ( prover, problem )
         case other                               => ( "unknown", other.fileName )
@@ -58,6 +62,13 @@ package object statistics {
       CSVRow( List( problem, solver, dagSize.toString, treeSize.toString, sizeRatio.toString,
         depth.toString ) )
     }
+  }
+
+  /*
+    Companion object for RPProofSTats[T]
+   */
+  object RPProofStats {
+    val csv_header = CSVRow( List( "problem", "solver", "dagsize", "treesize", "sizeratio", "depth" ) )
   }
 
   /*
