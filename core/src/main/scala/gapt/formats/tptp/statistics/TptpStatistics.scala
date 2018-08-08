@@ -1,29 +1,11 @@
-package gapt.formats.tptp
+package gapt.formats.tptp.statistics
 
 import ammonite.ops.{ FilePath, Path, read }
 import gapt.expr._
-import gapt.formats.tptp.csv.{ CSVFile, CSVRow }
+import gapt.formats.csv.{ CSVFile, CSVRow }
+import gapt.formats.tptp.{ TptpFile, TptpParser }
 
 import scala.collection.mutable
-
-package csv {
-  case class CSVRow[T]( cells: Seq[T] );
-
-  case class CSVFile[T]( header: CSVRow[T], rows: Seq[CSVRow[T]], sep: String ) {
-    val defaultSep = ", "
-
-    override def toString(): String = {
-      val sb = StringBuilder.newBuilder
-      sb.append( header.cells.mkString( "", sep, "\n" ) )
-      for ( r <- rows ) {
-        sb.append( r.cells.mkString( "", sep, "\n" ) )
-      }
-      sb.toString()
-    }
-
-  }
-
-}
 
 object TPTPstatistics {
   type signature = Map[Int, Set[Const]]

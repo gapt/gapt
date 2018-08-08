@@ -1,98 +1,15 @@
-package gapt.examples.tstp_statistics
+package gapt.formats.tptp.statistics
 
 import ammonite.ops.{ FilePath, Path, exists }
-import gapt.examples.tstp_statistics.Types.{ ClauseId, Problem, Prover, RuleName }
-import gapt.expr.{ Abs, App, Const, Expr, Substitution, Var }
-import gapt.formats.tptp.csv.CSVRow
+import gapt.expr._
 import gapt.formats.tptp.{ TptpFile, TptpParser, TptpProofParser }
-import gapt.proofs.HOLSequent
-import gapt.proofs.resolution.{ ResolutionProof, Subst }
+import gapt.proofs.resolution._
 import gapt.proofs.sketch.RefutationSketchToResolution
 import gapt.utils.{ Statistic, TimeOutException, withTimeout }
 
 import scala.collection.mutable
 import scala.compat.Platform.StackOverflowError
 import scala.concurrent.duration._
-
-object Types {
-  type RuleName = String
-  type ClauseId = String
-  type Prover = String
-  type Problem = String
-}
-
-abstract class FileData {
-  def fileName: String
-}
-
-case class CASCResult( path: String, prover: Prover, problem: String, extension: String )
-  extends FileData {
-  def fileName = s"$path/$prover-$problem$extension"
-  override def toString() = fileName
-}
-
-/*
-   Invariants:
-   dagSize <= treeSize
-   dept <= size
- */
-case class RPProofStats[T <: FileData](
-    name:              T, // some class representing the input file
-    dagSize:           BigInt,
-    treeSize:          BigInt,
-    depth:             Int,
-    rule_histogram:    Map[RuleName, Int],
-    clause_frequency:  Map[ClauseId, ( RuleName, Int )],
-    subst_term_sizes:  Option[Statistic[Int]],
-    subst_term_depths: Option[Statistic[Int]],
-    reused_axioms:     Map[RuleName, ( HOLSequent, Int )],
-    reused_derived:    Map[RuleName, ( HOLSequent, Int )],
-    clause_sizes:      Statistic[Int] ) {
-
-  val csv_header = CSVRow( List( "problem", "solver", "dagsize", "treesize", "sizeratio", "depth" ) )
-
-  def sizeRatio() = BigDecimal( treeSize ) / BigDecimal( dagSize )
-  def reused_statistics() = Statistic( reused_axioms.toList.map( _._2._2 ) )
-  def derived_statistics() = Statistic( reused_derived.toList.map( _._2._2 ) )
-
-  def toCSV = {
-    val ( problem, solver ) = name match {
-      case CASCResult( _, prover, problem, _ ) => ( prover, problem )
-      case other                               => ( "unknown", other.fileName )
-    }
-    CSVRow( List( problem, solver, dagSize.toString, treeSize.toString, sizeRatio.toString,
-      depth.toString ) )
-  }
-}
-
-/*
-   Invariants:
-   dagSize <= treeSize
-   dept <= size
- */
-case class TstpProofStats[T](
-    name:             FileData,
-    dagSize:          BigInt,
-    treeSize:         BigInt,
-    depth:            Int,
-    rule_histogram:   mutable.Map[RuleName, Int],
-    clause_frequency: mutable.Map[ClauseId, ( RuleName, Int )] )
-
-/*
-   Invariants:
-    axiom_count <= input_formula_count
-    constants + unary_funs + binary_funs <= signature_size
- */
-case class InputStats(
-    name:                FileData,
-    axiom_count:         Int,
-    input_formula_count: Int,
-    signature_size:      Int,
-    constants:           Int,
-    unary_funs:          Int,
-    binary_funs:         Int,
-    max_arity:           Int,
-    median_arity:        Int )
 
 object TstpStatistics {
 
@@ -284,5 +201,5 @@ object TstpStatistics {
 
     stats
   }
-
 }
+
