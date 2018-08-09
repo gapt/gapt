@@ -652,9 +652,9 @@ object introducePi2Cut {
         checkNecessityOfNewAndOldClause( clause, allowedClausesWithIndexListsMutable.toList )
       if ( !clauseIsUnnecessary ) {
         allowedClausesWithIndexListsMutable += clause
-        //        if ( !clause.isAllowedAtLeastAsSubformula && !clause.isAllowed ) {
-        //          literalsWithIndexListsMutable -= literalWithIndexLists
-        //        }
+                if ( !clause.isAllowedAtLeastAsSubformula && !clause.isAllowed ) {
+                  literalsWithIndexListsMutable -= literalWithIndexLists
+                }
         for ( unnecessaryClause <- listOfUnnecessaryClauses ) {
           allowedClausesWithIndexListsMutable -= unnecessaryClause
         }
@@ -692,10 +692,10 @@ object introducePi2Cut {
             allowedClausesWithIndexLists -= unnecessaryClause
           }
         }
-      } else if ( !clauseWithIndexLists.isAllowedAtLeastAsSubformula ) {
-        for ( literal <- subset ) {
-          literalsWithIndexLists -= literal
-        }
+//      } else if ( !clauseWithIndexLists.isAllowedAtLeastAsSubformula ) {
+//        for ( literal <- subset ) {
+//          literalsWithIndexLists -= literal
+//        }
       }
     }
 
