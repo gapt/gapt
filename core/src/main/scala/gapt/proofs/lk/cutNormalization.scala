@@ -99,7 +99,7 @@ class ReductiveCutNormalization(
    */
   def apply( proof: LKProof ): LKProof = {
     if ( cleanStructuralRules )
-      new IterativeParallelCsrStrategy( cutReduction, 1002 ) run proof
+      new IterativeParallelCsrStrategy( cutReduction ) run proof
     else
       new UppermostFirstStrategy( cutReduction ) run proof
   }
@@ -108,7 +108,7 @@ class ReductiveCutNormalization(
    * Implements an iterative parallel reduction, that cleans structural rules after each iteration.
    * @param reduction The reduction to be used by this strategy
    */
-  private class IterativeParallelCsrStrategy( reduction: Reduction, var steps: Int ) extends ReductionStrategy {
+  private class IterativeParallelCsrStrategy( reduction: Reduction ) extends ReductionStrategy {
     override def run( proof: LKProof ): LKProof = {
       var intermediaryProof = proof
       val reducer = ( new LowerMostRedexReducer( ( new UppermostRedexFilter ).filter( reduction ) ) )
@@ -116,8 +116,7 @@ class ReductiveCutNormalization(
         reducer.foundRedex = false
         intermediaryProof = reducer.apply( intermediaryProof, () )
         intermediaryProof = gapt.proofs.lk.cleanStructuralRules( intermediaryProof )
-        steps -= 1
-      } while ( reducer.foundRedex && steps > 0 )
+      } while ( reducer.foundRedex )
       intermediaryProof
     }
   }
