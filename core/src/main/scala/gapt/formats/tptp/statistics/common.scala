@@ -35,6 +35,7 @@ package object statistics {
    dagSize <= treeSize
    dept <= size
  */
+  @SerialVersionUID( 70112L )
   case class RPProofStats[T <: FileData](
       name:              T, // some class representing the input file
       dagSize:           BigInt,
@@ -46,7 +47,7 @@ package object statistics {
       subst_term_depths: Option[Statistic[Int]],
       reused_axioms:     Map[RuleName, ( HOLSequent, Int )],
       reused_derived:    Map[RuleName, ( HOLSequent, Int )],
-      clause_sizes:      Statistic[Int] ) {
+      clause_sizes:      Statistic[Int] ) extends Serializable {
 
     def sizeRatio() = BigDecimal( treeSize ) / BigDecimal( dagSize )
 
@@ -59,16 +60,40 @@ package object statistics {
         case CASCResult( _, prover, problem, _ ) => ( prover, problem )
         case other                               => ( "unknown", other.fileName )
       }
-      CSVRow( List( problem, solver, dagSize.toString, treeSize.toString, sizeRatio.toString,
-        depth.toString ) )
+      CSVRow(
+        List( problem, solver, dagSize.toString, treeSize.toString,
+          sizeRatio.toString, depth.toString )
+          ++ also_empty_stat_csv( rule_histogram.toList.map( _._2 ) )
+          ++ statistic_opt_csv( subst_term_sizes )
+          ++ statistic_opt_csv( subst_term_depths )
+          ++ also_empty_stat_csv( reused_axioms.toList.map( _._2._2 ) )
+          ++ also_empty_stat_csv( reused_derived.toList.map( _._2._2 ) )
+          ++ clause_sizes.toCSV )
     }
+
+    private val na_statistic = Statistic( 0 :: Nil ).toCSV map ( _ => "NA" )
+
+    private def statistic_opt_csv[T]( s: Option[Statistic[T]] ) = s match {
+      case None                    => na_statistic
+      case Some( s: Statistic[T] ) => s.toCSV
+    }
+    private def also_empty_stat_csv[T]( s: Seq[T] )( implicit num: Numeric[T], conv: T => BigDecimal ): Seq[String] =
+      if ( s.isEmpty ) na_statistic else Statistic( s ).toCSV
+
   }
 
   /*
     Companion object for RPProofSTats[T]
    */
   object RPProofStats {
-    val csv_header = CSVRow( List( "problem", "solver", "dagsize", "treesize", "sizeratio", "depth" ) )
+    val csv_header = CSVRow(
+      List( "problem", "solver", "dagsize", "treesize", "sizeratio", "depth" )
+        ++ Statistic.csv_header( "inference_freq" )
+        ++ Statistic.csv_header( "subterm_size" )
+        ++ Statistic.csv_header( "subterm_depth" )
+        ++ Statistic.csv_header( "reused_axioms" )
+        ++ Statistic.csv_header( "reused_derived" )
+        ++ Statistic.csv_header( "clause_sizes" ) )
   }
 
   /*

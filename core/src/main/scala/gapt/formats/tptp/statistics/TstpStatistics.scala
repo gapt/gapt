@@ -2,7 +2,7 @@ package gapt.formats.tptp.statistics
 
 import ammonite.ops.{ Path, exists }
 import gapt.expr._
-import gapt.formats.csv.CSVFile
+import gapt.formats.csv.{ CSVFile, CSVRow }
 import gapt.formats.tptp._
 import gapt.proofs.resolution._
 import gapt.proofs.sketch.RefutationSketchToResolution
@@ -12,15 +12,24 @@ import scala.collection.mutable
 import scala.compat.Platform.StackOverflowError
 import scala.concurrent.duration._
 
-sealed abstract class TstpError[T <: FileData]( file: T )
-case class FileNotFound[T <: FileData]( file: T ) extends TstpError( file )
-case class MalformedFile[T <: FileData]( file: T ) extends TstpError( file )
-case class ParsingError[T <: FileData]( file: T ) extends TstpError( file )
-case class ReconstructionGaveUp[T <: FileData]( file: T ) extends TstpError( file )
-case class ReconstructionTimeout[T <: FileData]( file: T ) extends TstpError( file )
-case class ReconstructionError[T <: FileData]( file: T ) extends TstpError( file )
-case class StackOverflow[T <: FileData]( file: T ) extends TstpError( file )
+@SerialVersionUID( 700000L )
+sealed abstract class TstpError[T <: FileData]( val file: T ) extends Serializable
+@SerialVersionUID( 700001L )
+case class FileNotFound[T <: FileData]( override val file: T ) extends TstpError( file )
+@SerialVersionUID( 700002L )
+case class MalformedFile[T <: FileData]( override val file: T ) extends TstpError( file )
+@SerialVersionUID( 700003L )
+case class ParsingError[T <: FileData]( override val file: T ) extends TstpError( file )
+@SerialVersionUID( 700004L )
+case class ReconstructionGaveUp[T <: FileData]( override val file: T ) extends TstpError( file )
+@SerialVersionUID( 700005L )
+case class ReconstructionTimeout[T <: FileData]( override val file: T ) extends TstpError( file )
+@SerialVersionUID( 700006L )
+case class ReconstructionError[T <: FileData]( override val file: T ) extends TstpError( file )
+@SerialVersionUID( 700008L )
+case class StackOverflow[T <: FileData]( override val file: T ) extends TstpError( file )
 
+@SerialVersionUID( 700010L )
 case class ErrorBags[T <: FileData](
     nf: Iterable[FileNotFound[T]],
     mf: Iterable[MalformedFile[T]],
@@ -28,15 +37,35 @@ case class ErrorBags[T <: FileData](
     rg: Iterable[ReconstructionGaveUp[T]],
     rt: Iterable[ReconstructionTimeout[T]],
     re: Iterable[ReconstructionError[T]],
-    so: Iterable[StackOverflow[T]] ) {
-  def printSizes() = {
-    print( s"file not found : ${nf.size}" )
-    print( s"malformed file : ${mf.size}" )
-    print( s"parsiong error : ${pe.size}" )
-    print( s"gave up        : ${rg.size}" )
-    print( s"timeout        : ${rt.size}" )
-    print( s"replay error   : ${re.size}" )
-    print( s"stack overflow : ${so.size}" )
+    so: Iterable[StackOverflow[T]] ) extends Serializable {
+  def printSizes = {
+    println( s"file not found : ${nf.size}" )
+    println( s"malformed file : ${mf.size}" )
+    println( s"parsiong error : ${pe.size}" )
+    println( s"gave up        : ${rg.size}" )
+    println( s"timeout        : ${rt.size}" )
+    println( s"replay error   : ${re.size}" )
+    println( s"stack overflow : ${so.size}" )
+  }
+
+}
+
+object ErrorBags {
+  def toCSV[T <: FileData]( x: ErrorBags[T] ) = x match {
+    case ErrorBags( a, b, c, d, e, f, g ) =>
+      CSVRow( List( a.size, b.size, c.size, d.size, e.size, f.size, g.size ) )
+  }
+
+  def filter[T <: FileData]( bag: ErrorBags[T], prop: T => Boolean ) = bag match {
+    case ErrorBags( a, b, c, d, e, f, g ) =>
+      ErrorBags(
+        a.filter( x => prop( x.file ) ),
+        b.filter( x => prop( x.file ) ),
+        c.filter( x => prop( x.file ) ),
+        d.filter( x => prop( x.file ) ),
+        e.filter( x => prop( x.file ) ),
+        f.filter( x => prop( x.file ) ),
+        g.filter( x => prop( x.file ) ) )
   }
 }
 
@@ -148,7 +177,7 @@ object TstpStatistics {
     } else ( None, Left( FileNotFound( v ) ) )
   }
 
-  def resultToCSV[T <: FileData]( rpstats: Iterable[RPProofStats[T]] ): Unit = {
+  def resultToCSV[T <: FileData]( rpstats: Iterable[RPProofStats[T]] ) = {
     CSVFile( RPProofStats.csv_header, rpstats.toSeq.map( _.toCSV ), CSVFile.defaultSep )
   }
 
@@ -190,7 +219,7 @@ object TstpStatistics {
       case e @ StackOverflow( file )         => so.add( e )
     }
 
-    ( nf, mf, pe, rg, rt, re, so )
+    ErrorBags( nf, mf, pe, rg, rt, re, so )
   }
 
   private def inc_rule_count[T]( r: T, rule_histogram: mutable.Map[T, Int] ) = {

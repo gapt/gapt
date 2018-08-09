@@ -12,13 +12,14 @@ package gapt.utils
  * @tparam T the type of elements the collection contains
  */
 
+@SerialVersionUID( 700100L )
 case class Statistic[T](
     n:            Int,
     min:          T,
     max:          T,
     avg:          BigDecimal,
     median:       BigDecimal,
-    sigma_square: Option[BigDecimal] ) {
+    sigma_square: Option[BigDecimal] ) extends Serializable {
 
   /**
    * exports the statistics as a list of strings
@@ -28,8 +29,8 @@ case class Statistic[T](
 }
 
 object Statistic {
-  //create a list of descriptions of the for tag-min that matches the order of Statistic.toCSV
-  def csv_header( tag: String ) = List( "min", "max", "avg", "median", "deviation" ).map( x => s"$tag-$x" )
+  //create a list of descriptions of the form tag-min, tag-max etc. that matches the order of Statistic.toCSV
+  def csv_header( tag: String ) = List( "count", "min", "max", "avg", "median", "deviation" ).map( x => s"$tag-$x" )
 
   /**
    * Creates a statistic from a collection of values of type T.
