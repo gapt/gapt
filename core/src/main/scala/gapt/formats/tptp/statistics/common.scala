@@ -5,8 +5,6 @@ import gapt.formats.csv.CSVRow
 import gapt.proofs.HOLSequent
 import gapt.utils.Statistic
 
-import scala.collection.mutable
-
 package object statistics {
 
   type RuleName = String
@@ -45,9 +43,11 @@ package object statistics {
       clause_frequency:  Map[ClauseId, ( RuleName, Int )],
       subst_term_sizes:  Option[Statistic[Int]],
       subst_term_depths: Option[Statistic[Int]],
-      reused_axioms:     Map[RuleName, ( HOLSequent, Int )],
-      reused_derived:    Map[RuleName, ( HOLSequent, Int )],
-      clause_sizes:      Statistic[Int] ) extends Serializable {
+      //      reused_axioms:     Map[RuleName, ( HOLSequent, Int )],
+      //      reused_derived:    Map[RuleName, ( HOLSequent, Int )],
+      reused_axioms:  Map[RuleName, ( String, Int )],
+      reused_derived: Map[RuleName, ( String, Int )],
+      clause_sizes:   Statistic[Int] ) extends Serializable {
 
     def sizeRatio() = BigDecimal( treeSize ) / BigDecimal( dagSize )
 
@@ -101,21 +101,24 @@ package object statistics {
    dagSize <= treeSize
    dept <= size
  */
-  case class TstpProofStats[T](
-      name:             FileData,
+  case class TstpProofStats[T <: FileData](
+      name:             T,
       dagSize:          BigInt,
       treeSize:         BigInt,
       depth:            Int,
-      rule_histogram:   mutable.Map[RuleName, Int],
-      clause_frequency: mutable.Map[ClauseId, ( RuleName, Int )] )
+      rule_histogram:   Map[RuleName, Int],
+      clause_frequency: Map[ClauseId, ( RuleName, Int )],
+      reused_axioms:    Map[RuleName, ( String, Int )],
+      reused_derived:   Map[RuleName, ( String, Int )],
+      clause_sizes:     Statistic[Int] ) extends Serializable
 
   /*
    Invariants:
     axiom_count <= input_formula_count
     constants + unary_funs + binary_funs <= signature_size
  */
-  case class InputStats(
-      name:                FileData,
+  case class InputStats[T <: FileData](
+      name:                T,
       axiom_count:         Int,
       input_formula_count: Int,
       signature_size:      Int,
@@ -124,5 +127,12 @@ package object statistics {
       binary_funs:         Int,
       max_arity:           Int,
       median_arity:        Int )
+
+  @SerialVersionUID( 70113L )
+  case class ResultBundle[T <: FileData](
+      tstp_stats:  Map[T, TstpProofStats[T]],
+      rp_stats:    Map[T, RPProofStats[T]],
+      tstp_errors: List[TstpError[T]],
+      rp_errors:   List[TstpError[T]] ) extends Serializable
 
 }

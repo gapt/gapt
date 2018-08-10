@@ -71,4 +71,13 @@ object Statistic {
     new Statistic[T]( _n, _min, _max, _avg, _median, _sigma_square )
   }
 
+  def print[T]( s: Statistic[T] ) = {
+    println( s"n  : ${s.n}" )
+    println( s"min: ${s.min}" )
+    println( s"max: ${s.max}" )
+    println( s"med: ${s.median}" )
+    println( s"avg: ${s.avg}" )
+    s.sigma_square.map( x => println( s"sd2: $x" ) )
+  }
+
 }

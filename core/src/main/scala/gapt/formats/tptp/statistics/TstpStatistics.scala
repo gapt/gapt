@@ -5,7 +5,7 @@ import gapt.expr._
 import gapt.formats.csv.{ CSVFile, CSVRow }
 import gapt.formats.tptp._
 import gapt.proofs.resolution._
-import gapt.proofs.sketch.RefutationSketchToResolution
+import gapt.proofs.sketch.{ RefutationSketch, RefutationSketchToResolution }
 import gapt.utils.{ Statistic, TimeOutException, withTimeout }
 
 import scala.collection.mutable
@@ -71,11 +71,10 @@ object ErrorBags {
 
 object TstpStatistics {
 
-  def apply[T <: FileData]( file: T, print_statistics: Boolean = false ): ( Option[TptpFile], Either[TstpError[T], RPProofStats[T]] ) = {
+  def apply[T <: FileData]( file: T, print_statistics: Boolean = false ): ( Either[TstpError[T], TstpProofStats[T]], Either[TstpError[T], RPProofStats[T]] ) = {
     loadFile( file, print_statistics ) match {
       case ( tstpo, rpo ) =>
-        ( tstpo, rpo.map( getRPStats( file, _ ) ) )
-
+        ( tstpo.map( getTSTPStats( file, _ ) ), rpo.map( getRPStats( file, _ ) ) )
     }
   }
 
@@ -86,7 +85,7 @@ object TstpStatistics {
     val ( tstps, rps ) = pfiles.par.map( i => {
       val r @ ( m1, m2 ) = apply( i, print_statistics )
       if ( print_statistics ) {
-        ( m1.isEmpty, m2.isLeft ) match {
+        ( m1.isLeft, m2.isLeft ) match {
           case ( true, _ )      => print( "o" )
           case ( false, true )  => print( "x" )
           case ( false, false ) => print( "." )
@@ -111,39 +110,64 @@ object TstpStatistics {
       case Left( msg ) => msg :: Nil
     }.toList
 
-    ( tstps.flatMap( ( x: Option[TptpFile] ) => x ), rpmap, rperrormap )
+    val tstpmap = mutable.Map() ++ ( tstps.flatMap {
+      case Right( stat ) => ( stat.name, stat ) :: Nil
+      case Left( _ )     => Nil
+    } )
+
+    val tstpperrormap = tstps.flatMap {
+      case Right( _ )  => Nil
+      case Left( msg ) => msg :: Nil
+    }.toList
+
+    ResultBundle( tstpmap.toMap, rpmap.toMap, tstpperrormap, rperrormap )
 
   }
 
-  def loadFile[T <: FileData]( v: T, print_statistics: Boolean = false ): ( Option[TptpFile], Either[TstpError[T], ResolutionProof] ) = {
+  def loadFile[T <: FileData]( v: T, print_statistics: Boolean = false ): ( Either[TstpError[T], RefutationSketch], Either[TstpError[T], ResolutionProof] ) = {
     if ( exists( Path( v.fileName ) ) ) {
-      val tstpf_file: Option[TptpFile] = try {
-        Some( TptpParser.load( v.file ) )
-
+      val tstp_sketch: Either[TstpError[T], RefutationSketch] = try {
+        withTimeout( 120.seconds ) {
+          Right( TptpProofParser.parse( v.file, true )._2 )
+        }
       } catch {
+        case e: TimeOutException =>
+          if ( print_statistics ) {
+            println( s"parser timeout $v" )
+          }
+          Left( ReconstructionTimeout( v ) )
+        case e: MalformedInputFileException =>
+          if ( print_statistics ) {
+            println( s"malformed file: $v" )
+          }
+          Left( MalformedFile( v ) )
         case e: Exception =>
           if ( print_statistics ) {
             println( s"parser error $v" )
           }
-          None
+          Left( ParsingError( v ) )
+        case e: StackOverflowError =>
+          if ( print_statistics ) {
+            println( s"parser timeout $v" )
+          }
+          Left( StackOverflow( v ) )
       }
 
-      tstpf_file match {
-        case None =>
+      tstp_sketch match {
+        case Left( _ ) =>
           //don't try to reconstruct the proof if we can't read it
-          ( None, Left( ParsingError( v ) ) )
-        case _ =>
+          ( tstp_sketch, Left( ParsingError( v ) ) )
+        case Right( sketch ) =>
           try {
             withTimeout( 120.seconds ) {
-              val ( formula, sketch ) = TptpProofParser.parse( v.file, true )
               RefutationSketchToResolution( sketch ) match {
                 case Left( unprovable ) =>
                   if ( print_statistics ) {
                     println( s"can't reconstruct $v" )
                   }
-                  ( tstpf_file, Left( ReconstructionGaveUp( v ) ) )
+                  ( tstp_sketch, Left( ReconstructionGaveUp( v ) ) )
                 case Right( proof ) =>
-                  ( tstpf_file, Right( proof ) )
+                  ( tstp_sketch, Right( proof ) )
               }
             }
           } catch {
@@ -152,29 +176,29 @@ object TstpStatistics {
                 println()
                 println( s"reconstruction timeout $v" )
               }
-              ( tstpf_file, Left( ReconstructionTimeout( v ) ) )
+              ( tstp_sketch, Left( ReconstructionTimeout( v ) ) )
             case e: MalformedInputFileException =>
               if ( print_statistics ) {
                 println()
                 println( s"malformed input file $v" )
               }
-              ( tstpf_file, Left( MalformedFile( v ) ) )
+              ( tstp_sketch, Left( MalformedFile( v ) ) )
             case e: Exception =>
               if ( print_statistics ) {
                 println()
                 println( s"reconstruction error $v" )
                 e.printStackTrace()
               }
-              ( tstpf_file, Left( ReconstructionError( v ) ) )
+              ( tstp_sketch, Left( ReconstructionError( v ) ) )
             case e: StackOverflowError =>
               if ( print_statistics ) {
                 println()
                 println( s"reconstruction error $v (stack overflow)" )
               }
-              ( tstpf_file, Left( StackOverflow( v ) ) )
+              ( tstp_sketch, Left( StackOverflow( v ) ) )
           }
       }
-    } else ( None, Left( FileNotFound( v ) ) )
+    } else ( Left( FileNotFound( v ) ), Left( FileNotFound( v ) ) )
   }
 
   def resultToCSV[T <: FileData]( rpstats: Iterable[RPProofStats[T]] ) = {
@@ -228,6 +252,10 @@ object TstpStatistics {
 
   private def fst_map[U, V, W, X]( m: mutable.Map[U, ( V, W, X )] ) =
     m.map( x => ( x._1, ( x._2._1, x._2._2 ) ) ).toMap
+
+  //can't serialize sequents so we convert them to strings
+  private def fst_map_c[U, V, W, X]( m: mutable.Map[U, ( V, W, X )] ) =
+    m.map( x => ( x._1, ( x._2._1.toString, x._2._2 ) ) ).toMap
 
   private def term_depth_size( t: Expr ): ( Int, Int ) = t match {
     case Var( _, _ ) | Const( _, _, _ ) => ( 1, 1 )
@@ -287,9 +315,47 @@ object TstpStatistics {
 
     val stats = RPProofStats( name, dagSize, treeSize, depth, hist.toMap, freq.toMap,
       getSubstStats( subst_sizes ), getSubstStats( subst_depths ),
-      fst_map( reused_axioms ), fst_map( reused_derived ), clause_sizes_dag )
+      fst_map_c( reused_axioms ), fst_map_c( reused_derived ), clause_sizes_dag )
 
     stats
   }
+
+  def getTSTPStats[T <: FileData]( name: T, rp: RefutationSketch ): TstpProofStats[T] = {
+    val dagSize = rp.dagLike.size
+    val treeSize = rp.treeLike.size
+    val depth = rp.depth
+    val hist = mutable.Map[RuleName, Int]()
+
+    val subproof_count = rp.subProofs.size
+    val ids = ( 1 to subproof_count ).map( "node" + _ )
+
+    val names = mutable.Map[RuleName, RefutationSketch]() ++ ( ids zip rp.subProofs )
+    val rnames = mutable.Map[RefutationSketch, RuleName]() ++ ( rp.subProofs zip ids )
+
+    require( rnames.size == subproof_count )
+
+    for ( ( r, id ) <- rnames ) {
+      r.immediateSubProofs.map( x => inc_rule_count( rnames( x ), hist ) )
+    }
+
+    val reused_proofs = hist.flatMap {
+      case ( n, freq ) if freq > 1 =>
+        val p = names( n )
+        ( n, ( p.conclusion, freq, p.immediateSubProofs.isEmpty ) ) :: Nil
+      case _ => Nil
+    }
+
+    val ( reused_axioms, reused_derived ) = reused_proofs.partition( _._2._3 )
+
+    val clause_sizes_dag = Statistic( rp.dagLike.postOrder.flatMap( x => x.conclusion.size :: Nil ) )
+
+    val freq = mutable.Map[ClauseId, ( RuleName, Int )]() //TODO: fill in
+
+    val stats = TstpProofStats( name, dagSize, treeSize, depth, hist.toMap, freq.toMap,
+      fst_map_c( reused_axioms ), fst_map_c( reused_derived ), clause_sizes_dag )
+
+    stats
+  }
+
 }
 
