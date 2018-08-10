@@ -48,6 +48,9 @@ case class ErrorBags[T <: FileData](
     println( s"stack overflow : ${so.size}" )
   }
 
+  def resourceErrors() = rt ++ so
+  def internalErrors() = pe ++ re ++ rg
+
 }
 
 object ErrorBags {
@@ -209,15 +212,15 @@ object TstpStatistics {
   def filterExisting[T <: FileData]( coll: Iterable[T] ) =
     coll.filter( x => exists( Path( x.fileName ) ) )
 
-  def bagResults[T <: CASCResult]( m: Map[T, RPProofStats[T]] ) = {
+  def bagResults[S <: CASCResult, T]( m: Map[S, T] ) = {
     val all_solvers = m.keySet.map( _.prover )
     val solver_count = all_solvers.size
 
-    val byProver = mutable.Map[Prover, Set[RPProofStats[T]]]()
+    val byProver = mutable.Map[Prover, Set[T]]()
     m.foreach { case ( k, v ) => byProver( k.prover ) = byProver.getOrElse( k.prover, Set() ) + v }
 
-    val byProblem = mutable.Map[Problem, Set[RPProofStats[T]]]()
-    m.foreach { case ( k, v ) => byProver( k.problem ) = byProver.getOrElse( k.problem, Set() ) + v }
+    val byProblem = mutable.Map[Problem, Set[T]]()
+    m.foreach { case ( k, v ) => byProblem( k.problem ) = byProblem.getOrElse( k.problem, Set() ) + v }
 
     val allSolved = byProblem.filter( _._2.size == solver_count )
 

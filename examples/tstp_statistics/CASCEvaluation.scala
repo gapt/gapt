@@ -25,7 +25,7 @@ object CASCEvaluation {
     }
   }
 
-  def loadResult[T <: FileData]( filename: String ) : Option[ResultBundle[T]] = {
+  def loadResult[T <: FileData]( filename: String ): Option[ResultBundle[T]] = {
     var ois: ObjectInputStream = null
     try {
       ois = new ObjectInputStream( new FileInputStream( filename ) )
@@ -43,15 +43,40 @@ object CASCEvaluation {
     time( TstpStatistics.applyAll( data, print_statistics ) )
 
   def eval[T <: CASCResult]( bundle: ResultBundle[T] ) = {
-    val ( statsByProver, statsByProblem, allSolved ) = TstpStatistics.bagResults( bundle.rp_stats )
+    val ( rstatsByProver, rstatsByProblem, rallSolved ) = TstpStatistics.bagResults( bundle.rp_stats )
+    val ( sstatsByProver, sstatsByProblem, sallSolved ) = TstpStatistics.bagResults( bundle.tstp_stats )
+
+    println( "=== reconstruction statistics" )
+    for ( p <- sstatsByProver.keySet ) {
+      val tstp_e_bags = TstpStatistics.bagErrors( bundle.tstp_errors.filter( _.file.prover == p ) )
+      val rp_e_bags = TstpStatistics.bagErrors( bundle.rp_errors.filter( _.file.prover == p ) )
+
+      println( s"$p has ${CASCData.files.size - tstp_e_bags.nf.size} tstp solutions" )
+      println( s"  constructed proof sketches: ${sstatsByProver( p ).size}" )
+      println( s"    resource errors         : ${tstp_e_bags.resourceErrors().size}" )
+      println( s"    malformed tstp          : ${tstp_e_bags.mf.size}" )
+      println( s"    unsuccessful constr     : ${tstp_e_bags.internalErrors().size}" )
+      println( s"  reconstructed proofs      : ${rstatsByProver( p ).size}" )
+      println( s"    resource errors         : ${rp_e_bags.resourceErrors().size}" )
+      println( s"    unsuccessful constr.    : ${rp_e_bags.internalErrors().size}" )
+
+      if ( tstp_e_bags.rg.nonEmpty ) println( "warning: tstp error bag 'gave up' non-empty!" )
+      if ( rp_e_bags.mf.nonEmpty ) println( "warning: res proof error bag 'malformed file' non-empty!" )
+    }
 
     val before_replayed = for ( f <- bundle.rp_stats.keySet.toList ) yield { ( bundle.tstp_stats( f ), bundle.rp_stats( f ) ) }
 
     println( "=== Tstp DAG vs Replayed Proof Statistics" )
-    println( "==           Total depth comparison" )
-    eval_before_after( before_replayed, depthRatio[T] )
-    println( "==           Total dag size comparison" )
-    eval_before_after( before_replayed, dagRatio[T] )
+    eval_before_after( before_replayed, depthRatio[T], "depth ratio" )
+    eval_before_after( before_replayed, dagRatio[T], "dag ratio  " )
+
+    val provers = bundle.rp_stats.keySet.map( _.prover )
+    for ( p <- provers ) {
+      val br = before_replayed.filter( _._2.name.prover == p )
+      println( s"==           Prover $p " )
+      eval_before_after( br, depthRatio[T], "depth ratio" )
+      eval_before_after( br, dagRatio[T], "dag ratio  " )
+    }
 
   }
 
@@ -64,17 +89,24 @@ object CASCEvaluation {
 
   def eval_before_after[T <: CASCResult](
     before_replayed: Seq[( TstpProofStats[T], RPProofStats[T] )],
-    ratio:           Tuple2[TstpProofStats[T], RPProofStats[T]] => BigDecimal ) = {
+    ratio:           Tuple2[TstpProofStats[T], RPProofStats[T]] => BigDecimal,
+    description:     String                                                   = "" ) = {
     val replay_shrank = before_replayed.filter( ratio( _ ) < 1 )
     val replay_expanded = before_replayed.filter( ratio( _ ) > 1 )
     val replay_same = before_replayed.filter( ratio( _ ) == 1 )
 
-    println( s"pairs       : ${before_replayed.size}" )
-    println( s"# shrunk    : ${replay_shrank.size}" )
-    println( s"# same size : ${replay_same.size}" )
-    println( s"# expanded  : ${replay_expanded.size}" )
+    //    println( s"pairs       : ${before_replayed.size}" )
+    println( s"$description # shrunk    : ${replay_shrank.size}" )
+    println( s"$description # same size : ${replay_same.size}" )
+    println( s"$description # expanded  : ${replay_expanded.size}" )
 
     ( replay_shrank, replay_same, replay_expanded )
+
+    //
+    //TODO: average sub term depth
+    //TODO: average ratio of reused terms
+    //TODO:
+
   }
 
 }
