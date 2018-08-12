@@ -47,24 +47,24 @@ object CASCEvaluation {
     val ( sstatsByProver, sstatsByProblem, sallSolved ) = TstpStatistics.bagResults( bundle.tstp_stats )
 
     println( "=== reconstruction statistics" )
-    for ( p <- sstatsByProver.keySet ) {
-      val tstp_e_bags = TstpStatistics.bagErrors( bundle.tstp_errors.filter( _.file.prover == p ) )
+    eval_errors(
+      "Total",
+      bundle.tstp_stats.size + bundle.tstp_errors.size,
+      bundle.tstp_stats.keySet.flatMap( x => Set( bundle.tstp_stats( x ) ) ),
+      bundle.rp_stats.keySet.flatMap( x => Set( bundle.rp_stats( x ) ) ),
+      TstpStatistics.bagErrors( bundle.tstp_errors ),
+      TstpStatistics.bagErrors( bundle.rp_errors ) )
+
+    for ( p <- sstatsByProver.keySet.toList.sorted ) {
+      val p_tstp_errors = bundle.tstp_errors.filter( _.file.prover == p )
+      val tstp_e_bags = TstpStatistics.bagErrors( p_tstp_errors )
       val rp_e_bags = TstpStatistics.bagErrors( bundle.rp_errors.filter( _.file.prover == p ) )
-
-      println( s"$p has ${CASCData.files.size - tstp_e_bags.nf.size} tstp solutions" )
-      println( s"  constructed proof sketches: ${sstatsByProver( p ).size}" )
-      println( s"    resource errors         : ${tstp_e_bags.resourceErrors().size}" )
-      println( s"    malformed tstp          : ${tstp_e_bags.mf.size}" )
-      println( s"    unsuccessful constr     : ${tstp_e_bags.internalErrors().size}" )
-      println( s"  reconstructed proofs      : ${rstatsByProver( p ).size}" )
-      println( s"    resource errors         : ${rp_e_bags.resourceErrors().size}" )
-      println( s"    unsuccessful constr.    : ${rp_e_bags.internalErrors().size}" )
-
-      if ( tstp_e_bags.rg.nonEmpty ) println( "warning: tstp error bag 'gave up' non-empty!" )
-      if ( rp_e_bags.mf.nonEmpty ) println( "warning: res proof error bag 'malformed file' non-empty!" )
+      eval_errors( p, sstatsByProver( p ).size + p_tstp_errors.size, sstatsByProver( p ), rstatsByProver( p ), tstp_e_bags, rp_e_bags )
     }
 
     val before_replayed = for ( f <- bundle.rp_stats.keySet.toList ) yield { ( bundle.tstp_stats( f ), bundle.rp_stats( f ) ) }
+
+    println
 
     println( "=== Tstp DAG vs Replayed Proof Statistics" )
     eval_before_after( before_replayed, depthRatio[T], "depth ratio" )
@@ -74,8 +74,8 @@ object CASCEvaluation {
     for ( p <- provers ) {
       val br = before_replayed.filter( _._2.name.prover == p )
       println( s"==           Prover $p " )
-      eval_before_after( br, depthRatio[T], "depth ratio" )
-      eval_before_after( br, dagRatio[T], "dag ratio  " )
+      eval_before_after( br, depthRatio[T], "  depth ratio" )
+      eval_before_after( br, dagRatio[T], "  dag ratio  " )
     }
 
   }
@@ -91,14 +91,18 @@ object CASCEvaluation {
     before_replayed: Seq[( TstpProofStats[T], RPProofStats[T] )],
     ratio:           Tuple2[TstpProofStats[T], RPProofStats[T]] => BigDecimal,
     description:     String                                                   = "" ) = {
+    val replay_shrank2 = before_replayed.filter( ratio( _ ) < 0.5 )
     val replay_shrank = before_replayed.filter( ratio( _ ) < 1 )
     val replay_expanded = before_replayed.filter( ratio( _ ) > 1 )
     val replay_same = before_replayed.filter( ratio( _ ) == 1 )
+    val replay_expanded2 = before_replayed.filter( ratio( _ ) > 2 )
 
     //    println( s"pairs       : ${before_replayed.size}" )
-    println( s"$description # shrunk    : ${replay_shrank.size}" )
-    println( s"$description # same size : ${replay_same.size}" )
-    println( s"$description # expanded  : ${replay_expanded.size}" )
+    println( s"$description # shrunk x2   : ${replay_shrank2.size}" )
+    println( s"$description # shrunk      : ${replay_shrank.size}" )
+    println( s"$description # same size   : ${replay_same.size}" )
+    println( s"$description # expanded    : ${replay_expanded.size}" )
+    println( s"$description # expanded x2 : ${replay_expanded2.size}" )
 
     ( replay_shrank, replay_same, replay_expanded )
 
@@ -107,6 +111,38 @@ object CASCEvaluation {
     //TODO: average ratio of reused terms
     //TODO:
 
+  }
+
+  def eval_errors[T <: FileData](
+    p:           String,
+    problems:    Int,
+    sstats:      Set[TstpProofStats[T]],
+    rpstats:     Set[RPProofStats[T]],
+    tstp_e_bags: ErrorBags[T], rp_e_bags: ErrorBags[T],
+    tex: Boolean = false ) = {
+    val s_count = problems - tstp_e_bags.nf.size
+    val s_tstp = sstats.size
+    val s_re = tstp_e_bags.resourceErrors().size
+    val s_mf = tstp_e_bags.mf.size
+    val s_un = tstp_e_bags.internalErrors().size
+    val r_rp = rpstats.size
+    val r_re = rp_e_bags.resourceErrors().size
+    val r_un = rp_e_bags.internalErrors().size
+    println( s"$p has ${s_count} tstp solutions" )
+    println( s"  constructed proof sketches: ${s_tstp}" )
+    println( s"    resource errors         : ${s_re}" )
+    println( s"    malformed tstp          : ${s_mf}" )
+    println( s"    unsuccessful constr     : ${s_un}" )
+    println( s"  reconstructed proofs      : ${r_rp}" )
+    println( s"    resource errors         : ${r_re}" )
+    println( s"    unsuccessful constr.    : ${r_un}" )
+
+    if ( tex ) {
+      println( s" $p & ${s_count} & ${s_tstp} & $s_re & $s_mf & $s_un & $r_rp & $r_re & $r_un \\\\" )
+    }
+
+    if ( tstp_e_bags.rg.nonEmpty ) println( "warning: tstp error bag 'gave up' non-empty!" )
+    if ( rp_e_bags.mf.nonEmpty ) println( "warning: res proof error bag 'malformed file' non-empty!" )
   }
 
 }
