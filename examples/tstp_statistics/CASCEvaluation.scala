@@ -90,7 +90,8 @@ object CASCEvaluation {
   def eval_before_after[T <: CASCResult](
     before_replayed: Seq[( TstpProofStats[T], RPProofStats[T] )],
     ratio:           Tuple2[TstpProofStats[T], RPProofStats[T]] => BigDecimal,
-    description:     String                                                   = "" ) = {
+    description:     String                                                   = "",
+    tex:             Boolean                                                  = true ) = {
     val replay_shrank2 = before_replayed.filter( ratio( _ ) < 0.5 )
     val replay_shrank = before_replayed.filter( ratio( _ ) < 1 )
     val replay_expanded = before_replayed.filter( ratio( _ ) > 1 )
@@ -104,6 +105,10 @@ object CASCEvaluation {
     println( s"$description # expanded    : ${replay_expanded.size}" )
     println( s"$description # expanded x2 : ${replay_expanded2.size}" )
 
+    if ( tex ) {
+      println( s" $description & " +
+        List( replay_shrank2, replay_shrank, replay_same, replay_expanded, replay_expanded2 ).map( _.size ).mkString( "", " & ", "\\\\" ) )
+    }
     ( replay_shrank, replay_same, replay_expanded )
 
     //

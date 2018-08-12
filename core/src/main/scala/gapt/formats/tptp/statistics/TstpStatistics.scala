@@ -14,6 +14,30 @@ import scala.concurrent.duration._
 
 @SerialVersionUID( 700000L )
 sealed abstract class TstpError[T <: FileData]( val file: T ) extends Serializable
+
+object TstpError {
+  def toCSV[T <: FileData]( e: TstpError[T] ): CSVRow[String] = {
+
+    val tp: String = e match {
+      case FileNotFound( _ )          => "FileNotFound"
+      case MalformedFile( _ )         => "MalformedFile"
+      case ParsingError( _ )          => "ParsingError"
+      case ReconstructionError( _ )   => "ReconstructionError"
+      case ReconstructionGaveUp( _ )  => "ReconstructionGaveUp"
+      case ReconstructionTimeout( _ ) => "ReconstuctionTimeout"
+      case StackOverflow( _ )         => "StackOverflow"
+    }
+
+    val row = e.file match {
+      case r @ CASCResult( path, prover, problem, extension ) =>
+        Seq( prover, problem )
+      case r: FileData =>
+        Seq( r.fileName )
+    }
+
+    CSVRow( row :+ tp )
+  }
+}
 @SerialVersionUID( 700001L )
 case class FileNotFound[T <: FileData]( override val file: T ) extends TstpError( file )
 @SerialVersionUID( 700002L )
