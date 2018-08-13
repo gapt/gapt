@@ -166,7 +166,7 @@ object LKToND {
         nd.EqualityIntroRule( s )
 
       case TopAxiom =>
-        nd.TopIntroRule()
+        nd.TopIntroRule
 
       case BottomAxiom =>
         nd.LogicalAxiom( Bottom() )

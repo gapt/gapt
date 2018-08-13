@@ -67,21 +67,21 @@ object improveSolutionLK {
     def checkSolution( cnf: Set[HOLClause] ): Session[Unit] = when( !isSolution.contains( cnf ) ) {
       val clauses = for ( inst <- groundInstances; clause <- cnf ) yield inst( clause.toDisjunction )
 
-      withScope( assert( clauses.toList ) >> checkUnsat ).flatMap { isSolOrUnknown =>
+      withScope( assert( clauses.toList ) *> checkUnsat ).flatMap { isSolOrUnknown =>
         val isSol = isSolOrUnknown.getOrElse( false )
         isSolution( cnf ) = isSol
 
         when( isSol ) {
-          forgetfulPropResolve( cnf ).toList.traverse_( checkSolution ) >>
-            when( hasEquality ) { forgetfulPropParam( cnf ).toList.traverse_( checkSolution ) } >>
+          forgetfulPropResolve( cnf ).toList.traverse_( checkSolution ) *>
+            when( hasEquality ) { forgetfulPropParam( cnf ).toList.traverse_( checkSolution ) } *>
             when( forgetOne ) { cnf.toList.traverse_( c => checkSolution( cnf - c ) ) }
         }
       }
     }
 
     prover.runSession {
-      declareSymbolsIn( names ++ containedNames( grounding ) ) >>
-        assert( grounding( context.toNegConjunction ) ) >>
+      declareSymbolsIn( names ++ containedNames( grounding ) ) *>
+        assert( grounding( context.toNegConjunction ) ) *>
         checkSolution( CNFp( start ).map { _.distinct.sortBy { _.hashCode } } )
     }
 
