@@ -4,6 +4,7 @@ import gapt.expr._
 import gapt.proofs.HOLSequent
 import gapt.provers.Session.Runners._
 import gapt.provers.Session._
+import cats.implicits._
 
 object SmtLibExporter {
 
@@ -14,12 +15,10 @@ object SmtLibExporter {
    * @return SMT-LIB benchmark.
    */
   def apply( s: HOLSequent, lineWidth: Int = 80 ): ( String, Map[TBase, TBase], Map[Const, Const] ) = {
-    val p = for {
-      _ <- setLogic( "QF_UF" )
-      _ <- declareSymbolsIn( s.elements )
-      _ <- assert( s.map( identity, -_ ).elements.toList )
-      _ <- checkSat
-    } yield ()
+    val p = setLogic( "QF_UF" ) *>
+      declareSymbolsIn( s.elements ) *>
+      assert( s.map( identity, -_ ).elements.toList ) *>
+      checkSat
 
     val benchmarkRecorder = new BenchmarkRecorder( lineWidth )
 
