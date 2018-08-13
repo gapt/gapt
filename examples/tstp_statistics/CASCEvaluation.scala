@@ -151,17 +151,23 @@ object CASCEvaluation {
     if ( rp_e_bags.mf.nonEmpty ) println( "warning: res proof error bag 'malformed file' non-empty!" )
   }
 
-  def get_depth_to_mindepth_graph[T <: CASCResult]( bundle: ResultBundle[T] ) = {
+  def get_depth_to_mindepth_graph[T <: CASCResult]( bundle: ResultBundle[T] ) =
+    get_prop_to_minprop_graph( bundle, ( x: RPProofStats[T] ) => x.depth )
+
+  def get_dagsize_to_minddagsize_graph[T <: CASCResult]( bundle: ResultBundle[T] ) =
+    get_prop_to_minprop_graph( bundle, ( x: RPProofStats[T] ) => x.dagSize )
+
+  def get_prop_to_minprop_graph[T <: CASCResult, U]( bundle: ResultBundle[T], prop: RPProofStats[T] => U )( implicit num: Numeric[U] ) = {
     val provers = bundle.rp_stats.keySet.map( _.prover ).toList.sorted
     val prover_no = Map[Prover, Int]() ++ ( provers zip ( 1 to provers.size ) )
     val byProblem = TstpStatistics.bagResults( bundle.rp_stats )._2
     val problem_no = Map[Problem, Int]() ++ ( byProblem.keySet.toList zip ( 1 to byProblem.keySet.size ) )
-    val minValues: Map[Problem, Int] = byProblem.map( x => ( x._1, x._2.map( y => y.depth ).min ) )
+    val minValues: Map[Problem, U] = byProblem.map( x => ( x._1, x._2.map( prop ).min ) )
 
     val data = bundle.rp_stats.toList.map( x =>
       (
         minValues( x._1.problem ), // min depth
-        x._2.depth, // current value
+        prop( x._2 ), // current value
         prover_no( x._1.prover ), // prover id
         problem_no( x._1.problem ) ) // problem id
     )
