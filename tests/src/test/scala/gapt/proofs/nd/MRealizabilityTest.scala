@@ -320,7 +320,7 @@ class MRealizabilityTest extends Specification {
       mrealizer( p3 ) must_== Var( "y_1", nat ->: conj( nat, one ) )
     }
     "topintro" in {
-      val p1 = TopIntroRule()
+      val p1 = TopIntroRule
       mrealizer( p1 ) must_== Abs( Var( "y", one ), Var( "y", one ) )
     }
     "negelim" in {

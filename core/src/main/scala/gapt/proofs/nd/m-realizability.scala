@@ -191,7 +191,7 @@ object MRealizability {
         val extraVar = Var( ng.fresh( "y" ), flat( subProof.conclusion( aux ) ) )
         Abs( extraVar, mrealizeCases( subProof, varsAntPrem( proof, variables, 0 ) + ( aux -> extraVar ), ng ) )
 
-      case TopIntroRule() =>
+      case TopIntroRule =>
         val varr = Var( ng.fresh( "y" ), ty"1" )
         Abs( varr, varr )
 
