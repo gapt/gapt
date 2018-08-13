@@ -20,7 +20,7 @@ class SmtInterpol(
     override val treatUnknownAsSat: Boolean = false ) extends IncrementalProver {
 
   override def runSession[A]( program: Session[A] ) =
-    new SmtInterpolSession().run( setLogic( logic ) >> program )
+    new SmtInterpolSession().run( setLogic( logic ) *> program )
 
   override def getInterpolant( tree: Tree[Formula] )( implicit ctx: Maybe[Context] ): Option[Tree[Formula]] = {
     val fvs = freeVariables( tree.postOrder )
@@ -32,7 +32,7 @@ class SmtInterpol(
     }
 
     val session = new SmtInterpolSession
-    session.run( setOption( "produce-proofs", "true" ) >> setLogic( logic ) )
+    session.run( setOption( "produce-proofs", "true" ) *> setLogic( logic ) )
     session.run( declareSymbolsIn( containedNames( tree ) ) )
     val labels = tree.map( _ => session.nameGen.freshWithIndex( "IP" ) )
     labels.zip( tree ).foreach { case ( l, f ) => session.run( assert( f, l ) ) }

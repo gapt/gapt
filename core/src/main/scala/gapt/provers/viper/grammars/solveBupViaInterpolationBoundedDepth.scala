@@ -161,7 +161,7 @@ object solveBupViaInterpolationConcreteTerms {
     def checkSolution( cnf: Set[HOLClause] ): Session[Option[Formula]] = {
       val clauses = for ( inst <- groundInstances; clause <- cnf ) yield inst( clause.toDisjunction )
 
-      withScope( assert( clauses.toList ) >> checkUnsat ).flatMap { isSolOrUnknown =>
+      withScope( assert( clauses.toList ) *> checkUnsat ).flatMap { isSolOrUnknown =>
         val isSol = isSolOrUnknown.getOrElse( false )
 
         if ( isSol ) {
@@ -190,8 +190,8 @@ object solveBupViaInterpolationConcreteTerms {
     }
 
     prover.runSession {
-      declareSymbolsIn( names ++ containedNames( grounding ) ) >>
-        assert( grounding( -context ) ) >>
+      declareSymbolsIn( names ++ containedNames( grounding ) ) *>
+        assert( grounding( -context ) ) *>
         checkSolution( CNFp( start ).map { _.distinct.sortBy { _.hashCode } } )
     }.get
   }

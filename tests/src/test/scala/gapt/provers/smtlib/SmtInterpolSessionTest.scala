@@ -24,9 +24,9 @@ class SmtInterpolSessionTest extends Specification {
       for {
         _ <- declareSymbolsIn( ctx.constants )
         _ <- assert( hof"p 0 -> -p (s 0)" )
-        sat1 <- withScope { assert( hof"p 0 & p (s 0)" ) >> checkSat }
+        sat1 <- withScope { assert( hof"p 0 & p (s 0)" ) *> checkSat }
         sat2 <- checkSat
-        sat3 <- withScope { assert( hof"p 0 & 0 = s 0" ) >> checkSat }
+        sat3 <- withScope { assert( hof"p 0 & 0 = s 0" ) *> checkSat }
       } yield ( sat1, sat2, sat3 )
     } must_== ( Right( false ), Right( true ), Right( false ) )
   }
