@@ -1,5 +1,6 @@
 package gapt.examples
 
+import gapt.formats.csv.{ CSVFile, CSVRow }
 import gapt.formats.tptp.statistics._
 import gapt.utils.time
 import java.io._
@@ -148,6 +149,25 @@ object CASCEvaluation {
 
     if ( tstp_e_bags.rg.nonEmpty ) println( "warning: tstp error bag 'gave up' non-empty!" )
     if ( rp_e_bags.mf.nonEmpty ) println( "warning: res proof error bag 'malformed file' non-empty!" )
+  }
+
+  def get_depth_to_mindepth_graph[T <: CASCResult]( bundle: ResultBundle[T] ) = {
+    val provers = bundle.rp_stats.keySet.map( _.prover ).toList.sorted
+    val prover_no = Map[Prover, Int]() ++ ( provers zip ( 1 to provers.size ) )
+    val byProblem = TstpStatistics.bagResults( bundle.rp_stats )._2
+    val problem_no = Map[Problem, Int]() ++ ( byProblem.keySet.toList zip ( 1 to byProblem.keySet.size ) )
+    val minValues: Map[Problem, Int] = byProblem.map( x => ( x._1, x._2.map( y => y.depth ).min ) )
+
+    val data = bundle.rp_stats.toList.map( x =>
+      (
+        minValues( x._1.problem ), // min depth
+        x._2.depth, // current value
+        prover_no( x._1.prover ), // prover id
+        problem_no( x._1.problem ) ) // problem id
+    )
+    val rows = data.map( x => CSVRow( List( x._1.toString(), x._2.toString(), x._3.toString(), x._4.toString() ) ) )
+
+    ( data, CSVFile( CSVRow( List( "mindepth", "mydepth", "prover_id", "problem_id" ) ), rows, ", " ) )
   }
 
 }
