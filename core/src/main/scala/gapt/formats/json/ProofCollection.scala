@@ -13,7 +13,7 @@ import cats.implicits._
  */
 private[json] class ProofCollection[P <: DagProof[P]] private ( val proofMap: Map[P, Int] ) extends AnyVal
 
-object ProofCollection {
+private[json] object ProofCollection {
   /**
    * Creates a [[ProofCollection]] from a proof by
    * enumerating all its subproofs in post order, disregarding duplicates.
@@ -34,13 +34,15 @@ object ProofCollection {
   }
 }
 
-object ProofCollectionCodec {
+private[json] object ProofCollectionCodec {
   /**
    * Encodes a proof collection
    */
-  private[json] def proofCollectionEncoder[P <: DagProof[P]]( encodeProof: Encoder[P] => Encoder[P] ): Encoder[ProofCollection[P]] = { coll =>
+  private[json] def proofCollectionEncoder[P <: DagProof[P]](
+    encodeProof: Encoder[P] => Encoder[P] ): Encoder[ProofCollection[P]] = { coll =>
     val numEncoder: Encoder[P] = p => Json.fromInt( coll.proofMap( p ) )
-    val encodeProofWithName: Encoder[P] = p => encodeProof( numEncoder )( p ).mapObject( ( "name", Json.fromString( s"${p.longName}" ) ) +: _ )
+    val encodeProofWithName: Encoder[P] = p =>
+      encodeProof( numEncoder )( p ).mapObject( ( "name", Json.fromString( s"${p.longName}" ) ) +: _ )
 
     Encoder.encodeMap[Int, P]( implicitly, encodeProofWithName )( coll.proofMap.toList.map( _.swap ).toMap )
   }
@@ -48,8 +50,9 @@ object ProofCollectionCodec {
   /**
    * Decodes a proof collection.
    */
-  private[json] def proofCollectionDecoder[P <: DagProof[P]]( decodeProof: ( String, ACursor, Decoder[P] ) => Result[P] ): Decoder[ProofCollection[P]] = Decoder.decodeMap[Int, Json] emap { jsonMap =>
-    lazy val proofMap: Map[Int, Eval[Result[P]]] = jsonMap map { case ( i, j ) => ( i, Later( j.as[P] ) ) }
+  private[json] def proofCollectionDecoder[P <: DagProof[P]](
+    decodeProof: ( String, ACursor, Decoder[P] ) => Result[P] ): Decoder[ProofCollection[P]] = Decoder.decodeMap[Int, Json] emap { jsonMap =>
+    lazy val proofMap: Map[Int, Eval[Result[P]]] = jsonMap map { case ( i, json ) => ( i, Later( json.as[P] ) ) }
     lazy val numDecoder: Decoder[P] = Decoder.decodeInt.emap { i =>
       proofMap.get( i ) match {
         case Some( e ) => e.value.leftMap( _.message )

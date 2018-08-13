@@ -2,7 +2,6 @@ package gapt.formats.json.et
 import gapt.expr.{ Atom, Expr, Polarity }
 import io.circe.{ Decoder, Encoder }
 import io.circe.syntax._
-//import io.circe.generic.extras.auto._
 import io.circe.generic.extras.semiauto._
 import gapt.formats.json._
 import gapt.proofs.expansion._
