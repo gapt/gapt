@@ -39,7 +39,7 @@ case class CSVFile[T]( header: CSVRow[T], rows: Seq[CSVRow[T]], sep: String ) {
    */
   def ++( file: CSVFile[T] ) = {
     require( file.sep == sep, "can only merge csv files with the same seperator" )
-    require( file.rows.size == rows.size, "can only merge csv files with same numebr of rows" )
+    require( file.rows.size == rows.size, "can only merge csv files with same number of rows" )
     CSVFile( header ++ file.header, ( rows zip file.rows ).map { case ( x, y ) => x ++ y }, sep )
   }
 

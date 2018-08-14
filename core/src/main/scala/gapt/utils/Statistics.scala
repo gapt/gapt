@@ -25,12 +25,26 @@ case class Statistic[T](
    * exports the statistics as a list of strings
    */
   lazy val toCSV = List( n.toString, min.toString, max.toString, avg.toString, median.toString,
-    sigma_square.map( _.toString ).getOrElse( "NA" ) )
+    sigma_square.map( _.toString ).getOrElse( Statistic.na ) )
 }
 
+/**
+ * Companion object to [[Statistic]]. Provides a csv header and convenience methods for statistic options and empty
+ * data lists.
+ */
 object Statistic {
-  //create a list of descriptions of the form tag-min, tag-max etc. that matches the order of Statistic.toCSV
+  val na = "NA"
+
+  /**
+   * create a list of descriptions of the form tag-min, tag-max etc. that matches the order of Statistic.toCSV
+   * @param tag the prefix for the columns
+   */
   def csv_header( tag: String ) = List( "count", "min", "max", "avg", "median", "deviation" ).map( x => s"$tag-$x" )
+
+  /**
+   * static "not applicable" CSV value for a non-existing statistic
+   */
+  val na_statistic = Statistic( 0 :: Nil ).toCSV map ( _ => na )
 
   /**
    * Creates a statistic from a collection of values of type T.
@@ -70,6 +84,28 @@ object Statistic {
 
     new Statistic[T]( _n, _min, _max, _avg, _median, _sigma_square )
   }
+
+  /**
+   * Converts a statistic option to CSV with a default of not applicable
+   * @param s an optional statistic
+   * @tparam T the type of data elements of the statistic
+   * @return CSV data for s, if it exists [[na_statistic]] otherwise
+   */
+  def optCSV[T]( s: Option[Statistic[T]] ) = s match {
+    case None                    => na_statistic
+    case Some( s: Statistic[T] ) => s.toCSV
+  }
+
+  /**
+   * Produces CSV data of statistics for non-empty data, and 'not applicable' values otherwise.
+   * @param s a sequence of data
+   * @param num the implicit converter to treat elements of s as numeric types
+   * @param conv a measure for calculating the avarage and standard deviation in the statistic
+   * @tparam T the type of data to create statistics on  (must be measurable in terms of num and conv)
+   * @return CSV data for s if it is non-empty, [[Statistic.na_statistic]] otherwise
+   */
+  def alsoEmptyDataToCSV[T]( s: Seq[T] )( implicit num: Numeric[T], conv: T => BigDecimal ): Seq[String] =
+    if ( s.isEmpty ) na_statistic else Statistic( s ).toCSV
 
   def print[T]( s: Statistic[T] ) = {
     println( s"n  : ${s.n}" )

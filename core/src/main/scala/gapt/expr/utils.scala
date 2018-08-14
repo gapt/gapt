@@ -7,6 +7,7 @@ package gapt.expr
 import gapt.proofs._
 import gapt.utils.NameGenerator
 
+import scala.annotation.tailrec
 import scala.collection.GenTraversable
 import scala.collection.mutable
 
@@ -171,6 +172,15 @@ object expressionSize {
     case Abs( _, f )                    => 1 + expressionSize( f )
     case App( a, b )                    => 1 + expressionSize( a ) + expressionSize( b )
   }
+}
+
+object expressionDepth {
+  def apply( t: Expr ): Int = t match {
+    case Var( _, _ ) | Const( _, _, _ ) => 1
+    case Abs( _, s )                    => apply( s ) + 1
+    case App( a, b )                    => ( apply( a ) max apply( b ) ) + 1
+  }
+
 }
 
 /**
