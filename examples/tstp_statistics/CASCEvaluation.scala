@@ -21,8 +21,11 @@ object CASCEvaluation {
       case e: Exception =>
         println( s"error writing to $filename: ${e.getMessage()}" )
     } finally {
-      if ( oos != null )
+      if ( oos != null ) try {
         oos.close
+      } catch {
+        case _: Exception => () //ignore
+      }
     }
   }
 
@@ -36,7 +39,11 @@ object CASCEvaluation {
         println( s"error reading from $filename: ${e.getMessage()}" )
         None
     } finally {
-      ois.close
+      if ( ois != null ) try {
+        ois.close
+      } catch {
+        case _: Exception => () //ignore
+      }
     }
   }
 

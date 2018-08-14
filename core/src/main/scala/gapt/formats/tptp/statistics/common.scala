@@ -254,16 +254,24 @@ package object statistics {
       rp_stats:    Map[T, RPProofStats[T]],
       tstp_errors: List[TstpError[T]],
       rp_errors:   List[TstpError[T]] ) extends Serializable {
-    def exportCSV( filename: String ) = {
+
+    /**
+     * Write a bundle to a set of files: $file_prefix-rp-stats.csv, $file_prefix-tstp-stats.csv,
+     * $file_prefix-rp-errors.csv and $file_prefix-tstp-errors.csv
+     * @param file_prefix the prfix for the files
+     * @param path the path where to save the file, default : pwd
+     * @return the csv files written to disk
+     */
+    def exportCSV( file_prefix: String, path: Path = pwd ) = {
       val f1 = TstpProofStats.toCSVFile( tstp_stats )
       val f2 = RPProofStats.toCSVFile( rp_stats )
       val f3 = CSVFile( CSVRow( Nil ), tstp_errors.map( TstpError.toCSV( _ ) ), "," )
       val f4 = CSVFile( CSVRow( Nil ), rp_errors.map( TstpError.toCSV( _ ) ), "," )
 
-      write( Path( s"$filename-rp_stats.csv", pwd ), f1.toString() )
-      write( Path( s"$filename-tstp_stats.csv", pwd ), f2.toString() )
-      write( Path( s"$filename-rp_errors.csv", pwd ), f3.toString() )
-      write( Path( s"$filename-tstp_errors.csv", pwd ), f4.toString() )
+      write( Path( s"${file_prefix}-rp_stats.csv", path ), f1.toString() )
+      write( Path( s"${file_prefix}-tstp_stats.csv", path ), f2.toString() )
+      write( Path( s"${file_prefix}-rp_errors.csv", path ), f3.toString() )
+      write( Path( s"${file_prefix}-tstp_errors.csv", path ), f4.toString() )
       ( f1, f2, f3, f4 )
     }
   }
