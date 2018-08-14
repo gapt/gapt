@@ -544,13 +544,10 @@ object Context {
         val Apps( _: Const, ctrArgs ) = lhsArgs( recIdx )
 
         val matchVars = nonRecLhsArgs ++ ctrArgs
-        //Not sure this needs to be here
-        /* matchVars.foreach( a => {
-          require( a.isInstanceOf[Var] )
-        } )*/
-        //   println( matchVars.toString )
 
-        //  require( matchVars == matchVars.distinct )
+        matchVars.foreach( a => { require( a.isInstanceOf[Var] ) } )
+        require( matchVars == matchVars.distinct )
+
         folSubTerms( rhs ).foreach {
           case Apps( fn @ Const( `name`, _, _ ), args ) =>
             require( fn == c )
