@@ -2,8 +2,8 @@ package gapt.proofs.ceres
 
 import gapt.expr._
 import gapt.expr.hol.toNNF
-import gapt.proofs.Context.PrimRecFun
-import gapt.proofs.{ MutableContext, Sequent }
+import gapt.proofs.MutableContext
+import gapt.proofs.Sequent
 
 import scala.util.matching.Regex
 
@@ -153,13 +153,22 @@ private object Support {
     case Neg( Atom( _, _ ) ) => Ex.Block( evar.intersect( freeVariables( f ) ).toSeq, f )
     case Neg( x )            => Neg( QuantIntroExists( x, evar ) )
   }
-  def add( chF: Map[Formula, ( Formula, Set[Var] )], qType: QuantifierC )( implicit ctx: MutableContext ): Unit =
-    ctx += PrimRecFun( {
+  def add( chF: Map[Formula, ( Formula, Set[Var] )], qType: QuantifierC )( implicit ctx: MutableContext ): Unit = {
+
+    import gapt.proofs.context.ReductionRuleUpdate.reductionRulesAsReductionRuleUpdate
+
+    val definitions: Map[Const, List[( Atom, Formula )]] = {
       for ( ( f @ Atom( newEx, _ ), ( form, vars ) ) <- chF.toList )
         yield ( newEx.asInstanceOf[Const], ( f,
         if ( qType.equals( ForallC ) ) QuantIntroForAll( form, vars )
         else QuantIntroExists( form, vars ) ) )
-    }.groupBy( _._1 ).map { case ( pred, eqns ) => ( pred, eqns.map( _._2 ) ) } )
+    }.groupBy( _._1 ).map { case ( pred, eqns ) => ( pred, eqns.map( _._2 ) ) }
+
+    definitions.keys.foreach { ctx += _ }
+    ctx += definitions.values.flatten.map {
+      case ( lhs, rhs ) => ReductionRule( lhs, rhs )
+    }.toSeq
+  }
   private def structNames( sss: Map[CLS, ( Struct, Set[Var] )] ): Map[( String, Sequent[Boolean] ), String] =
     sss.keySet.map {
       case CLS( Apps( Const( name, _, _ ), _ ), cc ) =>
