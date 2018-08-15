@@ -1,6 +1,7 @@
 package gapt.formats.tptp
 
-import ammonite.ops._
+import ammonite.ops.{ Path, _ }
+import gapt.formats.InputFile
 import gapt.formats.csv.{ CSVFile, CSVRow }
 import gapt.utils.Statistic
 
@@ -21,10 +22,17 @@ package object statistics {
   /**
    * Easier representation of file paths data follow a certain schema
    */
-  abstract class FileData {
-    def fileName: String
+  abstract class FileData extends InputFile {
+    override def fileName: String
+
+    def read = ammonite.ops.read ! fileAsPath
 
     def file = FilePath( fileName )
+
+    def fileAsPath = file match {
+      case p: Path     => p;
+      case rp: RelPath => Path( rp, pwd )
+    }
   }
 
   case object UnknownFile extends FileData {
@@ -206,6 +214,7 @@ package object statistics {
       reused_axioms:    Map[RuleName, ( String, Int )],
       reused_derived:   Map[RuleName, ( String, Int )],
       clause_sizes:     Statistic[Int] ) extends Serializable {
+    //TODO: add clause weight: number of symbols occurring in a clause i.e. sum of dag sizes of terms
     /*
      Invariants:
      dagSize <= treeSize

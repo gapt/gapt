@@ -1,13 +1,13 @@
 package gapt.examples
 
+import ammonite.ops.exists
 import gapt.formats.csv.{ CSVFile, CSVRow }
+import gapt.formats.leancop.{ LeanCoPParser, LeanCoPParserException }
 import gapt.formats.tptp.statistics._
-import gapt.utils.{ TimeOutException, time, withTimeout }
+import gapt.utils.{ Statistic, TimeOutException, time, withTimeout }
 
 import scala.compat.Platform.StackOverflowError
 import scala.concurrent.duration._
-
-import java.io._
 
 object CASCEvaluation {
   def apply( prefix: String, print_statistics: Boolean = false ) = {
@@ -32,6 +32,7 @@ object CASCEvaluation {
   }
 
   def saveResult[T]( filename: String, bundle: T ) = {
+    import java.io._
     var oos: ObjectOutputStream = null
     try {
       oos = new ObjectOutputStream( new FileOutputStream( filename ) )
@@ -49,6 +50,7 @@ object CASCEvaluation {
   }
 
   def loadResult[T]( filename: String ): Option[T] = {
+    import java.io._
     var ois: ObjectInputStream = null
     try {
       ois = new ObjectInputStream( new FileInputStream( filename ) )
@@ -68,6 +70,29 @@ object CASCEvaluation {
 
   def processFiles[T <: FileData]( data: Iterable[T], print_statistics: Boolean = false ) =
     time( TstpStatistics.applyAll( data, print_statistics ) )
+
+  def processLeanCop[T <: FileData]( data: Iterable[T], print_statistics: Boolean = false ) = {
+    data.par.map( x => try withTimeout( 120 seconds ) {
+      if ( exists ! x.fileAsPath ) {
+        val ep = LeanCoPParser.getExpansionProof( x )
+        if ( print_statistics ) print( "." );
+        Right( ep )
+      } else {
+        if ( print_statistics ) print( "x" );
+        Left( FileNotFound( x ) )
+      }
+    } catch {
+      case _: TimeOutException =>
+        if ( print_statistics ) print( "t" );
+        Left( ReconstructionTimeout( x ) )
+      case _: StackOverflowError =>
+        if ( print_statistics ) print( "s" );
+        Left( StackOverflow( x ) )
+      case _: LeanCoPParserException =>
+        if ( print_statistics ) print( "l" );
+        Left( ParsingError( x ) )
+    } )
+  }
 
   def eval[T <: CASCResult]( bundle: ResultBundle[T] ) = {
     val ( rstatsByProver, rstatsByProblem, rallSolved ) = TstpStatistics.bagResults( bundle.rp_stats )
@@ -175,6 +200,19 @@ object CASCEvaluation {
 
     if ( tstp_e_bags.rg.nonEmpty ) println( "warning: tstp error bag 'gave up' non-empty!" )
     if ( rp_e_bags.mf.nonEmpty ) println( "warning: res proof error bag 'malformed file' non-empty!" )
+  }
+
+  def getRPstatByProperty[S, T <: FileData]( rp_stats: Map[T, RPProofStats[T]], prop: RPProofStats[T] => S )( implicit num: Numeric[S], conv: S => BigDecimal ) =
+    Statistic( rp_stats.values.toSeq.map( prop( _ ) ) )
+
+  def eval_rp_stats[T <: FileData]( bundle: ResultBundle[T] ) = {
+    implicit def conv( v: BigInt ) = BigDecimal( v )
+
+    val depth_stats = getRPstatByProperty( bundle.rp_stats, ( x: RPProofStats[T] ) => x.depth )
+    val size_stats = getRPstatByProperty( bundle.rp_stats, ( x: RPProofStats[T] ) => x.dagSize )
+    val blowup_stats = getRPstatByProperty( bundle.rp_stats, ( x: RPProofStats[T] ) => x.sizeRatio() )
+
+    ( depth_stats, size_stats, blowup_stats )
   }
 
   def get_depth_to_mindepth_graph[T <: CASCResult]( bundle: ResultBundle[T] ) =
