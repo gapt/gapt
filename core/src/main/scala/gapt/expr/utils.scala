@@ -156,8 +156,8 @@ object constants {
    */
   def equalities( expression: Expr ): Set[Const] =
     all( expression ).filter {
-      case Const( "=", t1 ->: t2 ->: t3 ->: To, _ ) => ( t1 == t2 ) && ( t2 == t3 ) //type arguments must agree
-      case _                                        => false
+      case Const( "=", t1 ->: t2 ->: To, _ ) => t1 == t2 //type arguments must agree
+      case _                                 => false
     }
 
   def apply( expression: Expr ): Set[Const] =
