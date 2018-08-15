@@ -86,6 +86,17 @@ object Statistic {
   }
 
   /**
+   * Creates a statistic from a collection of values of type T, if values is non-empty
+   * @param values the collection of values
+   * @param num the implicit Numeric object with implementations for the algebraic operators
+   * @param conv a measure that maps the elements of T to big decimals
+   * @tparam T the type of elements
+   * @return the statistic belonging to the values
+   */
+  def applyOpt[T]( values: Seq[T] )( implicit num: Numeric[T], conv: T => BigDecimal ): Option[Statistic[T]] =
+    if ( values.isEmpty ) None else Some( apply( values ) )
+
+  /**
    * Converts a statistic option to CSV with a default of not applicable
    * @param s an optional statistic
    * @tparam T the type of data elements of the statistic

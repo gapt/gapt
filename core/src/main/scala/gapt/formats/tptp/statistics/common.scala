@@ -27,6 +27,33 @@ package object statistics {
     def file = FilePath( fileName )
   }
 
+  case object UnknownFile extends FileData {
+    override def fileName: String = { throw new IllegalArgumentException( "File does not exist!" ) }
+  }
+
+  /**
+   * Represents a TPTP library problem of a certain category. The problem must be in
+   * $path/Problems/XYZ/ - $path/Axioms must contain the axiom files to include.
+   * @param path the path to the TPTP base directory
+   * @param problem a TPTP library problem
+   */
+  case class TptpLibraryProblem( path: String, problem: Problem ) extends FileData {
+    /**
+     * The category is encoded in the file name
+     */
+    val category = categoryOfFile( problem )
+
+    /**
+     * Extracts the category from the file name i.e. the first 3 letters
+     */
+    def categoryOfFile( f: String ) = {
+      require( f.size > 3, "Name must be larger than 3 characters." )
+      f take 3
+    }
+
+    override def fileName = s"$path/Problems/$category/$problem.p"
+  }
+
   /**
    * A filename that comes from the CASC competition: the prover and TSTP problem name are accessible.
    * The filename is automatically set to $path/$prover-$problem$extension
@@ -224,12 +251,19 @@ package object statistics {
 
   }
 
-  /*
-   Invariants:
-    axiom_count <= input_formula_count
-    constants + unary_funs + binary_funs <= signature_size
- */
-  case class InputStats[T <: FileData](
+  /**
+   * Captures data from a TPTP problem file
+   * @param name the file the data comes from
+   * @param axiom_count the number of axioms in the problem (including included files)
+   * @param input_formula_count the number statements asserting an imput formula
+   * @param signature_size the total number of different constants and function symbols
+   * @param constants the number of constants in the problem
+   * @param unary_funs the number of unary functions in the problem
+   * @param binary_funs the number of binary functions in the problem
+   * @param arity_statistics statistical data about the arities of function symbols (may be empty e.g. for ∀xEy.x=y)
+   * @tparam T
+   */
+  case class TptpInputStats[T <: FileData](
       name:                T,
       axiom_count:         Int,
       input_formula_count: Int,
@@ -237,8 +271,31 @@ package object statistics {
       constants:           Int,
       unary_funs:          Int,
       binary_funs:         Int,
-      max_arity:           Int,
-      median_arity:        Int )
+      contains_equality:   Boolean,
+      arity_statistics:    Option[Statistic[Int]] ) {
+    /*
+     Invariants:
+      axiom_count <= input_formula_count
+      constants + unary_funs + binary_funs <= signature_size
+   */
+  }
+  object TptpInputStats {
+    def csv_header = List( "problem", "axiom_count", "input_formula_count", //signature size is contained in arity statisticis
+      "constants", "unary_funs", "binary_funs" ) ++ Statistic.csv_header( "arities" ) //TODO: fix this for arbitrary file data, this only works for TptpLibraryProblem atm
+    def toCSV[T <: FileData]( s: TptpInputStats[T] ) = {
+      val namecol = s.name match {
+        case CASCResult( path, prover, problem, extension ) =>
+          List( prover, problem )
+        case TptpLibraryProblem( path, problem ) =>
+          List( problem )
+      }
+
+      CSVRow( namecol ++
+        List( s.axiom_count, s.input_formula_count, s.constants, s.unary_funs, s.binary_funs ).map( _.toString ) ++
+        Statistic.optCSV( s.arity_statistics ) //arity_statistics contains the signature size
+      )
+    }
+  }
 
   /**
    * Collects errors and statistics from proof sketch and resolution proof reconstruction
@@ -258,7 +315,7 @@ package object statistics {
     /**
      * Write a bundle to a set of files: $file_prefix-rp-stats.csv, $file_prefix-tstp-stats.csv,
      * $file_prefix-rp-errors.csv and $file_prefix-tstp-errors.csv
-     * @param file_prefix the prfix for the files
+     * @param file_prefix the prefix for the files
      * @param path the path where to save the file, default : pwd
      * @return the csv files written to disk
      */

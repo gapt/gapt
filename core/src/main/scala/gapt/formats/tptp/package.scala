@@ -78,4 +78,16 @@ package object tptp {
       case _                                    => None
     }
   }
+
+  /**
+   * The roles of valid formula assertions in a TPTP file.
+   * @see http://tptp.cs.miami.edu/~tptp/TPTP/SyntaxBNF.html#formula_role
+   */
+  object TptpFormulaRoles {
+    val roles: Set[FormulaRole] = Set( "axiom ", "hypothesis ", "definition ", "assumption ", "lemma ",
+      "theorem ", "corollary ", "conjecture ", "negated_conjecture ", "plain" )
+
+    def apply() = roles
+  }
+
 }

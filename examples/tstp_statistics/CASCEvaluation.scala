@@ -2,7 +2,11 @@ package gapt.examples
 
 import gapt.formats.csv.{ CSVFile, CSVRow }
 import gapt.formats.tptp.statistics._
-import gapt.utils.time
+import gapt.utils.{ TimeOutException, time, withTimeout }
+
+import scala.compat.Platform.StackOverflowError
+import scala.concurrent.duration._
+
 import java.io._
 
 object CASCEvaluation {
@@ -12,7 +16,22 @@ object CASCEvaluation {
     eval( bundle )
   }
 
-  def saveResult[T <: FileData]( filename: String, bundle: ResultBundle[T] ) = {
+  def getProblemStats( prefix: String ) = {
+    val infiles = CASCData.prepareInputProblems( prefix )
+    infiles.par.map( x => {
+      try withTimeout( 120 seconds ) {
+        val stat = TPTPstatistics( x )
+        print( "." )
+        Right( stat )
+      } catch {
+        case _: TimeOutException   => Left( ReconstructionTimeout( x ) )
+        case _: StackOverflowError => Left( StackOverflow( x ) )
+      }
+    } ).toList
+
+  }
+
+  def saveResult[T]( filename: String, bundle: T ) = {
     var oos: ObjectOutputStream = null
     try {
       oos = new ObjectOutputStream( new FileOutputStream( filename ) )
@@ -29,11 +48,11 @@ object CASCEvaluation {
     }
   }
 
-  def loadResult[T <: FileData]( filename: String ): Option[ResultBundle[T]] = {
+  def loadResult[T]( filename: String ): Option[T] = {
     var ois: ObjectInputStream = null
     try {
       ois = new ObjectInputStream( new FileInputStream( filename ) )
-      Some( ois.readObject.asInstanceOf[ResultBundle[T]] )
+      Some( ois.readObject.asInstanceOf[T] )
     } catch {
       case e: Exception =>
         println( s"error reading from $filename: ${e.getMessage()}" )
@@ -186,11 +205,39 @@ object CASCEvaluation {
 }
 
 object CASCData {
-  def prepareProblems( prefix: String ) =
+  /**
+   * Creates a list of all problems for all provers
+   * @param prefix the path prefix containing the files
+   * @return A list of [[CASCResult]]s (which are an instance of [[FileData]])
+   */
+  def prepareProblems( prefix: String ): Seq[CASCResult] =
+    prepareProblems( prefix, provers )
+
+  /**
+   * Creates a list of all problems for a list of provers
+   * @param prefix the path prefix containing the files
+   * @param provers the provers to look into
+   * @return A list of [[CASCResult]]s (which are an instance of [[FileData]])
+   */
+  def prepareProblems( prefix: String, provers: List[Prover] ): Seq[CASCResult] =
     for ( f <- files; p <- provers ) yield {
       CASCResult( s"$prefix/$p/proofs", p, f, ".txt.out" )
     }
 
+  /**
+   * Creates a list of input files in the TPTP library hierarchy
+   * @param prefix the path prefix of the library (files must be in $prefix/Problems/XYZ
+   * @return the input problems
+   */
+  def prepareInputProblems( prefix: String ) = {
+    for ( f <- files ) yield {
+      TptpLibraryProblem( prefix, f )
+    }
+  }
+
+  /**
+   * A subset of the provers taking part in the 2018 CASC FOF competition
+   */
   val provers = List(
     "CSE_E---1.0",
     "E---2.2pre",
@@ -199,7 +246,7 @@ object CASCData {
     "Vampire---4.3" )
 
   /**
-   * The problem names of the 2018 CASC competition
+   * The problem names of the 2018 CASC FOF competition
    */
   val files = List(
     "AGT013+2", "AGT015+1", "AGT018+1", "AGT019+1", "AGT022+1",

@@ -1,9 +1,10 @@
 package gapt.formats.tptp.statistics
 
-import ammonite.ops.{ FilePath, Path, read }
+import ammonite.ops.{ BasePathImpl, FilePath, Path, RelPath, read }
 import gapt.expr._
 import gapt.formats.csv.{ CSVFile, CSVRow }
-import gapt.formats.tptp.{ TptpFile, TptpParser }
+import gapt.formats.tptp.{ AnnotatedFormula, TptpFile, TptpFormulaRoles, TptpParser }
+import gapt.utils.Statistic
 
 import scala.collection.mutable
 
@@ -12,11 +13,22 @@ object TPTPstatistics {
   type Freqmap = Map[Const, Int]
   type Sigtable = Map[String, Seq[Set[Const]]]
 
-  def apply( tptpFile: TptpFile ): ( Signature, Freqmap ) = {
+  def apply[T <: TptpLibraryProblem]( name: T ): TptpInputStats[T] = {
+    val tptpFile = TptpParser.load( name.file, f => TptpParser.parse( FilePath( s"${name.path}/$f" ) ) )
+    apply( tptpFile, name )
+  }
+
+  def apply[T <: FileData]( tptpFile: TptpFile, name: T = UnknownFile ): TptpInputStats[T] = {
     val ( deps, sequent ) = tptpFile.toSequentWithIncludes
 
+    val formula_assertions = tptpFile.inputs.collect {
+      case a @ AnnotatedFormula( language, name, role, formula, annotations ) if TptpFormulaRoles() contains role => a
+    }
+
+    val axiom_assertions = formula_assertions.filter( _.role == "axiom" )
+
     //get symbols in file
-    val consts = constants( sequent ) // collect( Seq( sequent.toFormula ), Seq() )
+    val consts = constants( sequent )
 
     //compute frequency of arities
     val sig = mutable.Map[Int, Set[Const]]()
@@ -26,6 +38,16 @@ object TPTPstatistics {
       sig( ar ) = entry + c
     }
 
+    val has_equality = constants.equalities( sequent.toFormula ).nonEmpty
+
+    //compute arity statistics
+    val arity_statistics = Statistic.applyOpt( consts.toList.map( c => arity( c.ty ) ) )
+    arity_statistics match {
+      case Some( Statistic( n, _, _, _, _, _ ) ) =>
+        require( n == consts.size, "Number of constants must agree with n of arity statistics!" )
+      case _ => ()
+    }
+
     //compute frequency of constants
     val frequencies = mutable.Map[Const, Int]()
     for ( c <- consts ) {
@@ -33,10 +55,17 @@ object TPTPstatistics {
       frequencies( c ) = entry + 1
     }
 
-    ( sig.toMap, frequencies.toMap )
+    val const_count = sig.getOrElse( 0, Set() ).size
+    val unary_count = sig.getOrElse( 1, Set() ).size
+    val binary_count = sig.getOrElse( 2, Set() ).size
+    val total_count = sig.values.flatten.foldLeft( 0 )( ( sum, c ) => sum + arity( c.ty ) )
+
+    TptpInputStats( name, axiom_assertions.size, formula_assertions.size,
+      total_count, const_count, unary_count, binary_count, has_equality, arity_statistics )
 
   }
 
+  /*
   def apply( file_list: Path ): Sigtable = {
     val files = read.lines( file_list )
 
@@ -65,6 +94,7 @@ object TPTPstatistics {
 
     sig_table.toMap
   }
+  */
 
   def sigtableToCsv( table: Sigtable ): CSVFile[String] = {
     var cols = 0

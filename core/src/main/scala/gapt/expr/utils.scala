@@ -135,6 +135,9 @@ object typeVariables {
  * Returns the set of non-logical constants occuring in the given argument.
  */
 object constants {
+  /**
+   * Find all constants in the expression
+   */
   def all( expression: Expr ): Set[Const] = {
     val cs = mutable.Set[Const]()
     def f( e: Expr ): Unit = e match {
@@ -147,6 +150,16 @@ object constants {
     f( expression )
     cs.toSet
   }
+
+  /**
+   * Find all equality constants in the expression
+   */
+  def equalities( expression: Expr ): Set[Const] =
+    all( expression ).filter {
+      case Const( "=", t1 ->: t2 ->: t3 ->: To, _ ) => ( t1 == t2 ) && ( t2 == t3 ) //type arguments must agree
+      case _                                        => false
+    }
+
   def apply( expression: Expr ): Set[Const] =
     all( expression ).filter { !_.isInstanceOf[LogicalConstant] }
 
