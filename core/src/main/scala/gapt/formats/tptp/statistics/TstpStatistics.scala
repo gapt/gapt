@@ -4,6 +4,7 @@ import ammonite.ops.{ Path, exists }
 import gapt.expr._
 import gapt.formats.csv.{ CSVFile, CSVRow }
 import gapt.formats.tptp._
+import gapt.proofs.HOLSequent
 import gapt.proofs.resolution._
 import gapt.proofs.sketch.{ RefutationSketch, RefutationSketchToResolution }
 import gapt.utils.{ Statistic, TimeOutException, withTimeout }
@@ -452,6 +453,10 @@ object TstpStatistics {
     if ( filtered.nonEmpty ) Some( Statistic( filtered ) ) else None
   }
 
+  def clauseWeight( s: HOLSequent ): Int = {
+    ( s.antecedent ++ s.antecedent ).foldLeft( 0 )( ( weight, formula ) => weight + expressionSize( formula ) )
+  }
+
   /**
    * Calculates [[RPProofStats]] for a given [[ResolutionProof]]
    * @param name the file containing rp
@@ -492,13 +497,15 @@ object TstpStatistics {
       case _ => Seq()
     }.unzip
 
-    val clause_sizes_dag = Statistic( rp.dagLike.postOrder.flatMap( x => x.conclusion.size :: Nil ) )
+    val ( csizes, cweights ) = rp.dagLike.postOrder.flatMap( x => ( x.conclusion.size, clauseWeight( x.conclusion ) ) :: Nil ).unzip
+    val clause_sizes = Statistic( csizes )
+    val clause_weights = Statistic( cweights )
 
-    val freq = mutable.Map[ClauseId, ( RuleName, Int )]() //TODO: fill in
+    val freq = mutable.Map[ClauseId, Int]() //TODO: fill in
 
     val stats = RPProofStats( name, dagSize, treeSize, depth, hist.toMap, freq.toMap,
-      getSubstStats( subst_sizes ), getSubstStats( subst_depths ),
-      fst_map_c( reused_axioms ), fst_map_c( reused_derived ), clause_sizes_dag )
+      fst_map_c( reused_axioms ), fst_map_c( reused_derived ), clause_sizes, clause_weights,
+      getSubstStats( subst_sizes ), getSubstStats( subst_depths ) )
 
     stats
   }
@@ -537,12 +544,14 @@ object TstpStatistics {
 
     val ( reused_axioms, reused_derived ) = reused_proofs.partition( _._2._3 )
 
-    val clause_sizes_dag = Statistic( rp.dagLike.postOrder.flatMap( x => x.conclusion.size :: Nil ) )
+    val ( csizes, cweights ) = rp.dagLike.postOrder.flatMap( x => ( x.conclusion.size, clauseWeight( x.conclusion ) ) :: Nil ).unzip
+    val clause_sizes = Statistic( csizes )
+    val clause_weights = Statistic( cweights )
 
-    val freq = mutable.Map[ClauseId, ( RuleName, Int )]() //TODO: fill in
+    val freq = mutable.Map[ClauseId, Int]() //TODO: fill in
 
     val stats = TstpProofStats( name, dagSize, treeSize, depth, hist.toMap, freq.toMap,
-      fst_map_c( reused_axioms ), fst_map_c( reused_derived ), clause_sizes_dag )
+      fst_map_c( reused_axioms ), fst_map_c( reused_derived ), clause_sizes, clause_weights )
 
     stats
   }

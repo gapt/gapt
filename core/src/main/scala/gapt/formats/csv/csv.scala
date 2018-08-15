@@ -48,3 +48,16 @@ case class CSVFile[T]( header: CSVRow[T], rows: Seq[CSVRow[T]], sep: String ) {
 object CSVFile {
   val defaultSep = ", "
 }
+
+trait CSVConvertible[T] {
+  /**
+   * Returns the csv header decribing the data
+   */
+  def csvHeader(): CSVRow[String]
+
+  /**
+   * Converts the data to a CSV row
+   */
+  def toCSV(): CSVRow[T]
+
+}
