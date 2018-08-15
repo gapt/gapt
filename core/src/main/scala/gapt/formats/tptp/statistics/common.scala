@@ -7,7 +7,7 @@ import gapt.utils.Statistic
 
 package object statistics {
 
-  type RuleName = String
+  type RuleName = Unit
   type ClauseId = String
   type Prover = String
   type Problem = String

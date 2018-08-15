@@ -468,21 +468,21 @@ object TstpStatistics {
     val dagSize = rp.dagLike.size
     val treeSize = rp.treeLike.size
     val depth = rp.depth
-    val hist = mutable.Map[RuleName, Int]()
+    val freq = mutable.Map[ClauseId, Int]()
 
     val subproof_count = rp.subProofs.size
     val ids = ( 1 to subproof_count ).map( "node" + _ )
 
-    val names = mutable.Map[RuleName, ResolutionProof]() ++ ( ids zip rp.subProofs )
-    val rnames = mutable.Map[ResolutionProof, RuleName]() ++ ( rp.subProofs zip ids )
+    val names = mutable.Map[ClauseId, ResolutionProof]() ++ ( ids zip rp.subProofs )
+    val rnames = mutable.Map[ResolutionProof, ClauseId]() ++ ( rp.subProofs zip ids )
 
     require( rnames.size == subproof_count )
 
     for ( ( r, id ) <- rnames ) {
-      r.immediateSubProofs.map( x => inc_rule_count( rnames( x ), hist ) )
+      r.immediateSubProofs.map( x => inc_rule_count( rnames( x ), freq ) )
     }
 
-    val reused_proofs = hist.flatMap {
+    val reused_proofs = freq.flatMap {
       case ( n, freq ) if freq > 1 =>
         val p = names( n )
         ( n, ( p.conclusion, freq, p.immediateSubProofs.isEmpty ) ) :: Nil
@@ -501,7 +501,7 @@ object TstpStatistics {
     val clause_sizes = Statistic( csizes )
     val clause_weights = Statistic( cweights )
 
-    val freq = mutable.Map[ClauseId, Int]() //TODO: fill in
+    val hist = mutable.Map[RuleName, Int]() //TODO: fill in
 
     val stats = RPProofStats( name, dagSize, treeSize, depth, hist.toMap, freq.toMap,
       fst_map_c( reused_axioms ), fst_map_c( reused_derived ), clause_sizes, clause_weights,
@@ -521,21 +521,21 @@ object TstpStatistics {
     val dagSize = rp.dagLike.size
     val treeSize = rp.treeLike.size
     val depth = rp.depth
-    val hist = mutable.Map[RuleName, Int]()
+    val freq = mutable.Map[ClauseId, Int]()
 
     val subproof_count = rp.subProofs.size
     val ids = ( 1 to subproof_count ).map( "node" + _ )
 
-    val names = mutable.Map[RuleName, RefutationSketch]() ++ ( ids zip rp.subProofs )
-    val rnames = mutable.Map[RefutationSketch, RuleName]() ++ ( rp.subProofs zip ids )
+    val names = mutable.Map[ClauseId, RefutationSketch]() ++ ( ids zip rp.subProofs )
+    val rnames = mutable.Map[RefutationSketch, ClauseId]() ++ ( rp.subProofs zip ids )
 
     require( rnames.size == subproof_count )
 
     for ( ( r, id ) <- rnames ) {
-      r.immediateSubProofs.map( x => inc_rule_count( rnames( x ), hist ) )
+      r.immediateSubProofs.map( x => inc_rule_count( rnames( x ), freq ) )
     }
 
-    val reused_proofs = hist.flatMap {
+    val reused_proofs = freq.flatMap {
       case ( n, freq ) if freq > 1 =>
         val p = names( n )
         ( n, ( p.conclusion, freq, p.immediateSubProofs.isEmpty ) ) :: Nil
@@ -548,7 +548,7 @@ object TstpStatistics {
     val clause_sizes = Statistic( csizes )
     val clause_weights = Statistic( cweights )
 
-    val freq = mutable.Map[ClauseId, Int]() //TODO: fill in
+    val hist = mutable.Map[RuleName, Int]() //TODO: fill in
 
     val stats = TstpProofStats( name, dagSize, treeSize, depth, hist.toMap, freq.toMap,
       fst_map_c( reused_axioms ), fst_map_c( reused_derived ), clause_sizes, clause_weights )
