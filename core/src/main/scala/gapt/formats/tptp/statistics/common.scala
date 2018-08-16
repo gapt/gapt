@@ -324,6 +324,9 @@ package object statistics {
 
     def toCSVFile[S <: FileData, T <: CSVConvertible[String]]( m: Map[S, T], sep: String = "," ) =
       RPProofStats.toCSVFile( m, sep )
+  }
+
+  object TstpProofStats2 {
     def toCSV[T <: FileData]( s: TstpProofStats[T] ): CSVRow[String] = {
       val ( problem, solver ) = s.name match {
         case CASCResult( _, prover, problem, _ ) => ( prover, problem )
