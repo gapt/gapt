@@ -57,6 +57,7 @@ package object statistics {
    * @param path    the path to the TPTP base directory
    * @param problem a TPTP library problem
    */
+  @SerialVersionUID( 7467907234480399719L )
   case class TptpLibraryProblem( path: String, problem: Problem ) extends FileData with Serializable {
     /**
      * The category is encoded in the file name
@@ -328,6 +329,7 @@ package object statistics {
    * @param arity_statistics    statistical data about the arities of function symbols (may be empty e.g. for ∀xEy.x=y)
    * @tparam T
    */
+  @SerialVersionUID( -2646726266696413930L )
   case class TptpInputStats[T <: FileData](
       name:                T,
       axiom_count:         Int,
