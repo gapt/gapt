@@ -215,6 +215,7 @@ package object statistics {
     val csv_header = CSVRow(
       List( "solver", "problem", "dagsize", "treesize", "sizeratio", "depth" )
         ++ Statistic.csv_header( "inference_freq" )
+        ++ Statistic.csv_header( "rules_freq" )
         ++ Statistic.csv_header( "subterm_size" )
         ++ Statistic.csv_header( "subterm_depth" )
         ++ Statistic.csv_header( "reused_axioms" )
@@ -233,10 +234,31 @@ package object statistics {
      */
     def toCSVFile[S <: FileData, T <: CSVConvertible[String]]( m: Map[S, T], sep: String = "," ) = {
       val entries = m.keySet.toSeq.sortBy( _.fileName )
-      val rows = entries.map( m.apply ).map( _.toCSV() )
+      val rows = entries.map( m.apply ).map {
+        case rp: RPProofStats[_]     => RPProofStats.toCSV( rp )
+        case tstp: TstpProofStats[_] => TstpProofStats.toCSV( tstp )
+        case x                       => x.toCSV() //change to _.toCSV when there's time to regenerate serialized data
+      }
       var header = if ( entries.nonEmpty ) m( entries( 0 ) ).csvHeader() else CSVRow( List[String]() )
 
       CSVFile( header, rows, sep )
+    }
+
+    def toCSV[T <: FileData]( s: RPProofStats[T] ): CSVRow[String] = {
+      val ( problem, solver ) = s.name match {
+        case CASCResult( _, prover, problem, _ ) => ( prover, problem )
+        case other                               => ( "unknown", other.fileName )
+      }
+      CSVRow(
+        List( problem, solver, s.dagSize.toString, s.treeSize.toString,
+          s.sizeRatio.toString, s.depth.toString )
+          ++ Statistic.alsoEmptyDataToCSV( s.clause_frequency.toList.map( _._2 ) )
+          ++ Statistic.alsoEmptyDataToCSV( s.rule_histogram.toList.map( _._2 ) )
+          ++ Statistic.optCSV( s.subst_term_sizes )
+          ++ Statistic.optCSV( s.subst_term_depths )
+          ++ Statistic.alsoEmptyDataToCSV( s.reused_axioms.toList.map( _._2._2 ) )
+          ++ Statistic.alsoEmptyDataToCSV( s.reused_derived.toList.map( _._2._2 ) )
+          ++ s.clause_sizes.toCSV )
     }
 
   }
@@ -295,11 +317,27 @@ package object statistics {
     val csv_header = CSVRow(
       List( "solver", "problem", "dagsize", "treesize", "sizeratio", "depth" )
         ++ Statistic.csv_header( "inference_freq" )
+        ++ Statistic.csv_header( "rules_freq" )
         ++ Statistic.csv_header( "reused_axioms" )
         ++ Statistic.csv_header( "reused_derived" )
         ++ Statistic.csv_header( "clause_sizes" ) )
 
-    def toCSVFile[S <: FileData, T <: CSVConvertible[String]]( m: Map[S, T], sep: String = "," ) = RPProofStats.toCSVFile( m, sep )
+    def toCSVFile[S <: FileData, T <: CSVConvertible[String]]( m: Map[S, T], sep: String = "," ) =
+      RPProofStats.toCSVFile( m, sep )
+    def toCSV[T <: FileData]( s: TstpProofStats[T] ): CSVRow[String] = {
+      val ( problem, solver ) = s.name match {
+        case CASCResult( _, prover, problem, _ ) => ( prover, problem )
+        case other                               => ( "unknown", other.fileName )
+      }
+      CSVRow(
+        List( problem, solver, s.dagSize.toString, s.treeSize.toString,
+          s.sizeRatio.toString, s.depth.toString )
+          ++ Statistic.alsoEmptyDataToCSV( s.clause_frequency.toList.map( _._2 ) )
+          ++ Statistic.alsoEmptyDataToCSV( s.rule_histogram.toList.map( _._2 ) )
+          ++ Statistic.alsoEmptyDataToCSV( s.reused_axioms.toList.map( _._2._2 ) )
+          ++ Statistic.alsoEmptyDataToCSV( s.reused_derived.toList.map( _._2._2 ) )
+          ++ s.clause_sizes.toCSV )
+    }
 
   }
 
