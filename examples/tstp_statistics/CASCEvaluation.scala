@@ -130,6 +130,13 @@ object CASCEvaluation {
       eval_before_after( br, dagRatio[T], "  dag ratio  " )
     }
 
+    println( "=== Replayed Proof Statistics" )
+    eval_rp_stats( bundle.rp_stats.values.toSet )
+    for ( p <- provers ) {
+      print( s"$p & " )
+      eval_rp_stats( rstatsByProver( p ) )
+    }
+
   }
 
   def dagRatio[T <: CASCResult]( pair: ( TstpProofStats[T], RPProofStats[T] ) ) = {
@@ -202,17 +209,35 @@ object CASCEvaluation {
     if ( rp_e_bags.mf.nonEmpty ) println( "warning: res proof error bag 'malformed file' non-empty!" )
   }
 
-  def getRPstatByProperty[S, T <: FileData]( rp_stats: Map[T, RPProofStats[T]], prop: RPProofStats[T] => S )( implicit num: Numeric[S], conv: S => BigDecimal ) =
-    Statistic( rp_stats.values.toSeq.map( prop( _ ) ) )
+  def getRPstatByProperty[S, T <: FileData]( rp_stats: Set[RPProofStats[T]], prop: RPProofStats[T] => S )( implicit num: Numeric[S], conv: S => BigDecimal ) =
+    Statistic( rp_stats.toSeq.map( prop( _ ) ) )
 
-  def eval_rp_stats[T <: FileData]( bundle: ResultBundle[T] ) = {
+  def getStatisticSummary[T]( s: Seq[Statistic[T]] )( implicit num: Numeric[T], conv: T => BigDecimal ) = {
+    val min = Statistic( s.map( _.min ) ).min
+    val avg = Statistic( s.map( _.avg ) ).avg
+    val max = Statistic( s.map( _.max ) ).max
+    Statistic( s.size, min, avg, max, num.zero, None )
+
+  }
+
+  def eval_rp_stats[T <: FileData]( rp_stats: Set[RPProofStats[T]] ) = {
     implicit def conv( v: BigInt ) = BigDecimal( v )
 
-    val depth_stats = getRPstatByProperty( bundle.rp_stats, ( x: RPProofStats[T] ) => x.depth )
-    val size_stats = getRPstatByProperty( bundle.rp_stats, ( x: RPProofStats[T] ) => x.dagSize )
-    val blowup_stats = getRPstatByProperty( bundle.rp_stats, ( x: RPProofStats[T] ) => x.sizeRatio() )
+    val depth_stats = getRPstatByProperty( rp_stats, ( x: RPProofStats[T] ) => x.depth )
+    val size_stats = getRPstatByProperty( rp_stats, ( x: RPProofStats[T] ) => x.dagSize )
+    val blowup_stats = getRPstatByProperty( rp_stats, ( x: RPProofStats[T] ) => x.sizeRatio() )
+    val clausesize_stats = getStatisticSummary( rp_stats.toList.map( _.clause_sizes ) )
+    val clauseweight_stats = getStatisticSummary( rp_stats.toList.map( _.clause_weights ) )
+    //val _stats = getStatisticSummary(rp_stats.map(_.))
 
-    ( depth_stats, size_stats, blowup_stats )
+    //print( s"${depth_stats.min} & ${depth_stats.avg} & ${depth_stats.max} & " )
+    //print( s"${size_stats.min} & ${size_stats.avg} & ${size_stats.max} & " )
+    //print( s"${blowup_stats.min} & ${blowup_stats.avg} & ${blowup_stats.max} & " )
+    print( s"${clausesize_stats.min} & ${clausesize_stats.avg} & ${clausesize_stats.max} & " )
+    print( s"${clauseweight_stats.min} & ${clauseweight_stats.avg} & ${clauseweight_stats.max}  " )
+
+    println( "\\\\" )
+    ( depth_stats, size_stats, blowup_stats, clausesize_stats, clauseweight_stats )
   }
 
   def get_depth_to_mindepth_graph[T <: CASCResult]( bundle: ResultBundle[T] ) =
