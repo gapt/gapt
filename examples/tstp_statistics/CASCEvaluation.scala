@@ -43,7 +43,7 @@ object CASCEvaluation {
       if ( oos != null ) try {
         oos.close
       } catch {
-        case _: Exception => () //ignore
+        case e: Exception => System.err.println( e )
       }
     }
   }
@@ -61,7 +61,7 @@ object CASCEvaluation {
       if ( ois != null ) try {
         ois.close
       } catch {
-        case _: Exception => () //ignore
+        case e: Exception => System.err.println( e )
       }
     }
   }
