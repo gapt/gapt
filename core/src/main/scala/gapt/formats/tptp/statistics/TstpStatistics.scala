@@ -21,7 +21,7 @@ import scala.concurrent.duration._
  * @tparam T an instance of [[FileData]]
  */
 @SerialVersionUID( 700000L )
-sealed abstract class TstpError[T <: FileData]( val file: T ) extends Serializable
+sealed abstract class TstpError[+T <: FileData]( val file: T ) extends Serializable
 
 /**
  * Companion object to [[TstpError]].
@@ -62,7 +62,7 @@ object TstpError {
  * @tparam T an instance of [[FileData]]
  */
 @SerialVersionUID( 700001L )
-case class FileNotFound[T <: FileData]( override val file: T ) extends TstpError( file )
+case class FileNotFound[+T <: FileData]( override val file: T ) extends TstpError( file )
 
 /**
  * Signifies an error in the TSTP DAG
@@ -70,7 +70,7 @@ case class FileNotFound[T <: FileData]( override val file: T ) extends TstpError
  * @tparam T an instance of [[FileData]]
  */
 @SerialVersionUID( 700002L )
-case class MalformedFile[T <: FileData]( override val file: T ) extends TstpError( file )
+case class MalformedFile[+T <: FileData]( override val file: T ) extends TstpError( file )
 
 /**
  * Signifies other exception that were thrown during sketch construction (e.g. the file is syntactically incorrect)
@@ -78,7 +78,7 @@ case class MalformedFile[T <: FileData]( override val file: T ) extends TstpErro
  * @tparam T an instance of [[FileData]]
  */
 @SerialVersionUID( 700003L )
-case class ParsingError[T <: FileData]( override val file: T ) extends TstpError( file )
+case class ParsingError[+T <: FileData]( override val file: T ) extends TstpError( file )
 
 /**
  * Signifies a termination of [[RefutationSketchToResolution.apply()]] that could not replay a step.
@@ -86,7 +86,7 @@ case class ParsingError[T <: FileData]( override val file: T ) extends TstpError
  * @tparam T an instance of [[FileData]]
  */
 @SerialVersionUID( 700004L )
-case class ReconstructionGaveUp[T <: FileData]( override val file: T ) extends TstpError( file )
+case class ReconstructionGaveUp[+T <: FileData]( override val file: T ) extends TstpError( file )
 
 /**
  * Signifies a timeout from [[withTimeout]] during reconstruction.
@@ -94,7 +94,7 @@ case class ReconstructionGaveUp[T <: FileData]( override val file: T ) extends T
  * @tparam T an instance of [[FileData]]
  */
 @SerialVersionUID( 700005L )
-case class ReconstructionTimeout[T <: FileData]( override val file: T ) extends TstpError( file )
+case class ReconstructionTimeout[+T <: FileData]( override val file: T ) extends TstpError( file )
 
 /**
  * Siginifies an exception during proof replay, e.g. attempting to apply a split where variables in the split clauses are not disjoint
@@ -102,7 +102,7 @@ case class ReconstructionTimeout[T <: FileData]( override val file: T ) extends 
  * @tparam T an instance of [[FileData]]
  */
 @SerialVersionUID( 700006L )
-case class ReconstructionError[T <: FileData]( override val file: T ) extends TstpError( file )
+case class ReconstructionError[+T <: FileData]( override val file: T ) extends TstpError( file )
 
 /**
  * Signifies a stack overflow
@@ -110,7 +110,7 @@ case class ReconstructionError[T <: FileData]( override val file: T ) extends Ts
  * @tparam T an instance of [[FileData]]
  */
 @SerialVersionUID( 700008L )
-case class StackOverflow[T <: FileData]( override val file: T ) extends TstpError( file )
+case class StackOverflow[+T <: FileData]( override val file: T ) extends TstpError( file )
 
 /**
  * Divides a list of [[TstpError]] into its sublasses
@@ -419,7 +419,7 @@ object TstpStatistics {
     val rg = mutable.Set[ReconstructionGaveUp[T]]()
     val rt = mutable.Set[ReconstructionTimeout[T]]()
     val re = mutable.Set[ReconstructionError[T]]()
-    val so = mutable.Set[StackOverflow[T]]()
+    val so: mutable.Set[StackOverflow[T]] = mutable.Set()
 
     errors foreach {
       case e @ FileNotFound( file )          => nf.add( e )
