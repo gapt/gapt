@@ -207,7 +207,7 @@ package object statistics {
           ++ Statistic.optCSV( subst_term_depths )
           ++ Statistic.alsoEmptyDataToCSV( reused_axioms.toList.map( _._2._2 ) )
           ++ Statistic.alsoEmptyDataToCSV( reused_derived.toList.map( _._2._2 ) )
-          ++ clause_sizes.toCSV )
+          ++ clause_sizes.toCSV ++ clause_weights.toCSV )
     }
 
   }
@@ -228,7 +228,8 @@ package object statistics {
         ++ Statistic.csv_header( "subterm_depth" )
         ++ Statistic.csv_header( "reused_axioms" )
         ++ Statistic.csv_header( "reused_derived" )
-        ++ Statistic.csv_header( "clause_sizes" ) )
+        ++ Statistic.csv_header( "clause_sizes" )
+        ++ Statistic.csv_header( "clause_weights" ) )
 
     /**
      * Creates a `CSVFile` from a map of [[FileData]] problem files to
@@ -387,10 +388,10 @@ package object statistics {
      * @return the csv files written to disk
      */
     def exportCSV( file_prefix: String, path: Path = pwd ) = {
-      val f1 = TstpProofStats.toCSVFile( tstp_stats )
-      val f2 = RPProofStats.toCSVFile( rp_stats )
-      val f3 = CSVFile( CSVRow( Nil ), tstp_errors.map( TstpError.toCSV( _ ) ), "," )
-      val f4 = CSVFile( CSVRow( Nil ), rp_errors.map( TstpError.toCSV( _ ) ), "," )
+      val f1 = RPProofStats.toCSVFile( rp_stats )
+      val f2 = TstpProofStats.toCSVFile( tstp_stats )
+      val f3 = CSVFile( CSVRow( Nil ), rp_errors.map( TstpError.toCSV( _ ) ), "," )
+      val f4 = CSVFile( CSVRow( Nil ), tstp_errors.map( TstpError.toCSV( _ ) ), "," )
 
       write( Path( s"${file_prefix}-rp_stats.csv", path ), f1.toString() )
       write( Path( s"${file_prefix}-tstp_stats.csv", path ), f2.toString() )
