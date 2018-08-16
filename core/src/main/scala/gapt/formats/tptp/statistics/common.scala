@@ -116,6 +116,7 @@ package object statistics {
    * @param clause_sizes      statistics over the length of clauses in the proof
    * @tparam T a subtype of [[FileData]] that represents the location and metadata of a TSTP file
    */
+  @SerialVersionUID( -2181096749132376641L )
   abstract class CommonProofStats[T <: FileData](
       val name:             T,
       val dagSize:          BigInt,
@@ -139,14 +140,19 @@ package object statistics {
     def sizeRatio() = BigDecimal( treeSize ) / BigDecimal( dagSize )
 
     /**
+     * Computes dagSize / depth
+     */
+    def dagSizeByDepth() = BigDecimal( dagSize ) / BigDecimal( depth )
+
+    /**
      * Computes statistics how often axioms are reused
      */
-    def reused_statistics() = Statistic( reused_axioms.toList.map( _._2._2 ) )
+    def reused_statistics() = Statistic.applyOpt( reused_axioms.toList.map( _._2._2 ) )
 
     /**
      * Computes statistics how often derived axioms are reused
      */
-    def derived_statistics() = Statistic( reused_derived.toList.map( _._2._2 ) )
+    def derived_statistics() = Statistic.applyOpt( reused_derived.toList.map( _._2._2 ) )
 
   }
 

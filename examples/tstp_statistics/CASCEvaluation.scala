@@ -131,12 +131,14 @@ object CASCEvaluation {
     }
 
     println( "=== Replayed Proof Statistics" )
-    eval_rp_stats( bundle.rp_stats.values.toSet )
-    for ( p <- provers ) {
+    val total = eval_rp_stats( bundle.rp_stats.values.toSet )._1
+    val rows = ( for ( p <- provers ) yield {
       print( s"$p & " )
-      eval_rp_stats( rstatsByProver( p ) )
-    }
+      CSVRow( p +: eval_rp_stats( rstatsByProver( p ) )._1.rows.head.cells )
+    } ).toSeq
 
+    val cfile: CSVFile[String] = CSVFile( CSVRow( "prover" +: total.header.cells ), rows.sortBy( _.cells( 0 ) ), CSVFile.defaultSep )
+    cfile
   }
 
   def dagRatio[T <: CASCResult]( pair: ( TstpProofStats[T], RPProofStats[T] ) ) = {
@@ -212,32 +214,75 @@ object CASCEvaluation {
   def getRPstatByProperty[S, T <: FileData]( rp_stats: Set[RPProofStats[T]], prop: RPProofStats[T] => S )( implicit num: Numeric[S], conv: S => BigDecimal ) =
     Statistic( rp_stats.toSeq.map( prop( _ ) ) )
 
+  /**
+   * toCSV with truncation after 2 digits
+   * @param s the statistic
+   * @param num implicit numeric object for statistic data
+   * @param conv implicit converter from statistic data to big decimals
+   * @tparam T the type of data points in the statistic
+   * @return a CSVRow with the trincated strings
+   */
+  def roundedStatisticCSV[T]( s: Statistic[T] )( implicit num: Numeric[T], conv: T => BigDecimal ) = {
+    val n = s.n
+    val min = conv( s.min )
+    val max = conv( s.max )
+    val median = s.median
+    val avg = s.avg
+    val sd2 = s.sigma_square.map( x => f"$x%.2f" )
+    CSVRow( List( s"$n", f"$min%.2f", f"$max%.2f", f"$avg%.2f", f"$median%.2f", sd2.getOrElse( "NA" ) ) )
+  }
+
   def getStatisticSummary[T]( s: Seq[Statistic[T]] )( implicit num: Numeric[T], conv: T => BigDecimal ) = {
     val min = Statistic( s.map( _.min ) ).min
-    val avg = Statistic( s.map( _.avg ) ).avg
+    val total_n = s.map( x => BigDecimal( x.n ) ).sum
+    val avg = s.map( x => ( x.avg * BigDecimal( x.n ) ) / total_n ).sum // need to create the weighted sum
     val max = Statistic( s.map( _.max ) ).max
-    Statistic( s.size, min, avg, max, num.zero, None )
+    Statistic( s.size, min, max, avg, num.zero, None )
 
   }
 
   def eval_rp_stats[T <: FileData]( rp_stats: Set[RPProofStats[T]] ) = {
     implicit def conv( v: BigInt ) = BigDecimal( v )
+    def maxavgh( x: String ) = List( s"${x}_max", s"${x}_avg" )
+    def maxavgsCSV[T]( s: Statistic[T] )( implicit num: Numeric[T], conv: T => BigDecimal ) = {
+      val csv = roundedStatisticCSV( s )
+      List( csv.cells( 2 ), csv.cells( 3 ) )
+    }
 
     val depth_stats = getRPstatByProperty( rp_stats, ( x: RPProofStats[T] ) => x.depth )
     val size_stats = getRPstatByProperty( rp_stats, ( x: RPProofStats[T] ) => x.dagSize )
     val blowup_stats = getRPstatByProperty( rp_stats, ( x: RPProofStats[T] ) => x.sizeRatio() )
+    val blowup_stats2 = getRPstatByProperty( rp_stats, ( x: RPProofStats[T] ) => x.dagSizeByDepth() )
     val clausesize_stats = getStatisticSummary( rp_stats.toList.map( _.clause_sizes ) )
     val clauseweight_stats = getStatisticSummary( rp_stats.toList.map( _.clause_weights ) )
     //val _stats = getStatisticSummary(rp_stats.map(_.))
+    val st_depth_stats = getStatisticSummary( rp_stats.toList.flatMap( _.subst_term_depths ) )
+    val st_size_stats = getStatisticSummary( rp_stats.toList.flatMap( _.subst_term_sizes ) )
+    val reused_axioms_stats = getStatisticSummary( rp_stats.toList.flatMap( _.reused_statistics() ) )
+    val reused_derived_stats = getStatisticSummary( rp_stats.toList.flatMap( _.derived_statistics() ) )
 
-    //print( s"${depth_stats.min} & ${depth_stats.avg} & ${depth_stats.max} & " )
-    //print( s"${size_stats.min} & ${size_stats.avg} & ${size_stats.max} & " )
-    //print( s"${blowup_stats.min} & ${blowup_stats.avg} & ${blowup_stats.max} & " )
+    val csv_head = List( "depth", "size", "width", "width2", "clause_size", "clause_weight",
+      "substterm_depth", "substterm_size",
+      "reused_axioms", "reused_derived" ).flatMap( x => maxavgh( x ) )
+
+    val row = maxavgsCSV( depth_stats ) ++ maxavgsCSV( size_stats ) ++
+      List( blowup_stats, blowup_stats2 ).flatMap( x => maxavgsCSV( x ) ) ++
+      List( clausesize_stats, clauseweight_stats ).flatMap( x => maxavgsCSV( x ) ) ++
+      List( st_depth_stats, st_size_stats ).flatMap( x => maxavgsCSV( x ) ) ++
+      List( reused_axioms_stats, reused_derived_stats ).flatMap( x => maxavgsCSV( x ) )
+
+    val cfile: CSVFile[String] = CSVFile( CSVRow( csv_head ), CSVRow( row ) :: Nil, ", " )
+
+    print( s"${depth_stats.min} & ${depth_stats.avg} & ${depth_stats.max} & " )
+    print( s"${size_stats.min} & ${size_stats.avg} & ${size_stats.max} & " )
+    print( s"${blowup_stats.min} & ${blowup_stats.avg} & ${blowup_stats.max} " )
+    println( "\\\\" )
+
     print( s"${clausesize_stats.min} & ${clausesize_stats.avg} & ${clausesize_stats.max} & " )
     print( s"${clauseweight_stats.min} & ${clauseweight_stats.avg} & ${clauseweight_stats.max}  " )
-
     println( "\\\\" )
-    ( depth_stats, size_stats, blowup_stats, clausesize_stats, clauseweight_stats )
+
+    ( cfile, depth_stats, size_stats, blowup_stats, clausesize_stats, clauseweight_stats )
   }
 
   def get_depth_to_mindepth_graph[T <: CASCResult]( bundle: ResultBundle[T] ) =

@@ -43,6 +43,24 @@ case class CSVFile[T]( header: CSVRow[T], rows: Seq[CSVRow[T]], sep: String ) {
     CSVFile( header ++ file.header, ( rows zip file.rows ).map { case ( x, y ) => x ++ y }, sep )
   }
 
+  /**
+   * Flips rows / columns
+   */
+  def transpose(): CSVFile[T] = {
+    val raw_header_rows = ( header +: rows ).map( _.cells )
+    val req_data = raw_header_rows.toSet.map( ( x: Seq[T] ) => x.size )
+    val cols = req_data.toList( 0 )
+    require( req_data.size == 1, "All rows must have the same number of columns" )
+    require( cols > 0, "Need columns to flip" )
+
+    val new_rows = for ( i <- 1 to cols ) yield {
+      CSVRow( raw_header_rows.map( _.apply( i - 1 ) ) )
+    }
+
+    CSVFile( new_rows.head, new_rows.tail, sep )
+
+  }
+
 }
 
 object CSVFile {

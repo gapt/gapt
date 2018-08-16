@@ -188,12 +188,12 @@ object expressionSize {
 
 object expressionDepth {
   /**
-    * Computes the depth of an expression.
-    *
-    * @param t The expression whose depth is to be computed.
-    * @return The depth of the given expression, that is, the maximum depth
-    * of branches in the expression's tree representation.
-    */
+   * Computes the depth of an expression.
+   *
+   * @param t The expression whose depth is to be computed.
+   * @return The depth of the given expression, that is, the maximum depth
+   * of branches in the expression's tree representation.
+   */
   def apply( t: Expr ): Int = t match {
     case Var( _, _ ) | Const( _, _, _ ) => 1
     case Abs( _, s )                    => apply( s ) + 1
