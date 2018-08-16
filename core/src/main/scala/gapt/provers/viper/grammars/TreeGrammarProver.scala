@@ -247,7 +247,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     proof
   }
 
-  // TODO: macke less hacky
+  // TODO: make less hacky
   def mkGroundTerm( ty: Ty ): Expr =
     ctx.constants.find( _.ty == ty ).getOrElse(
       instanceGen.terms.view.map( _._1 ).find( _.ty == ty ).head )
