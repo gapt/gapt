@@ -20,6 +20,24 @@ package object tptp {
         formula +: Sequent()
       case in => throw new IllegalArgumentException( in.toString )
     } )
+
+    def toSequentWithIncludes = {
+      val sequent = existentialClosure( inputs.flatMapS {
+        case AnnotatedFormula( _, _, "conjecture", formula, _ ) =>
+          Sequent() :+ formula
+        case AnnotatedFormula( _, _, _, formula, _ ) =>
+          formula +: Sequent()
+        case IncludeDirective( _, _ ) =>
+          Sequent()
+      } )
+      val names = inputs.collect( {
+        case IncludeDirective( name, _ ) => name
+      } )
+
+      ( names, sequent )
+
+    }
+
   }
   sealed trait TptpInput {
     override def toString = tptpToString.tptpInput( this )
@@ -60,4 +78,16 @@ package object tptp {
       case _                                    => None
     }
   }
+
+  /**
+   * The roles of valid formula assertions in a TPTP file.
+   * @see http://tptp.cs.miami.edu/~tptp/TPTP/SyntaxBNF.html#formula_role
+   */
+  object TptpFormulaRoles {
+    val roles: Set[FormulaRole] = Set( "axiom", "hypothesis", "definition", "assumption", "lemma",
+      "theorem", "corollary", "conjecture", "negated_conjecture", "plain" )
+
+    def apply() = roles
+  }
+
 }

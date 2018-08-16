@@ -7,7 +7,11 @@ object tptpToString {
   def tptpInput( input: TptpInput ): String = input match {
     case AnnotatedFormula( language, name, role, formula, annots ) =>
       s"${atomic_word( language )}(${atomic_word( name )}, $role, ${expression( formula )}${annotations( annots )}).\n"
-    case IncludeDirective( fileName, Seq() ) => s"include(${single_quoted( fileName )}).\n"
+    case IncludeDirective( fileName, None ) => s"include(${single_quoted( fileName )}).\n"
+    case IncludeDirective( fileName, Some( seq ) ) =>
+      //TODO: check what seq actually contains
+      val args = seq.map( single_quoted ).mkString( "[", ", ", "]" )
+      s"include(${single_quoted( fileName )}, ${args}).\n"
   }
 
   def annotations( annots: Seq[Expr] ): String = annots.map( expression ).map( ", " + _ ).mkString
