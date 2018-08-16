@@ -314,22 +314,12 @@ object SingleProjection {
        since the rule does not give direct access to the occurence of e in the conclusion, we look at the premise
      */
     val e_idx_conclusion = proof.occConnectors.head.child( e )
-    //    require( cut_ancs( e_idx_conclusion ) == true, "This is not a proof from the old calculus!" )
     val aux_ca = cut_ancs( proof.mainIndices.head )
     val eq_ca = cut_ancs( e_idx_conclusion )
-    //   val mainf = proof.endSequent( proof.mainIndices( 0 ) )
-    //val eqf = proof.endSequent( e_idx_conclusion )
     ( aux_ca, eq_ca ) match {
       case ( true, true ) =>
         s1
       case ( true, false ) =>
-        //       val ef = p.endSequent( e )
-        //     val ax = LogicalAxiom( ef )
-        //     val main_e = proof.mainIndices( 0 )
-        //    val es = proof.endSequent.zipWithIndex.filter( x => x._2 != main_e &&
-        //       x._2 != e_idx_conclusion &&
-        //       !cut_ancs( x._2 ) ).map( _._1 )
-        //  val wax = weakenESAncs( es, Set( ax ) ).
         s1
       case ( false, true ) =>
         //we first pick our aux formula
