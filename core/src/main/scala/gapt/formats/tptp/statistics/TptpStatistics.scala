@@ -1,9 +1,13 @@
 package gapt.formats.tptp.statistics
 
-import ammonite.ops.{ BasePathImpl, FilePath, Path, RelPath, read }
+import ammonite.ops.FilePath
 import gapt.expr._
-import gapt.formats.csv.{ CSVFile, CSVRow }
-import gapt.formats.tptp.{ AnnotatedFormula, TptpFile, TptpFormulaRoles, TptpParser }
+import gapt.formats.csv.CSVFile
+import gapt.formats.csv.CSVRow
+import gapt.formats.tptp.AnnotatedFormula
+import gapt.formats.tptp.TptpFile
+import gapt.formats.tptp.TptpFormulaRoles
+import gapt.formats.tptp.TptpParser
 import gapt.utils.Statistic
 
 import scala.collection.mutable
@@ -64,37 +68,6 @@ object TPTPstatistics {
       total_count, const_count, unary_count, binary_count, has_equality, arity_statistics )
 
   }
-
-  /*
-  def apply( file_list: Path ): Sigtable = {
-    val files = read.lines( file_list )
-
-    val stats_per_file = mutable.Map[String, Signature]()
-    var max_arity = 0
-
-    for ( f <- files ) {
-      println( s"processing $f" )
-      val tptp_file = TptpParser.parse( FilePath( f ) )
-      val ( sig, freq ) = apply( tptp_file )
-      val mks = sig.keySet.max
-      if ( mks > max_arity ) max_arity = mks
-      stats_per_file( f ) = sig
-    }
-
-    val sig_table = stats_per_file.map( kv => {
-      val ( name, sig ) = kv
-      val row = for ( i <- Range( 0, max_arity ) ) yield {
-        sig.get( i ) match {
-          case None      => Set[Const]()
-          case Some( s ) => s
-        }
-      }
-      ( name, row )
-    } )
-
-    sig_table.toMap
-  }
-  */
 
   def sigtableToCsv( table: Sigtable ): CSVFile[String] = {
     var cols = 0
