@@ -1,7 +1,3 @@
-/*
- * projections.scala
- *
- */
 
 package gapt.proofs.ceres
 
