@@ -251,8 +251,10 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     proof
   }
 
+  // TODO: make less hacky
   def mkGroundTerm( ty: Ty ): Expr =
-    instanceGen.terms.view.map( _._1 ).find( _.ty == ty ).head
+    ctx.constants.find( _.ty == ty ).getOrElse(
+      instanceGen.terms.view.map( _._1 ).find( _.ty == ty ).head )
 
   def getInstanceProof( inst: Instance ): ExpansionProof = time( "instproof" ) {
     info( s"Proving instance ${inst.toSigRelativeString}" )

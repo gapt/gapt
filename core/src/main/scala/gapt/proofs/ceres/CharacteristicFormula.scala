@@ -2,14 +2,46 @@ package gapt.proofs.ceres
 
 import gapt.expr._
 import gapt.expr.hol.toNNF
-import gapt.proofs.Context.PrimRecFun
-import gapt.proofs.{ MutableContext, Sequent }
+import gapt.proofs.MutableContext
+import gapt.proofs.Sequent
 
+import scala.util.matching.Regex
+
+object Viperize {
+  def apply( top: Expr )( implicit ctx: MutableContext ): Sequent[Formula] = {
+    val newAnte = ctx.normalizer.rules.map( x => {
+      val pattern = new Regex( "\\S+S[TF]*A[TF]*" )
+      if ( ( pattern findAllIn x.lhs.toString ).nonEmpty ) {
+        val matrix = Iff( x.lhs, x.rhs )
+        All.Block( freeVariables( matrix ).toSeq, matrix )
+      } else if ( !( x.lhs.ty.toString.matches( "o" ) ) ) {
+        val matrix = Eq( x.lhs, x.rhs )
+        val App( name, args ) = x.lhs
+        println( name )
+        All.Block( freeVariables( matrix ).toSeq, matrix )
+      } else Bottom()
+    } )
+    val newSuc = All.Block( freeVariables( top ).toSeq, Imp( top, Bottom() ) )
+    Sequent( newAnte.toSeq filterNot ( x => x.alphaEquals( Bottom() ) ), Seq( newSuc ) )
+  }
+}
 object CharFormN extends StructVisitor[Formula, Unit] {
   def apply( struct: Struct ): Formula = {
     val csf = recurse( struct, StructTransformer[Formula, Unit](
-      { ( x, _ ) => x }, { ( x, y, _ ) => And( x, y ) }, Top(),
-      { ( x, y, _ ) => Or( x, y ) }, Bottom(), { ( x, _ ) => Neg( x ) },
+      { ( x, _ ) => x }, { ( x, y, _ ) =>
+        {
+          if ( x.equals( Top() ) ) y
+          else if ( y.equals( Top() ) ) x
+          else And( x, y )
+        }
+      }, Top(),
+      { ( x, y, _ ) =>
+        {
+          if ( x.equals( Bottom() ) ) y
+          else if ( y.equals( Bottom() ) ) x
+          else Or( x, y )
+        }
+      }, Bottom(), { ( x, _ ) => Neg( x ) },
       { ( _, _, _ ) => throw new Exception( "Should not contain CLS terms" ) } ), Unit )
     All.Block( freeVariables( csf ).toSeq, csf )
   }
@@ -26,8 +58,20 @@ object CharFormPRN {
 object CharFormP extends StructVisitor[Formula, Unit] {
   def apply( struct: Struct ): Formula = {
     val csf = recurse( struct, StructTransformer[Formula, Unit](
-      { ( x, _ ) => toNNF( Neg( x ) ) }, { ( x, y, _ ) => Or( x, y ) }, Bottom(),
-      { ( x, y, _ ) => And( x, y ) }, Top(), { ( x, _ ) => Neg( x ) },
+      { ( x, _ ) => toNNF( Neg( x ) ) }, { ( x, y, _ ) =>
+        {
+          if ( x.equals( Bottom() ) ) y
+          else if ( y.equals( Bottom() ) ) x
+          else Or( x, y )
+        }
+      }, Bottom(),
+      { ( x, y, _ ) =>
+        {
+          if ( x.equals( Top() ) ) y
+          else if ( y.equals( Top() ) ) x
+          else And( x, y )
+        }
+      }, Top(), { ( x, _ ) => Neg( x ) },
       { ( _, _, _ ) => throw new Exception( "Should not contain CLS terms" ) } ), Unit )
     Ex.Block( freeVariables( csf ).toSeq, csf )
   }
@@ -109,13 +153,22 @@ private object Support {
     case Neg( Atom( _, _ ) ) => Ex.Block( evar.intersect( freeVariables( f ) ).toSeq, f )
     case Neg( x )            => Neg( QuantIntroExists( x, evar ) )
   }
-  def add( chF: Map[Formula, ( Formula, Set[Var] )], qType: QuantifierC )( implicit ctx: MutableContext ): Unit =
-    ctx += PrimRecFun( {
+  def add( chF: Map[Formula, ( Formula, Set[Var] )], qType: QuantifierC )( implicit ctx: MutableContext ): Unit = {
+
+    import gapt.proofs.context.ReductionRuleUpdate.reductionRulesAsReductionRuleUpdate
+
+    val definitions: Map[Const, List[( Atom, Formula )]] = {
       for ( ( f @ Atom( newEx, _ ), ( form, vars ) ) <- chF.toList )
         yield ( newEx.asInstanceOf[Const], ( f,
         if ( qType.equals( ForallC ) ) QuantIntroForAll( form, vars )
         else QuantIntroExists( form, vars ) ) )
-    }.groupBy( _._1 ).map { case ( pred, eqns ) => ( pred, eqns.map( _._2 ) ) } )
+    }.groupBy( _._1 ).map { case ( pred, eqns ) => ( pred, eqns.map( _._2 ) ) }
+
+    definitions.keys.foreach { ctx += _ }
+    ctx += definitions.values.flatten.map {
+      case ( lhs, rhs ) => ReductionRule( lhs, rhs )
+    }.toSeq
+  }
   private def structNames( sss: Map[CLS, ( Struct, Set[Var] )] ): Map[( String, Sequent[Boolean] ), String] =
     sss.keySet.map {
       case CLS( Apps( Const( name, _, _ ), _ ), cc ) =>

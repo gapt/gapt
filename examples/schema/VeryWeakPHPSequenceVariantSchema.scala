@@ -6,7 +6,7 @@ import gapt.proofs.Context
 import gapt.proofs.Sequent
 import gapt.proofs.gaptic._
 
-object VeryWeakPHPSequenceSchema extends TacticsProof {
+object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
   ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
   ctx += Context.Sort( "i" )
   ctx += hoc"f:nat>i>nat"
@@ -30,13 +30,13 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
   ctx += hoc"pi: nat>nat>nat>nat"
 
   ctx += PrimRecFun( hoc"POR:nat>nat>i>o", "POR 0 m x = E 0 (f m x) ", "POR (s y) m x = (E (s y) (f m x) ∨ POR y m x)" )
-  ctx += PrimRecFun( hoc"PAND:nat>nat>o", "(PAND 0 n)= (∀x (POR n 0 x))", "(PAND (s m) n) = ((∀x (POR n (s m) x)) & (PAND m n))" )
+  ctx += PrimRecFun( hoc"PAND:nat>nat>o", "(PAND 0 n)= (∀x (POR n 0 x))", "(PAND (s m) n) = ((∀x (POR n (s m) x)) | (PAND m n))" )
   ctx += PrimRecFun( hoc"TopFuncDef:nat>nat>i>o", "(TopFuncDef 0 k x)= (E (f 0 x) (f k x)) ", "(TopFuncDef (s m) k x)= ((E (f (s m) x) (f k x)) | (TopFuncDef m k x))" )
   ctx += PrimRecFun(
     hoc"CutDistinct:nat>nat>o",
     "(CutDistinct 0 n) =  ( (∃x ((E n (f 0 x)) & (E n (f 0 (suc x)))) ) | (∀y (LE (f 0 y) n)))",
     "(CutDistinct (s m) n ) = (" +
-      "(CutDistinct m n) & ( (∃x ((E n (f (s m) x)) & (E n (f (s m) (suc x)))) ) | (∀y (LE (f (s m) y) n)))" +
+      "(CutDistinct m n) | ( (∃x ((E n (f (s m) x)) & (E n (f (s m) (suc x)))) ) | (∀y (LE (f (s m) y) n)))" +
       ")" )
   ctx += "LEDefinition" -> hos"POR(n,m,a) :- LE(f(m,a), s(n))"
   ctx += "LEDefinition2" -> hos"POR(n,m, suc(a)) :- LE(f(m,a), s(n))"
@@ -632,7 +632,7 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
     cut( "cut1", hof"E(0, f(k,x))" )
     ref( "StrongTransitivityE" )
     ref( "NumericTransitivity" )
-    allL( le"x" )
+    allL( "Ant_3", fov"x" )
     ref( "minimalElement" )
 
   }
@@ -656,7 +656,7 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
     cut( "cut1", hof"E(0, f(k, x))" )
     ref( "StrongTransitivityE" )
     ref( "NumericTransitivity" )
-    allL( le"x" )
+    allL( fov"x" )
     ref( "minimalElement" )
     ref( "epsilon" )
   }
@@ -678,7 +678,7 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
     cut( "cut1", hof"E(0, f(k,suc(x)))" )
     ref( "StrongTransitivityE" )
     ref( "NumericTransitivity" )
-    allL( le"x" )
+    allL( fov"x" )
     ref( "minimalElement" )
 
   }
@@ -702,7 +702,7 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
     cut( "cut1", hof"E(0, f(k, (suc x)))" )
     ref( "StrongTransitivityE" )
     ref( "NumericTransitivity" )
-    allL( le"x" )
+    allL( fov"x" )
     ref( "minimalElement" )
     ref( "epsilon2" )
   }
@@ -727,7 +727,7 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
     cut( "cut1", hof"E(0, f(k,x))" )
     ref( "StrongTransitivityE" )
     ref( "NumericTransitivity" )
-    allL( le"x" )
+    allL( fov"x" )
     ref( "minimalElement" )
 
   }
@@ -763,7 +763,7 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
     ref( "StrongTransitivityE" )
     ref( "epsilon" )
     ref( "epsilon3" )
-    allL( le"x" )
+    allL( fov"x" )
     ref( "minimalElement" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"epsilon3 (s m) k x", Epsilon3Sc )
@@ -1020,7 +1020,7 @@ object VeryWeakPHPSequenceSchema extends TacticsProof {
     ref( "theta3" )
     allR( fov"r" )
     exR( fov"r" )
-    allL( le"r" )
+    allL( fov"r" )
     andR
     ref( "ordcon" )
     allL( le"(suc r)" )
