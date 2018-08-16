@@ -18,7 +18,9 @@ case class AvatarSplit( subProof: ResolutionProof, indices: Set[SequentIndex], c
 
   val thisComponent = subProof.conclusion.zipWithIndex.filter( indices contains _._2 ).map( _._1 )
   val rest = subProof.conclusion.zipWithIndex.filterNot( indices contains _._2 ).map( _._1 )
-  require( freeVariables( thisComponent ) intersect freeVariables( rest ) isEmpty, s"error splitting ${subProof.conclusion} free variables of ${thisComponent} and ${rest} intersect" )
+  require(
+    freeVariables( thisComponent ) intersect freeVariables( rest ) isEmpty,
+    s"error splitting ${subProof.conclusion}:\nfree variables of $thisComponent and $rest intersect" )
   require( thisComponent isSubMultisetOf component.clause )
 
   override def auxIndices = Seq( indices.toSeq )
