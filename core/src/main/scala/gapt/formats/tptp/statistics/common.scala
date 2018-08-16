@@ -7,7 +7,7 @@ import gapt.utils.Statistic
 
 package object statistics {
 
-  type RuleName = Unit
+  type RuleName = String
   type ClauseId = String
   type Prover = String
   type Problem = String
@@ -24,7 +24,7 @@ package object statistics {
   /**
    * Easier representation of file paths data follow a certain schema
    */
-  abstract class FileData extends InputFile with CSVConvertible[String] {
+  abstract class FileData extends InputFile with Serializable with CSVConvertible[String] {
     override def fileName: String
 
     def read = ammonite.ops.read ! fileAsPath
@@ -57,7 +57,7 @@ package object statistics {
    * @param path    the path to the TPTP base directory
    * @param problem a TPTP library problem
    */
-  case class TptpLibraryProblem( path: String, problem: Problem ) extends FileData {
+  case class TptpLibraryProblem( path: String, problem: Problem ) extends FileData with Serializable {
     /**
      * The category is encoded in the file name
      */
@@ -85,7 +85,7 @@ package object statistics {
    * @param problem   The TSTP library problem (see http://www.cs.miami.edu/~tptp/cgi-bin/SystemOnTPTP?TPTPProblem=$problem )
    * @param extension The file extension
    */
-  case class CASCResult( path: String, prover: Prover, problem: String, extension: String ) extends FileData {
+  case class CASCResult( path: String, prover: Prover, problem: String, extension: String ) extends FileData with Serializable {
     def fileName = s"$path/$prover-$problem$extension"
 
     override def toString() = fileName
@@ -126,7 +126,7 @@ package object statistics {
       val reused_axioms:    Map[RuleName, ( String, Int )], //TODO: change String type back to HOLSequent
       val reused_derived:   Map[RuleName, ( String, Int )],
       val clause_sizes:     Statistic[Int],
-      val clause_weights:   Statistic[Int] ) extends CSVConvertible[String] {
+      val clause_weights:   Statistic[Int] ) extends Serializable with CSVConvertible[String] {
     /*
       Invariants:
       dagSize <= treeSize
@@ -213,7 +213,7 @@ package object statistics {
      * Static header for CSV export
      */
     val csv_header = CSVRow(
-      List( "problem", "solver", "dagsize", "treesize", "sizeratio", "depth" )
+      List( "solver", "problem", "dagsize", "treesize", "sizeratio", "depth" )
         ++ Statistic.csv_header( "inference_freq" )
         ++ Statistic.csv_header( "subterm_size" )
         ++ Statistic.csv_header( "subterm_depth" )
@@ -293,7 +293,7 @@ package object statistics {
    */
   object TstpProofStats {
     val csv_header = CSVRow(
-      List( "problem", "solver", "dagsize", "treesize", "sizeratio", "depth" )
+      List( "solver", "problem", "dagsize", "treesize", "sizeratio", "depth" )
         ++ Statistic.csv_header( "inference_freq" )
         ++ Statistic.csv_header( "reused_axioms" )
         ++ Statistic.csv_header( "reused_derived" )

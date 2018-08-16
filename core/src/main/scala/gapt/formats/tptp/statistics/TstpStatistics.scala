@@ -468,6 +468,7 @@ object TstpStatistics {
     val dagSize = rp.dagLike.size
     val treeSize = rp.treeLike.size
     val depth = rp.depth
+    val hist = mutable.Map[RuleName, Int]()
     val freq = mutable.Map[ClauseId, Int]()
 
     val subproof_count = rp.subProofs.size
@@ -479,7 +480,10 @@ object TstpStatistics {
     require( rnames.size == subproof_count )
 
     for ( ( r, id ) <- rnames ) {
-      r.immediateSubProofs.map( x => inc_rule_count( rnames( x ), freq ) )
+      r.immediateSubProofs.map( x => {
+        inc_rule_count( x.name, hist ) //count rule name
+        inc_rule_count( rnames( x ), freq ) //count clause id
+      } )
     }
 
     val reused_proofs = freq.flatMap {
@@ -501,8 +505,6 @@ object TstpStatistics {
     val clause_sizes = Statistic( csizes )
     val clause_weights = Statistic( cweights )
 
-    val hist = mutable.Map[RuleName, Int]() //TODO: fill in
-
     val stats = RPProofStats( name, dagSize, treeSize, depth, hist.toMap, freq.toMap,
       fst_map_c( reused_axioms ), fst_map_c( reused_derived ), clause_sizes, clause_weights,
       getSubstStats( subst_sizes ), getSubstStats( subst_depths ) )
@@ -521,6 +523,7 @@ object TstpStatistics {
     val dagSize = rp.dagLike.size
     val treeSize = rp.treeLike.size
     val depth = rp.depth
+    val hist = mutable.Map[RuleName, Int]()
     val freq = mutable.Map[ClauseId, Int]()
 
     val subproof_count = rp.subProofs.size
@@ -532,7 +535,10 @@ object TstpStatistics {
     require( rnames.size == subproof_count )
 
     for ( ( r, id ) <- rnames ) {
-      r.immediateSubProofs.map( x => inc_rule_count( rnames( x ), freq ) )
+      r.immediateSubProofs.map( x => {
+        inc_rule_count( x.name, hist ) //count rule names
+        inc_rule_count( rnames( x ), freq ) //count clause occurrences
+      } )
     }
 
     val reused_proofs = freq.flatMap {
@@ -547,8 +553,6 @@ object TstpStatistics {
     val ( csizes, cweights ) = rp.dagLike.postOrder.flatMap( x => ( x.conclusion.size, clauseWeight( x.conclusion ) ) :: Nil ).unzip
     val clause_sizes = Statistic( csizes )
     val clause_weights = Statistic( cweights )
-
-    val hist = mutable.Map[RuleName, Int]() //TODO: fill in
 
     val stats = TstpProofStats( name, dagSize, treeSize, depth, hist.toMap, freq.toMap,
       fst_map_c( reused_axioms ), fst_map_c( reused_derived ), clause_sizes, clause_weights )
