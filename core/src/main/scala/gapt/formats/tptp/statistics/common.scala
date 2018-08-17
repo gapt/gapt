@@ -52,7 +52,7 @@ package object statistics {
 
   /**
    * Represents a TPTP library problem of a certain category. The problem must be in
-   * $path/Problems/XYZ/ - $path/Axioms must contain the axiom files to include.
+   * \$path/Problems/XYZ/ - \$path/Axioms must contain the axiom files to include.
    *
    * @param path    the path to the TPTP base directory
    * @param problem a TPTP library problem
@@ -79,11 +79,11 @@ package object statistics {
 
   /**
    * A filename that comes from the CASC competition: the prover and TSTP problem name are accessible.
-   * The filename is automatically set to $path/$prover-$problem$extension
+   * The filename is automatically set to \$path/\$prover-\$problem\$extension
    *
    * @param path      The problem path
    * @param prover    The prover produceing the tstp file
-   * @param problem   The TSTP library problem (see http://www.cs.miami.edu/~tptp/cgi-bin/SystemOnTPTP?TPTPProblem=$problem )
+   * @param problem   The TSTP library problem (see http://www.cs.miami.edu/~tptp/cgi-bin/SystemOnTPTP?TPTPProblem=\$problem )
    * @param extension The file extension
    */
   case class CASCResult( path: String, prover: Prover, problem: String, extension: String ) extends FileData with Serializable {
@@ -231,7 +231,7 @@ package object statistics {
         ++ Statistic.csv_header( "clause_sizes" ) )
 
     /**
-     * Creates a [[CSVFile]] from a map of [[FileData]] problem files to
+     * Creates a `CSVFile` from a map of [[FileData]] problem files to
      * proof sketch [[TstpProofStats]] or resolution proof [[RPProofStats]] statistics.
      *
      * @param m   the map
@@ -379,8 +379,8 @@ package object statistics {
       rp_errors:   List[TstpError[T]] ) extends Serializable {
 
     /**
-     * Write a bundle to a set of files: $file_prefix-rp-stats.csv, $file_prefix-tstp-stats.csv,
-     * $file_prefix-rp-errors.csv and $file_prefix-tstp-errors.csv
+     * Write a bundle to a set of files: \$file_prefix-rp-stats.csv, \$file_prefix-tstp-stats.csv,
+     * \$file_prefix-rp-errors.csv and \$file_prefix-tstp-errors.csv
      *
      * @param file_prefix the prefix for the files
      * @param path        the path where to save the file, default : pwd

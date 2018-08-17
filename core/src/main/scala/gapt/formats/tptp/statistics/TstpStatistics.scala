@@ -81,7 +81,7 @@ case class MalformedFile[+T <: FileData]( override val file: T ) extends TstpErr
 case class ParsingError[+T <: FileData]( override val file: T ) extends TstpError( file )
 
 /**
- * Signifies a termination of [[RefutationSketchToResolution.apply()]] that could not replay a step.
+ * Signifies a termination of `RefutationSketchToResolution.apply()` that could not replay a step.
  * @param file The file with the TSTP proof that was replayed
  * @tparam T an instance of [[FileData]]
  */
@@ -89,7 +89,7 @@ case class ParsingError[+T <: FileData]( override val file: T ) extends TstpErro
 case class ReconstructionGaveUp[+T <: FileData]( override val file: T ) extends TstpError( file )
 
 /**
- * Signifies a timeout from [[withTimeout]] during reconstruction.
+ * Signifies a timeout from [[gapt.utils.withTimeout]] during reconstruction.
  * @param file The file with the TSTP proof that was replayed
  * @tparam T an instance of [[FileData]]
  */
@@ -266,8 +266,8 @@ object TstpStatistics {
    * @tparam T the [[FileData]] instance used to describe files
    * @return a tuple of either
    *         * two [[TstpError]]s
-   *         * a [[RefutationSketch]] and a [[TstpError]]
-   *         * a [[RefutationSketch]] and a [[ResolutionProof]]
+   *         * a refutation sketch and a [[TstpError]]
+   *         * a refutation sketch and a resolution proof.
    */
   def loadFile[T <: FileData]( v: T, print_statistics: Boolean = false ): ( Either[TstpError[T], RefutationSketch], Either[TstpError[T], ResolutionProof] ) = {
     if ( exists( Path( v.fileName ) ) ) {
@@ -282,7 +282,7 @@ object TstpStatistics {
    * @param v the file to load
    * @param print_statistics print details about errors that occur
    * @tparam T an instance of [[FileData]] to describe the input file
-   * @return either a [[TstpError]] describing what failed or a [[RefutationSketch]]
+   * @return either a [[TstpError]] describing what failed or a refutation sketch.
    */
   def loadSketch[T <: FileData]( v: T, print_statistics: Boolean = false ): Either[TstpError[T], RefutationSketch] = try {
     withTimeout( 120.seconds ) {
@@ -317,7 +317,7 @@ object TstpStatistics {
    * @param tstp_sketch the sketch to replay
    * @param print_statistics print details about errors that occur
    * @tparam T an instance of [[FileData]] to describe the input file
-   * @return either a [[TstpError]] describing what failed or a [[ResolutionProof]]
+   * @return either a [[TstpError]] describing what failed or a resolution proof.
    */
   def replaySketch[T <: FileData]( v: T, tstp_sketch: Either[TstpError[T], RefutationSketch], print_statistics: Boolean = false ): Either[TstpError[T], ResolutionProof] = tstp_sketch match {
     case Left( _ ) =>
@@ -369,7 +369,7 @@ object TstpStatistics {
    * Converts a list of [[RPProofStats]] to a CSV File
    * @param rpstats the stats to convert
    * @tparam T the [[FileData]] instance describing a TSTP file
-   * @return a [[CSVFile]] with a row for each element in rpstats
+   * @return a CSV file with a row for each element in rpstats
    */
   def resultToCSV[T <: FileData]( rpstats: Iterable[RPProofStats[T]] ) = {
     //TODO: move to RPProofStats
@@ -458,7 +458,7 @@ object TstpStatistics {
   }
 
   /**
-   * Calculates [[RPProofStats]] for a given [[ResolutionProof]]
+   * Calculates [[RPProofStats]] for a given resolution proof.
    * @param name the file containing rp
    * @param rp the replayed proof
    * @tparam T the instance of [[FileData]] describing the file name
@@ -513,7 +513,7 @@ object TstpStatistics {
   }
 
   /**
-   * Calculates [[TstpProofStats]] for a given [[RefutationSketch]]
+   * Calculates [[TstpProofStats]] for a given refutation sketch.
    * @param name the file containing the sketch
    * @param rp the proof sketch
    * @tparam T the instance of [[FileData]] describing the file name
