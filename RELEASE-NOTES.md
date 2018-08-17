@@ -4,6 +4,10 @@
 
 * SMTInterpol interface
 * Support for Vampire 4.2.2
+* JSON Serialization for expressions, LK Proofs, ND Proofs
+* Improvements to the TIP Parser
+* TPTP/TSTP Statistics
+* New proof schemata
 
 ## Version 2.11 (released on 2018-04-30)
 
