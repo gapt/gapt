@@ -140,4 +140,8 @@ p101(Y))) & (-(all X (-r1(Y,X) | -(-p2(X) & -p102(X) & p101(X)))) & -(all X (-r1
 
   }
 
+  "issue 719" in {
+    Prover9TermParser.parseTerm( "X'" ) must beEqualTo( le"'\'' X" )
+  }
+
 }

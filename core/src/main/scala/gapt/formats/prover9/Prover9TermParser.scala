@@ -101,12 +101,17 @@ trait Prover9TermParserA extends RegexParsers with PackratParsers {
     case t1 ~ sym ~ t2  => FOLAtom( sym, List( t1, t2 ) )
   }
   lazy val atomsymb: Parser[String] = """[a-zA-Z][a-zA-Z0-9_]*""".r
-  lazy val term: PackratParser[FOLTerm] = ifunction | noniterm
-  lazy val noniterm: PackratParser[FOLTerm] = function | constant | variable
+  lazy val term: PackratParser[FOLTerm] = ifunction | pfunction | noniterm
   lazy val ifunction: PackratParser[FOLTerm] =
-    ( noniterm | parens( ifunction ) ) ~ """[+\-*/^v]""".r ~ ( noniterm | parens( ifunction ) ) ^^ {
+    pfunction ~ """[+\-*/^v]""".r ~ pfunction ^^ {
       case t1 ~ sym ~ t2 => FOLFunction( sym, List( t1, t2 ) )
     }
+  lazy val pfunction: PackratParser[FOLTerm] =
+    ( noniterm | parens( ifunction ) ) ~ "'".? ^^ {
+      case t1 ~ Some( _ ) => FOLFunction( "'", t1 )
+      case t1 ~ None      => t1
+    }
+  lazy val noniterm: PackratParser[FOLTerm] = function | constant | variable
   lazy val function: PackratParser[FOLTerm] = conssymb ~ "(" ~ repsep( term, "," ) ~ ")" ^^ {
     case x ~ _ ~ params ~ _ => FOLFunction( x, params )
   }
