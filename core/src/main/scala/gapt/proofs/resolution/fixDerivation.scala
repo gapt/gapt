@@ -20,20 +20,8 @@ import scala.collection.immutable.HashMap
  */
 
 object fixDerivation {
-  object matchingModEq extends syntacticMatching {
-    override def apply(
-      pairs:             List[( Expr, Expr )],
-      alreadyFixedSubst: PreSubstitution ): Traversable[Substitution] =
-      pairs match {
-        case ( ( Eq( t1, s1 ), Eq( t2, s2 ) ) :: rest ) =>
-          apply( ( t1 -> t2 ) :: ( s1 -> s2 ) :: rest, alreadyFixedSubst ).toSeq ++
-            apply( ( t1 -> s2 ) :: ( s1 -> t2 ) :: rest, alreadyFixedSubst ).toSeq
-        case _ => super.apply( pairs, alreadyFixedSubst )
-      }
-  }
-
   def tryDeriveBySubsumptionModEq( to: HOLClause, from: HOLClause ): Option[ResolutionProof] =
-    for ( s <- clauseSubsumption( from, to, matchingAlgorithm = matchingModEq ) ) yield {
+    for ( s <- clauseSubsumption.modEqSymm( from, to ) ) yield {
       var p = Factor( Subst( Input( from ), s ) )
 
       val needToFlip = for ( ( a, i ) <- p.conclusion.zipWithIndex ) yield a match {

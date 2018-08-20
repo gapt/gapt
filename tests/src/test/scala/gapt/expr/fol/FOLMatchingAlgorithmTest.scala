@@ -140,5 +140,22 @@ class FOLMatchingAlgorithmTest extends Specification {
       syntacticMatching( FOLFunction( "f", x, FOLFunction( "g", x ) ), FOLFunction( "f", FOLFunction( "g", x ), FOLFunction( "g", FOLFunction( "g", x ) ) ) ) must beSome
     }
   }
+
+  "many sorted" in {
+    syntacticMatching(
+      le"x:nat",
+      le"(#v(α: nat) + #v(α: nat): nat) + (s(0:nat): nat) = s(#v(α: nat) + #v(α: nat) + 0)" ) must beNone
+  }
+
+  "induction axioms" in {
+    syntacticMatching(
+      le"∀X X(#c(nil{?a}: list ?a))",
+      le"∀X X(#c(nil{?a_0}: list ?a_0))" ) must beSome
+    syntacticMatching(
+      le"#c(nil{?a}: list ?a)", le"#c(nil{?a_0}: list ?a_0)" ) must beSome
+    syntacticMatching(
+      le"∀X (X(#c(nil{?a}: list ?a)) ∧ ∀x0 ∀x1 (X(x1) → X(cons(x0:?a, x1))) → ∀x X(x))",
+      le"∀X (X(#c(nil{?a_0}: list ?a_0)) ∧ ∀x0 ∀x1 (X(x1) → X(cons(x0:?a_0, x1))) → ∀x X(x))" ) must beSome
+  }
 }
 
