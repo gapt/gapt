@@ -101,7 +101,13 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       else None
     } else syntacticMatching( a, b )
 
-  def Subst( proof: ResolutionProof, subst: Substitution ) = gapt.proofs.resolution.Subst.ifNecessary( proof, subst )
+  def Subst( subProof: ResolutionProof, substitution: Substitution ): ResolutionProof =
+    subProof match {
+      case _ if substitution.isIdentity => subProof
+      case Subst( subProof2, substitution2 ) =>
+        Subst( subProof2, substitution compose substitution2 )
+      case _ => gapt.proofs.resolution.Subst( subProof, substitution )
+    }
 
   object Clausification extends Clausifier(
     propositional,
