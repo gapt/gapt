@@ -812,8 +812,8 @@ object Context {
     val names = exprs.view.flatMap( containedNames( _ ) ).toSet
     val tys = names.flatMap( c => baseTypes( c.ty ) )
     var ctx = default
-    for ( ty <- tys if !ctx.isType( ty ) )
-      ctx += Sort( ty )
+    for ( ty @ TBase( n, ps ) <- tys if !ctx.isType( ty ) )
+      ctx += Sort( TBase( n, ps.indices.map( i => TVar( s"a$i" ) ).toList ) )
     val consts = names.collect { case c: Const => c }
     for ( ( n, cs ) <- consts.groupBy( _.name ) if ctx.constant( n ).isEmpty )
       ctx += ConstDecl( if ( cs.size == 1 ) cs.head else Const( n, TVar( "a" ), List( TVar( "a" ) ) ) )
