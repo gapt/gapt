@@ -107,7 +107,7 @@ object findDerivationViaResolution {
       freeVariables( a ),
       ( a.formulas ++ bs.flatMap( _.formulas ) ).flatMap( constants( _ ) ).toSet )
 
-    val groundingSubst = Substitution( grounding )
+    val groundingSubst = grounding
     val negatedClausesA = a.
       map( groundingSubst( _ ) ).
       map( _.asInstanceOf[Atom] ).
@@ -117,9 +117,9 @@ object findDerivationViaResolution {
     prover.getResolutionProof( bs ++ negatedClausesA ) map { refutation =>
       val tautologified = tautologifyInitialUnitClauses( eliminateSplitting( refutation ), negatedClausesA.toSet )
 
-      val toUnusedVars = rename( grounding.map( _._1 ), containedNames( tautologified ) )
-      val nonOverbindingUnground = grounding.map { case ( v, c ) => c -> toUnusedVars( v ) }
-      val derivation = TermReplacement( tautologified, nonOverbindingUnground.toMap[Expr, Expr] )
+      val toUnusedVars = rename( grounding.domain, containedNames( tautologified ) )
+      val nonOverbindingUnground = Substitution( grounding.map.map { case ( v, c ) => toUnusedVars( v ) -> c }, grounding.typeMap )
+      val derivation = TermReplacement.undoGrounding( tautologified, nonOverbindingUnground )
       val derivationInOrigVars = Subst( derivation, Substitution( toUnusedVars.map( _.swap ) ) )
 
       simplifyResolutionProof( derivationInOrigVars )

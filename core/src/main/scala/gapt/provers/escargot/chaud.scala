@@ -56,7 +56,7 @@ class EscargotChaud( allowedAtoms: Seq[Atom] ) {
   def getAtomicLKProof( atomicSequent: HOLClause ): Option[LKProof] =
     getResolutionProof( atomicSequent ).
       map( UnitResolutionToLKProof( _ ) ).
-      map( TermReplacement.hygienic( _, renaming ) )
+      map( TermReplacement.undoGrounding( _, renaming ) )
 
   @tailrec final def singleModelLoop(): Option[ResolutionProof] = {
     preprocessing()
