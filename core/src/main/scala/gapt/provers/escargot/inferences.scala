@@ -84,7 +84,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
   import state.{ DerivedCls, SimpCls, termOrdering, nameGen }
 
   def subsume( a: Cls, b: Cls ): Option[Substitution] =
-    subsume( a.clause, b.clause )
+    fastSubsumption( a.clause, b.clause, a.featureVec, b.featureVec, a.literalFeatureVecs, b.literalFeatureVecs )
   def subsume( a: HOLSequent, b: HOLSequent ): Option[Substitution] =
     if ( propositional ) {
       if ( a isSubMultisetOf b ) Some( Substitution() )

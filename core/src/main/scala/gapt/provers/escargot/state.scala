@@ -37,6 +37,9 @@ class Cls( val state: EscargotState, val proof: ResolutionProof, val index: Int 
 
   val weight = clause.elements.map { expressionSize( _ ) }.sum
 
+  val literalFeatureVecs = clause.map( TermFeatureVec( _ ) )
+  val featureVec = ClauseFeatureVec( literalFeatureVecs )
+
   override def toString = s"[$index] ${proof.stringifiedConclusion( state.ctx )}   (max = ${maximal mkString ", "}) (sel = ${selected mkString ", "}) (w = $weight)"
   override def hashCode = index
 }
