@@ -237,7 +237,8 @@ object MguFactor {
  * }}}
  */
 case class Subst( subProof: ResolutionProof, substitution: Substitution ) extends ResolutionProof {
-  override val conclusion: Sequent[Formula] = subProof.conclusion.map( substitution( _ ) ).map( BetaReduction.betaNormalize )
+  import gapt.proofs.lkt.ExprSubstWithβ._
+  override val conclusion: Sequent[Formula] = subProof.conclusion.map( substitution( _ ) )
   override def mainIndices: Seq[SequentIndex] = subProof.conclusion.indices
   override def auxIndices: Seq[Seq[SequentIndex]] = Seq( subProof.conclusion.indices )
   override def occConnectors: Seq[SequentConnector] =
@@ -310,11 +311,21 @@ case class Paramod( subProof1: ResolutionProof, eqIdx: SequentIndex, leftToRight
   require( eqIdx isSuc )
   val ( t, s ) = subProof1.conclusion( eqIdx ) match { case Eq( t_, s_ ) => if ( leftToRight ) ( t_, s_ ) else ( s_, t_ ) }
 
+  private def instCtx( t: Expr ): Formula =
+    ( context match {
+      case Abs( v, c ) =>
+        v.ty match {
+          case _ ->: _ => BetaReduction.betaNormalize( context( t ) )
+          case _       => Substitution( v -> t )( c )
+        }
+      case _ => context( t )
+    } ).asInstanceOf[Formula]
+
   def auxFormula = subProof2.conclusion( auxIdx )
   require(
-    auxFormula == BetaReduction.betaNormalize( context( t ) ),
-    s"$auxFormula == ${BetaReduction.betaNormalize( context( t ) )}" )
-  val rewrittenAuxFormula = BetaReduction.betaNormalize( context( s ) ).asInstanceOf[Formula]
+    auxFormula == instCtx( t ),
+    s"$auxFormula == ${instCtx( t )}" )
+  val rewrittenAuxFormula = instCtx( s )
   def mainFormulaSequent =
     if ( auxIdx isAnt ) rewrittenAuxFormula +: Sequent()
     else Sequent() :+ rewrittenAuxFormula

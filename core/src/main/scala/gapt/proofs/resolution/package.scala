@@ -39,7 +39,7 @@ package object resolution {
           val ( equation, auxFormula ) = ( q1New.conclusion( l1 ), q2New.conclusion( l2 ) )
           val Abs( v, subContext ) = con
           val v_ = rename( v, freeVariables( equation ) ++ freeVariables( auxFormula ) )
-          val contextNew = TermReplacement( Abs( v_, Substitution( v, v_ )( subContext ) ), repl )
+          val contextNew = BetaReduction betaNormalize TermReplacement( Abs( v_, Substitution( v, v_ )( subContext ) ), repl )
           Paramod( q1New, l1, dir, q2New, l2, contextNew )
         case AvatarSplit( q, indices, component ) =>
           AvatarSplit( f( q ), indices, TermReplacement( component, repl ) )
