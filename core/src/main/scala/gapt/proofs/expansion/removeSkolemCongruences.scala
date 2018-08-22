@@ -62,7 +62,7 @@ object removeSkolemCongruences {
   }
 
   def simplCongrs( congrs: Vector[( Expr, Expr )] ): Vector[( Expr, Expr )] = {
-    val lpo = LPO( containedNames( congrs ).collect { case c: Const => c }.toSeq.sortBy( _.name ) )
+    val lpo = LPO( containedNames( congrs ).collect { case c: Const => c.name }.toSeq.sorted )
     def lt( a: Expr, b: Expr ): Boolean = lpo.lt( a, b, true )
     congrs.view.
       filter( c => c._1 != c._2 ).
