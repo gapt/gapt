@@ -121,10 +121,11 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       else {
         expand( given.proof )
 
-        val consts = constants( cnf.map( _.conclusion.elements ).flatMap( constants( _ ) ).filter( _.name != "=" ) )
+        val consts = constants( cnf.map( _.conclusion.elements ).flatMap( constants( _ ) ).
+          filter( _.name != "=" ) ).map( _.name )
         state.termOrdering match {
           case LPO( precedence, typeOrder ) =>
-            val pc = precedence.takeWhile( arity( _ ) == 0 )
+            val pc = precedence.takeWhile( state.ctx.constant( _ ).exists( arity( _ ) == 0 ) )
             state.termOrdering = LPO( pc ++ consts.diff( precedence.toSet ) ++ precedence.drop( pc.size ), typeOrder )
         }
 

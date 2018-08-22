@@ -9,7 +9,7 @@ trait TermOrdering {
   def lt( e1: Expr, e2: Expr, treatVarsAsConsts: Boolean ): Boolean
 }
 
-case class LPO( precedence: Seq[Const] = Seq(), typeOrder: Set[( Ty, Ty )] = Set() ) extends TermOrdering {
+case class LPOOld( precedence: Seq[Const] = Seq(), typeOrder: Set[( Ty, Ty )] = Set() ) extends TermOrdering {
   val precIdx: Map[Const, Int] = precedence.zipWithIndex.toMap
 
   def lt( e1: Expr, e2: Expr, treatVarsAsConsts: Boolean ): Boolean = {
@@ -42,6 +42,48 @@ case class LPO( precedence: Seq[Const] = Seq(), typeOrder: Set[( Ty, Ty )] = Set
       } )
 
     memoLt( e1, e2 )
+  }
+}
+
+case class LPO( precedence: Seq[String] = Seq(), typeOrderLt: ( Ty, Ty ) => Boolean = ( _, _ ) => false ) extends TermOrdering {
+  val precIdx: Map[String, Int] = precedence.zipWithIndex.toMap
+
+  def lt( e1: Expr, e2: Expr, treatVarsAsConsts: Boolean ): Boolean = {
+    def majo( s: Expr, ts: List[Expr] ): Boolean =
+      ts.forall( t => lpo( s, t ) )
+
+    def alpha( ss: List[Expr], t: Expr ): Boolean =
+      ss.exists( s => s == t || lpo( s, t ) )
+
+    def precGt( h1: Expr, h2: Expr ): Boolean =
+      ( h1, h2 ) match {
+        case ( c1: Const, c2: Const ) =>
+          // TODO: type params?
+          precIdx.getOrElse( c1.name, -1 ) > precIdx.getOrElse( c2.name, -1 )
+        case ( _: Const, _: Var ) if treatVarsAsConsts => true
+        case ( v1: Var, v2: Var ) if treatVarsAsConsts => v1.toString > v2.toString
+        case _                                         => false
+      }
+
+    def lexMa( s: Expr, t: Expr, ss: List[Expr], ts: List[Expr] ): Boolean =
+      ( ss, ts ) match {
+        case ( si :: sss, ti :: tss ) =>
+          if ( si == ti ) lexMa( s, t, sss, tss )
+          else if ( lpo( si, ti ) ) majo( s, tss )
+          else alpha( ss, t )
+        case _ => false
+      }
+
+    def lpo( s: Expr, t: Expr ): Boolean = {
+      if ( typeOrderLt( t.ty, s.ty ) ) return true
+      val Apps( sf, sas ) = s
+      val Apps( tf, tas ) = t
+      if ( precGt( sf, tf ) ) majo( s, tas )
+      else if ( sf == tf ) lexMa( s, t, sas, tas )
+      else alpha( sas, t )
+    }
+
+    lpo( e2, e1 )
   }
 }
 

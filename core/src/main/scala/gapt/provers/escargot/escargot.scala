@@ -25,7 +25,7 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
 
     val precedence = functions.toSeq.sortBy { arity( _ ) } ++ eqs ++ ( atoms diff eqs ).toSeq.sortBy { arity( _ ) }
 
-    LPO( precedence, if ( boolOnTermLevel ) Set() else ( types - To ) map { ( _, To ) } )
+    LPO( precedence.map( _.name ).distinct, ( _, t ) => !boolOnTermLevel && t == To )
   }
 
   def setupDefaults(
