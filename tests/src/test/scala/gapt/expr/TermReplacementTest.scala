@@ -110,4 +110,13 @@ class TermReplacementTest extends Specification {
       ok
     }
   }
+
+  "overbinding hygiene" in {
+    TermReplacement.undoGrounding(
+      hof"!z z = #c(z: i)",
+      Substitution(
+        Map( hov"z:?i" -> le"#c(z:i)" ),
+        Map( TVar( "i" ) -> TBase( "i" ) ) ) ) must_==
+      hof"!(z2:?i) z2 = z"
+  }
 }

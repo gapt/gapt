@@ -223,11 +223,10 @@ object TermReplacement {
     val namesInObj = containedNames( t )
     val namesInRange = replacements.values.flatMap { containedNames( _ ) }.toSet // TODO: types
 
-    val needToRename = namesInObj intersect namesInRange -- replacements.keySet
     val nameGen = rename.awayFrom( namesInObj ++ namesInRange ++ replacements.keySet )
     val renaming = for (
       n <- namesInObj if !replacements.toMap[VarOrConst, Expr].contains( n )
-    ) yield n -> replTyInN( if ( namesInRange.contains( n ) ) nameGen.fresh( n ) else n )
+    ) yield n -> replTyInN( if ( namesInRange.contains( replTyInN( n ) ) ) nameGen.fresh( n ) else n )
 
     TermReplacement( t, replacements ++ renaming )
   }
