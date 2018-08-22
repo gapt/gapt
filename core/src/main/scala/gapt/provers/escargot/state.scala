@@ -25,7 +25,7 @@ import scala.collection.mutable
  *               hash code, and also indicates how old the clause is.
  */
 class Cls( val state: EscargotState, val proof: ResolutionProof, val index: Int ) {
-  def clause = proof.conclusion
+  val clause = proof.conclusion
   def assertion = proof.assertions
 
   val ass = state.intern( assertion )
@@ -40,6 +40,8 @@ class Cls( val state: EscargotState, val proof: ResolutionProof, val index: Int 
   val selected = ( maximal.filter { _.isAnt } ++ clause.indicesSequent.antecedent ).take( 1 )
 
   val weight = clause.elements.map { expressionSize( _ ) }.sum
+
+  val freeVars = freeVariables( clause )
 
   val literalFeatureVecs = clause.map( TermFeatureVec( _ ) )
   val featureVec = ClauseFeatureVec( literalFeatureVecs )

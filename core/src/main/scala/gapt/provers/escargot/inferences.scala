@@ -305,7 +305,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
   object OrderedResolution extends BinaryInferenceRule {
     def apply( c1: Cls, c2: Cls ): Set[Cls] = {
       if ( c2.selected.nonEmpty ) return Set()
-      val renaming = Substitution( rename( freeVariables( c2.clause ), freeVariables( c1.clause ) ) )
+      val renaming = Substitution( rename( c2.freeVars, c1.freeVars ) )
       val p2_ = Subst( c2.proof, renaming )
       val inferred = for {
         i1 <- if ( c1.selected.nonEmpty ) c1.selected else c1.maximal
@@ -331,7 +331,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
     def apply( c1: Cls, c2: Cls ): Set[Cls] = {
       if ( c1.selected.nonEmpty ) return Set()
-      val renaming = Substitution( rename( freeVariables( c2.clause ), freeVariables( c1.clause ) ) )
+      val renaming = Substitution( rename( c2.freeVars, c1.freeVars ) )
       val p2_ = Subst( c2.proof, renaming )
 
       val inferred = for {
