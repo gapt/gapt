@@ -189,10 +189,10 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       val eqs = for {
         c <- existing
         if c.assertion isSubMultisetOf assertion
-        Sequent( Seq(), Seq( Eq( t, s ) ) ) <- Seq( c.clause )
+        Sequent( Seq(), Seq( Eq( t, s ) ) ) <- choose( c.clause )
         if matching( t, s ).isDefined
         if matching( s, t ).isDefined
-        ( t_, s_, leftToRight ) <- Seq( ( t, s, true ), ( s, t, false ) )
+        ( t_, s_, leftToRight ) <- choose( ( t, s, true ), ( s, t, false ) )
         if !termOrdering.lt( t_, s_ )
       } yield ( t_, s_, c, leftToRight )
       if ( eqs isEmpty ) return expr
@@ -247,13 +247,15 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       ( Set(), existing.collect { case e if subsume( given, e ).isDefined => e -> given.ass } )
   }
 
+  def choose[T]( ts: T* ): Seq[T] = ts
+
   object ForwardUnitRewriting extends SimplificationRule {
     def simplify( given: Cls, existing: Set[Cls] ): Option[( Cls, Set[Int] )] = {
       val eqs = for {
         c <- existing
         if c.ass subsetOf given.ass // FIXME
-        Sequent( Seq(), Seq( Eq( t, s ) ) ) <- Seq( c.clause )
-        ( t_, s_, leftToRight ) <- Seq( ( t, s, true ), ( s, t, false ) )
+        Sequent( Seq(), Seq( Eq( t, s ) ) ) <- choose( c.clause )
+        ( t_, s_, leftToRight ) <- choose( ( t, s, true ), ( s, t, false ) )
         if !t_.isInstanceOf[Var]
         if !termOrdering.lt( t_, s_ )
       } yield ( t_, s_, c, leftToRight )
@@ -335,8 +337,8 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       val p2_ = Subst( c2.proof, renaming )
 
       val inferred = for {
-        i1 <- c1.maximal; Eq( t, s ) <- Seq( c1.clause( i1 ) ) if i1.isSuc
-        ( t_, s_, leftToRight ) <- Seq( ( t, s, true ), ( s, t, false ) ) if !termOrdering.lt( t_, s_ )
+        i1 <- c1.maximal; Eq( t, s ) <- choose( c1.clause( i1 ) ) if i1.isSuc
+        ( t_, s_, leftToRight ) <- choose( ( t, s, true ), ( s, t, false ) ) if !termOrdering.lt( t_, s_ )
         i2 <- if ( c2.selected.nonEmpty ) c2.selected else c2.maximal
         a2 = p2_.conclusion( i2 )
         ( st2, pos2 ) <- getFOPositions( a2 )
