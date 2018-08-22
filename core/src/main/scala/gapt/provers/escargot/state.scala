@@ -10,7 +10,9 @@ import gapt.utils.Logger
 import org.sat4j.minisat.SolverFactory
 import Sat4j._
 import gapt.proofs.context.mutable.MutableContext
-import org.sat4j.specs.ContradictionException
+import gapt.proofs.rup.RupProof
+import org.sat4j.specs.{ ContradictionException, IConstr, ISolverService }
+import org.sat4j.tools.SearchListenerAdapter
 
 object EscargotLogger extends Logger( "escargot" ); import EscargotLogger._
 
@@ -124,6 +126,11 @@ class EscargotState( val ctx: MutableContext ) {
 
   /** SAT solver instance */
   val solver = SolverFactory.newDefault()
+  val drup = mutable.Buffer[RupProof.Line]()
+  solver.setSearchListener( new SearchListenerAdapter[ISolverService] {
+    override def learnUnit( p: Int ) = drup += RupProof.Rup( Set( p ) )
+    override def learn( c: IConstr ) = drup += RupProof.Rup( c )
+  } )
 
   /** Map from assertion atoms to SAT solver atoms */
   val atomToSatSolver = mutable.Map[Atom, Int]()
@@ -144,7 +151,7 @@ class EscargotState( val ctx: MutableContext ) {
   /** Current propositional Avatar model. */
   var avatarModel = Set[Int]()
   /** Empty clauses that have already been derived.  All assertions in the empty clauses are false. */
-  var emptyClauses = mutable.Map[HOLClause, Cls]()
+  var emptyClauses = mutable.Map[Set[Int], Cls]()
   /** Is the assertion of cls true in the current model? */
   def isActive( cls: Cls ): Boolean = isActive( cls.ass )
   /** Is the assertion true in the current model? */
@@ -172,7 +179,7 @@ class EscargotState( val ctx: MutableContext ) {
 
     for ( c <- newlyDerived ) {
       if ( c.clause.isEmpty ) {
-        emptyClauses( c.assertion ) = c
+        emptyClauses( c.ass ) = c
         solver.addClause( c.ass.toSeq.map( -_ ) )
         if ( isActive( c.ass ) )
           usable += c // trigger model recomputation
@@ -245,9 +252,11 @@ class EscargotState( val ctx: MutableContext ) {
   }
 
   def mkSatProof(): ResolutionProof =
-    emptyClauses.get( Sequent() ).map( _.proof ).getOrElse {
-      Sat4j.getResolutionProof( emptyClauses.values.map( cls => AvatarContradiction( cls.proof ) ) ).get
-    }
+    RupProof( emptyClauses.keys.toSeq.map( cls => RupProof.Input( cls.map( -_ ) ) ) ++ drup :+ RupProof.Rup( Set() ) ).
+      toRes.toResolution( satSolverToAtom, cls => {
+        val p = emptyClauses( cls.map( -_ ) ).proof
+        if ( p.assertions.isEmpty ) p else AvatarContradiction( p )
+      } )
 
   /** Main inference loop. */
   def loop(): Option[ResolutionProof] = try {
