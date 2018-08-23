@@ -60,43 +60,57 @@ sealed trait DiscrTree[T] {
     result.result()
   }
 
+  def foreach( f: T => Unit ): Unit =
+    this match {
+      case Leaf( elems ) => elems.foreach( f )
+      case Node( next )  => next.values.foreach( _.foreach( f ) )
+    }
+
+  def elements: Vector[T] = {
+    val builder = Vector.newBuilder[T]
+    foreach( builder += _ )
+    builder.result()
+  }
+
+  def insert( es: Iterable[( Expr, T )] ): DiscrTree[T] =
+    es.foldLeft( this ) { case ( dt, ( e, t ) ) => dt.insert( e, t ) }
   def insert( es: Iterable[Expr], t: T ): DiscrTree[T] =
     es.foldLeft( this )( _.insert( _, t ) )
   def insert( e: Expr, t: T ): DiscrTree[T] = insert( TermString( e ), t )
   def insert( e: TermString, t: T ): DiscrTree[T] =
     ( e.next, this ) match {
-      case ( None, Leaf( elems ) ) => Leaf( elems + t )
+      case ( None, Leaf( elems ) ) => Leaf( elems :+ t )
       case ( Some( ( label, e_ ) ), Node( next ) ) =>
         Node( next.updated(
           label,
-          next.getOrElse( label, if ( e_.isEmpty ) Leaf[T]( Set.empty ) else Node[T]( Map() ) ).
+          next.getOrElse( label, if ( e_.isEmpty ) Leaf[T]( Vector.empty ) else Node[T]( Map() ) ).
             insert( e_, t ) ) )
       case _ =>
         throw new IllegalStateException
     }
 
-  def generalizations( e: Expr ): Set[T] = generalizations( TermString( e ) )
-  def generalizations( e: TermString ): Set[T] =
+  def generalizations( e: Expr ): Vector[T] = generalizations( TermString( e ) )
+  def generalizations( e: TermString ): Vector[T] =
     ( e.next, this ) match {
       case ( None, Leaf( elems ) ) => elems
       case ( Some( ( label, e_ ) ), Node( next ) ) =>
-        val res1 = next.get( Variable ).map( _.generalizations( e.jump ) ).getOrElse( Set.empty[T] )
+        val res1 = next.get( Variable ).map( _.generalizations( e.jump ) ).getOrElse( Vector.empty[T] )
         if ( label == Variable ) res1 else
-          res1 union next.get( label ).map( _.generalizations( e_ ) ).getOrElse( Set.empty[T] )
+          res1 ++ next.get( label ).map( _.generalizations( e_ ) ).getOrElse( Vector.empty[T] )
       case _ =>
         throw new IllegalStateException
     }
 
-  def unifiable( e: Expr ): Set[T] = unifiable( TermString( e ) )
-  def unifiable( e: TermString ): Set[T] =
+  def unifiable( e: Expr ): Vector[T] = unifiable( TermString( e ) )
+  def unifiable( e: TermString ): Vector[T] =
     ( e.next, this ) match {
       case ( None, Leaf( elems ) ) => elems
       case ( Some( ( label, e_ ) ), Node( next ) ) =>
         if ( label == Variable )
-          jump().view.flatMap( _.unifiable( e_ ) ).toSet
+          jump().view.flatMap( _.unifiable( e_ ) ).toVector
         else
-          next.get( Variable ).map( _.unifiable( e.jump ) ).getOrElse( Set.empty[T] ) union
-            next.get( label ).map( _.unifiable( e_ ) ).getOrElse( Set.empty[T] )
+          next.get( Variable ).map( _.unifiable( e.jump ) ).getOrElse( Vector.empty[T] ) ++
+            next.get( label ).map( _.unifiable( e_ ) ).getOrElse( Vector.empty[T] )
       case _ =>
         throw new IllegalStateException
     }
@@ -110,7 +124,7 @@ object DiscrTree {
   case object Variable extends Label { def arity = 0 }
   case class Constant( n: String, arity: Int ) extends Label
 
-  case class Leaf[T]( elems: Set[T] ) extends DiscrTree[T]
+  case class Leaf[T]( elems: Vector[T] ) extends DiscrTree[T]
   case class Node[T]( next: Map[Label, DiscrTree[T]] ) extends DiscrTree[T]
 
   private val empty: DiscrTree[Any] = Node( Map() )

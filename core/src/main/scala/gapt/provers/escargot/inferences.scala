@@ -34,19 +34,6 @@ trait InferenceRule extends PreprocessingRule {
   }
 }
 
-trait BinaryInferenceRule extends InferenceRule {
-  def apply( a: Cls, b: Cls ): Set[Cls]
-
-  def preFilterRight( given: Cls, existing: IndexedClsSet ): Set[Cls] = existing.clauses
-  def preFilterLeft( given: Cls, existing: IndexedClsSet ): Set[Cls] = existing.clauses
-
-  def apply( given: Cls, existing: IndexedClsSet ): ( Set[Cls], Set[( Cls, Set[Int] )] ) =
-    ( preFilterRight( given, existing ).flatMap( apply( given, _ ) ) ++
-      preFilterLeft( given, existing ).flatMap( apply( _, given ) ) ++
-      apply( given, given ),
-      Set() )
-}
-
 trait RedundancyRule extends InferenceRule {
   def isRedundant( given: Cls, existing: IndexedClsSet ): Option[Set[Int]]
   def apply( given: Cls, existing: IndexedClsSet ): ( Set[Cls], Set[( Cls, Set[Int] )] ) =
@@ -81,6 +68,57 @@ object getFOPositions {
     walk( exp, Nil )
     poss.toMap
   }
+}
+
+object UnitRwrLhsIndex extends Index[DiscrTree[( Expr, Expr, Boolean, Cls )]] {
+  def empty: I = DiscrTree()
+  def add( t: I, c: Cls ): I =
+    c.unitRwrLhs.foldLeft( t )( ( dt, e ) => dt.insert( e._1, e ) )
+  def remove( t: I, cs: Set[Cls] ): I = t.filter( e => !cs( e._4 ) )
+}
+
+object MaxPosLitIndex extends Index[DiscrTree[( Cls, SequentIndex )]] {
+  def empty: I = DiscrTree()
+  def add( t: I, c: Cls ): I =
+    t.insert( for ( i <- c.maximal if i.isSuc )
+      yield c.clause( i ) -> ( c, i ) )
+  def remove( t: I, cs: Set[Cls] ): I = t.filter( e => !cs( e._1 ) )
+}
+
+object SelectedLitIndex extends Index[DiscrTree[( Cls, SequentIndex )]] {
+  def empty: I = DiscrTree()
+  def add( t: I, c: Cls ): I =
+    t.insert( for {
+      i <- if ( c.selected.nonEmpty ) c.selected else c.maximal
+      if i.isAnt
+    } yield c.clause( i ) -> ( c, i ) )
+  def remove( t: I, cs: Set[Cls] ): I = t.filter( e => !cs( e._1 ) )
+}
+
+object ForwardSuperpositionIndex extends Index[DiscrTree[( Cls, SequentIndex, Expr, Expr, Boolean )]] {
+  def empty: I = DiscrTree()
+  private def choose[T]( ts: T* ): Seq[T] = ts
+  def add( t: I, c: Cls ): I =
+    t.insert( for {
+      i <- c.maximal
+      Eq( t, s ) <- choose( c.clause( i ) )
+      if i.isSuc
+      ( t_, s_, leftToRight ) <- choose( ( t, s, true ), ( s, t, false ) )
+      if !c.state.termOrdering.lt( t_, s_ )
+    } yield t_ -> ( c, i, t_, s_, leftToRight ) )
+  def remove( t: I, cs: Set[Cls] ): I = t.filter( e => !cs( e._1 ) )
+}
+
+object BackwardSuperpositionIndex extends Index[DiscrTree[( Cls, SequentIndex, Expr, Seq[LambdaPosition] )]] {
+  def empty: I = DiscrTree()
+  def add( t: I, c: Cls ): I =
+    t.insert( for {
+      i <- if ( c.selected.nonEmpty ) c.selected else c.maximal
+      a = c.clause( i )
+      ( st, pos ) <- getFOPositions( a )
+      if !st.isInstanceOf[Var]
+    } yield st -> ( c, i, st, pos ) )
+  def remove( t: I, cs: Set[Cls] ): I = t.filter( e => !cs( e._1 ) )
 }
 
 class StandardInferences( state: EscargotState, propositional: Boolean ) {
@@ -255,7 +293,8 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
   object ForwardUnitRewriting extends SimplificationRule {
     def simplify( given: Cls, existing: IndexedClsSet ): Option[( Cls, Set[Int] )] = {
-      if ( existing.unitRwrLhs.isEmpty ) return None
+      val unitRwrLhs = existing.getIndex( UnitRwrLhsIndex )
+      if ( unitRwrLhs.isEmpty ) return None
 
       var p = given.proof
       var didRewrite = true
@@ -266,7 +305,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
           i <- p.conclusion.indices if !didRewrite
           ( subterm, pos ) <- getFOPositions( p.conclusion( i ) ) if !didRewrite
           if !subterm.isInstanceOf[Var]
-          ( t_, s_, leftToRight, c1 ) <- existing.unitRwrLhs.generalizations( subterm ) if !didRewrite
+          ( t_, s_, leftToRight, c1 ) <- unitRwrLhs.generalizations( subterm ) if !didRewrite
           // if c1.ass subsetOf given.ass // FIXME
           subst <- matching( t_, subterm )
           if termOrdering.lt( subst( s_ ), subterm )
@@ -291,8 +330,9 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       val inferred = mutable.Set[Cls]()
       val deleted = mutable.Set[( Cls, Set[Int] )]()
 
+      val givenSet = IndexedClsSet( state ).addIndex( UnitRwrLhsIndex ) + given
       for ( e <- existing.clauses ) {
-        val ( i, d ) = ForwardUnitRewriting( e, IndexedClsSet( state ) + given )
+        val ( i, d ) = ForwardUnitRewriting( e, givenSet )
         inferred ++= i
         deleted ++= d
       }
@@ -301,12 +341,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
     }
   }
 
-  object OrderedResolution extends BinaryInferenceRule {
-    override def preFilterRight( given: Cls, existing: IndexedClsSet ): Set[Cls] =
-      given.negResCands.view.flatMap( existing.posResCands.unifiable ).toSet
-    override def preFilterLeft( given: Cls, existing: IndexedClsSet ): Set[Cls] =
-      given.posResCands.view.flatMap( existing.negResCands.unifiable ).toSet
-
+  object OrderedResolution extends InferenceRule {
     def apply( c1: Cls, c2: Cls ): Set[Cls] = {
       if ( c2.selected.nonEmpty ) return Set()
       val renaming = Substitution( rename( c2.freeVars, c1.freeVars ) )
@@ -323,9 +358,42 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       } yield DerivedCls( c1, c2, Resolution( p2__, conn2 child i2, p1__, conn1 child i1 ) )
       inferred.toSet
     }
+
+    def apply( given: Cls, existing: IndexedClsSet ): ( Set[Cls], Set[( Cls, Set[Int] )] ) = {
+      val givenSet = IndexedClsSet( state ).addIndex( SelectedLitIndex ).addIndex( MaxPosLitIndex ) + given
+      val existingPlusGiven = existing + given
+      val inferred1 =
+        for {
+          ( c1, i1 ) <- givenSet.getIndex( SelectedLitIndex ).elements
+          ( c2, i2 ) <- existingPlusGiven.getIndex( MaxPosLitIndex ).unifiable( c1.clause( i1 ) )
+          cn <- apply( c1, i1, c2, i2 )
+        } yield cn
+      val inferred2 =
+        for {
+          ( c2, i2 ) <- givenSet.getIndex( MaxPosLitIndex ).elements
+          ( c1, i1 ) <- existing.getIndex( SelectedLitIndex ).unifiable( c2.clause( i2 ) )
+          cn <- apply( c1, i1, c2, i2 )
+        } yield cn
+
+      ( Set() ++ inferred1 ++ inferred2, Set() )
+    }
+
+    // i1.isAnt i2.isSuc
+    def apply( c1: Cls, i1: SequentIndex, c2: Cls, i2: SequentIndex ): Option[Cls] = {
+      val renaming = Substitution( rename( c2.freeVars, c1.freeVars ) )
+      val p2_ = Subst( c2.proof, renaming )
+      val a1 = c1.clause( i1 )
+      for {
+        mgu <- unify( p2_.conclusion( i2 ), a1 )
+        if c1.selected.nonEmpty || !c1.maximal.exists { i1_ => i1_ != i1 && termOrdering.lt( a1, mgu( c1.clause( i1_ ) ) ) }
+        if !c2.maximal.exists { i2_ => i2_ != i2 && termOrdering.lt( mgu( p2_.conclusion( i2 ) ), mgu( p2_.conclusion( i2_ ) ) ) }
+        ( p1__, conn1 ) = Factor.withOccConn( Subst( c1.proof, mgu ) )
+        ( p2__, conn2 ) = Factor.withOccConn( Subst( p2_, mgu ) )
+      } yield DerivedCls( c1, c2, Resolution( p2__, conn2 child i2, p1__, conn1 child i1 ) )
+    }
   }
 
-  object Superposition extends BinaryInferenceRule {
+  object Superposition extends InferenceRule {
     def isReductive( atom: Formula, i: SequentIndex, pos: LambdaPosition ): Boolean =
       ( atom, i, pos.toList ) match {
         case ( Eq( t, s ), _: Suc, 2 :: _ )      => !termOrdering.lt( s, t )
@@ -333,28 +401,44 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
         case _                                   => true
       }
 
-    def apply( c1: Cls, c2: Cls ): Set[Cls] = {
-      if ( c1.selected.nonEmpty ) return Set()
+    def apply( given: Cls, existing: IndexedClsSet ): ( Set[Cls], Set[( Cls, Set[Int] )] ) = {
+      val givenSet = IndexedClsSet( state ).
+        addIndex( ForwardSuperpositionIndex ).
+        addIndex( BackwardSuperpositionIndex ) +
+        given
+      val existingPlusGiven = existing + given
+      val inferred1 =
+        for {
+          ( c1, i1, t1, s1, ltr ) <- givenSet.getIndex( ForwardSuperpositionIndex ).elements
+          ( c2, i2, _, pos2 ) <- existingPlusGiven.getIndex( BackwardSuperpositionIndex ).unifiable( t1 )
+          cn <- apply( c1, i1, t1, s1, ltr, c2, i2, pos2 )
+        } yield cn
+      val inferred2 =
+        for {
+          ( c2, i2, st2, pos2 ) <- givenSet.getIndex( BackwardSuperpositionIndex ).elements
+          ( c1, i1, t1, s1, ltr ) <- existing.getIndex( ForwardSuperpositionIndex ).unifiable( st2 )
+          cn <- apply( c1, i1, t1, s1, ltr, c2, i2, pos2 )
+        } yield cn
+
+      ( Set() ++ inferred1 ++ inferred2, Set() )
+    }
+
+    // i1.isSuc, c1.clause(i1) == Eq(_, _)
+    def apply( c1: Cls, i1: SequentIndex, t_ : Expr, s_ : Expr, leftToRight: Boolean,
+               c2: Cls, i2: SequentIndex, pos2: Seq[LambdaPosition] ): Option[Cls] = {
       val renaming = Substitution( rename( c2.freeVars, c1.freeVars ) )
       val p2_ = Subst( c2.proof, renaming )
-
-      val inferred = for {
-        i1 <- c1.maximal; Eq( t, s ) <- choose( c1.clause( i1 ) ) if i1.isSuc
-        ( t_, s_, leftToRight ) <- choose( ( t, s, true ), ( s, t, false ) ) if !termOrdering.lt( t_, s_ )
-        i2 <- if ( c2.selected.nonEmpty ) c2.selected else c2.maximal
-        a2 = p2_.conclusion( i2 )
-        ( st2, pos2 ) <- getFOPositions( a2 )
-        if !st2.isInstanceOf[Var]
+      val a2 = p2_.conclusion( i2 )
+      val st2 = a2( pos2.head )
+      for {
         mgu <- unify( t_, st2 )
         if !termOrdering.lt( mgu( t_ ), mgu( s_ ) )
-        pos2_ = pos2 filter { isReductive( mgu( a2 ), i2, _ ) } if pos2_.nonEmpty
+        pos2_ = pos2.filter( isReductive( mgu( a2 ), i2, _ ) ) if pos2_.nonEmpty
         p1__ = Subst( c1.proof, mgu )
         p2__ = Subst( p2_, mgu )
-        ( equation, atom ) = ( p1__.conclusion( i1 ), p2__.conclusion( i2 ) )
-        context = replacementContext( s.ty, atom, pos2_ )
+        atom = p2__.conclusion( i2 )
+        context = replacementContext( t_.ty, atom, pos2_ )
       } yield DerivedCls( c1, c2, Paramod( p1__, i1, leftToRight, p2__, i2, context ) )
-
-      inferred.toSet
     }
   }
 

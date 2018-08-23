@@ -68,39 +68,49 @@ class Cls( val state: EscargotState, val proof: ResolutionProof, val index: Int 
   override def hashCode = index
 }
 
-case class IndexedClsSet(
-    clauses:     Set[Cls],
-    posResCands: DiscrTree[Cls],
-    negResCands: DiscrTree[Cls],
-    unitRwrLhs:  DiscrTree[( Expr, Expr, Boolean, Cls )],
-    state:       EscargotState ) {
+class IndexedClsSet private (
+    val clauses: Set[Cls],
+    val state:   EscargotState,
+    indices:     Map[Index[_], AnyRef] ) {
   def size: Int = clauses.size
 
-  def +( c: Cls ): IndexedClsSet =
-    IndexedClsSet(
-      clauses = clauses + c,
-      posResCands = posResCands.insert( c.posResCands, c ),
-      negResCands = negResCands.insert( c.negResCands, c ),
-      unitRwrLhs = c.unitRwrLhs.foldLeft( unitRwrLhs )( ( dt, e ) => dt.insert( e._1, e ) ),
-      state = state )
+  def getIndex[T]( idx: Index[T] ): T =
+    indices( idx ).asInstanceOf[T]
+
+  def addIndex[T <: AnyRef]( idx: Index[T] ): IndexedClsSet =
+    new IndexedClsSet( clauses, state,
+      indices.updated( idx, indices.getOrElse( idx, idx.add( idx.empty, clauses ) ) ) )
+
+  def +( c: Cls ): IndexedClsSet = this ++ Some( c )
   def ++( cs: Iterable[Cls] ): IndexedClsSet =
-    cs.foldLeft( this )( _ + _ )
+    new IndexedClsSet(
+      clauses = clauses ++ cs,
+      indices = Map() ++ indices.view.map {
+        case ( i, t ) =>
+          i -> i.asInstanceOf[Index[AnyRef]].add( t, cs )
+      },
+      state = state )
   def -( c: Cls ): IndexedClsSet =
-    IndexedClsSet(
+    new IndexedClsSet(
       clauses = clauses - c,
-      posResCands = posResCands.remove( c ),
-      negResCands = negResCands.remove( c ),
-      unitRwrLhs = unitRwrLhs.filter( _._4 != c ),
+      indices = Map() ++ indices.view.map {
+        case ( i, t ) =>
+          i -> i.asInstanceOf[Index[AnyRef]].remove( t, c )
+      },
       state = state )
 }
 object IndexedClsSet {
   def apply( state: EscargotState ): IndexedClsSet =
-    IndexedClsSet(
-      clauses = Set(),
-      posResCands = DiscrTree(),
-      negResCands = DiscrTree(),
-      unitRwrLhs = DiscrTree(),
-      state = state )
+    new IndexedClsSet( Set(), state, Map() )
+}
+
+trait Index[T] {
+  type I = T
+  def empty: I
+  def add( t: I, cs: Iterable[Cls] ): I = cs.foldLeft( t )( add )
+  def add( t: I, c: Cls ): I
+  def remove( t: I, c: Cls ): I = remove( t, Set( c ) )
+  def remove( t: I, cs: Set[Cls] ): I
 }
 
 /**
@@ -146,6 +156,9 @@ class EscargotState( val ctx: MutableContext ) {
   var nameGen = ctx.newNameGenerator
   var preprocessingRules = Seq[PreprocessingRule]()
   var inferences = Seq[InferenceRule]()
+
+  def addIndex[T <: AnyRef]( idx: Index[T] ): Unit =
+    workedOff = workedOff.addIndex( idx )
 
   private var clsIdx = 0
   def InputCls( clause: HOLSequent ): Cls = InputCls( Input( clause ) )

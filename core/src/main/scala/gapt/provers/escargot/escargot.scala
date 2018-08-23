@@ -6,7 +6,7 @@ import gapt.proofs._
 import gapt.proofs.lk.LKProof
 import gapt.proofs.resolution._
 import gapt.provers.{ ResolutionProver, groundFreeVariables }
-import gapt.provers.escargot.impl.{ EscargotLogger, EscargotState, StandardInferences }
+import gapt.provers.escargot.impl._
 import gapt.utils.{ LogHandler, Maybe }
 import ammonite.ops._
 import gapt.proofs.context.Context
@@ -37,6 +37,7 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
     // Preprocessing rules
     state.preprocessingRules :+= DuplicateDeletion
     if ( equality ) {
+      state.addIndex( UnitRwrLhsIndex )
       state.preprocessingRules :+= ForwardUnitRewriting
       state.preprocessingRules :+= OrderEquations
       state.preprocessingRules :+= EqualityResolution
@@ -57,9 +58,13 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
       state.inferences :+= BackwardUnitRewriting
     }
     if ( splitting ) state.inferences :+= AvatarSplitting
+    state.addIndex( MaxPosLitIndex )
+    state.addIndex( SelectedLitIndex )
     state.inferences :+= OrderedResolution
     state.inferences :+= Factoring
     if ( equality ) {
+      state.addIndex( ForwardSuperpositionIndex )
+      state.addIndex( BackwardSuperpositionIndex )
       state.inferences :+= Superposition
       state.inferences :+= UnifyingEqualityResolution
     }
