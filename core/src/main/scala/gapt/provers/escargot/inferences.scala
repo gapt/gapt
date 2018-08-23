@@ -109,7 +109,7 @@ object ForwardSuperpositionIndex extends Index[DiscrTree[( Cls, SequentIndex, Ex
   private def choose[T]( ts: T* ): Seq[T] = ts
   def add( t: I, c: Cls ): I =
     t.insert( for {
-      i <- c.maximal if i.isSuc
+      i <- c.maximal if i.isSuc if c.selected.isEmpty
       Eq( t, s ) <- choose( c.clause( i ) )
       ( t_, s_, leftToRight ) <- choose( ( t, s, true ), ( s, t, false ) )
       if !c.state.termOrdering.lt( t_, s_ )
