@@ -39,6 +39,7 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
     if ( equality ) {
       state.addIndex( UnitRwrLhsIndex )
       state.preprocessingRules :+= ForwardUnitRewriting
+      state.preprocessingRules :+= VariableEqualityResolution
       state.preprocessingRules :+= OrderEquations
       state.preprocessingRules :+= EqualityResolution
       state.preprocessingRules :+= ReflexivityDeletion

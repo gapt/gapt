@@ -428,7 +428,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
         p1__ = Subst( c1.proof, mgu )
         p2__ = Subst( p2_, mgu )
         atom = p2__.conclusion( i2 )
-        context = replacementContext( t_.ty, atom, pos2_ )
+        context = replacementContext( mgu( s_.ty ), atom, pos2_ )
       } yield DerivedCls( c1, c2, Paramod( p1__, i1, leftToRight, p2__, i2, context ) )
     }
   }
@@ -454,6 +454,23 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
           mgu <- unify( t, s )
         } yield DerivedCls( given, Subst( given.proof, mgu ) )
       ( inferred.toSet, Set() )
+    }
+  }
+
+  object VariableEqualityResolution extends SimplificationRule {
+    def simp( p: ResolutionProof ): ResolutionProof =
+      p.conclusion.antecedent.zipWithIndex.collectFirst {
+        case ( Eq( x: Var, t ), i ) if !freeVariables( t ).contains( x ) => ( x, t, i )
+        case ( Eq( t, x: Var ), i ) if !freeVariables( t ).contains( x ) => ( x, t, i )
+      } match {
+        case Some( ( x, t, i ) ) =>
+          simp( Resolution( Refl( t ), Suc( 0 ), Subst( p, Substitution( x -> t ) ), Ant( i ) ) )
+        case None => p
+      }
+
+    override def simplify( given: Cls, existing: IndexedClsSet ): Option[( Cls, Set[Int] )] = {
+      val q = simp( given.proof )
+      if ( q eq given.proof ) None else Some( SimpCls( given, q ) -> Set.empty )
     }
   }
 
