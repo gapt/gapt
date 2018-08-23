@@ -96,12 +96,15 @@ object syntacticMGU {
               subst
             } else if ( freeVariables( t_ ) intersect ( bound + x ) nonEmpty ) {
               null
+            } else if ( x.ty == t_.ty ) {
+              val subst1 = Substitution( x -> t_ )
+              new PreSubstitution( Map() ++ subst.map.mapValues( subst1( _ ) ) + ( x -> t_ ), subst.typeMap )
             } else {
               go( x.ty, t_.ty, subst, bound ) match {
                 case null => null
                 case subst1 =>
-                  val subst2 = Substitution( Map( x -> t_ ), subst1.typeMap )
-                  new PreSubstitution( Map() ++ subst1.map.mapValues( subst2( _ ) ) + ( x -> t_ ), subst1.typeMap )
+                  val subst1_ = subst1.toSubstitution
+                  go( subst1_( x ), subst1_( t_ ), subst, bound )
               }
             }
         }
