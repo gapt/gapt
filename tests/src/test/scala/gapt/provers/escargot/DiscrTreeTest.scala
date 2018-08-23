@@ -1,44 +1,25 @@
 package gapt.provers.escargot
 
-import gapt.examples.Pi2Pigeonhole
-import gapt.examples.theories.{ nat, natdivisible }
-import gapt.expr.{ Expr, syntacticMGU, syntacticMatching }
-import gapt.expr.fol.folSubTerms
-import gapt.proofs.lk.LKToExpansionProof
+import gapt.expr._
+import gapt.expr.fol.{ Numeral, folSubTerms }
 import gapt.provers.escargot.impl.DiscrTree
 import org.specs2.mutable.Specification
 
 class DiscrTreeTest extends Specification {
 
-  "test 1" in {
-    val terms =
-      folSubTerms(
-        LKToExpansionProof( Pi2Pigeonhole.proof ).
-          deep.toFormula )
-    var tree = DiscrTree[Expr]()
-    for ( t <- terms ) tree = tree.insert( t, t )
-    for ( t1 <- terms ) {
-      val expected = terms.filter( syntacticMatching( _, t1 ).isDefined )
-      val actual = tree.generalizations( t1 ).toSet
-      val diff = expected diff actual
-      require( diff.isEmpty )
-      diff must beEmpty
-    }
-    for ( t1 <- terms ) {
-      val expected = terms.filter( syntacticMGU( _, t1 ).isDefined )
-      val actual = tree.unifiable( t1 ).toSet
-      val diff = expected diff actual
-      require( diff.isEmpty )
-      diff must beEmpty
-    }
-    ok
-  }
+  val terms = folSubTerms( Set(
+    le"x*(y*z) = (x*y)*z", le"x*0 != x*1",
+    le"g(g(x1,x2), g(x3,x4))", le"g(x5,x6)",
+    le"cons{?a}(u:?a, us:list?a)",
+    le"map(x: i>i, cons{i}(a : i, xs : list i))",
+    le"map(f: i>i, cons{i}(a : i, xs2 : list i))",
+    le"f: i>i",
+    le"x: ?a > ?b",
+    le"y: list ?a",
+    le"z: ?a",
+    le"w" ) ++ ( 0 until 10 ).map( Numeral( _ ) ) )
 
-  "test 2" in {
-    val terms =
-      folSubTerms(
-        LKToExpansionProof( nat.mulcomm.combined() ).
-          deep.toFormula )
+  "test 3" in {
     var tree = DiscrTree[Expr]()
     for ( t <- terms ) tree = tree.insert( t, t )
     for ( t1 <- terms ) {
