@@ -649,16 +649,23 @@ object Context {
       implicit
       ctx: Context ): PrimRecFun = {
       val temporaryContext = ctx + c
-      apply( c, equations.map { parseEqn( c, _ )( temporaryContext ) } )
+      apply( c, equations.map { parseEquation( c, _ )( temporaryContext ) } )
     }
+  }
 
-    private def parseEqn( c: Const, eqn: String )( implicit ctx: Context ): ( Expr, Expr ) = {
-      BabelParser.tryParse( eqn, p => preExpr.TypeAnnotation( p, preExpr.Bool ) ).
-        fold( throw _, identity ) match {
+  private object parseEquation {
+
+    def apply(
+      c: Const, equation: String )( implicit ctx: Context ): ( Expr, Expr ) = {
+      BabelParser.tryParse(
+        equation,
+        p => preExpr.TypeAnnotation( p, preExpr.Bool ) )
+        .fold( throw _, identity ) match {
           case Eq( lhs @ Apps( c_, _ ), rhs ) =>
             syntacticMatching( c_, c ).get( lhs -> rhs )
         }
     }
+
   }
 
   case object PrimitiveRecursiveFunctions {
@@ -669,27 +676,29 @@ object Context {
       implicit
       ctx: Context ): Iterable[PrimRecFun] = {
 
-      val constants = rawDefinitions map { _._1 }
-      val temporaryContext = ctx ++ constants.map { ConstDecl }
-
       val parsedDefinitions: Iterable[PrimRecFun] =
         rawDefinitions.map {
           case ( const, equations ) =>
-            PrimRecFun( const, equations )( temporaryContext )
+            PrimRecFun( const, equations )
         }
 
       batch( parsedDefinitions )
     }
 
     def apply(
-      rawDefinitions: Iterable[( Const, Seq[String] )] )( implicit ctx: Context ): Iterable[PrimRecFun] = {
+      rawDefinitions: Iterable[( Const, Seq[String] )] )(
+      implicit
+      ctx: Context ): Iterable[PrimRecFun] = {
 
-      val temporaryContext = ctx ++ rawDefinitions.map { d => ConstDecl( d._1 ) }
+      val parsingContext = ctx ++ rawDefinitions.map { d => ConstDecl( d._1 ) }
 
       val parsedDefinitions: Iterable[PrimRecFun] =
         rawDefinitions.map {
           case ( const, equations ) =>
-            PrimRecFun( const, equations: _* )( temporaryContext )
+            ( const, equations.map { parseEquation( const, _ )( parsingContext ) } )
+        }.map {
+          case ( const, equations ) =>
+            PrimRecFun( const, equations )
         }
 
       batch( parsedDefinitions )
