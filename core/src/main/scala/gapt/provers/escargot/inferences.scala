@@ -350,23 +350,6 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
   }
 
   object OrderedResolution extends InferenceRule {
-    def apply( c1: Cls, c2: Cls ): Set[Cls] = {
-      if ( c2.selected.nonEmpty ) return Set()
-      val renaming = Substitution( rename( c2.freeVars, c1.freeVars ) )
-      val p2_ = Subst( c2.proof, renaming )
-      val inferred = for {
-        i1 <- if ( c1.selected.nonEmpty ) c1.selected else c1.maximal
-        a1 = c1.clause( i1 ) if i1 isAnt;
-        i2 <- c2.maximal if i2 isSuc;
-        mgu <- unify( p2_.conclusion( i2 ), a1 )
-        if c1.selected.nonEmpty || !c1.maximal.exists { i1_ => i1_ != i1 && termOrdering.lt( a1, mgu( c1.clause( i1_ ) ) ) }
-        if !c2.maximal.exists { i2_ => i2_ != i2 && termOrdering.lt( mgu( p2_.conclusion( i2 ) ), mgu( p2_.conclusion( i2_ ) ) ) }
-        ( p1__, conn1 ) = Factor.withOccConn( Subst( c1.proof, mgu ) )
-        ( p2__, conn2 ) = Factor.withOccConn( Subst( p2_, mgu ) )
-      } yield DerivedCls( c1, c2, Resolution( p2__, conn2 child i2, p1__, conn1 child i1 ) )
-      inferred.toSet
-    }
-
     def apply( given: Cls, existing: IndexedClsSet ): ( Set[Cls], Set[( Cls, Set[Int] )] ) = {
       val givenSet = IndexedClsSet( state ).addIndex( SelectedLitIndex ).addIndex( MaxPosLitIndex ) + given
       val existingPlusGiven = existing + given
