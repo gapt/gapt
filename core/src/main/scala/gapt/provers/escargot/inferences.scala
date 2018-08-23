@@ -314,7 +314,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
           ( subterm, pos ) <- getFOPositions( p.conclusion( i ) ) if !didRewrite
           if !subterm.isInstanceOf[Var]
           ( t_, s_, leftToRight, c1 ) <- unitRwrLhs.generalizations( subterm ) if !didRewrite
-          // if c1.ass subsetOf given.ass // FIXME
+          if c1.ass subsetOf given.ass // FIXME: large performance difference? e.g. ALG200+1
           subst <- matching( t_, subterm )
           if termOrdering.lt( subst( s_ ), subterm )
         } {
