@@ -376,7 +376,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       val a1 = c1.clause( i1 )
       for {
         mgu <- unify( p2_.conclusion( i2 ), a1 )
-        if c1.selected.nonEmpty || !c1.maximal.exists { i1_ => i1_ != i1 && termOrdering.lt( a1, mgu( c1.clause( i1_ ) ) ) }
+        if c1.selected.nonEmpty || !c1.maximal.exists { i1_ => i1_ != i1 && termOrdering.lt( mgu( a1 ), mgu( c1.clause( i1_ ) ) ) }
         if !c2.maximal.exists { i2_ => i2_ != i2 && termOrdering.lt( mgu( p2_.conclusion( i2 ) ), mgu( p2_.conclusion( i2_ ) ) ) }
         ( p1__, conn1 ) = Factor.withOccConn( Subst( c1.proof, mgu ) )
         ( p2__, conn2 ) = Factor.withOccConn( Subst( p2_, mgu ) )
