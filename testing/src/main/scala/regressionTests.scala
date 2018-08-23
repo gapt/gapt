@@ -9,7 +9,7 @@ import gapt.expr.fol.isFOLPrenexSigma1
 import gapt.formats.babel.BabelParser
 import gapt.formats.leancop.LeanCoPParser
 import gapt.formats.tip.TipSmtImporter
-import gapt.formats.tptp.{ TptpParser, resolveIncludes }
+import gapt.formats.tptp.TptpImporter
 import gapt.formats.verit.VeriTParser
 import gapt.proofs.Context.ProofNames
 import gapt.proofs.ceres._
@@ -45,8 +45,8 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
       case ( duration, strategy ) =>
         try {
           ( withTimeout( duration ) { strategy.andThen( now )( ProofState( sequent ) ) } match {
-            case ( Left( error ) )         => throw new Exception( error.toSigRelativeString )
-            case ( Right( ( _, state ) ) ) => state.result
+            case Left( error )         => throw new Exception( error.toSigRelativeString )
+            case Right( ( _, state ) ) => state.result
           } ) --? s"viper $strategy"
         } catch {
           case _: TimeOutException =>
@@ -271,7 +271,7 @@ class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
 
   override def test( implicit testRun: TestRun ) = {
     val tptpDir = Path( f ) / up / up / up
-    val tptpProblem = resolveIncludes( TptpParser.parse( f ), path => TptpParser.parse( tptpDir / RelPath( path ) ) ) --- "TptpParser"
+    val tptpProblem = TptpImporter.resolve( f, path => TptpImporter.noResolve( tptpDir / RelPath( path ) ) ) --- "TptpParser"
 
     val sequent = tptpProblem.toSequent
 

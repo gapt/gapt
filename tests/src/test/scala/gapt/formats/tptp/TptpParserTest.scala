@@ -8,7 +8,7 @@ class TptpParserTest extends Specification {
   def loadTPTP( fileName: String ) =
     resolveIncludes(
       TptpFile( Seq( IncludeDirective( fileName, None ) ) ),
-      fileName => TptpParser.parse( ClasspathInputFile( fileName ) ) )
+      fileName => TptpImporter.noResolve( ClasspathInputFile( fileName ) ) )
 
   "gra014p1" in {
     loadTPTP( "GRA014+1.p" )

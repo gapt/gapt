@@ -1,7 +1,7 @@
 package gapt.provers.escargot
 
 import gapt.expr._
-import gapt.formats.tptp.{ TptpParser, resolutionToTptp, tptpProblemToResolution }
+import gapt.formats.tptp.{ TptpImporter, resolutionToTptp, tptpProblemToResolution }
 import gapt.proofs._
 import gapt.proofs.lk.LKProof
 import gapt.proofs.resolution._
@@ -76,7 +76,7 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
       case Seq( file ) => file
     }
 
-    val tptp = TptpParser.load( FilePath( tptpInputFile ) )
+    val tptp = TptpImporter.resolve( FilePath( tptpInputFile ) )
     getResolutionProof( structuralCNF.onProofs( tptpProblemToResolution( tptp ) ) ) match {
       case Some( proof ) =>
         println( "% SZS status Unsatisfiable" )

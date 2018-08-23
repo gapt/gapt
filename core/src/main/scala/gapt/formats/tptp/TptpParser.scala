@@ -118,11 +118,11 @@ class TptpParser( val input: ParserInput ) extends Parser {
   }
 }
 
-object TptpParser {
+object TptpImporter {
   /**
    * Parse a TPTP file, but do not resolve include directives.
    */
-  def parse( file: InputFile ): TptpFile = {
+  private def parse( file: InputFile ): TptpFile = {
     val input = file.read
     val parser = new TptpParser( input )
     parser.TPTP_file.run() match {
@@ -135,22 +135,29 @@ object TptpParser {
   }
 
   /**
+   * Load a TPTP file, but don't resolve includes.
+   * @param file The input file to load.
+   * @return The parsed file.
+   */
+  def noResolve( file: InputFile ): TptpFile = parse( file )
+
+  /**
    * The default resolver looks for include files relative to the current working directory
    * @param fileName the file name
    * @return the parsed tptp (include) file
    */
-  def default_resolver( fileName: String ) = parse( FilePath( fileName ) )
+  private def defaultResolver( fileName: String ) = parse( FilePath( fileName ) )
 
   /**
-   * Load a TPTP file resolving includes.
-   * @param file the input file to load
-   * @param resolver a function used to resolve eventual included files
-   * @return the parsed file
+   * Load a TPTP file and resolve includes.
+   * @param file The input file to load.
+   * @param resolver How to resolve included files.
+   * @return The parsed file.
    */
-  def load( file: InputFile, resolver: String => TptpFile = default_resolver ): TptpFile =
+  def resolve( file: InputFile, resolver: String => TptpFile = defaultResolver ): TptpFile =
     resolveIncludes( parse( file ), resolver )
 
   def main( args: Array[String] ): Unit =
-    print( load( FilePath( args.head ) ) )
+    print( resolve( FilePath( args.head ) ) )
 
 }
