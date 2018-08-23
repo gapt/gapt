@@ -72,8 +72,17 @@ object getFOPositions {
 
 object UnitRwrLhsIndex extends Index[DiscrTree[( Expr, Expr, Boolean, Cls )]] {
   def empty: I = DiscrTree()
+  private def choose[T]( ts: T* ): Seq[T] = ts
   def add( t: I, c: Cls ): I =
-    c.unitRwrLhs.foldLeft( t )( ( dt, e ) => dt.insert( e._1, e ) )
+    t.insert( c.clause match {
+      case Sequent( Seq(), Seq( Eq( t, s ) ) ) =>
+        for {
+          ( t_, s_, ltr ) <- choose( ( t, s, true ), ( s, t, false ) )
+          if !t_.isInstanceOf[Var]
+          if !c.state.termOrdering.lt( t_, s_ )
+        } yield t_ -> ( t_, s_, ltr, c )
+      case _ => Seq.empty
+    } )
   def remove( t: I, cs: Set[Cls] ): I = t.filter( e => !cs( e._4 ) )
 }
 
@@ -100,9 +109,8 @@ object ForwardSuperpositionIndex extends Index[DiscrTree[( Cls, SequentIndex, Ex
   private def choose[T]( ts: T* ): Seq[T] = ts
   def add( t: I, c: Cls ): I =
     t.insert( for {
-      i <- c.maximal
+      i <- c.maximal if i.isSuc
       Eq( t, s ) <- choose( c.clause( i ) )
-      if i.isSuc
       ( t_, s_, leftToRight ) <- choose( ( t, s, true ), ( s, t, false ) )
       if !c.state.termOrdering.lt( t_, s_ )
     } yield t_ -> ( c, i, t_, s_, leftToRight ) )

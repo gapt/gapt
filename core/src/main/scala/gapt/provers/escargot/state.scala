@@ -48,22 +48,6 @@ class Cls( val state: EscargotState, val proof: ResolutionProof, val index: Int 
   val literalFeatureVecs = clause.map( TermFeatureVec( _ ) )
   val featureVec = ClauseFeatureVec( literalFeatureVecs )
 
-  def posResCands: Vector[Formula] = maximal.filter( _.isSuc ).map( clause( _ ) )
-  def negResCands: Vector[Formula] =
-    ( if ( selected.nonEmpty ) selected else maximal ).
-      filter( _.isAnt ).map( clause( _ ) )
-  def unitRwrLhs: Seq[( Expr, Expr, Boolean, Cls )] =
-    clause match {
-      case Sequent( Seq(), Seq( Eq( t, s ) ) ) =>
-        def choose[T]( ts: T* ): Seq[T] = ts
-        for {
-          ( t_, s_, ltr ) <- choose( ( t, s, true ), ( s, t, false ) )
-          if !t_.isInstanceOf[Var]
-          if !state.termOrdering.lt( t_, s_ )
-        } yield ( t_, s_, ltr, this )
-      case _ => Seq.empty
-    }
-
   override def toString = s"[$index] ${proof.stringifiedConclusion( state.ctx )}   (max = ${maximal mkString ", "}) (sel = ${selected mkString ", "}) (w = $weight)"
   override def hashCode = index
 }
