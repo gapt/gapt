@@ -48,8 +48,59 @@ class Cls( val state: EscargotState, val proof: ResolutionProof, val index: Int 
   val literalFeatureVecs = clause.map( TermFeatureVec( _ ) )
   val featureVec = ClauseFeatureVec( literalFeatureVecs )
 
+  def posResCands: Vector[Formula] = maximal.filter( _.isSuc ).map( clause( _ ) )
+  def negResCands: Vector[Formula] =
+    ( if ( selected.nonEmpty ) selected else maximal ).
+      filter( _.isAnt ).map( clause( _ ) )
+  def unitRwrLhs: Seq[( Expr, Expr, Boolean, Cls )] =
+    clause match {
+      case Sequent( Seq(), Seq( Eq( t, s ) ) ) =>
+        def choose[T]( ts: T* ): Seq[T] = ts
+        for {
+          ( t_, s_, ltr ) <- choose( ( t, s, true ), ( s, t, false ) )
+          if !t_.isInstanceOf[Var]
+          if !state.termOrdering.lt( t_, s_ )
+        } yield ( t_, s_, ltr, this )
+      case _ => Seq.empty
+    }
+
   override def toString = s"[$index] ${proof.stringifiedConclusion( state.ctx )}   (max = ${maximal mkString ", "}) (sel = ${selected mkString ", "}) (w = $weight)"
   override def hashCode = index
+}
+
+case class IndexedClsSet(
+    clauses:     Set[Cls],
+    posResCands: DiscrTree[Cls],
+    negResCands: DiscrTree[Cls],
+    unitRwrLhs:  DiscrTree[( Expr, Expr, Boolean, Cls )],
+    state:       EscargotState ) {
+  def size: Int = clauses.size
+
+  def +( c: Cls ): IndexedClsSet =
+    IndexedClsSet(
+      clauses = clauses + c,
+      posResCands = posResCands.insert( c.posResCands, c ),
+      negResCands = negResCands.insert( c.negResCands, c ),
+      unitRwrLhs = c.unitRwrLhs.foldLeft( unitRwrLhs )( ( dt, e ) => dt.insert( e._1, e ) ),
+      state = state )
+  def ++( cs: Iterable[Cls] ): IndexedClsSet =
+    cs.foldLeft( this )( _ + _ )
+  def -( c: Cls ): IndexedClsSet =
+    IndexedClsSet(
+      clauses = clauses - c,
+      posResCands = posResCands.remove( c ),
+      negResCands = negResCands.remove( c ),
+      unitRwrLhs = unitRwrLhs.filter( _._4 != c ),
+      state = state )
+}
+object IndexedClsSet {
+  def apply( state: EscargotState ): IndexedClsSet =
+    IndexedClsSet(
+      clauses = Set(),
+      posResCands = DiscrTree(),
+      negResCands = DiscrTree(),
+      unitRwrLhs = DiscrTree(),
+      state = state )
 }
 
 /**
@@ -108,7 +159,7 @@ class EscargotState( val ctx: MutableContext ) {
   /** We have not yet used these clauses in inferences. */
   val usable = mutable.Set[Cls]()
   /** All inferences between these clauses have already been applied. */
-  var workedOff = Set[Cls]()
+  var workedOff = IndexedClsSet( this )
   /**
    * Locked clauses have assertions that are false in the current model,
    * or are subsumed by a clause whose assertion is true in the current model.
@@ -119,10 +170,10 @@ class EscargotState( val ctx: MutableContext ) {
 
   /** This formula should always be unsatisfiable. */
   def stateAsFormula: Formula = And {
-    ( newlyDerived.view ++ usable ++ workedOff ++ locked.map( _._1 ) ++ emptyClauses.values ).map { c =>
+    ( newlyDerived.view ++ usable ++ workedOff.clauses ++ locked.map( _._1 ) ++ emptyClauses.values ).map { c =>
       c.proof.assertions.toNegConjunction --> universalClosure( c.proof.conclusion.toFormula )
     }
-  } | And { ( newlyDerived.view ++ usable ++ workedOff ).map { c => universalClosure( c.proof.conclusion.toFormula ) } }
+  } | And { ( newlyDerived.view ++ usable ++ workedOff.clauses ).map { c => universalClosure( c.proof.conclusion.toFormula ) } }
 
   /** SAT solver instance */
   val solver = SolverFactory.newDefault()
@@ -241,7 +292,7 @@ class EscargotState( val ctx: MutableContext ) {
       usable += cls
     }
     for ( cls <- usable.toSeq if cls.clause.isEmpty ) usable -= cls
-    for ( cls <- workedOff.toSeq if !isActive( cls ) ) {
+    for ( cls <- workedOff.clauses if !isActive( cls ) ) {
       workedOff -= cls
       locked += ( cls -> None )
     }
