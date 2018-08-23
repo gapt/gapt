@@ -89,7 +89,7 @@ object UnitRwrLhsIndex extends Index[DiscrTree[( Expr, Expr, Boolean, Cls )]] {
 object MaxPosLitIndex extends Index[DiscrTree[( Cls, SequentIndex )]] {
   def empty: I = DiscrTree()
   def add( t: I, c: Cls ): I =
-    t.insert( for ( i <- c.maximal if i.isSuc )
+    t.insert( for ( i <- c.maximal if i.isSuc if c.selected.isEmpty )
       yield c.clause( i ) -> ( c, i ) )
   def remove( t: I, cs: Set[Cls] ): I = t.filter( e => !cs( e._1 ) )
 }
