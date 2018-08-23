@@ -16,7 +16,7 @@ class MalformedInputFileException( s: String ) extends IllegalArgumentException(
 
 object TptpProofParser {
   def parse( out: InputFile, labelledCNF: Map[String, Seq[FOLClause]] ): RefutationSketch =
-    parseSteps( TptpParser.parse( out ), labelledCNF )
+    parseSteps( TptpImporter.noResolve( out ), labelledCNF )
 
   def removeStrongQuants( tptpFile: TptpFile ): TptpFile = {
     val stepsWithStrongQuants = tptpFile.inputs.filter {
@@ -48,7 +48,7 @@ object TptpProofParser {
   }
 
   def parse( out: InputFile, ignoreStrongQuants: Boolean = false ): ( Sequent[FOLFormula], RefutationSketch ) = {
-    var tptpFile = TptpParser.parse( out )
+    var tptpFile = TptpImporter.noResolve( out )
     if ( ignoreStrongQuants ) tptpFile = removeStrongQuants( tptpFile )
     tptpFile = inventSources( tptpFile )
     val ( endSequent, labelledCNF ) = extractEndSequentAndCNF( tptpFile )

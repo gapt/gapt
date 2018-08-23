@@ -2,7 +2,7 @@ package gapt.formats.json
 
 import io.circe.Encoder
 
-object JSONExporter {
+object JsonExporter {
   /**
    * Exports a value for which an Encoder exists to JSON.
    */

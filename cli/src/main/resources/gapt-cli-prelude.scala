@@ -1,4 +1,4 @@
-import ammonite.ops._
+import ammonite.ops.{read => _, write => writeFile, _}
 import gapt._
 import gapt.examples._
 import gapt.expr._
@@ -13,6 +13,7 @@ import gapt.formats.smt._
 import gapt.formats.llk._
 import gapt.formats.latex._
 import gapt.formats.lean._
+import gapt.formats.implicits._
 import gapt.grammars._
 import gapt.proofs.reduction._
 import gapt.proofs.rup._

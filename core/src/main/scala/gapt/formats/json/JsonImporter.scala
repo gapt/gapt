@@ -4,7 +4,7 @@ import gapt.formats.InputFile
 import io.circe.{ Decoder, Json }
 import io.circe.parser._
 
-object JSONImporter {
+object JsonImporter {
   /**
    * Imports a value for which a Decoder exists from JSON.
    */
