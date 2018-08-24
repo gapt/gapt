@@ -619,6 +619,7 @@ object introducePi2Cut {
     /// Prints the most interesting data ///
     ////////////////////////////////////////
 
+    /*
     println( "Number of non-tautological leaves" )
     println( seHs.dualNonTautologicalAxioms.length )
     println( "Non-tautological leaves" )
@@ -640,7 +641,6 @@ object introducePi2Cut {
     }
     println( "Number of checked Formulas" )
     println( numberOfCheckedFormulas )
-    /*
     */
 
     ( None, nameOfExistentialVariableChecked, nameOfUniversalVariableChecked )

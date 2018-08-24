@@ -2,7 +2,7 @@ package gapt.cutintro
 
 import gapt.expr._
 import gapt.expr.hol.lcomp
-import gapt.grammars.{ Pi2Grammar, VtratgParameter, findMinimalPi2Grammar, findMinimalVTRATG }
+import gapt.grammars.{ Pi2Grammar, Pi2PreGrammar, VtratgParameter, findMinimalPi2Grammar, findMinimalVTRATG }
 import gapt.proofs.Sequent
 import gapt.proofs.expansion.InstanceTermEncoding
 import gapt.proofs.lk.LKProof
@@ -37,14 +37,17 @@ object Pi2CutIntroduction {
 
     if ( betas == Vector() ) {
       val grammar = findMinimalVTRATG( lang, VtratgParameter.forFolTratg( 1 ) )
-      val sehs = Pi2SeHs(
-        Sequent( Seq(), grammar.rightHandSides( grammar.startSymbolNT ).head.map( x => {
-          println( x )
-          x.asInstanceOf[Formula]
-        } ) ),
-        alpha, List( fov"beta" ),
-        grammar.productions.unzip._2.tail.head,
-        List( fot"dummyTermGottIstTot" ) )
+      val pi2grammar = Pi2Grammar( Pi2PreGrammar(
+        startSymbol = grammar.startSymbol,
+        alpha = alpha,
+        betas = Vector( grammar.nonTerminals.last.head ),
+        productions = Vector( grammar.nonTerminals.last.head -> fot"dummyTermGottIstTot" ) ++
+          grammar.productions.map {
+            case ( List( nt ), List( rhs ) ) =>
+              if ( nt == grammar.startSymbol ) nt -> rhs else alpha -> rhs
+          } ) )
+      require( lang subsetOf pi2grammar.language, "pi2 grammar does not cover language" )
+      val sehs = pi2GrammarToSEHS( pi2grammar, enc )
       println( "start computing cut formula" )
       val ( cutFormulaOpt, x, y ) = introducePi2Cut( sehs )
       cutFormulaOpt.flatMap { cutFormula =>
