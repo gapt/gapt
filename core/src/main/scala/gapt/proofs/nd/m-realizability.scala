@@ -1,10 +1,16 @@
 package gapt.proofs.nd
 
-import gapt.expr
-import gapt.expr.{ App, Substitution, Ty, Var, typeVariables, _ }
-import gapt.proofs.Context.{ BaseTypes, InductiveType, PrimRecFun, StructurallyInductiveTypes }
+import gapt.expr.App
+import gapt.expr.Substitution
+import gapt.expr.Ty
+import gapt.expr.Var
+import gapt.expr.typeVariables
+import gapt.expr._
+import gapt.proofs.Context.BaseTypes
+import gapt.proofs.Context.InductiveType
+import gapt.proofs.Context.PrimRecFun
+import gapt.proofs.Context.StructurallyInductiveTypes
 import gapt.proofs._
-import gapt.proofs.nd._
 import gapt.utils.NameGenerator
 
 object MRealizability {
@@ -58,7 +64,7 @@ object MRealizability {
         constr_recCaseVars( constr )( constrArgVars( constr ).flatMap( argVar =>
           if ( argVar.ty == indType ) Seq( argVar, rec( recCaseVars :+ argVar ) ) else Seq( argVar ) ) ) ) )
 
-      systemT += PrimRecFun( List( ( rec, equations ) ) )
+      systemT += PrimRecFun( rec, equations )
     }
 
     // add conjuctive type, pairs, projections and their reduction rules
@@ -71,12 +77,12 @@ object MRealizability {
     val pi2 = hoc"pi2{?a ?b}: (conj ?a ?b) > ?b"
     val x: Expr = hov"x : ?a"
     val y: Expr = hov"y : ?b"
-    systemT += PrimRecFun( List(
-      ( pi1, List(
-        ( pi1( pair( x, y ) ) -> x ) ) ) ) )( systemT )
-    systemT += PrimRecFun( List(
-      ( pi2, List(
-        ( pi2( pair( x, y ) ) -> y ) ) ) ) )( systemT )
+    systemT += PrimRecFun(
+      pi1, List(
+      ( pi1( pair( x, y ) ) -> x ) ) )( systemT )
+    systemT += PrimRecFun(
+      pi2, List(
+      ( pi2( pair( x, y ) ) -> y ) ) )( systemT )
 
     // add sum type
     val sum = ty"sum ?a ?b"
@@ -86,10 +92,10 @@ object MRealizability {
     val matchSum = hoc"matchSum{?a ?b ?c}: (sum ?a ?b) > (?a > ?c) > (?b > ?c) > ?c"
     val w1: Expr = hov"w1: ?a > ?c"
     val w2: Expr = hov"w2: ?b > ?c"
-    systemT += PrimRecFun( List(
-      ( matchSum, List(
-        ( matchSum( inl( x ), w1, w2 ) -> w1( x ) ),
-        ( matchSum( inr( y ), w1, w2 ) -> w2( y ) ) ) ) ) )( systemT )
+    systemT += PrimRecFun(
+      matchSum, List(
+      ( matchSum( inl( x ), w1, w2 ) -> w1( x ) ),
+      ( matchSum( inr( y ), w1, w2 ) -> w2( y ) ) ) )( systemT )
 
     // add a term+type to represent the empty program
     systemT += InductiveType(
