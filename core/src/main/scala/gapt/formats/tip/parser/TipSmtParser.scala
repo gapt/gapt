@@ -21,7 +21,7 @@ object TipSmtParser {
    * @return The parsed TIP problem.
    */
   def parse( input: InputFile ): TipSmtProblem = {
-    parse( SExpressionParser( input ) )
+    parse( SExpressionParser.parse( input ) )
   }
 
   /**
