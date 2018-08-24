@@ -1504,10 +1504,7 @@ GAPT currently supports JSON import and export of LK proofs and expansion proofs
 as well as all of their components such as formulas, sequents, indices, etc. For
 instance, this is how you export a sequent to JSON:
 \begin{clilisting}
-gapt> import gapt.formats.json._
-import gapt.formats.json._
-
-gapt> val s = JSONExporter(hos"A, B :- P(x)")
+gapt> val s = JsonExporter(hos"A, B :- P(x)")
 s: String =
 {
   "antecedent" : [
@@ -1522,10 +1519,7 @@ s: String =
 \end{clilisting}
 To read the JSON string back into a sequent:
 \begin{clilisting}
-gapt> import gapt.formats.InputFile
-import gapt.formats.InputFile
-
-gapt> val sequent = JSONImporter[HOLSequent](InputFile.fromString(s))
+gapt> val sequent = JsonImporter.load[HOLSequent](InputFile.fromString(s))
 sequent: gapt.proofs.HOLSequent = A, B ⊢ P(x)
 
 \end{clilisting}
@@ -1562,7 +1556,7 @@ p3: gapt.proofs.lk.LKProof =
 [p2] B ⊢ B    (LogicalAxiom(B:o))
 [p1] A ⊢ A    (LogicalAxiom(A:o))
 
-gapt> val s = JSONExporter(p3)
+gapt> val s = JsonExporter(p3)
 s: String =
 {
   "4" : {
@@ -1616,7 +1610,7 @@ fof(suc_0, conjecture, p(s(s('0')))).
 
 You can also parse TPTP problems:
 \begin{clilisting}
-gapt> val tptp = TptpImporter.resolve(pwd/"examples"/"import"/"irrationals.p")
+gapt> val tptp = TptpImporter.loadWithIncludes("examples/import/irrationals.p")
 tptp: gapt.formats.tptp.TptpFile =
 fof(a, axiom, i(sr2)).
 fof(b, axiom, ~ i(two)).
@@ -2133,7 +2127,7 @@ $ ./viper.sh --treegrammar --cansolsize 2 3 --gramw scomp \
 
 You can also use Viper from within GAPT:
 \begin{clilisting}
-gapt> val problem = TipSmtImporter.parse(FilePath("examples/tip/isaplanner/prop_06.smt2"))
+gapt> val problem = TipSmtImporter.load("examples/tip/isaplanner/prop_06.smt2")
 problem: gapt.formats.tip.TipProblem =
 ∀x0 'proj1-S'(S(x0)) = x0,
 ∀y '-2'(Z, y) = Z,
