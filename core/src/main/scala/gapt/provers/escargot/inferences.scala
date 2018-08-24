@@ -401,6 +401,14 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
         case _                                   => true
       }
 
+    def eligible( c: Cls, c1: HOLSequent, mgu: Substitution, i: SequentIndex ): Boolean = {
+      val a = mgu( c1( i ) )
+      def maximalIn( is: Iterable[SequentIndex] ): Boolean =
+        !is.exists( i_ => i_ != i && termOrdering.lt( a, mgu( c1( i_ ) ) ) )
+      if ( c.selected.isEmpty ) maximalIn( c.maximal )
+      else maximalIn( c.selected.view.filter( _.isAnt ) ) || maximalIn( c.selected.view.filter( _.isSuc ) )
+    }
+
     def apply( given: Cls, existing: IndexedClsSet ): ( Set[Cls], Set[( Cls, Set[Int] )] ) = {
       val givenSet = IndexedClsSet( state ).
         addIndex( ForwardSuperpositionIndex ).
@@ -434,6 +442,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
         mgu <- unify( t_, st2 )
         if !termOrdering.lt( mgu( t_ ), mgu( s_ ) )
         pos2_ = pos2.filter( isReductive( mgu( a2 ), i2, _ ) ) if pos2_.nonEmpty
+        if eligible( c2, p2_.conclusion, mgu, i2 )
         p1__ = Subst( c1.proof, mgu )
         p2__ = Subst( p2_, mgu )
         atom = p2__.conclusion( i2 )
