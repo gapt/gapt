@@ -113,7 +113,7 @@ object IEscargot {
     if ( opts.verbose )
       LogHandler.verbosity.value = LogHandler.verbosity.value.increase( Seq( EscargotLogger ), 2 )
 
-    val tptp = TptpImporter.resolve( FilePath( opts.files.head ) )
+    val tptp = TptpImporter.loadWithIncludes( FilePath( opts.files.head ) )
     val tptpSequent = tptp.toSequent
     implicit val ctx = MutableContext.guess( tptpSequent )
     ( if ( containsQuantifierOnLogicalLevel( tptpSequent.toImplication ) )

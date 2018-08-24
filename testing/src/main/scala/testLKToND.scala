@@ -85,7 +85,7 @@ object testLKToND2 extends scala.App {
     val Seq( fileName ) = args.toSeq
     metric( "file", fileName )
 
-    val tptp = time( "tptp" ) { TptpImporter.resolve( FilePath( fileName ) ) }
+    val tptp = time( "tptp" ) { TptpImporter.loadWithIncludes( FilePath( fileName ) ) }
     val problem = tptp.toSequent
     implicit val ctx = MutableContext.guess( problem )
     val cnf = time( "clausifier" ) { structuralCNF( problem ) }

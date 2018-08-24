@@ -20,7 +20,7 @@ object testExpansionImport extends scala.App {
   metric( "file", tptpFileName )
 
   try time( "total" ) {
-    val tptp = time( "tptpparser" ) { TptpImporter.resolve( FilePath( tptpFileName ) ) }
+    val tptp = time( "tptpparser" ) { TptpImporter.loadWithIncludes( FilePath( tptpFileName ) ) }
     val problem = tptp.toSequent
     metric( "problem_lcomp", lcomp( problem ) )
     metric( "problem_scomp", expressionSize( problem.toImplication ) )

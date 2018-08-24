@@ -18,7 +18,7 @@ object TPTPstatistics {
   type Sigtable = Map[String, Seq[Set[Const]]]
 
   def apply[T <: TptpLibraryProblem]( name: T ): TptpInputStats[T] = {
-    val tptpFile = TptpImporter.resolve( name.file, f => TptpImporter.noResolve( FilePath( s"${name.path}/$f" ) ) )
+    val tptpFile = TptpImporter.loadWithIncludes( name.file, f => TptpImporter.loadWithoutIncludes( FilePath( s"${name.path}/$f" ) ) )
     apply( tptpFile, name )
   }
 

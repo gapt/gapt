@@ -271,7 +271,7 @@ class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
 
   override def test( implicit testRun: TestRun ) = {
     val tptpDir = Path( f ) / up / up / up
-    val tptpProblem = TptpImporter.resolve( f, path => TptpImporter.noResolve( tptpDir / RelPath( path ) ) ) --- "TptpParser"
+    val tptpProblem = TptpImporter.loadWithIncludes( f, path => TptpImporter.loadWithoutIncludes( tptpDir / RelPath( path ) ) ) --- "TptpParser"
 
     val sequent = tptpProblem.toSequent
 
