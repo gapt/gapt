@@ -12,7 +12,7 @@ import gapt.utils.runProcess
 object TipSmtImporter extends ExternalProgram {
 
   def parse( tipBench: InputFile ): TipProblem = {
-    ( new TipSmtToTipProblemCompiler( TipSmtParser.parse( tipBench ) ) )
+    new TipSmtToTipProblemCompiler( TipSmtParser.parse( tipBench ) )
       .compileTipProblem()
       .toProblem
   }

@@ -27,16 +27,6 @@ object TipSmtParser {
   /**
    * Parses a TIP problem.
    *
-   * @param input The input to be parsed.
-   * @return The parsed TIP problem.
-   */
-  def parse( input: String ): TipSmtProblem = {
-    parse( StringInputFile( input ) )
-  }
-
-  /**
-   * Parses a TIP problem.
-   *
    * A tip problem consists of a sequence of s-expressions. Each of these
    * s-expressions represents a command.
    *

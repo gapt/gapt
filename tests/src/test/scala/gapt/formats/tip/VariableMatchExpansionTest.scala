@@ -1,5 +1,6 @@
 package gapt.formats.tip
 
+import gapt.formats.StringInputFile
 import gapt.formats.tip.parser.TipSmtAssertion
 import gapt.formats.tip.parser.TipSmtFunctionDefinition
 import gapt.formats.tip.parser.TipSmtGoal
@@ -13,7 +14,7 @@ class VariableMatchExpansionTest extends Specification {
   "variable match-expressions should be expanded in all expressions" in {
 
     val input =
-      """
+      StringInputFile( """
         | (declare-datatypes () ( (nat (Z) (S (p nat)))))
         | (define-fun
         |   f1
@@ -29,7 +30,7 @@ class VariableMatchExpansionTest extends Specification {
         |   ))
         | (prove (forall ((x nat)) (match x (case Z Z) (case (S y) x) )))
         | (assert (forall ((x nat)) (match x (case Z Z) (case (S y) x) )))
-      """.stripMargin
+      """.stripMargin )
 
     val originalProblem = TipSmtParser.parse( input )
     val transformedProblem =
@@ -52,14 +53,14 @@ class VariableMatchExpansionTest extends Specification {
 
   "unquantified variables should not be expanded" in {
     val input =
-      """
+      StringInputFile( """
         | (declare-datatypes () ( (nat (Z) (S (p nat)))))
         | (define-fun
         |   f1
         |   ((x nat))
         |   nat
         |   (forall ((x nat)) (match y (case Z Z) (case (S y) x) )))
-      """.stripMargin
+      """.stripMargin )
     val originalProblem = TipSmtParser.parse( input )
     val transformedProblem =
       expandVariableMatchExpressions.transform( originalProblem )
@@ -68,53 +69,53 @@ class VariableMatchExpansionTest extends Specification {
 
   "existential variable should be expanded properly" in {
     val originalProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (declare-datatypes () ( (nat (Z) (S (p nat)))))
         | (define-fun
         |   f1
         |   ((x nat))
         |   nat
         |   (exists ((x nat)) (match x (case Z Z) (case (S y) x) )))
-      """.stripMargin )
+      """.stripMargin ) )
     val expectedProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (declare-datatypes () ( (nat (Z) (S (p nat)))))
         | (define-fun
         |   f1
         |   ((x nat))
         |   nat
         |   (exists ((x nat)) (or Z (exists ((y nat)) (S y))) ))
-      """.stripMargin )
+      """.stripMargin ) )
     expandVariableMatchExpressions.transform( originalProblem ) must_==
       expectedProblem
   }
 
   "universal variable should be expanded properly" in {
     val originalProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (declare-datatypes () ( (nat (Z) (S (p nat)))))
         | (define-fun
         |   f1
         |   ((x nat))
         |   nat
         |   (forall ((x nat)) (match x (case Z Z) (case (S y) x) )))
-      """.stripMargin )
+      """.stripMargin ) )
     val expectedProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (declare-datatypes () ( (nat (Z) (S (p nat)))))
         | (define-fun
         |   f1
         |   ((x nat))
         |   nat
         |   (forall ((x nat)) (and Z (forall ((y nat)) (S y))) ))
-      """.stripMargin )
+      """.stripMargin ) )
     expandVariableMatchExpressions.transform( originalProblem ) must_==
       expectedProblem
   }
 
   "variable capture should be avoided" in {
     val originalProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (declare-datatypes () ( (nat (Z) (S (p nat)))))
         | (define-fun
         |   f1
@@ -125,9 +126,9 @@ class VariableMatchExpansionTest extends Specification {
         |     (match x
         |       (case Z Z)
         |       (case (S y) (forall ((y Nat)) (= y x) ) ) )))
-      """.stripMargin )
+      """.stripMargin ) )
     val expectedProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (declare-datatypes () ( (nat (Z) (S (p nat)))))
         | (define-fun
         |   f1
@@ -138,7 +139,7 @@ class VariableMatchExpansionTest extends Specification {
         |     (and
         |       Z
         |       (forall ((y nat)) (forall ((y_0 Nat)) (= y_0 (S y)) )  ))  ))
-      """.stripMargin )
+      """.stripMargin ) )
     expandVariableMatchExpressions.transform( originalProblem ) must_==
       expectedProblem
   }
