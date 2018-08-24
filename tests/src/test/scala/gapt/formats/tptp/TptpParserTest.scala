@@ -15,4 +15,9 @@ class TptpParserTest extends Specification {
     ok
   }
 
+  "tautological clauses" in {
+    tptpProblemToResolution( loadTPTP( "HWV116-1_excerpt.p" ) )
+    ok
+  }
+
 }
