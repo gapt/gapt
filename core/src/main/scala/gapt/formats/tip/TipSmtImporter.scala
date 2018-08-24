@@ -11,18 +11,14 @@ import gapt.utils.runProcess
 
 object TipSmtImporter extends ExternalProgram {
 
-  def parse( tipBench: InputFile ): TipProblem = {
+  def load( tipBench: InputFile ): TipProblem = {
     new TipSmtToTipProblemCompiler( TipSmtParser.parse( tipBench ) )
       .compileTipProblem()
       .toProblem
   }
 
-  def parse( input: String ): TipProblem = {
-    parse( StringInputFile( input ) )
-  }
-
-  def fixupAndParse( tipBench: InputFile ): TipProblem =
-    parse( StringInputFile( runProcess(
+  def fixupAndLoad( tipBench: InputFile ): TipProblem =
+    load( StringInputFile( runProcess(
       Seq(
         "tip",
         "--type-skolem-conjecture",
@@ -36,7 +32,7 @@ object TipSmtImporter extends ExternalProgram {
       tipBench.read,
       catchStderr = true ) ) )
 
-  val isInstalled =
-    try { runProcess( Seq( "tip", "--help" ), "" ); true }
+  val isInstalled: Boolean =
+    try { runProcess( Seq( "tip", "--help" ) ); true }
     catch { case _: IOException => false }
 }

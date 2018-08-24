@@ -37,7 +37,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
   override def timeout = Some( 10 minutes )
 
   override protected def test( implicit testRun: TestRun ): Unit = {
-    val bench = TipSmtImporter.fixupAndParse( f ) --- "tip parser"
+    val bench = TipSmtImporter.fixupAndLoad( f ) --- "tip parser"
 
     implicit val ctx: MutableContext = bench.ctx.newMutable
     val sequent = bench.toSequent
