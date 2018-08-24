@@ -33,22 +33,28 @@ object Pi2CutIntroduction {
     info( s"Language size: ${lang.size}" )
     metric( "lang_trivial", lang.size == lang.map { case Apps( r, _ ) => r }.size )
     metric( "langsize", lang.size )
-    println( "start computing grammar" )
 
-    if ( betas == Vector() ) {
-      val grammar = findMinimalVTRATG( lang, VtratgParameter.forFolTratg( 1 ) )
-      val pi2grammar = Pi2Grammar( Pi2PreGrammar(
-        startSymbol = grammar.startSymbol,
+    ( if ( betas.isEmpty ) {
+      val pi1grammar = findMinimalVTRATG( lang, 1 )
+      Some( Pi2Grammar( Pi2PreGrammar(
+        startSymbol = pi1grammar.startSymbol,
         alpha = alpha,
-        betas = Vector( grammar.nonTerminals.last.head ),
-        productions = Vector( grammar.nonTerminals.last.head -> fot"dummyTermGottIstTot" ) ++
-          grammar.productions.map {
+        betas = Vector( pi1grammar.nonTerminals.last.head ),
+        productions = Vector( pi1grammar.nonTerminals.last.head -> fot"dummyTermGottIstTot" ) ++
+          pi1grammar.productions.map {
             case ( List( nt ), List( rhs ) ) =>
-              if ( nt == grammar.startSymbol ) nt -> rhs else alpha -> rhs
-          } ) )
-      require( lang subsetOf pi2grammar.language, "pi2 grammar does not cover language" )
-      val sehs = pi2GrammarToSEHS( pi2grammar, enc )
-      println( "start computing cut formula" )
+              if ( nt == pi1grammar.startSymbol ) nt -> rhs else alpha -> rhs
+          } ) ) )
+    } else {
+      findMinimalPi2Grammar( lang, alpha, betas, solver )
+    } ) flatMap { grammar =>
+      info( s"Found grammar of size: ${grammar.size}\n$grammar" )
+      metric( "grammarsize", grammar.size )
+      metric( "alpha_prods", grammar.productions.count( _._1 == grammar.alpha ) )
+      metric( "pi1_grammarsize", grammar.tratg.size )
+      metric( "genlangsize", grammar.language.size )
+      metric( "covers_lang", lang subsetOf grammar.language )
+      val sehs = pi2GrammarToSEHS( grammar, enc )
       val ( cutFormulaOpt, x, y ) = introducePi2Cut( sehs )
       cutFormulaOpt.flatMap { cutFormula =>
         metric( "cutformula", cutFormula.toString )
@@ -59,27 +65,7 @@ object Pi2CutIntroduction {
         info( s"Could not find cut formula." )
         None
       }
-    } else {
-      findMinimalPi2Grammar( lang, alpha, betas, solver ).flatMap { grammar =>
-        info( s"Found grammar of size: ${grammar.size}\n$grammar" )
-        metric( "grammarsize", grammar.size )
-        metric( "alpha_prods", grammar.productions.count( _._1 == grammar.alpha ) )
-        metric( "pi1_grammarsize", grammar.tratg.size )
-        metric( "genlangsize", grammar.language.size )
-        val sehs = pi2GrammarToSEHS( grammar, enc )
-        println( "start computing cut formula" )
-        val ( cutFormulaOpt, x, y ) = introducePi2Cut( sehs )
-        cutFormulaOpt.flatMap { cutFormula =>
-          metric( "cutformula", cutFormula.toString )
-          metric( "cutformula_lcomp", lcomp( cutFormula ) )
-          info( s"Cut formula: $cutFormula" )
-          proveWithPi2Cut.giveProof( cutFormula, sehs, exp.shallow, x, y )
-        }.orElse {
-          info( s"Could not find cut formula." )
-          None
-        }
-      }
     }
-
   }
+
 }
