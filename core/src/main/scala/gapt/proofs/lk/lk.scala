@@ -200,12 +200,6 @@ object InitialSequent {
   def unapply( proof: InitialSequent ) = Some( proof.endSequent )
 }
 
-@deprecated( "Use ProofLink instead", since = "2.7" )
-object TheoryAxiom {
-  @deprecated( "Use ProofLink instead", since = "2.7" )
-  def apply( conclusion: HOLSequent ) = ProofLink( foc"th", conclusion )
-}
-
 /**
  * An LKProof introducing ⊤ on the right:
  * <pre>
