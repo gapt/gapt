@@ -233,20 +233,26 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       newlyInferred.groupBy( _.clauseWithAssertions ).values.map( _.head ).toSet
   }
 
+  object ReflModEqIndex extends Index[DiscrTree[( Expr, Expr, Boolean, Cls )]] {
+    def empty: I = DiscrTree()
+    private def choose[T]( ts: T* ): Seq[T] = ts
+    def add( t: I, c: Cls ): I =
+      t.insert( c.clause match {
+        case Sequent( Seq(), Seq( Eq( t, s ) ) ) if matching( t, s ).isDefined
+          && matching( s, t ).isDefined =>
+          for {
+            ( t_, s_, leftToRight ) <- choose( ( t, s, true ), ( s, t, false ) )
+            if !termOrdering.lt( t_, s_ )
+            if !t_.isInstanceOf[Var]
+          } yield t_ -> ( t_, s_, leftToRight, c )
+        case _ => Seq.empty
+      } )
+    def remove( t: I, cs: Set[Cls] ): I = t.filter( e => !cs( e._4 ) )
+  }
+
   object ReflModEqDeletion extends RedundancyRule {
 
-    def canonize( expr: Expr, assertion: HOLClause, existing: IndexedClsSet ): Expr = {
-      val eqs = for {
-        c <- existing.clauses
-        if c.assertion isSubMultisetOf assertion
-        Sequent( Seq(), Seq( Eq( t, s ) ) ) <- choose( c.clause )
-        if matching( t, s ).isDefined
-        if matching( s, t ).isDefined
-        ( t_, s_, leftToRight ) <- choose( ( t, s, true ), ( s, t, false ) )
-        if !termOrdering.lt( t_, s_ )
-      } yield ( t_, s_, c, leftToRight )
-      if ( eqs isEmpty ) return expr
-
+    def canonize( expr: Expr, assertion: Set[Int], eqs: ReflModEqIndex.I ): Expr = {
       var e = expr
       var didRewrite = true
       while ( didRewrite ) {
@@ -254,7 +260,8 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
         for {
           ( subterm, pos ) <- getFOPositions( e ) if !didRewrite
           if !subterm.isInstanceOf[Var]
-          ( t_, s_, c1, leftToRight ) <- eqs if !didRewrite
+          ( t_, s_, _, c1 ) <- eqs.generalizations( subterm ) if !didRewrite
+          if c1.ass subsetOf assertion
           subst <- matching( t_, subterm )
           if termOrdering.lt( subst( s_ ), subterm, treatVarsAsConsts = true )
         } {
@@ -265,11 +272,13 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       e
     }
 
-    def isRedundant( given: Cls, existing: IndexedClsSet ): Option[Set[Int]] =
-      if ( given.clause.succedent exists {
-        case Eq( t, s ) => canonize( t, given.assertion, existing ) == canonize( s, given.assertion, existing )
+    def isRedundant( given: Cls, existing: IndexedClsSet ): Option[Set[Int]] = {
+      val eqs = existing.getIndex( ReflModEqIndex )
+      if ( !eqs.isEmpty && given.clause.succedent.exists {
+        case Eq( t, s ) => canonize( t, given.ass, eqs ) == canonize( s, given.ass, eqs )
         case _          => false
       } ) Some( Set() ) else None
+    }
 
   }
 

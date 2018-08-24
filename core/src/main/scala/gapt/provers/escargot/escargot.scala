@@ -52,7 +52,10 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
 
     // Inference rules
     state.inferences :+= ForwardSubsumption
-    if ( equality ) state.inferences :+= ReflModEqDeletion
+    if ( equality ) {
+      state.addIndex( ReflModEqIndex )
+      state.inferences :+= ReflModEqDeletion
+    }
     state.inferences :+= BackwardSubsumption
     if ( equality ) {
       state.inferences :+= ForwardUnitRewriting
