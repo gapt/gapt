@@ -3,9 +3,9 @@ package gapt.proofs.lk
 import gapt.expr._
 import gapt.formats.babel.Notation
 import gapt.formats.babel.Precedence
-import gapt.proofs.Context
-import gapt.proofs.MutableContext
 import gapt.proofs.Sequent
+import gapt.proofs.context.Context
+import gapt.proofs.context.MutableContext
 import gapt.proofs.gaptic._
 import org.specs2.mutable.Specification
 

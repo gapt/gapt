@@ -3,8 +3,8 @@ package gapt.formats.babel
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock
 
 import gapt.expr.{ Const, LogicalC }
-import gapt.proofs.Context
-import gapt.proofs.Context.Facet
+import gapt.proofs.context.Context
+import gapt.proofs.context.Context.Facet
 import gapt.{ expr => real }
 
 /**

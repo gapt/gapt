@@ -2,13 +2,23 @@ package gapt.provers
 
 import gapt.expr._
 import gapt.expr.hol.existentialClosure
-import gapt.proofs.epsilon.{ EpsilonProof, ExpansionProofToEpsilon }
-import gapt.proofs.expansion.{ ExpansionProof, eliminateCutsET }
-import gapt.proofs.{ Context, HOLClause, HOLSequent, MutableContext, Sequent }
-import gapt.proofs.lk.{ ContractionMacroRule, ExtractInterpolant, LKProof, LKToExpansionProof }
-import Session._
-import Runners._
-import gapt.utils.{ Maybe, Tree }
+import gapt.proofs.context.Context
+import gapt.proofs.context.MutableContext
+import gapt.proofs.epsilon.EpsilonProof
+import gapt.proofs.epsilon.ExpansionProofToEpsilon
+import gapt.proofs.expansion.ExpansionProof
+import gapt.proofs.expansion.eliminateCutsET
+import gapt.proofs.lk.ContractionMacroRule
+import gapt.proofs.lk.ExtractInterpolant
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.LKToExpansionProof
+import gapt.proofs.HOLClause
+import gapt.proofs.HOLSequent
+import gapt.proofs.Sequent
+import gapt.provers.Session.Runners._
+import gapt.provers.Session._
+import gapt.utils.Maybe
+import gapt.utils.Tree
 
 /**
  * A prover that is able to refute HOL sequents/formulas (or subsets

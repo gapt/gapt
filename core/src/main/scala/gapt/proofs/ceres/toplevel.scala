@@ -1,7 +1,7 @@
 package gapt.proofs.ceres
 
-import gapt.expr.{ Expr, Formula }
-import gapt.proofs.{ Context, HOLSequent }
+import gapt.expr.Formula
+import gapt.proofs.context.Context
 import gapt.proofs.lk.LKProof
 
 object extractStruct {

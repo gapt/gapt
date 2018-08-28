@@ -1,11 +1,26 @@
 package gapt.provers
 
 import gapt.expr._
-import gapt.proofs.resolution.{ Clausifier, Input, ResolutionProof, ResolutionToExpansionProof, ResolutionToLKProof, eliminateSplitting, mapInputClauses, structuralCNF }
-import gapt.proofs.{ Context, ContextSection, HOLClause, HOLSequent, MutableContext, Sequent, withSection }
-import gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, deskolemizeET }
-import gapt.proofs.lk.{ LKProof, LKToExpansionProof, WeakeningContractionMacroRule }
-import gapt.utils.{ Maybe, NameGenerator }
+import gapt.proofs.context.Context
+import gapt.proofs.context.MutableContext
+import gapt.proofs.expansion.ExpansionProof
+import gapt.proofs.expansion.ExpansionProofToLK
+import gapt.proofs.expansion.deskolemizeET
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.WeakeningContractionMacroRule
+import gapt.proofs.resolution.Input
+import gapt.proofs.resolution.ResolutionProof
+import gapt.proofs.resolution.ResolutionToExpansionProof
+import gapt.proofs.resolution.ResolutionToLKProof
+import gapt.proofs.resolution.eliminateSplitting
+import gapt.proofs.resolution.mapInputClauses
+import gapt.proofs.resolution.structuralCNF
+import gapt.proofs.ContextSection
+import gapt.proofs.HOLClause
+import gapt.proofs.HOLSequent
+import gapt.proofs.Sequent
+import gapt.proofs.withSection
+import gapt.utils.Maybe
 
 trait ResolutionProver extends OneShotProver { self =>
 

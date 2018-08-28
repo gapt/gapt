@@ -1,8 +1,9 @@
 package gapt.proofs.lk
 
 import gapt.expr.isConstructorForm
+import gapt.proofs.context.Context
 import gapt.proofs.lk.reductions._
-import gapt.proofs.{ Context, SequentIndex }
+import gapt.proofs.{ SequentIndex }
 
 object cutNormal {
   def apply(

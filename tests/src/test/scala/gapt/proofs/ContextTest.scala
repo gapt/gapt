@@ -2,6 +2,8 @@ package gapt.proofs
 
 import gapt.expr._
 import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.context.Context
+import gapt.proofs.context.MutableContext
 import org.specs2.mutable.Specification
 
 class ContextTest extends Specification {

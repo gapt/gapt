@@ -3,7 +3,7 @@ import ammonite.ops.FilePath
 import gapt.expr.{ Const, expressionSize }
 import gapt.expr.hol.lcomp
 import gapt.formats.tptp.TptpParser
-import gapt.proofs.MutableContext
+import gapt.proofs.context.MutableContext
 import gapt.proofs.expansion.{ eliminateCutsET, eliminateDefsET }
 import gapt.proofs.resolution._
 import gapt.provers.eprover.EProver

@@ -67,7 +67,7 @@ import gapt.formats.tip.transformation.expandVariableMatchExpressions
 import gapt.formats.tip.transformation.moveUniversalQuantifiersInwards
 import gapt.formats.tip.transformation.toOuterConditionalNormalForm
 import gapt.formats.tip.transformation.useDefiningFormulas
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 
 import scala.collection.mutable
 

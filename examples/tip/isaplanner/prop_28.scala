@@ -1,7 +1,7 @@
 package gapt.examples.tip.isaplanner
 
 import gapt.expr._
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 import gapt.proofs.gaptic._
 
 /* This is not a s.i.p because of the subinduction for equal(x,x). */

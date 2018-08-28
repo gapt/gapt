@@ -1,7 +1,8 @@
 package gapt.provers
 
 import gapt.expr._
-import gapt.proofs.{ HOLSequent, MutableContext, Sequent }
+import gapt.proofs.context.MutableContext
+import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.utils.{ Maybe, NameGenerator }
 
 object mangleName {

@@ -8,6 +8,7 @@ import gapt.formats.ClasspathInputFile
 import gapt.proofs.lk.{ LKProof, freeVariablesLK }
 import gapt.utils.{ ExternalProgram, NameGenerator, runProcess, withTempFile }
 import gapt.proofs._
+import gapt.proofs.context.Context
 
 import scala.collection.mutable
 

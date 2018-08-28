@@ -2,7 +2,8 @@ package gapt.proofs.lk
 
 import gapt.expr._
 import gapt.expr.Abs
-import gapt.proofs.{ Ant, Context, ProofBuilder, Sequent, SequentMatchers, Suc }
+import gapt.proofs.context.Context
+import gapt.proofs.{ Ant, ProofBuilder, Sequent, SequentMatchers, Suc }
 import gapt.proofs.gaptic.OpenAssumption
 import org.specs2.mutable.Specification
 

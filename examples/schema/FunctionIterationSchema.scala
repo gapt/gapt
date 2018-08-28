@@ -1,9 +1,10 @@
 package gapt.examples
 
-import gapt.proofs.{ Context, Sequent }
-import gapt.proofs.Context._
+import gapt.proofs.{ Sequent }
+import gapt.proofs.context.Context._
 import gapt.proofs.gaptic._
 import gapt.expr._
+import gapt.proofs.context.Context
 
 object FunctionIterationSchema extends TacticsProof {
   ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )

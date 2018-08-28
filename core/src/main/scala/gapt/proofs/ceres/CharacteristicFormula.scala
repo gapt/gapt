@@ -2,8 +2,8 @@ package gapt.proofs.ceres
 
 import gapt.expr._
 import gapt.expr.hol.toNNF
-import gapt.proofs.MutableContext
 import gapt.proofs.Sequent
+import gapt.proofs.context.MutableContext
 
 import scala.util.matching.Regex
 

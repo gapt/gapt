@@ -4,7 +4,7 @@ import gapt.expr.fol._
 import gapt.expr._
 import gapt.expr.hol._
 import gapt.formats.babel.{ BabelExporter, BabelSignature, MapBabelSignature, Precedence }
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 import gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import gapt.utils.{ Doc, Logger }
 

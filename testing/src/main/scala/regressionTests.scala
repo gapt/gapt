@@ -11,13 +11,14 @@ import gapt.formats.leancop.LeanCoPParser
 import gapt.formats.tip.TipSmtImporter
 import gapt.formats.tptp.{ TptpParser, resolveIncludes }
 import gapt.formats.verit.VeriTParser
-import gapt.proofs.Context.ProofNames
+import gapt.proofs.context.Context.ProofNames
 import gapt.proofs.ceres._
+import gapt.proofs.context.MutableContext
 import gapt.proofs.expansion._
 import gapt.proofs.gaptic.{ ProofState, now }
 import gapt.proofs.lk._
 import gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
-import gapt.proofs.{ MutableContext, Suc, loadExpansionProof }
+import gapt.proofs.{ Suc, loadExpansionProof }
 import gapt.provers.congruence.SimpleSmtSolver
 import gapt.provers.escargot.Escargot
 import gapt.provers.prover9.Prover9Importer

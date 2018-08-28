@@ -6,11 +6,12 @@ import gapt.expr.Ty
 import gapt.expr.Var
 import gapt.expr.typeVariables
 import gapt.expr._
-import gapt.proofs.Context.BaseTypes
-import gapt.proofs.Context.InductiveType
-import gapt.proofs.Context.PrimRecFun
-import gapt.proofs.Context.StructurallyInductiveTypes
+import gapt.proofs.context.Context.BaseTypes
+import gapt.proofs.context.Context.InductiveType
+import gapt.proofs.context.Context.PrimRecFun
+import gapt.proofs.context.Context.StructurallyInductiveTypes
 import gapt.proofs._
+import gapt.proofs.context.Context
 import gapt.utils.NameGenerator
 
 object MRealizability {

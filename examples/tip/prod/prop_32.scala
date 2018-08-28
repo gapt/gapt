@@ -1,7 +1,7 @@
 package gapt.examples.tip.prod
 
 import gapt.expr._
-import gapt.proofs.Context.InductiveType
+import gapt.proofs.context.Context.InductiveType
 import gapt.proofs.Sequent
 import gapt.proofs.gaptic.{ Lemma, TacticsProof, _ }
 

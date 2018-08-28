@@ -1,8 +1,8 @@
 package gapt.cutintro
 
 import gapt.expr._
+import gapt.proofs.context.MutableContext
 import gapt.proofs.gaptic._
-import gapt.proofs.MutableContext
 import gapt.proofs.lk.CutRule
 import gapt.provers.maxsat.OpenWBO
 import org.specs2.mutable.Specification

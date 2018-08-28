@@ -5,7 +5,8 @@ import gapt.examples.{ LinearExampleProof, Pi2Pigeonhole }
 import gapt.expr._
 import gapt.formats.ClasspathInputFile
 import gapt.formats.llk.LLKProofParser
-import gapt.proofs.{ Context, Sequent, SequentMatchers }
+import gapt.proofs.context.Context
+import gapt.proofs.{ Sequent, SequentMatchers }
 import gapt.proofs.lk.{ LKToExpansionProof, eliminateDefinitions }
 import gapt.provers.escargot.Escargot
 import gapt.provers.verit.VeriT

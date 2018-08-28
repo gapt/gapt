@@ -1,6 +1,6 @@
 package gapt.expr
 
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 
 case class Definition( what: Const, by: Expr ) extends Context.Update {
   val Const( name, ty, ps ) = what

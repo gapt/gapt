@@ -5,6 +5,7 @@
 package gapt.expr
 
 import gapt.proofs._
+import gapt.proofs.context.Context
 import gapt.utils.NameGenerator
 
 import scala.collection.GenTraversable

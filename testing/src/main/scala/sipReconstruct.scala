@@ -3,7 +3,8 @@ import cats.{ Eval, Later }
 import gapt.examples.Script
 import gapt.examples.theories._
 import gapt.expr._
-import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.Sequent
+import gapt.proofs.context.Context
 import gapt.proofs.expansion._
 import gapt.proofs.gaptic.TacticsProof
 import gapt.proofs.lk._

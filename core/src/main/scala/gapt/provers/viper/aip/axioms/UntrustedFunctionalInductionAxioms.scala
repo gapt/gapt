@@ -2,8 +2,10 @@ package gapt.provers.viper.aip.axioms
 import gapt.expr._
 import gapt.expr.fol.folSubTerms
 import gapt.expr.hol.{ instantiate, universalClosure }
+import gapt.proofs.context.Context
+import gapt.proofs.context.MutableContext
 import gapt.proofs.lk.{ LKProof, ProofLink }
-import gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent }
+import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.provers.viper.aip.{ LabelledSequent, ThrowsError }
 
 case object UntrustedFunctionalInductionAxioms extends AxiomFactory {

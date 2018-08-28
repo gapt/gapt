@@ -1,7 +1,7 @@
 package gapt.examples.tip.prod
 import gapt.expr._
 import gapt.expr.fol.folTermSize
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 import gapt.proofs.gaptic._
 
 object prop_31 extends TacticsProof {

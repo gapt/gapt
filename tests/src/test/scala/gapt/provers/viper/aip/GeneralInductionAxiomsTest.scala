@@ -1,8 +1,10 @@
 package gapt.provers.viper.aip
 
 import gapt.expr._
+import gapt.proofs.context.Context
+import gapt.proofs.context.MutableContext
 import gapt.proofs.lk.LKProof
-import gapt.proofs.{ Context, MutableContext, Sequent }
+import gapt.proofs.{ Sequent }
 import gapt.provers.viper.aip.axioms.GeneralInductionAxioms
 import org.specs2.mutable.Specification
 

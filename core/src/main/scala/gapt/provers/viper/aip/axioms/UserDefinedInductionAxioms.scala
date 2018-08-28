@@ -1,8 +1,9 @@
 package gapt.provers.viper.aip.axioms
 
 import gapt.expr._
+import gapt.proofs.context.MutableContext
 import gapt.proofs.gaptic.OpenAssumption
-import gapt.proofs.{ MutableContext, Sequent }
+import gapt.proofs.{ Sequent }
 import gapt.provers.viper.aip.ThrowsError
 
 case class UserDefinedInductionAxioms( axioms: List[String] ) extends AxiomFactory {

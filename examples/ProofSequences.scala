@@ -3,11 +3,12 @@ package gapt.examples
 import gapt.expr._
 import gapt.expr.fol.{ Numeral, Utils }
 import gapt.expr.hol.{ instantiate, universalClosure }
-import gapt.proofs.{ Ant, Context, HOLSequent, ProofBuilder, Sequent, Suc }
+import gapt.proofs.{ Ant, HOLSequent, ProofBuilder, Sequent, Suc }
 import gapt.proofs.lk._
 import gapt.proofs.gaptic._
 import gapt.examples.Formulas._
 import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.context.Context
 
 trait ProofSequence {
   def apply( n: Int ): LKProof

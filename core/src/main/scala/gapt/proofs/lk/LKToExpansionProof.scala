@@ -1,7 +1,8 @@
 package gapt.proofs.lk
 
 import gapt.expr._
-import gapt.proofs.{ Ant, Context, Sequent }
+import gapt.proofs.context.Context
+import gapt.proofs.{ Ant, Sequent }
 import gapt.proofs.expansion._
 
 object LKToExpansionProof {

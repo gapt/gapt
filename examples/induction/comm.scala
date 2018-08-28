@@ -2,7 +2,7 @@ package gapt.examples.induction
 
 import gapt.expr._
 import gapt.formats.babel.{ Notation, Precedence }
-import gapt.proofs.Context.InductiveType
+import gapt.proofs.context.Context.InductiveType
 import gapt.proofs.gaptic._
 
 object comm extends TacticsProof {

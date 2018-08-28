@@ -2,7 +2,8 @@ package gapt.proofs.lk
 
 import gapt.examples.{ LinearExampleProof, Pi2Pigeonhole, lattice }
 import gapt.expr._
-import gapt.proofs.{ Ant, Context, ProofBuilder, Sequent, SequentMatchers, Suc }
+import gapt.proofs.context.Context
+import gapt.proofs.{ Ant, ProofBuilder, Sequent, SequentMatchers, Suc }
 import gapt.proofs.expansion._
 import gapt.utils.SatMatchers
 import org.specs2.mutable._

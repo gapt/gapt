@@ -2,7 +2,7 @@ package gapt.examples
 
 import gapt.expr._
 import gapt.formats.babel.{ Notation, Precedence }
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 import gapt.proofs.gaptic._
 
 object Pi2Pigeonhole extends TacticsProof {

@@ -1,7 +1,7 @@
 package gapt.proofs.lk
 
-import gapt.proofs.Context
-import gapt.proofs.Context.ProofNames
+import gapt.proofs.context.Context
+import gapt.proofs.context.Context.ProofNames
 
 case class Attributes( attrs: Map[String, Set[String]] ) {
   def +( lemmaName: String, attrName: String ) = copy( attrs =

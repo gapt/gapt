@@ -1,10 +1,8 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.Context._
+import gapt.proofs.context.Context
 import gapt.proofs.gaptic._
-import gapt.proofs.Context
-import gapt.proofs.Sequent
 
 object FirstSchema1 extends TacticsProof {
   //These are the two fundamental additions to the context needed for Schematic

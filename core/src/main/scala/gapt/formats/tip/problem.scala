@@ -2,7 +2,9 @@ package gapt.formats.tip
 
 import gapt.expr._
 import gapt.expr.hol.{ existentialClosure, universalClosure }
-import gapt.proofs.{ Context, ImmutableContext, Sequent }
+import gapt.proofs.context.Context
+import gapt.proofs.context.ImmutableContext
+import gapt.proofs.{ Sequent }
 
 case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
   val FunctionType( datatype, fieldTypes ) = constr.ty

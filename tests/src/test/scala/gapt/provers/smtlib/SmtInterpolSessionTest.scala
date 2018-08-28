@@ -1,12 +1,12 @@
 package gapt.provers.smtlib
 
 import gapt.expr._
-import gapt.proofs.Context
-import gapt.proofs.Context.InductiveType
+import gapt.proofs.context.Context.InductiveType
 import gapt.provers.Session._
 import gapt.formats.lisp.{ LFun, LList, LSymbol }
 import org.specs2.mutable._
 import cats.implicits._
+import gapt.proofs.context.Context
 import gapt.utils.EitherHelpers._
 
 class SmtInterpolSessionTest extends Specification {

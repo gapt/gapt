@@ -2,7 +2,7 @@ package gapt.proofs.lk
 
 import gapt.expr._
 import gapt.formats.babel.{ Notation, Precedence }
-import gapt.proofs.Context.InductiveType
+import gapt.proofs.context.Context.InductiveType
 import gapt.proofs.expansion.InstanceTermEncoding
 import gapt.proofs.gaptic.TacticsProof
 import gapt.utils.SatMatchers

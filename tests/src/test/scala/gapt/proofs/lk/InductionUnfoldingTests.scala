@@ -2,8 +2,9 @@ package gapt.proofs.lk
 
 import gapt.expr._
 import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.context.Context
 import gapt.proofs.gaptic.{ ProofState, _ }
-import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.{ Sequent }
 import org.specs2.mutable._
 
 class InductionUnfoldingOnTreesTest extends Specification {

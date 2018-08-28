@@ -1,7 +1,8 @@
 package gapt.proofs.lk.reductions
 
 import gapt.expr.isConstructorForm
-import gapt.proofs.{ Context, SequentConnector, guessPermutation }
+import gapt.proofs.context.Context
+import gapt.proofs.{ SequentConnector, guessPermutation }
 import gapt.proofs.lk.{ InductionRule, LKProof, unfoldInduction }
 
 class InductionUnfoldingReduction( implicit val ctx: Context ) extends Reduction {

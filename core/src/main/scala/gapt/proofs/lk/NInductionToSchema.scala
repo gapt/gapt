@@ -1,8 +1,10 @@
 package gapt.proofs.lk
 
 import gapt.expr._
-import gapt.proofs.Context.ProofNames
-import gapt.proofs.{ Context, MutableContext, SequentConnector }
+import gapt.proofs.context.Context
+import gapt.proofs.context.Context.ProofNames
+import gapt.proofs.context.MutableContext
+import gapt.proofs.{ SequentConnector }
 
 object CreateASchemaVersion extends LKVisitor[MutableContext] {
   override protected def recurse( p: LKProof, ctx: MutableContext ): ( LKProof, SequentConnector ) =

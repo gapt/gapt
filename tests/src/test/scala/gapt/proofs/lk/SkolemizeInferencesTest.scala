@@ -1,7 +1,8 @@
 package gapt.proofs.lk
 
 import gapt.examples.{ nTape3, primediv }
-import gapt.proofs.{ MutableContext, SequentMatchers }
+import gapt.proofs.context.MutableContext
+import gapt.proofs.{ SequentMatchers }
 import org.specs2.mutable.Specification
 
 class SkolemizeInferencesTest extends Specification with SequentMatchers {

@@ -1,7 +1,9 @@
 package gapt.proofs.epsilon
 
 import gapt.expr._
-import gapt.proofs.{ Context, MutableContext, Sequent }
+import gapt.proofs.context.Context
+import gapt.proofs.context.MutableContext
+import gapt.proofs.{ Sequent }
 import gapt.provers.escargot.Escargot
 import gapt.utils.SatMatchers
 import org.specs2.mutable.Specification

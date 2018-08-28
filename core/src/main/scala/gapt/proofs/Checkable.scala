@@ -1,6 +1,7 @@
 package gapt.proofs
 
 import gapt.expr._
+import gapt.proofs.context.Context
 import gapt.proofs.expansion.ExpansionProof
 import gapt.proofs.lk.LKProof
 import gapt.proofs.resolution.ResolutionProof

@@ -1,8 +1,9 @@
 package gapt.examples.tip.isaplanner
 
 import gapt.expr._
+import gapt.proofs.context.Context
 import gapt.proofs.gaptic._
-import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.{ Sequent }
 
 /* This proof is not a s.i.p. because of the subinduction on xs */
 object prop_41 extends TacticsProof {

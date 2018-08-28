@@ -1,7 +1,7 @@
 package gapt.examples.tip.isaplanner
 
 import gapt.expr._
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 import gapt.proofs.gaptic._
 import gapt.provers.escargot.Escargot
 import gapt.provers.viper.aip.axioms.SequentialInductionAxioms

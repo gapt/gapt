@@ -3,6 +3,7 @@ package gapt.proofs.lk
 import gapt.expr._
 import gapt.expr.hol.{ HOLPosition, SkolemFunctions, instantiate }
 import gapt.proofs._
+import gapt.proofs.context.MutableContext
 import gapt.utils.NameGenerator
 
 import scala.collection.mutable

@@ -1,9 +1,11 @@
 package gapt.proofs.lk
 
 import gapt.expr._
+import gapt.proofs.context.Context
+import gapt.proofs.context.MutableContext
 import gapt.proofs.gaptic.{ Lemma, OpenAssumption, allL, andL, axiomLog, cut, impL, insert }
 import gapt.proofs.lk.reductions._
-import gapt.proofs.{ Ant, Context, MutableContext, ProofBuilder, Sequent, SequentMatchers, Suc }
+import gapt.proofs.{ Ant, ProofBuilder, Sequent, SequentMatchers, Suc }
 import gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 

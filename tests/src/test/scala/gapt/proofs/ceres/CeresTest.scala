@@ -7,8 +7,10 @@ import gapt.expr.fol.Numeral
 import gapt.expr.hol.isAtom
 import gapt.formats.ClasspathInputFile
 import gapt.formats.llk._
+import gapt.proofs.context.Context
+import gapt.proofs.context.MutableContext
 import gapt.proofs.lk.{ CutRule, cutNormal }
-import gapt.proofs.{ Context, MutableContext, Sequent, SequentMatchers, gaptic }
+import gapt.proofs.{ Sequent, SequentMatchers, gaptic }
 import gapt.provers.escargot.Escargot
 import gapt.utils.SatMatchers
 import org.specs2.mutable._

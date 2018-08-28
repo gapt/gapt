@@ -1,8 +1,9 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.Context.PrimRecFun
-import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.context.Context.PrimRecFun
+import gapt.proofs.Sequent
+import gapt.proofs.context.Context
 import gapt.proofs.gaptic.TacticsProof
 import gapt.proofs.gaptic._
 

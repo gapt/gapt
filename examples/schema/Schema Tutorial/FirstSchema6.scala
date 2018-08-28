@@ -1,10 +1,10 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.Context._
 import gapt.proofs.gaptic._
-import gapt.proofs.Context
 import gapt.proofs.Sequent
+import gapt.proofs.context.Context
+import gapt.proofs.context.Context.PrimRecFun
 import gapt.proofs.lk.instantiateProof //used to unfold proof schema
 
 object FirstSchema6 extends TacticsProof {

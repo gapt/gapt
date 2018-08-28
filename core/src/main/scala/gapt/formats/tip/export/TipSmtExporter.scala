@@ -21,8 +21,9 @@ import gapt.formats.tip.util.TipNameGenerator
 import gapt.formats.tip.TipConstructor
 import gapt.formats.tip.TipDatatype
 import gapt.formats.tip.TipProblem
-import gapt.proofs.Context.Definitions
-import gapt.proofs.{ Context, HOLSequent, Sequent }
+import gapt.proofs.context.Context
+import gapt.proofs.context.Context.Definitions
+import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.utils.Doc
 
 object TipSmtExporter {

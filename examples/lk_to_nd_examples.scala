@@ -2,6 +2,7 @@ package gapt.examples.nd
 import gapt.examples.Script
 import gapt.expr._
 import gapt.proofs._
+import gapt.proofs.context.Context
 import gapt.proofs.lk._
 
 // Example 0.1.6

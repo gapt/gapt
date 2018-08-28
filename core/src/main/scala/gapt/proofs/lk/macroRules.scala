@@ -5,6 +5,7 @@ import gapt.expr.hol.{ instantiate, isPrenex }
 import gapt.proofs.IndexOrFormula.{ IsFormula, IsIndex }
 import gapt.proofs.expansion._
 import gapt.proofs._
+import gapt.proofs.context.Context
 import gapt.provers.ResolutionProver
 import gapt.provers.escargot.Escargot
 

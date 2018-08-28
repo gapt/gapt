@@ -2,8 +2,10 @@ package gapt.provers.viper
 import gapt.expr._
 import gapt.expr.hol.{ instantiate, skolemize, universalClosure }
 import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.context.Context
+import gapt.proofs.context.MutableContext
 import gapt.proofs.lk.LKProof
-import gapt.proofs.{ Context, HOLSequent, MutableContext }
+import gapt.proofs.{ HOLSequent }
 import gapt.provers.OneShotProver
 import gapt.provers.escargot.{ Escargot, QfUfEscargot }
 import gapt.provers.viper.grammars.hSolveQBUP

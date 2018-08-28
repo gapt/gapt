@@ -1,12 +1,12 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.Context._
 import gapt.proofs.gaptic._
-import gapt.proofs.Context
 import gapt.proofs.Sequent
 import gapt.proofs.ceres.CharacteristicClauseSet
 import gapt.proofs.ceres.StructCreators
+import gapt.proofs.context.Context
+import gapt.proofs.context.Context.PrimRecFun
 import gapt.proofs.lk.instantiateProof //used for struct extraction
 
 object FirstSchema7 extends TacticsProof {

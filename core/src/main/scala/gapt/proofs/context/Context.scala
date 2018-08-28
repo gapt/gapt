@@ -1,4 +1,4 @@
-package gapt.proofs
+package gapt.proofs.context
 
 import gapt.expr._
 import gapt.expr.fol.folSubTerms
@@ -8,16 +8,20 @@ import gapt.formats.babel.BabelSignature
 import gapt.formats.babel.Notation
 import gapt.formats.babel.Notations
 import gapt.formats.babel.Precedence
-import gapt.proofs.Context.BaseTypes
-import gapt.proofs.Context.Constants
-import gapt.proofs.Context.Definitions
-import gapt.proofs.Context.Facet
-import gapt.proofs.Context.Reductions
-import gapt.proofs.Context.SkolemFun
-import gapt.proofs.Context.Sort
-import gapt.proofs.Context.State
-import gapt.proofs.Context.StructurallyInductiveTypes
-import gapt.proofs.Context.Update
+import gapt.proofs.Checkable
+import gapt.proofs.HOLSequent
+import gapt.proofs.Sequent
+import gapt.proofs.SequentConnector
+import gapt.proofs.context.Context.BaseTypes
+import gapt.proofs.context.Context.Constants
+import gapt.proofs.context.Context.Definitions
+import gapt.proofs.context.Context.Facet
+import gapt.proofs.context.Context.Reductions
+import gapt.proofs.context.Context.SkolemFun
+import gapt.proofs.context.Context.Sort
+import gapt.proofs.context.Context.State
+import gapt.proofs.context.Context.StructurallyInductiveTypes
+import gapt.proofs.context.Context.Update
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.ProofLink
 import gapt.proofs.resolution.ResolutionProof

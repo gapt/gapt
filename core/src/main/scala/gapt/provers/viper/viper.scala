@@ -8,7 +8,8 @@ import gapt.formats.tip.TipProblem
 import gapt.formats.tip.TipSmtImporter
 import gapt.formats.{ InputFile, StdinInputFile }
 import gapt.grammars.InductionGrammar
-import gapt.proofs.{ HOLSequent, MutableContext }
+import gapt.proofs.context.MutableContext
+import gapt.proofs.{ HOLSequent }
 import gapt.proofs.gaptic._
 import gapt.proofs.gaptic.tactics.AnalyticInductionTactic
 import gapt.proofs.lk.{ ContractionMacroRule, CutRule, ForallRightBlock, ForallRightRule, LKProof, NegRightRule, OrRightMacroRule }

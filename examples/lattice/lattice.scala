@@ -3,7 +3,8 @@ package gapt.examples
 import gapt.expr._
 import gapt.expr.hol.CNFp
 import gapt.formats.babel.{ Notation, Precedence }
-import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.Sequent
+import gapt.proofs.context.Context
 import gapt.proofs.gaptic._
 
 object lattice extends TacticsProof {

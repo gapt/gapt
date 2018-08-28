@@ -2,7 +2,8 @@ package gapt.proofs.lkt
 
 import gapt.expr.Polarity._
 import gapt.expr._
-import gapt.proofs.{ Checkable, Context, Sequent }
+import gapt.proofs.context.Context
+import gapt.proofs.{ Checkable, Sequent }
 import gapt.utils.Maybe
 
 object check {

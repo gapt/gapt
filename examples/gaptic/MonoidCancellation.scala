@@ -2,7 +2,8 @@ package gapt.examples
 import gapt.expr._
 import gapt.expr.hol.universalClosure
 import gapt.formats.babel.{ Notation, Precedence }
-import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.context.Context
+import gapt.proofs.{ Sequent }
 import gapt.proofs.gaptic._
 import gapt.proofs.lk.LKProof
 

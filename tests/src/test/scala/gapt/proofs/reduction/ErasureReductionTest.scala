@@ -3,6 +3,7 @@ package gapt.proofs.reduction
 import gapt.expr._
 import gapt.formats.babel.BabelSignature
 import gapt.proofs._
+import gapt.proofs.context.Context
 import gapt.proofs.expansion.{ ETAtom, ETWeakQuantifier, ExpansionProof }
 import gapt.proofs.resolution.{ Input, MguResolution, eliminateSplitting }
 import gapt.provers.escargot.Escargot

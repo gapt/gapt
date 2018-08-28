@@ -1,14 +1,21 @@
 package gapt.provers.viper.aip
 
-import gapt.expr.{ Formula, Var }
-import gapt.formats.tip.TipProblem
-import gapt.proofs.gaptic.{ escargot => escargotTactic, _ }
-import gapt.proofs.lk.{ CutRule, LKProof }
-import gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent }
-import gapt.provers.escargot.Escargot
-import gapt.provers.{ Prover, ResolutionProver }
-import gapt.provers.viper.aip.axioms.{ Axiom, AxiomFactory, SequentialInductionAxioms }
 import cats.syntax.all._
+import gapt.expr.Formula
+import gapt.expr.Var
+import gapt.formats.tip.TipProblem
+import gapt.proofs.context.MutableContext
+import gapt.proofs.gaptic.{ escargot => escargotTactic }
+import gapt.proofs.gaptic._
+import gapt.proofs.lk.CutRule
+import gapt.proofs.lk.LKProof
+import gapt.proofs.HOLSequent
+import gapt.proofs.Sequent
+import gapt.provers.ResolutionProver
+import gapt.provers.escargot.Escargot
+import gapt.provers.viper.aip.axioms.Axiom
+import gapt.provers.viper.aip.axioms.AxiomFactory
+import gapt.provers.viper.aip.axioms.SequentialInductionAxioms
 
 case class ProverOptions(
     prover:       ResolutionProver = Escargot,

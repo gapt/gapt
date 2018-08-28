@@ -1,8 +1,9 @@
 package gapt.provers.viper
 
 import gapt.expr._
-import gapt.proofs.Context.InductiveType
-import gapt.proofs.{ MutableContext, SequentMatchers }
+import gapt.proofs.context.Context.InductiveType
+import gapt.proofs.SequentMatchers
+import gapt.proofs.context.MutableContext
 import gapt.provers.escargot.QfUfEscargot
 import gapt.provers.maxsat.MaxSat4j
 import gapt.provers.viper.grammars.{ TreeGrammarProver, TreeGrammarProverOptions }

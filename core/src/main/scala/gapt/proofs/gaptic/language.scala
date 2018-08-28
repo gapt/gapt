@@ -2,7 +2,9 @@ package gapt.proofs.gaptic
 
 import gapt.expr._
 import gapt.formats.babel.BabelSignature
-import gapt.proofs.{ Context, MutableContext, Sequent }
+import gapt.proofs.context.Context
+import gapt.proofs.context.MutableContext
+import gapt.proofs.{ Sequent }
 import gapt.proofs.lk._
 import gapt.utils.Maybe
 

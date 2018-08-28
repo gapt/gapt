@@ -3,6 +3,7 @@ package gapt.provers.viper.grammars
 import gapt.expr._
 import gapt.expr.hol.{ containsQuantifierOnLogicalLevel, universalClosure }
 import gapt.proofs._
+import gapt.proofs.context.MutableContext
 import gapt.proofs.gaptic._
 import gapt.proofs.lk.{ LKProof, cleanStructuralRules }
 import gapt.provers.Prover

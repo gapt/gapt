@@ -2,7 +2,8 @@ package gapt.proofs.lk
 
 import gapt.expr._
 import gapt.expr.hol._
-import gapt.proofs.{ Context, HOLClause, SequentConnector, Sequent }
+import gapt.proofs.context.Context
+import gapt.proofs.{ HOLClause, Sequent, SequentConnector }
 
 /**
  * Given a list of formulas Π, this transforms a proof π of Σ :- Δ into a proof π' of Π, Σ :- Δ.

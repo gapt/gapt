@@ -1,8 +1,9 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.Context.PrimRecFun
-import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.context.Context
+import gapt.proofs.context.Context.PrimRecFun
+import gapt.proofs.{ Sequent }
 import gapt.proofs.gaptic._
 
 //val two = LKProofSchemata.Instantiate("omega",Seq(le"((s:w>w) (0:w))",le"(0:w)"))(gniaSchema.ctx)

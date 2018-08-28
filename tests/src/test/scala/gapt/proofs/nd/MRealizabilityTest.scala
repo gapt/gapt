@@ -3,8 +3,9 @@ package gapt.proofs.nd
 import gapt.examples.Script
 import gapt.expr._
 import gapt.formats.babel.{ Notation, Precedence }
-import gapt.proofs.{ Ant, Checkable, Context }
-import gapt.proofs.Context.{ InductiveType, PrimRecFun }
+import gapt.proofs.context.Context
+import gapt.proofs.{ Ant, Checkable }
+import gapt.proofs.context.Context.{ InductiveType, PrimRecFun }
 import org.specs2.mutable.Specification
 
 class MRealizabilityTest extends Specification {

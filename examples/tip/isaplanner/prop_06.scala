@@ -2,8 +2,9 @@ package gapt.examples.tip.isaplanner
 
 import gapt.expr._
 import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.context.Context
 import gapt.proofs.gaptic.{ TacticsProof, _ }
-import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.{ Sequent }
 import gapt.provers.escargot.Escargot
 import gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, SequentialInductionAxioms, StandardInductionAxioms }
 import gapt.provers.viper.aip.{ AnalyticInductionProver, ProverOptions }

@@ -2,6 +2,7 @@ package gapt.proofs.lk
 import gapt.expr._
 import gapt.proofs.SequentConnector.guessInjection
 import gapt.proofs._
+import gapt.proofs.context.Context
 
 object instantiateProof {
   /**

@@ -2,7 +2,7 @@ package gapt.examples.tip.prod
 
 import gapt.expr._
 import gapt.formats.babel.{ Notation, Precedence }
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 import gapt.proofs.gaptic._
 
 object prop_01 extends TacticsProof {

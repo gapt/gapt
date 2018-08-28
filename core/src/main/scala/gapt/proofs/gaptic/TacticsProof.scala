@@ -1,6 +1,8 @@
 package gapt.proofs.gaptic
 
-import gapt.proofs.{ Context, ImmutableContext, MutableContext }
+import gapt.proofs.context.Context
+import gapt.proofs.context.ImmutableContext
+import gapt.proofs.context.MutableContext
 
 class TacticsProof0( initialContext: ImmutableContext ) {
   protected val mutableContext: MutableContext = initialContext.newMutable

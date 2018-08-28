@@ -5,9 +5,8 @@ import gapt.expr.Expr
 import gapt.expr.ReductionRule
 import gapt.expr.preExpr
 import gapt.formats.babel.BabelParser
-import gapt.proofs.Context
-import gapt.proofs.Context.Reductions
-import gapt.proofs.Context.Update
+import Context.Reductions
+import Context.Update
 
 class ReductionRuleUpdate(
     private val rules: Seq[ReductionRule] ) extends Update {

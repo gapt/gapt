@@ -6,7 +6,8 @@ package gapt.expr.fol
 
 import gapt.expr._
 import gapt.expr.hol.containsQuantifier
-import gapt.proofs.{ Context, HOLSequent }
+import gapt.proofs.HOLSequent
+import gapt.proofs.context.Context
 
 import scala.collection.{ GenTraversable, mutable }
 

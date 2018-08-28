@@ -2,7 +2,8 @@ package gapt.examples.tip.isaplanner
 
 import gapt.expr._
 import gapt.proofs.gaptic._
-import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.Sequent
+import gapt.proofs.context.Context
 
 object prop_35 extends TacticsProof {
 

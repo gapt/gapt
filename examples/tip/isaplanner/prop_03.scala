@@ -2,9 +2,10 @@ package gapt.examples.tip.isaplanner
 
 import gapt.expr._
 import gapt.proofs.gaptic._
-import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.{ Sequent }
 import gapt.provers.viper.aip.axioms.{ SequentialInductionAxioms, StandardInductionAxioms }
 import cats.syntax.all._
+import gapt.proofs.context.Context
 
 object prop_03 extends TacticsProof {
 

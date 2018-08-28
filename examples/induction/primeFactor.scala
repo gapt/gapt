@@ -3,6 +3,7 @@ package gapt.examples.induction
 import gapt.expr._
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs._
+import gapt.proofs.context.Context
 import gapt.proofs.gaptic._
 
 object primeFactor extends TacticsProof {

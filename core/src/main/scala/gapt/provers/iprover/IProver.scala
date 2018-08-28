@@ -5,9 +5,10 @@ import java.io.IOException
 import gapt.expr._
 import gapt.formats.StringInputFile
 import gapt.formats.tptp.{ TPTPFOLExporter, TptpProofParser }
+import gapt.proofs.context.MutableContext
 import gapt.proofs.resolution.ResolutionProof
 import gapt.proofs.sketch.RefutationSketchToResolution
-import gapt.proofs.{ FOLClause, HOLClause, MutableContext }
+import gapt.proofs.{ FOLClause, HOLClause }
 import gapt.provers.{ ResolutionProver, renameConstantsToFi }
 import gapt.utils.{ ExternalProgram, Maybe, runProcess }
 

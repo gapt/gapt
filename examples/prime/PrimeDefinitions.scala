@@ -1,11 +1,11 @@
 package gapt.examples.prime
 
 import gapt.expr.ExpressionParseHelper.Splice
-import gapt.expr.hol.CNFp
 import gapt.expr._
-import gapt.formats.babel.{ Notation, Precedence }
-import gapt.proofs.Context
-import gapt.proofs.Context.PrimRecFun
+import gapt.formats.babel.Notation
+import gapt.formats.babel.Precedence
+import gapt.proofs.context.Context
+import gapt.proofs.context.Context.PrimRecFun
 import gapt.proofs.gaptic.TacticsProof
 
 /**

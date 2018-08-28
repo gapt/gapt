@@ -4,6 +4,7 @@ import gapt.expr._
 import gapt.models.PropositionalModel
 import gapt.proofs.lk.LKProof
 import gapt.proofs._
+import gapt.proofs.context.MutableContext
 import gapt.proofs.resolution._
 import gapt.provers.escargot.impl.EscargotState
 import gapt.provers.escargot.impl.EscargotLogger._

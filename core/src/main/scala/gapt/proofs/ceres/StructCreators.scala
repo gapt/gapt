@@ -3,7 +3,8 @@ package gapt.proofs.ceres
 import gapt.proofs._
 import gapt.proofs.lk._
 import gapt.expr.{ Apps, Const, _ }
-import gapt.proofs.Context.{ ProofDefinitions, ProofNames }
+import gapt.proofs.context.Context
+import gapt.proofs.context.Context.{ ProofDefinitions, ProofNames }
 
 /**
  * Algorithms extracting structs from LK proofs, preparing them for gui code etc.

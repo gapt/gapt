@@ -1,7 +1,8 @@
 package gapt.examples.poset
 
 import gapt.expr._
-import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.context.Context
+import gapt.proofs.{ Sequent }
 import gapt.proofs.gaptic._
 
 object proof extends TacticsProof {

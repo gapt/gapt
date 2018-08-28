@@ -10,7 +10,7 @@ import gapt.proofs.resolution.fixDerivation
 import gapt.proofs.sketch.RefutationSketchToResolution
 import gapt.proofs.FOLClause
 import gapt.proofs.HOLClause
-import gapt.proofs.MutableContext
+import gapt.proofs.context.MutableContext
 import gapt.provers.ResolutionProver
 import gapt.provers.extractIntroducedDefinitions
 import gapt.provers.renameConstantsToFi

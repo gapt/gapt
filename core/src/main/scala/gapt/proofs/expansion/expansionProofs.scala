@@ -4,6 +4,7 @@ import gapt.expr._
 import gapt.proofs._
 import gapt.expr.hol.SkolemFunctions
 import gapt.formats.babel.BabelSignature
+import gapt.proofs.context.Context
 import gapt.utils.linearizeStrictPartialOrder
 
 import scala.collection.mutable

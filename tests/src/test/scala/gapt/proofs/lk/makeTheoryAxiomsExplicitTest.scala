@@ -3,7 +3,8 @@ package gapt.proofs.lk
 import gapt.examples.tape
 import gapt.expr._
 import gapt.expr.hol.universalClosure
-import gapt.proofs.{ Context, SequentMatchers }
+import gapt.proofs.context.Context
+import gapt.proofs.{ SequentMatchers }
 import org.specs2.mutable.Specification
 
 class makeTheoryAxiomsExplicitTest extends Specification with SequentMatchers {
