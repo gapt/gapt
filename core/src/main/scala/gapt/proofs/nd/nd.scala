@@ -1354,6 +1354,33 @@ case class ExcludedMiddleRule( leftSubProof: NDProof, aux1: SequentIndex, rightS
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
+object ExcludedMiddleRule extends ConvenienceConstructor( "ExcludedMiddleRule" ) {
+
+  /**
+   * Convenience constructor for EM.
+   * Given only the subproofs, it will attempt to create an inference with this.
+   *
+   * @param leftSubProof The left subproof.
+   * @param rightSubProof The right subproof.
+   * @return
+   */
+  def apply( leftSubProof: NDProof, rightSubProof: NDProof ): ExcludedMiddleRule = {
+
+    val candidates = ( for {
+      el <- leftSubProof.conclusion.antecedent
+      if rightSubProof.conclusion.antecedent.contains( -el )
+      leftIndex = leftSubProof.conclusion.indexOfInAnt( el )
+      rightIndex = rightSubProof.conclusion.indexOfInAnt( -el )
+    } yield ( leftIndex, rightIndex ) )
+
+    if ( candidates.isEmpty ) {
+      throw NDRuleCreationException( s"Antecedent ${leftSubProof.endSequent.antecedent} needs to not contain a formula that appears negated in ${rightSubProof.endSequent.antecedent}." )
+    } else {
+      new ExcludedMiddleRule( leftSubProof, candidates.head._1, rightSubProof, candidates.head._2 )
+    }
+  }
+}
+
 /**
  * An NDProof ending with a definition
  *
