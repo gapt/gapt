@@ -31,12 +31,14 @@ object ScalaCodeGenerator extends CodeGenerator {
         val b = typeParamToString( params( 1 ) )
         val c = typeParamToString( params( 2 ) )
         s"def bar[$a,$b,$c](p2: $a => $c)(p3: $b => $c): $c = {???}"
+      /*
       case Const( "bar2", _, params ) =>
         val p = typeParamToString( params( 0 ) )
         val a = typeParamToString( params( 1 ) )
         val b = typeParamToString( params( 2 ) )
         val c = typeParamToString( params( 3 ) )
         s"def bar2[$p,$a,$b,$c](p1: $p => Boolean)(p2: $a => $c)(p3: $b => $c): $c = {???}"
+        */
       case Const( "pair", _, params ) =>
         val a = typeParamToString( params( 0 ) )
         val b = typeParamToString( params( 1 ) )
@@ -87,7 +89,7 @@ def matchSum[$a,$b,$c](p1: Sum[$a,$b])(p2: $a => $c)(p3: $b => $c) = {
         s"def efq(p: Throwable) = {throw p}"
       case Const( "exception", _, params ) =>
         val a = typeParamToString( params( 0 ) )
-        s"class NewException[$a](m: $a) extends Exception\n" +
+        s"class NewException[$a](m: $a) extends Exception { def getVal: $a = m }\n" +
           s"def exception[$a](p: $a) = {new NewException(p)}"
       case Const( "pow2", _, params ) =>
         s"def pow2(x: Int) = x * x"
@@ -127,6 +129,7 @@ if(p3 == 0) {
       case Const( "<=", _, _ ) => "leq"
       case Const( "<", _, _ )  => "lt"
       case Const( "=", _, _ )  => "eq"
+      //TODO: and/or/impl etc.
       case Const( "pi1", _, params ) =>
         s"pi1[${params.map( toType( _ ) ).mkString( "," )}]"
       case Const( "pi2", _, params ) =>
@@ -159,6 +162,16 @@ if(p3 == 0) {
 
   def translate( e: Expr )( implicit ctx: Context ): String = {
     e match {
+      case App( App( App( Const( "bar2", _, params ), _ ), catchTerm ), tryTerm ) =>
+        val a = toType( params( 1 ) )
+        s"""
+           |try {
+           |  $tryTerm
+           |} catch {
+           |  case e: NewException[$a] => ($catchTerm)(e.getVal)
+           |  case e => println("BUG"); throw e
+           |}
+         """.stripMargin
       case App( e1, e2 ) =>
         s"${translate( e1 )}(${translate( e2 )})"
       case Abs( v, e ) =>

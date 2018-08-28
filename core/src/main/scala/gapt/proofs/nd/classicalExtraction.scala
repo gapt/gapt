@@ -108,7 +108,7 @@ object ClassicalExtraction {
     systemT += bar
 
     //val bar2 = hoc"bar2{?x ?a ?b ?c}: (?x > o) > (?a > ?c) > (?b > ?c) > ?c"
-    val bar2 = hoc"bar2{?x ?a ?b ?c}: (?x > o) > (?c) > (?c) > ?c"
+    val bar2 = hoc"bar2{?x ?a ?c}: (?x > o) > (?a > ?c) > (?c) > ?c"
     systemT += bar2
 
     val bar3 = hoc"bar3{?x ?a ?b ?c}: (?x > o) > (?a > ?c) > (?b > ?c) > ?c"
@@ -493,7 +493,7 @@ object ClassicalExtraction {
               val delL = l.delete( aux1 ).antecedent
               val delR = r.delete( aux2 ).antecedent
               //val res = delL ++: delR ++: Sequent() :+ le"bar2 ${Abs( x, g )} ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
-              val res = delL ++: delR ++: Sequent() :+ le"bar2 ${Abs( x, g )} ${l( Suc( 0 ) )} ${r( Suc( 0 ) )}"
+              val res = delL ++: delR ++: Sequent() :+ le"bar2 ${Abs( x, g )} ${Abs( varL, l( Suc( 0 ) ) )} ${r( Suc( 0 ) )}"
               res
 
             case f =>
