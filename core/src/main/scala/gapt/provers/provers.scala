@@ -2,7 +2,6 @@ package gapt.provers
 
 import gapt.expr._
 import gapt.expr.hol.existentialClosure
-import gapt.proofs.context.Context
 import gapt.proofs.context.MutableContext
 import gapt.proofs.epsilon.EpsilonProof
 import gapt.proofs.epsilon.ExpansionProofToEpsilon
@@ -15,6 +14,7 @@ import gapt.proofs.lk.LKToExpansionProof
 import gapt.proofs.HOLClause
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
+import gapt.proofs.context.Context
 import gapt.provers.Session.Runners._
 import gapt.provers.Session._
 import gapt.utils.Maybe

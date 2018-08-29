@@ -2,10 +2,11 @@ package gapt.examples
 import gapt.expr._
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.context.Context
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 
 object primediv extends TacticsProof {
-  ctx += Context.Sort( "nat" )
+  ctx += Sort( "nat" )
   ctx += hoc"'*': nat>nat>nat"
   ctx += Notation.Infix( "*", Precedence.timesDiv )
   ctx += hoc"1: nat"

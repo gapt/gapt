@@ -1,9 +1,9 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
-import gapt.proofs.context.Context.Sort
 import gapt.proofs.context.MutableContext
-import gapt.proofs.{ Sequent }
+import gapt.proofs.Sequent
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 import gapt.proofs.lk.LKToExpansionProof
 import org.specs2.mutable.Specification

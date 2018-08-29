@@ -1,17 +1,17 @@
 package gapt.provers.viper.aip
 
 import gapt.expr._
-import gapt.proofs.context.Context
+import gapt.proofs.Sequent
 import gapt.proofs.context.MutableContext
+import gapt.proofs.context.update.InductiveType
 import gapt.proofs.lk.LKProof
-import gapt.proofs.{ Sequent }
 import gapt.provers.viper.aip.axioms.GeneralInductionAxioms
 import org.specs2.mutable.Specification
 
 class GeneralInductionAxiomsTest extends Specification {
 
   implicit var ctx = MutableContext.default()
-  ctx += Context.InductiveType( "nat", hoc"0:nat", hoc"s:nat>nat" )
+  ctx += InductiveType( "nat", hoc"0:nat", hoc"s:nat>nat" )
   ctx += hoc"P:nat>nat>o"
 
   val axiomFactory = GeneralInductionAxioms()

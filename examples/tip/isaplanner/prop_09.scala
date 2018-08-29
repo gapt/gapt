@@ -1,13 +1,13 @@
 package gapt.examples.tip.isaplanner
 
 import gapt.expr._
-import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic._
 import gapt.provers.viper.aip.axioms.SequentialInductionAxioms
 
 object prop_09 extends TacticsProof {
 
-  ctx += Context.InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
   ctx += hoc"p:Nat>Nat"
   ctx += hoc"plus:Nat>Nat>Nat"
   ctx += hoc"minus:Nat>Nat>Nat"
@@ -66,7 +66,8 @@ object prop_09 extends TacticsProof {
     analyticInduction.withAxioms( SequentialInductionAxioms().forAllVariables.forLabel( "goal" ) )
   }
 
-  import gapt.proofs.gaptic.tactics.AnalyticInductionTactic.{ independentAxioms, sequentialAxioms }
+  import gapt.proofs.gaptic.tactics.AnalyticInductionTactic.independentAxioms
+  import gapt.proofs.gaptic.tactics.AnalyticInductionTactic.sequentialAxioms
 
   val proof4 = Lemma( sequent ) {
     analyticInduction withAxioms

@@ -2,6 +2,7 @@ package gapt.proofs
 
 import gapt.expr._
 import gapt.proofs.context.Context
+import gapt.proofs.context.update.Update
 import gapt.proofs.expansion.ExpansionProof
 import gapt.proofs.lk.LKProof
 import gapt.proofs.resolution.ResolutionProof
@@ -15,8 +16,8 @@ object Checkable {
   def requireDefEq( a: Expr, b: Expr )( implicit ctx: Context ): Unit =
     require( ctx.isDefEq( a, b ), s"${ctx.normalize( a ).toSigRelativeString} != ${ctx.normalize( b ).toSigRelativeString}" )
 
-  implicit object contextElementIsCheckable extends Checkable[Context.Update] {
-    def check( elem: Context.Update )( implicit context: Context ): Unit = elem( context )
+  implicit object contextElementIsCheckable extends Checkable[Update] {
+    def check( elem: Update )( implicit context: Context ): Unit = elem( context )
   }
 
   class ExpressionChecker( implicit ctx: Context ) {

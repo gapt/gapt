@@ -2,10 +2,11 @@ package gapt.provers.viper
 import gapt.expr._
 import gapt.expr.hol.{ instantiate, skolemize, universalClosure }
 import gapt.formats.babel.{ Notation, Precedence }
-import gapt.proofs.context.Context
 import gapt.proofs.context.MutableContext
 import gapt.proofs.lk.LKProof
-import gapt.proofs.{ HOLSequent }
+import gapt.proofs.HOLSequent
+import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
 import gapt.provers.OneShotProver
 import gapt.provers.escargot.{ Escargot, QfUfEscargot }
 import gapt.provers.viper.grammars.hSolveQBUP
@@ -27,7 +28,7 @@ class HSolveQbupTest extends Specification with SatMatchers {
 
   "double" in {
     implicit val ctx: MutableContext = MutableContext.default()
-    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
     ctx += hoc"'+': nat>nat>nat"
     ctx += Notation.Infix( "+", Precedence.plusMinus )
     ctx += hoc"d: nat>nat"
@@ -47,7 +48,7 @@ class HSolveQbupTest extends Specification with SatMatchers {
 
   "double mod th" in {
     implicit val ctx: MutableContext = MutableContext.default()
-    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
     ctx += hoc"'+': nat>nat>nat"
     ctx += Notation.Infix( "+", Precedence.plusMinus )
     ctx += hoc"d: nat>nat"

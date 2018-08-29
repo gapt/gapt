@@ -3,10 +3,13 @@ package gapt.examples
 import gapt.expr._
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
 import gapt.proofs.gaptic._
 
 object SimpleMutualInductionSchema extends TacticsProof {
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
   ctx += hoc"R: nat>nat>nat>o"
   ctx += hoc"phi: nat>nat"
   ctx += hoc"chi: nat>nat"
@@ -20,7 +23,7 @@ object SimpleMutualInductionSchema extends TacticsProof {
       hof"!x !y (-R(x,x,s(x)) | R(s(x),y,0))",
       hof"!x !y !z (-R(x,x,s(x)) | -R(y,z,y) | R(s(x),y,s(z)))" ),
     Seq( hof"R(n,m,k)" ) )
-  ctx += Context.ProofNameDeclaration( le"delta n m k", esdelta )
+  ctx += ProofNameDeclaration( le"delta n m k", esdelta )
   val esEpsilon = Sequent(
     Seq(
       hof"!x (R(0,x,0))",
@@ -28,7 +31,7 @@ object SimpleMutualInductionSchema extends TacticsProof {
       hof"!x !y (-R(x,x,s(x)) | R(s(x),y,0))",
       hof"!x !y !z (-R(x,x,s(x)) | -R(y,z,y) | R(s(x),y,s(z)))" ),
     Seq( hof"R(n,m,n)" ) )
-  ctx += Context.ProofNameDeclaration( le"epsilon n m", esEpsilon )
+  ctx += ProofNameDeclaration( le"epsilon n m", esEpsilon )
   val esOmega = Sequent(
     Seq(
       hof"!x (R(0,x,0))",
@@ -36,7 +39,7 @@ object SimpleMutualInductionSchema extends TacticsProof {
       hof"!x !y (-R(x,x,s(x)) | R(s(x),y,0))",
       hof"!x !y !z (-R(x,x,s(x)) | -R(y,z,y) | R(s(x),y,s(z)))" ),
     Seq( hof"R(n,0,n)" ) )
-  ctx += Context.ProofNameDeclaration( le"omega n", esOmega )
+  ctx += ProofNameDeclaration( le"omega n", esOmega )
   val esPhi = Sequent(
     Seq(
       hof"!x (R(0,x,0))",
@@ -44,7 +47,7 @@ object SimpleMutualInductionSchema extends TacticsProof {
       hof"!x !y (-R(x,x,s(x)) | R(s(x),y,0))",
       hof"!x !y !z (-R(x,x,s(x)) | -R(y,z,y) | R(s(x),y,s(z)))" ),
     Seq( hof"R(n,n,s(n))" ) )
-  ctx += Context.ProofNameDeclaration( le"phi n", esPhi )
+  ctx += ProofNameDeclaration( le"phi n", esPhi )
   val esChi = Sequent(
     Seq(
       hof"!x (R(0,x,0))",
@@ -52,7 +55,7 @@ object SimpleMutualInductionSchema extends TacticsProof {
       hof"!x !y (-R(x,x,s(x)) | R(s(x),y,0))",
       hof"!x !y !z (-R(x,x,s(x)) | -R(y,z,y) | R(s(x),y,s(z)))" ),
     Seq( hof"R(n,n,n)" ) )
-  ctx += Context.ProofNameDeclaration( le"chi n", esChi )
+  ctx += ProofNameDeclaration( le"chi n", esChi )
 
   val esPhiSc = Sequent(
     Seq(
@@ -75,7 +78,7 @@ object SimpleMutualInductionSchema extends TacticsProof {
     ref( "chi" )
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi (s n)", phiSc )
+  ctx += ProofDefinitionDeclaration( le"phi (s n)", phiSc )
   val esPhiBc = Sequent(
     Seq(
       "Ant_0" -> hof"!x (R(0,x,0))",
@@ -84,7 +87,7 @@ object SimpleMutualInductionSchema extends TacticsProof {
       "Ant_3" -> hof"!x !y !z (-R(x,x,s(x)) | -R(y,z,y) | R(s(x),y,s(z)))" ),
     Seq( "Suc_0" -> hof"R(0,0,s(0))" ) )
   val phiBc = Lemma( esPhiBc ) { escargot }
-  ctx += Context.ProofDefinitionDeclaration( le"phi 0", phiBc )
+  ctx += ProofDefinitionDeclaration( le"phi 0", phiBc )
 
   val esChiSc = Sequent(
     Seq(
@@ -118,7 +121,7 @@ object SimpleMutualInductionSchema extends TacticsProof {
     trivial
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi (s n)", chiSc )
+  ctx += ProofDefinitionDeclaration( le"chi (s n)", chiSc )
 
   val esChiBc = Sequent(
     Seq(
@@ -130,7 +133,7 @@ object SimpleMutualInductionSchema extends TacticsProof {
   val chiBc = Lemma( esChiBc ) {
     escargot
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi 0", chiBc )
+  ctx += ProofDefinitionDeclaration( le"chi 0", chiBc )
 
   val esOmegaSc = Sequent(
     Seq(
@@ -154,7 +157,7 @@ object SimpleMutualInductionSchema extends TacticsProof {
     trivial
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
+  ctx += ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
 
   val esOmegaBc = Sequent(
     Seq(
@@ -166,7 +169,7 @@ object SimpleMutualInductionSchema extends TacticsProof {
   val omegaBc = Lemma( esOmegaBc ) {
     ref( "chi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega 0", omegaBc )
+  ctx += ProofDefinitionDeclaration( le"omega 0", omegaBc )
 
   val esEpsilonSc = Sequent(
     Seq(
@@ -200,7 +203,7 @@ object SimpleMutualInductionSchema extends TacticsProof {
     trivial
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon (s n) (s m)", epsilonSc )
+  ctx += ProofDefinitionDeclaration( le"epsilon (s n) (s m)", epsilonSc )
 
   val esEpsilonBc = Sequent(
     Seq(
@@ -212,7 +215,7 @@ object SimpleMutualInductionSchema extends TacticsProof {
   val epsilonBc = Lemma( esEpsilonBc ) {
     ref( "omega" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon (s n) 0", epsilonBc )
+  ctx += ProofDefinitionDeclaration( le"epsilon (s n) 0", epsilonBc )
   val esEpsilonBc2 = Sequent(
     Seq(
       "Ant_0" -> hof"!x (R(0,x,0))",
@@ -224,7 +227,7 @@ object SimpleMutualInductionSchema extends TacticsProof {
     allL( "Ant_0", le"(s m:nat)" )
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon 0 (s m)", epsilonBc2 )
+  ctx += ProofDefinitionDeclaration( le"epsilon 0 (s m)", epsilonBc2 )
   val esEpsilonBc3 = Sequent(
     Seq(
       "Ant_0" -> hof"!x (R(0,x,0))",
@@ -236,7 +239,7 @@ object SimpleMutualInductionSchema extends TacticsProof {
     allL( "Ant_0", le"0" )
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon 0 0", epsilonBc3 )
+  ctx += ProofDefinitionDeclaration( le"epsilon 0 0", epsilonBc3 )
 
   val esDeltaSc = Sequent(
     Seq(
@@ -259,7 +262,7 @@ object SimpleMutualInductionSchema extends TacticsProof {
     ref( "epsilon" )
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"delta (s n) (s m) (s k)", deltaSc )
+  ctx += ProofDefinitionDeclaration( le"delta (s n) (s m) (s k)", deltaSc )
   val esdeltaBc = Sequent(
     Seq(
       "Ant_0" -> hof"!x (R(0,x,0))",
@@ -276,7 +279,7 @@ object SimpleMutualInductionSchema extends TacticsProof {
     ref( "phi" )
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"delta (s n) 0 0", deltaBc )
+  ctx += ProofDefinitionDeclaration( le"delta (s n) 0 0", deltaBc )
   val esdeltaBc2 = Sequent(
     Seq(
       "Ant_0" -> hof"!x (R(0,x,0))",
@@ -287,7 +290,7 @@ object SimpleMutualInductionSchema extends TacticsProof {
   val deltaBc2 = Lemma( esdeltaBc2 ) {
     ref( "epsilon" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"delta 0 (s m) 0", deltaBc2 )
+  ctx += ProofDefinitionDeclaration( le"delta 0 (s m) 0", deltaBc2 )
   val esdeltaBc3 = Sequent(
     Seq(
       "Ant_0" -> hof"!x (R(0,x,0))",
@@ -304,7 +307,7 @@ object SimpleMutualInductionSchema extends TacticsProof {
     ref( "epsilon" )
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"delta 0 0 (s k)", deltaBc3 )
+  ctx += ProofDefinitionDeclaration( le"delta 0 0 (s k)", deltaBc3 )
   val esdeltaBc4 = Sequent(
     Seq(
       "Ant_0" -> hof"!x (R(0,x,0))",
@@ -326,7 +329,7 @@ object SimpleMutualInductionSchema extends TacticsProof {
     ref( "epsilon" )
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"delta (s n) 0 (s k)", deltaBc4 )
+  ctx += ProofDefinitionDeclaration( le"delta (s n) 0 (s k)", deltaBc4 )
 
   val esdeltaBc5 = Sequent(
     Seq(
@@ -344,7 +347,7 @@ object SimpleMutualInductionSchema extends TacticsProof {
     ref( "epsilon" )
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"delta 0 (s m) (s k)", deltaBc5 )
+  ctx += ProofDefinitionDeclaration( le"delta 0 (s m) (s k)", deltaBc5 )
 
   val esdeltaBc6 = Sequent(
     Seq(
@@ -362,5 +365,5 @@ object SimpleMutualInductionSchema extends TacticsProof {
     ref( "phi" )
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"delta (s n) (s m) 0", deltaBc6 )
+  ctx += ProofDefinitionDeclaration( le"delta (s n) (s m) 0", deltaBc6 )
 }

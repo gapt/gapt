@@ -1,11 +1,16 @@
 package gapt.proofs.reduction
 
 import gapt.expr._
-import gapt.formats.babel.BabelSignature
 import gapt.proofs._
 import gapt.proofs.context.Context
-import gapt.proofs.expansion.{ ETAtom, ETWeakQuantifier, ExpansionProof }
-import gapt.proofs.resolution.{ Input, MguResolution, eliminateSplitting }
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.Sort
+import gapt.proofs.expansion.ETAtom
+import gapt.proofs.expansion.ETWeakQuantifier
+import gapt.proofs.expansion.ExpansionProof
+import gapt.proofs.resolution.Input
+import gapt.proofs.resolution.MguResolution
+import gapt.proofs.resolution.eliminateSplitting
 import gapt.provers.escargot.Escargot
 import gapt.provers.smtlib.Z3
 import gapt.utils.SatMatchers
@@ -14,8 +19,8 @@ import org.specs2.mutable._
 class ErasureReductionTest extends Specification with SatMatchers {
   "two-sorted" in {
     implicit var ctx = Context()
-    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
-    ctx += Context.Sort( "witness" )
+    ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    ctx += Sort( "witness" )
     ctx += hoc"f: witness > witness"
     ctx += hoc"P: nat > witness > o"
     ctx += hoc"Q: nat > o"
@@ -44,7 +49,7 @@ class ErasureReductionTest extends Specification with SatMatchers {
 
   "variables as weak quantifier instances" in {
     implicit var ctx = Context()
-    ctx += Context.Sort( "foo" )
+    ctx += Sort( "foo" )
     ctx += hoc"P: foo>o"
 
     val sequent = hof"∀x P x" +: Sequent() :+ hof"∃x P x"

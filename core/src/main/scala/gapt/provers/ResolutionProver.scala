@@ -1,7 +1,6 @@
 package gapt.provers
 
 import gapt.expr._
-import gapt.proofs.context.Context
 import gapt.proofs.context.MutableContext
 import gapt.proofs.expansion.ExpansionProof
 import gapt.proofs.expansion.ExpansionProofToLK
@@ -19,6 +18,7 @@ import gapt.proofs.ContextSection
 import gapt.proofs.HOLClause
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
+import gapt.proofs.context.Context
 import gapt.proofs.withSection
 import gapt.utils.Maybe
 

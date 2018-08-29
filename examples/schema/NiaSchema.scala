@@ -1,14 +1,18 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.context.Context._
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.PrimRecFun
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 
 object NiaSchema extends TacticsProof {
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-  ctx += Context.Sort( "i" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += Sort( "i" )
   ctx += hoc"f:i>nat"
   ctx += hoc"E: nat>nat>o"
   ctx += hoc"LEQ: i>i>o"
@@ -31,17 +35,17 @@ object NiaSchema extends TacticsProof {
   val esOmega = Sequent(
     Seq( hof"!x POR(n,x)" ),
     Seq( hof"?p?q (LE(p,q) & E(f(p),f(q)))" ) )
-  ctx += Context.ProofNameDeclaration( le"omega n", esOmega )
+  ctx += ProofNameDeclaration( le"omega n", esOmega )
   //The Name declaration of proof phi
   val esphi = Sequent(
     Seq( hof"!x?y (LEQ(x,y) & POR(n,y) )" ),
     Seq( hof"?p?q (LE(p,q) & E(f(p),f(q)))" ) )
-  ctx += Context.ProofNameDeclaration( le"phi n", esphi )
+  ctx += ProofNameDeclaration( le"phi n", esphi )
   //The Name declaration of proof chi
   val eschi = Sequent(
     Seq( hof" POR(n,a) " ),
     Seq( hof"POR(n,a)" ) )
-  ctx += Context.ProofNameDeclaration( le"chi n a", eschi )
+  ctx += ProofNameDeclaration( le"chi n a", eschi )
 
   //The base case of  omega
   val esOmegaBc = Sequent(
@@ -71,7 +75,7 @@ object NiaSchema extends TacticsProof {
     foTheory
     foTheory
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega 0", omegaBc )
+  ctx += ProofDefinitionDeclaration( le"omega 0", omegaBc )
 
   //The Step case of  omega
   //Need to complete
@@ -88,7 +92,7 @@ object NiaSchema extends TacticsProof {
     ref( "chi" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
+  ctx += ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
 
   // The Basecase of chi
   val esChiBc = Sequent(
@@ -101,7 +105,7 @@ object NiaSchema extends TacticsProof {
     unfold( "POR" ) atMost 1 in "Ant_2"
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi 0 a", chiBc )
+  ctx += ProofDefinitionDeclaration( le"chi 0 a", chiBc )
 
   //The step case of chi
   val esChiSc = Sequent(
@@ -117,7 +121,7 @@ object NiaSchema extends TacticsProof {
     trivial
     ref( "chi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi (s n) a", chiSc )
+  ctx += ProofDefinitionDeclaration( le"chi (s n) a", chiSc )
 
   //The base case of phi
   val esphiBc = Sequent(
@@ -141,7 +145,7 @@ object NiaSchema extends TacticsProof {
     unfold( "POR" ) atMost 1 in "Ant_2_1_1"
     foTheory
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi 0", phiBc )
+  ctx += ProofDefinitionDeclaration( le"phi 0", phiBc )
 
   //The step case of phi
 
@@ -192,6 +196,6 @@ object NiaSchema extends TacticsProof {
     foTheory
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi (s n)", phiSc )
+  ctx += ProofDefinitionDeclaration( le"phi (s n)", phiSc )
 }
 

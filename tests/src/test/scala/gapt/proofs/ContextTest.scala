@@ -4,6 +4,11 @@ import gapt.expr._
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.context.Context
 import gapt.proofs.context.MutableContext
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.PrimRecFun
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.context.update.Sort
 import org.specs2.mutable.Specification
 
 class ContextTest extends Specification {
@@ -20,13 +25,13 @@ class ContextTest extends Specification {
 
     "polymorphism" in {
       implicit val ctx: MutableContext = MutableContext.default()
-      ctx += Context.InductiveType(
+      ctx += InductiveType(
         ty"list ?a",
         hoc"nil{?a}: list ?a",
         hoc"cons{?a}: ?a > list ?a > list ?a" )
       ctx += hof"'+'{?a} xs x = cons{?a} x xs"
       ctx += Notation.Infix( "+", Precedence.plusMinus )
-      ctx += Context.Sort( "i" )
+      ctx += Sort( "i" )
       ctx ++= Seq( hoc"0: i", hoc"1: i", hoc"2: i" )
       val e = le"nil + 3 + 2 + 1: list i"
       ctx.check( e )
@@ -42,7 +47,7 @@ class ContextTest extends Specification {
     implicit val ctx: MutableContext = MutableContext.default()
     ctx += hof"const{?a ?b} (f: ?a > ?b) = (!x!y f x = f y)"
 
-    ctx += Context.Sort( "i" )
+    ctx += Sort( "i" )
     ctx += hoc"0 : i"
     ctx += hof"g (x:i) = 0"
 

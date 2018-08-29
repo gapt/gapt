@@ -1,7 +1,6 @@
 package gapt.proofs.context
 
 import gapt.expr._
-import gapt.expr.fol.folSubTerms
 import gapt.expr.hol.SkolemFunctions
 import gapt.formats.babel.BabelParser
 import gapt.formats.babel.BabelSignature
@@ -10,23 +9,20 @@ import gapt.formats.babel.Notations
 import gapt.formats.babel.Precedence
 import gapt.proofs.Checkable
 import gapt.proofs.HOLSequent
-import gapt.proofs.Sequent
 import gapt.proofs.SequentConnector
 import gapt.proofs.context.Context.BaseTypes
 import gapt.proofs.context.Context.Constants
 import gapt.proofs.context.Context.Definitions
 import gapt.proofs.context.Context.Facet
 import gapt.proofs.context.Context.Reductions
-import gapt.proofs.context.Context.SkolemFun
-import gapt.proofs.context.Context.Sort
-import gapt.proofs.context.Context.State
 import gapt.proofs.context.Context.StructurallyInductiveTypes
-import gapt.proofs.context.Context.Update
+import gapt.proofs.context.update.ConstDecl
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.Sort
+import gapt.proofs.context.update.Update
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.ProofLink
-import gapt.proofs.resolution.ResolutionProof
 import gapt.utils.NameGenerator
-import gapt.utils.linearizeStrictPartialOrder
 
 import scala.reflect.ClassTag
 
@@ -58,7 +54,7 @@ import scala.reflect.ClassTag
  *  - [[gapt.proofs.expansion.ExpansionProofToLK]] uses the information about the background theory
  *    to produce LK proofs modulo the background theory.
  */
-sealed trait Context extends BabelSignature {
+trait Context extends BabelSignature {
   def state: State
   def updates: List[Update]
   def toImmutable: ImmutableContext
@@ -166,21 +162,6 @@ sealed trait Context extends BabelSignature {
     s"${state}Updates:\n${updates.view.reverse.map( x => s"  $x\n" ).mkString}"
 }
 
-class ImmutableContext private ( val state: State, val updates: List[Update] ) extends Context {
-  def toImmutable: ImmutableContext = this
-
-  /**
-   * Adds an element to the context.
-   *
-   * If this is not a valid addition, then an exception is thrown.
-   */
-  override def +( update: Update ): ImmutableContext =
-    new ImmutableContext( update( this ), update :: updates )
-}
-object ImmutableContext {
-  val empty = new ImmutableContext( State(), Nil )
-}
-
 object Context {
   /** Type class for a facet of a context. */
   trait Facet[T] {
@@ -196,45 +177,6 @@ object Context {
         override def toString = clazz.getSimpleName
       }
     }
-  }
-
-  /**
-   * The state of a context.
-   *
-   * A context remembers both its history (what elements were added to it),
-   * as well as their effect: the current state (the values of the facets).
-   *
-   * State is basically a Cartesian product of all possible facets, where all except
-   * finitely many facets still have their initial value.  The [[get]] method returns
-   * the value of a facet, the [[update]] method changes the value.
-   */
-  class State private ( private val facets: Map[Facet[_], Any] ) {
-    def update[T: Facet]( f: T => T ): State =
-      new State( facets.updated( implicitly[Facet[T]], f( get[T] ) ) )
-
-    def get[T: Facet]: T =
-      facets.getOrElse( implicitly[Facet[T]], implicitly[Facet[T]].initial ).asInstanceOf[T]
-
-    def getAll[T: ClassTag]: Iterable[T] =
-      facets.values.collect { case t: T => t }
-
-    override def toString: String = {
-      val s = new StringBuilder
-      for ( ( f, d ) <- facets.toSeq.sortBy( _._1.toString ) ) {
-        s ++= s"$f:"
-        val dStr = d.toString
-        if ( dStr.contains( "\n" ) ) {
-          s.append( "\n  " ).append( dStr.replace( "\n", "\n  " ) )
-        } else {
-          s.append( " " ).append( dStr )
-        }
-        s ++= "\n\n"
-      }
-      s.result()
-    }
-  }
-  object State {
-    def apply(): State = new State( Map() )
   }
 
   /** Base types, including inductive types. */
@@ -402,263 +344,9 @@ object Context {
   }
   implicit val ProofDefinitionsFacet: Facet[ProofDefinitions] = Facet( ProofDefinitions( Map() ) )
 
-  /**
-   * Update of a context.
-   *
-   * An update stores (potentially multiple) modifications to a [[Context]].
-   * It is represented by a function that takes a [[Context]], and returns the modified [[State]].
-   */
-  trait Update {
-    /**
-     * Applies the modifications of this update to ctx.
-     *
-     * Throws an exception if the modifications are invalid (for example if we would redefine a constant).
-     */
-    def apply( ctx: Context ): State
-  }
-  object Update {
-    implicit def fromSort( ty: TBase ): Update = Sort( ty )
-    implicit def fromConst( const: Const ): Update = ConstDecl( const )
-    implicit def fromDefn( defn: ( String, Expr ) ): Update =
-      Definition( Const( defn._1, defn._2.ty ), defn._2 )
-    implicit def fromDefnEq( eq: Formula ): Update = eq match {
-      case Eq( Apps( VarOrConst( name, ty, ps ), vars ), by ) =>
-        Definition( Const( name, ty, ps ), Abs.Block( vars.map( _.asInstanceOf[Var] ), by ) )
-    }
-    implicit def fromAxiom( axiom: ( String, HOLSequent ) ): Update = {
-      val fvs = freeVariables( axiom._2 ).toVector.sortBy( _.toString )
-      val name = Const( axiom._1, FunctionType( Ti, fvs.map( _.ty ) ) )( fvs )
-      ProofNameDeclaration( name, axiom._2 )
-    }
-  }
-
-  /** Definition of a base type.  Either [[Sort]] or [[InductiveType]]. */
-  sealed trait TypeDef extends Update {
-    def ty: TBase
-  }
-  /** Uninterpreted base type. */
-  case class Sort( ty: TBase ) extends TypeDef {
-    override def apply( ctx: Context ): State =
-      ctx.state.update[BaseTypes]( _ + ty )
-  }
-  /** Inductive base type with constructors. */
-  case class InductiveType( ty: TBase, constructors: Vector[Const] ) extends TypeDef {
-    val params: List[TVar] = ty.params.map( _.asInstanceOf[TVar] )
-    for ( constr <- constructors ) {
-      val FunctionType( ty_, _ ) = constr.ty
-      require(
-        ty == ty_,
-        s"Base type $ty and type constructor $constr don't agree." )
-      require( constr.params == params )
-      require( typeVariables( constr ) subsetOf params.toSet )
-    }
-    require(
-      constructors.map( _.name ) == constructors.map( _.name ).distinct,
-      s"Names of type constructors are not distinct." )
-
-    val baseCases = constructors.find { case Const( _, FunctionType( _, argTys ), _ ) => !argTys.contains( ty ) }
-    require(
-      baseCases.nonEmpty,
-      s"Inductive type is empty, all of the constructors are recursive: ${constructors.mkString( ", " )}" )
-
-    override def apply( ctx: Context ): State = {
-      require( !ctx.isType( ty ), s"Type $ty already defined" )
-      for ( Const( ctr, FunctionType( _, fieldTys ), ctrPs ) <- constructors ) {
-        require( ctx.constant( ctr ).isEmpty, s"Constructor $ctr is already a declared constant" )
-        for ( fieldTy <- fieldTys ) {
-          if ( fieldTy == ty ) {
-            // positive occurrence of the inductive type
-          } else {
-            ctx.check( fieldTy )
-          }
-        }
-      }
-      ctx.state.update[BaseTypes]( _ + ty )
-        .update[Constants]( _ ++ constructors )
-        .update[StructurallyInductiveTypes]( _ + ( ty.name, constructors ) )
-    }
-  }
-
-  object Sort {
-    def apply( tyName: String ): Sort = Sort( TBase( tyName ) )
-  }
-  object InductiveType {
-    def apply( ty: Ty, constructors: Const* ): InductiveType =
-      InductiveType( ty.asInstanceOf[TBase], constructors.toVector )
-    def apply( tyName: String, constructors: Const* ): InductiveType =
-      InductiveType( TBase( tyName ), constructors: _* )
-  }
-
-  case class ConstDecl( const: Const ) extends Update {
-    override def apply( ctx: Context ): State = {
-      ctx.check( const.ty )
-      for ( p <- const.params ) require( p.isInstanceOf[TVar] )
-      require( typeVariables( const ).toSet subsetOf const.params.toSet )
-      ctx.state.update[Constants]( _ + const )
-    }
-  }
-
   implicit val skolemFunsFacet: Facet[SkolemFunctions] = Facet[SkolemFunctions]( SkolemFunctions( None ) )
 
-  case class SkolemFun( sym: Const, defn: Expr ) extends Update {
-    val Abs.Block( argumentVariables, strongQuantifier @ Quant( boundVariable, matrix, isForall ) ) = defn
-    require( sym.ty == FunctionType( boundVariable.ty, argumentVariables.map( _.ty ) ) )
-    require( freeVariables( defn ).isEmpty )
-
-    override def apply( ctx: Context ): State = {
-      ctx.check( sym.ty )
-      ctx.check( defn )
-      ctx.state.update[Constants]( _ + sym )
-        .update[SkolemFunctions]( _ + ( sym, defn ) )
-    }
-  }
-
-  case class PrimRecFun(
-      c:         Const,
-      nArgs:     Int,
-      recIdx:    Int,
-      equations: Vector[( Expr, Expr )] ) extends Update {
-
-    PrimitiveRecursiveFunctionValidator.validate( this )
-
-    private val Const( _, FunctionType( _, argTypes ), _ ) = c
-
-    val recursionType: TBase = argTypes( recIdx ).asInstanceOf[TBase]
-
-    /**
-     * Adds this primitive recursive function definition to a context.
-     *
-     * @param ctx The context to which this function definition is to be added.
-     * @return Returns the new context state resulting from the addition of
-     * this function definition to the current state of `ctx`. An exception is
-     * thrown if number of equations does not equal the number of constructors
-     * of the recursion type, or if the order of the equations does not
-     * correspond to the order of constructors of the recursion type.
-     */
-    override def apply( ctx: Context ): State = {
-      val ctx_ = ctx + c
-      val ctrs =
-        ctx.get[StructurallyInductiveTypes].constructors( recursionType.name )
-      require( equations.size == ctrs.size )
-      for ( ( ( lhs @ Apps( _, lhsArgs ), rhs ), ctr ) <- equations.zip( ctrs ) ) {
-        ctx_.check( lhs )
-        ctx_.check( rhs )
-        val Apps( Const( ctr_, _, _ ), _ ) = lhsArgs( recIdx )
-        require( ctr_ == ctr.name )
-      }
-      ctx.state.update[Constants]( _ + c )
-        .update[Reductions]( _ ++ equations.map( ReductionRule.apply ) )
-    }
-  }
-
-  object PrimitiveRecursiveFunctionValidator {
-
-    private type Equation = ( Expr, Expr )
-
-    /**
-     * Checks whether the given definition is syntactically well-formed.
-     *
-     * @param input The definition to be checked.
-     * @return Returns unit if the definition is well-formed, otherwise
-     *         an exception is thrown.
-     */
-    def validate( input: PrimRecFun ): Unit = {
-
-      val PrimRecFun( c, nArgs, recIdx, equations ) = input
-      val typeVars: Set[TVar] = typeVariables( c.ty )
-      val Const( name, FunctionType( _, argTypes ), _ ) = c
-
-      require( 0 <= recIdx && recIdx < nArgs && nArgs <= argTypes.size )
-
-      def validateEquation( input: Equation ): Unit = {
-
-        val ( lhs, rhs ) = input
-
-        require( lhs.ty == rhs.ty )
-        require( typeVariables( lhs.ty ) subsetOf typeVars )
-        require( typeVariables( rhs.ty ) subsetOf typeVars )
-
-        val Apps( `c`, lhsArgs ) = lhs
-        require( lhsArgs.size == nArgs )
-
-        val nonRecLhsArgs =
-          lhsArgs.zipWithIndex.filter( _._2 != recIdx ).map( _._1 )
-        val Apps( Const( _, _, _ ), ctrArgs ) = lhsArgs( recIdx )
-
-        val matchVars = nonRecLhsArgs ++ ctrArgs
-
-        matchVars.foreach( a => { require( a.isInstanceOf[Var] ) } )
-        require( matchVars == matchVars.distinct )
-
-        folSubTerms( rhs ).foreach {
-          case Apps( fn @ Const( `name`, _, _ ), args ) =>
-            require( fn == c )
-            require( ctrArgs.contains( args( recIdx ) ) )
-          case _ =>
-        }
-      }
-
-      for ( equation <- equations ) {
-        validateEquation( equation )
-      }
-    }
-  }
-
-  object PrimRecFun {
-
-    /**
-     * Constructs a primitive recursive function definition.
-     *
-     * @param c The constant that is to be defined primitive recursively.
-     * @param equations Oriented equations that define the constant c by
-     * primitive recursion.
-     * @param ctx The context in which the constant is to be defined.
-     * @return A primitive function definition if `c` and `euqations` represent
-     * a valid primitive function definition in the context `ctx`.
-     */
-    def apply(
-      constant:  Const,
-      equations: Iterable[( Expr, Expr )] )(
-      implicit
-      ctx: Context ): PrimRecFun = {
-
-      val ( arity, recIdx ) = equations.head._1 match {
-        case Apps( _, args ) =>
-          args.size -> args.indexWhere( !_.isInstanceOf[Var] )
-      }
-
-      val Const( _, FunctionType( _, argTys ), _ ) = constant
-      val equationsByConst = equations.groupBy {
-        case ( ( Apps( _, args ), _ ) ) =>
-          val Apps( ctr, _ ) = args( recIdx )
-          ctr
-      }
-      val Some( recCtrs ) = ctx.getConstructors( argTys( recIdx ) )
-
-      PrimRecFun(
-        constant, arity, recIdx, recCtrs.map( equationsByConst( _ ).head ) )
-    }
-
-    /**
-     * Constructs a primitive recursive function definition.
-     *
-     * @param c The constant that is to be defined primitive recursively.
-     * @param equations Oriented equations that define the constant c by
-     * primitive recursion.
-     * @param ctx The context in which the constant is to be defined.
-     * @return A primitive function definition if `c` and `euqations` represent
-     * a valid primitive function definition in the context `ctx`.
-     */
-    def apply(
-      c: Const, equations: String* )(
-      implicit
-      ctx: Context ): PrimRecFun = {
-      val temporaryContext = ctx + c
-      apply( c, equations.map { parseEquation( c, _ )( temporaryContext ) } )
-    }
-  }
-
-  private object parseEquation {
+  object parseEquation {
 
     def apply(
       c: Const, equation: String )( implicit ctx: Context ): ( Expr, Expr ) = {
@@ -670,146 +358,6 @@ object Context {
             syntacticMatching( c_, c ).get( lhs -> rhs )
         }
     }
-
-  }
-
-  case object PrimitiveRecursiveFunctions {
-
-    def apply(
-      rawDefinitions: Iterable[( Const, Iterable[( Expr, Expr )] )],
-      dummy:          Unit                                          = Unit )(
-      implicit
-      ctx: Context ): Iterable[PrimRecFun] = {
-
-      val parsedDefinitions: Iterable[PrimRecFun] =
-        rawDefinitions.map {
-          case ( const, equations ) =>
-            PrimRecFun( const, equations )
-        }
-
-      batch( parsedDefinitions )
-    }
-
-    def apply(
-      rawDefinitions: Iterable[( Const, Seq[String] )] )(
-      implicit
-      ctx: Context ): Iterable[PrimRecFun] = {
-
-      val parsingContext = ctx ++ rawDefinitions.map { d => ConstDecl( d._1 ) }
-
-      val parsedDefinitions: Iterable[PrimRecFun] =
-        rawDefinitions.map {
-          case ( const, equations ) =>
-            ( const, equations.map { parseEquation( const, _ )( parsingContext ) } )
-        }.map {
-          case ( const, equations ) =>
-            PrimRecFun( const, equations )
-        }
-
-      batch( parsedDefinitions )
-    }
-
-    private def batch(
-      parsedDefinitions: Iterable[PrimRecFun] )(
-      implicit
-      ctx: Context ): Iterable[PrimRecFun] = {
-
-      val ordering = sortConstants(
-        parsedDefinitions.map {
-          definition =>
-            ( definition.c, definition.equations )
-        } )
-
-      sortDefinitions( ordering, parsedDefinitions )
-    }
-
-    private def sortDefinitions(
-      ordering: Iterable[Const], definitions: Iterable[PrimRecFun] ): Iterable[PrimRecFun] = {
-      ordering.map { constant => definitions.find( _.c == constant ).get }
-    }
-
-    private def sortConstants(
-      definitions: Iterable[( Const, Seq[( Expr, Expr )] )] ): Seq[Const] = {
-
-      val constants = definitions.map { _._1 }
-
-      linearizeStrictPartialOrder(
-        constants,
-        dependencyRelation( definitions ) ) match {
-          case Left( cycle ) =>
-            throw new IllegalArgumentException(
-              s"cyclic dependency: ${cycle.mkString( " < " )}" )
-          case Right( order ) => order.reverse
-        }
-    }
-
-    private def dependencyRelation(
-      definitions: Iterable[( Const, Seq[( Expr, Expr )] )] ): Set[( Const, Const )] = {
-      val constants = definitions.map { _._1 }.toSet
-      definitions.flatMap {
-        case ( constant, equations ) =>
-          val dependsOn: Set[Const] =
-            equations.map { _._2 }.flatMap { extractConstant }.toSet.intersect( constants ).diff( Set( constant ) )
-          dependsOn.map { ( constant, _ ) }
-      }.toSet
-    }
-
-    private def extractConstant( expression: Expr ): Set[Const] = {
-      expression match {
-        case c @ Const( _, _, _ ) =>
-          Set( c )
-        case App( function, argument ) =>
-          extractConstant( function ) ++ extractConstant( argument )
-        case Abs( _, subexpression ) =>
-          extractConstant( subexpression )
-        case _ => Set()
-      }
-    }
-
-  }
-
-  case class ProofNameDeclaration( lhs: Expr, endSequent: HOLSequent ) extends Update {
-    override def apply( ctx: Context ): State = {
-      endSequent.foreach( ctx.check( _ ) )
-      val Apps( Const( c, _, ps ), vs ) = lhs
-      require( !ctx.get[ProofNames].names.keySet.contains( c ), s"proof already defined: $lhs" )
-      require( vs == vs.distinct )
-      require( vs.forall( _.isInstanceOf[Var] ) )
-      require( ps.forall( _.isInstanceOf[TVar] ) )
-      for ( fv <- freeVariables( endSequent ) )
-        require( vs.contains( fv ) )
-      for ( tv <- typeVariables( endSequent.toImplication ) )
-        require( ps.contains( tv ) )
-      ctx.state.update[ProofNames]( _ + ( c, lhs, endSequent ) )
-    }
-  }
-
-  case class ProofDefinitionDeclaration( lhs: Expr, referencedProof: LKProof ) extends Update {
-    override def apply( ctx: Context ): State = {
-      ctx.check( referencedProof )
-      val Apps( c: Const, vs ) = lhs
-      vs.foreach( ctx.check( _ ) )
-      val declSeq = ctx.get[ProofNames].lookup( lhs )
-        .getOrElse( throw new IllegalArgumentException( s"Proof name ${lhs.toSigRelativeString( ctx )} is not defined" ) )
-      require(
-        referencedProof.conclusion.isSubMultisetOf( declSeq ),
-        "End-sequent of proof definition does not match declaration.\n" +
-          "Given sequent: " + referencedProof.endSequent.toSigRelativeString( ctx ) + "\n" +
-          "Expected sequent: " + declSeq.toSigRelativeString( ctx ) + "\n" +
-          "Extraneous formulas: " +
-          referencedProof.endSequent.diff( declSeq ).toSigRelativeString( ctx ) )
-      val conn = SequentConnector.guessInjection( fromLower = referencedProof.conclusion, toUpper = declSeq )
-      val defn = ProofDefinition( lhs, conn, referencedProof )
-      ctx.state.update[ProofDefinitions]( _ + defn )
-    }
-  }
-
-  case class ProofDeclaration( lhs: Expr, proof: LKProof ) extends Update {
-    override def apply( ctx: Context ): State =
-      ctx + ProofNameDeclaration( lhs, proof.endSequent ) + ProofDefinitionDeclaration( lhs, proof ) state
-
-    override def toString: String =
-      s"ProofDeclaration($lhs, ${proof.endSequent})"
   }
 
   def guess( exprs: Traversable[Expr] ): ImmutableContext = {
@@ -824,79 +372,3 @@ object Context {
     ctx
   }
 }
-
-class MutableContext( private var ctx_ :ImmutableContext ) extends Context {
-  override def state: State = ctx.state
-  override def updates: List[Update] = ctx.updates
-  override def toImmutable: ImmutableContext = ctx
-
-  override def toString: String = ctx.toString
-
-  def ctx: ImmutableContext = ctx_
-  def ctx_=( newCtx: ImmutableContext ): Unit = ctx_ = newCtx
-
-  def +=( update: Update ): Unit = ctx += update
-  def ++=( updates: Iterable[Update] ): Unit = ctx ++= updates
-
-  def addDefinition( by: Expr, name: => String = newNameGenerator.freshWithIndex( "D" ), reuse: Boolean = true ): Const = {
-    if ( reuse ) {
-      for ( ( d, _ ) <- get[Definitions].definitions.find( _._2 == by ) ) {
-        return Const( d, by.ty )
-      }
-    }
-    val what = Const( name, by.ty, typeVariables( by ).toList )
-    this += Definition( what, by )
-    what
-  }
-
-  def addSkolemSym( defn: Expr, name: => String = newNameGenerator.freshWithIndex( "s" ), reuse: Boolean = true ): Const = {
-    if ( reuse ) {
-      for ( ( d, _ ) <- get[SkolemFunctions].skolemDefs.find( _._2 == defn ) ) {
-        return d
-      }
-    }
-    val Abs.Block( vs, Quant( v, _, _ ) ) = defn
-    val sym = Const( name, FunctionType( v.ty, vs.map( _.ty ) ) )
-    this += SkolemFun( sym, defn )
-    sym
-  }
-}
-object MutableContext {
-  def default(): MutableContext = Context.default.newMutable
-  def guess( exprs: Traversable[Expr] ): MutableContext = Context.guess( exprs ).newMutable
-  def guess( exprs: Expr* ): MutableContext = guess( exprs )
-  def guess( seq: Sequent[Expr] ): MutableContext = guess( seq.elements )
-  def guess( cnf: Traversable[Sequent[Expr]] )( implicit dummyImplicit: DummyImplicit ): MutableContext = guess( cnf.view.flatMap( _.elements ) )
-  def guess[R, S]( rs: Traversable[R] )( implicit ev: Replaceable[R, S] ): MutableContext =
-    guess( rs.view.flatMap( ev.names ) )
-  def guess( p: LKProof ): MutableContext =
-    guess( containedNames( p ) ) // TODO: add (Skolem) definitions
-
-  def guess( p: ResolutionProof ): MutableContext = {
-    val ctx = default()
-
-    val cs = containedNames( p )
-
-    val tys = cs.flatMap( c => baseTypes( c.ty ) )
-    for ( ty <- tys if !ctx.isType( ty ) )
-      ctx += Sort( ty )
-
-    val defs: Map[Const, Expr] = p.definitions.toMap
-    def add( c: Const ): Unit =
-      if ( ctx.constant( c.name ).isEmpty ) defs.get( c ) match {
-        case Some( d ) =>
-          constants( d ).foreach( add )
-          ctx += Definition( c, d )
-        case None =>
-          ctx += c
-      }
-    cs.foreach { case c: Const => add( c ) case _ => }
-
-    ctx
-  }
-}
-
-class ReadonlyMutableContext( ctx: ImmutableContext ) extends MutableContext( ctx ) {
-  override def ctx_=( newCtx: ImmutableContext ): Unit = throw new UnsupportedOperationException
-}
-

@@ -4,7 +4,7 @@ import gapt.expr._
 import gapt.expr.hol.{ instantiate, skolemize }
 import gapt.grammars.InductionGrammar
 import gapt.grammars.InductionGrammar.Production
-import gapt.proofs.context.Context.InductiveType
+import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.MutableContext
 import gapt.proofs.expansion.InstanceTermEncoding
 import gapt.provers.sat.Sat4j

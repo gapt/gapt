@@ -3,12 +3,16 @@ package gapt.examples
 import gapt.expr._
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
-import gapt.proofs.context.Context.PrimRecFun
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.PrimRecFun
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 
 object VeryWeakPHPSeqTwoSchema extends TacticsProof {
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-  ctx += Context.Sort( "i" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += Sort( "i" )
   ctx += hoc"f:nat>i>nat"
   ctx += hoc"suc:i>i"
   ctx += hoc"z:i"
@@ -41,13 +45,13 @@ object VeryWeakPHPSeqTwoSchema extends TacticsProof {
       hof"PAND(s(0),n)",
       hof"!x TopFuncDef(s(0),s(s(0)),x)" ),
     Seq( hof"?x ( E(f(s(s(0)),x), f(s(s(0)),suc(x))) )" ) )
-  ctx += Context.ProofNameDeclaration( le"omega n", esOmega )
+  ctx += ProofNameDeclaration( le"omega n", esOmega )
   val esPhi = Sequent(
     Seq(
       hof" CutDistinct(s(0),n)",
       hof"!x TopFuncDef(s(0),s(s(0)),x)" ),
     Seq( hof"?x ( E(f(s(s(0)),x), f(s(s(0)),suc(x))) )" ) )
-  ctx += Context.ProofNameDeclaration( le"phi n", esPhi )
+  ctx += ProofNameDeclaration( le"phi n", esPhi )
 
   //The base case of omega
   val esOmegaBc =
@@ -85,7 +89,7 @@ object VeryWeakPHPSeqTwoSchema extends TacticsProof {
     ref( "phi" )
 
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega 0", omegaBc )
+  ctx += ProofDefinitionDeclaration( le"omega 0", omegaBc )
 
   //The base case of omega
   val esOmegaSc =
@@ -133,7 +137,7 @@ object VeryWeakPHPSeqTwoSchema extends TacticsProof {
     ref( "LEDefinition" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega (s n)", OmegaSc )
+  ctx += ProofDefinitionDeclaration( le"omega (s n)", OmegaSc )
 
   val esPhiBc3 =
     Sequent(
@@ -196,7 +200,7 @@ object VeryWeakPHPSeqTwoSchema extends TacticsProof {
     allL( "Ant_0_1", le" a" )
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi 0", phiBc3 )
+  ctx += ProofDefinitionDeclaration( le"phi 0", phiBc3 )
 
   val esPhiSc =
     Sequent(
@@ -320,7 +324,7 @@ object VeryWeakPHPSeqTwoSchema extends TacticsProof {
     forget( "Ant_0" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi (s n)", phiSc )
+  ctx += ProofDefinitionDeclaration( le"phi (s n)", phiSc )
 
 }
 

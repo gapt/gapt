@@ -1,11 +1,12 @@
 package gapt.provers.viper.grammars
 
-import gapt.expr._
-import gapt.proofs.context.Context.{ BaseTypes, StructurallyInductiveTypes }
-import gapt.utils.NameGenerator
 import cats.instances.list._
 import cats.syntax.traverse._
+import gapt.expr._
 import gapt.proofs.context.Context
+import gapt.proofs.context.Context.BaseTypes
+import gapt.proofs.context.Context.StructurallyInductiveTypes
+import gapt.utils.NameGenerator
 
 import scala.collection.mutable
 

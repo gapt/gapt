@@ -1,16 +1,20 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.context.Context._
-import gapt.proofs.gaptic._
 import gapt.proofs.Sequent
-import gapt.proofs.ceres.{ CharacteristicClauseSet, StructCreators }
-import gapt.proofs.context.Context
+import gapt.proofs.ceres.CharacteristicClauseSet
+import gapt.proofs.ceres.StructCreators
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.PrimRecFun
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.context.update.Sort
+import gapt.proofs.gaptic._
 import gapt.proofs.lk.instantiateProof
 
 object FirstSchema9 extends TacticsProof {
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-  ctx += Context.Sort( "i" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += Sort( "i" )
 
   ctx += hoc"E: nat>nat>o"
   ctx += hoc"LE: i>i>o"
@@ -45,13 +49,13 @@ object FirstSchema9 extends TacticsProof {
   val esnuPrime = Sequent( Seq( hof"E(f(A),0)", hof"!x?y(LEQ(x,y) & POR(0,y))" ), Seq( hof"Ech(m,A)" ) )
   val esOmega = Sequent( Seq( hof"!x POR(n,x)" ), Seq( hof"?p Ech(m,p)" ) )
   val esphi = Sequent( Seq( hof"!x?y (LEQ(x,y) & POR(n,y) )" ), Seq( hof"?p Ech(m,p)" ) )
-  ctx += Context.ProofNameDeclaration( le"nu m n A", esnu ) // notice that here m is first than n
-  ctx += Context.ProofNameDeclaration( le"mu m n", esmu ) // notice that here m is first than n
-  ctx += Context.ProofNameDeclaration( le"mubase m", esmubase ) // notice that here there is only m
-  ctx += Context.ProofNameDeclaration( le"chi n a", eschi ) // notice that here there is only n
-  ctx += Context.ProofNameDeclaration( le"nuPrime m A", esnuPrime ) // notice that here there is only m
-  ctx += Context.ProofNameDeclaration( le"omega n m", esOmega ) // notice that here n is first than m
-  ctx += Context.ProofNameDeclaration( le"phi n m", esphi ) // notice that here n is first than m
+  ctx += ProofNameDeclaration( le"nu m n A", esnu ) // notice that here m is first than n
+  ctx += ProofNameDeclaration( le"mu m n", esmu ) // notice that here m is first than n
+  ctx += ProofNameDeclaration( le"mubase m", esmubase ) // notice that here there is only m
+  ctx += ProofNameDeclaration( le"chi n a", eschi ) // notice that here there is only n
+  ctx += ProofNameDeclaration( le"nuPrime m A", esnuPrime ) // notice that here there is only m
+  ctx += ProofNameDeclaration( le"omega n m", esOmega ) // notice that here n is first than m
+  ctx += ProofNameDeclaration( le"phi n m", esphi ) // notice that here n is first than m
 
   val esNuBc = Sequent( Seq( ( "Ant_2" -> hof"E(f(A),n)" ), ( "Ant_3" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" ) ), Seq( ( "Suc_0" -> hof"Ech(0,A)" ) ) )
   val esNuSc = Sequent( Seq( ( "Ant_2" -> hof"E(f(A),n)" ), ( "Ant_3" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" ) ), Seq( ( "Suc_0" -> hof"Ech(s(m),A)" ) ) )
@@ -258,22 +262,22 @@ object FirstSchema9 extends TacticsProof {
   //Notice that the inactive parameter does not have an sucessor function
   //around it but the active one does. Also the active parameter is always
   //the first one
-  ctx += Context.ProofDefinitionDeclaration( le"nu 0 n A", NuBc )
+  ctx += ProofDefinitionDeclaration( le"nu 0 n A", NuBc )
   //m is active and n is not
-  ctx += Context.ProofDefinitionDeclaration( le"nu (s m) n  A", NuSc )
-  ctx += Context.ProofDefinitionDeclaration( le"nuPrime 0 A", NuPrimeBc )
-  ctx += Context.ProofDefinitionDeclaration( le"nuPrime (s m) A", NuPrimeSc )
-  ctx += Context.ProofDefinitionDeclaration( le"mu 0 n", muBc )
-  ctx += Context.ProofDefinitionDeclaration( le"mu (s m) n ", muSc )
-  ctx += Context.ProofDefinitionDeclaration( le"mubase 0", mubaseBc )
-  ctx += Context.ProofDefinitionDeclaration( le"mubase (s m)", mubaseSc )
-  ctx += Context.ProofDefinitionDeclaration( le"chi 0 a", chiBc )
-  ctx += Context.ProofDefinitionDeclaration( le"chi (s n) a", chiSc )
-  ctx += Context.ProofDefinitionDeclaration( le"phi 0 m", phiBc )
+  ctx += ProofDefinitionDeclaration( le"nu (s m) n  A", NuSc )
+  ctx += ProofDefinitionDeclaration( le"nuPrime 0 A", NuPrimeBc )
+  ctx += ProofDefinitionDeclaration( le"nuPrime (s m) A", NuPrimeSc )
+  ctx += ProofDefinitionDeclaration( le"mu 0 n", muBc )
+  ctx += ProofDefinitionDeclaration( le"mu (s m) n ", muSc )
+  ctx += ProofDefinitionDeclaration( le"mubase 0", mubaseBc )
+  ctx += ProofDefinitionDeclaration( le"mubase (s m)", mubaseSc )
+  ctx += ProofDefinitionDeclaration( le"chi 0 a", chiBc )
+  ctx += ProofDefinitionDeclaration( le"chi (s n) a", chiSc )
+  ctx += ProofDefinitionDeclaration( le"phi 0 m", phiBc )
   //n is active m is not
-  ctx += Context.ProofDefinitionDeclaration( le"phi (s n) m", phiSc )
-  ctx += Context.ProofDefinitionDeclaration( le"omega 0 m", omegaBc )
-  ctx += Context.ProofDefinitionDeclaration( le"omega (s n) m", omegaSc )
+  ctx += ProofDefinitionDeclaration( le"phi (s n) m", phiSc )
+  ctx += ProofDefinitionDeclaration( le"omega 0 m", omegaBc )
+  ctx += ProofDefinitionDeclaration( le"omega (s n) m", omegaSc )
 
   //We can now perform the same steps as in the previous file but we two parameters
   //to substitute

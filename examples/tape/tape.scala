@@ -4,10 +4,11 @@ import gapt.expr._
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 
 object tape extends TacticsProof {
-  ctx += Context.Sort( "i" )
+  ctx += Sort( "i" )
   ctx += hoc"f: i>i"
   ctx += hoc"'+': i>i>i"
   ctx += Notation.Infix( "+", Precedence.plusMinus )

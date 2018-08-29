@@ -2,9 +2,10 @@ package gapt.proofs.lk
 
 import gapt.expr._
 import gapt.formats.babel.{ Notation, Precedence }
-import gapt.proofs.context.Context
 import gapt.proofs.gaptic.{ ProofState, _ }
-import gapt.proofs.{ Sequent }
+import gapt.proofs.Sequent
+import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
 import org.specs2.mutable._
 
 class InductionUnfoldingOnTreesTest extends Specification {
@@ -13,8 +14,8 @@ class InductionUnfoldingOnTreesTest extends Specification {
     proof.subProofs.exists( _.isInstanceOf[InductionRule] )
 
   object proofs extends TacticsProof {
-    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
-    ctx += Context.InductiveType( "tree", hoc"leaf: tree", hoc"node:tree>tree>nat>tree" )
+    ctx += InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    ctx += InductiveType( "tree", hoc"leaf: tree", hoc"node:tree>tree>nat>tree" )
     ctx += hoc"'+': nat>nat>nat"
     ctx += Notation.Infix( "+", Precedence.plusMinus )
     ctx += hoc"mirror: tree>tree"

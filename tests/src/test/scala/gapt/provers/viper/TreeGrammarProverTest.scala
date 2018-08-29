@@ -1,7 +1,7 @@
 package gapt.provers.viper
 
 import gapt.expr._
-import gapt.proofs.context.Context.InductiveType
+import gapt.proofs.context.update.InductiveType
 import gapt.proofs.SequentMatchers
 import gapt.proofs.context.MutableContext
 import gapt.provers.escargot.QfUfEscargot

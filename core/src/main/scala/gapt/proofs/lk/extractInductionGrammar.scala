@@ -3,8 +3,8 @@ package gapt.proofs.lk
 import gapt.expr._
 import gapt.expr.hol.{ containsQuantifierOnLogicalLevel, instantiate }
 import gapt.grammars.InductionGrammar
+import gapt.proofs.Sequent
 import gapt.proofs.context.Context
-import gapt.proofs.{ Sequent }
 import gapt.proofs.expansion._
 
 object extractInductionGrammar {

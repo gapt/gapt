@@ -468,7 +468,7 @@ trait TacticCommands {
    * is reduced to `n` new subgoals, where `n` is the number of constructors of the type of `x`.
    *
    * @param label The label of the formula `∀x.A`.
-   * @param ctx   A [[context.Context]]. It must contain an inductive definition of the type of `x`.
+   * @param ctx   A [[Context]]. It must contain an inductive definition of the type of `x`.
    */
   def induction( on: Var, label: String )( implicit ctx: Context ) = InductionTactic( OnLabel( label ), on )
 
@@ -515,7 +515,7 @@ trait TacticCommands {
    * Solves the current subgoal as a first-order consequence of the background theory. This
    * closes the goal.
    *
-   * @param ctx A [[context.Context]]. The current subgoal must be contained in its background theory.
+   * @param ctx A [[Context]]. The current subgoal must be contained in its background theory.
    */
   def foTheory( implicit ctx: Context ): Tactic[Unit] = Tactic {
     for {
@@ -530,7 +530,7 @@ trait TacticCommands {
    * Declares the current subgoal as a theory axiom, i.e. a sequent that is contained in the background theory. This
    * closes the goal.
    *
-   * @param ctx A [[context.Context]]. The current subgoal must be contained in its background theory.
+   * @param ctx A [[Context]]. The current subgoal must be contained in its background theory.
    */
   def theory( implicit ctx: Context ): Tactic[Unit] = Tactic {
     for {
@@ -678,7 +678,7 @@ trait TacticCommands {
    * use `repeat`.
    *
    * @param definitions The definitions `def1`,...,`defn`.
-   * @param ctx         A [[context.Context]]. The definitions you want to unfold need to be present in `ctx`.
+   * @param ctx         A [[Context]]. The definitions you want to unfold need to be present in `ctx`.
    */
   def unfold( definitions: String* )( implicit ctx: Context ) =
     UnfoldTacticHelper( definitions )

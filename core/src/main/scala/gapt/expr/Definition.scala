@@ -1,8 +1,10 @@
 package gapt.expr
 
 import gapt.proofs.context.Context
+import gapt.proofs.context.State
+import gapt.proofs.context.update.Update
 
-case class Definition( what: Const, by: Expr ) extends Context.Update {
+case class Definition( what: Const, by: Expr ) extends Update {
   val Const( name, ty, ps ) = what
   require( ps.forall( _.isInstanceOf[TVar] ), s"type parameters $ps must be variables" )
   require( ty == by.ty, s"type $ty of $what and type ${by.ty} of $by must match!" )
@@ -12,7 +14,7 @@ case class Definition( what: Const, by: Expr ) extends Context.Update {
 
   def toTuple: ( Const, Expr ) = ( what, by )
 
-  override def apply( ctx: Context ): Context.State = {
+  override def apply( ctx: Context ): State = {
     ctx.check( what.ty )
     ctx.check( by )
     ctx.state.update[Context.Constants]( _ + what )

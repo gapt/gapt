@@ -5,7 +5,7 @@ import gapt.expr.fol.{ folSubTerms, folTermSize }
 import gapt.expr.hol.atoms
 import gapt.formats.babel.{ BabelExporter, MapBabelSignature, Precedence }
 import gapt.grammars.InductionGrammar._
-import gapt.proofs.{ Checkable }
+import gapt.proofs.Checkable
 import gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import gapt.utils.{ Doc, NameGenerator }
 import cats.instances.list._

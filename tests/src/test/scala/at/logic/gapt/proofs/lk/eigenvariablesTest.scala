@@ -3,17 +3,18 @@ package at.logic.gapt.proofs.lk
 import gapt.expr._
 import gapt.formats.babel.Notation
 import gapt.formats.babel.Precedence
-import gapt.proofs.context.Context
 import gapt.proofs.context.MutableContext
 import gapt.proofs.gaptic._
 import gapt.proofs.lk.EigenVariablesLK
-import gapt.proofs.{ Sequent }
+import gapt.proofs.Sequent
+import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
 import org.specs2.mutable._
 
 class eigenvariablesTest extends Specification {
 
   implicit var ctx: MutableContext = Context().newMutable
-  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
   ctx += Notation.Infix( "+", Precedence.plusMinus )
   ctx += hoc"'+': nat>nat>nat"
 

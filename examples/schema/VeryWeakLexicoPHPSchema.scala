@@ -1,14 +1,18 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.context.Context._
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.PrimRecFun
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 
 object VeryWeakLexicoPHPSchema extends TacticsProof {
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-  ctx += Context.Sort( "i" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += Sort( "i" )
   ctx += hoc"f:i>i>nat"
   ctx += hoc"suc:i>i"
   ctx += hoc"z:i"
@@ -40,11 +44,11 @@ object VeryWeakLexicoPHPSchema extends TacticsProof {
   val esOmega = Sequent(
     Seq( hof"!x !y POR(n,x,y)" ),
     Seq( hof"?x ?y ( E(f(x,y), f(suc(x),suc(y))) | E(f(x,suc(y)), f(suc(x),suc(y))) | E(f(suc(x),y), f(suc(x),suc(y))))" ) )
-  ctx += Context.ProofNameDeclaration( le"omega n", esOmega )
+  ctx += ProofNameDeclaration( le"omega n", esOmega )
   val esPhi = Sequent(
     Seq( hof"?x ?y ( (E(n,f(x,y)) & E(n,f(suc(x),suc(y)))) | (E(n,f(x,suc(y))) & E(n,f(suc(x),suc(y)))) | (E(n,f(suc(x),y)) & E(n,f(suc(x),suc(y)))) ) | !x !y (LE(f(x,y),n) & LE(f(x,suc(y)),n) & LE(f(suc(x),y),n))" ),
     Seq( hof"?x ?y ( E(f(x,y), f(suc(x),suc(y))) | E(f(x,suc(y)), f(suc(x),suc(y))) | E(f(suc(x),y), f(suc(x),suc(y))))" ) )
-  ctx += Context.ProofNameDeclaration( le"phi n", esPhi )
+  ctx += ProofNameDeclaration( le"phi n", esPhi )
   //The base case of  omega
   val esOmegaBc =
     Sequent(
@@ -89,7 +93,7 @@ object VeryWeakLexicoPHPSchema extends TacticsProof {
     andL
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega 0", omegaBc )
+  ctx += ProofDefinitionDeclaration( le"omega 0", omegaBc )
 
   //The step case of  omega
   val esOmegaSc =
@@ -130,7 +134,7 @@ object VeryWeakLexicoPHPSchema extends TacticsProof {
     ref( "LEDefinition3b" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
+  ctx += ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
 
   val esPhiBc =
     Sequent(
@@ -158,7 +162,7 @@ object VeryWeakLexicoPHPSchema extends TacticsProof {
     andL
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi 0", phiBc )
+  ctx += ProofDefinitionDeclaration( le"phi 0", phiBc )
 
   val esPhiSc =
     Sequent(
@@ -222,6 +226,6 @@ object VeryWeakLexicoPHPSchema extends TacticsProof {
     ref( "ordcon6" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi (s n)", phiSc )
+  ctx += ProofDefinitionDeclaration( le"phi (s n)", phiSc )
 }
 

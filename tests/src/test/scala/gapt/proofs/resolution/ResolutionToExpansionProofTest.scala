@@ -4,7 +4,7 @@ import gapt.examples.CountingEquivalence
 import gapt.expr._
 import gapt.expr.fol.thresholds
 import gapt.expr.hol.CNFn
-import gapt.proofs.context.Context.SkolemFun
+import gapt.proofs.context.update.SkolemFun
 import gapt.proofs.context.MutableContext
 import gapt.provers.escargot.Escargot
 import gapt.proofs.{ ProofBuilder, _ }

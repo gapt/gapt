@@ -1,15 +1,18 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.context.Context._
 import gapt.proofs.Sequent
-import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.PrimRecFun
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 
 object ThreeStrictMonotoneSchema extends TacticsProof {
 
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-  ctx += Context.Sort( "i" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += Sort( "i" )
   ctx += hoc"f:i>nat"
   ctx += hoc"suc:i>i"
   ctx += hoc"z:i"
@@ -33,19 +36,19 @@ object ThreeStrictMonotoneSchema extends TacticsProof {
   val esOmega = Sequent(
     Seq( hof"!x POR(n,x)" ),
     Seq( hof"?z ( E(f(z), f(suc(z))) & ?x (  iLEQ(suc(z),suc(x)) & E(f(x), f(suc(x))) & ?y ( iLEQ(suc(x),suc(y)) & E(f(y), f(suc(y))) )))" ) )
-  ctx += Context.ProofNameDeclaration( le"omega n", esOmega )
+  ctx += ProofNameDeclaration( le"omega n", esOmega )
   val esPhi = Sequent(
     Seq( hof"?x ( E(n,f(x)) & E(n,f(suc(x)))) | !y (LE(f(y),n))" ),
     Seq( hof"?z ( E(f(z), f(suc(z))) & ?x (  iLEQ(suc(z),suc(x)) & E(f(x), f(suc(x))) & ?y ( iLEQ(suc(x),suc(y)) & E(f(y), f(suc(y))) )))" ) )
-  ctx += Context.ProofNameDeclaration( le"phi n", esPhi )
+  ctx += ProofNameDeclaration( le"phi n", esPhi )
   val esChi = Sequent(
     Seq( hof"?x ( iLEQ(suc(a),suc(x)) & E(n,f(x)) & E(n,f(suc(x)))) | !y (iLEQ(suc(a),suc(y)) & LE(f(y),n))" ),
     Seq( hof"?x (iLEQ(suc(a),suc(x)) & E(f(x), f(suc(x))) & ?y ( iLEQ(suc(x),suc(y)) & E(f(y), f(suc(y))) ))" ) )
-  ctx += Context.ProofNameDeclaration( le"chi n a", esChi )
+  ctx += ProofNameDeclaration( le"chi n a", esChi )
   val esNu = Sequent(
     Seq( hof"?x ( iLEQ(suc(a),suc(x)) & E(n,f(x)) & E(n,f(suc(x)))) | !y (iLEQ(suc(a),suc(y)) & LE(f(y),n))" ),
     Seq( hof"?x ( iLEQ(suc(a),suc(x)) & E(f(x), f(suc(x))) )" ) )
-  ctx += Context.ProofNameDeclaration( le"nu n a", esNu )
+  ctx += ProofNameDeclaration( le"nu n a", esNu )
 
   //The base case of  omega
   val esOmegaBc =
@@ -65,7 +68,7 @@ object ThreeStrictMonotoneSchema extends TacticsProof {
     trivial
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega 0", omegaBc )
+  ctx += ProofDefinitionDeclaration( le"omega 0", omegaBc )
 
   val esOmegaSc =
     Sequent(
@@ -90,7 +93,7 @@ object ThreeStrictMonotoneSchema extends TacticsProof {
     ref( "phi" )
 
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
+  ctx += ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
 
   val esPhiBc =
     Sequent(
@@ -115,7 +118,7 @@ object ThreeStrictMonotoneSchema extends TacticsProof {
     allL( foc"z" )
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi 0", phiBc )
+  ctx += ProofDefinitionDeclaration( le"phi 0", phiBc )
 
   val esPhiSc =
     Sequent(
@@ -148,7 +151,7 @@ object ThreeStrictMonotoneSchema extends TacticsProof {
     ref( "ordcon2" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi (s n)", phiSc )
+  ctx += ProofDefinitionDeclaration( le"phi (s n)", phiSc )
 
   val esChiBc =
     Sequent(
@@ -177,7 +180,7 @@ object ThreeStrictMonotoneSchema extends TacticsProof {
     andL
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi 0 a", chiBc )
+  ctx += ProofDefinitionDeclaration( le"chi 0 a", chiBc )
 
   val esChiSc =
     Sequent(
@@ -219,7 +222,7 @@ object ThreeStrictMonotoneSchema extends TacticsProof {
     ref( "ordcon2" )
     ref( "chi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi (s n) a", chiSc )
+  ctx += ProofDefinitionDeclaration( le"chi (s n) a", chiSc )
 
   val esNuBc =
     Sequent(
@@ -238,7 +241,7 @@ object ThreeStrictMonotoneSchema extends TacticsProof {
     andL
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"nu 0 a", nuBc )
+  ctx += ProofDefinitionDeclaration( le"nu 0 a", nuBc )
 
   val esNuSc =
     Sequent(
@@ -271,6 +274,6 @@ object ThreeStrictMonotoneSchema extends TacticsProof {
     forget( "Ant_0" )
     ref( "nu" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"nu (s n) a", nuSc )
+  ctx += ProofDefinitionDeclaration( le"nu (s n) a", nuSc )
 }
 

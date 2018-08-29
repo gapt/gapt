@@ -1,10 +1,10 @@
 package gapt.proofs.ceres
 
 import gapt.expr._
-import gapt.proofs.context.Context
 import gapt.proofs.context.Context.{ ProofDefinition, ProofDefinitions, ProofNames }
 import gapt.proofs.lk.{ EigenVariablesLK, LKProof }
-import gapt.proofs.{ Sequent }
+import gapt.proofs.Sequent
+import gapt.proofs.context.Context
 
 //Idea behind the type is for each proof symbol we have a  Map,  which maps configurations to a
 // a Struct  and the expression of the case of the inductive definition.

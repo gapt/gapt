@@ -1,11 +1,12 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.context.Context._
 import gapt.proofs.Sequent
-import gapt.proofs.gaptic._
 import gapt.proofs.ceres._
-import gapt.proofs.context.Context
+import gapt.proofs.context.update.PrimRecFun
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.gaptic._
 import gapt.proofs.lk.LKProof
 
 object OneStrictMonotoneRefutation extends TacticsProof( OneStrictMonotoneSchema.ctx ) {
@@ -31,15 +32,15 @@ object OneStrictMonotoneRefutation extends TacticsProof( OneStrictMonotoneSchema
     "SEQ2 (s x) y = (( (E y (f (SW (s x)))) | (LE (f (SW (s x))) y) ) & (SEQ2 x y))" )
 
   val esTop = Sequent( Seq( hof"omegaSFAF(n)" ), Seq() )
-  ctx += Context.ProofNameDeclaration( le"Top n", esTop )
+  ctx += ProofNameDeclaration( le"Top n", esTop )
   val esSeq1Make = Sequent(
     Seq( hof" !a ((E(n, f(suc(a))) | LE(f(a), n)))" ),
     Seq( hof"SEQ1(k, n)" ) )
-  ctx += Context.ProofNameDeclaration( le"Seq1Make k n", esSeq1Make )
+  ctx += ProofNameDeclaration( le"Seq1Make k n", esSeq1Make )
   val esSeq2Make = Sequent(
     Seq( hof" !a ((E(n, f(a)) | LE(f(a), n)))" ),
     Seq( hof"SEQ2(k, n)" ) )
-  ctx += Context.ProofNameDeclaration( le"Seq2Make k n", esSeq2Make )
+  ctx += ProofNameDeclaration( le"Seq2Make k n", esSeq2Make )
   val esSeq1Make2 = Sequent(
     Seq(
       hof"SEQ1(k, s(n))",
@@ -48,7 +49,7 @@ object OneStrictMonotoneRefutation extends TacticsProof( OneStrictMonotoneSchema
       hof"!b (¬LE(f(suc(b)), s(n)) ∨ (E(n, f(suc(b))) ∨ LE(f(b), n)))",
       hof"!a (¬E(s(n), f(a)) ∨ ¬E(s(n), f(suc(a))))" ),
     Seq( hof"SEQ1(k, n)" ) )
-  ctx += Context.ProofNameDeclaration( le"Seq1Make2 k n", esSeq1Make2 )
+  ctx += ProofNameDeclaration( le"Seq1Make2 k n", esSeq1Make2 )
   val esSeq2Make2 = Sequent(
     Seq(
       hof"SEQ1(k, s(n))",
@@ -56,18 +57,18 @@ object OneStrictMonotoneRefutation extends TacticsProof( OneStrictMonotoneSchema
       hof"!b (¬LE(f(b), s(n)) ∨ (E(n, f(b)) ∨ LE(f(b), n)))",
       hof"!a (¬E(s(n), f(a)) ∨ ¬E(s(n), f(suc(a))))" ),
     Seq( hof"SEQ2(k, n)" ) )
-  ctx += Context.ProofNameDeclaration( le"Seq2Make2 k n", esSeq2Make2 )
+  ctx += ProofNameDeclaration( le"Seq2Make2 k n", esSeq2Make2 )
   val esNext = Sequent(
     Seq( hof"SEQ1(n, n)", hof"SEQ2(n, n)", hof"phiSFAT(n)" ),
     Seq() )
-  ctx += Context.ProofNameDeclaration( le"Next n", esNext )
+  ctx += ProofNameDeclaration( le"Next n", esNext )
   val esPRBc = Sequent( Seq( "Ant_0" -> hof"omegaSFAF(0)" ), Seq() )
   val PRBc: LKProof = Lemma( esPRBc ) {
     unfold( "omegaSFAF" ) in "Ant_0"
     unfold( "phiSFAT" ) in "Ant_0"
     escargot
   }
-  ctx += Context.ProofDefinitionDeclaration( le"Top 0", PRBc )
+  ctx += ProofDefinitionDeclaration( le"Top 0", PRBc )
 
   val esPRSc = Sequent( Seq( "Ant_0" -> hof"omegaSFAF(s(n))" ), Seq() )
   val PRSc: LKProof = Lemma( esPRSc ) {
@@ -81,7 +82,7 @@ object OneStrictMonotoneRefutation extends TacticsProof( OneStrictMonotoneSchema
     andL
     ref( "Next" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"Top (s n)", PRSc )
+  ctx += ProofDefinitionDeclaration( le"Top (s n)", PRSc )
 
   val esNextBc = Sequent( Seq(
     "Ant_0" -> hof"phiSFAT(0)",
@@ -95,7 +96,7 @@ object OneStrictMonotoneRefutation extends TacticsProof( OneStrictMonotoneSchema
     unfold( "SW" ) in "Ant_2"
     escargot
   }
-  ctx += Context.ProofDefinitionDeclaration( le"Next 0", NextBc )
+  ctx += ProofDefinitionDeclaration( le"Next 0", NextBc )
   val esNextSc = Sequent( Seq(
     "Ant_0" -> hof"phiSFAT(s(n))",
     "Ant_1" -> hof"SEQ1(s(n),s(n))",
@@ -148,7 +149,7 @@ object OneStrictMonotoneRefutation extends TacticsProof( OneStrictMonotoneSchema
     andL
     ref( "Next" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"Next (s n)", NextSc )
+  ctx += ProofDefinitionDeclaration( le"Next (s n)", NextSc )
 
   val esSeq2Make2Bc = Sequent( Seq(
     "Ant_0" -> hof"SEQ1(0, s(n))",
@@ -165,7 +166,7 @@ object OneStrictMonotoneRefutation extends TacticsProof( OneStrictMonotoneSchema
     unfold( "SW" ) in "Suc_0"
     escargot
   }
-  ctx += Context.ProofDefinitionDeclaration( le"Seq2Make2 0 n", Seq2Make2Bc )
+  ctx += ProofDefinitionDeclaration( le"Seq2Make2 0 n", Seq2Make2Bc )
 
   val esSeq2Make2Sc = Sequent( Seq(
     "Ant_0" -> hof"SEQ1(s(k), s(n))",
@@ -209,7 +210,7 @@ object OneStrictMonotoneRefutation extends TacticsProof( OneStrictMonotoneSchema
     trivial
     ref( "Seq2Make2" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"Seq2Make2 (s k) n", Seq2Make2Sc )
+  ctx += ProofDefinitionDeclaration( le"Seq2Make2 (s k) n", Seq2Make2Sc )
 
   val esSeq1Make2Bc = Sequent( Seq(
     "Ant_0" -> hof"SEQ1(0, s(n))",
@@ -228,7 +229,7 @@ object OneStrictMonotoneRefutation extends TacticsProof( OneStrictMonotoneSchema
     unfold( "SW" ) in "Ant_4"
     escargot
   }
-  ctx += Context.ProofDefinitionDeclaration( le"Seq1Make2 0 n", Seq1Make2Bc )
+  ctx += ProofDefinitionDeclaration( le"Seq1Make2 0 n", Seq1Make2Bc )
 
   val esSeq1Make2Sc = Sequent( Seq(
     "Ant_0" -> hof"SEQ1(s(k), s(n))",
@@ -276,7 +277,7 @@ object OneStrictMonotoneRefutation extends TacticsProof( OneStrictMonotoneSchema
     ref( "Seq1Make2" )
 
   }
-  ctx += Context.ProofDefinitionDeclaration( le"Seq1Make2 (s k) n", Seq1Make2Sc )
+  ctx += ProofDefinitionDeclaration( le"Seq1Make2 (s k) n", Seq1Make2Sc )
 
   val esSeq1MakeBc = Sequent(
     Seq( "Ant_0" -> hof" !a ((E(n, f(suc(a))) | LE(f(a), n)))" ), Seq(
@@ -286,7 +287,7 @@ object OneStrictMonotoneRefutation extends TacticsProof( OneStrictMonotoneSchema
     unfold( "SW" ) in "Suc_0"
     escargot
   }
-  ctx += Context.ProofDefinitionDeclaration( le"Seq1Make 0 n ", Seq1MakeBc )
+  ctx += ProofDefinitionDeclaration( le"Seq1Make 0 n ", Seq1MakeBc )
   val esSeq1MakeSc = Sequent(
     Seq( "Ant_0" -> hof" !a ((E(n, f(suc(a))) | LE(f(a), n)))" ), Seq(
       "Suc_0" -> hof"SEQ1(s(k), n)" ) )
@@ -301,7 +302,7 @@ object OneStrictMonotoneRefutation extends TacticsProof( OneStrictMonotoneSchema
     trivial
     ref( "Seq1Make" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"Seq1Make (s k) n", Seq1MakeSc )
+  ctx += ProofDefinitionDeclaration( le"Seq1Make (s k) n", Seq1MakeSc )
 
   val esSeq2MakeBc = Sequent(
     Seq( "Ant_0" -> hof" !a ((E(n, f(a)) | LE(f(a), n)))" ), Seq(
@@ -311,7 +312,7 @@ object OneStrictMonotoneRefutation extends TacticsProof( OneStrictMonotoneSchema
     unfold( "SW" ) in "Suc_0"
     escargot
   }
-  ctx += Context.ProofDefinitionDeclaration( le"Seq2Make 0 n ", Seq2MakeBc )
+  ctx += ProofDefinitionDeclaration( le"Seq2Make 0 n ", Seq2MakeBc )
   val esSeq2MakeSc = Sequent(
     Seq( "Ant_0" -> hof" !a ((E(n, f(a)) | LE(f(a), n)))" ), Seq(
       "Suc_0" -> hof"SEQ2(s(k), n)" ) )
@@ -326,5 +327,5 @@ object OneStrictMonotoneRefutation extends TacticsProof( OneStrictMonotoneSchema
     trivial
     ref( "Seq2Make" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"Seq2Make (s k) n", Seq2MakeSc )
+  ctx += ProofDefinitionDeclaration( le"Seq2Make (s k) n", Seq2MakeSc )
 }

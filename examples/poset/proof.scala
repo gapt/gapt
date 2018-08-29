@@ -1,12 +1,12 @@
 package gapt.examples.poset
 
 import gapt.expr._
-import gapt.proofs.context.Context
-import gapt.proofs.{ Sequent }
+import gapt.proofs.Sequent
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 
 object proof extends TacticsProof {
-  ctx += Context.Sort( "i" )
+  ctx += Sort( "i" )
   ctx += hoc"f: i>i>i"
   ctx += hoc"a:i"
   ctx += hoc"b:i"

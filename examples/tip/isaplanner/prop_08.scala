@@ -1,14 +1,15 @@
 package gapt.examples.tip.isaplanner
 
 import gapt.expr._
-import gapt.proofs.context.Context
+import gapt.proofs.Sequent
+import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic._
-import gapt.proofs.{ Sequent }
-import gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, SequentialInductionAxioms }
+import gapt.provers.viper.aip.axioms.IndependentInductionAxioms
+import gapt.provers.viper.aip.axioms.SequentialInductionAxioms
 
 object prop_08 extends TacticsProof {
 
-  ctx += Context.InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
   ctx += hoc"p:Nat>Nat"
   ctx += TBase( "sk" )
   ctx += hoc"plus:Nat>Nat>Nat"

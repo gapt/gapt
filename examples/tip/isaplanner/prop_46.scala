@@ -1,7 +1,7 @@
 package gapt.examples.tip.isaplanner
 
 import gapt.expr._
-import gapt.proofs.context.Context.InductiveType
+import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic._
 
 object prop_46 extends TacticsProof {

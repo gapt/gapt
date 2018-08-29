@@ -155,7 +155,7 @@ private object Support {
   }
   def add( chF: Map[Formula, ( Formula, Set[Var] )], qType: QuantifierC )( implicit ctx: MutableContext ): Unit = {
 
-    import gapt.proofs.context.ReductionRuleUpdate.reductionRulesAsReductionRuleUpdate
+    import gapt.proofs.context.update.ReductionRuleUpdate.reductionRulesAsReductionRuleUpdate
 
     val definitions: Map[Const, List[( Atom, Formula )]] = {
       for ( ( f @ Atom( newEx, _ ), ( form, vars ) ) <- chF.toList )

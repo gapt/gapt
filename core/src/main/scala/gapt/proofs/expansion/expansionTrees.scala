@@ -3,9 +3,9 @@ package gapt.proofs.expansion
 import gapt.expr._
 import gapt.expr.hol.{ HOLPosition, inductionPrinciple, instantiate }
 import gapt.formats.babel.BabelSignature
-import gapt.proofs.context.Context.StructurallyInductiveTypes
 import gapt.proofs._
 import gapt.proofs.context.Context
+import gapt.proofs.context.Context.StructurallyInductiveTypes
 
 import scala.collection.mutable
 

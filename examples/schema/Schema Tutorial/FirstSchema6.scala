@@ -4,13 +4,17 @@ import gapt.expr._
 import gapt.proofs.gaptic._
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
-import gapt.proofs.context.Context.PrimRecFun
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.PrimRecFun
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.context.update.Sort
 import gapt.proofs.lk.instantiateProof //used to unfold proof schema
 
 object FirstSchema6 extends TacticsProof {
   //Type
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-  ctx += Context.Sort( "i" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += Sort( "i" )
   //Term Constants
   ctx += hoc"z:i"
   ctx += hoc"g:i>i"
@@ -37,9 +41,9 @@ object FirstSchema6 extends TacticsProof {
   val esphi = Sequent( Seq( hof"!x?y (LEQ(x,y) & POR(n,y) )" ), Seq( hof"?p?q (LE(p,q) & E(f(p),f(q)))" ) )
   val eschi = Sequent( Seq( hof" POR(n,a) " ), Seq( hof"POR(n,a)" ) )
   //Proof Declarations
-  ctx += Context.ProofNameDeclaration( le"omega n", esOmega )
-  ctx += Context.ProofNameDeclaration( le"phi n", esphi )
-  ctx += Context.ProofNameDeclaration( le"chi n a", eschi )
+  ctx += ProofNameDeclaration( le"omega n", esOmega )
+  ctx += ProofNameDeclaration( le"phi n", esphi )
+  ctx += ProofNameDeclaration( le"chi n a", eschi )
   //basecase and stepcase  end sequents
   val esChiBc = Sequent( Seq( "Ant_0" -> hof" POR(0,a)" ), Seq( "Suc_0" -> hof"POR(0,a)" ) )
   val esChiSc = Sequent( Seq( "Ant_0" -> hof" POR(s(n),a)" ), Seq( "Suc_0" -> hof"POR(s(n),a)" ) )
@@ -59,10 +63,10 @@ object FirstSchema6 extends TacticsProof {
     ref( "chi" ) // The proof link tactic
   }
   //Proof definitions
-  ctx += Context.ProofDefinitionDeclaration( le"chi 0 a", chiBc )
+  ctx += ProofDefinitionDeclaration( le"chi 0 a", chiBc )
   //Notice that like the base case the proof definition includes the fact that we
   //are defining the step case
-  ctx += Context.ProofDefinitionDeclaration( le"chi (s n) a", chiSc )
+  ctx += ProofDefinitionDeclaration( le"chi (s n) a", chiSc )
 
   //now if we run the command prooftool(FirstSchema.chiSc) we get a proof with a link to itself
   //and thus we have our first schema proof although a quite silly one.

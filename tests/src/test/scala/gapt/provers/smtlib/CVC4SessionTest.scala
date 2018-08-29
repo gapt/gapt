@@ -2,7 +2,7 @@ package gapt.provers.smtlib
 
 import gapt.expr._
 import gapt.formats.lisp.{ LFun, LList, LSymbol }
-import gapt.proofs.context.Context.InductiveType
+import gapt.proofs.context.update.InductiveType
 import gapt.provers.Session._
 import cats.implicits._
 import gapt.proofs.context.Context

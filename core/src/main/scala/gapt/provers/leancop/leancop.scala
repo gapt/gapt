@@ -9,7 +9,6 @@ import gapt.expr.Eq
 import gapt.expr.Substitution
 import gapt.formats.leancop.LeanCoPParser
 import gapt.formats.tptp.TPTPFOLExporter
-import gapt.proofs.context.Context
 import gapt.proofs.context.MutableContext
 import gapt.proofs.expansion.ETWeakQuantifierBlock
 import gapt.proofs.expansion.ExpansionProof
@@ -21,6 +20,7 @@ import gapt.proofs.resolution.structuralCNF
 import gapt.proofs.HOLClause
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
+import gapt.proofs.context.Context
 import gapt.provers.OneShotProver
 import gapt.provers.renameConstantsToFi
 import gapt.utils.EitherHelpers._

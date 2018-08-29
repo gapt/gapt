@@ -4,7 +4,8 @@ import gapt.proofs.nd._
 import gapt.expr._
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.{ Ant, Checkable }
-import gapt.proofs.context.Context.{ InductiveType, PrimRecFun }
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.PrimRecFun
 import gapt.proofs.gaptic.TacticsProof
 
 object successor extends TacticsProof {

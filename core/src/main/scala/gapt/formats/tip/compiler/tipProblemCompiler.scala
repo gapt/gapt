@@ -68,6 +68,7 @@ import gapt.formats.tip.transformation.moveUniversalQuantifiersInwards
 import gapt.formats.tip.transformation.toOuterConditionalNormalForm
 import gapt.formats.tip.transformation.useDefiningFormulas
 import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
 
 import scala.collection.mutable
 
@@ -439,7 +440,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
     val dt = TipDatatype(
       t,
       tipSmtDatatype.constructors.map { compileTipSmtConstructor( _, t ) } )
-    ctx += Context.InductiveType( t, dt.constructors.map( _.constr ): _* )
+    ctx += InductiveType( t, dt.constructors.map( _.constr ): _* )
     datatypes += dt
     dt.constructors foreach { ctr =>
       declare( ctr.constr )

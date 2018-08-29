@@ -1,13 +1,14 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.context.Context
-import gapt.proofs.context.Context.PrimRecFun
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.PrimRecFun
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 
 object FirstSchema2 extends TacticsProof {
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-  ctx += Context.Sort( "i" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += Sort( "i" )
   ctx += hoc"z:i"
   ctx += hoc"g:i>i"
   ctx += hoc"f:i>nat"

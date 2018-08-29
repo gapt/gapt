@@ -2,8 +2,9 @@ package gapt.examples
 import gapt.expr._
 import gapt.expr.hol.universalClosure
 import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.Sequent
 import gapt.proofs.context.Context
-import gapt.proofs.{ Sequent }
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 import gapt.proofs.lk.LKProof
 
@@ -12,7 +13,7 @@ import gapt.proofs.lk.LKProof
  * Gregory Malecha and Jesper Bengtson: Extensible and Efficient Automation Through Reflective Tactics, ESOP 2016.
  */
 object MonoidCancellation extends TacticsProof {
-  ctx += Context.Sort( "m" )
+  ctx += Sort( "m" )
   ctx += hoc"'*': m>m>m"
   ctx += Notation.Infix( "*", Precedence.timesDiv )
   ctx += hoc"1: m"

@@ -10,11 +10,14 @@ import gapt.proofs.lk._
 import gapt.utils.LogHandler
 import cats.{ Eval, Later }
 import gapt.proofs.context.Context
-import gapt.proofs.context.Context.InductiveType
-import gapt.proofs.context.Context.PrimRecFun
 import gapt.proofs.context.Context.ProofNames
-import gapt.proofs.context.Context.SkolemFun
+import gapt.proofs.context.update.SkolemFun
 import gapt.proofs.context.ImmutableContext
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.PrimRecFun
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.context.update.Update
 
 import scala.collection.mutable
 import scala.util.DynamicVariable
@@ -40,7 +43,7 @@ object Theory {
       p
     }
 
-    def updates = Seq( Context.ProofDefinitionDeclaration( proofName, proofWithLinks ) )
+    def updates = Seq( ProofDefinitionDeclaration( proofName, proofWithLinks ) )
   }
   object DelayedProofResult {
     def apply( proofName: Expr, proofWithLinks: LKProof ): DelayedProofResult = {
@@ -73,7 +76,7 @@ class Theory0( val imports: List[Theory] ) {
   implicit def ctx: Context = ifaceCtx
   def proofsHere: Vector[( String, Eval[Theory.DelayedProofResult] )] = proofsBuf.toVector
 
-  protected def addNow( update: Context.Update ): Unit = ifaceCtx += update
+  protected def addNow( update: Update ): Unit = ifaceCtx += update
   protected def addProof( name: Expr, proof: => LKProof ): Unit = {
     val Apps( Const( n, _, _ ), _ ) = name
     val declCtx = ctx
@@ -132,7 +135,7 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
     val fvs = freeVariables( endSequent ).toSeq.sortBy( _.name )
     val ftvs = typeVariables( endSequent.toImplication ).toList.sortBy( _.name )
     val proofName = Const( lemmaName, FunctionType( Ti, fvs.map( _.ty ) ), ftvs )( fvs )
-    addNow( Context.ProofNameDeclaration( proofName, endSequent ) )
+    addNow( ProofNameDeclaration( proofName, endSequent ) )
     proofName
   }
   private def addLemma( lemmaName: String, endSequent: HOLSequent, proof: => LKProof ): Expr = {
@@ -173,7 +176,7 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
     for ( ctr <- ctrs ) {
       val discr = Const( s"is_${ctr.name}", ty ->: To, ty.params )
       val eqns = ctrs.map( ctr2 => discr( freeTerms( ctr2 ) ) -> ( if ( ctr == ctr2 ) Top() else Bottom() ) )
-      addNow( Context.PrimRecFun( discr, eqns ) )
+      addNow( PrimRecFun( discr, eqns ) )
       val discrLemName = asciify( discr.name )
       auxLemma( discrLemName, universalClosure( simplify(
         And( eqns.map { case ( lhs, rhs ) => lhs <-> rhs } ) ) ) ) {
@@ -197,7 +200,7 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
   }
 
   protected def dfn( eqn: Formula ): Unit = {
-    val defnUpd = Context.Update.fromDefnEq( eqn ).asInstanceOf[Definition]
+    val defnUpd = Update.fromDefnEq( eqn ).asInstanceOf[Definition]
     addNow( defnUpd )
     val Abs.Block( vs, rhs ) = defnUpd.by
     val lhs = defnUpd.what( vs )

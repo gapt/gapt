@@ -3,6 +3,7 @@ package gapt.proofs.lk
 import gapt.expr._
 import gapt.proofs.context.Context
 import gapt.proofs.context.MutableContext
+import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic.{ Lemma, OpenAssumption, allL, andL, axiomLog, cut, impL, insert }
 import gapt.proofs.lk.reductions._
 import gapt.proofs.{ Ant, ProofBuilder, Sequent, SequentMatchers, Suc }
@@ -249,7 +250,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "induction left rank reduction should lift cut over induction" in {
     implicit var context: Context = Context()
-    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     context += hoc"equal: nat>nat>o"
     context += hoc"le: nat>nat>o"
     context += hoc"A:o"
@@ -280,7 +281,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
   }
   "induction right rank reduction should lift cut over induction" in {
     implicit var context: Context = Context()
-    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     context += hoc"equal: nat>nat>o"
     context += hoc"le: nat>nat>o"
     context += hoc"A:o"
@@ -312,7 +313,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "(1) free cut elimination should eliminate free cuts" in {
     implicit val context = MutableContext.default()
-    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     context += hoc"equal: nat>nat>o"
     context += hoc"le: nat>nat>o"
 
@@ -737,7 +738,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "left rank induction unfolding reduction should reduce" in {
     implicit var context: Context = Context()
-    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     context += hoc"F:nat>o"
     context += hoc"A:o"
     val proof = ( ProofBuilder
@@ -762,7 +763,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "left rank cut induction should reduce" in {
     implicit var context: Context = Context()
-    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     context += hoc"F:nat>o"
     context += hoc"A:o"
     val proof = ( ProofBuilder
@@ -789,7 +790,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "right rank cut induction should reduce" in {
     implicit var context: Context = Context()
-    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     context += hoc"F:nat>o"
     context += hoc"A:o"
     val proof = ( ProofBuilder

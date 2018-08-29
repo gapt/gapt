@@ -3,7 +3,7 @@ package gapt.examples.tip.isaplanner
 import gapt.expr._
 import gapt.formats.tip.TipConstructor
 import gapt.formats.tip.TipDatatype
-import gapt.proofs.context.Context.InductiveType
+import gapt.proofs.context.update.InductiveType
 import gapt.proofs.Sequent
 import gapt.proofs.gaptic._
 import gapt.proofs.gaptic.tactics.AnalyticInductionTactic._

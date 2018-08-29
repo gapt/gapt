@@ -1,11 +1,11 @@
 package gapt.proofs
 
 import gapt.expr._
-import gapt.proofs.context.Context.ConstDecl
-import gapt.proofs.context.Context.SkolemFun
-import gapt.proofs.context.Context.Update
 import gapt.proofs.context.ImmutableContext
 import gapt.proofs.context.MutableContext
+import gapt.proofs.context.update.ConstDecl
+import gapt.proofs.context.update.SkolemFun
+import gapt.proofs.context.update.Update
 
 import scala.collection.mutable
 

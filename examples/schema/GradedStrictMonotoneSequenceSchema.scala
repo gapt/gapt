@@ -1,14 +1,18 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.context.Context._
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.PrimRecFun
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 
 object GradedStrictMonotoneSequenceSchema extends TacticsProof {
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-  ctx += Context.Sort( "i" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += Sort( "i" )
   ctx += hoc"f:i>nat"
   ctx += hoc"suc:i>i"
   ctx += hoc"z:i"
@@ -47,51 +51,51 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
   val esOmega = Sequent(
     Seq( hof"!x POR(n,x)" ),
     Seq( hof"?x ( JumpSeq(k,m,x))" ) )
-  ctx += Context.ProofNameDeclaration( le"omega n k m", esOmega )
+  ctx += ProofNameDeclaration( le"omega n k m", esOmega )
   val esPhi = Sequent(
     Seq( hof"?x ( CSeq(m,n,x) ) | !y (LE(f(y),n))" ),
     Seq( hof"?x (  JumpSeq(k,m,x) )" ) )
-  ctx += Context.ProofNameDeclaration( le"phi n k m", esPhi )
+  ctx += ProofNameDeclaration( le"phi n k m", esPhi )
   val esChi = Sequent(
     Seq( hof"?x ( iLEQ(suc(a),suc(x)) & CSeq(m,n,x) ) | !y (iLEQ(suc(a),suc(y)) & LE(f(y),n))" ),
     Seq( hof"?x ( iLEQ(suc(a),suc(x)) & JumpSeq(k,m,x) )" ) )
-  ctx += Context.ProofNameDeclaration( le"chi n k m a", esChi )
+  ctx += ProofNameDeclaration( le"chi n k m a", esChi )
   val esNu = Sequent(
     Seq( hof"!x POR(n,x)" ),
     Seq( hof"CSeq(m,n,a)", hof"LE(f(a),n)" ) )
-  ctx += Context.ProofNameDeclaration( le"nu m n a", esNu )
+  ctx += ProofNameDeclaration( le"nu m n a", esNu )
   val esDelta = Sequent(
     Seq(
       hof" E(n, f(iNum(s(k), a)))",
       hof"CSeq(k, n, a)" ),
     Seq( hof"E(f(a), f(iNum(s(k), a)))" ) )
-  ctx += Context.ProofNameDeclaration( le"delta k n a", esDelta )
+  ctx += ProofNameDeclaration( le"delta k n a", esDelta )
   val esMu = Sequent(
     Seq( hof"CSeq(k,n,a) " ),
     Seq( hof"EndSeq(k,a) " ) )
-  ctx += Context.ProofNameDeclaration( le"mu k n a", esMu )
+  ctx += ProofNameDeclaration( le"mu k n a", esMu )
   val esEpsilon = Sequent(
     Seq( hof" POR(n,iNum(m,a)) " ),
     Seq( hof" LE(f(a), k)" ) )
-  ctx += Context.ProofNameDeclaration( le"epsilon n m k a", esEpsilon )
+  ctx += ProofNameDeclaration( le"epsilon n m k a", esEpsilon )
   val esPsi = Sequent(
     Seq(
       hof" E(n, f(iNum(s(k), a)))",
       hof"CSeq(k, n, a)" ),
     Seq( hof"E(f(a), f(iNum(s(k), a)))" ) )
-  ctx += Context.ProofNameDeclaration( le"psi k n a", esPsi )
+  ctx += ProofNameDeclaration( le"psi k n a", esPsi )
   val esZeta = Sequent(
     Seq( hof"CSeq(k,n,a) " ),
     Seq( hof"EndSeq(k,a) " ) )
-  ctx += Context.ProofNameDeclaration( le"zeta k n a", esZeta )
+  ctx += ProofNameDeclaration( le"zeta k n a", esZeta )
   val esTheta = Sequent(
     Seq( hof"!x LE(f(x),s(n))" ),
     Seq( hof"LE(f(a),n)", hof"CSeq(m,n,a)" ) )
-  ctx += Context.ProofNameDeclaration( le"theta m n a", esTheta )
+  ctx += ProofNameDeclaration( le"theta m n a", esTheta )
   val esXi = Sequent(
     Seq( hof"!y ( iLEQ(suc(a), suc(y)) & LE(f(y),s(n)))" ),
     Seq( hof"LE(f(c),n)", hof"CSeq(m,n,c)" ) )
-  ctx += Context.ProofNameDeclaration( le"xi m n a c", esXi )
+  ctx += ProofNameDeclaration( le"xi m n a c", esXi )
   //The base case of  omega
   val esOmegaBc =
     Sequent(
@@ -105,7 +109,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     ref( "nu" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega 0 k m", omegaBc )
+  ctx += ProofDefinitionDeclaration( le"omega 0 k m", omegaBc )
 
   /**
    *
@@ -125,7 +129,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     ref( "nu" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega (s n) k m", omegaSc )
+  ctx += ProofDefinitionDeclaration( le"omega (s n) k m", omegaSc )
   val esPhiBc =
     Sequent(
       Seq( "Ant_0" -> hof"?x (CSeq(0,0,x)) | !y (LE(f(y),0))" ),
@@ -142,7 +146,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     allL( foc"z" )
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi 0 0 0", phiBc )
+  ctx += ProofDefinitionDeclaration( le"phi 0 0 0", phiBc )
   val esPhiBcm =
     Sequent(
       Seq( "Ant_0" -> hof"?x (CSeq(s(m),0,x)) | !y (LE(f(y),0))" ),
@@ -162,7 +166,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     allL( foc"z" )
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi 0 0 (s m)", phiBcm )
+  ctx += ProofDefinitionDeclaration( le"phi 0 0 (s m)", phiBcm )
 
   val esPhiBc1 =
     Sequent(
@@ -189,7 +193,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     allL( foc"z" )
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi 0 (s k) 0", phiBc1 )
+  ctx += ProofDefinitionDeclaration( le"phi 0 (s k) 0", phiBc1 )
 
   val esPhiBc1m =
     Sequent(
@@ -222,7 +226,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     allL( foc"z" )
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi 0 (s k) (s m)", phiBc1m )
+  ctx += ProofDefinitionDeclaration( le"phi 0 (s k) (s m)", phiBc1m )
   val esPhiSc =
     Sequent(
       Seq( "Ant_0" -> hof"?x ( CSeq(0,s(n),x) ) | !y (LE(f(y),s(n)))" ),
@@ -245,7 +249,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     ref( "ordcon" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi (s n) 0 0", phiSc )
+  ctx += ProofDefinitionDeclaration( le"phi (s n) 0 0", phiSc )
 
   val esPhiScm =
     Sequent(
@@ -274,7 +278,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     forget( "Ant_0" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi (s n) 0 (s m)", phiScm )
+  ctx += ProofDefinitionDeclaration( le"phi (s n) 0 (s m)", phiScm )
 
   val esPhiSc1 =
     Sequent(
@@ -307,7 +311,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     ref( "ordcon" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi (s n) (s k) 0", phiSc1 )
+  ctx += ProofDefinitionDeclaration( le"phi (s n) (s k) 0", phiSc1 )
 
   val esPhiSc1m =
     Sequent(
@@ -345,7 +349,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     forget( "Ant_0" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi (s n) (s k) (s m)", phiSc1m )
+  ctx += ProofDefinitionDeclaration( le"phi (s n) (s k) (s m)", phiSc1m )
 
   val esChiBc =
     Sequent(
@@ -367,7 +371,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     andL
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi 0 0 0 a", chiBc )
+  ctx += ProofDefinitionDeclaration( le"chi 0 0 0 a", chiBc )
 
   val esChiBcm =
     Sequent(
@@ -392,7 +396,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     andL
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi 0 0 (s m) a", chiBcm )
+  ctx += ProofDefinitionDeclaration( le"chi 0 0 (s m) a", chiBcm )
 
   val esChi1Bc =
     Sequent(
@@ -424,7 +428,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     andL
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi 0 (s k) 0 a", chi1Bc )
+  ctx += ProofDefinitionDeclaration( le"chi 0 (s k) 0 a", chi1Bc )
 
   val esChi1Bcm =
     Sequent(
@@ -460,7 +464,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     andL
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi 0 (s k) (s m) a", chi1Bcm )
+  ctx += ProofDefinitionDeclaration( le"chi 0 (s k) (s m) a", chi1Bcm )
 
   val esChiSc =
     Sequent(
@@ -495,7 +499,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     forget( "Ant_0" )
     ref( "chi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi (s n) 0 0 a", ChiSc )
+  ctx += ProofDefinitionDeclaration( le"chi (s n) 0 0 a", ChiSc )
 
   val esChiScm =
     Sequent(
@@ -537,7 +541,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     forget( "Ant_0" )
     ref( "chi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi (s n) 0 (s m) a", ChiScm )
+  ctx += ProofDefinitionDeclaration( le"chi (s n) 0 (s m) a", ChiScm )
 
   val esChi1Sc =
     Sequent(
@@ -581,7 +585,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     forget( "Ant_0" )
     ref( "chi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi (s n) (s k) 0 a", chi1Sc )
+  ctx += ProofDefinitionDeclaration( le"chi (s n) (s k) 0 a", chi1Sc )
 
   val esChi1Scm =
     Sequent(
@@ -634,7 +638,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     forget( "Ant_0" )
     ref( "chi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi (s n) (s k) (s m) a", chi1Scm )
+  ctx += ProofDefinitionDeclaration( le"chi (s n) (s k) (s m) a", chi1Scm )
 
   val esDeltaBc = Sequent(
     Seq(
@@ -650,7 +654,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
 
     ref( "NumericTransitivity" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"delta 0 n a", deltaBc )
+  ctx += ProofDefinitionDeclaration( le"delta 0 n a", deltaBc )
   val esDeltaSc = Sequent(
     Seq(
       "Ant_0" -> hof" E(n, f(iNum(s(s(k)), a)))",
@@ -664,7 +668,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     ref( "delta" )
     ref( "NumericTransitivityStep" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"delta (s k) n a", deltaSc )
+  ctx += ProofDefinitionDeclaration( le"delta (s k) n a", deltaSc )
 
   val esmuBc =
     Sequent(
@@ -677,7 +681,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     unfold( "iNum" ) atMost 1 in "Ant_0"
     ref( "NumericTransitivityBase" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"mu 0 n a", muBc )
+  ctx += ProofDefinitionDeclaration( le"mu 0 n a", muBc )
 
   val esmuSc =
     Sequent(
@@ -691,7 +695,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     ref( "delta" )
     ref( "mu" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"mu (s k) n a", muSc )
+  ctx += ProofDefinitionDeclaration( le"mu (s k) n a", muSc )
 
   val esEpsilonBc = Sequent(
     Seq(
@@ -703,7 +707,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     unfold( "POR" ) atMost 1 in "Ant_2"
     ref( "LEDefinitionSingle" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon 0 m k a", epsilonBc )
+  ctx += ProofDefinitionDeclaration( le"epsilon 0 m k a", epsilonBc )
   val esEpsilonSc = Sequent(
     Seq(
       "Ant_2" -> hof" POR(s(n),iNum(m,a))" ),
@@ -715,7 +719,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     ref( "LEDefinitionSingle" )
     ref( "epsilon" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon (s n) m k a", epsilonSc )
+  ctx += ProofDefinitionDeclaration( le"epsilon (s n) m k a", epsilonSc )
 
   val esNuBc = Sequent(
     Seq(
@@ -729,7 +733,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     unfold( "CSeq" ) atMost 1 in "Suc_0"
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"nu 0 0 a", nuBc )
+  ctx += ProofDefinitionDeclaration( le"nu 0 0 a", nuBc )
   val esNu1Bc = Sequent(
     Seq(
       "Ant_0" -> hof"!x POR(s(n),x)" ),
@@ -744,7 +748,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     trivial
     ref( "epsilon" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"nu 0 (s n) a", nu1Bc )
+  ctx += ProofDefinitionDeclaration( le"nu 0 (s n) a", nu1Bc )
   val esNu2Bc = Sequent(
     Seq(
       "Ant_0" -> hof"!x POR(0,x)" ),
@@ -759,7 +763,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     trivial
     ref( "nu" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"nu (s m) 0 a", nu2Bc )
+  ctx += ProofDefinitionDeclaration( le"nu (s m) 0 a", nu2Bc )
   val esNuSc = Sequent(
     Seq(
       "Ant_0" -> hof"!x POR(s(n),x)" ),
@@ -778,7 +782,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     ref( "epsilon" )
     ref( "nu" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"nu (s m) (s n) a", nuSc )
+  ctx += ProofDefinitionDeclaration( le"nu (s m) (s n) a", nuSc )
 
   val esPsiBc = Sequent(
     Seq(
@@ -794,7 +798,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
 
     ref( "NumericTransitivity" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"psi 0 n a", psiBc )
+  ctx += ProofDefinitionDeclaration( le"psi 0 n a", psiBc )
   val esPsiSc = Sequent(
     Seq(
       "Ant_0" -> hof" E(n, f(iNum(s(s(k)), a)))",
@@ -808,7 +812,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     ref( "delta" )
     ref( "NumericTransitivityStep" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"psi (s k) n a", psiSc )
+  ctx += ProofDefinitionDeclaration( le"psi (s k) n a", psiSc )
 
   val esZetaBc =
     Sequent(
@@ -821,7 +825,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     unfold( "iNum" ) atMost 1 in "Ant_0"
     ref( "NumericTransitivityBase" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"zeta 0 n a", zetaBc )
+  ctx += ProofDefinitionDeclaration( le"zeta 0 n a", zetaBc )
 
   val esZetaSc =
     Sequent(
@@ -835,7 +839,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     ref( "delta" )
     ref( "mu" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"zeta (s k) n a", zetaSc )
+  ctx += ProofDefinitionDeclaration( le"zeta (s k) n a", zetaSc )
 
   val esThetaBc =
     Sequent(
@@ -848,7 +852,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     allL( le"(iNum 0 a)" )
     ref( "ordcon" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"theta 0 n a", thetaBc )
+  ctx += ProofDefinitionDeclaration( le"theta 0 n a", thetaBc )
 
   val esThetaSc =
     Sequent(
@@ -863,7 +867,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     ref( "ordcon" )
     ref( "theta" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"theta (s k) n a", thetaSc )
+  ctx += ProofDefinitionDeclaration( le"theta (s k) n a", thetaSc )
 
   val esXiBc =
     Sequent(
@@ -877,7 +881,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     andL
     ref( "ordcon" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"xi 0 n a c", xiBc )
+  ctx += ProofDefinitionDeclaration( le"xi 0 n a c", xiBc )
 
   val esXiSc =
     Sequent(
@@ -893,6 +897,6 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     ref( "ordcon" )
     ref( "xi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"xi (s k) n a c", xiSc )
+  ctx += ProofDefinitionDeclaration( le"xi (s k) n a c", xiSc )
 }
 

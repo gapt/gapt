@@ -3,10 +3,10 @@ package gapt.testing
 import ammonite.ops.FilePath
 import gapt.expr.hol.CNFn
 import gapt.expr.{ Atom, Const }
+import gapt.proofs.context.Context
 import gapt.proofs.expansion.{ eliminateCutsET, eliminateDefsET }
 import gapt.proofs.lk.LKToExpansionProof
 import gapt.proofs.resolution._
-import gapt.proofs.context.Context
 import gapt.proofs.context.MutableContext
 import gapt.provers.prover9.Prover9Importer
 import gapt.utils.{ LogHandler, Logger }

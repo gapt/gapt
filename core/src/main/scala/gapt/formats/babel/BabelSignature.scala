@@ -1,10 +1,11 @@
 package gapt.formats.babel
 
-import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock
-
-import gapt.expr.{ Const, LogicalC }
+import gapt.expr.Const
+import gapt.expr.LogicalC
 import gapt.proofs.context.Context
 import gapt.proofs.context.Context.Facet
+import gapt.proofs.context.State
+import gapt.proofs.context.update.Update
 import gapt.{ expr => real }
 
 /**
@@ -67,12 +68,12 @@ object BabelSignature {
   case class IsConst( c: Const ) extends VarConst( false )
 }
 
-sealed trait Notation extends Context.Update {
+sealed trait Notation extends Update {
   def precedence: Int
   def token: Notation.Token
   def const: Notation.ConstName
 
-  override def apply( ctx: Context ): Context.State =
+  override def apply( ctx: Context ): State =
     ctx.state.update[Notations]( _ + this )
 }
 object Notation {

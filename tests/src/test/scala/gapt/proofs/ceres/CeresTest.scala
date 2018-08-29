@@ -9,6 +9,7 @@ import gapt.formats.ClasspathInputFile
 import gapt.formats.llk._
 import gapt.proofs.context.Context
 import gapt.proofs.context.MutableContext
+import gapt.proofs.context.update.Sort
 import gapt.proofs.lk.{ CutRule, cutNormal }
 import gapt.proofs.{ Sequent, SequentMatchers, gaptic }
 import gapt.provers.escargot.Escargot
@@ -65,7 +66,7 @@ class CeresTest extends Specification with SequentMatchers with SatMatchers {
 
   "second-order definitions" in {
     implicit val ctx = MutableContext.default()
-    ctx += Context.Sort( "i" )
+    ctx += Sort( "i" )
     ctx += hof"in (x:i) X = (X x: o)"
     ctx ++= Seq( hoc"P:i>i>o", hoc"c:i", hoc"f:i>i", hoc"g:i>i" )
     ctx += hof"Q x = (∃y P x y)"

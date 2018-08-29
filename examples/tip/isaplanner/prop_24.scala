@@ -2,6 +2,7 @@ package gapt.examples.tip.isaplanner
 
 import gapt.expr._
 import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic._
 import gapt.provers.escargot.Escargot
 import gapt.provers.viper.aip.axioms.SequentialInductionAxioms
@@ -11,7 +12,7 @@ import gapt.provers.viper.aip.{ AnalyticInductionProver, ProverOptions }
 object prop_24 extends TacticsProof {
 
   ctx += TBase( "sk" )
-  ctx += Context.InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
   ctx += hoc"p:Nat>Nat"
   ctx += hoc"'max2' :Nat>Nat>Nat"
 

@@ -6,6 +6,7 @@ import gapt.expr.Substitution
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.context.Context
 import gapt.proofs.context.MutableContext
+import gapt.proofs.context.update.InductiveType
 import gapt.proofs.{ Sequent, SequentMatchers }
 import gapt.proofs.gaptic.{ Lemma, ProofState, allR, cut, escargot, induction, insert, refl, rewrite }
 import org.specs2.mutable.Specification
@@ -49,7 +50,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
 
   "all inductions should be eliminated" in {
     implicit val ctx: MutableContext = MutableContext.default()
-    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    ctx += InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     ctx += hoc"'+': nat>nat>nat"
     ctx += Notation.Infix( "+", Precedence.plusMinus )
 
@@ -99,7 +100,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
 
   "several unfolding steps are required" in {
     implicit val ctx = MutableContext.default()
-    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    ctx += InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     ctx += hoc"'+': nat>nat>nat"
     ctx += Notation.Infix( "+", Precedence.plusMinus )
 

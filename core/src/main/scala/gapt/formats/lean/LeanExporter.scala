@@ -3,12 +3,19 @@ package gapt.formats.lean
 import java.io.IOException
 
 import gapt.expr._
-import gapt.expr.hol.universalClosure
 import gapt.formats.ClasspathInputFile
-import gapt.proofs.lk.{ LKProof, freeVariablesLK }
-import gapt.utils.{ ExternalProgram, NameGenerator, runProcess, withTempFile }
 import gapt.proofs._
 import gapt.proofs.context.Context
+import gapt.proofs.context.update.ConstDecl
+import gapt.proofs.context.update.Sort
+import gapt.proofs.context.update.Update
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.freeVariablesLK
+import gapt.utils.ExternalProgram
+import gapt.utils.NameGenerator
+import gapt.utils.runProcess
+import gapt.utils.withTempFile
+import gapt.proofs.context.update.InductiveType
 
 import scala.collection.mutable
 
@@ -20,7 +27,7 @@ object LeanNames {
   val CONST = 1
   val TY = 2
 }
-import LeanNames._
+import gapt.formats.lean.LeanNames._
 class LeanNames(
     val nameGenerator: NameGenerator                                       = new NameGenerator( Set() ),
     gapt2lean:         mutable.Map[( String, LeanNames.NameKind ), String] = mutable.Map() ) {
@@ -107,29 +114,29 @@ class LeanExporter {
 
   def export( sequent: HOLSequent ): String = export( mkSequentFormula( sequent ) )
 
-  def export( upd: Context.Update ): String = upd match {
-    case Context.InductiveType( To, _ ) =>
+  def export( upd: Update ): String = upd match {
+    case InductiveType( To, _ ) =>
       nameMap.register( "o", TY, "Prop" )
       nameMap.register( TopC.name, CONST, "true" )
       nameMap.register( BottomC.name, CONST, "false" )
       ""
-    case Context.ConstDecl( c @ Const( "=", _, _ ) ) =>
+    case ConstDecl( c @ Const( "=", _, _ ) ) =>
       nameMap.register( c.name, CONST, "eq" ); ""
-    case Context.ConstDecl( c @ NegC() ) =>
+    case ConstDecl( c @ NegC() ) =>
       nameMap.register( c.name, CONST, "not" ); ""
-    case Context.ConstDecl( c @ AndC() ) =>
+    case ConstDecl( c @ AndC() ) =>
       nameMap.register( c.name, CONST, "and" ); ""
-    case Context.ConstDecl( c @ OrC() ) =>
+    case ConstDecl( c @ OrC() ) =>
       nameMap.register( c.name, CONST, "or" ); ""
-    case Context.ConstDecl( c @ ImpC() ) =>
+    case ConstDecl( c @ ImpC() ) =>
       nameMap.register( c.name, CONST, "implies" ); ""
-    case Context.ConstDecl( c @ ExistsC( _ ) ) =>
+    case ConstDecl( c @ ExistsC( _ ) ) =>
       nameMap.register( c.name, CONST, "Exists" )
       ""
-    case Context.ConstDecl( c @ ForallC( _ ) ) =>
+    case ConstDecl( c @ ForallC( _ ) ) =>
       val all = nameMap.getLeanName( c.name, CONST )
       s"def $all {a : Type} (P : a -> Prop) := ∀x, P x\n\n"
-    case Context.Sort( sort ) =>
+    case Sort( sort ) =>
       s"constant ${nameMap.getLeanName( sort.name, TY )} : Type\n\n"
     case Definition( Const( n, ty, _ ), by ) =>
       val what = nameMap.getLeanName( n, CONST )
@@ -138,9 +145,9 @@ class LeanExporter {
     //      val axName = nameMap.nameGenerator.fresh( "ax" )
     //      axiomNames( ax ) = axName
     //      s"axiom $axName : ${export( universalClosure( mkSequentFormula( ax ) ) )}\n\n"
-    case Context.ConstDecl( Const( n, t, _ ) ) =>
+    case ConstDecl( Const( n, t, _ ) ) =>
       s"constant ${nameMap.getLeanName( n, CONST )} : ${export( t )}\n\n"
-    case Context.InductiveType( ty, ctrs ) =>
+    case InductiveType( ty, ctrs ) =>
       s"inductive ${nameMap.getLeanName( ty.name, TY )} : Type\n" +
         ctrs.map { case Const( n, t, _ ) => s"| ${nameMap.getLeanName( n, CONST )} : ${export( t )}\n" }.mkString +
         s"open ${nameMap.getLeanName( ty.name, TY )}\n\n"

@@ -6,13 +6,17 @@ import gapt.proofs.Sequent
 import gapt.proofs.ceres.CharacteristicClauseSet
 import gapt.proofs.ceres.StructCreators
 import gapt.proofs.context.Context
-import gapt.proofs.context.Context.PrimRecFun
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.PrimRecFun
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.context.update.Sort
 import gapt.proofs.lk.instantiateProof //used for struct extraction
 
 object FirstSchema7 extends TacticsProof {
   //Type
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-  ctx += Context.Sort( "i" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += Sort( "i" )
   //Term Constants
   ctx += hoc"z:i"
   ctx += hoc"g:i>i"
@@ -39,9 +43,9 @@ object FirstSchema7 extends TacticsProof {
   val esphi = Sequent( Seq( hof"!x?y (LEQ(x,y) & POR(n,y) )" ), Seq( hof"?p?q (LE(p,q) & E(f(p),f(q)))" ) )
   val eschi = Sequent( Seq( hof" POR(n,a) " ), Seq( hof"POR(n,a)" ) )
   //Proof Declarations
-  ctx += Context.ProofNameDeclaration( le"omega n", esOmega )
-  ctx += Context.ProofNameDeclaration( le"phi n", esphi )
-  ctx += Context.ProofNameDeclaration( le"chi n a", eschi )
+  ctx += ProofNameDeclaration( le"omega n", esOmega )
+  ctx += ProofNameDeclaration( le"phi n", esphi )
+  ctx += ProofNameDeclaration( le"chi n a", eschi )
   //basecase and stepcase  end sequents
   val esChiBc = Sequent( Seq( "Ant_0" -> hof" POR(0,a)" ), Seq( "Suc_0" -> hof"POR(0,a)" ) )
   val esChiSc = Sequent( Seq( "Ant_0" -> hof" POR(s(n),a)" ), Seq( "Suc_0" -> hof"POR(s(n),a)" ) )
@@ -127,10 +131,10 @@ object FirstSchema7 extends TacticsProof {
   }
 
   //Proof definitions
-  ctx += Context.ProofDefinitionDeclaration( le"chi 0 a", chiBc )
-  ctx += Context.ProofDefinitionDeclaration( le"chi (s n) a", chiSc )
-  ctx += Context.ProofDefinitionDeclaration( le"phi 0", phiBc )
-  ctx += Context.ProofDefinitionDeclaration( le"phi (s n)", phiSc )
+  ctx += ProofDefinitionDeclaration( le"chi 0 a", chiBc )
+  ctx += ProofDefinitionDeclaration( le"chi (s n) a", chiSc )
+  ctx += ProofDefinitionDeclaration( le"phi 0", phiBc )
+  ctx += ProofDefinitionDeclaration( le"phi (s n)", phiSc )
 
   //Here we have added another two proof definitions for the more complex proof phi and labelled
   //the important tactic rules which where used. For example, foTheory chooses from the availiable theory

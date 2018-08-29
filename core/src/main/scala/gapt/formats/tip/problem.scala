@@ -2,9 +2,10 @@ package gapt.formats.tip
 
 import gapt.expr._
 import gapt.expr.hol.{ existentialClosure, universalClosure }
-import gapt.proofs.context.Context
 import gapt.proofs.context.ImmutableContext
-import gapt.proofs.{ Sequent }
+import gapt.proofs.Sequent
+import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
 
 case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
   val FunctionType( datatype, fieldTypes ) = constr.ty
@@ -69,7 +70,7 @@ trait TipProblemDefinition {
       dt =>
         {
           if ( !ctx.isType( dt.t ) ) {
-            ctx += Context.InductiveType( dt.t, dt.constructors.map( _.constr ): _* )
+            ctx += InductiveType( dt.t, dt.constructors.map( _.constr ): _* )
           }
           dt.constructors.foreach { ctr => ctr.projectors.foreach { ctx += _ } }
         }
