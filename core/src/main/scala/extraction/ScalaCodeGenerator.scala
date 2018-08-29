@@ -130,6 +130,7 @@ if(p3 == 0) {
       case Const( "<", _, _ )  => "lt"
       case Const( "=", _, _ )  => "eq"
       //TODO: and/or/impl etc.
+      /*
       case Const( "pi1", _, params ) =>
         s"pi1[${params.map( toType( _ ) ).mkString( "," )}]"
       case Const( "pi2", _, params ) =>
@@ -138,10 +139,15 @@ if(p3 == 0) {
         s"natRec[${params.map( toType( _ ) ).mkString( "," )}]"
       case Const( "pair", _, params ) =>
         s"pair[${params.map( toType( _ ) ).mkString( "," )}]"
+        */
       case Const( "inl", _, params ) =>
         s"inl[${params.map( toType( _ ) ).mkString( "," )}]"
       case Const( "inr", _, params ) =>
         s"inr[${params.map( toType( _ ) ).mkString( "," )}]"
+      /*
+      case Const( "exception", _, params ) =>
+        s"exception[${params.map( toType( _ ) ).mkString( "," )}]"
+        */
       case _ => c.name
     }
   }
@@ -166,9 +172,9 @@ if(p3 == 0) {
         val a = toType( params( 1 ) )
         s"""
            |try {
-           |  $tryTerm
+           |  ${translate( tryTerm )}
            |} catch {
-           |  case e: NewException[$a] => ($catchTerm)(e.getVal)
+           |  case e: NewException[$a] => ${translate( catchTerm )}(e.getVal)
            |  case e => println("BUG"); throw e
            |}
          """.stripMargin

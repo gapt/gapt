@@ -223,17 +223,18 @@ object ClassicalExtraction {
 
         case LogicalAxiom( formula ) =>
           //val v = Var( ng.fresh( "v" ), flat( formula ) )
-          /*
           val v = formula match {
             case Neg( f ) => {
-              getVar( "v", f, ng ) //Var( ng.fresh( "y" ), flat( formula ) )
+              val v = getVar( "v", f, ng ) //Var( ng.fresh( "y" ), flat( formula ) )
+              le"^$v exception $v"
             }
             case f => {
               getVar( "v", f, ng ) //Var( ng.fresh( "y" ), flat( formula ) )
             }
           }
-          */
+          /*
           val v = getVar( "v", formula, ng ) //Var( ng.fresh( "y" ), flat( formula ) )
+          */
           val res = v +: Sequent() :+ v
           //println( "LogicalAxiom " + formula + ", fresh v " + v )
           res
@@ -324,8 +325,8 @@ object ClassicalExtraction {
         case NegElimRule( leftSubProof, rightSubProof ) =>
           val l = extractCases( leftSubProof, ng )
           val r = extractCases( rightSubProof, ng )
-          //val res = l.antecedent ++: r.antecedent ++: Sequent() :+ App( l( Suc( 0 ) ), r( Suc( 0 ) ) )
-          val res = l.antecedent ++: r.antecedent ++: Sequent() :+ le"exception ${r( Suc( 0 ) )}"
+          val res = l.antecedent ++: r.antecedent ++: Sequent() :+ App( l( Suc( 0 ) ), r( Suc( 0 ) ) )
+          //val res = l.antecedent ++: r.antecedent ++: Sequent() :+ le"exception ${r( Suc( 0 ) )}"
           //println( "NegElim" )
           res
 
@@ -487,8 +488,8 @@ object ClassicalExtraction {
               val l = extractCases( leftSubProof, ng )
               val r = extractCases( rightSubProof, ng )
               val varL = l( aux1 ).asInstanceOf[Var]
-              val varR = r( aux2 ).asInstanceOf[Var]
-              assert( varL.ty ->: ty"exn" == varR.ty )
+              //val varR = r( aux2 ).asInstanceOf[Var]
+              //assert( varL.ty ->: ty"exn" == varR.ty )
               // TODO find index to delete somehow
               val delL = l.delete( aux1 ).antecedent
               val delR = r.delete( aux2 ).antecedent

@@ -1117,12 +1117,12 @@ object extractedCorrectAxiomClassical extends Script {
 }
 */
 
+
 object extractedCorrectAxiomClassicalEMnoAbs extends Script {
   def s( x: Int ) = x + 1
   def mul( x: Int )( y: Int ) = x * y
   def leq( x: Int )( y: Int ) = x <= y
 
-  def pow2( x: Int ) = x * x
   def pi2[A, B]( p: ( A, B ) ) = p._2
   sealed trait Sum[A, B]
   final case class Inr[A, B]( v: B ) extends Sum[A, B]
@@ -1139,7 +1139,6 @@ object extractedCorrectAxiomClassicalEMnoAbs extends Script {
   def lt( x: Int )( y: Int ) = x < y
   final case class Inl[A, B]( v: A ) extends Sum[A, B]
   def inl[A, B]( v: A ): Sum[A, B] = new Inl( v )
-  def f( x: Int )( y: Int ) = x < ( y + 1 ) * ( y + 1 ) && y * y <= x
 
   def natRec[A]( p1: A )( p2: ( Int => A => A ) )( p3: Int ): A = {
     if ( p3 == 0 ) {
@@ -1149,38 +1148,14 @@ object extractedCorrectAxiomClassicalEMnoAbs extends Script {
     }
   }
 
-  def and( left: Boolean )( right: Boolean ) = left && right
-
-  class NewException[A]( m: A ) extends Exception {
-    def getM = m
-  }
-  def exception[A]( p: A ): Throwable = {
-    println( s"in exception: $p" )
-    return new NewException( p )
-  }
-
-  def bar2[X, A, C]( p1: X => Boolean )( p2: A => C )( p3: C ): C = {
-    println( "in bar2" )
-    try {
-      println( "in try" )
-      p3
-    } catch {
-      case e: NewException[A] => {
-        println( "caught NewException" )
-        p2( e.getM )
-      }
-      case e => {
-        println( "other case" )
-        throw e
-      }
-    }
-  }
+  class NewException[A]( m: A ) extends Exception { def getVal: A = m }
+  def exception[A]( p: A ) = { new NewException( p ) }
 
   def pi1[A, B]( p: ( A, B ) ) = p._1
   def bar[A, B, C]( p2: A => C )( p3: B => C ): C = { ??? }
 
   def pair[A, B]( p0: A )( p1: B ): Tuple2[A, B] = ( p0, p1 )
-  def efq[A]( p: Throwable ): A = { throw p }
+  def efq( p: Throwable ) = { throw p }
 
   val prog = ( {
     v_13: ( Int => ( Int => ( Unit => Unit ) ) ) =>
@@ -1206,58 +1181,33 @@ object extractedCorrectAxiomClassicalEMnoAbs extends Script {
                                             v_1: ( Int => ( Int => Tuple2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )] ) ) =>
                                               ( {
                                                 n: Int =>
-                                                  natRec[Tuple2[Int, Tuple2[Unit, Unit]]]( pair[Int, Tuple2[Unit, Unit]]( 0 )( pair[Unit, Unit]( () )( pi2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )]( v_1( mul( 0 )( 0 ) )( 0 ) )( inl[Unit, Unit]( v_2( 0 ) ) ) ) ) )( ( {
+                                                  natRec( pair( 0 )( pair( () )( pi2( v_1( mul( 0 )( 0 ) )( 0 ) )( inl[Unit, Unit]( v_2( 0 ) ) ) ) ) )( ( {
                                                     n: Int =>
                                                       ( {
                                                         v_3: Tuple2[Int, Tuple2[Unit, Unit]] =>
-
-                                                          println( "before bar2" )
-
                                                           try {
                                                             efq( exception( v_3 ) )
                                                           } catch {
-                                                            case e: NewException[Tuple2[Int, Tuple2[Unit, Unit]]] =>
-                                                              ( { v_3: Tuple2[Int, Tuple2[Unit, Unit]] =>
-                                                                matchSum( pi1[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )]( v_1( mul( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) )( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( n ) )( pi2[Unit, Unit]( pi2[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( ( {
+                                                            case e: NewException[Tuple2[Int, Tuple2[Unit, Unit]]] => ( {
+                                                              v_3: Tuple2[Int, Tuple2[Unit, Unit]] =>
+                                                                matchSum( pi1( v_1( mul( pi1( v_3 ) )( pi1( v_3 ) ) )( n ) )( pi2( pi2( v_3 ) ) ) )( ( {
                                                                   v_12: Unit =>
-                                                                    matchSum( v_5( n )( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( pi1[Unit, Unit]( pi2[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( ( {
-                                                                      v_8: Unit => pair[Int, Tuple2[Unit, Unit]]( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( pair[Unit, Unit]( v_6( s( n ) )( s( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) ) )( mul( s( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( s( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) ) )( pair[Unit, Unit]( v_7( s( n ) )( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( v_8 ) )( v_9( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) ) )( pi2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )]( v_1( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( s( n ) ) )( inl[Unit, Unit]( v_10( s( n ) )( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( v_8 ) ) ) ) )
+                                                                    matchSum( v_5( n )( mul( s( pi1( v_3 ) ) )( s( pi1( v_3 ) ) ) )( pi1( pi2( v_3 ) ) ) )( ( {
+                                                                      v_8: Unit => pair( s( pi1( v_3 ) ) )( pair( v_6( s( n ) )( s( mul( s( pi1( v_3 ) ) )( s( pi1( v_3 ) ) ) ) )( mul( s( s( pi1( v_3 ) ) ) )( s( s( pi1( v_3 ) ) ) ) )( pair( v_7( s( n ) )( mul( s( pi1( v_3 ) ) )( s( pi1( v_3 ) ) ) )( v_8 ) )( v_9( pi1( v_3 ) ) ) ) )( pi2( v_1( mul( s( pi1( v_3 ) ) )( s( pi1( v_3 ) ) ) )( s( n ) ) )( inl[Unit, Unit]( v_10( s( n ) )( mul( s( pi1( v_3 ) ) )( s( pi1( v_3 ) ) ) )( v_8 ) ) ) ) )
                                                                     } ) )( ( {
-                                                                      v_11: Unit => pair[Int, Tuple2[Unit, Unit]]( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) )( pair[Unit, Unit]( v_11 )( pi2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )]( v_1( mul( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) )( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( n ) ) )( inr[Unit, Unit]( v_7( mul( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) )( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( n )( v_12 ) ) ) ) )
+                                                                      v_11: Unit => pair( pi1( v_3 ) )( pair( v_11 )( pi2( v_1( mul( pi1( v_3 ) )( pi1( v_3 ) ) )( s( n ) ) )( inr[Unit, Unit]( v_7( mul( pi1( v_3 ) )( pi1( v_3 ) ) )( n )( v_12 ) ) ) ) )
                                                                     } ) )
                                                                 } ) )( ( {
                                                                   v_14: Unit =>
-                                                                    matchSum( v_5( n )( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( pi1[Unit, Unit]( pi2[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( ( {
-                                                                      v_8: Unit => pair[Int, Tuple2[Unit, Unit]]( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( pair[Unit, Unit]( v_6( s( n ) )( s( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) ) )( mul( s( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( s( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) ) )( pair[Unit, Unit]( v_7( s( n ) )( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( v_8 ) )( v_9( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) ) )( pi2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )]( v_1( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( s( n ) ) )( inl[Unit, Unit]( v_10( s( n ) )( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( v_8 ) ) ) ) )
+                                                                    matchSum( v_5( n )( mul( s( pi1( v_3 ) ) )( s( pi1( v_3 ) ) ) )( pi1( pi2( v_3 ) ) ) )( ( {
+                                                                      v_8: Unit => pair( s( pi1( v_3 ) ) )( pair( v_6( s( n ) )( s( mul( s( pi1( v_3 ) ) )( s( pi1( v_3 ) ) ) ) )( mul( s( s( pi1( v_3 ) ) ) )( s( s( pi1( v_3 ) ) ) ) )( pair( v_7( s( n ) )( mul( s( pi1( v_3 ) ) )( s( pi1( v_3 ) ) ) )( v_8 ) )( v_9( pi1( v_3 ) ) ) ) )( pi2( v_1( mul( s( pi1( v_3 ) ) )( s( pi1( v_3 ) ) ) )( s( n ) ) )( inl[Unit, Unit]( v_10( s( n ) )( mul( s( pi1( v_3 ) ) )( s( pi1( v_3 ) ) ) )( v_8 ) ) ) ) )
                                                                     } ) )( ( {
-                                                                      v_11: Unit => pair[Int, Tuple2[Unit, Unit]]( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) )( pair[Unit, Unit]( v_11 )( pi2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )]( v_1( mul( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) )( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( n ) ) )( inr[Unit, Unit]( v_13( mul( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) )( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( n )( v_14 ) ) ) ) )
+                                                                      v_11: Unit => pair( pi1( v_3 ) )( pair( v_11 )( pi2( v_1( mul( pi1( v_3 ) )( pi1( v_3 ) ) )( s( n ) ) )( inr[Unit, Unit]( v_13( mul( pi1( v_3 ) )( pi1( v_3 ) ) )( n )( v_14 ) ) ) ) )
                                                                     } ) )
                                                                 } ) )
-                                                              } )( e.getM )
-                                                            case e =>
-                                                              println( "other case" )
-                                                              throw e
+                                                            } )( e.getVal )
+                                                            case e => println( "BUG" ); throw e
                                                           }
-                                                        /*
-                                                          bar2( ( {
-                                                            y: Int => and( lt( n )( mul( s( y ) )( s( y ) ) ) )( leq( mul( y )( y ) )( n ) )
-                                                          } ) )( { v_3: Tuple2[Int, Tuple2[Unit, Unit]] =>
-                                                            matchSum( pi1[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )]( v_1( mul( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) )( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( n ) )( pi2[Unit, Unit]( pi2[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( ( {
-                                                              v_12: Unit =>
-                                                                matchSum( v_5( n )( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( pi1[Unit, Unit]( pi2[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( ( {
-                                                                  v_8: Unit => pair[Int, Tuple2[Unit, Unit]]( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( pair[Unit, Unit]( v_6( s( n ) )( s( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) ) )( mul( s( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( s( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) ) )( pair[Unit, Unit]( v_7( s( n ) )( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( v_8 ) )( v_9( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) ) )( pi2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )]( v_1( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( s( n ) ) )( inl[Unit, Unit]( v_10( s( n ) )( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( v_8 ) ) ) ) )
-                                                                } ) )( ( {
-                                                                  v_11: Unit => pair[Int, Tuple2[Unit, Unit]]( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) )( pair[Unit, Unit]( v_11 )( pi2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )]( v_1( mul( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) )( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( n ) ) )( inr[Unit, Unit]( v_7( mul( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) )( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( n )( v_12 ) ) ) ) )
-                                                                } ) )
-                                                            } ) )( ( {
-                                                              v_14: Unit =>
-                                                                matchSum( v_5( n )( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( pi1[Unit, Unit]( pi2[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( ( {
-                                                                  v_8: Unit => pair[Int, Tuple2[Unit, Unit]]( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( pair[Unit, Unit]( v_6( s( n ) )( s( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) ) )( mul( s( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( s( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) ) )( pair[Unit, Unit]( v_7( s( n ) )( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( v_8 ) )( v_9( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) ) )( pi2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )]( v_1( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( s( n ) ) )( inl[Unit, Unit]( v_10( s( n ) )( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) ) )( v_8 ) ) ) ) )
-                                                                } ) )( ( {
-                                                                  v_11: Unit => pair[Int, Tuple2[Unit, Unit]]( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) )( pair[Unit, Unit]( v_11 )( pi2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )]( v_1( mul( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) )( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( s( n ) ) )( inr[Unit, Unit]( v_13( mul( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) )( pi1[Int, Tuple2[Unit, Unit]]( v_3 ) ) )( n )( v_14 ) ) ) ) )
-                                                                } ) )
-                                                            } ) )
-                                                          } )( efq( exception( v_3 ) ) )*/
                                                       } )
                                                   } ) )( n )
                                               } )
@@ -1341,12 +1291,10 @@ inr[Unit, Unit]( () )
   val realProg = prog( arg1 )( arg2 )( arg11 )( arg5 )( arg3 )( arg5 )( arg4 )( arg11 )( arg11 )( arg12 )( arg10 )
 
   0 to 4 map ( i => println( s"$i: ${realProg( i )._1}" ) )
-  /*
   println( "Testing 1000 inputs" )
   0 to 1000 foreach ( i => {
     if ( Math.floor( Math.sqrt( i ) ).toInt != realProg( i )._1 ) {
       throw new Exception( s"realProg failed at input $i." )
     }
   } )
-  */
 }
