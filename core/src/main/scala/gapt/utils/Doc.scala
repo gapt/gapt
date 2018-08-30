@@ -27,8 +27,8 @@ sealed trait Doc {
   def nest( i: Int ): Doc = Nest( i, this )
 
   /**
-   * Make line breaks in the document optional, i.e.
-   * turn them into spaces if there is sufficient room on the current line.
+   * Group a document such that it is displayed on one line
+   * if possible.
    */
   def group: Doc = Group( this )
 
@@ -129,10 +129,21 @@ object Doc {
    */
   def stack( lines: Traversable[Doc] ): Doc = sep( lines, line )
 
+  /**
+   * Groups a series of [[Doc]]s such that as many as possible will
+   * be put on one line.
+   * @param sep A separator between each pair of elements.
+   */
   def wordwrap( ds: Iterable[Doc], sep: Doc = "" ): Doc =
     ds.view.zipWithIndex.
       map { case ( d, i ) => if ( i == 0 ) d else ( sep <> line <> d ).group }.
       reduceLeftOption( _ <> _ ).getOrElse( "" )
+
+  /**
+   * Groups a series of [[Doc]]s such that as many as possible will
+   * be put on the first line, after which each one is put on a new line.
+   * @param sep A separator between each pair of elements.
+   */
   def wordwrap2( ds: Iterable[Doc], sep: Doc = "" ): Doc =
     ds.reduceLeftOption( ( a, b ) => ( a <> sep </> b ).group ).getOrElse( "" )
 }

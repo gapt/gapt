@@ -4,32 +4,25 @@ import gapt.proofs.lk.LKProof
 import gapt.formats.json.lk.LKProofCodec._
 import io.circe.Json
 import org.specs2.mutable.Specification
-import io.circe.parser._
 import org.specs2.specification.core.Fragments
 
 class JsonToDocTest extends Specification {
+  private def roundtrip( d: Json ) =
+    io.circe.parser.parse( JsonToDoc( d ).render( 80 ) ) must beRight( d )
+
   "The JSON to Doc converter" should {
     "convert and parse a small LK proof" in {
       val p: LKProof = gapt.examples.LinearExampleProof( 3 )
-      val json = _lkProofEncoder( p )
-      val rendered = JsonToDoc( json ).render( 80 )
-      val parsed = parse( rendered )
-      parsed must beRight( json )
+      roundtrip( _lkProofEncoder( p ) )
     }
 
     "convert and parse a bigger proof" in {
       val p: LKProof = gapt.examples.theories.nat.add0l.combined()
-      val json = _lkProofEncoder( p )
-      val rendered = JsonToDoc( json ).render( 80 )
-      val parsed = parse( rendered )
-      parsed must beRight( json )
+      roundtrip( _lkProofEncoder( p ) )
     }
   }
 
   "roundtrip" in {
-    def roundtrip( d: Json ) =
-      io.circe.parser.parse( JsonToDoc( d ).render( 80 ) ) must beRight( d )
-
     "double quotes" in roundtrip( Json.fromString( "\"" ) )
     "newlines" in roundtrip( Json.fromString( "\n" ) )
     "null byte" in roundtrip( Json.fromString( "\0" ) )
