@@ -1,8 +1,8 @@
 package gapt.proofs.lk
 
 import gapt.expr._
-import gapt.formats.babel.{Notation, Precedence}
-import gapt.proofs.{Context, MutableContext, Sequent}
+import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.{ Context, MutableContext, Sequent }
 import gapt.proofs.gaptic._
 import org.specs2.mutable.Specification
 
