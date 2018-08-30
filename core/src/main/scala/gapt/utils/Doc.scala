@@ -32,6 +32,7 @@ sealed trait Doc {
    */
   def group: Doc = Group( this )
 
+  /** Length of this document, if all Lines were printed as spaces. */
   private val flatSize: Int = this match {
     case Concat( a, b ) => a.flatSize + b.flatSize
     case Nest( _, d )   => d.flatSize
@@ -39,6 +40,7 @@ sealed trait Doc {
     case Line( orElse ) => orElse.length
     case Group( a )     => a.flatSize
   }
+  /** Whether this document contains a Line. */
   private val containsLine: Boolean = this match {
     case Line( _ )      => true
     case Concat( a, b ) => a.containsLine || b.containsLine
@@ -46,6 +48,7 @@ sealed trait Doc {
     case Text( _ )      => false
     case Group( a )     => a.containsLine
   }
+  /** Number of characters until the first Line or the end of the document. */
   private val distToFirstLine: Int = this match {
     case Line( _ )      => 0
     case Concat( a, b ) => a.distToLine( b.distToFirstLine )
@@ -53,6 +56,10 @@ sealed trait Doc {
     case Text( t )      => t.length
     case Group( a )     => a.distToFirstLine
   }
+  /**
+   * Assume that we're followed by `afterwards` many characters and a Line.
+   * How many characters until the first Line (or the end)?
+   */
   private def distToLine( afterwards: Int ): Int =
     if ( containsLine ) distToFirstLine else distToFirstLine + afterwards
 
@@ -108,7 +115,7 @@ object Doc {
   def line: Doc = Line( " " )
 
   /**
-   * An optional line break.
+   * Line break that is optionally replaced by nothing.
    */
   def zeroWidthLine: Doc = Line( "" )
   implicit def text( t: String ): Doc = Text( t )
