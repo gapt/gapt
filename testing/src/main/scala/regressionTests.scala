@@ -6,7 +6,9 @@ import ammonite.ops._
 import gapt.cutintro._
 import gapt.expr._
 import gapt.expr.fol.isFOLPrenexSigma1
+import gapt.formats.InputFile
 import gapt.formats.babel.BabelParser
+import gapt.formats.json._
 import gapt.formats.leancop.LeanCoPParser
 import gapt.formats.tip.TipSmtImporter
 import gapt.formats.tptp.TptpImporter
@@ -16,7 +18,8 @@ import gapt.proofs.ceres._
 import gapt.proofs.expansion._
 import gapt.proofs.gaptic.{ ProofState, now }
 import gapt.proofs.lk._
-import gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
+import gapt.proofs.nd.NDProof
+import gapt.proofs.resolution.{ ResolutionProof, ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
 import gapt.proofs.{ MutableContext, Suc, loadExpansionProof }
 import gapt.provers.congruence.SimpleSmtSolver
 import gapt.provers.escargot.Escargot
@@ -128,6 +131,8 @@ class TheoryTestCase( name: String, combined: Boolean )
     import TheoryTestCase.AllTheories._
     val lemmaHandle = LemmaHandle( ctx.get[ProofNames].names( name )._1 )
     val proof = ( if ( combined ) lemmaHandle.combined() else lemmaHandle.proof ) --- "proof"
+
+    JSONImporter.apply[LKProof]( InputFile.fromString( JSONExporter( proof ) ) ) == proof !-- "json export of lk proof"
 
     LKToND( proof ) --? "LKToND"
     normalizeLKt.withDebug( proof ) --? "lkt cut-elim"
@@ -283,9 +288,14 @@ class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
       desk.shallow.isSubsetOf( expansion.shallow ) !-- "shallow sequent of deskolemization"
       Z3.isValid( desk.deep ) !-- "deskolemized deep formula validity"
       ExpansionProofToLK( desk ).get --? "ExpansionProofToLK on deskolemization" foreach { deskLK =>
-        LKToND( deskLK ) --? "LKToND (deskolemization)"
+        JSONImporter.apply[LKProof]( InputFile.fromString( JSONExporter( deskLK ) ) ) == deskLK !-- "json export of lk proof"
+        LKToND( deskLK ) --? "LKToND (deskolemization)" foreach { nd =>
+          JSONImporter.apply[NDProof]( InputFile.fromString( JSONExporter( nd ) ) ) == nd !-- "json export of lk proof"
+        }
       }
     }
+
+    JSONImporter.apply[ExpansionProof]( InputFile.fromString( JSONExporter( expansion ) ) ) == expansion !-- "json export of expansion proof"
   }
 }
 
