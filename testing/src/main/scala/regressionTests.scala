@@ -132,7 +132,7 @@ class TheoryTestCase( name: String, combined: Boolean )
     val lemmaHandle = LemmaHandle( ctx.get[ProofNames].names( name )._1 )
     val proof = ( if ( combined ) lemmaHandle.combined() else lemmaHandle.proof ) --- "proof"
 
-    JSONImporter.apply[LKProof]( InputFile.fromString( JSONExporter( proof ) ) ) == proof !-- "json export of lk proof"
+    JsonImporter.load[LKProof]( InputFile.fromString( JsonExporter( proof ).render( 80 ) ) ) == proof !-- "json export of lk proof"
 
     LKToND( proof ) --? "LKToND"
     normalizeLKt.withDebug( proof ) --? "lkt cut-elim"
@@ -288,14 +288,14 @@ class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
       desk.shallow.isSubsetOf( expansion.shallow ) !-- "shallow sequent of deskolemization"
       Z3.isValid( desk.deep ) !-- "deskolemized deep formula validity"
       ExpansionProofToLK( desk ).get --? "ExpansionProofToLK on deskolemization" foreach { deskLK =>
-        JSONImporter.apply[LKProof]( InputFile.fromString( JSONExporter( deskLK ) ) ) == deskLK !-- "json export of lk proof"
+        JsonImporter.load[LKProof]( InputFile.fromString( JsonExporter( deskLK ).render( 80 ) ) ) == deskLK !-- "json export of lk proof"
         LKToND( deskLK ) --? "LKToND (deskolemization)" foreach { nd =>
-          JSONImporter.apply[NDProof]( InputFile.fromString( JSONExporter( nd ) ) ) == nd !-- "json export of lk proof"
+          JsonImporter.load[NDProof]( InputFile.fromString( JsonExporter( nd ).render( 80 ) ) ) == nd !-- "json export of lk proof"
         }
       }
     }
 
-    JSONImporter.apply[ExpansionProof]( InputFile.fromString( JSONExporter( expansion ) ) ) == expansion !-- "json export of expansion proof"
+    JsonImporter.load[ExpansionProof]( InputFile.fromString( JsonExporter( expansion ).render( 80 ) ) ) == expansion !-- "json export of expansion proof"
   }
 }
 
