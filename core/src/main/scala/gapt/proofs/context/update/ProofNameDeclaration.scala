@@ -9,7 +9,7 @@ import gapt.expr.freeVariables
 import gapt.expr.typeVariables
 import gapt.proofs.HOLSequent
 import gapt.proofs.context.Context
-import gapt.proofs.context.Context.ProofNames
+import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.context.State
 
 case class ProofNameDeclaration( lhs: Expr, endSequent: HOLSequent ) extends Update {

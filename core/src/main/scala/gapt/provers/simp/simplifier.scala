@@ -5,7 +5,7 @@ import gapt.expr.hol.instantiate
 import gapt.proofs.lk._
 import gapt.proofs._
 import gapt.proofs.context.Context
-import gapt.proofs.context.Context.ProofNames
+import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.context.MutableContext
 import gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, formulaToExpansionTree }
 import gapt.proofs.gaptic.{ OpenAssumption, Tactic, TacticFailure, Tactical1 }

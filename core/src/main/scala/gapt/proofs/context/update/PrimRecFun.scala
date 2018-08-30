@@ -13,9 +13,9 @@ import gapt.expr.Var
 import gapt.expr.fol.folSubTerms
 import gapt.expr.typeVariables
 import gapt.proofs.context.Context
-import gapt.proofs.context.Context.Constants
-import gapt.proofs.context.Context.Reductions
-import gapt.proofs.context.Context.StructurallyInductiveTypes
+import gapt.proofs.context.facet.Constants
+import gapt.proofs.context.facet.Reductions
+import gapt.proofs.context.facet.StructurallyInductiveTypes
 import gapt.proofs.context.Context.parseEquation
 import gapt.proofs.context.State
 import gapt.utils.linearizeStrictPartialOrder

@@ -1,8 +1,9 @@
 package gapt.proofs.lk
 
 import gapt.proofs.context.Context
-import gapt.proofs.context.Context.ProofNames
+import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.context.State
+import gapt.proofs.context.facet.Facet
 import gapt.proofs.context.update.Update
 
 case class Attributes( attrs: Map[String, Set[String]] ) {
@@ -22,7 +23,7 @@ case class Attributes( attrs: Map[String, Set[String]] ) {
 }
 
 object Attributes {
-  implicit val facet: Context.Facet[Attributes] = Context.Facet( Attributes( Map().withDefaultValue( Set() ) ) )
+  implicit val facet: Facet[Attributes] = Facet( Attributes( Map().withDefaultValue( Set() ) ) )
 
   case class AddAttributeUpdate( lemmaName: String, attrName: String ) extends Update {
     override def apply( ctx: Context ): State = {

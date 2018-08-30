@@ -1,6 +1,6 @@
 package gapt.proofs.context
 
-import gapt.proofs.context.Context.Facet
+import gapt.proofs.context.facet.Facet
 
 import scala.reflect.ClassTag
 

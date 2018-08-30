@@ -3,6 +3,8 @@ import gapt.expr._
 import gapt.proofs.SequentConnector.guessInjection
 import gapt.proofs._
 import gapt.proofs.context.Context
+import gapt.proofs.context.facet.ProofDefinitions
+import gapt.proofs.context.facet.ProofNames
 
 object instantiateProof {
   /**
@@ -25,12 +27,12 @@ object instantiateProof {
    *         together with the instantiated proof
    */
   def withConnector( proofName: Expr )( implicit ctx: Context ): ( SequentConnector, LKProof ) = {
-    ctx.get[Context.ProofDefinitions].findWithConnector( proofName ).headOption match {
+    ctx.get[ProofDefinitions].findWithConnector( proofName ).headOption match {
       case Some( ( connDefPrf2Link, subst, defPrf ) ) =>
         val ( instPrf, connInstPrf2SubstDefPrf ) = buildProof.withSequentConnector( subst( defPrf ), ctx )
         connInstPrf2SubstDefPrf * connDefPrf2Link -> instPrf
       case None =>
-        val Some( sequent ) = ctx.get[Context.ProofNames].lookup( proofName )
+        val Some( sequent ) = ctx.get[ProofNames].lookup( proofName )
         SequentConnector( sequent ) -> ProofLink( proofName, sequent )
     }
   }

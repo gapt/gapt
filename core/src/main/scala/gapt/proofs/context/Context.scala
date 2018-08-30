@@ -10,12 +10,12 @@ import gapt.formats.babel.Precedence
 import gapt.proofs.Checkable
 import gapt.proofs.HOLSequent
 import gapt.proofs.SequentConnector
-import gapt.proofs.context.Context.BaseTypes
-import gapt.proofs.context.Context.Constants
-import gapt.proofs.context.Context.Definitions
-import gapt.proofs.context.Context.Facet
-import gapt.proofs.context.Context.Reductions
-import gapt.proofs.context.Context.StructurallyInductiveTypes
+import gapt.proofs.context.facet.Constants
+import gapt.proofs.context.facet.Definitions
+import gapt.proofs.context.facet.Reductions
+import gapt.proofs.context.facet.StructurallyInductiveTypes
+import gapt.proofs.context.facet.BaseTypes
+import gapt.proofs.context.facet.Facet
 import gapt.proofs.context.update.ConstDecl
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.Sort
@@ -23,8 +23,6 @@ import gapt.proofs.context.update.Update
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.ProofLink
 import gapt.utils.NameGenerator
-
-import scala.reflect.ClassTag
 
 /**
  * Captures constants, types, definitions, and background theory used in a proof.
@@ -163,98 +161,6 @@ trait Context extends BabelSignature {
 }
 
 object Context {
-  /** Type class for a facet of a context. */
-  trait Facet[T] {
-    def clazz: Class[T]
-    def initial: T
-  }
-  object Facet {
-    def apply[T: ClassTag]( initialValue: T ): Facet[T] = {
-      val clazz_ = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
-      new Facet[T] {
-        def initial = initialValue
-        def clazz = clazz_
-        override def toString = clazz.getSimpleName
-      }
-    }
-  }
-
-  /** Base types, including inductive types. */
-  case class BaseTypes( baseTypes: Map[String, TBase] ) {
-    def +( ty: TBase ): BaseTypes = {
-      require( ty.params.forall( _.isInstanceOf[TVar] ) && ty.params == ty.params.distinct )
-      require(
-        !baseTypes.contains( ty.name ),
-        s"Base type $ty already defined." )
-      copy( baseTypes + ( ty.name -> ty ) )
-    }
-    override def toString = baseTypes.toSeq.sortBy( _._1 ).map( _._2 ).mkString( ", " )
-  }
-  implicit val baseTypesFacet: Facet[BaseTypes] = Facet( BaseTypes( Map() ) )
-
-  /** Constant symbols, including defined constants, constructors, etc. */
-  case class Constants( constants: Map[String, Const] ) {
-    def +( const: Const ): Constants = {
-      require(
-        !constants.contains( const.name ),
-        s"Constant $const is already defined as ${constants( const.name )}." )
-      copy( constants + ( const.name -> const ) )
-    }
-
-    def ++( consts: Traversable[Const] ): Constants =
-      consts.foldLeft( this )( _ + _ )
-
-    def lookup( name: String, params: List[Ty] ): Option[Const] =
-      constants.get( name ).flatMap {
-        case c @ Const( _, _, Nil ) if params.isEmpty => Some( c )
-        case Const( _, ty, declPs ) if declPs.size == params.size =>
-          val subst = Substitution( Nil, declPs.asInstanceOf[List[TVar]] zip params )
-          Some( Const( name, subst( ty ), params ) )
-        case _ => None
-      }
-
-    override def toString = constants.values.toSeq.sortBy( _.name ).
-      map( c => s"${c.name}${if ( c.params.isEmpty ) "" else c.params.mkString( "{", " ", "}" )}: ${c.ty}" ).mkString( "\n" )
-  }
-  implicit val constsFacet: Facet[Constants] = Facet( Constants( Map() ) )
-
-  /** Definitional reductions. */
-  case class Reductions( normalizer: Normalizer ) {
-    def ++( rules: Vector[ReductionRule] ): Reductions =
-      copy( Normalizer( normalizer.rules ++ rules ) )
-
-    def +( reductionRule: ReductionRule ): Reductions =
-      copy( normalizer + reductionRule )
-
-    override def toString: String =
-      normalizer.rules.map { case ReductionRule( lhs, rhs ) => s"$lhs -> $rhs" }.mkString( "\n" )
-  }
-  implicit val reductionsFacet: Facet[Reductions] = Facet( Reductions( Normalizer( Set() ) ) )
-
-  /** Definitions that define a constant by an expression of the same type. */
-  case class Definitions( definitions: Map[String, Expr] ) {
-    def +( defn: Definition ) = {
-      require( !definitions.contains( defn.what.name ) )
-      copy( definitions + ( defn.what.name -> defn.by ) )
-    }
-
-    override def toString = definitions.toSeq.sortBy( _._1 ).
-      map { case ( w, b ) => s"$w -> $b" }.mkString( "\n" )
-
-    def filter( p: ( ( String, Expr ) ) => Boolean ): Definitions =
-      copy( definitions.filter( p ) )
-  }
-  implicit val defsFacet: Facet[Definitions] = Facet( Definitions( Map() ) )
-
-  /** Inductive types, for each type we store its list of constructors. */
-  case class StructurallyInductiveTypes( constructors: Map[String, Vector[Const]] ) {
-    def +( ty: String, ctrs: Vector[Const] ) =
-      copy( constructors + ( ty -> ctrs ) )
-
-    override def toString: String = constructors.toSeq.sortBy( _._1 ).
-      map { case ( t, cs ) => s"$t: ${cs.mkString( ", " )}" }.mkString( "\n" )
-  }
-  implicit val structIndTysFacet: Facet[StructurallyInductiveTypes] = Facet( StructurallyInductiveTypes( Map() ) )
 
   val empty: ImmutableContext = ImmutableContext.empty
   def apply(): ImmutableContext = default
@@ -290,61 +196,6 @@ object Context {
     ConstDecl( EqC( TVar( "x" ) ) ),
     Notation.Infix( "=", EqC, Precedence.infixRel ),
     Notation.Infix( "!=", Notation.NeqName, Precedence.infixRel ) )
-
-  case class ProofNames( names: Map[String, ( Expr, HOLSequent )] ) {
-    def +( name: String, referencedExpression: Expr, referencedSequent: HOLSequent ) = copy( names + ( ( name, ( referencedExpression, referencedSequent ) ) ) )
-
-    def sequents: Iterable[HOLSequent] =
-      for ( ( _, ( _, seq ) ) <- names ) yield seq
-
-    def lookup( name: Expr ): Option[HOLSequent] =
-      ( for {
-        ( declName, declSeq ) <- names.values
-        subst <- syntacticMatching( declName, name )
-      } yield subst( declSeq ) ).headOption
-
-    def link( name: Expr ): Option[ProofLink] =
-      for ( sequent <- lookup( name ) ) yield ProofLink( name, sequent )
-
-    def find( seq: HOLSequent ): Option[Expr] =
-      ( for {
-        ( declName, declSeq ) <- names.values
-        subst <- clauseSubsumption( declSeq, seq, multisetSubsumption = true )
-      } yield subst( declName ) ).headOption
-
-    override def toString: String =
-      names.toSeq.sortBy( _._1 ).
-        map { case ( _, ( lhs, sequent ) ) => s"$lhs: $sequent" }.
-        mkString( "\n" )
-  }
-
-  implicit val ProofsFacet: Facet[ProofNames] = Facet( ProofNames( Map[String, ( Expr, HOLSequent )]() ) )
-
-  case class ProofDefinition( proofNameTerm: Expr, connector: SequentConnector, proof: LKProof ) {
-    val Apps( Const( proofName, _, _ ), _ ) = proofNameTerm
-  }
-
-  case class ProofDefinitions( components: Map[String, Set[ProofDefinition]] ) {
-    def +( defn: ProofDefinition ) =
-      copy( components.updated(
-        defn.proofName,
-        components.getOrElse( defn.proofName, Set() ) + defn ) )
-
-    def findWithConnector( name: Expr ): Iterable[( SequentConnector, Substitution, LKProof )] =
-      for {
-        defs <- components.values
-        defn <- defs
-        subst <- syntacticMatching( defn.proofNameTerm, name )
-      } yield ( defn.connector, subst, defn.proof )
-
-    def find( name: Expr ): Iterable[( LKProof, Substitution )] =
-      for ( ( _, subst, proof ) <- findWithConnector( name ) ) yield ( proof, subst )
-    override def toString: String =
-      components.map { case ( n, dfs ) => dfs.map( _.proofNameTerm ).mkString( ", " ) }.mkString( "\n" )
-  }
-  implicit val ProofDefinitionsFacet: Facet[ProofDefinitions] = Facet( ProofDefinitions( Map() ) )
-
-  implicit val skolemFunsFacet: Facet[SkolemFunctions] = Facet[SkolemFunctions]( SkolemFunctions( None ) )
 
   object parseEquation {
 

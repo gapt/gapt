@@ -8,7 +8,7 @@ import gapt.expr.Quant
 import gapt.expr.freeVariables
 import gapt.expr.hol.SkolemFunctions
 import gapt.proofs.context.Context
-import gapt.proofs.context.Context.Constants
+import gapt.proofs.context.facet.Constants
 import gapt.proofs.context.State
 
 case class SkolemFun( sym: Const, defn: Expr ) extends Update {

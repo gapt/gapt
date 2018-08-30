@@ -8,8 +8,8 @@ import gapt.expr._
 import gapt.expr.typeVariables
 import gapt.proofs._
 import gapt.proofs.context.Context
-import gapt.proofs.context.Context.BaseTypes
-import gapt.proofs.context.Context.StructurallyInductiveTypes
+import gapt.proofs.context.facet.BaseTypes
+import gapt.proofs.context.facet.StructurallyInductiveTypes
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.PrimRecFun
 import gapt.utils.NameGenerator

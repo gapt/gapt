@@ -7,10 +7,10 @@ import gapt.expr.TVar
 import gapt.expr.Ty
 import gapt.expr.typeVariables
 import gapt.proofs.context.Context
-import gapt.proofs.context.Context.BaseTypes
-import gapt.proofs.context.Context.Constants
-import gapt.proofs.context.Context.StructurallyInductiveTypes
+import gapt.proofs.context.facet.Constants
+import gapt.proofs.context.facet.StructurallyInductiveTypes
 import gapt.proofs.context.State
+import gapt.proofs.context.facet.BaseTypes
 
 /** Inductive base type with constructors. */
 case class InductiveType( ty: TBase, constructors: Vector[Const] ) extends TypeDef {

@@ -4,7 +4,7 @@ import gapt.expr.Const
 import gapt.expr.TVar
 import gapt.expr.typeVariables
 import gapt.proofs.context.Context
-import gapt.proofs.context.Context.Constants
+import gapt.proofs.context.facet.Constants
 import gapt.proofs.context.State
 
 case class ConstDecl( const: Const ) extends Update {

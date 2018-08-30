@@ -5,7 +5,7 @@ import gapt.expr.hol.HOLPosition
 import gapt.expr.hol.instantiate
 import gapt.proofs._
 import gapt.proofs.context.Context
-import gapt.proofs.context.Context.ProofNames
+import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.gaptic._
 import gapt.proofs.lk._
 

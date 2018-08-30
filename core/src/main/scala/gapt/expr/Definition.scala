@@ -2,6 +2,9 @@ package gapt.expr
 
 import gapt.proofs.context.Context
 import gapt.proofs.context.State
+import gapt.proofs.context.facet.Constants
+import gapt.proofs.context.facet.Definitions
+import gapt.proofs.context.facet.Reductions
 import gapt.proofs.context.update.Update
 
 case class Definition( what: Const, by: Expr ) extends Update {
@@ -17,9 +20,9 @@ case class Definition( what: Const, by: Expr ) extends Update {
   override def apply( ctx: Context ): State = {
     ctx.check( what.ty )
     ctx.check( by )
-    ctx.state.update[Context.Constants]( _ + what )
-      .update[Context.Definitions]( _ + this )
-      .update[Context.Reductions]( _ + ( what -> by ) )
+    ctx.state.update[Constants]( _ + what )
+      .update[Definitions]( _ + this )
+      .update[Reductions]( _ + ( what -> by ) )
   }
 }
 object Definition {

@@ -11,7 +11,7 @@ import gapt.formats.leancop.LeanCoPParser
 import gapt.formats.tip.TipSmtImporter
 import gapt.formats.tptp.{ TptpParser, resolveIncludes }
 import gapt.formats.verit.VeriTParser
-import gapt.proofs.context.Context.ProofNames
+import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.ceres._
 import gapt.proofs.context.MutableContext
 import gapt.proofs.expansion._

@@ -1,7 +1,7 @@
 package gapt.proofs.lk
 
 import gapt.expr._
-import gapt.proofs.context.Context.ProofNames
+import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.nd._
 import gapt.proofs.Ant
 import gapt.proofs.ProofBuilder

@@ -3,8 +3,8 @@ package gapt.formats.babel
 import gapt.expr.Const
 import gapt.expr.LogicalC
 import gapt.proofs.context.Context
-import gapt.proofs.context.Context.Facet
 import gapt.proofs.context.State
+import gapt.proofs.context.facet.Facet
 import gapt.proofs.context.update.Update
 import gapt.{ expr => real }
 

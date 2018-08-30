@@ -10,7 +10,7 @@ import gapt.proofs.lk._
 import gapt.utils.LogHandler
 import cats.{ Eval, Later }
 import gapt.proofs.context.Context
-import gapt.proofs.context.Context.ProofNames
+import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.context.update.SkolemFun
 import gapt.proofs.context.ImmutableContext
 import gapt.proofs.context.update.InductiveType

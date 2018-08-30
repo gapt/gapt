@@ -3,6 +3,7 @@ package gapt.proofs.lk
 import gapt.expr._
 import gapt.expr.hol._
 import gapt.proofs.context.Context
+import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.{ HOLClause, Sequent, SequentConnector }
 
 /**
@@ -31,7 +32,7 @@ object makeTheoryAxiomsExplicit extends LKVisitor[Seq[Formula]] {
   def apply( formulas: Formula* )( proof: LKProof ): LKProof = withSequentConnector( formulas: _* )( proof )._1
 
   def apply( proof: LKProof )( implicit ctx: Context ): LKProof =
-    apply( ctx.get[Context.ProofNames].sequents.toSeq map { s => universalClosure( s.toFormula ) }: _* )( proof )
+    apply( ctx.get[ProofNames].sequents.toSeq map { s => universalClosure( s.toFormula ) }: _* )( proof )
 
   /**
    *

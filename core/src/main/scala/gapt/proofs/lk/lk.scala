@@ -6,6 +6,7 @@ import gapt.proofs.IndexOrFormula.{ IsFormula, IsIndex }
 import gapt.proofs._
 import gapt.proofs.context
 import gapt.proofs.context.Context
+import gapt.proofs.context.facet.ProofNames
 
 import scala.collection.mutable
 
@@ -175,9 +176,9 @@ case class ProofLink( referencedProof: Expr, referencedSequent: Sequent[Formula]
 }
 object ProofLink {
   def apply( referencedProof: Expr )( implicit ctx: Context ): ProofLink =
-    ProofLink( referencedProof, ctx.get[Context.ProofNames].lookup( referencedProof ).get )
+    ProofLink( referencedProof, ctx.get[ProofNames].lookup( referencedProof ).get )
   def apply( name: String )( implicit ctx: Context ): ProofLink =
-    ProofLink( ctx.get[Context.ProofNames].names( name )._1 )
+    ProofLink( ctx.get[ProofNames].names( name )._1 )
 }
 
 /**

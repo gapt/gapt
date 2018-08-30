@@ -6,7 +6,7 @@ import gapt.expr.ReductionRule
 import gapt.expr.preExpr
 import gapt.formats.babel.BabelParser
 import gapt.proofs.context.Context
-import gapt.proofs.context.Context.Reductions
+import gapt.proofs.context.facet.Reductions
 import gapt.proofs.context.State
 
 class ReductionRuleUpdate(

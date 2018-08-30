@@ -5,7 +5,7 @@ import gapt.expr.hol.{ HOLPosition, inductionPrinciple, instantiate }
 import gapt.formats.babel.BabelSignature
 import gapt.proofs._
 import gapt.proofs.context.Context
-import gapt.proofs.context.Context.StructurallyInductiveTypes
+import gapt.proofs.context.facet.StructurallyInductiveTypes
 
 import scala.collection.mutable
 

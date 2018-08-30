@@ -2,6 +2,7 @@ package gapt.proofs
 
 import gapt.expr._
 import gapt.proofs.context.Context
+import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.context.update.Update
 import gapt.proofs.expansion.ExpansionProof
 import gapt.proofs.lk.LKProof
@@ -97,7 +98,7 @@ object Checkable {
         case StrongQuantifierRule( _, _, _, _, _ ) =>
         case _: ReflexivityAxiom | _: LogicalAxiom =>
         case ProofLink( name, sequent ) =>
-          val declSeq = ctx.get[Context.ProofNames].lookup( name )
+          val declSeq = ctx.get[ProofNames].lookup( name )
           require( declSeq.nonEmpty, s"Proof name $name does not exist in context" )
           require( declSeq.get == sequent, s"$declSeq\nis not equal to \n$sequent" )
         case TopAxiom | BottomAxiom

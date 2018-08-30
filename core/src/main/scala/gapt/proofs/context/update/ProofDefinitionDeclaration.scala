@@ -5,9 +5,9 @@ import gapt.expr.Const
 import gapt.expr.Expr
 import gapt.proofs.SequentConnector
 import gapt.proofs.context.Context
-import gapt.proofs.context.Context.ProofDefinition
-import gapt.proofs.context.Context.ProofDefinitions
-import gapt.proofs.context.Context.ProofNames
+import gapt.proofs.context.ProofDefinition
+import gapt.proofs.context.facet.ProofDefinitions
+import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.context.State
 import gapt.proofs.lk.LKProof
 

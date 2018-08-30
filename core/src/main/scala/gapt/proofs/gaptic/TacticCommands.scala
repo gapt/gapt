@@ -6,6 +6,7 @@ import gapt.proofs._
 import gapt.proofs.context
 import gapt.proofs.context.Context
 import gapt.proofs.context.MutableContext
+import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.gaptic.tactics._
 import gapt.proofs.lk._
 import gapt.provers.Prover
@@ -535,7 +536,7 @@ trait TacticCommands {
   def theory( implicit ctx: Context ): Tactic[Unit] = Tactic {
     for {
       goal <- currentGoal
-      proofLinkName <- ctx.get[Context.ProofNames].find( goal.conclusion ).
+      proofLinkName <- ctx.get[ProofNames].find( goal.conclusion ).
         toTactic( "does not follow from theory" )
       _ <- insert( ProofLink( proofLinkName ) )
     } yield ()
