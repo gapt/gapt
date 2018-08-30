@@ -4,7 +4,6 @@ import scala.reflect.ClassTag
 
 /** Type class for a facet of a context. */
 trait Facet[T] {
-  def clazz: Class[T]
   def initial: T
 }
 object Facet {
@@ -13,7 +12,7 @@ object Facet {
     new Facet[T] {
       def initial = initialValue
 
-      def clazz = clazz_
+      private def clazz = clazz_
 
       override def toString = clazz.getSimpleName
     }
