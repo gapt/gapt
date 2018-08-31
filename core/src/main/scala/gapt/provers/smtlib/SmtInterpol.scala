@@ -26,9 +26,9 @@ class SmtInterpol(
     val fvs = freeVariables( tree.postOrder )
     if ( fvs.nonEmpty ) return {
       val groundingMap = groundFreeVariables.getGroundingMap( fvs, constants( tree.postOrder ) )
-      TermReplacement.hygienic(
-        getInterpolant( Substitution( groundingMap )( tree ) ),
-        groundingMap.map( _.swap ).toMap )
+      TermReplacement.undoGrounding(
+        getInterpolant( groundingMap( tree ) ),
+        groundingMap )
     }
 
     val session = new SmtInterpolSession

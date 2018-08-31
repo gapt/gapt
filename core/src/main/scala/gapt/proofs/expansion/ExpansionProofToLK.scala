@@ -10,6 +10,10 @@ object ExpansionProofToLK extends ExpansionProofToLK( Escargot.getAtomicLKProof,
   object withIntuitionisticHeuristics extends ExpansionProofToLK(
     Escargot.getAtomicLKProof, intuitionisticHeuristics = true )
   def withTheory( implicit ctx: Context ) = new ExpansionProofToLK( FOTheoryMacroRule.option( _ ) )
+
+  override def apply( expansionProof: ExpansionProof )( implicit ctx: Context = Context.guess( expansionProof.deep.elements ) ): UnprovableOrLKProof =
+    new ExpansionProofToLK( Escargot.getAtomicLKProof( _ )( ctx ), intuitionisticHeuristics = false ).
+      apply( expansionProof ).asInstanceOf[UnprovableOrLKProof]
 }
 object PropositionalExpansionProofToLK extends ExpansionProofToLK( _ => None )
 
