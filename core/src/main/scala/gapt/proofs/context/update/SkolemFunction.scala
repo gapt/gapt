@@ -11,7 +11,7 @@ import gapt.proofs.context.Context
 import gapt.proofs.context.facet.Constants
 import gapt.proofs.context.State
 
-case class SkolemFun( sym: Const, defn: Expr ) extends Update {
+case class SkolemFunction( sym: Const, defn: Expr ) extends Update {
   val Abs.Block( argumentVariables, strongQuantifier @ Quant( boundVariable, matrix, isForall ) ) = defn
   require( sym.ty == FunctionType( boundVariable.ty, argumentVariables.map( _.ty ) ) )
   require( freeVariables( defn ).isEmpty )

@@ -13,14 +13,15 @@ import gapt.expr.Var
 import gapt.expr.fol.folSubTerms
 import gapt.expr.typeVariables
 import gapt.proofs.context.Context
+import gapt.proofs.context.Context.parseEquation
+import gapt.proofs.context.State
 import gapt.proofs.context.facet.Constants
 import gapt.proofs.context.facet.Reductions
 import gapt.proofs.context.facet.StructurallyInductiveTypes
-import gapt.proofs.context.Context.parseEquation
-import gapt.proofs.context.State
+import gapt.proofs.context.update.{ ConstantDeclaration => ConstDecl }
 import gapt.utils.linearizeStrictPartialOrder
 
-case class PrimRecFun(
+case class PrimitiveRecursiveFunction(
     c:         Const,
     nArgs:     Int,
     recIdx:    Int,
@@ -69,9 +70,9 @@ object PrimitiveRecursiveFunctionValidator {
    * @return Returns unit if the definition is well-formed, otherwise
    *         an exception is thrown.
    */
-  def validate( input: PrimRecFun ): Unit = {
+  def validate( input: PrimitiveRecursiveFunction ): Unit = {
 
-    val PrimRecFun( c, nArgs, recIdx, equations ) = input
+    val PrimitiveRecursiveFunction( c, nArgs, recIdx, equations ) = input
     val typeVars: Set[TVar] = typeVariables( c.ty )
     val Const( name, FunctionType( _, argTypes ), _ ) = c
 
@@ -111,7 +112,7 @@ object PrimitiveRecursiveFunctionValidator {
   }
 }
 
-object PrimRecFun {
+object PrimitiveRecursiveFunction {
 
   /**
    * Constructs a primitive recursive function definition.
@@ -127,7 +128,7 @@ object PrimRecFun {
     constant:  Const,
     equations: Iterable[( Expr, Expr )] )(
     implicit
-    ctx: Context ): PrimRecFun = {
+    ctx: Context ): PrimitiveRecursiveFunction = {
 
     val ( arity, recIdx ) = equations.head._1 match {
       case Apps( _, args ) =>
@@ -142,7 +143,7 @@ object PrimRecFun {
     }
     val Some( recCtrs ) = ctx.getConstructors( argTys( recIdx ) )
 
-    PrimRecFun(
+    PrimitiveRecursiveFunction(
       constant, arity, recIdx, recCtrs.map( equationsByConst( _ ).head ) )
   }
 
@@ -159,7 +160,7 @@ object PrimRecFun {
   def apply(
     c: Const, equations: String* )(
     implicit
-    ctx: Context ): PrimRecFun = {
+    ctx: Context ): PrimitiveRecursiveFunction = {
     val temporaryContext = ctx + c
     apply( c, equations.map { parseEquation( c, _ )( temporaryContext ) } )
   }
@@ -171,12 +172,12 @@ case object PrimitiveRecursiveFunctions {
     rawDefinitions: Iterable[( Const, Iterable[( Expr, Expr )] )],
     dummy:          Unit                                          = Unit )(
     implicit
-    ctx: Context ): Iterable[PrimRecFun] = {
+    ctx: Context ): Iterable[PrimitiveRecursiveFunction] = {
 
-    val parsedDefinitions: Iterable[PrimRecFun] =
+    val parsedDefinitions: Iterable[PrimitiveRecursiveFunction] =
       rawDefinitions.map {
         case ( const, equations ) =>
-          PrimRecFun( const, equations )
+          PrimitiveRecursiveFunction( const, equations )
       }
 
     batch( parsedDefinitions )
@@ -185,26 +186,26 @@ case object PrimitiveRecursiveFunctions {
   def apply(
     rawDefinitions: Iterable[( Const, Seq[String] )] )(
     implicit
-    ctx: Context ): Iterable[PrimRecFun] = {
+    ctx: Context ): Iterable[PrimitiveRecursiveFunction] = {
 
     val parsingContext = ctx ++ rawDefinitions.map { d => ConstDecl( d._1 ) }
 
-    val parsedDefinitions: Iterable[PrimRecFun] =
+    val parsedDefinitions: Iterable[PrimitiveRecursiveFunction] =
       rawDefinitions.map {
         case ( const, equations ) =>
           ( const, equations.map { parseEquation( const, _ )( parsingContext ) } )
       }.map {
         case ( const, equations ) =>
-          PrimRecFun( const, equations )
+          PrimitiveRecursiveFunction( const, equations )
       }
 
     batch( parsedDefinitions )
   }
 
   private def batch(
-    parsedDefinitions: Iterable[PrimRecFun] )(
+    parsedDefinitions: Iterable[PrimitiveRecursiveFunction] )(
     implicit
-    ctx: Context ): Iterable[PrimRecFun] = {
+    ctx: Context ): Iterable[PrimitiveRecursiveFunction] = {
 
     val ordering = sortConstants(
       parsedDefinitions.map {
@@ -216,7 +217,7 @@ case object PrimitiveRecursiveFunctions {
   }
 
   private def sortDefinitions(
-    ordering: Iterable[Const], definitions: Iterable[PrimRecFun] ): Iterable[PrimRecFun] = {
+    ordering: Iterable[Const], definitions: Iterable[PrimitiveRecursiveFunction] ): Iterable[PrimitiveRecursiveFunction] = {
     ordering.map { constant => definitions.find( _.c == constant ).get }
   }
 

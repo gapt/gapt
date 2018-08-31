@@ -14,6 +14,7 @@ case class BaseTypes( baseTypes: Map[String, TBase] ) {
   }
   override def toString = baseTypes.toSeq.sortBy( _._1 ).map( _._2 ).mkString( ", " )
 }
+
 object BaseTypes {
   implicit val baseTypesFacet: Facet[BaseTypes] = Facet( BaseTypes( Map() ) )
 }

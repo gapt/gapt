@@ -13,7 +13,7 @@ import gapt.proofs.context.State
 import gapt.proofs.context.facet.BaseTypes
 
 /** Inductive base type with constructors. */
-case class InductiveType( ty: TBase, constructors: Vector[Const] ) extends TypeDef {
+case class InductiveType( ty: TBase, constructors: Vector[Const] ) extends TypeDefinition {
   val params: List[TVar] = ty.params.map( _.asInstanceOf[TVar] )
   for ( constr <- constructors ) {
     val FunctionType( ty_, _ ) = constr.ty

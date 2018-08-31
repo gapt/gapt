@@ -4,10 +4,10 @@ import gapt.expr.Const
 import gapt.expr.TVar
 import gapt.expr.typeVariables
 import gapt.proofs.context.Context
-import gapt.proofs.context.facet.Constants
 import gapt.proofs.context.State
+import gapt.proofs.context.facet.Constants
 
-case class ConstDecl( const: Const ) extends Update {
+case class ConstantDeclaration( const: Const ) extends Update {
   override def apply( ctx: Context ): State = {
     ctx.check( const.ty )
     for ( p <- const.params ) require( p.isInstanceOf[TVar] )

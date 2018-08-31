@@ -5,7 +5,7 @@ import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.context.Context
 import gapt.proofs.context.MutableContext
 import gapt.proofs.context.update.InductiveType
-import gapt.proofs.context.update.PrimRecFun
+import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
 import gapt.proofs.context.update.ProofDefinitionDeclaration
 import gapt.proofs.context.update.ProofNameDeclaration
 import gapt.proofs.context.update.Sort

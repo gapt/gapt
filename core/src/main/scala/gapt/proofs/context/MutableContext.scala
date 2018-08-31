@@ -14,7 +14,7 @@ import gapt.expr.hol.SkolemFunctions
 import gapt.expr.typeVariables
 import gapt.proofs.Sequent
 import gapt.proofs.context.facet.Definitions
-import gapt.proofs.context.update.SkolemFun
+import gapt.proofs.context.update.{ SkolemFunction => SkolemFun }
 import gapt.proofs.context.update.Sort
 import gapt.proofs.context.update.Update
 import gapt.proofs.lk.LKProof

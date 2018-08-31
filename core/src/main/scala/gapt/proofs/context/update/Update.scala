@@ -16,6 +16,7 @@ import gapt.expr.freeVariables
 import gapt.proofs.HOLSequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.State
+import gapt.proofs.context.update.{ ConstantDeclaration => ConstDecl }
 
 /**
  * Update of a context.

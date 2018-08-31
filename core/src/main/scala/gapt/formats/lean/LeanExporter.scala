@@ -6,7 +6,7 @@ import gapt.expr._
 import gapt.formats.ClasspathInputFile
 import gapt.proofs._
 import gapt.proofs.context.Context
-import gapt.proofs.context.update.ConstDecl
+import gapt.proofs.context.update.{ ConstantDeclaration => ConstDecl }
 import gapt.proofs.context.update.Sort
 import gapt.proofs.context.update.Update
 import gapt.proofs.lk.LKProof

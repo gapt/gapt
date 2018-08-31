@@ -16,7 +16,7 @@ import gapt.proofs.context.facet.Reductions
 import gapt.proofs.context.facet.StructurallyInductiveTypes
 import gapt.proofs.context.facet.BaseTypes
 import gapt.proofs.context.facet.Facet
-import gapt.proofs.context.update.ConstDecl
+import gapt.proofs.context.update.{ ConstantDeclaration => ConstDecl }
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.Sort
 import gapt.proofs.context.update.Update

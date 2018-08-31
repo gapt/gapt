@@ -3,7 +3,7 @@ package gapt.examples
 import gapt.expr._
 import gapt.proofs.Sequent
 import gapt.proofs.context.update.InductiveType
-import gapt.proofs.context.update.PrimRecFun
+import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
 import gapt.proofs.context.update.ProofDefinitionDeclaration
 import gapt.proofs.context.update.ProofNameDeclaration
 import gapt.proofs.gaptic._
