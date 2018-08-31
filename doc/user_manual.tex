@@ -1504,17 +1504,8 @@ GAPT currently supports JSON import and export of LK proofs and expansion proofs
 as well as all of their components such as formulas, sequents, indices, etc. For
 instance, this is how you export a sequent to JSON:
 \begin{clilisting}
-gapt> val s = JsonExporter(hos"A, B :- P(x)")
-s: String =
-{
-  "antecedent" : [
-    "A:o",
-    "B:o"
-  ],
-  "succedent" : [
-    "P(x): o"
-  ]
-}
+gapt> val s = JsonExporter(hos"A, B :- P(x)").render(80)
+s: String = {"antecedent" : ["A:o", "B:o"], "succedent" : ["P(x): o"]}
 
 \end{clilisting}
 To read the JSON string back into a sequent:
@@ -1556,7 +1547,7 @@ p3: gapt.proofs.lk.LKProof =
 [p2] B ⊢ B    (LogicalAxiom(B:o))
 [p1] A ⊢ A    (LogicalAxiom(A:o))
 
-gapt> val s = JsonExporter(p3)
+gapt> val s = JsonExporter(p3).render(80)
 s: String =
 {
   "4" : {
@@ -1566,14 +1557,8 @@ s: String =
     "rightSubProof" : 1,
     "aux2" : 0
   },
-  "1" : {
-    "name" : "LogicalAxiom",
-    "A" : "B:o"
-  },
-  "0" : {
-    "name" : "LogicalAxiom",
-    "A" : "A:o"
-  },
+  "1" : {"name" : "LogicalAxiom", "A" : "B:o"},
+  "0" : {"name" : "LogicalAxiom", "A" : "A:o"},
   "2" : {
     "name" : "AndRightRule",
     "leftSubProof" : 0,
@@ -1600,7 +1585,7 @@ You can export sequents as TPTP problems:
 gapt> val sequent = hos"p(0), !x (p(x) -> p(s(x))) :- p(s(s(0)))"
 sequent: gapt.proofs.HOLSequent = p(0), ∀x (p(x) → p(s(x))) ⊢ p(s(s(0)))
 
-gapt> TPTPFOLExporter(sequent)
+gapt> TptpFOLExporter(sequent)
 res23: gapt.formats.tptp.TptpFile =
 fof(ant_0, axiom, p('0')).
 fof(ant_1, axiom, ![X]: (p(X) => p(s(X)))).

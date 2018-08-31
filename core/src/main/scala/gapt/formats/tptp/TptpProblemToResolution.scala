@@ -4,7 +4,7 @@ import gapt.expr.hol.CNFp
 import gapt.proofs.Sequent
 import gapt.proofs.resolution.{ Input, ResolutionProof }
 
-object tptpProblemToResolution {
+object TptpProblemToResolution {
   def apply( tptpFile: TptpFile ): Set[ResolutionProof] =
     tptpFile.inputs.map {
       case AnnotatedFormula( "cnf", _, _, formula, _ ) =>

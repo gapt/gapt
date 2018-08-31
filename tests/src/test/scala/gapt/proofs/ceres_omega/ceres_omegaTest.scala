@@ -6,7 +6,7 @@ import gapt.expr.fol.replaceAbstractions
 import gapt.expr.hol.{ HOLOrdering, containsQuantifierOnLogicalLevel, freeHOVariables }
 import gapt.formats.ClasspathInputFile
 import gapt.formats.llk.{ ExtendedProofDatabase, LLKProofParser }
-import gapt.formats.tptp.TPTPFOLExporter
+import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.ceres._
 import gapt.proofs.lk.{ AtomicExpansion, CutRule, eliminateDefinitions, LKProof, LKToExpansionProof, regularize, skolemizeLK }
 import gapt.proofs._
@@ -101,11 +101,11 @@ class ceres_omegaTest extends Specification with SequentMatchers {
       abspcss.map( x => info( x.toString ) )
       info( "=== projection replacement terms ===" )
       pqs.map( x => info( x._2 + " -> " + x._1 ) )
-      info( TPTPFOLExporter.tptp_problem( abspcss.asInstanceOf[List[HOLClause]] ).toString )
+      info( TptpFOLExporter.tptpProblem( abspcss.asInstanceOf[List[HOLClause]] ).toString )
 
       info( "=== computed css ===" )
       abscss.map( x => info( x.toString ) )
-      info( TPTPFOLExporter.tptp_problem( abscss.asInstanceOf[List[HOLClause]] ).toString )
+      info( TptpFOLExporter.tptpProblem( abscss.asInstanceOf[List[HOLClause]] ).toString )
 
       info( "=== css replacement terms ===" )
       cqs.map( x => info( x._2 + " -> " + x._1 ) )

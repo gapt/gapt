@@ -3,7 +3,7 @@ package gapt.integration_tests
 import gapt.expr.{ Eq, Expr, FOLAtom }
 import gapt.proofs.{ Context, HOLSequent, SequentMatchers }
 import gapt.proofs.lk._
-import gapt.formats.tptp.TPTPFOLExporter
+import gapt.formats.tptp.TptpFOLExporter
 import gapt.provers.escargot.Escargot
 import gapt.formats.llk.LatexLLKExporter
 import gapt.proofs.ceres.{ deleteTautologies, _ }
@@ -28,7 +28,7 @@ class TapeTest extends Specification with SequentMatchers {
       //      println( cs_.size )
       val cs = deleteTautologies( cs_ )
       //      cs.map( x => println( s"Clause: $x" ) )
-      val tptp = TPTPFOLExporter.tptp_problem( cs.toList )
+      val tptp = TptpFOLExporter.tptpProblem( cs.toList )
       //      println( s"tptp string:\n$tptp" )
       //      val writer = new java.io.FileWriter( "target" + separator + "tape-cs.tptp" )
       //      writer.write( tptp.toString )

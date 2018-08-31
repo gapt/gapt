@@ -2,7 +2,7 @@ package gapt.examples
 
 import gapt.expr._
 import gapt.expr.hol.universalClosure
-import gapt.formats.tptp.TPTPFOLExporter
+import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.ceres.{ CharacteristicClauseSet, extractStruct }
 import gapt.proofs.lk.{ AtomicExpansion, LKToExpansionProof }
 import gapt.proofs.reduction._
@@ -28,7 +28,7 @@ object ReductionDemo extends Script {
       ErasureReductionCNF
 
   val ( redSeq, back ) = reduction forward sequent
-  println( TPTPFOLExporter( redSeq ) )
+  println( TptpFOLExporter( redSeq ) )
   println()
   var Some( res ) = Vampire getResolutionProof redSeq
   var res_ = back( simplifyResolutionProof( eliminateSplitting( res ) ) )

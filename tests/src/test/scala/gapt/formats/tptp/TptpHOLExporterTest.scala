@@ -3,7 +3,7 @@ package gapt.formats.tptp
 import gapt.expr._
 import org.specs2.mutable._
 
-class TPTPHOLExporterTest extends Specification {
+class TptpHOLExporterTest extends Specification {
   "Export to TPTP thf" should {
     "handle atoms correctly" in {
       val x = Var( "x", Ti ->: To )

@@ -5,7 +5,7 @@ import java.io.{ IOException, StringReader }
 import gapt.expr.{ All, Eq, Substitution, TermReplacement }
 import gapt.expr.hol.universalClosure
 import gapt.formats.leancop.LeanCoPParser
-import gapt.formats.tptp.TPTPFOLExporter
+import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.{ Context, HOLClause, HOLSequent, MutableContext, Sequent }
 import gapt.proofs.expansion.{ ETWeakQuantifierBlock, ExpansionProof, ExpansionProofToLK, ExpansionSequent }
 import gapt.proofs.lk.LKProof
@@ -27,7 +27,7 @@ class LeanCoP extends OneShotProver with ExternalProgram {
     for ( ( _, clause ) <- cnf if clause.isProof ) return Some( ResolutionToExpansionProof( clause ) )
 
     renameConstantsToFi.wrap( cnf.keys ++: Sequent() )( ( renaming, sequent: HOLSequent ) => {
-      val tptp = TPTPFOLExporter( sequent ).toString
+      val tptp = TptpFOLExporter( sequent ).toString
       ( withTempFile.fromString( tptp ) { leanCoPInput =>
         runProcess.withExitValue( Seq( "leancop", leanCoPInput.toString ) )
       }: @unchecked ) match {

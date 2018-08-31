@@ -2,7 +2,7 @@ package gapt.formats.tptp
 
 import gapt.expr._
 
-object tptpToString {
+object TptpToString {
 
   def tptpInput( input: TptpInput ): String = input match {
     case AnnotatedFormula( language, name, role, formula, annots ) =>
