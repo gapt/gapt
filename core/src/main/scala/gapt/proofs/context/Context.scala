@@ -362,7 +362,7 @@ object Context {
     Notation.Infix( "=", EqC, Precedence.infixRel ),
     Notation.Infix( "!=", Notation.NeqName, Precedence.infixRel ) )
 
-  object parseEquation {
+  object parseDefinitionalEquations {
 
     def apply(
       c: Const, equation: String )( implicit ctx: Context ): ( Expr, Expr ) = {
