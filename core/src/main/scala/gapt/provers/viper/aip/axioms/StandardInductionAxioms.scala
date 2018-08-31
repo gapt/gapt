@@ -8,7 +8,7 @@ import gapt.provers.viper.aip._
 import cats.instances.all._
 import cats.syntax.all._
 import gapt.proofs.context.Context
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 
 object StandardInductionAxioms {
   def apply( variable: Var, formula: Formula )( implicit ctx: MutableContext ): ThrowsError[Axiom] = {

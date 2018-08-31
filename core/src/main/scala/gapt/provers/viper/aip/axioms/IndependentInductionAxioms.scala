@@ -2,11 +2,11 @@ package gapt.provers.viper.aip.axioms
 
 import gapt.expr.{ All, Formula, Var, freeVariables }
 import gapt.proofs.gaptic._
-import gapt.proofs.{ Sequent }
+import gapt.proofs.Sequent
 import gapt.provers.viper.aip._
 import cats.instances.all._
 import cats.syntax.all._
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 
 /**
  * Generates independent induction axioms.

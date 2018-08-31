@@ -2,9 +2,9 @@ package gapt.proofs.gaptic
 
 import gapt.expr._
 import gapt.formats.babel.BabelSignature
-import gapt.proofs.context.MutableContext
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.ProofDeclaration
 import gapt.proofs.lk._
 import gapt.utils.Maybe

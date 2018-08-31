@@ -3,7 +3,7 @@ package gapt.provers.escargot.impl
 import gapt.expr._
 import gapt.expr.hol.universalClosure
 import gapt.models.PropositionalModel
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.{ HOLClause, HOLSequent, Sequent }
 import gapt.proofs.resolution._
 import gapt.provers.escargot.{ LPO, TermOrdering }

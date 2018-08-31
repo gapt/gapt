@@ -9,7 +9,7 @@ import gapt.grammars.{ InductionGrammar, findMinimalInductionGrammar }
 import gapt.grammars.InductionGrammar.Production
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.StructurallyInductiveTypes
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, freeVariablesET, minimalExpansionSequent }
 import gapt.proofs.gaptic.Tactical1
 import gapt.proofs.lk.{ EquationalLKProver, LKProof }

@@ -1,7 +1,7 @@
 package gapt.expr.hol
 
 import gapt.expr._
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 
 object skolemize {
 

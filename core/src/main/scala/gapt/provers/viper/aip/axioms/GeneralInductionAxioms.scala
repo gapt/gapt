@@ -5,7 +5,7 @@ import gapt.proofs.Sequent
 import gapt.provers.viper.aip._
 import cats.instances.all._
 import cats.syntax.all._
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 
 case class GeneralInductionAxioms(
     vsel: VariableSelector = allVariablesSelector( _ )( _ ),

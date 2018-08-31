@@ -2,7 +2,7 @@ package gapt.provers.viper.aip
 
 import gapt.expr._
 import gapt.proofs.Sequent
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.lk.LKProof
 import gapt.provers.viper.aip.axioms.GeneralInductionAxioms

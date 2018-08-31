@@ -11,7 +11,7 @@ import gapt.provers._
 import gapt.expr._
 import gapt.formats.smt.SmtLibExporter
 import gapt.proofs.context.Context
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.lk.LKProof
 
 object VeriT extends VeriT

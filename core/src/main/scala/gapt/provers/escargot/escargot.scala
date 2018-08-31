@@ -9,7 +9,7 @@ import gapt.provers.{ ResolutionProver, groundFreeVariables }
 import gapt.provers.escargot.impl.{ EscargotLogger, EscargotState, StandardInferences }
 import gapt.utils.{ LogHandler, Maybe }
 import ammonite.ops._
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 
 object Escargot extends Escargot( splitting = true, equality = true, propositional = false ) {
   def lpoHeuristic( cnf: Traversable[HOLSequent], extraConsts: Iterable[Const] ): LPO = {

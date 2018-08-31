@@ -3,7 +3,7 @@ package gapt.proofs.lk
 import gapt.expr._
 import gapt.proofs.SequentConnector
 import gapt.proofs.context.facet.ProofNames
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.ProofDefinitionDeclaration
 import gapt.proofs.context.update.ProofNameDeclaration
 

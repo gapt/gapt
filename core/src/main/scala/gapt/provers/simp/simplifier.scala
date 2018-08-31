@@ -6,7 +6,7 @@ import gapt.proofs.lk._
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, formulaToExpansionTree }
 import gapt.proofs.gaptic.{ OpenAssumption, Tactic, TacticFailure, Tactical1 }
 import gapt.provers.OneShotProver

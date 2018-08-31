@@ -5,8 +5,8 @@ import gapt.formats.babel.BabelSignature
 import gapt.proofs._
 import gapt.proofs.context
 import gapt.proofs.context.Context
-import gapt.proofs.context.MutableContext
 import gapt.proofs.context.facet.ProofNames
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.gaptic.tactics._
 import gapt.proofs.lk._
 import gapt.provers.Prover

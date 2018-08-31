@@ -6,7 +6,7 @@ import gapt.proofs.Clause
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
 import gapt.proofs.SequentMatchers
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 import gapt.utils.SatMatchers
 import org.specs2.mutable._
 

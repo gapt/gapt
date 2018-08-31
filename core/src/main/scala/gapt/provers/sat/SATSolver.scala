@@ -5,7 +5,7 @@ import gapt.expr.{ Formula, HOLAtomConst }
 import gapt.formats.dimacs.{ DIMACS, DIMACSEncoding }
 import gapt.models.PropositionalModel
 import gapt.proofs.context.Context
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.lk.LKProof
 import gapt.proofs.resolution.{ Factor, Input, ResolutionProof }
 import gapt.proofs.rup.RupProof

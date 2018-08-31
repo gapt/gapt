@@ -2,11 +2,11 @@ package gapt.provers.viper.aip.axioms
 
 import gapt.expr.{ All, Eq, Ex, Formula, FunctionType, Or, TBase, Var, rename, Const => Con }
 import gapt.proofs.gaptic.{ ProofState, allR, escargot, induction }
-import gapt.proofs.{ Sequent }
+import gapt.proofs.Sequent
 import gapt.provers.viper.aip.{ LabelledSequent, ThrowsError, getConstructors }
 import cats.instances.all._
 import cats.syntax.all._
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 
 case class DomainClosureAxioms( types: List[TBase] = Nil ) extends AxiomFactory {
 

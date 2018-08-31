@@ -3,7 +3,7 @@ package gapt.proofs
 import gapt.expr._
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.context.Context
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
 import gapt.proofs.context.update.ProofDefinitionDeclaration

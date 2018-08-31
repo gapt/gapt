@@ -13,7 +13,7 @@ import gapt.formats.tptp.{ TptpParser, resolveIncludes }
 import gapt.formats.verit.VeriTParser
 import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.ceres._
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion._
 import gapt.proofs.gaptic.{ ProofState, now }
 import gapt.proofs.lk._

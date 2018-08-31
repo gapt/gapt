@@ -5,7 +5,7 @@ import gapt.formats.babel.Notation
 import gapt.formats.babel.Precedence
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic._
 import org.specs2.mutable.Specification

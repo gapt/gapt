@@ -2,7 +2,7 @@ package gapt.proofs.resolution
 
 import gapt.expr._
 import gapt.proofs.context.Context
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.proofs.expansion._
 import gapt.provers.sat.Sat4j

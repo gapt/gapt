@@ -8,7 +8,7 @@ import gapt.utils.quiet
 import ExpansionProofToLK._
 import gapt.expr.hol.instantiate
 import gapt.proofs.context.Context
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 
 import scala.collection.mutable
 

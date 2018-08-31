@@ -6,7 +6,7 @@ import gapt.expr._
 import gapt.expr.hol.existentialClosure
 import gapt.formats.babel.BabelParser
 import gapt.proofs.Sequent
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 import org.specs2.mutable._
 
 class EscargotTest extends Specification {

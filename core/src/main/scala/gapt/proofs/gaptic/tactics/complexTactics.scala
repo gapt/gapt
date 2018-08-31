@@ -13,7 +13,7 @@ import gapt.provers.viper.aip.AnalyticInductionProver
 import gapt.provers.viper.aip.axioms._
 import cats.syntax.all._
 import gapt.proofs.context.Context
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 
 /**
  * Performs backwards chaining:

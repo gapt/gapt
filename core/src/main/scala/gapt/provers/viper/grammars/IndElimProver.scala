@@ -3,7 +3,7 @@ package gapt.provers.viper.grammars
 import gapt.expr._
 import gapt.expr.hol.containsStrongQuantifier
 import gapt.proofs.context.Context
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion.ExpansionProof
 import gapt.proofs.{ HOLSequent, Sequent, Suc }
 import gapt.proofs.lk.{ LKProof, LKToExpansionProof, instanceProof, normalizeLKt, skolemizeLK }

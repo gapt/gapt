@@ -8,7 +8,7 @@ import gapt.expr.hol.isAtom
 import gapt.formats.ClasspathInputFile
 import gapt.formats.llk._
 import gapt.proofs.context.Context
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.Sort
 import gapt.proofs.lk.{ CutRule, cutNormal }
 import gapt.proofs.{ Sequent, SequentMatchers, gaptic }

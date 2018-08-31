@@ -4,11 +4,11 @@ import gapt.expr.{ All, Eq, Formula, Or, Var, freeVariables }
 import gapt.formats.tip.{ TipConstructor, TipDatatype }
 import gapt.proofs.gaptic.{ ProofState, allR, escargot, forget, induction, orR, repeat }
 import gapt.proofs.lk.LKProof
-import gapt.proofs.{ Sequent }
+import gapt.proofs.Sequent
 import gapt.provers.viper.aip.{ LabelledSequent, ThrowsError }
 import cats.instances.all._
 import cats.syntax.all._
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 
 case class TipDomainClosureAxioms( types: List[TipDatatype] = Nil ) extends AxiomFactory {
 

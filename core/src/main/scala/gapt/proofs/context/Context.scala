@@ -16,6 +16,8 @@ import gapt.proofs.context.facet.Reductions
 import gapt.proofs.context.facet.StructurallyInductiveTypes
 import gapt.proofs.context.facet.BaseTypes
 import gapt.proofs.context.facet.Facet
+import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.context.mutable.ReadonlyMutableContext
 import gapt.proofs.context.update.{ ConstantDeclaration => ConstDecl }
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.Sort
@@ -170,11 +172,11 @@ trait Context extends BabelSignature {
     } yield ctrs.map( subst( _ ).asInstanceOf[Const] )
 
   /**
-    * Checks whether the given base type is defined in this context.
-    *
-    * @param ty The base type that is to be checked.
-    * @return `true` if `ty` is defined in this context, `false` otherwise.
-    */
+   * Checks whether the given base type is defined in this context.
+   *
+   * @param ty The base type that is to be checked.
+   * @return `true` if `ty` is defined in this context, `false` otherwise.
+   */
   def isType( ty: TBase ): Boolean = (
     for {
       declT <- get[BaseTypes].baseTypes.get( ty.name )
@@ -182,14 +184,14 @@ trait Context extends BabelSignature {
     } yield () ).isDefined
 
   /**
-    * Looks up the definition of a constant.
-    *
-    * @param c The constant with type arguments `args` whose definition is to
-    * be looked up.
-    * @return If the constant `c` has a definition, then `Some( definition )`
-    * is returned where `definition` is obtained from the definition of `c` by
-    * instantiating the type variables according to args.
-    */
+   * Looks up the definition of a constant.
+   *
+   * @param c The constant with type arguments `args` whose definition is to
+   * be looked up.
+   * @return If the constant `c` has a definition, then `Some( definition )`
+   * is returned where `definition` is obtained from the definition of `c` by
+   * instantiating the type variables according to args.
+   */
   def definition( c: Const ): Option[Expr] =
     for {
       defC <- get[Constants].constants.get( c.name )
@@ -198,119 +200,118 @@ trait Context extends BabelSignature {
     } yield subst( defn )
 
   /**
-    * Retrieves all expression-level reduction rules.
-    *
-    * @return Returns all the expression-level reduction rules currently stored
-    * in this context.
-    */
+   * Retrieves all expression-level reduction rules.
+   *
+   * @return Returns all the expression-level reduction rules currently stored
+   * in this context.
+   */
   def reductionRules: Iterable[ReductionRule] = state.getAll[ReductionRule]
 
   /**
-    * Checks whether the context contains a given definition.
-    *
-    * @param defn The definition that is to be checked.
-    * @return Returns `true` if the given definition is an instance of a
-    * definition stored in this context.
-    */
+   * Checks whether the context contains a given definition.
+   *
+   * @param defn The definition that is to be checked.
+   * @return Returns `true` if the given definition is an instance of a
+   * definition stored in this context.
+   */
   def contains( defn: Definition ): Boolean =
     definition( defn.what ).contains( defn.by )
 
   /**
-    * Retrieves the skolem definition of a constant.
-    *
-    * @param skSym The constant whose definition is to be looked up.
-    * @return Returns `Some(definition)` if the constant `skSym` is a skolem
-    * function with definition `definition`.
-    */
+   * Retrieves the skolem definition of a constant.
+   *
+   * @param skSym The constant whose definition is to be looked up.
+   * @return Returns `Some(definition)` if the constant `skSym` is a skolem
+   * function with definition `definition`.
+   */
   def skolemDef( skSym: Const ): Option[Expr] =
     get[SkolemFunctions].skolemDefs.get( skSym )
 
   /**
-    * Applies an update to this context.
-    *
-    * @param update The update to be applied to this context.
-    * @return An immutable context obtained by converting this context to an
-    * immutable context and by applying the update to that context.
-    */
+   * Applies an update to this context.
+   *
+   * @param update The update to be applied to this context.
+   * @return An immutable context obtained by converting this context to an
+   * immutable context and by applying the update to that context.
+   */
   def +( update: Update ): ImmutableContext =
     toImmutable + update
 
   /**
-    * The context's normalizer.
-    *
-    * @return The context's normalizer.
-    */
+   * The context's normalizer.
+   *
+   * @return The context's normalizer.
+   */
   def normalizer = get[Reductions].normalizer
 
   /**
-    * Normalizes an expression.
-    *
-    * @param expression The expression to be normalized.
-    * @return An expression obtained by normalizing `expression` according to
-    * the reduction rules currently stored in this context.
-    */
+   * Normalizes an expression.
+   *
+   * @param expression The expression to be normalized.
+   * @return An expression obtained by normalizing `expression` according to
+   * the reduction rules currently stored in this context.
+   */
   def normalize( expression: Expr ): Expr =
     normalizer.normalize( expression )
 
   /**
-    * Reduces an expression to WHNF.
-    *
-    * @param expression The expression to be reduced to WHNF.
-    * @return An expression reduced to WHNF according to the reduction rules
-    * currently stored in this context.
-    */
+   * Reduces an expression to WHNF.
+   *
+   * @param expression The expression to be reduced to WHNF.
+   * @return An expression reduced to WHNF according to the reduction rules
+   * currently stored in this context.
+   */
   def whnf( expression: Expr ): Expr =
     normalizer.whnf( expression )
 
   /**
-    * Checks if two expressions normalize to the same expression.
-    *
-    * @param a An expression to be checked.
-    * @param b An expression to be checked.
-    * @return Returns `true` if and only if `a` and `b` normalize to the same
-    * expression in this context.
-    */
+   * Checks if two expressions normalize to the same expression.
+   *
+   * @param a An expression to be checked.
+   * @param b An expression to be checked.
+   * @return Returns `true` if and only if `a` and `b` normalize to the same
+   * expression in this context.
+   */
   def isDefEq( a: Expr, b: Expr ): Boolean =
     normalizer.isDefEq( a, b )
 
-
   /**
-    * Checks an object with respect to this context.
-    *
-    * This method checks whether a given object is correctly constructed
-    * according to this context. For example for a type to check against a
-    * context the base types occurring in that type must all be declared in the
-    * context.
-    *
-    * @param t The object to be checked.
-    * @tparam T The type of object to be checked.
-    */
+   * Checks an object with respect to this context.
+   *
+   * This method checks whether a given object is correctly constructed
+   * according to this context. For example for a type to check against a
+   * context the base types occurring in that type must all be declared in the
+   * context.
+   *
+   * @param t The object to be checked.
+   * @tparam T The type of object to be checked.
+   */
   def check[T: Checkable]( t: T ): Unit =
     implicitly[Checkable[T]].check( t )( this )
 
   /**
-    * Applies several updates to the context.
-    *
-    * @param updates The updates to be applied to the context.
-    * @return An immutable context obtained by applying iteratively applying
-    * the updates from left to right.
-    */
+   * Applies several updates to the context.
+   *
+   * @param updates The updates to be applied to the context.
+   * @return An immutable context obtained by applying iteratively applying
+   * the updates from left to right.
+   */
   def ++( updates: Traversable[Update] ): ImmutableContext =
     updates.foldLeft( toImmutable )( _ + _ )
 
   /**
-    * Retrieves all the names declared in this context.
-    *
-    * @return All the names currently declared in this context.
-    */
+   * Retrieves all the names declared in this context.
+   *
+   * @return All the names currently declared in this context.
+   */
   def names: Iterable[String] = constants.map( _.name ) ++ get[BaseTypes].baseTypes.keySet
 
   /**
-    * Creates a new name generator for this context.
-    *
-    * @return A new name generator that avoids all the names currently defined
-    * in the context.
-    */
+   * Creates a new name generator for this context.
+   *
+   * @return A new name generator that avoids all the names currently defined
+   * in the context.
+   */
   def newNameGenerator: NameGenerator = new NameGenerator( names )
 
   def signatureLookup( s: String ): BabelSignature.VarConst =

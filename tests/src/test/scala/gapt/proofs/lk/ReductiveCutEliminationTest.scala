@@ -2,7 +2,7 @@ package gapt.proofs.lk
 
 import gapt.expr._
 import gapt.proofs.context.Context
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic.{ Lemma, OpenAssumption, allL, andL, axiomLog, cut, impL, insert }
 import gapt.proofs.lk.reductions._

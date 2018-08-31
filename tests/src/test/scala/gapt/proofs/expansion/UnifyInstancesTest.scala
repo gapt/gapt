@@ -1,8 +1,8 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
-import gapt.proofs.context.MutableContext
 import gapt.proofs.Sequent
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 import gapt.proofs.lk.LKToExpansionProof

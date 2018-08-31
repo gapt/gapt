@@ -1,4 +1,4 @@
-package gapt.proofs.context
+package gapt.proofs.context.mutable
 
 import gapt.expr.Abs
 import gapt.expr.Const
@@ -13,10 +13,13 @@ import gapt.expr.containedNames
 import gapt.expr.hol.SkolemFunctions
 import gapt.expr.typeVariables
 import gapt.proofs.Sequent
+import gapt.proofs.context.Context
+import gapt.proofs.context.ImmutableContext
+import gapt.proofs.context.State
 import gapt.proofs.context.facet.Definitions
-import gapt.proofs.context.update.{ SkolemFunction => SkolemFun }
 import gapt.proofs.context.update.Sort
 import gapt.proofs.context.update.Update
+import gapt.proofs.context.update.{ SkolemFunction => SkolemFun }
 import gapt.proofs.lk.LKProof
 import gapt.proofs.resolution.ResolutionProof
 

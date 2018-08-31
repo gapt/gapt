@@ -5,10 +5,10 @@ import gapt.expr._
 import gapt.expr.fol.Numeral
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.grammars.RecursionScheme
-import gapt.proofs.context.MutableContext
 import gapt.proofs.gaptic._
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.Sort
 import gapt.utils.SatMatchers

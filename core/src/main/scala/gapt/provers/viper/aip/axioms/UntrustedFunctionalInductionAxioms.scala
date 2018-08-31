@@ -3,7 +3,7 @@ import gapt.expr._
 import gapt.expr.fol.folSubTerms
 import gapt.expr.hol.{ instantiate, universalClosure }
 import gapt.proofs.context.Context
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.lk.{ LKProof, ProofLink }
 import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.provers.viper.aip.{ LabelledSequent, ThrowsError }

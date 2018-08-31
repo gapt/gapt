@@ -7,7 +7,7 @@ import gapt.grammars._
 import gapt.grammars.reforest.Reforest
 import gapt.proofs._
 import gapt.proofs.context.Context
-import gapt.proofs.context.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion._
 import gapt.proofs.lk._
 import gapt.proofs.resolution.{ ResolutionProof, ResolutionToExpansionProof, containsEquationalReasoning }

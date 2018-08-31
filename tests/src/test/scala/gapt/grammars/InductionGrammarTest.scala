@@ -2,8 +2,8 @@ package gapt.grammars
 
 import gapt.expr._
 import gapt.grammars.InductionGrammar.Production
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.InductiveType
-import gapt.proofs.context.MutableContext
 import gapt.utils.SatMatchers
 import org.specs2.mutable.Specification
 
