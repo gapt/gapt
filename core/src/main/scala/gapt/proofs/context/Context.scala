@@ -332,7 +332,7 @@ object Context {
   def apply( updates: Traversable[Update] ): ImmutableContext =
     empty ++ updates
 
-  val default = empty ++ Seq(
+  val default: ImmutableContext = empty ++ Seq(
     InductiveType( To, Top(), Bottom() ),
     Notation.Alias( "true", TopC ), Notation.Alias( "⊤", TopC ),
     Notation.Alias( "false", BottomC ), Notation.Alias( "⊥", BottomC ),
