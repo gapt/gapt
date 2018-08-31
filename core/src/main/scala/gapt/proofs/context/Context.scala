@@ -17,7 +17,7 @@ import gapt.proofs.context.facet.StructurallyInductiveTypes
 import gapt.proofs.context.facet.BaseTypes
 import gapt.proofs.context.facet.Facet
 import gapt.proofs.context.mutable.MutableContext
-import gapt.proofs.context.mutable.ReadonlyMutableContext
+import gapt.proofs.context.mutable.ReadOnlyMutableContext
 import gapt.proofs.context.update.{ ConstantDeclaration => ConstDecl }
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.Sort
@@ -92,7 +92,7 @@ trait Context extends BabelSignature {
    * @return A new read-only context that is equal to this context at the time
    * of invoking this method.
    */
-  def toReadonly: ReadonlyMutableContext = new ReadonlyMutableContext( toImmutable )
+  def toReadonly: ReadOnlyMutableContext = newMutable
 
   /**
    * Retrieves a facet of this context.

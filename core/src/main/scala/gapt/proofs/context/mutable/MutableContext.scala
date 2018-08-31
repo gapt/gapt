@@ -23,7 +23,11 @@ import gapt.proofs.context.update.{ SkolemFunction => SkolemFun }
 import gapt.proofs.lk.LKProof
 import gapt.proofs.resolution.ResolutionProof
 
-class MutableContext( private var ctx_ :ImmutableContext ) extends Context {
+class MutableContext(
+    private var ctx_ :ImmutableContext ) extends Context
+  with ReadOnlyMutableContext
+  with WriteOnlyMutableContext {
+
   override def state: State = ctx.state
   override def updates: List[Update] = ctx.updates
   override def toImmutable: ImmutableContext = ctx
