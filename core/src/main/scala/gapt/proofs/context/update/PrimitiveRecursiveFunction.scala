@@ -13,7 +13,7 @@ import gapt.expr.Var
 import gapt.expr.fol.folSubTerms
 import gapt.expr.typeVariables
 import gapt.proofs.context.Context
-import gapt.proofs.context.Context.parseDefinitionalEquations
+import gapt.proofs.context.parseDefinitionalEquation
 import gapt.proofs.context.State
 import gapt.proofs.context.facet.Constants
 import gapt.proofs.context.facet.Reductions
@@ -162,7 +162,7 @@ object PrimitiveRecursiveFunction {
     implicit
     ctx: Context ): PrimitiveRecursiveFunction = {
     val temporaryContext = ctx + c
-    apply( c, equations.map { parseDefinitionalEquations( c, _ )( temporaryContext ) } )
+    apply( c, equations.map { parseDefinitionalEquation( c, _ )( temporaryContext ) } )
   }
 }
 
@@ -193,7 +193,7 @@ case object PrimitiveRecursiveFunctions {
     val parsedDefinitions: Iterable[PrimitiveRecursiveFunction] =
       rawDefinitions.map {
         case ( const, equations ) =>
-          ( const, equations.map { parseDefinitionalEquations( const, _ )( parsingContext ) } )
+          ( const, equations.map { parseDefinitionalEquation( const, _ )( parsingContext ) } )
       }.map {
         case ( const, equations ) =>
           PrimitiveRecursiveFunction( const, equations )

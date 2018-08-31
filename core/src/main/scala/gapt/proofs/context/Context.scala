@@ -362,20 +362,6 @@ object Context {
     Notation.Infix( "=", EqC, Precedence.infixRel ),
     Notation.Infix( "!=", Notation.NeqName, Precedence.infixRel ) )
 
-  object parseDefinitionalEquations {
-
-    def apply(
-      c: Const, equation: String )( implicit ctx: Context ): ( Expr, Expr ) = {
-      BabelParser.tryParse(
-        equation,
-        p => preExpr.TypeAnnotation( p, preExpr.Bool ) )
-        .fold( throw _, identity ) match {
-          case Eq( lhs @ Apps( c_, _ ), rhs ) =>
-            syntacticMatching( c_, c ).get( lhs -> rhs )
-        }
-    }
-  }
-
   def guess( exprs: Traversable[Expr] ): ImmutableContext = {
     val names = exprs.view.flatMap( containedNames( _ ) ).toSet
     val tys = names.flatMap( c => baseTypes( c.ty ) )
