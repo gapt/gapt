@@ -1,6 +1,6 @@
 package gapt.proofs.context.mutable
 
-import gapt.proofs.context.ImmutableContext
+import gapt.proofs.context.immutable.ImmutableContext
 
 trait ReadOnlyMutableContext {
 

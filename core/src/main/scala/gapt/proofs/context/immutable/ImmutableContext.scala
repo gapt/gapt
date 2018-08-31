@@ -1,5 +1,7 @@
-package gapt.proofs.context
+package gapt.proofs.context.immutable
 
+import gapt.proofs.context.Context
+import gapt.proofs.context.State
 import gapt.proofs.context.update.Update
 
 class ImmutableContext private ( val state: State, val updates: List[Update] ) extends Context {

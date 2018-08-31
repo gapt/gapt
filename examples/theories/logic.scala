@@ -11,8 +11,8 @@ import gapt.utils.LogHandler
 import cats.{ Eval, Later }
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames
+import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.update.{ SkolemFunction => SkolemFun }
-import gapt.proofs.context.ImmutableContext
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
 import gapt.proofs.context.update.ProofDefinitionDeclaration

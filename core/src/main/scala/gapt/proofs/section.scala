@@ -1,7 +1,7 @@
 package gapt.proofs
 
 import gapt.expr._
-import gapt.proofs.context.ImmutableContext
+import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.{ ConstantDeclaration => ConstDecl }
 import gapt.proofs.context.update.{ SkolemFunction => SkolemFun }

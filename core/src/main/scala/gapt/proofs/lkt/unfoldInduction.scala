@@ -2,7 +2,7 @@ package gapt.proofs.lkt
 
 import gapt.expr._
 import gapt.proofs.context.Context
-import gapt.proofs.context.ImmutableContext
+import gapt.proofs.context.immutable.ImmutableContext
 import gapt.provers.simp.{ SimpEqResult, Simplifier }
 
 trait SimpAdapter {

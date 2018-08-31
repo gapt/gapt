@@ -2,7 +2,7 @@ package gapt.proofs.context.mutable
 
 import gapt.expr.Const
 import gapt.expr.Expr
-import gapt.proofs.context.ImmutableContext
+import gapt.proofs.context.immutable.ImmutableContext
 
 trait WriteOnlyMutableContext {
 

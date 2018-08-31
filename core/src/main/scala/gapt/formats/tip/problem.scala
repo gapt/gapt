@@ -2,9 +2,9 @@ package gapt.formats.tip
 
 import gapt.expr._
 import gapt.expr.hol.{ existentialClosure, universalClosure }
-import gapt.proofs.context.ImmutableContext
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
+import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.update.InductiveType
 
 case class TipConstructor( constr: Const, projectors: Seq[Const] ) {

@@ -1,7 +1,7 @@
 package gapt.proofs.gaptic
 
 import gapt.proofs.context.Context
-import gapt.proofs.context.ImmutableContext
+import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.mutable.MutableContext
 
 class TacticsProof0( initialContext: ImmutableContext ) {
