@@ -8,31 +8,27 @@ import gapt.formats.babel.Notation
 import gapt.formats.babel.Notations
 import gapt.formats.babel.Precedence
 import gapt.proofs.Checkable
-import gapt.proofs.HOLSequent
-import gapt.proofs.SequentConnector
+import gapt.proofs.context.facet.BaseTypes
 import gapt.proofs.context.facet.Constants
 import gapt.proofs.context.facet.Definitions
+import gapt.proofs.context.facet.Facet
 import gapt.proofs.context.facet.Reductions
 import gapt.proofs.context.facet.StructurallyInductiveTypes
-import gapt.proofs.context.facet.BaseTypes
-import gapt.proofs.context.facet.Facet
 import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.mutable.ReadOnlyMutableContext
-import gapt.proofs.context.update.{ ConstantDeclaration => ConstDecl }
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.Sort
 import gapt.proofs.context.update.Update
-import gapt.proofs.lk.LKProof
-import gapt.proofs.lk.ProofLink
+import gapt.proofs.context.update.{ ConstantDeclaration => ConstDecl }
 import gapt.utils.NameGenerator
 
 /**
  * Captures constants, types, definitions, and background theory used in a proof.
  *
- * Each of these different kinds of information is stored in a separate [[Context.Facet]]
+ * Each of these different kinds of information is stored in a separate [[facet.Facet]]
  * of the context.  Each modification or addition to the context is recorded as
- * an [[Context.Update]].  Adding information is only possible by adding it as an [[Context.Update]].
+ * an [[update.Update]].  Adding information is only possible by adding it as an [[update.Update]].
  * (Basically a Context is an extensible LCF-style kernel.)
  *
  * There are several inferences in our LK proofs for which it is not enough that are
