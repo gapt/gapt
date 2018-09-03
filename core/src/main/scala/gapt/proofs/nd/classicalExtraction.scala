@@ -107,8 +107,8 @@ object ClassicalExtraction {
     val bar = hoc"bar{?a ?b ?c}: (?a > ?c) > (?b > ?c) > ?c"
     systemT += bar
 
-    //val bar2 = hoc"bar2{?x ?a ?b ?c}: (?x > o) > (?a > ?c) > (?b > ?c) > ?c"
-    val bar2 = hoc"bar2{?x ?a ?c}: (?x > o) > (?a > ?c) > (?c) > ?c"
+    val bar2 = hoc"bar2{?x ?a ?c}: (?x > o) > (?a > ?c) > ((?a > exn) > ?c) > ?c"
+    //val bar2 = hoc"bar2{?x ?a ?c}: (?x > o) > (?a > ?c) > (?c) > ?c"
     systemT += bar2
 
     val bar3 = hoc"bar3{?x ?a ?b ?c}: (?x > o) > (?a > ?c) > (?b > ?c) > ?c"
@@ -223,6 +223,7 @@ object ClassicalExtraction {
 
         case LogicalAxiom( formula ) =>
           //val v = Var( ng.fresh( "v" ), flat( formula ) )
+          /*
           val v = formula match {
             case Neg( f ) => {
               val v = getVar( "v", f, ng ) //Var( ng.fresh( "y" ), flat( formula ) )
@@ -232,9 +233,8 @@ object ClassicalExtraction {
               getVar( "v", f, ng ) //Var( ng.fresh( "y" ), flat( formula ) )
             }
           }
-          /*
-          val v = getVar( "v", formula, ng ) //Var( ng.fresh( "y" ), flat( formula ) )
           */
+          val v = getVar( "v", formula, ng ) //Var( ng.fresh( "y" ), flat( formula ) )
           val res = v +: Sequent() :+ v
           //println( "LogicalAxiom " + formula + ", fresh v " + v )
           res
@@ -488,13 +488,13 @@ object ClassicalExtraction {
               val l = extractCases( leftSubProof, ng )
               val r = extractCases( rightSubProof, ng )
               val varL = l( aux1 ).asInstanceOf[Var]
-              //val varR = r( aux2 ).asInstanceOf[Var]
+              val varR = r( aux2 ).asInstanceOf[Var]
               //assert( varL.ty ->: ty"exn" == varR.ty )
               // TODO find index to delete somehow
               val delL = l.delete( aux1 ).antecedent
               val delR = r.delete( aux2 ).antecedent
               //val res = delL ++: delR ++: Sequent() :+ le"bar2 ${Abs( x, g )} ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
-              val res = delL ++: delR ++: Sequent() :+ le"bar2 ${Abs( x, g )} ${Abs( varL, l( Suc( 0 ) ) )} ${r( Suc( 0 ) )}"
+              val res = delL ++: delR ++: Sequent() :+ le"bar2 ${Abs( x, g )} ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, ( r( Suc( 0 ) ) ) )}"
               res
 
             case f =>

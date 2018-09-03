@@ -172,7 +172,7 @@ if(p3 == 0) {
         val a = toType( params( 1 ) )
         s"""
            |try {
-           |  ${translate( tryTerm )}
+           |  ${translate( tryTerm )}(exception)
            |} catch {
            |  case e: NewException[$a] => ${translate( catchTerm )}(e.getVal)
            |  case e => println("BUG"); throw e
