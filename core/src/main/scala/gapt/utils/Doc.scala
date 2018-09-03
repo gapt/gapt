@@ -1,5 +1,6 @@
 package gapt.utils
 import Doc._
+import ammonite.ops.{ Path, write }
 
 import scala.language.implicitConversions
 
@@ -99,6 +100,11 @@ sealed trait Doc {
     case Line( _ )      => None
     case Group( a )     => a.firstChar
   }
+
+  /**
+   * Writes the document to the specified file, replacing the current contents.
+   */
+  def writeToFile( file: Path ): Unit = write.over( file, render( 80 ) )
 
 }
 
