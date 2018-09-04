@@ -104,8 +104,8 @@ object ClassicalExtraction {
     */
 
     //val handle = hoc"handle{?a ?b}: (?a > ?b) > ((?a > (exn ?a)) > ?b) > ?b"
-    val bar = hoc"bar{?a ?b ?c}: (?a > ?c) > (?b > ?c) > ?c"
-    systemT += bar
+    val em = hoc"em{?a ?c}: (?a > ?c) > ((?a > exn) > ?c) > ?c"
+    systemT += em
 
     val bar2 = hoc"bar2{?x ?a ?c}: (?x > o) > (?a > ?c) > ((?a > exn) > ?c) > ?c"
     //val bar2 = hoc"bar2{?x ?a ?c}: (?x > o) > (?a > ?c) > (?c) > ?c"
@@ -494,7 +494,8 @@ object ClassicalExtraction {
               val delL = l.delete( aux1 ).antecedent
               val delR = r.delete( aux2 ).antecedent
               //val res = delL ++: delR ++: Sequent() :+ le"bar2 ${Abs( x, g )} ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
-              val res = delL ++: delR ++: Sequent() :+ le"bar2 ${Abs( x, g )} ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, ( r( Suc( 0 ) ) ) )}"
+              //val res = delL ++: delR ++: Sequent() :+ le"bar2 ${Abs( x, g )} ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, ( r( Suc( 0 ) ) ) )}"
+              val res = delL ++: delR ++: Sequent() :+ le"em ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, ( r( Suc( 0 ) ) ) )}"
               res
 
             case f =>
@@ -505,7 +506,7 @@ object ClassicalExtraction {
               assert( varL.ty ->: ty"exn" == varR.ty )
               val delL = l.delete( aux1 ).antecedent
               val delR = r.delete( aux2 ).antecedent
-              val res = delL ++: delR ++: Sequent() :+ le"bar ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
+              val res = delL ++: delR ++: Sequent() :+ le"em ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
               //val res = l.delete( aux1 ).antecedent ++: r.delete( aux2 ).antecedent ++: Sequent() :+ le"bar ${l( Suc( 0 ) )} ${r( Suc( 0 ) )}"
               //println( s"EM0: ${f}" )
               res

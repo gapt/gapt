@@ -25,13 +25,12 @@ object ScalaCodeGenerator extends CodeGenerator {
         | Const( "0", _, _ ) => false
       case _ => true
     }.map {
-      // TODO: b = (a => exn)
+      /*
       case Const( "bar", _, params ) =>
         val a = typeParamToString( params( 0 ) )
         val b = typeParamToString( params( 1 ) )
         val c = typeParamToString( params( 2 ) )
         s"def bar[$a,$b,$c](p2: $a => $c)(p3: $b => $c): $c = {???}"
-      /*
       case Const( "bar2", _, params ) =>
         val p = typeParamToString( params( 0 ) )
         val a = typeParamToString( params( 1 ) )
@@ -86,10 +85,11 @@ def matchSum[$a,$b,$c](p1: Sum[$a,$b])(p2: $a => $c)(p3: $b => $c) = {
       case Const( "s", _, params ) =>
         s"def s(x: Int) = x + 1"
       case Const( "efq", _, params ) =>
-        s"def efq(p: Throwable) = {throw p}"
+        val a = typeParamToString( params( 0 ) )
+        s"def efq[$a](p: Throwable): $a = {throw p}"
       case Const( "exception", _, params ) =>
         val a = typeParamToString( params( 0 ) )
-        s"class NewException[$a](m: $a) extends Exception { def getVal: $a = m }\n" +
+        s"case class NewException[$a](m: $a) extends Exception\n" +
           s"def exception[$a](p: $a) = {new NewException(p)}"
       case Const( "pow2", _, params ) =>
         s"def pow2(x: Int) = x * x"
@@ -103,8 +103,6 @@ def matchSum[$a,$b,$c](p1: Sum[$a,$b])(p2: $a => $c)(p3: $b => $c) = {
         val x = typeParamToString( params( 0 ) )
         s"def eq[$x](x: $x)(y: $x) = x == y"
       // TODO
-      case Const( "f", _, params ) =>
-        s"def f(x: Int)(y: Int) = x < (y+1)*(y+1) && y*y <= x"
       case Const( "natRec", _, params ) =>
         val a = typeParamToString( params( 0 ) )
         s"""
@@ -140,6 +138,8 @@ if(p3 == 0) {
       case Const( "pair", _, params ) =>
         s"pair[${params.map( toType( _ ) ).mkString( "," )}]"
         */
+      case Const( "efq", _, params ) =>
+        s"efq[${params.map( toType( _ ) ).mkString( "," )}]"
       case Const( "inl", _, params ) =>
         s"inl[${params.map( toType( _ ) ).mkString( "," )}]"
       case Const( "inr", _, params ) =>
@@ -168,13 +168,13 @@ if(p3 == 0) {
 
   def translate( e: Expr )( implicit ctx: Context ): String = {
     e match {
-      case App( App( App( Const( "bar2", _, params ), _ ), catchTerm ), tryTerm ) =>
-        val a = toType( params( 1 ) )
+      case App( App( Const( "em", _, params ), catchTerm ), tryTerm ) =>
+        val a = toType( params( 0 ) )
         s"""
            |try {
            |  ${translate( tryTerm )}(exception)
            |} catch {
-           |  case e: NewException[$a] => ${translate( catchTerm )}(e.getVal)
+           |  case NewException( exceptionValue: $a) => ${translate( catchTerm )}( exceptionValue )
            |  case e => println("BUG"); throw e
            |}
          """.stripMargin
