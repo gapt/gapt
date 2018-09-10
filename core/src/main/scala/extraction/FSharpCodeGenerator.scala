@@ -5,7 +5,7 @@ import gapt.proofs.Context
 
 object FSharpCodeGenerator extends CodeGenerator {
 
-  def generateBoilerPlate( implicit context: Context ): String = {
+  def generateBoilerPlate( e: Expr )( implicit context: Context ): String = {
     def typeParamToString( param: Ty ) = "'" + param.toString.substring( 1 ).toLowerCase()
 
     var definedSumType = false
@@ -23,6 +23,7 @@ object FSharpCodeGenerator extends CodeGenerator {
         case _ => true
       }.map {
         // TODO: b = (a => exn)
+        /*
         case Const( "bar", _, params ) =>
           val a = typeParamToString( params( 0 ) )
           val b = typeParamToString( params( 1 ) )
@@ -34,6 +35,7 @@ object FSharpCodeGenerator extends CodeGenerator {
           val b = typeParamToString( params( 2 ) )
           val c = typeParamToString( params( 3 ) )
           s"let bar2 (p1: $p -> bool) (p2: $a -> $c) (p3: $b -> $c): $c = raise (NotImplementedException())"
+          */
         case Const( "pair", _, params ) =>
           val a = typeParamToString( params( 0 ) )
           val b = typeParamToString( params( 1 ) )
@@ -77,11 +79,24 @@ let matchSum (p1: Sum<$a,$b>) (p2: $a -> $c) (p3: $b -> $c) =
         case Const( "s", _, params ) =>
           s"let s (x: int) = x + 1"
         case Const( "efq", _, params ) =>
-          s"let efq (p: exn) = raise p"
+          val a = typeParamToString( params( 0 ) )
+          s"let efq<$a> (p: exn): $a = raise p"
         // TODO: FSharp does not support type parameters with exceptions, need to generate one for each type
         case Const( "exception", _, params ) =>
-          s"exception NewException of int\n" +
-            s"let newException(p: int) = NewException(p)"
+          s"""
+type T = INT of int | UNIT | PAIR of T * T
+let rec wrap (v: 'a) =
+  match v with
+  | (i : int) -> INT i
+  | :? unit -> UNIT
+  | (v1, v2) -> PAIR (wrap v1, wrap v2)
+let rec unwrap (v: T): 'a =
+  match v with
+  | INT i -> i
+  | UNIT -> ()
+  | PAIR (v1, v2) -> unwrap v1, unwrap v2
+exception NewException of T
+let newException (p: T) = (NewException p)"""
         case Const( "pow2", _, params ) =>
           s"let pow2 (x: int) = x * x"
         case Const( "*", _, params ) =>
@@ -93,9 +108,6 @@ let matchSum (p1: Sum<$a,$b>) (p2: $a -> $c) (p3: $b -> $c) =
         case Const( "=", _, params ) =>
           val x = typeParamToString( params( 0 ) )
           s"let eq (x: $x) (y: $x) = (x = y)"
-        // TODO
-        case Const( "f", _, params ) =>
-          s"let f (x: int) (y: int) = x < (y+1)*(y+1) && y*y <= x"
         case Const( "natRec", _, params ) =>
           val a = typeParamToString( params( 0 ) )
           s"""
@@ -103,8 +115,6 @@ let rec natRec (p1: $a) (p2: (int -> $a -> $a)) (p3: int): $a =
   if(p3 = 0) then p1
   else p2 (p3-1) (natRec (p1) (p2) (p3-1) )
 """
-        case Const( "subst", _, params ) =>
-          s"let subst (x: 'a) (y: 'b) : unit = ()"
         case c @ _ =>
           ""
         //"not yet implemented: " + c.toString
@@ -124,6 +134,8 @@ let rec natRec (p1: $a) (p2: (int -> $a -> $a)) (p3: int): $a =
         s"inl<${params.map( toType( _ ) ).mkString( "," )}>"
       case Const( "inr", _, params ) =>
         s"inr<${params.map( toType( _ ) ).mkString( "," )}>"
+      case Const( "efq", _, params ) =>
+        s"efq<${params.map( toType( _ ) ).mkString( "," )}>"
       case _ => c.name
     }
   }
@@ -143,8 +155,19 @@ let rec natRec (p1: $a) (p2: (int -> $a -> $a)) (p3: int): $a =
     }
   }
 
+  var bugIdentifier = 0
   def translate( e: Expr )( implicit ctx: Context ): String = {
     e match {
+      case App( App( Const( "em", _, params ), catchTerm ), tryTerm ) =>
+        bugIdentifier = bugIdentifier + 1
+        s"""
+(
+try
+  ( ${translate( tryTerm )} ( wrap >> newException ) )
+with
+  | NewException( exceptionValue ) -> ( ${translate( catchTerm )} ( unwrap exceptionValue ) )
+  | e -> printfn "BUG $bugIdentifier" ; raise e
+) """
       case App( e1, e2 ) =>
         s"(${translate( e1 )} ${translate( e2 )})"
       case Abs( v, e ) =>

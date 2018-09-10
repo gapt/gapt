@@ -5,7 +5,20 @@ import gapt.proofs.Context
 
 object ScalaCodeGenerator extends CodeGenerator {
 
-  def generateBoilerPlate( implicit context: Context ): String = {
+  private def collectExceptionTypes( e: Expr )( implicit ctx: Context ): Set[Ty] = {
+    e match {
+      case App( e1, e2 ) =>
+        collectExceptionTypes( e1 ) ++ collectExceptionTypes( e2 )
+      case Abs( _, e ) =>
+        collectExceptionTypes( e )
+      case Const( "em", _, params ) =>
+        Set( params( 0 ) )
+      case _ =>
+        Set.empty
+    }
+  }
+
+  def generateBoilerPlate( e: Expr )( implicit context: Context ): String = {
     def typeParamToString( param: Ty ) = param.toString.substring( 1 ).toUpperCase()
 
     var definedSumType = false
@@ -13,11 +26,6 @@ object ScalaCodeGenerator extends CodeGenerator {
     val prefix =
       """
         |object extracted extends App {
-        |""".stripMargin
-
-    val suffix =
-      """
-        |}
         |""".stripMargin
 
     val definitions = context.constants.filter {
@@ -89,8 +97,9 @@ def matchSum[$a,$b,$c](p1: Sum[$a,$b])(p2: $a => $c)(p3: $b => $c) = {
         s"def efq[$a](p: Throwable): $a = {throw p}"
       case Const( "exception", _, params ) =>
         val a = typeParamToString( params( 0 ) )
-        s"case class NewException[$a](m: $a) extends Exception\n" +
-          s"def exception[$a](p: $a) = {new NewException(p)}"
+        s"""
+case class NewException[$a](m: $a, id: Int) extends Exception
+def exception[$a]( m: $a )( implicit id: Int = -1 ) = {new NewException(m, id)}"""
       case Const( "pow2", _, params ) =>
         s"def pow2(x: Int) = x * x"
       case Const( "*", _, params ) =>
@@ -117,7 +126,15 @@ if(p3 == 0) {
         ""
       //"not yet implemented: " + c.toString
     }.mkString( "\n" )
-    prefix + definitions + suffix
+
+    val exceptionDefinitions = "import shapeless._\n" +
+      ( collectExceptionTypes( e ) map {
+        case t: Ty =>
+          val exceptionType = s"NewException[${toType( t )}]"
+          s"val `$exceptionType` = TypeCase[$exceptionType]"
+      } ).mkString( "\n" )
+
+    prefix + definitions + exceptionDefinitions
   }
 
   def toTerm( c: Const ): String = {
@@ -128,7 +145,6 @@ if(p3 == 0) {
       case Const( "<", _, _ )  => "lt"
       case Const( "=", _, _ )  => "eq"
       //TODO: and/or/impl etc.
-      /*
       case Const( "pi1", _, params ) =>
         s"pi1[${params.map( toType( _ ) ).mkString( "," )}]"
       case Const( "pi2", _, params ) =>
@@ -137,17 +153,14 @@ if(p3 == 0) {
         s"natRec[${params.map( toType( _ ) ).mkString( "," )}]"
       case Const( "pair", _, params ) =>
         s"pair[${params.map( toType( _ ) ).mkString( "," )}]"
-        */
       case Const( "efq", _, params ) =>
         s"efq[${params.map( toType( _ ) ).mkString( "," )}]"
       case Const( "inl", _, params ) =>
         s"inl[${params.map( toType( _ ) ).mkString( "," )}]"
       case Const( "inr", _, params ) =>
         s"inr[${params.map( toType( _ ) ).mkString( "," )}]"
-      /*
       case Const( "exception", _, params ) =>
         s"exception[${params.map( toType( _ ) ).mkString( "," )}]"
-        */
       case _ => c.name
     }
   }
@@ -166,16 +179,23 @@ if(p3 == 0) {
     }
   }
 
+  var bugID = 0
   def translate( e: Expr )( implicit ctx: Context ): String = {
     e match {
       case App( App( Const( "em", _, params ), catchTerm ), tryTerm ) =>
+        val localBugID = bugID
+        bugID = bugID + 1
         val a = toType( params( 0 ) )
+        //|  case NewException( exceptionValue: $a) => ${translate( catchTerm )}( exceptionValue )
         s"""
            |try {
-           |  ${translate( tryTerm )}(exception)
+           |  ${translate( tryTerm )}(exception[$a]( _ )( $localBugID ) )
            |} catch {
-           |  case NewException( exceptionValue: $a) => ${translate( catchTerm )}( exceptionValue )
-           |  case e => println("BUG"); throw e
+           |  case `NewException[$a]`(e) if e.id == $localBugID => {
+           |    println( "thrown at " + e.id + " caught at $localBugID" )
+           |    ${translate( catchTerm )}( e.m )
+           |  }
+           |  case e => println("BUG $localBugID"); throw e
            |}
          """.stripMargin
       case App( e1, e2 ) =>
@@ -188,4 +208,5 @@ if(p3 == 0) {
         toTerm( c )
     }
   }
+
 }

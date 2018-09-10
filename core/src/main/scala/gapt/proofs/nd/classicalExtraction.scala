@@ -173,9 +173,9 @@ object ClassicalExtraction {
     //permuteEM( remEmpProg( res ) )
     //permuteEM( res )
     //permuteEM( res )
-    normalize( res )
+    //normalize( res )
     //remEmpProg( res )
-    //res
+    res
   }
 
   def extractCases( proof: NDProof, ng: NameGenerator )( implicit systemT: Context ): Sequent[Expr] = {

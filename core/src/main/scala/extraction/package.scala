@@ -5,11 +5,11 @@ package object extraction {
   abstract class CodeGenerator {
 
     def apply( e: Expr )( implicit ctx: Context ) = {
-      println( generateBoilerPlate( ctx ) )
+      println( generateBoilerPlate( e )( ctx ) )
       println( translate( e )( ctx ) )
     }
 
-    def generateBoilerPlate( implicit ctx: Context ): String
+    def generateBoilerPlate( e: Expr )( implicit ctx: Context ): String
 
     def toTerm( c: Const ): String
 
