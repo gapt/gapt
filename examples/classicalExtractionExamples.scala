@@ -3106,6 +3106,7 @@ object automaticProofWithTypeParams extends Script {
 }
 
 object runtimeTypeError extends Script {
+
   val t: Tuple2[Int, Tuple2[Unit, Unit]] = ( 0, ( 1, ( (), () ) ) )
 
   def R[A]( b: A )( s: Int => A => A )( n: Int ): A = {
@@ -3627,4 +3628,433 @@ object automaticProofWithTypeParamsKeepingGenericTypes extends Script {
     }
   } )
 
+}
+
+object simplerProof extends Script {
+  def s( x: Int ) = x + 1
+  def mul( x: Int )( y: Int ) = x * y
+  def leq( x: Int )( y: Int ) = x <= y
+
+  def pow2( x: Int ) = x * x
+  def pi2[A, B]( p: ( A, B ) ) = p._2
+  sealed trait Sum[A, B]
+  final case class Inr[A, B]( v: B ) extends Sum[A, B]
+
+  def matchSum[A, B, C]( p1: Sum[A, B] )( p2: A => C )( p3: B => C ) = {
+    p1 match {
+      case Inl( a ) => p2( a )
+      case Inr( b ) => p3( b )
+    }
+  }
+
+  def eq[X]( x: X )( y: X ) = x == y
+  def lt( x: Int )( y: Int ) = x < y
+  final case class Inl[A, B]( v: A ) extends Sum[A, B]
+
+  def natRec[A]( p1: A )( p2: ( Int => A => A ) )( p3: Int ): A = {
+    if ( p3 == 0 ) {
+      p1
+    } else {
+      p2( p3 - 1 )( natRec( p1 )( p2 )( p3 - 1 ) )
+    }
+  }
+
+  case class Exn[A]( v: A, id: Option[Int] ) extends Exception
+  def exception[A]( v: A )( id: Option[Int] = None ) = new Exn( v, id )
+
+  def pi1[A, B]( p: ( A, B ) ) = p._1
+
+  def pair[A, B]( p0: A )( p1: B ): Tuple2[A, B] = ( p0, p1 )
+  def efq[B]( p: Throwable ): B = throw p
+  import shapeless._
+  val `Exn[Tuple2[Int, Tuple2[Unit, Unit]]]` = TypeCase[Exn[Tuple2[Int, Tuple2[Unit, Unit]]]]
+  val `Exn[Tuple2[Unit, Unit]]` = TypeCase[Exn[Tuple2[Unit, Unit]]]
+  val `Exn[Unit]` = TypeCase[Exn[Unit]]
+  val prog = ( {
+    v_68: ( Int => Unit ) =>
+      ( {
+        v_67: ( Int => Unit ) =>
+          ( {
+            v_58: ( Int => ( Int => ( Unit => Sum[Unit, Unit] ) ) ) =>
+              ( {
+                v_52: ( Int => Unit ) =>
+                  ( {
+                    v_63: ( Int => ( Int => ( Int => ( Tuple2[Unit, Unit] => Unit ) ) ) ) =>
+                      ( {
+                        v_51: ( Int => Unit ) =>
+                          ( {
+                            v_56: ( Int => ( Int => Tuple2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )] ) ) =>
+                              ( {
+                                v_2: Int =>
+                                  ( {
+                                    v_3: Unit =>
+                                      ( {
+                                        v_5: Unit =>
+                                          ( {
+                                            v_66: ( Int => Tuple2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )] ) =>
+                                              ( {
+                                                v_65: Tuple2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )] =>
+                                                  ( {
+                                                    v_4: Unit =>
+                                                      ( {
+                                                        v_7: ( Sum[Unit, Unit] => Unit ) =>
+                                                          ( {
+                                                            v_64: ( Unit => Sum[Unit, Unit] ) =>
+                                                              ( {
+                                                                v_1: ( Int => Tuple2[Int, Tuple2[Unit, Unit]] ) =>
+                                                                  ( {
+                                                                    v: Tuple2[Int, Tuple2[Unit, Unit]] => v
+                                                                  } )( v_1( v_2 ) )
+                                                              } )( ( {
+                                                                n: Int =>
+                                                                  natRec[Tuple2[Int, Tuple2[Unit, Unit]]]( pair[Int, Tuple2[Unit, Unit]]( 0 )( pair[Unit, Unit]( () )( ( {
+                                                                    v_6: Unit => ()
+                                                                  } )( v_7( Inl[Unit, Unit]( () ) ) ) ) ) )( ( {
+                                                                    v_0: Int =>
+                                                                      ( {
+                                                                        v_8: Tuple2[Int, Tuple2[Unit, Unit]] =>
+                                                                          ( {
+                                                                            v_60: ( Int => ( Int => ( Tuple2[Unit, Unit] => Unit ) ) ) =>
+                                                                              ( {
+                                                                                v_62: ( Int => ( Int => ( Tuple2[Unit, Unit] => Unit ) ) ) =>
+                                                                                  ( {
+                                                                                    v_61: ( Int => ( Tuple2[Unit, Unit] => Unit ) ) =>
+                                                                                      ( {
+                                                                                        v_34: ( Tuple2[Unit, Unit] => Unit ) =>
+                                                                                          ( {
+                                                                                            v_59: ( Int => ( Tuple2[Unit, Unit] => Unit ) ) =>
+                                                                                              ( {
+                                                                                                v_18: ( Tuple2[Unit, Unit] => Unit ) =>
+                                                                                                  ( {
+                                                                                                    v_57: ( Int => ( Unit => Sum[Unit, Unit] ) ) =>
+                                                                                                      ( {
+                                                                                                        v_23: ( Unit => Sum[Unit, Unit] ) =>
+                                                                                                          ( {
+                                                                                                            v_53: ( Int => Tuple2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )] ) =>
+                                                                                                              ( {
+                                                                                                                v_54: ( Int => Tuple2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )] ) =>
+                                                                                                                  ( {
+                                                                                                                    v_55: ( Int => Tuple2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )] ) =>
+                                                                                                                      ( {
+                                                                                                                        v_49: Tuple2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )] =>
+                                                                                                                          ( {
+                                                                                                                            v_47: Tuple2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )] =>
+                                                                                                                              ( {
+                                                                                                                                v_45: Tuple2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )] =>
+                                                                                                                                  ( {
+                                                                                                                                    v_43: Tuple2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )] =>
+                                                                                                                                      ( {
+                                                                                                                                        v_21: Unit =>
+                                                                                                                                          ( {
+                                                                                                                                            v_20: Unit =>
+                                                                                                                                              ( {
+                                                                                                                                                v_31: Unit =>
+                                                                                                                                                  try {
+                                                                                                                                                    ( {
+                                                                                                                                                      v_11: ( Tuple2[Int, Tuple2[Unit, Unit]] => Exception ) =>
+                                                                                                                                                        pair[Int, Tuple2[Unit, Unit]]( pi1[Int, Tuple2[Unit, Unit]]( v_8 ) )(
+                                                                                                                                                          try {
+                                                                                                                                                            ( {
+                                                                                                                                                              v_13: ( Tuple2[Unit, Unit] => Exception ) =>
+                                                                                                                                                                efq[Tuple2[Unit, Unit]]( v_11( pair[Int, Tuple2[Unit, Unit]]( s( pi1[Int, Tuple2[Unit, Unit]]( v_8 ) ) )( ( {
+                                                                                                                                                                  v_37: Unit =>
+                                                                                                                                                                    ( {
+                                                                                                                                                                      v_24: Unit =>
+                                                                                                                                                                        ( {
+                                                                                                                                                                          v_30: ( Sum[Unit, Unit] => Unit ) =>
+                                                                                                                                                                            ( {
+                                                                                                                                                                              v_48: ( Unit => Sum[Unit, Unit] ) =>
+                                                                                                                                                                                ( {
+                                                                                                                                                                                  v_32: ( Sum[Unit, Unit] => Unit ) =>
+                                                                                                                                                                                    ( {
+                                                                                                                                                                                      v_46: ( Unit => Sum[Unit, Unit] ) =>
+                                                                                                                                                                                        ( {
+                                                                                                                                                                                          v_44: ( Sum[Unit, Unit] => Unit ) =>
+                                                                                                                                                                                            ( {
+                                                                                                                                                                                              v_36: ( Unit => Sum[Unit, Unit] ) =>
+                                                                                                                                                                                                ( {
+                                                                                                                                                                                                  v_41: ( Sum[Unit, Unit] => Unit ) =>
+                                                                                                                                                                                                    ( {
+                                                                                                                                                                                                      v_42: ( Unit => Sum[Unit, Unit] ) =>
+                                                                                                                                                                                                        try {
+                                                                                                                                                                                                          ( {
+                                                                                                                                                                                                            v_14: ( Tuple2[Unit, Unit] => Exception ) =>
+                                                                                                                                                                                                              efq[Tuple2[Unit, Unit]]( v_13(
+                                                                                                                                                                                                                try {
+                                                                                                                                                                                                                  ( {
+                                                                                                                                                                                                                    v_13: ( Tuple2[Unit, Unit] => Exception ) =>
+                                                                                                                                                                                                                      try {
+                                                                                                                                                                                                                        ( {
+                                                                                                                                                                                                                          v_13: ( Tuple2[Unit, Unit] => Exception ) =>
+                                                                                                                                                                                                                            efq[Tuple2[Unit, Unit]]( v_14( pair[Unit, Unit](
+                                                                                                                                                                                                                              try {
+                                                                                                                                                                                                                                ( {
+                                                                                                                                                                                                                                  v_17: ( Unit => Exception ) =>
+                                                                                                                                                                                                                                    efq[Unit]( v_13( pair[Unit, Unit]( ( {
+                                                                                                                                                                                                                                      v_16: Sum[Unit, Unit] =>
+                                                                                                                                                                                                                                        matchSum( v_16 )( ( {
+                                                                                                                                                                                                                                          v_19: Unit =>
+                                                                                                                                                                                                                                            efq[Unit]( v_17( ( {
+                                                                                                                                                                                                                                              v_15: Unit => v_15
+                                                                                                                                                                                                                                            } )( v_18( pair[Unit, Unit]( () )( v_21 ) ) ) ) )
+                                                                                                                                                                                                                                        } ) )( ( {
+                                                                                                                                                                                                                                          v_22: Unit => v_22
+                                                                                                                                                                                                                                        } ) )
+                                                                                                                                                                                                                                    } )( v_23( v_24 ) ) )( ( {
+                                                                                                                                                                                                                                      v_26: Sum[Unit, Unit] =>
+                                                                                                                                                                                                                                        try {
+                                                                                                                                                                                                                                          ( {
+                                                                                                                                                                                                                                            v_27: ( Unit => Exception ) =>
+                                                                                                                                                                                                                                              matchSum( v_26 )( ( {
+                                                                                                                                                                                                                                                v_28: Unit =>
+                                                                                                                                                                                                                                                  efq[Unit]( v_27( ( {
+                                                                                                                                                                                                                                                    v_29: Unit => ()
+                                                                                                                                                                                                                                                  } )( v_30( Inr[Unit, Unit]( v_31 ) ) ) ) )
+                                                                                                                                                                                                                                              } ) )( ( {
+                                                                                                                                                                                                                                                v_35: Unit =>
+                                                                                                                                                                                                                                                  ( {
+                                                                                                                                                                                                                                                    v_25: Unit => v_25
+                                                                                                                                                                                                                                                  } )( v_32( Inr[Unit, Unit]( ( {
+                                                                                                                                                                                                                                                    v_33: Unit => v_33
+                                                                                                                                                                                                                                                  } )( v_34( pair[Unit, Unit]( v_35 )( v_31 ) ) ) ) ) )
+                                                                                                                                                                                                                                              } ) )
+                                                                                                                                                                                                                                          } )( exception[Unit]( _ )( Some( 6 ) ) )
+                                                                                                                                                                                                                                        } catch {
+                                                                                                                                                                                                                                          case `Exn[Unit]`( e ) if e.id == Some( 6 ) => {
+                                                                                                                                                                                                                                            //println( "thrown at " + e.id + " caught at 6" )
+                                                                                                                                                                                                                                            ( {
+                                                                                                                                                                                                                                              v_25: Unit => v_25
+                                                                                                                                                                                                                                            } )( e.v )
+                                                                                                                                                                                                                                          }
+                                                                                                                                                                                                                                          case e => {
+                                                                                                                                                                                                                                            //println("throwing further at 6")
+                                                                                                                                                                                                                                            throw e
+                                                                                                                                                                                                                                          }
+                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                    } )( v_36( v_37 ) ) ) ) )
+                                                                                                                                                                                                                                } )( exception[Unit]( _ )( Some( 5 ) ) )
+                                                                                                                                                                                                                              } catch {
+                                                                                                                                                                                                                                case `Exn[Unit]`( e ) if e.id == Some( 5 ) => {
+                                                                                                                                                                                                                                  //println( "thrown at " + e.id + " caught at 5" )
+                                                                                                                                                                                                                                  ( {
+                                                                                                                                                                                                                                    v_15: Unit => v_15
+                                                                                                                                                                                                                                  } )( e.v )
+                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                case e => {
+                                                                                                                                                                                                                                  //println("throwing further at 5")
+                                                                                                                                                                                                                                  throw e
+                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                              } )(
+                                                                                                                                                                                                                                try {
+                                                                                                                                                                                                                                  ( {
+                                                                                                                                                                                                                                    v_39: ( Unit => Exception ) =>
+                                                                                                                                                                                                                                      efq[Unit]( v_13( pair[Unit, Unit]( ( {
+                                                                                                                                                                                                                                        v_40: Unit =>
+                                                                                                                                                                                                                                          ( {
+                                                                                                                                                                                                                                            v_16: Sum[Unit, Unit] =>
+                                                                                                                                                                                                                                              matchSum( v_16 )( ( {
+                                                                                                                                                                                                                                                v_19: Unit => efq[Unit]( v_39( () ) )
+                                                                                                                                                                                                                                              } ) )( ( {
+                                                                                                                                                                                                                                                v_22: Unit => v_22
+                                                                                                                                                                                                                                              } ) )
+                                                                                                                                                                                                                                          } )( v_23( v_24 ) )
+                                                                                                                                                                                                                                      } )( v_41( Inl[Unit, Unit]( () ) ) ) )( ( {
+                                                                                                                                                                                                                                        v_26: Sum[Unit, Unit] =>
+                                                                                                                                                                                                                                          try {
+                                                                                                                                                                                                                                            ( {
+                                                                                                                                                                                                                                              v_27: ( Unit => Exception ) =>
+                                                                                                                                                                                                                                                matchSum( v_26 )( ( {
+                                                                                                                                                                                                                                                  v_28: Unit =>
+                                                                                                                                                                                                                                                    efq[Unit]( v_27( ( {
+                                                                                                                                                                                                                                                      v_29: Unit => ()
+                                                                                                                                                                                                                                                    } )( v_30( Inr[Unit, Unit]( v_31 ) ) ) ) )
+                                                                                                                                                                                                                                                } ) )( ( {
+                                                                                                                                                                                                                                                  v_35: Unit =>
+                                                                                                                                                                                                                                                    ( {
+                                                                                                                                                                                                                                                      v_25: Unit => v_25
+                                                                                                                                                                                                                                                    } )( v_32( Inr[Unit, Unit]( ( {
+                                                                                                                                                                                                                                                      v_33: Unit => v_33
+                                                                                                                                                                                                                                                    } )( v_34( pair[Unit, Unit]( v_35 )( v_31 ) ) ) ) ) )
+                                                                                                                                                                                                                                                } ) )
+                                                                                                                                                                                                                                            } )( exception[Unit]( _ )( Some( 8 ) ) )
+                                                                                                                                                                                                                                          } catch {
+                                                                                                                                                                                                                                            case `Exn[Unit]`( e ) if e.id == Some( 8 ) => {
+                                                                                                                                                                                                                                              //println( "thrown at " + e.id + " caught at 8" )
+                                                                                                                                                                                                                                              ( {
+                                                                                                                                                                                                                                                v_25: Unit => v_25
+                                                                                                                                                                                                                                              } )( e.v )
+                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                            case e => {
+                                                                                                                                                                                                                                              //println("throwing further at 8")
+                                                                                                                                                                                                                                              throw e
+                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                          }
+                                                                                                                                                                                                                                      } )( v_36( v_37 ) ) ) ) )
+                                                                                                                                                                                                                                  } )( exception[Unit]( _ )( Some( 7 ) ) )
+                                                                                                                                                                                                                                } catch {
+                                                                                                                                                                                                                                  case `Exn[Unit]`( e ) if e.id == Some( 7 ) => {
+                                                                                                                                                                                                                                    //println( "thrown at " + e.id + " caught at 7" )
+                                                                                                                                                                                                                                    ( {
+                                                                                                                                                                                                                                      v_38: Unit => v_38
+                                                                                                                                                                                                                                    } )( e.v )
+                                                                                                                                                                                                                                  }
+                                                                                                                                                                                                                                  case e => {
+                                                                                                                                                                                                                                    //println("throwing further at 7")
+                                                                                                                                                                                                                                    throw e
+                                                                                                                                                                                                                                  }
+                                                                                                                                                                                                                                } ) ) )
+                                                                                                                                                                                                                        } )( exception[Tuple2[Unit, Unit]]( _ )( Some( 4 ) ) )
+                                                                                                                                                                                                                      } catch {
+                                                                                                                                                                                                                        case `Exn[Tuple2[Unit, Unit]]`( e ) if e.id == Some( 4 ) => {
+                                                                                                                                                                                                                          //println( "thrown at " + e.id + " caught at 4" )
+                                                                                                                                                                                                                          ( {
+                                                                                                                                                                                                                            v_10: Tuple2[Unit, Unit] => v_10
+                                                                                                                                                                                                                          } )( e.v )
+                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                        case e => {
+                                                                                                                                                                                                                          //println("throwing further at 4")
+                                                                                                                                                                                                                          throw e
+                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                      }
+                                                                                                                                                                                                                  } )( exception[Tuple2[Unit, Unit]]( _ )( Some( 3 ) ) )
+                                                                                                                                                                                                                } catch {
+                                                                                                                                                                                                                  case `Exn[Tuple2[Unit, Unit]]`( e ) if e.id == Some( 3 ) => {
+                                                                                                                                                                                                                    //println( "thrown at " + e.id + " caught at 3" )
+                                                                                                                                                                                                                    ( {
+                                                                                                                                                                                                                      v_10: Tuple2[Unit, Unit] => v_10
+                                                                                                                                                                                                                    } )( e.v )
+                                                                                                                                                                                                                  }
+                                                                                                                                                                                                                  case e => {
+                                                                                                                                                                                                                    //println("throwing further at 3")
+                                                                                                                                                                                                                    throw e
+                                                                                                                                                                                                                  }
+                                                                                                                                                                                                                } ) )
+                                                                                                                                                                                                          } )( exception[Tuple2[Unit, Unit]]( _ )( Some( 2 ) ) )
+                                                                                                                                                                                                        } catch {
+                                                                                                                                                                                                          case `Exn[Tuple2[Unit, Unit]]`( e ) if e.id == Some( 2 ) => {
+                                                                                                                                                                                                            //println( "thrown at " + e.id + " caught at 2" )
+                                                                                                                                                                                                            ( {
+                                                                                                                                                                                                              v_12: Tuple2[Unit, Unit] => v_12
+                                                                                                                                                                                                            } )( e.v )
+                                                                                                                                                                                                          }
+                                                                                                                                                                                                          case e => {
+                                                                                                                                                                                                            //println("throwing further at 2")
+                                                                                                                                                                                                            throw e
+                                                                                                                                                                                                          }
+                                                                                                                                                                                                        }
+                                                                                                                                                                                                    } )( pi1[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )]( v_43 ) )
+                                                                                                                                                                                                } )( pi2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )]( v_43 ) )
+                                                                                                                                                                                            } )( pi1[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )]( v_45 ) )
+                                                                                                                                                                                        } )( pi2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )]( v_45 ) )
+                                                                                                                                                                                    } )( pi1[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )]( v_47 ) )
+                                                                                                                                                                                } )( pi2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )]( v_47 ) )
+                                                                                                                                                                            } )( pi1[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )]( v_49 ) )
+                                                                                                                                                                        } )( pi2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )]( v_49 ) )
+                                                                                                                                                                    } )( pi1[Unit, Unit]( pi2[Int, Tuple2[Unit, Unit]]( v_8 ) ) )
+                                                                                                                                                                } )( pi2[Unit, Unit]( pi2[Int, Tuple2[Unit, Unit]]( v_8 ) ) ) ) ) )
+                                                                                                                                                            } )( exception[Tuple2[Unit, Unit]]( _ )( Some( 1 ) ) )
+                                                                                                                                                          } catch {
+                                                                                                                                                            case `Exn[Tuple2[Unit, Unit]]`( e ) if e.id == Some( 1 ) => {
+                                                                                                                                                              //println( "thrown at " + e.id + " caught at 1" )
+                                                                                                                                                              ( {
+                                                                                                                                                                v_10: Tuple2[Unit, Unit] => v_10
+                                                                                                                                                              } )( e.v )
+                                                                                                                                                            }
+                                                                                                                                                            case e => {
+                                                                                                                                                              //println("throwing further at 1")
+                                                                                                                                                              throw e
+                                                                                                                                                            }
+                                                                                                                                                          } )
+                                                                                                                                                    } )( exception[Tuple2[Int, Tuple2[Unit, Unit]]]( _ )( Some( 0 ) ) )
+                                                                                                                                                  } catch {
+                                                                                                                                                    case `Exn[Tuple2[Int, Tuple2[Unit, Unit]]]`( e ) if e.id == Some( 0 ) => {
+                                                                                                                                                      //println( "thrown at " + e.id + " caught at 0" )
+                                                                                                                                                      ( {
+                                                                                                                                                        v_9: Tuple2[Int, Tuple2[Unit, Unit]] => v_9
+                                                                                                                                                      } )( e.v )
+                                                                                                                                                    }
+                                                                                                                                                    case e => {
+                                                                                                                                                      //println("throwing further at 0")
+                                                                                                                                                      throw e
+                                                                                                                                                    }
+                                                                                                                                                  }
+                                                                                                                                              } )( v_51( v_0 ) )
+                                                                                                                                          } )( v_51( s( v_0 ) ) )
+                                                                                                                                      } )( v_52( pi1[Int, Tuple2[Unit, Unit]]( v_8 ) ) )
+                                                                                                                                  } )( v_53( s( v_0 ) ) )
+                                                                                                                              } )( v_54( v_0 ) )
+                                                                                                                          } )( v_54( s( v_0 ) ) )
+                                                                                                                      } )( v_55( s( v_0 ) ) )
+                                                                                                                  } )( v_56( v_0 ) )
+                                                                                                              } )( v_56( mul( pi1[Int, Tuple2[Unit, Unit]]( v_8 ) )( pi1[Int, Tuple2[Unit, Unit]]( v_8 ) ) ) )
+                                                                                                          } )( v_56( s( v_0 ) ) )
+                                                                                                      } )( v_57( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_8 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_8 ) ) ) ) )
+                                                                                                  } )( v_58( v_0 ) )
+                                                                                              } )( v_59( mul( s( s( pi1[Int, Tuple2[Unit, Unit]]( v_8 ) ) ) )( s( s( pi1[Int, Tuple2[Unit, Unit]]( v_8 ) ) ) ) ) )
+                                                                                          } )( v_60( s( mul( s( pi1[Int, Tuple2[Unit, Unit]]( v_8 ) ) )( s( pi1[Int, Tuple2[Unit, Unit]]( v_8 ) ) ) ) ) )
+                                                                                      } )( v_61( s( v_0 ) ) )
+                                                                                  } )( v_62( v_0 ) )
+                                                                              } )( v_63( mul( pi1[Int, Tuple2[Unit, Unit]]( v_8 ) )( pi1[Int, Tuple2[Unit, Unit]]( v_8 ) ) ) )
+                                                                          } )( v_63( s( v_0 ) ) )
+                                                                      } )
+                                                                  } ) )( n )
+                                                              } ) )
+                                                          } )( pi1[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )]( v_65 ) )
+                                                      } )( pi2[( Unit => Sum[Unit, Unit] ), ( Sum[Unit, Unit] => Unit )]( v_65 ) )
+                                                  } )( v_51( 0 ) )
+                                              } )( v_66( 0 ) )
+                                          } )( v_56( 0 ) )
+                                      } )( v_67( 0 ) )
+                                  } )( v_68( s( 0 ) ) )
+                              } )
+                          } )
+                      } )
+                  } )
+              } )
+          } )
+      } )
+  } )
+
+  val arg1 = { _: Int => () }
+  val arg3 = { _: Int => { _: Int => { _: Int => { _: Tuple2[Unit, Unit] => () } } } }
+  val arg4 = { x: Int =>
+    { y: Int =>
+      { _: Unit =>
+        //println( s"v_59: x=$x, y=$y" )
+        if ( s( x ) == y ) {
+          Inl[Unit, Unit]( () )
+        } else if ( s( x ) < y ) {
+          Inr[Unit, Unit]( () )
+        } else {
+          // Don't care
+          Inr[Unit, Unit]( () )
+        }
+      }
+    }
+  }
+  val arg10 = { x: Int =>
+    { ( y: Int ) =>
+      ( { _: Unit =>
+        //println( s"v: x=$x, y=$y" )
+        if ( x == y ) {
+          Inl[Unit, Unit]( () )
+        } else if ( x < y ) {
+          Inr[Unit, Unit]( () )
+        } else {
+          // Don't care
+          Inr[Unit, Unit]( () )
+        }
+      }, { _: Sum[Unit, Unit] => () } )
+    }
+  }
+
+  val realProg = prog( arg1 )( arg1 )( arg4 )( arg1 )( arg3 )( arg1 )( arg10 )
+
+  0 to 4 foreach ( i => println( s"floor(sqrt($i)) = ${realProg( i )._1}\n" ) )
+  println( "Testing 1000 inputs" )
+  0 to 1000 foreach ( i => {
+    if ( Math.floor( Math.sqrt( i ) ).toInt != realProg( i )._1 ) {
+      throw new Exception( s"realProg failed at input $i." )
+    }
+  } )
 }

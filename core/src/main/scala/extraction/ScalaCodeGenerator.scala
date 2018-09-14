@@ -25,7 +25,7 @@ object ScalaCodeGenerator extends CodeGenerator {
 
     val prefix =
       """
-        |object extracted extends App {
+        |object extracted extends Script {
         |""".stripMargin
 
     val definitions = context.constants.filter {
@@ -33,19 +33,6 @@ object ScalaCodeGenerator extends CodeGenerator {
         | Const( "0", _, _ ) => false
       case _ => true
     }.map {
-      /*
-      case Const( "bar", _, params ) =>
-        val a = typeParamToString( params( 0 ) )
-        val b = typeParamToString( params( 1 ) )
-        val c = typeParamToString( params( 2 ) )
-        s"def bar[$a,$b,$c](p2: $a => $c)(p3: $b => $c): $c = {???}"
-      case Const( "bar2", _, params ) =>
-        val p = typeParamToString( params( 0 ) )
-        val a = typeParamToString( params( 1 ) )
-        val b = typeParamToString( params( 2 ) )
-        val c = typeParamToString( params( 3 ) )
-        s"def bar2[$p,$a,$b,$c](p1: $p => Boolean)(p2: $a => $c)(p3: $b => $c): $c = {???}"
-        */
       case Const( "pair", _, params ) =>
         val a = typeParamToString( params( 0 ) )
         val b = typeParamToString( params( 1 ) )
@@ -62,17 +49,14 @@ object ScalaCodeGenerator extends CodeGenerator {
         val a = typeParamToString( params( 0 ) )
         val b = typeParamToString( params( 1 ) )
         val res = ( if ( !definedSumType ) s"sealed trait Sum[$a,$b]\n" else "" ) +
-          s"final case class Inl[$a,$b](v:$a) extends Sum[$a,$b]\n" +
-          s"def inl[$a, $b]( v: $a ): Sum[$a,$b] = new Inl( v )"
+          s"final case class Inl[$a,$b](v:$a) extends Sum[$a,$b]\n"
         definedSumType = true
         res
       case Const( "inr", _, params ) =>
         val a = typeParamToString( params( 0 ) )
         val b = typeParamToString( params( 1 ) )
         val res = ( if ( !definedSumType ) s"sealed trait Sum[$a,$b]\n" else "" ) +
-          s"final case class Inr[$a,$b](v:$b) extends Sum[$a,$b]\n" +
-          s"def inr[$a, $b]( v: $b ): Sum[$a,$b] = new Inr( v )"
-
+          s"final case class Inr[$a,$b](v:$b) extends Sum[$a,$b]\n"
         definedSumType = true
         res
       case Const( "matchSum", _, params ) =>
@@ -85,8 +69,8 @@ def matchSum[$a,$b,$c](p1: Sum[$a,$b])(p2: $a => $c)(p3: $b => $c) = {
   p1 match {
     case Inl(a) => p2(a)
     case Inr(b) => p3(b)
-    }
   }
+}
 """
         definedSumType = true
         res
@@ -94,12 +78,12 @@ def matchSum[$a,$b,$c](p1: Sum[$a,$b])(p2: $a => $c)(p3: $b => $c) = {
         s"def s(x: Int) = x + 1"
       case Const( "efq", _, params ) =>
         val a = typeParamToString( params( 0 ) )
-        s"def efq[$a](p: Throwable): $a = {throw p}"
+        s"def efq[$a](p: Throwable): $a = throw p"
       case Const( "exception", _, params ) =>
         val a = typeParamToString( params( 0 ) )
         s"""
-case class NewException[$a](m: $a, id: Int) extends Exception
-def exception[$a]( m: $a )( implicit id: Int = -1 ) = {new NewException(m, id)}"""
+case class Exn[$a](v: $a, id: Option[Int]) extends Exception
+def exception[$a](v: $a )(id: Option[Int] = None) = new Exn(v, id)"""
       case Const( "pow2", _, params ) =>
         s"def pow2(x: Int) = x * x"
       case Const( "*", _, params ) =>
@@ -116,11 +100,11 @@ def exception[$a]( m: $a )( implicit id: Int = -1 ) = {new NewException(m, id)}"
         val a = typeParamToString( params( 0 ) )
         s"""
 def natRec[$a](p1: $a)(p2: (Int => $a => $a))(p3: Int): $a = {
-if(p3 == 0) {
-  p1
-} else {
-  p2(p3-1)(natRec(p1)(p2)(p3-1))
-}
+  if(p3 == 0) {
+    p1
+  } else {
+    p2(p3-1)(natRec(p1)(p2)(p3-1))
+  }
 }"""
       case c @ _ =>
         ""
@@ -130,7 +114,7 @@ if(p3 == 0) {
     val exceptionDefinitions = "import shapeless._\n" +
       ( collectExceptionTypes( e ) map {
         case t: Ty =>
-          val exceptionType = s"NewException[${toType( t )}]"
+          val exceptionType = s"Exn[${toType( t )}]"
           s"val `$exceptionType` = TypeCase[$exceptionType]"
       } ).mkString( "\n" )
 
@@ -156,9 +140,9 @@ if(p3 == 0) {
       case Const( "efq", _, params ) =>
         s"efq[${params.map( toType( _ ) ).mkString( "," )}]"
       case Const( "inl", _, params ) =>
-        s"inl[${params.map( toType( _ ) ).mkString( "," )}]"
+        s"Inl[${params.map( toType( _ ) ).mkString( "," )}]"
       case Const( "inr", _, params ) =>
-        s"inr[${params.map( toType( _ ) ).mkString( "," )}]"
+        s"Inr[${params.map( toType( _ ) ).mkString( "," )}]"
       case Const( "exception", _, params ) =>
         s"exception[${params.map( toType( _ ) ).mkString( "," )}]"
       case _ => c.name
@@ -186,16 +170,18 @@ if(p3 == 0) {
         val localBugID = bugID
         bugID = bugID + 1
         val a = toType( params( 0 ) )
-        //|  case NewException( exceptionValue: $a) => ${translate( catchTerm )}( exceptionValue )
         s"""
            |try {
-           |  ${translate( tryTerm )}(exception[$a]( _ )( $localBugID ) )
+           |  ${translate( tryTerm )}(exception[$a]( _ )( Some( $localBugID ) ) )
            |} catch {
-           |  case `NewException[$a]`(e) if e.id == $localBugID => {
-           |    println( "thrown at " + e.id + " caught at $localBugID" )
-           |    ${translate( catchTerm )}( e.m )
+           |  case `Exn[$a]`(e) if e.id == Some( $localBugID ) => {
+           |    //println( "thrown at " + e.id + " caught at $localBugID" )
+           |    ${translate( catchTerm )}( e.v )
            |  }
-           |  case e => println("BUG $localBugID"); throw e
+           |  case e => {
+           |    //println("throwing further at $localBugID")
+           |    throw e
+           |  }
            |}
          """.stripMargin
       case App( e1, e2 ) =>
