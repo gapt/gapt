@@ -184,7 +184,7 @@ object ClassicalExtraction {
       proof match {
         case WeakeningRule( subProof, formula ) =>
           val s = extractCases( subProof, ng )
-          val v = getVar( "v", formula, ng ) //Var( ng.fresh( "y" ), flat( formula ) )
+          val v = getVar( "vLambda", formula, ng ) //Var( ng.fresh( "y" ), flat( formula ) )
           val res = v +: s
           //println( "Weakening, fresh " + v )
           res
@@ -234,7 +234,7 @@ object ClassicalExtraction {
             }
           }
           */
-          val v = getVar( "v", formula, ng ) //Var( ng.fresh( "y" ), flat( formula ) )
+          val v = getVar( "vLambda", formula, ng ) //Var( ng.fresh( "y" ), flat( formula ) )
           val res = v +: Sequent() :+ v
           //println( "LogicalAxiom " + formula + ", fresh v " + v )
           res
