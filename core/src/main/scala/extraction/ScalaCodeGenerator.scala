@@ -111,14 +111,7 @@ def natRec[$a](p1: $a)(p2: (Int => $a => $a))(p3: Int): $a = {
       //"not yet implemented: " + c.toString
     }.mkString( "\n" )
 
-    val exceptionDefinitions = "import shapeless._\n" +
-      ( collectExceptionTypes( e ) map {
-        case t: Ty =>
-          val exceptionType = s"Exn[${toType( t )}]"
-          s"val `$exceptionType` = TypeCase[$exceptionType]"
-      } ).mkString( "\n" )
-
-    prefix + definitions + exceptionDefinitions
+    prefix + definitions
   }
 
   def toTerm( c: Const ): String = {
@@ -174,9 +167,9 @@ def natRec[$a](p1: $a)(p2: (Int => $a => $a))(p3: Int): $a = {
            |try {
            |  ${translate( tryTerm )}(exception[$a]( _ )( Some( $localBugID ) ) )
            |} catch {
-           |  case `Exn[$a]`(e) if e.id == Some( $localBugID ) => {
+           |  case Exn( v : $a, Some( id ) ) if id == $localBugID => {
            |    //println( "thrown at " + e.id + " caught at $localBugID" )
-           |    ${translate( catchTerm )}( e.v )
+           |    ${translate( catchTerm )}( v )
            |  }
            |  case e => {
            |    //println("throwing further at $localBugID")
