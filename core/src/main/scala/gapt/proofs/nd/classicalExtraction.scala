@@ -482,7 +482,8 @@ object ClassicalExtraction {
               val delL = l.delete( aux1 ).antecedent
               val delR = r.delete( aux2 ).antecedent
               // TODO
-              val res = delL ++: delR ++: Sequent() :+ le"bar3 ${Abs( x1, Ex( x2, g ) )} ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
+              //val res = delL ++: delR ++: Sequent() :+ le"bar3 ${Abs( x1, Ex( x2, g ) )} ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
+              val res = delL ++: delR ++: Sequent() :+ le"em ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
               res
             case f @ Ex( x, g ) if !containsQuantifierOnLogicalLevel( g ) =>
               val l = extractCases( leftSubProof, ng )
