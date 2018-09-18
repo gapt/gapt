@@ -2524,3 +2524,100 @@ object sqrtAutomaticExtractedWithoutShapeless extends Script {
     }
   } )
 }
+
+object manualExistsMinimum extends Script {
+
+  import gapt.expr._
+  import gapt.formats.babel.{ Notation, Precedence }
+  import gapt.proofs.Context
+  import gapt.proofs.nd._
+
+  implicit var ctx = Context.default
+  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += Notation.Infix( "<", Precedence.infixRel )
+  ctx += Notation.Infix( "<=", Precedence.infixRel )
+  ctx += hoc"'<': nat>nat>o"
+  ctx += hoc"'<=': nat>nat>o"
+  ctx += hoc"'f': nat>nat"
+  ctx += hoc"'z': nat"
+  ctx += hof"lesseqf (n:nat) = (?x (f(x) <= n))"
+  ctx += hof"lessf (n:nat) = (?x (f(x) < n))"
+  ctx += hof"hasminf = (?y (-lessf(y) & lesseqf(y)))"
+  val hasminf = hof"(?y (-lessf(y) & lesseqf(y)))"
+
+  val lem1 = hof"!x!y (x < s(y) -> x <= y)"
+  val lem2 = hof"!x (x <= 0 -> x = 0)"
+  val lem3 = hof"!x (x = 0 -> -(?y y < x))"
+
+  val T1 = ProofBuilder.
+    c( LogicalAxiom( hof"-lessf( s( n ) )" ) ).
+    c( LogicalAxiom( hof"lesseqf( s( n ) )" ) ).
+    b( AndIntroRule( _, _ ) ).
+    u( ExistsIntroRule( _, hasminf ) ).
+    u( DefinitionRule( _, hof"hasminf" ) ).
+    qed
+  //prooftool( T1 )
+
+  val T2 = ProofBuilder.
+    c( LogicalAxiom( hof"lessf(s(n))" ) ).
+    u( DefinitionRule( _, hof"?x (f(x) < s(n))" ) ).
+    c( LogicalAxiom( hof"lesseqf(n) -> hasminf" ) ).
+    c( LogicalAxiom( lem1 ) ).
+    u( ForallElimBlock( _, List( le"f(x)", le"(n:nat)" ) ) ).
+    c( LogicalAxiom( hof"f(x) < s(n)" ) ).
+    b( ImpElimRule( _, _ ) ).
+    u( ExistsIntroRule( _, hof"?x (f(x) <= n)" ) ).
+    u( DefinitionRule( _, hof"lesseqf(n)" ) ).
+    b( ImpElimRule( _, _ ) ).
+    b( ExistsElimRule( _, _ ) ).
+    qed
+  //prooftool( T2 )
+
+  val step = ProofBuilder.
+    c( T2 ).
+    c( T1 ).
+    b( ExcludedMiddleRule( _, _ ) ).
+    u( ImpIntroRule( _, hof"lesseqf(s(n))" ) ).
+    //u( ImpIntroRule( _, hof"lesseqf(n) -> hasminf" ) ).
+    //u( ForallIntroRule( _, hof"!n ((lesseqf(n) -> hasminf) -> (lesseqf(s(n)) -> hasminf))", hov"(n:nat)" ) ).
+    qed
+  prooftool( step )
+  val icStep = InductionCase( step, hoc"s", List( step.endSequent.indexOfInAnt( hof"lesseqf(n) -> hasminf" ) ), List( hov"n:nat" ) )
+
+  val base = ProofBuilder.
+    c( LogicalAxiom( hof"lesseqf(0)" ) ).
+    u( DefinitionRule( _, hof"?x (f(x) <= 0)" ) ).
+    c( LogicalAxiom( lem3 ) ).
+    u( ForallElimRule( _, le"f(x)" ) ).
+    c( LogicalAxiom( lem2 ) ).
+    u( ForallElimRule( _, le"f(x)" ) ).
+    c( LogicalAxiom( hof"f(x) <= 0" ) ).
+    b( ImpElimRule( _, _ ) ).
+    b( ImpElimRule( _, _ ) ).
+    u( DefinitionRule( _, hof"-lessf(f(z))" ) ).
+    c( LogicalAxiom( hof"f(z) <= f(z)" ) ).
+    u( ExistsIntroRule( _, hof"?x (f(x) <= f(z))" ) ).
+    u( DefinitionRule( _, hof"lesseqf(f(z))" ) ).
+    b( AndIntroRule( _, _ ) ).
+    u( ExistsIntroRule( _, hasminf ) ).
+    u( DefinitionRule( _, hof"hasminf" ) ).
+    b( ExistsElimRule( _, _ ) ).
+    u( ImpIntroRule( _, hof"lesseqf(0)" ) ).
+    qed
+  prooftool( base )
+  val icBase = InductionCase( base, hoc"0:nat", List.empty, List.empty )
+
+  val proof = ProofBuilder.
+    c( InductionRule( List( icBase, icStep ), Abs( hov"n:nat", hof"lesseqf(n) -> hasminf" ), le"n:nat" ) ).
+    u( ForallIntroRule( _, hov"n:nat", hov"n:nat" ) ).
+    u( ForallElimRule( _, le"f(0)" ) ).
+    c( LogicalAxiom( hof"f(0) <= f(0)" ) ).
+    u( ExistsIntroRule( _, hof"?x (x <= f(0))" ) ).
+    u( DefinitionRule( _, hof"lesseqf(f(0))" ) ).
+    b( ImpElimRule( _, _ ) ).
+    qed
+  prooftool( proof )
+  import extraction.{ ScalaCodeGenerator, FSharpCodeGenerator }
+  val m1 = ClassicalExtraction.extractCases( eliminateDefinitions( proof ) )
+  ScalaCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
+}
