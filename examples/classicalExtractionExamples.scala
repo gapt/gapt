@@ -2539,7 +2539,6 @@ object manualExistsMinimum extends Script {
   ctx += hoc"'<': nat>nat>o"
   ctx += hoc"'<=': nat>nat>o"
   ctx += hoc"'f': nat>nat"
-  ctx += hoc"'z': nat"
   ctx += hof"lesseqf (n:nat) = (?x (f(x) <= n))"
   ctx += hof"lessf (n:nat) = (?x (f(x) < n))"
   ctx += hof"hasminf = (?y (-lessf(y) & lesseqf(y)))"
@@ -2547,7 +2546,7 @@ object manualExistsMinimum extends Script {
 
   val lem1 = hof"!x!y (x < s(y) -> x <= y)"
   val lem2 = hof"!x (x <= 0 -> x = 0)"
-  val lem3 = hof"!x (x = 0 -> -(?y y < x))"
+  val lem3 = hof"!x (x = 0 -> -(?y f(y) < x))"
 
   val T1 = ProofBuilder.
     c( LogicalAxiom( hof"-lessf( s( n ) )" ) ).
@@ -2619,5 +2618,91 @@ object manualExistsMinimum extends Script {
   prooftool( proof )
   import extraction.{ ScalaCodeGenerator, FSharpCodeGenerator }
   val m1 = ClassicalExtraction.extractCases( eliminateDefinitions( proof ) )
+  ScalaCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
+}
+
+object manualExistsMinimumNoDefinitions extends Script {
+
+  import gapt.expr._
+  import gapt.formats.babel.{ Notation, Precedence }
+  import gapt.proofs.Context
+  import gapt.proofs.nd._
+
+  implicit var ctx = Context.default
+  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += Notation.Infix( "<", Precedence.infixRel )
+  ctx += Notation.Infix( "<=", Precedence.infixRel )
+  ctx += hoc"'<': nat>nat>o"
+  ctx += hoc"'<=': nat>nat>o"
+  ctx += hoc"'f': nat>nat"
+
+  val lem1 = hof"!x!y (x < s(y) -> x <= y)"
+  val lem2 = hof"!x (x <= 0 -> x = 0)"
+  val lem3 = hof"!y (y = 0 -> -(?x f(x) < y))"
+  val lem4 = hof"!x (x <= x)"
+
+  val T1 = ProofBuilder.
+    c( LogicalAxiom( hof"-(?x (f(x) < s(n)))" ) ).
+    c( LogicalAxiom( hof"?x (f(x) <= s(n))" ) ).
+    b( AndIntroRule( _, _ ) ).
+    u( ExistsIntroRule( _, hof"?y ((-(?x (f(x) < y))) & (?x (f(x) <= y)))" ) ).
+    qed
+  //prooftool( T1 )
+
+  val T2 = ProofBuilder.
+    c( LogicalAxiom( hof"?x (f(x) < s(n))" ) ).
+    c( LogicalAxiom( hof"(?x (f(x) <= n)) -> (?y ((-(?x (f(x) < y))) & (?x (f(x) <= y))))" ) ).
+    c( LogicalAxiom( lem1 ) ).
+    u( ForallElimBlock( _, List( le"f(x)", le"(n:nat)" ) ) ).
+    c( LogicalAxiom( hof"f(x) < s(n)" ) ).
+    b( ImpElimRule( _, _ ) ).
+    u( ExistsIntroRule( _, hof"?x (f(x) <= n)" ) ).
+    b( ImpElimRule( _, _ ) ).
+    b( ExistsElimRule( _, _ ) ).
+    qed
+  //prooftool( T2 )
+
+  val step = ProofBuilder.
+    c( T2 ).
+    c( T1 ).
+    b( ExcludedMiddleRule( _, _ ) ).
+    u( ImpIntroRule( _, hof"?x (f(x) <= s(n))" ) ).
+    //u( ImpIntroRule( _, hof"lesseqf(n) -> hasminf" ) ).
+    //u( ForallIntroRule( _, hof"!n ((lesseqf(n) -> hasminf) -> (lesseqf(s(n)) -> hasminf))", hov"(n:nat)" ) ).
+    qed
+  prooftool( step )
+  val icStep = InductionCase( step, hoc"s", List( step.endSequent.indexOfInAnt( hof"(?x (f(x) <= n)) -> (?y ((-(?x (f(x) < y))) & (?x (f(x) <= y))))" ) ), List( hov"n:nat" ) )
+
+  val base = ProofBuilder.
+    c( LogicalAxiom( hof"?x (f(x) <= 0)" ) ).
+    c( LogicalAxiom( lem3 ) ).
+    u( ForallElimRule( _, le"f(z)" ) ).
+    c( LogicalAxiom( lem2 ) ).
+    u( ForallElimRule( _, le"f(z)" ) ).
+    c( LogicalAxiom( hof"f(z) <= 0" ) ).
+    b( ImpElimRule( _, _ ) ).
+    b( ImpElimRule( _, _ ) ).
+    c( LogicalAxiom( lem4 ) ).
+    u( ForallElimRule( _, le"f(z)" ) ).
+    u( ExistsIntroRule( _, hof"?x (f(x) <= f(z))" ) ).
+    b( AndIntroRule( _, _ ) ).
+    u( ExistsIntroRule( _, hof"?y ((-(?x (f(x) < y))) & (?x (f(x) <= y)))" ) ).
+    b( ( pl, pr ) => ExistsElimRule( pl, pr, pr.endSequent.indexOfInAnt( hof"f(z) <= 0" ), hov"z:nat" ) ).
+    u( ImpIntroRule( _, hof"?x (f(x) <= 0)" ) ).
+    qed
+  prooftool( base )
+  val icBase = InductionCase( base, hoc"0:nat", List.empty, List.empty )
+
+  val proof = ProofBuilder.
+    c( InductionRule( List( icBase, icStep ), Abs( hov"n:nat", hof"(?x (f(x) <= n)) -> (?y ((-(?x (f(x) < y))) & (?x (f(x) <= y))))" ), le"n:nat" ) ).
+    u( ForallIntroRule( _, hov"n:nat", hov"n:nat" ) ).
+    u( ForallElimRule( _, le"f(0)" ) ).
+    c( LogicalAxiom( hof"f(0) <= f(0)" ) ).
+    u( ExistsIntroRule( _, hof"?x (f(x) <= f(0))" ) ).
+    b( ImpElimRule( _, _ ) ).
+    qed
+  prooftool( proof )
+  import extraction.{ ScalaCodeGenerator, FSharpCodeGenerator }
+  val m1 = ClassicalExtraction.extractCases( proof )
   ScalaCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
 }
