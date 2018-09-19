@@ -108,7 +108,7 @@ object evalCodeSnippetsInLatex {
     code ++= "import gapt.formats.babel._\n"
     if ( !nosig ) code ++=
       """
-          ctx += Context.Sort("i")
+          ctx += Sort("i")
           ctx += hoc"P: i>o"
           ctx += hoc"Q: i>o"
           ctx += hoc"I: i>o"
