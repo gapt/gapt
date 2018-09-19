@@ -38,7 +38,7 @@ object classicalExtractionTest {
     println( "free vars: " + freeVariables( m1 ) )
     println(); println()
     //println( FSharpCodeGenerator.apply( m1 )( ClassicalExtraction.systemT( ctx ) ) )
-    println( ScalaCodeGenerator.apply( m1 )( ClassicalExtraction.systemT( ctx ) ) )
+    println( ScalaCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) ) )
   }
 }
 
@@ -2632,8 +2632,10 @@ object manualExistsMinimumNoDefinitions extends Script {
   ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
   ctx += Notation.Infix( "<", Precedence.infixRel )
   ctx += Notation.Infix( "<=", Precedence.infixRel )
+  ctx += Notation.Infix( "+", Precedence.plusMinus )
   ctx += hoc"'<': nat>nat>o"
   ctx += hoc"'<=': nat>nat>o"
+  ctx += hoc"'+': nat>nat>nat"
   ctx += hoc"'f': nat>nat"
 
   val lem1 = hof"!x!y (x < s(y) -> x <= y)"
@@ -2670,7 +2672,7 @@ object manualExistsMinimumNoDefinitions extends Script {
     //u( ImpIntroRule( _, hof"lesseqf(n) -> hasminf" ) ).
     //u( ForallIntroRule( _, hof"!n ((lesseqf(n) -> hasminf) -> (lesseqf(s(n)) -> hasminf))", hov"(n:nat)" ) ).
     qed
-  prooftool( step )
+  //prooftool( step )
   val icStep = InductionCase( step, hoc"s", List( step.endSequent.indexOfInAnt( hof"(?x (f(x) <= n)) -> (?y ((-(?x (f(x) < y))) & (?x (f(x) <= y))))" ) ), List( hov"n:nat" ) )
 
   val base = ProofBuilder.
@@ -2690,7 +2692,7 @@ object manualExistsMinimumNoDefinitions extends Script {
     b( ( pl, pr ) => ExistsElimRule( pl, pr, pr.endSequent.indexOfInAnt( hof"f(z) <= 0" ), hov"z:nat" ) ).
     u( ImpIntroRule( _, hof"?x (f(x) <= 0)" ) ).
     qed
-  prooftool( base )
+  //prooftool( base )
   val icBase = InductionCase( base, hoc"0:nat", List.empty, List.empty )
 
   val proof = ProofBuilder.
@@ -2704,5 +2706,196 @@ object manualExistsMinimumNoDefinitions extends Script {
   prooftool( proof )
   import extraction.{ ScalaCodeGenerator, FSharpCodeGenerator }
   val m1 = ClassicalExtraction.extractCases( proof )
-  ScalaCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
+  ScalaCodeGenerator( "hasmin" )( m1 )( ClassicalExtraction.systemT( ctx ) )
+
+  val lem5 = hof"!y ((-(?x f(x) < y)) -> (!x y <= f(x)))"
+  val lem6 = hof"!x!y!z (x <= y & y <= z -> x <= z)"
+  val coquand = ProofBuilder.
+    c( LogicalAxiom( hof"(?y ((-(?x (f(x) < y))) & (?x (f(x) <= y))))" ) ).
+    c( LogicalAxiom( hof"(-(?x (f(x) < y))) & (?x (f(x) <= y))" ) ).
+    u( AndElim2Rule( _ ) ).
+    c( LogicalAxiom( lem6 ) ).
+    u( ForallElimBlock( _, List( le"f(x)", le"y:nat", le"f(x + a)" ) ) ).
+    c( LogicalAxiom( hof"f(x) <= y" ) ).
+    c( LogicalAxiom( lem5 ) ).
+    u( ForallElimRule( _, le"y:nat" ) ).
+    c( LogicalAxiom( hof"(-(?x (f(x) < y))) & (?x (f(x) <= y))" ) ).
+    u( AndElim1Rule( _ ) ).
+    b( ImpElimRule( _, _ ) ).
+    u( ForallElimRule( _, le"x + a" ) ).
+    b( AndIntroRule( _, _ ) ).
+    b( ImpElimRule( _, _ ) ).
+    u( ExistsIntroRule( _, hof"?x (f(x) <= f(x + a))" ) ).
+    u( ForallIntroRule( _, hof"!a?x (f(x) <= f(x + a))", hov"a:nat" ) ).
+    b( ExistsElimRule( _, _ ) ).
+    u( ContractionRule( _, hof"(-(?x (f(x) < y))) & (?x (f(x) <= y))" ) ).
+    b( ExistsElimRule( _, _ ) ).
+    qed
+  prooftool( coquand )
+  val m2 = ClassicalExtraction.extractCases( coquand )
+  ScalaCodeGenerator( "coquand" )( m2 )( ClassicalExtraction.systemT( ctx ) )
+}
+
+object coquand extends Script {
+
+  def s( x: Int ) = x + 1
+  def leq( x: Int )( y: Int ) = x <= y
+  def pi2[A, B]( p: ( A, B ) ) = p._2
+  sealed trait Sum[A, B]
+  final case class Inr[A, B]( v: B ) extends Sum[A, B]
+
+  def matchSum[A, B, C]( p1: Sum[A, B] )( p2: A => C )( p3: B => C ) = {
+    p1 match {
+      case Inl( a ) => p2( a )
+      case Inr( b ) => p3( b )
+    }
+  }
+
+  def eq[X]( x: X )( y: X ) = x == y
+  def lt( x: Int )( y: Int ) = x < y
+  final case class Inl[A, B]( v: A ) extends Sum[A, B]
+
+  def natRec[A]( p1: A )( p2: ( Int => A => A ) )( p3: Int ): A = {
+    println( s"in natRec: $p1, $p3" )
+    if ( p3 == 0 ) {
+      p1
+    } else {
+      p2( p3 - 1 )( natRec( p1 )( p2 )( p3 - 1 ) )
+    }
+  }
+
+  case class Exn[A]( v: A, id: Option[Int] ) extends Exception
+  def exception[A]( v: A )( id: Option[Int] = None ) = new Exn( v, id )
+  def pi1[A, B]( p: ( A, B ) ) = p._1
+  def add( x: Int )( y: Int ) = x + y
+  def pair[A, B]( p0: A )( p1: B ): Tuple2[A, B] = ( p0, p1 )
+  def efq[B]( p: Throwable ): B = throw p
+
+  def f( x: Int ) = 5 - x //( x + 1 ) * ( x + 1 )
+
+  val hasminProgram = ( {
+    vLambda_10: Unit =>
+      ( {
+        vLambda_6: ( Int => ( Int => ( Unit => Unit ) ) ) =>
+          ( {
+            vLambda_3: ( Int => Unit ) =>
+              ( {
+                vLambda_1: ( Int => ( Unit => Unit ) ) =>
+                  ( {
+                    vLambda_0: ( Int => ( Unit => ( Tuple2[Int, Unit] => Exception ) ) ) =>
+                      ( {
+                        n: Int =>
+                          natRec[( Tuple2[Int, Unit] => Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] )]( ( {
+                            vLambda: Tuple2[Int, Unit] => pair[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( f( pi1[Int, Unit]( vLambda ) ) )( pair[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( vLambda_0( f( pi1[Int, Unit]( vLambda ) ) )( vLambda_1( f( pi1[Int, Unit]( vLambda ) ) )( pi2[Int, Unit]( vLambda ) ) ) )( pair[Int, Unit]( pi1[Int, Unit]( vLambda ) )( vLambda_3( f( pi1[Int, Unit]( vLambda ) ) ) ) ) )
+                          } ) )( ( {
+                            n: Int =>
+                              ( {
+                                vLambda_5: ( Tuple2[Int, Unit] => Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] ) =>
+                                  ( {
+                                    vLambda_9: Tuple2[Int, Unit] =>
+                                      try {
+                                        ( {
+                                          vLambda_8: ( Tuple2[Int, Unit] => Exception ) => pair[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( s( n ) )( pair[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( vLambda_8 )( vLambda_9 ) )
+                                        } )( exception[Tuple2[Int, Unit]]( _ )( Some( 0 ) ) )
+                                      } catch {
+                                        case Exn( v: Tuple2[Int, Unit], Some( id ) ) if id == 0 => {
+                                          println( "thrown at " + id + " caught at 0" )
+                                          ( {
+                                            vLambda_4: Tuple2[Int, Unit] => vLambda_5( pair[Int, Unit]( pi1[Int, Unit]( vLambda_4 ) )( vLambda_6( f( pi1[Int, Unit]( vLambda_4 ) ) )( n )( pi2[Int, Unit]( vLambda_4 ) ) ) )
+                                          } )( v )
+                                        }
+                                        case e => {
+                                          //println("throwing further at 0")
+                                          throw e
+                                        }
+                                      }
+                                  } )
+                              } )
+                          } ) )( n )
+                      } )( f( 0 ) )( pair[Int, Unit]( 0 )( vLambda_10 ) )
+                  } )
+              } )
+          } )
+      } )
+  } )
+
+  val arg1 = {
+    _: Int =>
+      {
+        _: Int =>
+          {
+            _: Unit =>
+              {
+                ()
+              }
+          }
+      }
+  }
+  val arg2 = {
+    _: Int =>
+      {
+        ()
+      }
+  }
+  val arg3 = {
+    _: Int =>
+      {
+        _: Unit =>
+          {
+            ()
+          }
+      }
+  }
+  val arg4 = {
+    x: Int =>
+      {
+        y: Unit =>
+          {
+            arg: Tuple2[Int, Unit] =>
+              {
+                exception( arg )( Some( 0 ) )
+              }
+          }
+      }
+  }
+  val realHasminProgram = hasminProgram()( arg1 )( arg2 )( arg3 )( arg4 )
+
+  val coquandProgram = ( {
+    vLambda_3: ( Int => ( ( Tuple2[Int, Unit] => Exception ) => ( Int => Unit ) ) ) =>
+      ( {
+        vLambda_1: ( Int => ( Int => ( Int => ( Tuple2[Unit, Unit] => Unit ) ) ) ) =>
+          ( {
+            vLambda: Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] =>
+              ( {
+                a: Int => pair[Int, Unit]( pi1[Int, Unit]( pi2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( pi2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( vLambda ) ) ) )( vLambda_1( f( pi1[Int, Unit]( pi2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( pi2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( vLambda ) ) ) ) )( pi1[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( vLambda ) )( f( add( pi1[Int, Unit]( pi2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( pi2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( vLambda ) ) ) )( a ) ) )( pair[Unit, Unit]( pi2[Int, Unit]( pi2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( pi2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( vLambda ) ) ) )( vLambda_3( pi1[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( vLambda ) )( pi1[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( pi2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( vLambda ) ) )( add( pi1[Int, Unit]( pi2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( pi2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( vLambda ) ) ) )( a ) ) ) ) )
+              } )
+          } )
+      } )
+  } )
+
+  val arg5 = {
+    x: Int =>
+      {
+        y: ( Tuple2[Int, Unit] => Exception ) =>
+          {
+            { _: Int => () }
+          }
+      }
+  }
+  val arg6 = {
+    _: Int =>
+      {
+        _: Int =>
+          {
+            _: Int =>
+              {
+                { _: Tuple2[Unit, Unit] => () }
+              }
+          }
+      }
+  }
+  val realCoquandProgram: Int => ( Int, Unit ) = coquandProgram( arg5 )( arg6 )( realHasminProgram )
+
+  0 to 1 foreach ( i => println( s"realCoquandProgram($i): ${realCoquandProgram( i )}" ) )
+
 }

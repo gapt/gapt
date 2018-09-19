@@ -3,32 +3,27 @@ package extraction
 import gapt.expr._
 import gapt.proofs.Context
 
-object ScalaCodeGenerator extends CodeGenerator {
+object ScalaCodeGenerator {
+  def apply = new ScalaCodeGenerator( "extracted" )
 
-  private def collectExceptionTypes( e: Expr )( implicit ctx: Context ): Set[Ty] = {
-    e match {
-      case App( e1, e2 ) =>
-        collectExceptionTypes( e1 ) ++ collectExceptionTypes( e2 )
-      case Abs( _, e ) =>
-        collectExceptionTypes( e )
-      case Const( "em", _, params ) =>
-        Set( params( 0 ) )
-      case _ =>
-        Set.empty
-    }
-  }
+  def apply( name: String ) = new ScalaCodeGenerator( name )
+}
+
+class ScalaCodeGenerator( name: String ) extends CodeGenerator( name ) {
+
+  val prefix =
+    s"""
+      |object $name extends Script {
+      |""".stripMargin
+
+  val postfix = "\n}"
 
   def generateBoilerPlate( e: Expr )( implicit context: Context ): String = {
     def typeParamToString( param: Ty ) = param.toString.substring( 1 ).toUpperCase()
 
     var definedSumType = false
 
-    val prefix =
-      """
-        |object extracted extends Script {
-        |""".stripMargin
-
-    val definitions = context.constants.filter {
+    context.constants.filter {
       case Const( "i", _, _ )
         | Const( "0", _, _ ) => false
       case _ => true
@@ -86,8 +81,6 @@ case class Exn[$a](v: $a, id: Option[Int]) extends Exception
 def exception[$a](v: $a )(id: Option[Int] = None) = new Exn(v, id)"""
       case Const( "pow2", _, params ) =>
         s"def pow2(x: Int) = x * x"
-      case Const( "*", _, params ) =>
-        s"def mul(x: Int)(y: Int) = x * y"
       case Const( "<=", _, params ) =>
         s"def leq(x: Int)(y: Int) = x <= y"
       case Const( "<", _, params ) =>
@@ -95,6 +88,12 @@ def exception[$a](v: $a )(id: Option[Int] = None) = new Exn(v, id)"""
       case Const( "=", _, params ) =>
         val x = typeParamToString( params( 0 ) )
         s"def eq[$x](x: $x)(y: $x) = x == y"
+      case Const( "*", _, params ) =>
+        s"def mul(x: Int)(y: Int) = x * y"
+      case Const( "+", _, params ) =>
+        s"def add(x: Int)(y: Int) = x + y"
+      case Const( "-", _, params ) =>
+        s"def sub(x: Int)(y: Int) = x - y"
       // TODO
       case Const( "natRec", _, params ) =>
         val a = typeParamToString( params( 0 ) )
@@ -109,18 +108,18 @@ def natRec[$a](p1: $a)(p2: (Int => $a => $a))(p3: Int): $a = {
       case c @ _ =>
         ""
       //"not yet implemented: " + c.toString
-    }.mkString( "\n" )
-
-    prefix + definitions
+    }.filterNot( _ == "" ).mkString( "\n" )
   }
 
   def toTerm( c: Const ): String = {
     c match {
       case Const( "i", _, _ )  => "()"
-      case Const( "*", _, _ )  => "mul"
       case Const( "<=", _, _ ) => "leq"
       case Const( "<", _, _ )  => "lt"
       case Const( "=", _, _ )  => "eq"
+      case Const( "*", _, _ )  => "mul"
+      case Const( "+", _, _ )  => "add"
+      case Const( "-", _, _ )  => "sub"
       //TODO: and/or/impl etc.
       case Const( "pi1", _, params ) =>
         s"pi1[${params.map( toType( _ ) ).mkString( "," )}]"
@@ -168,7 +167,7 @@ def natRec[$a](p1: $a)(p2: (Int => $a => $a))(p3: Int): $a = {
            |  ${translate( tryTerm )}(exception[$a]( _ )( Some( $localBugID ) ) )
            |} catch {
            |  case Exn( v : $a, Some( id ) ) if id == $localBugID => {
-           |    //println( "thrown at " + e.id + " caught at $localBugID" )
+           |    //println( "thrown at " + id + " caught at $localBugID" )
            |    ${translate( catchTerm )}( v )
            |  }
            |  case e => {

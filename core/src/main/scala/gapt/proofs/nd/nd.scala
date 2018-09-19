@@ -1374,7 +1374,7 @@ object ExcludedMiddleRule extends ConvenienceConstructor( "ExcludedMiddleRule" )
     } yield ( leftIndex, rightIndex ) )
 
     if ( candidates.isEmpty ) {
-      throw NDRuleCreationException( s"Antecedent ${leftSubProof.endSequent.antecedent} needs to not contain a formula that appears negated in ${rightSubProof.endSequent.antecedent}." )
+      throw NDRuleCreationException( s"Antecedent ${leftSubProof.endSequent.antecedent} needs to contain a formula that appears negated in ${rightSubProof.endSequent.antecedent}." )
     } else {
       new ExcludedMiddleRule( leftSubProof, candidates.head._1, rightSubProof, candidates.head._2 )
     }
