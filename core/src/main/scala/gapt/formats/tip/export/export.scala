@@ -25,7 +25,7 @@ import gapt.proofs.Context.Definitions
 import gapt.proofs.{ Context, HOLSequent, Sequent }
 import gapt.utils.Doc
 
-object TipSmtExporter {
+package object export {
 
   def export( problem: TipSmtProblem ): Doc = {
     Doc.stack( toSExpression( problem ).map { _.toDoc } )
@@ -48,7 +48,7 @@ object TipSmtExporter {
    * the context.
    */
   def export( sequent: Sequent[Formula], context: Context ): Doc = {
-    TipSmtExporter.export(
+    export(
       new SequentContextToTipProblemConverter( sequent, context ).convert )
   }
 
