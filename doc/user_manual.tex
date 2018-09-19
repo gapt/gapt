@@ -788,11 +788,12 @@ Gaptic can not be (easily) used in the interactive Scala shell, as it requires
 multi-line input.  Gaptic scripts are usually developed as external files:
 \begin{tacticslisting}
 import gapt.expr._
-import gapt.proofs.{Context, Sequent}
+import gapt.proofs.context.update.Sort
+import gapt.proofs.Sequent
 import gapt.proofs.gaptic._
 
 object example extends TacticsProof {
-  ctx += Context.Sort("i")
+  ctx += Sort("i")
   ctx += hoc"P: i>o"
   ctx += hoc"Q: i>o"
 
@@ -1058,7 +1059,7 @@ Using gaptic, we can also create proofs with induction.  For example, let us
 prove that concatenation of lists is associative:
 
 \begin{tacticslisting}[nosig]
-ctx += Context.Sort("i")
+ctx += Sort("i")
 
 // Define the type of lists.
 ctx += InductiveType("list",
