@@ -20,6 +20,11 @@ import gapt.proofs.epsilon._
 import gapt.proofs.expansion._
 import gapt.proofs.hoare._
 import gapt.proofs._
+import gapt.proofs.context._
+import gapt.proofs.context.mutable._
+import gapt.proofs.context.immutable._
+import gapt.proofs.context.update._
+import gapt.proofs.context.facet._
 import gapt.proofs.ceres._
 import gapt.proofs.lk._
 import gapt.cutintro._
