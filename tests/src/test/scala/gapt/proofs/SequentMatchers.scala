@@ -1,25 +1,26 @@
 package gapt.proofs
 
-import org.specs2.matcher.{ Matchers, Matcher }
+import gapt.formats.babel.BabelSignature
+import org.specs2.matcher.{ Matcher, Matchers }
 
 trait SequentMatchers extends Matchers {
 
-  def beMultiSetEqual[A]( expected: Sequent[A] ): Matcher[Sequent[A]] = { actual: Sequent[A] =>
+  def beMultiSetEqual[A]( expected: Sequent[A] )( implicit sig: BabelSignature ): Matcher[Sequent[A]] = { actual: Sequent[A] =>
     ( actual multiSetEquals expected,
       s"""
          | Sequent
-         |   $actual
+         |   ${actual.toSigRelativeString}
          | is not multi-set equal to
-         |   $expected
+         |   ${expected.toSigRelativeString}
          |
          | Additional elements in actual:
-         |   ${actual diff expected}
+         |   ${actual diff expected toSigRelativeString}
          | Additional elements in expected:
-         |   ${expected diff actual}
+         |   ${expected diff actual toSigRelativeString}
        """.stripMargin )
   }
 
-  def beSetEqual[A]( expected: Sequent[A] ): Matcher[Sequent[A]] =
+  def beSetEqual[A]( expected: Sequent[A] )( implicit sig: BabelSignature ): Matcher[Sequent[A]] =
     beMultiSetEqual( expected.distinct ) ^^ { ( actual: Sequent[A] ) => actual.distinct }
 
 }

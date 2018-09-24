@@ -74,4 +74,6 @@ class SyntacticMguTest extends Specification {
 
   "f(x, x), f(a, b)" in { syntacticMGU( le"f x x", le"f a b" ) must beEmpty }
 
+  "x x" in { syntacticMGU( le"x:i", le"x:?a" ) must beSome }
+
 }

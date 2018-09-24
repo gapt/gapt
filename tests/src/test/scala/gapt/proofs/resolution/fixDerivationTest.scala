@@ -32,22 +32,15 @@ class FixDerivationTest extends Specification with SequentMatchers {
       fixDerivation.tryDeriveBySubsumptionModEq( to, from ) must beSome
     }
 
-    "matchingModEq" in {
-      val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
-      val Seq( f, g, h ) = Seq( "f", "g", "h" ) map { FOLFunctionConst( _, 1 ) }
-
-      def m( a: Expr, b: Expr ) = fixDerivation.matchingModEq( List( a -> b ), PreSubstitution() )
-
-      m( f( x ) === g( y ), f( y ) === g( x ) ) must contain( exactly( Substitution( x -> y, y -> x ) ) )
-      m( f( x ) === f( y ), f( y ) === f( x ) ) must contain( exactly( Substitution( x -> x, y -> y ), Substitution( x -> y, y -> x ) ) )
+    "modEqSymm" in {
+      clauseSubsumption.modEqSymm( hos":- x=y, p(x,y)", hos":- a=b, p(b,a)" ) must beSome
+      clauseSubsumption.modEqSymm( hos":- x=y, p(x,y)", hos":- a=b, p(a,b)" ) must beSome
+      clauseSubsumption.modEqSymm( hos":- x=y, p(x,y), p(y,x)", hos":- a=b, p(a,b)" ) must beNone
     }
 
     "derive modulo subsumption and equation reorientation" in {
-      val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
-      val Seq( f, g, h ) = Seq( "f", "g", "h" ) map { FOLFunctionConst( _, 1 ) }
-
-      val from = ( f( x ) === g( y ) ) +: Clause() :+ ( g( y ) === h( z ) )
-      val to = ( g( z ) === f( y ) ) +: Clause() :+ ( h( x ) === g( z ) )
+      val from = hcl"f(x) = g(y) :- g(y) = h(z)"
+      val to = hcl"g(z) = f(y) :- h(x) = g(z)"
 
       fixDerivation.tryDeriveBySubsumptionModEq( to, from ) must beLike {
         case Some( p ) => p.conclusion must beMultiSetEqual( to )

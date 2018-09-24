@@ -179,7 +179,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
   def safeMatching( c1: Const, c2: Const ): Option[Substitution] =
     if ( c1.name != c2.name ) None
     else if ( c1.params.size != c2.params.size ) None
-    else syntacticMatching( List(), ( c1.ty -> c2.ty ) :: ( c1.params zip c2.params ), PreSubstitution() ).headOption
+    else syntacticMatching( ( c1.ty -> c2.ty ) :: ( c1.params zip c2.params ) )
 
   def unicodeSafe( n: Notation.Token ): Boolean =
     unicode || n.token.forall( _ < 127 )

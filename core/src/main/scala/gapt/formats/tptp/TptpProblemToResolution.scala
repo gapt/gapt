@@ -10,6 +10,9 @@ object TptpProblemToResolution {
       case AnnotatedFormula( "cnf", _, _, formula, _ ) =>
         CNFp( formula ).toSeq match {
           case Seq( clause ) => Input( clause )
+          case _ =>
+            // e.g. tautologies
+            Input( Sequent() :+ formula )
         }
       case AnnotatedFormula( _, _, "conjecture", formula, _ ) =>
         Input( formula +: Sequent() )

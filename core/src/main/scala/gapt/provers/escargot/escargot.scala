@@ -105,11 +105,14 @@ class Escargot( splitting: Boolean, equality: Boolean, propositional: Boolean ) 
     state.loop()
   }
 
-  def getAtomicLKProof( sequent: HOLClause ): Option[LKProof] =
-    groundFreeVariables.wrap( sequent ) { sequent =>
-      getResolutionProof( sequent.map( _.asInstanceOf[Atom] ).
-        map( Sequent() :+ _, _ +: Sequent() ).elements ) map { resolution =>
+  def getAtomicLKProof( sequent: HOLClause )( implicit ctx0: Maybe[Context] ): Option[LKProof] = {
+    implicit val ctx: MutableContext = ctx0.getOrElse( MutableContext.guess( sequent ) ).newMutable
+    withSection { section =>
+      val seq = section.groundSequent( sequent )
+      getResolutionProof( seq.map( _.asInstanceOf[Atom] ).
+        map( Sequent() :+ _, _ +: Sequent() ).elements )( ctx ) map { resolution =>
         UnitResolutionToLKProof( resolution )
       }
     }
+  }
 }
