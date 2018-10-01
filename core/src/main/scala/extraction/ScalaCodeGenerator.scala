@@ -69,6 +69,11 @@ def matchSum[$a,$b,$c](p1: Sum[$a,$b])(p2: $a => $c)(p3: $b => $c) = {
 """
         definedSumType = true
         res
+      case Const( "existsElim", _, params ) =>
+        val a = typeParamToString( params( 0 ) )
+        val b = typeParamToString( params( 1 ) )
+        val c = typeParamToString( params( 2 ) )
+        s"def existsElim[$a,$b,$c](p1: Tuple2[$a,$b])(p2: $a => $b => $c) = p2( p1._1 )( p1._2 )"
       case Const( "s", _, params ) =>
         s"def s(x: Int) = x + 1"
       case Const( "efq", _, params ) =>
@@ -125,6 +130,8 @@ def natRec[$a](p1: $a)(p2: (Int => $a => $a))(p3: Int): $a = {
         s"pi1[${params.map( toType( _ ) ).mkString( "," )}]"
       case Const( "pi2", _, params ) =>
         s"pi2[${params.map( toType( _ ) ).mkString( "," )}]"
+      case Const( "existsElim", _, params ) =>
+        s"existsElim[${params.map( toType( _ ) ).mkString( "," )}]"
       case Const( "natRec", _, params ) =>
         s"natRec[${params.map( toType( _ ) ).mkString( "," )}]"
       case Const( "pair", _, params ) =>

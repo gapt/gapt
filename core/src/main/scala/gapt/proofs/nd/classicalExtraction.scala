@@ -78,6 +78,9 @@ object ClassicalExtraction {
         ( matchSum( inl( x ), w1, w2 ) -> w1( x ) ),
         ( matchSum( inr( y ), w1, w2 ) -> w2( y ) ) ) ) ) )( systemT )
 
+    val existsElim = hoc"existsElim{?a ?b ?c}: (conj ?a ?b) > (?a > ?b > ?c) > ?c"
+    systemT += existsElim
+
     //val bar = hoc"bar{?a}: ?a > ?a > hyp > ?a"
     //val hyp = ty"hyp"
     //systemT += InductiveType( hyp, bar )
@@ -411,7 +414,9 @@ object ClassicalExtraction {
           // use deleted var instead of fresh one
           val extraVar = r( aux ).asInstanceOf[Var]
           val sub2 = Substitution( extraVar, le"pi2(${l( Suc( 0 ) )})" )
-          val res = l.antecedent ++: r.delete( aux ).antecedent ++: Sequent() :+ sub1( sub2( r( Suc( 0 ) ) ) )
+          //val res = l.antecedent ++: r.delete( aux ).antecedent ++: Sequent() :+ sub1( sub2( r( Suc( 0 ) ) ) )
+          val param2 = le"^$eigenVariable (^$extraVar ${r( Suc( 0 ) )})"
+          val res = l.antecedent ++: r.delete( aux ).antecedent ++: Sequent() :+ le"existsElim(${l( Suc( 0 ) )}, $param2)"
           //println( "ExElim extraVar " + extraVar )
           res
 
@@ -453,6 +458,7 @@ object ClassicalExtraction {
           println( "free vars inductionCase suc 0: " + freeVariables( inductionCase( Suc( 0 ) ) ) )
           */
           val varsH = inductionCase( cases( 1 ).hypotheses ).asInstanceOf[Seq[Var]]
+          println( s"varsH: $varsH, ${cases( 1 ).proof.endSequent( cases( 1 ).hypotheses )}" )
           /*
           println( "inductionCase hyps: " + inductionCase( cases( 1 ).hypotheses ) )
           println( "baseCase suc 0: " + baseCase( Suc( 0 ) ) )

@@ -2617,8 +2617,8 @@ object manualExistsMinimum extends Script {
     qed
   prooftool( proof )
   import extraction.{ ScalaCodeGenerator, FSharpCodeGenerator }
-  val m1 = ClassicalExtraction.extractCases( eliminateDefinitions( proof ) )
-  ScalaCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
+  //val m1 = ClassicalExtraction.extractCases( eliminateDefinitions( proof ) )
+  //ScalaCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
 }
 
 object manualExistsMinimumNoDefinitions extends Script {
@@ -2708,7 +2708,23 @@ object manualExistsMinimumNoDefinitions extends Script {
   val m1 = ClassicalExtraction.extractCases( proof )
   ScalaCodeGenerator( "hasmin" )( m1 )( ClassicalExtraction.systemT( ctx ) )
 
-  val lem5 = hof"!y ((-(?x f(x) < y)) -> (!x y <= f(x)))"
+  val lem5 = ProofBuilder.
+    c( LogicalAxiom( hof"y <= f(x)" ) ).
+    c( LogicalAxiom( hof"-(?x (f(x) < y))" ) ).
+    c( LogicalAxiom( hof"!x!y (-(x <= y) -> (y < x))" ) ).
+    u( ForallElimBlock( _, List( le"y:nat", le"f(x)" ) ) ).
+    c( LogicalAxiom( hof"-(y <= f(x))" ) ).
+    b( ImpElimRule( _, _ ) ).
+    u( ExistsIntroRule( _, hof"?x (f(x) < y)" ) ).
+    b( NegElimRule( _, _ ) ).
+    u( BottomElimRule( _, hof"y <= f(x)" ) ).
+    b( ExcludedMiddleRule( _, _ ) ).
+    u( ForallIntroRule( _, hov"x:nat", hov"x:nat" ) ).
+    u( ImpIntroRule( _, hof"-(?x (f(x) < y))" ) ).
+    u( ForallIntroRule( _, hov"y:nat", hov"y:nat" ) ).
+    qed
+
+  //val lem5 = hof"!y ((-(?x f(x) < y)) -> (!x y <= f(x)))"
   val lem6 = hof"!x!y!z (x <= y & y <= z -> x <= z)"
   val coquand = ProofBuilder.
     c( LogicalAxiom( hof"(?y ((-(?x (f(x) < y))) & (?x (f(x) <= y))))" ) ).
@@ -2717,7 +2733,8 @@ object manualExistsMinimumNoDefinitions extends Script {
     c( LogicalAxiom( lem6 ) ).
     u( ForallElimBlock( _, List( le"f(x)", le"y:nat", le"f(x + a)" ) ) ).
     c( LogicalAxiom( hof"f(x) <= y" ) ).
-    c( LogicalAxiom( lem5 ) ).
+    //c( LogicalAxiom( lem5 ) ).
+    c( lem5 ).
     u( ForallElimRule( _, le"y:nat" ) ).
     c( LogicalAxiom( hof"(-(?x (f(x) < y))) & (?x (f(x) <= y))" ) ).
     u( AndElim1Rule( _ ) ).
@@ -2736,6 +2753,7 @@ object manualExistsMinimumNoDefinitions extends Script {
   ScalaCodeGenerator( "coquand" )( m2 )( ClassicalExtraction.systemT( ctx ) )
 }
 
+/*
 object coquand extends Script {
 
   def s( x: Int ) = x + 1
@@ -2755,6 +2773,7 @@ object coquand extends Script {
   def lt( x: Int )( y: Int ) = x < y
   final case class Inl[A, B]( v: A ) extends Sum[A, B]
 
+  //def natRec[( Tuple2[Int, Unit] => Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] )]( p1: A )( p2: ( Int => A => A ) )( p3: Int ): A = {
   def natRec[A]( p1: A )( p2: ( Int => A => A ) )( p3: Int ): A = {
     println( s"in natRec: $p1, $p3" )
     if ( p3 == 0 ) {
@@ -2765,13 +2784,17 @@ object coquand extends Script {
   }
 
   case class Exn[A]( v: A, id: Option[Int] ) extends Exception
-  def exception[A]( v: A )( id: Option[Int] = None ) = new Exn( v, id )
+  def exception[A]( v: A )( id: Option[Int] = None ) = {
+    println( s"in exception: $v" )
+    new Exn( v, id )
+  }
   def pi1[A, B]( p: ( A, B ) ) = p._1
   def add( x: Int )( y: Int ) = x + y
   def pair[A, B]( p0: A )( p1: B ): Tuple2[A, B] = ( p0, p1 )
   def efq[B]( p: Throwable ): B = throw p
 
-  def f( x: Int ) = 5 - x //( x + 1 ) * ( x + 1 )
+  //def f( x: Int ) = if ( x > 5 ) 1 else 5 - ( x + 1 )
+  def f( x: Int ) = if ( x == 0 ) 1 else if ( x == 1 ) 2 else 0
 
   val hasminProgram = ( {
     vLambda_10: Unit =>
@@ -2784,35 +2807,52 @@ object coquand extends Script {
                   ( {
                     vLambda_0: ( Int => ( Unit => ( Tuple2[Int, Unit] => Exception ) ) ) =>
                       ( {
-                        n: Int =>
-                          natRec[( Tuple2[Int, Unit] => Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] )]( ( {
-                            vLambda: Tuple2[Int, Unit] => pair[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( f( pi1[Int, Unit]( vLambda ) ) )( pair[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( vLambda_0( f( pi1[Int, Unit]( vLambda ) ) )( vLambda_1( f( pi1[Int, Unit]( vLambda ) ) )( pi2[Int, Unit]( vLambda ) ) ) )( pair[Int, Unit]( pi1[Int, Unit]( vLambda ) )( vLambda_3( f( pi1[Int, Unit]( vLambda ) ) ) ) ) )
-                          } ) )( ( {
-                            n: Int =>
+                        val F: Int => Tuple2[Int, Unit] => ( Int, ( Tuple2[Int, Unit] => Exception, Tuple2[Int, Unit] ) ) = ( {
+                          n: Int =>
+                            natRec[( Tuple2[Int, Unit] => Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] )]( {
+                              val base = ( {
+                                vLambda: Tuple2[Int, Unit] => pair[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( f( pi1[Int, Unit]( vLambda ) ) )( pair[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( vLambda_0( f( pi1[Int, Unit]( vLambda ) ) )( vLambda_1( f( pi1[Int, Unit]( vLambda ) ) )( pi2[Int, Unit]( vLambda ) ) ) )( pair[Int, Unit]( pi1[Int, Unit]( vLambda ) )( vLambda_3( f( pi1[Int, Unit]( vLambda ) ) ) ) ) )
+                              } )
+                              base
+                            } )( {
+                              println( "step case" )
                               ( {
-                                vLambda_5: ( Tuple2[Int, Unit] => Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] ) =>
+                                n: Int => // n is the recursion counter
                                   ( {
-                                    vLambda_9: Tuple2[Int, Unit] =>
-                                      try {
-                                        ( {
-                                          vLambda_8: ( Tuple2[Int, Unit] => Exception ) => pair[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( s( n ) )( pair[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( vLambda_8 )( vLambda_9 ) )
-                                        } )( exception[Tuple2[Int, Unit]]( _ )( Some( 0 ) ) )
-                                      } catch {
-                                        case Exn( v: Tuple2[Int, Unit], Some( id ) ) if id == 0 => {
-                                          println( "thrown at " + id + " caught at 0" )
-                                          ( {
-                                            vLambda_4: Tuple2[Int, Unit] => vLambda_5( pair[Int, Unit]( pi1[Int, Unit]( vLambda_4 ) )( vLambda_6( f( pi1[Int, Unit]( vLambda_4 ) ) )( n )( pi2[Int, Unit]( vLambda_4 ) ) ) )
-                                          } )( v )
-                                        }
-                                        case e => {
-                                          //println("throwing further at 0")
-                                          throw e
-                                        }
-                                      }
+                                    vLambda_5: ( Tuple2[Int, Unit] => Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] ) => // vLambda_5 is the previous result of the recursion
+                                      ( {
+                                        vLambda_9: Tuple2[Int, Unit] =>
+                                          try {
+                                            println( s"in try: n=$n" )
+                                            val T = ( {
+                                              vLambda_8: ( Tuple2[Int, Unit] => Exception ) => pair[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( s( n ) )( pair[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( vLambda_8 )( vLambda_9 ) )
+                                            } )
+                                            println( "after definition of T" )
+                                            val ret = T( exception[Tuple2[Int, Unit]]( _ )( Some( 0 ) ) )
+                                            println( s"after definition of ret: $ret" )
+                                            ret
+                                          } catch {
+                                            case Exn( v: Tuple2[Int, Unit], Some( id ) ) if id == 0 => {
+                                              println( "thrown at " + id + " caught at 0" )
+                                              ( {
+                                                vLambda_4: Tuple2[Int, Unit] => vLambda_5( pair[Int, Unit]( pi1[Int, Unit]( vLambda_4 ) )( vLambda_6( f( pi1[Int, Unit]( vLambda_4 ) ) )( n )( pi2[Int, Unit]( vLambda_4 ) ) ) )
+                                              } )( v )
+                                            }
+                                            case e => {
+                                              println( "throwing further at 0" )
+                                              throw e
+                                            }
+                                          }
+                                      } )
                                   } )
                               } )
-                          } ) )( n )
-                      } )( f( 0 ) )( pair[Int, Unit]( 0 )( vLambda_10 ) )
+                            } )( n )
+                        } )
+                        println( "applying f(0) to F" )
+                        val retF = F( f( 0 ) ) // forall-elim f(0)
+                        println( "after definition of retF" )
+                        retF
+                      } )( pair[Int, Unit]( 0 )( vLambda_10 ) ) // exists-intro 0, imp-elim
                   } )
               } )
           } )
@@ -2846,6 +2886,7 @@ object coquand extends Script {
           }
       }
   }
+  //val lem3 = hof"!x (x = 0 -> -(?y f(y) < x))"
   val arg4 = {
     x: Int =>
       {
@@ -2853,12 +2894,15 @@ object coquand extends Script {
           {
             arg: Tuple2[Int, Unit] =>
               {
-                exception( arg )( Some( 0 ) )
+                println( "in arg4" )
+                exception( arg )( None )
               }
           }
       }
   }
   val realHasminProgram = hasminProgram()( arg1 )( arg2 )( arg3 )( arg4 )
+  val res = realHasminProgram
+  println( s"res: $res" )
 
   val coquandProgram = ( {
     vLambda_3: ( Int => ( ( Tuple2[Int, Unit] => Exception ) => ( Int => Unit ) ) ) =>
@@ -2898,4 +2942,835 @@ object coquand extends Script {
 
   0 to 1 foreach ( i => println( s"realCoquandProgram($i): ${realCoquandProgram( i )}" ) )
 
+}
+*/
+
+object coquand extends Script {
+
+  def s( x: Int ) = x + 1
+
+  def leq( x: Int )( y: Int ) = x <= y
+
+  def pi2[A, B]( p: ( A, B ) ) = p._2
+
+  sealed trait Sum[A, B]
+
+  final case class Inr[A, B]( v: B ) extends Sum[A, B]
+
+  def matchSum[A, B, C]( p1: Sum[A, B] )( p2: A => C )( p3: B => C ) = {
+    p1 match {
+      case Inl( a ) => p2( a )
+      case Inr( b ) => p3( b )
+    }
+  }
+
+  def eq[X]( x: X )( y: X ) = x == y
+
+  def lt( x: Int )( y: Int ) = x < y
+
+  final case class Inl[A, B]( v: A ) extends Sum[A, B]
+
+  def natRec[A]( p1: A )( p2: ( Int => A => A ) )( p3: Int ): A = {
+    if ( p3 == 0 ) {
+      println( "base case" )
+      p1
+    } else {
+      println( s"step case ${p3 - 1}" )
+      p2( p3 - 1 )( natRec( p1 )( p2 )( p3 - 1 ) )
+    }
+  }
+
+  case class Exn[A]( v: A, id: Option[Int] ) extends Exception
+
+  def exception[A]( v: A )( id: Option[Int] = None ) = new Exn( v, id )
+
+  def existsElim[A, B, C]( p1: Tuple2[A, B] )( p2: A => B => C ) = p2( p1._1 )( p1._2 )
+
+  def pi1[A, B]( p: ( A, B ) ) = p._1
+
+  def add( x: Int )( y: Int ) = x + y
+
+  def pair[A, B]( p0: A )( p1: B ): Tuple2[A, B] = ( p0, p1 )
+
+  def efq[B]( p: Throwable ): B = throw p
+
+  /*
+  // OK:
+  def f( x: Int ) = 2 * x
+  def f( x: Int ) = x + 1
+  def f( x: Int ) = 1
+  */
+  // NOT OK:
+  def f( x: Int ) = if ( x > 5 ) 0 else 5 - x
+  /*
+  def f( x: Int ) = {
+    val ret = -( x * x ) + 2
+    if ( ret < 0 ) 0 else ret
+  }
+  */
+
+  def hasminProgram =
+    ( {
+      vLambda_10: Unit =>
+        ( {
+          vLambda_6: ( Int => ( Int => ( Unit => Unit ) ) ) =>
+            ( {
+              vLambda_3: ( Int => Unit ) =>
+                ( {
+                  vLambda_1: ( Int => ( Unit => Unit ) ) =>
+                    ( {
+                      vLambda_0: ( Int => ( Unit => ( Tuple2[Int, Unit] => Exception ) ) ) =>
+                        ( {
+                          n: Int =>
+                            val retNatRec = natRec[( Tuple2[Int, Unit] => Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] )]( ( { // Base Case: A
+                              vLambda: Tuple2[Int, Unit] =>
+                                println( "before existsElim 1" )
+                                val ret = existsElim[Int, Unit, Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]]( vLambda )( ( {
+                                  z: Int =>
+                                    ( {
+                                      vLambda_2: Unit =>
+                                        pair[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( f( z ) )( pair[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( {
+                                          val ftmp = vLambda_0( f( z ) ); println( "ftmp" ); ftmp( vLambda_1( f( z ) )( vLambda_2 ) )
+                                        } )( pair[Int, Unit]( z )( vLambda_3( f( z ) ) ) ) )
+                                    } )
+                                } ) )
+                                println( "after existsElim 1" )
+                                ret
+                            } ) )( ( { // Step Case: Int -> A -> A
+                              n: Int =>
+                                ( {
+                                  vLambda_5: ( Tuple2[Int, Unit] => Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] ) =>
+                                    ( {
+                                      vLambda_9: Tuple2[Int, Unit] => // exists x (f(x) <= s(n))
+                                        try {
+                                          println( s"in try: $n" )
+                                          ( {
+                                            vLambda_8: ( Tuple2[Int, Unit] => Exception ) =>
+                                              pair[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( s( n ) )( pair[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( vLambda_8 )( {
+                                                println( s"consuming vLambda_9: $vLambda_9" ); vLambda_9
+                                              } ) )
+                                          } )( exception[Tuple2[Int, Unit]]( _ )( Some( 0 ) ) )
+                                          //throw tmp._2._1( vLambda_9 )
+                                        } catch {
+                                          case Exn( v: Tuple2[Int, Unit], Some( id ) ) if id == 0 => {
+                                            println( s"thrown at $id caught at 0: $v" )
+                                            ( {
+                                              vLambda_4: Tuple2[Int, Unit] =>
+                                                existsElim[Int, Unit, Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]]( vLambda_4 )( ( {
+                                                  x: Int =>
+                                                    ( {
+                                                      vLambda_7: Unit => vLambda_5( pair[Int, Unit]( x )( vLambda_6( f( x ) )( n )( vLambda_7 ) ) )
+                                                    } )
+                                                } ) )
+                                            } )( v )
+                                          }
+                                          case e => {
+                                            println( "throwing further at 0" )
+                                            throw e
+                                          }
+                                        }
+                                    } )
+                                } )
+                            } ) )( n )
+                            println( "after natRec" )
+                            retNatRec
+                        } )( f( 0 ) )( pair[Int, Unit]( 0 )( vLambda_10 ) )
+                    } )
+                } )
+            } )
+        } )
+    } )
+
+  val arg1 = {
+    _: Int =>
+      {
+        _: Int =>
+          {
+            _: Unit =>
+              {
+                ()
+              }
+          }
+      }
+  }
+  val arg2 = {
+    _: Int =>
+      {
+        ()
+      }
+  }
+  val arg3 = {
+    _: Int =>
+      {
+        _: Unit =>
+          {
+            ()
+          }
+      }
+  }
+  //val lem3 = hof"!x (x = 0 -> -(?y f(y) < x))"
+  val arg4 = {
+    x: Int =>
+      {
+        y: Unit =>
+          {
+            arg: Tuple2[Int, Unit] =>
+              {
+                println( "in arg4" )
+                exception( arg )( None )
+              }
+          }
+      }
+  }
+  val realHasminProgram = hasminProgram()( arg1 )( arg2 )( arg3 )( arg4 )
+  val res = realHasminProgram
+  println( s"res: $res" )
+  val min = res._1
+  //val min = 0
+  /*
+  if ( !( ( 0 to 1000 forall ( x => f( x ) >= min ) ) && ( 0 to 1000 exists ( x => f( x ) <= min ) ) ) ) {
+    println( s"minimum ${min} incorrect" )
+    assert( false )
+  } else {
+    println( s"minimum ${min} correct" )
+  }
+  */
+
+  /*
+  val coquandProgram = ( {
+    vLambda_3: ( Int => ( ( Tuple2[Int, Unit] => Exception ) => ( Int => Unit ) ) ) =>
+      ( {
+        vLambda_1: ( Int => ( Int => ( Int => ( Tuple2[Unit, Unit] => Unit ) ) ) ) =>
+          ( {
+            vLambda: Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] =>
+              existsElim[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]], ( Int => Tuple2[Int, Unit] )]( vLambda )( ( {
+                y: Int =>
+                  ( {
+                    vLambda_0: Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]] =>
+                      existsElim[Int, Unit, ( Int => Tuple2[Int, Unit] )]( pi2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( vLambda_0 ) )( ( {
+                        x: Int =>
+                          ( {
+                            vLambda_2: Unit =>
+                              ( {
+                                a: Int => pair[Int, Unit]( x )( vLambda_1( f( x ) )( y )( f( add( x )( a ) ) )( pair[Unit, Unit]( vLambda_2 )( vLambda_3( y )( pi1[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( vLambda_0 ) )( add( x )( a ) ) ) ) )
+                              } )
+                          } )
+                      } ) )
+                  } )
+              } ) )
+          } )
+      } )
+  } )
+  */
+  val coquandProgram = ( {
+    vLambda_5: ( Int => ( Int => ( ( Unit => Exception ) => Unit ) ) ) =>
+      ( {
+        vLambda_1: ( Int => ( Int => ( Int => ( Tuple2[Unit, Unit] => Unit ) ) ) ) =>
+          ( {
+            vLambda: Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] =>
+              existsElim[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]], ( Int => Tuple2[Int, Unit] )]( vLambda )( ( {
+                y: Int =>
+                  ( {
+                    vLambda_0: Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]] =>
+                      existsElim[Int, Unit, ( Int => Tuple2[Int, Unit] )]( pi2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( vLambda_0 ) )( ( {
+                        x: Int =>
+                          ( {
+                            vLambda_2: Unit =>
+                              ( {
+                                a: Int =>
+                                  pair[Int, Unit]( x )( vLambda_1( f( x ) )( y )( f( add( x )( a ) ) )( pair[Unit, Unit]( vLambda_2 )( ( {
+                                    y: Int =>
+                                      ( {
+                                        vLambda_4: ( Tuple2[Int, Unit] => Exception ) =>
+                                          ( {
+                                            x: Int =>
+                                              try {
+                                                ( {
+                                                  vLambda_6: ( Unit => Exception ) => efq[Unit]( vLambda_4( pair[Int, Unit]( x )( vLambda_5( y )( f( x ) )( vLambda_6 ) ) ) )
+                                                } )( exception[Unit]( _ )( Some( 0 ) ) )
+                                              } catch {
+                                                case Exn( v: Unit, Some( id ) ) if id == 0 => {
+                                                  //println( "thrown at " + id + " caught at 0" )
+                                                  ( {
+                                                    vLambda_3: Unit => vLambda_3
+                                                  } )( v )
+                                                }
+                                                case e => {
+                                                  //println("throwing further at 0")
+                                                  throw e
+                                                }
+                                              }
+                                          } )
+                                      } )
+                                  } )( y )( pi1[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( vLambda_0 ) )( add( x )( a ) ) ) ) )
+                              } )
+                          } )
+                      } ) )
+                  } )
+              } ) )
+          } )
+      } )
+  } )
+
+  val arg5 = {
+    _: Int =>
+      {
+        _: Int =>
+          {
+            _: ( Unit => Exception ) =>
+              {
+                ()
+              }
+          }
+      }
+  }
+  val arg6 = {
+    _: Int =>
+      {
+        _: Int =>
+          {
+            _: Int =>
+              {
+                { _: Tuple2[Unit, Unit] => () }
+              }
+          }
+      }
+  }
+
+  val realCoquandProgram: Int => ( Int, Unit ) = coquandProgram( arg5 )( arg6 )( realHasminProgram )
+
+  List( 4 ) foreach ( i => println( s"realCoquandProgram($i): ${realCoquandProgram( i )}" ) )
+
+}
+
+object hasminExceptionTest extends Script {
+
+  def s( x: Int ) = x + 1
+
+  def leq( x: Int )( y: Int ) = x <= y
+
+  def pi2[A, B]( p: ( A, B ) ) = p._2
+
+  sealed trait Sum[A, B]
+
+  final case class Inr[A, B]( v: B ) extends Sum[A, B]
+
+  def matchSum[A, B, C]( p1: Sum[A, B] )( p2: A => C )( p3: B => C ) = {
+    p1 match {
+      case Inl( a ) => p2( a )
+      case Inr( b ) => p3( b )
+    }
+  }
+
+  def eq[X]( x: X )( y: X ) = x == y
+
+  def lt( x: Int )( y: Int ) = x < y
+
+  final case class Inl[A, B]( v: A ) extends Sum[A, B]
+
+  def natRec[A]( p1: A )( p2: ( Int => A => A ) )( p3: Int ): A = {
+    if ( p3 == 0 ) {
+      println( "base case" )
+      p1
+    } else {
+      println( "step case" )
+      p2( p3 - 1 )( natRec( p1 )( p2 )( p3 - 1 ) )
+    }
+  }
+
+  case class Exn[A]( v: A, id: Option[Int] ) extends Exception
+
+  def exception[A]( v: A )( id: Option[Int] = None ) = new Exn( v, id )
+
+  def existsElim[A, B, C]( p1: Tuple2[A, B] )( p2: A => B => C ) = p2( p1._1 )( p1._2 )
+
+  def pi1[A, B]( p: ( A, B ) ) = p._1
+
+  def add( x: Int )( y: Int ) = x + y
+
+  def pair[A, B]( p0: A )( p1: B ): Tuple2[A, B] = ( p0, p1 )
+
+  def efq[B]( p: Throwable ): B = {
+    println( "THROWING NOW" )
+    throw p
+  }
+
+  def f( x: Int ) = if ( x > 5 ) 0 else 5 - x
+  val X0 = 0
+
+  //def f( x: Int ) = 1
+
+  val hasminProgram = ( {
+    vLambda_30: ( Int => ( Unit => Unit ) ) =>
+      ( {
+        vLambda_28: ( Int => ( Unit => ( Tuple2[Int, Unit] => Exception ) ) ) =>
+          ( {
+            vLambda_26: ( Int => ( Int => ( Unit => Unit ) ) ) =>
+              ( {
+                vLambda_29: ( Int => Unit ) =>
+                  ( {
+                    vLambda_12: ( Unit => Unit ) =>
+                      ( {
+                        vLambda_13: Unit =>
+                          ( {
+                            vLambda_3: Unit =>
+                              ( {
+                                vLambda_10: ( Unit => ( Tuple2[Int, Unit] => Exception ) ) =>
+                                  try {
+                                    ( {
+                                      vLambda_1: ( Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] => Exception ) =>
+                                        pair[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( 0 )(
+                                          try {
+                                            ( {
+                                              vLambda_5: ( Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]] => Exception ) =>
+                                                efq[Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( vLambda_1(
+                                                  try {
+                                                    ( {
+                                                      vLambda_1: ( Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] => Exception ) =>
+                                                        ( {
+                                                          vLambda_4: ( Int => ( Tuple2[Int, Unit] => Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] ) ) =>
+                                                            ( {
+                                                              vLambda_2: ( Tuple2[Int, Unit] => Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] ) =>
+                                                                ( {
+                                                                  vLambda: Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] => vLambda
+                                                                } )( vLambda_2( pair[Int, Unit]( X0 )( vLambda_3 ) ) )
+                                                            } )( vLambda_4( f( X0 ) ) )
+                                                        } )( ( {
+                                                          n: Int =>
+                                                            natRec[( Tuple2[Int, Unit] => Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] )]( ( {
+                                                              vLambda_6: Tuple2[Int, Unit] =>
+                                                                try {
+                                                                  ( {
+                                                                    vLambda_1: ( Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] => Exception ) =>
+                                                                      efq[Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]]( vLambda_5( existsElim[Int, Unit, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( vLambda_6 )( ( {
+                                                                        v_5: Int =>
+                                                                          ( {
+                                                                            vLambda_14: Unit =>
+                                                                              pair[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( ( {
+                                                                                vLambda_7: Tuple2[Int, Unit] =>
+                                                                                  existsElim[Int, Unit, Exception]( vLambda_7 )( ( {
+                                                                                    v_4: Int =>
+                                                                                      ( {
+                                                                                        vLambda_9: Unit =>
+                                                                                          ( {
+                                                                                            vLambda_8: ( Tuple2[Int, Unit] => Exception ) => vLambda_8( pair[Int, Unit]( v_4 )( vLambda_9 ) )
+                                                                                          } )( vLambda_10( ( {
+                                                                                            vLambda_11: Unit => vLambda_11
+                                                                                          } )( vLambda_12( vLambda_13 ) ) ) )
+                                                                                      } )
+                                                                                  } ) )
+                                                                              } ) )( pair[Int, Unit]( v_5 )( vLambda_14 ) )
+                                                                          } )
+                                                                      } ) ) ) )
+                                                                  } )( exception[Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]]( _ )( Some( 3 ) ) )
+                                                                } catch {
+                                                                  case Exn( v: Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]], Some( id ) ) if id == 3 => {
+                                                                    println( "thrown at " + id + " caught at 3" )
+                                                                    ( {
+                                                                      vLambda: Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] => vLambda
+                                                                    } )( v )
+                                                                  }
+                                                                  case e @ Exn( v, Some( id ) ) => {
+                                                                    println( s"throwing further at 3: $v, $id" )
+                                                                    throw e
+                                                                  }
+                                                                }
+                                                            } ) )( ( {
+                                                              v_0: Int =>
+                                                                ( {
+                                                                  vLambda_21: ( Tuple2[Int, Unit] => Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] ) =>
+                                                                    try {
+                                                                      println( "in try 4" )
+                                                                      ( {
+                                                                        vLambda_17: ( ( Tuple2[Int, Unit] => Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] ) => Exception ) =>
+                                                                          println( "in try 4 2" )
+                                                                          efq[( Tuple2[Int, Unit] => Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] )]( vLambda_1( pair[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( s( v_0 ) )(
+                                                                            try {
+                                                                              println( "in try 5" )
+                                                                              ( {
+                                                                                vLambda_19: ( Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]] => Exception ) =>
+                                                                                  println( "in try 5 2" )
+                                                                                  efq[Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( vLambda_17( ( {
+                                                                                    vLambda_18: Tuple2[Int, Unit] =>
+                                                                                      existsElim[Int, Unit, Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]]( vLambda_18 )( ( {
+                                                                                        v_6: Int =>
+                                                                                          ( {
+                                                                                            vLambda_27: Unit =>
+                                                                                              try {
+                                                                                                println( "in try 6" )
+                                                                                                val res6 = ( {
+                                                                                                  vLambda_1: ( Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] => Exception ) =>
+                                                                                                    println( "in try 6 2" )
+                                                                                                    efq[Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]]( vLambda_19( pair[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( ( {
+                                                                                                      vLambda_20: Tuple2[Int, Unit] =>
+                                                                                                        vLambda_1( existsElim[Int, Unit, Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]]( vLambda_20 )( ( {
+                                                                                                          v_7: Int =>
+                                                                                                            ( {
+                                                                                                              vLambda_24: Unit =>
+                                                                                                                ( {
+                                                                                                                  vLambda_25: ( Int => ( Unit => Unit ) ) =>
+                                                                                                                    ( {
+                                                                                                                      vLambda_23: ( Unit => Unit ) =>
+                                                                                                                        ( {
+                                                                                                                          vLambda_22: Unit =>
+                                                                                                                            ( {
+                                                                                                                              vLambda: Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] => vLambda
+                                                                                                                            } )( vLambda_21( pair[Int, Unit]( v_7 )( vLambda_22 ) ) )
+                                                                                                                        } )( vLambda_23( vLambda_24 ) )
+                                                                                                                    } )( vLambda_25( v_0 ) )
+                                                                                                                } )( vLambda_26( f( v_7 ) ) )
+                                                                                                            } )
+                                                                                                        } ) ) )
+                                                                                                    } ) )( pair[Int, Unit]( v_6 )( vLambda_27 ) ) ) )
+                                                                                                } )( exception[Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]]( _ )( Some( 6 ) ) )
+                                                                                                println( s"res6: $res6" )
+                                                                                                res6
+                                                                                              } catch {
+                                                                                                case Exn( v: Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]], Some( id ) ) if id == 6 => {
+                                                                                                  println( "thrown at " + id + " caught at 6" )
+                                                                                                  ( {
+                                                                                                    vLambda: Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] => vLambda
+                                                                                                  } )( v )
+                                                                                                }
+                                                                                                case e @ Exn( v, Some( id ) ) => {
+                                                                                                  println( s"throwing further at 6: $v, $id" )
+                                                                                                  throw e
+                                                                                                }
+                                                                                              }
+                                                                                          } )
+                                                                                      } ) )
+                                                                                  } ) ) )
+                                                                              } )( exception[Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( _ )( Some( 5 ) ) )
+                                                                            } catch {
+                                                                              case Exn( v: Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]], Some( id ) ) if id == 5 => {
+                                                                                println( "thrown at " + id + " caught at 5" )
+                                                                                ( {
+                                                                                  vLambda_16: Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]] => vLambda_16
+                                                                                } )( v )
+                                                                              }
+                                                                              case e @ Exn( v, Some( id ) ) => {
+                                                                                println( s"throwing further at 5: $v, $id" )
+                                                                                throw e
+                                                                              }
+                                                                              case e => {
+                                                                                println( "throwing further at 5" )
+                                                                                throw e
+                                                                              }
+                                                                            } ) ) )
+                                                                      } )( exception[( Tuple2[Int, Unit] => Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] )]( _ )( Some( 4 ) ) )
+                                                                    } catch {
+                                                                      case Exn( v: ( Tuple2[Int, Unit] => Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] ), Some( id ) ) if id == 4 => {
+                                                                        println( "thrown at " + id + " caught at 4" )
+                                                                        ( {
+                                                                          vLambda_15: ( Tuple2[Int, Unit] => Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] ) => vLambda_15
+                                                                        } )( v )
+                                                                      }
+                                                                      case e @ Exn( v, Some( id ) ) => {
+                                                                        println( s"throwing further at 4: $v, $id" )
+                                                                        throw e
+                                                                      }
+                                                                    }
+                                                                } )
+                                                            } ) )( n )
+                                                        } ) )
+                                                    } )( exception[Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]]( _ )( Some( 2 ) ) )
+                                                  } catch {
+                                                    case Exn( v: Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]], Some( id ) ) if id == 2 => {
+                                                      println( "thrown at " + id + " caught at 2" )
+                                                      ( {
+                                                        vLambda: Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] => vLambda
+                                                      } )( v )
+                                                    }
+                                                    case e @ Exn( v, Some( id ) ) => {
+                                                      println( s"throwing further at 2: $v, $id" )
+                                                      throw e
+                                                    }
+                                                  } ) )
+                                            } )( exception[Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( _ )( Some( 1 ) ) )
+                                          } catch {
+                                            case Exn( v: Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]], Some( id ) ) if id == 1 => {
+                                              println( "thrown at " + id + " caught at 1" )
+                                              ( {
+                                                vLambda_0: Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]] => vLambda_0
+                                              } )( v )
+                                            }
+                                            case e @ Exn( v, Some( id ) ) => {
+                                              println( s"throwing further at 1: $v, $id" )
+                                              throw e
+                                            }
+                                          } )
+                                    } )( exception[Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]]( _ )( Some( 0 ) ) )
+                                  } catch {
+                                    case Exn( v: Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]], Some( id ) ) if id == 0 => {
+                                      println( "thrown at " + id + " caught at 0" )
+                                      ( {
+                                        vLambda: Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] => vLambda
+                                      } )( v )
+                                    }
+                                    case e @ Exn( v, Some( id ) ) => {
+                                      println( s"throwing further at 0: $v, $id" )
+                                      throw e
+                                    }
+                                  }
+                              } )( vLambda_28( 0 ) )
+                          } )( vLambda_29( f( X0 ) ) )
+                      } )( vLambda_29( 0 ) )
+                  } )( vLambda_30( 0 ) )
+              } )
+          } )
+      } )
+  } )
+
+  /*
+    ( {
+      vLambda_10: Unit =>
+        ( {
+          vLambda_6: ( Int => ( Int => ( Unit => Unit ) ) ) =>
+            ( {
+              vLambda_3: ( Int => Unit ) =>
+                ( {
+                  vLambda_1: ( Int => ( Unit => Unit ) ) =>
+                    ( {
+                      vLambda_0: ( Int => ( Unit => ( Tuple2[Int, Unit] => Exception ) ) ) =>
+                        ( {
+                          n: Int =>
+                            val retNatRec = natRec[( Tuple2[Int, Unit] => Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] )]( ( {
+                              vLambda: Tuple2[Int, Unit] =>
+                                println( "before existsElim 1" )
+                                val ret = existsElim[Int, Unit, Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]]( vLambda )( ( {
+                                  z: Int =>
+                                    ( {
+                                      vLambda_2: Unit =>
+                                        pair[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( f( z ) )( pair[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( {
+                                          val ftmp = vLambda_0( f( z ) ); println( "ftmp" ); ftmp( vLambda_1( f( z ) )( vLambda_2 ) )
+                                        } )( pair[Int, Unit]( z )( vLambda_3( f( z ) ) ) ) )
+                                    } )
+                                } ) )
+                                println( "after existsElim 1" )
+                                ret
+                            } ) )( ( {
+                              n: Int =>
+                                ( {
+                                  vLambda_5: ( Tuple2[Int, Unit] => Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]] ) =>
+                                    ( {
+                                      vLambda_9: Tuple2[Int, Unit] =>
+                                        try {
+                                          println( "in try" )
+                                          ( {
+                                            vLambda_8: ( Tuple2[Int, Unit] => Exception ) =>
+                                              pair[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]( s( n ) )( pair[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]( vLambda_8 )( {
+                                                println( s"consuming vLambda_9: $vLambda_9" ); vLambda_9
+                                              } ) )
+                                          } )( exception[Tuple2[Int, Unit]]( _ )( Some( 0 ) ) )
+                                          //throw tmp._2._1( vLambda_9 )
+                                        } catch {
+                                          case Exn( v: Tuple2[Int, Unit], Some( id ) ) if id == 0 => {
+                                            println( s"thrown at $id caught at 0: $v" )
+                                            ( {
+                                              vLambda_4: Tuple2[Int, Unit] =>
+                                                existsElim[Int, Unit, Tuple2[Int, Tuple2[( Tuple2[Int, Unit] => Exception ), Tuple2[Int, Unit]]]]( vLambda_4 )( ( {
+                                                  x: Int =>
+                                                    ( {
+                                                      vLambda_7: Unit => vLambda_5( pair[Int, Unit]( x )( vLambda_6( f( x ) )( n )( vLambda_7 ) ) )
+                                                    } )
+                                                } ) )
+                                            } )( v )
+                                          }
+                                          case e => {
+                                            println( "throwing further at 0" )
+                                            throw e
+                                          }
+                                        }
+                                    } )
+                                } )
+                            } ) )( n )
+                            println( "after natRec" )
+                            retNatRec
+                        } )( f( 0 ) )( pair[Int, Unit]( 0 )( vLambda_10 ) )
+                    } )
+                } )
+            } )
+        } )
+    } )
+    */
+
+  val arg1 = {
+    _: Int =>
+      {
+        _: Int =>
+          {
+            _: Unit =>
+              {
+                ()
+              }
+          }
+      }
+  }
+  val arg2 = {
+    _: Int =>
+      {
+        ()
+      }
+  }
+  val arg3 = {
+    _: Int =>
+      {
+        _: Unit =>
+          {
+            ()
+          }
+      }
+  }
+  //val lem3 = hof"!x (x = 0 -> -(?y f(y) < x))"
+  val arg4 = {
+    x: Int =>
+      {
+        y: Unit =>
+          {
+            arg: Tuple2[Int, Unit] =>
+              {
+                println( "in arg4" )
+                exception( arg )( None )
+              }
+          }
+      }
+  }
+  //val realHasminProgram = hasminProgram()( arg1 )( arg2 )( arg3 )( arg4 )
+  val realHasminProgram = hasminProgram( arg3 )( arg4 )( arg1 )( arg2 )
+  val res = realHasminProgram
+  println( s"res: $res" )
+  val min = res._1
+  //val min = 0
+  if ( !( 0 to 1000 forall ( x => f( x ) >= min ) ) ) {
+    println( s"minimum ${min} incorrect" )
+    assert( false )
+  } else {
+    println( s"minimum ${min} correct" )
+  }
+
+}
+
+object exceptionTest extends Script {
+  case class Exn[A]( v: A, id: Option[Int] ) extends Exception
+  def f =
+    try {
+      try {
+        throw Exn( 5, Some( 5 ) )
+      } catch {
+        case Exn( _, id ) if id == 6 =>
+          println( s"caught $id" )
+        case e @ Exn( _, id ) =>
+          println( s"throwing further at 6" )
+          throw e
+      }
+    } catch {
+      case Exn( _, id ) if id == 5 =>
+        println( s"caught $id" )
+      case e @ Exn( _, id ) =>
+        println( s"throwing further at 5" )
+        throw e
+    }
+
+  try {
+    f
+  } catch {
+    case Exn( _, id ) if id == 2 =>
+      println( s"caught $id" )
+    case e @ Exn( _, id ) =>
+      println( s"throwing further at 2" )
+      throw e
+  }
+
+}
+
+object permutationRules extends Script {
+
+  def s( x: Int ) = x + 1
+
+  def leq( x: Int )( y: Int ) = x <= y
+
+  def pi2[A, B]( p: ( A, B ) ) = p._2
+
+  sealed trait Sum[A, B]
+
+  final case class Inr[A, B]( v: B ) extends Sum[A, B]
+
+  def matchSum[A, B, C]( p1: Sum[A, B] )( p2: A => C )( p3: B => C ) = {
+    p1 match {
+      case Inl( a ) => p2( a )
+      case Inr( b ) => p3( b )
+    }
+  }
+
+  def eq[X]( x: X )( y: X ) = x == y
+
+  def lt( x: Int )( y: Int ) = x < y
+
+  final case class Inl[A, B]( v: A ) extends Sum[A, B]
+
+  def natRec[A]( p1: A )( p2: ( Int => A => A ) )( p3: Int ): A = {
+    if ( p3 == 0 ) {
+      println( "base case" )
+      p1
+    } else {
+      println( "step case" )
+      p2( p3 - 1 )( natRec( p1 )( p2 )( p3 - 1 ) )
+    }
+  }
+
+  case class Exn[A]( v: A, id: Option[Int] ) extends Exception
+
+  def exception[A]( v: A )( id: Option[Int] = None ) = new Exn( v, id )
+
+  def existsElim[A, B, C]( p1: Tuple2[A, B] )( p2: A => B => C ) = p2( p1._1 )( p1._2 )
+
+  def pi1[A, B]( p: ( A, B ) ) = p._1
+
+  def add( x: Int )( y: Int ) = x + y
+
+  def pair[A, B]( p0: A )( p1: B ): Tuple2[A, B] = ( p0, p1 )
+
+  def efq[B]( p: Throwable ): B = throw p
+
+  def f: ( Int => Int ) =
+    try {
+      // if throwing an exception in returned function,
+      // it won't be caught by catch block
+      { case x: Int => x + 3 }
+    } catch {
+      case _ => { case x: Int => x + 6 }
+    }
+  println( f( 0 ) )
+
+  def g: Tuple2[Int, String] =
+    try {
+      ( 3, "catch" )
+    } catch {
+      case _ => ( 6, "exn" )
+    }
+  println( pi1( g ) )
+  println( pi2( g ) )
+
+  def h: ( Sum[Int, String] ) =
+    try {
+      // if throwing an exception in returned function,
+      // it won't be caught by catch block
+      Inl[Int, String]( 3 )
+      throw Exn( "exn", Some( 0 ) )
+    } catch {
+      case Exn( v: String, id ) if id == Some( 0 ) => Inr[Int, String]( v )
+      case e                                       => throw e
+    }
+  println( h match {
+    case Inl( x ) => x
+    case Inr( y ) => y
+  } )
+
+  def i: Tuple2[Int, String] =
+    try {
+      ( 3, "try" )
+    } catch {
+      case _ => ( 6, "catch" )
+    }
+  println( existsElim( i )( { x: Int => { y: String => s"result: $x $y" } } ) )
 }
