@@ -34,8 +34,6 @@ lazy val commonSettings = Seq(
   fork := true,
   baseDirectory in run := file( "." ),
 
-  resolvers += Resolver.sonatypeRepo( "snapshots" ), // for scoverage
-
   sourcesInBase := false // people like to keep scripts lying around
 ) ++ scalariformSettings
 
