@@ -1550,15 +1550,8 @@ p3: gapt.proofs.lk.LKProof =
 gapt> val s = JsonExporter(p3).render(80)
 s: String =
 {
-  "4" : {
-    "name" : "AndRightRule",
-    "leftSubProof" : 3,
-    "aux1" : 0,
-    "rightSubProof" : 1,
-    "aux2" : 0
-  },
-  "1" : {"name" : "LogicalAxiom", "A" : "B:o"},
   "0" : {"name" : "LogicalAxiom", "A" : "A:o"},
+  "1" : {"name" : "LogicalAxiom", "A" : "B:o"},
   "2" : {
     "name" : "AndRightRule",
     "leftSubProof" : 0,
@@ -1571,6 +1564,13 @@ s: String =
     "leftSubProof" : 2,
     "aux1" : 0,
     "rightSubProof" : 0,
+    "aux2" : 0
+  },
+  "4" : {
+    "name" : "AndRightRule",
+    "leftSubProof" : 3,
+    "aux1" : 0,
+    "rightSubProof" : 1,
     "aux2" : 0
   }
 }
