@@ -7,20 +7,20 @@ import gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, ExpansionProo
 import gapt.proofs.lk.{ LKProof, isMaeharaMG3i }
 import gapt.proofs.{ Context, HOLSequent, MutableContext }
 import gapt.prooftool.LKProofViewer
-import gapt.provers.Prover
+import gapt.provers.{ OneShotProver, Prover }
 import gapt.provers.congruence.SimpleSmtSolver
 import gapt.provers.eprover.EProver
 import gapt.provers.escargot.impl.EscargotLogger
 import gapt.provers.spass.SPASS
 import gapt.provers.vampire.Vampire
-import gapt.utils.{ LogHandler, quiet }
+import gapt.utils.{ LogHandler, Maybe, quiet }
 
-object IEscargot {
-  def expansionProofToMG3i(
-    expProofWithSk:  ExpansionProof,
-    filename:        String,
-    method:          ExpToLKMethod,
-    showInProoftool: Boolean )( implicit ctx: Context ): Option[LKProof] = {
+class IEscargot(
+    backend:         Prover        = Escargot,
+    method:          ExpToLKMethod = ExpToLKMethod.MG3iViaSAT,
+    showInProoftool: Boolean       = false,
+    filename:        String        = "" ) extends OneShotProver {
+  def expansionProofToMG3i( expProofWithSk: ExpansionProof )( implicit ctx: Context ): Option[LKProof] = {
     val deskExpProof = deskolemizeET( expProofWithSk )
     EscargotLogger.warn( "converting expansion proof to LK" )
     quiet( method.convert( deskExpProof ) ) match {
@@ -42,10 +42,47 @@ object IEscargot {
     }
   }
 
-  sealed trait ExpToLKMethod {
-    def convert( exp: ExpansionProof )( implicit ctx: Context ): Either[HOLSequent, LKProof]
+  def getLKProof( seq: HOLSequent )( implicit ctx0: Maybe[MutableContext] ): Option[LKProof] =
+    getLKProof_( seq ) match {
+      case Some( Right( proof ) ) => Some( proof )
+      case _                      => None
+    }
+
+  def getLKProof_( seq: HOLSequent )( implicit ctx0: Maybe[MutableContext] ): Option[Either[Unit, LKProof]] = {
+    implicit val ctx: MutableContext = ctx0.getOrElse( MutableContext.guess( seq ) )
+
+    if ( !containsQuantifierOnLogicalLevel( seq.toImplication ) ) {
+      if ( !SimpleSmtSolver.isValid( seq ) ) Some( Left( () ) )
+      else expansionProofToMG3i( ExpansionProof( formulaToExpansionTree( seq ) ) ) match {
+        case Some( lk ) => Some( Right( lk ) )
+        case None       => if ( method.isComplete ) Some( Left( () ) ) else None
+      }
+    } else {
+      backend.getExpansionProof( seq ) match {
+        case Some( expansion ) =>
+          EscargotLogger.warn( "found classical expansion proof" )
+          expansionProofToMG3i( expansion ) match {
+            case Some( lk ) =>
+              require( lk.endSequent.isSubsetOf( seq ) )
+              Some( Right( lk ) )
+            case None =>
+              EscargotLogger.warn( "constructivization failed" )
+              None
+          }
+        case None =>
+          Some( Left( () ) )
+      }
+    }
   }
+}
+
+sealed trait ExpToLKMethod {
+  def isComplete: Boolean = false
+  def convert( exp: ExpansionProof )( implicit ctx: Context ): Either[HOLSequent, LKProof]
+}
+object ExpToLKMethod {
   case object MG3iViaSAT extends ExpToLKMethod {
+    override def isComplete = true
     def convert( exp: ExpansionProof )( implicit ctx: Context ): Either[HOLSequent, LKProof] =
       ExpansionProofToMG3iViaSAT( exp ).left.map( _._2 )
   }
@@ -61,6 +98,14 @@ object IEscargot {
         case ( th, seq ) => ( th.getExpansionTrees ++: seq ).shallow
       }
   }
+}
+
+object IEscargot extends IEscargot(
+  backend = Escargot,
+  method = ExpToLKMethod.MG3iViaSAT,
+  showInProoftool = false,
+  filename = "" ) {
+  import ExpToLKMethod._
 
   case class Options(
       verbose:   Boolean       = false,
@@ -87,7 +132,6 @@ object IEscargot {
 
   def main( args: Array[String] ): Unit = {
     LogHandler.current.value = LogHandler.tstp
-
     def usage =
       """
         |Usage: iescargot iltp-problem.p
@@ -96,7 +140,6 @@ object IEscargot {
         | --backend=...   classical first-order prover (escargot,vampire,spass,e)
         | --prooftool     show proof in prooftool
         |""".stripMargin
-
     val opts = Options().parse( args.toList ) match {
       case Left( err ) =>
         println( s"$err\n$usage" )
@@ -115,28 +158,16 @@ object IEscargot {
 
     val tptp = TptpImporter.loadWithIncludes( FilePath( opts.files.head ) )
     val tptpSequent = tptp.toSequent
-    implicit val ctx = MutableContext.guess( tptpSequent )
-    ( if ( containsQuantifierOnLogicalLevel( tptpSequent.toImplication ) )
-      opts.backend.getExpansionProof( tptpSequent )
-    else
-      Some( tptpSequent ).
-        filter( SimpleSmtSolver.isValid ).
-        map( formulaToExpansionTree( _ ) ).
-        map( ExpansionProof ) ) match {
-      case Some( expansion ) =>
-        println( "% found classical expansion proof" )
-        expansionProofToMG3i( expansion, filename = opts.files.head,
-          method = opts.method, showInProoftool = opts.prooftool ) match {
-          case Some( lk ) =>
-            require( lk.endSequent.isSubsetOf( tptpSequent ) )
-            println( "% SZS status Theorem" )
-            print( sequentProofToTptp( lk ) )
-          case None =>
-            println( "% SZS status Unknown" )
-            println( "% constructivization failed" )
-        }
-      case None =>
-        println( "% SZS status Non-Theorem" )
-    }
+    implicit val ctx: MutableContext = MutableContext.guess( tptpSequent )
+    new IEscargot( opts.backend, opts.method, opts.prooftool, opts.files.head ).
+      getLKProof_( tptpSequent ) match {
+        case Some( Right( lk ) ) =>
+          println( "% SZS status Theorem" )
+          print( sequentProofToTptp( lk ) )
+        case Some( Left( _ ) ) =>
+          println( "% SZS status Non-Theorem" )
+        case None =>
+          println( "% SZS status Unknown" )
+      }
   }
 }
