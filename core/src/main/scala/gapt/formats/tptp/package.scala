@@ -23,6 +23,8 @@ package object tptp {
 
     def toSequentWithIncludes = {
       val sequent = existentialClosure( inputs.flatMapS {
+        case AnnotatedPreFormula( language, name, role, formula, annotations ) =>
+          throw new IllegalArgumentException( "The file contains pre-formulas that still need typing!" )
         case AnnotatedFormula( _, _, "conjecture", formula, _ ) =>
           Sequent() :+ formula
         case AnnotatedFormula( _, _, _, formula, _ ) =>
@@ -43,6 +45,8 @@ package object tptp {
     override def toString = tptpToString.tptpInput( this )
   }
   case class AnnotatedFormula( language: String, name: String, role: FormulaRole, formula: Formula, annotations: Seq[GeneralTerm] ) extends TptpInput
+  case class AnnotatedPreFormula( language: String, name: String, role: FormulaRole, formula: preExpr.Expr, annotations: Seq[GeneralTerm] ) extends TptpInput
+  case class TypeDeclaration( name: String, ty_name: preExpr.BaseType, ty_definition: preExpr.Type )
   case class IncludeDirective( fileName: String, formulaSelection: Option[Seq[String]] ) extends TptpInput
 
   object TptpTerm {

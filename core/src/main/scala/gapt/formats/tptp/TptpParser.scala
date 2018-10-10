@@ -1,6 +1,8 @@
 package gapt.formats.tptp
 
 import gapt.expr._
+import gapt.expr.preExpr.{ All => PreAll, And => PreAnd, Bottom => PreBottom, Eq => PreEq, Ex => PreEx, Expr => PreExpr, Ident => PreIdent, Iff => PreIff, Imp => PreImp, Neg => PreNeg, Or => PreOr, Top => PreTop }
+import gapt.expr.preExprHelper._
 import gapt.formats.InputFile
 import org.parboiled2._
 import ammonite.ops._
@@ -27,16 +29,21 @@ class TptpParser( val input: ParserInput ) extends Parser {
     atomic_word ~ "(" ~ Ws ~ name ~ Comma ~ formula_role ~ Comma ~ formula ~ annotations ~ ")." ~ Ws ~>
       ( AnnotatedFormula( _, _, _, _, _ ) )
   }
+
+  def annotated_preformula = rule {
+    atomic_word ~ "(" ~ Ws ~ name ~ Comma ~ formula_role ~ Comma ~ pre_formula ~ annotations ~ ")." ~ Ws ~>
+      ( AnnotatedPreFormula( _, _, _, _, _ ) )
+  }
+
   def formula_role = rule { atomic_word }
   def annotations = rule { ( Comma ~ general_term ).* }
 
-  def formula = rule { typed_logic_formula }
-  def typed_logic_formula = rule { logic_formula } //add type annotation
-  def logic_formula: Rule1[Formula] = rule { unitary_formula ~ ( binary_nonassoc_part | or_formula_part | and_formula_part ).? }
+  // FOF formula
+  def formula = rule { unitary_formula ~ ( binary_nonassoc_part | or_formula_part | and_formula_part ).? }
   def binary_nonassoc_part = rule { binary_connective ~ unitary_formula ~> ( ( a: Formula, c: ( Expr, Expr ) => Formula, b: Formula ) => c( a, b ) ) }
   def or_formula_part = rule { ( "|" ~ Ws ~ unitary_formula ).+ ~> ( ( a: Formula, as: Seq[Formula] ) => Or.leftAssociative( a +: as: _* ) ) }
   def and_formula_part = rule { ( "&" ~ Ws ~ unitary_formula ).+ ~> ( ( a: Formula, as: Seq[Formula] ) => And.leftAssociative( a +: as: _* ) ) }
-  def unitary_formula: Rule1[Formula] = rule { quantified_formula | unary_formula | atomic_formula | "(" ~ Ws ~ logic_formula ~ ")" ~ Ws }
+  def unitary_formula: Rule1[Formula] = rule { quantified_formula | unary_formula | atomic_formula | "(" ~ Ws ~ formula ~ ")" ~ Ws }
   def quantified_formula = rule { fol_quantifier ~ "[" ~ Ws ~ variable_list ~ "]" ~ Ws ~ ":" ~ Ws ~ unitary_formula ~> ( ( q: QuantifierHelper, vs, m ) => q.Block( vs, m ) ) }
   def variable_list = rule { ( variable ~ ( ":" ~ Ws ~ name ).? ~> ( ( a, b ) => a ) ).+.separatedBy( Comma ) }
   def unary_formula = rule { "~" ~ Ws ~ unitary_formula ~> ( Neg( _ ) ) }
@@ -60,6 +67,36 @@ class TptpParser( val input: ParserInput ) extends Parser {
   def function_term = rule { name ~ ( "(" ~ Ws ~ term.+.separatedBy( Comma ) ~ ")" ~ Ws ).? ~> ( ( hd, as ) => TptpTerm( hd, as.getOrElse( Seq() ) ) ) }
   def variable = rule { capture( upper_word ) ~ Ws ~> ( FOLVar( _: String ) ) }
   def arguments = rule { term.+.separatedBy( Comma ) }
+
+  //TFF pre-formula (typing must be performd afterwards)
+  def pre_formula: Rule1[PreExpr] = rule { pre_unitary_formula ~ ( pre_binary_nonassoc_part | pre_or_formula_part | pre_and_formula_part ).? }
+  def pre_binary_nonassoc_part = rule { pre_binary_connective ~ pre_unitary_formula ~> ( ( a: PreExpr, c: ( PreExpr, PreExpr ) => PreExpr, b: PreExpr ) => c( a, b ) ) }
+  def pre_or_formula_part = rule { ( "|" ~ Ws ~ pre_unitary_formula ).+ ~> ( ( a: PreExpr, as: Seq[PreExpr] ) => OrLeftAssociative( a +: as: _* ) ) }
+  def pre_and_formula_part = rule { ( "&" ~ Ws ~ pre_unitary_formula ).+ ~> ( ( a: PreExpr, as: Seq[PreExpr] ) => AndLeftAssociative( a +: as: _* ) ) }
+  def pre_unitary_formula: Rule1[PreExpr] = rule { pre_quantified_formula | pre_unary_formula | pre_atomic_formula | "(" ~ Ws ~ pre_formula ~ ")" ~ Ws }
+  def pre_quantified_formula = rule { pre_fol_quantifier ~ "[" ~ Ws ~ pre_variable_list ~ "]" ~ Ws ~ ":" ~ Ws ~ pre_unitary_formula ~> ( ( q: ( Seq[PreIdent], PreExpr ) => PreExpr, vs, m ) => q( vs, m ) ) }
+  def pre_variable_list = rule { ( pre_variable ~ ( ":" ~ Ws ~ name ).? ~> ( ( a, b ) => a ) ).+.separatedBy( Comma ) }
+  def pre_unary_formula = rule { "~" ~ Ws ~ pre_unitary_formula ~> ( PreNeg( _ ) ) }
+
+  def pre_atomic_formula = rule { pre_defined_prop | pre_infix_formula | pre_plain_atomic_formula | ( distinct_object ~> ( PreIdent( _, preExpr.freshMetaType(), None ) ) ) }
+  def pre_plain_atomic_formula = rule { atomic_word ~ ( "(" ~ Ws ~ pre_arguments ~ ")" ~ Ws ).? ~> ( ( p, as ) => PreApps( p, as.getOrElse( Seq() ) ) ) }
+  def pre_defined_prop = rule { "$" ~ Ws ~ ( "true" ~ push( PreTop ) | "false" ~ push( PreBottom ) ) ~ Ws }
+  def pre_infix_formula = rule { pre_term ~ ( "=" ~ Ws ~ pre_term ~> ( PreEq( _: PreExpr, _ ) ) | "!=" ~ Ws ~ pre_term ~> ( ( s: PreExpr, t: PreExpr ) => PreNeg( PreEq( s, t ) ) ) ) }
+
+  def pre_fol_quantifier = rule { ( "!" ~ push( AllBlock ) | "?" ~ push( ExBlock ) ) ~ Ws }
+  def pre_binary_connective = rule {
+    ( ( "<=>" ~ push( ( a: PreExpr, b: PreExpr ) => PreIff( a, b ) ) ) |
+      ( "=>" ~ push( PreImp( _: PreExpr, _: PreExpr ) ) ) |
+      ( "<=" ~ push( ( a: PreExpr, b: PreExpr ) => PreImp( b, a ) ) ) |
+      ( "<~>" ~ push( ( a: PreExpr, b: PreExpr ) => PreNeg( PreIff( a, b ) ) ) ) |
+      ( "~|" ~ push( ( a: PreExpr, b: PreExpr ) => PreNeg( PreOr( a, b ) ) ) ) |
+      ( "~&" ~ push( ( a: PreExpr, b: PreExpr ) => PreNeg( PreAnd( a, b ) ) ) ) ) ~ Ws
+  }
+
+  def pre_term: Rule1[PreExpr] = rule { pre_variable | ( distinct_object ~> ( PreIdent( _, preExpr.freshMetaType(), None ) ) ) | ( number ~> ( PreIdent( _, preExpr.freshMetaType(), None ) ) ) | pre_function_term }
+  def pre_function_term = rule { name ~ ( "(" ~ Ws ~ pre_term.+.separatedBy( Comma ) ~ ")" ~ Ws ).? ~> ( ( hd, as ) => PreApps( hd, as.getOrElse( Seq() ) ) ) }
+  def pre_variable = rule { capture( upper_word ) ~ Ws ~> ( PreIdent( _: String, preExpr.freshMetaType(), None ) ) }
+  def pre_arguments = rule { pre_term.+.separatedBy( Comma ) }
 
   def include = rule { "include(" ~ Ws ~ file_name ~ formula_selection ~ ")." ~ Ws ~> ( IncludeDirective( _, _ ) ) }
   def formula_selection = rule { ( "," ~ Ws ~ "[" ~ name.*.separatedBy( Comma ) ~ "]" ~ Ws ).? }
@@ -90,7 +127,7 @@ class TptpParser( val input: ParserInput ) extends Parser {
 
   def single_quoted = rule { '\'' ~ sg_char.* ~ '\'' ~ Ws ~> ( ( l: Seq[String] ) => l.mkString ) }
 
-  def distinct_object = rule { '"' ~ do_char.* ~ '"' ~ Ws ~> ( ( l: Seq[String] ) => l.mkString ) }
+  def distinct_object: Rule1[String] = rule { '"' ~ do_char.* ~ '"' ~ Ws ~> ( ( l: Seq[String] ) => l.mkString ) }
 
   val alpha_numeric = UpperAlpha ++ LowerAlpha ++ Digit ++ CharPredicate( "$_" )
   def upper_word = rule { UpperAlpha ~ alpha_numeric.* }
@@ -107,13 +144,12 @@ class TptpParser( val input: ParserInput ) extends Parser {
   val sg_char_pred = CharPredicate( ' ' to '&', '(' to '[', ']' to '~' )
   def sg_char = rule { capture( sg_char_pred ) | ( "\\\\" ~ push( "\\" ) ) | ( "\\'" ~ push( "'" ) ) }
 
-  def complex_type = rule { basic_type | ( ">" ~ push( ( t1: Ty, t2: Ty ) => t1 -> t2 ) ) }
+  def complex_type = rule { basic_type | ( ">" ~ push( ( t1: preExpr.Type, t2: preExpr.Type ) => t1 -> t2 ) ) }
   def basic_type = rule {
     atomic_word ~> (
       ( name ) => name match {
-        case "$o" => To
-        case "$i" => Ti
-        case name => TBase( name )
+        case "$o" | "$i" | "$int" => preExpr.BaseType( name, Nil )
+        case name                 => preExpr.BaseType( name, Nil ) //TODO: add support for arrays (parametric)
       } )
   }
 }
@@ -154,3 +190,4 @@ object TptpParser {
     print( load( FilePath( args.head ) ) )
 
 }
+

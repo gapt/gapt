@@ -7,6 +7,9 @@ object tptpToString {
   def tptpInput( input: TptpInput ): String = input match {
     case AnnotatedFormula( language, name, role, formula, annots ) =>
       s"${atomic_word( language )}(${atomic_word( name )}, $role, ${expression( formula )}${annotations( annots )}).\n"
+    //TODO: fix pre formula printing
+    case AnnotatedPreFormula( language, name, role, formula, annots ) =>
+      s"${atomic_word( language )}(${atomic_word( name )}, $role, TODO, ${annotations( annots )}).\n"
     case IncludeDirective( fileName, None ) => s"include(${single_quoted( fileName )}).\n"
     case IncludeDirective( fileName, Some( seq ) ) =>
       //TODO: check what seq actually contains
@@ -65,6 +68,35 @@ object tptpToString {
       s"${atomic_word( hd )}(${args map expression mkString ", "})"
     case App( a, b ) => binExpr( a, b, p, prio.term, s"@" )
   }
+
+  //TODO: do typed expression printing
+  /*
+  private def pre_expression( expr: preExpr.Expr, p: Int ): String = expr match {
+    case GeneralList( elements @ _* ) =>
+      s"[${elements map pre_expression mkString ", "}]"
+    case GeneralColon( a, b ) =>
+      s"${pre_expression( a, prio.term )}:${pre_expression( b, prio.term )}"
+
+    case Iff( a, b ) =>
+      binExpr( a, b, p, prio.binary_formula, "<=>" )
+
+    case Top()                              => "$true"
+    case Bottom()                           => "$false"
+    case Const( c, _, _ )                   => atomic_word( c )
+    case Var( name, _ )                     => variable( name )
+    case Neg( Eq( a, b ) )                  => binExpr( a, b, p, prio.infix_formula, "!=" )
+    case Neg( f )                           => parenIf( p, prio.unitary_formula, s"~ ${expression( f, prio.unitary_formula + 1 )}" )
+    case Eq( a, b )                         => binExpr( a, b, p, prio.infix_formula, "=" )
+    case And( _, _ )                        => binAssocExpr( expr, p, "&", And )
+    case Or( a, b )                         => binAssocExpr( expr, p, "|", Or )
+    case Imp( a, b )                        => binExpr( a, b, p, prio.binary_formula, "=>" )
+    case All.Block( vs, bd ) if vs.nonEmpty => quant( vs, bd, p, "!" )
+    case Ex.Block( vs, bd ) if vs.nonEmpty  => quant( vs, bd, p, "?" )
+    case Apps( Const( hd, _, _ ), args ) if expr.ty.isInstanceOf[TBase] =>
+      s"${atomic_word( hd )}(${args map expression mkString ", "})"
+    case App( a, b ) => binExpr( a, b, p, prio.term, s"@" )
+  }
+  */
 
   def renameVarName( name: String ) =
     name.toUpperCase match {

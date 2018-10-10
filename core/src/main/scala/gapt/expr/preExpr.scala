@@ -9,6 +9,7 @@ import cats.syntax.traverse._
 import cats.syntax.either._
 import cats.instances.list._
 import cats.instances.either._
+import gapt.expr.preExpr.Ident
 
 import scala.collection.mutable
 
@@ -487,4 +488,24 @@ object preExpr {
   }
   def toRealExpr( expr: Expr, sig: BabelSignature ): Either[ElabError, real.Expr] =
     toRealExprs( Seq( expr ), sig ).map( _.head )
+}
+
+object preExprHelper {
+  def AndLeftAssociative( fs: preExpr.Expr* ) = leftAssociative( preExpr.And.apply, preExpr.Top )( fs: _* )
+  def OrLeftAssociative( fs: preExpr.Expr* ) = leftAssociative( preExpr.Or.apply, preExpr.Bottom )( fs: _* )
+
+  def leftAssociative[T]( op: ( T, T ) => T, neutral: T )( fs: T* ): T = {
+    fs.reduceLeftOption( op ).getOrElse( neutral )
+  }
+
+  val AllBlock = quantifierBlock( preExpr.All.apply )( _, _ )
+  val ExBlock = quantifierBlock( preExpr.Ex.apply )( _, _ )
+
+  def quantifierBlock[V, E]( op: ( V, E ) => E )( vars: Seq[V], expr: E ) = {
+    vars.reverse.foldLeft( expr )( ( v, acc ) => op( acc, v ) )
+  }
+
+  def PreApps( name: String, args: Seq[preExpr.Expr] ) =
+    args.reverse.foldLeft[preExpr.Expr]( preExpr.Ident( name, preExpr.freshMetaType(), None ) )( preExpr.App( _, _ ) )
+
 }
