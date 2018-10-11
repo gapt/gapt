@@ -13,7 +13,7 @@ import scala.collection.mutable
  * D. Weller: On the complexity of proof deskolemization, Journal of Symbolic
  * Logic, 77(2), 2012 for a formulation close to the one implemented here.
  */
-trait ExpansionTree extends DagProof[ExpansionTree] {
+sealed trait ExpansionTree extends DagProof[ExpansionTree] {
   /**
    * The formula represented by this tree.
    */
@@ -36,7 +36,7 @@ trait ExpansionTree extends DagProof[ExpansionTree] {
 /**
  * An expansion tree with one subtree.
  */
-trait UnaryExpansionTree extends ExpansionTree {
+sealed trait UnaryExpansionTree extends ExpansionTree {
   def child: ExpansionTree
   def immediateSubProofs = Seq( child )
 }
@@ -44,7 +44,7 @@ trait UnaryExpansionTree extends ExpansionTree {
 /**
  * An expansion tree with two subtrees.
  */
-trait BinaryExpansionTree extends ExpansionTree {
+sealed trait BinaryExpansionTree extends ExpansionTree {
   def child1: ExpansionTree
   def child2: ExpansionTree
   def immediateSubProofs = Seq( child1, child2 )
@@ -258,7 +258,7 @@ object ETInduction {
 /**
  * A general trait for trees representing quantified formulas.
  */
-trait ETQuantifier extends ExpansionTree {
+sealed trait ETQuantifier extends ExpansionTree {
   def instances: Traversable[( Expr, ExpansionTree )]
 }
 
@@ -287,7 +287,7 @@ case class ETWeakQuantifier( shallow: Formula, instances: Map[Expr, ExpansionTre
   for ( ( selectedTerm, child ) <- instances ) {
     require( child.polarity == polarity )
     val correctShallow = BetaReduction.betaNormalize( Substitution( boundVar -> selectedTerm )( qfFormula ) )
-    require( child.shallow == correctShallow, s"Incorrect shallow formula:\n${child.shallow} !=\n $correctShallow" )
+    require( child.shallow == correctShallow, s"Incorrect shallow formula:\n${child.shallow} !=\n$correctShallow" )
   }
 
   def deep =
@@ -331,6 +331,7 @@ object ETWeakQuantifierBlock {
           walk( a, terms, n )
           walk( b, terms, n )
         case ETWeakening( _, _ ) =>
+        case _                   =>
       }
 
     val numberQuants = et.shallow match {

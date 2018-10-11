@@ -28,7 +28,7 @@ object CERESExpansionExampleProof {
         ForallLeftRule( p5, fof"!x (P(x)->P(g(x)))", c ), fof"!x (P(x)->P(g(x)))", g( c ) ),
       fof"!x (P(x)->P(g(x)))" )
 
-    val p11 = ParamodulationRightRule( TheoryAxiom( seq ), ax1, LogicalAxiom( fof"P(f(f(z)))" ),
+    val p11 = ParamodulationRightRule( ProofLink( foc"th", seq ), ax1, LogicalAxiom( fof"P(f(f(z)))" ),
       fof"P(f(f(z)))", fof"P(g(z))" )
 
     val p15 = ImpLeftRule( LogicalAxiom( fof"P(z)" ), fof"P(z)",

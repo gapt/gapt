@@ -6,7 +6,9 @@ import ammonite.ops._
 import gapt.cutintro._
 import gapt.expr._
 import gapt.expr.fol.isFOLPrenexSigma1
+import gapt.formats.InputFile
 import gapt.formats.babel.BabelParser
+import gapt.formats.json._
 import gapt.formats.leancop.LeanCoPParser
 import gapt.formats.tip.TipSmtImporter
 import gapt.formats.tptp.{ TptpParser, resolveIncludes }
@@ -16,8 +18,8 @@ import gapt.proofs.ceres._
 import gapt.proofs.expansion._
 import gapt.proofs.gaptic.{ ProofState, now }
 import gapt.proofs.lk._
-import gapt.proofs.lkt.normalizeLKt
-import gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
+import gapt.proofs.nd.NDProof
+import gapt.proofs.resolution.{ ResolutionProof, ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
 import gapt.proofs.{ MutableContext, Suc, loadExpansionProof }
 import gapt.provers.congruence.SimpleSmtSolver
 import gapt.provers.escargot.Escargot
@@ -42,7 +44,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
 
     implicit val ctx: MutableContext = bench.ctx.newMutable
     val sequent = bench.toSequent
-    val proof = Viper.getStrategies( sequent, ViperOptions() ).reverse.view.flatMap {
+    val lkProofWithSk = Viper.getStrategies( sequent, ViperOptions() ).reverse.view.flatMap {
       case ( duration, strategy ) =>
         try {
           ( withTimeout( duration ) { strategy.andThen( now )( ProofState( sequent ) ) } match {
@@ -58,7 +60,15 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
         }
     }.headOption.getOrElse( throw new TimeOutException( null, Duration.Inf ) ) --- "viper"
 
-    ctx.check( proof ) --? "checking proof against context"
+    ctx.check( lkProofWithSk ) --? "checking proof against context"
+
+    val expProofWithSk = LKToExpansionProof( lkProofWithSk ) --- "LKToExpansionProof"
+    val expProofDesk = deskolemizeET( expProofWithSk ) --- "deskolemization"
+    expProofWithSk.shallow.isSubsetOf( expProofDesk.shallow ) !-- "shallow sequent of deskolemization"
+    Z3.isValid( expProofDesk.deep ) !-- "deskolemized deep formula validity"
+    val proof = ExpansionProofToLK( expProofDesk ).get --- "ExpansionProofToLK on deskolemization"
+
+    ctx.check( proof ) --? "checking deskolemized proof against context"
 
     extractRecSchem( proof ) --? "extract recursion scheme"
 
@@ -69,29 +79,20 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
       generate( lower = 2, upper = 3, num = 1 ).head --- "random instance term"
     val instProof = instanceProof( proof, instanceTerms )
 
-    val proofName @ Apps( proofNameC @ Const( proofNameStr, _, _ ), _ ) = Atom( ctx.newNameGenerator.fresh( "proof" ), variables )
+    val proofName @ Apps( proofNameC @ Const( proofNameStr, _, _ ), _ ) =
+      Atom( ctx.newNameGenerator.fresh( "proof" ), variables )
     ArithmeticInductionToSchema( proof, proofName ) --? "induction to schema" foreach { _ =>
       ProofLink( proofName ) --? "create schema proof link"
       instantiateProof.Instantiate( proofNameC( instanceTerms ) ) --? "schema instance"
       SchematicStruct( proofNameStr ).get --? "schematic struct" foreach { schemaStruct =>
         CharFormPRP.PR( CharFormPRP( schemaStruct ) ) --? "characteristic formula"
-        InstanceOfSchematicStruct( CLS( proofNameC( instanceTerms ), proof.endSequent.map( _ => false ) ), schemaStruct ) --? "struct instance"
+        InstanceOfSchematicStruct( CLS(
+          proofNameC( instanceTerms ),
+          proof.endSequent.map( _ => false ) ), schemaStruct ) --? "struct instance"
       }
     }
 
-    LKToExpansionProof( proof ) --? "LKToExpansionProof" foreach { expansion =>
-      deskolemizeET( expansion ) --? "deskolemization" foreach { desk =>
-        desk.shallow.isSubsetOf( expansion.shallow ) !-- "shallow sequent of deskolemization"
-        Z3.isValid( desk.deep ) !-- "deskolemized deep formula validity"
-        ExpansionProofToLK( desk ).get --? "ExpansionProofToLK on deskolemization" foreach { deskLK =>
-          deskLK.conclusion.isSubsetOf( proof.conclusion ) !-- "conclusion of ExpansionProofToLK"
-          ctx.check( deskLK ) --? "context check of ExpansionProofToLK"
-          LKToND( deskLK ) --? "LKToND (deskolemization)"
-        }
-      }
-    }
-
-    normalizeLKt.inductionWithDebug( instProof ) --? "eliminate inductions in instance proof using lkt"
+    normalizeLKt.inductionLK( instProof, debugging = true ) --? "eliminate inductions in instance proof using lkt"
     inductionNormalForm( instProof ) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
       indFreeProof.endSequent.multiSetEquals( instProof.endSequent ) !-- "induction elimination does not modify end-sequent"
       isInductionFree( indFreeProof ) !-- "induction elimination returns induction free proof"
@@ -131,6 +132,8 @@ class TheoryTestCase( name: String, combined: Boolean )
     val lemmaHandle = LemmaHandle( ctx.get[ProofNames].names( name )._1 )
     val proof = ( if ( combined ) lemmaHandle.combined() else lemmaHandle.proof ) --- "proof"
 
+    JSONImporter.apply[LKProof]( InputFile.fromString( JSONExporter( proof ) ) ) == proof !-- "json export of lk proof"
+
     LKToND( proof ) --? "LKToND"
     normalizeLKt.withDebug( proof ) --? "lkt cut-elim"
 
@@ -162,7 +165,7 @@ class TheoryTestCase( name: String, combined: Boolean )
       }
     }
 
-    normalizeLKt.inductionWithDebug( instProof ) --? "eliminate inductions in instance proof using lkt"
+    normalizeLKt.inductionLK( instProof, debugging = true ) --? "eliminate inductions in instance proof using lkt"
     inductionNormalForm( instProof ) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
       indFreeProof.endSequent.multiSetEquals( instProof.endSequent ) !-- "induction elimination does not modify end-sequent"
     }
@@ -285,9 +288,14 @@ class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
       desk.shallow.isSubsetOf( expansion.shallow ) !-- "shallow sequent of deskolemization"
       Z3.isValid( desk.deep ) !-- "deskolemized deep formula validity"
       ExpansionProofToLK( desk ).get --? "ExpansionProofToLK on deskolemization" foreach { deskLK =>
-        LKToND( deskLK ) --? "LKToND (deskolemization)"
+        JSONImporter.apply[LKProof]( InputFile.fromString( JSONExporter( deskLK ) ) ) == deskLK !-- "json export of lk proof"
+        LKToND( deskLK ) --? "LKToND (deskolemization)" foreach { nd =>
+          JSONImporter.apply[NDProof]( InputFile.fromString( JSONExporter( nd ) ) ) == nd !-- "json export of lk proof"
+        }
       }
     }
+
+    JSONImporter.apply[ExpansionProof]( InputFile.fromString( JSONExporter( expansion ) ) ) == expansion !-- "json export of expansion proof"
   }
 }
 

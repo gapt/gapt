@@ -183,7 +183,8 @@ object Viper {
         val newGoal = OpenAssumption( goal.labelledSequent.copy( antecedent =
           for ( ( p, i ) <- cnfPs.toVector.zipWithIndex ) yield s"h_$i" -> p.endSequent.succedent.head ) )
         insert( cnfPs.foldLeft[LKProof]( newGoal )( ( q, cnfP ) =>
-          ContractionMacroRule( CutRule( cnfP, q, cnfP.endSequent.succedent.head ) ) ) )
+          if ( !q.endSequent.antecedent.contains( cnfP.endSequent.succedent.head ) ) q else
+            ContractionMacroRule( CutRule( cnfP, q, cnfP.endSequent.succedent.head ) ) ) )
     }
   }
 

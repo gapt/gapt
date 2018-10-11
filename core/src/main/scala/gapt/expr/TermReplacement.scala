@@ -204,6 +204,39 @@ object TermReplacement {
 
     TermReplacement( obj, partialMap ++ renaming toMap )
   }
+
+  def apply[T: ClosedUnderReplacement]( t: T, replacements: Map[Const, Expr], tyReplacements: Map[TBase, Ty] ): T = {
+    def replTyInN( n: VarOrConst ): VarOrConst =
+      n match {
+        case Const( n, t, ps ) => Const( n, replTy( t ), ps map replTy )
+        case Var( n, t )       => Var( n, replTy( t ) )
+      }
+    def replTy( t: Ty ): Ty =
+      t match {
+        case t: TVar => t
+        case t @ TBase( n, ps ) =>
+          tyReplacements.getOrElse( t, TBase( n, ps map replTy ) )
+        case t1 ->: t2 =>
+          replTy( t1 ) ->: replTy( t2 )
+      }
+
+    val namesInObj = containedNames( t )
+    val namesInRange = replacements.values.flatMap { containedNames( _ ) }.toSet // TODO: types
+
+    val nameGen = rename.awayFrom( namesInObj ++ namesInRange ++ replacements.keySet )
+    val renaming = for (
+      n <- namesInObj if !replacements.toMap[VarOrConst, Expr].contains( n )
+    ) yield n -> replTyInN( if ( namesInRange.contains( replTyInN( n ) ) ) nameGen.fresh( n ) else n )
+
+    TermReplacement( t, replacements ++ renaming )
+  }
+
+  def undoGrounding[T: ClosedUnderReplacement]( t: T, subst: Substitution ): T =
+    apply(
+      t,
+      subst.map.collect { case ( v, c: Const ) => c -> v },
+      subst.typeMap.collect { case ( v, c: TBase ) => c -> v } )
+
 }
 
 object containedNames {

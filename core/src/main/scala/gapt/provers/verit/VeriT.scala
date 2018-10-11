@@ -9,6 +9,7 @@ import java.io._
 
 import gapt.provers._
 import gapt.expr._
+import gapt.formats.smt.SmtLibExporter
 import gapt.proofs.lk.LKProof
 
 object VeriT extends VeriT
@@ -25,14 +26,6 @@ class VeriT extends OneShotProver with ExternalProgram {
     VeriTParser.isUnsat( new StringReader( veritOutput ) )
   }
 
-  private def withGroundVariables2( seq: HOLSequent )( f: HOLSequent => Option[ExpansionProof] ): Option[ExpansionProof] = {
-    val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
-    f( renamedSeq ) map {
-      case ExpansionProof( renamedExpSeq ) =>
-        ExpansionProof( renamedExpSeq map { TermReplacement( _, invertRenaming.toMap ) } )
-    }
-  }
-
   /*
    * Given a sequent A1, ..., An |- B1, ..., Bm, veriT's proof is actually of
    * the sequent A1, ..., An, not B1, ..., not Bm |-.
@@ -41,7 +34,7 @@ class VeriT extends OneShotProver with ExternalProgram {
    * taking the quantified equality axioms from the proof returned by veriT and
    * merging them with the original end-sequent.
    */
-  override def getExpansionProof( s: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = withGroundVariables2( s ) { s =>
+  override def getExpansionProof( s: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = groundFreeVariables.wrap( s ) { s =>
     val ( smtBenchmark, _, renaming ) = SmtLibExporter( s, lineWidth = Int.MaxValue )
     val output = runProcess( Seq( "veriT", "--proof=-", "--proof-version=1" ), smtBenchmark )
 

@@ -6,7 +6,7 @@ import gapt.proofs.Context
 import gapt.proofs.Sequent
 import gapt.proofs.gaptic._
 
-object VeryWeakPHPSchema extends TacticsProof {
+object VeryWeakPHPSeqSchema extends TacticsProof {
   ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
   ctx += Context.Sort( "i" )
   ctx += hoc"f:i>nat"
@@ -14,10 +14,13 @@ object VeryWeakPHPSchema extends TacticsProof {
   ctx += hoc"z:i"
   ctx += hoc"E: nat>nat>o"
   ctx += hoc"LE: nat>nat>o"
+  ctx += hoc"LEQi: i>i>o"
 
-  ctx += hoc"omega: nat>nat"
-  ctx += hoc"phi: nat>nat"
+  ctx += hoc"omega: nat>nat>nat"
+  ctx += hoc"phi: nat>nat>i>nat"
   ctx += PrimRecFun( hoc"POR:nat>i>o", "POR 0 x = E 0 (f x) ", "POR (s y) x = (E (s y) (f x) ∨ POR y x)" )
+  ctx += PrimRecFun( hoc"MulEq:nat>i>o", "MulEq 0 x = (∃y (E (f x) (f (suc x)) ) ) ", "MulEq (s n) x = (∃y (LEQi x y) ∧ (E (f x) (f (suc x)) ) ∧ (MulEq n y ) )" )
+
   ctx += "LEDefinition" -> hos"POR(n,a) :- LE(f(a), s(n))"
   ctx += "LEDefinition2" -> hos"POR(n,suc(a)) :- LE(f(a), s(n))"
   ctx += "NumericTransitivity" -> hos"E(n,f(a)),E(n,f(suc(a))) :- E(f(a), f(suc(a)))"
@@ -27,19 +30,20 @@ object VeryWeakPHPSchema extends TacticsProof {
 
   val esOmega = Sequent(
     Seq( hof"!x POR(n,x)" ),
-    Seq( hof"?x ( E(f(x), f(suc(x))) )" ) )
-  ctx += Context.ProofNameDeclaration( le"omega n", esOmega )
+    Seq( hof"?x (MulEq(m,x))" ) )
+  ctx += Context.ProofNameDeclaration( le"omega n m", esOmega )
   val esPhi = Sequent(
     Seq( hof"?x ( E(n,f(x)) & E(n,f(suc(x)))) | !y (LE(f(y),n))" ),
-    Seq( hof"?x ( E(f(x), f(suc(x))) )" ) )
-  ctx += Context.ProofNameDeclaration( le"phi n", esPhi )
+    Seq( hof" MulEq(m,k)" ) )
+  ctx += Context.ProofNameDeclaration( le"phi n m", esPhi )
 
   //The base case of  omega
   val esOmegaBc =
     Sequent(
       Seq( "Ant_0" -> hof"!x POR(0,x)" ),
-      Seq( "Suc_0" -> hof"?x (E(f(x), f(suc(x))))" ) )
+      Seq( "Suc_0" -> hof"?x (MulEq(0,x))" ) )
   val omegaBc = Lemma( esOmegaBc ) {
+
     cut( "cut", hof"?x ( E(0,f(x)) & E(0,f(suc(x)))) | !y (LE(f(y),0))" )
     orR
     exR( "cut_0", hoc"z" )
@@ -50,9 +54,8 @@ object VeryWeakPHPSchema extends TacticsProof {
     allL( "Ant_0", le"(suc z)" )
     unfold( "POR" ) atMost 1 in "Ant_0_0"
     trivial
-    ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega 0", omegaBc )
+  ctx += Context.ProofDefinitionDeclaration( le"omega 0 0", omegaBc )
   val esOmegaSc =
     Sequent(
       Seq( "Ant_0" -> hof"!x POR(s(n),x)" ),

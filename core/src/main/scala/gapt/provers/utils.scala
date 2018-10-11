@@ -1,10 +1,8 @@
 package gapt.provers
 
 import gapt.expr._
-import gapt.proofs.{ HOLSequent, MutableContext }
+import gapt.proofs.{ HOLSequent, MutableContext, Sequent }
 import gapt.utils.{ Maybe, NameGenerator }
-
-import scala.collection.mutable
 
 object mangleName {
   def apply( name: String, prefix: String = "f_" ): String = {
@@ -15,6 +13,9 @@ object mangleName {
       case '+' => "p"
       case '-' => "s"
       case '/' => "d"
+      case 'ν' => "n"
+      case 'α' => "a"
+      case 'γ' => "g"
       case c   => c.toString
     }
     n = n.filter {
@@ -52,31 +53,38 @@ object renameConstantsToFi {
 }
 
 object groundFreeVariables {
-  def getGroundingMap( vars: Set[Var], consts: Set[Const] ): Seq[( Var, Const )] = {
+  def getGroundingMap( vars: Set[Var], consts: Set[Const] ): Substitution = {
     val nameGen = rename.awayFrom( consts )
-    vars.toSeq map { v =>
-      val tvs = typeVariables( v ).toList
-      v -> Const( nameGen fresh v.name, v.ty, tvs )
-    }
+    val tyVars = typeVariables( vars ++ consts )
+    // TODO(gabriel): fresh base types
+    val tyGround = Substitution( Map(), tyVars.map( v => v -> TBase( v.name ) ) )
+    Substitution( vars.toSeq map { v =>
+      v -> Const( nameGen fresh v.name, tyGround( v.ty ) )
+    }, tyGround.typeMap )
   }
 
-  def getGroundingMap( seq: HOLSequent ): Seq[( Var, Const )] =
+  def getGroundingMap( seq: HOLSequent ): Substitution =
     getGroundingMap( freeVariables( seq ), constants( seq ) )
 
-  def apply( seq: HOLSequent ): ( HOLSequent, Map[Const, Var] ) = {
+  def apply( seq: HOLSequent ): ( HOLSequent, Substitution ) = {
     val groundingMap = getGroundingMap( seq )
-    val groundSeq = Substitution( groundingMap )( seq )
-    val unground = groundingMap.map { case ( f, t ) => ( t, f ) }
-    ( groundSeq, unground.toMap )
+    val groundSeq = groundingMap( seq )
+    ( groundSeq, groundingMap )
+  }
+  def apply( formula: Formula ): ( Formula, Substitution ) = {
+    val ( Sequent( _, Seq( groundFormula ) ), unground ) = apply( Sequent() :+ formula )
+    ( groundFormula, unground )
   }
 
-  def wrapWithConsts[I, O]( seq: HOLSequent )( f: ( HOLSequent, Set[Const] ) => Option[I] )( implicit ev: Replaceable[I, O] ): Option[O] = {
+  def wrapWithConsts[T: ClosedUnderReplacement]( seq: HOLSequent )( f: ( HOLSequent, Set[Const] ) => Option[T] ): Option[T] = {
     val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
-    f( renamedSeq, invertRenaming.keySet ) map { TermReplacement.hygienic( _, invertRenaming ) }
+    f( renamedSeq, constants( invertRenaming.range ) ).map( TermReplacement.undoGrounding( _, invertRenaming ) )
   }
 
-  def wrap[I, O]( seq: HOLSequent )( f: HOLSequent => Option[I] )( implicit ev: Replaceable[I, O] ): Option[O] =
-    wrapWithConsts( seq )( ( groundSeq, _ ) => f( groundSeq ) )
+  def wrap[T: ClosedUnderReplacement]( seq: HOLSequent )( f: HOLSequent => Option[T] ): Option[T] = {
+    val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
+    f( renamedSeq ).map( TermReplacement.undoGrounding( _, invertRenaming ) )
+  }
 }
 
 object extractIntroducedDefinitions {

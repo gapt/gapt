@@ -797,7 +797,7 @@ object NegIntroRule extends ConvenienceConstructor( "NegIntroRule" ) {
  *     :- ⊤
  * </pre>
  */
-case class TopIntroRule() extends InitialSequent {
+case object TopIntroRule extends InitialSequent {
 
   def mainFormula = Top()
 

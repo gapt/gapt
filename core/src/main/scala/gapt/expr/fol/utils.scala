@@ -91,9 +91,26 @@ object isFOLPrenexSigma1 {
     seq.antecedent.forall( isFOLPrenexPi1( _ ) ) && seq.succedent.forall( isFOLPrenexSigma1( _ ) )
 }
 
+object isPrenexSigma1 {
+  def apply( f: Expr ): Boolean = f match {
+    case Ex.Block( _, matrix ) if !containsQuantifier( matrix ) => true
+    case _ => false
+  }
+
+  def apply( seq: HOLSequent ): Boolean =
+    seq.antecedent.forall( isPrenexPi1( _ ) ) && seq.succedent.forall( isPrenexSigma1( _ ) )
+}
+
 object isFOLPrenexPi1 {
   def apply( f: Expr ): Boolean = f match {
     case All.Block( _, matrix: FOLFormula ) if !containsQuantifier( matrix ) => true
+    case _ => false
+  }
+}
+
+object isPrenexPi1 {
+  def apply( f: Expr ): Boolean = f match {
+    case All.Block( _, matrix ) if !containsQuantifier( matrix ) => true
     case _ => false
   }
 }

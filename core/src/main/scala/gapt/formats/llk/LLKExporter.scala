@@ -198,20 +198,20 @@ class LLKExporter( val expandTex: Boolean ) {
 
     //TODO: this is only a way to write out the proof, but it cannot be read back in
     // (labels are not handled by llk so far)
-    /*
-    case ExistsSkLeftRule( p1,  aux, main, term ) =>
+    case ExistsSkLeftRule( p1, aux, main, term, d ) =>
       generateProof( p1, "\\EXSKL{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}"
         + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
+    /*
     case ExistsSkRightRule( p1,  aux, main, term ) =>
       generateProof( p1, "\\EXSKR{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}"
         + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
     case ForallSkLeftRule( p1,  aux, main, term ) =>
       generateProof( p1, "\\ALLSKL{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}"
         + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
-    case ForallSkRightRule( p1,  aux, main, term ) =>
+        */
+    case ForallSkRightRule( p1, aux, main, term, d ) =>
       generateProof( p1, "\\ALLSKR{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}"
         + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
-    */
   }
 
 }
@@ -232,12 +232,12 @@ object toLatexString {
   def getFormulaString( f: Expr, outermost: Boolean = true, escape_latex: Boolean ): String = f match {
     case All( x, t ) =>
       val op = if ( escape_latex ) "\\forall" else "all"
-      "(" + op + " " + getFormulaString( x.asInstanceOf[Var], false, escape_latex ) + " " +
-        getFormulaString( t, false, escape_latex ) + ")"
+      op + " " + getFormulaString( x.asInstanceOf[Var], false, escape_latex ) +
+        " " + getFormulaString( t, false, escape_latex )
     case Ex( x, t ) =>
       val op = if ( escape_latex ) "\\exists" else "exists"
-      "(" + op + " " + getFormulaString( x.asInstanceOf[Var], false, escape_latex ) + " " +
-        getFormulaString( t, false, escape_latex ) + ")"
+      op + " " + getFormulaString( x.asInstanceOf[Var], false, escape_latex ) +
+        " " + getFormulaString( t, false, escape_latex )
     case Neg( t1 ) =>
       val op = if ( escape_latex ) "\\neg" else "-"
       val str = " " + op + " " + getFormulaString( t1, false, escape_latex )

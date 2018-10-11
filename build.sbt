@@ -4,7 +4,7 @@ import org.apache.commons.compress.archivers.tar.{ TarArchiveEntry, TarArchiveOu
 import scalariform.formatter.preferences._
 import sys.process._
 
-val Version = "2.12-SNAPSHOT"
+val Version = "2.13-SNAPSHOT"
 
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
@@ -21,7 +21,7 @@ lazy val commonSettings = Seq(
     devConnection = Some( "scm:git:git@github.com:gapt/gapt.git" ) ) ),
   bintrayOrganization := Some( "gapt" ),
 
-  scalaVersion := "2.12.6",
+  scalaVersion := "2.12.7",
   scalacOptions in Compile ++= Seq(
     "-Ypartial-unification",
     "-deprecation",
@@ -34,8 +34,6 @@ lazy val commonSettings = Seq(
   fork := true,
   baseDirectory in run := file( "." ),
 
-  resolvers += Resolver.sonatypeRepo( "snapshots" ), // for scoverage
-
   sourcesInBase := false // people like to keep scripts lying around
 ) ++ scalariformSettings
 
@@ -46,7 +44,7 @@ lazy val scalariformSettings =
     .setPreference( DoubleIndentConstructorArguments, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "4.2.0"
+val specs2Version = "4.3.4"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   javaOptions in Test += "-Xmx2g",
@@ -177,12 +175,12 @@ lazy val core = project.in( file( "core" ) ).
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.parboiled" %% "parboiled" % "2.1.4",
       "com.lihaoyi" %% "fastparse" % "1.0.0",
-      "com.lihaoyi" %% "sourcecode" % "0.1.4",
-      "org.typelevel" %% "cats-free" % "1.0.1",
+      "com.lihaoyi" %% "sourcecode" % "0.1.5",
+      "org.typelevel" %% "cats-free" % "1.4.0",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
-      "org.apache.commons" % "commons-lang3" % "3.7",
-      "com.lihaoyi" %% "ammonite-ops" % "1.1.2",
-      "de.uni-freiburg.informatik.ultimate" % "smtinterpol" % "2.5-12-g3d15a15c",
+      "org.apache.commons" % "commons-lang3" % "3.8.1",
+      "com.lihaoyi" %% "ammonite-ops" % "1.2.1",
+      "de.uni-freiburg.informatik.ultimate" % "smtinterpol" % "2.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5" ),
 
@@ -190,7 +188,14 @@ lazy val core = project.in( file( "core" ) ).
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-swing" % "2.0.3",
       "com.itextpdf" % "itextpdf" % "5.5.13",
-      "org.scilab.forge" % "jlatexmath" % "1.0.7" ) )
+      "org.scilab.forge" % "jlatexmath" % "1.0.7" ),
+
+    // JSON serialization
+    libraryDependencies ++= Seq(
+      "io.circe" %% "circe-core",
+      "io.circe" %% "circe-generic",
+      "io.circe" %% "circe-parser",
+      "io.circe" %% "circe-generic-extras" ).map( _ % "0.10.0" ) )
 
 lazy val examples = project.in( file( "examples" ) ).
   dependsOn( core ).
@@ -246,7 +251,7 @@ lazy val testing = project.in( file( "testing" ) ).
     bintrayReleaseOnPublish := false,
     packagedArtifacts := Map(),
 
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.5.4" )
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.1" )
 
 lazy val releaseDist = TaskKey[File]( "release-dist", "Creates the release tar ball." )
 

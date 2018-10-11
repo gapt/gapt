@@ -24,7 +24,7 @@ package object nd {
     case ImpElimRule( maj, min )    => ImpElimRule( s( maj ), s( min ) )
     case ImpIntroRule( q, a )       => ImpIntroRule( s( q ), a )
 
-    case TopIntroRule()             => TopIntroRule()
+    case TopIntroRule               => TopIntroRule
     case BottomElimRule( maj, min ) => BottomElimRule( s( maj ), s( min ) )
 
     case EqualityIntroRule( t )     => EqualityIntroRule( s( t ) )

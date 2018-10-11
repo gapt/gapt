@@ -160,7 +160,7 @@
 {\Huge User manual}
 
 \vspace*{10mm}
-{\Large Version 2.12-SNAPSHOT}
+{\Large Version 2.13-SNAPSHOT}
 \vspace*{10mm}
 
 {\Large \today}
@@ -229,7 +229,7 @@ sbt console
   two lines to your \verb,build.sbt,:
 \begin{lstlisting}
 resolvers += Resolver.jcenterRepo
-libraryDependencies += "at.logic.gapt" %% "gapt" % "2.11"
+libraryDependencies += "at.logic.gapt" %% "gapt" % "2.12"
 \end{lstlisting}
 
 \end{enumerate}
@@ -1496,6 +1496,147 @@ mr: (Map[gapt.proofs.SequentIndex,gapt.expr.Var], gapt.expr.Expr) = (Map(),λx s
 
 Examples of proofs with from which more interesting realizers are extracted by the algorithm can be found in the file \cli{examples/m-realizabilityExamples.scala}. 
 
+\chapter{Input and output}
+GAPT can read from and write to several existing formats, including
+JSON and TPTP.
+\section{JSON}
+GAPT currently supports JSON import and export of LK proofs and expansion proofs,
+as well as all of their components such as formulas, sequents, indices, etc. For
+instance, this is how you export a sequent to JSON:
+\begin{clilisting}
+gapt> import gapt.formats.json._
+import gapt.formats.json._
+
+gapt> val s = JSONExporter(hos"A, B :- P(x)")
+s: String =
+{
+  "antecedent" : [
+    "A:o",
+    "B:o"
+  ],
+  "succedent" : [
+    "P(x): o"
+  ]
+}
+
+\end{clilisting}
+To read the JSON string back into a sequent:
+\begin{clilisting}
+gapt> import gapt.formats.InputFile
+import gapt.formats.InputFile
+
+gapt> val sequent = JSONImporter[HOLSequent](InputFile.fromString(s))
+sequent: gapt.proofs.HOLSequent = A, B ⊢ P(x)
+
+\end{clilisting}
+Serializing an LK proof to JSON works a little differently than you might
+expect. Instead of naively serializing the proof as an object, its distinct
+subproofs are collected in a map.
+\begin{clilisting}
+gapt> val ax1 = LogicalAxiom(hof"A")
+ax1: gapt.proofs.lk.LogicalAxiom =
+[p1] A ⊢ A    (LogicalAxiom(A:o))
+
+gapt> val ax2 = LogicalAxiom(hof"B")
+ax2: gapt.proofs.lk.LogicalAxiom =
+[p1] B ⊢ B    (LogicalAxiom(B:o))
+
+gapt> val p1 = AndRightRule(ax1, hof"A", ax2, hof"B")
+p1: gapt.proofs.lk.AndRightRule =
+[p3] A, B ⊢ A ∧ B    (AndRightRule(p1, Suc(0), p2, Suc(0)))
+[p2] B ⊢ B    (LogicalAxiom(B:o))
+[p1] A ⊢ A    (LogicalAxiom(A:o))
+
+gapt> val p2 = AndRightRule(p1, hof"A∧B", ax1, hof"A")
+p2: gapt.proofs.lk.AndRightRule =
+[p4] A, B, A ⊢ A ∧ B ∧ A    (AndRightRule(p3, Suc(0), p1, Suc(0)))
+[p3] A, B ⊢ A ∧ B    (AndRightRule(p1, Suc(0), p2, Suc(0)))
+[p2] B ⊢ B    (LogicalAxiom(B:o))
+[p1] A ⊢ A    (LogicalAxiom(A:o))
+
+gapt> val p3: LKProof = AndRightRule(p2, hof"A∧B∧A", ax2, hof"B")
+p3: gapt.proofs.lk.LKProof =
+[p5] A, B, A, B ⊢ A ∧ B ∧ A ∧ B    (AndRightRule(p4, Suc(0), p2, Suc(0)))
+[p4] A, B, A ⊢ A ∧ B ∧ A    (AndRightRule(p3, Suc(0), p1, Suc(0)))
+[p3] A, B ⊢ A ∧ B    (AndRightRule(p1, Suc(0), p2, Suc(0)))
+[p2] B ⊢ B    (LogicalAxiom(B:o))
+[p1] A ⊢ A    (LogicalAxiom(A:o))
+
+gapt> val s = JSONExporter(p3)
+s: String =
+{
+  "0" : {
+    "name" : "LogicalAxiom",
+    "A" : "A:o"
+  },
+  "1" : {
+    "name" : "LogicalAxiom",
+    "A" : "B:o"
+  },
+  "2" : {
+    "name" : "AndRightRule",
+    "leftSubProof" : 0,
+    "aux1" : 0,
+    "rightSubProof" : 1,
+    "aux2" : 0
+  },
+  "3" : {
+    "name" : "AndRightRule",
+    "leftSubProof" : 2,
+    "aux1" : 0,
+    "rightSubProof" : 0,
+    "aux2" : 0
+  },
+  "4" : {
+    "name" : "AndRightRule",
+    "leftSubProof" : 3,
+    "aux1" : 0,
+    "rightSubProof" : 1,
+    "aux2" : 0
+  }
+}
+
+\end{clilisting}
+As you can see, each of the logical axioms is only serialized once, despite being
+used multiple times in the proof.
+
+\section{TPTP}
+You can export sequents as TPTP problems:
+\begin{clilisting}
+gapt> val sequent = hos"p(0), !x (p(x) -> p(s(x))) :- p(s(s(0)))"
+sequent: gapt.proofs.HOLSequent = p(0), ∀x (p(x) → p(s(x))) ⊢ p(s(s(0)))
+
+gapt> TPTPFOLExporter(sequent)
+res23: gapt.formats.tptp.TptpFile =
+fof(ant_0, axiom, p('0')).
+fof(ant_1, axiom, ![X]: (p(X) => p(s(X)))).
+fof(suc_0, conjecture, p(s(s('0')))).
+
+\end{clilisting}
+
+You can also parse TPTP problems:
+\begin{clilisting}
+gapt> val tptp = TptpParser.load(pwd/"examples"/"import"/"irrationals.p")
+tptp: gapt.formats.tptp.TptpFile =
+fof(a, axiom, i(sr2)).
+fof(b, axiom, ~ i(two)).
+fof(c, axiom, times(sr2, sr2) = two).
+fof(d, axiom, ![X,Y,Z]: exp(exp(X, Y), Z) = exp(X, times(Y, Z))).
+fof(e, axiom, ![X]: exp(X, two) = times(X, X)).
+fof(f, conjecture, ?[X,Y]: (~ i(exp(X, Y)) & i(X) & i(Y))).
+
+gapt> tptp.toSequent
+res24: gapt.proofs.HOLSequent =
+i(sr2),
+¬i(two),
+times(sr2, sr2) = two,
+∀X ∀Y ∀Z exp(exp(X, Y), Z) = exp(X, times(Y, Z)),
+∀X exp(X, two) = times(X, X)
+⊢
+∃X ∃Y (¬i(exp(X, Y)) ∧ i(X) ∧ i(Y))
+
+\end{clilisting}
+
 \chapter{Interfaces to external theorem provers and solvers}
 
 
@@ -1515,10 +1656,10 @@ sequent: gapt.proofs.HOLSequent = p(0), ∀x (p(x) → p(s(x))) ⊢ p(s(s(0)))
 
 \begin{clilisting}[Prover9.isInstalled]
 gapt> Prover9 isValid sequent
-res23: Boolean = true
+res25: Boolean = true
 
 gapt> Prover9 getResolutionProof sequent
-res24: Option[gapt.proofs.resolution.ResolutionProof] =
+res26: Option[gapt.proofs.resolution.ResolutionProof] =
 Some([p13]  ⊢    (Resolution(p8, Suc(0), p12, Ant(0)))
 [p12] p(s(0)) ⊢    (Resolution(p9, Suc(0), p11, Ant(0)))
 [p11] p(s(s(0))) ⊢    (Subst(p10, Substitution()))
@@ -1535,7 +1676,7 @@ Some([p13]  ⊢    (Resolution(p8, Suc(0), p12, Ant(0)))
 )
 
 gapt> Prover9 getLKProof sequent
-res25: Option[gapt.proofs.lk.LKProof] =
+res27: Option[gapt.proofs.lk.LKProof] =
 Some([p11] ∀x (p(x) → p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(p10, Ant(2), Ant(1)))
 [p10] p(0), ∀x (p(x) → p(s(x))), ∀x (p(x) → p(s(x))) ⊢ p(s(s(0)))    (CutRule(p5, Suc(0), p9, Ant(1)))
 [p9] ∀x (p(x) → p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (CutRule(p8, Suc(0), p6, Ant(0)))
@@ -1547,7 +1688,7 @@ Some([p11] ∀x (p(x) → p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(
 [p3] p(0) → p(s(0)), p(0) ⊢ p(s(0))    (ImpLef...
 
 gapt> Prover9 getExpansionProof sequent
-res26: Option[gapt.proofs.expansion.ExpansionProof] =
+res28: Option[gapt.proofs.expansion.ExpansionProof] =
 Some(∀x (p(x) → p(s(x))) +^{0} (p(0)+ → p(s(0))-) +^{s(0)} (p(s(0))+ → p(s(s(0)))-),
 p(0)-
 :-
@@ -1560,7 +1701,7 @@ Vampire (\cli{Vampire}), and Metis (\cli{Metis}) as well, we will just show
 \cli{EProver.getLKProof} as an example:
 \begin{clilisting}[EProver.isInstalled]
 gapt> EProver getLKProof sequent
-res27: Option[gapt.proofs.lk.LKProof] =
+res29: Option[gapt.proofs.lk.LKProof] =
 Some([p11] ∀x (p(x) → p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(p10, Ant(2), Ant(1)))
 [p10] p(0), ∀x (p(x) → p(s(x))), ∀x (p(x) → p(s(x))) ⊢ p(s(s(0)))    (CutRule(p5, Suc(0), p9, Ant(1)))
 [p9] ∀x (p(x) → p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (CutRule(p8, Suc(0), p6, Ant(0)))
@@ -1578,7 +1719,7 @@ Note that \cli{getLKProof} only works for sequents without strong quantifiers
 will happily return expansion proofs with Skolem quantifiers in that case:
 \begin{clilisting}[Prover9.isInstalled]
 gapt> Prover9 getExpansionProof hof"?x!y p x y -> !y?x p x y"
-res28: Option[gapt.proofs.expansion.ExpansionProof] =
+res30: Option[gapt.proofs.expansion.ExpansionProof] =
 Some(
 :-
 ∃x ∀y p(x, y) +sk^{s_0} ∀y p(s_0, y) +^{s_1} p(s_0, s_1)- →
@@ -1589,45 +1730,11 @@ Some(
 The LeanCoP interface supports \cli{getExpansionProof} as well:
 \begin{clilisting}[LeanCoP.isInstalled]
 gapt> LeanCoP getExpansionProof sequent
-res29: Option[gapt.proofs.expansion.ExpansionProof] =
+res31: Option[gapt.proofs.expansion.ExpansionProof] =
 Some(∀x (p(x) → p(s(x))) +^{0} (p(0)+ → p(s(0))-) +^{s(0)} (p(s(0))+ → p(s(s(0)))-),
 p(0)-
 :-
 p(s(s(0)))+)
-
-\end{clilisting}
-
-You can also export sequents as TPTP problems if you want to pass them to other
-provers manually:
-\begin{clilisting}
-gapt> TPTPFOLExporter(sequent)
-res30: gapt.formats.tptp.TptpFile =
-fof(ant_0, axiom, p('0')).
-fof(ant_1, axiom, ![X]: (p(X) => p(s(X)))).
-fof(suc_0, conjecture, p(s(s('0')))).
-
-\end{clilisting}
-
-You can also parse TPTP problems:
-\begin{clilisting}
-gapt> val tptp = TptpParser.load(pwd/"examples"/"import"/"irrationals.p")
-tptp: gapt.formats.tptp.TptpFile =
-fof(a, axiom, i(sr2)).
-fof(b, axiom, ~ i(two)).
-fof(c, axiom, times(sr2, sr2) = two).
-fof(d, axiom, ![X,Y,Z]: exp(exp(X, Y), Z) = exp(X, times(Y, Z))).
-fof(e, axiom, ![X]: exp(X, two) = times(X, X)).
-fof(f, conjecture, ?[X,Y]: (~ i(exp(X, Y)) & i(X) & i(Y))).
-
-gapt> tptp.toSequent
-res31: gapt.proofs.HOLSequent =
-i(sr2),
-¬i(two),
-times(sr2, sr2) = two,
-∀X ∀Y ∀Z exp(exp(X, Y), Z) = exp(X, times(Y, Z)),
-∀X exp(X, two) = times(X, X)
-⊢
-∃X ∃Y (¬i(exp(X, Y)) ∧ i(X) ∧ i(Y))
 
 \end{clilisting}
 

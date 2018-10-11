@@ -9,9 +9,9 @@ import gapt.formats.dimacs._
 import gapt.formats.tip._
 import gapt.formats.tptp._
 import gapt.formats.verit._
+import gapt.formats.smt._
 import gapt.formats.llk._
 import gapt.formats.latex._
-import gapt.formats.lean._
 import gapt.grammars._
 import gapt.proofs.reduction._
 import gapt.proofs.rup._

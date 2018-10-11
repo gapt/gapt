@@ -3,26 +3,48 @@ package gapt.utils
 import scala.collection.mutable
 
 object linearizeStrictPartialOrder {
-  def apply[T]( set: Iterable[T], relation: Iterable[( T, T )] ): Either[Vector[T], Vector[T]] =
-    build( set.toSet, Map().withDefaultValue( Nil ) ++ relation.groupBy( _._1 ).mapValues( Nil ++ _.map( _._2 ) ) )
 
-  private def build[T]( set: Set[T], relation: Map[T, List[T]] ): Either[Vector[T], Vector[T]] = {
+  /**
+   * Linearizes a strict partial order.
+   *
+   * @param set The set of elements on which the relation is defined.
+   * @param relation The relation to be linearized.
+   * @tparam T The type of the elements.
+   * @return Either (right) a sequence of elements e1,...,en containing all the
+   * input elements such that ei `relation` ej implies i < j, for 1 <= i,j <= n,
+   * if the input relation is a strict partial order. Otherwise, a cycle (left)
+   * is returned.
+   */
+  def apply[T](
+    set:      Iterable[T],
+    relation: Iterable[( T, T )] ): Either[Vector[T], Vector[T]] =
+    apply(
+      set,
+      Map().withDefaultValue( Nil ) ++
+        relation.groupBy( _._1 ).mapValues( Nil ++ _.map( _._2 ) ) )
+
+  def apply[T](
+    set:      Iterable[T],
+    relation: T => Iterable[T] ): Either[Vector[T], Vector[T]] = {
     val out = mutable.Buffer[T]()
-    val printed = mutable.Set[T]()
+    val seen = mutable.Set[T]()
 
     case class CycleException( cycle: Vector[T] ) extends Throwable
 
-    def go( t: T, stacktrace: List[T], stacktraceSet: Set[T] ): Unit =
-      if ( printed( t ) ) {
-      } else if ( stacktraceSet( t ) ) {
-        throw CycleException( Vector( t ) ++ stacktrace.takeWhile( _ != t ).reverseIterator :+ t )
-      } else {
-        val stacktrace_ = t :: stacktrace
-        val stacktraceSet_ = stacktraceSet + t
-        relation( t ).foreach( go( _, stacktrace_, stacktraceSet_ ) )
-        out.prepend( t )
-        printed += t
+    def go( t: T, stacktrace: List[T], stacktraceSet: Set[T] ): Unit = {
+      if ( seen( t ) ) {
+        return
       }
+      if ( stacktraceSet( t ) ) {
+        throw CycleException(
+          Vector( t ) ++ stacktrace.takeWhile( _ != t ).reverseIterator :+ t )
+      }
+      val stacktrace_ = t :: stacktrace
+      val stacktraceSet_ = stacktraceSet + t
+      relation( t ).foreach { go( _, stacktrace_, stacktraceSet_ ) }
+      out.prepend( t )
+      seen += t
+    }
 
     try {
       for ( s <- set ) go( s, List(), Set() )

@@ -127,6 +127,7 @@ object Checkable {
           ctx.check( skT )
         case ETDefinition( sh, child ) =>
           requireDefEq( sh, child.shallow )( ctx )
+        case ETMerge( _, _ ) =>
       }
     }
   }

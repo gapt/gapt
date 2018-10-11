@@ -94,7 +94,7 @@ object RefutationSketchToResolution {
     val memo = mutable.Map[RefutationSketch, ErrorOr[ResolutionProof]]()
 
     def findDerivation( a: FOLClause, bs: List[ResolutionProof] ): Option[ResolutionProof] = {
-      for ( b <- bs; s <- clauseSubsumption( b.conclusion, a ) ) return Some( Subst.ifNecessary( b, s ) )
+      for ( b <- bs; s <- clauseSubsumption( b.conclusion, a ) ) return Some( Factor( Subst.ifNecessary( b, s ) ) )
       findDerivationViaResolution( a, bs.map( _.conclusion.asInstanceOf[HOLClause] ).toSet, prover ).
         map( mapInputClauses( _ )( bs.map { p => p.conclusion -> p }.toMap ) )
     }

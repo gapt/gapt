@@ -27,11 +27,11 @@ object beautifySolution {
             ( ( vs, cnfs ), j ) <- esCNFs.zipWithIndex.elements
             esCNF <- cnfs
             subst <- clauseSubsumption( esCNF, cls )
-          } yield ( j, subst.asFOLSubstitution( vs ).toList )
+          } yield ( j, subst.asFOLSubstitution( vs ) )
           subsumingFormulas.headOption match {
             case Some( ( j, inst ) ) =>
               for ( s <- ehs.sehs.ss( k )._2 )
-                addUs += j -> FOLSubstitution( ehs.sehs.ss( k )._1 zip s )( inst ).toList
+                addUs += j -> FOLSubstitution( ehs.sehs.ss( k )._1 zip s )( inst )
               false
             case None => true
           }

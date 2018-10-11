@@ -3,13 +3,14 @@ package gapt.examples
 import gapt.proofs.{ Context, Sequent }
 import gapt.proofs.gaptic._
 import gapt.expr._
-import gapt.proofs.ceres.{ CLS, CharFormPRN, SchematicStruct, Struct }
+import gapt.proofs.ceres._
 import gapt.proofs.lk.LKProof
 
 object FunctionIterationRefutation extends TacticsProof( FunctionIterationSchema.ctx ) {
   val SCS: Map[CLS, ( Struct, Set[Var] )] = SchematicStruct( "phi" ).getOrElse( Map() )
   val CFPRN = CharFormPRN( SCS )
   CharFormPRN.PR( CFPRN )
+  def sequentForm( input: Expr ) = Viperize( le"phiSFAFF $input" )
   ctx += hoc"Top:nat>nat"
   ctx += hoc"chi:nat>nat"
   ctx += hoc"rho:nat>nat"

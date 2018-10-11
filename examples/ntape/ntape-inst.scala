@@ -1,4 +1,4 @@
-package gapt.examples.ntape
+package gapt.examples
 
 import gapt.examples.Script
 import gapt.proofs.ceres.StructCreators
