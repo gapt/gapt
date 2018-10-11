@@ -21,9 +21,10 @@ class nTapeTest extends Specification {
       ok( "acnf could be created" )
     }
 
-    "print statistics of the 2 copies tape proof, including reproving the deep formula (tape3.llk)" in {
+    "collect statistics of the 2 copies tape proof, including reproving the deep formula (tape3.llk)" in {
       if ( !EProver.isInstalled ) skipped( "No EProver installed!" )
-      nTape2.printStatistics()
+      nTape2.collectStatistics()
+      nTapeInstances.computeInstances( nTape2.expansion_proof, nTape2.proofdb().Definitions )
       ok( "all statistics created!" )
     }
 
@@ -37,7 +38,8 @@ class nTapeTest extends Specification {
 
     "print statistics of the 3 copies tape proof, including reproving the deep formula tape3ex.llk" in {
       if ( !EProver.isInstalled ) skipped( "No EProver installed!" )
-      nTape3.printStatistics()
+      nTape3.collectStatistics()
+      nTapeInstances.computeInstances( nTape3.expansion_proof, nTape3.proofdb().Definitions )
       ok( "all statistics created!" )
     }
 
