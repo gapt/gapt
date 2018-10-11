@@ -232,22 +232,30 @@ abstract class AnalysisWithCeresOmega {
     TPTPHOLExporter.export( expansion_proof.expansionSequent, true, true )
   }
 
+  def collectStatistics() =
+    ( input_proof.treeLike.size, preprocessed_input_proof.treeLike.size, lksk_proof.treeLike.size,
+      acnf.treeLike.size, css.size, preprocessed_css.size, fol_refutation.dagLike.size, fol_refutation.treeLike.size,
+      fol_refutation.depth, reproved_deep.dagLike.size, reproved_deep.treeLike.size )
+
   def printStatistics() = {
+    val ( itree_size, preitree_size, lksk_treesize, acnftree_size, css_size, precss_size,
+      foldag_size, foltree_size, foldepth, rdtree_size, rddag_size ) = collectStatistics()
+
     println( "------------ Proof sizes --------------" )
-    println( s"Input proof            : ${input_proof.treeLike.size}" )
-    println( s"Preprocessed input     : ${preprocessed_input_proof.treeLike.size}" )
-    println( s"LKsk input proof       : ${lksk_proof.treeLike.size}" )
-    println( s"ACNF output proof      : ${acnf.treeLike.size}" )
+    println( s"Input proof            : ${itree_size}" )
+    println( s"Preprocessed input     : ${preitree_size}" )
+    println( s"LKsk input proof       : ${lksk_treesize}" )
+    println( s"ACNF output proof      : ${acnftree_size}" )
     println( "------------ " )
-    println( s"Css size               : ${css.size}" )
-    println( s"Preprocessed css size  : ${preprocessed_css.size}" )
+    println( s"Css size               : ${css_size}" )
+    println( s"Preprocessed css size  : ${precss_size}" )
     println( "------------ " )
-    println( s"Refutation size (dag)  : ${fol_refutation.dagLike.size}" )
-    println( s"Refutation size (tree) : ${fol_refutation.treeLike.size}" )
-    println( s"Refutation depth       : ${fol_refutation.depth}" )
+    println( s"Refutation size (dag)  : ${foldag_size}" )
+    println( s"Refutation size (tree) : ${foltree_size}" )
+    println( s"Refutation depth       : ${foldepth}" )
     println( "------------ " )
-    println( s"Reproved deep formula proof size (dag)  : ${reproved_deep.dagLike.size}" )
-    println( s"Reproved deep formula proof size (tree) : ${reproved_deep.treeLike.size}" )
+    println( s"Reproved deep formula proof size (dag)  : ${rddag_size}" )
+    println( s"Reproved deep formula proof size (tree) : ${rdtree_size}" )
   }
 
   /**
