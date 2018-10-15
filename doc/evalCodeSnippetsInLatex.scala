@@ -77,9 +77,17 @@ class CommandEvaluator {
     override def close() = {}
   }
   val outPrintStream = new PrintStream( new WriterOutputStream( outWriter ), true )
+
+  // toString() of lambdas includes the hashcode
   val lambdaRegex = """(?<= )[A-Za-z.0-9]+\$\$Lambda\$\d+/\d+@[0-9a-f]+""".r
-  def getOutput: String =
-    lambdaRegex.replaceAllIn( out.result(), "<function>" )
+  // "... 82 elided" is different between compile server and my machine
+  val elidedRegex = """... \d+ elided""".r
+  def getOutput: String = {
+    var o = out.result()
+    o = lambdaRegex.replaceAllIn( o, "<function>" )
+    o = elidedRegex.replaceAllIn( o, "... elided" )
+    o
+  }
 
   val repl = new ILoop( None, new JPrintWriter( outWriter ) )
 
