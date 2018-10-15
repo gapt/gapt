@@ -1,4 +1,4 @@
-package gapt.testing
+package gapt.testing.latex
 
 import java.io.{ ByteArrayOutputStream, PrintStream, Writer }
 import java.nio.ByteBuffer
@@ -285,7 +285,7 @@ object parse {
     } yield ( input.get, if ( output.endsWith( "\n" ) ) output.dropRight( 1 ) else output )
 }
 
-object evalCodeSnippetsInLatex {
+object evalCodeSnippets {
 
   def main( args: Array[String] ) = {
     val Array( inFile ) = args
