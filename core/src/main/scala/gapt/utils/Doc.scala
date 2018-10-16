@@ -93,6 +93,8 @@ sealed trait Doc {
     out.result()
   }
 
+  override def toString: String = render( 80 )
+
   def firstChar: Option[Char] = this match {
     case Concat( a, _ ) => a.firstChar
     case Nest( _, d )   => d.firstChar
