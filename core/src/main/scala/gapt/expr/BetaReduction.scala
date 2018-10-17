@@ -68,14 +68,71 @@ case class Normalizer( rules: Set[ReductionRule] ) {
 
   def toFormula = And( rules.map { case ReductionRule( lhs, rhs ) => universalClosure( lhs === rhs ) } )
 
-  def normalize( expr: Expr ): Expr = {
-    val Apps( hd_, as_ ) = whnf( expr )
-    Apps( hd_ match {
-      case Abs.Block( xs, e ) if xs.nonEmpty =>
-        Abs.Block( xs, normalize( e ) )
-      case _ => hd_
-    }, as_.map( normalize ) )
+  def replaceTy( ty: Ty, oldTy: Ty, newTy: Ty ): Ty = {
+    ty match {
+      case ty if ty == oldTy => newTy
+      case TArr( tyA, tyB )  => TArr( replaceTy( tyA, oldTy, newTy ), replaceTy( tyB, oldTy, newTy ) )
+      case ty                => ty
+    }
   }
+
+  // TODO: normalize?
+  def commute( block: Expr, appOrArg: Either[Expr, Expr] ): Expr = {
+    block match {
+      case Apps( Const( "handle", ty, params ), as ) =>
+        val newCatchB = appOrArg match {
+          case Left( app_ )  => app_( as( 1 ) )
+          case Right( arg_ ) => as( 1 )( arg_ )
+        }
+        val newHandle = Const( "handle", replaceTy( ty, params( 1 ), newCatchB.ty ), params.map( replaceTy( _, params( 1 ), newCatchB.ty ) ) )
+
+        Apps( newHandle, Seq( as( 0 ), newCatchB ) )
+
+      case Abs( v, arg ) =>
+        appOrArg match {
+          case Left( app_ )  => Abs( v, app_( arg ) )
+          case Right( arg_ ) => Abs( v, arg( arg_ ) )
+        }
+    }
+  }
+
+  object SplitTryCatch {
+    def unapply( xs: List[Expr] ): Option[( List[Expr], Expr, List[Expr] )] = {
+      val index = xs.indexWhere {
+        case Apps( Const( "tryCatch", _, _ ), _ ) => true
+        case _                                    => false
+      }
+      if ( index == -1 ) {
+        None
+      } else {
+        val ( front, back ) = xs.splitAt( index )
+        Some( ( front, xs( index ), back.tail ) )
+      }
+    }
+  }
+
+  def normalize( expr: Expr ): Expr =
+    whnf( expr ) match {
+      case Apps( hd_, as_ ) =>
+        as_ match {
+          // Commuting conversion (left) for try/catch
+          case SplitTryCatch( front, Apps( Const( "tryCatch", ty, params ), as2_ ), back ) if hd_.toUntypedAsciiString != "handle" =>
+            //println( s"input:\n$expr" )
+            //println( s"commuting:\n${hd_( front )}" )
+            val as2Commuted = as2_.map( commute( _, Left( hd_( front ) ) ) )
+            val Abs( _, arg ) = as2Commuted( 0 )
+            val res = Apps( Const( "tryCatch", replaceTy( ty, params( 1 ), arg.ty ), params.map( replaceTy( _, params( 1 ), arg.ty ) ) ), as2Commuted ++ back )
+            //println( s"left: res:\n$res" )
+            normalize( res )
+          case _ =>
+            Apps( hd_ match {
+              case Abs.Block( xs, e ) if xs.nonEmpty =>
+                Abs.Block( xs, normalize( e ) )
+              case _ =>
+                hd_
+            }, as_.map( normalize ) )
+        }
+    }
 
   @tailrec
   final def whnf( expr: Expr ): Expr =
@@ -90,6 +147,16 @@ case class Normalizer( rules: Set[ReductionRule] ) {
       case Abs.Block( vs, hd_ ) if vs.nonEmpty && as.nonEmpty =>
         val n = math.min( as.size, vs.size )
         Some( Apps( Substitution( vs.take( n ) zip as.take( n ) )( Abs.Block( vs.drop( n ), hd_ ) ), as.drop( n ) ) )
+      // Commuting conversion (right) for try/catch
+      case Const( "tryCatch", ty, params ) if as.size >= 3 =>
+        //println( s"input:\n$expr" )
+        //println( s"commuting:\n${as( 2 )}" )
+        val tryB = commute( normalize( as( 0 ) ), Right( normalize( as( 2 ) ) ) )
+        val catchB = commute( normalize( as( 1 ) ), Right( normalize( as( 2 ) ) ) )
+        val Abs( _, arg ) = tryB
+        val res = Apps( Const( "tryCatch", replaceTy( ty, params( 1 ), arg.ty ), params.map( replaceTy( _, params( 1 ), arg.ty ) ) ), List( tryB, catchB ) ++ as.drop( 3 ) )
+        //println( s"right: res:\n$res" )
+        Some( normalize( res ) )
       case hd @ Const( c, _, _ ) =>
         headMap.get( c ).flatMap {
           case ( rs, whnfArgs, normalizeArgs ) =>
@@ -107,6 +174,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
       case _ =>
         None
     }
+    //}
   }
 
   def isDefEq( a: Expr, b: Expr ): Boolean =

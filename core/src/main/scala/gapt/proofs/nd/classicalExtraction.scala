@@ -45,7 +45,7 @@ object ClassicalExtraction {
           App( recursor, constrVars.values.toVector :+ App( x, argVars( x ) ) ),
           argVars( x ).foldLeft( constrVars( x ): Expr )( ( y, z ) => if ( z.ty == typ ) App( App( y, z ), App( recursor, constrVars.values.toVector :+ z ) ) else App( y, z ) ) ) )
 
-      systemT += PrimRecFun( List( ( recursor, equations ) ) )
+      systemT += PrimRecFun( recursor, equations )
     }
 
     // add conjuctive type, pairs, projections and their reduction rules
@@ -58,12 +58,12 @@ object ClassicalExtraction {
     val pi2 = hoc"pi2{?a ?b}: (conj ?a ?b) > ?b"
     val x: Expr = hov"x : ?a"
     val y: Expr = hov"y : ?b"
-    systemT += PrimRecFun( List(
-      ( pi1, List(
-        ( pi1( pair( x, y ) ) -> x ) ) ) ) )( systemT )
-    systemT += PrimRecFun( List(
-      ( pi2, List(
-        ( pi2( pair( x, y ) ) -> y ) ) ) ) )( systemT )
+    systemT += PrimRecFun(
+      pi1,
+      List( ( pi1( pair( x, y ) ) -> x ) ) )( systemT )
+    systemT += PrimRecFun(
+      pi2,
+      List( ( pi2( pair( x, y ) ) -> y ) ) )( systemT )
 
     // add sum type
     val sum = ty"sum ?a ?b"
@@ -73,13 +73,17 @@ object ClassicalExtraction {
     val matchSum = hoc"matchSum{?a ?b ?c}: (sum ?a ?b) > (?a > ?c) > (?b > ?c) > ?c"
     val w1: Expr = hov"w1: ?a > ?c"
     val w2: Expr = hov"w2: ?b > ?c"
-    systemT += PrimRecFun( List(
-      ( matchSum, List(
+    systemT += PrimRecFun(
+      matchSum,
+      List(
         ( matchSum( inl( x ), w1, w2 ) -> w1( x ) ),
-        ( matchSum( inr( y ), w1, w2 ) -> w2( y ) ) ) ) ) )( systemT )
+        ( matchSum( inr( y ), w1, w2 ) -> w2( y ) ) ) )( systemT )
 
     val existsElim = hoc"existsElim{?a ?b ?c}: (conj ?a ?b) > (?a > ?b > ?c) > ?c"
-    systemT += existsElim
+    val w3: Expr = hov"w3: ?a > ?b > ?c"
+    systemT += PrimRecFun(
+      existsElim,
+      List( ( existsElim( pair( x, y ), w3 ) -> w3( x )( y ) ) ) )( systemT )
 
     //val bar = hoc"bar{?a}: ?a > ?a > hyp > ?a"
     //val hyp = ty"hyp"
@@ -92,12 +96,28 @@ object ClassicalExtraction {
     val raise = hoc"raise{?a ?b}: (exn ?a) > ?b"
     systemT += raise
     */
-    systemT += TBase( "exn" )
-    val exception = hoc"exception{?a}: ?a > exn"
-    //systemT += InductiveType( exn, exception )
-    systemT += exception
-    val efq = hoc"efq{?b}: exn > ?b"
+    val exn = ty"exn ?a"
+    val exception = hoc"exception{?a}: ?a > (exn ?a)"
+    systemT += InductiveType( exn, exception )
+    val efq = hoc"efq{?a ?c}: (exn ?a) > ?c"
     systemT += efq
+    val handle = hoc"handle{?a ?c}: (exn ?a) > ?c > (?a > ?c)"
+    systemT += handle
+    /*
+    systemT += PrimRecFun(
+      handle,
+      List( ( handle( exception( x ), w1 ) -> w1( x ) ) ) )( systemT )
+      */
+    //systemT += efq
+    //val raise = hoc"raise{?a}: ?a > exn"
+    //systemT += raise
+    //val e = hoc"e: exn ?a"
+    /*
+    systemT += PrimRecFun( List(
+      ( efq, List(
+        ( le"(efq( e )) x" -> le"efq( e )" ) ) ) ) )( systemT )
+    //( le"efq{(exn ?a) ?b}( efq( e ) )" -> le"efq{(exn ?a) ?b}( e )" ) ) ) ) )( systemT )
+    */
     /*
     val e: Expr = Var( "e", exn )
     systemT += PrimRecFun( List(
@@ -107,15 +127,16 @@ object ClassicalExtraction {
     */
 
     //val handle = hoc"handle{?a ?b}: (?a > ?b) > ((?a > (exn ?a)) > ?b) > ?b"
-    val em = hoc"em{?a ?c}: (?a > ?c) > ((?a > exn) > ?c) > ?c"
-    systemT += em
-
-    val bar2 = hoc"bar2{?x ?a ?c}: (?x > o) > (?a > ?c) > ((?a > exn) > ?c) > ?c"
-    //val bar2 = hoc"bar2{?x ?a ?c}: (?x > o) > (?a > ?c) > (?c) > ?c"
-    systemT += bar2
-
-    val bar3 = hoc"bar3{?x ?a ?b ?c}: (?x > o) > (?a > ?c) > (?b > ?c) > ?c"
-    systemT += bar3
+    //val tryCatch = hoc"tryCatch{?a ?c}: (?a > ?c) > ((?a > (exn ?a)) > ?c) > ?c"
+    //val tryCatch = hoc"tryCatch{?a ?c}: (?a > ?c) > ((?a > (exn ?a)) > ?c) > ?c"
+    val tryCatch = hoc"tryCatch{?a ?c}: ((?a > (exn ?a)) > ?c) > (?a > ?c) > ?c"
+    systemT += tryCatch
+    /*
+    val w5 = hov"w5:?a"
+    systemT += PrimRecFun(
+      em,
+      List( ( em( handle( exception( x ), w1 ), ( efq( exception( w5 ) ) ) ) -> w1( w5 ) ) ) )( systemT )
+      */
 
     // add a term+type to represent the empty program
     val ty1 = ty"1"
@@ -194,25 +215,25 @@ object ClassicalExtraction {
 
         case ContractionRule( subProof, aux1, aux2 ) =>
           val s = extractCases( subProof, ng )
+          assert( s( aux1 ) == s( aux2 ) )
           val v = s( aux1 )
           val res = v +: s.delete( List( aux1, aux2 ) )
           //println( "Contraction" )
           res
 
         /*
-        case LogicalAxiom( formula @ All( x, f ) ) if x.ty == ty"i" =>
+        case LogicalAxiom( formula @ Neg( Ex( _, p ) ) ) =>
           // TODO:
-          val a = Var( ng.fresh( "a" ), flat( formula ) )
-          val h = Const( ng.fresh( "H" ), flat( formula ) )
+          val a = getVar( "vHyp", formula, ng )
+          val h = Const( "raise", flat( formula ) )
           val res = a +: Sequent() :+ h
           //println( "Axiom All " + formula + ", fresh a " + a + " fresh H " + h )
           res
 
-        case LogicalAxiom( formula @ Ex( x, Neg( f ) ) ) if x.ty == ty"i" =>
+        case LogicalAxiom( formula @ Ex( _, p ) ) =>
           // TODO:
-          val a = Var( ng.fresh( "a" ), flat( formula ) )
-          val w = Const( ng.fresh( "W" ), flat( formula ) )
-          val res = a +: Sequent() :+ w
+          val a = getVar( "vHyp", formula, ng )
+          val res = a +: Sequent() :+ a
           //println( "Axiom Ex Neg " + formula + ", fresh a " + a + " fresh W " + w )
           res
 
@@ -351,7 +372,7 @@ object ClassicalExtraction {
         Abs( extraVar, tmp )
         */
 
-        case TopIntroRule() =>
+        case TopIntroRule =>
           // TODO
           Sequent() :+ le"i"
         //val varr = Var( "z", ty"1" )
@@ -489,7 +510,7 @@ object ClassicalExtraction {
               val delR = r.delete( aux2 ).antecedent
               // TODO
               //val res = delL ++: delR ++: Sequent() :+ le"bar3 ${Abs( x1, Ex( x2, g ) )} ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
-              val res = delL ++: delR ++: Sequent() :+ le"em ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
+              val res = delL ++: delR ++: Sequent() :+ le"tryCatch ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
               res
             case f @ Ex( x, g ) if !containsQuantifierOnLogicalLevel( g ) =>
               val l = extractCases( leftSubProof, ng )
@@ -502,7 +523,7 @@ object ClassicalExtraction {
               val delR = r.delete( aux2 ).antecedent
               //val res = delL ++: delR ++: Sequent() :+ le"bar2 ${Abs( x, g )} ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
               //val res = delL ++: delR ++: Sequent() :+ le"bar2 ${Abs( x, g )} ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, ( r( Suc( 0 ) ) ) )}"
-              val res = delL ++: delR ++: Sequent() :+ le"em ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, ( r( Suc( 0 ) ) ) )}"
+              val res = delL ++: delR ++: Sequent() :+ le"tryCatch ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, ( r( Suc( 0 ) ) ) )}"
               res
 
             case f =>
@@ -513,7 +534,7 @@ object ClassicalExtraction {
               assert( varL.ty ->: ty"exn" == varR.ty )
               val delL = l.delete( aux1 ).antecedent
               val delR = r.delete( aux2 ).antecedent
-              val res = delL ++: delR ++: Sequent() :+ le"em ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
+              val res = delL ++: delR ++: Sequent() :+ le"tryCatch ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
               //val res = l.delete( aux1 ).antecedent ++: r.delete( aux2 ).antecedent ++: Sequent() :+ le"bar ${l( Suc( 0 ) )} ${r( Suc( 0 ) )}"
               //println( s"EM0: ${f}" )
               res

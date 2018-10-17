@@ -76,6 +76,11 @@ def matchSum[$a,$b,$c](p1: Sum[$a,$b])(p2: $a => $c)(p3: $b => $c) = {
         s"def existsElim[$a,$b,$c](p1: Tuple2[$a,$b])(p2: $a => $b => $c) = p2( p1._1 )( p1._2 )"
       case Const( "s", _, params ) =>
         s"def s(x: Int) = x + 1"
+      /*
+      case Const( "raise", _, params ) =>
+        val a = typeParamToString( params( 0 ) )
+        s"def raise[$a](x: $a): Exception = throw exception(x)(None) // TODO get name/id of hypothesis variable in extraction"
+      */
       case Const( "efq", _, params ) =>
         val a = typeParamToString( params( 0 ) )
         s"def efq[$a](p: Throwable): $a = throw p"
@@ -154,7 +159,8 @@ def natRec[$a](p1: $a)(p2: (Int => $a => $a))(p3: Int): $a = {
       case TBase( "nat", Nil )
         | TBase( "i", Nil ) => "Int"
       case TBase( "o", Nil )       => "Boolean"
-      case TBase( "exn", Nil )     => "Exception"
+      //case TBase( "exn", params )     => "Exception"
+      case TBase( "exn", params )  => s"Exn[${toType( params( 0 ) )}"
       case TBase( "conj", params ) => s"Tuple2[${toType( params( 0 ) )}, ${toType( params( 1 ) )}]"
       case TBase( "sum", params )  => s"Sum[${toType( params( 0 ) )}, ${toType( params( 1 ) )}]"
       case TArr( t1, t2 )          => s"(${toType( t1 )} => ${toType( t2 )})"
@@ -165,7 +171,8 @@ def natRec[$a](p1: $a)(p2: (Int => $a => $a))(p3: Int): $a = {
   var bugID = 0
   def translate( e: Expr )( implicit ctx: Context ): String = {
     e match {
-      case App( App( Const( "em", _, params ), catchTerm ), tryTerm ) =>
+      // TODO: catchTerm using handle
+      case App( App( Const( "tryCatch", _, params ), catchTerm ), tryTerm ) =>
         val localBugID = bugID
         bugID = bugID + 1
         val a = toType( params( 0 ) )

@@ -158,7 +158,8 @@ let rec natRec (p1: $a) (p2: (int -> $a -> $a)) (p3: int): $a =
   var bugIdentifier = 0
   def translate( e: Expr )( implicit ctx: Context ): String = {
     e match {
-      case App( App( Const( "em", _, params ), catchTerm ), tryTerm ) =>
+      // TODO: catchTerm using handle
+      case App( App( Const( "tryCatch", _, params ), catchTerm ), tryTerm ) =>
         bugIdentifier = bugIdentifier + 1
         s"""
 (
