@@ -96,6 +96,20 @@ case class Normalizer( rules: Set[ReductionRule] ) {
     }
   }
 
+  object SplitEfq {
+    def unapply( xs: List[Expr] ): Option[( List[Expr], Expr, List[Expr] )] = {
+      val index = xs.indexWhere {
+        case Apps( Const( "efq", _, _ ), _ ) => true
+        case _                               => false
+      }
+      if ( index == -1 ) {
+        None
+      } else {
+        val ( front, tc :: back ) = xs.splitAt( index )
+        Some( ( front, tc, back ) )
+      }
+    }
+  }
   object SplitTryCatch {
     def unapply( xs: List[Expr] ): Option[( List[Expr], Expr, List[Expr] )] = {
       val index = xs.indexWhere {
@@ -105,8 +119,8 @@ case class Normalizer( rules: Set[ReductionRule] ) {
       if ( index == -1 ) {
         None
       } else {
-        val ( front, back ) = xs.splitAt( index )
-        Some( ( front, xs( index ), back.tail ) )
+        val ( front, tc :: back ) = xs.splitAt( index )
+        Some( ( front, tc, back ) )
       }
     }
   }
@@ -115,6 +129,10 @@ case class Normalizer( rules: Set[ReductionRule] ) {
     whnf( expr ) match {
       case Apps( hd_, as_ ) =>
         as_ match {
+          // raise left
+          case SplitEfq( _, Apps( Const( "efq", _, params ), as2_ ), _ ) =>
+            val newEfq = Const( "efq", TArr( as2_( 0 ).ty, expr.ty ), List( params( 0 ), expr.ty ) )
+            normalize( newEfq( as2_( 0 ) ) )
           // Commuting conversion (left) for try/catch
           case SplitTryCatch( front, Apps( Const( "tryCatch", ty, params ), as2_ ), back ) if hd_.toUntypedAsciiString != "handle" =>
             //println( s"input:\n$expr" )
@@ -147,6 +165,11 @@ case class Normalizer( rules: Set[ReductionRule] ) {
       case Abs.Block( vs, hd_ ) if vs.nonEmpty && as.nonEmpty =>
         val n = math.min( as.size, vs.size )
         Some( Apps( Substitution( vs.take( n ) zip as.take( n ) )( Abs.Block( vs.drop( n ), hd_ ) ), as.drop( n ) ) )
+      // raise right
+      case hd @ Const( "efq", _, _ ) if as.size > 1 =>
+        Some( normalize( hd( as( 0 ) ) ) )
+      case Const( "efq", _, _ ) =>
+        None
       // Commuting conversion (right) for try/catch
       case Const( "tryCatch", ty, params ) if as.size >= 3 =>
         //println( s"input:\n$expr" )
@@ -157,6 +180,17 @@ case class Normalizer( rules: Set[ReductionRule] ) {
         val res = Apps( Const( "tryCatch", replaceTy( ty, params( 1 ), arg.ty ), params.map( replaceTy( _, params( 1 ), arg.ty ) ) ), List( tryB, catchB ) ++ as.drop( 3 ) )
         //println( s"right: res:\n$res" )
         Some( normalize( res ) )
+      case Const( "tryCatch", ty, params ) =>
+        val tryB = as( 0 )
+        val Abs( exnV, arg ) = tryB
+        if ( !freeVariables( arg ).contains( exnV ) ) {
+          // handle simp
+          Some( arg )
+        } else {
+          // handle/raise
+          println( s"free vars: ${freeVariables( arg )}" )
+          None
+        }
       case hd @ Const( c, _, _ ) =>
         headMap.get( c ).flatMap {
           case ( rs, whnfArgs, normalizeArgs ) =>

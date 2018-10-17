@@ -4677,6 +4677,9 @@ object commutingConversions extends Script {
   val tryCatch3 = le"tryCatch((^y1 (M1: ?a_0 > ?a_1)), handle(y1(x1), (N1: ?a_0 > ?a_1)))"
   val tryCatch4 = le"tryCatch((^y0 (M0: exn ?a)), handle(y0(x0), (N0: exn ?a)))"
   val tryCatch5 = le"tryCatch((^y2 (M2: (?a_0 > ?a_1) > ?a_0 > ?a_2)), handle(y2(x2), (N2: (?a_0 > ?a_1) > ?a_0 > ?a_2)))"
+  val tryCatch6 = le"tryCatch((^y0 efq(y0(M0:?a_0))), handle(y0(x0), (N0:?a_0)))"
+  val efq = le"efq(exception(0))(M:?a_0)"
+  val efq2 = le"efq(efq(exception(0)))(M:?a_0)"
 
   /*
   println( tryCatch )
@@ -4689,10 +4692,13 @@ object commutingConversions extends Script {
   println( "2:" + normalize( le"($tryCatch2)(O)" ) )
   println( "3:" + normalize( le"($tryCatch2)($tryCatch)" ) )
   println( "4:" + normalize( le"($tryCatch3)(O)" ) )
-  println( "5:" + normalize( le"($tryCatch3)($tryCatch)" ) )
   println( "6:" + normalize( le"V($tryCatch3)(O)" ) )
   println( "7:" + normalize( le"((^x x)V)($tryCatch3)((^y y)O)" ) )
   println( "8:" + normalize( le"efq($tryCatch4)" ) )
-  */
+  println( "5:" + normalize( le"($tryCatch3)($tryCatch)" ) )
   println( "9:" + normalize( le"($tryCatch5)($tryCatch3)($tryCatch)" ) )
+  println( "11:" + normalize( le"($efq)" ) )
+  println( "12:" + normalize( le"($efq2)" ) )
+  */
+  println( "10:" + normalize( le"($tryCatch6)" ) )
 }
