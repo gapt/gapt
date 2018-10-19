@@ -4669,17 +4669,55 @@ object reductionExamples extends Script {
 object commutingConversions extends Script {
   var ctx = Context.default
   ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += Notation.Infix( "+", Precedence.plusMinus )
+  ctx += hoc"'+': nat>nat>nat"
 
   implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
 
-  val tryCatch = le"tryCatch((^y0 (M0:?a_0)), handle(y0(x0), (N0:?a_0)))"
+  val tryCatch = le"tryCatch((^y0 (M0:?a_0)), handle(y0(x0:?a_0), (N0:?a_0)))"
   val tryCatch2 = le"tryCatch((^y1 (^(z:?a_0) M1)), handle(y1(x1), (^(z:?a_0) N1)))"
   val tryCatch3 = le"tryCatch((^y1 (M1: ?a_0 > ?a_1)), handle(y1(x1), (N1: ?a_0 > ?a_1)))"
   val tryCatch4 = le"tryCatch((^y0 (M0: exn ?a)), handle(y0(x0), (N0: exn ?a)))"
   val tryCatch5 = le"tryCatch((^y2 (M2: (?a_0 > ?a_1) > ?a_0 > ?a_2)), handle(y2(x2), (N2: (?a_0 > ?a_1) > ?a_0 > ?a_2)))"
   val tryCatch6 = le"tryCatch((^y0 efq(y0(M0:?a_0))), handle(y0(x0), (N0:?a_0)))"
+  val tryCatch7 = le"tryCatch((^y1 (efq(y1(M1:?a_0)): ?a_0 > ?a_1)), handle(y1(x1:?a_0), (N1: ?a_0 > ?a_1)))"
   val efq = le"efq(exception(0))(M:?a_0)"
   val efq2 = le"efq(efq(exception(0)))(M:?a_0)"
+  val efq3 = le"efq(exception(0))(efq(exception(1)))"
+
+  val tryCatch8 = le"""
+tryCatch(
+  (^y1
+    (efq(y1(0:nat)): nat > nat)),
+  handle(y1(x1:nat),
+    (^(z:nat) s(z)))
+  )(tryCatch(
+      (^y0
+        s(x1)),
+      handle(y0(x0:nat),
+        (x0 + x1))
+  )
+)"""
+  val tryCatch9 = le"""
+tryCatch(
+  (^y1
+    (efq(y1(0:nat)): nat > nat)),
+  handle(y1(x1:nat),
+    (^(z:nat) s(z)))
+  )(tryCatch(
+      (^y0
+        efq(y0(s(x1))): nat),
+      handle(y0(x0:nat),
+        (x0 + x1))
+  )
+)"""
+  val tryCatch10 = le"""
+tryCatch(
+  (^y1
+    (^z efq(y1(z)): nat)),
+  handle(y1(x1:nat),
+    (^(w:nat) w))
+)(0)"""
 
   /*
   println( tryCatch )
@@ -4697,8 +4735,13 @@ object commutingConversions extends Script {
   println( "8:" + normalize( le"efq($tryCatch4)" ) )
   println( "5:" + normalize( le"($tryCatch3)($tryCatch)" ) )
   println( "9:" + normalize( le"($tryCatch5)($tryCatch3)($tryCatch)" ) )
+  println( "10:" + normalize( le"($tryCatch6)" ) )
   println( "11:" + normalize( le"($efq)" ) )
   println( "12:" + normalize( le"($efq2)" ) )
+  println( "13:" + normalize( le"($efq3)" ) )
+  println( "14:" + normalize( le"($tryCatch7)($tryCatch)" ) )
+  println( "15:" + normalize( le"$tryCatch8" ) )
+  println( "16:" + normalize( le"$tryCatch9" ) )
   */
-  println( "10:" + normalize( le"($tryCatch6)" ) )
+  println( "17:" + normalize( le"$tryCatch10" ) )
 }

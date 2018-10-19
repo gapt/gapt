@@ -76,7 +76,6 @@ case class Normalizer( rules: Set[ReductionRule] ) {
     }
   }
 
-  // TODO: normalize?
   def commute( block: Expr, appOrArg: Either[Expr, Expr] ): Expr = {
     block match {
       case Apps( Const( "handle", ty, params ), as ) =>
@@ -131,10 +130,12 @@ case class Normalizer( rules: Set[ReductionRule] ) {
         as_ match {
           // raise left
           case SplitEfq( _, Apps( Const( "efq", _, params ), as2_ ), _ ) =>
+            println( "raise left" )
             val newEfq = Const( "efq", TArr( as2_( 0 ).ty, expr.ty ), List( params( 0 ), expr.ty ) )
             normalize( newEfq( as2_( 0 ) ) )
           // Commuting conversion (left) for try/catch
           case SplitTryCatch( front, Apps( Const( "tryCatch", ty, params ), as2_ ), back ) if hd_.toUntypedAsciiString != "handle" =>
+            println( "cc left" )
             //println( s"input:\n$expr" )
             //println( s"commuting:\n${hd_( front )}" )
             val as2Commuted = as2_.map( commute( _, Left( hd_( front ) ) ) )
@@ -167,29 +168,51 @@ case class Normalizer( rules: Set[ReductionRule] ) {
         Some( Apps( Substitution( vs.take( n ) zip as.take( n ) )( Abs.Block( vs.drop( n ), hd_ ) ), as.drop( n ) ) )
       // raise right
       case hd @ Const( "efq", _, _ ) if as.size > 1 =>
-        Some( normalize( hd( as( 0 ) ) ) )
+        println( "raise right" )
+        //Some( normalize( hd( as( 0 ) ) ) )
+        Some( hd( as( 0 ) ) )
       case Const( "efq", _, _ ) =>
+        println( s"raise other:\n$expr" )
         None
       // Commuting conversion (right) for try/catch
       case Const( "tryCatch", ty, params ) if as.size >= 3 =>
+        println( "cc right" )
         //println( s"input:\n$expr" )
         //println( s"commuting:\n${as( 2 )}" )
-        val tryB = commute( normalize( as( 0 ) ), Right( normalize( as( 2 ) ) ) )
-        val catchB = commute( normalize( as( 1 ) ), Right( normalize( as( 2 ) ) ) )
+        //val tryB = commute( normalize( as( 0 ) ), Right( normalize( as( 2 ) ) ) )
+        val tryB = commute( as( 0 ), Right( as( 2 ) ) )
+        //val catchB = commute( normalize( as( 1 ) ), Right( normalize( as( 2 ) ) ) )
+        val catchB = commute( as( 1 ), Right( as( 2 ) ) )
         val Abs( _, arg ) = tryB
         val res = Apps( Const( "tryCatch", replaceTy( ty, params( 1 ), arg.ty ), params.map( replaceTy( _, params( 1 ), arg.ty ) ) ), List( tryB, catchB ) ++ as.drop( 3 ) )
-        //println( s"right: res:\n$res" )
-        Some( normalize( res ) )
+        println( s"cc right: res:\n$res" )
+        //Some( normalize( res ) )
+        Some( res )
       case Const( "tryCatch", ty, params ) =>
         val tryB = as( 0 )
         val Abs( exnV, arg ) = tryB
         if ( !freeVariables( arg ).contains( exnV ) ) {
+          println( s"handle simp:\n$tryB" )
           // handle simp
           Some( arg )
         } else {
+          // TODO: make sure not to reduce here before all commuting conversions are done, as.size >= 3 case for cc right is before this case. what about cc left?
+          println( "handle/raise" )
           // handle/raise
           println( s"free vars: ${freeVariables( arg )}" )
-          None
+          val res = normalize( arg ) match {
+            case App( Const( "efq", _, _ ), App( thrownExn, thrownVal ) ) =>
+              val App( App( Const( "handle", _, _ ), App( caughtExn, exnVar ) ), catchB ) = as( 1 )
+              if ( thrownExn == caughtExn ) {
+                Some( le"(^${exnVar.asInstanceOf[Var]} $catchB)$thrownVal" )
+              } else {
+                // TODO throw further
+                Some( tryB )
+              }
+            case _ =>
+              throw new Exception( "Expecting a raise in try block." )
+          }
+          res
         }
       case hd @ Const( c, _, _ ) =>
         headMap.get( c ).flatMap {
