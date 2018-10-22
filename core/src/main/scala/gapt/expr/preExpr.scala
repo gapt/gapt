@@ -505,7 +505,13 @@ object preExprHelper {
     vars.reverse.foldLeft( expr )( ( v, acc ) => op( acc, v ) )
   }
 
+  /*
+  def annQuantifierBlock( op: ( preExpr.Ident, preExpr.Expr ) => preExpr.Expr )( vars: Seq[( preExpr.Ident, preExpr.Type )], expr: preExpr.Expr ) = {
+    vars.reverse.foldLeft( expr )( ( v, acc ) => op( acc, v ) )
+  }
+  */
+
   def PreApps( name: String, args: Seq[preExpr.Expr] ) =
-    args.reverse.foldLeft[preExpr.Expr]( preExpr.Ident( name, preExpr.freshMetaType(), None ) )( preExpr.App( _, _ ) )
+    args.foldLeft[preExpr.Expr]( preExpr.Ident( name, preExpr.freshMetaType(), None ) )( preExpr.App( _, _ ) )
 
 }

@@ -1,12 +1,11 @@
 package gapt.formats.tptp
 
 import gapt.expr._
-import gapt.expr.preExpr.{ All => PreAll, And => PreAnd, Bottom => PreBottom, Eq => PreEq, Ex => PreEx, Expr => PreExpr, Ident => PreIdent, Iff => PreIff, Imp => PreImp, Neg => PreNeg, Or => PreOr, Top => PreTop }
+import gapt.expr.preExpr.{ All => PreAll, And => PreAnd, Bottom => PreBottom, Eq => PreEq, Ex => PreEx, Expr => PreExpr, Ident => PreIdent, Iff => PreIff, Imp => PreImp, Neg => PreNeg, Or => PreOr, Top => PreTop, TypeAnnotation }
 import gapt.expr.preExprHelper._
 import gapt.formats.InputFile
 import org.parboiled2._
 import ammonite.ops._
-import shapeless.HNil
 
 import scala.util.{ Failure, Success }
 
@@ -22,16 +21,21 @@ class TptpParser( val input: ParserInput ) extends Parser {
   def Comma = rule { "," ~ Ws }
   def Colon = rule { ":" ~ Ws }
   def TypeArrow = rule { ">" ~ Ws }
+  def TypeProduct = rule { "*" ~ Ws }
 
   def TPTP_file: Rule1[TptpFile] = rule { Ws ~ TPTP_input.* ~ EOI ~> ( TptpFile( _ ) ) }
 
-  def TPTP_input = rule { annotated_formula | annotated_preformula | include }
+  def TPTP_input = rule { annotated_formula | type_declaration | annotated_preformula | include }
 
   def annotated_formula = rule {
     "fof(" ~ Ws ~ name ~ Comma ~ formula_role ~ Comma ~ formula ~ annotations ~ ")." ~ Ws ~>
       ( AnnotatedFormula( "fof", _, _, _, _ ) )
   }
 
+  def type_declaration = rule {
+    atomic_word ~ "(" ~ Ws ~ name ~ Comma ~ "type" ~ Comma ~ ( atomic_word | number ) ~ Ws ~ ":" ~ Ws ~ complex_type ~ annotations ~ ")." ~ Ws ~>
+      ( TypeDeclaration( _, _, _, _, _ ) )
+  }
   def annotated_preformula = rule {
     atomic_word ~ "(" ~ Ws ~ name ~ Comma ~ formula_role ~ Comma ~ pre_formula ~ annotations ~ ")." ~ Ws ~>
       ( AnnotatedPreFormula( _, _, _, _, _ ) )
@@ -77,7 +81,13 @@ class TptpParser( val input: ParserInput ) extends Parser {
   def pre_and_formula_part = rule { ( "&" ~ Ws ~ pre_unitary_formula ).+ ~> ( ( a: PreExpr, as: Seq[PreExpr] ) => AndLeftAssociative( a +: as: _* ) ) }
   def pre_unitary_formula: Rule1[PreExpr] = rule { pre_quantified_formula | pre_unary_formula | pre_atomic_formula | "(" ~ Ws ~ pre_formula ~ ")" ~ Ws }
   def pre_quantified_formula = rule { pre_fol_quantifier ~ "[" ~ Ws ~ pre_variable_list ~ "]" ~ Ws ~ ":" ~ Ws ~ pre_unitary_formula ~> ( ( q: ( Seq[PreIdent], PreExpr ) => PreExpr, vs, m ) => q( vs, m ) ) }
-  def pre_variable_list = rule { ( pre_variable ~ ( ":" ~ Ws ~ name ).? ~> ( ( a, b ) => a ) ).+.separatedBy( Comma ) }
+  def pre_variable_list =
+    rule {
+      ( pre_variable ~ ( ":" ~ Ws ~ complex_type ).? ~> ( ( a: PreIdent, b: Option[preExpr.Type] ) => b match {
+        case None       => PreIdent( a.name, preExpr.BaseType( "$i", Nil ), None )
+        case Some( ty ) => PreIdent( a.name, ty, None ) //TODO: fix type parameters
+      } ) ).+.separatedBy( Comma )
+    }
   def pre_unary_formula = rule { "~" ~ Ws ~ pre_unitary_formula ~> ( PreNeg( _ ) ) }
 
   def pre_atomic_formula = rule { pre_defined_prop | pre_infix_formula | pre_plain_atomic_formula | ( distinct_object ~> ( PreIdent( _, preExpr.freshMetaType(), None ) ) ) }
@@ -146,13 +156,22 @@ class TptpParser( val input: ParserInput ) extends Parser {
   val sg_char_pred = CharPredicate( ' ' to '&', '(' to '[', ']' to '~' )
   def sg_char = rule { capture( sg_char_pred ) | ( "\\\\" ~ push( "\\" ) ) | ( "\\'" ~ push( "'" ) ) }
 
-  def complex_type: Rule1[preExpr.Type] = rule {
-    unitary_type.+.separatedBy( TypeArrow ) ~> { ( x: Seq[preExpr.Type] ) => x.reduceRight( preExpr.ArrType( _, _ ) ) }
+  def complex_type: Rule1[preExpr.Type] = rule { product_type | arrow_type }
+  def arrow_type = rule { unitary_type.+.separatedBy( TypeArrow ) ~> { ( x: Seq[preExpr.Type] ) => x.reduceRight( preExpr.ArrType( _, _ ) ) } }
+  def product_type = rule {
+    // "($i)>$i" is handled by arrow_type
+    "(" ~ unitary_type ~ Ws ~ TypeProduct ~ ( unitary_type.+.separatedBy( TypeProduct ) ) ~ ")" ~ Ws ~ TypeArrow ~ unitary_type ~>
+      ( ( x, xs, t ) => ( x +: xs ).foldRight( t )( preExpr.ArrType( _, _ ) ) )
   }
-  def unitary_type = rule { basic_type | "(" ~ complex_type ~ ")" }
-  def basic_type = rule {
-    atomic_word ~ ( "(" ~ Ws ~ complex_type.+.separatedBy( Comma ) ~ ")" ).? ~> {
-      ( name, optargs ) => preExpr.BaseType( name, optargs.map( _.toList ).getOrElse( Nil ) )
+  def unitary_type = rule { basic_type | "(" ~ complex_type ~ ")" ~ Ws }
+  def basic_type = rule { //TODO: fix number typing
+    atomic_word ~ ( "(" ~ Ws ~ complex_type.+.separatedBy( Comma ) ~ ")" ).? ~ Ws ~> {
+      ( _, _ ) match {
+        case ( "$o", _ )       => preExpr.BaseType( "o", Nil )
+        case ( "$i", _ )       => preExpr.BaseType( "i", Nil )
+        //TODO: rename types of o / i to something else?
+        case ( name, optargs ) => preExpr.BaseType( name, optargs.map( _.toList ).getOrElse( Nil ) )
+      }
     }
   }
 }

@@ -31,6 +31,8 @@ package object tptp {
           formula +: Sequent()
         case IncludeDirective( _, _ ) =>
           Sequent()
+        case TypeDeclaration( language, name, ty_name, ty_definition, annotations ) =>
+          Sequent()
       } )
       val names = inputs.collect( {
         case IncludeDirective( name, _ ) => name
@@ -46,7 +48,7 @@ package object tptp {
   }
   case class AnnotatedFormula( language: String, name: String, role: FormulaRole, formula: Formula, annotations: Seq[GeneralTerm] ) extends TptpInput
   case class AnnotatedPreFormula( language: String, name: String, role: FormulaRole, formula: preExpr.Expr, annotations: Seq[GeneralTerm] ) extends TptpInput
-  case class TypeDeclaration( name: String, ty_name: preExpr.BaseType, ty_definition: preExpr.Type )
+  case class TypeDeclaration( language: String, name: String, ty_name: String, ty_definition: preExpr.Type, annotations: Seq[GeneralTerm] ) extends TptpInput
   case class IncludeDirective( fileName: String, formulaSelection: Option[Seq[String]] ) extends TptpInput
 
   object TptpTerm {
