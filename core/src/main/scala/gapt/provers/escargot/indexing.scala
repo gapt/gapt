@@ -30,7 +30,7 @@ object TermString {
   def apply( e: Expr ): TermString = new TermString( e.ty :: e :: Nil )
 }
 
-sealed trait DiscrTree[T] {
+sealed trait DiscrTree[+T] {
   def isEmpty: Boolean =
     this match {
       case Leaf( elems ) => elems.isEmpty
@@ -43,7 +43,7 @@ sealed trait DiscrTree[T] {
       case Node( next )  => Node( Map() ++ next.mapValues( _.filter( p ) ) )
     }
 
-  def remove( t: T ): DiscrTree[T] = filter( _ != t )
+  def remove[S >: T]( t: S ): DiscrTree[T] = filter( _ != t )
 
   def jump( n: Int = 1 ): Vector[DiscrTree[T]] = {
     val result = Vector.newBuilder[DiscrTree[T]]
@@ -72,18 +72,18 @@ sealed trait DiscrTree[T] {
     builder.result()
   }
 
-  def insert( es: Iterable[( Expr, T )] ): DiscrTree[T] =
-    es.foldLeft( this ) { case ( dt, ( e, t ) ) => dt.insert( e, t ) }
-  def insert( es: Iterable[Expr], t: T ): DiscrTree[T] =
-    es.foldLeft( this )( _.insert( _, t ) )
-  def insert( e: Expr, t: T ): DiscrTree[T] = insert( TermString( e ), t )
-  def insert( e: TermString, t: T ): DiscrTree[T] =
+  def insert[S >: T]( es: Iterable[( Expr, S )] ): DiscrTree[S] =
+    es.foldLeft[DiscrTree[S]]( this ) { case ( dt, ( e, t ) ) => dt.insert( e, t ) }
+  def insert[S >: T]( es: Iterable[Expr], t: S ): DiscrTree[S] =
+    es.foldLeft[DiscrTree[S]]( this )( _.insert( _, t ) )
+  def insert[S >: T]( e: Expr, t: S ): DiscrTree[S] = insert( TermString( e ), t )
+  def insert[S >: T]( e: TermString, t: S ): DiscrTree[S] =
     ( e.next, this ) match {
       case ( None, Leaf( elems ) ) => Leaf( elems :+ t )
       case ( Some( ( label, e_ ) ), Node( next ) ) =>
         Node( next.updated(
           label,
-          next.getOrElse( label, if ( e_.isEmpty ) Leaf[T]( Vector.empty ) else Node[T]( Map() ) ).
+          next.getOrElse( label, if ( e_.isEmpty ) Leaf[S]( Vector.empty ) else Node[S]( Map() ) ).
             insert( e_, t ) ) )
       case _ =>
         throw new IllegalStateException
@@ -127,6 +127,6 @@ object DiscrTree {
   case class Leaf[T]( elems: Vector[T] ) extends DiscrTree[T]
   case class Node[T]( next: Map[Label, DiscrTree[T]] ) extends DiscrTree[T]
 
-  private val empty: DiscrTree[Any] = Node( Map() )
-  def apply[T](): DiscrTree[T] = empty.asInstanceOf[DiscrTree[T]]
+  val empty: DiscrTree[Nothing] = Node( Map() )
+  def apply[T](): DiscrTree[T] = empty
 }
