@@ -22,14 +22,14 @@ class IEscargot(
     filename:        String        = "" ) extends OneShotProver {
   def expansionProofToMG3i( expProofWithSk: ExpansionProof )( implicit ctx: Context ): Option[LKProof] = {
     val deskExpProof = deskolemizeET( expProofWithSk )
-    EscargotLogger.warn( "converting expansion proof to LK" )
+    EscargotLogger.info( "converting expansion proof to LK" )
     quiet( method.convert( deskExpProof ) ) match {
       case Right( lk ) =>
-        EscargotLogger.warn( s"LK proof has ${lk.dagLike.size} inferences" )
+        EscargotLogger.info( s"LK proof has ${lk.dagLike.size} inferences" )
         val maxSuccSize = lk.subProofs.map( _.endSequent.succedent.toSet.size ).max
-        EscargotLogger.warn( s"LK proof has maximum succedent size $maxSuccSize" )
+        EscargotLogger.info( s"LK proof has maximum succedent size $maxSuccSize" )
         val inMG3i = isMaeharaMG3i( lk )
-        EscargotLogger.warn( s"LK proof is in mG3i: $inMG3i" )
+        EscargotLogger.info( s"LK proof is in mG3i: $inMG3i" )
         if ( showInProoftool ) {
           val viewer = new LKProofViewer( filename, lk )
           viewer.markNonIntuitionisticInferences()
@@ -37,7 +37,7 @@ class IEscargot(
         }
         if ( inMG3i ) Some( lk ) else None
       case Left( unprovable ) =>
-        EscargotLogger.warn( s"stuck at: $unprovable" )
+        EscargotLogger.info( s"stuck at: $unprovable" )
         None
     }
   }
@@ -58,15 +58,15 @@ class IEscargot(
         case None       => if ( method.isComplete ) Some( Left( () ) ) else None
       }
     } else {
-      backend.getExpansionProof( seq ) match {
+      quiet( backend.getExpansionProof( seq ) ) match {
         case Some( expansion ) =>
-          EscargotLogger.warn( "found classical expansion proof" )
+          EscargotLogger.info( "found classical expansion proof" )
           expansionProofToMG3i( expansion ) match {
             case Some( lk ) =>
               require( lk.endSequent.isSubsetOf( seq ) )
               Some( Right( lk ) )
             case None =>
-              EscargotLogger.warn( "constructivization failed" )
+              EscargotLogger.info( "constructivization failed" )
               None
           }
         case None =>
@@ -153,8 +153,9 @@ object IEscargot extends IEscargot(
         }
     }
 
-    if ( opts.verbose )
-      LogHandler.verbosity.value = LogHandler.verbosity.value.increase( Seq( EscargotLogger ), 2 )
+    LogHandler.verbosity.value = LogHandler.verbosity.value.increase(
+      Seq( EscargotLogger ),
+      1 + ( if ( opts.verbose ) 2 else 0 ) )
 
     val tptp = TptpParser.load( FilePath( opts.files.head ) )
     val tptpSequent = tptp.toSequent
