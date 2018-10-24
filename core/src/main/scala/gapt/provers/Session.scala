@@ -351,7 +351,7 @@ object Session {
         val res = out.readLine()
         if ( debug ) println( s"-> $res" )
         if ( res == null ) throw new ExternalSmtlibProgram.UnexpectedTerminationException( input )
-        SExpressionParser( StringInputFile( res ) ).head
+        SExpressionParser.parse( StringInputFile( res ) ).head
       }
     }
 

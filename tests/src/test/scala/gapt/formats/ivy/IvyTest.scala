@@ -13,7 +13,7 @@ import scala.util.{ Failure, Success }
  */
 class IvyTest extends Specification {
   def parseClasspathFile( filename: String ) =
-    SExpressionParser( ClasspathInputFile( filename ) )
+    SExpressionParser.parse( ClasspathInputFile( filename ) )
   def tryParseString( string: String ) =
     SExpressionParser.tryParse( StringInputFile( string ) )
 

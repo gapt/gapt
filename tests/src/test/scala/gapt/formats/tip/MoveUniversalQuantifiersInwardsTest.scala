@@ -1,5 +1,6 @@
 package gapt.formats.tip
 
+import gapt.formats.StringInputFile
 import gapt.formats.tip.parser.TipSmtParser
 import gapt.formats.tip.transformation.moveUniversalQuantifiersInwards
 import org.specs2.mutable.Specification
@@ -8,14 +9,14 @@ class MoveUniversalQuantifiersInwardsTest extends Specification {
 
   "transformation should apply to function definitions" in {
     val originalProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (define-fun f1 ((x nat)) nat (forall ((x nat)) (and a b) ) )
         | (define-funs-rec
         |   ( (f3 ((x nat)) nat))
         |   ( (forall ((x nat)) (and a b) ) ) )
-      """.stripMargin )
+      """.stripMargin ) )
     val expectedProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (define-fun f1 ((x nat)) nat
         |   ( and
         |     (forall ((x nat)) a )
@@ -23,30 +24,30 @@ class MoveUniversalQuantifiersInwardsTest extends Specification {
         | (define-funs-rec
         |   ( (f3 ((x nat)) nat))
         |   ( (and (forall ((x nat)) a)  (forall ((x nat)) b)) ) )
-      """.stripMargin )
+      """.stripMargin ) )
     moveUniversalQuantifiersInwards.transform( originalProblem ) must_==
       expectedProblem
   }
 
   "universal quantifier should be distributed over conjuncts" in {
     val originalProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (define-fun f1 ((x nat)) nat (forall ((x nat)) (and a b) ) )
-      """.stripMargin )
+      """.stripMargin ) )
     val expectedProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (define-fun f1 ((x nat)) nat
         |   ( and
         |     (forall ((x nat)) a )
         |     (forall ((x nat)) b ) ) )
-      """.stripMargin )
+      """.stripMargin ) )
     moveUniversalQuantifiersInwards.transform( originalProblem ) must_==
       expectedProblem
   }
 
   "universal quantifiers should be moved inwards in ite-expressions" in {
     val originalProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (define-fun f1 ((x nat)) nat
         |   (ite
         |     (forall ((x nat)) (and a b) )
@@ -54,9 +55,9 @@ class MoveUniversalQuantifiersInwardsTest extends Specification {
         |     (forall ((x nat)) (and a b) )
         |   )
         | )
-      """.stripMargin )
+      """.stripMargin ) )
     val expectedProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (define-fun f1 ((x nat)) nat
         |   (ite
         |     (forall ((x nat)) (and a b) )
@@ -70,24 +71,24 @@ class MoveUniversalQuantifiersInwardsTest extends Specification {
         |     )
         |   )
         | )
-      """.stripMargin )
+      """.stripMargin ) )
     moveUniversalQuantifiersInwards.transform( originalProblem ) must_==
       expectedProblem
   }
 
   "universal quantifiers should be moved inwards inside conjunction" in {
     val originalProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (define-fun f1 ((x nat)) nat
         |   (and (forall ((x nat)) (and a b) ) c ) )
-      """.stripMargin )
+      """.stripMargin ) )
     val expectedProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (define-fun f1 ((x nat)) nat
         |   (and ( and
         |     (forall ((x nat)) a )
         |     (forall ((x nat)) b ) ) c ) )
-      """.stripMargin )
+      """.stripMargin ) )
     moveUniversalQuantifiersInwards.transform( originalProblem ) must_==
       expectedProblem
   }

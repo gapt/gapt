@@ -2,7 +2,7 @@ package gapt.provers.escargot
 
 import ammonite.ops.FilePath
 import gapt.expr.hol.containsQuantifierOnLogicalLevel
-import gapt.formats.tptp.{ TptpParser, sequentProofToTptp }
+import gapt.formats.tptp.{ TptpImporter, sequentProofToTptp }
 import gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, ExpansionProofToMG3i, ExpansionProofToMG3iViaSAT, deskolemizeET, formulaToExpansionTree }
 import gapt.proofs.lk.{ LKProof, isMaeharaMG3i }
 import gapt.proofs.{ Context, HOLSequent, MutableContext }
@@ -157,7 +157,7 @@ object IEscargot extends IEscargot(
       Seq( EscargotLogger ),
       1 + ( if ( opts.verbose ) 2 else 0 ) )
 
-    val tptp = TptpParser.load( FilePath( opts.files.head ) )
+    val tptp = TptpImporter.loadWithIncludes( FilePath( opts.files.head ) )
     val tptpSequent = tptp.toSequent
     implicit val ctx: MutableContext = MutableContext.guess( tptpSequent )
     new IEscargot( opts.backend, opts.method, opts.prooftool, opts.files.head ).

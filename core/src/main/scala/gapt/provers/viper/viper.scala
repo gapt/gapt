@@ -246,7 +246,7 @@ object Viper {
     if ( opts.mode == "help" || files.size != 1 ) return print( ViperOptions.usage )
     val file = files.head
 
-    val problem = if ( opts.fixup ) TipSmtImporter.fixupAndParse( file ) else TipSmtImporter.parse( file )
+    val problem = if ( opts.fixup ) TipSmtImporter.fixupAndLoad( file ) else TipSmtImporter.load( file )
     implicit val ctx: MutableContext = problem.ctx.newMutable
 
     apply( problem.toSequent, opts ) match {

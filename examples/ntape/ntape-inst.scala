@@ -9,7 +9,7 @@ import gapt.expr.hol._
 
 import gapt.formats.latex.SequentsListLatexExporter
 
-import gapt.formats.tptp.TPTPHOLExporter
+import gapt.formats.tptp.TptpHOLExporter
 import gapt.proofs.HOLSequent
 
 /* *************************************************************************** *

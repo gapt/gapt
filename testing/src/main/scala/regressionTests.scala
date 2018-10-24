@@ -11,7 +11,7 @@ import gapt.formats.babel.BabelParser
 import gapt.formats.json._
 import gapt.formats.leancop.LeanCoPParser
 import gapt.formats.tip.TipSmtImporter
-import gapt.formats.tptp.{ TptpParser, resolveIncludes }
+import gapt.formats.tptp.TptpImporter
 import gapt.formats.verit.VeriTParser
 import gapt.proofs.Context.ProofNames
 import gapt.proofs.ceres._
@@ -40,7 +40,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
   override def timeout = Some( 10 minutes )
 
   override protected def test( implicit testRun: TestRun ): Unit = {
-    val bench = TipSmtImporter.fixupAndParse( f ) --- "tip parser"
+    val bench = TipSmtImporter.fixupAndLoad( f ) --- "tip parser"
 
     implicit val ctx: MutableContext = bench.ctx.newMutable
     val sequent = bench.toSequent
@@ -48,8 +48,8 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
       case ( duration, strategy ) =>
         try {
           ( withTimeout( duration ) { strategy.andThen( now )( ProofState( sequent ) ) } match {
-            case ( Left( error ) )         => throw new Exception( error.toSigRelativeString )
-            case ( Right( ( _, state ) ) ) => state.result
+            case Left( error )         => throw new Exception( error.toSigRelativeString )
+            case Right( ( _, state ) ) => state.result
           } ) --? s"viper $strategy"
         } catch {
           case _: TimeOutException =>
@@ -132,7 +132,7 @@ class TheoryTestCase( name: String, combined: Boolean )
     val lemmaHandle = LemmaHandle( ctx.get[ProofNames].names( name )._1 )
     val proof = ( if ( combined ) lemmaHandle.combined() else lemmaHandle.proof ) --- "proof"
 
-    JSONImporter.apply[LKProof]( InputFile.fromString( JSONExporter( proof ) ) ) == proof !-- "json export of lk proof"
+    JsonImporter.load[LKProof]( InputFile.fromString( JsonExporter( proof ).render( 80 ) ) ) == proof !-- "json export of lk proof"
 
     LKToND( proof ) --? "LKToND"
     normalizeLKt.withDebug( proof ) --? "lkt cut-elim"
@@ -276,7 +276,7 @@ class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
 
   override def test( implicit testRun: TestRun ) = {
     val tptpDir = Path( f ) / up / up / up
-    val tptpProblem = resolveIncludes( TptpParser.parse( f ), path => TptpParser.parse( tptpDir / RelPath( path ) ) ) --- "TptpParser"
+    val tptpProblem = TptpImporter.loadWithIncludes( f, path => TptpImporter.loadWithoutIncludes( tptpDir / RelPath( path ) ) ) --- "TptpParser"
 
     val sequent = tptpProblem.toSequent
 
@@ -288,14 +288,14 @@ class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
       desk.shallow.isSubsetOf( expansion.shallow ) !-- "shallow sequent of deskolemization"
       Z3.isValid( desk.deep ) !-- "deskolemized deep formula validity"
       ExpansionProofToLK( desk ).get --? "ExpansionProofToLK on deskolemization" foreach { deskLK =>
-        JSONImporter.apply[LKProof]( InputFile.fromString( JSONExporter( deskLK ) ) ) == deskLK !-- "json export of lk proof"
+        JsonImporter.load[LKProof]( InputFile.fromString( JsonExporter( deskLK ).render( 80 ) ) ) == deskLK !-- "json export of lk proof"
         LKToND( deskLK ) --? "LKToND (deskolemization)" foreach { nd =>
-          JSONImporter.apply[NDProof]( InputFile.fromString( JSONExporter( nd ) ) ) == nd !-- "json export of lk proof"
+          JsonImporter.load[NDProof]( InputFile.fromString( JsonExporter( nd ).render( 80 ) ) ) == nd !-- "json export of lk proof"
         }
       }
     }
 
-    JSONImporter.apply[ExpansionProof]( InputFile.fromString( JSONExporter( expansion ) ) ) == expansion !-- "json export of expansion proof"
+    JsonImporter.load[ExpansionProof]( InputFile.fromString( JsonExporter( expansion ).render( 80 ) ) ) == expansion !-- "json export of expansion proof"
   }
 }
 

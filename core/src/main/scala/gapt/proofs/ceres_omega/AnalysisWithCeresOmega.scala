@@ -1,7 +1,7 @@
 package gapt.proofs.ceres_omega
 
 import gapt.expr._
-import gapt.formats.tptp.TPTPHOLExporter
+import gapt.formats.tptp.TptpHOLExporter
 import gapt.proofs.expansion._
 import gapt.proofs.lk._
 import gapt.expr.fol.{ reduceHolToFol, replaceAbstractions, undoHol2Fol }
@@ -182,7 +182,7 @@ abstract class AnalysisWithCeresOmega {
    * @param filename The name of the file to export to
    */
   def export_thf( filename: String ): Unit = {
-    TPTPHOLExporter( preprocessed_css, filename )
+    TptpHOLExporter( preprocessed_css, filename )
   }
 
   /**
@@ -224,12 +224,12 @@ abstract class AnalysisWithCeresOmega {
   def thf_reproving_deep( filename: Option[String] ): String = {
     filename match {
       case Some( fn ) =>
-        TPTPHOLExporter.apply( expansion_proof.expansionSequent, fn, true, true )
+        TptpHOLExporter.apply( expansion_proof.expansionSequent, fn, true, true )
       case None =>
         ()
     }
 
-    TPTPHOLExporter.export( expansion_proof.expansionSequent, true, true )
+    TptpHOLExporter.export( expansion_proof.expansionSequent, true, true )
   }
 
   def collectStatistics() =
@@ -262,7 +262,7 @@ abstract class AnalysisWithCeresOmega {
    * Prints the preprocessed characteristic sequent set in TPTP THF format. Use [[export_thf]] to write it to a file.
    */
   def print_css_thf(): Unit = {
-    println( TPTPHOLExporter.export_negative( preprocessed_css ) )
+    println( TptpHOLExporter.export_negative( preprocessed_css ) )
   }
 
 }

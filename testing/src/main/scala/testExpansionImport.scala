@@ -2,7 +2,7 @@ package gapt.testing
 import ammonite.ops.FilePath
 import gapt.expr.{ Const, expressionSize }
 import gapt.expr.hol.lcomp
-import gapt.formats.tptp.TptpParser
+import gapt.formats.tptp.TptpImporter
 import gapt.proofs.MutableContext
 import gapt.proofs.expansion.{ eliminateCutsET, eliminateDefsET }
 import gapt.proofs.resolution._
@@ -20,7 +20,7 @@ object testExpansionImport extends scala.App {
   metric( "file", tptpFileName )
 
   try time( "total" ) {
-    val tptp = time( "tptpparser" ) { TptpParser.load( FilePath( tptpFileName ) ) }
+    val tptp = time( "tptpparser" ) { TptpImporter.loadWithIncludes( FilePath( tptpFileName ) ) }
     val problem = tptp.toSequent
     metric( "problem_lcomp", lcomp( problem ) )
     metric( "problem_scomp", expressionSize( problem.toImplication ) )

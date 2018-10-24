@@ -7,7 +7,7 @@ import gapt.formats.csv.CSVRow
 import gapt.formats.tptp.AnnotatedFormula
 import gapt.formats.tptp.TptpFile
 import gapt.formats.tptp.TptpFormulaRoles
-import gapt.formats.tptp.TptpParser
+import gapt.formats.tptp.TptpImporter
 import gapt.utils.Statistic
 
 import scala.collection.mutable
@@ -18,7 +18,7 @@ object TPTPstatistics {
   type Sigtable = Map[String, Seq[Set[Const]]]
 
   def apply[T <: TptpLibraryProblem]( name: T ): TptpInputStats[T] = {
-    val tptpFile = TptpParser.load( name.file, f => TptpParser.parse( FilePath( s"${name.path}/$f" ) ) )
+    val tptpFile = TptpImporter.loadWithIncludes( name.file, f => TptpImporter.loadWithoutIncludes( FilePath( s"${name.path}/$f" ) ) )
     apply( tptpFile, name )
   }
 

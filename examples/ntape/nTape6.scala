@@ -3,7 +3,7 @@ package gapt.examples
 import java.io._
 
 import gapt.formats.llk.short._
-import gapt.formats.tptp.TPTPHOLExporter
+import gapt.formats.tptp.TptpHOLExporter
 import gapt.proofs.HOLSequent
 
 /**
@@ -131,19 +131,19 @@ object nTape6 {
   def export( path: String = ".", separate_axioms: Boolean = false ) {
     val f = path + File.separator + fn
     //sc
-    TPTPHOLExporter( s0a, f + "0-minimal.tptp", separate_axioms ) //provable by agsyhol
-    TPTPHOLExporter( s0b, f + "0-with-witness.tptp", separate_axioms ) //provable by agsyhol
+    TptpHOLExporter( s0a, f + "0-minimal.tptp", separate_axioms ) //provable by agsyhol
+    TptpHOLExporter( s0b, f + "0-with-witness.tptp", separate_axioms ) //provable by agsyhol
     //sc1
-    TPTPHOLExporter( s1a, f + "1-minimal.tptp", separate_axioms ) //timeout
-    TPTPHOLExporter( s1b, f + "1-withness-no-arith.tptp", separate_axioms ) //timeout
-    TPTPHOLExporter( s1c, f + "1-with-witness.tptp", separate_axioms ) //provable by leo 2, satallax, agsyhol
-    TPTPHOLExporter( s1d, f + "1-without-witness.tptp", separate_axioms ) //timeout
+    TptpHOLExporter( s1a, f + "1-minimal.tptp", separate_axioms ) //timeout
+    TptpHOLExporter( s1b, f + "1-withness-no-arith.tptp", separate_axioms ) //timeout
+    TptpHOLExporter( s1c, f + "1-with-witness.tptp", separate_axioms ) //provable by leo 2, satallax, agsyhol
+    TptpHOLExporter( s1d, f + "1-without-witness.tptp", separate_axioms ) //timeout
     //sc2
-    TPTPHOLExporter( s2b, f + "2-with-witness.tptp", separate_axioms ) //provable by leo 2, satallax
-    TPTPHOLExporter( s2c, f + "2-without-witness.tptp", separate_axioms ) //timeout
+    TptpHOLExporter( s2b, f + "2-with-witness.tptp", separate_axioms ) //provable by leo 2, satallax
+    TptpHOLExporter( s2c, f + "2-without-witness.tptp", separate_axioms ) //timeout
 
     //sc2 with different witness
-    TPTPHOLExporter( s2d, f + "2-with-witness2.tptp", separate_axioms ) //provable by leo 2, satallax
+    TptpHOLExporter( s2d, f + "2-with-witness2.tptp", separate_axioms ) //provable by leo 2, satallax
     //TPTPHOLExporter(  s2e , f + "2-with-witness2-help.tptp" , separate_axioms ) //provable by leo 2, satallax
 
     //these are some experiments

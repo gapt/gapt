@@ -4,7 +4,7 @@ import java.io.IOException
 
 import gapt.expr._
 import gapt.formats.StringInputFile
-import gapt.formats.tptp.{ TPTPFOLExporter, TptpProofParser }
+import gapt.formats.tptp.{ TptpFOLExporter, TptpProofParser }
 import gapt.proofs.resolution.ResolutionProof
 import gapt.proofs.sketch.RefutationSketchToResolution
 import gapt.proofs.{ FOLClause, HOLClause, MutableContext }
@@ -18,7 +18,7 @@ class Metis extends ResolutionProver with ExternalProgram {
     renameConstantsToFi.wrap( seq.toSeq )(
       ( renaming, cnf: Seq[HOLClause] ) => {
         val labelledCNF = cnf.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
-        val tptpIn = TPTPFOLExporter.exportLabelledCNF( labelledCNF ).toString
+        val tptpIn = TptpFOLExporter.exportLabelledCNF( labelledCNF ).toString
         val output = runProcess.withTempInputFile( Seq( "metis", "--show", "proof" ), tptpIn )
         val lines = output.split( "\n" ).toSeq
         if ( lines.exists( _.contains( "SZS status Unsatisfiable" ) ) ) {

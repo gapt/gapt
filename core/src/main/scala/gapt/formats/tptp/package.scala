@@ -40,7 +40,7 @@ package object tptp {
 
   }
   sealed trait TptpInput {
-    override def toString = tptpToString.tptpInput( this )
+    override def toString = TptpToString.tptpInput( this )
   }
   case class AnnotatedFormula( language: String, name: String, role: FormulaRole, formula: Formula, annotations: Seq[GeneralTerm] ) extends TptpInput
   case class IncludeDirective( fileName: String, formulaSelection: Option[Seq[String]] ) extends TptpInput
