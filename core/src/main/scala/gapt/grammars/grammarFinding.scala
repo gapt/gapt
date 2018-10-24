@@ -5,7 +5,7 @@ import gapt.expr.fol.folSubTerms
 import gapt.expr.fol.thresholds._
 import gapt.expr.hol.{ atoms, lcomp, simplify, toNNF }
 import gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
-import gapt.utils.Logger
+import gapt.utils.{ Logger, UNone, UOption, USome }
 
 import scala.collection.{ GenTraversable, mutable }
 
@@ -13,18 +13,21 @@ object subsetLGGs {
   def apply( terms: Traversable[Expr], maxSize: Int ): Set[Expr] = {
     val lggs = Set.newBuilder[Expr]
 
-    def findLGGs( currentLGG: Expr, terms: List[Expr], maxSize: Int ): Unit =
+    def findLGGs( currentLGG: UOption[Expr], terms: List[Expr], maxSize: Int ): Unit =
       if ( maxSize > 0 && terms.nonEmpty ) {
-        val ( t :: rest ) = terms
+        val t :: rest = terms
 
-        val newLGG = if ( currentLGG == null ) t else leastGeneralGeneralization.fast( currentLGG, t )._1
+        val newLGG = currentLGG match {
+          case USome( lgg ) => leastGeneralGeneralization.fast( lgg, t )._1
+          case _            => t
+        }
         lggs += newLGG
-        if ( !newLGG.isInstanceOf[Var] ) findLGGs( newLGG, rest, maxSize - 1 )
+        if ( !newLGG.isInstanceOf[Var] ) findLGGs( USome( newLGG ), rest, maxSize - 1 )
 
         findLGGs( currentLGG, rest, maxSize )
       }
 
-    findLGGs( null, terms.toList, maxSize )
+    findLGGs( UNone(), terms.toList, maxSize )
 
     lggs.result()
   }
