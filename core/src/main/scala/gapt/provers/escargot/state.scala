@@ -75,13 +75,14 @@ class IndexedClsSet private (
       },
       state = state )
   def -( c: Cls ): IndexedClsSet =
-    new IndexedClsSet(
-      clauses = clauses - c,
-      indices = Map() ++ indices.view.map {
-        case ( i, t ) =>
-          i -> i.asInstanceOf[Index[AnyRef]].remove( t, c )
-      },
-      state = state )
+    if ( !clauses( c ) ) this else
+      new IndexedClsSet(
+        clauses = clauses - c,
+        indices = Map() ++ indices.view.map {
+          case ( i, t ) =>
+            i -> i.asInstanceOf[Index[AnyRef]].remove( t, c )
+        },
+        state = state )
 }
 object IndexedClsSet {
   def apply( state: EscargotState ): IndexedClsSet =
