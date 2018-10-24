@@ -1,29 +1,30 @@
 package gapt.provers.escargot.impl
 import DiscrTree._
 import gapt.expr._
+import gapt.utils._
 
 class TermString( private val stack: List[Any] ) extends AnyVal {
   def isEmpty: Boolean = stack.isEmpty
   def jump: TermString = new TermString( stack.tail )
-  def next: Option[( Label, TermString )] =
+  def next: UOption[( Label, TermString )] =
     stack match {
-      case Nil => None
+      case Nil => UNone()
       case TBase( n, as ) :: rest =>
-        Some( ( Constant( n, as.length ), new TermString( as ++ rest ) ) )
+        USome( ( Constant( n, as.length ), new TermString( as ++ rest ) ) )
       case TVar( _ ) :: rest =>
-        Some( ( Variable, new TermString( rest ) ) )
+        USome( ( Variable, new TermString( rest ) ) )
       case ( a ->: b ) :: rest =>
-        Some( ( Constant( "->", 2 ), new TermString( a :: b :: rest ) ) )
+        USome( ( Constant( "->", 2 ), new TermString( a :: b :: rest ) ) )
       case Apps( hd, as ) :: rest =>
-        Some( hd match {
+        USome( hd match {
           case Const( n, _, _ ) => ( Constant( n, as.length ), new TermString( as ++ rest ) )
           case _                => ( Variable, new TermString( rest ) )
         } )
     }
   def toList: List[Label] =
     next match {
-      case None               => Nil
-      case Some( ( hd, tl ) ) => hd :: tl.toList
+      case USome( ( hd, tl ) ) => hd :: tl.toList
+      case _                   => Nil
     }
 }
 object TermString {
@@ -79,12 +80,12 @@ sealed trait DiscrTree[+T] {
   def insert[S >: T]( e: Expr, t: S ): DiscrTree[S] = insert( TermString( e ), t )
   def insert[S >: T]( e: TermString, t: S ): DiscrTree[S] =
     ( e.next, this ) match {
-      case ( None, Leaf( elems ) ) => Leaf( elems :+ t )
-      case ( Some( ( label, e_ ) ), Node( next ) ) =>
+      case ( USome( ( label, e_ ) ), Node( next ) ) =>
         Node( next.updated(
           label,
           next.getOrElse( label, if ( e_.isEmpty ) Leaf[S]( Vector.empty ) else Node[S]( Map() ) ).
             insert( e_, t ) ) )
+      case ( _, Leaf( elems ) ) => Leaf( elems :+ t )
       case _ =>
         throw new IllegalStateException
     }
@@ -92,11 +93,11 @@ sealed trait DiscrTree[+T] {
   def generalizations( e: Expr ): Vector[T] = generalizations( TermString( e ) )
   def generalizations( e: TermString ): Vector[T] =
     ( e.next, this ) match {
-      case ( None, Leaf( elems ) ) => elems
-      case ( Some( ( label, e_ ) ), Node( next ) ) =>
+      case ( USome( ( label, e_ ) ), Node( next ) ) =>
         val res1 = next.get( Variable ).map( _.generalizations( e.jump ) ).getOrElse( Vector.empty[T] )
         if ( label == Variable ) res1 else
           res1 ++ next.get( label ).map( _.generalizations( e_ ) ).getOrElse( Vector.empty[T] )
+      case ( _, Leaf( elems ) ) => elems
       case _ =>
         throw new IllegalStateException
     }
@@ -104,13 +105,13 @@ sealed trait DiscrTree[+T] {
   def unifiable( e: Expr ): Vector[T] = unifiable( TermString( e ) )
   def unifiable( e: TermString ): Vector[T] =
     ( e.next, this ) match {
-      case ( None, Leaf( elems ) ) => elems
-      case ( Some( ( label, e_ ) ), Node( next ) ) =>
+      case ( USome( ( label, e_ ) ), Node( next ) ) =>
         if ( label == Variable )
           jump().view.flatMap( _.unifiable( e_ ) ).toVector
         else
           next.get( Variable ).map( _.unifiable( e.jump ) ).getOrElse( Vector.empty[T] ) ++
             next.get( label ).map( _.unifiable( e_ ) ).getOrElse( Vector.empty[T] )
+      case ( _, Leaf( elems ) ) => elems
       case _ =>
         throw new IllegalStateException
     }
