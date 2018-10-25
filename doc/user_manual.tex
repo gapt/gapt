@@ -866,9 +866,9 @@ b: ∀x (P(x) → Q(x))
 :-
 c: Q(a)
 
-  at gapt.proofs.gaptic.Lemma$.finish(language.scala:18)
-  at gapt.proofs.gaptic.Lemma$.finish(language.scala:22)
-  at gapt.proofs.gaptic.Lemma$Helper.handleTacticBlock(language.scala:34)
+  at gapt.proofs.gaptic.Lemma$.finish(language.scala:21)
+  at gapt.proofs.gaptic.Lemma$.finish(language.scala:25)
+  at gapt.proofs.gaptic.Lemma$Helper.handleTacticBlock(language.scala:37)
   ... elided
 \end{tacticsoutput}
 
@@ -918,9 +918,9 @@ a: P(a)
 :-
 c: Q(a)
 
-  at gapt.proofs.gaptic.Lemma$.finish(language.scala:18)
-  at gapt.proofs.gaptic.Lemma$.finish(language.scala:22)
-  at gapt.proofs.gaptic.Lemma$Helper.handleTacticBlock(language.scala:34)
+  at gapt.proofs.gaptic.Lemma$.finish(language.scala:21)
+  at gapt.proofs.gaptic.Lemma$.finish(language.scala:25)
+  at gapt.proofs.gaptic.Lemma$Helper.handleTacticBlock(language.scala:37)
   ... elided
 \end{tacticsoutput}
 
@@ -1049,9 +1049,9 @@ A: A
 :-
 C: ∃x ∃y (x != y ∧ f(x) = f(y))
 
-  at gapt.proofs.gaptic.Lemma$.finish(language.scala:18)
-  at gapt.proofs.gaptic.Lemma$.finish(language.scala:22)
-  at gapt.proofs.gaptic.Lemma$Helper.handleTacticBlock(language.scala:34)
+  at gapt.proofs.gaptic.Lemma$.finish(language.scala:21)
+  at gapt.proofs.gaptic.Lemma$.finish(language.scala:25)
+  at gapt.proofs.gaptic.Lemma$Helper.handleTacticBlock(language.scala:37)
   ... elided
 \end{tacticsoutput}
 
@@ -1592,10 +1592,11 @@ fof(ant_0, axiom, p('0')).
 fof(ant_1, axiom, ![X]: (p(X) => p(s(X)))).
 fof(suc_0, conjecture, p(s(s('0')))).
 
-<console>:146: error: not found: value TPTPFOLExporter
-      TPTPFOLExporter(sequent)
-      ^
 gapt> TptpFOLExporter(sequent)
+res1: gapt.formats.tptp.TptpFile =
+fof(ant_0, axiom, p('0')).
+fof(ant_1, axiom, ![X]: (p(X) => p(s(X)))).
+fof(suc_0, conjecture, p(s(s('0')))).
 
 \end{clilisting}
 
