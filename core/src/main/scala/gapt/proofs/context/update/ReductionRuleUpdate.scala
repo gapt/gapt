@@ -1,13 +1,13 @@
-package gapt.proofs.context
+package gapt.proofs.context.update
 
 import gapt.expr.Eq
 import gapt.expr.Expr
 import gapt.expr.ReductionRule
 import gapt.expr.preExpr
 import gapt.formats.babel.BabelParser
-import gapt.proofs.Context
-import gapt.proofs.Context.Reductions
-import gapt.proofs.Context.Update
+import gapt.proofs.context.Context
+import gapt.proofs.context.facet.Reductions
+import gapt.proofs.context.State
 
 class ReductionRuleUpdate(
     private val rules: Seq[ReductionRule] ) extends Update {
@@ -20,7 +20,7 @@ class ReductionRuleUpdate(
    * by appending the reduction rules saved in this update to the `Reductions`
    * facet.
    */
-  override def apply( ctx: Context ): Context.State = {
+  override def apply( ctx: Context ): State = {
     ctx.state.update[Reductions]( _ ++ rules.toVector )
   }
 }

@@ -1,7 +1,10 @@
 package gapt.proofs.epsilon
 
 import gapt.expr._
-import gapt.proofs.{ Context, MutableContext, Sequent }
+import gapt.proofs.Sequent
+import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.Sort
 import gapt.provers.escargot.Escargot
 import gapt.utils.SatMatchers
 import org.specs2.mutable.Specification
@@ -33,7 +36,7 @@ class EpsilonProofTest extends Specification with SatMatchers {
 
   "many sorted 1" in {
     implicit val ctx: MutableContext = MutableContext.default()
-    ctx += Context.InductiveType( ty"nat", hoc"0 : nat", hoc"s : nat > nat" )
+    ctx += InductiveType( ty"nat", hoc"0 : nat", hoc"s : nat > nat" )
     ctx += hoc"P: nat > o"
     Escargot.getEpsilonProof( hof"!x (P x -> P (s x)) -> P 0 -> P (s (s 0))" ) must beLike {
       case Some( p ) =>
@@ -43,9 +46,9 @@ class EpsilonProofTest extends Specification with SatMatchers {
 
   "many sorted 2" in {
     implicit val ctx: MutableContext = MutableContext.default()
-    ctx += Context.InductiveType( ty"list ?a", hoc"nil{?a} : list ?a", hoc"cons{?a} : ?a > list ?a > list ?a" )
+    ctx += InductiveType( ty"list ?a", hoc"nil{?a} : list ?a", hoc"cons{?a} : ?a > list ?a > list ?a" )
     ctx += hoc"P{?a}: list ?a > o"
-    ctx += Context.Sort( "i" ) // TODO(gabriel): escargot fails when proving the goal with list ?a
+    ctx += Sort( "i" ) // TODO(gabriel): escargot fails when proving the goal with list ?a
     val f = hof"!xs!(x:i) (P xs -> P (cons x xs)) -> P (nil: list i) -> !x P (cons x nil : list i)"
     Escargot.getEpsilonProof( f ) must beLike {
       case Some( p ) =>

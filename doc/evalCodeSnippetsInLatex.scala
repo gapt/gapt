@@ -152,7 +152,7 @@ object evaluate {
       case TacticsListing( options, input, _ ) =>
         var code = input
         if ( !options.contains( "nosig" ) && !options.contains( "bare" ) ) code = s"""
-          ctx += Context.Sort("i")
+          ctx += Sort("i")
           ctx += hoc"P: i>o"
           ctx += hoc"Q: i>o"
           ctx += hoc"I: i>o"

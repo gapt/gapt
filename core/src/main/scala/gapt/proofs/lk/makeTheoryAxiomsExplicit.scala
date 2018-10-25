@@ -2,7 +2,9 @@ package gapt.proofs.lk
 
 import gapt.expr._
 import gapt.expr.hol._
-import gapt.proofs.{ Context, HOLClause, SequentConnector, Sequent }
+import gapt.proofs.context.Context
+import gapt.proofs.context.facet.ProofNames
+import gapt.proofs.{ HOLClause, Sequent, SequentConnector }
 
 /**
  * Given a list of formulas Π, this transforms a proof π of Σ :- Δ into a proof π' of Π, Σ :- Δ.
@@ -30,7 +32,7 @@ object makeTheoryAxiomsExplicit extends LKVisitor[Seq[Formula]] {
   def apply( formulas: Formula* )( proof: LKProof ): LKProof = withSequentConnector( formulas: _* )( proof )._1
 
   def apply( proof: LKProof )( implicit ctx: Context ): LKProof =
-    apply( ctx.get[Context.ProofNames].sequents.toSeq map { s => universalClosure( s.toFormula ) }: _* )( proof )
+    apply( ctx.get[ProofNames].sequents.toSeq map { s => universalClosure( s.toFormula ) }: _* )( proof )
 
   /**
    *

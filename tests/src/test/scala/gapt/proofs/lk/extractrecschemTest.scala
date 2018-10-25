@@ -5,9 +5,12 @@ import gapt.expr._
 import gapt.expr.fol.Numeral
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.grammars.RecursionScheme
-import gapt.proofs.Context.Sort
 import gapt.proofs.gaptic._
-import gapt.proofs.{ Context, MutableContext, Sequent }
+import gapt.proofs.Sequent
+import gapt.proofs.context.Context
+import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.Sort
 import gapt.utils.SatMatchers
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragment
@@ -84,8 +87,8 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
 
   "numeral induction" in {
     implicit val ctx: MutableContext = MutableContext.default()
-    ctx += Context.InductiveType( "Nat", hoc"Zero: Nat", hoc"Suc: Nat>Nat" )
-    ctx += Context.Sort( "Witness" )
+    ctx += InductiveType( "Nat", hoc"Zero: Nat", hoc"Suc: Nat>Nat" )
+    ctx += Sort( "Witness" )
     ctx += hoc"p: Nat>Witness>o"
     ctx += hoc"g: Witness>Witness"
     ctx += hoc"c: Witness"
@@ -110,7 +113,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
 
 class Pi2FactorialPOC extends Specification with SatMatchers {
   implicit var ctx = Context()
-  ctx += Context.InductiveType( "i", hoc"0:i", hoc"s:i>i" )
+  ctx += InductiveType( "i", hoc"0:i", hoc"s:i>i" )
 
   ctx += hoc"'+': i>i>i"
   ctx += hoc"'*': i>i>i"

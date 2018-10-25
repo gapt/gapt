@@ -5,7 +5,9 @@ import gapt.examples.{ LinearExampleProof, Pi2Pigeonhole }
 import gapt.expr._
 import gapt.formats.ClasspathInputFile
 import gapt.formats.llk.LLKProofParser
-import gapt.proofs.{ Context, Sequent, SequentMatchers }
+import gapt.proofs.context.Context
+import gapt.proofs.context.update.Sort
+import gapt.proofs.{ Sequent, SequentMatchers }
 import gapt.proofs.lk.{ LKToExpansionProof, eliminateDefinitions }
 import gapt.provers.escargot.Escargot
 import gapt.provers.verit.VeriT
@@ -93,7 +95,7 @@ class ExpansionProofTest extends Specification with SatMatchers with SequentMatc
 class ExpansionProofDefinitionEliminationTest extends Specification with SatMatchers {
   "simple unipolar definition" in {
     implicit var ctx = Context()
-    ctx += Context.Sort( "i" )
+    ctx += Sort( "i" )
     ctx += hoc"P: i>o"
     ctx += hoc"f: i>i"
     ctx += hoc"c: i"

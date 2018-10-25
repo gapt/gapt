@@ -1,14 +1,17 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.Context._
-import gapt.proofs.Context
 import gapt.proofs.Sequent
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 
 object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-  ctx += Context.Sort( "i" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += Sort( "i" )
   ctx += hoc"f:nat>i>nat"
   ctx += hoc"suc:i>i"
   ctx += hoc"z:i"
@@ -52,17 +55,17 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       hof"PAND(m,n)",
       hof"!x TopFuncDef(m,s(m),x)" ),
     Seq( hof"?x ( E(f(s(m),x), f(s(m),suc(x))) )" ) )
-  ctx += Context.ProofNameDeclaration( le"omega n m", esOmega )
+  ctx += ProofNameDeclaration( le"omega n m", esOmega )
   val esGamma = Sequent(
     Seq( hof"PAND(m,n)" ),
     Seq( hof"CutDistinct(m,n)" ) )
-  ctx += Context.ProofNameDeclaration( le"gamma n m", esGamma )
+  ctx += ProofNameDeclaration( le"gamma n m", esGamma )
   val esPhi = Sequent(
     Seq(
       hof" CutDistinct(m,n)",
       hof"!x TopFuncDef(m,s(m),x)" ),
     Seq( hof"?x ( E(f(s(m),x), f(s(m),suc(x))) )" ) )
-  ctx += Context.ProofNameDeclaration( le"phi n m", esPhi )
+  ctx += ProofNameDeclaration( le"phi n m", esPhi )
   val esMu = Sequent(
     Seq(
       hof"CutDistinct(m,s(n))",
@@ -70,28 +73,28 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     Seq(
       hof"?x ( E(f(k,x), f(k,suc(x))) )",
       hof"CutDistinct(m,n)" ) )
-  ctx += Context.ProofNameDeclaration( le"mu n m k", esMu )
+  ctx += ProofNameDeclaration( le"mu n m k", esMu )
   val esEpsilon = Sequent(
     Seq(
       hof"E(0, f(k, suc(x)))",
       hof"TopFuncDef(m,k,x)",
       hof"CutDistinct(m,0)" ),
     Seq( hof"E(f(k, x), f(k, suc(x)))" ) )
-  ctx += Context.ProofNameDeclaration( le"epsilon m k x", esEpsilon )
+  ctx += ProofNameDeclaration( le"epsilon m k x", esEpsilon )
   val esEpsilon2 = Sequent(
     Seq(
       hof"E(0, f(k, x))",
       hof"TopFuncDef(m,k,suc(x))",
       hof"CutDistinct(m,0)" ),
     Seq( hof"E(f(k, x), f(k, suc(x)))" ) )
-  ctx += Context.ProofNameDeclaration( le"epsilon2 m k x", esEpsilon2 )
+  ctx += ProofNameDeclaration( le"epsilon2 m k x", esEpsilon2 )
   val esEpsilon3 = Sequent(
     Seq(
       hof"TopFuncDef(m,k,x)",
       hof"TopFuncDef(m,k,suc(x))",
       hof"CutDistinct(m,0)" ),
     Seq( hof"E(f(k, x), f(k, suc(x)))" ) )
-  ctx += Context.ProofNameDeclaration( le"epsilon3 m k x", esEpsilon3 )
+  ctx += ProofNameDeclaration( le"epsilon3 m k x", esEpsilon3 )
   val esEpsilon4 = Sequent(
     Seq(
       hof"E(s(n), f(k, x))",
@@ -100,7 +103,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     Seq(
       hof"E(f(k, x), f(k, suc(x)))",
       hof"CutDistinct(m,n)" ) )
-  ctx += Context.ProofNameDeclaration( le"epsilon4 m k n x", esEpsilon4 )
+  ctx += ProofNameDeclaration( le"epsilon4 m k n x", esEpsilon4 )
   val esEpsilon5 = Sequent(
     Seq(
       hof"E(s(n), f(k, suc(x)))",
@@ -109,7 +112,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     Seq(
       hof"E(f(k, x), f(k, suc(x)))",
       hof"CutDistinct(m,n)" ) )
-  ctx += Context.ProofNameDeclaration( le"epsilon5 m k n x", esEpsilon5 )
+  ctx += ProofNameDeclaration( le"epsilon5 m k n x", esEpsilon5 )
   val esEpsilon6 = Sequent(
     Seq(
       hof"TopFuncDef(m,k,suc(x))",
@@ -118,7 +121,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     Seq(
       hof"E(f(k, x), f(k, suc(x)))",
       hof"CutDistinct(m,n)" ) )
-  ctx += Context.ProofNameDeclaration( le"epsilon6 m k n x", esEpsilon6 )
+  ctx += ProofNameDeclaration( le"epsilon6 m k n x", esEpsilon6 )
   val esTheta = Sequent(
     Seq(
       hof"E(s(n), f(k, y))",
@@ -128,7 +131,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       hof"E(f(k, y), f(k, suc(y)))",
       hof"E(n, f(w, x)) & E(n, f(w, suc(x)))",
       hof"LE(f(w, x), n)" ) )
-  ctx += Context.ProofNameDeclaration( le"theta m k w n x y", esTheta )
+  ctx += ProofNameDeclaration( le"theta m k w n x y", esTheta )
   val esTheta2 = Sequent(
     Seq(
       hof"E(s(n), f(k, suc(y)))",
@@ -138,7 +141,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       hof"E(f(k, y), f(k, suc(y)))",
       hof"E(n, f(w, x)) & E(n, f(w, suc(x)))",
       hof"LE(f(w, x), n)" ) )
-  ctx += Context.ProofNameDeclaration( le"theta2 m k w n x y", esTheta2 )
+  ctx += ProofNameDeclaration( le"theta2 m k w n x y", esTheta2 )
   val esTheta3 = Sequent(
     Seq(
       hof"TopFuncDef(m,k,suc(y))",
@@ -148,11 +151,11 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       hof"E(f(k, y), f(k, suc(y)))",
       hof"E(n, f(w, x)) & E(n, f(w, suc(x)))",
       hof"LE(f(w, x), n)" ) )
-  ctx += Context.ProofNameDeclaration( le"theta3 m k w n x y", esTheta3 )
+  ctx += ProofNameDeclaration( le"theta3 m k w n x y", esTheta3 )
   val espi = Sequent(
     Seq( hof"!x LE(f(k, x), s(n))" ),
     Seq( hof"CutDistinct(m,n)" ) )
-  ctx += Context.ProofNameDeclaration( le"pi n m k", espi )
+  ctx += ProofNameDeclaration( le"pi n m k", espi )
   //The base case of  omega
   val esOmegaBc =
     Sequent(
@@ -175,7 +178,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     trivial
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega 0 0", omegaBc )
+  ctx += ProofDefinitionDeclaration( le"omega 0 0", omegaBc )
 
   //The base case of omega
   val esOmegaBc2 =
@@ -204,7 +207,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     ref( "phi" )
 
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega 0 (s m)", omegaBc2 )
+  ctx += ProofDefinitionDeclaration( le"omega 0 (s m)", omegaBc2 )
 
   val esOmegaBc3 =
     Sequent(
@@ -232,7 +235,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     ref( "LEDefinition" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega (s n) 0", omegaBc3 )
+  ctx += ProofDefinitionDeclaration( le"omega (s n) 0", omegaBc3 )
 
   //The base case of omega
   val esOmegaSc =
@@ -264,7 +267,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     ref( "LEDefinition2" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega (s n) (s m)", OmegaSc )
+  ctx += ProofDefinitionDeclaration( le"omega (s n) (s m)", OmegaSc )
 
   val esGammaBc =
     Sequent(
@@ -283,7 +286,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     trivial
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"gamma 0 0", gammaBc )
+  ctx += ProofDefinitionDeclaration( le"gamma 0 0", gammaBc )
   val esGammaBc2 =
     Sequent(
       Seq( "Ant_0" -> hof"PAND(s(m),0)" ),
@@ -304,7 +307,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     trivial
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"gamma 0 (s m)", gammaBc2 )
+  ctx += ProofDefinitionDeclaration( le"gamma 0 (s m)", gammaBc2 )
 
   val esGammaBc3 =
     Sequent(
@@ -332,7 +335,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     ref( "LEDefinition2" )
     ref( "LEDefinition" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"gamma (s n) 0", gammaBc3 )
+  ctx += ProofDefinitionDeclaration( le"gamma (s n) 0", gammaBc3 )
 
   val esGammaSc =
     Sequent(
@@ -363,7 +366,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     ref( "LEDefinition2" )
     ref( "LEDefinition" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"gamma (s n) (s m)", gammaSc )
+  ctx += ProofDefinitionDeclaration( le"gamma (s n) (s m)", gammaSc )
 
   val esPhiBc =
     Sequent(
@@ -389,7 +392,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     allL( "Ant_0", foc"z" )
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi 0 0", phiBc )
+  ctx += ProofDefinitionDeclaration( le"phi 0 0", phiBc )
 
   val esPhiBc2 =
     Sequent(
@@ -426,7 +429,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     ref( "TransitivityE" )
     ref( "NumericTransitivity" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi (s n) 0", phiBc2 )
+  ctx += ProofDefinitionDeclaration( le"phi (s n) 0", phiBc2 )
 
   val esPhiBc3 =
     Sequent(
@@ -468,7 +471,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     allL( "Ant_0_1", hoc"z" )
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi 0 (s m)", phiBc3 )
+  ctx += ProofDefinitionDeclaration( le"phi 0 (s m)", phiBc3 )
 
   val esPhiSc =
     Sequent(
@@ -481,7 +484,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     ref( "mu" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi (s n) (s m)", phiSc )
+  ctx += ProofDefinitionDeclaration( le"phi (s n) (s m)", phiSc )
 
   val esMuBc =
     Sequent(
@@ -517,7 +520,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     exR( "Suc_0", fov"b" )
     ref( "NumericTransitivity" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"mu n 0 k", muBc )
+  ctx += ProofDefinitionDeclaration( le"mu n 0 k", muBc )
 
   val esMuSc =
     Sequent(
@@ -599,7 +602,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     ref( "epsilon6" )
     ref( "pi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"mu n (s m) k", muSc )
+  ctx += ProofDefinitionDeclaration( le"mu n (s m) k", muSc )
 
   /*
 
@@ -636,7 +639,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     ref( "minimalElement" )
 
   }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon 0 k x", EpsilonBc )
+  ctx += ProofDefinitionDeclaration( le"epsilon 0 k x", EpsilonBc )
 
   val esEpsilonSc =
     Sequent(
@@ -660,7 +663,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     ref( "minimalElement" )
     ref( "epsilon" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon (s m) k x", EpsilonSc )
+  ctx += ProofDefinitionDeclaration( le"epsilon (s m) k x", EpsilonSc )
 
   val esEpsilon2Bc =
     Sequent(
@@ -682,7 +685,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     ref( "minimalElement" )
 
   }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon2 0 k x", Epsilon2Bc )
+  ctx += ProofDefinitionDeclaration( le"epsilon2 0 k x", Epsilon2Bc )
 
   val esEpsilon2Sc =
     Sequent(
@@ -706,7 +709,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     ref( "minimalElement" )
     ref( "epsilon2" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon2 (s m) k x", Epsilon2Sc )
+  ctx += ProofDefinitionDeclaration( le"epsilon2 (s m) k x", Epsilon2Sc )
 
   val esEpsilon3Bc =
     Sequent(
@@ -731,7 +734,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     ref( "minimalElement" )
 
   }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon3 0 k x", Epsilon3Bc )
+  ctx += ProofDefinitionDeclaration( le"epsilon3 0 k x", Epsilon3Bc )
 
   val esEpsilon3Sc =
     Sequent(
@@ -766,7 +769,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     allL( fov"x" )
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon3 (s m) k x", Epsilon3Sc )
+  ctx += ProofDefinitionDeclaration( le"epsilon3 (s m) k x", Epsilon3Sc )
 
   val esEpsilon4Bc =
     Sequent(
@@ -796,7 +799,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     allL( le"(suc a)" )
     ref( "ordcon2" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon4 0 k n x", Epsilon4Bc )
+  ctx += ProofDefinitionDeclaration( le"epsilon4 0 k n x", Epsilon4Bc )
 
   val esEpsilon4Sc =
     Sequent(
@@ -844,7 +847,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     allL( le"(suc b)" )
     ref( "ordcon2" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon4 (s m) k n x", Epsilon4Sc )
+  ctx += ProofDefinitionDeclaration( le"epsilon4 (s m) k n x", Epsilon4Sc )
 
   val esEpsilon5Bc =
     Sequent(
@@ -874,7 +877,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     allL( le"(suc a)" )
     ref( "ordcon2" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon5 0 k n x", Epsilon5Bc )
+  ctx += ProofDefinitionDeclaration( le"epsilon5 0 k n x", Epsilon5Bc )
 
   val esEpsilon5Sc =
     Sequent(
@@ -922,7 +925,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     allL( le"(suc b)" )
     ref( "ordcon2" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon5 (s m) k n x", Epsilon5Sc )
+  ctx += ProofDefinitionDeclaration( le"epsilon5 (s m) k n x", Epsilon5Sc )
 
   val esEpsilon6Bc =
     Sequent(
@@ -956,7 +959,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     allL( le"(suc a)" )
     ref( "ordcon2" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon6 0 k n x", Epsilon6Bc )
+  ctx += ProofDefinitionDeclaration( le"epsilon6 0 k n x", Epsilon6Bc )
 
   val esEpsilon6Sc =
     Sequent(
@@ -1026,7 +1029,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     allL( le"(suc r)" )
     ref( "ordcon2" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon6 (s m) k n x", Epsilon6Sc )
+  ctx += ProofDefinitionDeclaration( le"epsilon6 (s m) k n x", Epsilon6Sc )
 
   val esThetaBC =
     Sequent(
@@ -1053,7 +1056,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     allL( le"(suc x)" )
     ref( "ordcon2" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"theta 0 k w n x y", ThetaBC )
+  ctx += ProofDefinitionDeclaration( le"theta 0 k w n x y", ThetaBC )
 
   val esThetaSC =
     Sequent(
@@ -1083,7 +1086,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     allL( le"(suc x)" )
     ref( "ordcon2" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"theta (s m) k w n x y", ThetaSC )
+  ctx += ProofDefinitionDeclaration( le"theta (s m) k w n x y", ThetaSC )
 
   val esTheta2BC =
     Sequent(
@@ -1110,7 +1113,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     allL( le"(suc x)" )
     ref( "ordcon2" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"theta2 0 k w n x y", Theta2BC )
+  ctx += ProofDefinitionDeclaration( le"theta2 0 k w n x y", Theta2BC )
 
   val esTheta2SC =
     Sequent(
@@ -1140,7 +1143,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     allL( le"(suc x)" )
     ref( "ordcon2" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"theta2 (s m) k w n x y", Theta2SC )
+  ctx += ProofDefinitionDeclaration( le"theta2 (s m) k w n x y", Theta2SC )
 
   val esTheta3BC =
     Sequent(
@@ -1170,7 +1173,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     allL( le"(suc x)" )
     ref( "ordcon2" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"theta3 0 k w n x y", Theta3BC )
+  ctx += ProofDefinitionDeclaration( le"theta3 0 k w n x y", Theta3BC )
 
   val esTheta3SC =
     Sequent(
@@ -1209,7 +1212,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     allL( le"(suc x)" )
     ref( "ordcon2" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"theta3 (s m) k w n x y", Theta3SC )
+  ctx += ProofDefinitionDeclaration( le"theta3 (s m) k w n x y", Theta3SC )
 
   val esPiBC =
     Sequent(
@@ -1226,7 +1229,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     allL( le"(suc a)" )
     ref( "ordcon2" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"pi n 0 k ", PiBC )
+  ctx += ProofDefinitionDeclaration( le"pi n 0 k ", PiBC )
 
   val esPiSC =
     Sequent(
@@ -1245,7 +1248,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     allL( le"(suc a)" )
     ref( "ordcon2" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"pi n (s m) k  ", PiSC )
+  ctx += ProofDefinitionDeclaration( le"pi n (s m) k  ", PiSC )
 
 }
 

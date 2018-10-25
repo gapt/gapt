@@ -1,8 +1,9 @@
 package gapt.provers.viper
 
-import gapt.expr.{ Const => Con, Formula, TBase, Var }
+import gapt.expr.{ Formula, TBase, Var, Const => Con }
 import gapt.formats.tip.TipProblem
-import gapt.proofs.{ Ant, Context, Sequent }
+import gapt.proofs.context.Context
+import gapt.proofs.{ Ant, Sequent }
 
 package object aip {
 

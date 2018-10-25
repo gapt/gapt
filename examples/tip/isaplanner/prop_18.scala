@@ -1,13 +1,13 @@
 package gapt.examples.tip.isaplanner
 
 import gapt.expr._
-import gapt.proofs.Context
+import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic._
 
 object prop_18 extends TacticsProof {
 
   ctx += TBase( "sk" )
-  ctx += Context.InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
   ctx += hoc"p:Nat>Nat"
   ctx += hoc"'plus' :Nat>Nat>Nat"
   ctx += hoc"'lt' :Nat>Nat>o"

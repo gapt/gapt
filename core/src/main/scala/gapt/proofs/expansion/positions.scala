@@ -2,7 +2,7 @@ package gapt.proofs.expansion
 
 import gapt.expr._
 import gapt.expr.hol.{ HOLPosition, instantiate }
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 
 private object getAtHOLPosition {
   def apply( et: ExpansionTree, pos: HOLPosition ): Set[ExpansionTree] =

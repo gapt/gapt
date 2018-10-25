@@ -1,15 +1,15 @@
 package gapt.integration_tests
 
-import gapt.expr.{ Eq, Expr, FOLAtom }
-import gapt.proofs.{ Context, HOLSequent, SequentMatchers }
-import gapt.proofs.lk._
-import gapt.formats.tptp.TptpFOLExporter
-import gapt.provers.escargot.Escargot
-import gapt.formats.llk.LatexLLKExporter
-import gapt.proofs.ceres.{ deleteTautologies, _ }
-import java.io.File.separator
-
 import gapt.examples.tape
+import gapt.expr.Eq
+import gapt.expr.FOLAtom
+import gapt.formats.tptp.TptpFOLExporter
+import gapt.proofs.SequentMatchers
+import gapt.proofs.ceres._
+import gapt.proofs.ceres.deleteTautologies
+import gapt.proofs.context.Context
+import gapt.proofs.lk._
+import gapt.provers.escargot.Escargot
 import gapt.provers.prover9.Prover9
 import org.specs2.mutable._
 

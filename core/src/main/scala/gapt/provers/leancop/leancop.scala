@@ -1,18 +1,35 @@
 package gapt.provers.leancop
 
-import java.io.{ IOException, StringReader }
+import java.io.IOException
+import java.io.StringReader
 
-import gapt.expr.{ All, Eq, Substitution, TermReplacement }
 import gapt.expr.hol.universalClosure
+import gapt.expr.All
+import gapt.expr.Eq
+import gapt.expr.Substitution
 import gapt.formats.leancop.LeanCoPParser
+import gapt.proofs.expansion.ETWeakQuantifierBlock
+import gapt.proofs.expansion.ExpansionProof
+import gapt.proofs.expansion.ExpansionProofToLK
 import gapt.formats.tptp.TptpFOLExporter
-import gapt.proofs.{ Context, HOLClause, HOLSequent, MutableContext, Sequent }
+import gapt.proofs.{ HOLClause, HOLSequent, Sequent }
 import gapt.proofs.expansion.{ ETWeakQuantifierBlock, ExpansionProof, ExpansionProofToLK, ExpansionSequent }
 import gapt.proofs.lk.LKProof
-import gapt.proofs.resolution.{ ResolutionToExpansionProof, expansionProofFromInstances, structuralCNF }
-import gapt.provers.{ OneShotProver, renameConstantsToFi }
-import gapt.utils.{ ExternalProgram, Maybe, runProcess, withTempFile }
+import gapt.proofs.resolution.ResolutionToExpansionProof
+import gapt.proofs.resolution.expansionProofFromInstances
+import gapt.proofs.resolution.structuralCNF
+import gapt.proofs.HOLClause
+import gapt.proofs.HOLSequent
+import gapt.proofs.Sequent
+import gapt.proofs.context.Context
+import gapt.proofs.context.mutable.MutableContext
+import gapt.provers.OneShotProver
+import gapt.provers.renameConstantsToFi
 import gapt.utils.EitherHelpers._
+import gapt.utils.ExternalProgram
+import gapt.utils.Maybe
+import gapt.utils.runProcess
+import gapt.utils.withTempFile
 
 object LeanCoP extends LeanCoP
 class LeanCoP extends OneShotProver with ExternalProgram {

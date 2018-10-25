@@ -2,14 +2,19 @@ package gapt.provers.metis
 
 import java.io.IOException
 
-import gapt.expr._
 import gapt.formats.StringInputFile
-import gapt.formats.tptp.{ TptpFOLExporter, TptpProofParser }
+import gapt.formats.tptp.TptpFOLExporter
+import gapt.formats.tptp.TptpProofParser
 import gapt.proofs.resolution.ResolutionProof
 import gapt.proofs.sketch.RefutationSketchToResolution
-import gapt.proofs.{ FOLClause, HOLClause, MutableContext }
-import gapt.provers.{ ResolutionProver, renameConstantsToFi }
-import gapt.utils.{ ExternalProgram, Maybe, runProcess }
+import gapt.proofs.FOLClause
+import gapt.proofs.HOLClause
+import gapt.proofs.context.mutable.MutableContext
+import gapt.provers.ResolutionProver
+import gapt.provers.renameConstantsToFi
+import gapt.utils.ExternalProgram
+import gapt.utils.Maybe
+import gapt.utils.runProcess
 
 object Metis extends Metis
 

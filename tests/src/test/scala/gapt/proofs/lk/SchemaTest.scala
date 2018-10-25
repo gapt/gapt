@@ -5,8 +5,12 @@ import gapt.examples._
 import gapt.proofs.ceres._
 import gapt.expr.fol.natMaker
 import gapt.expr.hol.CNFp
-import gapt.proofs.Context._
-import gapt.proofs.{ ImmutableContext, MutableContext, Sequent }
+import gapt.proofs.context.Context._
+import gapt.proofs.Sequent
+import gapt.proofs.context.facet.ProofDefinitions
+import gapt.proofs.context.facet.Reductions
+import gapt.proofs.context.immutable.ImmutableContext
+import gapt.proofs.context.mutable.MutableContext
 import gapt.provers.escargot.Escargot
 import org.specs2.mutable.Specification
 import gapt.proofs.gaptic._

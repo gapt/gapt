@@ -2,7 +2,9 @@ package gapt.proofs.lkt
 
 import gapt.expr.Polarity._
 import gapt.expr._
-import gapt.proofs.{ Checkable, Context, Sequent }
+import gapt.proofs.context.Context
+import gapt.proofs.context.facet.ProofNames
+import gapt.proofs.{ Checkable, Sequent }
 import gapt.utils.Maybe
 
 object check {
@@ -93,7 +95,7 @@ object check {
       case Link( mains, name0 ) =>
         val name = lctx.subst( name0 )
         for ( ctx_ <- ctx ) {
-          val declSeq = ctx_.get[Context.ProofNames].lookup( name )
+          val declSeq = ctx_.get[ProofNames].lookup( name )
           require( declSeq.nonEmpty )
           val refSeq = Sequent( for ( m <- mains ) yield lctx( m ) -> m.polarity )
           require( declSeq.contains( refSeq ) )

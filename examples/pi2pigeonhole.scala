@@ -1,12 +1,13 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.formats.babel.{ Notation, Precedence }
-import gapt.proofs.Context
+import gapt.formats.babel.Notation
+import gapt.formats.babel.Precedence
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 
 object Pi2Pigeonhole extends TacticsProof {
-  ctx += Context.Sort( "i" )
+  ctx += Sort( "i" )
   ctx += hoc"0: i"
   ctx += hoc"s: i>i"
   ctx += hoc"M: i>i>i"
@@ -35,7 +36,7 @@ object Pi2Pigeonhole extends TacticsProof {
 }
 
 object Pi3Pigeonhole extends TacticsProof {
-  ctx += Context.Sort( "i" )
+  ctx += Sort( "i" )
   ctx += hoc"0: i"
   ctx += hoc"s: i>i"
   ctx += hoc"M: i>i>i"

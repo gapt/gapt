@@ -5,6 +5,7 @@ import java.io.IOException
 import gapt.expr._
 import gapt.expr.hol.universalClosure
 import gapt.proofs._
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.resolution.{ AvatarNegNonGroundComp, AvatarNonGroundComp, ResolutionProof, fixDerivation }
 import gapt.proofs.sketch._
 import gapt.provers.{ ResolutionProver, extractIntroducedDefinitions, renameConstantsToFi }

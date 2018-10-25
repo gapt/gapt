@@ -1,13 +1,16 @@
 package gapt.testing
 import ammonite.ops.FilePath
-import gapt.expr.{ Const, expressionSize }
 import gapt.expr.hol.lcomp
+import gapt.expr.Const
+import gapt.expr.expressionSize
 import gapt.formats.tptp.TptpImporter
-import gapt.proofs.MutableContext
-import gapt.proofs.expansion.{ eliminateCutsET, eliminateDefsET }
+import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.expansion.eliminateCutsET
+import gapt.proofs.expansion.eliminateDefsET
 import gapt.proofs.resolution._
 import gapt.provers.eprover.EProver
-import gapt.utils.{ LogHandler, Logger }
+import gapt.utils.LogHandler
+import gapt.utils.Logger
 
 object testExpansionImport extends scala.App {
   val logger = Logger( "testExpansionImport" )

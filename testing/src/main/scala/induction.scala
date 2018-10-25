@@ -5,7 +5,9 @@ import gapt.expr.{ All, Eq, Var }
 import gapt.formats.tip.TipSmtImporter
 import gapt.proofs.gaptic.tactics.AnalyticInductionTactic
 import gapt.proofs.gaptic.{ ProofState, Tactic }
-import gapt.proofs.{ Ant, Context, MutableContext }
+import gapt.proofs.Ant
+import gapt.proofs.context.Context
+import gapt.proofs.context.mutable.MutableContext
 import gapt.provers.escargot.Escargot
 import gapt.provers.maxsat.OpenWBO
 import gapt.provers.smtlib.CVC4

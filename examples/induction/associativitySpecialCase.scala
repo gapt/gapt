@@ -1,12 +1,13 @@
 package gapt.examples.induction
 import gapt.expr._
-import gapt.formats.babel.{ Notation, Precedence }
-import gapt.proofs.Context
+import gapt.formats.babel.Notation
+import gapt.formats.babel.Precedence
+import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic._
 import gapt.provers.spass.SPASS
 
 object associativitySpecialCase extends TacticsProof {
-  ctx += Context.InductiveType( ty"nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( ty"nat", hoc"0: nat", hoc"s: nat>nat" )
   ctx += hoc"'+': nat>nat>nat"
   ctx += Notation.Infix( "+", Precedence.plusMinus )
 

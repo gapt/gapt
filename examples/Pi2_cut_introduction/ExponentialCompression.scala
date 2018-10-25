@@ -1,15 +1,18 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.Context._
 import gapt.proofs.gaptic._
-import gapt.proofs.Context
 import gapt.proofs.Sequent
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.context.update.Sort
+import gapt.proofs.context.update.PrimitiveRecursiveFunction
 
 object ExponentialCompression extends TacticsProof {
 
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-  ctx += Context.Sort( "i" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += Sort( "i" )
 
   ctx += hoc"a:i"
   ctx += hoc"f:i>i"
@@ -26,11 +29,11 @@ object ExponentialCompression extends TacticsProof {
 
   ctx += hoc"P: i>i>o"
 
-  ctx += PrimRecFun(
+  ctx += PrimitiveRecursiveFunction(
     hoc"Disjunction: nat>i>o",
     "( Disjunction 0 x ) = ( ( P x ( fn 0 x ) ) )",
     "( Disjunction (s xn) x ) = ( ( Disjunction xn x ) ∨ ( P x ( fn (s xn) x ) ) )" )
-  ctx += PrimRecFun(
+  ctx += PrimitiveRecursiveFunction(
     hoc"Conjunction: nat>i>i>o",
     "( Conjunction 0 y z ) = ( ( P ( f y ) ( f z ) ) )",
     "( Conjunction (s xn) x z ) = ( ∃y ( ( P ( f x ) ( f y ) ) ∧ ( Conjunction xn y z ) ) )" )
@@ -43,13 +46,13 @@ object ExponentialCompression extends TacticsProof {
     Seq(),
     Seq( hof"(∃x1∃x2∃x3∃x4∃x5∃x6∃x7( -( (Conjunction(n,x1,x2) -> P(f(x1),g(x2)))) ∨ -( (Disjunction(n,x3))) ∨ -( (P(x4,x5) -> P(x4,f(x5)))) ∨ ( (P(x6,g(x7)))) ))" ) )
 
-  ctx += Context.ProofNameDeclaration( le"omega n", certainlyTheEndSequentForRealTrustMeDude )
+  ctx += ProofNameDeclaration( le"omega n", certainlyTheEndSequentForRealTrustMeDude )
 
   val endSequent = Sequent(
     Seq(),
     Seq( hof"( -(!x!z (Conjunction(n,x,z) -> P(f(x),g(z)))) ∨ -(!x (Disjunction(n,x))) ∨ -(!x!y (P(x,y) -> P(x,f(y)))) ∨ (∃x∃y (P(x,g(y)))) )" ) )
 
-  ctx += Context.ProofNameDeclaration( le"preOmega n", endSequent )
+  ctx += ProofNameDeclaration( le"preOmega n", endSequent )
 
   val conjunction = Sequent(
     Seq(
@@ -57,7 +60,7 @@ object ExponentialCompression extends TacticsProof {
       hof"!x!y (P(x,y) -> P(x,f(y)))" ),
     Seq( hof"∃x∃z (Conjunction(n,x,z))" ) )
 
-  ctx += Context.ProofNameDeclaration( le"tau n", conjunction )
+  ctx += ProofNameDeclaration( le"tau n", conjunction )
 
   val intermediateEndSequent = Sequent(
     Seq(
@@ -66,7 +69,7 @@ object ExponentialCompression extends TacticsProof {
       hof"!x!y (P(x,y) -> P(x,f(y)))" ),
     Seq( hof"∃x∃y (P(x,g(y)))" ) )
 
-  ctx += Context.ProofNameDeclaration( le"chi n", intermediateEndSequent )
+  ctx += ProofNameDeclaration( le"chi n", intermediateEndSequent )
 
   val leftBranch = Sequent(
     Seq(
@@ -75,7 +78,7 @@ object ExponentialCompression extends TacticsProof {
     Seq(
       hof"∃y (P(alpha,f(y)))" ) )
 
-  ctx += Context.ProofNameDeclaration( le"phi n alpha", leftBranch )
+  ctx += ProofNameDeclaration( le"phi n alpha", leftBranch )
 
   val preRightBranch = Sequent(
     Seq(
@@ -83,7 +86,7 @@ object ExponentialCompression extends TacticsProof {
     Seq(
       hof"(∃z∃y ( ( P ( f alpha ) ( f y ) ) ∧ ( Conjunction na y z ) ) )" ) )
 
-  ctx += Context.ProofNameDeclaration( le"preXhi n alpha beta na", preRightBranch )
+  ctx += ProofNameDeclaration( le"preXhi n alpha beta na", preRightBranch )
 
   val rightBranch = Sequent(
     Seq(
@@ -92,7 +95,7 @@ object ExponentialCompression extends TacticsProof {
     Seq(
       hof"∃z (Conjunction(n,beta1,z))" ) )
 
-  ctx += Context.ProofNameDeclaration( le"xhi n beta1 beta2", rightBranch )
+  ctx += ProofNameDeclaration( le"xhi n beta1 beta2", rightBranch )
 
   //
   // proof pairs:
@@ -170,7 +173,7 @@ object ExponentialCompression extends TacticsProof {
     trivial
   }
 
-  ctx += Context.ProofDefinitionDeclaration( le"omega 0", omegaBc )
+  ctx += ProofDefinitionDeclaration( le"omega 0", omegaBc )
 
   val esOmegaSc = Sequent(
     Seq(),
@@ -244,7 +247,7 @@ object ExponentialCompression extends TacticsProof {
     trivial
   }
 
-  ctx += Context.ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
+  ctx += ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
 
   val esPreOmegaBc = Sequent(
     Seq(),
@@ -260,7 +263,7 @@ object ExponentialCompression extends TacticsProof {
     ref( "chi" )
   }
 
-  ctx += Context.ProofDefinitionDeclaration( le"preOmega 0", preOmegaBc )
+  ctx += ProofDefinitionDeclaration( le"preOmega 0", preOmegaBc )
 
   val esPreOmegaSc = Sequent(
     Seq(),
@@ -276,7 +279,7 @@ object ExponentialCompression extends TacticsProof {
     ref( "chi" )
   }
 
-  ctx += Context.ProofDefinitionDeclaration( le"preOmega (s n)", preOmegaSc )
+  ctx += ProofDefinitionDeclaration( le"preOmega (s n)", preOmegaSc )
 
   val esTauBc = Sequent(
     Seq(
@@ -297,7 +300,7 @@ object ExponentialCompression extends TacticsProof {
     trivial
   }
 
-  ctx += Context.ProofDefinitionDeclaration( le"tau 0", tauBc )
+  ctx += ProofDefinitionDeclaration( le"tau 0", tauBc )
 
   val esTauSc = Sequent(
     Seq(
@@ -316,7 +319,7 @@ object ExponentialCompression extends TacticsProof {
     ref( "xhi" )
   }
 
-  ctx += Context.ProofDefinitionDeclaration( le"tau (s n)", tauSc )
+  ctx += ProofDefinitionDeclaration( le"tau (s n)", tauSc )
 
   val esChiBc = Sequent(
     Seq(
@@ -343,7 +346,7 @@ object ExponentialCompression extends TacticsProof {
     trivial
   }
 
-  ctx += Context.ProofDefinitionDeclaration( le"chi 0", chiBc )
+  ctx += ProofDefinitionDeclaration( le"chi 0", chiBc )
 
   val esChiSc = Sequent(
     Seq(
@@ -370,7 +373,7 @@ object ExponentialCompression extends TacticsProof {
     trivial
   }
 
-  ctx += Context.ProofDefinitionDeclaration( le"chi (s n)", chiSc )
+  ctx += ProofDefinitionDeclaration( le"chi (s n)", chiSc )
 
   val esPhiBc = Sequent(
     Seq(
@@ -389,7 +392,7 @@ object ExponentialCompression extends TacticsProof {
     trivial
   }
 
-  ctx += Context.ProofDefinitionDeclaration( le"phi 0 alpha", phiBc )
+  ctx += ProofDefinitionDeclaration( le"phi 0 alpha", phiBc )
 
   val esPhiSc = Sequent(
     Seq(
@@ -410,7 +413,7 @@ object ExponentialCompression extends TacticsProof {
     trivial
   }
 
-  ctx += Context.ProofDefinitionDeclaration( le"phi (s n) alpha", phiSc )
+  ctx += ProofDefinitionDeclaration( le"phi (s n) alpha", phiSc )
 
   val esXhiBc = Sequent(
     Seq(
@@ -425,7 +428,7 @@ object ExponentialCompression extends TacticsProof {
     trivial
   }
 
-  ctx += Context.ProofDefinitionDeclaration( le"xhi 0 beta1 beta2", xhiBc )
+  ctx += ProofDefinitionDeclaration( le"xhi 0 beta1 beta2", xhiBc )
 
   val esXhiSc = Sequent(
     Seq(
@@ -446,7 +449,7 @@ object ExponentialCompression extends TacticsProof {
     ref( "preXhi" )
   }
 
-  ctx += Context.ProofDefinitionDeclaration( le"xhi (s n) beta1 beta2", xhiSc )
+  ctx += ProofDefinitionDeclaration( le"xhi (s n) beta1 beta2", xhiSc )
 
   val esPreXhiBc = Sequent(
     Seq(
@@ -464,7 +467,7 @@ object ExponentialCompression extends TacticsProof {
     trivial
   }
 
-  ctx += Context.ProofDefinitionDeclaration( le"preXhi 0 alpha beta na", preXhiBc )
+  ctx += ProofDefinitionDeclaration( le"preXhi 0 alpha beta na", preXhiBc )
 
   val esPreXhiSc = Sequent(
     Seq(
@@ -482,6 +485,6 @@ object ExponentialCompression extends TacticsProof {
     trivial
   }
 
-  ctx += Context.ProofDefinitionDeclaration( le"preXhi (s n) alpha beta na", preXhiSc )
+  ctx += ProofDefinitionDeclaration( le"preXhi (s n) alpha beta na", preXhiSc )
 
 }

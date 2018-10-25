@@ -2,7 +2,8 @@ package gapt.provers.viper.aip
 
 import gapt.expr.Expr
 import gapt.expr.{ All, And, Formula, FunctionType, Substitution, Var, freeVariables, rename, Const => Con }
-import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.Sequent
+import gapt.proofs.context.Context
 
 package object axioms {
 

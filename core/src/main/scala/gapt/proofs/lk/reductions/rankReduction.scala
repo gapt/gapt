@@ -1,8 +1,9 @@
 package gapt.proofs.lk.reductions
 
 import gapt.expr.{ Substitution, freeVariables, rename }
+import gapt.proofs.context.Context
 import gapt.proofs.lk.{ AndLeftRule, AndRightRule, ContractionLeftRule, ContractionMacroRule, ContractionRightRule, CutRule, DefinitionLeftRule, DefinitionRightRule, EqualityLeftRule, EqualityRightRule, ExistsLeftRule, ExistsRightRule, ExistsSkLeftRule, ForallLeftRule, ForallRightRule, ForallSkRightRule, ImpLeftRule, ImpRightRule, InductionCase, InductionRule, LKProof, NegLeftRule, NegRightRule, OrLeftRule, OrRightRule, WeakeningLeftRule, WeakeningMacroRule, WeakeningRightRule, inductionEigenvariables }
-import gapt.proofs.{ Context, SequentConnector, guessPermutation }
+import gapt.proofs.{ SequentConnector, guessPermutation }
 
 object LeftRankWeakeningLeftReduction extends CutReduction {
   override def reduce( cut: CutRule ): Option[LKProof] =

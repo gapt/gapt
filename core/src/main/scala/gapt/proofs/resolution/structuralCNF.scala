@@ -3,6 +3,7 @@ package gapt.proofs.resolution
 import gapt.expr._
 import gapt.expr.hol.SkolemFunctions
 import gapt.proofs._
+import gapt.proofs.context.mutable.MutableContext
 import gapt.utils.NameGenerator
 
 import scala.collection.mutable

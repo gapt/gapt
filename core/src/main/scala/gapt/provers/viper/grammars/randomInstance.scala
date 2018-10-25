@@ -2,7 +2,7 @@ package gapt.provers.viper.grammars
 
 import gapt.expr._
 import gapt.expr.fol.folTermSize
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 import gapt.utils.NameGenerator
 
 import scala.util.Random

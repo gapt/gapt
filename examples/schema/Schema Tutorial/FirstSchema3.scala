@@ -1,15 +1,17 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.Context._
-import gapt.proofs.gaptic._
-import gapt.proofs.Context
 import gapt.proofs.Sequent
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.context.update.Sort
+import gapt.proofs.gaptic._
 
 object FirstSchema3 extends TacticsProof {
   //Type
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-  ctx += Context.Sort( "i" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += Sort( "i" )
   //Term Constants
   ctx += hoc"z:i"
   ctx += hoc"g:i>i"
@@ -49,9 +51,9 @@ object FirstSchema3 extends TacticsProof {
   //that all the free variables in the sequents are present in the association. For example eschi has two
   //free variable thus, its association expression must have two free variables.
 
-  ctx += Context.ProofNameDeclaration( le"omega n", esOmega )
-  ctx += Context.ProofNameDeclaration( le"phi n", esphi )
-  ctx += Context.ProofNameDeclaration( le"chi n a", eschi )
+  ctx += ProofNameDeclaration( le"omega n", esOmega )
+  ctx += ProofNameDeclaration( le"phi n", esphi )
+  ctx += ProofNameDeclaration( le"chi n a", eschi )
 
   //The above code presents how one can add the association between the proof name, free variables, and end
   // sequent. Note that once again we are using application form for the expression,

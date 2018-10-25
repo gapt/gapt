@@ -1,15 +1,18 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.Context._
-import gapt.proofs.gaptic._
-import gapt.proofs.Context
 import gapt.proofs.Sequent
+import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.context.update.Sort
+import gapt.proofs.gaptic._
 
 object FirstSchema4 extends TacticsProof {
   //Type
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-  ctx += Context.Sort( "i" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += Sort( "i" )
   //Term Constants
   ctx += hoc"z:i"
   ctx += hoc"g:i>i"
@@ -36,9 +39,9 @@ object FirstSchema4 extends TacticsProof {
   val esphi = Sequent( Seq( hof"!x?y (LEQ(x,y) & POR(n,y) )" ), Seq( hof"?p?q (LE(p,q) & E(f(p),f(q)))" ) )
   val eschi = Sequent( Seq( hof" POR(n,a) " ), Seq( hof"POR(n,a)" ) )
   //Proof Declarations
-  ctx += Context.ProofNameDeclaration( le"omega n", esOmega )
-  ctx += Context.ProofNameDeclaration( le"phi n", esphi )
-  ctx += Context.ProofNameDeclaration( le"chi n a", eschi )
+  ctx += ProofNameDeclaration( le"omega n", esOmega )
+  ctx += ProofNameDeclaration( le"phi n", esphi )
+  ctx += ProofNameDeclaration( le"chi n a", eschi )
 
   //We start by proving the basecase of chi. At this point it is safe to assume that each proof schema component
   // has at most one stepcase and one basecase. The system can handle more, but that algorithms associated with

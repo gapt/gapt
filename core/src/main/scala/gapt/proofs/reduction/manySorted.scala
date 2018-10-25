@@ -3,6 +3,7 @@ package gapt.proofs.reduction
 import gapt.expr._
 import gapt.expr.hol._
 import gapt.proofs._
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion._
 import gapt.proofs.lk.LKProof
 import gapt.proofs.resolution._

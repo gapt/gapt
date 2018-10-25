@@ -2,7 +2,8 @@ package gapt.proofs.expansion
 
 import gapt.expr._
 import gapt.expr.hol.containsQuantifierOnLogicalLevel
-import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.Sequent
+import gapt.proofs.context.Context
 
 object prenexifyET {
   private def weakQuantifier( polarity: Polarity ) =

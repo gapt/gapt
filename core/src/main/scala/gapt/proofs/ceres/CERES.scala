@@ -4,8 +4,9 @@ import gapt.formats.llk.LLKExporter
 import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.lk._
 import gapt.proofs.resolution._
-import gapt.proofs.{ Context, HOLSequent, Sequent }
+import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.expr._
+import gapt.proofs.context.Context
 import gapt.proofs.expansion.{ ExpansionProof, ExpansionSequent }
 import gapt.provers.ResolutionProver
 import gapt.provers.escargot.Escargot

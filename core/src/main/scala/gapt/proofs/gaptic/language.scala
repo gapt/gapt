@@ -2,7 +2,10 @@ package gapt.proofs.gaptic
 
 import gapt.expr._
 import gapt.formats.babel.BabelSignature
-import gapt.proofs.{ Context, MutableContext, Sequent }
+import gapt.proofs.Sequent
+import gapt.proofs.context.Context
+import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.context.update.ProofDeclaration
 import gapt.proofs.lk._
 import gapt.utils.Maybe
 
@@ -25,7 +28,7 @@ object Lemma {
     val fvs = freeVariables( proof.endSequent ).toSeq.sortBy( _.name )
     val ftvs = typeVariables( proof.endSequent.toImplication ).toList.sortBy( _.name )
     val lhs = Const( lemmaName, FunctionType( Ti, fvs.map( _.ty ) ), ftvs )( fvs )
-    ctx += Context.ProofDeclaration( lhs, proof )
+    ctx += ProofDeclaration( lhs, proof )
     proof
   }
 

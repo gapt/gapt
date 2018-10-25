@@ -2,12 +2,14 @@ package gapt.testing
 
 import ammonite.ops.FilePath
 import gapt.expr.hol.containsQuantifierOnLogicalLevel
+import gapt.formats.tptp.TptpParser
+import gapt.proofs.context.mutable.MutableContext
 import gapt.formats.tptp.TptpImporter
 import gapt.proofs.expansion.{ ExpansionProofToLK, deskolemizeET }
 import gapt.proofs.lk.{ LKProof, LKToND, OrRightRule, WeakeningRightRule, containsEqualityReasoning, isMaeharaMG3i }
 import gapt.proofs.nd.{ ExcludedMiddleRule, NDProof }
 import gapt.proofs.resolution.{ ResolutionToExpansionProof, structuralCNF }
-import gapt.proofs.{ MutableContext, loadExpansionProof }
+import gapt.proofs.loadExpansionProof
 import gapt.provers.eprover.EProver
 import gapt.utils.{ LogHandler, Logger }
 

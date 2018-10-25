@@ -1,6 +1,10 @@
 package gapt.proofs.lk
-import gapt.expr.{ TArr, Const, Expr, TBase, Ty }
-import gapt.proofs.Context.InductiveType
+import gapt.expr.Const
+import gapt.expr.Expr
+import gapt.expr.TArr
+import gapt.expr.TBase
+import gapt.expr.Ty
+import gapt.proofs.context.update.InductiveType
 
 object IsKSimple {
   def apply( proof: LKProof ): Boolean = {

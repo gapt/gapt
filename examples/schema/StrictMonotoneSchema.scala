@@ -1,14 +1,18 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.Context._
-import gapt.proofs.Context
 import gapt.proofs.Sequent
+import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 
 object StrictMonotoneSchema extends TacticsProof {
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-  ctx += Context.Sort( "i" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += Sort( "i" )
   ctx += hoc"f:i>nat"
   ctx += hoc"suc:i>i"
   ctx += hoc"z:i"
@@ -31,11 +35,11 @@ object StrictMonotoneSchema extends TacticsProof {
   val esOmega = Sequent(
     Seq( hof"!x POR(n,x)" ),
     Seq( hof"?x ( E(f(x), f(suc(x))) )" ) )
-  ctx += Context.ProofNameDeclaration( le"omega n", esOmega )
+  ctx += ProofNameDeclaration( le"omega n", esOmega )
   val esPhi = Sequent(
     Seq( hof"?x ( E(f(x), f(suc(x))) | LE(f(suc(x)),n))" ),
     Seq( hof"?x ( E(f(x), f(suc(x))) )" ) )
-  ctx += Context.ProofNameDeclaration( le"phi n", esPhi )
+  ctx += ProofNameDeclaration( le"phi n", esPhi )
 
   //The base case of  omega
   val esOmegaBc =
@@ -53,7 +57,7 @@ object StrictMonotoneSchema extends TacticsProof {
     ref( "NumericTransitivity" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega 0", omegaBc )
+  ctx += ProofDefinitionDeclaration( le"omega 0", omegaBc )
   val esOmegaSc =
     Sequent(
       Seq( "Ant_0" -> hof"!x POR(s(n),x)" ),
@@ -75,7 +79,7 @@ object StrictMonotoneSchema extends TacticsProof {
     ref( "LEDefinition" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
+  ctx += ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
 
   val esPhiBc =
     Sequent(
@@ -88,7 +92,7 @@ object StrictMonotoneSchema extends TacticsProof {
     trivial
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi 0", phiBc )
+  ctx += ProofDefinitionDeclaration( le"phi 0", phiBc )
 
   val esPhiSc =
     Sequent(
@@ -106,7 +110,7 @@ object StrictMonotoneSchema extends TacticsProof {
     ref( "OrderPrinciple" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi (s n)", phiSc )
+  ctx += ProofDefinitionDeclaration( le"phi (s n)", phiSc )
 
 }
 

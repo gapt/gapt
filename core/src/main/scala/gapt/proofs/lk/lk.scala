@@ -4,6 +4,9 @@ import gapt.expr._
 import gapt.expr.hol.instantiate
 import gapt.proofs.IndexOrFormula.{ IsFormula, IsIndex }
 import gapt.proofs._
+import gapt.proofs.context
+import gapt.proofs.context.Context
+import gapt.proofs.context.facet.ProofNames
 
 import scala.collection.mutable
 
@@ -173,9 +176,9 @@ case class ProofLink( referencedProof: Expr, referencedSequent: Sequent[Formula]
 }
 object ProofLink {
   def apply( referencedProof: Expr )( implicit ctx: Context ): ProofLink =
-    ProofLink( referencedProof, ctx.get[Context.ProofNames].lookup( referencedProof ).get )
+    ProofLink( referencedProof, ctx.get[ProofNames].lookup( referencedProof ).get )
   def apply( name: String )( implicit ctx: Context ): ProofLink =
-    ProofLink( ctx.get[Context.ProofNames].names( name )._1 )
+    ProofLink( ctx.get[ProofNames].names( name )._1 )
 }
 
 /**
@@ -1882,7 +1885,7 @@ object DefinitionRule extends ConvenienceConstructor( "DefinitionRule" ) {
  *
  * NB: LK proofs that contain this rule are not sound by construction, since it allows you to replace any formula
  * by any other formula. The soundness of such proofs can only be established with respect to a Context.
- * Use the `check` method on [[gapt.proofs.Context]] to check whether the constructed proof is sound.
+ * Use the `check` method on [[Context]] to check whether the constructed proof is sound.
  *
  * @param subProof The proof π.
  * @param aux The index of A in the antecedent.
@@ -1926,7 +1929,7 @@ object DefinitionLeftRule extends ConvenienceConstructor( "DefinitionLeftRule" )
  *
  * NB: LK proofs that contain this rule are not sound by construction, since it allows you to replace any formula
  * by any other formula. The soundness of such proofs can only be established with respect to a Context.
- * Use the `check` method on [[gapt.proofs.Context]] to check whether the constructed proof is sound.
+ * Use the `check` method on [[Context]] to check whether the constructed proof is sound.
  *
  * @param subProof The proof π.
  * @param aux The index of A in the succedent.

@@ -5,7 +5,9 @@ import gapt.expr.hol.containsQuantifierOnLogicalLevel
 import gapt.formats.tptp.{ TptpImporter, sequentProofToTptp }
 import gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, ExpansionProofToMG3i, ExpansionProofToMG3iViaSAT, deskolemizeET, formulaToExpansionTree }
 import gapt.proofs.lk.{ LKProof, isMaeharaMG3i }
-import gapt.proofs.{ Context, HOLSequent, MutableContext }
+import gapt.proofs.HOLSequent
+import gapt.proofs.context.Context
+import gapt.proofs.context.mutable.MutableContext
 import gapt.prooftool.LKProofViewer
 import gapt.provers.{ OneShotProver, Prover }
 import gapt.provers.congruence.SimpleSmtSolver

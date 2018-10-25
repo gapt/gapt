@@ -4,10 +4,12 @@ import gapt.expr.hol.fastStructuralCNF
 import gapt.expr.{ Formula, HOLAtomConst }
 import gapt.formats.dimacs.{ DIMACS, DIMACSEncoding }
 import gapt.models.PropositionalModel
+import gapt.proofs.context.Context
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.lk.LKProof
 import gapt.proofs.resolution.{ Factor, Input, ResolutionProof }
 import gapt.proofs.rup.RupProof
-import gapt.proofs.{ Context, HOLClause, HOLSequent, MutableContext, Sequent }
+import gapt.proofs.{ HOLClause, HOLSequent, Sequent }
 import gapt.provers.{ OneShotProver, ResolutionProver }
 import gapt.utils.Maybe
 

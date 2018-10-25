@@ -1,7 +1,7 @@
 package gapt.provers.escargot
 
 import gapt.expr._
-import gapt.formats.tptp.{ TptpImporter, resolutionToTptp, TptpProblemToResolution }
+import gapt.formats.tptp.{ TptpImporter, TptpProblemToResolution, resolutionToTptp }
 import gapt.proofs._
 import gapt.proofs.lk.LKProof
 import gapt.proofs.resolution._
@@ -9,6 +9,8 @@ import gapt.provers.{ ResolutionProver, groundFreeVariables }
 import gapt.provers.escargot.impl.{ EscargotLogger, EscargotState, StandardInferences }
 import gapt.utils.{ LogHandler, Maybe }
 import ammonite.ops._
+import gapt.proofs.context.Context
+import gapt.proofs.context.mutable.MutableContext
 
 object Escargot extends Escargot( splitting = true, equality = true, propositional = false ) {
   def lpoHeuristic( cnf: Traversable[HOLSequent], extraConsts: Iterable[Const] ): LPO = {

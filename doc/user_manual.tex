@@ -760,7 +760,7 @@ symbols. An example for a context is:
 \begin{tacticslisting}[bare]
 object ContextExample {
   implicit val ctx = MutableContext.default()
-  ctx += Context.InductiveType("Nat", hoc" 0: Nat", hoc" s: Nat > Nat") //Adding a type declaration
+  ctx += InductiveType("Nat", hoc" 0: Nat", hoc" s: Nat > Nat") //Adding a type declaration
   ctx += hoc" '+' : Nat>Nat>Nat" //Adding a constant declaration
   ctx += "plus_zero" -> hos" :- ∀n (n + 0 = n)" //Adding a theory axiom
   ctx += "1" -> le" s 0" //Adding a definition
@@ -788,11 +788,12 @@ Gaptic can not be (easily) used in the interactive Scala shell, as it requires
 multi-line input.  Gaptic scripts are usually developed as external files:
 \begin{tacticslisting}
 import gapt.expr._
-import gapt.proofs.{Context, Sequent}
+import gapt.proofs.context.update.Sort
+import gapt.proofs.Sequent
 import gapt.proofs.gaptic._
 
 object example extends TacticsProof {
-  ctx += Context.Sort("i")
+  ctx += Sort("i")
   ctx += hoc"P: i>o"
   ctx += hoc"Q: i>o"
 
@@ -1058,10 +1059,10 @@ Using gaptic, we can also create proofs with induction.  For example, let us
 prove that concatenation of lists is associative:
 
 \begin{tacticslisting}[nosig]
-ctx += Context.Sort("i")
+ctx += Sort("i")
 
 // Define the type of lists.
-ctx += Context.InductiveType("list",
+ctx += InductiveType("list",
   hoc"nil: list",
   hoc"cons: i>list>list")
 

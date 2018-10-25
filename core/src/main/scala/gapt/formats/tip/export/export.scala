@@ -21,8 +21,11 @@ import gapt.formats.tip.util.TipNameGenerator
 import gapt.formats.tip.TipConstructor
 import gapt.formats.tip.TipDatatype
 import gapt.formats.tip.TipProblem
-import gapt.proofs.Context.Definitions
-import gapt.proofs.{ Context, HOLSequent, Sequent }
+import gapt.proofs.context.Context
+import gapt.proofs.context.facet.Definitions
+import gapt.proofs.context.facet.BaseTypes
+import gapt.proofs.context.facet.StructurallyInductiveTypes
+import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.utils.Doc
 
 package object export {
@@ -68,7 +71,7 @@ package object export {
 
     private def contextSymbols( context: Context ): Set[String] = {
       context.constants.map { _.name }.toSet ++
-        context.get[Context.BaseTypes].baseTypes.keys.toSet
+        context.get[BaseTypes].baseTypes.keys.toSet
     }
 
     private def toTipDatatype(
@@ -98,7 +101,7 @@ package object export {
       val assertions = sequent.antecedent
       val goal = And( sequent.succedent )
       val datatypes =
-        context.get[Context.StructurallyInductiveTypes]
+        context.get[StructurallyInductiveTypes]
           .constructors
           .filter {
             case ( name, _ ) => name != "o"
@@ -108,13 +111,13 @@ package object export {
 
       val sorts =
         context
-          .get[Context.BaseTypes]
+          .get[BaseTypes]
           .baseTypes
           .keys
           .toSet
           .diff(
             context
-              .get[Context.StructurallyInductiveTypes]
+              .get[StructurallyInductiveTypes]
               .constructors
               .keys
               .toSet )
@@ -127,7 +130,7 @@ package object export {
           .toSet
           .diff(
             context
-              .get[Context.StructurallyInductiveTypes]
+              .get[StructurallyInductiveTypes]
               .constructors
               .values
               .flatten

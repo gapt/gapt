@@ -1,8 +1,8 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.Context.Sort
 import gapt.proofs.Sequent
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 
 /**

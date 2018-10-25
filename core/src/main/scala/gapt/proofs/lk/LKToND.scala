@@ -1,9 +1,15 @@
 package gapt.proofs.lk
 
 import gapt.expr._
-import gapt.proofs.Context.ProofNames
-import gapt.proofs.{ Ant, Context, HOLSequent, ProofBuilder, SequentIndex, Suc, lk, nd }
+import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.nd._
+import gapt.proofs.Ant
+import gapt.proofs.ProofBuilder
+import gapt.proofs.SequentIndex
+import gapt.proofs.Suc
+import gapt.proofs.context.Context
+import gapt.proofs.lk
+import gapt.proofs.nd
 
 object LKToND {
 

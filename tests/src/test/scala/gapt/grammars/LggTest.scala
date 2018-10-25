@@ -1,7 +1,7 @@
 package gapt.grammars
 
 import gapt.expr._
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 import org.specs2.mutable.Specification
 
 class LggTest extends Specification {

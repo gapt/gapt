@@ -9,6 +9,7 @@ import gapt.formats.ivy.IvyParser
 import gapt.formats.ivy.conversion.IvyToResolution
 import gapt.formats.prover9.{ Prover9TermParser, Prover9TermParserLadrStyle }
 import gapt.proofs._
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion.ExpansionProof
 import gapt.proofs.lk.LKProof
 import gapt.proofs.resolution._

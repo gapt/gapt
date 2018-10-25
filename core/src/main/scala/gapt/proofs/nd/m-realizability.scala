@@ -4,13 +4,14 @@ import gapt.expr.App
 import gapt.expr.Substitution
 import gapt.expr.Ty
 import gapt.expr.Var
-import gapt.expr.typeVariables
 import gapt.expr._
-import gapt.proofs.Context.BaseTypes
-import gapt.proofs.Context.InductiveType
-import gapt.proofs.Context.PrimRecFun
-import gapt.proofs.Context.StructurallyInductiveTypes
+import gapt.expr.typeVariables
 import gapt.proofs._
+import gapt.proofs.context.Context
+import gapt.proofs.context.facet.BaseTypes
+import gapt.proofs.context.facet.StructurallyInductiveTypes
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
 import gapt.utils.NameGenerator
 
 object MRealizability {

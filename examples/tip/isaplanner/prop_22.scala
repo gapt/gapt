@@ -1,7 +1,7 @@
 package gapt.examples.tip.isaplanner
 
 import gapt.expr._
-import gapt.proofs.Context
+import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic._
 
 /* This proof is not a s.i.p. because of the nested
@@ -10,7 +10,7 @@ import gapt.proofs.gaptic._
 object prop_22 extends TacticsProof {
 
   ctx += TBase( "sk" )
-  ctx += Context.InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
   ctx += hoc"p:Nat>Nat"
   ctx += hoc"'max2' :Nat>Nat>Nat"
 

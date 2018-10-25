@@ -1,7 +1,7 @@
 package gapt.proofs.expansion
 import gapt.expr._
 import gapt.expr.hol.HOLPosition
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 
 object eliminateDefsET {
   object DefinitionFormula {

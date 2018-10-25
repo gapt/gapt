@@ -1,12 +1,13 @@
 package gapt.examples.induction
 
 import gapt.expr._
-import gapt.formats.babel.{ Notation, Precedence }
-import gapt.proofs._
+import gapt.formats.babel.Notation
+import gapt.formats.babel.Precedence
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 
 object primeFactor extends TacticsProof {
-  ctx += Context.Sort( "i" )
+  ctx += Sort( "i" )
 
   ctx += Const( "0", Ti )
   ctx += Const( "1", Ti )
