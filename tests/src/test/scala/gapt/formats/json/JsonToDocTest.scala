@@ -25,7 +25,7 @@ class JsonToDocTest extends Specification {
   "roundtrip" in {
     "double quotes" in roundtrip( Json.fromString( "\"" ) )
     "newlines" in roundtrip( Json.fromString( "\n" ) )
-    "null byte" in roundtrip( Json.fromString( "\0" ) )
+    "null byte" in roundtrip( Json.fromString( "\u0000" ) )
     Fragments.foreach( 0 until 20 )( i =>
       s"control character $i" in
         roundtrip( Json.fromString( i.toChar.toString ) ) )
