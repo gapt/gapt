@@ -790,7 +790,7 @@ trait TacticCommands {
     tac => tac.focused
 
   def trace( implicit sig: BabelSignature ): Tactic[Unit] =
-    Tactic( currentGoal.map { g => println( g.toPrettyString ); () } )
+    Tactic( currentGoal.map { g => println( g.toPrettyString ); () } ).aka( "trace" )
 
   def subst1: SubstTactic = SubstTactic( UniqueFormula )
   def subst1( hyp: String ): SubstTactic = SubstTactic( OnLabel( hyp ) )

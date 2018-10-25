@@ -3,10 +3,10 @@ package gapt.integration_tests
 import gapt.examples.tape
 import gapt.expr.Eq
 import gapt.expr.FOLAtom
-import gapt.formats.tptp.TPTPFOLExporter
+import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.SequentMatchers
-import gapt.proofs.ceres.deleteTautologies
 import gapt.proofs.ceres._
+import gapt.proofs.ceres.deleteTautologies
 import gapt.proofs.context.Context
 import gapt.proofs.lk._
 import gapt.provers.escargot.Escargot
@@ -28,7 +28,7 @@ class TapeTest extends Specification with SequentMatchers {
       //      println( cs_.size )
       val cs = deleteTautologies( cs_ )
       //      cs.map( x => println( s"Clause: $x" ) )
-      val tptp = TPTPFOLExporter.tptp_problem( cs.toList )
+      val tptp = TptpFOLExporter.tptpProblem( cs.toList )
       //      println( s"tptp string:\n$tptp" )
       //      val writer = new java.io.FileWriter( "target" + separator + "tape-cs.tptp" )
       //      writer.write( tptp.toString )

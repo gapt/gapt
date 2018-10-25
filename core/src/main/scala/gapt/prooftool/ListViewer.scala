@@ -2,7 +2,7 @@ package gapt.prooftool
 
 import ammonite.ops._
 
-import gapt.formats.tptp.TPTPFOLExporter
+import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.{ HOLSequent, Sequent }
 
 import gapt.expr.hol.existentialClosure
@@ -28,7 +28,7 @@ class ListViewer( name: String, list: List[HOLSequent] ) extends ScrollableProof
           }
           if ( result.endsWith( ".tptp" ) || chooser.fileFilter.getDescription == ".tptp" ) {
             val filename = if ( result.endsWith( ".tptp" ) ) result else result + ".tptp"
-            write( Path( filename, pwd ), TPTPFOLExporter( existentialClosure( ls.map( _.toImplication ) ++: Sequent() ) ).toString )
+            write( Path( filename, pwd ), TptpFOLExporter( existentialClosure( ls.map( _.toImplication ) ++: Sequent() ) ).toString )
           } else infoMessage( "Lists cannot be saved in this format." )
         } catch { case e: Throwable => errorMessage( "Cannot save the list! " + dnLine + getExceptionString( e ) ) }
         finally { mainPanel.cursor = java.awt.Cursor.getDefaultCursor }

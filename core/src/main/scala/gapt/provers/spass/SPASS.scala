@@ -126,7 +126,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
           }
         inferences foreach {
           case ( num, 0, "Inp", _, clause ) =>
-            val Some( clauseInOurCNF ) = cnf.find( clauseSubsumption( _, clause, matchingAlgorithm = fixDerivation.matchingModEq ).isDefined )
+            val Some( clauseInOurCNF ) = cnf.find( clauseSubsumption.modEqSymm( _, clause ).isDefined )
             inference2sketch( num ) = SketchInference( clause, Seq( SketchAxiom( clauseInOurCNF map { _.asInstanceOf[FOLAtom] } ) ) )
             if ( clause isEmpty ) splitCases += inference2sketch( num )
           case ( num, splitLevel, "Spt", Seq( splitClauseNum ), part1 ) =>

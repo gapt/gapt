@@ -1,93 +1,125 @@
 package gapt.expr
 
-trait MatchingAlgorithm {
+object syntacticMatching {
+  private type Nullable[T] = T
+
+  private def go( a: Ty, b: Ty, subst: PreSubstitution ): Nullable[PreSubstitution] =
+    ( a, b ) match {
+      case ( TBase( an, as ), TBase( bn, bs ) ) if an == bn =>
+        go( as, bs, subst )
+      case ( a: TVar, _ ) if subst.typeMap.get( a ).contains( b ) =>
+        subst
+      case ( a: TVar, _ ) if !subst.typeMap.contains( a ) =>
+        subst + ( a, b )
+      case ( a1 ->: a2, b1 ->: b2 ) =>
+        go( a1, b1, subst ) match {
+          case null   => null
+          case subst1 => go( a2, b2, subst1 )
+        }
+      case _ => null
+    }
+
+  private def go( as: List[Ty], bs: List[Ty], subst: PreSubstitution ): Nullable[PreSubstitution] =
+    ( as, bs ) match {
+      case ( a :: as_, b :: bs_ ) =>
+        go( a, b, subst ) match {
+          case null   => null
+          case subst1 => go( as_, bs_, subst1 )
+        }
+      case ( Nil, Nil ) => subst
+      case _            => null
+    }
+
+  private def go( a: Expr, b: Expr, subst: PreSubstitution ): Nullable[PreSubstitution] =
+    ( a, b ) match {
+      case ( App( a1, b1 ), App( a2, b2 ) ) =>
+        go( a1, a2, subst ) match {
+          case null   => null
+          case subst1 => go( b1, b2, subst1 )
+        }
+
+      case ( Const( n1, _, ps1 ), Const( n2, _, ps2 ) ) if n1 == n2 =>
+        go( ps1, ps2, subst )
+
+      case ( Abs( v1, e1 ), Abs( v2, e2 ) ) =>
+        go( v1.ty, v2.ty, subst ) match {
+          case null => null
+          case subst1 =>
+            val v1_ = rename( v1, subst1.domain ++ subst1.range ++ freeVariables( List( a, b ) ) )
+            val v2_ = Var( v1_.name, v2.ty )
+            go( Substitution( v1 -> v1_ )( e1 ), Substitution( v2 -> v2_ )( e2 ), subst1 + ( v1_, v2_ ) ) match {
+              case null => null
+              case subst2 =>
+                new PreSubstitution( subst2.map - v1_, subst2.typeMap )
+            }
+        }
+
+      case ( v: Var, exp ) if subst.map.get( v ).contains( exp ) =>
+        subst
+
+      case ( v: Var, exp ) if !subst.map.contains( v ) =>
+        go( v.ty, exp.ty, subst ) match {
+          case null   => null
+          case subst1 => subst1 + ( v, exp )
+        }
+
+      case _ => null
+    }
+
+  def apply( from: Expr, to: Expr ): Option[Substitution] =
+    apply( from, to, PreSubstitution() )
+
+  def apply( from: Expr, to: Expr, alreadyFixed: PreSubstitution ): Option[Substitution] =
+    go( from, to, alreadyFixed ) match {
+      case null  => None
+      case subst => Some( subst.toSubstitution )
+    }
+
   def apply(
-    pairs:             List[( Expr, Expr )],
-    alreadyFixedSubst: PreSubstitution ): Traversable[Substitution]
-}
+    pairs:        Iterable[( Expr, Expr )],
+    alreadyFixed: PreSubstitution ): Option[Substitution] = {
+    var subst: Nullable[PreSubstitution] = alreadyFixed
+    pairs.foreach { case ( a, b ) => if ( subst != null ) subst = go( a, b, subst ) }
+    subst match {
+      case null => None
+      case _    => Some( subst.toSubstitution )
+    }
+  }
 
-object syntacticMatching extends syntacticMatching {
   def apply( from: FOLExpression, to: FOLExpression ): Option[FOLSubstitution] =
-    apply( List( from -> to ) )
+    apply( from: Expr, to ).map( _.asFOLSubstitution )
 
-  def apply( pairs: List[( FOLExpression, FOLExpression )] )( implicit dummyImplicit: DummyImplicit ): Option[FOLSubstitution] =
+  def apply( pairs: Iterable[( FOLExpression, FOLExpression )] )( implicit dummyImplicit: DummyImplicit ): Option[FOLSubstitution] =
     apply( pairs, Map[FOLVar, FOLTerm]() )
 
   def apply(
-    pairs:             List[( FOLExpression, FOLExpression )],
-    alreadyFixedSubst: Map[FOLVar, FOLTerm] )( implicit dummyImplicit: DummyImplicit ): Option[FOLSubstitution] =
+    pairs:        Iterable[( FOLExpression, FOLExpression )],
+    alreadyFixed: Map[FOLVar, FOLTerm] )( implicit dummyImplicit: DummyImplicit ): Option[FOLSubstitution] =
     apply(
-      pairs: List[( Expr, Expr )],
-      Substitution( alreadyFixedSubst ) ) map { _.asFOLSubstitution } headOption
-
-  def apply( from: Expr, to: Expr, fixed: PreSubstitution ): Option[Substitution] =
-    apply( List( from -> to ), fixed ).headOption
-
-  def apply( from: Expr, to: Expr ): Option[Substitution] =
-    apply( List( from -> to ) )
+      pairs: Iterable[( Expr, Expr )],
+      PreSubstitution( alreadyFixed ) ).map( _.asFOLSubstitution )
 
   def apply( pairs: List[( Expr, Expr )] ): Option[Substitution] =
-    apply( pairs, PreSubstitution() ).headOption
+    apply( pairs, PreSubstitution() )
 
-  def apply( a: Ty, b: Ty ): Option[Substitution] =
-    apply( Nil, List( ( a, b ) ), PreSubstitution() ).headOption
-}
-class syntacticMatching extends MatchingAlgorithm {
   def apply(
-    pairs:             List[( Expr, Expr )],
-    alreadyFixedSubst: PreSubstitution ): Traversable[Substitution] = apply( pairs, Nil, alreadyFixedSubst )
+    pairs: Iterable[( Ty, Ty )] )( implicit dummyImplicit: DummyImplicit, dummyImplicit2: DummyImplicit ): Option[Substitution] =
+    apply( pairs, PreSubstitution() )( DummyImplicit.dummyImplicit )
 
-  // TODO: rewrite using StateT[PreSubstitution, OptionT[X]]
-
-  /**
-   * Recursively looks for a Substitution σ such that for each (a, b) ∈ pairs, σ(a) = b.
-   *
-   * @param pairs A list of pairs of expressions.
-   * @param alreadyFixedSubst The partial substitution which is already fixed, and can no longer be changed.
-   * @return
-   */
   def apply(
-    pairs:             List[( Expr, Expr )],
-    tyPairs:           List[( Ty, Ty )],
-    alreadyFixedSubst: PreSubstitution ): Traversable[Substitution] = ( pairs, tyPairs ) match {
-    case ( Nil, Nil ) => alreadyFixedSubst.toSubstitution :: Nil
-    case ( _, first :: rest ) =>
-      first match {
-        case ( TBase( a, as ), TBase( b, bs ) ) if a == b =>
-          apply( pairs, ( as, bs ).zipped.toList ::: rest, alreadyFixedSubst )
-        case ( a: TVar, b ) if alreadyFixedSubst.typeMap.get( a ).contains( b ) =>
-          apply( pairs, rest, alreadyFixedSubst )
-        case ( a: TVar, b ) if !alreadyFixedSubst.typeMap.contains( a ) =>
-          apply( pairs, rest, alreadyFixedSubst + ( a, b ) )
-        case ( a1 ->: a2, b1 ->: b2 ) =>
-          apply( pairs, ( a1, b1 ) :: ( a2, b2 ) :: rest, alreadyFixedSubst )
-        case _ => Nil
-      }
-    case ( first :: rest, _ ) =>
-      first match {
-        case ( App( a1, b1 ), App( a2, b2 ) ) =>
-          apply( ( a1 -> a2 ) :: ( b1 -> b2 ) :: rest, ( b1.ty, b2.ty ) :: tyPairs, alreadyFixedSubst )
-
-        case ( Const( n1, _, ps1 ), Const( n2, _, ps2 ) ) if n1 == n2 && ps1.size == ps2.size =>
-          apply( rest, ( ps1 zip ps2 ) ::: tyPairs, alreadyFixedSubst )
-
-        case ( Abs( v1, e1 ), Abs( v2, e2 ) ) =>
-          val v1_ = rename(
-            v1,
-            alreadyFixedSubst.domain ++
-              pairs.flatMap { p => freeVariables( p._1 ) ++ freeVariables( p._2 ) } toList )
-          val v2_ = Var( v1_.name, v2.ty )
-          apply(
-            ( v1_ -> v2_ ) :: ( Substitution( v1 -> v1_ )( e1 ) -> Substitution( v2 -> v2_ )( e2 ) ) :: rest,
-            tyPairs, alreadyFixedSubst ).map { subst => Substitution( subst.map - v1_, subst.typeMap ) }
-
-        case ( v: Var, exp ) if alreadyFixedSubst.map.get( v ).contains( exp ) =>
-          apply( rest, tyPairs, alreadyFixedSubst )
-
-        case ( v: Var, exp ) if !alreadyFixedSubst.map.contains( v ) =>
-          apply( rest, ( v.ty, exp.ty ) :: tyPairs, alreadyFixedSubst + ( v, exp ) )
-
-        case _ => Nil
-      }
+    pairs:        Iterable[( Ty, Ty )],
+    alreadyFixed: PreSubstitution )( implicit dummyImplicit: DummyImplicit ): Option[Substitution] = {
+    var subst: Nullable[PreSubstitution] = alreadyFixed
+    pairs.foreach { case ( a, b ) => if ( subst != null ) subst = go( a, b, subst ) }
+    subst match {
+      case null => None
+      case _    => Some( subst.toSubstitution )
+    }
   }
+
+  def apply( from: Ty, to: Ty ): Option[Substitution] =
+    go( from, to, PreSubstitution() ) match {
+      case null  => None
+      case subst => Some( subst.toSubstitution )
+    }
 }

@@ -2,7 +2,7 @@ package gapt.proofs.ceres
 
 import gapt.formats.ClasspathInputFile
 import gapt.formats.llk._
-import gapt.formats.tptp.{ TPTPFOLExporter, TptpProofParser }
+import gapt.formats.tptp.{ TptpFOLExporter, TptpProofParser }
 import gapt.proofs.HOLSequent
 import gapt.proofs.lk.LKProof
 import org.specs2.matcher.MatchResult

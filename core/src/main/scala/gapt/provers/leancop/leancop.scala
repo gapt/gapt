@@ -8,10 +8,12 @@ import gapt.expr.All
 import gapt.expr.Eq
 import gapt.expr.Substitution
 import gapt.formats.leancop.LeanCoPParser
-import gapt.formats.tptp.TPTPFOLExporter
 import gapt.proofs.expansion.ETWeakQuantifierBlock
 import gapt.proofs.expansion.ExpansionProof
 import gapt.proofs.expansion.ExpansionProofToLK
+import gapt.formats.tptp.TptpFOLExporter
+import gapt.proofs.{ HOLClause, HOLSequent, Sequent }
+import gapt.proofs.expansion.{ ETWeakQuantifierBlock, ExpansionProof, ExpansionProofToLK, ExpansionSequent }
 import gapt.proofs.lk.LKProof
 import gapt.proofs.resolution.ResolutionToExpansionProof
 import gapt.proofs.resolution.expansionProofFromInstances
@@ -42,7 +44,7 @@ class LeanCoP extends OneShotProver with ExternalProgram {
     for ( ( _, clause ) <- cnf if clause.isProof ) return Some( ResolutionToExpansionProof( clause ) )
 
     renameConstantsToFi.wrap( cnf.keys ++: Sequent() )( ( renaming, sequent: HOLSequent ) => {
-      val tptp = TPTPFOLExporter( sequent ).toString
+      val tptp = TptpFOLExporter( sequent ).toString
       ( withTempFile.fromString( tptp ) { leanCoPInput =>
         runProcess.withExitValue( Seq( "leancop", leanCoPInput.toString ) )
       }: @unchecked ) match {

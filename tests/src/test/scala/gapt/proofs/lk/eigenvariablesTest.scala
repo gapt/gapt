@@ -1,14 +1,13 @@
-package at.logic.gapt.proofs.lk
+package gapt.proofs.lk
 
 import gapt.expr._
 import gapt.formats.babel.Notation
 import gapt.formats.babel.Precedence
-import gapt.proofs.gaptic._
-import gapt.proofs.lk.EigenVariablesLK
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.InductiveType
+import gapt.proofs.gaptic._
 import org.specs2.mutable._
 
 class eigenvariablesTest extends Specification {

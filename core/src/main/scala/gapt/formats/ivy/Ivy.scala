@@ -19,7 +19,7 @@ object IvyParser {
 
   //calls the sexpression parser on the given file and parses it, needs a naming convention
   def apply( fn: InputFile ): IvyResolutionProof =
-    parse( SExpressionParser( fn ) )
+    parse( SExpressionParser.parse( fn ) )
 
   def parse( exp: Seq[SExpression] ): IvyResolutionProof = {
     require( exp.length >= 1, "An ivy proof must contain at least one proof object, not " + exp.length + "! " )

@@ -4,7 +4,7 @@ import gapt.expr._
 import gapt.expr.hol.universalClosure
 import gapt.proofs.{ HOLClause, HOLSequent }
 
-object TPTPFOLExporter {
+object TptpFOLExporter {
   def apply( formula: Formula ): TptpFile =
     TptpFile( Seq( AnnotatedFormula( "fof", "formula", "conjecture", formula, Seq() ) ) )
 
@@ -19,10 +19,8 @@ object TPTPFOLExporter {
     }
 
     if ( sequent.succedent.size <= 1 ) {
-      sequent.succedent foreach {
-        case formula =>
-          file += AnnotatedFormula( "fof", "suc_0", "conjecture", formula, Seq() )
-      }
+      sequent.succedent foreach ( formula =>
+        file += AnnotatedFormula( "fof", "suc_0", "conjecture", formula, Seq() ) )
     } else {
       sequent.succedent.zipWithIndex foreach {
         case ( formula, i ) =>
@@ -44,21 +42,27 @@ object TPTPFOLExporter {
     exportLabelledCNF( for ( ( c, i ) <- cnf.zipWithIndex ) yield s"clause_$i" -> c )
 
   def exportClause( clause: HOLClause, name: String ): TptpInput = {
-    val ( _, disj: Formula ) = tptpToString.renameVars( freeVariables( clause ).toSeq, clause.toDisjunction )
+    val ( _, disj: Formula ) = TptpToString.renameVars( freeVariables( clause ).toSeq, clause.toDisjunction )
     AnnotatedFormula( "cnf", name, "axiom", disj, Seq() )
   }
 
-  // convert a named list of clauses to a CNF refutation problem.
-  def tptp_problem_named( ss: List[( String, HOLClause )] ) = exportLabelledCNF( ss )
+  /**
+   * convert a named list of clauses to a CNF refutation problem.
+   */
+  def tptpProblemNamed( ss: List[( String, HOLClause )] ): TptpFile = exportLabelledCNF( ss )
 
-  // Convert a sequent into a tptp proof problem.
-  def tptp_proof_problem( seq: HOLSequent ) =
+  /**
+   * Convert a sequent into a tptp proof problem.
+   */
+  def tptpProofProblem( seq: HOLSequent ) =
     apply( seq.toImplication )
 
-  def tptp_proof_problem_split( seq: HOLSequent ) =
+  def tptpProofProblemSplit( seq: HOLSequent ) =
     apply( seq )
 
-  // convert a list of clauses to a CNF refutation problem.
-  def tptp_problem( ss: List[HOLClause] ) = exportCNF( ss )
+  /**
+   * convert a list of clauses to a CNF refutation problem.
+   */
+  def tptpProblem( ss: List[HOLClause] ): TptpFile = exportCNF( ss )
 
 }

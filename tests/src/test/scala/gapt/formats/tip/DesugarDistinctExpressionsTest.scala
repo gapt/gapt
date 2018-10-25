@@ -1,5 +1,6 @@
 package gapt.formats.tip
 
+import gapt.formats.StringInputFile
 import gapt.formats.tip.parser.TipSmtAnd
 import gapt.formats.tip.parser.TipSmtEq
 import gapt.formats.tip.parser.TipSmtFunctionDefinition
@@ -13,7 +14,7 @@ class DesugarDistinctExpressionsTest extends Specification {
 
   "distinct expressions should be desugared everywhere" in {
     val originalProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (declare-datatypes () ( (nat (Z) (S (p nat)))))
         | (define-fun
         |   f1
@@ -25,7 +26,7 @@ class DesugarDistinctExpressionsTest extends Specification {
         |   ( (distinct a b c) ) )
         | (prove  (distinct a b c) )
         | (assert (distinct a b c) )
-      """.stripMargin )
+      """.stripMargin ) )
     val resultingProblem =
       desugarDistinctExpressions.transform( originalProblem )
 
@@ -37,14 +38,14 @@ class DesugarDistinctExpressionsTest extends Specification {
 
   "distinct expressions should be desugared correctly" in {
     val originalProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (declare-datatypes () ( (nat (Z) (S (p nat)))))
         | (define-fun
         |   f1
         |   ((x nat))
         |   nat
         |   (distinct a b c d) )
-      """.stripMargin )
+      """.stripMargin ) )
     val resultingProblem =
       desugarDistinctExpressions.transform( originalProblem )
 

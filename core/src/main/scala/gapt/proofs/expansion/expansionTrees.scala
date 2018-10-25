@@ -288,7 +288,7 @@ case class ETWeakQuantifier( shallow: Formula, instances: Map[Expr, ExpansionTre
   for ( ( selectedTerm, child ) <- instances ) {
     require( child.polarity == polarity )
     val correctShallow = BetaReduction.betaNormalize( Substitution( boundVar -> selectedTerm )( qfFormula ) )
-    require( child.shallow == correctShallow, s"Incorrect shallow formula:\n${child.shallow} !=\n $correctShallow" )
+    require( child.shallow == correctShallow, s"Incorrect shallow formula:\n${child.shallow} !=\n$correctShallow" )
   }
 
   def deep =

@@ -9,15 +9,15 @@ import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.proofs.expansion.{ ETAnd, ETAtom, ETTop, ExpansionProof, ExpansionSequent, ExpansionTree }
 import gapt.provers.groundFreeVariables
 
-sealed class TPTPFormulaRole
-case object TPTPAxiom extends TPTPFormulaRole { override def toString() = "axiom" }
-case object TPTPDefinition extends TPTPFormulaRole { override def toString() = "definition" }
-case object TPTPConjecture extends TPTPFormulaRole { override def toString() = "conjecture" }
-case object TPTPNegatedConjecture extends TPTPFormulaRole { override def toString() = "negated_conjecture" }
+sealed class TptpFormulaRole
+case object TptpAxiom extends TptpFormulaRole { override def toString = "axiom" }
+case object TptpDefinition extends TptpFormulaRole { override def toString = "definition" }
+case object TptpConjecture extends TptpFormulaRole { override def toString = "conjecture" }
+case object TptpNegatedConjecture extends TptpFormulaRole { override def toString = "negated_conjecture" }
 
-object TPTPHOLExporter extends TPTPHOLExporter
+object TptpHOLExporter extends TptpHOLExporter
 
-class TPTPHOLExporter {
+class TptpHOLExporter {
   /**
    * Exports the given FSequent list to the THF fragment of TPTP. The default behavior of the exporter
    * expects a sequent list in a negative context, i.e. it will encode the refutation of the arguments.
@@ -32,7 +32,7 @@ class TPTPHOLExporter {
    * @param ls the list of sequents to export
    * @param filename the filename
    */
-  def apply( ls: List[HOLSequent], filename: String ) =
+  def apply( ls: List[HOLSequent], filename: String ): Unit =
     write( Path( filename, pwd ), export_negative( ls ) )
 
   /**
@@ -41,7 +41,7 @@ class TPTPHOLExporter {
    * @param seq the sequent to export
    * @param filename the filename
    */
-  def apply( seq: HOLSequent, filename: String, separate_axioms: Boolean = false ) =
+  def apply( seq: HOLSequent, filename: String, separate_axioms: Boolean = false ): Unit =
     write( Path( filename, pwd ), export_positive( seq, separate_axioms ) )
 
   /**
@@ -53,7 +53,7 @@ class TPTPHOLExporter {
    * @param lambda_lifting apply lambda lifting to deep formula and add the definitions into to the antecedent of the formula
    */
   def apply( seq: ExpansionSequent, filename: String,
-             maximize_axiom_declarations: Boolean, lambda_lifting: Boolean ) =
+             maximize_axiom_declarations: Boolean, lambda_lifting: Boolean ): Unit =
     write( Path( filename, pwd ), export( seq, maximize_axiom_declarations, lambda_lifting ) )
 
   /**
@@ -96,7 +96,7 @@ class TPTPHOLExporter {
       val negClauses = Neg( And( ls.map( closedFormula ) ) )
       index = index + 1
       // since in thf conjectures are seen as conjunction. the negated cnf is one big formula
-      List( thf_formula_dec( index, negClauses, TPTPConjecture, vnames, cnames ) )
+      List( thf_formula_dec( index, negClauses, TptpConjecture, vnames, cnames ) )
     }
 
     s"% type declarations$nLine" + tdecls.mkString +
@@ -128,19 +128,18 @@ class TPTPHOLExporter {
     }
     val cdecs = cdecs_.mkString
 
-    val sdecs = separate_axioms match {
-      case true =>
-        val axioms = seq.antecedent
-        val goal = Or( seq.succedent ) // work around different ATP's interpretations of multiple conclusions
-        val axiom_decs =
-          for ( fs <- axioms ) yield {
-            index = index + 1
-            thf_formula_dec( index, fs, TPTPAxiom, vnames, cnames )
-          }
-        ( axiom_decs.foldLeft( "" )( ( s, x ) => s + x + nLine )
-          + thf_formula_dec( index + 1, goal, TPTPConjecture, vnames, cnames ) )
-      case false =>
-        thf_formula_dec( index + 1, seq.toImplication, TPTPConjecture, vnames, cnames )
+    val sdecs = if ( separate_axioms ) {
+      val axioms = seq.antecedent
+      val goal = Or( seq.succedent ) // work around different ATP's interpretations of multiple conclusions
+      val axiom_decs =
+        for ( fs <- axioms ) yield {
+          index = index + 1
+          thf_formula_dec( index, fs, TptpAxiom, vnames, cnames )
+        }
+      ( axiom_decs.foldLeft( "" )( ( s, x ) => s + x + nLine )
+        + thf_formula_dec( index + 1, goal, TptpConjecture, vnames, cnames ) )
+    } else {
+      thf_formula_dec( index + 1, seq.toImplication, TptpConjecture, vnames, cnames )
     }
 
     "% type declarations" + nLine + tdecls.mkString +
@@ -152,26 +151,26 @@ class TPTPHOLExporter {
     if ( cnames.isEmpty && vnames.isEmpty ) {
       println( "% No symbol translation necessary!" )
       return ()
-    };
+    }
     println( "% Symbol translation table for THF export:" )
     val csyms = cnames.keySet.toList.map( { case Const( s, _, _ ) => s } )
     val vsyms = vnames.keySet.toList.map( { case Var( s, _ ) => s } )
 
-    val width = ( vsyms ++ csyms ).sortWith( ( x, y ) => y.size < x.size ).head.size
+    val width = ( vsyms ++ csyms ).sortWith( ( x, y ) => y.length < x.length ).head.length
 
     for ( ( c, s ) <- cnames ) {
       val sym = c.name
       if ( sym != s ) {
         print( "%   " )
         print( sym )
-        for ( i <- sym.size to ( width + 1 ) ) print( " " )
+        for ( i <- sym.length to ( width + 1 ) ) print( " " )
         print( " -> " )
         print( s )
         println()
       }
     }
 
-    val cunchanged = for ( ( c, s ) <- cnames; if ( c.name == s ) ) yield { s }
+    val cunchanged = for ( ( c, s ) <- cnames; if c.name == s ) yield { s }
     if ( cunchanged.nonEmpty ) println( "% Unchanged constants: " + cunchanged.mkString( "," ) )
 
     println( "% " )
@@ -181,24 +180,24 @@ class TPTPHOLExporter {
       if ( sym != s ) {
         print( "%   " )
         print( sym )
-        for ( i <- sym.size to ( width + 1 ) ) print( " " )
+        for ( i <- sym.length to ( width + 1 ) ) print( " " )
         print( " -> " )
         print( s )
         println()
       }
     }
 
-    val vunchanged = for ( ( c, s ) <- vnames; if ( c.name == s ) ) yield { s }
+    val vunchanged = for ( ( c, s ) <- vnames; if c.name == s ) yield { s }
     if ( vunchanged.nonEmpty ) println( "% Unchanged variables: " + vunchanged.mkString( "," ) )
 
   }
 
   type NameMap = Map[Var, String]
-  val emptyNameMap = Map[Var, String]()
+  val emptyNameMap: Map[Var, String] = Map[Var, String]()
   type CNameMap = Map[Const, String]
-  val emptyCNameMap = Map[Const, String]()
+  val emptyCNameMap: Map[Const, String] = Map[Const, String]()
 
-  def createFormula( f: Expr, map: Map[Var, String] ) = f match {
+  def createFormula( f: Expr, map: Map[Var, String] ): String = f match {
     case Var( _, _ ) => map( f.asInstanceOf[Var] )
   }
 
@@ -212,7 +211,7 @@ class TPTPHOLExporter {
     if ( map contains v )
       map
     else {
-      val name = mkVarName( v.name.toString(), map )
+      val name = mkVarName( v.name.toString, map )
       map + ( ( v, name ) )
     }
   } )
@@ -223,15 +222,15 @@ class TPTPHOLExporter {
     if ( map contains v )
       map
     else {
-      val name = mkConstName( v.name.toString(), map )
+      val name = mkConstName( v.name.toString, map )
       map + ( ( v, name ) )
     }
   } )
 
-  def thf_formula_dec( i: Int, f: Formula, role: TPTPFormulaRole, vmap: NameMap, cmap: CNameMap ): String = {
-    val f_str = thf_formula( f, vmap, cmap, true )
+  def thf_formula_dec( i: Int, f: Formula, role: TptpFormulaRole, vmap: NameMap, cmap: CNameMap ): String = {
+    val f_str = thf_formula( f, vmap, cmap, outermost = true )
     val internal_str = f.toString.flatMap( { case '\n' => "\n% "; case x => x :: Nil } ) //add comment after newline
-    s"${nLine}% formula: $internal_str ${nLine}thf(${i}, ${role}, ${f_str} )."
+    s"$nLine% formula: $internal_str ${nLine}thf($i, $role, $f_str )."
   }
 
   private def addparens( str: String, cond: Boolean ) = if ( cond ) "(" + str + ")" else str
@@ -264,17 +263,17 @@ class TPTPHOLExporter {
     "thf(" + i + ", type, " + cmap( c ) + ": " + getTypeString( c.ty ) + " )."
   }
 
-  def getTypeString( t: Ty ): String = getTypeString( t, true )
+  def getTypeString( t: Ty ): String = getTypeString( t, outer = true )
   def getTypeString( t: Ty, outer: Boolean ): String = t match {
     case Ti                 => "$i"
     case To                 => "$o"
     case TBase( name, Nil ) => name
-    case t1 ->: t2 if outer => getTypeString( t1, false ) + " > " + getTypeString( t2, false )
-    case t1 ->: t2          => "(" + getTypeString( t1, false ) + " > " + getTypeString( t2, false ) + ")"
+    case t1 ->: t2 if outer => getTypeString( t1, outer = false ) + " > " + getTypeString( t2, outer = false )
+    case t1 ->: t2          => "(" + getTypeString( t1, outer = false ) + " > " + getTypeString( t2, outer = false ) + ")"
     case _                  => throw new Exception( "TPTP type export for " + t + " not implemented!" )
   }
 
-  def mkVarName( str: String, map: Map[Var, String] ) = {
+  def mkVarName( str: String, map: Map[Var, String] ): String = {
     val fstr_ = str.filter( _.toString.matches( "[a-zA-Z0-9]" ) )
     val fstr = if ( fstr_.isEmpty ) {
       println( "Warning: " + str + " needs to be completely replaced by a fresh variable!" )
@@ -289,7 +288,7 @@ class TPTPHOLExporter {
       prefix
   }
 
-  def mkConstName( str: String, map: CNameMap ) = {
+  def mkConstName( str: String, map: CNameMap ): String = {
     val fstr_ = str match {
       case "=" => "=" //equality is handled explicitly
       case "+" => "plus"
@@ -313,7 +312,7 @@ class TPTPHOLExporter {
       prefix
   }
 
-  def appendPostfix( str: String, l: List[String] ) = {
+  def appendPostfix( str: String, l: List[String] ): FormulaRole = {
     var i = 100
     while ( l contains ( str + i ) ) {
       i = i + 1
@@ -373,7 +372,7 @@ class TPTPHOLExporter {
   def lambda_lift_and_add_definitions( seq: HOLSequent ): HOLSequent = {
     val ( cmap, seq0 :: Nil ) = replaceAbstractions( seq :: Nil )
     val qaxioms: Seq[Formula] = cmap.toSeq.map {
-      case ( term_, name ) => {
+      case ( term_, name ) =>
         //term_ should be closed, but to be sure we add the free variables the variables stripped from the outer-most
         //lambda-block in term_
         val fv = freeVariables( term_ ).toList
@@ -387,7 +386,6 @@ class TPTPHOLExporter {
         // and close the formula universally
         val axiom = all_vars.foldRight( eq ) { case ( v, f ) => All( v, f ) }
         axiom
-      }
     }
     qaxioms ++: seq0
   }

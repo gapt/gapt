@@ -1,7 +1,7 @@
 package gapt.provers.escargot
 
 import gapt.expr._
-import gapt.formats.tptp.{ TptpParser, resolutionToTptp, tptpProblemToResolution }
+import gapt.formats.tptp.{ TptpImporter, TptpProblemToResolution, resolutionToTptp }
 import gapt.proofs._
 import gapt.proofs.lk.LKProof
 import gapt.proofs.resolution._
@@ -9,6 +9,7 @@ import gapt.provers.{ ResolutionProver, groundFreeVariables }
 import gapt.provers.escargot.impl.{ EscargotLogger, EscargotState, StandardInferences }
 import gapt.utils.{ LogHandler, Maybe }
 import ammonite.ops._
+import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 
 object Escargot extends Escargot( splitting = true, equality = true, propositional = false ) {
@@ -77,8 +78,8 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
       case Seq( file ) => file
     }
 
-    val tptp = TptpParser.load( FilePath( tptpInputFile ) )
-    getResolutionProof( structuralCNF.onProofs( tptpProblemToResolution( tptp ) ) ) match {
+    val tptp = TptpImporter.loadWithIncludes( FilePath( tptpInputFile ) )
+    getResolutionProof( structuralCNF.onProofs( TptpProblemToResolution( tptp ) ) ) match {
       case Some( proof ) =>
         println( "% SZS status Unsatisfiable" )
         println( "% SZS output start CNFRefutation" )
@@ -106,11 +107,14 @@ class Escargot( splitting: Boolean, equality: Boolean, propositional: Boolean ) 
     state.loop()
   }
 
-  def getAtomicLKProof( sequent: HOLClause ): Option[LKProof] =
-    groundFreeVariables.wrap( sequent ) { sequent =>
-      getResolutionProof( sequent.map( _.asInstanceOf[Atom] ).
-        map( Sequent() :+ _, _ +: Sequent() ).elements ) map { resolution =>
+  def getAtomicLKProof( sequent: HOLClause )( implicit ctx0: Maybe[Context] ): Option[LKProof] = {
+    implicit val ctx: MutableContext = ctx0.getOrElse( MutableContext.guess( sequent ) ).newMutable
+    withSection { section =>
+      val seq = section.groundSequent( sequent )
+      getResolutionProof( seq.map( _.asInstanceOf[Atom] ).
+        map( Sequent() :+ _, _ +: Sequent() ).elements )( ctx ) map { resolution =>
         UnitResolutionToLKProof( resolution )
       }
     }
+  }
 }

@@ -49,7 +49,8 @@ class PreSubstitution( val map: Map[Var, Expr], val typeMap: Map[TVar, Ty] ) {
 }
 
 object PreSubstitution {
-  def apply(): PreSubstitution = new PreSubstitution( Map(), Map() )
+  val empty = new PreSubstitution( Map(), Map() )
+  def apply(): PreSubstitution = empty
   def apply( map: Traversable[( Var, Expr )] ): PreSubstitution = new PreSubstitution( map.toMap, Map() )
 }
 

@@ -11,7 +11,7 @@ object resolutionToTptp {
     val disj = if ( inf.assertions.isEmpty ) inf.conclusion.toDisjunction
     else inf.conclusion.toDisjunction | inf.assertions.toDisjunction
     if ( inf.conclusion.forall( _.isInstanceOf[Atom] ) ) {
-      AnnotatedFormula( "cnf", label, role, tptpToString.renameVars( disj ), annotations )
+      AnnotatedFormula( "cnf", label, role, TptpToString.renameVars( disj ), annotations )
     } else {
       AnnotatedFormula( "fof", label, role, universalClosure( disj ), annotations )
     }
