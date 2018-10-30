@@ -279,9 +279,9 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
             val needSpace = argDoc.firstChar.forall { c =>
               tok match {
                 case _ if c == '_' => true
-                case BabelLexical.OperatorAndNothingElse( _ ) =>
-                  def argIsRestOp = BabelLexical.RestOpChar.unapply( c.toString ).isDefined
-                  def argIsOp = BabelLexical.OpChar.unapply( c.toString ).isDefined
+                case _ if fastparse.parse( tok, BabelLexical.OperatorAndNothingElse( _ ) ).isSuccess =>
+                  def argIsRestOp = fastparse.parse( c.toString, BabelLexical.RestOpChar( _ ) ).isSuccess
+                  def argIsOp = fastparse.parse( c.toString, BabelLexical.OpChar( _ ) ).isSuccess
                   argIsOp || argIsRestOp && tok.contains( "_" )
                 case _ if tok.forall( BabelLexical.isUnquotNameChar ) =>
                   BabelLexical.isUnquotNameChar( c )
@@ -316,11 +316,10 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
   val asciiUnquotName = """[A-Za-z0-9_]+""".r
   def showName( token: Notation.Token )( implicit dummyImplicit: DummyImplicit ): Doc = showName( token.token )
   def showName( name: String ): Doc =
-    name match {
-      case BabelLexical.OperatorAndNothingElse( _ ) if unicodeSafe( name ) =>
-        name
-      case _ => showNonOpName( name )
-    }
+    if ( fastparse.parse( name, BabelLexical.OperatorAndNothingElse( _ ) ).isSuccess && unicodeSafe( name ) )
+      name
+    else
+      showNonOpName( name )
   def showNonOpName( name: String ): Doc = name match {
     case _ if unicode && name.nonEmpty && name.forall { BabelLexical.isUnquotNameChar } => name
     case asciiUnquotName() => name
