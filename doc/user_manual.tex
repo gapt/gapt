@@ -2133,7 +2133,7 @@ problem: gapt.formats.tip.TipProblem =
 
 gapt> val Some(proof) = Viper(problem, ViperOptions(verbosity=0))
 proof: gapt.proofs.lk.LKProof =
-[p169] ∀z ('-2'(S(z:Nat): Nat, #c(Z: Nat)): Nat) = S(z),
+[p172] ∀z ('-2'(S(z:Nat): Nat, #c(Z: Nat)): Nat) = S(z),
 ∀x0 ('proj1-S'(S(x0)): Nat) = x0,
 ∀y0 #c(Z: Nat) != S(y0),
 ∀y ('+2'(#c(Z: Nat), y:Nat): Nat) = y,
@@ -2141,8 +2141,8 @@ proof: gapt.proofs.lk.LKProof =
 ∀z ∀x2 '-2'(S(z), S(x2)) = '-2'(z, x2),
 ∀y ∀z '+2'(S(z), y) = S('+2'(z, y))
 ⊢
-∀n ∀m '-2'(n, '+2'(n, m)) = #c(Z: Nat)    (CutRule(p21, Suc(0), p168, Ant(3)))
-[p168] ∀z ('-2'(S(z:Nat): Nat, #c(Z: Nat)): Nat) = S(z),
+∀n ∀m '-2'(n, '+2'(n, m)) = #c(Z: Nat)    (CutRule(p21, Suc(0), p171, Ant(3)))
+[p171] ∀z ('-2'(S(z:Nat): Nat, #c(Z: Nat)): Nat) = S(z),
 ∀x0 ('proj1-S'(S(x0)): Nat) = x0,
 ∀y0 #c(Z: Nat) != S(y0),
 (⊤ → ∀m '-2'(#c(Z: Nat), '+2'(#c(Z: Nat), m:Nat)) = #c(Z: Nat)) ∧
@@ -2228,51 +2228,48 @@ gapt> cutFormulas(Pi2Pigeonhole.proof) filter {containsQuantifier(_)} foreach pr
 
 gapt> val acnf = CERES(Pi2Pigeonhole.proof)
 acnf: gapt.proofs.lk.LKProof =
-[p398] ∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0)),
+[p293] ∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0)),
 ∀x (f(x) = 0 ∨ f(x) = s(0))
 ⊢
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (CutRule(p1, Suc(0), p397, Ant(2)))
-[p397] ∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0)),
-∀x (f(x) = 0 ∨ f(x) = s(0)),
-0 = 0
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionRightRule(p292, Suc(1), Suc(0)))
+[p292] ∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0)),
+∀x (f(x) = 0 ∨ f(x) = s(0))
 ⊢
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionRightRule(p396, Suc(1), Suc(0)))
-[p396] ∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0)),
-∀x (f(x) = 0 ∨ f(x) = s(0)),
-0 = 0
-⊢
-∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0)),
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p395, Ant(3), Ant(1)))
-[p395] ∀x (f(x) = 0 ∨ f(x) = s(0)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p291, Ant(2), Ant(1)))
+[p291] ∀x (f(x) = 0 ∨ f(x) = s(0)),
 ∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0)),
-0 = 0,
 ∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0))
 ⊢
-∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0)),
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (Cont...
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p290, Ant(3), Ant(0)))
+[p290] ∀x (f(x) = 0 ∨ f(x) = s(0)),
+∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0)),
+∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0)),
+∀x (f(x) = 0 ∨ ...
 
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
 et: gapt.proofs.expansion.ExpansionProof =
 ∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0))
-  +^{s(M(v_0, s(M(v_2, v_3))))}
+  +^{s(M(v_1, s(M(v_2, v_3))))}
     ∀y_0
-      (s(M(v_0, s(M(v_2, v_3)))) <= M(s(M(v_0, s(M(v_2, v_3)))), y_0) ∧
-        y_0 <= M(s(M(v_0, s(M(v_2, v_3)))), y_0))
-    +^{v}
-      (s(M(v_0, s(M(v_2, v_3)))) <= M(s(M(v_0, s(M(v_2, v_3)))), v))- ∧
-      wk-{v <= M(s(M(v_0, s(M(v_2, v_3)))), v)}
-  +^{s(M(v_1, s(M(v_0, s(M(v_2, v_3))))))}
+      (s(M(v_1, s(M(v_2, v_3)))) <= M(s(M(v_1, s(M(v_2, v_3)))), y_0) ∧
+        y_0 <= M(s(M(v_1, s(M(v_2, v_3)))), y_0))
+    +^{s(M(s(M(v_4, v)), v_0))}
+      (s(M(v_1, s(M(v_2, v_3)))) <=
+          M(s(M(v_1, s(M(v_2, v_3)))), s(M(s(M(v_4, v)), v_0))))- ∧
+      (s(M(s(M(v_4, v)), v_0)) <=
+          M(s(M(v_1, s(M(v_2, v_3)))), s(M(s(M(v_4, v)), v_0))))-
+    +^{s(M(v_4, v))}
+      (s(M(v_1, s(M(v_2, v_3)))) <=
+          M(s(M(v_1, s(M(v_2, v_3)))), s(M(v_4, v))))- ∧
+      (s(M(v_4, v)) <= M(s(M(v_1, s(M(v_2, v_3)))), s(M(v_4, v))))-
+  +^{s(M(v_2, v_3))}
     ∀y_0
-      (s(M(v_1, s(M(v_0, s(M(v_2, v_3)))))) <=
-          M(s(M(v_1, s(M(v_0, s(M(v_2, v_3)))))), y_0) ∧
-        y_0 <= M(s(M(v_1, s(M(v_0, s(M(v_2, v_3)))))), y_0))
-    +^{s(M(s(M(v_0, s(M(v_2, v_3)))), v))}
-      (s(M(v_1, s(M(v_0, s(M(v_2, v_3)))))) <=
-          M(s(M(v_1, s(M(v_0, s(M(v_2, v_3)))))),
-              s(M(s(M(v_0, s(M(v_2, v_3)))), v))))- ∧
-      ...
+      (s(M(v_2, v_3)) <= M(s(M(v_2, v_3)), y_0) ∧ y_0 <= M(s(M(v_2, v_3)), y_0))
+    +^{s(M(s(M(v_4...
 
 gapt> prooftool(et)
 
