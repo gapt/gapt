@@ -1,41 +1,41 @@
 package gapt.expr
+import gapt.utils._
 
 object syntacticMatching {
-  private type Nullable[T] = T
 
-  private def go( a: Ty, b: Ty, subst: PreSubstitution ): Nullable[PreSubstitution] =
+  private def go( a: Ty, b: Ty, subst: PreSubstitution ): UOption[PreSubstitution] =
     ( a, b ) match {
       case ( TBase( an, as ), TBase( bn, bs ) ) if an == bn =>
         go( as, bs, subst )
       case ( a: TVar, _ ) if subst.typeMap.get( a ).contains( b ) =>
-        subst
+        USome( subst )
       case ( a: TVar, _ ) if !subst.typeMap.contains( a ) =>
-        subst + ( a, b )
+        USome( subst + ( a, b ) )
       case ( a1 ->: a2, b1 ->: b2 ) =>
         go( a1, b1, subst ) match {
-          case null   => null
-          case subst1 => go( a2, b2, subst1 )
+          case USome( subst1 ) => go( a2, b2, subst1 )
+          case _               => UNone()
         }
-      case _ => null
+      case _ => UNone()
     }
 
-  private def go( as: List[Ty], bs: List[Ty], subst: PreSubstitution ): Nullable[PreSubstitution] =
+  private def go( as: List[Ty], bs: List[Ty], subst: PreSubstitution ): UOption[PreSubstitution] =
     ( as, bs ) match {
       case ( a :: as_, b :: bs_ ) =>
         go( a, b, subst ) match {
-          case null   => null
-          case subst1 => go( as_, bs_, subst1 )
+          case USome( subst1 ) => go( as_, bs_, subst1 )
+          case _               => UNone()
         }
-      case ( Nil, Nil ) => subst
-      case _            => null
+      case ( Nil, Nil ) => USome( subst )
+      case _            => UNone()
     }
 
-  private def go( a: Expr, b: Expr, subst: PreSubstitution ): Nullable[PreSubstitution] =
+  private def go( a: Expr, b: Expr, subst: PreSubstitution ): UOption[PreSubstitution] =
     ( a, b ) match {
       case ( App( a1, b1 ), App( a2, b2 ) ) =>
         go( a1, a2, subst ) match {
-          case null   => null
-          case subst1 => go( b1, b2, subst1 )
+          case USome( subst1 ) => go( b1, b2, subst1 )
+          case _               => UNone()
         }
 
       case ( Const( n1, _, ps1 ), Const( n2, _, ps2 ) ) if n1 == n2 =>
@@ -43,47 +43,35 @@ object syntacticMatching {
 
       case ( Abs( v1, e1 ), Abs( v2, e2 ) ) =>
         go( v1.ty, v2.ty, subst ) match {
-          case null => null
-          case subst1 =>
+          case USome( subst1 ) =>
             val v1_ = rename( v1, subst1.domain ++ subst1.range ++ freeVariables( List( a, b ) ) )
             val v2_ = Var( v1_.name, v2.ty )
-            go( Substitution( v1 -> v1_ )( e1 ), Substitution( v2 -> v2_ )( e2 ), subst1 + ( v1_, v2_ ) ) match {
-              case null => null
-              case subst2 =>
-                new PreSubstitution( subst2.map - v1_, subst2.typeMap )
-            }
+            go( Substitution( v1 -> v1_ )( e1 ), Substitution( v2 -> v2_ )( e2 ), subst1 + ( v1_, v2_ ) ).
+              map( subst2 => new PreSubstitution( subst2.map - v1_, subst2.typeMap ) )
+          case _ => UNone()
         }
 
       case ( v: Var, exp ) if subst.map.get( v ).contains( exp ) =>
-        subst
+        USome( subst )
 
       case ( v: Var, exp ) if !subst.map.contains( v ) =>
-        go( v.ty, exp.ty, subst ) match {
-          case null   => null
-          case subst1 => subst1 + ( v, exp )
-        }
+        go( v.ty, exp.ty, subst ).map( _ + ( v, exp ) )
 
-      case _ => null
+      case _ => UNone()
     }
 
   def apply( from: Expr, to: Expr ): Option[Substitution] =
     apply( from, to, PreSubstitution() )
 
   def apply( from: Expr, to: Expr, alreadyFixed: PreSubstitution ): Option[Substitution] =
-    go( from, to, alreadyFixed ) match {
-      case null  => None
-      case subst => Some( subst.toSubstitution )
-    }
+    go( from, to, alreadyFixed ).map( _.toSubstitution ).toOption
 
   def apply(
     pairs:        Iterable[( Expr, Expr )],
     alreadyFixed: PreSubstitution ): Option[Substitution] = {
-    var subst: Nullable[PreSubstitution] = alreadyFixed
-    pairs.foreach { case ( a, b ) => if ( subst != null ) subst = go( a, b, subst ) }
-    subst match {
-      case null => None
-      case _    => Some( subst.toSubstitution )
-    }
+    var subst: UOption[PreSubstitution] = USome( alreadyFixed )
+    pairs.foreach { case ( a, b ) => subst = subst.flatMap( go( a, b, _ ) ) }
+    subst.map( _.toSubstitution ).toOption
   }
 
   def apply( from: FOLExpression, to: FOLExpression ): Option[FOLSubstitution] =
@@ -109,17 +97,11 @@ object syntacticMatching {
   def apply(
     pairs:        Iterable[( Ty, Ty )],
     alreadyFixed: PreSubstitution )( implicit dummyImplicit: DummyImplicit ): Option[Substitution] = {
-    var subst: Nullable[PreSubstitution] = alreadyFixed
-    pairs.foreach { case ( a, b ) => if ( subst != null ) subst = go( a, b, subst ) }
-    subst match {
-      case null => None
-      case _    => Some( subst.toSubstitution )
-    }
+    var subst: UOption[PreSubstitution] = USome( alreadyFixed )
+    pairs.foreach { case ( a, b ) => subst = subst.flatMap( go( a, b, _ ) ) }
+    subst.map( _.toSubstitution ).toOption
   }
 
   def apply( from: Ty, to: Ty ): Option[Substitution] =
-    go( from, to, PreSubstitution() ) match {
-      case null  => None
-      case subst => Some( subst.toSubstitution )
-    }
+    go( from, to, PreSubstitution() ).map( _.toSubstitution ).toOption
 }

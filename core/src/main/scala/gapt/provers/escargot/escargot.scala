@@ -6,7 +6,7 @@ import gapt.proofs._
 import gapt.proofs.lk.LKProof
 import gapt.proofs.resolution._
 import gapt.provers.{ ResolutionProver, groundFreeVariables }
-import gapt.provers.escargot.impl.{ EscargotLogger, EscargotState, StandardInferences }
+import gapt.provers.escargot.impl._
 import gapt.utils.{ LogHandler, Maybe }
 import ammonite.ops._
 import gapt.proofs.context.Context
@@ -25,7 +25,7 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
 
     val precedence = functions.toSeq.sortBy { arity( _ ) } ++ eqs ++ ( atoms diff eqs ).toSeq.sortBy { arity( _ ) }
 
-    LPO( precedence, if ( boolOnTermLevel ) Set() else ( types - To ) map { ( _, To ) } )
+    LPO( precedence.map( _.name ).distinct, ( _, t ) => !boolOnTermLevel && t == To )
   }
 
   def setupDefaults(
@@ -37,7 +37,9 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
     // Preprocessing rules
     state.preprocessingRules :+= DuplicateDeletion
     if ( equality ) {
+      state.addIndex( UnitRwrLhsIndex )
       state.preprocessingRules :+= ForwardUnitRewriting
+      state.preprocessingRules :+= VariableEqualityResolution
       state.preprocessingRules :+= OrderEquations
       state.preprocessingRules :+= EqualityResolution
       state.preprocessingRules :+= ReflexivityDeletion
@@ -50,16 +52,23 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
 
     // Inference rules
     state.inferences :+= ForwardSubsumption
-    if ( equality ) state.inferences :+= ReflModEqDeletion
+    if ( equality ) {
+      state.addIndex( ReflModEqIndex )
+      state.inferences :+= ReflModEqDeletion
+    }
     state.inferences :+= BackwardSubsumption
     if ( equality ) {
       state.inferences :+= ForwardUnitRewriting
       state.inferences :+= BackwardUnitRewriting
     }
     if ( splitting ) state.inferences :+= AvatarSplitting
+    state.addIndex( MaxPosLitIndex )
+    state.addIndex( SelectedLitIndex )
     state.inferences :+= OrderedResolution
     state.inferences :+= Factoring
     if ( equality ) {
+      state.addIndex( ForwardSuperpositionIndex )
+      state.addIndex( BackwardSuperpositionIndex )
       state.inferences :+= Superposition
       state.inferences :+= UnifyingEqualityResolution
     }

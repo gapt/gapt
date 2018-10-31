@@ -1,20 +1,20 @@
 package gapt.expr
+import gapt.utils._
 
 object syntacticMGU {
-  private type Nullable[T] = T
 
-  private def go( a: Ty, b: Ty, subst: PreSubstitution, bound: Set[Var] ): Nullable[PreSubstitution] =
+  private def go( a: Ty, b: Ty, subst: PreSubstitution, bound: Set[Var] ): UOption[PreSubstitution] =
     ( a, b ) match {
-      case _ if a eq b => subst
+      case _ if a eq b => USome( subst )
 
       case ( a1 ->: a2, b1 ->: b2 ) =>
         go( a1, b1, subst, bound ) match {
-          case null   => null
-          case subst1 => go( a2, b2, subst1, bound )
+          case USome( subst1 ) => go( a2, b2, subst1, bound )
+          case _               => UNone()
         }
 
       case ( TBase( n1, ts1 ), TBase( n2, ts2 ) ) =>
-        if ( n1 != n2 ) null else go( ts1, ts2, subst, bound )
+        if ( n1 != n2 ) UNone() else go( ts1, ts2, subst, bound )
 
       case ( x: TVar, t ) =>
         subst.typeMap.get( x ) match {
@@ -22,70 +22,67 @@ object syntacticMGU {
           case None =>
             val t_ = subst.toSubstitution( t )
             if ( x == t_ ) {
-              subst
+              USome( subst )
             } else if ( typeVariables( t_ ).contains( x ) ) {
-              null
+              UNone()
             } else {
               val subst1 = Substitution( Map(), Map( x -> t_ ) )
-              new PreSubstitution(
+              USome( new PreSubstitution(
                 Map() ++ subst.map.mapValues( subst1( _ ) ),
-                Map() ++ subst.typeMap.mapValues( subst1( _ ) ) + ( x -> t_ ) )
+                Map() ++ subst.typeMap.mapValues( subst1( _ ) ) + ( x -> t_ ) ) )
             }
         }
 
       case ( y, x: TVar ) => go( x, y, subst, bound )
 
-      case _              => null
+      case _              => UNone()
     }
 
-  private def go( as: List[Ty], bs: List[Ty], subst: PreSubstitution, bound: Set[Var] ): Nullable[PreSubstitution] =
+  private def go( as: List[Ty], bs: List[Ty], subst: PreSubstitution, bound: Set[Var] ): UOption[PreSubstitution] =
     ( as, bs ) match {
-      case ( Nil, Nil ) => subst
+      case ( Nil, Nil ) => USome( subst )
       case ( a :: ass, b :: bss ) =>
         go( a, b, subst, bound ) match {
-          case null   => null
-          case subst1 => go( ass, bss, subst1, bound )
+          case USome( subst1 ) => go( ass, bss, subst1, bound )
+          case _               => UNone()
         }
-      case _ => null
+      case _ => UNone()
     }
 
-  private def go( a: Expr, b: Expr, subst: PreSubstitution, bound: Set[Var] ): Nullable[PreSubstitution] =
+  private def go( a: Expr, b: Expr, subst: PreSubstitution, bound: Set[Var] ): UOption[PreSubstitution] =
     ( a, b ) match {
-      case _ if a eq b => subst
+      case _ if a eq b => USome( subst )
 
       case ( App( a1, a2 ), App( b1, b2 ) ) =>
         go( a1, b1, subst, bound ) match {
-          case null => null
-          case subst1 =>
+          case USome( subst1 ) =>
             go( a2, b2, subst1, bound )
+          case _ => UNone()
         }
 
       case ( Const( n1, t1, ps1 ), Const( n2, t2, ps2 ) ) =>
-        if ( n1 != n2 ) null else
+        if ( n1 != n2 ) UNone() else
           go( t1, t2, subst, bound ) match {
-            case null => null
-            case subst1 =>
+            case USome( subst1 ) =>
               go( ps1, ps2, subst1, bound )
+            case _ => UNone()
           }
 
       case ( Abs( v1, e1 ), Abs( v2, e2 ) ) =>
         if ( v1.ty == v2.ty ) {
           val v1_ = rename( v1, subst.domain ++ subst.range ++ freeVariables( List( a, b ) ) )
           val v2_ = v1_
-          go( Substitution( v1 -> v1_ )( e1 ), Substitution( v2 -> v2_ )( e2 ), subst, bound + v1_ ) match {
-            case null => null
-            case subst2 =>
-              new PreSubstitution( subst2.map - v1_, subst2.typeMap )
-          }
+          go( Substitution( v1 -> v1_ )( e1 ), Substitution( v2 -> v2_ )( e2 ), subst, bound + v1_ ).
+            map( subst2 => new PreSubstitution( subst2.map - v1_, subst2.typeMap ) )
         } else go( v1.ty, v2.ty, subst, bound ) match {
-          case null => null
-          case subst1 =>
+          case USome( subst1 ) =>
             val subst1_ = subst1.toSubstitution
             go( subst1_( a ), subst1_( b ), subst1, bound )
+          case _ => UNone()
         }
 
       case ( x: Var, y ) if bound.contains( x ) =>
-        if ( x == y ) subst else null
+        if ( x == y ) USome( subst ) else UNone()
 
       case ( x: Var, t ) =>
         subst.map.get( x ) match {
@@ -93,25 +90,25 @@ object syntacticMGU {
           case None =>
             val t_ = subst.toSubstitution( t )
             if ( x == t_ ) {
-              subst
+              USome( subst )
             } else if ( freeVariables( t_ ) intersect ( bound + x ) nonEmpty ) {
-              null
+              UNone()
             } else if ( x.ty == t_.ty ) {
               val subst1 = Substitution( x -> t_ )
-              new PreSubstitution( Map() ++ subst.map.mapValues( subst1( _ ) ) + ( x -> t_ ), subst.typeMap )
+              USome( new PreSubstitution( Map() ++ subst.map.mapValues( subst1( _ ) ) + ( x -> t_ ), subst.typeMap ) )
             } else {
               go( x.ty, t_.ty, subst, bound ) match {
-                case null => null
-                case subst1 =>
+                case USome( subst1 ) =>
                   val subst1_ = subst1.toSubstitution
                   go( subst1_( x ), subst1_( t_ ), subst, bound )
+                case _ => UNone()
               }
             }
         }
 
       case ( y, x: Var ) => go( x, y, subst, bound )
 
-      case _             => null
+      case _             => UNone()
     }
 
   def apply( exprs: Iterable[Expr] )( implicit dummyImplicit: DummyImplicit ): Option[Substitution] = {
@@ -119,18 +116,13 @@ object syntacticMGU {
     apply( exprs_ zip exprs_.tail )
   }
   def apply( eqs: Iterable[( Expr, Expr )] ): Option[Substitution] = {
-    var subst: Nullable[PreSubstitution] = PreSubstitution()
-    eqs.foreach { case ( l, r ) => if ( subst != null ) subst = go( l, r, subst, Set.empty[Var] ) }
-    subst match {
-      case null => None
-      case _    => Some( subst.toSubstitution )
-    }
+    var subst: UOption[PreSubstitution] = USome( PreSubstitution() )
+    eqs.foreach { case ( l, r ) => subst = subst.flatMap( go( l, r, _, Set.empty[Var] ) ) }
+    subst.map( _.toSubstitution ).toOption
   }
   def apply( a: Expr, b: Expr ): Option[Substitution] =
-    go( a, b, PreSubstitution(), Set.empty[Var] ) match {
-      case null  => None
-      case subst => Some( subst.toSubstitution )
-    }
+    go( a, b, PreSubstitution(), Set.empty[Var] ).
+      map( _.toSubstitution ).toOption
 
   def apply( eqs: Iterable[( FOLExpression, FOLExpression )] )( implicit dummyImplicit: DummyImplicit, dummyImplicit2: DummyImplicit ): Option[FOLSubstitution] =
     apply( eqs: Iterable[( Expr, Expr )] ).map( _.asFOLSubstitution )

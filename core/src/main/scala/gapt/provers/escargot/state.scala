@@ -2,13 +2,17 @@ package gapt.provers.escargot.impl
 
 import gapt.expr._
 import gapt.expr.hol.universalClosure
-import gapt.models.PropositionalModel
-import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.{ HOLClause, HOLSequent, Sequent }
 import gapt.proofs.resolution._
 import gapt.provers.escargot.{ LPO, TermOrdering }
 import gapt.provers.sat.Sat4j
 import gapt.utils.Logger
+import org.sat4j.minisat.SolverFactory
+import Sat4j._
+import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.rup.RupProof
+import org.sat4j.specs.{ ContradictionException, IConstr, ISolverService }
+import org.sat4j.tools.SearchListenerAdapter
 
 object EscargotLogger extends Logger( "escargot" ); import EscargotLogger._
 
@@ -23,8 +27,10 @@ import scala.collection.mutable
  *               hash code, and also indicates how old the clause is.
  */
 class Cls( val state: EscargotState, val proof: ResolutionProof, val index: Int ) {
-  def clause = proof.conclusion
+  val clause = proof.conclusion
   def assertion = proof.assertions
+
+  val ass = state.intern( assertion )
 
   def clauseWithAssertions = ( clause, assertion )
 
@@ -37,8 +43,59 @@ class Cls( val state: EscargotState, val proof: ResolutionProof, val index: Int 
 
   val weight = clause.elements.map { expressionSize( _ ) }.sum
 
+  val freeVars = freeVariables( clause )
+
+  val literalFeatureVecs = clause.map( TermFeatureVec( _ ) )
+  val featureVec = ClauseFeatureVec( literalFeatureVecs )
+
   override def toString = s"[$index] ${proof.stringifiedConclusion( state.ctx )}   (max = ${maximal mkString ", "}) (sel = ${selected mkString ", "}) (w = $weight)"
   override def hashCode = index
+}
+
+class IndexedClsSet private (
+    val clauses: Set[Cls],
+    val state:   EscargotState,
+    indices:     Map[Index[_], AnyRef] ) {
+  def size: Int = clauses.size
+
+  def getIndex[T]( idx: Index[T] ): T =
+    indices( idx ).asInstanceOf[T]
+
+  def addIndex[T <: AnyRef]( idx: Index[T] ): IndexedClsSet =
+    new IndexedClsSet( clauses, state,
+      indices.updated( idx, indices.getOrElse( idx, idx.add( idx.empty, clauses ) ) ) )
+
+  def +( c: Cls ): IndexedClsSet = this ++ Some( c )
+  def ++( cs: Iterable[Cls] ): IndexedClsSet =
+    new IndexedClsSet(
+      clauses = clauses ++ cs,
+      indices = Map() ++ indices.view.map {
+        case ( i, t ) =>
+          i -> i.asInstanceOf[Index[AnyRef]].add( t, cs )
+      },
+      state = state )
+  def -( c: Cls ): IndexedClsSet =
+    if ( !clauses( c ) ) this else
+      new IndexedClsSet(
+        clauses = clauses - c,
+        indices = Map() ++ indices.view.map {
+          case ( i, t ) =>
+            i -> i.asInstanceOf[Index[AnyRef]].remove( t, c )
+        },
+        state = state )
+}
+object IndexedClsSet {
+  def apply( state: EscargotState ): IndexedClsSet =
+    new IndexedClsSet( Set(), state, Map() )
+}
+
+trait Index[T] {
+  type I = T
+  def empty: I
+  def add( t: I, cs: Iterable[Cls] ): I = cs.foldLeft( t )( add )
+  def add( t: I, c: Cls ): I
+  def remove( t: I, c: Cls ): I = remove( t, Set( c ) )
+  def remove( t: I, cs: Set[Cls] ): I
 }
 
 /**
@@ -85,6 +142,9 @@ class EscargotState( val ctx: MutableContext ) {
   var preprocessingRules = Seq[PreprocessingRule]()
   var inferences = Seq[InferenceRule]()
 
+  def addIndex[T <: AnyRef]( idx: Index[T] ): Unit =
+    workedOff = workedOff.addIndex( idx )
+
   private var clsIdx = 0
   def InputCls( clause: HOLSequent ): Cls = InputCls( Input( clause ) )
   def InputCls( proof: ResolutionProof ): Cls = { clsIdx += 1; new Cls( this, proof, clsIdx ) }
@@ -97,54 +157,80 @@ class EscargotState( val ctx: MutableContext ) {
   /** We have not yet used these clauses in inferences. */
   val usable = mutable.Set[Cls]()
   /** All inferences between these clauses have already been applied. */
-  var workedOff = Set[Cls]()
+  var workedOff = IndexedClsSet( this )
   /**
    * Locked clauses have assertions that are false in the current model,
    * or are subsumed by a clause whose assertion is true in the current model.
    *
    * The optional clause is the assertion of the subsuming clause.
    */
-  val locked = mutable.Set[( Cls, Option[HOLClause] )]()
+  val locked = mutable.Set[( Cls, Option[Set[Int]] )]()
 
   /** This formula should always be unsatisfiable. */
   def stateAsFormula: Formula = And {
-    ( newlyDerived.view ++ usable ++ workedOff ++ locked.map( _._1 ) ++ emptyClauses.values ).map { c =>
+    ( newlyDerived.view ++ usable ++ workedOff.clauses ++ locked.map( _._1 ) ++ emptyClauses.values ).map { c =>
       c.proof.assertions.toNegConjunction --> universalClosure( c.proof.conclusion.toFormula )
     }
-  } | And { ( newlyDerived.view ++ usable ++ workedOff ).map { c => universalClosure( c.proof.conclusion.toFormula ) } }
+  } | And { ( newlyDerived.view ++ usable ++ workedOff.clauses ).map { c => universalClosure( c.proof.conclusion.toFormula ) } }
+
+  /** SAT solver instance */
+  val solver = SolverFactory.newDefault()
+  val drup = mutable.Buffer[RupProof.Line]()
+  solver.setSearchListener( new SearchListenerAdapter[ISolverService] {
+    override def learnUnit( p: Int ) = drup += RupProof.Rup( Set( p ) )
+    override def learn( c: IConstr ) = drup += RupProof.Rup( c )
+  } )
+
+  /** Map from assertion atoms to SAT solver atoms */
+  val atomToSatSolver = mutable.Map[Atom, Int]()
+  val satSolverToAtom = mutable.Map[Int, Atom]()
+  def intern( atom: Atom ): Int =
+    atomToSatSolver.getOrElseUpdate( atom, {
+      val i = solver.nextFreeVarId( true )
+      satSolverToAtom( i ) = atom
+      i
+    } )
+  def intern( assertions: HOLClause ): Set[Int] =
+    assertions.map( intern, -intern( _ ) ).elements.toSet
+  def deintern( i: Int ): Atom =
+    satSolverToAtom( i )
+  def deinternLiteral( i: Int ): Formula =
+    if ( i < 0 ) -deintern( -i ) else deintern( i )
 
   /** Current propositional Avatar model. */
-  var avatarModel = PropositionalModel( Map() )
+  var avatarModel = Set[Int]()
   /** Empty clauses that have already been derived.  All assertions in the empty clauses are false. */
-  var emptyClauses = mutable.Map[HOLClause, Cls]()
+  var emptyClauses = mutable.Map[Set[Int], Cls]()
   /** Is the assertion of cls true in the current model? */
-  def isActive( cls: Cls ): Boolean = isActive( cls.assertion )
+  def isActive( cls: Cls ): Boolean = isActive( cls.ass )
   /** Is the assertion true in the current model? */
   def isActive( assertion: HOLClause ): Boolean =
-    avatarModel( assertion.toNegConjunction )
+    intern( assertion ).subsetOf( avatarModel )
+  /** Is the assertion true in the current model? */
+  def isActive( assertion: Set[Int] ): Boolean =
+    assertion.subsetOf( avatarModel )
 
   /** Pre-processes the clauses in newlyDerived.  The result is again in newlyDerived. */
   def preprocessing() =
     for ( r <- preprocessingRules )
       newlyDerived = r.preprocess( newlyDerived, workedOff )
 
-  def trySetAssertion( assertion: HOLClause, value: Boolean ) =
-    for ( ( atom, i ) <- assertion.zipWithIndex )
-      trySetAvatarAtom( atom, if ( value ) i.isSuc else i.isAnt )
-  def trySetAvatarAtom( atom: Atom, value: Boolean ) =
-    if ( !avatarModel.assignment.isDefinedAt( atom ) )
-      avatarModel = PropositionalModel( avatarModel.assignment + ( atom -> value ) )
+  def trySetAssertion( assertion: Set[Int], value: Boolean ) =
+    for ( a <- assertion ) trySetAvatarAtom( if ( value ) a else -a )
+  def trySetAvatarAtom( atom: Int ) =
+    if ( !avatarModel( -atom ) ) avatarModel += atom
 
   /** Moves clauses from newlyDerived into usable and locked. */
   def clauseProcessing() = {
     // extend avatar model
     for ( c <- newlyDerived )
-      trySetAssertion( c.assertion, c.clause.nonEmpty )
+      trySetAssertion( c.ass, c.clause.nonEmpty )
 
     for ( c <- newlyDerived ) {
       if ( c.clause.isEmpty ) {
-        emptyClauses( c.assertion ) = c
-        if ( !avatarModel( c.assertion.toDisjunction ) )
+        emptyClauses( c.ass ) = c
+        solver.addClause( c.ass.toSeq.map( -_ ) )
+        if ( isActive( c.ass ) )
           usable += c // trigger model recomputation
       }
       if ( isActive( c ) ) {
@@ -167,7 +253,7 @@ class EscargotState( val ctx: MutableContext ) {
       for ( ( c, reason ) <- d ) {
         workedOff -= c
         if ( c == given ) discarded = true
-        if ( !reason.isSubMultisetOf( c.assertion ) )
+        if ( !reason.subsetOf( c.ass ) )
           locked += ( c -> Some( reason ) )
       }
     }
@@ -196,17 +282,15 @@ class EscargotState( val ctx: MutableContext ) {
     }
   }
 
-  def switchToNewModel( model: PropositionalModel ) = {
-    avatarModel = PropositionalModel(
-      for ( ( a, p ) <- avatarModel.assignment )
-        yield a -> model.assignment.getOrElse( a, p ) )
+  def switchToNewModel() = {
+    avatarModel = solver.model().toSet
 
     for ( ( cls, reason ) <- locked.toSet if isActive( cls ) && reason.forall { !isActive( _ ) } ) {
       locked -= ( cls -> reason )
       usable += cls
     }
     for ( cls <- usable.toSeq if cls.clause.isEmpty ) usable -= cls
-    for ( cls <- workedOff.toSeq if !isActive( cls ) ) {
+    for ( cls <- workedOff.clauses if !isActive( cls ) ) {
       workedOff -= cls
       locked += ( cls -> None )
     }
@@ -216,8 +300,15 @@ class EscargotState( val ctx: MutableContext ) {
     }
   }
 
+  def mkSatProof(): ResolutionProof =
+    RupProof( emptyClauses.keys.toSeq.map( cls => RupProof.Input( cls.map( -_ ) ) ) ++ drup :+ RupProof.Rup( Set() ) ).
+      toRes.toResolution( satSolverToAtom, cls => {
+        val p = emptyClauses( cls.map( -_ ) ).proof
+        if ( p.assertions.isEmpty ) p else AvatarContradiction( p )
+      } )
+
   /** Main inference loop. */
-  def loop(): Option[ResolutionProof] = {
+  def loop(): Option[ResolutionProof] = try {
     preprocessing()
     clauseProcessing()
 
@@ -225,14 +316,14 @@ class EscargotState( val ctx: MutableContext ) {
       if ( usable exists { _.clause.isEmpty } ) {
         for ( cls <- usable if cls.clause.isEmpty && cls.assertion.isEmpty )
           return Some( cls.proof )
-        Sat4j.solve( emptyClauses.keys ) match {
-          case Some( newModel ) =>
-            info( s"sat splitting model: ${avatarModel.trueAtoms.toSeq.sortBy( _.toString ).mkString( ", " )}".replace( '\n', ' ' ) )
-            switchToNewModel( newModel )
-          case None =>
-            return Some( emptyClauses.get( Sequent() ).map( _.proof ).getOrElse {
-              Sat4j.getResolutionProof( emptyClauses.values.map( cls => AvatarContradiction( cls.proof ) ) ).get
-            } )
+        if ( solver.isSatisfiable ) {
+          info( s"sat splitting model: ${
+            solver.model().filter( _ >= 0 ).map( deintern ).
+              sortBy( _.toString ).mkString( ", " )
+          }".replace( '\n', ' ' ) )
+          switchToNewModel()
+        } else {
+          return Some( mkSatProof() )
         }
       }
       if ( usable.isEmpty )
@@ -250,5 +341,8 @@ class EscargotState( val ctx: MutableContext ) {
     }
 
     None
+  } catch {
+    case _: ContradictionException =>
+      Some( mkSatProof() )
   }
 }
