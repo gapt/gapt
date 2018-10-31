@@ -2,12 +2,22 @@ package gapt.proofs.gaptic
 
 import gapt.expr._
 import gapt.formats.babel.BabelSignature
-import gapt.proofs.Sequent
+import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.ProofDeclaration
 import gapt.proofs.lk._
 import gapt.utils.Maybe
+
+case class CanLabelledSequent( labelledSequent: Sequent[( String, Formula )] ) extends AnyVal
+object CanLabelledSequent {
+  implicit def fromLabelledSequent( labelledSequent: Sequent[( String, Formula )] ): CanLabelledSequent =
+    CanLabelledSequent( labelledSequent )
+  implicit def fromSequent( sequent: HOLSequent ): CanLabelledSequent =
+    guessLabels( sequent )
+  implicit def fromFormula( formula: Formula ): CanLabelledSequent =
+    Sequent() :+ formula
+}
 
 object Lemma {
   def finish( proofState: ProofState, incompleteOk: Boolean )( implicit sig: BabelSignature ): LKProof =
@@ -36,10 +46,8 @@ object Lemma {
     def handleTacticBlock( proof: ProofState => ProofState )( implicit ctx: MutableContext, name: sourcecode.Name ): LKProof =
       finish( implicitly[sourcecode.Name].value, proof( ProofState( labelledSequent ) ), incompleteOk = false )
   }
-  def apply[T]( labelledSequent: Sequent[( String, Formula )] ): Helper =
-    new Helper( labelledSequent )
-  def apply[T]( formula: Formula ): Helper =
-    apply( guessLabels( Sequent() :+ formula ) )
+  def apply[T]( labelledSequent: CanLabelledSequent ): Helper =
+    new Helper( labelledSequent.labelledSequent )
 }
 
 object Proof {
@@ -52,18 +60,16 @@ object Proof {
     def handleTacticBlock( proof: ProofState => ProofState )( implicit sig: BabelSignature, ctx: Maybe[Context] ): LKProof =
       finish( proof( ProofState( labelledSequent ) ), incompleteOk = false )
   }
-  def apply[T]( labelledSequent: Sequent[( String, Formula )] ): Helper =
-    new Helper( labelledSequent )
-  def apply[T]( formula: Formula ): Helper =
-    apply( guessLabels( Sequent() :+ formula ) )
+  def apply[T]( labelledSequent: CanLabelledSequent ): Helper =
+    new Helper( labelledSequent.labelledSequent )
 }
 object IncompleteProof {
   class Helper( labelledSequent: Sequent[( String, Formula )] ) extends LemmaHelper[LKProof] {
     def handleTacticBlock( proof: ProofState => ProofState )( implicit sig: BabelSignature, ctx: Maybe[Context] ): LKProof =
       Proof.finish( proof( ProofState( labelledSequent ) ), incompleteOk = true )
   }
-  def apply[T]( labelledSequent: Sequent[( String, Formula )] ): Helper =
-    new Helper( labelledSequent )
+  def apply[T]( labelledSequent: CanLabelledSequent ): Helper =
+    new Helper( labelledSequent.labelledSequent )
 }
 
 class TacticFailureException( s: String, cause: Throwable = null ) extends Exception( s, cause )
