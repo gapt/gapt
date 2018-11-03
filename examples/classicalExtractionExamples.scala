@@ -1,6 +1,7 @@
 package gapt.examples
 
 import extraction.{ FSharpCodeGenerator, ScalaCodeGenerator }
+import gapt.examples.theories.nat
 import gapt.proofs.nd._
 import gapt.expr.{ TBase, _ }
 import gapt.formats.babel.{ Notation, Precedence }
@@ -4716,7 +4717,7 @@ tryCatch(
   (^y1
     (^z efq(y1(z)): nat)),
   handle(y1(x1:nat),
-    (^(w:nat) w))
+    (^(w:nat) s(w)))
 )(0)"""
 
   /*
@@ -4741,7 +4742,10 @@ tryCatch(
   println( "13:" + normalize( le"($efq3)" ) )
   println( "14:" + normalize( le"($tryCatch7)($tryCatch)" ) )
   println( "15:" + normalize( le"$tryCatch8" ) )
-  println( "16:" + normalize( le"$tryCatch9" ) )
   */
+  println( "16:" + normalize( le"$tryCatch9" ) )
+  /*
   println( "17:" + normalize( le"$tryCatch10" ) )
+  */
 }
+

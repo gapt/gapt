@@ -159,8 +159,8 @@ def natRec[$a](p1: $a)(p2: (Int => $a => $a))(p3: Int): $a = {
       case TBase( "nat", Nil )
         | TBase( "i", Nil ) => "Int"
       case TBase( "o", Nil )       => "Boolean"
-      //case TBase( "exn", params )     => "Exception"
-      case TBase( "exn", params )  => s"Exn[${toType( params( 0 ) )}"
+      case TBase( "exn", Nil )     => "Exception"
+      //case TBase( "exn", params )  => s"Exn[${toType( params( 0 ) )}"
       case TBase( "conj", params ) => s"Tuple2[${toType( params( 0 ) )}, ${toType( params( 1 ) )}]"
       case TBase( "sum", params )  => s"Sum[${toType( params( 0 ) )}, ${toType( params( 1 ) )}]"
       case TArr( t1, t2 )          => s"(${toType( t1 )} => ${toType( t2 )})"

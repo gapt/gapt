@@ -4,6 +4,7 @@ import gapt.expr.hol.containsQuantifierOnLogicalLevel
 import gapt.expr.{ App, Substitution, Ty, typeVariables, _ }
 import gapt.proofs.Context.{ BaseTypes, InductiveType, PrimRecFun, StructurallyInductiveTypes }
 import gapt.proofs._
+import gapt.proofs.context.ReductionRuleUpdate
 import gapt.utils.NameGenerator
 
 import scala.collection.mutable
@@ -93,15 +94,18 @@ object ClassicalExtraction {
     val exn = ty"exn ?a"
     val exception = hoc"exception{?a}: ?a > (exn ?a)"
     systemT += InductiveType( exn, exception )
-    val raise = hoc"raise{?a ?b}: (exn ?a) > ?b"
-    systemT += raise
-    */
-    val exn = ty"exn ?a"
-    val exception = hoc"exception{?a}: ?a > (exn ?a)"
-    systemT += InductiveType( exn, exception )
     val efq = hoc"efq{?a ?c}: (exn ?a) > ?c"
     systemT += efq
     val handle = hoc"handle{?a ?c}: (exn ?a) > ?c > (?a > ?c)"
+    systemT += handle
+    */
+    val exn = TBase( "exn" )
+    val exception = hoc"exception{?a}: ?a > exn"
+    systemT += exn
+    systemT += exception
+    val efq = hoc"efq{?c}: exn > ?c"
+    systemT += efq
+    val handle = hoc"handle{?a ?c}: exn > ?c > (?a > ?c)"
     systemT += handle
     /*
     systemT += PrimRecFun(
@@ -129,7 +133,8 @@ object ClassicalExtraction {
     //val handle = hoc"handle{?a ?b}: (?a > ?b) > ((?a > (exn ?a)) > ?b) > ?b"
     //val tryCatch = hoc"tryCatch{?a ?c}: (?a > ?c) > ((?a > (exn ?a)) > ?c) > ?c"
     //val tryCatch = hoc"tryCatch{?a ?c}: (?a > ?c) > ((?a > (exn ?a)) > ?c) > ?c"
-    val tryCatch = hoc"tryCatch{?a ?c}: ((?a > (exn ?a)) > ?c) > (?a > ?c) > ?c"
+    //val tryCatch = hoc"tryCatch{?a ?c}: ((?a > (exn ?a)) > ?c) > (?a > ?c) > ?c"
+    val tryCatch = hoc"tryCatch{?a ?c}: ((?a > exn) > ?c) > (?a > ?c) > ?c"
     systemT += tryCatch
     /*
     val w5 = hov"w5:?a"
@@ -175,6 +180,71 @@ object ClassicalExtraction {
 
     //println( "systemT" )
     //println( systemT )
+    //val cmp = hoc"cmp: nat>nat>sum(sum(1)(1))(1)"
+
+    val u: Expr = hov"u : nat"
+    val v: Expr = hov"v : nat"
+    val Some( inl1 ) = systemT.constant( "inl", List( ty"sum(1)(1)", ty"1" ) )
+    val Some( inl2 ) = systemT.constant( "inl", List( ty"1", ty"1" ) )
+    val Some( inr1 ) = systemT.constant( "inr", List( ty"sum(1)(1)", ty"1" ) )
+    val Some( inr2 ) = systemT.constant( "inr", List( ty"1", ty"1" ) )
+    val Some( i ) = systemT.constant( "i" )
+    val Some( z ) = systemT.constant( "0" )
+    val Some( s ) = systemT.constant( "s" )
+    val pred = hoc"pred: nat>nat"
+    systemT += PrimRecFun(
+      pred,
+      List(
+        pred( s( u ) ) -> u,
+        pred( z ) -> z ) )
+    val subtr = hoc"subtr: nat>nat>nat"
+    systemT += PrimRecFun(
+      subtr,
+      List(
+        subtr( u )( z ) -> u,
+        subtr( u )( s( v ) ) -> subtr( pred( u ) )( v ) ) )
+    val ite = hoc"ite{?a}:o>?a>?a>?a"
+    val x1: Expr = hov"x1 : ?a"
+    val x2: Expr = hov"x2 : ?a"
+    val Some( trueC ) = systemT.constant( "⊤" )
+    val Some( falseC ) = systemT.constant( "⊥" )
+    systemT += PrimRecFun(
+      ite,
+      List(
+        ite( trueC )( x1 )( x2 ) -> x1,
+        ite( falseC )( x1 )( x2 ) -> x2 ) )
+    val sg = hoc"sg: nat>o"
+    systemT += PrimRecFun(
+      sg,
+      List(
+        sg( z ) -> falseC,
+        sg( s( u ) ) -> trueC ) )
+    val gt = hoc"gt: nat>nat>o"
+    systemT += PrimRecFun(
+      gt,
+      List(
+        gt( z )( v ) -> sg( subtr( z )( v ) ),
+        gt( s( u ) )( v ) -> sg( subtr( s( u ) )( v ) ) ) )
+    val Some( ite1 ) = systemT.constant( "ite", List( ty"sum(sum(1)(1))(1)" ) )
+    val cmp = hoc"cmp: nat>nat>sum(sum(1)(1))(1)"
+    systemT += PrimRecFun(
+      cmp,
+      List(
+        cmp( z )( v ) ->
+          ite1( gt( z )( v ) )( inl1( inl2( i ) ) /*u>v*/ )(
+            ite1( gt( v )( z ) )( inl1( inr2( i ) ) /*v>u*/ )( inr1( i ) /*v=u*/ ) ),
+        cmp( s( u ) )( v ) ->
+          ite1( gt( s( u ) )( v ) )( inl1( inl2( i ) ) /*u>v*/ )(
+            ite1( gt( v )( s( u ) ) )( inl1( inr2( i ) ) /*v>u*/ )( inr1( i ) /*v=u*/ ) ) ) )
+    val Some( ite2 ) = systemT.constant( "ite", List( ty"sum(1)(1)" ) )
+    val cmp2 = hoc"cmp2: nat>nat>sum(1)(1)"
+    systemT += PrimRecFun(
+      cmp2,
+      List(
+        cmp2( z )( v ) ->
+          ite2( gt( v )( z ) )( inr2( i ) )( inl2( i ) ),
+        cmp2( s( u ) )( v ) ->
+          ite2( gt( v )( s( u ) ) )( inr2( i ) )( inl2( i ) ) ) )
     systemT
   }
 
@@ -397,7 +467,7 @@ object ClassicalExtraction {
             }
         }
         */
-
+          //val TBase( "exn", List( exnType ) ) = s( Suc( 0 ) ).ty
           val efqType = flat( mainFormula )
           //val raise = systemT.constant( "raise", List( exnTypeParameter, raisedType ) ).get
           val efq = systemT.constant( "efq", List( efqType ) ).get
@@ -499,6 +569,7 @@ object ClassicalExtraction {
 
         case ExcludedMiddleRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
           leftSubProof.endSequent( aux1 ) match {
+            /*
             case f @ All( x1, Ex( x2, g ) ) if !containsQuantifierOnLogicalLevel( g ) =>
               val l = extractCases( leftSubProof, ng )
               val r = extractCases( rightSubProof, ng )
@@ -525,17 +596,23 @@ object ClassicalExtraction {
               //val res = delL ++: delR ++: Sequent() :+ le"bar2 ${Abs( x, g )} ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, ( r( Suc( 0 ) ) ) )}"
               val res = delL ++: delR ++: Sequent() :+ le"tryCatch ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, ( r( Suc( 0 ) ) ) )}"
               res
+              */
 
             case f =>
               val l = extractCases( leftSubProof, ng )
               val r = extractCases( rightSubProof, ng )
               val varL = l( aux1 ).asInstanceOf[Var]
               val varR = r( aux2 ).asInstanceOf[Var]
-              assert( varL.ty ->: ty"exn" == varR.ty )
+              /*
+              varR.ty match {
+                case TArr( varL.ty, TBase( "exn", varL.ty ) ) => assert( true )
+                case _                                        => assert( false )
+              }
+              */
               val delL = l.delete( aux1 ).antecedent
               val delR = r.delete( aux2 ).antecedent
-              val res = delL ++: delR ++: Sequent() :+ le"tryCatch ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
-              //val res = l.delete( aux1 ).antecedent ++: r.delete( aux2 ).antecedent ++: Sequent() :+ le"bar ${l( Suc( 0 ) )} ${r( Suc( 0 ) )}"
+              //val res = delL ++: delR ++: Sequent() :+ le"tryCatch ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
+              val res = delL ++: delR ++: Sequent() :+ le"tryCatch(${Abs( varR, r( Suc( 0 ) ) )}, handle($varR($varL), ${l( Suc( 0 ) )}))"
               //println( s"EM0: ${f}" )
               res
           }
@@ -580,20 +657,10 @@ object ClassicalExtraction {
     }
   }
 
-  def normalForm( ty: Ty )( implicit ctx: Context ) = ty match {
-    case _ => ty
-    /*
-    case TBase( "conj", tau :: TBase( "1", Nil ) :: Nil ) => tau
-    case TBase( "conj", TBase( "1", Nil ) :: tau :: Nil ) => tau
-    case _ ->: TBase( "1", Nil )                          => ty"1"
-    case TBase( "1", Nil ) ->: tau                        => tau
-    */
-  }
-
   // computes the type of a potential m-realizer for the formula
   def flat( formula: Formula )( implicit ctx: Context ): Ty = formula match {
-    case Bottom() => ty"exn"
-    case Top()    => ty"exn" ->: ty"exn"
+    case Bottom() => ty"exn" //TBase( "exn", ty"1" )
+    case Top()    => ty"exn" ->: ty"exn" //TBase( "exn", ty"1" ) ->: TBase( "exn", ty"1" )
     //case Eq( s, t )                       => ty"1"
     case Eq( s, _ ) =>
       // With dependent types:
@@ -609,17 +676,18 @@ object ClassicalExtraction {
       //TBase( e.toUntypedString )
       ty"1" // ?
     case And( leftformula, rightformula ) =>
-      normalForm( TBase( "conj", flat( leftformula ), flat( rightformula ) ) )
+      TBase( "conj", flat( leftformula ), flat( rightformula ) )
     case Or( leftformula, rightformula ) =>
-      normalForm( TBase( "sum", flat( leftformula ), flat( rightformula ) ) )
+      TBase( "sum", flat( leftformula ), flat( rightformula ) )
     case Imp( leftformula, rightformula ) =>
-      normalForm( flat( leftformula ) ->: flat( rightformula ) )
+      flat( leftformula ) ->: flat( rightformula )
     case Neg( subformula ) =>
-      normalForm( flat( subformula ) ->: ty"exn" ) //TBase( "exn", flat( subformula ) ) //flat( Imp( subformula, Bottom() ) )
+      val typeParam = flat( subformula )
+      flat( subformula ) ->: ty"exn" //TBase( "exn", typeParam )
     case Ex( variable, subformula ) =>
-      normalForm( TBase( "conj", variable.ty, flat( subformula ) ) )
+      TBase( "conj", variable.ty, flat( subformula ) )
     case All( variable, subformula ) =>
-      normalForm( variable.ty ->: flat( subformula ) )
+      variable.ty ->: flat( subformula )
   }
   /**
    * removes all occurences of the empty program i : 1 from term, or is i : 1 itself,

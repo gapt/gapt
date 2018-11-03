@@ -120,4 +120,76 @@ class BetaReductionTest extends Specification {
   "issue 659" in {
     normalize( le"(^y y) y x" ) must_== le"y x"
   }
+  "normalize try/catch without raise with commuting conversion left" in {
+    import gapt.proofs.Context
+    import gapt.proofs.nd.ClassicalExtraction
+    var ctx = Context.default
+    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+
+    implicit val ctxClassical = ClassicalExtraction.systemT( ctx )
+    normalize(
+      le"""
+s(tryCatch(
+  (^y1 0),
+  handle(y1(x1:nat),
+    s(0))
+))""" ) must_== le"s(0)"
+  }
+  "normalize try/catch with commuting conversion left" in {
+    import gapt.proofs.Context
+    import gapt.proofs.nd.ClassicalExtraction
+    var ctx = Context.default
+    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+
+    implicit val ctxClassical = ClassicalExtraction.systemT( ctx )
+    normalize(
+      le"""
+s(tryCatch(
+  (^y1
+    efq(y1(0)): nat),
+  handle(y1(x1:nat),
+    s(0))
+))""" ) must_== le"s(s(0))"
+  }
+  "normalize try/catch with commuting conversion right" in {
+    import gapt.proofs.Context
+    import gapt.proofs.nd.ClassicalExtraction
+    var ctx = Context.default
+    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+
+    implicit val ctxClassical = ClassicalExtraction.systemT( ctx )
+    normalize(
+      le"""
+tryCatch(
+  (^y1
+    (^z efq(y1(z)): nat)),
+  handle(y1(x1:nat),
+    (^(w:nat) s(w)))
+)(0)""" ) must_== le"s(0)"
+  }
+  "normalize nested try/catch" in {
+    import gapt.formats.babel.{ Notation, Precedence }
+    import gapt.proofs.Context
+    import gapt.proofs.nd.ClassicalExtraction
+    var ctx = Context.default
+    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    ctx += Notation.Infix( "+", Precedence.plusMinus )
+    ctx += hoc"'+': nat>nat>nat"
+
+    implicit val ctxClassical = ClassicalExtraction.systemT( ctx )
+    normalize(
+      le"""
+tryCatch(
+  (^y1
+    (efq(y1(0:nat)): nat > nat)),
+  handle(y1(x1:nat),
+    (^(z:nat) s(z)))
+  )(tryCatch(
+      (^y0
+        efq(y0(s(x1))): nat),
+      handle(y0(x0:nat),
+        (x0 + x1))
+  )
+)""" ) must_== le"s((s(0:nat): nat) + 0: nat)"
+  }
 }

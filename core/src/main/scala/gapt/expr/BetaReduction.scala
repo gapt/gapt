@@ -134,13 +134,15 @@ case class Normalizer( rules: Set[ReductionRule] ) {
             val newEfq = Const( "efq", TArr( as2_( 0 ).ty, expr.ty ), List( params( 0 ), expr.ty ) )
             normalize( newEfq( as2_( 0 ) ) )
           // Commuting conversion (left) for try/catch
-          case SplitTryCatch( front, Apps( Const( "tryCatch", ty, params ), as2_ ), back ) if hd_.toUntypedAsciiString != "handle" =>
+          case SplitTryCatch( front, Apps( Const( "tryCatch", ty, params ), tryCatchBlocks ), back ) if hd_.toUntypedAsciiString != "handle" =>
             println( "cc left" )
             //println( s"input:\n$expr" )
             //println( s"commuting:\n${hd_( front )}" )
-            val as2Commuted = as2_.map( commute( _, Left( hd_( front ) ) ) )
-            val Abs( _, arg ) = as2Commuted( 0 )
-            val res = Apps( Const( "tryCatch", replaceTy( ty, params( 1 ), arg.ty ), params.map( replaceTy( _, params( 1 ), arg.ty ) ) ), as2Commuted ++ back )
+            val tryCatchBlocksCommuted = tryCatchBlocks.map( commute( _, Left( hd_( front ) ) ) )
+            val Abs( _, tryBlock ) = tryCatchBlocksCommuted( 0 )
+            val tmpTy = replaceTy( ty, params( 1 ), tryBlock.ty )
+            val tmpParams = params.map( replaceTy( _, params( 1 ), tryBlock.ty ) )
+            val res = Apps( Const( "tryCatch", tmpTy, tmpParams ), tryCatchBlocksCommuted ++ back )
             //println( s"left: res:\n$res" )
             normalize( res )
           case _ =>
