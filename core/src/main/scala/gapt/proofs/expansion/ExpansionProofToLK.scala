@@ -21,8 +21,9 @@ object PropositionalExpansionProofToLK extends ExpansionProofToLK( _ => None )
 class ExpansionProofToLK(
     theorySolver:             HOLClause => Option[LKProof],
     intuitionisticHeuristics: Boolean                      = false ) extends SolveUtils {
-  case class Theory( cuts: Seq[ETImp], inductions: Seq[ETInduction.Induction] ) {
-    def getExpansionTrees: Seq[ETImp] = cuts ++ inductions.map( i => ETImp( i.hyps, i.suc ) )
+  case class Theory( cuts: Seq[ETCut.Cut], inductions: Seq[ETInduction.Induction] ) {
+    def getExpansionTrees: Seq[ExpansionTree] =
+      ( cuts ++ inductions.map( i => ETCut.Cut( i.hyps, i.suc ) ) ).map( _.toImp )
   }
   type Error = ( Theory, ExpansionSequent )
 
@@ -64,7 +65,7 @@ class ExpansionProofToLK(
   }
 
   private def tryTheory( theory: Theory, expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
-    quiet( theorySolver( expSeq collect { case ETAtom( atom, _ ) => atom } ) ).map {
+    quiet( theorySolver( expSeq collect { case ETAtom( atom: Atom, _ ) => atom } ) ).map {
       Right( _ )
     }
 
@@ -141,7 +142,7 @@ class ExpansionProofToLK(
   private def tryIntuitionisticImpLeft( theory: Theory, expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
     expSeq.zipWithIndex.antecedent.view.flatMap {
       case ( e @ ETImp( f, g ), i: Ant ) =>
-        val expSeq_ = Sequent( expSeq.antecedent.filter( _.isInstanceOf[ETAtom] ), Vector( f ) )
+        val expSeq_ = Sequent( expSeq.antecedent.collect { case et @ ETAtom( _, _ ) => et }, Vector( f ) )
         solve( theory, expSeq_ ).map { p1 =>
           if ( !p1.conclusion.contains( f.shallow, f.polarity ) ) Right( p1 )
           else solve( theory, expSeq.updated( i, g ) ).map { p2 =>
@@ -210,7 +211,7 @@ class ExpansionProofToLK(
     } yield ev ).toSet
 
     theory.cuts.zipWithIndex collectFirst {
-      case ( ETImp( cut1, cut2 ), i ) if freeVariables( cut1.shallow ) intersect upcomingEVs isEmpty =>
+      case ( ETCut.Cut( cut1, cut2 ), i ) if freeVariables( cut1.shallow ) intersect upcomingEVs isEmpty =>
         val newCuts = theory.cuts.zipWithIndex.filter { _._2 != i }.map { _._1 }
         solve( Theory( newCuts, theory.inductions ), expSeq :+ cut1 ) flatMap { p1 =>
           if ( !p1.conclusion.contains( cut1.shallow, Polarity.InSuccedent ) ) Right( p1 )

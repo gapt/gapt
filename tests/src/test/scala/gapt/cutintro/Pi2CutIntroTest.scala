@@ -42,7 +42,7 @@ class Pi2CutIntroTest extends Specification {
     // FIXME: this text is so flaky, it might as well be flipping coins
     // It depends on at least: expression hash code and the name of the implication constant
     // If it doesn't work try random mutations in the variable names below...
-    Pi2CutIntroduction( p, fov"xa", Vector( fov"b1", fov"b2", fov"b3" ) ) must beLike {
+    Pi2CutIntroduction( p, fov"xa", Vector( fov"b3", fov"b2", fov"b1" ) ) must beLike {
       case Some( q ) =>
         val Some( cut ) = q.subProofs.find( _.isInstanceOf[CutRule] )
         ok

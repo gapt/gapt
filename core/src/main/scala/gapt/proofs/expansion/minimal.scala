@@ -40,7 +40,7 @@ object minimalExpansionSequent {
     new Minimizer( sequent, prover ).computeAMinimal()
 
   def apply( proof: ExpansionProof, prover: Prover ): Option[ExpansionProof] =
-    apply( proof.expansionSequent, prover ) map { ExpansionProof }
+    apply( proof.expansionSequent, prover ) map { ExpansionProof( _ ) }
 }
 
 /**

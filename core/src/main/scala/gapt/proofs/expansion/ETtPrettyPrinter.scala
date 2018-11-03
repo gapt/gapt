@@ -1,4 +1,4 @@
-package gapt.proofs.expansion2
+package gapt.proofs.expansion
 
 import gapt.expr._
 import gapt.formats.babel.{ BabelExporter, BabelSignature, Precedence }

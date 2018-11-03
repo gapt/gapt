@@ -96,7 +96,7 @@ object ResolutionToExpansionProof {
 
     val expansions = mutable.Map[ResolutionProof, Set[( Substitution, ExpansionSequent )]]().withDefaultValue( Set() )
 
-    val cuts = mutable.Buffer[ETImp]()
+    val cuts = mutable.Buffer[ETCut.Cut]()
     var expansionSequent: ExpansionSequent =
       if ( !addConclusion ) Sequent()
       else proof.conclusion.zipWithIndex.map { case ( a, i ) => ETAtom( a.asInstanceOf[Atom], !i.polarity ) }
@@ -160,8 +160,8 @@ object ResolutionToExpansionProof {
       case p @ Taut( f ) =>
         for {
           ( s, Sequent( Seq( l ), Seq( r ) ) ) <- expansions( p )
-          if !l.isInstanceOf[ETAtom] || !r.isInstanceOf[ETAtom]
-        } cuts += ETImp( l, r )
+          if !l.isAtom || !r.isAtom
+        } cuts += ( l -> r )
         clear( p )
       case p @ Refl( _ ) =>
         clear( p )
@@ -228,11 +228,11 @@ object ResolutionToExpansionProof {
       case p @ BottomR( q, i ) =>
         val Seq( oc ) = p.occConnectors
         propgm2( p, q, oc.parent( _, ETBottom( !i.polarity ) ) )
-      case p: NegL  => prop1( p, ETNeg )
-      case p: NegR  => prop1( p, ETNeg )
-      case p: AndL  => prop2( p, ETAnd )
-      case p: OrR   => prop2( p, ETOr )
-      case p: ImpR  => prop2( p, ETImp )
+      case p: NegL  => prop1( p, ETNeg( _ ) )
+      case p: NegR  => prop1( p, ETNeg( _ ) )
+      case p: AndL  => prop2( p, ETAnd( _, _ ) )
+      case p: OrR   => prop2( p, ETOr( _, _ ) )
+      case p: ImpR  => prop2( p, ETImp( _, _ ) )
       case p: AndR1 => prop1s( p, ( s, et ) => ETAnd( et, ETWeakening( s( p.sub2 ), Polarity.InAntecedent ) ) )
       case p: OrL1  => prop1s( p, ( s, et ) => ETOr( et, ETWeakening( s( p.sub2 ), Polarity.InSuccedent ) ) )
       case p: ImpL1 => prop1s( p, ( s, et ) => ETImp( et, ETWeakening( s( p.sub2 ), Polarity.InSuccedent ) ) )
@@ -253,8 +253,8 @@ object ResolutionToExpansionProof {
     }
 
     for ( ( splAtom, defn ) <- splitDefn )
-      cuts += ETImp(
-        ETMerge( defn, Polarity.InSuccedent, splitCutL( splAtom ) ),
+      cuts += (
+        ETMerge( defn, Polarity.InSuccedent, splitCutL( splAtom ) ) ->
         ETMerge( defn, Polarity.InAntecedent, splitCutR( splAtom ) ) )
 
     eliminateMerges( ExpansionProof( ETMerge( ETCut( cuts ) +: expansionSequent ) ) )

@@ -1,4 +1,4 @@
-package gapt.proofs.expansion2
+package gapt.proofs.expansion
 
 import gapt.expr._
 import gapt.expr.hol.{ HOLPosition, instantiate }
@@ -52,6 +52,8 @@ case class ExpansionTree( term: ETt, polarity: Polarity, shallow: Formula ) exte
     }
   }
 
+  def isAtom: Boolean = this match { case ETAtom( _, _ ) => true case _ => false }
+
   def apply( pos: HOLPosition ): Set[ExpansionTree] =
     if ( pos.isEmpty ) Set( this ) else ( ( pos.head, this ): @unchecked ) match {
       case ( _, ETMerge( a, b ) )                   => a.apply( pos ) union b.apply( pos )
@@ -71,7 +73,7 @@ case class ExpansionTree( term: ETt, polarity: Polarity, shallow: Formula ) exte
       case ( 1, ETSkolemQuantifier( _, _, _, ch ) ) => ch.apply( pos.tail )
       case ( 1, ETWeakQuantifier( _, insts ) )      => insts.values.flatMap( _.apply( pos.tail ) ).toSet
 
-      case ( 1, ETWeakening( _, _ ) )               => Set.empty
+      case ( _, ETWeakening( _, _ ) )               => Set.empty
     }
 
   /** Checks whether this expansion tree is correct (in the given Context). */
@@ -109,7 +111,7 @@ case class ExpansionTree( term: ETt, polarity: Polarity, shallow: Formula ) exte
     go( this )
   }
 
-  def toDoc( implicit sig: BabelSignature ): Doc = new ETtPrettyPrinter( sig ).export( this )
+  def toDoc( implicit sig: BabelSignature ): Doc = new ExpansionTreePrettyPrinter( sig ).export( this )
   def toSigRelativeString( implicit sig: BabelSignature ): String = toDoc.render( 80 )
   override def toString: String = toSigRelativeString
 }
@@ -197,7 +199,7 @@ object ETMerges {
     }
 }
 
-private[expansion2] class ETNullaryCompanion( conn: Formula ) {
+private[expansion] class ETNullaryCompanion( conn: Formula ) {
   def apply( polarity: Polarity ): ExpansionTree = ExpansionTree( ETtNullary, polarity, conn )
   def unapply( et: ExpansionTree ): Option[Polarity] = et match {
     case ExpansionTree( ETtNullary, polarity, `conn` ) => Some( polarity )
@@ -220,7 +222,7 @@ object ETNeg {
   }
 }
 
-private[expansion2] class ETBinaryCompanion( conn: BinaryPropConnectiveHelper, isImp: Boolean ) {
+private[expansion] class ETBinaryCompanion( conn: BinaryPropConnectiveHelper, isImp: Boolean ) {
   def apply( child1: ExpansionTree, child2: ExpansionTree ): ExpansionTree = {
     if ( isImp )
       require( !child1.polarity == child2.polarity )

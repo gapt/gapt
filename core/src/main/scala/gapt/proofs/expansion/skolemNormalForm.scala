@@ -51,9 +51,9 @@ object nonProofTheoreticSkolemTerms {
           gatherOccs( a, weak, 1 :: pos )
           gatherOccs( b, weak, 2 :: pos )
         case ETNeg( a ) => gatherOccs( a, weak, 1 :: pos )
-        case et: BinaryExpansionTree =>
-          gatherOccs( et.child1, weak, 1 :: pos )
-          gatherOccs( et.child2, weak, 2 :: pos )
+        case BinaryExpansionTree( child1, child2 ) =>
+          gatherOccs( child1, weak, 1 :: pos )
+          gatherOccs( child2, weak, 2 :: pos )
         case ETDefinition( _, ch ) =>
           gatherOccs( ch, weak, 1 :: pos )
         case ETStrongQuantifier( _, _, ch ) =>
@@ -78,10 +78,10 @@ object moveSkolemNodesToCuts {
   def apply( ep: ExpansionProof ): ExpansionProof = {
     implicit val nameGen: NameGenerator = rename.awayFrom( ep.eigenVariables ++ freeVariablesET( ep ) )
     val bad = nonProofTheoreticSkolemTerms( ep )
-    val cuts = mutable.Buffer[ETImp]()
+    val cuts = mutable.Buffer[( ExpansionTree, ExpansionTree )]()
     def go( et: ExpansionTree ): ExpansionTree =
       et match {
-        case _: ETWeakening | _: ETBottom | _: ETTop | _: ETAtom => et
+        case ETWeakening( _, _ ) | ETBottom( _ ) | ETTop( _ ) | ETAtom( _, _ ) => et
         case ETNeg( f ) => ETNeg( go( f ) )
         case ETAnd( f, g ) => ETAnd( go( f ), go( g ) )
         case ETOr( f, g ) => ETOr( go( f ), go( g ) )
@@ -96,11 +96,11 @@ object moveSkolemNodesToCuts {
           ETSkolemQuantifier( sh, t, d, go( f ) )
         case ETSkolemQuantifier( sh, t, d, f ) if et.polarity.inSuc =>
           val ( a, b ) = tautAtomicExpansionET( sh )
-          cuts += ETImp( ETSkolemQuantifier( sh, t, d, go( f ) ), a )
+          cuts += ( ETSkolemQuantifier( sh, t, d, go( f ) ) -> a )
           b
         case ETSkolemQuantifier( sh, t, d, f ) if et.polarity.inAnt =>
           val ( a, b ) = tautAtomicExpansionET( sh )
-          cuts += ETImp( b, ETSkolemQuantifier( sh, t, d, go( f ) ) )
+          cuts += ( b -> ETSkolemQuantifier( sh, t, d, go( f ) ) )
           a
       }
     val es = ep.expansionSequent.map( go )

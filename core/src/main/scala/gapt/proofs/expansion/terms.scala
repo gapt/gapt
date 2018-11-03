@@ -1,4 +1,4 @@
-package gapt.proofs.expansion2
+package gapt.proofs.expansion
 import gapt.expr._
 import gapt.formats.babel.BabelSignature
 import gapt.utils.Doc
@@ -183,6 +183,7 @@ object ETtMerge {
 }
 
 object ETtWeak {
+  def apply( instances: ( Expr, ETt )* ): ETtWeak = ETtWeak( instances.toMap )
   def withMerge( instances: Iterable[( Expr, ETt )] ): ETt =
     ETtWeak( Map() ++ instances.groupBy( _._1 ).mapValues( chs => ETtMerge( chs.map( _._2 ) ) ) )
 }

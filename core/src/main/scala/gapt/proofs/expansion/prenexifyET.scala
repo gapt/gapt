@@ -74,10 +74,10 @@ object prenexifyET {
       val ETWeakQuantifierBlock( sh, n, insts ) = apply( a )
       val Some( ( vs, matrix ) ) = weakQuantifier( a.polarity ).Block.unapply( sh )
       ETWeakQuantifierBlock( weakQuantifier( a.polarity ).Block( vs, -matrix ), n,
-        Map() ++ insts.mapValues( ETNeg ) )
-    case ETAnd( a, b ) => handleBinary( a, b, et.polarity, And( _, _ ), ETAnd, Polarity.InSuccedent )
-    case ETOr( a, b )  => handleBinary( a, b, et.polarity, Or( _, _ ), ETOr, Polarity.InAntecedent )
-    case ETImp( a, b ) => handleBinary( a, b, et.polarity, Imp( _, _ ), ETImp, Polarity.InAntecedent )
+        Map() ++ insts.mapValues( ETNeg( _ ) ) )
+    case ETAnd( a, b ) => handleBinary( a, b, et.polarity, And( _, _ ), ETAnd( _, _ ), Polarity.InSuccedent )
+    case ETOr( a, b )  => handleBinary( a, b, et.polarity, Or( _, _ ), ETOr( _, _ ), Polarity.InAntecedent )
+    case ETImp( a, b ) => handleBinary( a, b, et.polarity, Imp( _, _ ), ETImp( _, _ ), Polarity.InAntecedent )
     case ETWeakQuantifierBlock( sh1, n1, insts1 ) =>
       ETWeakQuantifierBlock( apply( sh1, et.polarity ), n1, Map() ++ insts1.mapValues( apply ) )
   }

@@ -22,7 +22,7 @@ object deskolemizeET {
 
   def replaceByEigenvariables( expansionProof: ExpansionProof ): ExpansionProof = {
     val nameGenerator = rename.awayFrom( containedNames( expansionProof ) )
-    val skolemTerms = expansionProof.subProofs.collect { case e: ETSkolemQuantifier => e.skolemTerm }
+    val skolemTerms = expansionProof.subProofs.collect { case ETSkolemQuantifier( _, skT, _, _ ) => skT }
     val repl = skolemTerms.map { t => ( t, Var( nameGenerator.fresh( "v" ), t.ty ) ) }.toMap
 
     ExpansionProof( replace( expansionProof.expansionSequent, repl ) )
@@ -32,20 +32,18 @@ object deskolemizeET {
     for ( e <- es ) yield replace( e, repl )
 
   def replace( et: ExpansionTree, repl: PartialFunction[Expr, Expr] ): ExpansionTree = et match {
-    case ETMerge( child1, child2 ) => ETMerge( replace( child1, repl ), replace( child2, repl ) )
+    case ETMerge( child1, child2 )   => ETMerge( replace( child1, repl ), replace( child2, repl ) )
 
-    case et @ ETWeakening( formula, _ ) =>
-      et.copy( formula = TermReplacement( formula, repl ) )
-    case et @ ETAtom( atom, _ ) =>
-      et.copy( atom = TermReplacement( atom, repl ) )
+    case ETWeakening( formula, pol ) => ETWeakening( TermReplacement( formula, repl ), pol )
+    case ETAtom( atom, pol )         => ETAtom( TermReplacement( atom, repl ), pol )
     case ETDefinition( sh, ch ) =>
       ETDefinition( TermReplacement( sh, repl ), replace( ch, repl ) )
 
-    case _: ETTop | _: ETBottom  => et
-    case ETNeg( child )          => ETNeg( replace( child, repl ) )
-    case ETAnd( child1, child2 ) => ETAnd( replace( child1, repl ), replace( child2, repl ) )
-    case ETOr( child1, child2 )  => ETOr( replace( child1, repl ), replace( child2, repl ) )
-    case ETImp( child1, child2 ) => ETImp( replace( child1, repl ), replace( child2, repl ) )
+    case ETTop( _ ) | ETBottom( _ ) => et
+    case ETNeg( child )             => ETNeg( replace( child, repl ) )
+    case ETAnd( child1, child2 )    => ETAnd( replace( child1, repl ), replace( child2, repl ) )
+    case ETOr( child1, child2 )     => ETOr( replace( child1, repl ), replace( child2, repl ) )
+    case ETImp( child1, child2 )    => ETImp( replace( child1, repl ), replace( child2, repl ) )
 
     case ETWeakQuantifier( shallow, instances ) =>
       ETWeakQuantifier.withMerge(

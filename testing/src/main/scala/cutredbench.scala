@@ -58,12 +58,6 @@ object CutReductionBenchmarkTools {
     def convert( p: LKProof ): P = LKToExpansionProof( p )
     def eliminate( p: P ): Unit = eliminateCutsET( p )
   }
-  case object ExpCut2Elim extends Method {
-    import gapt.proofs.{ expansion2 => e2 }
-    type P = e2.ExpansionProof
-    def convert( p: LKProof ): P = e2.ETtoET2( LKToExpansionProof( p ) )
-    def eliminate( p: P ): Unit = e2.eliminateCutsET( p )
-  }
   class AbstractLKtNorm( skipCut: Formula => Boolean = _ => false ) extends Method {
     type P = LKt
     def convert( p: LKProof ): P = LKToLKt( p )._1
@@ -72,7 +66,7 @@ object CutReductionBenchmarkTools {
   case object LKtNorm extends AbstractLKtNorm
   case object LKtNormA extends AbstractLKtNorm( isAtom( _ ) )
   case object LKtNormP extends AbstractLKtNorm( !containsQuantifierOnLogicalLevel( _ ) )
-  val methods = List( LKReductive, LKCERES, CERESEXP, BogoElim, ExpCutElim, ExpCut2Elim, LKtNorm, LKtNormA, LKtNormP )
+  val methods = List( LKReductive, LKCERES, CERESEXP, BogoElim, ExpCutElim, LKtNorm, LKtNormA, LKtNormP )
 }
 
 object cutReductionBenchmark extends Script {

@@ -1,4 +1,5 @@
 package gapt.proofs.expansion
+
 import gapt.expr._
 import gapt.utils.generatedUpperSetInPO
 
@@ -8,8 +9,8 @@ object eliminateCutsET {
   def apply( expansionProof: ExpansionProof, maxCutInsts: Int = Integer.MAX_VALUE ): ExpansionProof = {
     if ( expansionProof.cuts.isEmpty ) return ExpansionProof( expansionProof.nonCutPart )
 
-    def simplifiedEPWC( cuts: Seq[ETImp], es: ExpansionSequent ) =
-      ExpansionProof( eliminateMerges.unsafe( simpPropCuts( cuts ) +: es ) )
+    def simplifiedEPWC( cuts: Seq[ETCut.Cut], es: ExpansionSequent ) =
+      ExpansionProof( eliminateMerges( simpPropCuts( cuts ) +: es ) )
 
     var epwc = simplifiedEPWC( expansionProof.cuts, expansionProof.nonCutPart )
 
@@ -17,9 +18,9 @@ object eliminateCutsET {
       val cuts = epwc.cuts
       cuts.sortBy( numCutInsts ).view.flatMap {
         case cut if numCutInsts( cut ) > maxCutInsts => None
-        case cut @ ETImp( cut1, cut2 ) =>
+        case cut @ ETCut.Cut( cut1, cut2 ) =>
           singleStep( cut1, cut2, cuts.filterNot( _ == cut ), epwc.nonCutPart,
-            epwc.eigenVariables union freeVariables( epwc.deep ),
+            epwc.eigenVariables union freeVariables( epwc.shallow ),
             epwc.dependencyRelation )
       }.headOption match {
         case Some( ( newCuts, newES ) ) =>
@@ -31,27 +32,20 @@ object eliminateCutsET {
     throw new IllegalStateException
   }
 
-  private def numCutInsts( cut: ETImp ): Int =
-    cut match {
-      case ETImp( ETWeakQuantifierBlock( _, n, insts ), _ ) if n > 0 => insts.size
-      case ETImp( _, ETWeakQuantifierBlock( _, n, insts ) ) if n > 0 => insts.size
-      case _ => 0
-    }
+  private def numCutInsts: ETCut.Cut => Int = {
+    case ETCut.Cut( ETWeakQuantifierBlock( _, n, insts ), _ ) if n > 0 => insts.size
+    case ETCut.Cut( _, ETWeakQuantifierBlock( _, n, insts ) ) if n > 0 => insts.size
+    case _ => 0
+  }
 
-  private def safeMerge( ets: Seq[ExpansionTree] ): ExpansionTree =
-    ets.sortBy {
-      case ETStrongQuantifier( _, _, _ ) => 0
-      case _                             => 1
-    }.reduceLeft( ETMerge( _, _ ) )
-
-  private def simpPropCuts( cuts: Seq[ETImp] ): ExpansionTree = {
+  private def simpPropCuts( cuts: Seq[ETCut.Cut] ): ExpansionTree = {
     val newCuts = mutable.Buffer[( ExpansionTree, ExpansionTree )]()
     def simp( left: ExpansionTree, right: ExpansionTree ): Unit = ( left, right ) match {
-      case ( _: ETWeakening, _ )        =>
-      case ( _, _: ETWeakening )        =>
-      case ( _: ETAtom, _: ETAtom )     =>
-      case ( _: ETTop, _: ETTop )       =>
-      case ( _: ETBottom, _: ETBottom ) =>
+      case ( ETWeakening( _, _ ), _ )         =>
+      case ( _, ETWeakening( _, _ ) )         =>
+      case ( ETAtom( _, _ ), ETAtom( _, _ ) ) =>
+      case ( ETTop( _ ), ETTop( _ ) )         =>
+      case ( ETBottom( _ ), ETBottom( _ ) )   =>
       case ( ETMerge( l1, l2 ), r ) =>
         simp( l1, r ); simp( l2, r )
       case ( l, ETMerge( r1, r2 ) ) =>
@@ -65,14 +59,14 @@ object eliminateCutsET {
         simp( t2, t1 ); simp( s1, s2 )
       case _ => newCuts += ( ( left, right ) )
     }
-    for ( ETImp( l, r ) <- cuts ) simp( l, r )
+    for ( ETCut.Cut( l, r ) <- cuts ) simp( l, r )
     ETCut( newCuts.groupBy( _._1.shallow ).values.map( cs =>
-      ETImp( safeMerge( cs.map( _._1 ) ), safeMerge( cs.map( _._2 ) ) ) ) )
+      ETCut.Cut( ETMerge( cs.map( _._1 ) ), ETMerge( cs.map( _._2 ) ) ) ) )
   }
 
-  private def singleStep( cut1: ExpansionTree, cut2: ExpansionTree, rest: Seq[ETImp],
+  private def singleStep( cut1: ExpansionTree, cut2: ExpansionTree, rest: Seq[ETCut.Cut],
                           expansionSequent: ExpansionSequent, freeVars: Set[Var],
-                          dependencyRelation: Set[( Var, Var )] ): Option[( Seq[ETImp], ExpansionSequent )] = {
+                          dependencyRelation: Set[( Var, Var )] ): Option[( Seq[ETCut.Cut], ExpansionSequent )] = {
     // This uses a slightly more optimized reduction step than described in the unpublished
     // paper "Expansion Trees with Cut".
     //
@@ -99,10 +93,11 @@ object eliminateCutsET {
     // weak quantifier instances that have been changed through the substitution.
     def quantifiedCut(
       instances:      Map[Seq[Expr], ExpansionTree],
-      eigenVariables: Seq[Var], child: ExpansionTree ): ( Seq[ETImp], ExpansionSequent ) = {
+      eigenVariables: Seq[Var], child: ExpansionTree ): ( Seq[ETCut.Cut], ExpansionSequent ) = {
       if ( instances isEmpty ) return ( rest, expansionSequent )
 
-      val eigenVarsToRename = generatedUpperSetInPO( eigenVariablesET( child ) ++ eigenVariables, dependencyRelation ) -- eigenVariables
+      val eigenVarsToRename =
+        generatedUpperSetInPO( child.term.eigenVariables ++ eigenVariables, dependencyRelation ) -- eigenVariables
       val nameGen = rename.awayFrom( freeVars )
       val renamings = for ( _ <- 0 until instances.size )
         yield Substitution( eigenVarsToRename map { ev => ev -> nameGen.fresh( ev ) } )
@@ -110,25 +105,28 @@ object eliminateCutsET {
         for ( ( renaming, ( term, instance ) ) <- renamings zip instances )
           yield Substitution( eigenVariables zip term ) compose renaming
 
-      val matchingSubstOption = substs find { s => ( substs zip instances.values ).forall { inst => s( inst._2.shallow ) == inst._1( child.shallow ) } }
+      val matchingSubstOption = substs.find( s =>
+        ( substs zip instances.values ).forall( inst =>
+          s( inst._2.shallow ) == inst._1( child.shallow ) ) )
       val matchingSubst = matchingSubstOption getOrElse Substitution()
       val needExtraCopy = matchingSubstOption.isEmpty
 
       val newCuts = for ( ( subst, ( term, instance ) ) <- substs zip instances ) yield {
-        if ( instance.polarity.positive ) ETImp( matchingSubst( instance ), subst( child ) )
-        else ETImp( subst( child ), matchingSubst( instance ) )
+        if ( instance.polarity.positive ) ETCut.Cut( matchingSubst( instance ), subst( child ) )
+        else ETCut.Cut( subst( child ), matchingSubst( instance ) )
       }
 
       val substs_ = if ( needExtraCopy ) substs :+ Substitution() else substs
-      (
-        newCuts ++ ( for ( c <- rest; s <- substs_ ) yield s( c ).asInstanceOf[ETImp] ),
-        for ( tree <- expansionSequent ) yield ETMerge( substs_.map { _( tree ) } ) )
+      ( newCuts ++ ( for ( c <- rest; s <- substs_ ) yield s( c ) ),
+        for ( tree <- expansionSequent ) yield ETMerge( substs_.map( _( tree ) ) ) )
     }
 
     Some( ( cut1, cut2 ) ) collect {
-      case ( ETWeakQuantifierBlock( _, n, instances ), ETStrongQuantifierBlock( _, eigenVariables, child ) ) if n > 0 && eigenVariables.size == n =>
+      case ( ETWeakQuantifierBlock( _, n, instances ),
+        ETStrongQuantifierBlock( _, eigenVariables, child ) ) if n > 0 && eigenVariables.size == n =>
         quantifiedCut( instances, eigenVariables, child )
-      case ( ETStrongQuantifierBlock( _, eigenVariables, child ), ETWeakQuantifierBlock( _, n, instances ) ) if n > 0 && eigenVariables.size == n =>
+      case ( ETStrongQuantifierBlock( _, eigenVariables, child ),
+        ETWeakQuantifierBlock( _, n, instances ) ) if n > 0 && eigenVariables.size == n =>
         quantifiedCut( instances, eigenVariables, child )
     }
 

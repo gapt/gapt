@@ -67,7 +67,7 @@ class ExpansionProofToMG3i( theorySolver: HOLClause => Option[LKProof] )( implic
   }
 
   private def tryTheory( theory: Theory, expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
-    quiet( theorySolver( expSeq collect { case ETAtom( atom, _ ) => atom } ) ).map {
+    quiet( theorySolver( expSeq collect { case ETAtom( atom: Atom, _ ) => atom } ) ).map {
       Right( _ )
     }
 
@@ -303,14 +303,14 @@ class ExpansionProofToMG3i( theorySolver: HOLClause => Option[LKProof] )( implic
   private def tryPropag( theory: Theory, expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] = {
     lazy val antClause = Sequent( expSeq.shallow.antecedent.collect { case a: Atom => a }, Vector() )
     expSeq.zipWithIndex.elements.view.flatMap {
-      case ( ETImp( ETAtom( f, _ ), g ), i: Ant ) =>
+      case ( ETImp( ETAtom( f: Atom, _ ), g ), i: Ant ) =>
         solveAtomic( antClause :+ f ).map { p1 =>
           if ( !p1.conclusion.succedent.contains( f ) ) Right( p1 )
           else mapIf( solve( theory, expSeq.updated( i, g ) ), g.shallow, g.polarity ) { p2 =>
             ImpLeftRule( p1, p2, f --> g.shallow )
           }
         }
-      case ( ETNeg( ETAtom( f, _ ) ), _: Ant ) =>
+      case ( ETNeg( ETAtom( f: Atom, _ ) ), _: Ant ) =>
         solveAtomic( antClause :+ f ).map { p1 =>
           Right( if ( !p1.conclusion.succedent.contains( f ) ) p1
           else NegLeftRule( p1, f ) )
@@ -440,7 +440,7 @@ class ExpansionProofToMG3i( theorySolver: HOLClause => Option[LKProof] )( implic
     } yield ev ).toSet
 
     theory.cuts.zipWithIndex collectFirst {
-      case ( ETImp( cut1, cut2 ), i ) if freeVariables( cut1.shallow ) intersect upcomingEVs isEmpty =>
+      case ( ETCut.Cut( cut1, cut2 ), i ) if freeVariables( cut1.shallow ) intersect upcomingEVs isEmpty =>
         val newCuts = theory.cuts.zipWithIndex.filter { _._2 != i }.map { _._1 }
         solve( Theory( newCuts, theory.inductions ), expSeq :+ cut1 ) flatMap { p1 =>
           if ( !p1.conclusion.contains( cut1.shallow, Polarity.InSuccedent ) ) Right( p1 )

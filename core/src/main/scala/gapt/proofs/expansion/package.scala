@@ -21,22 +21,4 @@ package object expansion {
         reduceOption( ETOr( _, _ ) ).
         getOrElse( ETBottom( polarity ) )
   }
-
-  implicit val expansionTreesAreClosedUnderAdmissibleSubstitutions: ClosedUnderSub[ExpansionTree] = expansionTreeSubstitution
-  implicit val expansionProofsAreClosedUnderSubstitution: ClosedUnderSub[ExpansionProof] = expansionProofSubstitution
-
-  implicit object expansionTreesAreReplaceable extends ClosedUnderReplacement[ExpansionTree] {
-    override def replace( proof: ExpansionTree, p: PartialFunction[Expr, Expr] ) = replaceET( proof, p )
-
-    def names( proof: ExpansionTree ) =
-      proof.subProofs flatMap {
-        case p: ETSkolemQuantifier => containedNames( p.shallow ) ++ containedNames( p.skolemDef )
-        case p: ETStrongQuantifier => containedNames( p.shallow ) + p.eigenVariable
-        case p                     => containedNames( p.shallow )
-      }
-  }
-  implicit object expansionProofsAreReplaceable extends ClosedUnderReplacement[ExpansionProof] {
-    override def replace( proof: ExpansionProof, p: PartialFunction[Expr, Expr] ) = replaceET( proof, p )
-    def names( proof: ExpansionProof ) = containedNames( proof.expansionSequent )
-  }
 }

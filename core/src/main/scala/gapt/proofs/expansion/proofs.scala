@@ -1,7 +1,8 @@
-package gapt.proofs.expansion2
+package gapt.proofs.expansion
 
 import gapt.expr._
 import gapt.expr.hol.SkolemFunctions
+import gapt.formats.babel.BabelSignature
 import gapt.proofs.context.Context
 import gapt.proofs.{ Checkable, HOLSequent, Sequent }
 import gapt.utils.linearizeStrictPartialOrder
@@ -63,6 +64,10 @@ case class ExpansionProof( expansionSequent: Sequent[ExpansionTree] ) {
     expansionSequent.filterNot( et => ETCut.isCutExpansion( et ) || ETInduction.isInductionAxiomExpansion( et ) )
   def theoryPart( implicit ctx: Context ): ExpansionSequent =
     expansionSequent.filter( et => ETCut.isCutExpansion( et ) || ETInduction.isInductionAxiomExpansion( et ) )
+
+  override def toString: String = toSigRelativeString
+  def toSigRelativeString( implicit sig: BabelSignature ): String =
+    expansionSequent.map( _.toSigRelativeString ).toString
 }
 
 object ExpansionProof {

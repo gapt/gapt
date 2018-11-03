@@ -6,8 +6,8 @@ import gapt.utils.Doc
 import Doc._
 
 class ExpansionTreePrettyPrinter( sig: BabelSignature ) extends BabelExporter( unicode = true, sig = sig ) {
-  def export( et: ExpansionTree ): String =
-    group( show( et, Map[String, VarOrConst]() )._1.inPrec( 0 ) ).render( lineWidth )
+  def export( et: ExpansionTree ): Doc =
+    group( show( et, Map[String, VarOrConst]() )._1.inPrec( 0 ) )
 
   def addPol( doc: Doc, pol: Polarity ) =
     doc <> ( if ( pol.positive ) "+" else "-" )
