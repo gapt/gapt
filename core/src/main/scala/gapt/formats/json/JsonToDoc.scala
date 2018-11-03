@@ -30,8 +30,7 @@ object JsonToDoc {
         val c = value.charAt( i )
 
         if ( ( c == '"' || c == '\\' || c == '\b' || c == '\f' || c == '\n' || c == '\r' || c == '\t' ) ||
-          Character.isISOControl( c ) ||
-          c.toInt > 127 ) {
+          Character.isISOControl( c ) ) {
           writer.append( value, offset, i )
           writer.append( '\\' )
           c match {
