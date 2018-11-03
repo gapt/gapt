@@ -184,7 +184,7 @@ object evaluate {
 
 object parse {
   def apply( contents: String ): Document =
-    ( document( contents.lines.toList ): @unchecked ) match {
+    ( document( contents.linesIterator.toList ): @unchecked ) match {
       case Some( ( doc, Nil ) ) => doc
     }
 

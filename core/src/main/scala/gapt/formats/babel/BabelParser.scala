@@ -158,7 +158,7 @@ object BabelParser {
           case ( _, i ) if i == end - 1               => '╛'
           case ( _, i ) if begin < i && i < end       => '═'
           case ( _, _ )                               => ' '
-        }.mkString.lines.zip( text.lines ).
+        }.mkString.linesIterator.zip( text.linesIterator ).
         map {
           case ( markers, code ) if markers.trim.nonEmpty => s"  $code\n  $markers\n"
           case ( _, code )                                => s"  $code\n"
