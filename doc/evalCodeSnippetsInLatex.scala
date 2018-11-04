@@ -79,7 +79,7 @@ class CommandEvaluator {
   val outPrintStream = new PrintStream( new WriterOutputStream( outWriter ), true )
 
   // toString() of lambdas includes the hashcode
-  val lambdaRegex = """(?<= )[A-Za-z.0-9]+\$\$Lambda\$\d+/\d+@[0-9a-f]+""".r
+  val lambdaRegex = """\b[A-Za-z.0-9$]+\$\$\$?Lambda\$\d+/(\d+|0x[0-9a-f]+)@[0-9a-f]+""".r
   // "... 82 elided" is different between compile server and my machine
   val elidedRegex = """... \d+ elided""".r
   def getOutput: String = {
