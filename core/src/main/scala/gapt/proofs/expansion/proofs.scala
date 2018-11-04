@@ -52,7 +52,11 @@ case class ExpansionProof( expansionSequent: Sequent[ExpansionTree] ) {
     result.result()
   }
 
-  def size: Int = subProofs.size
+  def size: Int = {
+    var result = 0
+    for ( et <- expansionSequent; _ <- et.term ) result += 1
+    result
+  }
 
   def cuts: Vector[ETCut.Cut] =
     expansionSequent.antecedent.flatMap { case ETCut( cuts ) => cuts case _ => Seq() }
