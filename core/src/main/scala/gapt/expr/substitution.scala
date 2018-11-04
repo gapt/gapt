@@ -27,6 +27,13 @@ class PreSubstitution( val map: Map[Var, Expr], val typeMap: Map[TVar, Ty] ) {
 
   def isEmpty: Boolean = map.isEmpty && typeMap.isEmpty
 
+  private[expr] def applyToTypeOnly( v: Var ): Var =
+    if ( typeMap.isEmpty ) v else Var( v.name, SubstitutableTy.applySubstitution( this, v.ty ) )
+
+  // Special-cased for performance
+  def apply( v: Var ): Expr =
+    map.getOrElse( v, applyToTypeOnly( v ) )
+
   override def toString: String =
     s"Substitution(${
       ( map.toSeq.sortBy( _._1.name ) ++ typeMap.toSeq.sortBy( _._1.name ) ).
@@ -81,6 +88,9 @@ class Substitution( map: Map[Var, Expr], typeMap: Map[TVar, Ty] = Map() ) extend
    * @return
    */
   def apply[T, U]( x: T )( implicit ev: Substitutable[Substitution, T, U] ): U = ev.applySubstitution( this, x )
+
+  // Special-cased for performance
+  override def apply( v: Var ): Expr = super.apply( v )
 
   /** Compose two substitutions such that `(a compose b)(x) == a(b(x))`. */
   def compose( that: Substitution ): Substitution =
