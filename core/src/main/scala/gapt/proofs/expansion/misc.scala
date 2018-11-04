@@ -78,41 +78,39 @@ object cleanStructureET {
   def apply( es: ExpansionSequent ): ExpansionSequent = es.map( apply )
   def apply( ep: ExpansionProof ): ExpansionProof = ExpansionProof( apply( ep.expansionSequent ) )
 
-  def apply( t: ExpansionTree ): ExpansionTree = t match {
-    case ETMerge( s1, s2 ) => ( apply( s1 ), apply( s2 ) ) match {
-      case ( ETWeakening( _, _ ), r2 ) => r2
-      case ( r1, ETWeakening( _, _ ) ) => r1
-      case ( r1, r2 )                  => ETMerge( r1, r2 )
+  def apply( t: ExpansionTree ): ExpansionTree = ExpansionTree( t.shallow, t.polarity, apply( t.term ) )
+
+  def apply( t: ETt ): ETt = t match {
+    case ETtNullary | ETtAtom | ETtWeakening => t
+    case ETtMerge( s1, s2 ) => ( apply( s1 ), apply( s2 ) ) match {
+      case ( ETtWeakening, r2 ) => r2
+      case ( r1, ETtWeakening ) => r1
+      case ( r1, r2 )           => ETtMerge( r1, r2 )
     }
-    case ETNeg( s ) => apply( s ) match {
-      case ETWeakening( f, p ) => ETWeakening( -f, !p )
-      case r                   => ETNeg( r )
+    case ETtUnary( s ) => apply( s ) match {
+      case ETtWeakening => ETtWeakening
+      case r            => ETtUnary( r )
     }
-    case ETAnd( s1, s2 ) => ( apply( s1 ), apply( s2 ) ) match {
-      case ( ETWeakening( f1, p ), ETWeakening( f2, _ ) ) => ETWeakening( f1 & f2, p )
-      case ( r1, r2 )                                     => ETAnd( r1, r2 )
+    case ETtBinary( s1, s2 ) => ( apply( s1 ), apply( s2 ) ) match {
+      case ( ETtWeakening, ETtWeakening ) => ETtWeakening
+      case ( r1, r2 )                     => ETtBinary( r1, r2 )
     }
-    case ETOr( s1, s2 ) => ( apply( s1 ), apply( s2 ) ) match {
-      case ( ETWeakening( f1, p ), ETWeakening( f2, _ ) ) => ETWeakening( f1 | f2, p )
-      case ( r1, r2 )                                     => ETOr( r1, r2 )
+    case ETtStrong( ev, s ) => apply( s ) match {
+      case ETtWeakening => ETtWeakening
+      case r            => ETtStrong( ev, r )
     }
-    case ETImp( s1, s2 ) => ( apply( s1 ), apply( s2 ) ) match {
-      case ( ETWeakening( f1, _ ), ETWeakening( f2, p ) ) => ETWeakening( f1 --> f2, p )
-      case ( r1, r2 )                                     => ETImp( r1, r2 )
+    case ETtSkolem( st, sf, s ) => apply( s ) match {
+      case ETtWeakening => ETtWeakening
+      case r            => ETtSkolem( st, sf, r )
     }
-    case ETStrongQuantifier( sh, ev, s ) => apply( s ) match {
-      case ETWeakening( _, p ) => ETWeakening( sh, p )
-      case r                   => ETStrongQuantifier( sh, ev, r )
+    case ETtWeak( inst ) =>
+      val cleanInst =
+        for ( ( i, ch ) <- inst; ch_ = apply( ch ) if ch_ != ETtWeakening )
+          yield i -> ch_
+      if ( cleanInst.isEmpty ) ETtWeakening else ETtWeak( cleanInst )
+    case ETtDef( sh, ch ) => apply( ch ) match {
+      case ETtWeakening => ETtWeakening
+      case ch_          => ETtDef( sh, ch_ )
     }
-    case ETSkolemQuantifier( sh, st, sf, s ) => apply( s ) match {
-      case ETWeakening( _, p ) => ETWeakening( sh, p )
-      case r                   => ETSkolemQuantifier( sh, st, sf, r )
-    }
-    case ETWeakQuantifier( sh, inst ) =>
-      val cleanInst = ( Map() ++ inst.mapValues( apply ) ).
-        filter { case ( _, ETWeakening( _, _ ) ) => false case _ => true }
-      if ( cleanInst isEmpty ) ETWeakening( sh, t.polarity )
-      else ETWeakQuantifier( sh, cleanInst )
-    case _ => t
   }
 }
