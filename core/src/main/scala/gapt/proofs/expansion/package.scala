@@ -1,6 +1,6 @@
 package gapt.proofs
 
-import gapt.expr.{ ClosedUnderReplacement, ClosedUnderSub, Expr, Polarity, containedNames }
+import gapt.expr._
 
 package object expansion {
   type ExpansionSequent = Sequent[ExpansionTree]
@@ -11,11 +11,11 @@ package object expansion {
    *
    * @param sequent The expansion sequent that this wraps around.
    */
-  implicit class RichExpansionSequent( val sequent: ExpansionSequent ) {
-    def shallow = sequent map { _.shallow }
-    def deep = sequent map { _.deep }
+  implicit class RichExpansionSequent( private val sequent: ExpansionSequent ) extends AnyVal {
+    def shallow: HOLSequent = sequent.map( _.shallow )
+    def deep: HOLSequent = sequent.map( _.deep )
 
-    def toDisjunction( polarity: Polarity ) =
+    def toDisjunction( polarity: Polarity ): ExpansionTree =
       sequent.map( ETNeg( _ ), identity ).
         elements.
         reduceOption( ETOr( _, _ ) ).
