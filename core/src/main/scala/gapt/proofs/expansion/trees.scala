@@ -296,6 +296,24 @@ object ETWeakQuantifierBlock {
   def unapply( et: ExpansionTree ): Some[( Formula, Int, Map[Seq[Expr], ExpansionTree] )] = {
     val instances = mutable.Map[Seq[Expr], Set[ExpansionTree]]().withDefaultValue( Set() )
 
+    def maxQuants: ETt => Int = {
+      case ETtWeakening => Int.MaxValue
+      case ETtWeak( insts ) =>
+        if ( insts.isEmpty ) Int.MaxValue
+        else insts.values.map( maxQuants ).min match {
+          case Int.MaxValue => Int.MaxValue
+          case d            => d + 1
+        }
+      case ETtMerge( a, b ) =>
+        math.min( maxQuants( a ), maxQuants( b ) )
+      case _ => 0
+    }
+    val numberQuants0 = et.shallow match {
+      case Ex.Block( vs, _ ) if et.polarity.inSuc  => vs.size
+      case All.Block( vs, _ ) if et.polarity.inAnt => vs.size
+    }
+    val numberQuants = math.min( maxQuants( et.term ), numberQuants0 )
+
     def walk( et: ExpansionTree, terms: Seq[Expr], n: Int ): Unit =
       if ( n == 0 ) instances( terms ) += et else et match {
         case ETWeakQuantifier( _, insts ) =>
@@ -305,14 +323,9 @@ object ETWeakQuantifierBlock {
           walk( a, terms, n )
           walk( b, terms, n )
         case ETWeakening( _, _ ) =>
-        case _                   =>
+        case _ =>
+          throw new IllegalStateException
       }
-
-    val numberQuants = et.shallow match {
-      case Ex.Block( vs, _ ) if et.polarity.inSuc  => vs.size
-      case All.Block( vs, _ ) if et.polarity.inAnt => vs.size
-    }
-
     walk( et, Seq(), numberQuants )
 
     Some( ( et.shallow, numberQuants, Map() ++ instances.mapValues( ETMerge( _ ) ) ) )
