@@ -11,6 +11,9 @@ object ETCut {
     def toImp: ExpansionTree = ETImp( left, right )
   }
   object Cut {
+    def apply( cutFormula: Formula, left: ETt, right: ETt ): Cut =
+      ExpansionTree( cutFormula, Polarity.InSuccedent, left ) ->
+        ExpansionTree( cutFormula, Polarity.InAntecedent, right )
     implicit def fromPair( pair: ( ExpansionTree, ExpansionTree ) ): Cut =
       Cut( pair._1, pair._2 )
     implicit val closedUnderSub: ClosedUnderSub[Cut] =
