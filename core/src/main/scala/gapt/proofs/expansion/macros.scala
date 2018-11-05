@@ -20,7 +20,10 @@ object ETCut {
       { case ( sub, Cut( left, right ) ) => Cut( sub( left ), sub( right ) ) }
   }
 
-  val cutAxiom = hof"∀X (X → X)"
+  // We are not using the parser here for performance reasons.
+  // Using the parser incurs a ~500ms startup overhead.
+  val cutAxiom: Formula = { val X = Var( "X", To ); All( X, X --> X ) }
+
   def apply( cuts: Iterable[Cut] ): ExpansionTree =
     ETWeakQuantifier.withMerge( cutAxiom, for ( cut <- cuts ) yield cut.cutFormula -> cut.toImp )
   def apply( child1: ExpansionTree, child2: ExpansionTree ): ExpansionTree =
