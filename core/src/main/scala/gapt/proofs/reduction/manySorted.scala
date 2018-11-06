@@ -216,7 +216,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
     case ( ETAtom( atom: FOLAtom, pol ), _ ) => ETAtom( back( atom, freeVars ), pol )
     case ( ETWeakening( _, pol ), _ )        => ETWeakening( shallow, pol )
     case ( ETMerge( a, b ), _ )              => ETMerge( back( a, shallow, freeVars ), back( b, shallow, freeVars ) )
-    case ( _: ETBottom | _: ETTop, _ )       => et
+    case ( ETBottom( _ ) | ETTop( _ ), _ )   => et
     case ( ETNeg( a ), Neg( sha ) )          => ETNeg( back( a, sha, freeVars ) )
     case ( ETAnd( a, b ), And( sha, shb ) )  => ETAnd( back( a, sha, freeVars ), back( b, shb, freeVars ) )
     case ( ETOr( a, b ), Or( sha, shb ) )    => ETOr( back( a, sha, freeVars ), back( b, shb, freeVars ) )
@@ -351,14 +351,14 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
     case Ex( x, And( grd, f ) )          => Ex( x, unguard( f ) )
   }
   def unguard( et: ExpansionTree ): ExpansionTree = et match {
-    case ETMerge( a, b )        => ETMerge( unguard( a ), unguard( b ) )
-    case ETWeakening( f, pol )  => ETWeakening( unguard( f ), pol )
-    case _: ETAtom              => et
-    case _: ETTop | _: ETBottom => et
-    case ETNeg( a )             => ETNeg( unguard( a ) )
-    case ETAnd( a, b )          => ETAnd( unguard( a ), unguard( b ) )
-    case ETOr( a, b )           => ETOr( unguard( a ), unguard( b ) )
-    case ETImp( a, b )          => ETImp( unguard( a ), unguard( b ) )
+    case ETMerge( a, b )            => ETMerge( unguard( a ), unguard( b ) )
+    case ETWeakening( f, pol )      => ETWeakening( unguard( f ), pol )
+    case ETAtom( _, _ )             => et
+    case ETTop( _ ) | ETBottom( _ ) => et
+    case ETNeg( a )                 => ETNeg( unguard( a ) )
+    case ETAnd( a, b )              => ETAnd( unguard( a ), unguard( b ) )
+    case ETOr( a, b )               => ETOr( unguard( a ), unguard( b ) )
+    case ETImp( a, b )              => ETImp( unguard( a ), unguard( b ) )
     case ETWeakQuantifier( shallow, insts ) =>
       ETWeakQuantifier(
         unguard( shallow ),
@@ -653,14 +653,14 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
   }
 
   def back( et: ExpansionTree ): ExpansionTree = et match {
-    case ETMerge( a, b )        => ETMerge( back( a ), back( b ) )
-    case ETWeakening( f, pol )  => ETWeakening( back( f ), pol )
-    case ETAtom( atom, pol )    => ETAtom( back( atom ).asInstanceOf[Atom], pol )
-    case _: ETTop | _: ETBottom => et
-    case ETNeg( a )             => ETNeg( back( a ) )
-    case ETAnd( a, b )          => ETAnd( back( a ), back( b ) )
-    case ETOr( a, b )           => ETOr( back( a ), back( b ) )
-    case ETImp( a, b )          => ETImp( back( a ), back( b ) )
+    case ETMerge( a, b )            => ETMerge( back( a ), back( b ) )
+    case ETWeakening( f, pol )      => ETWeakening( back( f ), pol )
+    case ETAtom( atom, pol )        => ETAtom( back( atom ).asInstanceOf[Atom], pol )
+    case ETTop( _ ) | ETBottom( _ ) => et
+    case ETNeg( a )                 => ETNeg( back( a ) )
+    case ETAnd( a, b )              => ETAnd( back( a ), back( b ) )
+    case ETOr( a, b )               => ETOr( back( a ), back( b ) )
+    case ETImp( a, b )              => ETImp( back( a ), back( b ) )
     case ETWeakQuantifier( shallow, insts ) =>
       ETWeakQuantifier(
         back( shallow ),

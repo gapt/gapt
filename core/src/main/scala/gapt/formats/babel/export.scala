@@ -207,6 +207,27 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     }
   }
 
+  def sepByComma( args: List[Doc] ): Doc =
+    args match {
+      case Nil       => ""
+      case List( a ) => a
+      case _         => wordwrap( args, "," )
+    }
+
+  def shows(
+    exprs:     List[Expr],
+    knownType: Boolean,
+    bound:     Set[String],
+    t0:        Map[String, VarOrConst] ): ( List[Parenable], Map[String, VarOrConst] ) = {
+    var t1 = t0
+    val exprs_ = for ( expr <- exprs ) yield {
+      val ( expr_, t1_ ) = show( expr, knownType, bound, t1 )
+      t1 = t1_
+      expr_
+    }
+    ( exprs_, t1 )
+  }
+
   def showApps(
     expr:      Expr,
     knownType: Boolean,
@@ -241,19 +262,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
         case _                                  => false
       } )
     }
-    var t1 = t0
-    val args_ = for ( arg <- args ) yield {
-      val ( arg_, t1_ ) = show( arg, argTysKnown, bound, t1 )
-      t1 = t1_
-      arg_
-    }
-
-    def sepByComma( args: List[Doc] ): Doc =
-      args match {
-        case Nil       => ""
-        case List( a ) => a
-        case _         => wordwrap( args, "," )
-      }
+    val ( args_, t1 ) = shows( args, argTysKnown, bound, t0 )
 
     def showFunCall( hd: Parenable, args: List[Parenable] ) =
       Parenable( Precedence.app, hd.inPrec( Precedence.app ) <> nest( group( parens( sepByComma( args.map( _.inPrec( 0 ) ) ) ) ) ) )

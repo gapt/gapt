@@ -114,27 +114,6 @@ object Checkable {
     }
   }
 
-  implicit object expansionProofIsCheckable extends Checkable[ExpansionProof] {
-    import gapt.proofs.expansion._
-
-    def check( ep: ExpansionProof )( implicit ctx: Context ): Unit = {
-      ctx.check( ep.shallow )
-      ep.subProofs.foreach {
-        case ETTop( _ ) | ETBottom( _ ) | ETNeg( _ ) | ETAnd( _, _ ) | ETOr( _, _ ) | ETImp( _, _ ) =>
-        case ETWeakening( _, _ ) | ETAtom( _, _ ) =>
-        case ETWeakQuantifier( _, insts ) =>
-          insts.keys.foreach( ctx.check( _ ) )
-        case ETStrongQuantifier( _, _, _ ) =>
-        case sk @ ETSkolemQuantifier( _, skT, skD, _ ) =>
-          require( ctx.skolemDef( sk.skolemConst ).contains( skD ) )
-          ctx.check( skT )
-        case ETDefinition( sh, child ) =>
-          requireDefEq( sh, child.shallow )( ctx )
-        case ETMerge( _, _ ) =>
-      }
-    }
-  }
-
   implicit object resolutionIsCheckable extends Checkable[ResolutionProof] {
     import gapt.proofs.resolution._
 

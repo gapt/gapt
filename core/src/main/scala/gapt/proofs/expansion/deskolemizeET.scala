@@ -22,7 +22,7 @@ object deskolemizeET {
 
   def replaceByEigenvariables( expansionProof: ExpansionProof ): ExpansionProof = {
     val nameGenerator = rename.awayFrom( containedNames( expansionProof ) )
-    val skolemTerms = expansionProof.subProofs.collect { case e: ETSkolemQuantifier => e.skolemTerm }
+    val skolemTerms = expansionProof.subProofs.collect { case ETSkolemQuantifier( _, skT, _, _ ) => skT }
     val repl = skolemTerms.map { t => ( t, Var( nameGenerator.fresh( "v" ), t.ty ) ) }.toMap
 
     ExpansionProof( replace( expansionProof.expansionSequent, repl ) )
@@ -31,38 +31,31 @@ object deskolemizeET {
   def replace( es: ExpansionSequent, repl: PartialFunction[Expr, Expr] ): ExpansionSequent =
     for ( e <- es ) yield replace( e, repl )
 
-  def replace( et: ExpansionTree, repl: PartialFunction[Expr, Expr] ): ExpansionTree = et match {
-    case ETMerge( child1, child2 ) => ETMerge( replace( child1, repl ), replace( child2, repl ) )
+  def replace( et: ExpansionTree, repl: PartialFunction[Expr, Expr] ): ExpansionTree =
+    ExpansionTree( TermReplacement( et.shallow, repl ), et.polarity, replace( et.term, repl ) )
 
-    case et @ ETWeakening( formula, _ ) =>
-      et.copy( formula = TermReplacement( formula, repl ) )
-    case et @ ETAtom( atom, _ ) =>
-      et.copy( atom = TermReplacement( atom, repl ) )
-    case ETDefinition( sh, ch ) =>
-      ETDefinition( TermReplacement( sh, repl ), replace( ch, repl ) )
+  def replace( et: ETt, repl: PartialFunction[Expr, Expr] ): ETt = et match {
+    case ETtMerge( child1, child2 ) => ETtMerge( replace( child1, repl ), replace( child2, repl ) )
 
-    case _: ETTop | _: ETBottom  => et
-    case ETNeg( child )          => ETNeg( replace( child, repl ) )
-    case ETAnd( child1, child2 ) => ETAnd( replace( child1, repl ), replace( child2, repl ) )
-    case ETOr( child1, child2 )  => ETOr( replace( child1, repl ), replace( child2, repl ) )
-    case ETImp( child1, child2 ) => ETImp( replace( child1, repl ), replace( child2, repl ) )
+    case ETtWeakening               => ETtWeakening
+    case ETtAtom                    => ETtAtom
+    case ETtDef( sh, ch ) =>
+      ETtDef( TermReplacement( sh, repl ), replace( ch, repl ) )
 
-    case ETWeakQuantifier( shallow, instances ) =>
-      ETWeakQuantifier.withMerge(
-        TermReplacement( shallow, repl ),
+    case ETtNullary                  => et
+    case ETtUnary( child )           => ETtUnary( replace( child, repl ) )
+    case ETtBinary( child1, child2 ) => ETtBinary( replace( child1, repl ), replace( child2, repl ) )
+
+    case ETtWeak( instances ) =>
+      ETtWeak.withMerge(
         instances.map {
           case ( selectedTerm, child ) =>
             ( TermReplacement( selectedTerm, repl ), replace( child, repl ) )
         } )
-    case ETStrongQuantifier( shallow, eigenVariable, child ) =>
-      ETStrongQuantifier(
-        TermReplacement( shallow, repl ),
-        TermReplacement( eigenVariable, repl ).asInstanceOf[Var], replace( child, repl ) )
-    case ETSkolemQuantifier( shallow, skolemTerm, skolemDef, child ) =>
-      ETStrongQuantifier(
-        TermReplacement( shallow, repl ),
-        TermReplacement( skolemTerm, repl ).asInstanceOf[Var],
-        replace( child, repl ) )
+    case ETtStrong( eigenVariable, child ) =>
+      ETtStrong( TermReplacement( eigenVariable, repl ).asInstanceOf[Var], replace( child, repl ) )
+    case ETtSkolem( skolemTerm, _, child ) =>
+      ETtStrong( TermReplacement( skolemTerm, repl ).asInstanceOf[Var], replace( child, repl ) )
   }
 }
 

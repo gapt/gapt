@@ -3,6 +3,7 @@
 ## Version 2.13 (unreleased)
 
 * Escargot: discrimination trees and feature vector indices.
+* New term-based expansion tree implementation.
 
 ## Version 2.12 (released on 2018-08-17)
 

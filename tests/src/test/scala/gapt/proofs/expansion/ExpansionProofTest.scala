@@ -87,7 +87,11 @@ class ExpansionProofTest extends Specification with SatMatchers with SequentMatc
     ep.deep must beValidSequent
     val merged = eliminateMerges( ep )
     merged.deep must beValidSequent
-    merged must beLike { case e if !e.subProofs.exists( _.isInstanceOf[ETMerge] ) => ok }
+    merged.subProofs foreach {
+      case ETMerge( _, _ ) => ko
+      case _               => ok
+    }
+    ok
   }
 
 }

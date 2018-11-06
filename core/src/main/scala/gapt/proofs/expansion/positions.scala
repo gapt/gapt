@@ -5,27 +5,7 @@ import gapt.expr.hol.{ HOLPosition, instantiate }
 import gapt.proofs.context.Context
 
 private object getAtHOLPosition {
-  def apply( et: ExpansionTree, pos: HOLPosition ): Set[ExpansionTree] =
-    if ( pos.isEmpty ) Set( et ) else ( ( et, pos.head ): @unchecked ) match {
-      case ( ETMerge( a, b ), _ )                   => apply( a, pos ) union apply( b, pos )
-
-      case ( ETNeg( ch ), 1 )                       => apply( ch, pos.tail )
-
-      case ( ETAnd( l, _ ), 1 )                     => apply( l, pos.tail )
-      case ( ETAnd( _, r ), 2 )                     => apply( r, pos.tail )
-
-      case ( ETOr( l, _ ), 1 )                      => apply( l, pos.tail )
-      case ( ETOr( _, r ), 2 )                      => apply( r, pos.tail )
-
-      case ( ETImp( l, _ ), 1 )                     => apply( l, pos.tail )
-      case ( ETImp( _, r ), 2 )                     => apply( r, pos.tail )
-
-      case ( ETStrongQuantifier( _, _, ch ), 1 )    => apply( ch, pos.tail )
-      case ( ETSkolemQuantifier( _, _, _, ch ), 1 ) => apply( ch, pos.tail )
-      case ( ETWeakQuantifier( _, insts ), 1 )      => insts.values flatMap { apply( _, pos.tail ) } toSet
-
-      case ( ETWeakening( _, _ ), _ )               => Set()
-    }
+  def apply( et: ExpansionTree, pos: HOLPosition ): Set[ExpansionTree] = et( pos )
 }
 
 object replaceAtHOLPosition {
@@ -46,7 +26,6 @@ object replaceWithContext {
    */
   def apply( et: ExpansionTree, replacementContext: Abs, exp: Expr )( implicit ctx: Context = Context() ): ExpansionTree = {
     def newFormula = BetaReduction.betaNormalize( App( replacementContext, exp ) ).asInstanceOf[Formula]
-    def newAtom = newFormula.asInstanceOf[Atom]
 
     ( et, replacementContext ) match {
       case ( ETDefinition( sh, sub ), _ ) =>
@@ -56,8 +35,8 @@ object replaceWithContext {
 
       case ( ETMerge( left, right ), _ )                   => ETMerge( apply( left, replacementContext, exp ), apply( right, replacementContext, exp ) )
       case ( ETTop( _ ), _ ) | ( ETBottom( _ ), _ )        => et
-      case ( et @ ETAtom( formula, _ ), _ )                => et.copy( atom = newAtom )
-      case ( et @ ETWeakening( formula, _ ), _ )           => et.copy( formula = newFormula )
+      case ( ETAtom( _, pol ), _ )                         => ETAtom( newFormula, pol )
+      case ( ETWeakening( _, pol ), _ )                    => ETWeakening( newFormula, pol )
       case ( ETNeg( sub ), Abs( v, Neg( f ) ) )            => ETNeg( apply( sub, Abs( v, f ), exp ) )
       case ( ETAnd( left, right ), Abs( v, And( l, r ) ) ) => ETAnd( apply( left, Abs( v, l ), exp ), apply( right, Abs( v, r ), exp ) )
       case ( ETOr( left, right ), Abs( v, Or( l, r ) ) )   => ETOr( apply( left, Abs( v, l ), exp ), apply( right, Abs( v, r ), exp ) )
