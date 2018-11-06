@@ -116,6 +116,10 @@ object minimizePi2Grammar {
       And( for ( beta <- g.betas ) yield thresholds.exactly.oneOf(
         for ( p <- g.productions if p._1 == beta ) yield prodinc( p ) ) )
 
+    // FIXME: heuristic 1) is broken if the quantified variables do not occur in all atoms
+    // e.g.: ⊢ ∃x ∃y ∃z ∃w (P x y ∧ P y z ∧ P z w)
+    // Here the production τ → r₂(x, β₃, β₂, β₁) is completely acceptable.
+
     // Heuristic 1)
     // Whenever we have a production τ → t[β₃, ‥] then we require that it is actually of the
     // form τ → t[β₃, r₃], where t does not contain any β and β₃ → r₃
