@@ -228,7 +228,7 @@ sbt console
   it is available as a Maven artifact on JCenter.  All you need to do is add
   two lines to your \verb,build.sbt,:
 \begin{lstlisting}
-resolvers += Resolver.jcenterRepo
+resolvers += Resolver.bintrayRepo("gapt", "maven")
 libraryDependencies += "at.logic.gapt" %% "gapt" % "2.12"
 \end{lstlisting}
 
