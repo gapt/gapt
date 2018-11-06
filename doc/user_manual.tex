@@ -1179,12 +1179,10 @@ res0: gapt.proofs.expansion.ExpansionProof =
 ∀x_1 ((x_1:nat) + (0:nat): nat) = x_1
   +^{0} (0 + 0 = 0)-
   +^{s(0)} (s(0) + 0 = s(0))-
-  +^{s(s(0))} (s(s(0)) + 0 = s(s(0)))-,
+  +^{s(s(0): nat)} (s(s(0)) + 0 = s(s(0)))-,
 ∀x_1 ∀y_0 ((x_1:nat) + (s(y_0:nat): nat): nat) = s(x_1 + y_0)
-  +^{0}
-    ∀y_0 0 + s(y_0) = s(0 + y_0)
-    +^{0} (0 + s(0) = s(0 + 0))-
-    +^{s(0)} (0 + s(s(0)) = s(0 + s(0)))-
+  +^{0, 0} (0 + s(0) = s(0 + 0))-
+  +^{0, s(0)} (0 + s(s(0)) = s(0 + s(0)))-
 :-
 ((s(s(0:nat): nat) + 0: nat) = 0 + s(s(0)))+
 
@@ -1202,7 +1200,7 @@ clauses follow from the negation of the sequent:
 \begin{clilisting}
 gapt> val proofs = structuralCNF(hos":- ?z ?x (drinksat z x -> !y drinksat z y)")
 proofs: Set[gapt.proofs.resolution.ResolutionProof] =
-Set([p5] drinksat(z, s_0(z)) ⊢    (AllL(p4, Ant(0), s_0(z), λz ∀y drinksat(z, y)))
+Set([p5] drinksat(z, s_0(z)) ⊢    (AllL(p4, Ant(0), s_0(z)))
 [p4] ∀y drinksat(z, y) ⊢    (ImpL2(p3, Ant(0)))
 [p3] drinksat(z, x) → ∀y drinksat(z, y) ⊢    (ExL(p2, Ant(0), x))
 [p2] ∃x (drinksat(z, x) → ∀y drinksat(z, y)) ⊢    (ExL(p1, Ant(0), z))
@@ -1248,7 +1246,7 @@ p: gapt.proofs.lk.ForallRightRule =
 
 gapt> skolemizeLK(p)
 res1: gapt.proofs.lk.LKProof =
-[p2]  ⊢ ∀x x = x    (ForallSkRightRule(p1, Suc(0), ∀x x = x, s_0, ∀x x = x))
+[p2]  ⊢ ∀x x = x    (ForallSkRightRule(p1, Suc(0), ∀x x = x, s_0))
 [p1]  ⊢ s_0 = s_0    (ReflexivityAxiom(s_0))
 
 \end{clilisting}
@@ -1393,11 +1391,9 @@ expansion: gapt.proofs.expansion.ExpansionProof =
         +^{a} (¬P(x, a)- ∨ Q(x, a)+) →
       ∀x ∃y (¬P(x, y) ∨ Q(x, y))
         +^{b} ∃y (¬P(b, y) ∨ Q(b, y)) +ev^{y} (¬P(b, y)+ ∨ Q(b, y)-)),
-∀x ∀y (P(x, y) → Q(x, y))
-  +^{x} ∀y (P(x, y) → Q(x, y)) +^{a} (P(x, a)+ → Q(x, a)-)
+∀x ∀y (P(x, y) → Q(x, y)) +^{x, a} (P(x, a)+ → Q(x, a)-)
 :-
-∃x ∃y (¬Q(x, y) → ¬P(x, y))
-  +^{b} ∃y (¬Q(b, y) → ¬P(b, y)) +^{y} (¬Q(b, y)+ → ¬P(b, y)-)
+∃x ∃y (¬Q(x, y) → ¬P(x, y)) +^{b, y} (¬Q(b, y)+ → ¬P(b, y)-)
 
 \end{clilisting}
 
@@ -1413,10 +1409,10 @@ proven.  The deep sequent consists of instances of the shallow sequent: the
 sequent.
 \begin{clilisting}
 gapt> expansion.shallow
-res0: gapt.proofs.Sequent[gapt.expr.Formula] = ∀X (X → X), ∀x ∀y (P(x, y) → Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) → ¬P(x, y))
+res0: gapt.proofs.HOLSequent = ∀X (X → X), ∀x ∀y (P(x, y) → Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) → ¬P(x, y))
 
 gapt> expansion.deep
-res1: gapt.proofs.Sequent[gapt.expr.Formula] = ¬P(x, a) ∨ Q(x, a) → ¬P(b, y) ∨ Q(b, y), P(x, a) → Q(x, a) ⊢ ¬Q(b, y) → ¬P(b, y)
+res1: gapt.proofs.HOLSequent = ¬P(x, a) ∨ Q(x, a) → ¬P(b, y) ∨ Q(b, y), P(x, a) → Q(x, a) ⊢ ¬Q(b, y) → ¬P(b, y)
 
 gapt> Sat4j isValid expansion.deep
 res2: Boolean = true
@@ -1430,11 +1426,9 @@ in~\cite{Hetzl2013Expansion}:
 \begin{clilisting}
 gapt> eliminateCutsET(expansion)
 res3: gapt.proofs.expansion.ExpansionProof =
-∀x ∀y (P(x, y) → Q(x, y))
-  +^{b} ∀y (P(b, y) → Q(b, y)) +^{a} (P(b, a)+ → Q(b, a)-)
+∀x ∀y (P(x, y) → Q(x, y)) +^{b, a} (P(b, a)+ → Q(b, a)-)
 :-
-∃x ∃y (¬Q(x, y) → ¬P(x, y))
-  +^{b} ∃y (¬Q(b, y) → ¬P(b, y)) +^{a} (¬Q(b, a)+ → ¬P(b, a)-)
+∃x ∃y (¬Q(x, y) → ¬P(x, y)) +^{b, a} (¬Q(b, a)+ → ¬P(b, a)-)
 
 \end{clilisting}
 
@@ -1814,13 +1808,11 @@ and congruences) from veriT's proof output:
 gapt> val Some(expansionProof) = VeriT getExpansionProof f
 expansionProof: gapt.proofs.expansion.ExpansionProof =
 ∀x ∀y (x = y → y = x)
-  +^{a}
-    ∀y (a = y → y = a)
-    +^{b} ((a = b)+ → (b = a)-)
-    +^{c} ((a = c)+ → (c = a)-),
+  +^{a, b} ((a = b)+ → (b = a)-)
+  +^{a, c} ((a = c)+ → (c = a)-),
 ∀x1 ∀y1 (x1 = y1 ∧ P(x1) → P(y1))
-  +^{b} ∀y1 (b = y1 ∧ P(b) → P(y1)) +^{a} ((b = a)+ ∧ P(b)+ → P(a)-)
-  +^{c} ∀y1 (c = y1 ∧ P(c) → P(y1)) +^{a} ((c = a)+ ∧ P(c)+ → P(a)-)
+  +^{b, a} ((b = a)+ ∧ P(b)+ → P(a)-)
+  +^{c, a} ((c = a)+ ∧ P(c)+ → P(a)-)
 :-
 ((a = b)- ∨ (a = c)-) ∧ P(c)- ∧ P(b)- → P(a)+
 
@@ -2086,11 +2078,7 @@ Some(
 :-
 P(nil:list)- ∧
     (∀x ∀y ∀z (P(x) → P(cons(y:nat, cons(z:nat, x): list)))
-      +^{nil}
-        ∀y ∀z (P(nil) → P(cons(y, cons(z, nil))))
-        +^{0}
-          ∀z (P(nil) → P(cons(0, cons(z, nil))))
-          +^{s(0)} (P(nil)+ → P(cons(0, cons(s(0), nil)))-)) →
+      +^{nil, 0, s(0)} (P(nil)+ → P(cons(0, cons(s(0), nil)))-)) →
   P(cons(0, cons(s(0), nil)))+)
 
 \end{clilisting}
@@ -2253,23 +2241,19 @@ gapt> prooftool(acnf)
 gapt> val et = LKToExpansionProof(acnf)
 et: gapt.proofs.expansion.ExpansionProof =
 ∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0))
-  +^{s(M(v_1, s(M(v_2, v_3))))}
-    ∀y_0
-      (s(M(v_1, s(M(v_2, v_3)))) <= M(s(M(v_1, s(M(v_2, v_3)))), y_0) ∧
-        y_0 <= M(s(M(v_1, s(M(v_2, v_3)))), y_0))
-    +^{s(M(s(M(v_4, v)), v_0))}
-      (s(M(v_1, s(M(v_2, v_3)))) <=
-          M(s(M(v_1, s(M(v_2, v_3)))), s(M(s(M(v_4, v)), v_0))))- ∧
-      (s(M(s(M(v_4, v)), v_0)) <=
-          M(s(M(v_1, s(M(v_2, v_3)))), s(M(s(M(v_4, v)), v_0))))-
-    +^{s(M(v_4, v))}
-      (s(M(v_1, s(M(v_2, v_3)))) <=
-          M(s(M(v_1, s(M(v_2, v_3)))), s(M(v_4, v))))- ∧
-      (s(M(v_4, v)) <= M(s(M(v_1, s(M(v_2, v_3)))), s(M(v_4, v))))-
-  +^{s(M(v_2, v_3))}
-    ∀y_0
-      (s(M(v_2, v_3)) <= M(s(M(v_2, v_3)), y_0) ∧ y_0 <= M(s(M(v_2, v_3)), y_0))
-    +^{s(M(s(M(v_4...
+  +^{s(M(v_1, s(M(v_2, v_3)))), s(M(s(M(v_4, v)), v_0))}
+    (s(M(v_1, s(M(v_2, v_3)))) <=
+        M(s(M(v_1, s(M(v_2, v_3)))), s(M(s(M(v_4, v)), v_0))))- ∧
+    (s(M(s(M(v_4, v)), v_0)) <=
+        M(s(M(v_1, s(M(v_2, v_3)))), s(M(s(M(v_4, v)), v_0))))-
+  +^{s(M(v_1, s(M(v_2, v_3)))), s(M(v_4, v))}
+    (s(M(v_1, s(M(v_2, v_3)))) <= M(s(M(v_1, s(M(v_2, v_3)))), s(M(v_4, v))))- ∧
+    (s(M(v_4, v)) <= M(s(M(v_1, s(M(v_2, v_3)))), s(M(v_4, v))))-
+  +^{s(M(v_2, v_3)), s(M(s(M(v_4, v)), v_0))}
+    (s(M(v_2, v_3)) <= M(s(M(v_2, v_3)), s(M(s(M(v_4, v)), v_0))))- ∧
+    (s(M(s(M(v_4, v)), v_0)) <= M(s(M(v_2, v_3)), s(M(s(M(v_4, v)), v_0))))-
+  +^{s(M(v_2, v_3)), s(M(v_4, v))}
+    (s(M(v_2, v_3)) <= M(s(M(v_2, v_...
 
 gapt> prooftool(et)
 
