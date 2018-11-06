@@ -57,7 +57,7 @@ object nTapeInstances {
     val ( ind1base, ind1step ) = ind1 match {
       case ETImp( ETAnd(
         ETWeakQuantifier( _, base_instances ),
-        ETSkolemQuantifier( _, _, _,
+        ETSkolemQuantifier( _, _,
           ETImp( _, ETWeakQuantifier( f, step_instances ) )
           )
         ), _ ) =>
@@ -69,7 +69,7 @@ object nTapeInstances {
     val ( ind2base, ind2step ) = ind2 match {
       case ETImp( ETAnd(
         ETWeakQuantifier( _, base_instances ),
-        ETSkolemQuantifier( _, _, _,
+        ETSkolemQuantifier( _, _,
           ETImp( _, ETWeakQuantifier( f, step_instances ) )
           )
         ), _ ) =>

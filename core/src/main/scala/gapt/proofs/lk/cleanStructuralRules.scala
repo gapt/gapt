@@ -362,13 +362,13 @@ object cleanStructuralRules {
           ( subProofNew, subConnector * p.getSequentConnector.inv )
       }
 
-    case p @ ForallSkRightRule( subProof, aux, main, skTerm, skDef ) =>
+    case p @ ForallSkRightRule( subProof, aux, main, skTerm ) =>
       val ( subProofNew, subConnector ) = apply_( subProof, reductive )
 
       subConnector.children( aux ) match {
 
         case Seq( a ) => // The inference is performed on a non-weak formula → just do it
-          val proofNew = ForallSkRightRule( subProofNew, a, main, skTerm, skDef )
+          val proofNew = ForallSkRightRule( subProofNew, a, main, skTerm )
           ( proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv )
 
         case _ => // The aux formula is weak → do nothing
@@ -388,13 +388,13 @@ object cleanStructuralRules {
           ( subProofNew, subConnector * p.getSequentConnector.inv )
       }
 
-    case p @ ExistsSkLeftRule( subProof, aux, main, skTerm, skDef ) =>
+    case p @ ExistsSkLeftRule( subProof, aux, main, skTerm ) =>
       val ( subProofNew, subConnector ) = apply_( subProof, reductive )
 
       subConnector.children( aux ) match {
 
         case Seq( a ) => // The inference is performed on a non-weak formula → just do it
-          val proofNew = ExistsSkLeftRule( subProofNew, a, main, skTerm, skDef )
+          val proofNew = ExistsSkLeftRule( subProofNew, a, main, skTerm )
           ( proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv )
 
         case _ => // The aux formula is weak → do nothing

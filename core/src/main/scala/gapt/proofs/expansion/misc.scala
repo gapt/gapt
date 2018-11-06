@@ -99,9 +99,9 @@ object cleanStructureET {
       case ETtWeakening => ETtWeakening
       case r            => ETtStrong( ev, r )
     }
-    case ETtSkolem( st, sf, s ) => apply( s ) match {
+    case ETtSkolem( st, s ) => apply( s ) match {
       case ETtWeakening => ETtWeakening
-      case r            => ETtSkolem( st, sf, r )
+      case r            => ETtSkolem( st, r )
     }
     case ETtWeak( inst ) =>
       val cleanInst =

@@ -58,8 +58,8 @@ class makeEqualityExplicit( debugging: Boolean ) extends FreshHyp {
             rwrHyp,
             Bound1( aux, if ( main.inAnt ) Ax( main, aux ) else go( q, lctx.up1( p ) ).inst( aux ) ),
             Bound1( rwrHyp, if ( main.inSuc ) Ax( rwrHyp, main ) else go( q, lctx.up1( p ) ).inst( rwrHyp ) ) ) ) ) ) )
-      case AllSk( main, term, skDef, q ) => AllSk( main, term, skDef, go( q, lctx.up1( p ) ) )
-      case Def( main, f, q )             => Def( main, f, go( q, lctx.up1( p ) ) )
+      case AllSk( main, term, q ) => AllSk( main, term, go( q, lctx.up1( p ) ) )
+      case Def( main, f, q )      => Def( main, f, go( q, lctx.up1( p ) ) )
       case Ind( main, f, term, cases ) =>
         Ind( main, f, term, cases.zipWithIndex.map { case ( c, i ) => c.copy( q = go( c.q, lctx.upn( p, i ) ) ) } )
     }

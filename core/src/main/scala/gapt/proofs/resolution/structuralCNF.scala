@@ -114,11 +114,11 @@ class Clausifier(
       case ( All( x, a ), i: Suc ) if !propositional =>
         AllR( p, i, rename( x, freeVariables( p.conclusion ) ) )
       case ( f @ All( x, a ), i: Ant ) if !propositional =>
-        val ( skolemTerm, skolemizedFormula ) = getSkolemInfo( f, x )
-        AllL( p, i, skolemTerm, skolemizedFormula )
+        val ( skolemTerm, _ ) = getSkolemInfo( f, x )
+        AllL( p, i, skolemTerm )
       case ( f @ Ex( x, a ), i: Suc ) if !propositional =>
-        val ( skolemTerm, skolemizedFormula ) = getSkolemInfo( f, x )
-        ExR( p, i, skolemTerm, skolemizedFormula )
+        val ( skolemTerm, _ ) = getSkolemInfo( f, x )
+        ExR( p, i, skolemTerm )
 
       case ( Top(), i: Ant )              => TopL( p, i )
       case ( Bottom(), i: Suc )           => BottomR( p, i )

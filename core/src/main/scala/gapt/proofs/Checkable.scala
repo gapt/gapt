@@ -93,7 +93,9 @@ object Checkable {
             s"Induction rule has incorrect constructors: ${ctrsInProof.mkString( ", " )}\n" +
               s"Expected: ${ctrsInCtx.mkString( ", " )}" )
         case sk: SkolemQuantifierRule =>
-          require( ctx.skolemDef( sk.skolemConst ).contains( sk.skolemDef ) )
+          val Some( skolemDef ) = ctx.skolemDef( sk.skolemConst )
+          val expectedMain = BetaReduction.betaNormalize( skolemDef( sk.skolemArgs ) )
+          require( expectedMain == sk.mainFormula, s"Main formula should be $expectedMain, but is ${sk.mainFormula}" )
           ctx.check( sk.skolemTerm )
         case StrongQuantifierRule( _, _, _, _, _ ) =>
         case _: ReflexivityAxiom | _: LogicalAxiom =>
@@ -129,7 +131,8 @@ object Checkable {
         case Defn( df, by )             => require( ctx.isDefEq( df, by ) )
         case _: WeakQuantResolutionRule =>
         case q: SkolemQuantResolutionRule =>
-          require( ctx.skolemDef( q.skolemConst ).contains( q.skolemDef ) )
+          val Some( skolemDef ) = ctx.skolemDef( q.skolemConst )
+          require( BetaReduction.betaNormalize( skolemDef( q.skolemArgs ) ) == q.subProof.conclusion( q.idx ) )
           ctx.check( q.skolemTerm )
         case DefIntro( _, _, definition, _ ) =>
           requireDefEq( definition.what, definition.by )( ctx )

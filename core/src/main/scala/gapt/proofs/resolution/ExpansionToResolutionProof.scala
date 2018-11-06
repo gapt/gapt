@@ -40,10 +40,10 @@ object ExpansionToResolutionProof {
       case ( ETOr( a, b ), i: Suc )   => clausify( es.delete( i ) :+ a :+ b, OrR( p, i ) )
       case ( ETImp( a, b ), i: Suc )  => clausify( a +: es.delete( i ) :+ b, ImpR( p, i ) )
 
-      case ( ETSkolemQuantifier( sh, skTerm, skDef, child ), i: Ant ) =>
-        clausify( child +: es.delete( i ), AllL( p, i, skTerm, skDef ) )
-      case ( ETSkolemQuantifier( sh, skTerm, skDef, child ), i: Suc ) =>
-        clausify( es.delete( i ) :+ child, ExR( p, i, skTerm, skDef ) )
+      case ( ETSkolemQuantifier( sh, skTerm, child ), i: Ant ) =>
+        clausify( child +: es.delete( i ), AllL( p, i, skTerm ) )
+      case ( ETSkolemQuantifier( sh, skTerm, child ), i: Suc ) =>
+        clausify( es.delete( i ) :+ child, ExR( p, i, skTerm ) )
     }
 
   private def tryNAry( es: ExpansionSequent, p: ResolutionProof ): Option[Set[ResolutionProof]] =

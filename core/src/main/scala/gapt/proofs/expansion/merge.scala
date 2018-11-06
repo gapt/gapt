@@ -53,7 +53,7 @@ private class MergeNode {
 
   var defs: mutable.Map[Formula, MergeNode] = _
 
-  var skolems: mutable.Map[( Expr, Expr ), MergeNode] = _
+  var skolems: mutable.Map[Expr, MergeNode] = _
 
   def toETt: ETt = {
     var result: ETt = null
@@ -67,7 +67,7 @@ private class MergeNode {
     if ( weak != null ) write( ETtWeak( Map() ++ weak.mapValues( _.toETt ) ) )
     if ( strongEV != null ) write( ETtStrong( strongEV, strongChild.toETt ) )
     if ( defs != null ) for ( ( sh, ch ) <- defs ) write( ETtDef( sh, ch.toETt ) )
-    if ( skolems != null ) for ( ( ( skT, skD ), ch ) <- skolems ) write( ETtSkolem( skT, skD, ch.toETt ) )
+    if ( skolems != null ) for ( ( skT, ch ) <- skolems ) write( ETtSkolem( skT, ch.toETt ) )
     if ( result == null ) ETtWeakening else result
   }
 
@@ -92,7 +92,7 @@ private class MergeNode {
           weak.getOrElseUpdate( inst, new MergeNode ).add( ch )
       case ETtStrong( eigenVar, child ) =>
         if ( skolems != null ) {
-          val ( ( skT, _ ), merger ) = skolems.head
+          val ( skT, merger ) = skolems.head
           subst.add( eigenVar, skT )
           merger.add( child )
         } else {
@@ -107,16 +107,16 @@ private class MergeNode {
       case ETtDef( shallow, child ) =>
         if ( defs == null ) defs = mutable.Map.empty
         defs.getOrElseUpdate( shallow, new MergeNode ).add( child )
-      case ETtSkolem( skTerm, skDef, child ) =>
+      case ETtSkolem( skTerm, child ) =>
         if ( strongEV != null ) {
           require( skolems == null )
           subst.add( strongEV, skTerm )
-          skolems = mutable.Map( ( skTerm, skDef ) -> strongChild )
+          skolems = mutable.Map( skTerm -> strongChild )
           strongChild = null
           strongEV = null
         }
         if ( skolems == null ) skolems = mutable.Map.empty
-        skolems.getOrElseUpdate( ( skTerm, skDef ), new MergeNode ).add( child )
+        skolems.getOrElseUpdate( skTerm, new MergeNode ).add( child )
     }
 }
 private object MergeNode {

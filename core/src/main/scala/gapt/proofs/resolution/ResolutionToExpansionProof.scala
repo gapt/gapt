@@ -261,7 +261,7 @@ object ResolutionToExpansionProof {
             ETtMerge( ess.map( _._2( j ) ) ) ).toSet )
 
       case p: SkolemQuantResolutionRule =>
-        prop1s( p, ( s, et ) => ETtSkolem( s( p.skolemTerm ), p.skolemDef, et ) )
+        prop1s( p, ( s, et ) => ETtSkolem( s( p.skolemTerm ), et ) )
     }
 
     for ( ( splAtom, defn ) <- splitDefn )

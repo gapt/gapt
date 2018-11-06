@@ -2,6 +2,7 @@ package gapt.formats.tptp
 
 import gapt.expr._
 import gapt.expr.hol.{ instantiate, universalClosure }
+import gapt.proofs.context.Context
 import gapt.proofs.resolution._
 
 import scala.collection.mutable
@@ -69,7 +70,7 @@ object resolutionToTptp {
     }
   }
 
-  def apply( proof: ResolutionProof ): TptpFile = {
+  def apply( proof: ResolutionProof )( implicit ctx: Context ): TptpFile = {
     val inputs = Seq.newBuilder[TptpInput]
 
     val defMap = mutable.Map[Const, String]()

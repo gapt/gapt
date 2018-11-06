@@ -22,7 +22,7 @@ object deskolemizeET {
 
   def replaceByEigenvariables( expansionProof: ExpansionProof ): ExpansionProof = {
     val nameGenerator = rename.awayFrom( containedNames( expansionProof ) )
-    val skolemTerms = expansionProof.subProofs.collect { case ETSkolemQuantifier( _, skT, _, _ ) => skT }
+    val skolemTerms = expansionProof.subProofs.collect { case ETSkolemQuantifier( _, skT, _ ) => skT }
     val repl = skolemTerms.map { t => ( t, Var( nameGenerator.fresh( "v" ), t.ty ) ) }.toMap
 
     ExpansionProof( replace( expansionProof.expansionSequent, repl ) )
@@ -54,7 +54,7 @@ object deskolemizeET {
         } )
     case ETtStrong( eigenVariable, child ) =>
       ETtStrong( TermReplacement( eigenVariable, repl ).asInstanceOf[Var], replace( child, repl ) )
-    case ETtSkolem( skolemTerm, _, child ) =>
+    case ETtSkolem( skolemTerm, child ) =>
       ETtStrong( TermReplacement( skolemTerm, repl ).asInstanceOf[Var], replace( child, repl ) )
   }
 }

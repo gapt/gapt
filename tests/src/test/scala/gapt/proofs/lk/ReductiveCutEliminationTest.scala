@@ -687,7 +687,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
   "stuck cut left forall-sk should reduce" in {
     val proof = ( ProofBuilder
       c OpenAssumption( Sequent() :+ ( "" -> hof"A(s)" ) :+ ( "" -> hof"B" ) )
-      u ( ForallSkRightRule( _, Suc( 0 ), hof"!x A(x)", le"s", hof"!x A(x)" ) )
+      u ( ForallSkRightRule( _, Suc( 0 ), hof"!x A(x)", le"s" ) )
       c OpenAssumption( ( "" -> hof"!x A(x)" ) +: Sequent() )
       b ( CutRule( _, _, hof"!x A(x)" ) )
       c OpenAssumption( ( "" -> hof"B" ) +: Sequent() )
@@ -701,7 +701,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     val proof = ( ProofBuilder
       c OpenAssumption( Sequent() :+ ( "" -> hof"?x A(x)" ) )
       c OpenAssumption( ( "" -> hof"A(s)" ) +: Sequent() :+ ( "" -> hof"B" ) )
-      u ( ExistsSkLeftRule( _, Ant( 0 ), hof"?x A(x)", le"s", hof"?x A(x)" ) )
+      u ( ExistsSkLeftRule( _, Ant( 0 ), hof"?x A(x)", le"s" ) )
       b ( CutRule( _, _, hof"?x A(x)" ) )
       c OpenAssumption( ( "" -> hof"B" ) +: Sequent() )
       b ( CutRule( _, _, hof"B" ) ) qed )
@@ -714,7 +714,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     val proof = ( ProofBuilder
       c OpenAssumption( Sequent() :+ ( "" -> hof"B" ) )
       c OpenAssumption( ( "" -> hof"B" ) +: Sequent() :+ ( "" -> hof"A(s)" ) )
-      u ( ForallSkRightRule( _, Suc( 0 ), hof"!x A(x)", le"s", hof"!x A(x)" ) )
+      u ( ForallSkRightRule( _, Suc( 0 ), hof"!x A(x)", le"s" ) )
       c OpenAssumption( ( "" -> hof"!x A(x)" ) +: Sequent() )
       b ( CutRule( _, _, hof"!x A(x)" ) )
       b ( CutRule( _, _, hof"B" ) ) qed )
@@ -728,7 +728,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       c OpenAssumption( Sequent() :+ ( "" -> hof"B" ) )
       c OpenAssumption( Sequent() :+ ( "" -> hof"?x A(x)" ) )
       c OpenAssumption( ( "" -> hof"B" ) +: ( "" -> hof"A(s)" ) +: Sequent() )
-      u ( ExistsSkLeftRule( _, Ant( 1 ), hof"?x A(x)", le"s", hof"?x A(x)" ) )
+      u ( ExistsSkLeftRule( _, Ant( 1 ), hof"?x A(x)", le"s" ) )
       b ( CutRule( _, _, hof"?x A(x)" ) )
       b ( CutRule( _, _, hof"B" ) ) qed )
     val Some( newProof ) = StuckCutReduction.Right reduce proof

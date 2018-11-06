@@ -47,7 +47,7 @@ class ExpansionTreePrettyPrinter( sig: BabelSignature ) extends BabelExporter( u
       Parenable( Precedence.conj, sh_.inPrec( Precedence.conj ) <+>
         "+ev^{" <> sepByComma( evs_.map( _.inPrec( 0 ) ) ) <> "}" </>
         child_.inPrec( Precedence.conj ) ) -> t3
-    case ETSkolemQuantifier( sh, skTerm, _, child ) =>
+    case ETSkolemQuantifier( sh, skTerm, child ) =>
       val ( sh_, t1 ) = show( sh, true, Set(), t0 )
       val ( skTerm_, t2 ) = show( skTerm, true, Set(), t1 )
       val ( child_, t3 ) = show( child, t2 )

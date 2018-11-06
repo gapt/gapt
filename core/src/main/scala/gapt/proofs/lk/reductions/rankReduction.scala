@@ -282,11 +282,11 @@ object LeftRankForallRightReduction extends CutReduction {
 object LeftRankForallSkRightReduction extends CutReduction {
   override def reduce( cut: CutRule ): Option[LKProof] =
     cut.leftSubProof match {
-      case l @ ForallSkRightRule( subProof, a, main, skTerm, skDef ) if cut.leftSubProof.mainIndices.head != cut.aux1 =>
+      case l @ ForallSkRightRule( subProof, a, main, skTerm ) if cut.leftSubProof.mainIndices.head != cut.aux1 =>
         val aux1Sub = l.getSequentConnector.parent( cut.aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, cut.rightSubProof, cut.aux2 )
         val aNew = cutSub.getLeftSequentConnector.child( a )
-        Some( ForallSkRightRule( cutSub, aNew, main, skTerm, skDef ) )
+        Some( ForallSkRightRule( cutSub, aNew, main, skTerm ) )
 
       case _ => None
     }
@@ -317,11 +317,11 @@ object LeftRankExistsLeftReduction extends CutReduction {
 object LeftRankExistsSkLeftReduction extends CutReduction {
   override def reduce( cut: CutRule ): Option[LKProof] =
     cut.leftSubProof match {
-      case l @ ExistsSkLeftRule( subProof, a, main, skTerm, skDef ) =>
+      case l @ ExistsSkLeftRule( subProof, a, main, skTerm ) =>
         val aux1Sub = l.getSequentConnector.parent( cut.aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, cut.rightSubProof, cut.aux2 )
         val aNew = cutSub.getLeftSequentConnector.child( a )
-        Some( ExistsSkLeftRule( cutSub, aNew, main, skTerm, skDef ) )
+        Some( ExistsSkLeftRule( cutSub, aNew, main, skTerm ) )
 
       case _ => None
     }
@@ -743,11 +743,11 @@ object RightRankForallRightReduction extends CutReduction {
 object RightRankForallSkRightReduction extends CutReduction {
   def reduce( cut: CutRule ): Option[LKProof] =
     cut.rightSubProof match {
-      case r @ ForallSkRightRule( subProof, a, main, skTerm, skDef ) =>
+      case r @ ForallSkRightRule( subProof, a, main, skTerm ) =>
         val aux2Sub = r.getSequentConnector.parent( cut.aux2 )
         val cutSub = CutRule( cut.leftSubProof, cut.aux1, r.subProof, aux2Sub )
         val aNew = cutSub.getRightSequentConnector.child( a )
-        Some( ForallSkRightRule( cutSub, aNew, main, skTerm, skDef ) )
+        Some( ForallSkRightRule( cutSub, aNew, main, skTerm ) )
 
       case _ => None
     }
@@ -780,11 +780,11 @@ object RightRankExistsLeftReduction extends CutReduction {
 object RightRankExistsSkLeftReduction extends CutReduction {
   def reduce( cut: CutRule ): Option[LKProof] =
     cut.rightSubProof match {
-      case r @ ExistsSkLeftRule( subProof, a, main, skTerm, skDef ) if cut.rightSubProof.mainIndices.head != cut.aux2 =>
+      case r @ ExistsSkLeftRule( subProof, a, main, skTerm ) if cut.rightSubProof.mainIndices.head != cut.aux2 =>
         val aux2Sub = r.getSequentConnector.parent( cut.aux2 )
         val cutSub = CutRule( cut.leftSubProof, cut.aux1, r.subProof, aux2Sub )
         val aNew = cutSub.getRightSequentConnector.child( a )
-        Some( ExistsSkLeftRule( cutSub, aNew, main, skTerm, skDef ) )
+        Some( ExistsSkLeftRule( cutSub, aNew, main, skTerm ) )
 
       case _ => None
     }

@@ -34,10 +34,10 @@ sealed abstract class ETt { self: Product =>
       case ETtUnary( a ) => a.foreach( f )
       case ETtBinary( a, b ) =>
         a.foreach( f ); b.foreach( f )
-      case ETtWeak( insts )      => insts.values.foreach( _.foreach( f ) )
-      case ETtStrong( _, ch )    => ch.foreach( f )
-      case ETtSkolem( _, _, ch ) => ch.foreach( f )
-      case ETtDef( _, ch )       => ch.foreach( f )
+      case ETtWeak( insts )   => insts.values.foreach( _.foreach( f ) )
+      case ETtStrong( _, ch ) => ch.foreach( f )
+      case ETtSkolem( _, ch ) => ch.foreach( f )
+      case ETtDef( _, ch )    => ch.foreach( f )
     }
   }
 
@@ -75,7 +75,7 @@ sealed abstract class ETt { self: Product =>
       if ( polarity.positive ) Or( ds ) else And( ds )
     case ( ETtStrong( ev, ch ), Quant( bv, sh, isAll ) ) if isAll == polarity.positive =>
       ch.deep( Substitution( bv -> ev )( sh ), polarity )
-    case ( ETtSkolem( skT, _, ch ), Quant( bv, sh, isAll ) ) if isAll == polarity.positive =>
+    case ( ETtSkolem( skT, ch ), Quant( bv, sh, isAll ) ) if isAll == polarity.positive =>
       ch.deep( Substitution( bv -> skT )( sh ), polarity )
 
     case ( ETtDef( sh, ch ), _ ) => ch.deep( sh, polarity )
@@ -104,10 +104,10 @@ object ETt {
           case eigenVar2: Var =>
             ETtStrong( eigenVar2, applySubstitution( sub, child ) )
           case skTerm =>
-            ETtSkolem( skTerm, ???, applySubstitution( sub, child ) )
+            ETtSkolem( skTerm, applySubstitution( sub, child ) )
         }
-      case ETtSkolem( skTerm, skDef, child ) =>
-        ETtSkolem( sub( skTerm ), skDef, applySubstitution( sub, child ) )
+      case ETtSkolem( skTerm, child ) =>
+        ETtSkolem( sub( skTerm ), applySubstitution( sub, child ) )
       case ETtDef( sh, ch ) =>
         ETtDef( sub( sh ), applySubstitution( sub, ch ) )
     }
@@ -123,13 +123,8 @@ object ETt {
         yield TermReplacement( inst, p ) -> replace( child, p ) )
       case ETtStrong( eigenVar, child ) =>
         ETtStrong( TermReplacement( eigenVar, p ).asInstanceOf[Var], replace( child, p ) )
-      case ETtSkolem( skTerm, skDef, child ) =>
-        val Apps( skConst, _ ) = skTerm
-        val Apps( _, newArgs ) = TermReplacement( skConst, p )
-        ETtSkolem(
-          TermReplacement( skTerm, p ),
-          Abs( newArgs.map( _.asInstanceOf[Var] ), TermReplacement( skDef, p ) ),
-          replace( child, p ) )
+      case ETtSkolem( skTerm, child ) =>
+        ETtSkolem( TermReplacement( skTerm, p ), replace( child, p ) )
       case ETtDef( shallow, child ) => ETtDef( TermReplacement( shallow, p ), replace( child, p ) )
     }
 
@@ -140,9 +135,9 @@ object ETt {
       case ETtBinary( a, b )                   => names( a ) union names( b )
       case ETtWeak( insts ) =>
         ( insts.keys.flatMap( containedNames( _ ) ) ++ insts.values.flatMap( names ) ).toSet
-      case ETtStrong( eigenVar, child )      => names( child ) + eigenVar
-      case ETtSkolem( skTerm, skDef, child ) => names( child ) union containedNames( ( skTerm, skDef ) )
-      case ETtDef( shallow, child )          => names( child ) union containedNames( shallow )
+      case ETtStrong( eigenVar, child ) => names( child ) + eigenVar
+      case ETtSkolem( skTerm, child )   => names( child ) union containedNames( skTerm )
+      case ETtDef( shallow, child )     => names( child ) union containedNames( shallow )
     }
   }
 }
@@ -167,7 +162,7 @@ case class ETtWeak( instances: Map[Expr, ETt] ) extends ETt
 /** Expansion tree term for strong quantifiers with eigenvariables. */
 case class ETtStrong( eigenVar: Var, child: ETt ) extends ETt
 /** Expansion tree term for strong quantifiers with Skolem terms. */
-case class ETtSkolem( skTerm: Expr, skDef: Expr, child: ETt ) extends ETt
+case class ETtSkolem( skTerm: Expr, child: ETt ) extends ETt
 
 /**
  * Expansion tree term for definitions.

@@ -47,7 +47,7 @@ case class ExpansionTree( term: ETt, polarity: Polarity, shallow: Formula ) exte
       case ETImp( a, b ) => seq( a, b )
       case ETWeakQuantifier( _, insts ) => insts.values.toSeq
       case ETStrongQuantifier( _, _, ch ) => seq( ch )
-      case ETSkolemQuantifier( _, _, _, ch ) => seq( ch )
+      case ETSkolemQuantifier( _, _, ch ) => seq( ch )
       case ETDefinition( _, ch ) => seq( ch )
     }
   }
@@ -56,24 +56,24 @@ case class ExpansionTree( term: ETt, polarity: Polarity, shallow: Formula ) exte
 
   def apply( pos: HOLPosition ): Set[ExpansionTree] =
     if ( pos.isEmpty ) Set( this ) else ( ( pos.head, this ): @unchecked ) match {
-      case ( _, ETMerge( a, b ) )                   => a.apply( pos ) union b.apply( pos )
+      case ( _, ETMerge( a, b ) )                => a.apply( pos ) union b.apply( pos )
 
-      case ( 1, ETNeg( ch ) )                       => ch.apply( pos.tail )
+      case ( 1, ETNeg( ch ) )                    => ch.apply( pos.tail )
 
-      case ( 1, ETAnd( l, _ ) )                     => l.apply( pos.tail )
-      case ( 2, ETAnd( _, r ) )                     => r.apply( pos.tail )
+      case ( 1, ETAnd( l, _ ) )                  => l.apply( pos.tail )
+      case ( 2, ETAnd( _, r ) )                  => r.apply( pos.tail )
 
-      case ( 1, ETOr( l, _ ) )                      => l.apply( pos.tail )
-      case ( 2, ETOr( _, r ) )                      => r.apply( pos.tail )
+      case ( 1, ETOr( l, _ ) )                   => l.apply( pos.tail )
+      case ( 2, ETOr( _, r ) )                   => r.apply( pos.tail )
 
-      case ( 1, ETImp( l, _ ) )                     => l.apply( pos.tail )
-      case ( 2, ETImp( _, r ) )                     => r.apply( pos.tail )
+      case ( 1, ETImp( l, _ ) )                  => l.apply( pos.tail )
+      case ( 2, ETImp( _, r ) )                  => r.apply( pos.tail )
 
-      case ( 1, ETStrongQuantifier( _, _, ch ) )    => ch.apply( pos.tail )
-      case ( 1, ETSkolemQuantifier( _, _, _, ch ) ) => ch.apply( pos.tail )
-      case ( 1, ETWeakQuantifier( _, insts ) )      => insts.values.flatMap( _.apply( pos.tail ) ).toSet
+      case ( 1, ETStrongQuantifier( _, _, ch ) ) => ch.apply( pos.tail )
+      case ( 1, ETSkolemQuantifier( _, _, ch ) ) => ch.apply( pos.tail )
+      case ( 1, ETWeakQuantifier( _, insts ) )   => insts.values.flatMap( _.apply( pos.tail ) ).toSet
 
-      case ( _, ETWeakening( _, _ ) )               => Set.empty
+      case ( _, ETWeakening( _, _ ) )            => Set.empty
     }
 
   /** Checks whether this expansion tree is correct (in the given Context). */
@@ -98,10 +98,12 @@ case class ExpansionTree( term: ETt, polarity: Polarity, shallow: Formula ) exte
       case ETStrongQuantifier( _, eigenVar, child ) =>
         ctx.foreach( _.check( eigenVar ) )
         go( child )
-      case ETSkolemQuantifier( sh, skT, skD, child ) =>
+      case ETSkolemQuantifier( sh, skT, child ) =>
         val Apps( skConst: Const, skArgs ) = skT
-        ctx.foreach( ctx => require( ctx.skolemDef( skConst ).contains( skD ) ) )
-        require( BetaReduction.betaNormalize( skD( skArgs ) ) == sh )
+        ctx.foreach { ctx =>
+          val Some( skD ) = ctx.skolemDef( skConst )
+          require( BetaReduction.betaNormalize( skD( skArgs ) ) == sh )
+        }
         go( child )
       case ETDefinition( sh, child ) =>
         ctx.foreach( Checkable.requireDefEq( sh, child.shallow )( _ ) )
@@ -381,24 +383,21 @@ object ETStrongQuantifierBlock {
  * `ETSkolemQuantifier(∀y P(c,y), s_1(c), λx ∀y P(x,y), ETAtom(P(c,s_1(c)), InSuc))`.
  */
 object ETSkolemQuantifier {
-  def apply( shallow: Formula, skolemTerm: Expr, skolemDef: Expr, child: ExpansionTree ): ExpansionTree = {
+  def apply( shallow: Formula, skolemTerm: Expr, child: ExpansionTree ): ExpansionTree = {
     val ( polarity, boundVar, qfFormula ) = shallow match {
       case Ex( x, t )  => ( Polarity.InAntecedent, x, t )
       case All( x, t ) => ( Polarity.InSuccedent, x, t )
     }
 
-    val Apps( _: Const, skolemArgs ) = skolemTerm
-    require( BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) ) == shallow )
-
     require( child.polarity == polarity )
     require( child.shallow == Substitution( boundVar -> skolemTerm )( qfFormula ) )
 
-    ExpansionTree( ETtSkolem( skTerm = skolemTerm, skDef = skolemDef, child = child.term ), polarity, shallow )
+    ExpansionTree( ETtSkolem( skolemTerm, child.term ), polarity, shallow )
   }
 
-  def unapply( et: ExpansionTree ): Option[( Formula, Expr, Expr, ExpansionTree )] = et match {
-    case ExpansionTree( ETtSkolem( skTerm, skDef, child ), polarity, shallow @ Quant( bv, sh, isAll ) ) if isAll == polarity.inSuc =>
-      Some( ( shallow, skTerm, skDef, ExpansionTree( child, polarity, Substitution( bv -> skTerm )( sh ) ) ) )
+  def unapply( et: ExpansionTree ): Option[( Formula, Expr, ExpansionTree )] = et match {
+    case ExpansionTree( ETtSkolem( skTerm, child ), polarity, shallow @ Quant( bv, sh, isAll ) ) if isAll == polarity.inSuc =>
+      Some( ( shallow, skTerm, ExpansionTree( child, polarity, Substitution( bv -> skTerm )( sh ) ) ) )
     case _ => None
   }
 }

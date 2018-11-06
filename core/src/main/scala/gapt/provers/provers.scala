@@ -76,8 +76,10 @@ trait Prover {
   def getExpansionProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] =
     getLKProof( seq ) map { LKToExpansionProof( _ ) } map { eliminateCutsET( _ ) }
 
-  def getEpsilonProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[EpsilonProof] =
-    getExpansionProof( seq ) map { ExpansionProofToEpsilon( _ ) }
+  def getEpsilonProof( seq: HOLSequent )( implicit ctx0: Maybe[MutableContext] ): Option[EpsilonProof] = {
+    implicit val ctx = ctx0.getOrElse( MutableContext.guess( seq ) )
+    getExpansionProof( seq )( ctx ).map( ExpansionProofToEpsilon( _ ) )
+  }
   def getEpsilonProof( formula: Formula )( implicit ctx: Maybe[MutableContext] ): Option[EpsilonProof] =
     getEpsilonProof( Sequent() :+ formula )
 

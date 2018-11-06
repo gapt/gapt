@@ -44,18 +44,19 @@ object replaceWithContext {
       case ( ETStrongQuantifier( formula, x, sub ), _ ) =>
         ETStrongQuantifier( newFormula, x, apply( sub, instReplCtx( replacementContext, x ), exp ) )
 
-      case ( ETSkolemQuantifier( formula, skTerm @ Apps( skConst, skArgs ), skDef, sub ), _ ) =>
+      case ( ETSkolemQuantifier( formula, skTerm @ Apps( skConst, skArgs ), sub ), _ ) =>
         val boundVars = freeVariables( formula ) ++ freeVariables( skTerm ) ++ freeVariables( exp )
         val nameGen = rename.awayFrom( boundVars )
 
         val newSkArgs = skArgs.map( a => nameGen.fresh( Var( "x", a.ty ) ) )
         val lhs = newFormula
+        val Some( skDef ) = ctx.skolemDef( skConst.asInstanceOf[Const] ) // FIXME
         val rhs = BetaReduction.betaNormalize( skDef( newSkArgs ) )
         val subst = syntacticMGU( lhs, rhs, boundVars ).
           getOrElse( throw new IllegalArgumentException( s"Cannot unify $lhs =?= $rhs" ) )
         val newSkTerm = subst( skConst( newSkArgs ) )
 
-        ETSkolemQuantifier( newFormula, newSkTerm, skDef, apply( sub, instReplCtx( replacementContext, newSkTerm ), exp ) )
+        ETSkolemQuantifier( newFormula, newSkTerm, apply( sub, instReplCtx( replacementContext, newSkTerm ), exp ) )
 
       case ( ETWeakQuantifier( formula, instances ), _ ) =>
         ETWeakQuantifier(
@@ -138,7 +139,7 @@ object insertDefinition {
         val shallowNew = definitionApplied
         ETStrongQuantifier( shallowNew, eigen, insertDefinition( child, defn, instReplCtx( replacementContext, eigen ) ) )
 
-      case ( ETSkolemQuantifier( shallow, skolemTerm, skolemDef, child ), Quant( x, f, _ ) ) =>
+      case ( ETSkolemQuantifier( shallow, skolemTerm, child ), Quant( x, f, _ ) ) =>
         throw new IllegalArgumentException( "Skolem nodes are not handled at this time." )
 
       case ( ETWeakQuantifier( shallow, instances ), Quant( _, _, _ ) ) =>
@@ -176,7 +177,7 @@ object moveDefsUpward {
       case ( ETImp( t1, t2 ), Imp( f1, f2 ) )                 => ETImp( apply( t1, f1 ), apply( t2, f2 ) )
       case ( ETStrongQuantifier( _, eig, t ), Quant( _, _, _ ) ) =>
         ETStrongQuantifier( expectedSh, eig, apply( t, instantiate( expectedSh, eig ) ) )
-      case ( ETSkolemQuantifier( _, _, _, _ ), Quant( _, _, _ ) ) =>
+      case ( ETSkolemQuantifier( _, _, _ ), Quant( _, _, _ ) ) =>
         ETDefinition.ifNecessary( expectedSh, tree ) // TODO
       case ( ETWeakQuantifier( _, insts ), Quant( _, _, _ ) ) =>
         ETWeakQuantifier(

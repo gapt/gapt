@@ -83,7 +83,7 @@ class ExpansionProofTest extends Specification with SatMatchers with SequentMatc
         le"sk" -> ETAtom( hoa"P sk", Polarity.InAntecedent ) ) ) +: Sequent()
         :+ ETMerge(
           ETStrongQuantifier( hof"∀x P x", hov"y", ETAtom( hoa"P y", Polarity.InSuccedent ) ),
-          ETSkolemQuantifier( hof"∀x P x", le"sk", le"∀x P x", ETAtom( hoa"P sk", Polarity.InSuccedent ) ) ) )
+          ETSkolemQuantifier( hof"∀x P x", le"sk", ETAtom( hoa"P sk", Polarity.InSuccedent ) ) ) )
     ep.deep must beValidSequent
     val merged = eliminateMerges( ep )
     merged.deep must beValidSequent

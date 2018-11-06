@@ -14,7 +14,7 @@ class RemoveSkolemCongruencesTest extends Specification with SatMatchers {
     val ep = ExpansionProof(
       ETAtom( hoa"a=b", InAntecedent ) +:
         ETWeakQuantifier( hof"!x?y P(x,y)", Map( le"a" ->
-          ETSkolemQuantifier( hof"?y P(a,y)", le"f a", le"^x?y P(x,y)",
+          ETSkolemQuantifier( hof"?y P(a,y)", le"f a",
             ETAtom( hoa"P(a,f a)", InAntecedent ) ) ) ) +:
         Sequent() :+
         ETWeakQuantifier( hof"?x P(b,x)", Map( le"f b" -> ETAtom( hoa"P(b, f b)", InSuccedent ) ) ) )
@@ -29,8 +29,8 @@ class RemoveSkolemCongruencesTest extends Specification with SatMatchers {
       ETAtom( hoa"a=b", InAntecedent ) +:
         ETAtom( hoa"b=c", InAntecedent ) +:
         ETWeakQuantifier( hof"!x?y?z P(x,y,z)", Map( le"a" ->
-          ETSkolemQuantifier( hof"?y?z P(a,y,z)", le"f a", le"^x?y?z P(x,y,z)",
-            ETSkolemQuantifier( hof"?z P(a,f a,z)", le"g a", le"^x?z P(x,f x,z)",
+          ETSkolemQuantifier( hof"?y?z P(a,y,z)", le"f a",
+            ETSkolemQuantifier( hof"?z P(a,f a,z)", le"g a",
               ETAtom( hoa"P(a,f a,g a)", InAntecedent ) ) ) ) ) +:
         Sequent() :+
         ETWeakQuantifier( hof"?x?y P(b,x,y)", Map( le"f b" ->

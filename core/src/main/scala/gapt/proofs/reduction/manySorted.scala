@@ -366,7 +366,7 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
           case ( t, ETImp( _, inst ) ) if et.polarity.inAnt => t -> unguard( inst )
           case ( t, ETAnd( _, inst ) ) if et.polarity.inSuc => t -> unguard( inst )
         } )
-    case ETDefinition( _, _ ) | ETSkolemQuantifier( _, _, _, _ ) | ETStrongQuantifier( _, _, _ ) => throw new IllegalArgumentException
+    case ETDefinition( _, _ ) | ETSkolemQuantifier( _, _, _ ) | ETStrongQuantifier( _, _, _ ) => throw new IllegalArgumentException
   }
 
   def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof =
@@ -665,7 +665,7 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
       ETWeakQuantifier(
         back( shallow ),
         for ( ( t, c ) <- insts ) yield back( t ) -> back( c ) )
-    case ETDefinition( _, _ ) | ETSkolemQuantifier( _, _, _, _ ) | ETStrongQuantifier( _, _, _ ) => throw new IllegalArgumentException
+    case ETDefinition( _, _ ) | ETSkolemQuantifier( _, _, _ ) | ETStrongQuantifier( _, _, _ ) => throw new IllegalArgumentException
   }
 
   def back( expansionProof: ExpansionProof ): ExpansionProof =

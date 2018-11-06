@@ -58,7 +58,7 @@ class unfoldInduction( simp: SimpAdapter, ctx0: ImmutableContext ) {
     case AllL( main, term, q )                            => AllL( main, term, apply( q ) )
     case AllR( main, ev, q )                              => AllR( main, ev, apply( q ) )
     case Eql( main, eq, ltr, rwCtx, q )                   => Eql( main, eq, ltr, rwCtx, apply( q ) )
-    case AllSk( main, term, skDef, q )                    => AllSk( main, term, skDef, apply( q ) )
+    case AllSk( main, term, q )                           => AllSk( main, term, apply( q ) )
     case Def( main, f, q )                                => Def( main, f, apply( q ) )
     case p @ Ind( main, f, term, cases0 ) =>
       val cases = cases0.map( c => c.copy( q = c.q.rename_( simpHyps union p.freeHyps ) ) )

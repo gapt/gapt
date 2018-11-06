@@ -108,7 +108,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
     case ETDefinition( sh, ch ) =>
       addClause( DefinitionRightRule( LogicalAxiom( ch.shallow ), ch.shallow, sh ) )
       addClause( DefinitionLeftRule( LogicalAxiom( ch.shallow ), ch.shallow, sh ) )
-    case ETSkolemQuantifier( _, _, _, _ ) => throw new IllegalArgumentException
+    case ETSkolemQuantifier( _, _, _ ) => throw new IllegalArgumentException
   }
 
   val clausificationClauses = drup.toVector

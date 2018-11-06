@@ -60,7 +60,7 @@ object nonProofTheoreticSkolemTerms {
         case ETtWeak( insts ) =>
           for ( ( i, ch ) <- insts )
             gatherOccs( ch, i :: weak, 1 :: pos )
-        case ETtSkolem( skT, _, ch ) =>
+        case ETtSkolem( skT, ch ) =>
           gatherOccs( ch, weak, 1 :: pos )
           occs( skT ) += ( ( weak, pos ) )
       }
@@ -92,15 +92,15 @@ object moveSkolemNodesToCuts {
           ETWeakQuantifier( sh, for ( ( t, f ) <- insts ) yield t -> go( f ) )
         case ETStrongQuantifier( sh, ev, f ) =>
           ETStrongQuantifier( sh, ev, go( f ) )
-        case ETSkolemQuantifier( sh, t, d, f ) if !bad( t ) =>
-          ETSkolemQuantifier( sh, t, d, go( f ) )
-        case ETSkolemQuantifier( sh, t, d, f ) if et.polarity.inSuc =>
+        case ETSkolemQuantifier( sh, t, f ) if !bad( t ) =>
+          ETSkolemQuantifier( sh, t, go( f ) )
+        case ETSkolemQuantifier( sh, t, f ) if et.polarity.inSuc =>
           val ( a, b ) = tautAtomicExpansionET( sh )
-          cuts += ( ETSkolemQuantifier( sh, t, d, go( f ) ) -> a )
+          cuts += ( ETSkolemQuantifier( sh, t, go( f ) ) -> a )
           b
-        case ETSkolemQuantifier( sh, t, d, f ) if et.polarity.inAnt =>
+        case ETSkolemQuantifier( sh, t, f ) if et.polarity.inAnt =>
           val ( a, b ) = tautAtomicExpansionET( sh )
-          cuts += ( b -> ETSkolemQuantifier( sh, t, d, go( f ) ) )
+          cuts += ( b -> ETSkolemQuantifier( sh, t, go( f ) ) )
           a
       }
     val es = ep.expansionSequent.map( go )

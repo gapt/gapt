@@ -1,7 +1,6 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
-import gapt.expr.hol.SkolemFunctions
 import gapt.formats.babel.BabelSignature
 import gapt.proofs.context.Context
 import gapt.proofs.{ Checkable, HOLSequent, Sequent }
@@ -38,8 +37,7 @@ case class ExpansionProof( expansionSequent: Sequent[ExpansionTree] ) {
       filter { case ( a, b ) => eigenVariables( a ) && eigenVariables( b ) }
   val Right( linearizedDependencyRelation ) = linearizeStrictPartialOrder( eigenVariables, dependencyRelation )
 
-  def skolemFunctions: SkolemFunctions = SkolemFunctions(
-    subTerms.collect { case ETtSkolem( Apps( skC: Const, _ ), skDef, _ ) => skC -> skDef } )
+  def skolemSymbols: Set[Const] = subTerms.collect { case ETtSkolem( Apps( skC: Const, _ ), _ ) => skC }
 
   def subProofs: Set[ExpansionTree] = expansionSequent.elements.view.flatMap( _.subProofs ).toSet
   def shallow: HOLSequent = expansionSequent.map( _.shallow )
@@ -95,7 +93,7 @@ object ExpansionProof {
         case ETtStrong( eigenVar, child ) =>
           for ( b <- below ) out += ( b -> eigenVar )
           go( child, Set( eigenVar ) )
-        case ETtSkolem( skTerm, _, child ) =>
+        case ETtSkolem( skTerm, child ) =>
           go( child, below ++ freeVariables( skTerm ) )
         case ETtDef( _, child ) =>
           go( child, below )

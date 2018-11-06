@@ -42,8 +42,8 @@ object atomizeEquality {
       val cutf = lctx.up1( p )( q.aux )
       val sim = simulate( rwCtx, !ltr, eq, aux, main )
       Cut( cutf, apply( q, lctx.up1( p ) ), Bound1( aux, sim ) )
-    case AllSk( main, term, skDef, q ) =>
-      AllSk( main, term, skDef, apply( q, lctx.up1( p ) ) )
+    case AllSk( main, term, q ) =>
+      AllSk( main, term, apply( q, lctx.up1( p ) ) )
     case Def( main, f, q ) =>
       Def( main, f, apply( q, lctx.up1( p ) ) )
     case Ind( main, f, term, cases ) =>

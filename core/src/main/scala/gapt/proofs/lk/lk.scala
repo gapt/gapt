@@ -987,9 +987,8 @@ trait SkolemQuantifierRule extends UnaryLKProof with CommonRule {
   def aux: SequentIndex
   def mainFormula: Formula
   def skolemTerm: Expr
-  def skolemDef: Expr
 
-  require( freeVariables( skolemDef ).isEmpty )
+  //  require( freeVariables( skolemDef ).isEmpty )
 
   val ( auxFormula, context ) = premise focus aux
 
@@ -998,11 +997,11 @@ trait SkolemQuantifierRule extends UnaryLKProof with CommonRule {
 
   val Apps( skolemConst: Const, skolemArgs ) = skolemTerm
 
-  {
-    val expectedMain = BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) )
-    if ( expectedMain != mainFormula )
-      throw LKRuleCreationException( s"Main formula should be $expectedMain, but is $mainFormula" )
-  }
+  //  {
+  //    val expectedMain = BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) )
+  //    if ( expectedMain != mainFormula )
+  //      throw LKRuleCreationException( s"Main formula should be $expectedMain, but is $mainFormula" )
+  //  }
 
   {
     val expectedAux = BetaReduction.betaNormalize( instantiate( mainFormula, skolemTerm ) )
@@ -1213,7 +1212,7 @@ object ForallRightRule extends ConvenienceConstructor( "ForallRightRule" ) {
  * @param skolemDef The Skolem definition, see [[gapt.expr.hol.SkolemFunctions]]
  */
 case class ForallSkRightRule( subProof: LKProof, aux: SequentIndex, mainFormula: Formula,
-                              skolemTerm: Expr, skolemDef: Expr )
+                              skolemTerm: Expr )
   extends SkolemQuantifierRule {
 
   validateIndices( premise, Seq(), Seq( aux ) )
@@ -1239,13 +1238,14 @@ object ForallSkRightRule extends ConvenienceConstructor( "ForallSkRightRule" ) {
   def apply( subProof: LKProof, skolemTerm: Expr, skolemDef: Expr ): ForallSkRightRule = {
     val Apps( _, skolemArgs ) = skolemTerm
     val mainFormula = BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) ).asInstanceOf[Formula]
+    apply( subProof, mainFormula, skolemTerm )
+  }
+
+  def apply( subProof: LKProof, mainFormula: Formula, skolemTerm: Expr ): ForallSkRightRule = {
     val auxFormula = instantiate( mainFormula, skolemTerm )
-
     val premise = subProof.endSequent
-
     val ( _, indices ) = findAndValidate( premise )( Seq(), Seq( auxFormula ) )
-
-    ForallSkRightRule( subProof, Suc( indices( 0 ) ), mainFormula, skolemTerm, skolemDef )
+    ForallSkRightRule( subProof, Suc( indices( 0 ) ), mainFormula, skolemTerm )
   }
 }
 
@@ -1360,7 +1360,7 @@ object ExistsLeftRule extends ConvenienceConstructor( "ExistsLeftRule" ) {
  * @param skolemDef The Skolem definition, see [[gapt.expr.hol.SkolemFunctions]]
  */
 case class ExistsSkLeftRule( subProof: LKProof, aux: SequentIndex, mainFormula: Formula,
-                             skolemTerm: Expr, skolemDef: Expr )
+                             skolemTerm: Expr )
   extends SkolemQuantifierRule {
 
   validateIndices( premise, Seq( aux ), Seq() )
@@ -1386,13 +1386,14 @@ object ExistsSkLeftRule extends ConvenienceConstructor( "ExistsSkLeftRule" ) {
   def apply( subProof: LKProof, skolemTerm: Expr, skolemDef: Expr ): ExistsSkLeftRule = {
     val Apps( _, skolemArgs ) = skolemTerm
     val mainFormula = BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) ).asInstanceOf[Formula]
+    apply( subProof, mainFormula, skolemTerm )
+  }
+
+  def apply( subProof: LKProof, mainFormula: Formula, skolemTerm: Expr ): ExistsSkLeftRule = {
     val auxFormula = instantiate( mainFormula, skolemTerm )
-
     val premise = subProof.endSequent
-
     val ( indices, _ ) = findAndValidate( premise )( Seq( auxFormula ), Seq() )
-
-    ExistsSkLeftRule( subProof, Ant( indices( 0 ) ), mainFormula, skolemTerm, skolemDef )
+    ExistsSkLeftRule( subProof, Ant( indices( 0 ) ), mainFormula, skolemTerm )
   }
 
   def apply( subProof: LKProof, skolemTerm: Expr )( implicit ctx: Context ): ExistsSkLeftRule = {

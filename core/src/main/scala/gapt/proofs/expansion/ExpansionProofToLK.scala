@@ -163,13 +163,13 @@ class ExpansionProofToLK(
         mapIf( solve( theory, expSeq.updated( i, f ) ), f.shallow, i.polarity ) {
           ForallRightRule( _, sh, ev )
         }
-      case ( ETSkolemQuantifier( sh, skT, skD, f ), i: Ant ) =>
+      case ( ETSkolemQuantifier( sh, skT, f ), i: Ant ) =>
         mapIf( solve( theory, expSeq.updated( i, f ) ), f.shallow, i.polarity ) {
-          ExistsSkLeftRule( _, skT, skD )
+          ExistsSkLeftRule( _, sh, skT )
         }
-      case ( ETSkolemQuantifier( sh, skT, skD, f ), i: Suc ) =>
+      case ( ETSkolemQuantifier( sh, skT, f ), i: Suc ) =>
         mapIf( solve( theory, expSeq.updated( i, f ) ), f.shallow, i.polarity ) {
-          ForallSkRightRule( _, skT, skD )
+          ForallSkRightRule( _, sh, skT )
         }
     }
 

@@ -15,7 +15,7 @@ class deskolemizeETTest extends Specification with SatMatchers {
     val ep = ExpansionProof( Sequent() :+ ETWeakQuantifier( hof"?x (P x -> !y (x = x & P y))", Map(
       le"x_0" -> ETImp(
         ETWeakening( hof"P x_0", Negative ),
-        ETSkolemQuantifier( hof"!y (x_0 = x_0 & P y)", le"s_0 x_0", le"^x !y (x = x & P y)",
+        ETSkolemQuantifier( hof"!y (x_0 = x_0 & P y)", le"s_0 x_0",
           ETAnd( ETAtom( hoa"x_0 = x_0", Positive ), ETAtom( hoa"P (s_0 x_0)", Positive ) ) ) ),
       le"s_0 x_0" -> ETImp(
         ETAtom( hoa"P (s_0 x_0)", Negative ),

@@ -198,7 +198,7 @@ class LLKExporter( val expandTex: Boolean ) {
 
     //TODO: this is only a way to write out the proof, but it cannot be read back in
     // (labels are not handled by llk so far)
-    case ExistsSkLeftRule( p1, aux, main, term, d ) =>
+    case ExistsSkLeftRule( p1, aux, main, term ) =>
       generateProof( p1, "\\EXSKL{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}"
         + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
     /*
@@ -209,7 +209,7 @@ class LLKExporter( val expandTex: Boolean ) {
       generateProof( p1, "\\ALLSKL{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}"
         + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
         */
-    case ForallSkRightRule( p1, aux, main, term, d ) =>
+    case ForallSkRightRule( p1, aux, main, term ) =>
       generateProof( p1, "\\ALLSKR{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}"
         + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
   }

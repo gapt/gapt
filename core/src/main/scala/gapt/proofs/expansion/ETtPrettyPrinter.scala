@@ -45,7 +45,7 @@ class ETtPrettyPrinter( sig: BabelSignature ) extends BabelExporter( unicode = t
       val ( child_, t3 ) = show( child, t2 )
       Parenable( Precedence.quant, "⟨" <> ev_.inPrec( 0 ) <> "⟩ₑᵥ" </>
         child_.inPrec( Precedence.quant - 1 ) ) -> t3
-    case ETtSkolem( skTerm, _, child ) =>
+    case ETtSkolem( skTerm, child ) =>
       val t1 = t0
       val ( skTerm_, t2 ) = show( skTerm, true, Set(), t1 )
       val ( child_, t3 ) = show( child, t2 )

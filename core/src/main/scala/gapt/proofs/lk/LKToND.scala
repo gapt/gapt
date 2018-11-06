@@ -464,7 +464,7 @@ object LKToND {
           exchange( translate( proof, Some( focusMain ) ), focus.map( p.endSequent.apply ) )
         }
 
-      case ForallSkRightRule( subProof, aux, main, skT, skD ) =>
+      case ForallSkRightRule( subProof, aux, main, skT ) =>
         throw new LKToNDTranslationException(
           "ForallSkRightRule",
           "LK proofs containing skolem functions are not supported." )
@@ -485,7 +485,7 @@ object LKToND {
           b( ExistsElimRule( _, _, i, eigen ) ).
           qed
 
-      case ExistsSkLeftRule( subProof, aux, main, skT, skD ) =>
+      case ExistsSkLeftRule( subProof, aux, main, skT ) =>
         throw new LKToNDTranslationException(
           "ExistsSkLeftRule",
           "LK proofs containing skolem functions are not supported." )

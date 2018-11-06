@@ -70,8 +70,8 @@ object Projections {
       case ExistsLeftRule( p, a, eigenvar, qvar ) => handleStrongQuantRule( proof, p, ExistsLeftRule.apply, pred )
       case ForallLeftRule( p, a, f, t, v )        => handleWeakQuantRule( proof, p, a, f, t, v, ForallLeftRule.apply, pred )
       case ExistsRightRule( p, a, f, t, v )       => handleWeakQuantRule( proof, p, a, f, t, v, ExistsRightRule.apply, pred )
-      case ForallSkRightRule( p, a, m, t, d )     => handleSkQuantRule( proof, p, a, m, t, d, ForallSkRightRule.apply, pred )
-      case ExistsSkLeftRule( p, a, m, t, d )      => handleSkQuantRule( proof, p, a, m, t, d, ExistsSkLeftRule.apply, pred )
+      case ForallSkRightRule( p, a, m, t )        => handleSkQuantRule( proof, p, a, m, t, ForallSkRightRule.apply, pred )
+      case ExistsSkLeftRule( p, a, m, t )         => handleSkQuantRule( proof, p, a, m, t, ExistsSkLeftRule.apply, pred )
 
       case DefinitionLeftRule( p, a, m )          => handleDefRule( proof, p, a, m, DefinitionLeftRule.apply, pred )
       case DefinitionRightRule( p, a, m )         => handleDefRule( proof, p, a, m, DefinitionRightRule.apply, pred )
@@ -210,14 +210,14 @@ object Projections {
     } )
   }
 
-  def handleSkQuantRule( proof: LKProof, p: LKProof, a: SequentIndex, m: Formula, t: Expr, d: Expr,
-                         constructor: ( LKProof, SequentIndex, Formula, Expr, Expr ) => LKProof,
+  def handleSkQuantRule( proof: LKProof, p: LKProof, a: SequentIndex, m: Formula, t: Expr,
+                         constructor: ( LKProof, SequentIndex, Formula, Expr ) => LKProof,
                          pred:        Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
     val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
     if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
     else s.map( pm => {
       val List( a_ ) = pickrule( proof, List( p ), List( pm ), List( a ) )
-      constructor( pm, a_, m, t, d )
+      constructor( pm, a_, m, t )
     } )
   }
 

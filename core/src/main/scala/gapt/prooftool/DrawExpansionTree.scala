@@ -554,7 +554,7 @@ object ETStrongQuantifierBlock {
   def unapply( et: ExpansionTree ): Some[( Formula, Int, Map[Seq[Expr], ExpansionTree] )] = et match {
     case ETStrongQuantifier( _, eigen, ETStrongQuantifierBlock( _, depth, children ) ) =>
       Some( ( et.shallow, depth + 1, for ( ( t, child ) <- children ) yield ( eigen +: t, child ) ) )
-    case ETSkolemQuantifier( _, st, _, ETStrongQuantifierBlock( _, depth, children ) ) =>
+    case ETSkolemQuantifier( _, st, ETStrongQuantifierBlock( _, depth, children ) ) =>
       Some( ( et.shallow, depth + 1, for ( ( t, child ) <- children ) yield ( st +: t, child ) ) )
     case _ => Some( ( et.shallow, 0, Map( Seq[Expr]() -> et ) ) )
   }

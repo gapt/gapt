@@ -16,9 +16,9 @@ object removeSkolemCongruences {
     case ETtUnary( a )                       => ETtUnary( repl( m, a ) )
     case ETtBinary( a, b )                   => ETtBinary( repl( m, a ), repl( m, b ) )
     case ETtStrong( ev, ch )                 => ETtStrong( ev, repl( m, ch ) )
-    case ETtSkolem( Apps( skC, skAs ), skD, ch ) =>
+    case ETtSkolem( Apps( skC, skAs ), ch ) =>
       val newSkT = skC( TermReplacement( skAs, m ) )
-      ETtSkolem( newSkT, skD, repl( m, ch ) )
+      ETtSkolem( newSkT, repl( m, ch ) )
     case ETtWeak( insts ) =>
       ETtWeak.withMerge( for ( ( t, ch ) <- insts.view )
         yield TermReplacement( t, m ) -> repl( m, ch ) )
@@ -30,7 +30,7 @@ object removeSkolemCongruences {
       map( et => ETMerge( et, repl( m, et ) ) ) ) )
 
   def getAllPossibleCongruences( ep: ExpansionProof ): Vector[( Expr, Expr )] = {
-    val skSyms = ep.skolemFunctions.skolemDefs.keySet
+    val skSyms = ep.skolemSymbols
     val skTerms = folSubTerms( ep.deep.elements ).collect {
       case skTerm @ Apps( skSym: Const, _ ) if skSyms( skSym ) => skTerm
     }
@@ -42,7 +42,7 @@ object removeSkolemCongruences {
   }
 
   def getCongruencesViaVeriT( ep: ExpansionProof ): Vector[( Expr, Expr )] = {
-    val skSyms = ep.skolemFunctions.skolemDefs.keySet
+    val skSyms = ep.skolemSymbols
     val Some( epwc ) = VeriT.getExpansionProof( ep.deep )
     epwc.expansionSequent.antecedent.flatMap {
       case ETWeakQuantifierBlock( All.Block( _, Imp( _, Eq( Apps( f: Const, _ ), Apps( f_, _ ) ) ) ), n,

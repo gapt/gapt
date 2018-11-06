@@ -12,7 +12,7 @@ package object lk {
     def names( proof: LKProof ) =
       proof.subProofs.flatMap {
         case p: EqualityRule         => containedNames( p.endSequent ) ++ containedNames( p.replacementContext )
-        case p: SkolemQuantifierRule => containedNames( p.endSequent ) ++ containedNames( p.skolemTerm ) ++ containedNames( p.skolemDef )
+        case p: SkolemQuantifierRule => containedNames( p.endSequent ) ++ containedNames( p.skolemTerm )
         case p                       => containedNames( p.endSequent )
       }
   }
