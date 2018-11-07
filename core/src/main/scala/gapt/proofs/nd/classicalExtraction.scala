@@ -254,7 +254,7 @@ object ClassicalExtraction {
       case InductionRule( cases, _, _ ) => cases( 1 ).eigenVars
     }.flatten.map( _.name )
     val ng = new NameGenerator( evs )
-    val lambda = extractCases( proof, ng )( systemT( ctx ) )
+    val lambda = extractCases( proof, ng ) //systemT( ctx ) )
     //val res = lambda( Suc( 0 ) )
     //lambda.antecedent.foreach( e => println( s"abstracting ${e.asInstanceOf[Var]}" ) )
     val res = lambda.antecedent.fold( lambda( Suc( 0 ) ) )( ( agg, v ) => Abs( v.asInstanceOf[Var], agg ) )
@@ -613,6 +613,7 @@ object ClassicalExtraction {
               val delR = r.delete( aux2 ).antecedent
               //val res = delL ++: delR ++: Sequent() :+ le"tryCatch ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
               val res = delL ++: delR ++: Sequent() :+ le"tryCatch(${Abs( varR, r( Suc( 0 ) ) )}, handle($varR($varL), ${l( Suc( 0 ) )}))"
+              println( s"tryCatch.ty: ${res( Suc( 0 ) ).ty}" )
               //println( s"EM0: ${f}" )
               res
           }

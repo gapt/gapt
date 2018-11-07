@@ -4742,10 +4742,49 @@ tryCatch(
   println( "13:" + normalize( le"($efq3)" ) )
   println( "14:" + normalize( le"($tryCatch7)($tryCatch)" ) )
   println( "15:" + normalize( le"$tryCatch8" ) )
-  */
   println( "16:" + normalize( le"$tryCatch9" ) )
-  /*
   println( "17:" + normalize( le"$tryCatch10" ) )
   */
+  /*
+  normalize(
+    le"""
+s(tryCatch(
+  (^(y1: nat>exn) 0),
+  handle(y1(x1:nat),
+    s(0))
+))""" )
+*/
+
+  val pair =
+    le"""
+       (^(x: nat) ^(y: nat)
+         (^(f: nat>nat>exn)
+           (f x y)
+         )
+       )"""
+  val proj1 =
+    le"""
+       (^(p: (nat>nat>exn)>exn)
+         tryCatch(
+          (^(y:nat>exn)
+            efq(p(^(x:nat) efq(y(x))))
+          ),
+          handle(y(x:nat), x)
+         )
+       )
+      """
+  val proj2 =
+    le"""
+       (^(p: (nat>nat>exn)>exn)
+         tryCatch(
+          (^(y:nat>exn)
+            efq(p(^(x:nat) y))
+          ),
+          handle(y(x:nat), x)
+         )
+       )
+      """
+  val classicalPairing = proj2( pair( hoc"0:nat", le"s(0):nat" ) )
+  println( normalize( classicalPairing ) )
 }
 

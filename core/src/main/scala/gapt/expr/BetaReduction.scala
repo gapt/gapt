@@ -83,7 +83,14 @@ case class Normalizer( rules: Set[ReductionRule] ) {
           case Left( app_ )  => app_( as( 1 ) )
           case Right( arg_ ) => as( 1 )( arg_ )
         }
-        val newHandle = Const( "handle", replaceTy( ty, params( 1 ), newCatchB.ty ), params.map( replaceTy( _, params( 1 ), newCatchB.ty ) ) )
+        //val handle = hoc"handle{?a ?c}: exn > ?c > (?a > ?c)"
+        val App( f, arg ) = newCatchB
+        //val newTy = replaceTy( ty, params( 1 ), newCatchB.ty )
+        val ( a ->: c ) = f.ty
+        val newTy = ty"exn" ->: c ->: ( a ->: c )
+        //val newParams = params.map( replaceTy( _, params( 1 ), newCatchB.ty ) )
+        val newParams = List( a, c )
+        val newHandle = Const( "handle", newTy, newParams )
 
         Apps( newHandle, Seq( as( 0 ), newCatchB ) )
 
@@ -104,8 +111,8 @@ case class Normalizer( rules: Set[ReductionRule] ) {
       if ( index == -1 ) {
         None
       } else {
-        val ( front, tc :: back ) = xs.splitAt( index )
-        Some( ( front, tc, back ) )
+        val ( front, efq :: back ) = xs.splitAt( index )
+        Some( ( front, efq, back ) )
       }
     }
   }
@@ -124,36 +131,74 @@ case class Normalizer( rules: Set[ReductionRule] ) {
     }
   }
 
-  def normalize( expr: Expr ): Expr =
-    whnf( expr ) match {
+  def normalize( expr: Expr ): Expr = {
+    //println( s"normalize $expr" )
+    val res = whnf( expr ) match {
       case Apps( hd_, as_ ) =>
         as_ match {
           // raise left
           case SplitEfq( _, Apps( Const( "efq", _, params ), as2_ ), _ ) =>
             println( "raise left" )
-            val newEfq = Const( "efq", TArr( as2_( 0 ).ty, expr.ty ), List( params( 0 ), expr.ty ) )
-            normalize( newEfq( as2_( 0 ) ) )
+            val newEfq = Const( "efq", as2_( 0 ).ty ->: expr.ty, List( expr.ty ) )
+            //val res = normalize( newEfq( as2_( 0 ) ) )
+            val res = normalize( newEfq( normalize( as2_( 0 ) ) ) )
+            res
           // Commuting conversion (left) for try/catch
           case SplitTryCatch( front, Apps( Const( "tryCatch", ty, params ), tryCatchBlocks ), back ) if hd_.toUntypedAsciiString != "handle" =>
-            println( "cc left" )
+            println( s"cc left: commuting ${hd_( front )}" )
+            println( s"before cc left: tryCatch.ty: $ty" )
             //println( s"input:\n$expr" )
             //println( s"commuting:\n${hd_( front )}" )
+
+            //val tryCatch = hoc"tryCatch{?a ?c}: ((?a > exn) > ?c) > (?a > ?c) > ?c"
             val tryCatchBlocksCommuted = tryCatchBlocks.map( commute( _, Left( hd_( front ) ) ) )
-            val Abs( _, tryBlock ) = tryCatchBlocksCommuted( 0 )
-            val tmpTy = replaceTy( ty, params( 1 ), tryBlock.ty )
-            val tmpParams = params.map( replaceTy( _, params( 1 ), tryBlock.ty ) )
-            val res = Apps( Const( "tryCatch", tmpTy, tmpParams ), tryCatchBlocksCommuted ++ back )
-            //println( s"left: res:\n$res" )
+            val ( aTry ->: _ ) ->: cTry = tryCatchBlocksCommuted( 0 ).ty
+            val ( aCatch ->: cCatch ) = tryCatchBlocksCommuted( 1 ).ty
+            assert( aTry == aCatch )
+            assert( cTry == cCatch )
+            val a = aTry
+            val c = cTry
+            val tmpTy = ( ( a ->: ty"exn" ) ->: c ) ->: ( a ->: c ) ->: c
+            //val tmpParams = params.map( replaceTy( _, params( 1 ), tryBlock.ty ) )
+            val tmpParams = List( a, c )
+            val newTryCatch = Const( "tryCatch", tmpTy, tmpParams )
+            val res = Apps( newTryCatch, tryCatchBlocksCommuted ++ back )
+            println( s"after cc left: tryCatch.ty: $tmpTy" )
             normalize( res )
           case _ =>
-            Apps( hd_ match {
+            val nHd = hd_ match {
               case Abs.Block( xs, e ) if xs.nonEmpty =>
                 Abs.Block( xs, normalize( e ) )
               case _ =>
                 hd_
-            }, as_.map( normalize ) )
+            }
+            val nArgs = as_.map( normalize )
+            println( s"hd: $hd_" )
+            println( s"args: ${as_.mkString( "\nnextarg:\n" )}" )
+            println( s"nHd: $nHd" )
+            println( s"nArgs: $nArgs" )
+
+            // raise idem
+            // efq(efq(V))
+            if ( nArgs.length > 0 ) {
+              ( hd_, nArgs( 0 ) ) match {
+                case ( Const( "efq", _, _ ), Apps( Const( "efq", _, _ ), innerArgs ) ) =>
+                  println( "raise idem" )
+                  //nArgs( 0 )
+                  hd_( innerArgs )
+                case _ =>
+                  Apps( nHd, nArgs )
+              }
+            } else
+              Apps( nHd, nArgs )
         }
     }
+    // subject reduction property
+    if ( expr.ty != res.ty )
+      throw new Exception( s"subject reduction property violated: ${expr.ty} != ${res.ty} (expr: $expr, res: $res" )
+    //println( s"result of normalizing $expr\n$res" )
+    res
+  }
 
   @tailrec
   final def whnf( expr: Expr ): Expr =
@@ -169,16 +214,19 @@ case class Normalizer( rules: Set[ReductionRule] ) {
         val n = math.min( as.size, vs.size )
         Some( Apps( Substitution( vs.take( n ) zip as.take( n ) )( Abs.Block( vs.drop( n ), hd_ ) ), as.drop( n ) ) )
       // raise right
-      case hd @ Const( "efq", _, _ ) if as.size > 1 =>
+      case Const( "efq", _, _ ) if as.size > 1 =>
         println( "raise right" )
-        //Some( normalize( hd( as( 0 ) ) ) )
-        Some( hd( as( 0 ) ) )
+        val newEfq = Const( "efq", as( 0 ).ty ->: expr.ty, List( expr.ty ) )
+        Some( newEfq( as( 0 ) ) )
+      //Some( hd( as( 0 ) ) )
       case Const( "efq", _, _ ) =>
-        println( s"raise other:\n$expr" )
+        println( s"raise other: efq const: $hd" )
+        println( s"raise other: args: $as" )
         None
       // Commuting conversion (right) for try/catch
       case Const( "tryCatch", ty, params ) if as.size >= 3 =>
-        println( "cc right" )
+        println( s"cc right: commuting ${as( 2 )}" )
+        println( s"before cc right: tryCatch.ty: $ty" )
         //println( s"input:\n$expr" )
         //println( s"commuting:\n${as( 2 )}" )
         //val tryB = commute( normalize( as( 0 ) ), Right( normalize( as( 2 ) ) ) )
@@ -186,16 +234,18 @@ case class Normalizer( rules: Set[ReductionRule] ) {
         //val catchB = commute( normalize( as( 1 ) ), Right( normalize( as( 2 ) ) ) )
         val catchB = commute( as( 1 ), Right( as( 2 ) ) )
         val Abs( _, arg ) = tryB
-        val res = Apps( Const( "tryCatch", replaceTy( ty, params( 1 ), arg.ty ), params.map( replaceTy( _, params( 1 ), arg.ty ) ) ), List( tryB, catchB ) ++ as.drop( 3 ) )
+        val newTryCatch = Const( "tryCatch", replaceTy( ty, params( 1 ), arg.ty ), params.map( replaceTy( _, params( 1 ), arg.ty ) ) )
+        val res = Apps( newTryCatch, List( tryB, catchB ) ++ as.drop( 3 ) )
         println( s"cc right: res:\n$res" )
+        println( s"after cc right: tryCatch.ty: ${newTryCatch.ty}" )
         //Some( normalize( res ) )
         Some( res )
       case Const( "tryCatch", ty, params ) =>
         val tryB = as( 0 )
         val Abs( exnV, arg ) = tryB
         if ( !freeVariables( arg ).contains( exnV ) ) {
-          println( s"handle simp:\n$tryB" )
           // handle simp
+          println( s"handle simp" )
           Some( arg )
         } else {
           // TODO: make sure not to reduce here before all commuting conversions are done, as.size >= 3 case for cc right is before this case. what about cc left?
@@ -203,20 +253,28 @@ case class Normalizer( rules: Set[ReductionRule] ) {
           // handle/raise
           println( s"free vars: ${freeVariables( arg )}" )
           val res = normalize( arg ) match {
-            case App( Const( "efq", _, _ ), App( thrownExn, thrownVal ) ) =>
+            case ntb @ App( Const( "efq", _, _ ), App( thrownExn, thrownVal ) ) =>
               val App( App( Const( "handle", _, _ ), App( caughtExn, exnVar ) ), catchB ) = as( 1 )
               if ( thrownExn == caughtExn ) {
+                println( s"caught exception $caughtExn" )
                 Some( le"(^${exnVar.asInstanceOf[Var]} $catchB)$thrownVal" )
               } else {
                 // TODO throw further
-                Some( tryB )
+                println( s"throw further: normalized try block: $ntb" )
+                //Some( tryB )
+                Some( ntb )
               }
-            case _ =>
-              throw new Exception( "Expecting a raise in try block." )
+            case t =>
+              // exception var y in FV(V), but not raised
+              println( s"exception var y in FV but not raised. term: $t" )
+              Some( t )
+            //throw new Exception( s"Expecting a raise in try block. Is $t" )
           }
           res
         }
       case hd @ Const( c, _, _ ) =>
+        if ( c == "natRec" )
+          println( "reducing natRec" )
         headMap.get( c ).flatMap {
           case ( rs, whnfArgs, normalizeArgs ) =>
             val as_ = as.zipWithIndex.map {

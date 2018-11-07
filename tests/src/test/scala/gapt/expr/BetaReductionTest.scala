@@ -130,7 +130,7 @@ class BetaReductionTest extends Specification {
     normalize(
       le"""
 s(tryCatch(
-  (^y1 0),
+  (^(y1: nat>exn) 0),
   handle(y1(x1:nat),
     s(0))
 ))""" ) must_== le"s(0)"
@@ -145,7 +145,7 @@ s(tryCatch(
     normalize(
       le"""
 s(tryCatch(
-  (^y1
+  (^(y1: nat>exn)
     efq(y1(0)): nat),
   handle(y1(x1:nat),
     s(0))
@@ -161,7 +161,7 @@ s(tryCatch(
     normalize(
       le"""
 tryCatch(
-  (^y1
+  (^(y1: nat>exn)
     (^z efq(y1(z)): nat)),
   handle(y1(x1:nat),
     (^(w:nat) s(w)))
@@ -180,16 +180,72 @@ tryCatch(
     normalize(
       le"""
 tryCatch(
-  (^y1
+  (^(y1: nat>exn)
     (efq(y1(0:nat)): nat > nat)),
   handle(y1(x1:nat),
     (^(z:nat) s(z)))
   )(tryCatch(
-      (^y0
+      (^(y0: nat>exn)
         efq(y0(s(x1))): nat),
       handle(y0(x0:nat),
         (x0 + x1))
   )
 )""" ) must_== le"s((s(0:nat): nat) + 0: nat)"
+  }
+  "normalize classical pairing pi1" in {
+    import gapt.proofs.Context
+    import gapt.proofs.nd.ClassicalExtraction
+    var ctx = Context.default
+    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+
+    implicit val ctxClassical = ClassicalExtraction.systemT( ctx )
+    val pair =
+      le"""
+     (^(x: nat) ^(y: nat)
+       (^(f: nat>nat>exn)
+         (f x y)
+       )
+     )"""
+    val pi1 =
+      le"""
+     (^(p: (nat>nat>exn)>exn)
+       tryCatch(
+        (^(y:nat>exn)
+          efq(p(^(x:nat) efq(y(x))))
+        ),
+        handle(y(x:nat), x)
+       )
+     )
+    """
+    val classicalPairing = pi1( pair( hoc"0:nat", le"s(0):nat" ) )
+    normalize( classicalPairing ) must_== le"0: nat"
+  }
+  "normalize classical pairing pi2" in {
+    import gapt.proofs.Context
+    import gapt.proofs.nd.ClassicalExtraction
+    var ctx = Context.default
+    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+
+    implicit val ctxClassical = ClassicalExtraction.systemT( ctx )
+    val pair =
+      le"""
+     (^(x: nat) ^(y: nat)
+       (^(f: nat>nat>exn)
+         (f x y)
+       )
+     )"""
+    val pi2 =
+      le"""
+     (^(p: (nat>nat>exn)>exn)
+       tryCatch(
+        (^(y:nat>exn)
+          efq(p(^(x:nat) y))
+        ),
+        handle(y(x:nat), x)
+       )
+     )
+    """
+    val classicalPairing = pi2( pair( hoc"0:nat", le"s(0):nat" ) )
+    normalize( classicalPairing ) must_== le"s(0): nat"
   }
 }
