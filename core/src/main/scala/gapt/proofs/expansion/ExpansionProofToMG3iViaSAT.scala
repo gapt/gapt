@@ -150,7 +150,6 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
     while ( isESatisfiable( assumptions ) ) {
       val model = solver.model(): Seq[Int]
 
-      val assumptionsAnt = assumptions.filter( _ > 0 )
       def checkEVCond( e: ExpansionTree ): Boolean =
         freeVariables( e.shallow ).
           intersect( expansionProof.eigenVariables ).
@@ -175,8 +174,9 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         model.filter( _ > 0 ).flatMap( atomToET ).filter( checkEVCond ).collectFirst {
           case e @ ETStrongQuantifier( sh, ev, a ) if e.polarity.inAnt &&
             !eigenVariables.contains( ev ) && !assumptions.contains( atom( a ) ) =>
-            val provable = solve( eigenVariables + ev, assumptions + atom( a ) )
-            if ( provable.isRight ) addClauseWithCtx( assumptions, Set( atom( a ) ), Set( atom( e ) ) )( p =>
+            val ctx = assumptions.filter( a => !freeVariables( atomToSh( math.abs( a ) ) ).contains( ev ) )
+            val provable = solve( eigenVariables + ev, ctx + atom( a ) )
+            if ( provable.isRight ) addClauseWithCtx( ctx, Set( atom( a ) ), Set( atom( e ) ) )( p =>
               if ( !p.endSequent.antecedent.contains( a.shallow ) ) p
               else ExistsLeftRule( p, sh, ev ) )
             provable
@@ -200,18 +200,23 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
             case _ =>
               ( upper + -atom( e ), eigenVariables, back )
           }
-        val candidates = model.filter( _ < 0 ).map( -_ ).flatMap( atomToET ).filter( checkEVCond ).collect {
+        val candidates = model.filter( _ < 0 ).map( -_ ).flatMap( atomToET ).collect {
           case e @ ETNeg( a ) if e.polarity.inSuc && !assumptions.contains( atom( a ) )                 => e
           case e @ ETImp( a, _ ) if e.polarity.inSuc && !assumptions.contains( atom( a ) )              => e
           case e @ ETStrongQuantifier( _, ev, _ ) if e.polarity.inSuc && !eigenVariables.contains( ev ) => e
         }
         val nextSteps = candidates.map { e =>
-          val ( upper, evs, transform ) = handleBlock( e, Set.empty, eigenVariables, identity )
-          ( upper, Set( -atom( e ) ), evs, transform )
+          val ( upper, newEvs, transform ) = handleBlock( e, Set.empty, Set.empty, identity )
+          val ctx = model.filter( _ > 0 ).
+            filter( a => newEvs.isEmpty || freeVariables( atomToSh( a ) ).intersect( newEvs ).isEmpty ).toSet
+          ( upper, Set( -atom( e ) ), ctx, newEvs, transform )
         }
-        nextSteps.find( s => solve( s._3, assumptionsAnt ++ s._1 ).isRight ) match {
-          case Some( ( upper, lower, _, transform ) ) =>
-            addClauseWithCtx( assumptionsAnt, upper, lower )( transform )
+        nextSteps.find {
+          case ( upper, _, ctx, newEvs, _ ) =>
+            solve( eigenVariables ++ newEvs, ctx ++ upper ).isRight
+        } match {
+          case Some( ( upper, lower, ctx, _, transform ) ) =>
+            addClauseWithCtx( ctx, upper, lower )( transform )
             Right( () )
           case None =>
             Left( assumptions )

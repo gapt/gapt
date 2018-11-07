@@ -67,3 +67,13 @@ object generatedUpperSetInPO {
     upper.toSet
   }
 }
+
+object transitiveClosure {
+  def apply[T]( rel: Iterable[( T, T )] ): Set[( T, T )] = {
+    val adjList = Map() ++ ( for ( ( a, g ) <- rel.groupBy( _._1 ) ) yield a -> g.map( _._2 ).toSet )
+    val upperSets = mutable.Map[T, Set[T]]()
+    def upperSet( a: T ): Set[T] =
+      upperSets.getOrElseUpdate( a, adjList.getOrElse( a, Set.empty ).flatMap( upperSet ) )
+    for ( a <- rel.map( _._1 ).toSet ++ rel.map( _._2 ); b <- upperSet( a ) ) yield a -> b
+  }
+}
