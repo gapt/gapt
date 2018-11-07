@@ -1,9 +1,11 @@
 package gapt.provers.escargot
 
 import ammonite.ops.FilePath
+import gapt.expr._
+import gapt.expr.fol.folSubTerms
 import gapt.expr.hol.containsQuantifierOnLogicalLevel
 import gapt.formats.tptp.{ TptpImporter, sequentProofToTptp }
-import gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, ExpansionProofToMG3i, ExpansionProofToMG3iViaSAT, deskolemizeET, formulaToExpansionTree }
+import gapt.proofs.expansion.{ ETAnd, ETAtom, ETBottom, ETDefinition, ETImp, ETMerge, ETNeg, ETOr, ETSkolemQuantifier, ETStrongQuantifier, ETTop, ETWeakQuantifier, ETWeakening, ExpansionProof, ExpansionProofToLK, ExpansionProofToMG3i, ExpansionProofToMG3iViaSAT, ExpansionSequent, ExpansionTree, deskolemizeET, formulaToExpansionTree }
 import gapt.proofs.lk.{ LKProof, isMaeharaMG3i }
 import gapt.proofs.HOLSequent
 import gapt.proofs.context.Context
@@ -16,6 +18,61 @@ import gapt.provers.escargot.impl.EscargotLogger
 import gapt.provers.spass.SPASS
 import gapt.provers.vampire.Vampire
 import gapt.utils.{ LogHandler, Maybe, quiet }
+
+object heuristicDecidabilityInstantiation {
+  def apply( proof: ExpansionProof ): ExpansionProof = {
+    val terms = folSubTerms( proof.deep.toImplication ).groupBy( _.ty )
+    val cands = proof.shallow.antecedent.filter( isCandidate )
+    ExpansionProof( ETMerge(
+      ( for ( cand <- cands ) yield formulaToExpansionTree(
+        cand,
+        mkSubsts( boundVariables( cand ), terms ), Polarity.InAntecedent ) ) ++:
+        proof.expansionSequent ) )
+  }
+
+  def mkSubsts( vars: Set[Var], terms: Map[Ty, Set[Expr]] ): Set[Substitution] = {
+    import cats.syntax.traverse._
+    import cats.instances.list._
+    vars.toList.traverse( v => terms( v.ty ).toList.map( v -> _ ) ).
+      map( Substitution( _ ) ).toSet
+  }
+
+  def isCandidate: Formula => Boolean = {
+    case Imp( lhs, rhs )               => !containsQuantifierOnLogicalLevel( lhs ) && isCandidate( rhs )
+    case All( _, rhs )                 => isCandidate( rhs )
+    case Or( Neg( a ), a_ ) if a == a_ => !containsQuantifierOnLogicalLevel( a )
+    case Or( a, Neg( a_ ) ) if a == a_ => !containsQuantifierOnLogicalLevel( a )
+    case _                             => false
+  }
+}
+
+object pushWeakeningsUp {
+  def apply( ep: ExpansionProof ): ExpansionProof = ExpansionProof( apply( ep.expansionSequent ) )
+  def apply( es: ExpansionSequent ): ExpansionSequent = es.map( apply )
+
+  def apply( et: ExpansionTree ): ExpansionTree = et match {
+    case ETAtom( _, _ ) | ETBottom( _ ) | ETTop( _ ) => et
+    case ETWeakening( sh, pol )                      => apply( sh, pol )
+    case ETMerge( a, b )                             => ETMerge( apply( a ), apply( b ) )
+    case ETNeg( a )                                  => ETNeg( apply( a ) )
+    case ETAnd( a, b )                               => ETAnd( apply( a ), apply( b ) )
+    case ETOr( a, b )                                => ETOr( apply( a ), apply( b ) )
+    case ETImp( a, b )                               => ETImp( apply( a ), apply( b ) )
+    case ETWeakQuantifier( sh, insts )               => ETWeakQuantifier( sh, Map() ++ insts.mapValues( apply ) )
+    case ETStrongQuantifier( sh, ev, ch )            => ETStrongQuantifier( sh, ev, apply( ch ) )
+    case ETSkolemQuantifier( sh, skT, ch )           => ETSkolemQuantifier( sh, skT, apply( ch ) )
+    case ETDefinition( sh, ch )                      => ETDefinition( sh, apply( ch ) )
+  }
+
+  def apply( sh: Formula, pol: Polarity ): ExpansionTree = sh match {
+    case sh: Atom    => ETAtom( sh, pol )
+    case Neg( a )    => ETNeg( apply( a, !pol ) )
+    case And( a, b ) => ETAnd( apply( a, pol ), apply( b, pol ) )
+    case Or( a, b )  => ETOr( apply( a, pol ), apply( b, pol ) )
+    case Imp( a, b ) => ETImp( apply( a, !pol ), apply( b, pol ) )
+    case _           => ETWeakening( sh, pol )
+  }
+}
 
 class IEscargot(
     backend:         Prover        = Escargot,
@@ -61,9 +118,12 @@ class IEscargot(
       }
     } else {
       quiet( backend.getExpansionProof( seq ) ) match {
-        case Some( expansion ) =>
+        case Some( expansion0 ) =>
           EscargotLogger.info( "found classical expansion proof" )
-          expansionProofToMG3i( expansion ) match {
+          val expansion1 = ETWeakening( expansion0, seq )
+          val expansion2 = pushWeakeningsUp( expansion1 )
+          val expansion3 = heuristicDecidabilityInstantiation( expansion2 )
+          expansionProofToMG3i( expansion3 ) match {
             case Some( lk ) =>
               require( lk.endSequent.isSubsetOf( seq ) )
               Some( Right( lk ) )
