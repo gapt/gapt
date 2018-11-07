@@ -31,4 +31,9 @@ class ExpansionProofToMG3iViaSATTest extends Specification with SequentMatchers 
   "not not imp lem" in { ep( hof"~ ~ (E -> p | ~p)" ) must beGood }
   "linear" in { ep( hof"!x P(x,0) & !x!y (!z P(f(x,z),y) -> P(x,s(y))) -> !x P(x,${Numeral( 5 )})" ) must beGood }
 
+  "cond dec" in {
+    skipped( "incomplete" )
+    ep( hof"(q -> p | ~p) -> q -> ~p | (r -> r & p)" ) must beGood
+  }
+
 }
