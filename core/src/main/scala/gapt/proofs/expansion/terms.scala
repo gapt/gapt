@@ -69,7 +69,7 @@ sealed abstract class ETt { self: Product =>
       ch1.deep( sh1, !polarity ) --> ch2.deep( sh2, polarity )
 
     case ( ETtWeak( insts ), Quant( bv, sh, isAll ) ) if isAll == polarity.negative =>
-      import gapt.proofs.lkt.ExprSubstWithβ._
+      import ExprSubstWithβ._
       val ds = for ( ( inst, ch ) <- insts )
         yield ch.deep( Substitution( bv -> inst )( sh ), polarity )
       if ( polarity.positive ) Or( ds ) else And( ds )

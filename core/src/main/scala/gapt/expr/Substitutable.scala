@@ -153,3 +153,22 @@ object Substitutable extends ExprSubstitutable7 with SeqSubstitutable {
     ( sub, pair ) => ( ev1.applySubstitution( sub, pair._1 ), ev2.applySubstitution( sub, pair._2 ) )
 
 }
+
+trait ExprSubstWithβ0 {
+  implicit val exprSubstWithβ: ClosedUnderSub[Expr] = ( sub, expr ) => {
+    val substituted = sub( expr )( Substitutable.ExprClosedUnderSub )
+    val needβ = sub.map.values.exists( _.isInstanceOf[Abs] )
+    if ( needβ ) BetaReduction.betaNormalize( substituted ) else substituted
+  }
+}
+trait ExprSubstWithβ1 extends ExprSubstWithβ0 {
+  implicit val formulaSubstWithβ: ClosedUnderSub[Formula] =
+    ( sub, formula ) => sub( formula: Expr ).asInstanceOf[Formula]
+  implicit val absSubstWithβ: ClosedUnderSub[Abs] =
+    ( sub, abs ) => sub( abs: Expr ).asInstanceOf[Abs]
+}
+/**
+ * Contains Substitutable instances for expressions that automatically
+ * perform β-reduction if the range of the substitution contains a λ-abstraction.
+ */
+object ExprSubstWithβ extends ExprSubstWithβ1

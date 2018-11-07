@@ -239,7 +239,7 @@ object MguFactor {
  * }}}
  */
 case class Subst( subProof: ResolutionProof, substitution: Substitution ) extends ResolutionProof {
-  import gapt.proofs.lkt.ExprSubstWithβ._
+  import ExprSubstWithβ._
   override val conclusion: Sequent[Formula] = subProof.conclusion.map( substitution( _ ) )
   override def mainIndices: Seq[SequentIndex] = subProof.conclusion.indices
   override def auxIndices: Seq[Seq[SequentIndex]] = Seq( subProof.conclusion.indices )

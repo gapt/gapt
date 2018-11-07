@@ -335,22 +335,6 @@ object AllRBlock {
     }
 }
 
-trait ExprSubstWithβ0 {
-  implicit val exprSubstWithβ: ClosedUnderSub[Expr] =
-    ( sub, expr ) =>
-      if ( sub.map.values.exists( _.isInstanceOf[Abs] ) )
-        BetaReduction.betaNormalize( sub( expr )( Substitutable.ExprClosedUnderSub ) )
-      else
-        sub( expr )( Substitutable.ExprClosedUnderSub )
-}
-trait ExprSubstWithβ extends ExprSubstWithβ0 {
-  implicit val formulaSubstWithβ: ClosedUnderSub[Formula] =
-    ( sub, formula ) => sub( formula: Expr ).asInstanceOf[Formula]
-  implicit val absSubstWithβ: ClosedUnderSub[Abs] =
-    ( sub, abs ) => sub( abs: Expr ).asInstanceOf[Abs]
-}
-object ExprSubstWithβ extends ExprSubstWithβ
-
 trait ImplicitInstances {
   import ExprSubstWithβ._
 

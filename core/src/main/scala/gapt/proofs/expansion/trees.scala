@@ -259,7 +259,7 @@ object ETImp extends ETBinaryCompanion( Imp, isImp = true )
  *
  */
 object ETWeakQuantifier {
-  import gapt.proofs.lkt.ExprSubstWithβ._
+  import ExprSubstWithβ._
   def apply( shallow: Formula, instances: Map[Expr, ExpansionTree] ): ExpansionTree = {
     val ( polarity, boundVar, qfFormula ) = shallow match {
       case Ex( x, t )  => ( Polarity.InSuccedent, x, t )
