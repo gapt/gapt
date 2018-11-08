@@ -25,7 +25,7 @@ class EProver( extraArgs: Seq[String] ) extends ResolutionProver with ExternalPr
         ( logger.time( "eprover" ) { runProcess.withExitValue( Seq( "eprover", "-p", "--tptp3-format" ) ++ extraArgs, tptpIn ) }: @unchecked ) match {
           case ( 0, output ) =>
             val lines = output.split( "\n" )
-            require( lines.contains( "# SZS status Unsatisfiable" ) )
+            require( lines.contains( "# SZS status Unsatisfiable" ) || lines.contains( "# SZS status ContradictoryAxioms" ) )
             logger.time( "eprover_import" ) {
               val sketch = TptpProofParser.parse(
                 StringInputFile( lines.filterNot( _ startsWith "#" ).mkString( "\n" ) ),
