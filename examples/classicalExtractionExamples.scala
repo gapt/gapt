@@ -4788,3 +4788,153 @@ s(tryCatch(
   println( normalize( classicalPairing ) )
 }
 
+object synthexManySorted extends Script {
+
+  import gapt.proofs._
+  import gapt.proofs.expansion.{ ExpansionProof, ETWeakQuantifier, ExpansionProofToLK }
+  import gapt.proofs.nd.InductionRule
+  import gapt.proofs.reduction._
+  import gapt.provers.vampire.Vampire
+
+  var ctx = Context.default
+  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += Notation.Infix( "<", Precedence.infixRel )
+  ctx += Notation.Infix( "*", Precedence.timesDiv )
+  ctx += Notation.Infix( "<=", Precedence.infixRel )
+  ctx += hoc"'pow2': nat>nat"
+  ctx += hoc"'*': nat>nat>nat"
+  ctx += hoc"'<': nat>nat>o"
+  ctx += hoc"'<=': nat>nat>o"
+  ctx += hoc"'f': nat>nat>o"
+  implicit val cctx = ClassicalExtraction.systemT( ctx )
+
+  val peano5 = hof"!x 0 = x*0"
+  val peano7 = hof"!x!y (x<y -> s(x)<s(y))"
+  val lem1 = hof"!x s(pow2(s x)) < pow2(s(s x))"
+  val lem2 = hof"!x pow2(x) < pow2(s x)"
+  val lem4 = hof"!x!y (y<x | x<y | x=y)"
+  val lem5 = hof"!x!y!z (y<z & x<y -> x<z)"
+  val defleq = hof"!x!y (x<=y <-> (x=y | x<y))"
+  val defpow2 = hof"!x x*x = pow2(x)"
+  val defind = hof"!x!y ((f x y) <-> (x < pow2(s y) & pow2(y) <= x))"
+  val thm1 =
+    hof"""!y!x (
+    s(x)<pow2(s y) & x<pow2(s y) & pow2(y)<=x ->
+      s(x)<pow2(s y) & pow2(y)<=s(x)
+  )"""
+  val ind = hof"(?y (f 0 y)) & !x ((?y (f x y)) -> (?y (f (s x) y))) -> !x?y (f x y)"
+  val thm = hof"!x?y (f x y)"
+  val problem = peano5 +: peano7 +: lem1 +: lem2 +: lem4 +: lem5 +: defleq +: defpow2 +: defind +: ind +: thm1 +: Sequent() :+ thm
+
+  val tmp: ( HOLSequent, ExpansionProof => ExpansionProof ) = ErasureReductionET forward problem
+  //val ind2 = tmp._1( Ant( 9 ) )
+  //println( ind2 )
+
+  println( "Vampire..." )
+
+  val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ).withDeskolemization.extendToManySortedViaErasure ) getExpansionProof problem
+  //val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
+  println( "Done." )
+  println( "Deskolemization..." )
+  val desk: ExpansionProof = expansionProof.get
+  println( "Done." )
+  //prooftool( desk )
+  val deskInd = ExpansionProof( desk.expansionSequent.map {
+    case et =>
+      et.shallow match {
+        case `ind` =>
+
+          ETWeakQuantifier(
+            hof"!X (X(0) ∧ ∀x (X(x) → X(s(x))) → ∀x X(x))",
+            Map( le"^x ?y (f x y)" -> et ) )
+        /*
+case `ind2` =>
+  ETWeakQuantifier(
+    hof"!X (X(#c(f_0:i)) ∧ ∀x_0 (X(x_0) → X(#c(f_s:i>i)(x_0))) → ∀x_0 X(x_0))", Map( le"^x_0 ?y_0 (#c(P_f:i>i>o) x_0 y_0)" -> et ) )
+            */
+        case _ => et
+      }
+  } )
+  //prooftool( deskInd )
+
+  println( "Expansion proof to LK..." )
+  val lk = ExpansionProofToLK( deskInd ).getOrElse( throw new Exception( "LK proof not obtained" ) )
+  println( "Done." )
+  cctx.check( lk )
+  //println( "LK: num inferences: " + lk.subProofs.size )
+
+  println( "LK to ND..." )
+  val nd = LKToND( lk, Some( Suc( 0 ) ) )
+  println( "Done." )
+  //println( nd )
+  //prooftool( nd )
+  if ( nd.subProofs.exists {
+    case InductionRule( _, _, _ ) => true
+    case _                        => false
+  } )
+    println( "contains Induction" )
+  println( s"contains ${
+    nd.subProofs.filter {
+      case ExcludedMiddleRule( _, _, _, _ ) => true
+      case _                                => false
+    }.size
+  } excluded middle inferences" )
+
+  //val m1 = MRealizability.mrealize( nd, false )._2
+  val m1 = ClassicalExtraction.extractCases( nd )
+  //print( m1 ); print( " of type " ); println( m1.ty )
+  println( "free variables in m1: " + freeVariables( m1 ) )
+  //println( "ND: num inferences: " + nd.subProofs.size )
+  //println( "ND: num EM: " + nd.subProofs.count {
+  //case _: ExcludedMiddleRule => true
+  //case _                     => false
+  //} )
+  //FSharpCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
+  /*
+  ScalaCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
+  println( "flat(thm): " + ClassicalExtraction.flat( thm ) )
+  println( "ty(m1): " + m1.ty )
+  */
+
+  //val arg1 = le"(^(tmp:nat) i)"
+  val m1Args = scala.collection.mutable.Map[Ty, Expr](
+    List( peano5, peano7, lem1, lem2, lem5, defpow2, defind, thm1 ).zipWithIndex.map {
+      case ( f, i ) => ClassicalExtraction.flat( f ) -> Const( s"arg$i", ClassicalExtraction.flat( f ) )
+    }: _* )
+  val Some( i ) = cctx.constant( "i" )
+
+  val Some( pair ) = cctx.constant( "pair", List( ty"1>sum(1)(1)", ty"sum(1)(1)>1" ) )
+  val Some( cmp ) = cctx.constant( "cmp" )
+  val Some( cmp2 ) = cctx.constant( "cmp2" )
+
+  // TODO: (y < x | x < y) | x = y)
+  m1Args += ( ClassicalExtraction.flat( lem4 ) ->
+    le"""
+  (^(tmp1:nat) (^(tmp2:nat) ($cmp tmp1 tmp2)))
+  """ )
+  // TODO: (x<=y <-> (x=y | x<y))"
+  m1Args += ( ClassicalExtraction.flat( defleq ) ->
+    le"""(^(tmp1:nat) (^(tmp2:nat)
+  $pair(
+    (^(tmp3:1) ($cmp2 tmp1 tmp2)),
+    (^(tmp4:sum(1)(1)) $i)
+  )))""" )
+
+  def assignArgs( prog: Expr ): Expr = prog.ty match {
+    case TArr( TBase( "nat", _ ), _ ) => prog
+    case TArr( argTy, _ ) =>
+      val arg = m1Args( argTy )
+      //println( s"assigning $arg to ${prog.ty}" )
+      assignArgs( prog( arg ) )
+  }
+  val realm1 = assignArgs( m1 )
+
+  println( s"normalize\n${normalize( realm1( le"s(s(s(s(0))))" ) )}" )
+  /*
+  println( "expecting inr(i)" + normalize( m1Args( ClassicalExtraction.flat( lem4 ) )( le"0:nat" )( le"0:nat" ) ) )
+  println( "expecting inl(inl(i))" + normalize( m1Args( ClassicalExtraction.flat( lem4 ) )( le"0:nat" )( le"s(0):nat" ) ) )
+  println( "expecting inl(inr(i))" + normalize( m1Args( ClassicalExtraction.flat( lem4 ) )( le"s(0):nat" )( le"0:nat" ) ) )
+  println( "expecting inl(i)" + normalize( m1Args( ClassicalExtraction.flat( defleq ) )( le"0:nat" )( le"0:nat" ) ) )
+  println( "expecting inr(i)" + normalize( m1Args( ClassicalExtraction.flat( defleq ) )( le"0:nat" )( le"s(0):nat" ) ) )
+  */
+}

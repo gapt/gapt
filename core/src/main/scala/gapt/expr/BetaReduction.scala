@@ -174,9 +174,9 @@ case class Normalizer( rules: Set[ReductionRule] ) {
             }
             val nArgs = as_.map( normalize )
             println( s"hd: $hd_" )
-            println( s"args: ${as_.mkString( "\nnextarg:\n" )}" )
+            //println( s"args: ${as_.mkString( "\nnextarg:\n" )}" )
             println( s"nHd: $nHd" )
-            println( s"nArgs: $nArgs" )
+            //println( s"nArgs: $nArgs" )
 
             // raise idem
             // efq(efq(V))
@@ -221,7 +221,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
       //Some( hd( as( 0 ) ) )
       case Const( "efq", _, _ ) =>
         println( s"raise other: efq const: $hd" )
-        println( s"raise other: args: $as" )
+        //println( s"raise other: args: $as" )
         None
       // Commuting conversion (right) for try/catch
       case Const( "tryCatch", ty, params ) if as.size >= 3 =>
@@ -273,8 +273,6 @@ case class Normalizer( rules: Set[ReductionRule] ) {
           res
         }
       case hd @ Const( c, _, _ ) =>
-        if ( c == "natRec" )
-          println( "reducing natRec" )
         headMap.get( c ).flatMap {
           case ( rs, whnfArgs, normalizeArgs ) =>
             val as_ = as.zipWithIndex.map {

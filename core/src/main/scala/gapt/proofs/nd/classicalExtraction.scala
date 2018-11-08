@@ -231,11 +231,11 @@ object ClassicalExtraction {
       cmp,
       List(
         cmp( z )( v ) ->
-          ite1( gt( z )( v ) )( inl1( inl2( i ) ) /*u>v*/ )(
-            ite1( gt( v )( z ) )( inl1( inr2( i ) ) /*v>u*/ )( inr1( i ) /*v=u*/ ) ),
+          ite1( gt( v )( z ) )( inl1( inl2( i ) ) /*v>u*/ )(
+            ite1( gt( z )( v ) )( inl1( inr2( i ) ) /*u>v*/ )( inr1( i ) /*v=u*/ ) ),
         cmp( s( u ) )( v ) ->
-          ite1( gt( s( u ) )( v ) )( inl1( inl2( i ) ) /*u>v*/ )(
-            ite1( gt( v )( s( u ) ) )( inl1( inr2( i ) ) /*v>u*/ )( inr1( i ) /*v=u*/ ) ) ) )
+          ite1( gt( v )( s( u ) ) )( inl1( inl2( i ) ) /*v>u*/ )(
+            ite1( gt( s( u ) )( v ) )( inl1( inr2( i ) ) /*u>v*/ )( inr1( i ) /*v=u*/ ) ) ) )
     val Some( ite2 ) = systemT.constant( "ite", List( ty"sum(1)(1)" ) )
     val cmp2 = hoc"cmp2: nat>nat>sum(1)(1)"
     systemT += PrimRecFun(
