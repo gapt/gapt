@@ -131,5 +131,25 @@ object ExpansionProof {
 
 object freeVariablesET {
   def apply( expansionProof: ExpansionProof ): Set[Var] =
-    freeVariables( expansionProof.deep ) diff expansionProof.eigenVariables
+    apply( expansionProof.expansionSequent ) diff expansionProof.eigenVariables
+
+  /** Note: also includes variables contained in eigenvariable nodes. */
+  def apply( expansionTree: ExpansionSequent ): Set[Var] =
+    expansionTree.elements.view.flatMap( apply ).toSet
+
+  /** Note: also includes variables contained in eigenvariable nodes. */
+  def apply( expansionTree: ExpansionTree ): Set[Var] =
+    apply( expansionTree.term ) union freeVariables( expansionTree.shallow )
+
+  /** Note: also includes variables contained in eigenvariable nodes. */
+  def apply( et: ETt ): Set[Var] = {
+    val fvs = Set.newBuilder[Var]
+    et.foreach {
+      case ETtWeak( instances )     => fvs ++= freeVariables( instances.keys )
+      case ETtStrong( eigenVar, _ ) => fvs += eigenVar
+      case ETtSkolem( skTerm, _ )   => fvs ++= freeVariables( skTerm )
+      case _                        =>
+    }
+    fvs.result()
+  }
 }
