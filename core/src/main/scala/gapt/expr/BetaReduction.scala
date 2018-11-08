@@ -147,12 +147,12 @@ case class Normalizer( rules: Set[ReductionRule] ) {
             //val tryCatch = hoc"tryCatch{?a ?c}: ((?a > exn) > ?c) > (?a > ?c) > ?c"
             val tryCatchBlocksCommuted = tryCatchBlocks.map( commute( _, Left( hd_( front ) ) ) )
             val ( aTry ->: _ ) ->: cTry = tryCatchBlocksCommuted( 0 ).ty
-            val ( aCatch ->: cCatch ) = tryCatchBlocksCommuted( 1 ).ty
-            assert( aTry == aCatch )
+            val ( _ ->: cCatch ) = tryCatchBlocksCommuted( 1 ).ty
+            //assert( aTry == aCatch )
             assert( cTry == cCatch )
             val a = aTry
             val c = cTry
-            val tmpTy = ( ( a ->: ty"exn" ) ->: c ) ->: ( a ->: c ) ->: c
+            val tmpTy = ( ( a ->: ty"exn" ) ->: c ) ->: ( ty"exn" ->: c ) ->: c
             //val tmpParams = params.map( replaceTy( _, params( 1 ), tryBlock.ty ) )
             val tmpParams = List( a, c )
             val newTryCatch = Const( "tryCatch", tmpTy, tmpParams )
@@ -256,6 +256,8 @@ case class Normalizer( rules: Set[ReductionRule] ) {
           val res = normalize( arg ) match {
             case ntb @ App( Const( "efq", _, _ ), App( thrownExn, thrownVal ) ) =>
               val App( App( Const( "handle", _, _ ), App( caughtExn, exnVar ) ), catchB ) = as( 1 )
+              println(s"thrown exn: $thrownExn")
+              println(s"caught exn: $caughtExn")
               if ( thrownExn == caughtExn ) {
                 println( s"caught exception $caughtExn" )
                 Some( le"(^${exnVar.asInstanceOf[Var]} $catchB)$thrownVal" )

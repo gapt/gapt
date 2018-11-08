@@ -1,13 +1,14 @@
 package gapt.examples
 
-import extraction.{ FSharpCodeGenerator, ScalaCodeGenerator }
+import extraction.{FSharpCodeGenerator, ScalaCodeGenerator}
 import gapt.examples.theories.nat
 import gapt.proofs.nd._
-import gapt.expr.{ TBase, _ }
-import gapt.formats.babel.{ Notation, Precedence }
+import gapt.expr.{TBase, _}
+import gapt.formats.babel.{Notation, Precedence}
+import gapt.formats.json.JSONImporter
 import gapt.proofs
-import gapt.proofs.{ Ant, Checkable, Context, ProofBuilder, Sequent, Suc }
-import gapt.proofs.Context.{ InductiveType, PrimRecFun }
+import gapt.proofs.{Ant, Checkable, Context, ProofBuilder, Sequent, Suc}
+import gapt.proofs.Context.{InductiveType, PrimRecFun}
 import gapt.proofs.context.ReductionRuleUpdate
 import gapt.proofs.lk._
 import gapt.prooftool.prooftool
@@ -4830,37 +4831,50 @@ object synthexManySorted extends Script {
   //val ind2 = tmp._1( Ant( 9 ) )
   //println( ind2 )
 
-  println( "Vampire..." )
+  import java.io._
+  import gapt.formats.json._
+  val f = new File("/home/matthias/tmp/synthexManySorted.json")
+  val lk = if (f.isFile() && f.canRead()) {
+    println("Reading proof from JSON file...")
+    JSONImporter.apply[LKProof](f)
+  } else {
+    println("Vampire...")
 
-  val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ).withDeskolemization.extendToManySortedViaErasure ) getExpansionProof problem
-  //val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
-  println( "Done." )
-  println( "Deskolemization..." )
-  val desk: ExpansionProof = expansionProof.get
-  println( "Done." )
-  //prooftool( desk )
-  val deskInd = ExpansionProof( desk.expansionSequent.map {
-    case et =>
-      et.shallow match {
-        case `ind` =>
+    val expansionProof: Option[ExpansionProof] = (new Vampire(extraArgs = Seq("--time_limit", "15m")).withDeskolemization.extendToManySortedViaErasure) getExpansionProof problem
+    //val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
+    println("Done.")
+    println("Deskolemization...")
+    val desk: ExpansionProof = expansionProof.get
+    println("Done.")
+    //prooftool( desk )
+    val deskInd = ExpansionProof(desk.expansionSequent.map {
+      case et =>
+        et.shallow match {
+          case `ind` =>
 
-          ETWeakQuantifier(
-            hof"!X (X(0) ∧ ∀x (X(x) → X(s(x))) → ∀x X(x))",
-            Map( le"^x ?y (f x y)" -> et ) )
-        /*
+            ETWeakQuantifier(
+              hof"!X (X(0) ∧ ∀x (X(x) → X(s(x))) → ∀x X(x))",
+              Map(le"^x ?y (f x y)" -> et))
+          /*
 case `ind2` =>
   ETWeakQuantifier(
     hof"!X (X(#c(f_0:i)) ∧ ∀x_0 (X(x_0) → X(#c(f_s:i>i)(x_0))) → ∀x_0 X(x_0))", Map( le"^x_0 ?y_0 (#c(P_f:i>i>o) x_0 y_0)" -> et ) )
             */
-        case _ => et
-      }
-  } )
-  //prooftool( deskInd )
+          case _ => et
+        }
+    })
+    //prooftool( deskInd )
 
-  println( "Expansion proof to LK..." )
-  val lk = ExpansionProofToLK( deskInd ).getOrElse( throw new Exception( "LK proof not obtained" ) )
-  println( "Done." )
-  cctx.check( lk )
+    println("Expansion proof to LK...")
+    val lk = ExpansionProofToLK(deskInd).getOrElse(throw new Exception("LK proof not obtained"))
+    println("Done.")
+    cctx.check(lk)
+    val jsonLk = gapt.formats.json.JSONExporter(lk)
+    val bw = new BufferedWriter(new FileWriter(f))
+    bw.write(jsonLk)
+    bw.close()
+    lk
+  }
   //println( "LK: num inferences: " + lk.subProofs.size )
 
   println( "LK to ND..." )
@@ -4937,4 +4951,14 @@ case `ind2` =>
   println( "expecting inl(i)" + normalize( m1Args( ClassicalExtraction.flat( defleq ) )( le"0:nat" )( le"0:nat" ) ) )
   println( "expecting inr(i)" + normalize( m1Args( ClassicalExtraction.flat( defleq ) )( le"0:nat" )( le"s(0):nat" ) ) )
   */
+}
+
+object commutingConversions2 extends Script {
+  var ctx = Context.default
+  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+
+  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+
+  println( normalize( le"efq(tryCatch((^y0 (M0: exn)), handle(y0(x0), (N0: exn))))" ) )
+  println( normalize( le"efq(tryCatch((^(y0: nat>exn) y0(0)), handle((y0: nat>exn)(x0), (N0: exn)))): nat" ) )
 }

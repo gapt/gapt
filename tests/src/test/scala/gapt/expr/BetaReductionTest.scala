@@ -248,4 +248,12 @@ tryCatch(
     val classicalPairing = pi2( pair( hoc"0:nat", le"s(0):nat" ) )
     normalize( classicalPairing ) must_== le"s(0): nat"
   }
+  "commute efq(tryCatch M handle N) -> tryCatch (efq M) handle (efq N)" in {
+    import gapt.proofs.Context
+    import gapt.proofs.nd.ClassicalExtraction
+    var ctx = Context.default
+    implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+
+    normalize(le"efq(tryCatch((^y0 (M0: exn)), handle(y0(x0), (N0: exn))))") must_== le"tryCatch((^y0 (efq(M0: exn))), handle(y0(x0), efq(N0: exn))))"
+  }
 }
