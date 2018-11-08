@@ -136,13 +136,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
     val res = whnf( expr ) match {
       case Apps( hd_, as_ ) =>
         as_ match {
-          // raise left
-          case SplitEfq( _, Apps( Const( "efq", _, params ), as2_ ), _ ) =>
-            println( "raise left" )
-            val newEfq = Const( "efq", as2_( 0 ).ty ->: expr.ty, List( expr.ty ) )
-            //val res = normalize( newEfq( as2_( 0 ) ) )
-            val res = normalize( newEfq( normalize( as2_( 0 ) ) ) )
-            res
+
           // Commuting conversion (left) for try/catch
           case SplitTryCatch( front, Apps( Const( "tryCatch", ty, params ), tryCatchBlocks ), back ) if hd_.toUntypedAsciiString != "handle" =>
             println( s"cc left: commuting ${hd_( front )}" )
@@ -165,6 +159,13 @@ case class Normalizer( rules: Set[ReductionRule] ) {
             val res = Apps( newTryCatch, tryCatchBlocksCommuted ++ back )
             println( s"after cc left: tryCatch.ty: $tmpTy" )
             normalize( res )
+          // raise left
+          case SplitEfq( _, Apps( Const( "efq", _, params ), as2_ ), _ ) =>
+            println( "raise left" )
+            val newEfq = Const( "efq", as2_( 0 ).ty ->: expr.ty, List( expr.ty ) )
+            //val res = normalize( newEfq( as2_( 0 ) ) )
+            val res = normalize( newEfq( normalize( as2_( 0 ) ) ) )
+            res
           case _ =>
             val nHd = hd_ match {
               case Abs.Block( xs, e ) if xs.nonEmpty =>
@@ -266,9 +267,9 @@ case class Normalizer( rules: Set[ReductionRule] ) {
               }
             case t =>
               // exception var y in FV(V), but not raised
-              println( s"exception var y in FV but not raised. term: $t" )
-              Some( t )
-            //throw new Exception( s"Expecting a raise in try block. Is $t" )
+              //println( s"exception var y in FV but not raised. term: $t" )
+              //Some( t )
+              throw new Exception( s"Expecting a raise in try block. Is $t" )
           }
           res
         }
