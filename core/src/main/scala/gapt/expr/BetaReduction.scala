@@ -85,8 +85,8 @@ case class Normalizer( rules: Set[ReductionRule] ) {
         }
         //val handle = hoc"handle{?a ?c}: exn > ?c > (?a > ?c)"
         val App( f, arg ) = newCatchB
-        //val newTy = replaceTy( ty, params( 1 ), newCatchB.ty )
-        val ( a ->: c ) = f.ty
+        val a = params(0)
+        val c = newCatchB.ty
         val newTy = ty"exn" ->: c ->: ( a ->: c )
         //val newParams = params.map( replaceTy( _, params( 1 ), newCatchB.ty ) )
         val newParams = List( a, c )
@@ -147,12 +147,12 @@ case class Normalizer( rules: Set[ReductionRule] ) {
             //val tryCatch = hoc"tryCatch{?a ?c}: ((?a > exn) > ?c) > (?a > ?c) > ?c"
             val tryCatchBlocksCommuted = tryCatchBlocks.map( commute( _, Left( hd_( front ) ) ) )
             val ( aTry ->: _ ) ->: cTry = tryCatchBlocksCommuted( 0 ).ty
-            val ( _ ->: cCatch ) = tryCatchBlocksCommuted( 1 ).ty
-            //assert( aTry == aCatch )
+            val ( aCatch ->: cCatch ) = tryCatchBlocksCommuted( 1 ).ty
+            assert( aTry == aCatch )
             assert( cTry == cCatch )
             val a = aTry
             val c = cTry
-            val tmpTy = ( ( a ->: ty"exn" ) ->: c ) ->: ( ty"exn" ->: c ) ->: c
+            val tmpTy = ( ( a ->: ty"exn" ) ->: c ) ->: ( a ->: c ) ->: c
             //val tmpParams = params.map( replaceTy( _, params( 1 ), tryBlock.ty ) )
             val tmpParams = List( a, c )
             val newTryCatch = Const( "tryCatch", tmpTy, tmpParams )
@@ -160,11 +160,10 @@ case class Normalizer( rules: Set[ReductionRule] ) {
             println( s"after cc left: tryCatch.ty: $tmpTy" )
             normalize( res )
           // raise left
-          case SplitEfq( _, Apps( Const( "efq", _, params ), as2_ ), _ ) =>
+          case SplitEfq( front, Apps( Const( "efq", _, params ), as2_ ), back ) =>
             println( "raise left" )
             val newEfq = Const( "efq", as2_( 0 ).ty ->: expr.ty, List( expr.ty ) )
-            //val res = normalize( newEfq( as2_( 0 ) ) )
-            val res = normalize( newEfq( normalize( as2_( 0 ) ) ) )
+            val res = normalize( newEfq( as2_( 0 ) ) )
             res
           case _ =>
             val nHd = hd_ match {
@@ -220,10 +219,30 @@ case class Normalizer( rules: Set[ReductionRule] ) {
         val newEfq = Const( "efq", as( 0 ).ty ->: expr.ty, List( expr.ty ) )
         Some( newEfq( as( 0 ) ) )
       //Some( hd( as( 0 ) ) )
-      case Const( "efq", _, _ ) =>
-        println( s"raise other: efq const: $hd" )
-        //println( s"raise other: args: $as" )
-        None
+      case Const( "efq", _, _ ) if as.size == 1 =>
+        // If normalize(as(0)) reduces to a tryCatch, it means that that the tryCatch returns an exception
+        // variable, we thus know that handle simp and handle/raise didn't apply, hence we commute efq
+        normalize(as(0)) match {
+          case Apps(Const("tryCatch", _, _), tryCatchBlocks) =>
+            // raise/handle
+            println("raise/handle")
+            val tryCatchBlocksCommuted = tryCatchBlocks.map( commute( _, Left( hd ) ) )
+            val ( aTry ->: _ ) ->: cTry = tryCatchBlocksCommuted( 0 ).ty
+            val ( aCatch ->: cCatch ) = tryCatchBlocksCommuted( 1 ).ty
+            assert( aTry == aCatch )
+            assert( cTry == cCatch )
+            val a = aTry
+            val c = cTry
+            val tmpTy = ( ( a ->: ty"exn" ) ->: c ) ->: ( a ->: c ) ->: c
+            //val tmpParams = params.map( replaceTy( _, params( 1 ), tryBlock.ty ) )
+            val tmpParams = List( a, c )
+            val newTryCatch = Const( "tryCatch", tmpTy, tmpParams )
+            Some(Apps(newTryCatch, tryCatchBlocksCommuted))
+          case _ =>
+            println( s"raise other: efq const: $hd" )
+            //Some( normalize(hd(normalize(as(0))) ))
+            None
+        }
       // Commuting conversion (right) for try/catch
       case Const( "tryCatch", ty, params ) if as.size >= 3 =>
         println( s"cc right: commuting ${as( 2 )}" )
@@ -271,7 +290,9 @@ case class Normalizer( rules: Set[ReductionRule] ) {
               // exception var y in FV(V), but not raised
               //println( s"exception var y in FV but not raised. term: $t" )
               //Some( t )
-              throw new Exception( s"Expecting a raise in try block. Is $t" )
+              println(s"Expecting a raise in try block. Is $t\ndo not reduce and keep $expr" )
+              None
+              //throw new Exception( s"Expecting a raise in try block. Is $t" )
           }
           res
         }

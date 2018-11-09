@@ -4959,6 +4959,6 @@ object commutingConversions2 extends Script {
 
   implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
 
-  println( normalize( le"efq(tryCatch((^y0 (M0: exn)), handle(y0(x0), (N0: exn))))" ) )
-  println( normalize( le"efq(tryCatch((^(y0: nat>exn) y0(0)), handle((y0: nat>exn)(x0), (N0: exn)))): nat" ) )
+  //println( normalize( le"efq(tryCatch((^(y0: nat>exn) y0(0)), handle((y0: nat>exn)(x0:nat), (N0: nat>exn)(x0)))): nat" ) )
+  println( normalize( le"efq(f(tryCatch((^(y0: nat>exn) y0(0)), handle((y0: nat>exn)(x0:nat), (N0: nat>exn)(x0))))): nat" ) )
 }

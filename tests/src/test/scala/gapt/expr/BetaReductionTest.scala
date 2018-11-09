@@ -256,4 +256,15 @@ tryCatch(
 
     normalize(le"efq(tryCatch((^y0 (M0: exn)), handle(y0(x0), (N0: exn))))") must_== le"tryCatch((^y0 (efq(M0: exn))), handle(y0(x0), efq(N0: exn))))"
   }
+  "raise/handle without and with additional CC" in {
+    import gapt.proofs.Context
+    import gapt.proofs.nd.ClassicalExtraction
+    var ctx = Context.default
+  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+
+  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+
+  normalize( le"efq(tryCatch((^(y0: nat>exn) y0(0)), handle((y0: nat>exn)(x0:nat), (N0: nat>exn)(x0)))): nat" ) must_== le"efq(N0(0)): nat"
+  normalize( le"efq(f(tryCatch((^(y0: nat>exn) y0(0)), handle((y0: nat>exn)(x0:nat), (N0: nat>exn)(x0))))): nat" ) must_== le"efq(f(y0(0):exn)): nat"
+  }
 }
