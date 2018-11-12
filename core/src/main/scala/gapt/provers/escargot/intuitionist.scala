@@ -6,7 +6,7 @@ import gapt.expr.fol.folSubTerms
 import gapt.expr.hol.containsQuantifierOnLogicalLevel
 import gapt.formats.tptp.{ TptpImporter, sequentProofToTptp }
 import gapt.proofs.expansion.{ ETAnd, ETAtom, ETBottom, ETDefinition, ETImp, ETMerge, ETNeg, ETOr, ETSkolemQuantifier, ETStrongQuantifier, ETTop, ETWeakQuantifier, ETWeakening, ExpansionProof, ExpansionProofToLK, ExpansionProofToMG3i, ExpansionProofToMG3iViaSAT, ExpansionSequent, ExpansionTree, deskolemizeET, formulaToExpansionTree }
-import gapt.proofs.lk.{ LKProof, isMaeharaMG3i }
+import gapt.proofs.lk.{ LKProof, MG3iToLJ, isMaeharaMG3i, normalizeLKt }
 import gapt.proofs.HOLSequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
@@ -78,12 +78,14 @@ class IEscargot(
     backend:         Prover        = Escargot,
     method:          ExpToLKMethod = ExpToLKMethod.MG3iViaSAT,
     showInProoftool: Boolean       = false,
+    convertToLJ:     Boolean       = false,
     filename:        String        = "" ) extends OneShotProver {
   def expansionProofToMG3i( expProofWithSk: ExpansionProof )( implicit ctx: Context ): Option[LKProof] = {
     val deskExpProof = deskolemizeET( expProofWithSk )
     EscargotLogger.info( "converting expansion proof to LK" )
     quiet( method.convert( deskExpProof ) ) match {
-      case Right( lk ) =>
+      case Right( lk0 ) =>
+        val lk = if ( !convertToLJ ) lk0 else normalizeLKt.lk( MG3iToLJ( lk0 ) )
         EscargotLogger.info( s"LK proof has ${lk.dagLike.size} inferences" )
         val maxSuccSize = lk.subProofs.map( _.endSequent.succedent.toSet.size ).max
         EscargotLogger.info( s"LK proof has maximum succedent size $maxSuccSize" )
@@ -165,6 +167,7 @@ object ExpToLKMethod {
 object IEscargot extends IEscargot(
   backend = Escargot,
   method = ExpToLKMethod.MG3iViaSAT,
+  convertToLJ = false,
   showInProoftool = false,
   filename = "" ) {
   import ExpToLKMethod._
@@ -173,6 +176,7 @@ object IEscargot extends IEscargot(
       verbose:   Boolean       = false,
       backend:   Prover        = Escargot,
       prooftool: Boolean       = false,
+      convertLJ: Boolean       = false,
       method:    ExpToLKMethod = MG3iViaSAT,
       files:     Seq[String]   = Seq() ) {
     def parse( args: List[String] ): Either[String, Options] =
@@ -181,6 +185,7 @@ object IEscargot extends IEscargot(
         case "--backend=spass" :: rest         => copy( backend = SPASS ).parse( rest )
         case "--backend=escargot" :: rest      => copy( backend = Escargot ).parse( rest )
         case "--backend=e" :: rest             => copy( backend = new EProver( extraArgs = Seq( "--auto" ) ) ).parse( rest )
+        case "--lj" :: rest                    => copy( convertLJ = true ).parse( rest )
         case "--prooftool" :: rest             => copy( prooftool = true ).parse( rest )
         case "--heuristic" :: rest             => copy( method = Heuristic ).parse( rest )
         case "--mg4ip" :: rest                 => copy( method = MG4ip ).parse( rest )
@@ -222,7 +227,7 @@ object IEscargot extends IEscargot(
     val tptp = TptpImporter.loadWithIncludes( FilePath( opts.files.head ) )
     val tptpSequent = tptp.toSequent
     implicit val ctx: MutableContext = MutableContext.guess( tptpSequent )
-    new IEscargot( opts.backend, opts.method, opts.prooftool, opts.files.head ).
+    new IEscargot( opts.backend, opts.method, opts.prooftool, opts.convertLJ, opts.files.head ).
       getLKProof_( tptpSequent ) match {
         case Some( Right( lk ) ) =>
           println( "% SZS status Theorem" )
