@@ -23,6 +23,8 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
 
   implicit def clause2sat4j( clause: Iterable[Int] ): IVecInt =
     new VecInt( clause.toArray )
+  implicit def sat4j2clause_( clause: IVecInt ): Set[Int] =
+    clause.toArray.toSet
 
   val shAtoms = expansionProof.subProofs.
     map( _.shallow ).
@@ -162,7 +164,9 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
             case _ :: ts => go( ts, ctx )
             case Nil => ctx
           }
-        go( ctx.toList, ctx )
+        require( !solver.isSatisfiable( upper union ctx ) )
+        val ctx_ = ctx.intersect( solver.unsatExplanation() )
+        go( ctx_.toList.sortBy( -math.abs( _ ) ), ctx_ )
       }
       def addClauseWithCtx( ctx: Set[Int], upper: Set[Int], lower: Set[Int] )( p: LKProof => LKProof ): Unit =
         if ( solver.isSatisfiable( ctx ) ) {
