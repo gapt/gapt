@@ -13,14 +13,19 @@ object ClassicalExtraction {
 
   private val varMap: mutable.Map[Formula, Var] = mutable.Map.empty
   private def getVar( name: String, f: Formula, nameGenerator: NameGenerator )( implicit ctx: Context ) = {
-    if ( varMap.contains( f ) ) {
+    val res = if ( varMap.contains( f ) ) {
       varMap( f )
     } else {
       val v = Var( nameGenerator.fresh( name ), flat( f ) )
       varMap += ( f -> v )
       v
     }
+    if(res.name == "vLambda_5")
+      println("getVar vLambda_5")
+    res
   }
+
+  def getVarMap = varMap
 
   def systemT( ctx: Context ): Context = {
 

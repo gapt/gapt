@@ -4838,7 +4838,7 @@ object synthexManySorted extends Script {
     println("Reading proof from JSON file...")
     JSONImporter.apply[LKProof](f)
   } else {
-    println("Vampire...")
+    println("Proving using Vampire...")
 
     val expansionProof: Option[ExpansionProof] = (new Vampire(extraArgs = Seq("--time_limit", "15m")).withDeskolemization.extendToManySortedViaErasure) getExpansionProof problem
     //val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
@@ -4896,8 +4896,9 @@ case `ind2` =>
 
   //val m1 = MRealizability.mrealize( nd, false )._2
   val m1 = ClassicalExtraction.extractCases( nd )
+  println("var map\n" + ClassicalExtraction.getVarMap.mkString("\n"))
   //print( m1 ); print( " of type " ); println( m1.ty )
-  println( "free variables in m1: " + freeVariables( m1 ) )
+  //println( "free variables in m1: " + freeVariables( m1 ) )
   //println( "ND: num inferences: " + nd.subProofs.size )
   //println( "ND: num EM: " + nd.subProofs.count {
   //case _: ExcludedMiddleRule => true
@@ -4921,12 +4922,12 @@ case `ind2` =>
   val Some( cmp ) = cctx.constant( "cmp" )
   val Some( cmp2 ) = cctx.constant( "cmp2" )
 
-  // TODO: (y < x | x < y) | x = y)
+  // (y < x | x < y) | x = y)
   m1Args += ( ClassicalExtraction.flat( lem4 ) ->
     le"""
   (^(tmp1:nat) (^(tmp2:nat) ($cmp tmp1 tmp2)))
   """ )
-  // TODO: (x<=y <-> (x=y | x<y))"
+  // (x<=y <-> (x=y | x<y))"
   m1Args += ( ClassicalExtraction.flat( defleq ) ->
     le"""(^(tmp1:nat) (^(tmp2:nat)
   $pair(
@@ -4961,4 +4962,25 @@ object commutingConversions2 extends Script {
 
   //println( normalize( le"efq(tryCatch((^(y0: nat>exn) y0(0)), handle((y0: nat>exn)(x0:nat), (N0: nat>exn)(x0)))): nat" ) )
   println( normalize( le"efq(f(tryCatch((^(y0: nat>exn) y0(0)), handle((y0: nat>exn)(x0:nat), (N0: nat>exn)(x0))))): nat" ) )
+}
+
+object handleRaiseReduction extends Script {
+  var ctx = Context.default
+  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+
+  // reduces to N0(0) or N1(0) depending on which exception variable is raised
+  println( normalize(
+    le"""
+        tryCatch(
+          (^(y0: nat>exn)
+            tryCatch(
+              (^(y1: nat>exn)
+                efq(y0(0)):nat),
+            handle(
+              (y1: nat>exn)(x0: nat), (N1: nat>nat)(x0))
+            )),
+        handle(
+          (y0: nat>exn)(x0:nat), (N0: nat>nat)(x0))
+        ): nat""" ) )
 }

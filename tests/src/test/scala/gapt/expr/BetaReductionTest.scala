@@ -267,4 +267,38 @@ tryCatch(
   normalize( le"efq(tryCatch((^(y0: nat>exn) y0(0)), handle((y0: nat>exn)(x0:nat), (N0: nat>exn)(x0)))): nat" ) must_== le"efq(N0(0)): nat"
   normalize( le"efq(f(tryCatch((^(y0: nat>exn) y0(0)), handle((y0: nat>exn)(x0:nat), (N0: nat>exn)(x0))))): nat" ) must_== le"efq(f(y0(0):exn)): nat"
   }
+  "handle/raise reduction" in {
+    import gapt.proofs.Context
+    import gapt.proofs.nd.ClassicalExtraction
+    var ctx = Context.default
+    ctx += Context.InductiveType("nat", hoc"0: nat", hoc"s: nat>nat")
+
+    implicit var ctxClassical = ClassicalExtraction.systemT(ctx)
+    normalize(
+      le"""
+        tryCatch(
+          (^(y0: nat>exn)
+            tryCatch(
+              (^(y1: nat>exn)
+                efq(y0(0)):nat),
+            handle(
+              (y1: nat>exn)(x0: nat), (N1: nat>nat)(x0))
+            )),
+        handle(
+          (y0: nat>exn)(x0:nat), (N0: nat>nat)(x0))
+        ): nat""" ) must_== le"N0(0):nat"
+    normalize(
+      le"""
+        tryCatch(
+          (^(y0: nat>exn)
+            tryCatch(
+              (^(y1: nat>exn)
+                efq(y1(0)):nat),
+            handle(
+              (y1: nat>exn)(x0: nat), (N1: nat>nat)(x0))
+            )),
+        handle(
+          (y0: nat>exn)(x0:nat), (N0: nat>nat)(x0))
+        ): nat""" ) must_== le"N1(0):nat"
+  }
 }

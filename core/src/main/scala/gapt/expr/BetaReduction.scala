@@ -287,16 +287,19 @@ case class Normalizer( rules: Set[ReductionRule] ) {
                 Some( ntb )
               }
             case t =>
-              // exception var y in FV(V), but not raised
-              //println( s"exception var y in FV but not raised. term: $t" )
-              //Some( t )
-              println(s"Expecting a raise in try block. Is $t\ndo not reduce and keep $expr" )
+              // Exception var y in FV(V), but not raised
+              // Expecting a raise in try block. Do not reduce and keep $expr. Should be handled by raise/handle case. I.e., at some point the exception in the block will be raised due to soundness of the proof system..
+              println(s"Expecting a raise in try block. Is $t\ndo not reduce and keep $expr. Should be handled by raise/handle case. I.e., at some point the exception in the block will be raised due to soundness of the proof system." )
+              assert(params(1) == ty"exn")
               None
               //throw new Exception( s"Expecting a raise in try block. Is $t" )
           }
           res
         }
       case hd @ Const( c, _, _ ) =>
+        if(c == "existsElim") {
+          println("reducing existsElim")
+        }
         headMap.get( c ).flatMap {
           case ( rs, whnfArgs, normalizeArgs ) =>
             val as_ = as.zipWithIndex.map {
