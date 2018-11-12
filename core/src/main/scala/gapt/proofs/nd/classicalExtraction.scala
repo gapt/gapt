@@ -20,8 +20,8 @@ object ClassicalExtraction {
       varMap += ( f -> v )
       v
     }
-    if(res.name == "vLambda_5")
-      println("getVar vLambda_5")
+    if ( res.name == "vLambda_5" )
+      println( "getVar vLambda_5" )
     res
   }
 

@@ -1,14 +1,14 @@
 package gapt.examples
 
-import extraction.{FSharpCodeGenerator, ScalaCodeGenerator}
+import extraction.{ FSharpCodeGenerator, ScalaCodeGenerator }
 import gapt.examples.theories.nat
 import gapt.proofs.nd._
-import gapt.expr.{TBase, _}
-import gapt.formats.babel.{Notation, Precedence}
+import gapt.expr.{ TBase, _ }
+import gapt.formats.babel.{ Notation, Precedence }
 import gapt.formats.json.JSONImporter
 import gapt.proofs
-import gapt.proofs.{Ant, Checkable, Context, ProofBuilder, Sequent, Suc}
-import gapt.proofs.Context.{InductiveType, PrimRecFun}
+import gapt.proofs.{ Ant, Checkable, Context, ProofBuilder, Sequent, Suc }
+import gapt.proofs.Context.{ InductiveType, PrimRecFun }
 import gapt.proofs.context.ReductionRuleUpdate
 import gapt.proofs.lk._
 import gapt.prooftool.prooftool
@@ -4833,28 +4833,28 @@ object synthexManySorted extends Script {
 
   import java.io._
   import gapt.formats.json._
-  val f = new File("/home/matthias/tmp/synthexManySorted.json")
-  val lk = if (f.isFile() && f.canRead()) {
-    println("Reading proof from JSON file...")
-    JSONImporter.apply[LKProof](f)
+  val f = new File( "/home/matthias/tmp/synthexManySorted.json" )
+  val lk = if ( f.isFile() && f.canRead() ) {
+    println( "Reading proof from JSON file..." )
+    JSONImporter.apply[LKProof]( f )
   } else {
-    println("Proving using Vampire...")
+    println( "Proving using Vampire..." )
 
-    val expansionProof: Option[ExpansionProof] = (new Vampire(extraArgs = Seq("--time_limit", "15m")).withDeskolemization.extendToManySortedViaErasure) getExpansionProof problem
+    val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "15m" ) ).withDeskolemization.extendToManySortedViaErasure ) getExpansionProof problem
     //val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
-    println("Done.")
-    println("Deskolemization...")
+    println( "Done." )
+    println( "Deskolemization..." )
     val desk: ExpansionProof = expansionProof.get
-    println("Done.")
+    println( "Done." )
     //prooftool( desk )
-    val deskInd = ExpansionProof(desk.expansionSequent.map {
+    val deskInd = ExpansionProof( desk.expansionSequent.map {
       case et =>
         et.shallow match {
           case `ind` =>
 
             ETWeakQuantifier(
               hof"!X (X(0) ∧ ∀x (X(x) → X(s(x))) → ∀x X(x))",
-              Map(le"^x ?y (f x y)" -> et))
+              Map( le"^x ?y (f x y)" -> et ) )
           /*
 case `ind2` =>
   ETWeakQuantifier(
@@ -4862,16 +4862,16 @@ case `ind2` =>
             */
           case _ => et
         }
-    })
+    } )
     //prooftool( deskInd )
 
-    println("Expansion proof to LK...")
-    val lk = ExpansionProofToLK(deskInd).getOrElse(throw new Exception("LK proof not obtained"))
-    println("Done.")
-    cctx.check(lk)
-    val jsonLk = gapt.formats.json.JSONExporter(lk)
-    val bw = new BufferedWriter(new FileWriter(f))
-    bw.write(jsonLk)
+    println( "Expansion proof to LK..." )
+    val lk = ExpansionProofToLK( deskInd ).getOrElse( throw new Exception( "LK proof not obtained" ) )
+    println( "Done." )
+    cctx.check( lk )
+    val jsonLk = gapt.formats.json.JSONExporter( lk )
+    val bw = new BufferedWriter( new FileWriter( f ) )
+    bw.write( jsonLk )
     bw.close()
     lk
   }
@@ -4896,7 +4896,7 @@ case `ind2` =>
 
   //val m1 = MRealizability.mrealize( nd, false )._2
   val m1 = ClassicalExtraction.extractCases( nd )
-  println("var map\n" + ClassicalExtraction.getVarMap.mkString("\n"))
+  println( "var map\n" + ClassicalExtraction.getVarMap.mkString( "\n" ) )
   //print( m1 ); print( " of type " ); println( m1.ty )
   //println( "free variables in m1: " + freeVariables( m1 ) )
   //println( "ND: num inferences: " + nd.subProofs.size )

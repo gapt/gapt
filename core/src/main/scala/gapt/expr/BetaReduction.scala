@@ -85,7 +85,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
         }
         //val handle = hoc"handle{?a ?c}: exn > ?c > (?a > ?c)"
         val App( f, arg ) = newCatchB
-        val a = params(0)
+        val a = params( 0 )
         val c = newCatchB.ty
         val newTy = ty"exn" ->: c ->: ( a ->: c )
         //val newParams = params.map( replaceTy( _, params( 1 ), newCatchB.ty ) )
@@ -222,10 +222,10 @@ case class Normalizer( rules: Set[ReductionRule] ) {
       case Const( "efq", _, _ ) if as.size == 1 =>
         // If normalize(as(0)) reduces to a tryCatch, it means that that the tryCatch returns an exception
         // variable, we thus know that handle simp and handle/raise didn't apply, hence we commute efq
-        normalize(as(0)) match {
-          case Apps(Const("tryCatch", _, _), tryCatchBlocks) =>
+        normalize( as( 0 ) ) match {
+          case Apps( Const( "tryCatch", _, _ ), tryCatchBlocks ) =>
             // raise/handle
-            println("raise/handle")
+            println( "raise/handle" )
             val tryCatchBlocksCommuted = tryCatchBlocks.map( commute( _, Left( hd ) ) )
             val ( aTry ->: _ ) ->: cTry = tryCatchBlocksCommuted( 0 ).ty
             val ( aCatch ->: cCatch ) = tryCatchBlocksCommuted( 1 ).ty
@@ -237,7 +237,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
             //val tmpParams = params.map( replaceTy( _, params( 1 ), tryBlock.ty ) )
             val tmpParams = List( a, c )
             val newTryCatch = Const( "tryCatch", tmpTy, tmpParams )
-            Some(Apps(newTryCatch, tryCatchBlocksCommuted))
+            Some( Apps( newTryCatch, tryCatchBlocksCommuted ) )
           case _ =>
             println( s"raise other: efq const: $hd" )
             //Some( normalize(hd(normalize(as(0))) ))
@@ -275,8 +275,8 @@ case class Normalizer( rules: Set[ReductionRule] ) {
           val res = normalize( arg ) match {
             case ntb @ App( Const( "efq", _, _ ), App( thrownExn, thrownVal ) ) =>
               val App( App( Const( "handle", _, _ ), App( caughtExn, exnVar ) ), catchB ) = as( 1 )
-              println(s"thrown exn: $thrownExn")
-              println(s"caught exn: $caughtExn")
+              println( s"thrown exn: $thrownExn" )
+              println( s"caught exn: $caughtExn" )
               if ( thrownExn == caughtExn ) {
                 println( s"caught exception $caughtExn" )
                 Some( le"(^${exnVar.asInstanceOf[Var]} $catchB)$thrownVal" )
@@ -289,16 +289,16 @@ case class Normalizer( rules: Set[ReductionRule] ) {
             case t =>
               // Exception var y in FV(V), but not raised
               // Expecting a raise in try block. Do not reduce and keep $expr. Should be handled by raise/handle case. I.e., at some point the exception in the block will be raised due to soundness of the proof system..
-              println(s"Expecting a raise in try block. Is $t\ndo not reduce and keep $expr. Should be handled by raise/handle case. I.e., at some point the exception in the block will be raised due to soundness of the proof system." )
-              assert(params(1) == ty"exn")
+              println( s"Expecting a raise in try block. Is $t\ndo not reduce and keep $expr. Should be handled by raise/handle case. I.e., at some point the exception in the block will be raised due to soundness of the proof system." )
+              assert( params( 1 ) == ty"exn" )
               None
-              //throw new Exception( s"Expecting a raise in try block. Is $t" )
+            //throw new Exception( s"Expecting a raise in try block. Is $t" )
           }
           res
         }
       case hd @ Const( c, _, _ ) =>
-        if(c == "existsElim") {
-          println("reducing existsElim")
+        if ( c == "existsElim" ) {
+          println( "reducing existsElim" )
         }
         headMap.get( c ).flatMap {
           case ( rs, whnfArgs, normalizeArgs ) =>
