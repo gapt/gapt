@@ -18,6 +18,10 @@ object LKToExpansionProof {
     val theory_ = ETMerge.byShallowFormula( theory )
     eliminateMerges( moveDefsUpward( ExpansionProof( theory_ ++: expansionSequent ) ) )
   }
+  def withoutMerge( proof: LKProof )( implicit ctx: Context = Context() ): ExpansionProof = {
+    val ( theory, expansionSequent ) = extract( regularize( AtomicExpansion( makeInductionExplicit( proof ) ) ) )
+    moveDefsUpward( ExpansionProof( theory ++: expansionSequent ) )
+  }
 
   private def extract( proof: LKProof )( implicit ctx: Context ): ( Seq[ExpansionTree], Sequent[ExpansionTree] ) = proof match {
 
