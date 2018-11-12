@@ -10,7 +10,7 @@ import gapt.provers.escargot.Escargot
 import org.sat4j.minisat.SolverFactory
 import org.sat4j.specs._
 import gapt.provers.sat.Sat4j._
-import gapt.utils.quiet
+import gapt.utils.{ generatedUpperSetInPO, quiet }
 import org.sat4j.core.VecInt
 import org.sat4j.tools.SearchListenerAdapter
 
@@ -128,6 +128,11 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         true
     }
 
+  val dependencies = Map() ++ ( for ( ev <- expansionProof.eigenVariables )
+    yield ev -> ( generatedUpperSetInPO( List( ev ), expansionProof.dependencyRelation.map( _.swap ) ) - ev ) )
+  val immediateDeps = for ( ( ev1, down1 ) <- dependencies )
+    yield ev1 -> ( down1 -- down1.flatMap( dependencies ) )
+
   type Counterexample = Set[Int] // just the assumptions
   type Result = Either[Counterexample, Unit]
 
@@ -150,11 +155,6 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
     while ( isESatisfiable( assumptions ) ) {
       val model = solver.model(): Seq[Int]
 
-      def checkEVCond( e: ExpansionTree ): Boolean =
-        freeVariables( e.shallow ).
-          intersect( expansionProof.eigenVariables ).
-          subsetOf( eigenVariables )
-
       def minimizeCtx( ctx: Set[Int], upper: Set[Int] ): Set[Int] = {
         def go( todo: List[Int], ctx: Set[Int] ): Set[Int] =
           todo match {
@@ -170,11 +170,12 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
           addClause( upper = modelSequent( upper ++ ctx2 ), lower = modelSequent( lower ++ ctx2 ) )( p )
         }
 
-      def tryInvertible(): Option[Result] =
-        model.filter( _ > 0 ).flatMap( atomToET ).filter( checkEVCond ).collectFirst {
+      def tryExistsLeft(): Option[Result] =
+        model.filter( _ > 0 ).flatMap( atomToET ).collectFirst {
           case e @ ETStrongQuantifier( sh, ev, a ) if e.polarity.inAnt &&
-            !eigenVariables.contains( ev ) && !assumptions.contains( atom( a ) ) =>
-            val ctx = assumptions.filter( a => !freeVariables( atomToSh( math.abs( a ) ) ).contains( ev ) )
+            !eigenVariables.contains( ev ) && immediateDeps( ev ).subsetOf( eigenVariables ) =>
+            val ctx = ( assumptions ++ model.filter( _ > 0 ) ).
+              filter( a => !freeVariables( atomToSh( math.abs( a ) ) ).contains( ev ) )
             val provable = solve( eigenVariables + ev, ctx + atom( a ) )
             if ( provable.isRight ) addClauseWithCtx( ctx, Set( atom( a ) ), Set( atom( e ) ) )( p =>
               if ( !p.endSequent.antecedent.contains( a.shallow ) ) p
@@ -201,9 +202,11 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
               ( upper + -atom( e ), eigenVariables, back )
           }
         val candidates = model.filter( _ < 0 ).map( -_ ).flatMap( atomToET ).collect {
-          case e @ ETNeg( a ) if e.polarity.inSuc && !assumptions.contains( atom( a ) )                 => e
-          case e @ ETImp( a, _ ) if e.polarity.inSuc && !assumptions.contains( atom( a ) )              => e
-          case e @ ETStrongQuantifier( _, ev, _ ) if e.polarity.inSuc && !eigenVariables.contains( ev ) => e
+          case e @ ETNeg( a ) if e.polarity.inSuc && !assumptions.contains( atom( a ) )    => e
+          case e @ ETImp( a, _ ) if e.polarity.inSuc && !assumptions.contains( atom( a ) ) => e
+          case e @ ETStrongQuantifier( _, ev, _ ) if e.polarity.inSuc
+            && !eigenVariables.contains( ev )
+            && immediateDeps( ev ).subsetOf( eigenVariables ) => e
         }
         val nextSteps = candidates.map { e =>
           val ( upper, newEvs, transform ) = handleBlock( e, Set.empty, Set.empty, identity )
@@ -223,7 +226,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         }
       }
 
-      tryInvertible().getOrElse( tryNonInvertible() ) match {
+      tryExistsLeft().getOrElse( tryNonInvertible() ) match {
         case Right( _ ) => // next model
           require( !solver.isSatisfiable( model ) )
         case reason @ Left( _ ) =>
