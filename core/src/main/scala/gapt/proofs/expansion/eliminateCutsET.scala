@@ -20,7 +20,7 @@ object eliminateCutsET {
         case cut if numCutInsts( cut ) > maxCutInsts => None
         case cut @ ETCut.Cut( cut1, cut2 ) =>
           singleStep( cut1, cut2, cuts.filterNot( _ == cut ), epwc.nonCutPart,
-            epwc.eigenVariables union freeVariables( epwc.shallow ),
+            freeVariablesET.includingEigenVariables( epwc ),
             epwc.dependencyRelation )
       }.headOption match {
         case Some( ( newCuts, newES ) ) =>

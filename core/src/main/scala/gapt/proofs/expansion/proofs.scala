@@ -35,7 +35,12 @@ case class ExpansionProof( expansionSequent: Sequent[ExpansionTree] ) {
   val dependencyRelation: Set[( Var, Var )] =
     ExpansionProof.dependencies( expansionSequent ).
       filter { case ( a, b ) => eigenVariables( a ) && eigenVariables( b ) }
-  val Right( linearizedDependencyRelation ) = linearizeStrictPartialOrder( eigenVariables, dependencyRelation )
+  val linearizedDependencyRelation: Vector[Var] =
+    linearizeStrictPartialOrder( eigenVariables, dependencyRelation ) match {
+      case Right( linearized ) => linearized
+      case Left( cycle ) =>
+        throw new IllegalArgumentException( s"dependency relation contains cycle: ${cycle.mkString( " -> " )}" )
+    }
 
   def skolemSymbols: Set[Const] = subTerms.collect { case ETtSkolem( Apps( skC: Const, _ ), _ ) => skC }
 
@@ -133,9 +138,15 @@ object freeVariablesET {
   def apply( expansionProof: ExpansionProof ): Set[Var] =
     apply( expansionProof.expansionSequent ) diff expansionProof.eigenVariables
 
+  def includingEigenVariables( expansionProof: ExpansionProof ): Set[Var] =
+    includingEigenVariables( expansionProof.expansionSequent )
+
+  def includingEigenVariables( expansionSequent: ExpansionSequent ): Set[Var] =
+    expansionSequent.elements.view.flatMap( apply ).toSet
+
   /** Note: also includes variables contained in eigenvariable nodes. */
-  def apply( expansionTree: ExpansionSequent ): Set[Var] =
-    expansionTree.elements.view.flatMap( apply ).toSet
+  def apply( expansionSequent: ExpansionSequent ): Set[Var] =
+    includingEigenVariables( expansionSequent )
 
   /** Note: also includes variables contained in eigenvariable nodes. */
   def apply( expansionTree: ExpansionTree ): Set[Var] =
