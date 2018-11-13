@@ -6,21 +6,11 @@ import gapt.utils.Doc
 import gapt.utils.Doc._
 
 class ETtPrettyPrinter( sig: BabelSignature ) extends BabelExporter( unicode = true, sig = sig ) {
-  def export( et: ExpansionTree ): Doc = {
-    group( show( et, Map[String, VarOrConst]() )._1 )
-  }
   def export( et: ETt ): Doc =
     group( show( et, Map[String, VarOrConst]() )._1.inPrec( 0 ) )
 
   def addPol( doc: Doc, pol: Polarity ): Doc =
     doc <> ( if ( pol.positive ) "+" else "-" )
-
-  def show( et: ExpansionTree, t0: Map[String, VarOrConst] ): ( Doc, Map[String, VarOrConst] ) = {
-    val t0 = Map[String, VarOrConst]()
-    val ( sh, t1 ) = show( et.shallow, knownType = true, Set(), t0 )
-    val ( term, t2 ) = show( et.term, t1 )
-    ( addPol( sh.inPrec( Precedence.app ), et.polarity ) <> ":" </> term.inPrec( Precedence.app ), t2 )
-  }
 
   def show( et: ETt, t0: Map[String, VarOrConst] ): ( Parenable, Map[String, VarOrConst] ) = et match {
     case ETtNullary => ( Parenable( Precedence.max, "∘" ), t0 )

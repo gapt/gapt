@@ -30,6 +30,8 @@ object ETCut {
     apply( Some( Cut( child1, child2 ) ) )
   def apply( cuts: Iterable[( ExpansionTree, ExpansionTree )] )( implicit dummyImplicit: DummyImplicit ): ExpansionTree =
     apply( for ( ( left, right ) <- cuts ) yield Cut( left, right ) )
+  def apply( cutFormula: Formula, left: ETt, right: ETt ): ExpansionTree =
+    apply( Some( Cut( cutFormula, left, right ) ) )
 
   def isCutExpansion( tree: ExpansionTree ): Boolean =
     tree.polarity.inAnt && tree.shallow == cutAxiom

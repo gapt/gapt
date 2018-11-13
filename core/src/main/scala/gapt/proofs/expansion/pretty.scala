@@ -5,12 +5,9 @@ import gapt.formats.babel.{ BabelExporter, BabelSignature, Precedence }
 import gapt.utils.Doc
 import Doc._
 
-class ExpansionTreePrettyPrinter( sig: BabelSignature ) extends BabelExporter( unicode = true, sig = sig ) {
+class ExpansionTreePrettyPrinter( sig: BabelSignature ) extends ETtPrettyPrinter( sig ) {
   def export( et: ExpansionTree ): Doc =
     group( show( et, Map[String, VarOrConst]() )._1.inPrec( 0 ) )
-
-  def addPol( doc: Doc, pol: Polarity ) =
-    doc <> ( if ( pol.positive ) "+" else "-" )
 
   def show( et: ExpansionTree, t0: Map[String, VarOrConst] ): ( Parenable, Map[String, VarOrConst] ) = et match {
     case ETTop( pol )    => ( Parenable( Precedence.max, addPol( "⊤", pol ) ), t0 )
@@ -71,6 +68,10 @@ class ExpansionTreePrettyPrinter( sig: BabelSignature ) extends BabelExporter( u
       val ( sh_, t1 ) = show( shallow, true, Set(), t0 )
       val ( child_, t2 ) = show( child, t1 )
       Parenable( Precedence.conj, sh_.inPrec( Precedence.conj ) <+> "+def" </> child_.inPrec( Precedence.conj ) ) -> t2
+    case ExpansionTree( term, pol, sh ) =>
+      val ( sh_, t1 ) = show( sh, true, Set(), t0 )
+      val ( term_, t2 ) = show( term, t1 )
+      Parenable( Precedence.max, ( "⟨" <> addPol( sh_.inPrec( 0 ), pol ) <> "," </> term_.inPrec( 0 ) <> "⟩" ).group ) -> t2
   }
 
 }
