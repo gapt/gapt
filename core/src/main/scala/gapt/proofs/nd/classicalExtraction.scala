@@ -213,6 +213,12 @@ object ClassicalExtraction {
     val x2: Expr = hov"x2 : ?a"
     val Some( trueC ) = systemT.constant( "⊤" )
     val Some( falseC ) = systemT.constant( "⊥" )
+    val not = hoc"not: o>o"
+    systemT += PrimRecFun(
+      not,
+      List(
+        not( falseC ) -> trueC,
+        not( trueC ) -> falseC ) )
     systemT += PrimRecFun(
       ite,
       List(

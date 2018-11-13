@@ -173,9 +173,9 @@ case class Normalizer( rules: Set[ReductionRule] ) {
                 hd_
             }
             val nArgs = as_.map( normalize )
-            println( s"hd: $hd_" )
+            //println( s"hd: $hd_" )
             //println( s"args: ${as_.mkString( "\nnextarg:\n" )}" )
-            println( s"nHd: $nHd" )
+            //println( s"nHd: $nHd" )
             //println( s"nArgs: $nArgs" )
 
             // raise idem
@@ -299,6 +299,13 @@ case class Normalizer( rules: Set[ReductionRule] ) {
       case hd @ Const( c, _, _ ) =>
         if ( c == "existsElim" ) {
           println( "reducing existsElim" )
+        }
+        c match {
+          case "+" | "-" | "*" | "pow2" =>
+            println( s"reducing arithmetic op $c" )
+          case "<" | "<=" =>
+            println( s"reducing comparison op $c" )
+          case _ => ()
         }
         headMap.get( c ).flatMap {
           case ( rs, whnfArgs, normalizeArgs ) =>
