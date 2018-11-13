@@ -23,13 +23,14 @@ object MG3iToLJ {
       case WeakeningRightRule( p, _ )      => apply( p, goal, projections )
       case WeakeningLeftRule( p, f )       => WeakeningLeftRule( apply( p, goal, projections ), f )
       case proof @ CutRule( p1, _, p2, _ ) =>
-        val leftGoal = goal | proof.cutFormula
-        val q1 = apply( p1, leftGoal, Map() ++
-          projections.mapValues( pr => CutRule( pr, OrRightMacroRule( LogicalAxiom( goal ), goal, proof.cutFormula ), goal ) ) +
-          ( proof.cutFormula -> OrRightMacroRule( LogicalAxiom( proof.cutFormula ), goal, proof.cutFormula ) ) )
-        ContractionMacroRule( CutRule( q1, OrLeftRule(
-          LogicalAxiom( goal ),
-          apply( p2, goal, projections ), leftGoal ), leftGoal ) )
+        val q2 = apply( p2, goal, projections )
+        if ( !q2.conclusion.antecedent.contains( proof.cutFormula ) ) q2 else {
+          val leftGoal = goal | proof.cutFormula
+          val q1 = apply( p1, leftGoal, Map() ++
+            projections.mapValues( pr => CutRule( pr, OrRightMacroRule( LogicalAxiom( goal ), goal, proof.cutFormula ), goal ) ) +
+            ( proof.cutFormula -> OrRightMacroRule( LogicalAxiom( proof.cutFormula ), goal, proof.cutFormula ) ) )
+          ContractionMacroRule( CutRule( q1, OrLeftRule( LogicalAxiom( goal ), q2, leftGoal ), leftGoal ) )
+        }
       case BottomAxiom => WeakeningRightRule( BottomAxiom, goal )
       case TopAxiom    => CutRule( TopAxiom, projections( Top() ), Top() )
       case proof @ EqualityLeftRule( p, _, _, cx ) =>
@@ -42,13 +43,16 @@ object MG3iToLJ {
       case proof @ OrLeftRule( p1, _, p2, _ ) =>
         ContractionMacroRule( OrLeftRule( apply( p1, goal, projections ), proof.leftDisjunct, apply( p2, goal, projections ), proof.rightDisjunct ) )
       case proof @ ImpLeftRule( p1, _, p2, _ ) =>
-        val leftGoal = goal | proof.impPremise
-        val q1 = apply( p1, leftGoal, Map() ++
-          projections.mapValues( pr => CutRule( pr, OrRightMacroRule( LogicalAxiom( goal ), goal, proof.impPremise ), goal ) ) +
-          ( proof.impPremise -> OrRightMacroRule( LogicalAxiom( proof.impPremise ), goal, proof.impPremise ) ) )
-        ContractionMacroRule( CutRule( q1, OrLeftRule(
-          LogicalAxiom( goal ),
-          apply( p2, goal, projections ), leftGoal ), leftGoal ) )
+        val q2 = apply( p2, goal, projections )
+        if ( !q2.conclusion.antecedent.contains( proof.impConclusion ) ) q2 else {
+          val leftGoal = goal | proof.impPremise
+          val q1 = apply( p1, leftGoal, Map() ++
+            projections.mapValues( pr => CutRule( pr, OrRightMacroRule( LogicalAxiom( goal ), goal, proof.impPremise ), goal ) ) +
+            ( proof.impPremise -> OrRightMacroRule( LogicalAxiom( proof.impPremise ), goal, proof.impPremise ) ) )
+          ContractionMacroRule( CutRule( q1, OrLeftRule(
+            LogicalAxiom( goal ),
+            ImpLeftRule( LogicalAxiom( proof.impPremise ), proof.impPremise, q2, proof.impConclusion ), leftGoal ), leftGoal ) )
+        }
       case proof @ NegLeftRule( p, _ ) =>
         val auxF = proof.auxFormulas.head.head
         val newGoal = goal | auxF
