@@ -24,10 +24,8 @@ class ExpansionProofTest extends Specification with SatMatchers with SequentMatc
   }
 
   "reject cyclic proofs" in {
-    val Seq( x, y ) = Seq( "x", "y" ) map { FOLVar( _ ) }
-    ExpansionProof( Sequent() :+ ETWeakQuantifier(
-      Ex( x, All( y, x === y ) ),
-      Map( x -> ETStrongQuantifier( All( y, x === y ), x, ETAtom( x === x, Polarity.InSuccedent ) ) ) ) ) must throwA[MatchError]
+    ExpansionProof( Sequent() :+ ExpansionTree( hof"?x !y x=y", Polarity.InSuccedent,
+      ETtWeak( hov"x" -> ETtStrong( hov"x", ETtAtom ) ) ) ) must throwAn[IllegalArgumentException]
   }
 
   "substitute proofs" in {
