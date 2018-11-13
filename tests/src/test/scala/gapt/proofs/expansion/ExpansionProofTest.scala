@@ -98,7 +98,7 @@ class ExpansionProofDefinitionEliminationTest extends Specification with SatMatc
       hof"∀x (D x ↔ P x ∧ P (f x))", Polarity.InAntecedent,
       ETtWeak( le"c" -> ETtBinary( ETtBinary( ETtAtom, ETtBinary( ETtWeakening, ETtAtom ) ), ETtWeakening ) ) )
     val f = ExpansionTree(
-      hof"∃x (P x ∧ P (f x) → P (f x))", Polarity.InAntecedent,
+      hof"∃x (P x ∧ P (f x) → P (f x))", Polarity.InSuccedent,
       ETtWeak( le"c" -> ETtBinary( ETtDef( hof"D c", ETtAtom ), ETtAtom ) ) )
 
     val epwd = ExpansionProof( d +: Sequent() :+ f )
