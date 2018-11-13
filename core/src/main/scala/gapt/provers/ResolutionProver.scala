@@ -75,7 +75,7 @@ trait ResolutionProver extends OneShotProver { self =>
   override def getExpansionProof( seq: HOLSequent )( implicit ctx0: Maybe[MutableContext] ): Option[ExpansionProof] = {
     implicit val ctx: MutableContext = ctx0.getOrElse( MutableContext.guess( seq ) )
     withSection { section =>
-      getResolutionProof( section.groundSequent( seq ) )( ctx ).map( ResolutionToExpansionProof( _ ) )
+      getResolutionProof( section.groundSequent( seq ) )( ctx ).map( ResolutionToExpansionProof( _ )( ctx ) )
     }
   }
 
