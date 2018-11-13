@@ -79,7 +79,7 @@ object MG3iToLJ {
       case proof @ ExistsLeftRule( p, _, _, _ ) =>
         ExistsLeftRule( apply( p, goal, projections ), proof.mainFormula, proof.eigenVariable )
       case proof @ ForallLeftRule( p, _, _, _, _ ) =>
-        ContractionMacroRule( ForallLeftRule( apply( p, goal, projections ), proof.mainFormula, proof.term ) )
+        ForallLeftRule( apply( p, goal, projections ), proof.mainFormula, proof.term )
       case proof @ NegRightRule( p, _ ) =>
         require( p.conclusion.succedent.isEmpty )
         CutRule(
@@ -94,7 +94,7 @@ object MG3iToLJ {
         val q = apply( p, proof.auxFormula, Map( proof.auxFormula -> LogicalAxiom( proof.auxFormula ) ) )
         CutRule( ForallRightRule( q, proof.mainFormula, proof.eigenVariable ), projections( proof.mainFormula ), proof.mainFormula )
     }
-    require( result.conclusion.succedent == Seq( goal ) )
+    require( result.conclusion.succedent.distinct == Seq( goal ) )
     ContractionMacroRule( result )
   }
 }
