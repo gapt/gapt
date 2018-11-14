@@ -118,6 +118,7 @@ class IEscargot(
               None
           }
         case None =>
+          // TODO: make sure that Vampire/SPASS/E only return None for satisfiable problems
           Some( Left( () ) )
       }
     }
