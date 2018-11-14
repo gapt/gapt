@@ -3,20 +3,20 @@ package gapt.provers.escargot
 import ammonite.ops.FilePath
 import gapt.expr._
 import gapt.expr.fol.folSubTerms
-import gapt.expr.hol.containsQuantifierOnLogicalLevel
+import gapt.expr.hol.{ containsQuantifierOnLogicalLevel, isEssentiallyCNF }
 import gapt.formats.tptp.{ TptpImporter, sequentProofToTptp }
-import gapt.proofs.expansion.{ ETAnd, ETAtom, ETBottom, ETDefinition, ETImp, ETMerge, ETNeg, ETOr, ETSkolemQuantifier, ETStrongQuantifier, ETTop, ETWeakQuantifier, ETWeakening, ExpansionProof, ExpansionProofToLK, ExpansionProofToMG3i, ExpansionProofToMG3iViaSAT, ExpansionSequent, ExpansionTree, deskolemizeET, formulaToExpansionTree }
-import gapt.proofs.lk.{ LKProof, MG3iToLJ, isMaeharaMG3i, normalizeLKt }
 import gapt.proofs.HOLSequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.expansion._
+import gapt.proofs.lk.{ LKProof, MG3iToLJ, isMaeharaMG3i, normalizeLKt }
 import gapt.prooftool.LKProofViewer
-import gapt.provers.{ OneShotProver, Prover }
 import gapt.provers.congruence.SimpleSmtSolver
 import gapt.provers.eprover.EProver
 import gapt.provers.escargot.impl.EscargotLogger
 import gapt.provers.spass.SPASS
 import gapt.provers.vampire.Vampire
+import gapt.provers.{ OneShotProver, Prover }
 import gapt.utils.{ LogHandler, Maybe, quiet }
 
 object heuristicDecidabilityInstantiation {
@@ -31,8 +31,8 @@ object heuristicDecidabilityInstantiation {
   }
 
   def mkSubsts( vars: Set[Var], terms: Map[Ty, Set[Expr]] ): Set[Substitution] = {
-    import cats.syntax.traverse._
     import cats.instances.list._
+    import cats.syntax.traverse._
     vars.toList.traverse( v => terms( v.ty ).toList.map( v -> _ ) ).
       map( Substitution( _ ) ).toSet
   }
@@ -44,77 +44,6 @@ object heuristicDecidabilityInstantiation {
     case Or( a, Neg( a_ ) ) if a == a_ => !containsQuantifierOnLogicalLevel( a )
     case _                             => false
   }
-}
-
-object pushWeakeningsUp {
-  def apply( ep: ExpansionProof ): ExpansionProof = ExpansionProof( apply( ep.expansionSequent ) )
-  def apply( es: ExpansionSequent ): ExpansionSequent = es.map( apply )
-
-  def apply( et: ExpansionTree ): ExpansionTree = et match {
-    case ETAtom( _, _ ) | ETBottom( _ ) | ETTop( _ ) => et
-    case ETWeakening( sh, pol )                      => apply( sh, pol )
-    case ETMerge( a, b )                             => ETMerge( apply( a ), apply( b ) )
-    case ETNeg( a )                                  => ETNeg( apply( a ) )
-    case ETAnd( a, b )                               => ETAnd( apply( a ), apply( b ) )
-    case ETOr( a, b )                                => ETOr( apply( a ), apply( b ) )
-    case ETImp( a, b )                               => ETImp( apply( a ), apply( b ) )
-    case ETWeakQuantifier( sh, insts )               => ETWeakQuantifier( sh, Map() ++ insts.mapValues( apply ) )
-    case ETStrongQuantifier( sh, ev, ch )            => ETStrongQuantifier( sh, ev, apply( ch ) )
-    case ETSkolemQuantifier( sh, skT, ch )           => ETSkolemQuantifier( sh, skT, apply( ch ) )
-    case ETDefinition( sh, ch )                      => ETDefinition( sh, apply( ch ) )
-  }
-
-  def apply( sh: Formula, pol: Polarity ): ExpansionTree = sh match {
-    case sh: Atom    => ETAtom( sh, pol )
-    case Neg( a )    => ETNeg( apply( a, !pol ) )
-    case And( a, b ) => ETAnd( apply( a, pol ), apply( b, pol ) )
-    case Or( a, b )  => ETOr( apply( a, pol ), apply( b, pol ) )
-    case Imp( a, b ) => ETImp( apply( a, !pol ), apply( b, pol ) )
-    case _           => ETWeakening( sh, pol )
-  }
-}
-
-object isEssentiallyCNF {
-  private def hypLhs: Formula => Boolean = {
-    case _: Atom     => true
-    case Bottom()    => true
-    case Top()       => true
-    case And( f, g ) => hypLhs( f ) && hypLhs( g )
-    case Or( f, g )  => hypLhs( f ) && hypLhs( g )
-    case Ex( _, f )  => hypLhs( f )
-    case _           => false
-  }
-
-  private def hypMatrix: Formula => Boolean = {
-    case _: Atom     => true
-    case Bottom()    => true
-    case Top()       => true
-    case All( _, f ) => hypMatrix( f )
-    case Imp( f, g ) => hypLhs( f ) && hypMatrix( g )
-    case Neg( f )    => hypLhs( f )
-    case And( f, g ) => hypMatrix( f ) && hypMatrix( g )
-    case Or( f, g )  => hypMatrix( f ) && hypMatrix( g )
-    case _           => false
-  }
-
-  private def prenexHyp: Formula => Boolean = {
-    case All( _, f ) => prenexHyp( f )
-    case Ex( _, f )  => prenexHyp( f )
-    case And( f, g ) => prenexHyp( f ) && prenexHyp( g )
-    case Or( f, g )  => prenexHyp( f ) && prenexHyp( g )
-    case f           => hypMatrix( f )
-  }
-
-  private def fml: Formula => Boolean = {
-    case Imp( f, g ) => prenexHyp( f ) && fml( g )
-    case Neg( f )    => prenexHyp( f )
-    case And( f, g ) => fml( f ) && fml( g )
-    case All( _, f ) => fml( f )
-    case f           => hypLhs( f )
-  }
-
-  def apply( formula: Formula ): Boolean = fml( formula )
-  def apply( sequent: HOLSequent ): Boolean = apply( sequent.toImplication )
 }
 
 class IEscargot(
