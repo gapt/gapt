@@ -3,11 +3,30 @@ package gapt.proofs.lk
 import gapt.expr._
 
 object MG3iToLJ {
-  def apply( proof: LKProof ): LKProof = {
-    val Seq( f ) = proof.conclusion.succedent
-    val q = apply( proof, f, Map( f -> LogicalAxiom( f ) ) )
-    require( q.conclusion.isSubsetOf( proof.conclusion ) )
-    q
+  private def mkProjs( fs: List[Formula] ): ( Formula, Map[Formula, LKProof] ) =
+    fs match {
+      case Nil => ( Bottom(), Map.empty )
+      case f :: Nil =>
+        ( f, Map( f -> LogicalAxiom( f ) ) )
+      case f :: fs_ =>
+        val ( d, ps ) = mkProjs( fs_ )
+        ( d | f, Map( f -> OrRightMacroRule( LogicalAxiom( f ), d, f ) ) ++ ps.mapValues( OrRightMacroRule( _, d, f ) ) )
+    }
+
+  def apply( proof: LKProof ): LKProof = proof.conclusion.succedent match {
+    case Seq() =>
+      val q = CutRule( apply( proof, Bottom(), Map.empty ), BottomAxiom, Bottom() )
+      require( q.conclusion.isSubsetOf( proof.conclusion ) )
+      q
+    case Seq( f ) =>
+      val q = apply( proof, f, Map( f -> LogicalAxiom( f ) ) )
+      require( q.conclusion.isSubsetOf( proof.conclusion ) )
+      q
+    case fs =>
+      val ( newSuc, projs ) = mkProjs( fs.toList )
+      val q = apply( proof, newSuc, projs )
+      require( q.conclusion.isSubsetOf( proof.conclusion.copy( succedent = Vector( newSuc ) ) ) )
+      q
   }
 
   def apply( proof: LKProof, goal: Formula, projections: Map[Formula, LKProof] ): LKProof = {
