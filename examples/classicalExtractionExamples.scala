@@ -4429,7 +4429,28 @@ object commutingConversions2 extends Script {
   implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
 
   //println( normalize( le"efq(tryCatch((^(y0: nat>exn) y0(0)), handle((y0: nat>exn)(x0:nat), (N0: nat>exn)(x0)))): nat" ) )
-  println( normalize( le"efq(f(tryCatch((^(y0: nat>exn) y0(0)), handle((y0: nat>exn)(x0:nat), (N0: nat>exn)(x0))))): nat" ) )
+  //println( normalize( le"efq(f(tryCatch((^(y0: nat>exn) y0(0)), handle((y0: nat>exn)(x0:nat), (N0: nat>exn)(x0))))): nat" ) )
+
+  println( normalize(
+    le"""
+         existsElim(
+           tryCatch(
+             (^(y0: nat>exn) pair(y0, i)),
+             handle((y0:nat>exn)(x0:nat), (N0:conj(nat>exn)(1)))
+           ), (^(x:nat>exn) (^(y:1) x(0)))
+         )
+      """ ) )
+  /*
+  println( normalize(
+    le"""
+         existsElim(
+           tryCatch(
+             (^(y0: nat>exn) pair(y0, i)),
+             handle((y0:nat>exn)(x0:nat), (N0:conj(nat>exn)(1)))
+           ), (^(x:nat>exn) (^(y:1) efq(x(0))))
+         )
+      """ ) )
+      */
 }
 
 object handleRaiseReduction extends Script {

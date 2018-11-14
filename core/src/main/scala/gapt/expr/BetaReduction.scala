@@ -290,23 +290,25 @@ case class Normalizer( rules: Set[ReductionRule] ) {
               // Exception var y in FV(V), but not raised
               // Expecting a raise in try block. Do not reduce and keep $expr. Should be handled by raise/handle case. I.e., at some point the exception in the block will be raised due to soundness of the proof system..
               println( s"Expecting a raise in try block. Is $t\ndo not reduce and keep $expr. Should be handled by raise/handle case. I.e., at some point the exception in the block will be raised due to soundness of the proof system." )
-              assert( params( 1 ) == ty"exn" )
+              // TODO: in existsMinimum program (Federico's thesis) it's a conjunction, wrapping an exception, not an exception.
+              //assert( params( 1 ) == ty"exn" )
               None
             //throw new Exception( s"Expecting a raise in try block. Is $t" )
           }
           res
         }
       case hd @ Const( c, _, _ ) =>
-        if ( c == "existsElim" ) {
-          println( "reducing existsElim" )
-        }
+        /*
         c match {
+          case "existsElim" =>
+            println( "reducing existsElim" )
           case "+" | "-" | "*" | "pow2" =>
             println( s"reducing arithmetic op $c" )
           case "<" | "<=" =>
             println( s"reducing comparison op $c" )
           case _ => ()
         }
+        */
         headMap.get( c ).flatMap {
           case ( rs, whnfArgs, normalizeArgs ) =>
             val as_ = as.zipWithIndex.map {
