@@ -107,6 +107,7 @@ object isEssentiallyCNF {
 
   private def fml: Formula => Boolean = {
     case Imp( f, g ) => prenexHyp( f ) && fml( g )
+    case Neg( f )    => prenexHyp( f )
     case And( f, g ) => fml( f ) && fml( g )
     case All( _, f ) => fml( f )
     case f           => hypLhs( f )
