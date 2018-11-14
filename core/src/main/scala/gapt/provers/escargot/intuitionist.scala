@@ -74,6 +74,48 @@ object pushWeakeningsUp {
   }
 }
 
+object isEssentiallyCNF {
+  private def hypLhs: Formula => Boolean = {
+    case _: Atom     => true
+    case Bottom()    => true
+    case Top()       => true
+    case And( f, g ) => hypLhs( f ) && hypLhs( g )
+    case Or( f, g )  => hypLhs( f ) && hypLhs( g )
+    case Ex( _, f )  => hypLhs( f )
+    case _           => false
+  }
+
+  private def hypMatrix: Formula => Boolean = {
+    case _: Atom     => true
+    case Bottom()    => true
+    case Top()       => true
+    case All( _, f ) => hypMatrix( f )
+    case Imp( f, g ) => hypLhs( f ) && hypMatrix( g )
+    case Neg( f )    => hypLhs( f )
+    case And( f, g ) => hypMatrix( f ) && hypMatrix( g )
+    case Or( f, g )  => hypMatrix( f ) && hypMatrix( g )
+    case _           => false
+  }
+
+  private def prenexHyp: Formula => Boolean = {
+    case All( _, f ) => prenexHyp( f )
+    case Ex( _, f )  => prenexHyp( f )
+    case And( f, g ) => prenexHyp( f ) && prenexHyp( g )
+    case Or( f, g )  => prenexHyp( f ) && prenexHyp( g )
+    case f           => hypMatrix( f )
+  }
+
+  private def fml: Formula => Boolean = {
+    case Imp( f, g ) => prenexHyp( f ) && fml( g )
+    case And( f, g ) => fml( f ) && fml( g )
+    case All( _, f ) => fml( f )
+    case f           => hypLhs( f )
+  }
+
+  def apply( formula: Formula ): Boolean = fml( formula )
+  def apply( sequent: HOLSequent ): Boolean = apply( sequent.toImplication )
+}
+
 class IEscargot(
     backend:         Prover        = Escargot,
     method:          ExpToLKMethod = ExpToLKMethod.MG3iViaSAT,
@@ -112,16 +154,28 @@ class IEscargot(
   def getLKProof_( seq: HOLSequent )( implicit ctx0: Maybe[MutableContext] ): Option[Either[Unit, LKProof]] = {
     implicit val ctx: MutableContext = ctx0.getOrElse( MutableContext.guess( seq ) )
 
+    val essentiallyCNF = isEssentiallyCNF( seq )
+    if ( essentiallyCNF )
+      EscargotLogger.info( "problem is essentially in clause normal form" )
+
     if ( !containsQuantifierOnLogicalLevel( seq.toImplication ) ) {
       if ( !SimpleSmtSolver.isValid( seq ) ) Some( Left( () ) )
-      else expansionProofToMG3i( ExpansionProof( formulaToExpansionTree( seq ) ) ) match {
-        case Some( lk ) => Some( Right( lk ) )
-        case None       => if ( method.isComplete ) Some( Left( () ) ) else None
+      else {
+        if ( essentiallyCNF ) EscargotLogger.info( "SZS status Theorem" )
+        expansionProofToMG3i( ExpansionProof( formulaToExpansionTree( seq ) ) ) match {
+          case Some( lk ) => Some( Right( lk ) )
+          case None       => if ( method.isComplete ) Some( Left( () ) ) else None
+        }
       }
     } else {
       quiet( backend.getExpansionProof( seq ) ) match {
         case Some( expansion0 ) =>
           EscargotLogger.info( "found classical expansion proof" )
+          val proofEssentiallyCNF = essentiallyCNF || isEssentiallyCNF( expansion0.shallow )
+          if ( !essentiallyCNF && proofEssentiallyCNF )
+            EscargotLogger.info( "axioms used by proof are essentially in clause normal form" )
+          if ( proofEssentiallyCNF )
+            EscargotLogger.info( "SZS status Theorem" )
           val expansion1 = ETWeakening( expansion0, seq )
           val expansion2 = pushWeakeningsUp( expansion1 )
           val expansion3 = heuristicDecidabilityInstantiation( expansion2 )
