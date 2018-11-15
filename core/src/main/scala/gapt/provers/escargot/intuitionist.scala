@@ -15,7 +15,7 @@ import gapt.provers.congruence.SimpleSmtSolver
 import gapt.provers.eprover.EProver
 import gapt.provers.escargot.impl.EscargotLogger
 import gapt.provers.spass.SPASS
-import gapt.provers.vampire.Vampire
+import gapt.provers.vampire.{ Vampire, VampireCASC }
 import gapt.provers.{ OneShotProver, Prover }
 import gapt.utils.{ LogHandler, Maybe, quiet }
 import EscargotLogger._
@@ -179,53 +179,63 @@ object IEscargot extends IEscargot(
   filename = "" ) {
   import ExpToLKMethod._
 
-  case class Options(
-      verbose:   Boolean       = false,
-      backend:   Prover        = Escargot,
-      prooftool: Boolean       = false,
-      convertLJ: Boolean       = false,
-      method:    ExpToLKMethod = MG3iViaSAT,
-      metrics:   Boolean       = false,
-      files:     Seq[String]   = Seq() ) {
-    def parse( args: List[String] ): Either[String, Options] =
-      args match {
-        case "--backend=vampire" :: rest       => copy( backend = Vampire ).parse( rest )
-        case "--backend=spass" :: rest         => copy( backend = SPASS ).parse( rest )
-        case "--backend=escargot" :: rest      => copy( backend = Escargot ).parse( rest )
-        case "--backend=e" :: rest             => copy( backend = new EProver( extraArgs = Seq( "--auto" ) ) ).parse( rest )
-        case "--lj" :: rest                    => copy( convertLJ = true ).parse( rest )
-        case "--prooftool" :: rest             => copy( prooftool = true ).parse( rest )
-        case "--heuristic" :: rest             => copy( method = Heuristic ).parse( rest )
-        case "--mg4ip" :: rest                 => copy( method = MG4ip ).parse( rest )
-        case "--mg3isat" :: rest               => copy( method = MG3iViaSAT ).parse( rest )
-        case "--metrics" :: rest               => copy( metrics = true ).parse( rest )
-        case "-v" :: rest                      => copy( verbose = true ).parse( rest )
-        case opt :: _ if opt.startsWith( "-" ) => Left( s"unknown option $opt" )
-        case file :: rest                      => copy( files = files :+ file ).parse( rest )
-        case Nil                               => Right( this )
-      }
+  private case class Options(
+      verbose:   Boolean        = false,
+      backend:   Prover         = Escargot,
+      prooftool: Boolean        = false,
+      convertLJ: Boolean        = false,
+      method:    ExpToLKMethod  = MG3iViaSAT,
+      metrics:   Boolean        = false,
+      file:      Option[String] = None )
+
+  private val optionParser = new scopt.OptionParser[Options]( "iescargot" ) {
+    head( "iescargot" )
+
+    val backends = Map(
+      "vampire" -> Vampire,
+      "vampirecasc" -> VampireCASC,
+      "spass" -> SPASS,
+      "e" -> new EProver( extraArgs = Seq( "--auto" ) ),
+      "escargot" -> Escargot )
+    opt[String]( "backend" ).
+      valueName( s"(${backends.keys.mkString( "|" )})" ).
+      text( "first-order prover to use as backend (default is escargot)" ).
+      action( ( b, c ) => c.copy( backend = backends( b ) ) )
+
+    val methods = Map(
+      "heuristic" -> Heuristic,
+      "mg4ip" -> MG4ip,
+      "mg3isat" -> MG3iViaSAT )
+    opt[String]( "method" ).
+      valueName( s"(${methods.keys.mkString( "|" )})" ).
+      text( "method to convert expansion proofs to LK (default is mg3isat)" ).
+      action( ( m, c ) => c.copy( method = methods( m ) ) )
+
+    opt[Unit]( 'v', "verbose" ).
+      action( ( _, c ) => c.copy( verbose = true ) ).
+      text( "produce more output" )
+
+    opt[Unit]( "metrics" ).
+      action( ( _, c ) => c.copy( metrics = true ) ).
+      text( "display measurements for experiments" )
+
+    opt[Unit]( "prooftool" ).
+      action( ( _, c ) => c.copy( prooftool = true ) ).
+      text( "show proof in prooftool" )
+
+    opt[Unit]( "lj" ).
+      action( ( _, c ) => c.copy( convertLJ = true ) ).
+      text( "convert proof to cut-free lj" )
+
+    arg[String]( "iltp-problem.p" ).
+      text( "input file in TPTP format" ).
+      action( ( x, c ) => c.copy( file = Some( x ) ) )
   }
 
   def main( args: Array[String] ): Unit = try {
-    def usage =
-      """
-        |Usage: iescargot iltp-problem.p
-        |
-        | -v              verbose
-        | --backend=...   classical first-order prover (escargot,vampire,spass,e)
-        | --prooftool     show proof in prooftool
-        |""".stripMargin
-    val opts = Options().parse( args.toList ) match {
-      case Left( err ) =>
-        println( s"$err\n$usage" )
-        sys.exit( 1 )
-      case Right( o ) =>
-        o.files match {
-          case Seq( _ ) => o
-          case Seq() =>
-            println( usage )
-            sys.exit( 1 )
-        }
+    val opts = optionParser.parse( args, Options() ).getOrElse {
+      System.exit( 1 )
+      throw new IllegalStateException
     }
 
     LogHandler.current.value =
@@ -234,7 +244,7 @@ object IEscargot extends IEscargot(
       Seq( EscargotLogger ),
       1 + ( if ( opts.verbose ) 2 else 0 ) )
 
-    val Seq( file ) = opts.files
+    val file = opts.file.get
 
     metric( "file", file )
     metric( "backend", opts.backend.getClass.getSimpleName )

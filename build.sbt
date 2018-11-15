@@ -181,6 +181,7 @@ lazy val core = project.in( file( "core" ) ).
       "org.apache.commons" % "commons-lang3" % "3.8.1",
       "com.lihaoyi" %% "ammonite-ops" % "1.3.2",
       "de.uni-freiburg.informatik.ultimate" % "smtinterpol" % "2.5",
+      "com.github.scopt" %% "scopt" % "3.7.0",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5" ),
 
