@@ -247,7 +247,7 @@ object IEscargot extends IEscargot(
     val file = opts.file.get
 
     metric( "file", file )
-    metric( "backend", opts.backend.getClass.getSimpleName )
+    metric( "backend", opts.backend.getClass.getSimpleName.replace( "$", "" ) )
     metric( "method", opts.method )
 
     val tptp = time( "parse" ) { TptpImporter.loadWithIncludes( FilePath( file ) ) }
