@@ -16,7 +16,6 @@ import gapt.utils._
 import org.json4s._
 import org.json4s.native.JsonMethods._
 
-import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
 import ammonite.ops._
@@ -179,7 +178,7 @@ object testPi2CutIntro extends App {
 }
 
 object collectExperimentResults extends App {
-  val metricsLineRegex = """(% )?METRICS (.*)""".r
+  val metricsLineRegex = """(?:% )?METRICS (.*)""".r
 
   def parseOut( fn: Path ) =
     JObject(
@@ -194,8 +193,20 @@ object collectExperimentResults extends App {
           case ( k, vs ) => k -> vs.last._2
         }.toList )
 
-  val allResults = JArray( ls.rec( pwd ).filter( _.last == "stdout" ).map( parseOut ).toList )
-  print( compact( render( allResults ) ) )
+  def canonicalize: JValue => JValue = {
+    case JObject( fields ) => JObject( fields.sortBy( _._1 ).map { case ( k, v ) => k -> canonicalize( v ) } )
+    case JArray( fields )  => JArray( fields.map( canonicalize ) )
+    case value             => value
+  }
+
+  val out = new PrintWriter( Console.out )
+  val writer = JsonWriter.streamingPretty( out ).startArray()
+  for ( f <- ls.rec( pwd ).filter( _.last == "stdout" ) ) {
+    writer.addJValue( canonicalize( parseOut( f ) ) )
+    out.flush()
+  }
+  writer.endArray()
+  out.close()
 }
 
 object findNonTrivialTSTPExamples extends App {
