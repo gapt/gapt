@@ -14,7 +14,7 @@ import gapt.provers.smtlib.CVC4
 import gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, SequentialInductionAxioms, UntrustedFunctionalInductionAxioms }
 import gapt.provers.viper.grammars.TreeGrammarProverOptions.Passthru
 import gapt.provers.viper.grammars.{ TreeGrammarInductionTactic, TreeGrammarProverOptions }
-import gapt.utils.{ LogHandler, Logger }
+import gapt.utils.{ LogHandler, Logger, MetricsPrinter }
 
 object testInduction extends App {
   val logger = Logger( "testInduction" )

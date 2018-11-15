@@ -191,6 +191,7 @@ lazy val core = project.in( file( "core" ) ).
       "org.scilab.forge" % "jlatexmath" % "1.0.7" ),
 
     // JSON serialization
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.1",
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
@@ -249,9 +250,7 @@ lazy val testing = project.in( file( "testing" ) ).
     description := "gapt extended regression tests",
 
     bintrayReleaseOnPublish := false,
-    packagedArtifacts := Map(),
-
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.1" )
+    packagedArtifacts := Map() )
 
 lazy val releaseDist = TaskKey[File]( "release-dist", "Creates the release tar ball." )
 

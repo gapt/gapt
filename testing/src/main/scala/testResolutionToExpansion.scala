@@ -9,7 +9,7 @@ import gapt.proofs.expansion.{ eliminateCutsET, eliminateDefsET }
 import gapt.proofs.lk.LKToExpansionProof
 import gapt.proofs.resolution._
 import gapt.provers.prover9.Prover9Importer
-import gapt.utils.{ LogHandler, Logger }
+import gapt.utils.{ LogHandler, Logger, MetricsPrinter }
 
 object testResolutionToExpansion extends scala.App {
   val logger = Logger( "testResolutionToExpansion" )

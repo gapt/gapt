@@ -11,7 +11,7 @@ import gapt.proofs.nd.{ ExcludedMiddleRule, NDProof }
 import gapt.proofs.resolution.{ ResolutionToExpansionProof, structuralCNF }
 import gapt.proofs.loadExpansionProof
 import gapt.provers.eprover.EProver
-import gapt.utils.{ LogHandler, Logger }
+import gapt.utils.{ LogHandler, Logger, MetricsPrinter }
 
 private object lkStats {
   def apply( lk: LKProof, logger: Logger ): Unit = {
