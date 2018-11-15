@@ -180,17 +180,16 @@ object IEscargot extends IEscargot(
   import ExpToLKMethod._
 
   private case class Options(
-      verbose:   Boolean        = false,
-      backend:   Prover         = Escargot,
-      prooftool: Boolean        = false,
-      convertLJ: Boolean        = false,
-      method:    ExpToLKMethod  = MG3iViaSAT,
-      metrics:   Boolean        = false,
-      file:      Option[String] = None )
+      verbose:    Boolean        = false,
+      backend:    Prover         = Escargot,
+      prooftool:  Boolean        = false,
+      convertLJ:  Boolean        = false,
+      method:     ExpToLKMethod  = MG3iViaSAT,
+      metrics:    Boolean        = false,
+      printProof: Boolean        = true,
+      file:       Option[String] = None )
 
   private val optionParser = new scopt.OptionParser[Options]( "iescargot" ) {
-    head( "iescargot" )
-
     val backends = Map(
       "vampire" -> Vampire,
       "vampirecasc" -> VampireCASC,
@@ -210,6 +209,11 @@ object IEscargot extends IEscargot(
       valueName( s"(${methods.keys.mkString( "|" )})" ).
       text( "method to convert expansion proofs to LK (default is mg3isat)" ).
       action( ( m, c ) => c.copy( method = methods( m ) ) )
+
+    opt[Boolean]( "print-proof" ).
+      action( ( x, c ) => c.copy( printProof = x ) ).
+      valueName( "(true|false)" ).
+      text( "print the LK proof as a TPTP derivation" )
 
     opt[Unit]( 'v', "verbose" ).
       action( ( _, c ) => c.copy( verbose = true ) ).
@@ -259,7 +263,8 @@ object IEscargot extends IEscargot(
           case Some( Right( lk ) ) =>
             metric( "status", "theorem" )
             println( "% SZS status Theorem" )
-            time( "print_proof" ) { print( sequentProofToTptp( lk ) ) }
+            if ( opts.printProof )
+              time( "print_proof" ) { print( sequentProofToTptp( lk ) ) }
           case Some( Left( _ ) ) =>
             metric( "status", "nontheorem" )
             println( "% SZS status Non-Theorem" )
