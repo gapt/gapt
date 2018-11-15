@@ -250,23 +250,24 @@ object IEscargot extends IEscargot(
     metric( "backend", opts.backend.getClass.getSimpleName.replace( "$", "" ) )
     metric( "method", opts.method )
 
-    val tptp = time( "parse" ) { TptpImporter.loadWithIncludes( FilePath( file ) ) }
-    val tptpSequent = tptp.toSequent
-    implicit val ctx: MutableContext = MutableContext.guess( tptpSequent )
-    new IEscargot( opts.backend, opts.method, opts.prooftool, opts.convertLJ, file ).
-      getLKProof_( tptpSequent ) match {
-        case Some( Right( lk ) ) =>
-          metric( "status", "theorem" )
-          println( "% SZS status Theorem" )
-          time( "print_proof" ) { print( sequentProofToTptp( lk ) ) }
-        case Some( Left( _ ) ) =>
-          metric( "status", "nontheorem" )
-          println( "% SZS status Non-Theorem" )
-        case None =>
-          metric( "status", "unknown" )
-          println( "% SZS status Unknown" )
-      }
-    metric( "done", true )
+    time( "total" ) {
+      val tptp = time( "parse" ) { TptpImporter.loadWithIncludes( FilePath( file ) ) }
+      val tptpSequent = tptp.toSequent
+      implicit val ctx: MutableContext = MutableContext.guess( tptpSequent )
+      new IEscargot( opts.backend, opts.method, opts.prooftool, opts.convertLJ, file ).
+        getLKProof_( tptpSequent ) match {
+          case Some( Right( lk ) ) =>
+            metric( "status", "theorem" )
+            println( "% SZS status Theorem" )
+            time( "print_proof" ) { print( sequentProofToTptp( lk ) ) }
+          case Some( Left( _ ) ) =>
+            metric( "status", "nontheorem" )
+            println( "% SZS status Non-Theorem" )
+          case None =>
+            metric( "status", "unknown" )
+            println( "% SZS status Unknown" )
+        }
+    }
   } catch {
     case t: Throwable =>
       metric( "exception", t.toString.take( 200 ) )
