@@ -179,7 +179,7 @@ object testPi2CutIntro extends App {
 }
 
 object collectExperimentResults extends App {
-  val metricsLineRegex = """METRICS (.*)""".r
+  val metricsLineRegex = """(% )?METRICS (.*)""".r
 
   def parseOut( fn: Path ) =
     JObject(

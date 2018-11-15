@@ -24,20 +24,18 @@ class MetricsPrinter extends LogHandler {
   val phaseStack: mutable.Buffer[String] = mutable.Buffer()
   override def timeBegin( domain: String, level: VerbosityLevel, key: String, desc: String ): Unit = {
     phaseStack += key
-    value( "phase", key )
-    value( s"started_$phase", true )
-    value( s"in_$phase", true )
+    value( "phase", phase )
   }
   override def time( domain: String, level: VerbosityLevel, key: String, desc: String, duration: Duration ): Unit = {
-    value( s"time_$key", duration.toMillis )
-    value( s"in_$phase", false )
-    value( s"ended_$phase", true )
+    value( s"time_$phase", duration.toMillis )
     phaseStack.trimEnd( 1 )
   }
-  def phase: String = phaseStack.last
+  def phase: String = phaseStack.mkString( "_" )
 
   override def metric( domain: String, level: VerbosityLevel, key: String, desc: String, v: => Any ): Unit =
     value( key, v )
+
+  def println( string: String ): Unit = Console.println( string )
 
   def value( key: String, value: => Any ): Unit = {
     data( key ) = value
