@@ -118,7 +118,7 @@ class IEscargot(
           EscargotLogger.info( "found classical expansion proof" )
           metric( "exp_size", numberOfInstancesET( expansion0 ) )
           val proofEssentiallyCNF = essentiallyCNF || isEssentiallyCNF( expansion0.shallow )
-          metric( "proof_ess_cnf", essentiallyCNF )
+          metric( "proof_ess_cnf", proofEssentiallyCNF )
           if ( !essentiallyCNF && proofEssentiallyCNF )
             EscargotLogger.info( "axioms used by proof are essentially in clause normal form" )
           if ( proofEssentiallyCNF ) {
