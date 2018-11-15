@@ -34,8 +34,12 @@ object formulaToExpansionTree {
 }
 
 object numberOfInstancesET {
-  def apply( t: ExpansionTree ): Int =
-    t.treeLike.postOrder collect { case ETWeakQuantifier( _, instances ) => instances.size } sum
+  def apply( t: ETt ): Int = {
+    var result = 0
+    t.foreach { case ETtWeak( insts ) => result += insts.size case _ => }
+    result
+  }
+  def apply( t: ExpansionTree ): Int = apply( t.term )
   def apply( s: ExpansionSequent ): Int = s.elements map apply sum
   def apply( ep: ExpansionProof ): Int = apply( ep.expansionSequent )
 }
