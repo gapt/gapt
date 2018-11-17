@@ -1,13 +1,16 @@
 package gapt.testing
 import ammonite.ops.FilePath
-import gapt.expr.{ Const, expressionSize }
 import gapt.expr.hol.lcomp
-import gapt.formats.tptp.TptpParser
-import gapt.proofs.MutableContext
-import gapt.proofs.expansion.{ eliminateCutsET, eliminateDefsET }
+import gapt.expr.Const
+import gapt.expr.expressionSize
+import gapt.formats.tptp.TptpImporter
+import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.expansion.eliminateCutsET
+import gapt.proofs.expansion.eliminateDefsET
 import gapt.proofs.resolution._
 import gapt.provers.eprover.EProver
-import gapt.utils.{ LogHandler, Logger }
+import gapt.utils.LogHandler
+import gapt.utils.Logger
 
 object testExpansionImport extends scala.App {
   val logger = Logger( "testExpansionImport" )
@@ -20,7 +23,7 @@ object testExpansionImport extends scala.App {
   metric( "file", tptpFileName )
 
   try time( "total" ) {
-    val tptp = time( "tptpparser" ) { TptpParser.load( FilePath( tptpFileName ) ) }
+    val tptp = time( "tptpparser" ) { TptpImporter.loadWithIncludes( FilePath( tptpFileName ) ) }
     val problem = tptp.toSequent
     metric( "problem_lcomp", lcomp( problem ) )
     metric( "problem_scomp", expressionSize( problem.toImplication ) )

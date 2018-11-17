@@ -4,6 +4,7 @@ import gapt.expr._
 import gapt.expr.hol.SkolemFunctions
 import gapt.formats.babel.BabelSignature
 import gapt.proofs._
+import gapt.proofs.context.Context
 
 import scala.collection.mutable
 
@@ -88,8 +89,10 @@ trait ResolutionProof extends SequentProof[Formula, ResolutionProof] with DagPro
     builder.toMap
   }
 
-  def skolemFunctions =
-    SkolemFunctions( subProofs.collect { case p: SkolemQuantResolutionRule => p.skolemConst -> p.skolemDef } )
+  def skolemSymbols: Set[Const] =
+    subProofs.collect { case p: SkolemQuantResolutionRule => p.skolemConst }
+  def skolemFunctions( implicit ctx: Context ) =
+    SkolemFunctions( skolemSymbols.map( skC => skC -> ctx.skolemDef( skC ).get ) )
 
   def stringifiedConclusion( implicit sig: BabelSignature ): String = {
     val assertionString =
@@ -103,7 +106,6 @@ trait ResolutionProof extends SequentProof[Formula, ResolutionProof] with DagPro
   /** Is this a proof of the empty clause with empty assertions, and consistent definitions? */
   def isProof = {
     definitions
-    skolemFunctions
     conclusion.isEmpty && assertions.isEmpty
   }
 
@@ -237,7 +239,7 @@ object MguFactor {
  * }}}
  */
 case class Subst( subProof: ResolutionProof, substitution: Substitution ) extends ResolutionProof {
-  import gapt.proofs.lkt.ExprSubstWithβ._
+  import ExprSubstWithβ._
   override val conclusion: Sequent[Formula] = subProof.conclusion.map( substitution( _ ) )
   override def mainIndices: Seq[SequentIndex] = subProof.conclusion.indices
   override def auxIndices: Seq[Seq[SequentIndex]] = Seq( subProof.conclusion.indices )
@@ -485,30 +487,24 @@ case class ExL( subProof: ResolutionProof, idx: SequentIndex, variable: Var ) ex
 
 abstract class SkolemQuantResolutionRule extends PropositionalResolutionRule {
   def skolemTerm: Expr
-  def skolemDef: Expr
   def bound: Var
   def sub: Formula
 
   val Apps( skolemConst: Const, skolemArgs ) = skolemTerm
-  requireEq( BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) ), subProof.conclusion( idx ) )
 
   def instFormula = Substitution( bound -> skolemTerm )( sub )
 }
 trait SkolemQuantResolutionRuleCompanion {
   type R
-  def apply( subProof: ResolutionProof, idx: SequentIndex, skolemTerm: Expr, skolemDef: Expr ): R
-  def apply( subProof: ResolutionProof, idx: SequentIndex, skolemTerm: Expr )( implicit ctx: Context ): R = {
-    val Apps( skConst: Const, _ ) = skolemTerm
-    apply( subProof, idx, skolemTerm, ctx.skolemDef( skConst ).get )
-  }
+  def apply( subProof: ResolutionProof, idx: SequentIndex, skolemTerm: Expr ): R
 }
-case class AllL( subProof: ResolutionProof, idx: SequentIndex, skolemTerm: Expr, skolemDef: Expr ) extends SkolemQuantResolutionRule {
+case class AllL( subProof: ResolutionProof, idx: SequentIndex, skolemTerm: Expr ) extends SkolemQuantResolutionRule {
   require( idx isAnt )
   val All( bound, sub ) = subProof.conclusion( idx )
   def mainFormulaSequent = instFormula +: Sequent()
 }
 object AllL extends SkolemQuantResolutionRuleCompanion { type R = AllL }
-case class ExR( subProof: ResolutionProof, idx: SequentIndex, skolemTerm: Expr, skolemDef: Expr ) extends SkolemQuantResolutionRule {
+case class ExR( subProof: ResolutionProof, idx: SequentIndex, skolemTerm: Expr ) extends SkolemQuantResolutionRule {
   require( idx isSuc )
   val Ex( bound, sub ) = subProof.conclusion( idx )
   def mainFormulaSequent = Sequent() :+ instFormula

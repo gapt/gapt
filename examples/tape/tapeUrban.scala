@@ -2,7 +2,9 @@ package gapt.examples
 
 import gapt.expr._
 import gapt.formats.babel.{ Notation, Precedence }
-import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.Sequent
+import gapt.proofs.context.Context
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 
 /**
@@ -10,7 +12,7 @@ import gapt.proofs.gaptic._
  * and Computation, PhD Thesis, Cambridge University, 2000.
  */
 object tapeUrban extends TacticsProof {
-  ctx += Context.Sort( "i" )
+  ctx += Sort( "i" )
 
   ctx += hoc"f: i>i"
   ctx += hoc"'<=': i>i>o"

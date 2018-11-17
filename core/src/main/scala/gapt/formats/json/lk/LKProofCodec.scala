@@ -23,35 +23,35 @@ object LKProofCodec {
     implicit val e: Encoder[LKProof] = subEncoder
 
     {
-      case p @ ProofLink( _, _ )                  => p.asJson
-      case TopAxiom                               => TopAxiom.asJson
-      case BottomAxiom                            => BottomAxiom.asJson
-      case p @ LogicalAxiom( _ )                  => p.asJson
-      case p @ ReflexivityAxiom( _ )              => p.asJson
-      case p @ WeakeningLeftRule( _, _ )          => p.asJson
-      case p @ WeakeningRightRule( _, _ )         => p.asJson
-      case p @ ContractionLeftRule( _, _, _ )     => p.asJson
-      case p @ ContractionRightRule( _, _, _ )    => p.asJson
-      case p @ CutRule( _, _, _, _ )              => p.asJson
-      case p @ NegLeftRule( _, _ )                => p.asJson
-      case p @ NegRightRule( _, _ )               => p.asJson
-      case p @ AndLeftRule( _, _, _ )             => p.asJson
-      case p @ AndRightRule( _, _, _, _ )         => p.asJson
-      case p @ OrLeftRule( _, _, _, _ )           => p.asJson
-      case p @ OrRightRule( _, _, _ )             => p.asJson
-      case p @ ImpLeftRule( _, _, _, _ )          => p.asJson
-      case p @ ImpRightRule( _, _, _ )            => p.asJson
-      case p @ ForallLeftRule( _, _, _, _, _ )    => p.asJson
-      case p @ ForallRightRule( _, _, _, _ )      => p.asJson
-      case p @ ExistsLeftRule( _, _, _, _ )       => p.asJson
-      case p @ ExistsRightRule( _, _, _, _, _ )   => p.asJson
-      case p @ ExistsSkLeftRule( _, _, _, _, _ )  => p.asJson
-      case p @ ForallSkRightRule( _, _, _, _, _ ) => p.asJson
-      case p @ EqualityLeftRule( _, _, _, _ )     => p.asJson
-      case p @ EqualityRightRule( _, _, _, _ )    => p.asJson
-      case p @ InductionRule( _, _, _ )           => p.asJson
-      case p @ DefinitionLeftRule( _, _, _ )      => p.asJson
-      case p @ DefinitionRightRule( _, _, _ )     => p.asJson
+      case p @ ProofLink( _, _ )                => p.asJson
+      case TopAxiom                             => TopAxiom.asJson
+      case BottomAxiom                          => BottomAxiom.asJson
+      case p @ LogicalAxiom( _ )                => p.asJson
+      case p @ ReflexivityAxiom( _ )            => p.asJson
+      case p @ WeakeningLeftRule( _, _ )        => p.asJson
+      case p @ WeakeningRightRule( _, _ )       => p.asJson
+      case p @ ContractionLeftRule( _, _, _ )   => p.asJson
+      case p @ ContractionRightRule( _, _, _ )  => p.asJson
+      case p @ CutRule( _, _, _, _ )            => p.asJson
+      case p @ NegLeftRule( _, _ )              => p.asJson
+      case p @ NegRightRule( _, _ )             => p.asJson
+      case p @ AndLeftRule( _, _, _ )           => p.asJson
+      case p @ AndRightRule( _, _, _, _ )       => p.asJson
+      case p @ OrLeftRule( _, _, _, _ )         => p.asJson
+      case p @ OrRightRule( _, _, _ )           => p.asJson
+      case p @ ImpLeftRule( _, _, _, _ )        => p.asJson
+      case p @ ImpRightRule( _, _, _ )          => p.asJson
+      case p @ ForallLeftRule( _, _, _, _, _ )  => p.asJson
+      case p @ ForallRightRule( _, _, _, _ )    => p.asJson
+      case p @ ExistsLeftRule( _, _, _, _ )     => p.asJson
+      case p @ ExistsRightRule( _, _, _, _, _ ) => p.asJson
+      case p @ ExistsSkLeftRule( _, _, _, _ )   => p.asJson
+      case p @ ForallSkRightRule( _, _, _, _ )  => p.asJson
+      case p @ EqualityLeftRule( _, _, _, _ )   => p.asJson
+      case p @ EqualityRightRule( _, _, _, _ )  => p.asJson
+      case p @ InductionRule( _, _, _ )         => p.asJson
+      case p @ DefinitionLeftRule( _, _, _ )    => p.asJson
+      case p @ DefinitionRightRule( _, _, _ )   => p.asJson
     }
   }
 

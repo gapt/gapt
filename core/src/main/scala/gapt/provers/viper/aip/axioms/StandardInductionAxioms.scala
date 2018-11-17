@@ -2,11 +2,13 @@ package gapt.provers.viper.aip.axioms
 import gapt.expr.{ Formula, Substitution, Var, Const => Con }
 import gapt.proofs.gaptic._
 import gapt.proofs.lk.LKProof
-import gapt.proofs.{ Context, MutableContext, Sequent }
+import gapt.proofs.Sequent
 import gapt.prooftool.prooftool
 import gapt.provers.viper.aip._
 import cats.instances.all._
 import cats.syntax.all._
+import gapt.proofs.context.Context
+import gapt.proofs.context.mutable.MutableContext
 
 object StandardInductionAxioms {
   def apply( variable: Var, formula: Formula )( implicit ctx: MutableContext ): ThrowsError[Axiom] = {

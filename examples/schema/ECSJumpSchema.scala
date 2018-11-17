@@ -1,14 +1,18 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.Context._
-import gapt.proofs.Context
 import gapt.proofs.Sequent
+import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 
 object ECSJumpSchema extends TacticsProof {
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-  ctx += Context.Sort( "i" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += Sort( "i" )
   //Constants
   ctx += hoc"f:nat>i>nat"
   ctx += hoc"g:i>i"
@@ -64,15 +68,15 @@ object ECSJumpSchema extends TacticsProof {
   val esOmega = Sequent(
     Seq( hof"PAND(m,n)", hof"!x( TopFuncDef(m,s(m),x))" ),
     Seq( hof"?x (iLEQ(x,g(x)) -> E(f(s(m),x), f(s(m),g(x))) )" ) )
-  ctx += Context.ProofNameDeclaration( le"omega n m", esOmega )
+  ctx += ProofNameDeclaration( le"omega n m", esOmega )
   val esPhi = Sequent(
     Seq( hof"?x CutDistinct(m,n,x)", hof"!x( TopFuncDef(m,s(m),x))" ),
     Seq( hof"?x (iLEQ(x,g(x)) -> E(f(s(m),x), f(s(m),g(x))) )" ) )
-  ctx += Context.ProofNameDeclaration( le"phi n m", esPhi )
+  ctx += ProofNameDeclaration( le"phi n m", esPhi )
   val esMu = Sequent(
     Seq( hof"PAND(m,n)" ),
     Seq( hof"CutDistinct(m,n,x)" ) )
-  ctx += Context.ProofNameDeclaration( le"mu m n x", esMu )
+  ctx += ProofNameDeclaration( le"mu m n x", esMu )
   val esGamma = Sequent(
     Seq(
       hof"TopFuncDef(m, k, g(x))",
@@ -80,7 +84,7 @@ object ECSJumpSchema extends TacticsProof {
       hof"iLEQ(x, g(x))",
       hof"CutDistinct(m,n,x)" ),
     Seq( hof"E(f(k, x), f(k, g(x)))" ) )
-  ctx += Context.ProofNameDeclaration( le"gamma m k n x", esGamma )
+  ctx += ProofNameDeclaration( le"gamma m k n x", esGamma )
   val esEpsilon = Sequent(
     Seq(
       hof"E(0, f(k, x))",
@@ -88,7 +92,7 @@ object ECSJumpSchema extends TacticsProof {
       hof"iLEQ(x, g(x))",
       hof"CutDistinct(m,n,x)" ),
     Seq( hof"E(f(k, x), f(k, g(x)))" ) )
-  ctx += Context.ProofNameDeclaration( le"epsilon m k n x", esEpsilon )
+  ctx += ProofNameDeclaration( le"epsilon m k n x", esEpsilon )
   val estheta = Sequent(
     Seq(
       hof"E(0, f(k, g(x)))",
@@ -96,18 +100,18 @@ object ECSJumpSchema extends TacticsProof {
       hof"iLEQ(x, g(x))",
       hof"CutDistinct(m,n,x)" ),
     Seq( hof"E(f(k, x), f(k, g(x)))" ) )
-  ctx += Context.ProofNameDeclaration( le"theta m k n x", estheta )
+  ctx += ProofNameDeclaration( le"theta m k n x", estheta )
   val esdelta = Sequent(
     Seq( hof" CutDistinct(m,s(n),y)" ),
     Seq(
       hof"CutDistinct(m,n,y)",
       hof"?x CutConstant(m,s(n),x)",
       hof"?x CutLess(k,s(n),x)" ) )
-  ctx += Context.ProofNameDeclaration( le"delta n m k y", esdelta )
+  ctx += ProofNameDeclaration( le"delta n m k y", esdelta )
   val esbeta = Sequent(
     Seq( hof"CutLess(k,s(n),x)" ),
     Seq( hof"CutDistinct(m,n,x)" ) )
-  ctx += Context.ProofNameDeclaration( le"beta m n k x", esbeta )
+  ctx += ProofNameDeclaration( le"beta m n k x", esbeta )
   val esalpha = Sequent(
     Seq(
       hof"CutLess(k, s(n), x)",
@@ -115,7 +119,7 @@ object ECSJumpSchema extends TacticsProof {
     Seq(
       hof"E(n, f(m, y))",
       hof"LE(f(m, y), n)" ) )
-  ctx += Context.ProofNameDeclaration( le"alpha k n m x y", esalpha )
+  ctx += ProofNameDeclaration( le"alpha k n m x y", esalpha )
   val eszeta = Sequent(
     Seq(
       hof"CutConstant(m,n,x)",
@@ -123,11 +127,11 @@ object ECSJumpSchema extends TacticsProof {
       hof"TopFuncDef(m, k, x)",
       hof"TopFuncDef(m, k, g(x))" ),
     Seq( hof" E(f(k,x), f(k,g(x))) " ) )
-  ctx += Context.ProofNameDeclaration( le"zeta n m k x", eszeta )
+  ctx += ProofNameDeclaration( le"zeta n m k x", eszeta )
   val espi = Sequent(
     Seq( hof"LE(f(m, x), n)" ),
     Seq( hof"CutLess(k, n, x)" ) )
-  ctx += Context.ProofNameDeclaration( le"pi k n m x", espi )
+  ctx += ProofNameDeclaration( le"pi k n m x", espi )
   val essigma = Sequent(
     Seq(
       hof"CutDistinct(m, n, x)",
@@ -135,13 +139,13 @@ object ECSJumpSchema extends TacticsProof {
     Seq(
       hof"?z CutLess(k, n, z)",
       hof"CutConstant(m, n, y)" ) )
-  ctx += Context.ProofNameDeclaration( le"sigma n m k x y", essigma )
+  ctx += ProofNameDeclaration( le"sigma n m k x y", essigma )
   val espsi = Sequent(
     Seq( hof"CutDistinct(m, n, x)" ),
     Seq(
       hof"?z CutLess(k, n, z)",
       hof"CutConstant(m, n, x)" ) )
-  ctx += Context.ProofNameDeclaration( le"psi n m k x", espsi )
+  ctx += ProofNameDeclaration( le"psi n m k x", espsi )
   val esxi = Sequent(
     Seq(
       hof"E(n, f(k, x))",
@@ -149,7 +153,7 @@ object ECSJumpSchema extends TacticsProof {
       hof"iLEQ(x, g(x))",
       hof"TopFuncDef(m, k, g(x))" ),
     Seq( hof"E(f(k, x), f(k, g(x)))" ) )
-  ctx += Context.ProofNameDeclaration( le"xi n m k x", esxi )
+  ctx += ProofNameDeclaration( le"xi n m k x", esxi )
   val eschi = Sequent(
     Seq(
       hof"E(n, f(k, g(x)))",
@@ -157,7 +161,7 @@ object ECSJumpSchema extends TacticsProof {
       hof"iLEQ(x, g(x))",
       hof"TopFuncDef(m, k, x)" ),
     Seq( hof"E(f(k, x), f(k, g(x)))" ) )
-  ctx += Context.ProofNameDeclaration( le"chi n m k x", eschi )
+  ctx += ProofNameDeclaration( le"chi n m k x", eschi )
   //This is the top symbols of the proof schema which is only recursive in
   //n
 
@@ -191,7 +195,7 @@ object ECSJumpSchema extends TacticsProof {
     ref( "mu" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega 0 m", omegaBc )
+  ctx += ProofDefinitionDeclaration( le"omega 0 m", omegaBc )
 
   val esOmegaSc =
     Sequent(
@@ -205,7 +209,7 @@ object ECSJumpSchema extends TacticsProof {
     ref( "mu" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega (s n) m", omegaSc )
+  ctx += ProofDefinitionDeclaration( le"omega (s n) m", omegaSc )
 
   /*
        ************************
@@ -261,7 +265,7 @@ object ECSJumpSchema extends TacticsProof {
     ref( "minimalElement" )
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi 0 0", phiBc )
+  ctx += ProofDefinitionDeclaration( le"phi 0 0", phiBc )
 
   //There are a total of three step cases for phi
   val esPhiSc1 =
@@ -317,7 +321,7 @@ object ECSJumpSchema extends TacticsProof {
     ref( "NumericTransitivity" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi (s n) 0", phiSc1 )
+  ctx += ProofDefinitionDeclaration( le"phi (s n) 0", phiSc1 )
 
   val esPhiSc2 =
     Sequent(
@@ -333,7 +337,7 @@ object ECSJumpSchema extends TacticsProof {
     allL( "Ant_1", le"(g a)" )
     ref( "gamma" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi 0  (s m)", phiSc2 )
+  ctx += ProofDefinitionDeclaration( le"phi 0  (s m)", phiSc2 )
 
   val esPhiSc3 =
     Sequent(
@@ -362,7 +366,7 @@ object ECSJumpSchema extends TacticsProof {
     allL( "Ant_1", le"(g a)" )
     ref( "zeta" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi (s n) (s m)", phiSc3 )
+  ctx += ProofDefinitionDeclaration( le"phi (s n) (s m)", phiSc3 )
 
   /*
              ****          ****
@@ -393,7 +397,7 @@ object ECSJumpSchema extends TacticsProof {
     allL( "Ant_0", fov"a" )
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"mu 0 0 x", muBc2 )
+  ctx += ProofDefinitionDeclaration( le"mu 0 0 x", muBc2 )
   val esMuSc2 =
     Sequent(
       Seq( "Ant_0" -> hof"PAND(s(m),0)" ),
@@ -411,7 +415,7 @@ object ECSJumpSchema extends TacticsProof {
     unfold( "POR" ) atMost 1 in "Ant_0_0_0"
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"mu (s m) 0 x", muSc2 )
+  ctx += ProofDefinitionDeclaration( le"mu (s m) 0 x", muSc2 )
 
   val esMuBc =
     Sequent(
@@ -429,7 +433,7 @@ object ECSJumpSchema extends TacticsProof {
     trivial
     ref( "LEDefinition" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"mu 0 (s n) x", muBc )
+  ctx += ProofDefinitionDeclaration( le"mu 0 (s n) x", muBc )
 
   val esMuSc =
     Sequent(
@@ -450,7 +454,7 @@ object ECSJumpSchema extends TacticsProof {
     trivial
     ref( "LEDefinition" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"mu (s m) (s n) x", muSc )
+  ctx += ProofDefinitionDeclaration( le"mu (s m) (s n) x", muSc )
 
   /*
 
@@ -487,7 +491,7 @@ object ECSJumpSchema extends TacticsProof {
     ref( "NumericTransitivity" )
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"theta 0 k 0 x", thetaBc )
+  ctx += ProofDefinitionDeclaration( le"theta 0 k 0 x", thetaBc )
 
   val esthetaBc2 =
     Sequent(
@@ -513,7 +517,7 @@ object ECSJumpSchema extends TacticsProof {
     ref( "minimalElement" )
 
   }
-  ctx += Context.ProofDefinitionDeclaration( le"theta (s m) k 0 x", thetaBc2 )
+  ctx += ProofDefinitionDeclaration( le"theta (s m) k 0 x", thetaBc2 )
 
   /*
 
@@ -550,7 +554,7 @@ object ECSJumpSchema extends TacticsProof {
     ref( "NumericTransitivity" )
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon 0 k 0 x", EpsilonBc )
+  ctx += ProofDefinitionDeclaration( le"epsilon 0 k 0 x", EpsilonBc )
 
   val esEpsilonBc2 =
     Sequent(
@@ -576,7 +580,7 @@ object ECSJumpSchema extends TacticsProof {
     ref( "minimalElement" )
 
   }
-  ctx += Context.ProofDefinitionDeclaration( le"epsilon (s m) k 0 x", EpsilonBc2 )
+  ctx += ProofDefinitionDeclaration( le"epsilon (s m) k 0 x", EpsilonBc2 )
 
   /*
 
@@ -619,7 +623,7 @@ object ECSJumpSchema extends TacticsProof {
     ref( "minimalElement" )
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"gamma 0 k 0 x", GammaBc )
+  ctx += ProofDefinitionDeclaration( le"gamma 0 k 0 x", GammaBc )
 
   val esGammaBc2 =
     Sequent(
@@ -679,7 +683,7 @@ object ECSJumpSchema extends TacticsProof {
     ref( "theta" )
     ref( "minimalElement" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"gamma (s m) k 0 x", GammaBc2 )
+  ctx += ProofDefinitionDeclaration( le"gamma (s m) k 0 x", GammaBc2 )
 
   /*
 
@@ -738,7 +742,7 @@ object ECSJumpSchema extends TacticsProof {
     ref( "pi" )
     ref( "ordCondition" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"delta n 0 k a", deltaBc )
+  ctx += ProofDefinitionDeclaration( le"delta n 0 k a", deltaBc )
 
   val esdeltaSc =
     Sequent(
@@ -787,7 +791,7 @@ object ECSJumpSchema extends TacticsProof {
     ref( "pi" )
     ref( "psi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"delta n (s m) k a", deltaSc )
+  ctx += ProofDefinitionDeclaration( le"delta n (s m) k a", deltaSc )
 
   /*
            **************************
@@ -814,7 +818,7 @@ object ECSJumpSchema extends TacticsProof {
     unfold( "CutLess" ) atMost 1 in "Suc_0"
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"pi 0 n 0 a", PiBc )
+  ctx += ProofDefinitionDeclaration( le"pi 0 n 0 a", PiBc )
 
   val esPiBc2 =
     Sequent(
@@ -825,7 +829,7 @@ object ECSJumpSchema extends TacticsProof {
     orR
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"pi (s k) n (s k)  a", PiBc2 )
+  ctx += ProofDefinitionDeclaration( le"pi (s k) n (s k)  a", PiBc2 )
 
   val esPiSc =
     Sequent(
@@ -836,7 +840,7 @@ object ECSJumpSchema extends TacticsProof {
     orR
     ref( "pi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"pi (s k) n m  a", PiSc )
+  ctx += ProofDefinitionDeclaration( le"pi (s k) n m  a", PiSc )
 
   /*
        *************************
@@ -877,7 +881,7 @@ object ECSJumpSchema extends TacticsProof {
     exR( fov"c" )
     ref( "pi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"sigma n 0 k a b", SigmaBc )
+  ctx += ProofDefinitionDeclaration( le"sigma n 0 k a b", SigmaBc )
 
   val esSigmaSc =
     Sequent(
@@ -903,7 +907,7 @@ object ECSJumpSchema extends TacticsProof {
     exR( fov"c" )
     ref( "pi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"sigma n (s m) k a b", SigmaSc )
+  ctx += ProofDefinitionDeclaration( le"sigma n (s m) k a b", SigmaSc )
 
   /*
      *          *****          *
@@ -946,7 +950,7 @@ object ECSJumpSchema extends TacticsProof {
     exR( fov"b" )
     ref( "pi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"psi n 0 k a", PsiBc )
+  ctx += ProofDefinitionDeclaration( le"psi n 0 k a", PsiBc )
 
   val esPsiSc =
     Sequent(
@@ -970,7 +974,7 @@ object ECSJumpSchema extends TacticsProof {
     exR( fov"b" )
     ref( "pi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"psi n (s m) k a", PsiSc )
+  ctx += ProofDefinitionDeclaration( le"psi n (s m) k a", PsiSc )
 
   val esZetaBc =
     Sequent(
@@ -996,7 +1000,7 @@ object ECSJumpSchema extends TacticsProof {
     ref( "TransitivityE" )
     ref( "NumericTransitivity" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"zeta n 0 k a", ZetaBc )
+  ctx += ProofDefinitionDeclaration( le"zeta n 0 k a", ZetaBc )
 
   val esZetaSc =
     Sequent(
@@ -1035,7 +1039,7 @@ object ECSJumpSchema extends TacticsProof {
     ref( "zeta" )
 
   }
-  ctx += Context.ProofDefinitionDeclaration( le"zeta n (s m) k a", ZetaSc )
+  ctx += ProofDefinitionDeclaration( le"zeta n (s m) k a", ZetaSc )
 
   val esXiBc =
     Sequent(
@@ -1055,7 +1059,7 @@ object ECSJumpSchema extends TacticsProof {
     ref( "TransitivityE" )
     ref( "NumericTransitivity" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"xi n 0 k a", xiBc )
+  ctx += ProofDefinitionDeclaration( le"xi n 0 k a", xiBc )
 
   val esXiSc =
     Sequent(
@@ -1078,7 +1082,7 @@ object ECSJumpSchema extends TacticsProof {
     ref( "NumericTransitivity" )
     ref( "xi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"xi n (s m) k a", xiSc )
+  ctx += ProofDefinitionDeclaration( le"xi n (s m) k a", xiSc )
 
   val esChiBc =
     Sequent(
@@ -1098,7 +1102,7 @@ object ECSJumpSchema extends TacticsProof {
     ref( "TransitivityE" )
     ref( "NumericTransitivity" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi n 0 k a", chiBc )
+  ctx += ProofDefinitionDeclaration( le"chi n 0 k a", chiBc )
 
   val esChiSc =
     Sequent(
@@ -1121,7 +1125,7 @@ object ECSJumpSchema extends TacticsProof {
     ref( "NumericTransitivity" )
     ref( "chi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi n (s m) k a", chiSc )
+  ctx += ProofDefinitionDeclaration( le"chi n (s m) k a", chiSc )
 
   val esBetaBc =
     Sequent(
@@ -1134,7 +1138,7 @@ object ECSJumpSchema extends TacticsProof {
     impR
     ref( "alpha" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"beta 0 n k a", betaBc )
+  ctx += ProofDefinitionDeclaration( le"beta 0 n k a", betaBc )
 
   val esBetaSc =
     Sequent(
@@ -1149,7 +1153,7 @@ object ECSJumpSchema extends TacticsProof {
     impR
     ref( "alpha" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"beta (s m) n k a", betaSc )
+  ctx += ProofDefinitionDeclaration( le"beta (s m) n k a", betaSc )
 
   val esAlphaBc =
     Sequent(
@@ -1164,7 +1168,7 @@ object ECSJumpSchema extends TacticsProof {
     ref( "ordCondition" )
 
   }
-  ctx += Context.ProofDefinitionDeclaration( le"alpha 0 n m a b", alphaBc )
+  ctx += ProofDefinitionDeclaration( le"alpha 0 n m a b", alphaBc )
 
   val esAlphaSc =
     Sequent(
@@ -1181,5 +1185,5 @@ object ECSJumpSchema extends TacticsProof {
     ref( "ordCondition" )
 
   }
-  ctx += Context.ProofDefinitionDeclaration( le"alpha (s k) n m a b", alphaSc )
+  ctx += ProofDefinitionDeclaration( le"alpha (s k) n m a b", alphaSc )
 }

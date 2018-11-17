@@ -1,7 +1,7 @@
 package gapt.expr
 
 import gapt.expr.hol.universalClosure
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 
 import scala.annotation.tailrec
 import scala.collection.mutable

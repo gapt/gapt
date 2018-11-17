@@ -1,7 +1,9 @@
 package gapt.provers.congruence
 
+import gapt.proofs.context.Context
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.resolution.structuralCNF
-import gapt.proofs.{ Context, HOLClause, HOLSequent, MutableContext }
+import gapt.proofs.{ HOLClause, HOLSequent }
 import gapt.provers.OneShotProver
 import gapt.provers.sat.Sat4j
 import gapt.utils.Maybe

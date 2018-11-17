@@ -4,9 +4,10 @@ import java.io.IOException
 
 import gapt.expr._
 import gapt.formats.StringInputFile
-import gapt.formats.tptp.{ TPTPFOLExporter, TptpProofParser, tptpToString }
+import gapt.proofs.context.mutable.MutableContext
+import gapt.formats.tptp.{ TptpFOLExporter, TptpProofParser, TptpToString }
 import gapt.proofs.resolution.ResolutionProof
-import gapt.proofs.{ FOLClause, HOLClause, MutableContext }
+import gapt.proofs.{ FOLClause, HOLClause }
 import gapt.proofs.sketch.RefutationSketchToResolution
 import gapt.provers.{ ResolutionProver, renameConstantsToFi }
 import gapt.utils._
@@ -20,11 +21,11 @@ class EProver( extraArgs: Seq[String] ) extends ResolutionProver with ExternalPr
     renameConstantsToFi.wrap( seq.toSeq )(
       ( renaming, cnf: Seq[HOLClause] ) => {
         val labelledCNF = cnf.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
-        val tptpIn = TPTPFOLExporter.exportLabelledCNF( labelledCNF ).toString
+        val tptpIn = TptpFOLExporter.exportLabelledCNF( labelledCNF ).toString
         ( logger.time( "eprover" ) { runProcess.withExitValue( Seq( "eprover", "-p", "--tptp3-format" ) ++ extraArgs, tptpIn ) }: @unchecked ) match {
           case ( 0, output ) =>
             val lines = output.split( "\n" )
-            require( lines.contains( "# SZS status Unsatisfiable" ) )
+            require( lines.contains( "# SZS status Unsatisfiable" ) || lines.contains( "# SZS status ContradictoryAxioms" ) )
             logger.time( "eprover_import" ) {
               val sketch = TptpProofParser.parse(
                 StringInputFile( lines.filterNot( _ startsWith "#" ).mkString( "\n" ) ),

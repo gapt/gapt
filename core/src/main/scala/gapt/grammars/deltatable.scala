@@ -2,6 +2,7 @@ package gapt.grammars
 
 import gapt.cutintro.GrammarFindingMethod
 import gapt.expr._
+import gapt.utils.{ UNone, UOption, USome }
 
 import scala.collection.mutable
 
@@ -18,29 +19,34 @@ object deltaTableAlgorithm {
 
     def populate(
       remainingTerms: List[Expr],
-      currentLGG:     Expr,
+      currentLGG:     UOption[Expr],
       currentCover:   Set[Expr],
       currentSubst:   Set[Substitution] ): Unit = if ( remainingTerms.nonEmpty ) {
-      val ( newTerm :: rest ) = remainingTerms
+      val newTerm :: rest = remainingTerms
 
       val ( newLGG, substCurLGG, substNewTerm ) =
-        if ( currentLGG == null ) ( newTerm, Map[Var, Expr](), Map[Var, Expr]() )
-        else if ( singleVariable ) leastGeneralGeneralization1.fast( currentLGG, newTerm )
-        else leastGeneralGeneralization.fast( currentLGG, newTerm )
+        currentLGG match {
+          case USome( curLGG ) =>
+            if ( singleVariable ) leastGeneralGeneralization1.fast( curLGG, newTerm )
+            leastGeneralGeneralization.fast( curLGG, newTerm )
+          case _ => ( newTerm, Map.empty[Var, Expr], Map.empty[Var, Expr] )
+        }
 
       if ( !newLGG.isInstanceOf[Var] && maxArity.forall { substCurLGG.size <= _ } ) {
-        val newSubst = currentSubst.map { subst => Substitution( Map() ++ substCurLGG.mapValues( subst( _ ) ) ) } + Substitution( substNewTerm )
+        val newSubst =
+          currentSubst.map( subst => Substitution( Map.empty ++ substCurLGG.mapValues( subst( _ ) ) ) ) +
+            Substitution( substNewTerm )
         val newCover = currentCover + newTerm
         deltatable( newSubst ) ::= ( newLGG -> newCover )
-        populate( rest, newLGG, newCover, newSubst )
+        populate( rest, USome( newLGG ), newCover, newSubst )
       }
 
       populate( rest, currentLGG, currentCover, currentSubst )
     }
 
-    populate( termSet.toList, null, Set(), Set() )
+    populate( termSet.toList, UNone(), Set.empty, Set.empty )
 
-    Map() ++ deltatable.mapValues( _.toSet )
+    Map.empty ++ deltatable.mapValues( _.toSet )
   }
 
   def keySubsumption( a: Set[Substitution], b: Set[Substitution] ): Set[Map[Var, Var]] =

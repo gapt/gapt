@@ -2,6 +2,7 @@ package gapt.proofs.lk
 
 import gapt.expr._
 import gapt.proofs._
+import gapt.proofs.context.mutable.MutableContext
 import gapt.provers.OneShotProver
 import gapt.utils.Maybe
 

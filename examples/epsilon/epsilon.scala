@@ -1,10 +1,19 @@
 package gapt.examples
 import gapt.expr._
+import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.epsilon.epsilonize
-import gapt.proofs.reduction.{ HOFunctionReduction, LambdaEliminationReduction }
 import gapt.provers.escargot.Escargot
 
 object epsilon extends Script {
+  implicit val ctx = MutableContext.default()
+  ctx += hoc"ε{?a} : (?a>o)>?a"
+  ctx += Ti
+  ctx += hoc"P: i>i>i>o"
+  ctx += hoc"rat: i>o"; ctx += hoc"pow: i>i>i"
+  ctx += hoc"'*': i>i>i"; ctx += hoc"s2: i"; ctx += hoc"2: i"
+  ctx += Notation.Infix( "*", Precedence.timesDiv )
+
   println( "Exercises for the lecture on epsilon calculus at the TU Wien:\n" )
 
   val threeExists = hof"∃x∃y∃z P(x,y,z)"
@@ -22,6 +31,5 @@ object epsilon extends Script {
   val Some( irratProof ) = Escargot getEpsilonProof irratProblem
   println( irratProof )
 
-  val reduction = LambdaEliminationReduction() |> HOFunctionReduction()
-  require( Escargot isValid reduction.forward( irratProof.deep )._1 )
+  require( Escargot.isValid( irratProof.deep ) )
 }

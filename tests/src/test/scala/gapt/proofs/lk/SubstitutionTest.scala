@@ -2,6 +2,9 @@ package gapt.proofs.lk
 
 import gapt.expr._
 import gapt.proofs._
+import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.Sort
 import org.specs2.mutable._
 
 class SubstitutionTest extends Specification with SequentMatchers {
@@ -58,8 +61,8 @@ class SubstitutionTest extends Specification with SequentMatchers {
 
   "induction" in {
     var ctx = Context()
-    ctx += Context.Sort( "sk" )
-    ctx += Context.InductiveType( "list", hoc"nil: list", hoc"cons:sk>list>list" )
+    ctx += Sort( "sk" )
+    ctx += InductiveType( "list", hoc"nil: list", hoc"cons:sk>list>list" )
     ctx += hoc"B:list>o"
     ctx += hoc"t:list"
     val proof = ( ProofBuilder

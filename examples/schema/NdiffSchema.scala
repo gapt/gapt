@@ -1,14 +1,17 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.Context.PrimRecFun
-import gapt.proofs.Context
 import gapt.proofs.Sequent
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 
 object NdiffSchema extends TacticsProof {
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-  ctx += Context.Sort( "i" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += Sort( "i" )
   ctx += hoc"f:i>nat"
   ctx += hoc"E: nat>nat>o"
   ctx += hoc"LE: i>i>o"
@@ -29,15 +32,15 @@ object NdiffSchema extends TacticsProof {
   val esOmega = Sequent(
     Seq( hof"!x bloc(n,0,x)" ),
     Seq( hof"?p DIFF(n,p)" ) )
-  ctx += Context.ProofNameDeclaration( le"omega n", esOmega )
+  ctx += ProofNameDeclaration( le"omega n", esOmega )
   val eschi = Sequent(
     Seq( hof"bloc(n, m, a)" ),
     Seq( hof"∃x ∃y ( LEQ(AP(k,x), y) & E(f(y), k))" ) )
-  ctx += Context.ProofNameDeclaration( le"chi n m k a", eschi )
+  ctx += ProofNameDeclaration( le"chi n m k a", eschi )
   val esphi = Sequent(
     Seq( hof"E(f(B), n)", hof"bloc(n, m, K)" ),
     Seq( hof"DIFF(n, B)" ) )
-  ctx += Context.ProofNameDeclaration( le"phi n m B K", esphi )
+  ctx += ProofNameDeclaration( le"phi n m B K", esphi )
   val esOmegaSc = Sequent(
     Seq( "Ant_0" -> hof"!x bloc(s(n),0,x)" ),
     Seq( "Suc_0" -> hof"?p DIFF(s(n),p)" ) )
@@ -54,7 +57,7 @@ object NdiffSchema extends TacticsProof {
     exR( "Suc_0", fov"B" )
     ref( "phi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
+  ctx += ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
 
   val esOmegaBc = Sequent(
     Seq( "Ant_0" -> hof"!x bloc(0,0,x)" ),
@@ -85,7 +88,7 @@ object NdiffSchema extends TacticsProof {
     andL( "Ant_0_0_0_0" )
     theory
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega 0", omegaBc )
+  ctx += ProofDefinitionDeclaration( le"omega 0", omegaBc )
 
   val esphiSc = Sequent(
     Seq( "Ant_0" -> hof"E(f(B), s(n))", "Ant_1" -> hof"bloc(s(n), m, K)" ),
@@ -121,7 +124,7 @@ object NdiffSchema extends TacticsProof {
     ref( "phi" )
 
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi (s n) m B K", phiSc )
+  ctx += ProofDefinitionDeclaration( le"phi (s n) m B K", phiSc )
 
   val esphiBc = Sequent(
     Seq( "Ant_0" -> hof"E(f(B), 0)", "Ant_1" -> hof"bloc(0, m, K)" ),
@@ -135,7 +138,7 @@ object NdiffSchema extends TacticsProof {
     negR( "Suc_0_0" )
     theory
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi 0 m B K", phiBc )
+  ctx += ProofDefinitionDeclaration( le"phi 0 m B K", phiBc )
 
   val eschiBc1 = Sequent(
     Seq( "Ant_0" -> hof"bloc(s(n), k, K)" ),
@@ -152,7 +155,7 @@ object NdiffSchema extends TacticsProof {
     trivial
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi (s n) k k K", chiBc1 )
+  ctx += ProofDefinitionDeclaration( le"chi (s n) k k K", chiBc1 )
   val eschiSc = Sequent(
     Seq( "Ant_0" -> hof"bloc(s(n), m, K)" ),
     Seq( "Suc_0" -> hof"∃x ∃y ( LEQ(AP(k,x), y) & E(f(y), k))" ) )
@@ -164,7 +167,7 @@ object NdiffSchema extends TacticsProof {
     andL( "Ant_0_0_0_0" )
     ref( "chi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi (s n) m k K", chiSc )
+  ctx += ProofDefinitionDeclaration( le"chi (s n) m k K", chiSc )
 
   val eschiBc2 = Sequent(
     Seq( "Ant_0" -> hof"bloc(0, k, K)" ),
@@ -182,7 +185,7 @@ object NdiffSchema extends TacticsProof {
     trivial
 
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi 0 k k K", chiBc2 )
+  ctx += ProofDefinitionDeclaration( le"chi 0 k k K", chiBc2 )
 
   val eschiBc3 = Sequent(
     Seq( "Ant_0" -> hof"bloc(0, m, K)" ),
@@ -199,6 +202,6 @@ object NdiffSchema extends TacticsProof {
     theory
     theory
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi 0 m k K", chiBc3 )
+  ctx += ProofDefinitionDeclaration( le"chi 0 m k K", chiBc3 )
 }
 

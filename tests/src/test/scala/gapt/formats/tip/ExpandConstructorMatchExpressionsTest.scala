@@ -1,5 +1,6 @@
 package gapt.formats.tip
 
+import gapt.formats.StringInputFile
 import gapt.formats.tip.parser.TipSmtParser
 import gapt.formats.tip.transformation.expandConstructorMatchExpressions
 import org.specs2.mutable.Specification
@@ -8,7 +9,7 @@ class expandConstructorMatchExpressionsTest extends Specification {
 
   "constructor match-expressions should be expanded everywhere" in {
     val originalProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (declare-datatypes () ( (nat (Z) (S (p nat)))))
         |
         | (define-fun f1 ((x nat)) nat
@@ -31,9 +32,9 @@ class expandConstructorMatchExpressionsTest extends Specification {
         | (assert-not
         |   ( match Z (case Z a) (case (S y) b) )
         | )
-      """.stripMargin )
+      """.stripMargin ) )
     val expectedProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (declare-datatypes () ( (nat (Z) (S (p nat)))))
         |
         | (define-fun f1 ((x nat)) nat
@@ -45,14 +46,14 @@ class expandConstructorMatchExpressionsTest extends Specification {
         | (prove a )
         | (assert a )
         | (assert-not a )
-      """.stripMargin )
+      """.stripMargin ) )
     expandConstructorMatchExpressions.transform( originalProblem ) must_==
       expectedProblem
   }
 
   "constructor match-expressions should expand properly" in {
     val originalProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (declare-datatypes () ( (nat (Z) (S (p1 nat) (p2 nat) (p3 nat)))))
         |
         | (define-fun f1 ((x nat)) nat
@@ -61,22 +62,22 @@ class expandConstructorMatchExpressionsTest extends Specification {
         |     (case (S x1 x2 x3) (f1 (S x1 x2 x3)) )
         |   )
         | )
-      """.stripMargin )
+      """.stripMargin ) )
     val expectedProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (declare-datatypes () ( (nat (Z) (S (p1 nat) (p2 nat) (p3 nat)))))
         |
         | (define-fun f1 ((x nat)) nat
         |   (f1 (S a1 a2 a3))
         | )
-      """.stripMargin )
+      """.stripMargin ) )
     expandConstructorMatchExpressions.transform( originalProblem ) must_==
       expectedProblem
   }
 
   "constructor match-expression should expand from outside to inside" in {
     val originalProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (declare-datatypes () ( (nat (Z) (S (p nat)))))
         |
         | (define-fun f1 ((x nat)) nat
@@ -90,15 +91,15 @@ class expandConstructorMatchExpressionsTest extends Specification {
         |     )
         |   )
         | )
-      """.stripMargin )
+      """.stripMargin ) )
     val expectedProblem = TipSmtParser.parse(
-      """
+      StringInputFile( """
         | (declare-datatypes () ( (nat (Z) (S (p nat)))))
         |
         | (define-fun f1 ((x nat)) nat
         |   a
         | )
-      """.stripMargin )
+      """.stripMargin ) )
     expandConstructorMatchExpressions.transform( originalProblem ) must_==
       expectedProblem
   }
@@ -106,7 +107,7 @@ class expandConstructorMatchExpressionsTest extends Specification {
   "constructor match-expressions should be expanded in subexpressions" in {
     "and" in {
       val originalProblem = TipSmtParser.parse(
-        """
+        StringInputFile( """
           | (declare-datatypes () ( (nat (Z) (S (p nat)))))
           |
           | (define-fun f1 ((x nat)) bool
@@ -117,21 +118,21 @@ class expandConstructorMatchExpressionsTest extends Specification {
           |     ) b
           |   )
           | )
-        """.stripMargin )
+        """.stripMargin ) )
       val expectedProblem = TipSmtParser.parse(
-        """
+        StringInputFile( """
           | (declare-datatypes () ( (nat (Z) (S (p nat)))))
           |
           | (define-fun f1 ((x nat)) bool
           |   (and true b )
           | )
-        """.stripMargin )
+        """.stripMargin ) )
       expandConstructorMatchExpressions.transform( originalProblem ) must_==
         expectedProblem
     }
     "or" in {
       val originalProblem = TipSmtParser.parse(
-        """
+        StringInputFile( """
           | (declare-datatypes () ( (nat (Z) (S (p nat)))))
           |
           | (define-fun f1 ((x nat)) bool
@@ -142,21 +143,21 @@ class expandConstructorMatchExpressionsTest extends Specification {
           |     ) b
           |   )
           | )
-        """.stripMargin )
+        """.stripMargin ) )
       val expectedProblem = TipSmtParser.parse(
-        """
+        StringInputFile( """
           | (declare-datatypes () ( (nat (Z) (S (p nat)))))
           |
           | (define-fun f1 ((x nat)) bool
           |   (or true b )
           | )
-        """.stripMargin )
+        """.stripMargin ) )
       expandConstructorMatchExpressions.transform( originalProblem ) must_==
         expectedProblem
     }
     "imp" in {
       val originalProblem = TipSmtParser.parse(
-        """
+        StringInputFile( """
           | (declare-datatypes () ( (nat (Z) (S (p nat)))))
           |
           | (define-fun f1 ((x nat)) bool
@@ -167,21 +168,21 @@ class expandConstructorMatchExpressionsTest extends Specification {
           |     ) b
           |   )
           | )
-        """.stripMargin )
+        """.stripMargin ) )
       val expectedProblem = TipSmtParser.parse(
-        """
+        StringInputFile( """
           | (declare-datatypes () ( (nat (Z) (S (p nat)))))
           |
           | (define-fun f1 ((x nat)) bool
           |   (imp true b )
           | )
-        """.stripMargin )
+        """.stripMargin ) )
       expandConstructorMatchExpressions.transform( originalProblem ) must_==
         expectedProblem
     }
     "eq" in {
       val originalProblem = TipSmtParser.parse(
-        """
+        StringInputFile( """
           | (declare-datatypes () ( (nat (Z) (S (p nat)))))
           |
           | (define-fun f1 ((x nat)) bool
@@ -192,21 +193,21 @@ class expandConstructorMatchExpressionsTest extends Specification {
           |     ) b
           |   )
           | )
-        """.stripMargin )
+        """.stripMargin ) )
       val expectedProblem = TipSmtParser.parse(
-        """
+        StringInputFile( """
           | (declare-datatypes () ( (nat (Z) (S (p nat)))))
           |
           | (define-fun f1 ((x nat)) bool
           |   (eq true b )
           | )
-        """.stripMargin )
+        """.stripMargin ) )
       expandConstructorMatchExpressions.transform( originalProblem ) must_==
         expectedProblem
     }
     "forall" in {
       val originalProblem = TipSmtParser.parse(
-        """
+        StringInputFile( """
           | (declare-datatypes () ( (nat (Z) (S (p nat)))))
           |
           | (define-fun f1 ((x nat)) bool
@@ -217,21 +218,21 @@ class expandConstructorMatchExpressionsTest extends Specification {
           |     )
           |   )
           | )
-        """.stripMargin )
+        """.stripMargin ) )
       val expectedProblem = TipSmtParser.parse(
-        """
+        StringInputFile( """
           | (declare-datatypes () ( (nat (Z) (S (p nat)))))
           |
           | (define-fun f1 ((x nat)) bool
           |   (forall ((z nat)) true)
           | )
-        """.stripMargin )
+        """.stripMargin ) )
       expandConstructorMatchExpressions.transform( originalProblem ) must_==
         expectedProblem
     }
     "exists" in {
       val originalProblem = TipSmtParser.parse(
-        """
+        StringInputFile( """
           | (declare-datatypes () ( (nat (Z) (S (p nat)))))
           |
           | (define-fun f1 ((x nat)) bool
@@ -242,21 +243,21 @@ class expandConstructorMatchExpressionsTest extends Specification {
           |     )
           |   )
           | )
-        """.stripMargin )
+        """.stripMargin ) )
       val expectedProblem = TipSmtParser.parse(
-        """
+        StringInputFile( """
           | (declare-datatypes () ( (nat (Z) (S (p nat)))))
           |
           | (define-fun f1 ((x nat)) bool
           |   (exists ((z nat)) true)
           | )
-        """.stripMargin )
+        """.stripMargin ) )
       expandConstructorMatchExpressions.transform( originalProblem ) must_==
         expectedProblem
     }
     "match" in {
       val originalProblem = TipSmtParser.parse(
-        """
+        StringInputFile( """
           | (declare-datatypes () ( (nat (Z) (S (p nat)))))
           |
           | (define-fun f1 ((x nat)) bool
@@ -270,9 +271,9 @@ class expandConstructorMatchExpressionsTest extends Specification {
           |     )
           |   )
           | )
-        """.stripMargin )
+        """.stripMargin ) )
       val expectedProblem = TipSmtParser.parse(
-        """
+        StringInputFile( """
           | (declare-datatypes () ( (nat (Z) (S (p nat)))))
           |
           | (define-fun f1 ((x nat)) bool
@@ -281,14 +282,14 @@ class expandConstructorMatchExpressionsTest extends Specification {
           |     ( case (S z) true )
           |   )
           | )
-        """.stripMargin )
+        """.stripMargin ) )
       expandConstructorMatchExpressions.transform( originalProblem ) must_==
         expectedProblem
     }
     "ite" in {
       "expand in condition" in {
         val originalProblem = TipSmtParser.parse(
-          """
+          StringInputFile( """
             | (declare-datatypes () ( (nat (Z) (S (p nat)))))
             |
             | (define-fun f1 ((x nat)) bool
@@ -299,21 +300,21 @@ class expandConstructorMatchExpressionsTest extends Specification {
             |     ) b c
             |   )
             | )
-          """.stripMargin )
+          """.stripMargin ) )
         val expectedProblem = TipSmtParser.parse(
-          """
+          StringInputFile( """
             | (declare-datatypes () ( (nat (Z) (S (p nat)))))
             |
             | (define-fun f1 ((x nat)) bool
             |   (ite true b c)
             | )
-          """.stripMargin )
+          """.stripMargin ) )
         expandConstructorMatchExpressions.transform( originalProblem ) must_==
           expectedProblem
       }
       "expand in ifTrue" in {
         val originalProblem = TipSmtParser.parse(
-          """
+          StringInputFile( """
             | (declare-datatypes () ( (nat (Z) (S (p nat)))))
             |
             | (define-fun f1 ((x nat)) bool
@@ -326,21 +327,21 @@ class expandConstructorMatchExpressionsTest extends Specification {
             |     c
             |   )
             | )
-          """.stripMargin )
+          """.stripMargin ) )
         val expectedProblem = TipSmtParser.parse(
-          """
+          StringInputFile( """
             | (declare-datatypes () ( (nat (Z) (S (p nat)))))
             |
             | (define-fun f1 ((x nat)) bool
             |   (ite b true c)
             | )
-          """.stripMargin )
+          """.stripMargin ) )
         expandConstructorMatchExpressions.transform( originalProblem ) must_==
           expectedProblem
       }
       "expand in ifFalse" in {
         val originalProblem = TipSmtParser.parse(
-          """
+          StringInputFile( """
             | (declare-datatypes () ( (nat (Z) (S (p nat)))))
             |
             | (define-fun f1 ((x nat)) bool
@@ -353,22 +354,22 @@ class expandConstructorMatchExpressionsTest extends Specification {
             |     )
             |   )
             | )
-          """.stripMargin )
+          """.stripMargin ) )
         val expectedProblem = TipSmtParser.parse(
-          """
+          StringInputFile( """
             | (declare-datatypes () ( (nat (Z) (S (p nat)))))
             |
             | (define-fun f1 ((x nat)) bool
             |   (ite b c true)
             | )
-          """.stripMargin )
+          """.stripMargin ) )
         expandConstructorMatchExpressions.transform( originalProblem ) must_==
           expectedProblem
       }
     }
     "func" in {
       val originalProblem = TipSmtParser.parse(
-        """
+        StringInputFile( """
           | (declare-datatypes () ( (nat (Z) (S (p nat)))))
           |
           | (define-fun f1 ((x nat)) bool
@@ -379,15 +380,15 @@ class expandConstructorMatchExpressionsTest extends Specification {
           |     ) b
           |   )
           | )
-        """.stripMargin )
+        """.stripMargin ) )
       val expectedProblem = TipSmtParser.parse(
-        """
+        StringInputFile( """
           | (declare-datatypes () ( (nat (Z) (S (p nat)))))
           |
           | (define-fun f1 ((x nat)) bool
           |   (f1 true b )
           | )
-        """.stripMargin )
+        """.stripMargin ) )
       expandConstructorMatchExpressions.transform( originalProblem ) must_==
         expectedProblem
     }

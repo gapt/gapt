@@ -1,16 +1,15 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.Context._
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
-import gapt.proofs.Context
-import gapt.proofs.Sequent
 
 object FirstSchema1 extends TacticsProof {
   //These are the two fundamental additions to the context needed for Schematic
   //proof construction.
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" ) //defines the natural numbers
-  ctx += Context.Sort( "i" ) //defines the first order term sort
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" ) //defines the natural numbers
+  ctx += Sort( "i" ) //defines the first order term sort
 
   // Note that at this point both sorts are empty (though in the case of the type "nat"
   // we do have the individuals 0, s(0), s(s(0)), and so on, but no predicates or

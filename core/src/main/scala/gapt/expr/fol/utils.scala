@@ -6,9 +6,11 @@ package gapt.expr.fol
 
 import gapt.expr._
 import gapt.expr.hol.containsQuantifier
-import gapt.proofs.{ Context, HOLSequent }
+import gapt.proofs.HOLSequent
+import gapt.proofs.context.Context
+import gapt.proofs.context.facet.Constants
 
-import scala.collection.{ GenTraversable, mutable }
+import scala.collection.mutable
 
 object isFOLFunction {
   /** Returns whether t is a function. */
@@ -254,9 +256,9 @@ object naive extends CountingFormulas {
 
 object natMaker {
   def apply( i: Int, thevar: Expr = Const( "0", Ti ) )( implicit ctx: Context ): Expr = {
-    val suc = ctx.get[Context.Constants].constants.getOrElse( "s", { throw new Exception( "nat not defined" ) } )
+    val suc = ctx.get[Constants].constants.getOrElse( "s", { throw new Exception( "nat not defined" ) } )
     if ( i > 0 ) Apps( suc, Seq( natMaker( i - 1, thevar ) ) )
-    else if ( thevar.equals( Const( "0", Ti ) ) ) ctx.get[Context.Constants].constants.getOrElse( "0", { throw new Exception( "nat not defined" ) } )
+    else if ( thevar.equals( Const( "0", Ti ) ) ) ctx.get[Constants].constants.getOrElse( "0", { throw new Exception( "nat not defined" ) } )
     else thevar
   }
 }

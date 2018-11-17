@@ -1,7 +1,7 @@
 package gapt.proofs.lk.reductions
 
 import gapt.expr.hol.containsQuantifier
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 import gapt.proofs.lk.{ CutRule, LKProof }
 
 trait RedexFilter {

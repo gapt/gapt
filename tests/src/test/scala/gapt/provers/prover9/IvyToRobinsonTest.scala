@@ -13,7 +13,7 @@ import gapt.formats.lisp.{ LList, SExpressionParser }
 class IvyToResolutionTest extends Specification {
 
   def parse( file: String ): MatchResult[Any] = {
-    val result = SExpressionParser( ClasspathInputFile( file ) )
+    val result = SExpressionParser.parse( ClasspathInputFile( file ) )
     result must not beEmpty
     val proof = result.head
     proof match {

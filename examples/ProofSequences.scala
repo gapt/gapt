@@ -3,11 +3,13 @@ package gapt.examples
 import gapt.expr._
 import gapt.expr.fol.{ Numeral, Utils }
 import gapt.expr.hol.{ instantiate, universalClosure }
-import gapt.proofs.{ Ant, Context, HOLSequent, ProofBuilder, Sequent, Suc }
+import gapt.proofs.{ Ant, HOLSequent, ProofBuilder, Sequent, Suc }
 import gapt.proofs.lk._
 import gapt.proofs.gaptic._
 import gapt.examples.Formulas._
 import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.context.Context
+import gapt.proofs.context.update.Sort
 
 trait ProofSequence {
   def apply( n: Int ): LKProof
@@ -255,7 +257,7 @@ trait ExplicitEqualityTactics {
  * where n is an Integer parameter >= 0.
  */
 object LinearEqExampleProof extends TacticsProof with ProofSequence with ExplicitEqualityTactics {
-  ctx += Context.Sort( "i" )
+  ctx += Sort( "i" )
   ctx += hoc"f: i>i"
   ctx += hoc"a: i"
 
@@ -275,7 +277,7 @@ object LinearEqExampleProof extends TacticsProof with ProofSequence with Explici
 }
 
 object SumOfOnesF2ExampleProof extends TacticsProof with ProofSequence with ExplicitEqualityTactics {
-  ctx += Context.Sort( "i" )
+  ctx += Sort( "i" )
   ctx += hoc"s: i>i"
   ctx += hoc"0: i"
   ctx += hoc"'+': i>i>i"
@@ -300,7 +302,7 @@ object SumOfOnesF2ExampleProof extends TacticsProof with ProofSequence with Expl
 }
 
 object SumOfOnesFExampleProof extends TacticsProof with ProofSequence with ExplicitEqualityTactics {
-  ctx += Context.Sort( "i" )
+  ctx += Sort( "i" )
   ctx += hoc"s: i>i"
   ctx += hoc"0: i"
   ctx += hoc"'+': i>i>i"

@@ -1,7 +1,7 @@
 package gapt.proofs.expansion
 import gapt.expr._
 import gapt.expr.hol.HOLPosition
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 
 object eliminateDefsET {
   object DefinitionFormula {
@@ -73,7 +73,7 @@ object eliminateDefsET {
         pos = is.filter( _.polarity.positive )
         neg = is.filter( _.polarity.negative )
         if pos.nonEmpty && neg.nonEmpty
-      } yield ETImp( ETMerge( pos ), ETMerge( neg ) )
+      } yield ETMerge( pos ) -> ETMerge( neg )
     }
 
     val newES = ETMerge( newCuts +: rest.map( repl ) )

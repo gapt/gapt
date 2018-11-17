@@ -25,9 +25,23 @@ class nTape2 extends AnalysisWithCeresOmega {
 object nTape2 extends nTape2
 
 object nTapeInstances {
-  //prints the interesting terms from the expansion sequent
   def printInstances( expansion_proof: ExpansionProof, definitions: Map[Const, Expr] ) = {
     println( "------------ Witness Terms from Expansion Proof --------------" )
+    val ( base1, base2, step1, step2, map ) = computeInstances( expansion_proof, definitions )
+    println( "base 1 simplified: " + base1 )
+    println( "base 2 simplified: " + base2 )
+    println( "step 1 simplified: " + step1 )
+    println( "step 2 simplified: " + step2 )
+
+    println( "With shortcuts:" )
+    for ( ( term, sym ) <- map ) {
+      println( "Symbol: " + sym )
+      println( "Term:   " + term )
+    }
+  }
+
+  //prints the interesting terms from the expansion sequent
+  def computeInstances( expansion_proof: ExpansionProof, definitions: Map[Const, Expr] ) = {
 
     //FIXME: we are using the induction axiom to find its expansion tree now, but antecedent(1) is still not perfect
     val conjuncts = decompose( expansion_proof.expansionSequent.antecedent( 1 ) )
@@ -43,7 +57,7 @@ object nTapeInstances {
     val ( ind1base, ind1step ) = ind1 match {
       case ETImp( ETAnd(
         ETWeakQuantifier( _, base_instances ),
-        ETSkolemQuantifier( _, _, _,
+        ETSkolemQuantifier( _, _,
           ETImp( _, ETWeakQuantifier( f, step_instances ) )
           )
         ), _ ) =>
@@ -55,7 +69,7 @@ object nTapeInstances {
     val ( ind2base, ind2step ) = ind2 match {
       case ETImp( ETAnd(
         ETWeakQuantifier( _, base_instances ),
-        ETSkolemQuantifier( _, _, _,
+        ETSkolemQuantifier( _, _,
           ETImp( _, ETWeakQuantifier( f, step_instances ) )
           )
         ), _ ) =>
@@ -74,18 +88,8 @@ object nTapeInstances {
         val ( map3, tb1 ) = replaceAbstractions( tb, map2, counter )
         val ( map4, ts1 ) = replaceAbstractions( ts, map3, counter )
 
-        println( "base 1 simplified: " + Abs( xb, sb1 ) )
-        println( "base 2 simplified: " + Abs( yb, tb1 ) )
-        println( "step 1 simplified: " + Abs( xs, ss1 ) )
-        println( "step 2 simplified: " + Abs( ys, ts1 ) )
-
-        println( "With shortcuts:" )
-        for ( ( term, sym ) <- map4 ) {
-          println( "Symbol: " + sym )
-          println( "Term:   " + term )
-        }
+        ( Abs( xb, sb1 ), Abs( yb, tb1 ), Abs( xs, ss1 ), Abs( ys, ts1 ), map4 )
     }
-
   }
 
   private def decompose( et: ExpansionTree ): List[ExpansionTree] = et match {

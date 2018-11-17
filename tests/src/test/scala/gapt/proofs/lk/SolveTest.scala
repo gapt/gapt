@@ -13,20 +13,11 @@ class SolveTest extends Specification with SequentMatchers {
   "SolveTest" should {
     "prove sequent where quantifier order matters" in {
       // example from Chaudhuri et.al.: A multi-focused proof system ...
-      val formula = hof"∃x (¬d(x) ∨ ∀y d(y))"
-
-      val inst1 = ETOr(
-        ETNeg( ETAtom( hoa"d(u)", Polarity.InAntecedent ) ), // -d(u)
-        ETStrongQuantifier( hof"∀y d(y)", hov"v", ETAtom( hoa"d(v)", Polarity.InSuccedent ) ) // forall y d(y) +^v d(v)
-      )
-
-      val inst2 = ETOr(
-        ETNeg( ETAtom( hoa"d(c)", Polarity.InAntecedent ) ), // -d(c)
-        ETStrongQuantifier( hof"∀y d(y)", hov"u", ETAtom( hoa"d(u)", Polarity.InSuccedent ) ) // forall y d(y) +^u d(u)
-      )
-
       // here, the second tree, containing c, must be expanded before u, as u is used as eigenvar in the c branch
-      val et = ETWeakQuantifier( formula, Map( le"u" -> inst1, le"c" -> inst2 ) )
+      val et = ExpansionTree( hof"∃x (¬d(x) ∨ ∀y d(y))", Polarity.InSuccedent,
+        ETtWeak(
+          le"u" -> ETtBinary( ETtUnary( ETtAtom ), ETtStrong( hov"v", ETtAtom ) ),
+          le"c" -> ETtBinary( ETtUnary( ETtAtom ), ETtStrong( hov"u", ETtAtom ) ) ) )
       val etSeq = Sequent() :+ et
 
       val Right( lkProof ) = ExpansionProofToLK( ExpansionProof( etSeq ) )
@@ -73,28 +64,17 @@ class SolveTest extends Specification with SequentMatchers {
 
     "cuts" in {
       val es = ETAtom( hoa"p 0", Polarity.InAntecedent ) +:
-        ETWeakQuantifier( hof"∀x (p x → p (s x))", Map(
-          le"z" -> ETImp(
-            ETAtom( hoa"p z", Polarity.InSuccedent ),
-            ETAtom( hoa"p (s z)", Polarity.InAntecedent ) ),
-          le"s z" -> ETImp(
-            ETAtom( hoa"p (s z)", Polarity.InSuccedent ),
-            ETAtom( hoa"p (s (s z))", Polarity.InAntecedent ) ) ) ) +:
+        ExpansionTree( hof"∀x (p x → p (s x))", Polarity.InAntecedent, ETtWeak(
+          le"z" -> ETtBinary( ETtAtom, ETtAtom ),
+          le"s z" -> ETtBinary( ETtAtom, ETtAtom ) ) ) +:
         Sequent() :+
         ETAtom( hoa"p (s (s (s (s 0))))", Polarity.InSuccedent )
-      val cutf = hof"∀x (p x → p (s (s x)))"
       val cut = ETCut(
-        ETStrongQuantifier( cutf, hov"z",
-          ETImp(
-            ETAtom( hoa"p z", Polarity.InAntecedent ),
-            ETAtom( hoa"p (s (s z))", Polarity.InSuccedent ) ) ),
-        ETWeakQuantifier( cutf, Map(
-          le"0" -> ETImp(
-            ETAtom( hoa"p 0", Polarity.InSuccedent ),
-            ETAtom( hoa"p (s (s 0))", Polarity.InAntecedent ) ),
-          le"s (s 0)" -> ETImp(
-            ETAtom( hoa"p (s (s 0))", Polarity.InSuccedent ),
-            ETAtom( hoa"p (s (s (s (s 0))))", Polarity.InAntecedent ) ) ) ) )
+        hof"∀x (p x → p (s (s x)))",
+        ETtStrong( hov"z", ETtBinary( ETtAtom, ETtAtom ) ),
+        ETtWeak(
+          le"0" -> ETtBinary( ETtAtom, ETtAtom ),
+          le"s (s 0)" -> ETtBinary( ETtAtom, ETtAtom ) ) )
       val epwc = ExpansionProof( cut +: es )
       ExpansionProofToLK( epwc ) must beLike {
         case Right( p ) => p.conclusion must beMultiSetEqual( epwc.nonCutPart.shallow )

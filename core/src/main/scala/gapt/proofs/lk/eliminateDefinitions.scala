@@ -1,8 +1,7 @@
 package gapt.proofs.lk
 
 import gapt.expr._
-import gapt.proofs.Context.Definitions
-import gapt.proofs.{ Ant, Context, SequentConnector, Suc }
+import gapt.proofs.context.Context
 
 /**
  * Eliminates definitions from a lambda expression, HOL formula, or LK proof.
@@ -16,7 +15,7 @@ object eliminateDefinitions {
     new eliminateDefinitions( Normalizer( dmap.map( ReductionRule.apply ) ) )
 
   /**
-   * Given an implicit [[gapt.proofs.Context]] in scope, this removes all definitions in that context from a
+   * Given an implicit [[Context]] in scope, this removes all definitions in that context from a
    * proof.
    * @param proof The proof to be transformed.
    * @param ctx An implicit context. Definitions in this will be removed from proof.
@@ -100,11 +99,11 @@ class eliminateDefinitions private ( normalizer: Normalizer ) extends Function[E
     case ForallRightRule( subProof, aux, eigen, quant ) =>
       ForallRightRule( apply( subProof ), aux, eigen, quant )
 
-    case ExistsSkLeftRule( subProof, aux, main, skT, skD ) =>
-      ExistsSkLeftRule( apply( subProof ), aux, apply( main ), apply( skT ), apply( skD ) )
+    case ExistsSkLeftRule( subProof, aux, main, skT ) =>
+      ExistsSkLeftRule( apply( subProof ), aux, apply( main ), apply( skT ) )
 
-    case ForallSkRightRule( subProof, aux, main, skT, skD ) =>
-      ForallSkRightRule( apply( subProof ), aux, apply( main ), apply( skT ), apply( skD ) )
+    case ForallSkRightRule( subProof, aux, main, skT ) =>
+      ForallSkRightRule( apply( subProof ), aux, apply( main ), apply( skT ) )
 
     //equational rules
     case proof @ EqualityLeftRule( subProof, eq, aux, con ) =>

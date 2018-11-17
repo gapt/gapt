@@ -135,8 +135,8 @@ object ResolutionToLKProof {
       case p: ImpL1   => reducef( p ) { case Imp( l, r ) => ImpRightRule( WeakeningRightRule( LogicalAxiom( l ), r ), Ant( 0 ), Suc( 1 ) ) }
       case p: ImpL2   => reducef( p ) { case Imp( l, r ) => ImpRightRule( WeakeningLeftRule( LogicalAxiom( r ), l ), Ant( 0 ), Suc( 0 ) ) }
 
-      case p: AllL    => reducef( p )( f => ForallSkRightRule( LogicalAxiom( instantiate( f, p.skolemTerm ) ), Suc( 0 ), f, p.skolemTerm, p.skolemDef ) )
-      case p: ExR     => reducef( p )( f => ExistsSkLeftRule( LogicalAxiom( instantiate( f, p.skolemTerm ) ), Ant( 0 ), f, p.skolemTerm, p.skolemDef ) )
+      case p: AllL    => reducef( p )( f => ForallSkRightRule( LogicalAxiom( instantiate( f, p.skolemTerm ) ), Suc( 0 ), f, p.skolemTerm ) )
+      case p: ExR     => reducef( p )( f => ExistsSkLeftRule( LogicalAxiom( instantiate( f, p.skolemTerm ) ), Ant( 0 ), f, p.skolemTerm ) )
 
       case p: AllR    => reducef( p )( f => ForallLeftRule( LogicalAxiom( instantiate( f, p.variable ) ), f, p.variable ) )
       case p: ExL     => reducef( p )( f => ExistsRightRule( LogicalAxiom( instantiate( f, p.variable ) ), f, p.variable ) )

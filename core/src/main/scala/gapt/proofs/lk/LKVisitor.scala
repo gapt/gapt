@@ -228,7 +228,7 @@ trait LKVisitor[T] {
   protected def visitForallSkRight( proof: ForallSkRightRule, otherArg: T ): ( LKProof, SequentConnector ) =
     one2one( proof, otherArg ) {
       case Seq( ( subProof, subConn ) ) =>
-        ForallSkRightRule( subProof, subConn.child( proof.aux ), proof.mainFormula, proof.skolemTerm, proof.skolemDef )
+        ForallSkRightRule( subProof, subConn.child( proof.aux ), proof.mainFormula, proof.skolemTerm )
     }
 
   protected def visitExistsLeft( proof: ExistsLeftRule, otherArg: T ): ( LKProof, SequentConnector ) =
@@ -240,7 +240,7 @@ trait LKVisitor[T] {
   protected def visitExistsSkLeft( proof: ExistsSkLeftRule, otherArg: T ): ( LKProof, SequentConnector ) =
     one2one( proof, otherArg ) {
       case Seq( ( subProof, subConn ) ) =>
-        ExistsSkLeftRule( subProof, subConn.child( proof.aux ), proof.mainFormula, proof.skolemTerm, proof.skolemDef )
+        ExistsSkLeftRule( subProof, subConn.child( proof.aux ), proof.mainFormula, proof.skolemTerm )
     }
 
   protected def visitExistsRight( proof: ExistsRightRule, otherArg: T ): ( LKProof, SequentConnector ) =

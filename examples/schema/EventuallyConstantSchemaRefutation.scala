@@ -1,8 +1,10 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.Sequent
 import gapt.proofs.ceres._
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
 import gapt.proofs.gaptic._
 import gapt.proofs.lk.LKProof
 
@@ -15,9 +17,9 @@ object EventuallyConstantSchemaRefutation extends TacticsProof( EventuallyConsta
   ctx += hoc"Top:nat>nat"
   ctx += hoc"Next:nat>i>nat"
   val esTop = Sequent( Seq( hof"phiSFAF(n)" ), Seq() )
-  ctx += Context.ProofNameDeclaration( le"Top n", esTop )
+  ctx += ProofNameDeclaration( le"Top n", esTop )
   val esphi = Sequent( Seq( hof"E(n, f(g(k))) | LE(f(g(k)), n)", hof"E(n, f(k)) | LE(f(k), n)", hof"phiSFAT(n)" ), Seq() )
-  ctx += Context.ProofNameDeclaration( le"Next n k", esphi )
+  ctx += ProofNameDeclaration( le"Next n k", esphi )
 
   val esPRSc = Sequent( Seq( "Ant_0" -> hof"phiSFAF(s(n))" ), Seq() )
   val PRSc: LKProof = Lemma( esPRSc ) {
@@ -67,14 +69,14 @@ object EventuallyConstantSchemaRefutation extends TacticsProof( EventuallyConsta
     escargot
     ref( "Next" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"Top (s n)", PRSc )
+  ctx += ProofDefinitionDeclaration( le"Top (s n)", PRSc )
 
   val esPRBc = Sequent( Seq( "Ant_0" -> hof"phiSFAF(0)" ), Seq() )
   val PRBc: LKProof = Lemma( esPRBc ) {
     unfold( "phiSFAF" ) in "Ant_0"
     escargot
   }
-  ctx += Context.ProofDefinitionDeclaration( le"Top 0", PRBc )
+  ctx += ProofDefinitionDeclaration( le"Top 0", PRBc )
 
   val esPR2Sc = Sequent( Seq(
     "Ant_2" -> hof"E(s(n), f(g(k))) | LE(f(g(k)), s(n))",
@@ -140,7 +142,7 @@ object EventuallyConstantSchemaRefutation extends TacticsProof( EventuallyConsta
     ref( "Next" )
     escargot
   }
-  ctx += Context.ProofDefinitionDeclaration( le"Next (s n) k", PR2Sc )
+  ctx += ProofDefinitionDeclaration( le"Next (s n) k", PR2Sc )
 
   val esPR2Bc = Sequent( Seq(
     "Ant_2" -> hof"E(0, f(g(k))) | LE(f(g(k)), 0)",
@@ -150,7 +152,7 @@ object EventuallyConstantSchemaRefutation extends TacticsProof( EventuallyConsta
     unfold( "phiSFAT" ) in "Ant_0"
     escargot
   }
-  ctx += Context.ProofDefinitionDeclaration( le"Next 0 k", PR2Bc )
+  ctx += ProofDefinitionDeclaration( le"Next 0 k", PR2Bc )
 
 }
 

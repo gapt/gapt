@@ -10,8 +10,8 @@ object clausifier extends App {
     case Array( fn ) => FilePath( fn )
     case _           => StdinInputFile()
   }
-  val tptp = TptpParser.load( input )
-  val inputClauses = tptpProblemToResolution( tptp )
+  val tptp = TptpImporter.loadWithIncludes( input )
+  val inputClauses = TptpProblemToResolution( tptp )
   val cnf = structuralCNF.onProofs( inputClauses )
   val tptpCNF = TptpFile( for ( ( cls, i ) <- cnf.toSeq.zipWithIndex )
     yield resolutionToTptp.fofOrCnf( s"cls_$i", "axiom", cls, Seq() ) )

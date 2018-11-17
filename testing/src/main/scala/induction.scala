@@ -5,7 +5,9 @@ import gapt.expr.{ All, Eq, Var }
 import gapt.formats.tip.TipSmtImporter
 import gapt.proofs.gaptic.tactics.AnalyticInductionTactic
 import gapt.proofs.gaptic.{ ProofState, Tactic }
-import gapt.proofs.{ Ant, Context, MutableContext }
+import gapt.proofs.Ant
+import gapt.proofs.context.Context
+import gapt.proofs.context.mutable.MutableContext
 import gapt.provers.escargot.Escargot
 import gapt.provers.maxsat.OpenWBO
 import gapt.provers.smtlib.CVC4
@@ -63,7 +65,7 @@ object testInduction extends App {
   logger.metric( "filename", fileName )
   logger.metric( "strategy", strategyName )
   try logger.time( "total" ) {
-    val tipProblem = logger.time( "tip" ) { TipSmtImporter.fixupAndParse( FilePath( fileName ) ) }
+    val tipProblem = logger.time( "tip" ) { TipSmtImporter.fixupAndLoad( FilePath( fileName ) ) }
     implicit val ctx: MutableContext = tipProblem.ctx.newMutable
     logger.metric( "goal", tipProblem.goal.toSigRelativeString )
     val proof = logger.time( "prover" ) {
@@ -86,7 +88,7 @@ object computeStrategies extends scala.App {
 
   args foreach { fileName =>
     try {
-      val problem = TipSmtImporter.fixupAndParse( FilePath( fileName ) )
+      val problem = TipSmtImporter.fixupAndLoad( FilePath( fileName ) )
       import problem.ctx
       val sequent = problem.toSequent
       val All.Block( goalQuants, _ ) = sequent.succedent.head

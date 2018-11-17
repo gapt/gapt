@@ -2,7 +2,9 @@ package gapt.proofs.lkt
 
 import gapt.expr.Polarity._
 import gapt.expr._
-import gapt.proofs.{ Checkable, Context, Sequent }
+import gapt.proofs.context.Context
+import gapt.proofs.context.facet.ProofNames
+import gapt.proofs.{ Checkable, Sequent }
 import gapt.utils.Maybe
 
 object check {
@@ -65,12 +67,13 @@ object check {
         requireEq( BetaReduction.betaNormalize( lctx.subst( rwCtx ).apply( lctx.eqLhs( p ) ) ), lctx( main ) )
         ctx.foreach( _.check( rwCtx ) )
         check( q.p, lctx.up1( p ) )
-      case AllSk( main, term0, skDef, q ) =>
+      case AllSk( main, term0, q ) =>
         val term = lctx.subst( term0 )
         val Apps( skSym: Const, skArgs ) = term
-        requireEq( BetaReduction.betaNormalize( skDef( skArgs ) ), lctx( main ) )
-        for ( ctx_ <- ctx )
-          require( ctx_.skolemDef( skSym ).contains( skDef ) )
+        for ( ctx_ <- ctx ) {
+          val Some( skDef ) = ctx_.skolemDef( skSym )
+          requireEq( BetaReduction.betaNormalize( skDef( skArgs ) ), lctx( main ) )
+        }
         check( q.p, lctx.up1( p ) )
       case Def( main, f0, q ) =>
         val f = lctx.subst( f0 )
@@ -93,7 +96,7 @@ object check {
       case Link( mains, name0 ) =>
         val name = lctx.subst( name0 )
         for ( ctx_ <- ctx ) {
-          val declSeq = ctx_.get[Context.ProofNames].lookup( name )
+          val declSeq = ctx_.get[ProofNames].lookup( name )
           require( declSeq.nonEmpty )
           val refSeq = Sequent( for ( m <- mains ) yield lctx( m ) -> m.polarity )
           require( declSeq.contains( refSeq ) )

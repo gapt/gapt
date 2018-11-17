@@ -69,7 +69,7 @@ case class LCons( car: SExpression, cdr: SExpression ) extends SExpression {
 }
 
 object SExpressionParser {
-  def apply( fn: InputFile ): List[SExpression] = {
+  def parse( fn: InputFile ): List[SExpression] = {
     val parser = new SExpressionParser( fn.read )
     parser.File.run() match {
       case Failure( error: ParseError ) =>

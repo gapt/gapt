@@ -26,7 +26,9 @@ trait Substitutable[-S <: Substitution, -T, +U] {
 
 trait ExprSubstitutable1 {
   implicit object SubstitutableTy extends ClosedUnderSub[Ty] {
-    override def applySubstitution( sub: Substitution, ty: Ty ): Ty = ty match {
+    override def applySubstitution( sub: Substitution, ty: Ty ): Ty =
+      applySubstitution( sub: PreSubstitution, ty )
+    def applySubstitution( sub: PreSubstitution, ty: Ty ): Ty = ty match {
       case _ if sub.typeMap.isEmpty => ty
       case ty @ TBase( _, Nil )     => ty
       case TBase( n, ps )           => TBase( n, ps.map( applySubstitution( sub, _ ) ) )
@@ -46,19 +48,16 @@ trait ExprSubstitutable1 {
     if ( sub.isIdentity ) t else {
       val sub1 = if ( sub.typeMap.isEmpty ) sub else {
         Substitution(
-          freeVariables( t ).map( v => v -> substVar( sub, v ) ).toMap ++ sub.map,
+          freeVariables( t ).map( v => v -> sub.applyToTypeOnly( v ) ).toMap ++ sub.map,
           sub.typeMap )
       }
       go( sub1, t )
     }
 
-  private def substVar( sub: Substitution, v: Var ): Var =
-    if ( sub.typeMap.isEmpty ) v else Var( v.name, SubstitutableTy.applySubstitution( sub, v.ty ) )
-
   // if sub.typeMap.nonEmpty, then every free variable must in the domain of sub
   private def go( sub: Substitution, t: Expr ): Expr = t match {
     case _ if sub.isEmpty => t
-    case v: Var           => sub.map.getOrElse( v, substVar( sub, v ) )
+    case v: Var           => sub( v )
     case c @ Const( x, ty, ps ) =>
       if ( sub.typeMap.isEmpty ) c else
         Const( x, SubstitutableTy.applySubstitution( sub, ty ),
@@ -66,12 +65,12 @@ trait ExprSubstitutable1 {
     case App( a, b ) => App( go( sub, a ), go( sub, b ) )
     case Abs( v, _ ) if sub.domain contains v =>
       go( Substitution( sub.map - v, sub.typeMap ), t )
-    case Abs( v, s ) if sub.range contains substVar( sub, v ) =>
+    case Abs( v, s ) if sub.range contains sub.applyToTypeOnly( v ) =>
       // It is safe to rename the bound variable to any variable that is not in freeVariables(s).
       val newV = rename( v, freeVariables( s ) union sub.range )
       applySub( sub, Abs( newV, applySub( Substitution( v -> newV ), s ) ) )
     case Abs( v, s ) =>
-      val newV = substVar( sub, v )
+      val newV = sub.applyToTypeOnly( v )
       Abs( newV, go( Substitution( sub.map + ( v -> newV ), sub.typeMap ), s ) )
   }
 
@@ -154,3 +153,22 @@ object Substitutable extends ExprSubstitutable7 with SeqSubstitutable {
     ( sub, pair ) => ( ev1.applySubstitution( sub, pair._1 ), ev2.applySubstitution( sub, pair._2 ) )
 
 }
+
+trait ExprSubstWithβ0 {
+  implicit val exprSubstWithβ: ClosedUnderSub[Expr] = ( sub, expr ) => {
+    val substituted = sub( expr )( Substitutable.ExprClosedUnderSub )
+    val needβ = sub.map.values.exists( _.isInstanceOf[Abs] )
+    if ( needβ ) BetaReduction.betaNormalize( substituted ) else substituted
+  }
+}
+trait ExprSubstWithβ1 extends ExprSubstWithβ0 {
+  implicit val formulaSubstWithβ: ClosedUnderSub[Formula] =
+    ( sub, formula ) => sub( formula: Expr ).asInstanceOf[Formula]
+  implicit val absSubstWithβ: ClosedUnderSub[Abs] =
+    ( sub, abs ) => sub( abs: Expr ).asInstanceOf[Abs]
+}
+/**
+ * Contains Substitutable instances for expressions that automatically
+ * perform β-reduction if the range of the substitution contains a λ-abstraction.
+ */
+object ExprSubstWithβ extends ExprSubstWithβ1

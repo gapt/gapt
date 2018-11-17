@@ -1,13 +1,17 @@
 package gapt.examples
 
-import gapt.proofs.{ Context, Sequent }
-import gapt.proofs.Context._
-import gapt.proofs.gaptic._
 import gapt.expr._
+import gapt.proofs.Sequent
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.context.update.Sort
+import gapt.proofs.gaptic._
 
 object FunctionIterationSchema extends TacticsProof {
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-  ctx += Context.Sort( "i" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += Sort( "i" )
   ctx += hoc"f:i>i"
   ctx += hoc"a:i"
   ctx += hoc"P: i>o"
@@ -17,7 +21,7 @@ object FunctionIterationSchema extends TacticsProof {
   val esPhi = Sequent(
     Seq( hof"!x (-P(x) | P(f(x)))", hof"P(a)" ),
     Seq( hof"P(if(n,a))" ) )
-  ctx += Context.ProofNameDeclaration( le"phi n", esPhi )
+  ctx += ProofNameDeclaration( le"phi n", esPhi )
 
   val esPhiSc = Sequent(
     Seq(
@@ -49,7 +53,7 @@ object FunctionIterationSchema extends TacticsProof {
       trivial
     }
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi (s n)", phiSc )
+  ctx += ProofDefinitionDeclaration( le"phi (s n)", phiSc )
   val esPhiBc = Sequent(
     Seq(
       "Ant_1" -> hof"!x (-P(x) | P(f(x)))",
@@ -59,6 +63,6 @@ object FunctionIterationSchema extends TacticsProof {
     unfold( "if" ) atMost 1 in "Suc_0"
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi 0", phiBc )
+  ctx += ProofDefinitionDeclaration( le"phi 0", phiBc )
 
 }

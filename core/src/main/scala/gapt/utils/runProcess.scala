@@ -4,7 +4,6 @@ import java.io.IOException
 
 import scala.concurrent._
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 import ammonite.ops._
 
@@ -21,6 +20,9 @@ object runProcess {
       case ( exitValue, out ) => throw new IOException( s"${cmd mkString " "} exited with value $exitValue:\n$out" )
     }
 
+  private implicit val newThreadExecutionContext: ExecutionContext =
+    ExecutionContext.fromExecutor( runnable => new Thread( runnable ).start() )
+
   def withExitValue( cmd: Seq[String], stdin: String = "", catchStderr: Boolean = false ): ( Int, String ) = {
     val pb = new ProcessBuilder( cmd: _* )
 
@@ -32,7 +34,7 @@ object runProcess {
     Runtime.getRuntime.addShutdownHook( shutdownHook )
 
     try {
-      val stdout = Future { blocking { read ! p.getInputStream } }
+      val stdout = Future( read ! p.getInputStream )
 
       blocking {
         p.getOutputStream.write( stdin getBytes )

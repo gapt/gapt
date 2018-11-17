@@ -2,30 +2,10 @@ package gapt.proofs.expansion
 
 import gapt.expr._
 import gapt.expr.hol.{ HOLPosition, instantiate }
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 
 private object getAtHOLPosition {
-  def apply( et: ExpansionTree, pos: HOLPosition ): Set[ExpansionTree] =
-    if ( pos.isEmpty ) Set( et ) else ( ( et, pos.head ): @unchecked ) match {
-      case ( ETMerge( a, b ), _ )                   => apply( a, pos ) union apply( b, pos )
-
-      case ( ETNeg( ch ), 1 )                       => apply( ch, pos.tail )
-
-      case ( ETAnd( l, _ ), 1 )                     => apply( l, pos.tail )
-      case ( ETAnd( _, r ), 2 )                     => apply( r, pos.tail )
-
-      case ( ETOr( l, _ ), 1 )                      => apply( l, pos.tail )
-      case ( ETOr( _, r ), 2 )                      => apply( r, pos.tail )
-
-      case ( ETImp( l, _ ), 1 )                     => apply( l, pos.tail )
-      case ( ETImp( _, r ), 2 )                     => apply( r, pos.tail )
-
-      case ( ETStrongQuantifier( _, _, ch ), 1 )    => apply( ch, pos.tail )
-      case ( ETSkolemQuantifier( _, _, _, ch ), 1 ) => apply( ch, pos.tail )
-      case ( ETWeakQuantifier( _, insts ), 1 )      => insts.values flatMap { apply( _, pos.tail ) } toSet
-
-      case ( ETWeakening( _, _ ), _ )               => Set()
-    }
+  def apply( et: ExpansionTree, pos: HOLPosition ): Set[ExpansionTree] = et( pos )
 }
 
 object replaceAtHOLPosition {
@@ -46,7 +26,6 @@ object replaceWithContext {
    */
   def apply( et: ExpansionTree, replacementContext: Abs, exp: Expr )( implicit ctx: Context = Context() ): ExpansionTree = {
     def newFormula = BetaReduction.betaNormalize( App( replacementContext, exp ) ).asInstanceOf[Formula]
-    def newAtom = newFormula.asInstanceOf[Atom]
 
     ( et, replacementContext ) match {
       case ( ETDefinition( sh, sub ), _ ) =>
@@ -56,8 +35,8 @@ object replaceWithContext {
 
       case ( ETMerge( left, right ), _ )                   => ETMerge( apply( left, replacementContext, exp ), apply( right, replacementContext, exp ) )
       case ( ETTop( _ ), _ ) | ( ETBottom( _ ), _ )        => et
-      case ( et @ ETAtom( formula, _ ), _ )                => et.copy( atom = newAtom )
-      case ( et @ ETWeakening( formula, _ ), _ )           => et.copy( formula = newFormula )
+      case ( ETAtom( _, pol ), _ )                         => ETAtom( newFormula, pol )
+      case ( ETWeakening( _, pol ), _ )                    => ETWeakening( newFormula, pol )
       case ( ETNeg( sub ), Abs( v, Neg( f ) ) )            => ETNeg( apply( sub, Abs( v, f ), exp ) )
       case ( ETAnd( left, right ), Abs( v, And( l, r ) ) ) => ETAnd( apply( left, Abs( v, l ), exp ), apply( right, Abs( v, r ), exp ) )
       case ( ETOr( left, right ), Abs( v, Or( l, r ) ) )   => ETOr( apply( left, Abs( v, l ), exp ), apply( right, Abs( v, r ), exp ) )
@@ -65,18 +44,19 @@ object replaceWithContext {
       case ( ETStrongQuantifier( formula, x, sub ), _ ) =>
         ETStrongQuantifier( newFormula, x, apply( sub, instReplCtx( replacementContext, x ), exp ) )
 
-      case ( ETSkolemQuantifier( formula, skTerm @ Apps( skConst, skArgs ), skDef, sub ), _ ) =>
+      case ( ETSkolemQuantifier( formula, skTerm @ Apps( skConst, skArgs ), sub ), _ ) =>
         val boundVars = freeVariables( formula ) ++ freeVariables( skTerm ) ++ freeVariables( exp )
         val nameGen = rename.awayFrom( boundVars )
 
         val newSkArgs = skArgs.map( a => nameGen.fresh( Var( "x", a.ty ) ) )
         val lhs = newFormula
+        val Some( skDef ) = ctx.skolemDef( skConst.asInstanceOf[Const] ) // FIXME
         val rhs = BetaReduction.betaNormalize( skDef( newSkArgs ) )
         val subst = syntacticMGU( lhs, rhs, boundVars ).
           getOrElse( throw new IllegalArgumentException( s"Cannot unify $lhs =?= $rhs" ) )
         val newSkTerm = subst( skConst( newSkArgs ) )
 
-        ETSkolemQuantifier( newFormula, newSkTerm, skDef, apply( sub, instReplCtx( replacementContext, newSkTerm ), exp ) )
+        ETSkolemQuantifier( newFormula, newSkTerm, apply( sub, instReplCtx( replacementContext, newSkTerm ), exp ) )
 
       case ( ETWeakQuantifier( formula, instances ), _ ) =>
         ETWeakQuantifier(
@@ -159,7 +139,7 @@ object insertDefinition {
         val shallowNew = definitionApplied
         ETStrongQuantifier( shallowNew, eigen, insertDefinition( child, defn, instReplCtx( replacementContext, eigen ) ) )
 
-      case ( ETSkolemQuantifier( shallow, skolemTerm, skolemDef, child ), Quant( x, f, _ ) ) =>
+      case ( ETSkolemQuantifier( shallow, skolemTerm, child ), Quant( x, f, _ ) ) =>
         throw new IllegalArgumentException( "Skolem nodes are not handled at this time." )
 
       case ( ETWeakQuantifier( shallow, instances ), Quant( _, _, _ ) ) =>
@@ -197,7 +177,7 @@ object moveDefsUpward {
       case ( ETImp( t1, t2 ), Imp( f1, f2 ) )                 => ETImp( apply( t1, f1 ), apply( t2, f2 ) )
       case ( ETStrongQuantifier( _, eig, t ), Quant( _, _, _ ) ) =>
         ETStrongQuantifier( expectedSh, eig, apply( t, instantiate( expectedSh, eig ) ) )
-      case ( ETSkolemQuantifier( _, _, _, _ ), Quant( _, _, _ ) ) =>
+      case ( ETSkolemQuantifier( _, _, _ ), Quant( _, _, _ ) ) =>
         ETDefinition.ifNecessary( expectedSh, tree ) // TODO
       case ( ETWeakQuantifier( _, insts ), Quant( _, _, _ ) ) =>
         ETWeakQuantifier(

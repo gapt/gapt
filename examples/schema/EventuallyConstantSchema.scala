@@ -1,14 +1,19 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.Context.PrimRecFun
-import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.Sequent
+import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic.TacticsProof
 import gapt.proofs.gaptic._
 
 object EventuallyConstantSchema extends TacticsProof {
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-  ctx += Context.Sort( "i" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += Sort( "i" )
   ctx += hoc"f:i>nat"
   ctx += hoc"g:i>i"
   ctx += hoc"z:i"
@@ -29,11 +34,11 @@ object EventuallyConstantSchema extends TacticsProof {
   val esOmega = Sequent(
     Seq( hof"!x POR(n,x)" ),
     Seq( hof"?x (iLEQ(x,g(x)) -> E(f(x), f(g(x))) )" ) )
-  ctx += Context.ProofNameDeclaration( le"omega n", esOmega )
+  ctx += ProofNameDeclaration( le"omega n", esOmega )
   val esPhi = Sequent(
     Seq( hof"?x !y ((iLEQ(x,y) -> E(n,f(y))) | LE(f(y),n))" ),
     Seq( hof"?x (iLEQ(x,g(x)) -> E(f(x), f(g(x))) )" ) )
-  ctx += Context.ProofNameDeclaration( le"phi n", esPhi )
+  ctx += ProofNameDeclaration( le"phi n", esPhi )
 
   //The base case of  omega
   val esOmegaBc =
@@ -50,7 +55,7 @@ object EventuallyConstantSchema extends TacticsProof {
     unfold( "POR" ) atMost 1 in "Ant_0_0"
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega 0", omegaBc )
+  ctx += ProofDefinitionDeclaration( le"omega 0", omegaBc )
   val esOmegaSc =
     Sequent(
       Seq( "Ant_0" -> hof"!x POR(s(n),x)" ),
@@ -65,7 +70,7 @@ object EventuallyConstantSchema extends TacticsProof {
     unfold( "POR" ) atMost 1 in "Ant_0_0"
     orL left trivial; foTheory
   }
-  ctx += Context.ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
+  ctx += ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
   val esPhiBc =
     Sequent(
       Seq( "Ant_0" -> hof"?x !y ((iLEQ(x,y) -> E(0,f(y))) | LE(f(y),0))" ),
@@ -89,7 +94,7 @@ object EventuallyConstantSchema extends TacticsProof {
       foTheory
     }
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi 0", phiBc )
+  ctx += ProofDefinitionDeclaration( le"phi 0", phiBc )
   val esPhiSc =
     Sequent(
       Seq( "Ant_0" -> hof"?x !y ((iLEQ(x,y) -> E(s(n),f(y))) | LE(f(y),s(n)))" ),
@@ -127,6 +132,6 @@ object EventuallyConstantSchema extends TacticsProof {
     impR
     foTheory
   }
-  ctx += Context.ProofDefinitionDeclaration( le"phi (s n)", phiSc )
+  ctx += ProofDefinitionDeclaration( le"phi (s n)", phiSc )
 
 }

@@ -1,13 +1,14 @@
 package gapt.proofs.epsilon
 
 import gapt.expr._
-import gapt.expr.hol.instantiate
+import gapt.expr.hol.{ SkolemFunctions, instantiate }
+import gapt.proofs.context.Context
 import gapt.proofs.expansion._
 
 object ExpansionProofToEpsilon {
 
-  def apply( e: ExpansionProof ): EpsilonProof = {
-    val skolemToEpsilonMap = e.skolemFunctions.skolemDefs.map {
+  def apply( e: ExpansionProof )( implicit ctx: Context ): EpsilonProof = {
+    val skolemToEpsilonMap = ctx.get[SkolemFunctions].skolemDefs.map {
       case ( sk, Abs.Block( vs, q @ Quant( x, _, isForall ) ) ) =>
         val x_ = rename( x, vs )
         ( sk: Expr ) -> Abs.Block( vs, Epsilon( x_, epsilonize(

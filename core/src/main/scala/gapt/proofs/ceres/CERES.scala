@@ -1,11 +1,12 @@
 package gapt.proofs.ceres
 
 import gapt.formats.llk.LLKExporter
-import gapt.formats.tptp.TPTPFOLExporter
+import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.lk._
 import gapt.proofs.resolution._
-import gapt.proofs.{ Context, HOLSequent, Sequent }
+import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.expr._
+import gapt.proofs.context.Context
 import gapt.proofs.expansion.{ ExpansionProof, ExpansionSequent }
 import gapt.provers.ResolutionProver
 import gapt.provers.escargot.Escargot
@@ -77,7 +78,7 @@ class CERES {
     prover.getResolutionProof( tapecl ) match {
       case None => throw new Exception(
         "The characteristic clause set could not be refuted:\n" +
-          TPTPFOLExporter( tapecl ) )
+          TptpFOLExporter( tapecl ) )
       case Some( rp ) =>
         cleanStructuralRules( apply( es, proj, eliminateSplitting( rp ) ) )
     }
@@ -126,7 +127,7 @@ class CERES {
     prover.getResolutionProof( tapecl ) match {
       case None => throw new Exception(
         "The characteristic clause set could not be refuted:\n" +
-          TPTPFOLExporter( tapecl ) )
+          TptpFOLExporter( tapecl ) )
       case Some( rp ) =>
         ResolutionToExpansionProof( eliminateSplitting( rp ), findPartialExpansionSequent( es, proj ) )
     }

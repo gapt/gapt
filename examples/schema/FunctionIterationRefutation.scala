@@ -1,9 +1,11 @@
 package gapt.examples
 
-import gapt.proofs.{ Context, Sequent }
-import gapt.proofs.gaptic._
 import gapt.expr._
+import gapt.proofs.Sequent
 import gapt.proofs.ceres._
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.gaptic._
 import gapt.proofs.lk.LKProof
 
 object FunctionIterationRefutation extends TacticsProof( FunctionIterationSchema.ctx ) {
@@ -15,24 +17,24 @@ object FunctionIterationRefutation extends TacticsProof( FunctionIterationSchema
   ctx += hoc"chi:nat>nat"
   ctx += hoc"rho:nat>nat"
   val esTop = Sequent( Seq( hof"phiSFAFF(n)" ), Seq() )
-  ctx += Context.ProofNameDeclaration( le"Top n", esTop )
+  ctx += ProofNameDeclaration( le"Top n", esTop )
   val eschi = Sequent( Seq( hof"!A (-P(A) | P(f(A)))", hof"phiSFATF(n)" ), Seq() )
-  ctx += Context.ProofNameDeclaration( le"chi n", eschi )
+  ctx += ProofNameDeclaration( le"chi n", eschi )
   val esrho = Sequent( Seq( hof"!A (-P(A) | P(f(A)))", hof"phiSTATF(n)" ), Seq( hof"P(if(n, a))" ) )
-  ctx += Context.ProofNameDeclaration( le"rho n", esrho )
+  ctx += ProofNameDeclaration( le"rho n", esrho )
   val esPRSc = Sequent( Seq( "Ant_0" -> hof"phiSFAFF(s(n))" ), Seq() )
   val PRSc: LKProof = Lemma( esPRSc ) {
     unfold( "phiSFAFF" ) in "Ant_0"
     andL
     ref( "chi" )
   }
-  ctx += Context.ProofDefinitionDeclaration( le"Top (s n)", PRSc )
+  ctx += ProofDefinitionDeclaration( le"Top (s n)", PRSc )
   val esPRBc = Sequent( Seq( "Ant_0" -> hof"phiSFAFF(0)" ), Seq() )
   val PRBc: LKProof = Lemma( esPRBc ) {
     unfold( "phiSFAFF" ) in "Ant_0"
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"Top 0", PRBc )
+  ctx += ProofDefinitionDeclaration( le"Top 0", PRBc )
   val esChiSc = Sequent( Seq(
     "Ant_0" -> hof"!A (-P(A) | P(f(A)))",
     "Ant_1" -> hof"phiSFATF(s(n))" ), Seq() )
@@ -46,7 +48,7 @@ object FunctionIterationRefutation extends TacticsProof( FunctionIterationSchema
     negL
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi (s n)", ChiSc )
+  ctx += ProofDefinitionDeclaration( le"chi (s n)", ChiSc )
   val esChiBc = Sequent( Seq(
     "Ant_0" -> hof"!A (-P(A) | P(f(A)))",
     "Ant_1" -> hof"phiSFATF(0)" ), Seq() )
@@ -54,7 +56,7 @@ object FunctionIterationRefutation extends TacticsProof( FunctionIterationSchema
     unfold( "phiSFATF" ) in "Ant_1"
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"chi 0", ChiBc )
+  ctx += ProofDefinitionDeclaration( le"chi 0", ChiBc )
   val esRhoSc = Sequent( Seq(
     "Ant_0" -> hof"!A (-P(A) | P(f(A)))",
     "Ant_1" -> hof"phiSTATF(s(n))" ), Seq( "Suc_0" -> hof"P(if(s(n), a))" ) )
@@ -67,7 +69,7 @@ object FunctionIterationRefutation extends TacticsProof( FunctionIterationSchema
     ref( "rho" )
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"rho (s n)", RhoSc )
+  ctx += ProofDefinitionDeclaration( le"rho (s n)", RhoSc )
   val esRhoBc = Sequent( Seq(
     "Ant_0" -> hof"!A (-P(A) | P(f(A)))",
     "Ant_1" -> hof"phiSTATF(0)" ), Seq( "Suc_0" -> hof"P(if(0, a))" ) )
@@ -76,6 +78,6 @@ object FunctionIterationRefutation extends TacticsProof( FunctionIterationSchema
     unfold( "if" ) in "Suc_0"
     trivial
   }
-  ctx += Context.ProofDefinitionDeclaration( le"rho 0", RhoBc )
+  ctx += ProofDefinitionDeclaration( le"rho 0", RhoBc )
 
 }

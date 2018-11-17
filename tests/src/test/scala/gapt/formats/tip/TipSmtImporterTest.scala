@@ -11,7 +11,7 @@ class TipSmtImporterTest extends Specification {
 
   "bin_distrib.smt2" in {
     val problem =
-      TipSmtImporter.parse( ClasspathInputFile( "bin_distrib.smt2" ) )
+      TipSmtImporter.load( ClasspathInputFile( "bin_distrib.smt2" ) )
     val one = Const( "One", TBase( "Bin" ) )
     val oneAnd = Const( "OneAnd", TBase( "Bin" ) ->: TBase( "Bin" ) )
     val instanceSequent =

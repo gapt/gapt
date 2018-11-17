@@ -2,7 +2,7 @@ package gapt.proofs.lk.reductions
 
 import gapt.expr.{ Bottom, Substitution, Top }
 import gapt.proofs.lk.{ AndLeftRule, AndRightRule, BottomAxiom, CutRule, DefinitionLeftRule, DefinitionRightRule, EqualityLeftRule, EqualityRightRule, ExistsLeftRule, ExistsRightRule, ForallLeftRule, ForallRightRule, ImpLeftRule, ImpRightRule, LKProof, LogicalAxiom, NegLeftRule, NegRightRule, OrLeftRule, OrRightRule, TopAxiom, WeakeningLeftRule, WeakeningMacroRule, WeakeningRightRule }
-import gapt.proofs.{ Context, SequentConnector, guessPermutation }
+import gapt.proofs.{ SequentConnector, guessPermutation }
 
 object GradeReductionAxiomLeft extends CutReduction {
   override def reduce( cut: CutRule ): Option[LKProof] =

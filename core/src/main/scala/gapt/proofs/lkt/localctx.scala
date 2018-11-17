@@ -52,8 +52,8 @@ case class LocalCtx( hyps: Map[Hyp, Formula], subst: Substitution ) extends ALCt
         copy( subst = subst compose Substitution( p.ev -> ev ) ).
           up( instantiate( hyps( p.main ), ev ) )
       }
-    case AllSk( main, term, _, _ ) => up( instantiate( hyps( main ), subst( term ) ) )
-    case Def( _, f, _ )            => up( subst( f ) )
+    case AllSk( main, term, _ ) => up( instantiate( hyps( main ), subst( term ) ) )
+    case Def( _, f, _ )         => up( subst( f ) )
   }
   def up12_( p: LKt ): LC2 = ( p: @unchecked ) match {
     case AndL( main, _ ) => hyps( main ) match { case BinConn( f, g ) => up( f, g ) }
@@ -109,7 +109,7 @@ trait ALCtx[LC <: ALCtx[LC]] {
     case AllL( _, _, q )      => up1_( p )( q.aux )
     case AllR( _, _, q )      => up1_( p )( q.aux )
     case Eql( _, _, _, _, q ) => up1_( p )( q.aux )
-    case AllSk( _, _, _, q )  => up1_( p )( q.aux )
+    case AllSk( _, _, q )     => up1_( p )( q.aux )
     case Def( _, _, q )       => up1_( p )( q.aux )
   }
   def up2( p: LKt ): LC = ( p: @unchecked ) match {

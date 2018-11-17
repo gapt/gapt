@@ -1,9 +1,15 @@
 package gapt.proofs.lk
 
 import gapt.expr._
-import gapt.proofs.Context.ProofNames
-import gapt.proofs.{ Ant, Context, HOLSequent, ProofBuilder, SequentIndex, Suc, lk, nd }
+import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.nd._
+import gapt.proofs.Ant
+import gapt.proofs.ProofBuilder
+import gapt.proofs.SequentIndex
+import gapt.proofs.Suc
+import gapt.proofs.context.Context
+import gapt.proofs.lk
+import gapt.proofs.nd
 
 object LKToND {
 
@@ -458,7 +464,7 @@ object LKToND {
           exchange( translate( proof, Some( focusMain ) ), focus.map( p.endSequent.apply ) )
         }
 
-      case ForallSkRightRule( subProof, aux, main, skT, skD ) =>
+      case ForallSkRightRule( subProof, aux, main, skT ) =>
         throw new LKToNDTranslationException(
           "ForallSkRightRule",
           "LK proofs containing skolem functions are not supported." )
@@ -479,7 +485,7 @@ object LKToND {
           b( ExistsElimRule( _, _, i, eigen ) ).
           qed
 
-      case ExistsSkLeftRule( subProof, aux, main, skT, skD ) =>
+      case ExistsSkLeftRule( subProof, aux, main, skT ) =>
         throw new LKToNDTranslationException(
           "ExistsSkLeftRule",
           "LK proofs containing skolem functions are not supported." )

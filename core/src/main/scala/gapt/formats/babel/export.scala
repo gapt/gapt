@@ -207,6 +207,27 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     }
   }
 
+  def sepByComma( args: List[Doc] ): Doc =
+    args match {
+      case Nil       => ""
+      case List( a ) => a
+      case _         => wordwrap( args, "," )
+    }
+
+  def shows(
+    exprs:     List[Expr],
+    knownType: Boolean,
+    bound:     Set[String],
+    t0:        Map[String, VarOrConst] ): ( List[Parenable], Map[String, VarOrConst] ) = {
+    var t1 = t0
+    val exprs_ = for ( expr <- exprs ) yield {
+      val ( expr_, t1_ ) = show( expr, knownType, bound, t1 )
+      t1 = t1_
+      expr_
+    }
+    ( exprs_, t1 )
+  }
+
   def showApps(
     expr:      Expr,
     knownType: Boolean,
@@ -241,19 +262,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
         case _                                  => false
       } )
     }
-    var t1 = t0
-    val args_ = for ( arg <- args ) yield {
-      val ( arg_, t1_ ) = show( arg, argTysKnown, bound, t1 )
-      t1 = t1_
-      arg_
-    }
-
-    def sepByComma( args: List[Doc] ): Doc =
-      args match {
-        case Nil       => ""
-        case List( a ) => a
-        case _         => wordwrap( args, "," )
-      }
+    val ( args_, t1 ) = shows( args, argTysKnown, bound, t0 )
 
     def showFunCall( hd: Parenable, args: List[Parenable] ) =
       Parenable( Precedence.app, hd.inPrec( Precedence.app ) <> nest( group( parens( sepByComma( args.map( _.inPrec( 0 ) ) ) ) ) ) )
@@ -279,9 +288,9 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
             val needSpace = argDoc.firstChar.forall { c =>
               tok match {
                 case _ if c == '_' => true
-                case BabelLexical.OperatorAndNothingElse( _ ) =>
-                  def argIsRestOp = BabelLexical.RestOpChar.unapply( c.toString ).isDefined
-                  def argIsOp = BabelLexical.OpChar.unapply( c.toString ).isDefined
+                case _ if fastparse.parse( tok, BabelLexical.OperatorAndNothingElse( _ ) ).isSuccess =>
+                  def argIsRestOp = fastparse.parse( c.toString, BabelLexical.RestOpChar( _ ) ).isSuccess
+                  def argIsOp = fastparse.parse( c.toString, BabelLexical.OpChar( _ ) ).isSuccess
                   argIsOp || argIsRestOp && tok.contains( "_" )
                 case _ if tok.forall( BabelLexical.isUnquotNameChar ) =>
                   BabelLexical.isUnquotNameChar( c )
@@ -316,11 +325,10 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
   val asciiUnquotName = """[A-Za-z0-9_]+""".r
   def showName( token: Notation.Token )( implicit dummyImplicit: DummyImplicit ): Doc = showName( token.token )
   def showName( name: String ): Doc =
-    name match {
-      case BabelLexical.OperatorAndNothingElse( _ ) if unicodeSafe( name ) =>
-        name
-      case _ => showNonOpName( name )
-    }
+    if ( fastparse.parse( name, BabelLexical.OperatorAndNothingElse( _ ) ).isSuccess && unicodeSafe( name ) )
+      name
+    else
+      showNonOpName( name )
   def showNonOpName( name: String ): Doc = name match {
     case _ if unicode && name.nonEmpty && name.forall { BabelLexical.isUnquotNameChar } => name
     case asciiUnquotName() => name

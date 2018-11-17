@@ -3,14 +3,14 @@ package gapt.provers.vampire
 import java.io.IOException
 
 import gapt.formats.StringInputFile
-import gapt.formats.tptp.TPTPFOLExporter
+import gapt.formats.tptp.TptpFOLExporter
 import gapt.formats.tptp.TptpProofParser
 import gapt.proofs.resolution.ResolutionProof
 import gapt.proofs.resolution.fixDerivation
 import gapt.proofs.sketch.RefutationSketchToResolution
 import gapt.proofs.FOLClause
 import gapt.proofs.HOLClause
-import gapt.proofs.MutableContext
+import gapt.proofs.context.mutable.MutableContext
 import gapt.provers.ResolutionProver
 import gapt.provers.extractIntroducedDefinitions
 import gapt.provers.renameConstantsToFi
@@ -25,7 +25,7 @@ class Vampire( commandName: String = "vampire", extraArgs: Seq[String] = Seq() )
     renameConstantsToFi.wrap( seq.toSeq )(
       ( renaming, cnf: Seq[HOLClause] ) => {
         val labelledCNF = cnf.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
-        val tptpIn = TPTPFOLExporter.exportLabelledCNF( labelledCNF ).toString
+        val tptpIn = TptpFOLExporter.exportLabelledCNF( labelledCNF ).toString
         val output = runProcess.withTempInputFile(
           commandName +: "-p" +: "tptp" +: extraArgs,
           tptpIn ).split( "\n" )

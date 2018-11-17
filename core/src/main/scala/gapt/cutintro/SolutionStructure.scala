@@ -34,12 +34,12 @@ case class SolutionStructure( sehs: SchematicExtendedHerbrandSequent, formulas: 
 
     val cuts = ETCut {
       for ( ( ( eigenVar, cutImplInst ), formula ) <- sehs.ss zip formulas )
-        yield ETImp(
+        yield (
         ETStrongQuantifierBlock( All.Block( eigenVar, formula ), eigenVar,
           formulaToExpansionTree( formula, Polarity.Positive ) ),
-        ETWeakQuantifierBlock( All.Block( eigenVar, formula ), eigenVar.size,
-          for ( inst <- cutImplInst ) yield inst ->
-            formulaToExpansionTree( Substitution( eigenVar zip inst )( formula ), Polarity.Negative ) ) )
+          ETWeakQuantifierBlock( All.Block( eigenVar, formula ), eigenVar.size,
+            for ( inst <- cutImplInst ) yield inst ->
+              formulaToExpansionTree( Substitution( eigenVar zip inst )( formula ), Polarity.Negative ) ) )
     }
 
     eliminateMerges( ExpansionProof( cuts +: nonCutPart ) )

@@ -1,6 +1,9 @@
 package gapt.proofs
 
 import gapt.expr._
+import gapt.proofs.context.Context
+import gapt.proofs.context.facet.ProofNames
+import gapt.proofs.context.update.Update
 import gapt.proofs.expansion.ExpansionProof
 import gapt.proofs.lk.LKProof
 import gapt.proofs.resolution.ResolutionProof
@@ -14,8 +17,8 @@ object Checkable {
   def requireDefEq( a: Expr, b: Expr )( implicit ctx: Context ): Unit =
     require( ctx.isDefEq( a, b ), s"${ctx.normalize( a ).toSigRelativeString} != ${ctx.normalize( b ).toSigRelativeString}" )
 
-  implicit object contextElementIsCheckable extends Checkable[Context.Update] {
-    def check( elem: Context.Update )( implicit context: Context ): Unit = elem( context )
+  implicit object contextElementIsCheckable extends Checkable[Update] {
+    def check( elem: Update )( implicit context: Context ): Unit = elem( context )
   }
 
   class ExpressionChecker( implicit ctx: Context ) {
@@ -90,12 +93,14 @@ object Checkable {
             s"Induction rule has incorrect constructors: ${ctrsInProof.mkString( ", " )}\n" +
               s"Expected: ${ctrsInCtx.mkString( ", " )}" )
         case sk: SkolemQuantifierRule =>
-          require( ctx.skolemDef( sk.skolemConst ).contains( sk.skolemDef ) )
+          val Some( skolemDef ) = ctx.skolemDef( sk.skolemConst )
+          val expectedMain = BetaReduction.betaNormalize( skolemDef( sk.skolemArgs ) )
+          require( expectedMain == sk.mainFormula, s"Main formula should be $expectedMain, but is ${sk.mainFormula}" )
           ctx.check( sk.skolemTerm )
         case StrongQuantifierRule( _, _, _, _, _ ) =>
         case _: ReflexivityAxiom | _: LogicalAxiom =>
         case ProofLink( name, sequent ) =>
-          val declSeq = ctx.get[Context.ProofNames].lookup( name )
+          val declSeq = ctx.get[ProofNames].lookup( name )
           require( declSeq.nonEmpty, s"Proof name $name does not exist in context" )
           require( declSeq.get == sequent, s"$declSeq\nis not equal to \n$sequent" )
         case TopAxiom | BottomAxiom
@@ -107,27 +112,6 @@ object Checkable {
         case _: CutRule =>
         case d: DefinitionRule =>
           requireDefEq( d.mainFormula, d.auxFormula )( ctx )
-      }
-    }
-  }
-
-  implicit object expansionProofIsCheckable extends Checkable[ExpansionProof] {
-    import gapt.proofs.expansion._
-
-    def check( ep: ExpansionProof )( implicit ctx: Context ): Unit = {
-      ctx.check( ep.shallow )
-      ep.subProofs.foreach {
-        case ETTop( _ ) | ETBottom( _ ) | ETNeg( _ ) | ETAnd( _, _ ) | ETOr( _, _ ) | ETImp( _, _ ) =>
-        case ETWeakening( _, _ ) | ETAtom( _, _ ) =>
-        case ETWeakQuantifier( _, insts ) =>
-          insts.keys.foreach( ctx.check( _ ) )
-        case ETStrongQuantifier( _, _, _ ) =>
-        case sk @ ETSkolemQuantifier( _, skT, skD, _ ) =>
-          require( ctx.skolemDef( sk.skolemConst ).contains( skD ) )
-          ctx.check( skT )
-        case ETDefinition( sh, child ) =>
-          requireDefEq( sh, child.shallow )( ctx )
-        case ETMerge( _, _ ) =>
       }
     }
   }
@@ -147,7 +131,8 @@ object Checkable {
         case Defn( df, by )             => require( ctx.isDefEq( df, by ) )
         case _: WeakQuantResolutionRule =>
         case q: SkolemQuantResolutionRule =>
-          require( ctx.skolemDef( q.skolemConst ).contains( q.skolemDef ) )
+          val Some( skolemDef ) = ctx.skolemDef( q.skolemConst )
+          require( BetaReduction.betaNormalize( skolemDef( q.skolemArgs ) ) == q.subProof.conclusion( q.idx ) )
           ctx.check( q.skolemTerm )
         case DefIntro( _, _, definition, _ ) =>
           requireDefEq( definition.what, definition.by )( ctx )
