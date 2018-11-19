@@ -235,9 +235,13 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         case Right( _ ) => // next model
           require( !solver.isSatisfiable( model ) )
         case reason @ Left( _ ) =>
-          require( solver.isSatisfiable( assumptions ) )
-          unprovable += ( ( eigenVariables, assumptions ) )
-          return reason
+          if ( solver.isSatisfiable( assumptions ) ) {
+            unprovable += ( ( eigenVariables, assumptions ) )
+            return reason
+          } else {
+            // We solved the current goal even though no ∃:l, ∀:r, →:r, ¬:r rule was successful.
+            // This can happen if we learned a useful lemma during the search.
+          }
       }
     }
     Right( () )
