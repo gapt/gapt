@@ -32,19 +32,33 @@ class Vampire( commandName: String = "vampire", extraArgs: Seq[String] = Seq() )
             commandName +: "-p" +: "tptp" +: extraArgs,
             tptpIn ).split( "\n" )
         }
-        if ( output.exists( l => l.startsWith( "Refutation found" ) || l.startsWith( "% Refutation found" ) ) ) {
-          val sketch = time( "tptp_parse" ) { TptpProofParser.parse( StringInputFile( output.drop( 1 ).takeWhile( !_.startsWith( "---" ) ).mkString( "\n" ) ) )._2 }
-          val Right( resolution ) = time( "replay" ) { RefutationSketchToResolution( sketch ) }
-          Some( time( "fix_derivation" ) { fixDerivation( resolution, cnf ) } )
-        } else {
-          require( output.exists( l => l.startsWith( "% SZS status Satisfiable" )
-            || l.startsWith( "% SZS status CounterSatisfiable" ) ) )
-          None
+        extractRefutation( output ) match {
+          case Some( refutationLines ) =>
+            val sketch = time( "tptp_parse" ) {
+              TptpProofParser.parse( StringInputFile( refutationLines.mkString( "\n" ) ) )._2
+            }
+            val Right( resolution ) = time( "replay" ) { RefutationSketchToResolution( sketch ) }
+            Some( time( "fix_derivation" ) { fixDerivation( resolution, cnf ) } )
+          case None =>
+            require( output.exists( l => l.startsWith( "% SZS status Satisfiable " ) || l == "Satisfiable!" ) )
+            None
         }
       } ).map { resolution =>
         extractIntroducedDefinitions( resolution )
         resolution
       }
+
+  private def extractRefutation( lines: Array[String] ): Option[Array[String]] =
+    if ( lines.exists( _.startsWith( "Refutation found" ) ) ) {
+      // Vampire 4.1
+      Some( lines.drop( 1 ).takeWhile( !_.startsWith( "---" ) ) )
+    } else if ( lines.exists( _.startsWith( "% SZS status Unsatisfiable " ) ) ) {
+      // Vampire 4.2
+      Some( lines.dropWhile( !_.startsWith( "% SZS output start Proof" ) ).
+        takeWhile( !_.startsWith( "% SZS output end Proof" ) ) )
+    } else {
+      None
+    }
 
   override val isInstalled: Boolean =
     try {
