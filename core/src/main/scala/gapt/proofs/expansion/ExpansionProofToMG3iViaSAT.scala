@@ -197,7 +197,8 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
                   NegRightRule( p, a.shallow ) ) )
             case ETImp( a, b ) =>
               handleBlock( b, upper + atom( a ), eigenVariables, p => back(
-                ImpRightMacroRule( p, a.shallow, b.shallow ) ) )
+                if ( !p.endSequent.antecedent.contains( a.shallow ) && !p.endSequent.succedent.contains( b.shallow ) ) p else
+                  ImpRightMacroRule( p, a.shallow, b.shallow ) ) )
             case ETStrongQuantifier( _, ev, a ) =>
               handleBlock( a, upper, eigenVariables + ev, p => back(
                 if ( !p.endSequent.succedent.contains( a.shallow ) ) p else
