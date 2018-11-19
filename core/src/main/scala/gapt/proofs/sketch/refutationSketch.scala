@@ -65,7 +65,8 @@ case class SketchComponentElim( subProof: RefutationSketch, component: AvatarDef
 }
 
 case class SketchSplitCombine( splitCases: Seq[RefutationSketch] ) extends RefutationSketch {
-  for ( p <- splitCases ) require( p.conclusion.isEmpty, p )
+  // TODO(gabriel): vampire also adds ground clauses (w/o assertions) as parents
+  //  for ( p <- splitCases ) require( p.conclusion.isEmpty, p )
 
   override def immediateSubProofs = splitCases
   override def conclusion = FOLClause()
