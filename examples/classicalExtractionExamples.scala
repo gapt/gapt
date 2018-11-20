@@ -3995,7 +3995,14 @@ object commutingConversions2 extends Script {
 
   //println( normalize( le"efq(tryCatch((^(y0: nat>exn) y0(0)), handle((y0: nat>exn)(x0:nat), (N0: nat>exn)(x0)))): nat" ) )
   //println( normalize( le"efq(f(tryCatch((^(y0: nat>exn) y0(0)), handle((y0: nat>exn)(x0:nat), (N0: nat>exn)(x0))))): nat" ) )
+  println( normalize( le"""
+    efq(f(
+      (^(y0: nat>exn) tryCatch(y0,
+                        y0(0),
+                        handle((y0: nat>exn)(x0:nat), (N0: nat>exn)(x0))
+                      ))(exnV))): nat""" ) )
 
+  /*
   println( normalize(
     le"""
          existsElim(
@@ -4005,7 +4012,6 @@ object commutingConversions2 extends Script {
            ), (^(x:nat>exn) (^(y:1) x(0)))
          )
       """ ) )
-  /*
   println( normalize(
     le"""
          existsElim(
@@ -4074,13 +4080,12 @@ object testExistsElimTryCatch extends Script {
          existsElim(
            pair(r, i:1),
            (^(v1: nat) (^(v2: 1)
-             tryCatch(
-               (^(vLambda_13: (conj(nat)(1))>exn)
-                 (efq(vLambda_13(pair(v1, v2))):conj(nat)(1))),
+             (^(vLambda_13: (conj(nat)(1))>exn) tryCatch(vLambda_13,
+                 (efq(vLambda_13(pair(v1, v2))):conj(nat)(1)),
                  handle(
                    (vLambda_13: (conj(nat)(1))>exn)(x: conj(nat)(1)), x
                  )
-             )
+             ))(exnV)
            ) )
          ))),
          s(0))

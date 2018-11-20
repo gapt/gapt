@@ -129,11 +129,11 @@ class BetaReductionTest extends Specification {
     implicit val ctxClassical = ClassicalExtraction.systemT( ctx )
     normalize(
       le"""
-s(tryCatch(
-  (^(y1: nat>exn) 0),
+s((^(y1: nat>exn) tryCatch(y1,
+   0,
   handle(y1(x1:nat),
-    s(0))
-))""" ) must_== le"s(0)"
+    s(0)))
+)(exnV))""" ) must_== le"s(0)"
   }
   "normalize try/catch with commuting conversion left" in {
     import gapt.proofs.Context
@@ -144,12 +144,11 @@ s(tryCatch(
     implicit val ctxClassical = ClassicalExtraction.systemT( ctx )
     normalize(
       le"""
-s(tryCatch(
-  (^(y1: nat>exn)
-    efq(y1(0)): nat),
+s((^(y1: nat>exn) tryCatch(y1,
+    efq(y1(0)): nat,
   handle(y1(x1:nat),
-    s(0))
-))""" ) must_== le"s(s(0))"
+    s(0)))
+)(exnV))""" ) must_== le"s(s(0))"
   }
   "normalize try/catch with commuting conversion right" in {
     import gapt.proofs.Context
@@ -160,12 +159,11 @@ s(tryCatch(
     implicit val ctxClassical = ClassicalExtraction.systemT( ctx )
     normalize(
       le"""
-tryCatch(
-  (^(y1: nat>exn)
-    (^z efq(y1(z)): nat)),
-  handle(y1(x1:nat),
-    (^(w:nat) s(w)))
-)(0)""" ) must_== le"s(0)"
+(^(exnV: nat>exn) tryCatch(exnV,
+    (^z efq(exnV(z)): nat),
+  handle(exnV(x1:nat),
+    (^(w:nat) s(w))))
+)(y1)(0)""" ) must_== le"s(0)"
   }
   "normalize nested try/catch" in {
     import gapt.formats.babel.{ Notation, Precedence }
@@ -179,18 +177,16 @@ tryCatch(
     implicit val ctxClassical = ClassicalExtraction.systemT( ctx )
     normalize(
       le"""
-tryCatch(
-  (^(y1: nat>exn)
-    (efq(y1(0:nat)): nat > nat)),
+(^(y1: nat>exn) tryCatch(y1,
+    (efq(y1(0:nat)): nat > nat),
   handle(y1(x1:nat),
     (^(z:nat) s(z)))
-  )(tryCatch(
-      (^(y0: nat>exn)
-        efq(y0(s(x1))): nat),
+  )((^(y0: nat>exn) tryCatch(y0,
+        efq(y0(s(x1))): nat,
       handle(y0(x0:nat),
         (x0 + x1))
-  )
-)""" ) must_== le"s((s(0:nat): nat) + 0: nat)"
+  ))(exnV2)
+))(exnV1)""" ) must_== le"s((s(0:nat): nat) + 0: nat)"
   }
   "normalize classical pairing pi1" in {
     import gapt.proofs.Context
@@ -209,13 +205,12 @@ tryCatch(
     val pi1 =
       le"""
      (^(p: (nat>nat>exn)>exn)
-       tryCatch(
-        (^(y:nat>exn)
-          efq(p(^(x:nat) efq(y(x))))
+       (^(y:nat>exn) tryCatch(y,
+          efq(p(^(x:nat) efq(y(x)))
         ),
         handle(y(x:nat), x)
        )
-     )
+     )(exnV))
     """
     val classicalPairing = pi1( pair( hoc"0:nat", le"s(0):nat" ) )
     normalize( classicalPairing ) must_== le"0: nat"
@@ -237,13 +232,12 @@ tryCatch(
     val pi2 =
       le"""
      (^(p: (nat>nat>exn)>exn)
-       tryCatch(
-        (^(y:nat>exn)
-          efq(p(^(x:nat) y))
+       (^(y:nat>exn) tryCatch(y,
+          efq(p(^(x:nat) y)
         ),
         handle(y(x:nat), x)
        )
-     )
+     )(exnV))
     """
     val classicalPairing = pi2( pair( hoc"0:nat", le"s(0):nat" ) )
     normalize( classicalPairing ) must_== le"s(0): nat"
@@ -255,7 +249,7 @@ tryCatch(
     ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
     implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
 
-    normalize( le"efq(tryCatch((^y0 (M0: exn)), handle(y0(x0), (N0: exn)))):?a" ) must_== le"efq(M0: exn): ?a"
+    normalize( le"efq((^y0 tryCatch(y0, (M0: exn), handle(y0(x0), (N0: exn))))(exnVar)):?a" ) must_== le"efq(M0: exn): ?a"
   }
   "raise/handle without and with additional CC" in {
     import gapt.proofs.Context
@@ -265,8 +259,18 @@ tryCatch(
 
     implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
 
-    normalize( le"efq(tryCatch((^(y0: nat>exn) y0(0)), handle((y0: nat>exn)(x0:nat), (N0: nat>exn)(x0)))): nat" ) must_== le"efq(N0(0)): nat"
-    normalize( le"efq(f(tryCatch((^(y0: nat>exn) y0(0)), handle((y0: nat>exn)(x0:nat), (N0: nat>exn)(x0))))): nat" ) must_== le"efq(f(y0(0):exn)): nat"
+    normalize( le"""
+    efq(
+      (^(y0: nat>exn) tryCatch(y0,
+                        y0(0),
+                        handle((y0: nat>exn)(x0:nat), (N0: nat>exn)(x0))
+                      ))(exnV)): nat""" ) must_== le"efq(N0(0)): nat"
+    normalize( le"""
+    efq(f(
+      (^(y0: nat>exn) tryCatch(y0,
+                        y0(0),
+                        handle((y0: nat>exn)(x0:nat), (N0: nat>exn)(x0))
+                      ))(exnV))): nat""" ) must_== le"efq(f(y0(0):exn)): nat"
   }
   "handle/raise reduction" in {
     import gapt.proofs.Context
@@ -277,29 +281,49 @@ tryCatch(
     implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
     normalize(
       le"""
-        tryCatch(
-          (^(y0: nat>exn)
-            tryCatch(
-              (^(y1: nat>exn)
-                efq(y0(0)):nat),
+        (^(y0: nat>exn) tryCatch(y0,
+            (^(y1: nat>exn) tryCatch(y1,
+                efq(y0(0)):nat,
             handle(
               (y1: nat>exn)(x0: nat), (N1: nat>nat)(x0))
-            )),
+            ))(exnV2),
         handle(
           (y0: nat>exn)(x0:nat), (N0: nat>nat)(x0))
-        ): nat""" ) must_== le"N0(0):nat"
+        ))(exnV1): nat""" ) must_== le"N0(0):nat"
     normalize(
       le"""
-        tryCatch(
-          (^(y0: nat>exn)
-            tryCatch(
-              (^(y1: nat>exn)
-                efq(y1(0)):nat),
+        (^(y0: nat>exn) tryCatch(y0,
+            (^(y1: nat>exn) tryCatch(y1,
+                efq(y1(0)):nat,
             handle(
               (y1: nat>exn)(x0: nat), (N1: nat>nat)(x0))
-            )),
+            ))(exnV2),
         handle(
           (y0: nat>exn)(x0:nat), (N0: nat>nat)(x0))
-        ): nat""" ) must_== le"N1(0):nat"
+        ))(exnV1): nat""" ) must_== le"N1(0):nat"
+  }
+  "reduce natRec, existsElim, tryCatch (previously problems with var substitution)" in {
+    import gapt.proofs.Context
+    import gapt.proofs.nd.ClassicalExtraction
+    var ctx = Context.default
+    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+    normalize( le"""
+       natRec(
+         base: conj(nat)(1),
+         (^(r:nat)(^(p:conj(nat)(1))
+         existsElim(
+           pair(r, i:1),
+           (^(v1: nat) (^(v2: 1)
+             (^(vLambda_13: (conj(nat)(1))>exn) tryCatch(vLambda_13,
+                 (efq(vLambda_13(pair(v1, v2))):conj(nat)(1)),
+                 handle(
+                   (vLambda_13: (conj(nat)(1))>exn)(x: conj(nat)(1)), x
+                 )
+             ))(exnV)
+           ) )
+         ))),
+         s(0))
+    """ ) must_== le"pair(0, i)"
   }
 }

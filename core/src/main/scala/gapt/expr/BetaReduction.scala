@@ -88,11 +88,10 @@ case class Normalizer( rules: Set[ReductionRule] ) {
         println( s"catch: ${as( 0 )}" )
         Apps( newHandle, Seq( as( 0 ), newCatchB ) )
 
-      case Abs( v, arg ) =>
-        println( s"try with var: $v" )
+      case tryB =>
         appOrArg match {
-          case Left( app_ )  => Abs( v, app_( arg ) )
-          case Right( arg_ ) => Abs( v, arg( arg_ ) )
+          case Left( app_ )  => app_( tryB )
+          case Right( arg_ ) => tryB( arg_ )
         }
     }
   }
@@ -114,8 +113,8 @@ case class Normalizer( rules: Set[ReductionRule] ) {
   object SplitTryCatch {
     def unapply( xs: List[Expr] ): Option[( List[Expr], Expr, List[Expr] )] = {
       val index = xs.indexWhere {
-        case Apps( Const( "tryCatch", _, _ ), _ ) => true
-        case _                                    => false
+        case App( Abs( _, Apps( Const( "tryCatch", _, _ ), _ ) ), _ ) => true
+        case _ => false
       }
       if ( index == -1 ) {
         None
@@ -127,35 +126,36 @@ case class Normalizer( rules: Set[ReductionRule] ) {
   }
 
   def normalize( expr: Expr ): Expr = {
-    println( s"normalize begin $expr" )
+    //println( s"normalize begin $expr" )
     val res = whnf( expr ) match {
       case Apps( hd_, as_ ) =>
         as_ match {
 
           // Commuting conversion (left) for try/catch
-          case SplitTryCatch( front, Apps( Const( "tryCatch", ty, params ), tryCatchBlocks ), back ) if hd_.toUntypedAsciiString != "handle" =>
+          case SplitTryCatch( front, App( Abs( _, Apps( Const( "tryCatch", ty, params ), tryCatchBlocks ) ), exnV ), back ) if hd_.toUntypedAsciiString != "handle" =>
 
             //println( s"cc left: commuting ${hd_( front )}" )
             println( s"cc left" )
             println( s"before cc left: tryCatch.ty: $ty" )
-            val Abs( exnV, _ ) = tryCatchBlocks( 0 )
+            val exnV = tryCatchBlocks( 0 )
             println( s"@@@@@@ tryCatch exnV: $exnV" )
             //println( s"input:\n$expr" )
             //println( s"commuting:\n${hd_( front )}" )
 
             //val tryCatch = hoc"tryCatch{?a ?c}: ((?a > exn) > ?c) > (?a > ?c) > ?c"
-            val tryCatchBlocksCommuted = tryCatchBlocks.map( commute( _, Left( hd_( front ) ) ) )
-            val ( aTry ->: _ ) ->: cTry = tryCatchBlocksCommuted( 0 ).ty
+            val tryCatchBlocksCommuted = tryCatchBlocks.drop( 1 ).map( commute( _, Left( hd_( front ) ) ) )
+            val aExn ->: _ = exnV.ty
+            val cTry = tryCatchBlocksCommuted( 0 ).ty
             val ( aCatch ->: cCatch ) = tryCatchBlocksCommuted( 1 ).ty
-            assert( aTry == aCatch )
+            assert( aExn == aCatch )
             assert( cTry == cCatch )
-            val a = aTry
+            val a = aExn
             val c = cTry
-            val tmpTy = ( ( a ->: ty"exn" ) ->: c ) ->: ( a ->: c ) ->: c
+            val tmpTy = ( a ->: ty"exn" ) ->: c ->: ( a ->: c ) ->: c
             //val tmpParams = params.map( replaceTy( _, params( 1 ), tryBlock.ty ) )
             val tmpParams = List( a, c )
             val newTryCatch = Const( "tryCatch", tmpTy, tmpParams )
-            val res = Apps( newTryCatch, tryCatchBlocksCommuted ++ back )
+            val res = Apps( newTryCatch, exnV :: tryCatchBlocksCommuted ++ back )
             println( s"after cc left: tryCatch.ty: $tmpTy" )
             normalize( res )
           // raise left
@@ -195,7 +195,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
     // subject reduction property
     if ( expr.ty != res.ty )
       throw new Exception( s"subject reduction property violated: ${expr.ty} != ${res.ty} (expr: $expr, res: $res" )
-    println( s"normalize end $res" )
+    //println( s"normalize end $res" )
     res
   }
 
@@ -226,43 +226,46 @@ case class Normalizer( rules: Set[ReductionRule] ) {
           case Apps( Const( "tryCatch", _, _ ), tryCatchBlocks ) =>
             // raise/handle
             println( "raise/handle" )
-            val tryCatchBlocksCommuted = tryCatchBlocks.map( commute( _, Left( hd ) ) )
-            val ( aTry ->: _ ) ->: cTry = tryCatchBlocksCommuted( 0 ).ty
+            val tryCatchBlocksCommuted = tryCatchBlocks.drop( 1 ).map( commute( _, Left( hd ) ) )
+            val exnV = tryCatchBlocks( 0 )
+            val aExn ->: _ = exnV.ty
+            val cTry = tryCatchBlocksCommuted( 0 ).ty
             val ( aCatch ->: cCatch ) = tryCatchBlocksCommuted( 1 ).ty
-            assert( aTry == aCatch )
+            assert( aExn == aCatch )
             assert( cTry == cCatch )
-            val a = aTry
+            val a = aExn
             val c = cTry
-            val tmpTy = ( ( a ->: ty"exn" ) ->: c ) ->: ( a ->: c ) ->: c
+            val tmpTy = ( a ->: ty"exn" ) ->: c ->: ( a ->: c ) ->: c
             //val tmpParams = params.map( replaceTy( _, params( 1 ), tryBlock.ty ) )
             val tmpParams = List( a, c )
             val newTryCatch = Const( "tryCatch", tmpTy, tmpParams )
-            Some( Apps( newTryCatch, tryCatchBlocksCommuted ) )
+            Some( Apps( newTryCatch, exnV :: tryCatchBlocksCommuted ) )
           case _ =>
             println( s"raise other: efq const: $hd" )
             //Some( normalize(hd(normalize(as(0))) ))
             None
         }
       // Commuting conversion (right) for try/catch
-      case Const( "tryCatch", ty, _ ) if as.size >= 3 =>
+      case Const( "tryCatch", ty, _ ) if as.size >= 4 =>
         //println( s"cc right: commuting ${as( 2 )}" )
         println( s"cc right" )
         println( s"before cc right: tryCatch.ty: $ty" )
-        val Abs( exnV, _ ) = as( 0 )
+        val exnV = as( 0 )
         println( s"@@@@@@ tryCatch exnV: $exnV" )
-        val tryCatchBlocks = as.take( 2 )
-        val tryCatchBlocksCommuted = tryCatchBlocks.map( commute( _, Right( as( 2 ) ) ) )
-        val ( aTry ->: _ ) ->: cTry = tryCatchBlocksCommuted( 0 ).ty
+        val tryCatchBlocks = as.drop( 1 ).take( 2 )
+        val tryCatchBlocksCommuted = tryCatchBlocks.map( commute( _, Right( as( 3 ) ) ) )
+        val aExn ->: _ = exnV.ty
+        val cTry = tryCatchBlocksCommuted( 0 ).ty
         val ( aCatch ->: cCatch ) = tryCatchBlocksCommuted( 1 ).ty
-        assert( aTry == aCatch )
+        assert( aExn == aCatch )
         assert( cTry == cCatch )
-        val a = aTry
+        val a = aExn
         val c = cTry
-        val tmpTy = ( ( a ->: ty"exn" ) ->: c ) ->: ( a ->: c ) ->: c
+        val tmpTy = ( a ->: ty"exn" ) ->: c ->: ( a ->: c ) ->: c
         //val tmpParams = params.map( replaceTy( _, params( 1 ), tryBlock.ty ) )
         val tmpParams = List( a, c )
         val newTryCatch = Const( "tryCatch", tmpTy, tmpParams )
-        val res = Apps( newTryCatch, tryCatchBlocksCommuted ++ as.drop( 3 ) )
+        val res = Apps( newTryCatch, exnV :: tryCatchBlocksCommuted ++ as.drop( 4 ) )
         println( s"cc right: res:\n$res" )
         println( s"after cc right: tryCatch.ty: ${newTryCatch.ty}" )
         Some( res )
@@ -285,20 +288,20 @@ case class Normalizer( rules: Set[ReductionRule] ) {
         Some( res )
         */
       case Const( "tryCatch", ty, params ) =>
-        val tryB = as( 0 )
-        val Abs( exnV, arg ) = tryB
-        if ( !freeVariables( arg ).contains( exnV ) ) {
+        val exnV = as( 0 ).asInstanceOf[Var]
+        val tryB = as( 1 )
+        if ( !freeVariables( tryB ).contains( exnV ) ) {
           // handle simp
           println( s"handle simp" )
-          Some( arg )
+          Some( tryB )
         } else {
           // TODO: make sure not to reduce here before all commuting conversions are done, as.size >= 3 case for cc right is before this case. what about cc left?
           println( "handle/raise" )
           // handle/raise
-          println( s"free vars: ${freeVariables( arg )}" )
-          val res = normalize( arg ) match {
+          println( s"free vars: ${freeVariables( tryB )}" )
+          val res = normalize( tryB ) match {
             case ntb @ App( Const( "efq", _, _ ), App( thrownExn, thrownVal ) ) =>
-              val App( App( Const( "handle", _, _ ), App( caughtExn, exnVar ) ), catchB ) = as( 1 )
+              val App( App( Const( "handle", _, _ ), App( caughtExn, exnVar ) ), catchB ) = as( 2 )
               println( s"thrown exn: $thrownExn" )
               println( s"caught exn: $caughtExn" )
               if ( thrownExn == caughtExn ) {
