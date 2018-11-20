@@ -68,15 +68,8 @@ case class Normalizer( rules: Set[ReductionRule] ) {
 
   def toFormula = And( rules.map { case ReductionRule( lhs, rhs ) => universalClosure( lhs === rhs ) } )
 
-  def replaceTy( ty: Ty, oldTy: Ty, newTy: Ty ): Ty = {
-    ty match {
-      case ty if ty == oldTy => newTy
-      case TArr( tyA, tyB )  => TArr( replaceTy( tyA, oldTy, newTy ), replaceTy( tyB, oldTy, newTy ) )
-      case ty                => ty
-    }
-  }
-
   def commute( block: Expr, appOrArg: Either[Expr, Expr] ): Expr = {
+    println( "in commute" )
     block match {
       case Apps( Const( "handle", ty, params ), as ) =>
         val newCatchB = appOrArg match {
@@ -92,9 +85,11 @@ case class Normalizer( rules: Set[ReductionRule] ) {
         val newParams = List( a, c )
         val newHandle = Const( "handle", newTy, newParams )
 
+        println( s"catch: ${as( 0 )}" )
         Apps( newHandle, Seq( as( 0 ), newCatchB ) )
 
       case Abs( v, arg ) =>
+        println( s"try with var: $v" )
         appOrArg match {
           case Left( app_ )  => Abs( v, app_( arg ) )
           case Right( arg_ ) => Abs( v, arg( arg_ ) )
@@ -132,15 +127,19 @@ case class Normalizer( rules: Set[ReductionRule] ) {
   }
 
   def normalize( expr: Expr ): Expr = {
-    //println( s"normalize $expr" )
+    println( s"normalize begin $expr" )
     val res = whnf( expr ) match {
       case Apps( hd_, as_ ) =>
         as_ match {
 
           // Commuting conversion (left) for try/catch
           case SplitTryCatch( front, Apps( Const( "tryCatch", ty, params ), tryCatchBlocks ), back ) if hd_.toUntypedAsciiString != "handle" =>
-            println( s"cc left: commuting ${hd_( front )}" )
+
+            //println( s"cc left: commuting ${hd_( front )}" )
+            println( s"cc left" )
             println( s"before cc left: tryCatch.ty: $ty" )
+            val Abs( exnV, _ ) = tryCatchBlocks( 0 )
+            println( s"@@@@@@ tryCatch exnV: $exnV" )
             //println( s"input:\n$expr" )
             //println( s"commuting:\n${hd_( front )}" )
 
@@ -196,7 +195,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
     // subject reduction property
     if ( expr.ty != res.ty )
       throw new Exception( s"subject reduction property violated: ${expr.ty} != ${res.ty} (expr: $expr, res: $res" )
-    //println( s"result of normalizing $expr\n$res" )
+    println( s"normalize end $res" )
     res
   }
 
@@ -212,6 +211,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
     hd match {
       case Abs.Block( vs, hd_ ) if vs.nonEmpty && as.nonEmpty =>
         val n = math.min( as.size, vs.size )
+        println( s"beta reduction: ${vs.take( n )}" )
         Some( Apps( Substitution( vs.take( n ) zip as.take( n ) )( Abs.Block( vs.drop( n ), hd_ ) ), as.drop( n ) ) )
       // raise right
       case Const( "efq", _, _ ) if as.size > 1 =>
@@ -244,7 +244,30 @@ case class Normalizer( rules: Set[ReductionRule] ) {
             None
         }
       // Commuting conversion (right) for try/catch
-      case Const( "tryCatch", ty, params ) if as.size >= 3 =>
+      case Const( "tryCatch", ty, _ ) if as.size >= 3 =>
+        //println( s"cc right: commuting ${as( 2 )}" )
+        println( s"cc right" )
+        println( s"before cc right: tryCatch.ty: $ty" )
+        val Abs( exnV, _ ) = as( 0 )
+        println( s"@@@@@@ tryCatch exnV: $exnV" )
+        val tryCatchBlocks = as.take( 2 )
+        val tryCatchBlocksCommuted = tryCatchBlocks.map( commute( _, Right( as( 2 ) ) ) )
+        val ( aTry ->: _ ) ->: cTry = tryCatchBlocksCommuted( 0 ).ty
+        val ( aCatch ->: cCatch ) = tryCatchBlocksCommuted( 1 ).ty
+        assert( aTry == aCatch )
+        assert( cTry == cCatch )
+        val a = aTry
+        val c = cTry
+        val tmpTy = ( ( a ->: ty"exn" ) ->: c ) ->: ( a ->: c ) ->: c
+        //val tmpParams = params.map( replaceTy( _, params( 1 ), tryBlock.ty ) )
+        val tmpParams = List( a, c )
+        val newTryCatch = Const( "tryCatch", tmpTy, tmpParams )
+        val res = Apps( newTryCatch, tryCatchBlocksCommuted ++ as.drop( 3 ) )
+        println( s"cc right: res:\n$res" )
+        println( s"after cc right: tryCatch.ty: ${newTryCatch.ty}" )
+        Some( res )
+
+      /*
         println( s"cc right: commuting ${as( 2 )}" )
         println( s"before cc right: tryCatch.ty: $ty" )
         //println( s"input:\n$expr" )
@@ -260,6 +283,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
         println( s"after cc right: tryCatch.ty: ${newTryCatch.ty}" )
         //Some( normalize( res ) )
         Some( res )
+        */
       case Const( "tryCatch", ty, params ) =>
         val tryB = as( 0 )
         val Abs( exnV, arg ) = tryB
@@ -287,9 +311,8 @@ case class Normalizer( rules: Set[ReductionRule] ) {
                 Some( ntb )
               }
             case t =>
-              // Exception var y in FV(V), but not raised
-              // Expecting a raise in try block. Do not reduce and keep $expr. Should be handled by raise/handle case. I.e., at some point the exception in the block will be raised due to soundness of the proof system..
-              println( s"Expecting a raise in try block. Is $t\ndo not reduce and keep $expr. Should be handled by raise/handle case. I.e., at some point the exception in the block will be raised due to soundness of the proof system." )
+              println( "Keep try block" )
+              //println( s"Expecting a raise in try block. Is $t\ndo not reduce and keep $expr. Should be handled by raise/handle case. I.e., at some point the exception in the block will be raised due to soundness of the proof system." )
               // TODO: in existsMinimum program (Federico's thesis) it's a conjunction, wrapping an exception, not an exception.
               //assert( params( 1 ) == ty"exn" )
               None
@@ -298,17 +321,19 @@ case class Normalizer( rules: Set[ReductionRule] ) {
           res
         }
       case hd @ Const( c, _, _ ) =>
-        /*
         c match {
+          case "natRec" =>
+            println( "reducing natRec" )
           case "existsElim" =>
             println( "reducing existsElim" )
+          /*
           case "+" | "-" | "*" | "pow2" =>
             println( s"reducing arithmetic op $c" )
           case "<" | "<=" =>
             println( s"reducing comparison op $c" )
+          */
           case _ => ()
         }
-        */
         headMap.get( c ).flatMap {
           case ( rs, whnfArgs, normalizeArgs ) =>
             val as_ = as.zipWithIndex.map {
@@ -317,7 +342,9 @@ case class Normalizer( rules: Set[ReductionRule] ) {
               case ( a, _ )                       => a
             }
             rs.view.flatMap { r =>
-              syntacticMatching( r.lhs, Apps( hd, as_.take( r.lhsArgsSize ) ) ).map { subst =>
+              val substs = syntacticMatching( r.lhs, Apps( hd, as_.take( r.lhsArgsSize ) ) )
+              println( s"substs: $substs" )
+              substs.map { subst =>
                 Apps( subst( r.rhs ), as_.drop( r.lhsArgsSize ) )
               }
             }.headOption

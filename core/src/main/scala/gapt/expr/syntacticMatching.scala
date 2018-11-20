@@ -46,6 +46,7 @@ object syntacticMatching {
           case null => null
           case subst1 =>
             val v1_ = rename( v1, subst1.domain ++ subst1.range ++ freeVariables( List( a, b ) ) )
+            println( s"@@@@@ rename: $v1_" )
             val v2_ = Var( v1_.name, v2.ty )
             go( Substitution( v1 -> v1_ )( e1 ), Substitution( v2 -> v2_ )( e2 ), subst1 + ( v1_, v2_ ) ) match {
               case null => null

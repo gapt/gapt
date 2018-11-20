@@ -20,6 +20,8 @@ object ClassicalExtraction {
       varMap += ( f -> v )
       v
     }
+    if ( res.name == "vLambda_1" )
+      println( "getVar vLambda_1" )
     if ( res.name == "vLambda_5" )
       println( "getVar vLambda_5" )
     res
@@ -136,10 +138,8 @@ object ClassicalExtraction {
     */
 
     //val handle = hoc"handle{?a ?b}: (?a > ?b) > ((?a > (exn ?a)) > ?b) > ?b"
-    //val tryCatch = hoc"tryCatch{?a ?c}: (?a > ?c) > ((?a > (exn ?a)) > ?c) > ?c"
-    //val tryCatch = hoc"tryCatch{?a ?c}: (?a > ?c) > ((?a > (exn ?a)) > ?c) > ?c"
-    //val tryCatch = hoc"tryCatch{?a ?c}: ((?a > (exn ?a)) > ?c) > (?a > ?c) > ?c"
-    val tryCatch = hoc"tryCatch{?a ?c}: ((?a > exn) > ?c) > (?a > ?c) > ?c"
+    //val tryCatch = hoc"tryCatch{?a ?c}: ((?a > exn) > ?c) > (?a > ?c) > ?c"
+    val tryCatch = hoc"tryCatch{?a ?c}: (?a > exn) > ?c > (?a > ?c) > ?c"
     systemT += tryCatch
     /*
     val w5 = hov"w5:?a"
@@ -623,8 +623,8 @@ object ClassicalExtraction {
               val delL = l.delete( aux1 ).antecedent
               val delR = r.delete( aux2 ).antecedent
               //val res = delL ++: delR ++: Sequent() :+ le"tryCatch ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
-              val res = delL ++: delR ++: Sequent() :+ le"tryCatch(${Abs( varR, r( Suc( 0 ) ) )}, handle($varR($varL), ${l( Suc( 0 ) )}))"
-              println( s"tryCatch.ty: ${res( Suc( 0 ) ).ty}" )
+              val res = delL ++: delR ++: Sequent() :+ le"(^exnV tryCatch(exnV, ${r( Suc( 0 ) )}, handle(exnV($varL), ${l( Suc( 0 ) )})))($varR)"
+              println( s"tryCatch var: $varR, catch: ${varR( varL )}, tryCatch.ty: ${res( Suc( 0 ) ).ty}" )
               //println( s"EM0: ${f}" )
               res
           }
