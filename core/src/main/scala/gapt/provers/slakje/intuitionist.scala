@@ -1,4 +1,4 @@
-package gapt.provers.escargot
+package gapt.provers.slakje
 
 import ammonite.ops.FilePath
 import gapt.expr._
@@ -13,12 +13,14 @@ import gapt.proofs.lk.{ LKProof, MG3iToLJ, isMaeharaMG3i, normalizeLKt }
 import gapt.prooftool.LKProofViewer
 import gapt.provers.congruence.SimpleSmtSolver
 import gapt.provers.eprover.EProver
+import gapt.provers.escargot.Escargot
 import gapt.provers.escargot.impl.EscargotLogger
 import gapt.provers.spass.SPASS
 import gapt.provers.vampire.{ Vampire, VampireCASC }
 import gapt.provers.{ OneShotProver, Prover }
-import gapt.utils.{ LogHandler, Maybe, quiet }
-import EscargotLogger._
+import gapt.utils.{ LogHandler, Logger, Maybe, quiet }
+
+object SlakjeLogger extends Logger( "slakje" ); import SlakjeLogger._
 
 object heuristicDecidabilityInstantiation {
   def apply( proof: ExpansionProof ): ExpansionProof = {
@@ -48,7 +50,7 @@ object heuristicDecidabilityInstantiation {
   }
 }
 
-class IEscargot(
+class Slakje(
     backend:         Prover        = Escargot,
     method:          ExpToLKMethod = ExpToLKMethod.MG3iViaSAT,
     showInProoftool: Boolean       = false,
@@ -56,18 +58,18 @@ class IEscargot(
     filename:        String        = "" ) extends OneShotProver {
   def expansionProofToMG3i( expProofWithSk: ExpansionProof )( implicit ctx: Context ): Option[LKProof] = {
     val deskExpProof = time( "deskolemization" ) { deskolemizeET( expProofWithSk ) }
-    EscargotLogger.info( "converting expansion proof to LK" )
+    info( "converting expansion proof to LK" )
     time( "exptolk" ) { quiet( method.convert( deskExpProof ) ) } match {
       case Right( lk0 ) =>
         val lk = if ( !convertToLJ ) lk0 else time( "convert_lj" ) { normalizeLKt.lk( MG3iToLJ( lk0 ) ) }
         metric( "lk_dag_size", lk.dagLike.size )
-        EscargotLogger.info( s"LK proof has ${lk.dagLike.size} inferences" )
+        info( s"LK proof has ${lk.dagLike.size} inferences" )
         val maxSuccSize = lk.subProofs.map( _.endSequent.succedent.toSet.size ).max
         metric( "lk_max_succ_size", maxSuccSize )
-        EscargotLogger.info( s"LK proof has maximum succedent size $maxSuccSize" )
+        info( s"LK proof has maximum succedent size $maxSuccSize" )
         val inMG3i = isMaeharaMG3i( lk )
         metric( "lk_mg3i", inMG3i )
-        EscargotLogger.info( s"LK proof is in mG3i: $inMG3i" )
+        info( s"LK proof is in mG3i: $inMG3i" )
         if ( showInProoftool ) {
           val viewer = new LKProofViewer( filename, lk )
           viewer.markNonIntuitionisticInferences()
@@ -75,7 +77,7 @@ class IEscargot(
         }
         if ( inMG3i ) Some( lk ) else None
       case Left( unprovable ) =>
-        EscargotLogger.info( s"stuck at: $unprovable" )
+        info( s"stuck at: $unprovable" )
         None
     }
   }
@@ -92,7 +94,7 @@ class IEscargot(
     val essentiallyCNF = isEssentiallyCNF( seq )
     metric( "ess_cnf", essentiallyCNF )
     if ( essentiallyCNF )
-      EscargotLogger.info( "problem is essentially in clause normal form" )
+      info( "problem is essentially in clause normal form" )
 
     val quantifierFree = !containsQuantifierOnLogicalLevel( seq.toImplication )
     metric( "quant_free", quantifierFree )
@@ -101,7 +103,7 @@ class IEscargot(
       metric( "prover_valid", qfUfValid )
       if ( !qfUfValid ) Some( Left( () ) ) else {
         if ( essentiallyCNF ) {
-          EscargotLogger.info( "SZS status Theorem" )
+          info( "SZS status Theorem" )
           metric( "status", "theorem" )
         }
         val maybeLK = expansionProofToMG3i( ExpansionProof( formulaToExpansionTree( seq ) ) )
@@ -115,15 +117,15 @@ class IEscargot(
       time( "prover" ) { quiet( backend.getExpansionProof( seq ) ) } match {
         case Some( expansion0 ) =>
           metric( "prover_valid", true )
-          EscargotLogger.info( "found classical expansion proof" )
+          info( "found classical expansion proof" )
           metric( "exp_size", numberOfInstancesET( expansion0 ) )
           val proofEssentiallyCNF = essentiallyCNF || isEssentiallyCNF( expansion0.shallow )
           metric( "proof_ess_cnf", proofEssentiallyCNF )
           if ( !essentiallyCNF && proofEssentiallyCNF )
-            EscargotLogger.info( "axioms used by proof are essentially in clause normal form" )
+            info( "axioms used by proof are essentially in clause normal form" )
           if ( proofEssentiallyCNF ) {
             metric( "status", "theorem" )
-            EscargotLogger.info( "SZS status Theorem" )
+            info( "SZS status Theorem" )
           }
           val expansion1 = ETWeakening( expansion0, seq )
           val expansion2 = pushWeakeningsUp( expansion1 )
@@ -135,7 +137,7 @@ class IEscargot(
               require( lk.endSequent.isSubsetOf( seq ) )
               Some( Right( lk ) )
             case None =>
-              EscargotLogger.info( "constructivization failed" )
+              info( "constructivization failed" )
               None
           }
         case None =>
@@ -171,7 +173,7 @@ object ExpToLKMethod {
   }
 }
 
-object IEscargot extends IEscargot(
+object Slakje extends Slakje(
   backend = Escargot,
   method = ExpToLKMethod.MG3iViaSAT,
   convertToLJ = false,
@@ -189,7 +191,7 @@ object IEscargot extends IEscargot(
       printProof: Boolean        = true,
       file:       Option[String] = None )
 
-  private val optionParser = new scopt.OptionParser[Options]( "iescargot" ) {
+  private val optionParser = new scopt.OptionParser[Options]( "slakje" ) {
     val backends = Map(
       "vampire" -> Vampire,
       "vampirecasc" -> VampireCASC,
@@ -245,7 +247,7 @@ object IEscargot extends IEscargot(
     LogHandler.current.value =
       if ( opts.metrics ) new LogHandler.tstpWithMetrics else LogHandler.tstp
     LogHandler.verbosity.value = LogHandler.verbosity.value.increase(
-      Seq( EscargotLogger ),
+      Seq( SlakjeLogger, EscargotLogger ),
       1 + ( if ( opts.verbose ) 2 else 0 ) )
 
     val file = opts.file.get
@@ -258,7 +260,7 @@ object IEscargot extends IEscargot(
       val tptp = time( "parse" ) { TptpImporter.loadWithIncludes( FilePath( file ) ) }
       val tptpSequent = tptp.toSequent
       implicit val ctx: MutableContext = MutableContext.guess( tptpSequent )
-      new IEscargot( opts.backend, opts.method, opts.prooftool, opts.convertLJ, file ).
+      new Slakje( opts.backend, opts.method, opts.prooftool, opts.convertLJ, file ).
         getLKProof_( tptpSequent ) match {
           case Some( Right( lk ) ) =>
             metric( "status", "theorem" )
