@@ -176,7 +176,7 @@ object ExpToLKMethod {
 object Slakje extends Slakje(
   backend = Escargot,
   method = ExpToLKMethod.MG3iViaSAT,
-  convertToLJ = false,
+  convertToLJ = true,
   showInProoftool = false,
   filename = "" ) {
   import ExpToLKMethod._

@@ -5,6 +5,7 @@
 * Escargot: discrimination trees and feature vector indices.
 * New term-based expansion tree implementation.
 * Support for E 2.2.
+* Slakje: automated theorem prover for first-order intuitionistic logic.
 
 ## Version 2.12 (released on 2018-08-17)
 
