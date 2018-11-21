@@ -67,8 +67,11 @@ object nonProofTheoreticSkolemTerms {
 
     for ( ( e, i ) <- es.elements.zip( Stream.from( 1 ) ) ) gatherOccs( e.term, Nil, i :: Nil )
 
-    // Which Skolem terms occur more than once?
-    occs.collect { case ( skT, os ) if os.size > 1 => skT }.toSet
+    // Which Skolem terms 1) occur more than once?, or 2) occur in weak quantifier instances below them?
+    occs.collect {
+      case ( skT, os ) if os.size > 1 || os.exists( _._1.exists( t => subTerms( t ).contains( skT ) ) ) =>
+        skT
+    }.toSet
   }
 }
 

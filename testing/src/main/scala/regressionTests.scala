@@ -295,6 +295,11 @@ class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
         LKToND( deskLK ) --? "LKToND (deskolemization)" foreach { nd =>
           JsonImporter.load[NDProof]( InputFile.fromString( JsonExporter( nd ).render( 80 ) ) ) == nd !-- "json export of lk proof"
         }
+        isMaeharaMG3i( deskLK ) --? "isMaeharaMG3i" match {
+          case Some( true ) =>
+            MG3iToLJ( deskLK ) --? "MG3iToLJ"
+          case _ =>
+        }
       }
     }
 

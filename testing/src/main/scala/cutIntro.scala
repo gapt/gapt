@@ -16,51 +16,9 @@ import gapt.utils._
 import org.json4s._
 import org.json4s.native.JsonMethods._
 
-import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
 import ammonite.ops._
-import gapt.utils.LogHandler.VerbosityLevel
-
-class MetricsPrinter extends LogHandler {
-  val data: mutable.Map[String, Any] = mutable.Map[String, Any]()
-
-  def jsonify( v: Any ): JValue = v match {
-    case l: Long    => JInt( l )
-    case l: Int     => JInt( l )
-    case l: BigInt  => JInt( l )
-    case l: Double  => JDouble( l )
-    case l: Float   => JDouble( l )
-    case b: Boolean => JBool( b )
-    case l: Seq[_]  => JArray( l map jsonify toList )
-    case s          => JString( s toString )
-  }
-
-  val phaseStack: mutable.Buffer[String] = mutable.Buffer()
-  override def timeBegin( domain: String, level: VerbosityLevel, key: String, desc: String ): Unit = {
-    phaseStack += key
-    value( "phase", key )
-    value( s"started_$phase", true )
-    value( s"in_$phase", true )
-  }
-  override def time( domain: String, level: VerbosityLevel, key: String, desc: String, duration: Duration ): Unit = {
-    value( s"time_$key", duration.toMillis )
-    value( s"in_$phase", false )
-    value( s"ended_$phase", true )
-    phaseStack.trimEnd( 1 )
-  }
-  def phase: String = phaseStack.last
-
-  override def metric( domain: String, level: VerbosityLevel, key: String, desc: String, v: => Any ): Unit =
-    value( key, v )
-
-  def value( key: String, value: => Any ) = {
-    data( key ) = value
-    println( s"METRICS ${compact( render( JObject( key -> jsonify( data( key ) ) ) ) )}" )
-  }
-
-  override def message( domain: String, level: VerbosityLevel, msg: => Any ): Unit = ()
-}
 
 object parseMethod {
 
@@ -220,7 +178,7 @@ object testPi2CutIntro extends App {
 }
 
 object collectExperimentResults extends App {
-  val metricsLineRegex = """METRICS (.*)""".r
+  val metricsLineRegex = """(?:% )?METRICS (.*)""".r
 
   def parseOut( fn: Path ) =
     JObject(
@@ -235,8 +193,20 @@ object collectExperimentResults extends App {
           case ( k, vs ) => k -> vs.last._2
         }.toList )
 
-  val allResults = JArray( ls.rec( pwd ).filter( _.last == "stdout" ).map( parseOut ).toList )
-  print( compact( render( allResults ) ) )
+  def canonicalize: JValue => JValue = {
+    case JObject( fields ) => JObject( fields.sortBy( _._1 ).map { case ( k, v ) => k -> canonicalize( v ) } )
+    case JArray( fields )  => JArray( fields.map( canonicalize ) )
+    case value             => value
+  }
+
+  val out = new PrintWriter( Console.out )
+  val writer = JsonWriter.streamingPretty( out ).startArray()
+  for ( f <- ls.rec( pwd ).filter( _.last == "stdout" ) ) {
+    writer.addJValue( canonicalize( parseOut( f ) ) )
+    out.flush()
+  }
+  writer.endArray()
+  out.close()
 }
 
 object findNonTrivialTSTPExamples extends App {

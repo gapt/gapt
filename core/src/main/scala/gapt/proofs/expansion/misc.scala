@@ -34,8 +34,12 @@ object formulaToExpansionTree {
 }
 
 object numberOfInstancesET {
-  def apply( t: ExpansionTree ): Int =
-    t.treeLike.postOrder collect { case ETWeakQuantifier( _, instances ) => instances.size } sum
+  def apply( t: ETt ): Int = {
+    var result = 0
+    t.foreach { case ETtWeak( insts ) => result += insts.size case _ => }
+    result
+  }
+  def apply( t: ExpansionTree ): Int = apply( t.term )
   def apply( s: ExpansionSequent ): Int = s.elements map apply sum
   def apply( ep: ExpansionProof ): Int = apply( ep.expansionSequent )
 }
@@ -112,5 +116,33 @@ object cleanStructureET {
       case ETtWeakening => ETtWeakening
       case ch_          => ETtDef( sh, ch_ )
     }
+  }
+}
+
+object pushWeakeningsUp {
+  def apply( ep: ExpansionProof ): ExpansionProof = ExpansionProof( apply( ep.expansionSequent ) )
+  def apply( es: ExpansionSequent ): ExpansionSequent = es.map( apply )
+
+  def apply( et: ExpansionTree ): ExpansionTree = et match {
+    case ETAtom( _, _ ) | ETBottom( _ ) | ETTop( _ ) => et
+    case ETWeakening( sh, pol )                      => apply( sh, pol )
+    case ETMerge( a, b )                             => ETMerge( apply( a ), apply( b ) )
+    case ETNeg( a )                                  => ETNeg( apply( a ) )
+    case ETAnd( a, b )                               => ETAnd( apply( a ), apply( b ) )
+    case ETOr( a, b )                                => ETOr( apply( a ), apply( b ) )
+    case ETImp( a, b )                               => ETImp( apply( a ), apply( b ) )
+    case ETWeakQuantifier( sh, insts )               => ETWeakQuantifier( sh, Map() ++ insts.mapValues( apply ) )
+    case ETStrongQuantifier( sh, ev, ch )            => ETStrongQuantifier( sh, ev, apply( ch ) )
+    case ETSkolemQuantifier( sh, skT, ch )           => ETSkolemQuantifier( sh, skT, apply( ch ) )
+    case ETDefinition( sh, ch )                      => ETDefinition( sh, apply( ch ) )
+  }
+
+  def apply( sh: Formula, pol: Polarity ): ExpansionTree = sh match {
+    case sh: Atom    => ETAtom( sh, pol )
+    case Neg( a )    => ETNeg( apply( a, !pol ) )
+    case And( a, b ) => ETAnd( apply( a, pol ), apply( b, pol ) )
+    case Or( a, b )  => ETOr( apply( a, pol ), apply( b, pol ) )
+    case Imp( a, b ) => ETImp( apply( a, !pol ), apply( b, pol ) )
+    case _           => ETWeakening( sh, pol )
   }
 }
