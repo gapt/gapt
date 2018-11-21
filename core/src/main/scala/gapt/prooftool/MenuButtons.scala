@@ -1,10 +1,11 @@
 package gapt.prooftool
 
 import java.awt.event.{ ActionEvent, KeyEvent }
+
 import javax.swing.KeyStroke
 
 import scala.swing.event.Key
-import scala.swing.{ CheckMenuItem, Action, MenuItem }
+import scala.swing.{ Action, CheckMenuItem, FileChooser, MenuItem }
 
 /**
  * An object that contains some common menu buttons.
@@ -145,19 +146,6 @@ object MenuButtons {
         main.publisher.publish( HideDebugBorders )
     }
   }
-}
-
-/**
- * A trait for ProofToolViewer objects that can save their contents.
- * @tparam T The type of the content object.
- */
-trait Savable[-T] {
-  /**
-   * Saves an object to disk.
-   * @param name
-   * @param obj The object to be saved.
-   */
-  def fSave( name: String, obj: T ): Unit
 }
 
 trait ContainsSequentProof {
