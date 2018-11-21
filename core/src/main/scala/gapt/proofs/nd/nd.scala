@@ -708,11 +708,16 @@ object ImpIntroRule extends ConvenienceConstructor( "ImpIntroRule" ) {
 case class NegElimRule( leftSubProof: NDProof, rightSubProof: NDProof )
   extends BinaryNDProof with CommonRule {
 
-  val formulaL = leftPremise( Suc( 0 ) )
-  val formulaR = rightPremise( Suc( 0 ) )
+  val negatedFormula = leftPremise( Suc( 0 ) )
+  val formula = rightPremise( Suc( 0 ) )
 
-  val mainFormula = if ( ( formulaL == Neg( formulaR ) ) || ( formulaR == Neg( formulaL ) ) ) Bottom() else
-    throw NDRuleCreationException( s"Formula $formulaL is not the negation of $formulaR, or the either way around." )
+  val mainFormula =
+    if ( ( negatedFormula == Neg( formula ) ) )
+      Bottom()
+    else
+      throw NDRuleCreationException(
+        s"""Formula $negatedFormula is not the negation of $formula.
+         """.stripMargin )
 
   def auxIndices = Seq( Seq( Suc( 0 ) ), Seq( Suc( 0 ) ) )
 
