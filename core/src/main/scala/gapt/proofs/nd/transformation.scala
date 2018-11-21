@@ -320,11 +320,22 @@ object kolmogorov {
         TheoryAxiom( k( formula ) )
 
       case ExcludedMiddleRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-        val lessnegated = k( leftSubProof.conclusion( Suc( 0 ) ) ) match { case Neg( formula ) => formula }
+        val lessnegated =
+          k( leftSubProof.conclusion( Suc( 0 ) ) ) match {
+            case Neg( formula ) => formula
+          }
         val p = LogicalAxiom( lessnegated )
-        val left = NegIntroRule( NegElimRule( kolmogorov( leftSubProof ), p ), k( leftSubProof.conclusion( aux1 ) ) )
-        val right = NegIntroRule( NegElimRule( kolmogorov( rightSubProof ), p ), k( rightSubProof.conclusion( aux2 ) ) )
-        NegIntroRule( ContractionRule( NegElimRule( left, right ), lessnegated ), lessnegated )
+        val right =
+          NegIntroRule(
+            NegElimRule( kolmogorov( leftSubProof ), p ),
+            k( leftSubProof.conclusion( aux1 ) ) )
+        val left =
+          NegIntroRule(
+            NegElimRule( kolmogorov( rightSubProof ), p ),
+            k( rightSubProof.conclusion( aux2 ) ) )
+        NegIntroRule(
+          ContractionRule( NegElimRule( left, right ), lessnegated ),
+          lessnegated )
 
       case DefinitionRule( subProof, formula ) =>
         DefinitionRule( kolmogorov( subProof ), k( formula ) )
