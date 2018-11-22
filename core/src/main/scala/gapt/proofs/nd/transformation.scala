@@ -16,7 +16,7 @@ object friedman {
    * ⊤∨A or equivalent to A and ⊤ respectively.
    *
    * @param formula input formula for the function fr
-   * @param a formula that is disjunctively added to the atoms of the inpur formula
+   * @param a formula that is disjunctively added to the atoms of the input formula
    * @return result of applying fr for a to the input formula
    */
   def fr( formula: Expr, a: Formula ): Formula = {
