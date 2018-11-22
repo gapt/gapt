@@ -177,7 +177,8 @@ class transformationTest extends Specification {
       val p = InductionRule( cases, Abs( Var( "x", TBase( "nat" ) ), hof"(((x: nat) + (0:nat)): nat) = x" ), le"x: nat" )
 
       kolmogorov( p ).conclusion mustEqual
-        Seq( hof"¬ ¬ ∀(x:nat) ¬(x:nat) + (0:nat) != (x:nat)",
+        Seq(
+          hof"¬ ¬ ∀(x:nat) ¬(x:nat) + (0:nat) != (x:nat)",
           hof"¬ ¬ ∀(x:nat) ¬ ¬ ∀(y:nat) ¬s(x:nat) + (y:nat) != s((x:nat) + (y:nat))" ) ++:
           Sequent() :+ hof"¬ (x:nat) + (0:nat) != (x:nat)"
     }
