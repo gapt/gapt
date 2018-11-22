@@ -6,10 +6,14 @@ import gapt.proofs.{ Ant, Suc }
 object friedman {
 
   /**
-   * Applies the Friedman translation fr for a given formula a to a formula.
-   * This function replaces every atom occurring in the formula by a disjunction formed by the atom and the formula a.
-   * The case of the negation is explained by treating ¬A as an abbreviation for A→⊥
-   * The Bottom and Top cases are explained by observing that ⊥∨A and ⊤∨A or equivalent to A and ⊤ respectively.
+   * Applies the Friedman translation fr for a given formula a to a
+   * formula.
+   *
+   * This function replaces every atom occurring in the formula by a
+   * disjunction formed by the atom and the formula a. The case of the
+   * negation is explained by treating ¬A as an abbreviation for A→⊥
+   * The Bottom and Top cases are explained by observing that ⊥∨A and
+   * ⊤∨A or equivalent to A and ⊤ respectively.
    *
    * @param formula input formula for the function fr
    * @param a formula that is disjunctively added to the atoms of the inpur formula
@@ -41,10 +45,14 @@ object friedman {
   }
 
   /**
-   * Applies the Friedman proof transformation for a formula A to a given intuitionistic natural deduction proof.
-   * The conclusion of the resulting proof is the Friedman translation fr applied to the original conclusion.
+   * Applies the Friedman proof transformation for a formula A to a
+   * given intuitionistic natural deduction proof.
    *
-   * @param proof A proof in ND for a sequent Γ :- A, without applications of the excluded middle rule
+   * The conclusion of the resulting proof is the Friedman
+   * translation fr applied to the original conclusion.
+   *
+   * @param proof A proof in ND for a sequent Γ :- A, without
+   * applications of the excluded middle rule
    * @param a The formula that we instantiate the Friedman translation with
    * @return A proof in ND for the sequent fr(Γ, a) :- fr(A, a)
    */
@@ -77,7 +85,12 @@ object friedman {
         ImpIntroRule( friedman( subProof, a ), aux )
 
       case OrElimRule( leftSubProof, middleSubProof, aux1, rightSubProof, aux2 ) =>
-        OrElimRule( friedman( leftSubProof, a ), friedman( middleSubProof, a ), aux1, friedman( rightSubProof, a ), aux2 )
+        OrElimRule(
+          friedman( leftSubProof, a ),
+          friedman( middleSubProof, a ),
+          aux1,
+          friedman( rightSubProof, a ),
+          aux2 )
 
       case OrIntro1Rule( subProof, rightDisjunct ) =>
         OrIntro1Rule( friedman( subProof, a ), fr( rightDisjunct, a ) )
@@ -105,14 +118,18 @@ object friedman {
           if ( a.contains( eigenVariable ) )
             rename( eigenVariable, freeVariables( subProof.conclusion ) ++ freeVariables( a ) )
           else eigenVariable
-        ForallIntroRule( friedman( Substitution( eigenVariable, eig )( subProof ), a ), fr( proof.conclusion( Suc( 0 ) ), a ), eig )
+        ForallIntroRule(
+          friedman( Substitution( eigenVariable, eig )( subProof ), a ),
+          fr( proof.conclusion( Suc( 0 ) ), a ), eig )
 
       case ExistsElimRule( leftSubProof, rightSubProof, aux, eigenVariable ) =>
         val eig =
           if ( a.contains( eigenVariable ) )
             rename( eigenVariable, freeVariables( rightSubProof.conclusion ) ++ freeVariables( a ) )
           else eigenVariable
-        ExistsElimRule( friedman( leftSubProof, a ), friedman( Substitution( eigenVariable, eig )( rightSubProof ), a ), aux, eig )
+        ExistsElimRule(
+          friedman( leftSubProof, a ),
+          friedman( Substitution( eigenVariable, eig )( rightSubProof ), a ), aux, eig )
 
       case ExistsIntroRule( subProof, formula, term, v ) =>
         ExistsIntroRule( friedman( subProof, a ), fr( proof.conclusion( Suc( 0 ) ), a ), term )
@@ -120,7 +137,9 @@ object friedman {
       case EqualityElimRule( leftSubProof, rightSubProof, formula, variable ) =>
         OrElimRule(
           friedman( leftSubProof, a ),
-          EqualityElimRule( LogicalAxiom( leftSubProof.conclusion( Suc( 0 ) ) ), friedman( rightSubProof, a ) ),
+          EqualityElimRule(
+            LogicalAxiom( leftSubProof.conclusion( Suc( 0 ) ) ),
+            friedman( rightSubProof, a ) ),
           frAux( proof.conclusion( Suc( 0 ) ), a ) )
 
       case EqualityIntroRule( term ) =>
@@ -151,7 +170,9 @@ object friedman {
     }
   }
 
-  // creates a proof for: a :- fr(formula, a)
+  /**
+   * Creates a proof of the sequent `a :- fr(formula, a)`.
+   */
   def frAux( formula: Formula, a: Formula ): NDProof = {
 
     formula match {
@@ -212,10 +233,12 @@ object kolmogorov {
   private def doublenegate( formula: Formula ): Formula = Neg( Neg( formula ) )
 
   /**
-   * Applies the Kolmogorov proof transformation to a given natural deduction proof.
-   * The transformation removes all occurences of the excluded middle rule and the botttom elimination rule,
-   * and thus the resulting proof is a proof in intuitionistic, minimal logic.
-   * The conclusion of the resulting proof is the Kolmogorov trnaslation k applied to the original conclusion.
+   * Applies the Kolmogorov proof transformation to a given natural
+   * deduction proof. The transformation removes all occurences of the
+   * excluded middle rule and the botttom elimination rule, and thus
+   * the resulting proof is a proof in intuitionistic, minimal logic.
+   * The conclusion of the resulting proof is the Kolmogorov
+   * trnaslation k applied to the original conclusion.
    *
    * @param proof A proof in ND for a sequent Γ :- A
    * @return A proof in intuitionistic, minimal ND for the sequent k(Γ) :- k(A)
@@ -234,13 +257,13 @@ object kolmogorov {
         ContractionRule( kolmogorov( subProof ), aux1, aux2 )
 
       case AndElim1Rule( subProof ) =>
-        val ( leftConjunct, rightConjunct ) = subProof.conclusion( Suc( 0 ) ) match { case And( left, right ) => ( left, right ) }
+        val And( leftConjunct, rightConjunct ) = subProof.conclusion( Suc( 0 ) )
         elimcase(
           kolmogorov( subProof ),
           AndElim1Rule( LogicalAxiom( And( k( leftConjunct ), k( rightConjunct ) ) ) ) )
 
       case AndElim2Rule( subProof ) =>
-        val ( leftConjunct, rightConjunct ) = subProof.conclusion( Suc( 0 ) ) match { case And( left, right ) => ( left, right ) }
+        val And( leftConjunct, rightConjunct ) = subProof.conclusion( Suc( 0 ) )
         elimcase(
           kolmogorov( subProof ),
           AndElim2Rule( LogicalAxiom( And( k( leftConjunct ), k( rightConjunct ) ) ) ) )
@@ -249,7 +272,7 @@ object kolmogorov {
         introcase( AndIntroRule( kolmogorov( leftSubProof ), kolmogorov( rightSubProof ) ) )
 
       case ImpElimRule( leftSubProof, rightSubProof ) =>
-        val ( antecedent, consequent ) = leftSubProof.conclusion( Suc( 0 ) ) match { case Imp( ant, cons ) => ( ant, cons ) }
+        val Imp( antecedent, consequent ) = leftSubProof.conclusion( Suc( 0 ) )
         elimcase(
           kolmogorov( leftSubProof ),
           ImpElimRule( LogicalAxiom( Imp( k( antecedent ), k( consequent ) ) ), kolmogorov( rightSubProof ) ) )
@@ -258,10 +281,18 @@ object kolmogorov {
         introcase( ImpIntroRule( kolmogorov( subProof ), aux ) )
 
       case OrElimRule( leftSubProof, middleSubProof, aux1, rightSubProof, aux2 ) =>
-        val ( leftDisjunct, rightDisjunct ) = leftSubProof.conclusion( Suc( 0 ) ) match { case Or( left, right ) => ( left, right ) }
+        val Or( leftDisjunct, rightDisjunct ) = leftSubProof.conclusion( Suc( 0 ) )
         elimcase(
           kolmogorov( leftSubProof ),
-          OrElimRule( LogicalAxiom( Or( k( leftDisjunct ), k( rightDisjunct ) ) ), kolmogorov( middleSubProof ), aux1, kolmogorov( rightSubProof ), aux2 ) )
+          OrElimRule(
+            LogicalAxiom(
+              Or(
+                k( leftDisjunct ),
+                k( rightDisjunct ) ) ),
+            kolmogorov( middleSubProof ),
+            aux1,
+            kolmogorov( rightSubProof ),
+            aux2 ) )
 
       case OrIntro1Rule( subProof, rightDisjunct ) =>
         introcase( OrIntro1Rule( kolmogorov( subProof ), k( rightDisjunct ) ) )
@@ -270,49 +301,79 @@ object kolmogorov {
         introcase( OrIntro2Rule( kolmogorov( subProof ), k( leftDisjunct ) ) )
 
       case NegElimRule( leftSubProof, rightSubProof ) =>
-        introcase( NegElimRule( kolmogorov( leftSubProof ), kolmogorov( rightSubProof ) ) )
+        introcase(
+          NegElimRule( kolmogorov( leftSubProof ), kolmogorov( rightSubProof ) ) )
 
       case NegIntroRule( subProof, aux ) =>
-        NegIntroRule( NegElimRule( kolmogorov( subProof ), NegIntroRule( LogicalAxiom( hof"⊥" ) ) ), aux )
+        NegIntroRule(
+          NegElimRule(
+            kolmogorov( subProof ),
+            NegIntroRule( LogicalAxiom( hof"⊥" ) ) ), aux )
 
       case BottomElimRule( subProof, mainFormula ) =>
-        val lessnegated = k( mainFormula ) match { case Neg( formula ) => formula }
-        NegIntroRule( WeakeningRule( NegElimRule( kolmogorov( subProof ), NegIntroRule( LogicalAxiom( Bottom() ) ) ), lessnegated ), lessnegated )
+        val Neg( lessnegated ) = k( mainFormula )
+        NegIntroRule(
+          WeakeningRule(
+            NegElimRule(
+              kolmogorov( subProof ),
+              NegIntroRule( LogicalAxiom( Bottom() ) ) ), lessnegated ),
+          lessnegated )
 
       case TopIntroRule =>
         introcase( TopIntroRule )
 
       case ForallElimRule( subProof, term ) =>
-        val ( variable, formula ) = subProof.conclusion( Suc( 0 ) ) match { case All( vari, form ) => ( vari, form ) }
+        val All( variable, formula ) = subProof.conclusion( Suc( 0 ) )
         elimcase(
           kolmogorov( subProof ),
           ForallElimRule( LogicalAxiom( All( variable, k( formula ) ) ), term ) )
 
       case ForallIntroRule( subProof, eigenVariable, quantifiedVariable ) =>
-        introcase( ForallIntroRule( kolmogorov( subProof ), eigenVariable, quantifiedVariable ) )
+        introcase(
+          ForallIntroRule(
+            kolmogorov( subProof ),
+            eigenVariable,
+            quantifiedVariable ) )
 
       case ExistsElimRule( leftSubProof, rightSubProof, aux, eigenVariable ) =>
-        val ( variable, formula ) = leftSubProof.conclusion( Suc( 0 ) ) match { case Ex( vari, form ) => ( vari, form ) }
+        val Ex( variable, formula ) = leftSubProof.conclusion( Suc( 0 ) )
         elimcase(
           kolmogorov( leftSubProof ),
-          ExistsElimRule( LogicalAxiom( Ex( variable, k( formula ) ) ), kolmogorov( rightSubProof ), aux, eigenVariable ) )
+          ExistsElimRule(
+            LogicalAxiom( Ex( variable, k( formula ) ) ),
+            kolmogorov( rightSubProof ),
+            aux,
+            eigenVariable ) )
 
       case ExistsIntroRule( subProof, formula, term, variable ) =>
-        introcase( ExistsIntroRule( kolmogorov( subProof ), k( formula ), term, variable ) )
+        introcase(
+          ExistsIntroRule(
+            kolmogorov( subProof ),
+            k( formula ),
+            term,
+            variable ) )
 
       case EqualityElimRule( leftSubProof, rightSubProof, formula, variable ) =>
         val equation = leftSubProof.conclusion( Suc( 0 ) )
         elimcase(
           kolmogorov( leftSubProof ),
-          EqualityElimRule( LogicalAxiom( equation ), kolmogorov( rightSubProof ), k( formula ), variable ) )
+          EqualityElimRule(
+            LogicalAxiom( equation ),
+            kolmogorov( rightSubProof ),
+            k( formula ),
+            variable ) )
 
       case EqualityIntroRule( term ) =>
         introcase( EqualityIntroRule( term ) )
 
       case InductionRule( cases, formula, term ) =>
-        val ( variable, _ ) = formula match { case Abs( vari, form ) => ( vari, form ) }
+        val Abs( variable, _ ) = formula
         InductionRule(
-          cases.map( x => InductionCase( kolmogorov( x.proof ), x.constructor, x.hypotheses, x.eigenVars ) ),
+          cases.map {
+            x =>
+              InductionCase(
+                kolmogorov( x.proof ), x.constructor, x.hypotheses, x.eigenVars )
+          },
           Abs( variable, k( BetaReduction.betaNormalize( formula( variable ) ) ) ),
           term )
 
@@ -320,10 +381,7 @@ object kolmogorov {
         TheoryAxiom( k( formula ) )
 
       case ExcludedMiddleRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-        val lessnegated =
-          k( leftSubProof.conclusion( Suc( 0 ) ) ) match {
-            case Neg( formula ) => formula
-          }
+        val Neg( lessnegated ) = k( leftSubProof.conclusion( Suc( 0 ) ) )
         val p = LogicalAxiom( lessnegated )
         val right =
           NegIntroRule(
@@ -349,10 +407,13 @@ object kolmogorov {
   }
 
   private def elimcase( elimproof: NDProof, conclproof: NDProof ): NDProof = {
-    val lessnegated = conclproof.conclusion( Suc( 0 ) ) match { case Neg( formula ) => formula }
-    NegIntroRule( NegElimRule(
-      elimproof,
-      NegIntroRule( NegElimRule( conclproof, LogicalAxiom( lessnegated ) ), Ant( 0 ) ) ), lessnegated )
+    val Neg( lessnegated ) = conclproof.conclusion( Suc( 0 ) )
+    NegIntroRule(
+      NegElimRule(
+        elimproof,
+        NegIntroRule(
+          NegElimRule( conclproof, LogicalAxiom( lessnegated ) ), Ant( 0 ) ) ),
+      lessnegated )
   }
 
 }
