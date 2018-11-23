@@ -53,6 +53,7 @@ sealed trait DiscrTree[+T] {
         case _ if n == 0 =>
           result += t
         case Leaf( _ ) =>
+          result += t
         case Node( next ) =>
           for ( ( l, ch ) <- next )
             walk( ch, n - 1 + l.arity )
@@ -77,14 +78,15 @@ sealed trait DiscrTree[+T] {
     es.foldLeft[DiscrTree[S]]( this ) { case ( dt, ( e, t ) ) => dt.insert( e, t ) }
   def insert[S >: T]( es: Iterable[Expr], t: S ): DiscrTree[S] =
     es.foldLeft[DiscrTree[S]]( this )( _.insert( _, t ) )
-  def insert[S >: T]( e: Expr, t: S ): DiscrTree[S] = insert( TermString( e ), t )
-  def insert[S >: T]( e: TermString, t: S ): DiscrTree[S] =
+  def insert[S >: T]( e: Expr, t: S ): DiscrTree[S] =
+    insert( TermString( e ), t, DiscrTree.maxDepth )
+  def insert[S >: T]( e: TermString, t: S, ttl: Int ): DiscrTree[S] =
     ( e.next, this ) match {
       case ( USome( ( label, e_ ) ), Node( next ) ) =>
         Node( next.updated(
           label,
-          next.getOrElse( label, if ( e_.isEmpty ) Leaf[S]( Vector.empty ) else Node[S]( Map() ) ).
-            insert( e_, t ) ) )
+          next.getOrElse( label, if ( e_.isEmpty || ttl < 0 ) Leaf[S]( Vector.empty ) else Node[S]( Map() ) ).
+            insert( e_, t, ttl - 1 ) ) )
       case ( _, Leaf( elems ) ) => Leaf( elems :+ t )
       case _ =>
         throw new IllegalStateException
@@ -130,4 +132,6 @@ object DiscrTree {
 
   val empty: DiscrTree[Nothing] = Node( Map() )
   def apply[T](): DiscrTree[T] = empty
+
+  val maxDepth = 100
 }
