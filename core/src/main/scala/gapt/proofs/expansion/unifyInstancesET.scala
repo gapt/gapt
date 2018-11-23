@@ -7,6 +7,7 @@ object unifyInstancesET {
   def apply( ep: ExpansionProof ): ExpansionProof = {
     val instances = for ( ETWeakQuantifier( _, insts ) <- ep.subProofs.toSeq ) yield insts.keySet
 
+    // TODO: this is not enough to ensure acyclicity
     val subst = unifyInstances( instances, ep.eigenVariables ++ freeVariables( ep.shallow ) )
 
     if ( subst.isIdentity ) ep
