@@ -3,7 +3,7 @@ package gapt.provers.slakje
 import ammonite.ops.FilePath
 import gapt.expr._
 import gapt.expr.fol.folSubTerms
-import gapt.expr.hol.{ containsQuantifierOnLogicalLevel, isEssentiallyCNF }
+import gapt.expr.hol.{ atoms, containsQuantifierOnLogicalLevel, isEssentiallyCNF }
 import gapt.formats.tptp.{ TptpImporter, sequentProofToTptp }
 import gapt.proofs.HOLSequent
 import gapt.proofs.context.Context
@@ -57,7 +57,10 @@ class Slakje(
     convertToLJ:     Boolean       = false,
     filename:        String        = "" ) extends OneShotProver {
   def expansionProofToMG3i( expProofWithSk: ExpansionProof )( implicit ctx: Context ): Option[LKProof] = {
-    val deskExpProof = time( "deskolemization" ) { deskolemizeET( expProofWithSk ) }
+    // TODO: mine proofs for congruences
+    val hasEquality = atoms( expProofWithSk.shallow ).exists { case Eq( _, _ ) => true case _ => false }
+    metric( "has_equality", hasEquality )
+    val deskExpProof = time( "deskolemization" ) { deskolemizeET( expProofWithSk, removeCongruences = hasEquality ) }
     info( "converting expansion proof to LK" )
     time( "exptolk" ) { quiet( method.convert( deskExpProof ) ) } match {
       case Right( lk0 ) =>
