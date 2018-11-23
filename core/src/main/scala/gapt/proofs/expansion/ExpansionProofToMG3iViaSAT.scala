@@ -135,10 +135,106 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
   val immediateDeps = for ( ( ev1, down1 ) <- dependencies )
     yield ev1 -> ( down1 -- down1.flatMap( dependencies ) )
 
+  val atomsWithFreeVar: Map[Var, Set[Int]] =
+    Map().withDefaultValue( Set.empty[Int] ) ++
+      atomToSh.view.flatMap { case ( a, f ) => freeVariables( f ).map( _ -> a ) }.
+      groupBy( _._1 ).mapValues( _.map( _._2 ).toSet )
+
   type Counterexample = Set[Int] // just the assumptions
   type Result = Either[Counterexample, Unit]
 
   val unprovable = mutable.Buffer[( Set[Var], Counterexample )]()
+
+  def refute( eigenVariables: Set[Var], model: Vector[Int] ): Result = {
+    def minimizeCtx( ctx: Set[Int], upper: Set[Int] ): Set[Int] = {
+      def go( todo: List[Int], ctx: Set[Int] ): Set[Int] =
+        todo match {
+          case t :: ts if !solver.isSatisfiable( upper union ( ctx - t ) ) => go( ts, ctx - t )
+          case _ :: ts => go( ts, ctx )
+          case Nil => ctx
+        }
+      require( !solver.isSatisfiable( upper union ctx ) )
+      val ctx_ = ctx.intersect( solver.unsatExplanation() )
+      go( ctx_.toList.sortBy( -math.abs( _ ) ), ctx_ )
+    }
+    def addClauseWithCtx( ctx: Set[Int], upper: Set[Int], lower: Set[Int] )( p: LKProof => LKProof ): Unit =
+      if ( solver.isSatisfiable( ctx ) ) {
+        val ctx2 = minimizeCtx( ctx, upper )
+        addClause( upper = modelSequent( upper ++ ctx2 ), lower = modelSequent( lower ++ ctx2 ) )( p )
+      }
+
+    def tryExistsLeft(): Option[Result] =
+      model.view.filter( _ > 0 ).flatMap( atomToET ).collectFirst {
+        case e @ ETStrongQuantifier( sh, ev, a ) if e.polarity.inAnt &&
+          !eigenVariables.contains( ev ) && immediateDeps( ev ).subsetOf( eigenVariables ) =>
+          val atomsWithEV = atomsWithFreeVar( ev )
+          val ctx = model.view.filter( a => !atomsWithEV.contains( math.abs( a ) ) ).toSet
+          val provable = solve( eigenVariables + ev, ctx + atom( a ) )
+          if ( provable.isRight ) addClauseWithCtx( ctx, Set( atom( a ) ), Set( atom( e ) ) )( p =>
+            if ( !p.endSequent.antecedent.contains( a.shallow ) ) p
+            else ExistsLeftRule( p, sh, ev ) )
+          provable
+      }
+
+    def tryNonInvertible(): Result = {
+      def handleBlock( e: ExpansionTree, upper: Set[Int], eigenVariables: Set[Var],
+                       back: LKProof => LKProof ): ( Set[Int], Set[Var], LKProof => LKProof ) =
+        e match {
+          case ETNeg( a ) =>
+            ( upper + atom( a ), eigenVariables, p =>
+              back( if ( !p.endSequent.antecedent.contains( a.shallow ) ) p else
+                NegRightRule( p, a.shallow ) ) )
+          case ETImp( a, b ) =>
+            handleBlock( b, upper + atom( a ), eigenVariables, p => back(
+              if ( !p.endSequent.antecedent.contains( a.shallow ) && !p.endSequent.succedent.contains( b.shallow ) ) p else
+                ImpRightMacroRule( p, a.shallow, b.shallow ) ) )
+          case ETStrongQuantifier( _, ev, a ) =>
+            handleBlock( a, upper, eigenVariables + ev, p => back(
+              if ( !p.endSequent.succedent.contains( a.shallow ) ) p else
+                ForallRightRule( p, e.shallow, ev ) ) )
+          case _ =>
+            ( upper + -atom( e ), eigenVariables, back )
+        }
+      val candidates = model.view.filter( _ < 0 ).map( -_ ).flatMap( atomToET ).collect {
+        case e @ ETNeg( a ) if e.polarity.inSuc && !model.contains( atom( a ) )    => e
+        case e @ ETImp( a, _ ) if e.polarity.inSuc && !model.contains( atom( a ) ) => e
+        case e @ ETStrongQuantifier( _, ev, _ ) if e.polarity.inSuc
+          && !eigenVariables.contains( ev )
+          && immediateDeps( ev ).subsetOf( eigenVariables ) => e
+      }
+      val nextSteps = candidates.map { e =>
+        val ( upper, newEvs, transform ) = handleBlock( e, Set.empty, Set.empty, identity )
+        val atomsWithEigenVars = newEvs.flatMap( atomsWithFreeVar )
+        val ctx = model.view.filter( _ > 0 ).toSet.diff( atomsWithEigenVars )
+        ( upper, Set( -atom( e ) ), ctx, newEvs, transform )
+      }
+      nextSteps.find {
+        case ( upper, _, ctx, newEvs, _ ) =>
+          solve( eigenVariables ++ newEvs, ctx ++ upper ).isRight
+      } match {
+        case Some( ( upper, lower, ctx, _, transform ) ) =>
+          addClauseWithCtx( ctx, upper, lower )( transform )
+          Right( () )
+        case None =>
+          Left( model.toSet )
+      }
+    }
+
+    tryExistsLeft().getOrElse( tryNonInvertible() ) match {
+      case ok @ Right( _ ) => // next model
+        require( !solver.isSatisfiable( model ) )
+        ok
+      case reason @ Left( _ ) =>
+        if ( solver.isSatisfiable( model ) ) {
+          unprovable += ( ( eigenVariables, model.toSet ) )
+          reason
+        } else {
+          // We solved the current goal even though no ∃:l, ∀:r, →:r, ¬:r rule was successful.
+          // This can happen if we learned a useful lemma during the search.
+          Right( () )
+        }
+    }
+  }
 
   def solve( eigenVariables: Set[Var], assumptions: Set[Int] ): Result = {
     unprovable.find {
@@ -149,99 +245,15 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
       case _ =>
     }
 
-    if ( isESatisfiable( assumptions + classical ) ) {
-      unprovable += ( ( eigenVariables, assumptions ) )
+    if ( isESatisfiable( assumptions + classical ) )
       return Left( assumptions )
-    }
 
     while ( isESatisfiable( assumptions ) ) {
-      val model = solver.model(): Seq[Int]
+      val model = solver.model().view.filter( v => v != classical && v != -classical ).toVector
 
-      def minimizeCtx( ctx: Set[Int], upper: Set[Int] ): Set[Int] = {
-        def go( todo: List[Int], ctx: Set[Int] ): Set[Int] =
-          todo match {
-            case t :: ts if !solver.isSatisfiable( upper union ( ctx - t ) ) => go( ts, ctx - t )
-            case _ :: ts => go( ts, ctx )
-            case Nil => ctx
-          }
-        require( !solver.isSatisfiable( upper union ctx ) )
-        val ctx_ = ctx.intersect( solver.unsatExplanation() )
-        go( ctx_.toList.sortBy( -math.abs( _ ) ), ctx_ )
-      }
-      def addClauseWithCtx( ctx: Set[Int], upper: Set[Int], lower: Set[Int] )( p: LKProof => LKProof ): Unit =
-        if ( solver.isSatisfiable( ctx ) ) {
-          val ctx2 = minimizeCtx( ctx, upper )
-          addClause( upper = modelSequent( upper ++ ctx2 ), lower = modelSequent( lower ++ ctx2 ) )( p )
-        }
-
-      def tryExistsLeft(): Option[Result] =
-        model.filter( _ > 0 ).flatMap( atomToET ).collectFirst {
-          case e @ ETStrongQuantifier( sh, ev, a ) if e.polarity.inAnt &&
-            !eigenVariables.contains( ev ) && immediateDeps( ev ).subsetOf( eigenVariables ) =>
-            val ctx = ( assumptions ++ model.filter( _ > 0 ) ).
-              filter( a => !freeVariables( atomToSh( math.abs( a ) ) ).contains( ev ) )
-            val provable = solve( eigenVariables + ev, ctx + atom( a ) )
-            if ( provable.isRight ) addClauseWithCtx( ctx, Set( atom( a ) ), Set( atom( e ) ) )( p =>
-              if ( !p.endSequent.antecedent.contains( a.shallow ) ) p
-              else ExistsLeftRule( p, sh, ev ) )
-            provable
-        }
-
-      def tryNonInvertible(): Result = {
-        def handleBlock( e: ExpansionTree, upper: Set[Int], eigenVariables: Set[Var],
-                         back: LKProof => LKProof ): ( Set[Int], Set[Var], LKProof => LKProof ) =
-          e match {
-            case ETNeg( a ) =>
-              ( upper + atom( a ), eigenVariables, p =>
-                back( if ( !p.endSequent.antecedent.contains( a.shallow ) ) p else
-                  NegRightRule( p, a.shallow ) ) )
-            case ETImp( a, b ) =>
-              handleBlock( b, upper + atom( a ), eigenVariables, p => back(
-                if ( !p.endSequent.antecedent.contains( a.shallow ) && !p.endSequent.succedent.contains( b.shallow ) ) p else
-                  ImpRightMacroRule( p, a.shallow, b.shallow ) ) )
-            case ETStrongQuantifier( _, ev, a ) =>
-              handleBlock( a, upper, eigenVariables + ev, p => back(
-                if ( !p.endSequent.succedent.contains( a.shallow ) ) p else
-                  ForallRightRule( p, e.shallow, ev ) ) )
-            case _ =>
-              ( upper + -atom( e ), eigenVariables, back )
-          }
-        val candidates = model.filter( _ < 0 ).map( -_ ).flatMap( atomToET ).collect {
-          case e @ ETNeg( a ) if e.polarity.inSuc && !assumptions.contains( atom( a ) )    => e
-          case e @ ETImp( a, _ ) if e.polarity.inSuc && !assumptions.contains( atom( a ) ) => e
-          case e @ ETStrongQuantifier( _, ev, _ ) if e.polarity.inSuc
-            && !eigenVariables.contains( ev )
-            && immediateDeps( ev ).subsetOf( eigenVariables ) => e
-        }
-        val nextSteps = candidates.map { e =>
-          val ( upper, newEvs, transform ) = handleBlock( e, Set.empty, Set.empty, identity )
-          val ctx = model.filter( _ > 0 ).
-            filter( a => newEvs.isEmpty || freeVariables( atomToSh( a ) ).intersect( newEvs ).isEmpty ).toSet
-          ( upper, Set( -atom( e ) ), ctx, newEvs, transform )
-        }
-        nextSteps.find {
-          case ( upper, _, ctx, newEvs, _ ) =>
-            solve( eigenVariables ++ newEvs, ctx ++ upper ).isRight
-        } match {
-          case Some( ( upper, lower, ctx, _, transform ) ) =>
-            addClauseWithCtx( ctx, upper, lower )( transform )
-            Right( () )
-          case None =>
-            Left( assumptions )
-        }
-      }
-
-      tryExistsLeft().getOrElse( tryNonInvertible() ) match {
-        case Right( _ ) => // next model
-          require( !solver.isSatisfiable( model ) )
-        case reason @ Left( _ ) =>
-          if ( solver.isSatisfiable( assumptions ) ) {
-            unprovable += ( ( eigenVariables, assumptions ) )
-            return reason
-          } else {
-            // We solved the current goal even though no ∃:l, ∀:r, →:r, ¬:r rule was successful.
-            // This can happen if we learned a useful lemma during the search.
-          }
+      refute( eigenVariables, model ) match {
+        case reason @ Left( _ ) => return reason
+        case Right( _ )         => // next model
       }
     }
     Right( () )
