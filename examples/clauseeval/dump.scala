@@ -16,26 +16,27 @@ import scala.io.Codec
 object Memo {
   import gapt.expr
 
-  var ccount = 0
-  var vcount = 0
-  var appcount = 0
-  var abscount = 0
-
-  val consts = mutable.Set[expr.Const]()
-  val vars = mutable.Set[expr.Var]()
-  val abs = mutable.Set[expr.Abs]()
+  val consts = mutable.HashMap[Int, mutable.Set[expr.Const]]()
+  val vars = mutable.HashMap[Int, mutable.Set[expr.Var]]()
+  val abs = mutable.HashMap[Int, mutable.Set[expr.Abs]]()
   val apps = mutable.HashMap[Int, mutable.Set[expr.App]]()
 
   object Const {
     def apply( name: String, ty: Ty, params: List[Ty] = Nil ) =
       consts.synchronized {
-        ccount += 1
         val c = expr.Const( name, ty, params )
-        consts find ( u => c == u ) match {
-          case Some( x ) => x
+        val hash = name.hashCode ^ ty.hashCode
+        consts.get( hash ) match {
+          case Some( set ) =>
+            set find ( u => c == u ) match {
+              case Some( x ) => x
+              case None =>
+                //println( s"consts ${consts.size} / $ccount" )
+                set += c
+                c
+            }
           case None =>
-            //println( s"consts ${consts.size} / $ccount" )
-            consts += c
+            consts( hash ) = mutable.Set( c )
             c
         }
       }
@@ -44,13 +45,19 @@ object Memo {
   object Var {
     def apply( name: String, ty: Ty ) =
       vars.synchronized {
-        vcount += 1
         val c = expr.Var( name, ty )
-        vars find ( u => c == u ) match {
-          case Some( x ) => x
+        val hash = name.hashCode ^ ty.hashCode
+        vars.get( hash ) match {
+          case Some( set ) =>
+            set find ( u => c == u ) match {
+              case Some( x ) => x
+              case None =>
+                //println( s"vars ${vars.size} / $vcount" )
+                set += c
+                c
+            }
           case None =>
-            //println( s"vars ${vars.size} / $vcount" )
-            vars += c
+            vars( hash ) = mutable.Set( c )
             c
         }
       }
@@ -59,7 +66,6 @@ object Memo {
   object App {
     def apply( s: expr.Expr, t: expr.Expr ) =
       apps.synchronized {
-        appcount += 1
         val c = expr.App( s, t )
         val hash = s.hashCode ^ t.hashCode
         apps.get( hash ) match {
@@ -88,13 +94,18 @@ object Memo {
   object Abs {
     def apply( s: expr.Var, t: expr.Expr ) =
       abs.synchronized {
-        abscount += 1
         val c = expr.Abs( s, t )
-        abs find ( u => c == u ) match {
-          case Some( x ) => x
+        val hash = s.hashCode ^ t.hashCode
+        abs.get( hash ) match {
+          case Some( set ) =>
+            set find ( u => c == u ) match {
+              case Some( x ) => x
+              case None =>
+                set += c
+                c
+            }
           case None =>
-            println( s"abs ${abs.size} / $abscount" )
-            abs += c
+            abs( hash ) = mutable.Set( c )
             c
         }
       }
@@ -164,6 +175,13 @@ case class DumpData[T]( path: String, file_list: String, simplifier: Simplifier[
     ( normalize( formula ) match {
       case All.Block( _, Or.nAry( ls ) ) => ls
     } ).toSet
+  }
+
+  def csetToSequent( cl : DClause) = {
+    val (neg, pos) = cl.partition { case Neg(f) => true; case _ => false }
+    val ant  = neg map { case Neg(f) => f }
+    val succ = pos map { case f : Formula => f }
+    Sequent(ant, succ)
   }
 
   def toSequent( formula: Formula ) = {
