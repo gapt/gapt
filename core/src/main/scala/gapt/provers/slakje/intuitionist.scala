@@ -42,8 +42,11 @@ object heuristicDecidabilityInstantiation {
   }
 
   def isCandidate: Formula => Boolean = {
-    case Imp( lhs, rhs )               => !containsQuantifierOnLogicalLevel( lhs ) && isCandidate( rhs )
-    case All( _, rhs )                 => isCandidate( rhs )
+    case Imp( lhs, rhs ) => !containsQuantifierOnLogicalLevel( lhs ) && isCandidate( rhs )
+    case All( _, rhs )   => isCandidate( rhs )
+    case And( left, right ) =>
+      ( isCandidate( left ) && !containsQuantifierOnLogicalLevel( right ) ) ||
+        ( isCandidate( right ) && !containsQuantifierOnLogicalLevel( left ) )
     case Or( Neg( a ), a_ ) if a == a_ => !containsQuantifierOnLogicalLevel( a )
     case Or( a, Neg( a_ ) ) if a == a_ => !containsQuantifierOnLogicalLevel( a )
     case _                             => false
