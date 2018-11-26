@@ -94,8 +94,7 @@ object Checkable {
               s"Expected: ${ctrsInCtx.mkString( ", " )}" )
         case sk: SkolemQuantifierRule =>
           val Some( skolemDef ) = ctx.skolemDef( sk.skolemConst )
-          val expectedMain = BetaReduction.betaNormalize( skolemDef( sk.skolemArgs ) )
-          require( expectedMain == sk.mainFormula, s"Main formula should be $expectedMain, but is ${sk.mainFormula}" )
+          Checkable.requireDefEq( skolemDef( sk.skolemArgs ), sk.mainFormula )
           ctx.check( sk.skolemTerm )
         case StrongQuantifierRule( _, _, _, _, _ ) =>
         case _: ReflexivityAxiom | _: LogicalAxiom =>

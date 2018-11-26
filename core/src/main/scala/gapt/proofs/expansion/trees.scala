@@ -102,7 +102,7 @@ case class ExpansionTree( term: ETt, polarity: Polarity, shallow: Formula ) exte
         val Apps( skConst: Const, skArgs ) = skT
         ctx.foreach { ctx =>
           val Some( skD ) = ctx.skolemDef( skConst )
-          require( BetaReduction.betaNormalize( skD( skArgs ) ) == sh )
+          Checkable.requireDefEq( skD( skArgs ), sh )( ctx )
         }
         go( child )
       case ETDefinition( sh, child ) =>
