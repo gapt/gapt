@@ -7,7 +7,7 @@ import gapt.cutintro._
 import gapt.expr._
 import gapt.expr.fol.isFOLPrenexSigma1
 import gapt.formats.InputFile
-import gapt.formats.babel.BabelParser
+import gapt.formats.babel.{ BabelParser, BabelSignature }
 import gapt.formats.json._
 import gapt.formats.leancop.LeanCoPParser
 import gapt.formats.tip.TipSmtImporter
@@ -148,6 +148,16 @@ class TheoryTestCase( name: String, combined: Boolean )
         LKToND( expansionLK ) --? "LKToND (expansion)"
       }
     }
+
+    val terms = proof.subProofs.flatMap( _.endSequent.elements ).flatMap( subTerms( _ ) )
+    ( for ( t <- terms )
+      require(
+      BabelParser.parse( t.toString )( BabelSignature.defaultSignature ) == t,
+      t.toString ) ) --? "babel exporter"
+    ( for ( t <- terms )
+      require(
+      BabelParser.parse( t.toSigRelativeString ) == t,
+      t.toSigRelativeString ) ) --? "babel exporter with sig"
 
     val All.Block( variables, _ ) = proof.endSequent.succedent.head
     val instanceTerms = new EnumeratingInstanceGenerator( variables.map( _.ty.asInstanceOf[TBase] ), ctx ).
