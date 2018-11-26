@@ -54,6 +54,7 @@ class Slakje(
     backend:         Prover        = Escargot,
     method:          ExpToLKMethod = ExpToLKMethod.MG3iViaSAT,
     showInProoftool: Boolean       = false,
+    printExp:        Boolean       = false,
     convertToLJ:     Boolean       = false,
     filename:        String        = "" ) extends OneShotProver {
   def expansionProofToMG3i( expProofWithSk: ExpansionProof )( implicit ctx: Context ): Option[LKProof] = {
@@ -62,6 +63,7 @@ class Slakje(
     metric( "has_equality", hasEquality )
     val deskExpProof = time( "deskolemization" ) { deskolemizeET( expProofWithSk, removeCongruences = hasEquality ) }
     info( "converting expansion proof to LK" )
+    if ( printExp ) info( deskExpProof.withoutWeakenings.toSigRelativeString )
     time( "exptolk" ) { quiet( method.convert( deskExpProof ) ) } match {
       case Right( lk0 ) =>
         val lk = if ( !convertToLJ ) lk0 else time( "convert_lj" ) { normalizeLKt.lk( MG3iToLJ( lk0 ) ) }
@@ -181,6 +183,7 @@ object Slakje extends Slakje(
   method = ExpToLKMethod.MG3iViaSAT,
   convertToLJ = true,
   showInProoftool = false,
+  printExp = false,
   filename = "" ) {
   import ExpToLKMethod._
 
@@ -192,6 +195,7 @@ object Slakje extends Slakje(
       method:     ExpToLKMethod  = MG3iViaSAT,
       metrics:    Boolean        = false,
       printProof: Boolean        = true,
+      printExp:   Boolean        = false,
       file:       Option[String] = None )
 
   private val optionParser = new scopt.OptionParser[Options]( "slakje" ) {
@@ -219,6 +223,10 @@ object Slakje extends Slakje(
       action( ( x, c ) => c.copy( printProof = x ) ).
       valueName( "(true|false)" ).
       text( "print the LK proof as a TPTP derivation" )
+    opt[Boolean]( "print-expansion" ).
+      action( ( x, c ) => c.copy( printExp = x ) ).
+      valueName( "(true|false)" ).
+      text( "print the deskolemized expansion proof" )
 
     opt[Unit]( 'v', "verbose" ).
       action( ( _, c ) => c.copy( verbose = true ) ).
@@ -263,7 +271,7 @@ object Slakje extends Slakje(
       val tptp = time( "parse" ) { TptpImporter.loadWithIncludes( FilePath( file ) ) }
       val tptpSequent = tptp.toSequent
       implicit val ctx: MutableContext = MutableContext.guess( tptpSequent )
-      new Slakje( opts.backend, opts.method, opts.prooftool, opts.convertLJ, file ).
+      new Slakje( opts.backend, opts.method, opts.prooftool, opts.printExp, opts.convertLJ, file ).
         getLKProof_( tptpSequent ) match {
           case Some( Right( lk ) ) =>
             metric( "status", "theorem" )
