@@ -72,6 +72,9 @@ case class ExpansionProof( expansionSequent: Sequent[ExpansionTree] ) {
   def theoryPart( implicit ctx: Context ): ExpansionSequent =
     expansionSequent.filter( et => ETCut.isCutExpansion( et ) || ETInduction.isInductionAxiomExpansion( et ) )
 
+  def withoutWeakenings: ExpansionProof =
+    copy( expansionSequent.filter { case ETWeakening( _, _ ) => false case _ => true } )
+
   override def toString: String = toSigRelativeString
   def toSigRelativeString( implicit sig: BabelSignature ): String =
     expansionSequent.map( _.toSigRelativeString ).toString
