@@ -71,6 +71,8 @@ class BabelTest extends Specification {
       "∃ 🙋 (🍷 🙋 → ∀ 🙍 (🍷 🙍))",
       "'-2' = (-2)",
       "''",
+      "#c('='{nat} : nat>nat>o)",
+      "(->) ((x:nat) != 0)",
       "'\\u0000'",
       "#c(true: o)",
       "true", "'true'", "'all' x" )

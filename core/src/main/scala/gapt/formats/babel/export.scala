@@ -83,7 +83,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       case Iff( a, b ) =>
         showFakeBin( expr, Notation.fakeIffConst, a, b, knownType, bound, t0 )
       case Neg( Eq( a, b ) ) =>
-        showFakeBin( expr, Notation.fakeNeqConst, a, b, knownType, bound, t0 )
+        showFakeBin( expr, Notation.fakeNeqConst, a, b, false, bound, t0 )
 
       case Abs( v @ Var( vn, vt ), e ) =>
         val ( e_, t1 ) = show( e, knownType, bound + vn, t0 - vn )
@@ -120,15 +120,18 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       case Safe =>
         ident match {
           case Var( name, ty ) =>
-            Parenable( Precedence.max, "#v(" <> showName( name ) <> ":" </> show( ty, false ) <> ")" )
+            Parenable( Precedence.max, "#v(" <> showNameFollowableByOp( name ) <> ":" </> show( ty, false ) <> ")" )
           case Const( name, ty, params ) =>
-            Parenable( Precedence.max, "#c(" <> showName( name ) <> showTyParams( params ) <> ":" </> show( ty, false ) <> ")" )
+            Parenable( Precedence.max, "#c(" <> showNameWithParams( name, params ) <> ":" </> show( ty, false ) <> ")" )
         }
       case WithParams =>
-        Parenable( Precedence.max, showName( ident.name ) <> showTyParams( ident.asInstanceOf[Const].params ) )
+        Parenable( Precedence.max, showNameWithParams( ident.name, ident.asInstanceOf[Const].params ) )
       case WithType =>
-        Parenable( Precedence.typeAnnot, showName( ident.name ) <> ":" <> show( ident.ty, false ) )
+        Parenable( Precedence.typeAnnot, showNameFollowableByOp( ident.name ) <> ":" <> show( ident.ty, false ) )
     }
+
+  def showNameWithParams( name: String, params: List[Ty] ): Doc =
+    ( if ( params.isEmpty ) showName( name ) else showNameFollowableByOp( name ) ) <> showTyParams( params )
 
   def getIdentShowMode(
     expr:      VarOrConst,
@@ -327,6 +330,11 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
   def showName( name: String ): Doc =
     if ( fastparse.parse( name, BabelLexical.OperatorAndNothingElse( _ ) ).isSuccess && unicodeSafe( name ) )
       name
+    else
+      showNonOpName( name )
+  def showNameFollowableByOp( name: String ): Doc =
+    if ( fastparse.parse( name, BabelLexical.OperatorAndNothingElse( _ ) ).isSuccess && unicodeSafe( name ) )
+      name <> " "
     else
       showNonOpName( name )
   def showNonOpName( name: String ): Doc = name match {
