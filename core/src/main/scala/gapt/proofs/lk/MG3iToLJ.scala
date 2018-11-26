@@ -35,7 +35,8 @@ object MG3iToLJ {
       require( pr.conclusion.antecedent.contains( f ) )
     }
     def withAddGoal( p: LKProof, addGoal: Formula, r: LKProof ): LKProof =
-      if ( p.conclusion.succedent.forall( _ == addGoal ) ) {
+      if ( !r.conclusion.antecedent.contains( addGoal ) ) r
+      else if ( p.conclusion.succedent.forall( _ == addGoal ) ) {
         val q = apply( p, addGoal, Map( addGoal -> LogicalAxiom( addGoal ) ) )
         val res = ContractionMacroRule( CutRule( q, r, addGoal ) )
         if ( res.conclusion.succedent.isEmpty ) WeakeningRightRule( res, goal ) else res
@@ -58,7 +59,7 @@ object MG3iToLJ {
       case ContractionLeftRule( p, _, _ )  => apply( p, goal, projections )
       case ContractionRightRule( p, _, _ ) => apply( p, goal, projections )
       case WeakeningRightRule( p, _ )      => apply( p, goal, projections )
-      case WeakeningLeftRule( p, f )       => WeakeningLeftRule( apply( p, goal, projections ), f )
+      case WeakeningLeftRule( p, _ )       => apply( p, goal, projections )
       case proof @ CutRule( p1, _, p2, _ ) =>
         val q2 = apply( p2, goal, projections )
         if ( !q2.conclusion.antecedent.contains( proof.cutFormula ) ) q2
