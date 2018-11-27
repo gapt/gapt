@@ -126,7 +126,7 @@ class Slakje(
         case Some( expansion0 ) =>
           metric( "prover_valid", true )
           info( "found classical expansion proof" )
-          metric( "exp_size", numberOfInstancesET( expansion0 ) )
+          metric( "exp_size_before_unif", numberOfInstancesET( expansion0 ) )
           val proofEssentiallyCNF = essentiallyCNF || isEssentiallyCNF( expansion0.shallow )
           metric( "proof_ess_cnf", proofEssentiallyCNF )
           if ( !essentiallyCNF && proofEssentiallyCNF )
@@ -135,7 +135,9 @@ class Slakje(
             metric( "status", "theorem" )
             info( "SZS status Theorem" )
           }
-          val expansion1 = ETWeakening( expansion0, seq )
+          val expansion01 = time( "unif_inst" ) { unifyInstancesET( expansion0 ) } // FIXME: see https://github.com/gapt/gapt/issues/730
+          metric( "exp_size", numberOfInstancesET( expansion01 ) )
+          val expansion1 = ETWeakening( expansion01, seq )
           val expansion2 = pushWeakeningsUp( expansion1 )
           val expansion3 = time( "heuristic_inst" ) { heuristicDecidabilityInstantiation( expansion2 ) }
           val maybeLK = expansionProofToMG3i( expansion3 )
