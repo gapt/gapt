@@ -67,14 +67,24 @@ object MG3iToLJ {
       case BottomAxiom => WeakeningRightRule( BottomAxiom, goal )
       case TopAxiom    => CutRule( TopAxiom, projections( Top() ), Top() )
       case proof @ EqualityLeftRule( p, _, _, cx ) =>
-        EqualityLeftRule( apply( p, goal, projections ), proof.equation, proof.auxFormula, cx )
+        val q = apply( p, goal, projections )
+        if ( !q.conclusion.antecedent.contains( proof.auxFormula ) ) q else
+          EqualityLeftRule( WeakeningLeftMacroRule( q, proof.equation ), proof.equation, proof.auxFormula, cx )
       case proof @ EqualityRightRule( p, _, _, cx ) =>
         apply( p, goal, projections + ( proof.auxFormula ->
           EqualityLeftRule( WeakeningLeftRule( projections( proof.mainFormula ), proof.equation ), proof.equation, proof.mainFormula, cx ) ) )
       case proof @ AndLeftRule( p, _, _ ) =>
-        AndLeftMacroRule( apply( p, goal, projections ), proof.leftConjunct, proof.rightConjunct )
+        val q = apply( p, goal, projections )
+        if ( q.conclusion.antecedent.contains( proof.leftConjunct ) || q.conclusion.antecedent.contains( proof.rightConjunct ) )
+          AndLeftMacroRule( q, proof.leftConjunct, proof.rightConjunct )
+        else q
       case proof @ OrLeftRule( p1, _, p2, _ ) =>
-        OrLeftRule( apply( p1, goal, projections ), proof.leftDisjunct, apply( p2, goal, projections ), proof.rightDisjunct )
+        val q1 = apply( p1, goal, projections )
+        if ( !q1.conclusion.antecedent.contains( proof.leftDisjunct ) ) q1 else {
+          val q2 = apply( p2, goal, projections )
+          if ( !q2.conclusion.antecedent.contains( proof.rightDisjunct ) ) q2 else
+            OrLeftRule( q1, proof.leftDisjunct, q2, proof.rightDisjunct )
+        }
       case proof @ ImpLeftRule( p1, _, p2, _ ) =>
         val q2 = apply( p2, goal, projections )
         if ( !q2.conclusion.antecedent.contains( proof.impConclusion ) ) q2
