@@ -200,7 +200,7 @@ class App private[expr] ( val function: Expr, val arg: Expr ) extends Expr {
     function.ty match {
       case in ->: out if in == arg.ty => out
       case _ => throw new IllegalArgumentException(
-        s"Types don't fit while constructing application ($function : ${function.ty}) ($arg : ${arg.ty})" )
+        s"Types don't fit while constructing application (${function.toUntypedString} : ${function.ty}) (${arg.toUntypedString} : ${arg.ty})" )
     }
 
   def syntaxEquals( e: Expr ) = e match {

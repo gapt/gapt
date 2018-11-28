@@ -17,8 +17,8 @@ object ReadFilenames {
   def apply( fp: Path ) = {
     read.lines( fp, Codec.UTF8 )
   }
-  //  val my_path = "/opt/smtlib/Main Track no BV or QF/dump/stripped/UFLIA/"
-  val my_path = "/home/marty/manchester/experiments/instance_overview_2018/more_terms/stripped/"
+  val my_path = "/opt/smtlib/Main Track no BV or QF/dump/stripped/UFLIA/"
+  //val my_path = "/home/marty/manchester/experiments/instance_overview_2018/more_terms/stripped/"
   val my_list = "list.txt"
 }
 
@@ -63,8 +63,9 @@ case class DumpData[T]( path: String, file_list: String, simplifier: Simplifier[
       print( "." )
       Some( r )
     } catch {
-      case _: Exception =>
-        print( "x" )
+      case e: Exception =>
+        //println( s"x $x : ${e.getMessage}" )
+        print( "x " )
         None
     }
 
@@ -102,7 +103,7 @@ case class DumpData[T]( path: String, file_list: String, simplifier: Simplifier[
   lazy val nfs = {
     val map = mutable.Map[DClause, Int]()
     parse( getClauses( onlyCountNF( map ) ) )
-    map
+    map.seq
   }
 
   //
@@ -118,17 +119,21 @@ case class DumpData[T]( path: String, file_list: String, simplifier: Simplifier[
     map
   }
 
-  def inc[T]( v: T, m: mutable.Map[T, Int] ) = {
-    val count = m.getOrElse( v, 0 ) + 1
-    m( v ) = count
-    ()
+  def inc[T]( v: T, m: mutable.Map[T, Int] ): Unit = {
+    m.synchronized {
+      val count = m.getOrElse( v, 0 ) + 1
+      m( v ) = count
+      ()
+    }
   }
 
-  def add[T, U]( k: T, v: U, m: mutable.Map[T, mutable.Set[U]] ) = {
-    if ( m contains k ) {
-      m( k ) += v
-    } else {
-      m( k ) = mutable.Set( v )
+  def add[T, U]( k: T, v: U, m: mutable.Map[T, mutable.Set[U]] ): Unit = {
+    m.synchronized {
+      if ( m contains k ) {
+        m( k ) += v
+      } else {
+        m( k ) = mutable.Set( v )
+      }
     }
     ()
   }
