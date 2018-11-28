@@ -21,7 +21,7 @@ lazy val commonSettings = Seq(
     devConnection = Some( "scm:git:git@github.com:gapt/gapt.git" ) ) ),
   bintrayOrganization := Some( "gapt" ),
 
-  scalaVersion := "2.12.6",
+  scalaVersion := "2.12.7",
   scalacOptions in Compile ++= Seq(
     "-Ypartial-unification",
     "-deprecation",
@@ -34,8 +34,6 @@ lazy val commonSettings = Seq(
   fork := true,
   baseDirectory in run := file( "." ),
 
-  resolvers += Resolver.sonatypeRepo( "snapshots" ), // for scoverage
-
   sourcesInBase := false // people like to keep scripts lying around
 ) ++ scalariformSettings
 
@@ -46,7 +44,7 @@ lazy val scalariformSettings =
     .setPreference( DoubleIndentConstructorArguments, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "4.3.2"
+val specs2Version = "4.3.5"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   javaOptions in Test += "-Xmx2g",
@@ -101,7 +99,7 @@ lazy val root = project.in( file( "." ) ).
         mkScript( target.value / "test-induction", "gapt.testing.testInduction" ),
         mkScript( target.value / "viper", "gapt.provers.viper.Viper" ),
         mkScript( target.value / "escargot", "gapt.provers.escargot.Escargot" ),
-        mkScript( target.value / "iescargot", "gapt.provers.escargot.IEscargot" ),
+        mkScript( target.value / "slakje", "gapt.provers.slakje.Slakje" ),
         mkScript( target.value / "cli", "gapt.cli.CLIMain" ) )
     },
 
@@ -117,7 +115,7 @@ lazy val root = project.in( file( "." ) ).
       Process( List( "latexmk", "-pdf", "user_manual.tex" ), baseDir / "doc" ) !
 
       val filesToIncludeAsIs = List(
-        "COPYING", "gapt.sh", "escargot.sh", "viper.sh", "include.sh", "examples" )
+        "COPYING", "gapt.sh", "slakje.sh", "escargot.sh", "viper.sh", "include.sh", "examples" )
       val entries = List( ( assembly.value, s"gapt-$version.jar" ) ) ++
         filesToIncludeAsIs.flatMap { fn => recursiveListFiles( baseDir / fn ) }
         .map { f => ( f, baseDir.toPath.relativize( f.toPath ) ) } ++
@@ -150,7 +148,7 @@ lazy val root = project.in( file( "." ) ).
     evalUserManual := {
       val userManFn = "doc/user_manual.tex"
       val out = new ByteArrayOutputStream
-      val exitVal = new Fork( "java", Some( "gapt.testing.evalCodeSnippetsInLatex" ) ).fork(
+      val exitVal = new Fork( "java", Some( "gapt.testing.latex.evalCodeSnippets" ) ).fork(
         ForkOptions(
           javaHome = javaHome.value,
           outputStrategy = Some( CustomOutput( out ) ),
@@ -175,14 +173,15 @@ lazy val core = project.in( file( "core" ) ).
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.1",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "org.parboiled" %% "parboiled" % "2.1.4",
-      "com.lihaoyi" %% "fastparse" % "1.0.0",
-      "com.lihaoyi" %% "sourcecode" % "0.1.4",
-      "org.typelevel" %% "cats-free" % "1.2.0",
+      "org.parboiled" %% "parboiled" % "2.1.5",
+      "com.lihaoyi" %% "fastparse" % "2.0.4",
+      "com.lihaoyi" %% "sourcecode" % "0.1.5",
+      "org.typelevel" %% "cats-free" % "1.4.0",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
-      "org.apache.commons" % "commons-lang3" % "3.7",
-      "com.lihaoyi" %% "ammonite-ops" % "1.1.2",
+      "org.apache.commons" % "commons-lang3" % "3.8.1",
+      "com.lihaoyi" %% "ammonite-ops" % "1.3.2",
       "de.uni-freiburg.informatik.ultimate" % "smtinterpol" % "2.5",
+      "com.github.scopt" %% "scopt" % "3.7.0",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5" ),
 
@@ -193,11 +192,12 @@ lazy val core = project.in( file( "core" ) ).
       "org.scilab.forge" % "jlatexmath" % "1.0.7" ),
 
     // JSON serialization
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.1",
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
       "io.circe" %% "circe-parser",
-      "io.circe" %% "circe-generic-extras" ).map( _ % "0.9.3" ) )
+      "io.circe" %% "circe-generic-extras" ).map( _ % "0.10.0" ) )
 
 lazy val examples = project.in( file( "examples" ) ).
   dependsOn( core ).
@@ -251,9 +251,7 @@ lazy val testing = project.in( file( "testing" ) ).
     description := "gapt extended regression tests",
 
     bintrayReleaseOnPublish := false,
-    packagedArtifacts := Map(),
-
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.5.4" )
+    packagedArtifacts := Map() )
 
 lazy val releaseDist = TaskKey[File]( "release-dist", "Creates the release tar ball." )
 

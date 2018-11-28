@@ -1,18 +1,19 @@
 package gapt.examples.tip.isaplanner
 
 import gapt.expr._
-import gapt.proofs.Context
+import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic._
 import gapt.provers.escargot.Escargot
 import gapt.provers.viper.aip.axioms.IndependentInductionAxioms
-import gapt.provers.viper.aip.{ AnalyticInductionProver, ProverOptions }
+import gapt.provers.viper.aip.AnalyticInductionProver
+import gapt.provers.viper.aip.ProverOptions
 
 object prop_43 extends TacticsProof {
 
   ctx += TBase( "sk" )
   ctx += TBase( "fun1" )
 
-  ctx += Context.InductiveType( ty"list", hoc"nil:list", hoc"cons:sk>list>list" )
+  ctx += InductiveType( ty"list", hoc"nil:list", hoc"cons:sk>list>list" )
   ctx += hoc"head:list>sk"
   ctx += hoc"tail:list>list"
 

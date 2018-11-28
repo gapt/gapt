@@ -616,14 +616,22 @@ object introducePi2Cut {
       }
     }
 
-    /*
     /// Prints the most interesting data ///
     ////////////////////////////////////////
 
+    /*
     println( "Number of non-tautological leaves" )
     println( seHs.dualNonTautologicalAxioms.length )
+    println( "Non-tautological leaves" )
+    println( seHs.dualNonTautologicalAxioms )
+    println( "Substitution pairs alpha" )
+    println( seHs.substitutionPairsAlpha )
+    println( "Substitution pairs beta" )
+    println( seHs.substitutionPairsBeta )
     println( "Number of unified literals" )
     println( unifiedLiterals.size )
+    println( "Unified literals" )
+    println( unifiedLiterals )
     numberOfAllowedClauses match {
       case Some( t ) => {
         println( "Number of allowed clauses" )
@@ -692,10 +700,10 @@ object introducePi2Cut {
             allowedClausesWithIndexLists -= unnecessaryClause
           }
         }
-      } else if ( !clauseWithIndexLists.isAllowedAtLeastAsSubformula ) {
-        for ( literal <- subset ) {
-          literalsWithIndexLists -= literal
-        }
+        //      } else if ( !clauseWithIndexLists.isAllowedAtLeastAsSubformula ) {
+        //        for ( literal <- subset ) {
+        //          literalsWithIndexLists -= literal
+        //        }
       }
     }
 

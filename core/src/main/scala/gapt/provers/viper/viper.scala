@@ -8,7 +8,8 @@ import gapt.formats.tip.TipProblem
 import gapt.formats.tip.TipSmtImporter
 import gapt.formats.{ InputFile, StdinInputFile }
 import gapt.grammars.InductionGrammar
-import gapt.proofs.{ HOLSequent, MutableContext }
+import gapt.proofs.HOLSequent
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.gaptic._
 import gapt.proofs.gaptic.tactics.AnalyticInductionTactic
 import gapt.proofs.lk.{ ContractionMacroRule, CutRule, ForallRightBlock, ForallRightRule, LKProof, NegRightRule, OrRightMacroRule }
@@ -246,7 +247,7 @@ object Viper {
     if ( opts.mode == "help" || files.size != 1 ) return print( ViperOptions.usage )
     val file = files.head
 
-    val problem = if ( opts.fixup ) TipSmtImporter.fixupAndParse( file ) else TipSmtImporter.parse( file )
+    val problem = if ( opts.fixup ) TipSmtImporter.fixupAndLoad( file ) else TipSmtImporter.load( file )
     implicit val ctx: MutableContext = problem.ctx.newMutable
 
     apply( problem.toSequent, opts ) match {

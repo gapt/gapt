@@ -1,8 +1,11 @@
 package gapt.proofs.lk
 
 import gapt.expr._
-import gapt.proofs.Context.ProofNames
-import gapt.proofs.{ Context, MutableContext, SequentConnector }
+import gapt.proofs.SequentConnector
+import gapt.proofs.context.facet.ProofNames
+import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
 
 object CreateASchemaVersion extends LKVisitor[MutableContext] {
   override protected def recurse( p: LKProof, ctx: MutableContext ): ( LKProof, SequentConnector ) =
@@ -15,7 +18,7 @@ object CreateASchemaVersion extends LKVisitor[MutableContext] {
         val name = Const( ctx.newNameGenerator.fresh( "Proof" ), FunctionType( typeTerm.ty, fv.map( _.ty ) ) )
         val proofName = Apps( name, fv )
         ctx += name
-        ctx += Context.ProofNameDeclaration( proofName, es )
+        ctx += ProofNameDeclaration( proofName, es )
         casesI.foreach {
           case InductionCase( subproof, _, hy, _, con ) =>
             val sigma = syntacticMatching( formNorm, subproof.endSequent( con ) ).get
@@ -45,8 +48,8 @@ object ArithmeticInductionToSchema {
     val resProof: LKProof = CreateASchemaVersion( proof, ctx )
     if ( ctx.get[ProofNames].lookup( pe ).isEmpty ) {
       ctx += c
-      ctx += Context.ProofNameDeclaration( pe, resProof.endSequent )
+      ctx += ProofNameDeclaration( pe, resProof.endSequent )
     }
-    ctx += Context.ProofDefinitionDeclaration( pe, resProof )
+    ctx += ProofDefinitionDeclaration( pe, resProof )
   }
 }

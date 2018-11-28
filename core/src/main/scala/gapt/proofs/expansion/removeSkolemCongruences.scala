@@ -8,38 +8,29 @@ import gapt.provers.verit.VeriT
 
 object removeSkolemCongruences {
 
-  def repl( m: Map[Expr, Expr], et: ExpansionTree, newSh: Formula ): ExpansionTree =
-    ( et, newSh ) match {
-      case ( ETTop( _ ) | ETBottom( _ ), _ ) => et
-      case ( ETAtom( _, pol ), newSh: Atom ) => ETAtom( newSh, pol )
-      case ( ETWeakening( _, pol ), _ )      => ETWeakening( newSh, pol )
-      case ( ETMerge( a, b ), _ )            => ETMerge( repl( m, a, newSh ), repl( m, b, newSh ) )
-      case ( ETNeg( a ), Neg( f ) )          => ETNeg( repl( m, a, f ) )
-      case ( ETAnd( a, b ), And( f, g ) )    => ETAnd( repl( m, a, f ), repl( m, b, g ) )
-      case ( ETOr( a, b ), Or( f, g ) )      => ETOr( repl( m, a, f ), repl( m, b, g ) )
-      case ( ETImp( a, b ), Imp( f, g ) )    => ETImp( repl( m, a, f ), repl( m, b, g ) )
-      case ( ETStrongQuantifier( _, ev, ch ), _ ) =>
-        ETStrongQuantifier( newSh, ev, repl( m, ch, instantiate( newSh, ev ) ) )
-      case ( ETSkolemQuantifier( _, Apps( skC, skAs ), skD, ch ), _ ) =>
-        val newSkT = skC( TermReplacement( skAs, m ) )
-        ETSkolemQuantifier( newSh, newSkT, skD,
-          repl( m, ch, instantiate( newSh, newSkT ) ) )
-      case ( ETWeakQuantifier( _, insts ), _ ) =>
-        ETWeakQuantifier.withMerge(
-          newSh,
-          insts.view.map {
-            case ( t, ch ) =>
-              val newT = TermReplacement( t, m )
-              newT -> repl( m, ch, BetaReduction.betaNormalize( instantiate( newSh, newT ) ) )
-          } )
-    }
+  def repl( m: Map[Expr, Expr], et: ExpansionTree ): ExpansionTree =
+    ExpansionTree( et.shallow, et.polarity, repl( m, et.term ) )
+  def repl( m: Map[Expr, Expr], et: ETt ): ETt = et match {
+    case ETtNullary | ETtAtom | ETtWeakening => et
+    case ETtMerge( a, b )                    => ETtMerge( repl( m, a ), repl( m, b ) )
+    case ETtUnary( a )                       => ETtUnary( repl( m, a ) )
+    case ETtBinary( a, b )                   => ETtBinary( repl( m, a ), repl( m, b ) )
+    case ETtStrong( ev, ch )                 => ETtStrong( ev, repl( m, ch ) )
+    case ETtSkolem( Apps( skC, skAs ), ch ) =>
+      val newSkT = skC( TermReplacement( skAs, m ) )
+      ETtSkolem( newSkT, repl( m, ch ) )
+    case ETtWeak( insts ) =>
+      ETtWeak.withMerge( for ( ( t, ch ) <- insts.view )
+        yield TermReplacement( t, m ) -> repl( m, ch ) )
+    case ETtDef( _, _ ) => throw new MatchError( et )
+  }
 
   def remove1( m: Map[Expr, Expr], ep: ExpansionProof ): ExpansionProof =
-    ExpansionProof( eliminateMerges.unsafe( ep.expansionSequent.
-      map( et => ETMerge( et, repl( m, et, et.shallow ) ) ) ) )
+    ExpansionProof( eliminateMerges( ep.expansionSequent.
+      map( et => ETMerge( et, repl( m, et ) ) ) ) )
 
   def getAllPossibleCongruences( ep: ExpansionProof ): Vector[( Expr, Expr )] = {
-    val skSyms = ep.skolemFunctions.skolemDefs.keySet
+    val skSyms = ep.skolemSymbols
     val skTerms = folSubTerms( ep.deep.elements ).collect {
       case skTerm @ Apps( skSym: Const, _ ) if skSyms( skSym ) => skTerm
     }
@@ -51,7 +42,7 @@ object removeSkolemCongruences {
   }
 
   def getCongruencesViaVeriT( ep: ExpansionProof ): Vector[( Expr, Expr )] = {
-    val skSyms = ep.skolemFunctions.skolemDefs.keySet
+    val skSyms = ep.skolemSymbols
     val Some( epwc ) = VeriT.getExpansionProof( ep.deep )
     epwc.expansionSequent.antecedent.flatMap {
       case ETWeakQuantifierBlock( All.Block( _, Imp( _, Eq( Apps( f: Const, _ ), Apps( f_, _ ) ) ) ), n,
@@ -62,7 +53,7 @@ object removeSkolemCongruences {
   }
 
   def simplCongrs( congrs: Vector[( Expr, Expr )] ): Vector[( Expr, Expr )] = {
-    val lpo = LPO( containedNames( congrs ).collect { case c: Const => c }.toSeq.sortBy( _.name ) )
+    val lpo = LPO( containedNames( congrs ).collect { case c: Const => c.name }.toSeq.sorted )
     def lt( a: Expr, b: Expr ): Boolean = lpo.lt( a, b, true )
     congrs.view.
       filter( c => c._1 != c._2 ).

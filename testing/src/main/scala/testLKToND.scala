@@ -3,13 +3,15 @@ package gapt.testing
 import ammonite.ops.FilePath
 import gapt.expr.hol.containsQuantifierOnLogicalLevel
 import gapt.formats.tptp.TptpParser
+import gapt.proofs.context.mutable.MutableContext
+import gapt.formats.tptp.TptpImporter
 import gapt.proofs.expansion.{ ExpansionProofToLK, deskolemizeET }
 import gapt.proofs.lk.{ LKProof, LKToND, OrRightRule, WeakeningRightRule, containsEqualityReasoning, isMaeharaMG3i }
 import gapt.proofs.nd.{ ExcludedMiddleRule, NDProof }
 import gapt.proofs.resolution.{ ResolutionToExpansionProof, structuralCNF }
-import gapt.proofs.{ MutableContext, loadExpansionProof }
+import gapt.proofs.loadExpansionProof
 import gapt.provers.eprover.EProver
-import gapt.utils.{ LogHandler, Logger }
+import gapt.utils.{ LogHandler, Logger, MetricsPrinter }
 
 private object lkStats {
   def apply( lk: LKProof, logger: Logger ): Unit = {
@@ -85,7 +87,7 @@ object testLKToND2 extends scala.App {
     val Seq( fileName ) = args.toSeq
     metric( "file", fileName )
 
-    val tptp = time( "tptp" ) { TptpParser.load( FilePath( fileName ) ) }
+    val tptp = time( "tptp" ) { TptpImporter.loadWithIncludes( FilePath( fileName ) ) }
     val problem = tptp.toSequent
     implicit val ctx = MutableContext.guess( problem )
     val cnf = time( "clausifier" ) { structuralCNF( problem ) }

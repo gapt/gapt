@@ -2,9 +2,9 @@ package gapt.provers.viper.grammars
 
 import gapt.expr.fol.folTermSize
 import gapt.expr.{ Expr, TBase }
-import gapt.proofs.Context
 import cats.instances.list._
 import cats.syntax.traverse._
+import gapt.proofs.context.Context
 
 import scala.collection.mutable
 import scala.util.Random

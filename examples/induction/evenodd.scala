@@ -1,9 +1,8 @@
 package gapt.examples.induction
 
-import gapt.proofs.Context.InductiveType
-import gapt.proofs.gaptic._
 import gapt.expr._
-import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.gaptic._
 
 object evenodd extends TacticsProof {
 

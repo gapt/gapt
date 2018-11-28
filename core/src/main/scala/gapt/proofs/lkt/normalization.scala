@@ -2,7 +2,7 @@ package gapt.proofs.lkt
 
 import gapt.expr._
 import gapt.expr.hol.{ containsQuantifierOnLogicalLevel, instantiate, isAtom }
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 import gapt.proofs.lk.LKProof
 import gapt.provers.simp.{ QPropSimpProc, SimpLemmas, Simplifier }
 import gapt.utils.Maybe
@@ -48,8 +48,8 @@ class Normalizer[LC <: ALCtx[LC]]( skipCut: Formula => Boolean ) {
         }
       case Eql( main, eq, ltr, rwCtx, q ) if main != hyp && eq != hyp =>
         Eql.f( main, eq, ltr, rwCtx, apply( q, lctx.up1_( p ) ) )
-      case AllSk( main, term, skDef, q ) if main != hyp =>
-        AllSk.f( main, term, skDef, apply( q, lctx.up1_( p ) ) )
+      case AllSk( main, term, q ) if main != hyp =>
+        AllSk.f( main, term, apply( q, lctx.up1_( p ) ) )
       case Def( main, f, q ) if main != hyp =>
         Def.f( main, f, apply( q, lctx.up1_( p ) ) )
       case Ind( main, f, t, cases ) if main != hyp =>
@@ -76,7 +76,7 @@ class Normalizer[LC <: ALCtx[LC]]( skipCut: Formula => Boolean ) {
     case AllL( main, term, q )             => AllL.f( main, term, normalize( q, lctx.up1( p ) ) )
     case AllR( main, ev, q )               => AllR.f( main, ev, normalize( q, lctx.up1( p ) ) )
     case Eql( main, eq, ltr, rwCtx, q )    => Eql.f( main, eq, ltr, rwCtx, normalize( q, lctx.up1( p ) ) )
-    case AllSk( main, term, skDef, q )     => AllSk.f( main, term, skDef, normalize( q, lctx.up1( p ) ) )
+    case AllSk( main, term, q )            => AllSk.f( main, term, normalize( q, lctx.up1( p ) ) )
     case Def( main, f, q )                 => Def.f( main, f, normalize( q, lctx.up1( p ) ) )
     case Ind( main, f, t, cases ) =>
       Ind( main, f, t, for ( ( c, i ) <- cases.zipWithIndex )

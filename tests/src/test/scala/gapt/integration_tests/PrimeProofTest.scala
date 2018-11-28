@@ -5,7 +5,7 @@ import gapt.expr.{ Atom, Formula, Top }
 import gapt.expr.hol.containsStrongQuantifier
 import gapt.proofs.{ Ant, HOLClause, SequentConnector, Suc }
 import gapt.proofs.expansion.ExpansionSequent
-import gapt.formats.tptp.TPTPFOLExporter
+import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.lk._
 import gapt.provers.prover9._
 import gapt.provers.verit.VeriT
@@ -150,7 +150,7 @@ class PrimeProofTest extends Specification {
       val s = extractStruct( proof_sk, CERES.skipEquations )
 
       val cs = deleteTautologies( CharacteristicClauseSet( s ) )
-      val tptp = TPTPFOLExporter.tptp_problem( cs.toList )
+      val tptp = TptpFOLExporter.tptpProblem( cs.toList )
       //      val writer = new java.io.FileWriter( "target" + separator + "prime1-" + n + "-cs.tptp" )
       //      writer.write( tptp.toString )
       //      writer.flush

@@ -65,8 +65,8 @@ object SingleProjection {
       case ExistsLeftRule( p, _, _, _ )       => handleStrongQuantRule( proof, p, ExistsLeftRule.apply, pred )
       case ForallLeftRule( p, a, f, t, v )    => handleWeakQuantRule( proof, p, a, f, t, v, ForallLeftRule.apply, pred )
       case ExistsRightRule( p, a, f, t, v )   => handleWeakQuantRule( proof, p, a, f, t, v, ExistsRightRule.apply, pred )
-      case ForallSkRightRule( p, a, m, t, d ) => handleSkQuantRule( proof, p, a, m, t, d, ForallSkRightRule.apply, pred )
-      case ExistsSkLeftRule( p, a, m, t, d )  => handleSkQuantRule( proof, p, a, m, t, d, ExistsSkLeftRule.apply, pred )
+      case ForallSkRightRule( p, a, m, t )    => handleSkQuantRule( proof, p, a, m, t, ForallSkRightRule.apply, pred )
+      case ExistsSkLeftRule( p, a, m, t )     => handleSkQuantRule( proof, p, a, m, t, ExistsSkLeftRule.apply, pred )
 
       case DefinitionLeftRule( p, a, m )      => handleDefRule( proof, p, a, m, DefinitionLeftRule.apply, pred )
       case DefinitionRightRule( p, a, m )     => handleDefRule( proof, p, a, m, DefinitionRightRule.apply, pred )
@@ -272,14 +272,14 @@ object SingleProjection {
   }
 
   private def handleSkQuantRule(
-    proof: LKProof, p: LKProof, a: SequentIndex, m: Formula, t: Expr, d: Expr,
-    constructor: ( LKProof, SequentIndex, Formula, Expr, Expr ) => LKProof,
+    proof: LKProof, p: LKProof, a: SequentIndex, m: Formula, t: Expr,
+    constructor: ( LKProof, SequentIndex, Formula, Expr ) => LKProof,
     pred:        Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): ( Option[SequentIndex], LKProof ) = {
     val s = apply( p, copySetToAncestor( proof.occConnectors.head, cut_ancs ), pred )
     if ( cut_ancs( proof.mainIndices.head ) ) s
     else {
       val List( a_ ) = pickrule( proof, List( p ), List( s._2 ), List( a ) )
-      val finproof = constructor( s._2, a_, m, t, d )
+      val finproof = constructor( s._2, a_, m, t )
       if ( s._1.nonEmpty ) {
         val form = s._2.endSequent( s._1.get )
         ( Some( finproof.endSequent.indexOfInSuc( form ) ), finproof )

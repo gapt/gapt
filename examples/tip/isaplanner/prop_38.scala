@@ -1,7 +1,8 @@
 package gapt.examples.tip.isaplanner
 
 import gapt.expr._
-import gapt.proofs.Context
+import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic._
 
 /* This proof is not a s.i.p. because of the subinduction required
@@ -9,10 +10,10 @@ import gapt.proofs.gaptic._
  */
 object prop_38 extends TacticsProof {
 
-  ctx += Context.InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
   ctx += hoc"p:Nat>Nat"
 
-  ctx += Context.InductiveType( ty"list", hoc"nil:list", hoc"cons:Nat>list>list" )
+  ctx += InductiveType( ty"list", hoc"nil:list", hoc"cons:Nat>list>list" )
   ctx += hoc"head:list>Nat"
   ctx += hoc"tail:list>list"
 

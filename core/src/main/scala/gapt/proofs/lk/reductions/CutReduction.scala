@@ -1,6 +1,6 @@
 package gapt.proofs.lk.reductions
 
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 import gapt.proofs.lk.{ CutRule, LKProof }
 
 trait CutReduction extends Reduction {

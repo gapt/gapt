@@ -7,11 +7,13 @@ import gapt.formats.babel.BabelSignature
 import gapt.formats.smt.SmtLibExporter
 import gapt.grammars.{ InductionGrammar, findMinimalInductionGrammar }
 import gapt.grammars.InductionGrammar.Production
-import gapt.proofs.Context.StructurallyInductiveTypes
+import gapt.proofs.context.Context
+import gapt.proofs.context.facet.StructurallyInductiveTypes
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, freeVariablesET, minimalExpansionSequent }
 import gapt.proofs.gaptic.Tactical1
 import gapt.proofs.lk.{ EquationalLKProver, LKProof }
-import gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent, withSection }
+import gapt.proofs.{ HOLSequent, Sequent, withSection }
 import gapt.provers.escargot.{ Escargot, QfUfEscargot }
 import gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import gapt.provers.verit.VeriT

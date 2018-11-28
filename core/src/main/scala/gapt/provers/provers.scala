@@ -2,13 +2,23 @@ package gapt.provers
 
 import gapt.expr._
 import gapt.expr.hol.existentialClosure
-import gapt.proofs.epsilon.{ EpsilonProof, ExpansionProofToEpsilon }
-import gapt.proofs.expansion.{ ExpansionProof, eliminateCutsET }
-import gapt.proofs.{ Context, HOLClause, HOLSequent, MutableContext, Sequent }
-import gapt.proofs.lk.{ ContractionMacroRule, ExtractInterpolant, LKProof, LKToExpansionProof }
-import Session._
-import Runners._
-import gapt.utils.{ Maybe, Tree }
+import gapt.proofs.epsilon.EpsilonProof
+import gapt.proofs.epsilon.ExpansionProofToEpsilon
+import gapt.proofs.expansion.ExpansionProof
+import gapt.proofs.expansion.eliminateCutsET
+import gapt.proofs.lk.ContractionMacroRule
+import gapt.proofs.lk.ExtractInterpolant
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.LKToExpansionProof
+import gapt.proofs.HOLClause
+import gapt.proofs.HOLSequent
+import gapt.proofs.Sequent
+import gapt.proofs.context.Context
+import gapt.proofs.context.mutable.MutableContext
+import gapt.provers.Session.Runners._
+import gapt.provers.Session._
+import gapt.utils.Maybe
+import gapt.utils.Tree
 
 /**
  * A prover that is able to refute HOL sequents/formulas (or subsets
@@ -66,8 +76,10 @@ trait Prover {
   def getExpansionProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] =
     getLKProof( seq ) map { LKToExpansionProof( _ ) } map { eliminateCutsET( _ ) }
 
-  def getEpsilonProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[EpsilonProof] =
-    getExpansionProof( seq ) map { ExpansionProofToEpsilon( _ ) }
+  def getEpsilonProof( seq: HOLSequent )( implicit ctx0: Maybe[MutableContext] ): Option[EpsilonProof] = {
+    implicit val ctx = ctx0.getOrElse( MutableContext.guess( seq ) )
+    getExpansionProof( seq )( ctx ).map( ExpansionProofToEpsilon( _ ) )
+  }
   def getEpsilonProof( formula: Formula )( implicit ctx: Maybe[MutableContext] ): Option[EpsilonProof] =
     getEpsilonProof( Sequent() :+ formula )
 

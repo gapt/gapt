@@ -7,6 +7,8 @@ import io.circe._
 import io.circe.KeyEncoder._
 import cats.implicits._
 
+import scala.collection.immutable.ListMap
+
 /**
  * Wraps a map from proofs to integers. Each proof must be mapped to a
  * higher number than its subproofs.
@@ -44,7 +46,8 @@ private[json] object ProofCollectionCodec {
     val encodeProofWithName: Encoder[P] = p =>
       encodeProof( numEncoder )( p ).mapObject( ( "name", Json.fromString( s"${p.longName}" ) ) +: _ )
 
-    Encoder.encodeMap[Int, P]( implicitly, encodeProofWithName )( coll.proofMap.toList.map( _.swap ).toMap )
+    Encoder.encodeMap[Int, P]( implicitly, encodeProofWithName )(
+      ListMap( coll.proofMap.toVector.map( _.swap ).sortBy( _._1 ): _* ) )
   }
 
   /**

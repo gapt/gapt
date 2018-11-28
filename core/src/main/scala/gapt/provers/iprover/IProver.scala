@@ -4,10 +4,11 @@ import java.io.IOException
 
 import gapt.expr._
 import gapt.formats.StringInputFile
-import gapt.formats.tptp.{ TPTPFOLExporter, TptpProofParser }
+import gapt.proofs.context.mutable.MutableContext
+import gapt.formats.tptp.{ TptpFOLExporter, TptpProofParser }
 import gapt.proofs.resolution.ResolutionProof
 import gapt.proofs.sketch.RefutationSketchToResolution
-import gapt.proofs.{ FOLClause, HOLClause, MutableContext }
+import gapt.proofs.{ FOLClause, HOLClause }
 import gapt.provers.{ ResolutionProver, renameConstantsToFi }
 import gapt.utils.{ ExternalProgram, Maybe, runProcess }
 
@@ -18,7 +19,7 @@ class IProver extends ResolutionProver with ExternalProgram {
     renameConstantsToFi.wrap( seq.toSeq )(
       ( renaming, cnf: Seq[HOLClause] ) => {
         val labelledCNF = cnf.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
-        val tptpIn = TPTPFOLExporter.exportLabelledCNF( labelledCNF ).toString
+        val tptpIn = TptpFOLExporter.exportLabelledCNF( labelledCNF ).toString
         val output = runProcess.withTempInputFile( Seq(
           "iproveropt",
           "--schedule", "none",

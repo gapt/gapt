@@ -2,7 +2,7 @@ package gapt.provers.verit
 
 import gapt.expr.hol.containsQuantifier
 import gapt.formats.verit._
-import gapt.proofs.{ Context, HOLSequent, MutableContext }
+import gapt.proofs.HOLSequent
 import gapt.proofs.expansion._
 import gapt.utils.{ ExternalProgram, Maybe, runProcess }
 import java.io._
@@ -10,6 +10,8 @@ import java.io._
 import gapt.provers._
 import gapt.expr._
 import gapt.formats.smt.SmtLibExporter
+import gapt.proofs.context.Context
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.lk.LKProof
 
 object VeriT extends VeriT

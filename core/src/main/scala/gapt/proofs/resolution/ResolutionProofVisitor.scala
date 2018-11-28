@@ -48,25 +48,25 @@ class ResolutionProofVisitor {
     case DefIntro( _, _, defAtom, definition ) =>
       DefIntro( newSub, aux, defAtom, definition )
 
-    case _: TopL                     => TopL( newSub, aux )
-    case _: BottomR                  => BottomR( newSub, aux )
-    case _: NegL                     => NegL( newSub, aux )
-    case _: NegR                     => NegR( newSub, aux )
-    case _: AndL                     => AndL( newSub, aux )
-    case _: AndR1                    => AndR1( newSub, aux )
-    case _: AndR2                    => AndR2( newSub, aux )
-    case _: OrL1                     => OrL1( newSub, aux )
-    case _: OrL2                     => OrL2( newSub, aux )
-    case _: OrR                      => OrR( newSub, aux )
-    case _: ImpL1                    => ImpL1( newSub, aux )
-    case _: ImpL2                    => ImpL2( newSub, aux )
-    case _: ImpR                     => ImpR( newSub, aux )
+    case _: TopL              => TopL( newSub, aux )
+    case _: BottomR           => BottomR( newSub, aux )
+    case _: NegL              => NegL( newSub, aux )
+    case _: NegR              => NegR( newSub, aux )
+    case _: AndL              => AndL( newSub, aux )
+    case _: AndR1             => AndR1( newSub, aux )
+    case _: AndR2             => AndR2( newSub, aux )
+    case _: OrL1              => OrL1( newSub, aux )
+    case _: OrL2              => OrL2( newSub, aux )
+    case _: OrR               => OrR( newSub, aux )
+    case _: ImpL1             => ImpL1( newSub, aux )
+    case _: ImpL2             => ImpL2( newSub, aux )
+    case _: ImpR              => ImpR( newSub, aux )
 
-    case AllR( _, _, ev )            => AllR( newSub, aux, ev )
-    case ExL( _, _, ev )             => ExL( newSub, aux, ev )
+    case AllR( _, _, ev )     => AllR( newSub, aux, ev )
+    case ExL( _, _, ev )      => ExL( newSub, aux, ev )
 
-    case AllL( _, _, skTerm, skDef ) => AllL( newSub, aux, skTerm, skDef )
-    case ExR( _, _, skTerm, skDef )  => ExR( newSub, aux, skTerm, skDef )
+    case AllL( _, _, skTerm ) => AllL( newSub, aux, skTerm )
+    case ExR( _, _, skTerm )  => ExR( newSub, aux, skTerm )
   }
 
   def visitInput( p: Input ): ResolutionProof = p

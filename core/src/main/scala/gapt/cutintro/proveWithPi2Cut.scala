@@ -1,6 +1,6 @@
 package gapt.cutintro
 import gapt.expr._
-import gapt.proofs.{ Context, Sequent }
+import gapt.proofs.Sequent
 import gapt.proofs.gaptic._
 import gapt.proofs.gaptic.{ Lemma, guessLabels, tactics }
 import gapt.proofs.gaptic.tactics._

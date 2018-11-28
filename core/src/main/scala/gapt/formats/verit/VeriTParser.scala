@@ -1,15 +1,13 @@
 package gapt.formats.verit
 
-import gapt.expr.BetaReduction._
-import gapt.expr._
-import gapt.expr.hol.{ instantiate, isPrenex }
-import gapt.proofs.expansion._
-import java.io.{ FileReader, Reader, StringReader }
+import java.io.{ Reader, StringReader }
 
+import gapt.expr._
+import gapt.expr.hol.instantiate
 import gapt.formats.InputFile
 import gapt.proofs.Sequent
+import gapt.proofs.expansion._
 
-import scala.collection.immutable.HashMap
 import scala.util.parsing.combinator._
 
 class VeriTParserException( msg: String ) extends Exception( msg: String )
@@ -41,7 +39,7 @@ object VeriTParser extends RegexParsers {
     // ...
     // =(x0, xn-1) ^ =(xn-1, xn) -> =(x0, xn)
     //
-    def unfoldChain( l: List[FOLFormula] ) = unfoldChain_( l.tail, l( 0 ) )
+    def unfoldChain( l: List[FOLFormula] ) = unfoldChain_( l.tail, l.head )
     def unfoldChain_( l: List[FOLFormula], c: FOLFormula ): List[Seq[FOLTerm]] = l.head match {
       case Neg( Eq( x0, x1 ) ) => c match {
         // Note that the variables are:
@@ -64,11 +62,11 @@ object VeriTParser extends RegexParsers {
           Seq( x3, x1, x0 ) :: unfoldChain_( l.tail, newc )
 
         // y=x ^ y=z -> x=z
-        case Neg( ( Eq( x2, x3 ) ) ) if x2 == x0 =>
+        case Neg( Eq( x2, x3 ) ) if x2 == x0 =>
           val newc = Neg( Eq( x3, x1 ) )
           Seq( x3, x0, x1 ) :: unfoldChain_( l.tail, newc )
 
-        case Neg( ( Eq( x2, x3 ) ) ) =>
+        case Neg( Eq( x2, x3 ) ) =>
           throw new VeriTUnfoldingTransitivityException( "ERROR: the conclusion of the previous terms have" +
             " no literal in common with the next one. Are the literals out of order?" +
             nLine + "conclusion: " + c + nLine + "second literal: " + l.head )
@@ -160,7 +158,7 @@ object VeriTParser extends RegexParsers {
     }
 
     val pname = getPredName( f.last )
-    val ( args1, args2 ) = getArgsLst( f( f.length - 2 ), f( f.length - 1 ) )
+    val ( args1, args2 ) = getArgsLst( f( f.length - 2 ), f.last )
     val eq_congr_pred = gen_eq_congr_pred( args1.size, pname )
 
     Seq( ( eq_congr_pred, args1 ++ args2 ) )
@@ -220,7 +218,7 @@ object VeriTParser extends RegexParsers {
           } else acc
       }
 
-      val axioms = r.map( p => p._2 ).flatten
+      val axioms = r.flatMap( p => p._2 )
 
       // Transform all pairs into expansion trees
       val inputET = input.map( p => formulaToExpansionTree( p, Polarity.InAntecedent ) )
@@ -262,22 +260,14 @@ object VeriTParser extends RegexParsers {
     eqAxiom ^^ ( i => ( Nil, Some( i ) ) ) |
       innerRule ^^ ( s => ( s, None ) )
   def eqAxiom: Parser[Instances] = eq_reflexive | eq_transitive | eq_congruence | eq_congruence_pred
-  def eq_reflexive: Parser[Instances] = "eq_reflexive" ~> conclusion ^^ {
-    case c =>
-      getEqReflInstances( c )
-  }
-  def eq_transitive: Parser[Instances] = "eq_transitive" ~> conclusion ^^ {
-    case c =>
-      getEqTransInstances( c )
-  }
-  def eq_congruence: Parser[Instances] = "eq_congruent" ~> conclusion ^^ {
-    case c =>
-      getEqCongrInstances( c )
-  }
-  def eq_congruence_pred: Parser[Instances] = "eq_congruent_pred" ~> conclusion ^^ {
-    case c =>
-      getEqCongrPredInstances( c )
-  }
+  def eq_reflexive: Parser[Instances] = "eq_reflexive" ~> conclusion ^^ ( c =>
+    getEqReflInstances( c ) )
+  def eq_transitive: Parser[Instances] = "eq_transitive" ~> conclusion ^^ ( c =>
+    getEqTransInstances( c ) )
+  def eq_congruence: Parser[Instances] = "eq_congruent" ~> conclusion ^^ ( c =>
+    getEqCongrInstances( c ) )
+  def eq_congruence_pred: Parser[Instances] = "eq_congruent_pred" ~> conclusion ^^ ( c =>
+    getEqCongrPredInstances( c ) )
 
   def innerRule: Parser[List[String]] =
     resolution | and | and_pos | and_neg | or | or_pos | or_neg |
@@ -286,15 +276,15 @@ object VeriTParser extends RegexParsers {
   // Rules that I don't care except if they use some clause (collecting their labels)
   def resolution: Parser[List[String]] = "resolution" ~> premises <~ conclusion
   def and: Parser[List[String]] = "and" ~> premises <~ conclusion
-  def and_pos: Parser[List[String]] = "and_pos" ~> conclusion ^^ { case _ => Nil }
-  def and_neg: Parser[List[String]] = "and_neg" ~> conclusion ^^ { case _ => Nil }
+  def and_pos: Parser[List[String]] = "and_pos" ~> conclusion ^^ ( _ => Nil )
+  def and_neg: Parser[List[String]] = "and_neg" ~> conclusion ^^ ( _ => Nil )
   def or: Parser[List[String]] = "or" ~> premises <~ conclusion
-  def or_pos: Parser[List[String]] = "or_pos" ~> conclusion ^^ { case _ => Nil }
-  def or_neg: Parser[List[String]] = "or_neg" ~> conclusion ^^ { case _ => Nil }
+  def or_pos: Parser[List[String]] = "or_pos" ~> conclusion ^^ ( _ => Nil )
+  def or_neg: Parser[List[String]] = "or_neg" ~> conclusion ^^ ( _ => Nil )
   def implies: Parser[List[String]] = "implies" ~> premises <~ conclusion
-  def implies_pos: Parser[List[String]] = "implies_pos" ~> conclusion ^^ { case _ => Nil }
-  def implies_neg1: Parser[List[String]] = "implies_neg1" ~> conclusion ^^ { case _ => Nil }
-  def implies_neg2: Parser[List[String]] = "implies_neg2" ~> conclusion ^^ { case _ => Nil }
+  def implies_pos: Parser[List[String]] = "implies_pos" ~> conclusion ^^ ( _ => Nil )
+  def implies_neg1: Parser[List[String]] = "implies_neg1" ~> conclusion ^^ ( _ => Nil )
+  def implies_neg2: Parser[List[String]] = "implies_neg2" ~> conclusion ^^ ( _ => Nil )
   def not_implies1: Parser[List[String]] = "not_implies1" ~> premises <~ conclusion
   def not_implies2: Parser[List[String]] = "not_implies2" ~> premises <~ conclusion
   def not_and: Parser[List[String]] = "not_and" ~> premises <~ conclusion
@@ -312,37 +302,29 @@ object VeriTParser extends RegexParsers {
   def formula: Parser[FOLFormula] = andFormula | orFormula | notFormula | implFormula | pred
 
   def term: Parser[FOLTerm] = constant | function
-  def constant: Parser[FOLTerm] = name ^^ { case n => FOLConst( n ) }
+  def constant: Parser[FOLTerm] = name ^^ ( n => FOLConst( n ) )
   def function: Parser[FOLTerm] = "(" ~> name ~ rep( term ) <~ ")" ^^ {
     case name ~ args =>
       val n = name
       FOLFunction( n, args )
   }
 
-  def andFormula: Parser[FOLFormula] = "(and" ~> rep( formula ) <~ ")" ^^ {
-    case flst => And( flst )
-  }
-  def orFormula: Parser[FOLFormula] = "(or" ~> rep( formula ) <~ ")" ^^ {
-    case flst => Or( flst )
-  }
+  def andFormula: Parser[FOLFormula] = "(and" ~> rep( formula ) <~ ")" ^^ ( flst => And( flst ) )
+  def orFormula: Parser[FOLFormula] = "(or" ~> rep( formula ) <~ ")" ^^ ( flst => Or( flst ) )
   def implFormula: Parser[FOLFormula] = "(=>" ~> rep( formula ) <~ ")" ^^ {
-    case flst =>
-      val last = flst( flst.size - 1 )
+    flst =>
+      val last = flst.last
       val second_last = flst( flst.size - 2 )
       val rest = flst.dropRight( 2 )
       val imp = Imp( second_last, last )
       rest.foldRight( imp ) { case ( f, acc ) => Imp( f, acc ) }
   }
-  def notFormula: Parser[FOLFormula] = "(not" ~> formula <~ ")" ^^ {
-    case f => Neg( f )
-  }
+  def notFormula: Parser[FOLFormula] = "(not" ~> formula <~ ")" ^^ ( f => Neg( f ) )
   def pred: Parser[FOLFormula] = "(" ~> name ~ rep( term ) <~ ")" ^^ {
     case name ~ args =>
       FOLAtom( name, args )
-  } | name ^^ {
-    // No parenthesis around unary symbols
-    case name => FOLAtom( name, Nil )
-  }
+  } | name ^^ ( // No parenthesis around unary symbols
+    name => FOLAtom( name, Nil ) )
 
   // Syntax of let-expressions:
   // (let (v1 t1) ... (vn tn) exp)
@@ -351,9 +333,7 @@ object VeriTParser extends RegexParsers {
   // But we are not constructing the terms for now, first because we don't need
   // it and second because the garbage collector goes crazy and crashes while
   // constructing this huge lambda-term
-  def let: Parser[FOLFormula] = "(" ~> "let" ~> "(" ~> rep( binding ) ~ ")" ~ expression <~ ")" ^^ {
-    case _ => Or( List() )
-  }
+  def let: Parser[FOLFormula] = "(" ~> "let" ~> "(" ~> rep( binding ) ~ ")" ~ expression <~ ")" ^^ ( _ => Or( List() ) )
 
   def binding: Parser[( FOLTerm, FOLTerm )] = "(" ~> constant ~ term <~ ")" ^^ {
     case v ~ t => ( v, t )

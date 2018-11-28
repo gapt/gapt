@@ -4,10 +4,11 @@ import java.awt.Color
 import java.awt.Font._
 import java.awt.image.BufferedImage
 import java.io.File
+
+import ammonite.ops.{ Path, write }
 import javax.imageio.ImageIO
 import javax.swing.WindowConstants
 import javax.swing.filechooser.FileFilter
-
 import com.itextpdf.awt.PdfGraphics2D
 
 import scala.swing.Dialog.Message
@@ -120,7 +121,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
    * Opens a proof db and displays all its contents.
    */
   def fOpen() {
-    chooser.fileFilter = chooser.acceptAllFileFilter
+    val chooser = createChooser( ".gz", ".ivy", ".lks", ".lksc", ".llk", ".pdf", ".png", ".rs", ".tex", ".tptp", ".xml" )
     chooser.showOpenDialog( mBar ) match {
       case FileChooser.Result.Approve =>
         mainPanel.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
@@ -140,7 +141,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
    * @param component The component to be exported.
    */
   def fExportPdf( component: Component ) {
-    chooser.fileFilter = chooser.peer.getChoosableFileFilters.find( f => f.getDescription == ".pdf" ).get
+    val chooser = createChooser( ".pdf" )
     chooser.showSaveDialog( mBar ) match {
       case FileChooser.Result.Approve => try {
         mainPanel.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
@@ -176,7 +177,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
    * @param component The component to be exported.
    */
   def fExportPng( component: Component ) {
-    chooser.fileFilter = chooser.peer.getChoosableFileFilters.find( f => f.getDescription == ".png" ).get
+    val chooser = createChooser( ".png" )
     chooser.showSaveDialog( mBar ) match {
       case FileChooser.Result.Approve => try {
         mainPanel.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
@@ -267,8 +268,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
     else e.getStackTrace.toString
   }
 
-  protected val chooser = new FileChooser {
-    val extensions = List( ".gz", ".ivy", ".lks", ".lksc", ".llk", ".pdf", ".png", ".rs", ".tex", ".tptp", ".xml" )
+  protected def createChooser( extensions: String* ): FileChooser = new FileChooser {
     extensions.foreach( fe => peer.addChoosableFileFilter(
       new FileFilter {
         def accept( f: File ): Boolean = {
@@ -330,4 +330,41 @@ abstract class ScrollableProofToolViewer[+T]( name: String, content: T ) extends
   }
 
   override def mainPanel = scrollPane
+}
+
+/**
+ * A trait for ProofToolViewer objects that can save their contents.
+ * @tparam T The type of the content object.
+ */
+trait Savable[T] extends ProofToolViewer[T] {
+  /**
+   * Saves an object to disk.
+   * @param name
+   * @param obj The object to be saved.
+   */
+  def fSave( name: String, obj: T ): Unit = {
+    val chooser = createChooser( saveFormats.keys.toList: _* )
+    chooser.showSaveDialog( mBar ) match {
+      case FileChooser.Result.Approve =>
+        mainPanel.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
+        val result = chooser.selectedFile.getAbsolutePath
+        try {
+          saveFormats.toList.collectFirst {
+            case ( format, exporter ) if result.endsWith( format ) || chooser.fileFilter.getDescription == format =>
+              val fileName = if ( result.endsWith( format ) ) result else result + format
+              ( fileName, exporter( obj ) )
+          } match {
+            case Some( ( fileName, content ) ) => write( Path( fileName ), content )
+            case None                          => infoMessage( "Content cannot be saved in this format." )
+          }
+        } catch { case e: Throwable => errorMessage( "Cannot save the proof! " + dnLine + getExceptionString( e ) ) }
+        finally { mainPanel.cursor = java.awt.Cursor.getDefaultCursor }
+      case _ =>
+    }
+  }
+
+  def saveFormats: Map[String, T => String]
+
+  private def saveAsButton = MenuButtons.saveAsButton( this )
+  override def fileMenuContents = Seq( openButton, saveAsButton, new Separator, exportToPDFButton, exportToPNGButton )
 }

@@ -1,11 +1,13 @@
 package gapt.cutintro
 
 import gapt.expr._
-import gapt.expr.fol.isFOLPrenexSigma1
+import gapt.expr.fol.{ isFOLPrenexSigma1, isPrenexSigma1 }
 import gapt.expr.hol._
 import gapt.grammars._
 import gapt.grammars.reforest.Reforest
 import gapt.proofs._
+import gapt.proofs.context.Context
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion._
 import gapt.proofs.lk._
 import gapt.proofs.resolution.{ ResolutionProof, ResolutionToExpansionProof, containsEquationalReasoning }
@@ -198,7 +200,7 @@ object CutIntroduction {
       expansionProof:   ExpansionProof,
       backgroundTheory: BackgroundTheory ) {
     require(
-      isFOLPrenexSigma1( expansionProof.shallow ),
+      isPrenexSigma1( expansionProof.shallow ),
       "Cut-introduction requires first-order prenex end-sequents without strong quantifiers" )
   }
   object InputProof {

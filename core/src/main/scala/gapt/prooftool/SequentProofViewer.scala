@@ -2,10 +2,12 @@ package gapt.prooftool
 
 import ammonite.ops._
 import gapt.expr.Formula
+import gapt.formats.json._
 import gapt.formats.latex.LatexExporter
 import gapt.proofs._
 import gapt.proofs.lk.{ LKProof, LKToExpansionProof, isMaeharaMG3i }
 import gapt.formats.llk.exportLLK
+import gapt.proofs.nd.NDProof
 
 import scala.swing._
 
@@ -19,7 +21,6 @@ import scala.swing._
 abstract class DagProofViewer[T <: DagProof[T]]( name: String, proof: DagProof[T] )
   extends ScrollableProofToolViewer[DagProof[T]]( name, proof ) {
   override val content = proof
-
 }
 
 /**
@@ -140,7 +141,6 @@ class LKProofViewer( name: String, proof: LKProof )
   extends SequentProofViewer[Formula, LKProof]( name, proof, LatexExporter( _ ) )
   with Savable[LKProof] with ContainsLKProof {
   override val content: LKProof = proof
-  override def fileMenuContents = Seq( openButton, saveAsButton, new Separator, exportToPDFButton, exportToPNGButton )
   override def viewMenuContents = super.viewMenuContents ++ Seq(
     hideStructuralRulesButton, markCutAncestorsButton, markNonIntuitionisticInferencesButton, new Separator(),
     viewExpansionProofButton )
@@ -160,26 +160,10 @@ class LKProofViewer( name: String, proof: LKProof )
 
   }
 
-  override def fSave( name: String, proof: LKProof ) {
-    chooser.fileFilter = chooser.acceptAllFileFilter
-    chooser.showSaveDialog( mBar ) match {
-      case FileChooser.Result.Approve =>
-        scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-        val result = chooser.selectedFile.getAbsolutePath
-        // val pair = body.getContent.getData.get
-        try {
-          if ( result.endsWith( ".llk" ) || chooser.fileFilter.getDescription == ".llk" ) {
-            val filename = if ( result.endsWith( ".llk" ) ) result else result + ".llk"
-            write( Path( filename ), exportLLK( proof ) )
-          } else if ( result.endsWith( ".tex" ) || chooser.fileFilter.getDescription == ".tex" ) {
-            val filename = if ( result.endsWith( ".tex" ) ) result else result + ".tex"
-            write( Path( filename ), LatexExporter( proof ) )
-          } else infoMessage( "Proofs cannot be saved in this format." )
-        } catch { case e: Throwable => errorMessage( "Cannot save the proof! " + dnLine + getExceptionString( e ) ) }
-        finally { scrollPane.cursor = java.awt.Cursor.getDefaultCursor }
-      case _ =>
-    }
-  }
+  def saveFormats = Map(
+    ".llk" -> { p: LKProof => exportLLK( p ) },
+    ".tex" -> { p: LKProof => LatexExporter( p ) },
+    ".json" -> { p: LKProof => JsonExporter( p ).toString } )
 
   def hideStructuralRules(): Unit = publisher.publish( HideStructuralRules )
   def showAllRules(): Unit = publisher.publish( ShowAllRules( Nil ) )
@@ -211,9 +195,6 @@ class LKProofViewer( name: String, proof: LKProof )
     } )
 
   // New menu buttons
-  def saveAsButton = MenuButtons.saveAsButton[LKProof](
-    this.asInstanceOf[ProofToolViewer[LKProof] with Savable[LKProof]] )
-
   def markCutAncestorsButton = MenuButtons.marCutAncestorsButton( this )
 
   def viewExpansionProofButton = new MenuItem( Action( "View expansion proof" ) {
@@ -222,4 +203,12 @@ class LKProofViewer( name: String, proof: LKProof )
 
   def hideStructuralRulesButton = MenuButtons.hideStructuralRulesButton( this )
 
+}
+
+class NDProofViewer( name: String, proof: NDProof )
+  extends SequentProofViewer[Formula, NDProof]( name, proof, LatexExporter( _ ) ) with Savable[NDProof] {
+  override val content: NDProof = proof
+
+  def saveFormats = Map(
+    ".json" -> { p: NDProof => JsonExporter( p ).toString } )
 }

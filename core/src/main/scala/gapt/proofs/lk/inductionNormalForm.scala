@@ -1,6 +1,6 @@
 package gapt.proofs.lk
 
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 
 object inductionNormalForm {
   /**

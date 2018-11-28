@@ -4,8 +4,8 @@ import gapt.expr._
 import gapt.expr.hol.{ instantiate, skolemize }
 import gapt.grammars.InductionGrammar
 import gapt.grammars.InductionGrammar.Production
-import gapt.proofs.Context.InductiveType
-import gapt.proofs.MutableContext
+import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.context.update.InductiveType
 import gapt.proofs.expansion.InstanceTermEncoding
 import gapt.provers.sat.Sat4j
 import gapt.provers.viper.grammars.{ InductionBUP, constructSIP }

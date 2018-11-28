@@ -1,8 +1,9 @@
 package gapt.proofs.gaptic
 
 import gapt.expr._
-import gapt.proofs.Context.ProofNames
-import gapt.proofs.{ MutableContext, Sequent }
+import gapt.proofs.context.facet.ProofNames
+import gapt.proofs.Sequent
+import gapt.proofs.context.mutable.MutableContext
 import org.specs2.mutable.Specification
 
 class ProofMacrosTest extends Specification {

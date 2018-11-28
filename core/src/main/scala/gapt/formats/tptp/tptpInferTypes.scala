@@ -3,11 +3,11 @@ package gapt.formats.tptp
 import gapt.expr._
 import gapt.expr.arithmetic.int.TInt
 import gapt.formats.babel.{BabelSignature, Notation, Notations, Precedence}
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 
 import scala.collection.mutable
 
-object tptpInferTypes {
+object TptpInferTypes {
   case class Context(constants: Map[String, Ty], variables: Map[String, Ty],
                      types: Map[preExpr.Type, Ty], memo : ExpressionMemoization ) {
     def updatedC( cname: String, ty: Ty ) = {

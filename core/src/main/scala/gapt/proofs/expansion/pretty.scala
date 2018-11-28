@@ -5,12 +5,9 @@ import gapt.formats.babel.{ BabelExporter, BabelSignature, Precedence }
 import gapt.utils.Doc
 import Doc._
 
-class ExpansionTreePrettyPrinter( sig: BabelSignature ) extends BabelExporter( unicode = true, sig = sig ) {
-  def export( et: ExpansionTree ): String =
-    group( show( et, Map[String, VarOrConst]() )._1.inPrec( 0 ) ).render( lineWidth )
-
-  def addPol( doc: Doc, pol: Polarity ) =
-    doc <> ( if ( pol.positive ) "+" else "-" )
+class ExpansionTreePrettyPrinter( sig: BabelSignature ) extends ETtPrettyPrinter( sig ) {
+  def export( et: ExpansionTree ): Doc =
+    group( show( et, Map[String, VarOrConst]() )._1.inPrec( 0 ) )
 
   def show( et: ExpansionTree, t0: Map[String, VarOrConst] ): ( Parenable, Map[String, VarOrConst] ) = et match {
     case ETTop( pol )    => ( Parenable( Precedence.max, addPol( "⊤", pol ) ), t0 )
@@ -40,35 +37,41 @@ class ExpansionTreePrettyPrinter( sig: BabelSignature ) extends BabelExporter( u
       val ( a_, t1 ) = show( a, t0 )
       val ( b_, t2 ) = show( b, t1 )
       Parenable( Precedence.impl, a_.inPrec( Precedence.impl + 1 ) <+> "→" </> b_.inPrec( Precedence.impl ) ) -> t2
-    case ETStrongQuantifier( sh, ev, child ) =>
+    case ETStrongQuantifierBlock( sh, evs, child ) if evs.nonEmpty =>
       val ( sh_, t1 ) = show( sh, true, Set(), t0 )
-      val ( ev_, t2 ) = show( ev, true, Set(), t1 )
+      val ( evs_, t2 ) = shows( evs.toList, true, Set(), t1 )
       val ( child_, t3 ) = show( child, t2 )
-      Parenable( Precedence.conj, sh_.inPrec( Precedence.conj ) <+> "+ev^{" <> ev_.inPrec( 0 ) <> "}" </>
+      Parenable( Precedence.conj, sh_.inPrec( Precedence.conj ) <+>
+        "+ev^{" <> sepByComma( evs_.map( _.inPrec( 0 ) ) ) <> "}" </>
         child_.inPrec( Precedence.conj ) ) -> t3
-    case ETSkolemQuantifier( sh, skTerm, _, child ) =>
+    case ETSkolemQuantifier( sh, skTerm, child ) =>
       val ( sh_, t1 ) = show( sh, true, Set(), t0 )
       val ( skTerm_, t2 ) = show( skTerm, true, Set(), t1 )
       val ( child_, t3 ) = show( child, t2 )
       Parenable( Precedence.conj, sh_.inPrec( Precedence.conj ) <+> "+sk^{" <> skTerm_.inPrec( 0 ) <> "}" </>
         child_.inPrec( Precedence.conj ) ) -> t3
-    case ETWeakQuantifier( sh, insts ) =>
+    case ETWeakQuantifierBlock( sh, n, insts ) if n > 0 =>
       val ( sh_, t1 ) = show( sh, true, Set(), t0 )
       var t2 = t1
       val insts_ = insts.toList map {
-        case ( term, child ) =>
-          val ( term_, t3 ) = show( term, true, Set(), t2 )
+        case ( terms, child ) =>
+          val ( terms_, t3 ) = shows( terms.toList, true, Set(), t2 )
           val ( child_, t4 ) = show( child, t3 )
           t2 = t4
+          val termsDoc = sepByComma( terms_.map( _.inPrec( 0 ) ) )
           (
-            term_.inPrec( 0 ).render( Integer.MAX_VALUE ),
-            group( nest( "+^{" <> term_.inPrec( 0 ) <> "}" </> child_.inPrec( Precedence.conj ) ) ) )
+            termsDoc.render( Integer.MAX_VALUE ),
+            group( nest( "+^{" <> termsDoc <> "}" </> child_.inPrec( Precedence.conj ) ) ) )
       }
       Parenable( Precedence.conj, sep( sh_.inPrec( Precedence.conj ) +: insts_.sortBy( _._1 ).map( _._2 ), line ) ) -> t2
     case ETDefinition( shallow, child ) =>
       val ( sh_, t1 ) = show( shallow, true, Set(), t0 )
       val ( child_, t2 ) = show( child, t1 )
       Parenable( Precedence.conj, sh_.inPrec( Precedence.conj ) <+> "+def" </> child_.inPrec( Precedence.conj ) ) -> t2
+    case ExpansionTree( term, pol, sh ) =>
+      val ( sh_, t1 ) = show( sh, true, Set(), t0 )
+      val ( term_, t2 ) = show( term, t1 )
+      Parenable( Precedence.max, ( "⟨" <> addPol( sh_.inPrec( 0 ), pol ) <> "," </> term_.inPrec( 0 ) <> "⟩" ).group ) -> t2
   }
 
 }

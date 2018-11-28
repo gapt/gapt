@@ -5,7 +5,6 @@ import gapt.expr.{ Formula, Expr, preExpr }
 import gapt.proofs.gaptic.guessLabels
 import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.utils.NameGenerator
-import fastparse.core.ParseError
 import cats.syntax.either._
 
 object Precedence {
@@ -30,13 +29,11 @@ object Precedence {
 
 sealed abstract class BabelParseError( message: String ) extends IllegalArgumentException( message )
 case class BabelElabError( reason: String ) extends BabelParseError( reason )
-case class BabelParsingError( parseError: fastparse.all.Parsed.Failure )
-  extends BabelParseError( ParseError( parseError ).getMessage )
+case class BabelParsingError( parseError: fastparse.Parsed.Failure )
+  extends BabelParseError( parseError.trace.longAggregateMsg )
 
 object BabelLexical {
-  import fastparse.all._
-
-  val Whitespace = NoTrace( CharsWhile( _.isWhitespace, min = 0 ) )
+  import fastparse._, NoWhitespace._
 
   def isOpChar( c: Char ) =
     c != 'λ' && c != '⊢' && c != ',' && c != '(' && c != ')' && c != '\'' && c != '#' && c != ':' &&
@@ -45,105 +42,105 @@ object BabelLexical {
         ty != Character.SPACE_SEPARATOR && (
           ty == Character.MATH_SYMBOL || ty == Character.OTHER_SYMBOL || ( '\u0020' <= c && c <= '\u007e' ) )
       }
-  val OpChar = CharPred( isOpChar )
-  val RestOpChar = OpChar | CharIn( "_" ) | CharPred( isUnquotNameChar )
-  val Operator: P[String] = P( ( OpChar.rep( 1 ) ~ ( "_" ~ RestOpChar.rep ).? ).! )
-  val OperatorAndNothingElse = Operator ~ End
+  def OpChar[_: P] = CharPred( isOpChar )
+  def RestOpChar[_: P] = OpChar | CharIn( "_" ) | CharPred( isUnquotNameChar )
+  def Operator[_: P]: P[String] = P( ( OpChar.rep( 1 ) ~ ( "_" ~ RestOpChar.rep ).? ).! )
+  def OperatorAndNothingElse[_: P] = Operator ~ End
 
-  val Name: P[String] = P( Operator | UnquotedName | QuotedName )
-  val TyName: P[String] = P( UnquotedName | QuotedName )
+  def Name[_: P]: P[String] = P( Operator | UnquotedName | QuotedName )
+  def TyName[_: P]: P[String] = P( UnquotedName | QuotedName )
   def isEmoji( c: Char ) = ( '\ud83c' <= c && c <= '\udbff' ) || ( '\udc00' <= c && c <= '\udfff' )
   def isUnquotNameChar( c: Char ) = ( c.isUnicodeIdentifierPart || isEmoji( c ) || c == '_' || c == '$' ) && c != 'λ'
-  val UnquotedName: P[String] = P( CharsWhile( isUnquotNameChar ).! )
-  val QuotedName: P[String] = P( "'" ~ QuotedNameChar.rep ~ "'" ).map( _.mkString )
-  val QuotedNameChar: P[String] = P(
+  def UnquotedName[_: P]: P[String] = P( CharsWhile( isUnquotNameChar ).! )
+  def QuotedName[_: P]: P[String] = P( "'" ~ QuotedNameChar.rep ~ "'" ).map( _.mkString )
+  def QuotedNameChar[_: P]: P[String] = P(
     CharsWhile( c => c != '\\' && c != '\'' ).! |
       ( "\\" ~ ( "'" | "\\" ).! ) |
-      ( "\\u" ~ CharIn( ( 'a' to 'f' ) ++ ( '0' to '9' ) ).
+      ( "\\u" ~ CharIn( "0123456789abcdef" ).
         rep( min = 4, max = 4 ).!.
         map( Integer.parseInt( _, 16 ).toChar.toString ) ) )
 
-  def kw( name: String ) = P( name ~ !CharPred( isUnquotNameChar ) )
+  def kw[_: P]( name: String ) = P( name ~ !CharPred( isUnquotNameChar ) )
 }
 
 object BabelParserCombinators {
   import BabelLexical._
-  import fastparse.noApi._
-  val White = fastparse.WhitespaceApi.Wrapper( Whitespace )
-  import White._
+  import fastparse._, MultiLineWhitespace._
 
-  def MarkPos( p: P[preExpr.Expr] ): P[preExpr.Expr] =
-    ( Index ~ p ~ Index ).map {
-      case ( _, e @ preExpr.LocAnnotation( _, _ ), _ ) => e
-      case ( begin, e, end ) =>
-        preExpr.LocAnnotation( e, preExpr.Location( begin, end ) )
+  def MarkPos[_: P]( p: => P[preExpr.Expr] ): P[preExpr.Expr] = {
+    val begin = P.current.index
+    val result = p
+    val end = P.current.index
+    result.map {
+      case annotated @ preExpr.LocAnnotation( _, _ ) =>
+        annotated
+      case unannotated =>
+        preExpr.LocAnnotation( unannotated, preExpr.Location( begin, end ) )
     }
+  }
 
-  def PE( p: => P[preExpr.Expr] )( implicit name: sourcecode.Name ): P[preExpr.Expr] =
-    P( MarkPos( p ) )( name )
+  def ExprAndNothingElse[_: P]: P[preExpr.Expr] = P( "" ~ Expr ~ End )
 
-  val ExprAndNothingElse: P[preExpr.Expr] = P( "" ~ Expr ~ End )
+  def Expr[_: P]: P[preExpr.Expr] = P( Lam )
 
-  val Expr: P[preExpr.Expr] = P( Lam )
-
-  val BoundVar: P[preExpr.Ident] = P(
+  def BoundVar[_: P]: P[preExpr.Ident] = P(
     Name.map( preExpr.Ident( _, preExpr.freshMetaType(), None ) ) |
       ( "(" ~ Name ~ ":" ~ Type ~ ")" ).map( x => preExpr.Ident( x._1, x._2, None ) ) )
-  val Lam: P[preExpr.Expr] = PE( ( ( "^" | "λ" ) ~/ BoundVar ~ Lam ).
-    map( x => preExpr.Abs( x._1, x._2 ) ) | TypeAnnotation )
+  def Lam[_: P]: P[preExpr.Expr] = MarkPos( P( ( ( "^" | "λ" ) ~/ BoundVar ~ Lam ).
+    map( x => preExpr.Abs( x._1, x._2 ) ) | TypeAnnotation ) )
 
-  val TypeAnnotation: P[preExpr.Expr] = PE( ( FlatOps ~/ ( ":" ~ Type ).? ) map {
+  def TypeAnnotation[_: P]: P[preExpr.Expr] = MarkPos( P( ( FlatOps ~/ ( ":" ~ Type ).? ) map {
     case ( expr, Some( ty ) ) => preExpr.TypeAnnotation( expr, ty )
     case ( expr, None )       => expr
-  } )
+  } ) )
 
-  val FlatOps: P[preExpr.Expr] = PE( FlatOpsElem.rep( 1 ).map( children => preExpr.FlatOps( children.view.flatten.toList ) ) )
-  val FlatOpsElem: P[Seq[preExpr.FlatOpsChild]] = P(
+  def FlatOps[_: P]: P[preExpr.Expr] = MarkPos( P( FlatOpsElem.rep( 1 ).map( children => preExpr.FlatOps( children.view.flatten.toList ) ) ) )
+  def FlatOpsElem[_: P]: P[Seq[preExpr.FlatOpsChild]] = P(
     ( Ident.map { case preExpr.LocAnnotation( preExpr.Ident( n, _, None ), loc ) => Left( ( n, loc ) ) case e => Right( e ) } |
       ( VarLiteral | ConstLiteral ).map( Right( _ ) ) ).map( Seq( _ ) )
       | Tuple.map( _.map( Right( _ ) ) ) )
 
-  val Fn: P[preExpr.Expr] = PE( Ident | VarLiteral | ConstLiteral )
-  val Tuple: P[Seq[preExpr.Expr]] = P( "(" ~/ Expr.rep( sep = "," ) ~ ")" )
+  def Fn[_: P]: P[preExpr.Expr] = MarkPos( P( Ident | VarLiteral | ConstLiteral ) )
+  def Tuple[_: P]: P[Seq[preExpr.Expr]] = P( "(" ~/ Expr.rep( sep = "," ) ~ ")" )
 
-  val Parens = PE( "(" ~/ Expr ~/ ")" )
+  def Parens[_: P] = MarkPos( P( "(" ~/ Expr ~/ ")" ) )
 
-  val Var = P( Name ~ ":" ~ Type ) map {
+  def Var[_: P] = P( Name ~ ":" ~ Type ) map {
     case ( name, ty ) => real.Var( name, preExpr.toRealType( ty, Map() ) )
   }
-  val TyParams = P( "{" ~ Type.rep ~ "}" )
-  val Const = P( Name ~ TyParams.? ~ ":" ~ Type ) map {
+  def TyParams[_: P] = P( "{" ~ Type.rep ~ "}" )
+  def Const[_: P] = P( Name ~ TyParams.? ~ ":" ~ Type ) map {
     case ( name, ps, ty ) => real.Const( name, preExpr.toRealType( ty, Map() ),
       ps.getOrElse( Nil ).toList.map( preExpr.toRealType( _, Map() ) ) )
   }
-  val VarLiteral = PE( ( "#v(" ~/ Var ~ ")" ).map { preExpr.QuoteBlackbox } )
-  val ConstLiteral = PE( ( "#c(" ~/ Const ~ ")" ).map { preExpr.QuoteBlackbox } )
+  def VarLiteral[_: P] = MarkPos( P( ( "#v(" ~/ Var ~ ")" ).map { preExpr.QuoteBlackbox } ) )
+  def ConstLiteral[_: P] = MarkPos( P( ( "#c(" ~/ Const ~ ")" ).map { preExpr.QuoteBlackbox } ) )
 
-  val Ident: P[preExpr.Expr] = PE( ( Name ~ TyParams.? ).map {
+  def Ident[_: P]: P[preExpr.Expr] = MarkPos( P( ( Name ~ TyParams.? ).map {
     case ( n, ps ) =>
       preExpr.Ident( n, preExpr.freshMetaType(), ps.map( _.toList ) )
-  } )
+  } ) )
 
-  val TypeParens: P[preExpr.Type] = P( "(" ~/ Type ~ ")" )
-  val TypeBase: P[preExpr.Type] = P( TyName ~ TypeAtom.rep ).map { case ( n, ps ) => preExpr.BaseType( n, ps.toList ) }
-  val TypeVar: P[preExpr.Type] = P( "?" ~/ TyName ).map( preExpr.VarType )
-  val TypeAtom: P[preExpr.Type] = P( TypeParens | TypeVar | TypeBase )
-  val Type: P[preExpr.Type] = P( TypeAtom.rep( min = 1, sep = ">" ) ).map { _.reduceRight( preExpr.ArrType ) }
-  val TypeAndNothingElse = P( "" ~ Type ~ End )
+  def TypeParens[_: P]: P[preExpr.Type] = P( "(" ~/ Type ~ ")" )
+  def TypeBase[_: P]: P[preExpr.Type] = P( TyName ~ TypeAtom.rep ).map { case ( n, ps ) => preExpr.BaseType( n, ps.toList ) }
+  def TypeVar[_: P]: P[preExpr.Type] = P( "?" ~/ TyName ).map( preExpr.VarType )
+  def TypeAtom[_: P]: P[preExpr.Type] = P( TypeParens | TypeVar | TypeBase )
+  def Type[_: P]: P[preExpr.Type] = P( TypeAtom.rep( min = 1, sep = ">" ) ).map { _.reduceRight( preExpr.ArrType ) }
+  def TypeAndNothingElse[_: P] = P( "" ~ Type ~ End )
 
-  val Sequent = P( Expr.rep( sep = "," ) ~ ( ":-" | "⊢" ) ~ Expr.rep( sep = "," ) ).
+  def Sequent[_: P] = P( Expr.rep( sep = "," ) ~ ( ":-" | "⊢" ) ~ Expr.rep( sep = "," ) ).
     map { case ( ant, suc ) => HOLSequent( ant, suc ) }
-  val SequentAndNothingElse = P( "" ~ Sequent ~ End )
+  def SequentAndNothingElse[_: P] = P( "" ~ Sequent ~ End )
 
-  val LabelledFormula = P( ( TyName ~ ":" ~ !"-" ).? ~ Expr )
-  val LabelledSequent = P( LabelledFormula.rep( sep = "," ) ~ ( ":-" | "⊢" ) ~ LabelledFormula.rep( sep = "," ) ).
+  def LabelledFormula[_: P] = P( ( TyName ~ ":" ~ !"-" ).? ~ Expr )
+  def LabelledSequent[_: P] = P( LabelledFormula.rep( sep = "," ) ~ ( ":-" | "⊢" ) ~ LabelledFormula.rep( sep = "," ) ).
     map { case ( ant, suc ) => HOLSequent( ant, suc ) }
-  val LabelledSequentAndNothingElse = P( "" ~ LabelledSequent ~ End )
+  def LabelledSequentAndNothingElse[_: P] = P( "" ~ LabelledSequent ~ End )
 }
 
 object BabelParser {
   import BabelParserCombinators._
-  import fastparse.all._
+  import fastparse._
 
   private def ppElabError( text: String, err: preExpr.ElabError )(
     implicit
@@ -161,7 +158,7 @@ object BabelParser {
           case ( _, i ) if i == end - 1               => '╛'
           case ( _, i ) if begin < i && i < end       => '═'
           case ( _, _ )                               => ' '
-        }.mkString.lines.zip( text.lines ).
+        }.mkString.linesIterator.zip( text.linesIterator ).
         map {
           case ( markers, code ) if markers.trim.nonEmpty => s"  $code\n  $markers\n"
           case ( _, code )                                => s"  $code\n"
@@ -187,7 +184,7 @@ object BabelParser {
   def tryParse(
     text:           String,
     astTransformer: preExpr.Expr => preExpr.Expr = identity )( implicit sig: BabelSignature ): Either[BabelParseError, Expr] = {
-    ExprAndNothingElse.parse( text ) match {
+    fastparse.parse( text, ExprAndNothingElse( _ ) ) match {
       case Parsed.Success( expr, _ ) =>
         val transformedExpr = astTransformer( expr )
         preExpr.toRealExpr( transformedExpr, sig ).leftMap( ppElabError( text, _ ) )
@@ -204,7 +201,7 @@ object BabelParser {
     tryParse( text, preExpr.TypeAnnotation( _, preExpr.Bool ) ).fold( throw _, _.asInstanceOf[Formula] )
 
   def tryParseType( text: String ): Either[BabelParseError, real.Ty] = {
-    TypeAndNothingElse.parse( text ) match {
+    fastparse.parse( text, TypeAndNothingElse( _ ) ) match {
       case Parsed.Success( expr, _ ) =>
         Right( preExpr.toRealType( expr, Map() ) )
       case parseError @ Parsed.Failure( _, _, _ ) =>
@@ -217,7 +214,7 @@ object BabelParser {
     astTransformer: preExpr.Expr => preExpr.Expr = identity )(
     implicit
     sig: BabelSignature ): Either[BabelParseError, Sequent[Expr]] = {
-    SequentAndNothingElse.parse( text ) match {
+    fastparse.parse( text, SequentAndNothingElse( _ ) ) match {
       case Parsed.Success( exprSequent, _ ) =>
         val transformed = exprSequent.map( astTransformer )
         preExpr.toRealExprs( transformed.elements, sig ).leftMap( ppElabError( text, _ ) ).map { sequentElements =>
@@ -235,7 +232,7 @@ object BabelParser {
     astTransformer: preExpr.Expr => preExpr.Expr = identity )(
     implicit
     sig: BabelSignature ): Either[BabelParseError, Sequent[( String, Formula )]] = {
-    LabelledSequentAndNothingElse.parse( text ) match {
+    fastparse.parse( text, LabelledSequentAndNothingElse( _ ) ) match {
       case Parsed.Success( exprSequent, _ ) =>
         val transformed = for ( ( l, f ) <- exprSequent )
           yield l -> preExpr.TypeAnnotation( astTransformer( f ), preExpr.Bool )

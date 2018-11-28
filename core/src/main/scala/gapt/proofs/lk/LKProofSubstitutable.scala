@@ -131,11 +131,11 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
       val Ex( newV, newF ) = substitution( p.mainFormula )
       ExistsRightRule( subProofNew, aux, betaNormalize( newF ), betaNormalize( substitution( term ) ), newV )
 
-    case p @ ExistsSkLeftRule( subProof, aux, main, skT, skD ) =>
-      ExistsSkLeftRule( go( substitution, subProof ), aux, BetaReduction.betaNormalize( substitution( main ) ), substitution( skT ), skD )
+    case p @ ExistsSkLeftRule( subProof, aux, main, skT ) =>
+      ExistsSkLeftRule( go( substitution, subProof ), aux, BetaReduction.betaNormalize( substitution( main ) ), substitution( skT ) )
 
-    case p @ ForallSkRightRule( subProof, aux, main, skT, skD ) =>
-      ForallSkRightRule( go( substitution, subProof ), aux, BetaReduction.betaNormalize( substitution( main ) ), substitution( skT ), skD )
+    case p @ ForallSkRightRule( subProof, aux, main, skT ) =>
+      ForallSkRightRule( go( substitution, subProof ), aux, BetaReduction.betaNormalize( substitution( main ) ), substitution( skT ) )
 
     case EqualityLeftRule( subProof, eq, aux, con ) =>
       val subProofNew = go( substitution, subProof )
@@ -226,11 +226,9 @@ class LKProofReplacer( repl: PartialFunction[Expr, Expr] ) extends LKVisitor[Uni
   override protected def visitForallSkRight( proof: ForallSkRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
     one2one( proof, otherArg ) {
       case Seq( ( subProofNew, subConnector ) ) =>
-        val Apps( _, newArgs ) = TermReplacement( proof.skolemConst, repl )
         ForallSkRightRule( subProofNew, subConnector.child( proof.aux ),
           TermReplacement( proof.mainFormula, repl ),
-          TermReplacement( proof.skolemTerm, repl ),
-          Abs( newArgs.map( _.asInstanceOf[Var] ), TermReplacement( proof.skolemDef, repl ) ) )
+          TermReplacement( proof.skolemTerm, repl ) )
     }
 
   override protected def visitExistsRight( proof: ExistsRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
@@ -249,11 +247,9 @@ class LKProofReplacer( repl: PartialFunction[Expr, Expr] ) extends LKVisitor[Uni
   override protected def visitExistsSkLeft( proof: ExistsSkLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
     one2one( proof, otherArg ) {
       case Seq( ( subProofNew, subConnector ) ) =>
-        val Apps( _, newArgs ) = TermReplacement( proof.skolemConst, repl )
         ExistsSkLeftRule( subProofNew, subConnector.child( proof.aux ),
           TermReplacement( proof.mainFormula, repl ),
-          TermReplacement( proof.skolemTerm, repl ),
-          Abs( newArgs.map( _.asInstanceOf[Var] ), TermReplacement( proof.skolemDef, repl ) ) )
+          TermReplacement( proof.skolemTerm, repl ) )
     }
 
   override protected def visitEqualityLeft( proof: EqualityLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) =

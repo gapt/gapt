@@ -4,6 +4,9 @@ import gapt.expr._
 import gapt.expr.hol.instantiate
 import gapt.proofs.IndexOrFormula.{ IsFormula, IsIndex }
 import gapt.proofs._
+import gapt.proofs.context
+import gapt.proofs.context.Context
+import gapt.proofs.context.facet.ProofNames
 
 import scala.collection.mutable
 
@@ -173,9 +176,9 @@ case class ProofLink( referencedProof: Expr, referencedSequent: Sequent[Formula]
 }
 object ProofLink {
   def apply( referencedProof: Expr )( implicit ctx: Context ): ProofLink =
-    ProofLink( referencedProof, ctx.get[Context.ProofNames].lookup( referencedProof ).get )
+    ProofLink( referencedProof, ctx.get[ProofNames].lookup( referencedProof ).get )
   def apply( name: String )( implicit ctx: Context ): ProofLink =
-    ProofLink( ctx.get[Context.ProofNames].names( name )._1 )
+    ProofLink( ctx.get[ProofNames].names( name )._1 )
 }
 
 /**
@@ -984,9 +987,8 @@ trait SkolemQuantifierRule extends UnaryLKProof with CommonRule {
   def aux: SequentIndex
   def mainFormula: Formula
   def skolemTerm: Expr
-  def skolemDef: Expr
 
-  require( freeVariables( skolemDef ).isEmpty )
+  //  require( freeVariables( skolemDef ).isEmpty )
 
   val ( auxFormula, context ) = premise focus aux
 
@@ -995,11 +997,11 @@ trait SkolemQuantifierRule extends UnaryLKProof with CommonRule {
 
   val Apps( skolemConst: Const, skolemArgs ) = skolemTerm
 
-  {
-    val expectedMain = BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) )
-    if ( expectedMain != mainFormula )
-      throw LKRuleCreationException( s"Main formula should be $expectedMain, but is $mainFormula" )
-  }
+  //  {
+  //    val expectedMain = BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) )
+  //    if ( expectedMain != mainFormula )
+  //      throw LKRuleCreationException( s"Main formula should be $expectedMain, but is $mainFormula" )
+  //  }
 
   {
     val expectedAux = BetaReduction.betaNormalize( instantiate( mainFormula, skolemTerm ) )
@@ -1210,7 +1212,7 @@ object ForallRightRule extends ConvenienceConstructor( "ForallRightRule" ) {
  * @param skolemDef The Skolem definition, see [[gapt.expr.hol.SkolemFunctions]]
  */
 case class ForallSkRightRule( subProof: LKProof, aux: SequentIndex, mainFormula: Formula,
-                              skolemTerm: Expr, skolemDef: Expr )
+                              skolemTerm: Expr )
   extends SkolemQuantifierRule {
 
   validateIndices( premise, Seq(), Seq( aux ) )
@@ -1236,13 +1238,14 @@ object ForallSkRightRule extends ConvenienceConstructor( "ForallSkRightRule" ) {
   def apply( subProof: LKProof, skolemTerm: Expr, skolemDef: Expr ): ForallSkRightRule = {
     val Apps( _, skolemArgs ) = skolemTerm
     val mainFormula = BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) ).asInstanceOf[Formula]
+    apply( subProof, mainFormula, skolemTerm )
+  }
+
+  def apply( subProof: LKProof, mainFormula: Formula, skolemTerm: Expr ): ForallSkRightRule = {
     val auxFormula = instantiate( mainFormula, skolemTerm )
-
     val premise = subProof.endSequent
-
     val ( _, indices ) = findAndValidate( premise )( Seq(), Seq( auxFormula ) )
-
-    ForallSkRightRule( subProof, Suc( indices( 0 ) ), mainFormula, skolemTerm, skolemDef )
+    ForallSkRightRule( subProof, Suc( indices( 0 ) ), mainFormula, skolemTerm )
   }
 }
 
@@ -1357,7 +1360,7 @@ object ExistsLeftRule extends ConvenienceConstructor( "ExistsLeftRule" ) {
  * @param skolemDef The Skolem definition, see [[gapt.expr.hol.SkolemFunctions]]
  */
 case class ExistsSkLeftRule( subProof: LKProof, aux: SequentIndex, mainFormula: Formula,
-                             skolemTerm: Expr, skolemDef: Expr )
+                             skolemTerm: Expr )
   extends SkolemQuantifierRule {
 
   validateIndices( premise, Seq( aux ), Seq() )
@@ -1383,13 +1386,14 @@ object ExistsSkLeftRule extends ConvenienceConstructor( "ExistsSkLeftRule" ) {
   def apply( subProof: LKProof, skolemTerm: Expr, skolemDef: Expr ): ExistsSkLeftRule = {
     val Apps( _, skolemArgs ) = skolemTerm
     val mainFormula = BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) ).asInstanceOf[Formula]
+    apply( subProof, mainFormula, skolemTerm )
+  }
+
+  def apply( subProof: LKProof, mainFormula: Formula, skolemTerm: Expr ): ExistsSkLeftRule = {
     val auxFormula = instantiate( mainFormula, skolemTerm )
-
     val premise = subProof.endSequent
-
     val ( indices, _ ) = findAndValidate( premise )( Seq( auxFormula ), Seq() )
-
-    ExistsSkLeftRule( subProof, Ant( indices( 0 ) ), mainFormula, skolemTerm, skolemDef )
+    ExistsSkLeftRule( subProof, Ant( indices( 0 ) ), mainFormula, skolemTerm )
   }
 
   def apply( subProof: LKProof, skolemTerm: Expr )( implicit ctx: Context ): ExistsSkLeftRule = {
@@ -1882,7 +1886,7 @@ object DefinitionRule extends ConvenienceConstructor( "DefinitionRule" ) {
  *
  * NB: LK proofs that contain this rule are not sound by construction, since it allows you to replace any formula
  * by any other formula. The soundness of such proofs can only be established with respect to a Context.
- * Use the `check` method on [[gapt.proofs.Context]] to check whether the constructed proof is sound.
+ * Use the `check` method on [[Context]] to check whether the constructed proof is sound.
  *
  * @param subProof The proof π.
  * @param aux The index of A in the antecedent.
@@ -1926,7 +1930,7 @@ object DefinitionLeftRule extends ConvenienceConstructor( "DefinitionLeftRule" )
  *
  * NB: LK proofs that contain this rule are not sound by construction, since it allows you to replace any formula
  * by any other formula. The soundness of such proofs can only be established with respect to a Context.
- * Use the `check` method on [[gapt.proofs.Context]] to check whether the constructed proof is sound.
+ * Use the `check` method on [[Context]] to check whether the constructed proof is sound.
  *
  * @param subProof The proof π.
  * @param aux The index of A in the succedent.

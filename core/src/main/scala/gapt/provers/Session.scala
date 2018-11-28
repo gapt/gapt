@@ -252,11 +252,9 @@ object Session {
         case DeclareFun( fun ) => termRenaming( fun ) match {
           case Const( name, FunctionType( TBase( retType, Nil ), argTypes ), _ ) =>
             tell( LFun( "declare-fun", LSymbol( name ),
-              LList( argTypes.map {
-                case TBase( argType, Nil ) => LSymbol( argType )
-                case ty                    => throw new IllegalArgumentException( s"unsupported type: $ty" )
-              } ),
+              LList( argTypes map convert: _* ),
               LSymbol( retType ) ) )
+          case _ => () // do not declare applications or abstractions. TODO: check if we need to recurse into the term
         }
         case Assert( formula )                => tell( LFun( "assert", convert( formula ) ) )
 
@@ -273,6 +271,13 @@ object Session {
       }
 
       protected val nameGen = new NameGenerator( Set() ) // TODO: add reserved keywords?
+
+      def convert( ty: Ty ): SExpression = ty match {
+        case TBase( argType, Nil ) => LSymbol( argType )
+        case FunctionType( to, from ) =>
+          val ts = ( from :+ to ) map convert
+          LFun( "->", ts: _* )
+      }
 
       object typeRenaming {
         val map = mutable.Map[TBase, TBase]()
@@ -305,15 +310,21 @@ object Session {
         case Imp( a, b ) => LFun( "=>", convert( a, boundVars ), convert( b, boundVars ) )
         case Eq( a, b )  => LFun( "=", convert( a, boundVars ), convert( b, boundVars ) )
         case c: Const    => LSymbol( termRenaming( c ).name )
-        case All( x @ Var( _, ty: TBase ), a ) =>
+        case All( x @ Var( _, ty ), a ) =>
           val smtVar = s"x${boundVars.size}"
-          LFun( "forall", LList( LFun( smtVar, LSymbol( typeRenaming( ty ).name ) ) ), convert( a, boundVars + ( x -> smtVar ) ) )
-        case Ex( x @ Var( _, ty: TBase ), a ) =>
+          LFun( "forall", LList( LFun( smtVar, convert( typeRenaming( ty ) ) ) ),
+            convert( a, boundVars + ( x -> smtVar ) ) )
+        case Ex( x @ Var( _, ty ), a ) =>
           val smtVar = s"x${boundVars.size}"
-          LFun( "exists", LList( LFun( smtVar, LSymbol( typeRenaming( ty ).name ) ) ), convert( a, boundVars + ( x -> smtVar ) ) )
+          LFun( "exists", LList( LFun( smtVar, convert( typeRenaming( ty ) ) ) ),
+            convert( a, boundVars + ( x -> smtVar ) ) )
         case v: Var => LSymbol( boundVars( v ) )
-        case Apps( c: Const, args ) =>
-          LFun( termRenaming( c ).name, args map { convert( _, boundVars ) }: _* )
+        case Abs( x @ Var( _, ty ), a ) =>
+          val smtVar = s"x${boundVars.size}"
+          LFun( "lambda", LList( LFun( smtVar, convert( typeRenaming( ty ) ) ) ),
+            convert( a, boundVars + ( x -> smtVar ) ) )
+        case Apps( c, args ) =>
+          LList( ( c :: args ) map { convert( _, boundVars ) }: _* )
       }
 
     }
@@ -340,7 +351,7 @@ object Session {
         val res = out.readLine()
         if ( debug ) println( s"-> $res" )
         if ( res == null ) throw new ExternalSmtlibProgram.UnexpectedTerminationException( input )
-        SExpressionParser( StringInputFile( res ) ).head
+        SExpressionParser.parse( StringInputFile( res ) ).head
       }
     }
 

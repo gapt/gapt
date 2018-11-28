@@ -3,8 +3,9 @@ package gapt.provers.spass
 import gapt.examples.CountingEquivalence
 import gapt.expr._
 import gapt.expr.fol.{ naive, thresholds }
+import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.resolution.{ AvatarComponent, AvatarNegNonGroundComp, ResolutionToLKProof }
-import gapt.proofs.{ Clause, HOLSequent, MutableContext, Sequent, SequentMatchers }
+import gapt.proofs.{ Clause, HOLSequent, Sequent, SequentMatchers }
 import gapt.utils.SatMatchers
 import org.specs2.mutable.Specification
 

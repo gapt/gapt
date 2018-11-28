@@ -2,7 +2,9 @@ package gapt.proofs.lk
 
 import gapt.expr._
 import gapt.expr.Abs
-import gapt.proofs.{ Ant, Context, ProofBuilder, Sequent, SequentMatchers, Suc }
+import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.{ Ant, ProofBuilder, Sequent, SequentMatchers, Suc }
 import gapt.proofs.gaptic.OpenAssumption
 import org.specs2.mutable.Specification
 
@@ -653,7 +655,7 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
 
   "equality left; upper sequent intro. by induction" in {
     implicit var context = Context()
-    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     context += hoc"F:nat>o"
     context += Ti
     context += hoc"A:i>o"
@@ -672,7 +674,7 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
 
   "equality right; upper sequent intro. by induction; aux is not principal" in {
     implicit var context = Context()
-    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     context += hoc"F:nat>o"
     context += Ti
     context += hoc"A:i>o"
@@ -691,7 +693,7 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
 
   "equality right; upper sequent intro. by induction; aux is principal" in {
     implicit var context = Context()
-    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     context += hoc"F:nat>o"
     context += hoc"r:nat"
     context += hoc"t:nat"

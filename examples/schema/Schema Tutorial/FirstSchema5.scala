@@ -1,15 +1,19 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.Context._
-import gapt.proofs.gaptic._
-import gapt.proofs.Context
 import gapt.proofs.Sequent
+import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
+import gapt.proofs.context.update.ProofDefinitionDeclaration
+import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.context.update.Sort
+import gapt.proofs.gaptic._
 
 object FirstSchema5 extends TacticsProof {
   //Type
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-  ctx += Context.Sort( "i" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += Sort( "i" )
   //Term Constants
   ctx += hoc"z:i"
   ctx += hoc"g:i>i"
@@ -36,9 +40,9 @@ object FirstSchema5 extends TacticsProof {
   val esphi = Sequent( Seq( hof"!x?y (LEQ(x,y) & POR(n,y) )" ), Seq( hof"?p?q (LE(p,q) & E(f(p),f(q)))" ) )
   val eschi = Sequent( Seq( hof" POR(n,a) " ), Seq( hof"POR(n,a)" ) )
   //Proof Declarations
-  ctx += Context.ProofNameDeclaration( le"omega n", esOmega )
-  ctx += Context.ProofNameDeclaration( le"phi n", esphi )
-  ctx += Context.ProofNameDeclaration( le"chi n a", eschi )
+  ctx += ProofNameDeclaration( le"omega n", esOmega )
+  ctx += ProofNameDeclaration( le"phi n", esphi )
+  ctx += ProofNameDeclaration( le"chi n a", eschi )
   //Chi basecase end sequent
   val esChiBc = Sequent( Seq( "Ant_0" -> hof" POR(0,a)" ), Seq( "Suc_0" -> hof"POR(0,a)" ) )
   //Proof of chi basecase
@@ -58,7 +62,7 @@ res1: gapt.proofs.lk.LKProof =
 
   //We can open this proof in prooftool by typing prooftool(FirstSchema.chiBc). The last step is to add this
   //proof to the context to the ProofDefinition facet using the following command.
-  ctx += Context.ProofDefinitionDeclaration( le"chi 0 a", chiBc )
+  ctx += ProofDefinitionDeclaration( le"chi 0 a", chiBc )
 
   //This is similar to a proof declaration except the variables are instantiated correctly to associate with
   //the specific case addressed.

@@ -1,7 +1,7 @@
 package gapt.proofs.lk
 
 import gapt.proofs.lk.reductions.Reduction
-import gapt.proofs.{ Context, SequentConnector }
+import gapt.proofs.SequentConnector
 
 trait ReductionStrategy {
   def run( proof: LKProof ): LKProof

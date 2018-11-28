@@ -1,20 +1,20 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.proofs.Context._
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
+import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
-import gapt.proofs.Context
-import gapt.proofs.Sequent
 
 object FirstSchema2 extends TacticsProof {
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-  ctx += Context.Sort( "i" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += Sort( "i" )
   ctx += hoc"z:i"
   ctx += hoc"g:i>i"
   ctx += hoc"f:i>nat"
   ctx += hoc"max:i>i>i"
 
-  //By importing gapt.proofs.Context we include some basic context definitions.
+  //By importing gapt.proofs.context.Context we include some basic context definitions.
   // For example ctx += Context.Sort( "o" ) the sort of booleans. this allows one
   // to introduce new predicate symbols.
 

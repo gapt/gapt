@@ -5,6 +5,7 @@
 package gapt.expr
 
 import gapt.proofs._
+import gapt.proofs.context.Context
 import gapt.utils.NameGenerator
 
 import scala.collection.GenTraversable
@@ -63,6 +64,30 @@ object variables {
     val vs = mutable.Set[Var]()
     def go( e: Expr ): Unit = e match {
       case v: Var   => vs += v
+      case _: Const =>
+      case App( a, b ) =>
+        go( a ); go( b )
+      case Abs( v, t ) => vs += v; go( t )
+    }
+    go( e )
+    vs.toSet
+  }
+
+  def apply( t: FOLExpression ): Set[FOLVar] = apply( t.asInstanceOf[Expr] ).asInstanceOf[Set[FOLVar]]
+  def apply( s: HOLSequent ): Set[Var] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Var]() )( ( x, y ) => x ++ apply( y ) )
+  def apply( s: Sequent[FOLFormula] )( implicit dummyImplicit: DummyImplicit, dummyImplicit2: DummyImplicit ): Set[FOLVar] = s.elements flatMap apply toSet
+  def apply[Fml <: Expr, Proof <: SequentProof[Fml, Proof]]( p: SequentProof[Fml, Proof] ): Set[Var] =
+    p.subProofs flatMap { _.conclusion.elements } flatMap { variables( _ ) }
+}
+
+/**
+ * Returns the set of all bound variables occurring in the given argument.
+ */
+object boundVariables {
+  def apply( e: Expr ): Set[Var] = {
+    val vs = mutable.Set[Var]()
+    def go( e: Expr ): Unit = e match {
+      case _: Var   =>
       case _: Const =>
       case App( a, b ) =>
         go( a ); go( b )

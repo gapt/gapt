@@ -1,7 +1,7 @@
 package gapt.proofs.ceres_omega
 
 import gapt.expr._
-import gapt.formats.tptp.TPTPHOLExporter
+import gapt.formats.tptp.TptpHOLExporter
 import gapt.proofs.expansion._
 import gapt.proofs.lk._
 import gapt.expr.fol.{ reduceHolToFol, replaceAbstractions, undoHol2Fol }
@@ -182,7 +182,7 @@ abstract class AnalysisWithCeresOmega {
    * @param filename The name of the file to export to
    */
   def export_thf( filename: String ): Unit = {
-    TPTPHOLExporter( preprocessed_css, filename )
+    TptpHOLExporter( preprocessed_css, filename )
   }
 
   /**
@@ -224,37 +224,45 @@ abstract class AnalysisWithCeresOmega {
   def thf_reproving_deep( filename: Option[String] ): String = {
     filename match {
       case Some( fn ) =>
-        TPTPHOLExporter.apply( expansion_proof.expansionSequent, fn, true, true )
+        TptpHOLExporter.apply( expansion_proof.expansionSequent, fn, true, true )
       case None =>
         ()
     }
 
-    TPTPHOLExporter.export( expansion_proof.expansionSequent, true, true )
+    TptpHOLExporter.export( expansion_proof.expansionSequent, true, true )
   }
 
+  def collectStatistics() =
+    ( input_proof.treeLike.size, preprocessed_input_proof.treeLike.size, lksk_proof.treeLike.size,
+      acnf.treeLike.size, css.size, preprocessed_css.size, fol_refutation.dagLike.size, fol_refutation.treeLike.size,
+      fol_refutation.depth, reproved_deep.dagLike.size, reproved_deep.treeLike.size )
+
   def printStatistics() = {
+    val ( itree_size, preitree_size, lksk_treesize, acnftree_size, css_size, precss_size,
+      foldag_size, foltree_size, foldepth, rdtree_size, rddag_size ) = collectStatistics()
+
     println( "------------ Proof sizes --------------" )
-    println( s"Input proof            : ${input_proof.treeLike.size}" )
-    println( s"Preprocessed input     : ${preprocessed_input_proof.treeLike.size}" )
-    println( s"LKsk input proof       : ${lksk_proof.treeLike.size}" )
-    println( s"ACNF output proof      : ${acnf.treeLike.size}" )
+    println( s"Input proof            : ${itree_size}" )
+    println( s"Preprocessed input     : ${preitree_size}" )
+    println( s"LKsk input proof       : ${lksk_treesize}" )
+    println( s"ACNF output proof      : ${acnftree_size}" )
     println( "------------ " )
-    println( s"Css size               : ${css.size}" )
-    println( s"Preprocessed css size  : ${preprocessed_css.size}" )
+    println( s"Css size               : ${css_size}" )
+    println( s"Preprocessed css size  : ${precss_size}" )
     println( "------------ " )
-    println( s"Refutation size (dag)  : ${fol_refutation.dagLike.size}" )
-    println( s"Refutation size (tree) : ${fol_refutation.treeLike.size}" )
-    println( s"Refutation depth       : ${fol_refutation.depth}" )
+    println( s"Refutation size (dag)  : ${foldag_size}" )
+    println( s"Refutation size (tree) : ${foltree_size}" )
+    println( s"Refutation depth       : ${foldepth}" )
     println( "------------ " )
-    println( s"Reproved deep formula proof size (dag)  : ${reproved_deep.dagLike.size}" )
-    println( s"Reproved deep formula proof size (tree) : ${reproved_deep.treeLike.size}" )
+    println( s"Reproved deep formula proof size (dag)  : ${rddag_size}" )
+    println( s"Reproved deep formula proof size (tree) : ${rdtree_size}" )
   }
 
   /**
    * Prints the preprocessed characteristic sequent set in TPTP THF format. Use [[export_thf]] to write it to a file.
    */
   def print_css_thf(): Unit = {
-    println( TPTPHOLExporter.export_negative( preprocessed_css ) )
+    println( TptpHOLExporter.export_negative( preprocessed_css ) )
   }
 
 }

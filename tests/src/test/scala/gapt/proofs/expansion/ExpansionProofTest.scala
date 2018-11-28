@@ -5,7 +5,9 @@ import gapt.examples.{ LinearExampleProof, Pi2Pigeonhole }
 import gapt.expr._
 import gapt.formats.ClasspathInputFile
 import gapt.formats.llk.LLKProofParser
-import gapt.proofs.{ Context, Sequent, SequentMatchers }
+import gapt.proofs.context.Context
+import gapt.proofs.context.update.Sort
+import gapt.proofs.{ Sequent, SequentMatchers }
 import gapt.proofs.lk.{ LKToExpansionProof, eliminateDefinitions }
 import gapt.provers.escargot.Escargot
 import gapt.provers.verit.VeriT
@@ -22,27 +24,21 @@ class ExpansionProofTest extends Specification with SatMatchers with SequentMatc
   }
 
   "reject cyclic proofs" in {
-    val Seq( x, y ) = Seq( "x", "y" ) map { FOLVar( _ ) }
-    ExpansionProof( Sequent() :+ ETWeakQuantifier(
-      Ex( x, All( y, x === y ) ),
-      Map( x -> ETStrongQuantifier( All( y, x === y ), x, ETAtom( x === x, Polarity.InSuccedent ) ) ) ) ) must throwA[MatchError]
+    ExpansionProof( Sequent() :+ ExpansionTree( hof"?x !y x=y", Polarity.InSuccedent,
+      ETtWeak( hov"x" -> ETtStrong( hov"x", ETtAtom ) ) ) ) must throwAn[IllegalArgumentException]
   }
 
   "substitute proofs" in {
-    val Seq( x, y ) = Seq( "x", "y" ) map { FOLVar( _ ) }
-    val f = FOLFunctionConst( "f", 1 )
-    val r = FOLAtomConst( "r", 2 )
+    val proof = ExpansionProof( Sequent() :+ ExpansionTree(
+      hof"∀x r(x,y)", Polarity.InSuccedent, ETtStrong( hov"x", ETtAtom ) ) )
+    proof.deep must_== hos"⊢ r(x,y)"
 
-    val proof = ExpansionProof( Sequent() :+ ETStrongQuantifier(
-      All( x, r( x, y ) ), x, ETAtom( r( x, y ), Polarity.InSuccedent ) ) )
-    proof.deep must_== ( Sequent() :+ r( x, y ) )
+    val proof1 = Substitution( hov"x" -> hov"y" )( proof )
+    proof1.deep must_== hos"⊢ r(x,y)"
 
-    val proof1 = Substitution( x -> y )( proof )
-    proof1.deep must_== ( Sequent() :+ r( x, y ) )
-
-    val proof2 = Substitution( y -> f( x ) )( proof )
+    val proof2 = Substitution( hov"y" -> le"f(x)" )( proof )
     val Seq( x0 ) = proof2.eigenVariables.toSeq
-    proof2.deep must_== ( Sequent() :+ r( x0, f( x ) ) )
+    proof2.deep must_== hos"⊢ r($x0, f(x))"
   }
 
   "pi2 pigeonhole" in {
@@ -62,13 +58,11 @@ class ExpansionProofTest extends Specification with SatMatchers with SequentMatc
   }
 
   "weird cuts" in {
-    val epwc = ExpansionProof(
-      Seq( ETImp(
-        ETStrongQuantifier( hof"∀x P x", hov"x", ETAtom( hoa"P x", Polarity.InSuccedent ) ),
-        ETWeakQuantifier( hof"∀x P x", Map( le"f x" -> ETAtom( hoa"P (f x)", Polarity.InAntecedent ) ) ) ) ) ++:
-        ETWeakQuantifier( hof"∀x P x", Map( le"x" -> ETAtom( hoa"P x", Polarity.InAntecedent ) ) ) +:
-        Sequent()
-        :+ ETWeakQuantifier( hof"∃x P (f x)", Map( le"x" -> ETAtom( hoa"P (f x)", Polarity.InSuccedent ) ) ) )
+    val epwc = ExpansionProof( ETCut(
+      hof"∀x P(x)",
+      ETtStrong( hov"x", ETtAtom ), ETtWeak( le"f(x)" -> ETtAtom ) ) +: Sequent() :+
+      ExpansionTree( hof"∀x P(x) → ∃x P(f(x))", Polarity.InSuccedent,
+        ETtBinary( ETtWeak( le"x" -> ETtAtom ), ETtWeak( le"x" -> ETtAtom ) ) ) )
     epwc.deep must beValidSequent
     val ep = eliminateCutsET( epwc )
     ep.deep must beValidSequent
@@ -76,16 +70,17 @@ class ExpansionProofTest extends Specification with SatMatchers with SequentMatc
 
   "merge skolem and strong quantifiers" in {
     val ep = ExpansionProof(
-      ETWeakQuantifier( hof"∀x P x", Map(
-        le"y" -> ETAtom( hoa"P y", Polarity.InAntecedent ),
-        le"sk" -> ETAtom( hoa"P sk", Polarity.InAntecedent ) ) ) +: Sequent()
-        :+ ETMerge(
-          ETStrongQuantifier( hof"∀x P x", hov"y", ETAtom( hoa"P y", Polarity.InSuccedent ) ),
-          ETSkolemQuantifier( hof"∀x P x", le"sk", le"∀x P x", ETAtom( hoa"P sk", Polarity.InSuccedent ) ) ) )
+      ExpansionTree( hof"∀x P(x)", Polarity.InAntecedent, ETtWeak( le"y" -> ETtAtom, le"sk" -> ETtAtom ) ) +:
+        Sequent() :+ ExpansionTree( hof"∀x P(x)", Polarity.InSuccedent,
+          ETtMerge( ETtStrong( hov"y", ETtAtom ), ETtSkolem( le"sk", ETtAtom ) ) ) )
     ep.deep must beValidSequent
     val merged = eliminateMerges( ep )
     merged.deep must beValidSequent
-    merged must beLike { case e if !e.subProofs.exists( _.isInstanceOf[ETMerge] ) => ok }
+    merged.subProofs foreach {
+      case ETMerge( _, _ ) => ko
+      case _               => ok
+    }
+    ok
   }
 
 }
@@ -93,26 +88,18 @@ class ExpansionProofTest extends Specification with SatMatchers with SequentMatc
 class ExpansionProofDefinitionEliminationTest extends Specification with SatMatchers {
   "simple unipolar definition" in {
     implicit var ctx = Context()
-    ctx += Context.Sort( "i" )
+    ctx += Sort( "i" )
     ctx += hoc"P: i>o"
     ctx += hoc"f: i>i"
     ctx += hoc"c: i"
     ctx += hof"D x = (P x ∧ P (f x))"
 
-    val d = ETWeakQuantifier(
-      hof"∀x (D x <-> P x ∧ P (f x))",
-      Map( le"c" ->
-        ETAnd(
-          ETImp(
-            ETAtom( hoa"D c", Polarity.InSuccedent ),
-            ETAnd( ETWeakening( hof"P c", Polarity.InAntecedent ), ETAtom( hoa"P (f c)", Polarity.InAntecedent ) ) ),
-          ETWeakening( hof"P c ∧ P (f c) → D c", Polarity.InAntecedent ) ) ) )
-    val f = ETWeakQuantifier(
-      hof"∃x (P x ∧ P (f x) → P (f x))",
-      Map( le"c" ->
-        ETImp(
-          ETDefinition( hof"P c & P (f c)", ETAtom( hoa"D c", Polarity.InAntecedent ) ),
-          ETAtom( hoa"P (f c)", Polarity.InSuccedent ) ) ) )
+    val d = ExpansionTree(
+      hof"∀x (D x ↔ P x ∧ P (f x))", Polarity.InAntecedent,
+      ETtWeak( le"c" -> ETtBinary( ETtBinary( ETtAtom, ETtBinary( ETtWeakening, ETtAtom ) ), ETtWeakening ) ) )
+    val f = ExpansionTree(
+      hof"∃x (P x ∧ P (f x) → P (f x))", Polarity.InSuccedent,
+      ETtWeak( le"c" -> ETtBinary( ETtDef( hof"D c", ETtAtom ), ETtAtom ) ) )
 
     val epwd = ExpansionProof( d +: Sequent() :+ f )
     epwd.deep must beValidSequent

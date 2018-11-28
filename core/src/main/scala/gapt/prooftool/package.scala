@@ -1,11 +1,12 @@
 package gapt
 
-import gapt.expr.{ Formula, Expr }
+import gapt.expr.{ Expr, Formula }
 import gapt.formats.latex.LatexExporter
 import gapt.formats.llk.ExtendedProofDatabase
 import gapt.proofs.ceres.Struct
 import gapt.proofs.expansion.ExpansionProof
 import gapt.proofs.lk.LKProof
+import gapt.proofs.nd.NDProof
 import gapt.proofs.{ HOLSequent, SequentProof }
 import gapt.prooftool._
 
@@ -34,7 +35,7 @@ private[gapt] trait ProoftoolInstances1 {
     ( seq, name ) => List( new ListViewer( name, List( seq ) ) )
 
   implicit val ProofDatabaseViewable: ProoftoolViewable[ExtendedProofDatabase] =
-    ( db, _ ) => db.proofs.flatMap( ( t ) => ProoftoolViewable[LKProof].display( t._2, t._1 ) )
+    ( db, _ ) => db.proofs.flatMap( t => ProoftoolViewable[LKProof].display( t._2, t._1 ) )
 
   implicit def OptionViewable[T: ProoftoolViewable]: ProoftoolViewable[Option[T]] =
     ( oT, name ) => oT.toList.flatMap( ProoftoolViewable[T].display( _, name ) )
@@ -47,6 +48,9 @@ private[gapt] trait ProoftoolInstances1 {
 private[gapt] trait ProoftoolInstances2 extends ProoftoolInstances1 {
   implicit val LKProofViewable: ProoftoolViewable[LKProof] =
     ( x, name ) => List( new LKProofViewer( name, x ) )
+
+  implicit val NDProofViewable: ProoftoolViewable[NDProof] =
+    ( x, name ) => List( new NDProofViewer( name, x ) )
 }
 
 package object prooftool extends ProoftoolInstances2 {

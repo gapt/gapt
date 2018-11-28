@@ -3,7 +3,8 @@ package gapt.proofs.expansion
 import gapt.expr.Polarity.{ Negative, Positive }
 import gapt.expr._
 import gapt.expr.hol.instantiate
-import gapt.proofs.{ Context, MutableContext }
+import gapt.proofs.context.Context
+import gapt.proofs.context.mutable.MutableContext
 
 import scala.collection.mutable
 
@@ -25,8 +26,8 @@ object atomicExpansionET {
         ETWeakQuantifier( sh, Map() ++ insts.mapValues( mapDefinedAtom( _ )( f ) ) )
       case ETStrongQuantifier( sh, ev, ch ) =>
         ETStrongQuantifier( sh, ev, mapDefinedAtom( ch )( f ) )
-      case ETSkolemQuantifier( sh, skT, skD, ch ) =>
-        ETSkolemQuantifier( sh, skT, skD, mapDefinedAtom( ch )( f ) )
+      case ETSkolemQuantifier( sh, skT, ch ) =>
+        ETSkolemQuantifier( sh, skT, mapDefinedAtom( ch )( f ) )
     }
 
   def mapDefinedAtom( ep: ExpansionProof )( f: PartialFunction[( Formula, Formula, Polarity ), ExpansionTree] ): ExpansionProof =

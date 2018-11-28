@@ -1,6 +1,6 @@
 package gapt.provers.viper.aip.axioms
 
-import gapt.proofs.{ Context, MutableContext }
+import gapt.proofs.context.mutable.MutableContext
 import gapt.provers.viper.aip.{ LabelledSequent, ThrowsError }
 
 trait AxiomFactory {

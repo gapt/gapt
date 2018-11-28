@@ -711,8 +711,13 @@ case class NegElimRule( leftSubProof: NDProof, rightSubProof: NDProof )
   val negatedFormula = leftPremise( Suc( 0 ) )
   val formula = rightPremise( Suc( 0 ) )
 
-  val mainFormula = if ( negatedFormula == Neg( formula ) ) Bottom() else
-    throw NDRuleCreationException( s"Formula $negatedFormula is not the negation of $formula." )
+  val mainFormula =
+    if ( ( negatedFormula == Neg( formula ) ) )
+      Bottom()
+    else
+      throw NDRuleCreationException(
+        s"""Formula $negatedFormula is not the negation of $formula.
+         """.stripMargin )
 
   def auxIndices = Seq( Seq( Suc( 0 ) ), Seq( Suc( 0 ) ) )
 

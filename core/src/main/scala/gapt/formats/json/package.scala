@@ -9,7 +9,7 @@ import gapt.formats.json.et.ExpansionTreeCodec._
 import gapt.proofs.lk.LKProof
 import gapt.formats.json.ExprCodec._
 import gapt.formats.json.SequentCodec._
-import gapt.proofs.expansion.{ ExpansionProof, ExpansionTree }
+import gapt.proofs.expansion.{ ETt, ExpansionProof, ExpansionSequent, ExpansionTree }
 import gapt.proofs.nd.NDProof
 
 package object json {
@@ -50,8 +50,14 @@ package object json {
   implicit val ndProofEncoder: Encoder[NDProof] = _ndProofEncoder
   implicit val ndProofDecoder: Decoder[NDProof] = _ndProofDecoder
 
+  implicit val expansionTreeTermEncoder: Encoder[ETt] = _expansionTreeTermEncoder
+  implicit val expansionTreeTermDecoder: Decoder[ETt] = _expansionTreeTermDecoder
+
   implicit val expansionTreeEncoder: Encoder[ExpansionTree] = _expansionTreeEncoder
   implicit val expansionTreeDecoder: Decoder[ExpansionTree] = _expansionTreeDecoder
+
+  implicit val expansionSequentEncoder: Encoder[ExpansionSequent] = _expansionSequentEncoder
+  implicit val expansionSequentDecoder: Decoder[ExpansionSequent] = _expansionSequentDecoder
 
   implicit val expansionProofEncoder: Encoder[ExpansionProof] = _expansionProofEncoder
   implicit val expansionProofDecoder: Decoder[ExpansionProof] = _expansionProofDecoder

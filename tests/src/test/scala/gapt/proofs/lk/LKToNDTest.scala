@@ -3,8 +3,11 @@ package gapt.proofs.lk
 import gapt.examples
 import gapt.expr._
 import gapt.formats.babel.{ Notation, Precedence }
+import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.Sort
 import gapt.proofs.nd.{ ExcludedMiddleRule, NDProof }
-import gapt.proofs.{ Ant, Context, ProofBuilder, SequentIndex, SequentMatchers, Suc }
+import gapt.proofs.{ Ant, ProofBuilder, SequentIndex, SequentMatchers, Suc }
 import gapt.utils.SatMatchers
 import org.specs2.mutable._
 
@@ -759,7 +762,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val ax1 = LogicalAxiom( P0 )
 
       implicit var ctx = Context.default
-      ctx += Context.InductiveType( "i", hoc"0: i", hoc"s: i>i" )
+      ctx += InductiveType( "i", hoc"0: i", hoc"s: i>i" )
       ctx += hoc"'th': i>i"
       ctx += hoc"'P': i>o"
       ctx += ( "th", hos"$Px :- $PSx" )
@@ -781,7 +784,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
 
     "translate ProofLink" in {
       implicit var ctx = Context.default
-      ctx += Context.Sort( "i" )
+      ctx += Sort( "i" )
       ctx += hoc"'<': i>i>o"
       ctx += hoc"'+': i>i>i"
       ctx += hoc"'1': i"
@@ -801,7 +804,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
 
     "translate ProofLink multiple antecedents" in {
       implicit var ctx = Context.default
-      ctx += Context.Sort( "i" )
+      ctx += Sort( "i" )
       ctx += hoc"'<': i>i>o"
       ctx += hoc"'1': i"
       ctx += hoc"'2': i"
@@ -820,7 +823,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
 
     "translate ProofLink multiple antecedents and succedents" in {
       implicit var ctx = Context.default
-      ctx += Context.Sort( "i" )
+      ctx += Sort( "i" )
       ctx += hoc"'<': i>i>o"
       ctx += hoc"'1': i"
       ctx += hoc"'2': i"

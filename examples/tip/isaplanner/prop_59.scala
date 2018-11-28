@@ -1,7 +1,7 @@
 package gapt.examples.tip.isaplanner
 
 import gapt.expr._
-import gapt.proofs.Context.InductiveType
+import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic._
 
 object prop_59 extends TacticsProof {
@@ -13,6 +13,9 @@ object prop_59 extends TacticsProof {
   //Function constants
   ctx += hoc"'last' :list>Nat"
   ctx += hoc"'append' :list>list>list"
+  ctx += hoc"p: Nat>Nat"
+  ctx += hoc"tail: list>list"
+  ctx += hoc"head: list>Nat"
 
   val sequent =
     hols"""

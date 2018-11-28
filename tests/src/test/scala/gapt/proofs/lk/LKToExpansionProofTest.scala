@@ -2,7 +2,8 @@ package gapt.proofs.lk
 
 import gapt.examples.{ LinearExampleProof, Pi2Pigeonhole, lattice }
 import gapt.expr._
-import gapt.proofs.{ Ant, Context, ProofBuilder, Sequent, SequentMatchers, Suc }
+import gapt.proofs.context.Context
+import gapt.proofs.{ Ant, ProofBuilder, Sequent, SequentMatchers, Suc }
 import gapt.proofs.expansion._
 import gapt.utils.SatMatchers
 import org.specs2.mutable._
@@ -40,19 +41,10 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
 
       val E = LKToExpansionProof( p ).expansionSequent
 
-      E.antecedent must_== Seq( ETStrongQuantifier( hof"∃x P x", fov"β", ETAtom( hoa"P β", Polarity.InAntecedent ) ) )
-      // this assumes that the first variable wins, f(β) would also be valid
-      val f_alpha = le"f β"
-      E.succedent must_== Seq( ETWeakQuantifier(
-        hof"∃y ∃z Q y z",
-        Map(
-          f_alpha ->
-            ETWeakQuantifier(
-              hof"∃z Q $f_alpha z",
-              Map(
-                le"c" -> ETAtom( hoa"Q $f_alpha c", Polarity.InSuccedent ),
-                le"d" -> ETAtom( hoa"Q $f_alpha d", Polarity.InSuccedent ) ) ) ) ) )
-
+      E.antecedent must_== Seq( ExpansionTree( hof"∃x P x", Polarity.InAntecedent, ETtStrong( fov"α", ETtAtom ) ) )
+      E.succedent must_== Seq( ExpansionTree( hof"∃y ∃z Q y z", Polarity.InSuccedent,
+        // this assumes that the first variable wins, f(β) would also be valid
+        ETtWeak( le"f α" -> ETtWeak( le"c" -> ETtAtom, le"d" -> ETtAtom ) ) ) )
     }
 
     "handle polarity" in {
@@ -94,7 +86,11 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
     }
 
     "return merge-free proofs" in {
-      LKToExpansionProof( Pi2Pigeonhole.proof ).subProofs must not( contain( beAnInstanceOf[ETMerge] ) )
+      LKToExpansionProof( Pi2Pigeonhole.proof ).subProofs.foreach {
+        case ETMerge( _, _ ) => ko
+        case _               => ok
+      }
+      ok
     }
 
     "equality on weakened formulas" in {

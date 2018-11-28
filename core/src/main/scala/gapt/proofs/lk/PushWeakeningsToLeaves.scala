@@ -146,11 +146,11 @@ object pushSingleWeakeningToLeaves {
     case ExistsRightRule( subProof, _, _, term, _ ) =>
       ExistsRightRule( pushSingleWeakeningToLeaves( subProof, side, formula ), proof.mainFormulas.head, term )
 
-    case ForallSkRightRule( subProof, _, _, skTerm, skDef ) =>
-      ForallSkRightRule( pushSingleWeakeningToLeaves( subProof, side, formula ), skTerm, skDef )
+    case ForallSkRightRule( subProof, _, main, skTerm ) =>
+      ForallSkRightRule( pushSingleWeakeningToLeaves( subProof, side, formula ), main, skTerm )
 
-    case ExistsSkLeftRule( subProof, _, _, skTerm, skDef ) =>
-      ExistsSkLeftRule( pushSingleWeakeningToLeaves( subProof, side, formula ), skTerm, skDef )
+    case ExistsSkLeftRule( subProof, _, main, skTerm ) =>
+      ExistsSkLeftRule( pushSingleWeakeningToLeaves( subProof, side, formula ), main, skTerm )
 
     case EqualityLeftRule( subProof, _, _, _ ) =>
       EqualityLeftRule(

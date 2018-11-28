@@ -1,9 +1,12 @@
 package gapt.proofs.lk
 
 import gapt.expr._
+import gapt.proofs.context.Context
+import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic.{ Lemma, OpenAssumption, allL, andL, axiomLog, cut, impL, insert }
 import gapt.proofs.lk.reductions._
-import gapt.proofs.{ Ant, Context, MutableContext, ProofBuilder, Sequent, SequentMatchers, Suc }
+import gapt.proofs.{ Ant, ProofBuilder, Sequent, SequentMatchers, Suc }
 import gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 
@@ -247,7 +250,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "induction left rank reduction should lift cut over induction" in {
     implicit var context: Context = Context()
-    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     context += hoc"equal: nat>nat>o"
     context += hoc"le: nat>nat>o"
     context += hoc"A:o"
@@ -278,7 +281,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
   }
   "induction right rank reduction should lift cut over induction" in {
     implicit var context: Context = Context()
-    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     context += hoc"equal: nat>nat>o"
     context += hoc"le: nat>nat>o"
     context += hoc"A:o"
@@ -310,7 +313,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "(1) free cut elimination should eliminate free cuts" in {
     implicit val context = MutableContext.default()
-    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     context += hoc"equal: nat>nat>o"
     context += hoc"le: nat>nat>o"
 
@@ -684,7 +687,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
   "stuck cut left forall-sk should reduce" in {
     val proof = ( ProofBuilder
       c OpenAssumption( Sequent() :+ ( "" -> hof"A(s)" ) :+ ( "" -> hof"B" ) )
-      u ( ForallSkRightRule( _, Suc( 0 ), hof"!x A(x)", le"s", hof"!x A(x)" ) )
+      u ( ForallSkRightRule( _, Suc( 0 ), hof"!x A(x)", le"s" ) )
       c OpenAssumption( ( "" -> hof"!x A(x)" ) +: Sequent() )
       b ( CutRule( _, _, hof"!x A(x)" ) )
       c OpenAssumption( ( "" -> hof"B" ) +: Sequent() )
@@ -698,7 +701,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     val proof = ( ProofBuilder
       c OpenAssumption( Sequent() :+ ( "" -> hof"?x A(x)" ) )
       c OpenAssumption( ( "" -> hof"A(s)" ) +: Sequent() :+ ( "" -> hof"B" ) )
-      u ( ExistsSkLeftRule( _, Ant( 0 ), hof"?x A(x)", le"s", hof"?x A(x)" ) )
+      u ( ExistsSkLeftRule( _, Ant( 0 ), hof"?x A(x)", le"s" ) )
       b ( CutRule( _, _, hof"?x A(x)" ) )
       c OpenAssumption( ( "" -> hof"B" ) +: Sequent() )
       b ( CutRule( _, _, hof"B" ) ) qed )
@@ -711,7 +714,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     val proof = ( ProofBuilder
       c OpenAssumption( Sequent() :+ ( "" -> hof"B" ) )
       c OpenAssumption( ( "" -> hof"B" ) +: Sequent() :+ ( "" -> hof"A(s)" ) )
-      u ( ForallSkRightRule( _, Suc( 0 ), hof"!x A(x)", le"s", hof"!x A(x)" ) )
+      u ( ForallSkRightRule( _, Suc( 0 ), hof"!x A(x)", le"s" ) )
       c OpenAssumption( ( "" -> hof"!x A(x)" ) +: Sequent() )
       b ( CutRule( _, _, hof"!x A(x)" ) )
       b ( CutRule( _, _, hof"B" ) ) qed )
@@ -725,7 +728,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       c OpenAssumption( Sequent() :+ ( "" -> hof"B" ) )
       c OpenAssumption( Sequent() :+ ( "" -> hof"?x A(x)" ) )
       c OpenAssumption( ( "" -> hof"B" ) +: ( "" -> hof"A(s)" ) +: Sequent() )
-      u ( ExistsSkLeftRule( _, Ant( 1 ), hof"?x A(x)", le"s", hof"?x A(x)" ) )
+      u ( ExistsSkLeftRule( _, Ant( 1 ), hof"?x A(x)", le"s" ) )
       b ( CutRule( _, _, hof"?x A(x)" ) )
       b ( CutRule( _, _, hof"B" ) ) qed )
     val Some( newProof ) = StuckCutReduction.Right reduce proof
@@ -735,7 +738,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "left rank induction unfolding reduction should reduce" in {
     implicit var context: Context = Context()
-    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     context += hoc"F:nat>o"
     context += hoc"A:o"
     val proof = ( ProofBuilder
@@ -760,7 +763,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "left rank cut induction should reduce" in {
     implicit var context: Context = Context()
-    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     context += hoc"F:nat>o"
     context += hoc"A:o"
     val proof = ( ProofBuilder
@@ -787,7 +790,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "right rank cut induction should reduce" in {
     implicit var context: Context = Context()
-    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     context += hoc"F:nat>o"
     context += hoc"A:o"
     val proof = ( ProofBuilder

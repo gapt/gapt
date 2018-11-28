@@ -1,11 +1,12 @@
 package gapt.examples.prime
 
 import gapt.expr.ExpressionParseHelper.Splice
-import gapt.expr.hol.CNFp
 import gapt.expr._
-import gapt.formats.babel.{ Notation, Precedence }
-import gapt.proofs.Context
-import gapt.proofs.Context.PrimRecFun
+import gapt.formats.babel.Notation
+import gapt.formats.babel.Precedence
+import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
 import gapt.proofs.gaptic.TacticsProof
 
 /**
@@ -15,7 +16,7 @@ trait PrimeDefinitions extends TacticsProof {
   def k: Int
 
   // Types
-  ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
   ctx += hof"1 = s 0"
   implicit def spliceNum( i: Int ): Splice[Expr] =
     if ( i == 0 ) le"0" else le"s ${spliceNum( i - 1 )}"

@@ -64,6 +64,12 @@ object LogHandler {
     def message( domain: String, level: VerbosityLevel, msg: => Any ): Unit =
       if ( level <= Warn ) Console.out.println( s"% ${msg.toString.replace( "\n", "\n% " )}" )
   }
+  class tstpWithMetrics extends MetricsPrinter {
+    override def message( domain: String, level: VerbosityLevel, msg: => Any ): Unit =
+      if ( level <= Warn ) println( msg.toString )
+    override def println( string: String ): Unit =
+      Console.out.println( "% " + string.replace( "\n", "\n% " ) )
+  }
 }
 
 case class Logger( domain: String ) {

@@ -2,6 +2,9 @@ package gapt.examples.nd
 import gapt.examples.Script
 import gapt.expr._
 import gapt.proofs._
+import gapt.proofs.context.Context
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.Sort
 import gapt.proofs.lk._
 
 // Example 0.1.6
@@ -484,7 +487,7 @@ object negLeft extends Script {
 
 object proofLink extends Script {
   implicit var ctx = Context.default
-  ctx += Context.Sort( "i" )
+  ctx += Sort( "i" )
   ctx += hoc"'<': i>i>o"
   ctx += hoc"'+': i>i>i"
   ctx += hoc"'1': i"
@@ -503,7 +506,7 @@ object proofLink extends Script {
 
 object proofLink2 extends Script {
   implicit var ctx = Context.default
-  ctx += Context.Sort( "i" )
+  ctx += Sort( "i" )
   ctx += hoc"'<': i>i>o"
   ctx += hoc"'1': i"
   ctx += hoc"'2': i"
@@ -522,7 +525,7 @@ object proofLink2 extends Script {
 
 object proofLink3 extends Script {
   implicit var ctx = Context.default
-  ctx += Context.Sort( "i" )
+  ctx += Sort( "i" )
   ctx += hoc"'<': i>i>o"
   ctx += hoc"'1': i"
   ctx += hoc"'2': i"
@@ -581,7 +584,7 @@ object inductionRule extends Script {
   val ax1 = LogicalAxiom( P0 )
 
   implicit var ctx = Context.default
-  ctx += Context.InductiveType( "i", hoc"0: i", hoc"s: i>i" )
+  ctx += InductiveType( "i", hoc"0: i", hoc"s: i>i" )
   ctx += hoc"'th': i>i"
   ctx += hoc"'P': i>o"
   ctx += ( "th", hos"$Px :- $PSx" )

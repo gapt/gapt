@@ -55,7 +55,7 @@ case class DumpData[T]( path: String, file_list: String, simplifier: Simplifier[
     try {
       val cache = simplifier.defaultCache()
       val cl_pairs =
-        tptpInferTypes( TptpParser.load( x ) ).inputs.collect {
+        TptpInferTypes( TptpImporter.loadWithIncludes( x ) ).inputs.collect {
           case a @ AnnotatedFormula( _, _, _, f, _ ) =>
             compute( f, cache )
         }
@@ -173,7 +173,7 @@ trait Simplifier[T] {
 
   def simplify( e: Expr, cache: T ): Expr
 
-  def isInterpreted( s: String ) = tptpInferTypes.isNumeral( s ) || ( Set( "$sum", "$product", "$uminus", "$difference",
+  def isInterpreted( s: String ) = TptpInferTypes.isNumeral( s ) || ( Set( "$sum", "$product", "$uminus", "$difference",
     "$less", "$lesseq", "$greater", "$greatereq" ) contains s )
 
   def simplifyT( ty: Ty ): Ty = ty match {
@@ -271,7 +271,7 @@ object UninterpretedSimplifier extends Simplifier[Caches.C2] {
         iconsts( c )
       case NonLogicalConstant( name, ty, _ ) if cmap.contains( ty ) && !isInterpreted( name ) =>
         cmap( ty )
-      case NonLogicalConstant( name, TInt, _ ) if tptpInferTypes.isNumeral( name ) =>
+      case NonLogicalConstant( name, TInt, _ ) if TptpInferTypes.isNumeral( name ) =>
         num
       case NonLogicalConstant( name, ty, _ ) if isInterpreted( name ) =>
         val nc = Const( name, simplifyT( ty ) )

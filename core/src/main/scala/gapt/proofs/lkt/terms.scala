@@ -99,7 +99,7 @@ sealed trait LKt {
       case AllL( main, term, q )          => AllL( main.replace( a, b ), term, q.replace( a, b ) )
       case AllR( main, ev, q )            => AllR( main.replace( a, b ), ev, q.replace( a, b ) )
       case Eql( main, eq, ltr, rwCtx, q ) => Eql( main.replace( a, b ), eq.replace( a, b ), ltr, rwCtx, q.replace( a, b ) )
-      case AllSk( main, term, skDef, q )  => AllSk( main.replace( a, b ), term, skDef, q.replace( a, b ) )
+      case AllSk( main, term, q )         => AllSk( main.replace( a, b ), term, q.replace( a, b ) )
       case Def( main, f, q )              => Def( main.replace( a, b ), f, q.replace( a, b ) )
       case Ind( main, f, t, cs )          => Ind( main.replace( a, b ), f, t, cs.map( c => c.copy( q = c.q.replace( a, b ) ) ) )
       case Link( mains, name )            => Link( mains.map( _.replace( a, b ) ), name )
@@ -117,7 +117,7 @@ sealed trait LKt {
     case AllL( main, _, _ )       => Seq( main )
     case AllR( main, _, _ )       => Seq( main )
     case Eql( main, eq, _, _, _ ) => Seq( main, eq )
-    case AllSk( main, _, _, _ )   => Seq( main )
+    case AllSk( main, _, _ )      => Seq( main )
     case Def( main, _, _ )        => Seq( main )
     case Ind( main, _, _, _ )     => Seq( main )
     case Link( mains, _ )         => mains
@@ -135,7 +135,7 @@ sealed trait LKt {
     case AllL( main, _, q )       => q.freeHyps + main
     case AllR( main, _, q )       => q.freeHyps + main
     case Eql( main, eq, _, _, q ) => q.freeHyps + main + eq
-    case AllSk( main, _, _, q )   => q.freeHyps + main
+    case AllSk( main, _, q )      => q.freeHyps + main
     case Def( main, _, q )        => q.freeHyps + main
     case Ind( main, _, _, cs )    => cs.view.flatMap( _.q.freeHyps ).toSet + main
     case Link( mains, _ )         => mains.toSet
@@ -151,7 +151,7 @@ sealed trait LKt {
     case AllL( _, _, q )                   => q.p.hasCuts
     case AllR( _, _, q )                   => q.p.hasCuts
     case Eql( _, _, _, _, q )              => q.p.hasCuts
-    case AllSk( _, _, _, q )               => q.p.hasCuts
+    case AllSk( _, _, q )                  => q.p.hasCuts
     case Def( _, _, q )                    => q.p.hasCuts
     case Ind( _, _, _, cs )                => cs.exists( _.q.p.hasCuts )
     case Link( _, _ )                      => false
@@ -167,7 +167,7 @@ sealed trait LKt {
     case AllL( _, term, q )                => q.p.freeVars union freeVariables( term )
     case AllR( _, ev, q )                  => q.p.freeVars - ev
     case Eql( _, _, _, rwCtx, q )          => q.p.freeVars union freeVariables( rwCtx )
-    case AllSk( _, _, _, q )               => q.p.freeVars
+    case AllSk( _, _, q )                  => q.p.freeVars
     case Def( _, f, q )                    => q.p.freeVars union freeVariables( f )
     case Ind( _, _, _, cs )                => cs.view.flatMap( c => c.q.p.freeVars -- c.evs ).toSet
     case Link( _, name )                   => freeVariables( name )
@@ -208,7 +208,7 @@ sealed trait LKt {
       case AllL( _, _, q )      => q.p.foreach( f )
       case AllR( _, _, q )      => q.p.foreach( f )
       case Eql( _, _, _, _, q ) => q.p.foreach( f )
-      case AllSk( _, _, _, q )  => q.p.foreach( f )
+      case AllSk( _, _, q )     => q.p.foreach( f )
       case Def( _, _, q )       => q.p.foreach( f )
       case Ind( _, _, _, cs )   => for ( c <- cs ) c.q.p.foreach( f )
       case Link( _, _ )         =>
@@ -244,7 +244,7 @@ sealed trait LKt {
         out += main; out += q.aux
       case Eql( main, eq, _, _, q ) =>
         out += main; out += eq; out += q.aux
-      case AllSk( main, _, _, q ) =>
+      case AllSk( main, _, q ) =>
         out += main; out += q.aux
       case Def( main, _, q ) =>
         out += main; out += q.aux
@@ -277,7 +277,7 @@ case class AndL( main: Hyp, q: Bound2 ) extends LKt
 case class AllL( main: Hyp, term: Expr, q: Bound1 ) extends LKt
 case class AllR( main: Hyp, ev: Var, q: Bound1 ) extends LKt
 case class Eql( main: Hyp, eq: Hyp, ltr: Boolean, rwCtx: Expr, q: Bound1 ) extends LKt
-case class AllSk( main: Hyp, term: Expr, skDef: Expr, q: Bound1 ) extends LKt
+case class AllSk( main: Hyp, term: Expr, q: Bound1 ) extends LKt
 case class Def( main: Hyp, f: Formula, q: Bound1 ) extends LKt
 case class IndCase( ctr: Const, evs: List[Var], q: BoundN )
 case class Ind( main: Hyp, f: Abs, term: Expr, cases: List[IndCase] ) extends LKt {
@@ -313,8 +313,8 @@ object Eql {
     if ( q.isConst ) q.p else Eql( main, eq, ltr, rwCtx, q )
 }
 object AllSk {
-  def f( main: Hyp, term: Expr, skDef: Expr, q: Bound1 ): LKt =
-    if ( q.isConst ) q.p else AllSk( main, term, skDef, q )
+  def f( main: Hyp, term: Expr, q: Bound1 ): LKt =
+    if ( q.isConst ) q.p else AllSk( main, term, q )
 }
 object Def {
   def f( main: Hyp, f: Formula, q: Bound1 ): LKt = if ( q.isConst ) q.p else Def( main, f, q )
@@ -334,22 +334,6 @@ object AllRBlock {
       case t +: ts => AllR( m, t, Bound1( b.aux, AllRBlock( b.aux, ts, b ) ) )
     }
 }
-
-trait ExprSubstWithβ0 {
-  implicit val exprSubstWithβ: ClosedUnderSub[Expr] =
-    ( sub, expr ) =>
-      if ( sub.map.values.exists( _.isInstanceOf[Abs] ) )
-        BetaReduction.betaNormalize( sub( expr )( Substitutable.ExprClosedUnderSub ) )
-      else
-        sub( expr )( Substitutable.ExprClosedUnderSub )
-}
-trait ExprSubstWithβ extends ExprSubstWithβ0 {
-  implicit val formulaSubstWithβ: ClosedUnderSub[Formula] =
-    ( sub, formula ) => sub( formula: Expr ).asInstanceOf[Formula]
-  implicit val absSubstWithβ: ClosedUnderSub[Abs] =
-    ( sub, abs ) => sub( abs: Expr ).asInstanceOf[Abs]
-}
-object ExprSubstWithβ extends ExprSubstWithβ
 
 trait ImplicitInstances {
   import ExprSubstWithβ._
@@ -386,7 +370,7 @@ trait ImplicitInstances {
         AllR( main, ev_, Substitution( sub.map + ( ev -> ev_ ), sub.typeMap )( q ) )
       case AllR( main, ev, q )            => AllR( main, ev, sub( q ) )
       case Eql( main, eq, ltr, rwCtx, q ) => Eql( main, eq, ltr, sub( rwCtx ), sub( q ) )
-      case AllSk( main, term, skDef, q )  => AllSk( main, sub( term ), skDef, sub( q ) )
+      case AllSk( main, term, q )         => AllSk( main, sub( term ), sub( q ) )
       case Def( main, f, q )              => Def( main, sub( f ), sub( q ) )
       case Ind( main, f, term, cases )    => Ind( main, sub( f ), sub( term ), sub( cases ) )
       case Link( mains, name )            => Link( mains, sub( name ) )
@@ -428,7 +412,7 @@ trait ImplicitInstances {
         case AllL( main, term, q )             => AllL( main, TermReplacement( term, repl ), TermReplacement( q, repl ) )
         case AllR( main, ev, q )               => AllR( main, TermReplacement( ev, repl ).asInstanceOf[Var], TermReplacement( q, repl ) )
         case Eql( main, eq, ltr, rwCtx, q )    => Eql( main, eq, ltr, TermReplacement( rwCtx, repl ).asInstanceOf[Abs], TermReplacement( q, repl ) )
-        case AllSk( main, term, skDef, q )     => AllSk( main, TermReplacement( term, repl ), TermReplacement( skDef, repl ), TermReplacement( q, repl ) )
+        case AllSk( main, term, q )            => AllSk( main, TermReplacement( term, repl ), TermReplacement( q, repl ) )
         case Def( main, f, q )                 => Def( main, TermReplacement( f, repl ), TermReplacement( q, repl ) )
         case Ind( main, f, t, cases )          => Ind( main, TermReplacement( f, repl ).asInstanceOf[Abs], TermReplacement( t, repl ), TermReplacement( cases, repl ) )
         case Link( mains, name )               => Link( mains, TermReplacement( name, repl ) )
@@ -444,7 +428,7 @@ trait ImplicitInstances {
         case AllL( _, term, q )                => containedNames( q ) union containedNames( term )
         case AllR( _, ev, q )                  => containedNames( q ) + ev
         case Eql( _, _, _, rwCtx, q )          => containedNames( q ) union containedNames( rwCtx )
-        case AllSk( _, term, skDef, q )        => containedNames( q ) union containedNames( term ) union containedNames( skDef )
+        case AllSk( _, term, q )               => containedNames( q ) union containedNames( term )
         case Def( _, f, q )                    => containedNames( q ) union containedNames( f )
         case Ind( _, f, t, cases )             => containedNames( cases ) union containedNames( f ) union containedNames( t )
         case Link( _, name )                   => containedNames( name )

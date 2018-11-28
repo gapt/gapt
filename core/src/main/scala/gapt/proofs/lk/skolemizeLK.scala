@@ -3,6 +3,7 @@ package gapt.proofs.lk
 import gapt.expr._
 import gapt.expr.hol.{ HOLPosition, SkolemFunctions, instantiate }
 import gapt.proofs._
+import gapt.proofs.context.mutable.MutableContext
 import gapt.utils.NameGenerator
 
 import scala.collection.mutable
@@ -155,8 +156,8 @@ private class skolemizeLK(
         val q_ = apply( p.subProof, p.occConnectors.head.parent( info ).
           updated( p.aux, info( p.mainIndices.head ).instantiateQuantifier( freshVar ) ),
           subst compose Substitution( freshVar -> p.skolemTerm ) )
-        if ( p.aux.isSuc ) ForallSkRightRule( q_, p.aux, subf( p.mainFormula ), sub( p.skolemTerm ), p.skolemDef )
-        else ExistsSkLeftRule( q_, p.aux, subf( p.mainFormula ), sub( p.skolemTerm ), p.skolemDef )
+        if ( p.aux.isSuc ) ForallSkRightRule( q_, p.aux, subf( p.mainFormula ), sub( p.skolemTerm ) )
+        else ExistsSkLeftRule( q_, p.aux, subf( p.mainFormula ), sub( p.skolemTerm ) )
 
       // Eigenvariable inferences that we keep
       case p @ StrongQuantifierRule( q, a, eigen, quant, pol ) if info( p.mainIndices.head ).isCutAnc && !skolemizeAboveCuts =>
@@ -179,8 +180,8 @@ private class skolemizeLK(
         val q_ = apply( q, p.occConnectors.head.parent( info ).
           updated( a, info( p.mainIndices.head ).instantiateQuantifier( skolemTerm ) ),
           subst compose Substitution( eigen -> skolemTerm ) )
-        if ( pol ) ForallSkRightRule( q_, a, subf( p.mainFormulas.head ), sub( skolemTerm ), skolemDef )
-        else ExistsSkLeftRule( q_, a, subf( p.mainFormulas.head ), sub( skolemTerm ), skolemDef )
+        if ( pol ) ForallSkRightRule( q_, a, subf( p.mainFormulas.head ), sub( skolemTerm ) )
+        else ExistsSkLeftRule( q_, a, subf( p.mainFormulas.head ), sub( skolemTerm ) )
     }
   }
 }

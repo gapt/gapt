@@ -2,8 +2,8 @@ package gapt.proofs.lk
 
 import gapt.expr._
 import gapt.expr.hol.instantiate
-import gapt.proofs.Context
 import gapt.proofs.SequentConnector
+import gapt.proofs.context.Context
 import gapt.provers.viper.aip
 import gapt.utils.NameGenerator
 

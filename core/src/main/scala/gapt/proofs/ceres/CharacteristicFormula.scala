@@ -2,8 +2,8 @@ package gapt.proofs.ceres
 
 import gapt.expr._
 import gapt.expr.hol.toNNF
-import gapt.proofs.MutableContext
 import gapt.proofs.Sequent
+import gapt.proofs.context.mutable.MutableContext
 
 import scala.util.matching.Regex
 
@@ -155,7 +155,7 @@ private object Support {
   }
   def add( chF: Map[Formula, ( Formula, Set[Var] )], qType: QuantifierC )( implicit ctx: MutableContext ): Unit = {
 
-    import gapt.proofs.context.ReductionRuleUpdate.reductionRulesAsReductionRuleUpdate
+    import gapt.proofs.context.update.ReductionRuleUpdate.reductionRulesAsReductionRuleUpdate
 
     val definitions: Map[Const, List[( Atom, Formula )]] = {
       for ( ( f @ Atom( newEx, _ ), ( form, vars ) ) <- chF.toList )

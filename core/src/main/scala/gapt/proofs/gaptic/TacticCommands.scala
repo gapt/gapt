@@ -1,16 +1,20 @@
 package gapt.proofs.gaptic
 
-import tactics._
 import gapt.expr._
 import gapt.formats.babel.BabelSignature
-import gapt.proofs.Context.ProofNames
 import gapt.proofs._
+import gapt.proofs.context
+import gapt.proofs.context.Context
+import gapt.proofs.context.facet.ProofNames
+import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.gaptic.tactics._
 import gapt.proofs.lk._
 import gapt.provers.Prover
 import gapt.provers.escargot.Escargot
 import gapt.provers.prover9.Prover9
 import gapt.provers.simp.SimpTactic
-import gapt.provers.viper.aip.axioms.{ GeneralInductionAxioms, StandardInductionAxioms }
+import gapt.provers.viper.aip.axioms.GeneralInductionAxioms
+import gapt.provers.viper.aip.axioms.StandardInductionAxioms
 import gapt.provers.viper.grammars.TreeGrammarInductionTactic
 
 /**
@@ -452,7 +456,8 @@ trait TacticCommands {
    * is reduced to `n` new subgoals, where `n` is the number of constructors of the type of `x`.
    *
    * This will only work if there is exactly one universal formula in the succedent!
-   * @param ctx A [[gapt.proofs.Context]]. It must contain an inductive definition of the type of `x`.
+   *
+   * @param ctx A [[Context]]. It must contain an inductive definition of the type of `x`.
    */
   def induction( on: Var )( implicit ctx: Context ) = InductionTactic( UniqueFormula, on )
 
@@ -462,8 +467,9 @@ trait TacticCommands {
    * `Γ, :- Δ, ∀x.A`
    *
    * is reduced to `n` new subgoals, where `n` is the number of constructors of the type of `x`.
+   *
    * @param label The label of the formula `∀x.A`.
-   * @param ctx A [[gapt.proofs.Context]]. It must contain an inductive definition of the type of `x`.
+   * @param ctx   A [[Context]]. It must contain an inductive definition of the type of `x`.
    */
   def induction( on: Var, label: String )( implicit ctx: Context ) = InductionTactic( OnLabel( label ), on )
 
@@ -509,7 +515,8 @@ trait TacticCommands {
   /**
    * Solves the current subgoal as a first-order consequence of the background theory. This
    * closes the goal.
-   * @param ctx A [[gapt.proofs.Context]]. The current subgoal must be contained in its background theory.
+   *
+   * @param ctx A [[Context]]. The current subgoal must be contained in its background theory.
    */
   def foTheory( implicit ctx: Context ): Tactic[Unit] = Tactic {
     for {
@@ -523,12 +530,13 @@ trait TacticCommands {
   /**
    * Declares the current subgoal as a theory axiom, i.e. a sequent that is contained in the background theory. This
    * closes the goal.
-   * @param ctx A [[gapt.proofs.Context]]. The current subgoal must be contained in its background theory.
+   *
+   * @param ctx A [[Context]]. The current subgoal must be contained in its background theory.
    */
   def theory( implicit ctx: Context ): Tactic[Unit] = Tactic {
     for {
       goal <- currentGoal
-      proofLinkName <- ctx.get[Context.ProofNames].find( goal.conclusion ).
+      proofLinkName <- ctx.get[ProofNames].find( goal.conclusion ).
         toTactic( "does not follow from theory" )
       _ <- insert( ProofLink( proofLinkName ) )
     } yield ()
@@ -669,8 +677,9 @@ trait TacticCommands {
    *
    * NB: This will only replace the first definition it finds in each supplied formula. If you want to unfold all definitions,
    * use `repeat`.
+   *
    * @param definitions The definitions `def1`,...,`defn`.
-   * @param ctx A [[gapt.proofs.Context]]. The definitions you want to unfold need to be present in `ctx`.
+   * @param ctx         A [[Context]]. The definitions you want to unfold need to be present in `ctx`.
    */
   def unfold( definitions: String* )( implicit ctx: Context ) =
     UnfoldTacticHelper( definitions )
@@ -781,7 +790,7 @@ trait TacticCommands {
     tac => tac.focused
 
   def trace( implicit sig: BabelSignature ): Tactic[Unit] =
-    Tactic( currentGoal.map { g => println( g.toPrettyString ); () } )
+    Tactic( currentGoal.map { g => println( g.toPrettyString ); () } ).aka( "trace" )
 
   def subst1: SubstTactic = SubstTactic( UniqueFormula )
   def subst1( hyp: String ): SubstTactic = SubstTactic( OnLabel( hyp ) )
