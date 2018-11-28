@@ -26,17 +26,27 @@ class TptpParser( val input: ParserInput ) extends Parser {
 
   def TPTP_file: Rule1[TptpFile] = rule { Ws ~ TPTP_input.* ~ EOI ~> ( TptpFile( _ ) ) }
 
-  private def TPTP_input = rule { annotated_formula | include }
+  def TPTP_input = rule { annotated_formula | type_declaration | annotated_preformula | include }
 
   private def annotated_formula = rule {
     atomic_word ~ "(" ~ Ws ~ name ~ Comma ~ formula_role ~ Comma ~ formula ~ annotations ~ ")." ~ Ws ~>
       ( AnnotatedFormula( _, _, _, _, _ ) )
   }
+
+  private def annotated_preformula = rule {
+    atomic_word ~ "(" ~ Ws ~ name ~ Comma ~ formula_role ~ Comma ~ pre_formula ~ annotations ~ ")." ~ Ws ~>
+      ( AnnotatedPreFormula( _, _, _, _, _ ) )
+  }
+
+  private def type_declaration = rule {
+    atomic_word ~ "(" ~ Ws ~ name ~ Comma ~ "type" ~ Comma ~ ( atomic_word | number ) ~ Ws ~ ":" ~ Ws ~ complex_type ~ annotations ~ ")." ~ Ws ~>
+      ( TypeDeclaration( _, _, _, _, _ ) )
+  }
+
   private def formula_role = rule { atomic_word }
   private def annotations = rule { ( Comma ~ general_term ).* }
 
-  private def formula = rule { typed_logic_formula }
-  private def typed_logic_formula = rule { logic_formula } //add type annotation
+  private def formula = rule { logic_formula } //add type annotation
   private def logic_formula: Rule1[Formula] = rule { unitary_formula ~ ( binary_nonassoc_part | or_formula_part | and_formula_part ).? }
   private def binary_nonassoc_part = rule { binary_connective ~ unitary_formula ~> ( ( a: Formula, c: ( Expr, Expr ) => Formula, b: Formula ) => c( a, b ) ) }
   private def or_formula_part = rule { ( "|" ~ Ws ~ unitary_formula ).+ ~> ( ( a: Formula, as: Seq[Formula] ) => Or.leftAssociative( a +: as: _* ) ) }
