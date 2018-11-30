@@ -17,6 +17,43 @@ import org.sat4j.tools.SearchListenerAdapter
 import scala.annotation.tailrec
 import scala.collection.mutable
 
+private sealed trait CExSet {
+  import CExSet._
+  def insert( is: List[Int] ): CExSet = ( is, this ) match {
+    case ( i :: is2, Node( j, t, f ) ) =>
+      if ( j > math.abs( i ) ) {
+        Node( math.abs( i ), this, this ).insert( is )
+      } else if ( j < math.abs( i ) ) {
+        Node( j, t.insert( is ), f.insert( is ) )
+      } else { // j == math.abs(i)
+        if ( i > 0 ) Node( j, t.insert( is2 ), f )
+        else Node( j, t, f.insert( is2 ) )
+      }
+    case ( Nil, Node( _, _, _ ) )        => this
+    case ( Nil, Nothing | JustEmptySet ) => JustEmptySet
+    case ( i :: _, Nothing | JustEmptySet ) =>
+      Node( math.abs( i ), Nothing, Nothing ).insert( is )
+  }
+  def query( is: List[Int] ): Boolean = ( is, this ) match {
+    case ( i :: is2, Node( j, t, f ) ) =>
+      if ( j > math.abs( i ) ) false
+      else if ( j < math.abs( i ) ) t.query( is ) || f.query( is )
+      else {
+        if ( i > 0 ) t.query( is2 )
+        else f.query( is2 )
+      }
+    case ( _ :: _, Nothing | JustEmptySet )      => false
+    case ( Nil, Node( _, _, _ ) | JustEmptySet ) => true
+    case ( Nil, Nothing )                        => false
+  }
+}
+private object CExSet {
+  case class Node( i: Int, t: CExSet, f: CExSet ) extends CExSet
+  case object JustEmptySet extends CExSet
+  case object Nothing extends CExSet
+  def empty: CExSet = Nothing
+}
+
 class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
   val solver = SolverFactory.newDefault()
   def newVar(): Int = solver.nextFreeVarId( true )
@@ -136,15 +173,21 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
     yield ev1 -> ( down1 -- down1.flatMap( dependencies ) )
   val noReverseDeps = expansionProof.eigenVariables -- expansionProof.dependencyRelation.map( _._1 )
 
-  val atomsWithFreeVar: Map[Var, Set[Int]] =
+  val atomToEigenvars: Map[Int, Set[Var]] =
+    Map() ++ atomToSh.mapValues( freeVariables( _ ).intersect( expansionProof.eigenVariables ) )
+  val atomsWithFreeEigenvar: Map[Var, Set[Int]] =
     Map().withDefaultValue( Set.empty[Int] ) ++
-      atomToSh.view.flatMap { case ( a, f ) => freeVariables( f ).map( _ -> a ) }.
+      atomToEigenvars.view.flatMap { case ( a, vs ) => vs.map( _ -> a ) }.
       groupBy( _._1 ).mapValues( _.map( _._2 ).toSet )
 
   type Counterexample = Set[Int] // just the assumptions
   type Result = Either[Counterexample, Unit]
 
-  val unprovable = mutable.Buffer[( Set[Var], Counterexample )]()
+  val evIds: Map[Var, Int] = Map() ++ expansionProof.eigenVariables.map( e => e -> newVar() )
+  private var unprovable: CExSet = CExSet.empty
+
+  def mkCEx( eigenVariables: Set[Var], model: Iterable[Int] ): List[Int] =
+    ( model.view ++ expansionProof.eigenVariables.diff( eigenVariables ).map( evIds ) ).toList.sortBy( math.abs )
 
   def refute( eigenVariables: Set[Var], model: Vector[Int] ): Result = {
     def minimizeCtx( ctx: Set[Int], upper: Set[Int] ): Set[Int] = {
@@ -165,17 +208,19 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
       }
 
     def tryExistsLeft(): Option[Result] =
-      model.view.filter( _ > 0 ).flatMap( atomToET ).flatMap {
-        case e @ ETStrongQuantifier( sh, ev, a ) if e.polarity.inAnt &&
-          !eigenVariables.contains( ev ) =>
-          val atomsWithEV = atomsWithFreeVar( ev )
-          val ctx = model.view.filter( a => !atomsWithEV.contains( math.abs( a ) ) ).toSet
-          val provable = solve( eigenVariables + ev, ctx + atom( a ) )
-          if ( provable.isRight ) addClauseWithCtx( ctx, Set( atom( a ) ), Set( atom( e ) ) )( p =>
-            if ( !p.endSequent.antecedent.contains( a.shallow ) ) p
-            else ExistsLeftRule( p, sh, ev ) )
-          Some( provable ).filter( _.isRight || dependencies( ev ).subsetOf( eigenVariables ) )
-        case _ => None
+      model.view.filter( _ > 0 ).flatMap { at =>
+        atomToET( at ).flatMap {
+          case e @ ETStrongQuantifier( sh, ev, a ) if e.polarity.inAnt &&
+            !eigenVariables.contains( ev ) =>
+            val atomsWithEV = atomsWithFreeEigenvar( ev )
+            val ctx = model.view.filter( a => !atomsWithEV.contains( math.abs( a ) ) ).toSet
+            val provable = solve( eigenVariables + ev, ctx + atom( a ) )
+            if ( provable.isRight ) addClauseWithCtx( ctx, Set( atom( a ) ), Set( atom( e ) ) )( p =>
+              if ( !p.endSequent.antecedent.contains( a.shallow ) ) p
+              else ExistsLeftRule( p, sh, ev ) )
+            Some( provable ).filter( _.isRight || atomToEigenvars( at ).subsetOf( eigenVariables ) )
+          case _ => None
+        }
       }.headOption
 
     def tryNonInvertible(): Option[Result] = {
@@ -202,10 +247,10 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         case e @ ETImp( a, _ ) if e.polarity.inSuc && !model.contains( atom( a ) ) => e
         case e @ ETStrongQuantifier( _, ev, _ ) if e.polarity.inSuc
           && !eigenVariables.contains( ev ) => e
-      }
+      }.toVector
       val nextSteps = candidates.map { e =>
         val ( upper, newEvs, transform ) = handleBlock( e, Set.empty, Set.empty, identity )
-        val atomsWithEigenVars = newEvs.flatMap( atomsWithFreeVar )
+        val atomsWithEigenVars = newEvs.flatMap( atomsWithFreeEigenvar )
         val ctx = model.view.filter( _ > 0 ).toSet.diff( atomsWithEigenVars )
         ( upper, Set( -atom( e ) ), ctx, newEvs, transform )
       }
@@ -227,7 +272,6 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         ok
       case reason @ Left( _ ) =>
         if ( solver.isSatisfiable( model ) ) {
-          unprovable += ( ( eigenVariables, model.toSet ) )
           reason
         } else {
           // We solved the current goal even though no ∃:l, ∀:r, →:r, ¬:r rule was successful.
@@ -238,13 +282,8 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
   }
 
   def solve( eigenVariables: Set[Var], assumptions: Set[Int] ): Result = {
-    unprovable.find {
-      case ( evs, ass ) => evs.subsetOf( eigenVariables ) && assumptions.subsetOf( ass )
-    } match {
-      case Some( ( _, ass ) ) =>
-        return Left( ass )
-      case _ =>
-    }
+    if ( unprovable.query( mkCEx( eigenVariables, assumptions ) ) )
+      return Left( assumptions )
 
     if ( isESatisfiable( assumptions + classical ) )
       return Left( assumptions )
@@ -253,8 +292,10 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
       val model = solver.model().view.filter( v => v != classical && v != -classical ).toVector
 
       refute( eigenVariables, model ) match {
-        case reason @ Left( _ ) => return reason
-        case Right( _ )         => // next model
+        case reason @ Left( _ ) =>
+          unprovable = unprovable.insert( mkCEx( eigenVariables, model ) )
+          return reason
+        case Right( _ ) => // next model
       }
     }
     Right( () )
