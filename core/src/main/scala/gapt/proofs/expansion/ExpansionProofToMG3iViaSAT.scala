@@ -207,21 +207,32 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         addClause( upper = modelSequent( upper ++ ctx2 ), lower = modelSequent( lower ++ ctx2 ) )( p )
       }
 
-    def tryExistsLeft(): Option[Result] =
-      model.view.filter( _ > 0 ).flatMap { at =>
-        atomToET( at ).flatMap {
-          case e @ ETStrongQuantifier( sh, ev, a ) if e.polarity.inAnt &&
-            !eigenVariables.contains( ev ) =>
-            val atomsWithEV = atomsWithFreeEigenvar( ev )
-            val ctx = model.view.filter( a => !atomsWithEV.contains( math.abs( a ) ) ).toSet
-            val provable = solve( eigenVariables + ev, ctx + atom( a ) )
-            if ( provable.isRight ) addClauseWithCtx( ctx, Set( atom( a ) ), Set( atom( e ) ) )( p =>
-              if ( !p.endSequent.antecedent.contains( a.shallow ) ) p
-              else ExistsLeftRule( p, sh, ev ) )
-            Some( provable ).filter( _.isRight || atomToEigenvars( at ).subsetOf( eigenVariables ) )
-          case _ => None
-        }
-      }.headOption
+    def tryExistsLeft(): Option[Result] = {
+      val candidates =
+        model.view.filter( _ > 0 ).flatMap { at =>
+          atomToET( at ).collect {
+            case e @ ETStrongQuantifier( sh, ev, a ) if e.polarity.inAnt &&
+              !eigenVariables.contains( ev ) =>
+              val atomsWithEV = atomsWithFreeEigenvar( ev )
+              val ctx = model.view.filter( a => !atomsWithEV.contains( math.abs( a ) ) ).toSet
+              ( ev, ctx, sh, a.shallow, atomToEigenvars( at ).subsetOf( eigenVariables ) )
+          }
+        }.toVector
+      def go: ( ( Var, Set[Int], Formula, Formula, Boolean ) ) => Result = {
+        case ( ev, ctx, sh, a, _ ) =>
+          val provable = solve( eigenVariables + ev, ctx + atom( a ) )
+          if ( provable.isRight ) addClauseWithCtx( ctx, Set( atom( a ) ), Set( atom( sh ) ) )( p =>
+            if ( !p.endSequent.antecedent.contains( a ) ) p
+            else ExistsLeftRule( p, sh, ev ) )
+          provable
+      }
+      candidates.find( _._5 ) match {
+        case Some( invertible ) =>
+          Some( go( invertible ) )
+        case None =>
+          candidates.view.map( go ).find( _.isRight )
+      }
+    }
 
     def tryNonInvertible(): Option[Result] = {
       def handleBlock( e: ExpansionTree, upper: Set[Int], eigenVariables: Set[Var],
