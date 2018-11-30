@@ -134,6 +134,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
     yield ev -> ( generatedUpperSetInPO( List( ev ), expansionProof.dependencyRelation.map( _.swap ) ) - ev ) )
   val immediateDeps = for ( ( ev1, down1 ) <- dependencies )
     yield ev1 -> ( down1 -- down1.flatMap( dependencies ) )
+  val noReverseDeps = expansionProof.eigenVariables -- expansionProof.dependencyRelation.map( _._1 )
 
   val atomsWithFreeVar: Map[Var, Set[Int]] =
     Map().withDefaultValue( Set.empty[Int] ) ++
@@ -164,19 +165,20 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
       }
 
     def tryExistsLeft(): Option[Result] =
-      model.view.filter( _ > 0 ).flatMap( atomToET ).collectFirst {
+      model.view.filter( _ > 0 ).flatMap( atomToET ).flatMap {
         case e @ ETStrongQuantifier( sh, ev, a ) if e.polarity.inAnt &&
-          !eigenVariables.contains( ev ) && immediateDeps( ev ).subsetOf( eigenVariables ) =>
+          !eigenVariables.contains( ev ) =>
           val atomsWithEV = atomsWithFreeVar( ev )
           val ctx = model.view.filter( a => !atomsWithEV.contains( math.abs( a ) ) ).toSet
           val provable = solve( eigenVariables + ev, ctx + atom( a ) )
           if ( provable.isRight ) addClauseWithCtx( ctx, Set( atom( a ) ), Set( atom( e ) ) )( p =>
             if ( !p.endSequent.antecedent.contains( a.shallow ) ) p
             else ExistsLeftRule( p, sh, ev ) )
-          provable
-      }
+          Some( provable ).filter( _.isRight || dependencies( ev ).subsetOf( eigenVariables ) )
+        case _ => None
+      }.headOption
 
-    def tryNonInvertible(): Result = {
+    def tryNonInvertible(): Option[Result] = {
       def handleBlock( e: ExpansionTree, upper: Set[Int], eigenVariables: Set[Var],
                        back: LKProof => LKProof ): ( Set[Int], Set[Var], LKProof => LKProof ) =
         e match {
@@ -199,8 +201,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         case e @ ETNeg( a ) if e.polarity.inSuc && !model.contains( atom( a ) )    => e
         case e @ ETImp( a, _ ) if e.polarity.inSuc && !model.contains( atom( a ) ) => e
         case e @ ETStrongQuantifier( _, ev, _ ) if e.polarity.inSuc
-          && !eigenVariables.contains( ev )
-          && immediateDeps( ev ).subsetOf( eigenVariables ) => e
+          && !eigenVariables.contains( ev ) => e
       }
       val nextSteps = candidates.map { e =>
         val ( upper, newEvs, transform ) = handleBlock( e, Set.empty, Set.empty, identity )
@@ -214,13 +215,13 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
       } match {
         case Some( ( upper, lower, ctx, _, transform ) ) =>
           addClauseWithCtx( ctx, upper, lower )( transform )
-          Right( () )
+          Some( Right( () ) )
         case None =>
-          Left( model.toSet )
+          None
       }
     }
 
-    tryExistsLeft().getOrElse( tryNonInvertible() ) match {
+    tryExistsLeft().orElse( tryNonInvertible() ).getOrElse( Left( model.toSet ) ) match {
       case ok @ Right( _ ) => // next model
         require( !solver.isSatisfiable( model ) )
         ok
