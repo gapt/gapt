@@ -137,7 +137,7 @@ class TheoryTestCase( name: String, combined: Boolean )
       require( parser( stringifier( t ) ) == t )
     catch {
       case e: Exception =>
-        throw new Exception( stringifier(t) + "\n\n" + t.toRawString, e )
+        throw new Exception( stringifier( t ) + "\n\n" + t.toRawString, e )
     } ) --? name
 
   override protected def test( implicit testRun: TestRun ): Unit = {
