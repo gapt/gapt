@@ -140,7 +140,11 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       case WithParams =>
         Parenable( Precedence.max, showNameWithParams( ident.name, ident.asInstanceOf[Const].params ) )
       case WithType =>
-        Parenable( Precedence.typeAnnot, showNameFollowableByOp( ident.name ) <> ":" <> show( ident.ty, false ) )
+        val withParams = ident match {
+          case Const( n, _, ps ) => showNameFollowableByOp( n ) <> showTyParams( ps )
+          case Var( n, _ )       => showNameFollowableByOp( n )
+        }
+        Parenable( Precedence.typeAnnot, withParams <> ":" <> show( ident.ty, false ) )
     }
 
   def showNameWithParams( name: String, params: List[Ty] ): Doc =
@@ -174,11 +178,15 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       case _ if !expr.isInstanceOf[Const] => Safe -> t0
       // Now: expr.isInstanceOf[Const]
       case BabelSignature.IsUnknownConst if knownType || t0.get( name ).contains( expr ) || expr == FOLConst( name ) =>
-        Bare -> ( t0 + ( name -> expr ) )
+        val hasParams = expr.asInstanceOf[Const].params.nonEmpty
+        if ( hasParams )
+          WithParams -> t0
+        else
+          Bare -> ( t0 + ( name -> expr ) )
       case BabelSignature.IsUnknownConst =>
         expr match {
           case Const( _, _, ps ) if ps.nonEmpty =>
-            Safe -> t0
+            WithType -> t0
           case _ =>
             WithType -> ( t0 + ( name -> expr ) )
         }
