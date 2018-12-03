@@ -30,10 +30,6 @@ object MG3iToLJ {
   }
 
   def apply( proof: LKProof, goal: Formula, projections: Map[Formula, LKProof] ): LKProof = {
-    for ( ( f, pr ) <- projections ) {
-      require( pr.conclusion.succedent == Seq( goal ) )
-      require( pr.conclusion.antecedent.contains( f ) )
-    }
     def withAddGoal( p: LKProof, addGoal: Formula, r: LKProof ): LKProof =
       if ( !r.conclusion.antecedent.contains( addGoal ) ) r
       else if ( p.conclusion.succedent.forall( _ == addGoal ) ) {
@@ -53,7 +49,7 @@ object MG3iToLJ {
           val Seq( g ) = pr.conclusion.succedent
           f -> ContractionMacroRule( CutRule( pr, projections( g ), g ) )
       }
-    val result = proof match {
+    ContractionMacroRule( proof match {
       case LogicalAxiom( atom )            => projections( atom )
       case proof @ ReflexivityAxiom( _ )   => CutRule( proof, projections( proof.mainFormula ), proof.mainFormula )
       case ContractionLeftRule( p, _, _ )  => apply( p, goal, projections )
@@ -126,8 +122,6 @@ object MG3iToLJ {
         require( p.conclusion.succedent.size == 1 )
         val q = apply( p, proof.auxFormula, Map( proof.auxFormula -> LogicalAxiom( proof.auxFormula ) ) )
         CutRule( ForallRightRule( q, proof.mainFormula, proof.eigenVariable ), projections( proof.mainFormula ), proof.mainFormula )
-    }
-    require( result.conclusion.succedent.distinct == Seq( goal ) )
-    ContractionMacroRule( result )
+    } )
   }
 }
