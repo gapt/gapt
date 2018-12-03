@@ -498,7 +498,8 @@ case class NegLeftRule( subProof: LKProof, aux: SequentIndex )
 
   validateIndices( premise, Seq(), Seq( aux ) )
 
-  val mainFormula = Neg( premise( aux ) )
+  def auxFormula = premise( aux )
+  val mainFormula = Neg( auxFormula )
 
   override def auxIndices = Seq( Seq( aux ) )
   override def name = "¬:l"
@@ -540,7 +541,8 @@ case class NegRightRule( subProof: LKProof, aux: SequentIndex )
 
   validateIndices( premise, Seq( aux ), Seq() )
 
-  val mainFormula = Neg( premise( aux ) )
+  def auxFormula = premise( aux )
+  val mainFormula = Neg( auxFormula )
 
   override def auxIndices = Seq( Seq( aux ) )
   override def name = "¬:r"
@@ -1031,7 +1033,8 @@ case class ForallLeftRule( subProof: LKProof, aux: SequentIndex, A: Formula, ter
 
   validateIndices( premise, Seq( aux ), Seq() )
 
-  if ( premise( aux ) != BetaReduction.betaNormalize( Substitution( v, term )( A ) ) )
+  def auxFormula = premise( aux )
+  if ( auxFormula != BetaReduction.betaNormalize( Substitution( v, term )( A ) ) )
     throw LKRuleCreationException( s"Substituting $term for $v in $A does not result in ${premise( aux )}." )
 
   val mainFormula = BetaReduction.betaNormalize( All( v, A ) )
@@ -1424,7 +1427,8 @@ case class ExistsRightRule( subProof: LKProof, aux: SequentIndex, A: Formula, te
 
   validateIndices( premise, Seq(), Seq( aux ) )
 
-  if ( premise( aux ) != BetaReduction.betaNormalize( Substitution( v, term )( A ) ) )
+  def auxFormula = premise( aux )
+  if ( auxFormula != BetaReduction.betaNormalize( Substitution( v, term )( A ) ) )
     throw LKRuleCreationException( s"Substituting $term for $v in $A does not result in ${premise( aux )}." )
 
   val mainFormula = BetaReduction.betaNormalize( Ex( v, A ) )
