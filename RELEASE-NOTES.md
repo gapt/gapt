@@ -1,5 +1,7 @@
 # Release notes for GAPT
 
+## Version 2.14 (unreleased)
+
 ## Version 2.13 (released on 2018-12-03)
 
 * Escargot: discrimination trees and feature vector indices.
