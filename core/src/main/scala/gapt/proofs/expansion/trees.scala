@@ -19,8 +19,8 @@ import scala.collection.mutable
  * [[ExpansionTree]] wraps an expansion tree term together with the intended
  * shallow formula and polarity.  The term may not be necessarily correct
  * for this shallow formula (i.e., calling [[deep]] may produce an exception).
- * Calling [[check()]] validates the correctness of the expansion tree (also
- * with respect to the given [[Context]]).
+ * Calling [[ExpansionTree.check]] validates the correctness of the expansion tree (also
+ * with respect to the given [[gapt.proofs.context.Context]]).
  *
  * The constructors [[ETAtom]], [[ETAnd]], etc. ensure that the produced
  * expansion trees are correct.
