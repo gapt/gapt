@@ -90,8 +90,7 @@ object MG3iToLJ {
         if ( !q2.conclusion.antecedent.contains( proof.impConclusion ) ) q2
         else withAddGoal( p1, proof.impPremise, ImpLeftRule( LogicalAxiom( proof.impPremise ), proof.impPremise, q2, proof.impConclusion ) )
       case proof @ NegLeftRule( p, _ ) =>
-        val auxF = proof.auxFormulas.head.head
-        withAddGoal( p, auxF, NegLeftRule( LogicalAxiom( auxF ), auxF ) )
+        withAddGoal( p, proof.auxFormula, NegLeftRule( LogicalAxiom( proof.auxFormula ), proof.auxFormula ) )
       case proof @ AndRightRule( p1, _, p2, _ ) =>
         val q2 = apply( p2, goal, rightChain( proof.rightConjunct ->
           AndRightRule( LogicalAxiom( proof.leftConjunct ), LogicalAxiom( proof.rightConjunct ), proof.mainFormula ) ) )
@@ -103,17 +102,21 @@ object MG3iToLJ {
           proof.rightDisjunct ->
             OrRightMacroRule( LogicalAxiom( proof.rightDisjunct ), proof.leftDisjunct, proof.rightDisjunct ) ) )
       case proof @ ExistsRightRule( p, _, _, _, _ ) =>
-        val auxF = proof.auxFormulas.head.head
-        apply( p, goal, rightChain( auxF ->
-          ExistsRightRule( LogicalAxiom( auxF ), proof.mainFormula, proof.term ) ) )
+        apply( p, goal, rightChain( proof.auxFormula ->
+          ExistsRightRule( LogicalAxiom( proof.auxFormula ), proof.mainFormula, proof.term ) ) )
       case proof @ ExistsLeftRule( p, _, _, _ ) =>
-        ExistsLeftRule( apply( p, goal, projections ), proof.mainFormula, proof.eigenVariable )
+        val q = apply( p, goal, projections )
+        if ( !q.conclusion.antecedent.contains( proof.auxFormula ) ) q else
+          ExistsLeftRule( q, proof.mainFormula, proof.eigenVariable )
       case proof @ ForallLeftRule( p, _, _, _, _ ) =>
-        ForallLeftRule( apply( p, goal, projections ), proof.mainFormula, proof.term )
+        val q = apply( p, goal, projections )
+        if ( !q.conclusion.antecedent.contains( proof.auxFormula ) ) q else
+          ForallLeftRule( q, proof.mainFormula, proof.term )
       case proof @ NegRightRule( p, _ ) =>
         require( p.conclusion.succedent.isEmpty )
+        val q = CutRule( apply( p, Bottom(), Map() ), BottomAxiom, Bottom() )
         CutRule(
-          NegRightRule( CutRule( apply( p, Bottom(), Map() ), BottomAxiom, Bottom() ), proof.auxFormulas.head.head ),
+          if ( !q.conclusion.antecedent.contains( proof.auxFormula ) ) q else NegRightRule( q, proof.auxFormula ),
           projections( proof.mainFormula ), proof.mainFormula )
       case proof @ ImpRightRule( p, _, _ ) =>
         require( p.conclusion.succedent.size == 1 )
