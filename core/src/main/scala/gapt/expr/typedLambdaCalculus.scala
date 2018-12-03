@@ -144,6 +144,11 @@ abstract class Expr {
   def toUntypedAsciiString( implicit sig: BabelSignature ) =
     new BabelExporter( unicode = false, sig = implicitly, omitTypes = true ).export( this )
 
+  def toRawString: String =
+    new BabelExporter( unicode = true, sig = BabelSignature.defaultSignature ).exportRaw( this )
+  def toRawAsciiString: String =
+    new BabelExporter( unicode = false, sig = BabelSignature.defaultSignature ).exportRaw( this )
+
   def &( that: Expr ): Formula = And( this, that )
   def |( that: Expr ): Formula = Or( this, that )
   def unary_- : Formula = Neg( this )

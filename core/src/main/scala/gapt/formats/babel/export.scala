@@ -31,6 +31,8 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
 
   def export( expr: Expr ): String =
     group( show( expr, false, Set(), Map() )._1.inPrec( 0 ) ).render( lineWidth )
+  def exportRaw( expr: Expr ): String =
+    group( showRaw( expr ).inPrec( 0 ) ).render( lineWidth )
   def export( sequent: HOLSequent ): String =
     group( show( sequent, Set(), Map() )._1 ).render( lineWidth )
   def export( ty: Ty ): String = show( ty, needParens = false ).group.render( lineWidth )
@@ -57,6 +59,17 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       } else {
         doc
       }
+  }
+
+  def showRaw( expr: Expr ): Parenable = expr match {
+    case Abs( Var( vn, vt ), e ) =>
+      val v_ = parens( showName( vn ) <> ":" <> show( vt, false ) )
+      val e_ = showRaw( e )
+      Parenable( Precedence.lam, ( if ( unicode ) "λ" else "^" ) <> v_ </> e_.inPrec( Precedence.lam + 1 ) )
+    case ident @ VarOrConst( _, _, _ ) =>
+      show( ident, Safe )
+    case Apps( f, as ) =>
+      Parenable( Precedence.app, wordwrap2( ( f :: as ).map( showRaw ).map( _.inPrec( Precedence.app + 1 ) ) ) )
   }
 
   /**

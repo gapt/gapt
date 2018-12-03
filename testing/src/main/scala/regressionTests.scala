@@ -130,6 +130,16 @@ class TheoryTestCase( name: String, combined: Boolean )
   extends RegressionTestCase( name + ( if ( combined ) "-combined" else "" ) ) {
   override def timeout = Some( 5 minutes )
 
+  private def testBabelExport( name: String, terms: Set[Expr],
+                               stringifier: Expr => String,
+                               parser:      String => Expr )( implicit testRun: TestRun ): Unit =
+    ( for ( t <- terms ) try
+      require( parser( stringifier( t ) ) == t )
+    catch {
+      case e: Exception =>
+        throw new Exception( stringifier(t) + "\n\n" + t.toRawString, e )
+    } ) --? name
+
   override protected def test( implicit testRun: TestRun ): Unit = {
     import TheoryTestCase.AllTheories._
     val lemmaHandle = LemmaHandle( ctx.get[ProofNames].names( name )._1 )
@@ -150,14 +160,10 @@ class TheoryTestCase( name: String, combined: Boolean )
     }
 
     val terms = proof.subProofs.flatMap( _.endSequent.elements ).flatMap( subTerms( _ ) )
-    ( for ( t <- terms )
-      require(
-      BabelParser.parse( t.toString )( BabelSignature.defaultSignature ) == t,
-      t.toString ) ) --? "babel exporter"
-    ( for ( t <- terms )
-      require(
-      BabelParser.parse( t.toSigRelativeString ) == t,
-      t.toSigRelativeString ) ) --? "babel exporter with sig"
+    testBabelExport( "babel exporter", terms, _.toString, BabelParser.parse( _ )( BabelSignature.defaultSignature ) )
+    testBabelExport( "raw babel exporter", terms, _.toRawString, BabelParser.parse( _ )( BabelSignature.defaultSignature ) )
+    testBabelExport( "babel exporter with sig", terms, _.toSigRelativeString, BabelParser.parse( _ ) )
+    testBabelExport( "raw babel exporter with sig", terms, _.toRawString, BabelParser.parse( _ ) )
 
     val All.Block( variables, _ ) = proof.endSequent.succedent.head
     val instanceTerms = new EnumeratingInstanceGenerator( variables.map( _.ty.asInstanceOf[TBase] ), ctx ).
