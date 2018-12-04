@@ -11,10 +11,10 @@ import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion._
 import gapt.proofs.lk.{ LKProof, MG3iToLJ, isMaeharaMG3i, normalizeLKt }
 import gapt.prooftool.LKProofViewer
-import gapt.provers.congruence.SimpleSmtSolver
 import gapt.provers.eprover.EProver
 import gapt.provers.escargot.Escargot
 import gapt.provers.escargot.impl.EscargotLogger
+import gapt.provers.smtlib.SmtInterpol
 import gapt.provers.spass.SPASS
 import gapt.provers.vampire.{ Vampire, VampireCASC }
 import gapt.provers.{ OneShotProver, Prover }
@@ -107,7 +107,7 @@ class Slakje(
     val quantifierFree = !containsQuantifierOnLogicalLevel( seq.toImplication )
     metric( "quant_free", quantifierFree )
     if ( quantifierFree ) {
-      val qfUfValid = time( "prover" ) { SimpleSmtSolver.isValid( seq ) }
+      val qfUfValid = time( "prover" ) { SmtInterpol.isValid( seq ) }
       metric( "prover_valid", qfUfValid )
       if ( !qfUfValid ) Some( Left( () ) ) else {
         if ( essentiallyCNF ) {
