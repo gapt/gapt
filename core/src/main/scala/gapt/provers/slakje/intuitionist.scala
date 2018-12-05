@@ -3,7 +3,7 @@ package gapt.provers.slakje
 import ammonite.ops.FilePath
 import gapt.expr._
 import gapt.expr.fol.folSubTerms
-import gapt.expr.hol.{ atoms, containsQuantifierOnLogicalLevel, isEssentiallyCNF }
+import gapt.expr.hol.{ atoms, containsQuantifierOnLogicalLevel, isOrevkovClass1 }
 import gapt.formats.tptp.{ TptpImporter, sequentProofToTptp }
 import gapt.proofs.HOLSequent
 import gapt.proofs.context.Context
@@ -99,10 +99,10 @@ class Slakje(
   def getLKProof_( seq: HOLSequent )( implicit ctx0: Maybe[MutableContext] ): Option[Either[Unit, LKProof]] = {
     implicit val ctx: MutableContext = ctx0.getOrElse( MutableContext.guess( seq ) )
 
-    val essentiallyCNF = isEssentiallyCNF( seq )
-    metric( "ess_cnf", essentiallyCNF )
-    if ( essentiallyCNF )
-      info( "problem is essentially in clause normal form" )
+    val class1 = isOrevkovClass1( seq )
+    metric( "class1", class1 )
+    if ( class1 )
+      info( "problem is in Orevkov's class 1" )
 
     val quantifierFree = !containsQuantifierOnLogicalLevel( seq.toImplication )
     metric( "quant_free", quantifierFree )
@@ -110,7 +110,7 @@ class Slakje(
       val qfUfValid = time( "prover" ) { SmtInterpol.isValid( seq ) }
       metric( "prover_valid", qfUfValid )
       if ( !qfUfValid ) Some( Left( () ) ) else {
-        if ( essentiallyCNF ) {
+        if ( class1 ) {
           info( "SZS status Theorem" )
           metric( "status", "theorem" )
         }
@@ -127,11 +127,11 @@ class Slakje(
           metric( "prover_valid", true )
           info( "found classical expansion proof" )
           metric( "exp_size_before_unif", numberOfInstancesET( expansion0 ) )
-          val proofEssentiallyCNF = essentiallyCNF || isEssentiallyCNF( expansion0.shallow )
-          metric( "proof_ess_cnf", proofEssentiallyCNF )
-          if ( !essentiallyCNF && proofEssentiallyCNF )
-            info( "axioms used by proof are essentially in clause normal form" )
-          if ( proofEssentiallyCNF ) {
+          val proofInClass1 = class1 || isOrevkovClass1( expansion0.shallow )
+          metric( "proof_class1", proofInClass1 )
+          if ( !class1 && proofInClass1 )
+            info( "end-sequent of proof is in Orevkov's class 1" )
+          if ( proofInClass1 ) {
             metric( "status", "theorem" )
             info( "SZS status Theorem" )
           }
