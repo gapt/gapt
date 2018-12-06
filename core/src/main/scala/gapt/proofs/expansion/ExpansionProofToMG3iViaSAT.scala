@@ -167,12 +167,6 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
         true
     }
 
-  val dependencies = Map() ++ ( for ( ev <- expansionProof.eigenVariables )
-    yield ev -> ( generatedUpperSetInPO( List( ev ), expansionProof.dependencyRelation.map( _.swap ) ) - ev ) )
-  val immediateDeps = for ( ( ev1, down1 ) <- dependencies )
-    yield ev1 -> ( down1 -- down1.flatMap( dependencies ) )
-  val noReverseDeps = expansionProof.eigenVariables -- expansionProof.dependencyRelation.map( _._1 )
-
   val atomToEigenvars: Map[Int, Set[Var]] =
     Map() ++ atomToSh.mapValues( freeVariables( _ ).intersect( expansionProof.eigenVariables ) )
   val atomsWithFreeEigenvar: Map[Var, Set[Int]] =
