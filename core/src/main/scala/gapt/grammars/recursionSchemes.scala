@@ -34,17 +34,17 @@ private class RecursionSchemeExporter( unicode: Boolean, rs: RecursionScheme )
   def export(): String = {
     val nonTerminals = rs.startSymbol +: ( rs.nonTerminals - rs.startSymbol ).toList.sortBy { _.name }
     val ntDecl = group( "Non-terminals:" <> nest( line <> csep(
-      nonTerminals map { show( _, false, Set(), Map() )._1.inPrec( 0 ) } ) ) )
+      nonTerminals map { show( _, false, Map(), Map() )._1.inPrec( 0 ) } ) ) )
 
     val tDecl = group( "Terminals:" <> nest( line <> csep(
-      rs.terminals.toList.sortBy { _.name } map { show( _, false, Set(), Map() )._1.inPrec( 0 ) } ) ) )
+      rs.terminals.toList.sortBy { _.name } map { show( _, false, Map(), Map() )._1.inPrec( 0 ) } ) ) )
 
     val knownTypes = ( rs.nonTerminals union rs.terminals ).map { c => c.name -> c }.toMap
 
     val rules = group( stack( rs.rules.toList sortBy { _.toString } map {
       case Rule( lhs, rhs ) =>
-        group( show( lhs, false, Set(), knownTypes )._1.inPrec( Precedence.impl ) </> nest( "→" </>
-          show( rhs, true, Set(), knownTypes )._1.inPrec( Precedence.impl ) ) )
+        group( show( lhs, false, Map(), knownTypes )._1.inPrec( Precedence.impl ) </> nest( "→" </>
+          show( rhs, true, Map(), knownTypes )._1.inPrec( Precedence.impl ) ) )
     } ) )
 
     group( ntDecl </> tDecl <> line </> rules <> line ).render( lineWidth )

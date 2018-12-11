@@ -179,7 +179,7 @@ sealed trait LKt {
       prod.productIterator.toSeq.map {
         case expr: Expr =>
           new BabelExporter( unicode = true, sig = sig ).
-            show( expr, knownType = false, Set(), Map() )._1.inPrec( 0 )
+            show( expr, knownType = false, Map(), Map() )._1.inPrec( 0 )
         case bnd: Bound => bnd.toDoc
         case hyp: Hyp   => hyp.toDoc
         case p: LKt     => p.toDoc

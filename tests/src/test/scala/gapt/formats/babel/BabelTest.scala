@@ -73,6 +73,8 @@ class BabelTest extends Specification {
       "''",
       "#c('='{nat} : nat>nat>o)",
       "(->) ((x:nat) != 0)",
+      "foldr{(nat) (nat)} : (nat>nat>nat) > nat > list nat > nat",
+      "^(y:i) #v(y:j)",
       "'\\u0000'",
       "#c(true: o)",
       "true", "'true'", "'all' x" )
@@ -88,7 +90,6 @@ class BabelTest extends Specification {
         require( expr == expr3 )
         expr syntaxEquals expr3 must beTrue
 
-        println( expr.toRawString )
         val expr4 = BabelParser.parse( expr.toRawString )
         require( expr == expr4 )
         expr syntaxEquals expr4 must beTrue

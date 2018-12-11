@@ -31,13 +31,13 @@ class ETtPrettyPrinter( sig: BabelSignature ) extends BabelExporter( unicode = t
       Parenable( Precedence.conj, a_.inPrec( Precedence.conj ) <+> "×" </> b_.inPrec( Precedence.conj + 1 ) ) -> t2
     case ETtStrong( ev, child ) =>
       val t1 = t0
-      val ( ev_, t2 ) = show( ev, true, Set(), t1 )
+      val ( ev_, t2 ) = show( ev, true, Map(), t1 )
       val ( child_, t3 ) = show( child, t2 )
       Parenable( Precedence.quant, "⟨" <> ev_.inPrec( 0 ) <> "⟩ₑᵥ" </>
         child_.inPrec( Precedence.quant - 1 ) ) -> t3
     case ETtSkolem( skTerm, child ) =>
       val t1 = t0
-      val ( skTerm_, t2 ) = show( skTerm, true, Set(), t1 )
+      val ( skTerm_, t2 ) = show( skTerm, true, Map(), t1 )
       val ( child_, t3 ) = show( child, t2 )
       Parenable( Precedence.quant, "⟨" <> skTerm_.inPrec( 0 ) <> "⟩ₛₖ" </>
         child_.inPrec( Precedence.quant - 1 ) ) -> t3
@@ -45,7 +45,7 @@ class ETtPrettyPrinter( sig: BabelSignature ) extends BabelExporter( unicode = t
       var t2 = t0
       val insts_ = insts.toList.map {
         case ( term, child ) =>
-          val ( term_, t3 ) = show( term, true, Set(), t2 )
+          val ( term_, t3 ) = show( term, true, Map(), t2 )
           val ( child_, t4 ) = show( child, t3 )
           t2 = t4
           (
@@ -59,7 +59,7 @@ class ETtPrettyPrinter( sig: BabelSignature ) extends BabelExporter( unicode = t
           Parenable( Precedence.iff, group( sep( insts_, line ) ) )
       } ) -> t2
     case ETtDef( shallow, child ) =>
-      val ( sh_, t1 ) = show( shallow, true, Set(), t0 )
+      val ( sh_, t1 ) = show( shallow, true, Map(), t0 )
       val ( child_, t2 ) = show( child, t1 )
       Parenable( Precedence.conj, "⦃" <> sh_.inPrec( Precedence.quant ) <> "⦄ᵈᵉᶠ	" </> child_.inPrec( Precedence.quant - 1 ) ) -> t2
   }
