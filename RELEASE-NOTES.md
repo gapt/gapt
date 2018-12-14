@@ -1,10 +1,15 @@
 # Release notes for GAPT
 
-## Version 2.13 (unreleased)
+## Version 2.14 (unreleased)
+
+## Version 2.13 (released on 2018-12-03)
 
 * Escargot: discrimination trees and feature vector indices.
 * New term-based expansion tree implementation.
 * Support for E 2.2.
+* Slakje: automated theorem prover for first-order intuitionistic logic.
+* JSON export and import for proofs and expressions
+* Kolmogorov and Friedman translations
 
 ## Version 2.12 (released on 2018-08-17)
 

@@ -1,7 +1,10 @@
 package gapt.formats
 
+import java.io.InputStream
+
 import ammonite.ops._
 
+import scala.io.Codec
 import scala.sys.process
 
 trait InputFile {
@@ -13,8 +16,11 @@ object InputFile {
   def fromString( content: String ) = StringInputFile( content )
   implicit def fromJavaFile( file: java.io.File ): OnDiskInputFile = OnDiskInputFile( Path( file ) )
   implicit def fromInputStream( stream: java.io.InputStream ): InputFile =
-    StringInputFile( read ! stream )
+    StringInputFile( readStream( stream ) )
   implicit def fromFileName( fileName: String ): InputFile = fromPath( FilePath( fileName ) )
+
+  def readStream( stream: InputStream ): String =
+    scala.io.Source.fromInputStream( stream )( Codec.UTF8 ).mkString
 }
 case class StringInputFile( content: String ) extends InputFile {
   def fileName = "<string>"
@@ -30,11 +36,11 @@ case class StdinInputFile( content: String ) extends InputFile {
   def read = content
 }
 object StdinInputFile {
-  def apply(): StdinInputFile = StdinInputFile( read( process.stdin ) )
+  def apply(): StdinInputFile = StdinInputFile( InputFile.readStream( process.stdin ) )
 }
 
 case class ClasspathInputFile( fileName: String, classLoader: ClassLoader ) extends InputFile {
-  def read = ammonite.ops.read ! classLoader.getResourceAsStream( fileName )
+  def read = InputFile.readStream( classLoader.getResourceAsStream( fileName ) )
 }
 object ClasspathInputFile {
   def apply( fileName: String ): ClasspathInputFile =

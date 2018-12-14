@@ -43,6 +43,7 @@ import gapt.provers.vampire._
 import gapt.provers.verit._
 import gapt.provers.smtlib._
 import gapt.provers.escargot._
+import gapt.provers.slakje.Slakje
 import gapt.provers.spass._
 import gapt.prooftool.prooftool
 import gapt.utils._

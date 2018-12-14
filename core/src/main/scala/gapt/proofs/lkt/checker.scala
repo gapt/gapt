@@ -63,16 +63,20 @@ object check {
         ctx.foreach( _.check( ev ) )
         check( q.p, lctx.up1( p ) )
       case p @ Eql( main, eq, _, rwCtx, q ) =>
+        require( main.inSuc == q.aux.inSuc )
         require( eq.inAnt )
         requireEq( BetaReduction.betaNormalize( lctx.subst( rwCtx ).apply( lctx.eqLhs( p ) ) ), lctx( main ) )
         ctx.foreach( _.check( rwCtx ) )
         check( q.p, lctx.up1( p ) )
       case AllSk( main, term0, q ) =>
+        require( main.inSuc == q.aux.inSuc )
         val term = lctx.subst( term0 )
         val Apps( skSym: Const, skArgs ) = term
+        val m @ Quant( _, _, isAll ) = lctx( main )
+        require( isAll == main.inSuc )
         for ( ctx_ <- ctx ) {
           val Some( skDef ) = ctx_.skolemDef( skSym )
-          requireEq( BetaReduction.betaNormalize( skDef( skArgs ) ), lctx( main ) )
+          Checkable.requireDefEq( skDef( skArgs ), m )( ctx_ )
         }
         check( q.p, lctx.up1( p ) )
       case Def( main, f0, q ) =>

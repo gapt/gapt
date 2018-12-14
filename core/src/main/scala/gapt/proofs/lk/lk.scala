@@ -498,7 +498,8 @@ case class NegLeftRule( subProof: LKProof, aux: SequentIndex )
 
   validateIndices( premise, Seq(), Seq( aux ) )
 
-  val mainFormula = Neg( premise( aux ) )
+  def auxFormula = premise( aux )
+  val mainFormula = Neg( auxFormula )
 
   override def auxIndices = Seq( Seq( aux ) )
   override def name = "¬:l"
@@ -540,7 +541,8 @@ case class NegRightRule( subProof: LKProof, aux: SequentIndex )
 
   validateIndices( premise, Seq( aux ), Seq() )
 
-  val mainFormula = Neg( premise( aux ) )
+  def auxFormula = premise( aux )
+  val mainFormula = Neg( auxFormula )
 
   override def auxIndices = Seq( Seq( aux ) )
   override def name = "¬:r"
@@ -1031,7 +1033,8 @@ case class ForallLeftRule( subProof: LKProof, aux: SequentIndex, A: Formula, ter
 
   validateIndices( premise, Seq( aux ), Seq() )
 
-  if ( premise( aux ) != BetaReduction.betaNormalize( Substitution( v, term )( A ) ) )
+  def auxFormula = premise( aux )
+  if ( auxFormula != BetaReduction.betaNormalize( Substitution( v, term )( A ) ) )
     throw LKRuleCreationException( s"Substituting $term for $v in $A does not result in ${premise( aux )}." )
 
   val mainFormula = BetaReduction.betaNormalize( All( v, A ) )
@@ -1424,7 +1427,8 @@ case class ExistsRightRule( subProof: LKProof, aux: SequentIndex, A: Formula, te
 
   validateIndices( premise, Seq(), Seq( aux ) )
 
-  if ( premise( aux ) != BetaReduction.betaNormalize( Substitution( v, term )( A ) ) )
+  def auxFormula = premise( aux )
+  if ( auxFormula != BetaReduction.betaNormalize( Substitution( v, term )( A ) ) )
     throw LKRuleCreationException( s"Substituting $term for $v in $A does not result in ${premise( aux )}." )
 
   val mainFormula = BetaReduction.betaNormalize( Ex( v, A ) )
@@ -1886,7 +1890,7 @@ object DefinitionRule extends ConvenienceConstructor( "DefinitionRule" ) {
  *
  * NB: LK proofs that contain this rule are not sound by construction, since it allows you to replace any formula
  * by any other formula. The soundness of such proofs can only be established with respect to a Context.
- * Use the `check` method on [[Context]] to check whether the constructed proof is sound.
+ * Use the `check` method on [[gapt.proofs.context.Context]] to check whether the constructed proof is sound.
  *
  * @param subProof The proof π.
  * @param aux The index of A in the antecedent.
@@ -1930,7 +1934,7 @@ object DefinitionLeftRule extends ConvenienceConstructor( "DefinitionLeftRule" )
  *
  * NB: LK proofs that contain this rule are not sound by construction, since it allows you to replace any formula
  * by any other formula. The soundness of such proofs can only be established with respect to a Context.
- * Use the `check` method on [[Context]] to check whether the constructed proof is sound.
+ * Use the `check` method on [[gapt.proofs.context.Context]] to check whether the constructed proof is sound.
  *
  * @param subProof The proof π.
  * @param aux The index of A in the succedent.

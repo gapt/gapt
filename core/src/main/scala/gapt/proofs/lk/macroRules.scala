@@ -857,6 +857,8 @@ object WeakeningLeftMacroRule {
    */
   def apply( p: LKProof, formula: Formula, n: Int ): LKProof = withSequentConnector( p, formula, n )._1
 
+  def apply( p: LKProof, formula: Formula ): LKProof = apply( p, formula, 1 )
+
   /**
    *
    * @param p An LKProof.

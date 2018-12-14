@@ -4,8 +4,7 @@ import java.io.IOException
 
 import scala.concurrent._
 import scala.concurrent.duration._
-
-import ammonite.ops._
+import gapt.formats.InputFile
 
 object runProcess {
 
@@ -34,7 +33,7 @@ object runProcess {
     Runtime.getRuntime.addShutdownHook( shutdownHook )
 
     try {
-      val stdout = Future( read ! p.getInputStream )
+      val stdout = Future( InputFile.readStream( p.getInputStream ) )
 
       blocking {
         p.getOutputStream.write( stdin getBytes )

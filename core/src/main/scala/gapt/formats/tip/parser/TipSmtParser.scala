@@ -561,6 +561,8 @@ object TipSmtParser {
    * Parses an expression.
    *
    * An expression is an s-expression of the form:
+   *
+   * {{{
    * expression ::= true
    * | false
    * | ite_expr
@@ -575,6 +577,7 @@ object TipSmtParser {
    * | function_call,
    * function_call ::= '(' function_name { expression } ')',
    * function_name ::= symbol.
+   * }}}
    *
    * @param sexp The expression to be parsed.
    * @return The parsed expression.

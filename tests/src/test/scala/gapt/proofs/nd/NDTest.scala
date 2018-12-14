@@ -177,7 +177,7 @@ class NDTest extends Specification with SatMatchers {
     a2.conclusion must beValidSequent
   }
 
-  "Negation" in {
+  "Negation1" in {
     val a1 = LogicalAxiom( hof"¬a" )
     val a2 = LogicalAxiom( hof"a" )
     val a3 = NegElimRule( a1, a2 )

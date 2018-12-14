@@ -133,7 +133,7 @@ case class RewriteTactic(
  * Reduces a subgoal via induction.
  *
  * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
- * @param ctx  A [[Context]]. Used to find the constructors of inductive types.
+ * @param ctx  A [[gapt.proofs.context.Context]]. Used to find the constructors of inductive types.
  */
 case class InductionTactic( mode: TacticApplyMode, v: Var, eigenVariables: Map[Const, Vector[Var]] = Map() )( implicit ctx: Context ) extends Tactical1[Unit] {
 

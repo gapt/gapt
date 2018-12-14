@@ -142,20 +142,25 @@ object TptpImporter {
   def loadWithoutIncludes( file: InputFile ): TptpFile = parse( file )
 
   /**
-   * The default resolver looks for include files relative to the current working directory
-   * @param fileName the file name
-   * @return the parsed tptp (include) file
-   */
-  private def defaultResolver( fileName: String ) = parse( FilePath( fileName ) )
-
-  /**
    * Load a TPTP file and resolve includes.
    * @param file The input file to load.
    * @param resolver How to resolve included files.
    * @return The parsed file.
    */
-  def loadWithIncludes( file: InputFile, resolver: String => TptpFile = defaultResolver ): TptpFile =
+  def loadWithIncludes( file: InputFile, resolver: String => TptpFile ): TptpFile =
     resolveIncludes( parse( file ), resolver )
+
+  def loadWithIncludes( file: InputFile, relativeTo: Path ): TptpFile =
+    loadWithIncludes( file, fileName => parse( Path( fileName, relativeTo ) ) )
+
+  def loadWithIncludes( file: InputFile, relativeTo: FilePath ): TptpFile =
+    loadWithIncludes( file, Path( relativeTo, pwd ) )
+
+  def loadWithIncludes( file: InputFile, relativeTo: String ): TptpFile =
+    loadWithIncludes( file, FilePath( relativeTo ) )
+
+  def loadWithIncludes( file: InputFile ): TptpFile =
+    loadWithIncludes( file, pwd )
 
   def main( args: Array[String] ): Unit =
     print( loadWithIncludes( FilePath( args.head ) ) )

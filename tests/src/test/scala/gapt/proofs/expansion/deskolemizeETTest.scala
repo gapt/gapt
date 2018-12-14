@@ -34,6 +34,16 @@ class deskolemizeETTest extends Specification with SatMatchers {
     deskolemized.shallow must_== drinker.shallow
   }
 
+  "drinker 2" in {
+    val drinker = ExpansionProof( Sequent() :+
+      ExpansionTree( hof"∃x (p(x) -> ∀y p(y))", Polarity.InSuccedent,
+        ETtWeak( le"f" -> ETtBinary( ETtAtom, ETtSkolem( le"f", ETtAtom ) ) ) ) )
+    drinker.deep must beValidSequent
+    val deskolemized = deskolemizeET( drinker )
+    deskolemized.deep must beValidSequent
+    deskolemized.shallow must_== drinker.shallow
+  }
+
   "counting 0" in {
     val Some( proof ) = Escargot.getExpansionProof( CountingEquivalence( 0 ) )
     val deskolemized = deskolemizeET( proof )

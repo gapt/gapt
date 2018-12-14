@@ -160,7 +160,7 @@
 {\Huge User manual}
 
 \vspace*{10mm}
-{\Large Version 2.13-SNAPSHOT}
+{\Large Version 2.14-SNAPSHOT}
 \vspace*{10mm}
 
 {\Large \today}
@@ -229,7 +229,7 @@ sbt console
   two lines to your \verb,build.sbt,:
 \begin{lstlisting}
 resolvers += Resolver.bintrayRepo("gapt", "maven")
-libraryDependencies += "at.logic.gapt" %% "gapt" % "2.12"
+libraryDependencies += "at.logic.gapt" %% "gapt" % "2.13"
 \end{lstlisting}
 
 \end{enumerate}
@@ -2172,6 +2172,32 @@ res1: gapt.proofs.lk.LKProof =
 
 \end{clilisting}
 
+\section{Intuitionistic theorem prover Slakje}
+
+Slakje is an automated intuitionistic theorem prover based on
+constructivization of classical proofs on the level of expansion trees.  The
+function \texttt{Slakje.getLKProof} returns a cut-free intuitionistic proof in
+the calculus LJ:
+\begin{clilisting}
+gapt> Slakje.getLKProof(hof"¬ ¬ ∀x P(x) → ∀x ¬ ¬ P(x)")
+res0: Option[gapt.proofs.lk.LKProof] =
+Some([p8]  ⊢ ¬ ¬ ∀x P(x) → ∀x ¬ ¬P(x)    (ImpRightRule(p7, Ant(0), Suc(0)))
+[p7] ¬ ¬ ∀x P(x) ⊢ ∀x ¬ ¬P(x)    (ForallRightRule(p6, Suc(0), v, x))
+[p6] ¬ ¬ ∀x P(x) ⊢ ¬ ¬P(v)    (NegRightRule(p5, Ant(1)))
+[p5] ¬ ¬ ∀x P(x), ¬P(v) ⊢     (NegLeftRule(p4, Suc(0)))
+[p4] ¬P(v) ⊢ ¬ ∀x P(x)    (NegRightRule(p3, Ant(1)))
+[p3] ¬P(v), ∀x P(x) ⊢     (NegLeftRule(p2, Suc(0)))
+[p2] ∀x P(x) ⊢ P(v)    (ForallLeftRule(p1, Ant(0), P(x): o, v, x))
+[p1] P(v) ⊢ P(v)    (LogicalAxiom(P(v): o))
+)
+
+\end{clilisting}
+
+Slakje can also be used from the command-line using the \texttt{slakje.sh}
+script.  This script expects a problem in TPTP format:
+\begin{lstlisting}
+$ ./slakje.sh examples/tptp/LCL684+1.001.p
+\end{lstlisting}
 
 \chapter{Advanced topics}
 

@@ -2,10 +2,11 @@ package gapt.prooftool
 
 import scala.swing._
 import java.awt.Color
-import javax.swing.{ JSpinner, SpinnerModel }
 
-import scala.swing.event.{ MouseDragged, MouseReleased, MouseWheelMoved, ValueChanged }
-import java.awt.event.{ FocusAdapter, MouseEvent, MouseMotionListener }
+import javax.swing.{ JComponent, JSpinner, KeyStroke, SpinnerModel }
+
+import scala.swing.event._
+import java.awt.event.{ FocusAdapter, KeyEvent, MouseEvent, MouseMotionListener }
 import java.awt.Font._
 
 import scala.swing.BorderPanel.Position
@@ -29,6 +30,20 @@ class PTScrollPane extends ScrollPane {
   }
   //  def content_=(c : Component) { viewportView = c }
   //  def content = viewportView.get.asInstanceOf[Launcher]
+
+  for (
+    ( key, act ) <- Seq(
+      KeyEvent.VK_DOWN -> "positiveUnitIncrement",
+      KeyEvent.VK_UP -> "negativeUnitIncrement" )
+  ) peer.getVerticalScrollBar.getInputMap( JComponent.WHEN_IN_FOCUSED_WINDOW ).
+    put( KeyStroke.getKeyStroke( key, 0 ), act )
+
+  for (
+    ( key, act ) <- Seq(
+      KeyEvent.VK_RIGHT -> "positiveUnitIncrement",
+      KeyEvent.VK_LEFT -> "negativeUnitIncrement" )
+  ) peer.getHorizontalScrollBar.getInputMap( JComponent.WHEN_IN_FOCUSED_WINDOW ).
+    put( KeyStroke.getKeyStroke( key, 0 ), act )
 }
 
 /**

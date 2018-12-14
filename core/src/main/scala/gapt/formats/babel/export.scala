@@ -30,12 +30,14 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
   protected def parens( doc: Doc ): Doc = "(" <> doc <> ")"
 
   def export( expr: Expr ): String =
-    group( show( expr, false, Set(), Map() )._1.inPrec( 0 ) ).render( lineWidth )
+    group( show( expr, false, Map(), Map() )._1.inPrec( 0 ) ).render( lineWidth )
+  def exportRaw( expr: Expr ): String =
+    group( showRaw( expr ).inPrec( 0 ) ).render( lineWidth )
   def export( sequent: HOLSequent ): String =
-    group( show( sequent, Set(), Map() )._1 ).render( lineWidth )
+    group( show( sequent, Map(), Map() )._1 ).render( lineWidth )
   def export( ty: Ty ): String = show( ty, needParens = false ).group.render( lineWidth )
 
-  def show( sequent: HOLSequent, bound: Set[String], t0: Map[String, VarOrConst] ): ( Doc, Map[String, VarOrConst] ) = {
+  def show( sequent: HOLSequent, bound: Map[String, Var], t0: Map[String, VarOrConst] ): ( Doc, Map[String, VarOrConst] ) = {
     var t1 = t0
     val docSequent = sequent map { formula =>
       val ( formulaDoc, t1_ ) = show( formula, true, bound, t1 )
@@ -59,6 +61,17 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       }
   }
 
+  def showRaw( expr: Expr ): Parenable = expr match {
+    case Abs( Var( vn, vt ), e ) =>
+      val v_ = parens( showName( vn ) <> ":" <> show( vt, false ) )
+      val e_ = showRaw( e )
+      Parenable( Precedence.lam, ( if ( unicode ) "λ" else "^" ) <> v_ </> e_.inPrec( Precedence.lam + 1 ) )
+    case ident @ VarOrConst( _, _, _ ) =>
+      show( ident, Safe )
+    case Apps( f, as ) =>
+      Parenable( Precedence.app, wordwrap2( ( f :: as ).map( showRaw ).map( _.inPrec( Precedence.app + 1 ) ) ) )
+  }
+
   /**
    * Converts a lambda expression into a document.
    *
@@ -77,16 +90,16 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
   def show(
     expr:      Expr,
     knownType: Boolean,
-    bound:     Set[String],
+    bound:     Map[String, Var],
     t0:        Map[String, VarOrConst] ): ( Parenable, Map[String, VarOrConst] ) =
     expr match {
       case Iff( a, b ) =>
         showFakeBin( expr, Notation.fakeIffConst, a, b, knownType, bound, t0 )
       case Neg( Eq( a, b ) ) =>
-        showFakeBin( expr, Notation.fakeNeqConst, a, b, knownType, bound, t0 )
+        showFakeBin( expr, Notation.fakeNeqConst, a, b, false, bound, t0 )
 
       case Abs( v @ Var( vn, vt ), e ) =>
-        val ( e_, t1 ) = show( e, knownType, bound + vn, t0 - vn )
+        val ( e_, t1 ) = show( e, knownType, bound + ( vn -> v ), t0 - vn )
         val v_ =
           if ( vt == Ti || t1.get( vn ).contains( v ) || omitTypes )
             showName( vn )
@@ -120,37 +133,45 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       case Safe =>
         ident match {
           case Var( name, ty ) =>
-            Parenable( Precedence.max, "#v(" <> showName( name ) <> ":" </> show( ty, false ) <> ")" )
+            Parenable( Precedence.max, "#v(" <> showNameFollowableByOp( name ) <> ":" </> show( ty, false ) <> ")" )
           case Const( name, ty, params ) =>
-            Parenable( Precedence.max, "#c(" <> showName( name ) <> showTyParams( params ) <> ":" </> show( ty, false ) <> ")" )
+            Parenable( Precedence.max, "#c(" <> showNameWithParams( name, params ) <> ":" </> show( ty, false ) <> ")" )
         }
       case WithParams =>
-        Parenable( Precedence.max, showName( ident.name ) <> showTyParams( ident.asInstanceOf[Const].params ) )
+        Parenable( Precedence.max, showNameWithParams( ident.name, ident.asInstanceOf[Const].params ) )
       case WithType =>
-        Parenable( Precedence.typeAnnot, showName( ident.name ) <> ":" <> show( ident.ty, false ) )
+        val withParams = ident match {
+          case Const( n, _, ps ) => showNameFollowableByOp( n ) <> showTyParams( ps )
+          case Var( n, _ )       => showNameFollowableByOp( n )
+        }
+        Parenable( Precedence.typeAnnot, withParams <> ":" <> show( ident.ty, false ) )
     }
+
+  def showNameWithParams( name: String, params: List[Ty] ): Doc =
+    ( if ( params.isEmpty ) showName( name ) else showNameFollowableByOp( name ) ) <> showTyParams( params )
 
   def getIdentShowMode(
     expr:      VarOrConst,
     knownType: Boolean,
-    bound:     Set[String],
+    bound:     Map[String, Var],
     t0:        Map[String, VarOrConst] ): ( IdentShowMode, Map[String, VarOrConst] ) = {
     val name = expr.name
     val ty = expr.ty
     val isAliased = sig.notationsForToken( expr.name ).exists( not => not.const != RealConst( expr.name ) )
     sig.signatureLookup( name ) match {
-      case _ if omitTypes                          => Bare -> t0
-      case _ if isAliased                          => Safe -> t0
-      case _ if t0.get( name ).exists( _ != expr ) => Safe -> t0
+      case _ if omitTypes                             => Bare -> t0
+      case _ if isAliased                             => Safe -> t0
+      case _ if t0.get( name ).exists( _ != expr )    => Safe -> t0
+      case _ if bound.get( name ).exists( _ != expr ) => Safe -> t0
       // Now: t0.get(name).forall(_ == expr)
-      case BabelSignature.IsConst( c ) if !bound( name ) =>
+      case BabelSignature.IsConst( c ) if !bound.contains( name ) =>
         safeMatching( c, expr ) match {
           case Some( _ ) if knownType && !paramsNecessary( c ) =>
             Bare -> t0
           case Some( _ ) => WithParams -> t0
           case None      => Safe -> t0
         }
-      case res if bound( name ) || res.isVar =>
+      case res if bound.contains( name ) || res.isVar =>
         if ( expr.isInstanceOf[Const] ) Safe -> t0
         else if ( knownType || t0.get( name ).contains( expr ) || ty == Ti ) Bare -> ( t0 + ( name -> expr ) )
         else WithType -> ( t0 + ( name -> expr ) )
@@ -158,11 +179,15 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       case _ if !expr.isInstanceOf[Const] => Safe -> t0
       // Now: expr.isInstanceOf[Const]
       case BabelSignature.IsUnknownConst if knownType || t0.get( name ).contains( expr ) || expr == FOLConst( name ) =>
-        Bare -> ( t0 + ( name -> expr ) )
+        val hasParams = expr.asInstanceOf[Const].params.nonEmpty
+        if ( hasParams )
+          WithParams -> t0
+        else
+          Bare -> ( t0 + ( name -> expr ) )
       case BabelSignature.IsUnknownConst =>
         expr match {
           case Const( _, _, ps ) if ps.nonEmpty =>
-            Safe -> t0
+            WithType -> t0
           case _ =>
             WithType -> ( t0 + ( name -> expr ) )
         }
@@ -188,14 +213,21 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     sig.notationsForConst( const ).find( not => unicodeSafe( not.token ) )
 
   def showTyParams( params: List[Ty], always: Boolean = false ): Doc =
-    if ( params.isEmpty ) "" else
-      "{" <> wordwrap( params.map( show( _, params.size > 1 ) ) ) <> "}"
+    params match {
+      case List()        => ""
+      case List( param ) => "{" <> show( param, needParens = false ) <> "}"
+      case _ =>
+        "{" <> wordwrap( params.map {
+          case param @ TVar( _ ) => show( param, needParens = false )
+          case param             => parens( show( param, needParens = false ) )
+        } ) <> "}"
+    }
 
   def showFakeBin(
     expr:      Expr,
     fakeConst: Notation.ConstName, a: Expr, b: Expr,
     knownType: Boolean,
-    bound:     Set[String],
+    bound:     Map[String, Var],
     t0:        Map[String, VarOrConst] ): ( Parenable, Map[String, VarOrConst] ) = {
     notationForConst( fakeConst ) match {
       case Some( Notation.Infix( Notation.Token( tok ), _, prec, _ ) ) =>
@@ -217,7 +249,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
   def shows(
     exprs:     List[Expr],
     knownType: Boolean,
-    bound:     Set[String],
+    bound:     Map[String, Var],
     t0:        Map[String, VarOrConst] ): ( List[Parenable], Map[String, VarOrConst] ) = {
     var t1 = t0
     val exprs_ = for ( expr <- exprs ) yield {
@@ -231,7 +263,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
   def showApps(
     expr:      Expr,
     knownType: Boolean,
-    bound:     Set[String],
+    bound:     Map[String, Var],
     t0:        Map[String, VarOrConst] ): ( Parenable, Map[String, VarOrConst] ) = {
     val Apps( hd, args ) = expr
     val hdSym = hd match {
@@ -244,7 +276,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       case ( Some( Notation.Quantifier( tok, _, prec ) ), Seq( Abs( v, e ) ) ) =>
         // FIXME
         val Var( vn, vt ) = v
-        val ( e_, t1 ) = show( e, true, bound + vn, t0 - vn )
+        val ( e_, t1 ) = show( e, true, bound + ( vn -> v ), t0 - vn )
         val v_ =
           if ( vt == Ti || t1.get( vn ).contains( v ) || omitTypes )
             showName( vn )
@@ -327,6 +359,11 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
   def showName( name: String ): Doc =
     if ( fastparse.parse( name, BabelLexical.OperatorAndNothingElse( _ ) ).isSuccess && unicodeSafe( name ) )
       name
+    else
+      showNonOpName( name )
+  def showNameFollowableByOp( name: String ): Doc =
+    if ( fastparse.parse( name, BabelLexical.OperatorAndNothingElse( _ ) ).isSuccess && unicodeSafe( name ) )
+      name <> " "
     else
       showNonOpName( name )
   def showNonOpName( name: String ): Doc = name match {

@@ -17,7 +17,9 @@ class DiscrTreeTest extends Specification {
     le"x: ?a > ?b",
     le"y: list ?a",
     le"z: ?a",
-    le"w" ) ++ ( 0 until 10 ).map( Numeral( _ ) ) )
+    le"w" ) +
+    Numeral( DiscrTree.maxDepth + 5 ) +
+    FOLFunctionConst( "s", 1 ).^( DiscrTree.maxDepth )( le"x" ) )
 
   "test 3" in {
     var tree = DiscrTree[Expr]()

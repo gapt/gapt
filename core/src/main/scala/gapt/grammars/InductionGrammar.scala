@@ -181,7 +181,7 @@ private class IndGExporter( unicode: Boolean, g: InductionGrammar )
 
   def csep( docs: List[Doc] ): Doc = wordwrap( docs, "," )
 
-  def showNt( nt: Var ): Doc = show( nt, false, Set(), Map() )._1.inPrec( 0 )
+  def showNt( nt: Var ): Doc = show( nt, false, Map(), Map() )._1.inPrec( 0 )
   def showNt( nt: List[Var] ): Doc = csep( nt.map( showNt ) )
 
   def export: String = {
@@ -192,7 +192,7 @@ private class IndGExporter( unicode: Boolean, g: InductionGrammar )
         "Parameter: " <> showNt( g.alpha ) <> line <>
         "Quantifiers: " <> showNt( g.gamma ) <> line <>
         "Constructors: " <> csep( g.nus.toList.map {
-          case ( c, nu ) => show( c( nu ), true, Set(), knownTypes )._1.inPrec( 0 )
+          case ( c, nu ) => show( c( nu ), true, Map(), knownTypes )._1.inPrec( 0 )
         } )
 
     val prods = stack( g.productions.toList
@@ -200,8 +200,8 @@ private class IndGExporter( unicode: Boolean, g: InductionGrammar )
       map { p =>
         group( csep( p.zipped.map {
           case ( a, t ) =>
-            group( group( show( a, false, Set(), knownTypes )._1.inPrec( Precedence.impl ) </> "→" ) </> nest(
-              show( t, true, Set(), knownTypes )._1.inPrec( Precedence.impl ) ) )
+            group( group( show( a, false, Map(), knownTypes )._1.inPrec( Precedence.impl ) </> "→" ) </> nest(
+              show( t, true, Map(), knownTypes )._1.inPrec( Precedence.impl ) ) )
         } ) ) <> line
       } )
 

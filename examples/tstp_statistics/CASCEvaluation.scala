@@ -73,7 +73,7 @@ object CASCEvaluation {
 
   def processLeanCop[T <: FileData]( data: Iterable[T], print_statistics: Boolean = false ) = {
     data.par.map( x => try withTimeout( 120 seconds ) {
-      if ( exists ! x.fileAsPath ) {
+      if ( exists( x.fileAsPath ) ) {
         val ep = LeanCoPParser.getExpansionProof( x )
         if ( print_statistics ) print( "." );
         Right( ep )

@@ -3,7 +3,7 @@ package gapt.proofs.expansion
 import gapt.expr._
 import gapt.expr.hol.{ HOLPosition, instantiate }
 import gapt.formats.babel.BabelSignature
-import gapt.proofs.{ Checkable, DagProof, Sequent }
+import gapt.proofs.{ Checkable, DagProof, HOLSequent, Sequent }
 import gapt.proofs.context.Context
 import gapt.utils.{ Doc, Maybe }
 
@@ -19,8 +19,8 @@ import scala.collection.mutable
  * [[ExpansionTree]] wraps an expansion tree term together with the intended
  * shallow formula and polarity.  The term may not be necessarily correct
  * for this shallow formula (i.e., calling [[deep]] may produce an exception).
- * Calling [[check()]] validates the correctness of the expansion tree (also
- * with respect to the given [[Context]]).
+ * Calling [[ExpansionTree.check]] validates the correctness of the expansion tree (also
+ * with respect to the given [[gapt.proofs.context.Context]]).
  *
  * The constructors [[ETAtom]], [[ETAnd]], etc. ensure that the produced
  * expansion trees are correct.
@@ -102,7 +102,7 @@ case class ExpansionTree( term: ETt, polarity: Polarity, shallow: Formula ) exte
         val Apps( skConst: Const, skArgs ) = skT
         ctx.foreach { ctx =>
           val Some( skD ) = ctx.skolemDef( skConst )
-          require( BetaReduction.betaNormalize( skD( skArgs ) ) == sh )
+          Checkable.requireDefEq( skD( skArgs ), sh )( ctx )
         }
         go( child )
       case ETDefinition( sh, child ) =>
@@ -157,6 +157,12 @@ object ETWeakening {
     case ExpansionTree( ETtWeakening, polarity, shallow ) => Some( ( shallow, polarity ) )
     case _ => None
   }
+
+  def apply( proof: ExpansionProof, newShallow: HOLSequent ): ExpansionProof =
+    ExpansionProof( apply( proof.expansionSequent, newShallow ) )
+  def apply( sequent: ExpansionSequent, newShallow: HOLSequent ): ExpansionSequent =
+    sequent ++ ( for ( ( t, i ) <- newShallow.diff( sequent.shallow ).zipWithIndex )
+      yield ETWeakening( t, i.polarity ) )
 }
 
 /** Expansion tree merge node, representing a contraction inference. */
