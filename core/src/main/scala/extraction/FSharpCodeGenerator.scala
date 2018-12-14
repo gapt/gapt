@@ -1,7 +1,7 @@
 package extraction
 
 import gapt.expr._
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 
 object FSharpCodeGenerator extends CodeGenerator( "" ) {
 

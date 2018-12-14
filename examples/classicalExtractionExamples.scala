@@ -5,11 +5,12 @@ import gapt.examples.theories.nat
 import gapt.proofs.nd._
 import gapt.expr.{ TBase, _ }
 import gapt.formats.babel.{ Notation, Precedence }
-import gapt.formats.json.JSONImporter
+import gapt.formats.json.JsonImporter
 import gapt.proofs
-import gapt.proofs.{ Ant, Checkable, Context, ProofBuilder, Sequent, Suc }
-import gapt.proofs.Context.{ InductiveType, PrimRecFun }
-import gapt.proofs.context.ReductionRuleUpdate
+import gapt.proofs.context.Context
+import gapt.proofs.{ Ant, Checkable, ProofBuilder, Sequent, Suc }
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.ReductionRuleUpdate
 import gapt.proofs.lk._
 import gapt.prooftool.prooftool
 
@@ -246,7 +247,7 @@ object example13 extends Script {
 
 object maximum extends Script {
   implicit var ctx = Context.default
-  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
   ctx += Notation.Infix( "<", Precedence.infixRel )
   ctx += Notation.Infix( "+", Precedence.plusMinus )
   ctx += Notation.Infix( ">=", Precedence.infixRel )
@@ -311,11 +312,11 @@ object sqrtProofManualCorrectAxiomClassical extends Script {
 
   import gapt.expr._
   import gapt.formats.babel.{ Notation, Precedence }
-  import gapt.proofs.Context
+  import gapt.proofs.context.Context
   import gapt.proofs.nd._
 
   implicit var ctx = Context.default
-  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
   ctx += Notation.Infix( "<", Precedence.infixRel )
   ctx += Notation.Infix( "*", Precedence.timesDiv )
   ctx += Notation.Infix( "<=", Precedence.infixRel )
@@ -537,11 +538,11 @@ object sqrtProofManualCorrectAxiomClassicalDifferentEMFormulasUsingEFQ extends S
 
   import gapt.expr._
   import gapt.formats.babel.{ Notation, Precedence }
-  import gapt.proofs.Context
+  import gapt.proofs.context.Context
   import gapt.proofs.nd._
 
   implicit var ctx = Context.default
-  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
   ctx += Notation.Infix( "<", Precedence.infixRel )
   ctx += Notation.Infix( "*", Precedence.timesDiv )
   ctx += Notation.Infix( "<=", Precedence.infixRel )
@@ -1880,11 +1881,11 @@ object manualExistsMinimum extends Script {
 
   import gapt.expr._
   import gapt.formats.babel.{ Notation, Precedence }
-  import gapt.proofs.Context
+  import gapt.proofs.context.Context
   import gapt.proofs.nd._
 
   implicit var ctx = Context.default
-  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
   ctx += Notation.Infix( "<", Precedence.infixRel )
   ctx += Notation.Infix( "<=", Precedence.infixRel )
   ctx += hoc"'<': nat>nat>o"
@@ -3494,11 +3495,11 @@ object trycatchTest extends Script {
 
   import gapt.expr._
   import gapt.formats.babel.{ Notation, Precedence }
-  import gapt.proofs.Context
+  import gapt.proofs.context.Context
   import gapt.proofs.nd._
 
   implicit var ctx = Context.default
-  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
   ctx += Notation.Infix( "<", Precedence.infixRel )
   ctx += hoc"'<': nat>nat>o"
   ctx += hoc"'P': nat>o"
@@ -3661,11 +3662,11 @@ object throwReductionRules extends Script {
 object churchRosserFailure extends Script {
   import gapt.expr._
   import gapt.formats.babel.{ Notation, Precedence }
-  import gapt.proofs.Context
+  import gapt.proofs.context.Context
   import gapt.proofs.nd._
 
   implicit var ctx = Context.default
-  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
   ctx += Notation.Infix( "<", Precedence.infixRel )
   ctx += hoc"'<': nat>nat>o"
   ctx += hoc"'P': nat>o"
@@ -3819,7 +3820,7 @@ object churchRosserFailureProgram extends Script {
 
 object reductionExamples extends Script {
   var ctx = Context.default
-  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
 
   implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
 
@@ -3868,7 +3869,7 @@ object reductionExamples extends Script {
 
 object commutingConversions extends Script {
   var ctx = Context.default
-  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
   ctx += Notation.Infix( "+", Precedence.plusMinus )
   ctx += hoc"'+': nat>nat>nat"
 
@@ -3989,7 +3990,7 @@ s(tryCatch(
 
 object commutingConversions2 extends Script {
   var ctx = Context.default
-  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
 
   implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
 
@@ -4026,7 +4027,7 @@ object commutingConversions2 extends Script {
 
 object handleRaiseReduction extends Script {
   var ctx = Context.default
-  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
   implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
 
   // reduces to N0(0) or N1(0) depending on which exception variable is raised
@@ -4047,7 +4048,7 @@ object handleRaiseReduction extends Script {
 
 object testExistsElimTryCatch extends Script {
   var ctx = Context.default
-  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
   implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
   /*
   println( normalize( le"""
@@ -4095,7 +4096,7 @@ object testExistsElimTryCatch extends Script {
 
 object handleSimp extends Script {
   var ctx = Context.default
-  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
   implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
   val f = normalize // ScalaCodeGenerator
   println( f( le"""
@@ -4107,7 +4108,7 @@ s((^(y1: nat>exn) tryCatch(y1,
 }
 object handleRaise extends Script {
   var ctx = Context.default
-  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
   implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
   val f = normalize // ScalaCodeGenerator
   println( f( le"""
@@ -4124,7 +4125,7 @@ s((^(y1: nat>exn)
 }
 object exceptionCarryingException extends Script {
   var ctx = Context.default
-  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
   implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
   val f = normalize // ScalaCodeGenerator
   println( f( le"""
@@ -4141,10 +4142,10 @@ s((^(y1: (nat>exn)>exn)
 }
 
 object reduceMatchSum extends Script {
-  import gapt.proofs.Context
+  import gapt.proofs.context.Context
   import gapt.proofs.nd.ClassicalExtraction
   var ctx = Context.default
-  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
   implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
   println( normalize( le"""
          matchSum(
@@ -4161,10 +4162,10 @@ object reduceMatchSum extends Script {
   """ ) )
 }
 object commuteEfqInfiniteExecution extends Script {
-  import gapt.proofs.Context
+  import gapt.proofs.context.Context
   import gapt.proofs.nd.ClassicalExtraction
   var ctx = Context.default
-  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
   implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
   println( normalize( le"""
          efq(matchSum(

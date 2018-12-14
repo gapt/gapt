@@ -1,5 +1,5 @@
 import gapt.expr.{ Const, Expr, Ty }
-import gapt.proofs.Context
+import gapt.proofs.context.Context
 
 package object extraction {
   abstract class CodeGenerator( val name: String ) {

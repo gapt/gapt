@@ -3,21 +3,21 @@ package gapt.examples
 import extraction.ScalaCodeGenerator
 import gapt.expr._
 import gapt.formats.babel._
-import gapt.proofs.Context.PrimRecFun
+import gapt.proofs.context.Context
 import gapt.proofs.ProofBuilder
-import gapt.proofs.lk.{ LKProof, LKToND }
-import gapt.proofs.nd.{ ClassicalExtraction, ExcludedMiddleRule }
+import gapt.proofs.context.update.{InductiveType, PrimitiveRecursiveFunction}
+import gapt.proofs.lk.{LKProof, LKToND}
+import gapt.proofs.nd.{ClassicalExtraction, ExcludedMiddleRule}
 import gapt.prooftool.prooftool
 
 object sqrtProofManualCorrectAxiom extends Script {
 
   import gapt.expr._
   import gapt.formats.babel.{ Notation, Precedence }
-  import gapt.proofs.Context
   import gapt.proofs.nd._
 
   var ctx = Context.default
-  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
   ctx += Notation.Infix( "<", Precedence.infixRel )
   ctx += Notation.Infix( "*", Precedence.timesDiv )
   ctx += Notation.Infix( "<=", Precedence.infixRel )
@@ -30,25 +30,25 @@ object sqrtProofManualCorrectAxiom extends Script {
   val x = hov"x:nat"
   val y = hov"y:nat"
   val plus = hoc"'+': nat>nat>nat"
-  cctx += PrimRecFun(
+  cctx += PrimitiveRecursiveFunction(
     plus,
     List(
       ( plus( z, y ) -> y ),
       ( plus( s( x ), y ) -> s( plus( x, y ) ) ) ) )( cctx )
   val times = hoc"'*': nat>nat>nat"
-  cctx += PrimRecFun(
+  cctx += PrimitiveRecursiveFunction(
     times,
     List(
       ( times( z, y ) -> z ),
       ( times( s( x ), y ) -> plus( y, times( x, y ) ) ) ) )( cctx )
   val lt = hoc"'<': nat>nat>o"
-  cctx += PrimRecFun(
+  cctx += PrimitiveRecursiveFunction(
     lt,
     List(
       ( lt( z, y ) -> gt( y, z ) ),
       ( lt( s( x ), y ) -> gt( y, s( x ) ) ) ) )( cctx )
   val leq = hoc"'<=': nat>nat>o"
-  cctx += PrimRecFun(
+  cctx += PrimitiveRecursiveFunction(
     leq,
     List(
       ( leq( z, y ) -> not( gt( z, y ) ) ),
@@ -317,11 +317,11 @@ object manualExistsMinimumNoDefinitions extends Script {
 
   import gapt.expr._
   import gapt.formats.babel.{ Notation, Precedence }
-  import gapt.proofs.Context
+  import gapt.proofs.context.Context
   import gapt.proofs.nd._
 
   var ctx = Context.default
-  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
   ctx += Notation.Infix( "<", Precedence.infixRel )
   ctx += Notation.Infix( "<=", Precedence.infixRel )
   ctx += Notation.Infix( "+", Precedence.plusMinus )
@@ -340,25 +340,25 @@ object manualExistsMinimumNoDefinitions extends Script {
   // def f( x: Int ) = if ( x > 1 ) 0 else 1 - x
   // min at x = 1
   val f = hoc"'f': nat>nat"
-  cctx += PrimRecFun(
+  cctx += PrimitiveRecursiveFunction(
     f,
     List(
       ( f( z ) -> subtr( s( z ), z ) ),
       ( f( s( x ) ) -> ite( gt( s( x ), s( z ) ) )( z )( subtr( s( z ), s( x ) ) ) ) ) )( cctx )
   val plus = hoc"'+': nat>nat>nat"
-  cctx += PrimRecFun(
+  cctx += PrimitiveRecursiveFunction(
     plus,
     List(
       ( plus( z, y ) -> y ),
       ( plus( s( x ), y ) -> s( plus( x, y ) ) ) ) )( cctx )
   val lt = hoc"'<': nat>nat>o"
-  cctx += PrimRecFun(
+  cctx += PrimitiveRecursiveFunction(
     lt,
     List(
       ( lt( z, y ) -> gt( y, z ) ),
       ( lt( s( x ), y ) -> gt( y, s( x ) ) ) ) )( cctx )
   val leq = hoc"'<=': nat>nat>o"
-  cctx += PrimRecFun(
+  cctx += PrimitiveRecursiveFunction(
     leq,
     List(
       ( leq( z, y ) -> not( gt( z, y ) ) ),
@@ -561,7 +561,7 @@ object synthexManySorted extends Script {
   import gapt.provers.vampire.Vampire
 
   var ctx = Context.default
-  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
   ctx += Notation.Infix( "<", Precedence.infixRel )
   ctx += Notation.Infix( "*", Precedence.timesDiv )
   ctx += Notation.Infix( "<=", Precedence.infixRel )
@@ -575,31 +575,31 @@ object synthexManySorted extends Script {
   val x = hov"x:nat"
   val y = hov"y:nat"
   val plus = hoc"'+': nat>nat>nat"
-  cctx += PrimRecFun(
+  cctx += PrimitiveRecursiveFunction(
     plus,
     List(
       ( plus( z, y ) -> y ),
       ( plus( s( x ), y ) -> s( plus( x, y ) ) ) ) )( cctx )
   val times = hoc"'*': nat>nat>nat"
-  cctx += PrimRecFun(
+  cctx += PrimitiveRecursiveFunction(
     times,
     List(
       ( times( z, y ) -> z ),
       ( times( s( x ), y ) -> plus( y, times( x, y ) ) ) ) )( cctx )
   val pow2 = hoc"'pow2': nat>nat"
-  cctx += PrimRecFun(
+  cctx += PrimitiveRecursiveFunction(
     pow2,
     List(
       ( pow2( z ) -> z ),
       ( pow2( s( x ) ) -> times( s( x ), s( x ) ) ) ) )( cctx )
   val lt = hoc"'<': nat>nat>o"
-  cctx += PrimRecFun(
+  cctx += PrimitiveRecursiveFunction(
     lt,
     List(
       ( lt( z, y ) -> gt( y, z ) ),
       ( lt( s( x ), y ) -> gt( y, s( x ) ) ) ) )( cctx )
   val leq = hoc"'<=': nat>nat>o"
-  cctx += PrimRecFun(
+  cctx += PrimitiveRecursiveFunction(
     leq,
     List(
       ( leq( z, y ) -> not( gt( z, y ) ) ),
@@ -633,7 +633,7 @@ object synthexManySorted extends Script {
   val f = new File( "/home/matthias/tmp/synthexManySorted.json" )
   val lk = if ( f.isFile() && f.canRead() ) {
     println( "Reading proof from JSON file..." )
-    JSONImporter.apply[LKProof]( f )
+    JsonImporter.load[LKProof]( f )
   } else {
     println( "Proving using Vampire..." )
 
@@ -666,9 +666,9 @@ ETWeakQuantifier(
     val lk = ExpansionProofToLK( deskInd ).getOrElse( throw new Exception( "LK proof not obtained" ) )
     println( "Done." )
     cctx.check( lk )
-    val jsonLk = gapt.formats.json.JSONExporter( lk )
+    val jsonLk = gapt.formats.json.JsonExporter( lk )
     val bw = new BufferedWriter( new FileWriter( f ) )
-    bw.write( jsonLk )
+    bw.write( jsonLk.render(80) )
     bw.close()
     lk
   }

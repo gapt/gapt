@@ -1,10 +1,11 @@
 package gapt.proofs.nd
 
 import gapt.expr.hol.containsQuantifierOnLogicalLevel
-import gapt.expr.{ App, Substitution, Ty, typeVariables, _ }
-import gapt.proofs.Context.{ BaseTypes, InductiveType, PrimRecFun, StructurallyInductiveTypes }
+import gapt.expr.{App, Substitution, Ty, typeVariables, _}
+import gapt.proofs.context.Context
 import gapt.proofs._
-import gapt.proofs.context.ReductionRuleUpdate
+import gapt.proofs.context.facet.{BaseTypes, StructurallyInductiveTypes}
+import gapt.proofs.context.update.{InductiveType, PrimitiveRecursiveFunction, ReductionRuleUpdate}
 import gapt.utils.NameGenerator
 
 import scala.collection.mutable
@@ -48,7 +49,7 @@ object ClassicalExtraction {
           App( recursor, constrVars.values.toVector :+ App( x, argVars( x ) ) ),
           argVars( x ).foldLeft( constrVars( x ): Expr )( ( y, z ) => if ( z.ty == typ ) App( App( y, z ), App( recursor, constrVars.values.toVector :+ z ) ) else App( y, z ) ) ) )
 
-      systemT += PrimRecFun( recursor, equations )
+      systemT += PrimitiveRecursiveFunction( recursor, equations )
     }
 
     // add conjuctive type, pairs, projections and their reduction rules
@@ -61,10 +62,10 @@ object ClassicalExtraction {
     val pi2 = hoc"pi2{?a ?b}: (conj ?a ?b) > ?b"
     val x: Expr = hov"x : ?a"
     val y: Expr = hov"y : ?b"
-    systemT += PrimRecFun(
+    systemT += PrimitiveRecursiveFunction(
       pi1,
       List( ( pi1( pair( x, y ) ) -> x ) ) )( systemT )
-    systemT += PrimRecFun(
+    systemT += PrimitiveRecursiveFunction(
       pi2,
       List( ( pi2( pair( x, y ) ) -> y ) ) )( systemT )
 
@@ -76,7 +77,7 @@ object ClassicalExtraction {
     val matchSum = hoc"matchSum{?a ?b ?c}: (sum ?a ?b) > (?a > ?c) > (?b > ?c) > ?c"
     val w1: Expr = hov"w1: ?a > ?c"
     val w2: Expr = hov"w2: ?b > ?c"
-    systemT += PrimRecFun(
+    systemT += PrimitiveRecursiveFunction(
       matchSum,
       List(
         ( matchSum( inl( x ), w1, w2 ) -> w1( x ) ),
@@ -84,7 +85,7 @@ object ClassicalExtraction {
 
     val existsElim = hoc"existsElim{?a ?b ?c}: (conj ?a ?b) > (?a > ?b > ?c) > ?c"
     val w3: Expr = hov"w3: ?a > ?b > ?c"
-    systemT += PrimRecFun(
+    systemT += PrimitiveRecursiveFunction(
       existsElim,
       List( ( existsElim( pair( x, y ), w3 ) -> w3( x )( y ) ) ) )( systemT )
 
@@ -192,13 +193,13 @@ object ClassicalExtraction {
     val Some( z ) = systemT.constant( "0" )
     val Some( s ) = systemT.constant( "s" )
     val pred = hoc"pred: nat>nat"
-    systemT += PrimRecFun(
+    systemT += PrimitiveRecursiveFunction(
       pred,
       List(
         pred( s( u ) ) -> u,
         pred( z ) -> z ) )
     val subtr = hoc"subtr: nat>nat>nat"
-    systemT += PrimRecFun(
+    systemT += PrimitiveRecursiveFunction(
       subtr,
       List(
         subtr( u )( z ) -> u,
@@ -209,31 +210,31 @@ object ClassicalExtraction {
     val Some( trueC ) = systemT.constant( "⊤" )
     val Some( falseC ) = systemT.constant( "⊥" )
     val not = hoc"not: o>o"
-    systemT += PrimRecFun(
+    systemT += PrimitiveRecursiveFunction(
       not,
       List(
         not( falseC ) -> trueC,
         not( trueC ) -> falseC ) )
-    systemT += PrimRecFun(
+    systemT += PrimitiveRecursiveFunction(
       ite,
       List(
         ite( trueC )( x1 )( x2 ) -> x1,
         ite( falseC )( x1 )( x2 ) -> x2 ) )
     val sg = hoc"sg: nat>o"
-    systemT += PrimRecFun(
+    systemT += PrimitiveRecursiveFunction(
       sg,
       List(
         sg( z ) -> falseC,
         sg( s( u ) ) -> trueC ) )
     val gt = hoc"gt: nat>nat>o"
-    systemT += PrimRecFun(
+    systemT += PrimitiveRecursiveFunction(
       gt,
       List(
         gt( z )( v ) -> sg( subtr( z )( v ) ),
         gt( s( u ) )( v ) -> sg( subtr( s( u ) )( v ) ) ) )
     val Some( ite1 ) = systemT.constant( "ite", List( ty"sum(sum(1)(1))(1)" ) )
     val cmp = hoc"cmp: nat>nat>sum(sum(1)(1))(1)"
-    systemT += PrimRecFun(
+    systemT += PrimitiveRecursiveFunction(
       cmp,
       List(
         cmp( z )( v ) ->
@@ -244,7 +245,7 @@ object ClassicalExtraction {
             ite1( gt( s( u ) )( v ) )( inl1( inr2( i ) ) /*u>v*/ )( inr1( i ) /*v=u*/ ) ) ) )
     val Some( ite2 ) = systemT.constant( "ite", List( ty"sum(1)(1)" ) )
     val cmp2 = hoc"cmp2: nat>nat>sum(1)(1)"
-    systemT += PrimRecFun(
+    systemT += PrimitiveRecursiveFunction(
       cmp2,
       List(
         cmp2( z )( v ) ->
