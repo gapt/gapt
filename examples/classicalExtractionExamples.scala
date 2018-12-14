@@ -4090,4 +4090,94 @@ object testExistsElimTryCatch extends Script {
          ))),
          s(0))
     """ ) )
+  println( normalize( le"(^x (^x s(x)))(0)(1)" ) )
 }
+
+object handleSimp extends Script {
+  var ctx = Context.default
+  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+  val f = normalize // ScalaCodeGenerator
+  println( f( le"""
+s((^(y1: nat>exn) tryCatch(y1,
+   0,
+  handle(y1(x1:nat),
+    s(0)))
+)(exnV))""" ) )
+}
+object handleRaise extends Script {
+  var ctx = Context.default
+  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+  val f = normalize // ScalaCodeGenerator
+  println( f( le"""
+s((^(y1: nat>exn)
+    tryCatch(y1,
+    (^(y2: nat>exn)
+      tryCatch(y2,
+        efq(y1(0)),
+      handle(y2(x1:nat),
+        s(x1))))(exnV1),
+  handle(y1(x1:nat),
+    x1))
+)(exnV))""" ) )
+}
+object exceptionCarryingException extends Script {
+  var ctx = Context.default
+  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+  val f = normalize // ScalaCodeGenerator
+  println( f( le"""
+s((^(y1: (nat>exn)>exn)
+    tryCatch(y1,
+    (^(y2: nat>exn)
+      tryCatch(y2,
+        efq(y1(y2)),
+      handle(y2(x1:nat),
+        s(x1))))(exnV1),
+  handle(y1(x2:nat>exn),
+    efq(x2(0))))
+)(exnV))""" ) )
+}
+
+object reduceMatchSum extends Script {
+  import gapt.proofs.Context
+  import gapt.proofs.nd.ClassicalExtraction
+  var ctx = Context.default
+  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+  println( normalize( le"""
+         matchSum(
+           (^(y0: nat>exn) tryCatch(y0,
+             inr(y0(0)): sum(nat)(exn),
+             handle(
+               y0(x0:nat), inl(x0): sum(nat)(exn)
+             ))
+           )(myExn:nat>exn))(
+           ^(c1: nat) s(0)
+           )(
+           ^(c2: exn) efq(c2)
+           )
+  """ ) )
+}
+object commuteEfqInfiniteExecution extends Script {
+  import gapt.proofs.Context
+  import gapt.proofs.nd.ClassicalExtraction
+  var ctx = Context.default
+  ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+  println( normalize( le"""
+         efq(matchSum(
+          (^(y0: nat>exn) tryCatch(y0,
+            inl(y0): sum(nat>exn)(exn),
+            handle(
+              y0(x0:nat), inr(y0(x0)): sum(nat>exn)(exn)
+            ))
+          )(myExn:nat>exn))(
+          ^(c1: nat>exn) c1(0)
+          )(
+          ^(c2: exn) c2
+          ))
+  """ ) )
+}
+

@@ -132,7 +132,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
         as_ match {
 
           // Commuting conversion (left) for try/catch
-          case SplitTryCatch( front, App( Abs( _, Apps( Const( "tryCatch", ty, params ), tryCatchBlocks ) ), exnV ), back ) if hd_.toUntypedAsciiString != "handle" =>
+          case SplitTryCatch( front, App( Abs( _, Apps( Const( "tryCatch", ty, params ), tryCatchBlocks ) ), _ ), back ) if hd_.toUntypedAsciiString != "handle" =>
 
             //println( s"cc left: commuting ${hd_( front )}" )
             println( s"cc left" )
@@ -222,7 +222,9 @@ case class Normalizer( rules: Set[ReductionRule] ) {
       case Const( "efq", _, _ ) if as.size == 1 =>
         // If normalize(as(0)) reduces to a tryCatch, it means that that the tryCatch returns an exception
         // variable, we thus know that handle simp and handle/raise didn't apply, hence we commute efq
-        normalize( as( 0 ) ) match {
+        val r = normalize( as( 0 ) )
+        println( s"result of normalize efq arg:\n$r" )
+        r match {
           case Apps( Const( "tryCatch", _, _ ), tryCatchBlocks ) =>
             // raise/handle
             println( "raise/handle" )
@@ -304,9 +306,12 @@ case class Normalizer( rules: Set[ReductionRule] ) {
               val App( App( Const( "handle", _, _ ), App( caughtExn, exnVar ) ), catchB ) = as( 2 )
               println( s"thrown exn: $thrownExn" )
               println( s"caught exn: $caughtExn" )
+              // TODO: flatten catch blocks, keep all catch blocks, substitute in the appropriate one
               if ( thrownExn == caughtExn ) {
                 println( s"caught exception $caughtExn" )
-                Some( le"(^${exnVar.asInstanceOf[Var]} $catchB)$thrownVal" )
+                val ret = Substitution( exnVar.asInstanceOf[Var], thrownVal )( catchB )
+                println( s"reducing catch block with exnVar=$exnVar: $ret" )
+                Some( ret )
               } else {
                 // TODO throw further
                 println( s"throw further: normalized try block: $ntb" )
@@ -325,6 +330,8 @@ case class Normalizer( rules: Set[ReductionRule] ) {
         }
       case hd @ Const( c, _, _ ) =>
         c match {
+          case "matchSum" =>
+            println( "reducing matchSum" )
           case "natRec" =>
             println( "reducing natRec" )
           case "existsElim" =>
@@ -340,13 +347,17 @@ case class Normalizer( rules: Set[ReductionRule] ) {
         headMap.get( c ).flatMap {
           case ( rs, whnfArgs, normalizeArgs ) =>
             val as_ = as.zipWithIndex.map {
-              case ( a, i ) if whnfArgs( i )      => whnf( a )
-              case ( a, i ) if normalizeArgs( i ) => normalize( a )
-              case ( a, _ )                       => a
+              case ( a, i ) if whnfArgs( i ) =>
+                println( s"whnf: a: ${a}" )
+                whnf( a )
+              case ( a, i ) if normalizeArgs( i ) =>
+                println( s"normalize: a: ${a}" )
+                normalize( a )
+              case ( a, _ ) => a
             }
             rs.view.flatMap { r =>
               val substs = syntacticMatching( r.lhs, Apps( hd, as_.take( r.lhsArgsSize ) ) )
-              println( s"substs: $substs" )
+              //println( s"substs: $substs" )
               substs.map { subst =>
                 Apps( subst( r.rhs ), as_.drop( r.lhsArgsSize ) )
               }

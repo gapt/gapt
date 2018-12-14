@@ -64,7 +64,6 @@ trait ExprSubstitutable1 {
         Const( x, SubstitutableTy.applySubstitution( sub, ty ),
           ps.map( SubstitutableTy.applySubstitution( sub, _ ) ) )
     case App( a, b ) =>
-      println( s"sub: ${sub}" )
       App( go( sub, a ), go( sub, b ) )
     case Abs( v, _ ) if sub.domain contains v =>
       go( Substitution( sub.map - v, sub.typeMap ), t )

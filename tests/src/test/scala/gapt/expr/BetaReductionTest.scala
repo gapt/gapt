@@ -326,4 +326,51 @@ s((^(y1: nat>exn) tryCatch(y1,
          s(0))
     """ ) must_== le"pair(0, i)"
   }
+  "cc match/case" in {
+    import gapt.proofs.Context
+    import gapt.proofs.nd.ClassicalExtraction
+    var ctx = Context.default
+    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+    normalize(le"""
+         matchSum(
+          (^(y0: nat>exn) tryCatch(y0,
+            inr(y0(0)): sum(nat)(exn),
+            handle(
+              y0(x0:nat), inl(x0): sum(nat)(exn)
+            ))
+          )(myExn:nat>exn))(
+          ^(c1: nat) s(0)
+          )(
+          ^(c2: exn) efq(c2)
+          )
+    """) must_== le"s(0)"
+  }
+  "cc match/case" in {
+    import gapt.proofs.Context
+    import gapt.proofs.nd.ClassicalExtraction
+    var ctx = Context.default
+    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+    normalize(le"""
+         efq(matchSum(
+          (^(y0: nat>exn) tryCatch(y0,
+            inl(y0): sum(nat>exn)(exn),
+            handle(
+              y0(x0:nat), inr(y0(x0)): sum(nat>exn)(exn)
+            ))
+          )(myExn:nat>exn))(
+          ^(c1: nat>exn) c1(0)
+          )(
+          ^(c2: exn) c2
+          ))
+    """) must_== le"s(0)"
+  }
+  "cc existsElim" in {
+    import gapt.proofs.Context
+    import gapt.proofs.nd.ClassicalExtraction
+    var ctx = Context.default
+    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+  }
 }

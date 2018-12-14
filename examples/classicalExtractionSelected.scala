@@ -1,5 +1,6 @@
 package gapt.examples
 
+import extraction.ScalaCodeGenerator
 import gapt.expr._
 import gapt.formats.babel._
 import gapt.proofs.Context.PrimRecFun
@@ -701,11 +702,13 @@ ETWeakQuantifier(
   //case _                     => false
   //} )
   //FSharpCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
-  /*
-ScalaCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
-println( "flat(thm): " + ClassicalExtraction.flat( thm ) )
-println( "ty(m1): " + m1.ty )
-*/
+  val scalaProg = ScalaCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
+  val scalaFile = new File( "/home/matthias/tmp/synthexManySorted.scala" )
+  val bw = new BufferedWriter( new FileWriter( scalaFile ) )
+  bw.write( scalaProg )
+  bw.close()
+  //println( "flat(thm): " + ClassicalExtraction.flat( thm ) )
+  //println( "ty(m1): " + m1.ty )
 
   //val arg1 = le"(^(tmp:nat) i)"
   val m1Args = scala.collection.mutable.Map[Ty, Expr](
@@ -760,3 +763,4 @@ println( "expecting inl(i)" + normalize( m1Args( ClassicalExtraction.flat( defle
 println( "expecting inr(i)" + normalize( m1Args( ClassicalExtraction.flat( defleq ) )( le"0:nat" )( le"s(0):nat" ) ) )
 */
 }
+

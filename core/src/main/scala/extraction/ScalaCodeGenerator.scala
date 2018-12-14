@@ -172,17 +172,19 @@ def natRec[$a](p1: $a)(p2: (Int => $a => $a))(p3: Int): $a = {
   def translate( e: Expr )( implicit ctx: Context ): String = {
     e match {
       // TODO: catchTerm using handle
-      case App( App( Const( "tryCatch", _, params ), catchTerm ), tryTerm ) =>
+      //case App( App( Const( "tryCatch", _, params ), catchTerm ), tryTerm ) =>
+      case App( Abs( _, Apps( Const( "tryCatch", ty, params ), tryCatchBlocks ) ), exnV ) =>
+        //App( App( Const( "handle", _, _ ), App( caughtExn, exnVar ) ), catchB )))
         val localBugID = bugID
         bugID = bugID + 1
         val a = toType( params( 0 ) )
         s"""
            |try {
-           |  ${translate( tryTerm )}(exception[$a]( _ )( Some( $localBugID ) ) )
+           |  ${translate( tryCatchBlocks( 1 ) )}(exception[$a]( _ )( Some( $localBugID ) ) )
            |} catch {
            |  case Exn( v : $a, Some( id ) ) if id == $localBugID => {
            |    //println( "thrown at " + id + " caught at $localBugID" )
-           |    ${translate( catchTerm )}( v )
+           |    ${translate( tryCatchBlocks( 2 ) )}( v )
            |  }
            |  case e => {
            |    //println("throwing further at $localBugID")
