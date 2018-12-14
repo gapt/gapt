@@ -1,4 +1,6 @@
-import gapt.examples.Script
+package gapt.examples
+
+import extraction.ScalaCodeGenerator
 import gapt.expr._
 import gapt.formats.babel._
 import gapt.proofs.Context.PrimRecFun
@@ -542,7 +544,12 @@ val lem19 = ProofBuilder.
   println( s"realm1.ty: ${realm1.ty}" )
   println( s"realm2.ty: ${realm2.ty}" )
   val Some( proj1 ) = cctx.constant( "pi1", List( ty"nat", ty"1" ) )
-  println( normalize( proj1( realm2( le"0" ) ) ) )
+  //assert( normalized == normalize( normalized ) )
+  var normalized = proj1( realm2( le"s(0)" ) )
+  while ( normalize( normalized ) != normalized ) {
+    normalized = normalize( normalized )
+  }
+  println( normalized )
 }
 
 object synthexManySorted extends Script {
@@ -597,7 +604,7 @@ object synthexManySorted extends Script {
     List(
       ( leq( z, y ) -> not( gt( z, y ) ) ),
       ( leq( s( x ), y ) -> not( gt( s( x ), y ) ) ) ) )( cctx )
-  println( s"normalizing pow2(2): ${normalize( pow2( s( s( z ) ) ) )}" )
+  //println( s"normalizing pow2(2): ${normalize( pow2( s( s( z ) ) ) )}" )
 
   val peano5 = hof"!x 0 = x*0"
   val peano7 = hof"!x!y (x<y -> s(x)<s(y))"
@@ -695,11 +702,13 @@ ETWeakQuantifier(
   //case _                     => false
   //} )
   //FSharpCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
-  /*
-ScalaCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
-println( "flat(thm): " + ClassicalExtraction.flat( thm ) )
-println( "ty(m1): " + m1.ty )
-*/
+  val scalaProg = ScalaCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
+  val scalaFile = new File( "/home/matthias/tmp/synthexManySorted.scala" )
+  val bw = new BufferedWriter( new FileWriter( scalaFile ) )
+  bw.write( scalaProg )
+  bw.close()
+  //println( "flat(thm): " + ClassicalExtraction.flat( thm ) )
+  //println( "ty(m1): " + m1.ty )
 
   //val arg1 = le"(^(tmp:nat) i)"
   val m1Args = scala.collection.mutable.Map[Ty, Expr](
@@ -735,8 +744,17 @@ $pair(
   val realm1 = assignArgs( m1 )
 
   val Some( proj1 ) = cctx.constant( "pi1", List( ty"nat", ty"1" ) )
+  /*
   println( realm1 )
   println( s"normalize\n${normalize( proj1( realm1( le"s(s(s(s(0))))" ) ) )}" )
+  */
+  var normalized = proj1( realm1( le"s(s(s(s(0))))" ) )
+
+  println( "synthex program:\n" + normalized )
+  //while ( normalize( normalized ) != normalized ) {
+  normalized = normalize( normalized )
+  //}
+  println( normalized )
   /*
 println( "expecting inr(i)" + normalize( m1Args( ClassicalExtraction.flat( lem4 ) )( le"0:nat" )( le"0:nat" ) ) )
 println( "expecting inl(inl(i))" + normalize( m1Args( ClassicalExtraction.flat( lem4 ) )( le"0:nat" )( le"s(0):nat" ) ) )
@@ -745,3 +763,4 @@ println( "expecting inl(i)" + normalize( m1Args( ClassicalExtraction.flat( defle
 println( "expecting inr(i)" + normalize( m1Args( ClassicalExtraction.flat( defleq ) )( le"0:nat" )( le"s(0):nat" ) ) )
 */
 }
+

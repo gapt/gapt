@@ -8,12 +8,8 @@ package object extraction {
 
     val postfix: String
 
-    def apply( e: Expr )( implicit ctx: Context ) = {
-      println( prefix )
-      println( generateBoilerPlate( e )( ctx ) )
-      println( translate( e )( ctx ) )
-      println( postfix )
-    }
+    def apply( e: Expr )( implicit ctx: Context ): String =
+      List( prefix, generateBoilerPlate( e )( ctx ), translate( e )( ctx ), postfix ).mkString( "\n" )
 
     def generateBoilerPlate( e: Expr )( implicit ctx: Context ): String
 

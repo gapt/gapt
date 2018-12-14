@@ -13,16 +13,13 @@ object ClassicalExtraction {
 
   private val varMap: mutable.Map[Formula, Var] = mutable.Map.empty
   private def getVar( name: String, f: Formula, nameGenerator: NameGenerator )( implicit ctx: Context ) = {
-    val res = if ( varMap.contains( f ) ) {
+    if ( varMap.contains( f ) ) {
       varMap( f )
     } else {
       val v = Var( nameGenerator.fresh( name ), flat( f ) )
       varMap += ( f -> v )
       v
     }
-    if ( res.name == "vLambda_5" )
-      println( "getVar vLambda_5" )
-    res
   }
 
   def getVarMap = varMap
@@ -136,10 +133,8 @@ object ClassicalExtraction {
     */
 
     //val handle = hoc"handle{?a ?b}: (?a > ?b) > ((?a > (exn ?a)) > ?b) > ?b"
-    //val tryCatch = hoc"tryCatch{?a ?c}: (?a > ?c) > ((?a > (exn ?a)) > ?c) > ?c"
-    //val tryCatch = hoc"tryCatch{?a ?c}: (?a > ?c) > ((?a > (exn ?a)) > ?c) > ?c"
-    //val tryCatch = hoc"tryCatch{?a ?c}: ((?a > (exn ?a)) > ?c) > (?a > ?c) > ?c"
-    val tryCatch = hoc"tryCatch{?a ?c}: ((?a > exn) > ?c) > (?a > ?c) > ?c"
+    //val tryCatch = hoc"tryCatch{?a ?c}: ((?a > exn) > ?c) > (?a > ?c) > ?c"
+    val tryCatch = hoc"tryCatch{?a ?c}: (?a > exn) > ?c > (?a > ?c) > ?c"
     systemT += tryCatch
     /*
     val w5 = hov"w5:?a"
@@ -485,6 +480,7 @@ object ClassicalExtraction {
           // TODO reverse makes App in ExcludedMiddle realizer work (example6)
           // TODO reverse makes App in ExcludedMiddle realizer fail (example7)
           //Abs( variablesAntConclusion( proof ).reverse, raise( App( subProofRealizer, variablesAntPremise( proof, 0 ) ) ) )
+          println( s"raising efq: ${s( Suc( 0 ) )}" )
           val res = s.replaceAt( Suc( 0 ), efq( s( Suc( 0 ) ) ) )
           //println( "BottomElim" )
           res
@@ -620,11 +616,15 @@ object ClassicalExtraction {
                 case _                                        => assert( false )
               }
               */
+              val exnVar = ng.fresh( "vException" )
               val delL = l.delete( aux1 ).antecedent
               val delR = r.delete( aux2 ).antecedent
               //val res = delL ++: delR ++: Sequent() :+ le"tryCatch ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
-              val res = delL ++: delR ++: Sequent() :+ le"tryCatch(${Abs( varR, r( Suc( 0 ) ) )}, handle($varR($varL), ${l( Suc( 0 ) )}))"
-              println( s"tryCatch.ty: ${res( Suc( 0 ) ).ty}" )
+              //if ( freeVariables( r( Suc( 0 ) ) ).contains( varR ) )
+              //println( s"contains $varR" )
+              val res = delL ++: delR ++: Sequent() :+ le"(^$varR tryCatch($varR, ${r( Suc( 0 ) )}, handle($varR($varL), ${l( Suc( 0 ) )})))($exnVar)"
+              //val res = delL ++: delR ++: Sequent() :+ le"tryCatch($varR, ${r( Suc( 0 ) )}, handle($varR($varL), ${l( Suc( 0 ) )}))"
+              println( s"tryCatch var: $varR, catch: ${varR( varL )}, tryCatch.ty: ${res( Suc( 0 ) ).ty}" )
               //println( s"EM0: ${f}" )
               res
           }

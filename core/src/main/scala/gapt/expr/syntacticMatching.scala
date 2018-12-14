@@ -45,6 +45,7 @@ object syntacticMatching {
         go( v1.ty, v2.ty, subst ) match {
           case USome( subst1 ) =>
             val v1_ = rename( v1, subst1.domain ++ subst1.range ++ freeVariables( List( a, b ) ) )
+            println( s"@@@@@ rename: $v1_" )
             val v2_ = Var( v1_.name, v2.ty )
             go( Substitution( v1 -> v1_ )( e1 ), Substitution( v2 -> v2_ )( e2 ), subst1 + ( v1_, v2_ ) ).
               map( subst2 => new PreSubstitution( subst2.map - v1_, subst2.typeMap ) )
