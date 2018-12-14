@@ -21,7 +21,7 @@ lazy val commonSettings = Seq(
     devConnection = Some( "scm:git:git@github.com:gapt/gapt.git" ) ) ),
   bintrayOrganization := Some( "gapt" ),
 
-  scalaVersion := "2.12.7",
+  scalaVersion := "2.12.8",
   scalacOptions in Compile ++= Seq(
     "-Ypartial-unification",
     "-deprecation",
@@ -174,14 +174,14 @@ lazy val core = project.in( file( "core" ) ).
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.1",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.parboiled" %% "parboiled" % "2.1.5",
-      "com.lihaoyi" %% "fastparse" % "2.0.4",
+      "com.lihaoyi" %% "fastparse" % "2.0.5",
       "com.lihaoyi" %% "sourcecode" % "0.1.5",
       "org.typelevel" %% "cats-free" % "1.4.0",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
       "org.apache.commons" % "commons-lang3" % "3.8.1",
-      "com.lihaoyi" %% "ammonite-ops" % "1.3.2",
+      "com.lihaoyi" %% "ammonite-ops" % "1.5.0",
       "de.uni-freiburg.informatik.ultimate" % "smtinterpol" % "2.5",
-      "com.github.scopt" %% "scopt" % "3.7.0",
+      "com.github.scopt" %% "scopt" % "3.7.1",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5" ),
 
@@ -192,12 +192,12 @@ lazy val core = project.in( file( "core" ) ).
       "org.scilab.forge" % "jlatexmath" % "1.0.7" ),
 
     // JSON serialization
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.1",
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.2",
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
       "io.circe" %% "circe-parser",
-      "io.circe" %% "circe-generic-extras" ).map( _ % "0.10.0" ) )
+      "io.circe" %% "circe-generic-extras" ).map( _ % "0.10.1" ) )
 
 lazy val examples = project.in( file( "examples" ) ).
   dependsOn( core ).
