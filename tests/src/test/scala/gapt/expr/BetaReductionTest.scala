@@ -120,11 +120,14 @@ class BetaReductionTest extends Specification {
   "issue 659" in {
     normalize( le"(^y y) y x" ) must_== le"y x"
   }
+
+  import gapt.proofs.context.Context
+  import gapt.proofs.context.update.InductiveType
+  import gapt.proofs.nd.ClassicalExtraction
+
   "normalize try/catch without raise with commuting conversion left" in {
-    import gapt.proofs.Context
-    import gapt.proofs.nd.ClassicalExtraction
     var ctx = Context.default
-    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
 
     implicit val ctxClassical = ClassicalExtraction.systemT( ctx )
     normalize(
@@ -136,10 +139,8 @@ s((^(y1: nat>exn) tryCatch(y1,
 )(exnV))""" ) must_== le"s(0)"
   }
   "normalize try/catch with commuting conversion left" in {
-    import gapt.proofs.Context
-    import gapt.proofs.nd.ClassicalExtraction
     var ctx = Context.default
-    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
 
     implicit val ctxClassical = ClassicalExtraction.systemT( ctx )
     normalize(
@@ -151,10 +152,8 @@ s((^(y1: nat>exn) tryCatch(y1,
 )(exnV))""" ) must_== le"s(s(0))"
   }
   "normalize try/catch with commuting conversion right" in {
-    import gapt.proofs.Context
-    import gapt.proofs.nd.ClassicalExtraction
     var ctx = Context.default
-    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
 
     implicit val ctxClassical = ClassicalExtraction.systemT( ctx )
     normalize(
@@ -167,10 +166,8 @@ s((^(y1: nat>exn) tryCatch(y1,
   }
   "normalize nested try/catch" in {
     import gapt.formats.babel.{ Notation, Precedence }
-    import gapt.proofs.Context
-    import gapt.proofs.nd.ClassicalExtraction
     var ctx = Context.default
-    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
     ctx += Notation.Infix( "+", Precedence.plusMinus )
     ctx += hoc"'+': nat>nat>nat"
 
@@ -189,10 +186,8 @@ s((^(y1: nat>exn) tryCatch(y1,
 ))(exnV1)""" ) must_== le"s((s(0:nat): nat) + 0: nat)"
   }
   "normalize classical pairing pi1" in {
-    import gapt.proofs.Context
-    import gapt.proofs.nd.ClassicalExtraction
     var ctx = Context.default
-    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
 
     implicit val ctxClassical = ClassicalExtraction.systemT( ctx )
     val pair =
@@ -216,10 +211,8 @@ s((^(y1: nat>exn) tryCatch(y1,
     normalize( classicalPairing ) must_== le"0: nat"
   }
   "normalize classical pairing pi2" in {
-    import gapt.proofs.Context
-    import gapt.proofs.nd.ClassicalExtraction
     var ctx = Context.default
-    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
 
     implicit val ctxClassical = ClassicalExtraction.systemT( ctx )
     val pair =
@@ -243,29 +236,27 @@ s((^(y1: nat>exn) tryCatch(y1,
     normalize( classicalPairing ) must_== le"s(0): nat"
   }
   "commute efq(tryCatch M handle N) -> tryCatch (efq M) handle (efq N) -> (efq M)" in {
-    import gapt.proofs.Context
-    import gapt.proofs.nd.ClassicalExtraction
     var ctx = Context.default
-    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
     implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
 
     normalize( le"efq((^y0 tryCatch(y0, (M0: exn), handle(y0(x0), (N0: exn))))(exnVar)):?a" ) must_== le"efq(M0: exn): ?a"
   }
   "raise/handle without and with additional CC" in {
-    import gapt.proofs.Context
-    import gapt.proofs.nd.ClassicalExtraction
     var ctx = Context.default
-    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
 
     implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
 
-    normalize( le"""
+    normalize(
+      le"""
     efq(
       (^(y0: nat>exn) tryCatch(y0,
                         y0(0),
                         handle((y0: nat>exn)(x0:nat), (N0: nat>exn)(x0))
                       ))(exnV)): nat""" ) must_== le"efq(N0(0)): nat"
-    normalize( le"""
+    normalize(
+      le"""
     efq(f(
       (^(y0: nat>exn) tryCatch(y0,
                         y0(0),
@@ -273,10 +264,8 @@ s((^(y1: nat>exn) tryCatch(y1,
                       ))(exnV))): nat""" ) must_== le"efq(f(y0(0):exn)): nat"
   }
   "handle/raise reduction" in {
-    import gapt.proofs.Context
-    import gapt.proofs.nd.ClassicalExtraction
     var ctx = Context.default
-    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
 
     implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
     normalize(
@@ -303,12 +292,11 @@ s((^(y1: nat>exn) tryCatch(y1,
         ))(exnV1): nat""" ) must_== le"N1(0):nat"
   }
   "reduce natRec, existsElim, tryCatch (previously problems with var substitution)" in {
-    import gapt.proofs.Context
-    import gapt.proofs.nd.ClassicalExtraction
     var ctx = Context.default
-    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
     implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
-    normalize( le"""
+    normalize(
+      le"""
        natRec(
          base: conj(nat)(1),
          (^(r:nat)(^(p:conj(nat)(1))
@@ -326,13 +314,12 @@ s((^(y1: nat>exn) tryCatch(y1,
          s(0))
     """ ) must_== le"pair(0, i)"
   }
-  "cc match/case" in {
-    import gapt.proofs.Context
-    import gapt.proofs.nd.ClassicalExtraction
+  "cc match/case 1" in {
     var ctx = Context.default
-    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
     implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
-    normalize(le"""
+    normalize(
+      le"""
          matchSum(
           (^(y0: nat>exn) tryCatch(y0,
             inr(y0(0)): sum(nat)(exn),
@@ -344,15 +331,14 @@ s((^(y1: nat>exn) tryCatch(y1,
           )(
           ^(c2: exn) efq(c2)
           )
-    """) must_== le"s(0)"
+    """ ) must_== le"s(0)"
   }
-  "cc match/case" in {
-    import gapt.proofs.Context
-    import gapt.proofs.nd.ClassicalExtraction
-    var ctx = Context.default
-    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
-    implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
-    normalize(le"""
+  /*
+  "cc match/case 2, infinite reduction" in {
+    var ctx = gapt.proofs.context.Context.default
+    ctx += gapt.proofs.context.update.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    implicit var ctxClassical = gapt.proofs.nd.ClassicalExtraction.systemT( ctx )
+    normalize( le"""
          efq(matchSum(
           (^(y0: nat>exn) tryCatch(y0,
             inl(y0): sum(nat>exn)(exn),
@@ -364,13 +350,7 @@ s((^(y1: nat>exn) tryCatch(y1,
           )(
           ^(c2: exn) c2
           ))
-    """) must_== le"s(0)"
+    """ ) must not terminate(retries=3, sleep=200.millis)
   }
-  "cc existsElim" in {
-    import gapt.proofs.Context
-    import gapt.proofs.nd.ClassicalExtraction
-    var ctx = Context.default
-    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
-    implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
-  }
+    */
 }
