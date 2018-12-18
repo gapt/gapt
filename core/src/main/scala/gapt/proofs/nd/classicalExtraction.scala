@@ -1,11 +1,11 @@
 package gapt.proofs.nd
 
 import gapt.expr.hol.containsQuantifierOnLogicalLevel
-import gapt.expr.{App, Substitution, Ty, typeVariables, _}
+import gapt.expr.{ App, Substitution, Ty, typeVariables, _ }
 import gapt.proofs.context.Context
 import gapt.proofs._
-import gapt.proofs.context.facet.{BaseTypes, StructurallyInductiveTypes}
-import gapt.proofs.context.update.{InductiveType, PrimitiveRecursiveFunction, ReductionRuleUpdate}
+import gapt.proofs.context.facet.{ BaseTypes, StructurallyInductiveTypes }
+import gapt.proofs.context.update.{ InductiveType, PrimitiveRecursiveFunction, ReductionRuleUpdate }
 import gapt.utils.NameGenerator
 
 import scala.collection.mutable

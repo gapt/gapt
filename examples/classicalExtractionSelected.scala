@@ -5,9 +5,9 @@ import gapt.expr._
 import gapt.formats.babel._
 import gapt.proofs.context.Context
 import gapt.proofs.ProofBuilder
-import gapt.proofs.context.update.{InductiveType, PrimitiveRecursiveFunction}
-import gapt.proofs.lk.{LKProof, LKToND}
-import gapt.proofs.nd.{ClassicalExtraction, ExcludedMiddleRule}
+import gapt.proofs.context.update.{ InductiveType, PrimitiveRecursiveFunction }
+import gapt.proofs.lk.{ LKProof, LKToND }
+import gapt.proofs.nd.{ ClassicalExtraction, ExcludedMiddleRule }
 import gapt.prooftool.prooftool
 
 object sqrtProofManualCorrectAxiom extends Script {
@@ -668,7 +668,7 @@ ETWeakQuantifier(
     cctx.check( lk )
     val jsonLk = gapt.formats.json.JsonExporter( lk )
     val bw = new BufferedWriter( new FileWriter( f ) )
-    bw.write( jsonLk.render(80) )
+    bw.write( jsonLk.render( 80 ) )
     bw.close()
     lk
   }
