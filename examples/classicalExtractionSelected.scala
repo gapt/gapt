@@ -3,12 +3,14 @@ package gapt.examples
 import extraction.ScalaCodeGenerator
 import gapt.expr._
 import gapt.formats.babel._
+import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.context.Context
 import gapt.proofs.ProofBuilder
 import gapt.proofs.context.update.{ InductiveType, PrimitiveRecursiveFunction }
 import gapt.proofs.lk.{ LKProof, LKToND }
 import gapt.proofs.nd.{ ClassicalExtraction, ExcludedMiddleRule }
 import gapt.prooftool.prooftool
+import gapt.provers.smtlib.Z3
 
 object sqrtProofManualCorrectAxiom extends Script {
 
@@ -764,3 +766,41 @@ println( "expecting inr(i)" + normalize( m1Args( ClassicalExtraction.flat( defle
 */
 }
 
+object booleanDet extends Script {
+
+  import gapt.expr._
+  import gapt.proofs.nd._
+  import gapt.proofs._
+  import gapt.proofs.expansion.{ ExpansionProof, ETWeakQuantifier, ExpansionProofToLK }
+  import gapt.provers.vampire.Vampire
+
+  var ctx = Context.default
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  implicit var cctx = ClassicalExtraction.systemT( ctx )
+  /*
+  val minterm1 = ProofBuilder.
+    c( LogicalAxiom( hof"-x1" ) ).
+    c( LogicalAxiom( hof"-x2" ) ).
+    c( LogicalAxiom( hof"-y" ) ).
+    b( AndIntroRule( _, _ ) ).
+    b( AndIntroRule( _, _ ) ).
+    qed
+  val p = ProofBuilder.
+  b(OrIntroRule(minterm1)).
+  qed
+  prooftool( p )
+  */
+  val thm = hof"!(x1:o)!(x2:o)?(y:o) ((-x1 & -x2 & -y) | (-x1 & x2 & -y ) | (-x1 & x2 & y) | (x1 & -x2 & y) | (x1 & x2 & y)) <-> true"
+  val problem = Sequent() :+ thm
+  println( TptpFOLExporter.tptpProofProblem( problem ).toString() )
+  val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "15m" ) ).withDeskolemization ) getExpansionProof problem
+  //val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
+  println( "Done." )
+  println( "Deskolemization..." )
+  val desk: ExpansionProof = expansionProof.get
+  println( "Done." )
+  val lk = ExpansionProofToLK( desk ).getOrElse( throw new Exception( "LK proof not obtained" ) )
+  val nd = LKToND( lk, Some( Suc( 0 ) ) )
+  println( nd )
+  prooftool( nd )
+}

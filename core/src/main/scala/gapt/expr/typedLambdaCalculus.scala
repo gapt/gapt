@@ -263,18 +263,7 @@ object Const {
   def unapply( c: Const ): Some[( String, Ty, List[Ty] )] = Some( ( c.name, c.ty, c.params ) )
 }
 object App {
-  def apply( f: Expr, a: Expr ) = {
-    f match {
-      case Const( "tryCatch", _, _ ) =>
-        a match {
-          case Abs( Var( "vLambda_0", _ ), _ ) =>
-            ()
-          case _ => ()
-        }
-      case _ => ()
-    }
-    determineTraits.forApp( f, a )
-  }
+  def apply( f: Expr, a: Expr ) = determineTraits.forApp( f, a )
 
   def apply( function: Expr, arguments: Seq[Expr] ): Expr = Apps( function, arguments )
 
