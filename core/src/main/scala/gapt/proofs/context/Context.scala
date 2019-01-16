@@ -367,10 +367,13 @@ object Context {
     val tys = names.flatMap( c => baseTypes( c.ty ) )
     var ctx = default
     for ( ty <- tys if !ctx.isType( ty ) )
-      ctx += Sort( ty )
+      ctx += Sort( TBase( ty.name, ty.params.indices.map( i => TVar( s"a_$i" ) ).toList ) )
     val consts = names.collect { case c: Const => c }
-    for ( ( n, cs ) <- consts.groupBy( _.name ) if ctx.constant( n ).isEmpty )
-      ctx += ConstDecl( if ( cs.size == 1 ) cs.head else Const( n, TVar( "a" ), List( TVar( "a" ) ) ) )
+    for ( ( n, cs ) <- consts.groupBy( _.name ) if ctx.constant( n ).isEmpty ) {
+      // HACK, HACK, HACK
+      ctx += ( ctx_ => ctx_.state.update[Constants]( _ + cs.head ) )
+      //      ctx += ConstDecl( if ( cs.size == 1 ) cs.head else Const( n, TVar( "a" ), List( TVar( "a" ) ) ) )
+    }
     ctx
   }
 }
