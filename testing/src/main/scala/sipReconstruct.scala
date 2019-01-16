@@ -41,6 +41,15 @@ object sipReconstruct extends Script {
       lem.combined( included = Set( n ) )
     }
 
+  def groundTypeVars( p: LKProof )( implicit ctx: Context ): ( Context, LKProof ) = {
+    val mutCtx = ctx.newMutable
+    val tyVars = typeVariables( p.endSequent.elements )
+    val nameGen = mutCtx.newNameGenerator
+    val grounding = tyVars.map( v => v -> TBase( nameGen.fresh( v.name ) ) ).toMap
+    grounding.values.foreach( mutCtx += _ )
+    mutCtx.toImmutable -> Substitution( Map.empty, grounding )( p )
+  }
+
   val indProofs = ( Map()
     ++ getIsaplanner( "03", "proof", "proof2", "proof3" )
     ++ getIsaplanner( "06", "proof1", "proof2", "proof3", "proof4", "proof5" )
@@ -108,13 +117,12 @@ object sipReconstruct extends Script {
     ++ getProd( "35", "proof" )
     ++ {
       val thy = new Theory(
-        nat, natorder, natdivision, natdivisible
-      // list, listlength, listdrop, listfold
-      )
+        nat, natorder, natdivision, natdivisible,
+        list, listlength, listdrop, listfold )
       import thy._
       allProofs.view.flatMap( p => Seq(
-        s"theory.${p._1}" -> Later( ctx -> LemmaHandle( p._1 ).proof ),
-        s"theory1.${p._1}" -> Later( ctx -> inlineLast( thy )( LemmaHandle( p._1 ) ) ) ) )
+        s"theory.${p._1}" -> Later( groundTypeVars( LemmaHandle( p._1 ).proof ) ),
+        s"theory1.${p._1}" -> Later( groundTypeVars( inlineLast( thy )( LemmaHandle( p._1 ) ) ) ) ) )
     } )
 
   LogHandler.current.value = ( domain, level, msg ) => if ( level <= LogHandler.Warn ) println( msg )
