@@ -45,12 +45,24 @@ object enumerateTerms {
     out.result()
   }
 
+  def freeConstructorsForType( ts: Ty* )( implicit ctx: Context ): Set[VarOrConst] =
+    ts.flatMap( t => ctx.getConstructors( t ) match {
+      case Some( ctrs ) =>
+        ctrs ++ ( ctrs.map( _.ty ).flatMap( baseTypes( _ ) ).toSet[Ty] diff ts.toSet ).map( Var( "x", _ ) )
+      case None =>
+        Seq( Var( "x", t ) )
+    } ).toSet
+
   def asStream( implicit ctx: Context ): Stream[Expr] = withSymbols( Set.empty
     ++ ctx.get[StructurallyInductiveTypes].constructors.values.flatten
     ++ ( ctx.get[BaseTypes].baseTypes -- ctx.get[StructurallyInductiveTypes].constructors.keySet ).values.map( Var( "x", _ ) ) )
 
   def forType( ty: Ty* )( implicit ctx: Context ): Stream[Expr] =
-    withSymbols( constructorsForType( ty: _* ) )
+    forType( freeConstructors = false, ty: _* )
+
+  def forType( freeConstructors: Boolean, ty: Ty* )( implicit ctx: Context ): Stream[Expr] =
+    withSymbols( if ( freeConstructors ) freeConstructorsForType( ty: _* )
+    else constructorsForType( ty: _* ) )
 
   def withSymbols( syms: Set[VarOrConst] ): Stream[Expr] = {
     val terms = mutable.Set[Expr]()

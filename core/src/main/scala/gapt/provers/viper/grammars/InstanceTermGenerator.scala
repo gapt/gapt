@@ -23,8 +23,8 @@ class RandomInstanceGenerator( val paramTys: Seq[TBase], implicit val ctx: Conte
     instances.toSet
   }
 }
-class EnumeratingInstanceGenerator( val paramTys: Seq[TBase], implicit val ctx: Context ) extends InstanceTermGenerator {
-  val terms = enumerateTerms.forType( paramTys: _* ).take( 10000 ).map( t => t -> folTermSize( t ) )
+class EnumeratingInstanceGenerator( val paramTys: Seq[TBase], val freeConstructors: Boolean, implicit val ctx: Context ) extends InstanceTermGenerator {
+  val terms = enumerateTerms.forType( freeConstructors, paramTys: _* ).take( 10000 ).map( t => t -> folTermSize( t ) )
 
   override def generate( lower: Float, upper: Float, num: Int ): Set[Seq[Expr]] =
     Random.shuffle( paramTys.toList.traverse( t =>

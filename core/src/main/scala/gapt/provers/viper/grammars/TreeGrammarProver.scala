@@ -110,7 +110,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
 
   val encoding = InstanceTermEncoding( sequent.map( identity, instantiate( _, alpha ) ) )
 
-  val instanceGen = new EnumeratingInstanceGenerator( Seq( indTy ), implicitly )
+  val instanceGen = new EnumeratingInstanceGenerator( Seq( indTy ), true, implicitly )
 
   type Instance = Expr
 
