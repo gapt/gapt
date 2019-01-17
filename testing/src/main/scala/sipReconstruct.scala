@@ -120,7 +120,10 @@ object sipReconstruct extends Script {
         nat, natorder, natdivision, natdivisible,
         list, listlength, listdrop, listfold )
       import thy._
-      allProofs.view.flatMap( p => Seq(
+      // Blacklist: contain partially applied functions
+      val blacklist = Set( "foldrapp", "filterapp", "lallapp", "lallrev",
+        "lenmap", "mapapp", "mapmap", "revfilter", "revmap" )
+      allProofs.view.filterNot( p => blacklist( p._1 ) ).flatMap( p => Seq(
         s"theory.${p._1}" -> Later( groundTypeVars( LemmaHandle( p._1 ).proof ) ),
         s"theory1.${p._1}" -> Later( groundTypeVars( inlineLast( thy )( LemmaHandle( p._1 ) ) ) ) ) )
     } )
