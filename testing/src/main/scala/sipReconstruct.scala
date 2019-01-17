@@ -160,15 +160,17 @@ object sipReconstruct extends Script {
       println( s"SIP with induction formula: ${All( x, f ).toSigRelativeString}\n" )
     val qtys = Some( indG.gamma.map { case Var( _, TBase( n, _ ) ) => n } )
 
+    val opts = TreeGrammarProverOptions( quantTys = qtys )
     verbose.only( TreeGrammarProver.logger ) {
       mode match {
         case "cansol" =>
-          indElimReversal( p, TreeGrammarProverOptions( minInstProof = false, quantTys = qtys ) )
+          indElimReversal( p, opts.copy( minInstProof = false ) )
         case "interp" =>
-          indElimReversal( p, TreeGrammarProverOptions( minInstProof = false, quantTys = qtys,
-            useInterpolation = true ) )
+          indElimReversal( p, opts.copy( minInstProof = false, useInterpolation = true ) )
         case "atp" =>
-          TreeGrammarProver( p.endSequent, TreeGrammarProverOptions( quantTys = qtys ) )
+          TreeGrammarProver( p.endSequent, opts )
+        case "atpintp" =>
+          TreeGrammarProver( p.endSequent, opts.copy( useInterpolation = true ) )
       }
     }
   }
