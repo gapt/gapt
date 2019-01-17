@@ -42,7 +42,7 @@ object SmtLibExporter {
         }
     }
 
-    val vars = freeVariables( clauses0.map( _._1 ) ++ clauses0.flatMap( _._2 ) ).diff( rels.toSet )
+    val vars = freeVariables( clauses0.map( _._1 ) ++ clauses0.flatMap( _._2 ) ).diff( rels.toSet ).toList
     val groundVars = vars.map { case Var( n, t ) => Const( n, t ) }
     val clauses = Substitution( ( rels zip groundRels ) ++ ( vars zip groundVars ) )( clauses0 )
 
