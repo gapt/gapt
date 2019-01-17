@@ -4,6 +4,7 @@ import gapt.expr._
 import gapt.expr.fol.{ folSubTerms, folTermSize }
 import gapt.expr.hol._
 import gapt.formats.babel.BabelSignature
+import gapt.formats.latex.LatexExporter
 import gapt.formats.smt.SmtLibExporter
 import gapt.grammars.{ InductionGrammar, findMinimalInductionGrammar }
 import gapt.grammars.InductionGrammar.Production
@@ -209,9 +210,10 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
   def solveBUP( bup: InductionBUP ): Expr = time( "solvebup" ) {
     val qbup @ Ex( x_B, qbupMatrix ) = bup.formula
     info( s"Solution condition:\n${qbup.toSigRelativeString}\n" )
-    try
+    try {
+      info( s"latex:\n${LatexExporter( qbup )}\n" )
       info( s"smt-lib:\n${SmtLibExporter.bup( bup.formula )}" )
-    catch { case e: Throwable => info( ExceptionUtils.getStackTrace( e ) ) }
+    } catch { case e: Throwable => info( ExceptionUtils.getStackTrace( e ) ) }
 
     val solution =
       if ( options.useInterpolation )
