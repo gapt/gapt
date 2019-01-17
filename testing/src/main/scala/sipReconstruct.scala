@@ -159,6 +159,7 @@ object sipReconstruct extends Script {
     for ( InductionRule( _, Abs( x, f ), _ ) <- p.subProofs )
       println( s"SIP with induction formula: ${All( x, f ).toSigRelativeString}\n" )
     val qtys = indG.gamma.map { case Var( _, t @ TBase( _, _ ) ) => t }
+    println( s"SIP of problem: ${p.endSequent.succedent.head.toSigRelativeString}\n" )
 
     val opts = TreeGrammarProverOptions( quantTys = Some( qtys ) )
     verbose.only( TreeGrammarProver.logger ) {
