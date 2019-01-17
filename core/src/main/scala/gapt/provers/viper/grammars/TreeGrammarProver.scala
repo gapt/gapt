@@ -8,7 +8,7 @@ import gapt.formats.smt.SmtLibExporter
 import gapt.grammars.{ InductionGrammar, findMinimalInductionGrammar }
 import gapt.grammars.InductionGrammar.Production
 import gapt.proofs.context.Context
-import gapt.proofs.context.facet.StructurallyInductiveTypes
+import gapt.proofs.context.facet.{ BaseTypes, StructurallyInductiveTypes }
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, freeVariablesET, minimalExpansionSequent }
 import gapt.proofs.gaptic.Tactical1
@@ -31,21 +31,21 @@ object DefaultProvers {
 
 import TreeGrammarProverOptions._
 case class TreeGrammarProverOptions(
-    goalQuantifier:   Int                 = 0,
-    instanceNumber:   Int                 = 10,
-    instanceSize:     FloatRange          = ( 0, 2 ),
-    instanceProver:   Prover              = DefaultProvers.firstOrder,
-    minInstProof:     Boolean             = true,
-    smtSolver:        Prover              = DefaultProvers.smt,
-    smtEquationMode:  SmtEquationMode     = AddNormalizedFormula,
-    quantTys:         Option[Seq[String]] = None,
+    goalQuantifier:   Int                = 0,
+    instanceNumber:   Int                = 10,
+    instanceSize:     FloatRange         = ( 0, 2 ),
+    instanceProver:   Prover             = DefaultProvers.firstOrder,
+    minInstProof:     Boolean            = true,
+    smtSolver:        Prover             = DefaultProvers.smt,
+    smtEquationMode:  SmtEquationMode    = AddNormalizedFormula,
+    quantTys:         Option[Seq[TBase]] = None,
     grammarWeighting: Production => Int = _ => 1,
-    tautCheckNumber:  Int                 = 10,
-    tautCheckSize:    FloatRange          = ( 2, 3 ),
-    useInterpolation: Boolean             = false,
-    canSolSize:       FloatRange          = ( 2, 4 ),
-    maxSATSolver:     MaxSATSolver        = bestAvailableMaxSatSolver,
-    equationalTheory: Seq[Formula]        = Seq() )
+    tautCheckNumber:  Int                = 10,
+    tautCheckSize:    FloatRange         = ( 2, 3 ),
+    useInterpolation: Boolean            = false,
+    canSolSize:       FloatRange         = ( 2, 4 ),
+    maxSATSolver:     MaxSATSolver       = bestAvailableMaxSatSolver,
+    equationalTheory: Seq[Formula]       = Seq() )
 
 object TreeGrammarProverOptions {
   type FloatRange = ( Float, Float )
@@ -92,9 +92,12 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
 
   val indTy = v0.ty.asInstanceOf[TBase]
 
-  val quantTys = options.quantTys.getOrElse( ctx.get[StructurallyInductiveTypes].constructors.keySet - "o" ).toList.map( TBase( _ ) )
+  val quantTys = options.quantTys.getOrElse(
+    ctx.get[BaseTypes].baseTypes.values.toSet - To ).toList
   metric( "quant_tys", quantTys )
-  val gamma = for ( ( t, i ) <- quantTys.zipWithIndex ) yield Var( s"γ_$i", t )
+  val gamma =
+    if ( quantTys.length == 1 ) List( Var( "γ", quantTys.head ) ) else
+      for ( ( t, i ) <- quantTys.zipWithIndex ) yield Var( s"γ_$i", t )
 
   val ( tau, alpha, nus ) = {
     val defaultNames = InductionGrammar.defaultNonTerminalNames(
@@ -291,7 +294,7 @@ class TreeGrammarInductionTactic( options: TreeGrammarProverOptions = TreeGramma
   def instanceProver( prover: Prover ) = copy( options.copy( instanceProver = prover ) )
   def smtSolver( prover: Prover ) = copy( options.copy( smtSolver = prover ) )
   def smtEquationMode( mode: TreeGrammarProverOptions.SmtEquationMode ) = copy( options.copy( smtEquationMode = mode ) )
-  def quantTys( tys: String* ) = copy( options.copy( quantTys = Some( tys ) ) )
+  def quantTys( tys: TBase* ) = copy( options.copy( quantTys = Some( tys ) ) )
   def grammarWeighting( w: InductionGrammar.Production => Int ) = copy( options.copy( grammarWeighting = w ) )
   def tautCheckNumber( n: Int ) = copy( options.copy( tautCheckNumber = n ) )
   def tautCheckSize( from: Float, to: Float ) = copy( options.copy( tautCheckSize = ( from, to ) ) )

@@ -105,7 +105,7 @@ object ViperOptions {
       case "--instsize" :: a :: b :: rest => parseTreeGrammar( rest, opts.copy( instanceSize = a.toFloat -> b.toFloat ) )
       case "--qtys" :: qtys :: rest => parseTreeGrammar(
         rest,
-        opts.copy( quantTys = Some( qtys.split( "," ).toSeq.filter( _.nonEmpty ) ) ) )
+        opts.copy( quantTys = Some( qtys.split( "," ).toSeq.filter( _.nonEmpty ).map( TBase( _ ) ) ) ) )
       case "--gramw" :: w :: rest =>
         val f: InductionGrammar.Production => Int = w match {
           case "scomp" => r => folTermSize( r.lhs ) + folTermSize( r.rhs )
