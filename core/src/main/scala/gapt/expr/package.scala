@@ -25,4 +25,6 @@ package object expr {
       case c: Const => fresh( c )
     }
   }
+
+  type ReplacementContext = Abs
 }
