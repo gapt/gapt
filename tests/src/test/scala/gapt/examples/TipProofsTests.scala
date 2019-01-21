@@ -74,7 +74,7 @@ class TipProofsTests extends Specification {
   "prod/prop_28" in { gapt.examples.tip.prod.prop_28; ok }
   "prod/prop_29" in { gapt.examples.tip.prod.prop_29; ok }
   "prod/prop_30" in { gapt.examples.tip.prod.prop_30; ok }
-  "prod/prop_31" in { if ( !OpenWBO.isInstalled ) skipped( "no openwbo" ); gapt.examples.tip.prod.prop_31; ok }
+  "prod/prop_31" in { skipped("excessive memory usage") }
   "prod/prop_32" in { gapt.examples.tip.prod.prop_32; ok }
   "prod/prop_33" in { gapt.examples.tip.prod.prop_33; ok }
   "prod/prop_34" in { gapt.examples.tip.prod.prop_34; ok }
