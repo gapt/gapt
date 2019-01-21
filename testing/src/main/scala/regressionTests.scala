@@ -78,7 +78,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
     LKToND( proof ) --? "LKToND"
 
     val All.Block( variables, _ ) = sequent.succedent.head
-    val instanceTerms = new EnumeratingInstanceGenerator( variables.map( _.ty.asInstanceOf[TBase] ), false, ctx ).
+    val instanceTerms = new EnumeratingInstanceGenerator( variables.map( _.ty ), false, ctx ).
       generate( lower = 2, upper = 3, num = 1 ).head --- "random instance term"
     val instProof = instanceProof( proof, instanceTerms )
 
@@ -166,7 +166,7 @@ class TheoryTestCase( name: String, combined: Boolean )
     testBabelExport( "raw babel exporter with sig", terms, _.toRawString, BabelParser.parse( _ ) )
 
     val All.Block( variables, _ ) = proof.endSequent.succedent.head
-    val instanceTerms = new EnumeratingInstanceGenerator( variables.map( _.ty.asInstanceOf[TBase] ), false, ctx ).
+    val instanceTerms = new EnumeratingInstanceGenerator( variables.map( _.ty ), false, ctx ).
       generate( lower = 2, upper = 3, num = 1 ).head --- "random instance term"
     val instProof = instanceProof( proof, instanceTerms )
 

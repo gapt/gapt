@@ -31,14 +31,11 @@ object enumerateTerms {
         case Some( ctrs ) =>
           for ( ctr <- ctrs ) {
             out += ctr
-            go( ctr.ty )
+            val FunctionType( _, fields ) = ctr.ty
+            fields.foreach( go )
           }
         case None =>
-          t match {
-            case TArr( i, o ) =>
-              go( i ); go( o )
-            case _ => out += Var( "x", t )
-          }
+          out += Var( "x", t )
       }
     }
     t.foreach( go )
@@ -65,10 +62,10 @@ object enumerateTerms {
     else constructorsForType( ty: _* ) )
 
   def withSymbols( syms: Set[VarOrConst] ): Stream[Expr] = {
-    val terms = mutable.Set[Expr]()
-    terms ++= syms.view.filter( _.ty.isInstanceOf[TBase] )
+    val nonConstantCtrs = syms.filter( sym => sym.isInstanceOf[Const] && !sym.ty.isInstanceOf[TBase] )
 
-    val nonConstantCtrs = syms.filter( !_.ty.isInstanceOf[TBase] )
+    val terms = mutable.Set[Expr]()
+    terms ++= ( syms diff nonConstantCtrs )
 
     def take( tys: Seq[Ty] ): Seq[Seq[Expr]] =
       tys.toList.traverse( t => terms.filter( _.ty == t ).toList )
