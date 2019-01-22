@@ -1,20 +1,37 @@
-/*
- * longNormalForm.scala
- *
- * Transforms a function f: i0 -> ... -> in -> o into
- * \lambda x0:i0. ... \lambda xn:in f x0 ... xn
- * i.e. adds the lambda abstraction and new variables.
- * Note that etaExpantion is applied only to expressions in beta-normal form.
- *
- * Implemented according to Definition 2.25 of Higher-Order Unification and
- * Matching by Gilles Dowek (http://who.rocq.inria.fr/Gilles.Dowek/Publi/unification.ps)
- */
 
 package gapt.expr
 
+/**
+ * If t = λx₁...λxₘ(y u₁ ... uₚ) is a normal term of type T₁ → ... → Tₙ → U, with
+ * U atomic and m ≤ n, then its long normal form is the term
+ *
+ * λx₁...λxₘλxₘ₊₁...λxₙ(y u₁'... uₚ' xₘ₊₁' ... xₙ'),
+ *
+ * where uᵢ' is the long normal form of uᵢ and xⱼ' is the long normal form of xⱼ.
+ *
+ * Implemented according to Definition 2.25, Higher-Order Unification and
+ * Matching by Gilles Dowek.
+ */
 object longNormalForm {
+
+  /**
+   * Computes the long normal form.
+   *
+   * @param term A term.
+   * @return The long normal form of `term`. Note that η-expansion is applied
+   * only to expressions in β-normal form.
+   */
   def apply( term: Expr ): Expr = apply( term, List() )
   def apply( term: Expr, disallowedVars: List[Var] ): Expr = term match {
+
+  /**
+   * Computes the long normal form.
+   *
+   * @param term A term.
+   * @param disallowedVars Variables that whose names are not allowed for fresh
+   * variables.
+   * @return The long normal form of `term`.
+   */
     case Var( _, exptype ) => exptype match {
       case Ti => term
       case To => term
