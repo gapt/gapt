@@ -22,7 +22,6 @@ object longNormalForm {
    * only to expressions in β-normal form.
    */
   def apply( term: Expr ): Expr = apply( term, List() )
-  def apply( term: Expr, disallowedVars: List[Var] ): Expr = term match {
 
   /**
    * Computes the long normal form.
@@ -32,6 +31,7 @@ object longNormalForm {
    * variables.
    * @return The long normal form of `term`.
    */
+  private def apply( term: Expr, disallowedVars: List[Var] ): Expr = term match {
     case Var( _, exptype ) => exptype match {
       case Ti => term
       case To => term
