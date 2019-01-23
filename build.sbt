@@ -112,7 +112,7 @@ lazy val root = project.in( file( "." ) ).
 
       val archiveFile = file( "." ) / "target" / s"gapt-$version.tar.gz"
 
-      Process( List( "latexmk", "-pdf", "user_manual.tex" ), baseDir / "doc" ) !
+      Process( List( "latexmk", "-pdf", "-silent", "user_manual.tex" ), baseDir / "doc" ) !
 
       val filesToIncludeAsIs = List(
         "COPYING", "gapt.sh", "slakje.sh", "escargot.sh", "viper.sh", "include.sh", "examples" )
