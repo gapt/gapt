@@ -1,6 +1,8 @@
 
 package gapt.expr
 
+import gapt.utils.NameGenerator
+
 /**
  * If t = λx₁...λxₘ(y u₁ ... uₚ) is a normal term of type T₁ → ... → Tₙ → U, with
  * U atomic and m ≤ n, then its long normal form is the term
@@ -21,44 +23,20 @@ object longNormalForm {
    * @return The long normal form of `term`. Note that η-expansion is applied
    * only to expressions in β-normal form.
    */
-  def apply( term: Expr ): Expr = apply( term, List() )
-
-  /**
-   * Computes the long normal form.
-   *
-   * @param term A term.
-   * @param disallowedVars Variables that whose names are not allowed for fresh
-   * variables.
-   * @return The long normal form of `term`.
-   */
-  private def apply( term: Expr, disallowedVars: List[Var] ): Expr = term match {
-    case Var( _, exptype ) => exptype match {
-      case Ti => term
-      case To => term
-      case FunctionType( _, args ) => {
-        val binders: List[Var] = args.foldRight( List[Var]() )( ( z, acc ) => {
-          val newVar = Var( "eta", z ) // Creating a new var of appropriate type
-          rename( newVar, disallowedVars ++ acc ) :: acc // Rename if needed
-        } )
-        val dv = disallowedVars ++ binders
-        Abs( binders, App( term, binders.map( ( z => apply( z, dv ) ) ) ) )
-      }
+  def apply( e: Expr ): Expr =
+    e match {
+      case Abs( v, e_ ) => Abs( v, longNormalForm( e_ ) )
+      case Apps( e, es ) =>
+        e.ty match {
+          case FunctionType( _, ts ) =>
+            val names = new NameGenerator( freeVariables( e ).map { _.name } )
+            val etaVars = ts.drop( es.length ).map { t => names.fresh( Var( "η", t ) ) }
+            Abs.Block(
+              etaVars,
+              Apps(
+                e,
+                es.map { longNormalForm( _ ) } ++ etaVars.map { longNormalForm( _ ) } ) )
+        }
     }
-
-    case App( m, n ) => term.ty match {
-      case Ti => term
-      case To => term
-      case FunctionType( _, args ) => {
-        val binders: List[Var] = args.foldRight( List[Var]() )( ( z, acc ) => {
-          val newVar = Var( "eta", z ) // Creating a new var of appropriate type
-          rename( newVar, disallowedVars ++ acc ) :: acc // Rename if needed
-        } )
-        val dv = disallowedVars ++ binders
-        Abs( binders, App( App( m, apply( n, dv ) ), binders.map( ( z => apply( z, dv ) ) ) ) )
-      }
-    }
-
-    case Abs( x, t ) => Abs( x, apply( t, disallowedVars ) )
-  }
 }
 
