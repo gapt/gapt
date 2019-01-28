@@ -319,11 +319,17 @@ case class Normalizer( rules: Set[ReductionRule] ) {
                 Some( ntb )
               }
             case t =>
+              /*
+              // in boolean determinization example, None results in incorrect reduction, stopping at a try block without raise statement
               println( "Keep try block" )
+              None
+              */
               //println( s"Expecting a raise in try block. Is $t\ndo not reduce and keep $expr. Should be handled by raise/handle case. I.e., at some point the exception in the block will be raised due to soundness of the proof system." )
               // TODO: in existsMinimum program (Federico's thesis) it's a conjunction, wrapping an exception, not an exception.
               //assert( params( 1 ) == ty"exn" )
-              None
+              // in boolean determinization example, Some(tryB) results in correct reduction, reducing a try block without throw further
+              println( s"reducing further: $t" )
+              Some( tryB )
             //throw new Exception( s"Expecting a raise in try block. Is $t" )
           }
           res

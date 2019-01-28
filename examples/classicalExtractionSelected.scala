@@ -2,6 +2,7 @@ package gapt.examples
 
 import extraction.ScalaCodeGenerator
 import gapt.expr._
+import gapt.expr.hol.{ CNFn, CNFp }
 import gapt.formats.babel._
 import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.context.Context
@@ -9,6 +10,7 @@ import gapt.proofs.ProofBuilder
 import gapt.proofs.context.update.{ InductiveType, PrimitiveRecursiveFunction }
 import gapt.proofs.lk.{ LKProof, LKToND }
 import gapt.proofs.nd.{ ClassicalExtraction, ExcludedMiddleRule }
+import gapt.proofs.resolution.PCNF
 import gapt.prooftool.prooftool
 import gapt.provers.smtlib.Z3
 
@@ -639,7 +641,7 @@ object synthexManySorted extends Script {
   } else {
     println( "Proving using Vampire..." )
 
-    val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "15m" ) ).withDeskolemization.extendToManySortedViaErasure ) getExpansionProof problem
+    val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "45m" ) ).withDeskolemization.extendToManySortedViaErasure ) getExpansionProof problem
     //val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
     println( "Done." )
     println( "Deskolemization..." )
@@ -774,26 +776,26 @@ object booleanDet extends Script {
   import gapt.proofs.expansion.{ ExpansionProof, ETWeakQuantifier, ExpansionProofToLK }
   import gapt.provers.vampire.Vampire
 
+  import gapt.proofs.context.Context
+  import gapt.proofs.nd.ClassicalExtraction
   var ctx = Context.default
   ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
-  implicit var cctx = ClassicalExtraction.systemT( ctx )
-  /*
-  val minterm1 = ProofBuilder.
-    c( LogicalAxiom( hof"-x1" ) ).
-    c( LogicalAxiom( hof"-x2" ) ).
-    c( LogicalAxiom( hof"-y" ) ).
-    b( AndIntroRule( _, _ ) ).
-    b( AndIntroRule( _, _ ) ).
-    qed
-  val p = ProofBuilder.
-  b(OrIntroRule(minterm1)).
-  qed
-  prooftool( p )
-  */
-  val thm = hof"!(x1:o)!(x2:o)?(y:o) ((-x1 & -x2 & -y) | (-x1 & x2 & -y ) | (-x1 & x2 & y) | (x1 & -x2 & y) | (x1 & x2 & y)) <-> true"
-  val problem = Sequent() :+ thm
+  ctx += InductiveType( "bool", hoc"bFalse: bool", hoc"bTrue: bool" )
+  val Some( bFalse ) = ctx.constant( "bFalse" )
+  val Some( bTrue ) = ctx.constant( "bTrue" )
+  val bIsTrue = hoc"p : bool>o"
+  ctx += PrimitiveRecursiveFunction(
+    bIsTrue,
+    List(
+      ( bIsTrue( bFalse ) -> hof"false" ),
+      ( bIsTrue( bTrue ) -> hof"true" ) ) )( ctx )
+  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+  val axiom1 = hof"p(bTrue)"
+  val axiom2 = hof"-p(bFalse)"
+  val thmfof = hof"!x1!x2?y ((-p(x1) & -p(x2) & -p(y)) | (-p(x1) & p(x2) & p(y)) | (p(x1) & -p(x2) & p(y)) | (p(x1) & p(x2) & -p(y)))"
+  val problem = axiom1 +: axiom2 +: Sequent() :+ thmfof
   println( TptpFOLExporter.tptpProofProblem( problem ).toString() )
-  val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "15m" ) ).withDeskolemization ) getExpansionProof problem
+  val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "45m" ) ).withDeskolemization.extendToManySortedViaErasure ) getExpansionProof problem
   //val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
   println( "Done." )
   println( "Deskolemization..." )
@@ -803,4 +805,382 @@ object booleanDet extends Script {
   val nd = LKToND( lk, Some( Suc( 0 ) ) )
   println( nd )
   prooftool( nd )
+  val m1 = ClassicalExtraction.extractCases( nd )
+  val Some( i ) = ctxClassical.constant( "i" )
+  val Some( exception ) = ctxClassical.constant( "exception", List( ty"1" ) )
+
+  val realm1 = m1( exception )( i )
+  println( normalize( realm1( bFalse )( bFalse ) ) )
+  println( normalize( realm1( bFalse )( bTrue ) ) )
+  println( normalize( realm1( bTrue )( bFalse ) ) )
+  println( normalize( realm1( bTrue )( bTrue ) ) )
+}
+
+object simpleNatDet extends Script {
+
+  import gapt.proofs._
+  import gapt.proofs.expansion.{ ExpansionProof, ETWeakQuantifier, ExpansionProofToLK }
+  import gapt.proofs.nd.InductionRule
+  import gapt.proofs.reduction._
+  import gapt.provers.vampire.Vampire
+
+  var ctx = Context.default
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += Notation.Infix( "<", Precedence.infixRel )
+  ctx += Notation.Infix( "*", Precedence.timesDiv )
+  ctx += Notation.Infix( "<=", Precedence.infixRel )
+  ctx += hoc"'f': nat>nat>o"
+  implicit var cctx = ClassicalExtraction.systemT( ctx )
+  val Some( z ) = cctx.constant( "0" )
+  val Some( s ) = cctx.constant( "s" )
+  val Some( gt ) = cctx.constant( "gt" )
+  val Some( not ) = cctx.constant( "not" )
+
+  val x = hov"x:nat"
+  val y = hov"y:nat"
+  val plus = hoc"'+': nat>nat>nat"
+  cctx += PrimitiveRecursiveFunction(
+    plus,
+    List(
+      ( plus( z, y ) -> y ),
+      ( plus( s( x ), y ) -> s( plus( x, y ) ) ) ) )( cctx )
+  val times = hoc"'*': nat>nat>nat"
+  cctx += PrimitiveRecursiveFunction(
+    times,
+    List(
+      ( times( z, y ) -> z ),
+      ( times( s( x ), y ) -> plus( y, times( x, y ) ) ) ) )( cctx )
+  val pow2 = hoc"'pow2': nat>nat"
+  cctx += PrimitiveRecursiveFunction(
+    pow2,
+    List(
+      ( pow2( z ) -> z ),
+      ( pow2( s( x ) ) -> times( s( x ), s( x ) ) ) ) )( cctx )
+  val lt = hoc"'<': nat>nat>o"
+  cctx += PrimitiveRecursiveFunction(
+    lt,
+    List(
+      ( lt( z, y ) -> gt( y, z ) ),
+      ( lt( s( x ), y ) -> gt( y, s( x ) ) ) ) )( cctx )
+  val leq = hoc"'<=': nat>nat>o"
+  cctx += PrimitiveRecursiveFunction(
+    leq,
+    List(
+      ( leq( z, y ) -> not( gt( z, y ) ) ),
+      ( leq( s( x ), y ) -> not( gt( s( x ), y ) ) ) ) )( cctx )
+  //println( s"normalizing pow2(2): ${normalize( pow2( s( s( z ) ) ) )}" )
+
+  val peano5 = hof"!x 0 = x*0"
+  val peano7 = hof"!x!y (x<y -> s(x)<s(y))"
+  val lem1 = hof"!x s(pow2(s x)) < pow2(s(s x))"
+  val lem2 = hof"!x pow2(x) < pow2(s x)"
+  val lem4 = hof"!x!y (y<x | x<y | x=y)"
+  val lem5 = hof"!x!y!z (y<z & x<y -> x<z)"
+  val defleq = hof"!x!y (x<=y <-> (x=y | x<y))"
+  val defpow2 = hof"!x x*x = pow2(x)"
+  //val defind = hof"!x!y ((f x y) <-> (x < pow2(s y) & pow2(y) <= x))"
+  val thm1 =
+    hof"""!y!x (
+  s(x)<pow2(s y) & x<pow2(s y) & pow2(y)<=x ->
+    s(x)<pow2(s y) & pow2(y)<=s(x)
+)"""
+  val ind = hof"(?y (f 0 y)) & !x ((?y (f x y)) -> (?y (f (s x) y))) -> !x?y (f x y)"
+
+  val defind = hof"!x!y ((f x y) <-> ((x = 0 & y = s(0)) | (x = s(0) & y = s(0)) | (0 < x & y = 0) | (0 < x & y = s(0))))"
+  val thm = hof"!x?y (f x y)"
+  val problem = defind +: ind +: peano7 +: Sequent() :+ thm
+
+  val tmp: ( HOLSequent, ExpansionProof => ExpansionProof ) = ErasureReductionET forward problem
+  //val ind2 = tmp._1( Ant( 9 ) )
+  //println( ind2 )
+
+  import java.io._
+  import gapt.formats.json._
+  val f = new File( "/home/matthias/tmp/simpleNatDet.json" )
+  val lk = if ( f.isFile() && f.canRead() ) {
+    println( "Reading proof from JSON file..." )
+    JsonImporter.load[LKProof]( f )
+  } else {
+    println( "Proving using Vampire..." )
+
+    val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "45m" ) ).withDeskolemization.extendToManySortedViaErasure ) getExpansionProof problem
+    //val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
+    println( "Done." )
+    println( "Deskolemization..." )
+    val desk: ExpansionProof = expansionProof.get
+    println( "Done." )
+    //prooftool( desk )
+    val deskInd = ExpansionProof( desk.expansionSequent.map {
+      case et =>
+        et.shallow match {
+          case `ind` =>
+
+            ETWeakQuantifier(
+              hof"!X (X(0) ∧ ∀x (X(x) → X(s(x))) → ∀x X(x))",
+              Map( le"^x ?y (f x y)" -> et ) )
+          /*
+case `ind2` =>
+ETWeakQuantifier(
+  hof"!X (X(#c(f_0:i)) ∧ ∀x_0 (X(x_0) → X(#c(f_s:i>i)(x_0))) → ∀x_0 X(x_0))", Map( le"^x_0 ?y_0 (#c(P_f:i>i>o) x_0 y_0)" -> et ) )
+          */
+          case _ => et
+        }
+    } )
+    //prooftool( deskInd )
+
+    println( "Expansion proof to LK..." )
+    val lk = ExpansionProofToLK( deskInd ).getOrElse( throw new Exception( "LK proof not obtained" ) )
+    println( "Done." )
+    cctx.check( lk )
+    val jsonLk = gapt.formats.json.JsonExporter( lk )
+    val bw = new BufferedWriter( new FileWriter( f ) )
+    bw.write( jsonLk.render( 80 ) )
+    bw.close()
+    lk
+  }
+  //println( "LK: num inferences: " + lk.subProofs.size )
+
+  println( "LK to ND..." )
+  val nd = LKToND( lk, Some( Suc( 0 ) ) )
+  println( "Done." )
+  //println( nd )
+  //prooftool( nd )
+  if ( nd.subProofs.exists {
+    case InductionRule( _, _, _ ) => true
+    case _                        => false
+  } )
+    println( "contains Induction" )
+  println( s"contains ${
+    nd.subProofs.filter {
+      case ExcludedMiddleRule( _, _, _, _ ) => true
+      case _                                => false
+    }.size
+  } excluded middle inferences" )
+
+  //val m1 = MRealizability.mrealize( nd, false )._2
+  val m1 = ClassicalExtraction.extractCases( nd )
+  println( "var map\n" + ClassicalExtraction.getVarMap.mkString( "\n" ) )
+  //print( m1 ); print( " of type " ); println( m1.ty )
+  //println( "free variables in m1: " + freeVariables( m1 ) )
+  //println( "ND: num inferences: " + nd.subProofs.size )
+  //println( "ND: num EM: " + nd.subProofs.count {
+  //case _: ExcludedMiddleRule => true
+  //case _                     => false
+  //} )
+  //FSharpCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
+  val scalaProg = ScalaCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
+  val scalaFile = new File( "/home/matthias/tmp/synthexManySorted.scala" )
+  val bw = new BufferedWriter( new FileWriter( scalaFile ) )
+  bw.write( scalaProg )
+  bw.close()
+  //println( "flat(thm): " + ClassicalExtraction.flat( thm ) )
+  //println( "ty(m1): " + m1.ty )
+
+  //val arg1 = le"(^(tmp:nat) i)"
+  val m1Args = scala.collection.mutable.Map[Ty, Expr](
+    List( peano5, peano7, lem1, lem2, lem5, defpow2, defind, thm1 ).zipWithIndex.map {
+      case ( f, i ) => ClassicalExtraction.flat( f ) -> Const( s"arg$i", ClassicalExtraction.flat( f ) )
+    }: _* )
+  val Some( i ) = cctx.constant( "i" )
+
+  val Some( pair ) = cctx.constant( "pair", List( ty"1>sum(1)(1)", ty"sum(1)(1)>1" ) )
+  val Some( cmp ) = cctx.constant( "cmp" )
+  val Some( cmp2 ) = cctx.constant( "cmp2" )
+
+  // (y < x | x < y) | x = y)
+  m1Args += ( ClassicalExtraction.flat( lem4 ) ->
+    le"""
+(^(tmp1:nat) (^(tmp2:nat) ($cmp tmp1 tmp2)))
+""" )
+  // (x<=y <-> (x=y | x<y))"
+  m1Args += ( ClassicalExtraction.flat( defleq ) ->
+    le"""(^(tmp3:nat) (^(tmp4:nat)
+$pair(
+  (^(tmp5:1) ($cmp2 tmp3 tmp4)),
+  (^(tmp6:sum(1)(1)) $i)
+)))""" )
+
+  def assignArgs( prog: Expr ): Expr = prog.ty match {
+    case TArr( TBase( "nat", _ ), _ ) => prog
+    case TArr( argTy, _ ) =>
+      val arg = m1Args( argTy )
+      println( s"assigning $arg to ${prog.ty}" )
+      assignArgs( prog( arg ) )
+  }
+  val realm1 = assignArgs( m1 )
+
+  val Some( proj1 ) = cctx.constant( "pi1", List( ty"nat", ty"1" ) )
+  /*
+  println( realm1 )
+  println( s"normalize\n${normalize( proj1( realm1( le"s(s(s(s(0))))" ) ) )}" )
+  */
+  var normalized = proj1( realm1( le"s(s(s(s(0))))" ) )
+
+  println( "synthex program:\n" + normalized )
+  //while ( normalize( normalized ) != normalized ) {
+  normalized = normalize( normalized )
+  //}
+  println( normalized )
+  /*
+println( "expecting inr(i)" + normalize( m1Args( ClassicalExtraction.flat( lem4 ) )( le"0:nat" )( le"0:nat" ) ) )
+println( "expecting inl(inl(i))" + normalize( m1Args( ClassicalExtraction.flat( lem4 ) )( le"0:nat" )( le"s(0):nat" ) ) )
+println( "expecting inl(inr(i))" + normalize( m1Args( ClassicalExtraction.flat( lem4 ) )( le"s(0):nat" )( le"0:nat" ) ) )
+println( "expecting inl(i)" + normalize( m1Args( ClassicalExtraction.flat( defleq ) )( le"0:nat" )( le"0:nat" ) ) )
+println( "expecting inr(i)" + normalize( m1Args( ClassicalExtraction.flat( defleq ) )( le"0:nat" )( le"s(0):nat" ) ) )
+*/
+}
+
+object booleanDeterminizationVampire extends Script {
+
+  import gapt.proofs._
+  import gapt.proofs.expansion.{ ExpansionProof, ETWeakQuantifier, ExpansionProofToLK }
+  import gapt.proofs.nd.InductionRule
+  import gapt.proofs.reduction._
+  import gapt.provers.vampire.Vampire
+  import gapt.proofs.context.Context
+  import gapt.proofs.nd.ClassicalExtraction
+
+  var ctx = Context.default
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "bool", hoc"bFalse: bool", hoc"bTrue: bool" )
+  ctx += Notation.Infix( "||", Precedence.disj )
+  ctx += Notation.Infix( "&&", Precedence.conj )
+  val Some( bFalse ) = ctx.constant( "bFalse" )
+  val Some( bTrue ) = ctx.constant( "bTrue" )
+
+  val x = hov"x:bool"
+  val bNot = hoc"-- : bool>bool"
+  ctx += PrimitiveRecursiveFunction(
+    bNot,
+    List(
+      ( bNot( bFalse ) -> bTrue ),
+      ( bNot( bTrue ) -> bFalse ) ) )( ctx )
+
+  val bOr = hoc"|| : bool>bool>bool"
+  ctx += PrimitiveRecursiveFunction(
+    bOr,
+    List(
+      ( bOr( bFalse, x ) -> x ),
+      ( bOr( bTrue, x ) -> bTrue ) ) )( ctx )
+
+  val bAnd = hoc"&& : bool>bool>bool"
+  ctx += PrimitiveRecursiveFunction(
+    bAnd,
+    List(
+      ( bAnd( bFalse, x ) -> bFalse ),
+      ( bAnd( bTrue, x ) -> x ) ) )( ctx )
+  //ctx += hof"!x!y (bAnd(x,y) = bTrue <-> (x = bTrue & y = bTrue))"
+
+  /*
+  val bEx = hoc"bEx : bool>bool>bool"
+  val f = le"f:bool"
+  ctx += PrimitiveRecursiveFunction(
+    bEx,
+    List(
+      ( bEx( x, f ) -> bOr(Substitution(x -> bTrue)(f), Substitution(x -> bFalse)(f)))))( ctx )
+  */
+
+  val bIsTrue = hoc"bIsTrue : bool>o"
+  ctx += PrimitiveRecursiveFunction(
+    bIsTrue,
+    List(
+      ( bIsTrue( bFalse ) -> hof"false" ),
+      ( bIsTrue( bTrue ) -> hof"true" ) ) )( ctx )
+
+  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+
+  // TODO embedding of QBF into FOL
+  val lem1 = hof"bIsTrue(bTrue)"
+  val lem2 = hof"-bIsTrue(bFalse)"
+  val lem3 = hof"!x (bIsTrue(x) | -bIsTrue(x))"
+  val thm = hof"(!(x:bool)?(y:bool) ((bIsTrue(x) & bIsTrue(y)) | (bIsTrue(x) & -bIsTrue(y)))) & bIsTrue(bTrue) & -bIsTrue(bFalse)"
+  val problem = lem1 +: lem2 +: lem3 +: Sequent() :+ thm
+  println( problem )
+
+  val tmp: ( HOLSequent, ExpansionProof => ExpansionProof ) = ErasureReductionET forward problem
+  //val ind2 = tmp._1( Ant( 9 ) )
+  //println( ind2 )
+
+  import java.io._
+  import gapt.formats.json._
+  val f = new File( "/home/matthias/tmp/booleanDeterminizationVampire.json" )
+  val lk = if ( f.isFile() && f.canRead() ) {
+    println( "Reading proof from JSON file..." )
+    JsonImporter.load[LKProof]( f )
+  } else {
+    println( "Proving using Vampire..." )
+
+    val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "45m" ) ).withDeskolemization.extendToManySortedViaErasure ) getExpansionProof problem
+    //val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
+    println( "Done." )
+    println( "Deskolemization..." )
+    val desk: ExpansionProof = expansionProof.get
+    println( "Done." )
+    //prooftool( desk )
+    val deskInd = ExpansionProof( desk.expansionSequent.map {
+      case et =>
+        et.shallow match {
+          /*
+          case `ind` =>
+
+            ETWeakQuantifier(
+              hof"!X (X(0) ∧ ∀x (X(x) → X(s(x))) → ∀x X(x))",
+              Map( le"^x ?y (f x y)" -> et ) )
+              */
+          /*
+case `ind2` =>
+ETWeakQuantifier(
+  hof"!X (X(#c(f_0:i)) ∧ ∀x_0 (X(x_0) → X(#c(f_s:i>i)(x_0))) → ∀x_0 X(x_0))", Map( le"^x_0 ?y_0 (#c(P_f:i>i>o) x_0 y_0)" -> et ) )
+          */
+          case _ => et
+        }
+    } )
+    //prooftool( deskInd )
+
+    println( "Expansion proof to LK..." )
+    val lk = ExpansionProofToLK( deskInd ).getOrElse( throw new Exception( "LK proof not obtained" ) )
+    println( "Done." )
+    ctx.check( lk )
+    val jsonLk = gapt.formats.json.JsonExporter( lk )
+    val bw = new BufferedWriter( new FileWriter( f ) )
+    bw.write( jsonLk.render( 80 ) )
+    bw.close()
+    lk
+  }
+  //println( "LK: num inferences: " + lk.subProofs.size )
+
+  println( "LK to ND..." )
+  val nd = LKToND( lk, Some( Suc( 0 ) ) )
+  println( "Done." )
+  //println( nd )
+  //prooftool( nd )
+  if ( nd.subProofs.exists {
+    case InductionRule( _, _, _ ) => true
+    case _                        => false
+  } )
+    println( "contains Induction" )
+  println( s"contains ${
+    nd.subProofs.filter {
+      case ExcludedMiddleRule( _, _, _, _ ) => true
+      case _                                => false
+    }.size
+  } excluded middle inferences" )
+
+  //val m1 = MRealizability.mrealize( nd, false )._2
+  val m1 = ClassicalExtraction.extractCases( nd )
+  println( "var map\n" + ClassicalExtraction.getVarMap.mkString( "\n" ) )
+  //print( m1 ); print( " of type " ); println( m1.ty )
+  //println( "free variables in m1: " + freeVariables( m1 ) )
+  //println( "ND: num inferences: " + nd.subProofs.size )
+  //println( "ND: num EM: " + nd.subProofs.count {
+  //case _: ExcludedMiddleRule => true
+  //case _                     => false
+  //} )
+  //FSharpCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
+  val scalaProg = ScalaCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
+  val scalaFile = new File( "/home/matthias/tmp/synthexManySorted.scala" )
+  val bw = new BufferedWriter( new FileWriter( scalaFile ) )
+  bw.write( scalaProg )
+  bw.close()
+
 }

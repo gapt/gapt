@@ -69,6 +69,13 @@ object ClassicalExtraction {
       pi2,
       List( ( pi2( pair( x, y ) ) -> y ) ) )( systemT )
 
+    // existsPair
+    /*
+    val exConj = ty"exConj ?a ?b"
+    val exPair = hoc"exPair{?a ?b ?c}: ?a > ?b[m/alpha] > (exConj ?a ?b)"
+    systemT += InductiveType( exConj, exPair )
+    */
+
     // add sum type
     val sum = ty"sum ?a ?b"
     val inl = hoc"inl{?a ?b}: ?a > (sum ?a ?b)"
@@ -500,8 +507,11 @@ object ClassicalExtraction {
 
         case ExistsIntroRule( subProof, formula, term, variable ) =>
           val s = extractCases( subProof, ng )
+          val subst = Substitution( variable, term )( formula )
           val res = s.replaceAt( Suc( 0 ), le"pair($term,${s( Suc( 0 ) )})" )
-          //println( "ExIntro" )
+          val t = res( Suc( 0 ) )
+          println( "ExIntro" )
+          println( res( Suc( 0 ) ) )
           res
 
         case ExistsElimRule( leftSubProof, rightSubProof, aux, eigenVariable ) =>
@@ -624,6 +634,7 @@ object ClassicalExtraction {
               //if ( freeVariables( r( Suc( 0 ) ) ).contains( varR ) )
               //println( s"contains $varR" )
               val res = delL ++: delR ++: Sequent() :+ le"(^$varR tryCatch($varR, ${r( Suc( 0 ) )}, handle($varR($varL), ${l( Suc( 0 ) )})))($exnVar)"
+              //val res = delL ++: delR ++: Sequent() :+ le"ite(${leftSubProof.endSequent(aux1)}, ${l(Suc(0))}, ${r(Suc(0))})"
               //val res = delL ++: delR ++: Sequent() :+ le"tryCatch($varR, ${r( Suc( 0 ) )}, handle($varR($varL), ${l( Suc( 0 ) )}))"
               println( s"tryCatch var: $varR, catch: ${varR( varL )}, tryCatch.ty: ${res( Suc( 0 ) ).ty}" )
               //println( s"EM0: ${f}" )
@@ -687,7 +698,7 @@ object ClassicalExtraction {
       //TBase( e.toUntypedString, es.map( x => TBase( x.toString ) ) )
       // Losing information of dependent types:
       //TBase( e.toUntypedString )
-      ty"1" // ?
+      ty"1" // ? e.ty ?
     case And( leftformula, rightformula ) =>
       TBase( "conj", flat( leftformula ), flat( rightformula ) )
     case Or( leftformula, rightformula ) =>

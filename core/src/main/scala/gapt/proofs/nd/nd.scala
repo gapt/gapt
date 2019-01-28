@@ -1384,6 +1384,29 @@ object ExcludedMiddleRule extends ConvenienceConstructor( "ExcludedMiddleRule" )
       new ExcludedMiddleRule( leftSubProof, candidates.head._1, rightSubProof, candidates.head._2 )
     }
   }
+  /**
+   * Convenience constructor for EM.
+   * Given only the subproofs, it will attempt to create an inference with this.
+   *
+   * @param leftSubProof The left subproof.
+   * @param rightSubProof The right subproof.
+   * @param term The term that is eliminated. ¬term must be in Π and term in Γ
+   * @return
+   */
+  def apply( leftSubProof: NDProof, rightSubProof: NDProof, term: Expr ): ExcludedMiddleRule = {
+
+    val leftIdx = if ( leftSubProof.conclusion.antecedent.contains( term ) )
+      leftSubProof.conclusion.indexOfInAnt( term )
+    else
+      throw NDRuleCreationException( s"Antecedent ${leftSubProof.endSequent.antecedent} needs to contain a formula that appears negated in ${rightSubProof.endSequent.antecedent}." )
+
+    val rightIdx = if ( rightSubProof.conclusion.antecedent.contains( -term ) )
+      rightSubProof.conclusion.indexOfInAnt( -term )
+    else
+      throw NDRuleCreationException( s"Antecedent ${leftSubProof.endSequent.antecedent} needs to contain a formula that appears negated in ${rightSubProof.endSequent.antecedent}." )
+    new ExcludedMiddleRule( leftSubProof, leftIdx, rightSubProof, rightIdx )
+  }
+
 }
 
 /**
