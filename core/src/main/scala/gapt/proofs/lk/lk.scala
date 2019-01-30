@@ -1084,7 +1084,7 @@ object ForallLeftRule extends ConvenienceConstructor( "ForallLeftRule" ) {
    * @return
    */
   def apply( subProof: LKProof, mainFormula: Formula ): ForallLeftRule = mainFormula match {
-    case All( v, subFormula ) =>
+    case All( v, _ ) =>
       val p = apply( subProof, mainFormula, v )
       assert( p.mainFormula == mainFormula )
       p
@@ -1182,7 +1182,7 @@ object ForallRightRule extends ConvenienceConstructor( "ForallRightRule" ) {
    * @return
    */
   def apply( subProof: LKProof, mainFormula: Formula ): ForallRightRule = mainFormula match {
-    case All( v, subFormula ) =>
+    case All( v, _ ) =>
       val p = apply( subProof, mainFormula, v )
       assert( p.mainFormula == mainFormula )
       p
@@ -1333,7 +1333,7 @@ object ExistsLeftRule extends ConvenienceConstructor( "ExistsLeftRule" ) {
    * @return
    */
   def apply( subProof: LKProof, mainFormula: Formula ): ExistsLeftRule = mainFormula match {
-    case Ex( v, subFormula ) =>
+    case Ex( v, _ ) =>
       val p = apply( subProof, mainFormula, v )
       assert( p.mainFormula == mainFormula )
       p
@@ -1479,7 +1479,7 @@ object ExistsRightRule extends ConvenienceConstructor( "ExistsRightRule" ) {
    * @return
    */
   def apply( subProof: LKProof, mainFormula: Formula ): ExistsRightRule = mainFormula match {
-    case Ex( v, subFormula ) =>
+    case Ex( v, _ ) =>
       val p = apply( subProof, mainFormula, v )
       assert( p.mainFormula == mainFormula )
       p
@@ -1632,7 +1632,7 @@ object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
         if ( s == t && auxFormula == mainFormula ) {
           val repContext = replacementContext.abstractTerm( auxFormula )( s )
 
-          val Abs( v, rest ) = repContext
+          val Abs( _, _ ) = repContext
           if ( auxFormula.find( s ).isEmpty )
             throw LKRuleCreationException( s"Eq is trivial, but term $s does not occur in $auxFormula." )
 
@@ -1742,7 +1742,7 @@ object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
         if ( s == t && auxFormula == mainFormula ) {
           val repContext = replacementContext.abstractTerm( auxFormula )( s )
 
-          val Abs( v, rest ) = repContext
+          val Abs( _, _ ) = repContext
           if ( auxFormula.find( s ).isEmpty )
             throw LKRuleCreationException( s"Eq is trivial, but term $s does not occur in $auxFormula." )
 
