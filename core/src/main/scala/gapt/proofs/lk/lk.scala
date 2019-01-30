@@ -1213,7 +1213,6 @@ object ForallRightRule extends ConvenienceConstructor( "ForallRightRule" ) {
  * @param aux The index of A[x\α].
  * @param mainFormula The main formula A[x\s(...)]
  * @param skolemTerm The Skolem term s(...)
- * @param skolemDef The Skolem definition, see [[gapt.expr.hol.SkolemFunctions]]
  */
 case class ForallSkRightRule( subProof: LKProof, aux: SequentIndex, mainFormula: Formula,
                               skolemTerm: Expr )
@@ -1361,7 +1360,6 @@ object ExistsLeftRule extends ConvenienceConstructor( "ExistsLeftRule" ) {
  * @param aux The index of A[x\s(...)].
  * @param mainFormula The main formula A[x\s(...)]
  * @param skolemTerm The Skolem term s(...)
- * @param skolemDef The Skolem definition, see [[gapt.expr.hol.SkolemFunctions]]
  */
 case class ExistsSkLeftRule( subProof: LKProof, aux: SequentIndex, mainFormula: Formula,
                              skolemTerm: Expr )
