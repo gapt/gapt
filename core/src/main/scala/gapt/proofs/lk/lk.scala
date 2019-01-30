@@ -18,7 +18,7 @@ abstract class LKProof extends SequentProof[Formula, LKProof] {
   /**
    * The end-sequent of the rule.
    */
-  final def endSequent = conclusion
+  final def endSequent: HOLSequent = conclusion
 
   /**
    * Checks whether indices are in the right place and premise is defined at all of them.
@@ -92,13 +92,13 @@ abstract class UnaryLKProof extends LKProof {
    *
    * @return
    */
-  def premise = subProof.endSequent
+  def premise: HOLSequent = subProof.endSequent
 
-  override def immediateSubProofs = Seq( subProof )
+  override def immediateSubProofs: Seq[LKProof] = Seq( subProof )
 }
 
 object UnaryLKProof {
-  def unapply( p: UnaryLKProof ) = Some( p.endSequent, p.subProof )
+  def unapply( p: UnaryLKProof ): Option[( HOLSequent, LKProof )] = Some( p.endSequent, p.subProof )
 }
 
 /**
@@ -144,20 +144,21 @@ abstract class BinaryLKProof extends LKProof {
    *
    * @return
    */
-  def leftPremise = leftSubProof.endSequent
+  def leftPremise: HOLSequent = leftSubProof.endSequent
 
   /**
    * The right upper sequent of the rule.
    *
    * @return
    */
-  def rightPremise = rightSubProof.endSequent
+  def rightPremise: HOLSequent = rightSubProof.endSequent
 
-  override def immediateSubProofs = Seq( leftSubProof, rightSubProof )
+  override def immediateSubProofs: Seq[LKProof] = Seq( leftSubProof, rightSubProof )
 }
 
 object BinaryLKProof {
-  def unapply( p: BinaryLKProof ) = Some( p.endSequent, p.leftSubProof, p.rightSubProof )
+  def unapply( p: BinaryLKProof ): Option[( HOLSequent, LKProof, LKProof )] =
+    Some( p.endSequent, p.leftSubProof, p.rightSubProof )
 }
 
 trait CommonRule extends LKProof with ContextRule[Formula, LKProof]
@@ -171,8 +172,8 @@ trait Eigenvariable {
 }
 
 case class ProofLink( referencedProof: Expr, referencedSequent: Sequent[Formula] ) extends InitialSequent {
-  override def name = "link"
-  override def conclusion = referencedSequent
+  override def name: String = "link"
+  override def conclusion: HOLSequent = referencedSequent
 }
 object ProofLink {
   def apply( referencedProof: Expr )( implicit ctx: Context ): ProofLink =
@@ -190,17 +191,17 @@ object ProofLink {
  */
 abstract class InitialSequent extends LKProof {
 
-  override def mainIndices = endSequent.indices
+  override def mainIndices: Vector[SequentIndex] = endSequent.indices
 
-  override def auxIndices = Seq()
+  override def auxIndices: Seq[Nothing] = Seq()
 
-  override def immediateSubProofs = Seq()
+  override def immediateSubProofs: Seq[Nothing] = Seq()
 
-  override def occConnectors = Seq()
+  override def occConnectors: Seq[Nothing] = Seq()
 }
 
 object InitialSequent {
-  def unapply( proof: InitialSequent ) = Some( proof.endSequent )
+  def unapply( proof: InitialSequent ): Option[HOLSequent] = Some( proof.endSequent )
 }
 
 /**
@@ -212,8 +213,8 @@ object InitialSequent {
  */
 case object TopAxiom extends InitialSequent {
   override def name: String = "⊤:r"
-  override def conclusion = HOLSequent( Nil, Seq( Top() ) )
-  def mainFormula = Top()
+  override def conclusion: HOLSequent = HOLSequent( Nil, Seq( Top() ) )
+  def mainFormula: PropFormula with Const = Top()
 }
 
 /**
@@ -225,8 +226,8 @@ case object TopAxiom extends InitialSequent {
  */
 case object BottomAxiom extends InitialSequent {
   override def name: String = "⊥:l"
-  override def conclusion = HOLSequent( Seq( Bottom() ), Nil )
-  def mainFormula = Bottom()
+  override def conclusion: HOLSequent = HOLSequent( Seq( Bottom() ), Nil )
+  def mainFormula: PropFormula with Const = Bottom()
 }
 
 /**
@@ -240,9 +241,9 @@ case object BottomAxiom extends InitialSequent {
  * @param A The atom A.
  */
 case class LogicalAxiom( A: Formula ) extends InitialSequent {
-  override def name = "ax"
-  override def conclusion = HOLSequent( Seq( A ), Seq( A ) )
-  def mainFormula = A
+  override def name: String = "ax"
+  override def conclusion: HOLSequent = HOLSequent( Seq( A ), Seq( A ) )
+  def mainFormula: Formula = A
 }
 
 /**
@@ -256,18 +257,18 @@ case class LogicalAxiom( A: Formula ) extends InitialSequent {
  * @param s The term s.
  */
 case class ReflexivityAxiom( s: Expr ) extends InitialSequent {
-  override def name = "refl"
-  override def conclusion = HOLSequent( Seq(), Seq( Eq( s, s ) ) )
-  def mainFormula = Eq( s, s )
+  override def name: String = "refl"
+  override def conclusion: HOLSequent = HOLSequent( Seq(), Seq( Eq( s, s ) ) )
+  def mainFormula: Formula = Eq( s, s )
 }
 
 abstract class ContractionRule extends UnaryLKProof with CommonRule {
   def aux1: SequentIndex
   def aux2: SequentIndex
 
-  override def auxIndices = Seq( Seq( aux1, aux2 ) )
+  override def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux1, aux2 ) )
 
-  val mainFormula = premise( aux1 )
+  val mainFormula: Formula = premise( aux1 )
 }
 
 /**
@@ -290,9 +291,9 @@ case class ContractionLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: Seq
   if ( premise( aux1 ) != premise( aux2 ) )
     throw LKRuleCreationException( s"Auxiliary formulas ${premise( aux1 )} and ${premise( aux2 )} are not equal." )
 
-  override def name = "c:l"
+  override def name: String = "c:l"
 
-  override def mainFormulaSequent = mainFormula +: Sequent()
+  override def mainFormulaSequent: HOLSequent = mainFormula +: Sequent()
 }
 
 object ContractionLeftRule extends ConvenienceConstructor( "ContractionLeftRule" ) {
@@ -336,9 +337,9 @@ case class ContractionRightRule( subProof: LKProof, aux1: SequentIndex, aux2: Se
   if ( premise( aux1 ) != premise( aux2 ) )
     throw LKRuleCreationException( s"Auxiliary formulas ${premise( aux1 )} and ${premise( aux2 )} are not equal." )
 
-  override def name = "c:r"
+  override def name: String = "c:r"
 
-  override def mainFormulaSequent = Sequent() :+ mainFormula
+  override def mainFormulaSequent: HOLSequent = Sequent() :+ mainFormula
 
 }
 
@@ -376,11 +377,11 @@ object ContractionRightRule extends ConvenienceConstructor( "ContractionRightRul
  */
 case class WeakeningLeftRule( subProof: LKProof, formula: Formula )
   extends UnaryLKProof with CommonRule {
-  override def auxIndices = Seq( Seq() )
-  override def name = "w:l"
-  def mainFormula = formula
+  override def auxIndices: Seq[Seq[Nothing]] = Seq( Seq() )
+  override def name: String = "w:l"
+  def mainFormula: Formula = formula
 
-  override def mainFormulaSequent = mainFormula +: Sequent()
+  override def mainFormulaSequent: HOLSequent = mainFormula +: Sequent()
 }
 
 /**
@@ -397,11 +398,11 @@ case class WeakeningLeftRule( subProof: LKProof, formula: Formula )
  */
 case class WeakeningRightRule( subProof: LKProof, formula: Formula )
   extends UnaryLKProof with CommonRule {
-  override def auxIndices = Seq( Seq() )
-  override def name = "w:r"
-  def mainFormula = formula
+  override def auxIndices: Seq[Seq[Nothing]] = Seq( Seq() )
+  override def name: String = "w:r"
+  def mainFormula: Formula = formula
 
-  override def mainFormulaSequent = Sequent() :+ mainFormula
+  override def mainFormulaSequent: HOLSequent = Sequent() :+ mainFormula
 }
 
 /**
@@ -428,13 +429,13 @@ case class CutRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LK
     throw LKRuleCreationException(
       s"Auxiliary formulas are not the same:\n${leftPremise( aux1 )}\n${rightPremise( aux2 )}" )
 
-  def cutFormula = leftPremise( aux1 )
+  def cutFormula: Formula = leftPremise( aux1 )
 
-  override def name = "cut"
+  override def name: String = "cut"
 
-  def auxIndices = Seq( Seq( aux1 ), Seq( aux2 ) )
+  def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux1 ), Seq( aux2 ) )
 
-  override def mainFormulaSequent = Sequent()
+  override def mainFormulaSequent: HOLSequent = Sequent()
 }
 
 object CutRule extends ConvenienceConstructor( "CutRule" ) {
@@ -498,13 +499,13 @@ case class NegLeftRule( subProof: LKProof, aux: SequentIndex )
 
   validateIndices( premise, Seq(), Seq( aux ) )
 
-  def auxFormula = premise( aux )
-  val mainFormula = Neg( auxFormula )
+  def auxFormula: Formula = premise( aux )
+  val mainFormula: Formula = Neg( auxFormula )
 
-  override def auxIndices = Seq( Seq( aux ) )
-  override def name = "¬:l"
+  override def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux ) )
+  override def name: String = "¬:l"
 
-  override def mainFormulaSequent = mainFormula +: Sequent()
+  override def mainFormulaSequent: HOLSequent = mainFormula +: Sequent()
 }
 
 object NegLeftRule extends ConvenienceConstructor( "NegLeftRule" ) {
@@ -541,13 +542,13 @@ case class NegRightRule( subProof: LKProof, aux: SequentIndex )
 
   validateIndices( premise, Seq( aux ), Seq() )
 
-  def auxFormula = premise( aux )
-  val mainFormula = Neg( auxFormula )
+  def auxFormula: Formula = premise( aux )
+  val mainFormula: Formula = Neg( auxFormula )
 
-  override def auxIndices = Seq( Seq( aux ) )
-  override def name = "¬:r"
+  override def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux ) )
+  override def name: String = "¬:r"
 
-  override def mainFormulaSequent = Sequent() :+ mainFormula
+  override def mainFormulaSequent: HOLSequent = Sequent() :+ mainFormula
 }
 
 object NegRightRule extends ConvenienceConstructor( "NegRightRule" ) {
@@ -585,15 +586,15 @@ case class AndLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
 
   validateIndices( premise, Seq( aux1, aux2 ), Seq() )
 
-  val leftConjunct = premise( aux1 )
-  val rightConjunct = premise( aux2 )
-  val mainFormula = And( leftConjunct, rightConjunct )
+  val leftConjunct: Formula = premise( aux1 )
+  val rightConjunct: Formula = premise( aux2 )
+  val mainFormula: Formula = And( leftConjunct, rightConjunct )
 
-  override def auxIndices = Seq( Seq( aux1, aux2 ) )
+  override def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux1, aux2 ) )
 
-  override def name = "∧:l"
+  override def name: String = "∧:l"
 
-  override def mainFormulaSequent = mainFormula +: Sequent()
+  override def mainFormulaSequent: HOLSequent = mainFormula +: Sequent()
 }
 
 object AndLeftRule extends ConvenienceConstructor( "AndLeftRule" ) {
@@ -653,16 +654,16 @@ case class AndRightRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProo
   validateIndices( leftPremise, Seq(), Seq( aux1 ) )
   validateIndices( rightPremise, Seq(), Seq( aux2 ) )
 
-  val leftConjunct = leftPremise( aux1 )
-  val rightConjunct = rightPremise( aux2 )
+  val leftConjunct: Formula = leftPremise( aux1 )
+  val rightConjunct: Formula = rightPremise( aux2 )
 
-  val mainFormula = And( leftConjunct, rightConjunct )
+  val mainFormula: Formula = And( leftConjunct, rightConjunct )
 
-  def auxIndices = Seq( Seq( aux1 ), Seq( aux2 ) )
+  def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux1 ), Seq( aux2 ) )
 
-  override def name = "∧:r"
+  override def name: String = "∧:r"
 
-  override def mainFormulaSequent = Sequent() :+ mainFormula
+  override def mainFormulaSequent: HOLSequent = Sequent() :+ mainFormula
 }
 
 object AndRightRule extends ConvenienceConstructor( "AndRightRule" ) {
@@ -727,16 +728,16 @@ case class OrLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof:
   validateIndices( leftPremise, Seq( aux1 ), Seq() )
   validateIndices( rightPremise, Seq( aux2 ), Seq() )
 
-  val leftDisjunct = leftPremise( aux1 )
-  val rightDisjunct = rightPremise( aux2 )
+  val leftDisjunct: Formula = leftPremise( aux1 )
+  val rightDisjunct: Formula = rightPremise( aux2 )
 
-  val mainFormula = Or( leftDisjunct, rightDisjunct )
+  val mainFormula: Formula = Or( leftDisjunct, rightDisjunct )
 
-  def auxIndices = Seq( Seq( aux1 ), Seq( aux2 ) )
+  def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux1 ), Seq( aux2 ) )
 
-  override def name = "∨:l"
+  override def name: String = "∨:l"
 
-  override def mainFormulaSequent = mainFormula +: Sequent()
+  override def mainFormulaSequent: HOLSequent = mainFormula +: Sequent()
 }
 
 object OrLeftRule extends ConvenienceConstructor( "OrLeftRule" ) {
@@ -798,15 +799,15 @@ case class OrRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
 
   validateIndices( premise, Seq(), Seq( aux1, aux2 ) )
 
-  val leftDisjunct = premise( aux1 )
-  val rightDisjunct = premise( aux2 )
-  val mainFormula = Or( leftDisjunct, rightDisjunct )
+  val leftDisjunct: Formula = premise( aux1 )
+  val rightDisjunct: Formula = premise( aux2 )
+  val mainFormula: Formula = Or( leftDisjunct, rightDisjunct )
 
-  override def auxIndices = Seq( Seq( aux1, aux2 ) )
+  override def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux1, aux2 ) )
 
-  override def name = "∨:r"
+  override def name: String = "∨:r"
 
-  override def mainFormulaSequent = Sequent() :+ mainFormula
+  override def mainFormulaSequent: HOLSequent = Sequent() :+ mainFormula
 }
 
 object OrRightRule extends ConvenienceConstructor( "OrRightRule" ) {
@@ -866,16 +867,16 @@ case class ImpLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof
   validateIndices( leftPremise, Seq(), Seq( aux1 ) )
   validateIndices( rightPremise, Seq( aux2 ), Seq() )
 
-  val impPremise = leftPremise( aux1 )
-  val impConclusion = rightPremise( aux2 )
+  val impPremise: Formula = leftPremise( aux1 )
+  val impConclusion: Formula = rightPremise( aux2 )
 
-  val mainFormula = Imp( impPremise, impConclusion )
+  val mainFormula: Formula = Imp( impPremise, impConclusion )
 
-  def auxIndices = Seq( Seq( aux1 ), Seq( aux2 ) )
+  def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux1 ), Seq( aux2 ) )
 
-  override def name = "→:l"
+  override def name: String = "→:l"
 
-  override def mainFormulaSequent = mainFormula +: Sequent()
+  override def mainFormulaSequent: HOLSequent = mainFormula +: Sequent()
 }
 
 object ImpLeftRule extends ConvenienceConstructor( "ImpLeftRule" ) {
@@ -937,15 +938,15 @@ case class ImpRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInd
 
   validateIndices( premise, Seq( aux1 ), Seq( aux2 ) )
 
-  val impPremise = premise( aux1 )
-  val impConclusion = premise( aux2 )
-  val mainFormula = Imp( impPremise, impConclusion )
+  val impPremise: Formula = premise( aux1 )
+  val impConclusion: Formula = premise( aux2 )
+  val mainFormula: Formula = Imp( impPremise, impConclusion )
 
-  override def auxIndices = Seq( Seq( aux1, aux2 ) )
+  override def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux1, aux2 ) )
 
-  override def name = "→:r"
+  override def name: String = "→:r"
 
-  override def mainFormulaSequent = Sequent() :+ mainFormula
+  override def mainFormulaSequent: HOLSequent = Sequent() :+ mainFormula
 }
 
 object ImpRightRule extends ConvenienceConstructor( "ImpRightRule" ) {
@@ -1033,17 +1034,17 @@ case class ForallLeftRule( subProof: LKProof, aux: SequentIndex, A: Formula, ter
 
   validateIndices( premise, Seq( aux ), Seq() )
 
-  def auxFormula = premise( aux )
+  def auxFormula: Formula = premise( aux )
   if ( auxFormula != BetaReduction.betaNormalize( Substitution( v, term )( A ) ) )
     throw LKRuleCreationException( s"Substituting $term for $v in $A does not result in ${premise( aux )}." )
 
-  val mainFormula = BetaReduction.betaNormalize( All( v, A ) )
+  val mainFormula: Formula = BetaReduction.betaNormalize( All( v, A ) )
 
-  override def name = "∀:l"
+  override def name: String = "∀:l"
 
-  def auxIndices = Seq( Seq( aux ) )
+  def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux ) )
 
-  override def mainFormulaSequent = mainFormula +: Sequent()
+  override def mainFormulaSequent: HOLSequent = mainFormula +: Sequent()
 }
 
 object ForallLeftRule extends ConvenienceConstructor( "ForallLeftRule" ) {
@@ -1126,7 +1127,7 @@ case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable:
   if ( freeVariables( context ) contains eigenVariable )
     throw LKRuleCreationException( s"Eigenvariable condition is violated: $context contains $eigenVariable" )
 
-  val subFormula = BetaReduction.betaNormalize( Substitution( eigenVariable, quantifiedVariable )( auxFormula ) )
+  val subFormula: Formula = BetaReduction.betaNormalize( Substitution( eigenVariable, quantifiedVariable )( auxFormula ) )
 
   if ( BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) ) != auxFormula )
     throw LKRuleCreationException(
@@ -1134,13 +1135,13 @@ case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable:
         BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) ) +
         s", but is $auxFormula." )
 
-  val mainFormula = BetaReduction.betaNormalize( All( quantifiedVariable, subFormula ) )
+  val mainFormula: Formula = BetaReduction.betaNormalize( All( quantifiedVariable, subFormula ) )
 
-  override def name = "∀:r"
+  override def name: String = "∀:r"
 
-  def auxIndices = Seq( Seq( aux ) )
+  def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux ) )
 
-  override def mainFormulaSequent = Sequent() :+ mainFormula
+  override def mainFormulaSequent: HOLSequent = Sequent() :+ mainFormula
 }
 
 object ForallRightRule extends ConvenienceConstructor( "ForallRightRule" ) {
@@ -1222,11 +1223,11 @@ case class ForallSkRightRule( subProof: LKProof, aux: SequentIndex, mainFormula:
 
   val All( quantifiedVariable, subFormula ) = mainFormula
 
-  override def name = "∀sk:r"
+  override def name: String = "∀sk:r"
 
-  def auxIndices = Seq( Seq( aux ) )
+  def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux ) )
 
-  override def mainFormulaSequent = Sequent() :+ mainFormula
+  override def mainFormulaSequent: HOLSequent = Sequent() :+ mainFormula
 }
 
 object ForallSkRightRule extends ConvenienceConstructor( "ForallSkRightRule" ) {
@@ -1278,7 +1279,7 @@ case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: 
   if ( freeVariables( context ) contains eigenVariable )
     throw LKRuleCreationException( s"Eigenvariable condition is violated: $context contains $eigenVariable" )
 
-  val subFormula = BetaReduction.betaNormalize( Substitution( eigenVariable, quantifiedVariable )( auxFormula ) )
+  val subFormula: Formula = BetaReduction.betaNormalize( Substitution( eigenVariable, quantifiedVariable )( auxFormula ) )
 
   if ( BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) ) != auxFormula )
     throw LKRuleCreationException(
@@ -1286,13 +1287,13 @@ case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: 
         BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) ) +
         s", but is $auxFormula." )
 
-  val mainFormula = BetaReduction.betaNormalize( Ex( quantifiedVariable, subFormula ) )
+  val mainFormula: Formula = BetaReduction.betaNormalize( Ex( quantifiedVariable, subFormula ) )
 
-  override def name = "∃:l"
+  override def name: String = "∃:l"
 
-  def auxIndices = Seq( Seq( aux ) )
+  def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux ) )
 
-  override def mainFormulaSequent = mainFormula +: Sequent()
+  override def mainFormulaSequent: HOLSequent = mainFormula +: Sequent()
 }
 
 object ExistsLeftRule extends ConvenienceConstructor( "ExistsLeftRule" ) {
@@ -1370,11 +1371,11 @@ case class ExistsSkLeftRule( subProof: LKProof, aux: SequentIndex, mainFormula: 
 
   val Ex( quantifiedVariable, subFormula ) = mainFormula
 
-  override def name = "∃sk:l"
+  override def name: String = "∃sk:l"
 
-  def auxIndices = Seq( Seq( aux ) )
+  def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux ) )
 
-  override def mainFormulaSequent = mainFormula +: Sequent()
+  override def mainFormulaSequent: HOLSequent = mainFormula +: Sequent()
 }
 
 object ExistsSkLeftRule extends ConvenienceConstructor( "ExistsSkLeftRule" ) {
@@ -1427,17 +1428,17 @@ case class ExistsRightRule( subProof: LKProof, aux: SequentIndex, A: Formula, te
 
   validateIndices( premise, Seq(), Seq( aux ) )
 
-  def auxFormula = premise( aux )
+  def auxFormula: Formula = premise( aux )
   if ( auxFormula != BetaReduction.betaNormalize( Substitution( v, term )( A ) ) )
     throw LKRuleCreationException( s"Substituting $term for $v in $A does not result in ${premise( aux )}." )
 
-  val mainFormula = BetaReduction.betaNormalize( Ex( v, A ) )
+  val mainFormula: Formula = BetaReduction.betaNormalize( Ex( v, A ) )
 
-  override def name = "∃:r"
+  override def name: String = "∃:r"
 
-  def auxIndices = Seq( Seq( aux ) )
+  def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux ) )
 
-  override def mainFormulaSequent = Sequent() :+ mainFormula
+  override def mainFormulaSequent: HOLSequent = Sequent() :+ mainFormula
 }
 
 object ExistsRightRule extends ConvenienceConstructor( "ExistsRightRule" ) {
@@ -1496,7 +1497,7 @@ object ExistsRightRule extends ConvenienceConstructor( "ExistsRightRule" ) {
 }
 
 object WeakQuantifierRule {
-  def unapply( p: UnaryLKProof ) = p match {
+  def unapply( p: UnaryLKProof ): Option[( LKProof, SequentIndex, Formula, Expr, Var, Boolean )] = p match {
     case ForallLeftRule( subProof, aux, f, t, v ) =>
       Some( ( subProof, aux, f, t, v, false ) )
     case ExistsRightRule( subProof, aux, f, t, v ) =>
@@ -1506,7 +1507,7 @@ object WeakQuantifierRule {
 }
 
 object StrongQuantifierRule {
-  def unapply( p: UnaryLKProof ) = p match {
+  def unapply( p: UnaryLKProof ): Option[( LKProof, SequentIndex, Var, Var, Boolean )] = p match {
     case ExistsLeftRule( subProof, aux, eigen, quant ) =>
       Some( ( subProof, aux, eigen, quant, false ) )
     case ForallRightRule( subProof, aux, eigen, quant ) =>
@@ -1530,9 +1531,9 @@ abstract class EqualityRule extends UnaryLKProof with CommonRule {
     case Suc( _ ) => validateIndices( premise, Seq( eq ), Seq( aux ) )
   }
 
-  def equation = premise( eq )
+  def equation: Formula = premise( eq )
 
-  val auxFormula = premise( aux )
+  val auxFormula: Formula = premise( aux )
 
   val ( what, by, leftToRight ) = equation match {
     case Eq( s, t ) =>
@@ -1549,14 +1550,14 @@ abstract class EqualityRule extends UnaryLKProof with CommonRule {
     case _ => throw LKRuleCreationException( s"Formula $equation is not an equation." )
   }
 
-  def mainFormula = BetaReduction.betaNormalize( App( replacementContext, by ) ).asInstanceOf[Formula]
+  def mainFormula: Formula = BetaReduction.betaNormalize( App( replacementContext, by ) ).asInstanceOf[Formula]
 
-  def auxIndices = Seq( Seq( eq, aux ) )
+  def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( eq, aux ) )
 
-  override def formulasToBeDeleted = Seq( Seq( aux ) )
+  override def formulasToBeDeleted: Seq[Seq[SequentIndex]] = Seq( Seq( aux ) )
 
-  def auxInConclusion = mainIndices.head
-  def eqInConclusion = getSequentConnector.child( eq )
+  def auxInConclusion: SequentIndex = mainIndices.head
+  def eqInConclusion: SequentIndex = getSequentConnector.child( eq )
 
 }
 
@@ -1582,9 +1583,9 @@ case class EqualityLeftRule( subProof: LKProof, eq: SequentIndex, aux: SequentIn
 
   validateIndices( premise, Seq( eq, aux ), Seq() )
 
-  override def name = "eq:l"
+  override def name: String = "eq:l"
 
-  override def mainFormulaSequent = mainFormula +: Sequent()
+  override def mainFormulaSequent: HOLSequent = mainFormula +: Sequent()
 }
 
 object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
@@ -1692,9 +1693,9 @@ case class EqualityRightRule( subProof: LKProof, eq: SequentIndex, aux: SequentI
 
   validateIndices( premise, Seq( eq ), Seq( aux ) )
 
-  override def name = "eq:r"
+  override def name: String = "eq:r"
 
-  override def mainFormulaSequent = Sequent() :+ mainFormula
+  override def mainFormulaSequent: HOLSequent = Sequent() :+ mainFormula
 }
 
 object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
@@ -1805,14 +1806,14 @@ case class InductionCase( proof: LKProof, constructor: Const,
   val FunctionType( indTy, fieldTypes ) = constructor.ty
   require( fieldTypes == eigenVars.map( _.ty ) )
 
-  val hypVars = eigenVars filter { _.ty == indTy }
+  val hypVars: Seq[Var] = eigenVars filter { _.ty == indTy }
   require( hypotheses.size == hypVars.size )
 
   hypotheses foreach { hyp =>
     require( hyp.isAnt && proof.endSequent.isDefinedAt( hyp ) )
   }
 
-  val term = constructor( eigenVars: _* )
+  val term: Expr = constructor( eigenVars: _* )
 
   require( conclusion.isSuc && proof.endSequent.isDefinedAt( conclusion ) )
 }
@@ -1846,16 +1847,16 @@ case class InductionRule( cases: Seq[InductionCase], formula: Abs, term: Expr ) 
   for ( ( cas, ctx ) <- cases zip contexts )
     require( freeVariables( ctx.elements :+ formula ) intersect cas.eigenVars.toSet isEmpty )
 
-  val mainFormula = BetaReduction.betaNormalize( formula( term ).asInstanceOf[Formula] )
-  override protected def mainFormulaSequent = Sequent() :+ mainFormula
+  val mainFormula: Formula = BetaReduction.betaNormalize( formula( term ).asInstanceOf[Formula] )
+  override protected def mainFormulaSequent: HOLSequent = Sequent() :+ mainFormula
   override def auxIndices: Seq[Seq[SequentIndex]] = cases map { c => c.hypotheses :+ c.conclusion }
   override def immediateSubProofs: Seq[LKProof] = cases map { _.proof }
 
   private lazy val product = cases.flatMap { _.productIterator } :+ formula :+ term
-  override def productArity = product.size
-  override def productElement( n: Int ) = product( n )
+  override def productArity: Int = product.size
+  override def productElement( n: Int ): Any = product( n )
 
-  override def name = "ind"
+  override def name: String = "ind"
 }
 
 abstract class DefinitionRule extends UnaryLKProof with CommonRule {
@@ -1897,9 +1898,9 @@ object DefinitionRule extends ConvenienceConstructor( "DefinitionRule" ) {
  * @param mainFormula The formula
  */
 case class DefinitionLeftRule( subProof: LKProof, aux: SequentIndex, mainFormula: Formula ) extends DefinitionRule {
-  override def name = "d:l"
-  override def auxIndices = Seq( Seq( aux ) )
-  override def mainFormulaSequent = mainFormula +: Sequent()
+  override def name: String = "d:l"
+  override def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux ) )
+  override def mainFormulaSequent: HOLSequent = mainFormula +: Sequent()
 }
 
 object DefinitionLeftRule extends ConvenienceConstructor( "DefinitionLeftRule" ) {
@@ -1941,9 +1942,9 @@ object DefinitionLeftRule extends ConvenienceConstructor( "DefinitionLeftRule" )
  * @param mainFormula The formula
  */
 case class DefinitionRightRule( subProof: LKProof, aux: SequentIndex, mainFormula: Formula ) extends DefinitionRule {
-  override def name = "d:r"
-  override def auxIndices = Seq( Seq( aux ) )
-  override def mainFormulaSequent = Sequent() :+ mainFormula
+  override def name: String = "d:r"
+  override def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux ) )
+  override def mainFormulaSequent: HOLSequent = Sequent() :+ mainFormula
 }
 
 object DefinitionRightRule extends ConvenienceConstructor( "DefinitionRightRule" ) {
@@ -2111,7 +2112,7 @@ class ConvenienceConstructor( val longName: String ) {
    * @return
    */
   protected def validateIndices( premise: HOLSequent )( antFormulas: Seq[Formula], antIndices: Seq[Int],
-                                                        sucFormulas: Seq[Formula], sucIndices: Seq[Int] ) = {
+                                                        sucFormulas: Seq[Formula], sucIndices: Seq[Int] ): Unit = {
     val antMap = scala.collection.mutable.HashMap.empty[Formula, Int]
     val sucMap = scala.collection.mutable.HashMap.empty[Formula, Int]
 
