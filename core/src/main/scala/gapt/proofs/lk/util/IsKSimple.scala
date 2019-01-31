@@ -1,10 +1,13 @@
-package gapt.proofs.lk
+package gapt.proofs.lk.util
+
 import gapt.expr.Const
 import gapt.expr.Expr
 import gapt.expr.TArr
 import gapt.expr.TBase
 import gapt.expr.Ty
 import gapt.proofs.context.update.InductiveType
+import gapt.proofs.lk.InductionRule
+import gapt.proofs.lk.LKProof
 
 object IsKSimple {
   def apply( proof: LKProof ): Boolean = {
@@ -21,4 +24,3 @@ object IsKSimple {
   }
 
 }
-

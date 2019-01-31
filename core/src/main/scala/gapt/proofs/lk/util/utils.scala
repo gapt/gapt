@@ -1,9 +1,23 @@
-package gapt.proofs.lk
+package gapt.proofs.lk.util
 
 import gapt.expr._
 import gapt.expr.hol.instantiate
 import gapt.proofs.SequentConnector
 import gapt.proofs.context.Context
+import gapt.proofs.lk.CutRule
+import gapt.proofs.lk.DefinitionLeftRule
+import gapt.proofs.lk.DefinitionRightRule
+import gapt.proofs.lk.EqualityLeftRule
+import gapt.proofs.lk.EqualityRightRule
+import gapt.proofs.lk.ExistsLeftRule
+import gapt.proofs.lk.ForallLeftBlock
+import gapt.proofs.lk.ForallRightRule
+import gapt.proofs.lk.InductionRule
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.LKVisitor
+import gapt.proofs.lk.LogicalAxiom
+import gapt.proofs.lk.ReflexivityAxiom
+import gapt.proofs.lk.StrongQuantifierRule
 import gapt.provers.viper.aip
 import gapt.utils.NameGenerator
 

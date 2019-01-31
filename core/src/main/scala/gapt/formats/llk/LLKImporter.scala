@@ -9,6 +9,8 @@ import gapt.proofs.lk._
 
 import scala.annotation.tailrec
 import EquationVerifier._
+import gapt.proofs.lk.util.AtomicExpansion
+import gapt.proofs.lk.util.solvePropositional
 import gapt.utils.Logger
 
 private object LLKLogger extends Logger( "llk" ); import LLKLogger._

@@ -1,10 +1,27 @@
-package gapt.proofs.lk
+package gapt.proofs.lk.util
 
 import gapt.expr._
 import gapt.expr.hol.containsQuantifier
 import gapt.grammars._
+import gapt.proofs.Ant
+import gapt.proofs.Sequent
+import gapt.proofs.SequentIndex
+import gapt.proofs.Suc
+import gapt.proofs.lk.BottomAxiom
+import gapt.proofs.lk.ContractionRule
+import gapt.proofs.lk.CutRule
+import gapt.proofs.lk.EqualityLeftRule
+import gapt.proofs.lk.EqualityRightRule
+import gapt.proofs.lk.EqualityRule
+import gapt.proofs.lk.InductionRule
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.LogicalAxiom
+import gapt.proofs.lk.ProofLink
+import gapt.proofs.lk.ReflexivityAxiom
+import gapt.proofs.lk.StrongQuantifierRule
+import gapt.proofs.lk.TopAxiom
+import gapt.proofs.lk.WeakQuantifierRule
 import gapt.proofs.lk.transformations.moveStrongQuantifierRulesDown
-import gapt.proofs.{ Ant, Sequent, SequentIndex, Suc }
 
 object extractRecSchem {
   def apply(

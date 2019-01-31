@@ -1,7 +1,13 @@
-package gapt.proofs.lk
+package gapt.proofs.lk.util
 
 import gapt.expr.To
 import gapt.proofs.SequentIndex
+import gapt.proofs.lk.ForallRightRule
+import gapt.proofs.lk.ImpRightRule
+import gapt.proofs.lk.InductionRule
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.NegRightRule
+import gapt.proofs.lk.SkolemQuantifierRule
 
 /**
  * Checks whether a given proof in LK is in the calculus L'J introduced in [Maehara 1954].  In

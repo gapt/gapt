@@ -13,6 +13,8 @@ import gapt.proofs.lk.transformations.acnfTop
 import gapt.proofs.lk.transformations.cutNormal
 import gapt.proofs.lk.transformations.isAcnf
 import gapt.proofs.lk.transformations.isAcnfTop
+import gapt.proofs.lk.util.isCutFree
+import gapt.proofs.lk.util.isInductionFree
 import gapt.proofs.{ Ant, ProofBuilder, Sequent, SequentMatchers, Suc }
 import gapt.provers.escargot.Escargot
 import org.specs2.mutable._

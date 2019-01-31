@@ -4,6 +4,7 @@ import gapt.proofs.lk._
 import gapt.proofs._
 import gapt.expr._
 import gapt.proofs.context.Context
+import gapt.proofs.lk.util.SolveUtils
 import gapt.provers.escargot.Escargot
 import gapt.utils.quiet
 

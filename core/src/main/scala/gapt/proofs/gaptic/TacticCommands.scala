@@ -9,6 +9,7 @@ import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.gaptic.tactics._
 import gapt.proofs.lk._
+import gapt.proofs.lk.util.solvePropositional
 import gapt.provers.Prover
 import gapt.provers.escargot.Escargot
 import gapt.provers.prover9.Prover9

@@ -27,7 +27,6 @@ import gapt.proofs.expansion.moveDefsUpward
 import gapt.proofs.expansion.replaceWithContext
 import gapt.proofs.lk.AndLeftRule
 import gapt.proofs.lk.AndRightRule
-import gapt.proofs.lk.AtomicExpansion
 import gapt.proofs.lk.BottomAxiom
 import gapt.proofs.lk.ContractionLeftRule
 import gapt.proofs.lk.ContractionRightRule
@@ -55,7 +54,8 @@ import gapt.proofs.lk.ReflexivityAxiom
 import gapt.proofs.lk.TopAxiom
 import gapt.proofs.lk.WeakeningLeftRule
 import gapt.proofs.lk.WeakeningRightRule
-import gapt.proofs.lk.regularize
+import gapt.proofs.lk.util.AtomicExpansion
+import gapt.proofs.lk.util.regularize
 
 object LKToExpansionProof {
 

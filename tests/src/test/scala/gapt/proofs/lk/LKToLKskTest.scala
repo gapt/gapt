@@ -6,6 +6,8 @@ import gapt.formats.ClasspathInputFile
 import gapt.formats.llk.loadLLK
 import gapt.proofs.lk.transformations.eliminateDefinitions
 import gapt.proofs.lk.transformations.skolemizeLK
+import gapt.proofs.lk.util.AtomicExpansion
+import gapt.proofs.lk.util.regularize
 import gapt.proofs.{ Ant, Suc }
 import org.specs2.mutable._
 

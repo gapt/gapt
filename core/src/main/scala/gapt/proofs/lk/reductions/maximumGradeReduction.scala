@@ -2,7 +2,9 @@ package gapt.proofs.lk.reductions
 
 import gapt.expr.FOLFormula
 import gapt.proofs.context.Context
-import gapt.proofs.lk.{ CutRule, LKProof, Selector, logicalComplexity }
+import gapt.proofs.lk.transformations.Selector
+import gapt.proofs.lk.util.logicalComplexity
+import gapt.proofs.lk.{ CutRule, LKProof }
 
 class MaximumGradeSelector( reduction: CutReduction ) extends Selector {
   override def createSelectorReduction( proof: LKProof ): Option[Reduction] = {

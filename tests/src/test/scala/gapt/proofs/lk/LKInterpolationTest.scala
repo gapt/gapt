@@ -3,6 +3,8 @@ package gapt.proofs.lk
 import gapt.expr._
 import gapt.expr.hol.HOLPosition
 import gapt.proofs._
+import gapt.proofs.lk.util.ExtractInterpolant
+import gapt.proofs.lk.util.Interpolate
 import org.specs2.execute.Success
 import org.specs2.mutable._
 

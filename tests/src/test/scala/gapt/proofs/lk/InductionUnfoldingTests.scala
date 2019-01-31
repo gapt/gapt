@@ -7,6 +7,7 @@ import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.lk.transformations.unfoldInduction
+import gapt.proofs.lk.util.regularize
 import org.specs2.mutable._
 
 class InductionUnfoldingOnTreesTest extends Specification {

@@ -1,7 +1,9 @@
-package gapt.proofs.lk
+package gapt.proofs.lk.transformations
 
-import gapt.proofs.lk.reductions.Reduction
 import gapt.proofs.SequentConnector
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.LKVisitor
+import gapt.proofs.lk.reductions.Reduction
 
 trait ReductionStrategy {
   def run( proof: LKProof ): LKProof

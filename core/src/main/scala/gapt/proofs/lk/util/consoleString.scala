@@ -1,7 +1,11 @@
-package gapt.proofs.lk
+package gapt.proofs.lk.util
 
 import gapt.proofs.HOLSequent
 import gapt.proofs.SequentIndex
+import gapt.proofs.lk.BinaryLKProof
+import gapt.proofs.lk.InitialSequent
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.UnaryLKProof
 
 object consoleString {
   /**
@@ -52,4 +56,3 @@ object consoleString {
 
   }
 }
-

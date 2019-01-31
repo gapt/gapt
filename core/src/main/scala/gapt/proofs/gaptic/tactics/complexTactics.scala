@@ -14,6 +14,8 @@ import gapt.provers.viper.aip.axioms._
 import cats.syntax.all._
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.lk.util.solvePropositional
+import gapt.proofs.lk.util.solveQuasiPropositional
 
 /**
  * Performs backwards chaining:

@@ -1,4 +1,11 @@
-package gapt.proofs.lk
+package gapt.proofs.lk.util
+
+import gapt.proofs.lk.CutRule
+import gapt.proofs.lk.EqualityRule
+import gapt.proofs.lk.InductionRule
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.StrongQuantifierRule
+import gapt.proofs.lk.WeakQuantifierRule
 
 object quantRulesNumber {
   def apply( p: LKProof ): Int =

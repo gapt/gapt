@@ -6,6 +6,7 @@ import gapt.proofs.{ Ant, ProofBuilder, Sequent, SequentConnector, SequentIndex,
 import gapt.proofs.lk._
 import gapt.proofs.lk.transformations.cutNormal
 import gapt.proofs.lk.transformations.eliminateDefinitions
+import gapt.proofs.lk.util.solvePropositional
 
 import scala.collection.mutable
 

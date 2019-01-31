@@ -33,7 +33,7 @@ import gapt.proofs.lk.OrRightRule
 import gapt.proofs.lk.StrongQuantifierRule
 import gapt.proofs.lk.WeakeningLeftRule
 import gapt.proofs.lk.WeakeningRightRule
-import gapt.proofs.lk.freeVariablesLK
+import gapt.proofs.lk.util.freeVariablesLK
 
 /**
  * Modifies an LK proof to introduce strong quantifiers as soon as possible.

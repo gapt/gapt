@@ -6,7 +6,9 @@ import gapt.expr._
 import gapt.expr.hol.containsQuantifierOnLogicalLevel
 import gapt.proofs.context.Context
 import gapt.proofs.lk.transformations.eliminateDefinitions
-import gapt.proofs.lk.{ LKProof, instanceProof, normalizeLKt, solvePropositional }
+import gapt.proofs.lk.util.instanceProof
+import gapt.proofs.lk.util.solvePropositional
+import gapt.proofs.lk.{ LKProof, normalizeLKt }
 import gapt.proofs.{ SequentMatchers, lk }
 import gapt.provers.escargot.Escargot
 import gapt.utils.Maybe

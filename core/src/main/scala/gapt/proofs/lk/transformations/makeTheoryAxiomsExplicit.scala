@@ -17,7 +17,7 @@ import gapt.proofs.lk.ForallLeftBlock
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.LKVisitor
 import gapt.proofs.lk.ProofLink
-import gapt.proofs.lk.solvePropositional
+import gapt.proofs.lk.util.solvePropositional
 
 /**
  * Given a list of formulas Π, this transforms a proof π of Σ :- Δ into a proof π' of Π, Σ :- Δ.

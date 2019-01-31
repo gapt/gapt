@@ -21,10 +21,21 @@ import gapt.proofs.gaptic.{ ProofState, now }
 import gapt.proofs.lk._
 import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.proofs.lk.transformations.LKToND
+import gapt.proofs.lk.transformations.MG3iToLJ
 import gapt.proofs.lk.transformations.cleanStructuralRules
 import gapt.proofs.lk.transformations.cutNormal
 import gapt.proofs.lk.transformations.folSkolemize
 import gapt.proofs.lk.transformations.inductionNormalForm
+import gapt.proofs.lk.util.ArithmeticInductionToSchema
+import gapt.proofs.lk.util.ExtractInterpolant
+import gapt.proofs.lk.util.containsEqualityReasoning
+import gapt.proofs.lk.util.extractRecSchem
+import gapt.proofs.lk.util.instanceProof
+import gapt.proofs.lk.util.instantiateProof
+import gapt.proofs.lk.util.isMaeharaMG3i
+import gapt.proofs.lk.util.regularize
+import gapt.proofs.lk.util.solvePropositional
+import gapt.proofs.lk.util.solveQuasiPropositional
 import gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
 import gapt.proofs.{ Suc, loadExpansionProof }
 import gapt.proofs.nd.NDProof

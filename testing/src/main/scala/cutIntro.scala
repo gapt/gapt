@@ -19,6 +19,7 @@ import org.json4s.native.JsonMethods._
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
 import ammonite.ops._
+import gapt.proofs.lk.util.rulesNumber
 
 object parseMethod {
 

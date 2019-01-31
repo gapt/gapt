@@ -1,10 +1,15 @@
-package gapt.proofs.lk
-import gapt.expr._
+package gapt.proofs.lk.util
+
+import gapt.expr.Expr
+import gapt.proofs.SequentConnector
 import gapt.proofs.SequentConnector.guessInjection
-import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofDefinitions
 import gapt.proofs.context.facet.ProofNames
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.LKVisitor
+import gapt.proofs.lk.ProofLink
+import gapt.proofs.lk.WeakeningMacroRule
 import gapt.proofs.lk.transformations.eliminateDefinitions
 
 object instantiateProof {

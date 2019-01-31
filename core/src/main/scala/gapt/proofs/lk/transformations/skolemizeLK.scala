@@ -38,7 +38,7 @@ import gapt.proofs.lk.TopAxiom
 import gapt.proofs.lk.WeakQuantifierRule
 import gapt.proofs.lk.WeakeningLeftRule
 import gapt.proofs.lk.WeakeningRightRule
-import gapt.proofs.lk.regularize
+import gapt.proofs.lk.util.regularize
 import gapt.utils.NameGenerator
 
 import scala.collection.mutable

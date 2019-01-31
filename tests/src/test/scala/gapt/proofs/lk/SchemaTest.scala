@@ -14,6 +14,10 @@ import gapt.proofs.context.mutable.MutableContext
 import gapt.provers.escargot.Escargot
 import org.specs2.mutable.Specification
 import gapt.proofs.gaptic._
+import gapt.proofs.lk.util.ArithmeticInductionToSchema
+import gapt.proofs.lk.util.IsKSimple
+import gapt.proofs.lk.util.instantiateProof
+import gapt.proofs.lk.util.regularize
 
 class proofes( initialContext: ImmutableContext ) extends TacticsProof( initialContext ) {
   def prove0( SCS: Map[CLS, ( Struct, Set[Var] )] ): LKProof = {

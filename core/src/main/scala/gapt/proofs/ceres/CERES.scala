@@ -11,6 +11,9 @@ import gapt.proofs.expansion.{ ExpansionProof, ExpansionSequent }
 import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.proofs.lk.transformations.cleanStructuralRules
 import gapt.proofs.lk.transformations.skolemizeLK
+import gapt.proofs.lk.util.AtomicExpansion
+import gapt.proofs.lk.util.groundFreeVarsLK
+import gapt.proofs.lk.util.regularize
 import gapt.provers.ResolutionProver
 import gapt.provers.escargot.Escargot
 

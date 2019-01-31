@@ -8,7 +8,9 @@ import gapt.grammars.DeltaTableMethod
 import gapt.proofs.{ Ant, Sequent }
 import gapt.proofs.expansion.{ ETWeakening, ExpansionProof }
 import gapt.cutintro._
-import gapt.proofs.lk.{ CutRule, ForallLeftRule, quantRulesNumber, weakQuantRulesNumber }
+import gapt.proofs.lk.util.quantRulesNumber
+import gapt.proofs.lk.util.weakQuantRulesNumber
+import gapt.proofs.lk.{ CutRule, ForallLeftRule }
 import gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 

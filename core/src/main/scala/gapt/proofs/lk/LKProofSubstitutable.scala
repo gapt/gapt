@@ -4,6 +4,7 @@ import gapt.expr._
 import BetaReduction.{ betaNormalize, _ }
 import gapt.proofs.SequentConnector
 import gapt.proofs.gaptic.OpenAssumption
+import gapt.proofs.lk.util.freeVariablesLK
 
 /**
  * Class that describes how LKProofs can be substituted.

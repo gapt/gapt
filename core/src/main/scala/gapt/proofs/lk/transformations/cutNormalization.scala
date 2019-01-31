@@ -5,12 +5,7 @@ import gapt.proofs.SequentIndex
 import gapt.proofs.context.Context
 import gapt.proofs.lk.CutRule
 import gapt.proofs.lk.InductionRule
-import gapt.proofs.lk.IterativeParallelStrategy
 import gapt.proofs.lk.LKProof
-import gapt.proofs.lk.LowerMostRedexReducer
-import gapt.proofs.lk.ParallelAtDepthStrategy
-import gapt.proofs.lk.ReductionStrategy
-import gapt.proofs.lk.UppermostFirstStrategy
 import gapt.proofs.lk.reductions._
 import gapt.proofs.lk.transformations
 

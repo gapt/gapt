@@ -2,15 +2,13 @@ package gapt.examples
 
 import gapt.examples.Script
 import gapt.proofs.ceres.StructCreators
-import gapt.proofs.lk.{ AtomicExpansion, regularize }
-import java.nio.file.{ Paths, Files }
+import java.nio.file.{ Files, Paths }
 
 import gapt.expr.hol._
-
 import gapt.formats.latex.SequentsListLatexExporter
-
 import gapt.formats.tptp.TptpHOLExporter
 import gapt.proofs.HOLSequent
+import gapt.proofs.lk.util.regularize
 
 /* *************************************************************************** *
    n-Tape Proof script: loads an instance of the n-Tape proof, extracts the

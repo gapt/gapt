@@ -9,7 +9,8 @@ import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
 import gapt.proofs.context.update.ProofDefinitionDeclaration
 import gapt.proofs.context.update.ProofNameDeclaration
 import gapt.proofs.context.update.Sort
-import gapt.proofs.lk.instantiateProof //used to unfold proof schema
+import gapt.proofs.lk.util.instantiateProof
+//used to unfold proof schema
 
 object FirstSchema6 extends TacticsProof {
   //Type

@@ -13,7 +13,8 @@ import gapt.proofs.context.facet.{ BaseTypes, StructurallyInductiveTypes }
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, freeVariablesET, minimalExpansionSequent }
 import gapt.proofs.gaptic.Tactical1
-import gapt.proofs.lk.{ EquationalLKProver, LKProof }
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.util.EquationalLKProver
 import gapt.proofs.{ HOLSequent, Sequent, withSection }
 import gapt.provers.escargot.{ Escargot, QfUfEscargot }
 import gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }

@@ -8,11 +8,13 @@ import gapt.formats.ClasspathInputFile
 import gapt.formats.llk.{ ExtendedProofDatabase, LLKProofParser }
 import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.ceres._
-import gapt.proofs.lk.{ AtomicExpansion, CutRule, LKProof, regularize }
+import gapt.proofs.lk.{ CutRule, LKProof }
 import gapt.proofs._
 import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.proofs.lk.transformations.eliminateDefinitions
 import gapt.proofs.lk.transformations.skolemizeLK
+import gapt.proofs.lk.util.AtomicExpansion
+import gapt.proofs.lk.util.regularize
 import gapt.proofs.resolution.{ Input, Resolution, Subst }
 import gapt.provers.prover9.Prover9
 import org.specs2.mutable._

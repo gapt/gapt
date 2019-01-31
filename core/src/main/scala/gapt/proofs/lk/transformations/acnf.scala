@@ -6,7 +6,6 @@ import gapt.proofs.lk.CutRule
 import gapt.proofs.lk.InitialSequent
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.LogicalAxiom
-import gapt.proofs.lk.UppermostFirstStrategy
 import gapt.proofs.lk.WeakeningLeftRule
 import gapt.proofs.lk.WeakeningRightRule
 import gapt.proofs.lk.reductions.CutReduction

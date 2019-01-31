@@ -12,6 +12,12 @@ import gapt.proofs.expansion._
 import gapt.proofs.lk._
 import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.proofs.lk.transformations.cleanStructuralRules
+import gapt.proofs.lk.util.EquationalLKProver
+import gapt.proofs.lk.util.LKProver
+import gapt.proofs.lk.util.containsEqualityReasoning
+import gapt.proofs.lk.util.cutsNumber
+import gapt.proofs.lk.util.quantRulesNumber
+import gapt.proofs.lk.util.rulesNumber
 import gapt.proofs.resolution.{ ResolutionProof, ResolutionToExpansionProof, containsEquationalReasoning }
 import gapt.provers.Session.Session
 import gapt.provers.escargot.Escargot

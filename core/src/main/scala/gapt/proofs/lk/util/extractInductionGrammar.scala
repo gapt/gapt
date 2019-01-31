@@ -1,11 +1,23 @@
-package gapt.proofs.lk
+package gapt.proofs.lk.util
 
-import gapt.expr._
-import gapt.expr.hol.{ containsQuantifierOnLogicalLevel, instantiate }
+import gapt.expr.All
+import gapt.expr.Const
+import gapt.expr.Substitution
+import gapt.expr.Var
+import gapt.expr.hol.containsQuantifierOnLogicalLevel
+import gapt.expr.hol.instantiate
+import gapt.expr.rename
 import gapt.grammars.InductionGrammar
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
-import gapt.proofs.expansion._
+import gapt.proofs.expansion.ETStrongQuantifier
+import gapt.proofs.expansion.ETStrongQuantifierBlock
+import gapt.proofs.expansion.ETWeakQuantifierBlock
+import gapt.proofs.expansion.ExpansionProof
+import gapt.proofs.expansion.InstanceTermEncoding
+import gapt.proofs.expansion.eliminateCutsET
+import gapt.proofs.expansion.freeVariablesET
+import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.transformations.LKToExpansionProof
 
 object extractInductionGrammar {

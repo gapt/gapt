@@ -1,4 +1,4 @@
-package gapt.proofs.lk
+package gapt.proofs.lk.util
 
 import gapt.expr._
 import gapt.proofs.SequentConnector
@@ -6,6 +6,13 @@ import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.ProofDefinitionDeclaration
 import gapt.proofs.context.update.ProofNameDeclaration
+import gapt.proofs.lk.ContractionMacroRule
+import gapt.proofs.lk.CutRule
+import gapt.proofs.lk.InductionCase
+import gapt.proofs.lk.InductionRule
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.LKVisitor
+import gapt.proofs.lk.ProofLink
 
 object CreateASchemaVersion extends LKVisitor[MutableContext] {
   override protected def recurse( p: LKProof, ctx: MutableContext ): ( LKProof, SequentConnector ) =
