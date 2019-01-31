@@ -1,7 +1,16 @@
-package gapt.proofs.lk
+package gapt.proofs.lk.transformations
 
-import gapt.expr.{ Apps, Expr, Substitution }
+import gapt.expr.Apps
+import gapt.expr.Expr
+import gapt.expr.Substitution
 import gapt.proofs.SequentIndex
+import gapt.proofs.lk.ContractionMacroRule
+import gapt.proofs.lk.CutRule
+import gapt.proofs.lk.InductionCase
+import gapt.proofs.lk.InductionRule
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.WeakeningMacroRule
+import gapt.proofs.lk.transformations
 
 object unfoldInduction {
   /**
@@ -63,7 +72,7 @@ private object cutInductionHypotheses {
         val remainingCuts = rest map {
           case ( hyp, hypInAnt ) => ( hyp, intermediaryProof.getRightSequentConnector.child( hypInAnt ) )
         }
-        cutInductionHypotheses(
+        transformations.cutInductionHypotheses(
           remainingCuts,
           intermediaryProof,
           intermediaryProof.getRightSequentConnector.child( conclusionIndex ) )

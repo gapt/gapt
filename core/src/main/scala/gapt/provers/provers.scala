@@ -9,12 +9,12 @@ import gapt.proofs.expansion.eliminateCutsET
 import gapt.proofs.lk.ContractionMacroRule
 import gapt.proofs.lk.ExtractInterpolant
 import gapt.proofs.lk.LKProof
-import gapt.proofs.lk.LKToExpansionProof
 import gapt.proofs.HOLClause
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.provers.Session.Runners._
 import gapt.provers.Session._
 import gapt.utils.Maybe

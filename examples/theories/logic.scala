@@ -18,6 +18,9 @@ import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
 import gapt.proofs.context.update.ProofDefinitionDeclaration
 import gapt.proofs.context.update.ProofNameDeclaration
 import gapt.proofs.context.update.Update
+import gapt.proofs.lk.transformations.cleanCuts
+import gapt.proofs.lk.transformations.cleanStructuralRules
+import gapt.proofs.lk.transformations.eliminateDefinitions
 
 import scala.collection.mutable
 import scala.util.DynamicVariable

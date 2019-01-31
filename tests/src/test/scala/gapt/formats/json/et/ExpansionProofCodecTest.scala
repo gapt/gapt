@@ -1,7 +1,7 @@
 package gapt.formats.json.et
 
 import gapt.proofs.expansion._
-import gapt.proofs.lk.LKToExpansionProof
+import gapt.proofs.lk.transformations.LKToExpansionProof
 import org.specs2.mutable.Specification
 
 class ExpansionProofCodecTest extends Specification {

@@ -1,9 +1,61 @@
-package gapt.proofs.lk
+package gapt.proofs.lk.transformations
 
-import gapt.expr._
+import gapt.expr.Atom
+import gapt.expr.Eq
+import gapt.expr.Polarity
+import gapt.proofs.Sequent
 import gapt.proofs.context.Context
-import gapt.proofs.{ Ant, Sequent }
-import gapt.proofs.expansion._
+import gapt.proofs.expansion.ETAnd
+import gapt.proofs.expansion.ETAtom
+import gapt.proofs.expansion.ETBottom
+import gapt.proofs.expansion.ETCut
+import gapt.proofs.expansion.ETDefinition
+import gapt.proofs.expansion.ETImp
+import gapt.proofs.expansion.ETMerge
+import gapt.proofs.expansion.ETNeg
+import gapt.proofs.expansion.ETOr
+import gapt.proofs.expansion.ETSkolemQuantifier
+import gapt.proofs.expansion.ETStrongQuantifier
+import gapt.proofs.expansion.ETTop
+import gapt.proofs.expansion.ETWeakQuantifier
+import gapt.proofs.expansion.ETWeakening
+import gapt.proofs.expansion.ExpansionProof
+import gapt.proofs.expansion.ExpansionTree
+import gapt.proofs.expansion.eliminateMerges
+import gapt.proofs.expansion.isPropositionalET
+import gapt.proofs.expansion.moveDefsUpward
+import gapt.proofs.expansion.replaceWithContext
+import gapt.proofs.lk.AndLeftRule
+import gapt.proofs.lk.AndRightRule
+import gapt.proofs.lk.AtomicExpansion
+import gapt.proofs.lk.BottomAxiom
+import gapt.proofs.lk.ContractionLeftRule
+import gapt.proofs.lk.ContractionRightRule
+import gapt.proofs.lk.CutRule
+import gapt.proofs.lk.DefinitionLeftRule
+import gapt.proofs.lk.DefinitionRightRule
+import gapt.proofs.lk.EqualityRule
+import gapt.proofs.lk.ExistsLeftRule
+import gapt.proofs.lk.ExistsRightRule
+import gapt.proofs.lk.ExistsSkLeftRule
+import gapt.proofs.lk.ForallLeftRule
+import gapt.proofs.lk.ForallRightRule
+import gapt.proofs.lk.ForallSkRightRule
+import gapt.proofs.lk.ImpLeftRule
+import gapt.proofs.lk.ImpRightRule
+import gapt.proofs.lk.InductionRule
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.LogicalAxiom
+import gapt.proofs.lk.NegLeftRule
+import gapt.proofs.lk.NegRightRule
+import gapt.proofs.lk.OrLeftRule
+import gapt.proofs.lk.OrRightRule
+import gapt.proofs.lk.ProofLink
+import gapt.proofs.lk.ReflexivityAxiom
+import gapt.proofs.lk.TopAxiom
+import gapt.proofs.lk.WeakeningLeftRule
+import gapt.proofs.lk.WeakeningRightRule
+import gapt.proofs.lk.regularize
 
 object LKToExpansionProof {
 

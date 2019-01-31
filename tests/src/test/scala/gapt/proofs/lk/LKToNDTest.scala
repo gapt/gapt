@@ -6,6 +6,7 @@ import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.context.Context
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.Sort
+import gapt.proofs.lk.transformations.LKToND
 import gapt.proofs.nd.{ ExcludedMiddleRule, NDProof }
 import gapt.proofs.{ Ant, ProofBuilder, SequentIndex, SequentMatchers, Suc }
 import gapt.utils.SatMatchers

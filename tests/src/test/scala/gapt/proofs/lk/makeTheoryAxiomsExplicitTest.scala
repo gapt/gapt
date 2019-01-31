@@ -5,6 +5,7 @@ import gapt.expr.hol.universalClosure
 import gapt.proofs.SequentMatchers
 import gapt.proofs.context.facet.ProofDefinitions
 import gapt.proofs.context.facet.ProofNames
+import gapt.proofs.lk.transformations.makeTheoryAxiomsExplicit
 import org.specs2.mutable.Specification
 
 class makeTheoryAxiomsExplicitTest extends Specification with SequentMatchers {

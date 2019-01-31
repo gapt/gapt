@@ -4,7 +4,7 @@ import gapt.expr._
 import gapt.expr.hol.universalClosure
 import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.ceres.{ CharacteristicClauseSet, extractStruct }
-import gapt.proofs.lk.{ AtomicExpansion, LKToExpansionProof }
+import gapt.proofs.lk.AtomicExpansion
 import gapt.proofs.reduction._
 import gapt.proofs.Sequent
 import gapt.proofs.expansion.eliminateCutsET

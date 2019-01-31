@@ -4,6 +4,8 @@ import gapt.examples.{ Pi2Pigeonhole, lattice, tape }
 import gapt.expr._
 import gapt.formats.ClasspathInputFile
 import gapt.formats.llk.loadLLK
+import gapt.proofs.lk.transformations.eliminateDefinitions
+import gapt.proofs.lk.transformations.skolemizeLK
 import gapt.proofs.{ Ant, Suc }
 import org.specs2.mutable._
 

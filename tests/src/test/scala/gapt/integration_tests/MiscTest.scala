@@ -13,8 +13,11 @@ import gapt.proofs.lk._
 import gapt.provers.prover9.{ Prover9, Prover9Importer }
 import gapt.provers.sat.Sat4j
 import gapt.provers.verit.VeriT
-
 import gapt.formats.ClasspathInputFile
+import gapt.proofs.lk.transformations.LKToExpansionProof
+import gapt.proofs.lk.transformations.cutNormal
+import gapt.proofs.lk.transformations.eliminateDefinitions
+import gapt.proofs.lk.transformations.skolemizeLK
 import org.specs2.mutable._
 
 class MiscTest extends Specification {

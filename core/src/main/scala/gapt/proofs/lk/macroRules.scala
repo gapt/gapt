@@ -7,6 +7,7 @@ import gapt.proofs.expansion._
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames
+import gapt.proofs.lk.transformations.cleanCuts
 import gapt.provers.ResolutionProver
 import gapt.provers.escargot.Escargot
 

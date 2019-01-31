@@ -5,6 +5,7 @@ import gapt.expr._
 import gapt.proofs.context.Context
 import gapt.proofs.{ Ant, ProofBuilder, Sequent, SequentMatchers, Suc }
 import gapt.proofs.expansion._
+import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.utils.SatMatchers
 import org.specs2.mutable._
 

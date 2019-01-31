@@ -19,6 +19,12 @@ import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion._
 import gapt.proofs.gaptic.{ ProofState, now }
 import gapt.proofs.lk._
+import gapt.proofs.lk.transformations.LKToExpansionProof
+import gapt.proofs.lk.transformations.LKToND
+import gapt.proofs.lk.transformations.cleanStructuralRules
+import gapt.proofs.lk.transformations.cutNormal
+import gapt.proofs.lk.transformations.folSkolemize
+import gapt.proofs.lk.transformations.inductionNormalForm
 import gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
 import gapt.proofs.{ Suc, loadExpansionProof }
 import gapt.proofs.nd.NDProof

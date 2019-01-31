@@ -9,6 +9,7 @@ import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.{ Sequent, SequentMatchers }
 import gapt.proofs.gaptic.{ Lemma, ProofState, allR, cut, escargot, induction, insert, refl, rewrite }
+import gapt.proofs.lk.transformations.inductionNormalForm
 import org.specs2.mutable.Specification
 
 class InductionEliminationTests extends Specification with SequentMatchers {

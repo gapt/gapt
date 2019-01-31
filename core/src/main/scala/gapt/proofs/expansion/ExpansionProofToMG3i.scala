@@ -9,6 +9,7 @@ import ExpansionProofToLK._
 import gapt.expr.hol.instantiate
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.lk.transformations.eliminateDefinitions
 
 import scala.collection.mutable
 

@@ -6,7 +6,8 @@ import gapt.formats.tptp.TptpParser
 import gapt.proofs.context.mutable.MutableContext
 import gapt.formats.tptp.TptpImporter
 import gapt.proofs.expansion.{ ExpansionProofToLK, deskolemizeET }
-import gapt.proofs.lk.{ LKProof, LKToND, OrRightRule, WeakeningRightRule, containsEqualityReasoning, isMaeharaMG3i }
+import gapt.proofs.lk.transformations.LKToND
+import gapt.proofs.lk.{ LKProof, OrRightRule, WeakeningRightRule, containsEqualityReasoning, isMaeharaMG3i }
 import gapt.proofs.nd.{ ExcludedMiddleRule, NDProof }
 import gapt.proofs.resolution.{ ResolutionToExpansionProof, structuralCNF }
 import gapt.proofs.loadExpansionProof

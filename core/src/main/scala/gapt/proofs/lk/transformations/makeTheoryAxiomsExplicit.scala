@@ -1,10 +1,23 @@
-package gapt.proofs.lk
+package gapt.proofs.lk.transformations
 
-import gapt.expr._
-import gapt.expr.hol._
+import gapt.expr.All
+import gapt.expr.And
+import gapt.expr.Formula
+import gapt.expr.Polarity
+import gapt.expr.clauseSubsumption
+import gapt.expr.freeVariables
+import gapt.expr.hol.CNFp
+import gapt.expr.hol.containsStrongQuantifier
+import gapt.expr.hol.isPrenex
+import gapt.expr.hol.universalClosure
+import gapt.proofs.SequentConnector
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames
-import gapt.proofs.{ HOLClause, Sequent, SequentConnector }
+import gapt.proofs.lk.ForallLeftBlock
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.LKVisitor
+import gapt.proofs.lk.ProofLink
+import gapt.proofs.lk.solvePropositional
 
 /**
  * Given a list of formulas Π, this transforms a proof π of Σ :- Δ into a proof π' of Π, Σ :- Δ.

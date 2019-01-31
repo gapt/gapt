@@ -1,8 +1,18 @@
-package gapt.proofs.lk
+package gapt.proofs.lk.transformations
 
 import gapt.expr.Formula
 import gapt.expr.hol.isAtom
-import gapt.proofs.lk.reductions.{ CutReduction, gradeReduction, leftRankReduction, rightRankReduction }
+import gapt.proofs.lk.CutRule
+import gapt.proofs.lk.InitialSequent
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.LogicalAxiom
+import gapt.proofs.lk.UppermostFirstStrategy
+import gapt.proofs.lk.WeakeningLeftRule
+import gapt.proofs.lk.WeakeningRightRule
+import gapt.proofs.lk.reductions.CutReduction
+import gapt.proofs.lk.reductions.gradeReduction
+import gapt.proofs.lk.reductions.leftRankReduction
+import gapt.proofs.lk.reductions.rightRankReduction
 
 object acnf {
   /**

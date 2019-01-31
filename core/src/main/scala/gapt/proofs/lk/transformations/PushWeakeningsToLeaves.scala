@@ -1,7 +1,34 @@
-package gapt.proofs.lk
+package gapt.proofs.lk.transformations
 
-import gapt.expr.{ Formula, Polarity }
+import gapt.expr.Formula
+import gapt.expr.Polarity
 import gapt.proofs.SequentConnector
+import gapt.proofs.lk.AndLeftRule
+import gapt.proofs.lk.AndRightRule
+import gapt.proofs.lk.ContractionLeftRule
+import gapt.proofs.lk.ContractionMacroRule
+import gapt.proofs.lk.ContractionRightRule
+import gapt.proofs.lk.CutRule
+import gapt.proofs.lk.EqualityLeftRule
+import gapt.proofs.lk.EqualityRightRule
+import gapt.proofs.lk.ExistsLeftRule
+import gapt.proofs.lk.ExistsRightRule
+import gapt.proofs.lk.ExistsSkLeftRule
+import gapt.proofs.lk.ForallLeftRule
+import gapt.proofs.lk.ForallRightRule
+import gapt.proofs.lk.ForallSkRightRule
+import gapt.proofs.lk.ImpLeftRule
+import gapt.proofs.lk.ImpRightRule
+import gapt.proofs.lk.InductionRule
+import gapt.proofs.lk.InitialSequent
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.LKVisitor
+import gapt.proofs.lk.NegLeftRule
+import gapt.proofs.lk.NegRightRule
+import gapt.proofs.lk.OrLeftRule
+import gapt.proofs.lk.OrRightRule
+import gapt.proofs.lk.WeakeningLeftRule
+import gapt.proofs.lk.WeakeningRightRule
 
 object weakeningOnlySubTree {
   /**

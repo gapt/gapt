@@ -1,8 +1,39 @@
-package gapt.proofs.lk
+package gapt.proofs.lk.transformations
 
-import gapt.expr._
+import gapt.expr.All
+import gapt.expr.Ex
+import gapt.expr.Substitution
+import gapt.expr.Var
 import gapt.expr.hol.instantiate
-import gapt.proofs._
+import gapt.expr.rename
+import gapt.proofs.Ant
+import gapt.proofs.Sequent
+import gapt.proofs.SequentConnector
+import gapt.proofs.Suc
+import gapt.proofs.lk.AndLeftRule
+import gapt.proofs.lk.AndRightRule
+import gapt.proofs.lk.ContractionLeftRule
+import gapt.proofs.lk.ContractionRightRule
+import gapt.proofs.lk.CutRule
+import gapt.proofs.lk.EqualityLeftRule
+import gapt.proofs.lk.EqualityRightRule
+import gapt.proofs.lk.ExistsLeftRule
+import gapt.proofs.lk.ExistsRightRule
+import gapt.proofs.lk.ForallLeftRule
+import gapt.proofs.lk.ForallRightRule
+import gapt.proofs.lk.ImpLeftRule
+import gapt.proofs.lk.ImpRightRule
+import gapt.proofs.lk.InductionRule
+import gapt.proofs.lk.InitialSequent
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.NegLeftRule
+import gapt.proofs.lk.NegRightRule
+import gapt.proofs.lk.OrLeftRule
+import gapt.proofs.lk.OrRightRule
+import gapt.proofs.lk.StrongQuantifierRule
+import gapt.proofs.lk.WeakeningLeftRule
+import gapt.proofs.lk.WeakeningRightRule
+import gapt.proofs.lk.freeVariablesLK
 
 /**
  * Modifies an LK proof to introduce strong quantifiers as soon as possible.

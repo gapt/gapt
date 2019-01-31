@@ -6,6 +6,13 @@ import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic.{ Lemma, OpenAssumption, allL, andL, axiomLog, cut, impL, insert }
 import gapt.proofs.lk.reductions._
+import gapt.proofs.lk.transformations.LeftRankInductionUnfoldingReduction
+import gapt.proofs.lk.transformations.StuckCutReduction
+import gapt.proofs.lk.transformations.acnf
+import gapt.proofs.lk.transformations.acnfTop
+import gapt.proofs.lk.transformations.cutNormal
+import gapt.proofs.lk.transformations.isAcnf
+import gapt.proofs.lk.transformations.isAcnfTop
 import gapt.proofs.{ Ant, ProofBuilder, Sequent, SequentMatchers, Suc }
 import gapt.provers.escargot.Escargot
 import org.specs2.mutable._

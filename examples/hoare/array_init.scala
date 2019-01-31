@@ -6,7 +6,7 @@ import gapt.formats.hoare.ProgramParser
 import gapt.proofs.expansion.extractInstances
 import gapt.proofs.hoare.{ ForLoop, SimpleLoopProblem }
 import gapt.formats.prover9.Prover9TermParserLadrStyle._
-import gapt.proofs.lk.LKToExpansionProof
+import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.provers.prover9.Prover9
 
 object array_init extends Script {

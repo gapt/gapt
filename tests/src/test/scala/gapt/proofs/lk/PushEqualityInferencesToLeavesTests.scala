@@ -6,6 +6,9 @@ import gapt.proofs.context.Context
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.{ Ant, ProofBuilder, Sequent, SequentMatchers, Suc }
 import gapt.proofs.gaptic.OpenAssumption
+import gapt.proofs.lk.transformations.equalityLeftReduction
+import gapt.proofs.lk.transformations.equalityRightReduction
+import gapt.proofs.lk.transformations.pushEqualityInferencesToLeaves
 import org.specs2.mutable.Specification
 
 class PushEqualityInferencesToLeavesTests extends Specification with SequentMatchers {

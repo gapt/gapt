@@ -1,7 +1,8 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
-import gapt.proofs.lk.{ LKProof, LKToExpansionProof }
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.transformations.LKToExpansionProof
 
 /**
  * Deskolemization of expansion trees.

@@ -2,7 +2,7 @@ package gapt.examples
 
 import gapt.examples.Script
 import gapt.proofs.ceres.StructCreators
-import gapt.proofs.lk.{ AtomicExpansion, regularize, eliminateDefinitions }
+import gapt.proofs.lk.{ AtomicExpansion, regularize }
 import java.nio.file.{ Paths, Files }
 
 import gapt.expr.hol._

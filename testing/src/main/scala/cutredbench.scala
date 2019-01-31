@@ -7,7 +7,11 @@ import gapt.expr.hol.{ containsQuantifierOnLogicalLevel, isAtom }
 import gapt.proofs.HOLSequent
 import gapt.proofs.ceres.CERES
 import gapt.proofs.expansion.{ ExpansionProof, eliminateCutsET }
-import gapt.proofs.lk.{ LKProof, LKToExpansionProof, cutNormal, eliminateDefinitions, inductionNormalForm, instanceProof, normalizeLKt }
+import gapt.proofs.lk.transformations.LKToExpansionProof
+import gapt.proofs.lk.transformations.cutNormal
+import gapt.proofs.lk.transformations.eliminateDefinitions
+import gapt.proofs.lk.transformations.inductionNormalForm
+import gapt.proofs.lk.{ LKProof, instanceProof, normalizeLKt }
 import gapt.proofs.lkt.{ LKToLKt, LKt, LocalCtx }
 import gapt.proofs.resolution.ResolutionToLKProof
 import gapt.provers.escargot.Escargot

@@ -1,15 +1,42 @@
-package gapt.proofs.lk
+package gapt.proofs.lk.transformations
 
 import gapt.expr._
-import gapt.proofs.context.facet.ProofNames
-import gapt.proofs.nd._
 import gapt.proofs.Ant
 import gapt.proofs.ProofBuilder
 import gapt.proofs.SequentIndex
 import gapt.proofs.Suc
 import gapt.proofs.context.Context
+import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.lk
+import gapt.proofs.lk.AndLeftRule
+import gapt.proofs.lk.AndRightRule
+import gapt.proofs.lk.BottomAxiom
+import gapt.proofs.lk.ContractionLeftRule
+import gapt.proofs.lk.ContractionRightRule
+import gapt.proofs.lk.CutRule
+import gapt.proofs.lk.DefinitionLeftRule
+import gapt.proofs.lk.DefinitionRightRule
+import gapt.proofs.lk.EqualityLeftRule
+import gapt.proofs.lk.EqualityRightRule
+import gapt.proofs.lk.ExistsLeftRule
+import gapt.proofs.lk.ExistsRightRule
+import gapt.proofs.lk.ExistsSkLeftRule
+import gapt.proofs.lk.ForallLeftRule
+import gapt.proofs.lk.ForallRightRule
+import gapt.proofs.lk.ForallSkRightRule
+import gapt.proofs.lk.ImpLeftRule
+import gapt.proofs.lk.ImpRightRule
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.NegLeftRule
+import gapt.proofs.lk.NegRightRule
+import gapt.proofs.lk.OrLeftRule
+import gapt.proofs.lk.OrRightRule
+import gapt.proofs.lk.ReflexivityAxiom
+import gapt.proofs.lk.TopAxiom
+import gapt.proofs.lk.WeakeningLeftRule
+import gapt.proofs.lk.WeakeningRightRule
 import gapt.proofs.nd
+import gapt.proofs.nd._
 
 object LKToND {
 
@@ -538,7 +565,7 @@ object LKToND {
           exchange( translate( proof, Some( focusMain ) ), focus.map( p.endSequent.apply ) )
         }
 
-      case InductionRule( cases, formula, term ) =>
+      case lk.InductionRule( cases, formula, term ) =>
         val ndCases = cases.map {
           case lk.InductionCase( proof, constructor, hypotheses, eigenVars, conclusion ) =>
             val prfNd = translate( proof, Some( conclusion ) )

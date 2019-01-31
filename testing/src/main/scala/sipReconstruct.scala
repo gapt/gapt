@@ -8,6 +8,7 @@ import gapt.proofs.context.Context
 import gapt.proofs.expansion._
 import gapt.proofs.gaptic.TacticsProof
 import gapt.proofs.lk._
+import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.provers.viper.grammars.{ TreeGrammarProver, TreeGrammarProverOptions, indElimReversal }
 import gapt.utils.{ LogHandler, verbose }
 

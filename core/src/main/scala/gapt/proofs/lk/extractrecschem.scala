@@ -3,7 +3,8 @@ package gapt.proofs.lk
 import gapt.expr._
 import gapt.expr.hol.containsQuantifier
 import gapt.grammars._
-import gapt.proofs.{ Suc, Ant, SequentIndex, Sequent }
+import gapt.proofs.lk.transformations.moveStrongQuantifierRulesDown
+import gapt.proofs.{ Ant, Sequent, SequentIndex, Suc }
 
 object extractRecSchem {
   def apply(

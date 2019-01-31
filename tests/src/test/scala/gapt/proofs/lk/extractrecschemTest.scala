@@ -11,6 +11,7 @@ import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.Sort
+import gapt.proofs.lk.transformations.eliminateDefinitions
 import gapt.utils.SatMatchers
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragment

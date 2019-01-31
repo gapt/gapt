@@ -1,9 +1,51 @@
-package gapt.proofs.lk
+package gapt.proofs.lk.transformations
 
-import gapt.expr._
-import gapt.proofs.{ HOLSequent, Sequent }
-import gapt.utils.{ NameGenerator, StreamUtils }
-import StreamUtils._
+import gapt.expr.All
+import gapt.expr.And
+import gapt.expr.Atom
+import gapt.expr.Bottom
+import gapt.expr.Const
+import gapt.expr.Ex
+import gapt.expr.Expr
+import gapt.expr.Formula
+import gapt.expr.FunctionType
+import gapt.expr.Imp
+import gapt.expr.Neg
+import gapt.expr.Or
+import gapt.expr.Polarity
+import gapt.expr.Substitution
+import gapt.expr.Top
+import gapt.expr.constants
+import gapt.expr.containedNames
+import gapt.expr.rename
+import gapt.proofs.HOLSequent
+import gapt.proofs.Sequent
+import gapt.proofs.lk.AndLeftRule
+import gapt.proofs.lk.AndRightRule
+import gapt.proofs.lk.ContractionLeftRule
+import gapt.proofs.lk.ContractionRightRule
+import gapt.proofs.lk.CutRule
+import gapt.proofs.lk.EqualityLeftRule
+import gapt.proofs.lk.EqualityRightRule
+import gapt.proofs.lk.ExchangeLeftMacroRule
+import gapt.proofs.lk.ExchangeRightMacroRule
+import gapt.proofs.lk.ExistsLeftRule
+import gapt.proofs.lk.ExistsRightRule
+import gapt.proofs.lk.ForallLeftRule
+import gapt.proofs.lk.ForallRightRule
+import gapt.proofs.lk.ImpLeftRule
+import gapt.proofs.lk.ImpRightRule
+import gapt.proofs.lk.InitialSequent
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.NegLeftRule
+import gapt.proofs.lk.NegRightRule
+import gapt.proofs.lk.OrLeftRule
+import gapt.proofs.lk.OrRightRule
+import gapt.proofs.lk.WeakeningLeftRule
+import gapt.proofs.lk.WeakeningRightRule
+import gapt.utils.NameGenerator
+import gapt.utils.StreamUtils.even
+import gapt.utils.StreamUtils.odd
 
 object folSkolemize {
   private[lk] class SkolemSymbolFactory( usedConstants: Iterable[Const] ) {

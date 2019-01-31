@@ -1,6 +1,11 @@
-package gapt.proofs.lk
+package gapt.proofs.lk.transformations
 
-import gapt.proofs._
+import gapt.proofs.Ant
+import gapt.proofs.Suc
+import gapt.proofs.lk.CutRule
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.LKVisitor
+import gapt.proofs.lk.LogicalAxiom
 
 /**
  * Algorithm that removes some unnecessary cuts.

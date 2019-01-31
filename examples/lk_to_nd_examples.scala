@@ -6,6 +6,7 @@ import gapt.proofs.context.Context
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.Sort
 import gapt.proofs.lk._
+import gapt.proofs.lk.transformations.LKToND
 
 // Example 0.1.6
 object ex0_1_6 extends Script {

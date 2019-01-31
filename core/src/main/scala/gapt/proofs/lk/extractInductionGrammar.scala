@@ -6,6 +6,7 @@ import gapt.grammars.InductionGrammar
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.expansion._
+import gapt.proofs.lk.transformations.LKToExpansionProof
 
 object extractInductionGrammar {
 

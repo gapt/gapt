@@ -4,6 +4,8 @@ import gapt.expr._
 import gapt.expr.hol.instantiate
 import gapt.proofs.{ Ant, ProofBuilder, Sequent, SequentConnector, SequentIndex, Suc }
 import gapt.proofs.lk._
+import gapt.proofs.lk.transformations.cutNormal
+import gapt.proofs.lk.transformations.eliminateDefinitions
 
 import scala.collection.mutable
 

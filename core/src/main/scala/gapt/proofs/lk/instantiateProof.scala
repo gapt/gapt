@@ -5,6 +5,7 @@ import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofDefinitions
 import gapt.proofs.context.facet.ProofNames
+import gapt.proofs.lk.transformations.eliminateDefinitions
 
 object instantiateProof {
   /**

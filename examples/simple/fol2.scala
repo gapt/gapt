@@ -3,6 +3,7 @@ package gapt.examples
 import gapt.expr._
 import gapt.proofs.ceres.CERES
 import gapt.proofs.lk._
+import gapt.proofs.lk.transformations.cutNormal
 
 /**
  * Provides a simple intuitionistic proof of ¬p ∨ p ⊢ ¬¬p → p. Applying the CERES method will create a

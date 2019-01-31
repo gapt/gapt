@@ -1,6 +1,7 @@
-package gapt.proofs.lk
+package gapt.proofs.lk.transformations
 
 import gapt.proofs.context.Context
+import gapt.proofs.lk.LKProof
 
 object inductionNormalForm {
   /**

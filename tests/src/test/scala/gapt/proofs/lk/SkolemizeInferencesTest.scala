@@ -3,6 +3,7 @@ package gapt.proofs.lk
 import gapt.examples.{ nTape3, primediv }
 import gapt.proofs.SequentMatchers
 import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.lk.transformations.skolemizeLK
 import org.specs2.mutable.Specification
 
 class SkolemizeInferencesTest extends Specification with SequentMatchers {
