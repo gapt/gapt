@@ -2,9 +2,17 @@ package gapt.proofs.lk
 
 import gapt.expr._
 import gapt.expr.hol.instantiate
-import gapt.proofs.IndexOrFormula.{ IsFormula, IsIndex }
-import gapt.proofs._
-import gapt.proofs.context
+import gapt.proofs.Ant
+import gapt.proofs.ContextRule
+import gapt.proofs.HOLSequent
+import gapt.proofs.IndexOrFormula
+import gapt.proofs.IndexOrFormula.IsFormula
+import gapt.proofs.IndexOrFormula.IsIndex
+import gapt.proofs.Sequent
+import gapt.proofs.SequentConnector
+import gapt.proofs.SequentIndex
+import gapt.proofs.SequentProof
+import gapt.proofs.Suc
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames
 
