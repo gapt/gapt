@@ -12,27 +12,32 @@ import gapt.proofs.lk.rules.LogicalAxiom
  * Algorithm that removes some unnecessary cuts.
  * At the moment it only removes cuts where one of the premises is a logical axiom.
  */
-object cleanCuts extends LKVisitor[Unit] {
+object cleanCuts {
 
-  def apply( p: LKProof ): LKProof = apply( p, () )
+  def apply( p: LKProof ): LKProof = cleanCutsVisitor( p, () )
 
-  override def visitCut( p: CutRule, otherArg: Unit ): (LKProof, SequentConnector) = {
-    val CutRule( leftSubProof, aux1, rightSubProof, aux2 ) = p
+  private object cleanCutsVisitor extends LKVisitor[Unit] {
 
-    ( leftSubProof, rightSubProof ) match {
-      case ( LogicalAxiom( _ ), _ ) =>
-        val ( subProofNew, subConnector ) = recurse( rightSubProof, () )
-        ( subProofNew,
-          subConnector * p.getRightSequentConnector.inv
-          + ( subConnector.child( aux2 ), p.getLeftSequentConnector.child( Ant( 0 ) ) ) )
+    override def visitCut( p: CutRule, otherArg: Unit ): ( LKProof, SequentConnector ) = {
+      val CutRule( leftSubProof, aux1, rightSubProof, aux2 ) = p
 
-      case ( _, LogicalAxiom( _ ) ) =>
-        val ( subProofNew, subConnector ) = recurse( leftSubProof, () )
-        ( subProofNew,
-          subConnector * p.getLeftSequentConnector.inv
-          + ( subConnector.child( aux1 ), p.getRightSequentConnector.child( Suc( 0 ) ) ) )
+      ( leftSubProof, rightSubProof ) match {
+        case ( LogicalAxiom( _ ), _ ) =>
+          val ( subProofNew, subConnector ) = recurse( rightSubProof, () )
+          ( subProofNew,
+            subConnector * p.getRightSequentConnector.inv
+            + ( subConnector.child( aux2 ), p.getLeftSequentConnector.child( Ant( 0 ) ) ) )
 
-      case _ => super.visitCut( p, () )
+        case ( _, LogicalAxiom( _ ) ) =>
+          val ( subProofNew, subConnector ) = recurse( leftSubProof, () )
+          ( subProofNew,
+            subConnector * p.getLeftSequentConnector.inv
+            + ( subConnector.child( aux1 ), p.getRightSequentConnector.child( Suc( 0 ) ) ) )
+
+        case _ => super.visitCut( p, () )
+      }
     }
+
   }
+
 }

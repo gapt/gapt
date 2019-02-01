@@ -119,7 +119,7 @@ class ReductiveCutNormalization(
       val reducer = ( new LowerMostRedexReducer( ( new UppermostRedexFilter ).filter( reduction ) ) )
       do {
         reducer.foundRedex = false
-        intermediaryProof = reducer.apply( intermediaryProof, () )
+        intermediaryProof = reducer.apply( intermediaryProof )
         intermediaryProof = transformations.cleanStructuralRules( intermediaryProof )
       } while ( reducer.foundRedex )
       intermediaryProof

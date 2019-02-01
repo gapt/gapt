@@ -10,7 +10,7 @@ package object lk {
 
   implicit object lkProofReplaceable extends ClosedUnderReplacement[LKProof] {
     override def replace( proof: LKProof, p: PartialFunction[Expr, Expr] ): LKProof =
-      new LKProofReplacer( p ).apply( proof, () )
+      new LKProofReplacer( p ).apply( proof )
 
     def names( proof: LKProof ): Set[VarOrConst] =
       proof.subProofs.flatMap {

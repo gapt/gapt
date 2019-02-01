@@ -208,114 +208,128 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
     }
 }
 
-class LKProofReplacer( repl: PartialFunction[Expr, Expr] ) extends LKVisitor[Unit] {
-  override protected def visitOpenAssumption( proof: OpenAssumption, otherArg: Unit ): ( LKProof, SequentConnector ) = {
-    val proofNew = OpenAssumption( for ( ( l, f ) <- proof.labelledSequent ) yield l -> TermReplacement( f, repl ), proof.index )
-    ( proofNew, SequentConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map { Seq( _ ) } ) )
+class LKProofReplacer( repl: PartialFunction[Expr, Expr] ) {
+
+  def apply( proof: LKProof ): LKProof = lkProofReplacerVisitor( proof, () )
+
+  private object lkProofReplacerVisitor extends LKVisitor[Unit] {
+
+    override protected def visitOpenAssumption( proof: OpenAssumption, otherArg: Unit ): ( LKProof, SequentConnector ) = {
+      val proofNew = OpenAssumption( for ( ( l, f ) <- proof.labelledSequent ) yield l -> TermReplacement( f, repl ), proof.index )
+      ( proofNew, SequentConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map {
+        Seq( _ )
+      } ) )
+    }
+
+    override protected def visitLogicalAxiom( proof: LogicalAxiom, otherArg: Unit ): ( LKProof, SequentConnector ) = {
+      val proofNew = LogicalAxiom( TermReplacement( proof.A, repl ) )
+      ( proofNew, SequentConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map {
+        Seq( _ )
+      } ) )
+    }
+
+    override protected def visitReflexivityAxiom( proof: ReflexivityAxiom, otherArg: Unit ): ( LKProof, SequentConnector ) = {
+      val proofNew = ReflexivityAxiom( TermReplacement( proof.s, repl ) )
+      ( proofNew, SequentConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map {
+        Seq( _ )
+      } ) )
+    }
+
+    override protected def visitProofLink( proof: ProofLink, otherArg: Unit ): ( LKProof, SequentConnector ) = {
+      val proofNew = ProofLink( TermReplacement( proof.referencedProof, repl ), TermReplacement( proof.conclusion, repl ) )
+      ( proofNew, SequentConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map {
+        Seq( _ )
+      } ) )
+    }
+
+    override protected def visitWeakeningLeft( proof: WeakeningLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) = {
+      val ( subProofNew, subConnector ) = recurse( proof.subProof, () )
+      val proofNew = WeakeningLeftRule( subProofNew, TermReplacement( proof.formula, repl ) )
+      ( proofNew, ( proofNew.getSequentConnector * subConnector * proof.getSequentConnector.inv ) + ( proofNew.mainIndices( 0 ), proof.mainIndices( 0 ) ) )
+    }
+
+    override protected def visitWeakeningRight( proof: WeakeningRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) = {
+      val ( subProofNew, subConnector ) = recurse( proof.subProof, () )
+      val proofNew = WeakeningRightRule( subProofNew, TermReplacement( proof.formula, repl ) )
+      ( proofNew, ( proofNew.getSequentConnector * subConnector * proof.getSequentConnector.inv ) + ( proofNew.mainIndices( 0 ), proof.mainIndices( 0 ) ) )
+    }
+
+    override protected def visitForallLeft( proof: ForallLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
+      one2one( proof, otherArg ) {
+        case Seq( ( subProofNew, subConnector ) ) =>
+          ForallLeftRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ), TermReplacement( proof.term, repl ) )
+      }
+
+    override protected def visitForallRight( proof: ForallRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
+      one2one( proof, otherArg ) {
+        case Seq( ( subProofNew, subConnector ) ) =>
+          ForallRightRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ),
+            TermReplacement( proof.eigenVariable, repl ).asInstanceOf[Var] )
+      }
+
+    override protected def visitForallSkRight( proof: ForallSkRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
+      one2one( proof, otherArg ) {
+        case Seq( ( subProofNew, subConnector ) ) =>
+          ForallSkRightRule( subProofNew, subConnector.child( proof.aux ),
+            TermReplacement( proof.mainFormula, repl ),
+            TermReplacement( proof.skolemTerm, repl ) )
+      }
+
+    override protected def visitExistsRight( proof: ExistsRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
+      one2one( proof, otherArg ) {
+        case Seq( ( subProofNew, subConnector ) ) =>
+          ExistsRightRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ), TermReplacement( proof.term, repl ) )
+      }
+
+    override protected def visitExistsLeft( proof: ExistsLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
+      one2one( proof, otherArg ) {
+        case Seq( ( subProofNew, subConnector ) ) =>
+          ExistsLeftRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ),
+            TermReplacement( proof.eigenVariable, repl ).asInstanceOf[Var] )
+      }
+
+    override protected def visitExistsSkLeft( proof: ExistsSkLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
+      one2one( proof, otherArg ) {
+        case Seq( ( subProofNew, subConnector ) ) =>
+          ExistsSkLeftRule( subProofNew, subConnector.child( proof.aux ),
+            TermReplacement( proof.mainFormula, repl ),
+            TermReplacement( proof.skolemTerm, repl ) )
+      }
+
+    override protected def visitEqualityLeft( proof: EqualityLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
+      one2one( proof, otherArg ) {
+        case Seq( ( subProofNew, subConnector ) ) =>
+          EqualityLeftRule( subProofNew, subConnector.child( proof.eq ), subConnector.child( proof.aux ),
+            TermReplacement( proof.replacementContext, repl ).asInstanceOf[Abs] )
+      }
+
+    override protected def visitEqualityRight( proof: EqualityRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
+      one2one( proof, otherArg ) {
+        case Seq( ( subProofNew, subConnector ) ) =>
+          EqualityRightRule( subProofNew, subConnector.child( proof.eq ), subConnector.child( proof.aux ),
+            TermReplacement( proof.replacementContext, repl ).asInstanceOf[Abs] )
+      }
+
+    override protected def visitDefinitionLeft( proof: DefinitionLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
+      one2one( proof, otherArg ) {
+        case Seq( ( subProofNew, subConnector ) ) =>
+          DefinitionLeftRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ) )
+      }
+
+    override protected def visitDefinitionRight( proof: DefinitionRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
+      one2one( proof, otherArg ) {
+        case Seq( ( subProofNew, subConnector ) ) =>
+          DefinitionRightRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ) )
+      }
+
+    override protected def visitInduction( proof: InductionRule, otherArg: Unit ) =
+      one2one( proof, otherArg ) { newSubProofs =>
+        InductionRule(
+          for ( ( ( newSubProof, subConn ), oldCase ) <- newSubProofs.zip( proof.cases ) )
+            yield InductionCase( newSubProof, TermReplacement( oldCase.constructor, repl ).asInstanceOf[Const],
+            oldCase.hypotheses.map( subConn.child ), oldCase.eigenVars.map( TermReplacement( _, repl ).asInstanceOf[Var] ),
+            subConn.child( oldCase.conclusion ) ),
+          TermReplacement( proof.formula, repl ).asInstanceOf[Abs], TermReplacement( proof.term, repl ) )
+      }
   }
-
-  override protected def visitLogicalAxiom( proof: LogicalAxiom, otherArg: Unit ): ( LKProof, SequentConnector ) = {
-    val proofNew = LogicalAxiom( TermReplacement( proof.A, repl ) )
-    ( proofNew, SequentConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map { Seq( _ ) } ) )
-  }
-
-  override protected def visitReflexivityAxiom( proof: ReflexivityAxiom, otherArg: Unit ): ( LKProof, SequentConnector ) = {
-    val proofNew = ReflexivityAxiom( TermReplacement( proof.s, repl ) )
-    ( proofNew, SequentConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map { Seq( _ ) } ) )
-  }
-
-  override protected def visitProofLink( proof: ProofLink, otherArg: Unit ): ( LKProof, SequentConnector ) = {
-    val proofNew = ProofLink( TermReplacement( proof.referencedProof, repl ), TermReplacement( proof.conclusion, repl ) )
-    ( proofNew, SequentConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map { Seq( _ ) } ) )
-  }
-
-  override protected def visitWeakeningLeft( proof: WeakeningLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) = {
-    val ( subProofNew, subConnector ) = recurse( proof.subProof, () )
-    val proofNew = WeakeningLeftRule( subProofNew, TermReplacement( proof.formula, repl ) )
-    ( proofNew, ( proofNew.getSequentConnector * subConnector * proof.getSequentConnector.inv ) + ( proofNew.mainIndices( 0 ), proof.mainIndices( 0 ) ) )
-  }
-
-  override protected def visitWeakeningRight( proof: WeakeningRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) = {
-    val ( subProofNew, subConnector ) = recurse( proof.subProof, () )
-    val proofNew = WeakeningRightRule( subProofNew, TermReplacement( proof.formula, repl ) )
-    ( proofNew, ( proofNew.getSequentConnector * subConnector * proof.getSequentConnector.inv ) + ( proofNew.mainIndices( 0 ), proof.mainIndices( 0 ) ) )
-  }
-
-  override protected def visitForallLeft( proof: ForallLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
-    one2one( proof, otherArg ) {
-      case Seq( ( subProofNew, subConnector ) ) =>
-        ForallLeftRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ), TermReplacement( proof.term, repl ) )
-    }
-
-  override protected def visitForallRight( proof: ForallRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
-    one2one( proof, otherArg ) {
-      case Seq( ( subProofNew, subConnector ) ) =>
-        ForallRightRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ),
-          TermReplacement( proof.eigenVariable, repl ).asInstanceOf[Var] )
-    }
-
-  override protected def visitForallSkRight( proof: ForallSkRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
-    one2one( proof, otherArg ) {
-      case Seq( ( subProofNew, subConnector ) ) =>
-        ForallSkRightRule( subProofNew, subConnector.child( proof.aux ),
-          TermReplacement( proof.mainFormula, repl ),
-          TermReplacement( proof.skolemTerm, repl ) )
-    }
-
-  override protected def visitExistsRight( proof: ExistsRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
-    one2one( proof, otherArg ) {
-      case Seq( ( subProofNew, subConnector ) ) =>
-        ExistsRightRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ), TermReplacement( proof.term, repl ) )
-    }
-
-  override protected def visitExistsLeft( proof: ExistsLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
-    one2one( proof, otherArg ) {
-      case Seq( ( subProofNew, subConnector ) ) =>
-        ExistsLeftRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ),
-          TermReplacement( proof.eigenVariable, repl ).asInstanceOf[Var] )
-    }
-
-  override protected def visitExistsSkLeft( proof: ExistsSkLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
-    one2one( proof, otherArg ) {
-      case Seq( ( subProofNew, subConnector ) ) =>
-        ExistsSkLeftRule( subProofNew, subConnector.child( proof.aux ),
-          TermReplacement( proof.mainFormula, repl ),
-          TermReplacement( proof.skolemTerm, repl ) )
-    }
-
-  override protected def visitEqualityLeft( proof: EqualityLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
-    one2one( proof, otherArg ) {
-      case Seq( ( subProofNew, subConnector ) ) =>
-        EqualityLeftRule( subProofNew, subConnector.child( proof.eq ), subConnector.child( proof.aux ),
-          TermReplacement( proof.replacementContext, repl ).asInstanceOf[Abs] )
-    }
-
-  override protected def visitEqualityRight( proof: EqualityRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
-    one2one( proof, otherArg ) {
-      case Seq( ( subProofNew, subConnector ) ) =>
-        EqualityRightRule( subProofNew, subConnector.child( proof.eq ), subConnector.child( proof.aux ),
-          TermReplacement( proof.replacementContext, repl ).asInstanceOf[Abs] )
-    }
-
-  override protected def visitDefinitionLeft( proof: DefinitionLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
-    one2one( proof, otherArg ) {
-      case Seq( ( subProofNew, subConnector ) ) =>
-        DefinitionLeftRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ) )
-    }
-
-  override protected def visitDefinitionRight( proof: DefinitionRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
-    one2one( proof, otherArg ) {
-      case Seq( ( subProofNew, subConnector ) ) =>
-        DefinitionRightRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ) )
-    }
-
-  override protected def visitInduction( proof: InductionRule, otherArg: Unit ) =
-    one2one( proof, otherArg ) { newSubProofs =>
-      InductionRule(
-        for ( ( ( newSubProof, subConn ), oldCase ) <- newSubProofs.zip( proof.cases ) )
-          yield InductionCase( newSubProof, TermReplacement( oldCase.constructor, repl ).asInstanceOf[Const],
-          oldCase.hypotheses.map( subConn.child ), oldCase.eigenVars.map( TermReplacement( _, repl ).asInstanceOf[Var] ),
-          subConn.child( oldCase.conclusion ) ),
-        TermReplacement( proof.formula, repl ).asInstanceOf[Abs], TermReplacement( proof.term, repl ) )
-    }
 }

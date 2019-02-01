@@ -121,46 +121,45 @@ object regularize {
    * @return A regular LKProof.
    */
   def apply( proof: LKProof ): LKProof =
-    new regularize( rename.awayFrom( freeVariablesLK( proof ) ) ).apply( proof, () )
-}
+    new Regularize( rename.awayFrom( freeVariablesLK( proof ) ) ).apply( proof, () )
 
-class regularize( nameGen: NameGenerator ) extends LKVisitor[Unit] {
+  private class Regularize( nameGen: NameGenerator ) extends LKVisitor[Unit] {
 
-  protected override def visitForallRight( proof: ForallRightRule, arg: Unit ) = {
-    val ForallRightRule( subProof, aux, eigen, quant ) = proof
-    val eigenNew = nameGen.fresh( eigen )
-    val ( subProofNew, subConnector ) = recurse( Substitution( eigen -> eigenNew )( subProof ), () )
-    val proofNew = ForallRightRule( subProofNew, aux, eigenNew, quant )
-    ( proofNew, proofNew.getSequentConnector * subConnector * proof.getSequentConnector.inv )
-  }
-
-  protected override def visitExistsLeft( proof: ExistsLeftRule, arg: Unit ) = {
-    val ExistsLeftRule( subProof, aux, eigen, quant ) = proof
-    val eigenNew = nameGen.fresh( eigen )
-    val ( subProofNew, subConnector ) = recurse( Substitution( eigen -> eigenNew )( subProof ), () )
-    val proofNew = ExistsLeftRule( subProofNew, aux, eigenNew, quant )
-    ( proofNew, proofNew.getSequentConnector * subConnector * proof.getSequentConnector.inv )
-  }
-
-  protected override def visitInduction( proof: InductionRule, arg: Unit ) = {
-    val InductionRule( cases, _, term ) = proof
-
-    val newQuant = nameGen.fresh( proof.quant )
-
-    val newCasesConnectors = cases map { c =>
-      val renaming = for ( ev <- c.eigenVars ) yield ev -> nameGen.fresh( ev )
-      val ( subProofNew, subConnector ) = recurse( Substitution( renaming )( c.proof ), () )
-      c.copy( proof = subProofNew, eigenVars = c.eigenVars map renaming.toMap ) -> subConnector
+    protected override def visitForallRight( proof: ForallRightRule, arg: Unit ) = {
+      val ForallRightRule( subProof, aux, eigen, quant ) = proof
+      val eigenNew = nameGen.fresh( eigen )
+      val ( subProofNew, subConnector ) = recurse( Substitution( eigen -> eigenNew )( subProof ), () )
+      val proofNew = ForallRightRule( subProofNew, aux, eigenNew, quant )
+      ( proofNew, proofNew.getSequentConnector * subConnector * proof.getSequentConnector.inv )
     }
 
-    val ( casesNew, subConnectors ) = newCasesConnectors.unzip
-    val proofNew = InductionRule( casesNew, proof.formula, term )
-    val subConnectors_ = for ( ( c1, c2, c3 ) <- ( proofNew.occConnectors, subConnectors, proof.occConnectors ).zipped ) yield c1 * c2 * c3.inv
-    val connector = if ( subConnectors_.isEmpty ) SequentConnector( proofNew.endSequent ) else subConnectors_.reduceLeft( _ + _ )
+    protected override def visitExistsLeft( proof: ExistsLeftRule, arg: Unit ) = {
+      val ExistsLeftRule( subProof, aux, eigen, quant ) = proof
+      val eigenNew = nameGen.fresh( eigen )
+      val ( subProofNew, subConnector ) = recurse( Substitution( eigen -> eigenNew )( subProof ), () )
+      val proofNew = ExistsLeftRule( subProofNew, aux, eigenNew, quant )
+      ( proofNew, proofNew.getSequentConnector * subConnector * proof.getSequentConnector.inv )
+    }
 
-    ( proofNew, connector )
+    protected override def visitInduction( proof: InductionRule, arg: Unit ) = {
+      val InductionRule( cases, _, term ) = proof
+
+      val newQuant = nameGen.fresh( proof.quant )
+
+      val newCasesConnectors = cases map { c =>
+        val renaming = for ( ev <- c.eigenVars ) yield ev -> nameGen.fresh( ev )
+        val ( subProofNew, subConnector ) = recurse( Substitution( renaming )( c.proof ), () )
+        c.copy( proof = subProofNew, eigenVars = c.eigenVars map renaming.toMap ) -> subConnector
+      }
+
+      val ( casesNew, subConnectors ) = newCasesConnectors.unzip
+      val proofNew = InductionRule( casesNew, proof.formula, term )
+      val subConnectors_ = for ( ( c1, c2, c3 ) <- ( proofNew.occConnectors, subConnectors, proof.occConnectors ).zipped ) yield c1 * c2 * c3.inv
+      val connector = if ( subConnectors_.isEmpty ) SequentConnector( proofNew.endSequent ) else subConnectors_.reduceLeft( _ + _ )
+
+      ( proofNew, connector )
+    }
   }
-
 }
 
 object extractInductionAxioms {

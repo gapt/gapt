@@ -42,7 +42,7 @@ class IterativeParallelStrategy( reduction: Reduction ) extends ReductionStrateg
     val reducer = ( new LowerMostRedexReducer( reduction ) )
     do {
       reducer.foundRedex = false
-      intermediaryProof = reducer.apply( intermediaryProof, () )
+      intermediaryProof = reducer.apply( intermediaryProof )
       if ( reducer.foundRedex ) foundRedex = true
     } while ( reducer.foundRedex )
     intermediaryProof
@@ -61,18 +61,24 @@ trait RedexReducer {
  * Applies a given reduction to the lowermost redexes.
  * @param reduction The reduction to be applied to the lowermost redexes.
  */
-class LowerMostRedexReducer( reduction: Reduction ) extends LKVisitor[Unit] with RedexReducer {
+class LowerMostRedexReducer( reduction: Reduction ) extends RedexReducer {
 
   var foundRedex: Boolean = false
 
-  override def recurse( proof: LKProof, u: Unit ): ( LKProof, SequentConnector ) = {
-    reduction.reduce( proof ) match {
-      case Some( finalProof ) =>
-        foundRedex = true
-        ( finalProof, SequentConnector.guessInjection(
-          fromLower = proof.conclusion, toUpper = finalProof.conclusion ).inv )
-      case _ => super.recurse( proof, u )
+  def apply( proof: LKProof ): LKProof = visitor( proof, () )
+
+  private object visitor extends LKVisitor[Unit] {
+
+    override def recurse( proof: LKProof, u: Unit ): ( LKProof, SequentConnector ) = {
+      reduction.reduce( proof ) match {
+        case Some( finalProof ) =>
+          foundRedex = true
+          ( finalProof, SequentConnector.guessInjection(
+            fromLower = proof.conclusion, toUpper = finalProof.conclusion ).inv )
+        case _ => super.recurse( proof, u )
+      }
     }
+
   }
 }
 
@@ -89,7 +95,7 @@ class IterativeSelectiveStrategy( selector: Selector ) extends ReductionStrategy
       selector.createSelectorReduction( intermediaryProof ) match {
         case Some( selectorReduction ) =>
           continue = true
-          intermediaryProof = ( new LowerMostRedexReducer( selectorReduction ) ).apply( intermediaryProof, () )
+          intermediaryProof = ( new LowerMostRedexReducer( selectorReduction ) ).apply( intermediaryProof )
         case None =>
       }
     } while ( continue )
