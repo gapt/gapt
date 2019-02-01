@@ -14,8 +14,6 @@ import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.EqualityRightRule
 import gapt.proofs.lk.rules.ExistsLeftRule
-import gapt.proofs.lk.rules.ExistsRightBlock
-import gapt.proofs.lk.rules.ForallLeftBlock
 import gapt.proofs.lk.rules.ForallRightRule
 import gapt.proofs.lk.rules.ImpLeftRule
 import gapt.proofs.lk.rules.ImpRightRule
@@ -27,6 +25,8 @@ import gapt.proofs.lk.rules.OrRightRule
 import gapt.proofs.lk.rules.ProofLink
 import gapt.proofs.lk.rules.ReflexivityAxiom
 import gapt.proofs.lk.rules.TopAxiom
+import gapt.proofs.lk.rules.macros.ExistsRightBlock
+import gapt.proofs.lk.rules.macros.ForallLeftBlock
 
 /**
  * Closes a goal with a proof link

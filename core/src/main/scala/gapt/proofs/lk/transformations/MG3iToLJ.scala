@@ -4,12 +4,10 @@ import gapt.expr.Bottom
 import gapt.expr.Formula
 import gapt.expr.Top
 import gapt.proofs.lk.LKProof
-import gapt.proofs.lk.rules.AndLeftMacroRule
 import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.BottomAxiom
 import gapt.proofs.lk.rules.ContractionLeftRule
-import gapt.proofs.lk.rules.ContractionMacroRule
 import gapt.proofs.lk.rules.ContractionRightRule
 import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.EqualityLeftRule
@@ -19,19 +17,22 @@ import gapt.proofs.lk.rules.ExistsRightRule
 import gapt.proofs.lk.rules.ForallLeftRule
 import gapt.proofs.lk.rules.ForallRightRule
 import gapt.proofs.lk.rules.ImpLeftRule
-import gapt.proofs.lk.rules.ImpRightMacroRule
 import gapt.proofs.lk.rules.ImpRightRule
 import gapt.proofs.lk.rules.LogicalAxiom
 import gapt.proofs.lk.rules.NegLeftRule
 import gapt.proofs.lk.rules.NegRightRule
 import gapt.proofs.lk.rules.OrLeftRule
-import gapt.proofs.lk.rules.OrRightMacroRule
 import gapt.proofs.lk.rules.OrRightRule
 import gapt.proofs.lk.rules.ReflexivityAxiom
 import gapt.proofs.lk.rules.TopAxiom
-import gapt.proofs.lk.rules.WeakeningLeftMacroRule
 import gapt.proofs.lk.rules.WeakeningLeftRule
 import gapt.proofs.lk.rules.WeakeningRightRule
+import gapt.proofs.lk.rules.macros
+import gapt.proofs.lk.rules.macros.AndLeftMacroRule
+import gapt.proofs.lk.rules.macros.ContractionMacroRule
+import gapt.proofs.lk.rules.macros.ImpRightMacroRule
+import gapt.proofs.lk.rules.macros.OrRightMacroRule
+import gapt.proofs.lk.rules.macros.WeakeningLeftMacroRule
 
 object MG3iToLJ {
   private def mkProjs( fs: List[Formula] ): ( Formula, Map[Formula, LKProof] ) =
@@ -80,7 +81,7 @@ object MG3iToLJ {
           val Seq( g ) = pr.conclusion.succedent
           f -> ContractionMacroRule( CutRule( pr, projections( g ), g ) )
       }
-    ContractionMacroRule( proof match {
+    macros.ContractionMacroRule( proof match {
       case LogicalAxiom( atom )            => projections( atom )
       case proof @ ReflexivityAxiom( _ )   => CutRule( proof, projections( proof.mainFormula ), proof.mainFormula )
       case ContractionLeftRule( p, _, _ )  => apply( p, goal, projections )

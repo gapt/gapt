@@ -12,7 +12,7 @@ import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
-import gapt.proofs.lk.rules.ContractionMacroRule
+import gapt.proofs.lk.rules.macros.ContractionMacroRule
 import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.proofs.lk.util.ExtractInterpolant
 import gapt.provers.Session.Runners._

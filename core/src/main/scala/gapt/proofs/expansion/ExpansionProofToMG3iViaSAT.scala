@@ -2,10 +2,8 @@ package gapt.proofs.expansion
 
 import gapt.expr._
 import gapt.expr.hol.lcomp
-import gapt.proofs.rup._
-import gapt.proofs.lk._
 import gapt.proofs._
-import gapt.proofs.lk.rules.AndLeftMacroRule
+import gapt.proofs.lk._
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.BottomAxiom
 import gapt.proofs.lk.rules.DefinitionLeftRule
@@ -15,21 +13,23 @@ import gapt.proofs.lk.rules.ExistsRightRule
 import gapt.proofs.lk.rules.ForallLeftRule
 import gapt.proofs.lk.rules.ForallRightRule
 import gapt.proofs.lk.rules.ImpLeftRule
-import gapt.proofs.lk.rules.ImpRightMacroRule
 import gapt.proofs.lk.rules.LogicalAxiom
 import gapt.proofs.lk.rules.NegLeftRule
 import gapt.proofs.lk.rules.NegRightRule
 import gapt.proofs.lk.rules.OrLeftRule
-import gapt.proofs.lk.rules.OrRightMacroRule
 import gapt.proofs.lk.rules.TopAxiom
-import gapt.proofs.lk.rules.WeakeningMacroRule
+import gapt.proofs.lk.rules.macros.AndLeftMacroRule
+import gapt.proofs.lk.rules.macros.ImpRightMacroRule
+import gapt.proofs.lk.rules.macros.OrRightMacroRule
+import gapt.proofs.lk.rules.macros.WeakeningMacroRule
+import gapt.proofs.rup._
 import gapt.provers.congruence.CC
 import gapt.provers.escargot.Escargot
+import gapt.provers.sat.Sat4j._
+import gapt.utils.quiet
+import org.sat4j.core.VecInt
 import org.sat4j.minisat.SolverFactory
 import org.sat4j.specs._
-import gapt.provers.sat.Sat4j._
-import gapt.utils.{ generatedUpperSetInPO, quiet }
-import org.sat4j.core.VecInt
 import org.sat4j.tools.SearchListenerAdapter
 
 import scala.annotation.tailrec

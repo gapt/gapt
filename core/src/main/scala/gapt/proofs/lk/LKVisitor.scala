@@ -1,14 +1,11 @@
 package gapt.proofs.lk
 
-import gapt.expr.Formula
 import gapt.proofs.SequentConnector
 import gapt.proofs.gaptic.OpenAssumption
 import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.BottomAxiom
-import gapt.proofs.lk.rules.ContractionLeftMacroRule
 import gapt.proofs.lk.rules.ContractionLeftRule
-import gapt.proofs.lk.rules.ContractionRightMacroRule
 import gapt.proofs.lk.rules.ContractionRightRule
 import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.DefinitionLeftRule
@@ -35,6 +32,8 @@ import gapt.proofs.lk.rules.ReflexivityAxiom
 import gapt.proofs.lk.rules.TopAxiom
 import gapt.proofs.lk.rules.WeakeningLeftRule
 import gapt.proofs.lk.rules.WeakeningRightRule
+import gapt.proofs.lk.rules.macros.ContractionLeftMacroRule
+import gapt.proofs.lk.rules.macros.ContractionRightMacroRule
 
 /**
  * Implementation of the visitor pattern for [[gapt.proofs.lk.LKProof]].

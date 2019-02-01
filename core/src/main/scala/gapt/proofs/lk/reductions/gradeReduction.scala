@@ -25,10 +25,10 @@ import gapt.proofs.lk.rules.OrLeftRule
 import gapt.proofs.lk.rules.OrRightRule
 import gapt.proofs.lk.rules.TopAxiom
 import gapt.proofs.lk.rules.WeakeningLeftRule
-import gapt.proofs.lk.rules.WeakeningMacroRule
 import gapt.proofs.lk.rules.WeakeningRightRule
 import gapt.proofs.SequentConnector
 import gapt.proofs.guessPermutation
+import gapt.proofs.lk.rules.macros.WeakeningMacroRule
 
 object GradeReductionAxiomLeft extends CutReduction {
   override def reduce( cut: CutRule ): Option[LKProof] =

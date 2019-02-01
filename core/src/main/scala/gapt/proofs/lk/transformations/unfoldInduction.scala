@@ -5,11 +5,11 @@ import gapt.expr.Expr
 import gapt.expr.Substitution
 import gapt.proofs.SequentIndex
 import gapt.proofs.lk.LKProof
-import gapt.proofs.lk.rules.ContractionMacroRule
 import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.InductionCase
 import gapt.proofs.lk.rules.InductionRule
-import gapt.proofs.lk.rules.WeakeningMacroRule
+import gapt.proofs.lk.rules.macros.ContractionMacroRule
+import gapt.proofs.lk.rules.macros.WeakeningMacroRule
 import gapt.proofs.lk.transformations
 
 object unfoldInduction {

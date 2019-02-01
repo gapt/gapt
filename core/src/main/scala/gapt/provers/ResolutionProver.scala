@@ -18,7 +18,7 @@ import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
-import gapt.proofs.lk.rules.WeakeningContractionMacroRule
+import gapt.proofs.lk.rules.macros.WeakeningContractionMacroRule
 import gapt.proofs.withSection
 import gapt.utils.Maybe
 

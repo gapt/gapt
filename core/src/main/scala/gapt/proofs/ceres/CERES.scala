@@ -8,7 +8,7 @@ import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.expr._
 import gapt.proofs.context.Context
 import gapt.proofs.expansion.{ ExpansionProof, ExpansionSequent }
-import gapt.proofs.lk.rules.WeakeningContractionMacroRule
+import gapt.proofs.lk.rules.macros.WeakeningContractionMacroRule
 import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.proofs.lk.transformations.cleanStructuralRules
 import gapt.proofs.lk.transformations.skolemizeLK

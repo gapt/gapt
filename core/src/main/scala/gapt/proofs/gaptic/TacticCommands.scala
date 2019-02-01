@@ -10,12 +10,12 @@ import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.gaptic.tactics._
 import gapt.proofs.lk._
 import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.FOTheoryMacroRule
-import gapt.proofs.lk.rules.ForallLeftBlock
 import gapt.proofs.lk.rules.ForallLeftRule
-import gapt.proofs.lk.rules.ForallRightBlock
 import gapt.proofs.lk.rules.LogicalAxiom
 import gapt.proofs.lk.rules.ProofLink
+import gapt.proofs.lk.rules.macros.FOTheoryMacroRule
+import gapt.proofs.lk.rules.macros.ForallLeftBlock
+import gapt.proofs.lk.rules.macros.ForallRightBlock
 import gapt.proofs.lk.util.solvePropositional
 import gapt.provers.Prover
 import gapt.provers.escargot.Escargot

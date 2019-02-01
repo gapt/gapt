@@ -9,7 +9,7 @@ import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.LKVisitor
 import gapt.proofs.lk.rules.ProofLink
-import gapt.proofs.lk.rules.WeakeningMacroRule
+import gapt.proofs.lk.rules.macros.WeakeningMacroRule
 import gapt.proofs.lk.transformations.eliminateDefinitions
 
 object instantiateProof {

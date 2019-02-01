@@ -9,8 +9,8 @@ import gapt.proofs.lk.rules.ForallRightRule
 import gapt.proofs.lk.rules.ImpLeftRule
 import gapt.proofs.lk.rules.ImpRightRule
 import gapt.proofs.lk.rules.LogicalAxiom
-import gapt.proofs.lk.rules.ParamodulationRightRule
 import gapt.proofs.lk.rules.ProofLink
+import gapt.proofs.lk.rules.macros.ParamodulationRightRule
 
 object CERESExpansionExampleProof {
   val c = FOLConst( "c" )

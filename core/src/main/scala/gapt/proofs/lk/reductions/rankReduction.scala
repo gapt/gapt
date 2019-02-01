@@ -8,7 +8,6 @@ import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.ContractionLeftRule
-import gapt.proofs.lk.rules.ContractionMacroRule
 import gapt.proofs.lk.rules.ContractionRightRule
 import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.DefinitionLeftRule
@@ -30,11 +29,12 @@ import gapt.proofs.lk.rules.NegRightRule
 import gapt.proofs.lk.rules.OrLeftRule
 import gapt.proofs.lk.rules.OrRightRule
 import gapt.proofs.lk.rules.WeakeningLeftRule
-import gapt.proofs.lk.rules.WeakeningMacroRule
 import gapt.proofs.lk.rules.WeakeningRightRule
 import gapt.proofs.lk.util.inductionEigenvariables
 import gapt.proofs.SequentConnector
 import gapt.proofs.guessPermutation
+import gapt.proofs.lk.rules.macros.ContractionMacroRule
+import gapt.proofs.lk.rules.macros.WeakeningMacroRule
 
 object LeftRankWeakeningLeftReduction extends CutReduction {
   override def reduce( cut: CutRule ): Option[LKProof] =

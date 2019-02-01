@@ -28,8 +28,8 @@ import gapt.proofs.lk.rules.NegRightRule
 import gapt.proofs.lk.rules.OrLeftRule
 import gapt.proofs.lk.rules.OrRightRule
 import gapt.proofs.lk.rules.WeakeningLeftRule
-import gapt.proofs.lk.rules.WeakeningMacroRule
 import gapt.proofs.lk.rules.WeakeningRightRule
+import gapt.proofs.lk.rules.macros.WeakeningMacroRule
 import gapt.utils.NameGenerator
 
 object SingleProjectionWithQuantifiers {

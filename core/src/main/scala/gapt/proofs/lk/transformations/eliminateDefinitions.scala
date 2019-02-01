@@ -13,8 +13,6 @@ import gapt.proofs.lk.rules.DefinitionLeftRule
 import gapt.proofs.lk.rules.DefinitionRightRule
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.EqualityRightRule
-import gapt.proofs.lk.rules.ExchangeLeftMacroRule
-import gapt.proofs.lk.rules.ExchangeRightMacroRule
 import gapt.proofs.lk.rules.ExistsLeftRule
 import gapt.proofs.lk.rules.ExistsRightRule
 import gapt.proofs.lk.rules.ExistsSkLeftRule
@@ -34,6 +32,8 @@ import gapt.proofs.lk.rules.ReflexivityAxiom
 import gapt.proofs.lk.rules.TopAxiom
 import gapt.proofs.lk.rules.WeakeningLeftRule
 import gapt.proofs.lk.rules.WeakeningRightRule
+import gapt.proofs.lk.rules.macros.ExchangeLeftMacroRule
+import gapt.proofs.lk.rules.macros.ExchangeRightMacroRule
 
 /**
  * Eliminates definitions from a lambda expression, HOL formula, or LK proof.

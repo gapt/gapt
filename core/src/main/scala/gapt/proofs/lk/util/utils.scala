@@ -12,12 +12,12 @@ import gapt.proofs.lk.rules.DefinitionRightRule
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.EqualityRightRule
 import gapt.proofs.lk.rules.ExistsLeftRule
-import gapt.proofs.lk.rules.ForallLeftBlock
 import gapt.proofs.lk.rules.ForallRightRule
 import gapt.proofs.lk.rules.InductionRule
 import gapt.proofs.lk.rules.LogicalAxiom
 import gapt.proofs.lk.rules.ReflexivityAxiom
 import gapt.proofs.lk.rules.StrongQuantifierRule
+import gapt.proofs.lk.rules.macros.ForallLeftBlock
 import gapt.provers.viper.aip
 import gapt.utils.NameGenerator
 

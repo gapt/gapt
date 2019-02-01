@@ -11,7 +11,6 @@ import scala.annotation.tailrec
 import EquationVerifier._
 import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule
-import gapt.proofs.lk.rules.ContractionMacroRule
 import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.DefinitionLeftRule
 import gapt.proofs.lk.rules.DefinitionRightRule
@@ -30,8 +29,9 @@ import gapt.proofs.lk.rules.OrLeftRule
 import gapt.proofs.lk.rules.OrRightRule
 import gapt.proofs.lk.rules.ProofLink
 import gapt.proofs.lk.rules.WeakeningLeftRule
-import gapt.proofs.lk.rules.WeakeningMacroRule
 import gapt.proofs.lk.rules.WeakeningRightRule
+import gapt.proofs.lk.rules.macros.ContractionMacroRule
+import gapt.proofs.lk.rules.macros.WeakeningMacroRule
 import gapt.proofs.lk.util.AtomicExpansion
 import gapt.proofs.lk.util.solvePropositional
 import gapt.utils.Logger

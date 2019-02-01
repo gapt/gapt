@@ -8,27 +8,29 @@ import gapt.expr.hol.instantiate
 import gapt.expr.hol.universalClosure
 import gapt.formats.babel.Notation
 import gapt.formats.babel.Precedence
-import gapt.proofs.context.update.Sort
-import gapt.proofs.gaptic._
-import gapt.proofs.lk._
-import gapt.proofs.lk.rules.ContractionLeftRule
-import gapt.proofs.lk.rules.ContractionMacroRule
-import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.EqualityRightRule
-import gapt.proofs.lk.rules.ForallLeftBlock
-import gapt.proofs.lk.rules.ForallLeftRule
-import gapt.proofs.lk.rules.ImpLeftRule
-import gapt.proofs.lk.rules.LogicalAxiom
-import gapt.proofs.lk.rules.ReflexivityAxiom
-import gapt.proofs.lk.rules.TransRule
-import gapt.proofs.lk.rules.WeakeningContractionMacroRule
-import gapt.proofs.lk.rules.WeakeningLeftMacroRule
-import gapt.proofs.lk.rules.WeakeningLeftRule
 import gapt.proofs.Ant
 import gapt.proofs.HOLSequent
 import gapt.proofs.ProofBuilder
 import gapt.proofs.Sequent
 import gapt.proofs.Suc
+import gapt.proofs.context.update.Sort
+import gapt.proofs.gaptic._
+import gapt.proofs.lk._
+import gapt.proofs.lk.rules
+import gapt.proofs.lk.rules.ContractionLeftRule
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.EqualityRightRule
+import gapt.proofs.lk.rules.ForallLeftRule
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.ReflexivityAxiom
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.macros
+import gapt.proofs.lk.rules.macros.ContractionMacroRule
+import gapt.proofs.lk.rules.macros.ForallLeftBlock
+import gapt.proofs.lk.rules.macros.TransRule
+import gapt.proofs.lk.rules.macros.WeakeningContractionMacroRule
+import gapt.proofs.lk.rules.macros.WeakeningLeftMacroRule
 
 trait ProofSequence {
   def apply( n: Int ): LKProof
@@ -1029,7 +1031,7 @@ object FactorialFunctionEqualityExampleProof2 extends ProofSequence {
         u ( EqualityRightRule( _, ASSO( product( i + 2 ), num( i + 1 ), f( num( i ) ) ),
           Eq( m( product( i + 1 ), f( num( i ) ) ), g( product( i + 1 ), num( i ) ) ),
           Eq( m( product( i + 2 ), m( num( i + 1 ), f( num( i ) ) ) ), g( product( i + 1 ), num( i ) ) ) ) )
-          u ( ForallLeftBlock( _, universalClosure( ASSO( x, y, z ) ),
+          u ( macros.ForallLeftBlock( _, universalClosure( ASSO( x, y, z ) ),
             List( product( i + 2 ), num( i + 1 ), f( num( i ) ) ) ) )
             u ( EqualityRightRule( _, fST( num( i ) ),
               Eq( m( product( i + 2 ), m( num( i + 1 ), f( num( i ) ) ) ), g( product( i + 1 ), num( i ) ) ),
@@ -1038,7 +1040,7 @@ object FactorialFunctionEqualityExampleProof2 extends ProofSequence {
                 Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 1 ), num( i ) ) ),
                 Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 2 ), num( i + 1 ) ) ) ) )
                 u ( ForallLeftRule( _, universalClosure( fST( x ) ), num( i ) ) )
-                u ( ForallLeftBlock( _, universalClosure( gST( x, y ) ), List( product( i + 2 ), num( i ) ) ) )
+                u ( rules.macros.ForallLeftBlock( _, universalClosure( gST( x, y ) ), List( product( i + 2 ), num( i ) ) ) )
                 u ( ContractionMacroRule( _ ) ) qed )
     }
 

@@ -1,18 +1,14 @@
 package gapt.proofs.expansion
 
-import gapt.proofs.lk._
-import gapt.proofs._
 import gapt.expr._
-import gapt.provers.escargot.Escargot
-import gapt.utils.quiet
-import ExpansionProofToLK._
 import gapt.expr.hol.instantiate
+import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
-import gapt.proofs.lk.rules.AndLeftMacroRule
+import gapt.proofs.expansion.ExpansionProofToLK._
+import gapt.proofs.lk._
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.BottomAxiom
-import gapt.proofs.lk.rules.ContractionMacroRule
 import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.DefinitionRule
 import gapt.proofs.lk.rules.ExistsLeftRule
@@ -20,20 +16,24 @@ import gapt.proofs.lk.rules.ExistsRightRule
 import gapt.proofs.lk.rules.ForallLeftRule
 import gapt.proofs.lk.rules.ForallRightRule
 import gapt.proofs.lk.rules.ImpLeftRule
-import gapt.proofs.lk.rules.ImpRightMacroRule
 import gapt.proofs.lk.rules.ImpRightRule
 import gapt.proofs.lk.rules.LogicalAxiom
 import gapt.proofs.lk.rules.NegLeftRule
 import gapt.proofs.lk.rules.NegRightRule
 import gapt.proofs.lk.rules.OrLeftRule
-import gapt.proofs.lk.rules.OrRightMacroRule
 import gapt.proofs.lk.rules.OrRightRule
 import gapt.proofs.lk.rules.TopAxiom
 import gapt.proofs.lk.rules.WeakeningLeftRule
-import gapt.proofs.lk.rules.WeakeningMacroRule
 import gapt.proofs.lk.rules.WeakeningRightRule
+import gapt.proofs.lk.rules.macros.AndLeftMacroRule
+import gapt.proofs.lk.rules.macros.ContractionMacroRule
+import gapt.proofs.lk.rules.macros.ImpRightMacroRule
+import gapt.proofs.lk.rules.macros.OrRightMacroRule
+import gapt.proofs.lk.rules.macros.WeakeningMacroRule
 import gapt.proofs.lk.transformations.eliminateDefinitions
 import gapt.proofs.lk.util.SolveUtils
+import gapt.provers.escargot.Escargot
+import gapt.utils.quiet
 
 import scala.collection.mutable
 

@@ -4,9 +4,9 @@ import java.util
 import gapt.expr.Formula
 import gapt.proofs.DagProof
 import gapt.proofs.lk.LKProof
-import gapt.proofs.lk.rules.ContractionMacroRule
 import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.macros.ContractionMacroRule
 import gapt.proofs.resolution.ResolutionProof
 import gapt.proofs.rup.RupProof._
 import org.sat4j.core.LiteralsUtils

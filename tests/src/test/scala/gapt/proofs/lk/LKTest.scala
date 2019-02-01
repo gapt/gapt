@@ -10,8 +10,6 @@ import gapt.proofs.lk.rules.ContractionRightRule
 import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.EqualityRightRule
-import gapt.proofs.lk.rules.ExchangeLeftMacroRule
-import gapt.proofs.lk.rules.ExchangeRightMacroRule
 import gapt.proofs.lk.rules.ExistsLeftRule
 import gapt.proofs.lk.rules.ForallRightRule
 import gapt.proofs.lk.rules.ImpLeftRule
@@ -25,9 +23,11 @@ import gapt.proofs.lk.rules.OrLeftRule
 import gapt.proofs.lk.rules.OrRightRule
 import gapt.proofs.lk.rules.ProofLink
 import gapt.proofs.lk.rules.ReflexivityAxiom
-import gapt.proofs.lk.rules.WeakeningContractionMacroRule
 import gapt.proofs.lk.rules.WeakeningLeftRule
 import gapt.proofs.lk.rules.WeakeningRightRule
+import gapt.proofs.lk.rules.macros.ExchangeLeftMacroRule
+import gapt.proofs.lk.rules.macros.ExchangeRightMacroRule
+import gapt.proofs.lk.rules.macros.WeakeningContractionMacroRule
 import org.specs2.execute.Success
 import org.specs2.mutable._
 

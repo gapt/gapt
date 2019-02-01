@@ -8,7 +8,6 @@ import gapt.proofs.lk.LKVisitor
 import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.ContractionLeftRule
-import gapt.proofs.lk.rules.ContractionMacroRule
 import gapt.proofs.lk.rules.ContractionRightRule
 import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.EqualityLeftRule
@@ -29,6 +28,7 @@ import gapt.proofs.lk.rules.OrLeftRule
 import gapt.proofs.lk.rules.OrRightRule
 import gapt.proofs.lk.rules.WeakeningLeftRule
 import gapt.proofs.lk.rules.WeakeningRightRule
+import gapt.proofs.lk.rules.macros.ContractionMacroRule
 
 object weakeningOnlySubTree {
   /**

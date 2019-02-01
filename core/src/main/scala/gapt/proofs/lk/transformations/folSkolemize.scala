@@ -28,8 +28,6 @@ import gapt.proofs.lk.rules.ContractionRightRule
 import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.EqualityRightRule
-import gapt.proofs.lk.rules.ExchangeLeftMacroRule
-import gapt.proofs.lk.rules.ExchangeRightMacroRule
 import gapt.proofs.lk.rules.ExistsLeftRule
 import gapt.proofs.lk.rules.ExistsRightRule
 import gapt.proofs.lk.rules.ForallLeftRule
@@ -43,6 +41,8 @@ import gapt.proofs.lk.rules.OrLeftRule
 import gapt.proofs.lk.rules.OrRightRule
 import gapt.proofs.lk.rules.WeakeningLeftRule
 import gapt.proofs.lk.rules.WeakeningRightRule
+import gapt.proofs.lk.rules.macros.ExchangeLeftMacroRule
+import gapt.proofs.lk.rules.macros.ExchangeRightMacroRule
 import gapt.utils.NameGenerator
 import gapt.utils.StreamUtils.even
 import gapt.utils.StreamUtils.odd
