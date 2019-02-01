@@ -15,17 +15,21 @@ import gapt.proofs.lk.rules.LogicalAxiom
 
 object TransRule {
   /**
-   * <pre>Performs a proof employing transitivity.
+   * Performs a proof employing transitivity.
    *
    * Takes a proof π with end-sequent of the form
+   * <pre>
    * (x=z), Trans, ... |- ...
-   * and return one with end-sequent of the form
-   * (x=y), (y=z), Trans, ... |- ...
-   * where Trans is defined as Forall xyz.((x=y ∧ y=z) -> x=z)
    * </pre>
-   * @param x X
-   * @param y Y
-   * @param z Z
+   * and return one with end-sequent of the form
+   * <pre>
+   * (x=y), (y=z), Trans, ... |- ...
+   * </pre>
+   * where Trans is defined as Forall xyz.((x=y ∧ y=z) -> x=z)
+   *
+   * @param x a first-order term
+   * @param y a first-order term
+   * @param z a first-order term
    * @param subProof The proof π which contains the (x=z) which is to be shown.
    * @return A proof with π as a subtree and the formula (x=z) replaced by (x=y) and (y=z).
    */
