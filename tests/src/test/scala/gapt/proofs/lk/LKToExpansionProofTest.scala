@@ -5,6 +5,27 @@ import gapt.expr._
 import gapt.proofs.context.Context
 import gapt.proofs.{ Ant, ProofBuilder, Sequent, SequentMatchers, Suc }
 import gapt.proofs.expansion._
+import gapt.proofs.lk.rules.ContractionLeftRule
+import gapt.proofs.lk.rules.ContractionRightRule
+import gapt.proofs.lk.rules.DefinitionRightRule
+import gapt.proofs.lk.rules.EqualityLeftRule
+import gapt.proofs.lk.rules.EqualityRightRule
+import gapt.proofs.lk.rules.ExistsLeftRule
+import gapt.proofs.lk.rules.ExistsRightRule
+import gapt.proofs.lk.rules.ForallLeftBlock
+import gapt.proofs.lk.rules.ForallRightRule
+import gapt.proofs.lk.rules.ImpRightRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.NegLeftRule
+import gapt.proofs.lk.rules.NegRightRule
+import gapt.proofs.lk.rules.OrLeftRule
+import gapt.proofs.lk.rules.OrRightMacroRule
+import gapt.proofs.lk.rules.OrRightRule
+import gapt.proofs.lk.rules.ProofLink
+import gapt.proofs.lk.rules.ReflexivityAxiom
+import gapt.proofs.lk.rules.TopAxiom
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.WeakeningRightRule
 import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.utils.SatMatchers
 import org.specs2.mutable._

@@ -7,6 +7,8 @@ import gapt.formats.babel.BabelSignature
 import gapt.utils.{ Logger, NameGenerator }
 import cats.syntax.all._
 import cats.instances.all._
+import gapt.proofs.lk.rules.InitialSequent
+import gapt.proofs.lk.rules.WeakeningContractionMacroRule
 
 object guessLabels {
   def suggestLabel( formula: Formula, idx: SequentIndex, nameGen: NameGenerator ): String =

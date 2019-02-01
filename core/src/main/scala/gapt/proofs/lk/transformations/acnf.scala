@@ -2,16 +2,16 @@ package gapt.proofs.lk.transformations
 
 import gapt.expr.Formula
 import gapt.expr.hol.isAtom
-import gapt.proofs.lk.CutRule
-import gapt.proofs.lk.InitialSequent
 import gapt.proofs.lk.LKProof
-import gapt.proofs.lk.LogicalAxiom
-import gapt.proofs.lk.WeakeningLeftRule
-import gapt.proofs.lk.WeakeningRightRule
 import gapt.proofs.lk.reductions.CutReduction
 import gapt.proofs.lk.reductions.gradeReduction
 import gapt.proofs.lk.reductions.leftRankReduction
 import gapt.proofs.lk.reductions.rightRankReduction
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.InitialSequent
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.WeakeningRightRule
 
 object acnf {
   /**

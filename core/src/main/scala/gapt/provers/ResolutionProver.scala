@@ -5,7 +5,6 @@ import gapt.proofs.expansion.ExpansionProof
 import gapt.proofs.expansion.ExpansionProofToLK
 import gapt.proofs.expansion.deskolemizeET
 import gapt.proofs.lk.LKProof
-import gapt.proofs.lk.WeakeningContractionMacroRule
 import gapt.proofs.resolution.Input
 import gapt.proofs.resolution.ResolutionProof
 import gapt.proofs.resolution.ResolutionToExpansionProof
@@ -19,6 +18,7 @@ import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.lk.rules.WeakeningContractionMacroRule
 import gapt.proofs.withSection
 import gapt.utils.Maybe
 

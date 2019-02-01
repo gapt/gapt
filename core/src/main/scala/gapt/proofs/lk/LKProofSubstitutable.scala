@@ -4,6 +4,36 @@ import gapt.expr._
 import BetaReduction.{ betaNormalize, _ }
 import gapt.proofs.SequentConnector
 import gapt.proofs.gaptic.OpenAssumption
+import gapt.proofs.lk.rules.AndLeftRule
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.BottomAxiom
+import gapt.proofs.lk.rules.ContractionLeftRule
+import gapt.proofs.lk.rules.ContractionRightRule
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.DefinitionLeftRule
+import gapt.proofs.lk.rules.DefinitionRightRule
+import gapt.proofs.lk.rules.EqualityLeftRule
+import gapt.proofs.lk.rules.EqualityRightRule
+import gapt.proofs.lk.rules.ExistsLeftRule
+import gapt.proofs.lk.rules.ExistsRightRule
+import gapt.proofs.lk.rules.ExistsSkLeftRule
+import gapt.proofs.lk.rules.ForallLeftRule
+import gapt.proofs.lk.rules.ForallRightRule
+import gapt.proofs.lk.rules.ForallSkRightRule
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.ImpRightRule
+import gapt.proofs.lk.rules.InductionCase
+import gapt.proofs.lk.rules.InductionRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.NegLeftRule
+import gapt.proofs.lk.rules.NegRightRule
+import gapt.proofs.lk.rules.OrLeftRule
+import gapt.proofs.lk.rules.OrRightRule
+import gapt.proofs.lk.rules.ProofLink
+import gapt.proofs.lk.rules.ReflexivityAxiom
+import gapt.proofs.lk.rules.TopAxiom
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.WeakeningRightRule
 import gapt.proofs.lk.util.freeVariablesLK
 
 /**
@@ -147,7 +177,7 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
       EqualityRightRule( subProofNew, eq, aux, substitution( con ).asInstanceOf[Abs] )
 
     case InductionRule( cases, main, term ) =>
-      InductionRule( cases map {
+      rules.InductionRule( cases map {
         indCase( substitution, _ )
       }, substitution( main ).asInstanceOf[Abs], substitution( term ) )
 

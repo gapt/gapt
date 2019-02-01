@@ -7,16 +7,16 @@ import gapt.expr.hol.inductionPrinciple
 import gapt.proofs.Ant
 import gapt.proofs.ProofBuilder
 import gapt.proofs.SequentConnector
-import gapt.proofs.lk.AndRightRule
-import gapt.proofs.lk.ExchangeRightMacroRule
-import gapt.proofs.lk.ForallLeftRule
-import gapt.proofs.lk.ForallRightBlock
-import gapt.proofs.lk.ImpLeftRule
-import gapt.proofs.lk.ImpRightRule
-import gapt.proofs.lk.InductionRule
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.LKVisitor
-import gapt.proofs.lk.LogicalAxiom
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.ExchangeRightMacroRule
+import gapt.proofs.lk.rules.ForallLeftRule
+import gapt.proofs.lk.rules.ForallRightBlock
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.ImpRightRule
+import gapt.proofs.lk.rules.InductionRule
+import gapt.proofs.lk.rules.LogicalAxiom
 
 object makeInductionExplicit extends LKVisitor[Unit] {
 

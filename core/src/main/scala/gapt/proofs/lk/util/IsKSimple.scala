@@ -6,8 +6,8 @@ import gapt.expr.TArr
 import gapt.expr.TBase
 import gapt.expr.Ty
 import gapt.proofs.context.update.InductiveType
-import gapt.proofs.lk.InductionRule
 import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.rules.InductionRule
 
 object IsKSimple {
   def apply( proof: LKProof ): Boolean = {

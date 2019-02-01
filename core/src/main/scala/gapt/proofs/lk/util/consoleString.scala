@@ -2,10 +2,10 @@ package gapt.proofs.lk.util
 
 import gapt.proofs.HOLSequent
 import gapt.proofs.SequentIndex
-import gapt.proofs.lk.BinaryLKProof
-import gapt.proofs.lk.InitialSequent
 import gapt.proofs.lk.LKProof
-import gapt.proofs.lk.UnaryLKProof
+import gapt.proofs.lk.rules.BinaryLKProof
+import gapt.proofs.lk.rules.InitialSequent
+import gapt.proofs.lk.rules.UnaryLKProof
 
 object consoleString {
   /**

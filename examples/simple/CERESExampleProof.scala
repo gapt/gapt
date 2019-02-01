@@ -2,7 +2,15 @@ package gapt.examples
 
 import gapt.expr._
 import gapt.proofs.Sequent
-import gapt.proofs.lk._
+import gapt.proofs.lk.rules.ContractionLeftRule
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.ForallLeftRule
+import gapt.proofs.lk.rules.ForallRightRule
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.ImpRightRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.ParamodulationRightRule
+import gapt.proofs.lk.rules.ProofLink
 
 object CERESExpansionExampleProof {
   val c = FOLConst( "c" )

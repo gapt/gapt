@@ -2,20 +2,20 @@ package gapt.proofs.lk.util
 
 import gapt.expr._
 import gapt.proofs._
-import gapt.proofs.lk.AndLeftMacroRule
-import gapt.proofs.lk.AndRightRule
-import gapt.proofs.lk.BottomAxiom
-import gapt.proofs.lk.ContractionMacroRule
-import gapt.proofs.lk.ImpLeftRule
-import gapt.proofs.lk.ImpRightMacroRule
 import gapt.proofs.lk.LKProof
-import gapt.proofs.lk.LogicalAxiom
-import gapt.proofs.lk.NegLeftRule
-import gapt.proofs.lk.NegRightRule
-import gapt.proofs.lk.OrLeftRule
-import gapt.proofs.lk.OrRightMacroRule
-import gapt.proofs.lk.TopAxiom
-import gapt.proofs.lk.WeakeningMacroRule
+import gapt.proofs.lk.rules.AndLeftMacroRule
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.BottomAxiom
+import gapt.proofs.lk.rules.ContractionMacroRule
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.ImpRightMacroRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.NegLeftRule
+import gapt.proofs.lk.rules.NegRightRule
+import gapt.proofs.lk.rules.OrLeftRule
+import gapt.proofs.lk.rules.OrRightMacroRule
+import gapt.proofs.lk.rules.TopAxiom
+import gapt.proofs.lk.rules.WeakeningMacroRule
 import gapt.provers.escargot.Escargot
 
 trait SolveUtils {

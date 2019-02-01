@@ -2,10 +2,10 @@ package gapt.proofs.lk.transformations
 
 import gapt.proofs.Ant
 import gapt.proofs.Suc
-import gapt.proofs.lk.CutRule
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.LKVisitor
-import gapt.proofs.lk.LogicalAxiom
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.LogicalAxiom
 
 /**
  * Algorithm that removes some unnecessary cuts.

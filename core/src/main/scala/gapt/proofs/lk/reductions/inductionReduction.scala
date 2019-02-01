@@ -2,9 +2,11 @@ package gapt.proofs.lk.reductions
 
 import gapt.expr.isConstructorForm
 import gapt.proofs.context.Context
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.rules.InductionRule
 import gapt.proofs.lk.transformations.unfoldInduction
-import gapt.proofs.{ SequentConnector, guessPermutation }
-import gapt.proofs.lk.{ InductionRule, LKProof }
+import gapt.proofs.SequentConnector
+import gapt.proofs.guessPermutation
 
 class InductionUnfoldingReduction( implicit val ctx: Context ) extends Reduction {
 

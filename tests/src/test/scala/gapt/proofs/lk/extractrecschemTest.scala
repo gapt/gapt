@@ -11,6 +11,8 @@ import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.Sort
+import gapt.proofs.lk.rules.BottomAxiom
+import gapt.proofs.lk.rules.TopAxiom
 import gapt.proofs.lk.transformations.eliminateDefinitions
 import gapt.proofs.lk.util.extractRecSchem
 import gapt.utils.SatMatchers

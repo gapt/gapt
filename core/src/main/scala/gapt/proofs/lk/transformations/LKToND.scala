@@ -8,33 +8,33 @@ import gapt.proofs.Suc
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.lk
-import gapt.proofs.lk.AndLeftRule
-import gapt.proofs.lk.AndRightRule
-import gapt.proofs.lk.BottomAxiom
-import gapt.proofs.lk.ContractionLeftRule
-import gapt.proofs.lk.ContractionRightRule
-import gapt.proofs.lk.CutRule
-import gapt.proofs.lk.DefinitionLeftRule
-import gapt.proofs.lk.DefinitionRightRule
-import gapt.proofs.lk.EqualityLeftRule
-import gapt.proofs.lk.EqualityRightRule
-import gapt.proofs.lk.ExistsLeftRule
-import gapt.proofs.lk.ExistsRightRule
-import gapt.proofs.lk.ExistsSkLeftRule
-import gapt.proofs.lk.ForallLeftRule
-import gapt.proofs.lk.ForallRightRule
-import gapt.proofs.lk.ForallSkRightRule
-import gapt.proofs.lk.ImpLeftRule
-import gapt.proofs.lk.ImpRightRule
 import gapt.proofs.lk.LKProof
-import gapt.proofs.lk.NegLeftRule
-import gapt.proofs.lk.NegRightRule
-import gapt.proofs.lk.OrLeftRule
-import gapt.proofs.lk.OrRightRule
-import gapt.proofs.lk.ReflexivityAxiom
-import gapt.proofs.lk.TopAxiom
-import gapt.proofs.lk.WeakeningLeftRule
-import gapt.proofs.lk.WeakeningRightRule
+import gapt.proofs.lk.rules.AndLeftRule
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.BottomAxiom
+import gapt.proofs.lk.rules.ContractionLeftRule
+import gapt.proofs.lk.rules.ContractionRightRule
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.DefinitionLeftRule
+import gapt.proofs.lk.rules.DefinitionRightRule
+import gapt.proofs.lk.rules.EqualityLeftRule
+import gapt.proofs.lk.rules.EqualityRightRule
+import gapt.proofs.lk.rules.ExistsLeftRule
+import gapt.proofs.lk.rules.ExistsRightRule
+import gapt.proofs.lk.rules.ExistsSkLeftRule
+import gapt.proofs.lk.rules.ForallLeftRule
+import gapt.proofs.lk.rules.ForallRightRule
+import gapt.proofs.lk.rules.ForallSkRightRule
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.ImpRightRule
+import gapt.proofs.lk.rules.NegLeftRule
+import gapt.proofs.lk.rules.NegRightRule
+import gapt.proofs.lk.rules.OrLeftRule
+import gapt.proofs.lk.rules.OrRightRule
+import gapt.proofs.lk.rules.ReflexivityAxiom
+import gapt.proofs.lk.rules.TopAxiom
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.WeakeningRightRule
 import gapt.proofs.nd
 import gapt.proofs.nd._
 
@@ -148,10 +148,10 @@ object LKToND {
     val ndProof = proof match {
 
       // Axioms
-      case lk.LogicalAxiom( f ) =>
+      case lk.rules.LogicalAxiom( f ) =>
         nd.LogicalAxiom( f )
 
-      case lk.ProofLink( prf, seq ) =>
+      case lk.rules.ProofLink( prf, seq ) =>
         val Apps( Const( proofName, _, _ ), args ) = prf
         val ( genprf, genseq ) = ctx.get[ProofNames].names( proofName )
         val Apps( _, vs ) = genprf
@@ -565,9 +565,9 @@ object LKToND {
           exchange( translate( proof, Some( focusMain ) ), focus.map( p.endSequent.apply ) )
         }
 
-      case lk.InductionRule( cases, formula, term ) =>
+      case lk.rules.InductionRule( cases, formula, term ) =>
         val ndCases = cases.map {
-          case lk.InductionCase( proof, constructor, hypotheses, eigenVars, conclusion ) =>
+          case lk.rules.InductionCase( proof, constructor, hypotheses, eigenVars, conclusion ) =>
             val prfNd = translate( proof, Some( conclusion ) )
             val hypNd = hypotheses.map { case i: SequentIndex => prfNd.endSequent.indexOf( proof.endSequent( i ) ) }
             nd.InductionCase( prfNd, constructor, hypNd, eigenVars )

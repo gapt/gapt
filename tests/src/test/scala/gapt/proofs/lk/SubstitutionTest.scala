@@ -5,6 +5,14 @@ import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.Sort
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.ForallLeftRule
+import gapt.proofs.lk.rules.ForallRightRule
+import gapt.proofs.lk.rules.InductionCase
+import gapt.proofs.lk.rules.InductionRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.WeakeningRightRule
 import org.specs2.mutable._
 
 class SubstitutionTest extends Specification with SequentMatchers {

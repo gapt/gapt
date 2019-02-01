@@ -19,6 +19,9 @@ import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion._
 import gapt.proofs.gaptic.{ ProofState, now }
 import gapt.proofs.lk._
+import gapt.proofs.lk.rules.InductionRule
+import gapt.proofs.lk.rules.ProofLink
+import gapt.proofs.lk.rules.WeakeningContractionMacroRule
 import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.proofs.lk.transformations.LKToND
 import gapt.proofs.lk.transformations.MG3iToLJ

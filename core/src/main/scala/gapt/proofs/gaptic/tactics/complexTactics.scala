@@ -14,6 +14,18 @@ import gapt.provers.viper.aip.axioms._
 import cats.syntax.all._
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.ContractionLeftRule
+import gapt.proofs.lk.rules.DefinitionRule
+import gapt.proofs.lk.rules.EqualityLeftRule
+import gapt.proofs.lk.rules.EqualityRightRule
+import gapt.proofs.lk.rules.ForallLeftBlock
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.InductionCase
+import gapt.proofs.lk.rules.InductionRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.WeakeningMacroRule
 import gapt.proofs.lk.util.solvePropositional
 import gapt.proofs.lk.util.solveQuasiPropositional
 

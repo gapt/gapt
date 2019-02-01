@@ -18,6 +18,15 @@ import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
 import gapt.proofs.context.update.ProofDefinitionDeclaration
 import gapt.proofs.context.update.ProofNameDeclaration
 import gapt.proofs.context.update.Update
+import gapt.proofs.lk.rules
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.ContractionMacroRule
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.ExistsSkLeftRule
+import gapt.proofs.lk.rules.ForallLeftBlock
+import gapt.proofs.lk.rules.ForallRightBlock
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.ProofLink
 import gapt.proofs.lk.transformations.cleanCuts
 import gapt.proofs.lk.transformations.cleanStructuralRules
 import gapt.proofs.lk.transformations.eliminateDefinitions
@@ -238,7 +247,7 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
             u( ExistsSkLeftRule( _, skC( xs ), skDef ) ).
             u( ForallLeftBlock( _, desc, xs ) ).
             u( ForallRightBlock( _, spec, xs ) ).
-            u( CutRule( exProof, _, desc ) ).
+            u( rules.CutRule( exProof, _, desc ) ).
             qed
         }
       }

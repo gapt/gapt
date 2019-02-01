@@ -1,13 +1,15 @@
 package gapt.prooftool
 
-import gapt.proofs.{ DagProof, SequentIndex, SequentProof }
-import gapt.proofs.lk.{ InitialSequent, LKProof }
-
-import swing.SequentialContainer.Wrapper
+import gapt.expr._
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.rules.InitialSequent
+import gapt.proofs.DagProof
+import gapt.proofs.SequentIndex
+import gapt.proofs.SequentProof
 import javax.swing.JPopupMenu
 
-import swing._
-import gapt.expr._
+import scala.swing.SequentialContainer.Wrapper
+import scala.swing._
 
 class PopupMenu extends Component with Wrapper {
   override lazy val peer: JPopupMenu = new JPopupMenu

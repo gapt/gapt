@@ -3,10 +3,10 @@ package gapt.proofs.lk.transformations
 import gapt.expr.isConstructorForm
 import gapt.proofs.SequentIndex
 import gapt.proofs.context.Context
-import gapt.proofs.lk.CutRule
-import gapt.proofs.lk.InductionRule
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.reductions._
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.InductionRule
 import gapt.proofs.lk.transformations
 
 object cutNormal {

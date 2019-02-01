@@ -14,6 +14,9 @@ import gapt.provers.prover9.{ Prover9, Prover9Importer }
 import gapt.provers.sat.Sat4j
 import gapt.provers.verit.VeriT
 import gapt.formats.ClasspathInputFile
+import gapt.proofs.lk.rules.ForallLeftRule
+import gapt.proofs.lk.rules.ForallRightRule
+import gapt.proofs.lk.rules.LogicalAxiom
 import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.proofs.lk.transformations.cutNormal
 import gapt.proofs.lk.transformations.eliminateDefinitions

@@ -9,6 +9,8 @@ import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
 import gapt.proofs.context.update.ProofDefinitionDeclaration
 import gapt.proofs.context.update.ProofNameDeclaration
 import gapt.proofs.context.update.Sort
+import gapt.proofs.lk.rules.ProofLink
+import gapt.proofs.lk.rules.WeakeningMacroRule
 import org.specs2.mutable.Specification
 
 class ContextTest extends Specification {

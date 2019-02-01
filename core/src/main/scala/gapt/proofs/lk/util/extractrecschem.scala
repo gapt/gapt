@@ -7,20 +7,20 @@ import gapt.proofs.Ant
 import gapt.proofs.Sequent
 import gapt.proofs.SequentIndex
 import gapt.proofs.Suc
-import gapt.proofs.lk.BottomAxiom
-import gapt.proofs.lk.ContractionRule
-import gapt.proofs.lk.CutRule
-import gapt.proofs.lk.EqualityLeftRule
-import gapt.proofs.lk.EqualityRightRule
-import gapt.proofs.lk.EqualityRule
-import gapt.proofs.lk.InductionRule
 import gapt.proofs.lk.LKProof
-import gapt.proofs.lk.LogicalAxiom
-import gapt.proofs.lk.ProofLink
-import gapt.proofs.lk.ReflexivityAxiom
-import gapt.proofs.lk.StrongQuantifierRule
-import gapt.proofs.lk.TopAxiom
-import gapt.proofs.lk.WeakQuantifierRule
+import gapt.proofs.lk.rules.BottomAxiom
+import gapt.proofs.lk.rules.ContractionRule
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.EqualityLeftRule
+import gapt.proofs.lk.rules.EqualityRightRule
+import gapt.proofs.lk.rules.EqualityRule
+import gapt.proofs.lk.rules.InductionRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.ProofLink
+import gapt.proofs.lk.rules.ReflexivityAxiom
+import gapt.proofs.lk.rules.StrongQuantifierRule
+import gapt.proofs.lk.rules.TopAxiom
+import gapt.proofs.lk.rules.WeakQuantifierRule
 import gapt.proofs.lk.transformations.moveStrongQuantifierRulesDown
 
 object extractRecSchem {

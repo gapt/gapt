@@ -3,6 +3,12 @@ package gapt.proofs.resolution
 import gapt.expr.{ Eq, Formula }
 import gapt.proofs.{ Ant, Suc }
 import gapt.proofs.lk._
+import gapt.proofs.lk.rules.ContractionMacroRule
+import gapt.proofs.lk.rules.EqualityLeftRule
+import gapt.proofs.lk.rules.EqualityRightRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.ReflexivityAxiom
+import gapt.proofs.lk.rules.WeakeningLeftRule
 
 object UnitResolutionToLKProof {
 

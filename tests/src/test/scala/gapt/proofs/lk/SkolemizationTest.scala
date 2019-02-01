@@ -1,6 +1,11 @@
 package gapt.proofs.lk
 
 import gapt.expr._
+import gapt.proofs.lk.rules.ExistsLeftRule
+import gapt.proofs.lk.rules.ExistsRightRule
+import gapt.proofs.lk.rules.ForallLeftRule
+import gapt.proofs.lk.rules.ForallRightRule
+import gapt.proofs.lk.rules.LogicalAxiom
 import gapt.proofs.lk.transformations.folSkolemize
 import gapt.proofs.lk.transformations.folSkolemize.SkolemSymbolFactory
 import org.specs2.mutable._

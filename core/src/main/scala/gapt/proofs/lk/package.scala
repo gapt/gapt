@@ -1,6 +1,8 @@
 package gapt.proofs
 
 import gapt.expr.{ ClosedUnderReplacement, Expr, containedNames }
+import gapt.proofs.lk.rules.EqualityRule
+import gapt.proofs.lk.rules.SkolemQuantifierRule
 
 package object lk {
   implicit object LKProofSubstitutableDefault extends LKProofSubstitutable( false )

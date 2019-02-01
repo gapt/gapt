@@ -9,6 +9,30 @@ import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, formulaToExpansionTree }
 import gapt.proofs.gaptic.{ OpenAssumption, Tactic, TacticFailure, Tactical1 }
+import gapt.proofs.lk.rules.AndLeftRule
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.BottomAxiom
+import gapt.proofs.lk.rules.ContractionMacroRule
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.ExistsLeftRule
+import gapt.proofs.lk.rules.ExistsRightRule
+import gapt.proofs.lk.rules.ForallLeftRule
+import gapt.proofs.lk.rules.ForallRightRule
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.ImpRightRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.NegLeftRule
+import gapt.proofs.lk.rules.NegRightRule
+import gapt.proofs.lk.rules.OrLeftRule
+import gapt.proofs.lk.rules.OrRightRule
+import gapt.proofs.lk.rules.ParamodulationLeftRule
+import gapt.proofs.lk.rules.ParamodulationRightRule
+import gapt.proofs.lk.rules.ProofLink
+import gapt.proofs.lk.rules.ReflexivityAxiom
+import gapt.proofs.lk.rules.TopAxiom
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.WeakeningMacroRule
+import gapt.proofs.lk.rules.WeakeningRightRule
 import gapt.provers.OneShotProver
 import gapt.utils.{ Logger, Maybe }
 

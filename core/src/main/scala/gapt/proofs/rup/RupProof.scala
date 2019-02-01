@@ -2,16 +2,23 @@ package gapt.proofs.rup
 import java.util
 
 import gapt.expr.Formula
-import gapt.formats.dimacs.DIMACS
 import gapt.proofs.DagProof
 import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.rules.ContractionMacroRule
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.LogicalAxiom
 import gapt.proofs.resolution.ResolutionProof
 import gapt.proofs.rup.RupProof._
-import org.sat4j.core.{ LiteralsUtils, Vec, VecInt }
+import org.sat4j.core.LiteralsUtils
+import org.sat4j.core.Vec
+import org.sat4j.core.VecInt
 import org.sat4j.minisat.constraints.MixedDataStructureDanielWL
-import org.sat4j.minisat.constraints.cnf.{ OriginalBinaryClause, OriginalWLClause, UnitClause }
-import org.sat4j.minisat.core.{ Constr, Propagatable }
-import org.sat4j.specs.{ IConstr, UnitPropagationListener }
+import org.sat4j.minisat.constraints.cnf.OriginalBinaryClause
+import org.sat4j.minisat.constraints.cnf.OriginalWLClause
+import org.sat4j.minisat.constraints.cnf.UnitClause
+import org.sat4j.minisat.core.Constr
+import org.sat4j.minisat.core.Propagatable
+import org.sat4j.specs.UnitPropagationListener
 
 import scala.collection.mutable
 
