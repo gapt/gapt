@@ -52,7 +52,7 @@ object AtomicExpansion {
   }
 
   def apply( p: LKProof ): LKProof = new LKVisitor[Unit] {
-    override def visitLogicalAxiom( proof: LogicalAxiom, otherArg: Unit ) =
+    override def visitLogicalAxiom( proof: LogicalAxiom, otherArg: Unit ): ( LKProof, SequentConnector ) =
       ( AtomicExpansion( proof.A ), SequentConnector( proof.endSequent ) )
   }.apply( p, () )
 

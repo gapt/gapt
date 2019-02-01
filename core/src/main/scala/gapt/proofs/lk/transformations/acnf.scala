@@ -20,7 +20,7 @@ object acnf {
    * @param proof The proof to be transformed to ACNF.
    * @return A proof of the same end-sequent in ACNF.
    */
-  def apply( proof: LKProof ) =
+  def apply( proof: LKProof ): LKProof =
     ( new UppermostFirstStrategy( acnfReduction ) ).run( proof )
 
   private val acnfReduction = new CutReduction {
@@ -58,7 +58,7 @@ object acnfTop {
    * @param proof The proof to be transformed to ACNF Top
    * @return A proof of the same end-sequent in ACNF Top.
    */
-  def apply( proof: LKProof ) =
+  def apply( proof: LKProof ): LKProof =
     ( new UppermostFirstStrategy( acnfTopReduction ) ).run( proof )
 
   private val acnfTopReduction = new CutReduction {

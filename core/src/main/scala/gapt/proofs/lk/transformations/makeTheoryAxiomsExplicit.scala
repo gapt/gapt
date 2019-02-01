@@ -33,7 +33,7 @@ object makeTheoryAxiomsExplicit extends LKVisitor[Seq[Formula]] {
    *         is removed in `proof'` and elements of `formulas` may occur in the antecedent of the end sequent of `proof'`;
    *        `conn` is an SequentConnector relating `proof` and `proof'`.
    */
-  def withSequentConnector( formulas: Formula* )( proof: LKProof ) = recurse( proof, formulas )
+  def withSequentConnector( formulas: Formula* )( proof: LKProof ): ( LKProof, SequentConnector ) = recurse( proof, formulas )
 
   /**
    * Eliminates some theory axioms from `proof`, namely those subsumed by `formulas`.

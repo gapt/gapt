@@ -7,7 +7,7 @@ import gapt.expr.Formula
 import gapt.proofs.lk.LKProof
 
 object WeakQuantifierBlock {
-  def apply( p: LKProof, main: Formula, terms: Seq[Expr] ) =
+  def apply( p: LKProof, main: Formula, terms: Seq[Expr] ): LKProof =
     main match {
       case _ if terms.isEmpty => p
       case All( _, _ )        => ForallLeftBlock( p, main, terms )

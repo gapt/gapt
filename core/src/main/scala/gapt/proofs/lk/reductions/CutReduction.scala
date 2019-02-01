@@ -15,7 +15,7 @@ trait CutReduction extends Reduction {
 
   def orElse( reduction: CutReduction ): CutReduction =
     new CutReduction {
-      def reduce( cut: CutRule ) =
+      def reduce( cut: CutRule ): Option[LKProof] =
         CutReduction.this.reduce( cut ) orElse reduction.reduce( cut )
     }
 

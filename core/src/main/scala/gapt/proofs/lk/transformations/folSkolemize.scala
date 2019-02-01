@@ -51,13 +51,13 @@ object folSkolemize {
   private[lk] class SkolemSymbolFactory( usedConstants: Iterable[Const] ) {
     private var skolem_symbol_stream = new NameGenerator( usedConstants map { _.name } ).freshStream( "s" )
 
-    def getSkolemSymbols = {
+    def getSkolemSymbols: Stream[String] = {
       val stream = even( skolem_symbol_stream )
       skolem_symbol_stream = odd( skolem_symbol_stream )
       stream
     }
 
-    def getSkolemSymbol = {
+    def getSkolemSymbol: String = {
       val sym = skolem_symbol_stream.head
       skolem_symbol_stream = skolem_symbol_stream.tail
       sym

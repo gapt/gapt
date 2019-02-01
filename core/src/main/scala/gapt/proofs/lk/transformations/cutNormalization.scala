@@ -13,7 +13,7 @@ object cutNormal {
   def apply(
     proof:                LKProof,
     cleanStructuralRules: Boolean = true,
-    unfoldInductions:     Boolean = false )( implicit ctx: Context = Context.default ) =
+    unfoldInductions:     Boolean = false )( implicit ctx: Context = Context.default ): LKProof =
     ( new ReductiveCutNormalization( cleanStructuralRules, unfoldInductions ) ).apply( proof )
 
   val nonCommutingRightRankReduction =

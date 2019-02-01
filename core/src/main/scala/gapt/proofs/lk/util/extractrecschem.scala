@@ -64,7 +64,7 @@ private[lk] class extractRecSchem( includeTheoryAxioms: Boolean, includeEqTheory
   private def mkFreshVar(): String = freshVars.next()
 
   private object QuantifiedCut {
-    def unapply( p: LKProof ) = p match {
+    def unapply( p: LKProof ): Option[( LKProof, SequentIndex, LKProof, SequentIndex, Boolean )] = p match {
       case CutRule( q1, aux1, q2, aux2 ) =>
         q1.conclusion( aux1 ) match {
           case All.Block( u, f ) if u.nonEmpty =>

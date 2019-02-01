@@ -1,6 +1,7 @@
 package gapt.proofs.lk.transformations
 
 import gapt.proofs.Ant
+import gapt.proofs.SequentConnector
 import gapt.proofs.Suc
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.LKVisitor
@@ -15,7 +16,7 @@ object cleanCuts extends LKVisitor[Unit] {
 
   def apply( p: LKProof ): LKProof = apply( p, () )
 
-  override def visitCut( p: CutRule, otherArg: Unit ) = {
+  override def visitCut( p: CutRule, otherArg: Unit ): (LKProof, SequentConnector) = {
     val CutRule( leftSubProof, aux1, rightSubProof, aux2 ) = p
 
     ( leftSubProof, rightSubProof ) match {
