@@ -25,13 +25,13 @@ trait SolveUtils {
   /**
    * Applies the function f, if maybeProof is Right(proof) and formula is present in polarity pol in proof.
    */
-  protected def mapIf( maybeProof: UnprovableOrLKProof, formula: Formula, pol: Polarity )( f: LKProof => LKProof ) =
+  protected final def mapIf( maybeProof: UnprovableOrLKProof, formula: Formula, pol: Polarity )( f: LKProof => LKProof ) =
     maybeProof map { p => if ( p.conclusion.contains( formula, pol ) ) f( p ) else p }
 
   /**
    * Applies the function f, if maybeProof is Right(proof) and one of formula{1,2} is present in polarity pol{1,2} in proof.
    */
-  protected def mapIf(
+  protected final def mapIf(
     maybeProof: UnprovableOrLKProof,
     formula1:   Formula, pol1: Polarity,
     formula2: Formula, pol2: Polarity )( f: LKProof => LKProof ) =

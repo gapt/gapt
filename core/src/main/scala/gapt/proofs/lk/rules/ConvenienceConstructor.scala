@@ -22,7 +22,7 @@ class ConvenienceConstructor( val longName: String ) {
    * @param text The rest of the message.
    * @return
    */
-  protected def LKRuleCreationException( text: String ): LKRuleCreationException =
+  protected final def LKRuleCreationException( text: String ): LKRuleCreationException =
     new LKRuleCreationException( longName, text )
 
   def findIndicesOrFormulasInPremise( premise: HOLSequent )(

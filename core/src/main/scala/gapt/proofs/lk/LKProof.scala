@@ -26,7 +26,7 @@ abstract class LKProof extends SequentProof[Formula, LKProof] {
    * @param antecedentIndices Indices that should be in the antecedent.
    * @param succedentIndices Indices that should be in the succedent.
    */
-  protected def validateIndices(
+  protected final def validateIndices(
     premise:           HOLSequent,
     antecedentIndices: Seq[SequentIndex], succedentIndices: Seq[SequentIndex] ): Unit = {
     val antSet = mutable.HashSet[SequentIndex]()
