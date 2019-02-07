@@ -694,11 +694,10 @@ trait TacticCommands {
    * NB: This will only replace the first definition it finds in each supplied formula. If you want to fold all definitions,
    * use `repeat`.
    *
-   * @param label The formula labels `label`
+   * @param definition The formula labels `def`
    * @param ctx         A [[gapt.proofs.context.Context]]. The definitions you want to fold need to be present in `ctx`.
    */
-  def fold( label: String )( implicit ctx: Context ) =
-    foldTactic( label )
+  def fold( definition: String )( implicit ctx: Context ) = FoldTacticHelper( definition )
 
   /**
    * Does nothing.

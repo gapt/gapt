@@ -228,17 +228,49 @@ case class UnfoldTactic( target: String, definitions: Seq[String], maxSteps: Opt
     } yield ()
 }
 
-case class foldTactic( target: String )( implicit ctx: Context ) extends Tactical1[Unit] {
-  def fold( main: Formula ): Formula = {
-    val base = Normalizer( ctx.normalizer.rules.map( x => ReductionRule( x.rhs, x.lhs ) ) )
-    val result = base.reduce1( main )
-    if ( result.isEmpty ) main
-    else result.get.asInstanceOf[Formula]
+case class FoldTacticHelper( definition: String )( implicit ctx: Context ) {
+  def in( labels: String ) = FoldTactic( labels, definition )
+}
+case class FoldTactic( target: String, definition: String )( implicit ctx: Context ) extends Tactical1[Unit] {
+  def fold( main: Formula ): Expr = {
+    val base = ctx.normalizer
+    val rules = base.rules.filter( x => x.lhsHeadName.matches( definition ) )
+    if ( rules.isEmpty ) main
+    else {
+      val trans = rules.map( x => {
+        val fvL = freeVariables( x.lhs )
+        val fvPos = fvL.map( y => ( x.lhs.find( y ), x.rhs.find( y ) ) )
+        val matchForm = fvPos.foldLeft( ( x.lhs, x.rhs ) )( ( form, posList ) => {
+          val mRF = posList._2.foldLeft( ( Set[Expr](), form._2 ) )( ( form2, pos ) => {
+            if ( main.isDefinedAt( pos ) ) {
+              val term = main.get( pos ).get
+              try {
+                ( form2._1.asInstanceOf[Set[Expr]] + term, form2._2.replace( pos, term ) )
+              } catch { case _: Throwable => ( form2._1.asInstanceOf[Set[Expr]] + x.rhs.get( pos ).get, form2._2 ) }
+            } else ( form2._1.asInstanceOf[Set[Expr]] + x.rhs.get( pos ).get, form2._2 )
+          } )
+          if ( mRF._1.size > 1 ) form
+          else {
+            val res = posList._1.foldLeft( form._1 )( ( form2, pos ) => {
+              try {
+                form2.replace( pos, mRF._1.head )
+              } catch { case _: Throwable => form2 }
+            } )
+            ( res, mRF._2 )
+          }
+
+        } )
+        matchForm
+      } ).filter( x => x._2.alphaEquals( main ) )
+      if ( trans.size == 1 ) trans.head._1
+      else main
+
+    }
   }
   def apply( goal: OpenAssumption ): Tactic[Unit] =
     for {
       ( label: String, main: Formula, idx: SequentIndex ) <- findFormula( goal, OnLabel( target ) )
-      newGoal = OpenAssumption( goal.labelledSequent.updated( idx, label -> fold( main ) ) )
+      newGoal = OpenAssumption( goal.labelledSequent.updated( idx, label -> fold( main ).asInstanceOf[Formula] ) )
       _ <- replace( DefinitionRule( newGoal, idx, main ) )
     } yield ()
 }
