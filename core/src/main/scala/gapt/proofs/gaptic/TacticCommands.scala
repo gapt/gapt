@@ -685,6 +685,22 @@ trait TacticCommands {
     UnfoldTacticHelper( definitions )
 
   /**
+   * Replaces a definition with its defined constant. Syntax:
+   *
+   * {{{
+   *   fold("def1", "def2",...,"defn") in ("label1", "label2",...,"labelk")
+   * }}}
+   *
+   * NB: This will only replace the first definition it finds in each supplied formula. If you want to fold all definitions,
+   * use `repeat`.
+   *
+   * @param label The formula labels `label`
+   * @param ctx         A [[gapt.proofs.context.Context]]. The definitions you want to fold need to be present in `ctx`.
+   */
+  def fold( label: String )( implicit ctx: Context ) =
+    foldTactic( label )
+
+  /**
    * Does nothing.
    */
   def skip: Tactic[Unit] = Tactic.pure( () ).aka( "skip" )

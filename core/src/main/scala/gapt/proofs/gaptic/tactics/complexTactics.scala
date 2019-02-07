@@ -228,6 +228,21 @@ case class UnfoldTactic( target: String, definitions: Seq[String], maxSteps: Opt
     } yield ()
 }
 
+case class foldTactic( target: String )( implicit ctx: Context ) extends Tactical1[Unit] {
+  def fold( main: Formula ): Formula = {
+    val base = Normalizer( ctx.normalizer.rules.map( x => ReductionRule( x.rhs, x.lhs ) ) )
+    val result = base.reduce1( main )
+    if ( result.isEmpty ) main
+    else result.get.asInstanceOf[Formula]
+  }
+  def apply( goal: OpenAssumption ): Tactic[Unit] =
+    for {
+      ( label: String, main: Formula, idx: SequentIndex ) <- findFormula( goal, OnLabel( target ) )
+      newGoal = OpenAssumption( goal.labelledSequent.updated( idx, label -> fold( main ) ) )
+      _ <- replace( DefinitionRule( newGoal, idx, main ) )
+    } yield ()
+}
+
 /**
  * Calls the GAPT tableau prover on the subgoal.
  */
