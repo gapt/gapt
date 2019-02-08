@@ -14,8 +14,8 @@ import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.ContractionLeftRule
 import gapt.proofs.lk.rules.ContractionRightRule
 import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.DefinitionLeftRule
-import gapt.proofs.lk.rules.DefinitionRightRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.EqualityRightRule
 import gapt.proofs.lk.rules.ExistsLeftRule
@@ -98,8 +98,8 @@ object Projections {
       case ForallSkRightRule( p, a, m, t )        => handleSkQuantRule( proof, p, a, m, t, ForallSkRightRule.apply, pred )
       case ExistsSkLeftRule( p, a, m, t )         => handleSkQuantRule( proof, p, a, m, t, ExistsSkLeftRule.apply, pred )
 
-      case DefinitionLeftRule( p, a, m )          => handleDefRule( proof, p, a, m, DefinitionLeftRule.apply, pred )
-      case DefinitionRightRule( p, a, m )         => handleDefRule( proof, p, a, m, DefinitionRightRule.apply, pred )
+      case ConversionLeftRule( p, a, m )          => handleDefRule( proof, p, a, m, ConversionLeftRule.apply, pred )
+      case ConversionRightRule( p, a, m )         => handleDefRule( proof, p, a, m, ConversionRightRule.apply, pred )
       case EqualityLeftRule( p1, e, a, con )      => handleEqRule( proof, p1, e, a, con, EqualityLeftRule.apply, pred )
       case EqualityRightRule( p1, e, a, con )     => handleEqRule( proof, p1, e, a, con, EqualityRightRule.apply, pred )
       case rule @ CutRule( p1, a1, p2, a2 ) =>

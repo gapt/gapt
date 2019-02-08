@@ -12,8 +12,8 @@ import gapt.proofs.lk.rules.BottomAxiom
 import gapt.proofs.lk.rules.ContractionLeftRule
 import gapt.proofs.lk.rules.ContractionRightRule
 import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.DefinitionLeftRule
-import gapt.proofs.lk.rules.DefinitionRightRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.EqualityRightRule
 import gapt.proofs.lk.rules.EqualityRule
@@ -166,14 +166,14 @@ private class skolemizeLK(
           apply( q1, p.getLeftSequentConnector.parent( info, Info( Seq( p.cutFormula ), isCutAnc = true, Seq(), Seq( -1 ) ) ), subst ), a1,
           apply( q2, p.getRightSequentConnector.parent( info, Info( Seq( p.cutFormula ), isCutAnc = true, Seq(), Seq( -1 ) ) ), subst ), a2 )
 
-      case p @ DefinitionLeftRule( q, a, m ) =>
+      case p @ ConversionLeftRule( q, a, m ) =>
         val qNew = apply( q, p.getSequentConnector.parent( info ).
           updated( a, info( p.mainIndices.head ).copy( generalizedFormulas = Seq( q.conclusion( a ) ) ) ), subst )
-        DefinitionLeftRule( qNew, a, subst( m ) )
-      case p @ DefinitionRightRule( q, a, m ) =>
+        ConversionLeftRule( qNew, a, subst( m ) )
+      case p @ ConversionRightRule( q, a, m ) =>
         val qNew = apply( q, p.getSequentConnector.parent( info ).
           updated( a, info( p.mainIndices.head ).copy( generalizedFormulas = Seq( q.conclusion( a ) ) ) ), subst )
-        DefinitionRightRule( qNew, a, subst( m ) )
+        ConversionRightRule( qNew, a, subst( m ) )
 
       case p @ WeakQuantifierRule( q, a, _, term, bound, pol ) =>
         val freshVar = nameGen fresh bound

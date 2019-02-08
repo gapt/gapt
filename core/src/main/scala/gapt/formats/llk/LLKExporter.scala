@@ -8,8 +8,8 @@ import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.ContractionLeftRule
 import gapt.proofs.lk.rules.ContractionRightRule
 import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.DefinitionLeftRule
-import gapt.proofs.lk.rules.DefinitionRightRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.EqualityRightRule
 import gapt.proofs.lk.rules.ExistsLeftRule
@@ -215,9 +215,9 @@ class LLKExporter( val expandTex: Boolean ) {
     case EqualityRightRule( p1, _, _, _ ) =>
       generateProof( p1, "\\UEQR" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
     //definition rules
-    case DefinitionLeftRule( p1, _, _ ) =>
+    case ConversionLeftRule( p1, _, _ ) =>
       generateProof( p1, "\\DEF" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
-    case DefinitionRightRule( p1, _, _ ) =>
+    case ConversionRightRule( p1, _, _ ) =>
       generateProof( p1, "\\DEF" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
 
     //TODO: this is only a way to write out the proof, but it cannot be read back in

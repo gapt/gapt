@@ -9,8 +9,8 @@ import gapt.proofs.lk.rules.BottomAxiom
 import gapt.proofs.lk.rules.ContractionLeftRule
 import gapt.proofs.lk.rules.ContractionRightRule
 import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.DefinitionLeftRule
-import gapt.proofs.lk.rules.DefinitionRightRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
 import gapt.proofs.lk.rules.EqualityRightRule
 import gapt.proofs.lk.rules.ExistsRightRule
 import gapt.proofs.lk.rules.ExistsSkLeftRule
@@ -91,10 +91,10 @@ object ResolutionToLKProof {
 
         ProofBuilder.
           c( LogicalAxiom( phi ) ).
-          u( DefinitionLeftRule( _, Ant( 0 ), defAtom ) ).
+          u( ConversionLeftRule( _, Ant( 0 ), defAtom ) ).
           u( ImpRightRule( _, Ant( 0 ), Suc( 0 ) ) ).
           c( LogicalAxiom( phi ) ).
-          u( DefinitionRightRule( _, Suc( 0 ), defAtom ) ).
+          u( ConversionRightRule( _, Suc( 0 ), defAtom ) ).
           u( ImpRightRule( _, Ant( 0 ), Suc( 0 ) ) ).
           b( AndRightRule( _, Suc( 0 ), _, Suc( 0 ) ) ).
           u( ForallRightBlock( _, p.definitionFormula, p.vars ) ).
@@ -120,13 +120,13 @@ object ResolutionToLKProof {
         val Right( p1 ) = solvePropositional( comp.disjunction +: comp.clause )
         val p2 = ForallLeftBlock( p1, aux, vars )
 
-        val p3 = DefinitionLeftRule( p2, aux, splAtom )
+        val p3 = ConversionLeftRule( p2, aux, splAtom )
         p3
       case AvatarComponent( AvatarGroundComp( atom, _ ) ) => LogicalAxiom( atom )
       case AvatarComponent( comp @ AvatarNegNonGroundComp( splAtom, aux, vars, idx ) ) =>
         val Right( p1 ) = solvePropositional( comp.clause :+ comp.disjunction )
         val p2 = ForallRightBlock( p1, aux, vars )
-        val p3 = DefinitionRightRule( p2, aux, splAtom )
+        val p3 = ConversionRightRule( p2, aux, splAtom )
         p3
       case AvatarSplit( q, indices, AvatarGroundComp( _, _ ) ) => f( q )
       case p @ AvatarSplit( q, _, comp @ AvatarNonGroundComp( splAtom, aux, vars ) ) =>
@@ -146,14 +146,14 @@ object ResolutionToLKProof {
           }
         mkOr( comp.disjunction )
         p_ = ForallRightBlock( p_, aux, vars )
-        p_ = DefinitionRightRule( p_, aux, splAtom )
+        p_ = ConversionRightRule( p_, aux, splAtom )
         p_
 
       case p @ DefIntro( q, i: Suc, definition, args ) =>
-        DefinitionRightRule( f( q ), q.conclusion( i ), p.defAtom )
+        ConversionRightRule( f( q ), q.conclusion( i ), p.defAtom )
 
       case p @ DefIntro( q, i: Ant, definition, args ) =>
-        DefinitionLeftRule( f( q ), q.conclusion( i ), p.defAtom )
+        ConversionLeftRule( f( q ), q.conclusion( i ), p.defAtom )
 
       case p @ Flip( q, i: Ant ) =>
         CutRule( mkSymmProof( p.s, p.t ), f( q ), q.conclusion( i ) )

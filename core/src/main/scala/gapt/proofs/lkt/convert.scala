@@ -14,7 +14,7 @@ import gapt.proofs.lk.rules.ContractionLeftRule
 import gapt.proofs.lk.rules.ContractionRightRule
 import gapt.proofs.lk.rules.ContractionRule
 import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.DefinitionRule
+import gapt.proofs.lk.rules.ConversionRule
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.EqualityRightRule
 import gapt.proofs.lk.rules.EqualityRule
@@ -128,7 +128,7 @@ class LKToLKt( debugging: Boolean ) extends FreshHyp {
         AllSk( hyps( p.mainIndices.head ), p.skolemTerm, Bound1(
           aux,
           go( p.subProof, p.getSequentConnector.parent( hyps ).updated( p.aux, aux ) ) ) )
-      case p: DefinitionRule =>
+      case p: ConversionRule =>
         val aux = fresh( p.aux.polarity )
         Def( hyps( p.mainIndices.head ), p.auxFormula, Bound1(
           aux,
@@ -272,7 +272,7 @@ object LKtToLK {
         r -> r.getSequentConnector.child( s2, main ).updated( r.eqInConclusion, eq ).updated( r.auxInConclusion, main )
       case Def( main, _, q1 ) =>
         val ( r1, s1 ) = withMap( q1, lctx.up1( p ) )
-        down( lk.rules.DefinitionRule( r1, s1.indexOf( q1.aux ), lctx( main ) ), s1, main )
+        down( lk.rules.ConversionRule( r1, s1.indexOf( q1.aux ), lctx( main ) ), s1, main )
       case AllSk( main, term, q1 ) =>
         val ( r1, s1 ) = withMap( q1, lctx.up1( p ) )
         val r2 = lctx( main ) match {

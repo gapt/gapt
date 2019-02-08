@@ -16,7 +16,7 @@ import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.ContractionLeftRule
-import gapt.proofs.lk.rules.DefinitionRule
+import gapt.proofs.lk.rules.ConversionRule
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.EqualityRightRule
 import gapt.proofs.lk.rules.ImpLeftRule
@@ -238,7 +238,7 @@ case class UnfoldTactic( target: String, definitions: Seq[String], maxSteps: Opt
     for {
       ( label: String, main: Formula, idx: SequentIndex ) <- findFormula( goal, OnLabel( target ) )
       newGoal = OpenAssumption( goal.labelledSequent.updated( idx, label -> unfold( main ) ) )
-      _ <- replace( DefinitionRule( newGoal, idx, main ) )
+      _ <- replace( ConversionRule( newGoal, idx, main ) )
     } yield ()
 }
 

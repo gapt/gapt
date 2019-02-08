@@ -8,8 +8,8 @@ import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.BottomAxiom
 import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.DefinitionLeftRule
-import gapt.proofs.lk.rules.DefinitionRightRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.EqualityRightRule
 import gapt.proofs.lk.rules.ExistsLeftRule
@@ -156,7 +156,7 @@ object GradeReductionExists extends CutReduction {
 object GradeReductionDefinition extends CutReduction {
   override def reduce( cut: CutRule ): Option[LKProof] =
     ( cut.leftSubProof, cut.rightSubProof ) match {
-      case ( DefinitionRightRule( lSubProof, a1, definition1 ), DefinitionLeftRule( rSubProof, a2, definition2 )
+      case ( ConversionRightRule( lSubProof, a1, definition1 ), ConversionLeftRule( rSubProof, a2, definition2 )
         ) if cut.leftSubProof.mainIndices.head == cut.aux1 && cut.rightSubProof.mainIndices.head == cut.aux2 =>
         Some( CutRule( lSubProof, a1, rSubProof, a2 ) )
       case _ => None

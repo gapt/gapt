@@ -7,7 +7,7 @@ import gapt.proofs.{ Ant, ProofBuilder, Sequent, SequentMatchers, Suc }
 import gapt.proofs.expansion._
 import gapt.proofs.lk.rules.ContractionLeftRule
 import gapt.proofs.lk.rules.ContractionRightRule
-import gapt.proofs.lk.rules.DefinitionRightRule
+import gapt.proofs.lk.rules.ConversionRightRule
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.EqualityRightRule
 import gapt.proofs.lk.rules.ExistsLeftRule
@@ -151,7 +151,7 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
         c( LogicalAxiom( fof"x = (x:i)" ) ).
         u( NegRightRule( _, Ant( 0 ) ) ).
         u( OrRightRule( _, Suc( 0 ), Suc( 1 ) ) ).
-        u( DefinitionRightRule( _, Suc( 0 ), fof"P(x)" ) ).
+        u( ConversionRightRule( _, Suc( 0 ), fof"P(x)" ) ).
         u( OrRightMacroRule( _, fof"P(x)", fof"Q(x)" ) ).
         qed
 
@@ -174,7 +174,7 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
         u( NegRightRule( _, Ant( 0 ) ) ).
         u( OrRightRule( _, Suc( 0 ), Suc( 1 ) ) ).
         u( OrRightMacroRule( _, fof"x = (x:i) ∨ ¬ x = x", fof"Q(x)" ) ).
-        u( DefinitionRightRule( _, Suc( 0 ), fof"P(x) ∨ Q(x)" ) ).
+        u( ConversionRightRule( _, Suc( 0 ), fof"P(x) ∨ Q(x)" ) ).
         qed
 
       val e = LKToExpansionProof( p )
@@ -196,7 +196,7 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
         c( LogicalAxiom( fof"f( g x) = f (g x)" ) ).
         u( NegRightRule( _, Ant( 0 ) ) ).
         u( OrRightRule( _, Suc( 0 ), Suc( 1 ) ) ).
-        u( DefinitionRightRule( _, Suc( 0 ), fof"h x = f (g x) ∨ ¬ f (g x) = f (g x)" ) ).
+        u( ConversionRightRule( _, Suc( 0 ), fof"h x = f (g x) ∨ ¬ f (g x) = f (g x)" ) ).
         qed
 
       val e = LKToExpansionProof( p )
@@ -216,7 +216,7 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
 
       val p = ProofBuilder.
         c( LogicalAxiom( hof"S(Q & R)" ) ).
-        u( DefinitionRightRule( _, Suc( 0 ), hof"S P" ) ).
+        u( ConversionRightRule( _, Suc( 0 ), hof"S P" ) ).
         qed
 
       val e = LKToExpansionProof( p )
@@ -236,7 +236,7 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
         u( NegLeftRule( _, Suc( 0 ) ) ).
         u( NegRightRule( _, Ant( 0 ) ) ).
         u( ImpRightRule( _, Ant( 0 ), Suc( 0 ) ) ).
-        u( DefinitionRightRule( _, Suc( 0 ), hof"X -> n (n X)" ) ).
+        u( ConversionRightRule( _, Suc( 0 ), hof"X -> n (n X)" ) ).
         qed
 
       val e = LKToExpansionProof( p )

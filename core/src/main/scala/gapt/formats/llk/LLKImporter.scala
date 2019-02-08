@@ -12,8 +12,8 @@ import EquationVerifier._
 import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.DefinitionLeftRule
-import gapt.proofs.lk.rules.DefinitionRightRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.EqualityRightRule
 import gapt.proofs.lk.rules.ExistsLeftRule
@@ -883,10 +883,10 @@ trait TokenToLKConverter {
 
         //try each definition to infer the main formula
         val rule = definitions.dropWhile( d => try {
-          DefinitionRightRule( parent, aux, main );
+          ConversionRightRule( parent, aux, main );
           false
         } catch { case e: Exception => true } ) match {
-          case d :: _ => DefinitionRightRule( parent, aux, main )
+          case d :: _ => ConversionRightRule( parent, aux, main )
           case _ =>
             throw new HybridLatexParserException(
               "Couldn't find a matching definition to infer " + f( main ) + " from " + f( aux ) )
@@ -895,9 +895,9 @@ trait TokenToLKConverter {
       case ( HOLSequent( Vector( aux ), Vector() ), HOLSequent( Vector( main ), Vector() ) ) =>
         //try each definition to infer the main formula
         val rule = definitions.dropWhile( d => try {
-          DefinitionLeftRule( parent, aux, main ); false
+          ConversionLeftRule( parent, aux, main ); false
         } catch { case e: Exception => true } ) match {
-          case d :: _ => DefinitionLeftRule( parent, aux, main )
+          case d :: _ => ConversionLeftRule( parent, aux, main )
           case _ =>
             throw new HybridLatexParserException(
               "Couldn't find a matching definition to infer " + f( main ) + " from " + f( aux ) )
@@ -1039,7 +1039,7 @@ trait TokenToLKConverter {
     val defs = definitions.toList.map( x => llkDefinitionToLKDefinition( x._1, x._2 ) )
     val ( _, axproof ) = getAxiomLookupProof( name, axiom, auxf, axiomconjunction, LogicalAxiom( auxf ), sub2, defs )
     val Some( axdef ) = defs.find( _.what == Const( "AX", To ) )
-    val axrule = DefinitionLeftRule( axproof, axiomconjunction, axformula )
+    val axrule = ConversionLeftRule( axproof, axiomconjunction, axformula )
 
     val Eq( s, t ) = auxf
 
@@ -1134,7 +1134,7 @@ trait TokenToLKConverter {
     val defs = definitions.toList.map( x => llkDefinitionToLKDefinition( x._1, x._2 ) )
     val ( _, axproof ) = getAxiomLookupProof( name, axiom, auxf, axiomconjunction, oldproof, sub2, defs )
     val Some( axdef ) = defs.find( _.what == Const( "AX", To ) )
-    val axrule = DefinitionLeftRule( axproof, axiomconjunction, axformula )
+    val axrule = ConversionLeftRule( axproof, axiomconjunction, axformula )
     ContractionMacroRule( axrule, fs, strict = false ) :: rest
   }
 
@@ -1363,7 +1363,7 @@ trait TokenToLKConverter {
         val d = definitions.find( _.what == c ).getOrElse(
           throw new Exception(
             s"could not find a definition for $c in ${definitions.map( _.what ).sortBy( _.name )}" ) )
-        ( axiomconj, DefinitionLeftRule( pi, axiom, axiomconj ) )
+        ( axiomconj, ConversionLeftRule( pi, axiom, axiomconj ) )
 
       case And( x, y ) if formula_contains_atom( x, name ) =>
         val ( aux, uproof ) = getAxiomLookupProof( name, axiom, instance, x, axiomproof, sub, definitions )

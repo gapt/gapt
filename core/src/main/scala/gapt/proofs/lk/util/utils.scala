@@ -7,8 +7,8 @@ import gapt.proofs.context.Context
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.LKVisitor
 import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.DefinitionLeftRule
-import gapt.proofs.lk.rules.DefinitionRightRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.EqualityRightRule
 import gapt.proofs.lk.rules.ExistsLeftRule
@@ -38,7 +38,7 @@ object containsEqualityReasoning {
 object containsDefinitionRules {
   def apply( proof: LKProof ): Boolean =
     proof.subProofs.exists {
-      case DefinitionLeftRule( _, _, _ ) | DefinitionRightRule( _, _, _ ) => true
+      case ConversionLeftRule( _, _, _ ) | ConversionRightRule( _, _, _ ) => true
       case _ => false
     }
 }

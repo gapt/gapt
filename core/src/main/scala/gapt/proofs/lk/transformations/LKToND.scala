@@ -15,8 +15,8 @@ import gapt.proofs.lk.rules.BottomAxiom
 import gapt.proofs.lk.rules.ContractionLeftRule
 import gapt.proofs.lk.rules.ContractionRightRule
 import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.DefinitionLeftRule
-import gapt.proofs.lk.rules.DefinitionRightRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.EqualityRightRule
 import gapt.proofs.lk.rules.ExistsLeftRule
@@ -574,7 +574,7 @@ object LKToND {
         }
         nd.InductionRule( ndCases, formula, term )
 
-      case p @ DefinitionLeftRule( subProof: LKProof, aux: SequentIndex, main: Formula ) =>
+      case p @ ConversionLeftRule( subProof: LKProof, aux: SequentIndex, main: Formula ) =>
         val t = translate( subProof, focus )
         ProofBuilder.
           c( t ).
@@ -584,7 +584,7 @@ object LKToND {
           b( ImpElimRule( _, _ ) ).
           qed
 
-      case p @ DefinitionRightRule( subProof, aux, main ) =>
+      case p @ ConversionRightRule( subProof, aux, main ) =>
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
           val t = translate( subProof, focus )
           ProofBuilder.

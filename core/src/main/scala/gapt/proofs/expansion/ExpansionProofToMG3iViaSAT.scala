@@ -6,8 +6,8 @@ import gapt.proofs._
 import gapt.proofs.lk._
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.BottomAxiom
-import gapt.proofs.lk.rules.DefinitionLeftRule
-import gapt.proofs.lk.rules.DefinitionRightRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
 import gapt.proofs.lk.rules.ExistsLeftRule
 import gapt.proofs.lk.rules.ExistsRightRule
 import gapt.proofs.lk.rules.ForallLeftRule
@@ -163,8 +163,8 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
       val pol = if ( e.polarity.inSuc ) 1 else -1
       solver.addClause( Seq( -classical, -pol * atom( ch.shallow ), pol * atom( e.shallow ) ) )
     case ETDefinition( sh, ch ) =>
-      addClause( DefinitionRightRule( LogicalAxiom( ch.shallow ), ch.shallow, sh ) )
-      addClause( DefinitionLeftRule( LogicalAxiom( ch.shallow ), ch.shallow, sh ) )
+      addClause( ConversionRightRule( LogicalAxiom( ch.shallow ), ch.shallow, sh ) )
+      addClause( ConversionLeftRule( LogicalAxiom( ch.shallow ), ch.shallow, sh ) )
     case ETSkolemQuantifier( _, _, _ ) => throw new IllegalArgumentException
   }
 

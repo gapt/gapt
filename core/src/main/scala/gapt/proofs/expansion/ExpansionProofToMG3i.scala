@@ -10,7 +10,7 @@ import gapt.proofs.lk._
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.BottomAxiom
 import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.DefinitionRule
+import gapt.proofs.lk.rules.ConversionRule
 import gapt.proofs.lk.rules.ExistsLeftRule
 import gapt.proofs.lk.rules.ExistsRightRule
 import gapt.proofs.lk.rules.ForallLeftRule
@@ -100,7 +100,7 @@ class ExpansionProofToMG3i( theorySolver: HOLClause => Option[LKProof] )( implic
     expSeq.zipWithIndex.elements collectFirst {
       case ( ETDefinition( sh, ch ), i ) =>
         mapIf( solve( theory, expSeq.updated( i, ch ) ), ch.shallow, i.polarity ) {
-          DefinitionRule( _, ch.shallow, sh, i.polarity )
+          ConversionRule( _, ch.shallow, sh, i.polarity )
         }
     }
 

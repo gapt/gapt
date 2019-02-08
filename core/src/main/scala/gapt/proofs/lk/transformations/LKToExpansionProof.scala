@@ -32,8 +32,8 @@ import gapt.proofs.lk.rules.BottomAxiom
 import gapt.proofs.lk.rules.ContractionLeftRule
 import gapt.proofs.lk.rules.ContractionRightRule
 import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.DefinitionLeftRule
-import gapt.proofs.lk.rules.DefinitionRightRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
 import gapt.proofs.lk.rules.EqualityRule
 import gapt.proofs.lk.rules.ExistsLeftRule
 import gapt.proofs.lk.rules.ExistsRightRule
@@ -196,12 +196,12 @@ object LKToExpansionProof {
       val context = sequent.updated( p.eq, newEqTree ).delete( p.aux )
       ( subCuts, if ( p.aux.isAnt ) newAuxTree +: context else context :+ newAuxTree )
 
-    case DefinitionLeftRule( subProof, aux, main ) =>
+    case ConversionLeftRule( subProof, aux, main ) =>
       val ( subCuts, subSequent ) = extract( subProof )
 
       ( subCuts, ETDefinition( main, subSequent( aux ) ) +: subSequent.delete( aux ) )
 
-    case DefinitionRightRule( subProof, aux, main ) =>
+    case ConversionRightRule( subProof, aux, main ) =>
       val ( subCuts, subSequent ) = extract( subProof )
 
       ( subCuts, subSequent.delete( aux ) :+ ETDefinition( main, subSequent( aux ) ) )

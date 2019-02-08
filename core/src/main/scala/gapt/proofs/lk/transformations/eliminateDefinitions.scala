@@ -9,8 +9,8 @@ import gapt.proofs.lk.rules.BottomAxiom
 import gapt.proofs.lk.rules.ContractionLeftRule
 import gapt.proofs.lk.rules.ContractionRightRule
 import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.DefinitionLeftRule
-import gapt.proofs.lk.rules.DefinitionRightRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.EqualityRightRule
 import gapt.proofs.lk.rules.ExistsLeftRule
@@ -148,17 +148,17 @@ class eliminateDefinitions private ( normalizer: Normalizer ) extends Function[E
         sequent. We use exchange macro rules to artificially replicate the movement of formulas that the definition
          rule would have performed.*/
 
-    case proof @ DefinitionLeftRule( subProof, aux, _ ) =>
+    case proof @ ConversionLeftRule( subProof, aux, _ ) =>
       if ( apply( proof.auxFormula ) == apply( proof.mainFormula ) )
         ExchangeLeftMacroRule( apply( subProof ), aux )
       else
-        DefinitionLeftRule( apply( subProof ), aux, apply( proof.mainFormula ) )
+        ConversionLeftRule( apply( subProof ), aux, apply( proof.mainFormula ) )
 
-    case proof @ DefinitionRightRule( subProof, aux, _ ) =>
+    case proof @ ConversionRightRule( subProof, aux, _ ) =>
       if ( apply( proof.auxFormula ) == apply( proof.mainFormula ) )
         ExchangeRightMacroRule( apply( subProof ), aux )
       else
-        DefinitionRightRule( apply( subProof ), aux, apply( proof.mainFormula ) )
+        ConversionRightRule( apply( subProof ), aux, apply( proof.mainFormula ) )
 
     case InductionRule( cases, main, term ) =>
       InductionRule( cases map { cs => cs.copy( proof = apply( cs.proof ) ) }, apply( main ).asInstanceOf[Abs], apply( term ) )

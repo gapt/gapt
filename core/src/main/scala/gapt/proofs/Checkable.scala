@@ -10,7 +10,7 @@ import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.BottomAxiom
 import gapt.proofs.lk.rules.ContractionRule
 import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.DefinitionRule
+import gapt.proofs.lk.rules.ConversionRule
 import gapt.proofs.lk.rules.EqualityRule
 import gapt.proofs.lk.rules.ExistsRightRule
 import gapt.proofs.lk.rules.ForallLeftRule
@@ -132,7 +132,7 @@ object Checkable {
           | _: ImpLeftRule | _: ImpRightRule =>
         case _: ContractionRule | _: WeakeningLeftRule | _: WeakeningRightRule =>
         case _: CutRule =>
-        case d: DefinitionRule =>
+        case d: ConversionRule =>
           requireDefEq( d.mainFormula, d.auxFormula )( ctx )
       }
     }

@@ -10,8 +10,8 @@ import gapt.proofs.lk.rules.BottomAxiom
 import gapt.proofs.lk.rules.ContractionLeftRule
 import gapt.proofs.lk.rules.ContractionRightRule
 import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.DefinitionLeftRule
-import gapt.proofs.lk.rules.DefinitionRightRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.EqualityRightRule
 import gapt.proofs.lk.rules.ExistsLeftRule
@@ -181,13 +181,13 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
         indCase( substitution, _ )
       }, substitution( main ).asInstanceOf[Abs], substitution( term ) )
 
-    case DefinitionLeftRule( subProof, aux, main ) =>
+    case ConversionLeftRule( subProof, aux, main ) =>
       val subProofNew = go( substitution, subProof )
-      DefinitionLeftRule( subProofNew, aux, substitution( main ) )
+      ConversionLeftRule( subProofNew, aux, substitution( main ) )
 
-    case DefinitionRightRule( subProof, aux, main ) =>
+    case ConversionRightRule( subProof, aux, main ) =>
       val subProofNew = go( substitution, subProof )
-      DefinitionRightRule( subProofNew, aux, substitution( main ) )
+      ConversionRightRule( subProofNew, aux, substitution( main ) )
   }
 
   private def indCase( subst: Substitution, c: InductionCase ): InductionCase =
@@ -310,16 +310,16 @@ class LKProofReplacer( repl: PartialFunction[Expr, Expr] ) {
             TermReplacement( proof.replacementContext, repl ).asInstanceOf[Abs] )
       }
 
-    override protected def visitDefinitionLeft( proof: DefinitionLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
+    override protected def visitDefinitionLeft( proof: ConversionLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
       one2one( proof, otherArg ) {
         case Seq( ( subProofNew, subConnector ) ) =>
-          DefinitionLeftRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ) )
+          ConversionLeftRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ) )
       }
 
-    override protected def visitDefinitionRight( proof: DefinitionRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
+    override protected def visitDefinitionRight( proof: ConversionRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
       one2one( proof, otherArg ) {
         case Seq( ( subProofNew, subConnector ) ) =>
-          DefinitionRightRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ) )
+          ConversionRightRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ) )
       }
 
     override protected def visitInduction( proof: InductionRule, otherArg: Unit ) =

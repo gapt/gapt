@@ -8,8 +8,8 @@ import gapt.proofs.lk.rules.BottomAxiom
 import gapt.proofs.lk.rules.ContractionLeftRule
 import gapt.proofs.lk.rules.ContractionRightRule
 import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.DefinitionLeftRule
-import gapt.proofs.lk.rules.DefinitionRightRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.EqualityRightRule
 import gapt.proofs.lk.rules.ExistsLeftRule
@@ -79,8 +79,8 @@ object LKProofCodec {
       case p @ EqualityLeftRule( _, _, _, _ )   => p.asJson
       case p @ EqualityRightRule( _, _, _, _ )  => p.asJson
       case p @ InductionRule( _, _, _ )         => p.asJson
-      case p @ DefinitionLeftRule( _, _, _ )    => p.asJson
-      case p @ DefinitionRightRule( _, _, _ )   => p.asJson
+      case p @ ConversionLeftRule( _, _, _ )    => p.asJson
+      case p @ ConversionRightRule( _, _, _ )   => p.asJson
     }
   }
 
@@ -117,8 +117,8 @@ object LKProofCodec {
       case "EqualityLeftRule"     => c.as[EqualityLeftRule]
       case "EqualityRightRule"    => c.as[EqualityRightRule]
       case "InductionRule"        => c.as[InductionRule]
-      case "DefinitionLeftRule"   => c.as[DefinitionLeftRule]
-      case "DefinitionRightRule"  => c.as[DefinitionRightRule]
+      case "DefinitionLeftRule"   => c.as[ConversionLeftRule]
+      case "DefinitionRightRule"  => c.as[ConversionRightRule]
       case _                      => Left( DecodingFailure( s"Rule $name not recognized.", Nil ) )
     }
   }

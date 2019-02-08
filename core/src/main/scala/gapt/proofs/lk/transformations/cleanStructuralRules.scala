@@ -10,8 +10,8 @@ import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.ContractionLeftRule
 import gapt.proofs.lk.rules.ContractionRightRule
 import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.DefinitionLeftRule
-import gapt.proofs.lk.rules.DefinitionRightRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.EqualityRightRule
 import gapt.proofs.lk.rules.ExistsLeftRule
@@ -476,26 +476,26 @@ object cleanStructuralRules {
           ( proofNew, proofNew.getSequentConnector * subConnector_ * p.getSequentConnector.inv )
       }
 
-    case p @ DefinitionLeftRule( subProof, aux, main ) =>
+    case p @ ConversionLeftRule( subProof, aux, main ) =>
       val ( subProofNew, subConnector ) = apply_( subProof, reductive )
 
       subConnector.children( aux ) match {
 
         case Seq( a ) => // The inference is performed on a non-weak formula → just do it
-          val proofNew = DefinitionLeftRule( subProofNew, a, main )
+          val proofNew = ConversionLeftRule( subProofNew, a, main )
           ( proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv )
 
         case _ => // The aux formula is weak → do nothing
           ( subProofNew, subConnector * p.getSequentConnector.inv )
       }
 
-    case p @ DefinitionRightRule( subProof, aux, main ) =>
+    case p @ ConversionRightRule( subProof, aux, main ) =>
       val ( subProofNew, subConnector ) = apply_( subProof, reductive )
 
       subConnector.children( aux ) match {
 
         case Seq( a ) => // The inference is performed on a non-weak formula → just do it
-          val proofNew = DefinitionRightRule( subProofNew, a, main )
+          val proofNew = ConversionRightRule( subProofNew, a, main )
           ( proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv )
 
         case _ => // The aux formula is weak → do nothing

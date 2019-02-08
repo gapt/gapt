@@ -12,8 +12,8 @@ import gapt.proofs.lk.rules.BottomAxiom
 import gapt.proofs.lk.rules.ContractionLeftRule
 import gapt.proofs.lk.rules.ContractionRightRule
 import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.DefinitionLeftRule
-import gapt.proofs.lk.rules.DefinitionRightRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.EqualityRightRule
 import gapt.proofs.lk.rules.ExistsLeftRule
@@ -869,7 +869,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
     "translate DefinitionLeftRule" in {
       val lk = ProofBuilder.
         c( LogicalAxiom( hof"A" ) ).
-        u( DefinitionLeftRule( _, Ant( 0 ), hof"B" ) ).
+        u( ConversionLeftRule( _, Ant( 0 ), hof"B" ) ).
         qed
 
       val focus = Some( Suc( 0 ) )
@@ -882,7 +882,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val lk = ProofBuilder.
         c( LogicalAxiom( hof"A" ) ).
         u( WeakeningRightRule( _, hof"B" ) ).
-        u( DefinitionRightRule( _, Suc( 1 ), hof"C" ) ).
+        u( ConversionRightRule( _, Suc( 1 ), hof"C" ) ).
         qed
 
       val focus = Some( Suc( 0 ) )
@@ -895,7 +895,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val lk = ProofBuilder.
         c( LogicalAxiom( hof"A" ) ).
         u( WeakeningRightRule( _, hof"B" ) ).
-        u( DefinitionRightRule( _, Suc( 1 ), hof"C" ) ).
+        u( ConversionRightRule( _, Suc( 1 ), hof"C" ) ).
         qed
 
       val focus = Some( Suc( 1 ) )
