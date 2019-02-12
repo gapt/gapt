@@ -17,6 +17,18 @@ import org.sat4j.tools.SearchListenerAdapter
 import scala.annotation.tailrec
 import scala.collection.mutable
 
+/**
+ * Efficient tree-based data structure for sets of counter-examples.
+ *
+ * A counter-example is a set of non-zero integers without duplicate
+ * absolute values, e.g. `{1,-2,3}`---think of how a SAT solver
+ * returns a model.  (All operations expect a list sorted by absolute
+ * value instead of a set.)
+ *
+ * The important query operation that we're interested in is: given a
+ * counter-example Q, do we already have a counter-example Q' such
+ * that Q ⊆ Q'.
+ */
 private sealed trait CExSet {
   import CExSet._
   def insert( is: List[Int] ): CExSet = ( is, this ) match {
