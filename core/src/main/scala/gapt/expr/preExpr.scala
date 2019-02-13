@@ -9,6 +9,7 @@ import cats.syntax.traverse._
 import cats.syntax.either._
 import cats.instances.list._
 import cats.instances.either._
+import gapt.expr.util.freeVariables
 
 import scala.collection.mutable
 
@@ -131,7 +132,7 @@ object preExpr {
 
   def QuoteWhitebox( e: real.Expr ) =
     Quoted( e, liftTypeMono( e.ty ),
-      real.freeVariables( e ).
+      freeVariables( e ).
         map { case real.Var( name, ty ) => name -> liftTypeMono( ty ) }.
         toMap )
 

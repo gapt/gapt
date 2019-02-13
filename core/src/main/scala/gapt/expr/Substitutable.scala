@@ -1,5 +1,7 @@
 package gapt.expr
 
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.proofs.Sequent
 
 import scala.annotation.implicitNotFound

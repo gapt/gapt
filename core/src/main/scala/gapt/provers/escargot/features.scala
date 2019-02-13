@@ -1,6 +1,7 @@
 package gapt.provers.escargot.impl
 
 import gapt.expr._
+import gapt.expr.util.syntacticMatching
 import gapt.proofs.{ HOLSequent, Sequent }
 
 class FrequenciesBuilder( private var arr: Array[Int] = new Array[Int]( Frequencies.buckets ) ) {

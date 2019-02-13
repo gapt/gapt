@@ -8,10 +8,10 @@ import gapt.expr.FunctionType
 import gapt.expr.Quant
 import gapt.expr.Replaceable
 import gapt.expr.baseTypes
-import gapt.expr.constants
 import gapt.expr.containedNames
 import gapt.expr.hol.SkolemFunctions
-import gapt.expr.typeVariables
+import gapt.expr.util.constants
+import gapt.expr.util.typeVariables
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.State

@@ -2,6 +2,8 @@ package gapt.proofs.lkt
 
 import gapt.expr._
 import gapt.expr.hol.instantiate
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.proofs.{ HOLSequent, Sequent }
 
 object BinConn {

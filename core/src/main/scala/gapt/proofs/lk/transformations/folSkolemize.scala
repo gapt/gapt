@@ -15,9 +15,9 @@ import gapt.expr.Or
 import gapt.expr.Polarity
 import gapt.expr.Substitution
 import gapt.expr.Top
-import gapt.expr.constants
 import gapt.expr.containedNames
-import gapt.expr.rename
+import gapt.expr.util.constants
+import gapt.expr.util.rename
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
 import gapt.proofs.lk.LKProof

@@ -2,6 +2,8 @@ package gapt.formats.tptp
 
 import gapt.expr._
 import gapt.expr.hol.{ CNFn, CNFp, containsStrongQuantifier, universalClosure }
+import gapt.expr.util.clauseSubsumption
+import gapt.expr.util.freeVariables
 import gapt.formats.InputFile
 import gapt.proofs.resolution.{ AvatarDefinition, AvatarGroundComp, AvatarNonGroundComp, AvatarSplit }
 import gapt.proofs.sketch._

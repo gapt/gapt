@@ -6,6 +6,8 @@ import gapt.proofs.loadExpansionProof
 
 import scala.App
 import ammonite.ops._
+import gapt.expr.util.constants
+import gapt.expr.util.freeVariables
 
 object dumpTermset extends App {
   val Array( inputFileName, outputFileName ) = args

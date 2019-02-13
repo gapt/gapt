@@ -1,6 +1,10 @@
 package gapt.examples
 import gapt.expr._
 import gapt.expr.hol.universalClosure
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.expr.util.syntacticMGU
+import gapt.expr.util.syntacticMatching
 import gapt.formats.babel.BabelParser.parseFormula
 import gapt.proofs.expansion.{ ExpansionProofToLK, minimalExpansionSequent }
 import gapt.proofs.resolution.{ expansionProofFromInstances, structuralCNF }

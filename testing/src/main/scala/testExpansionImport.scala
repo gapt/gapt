@@ -2,7 +2,7 @@ package gapt.testing
 import ammonite.ops.FilePath
 import gapt.expr.hol.lcomp
 import gapt.expr.Const
-import gapt.expr.expressionSize
+import gapt.expr.util.expressionSize
 import gapt.formats.tptp.TptpImporter
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion.eliminateCutsET

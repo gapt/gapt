@@ -3,6 +3,13 @@ package gapt.grammars
 import gapt.expr.fol._
 import gapt.expr._
 import gapt.expr.hol._
+import gapt.expr.util.constants
+import gapt.expr.util.expressionSize
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.expr.util.subTerms
+import gapt.expr.util.syntacticMGU
+import gapt.expr.util.syntacticMatching
 import gapt.formats.babel.{ BabelExporter, BabelSignature, MapBabelSignature, Precedence }
 import gapt.proofs.context.Context
 import gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }

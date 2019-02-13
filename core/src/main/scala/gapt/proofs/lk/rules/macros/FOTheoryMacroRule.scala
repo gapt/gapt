@@ -5,8 +5,8 @@ import gapt.expr.Const
 import gapt.expr.Substitution
 import gapt.expr.TermReplacement
 import gapt.expr.containedNames
-import gapt.expr.freeVariables
-import gapt.expr.rename
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context

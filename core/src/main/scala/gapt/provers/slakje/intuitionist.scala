@@ -4,6 +4,7 @@ import ammonite.ops.FilePath
 import gapt.expr._
 import gapt.expr.fol.folSubTerms
 import gapt.expr.hol.{ atoms, containsQuantifierOnLogicalLevel, isOrevkovClass1 }
+import gapt.expr.util.boundVariables
 import gapt.formats.tptp.{ TptpImporter, sequentProofToTptp }
 import gapt.proofs.HOLSequent
 import gapt.proofs.context.Context

@@ -9,6 +9,8 @@ import gapt.proofs.lk._
 
 import scala.annotation.tailrec
 import EquationVerifier._
+import gapt.expr.util.freeVariables
+import gapt.expr.util.syntacticMatching
 import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.CutRule

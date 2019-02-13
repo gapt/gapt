@@ -2,6 +2,11 @@ package gapt.provers.viper.grammars
 
 import gapt.expr._
 import gapt.expr.hol._
+import gapt.expr.util.expressionSize
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.expr.util.syntacticMGU
+import gapt.expr.util.syntacticMatching
 import gapt.grammars.{ RecSchemTemplate, RecursionScheme, Rule }
 import gapt.proofs._
 import gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }

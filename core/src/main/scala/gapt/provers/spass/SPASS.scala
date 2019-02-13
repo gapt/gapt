@@ -4,6 +4,10 @@ import java.io.IOException
 
 import gapt.expr._
 import gapt.expr.hol.universalClosure
+import gapt.expr.util.clauseSubsumption
+import gapt.expr.util.constants
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.proofs._
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.resolution.{ AvatarNegNonGroundComp, AvatarNonGroundComp, ResolutionProof, fixDerivation }

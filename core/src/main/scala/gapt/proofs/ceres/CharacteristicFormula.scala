@@ -2,6 +2,7 @@ package gapt.proofs.ceres
 
 import gapt.expr._
 import gapt.expr.hol.toNNF
+import gapt.expr.util.freeVariables
 import gapt.proofs.Sequent
 import gapt.proofs.context.mutable.MutableContext
 

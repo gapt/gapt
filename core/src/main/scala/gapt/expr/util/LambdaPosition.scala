@@ -3,7 +3,13 @@
  *
  */
 
-package gapt.expr
+package gapt.expr.util
+
+import gapt.expr.Abs
+import gapt.expr.App
+import gapt.expr.Const
+import gapt.expr.Expr
+import gapt.expr.Var
 
 object LambdaPosition {
   def apply( xs: Int* ) = new LambdaPosition( xs.toList )

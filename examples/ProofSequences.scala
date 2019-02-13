@@ -6,6 +6,7 @@ import gapt.expr.fol.Numeral
 import gapt.expr.fol.Utils
 import gapt.expr.hol.instantiate
 import gapt.expr.hol.universalClosure
+import gapt.expr.util.syntacticMatching
 import gapt.formats.babel.Notation
 import gapt.formats.babel.Precedence
 import gapt.proofs.Ant

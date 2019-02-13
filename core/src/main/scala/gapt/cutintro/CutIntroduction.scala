@@ -3,6 +3,9 @@ package gapt.cutintro
 import gapt.expr._
 import gapt.expr.fol.{ isFOLPrenexSigma1, isPrenexSigma1 }
 import gapt.expr.hol._
+import gapt.expr.util.expressionSize
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.grammars._
 import gapt.grammars.reforest.Reforest
 import gapt.proofs._

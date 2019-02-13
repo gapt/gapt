@@ -2,8 +2,33 @@
  * Utility functions for the lambda calculus.
  */
 
-package gapt.expr
+package gapt.expr.util
 
+import gapt.expr.->:
+import gapt.expr.Abs
+import gapt.expr.All
+import gapt.expr.And
+import gapt.expr.App
+import gapt.expr.Apps
+import gapt.expr.Const
+import gapt.expr.Ex
+import gapt.expr.Expr
+import gapt.expr.FOLConst
+import gapt.expr.FOLExpression
+import gapt.expr.FOLFormula
+import gapt.expr.FOLVar
+import gapt.expr.Formula
+import gapt.expr.Imp
+import gapt.expr.LogicalConstant
+import gapt.expr.Neg
+import gapt.expr.Or
+import gapt.expr.Substitution
+import gapt.expr.TBase
+import gapt.expr.TVar
+import gapt.expr.To
+import gapt.expr.Ty
+import gapt.expr.Var
+import gapt.expr.VarOrConst
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.utils.NameGenerator

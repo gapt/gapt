@@ -4,6 +4,8 @@ import java.io.IOException
 
 import gapt.expr._
 import gapt.expr.hol._
+import gapt.expr.util.freeVariables
+import gapt.expr.util.syntacticMatching
 import gapt.formats.{ InputFile, StringInputFile }
 import gapt.formats.ivy.IvyParser
 import gapt.formats.ivy.conversion.IvyToResolution

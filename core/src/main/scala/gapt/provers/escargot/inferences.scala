@@ -2,6 +2,15 @@ package gapt.provers.escargot.impl
 
 import gapt.expr._
 import gapt.expr.hol.universalClosure
+import gapt.expr.util.LambdaPosition
+import gapt.expr.util.clauseSubsumption
+import gapt.expr.util.constants
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.expr.util.replacementContext
+import gapt.expr.util.syntacticMGU
+import gapt.expr.util.syntacticMatching
+import gapt.expr.util.typeVariables
 import gapt.proofs._
 import gapt.proofs.resolution._
 import gapt.provers.escargot.LPO

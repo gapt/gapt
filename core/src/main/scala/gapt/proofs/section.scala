@@ -1,6 +1,8 @@
 package gapt.proofs
 
 import gapt.expr._
+import gapt.expr.util.freeVariables
+import gapt.expr.util.typeVariables
 import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.Sort

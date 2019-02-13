@@ -8,8 +8,8 @@ import gapt.expr.Imp
 import gapt.expr.Neg
 import gapt.expr.Or
 import gapt.expr.Substitution
-import gapt.expr.freeVariables
-import gapt.expr.rename
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.proofs.Ant
 import gapt.proofs.SequentConnector
 import gapt.proofs.SequentIndex

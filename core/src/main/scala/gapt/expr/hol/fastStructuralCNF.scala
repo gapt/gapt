@@ -1,6 +1,9 @@
 package gapt.expr.hol
 
 import gapt.expr._
+import gapt.expr.util.constants
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.proofs._
 import gapt.proofs.expansion._
 import gapt.utils.NameGenerator

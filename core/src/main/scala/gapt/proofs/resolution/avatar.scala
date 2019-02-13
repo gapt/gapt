@@ -2,6 +2,7 @@ package gapt.proofs.resolution
 
 import gapt.expr._
 import gapt.expr.hol.instantiate
+import gapt.expr.util.freeVariables
 import gapt.proofs._
 
 /**

@@ -1,10 +1,11 @@
 package gapt.formats.tptp
 
 import ammonite.ops._
-
 import gapt.expr._
 import gapt.expr.fol.replaceAbstractions
 import gapt.expr.hol._
+import gapt.expr.util.freeVariables
+import gapt.expr.util.subTerms
 import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.proofs.expansion.{ ETAnd, ETAtom, ETTop, ExpansionProof, ExpansionSequent, ExpansionTree }
 import gapt.provers.groundFreeVariables

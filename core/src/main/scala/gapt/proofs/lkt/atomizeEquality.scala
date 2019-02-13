@@ -1,6 +1,7 @@
 package gapt.proofs.lkt
 
 import gapt.expr._
+import gapt.expr.util.freeVariables
 import gapt.proofs.lk.LKProof
 
 object atomizeEquality {

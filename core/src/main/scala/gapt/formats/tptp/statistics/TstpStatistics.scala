@@ -2,6 +2,8 @@ package gapt.formats.tptp.statistics
 
 import ammonite.ops.{ Path, exists }
 import gapt.expr._
+import gapt.expr.util.expressionDepth
+import gapt.expr.util.expressionSize
 import gapt.formats.csv.{ CSVFile, CSVRow }
 import gapt.formats.tptp._
 import gapt.proofs.HOLSequent

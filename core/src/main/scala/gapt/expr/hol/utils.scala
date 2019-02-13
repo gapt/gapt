@@ -5,7 +5,9 @@
 package gapt.expr.hol
 
 import gapt.expr._
-import gapt.proofs.{ Sequent, HOLSequent, FOLClause }
+import gapt.expr.util.LambdaPosition
+import gapt.expr.util.freeVariables
+import gapt.proofs.{ FOLClause, HOLSequent, Sequent }
 
 /**
  * Returns true iff the given Expr consists of a logical constant.

@@ -1,5 +1,6 @@
 package gapt
 
+import gapt.expr.util.ExpressionParseHelper
 import gapt.formats.babel.BabelSignature
 import gapt.utils.NameGenerator
 

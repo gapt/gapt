@@ -2,6 +2,8 @@ package gapt.provers.viper.grammars
 
 import gapt.expr._
 import gapt.expr.hol.containsStrongQuantifier
+import gapt.expr.util.freeVariables
+import gapt.expr.util.syntacticMatching
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion.ExpansionProof

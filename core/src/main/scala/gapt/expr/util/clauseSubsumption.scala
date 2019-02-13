@@ -1,5 +1,9 @@
-package gapt.expr
+package gapt.expr.util
 
+import gapt.expr.Eq
+import gapt.expr.Expr
+import gapt.expr.PreSubstitution
+import gapt.expr.Substitution
 import gapt.proofs.Sequent
 
 object clauseSubsumption {

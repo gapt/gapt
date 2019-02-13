@@ -1,6 +1,8 @@
 package gapt.proofs.lkt
 
 import gapt.expr._
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.formats.babel.{ BabelExporter, BabelSignature }
 import gapt.utils.Doc
 

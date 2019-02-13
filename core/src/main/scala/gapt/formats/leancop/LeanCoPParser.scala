@@ -6,6 +6,8 @@ import gapt.expr.hol._
 import gapt.proofs.expansion.{ ExpansionSequent, ExpansionTree, formulaToExpansionTree }
 import java.io.{ FileReader, Reader, StringReader }
 
+import gapt.expr.util.clauseSubsumption
+import gapt.expr.util.freeVariables
 import gapt.formats.InputFile
 
 import scala.util.parsing.combinator._

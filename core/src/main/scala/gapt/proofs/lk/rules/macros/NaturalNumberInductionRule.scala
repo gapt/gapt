@@ -5,7 +5,7 @@ import gapt.expr.All
 import gapt.expr.FOLConst
 import gapt.expr.FOLFormula
 import gapt.expr.FOLFunctionConst
-import gapt.expr.syntacticMatching
+import gapt.expr.util.syntacticMatching
 import gapt.proofs.Ant
 import gapt.proofs.IndexOrFormula
 import gapt.proofs.SequentIndex

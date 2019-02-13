@@ -6,7 +6,7 @@ import gapt.expr.Substitution
 import gapt.expr.Var
 import gapt.expr.hol.containsQuantifierOnLogicalLevel
 import gapt.expr.hol.instantiate
-import gapt.expr.rename
+import gapt.expr.util.rename
 import gapt.grammars.InductionGrammar
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context

@@ -1,8 +1,10 @@
 package gapt.cutintro
 
 import gapt.expr._
-import gapt.expr.hol.{ simplify, instantiate, CNFp, CNFn }
-import gapt.proofs.{ FOLClause, SequentIndex, Suc, Ant }
+import gapt.expr.hol.{ CNFn, CNFp, instantiate, simplify }
+import gapt.expr.util.clauseSubsumption
+import gapt.expr.util.syntacticMatching
+import gapt.proofs.{ Ant, FOLClause, SequentIndex, Suc }
 
 import scala.collection.mutable
 

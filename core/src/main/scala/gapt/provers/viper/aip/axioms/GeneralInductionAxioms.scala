@@ -1,6 +1,6 @@
 package gapt.provers.viper.aip.axioms
 
-import gapt.expr.{ All, Formula, Var, freeVariables }
+import gapt.expr.{ All, Formula, Var }
 import gapt.proofs.Sequent
 import gapt.provers.viper.aip._
 import cats.instances.all._

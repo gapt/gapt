@@ -1,6 +1,8 @@
 package gapt.expr
 
 import gapt.expr.hol.universalClosure
+import gapt.expr.util.freeVariables
+import gapt.expr.util.syntacticMatching
 import gapt.proofs.context.Context
 
 import scala.annotation.tailrec

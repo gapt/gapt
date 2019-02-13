@@ -1,8 +1,8 @@
 package gapt.proofs.context.facet
 
 import gapt.expr.Expr
-import gapt.expr.clauseSubsumption
-import gapt.expr.syntacticMatching
+import gapt.expr.util.clauseSubsumption
+import gapt.expr.util.syntacticMatching
 import gapt.proofs.HOLSequent
 import gapt.proofs.lk.rules.ProofLink
 

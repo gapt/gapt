@@ -1,6 +1,8 @@
 package gapt.formats.tptp
 
 import gapt.expr._
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 
 object TptpToString {
 

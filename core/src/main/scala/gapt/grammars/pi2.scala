@@ -2,6 +2,8 @@ package gapt.grammars
 import gapt.expr._
 import gapt.expr.fol.{ folSubTerms, thresholds }
 import gapt.expr.hol.{ lcomp, simplify, toNNF }
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.provers.maxsat.MaxSATSolver
 import gapt.utils.Logger
 

@@ -1,5 +1,11 @@
-package gapt.expr
+package gapt.expr.util
 
+import gapt.expr.Abs
+import gapt.expr.Expr
+import gapt.expr.ReplacementContext
+import gapt.expr.Ty
+import gapt.expr.Var
+import gapt.expr.containedNames
 import gapt.expr.hol.HOLPosition
 
 /**

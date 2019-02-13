@@ -2,6 +2,7 @@ package gapt.proofs.expansion
 
 import gapt.expr._
 import gapt.expr.hol.lcomp
+import gapt.expr.util.freeVariables
 import gapt.proofs._
 import gapt.proofs.lk._
 import gapt.proofs.lk.rules.AndRightRule

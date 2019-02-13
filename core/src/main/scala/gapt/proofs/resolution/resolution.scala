@@ -2,6 +2,10 @@ package gapt.proofs.resolution
 
 import gapt.expr._
 import gapt.expr.hol.SkolemFunctions
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.expr.util.replacementContext
+import gapt.expr.util.syntacticMGU
 import gapt.formats.babel.BabelSignature
 import gapt.proofs._
 import gapt.proofs.context.Context

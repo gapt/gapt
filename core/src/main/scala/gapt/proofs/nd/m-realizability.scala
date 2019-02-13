@@ -5,7 +5,8 @@ import gapt.expr.Substitution
 import gapt.expr.Ty
 import gapt.expr.Var
 import gapt.expr._
-import gapt.expr.typeVariables
+import gapt.expr.util.freeVariables
+import gapt.expr.util.typeVariables
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.BaseTypes

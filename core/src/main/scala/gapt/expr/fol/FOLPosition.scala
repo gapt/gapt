@@ -2,6 +2,8 @@ package gapt.expr.fol
 
 import gapt.expr._
 import gapt.expr.hol.HOLPosition
+import gapt.expr.util
+import gapt.expr.util.LambdaPosition
 
 object FOLPosition {
   def apply( is: Int* ) = new FOLPosition( is.toList )
@@ -28,7 +30,7 @@ object FOLPosition {
   }
 
   /**
-   * Replaces a a subexpression in a FOLFormula. This function is actually a wrapper around [[gapt.expr.LambdaPosition.replace]].
+   * Replaces a a subexpression in a FOLFormula. This function is actually a wrapper around [[LambdaPosition.replace]].
    *
    * @param f The formula in which to perform the replacement.
    * @param pos The position at which to replace.
@@ -38,7 +40,7 @@ object FOLPosition {
   def replace( f: FOLFormula, pos: FOLPosition, repTerm: FOLExpression ): FOLFormula = replace( f.asInstanceOf[FOLExpression], pos, repTerm ).asInstanceOf[FOLFormula]
 
   /**
-   * Replaces a a subexpression in a FOLExpression. This function is actually a wrapper around [[gapt.expr.LambdaPosition.replace]].
+   * Replaces a a subexpression in a FOLExpression. This function is actually a wrapper around [[util.LambdaPosition.replace]].
    *
    * @param f The expression in which to perform the replacement.
    * @param pos The position at which to replace.

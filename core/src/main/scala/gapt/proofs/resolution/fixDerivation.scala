@@ -2,6 +2,10 @@ package gapt.proofs.resolution
 
 import gapt.expr._
 import gapt.expr.hol.CNFn
+import gapt.expr.util.clauseSubsumption
+import gapt.expr.util.constants
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.proofs._
 import gapt.provers.escargot.{ Escargot, NonSplittingEscargot }
 import gapt.provers.{ ResolutionProver, groundFreeVariables }

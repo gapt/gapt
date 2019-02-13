@@ -1,6 +1,7 @@
 package gapt.grammars.reforest
 
 import gapt.expr._
+import gapt.expr.util.freeVariables
 import gapt.grammars._
 
 import scala.collection.mutable

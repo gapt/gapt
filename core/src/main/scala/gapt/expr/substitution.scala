@@ -1,6 +1,7 @@
 package gapt.expr
 
 import gapt.expr.Substitutable.SubstitutableTy
+import gapt.expr.util.freeVariables
 
 import scala.collection.GenTraversable
 

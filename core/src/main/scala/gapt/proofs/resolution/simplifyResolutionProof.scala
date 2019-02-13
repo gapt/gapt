@@ -1,6 +1,6 @@
 package gapt.proofs.resolution
 
-import gapt.expr.freeVariables
+import gapt.expr.util.freeVariables
 
 import scala.collection.mutable
 

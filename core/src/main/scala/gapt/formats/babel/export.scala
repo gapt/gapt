@@ -4,6 +4,8 @@ import gapt.expr._
 import gapt.proofs.HOLSequent
 import gapt.utils.Doc
 import Doc._
+import gapt.expr.util.syntacticMatching
+import gapt.expr.util.typeVariables
 import gapt.formats.babel.Notation.RealConst
 
 /**

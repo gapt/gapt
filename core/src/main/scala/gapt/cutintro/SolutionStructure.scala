@@ -3,6 +3,7 @@ package gapt.cutintro
 import gapt.expr._
 import gapt.expr.fol.isFOLPrenexSigma1
 import gapt.expr.hol.containsQuantifier
+import gapt.expr.util.freeVariables
 import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.proofs.expansion._
 import gapt.provers.Prover

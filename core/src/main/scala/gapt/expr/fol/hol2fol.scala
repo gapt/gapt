@@ -2,6 +2,7 @@ package gapt.expr.fol
 
 import gapt.expr._
 import gapt.expr.hol._
+import gapt.expr.util.freeVariables
 import gapt.proofs.HOLSequent
 
 class Counter {

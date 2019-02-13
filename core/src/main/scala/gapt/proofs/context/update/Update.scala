@@ -12,7 +12,7 @@ import gapt.expr.TBase
 import gapt.expr.Ti
 import gapt.expr.Var
 import gapt.expr.VarOrConst
-import gapt.expr.freeVariables
+import gapt.expr.util.freeVariables
 import gapt.proofs.HOLSequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.State

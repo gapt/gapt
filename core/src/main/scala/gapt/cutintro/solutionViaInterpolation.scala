@@ -2,6 +2,7 @@ package gapt.cutintro
 
 import gapt.expr._
 import gapt.expr.hol.simplify
+import gapt.expr.util.rename
 import gapt.provers.smtlib.SmtInterpol
 import gapt.utils.Tree
 

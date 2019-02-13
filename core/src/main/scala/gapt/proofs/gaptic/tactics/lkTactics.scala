@@ -3,6 +3,9 @@ package gapt.proofs.gaptic.tactics
 import gapt.expr._
 import gapt.expr.hol.HOLPosition
 import gapt.expr.hol.instantiate
+import gapt.expr.util.clauseSubsumption
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames

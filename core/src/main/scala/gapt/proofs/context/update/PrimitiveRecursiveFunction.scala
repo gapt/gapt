@@ -11,7 +11,7 @@ import gapt.expr.TBase
 import gapt.expr.TVar
 import gapt.expr.Var
 import gapt.expr.fol.folSubTerms
-import gapt.expr.typeVariables
+import gapt.expr.util.typeVariables
 import gapt.proofs.context.Context
 import gapt.proofs.context.parseDefinitionalEquation
 import gapt.proofs.context.State

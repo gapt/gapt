@@ -1,5 +1,7 @@
 package gapt.grammars
 import gapt.expr._
+import gapt.expr.util.constants
+import gapt.expr.util.freeVariables
 import gapt.formats.babel.{ BabelExporter, MapBabelSignature, Precedence }
 import gapt.utils.Doc
 

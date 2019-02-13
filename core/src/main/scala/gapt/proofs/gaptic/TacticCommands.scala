@@ -1,6 +1,8 @@
 package gapt.proofs.gaptic
 
 import gapt.expr._
+import gapt.expr.util.freeVariables
+import gapt.expr.util.syntacticMatching
 import gapt.formats.babel.BabelSignature
 import gapt.proofs._
 import gapt.proofs.context

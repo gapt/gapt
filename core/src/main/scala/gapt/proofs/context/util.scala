@@ -5,7 +5,7 @@ import gapt.expr.Const
 import gapt.expr.Eq
 import gapt.expr.Expr
 import gapt.expr.preExpr
-import gapt.expr.syntacticMatching
+import gapt.expr.util.syntacticMatching
 import gapt.formats.babel.BabelParser
 
 private[context] object parseDefinitionalEquation {

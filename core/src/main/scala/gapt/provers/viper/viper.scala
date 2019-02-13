@@ -4,6 +4,7 @@ import ammonite.ops._
 import gapt.expr._
 import gapt.expr.fol.folTermSize
 import gapt.expr.hol.containsQuantifierOnLogicalLevel
+import gapt.expr.util.freeVariables
 import gapt.formats.InputFile
 import gapt.formats.StdinInputFile
 import gapt.formats.tip.TipProblem

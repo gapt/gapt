@@ -1,5 +1,22 @@
-package gapt.expr
-import gapt.utils._
+package gapt.expr.util
+
+import gapt.expr.->:
+import gapt.expr.Abs
+import gapt.expr.App
+import gapt.expr.Const
+import gapt.expr.Expr
+import gapt.expr.FOLExpression
+import gapt.expr.FOLSubstitution
+import gapt.expr.PreSubstitution
+import gapt.expr.Substitution
+import gapt.expr.TBase
+import gapt.expr.TVar
+import gapt.expr.TermReplacement
+import gapt.expr.Ty
+import gapt.expr.Var
+import gapt.utils.UNone
+import gapt.utils.UOption
+import gapt.utils.USome
 
 object syntacticMGU {
 

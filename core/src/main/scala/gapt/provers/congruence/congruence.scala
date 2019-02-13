@@ -1,6 +1,7 @@
 package gapt.provers.congruence
 
-import gapt.expr.{ App, Atom, Eq, Expr, subTerms }
+import gapt.expr.util.subTerms
+import gapt.expr.{ App, Atom, Eq, Expr }
 import gapt.proofs.{ HOLClause, Sequent }
 import gapt.provers.congruence.MutCC._
 

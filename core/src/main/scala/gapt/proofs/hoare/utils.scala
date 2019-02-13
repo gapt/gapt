@@ -1,6 +1,7 @@
 package gapt.proofs.hoare
 
 import gapt.expr._
+import gapt.expr.util.freeVariables
 
 object usedVariables {
   def apply( p: Program ): List[FOLVar] = p match {

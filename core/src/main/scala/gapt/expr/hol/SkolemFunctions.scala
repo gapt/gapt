@@ -1,6 +1,7 @@
 package gapt.expr.hol
 
 import gapt.expr._
+import gapt.expr.util.constants
 import gapt.proofs.epsilon.Epsilon
 import gapt.utils.linearizeStrictPartialOrder
 

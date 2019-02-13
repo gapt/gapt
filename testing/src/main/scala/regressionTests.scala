@@ -7,6 +7,7 @@ import ammonite.ops._
 import gapt.cutintro._
 import gapt.expr._
 import gapt.expr.fol.isFOLPrenexSigma1
+import gapt.expr.util.subTerms
 import gapt.formats.InputFile
 import gapt.formats.babel.BabelParser
 import gapt.formats.babel.BabelSignature

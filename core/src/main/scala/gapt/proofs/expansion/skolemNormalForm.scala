@@ -1,5 +1,7 @@
 package gapt.proofs.expansion
 import gapt.expr._
+import gapt.expr.util.rename
+import gapt.expr.util.subTerms
 import gapt.utils.NameGenerator
 
 import scala.collection.mutable

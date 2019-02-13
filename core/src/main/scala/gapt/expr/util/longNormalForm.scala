@@ -1,6 +1,10 @@
+package gapt.expr.util
 
-package gapt.expr
-
+import gapt.expr.Abs
+import gapt.expr.Apps
+import gapt.expr.Expr
+import gapt.expr.FunctionType
+import gapt.expr.Var
 import gapt.utils.NameGenerator
 
 /**
@@ -39,4 +43,3 @@ object longNormalForm {
         }
     }
 }
-

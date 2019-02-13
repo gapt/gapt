@@ -5,8 +5,8 @@
 package gapt.expr
 
 import org.specs2.mutable._
-
 import BetaReduction._
+import gapt.expr.util.rename
 import org.specs2.execute.Success
 
 class SubstitutionsTest extends Specification {

@@ -2,6 +2,13 @@ package gapt.provers.simp
 
 import gapt.expr._
 import gapt.expr.hol.instantiate
+import gapt.expr.util.LambdaPosition
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.expr.util.replacementContext
+import gapt.expr.util.syntacticMatching
+import gapt.expr.util.toVNF
+import gapt.expr.util.typeVariables
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames

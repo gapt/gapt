@@ -1,6 +1,8 @@
 package gapt.proofs.resolution
 
 import gapt.expr._
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.proofs.{ Ant, Sequent, Suc }
 import gapt.proofs.expansion._
 import gapt.provers.ResolutionProver

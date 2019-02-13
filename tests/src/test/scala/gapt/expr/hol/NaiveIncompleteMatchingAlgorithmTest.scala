@@ -6,6 +6,7 @@
 package gapt.expr.hol
 
 import gapt.expr._
+import gapt.expr.util.syntacticMatching
 import org.specs2.mutable._
 
 class NaiveIncompleteMatchingAlgorithmTest extends Specification {

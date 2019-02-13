@@ -2,6 +2,7 @@ package gapt.proofs.context
 
 import gapt.expr._
 import gapt.expr.hol.SkolemFunctions
+import gapt.expr.util.syntacticMatching
 import gapt.formats.babel.BabelParser
 import gapt.formats.babel.BabelSignature
 import gapt.formats.babel.Notation

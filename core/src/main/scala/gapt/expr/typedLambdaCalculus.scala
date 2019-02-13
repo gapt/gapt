@@ -2,6 +2,7 @@ package gapt.expr
 
 import gapt.expr.hol.HOLPosition
 import gapt.expr.hol.HOLPosition._
+import gapt.expr.util.LambdaPosition
 import gapt.formats.babel.{ BabelExporter, BabelSignature }
 
 import scala.annotation.tailrec

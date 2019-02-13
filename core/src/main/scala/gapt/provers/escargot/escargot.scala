@@ -9,6 +9,9 @@ import gapt.provers.{ ResolutionProver, groundFreeVariables }
 import gapt.provers.escargot.impl._
 import gapt.utils.{ LogHandler, Maybe }
 import ammonite.ops._
+import gapt.expr.util.constants
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 

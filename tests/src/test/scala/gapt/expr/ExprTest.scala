@@ -1,5 +1,8 @@
 package gapt.expr
 
+import gapt.expr.util.constants
+import gapt.expr.util.freeVariables
+import gapt.expr.util.variables
 import org.specs2.mutable._
 
 class ExprTest extends Specification {

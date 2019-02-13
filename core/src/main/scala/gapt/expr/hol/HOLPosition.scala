@@ -1,6 +1,9 @@
 package gapt.expr.hol
 
 import gapt.expr._
+import gapt.expr.util
+import gapt.expr.util
+import gapt.expr.util.LambdaPosition
 
 object HOLPosition {
   def apply( is: Int* ) = new HOLPosition( is.toList )
@@ -10,7 +13,8 @@ object HOLPosition {
   /**
    * Returns a list of positions of subexpressions that satisfy some predicate.
    *
-   * This function is a wrapper around [[gapt.expr.LambdaPosition.getPositions]].
+   * This function is a wrapper around [[LambdaPosition.getPositions]].
+   *
    * @param exp The expression under consideration.
    * @param pred The predicate to be evaluated. Defaults to "always true", i.e. if called without this argument, the function will return all positions.
    * @return Positions of subexpressions satisfying pred.
@@ -23,7 +27,7 @@ object HOLPosition {
   }
 
   /**
-   * Replaces a a subexpression in a Formula. This function is actually a wrapper around [[gapt.expr.LambdaPosition.replace]].
+   * Replaces a a subexpression in a Formula. This function is actually a wrapper around [[util.LambdaPosition.replace]].
    *
    * @param f The formula in which to perform the replacement.
    * @param pos The position at which to replace.
@@ -33,7 +37,7 @@ object HOLPosition {
   def replace( f: Formula, pos: HOLPosition, repTerm: Expr ): Formula = replace( f.asInstanceOf[Expr], pos, repTerm ).asInstanceOf[Formula]
 
   /**
-   * Replaces a a subexpression in a Expr. This function is actually a wrapper around [[gapt.expr.LambdaPosition.replace]].
+   * Replaces a a subexpression in a Expr. This function is actually a wrapper around [[util.LambdaPosition.replace]].
    *
    * @param exp The expression in which to perform the replacement.
    * @param pos The position at which to replace.
@@ -245,7 +249,7 @@ object HOLPosition {
  * Positions are represented by lists of Integers. The empty list denotes the expression itself.
  * A nonempty list denotes a position in the left or right subexpression according to whether it starts with 1 or 2.
  *
- * The difference between this and [[gapt.expr.LambdaPosition]] lies in the handling of quantifiers and binary logical
+ * The difference between this and [[LambdaPosition]] lies in the handling of quantifiers and binary logical
  * connectives. LambdaPositions treat e.g. conjunctions like any other function, while HOLPositions treat them naturally,
  * i.e. 1 denotes the left conjunct and 2 the right conjunct.
  *

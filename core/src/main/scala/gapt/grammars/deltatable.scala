@@ -2,6 +2,9 @@ package gapt.grammars
 
 import gapt.cutintro.GrammarFindingMethod
 import gapt.expr._
+import gapt.expr.util.expressionSize
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.utils.{ UNone, UOption, USome }
 
 import scala.collection.mutable

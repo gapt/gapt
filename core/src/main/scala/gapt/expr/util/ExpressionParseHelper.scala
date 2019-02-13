@@ -1,8 +1,25 @@
-package gapt.expr
+package gapt.expr.util
 
-import gapt.expr.ExpressionParseHelper.Splice
+import gapt.expr.Atom
+import gapt.expr.Const
+import gapt.expr.Expr
+import gapt.expr.FOLAtom
+import gapt.expr.FOLConst
+import gapt.expr.FOLExpression
+import gapt.expr.FOLFormula
+import gapt.expr.FOLTerm
+import gapt.expr.FOLVar
+import gapt.expr.Formula
+import gapt.expr.Ty
+import gapt.expr.Var
+import gapt.expr.preExpr
+import gapt.expr.util.ExpressionParseHelper.Splice
 import gapt.formats.babel._
-import gapt.proofs.{ FOLClause, FOLSequent, HOLClause, HOLSequent, Sequent }
+import gapt.proofs.FOLClause
+import gapt.proofs.FOLSequent
+import gapt.proofs.HOLClause
+import gapt.proofs.HOLSequent
+import gapt.proofs.Sequent
 
 object ExpressionParseHelper {
   abstract class Splice[+ForType] {

@@ -5,7 +5,7 @@ import gapt.expr.App
 import gapt.expr.BetaReduction
 import gapt.expr.Eq
 import gapt.expr.Formula
-import gapt.expr.replacementContext
+import gapt.expr.util.replacementContext
 import gapt.proofs.Ant
 import gapt.proofs.HOLSequent
 import gapt.proofs.IndexOrFormula

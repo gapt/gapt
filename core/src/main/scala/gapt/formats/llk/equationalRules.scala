@@ -5,7 +5,9 @@
 
 package gapt.formats.llk
 
-import gapt.expr.{ Substitution => SubstitutionLambda, rename => renameLambda, _ }
+import gapt.expr.util.freeVariables
+import gapt.expr.{ Substitution => SubstitutionLambda, _ }
+import gapt.expr.util.{ rename => renameLambda }
 
 //TODO: perhaps there is a better place for this
 object EquationVerifier {

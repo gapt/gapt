@@ -2,6 +2,8 @@ package gapt.proofs.expansion
 
 import gapt.expr._
 import gapt.expr.hol.instantiate
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext

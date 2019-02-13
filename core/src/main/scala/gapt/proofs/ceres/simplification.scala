@@ -2,6 +2,9 @@
 package gapt.proofs.ceres
 
 import gapt.expr._
+import gapt.expr.util.clauseSubsumption
+import gapt.expr.util.freeVariables
+import gapt.expr.util.syntacticMatching
 import gapt.proofs.{ HOLSequent, Sequent }
 
 object deleteTautologies {

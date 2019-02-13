@@ -9,6 +9,8 @@ import gapt.provers.sat.Sat4j
 import gapt.utils.Logger
 import org.sat4j.minisat.SolverFactory
 import Sat4j._
+import gapt.expr.util.expressionSize
+import gapt.expr.util.freeVariables
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.rup.RupProof
 import org.sat4j.specs.{ ContradictionException, IConstr, ISolverService }

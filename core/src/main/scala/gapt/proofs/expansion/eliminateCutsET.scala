@@ -1,6 +1,7 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
+import gapt.expr.util.rename
 import gapt.utils.generatedUpperSetInPO
 
 import scala.collection.mutable

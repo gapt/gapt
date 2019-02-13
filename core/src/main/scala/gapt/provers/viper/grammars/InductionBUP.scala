@@ -1,6 +1,8 @@
 package gapt.provers.viper.grammars
 
 import gapt.expr._
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.grammars.InductionGrammar
 import gapt.grammars.InductionGrammar.Production
 import gapt.proofs.HOLSequent

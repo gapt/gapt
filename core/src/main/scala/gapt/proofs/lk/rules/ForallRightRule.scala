@@ -5,7 +5,7 @@ import gapt.expr.BetaReduction
 import gapt.expr.Formula
 import gapt.expr.Substitution
 import gapt.expr.Var
-import gapt.expr.freeVariables
+import gapt.expr.util.freeVariables
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
 import gapt.proofs.SequentIndex

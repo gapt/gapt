@@ -1,6 +1,7 @@
 package gapt.expr.fol
 
 import gapt.expr._
+import gapt.expr.util.freeVariables
 import gapt.expr.{ Ti, To, Ty }
 import gapt.proofs.SequentProof
 import gapt.utils.Logger

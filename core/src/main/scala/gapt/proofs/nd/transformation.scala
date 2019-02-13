@@ -1,6 +1,8 @@
 package gapt.proofs.nd
 
 import gapt.expr._
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.proofs.{ Ant, Suc }
 
 object friedman {

@@ -9,6 +9,7 @@ import java.io._
 
 import gapt.provers._
 import gapt.expr._
+import gapt.expr.util.freeVariables
 import gapt.formats.smt.SmtLibExporter
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext

@@ -2,6 +2,7 @@ package gapt.proofs.lkt
 
 import gapt.expr._
 import gapt.expr.hol.{ containsQuantifierOnLogicalLevel, instantiate, isAtom }
+import gapt.expr.util.rename
 import gapt.proofs.context.Context
 import gapt.proofs.lk.LKProof
 import gapt.provers.simp.{ QPropSimpProc, SimpLemmas, Simplifier }

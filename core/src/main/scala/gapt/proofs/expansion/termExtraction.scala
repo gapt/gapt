@@ -2,6 +2,12 @@ package gapt.proofs.expansion
 
 import gapt.expr._
 import gapt.expr.hol._
+import gapt.expr.util.constants
+import gapt.expr.util.freeVariables
+import gapt.expr.util.isInVNF
+import gapt.expr.util.rename
+import gapt.expr.util.syntacticMatching
+import gapt.expr.util.toVNF
 import gapt.grammars.{ RecursionScheme, Rule }
 import gapt.proofs._
 import gapt.proofs.lk.LKProof
