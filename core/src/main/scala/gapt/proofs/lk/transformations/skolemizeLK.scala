@@ -223,8 +223,9 @@ private class skolemizeLK(
 
 object skolemizeLK {
   /**
-   * Skolemize a proof in LK by introducing the Skolem inferences [[ExistsSkLeftRule]] and [[ForallSkRightRule]].
-   * This transformation does not increase the number of inferences (with tree-like counting).
+   * Skolemize a proof in LK by introducing the Skolem inferences [[gapt.proofs.lk.rules.ExistsSkLeftRule]] and
+   * [[gapt.proofs.lk.rules.ForallSkRightRule]]. This transformation does not increase the number of inferences (with
+   * tree-like counting).
    *
    * @param proofTheoretic  Whether to Skolemize proof-theoretically.  Setting this flag to true guarantees
    *                        that the expansion proof of the Skolemized proof can be deskolemized using the naive
