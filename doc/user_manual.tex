@@ -570,11 +570,11 @@ We start with the axioms:
 %
 \begin{clilisting}
 gapt> val p1 = LogicalAxiom(fof"A")
-p1: gapt.proofs.lk.LogicalAxiom =
+p1: gapt.proofs.lk.rules.LogicalAxiom =
 [p1] A ⊢ A    (LogicalAxiom(A:o))
 
 gapt> val p2 = LogicalAxiom(fof"B")
-p2: gapt.proofs.lk.LogicalAxiom =
+p2: gapt.proofs.lk.rules.LogicalAxiom =
 [p1] B ⊢ B    (LogicalAxiom(B:o))
 
 \end{clilisting}
@@ -582,7 +582,7 @@ p2: gapt.proofs.lk.LogicalAxiom =
 These are joined by an $(\land\mt{:r})$-inference.
 \begin{clilisting}
 gapt> val p3 = AndRightRule( p1, fof"A", p2, fof"B" )
-p3: gapt.proofs.lk.AndRightRule =
+p3: gapt.proofs.lk.rules.AndRightRule =
 [p3] A, B ⊢ A ∧ B    (AndRightRule(p1, Suc(0), p2, Suc(0)))
 [p2] B ⊢ B    (LogicalAxiom(B:o))
 [p1] A ⊢ A    (LogicalAxiom(A:o))
@@ -593,14 +593,14 @@ To finish the proof it remains to apply two $(\impl\mt{:r})$-inferences:
 %
 \begin{clilisting}
 gapt> val p4 = ImpRightRule( p3, fof"B", fof"A & B" )
-p4: gapt.proofs.lk.ImpRightRule =
+p4: gapt.proofs.lk.rules.ImpRightRule =
 [p4] A ⊢ B → A ∧ B    (ImpRightRule(p3, Ant(1), Suc(0)))
 [p3] A, B ⊢ A ∧ B    (AndRightRule(p1, Suc(0), p2, Suc(0)))
 [p2] B ⊢ B    (LogicalAxiom(B:o))
 [p1] A ⊢ A    (LogicalAxiom(A:o))
 
 gapt> val p5 = ImpRightRule( p4, fof"A", fof"B -> A&B" )
-p5: gapt.proofs.lk.ImpRightRule =
+p5: gapt.proofs.lk.rules.ImpRightRule =
 [p5]  ⊢ A → B → A ∧ B    (ImpRightRule(p4, Ant(0), Suc(0)))
 [p4] A ⊢ B → A ∧ B    (ImpRightRule(p3, Ant(1), Suc(0)))
 [p3] A, B ⊢ A ∧ B    (AndRightRule(p1, Suc(0), p2, Suc(0)))
@@ -619,11 +619,11 @@ There are also several macro rules that make proof construction more convenient.
 For instance:
 \begin{clilisting}
 gapt> val p1 = LogicalAxiom(fof"A")
-p1: gapt.proofs.lk.LogicalAxiom =
+p1: gapt.proofs.lk.rules.LogicalAxiom =
 [p1] A ⊢ A    (LogicalAxiom(A:o))
 
 gapt> val p2 = AndLeftMacroRule(p1, fof"A", fof"B")
-p2: gapt.proofs.lk.AndLeftRule =
+p2: gapt.proofs.lk.rules.AndLeftRule =
 [p3] A ∧ B ⊢ A    (AndLeftRule(p2, Ant(1), Ant(0)))
 [p2] B, A ⊢ A    (WeakeningLeftRule(p1, B:o))
 [p1] A ⊢ A    (LogicalAxiom(A:o))
@@ -866,9 +866,9 @@ b: ∀x (P(x) → Q(x))
 :-
 c: Q(a)
 
-  at gapt.proofs.gaptic.Lemma$.finish(language.scala:31)
-  at gapt.proofs.gaptic.Lemma$.finish(language.scala:35)
-  at gapt.proofs.gaptic.Lemma$Helper.handleTacticBlock(language.scala:47)
+  at gapt.proofs.gaptic.Lemma$.finish(language.scala:32)
+  at gapt.proofs.gaptic.Lemma$.finish(language.scala:36)
+  at gapt.proofs.gaptic.Lemma$Helper.handleTacticBlock(language.scala:48)
   ... elided
 \end{tacticsoutput}
 
@@ -918,9 +918,9 @@ a: P(a)
 :-
 c: Q(a)
 
-  at gapt.proofs.gaptic.Lemma$.finish(language.scala:31)
-  at gapt.proofs.gaptic.Lemma$.finish(language.scala:35)
-  at gapt.proofs.gaptic.Lemma$Helper.handleTacticBlock(language.scala:47)
+  at gapt.proofs.gaptic.Lemma$.finish(language.scala:32)
+  at gapt.proofs.gaptic.Lemma$.finish(language.scala:36)
+  at gapt.proofs.gaptic.Lemma$Helper.handleTacticBlock(language.scala:48)
   ... elided
 \end{tacticsoutput}
 
@@ -1049,9 +1049,9 @@ A: A
 :-
 C: ∃x ∃y (x != y ∧ f(x) = f(y))
 
-  at gapt.proofs.gaptic.Lemma$.finish(language.scala:31)
-  at gapt.proofs.gaptic.Lemma$.finish(language.scala:35)
-  at gapt.proofs.gaptic.Lemma$Helper.handleTacticBlock(language.scala:47)
+  at gapt.proofs.gaptic.Lemma$.finish(language.scala:32)
+  at gapt.proofs.gaptic.Lemma$.finish(language.scala:36)
+  at gapt.proofs.gaptic.Lemma$Helper.handleTacticBlock(language.scala:48)
   ... elided
 \end{tacticsoutput}
 
@@ -1240,7 +1240,7 @@ the eigenvariable inferences by Skolem inference using
 \texttt{skolemizeLK}---this is called \emph{proof Skolemization}:
 \begin{clilisting}
 gapt> val p = ForallRightRule(ReflexivityAxiom(le"x"), hof"!x x=x")
-p: gapt.proofs.lk.ForallRightRule =
+p: gapt.proofs.lk.rules.ForallRightRule =
 [p2]  ⊢ ∀x x = x    (ForallRightRule(p1, Suc(0), x, x))
 [p1]  ⊢ x = x    (ReflexivityAxiom(x))
 
@@ -1511,21 +1511,21 @@ expect. Instead of naively serializing the proof as an object, its distinct
 subproofs are collected in a map.
 \begin{clilisting}
 gapt> val ax1 = LogicalAxiom(hof"A")
-ax1: gapt.proofs.lk.LogicalAxiom =
+ax1: gapt.proofs.lk.rules.LogicalAxiom =
 [p1] A ⊢ A    (LogicalAxiom(A:o))
 
 gapt> val ax2 = LogicalAxiom(hof"B")
-ax2: gapt.proofs.lk.LogicalAxiom =
+ax2: gapt.proofs.lk.rules.LogicalAxiom =
 [p1] B ⊢ B    (LogicalAxiom(B:o))
 
 gapt> val p1 = AndRightRule(ax1, hof"A", ax2, hof"B")
-p1: gapt.proofs.lk.AndRightRule =
+p1: gapt.proofs.lk.rules.AndRightRule =
 [p3] A, B ⊢ A ∧ B    (AndRightRule(p1, Suc(0), p2, Suc(0)))
 [p2] B ⊢ B    (LogicalAxiom(B:o))
 [p1] A ⊢ A    (LogicalAxiom(A:o))
 
 gapt> val p2 = AndRightRule(p1, hof"A∧B", ax1, hof"A")
-p2: gapt.proofs.lk.AndRightRule =
+p2: gapt.proofs.lk.rules.AndRightRule =
 [p4] A, B, A ⊢ A ∧ B ∧ A    (AndRightRule(p3, Suc(0), p1, Suc(0)))
 [p3] A, B ⊢ A ∧ B    (AndRightRule(p1, Suc(0), p2, Suc(0)))
 [p2] B ⊢ B    (LogicalAxiom(B:o))

@@ -5,7 +5,29 @@ import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.Sort
-import gapt.proofs.lk._
+import gapt.proofs.lk.rules.AndLeftRule
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.BottomAxiom
+import gapt.proofs.lk.rules.ContractionLeftRule
+import gapt.proofs.lk.rules.ContractionRightRule
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
+import gapt.proofs.lk.rules.EqualityLeftRule
+import gapt.proofs.lk.rules.EqualityRightRule
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.ImpRightRule
+import gapt.proofs.lk.rules.InductionCase
+import gapt.proofs.lk.rules.InductionRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.NegLeftRule
+import gapt.proofs.lk.rules.NegRightRule
+import gapt.proofs.lk.rules.OrLeftRule
+import gapt.proofs.lk.rules.OrRightRule
+import gapt.proofs.lk.rules.ProofLink
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.WeakeningRightRule
+import gapt.proofs.lk.transformations.LKToND
 
 // Example 0.1.6
 object ex0_1_6 extends Script {
@@ -609,7 +631,7 @@ object definitionLeftRule extends Script {
   val lk = ProofBuilder.
     c( LogicalAxiom( hof"A" ) ).
     u( WeakeningLeftRule( _, hof"B" ) ).
-    u( DefinitionLeftRule( _, Ant( 0 ), hof"C" ) ).
+    u( ConversionLeftRule( _, Ant( 0 ), hof"C" ) ).
     qed
 
   val focus = Some( Suc( 0 ) )
@@ -623,7 +645,7 @@ object definitionRightRule extends Script {
   val lk = ProofBuilder.
     c( LogicalAxiom( hof"A" ) ).
     u( WeakeningRightRule( _, hof"B" ) ).
-    u( DefinitionRightRule( _, Suc( 1 ), hof"C" ) ).
+    u( ConversionRightRule( _, Suc( 1 ), hof"C" ) ).
     qed
 
   val focus = Some( Suc( 0 ) )
@@ -637,7 +659,7 @@ object definitionRightRule2 extends Script {
   val lk = ProofBuilder.
     c( LogicalAxiom( hof"A" ) ).
     u( WeakeningRightRule( _, hof"B" ) ).
-    u( DefinitionRightRule( _, Suc( 1 ), hof"C" ) ).
+    u( ConversionRightRule( _, Suc( 1 ), hof"C" ) ).
     qed
 
   val focus = Some( Suc( 1 ) )

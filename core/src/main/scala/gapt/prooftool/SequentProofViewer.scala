@@ -5,8 +5,10 @@ import gapt.expr.Formula
 import gapt.formats.json._
 import gapt.formats.latex.LatexExporter
 import gapt.proofs._
-import gapt.proofs.lk.{ LKProof, LKToExpansionProof, isMaeharaMG3i }
+import gapt.proofs.lk.LKProof
 import gapt.formats.llk.exportLLK
+import gapt.proofs.lk.transformations.LKToExpansionProof
+import gapt.proofs.lk.util.isMaeharaMG3i
 import gapt.proofs.nd.NDProof
 
 import scala.swing._

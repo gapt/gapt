@@ -1,7 +1,8 @@
 package gapt.provers.simp
 
 import gapt.expr._
-import gapt.proofs.lk.{ CutRule, TopAxiom }
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.TopAxiom
 import gapt.proofs.{ HOLSequent, Sequent }
 import org.specs2.mutable.Specification
 

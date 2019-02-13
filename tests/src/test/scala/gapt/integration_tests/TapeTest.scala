@@ -9,6 +9,7 @@ import gapt.proofs.ceres._
 import gapt.proofs.ceres.deleteTautologies
 import gapt.proofs.context.Context
 import gapt.proofs.lk._
+import gapt.proofs.lk.transformations.skolemizeLK
 import gapt.provers.escargot.Escargot
 import gapt.provers.prover9.Prover9
 import org.specs2.mutable._

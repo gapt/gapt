@@ -3,7 +3,7 @@ package gapt.expr.bdt
 import gapt.expr.{ And, Atom, Bottom, Formula, Imp, Neg, Or, Polarity, Top }
 import gapt.expr.bdt.BDT.{ F, Ite, T }
 import gapt.proofs.Sequent
-import gapt.proofs.lk.solvePropositional
+import gapt.proofs.lk.util.solvePropositional
 import gapt.provers.congruence.CC
 
 sealed trait BDT {

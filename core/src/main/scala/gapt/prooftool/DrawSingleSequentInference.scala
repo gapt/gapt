@@ -1,12 +1,13 @@
 package gapt.prooftool
 
-import gapt.proofs.SequentProof
-import gapt.proofs.lk.{ ExistsRightRule, ForallLeftRule }
-
-import scala.swing._
 import java.awt.Color
 
 import gapt.formats.latex.LatexExporter
+import gapt.proofs.SequentProof
+import gapt.proofs.lk.rules.ExistsRightRule
+import gapt.proofs.lk.rules.ForallLeftRule
+
+import scala.swing._
 
 class DrawSingleSequentInference[F, T <: SequentProof[F, T]](
     main:                     ProofToolViewer[_],

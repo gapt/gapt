@@ -4,7 +4,7 @@ import gapt.expr.Expr
 import gapt.expr.clauseSubsumption
 import gapt.expr.syntacticMatching
 import gapt.proofs.HOLSequent
-import gapt.proofs.lk.ProofLink
+import gapt.proofs.lk.rules.ProofLink
 
 case class ProofNames( names: Map[String, ( Expr, HOLSequent )] ) {
   def +( name: String, referencedExpression: Expr, referencedSequent: HOLSequent ) = copy( names + ( ( name, ( referencedExpression, referencedSequent ) ) ) )

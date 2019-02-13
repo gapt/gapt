@@ -3,13 +3,13 @@ package gapt.integration_tests
 import gapt.formats.llk.ExtendedProofDatabase
 import gapt.proofs.{ FOLClause, HOLClause, HOLSequent }
 import gapt.proofs.ceres_omega._
-import gapt.proofs.lk.{ AtomicExpansion, regularize }
 import gapt.proofs.ceres.{ CharacteristicClauseSet, deleteTautologies }
 import gapt.examples.primediv
 import gapt.expr._
 import gapt.provers.prover9.Prover9
 import org.specs2.mutable._
 import BetaReduction._
+import gapt.proofs.lk.util.regularize
 
 object PDAnalysis extends AnalysisWithCeresOmega {
   val pdb = ExtendedProofDatabase( Map( hoa"THEPROOF" -> primediv.proof ), Map(), primediv.ctx.definitions )

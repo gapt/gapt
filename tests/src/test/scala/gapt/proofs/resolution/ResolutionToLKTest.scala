@@ -5,6 +5,7 @@ import gapt.expr._
 import gapt.expr.fol.{ naive, thresholds }
 import gapt.proofs.lk._
 import gapt.proofs._
+import gapt.proofs.lk.rules.LogicalAxiom
 import gapt.provers.escargot.Escargot
 import gapt.provers.prover9.Prover9
 import gapt.utils.SatMatchers

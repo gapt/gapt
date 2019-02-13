@@ -3,6 +3,30 @@ package gapt.formats.llk
 import gapt.proofs._
 import gapt.expr._
 import gapt.proofs.lk._
+import gapt.proofs.lk.rules.AndLeftRule
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.ContractionLeftRule
+import gapt.proofs.lk.rules.ContractionRightRule
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
+import gapt.proofs.lk.rules.EqualityLeftRule
+import gapt.proofs.lk.rules.EqualityRightRule
+import gapt.proofs.lk.rules.ExistsLeftRule
+import gapt.proofs.lk.rules.ExistsRightRule
+import gapt.proofs.lk.rules.ExistsSkLeftRule
+import gapt.proofs.lk.rules.ForallLeftRule
+import gapt.proofs.lk.rules.ForallRightRule
+import gapt.proofs.lk.rules.ForallSkRightRule
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.ImpRightRule
+import gapt.proofs.lk.rules.InitialSequent
+import gapt.proofs.lk.rules.NegLeftRule
+import gapt.proofs.lk.rules.NegRightRule
+import gapt.proofs.lk.rules.OrLeftRule
+import gapt.proofs.lk.rules.OrRightRule
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.WeakeningRightRule
 
 object LatexLLKExporter extends LLKExporter( true )
 object LLKExporter extends LLKExporter( false )
@@ -191,9 +215,9 @@ class LLKExporter( val expandTex: Boolean ) {
     case EqualityRightRule( p1, _, _, _ ) =>
       generateProof( p1, "\\UEQR" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
     //definition rules
-    case DefinitionLeftRule( p1, _, _ ) =>
+    case ConversionLeftRule( p1, _, _ ) =>
       generateProof( p1, "\\DEF" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
-    case DefinitionRightRule( p1, _, _ ) =>
+    case ConversionRightRule( p1, _, _ ) =>
       generateProof( p1, "\\DEF" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
 
     //TODO: this is only a way to write out the proof, but it cannot be read back in

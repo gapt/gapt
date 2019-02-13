@@ -15,6 +15,11 @@ import java.io.File.separator
 import java.io.{ FileInputStream, FileReader, IOException, InputStreamReader }
 import java.util.zip.GZIPInputStream
 
+import gapt.proofs.lk.transformations.LKToExpansionProof
+import gapt.proofs.lk.transformations.eliminateDefinitions
+import gapt.proofs.lk.transformations.folSkolemize
+import gapt.proofs.lk.util.AtomicExpansion
+import gapt.proofs.lk.util.regularize
 import gapt.provers.smtlib.Z3
 import org.specs2.mutable._
 

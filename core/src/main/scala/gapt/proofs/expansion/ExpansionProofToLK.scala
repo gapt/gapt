@@ -1,9 +1,34 @@
 package gapt.proofs.expansion
 
-import gapt.proofs.lk._
-import gapt.proofs._
 import gapt.expr._
+import gapt.proofs._
 import gapt.proofs.context.Context
+import gapt.proofs.lk._
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.BottomAxiom
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.ConversionRule
+import gapt.proofs.lk.rules.ExistsLeftRule
+import gapt.proofs.lk.rules.ExistsRightRule
+import gapt.proofs.lk.rules.ExistsSkLeftRule
+import gapt.proofs.lk.rules.ForallLeftRule
+import gapt.proofs.lk.rules.ForallRightRule
+import gapt.proofs.lk.rules.ForallSkRightRule
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.InductionCase
+import gapt.proofs.lk.rules.InductionRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.NegLeftRule
+import gapt.proofs.lk.rules.NegRightRule
+import gapt.proofs.lk.rules.OrLeftRule
+import gapt.proofs.lk.rules.TopAxiom
+import gapt.proofs.lk.rules.macros.AndLeftMacroRule
+import gapt.proofs.lk.rules.macros.ContractionMacroRule
+import gapt.proofs.lk.rules.macros.FOTheoryMacroRule
+import gapt.proofs.lk.rules.macros.ImpRightMacroRule
+import gapt.proofs.lk.rules.macros.OrRightMacroRule
+import gapt.proofs.lk.rules.macros.WeakeningMacroRule
+import gapt.proofs.lk.util.SolveUtils
 import gapt.provers.escargot.Escargot
 import gapt.utils.quiet
 
@@ -73,7 +98,7 @@ class ExpansionProofToLK(
     expSeq.zipWithIndex.elements collectFirst {
       case ( ETDefinition( sh, ch ), i ) =>
         mapIf( solve( theory, expSeq.updated( i, ch ) ), ch.shallow, i.polarity ) {
-          DefinitionRule( _, ch.shallow, sh, i.polarity )
+          ConversionRule( _, ch.shallow, sh, i.polarity )
         }
     }
 

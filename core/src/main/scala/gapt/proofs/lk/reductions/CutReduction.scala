@@ -1,7 +1,8 @@
 package gapt.proofs.lk.reductions
 
 import gapt.proofs.context.Context
-import gapt.proofs.lk.{ CutRule, LKProof }
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.rules.CutRule
 
 trait CutReduction extends Reduction {
   def reduce( proof: LKProof ): Option[LKProof] =
@@ -14,7 +15,7 @@ trait CutReduction extends Reduction {
 
   def orElse( reduction: CutReduction ): CutReduction =
     new CutReduction {
-      def reduce( cut: CutRule ) =
+      def reduce( cut: CutRule ): Option[LKProof] =
         CutReduction.this.reduce( cut ) orElse reduction.reduce( cut )
     }
 

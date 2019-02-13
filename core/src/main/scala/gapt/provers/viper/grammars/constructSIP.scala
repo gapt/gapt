@@ -5,7 +5,8 @@ import gapt.expr.hol.{ containsQuantifierOnLogicalLevel, universalClosure }
 import gapt.proofs._
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.gaptic._
-import gapt.proofs.lk.{ LKProof, cleanStructuralRules }
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.transformations.cleanStructuralRules
 import gapt.provers.Prover
 
 object constructSIP {

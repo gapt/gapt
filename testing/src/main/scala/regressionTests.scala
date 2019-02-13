@@ -1,37 +1,64 @@
 package gapt.testing
 
-import java.io.{ FileWriter, PrintWriter }
+import java.io.FileWriter
+import java.io.PrintWriter
 
 import ammonite.ops._
 import gapt.cutintro._
 import gapt.expr._
 import gapt.expr.fol.isFOLPrenexSigma1
 import gapt.formats.InputFile
-import gapt.formats.babel.{ BabelParser, BabelSignature }
+import gapt.formats.babel.BabelParser
+import gapt.formats.babel.BabelSignature
 import gapt.formats.json._
 import gapt.formats.leancop.LeanCoPParser
 import gapt.formats.tip.TipSmtImporter
 import gapt.formats.tptp.TptpImporter
 import gapt.formats.verit.VeriTParser
-import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.ceres._
+import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion._
-import gapt.proofs.gaptic.{ ProofState, now }
+import gapt.proofs.gaptic.ProofState
+import gapt.proofs.gaptic.now
 import gapt.proofs.lk._
-import gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
-import gapt.proofs.{ Suc, loadExpansionProof }
+import gapt.proofs.lk.rules.ProofLink
+import gapt.proofs.lk.rules.macros.WeakeningContractionMacroRule
+import gapt.proofs.lk.transformations.LKToExpansionProof
+import gapt.proofs.lk.transformations.LKToND
+import gapt.proofs.lk.transformations.MG3iToLJ
+import gapt.proofs.lk.transformations.cleanStructuralRules
+import gapt.proofs.lk.transformations.cutNormal
+import gapt.proofs.lk.transformations.folSkolemize
+import gapt.proofs.lk.transformations.inductionNormalForm
+import gapt.proofs.lk.util.ArithmeticInductionToSchema
+import gapt.proofs.lk.util.ExtractInterpolant
+import gapt.proofs.lk.util.containsEqualityReasoning
+import gapt.proofs.lk.util.extractRecSchem
+import gapt.proofs.lk.util.instanceProof
+import gapt.proofs.lk.util.instantiateProof
+import gapt.proofs.lk.util.isInductionFree
+import gapt.proofs.lk.util.isMaeharaMG3i
+import gapt.proofs.lk.util.regularize
+import gapt.proofs.lk.util.solvePropositional
+import gapt.proofs.lk.util.solveQuasiPropositional
 import gapt.proofs.nd.NDProof
-import gapt.proofs.resolution.{ ResolutionProof, ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
-import gapt.proofs.{ Suc, loadExpansionProof }
+import gapt.proofs.resolution.ResolutionToExpansionProof
+import gapt.proofs.resolution.ResolutionToLKProof
+import gapt.proofs.resolution.simplifyResolutionProof
+import gapt.proofs.Suc
+import gapt.proofs.loadExpansionProof
 import gapt.provers.congruence.SimpleSmtSolver
 import gapt.provers.escargot.Escargot
 import gapt.provers.prover9.Prover9Importer
-import gapt.provers.sat.{ MiniSAT, Sat4j }
-import gapt.provers.smtlib.{ SmtInterpol, Z3 }
+import gapt.provers.sat.MiniSAT
+import gapt.provers.sat.Sat4j
+import gapt.provers.smtlib.SmtInterpol
+import gapt.provers.smtlib.Z3
 import gapt.provers.verit.VeriT
 import gapt.provers.viper.grammars.EnumeratingInstanceGenerator
-import gapt.provers.viper.{ Viper, ViperOptions }
+import gapt.provers.viper.Viper
+import gapt.provers.viper.ViperOptions
 import gapt.utils.EitherHelpers._
 import gapt.utils._
 
@@ -101,12 +128,6 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
       isInductionFree( indFreeProof ) !-- "induction elimination returns induction free proof"
     }
   }
-
-  private def isInductionFree( proof: LKProof ) =
-    proof.subProofs.forall {
-      case InductionRule( _, _, _ ) => false
-      case _                        => true
-    }
 }
 
 object TheoryTestCase {

@@ -7,6 +7,12 @@ import java.awt.{ BasicStroke, Color, RenderingHints, Stroke }
 import gapt.expr.Expr
 import gapt.formats.latex.LatexExporter
 import gapt.proofs.lk._
+import gapt.proofs.lk.rules.ContractionLeftRule
+import gapt.proofs.lk.rules.ContractionRightRule
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.ProofLink
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.WeakeningRightRule
 import gapt.proofs.{ SequentIndex, SequentProof }
 
 import scala.swing._

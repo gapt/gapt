@@ -7,6 +7,7 @@ import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.ProofDeclaration
 import gapt.proofs.lk._
+import gapt.proofs.lk.transformations.cleanStructuralRules
 import gapt.utils.Maybe
 
 case class CanLabelledSequent( labelledSequent: Sequent[( String, Formula )] ) extends AnyVal
