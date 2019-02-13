@@ -1,6 +1,6 @@
 package gapt.proofs.context.update
 
-import gapt.expr.TBase
+import gapt.expr.ty.TBase
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.BaseTypes
 import gapt.proofs.context.State

@@ -4,6 +4,12 @@ import ammonite.ops._
 import gapt.expr._
 import gapt.expr.fol.replaceAbstractions
 import gapt.expr.hol._
+import gapt.expr.ty.->:
+import gapt.expr.ty.TBase
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
+import gapt.expr.ty.Ty
+import gapt.expr.ty.baseTypes
 import gapt.expr.util.freeVariables
 import gapt.expr.util.subTerms
 import gapt.proofs.{ HOLSequent, Sequent }

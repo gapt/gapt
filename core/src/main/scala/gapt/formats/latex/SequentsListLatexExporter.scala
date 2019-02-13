@@ -3,6 +3,9 @@ package gapt.formats.latex
 import gapt.proofs.HOLSequent
 import gapt.expr._
 import gapt.expr.hol._
+import gapt.expr.ty.->:
+import gapt.expr.ty.TBase
+import gapt.expr.ty.Ty
 
 trait SequentsListLatexExporter {
   def getOutput: java.io.Writer

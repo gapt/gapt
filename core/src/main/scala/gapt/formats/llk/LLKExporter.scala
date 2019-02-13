@@ -2,6 +2,10 @@ package gapt.formats.llk
 
 import gapt.proofs._
 import gapt.expr._
+import gapt.expr.ty.->:
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
+import gapt.expr.ty.Ty
 import gapt.proofs.lk._
 import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule

@@ -3,9 +3,9 @@ package gapt.proofs.context.update
 import gapt.expr.Abs
 import gapt.expr.Const
 import gapt.expr.Expr
-import gapt.expr.FunctionType
 import gapt.expr.Quant
 import gapt.expr.hol.SkolemFunctions
+import gapt.expr.ty.FunctionType
 import gapt.expr.util.freeVariables
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.Constants

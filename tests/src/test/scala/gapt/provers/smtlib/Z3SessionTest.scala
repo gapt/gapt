@@ -1,10 +1,12 @@
 package gapt.provers.smtlib
 
 import gapt.expr._
-import gapt.formats.lisp.{ LSymbol, LFun, LList, SExpression }
+import gapt.formats.lisp.{ LFun, LList, LSymbol, SExpression }
 import org.specs2.mutable._
 import gapt.provers.Session._
 import cats.implicits._
+import gapt.expr.ty.TBase
+import gapt.expr.ty.To
 import gapt.utils.EitherHelpers._
 
 class Z3SessionTest extends Specification {

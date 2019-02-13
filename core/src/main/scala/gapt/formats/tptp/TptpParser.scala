@@ -4,6 +4,10 @@ import gapt.expr._
 import gapt.formats.InputFile
 import org.parboiled2._
 import ammonite.ops._
+import gapt.expr.ty.TBase
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
+import gapt.expr.ty.Ty
 
 import scala.util.{ Failure, Success }
 

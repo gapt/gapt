@@ -7,6 +7,9 @@ package gapt.expr
 import org.specs2.mutable._
 import BetaReduction._
 import gapt.expr.subst.Substitution
+import gapt.expr.ty.TVar
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
 import gapt.expr.util.rename
 import org.specs2.execute.Success
 

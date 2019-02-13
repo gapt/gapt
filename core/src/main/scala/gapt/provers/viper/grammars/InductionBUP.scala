@@ -1,6 +1,8 @@
 package gapt.provers.viper.grammars
 
 import gapt.expr._
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.To
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.grammars.InductionGrammar

@@ -7,6 +7,8 @@ package gapt.expr.hol
 
 import gapt.expr._
 import gapt.expr.subst.Substitution
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
 import gapt.expr.util.syntacticMatching
 import org.specs2.mutable._
 

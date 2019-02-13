@@ -2,6 +2,8 @@ package gapt.proofs.lk
 
 import gapt.examples.{ Pi2Pigeonhole, lattice, tape }
 import gapt.expr._
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
 import gapt.formats.ClasspathInputFile
 import gapt.formats.llk.loadLLK
 import gapt.proofs.lk.rules.ContractionLeftRule

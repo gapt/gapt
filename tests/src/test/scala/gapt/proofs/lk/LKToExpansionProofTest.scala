@@ -2,6 +2,7 @@ package gapt.proofs.lk
 
 import gapt.examples.{ LinearExampleProof, Pi2Pigeonhole, lattice }
 import gapt.expr._
+import gapt.expr.ty.TBase
 import gapt.proofs.context.Context
 import gapt.proofs.{ Ant, ProofBuilder, Sequent, SequentMatchers, Suc }
 import gapt.proofs.expansion._

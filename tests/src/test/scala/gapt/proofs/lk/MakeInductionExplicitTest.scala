@@ -1,6 +1,7 @@
 package gapt.proofs.lk
 
 import gapt.expr._
+import gapt.expr.ty.Ti
 import gapt.proofs.SequentMatchers
 import gapt.proofs.lk.rules.InductionRule
 import gapt.proofs.lk.transformations.makeInductionExplicit

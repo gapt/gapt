@@ -1,5 +1,10 @@
 package gapt.expr
 
+import gapt.expr.ty.->:
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
+import gapt.expr.ty.Ty
+
 object NonLogicalConstant {
   def unapply( c: Const ) = c match {
     case c: LogicalConstant => None

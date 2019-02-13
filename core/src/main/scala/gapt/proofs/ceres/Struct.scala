@@ -6,6 +6,7 @@
 package gapt.proofs.ceres
 
 import gapt.expr._
+import gapt.expr.ty.To
 import gapt.proofs.Sequent
 
 import scala.math.max

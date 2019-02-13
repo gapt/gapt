@@ -2,6 +2,9 @@ package gapt.formats.tip
 
 import gapt.expr._
 import gapt.expr.hol.{ existentialClosure, universalClosure }
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.TBase
+import gapt.expr.ty.To
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.immutable.ImmutableContext

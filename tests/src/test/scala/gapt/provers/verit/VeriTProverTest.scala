@@ -6,7 +6,9 @@ package gapt.provers.verit
 
 import gapt.examples.BussTautology
 import gapt.expr._
-import gapt.proofs.{ Sequent, HOLSequent }
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
+import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.provers.sat.Sat4j
 import gapt.utils.SatMatchers
 import org.specs2.mutable._

@@ -4,6 +4,10 @@ import gapt.expr._
 import gapt.proofs.{ HOLSequent, SequentProof }
 import gapt.utils.Doc
 import Doc._
+import gapt.expr.ty.->:
+import gapt.expr.ty.TBase
+import gapt.expr.ty.TVar
+import gapt.expr.ty.Ty
 
 object LatexExporter {
 

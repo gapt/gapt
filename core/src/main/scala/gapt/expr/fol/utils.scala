@@ -6,6 +6,7 @@ package gapt.expr.fol
 
 import gapt.expr._
 import gapt.expr.hol.containsQuantifier
+import gapt.expr.ty.Ti
 import gapt.proofs.HOLSequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.Constants

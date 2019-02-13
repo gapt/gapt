@@ -5,6 +5,8 @@ import gapt.expr.fol.folSubTerms
 import gapt.expr.fol.thresholds._
 import gapt.expr.hol.{ atoms, lcomp, simplify, toNNF }
 import gapt.expr.subst.PreSubstitution
+import gapt.expr.ty.TBase
+import gapt.expr.ty.Ti
 import gapt.expr.util.LambdaPosition
 import gapt.expr.util.constants
 import gapt.expr.util.expressionSize

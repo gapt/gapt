@@ -1,5 +1,6 @@
 package gapt.expr
 
+import gapt.expr.ty.Ti
 import org.specs2.mutable._
 
 class TraitsTest extends Specification {

@@ -8,13 +8,13 @@ import gapt.expr.EqC
 import gapt.expr.ExistsC
 import gapt.expr.ForallC
 import gapt.expr.Formula
-import gapt.expr.FunctionType
 import gapt.expr.ImpC
 import gapt.expr.NegC
 import gapt.expr.OrC
-import gapt.expr.TBase
-import gapt.expr.TVar
-import gapt.expr.Ty
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.TBase
+import gapt.expr.ty.TVar
+import gapt.expr.ty.Ty
 import gapt.formats.tip.parser.TipSmtProblem
 import gapt.formats.tip.parser.toSExpression
 import gapt.formats.tip.util.TipNameGenerator

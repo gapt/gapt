@@ -1,6 +1,8 @@
 package gapt.grammars
 
 import gapt.expr._
+import gapt.expr.ty.TBase
+import gapt.expr.ty.To
 import gapt.utils.SatMatchers
 import org.specs2.mutable._
 

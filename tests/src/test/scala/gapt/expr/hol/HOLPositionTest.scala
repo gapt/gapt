@@ -2,7 +2,8 @@ package gapt.expr.hol
 
 import HOLPosition._
 import gapt.expr._
-
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
 import org.specs2.mutable._
 
 class HOLPositionTest extends Specification {

@@ -1,5 +1,6 @@
 package gapt.expr
 
+import gapt.expr.ty.Ti
 import gapt.expr.util.longNormalForm
 import org.specs2.mutable._
 

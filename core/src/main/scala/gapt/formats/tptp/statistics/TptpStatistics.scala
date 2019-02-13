@@ -2,6 +2,7 @@ package gapt.formats.tptp.statistics
 
 import ammonite.ops.FilePath
 import gapt.expr._
+import gapt.expr.ty.arity
 import gapt.expr.util.constants
 import gapt.formats.csv.CSVFile
 import gapt.formats.csv.CSVRow

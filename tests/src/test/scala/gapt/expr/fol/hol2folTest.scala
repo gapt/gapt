@@ -5,6 +5,9 @@
 package gapt.expr.fol
 
 import gapt.expr._
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
+import gapt.expr.ty.Ty
 import org.specs2.mutable._
 
 class hol2folTest extends Specification {

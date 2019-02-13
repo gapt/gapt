@@ -1,5 +1,9 @@
 package gapt.expr
 
+import gapt.expr.ty.->:
+import gapt.expr.ty.To
+import gapt.expr.ty.Ty
+
 /**
  * Helper class for logical constants.
  *

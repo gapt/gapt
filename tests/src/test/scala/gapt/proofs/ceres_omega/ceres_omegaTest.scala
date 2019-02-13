@@ -5,6 +5,8 @@ import gapt.expr._
 import gapt.expr.fol.replaceAbstractions
 import gapt.expr.hol.{ HOLOrdering, containsQuantifierOnLogicalLevel, freeHOVariables }
 import gapt.expr.subst.Substitution
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
 import gapt.formats.ClasspathInputFile
 import gapt.formats.llk.{ ExtendedProofDatabase, LLKProofParser }
 import gapt.formats.tptp.TptpFOLExporter

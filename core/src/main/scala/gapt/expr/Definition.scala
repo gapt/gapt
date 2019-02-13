@@ -1,5 +1,6 @@
 package gapt.expr
 
+import gapt.expr.ty.TVar
 import gapt.expr.util.freeVariables
 import gapt.expr.util.typeVariables
 import gapt.proofs.context.Context

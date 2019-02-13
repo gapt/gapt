@@ -9,6 +9,8 @@ import java.io._
 
 import gapt.provers._
 import gapt.expr._
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.TBase
 import gapt.expr.util.freeVariables
 import gapt.formats.smt.SmtLibExporter
 import gapt.proofs.context.Context

@@ -3,10 +3,10 @@ package gapt.expr.subst
 import gapt.expr.App
 import gapt.expr.Const
 import gapt.expr.Expr
-import gapt.expr.TVar
-import gapt.expr.Ty
 import gapt.expr.Var
 import gapt.expr.subst.Substitutable.SubstitutableTy
+import gapt.expr.ty.TVar
+import gapt.expr.ty.Ty
 
 /**
  * A substitution is a mapping from variables to lambda-expressions which differs from the identity

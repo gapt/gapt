@@ -1,6 +1,8 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
 import org.specs2.mutable._
 
 class ReplaceAtHOLPositionTest extends Specification {

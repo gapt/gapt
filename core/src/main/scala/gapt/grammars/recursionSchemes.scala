@@ -5,6 +5,10 @@ import gapt.expr._
 import gapt.expr.hol._
 import gapt.expr.subst.FOLSubstitution
 import gapt.expr.subst.Substitution
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.TBase
+import gapt.expr.ty.To
+import gapt.expr.ty.arity
 import gapt.expr.util.constants
 import gapt.expr.util.expressionSize
 import gapt.expr.util.freeVariables

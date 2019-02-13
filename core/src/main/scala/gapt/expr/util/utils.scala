@@ -4,7 +4,6 @@
 
 package gapt.expr.util
 
-import gapt.expr.->:
 import gapt.expr.Abs
 import gapt.expr.All
 import gapt.expr.And
@@ -22,13 +21,14 @@ import gapt.expr.Imp
 import gapt.expr.LogicalConstant
 import gapt.expr.Neg
 import gapt.expr.Or
-import gapt.expr.TBase
-import gapt.expr.TVar
-import gapt.expr.To
-import gapt.expr.Ty
 import gapt.expr.Var
 import gapt.expr.VarOrConst
 import gapt.expr.subst.Substitution
+import gapt.expr.ty.->:
+import gapt.expr.ty.TBase
+import gapt.expr.ty.TVar
+import gapt.expr.ty.To
+import gapt.expr.ty.Ty
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.utils.NameGenerator

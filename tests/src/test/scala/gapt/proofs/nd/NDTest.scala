@@ -1,6 +1,7 @@
 package gapt.proofs.nd
 
 import gapt.expr._
+import gapt.expr.ty.TBase
 import gapt.proofs._
 import gapt.utils.SatMatchers
 import org.specs2.mutable._

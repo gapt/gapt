@@ -1,7 +1,7 @@
 package gapt.proofs.context.update
 
 import gapt.expr.Const
-import gapt.expr.TVar
+import gapt.expr.ty.TVar
 import gapt.expr.util.typeVariables
 import gapt.proofs.context.Context
 import gapt.proofs.context.State

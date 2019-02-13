@@ -1,5 +1,6 @@
 package gapt.examples.tip.prod
 import gapt.expr._
+import gapt.expr.ty.Ti
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic._
 

@@ -1,10 +1,14 @@
 package gapt.proofs.nd
 
 import gapt.expr.App
-import gapt.expr.Ty
 import gapt.expr.Var
 import gapt.expr._
 import gapt.expr.subst.Substitution
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.TArr
+import gapt.expr.ty.TBase
+import gapt.expr.ty.TVar
+import gapt.expr.ty.Ty
 import gapt.expr.util.freeVariables
 import gapt.expr.util.typeVariables
 import gapt.proofs._

@@ -1,5 +1,8 @@
 package gapt.expr
 
+import gapt.expr.ty.->:
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
 import gapt.expr.util.constants
 import gapt.expr.util.freeVariables
 import gapt.expr.util.variables

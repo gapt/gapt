@@ -3,6 +3,9 @@ package gapt.proofs.resolution
 import gapt.expr._
 import gapt.expr.hol.SkolemFunctions
 import gapt.expr.subst.Substitution
+import gapt.expr.ty.->:
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.To
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.expr.util.replacementContext

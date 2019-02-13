@@ -1,11 +1,12 @@
 package gapt.formats.babel
 
 import gapt.{ expr => real }
-import gapt.expr.{ Formula, Expr, preExpr }
+import gapt.expr.{ Expr, Formula, preExpr }
 import gapt.proofs.gaptic.guessLabels
 import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.utils.NameGenerator
 import cats.syntax.either._
+import gapt.expr.ty.Ty
 
 object Precedence {
   val min = 0
@@ -200,7 +201,7 @@ object BabelParser {
   def parseFormula( text: String )( implicit sig: BabelSignature ): Formula =
     tryParse( text, preExpr.TypeAnnotation( _, preExpr.Bool ) ).fold( throw _, _.asInstanceOf[Formula] )
 
-  def tryParseType( text: String ): Either[BabelParseError, real.Ty] = {
+  def tryParseType( text: String ): Either[BabelParseError, Ty] = {
     fastparse.parse( text, TypeAndNothingElse( _ ) ) match {
       case Parsed.Success( expr, _ ) =>
         Right( preExpr.toRealType( expr, Map() ) )

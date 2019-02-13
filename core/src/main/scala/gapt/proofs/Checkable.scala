@@ -1,6 +1,10 @@
 package gapt.proofs
 
 import gapt.expr._
+import gapt.expr.ty.->:
+import gapt.expr.ty.TBase
+import gapt.expr.ty.TVar
+import gapt.expr.ty.Ty
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.context.update.Update

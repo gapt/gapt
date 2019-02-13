@@ -4,6 +4,8 @@
 
 package gapt.expr
 
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
 import gapt.expr.util.freeVariables
 import gapt.expr.util.isInVNF
 import gapt.expr.util.rename

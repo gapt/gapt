@@ -2,6 +2,8 @@ package gapt.provers.viper.aip.axioms
 import gapt.expr._
 import gapt.expr.fol.folSubTerms
 import gapt.expr.hol.{ instantiate, universalClosure }
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.To
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.proofs.context.Context

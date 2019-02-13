@@ -3,10 +3,10 @@ package gapt.expr.util
 import gapt.expr.Abs
 import gapt.expr.Expr
 import gapt.expr.ReplacementContext
-import gapt.expr.Ty
 import gapt.expr.Var
 import gapt.expr.containedNames
 import gapt.expr.hol.HOLPosition
+import gapt.expr.ty.Ty
 
 /**
  * Creates capture avoiding replacement contexts.

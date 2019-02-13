@@ -1,6 +1,8 @@
 package gapt.proofs.gaptic
 
 import gapt.expr._
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.Ti
 import gapt.expr.util.freeVariables
 import gapt.expr.util.typeVariables
 import gapt.formats.babel.BabelSignature

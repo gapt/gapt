@@ -2,6 +2,10 @@ package gapt.proofs
 
 import gapt.expr._
 import gapt.expr.subst.Substitution
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.TBase
+import gapt.expr.ty.TVar
+import gapt.expr.ty.Ty
 import gapt.expr.util.freeVariables
 import gapt.expr.util.typeVariables
 import gapt.proofs.context.immutable.ImmutableContext

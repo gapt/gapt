@@ -1,6 +1,9 @@
 package gapt.proofs.expansion
 import gapt.expr._
 import gapt.expr.hol.{ HOLPosition, inductionPrinciple }
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.TBase
+import gapt.expr.ty.To
 import gapt.expr.util.syntacticMatching
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.StructurallyInductiveTypes

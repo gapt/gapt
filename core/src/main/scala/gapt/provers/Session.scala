@@ -13,6 +13,12 @@ import cats.free.Free.liftF
 import cats.free._
 import cats.implicits._
 import cats.{ Id, ~> }
+import gapt.expr.ty.->:
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.TBase
+import gapt.expr.ty.To
+import gapt.expr.ty.Ty
+import gapt.expr.ty.baseTypes
 import gapt.expr.util.constants
 
 import scala.collection.mutable

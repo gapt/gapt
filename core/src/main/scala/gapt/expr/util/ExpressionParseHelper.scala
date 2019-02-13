@@ -10,9 +10,9 @@ import gapt.expr.FOLFormula
 import gapt.expr.FOLTerm
 import gapt.expr.FOLVar
 import gapt.expr.Formula
-import gapt.expr.Ty
 import gapt.expr.Var
 import gapt.expr.preExpr
+import gapt.expr.ty.Ty
 import gapt.expr.util.ExpressionParseHelper.Splice
 import gapt.formats.babel._
 import gapt.proofs.FOLClause

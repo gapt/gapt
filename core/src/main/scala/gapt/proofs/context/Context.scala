@@ -2,6 +2,11 @@ package gapt.proofs.context
 
 import gapt.expr._
 import gapt.expr.hol.SkolemFunctions
+import gapt.expr.ty.TBase
+import gapt.expr.ty.TVar
+import gapt.expr.ty.To
+import gapt.expr.ty.Ty
+import gapt.expr.ty.baseTypes
 import gapt.expr.util.syntacticMatching
 import gapt.formats.babel.BabelParser
 import gapt.formats.babel.BabelSignature

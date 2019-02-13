@@ -1,15 +1,15 @@
 package gapt.expr.subst
 
-import gapt.expr.->:
 import gapt.expr.Abs
 import gapt.expr.App
 import gapt.expr.ClosedUnderSub
 import gapt.expr.Const
 import gapt.expr.Expr
-import gapt.expr.TBase
-import gapt.expr.TVar
-import gapt.expr.Ty
 import gapt.expr.Var
+import gapt.expr.ty.->:
+import gapt.expr.ty.TBase
+import gapt.expr.ty.TVar
+import gapt.expr.ty.Ty
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 

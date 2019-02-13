@@ -1,6 +1,8 @@
 package gapt.provers.escargot
 
 import gapt.expr._
+import gapt.expr.ty.Ty
+import gapt.expr.ty.arity
 
 import scala.collection.mutable
 

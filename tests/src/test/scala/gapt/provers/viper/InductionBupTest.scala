@@ -2,6 +2,8 @@ package gapt.provers.viper
 
 import gapt.expr._
 import gapt.expr.hol.{ instantiate, skolemize }
+import gapt.expr.ty.TBase
+import gapt.expr.ty.Ti
 import gapt.grammars.InductionGrammar
 import gapt.grammars.InductionGrammar.Production
 import gapt.proofs.context.mutable.MutableContext

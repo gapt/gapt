@@ -5,6 +5,8 @@
 
 package gapt.expr
 
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
 import gapt.expr.util.clauseSubsumption
 import gapt.proofs.HOLSequent
 import org.specs2.mutable._

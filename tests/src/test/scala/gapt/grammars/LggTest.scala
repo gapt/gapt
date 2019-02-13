@@ -1,6 +1,7 @@
 package gapt.grammars
 
 import gapt.expr._
+import gapt.expr.ty.TBase
 import gapt.expr.util.freeVariables
 import gapt.proofs.context.Context
 import org.specs2.mutable.Specification

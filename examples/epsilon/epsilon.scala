@@ -1,5 +1,6 @@
 package gapt.examples
 import gapt.expr._
+import gapt.expr.ty.Ti
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.epsilon.epsilonize

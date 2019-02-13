@@ -1,8 +1,9 @@
 package gapt.proofs.lkt
 
+import gapt.expr.ty.Ty
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
-import gapt.expr.{ All, BetaReduction, Eq, Expr, Formula, Ty, Var }
+import gapt.expr.{ All, BetaReduction, Eq, Expr, Formula, Var }
 
 import scala.collection.mutable
 

@@ -2,6 +2,10 @@ package gapt.proofs.lk.util
 
 import gapt.expr._
 import gapt.expr.hol.containsQuantifier
+import gapt.expr.ty.->:
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.To
+import gapt.expr.ty.Ty
 import gapt.grammars._
 import gapt.proofs.Ant
 import gapt.proofs.Sequent

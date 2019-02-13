@@ -8,6 +8,8 @@ import org.specs2.mutable._
 import gapt.expr._
 import BetaReduction._
 import gapt.expr.subst.Substitution
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
 
 class HigherOrderLogicTest extends Specification {
 

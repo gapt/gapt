@@ -2,6 +2,7 @@ package gapt.proofs.lk
 
 import gapt.examples
 import gapt.expr._
+import gapt.expr.ty.TBase
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.context.Context
 import gapt.proofs.context.update.InductiveType

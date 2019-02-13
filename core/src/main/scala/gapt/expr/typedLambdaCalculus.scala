@@ -2,6 +2,8 @@ package gapt.expr
 
 import gapt.expr.hol.HOLPosition
 import gapt.expr.hol.HOLPosition._
+import gapt.expr.ty.->:
+import gapt.expr.ty.Ty
 import gapt.expr.util.LambdaPosition
 import gapt.formats.babel.{ BabelExporter, BabelSignature }
 

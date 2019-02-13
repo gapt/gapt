@@ -6,6 +6,8 @@ package gapt.expr.fol
 
 import org.specs2.mutable._
 import gapt.expr._
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
 
 class FirstOrderLogicTest extends Specification {
   "FirstOrderLogic" should {

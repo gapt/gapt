@@ -9,6 +9,11 @@ import cats.syntax.traverse._
 import cats.syntax.either._
 import cats.instances.list._
 import cats.instances.either._
+import gapt.expr
+import gapt.expr.ty.->:
+import gapt.expr.ty.TBase
+import gapt.expr.ty.TVar
+import gapt.expr.ty.Ty
 import gapt.expr.util.freeVariables
 
 import scala.collection.mutable
@@ -110,21 +115,21 @@ object preExpr {
   def Ex = Quant( real.ExistsC.name )
   def All = Quant( real.ForallC.name )
 
-  def liftTypePoly( t: real.Ty, ps: List[real.Ty] ) = {
-    val vars = mutable.Map[real.TVar, Type]()
-    def lift( t: real.Ty ): Type = t match {
-      case t: real.TVar               => vars.getOrElseUpdate( t, freshMetaType() )
-      case real.TBase( name, params ) => BaseType( name, params.map( lift ) )
-      case real.`->:`( in, out )      => ArrType( lift( in ), lift( out ) )
+  def liftTypePoly( t: Ty, ps: List[Ty] ) = {
+    val vars = mutable.Map[TVar, Type]()
+    def lift( t: Ty ): Type = t match {
+      case t: TVar                       => vars.getOrElseUpdate( t, freshMetaType() )
+      case real.ty.TBase( name, params ) => BaseType( name, params.map( lift ) )
+      case ->:( in, out )                => ArrType( lift( in ), lift( out ) )
     }
     val res = ( lift( t ), ps.map( lift ) )
     res
   }
 
-  def liftTypeMono( t: real.Ty ): Type = t match {
-    case real.TVar( name )          => VarType( name )
-    case real.TBase( name, params ) => BaseType( name, params.map( liftTypeMono ) )
-    case real.`->:`( in, out )      => ArrType( liftTypeMono( in ), liftTypeMono( out ) )
+  def liftTypeMono( t: Ty ): Type = t match {
+    case real.ty.TVar( name )          => VarType( name )
+    case real.ty.TBase( name, params ) => BaseType( name, params.map( liftTypeMono ) )
+    case ->:( in, out )                => ArrType( liftTypeMono( in ), liftTypeMono( out ) )
   }
 
   def QuoteBlackbox( e: real.Expr ) =
@@ -441,9 +446,9 @@ object preExpr {
     }.toSet
   }
 
-  def toRealType( ty: Type, assg: Map[MetaTypeIdx, Type] ): real.Ty = ty match {
-    case BaseType( name, params ) => real.TBase( name, params.map( toRealType( _, assg ) ) )
-    case VarType( name )          => real.TVar( name )
+  def toRealType( ty: Type, assg: Map[MetaTypeIdx, Type] ): Ty = ty match {
+    case BaseType( name, params ) => TBase( name, params.map( toRealType( _, assg ) ) )
+    case VarType( name )          => expr.ty.TVar( name )
     case ArrType( a, b )          => toRealType( a, assg ) ->: toRealType( b, assg )
     case MetaType( idx )          => toRealType( assg( idx ), assg )
   }

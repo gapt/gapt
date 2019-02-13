@@ -1794,7 +1794,7 @@ benchmark: String =
       (f_P f_a))))
 (check-sat)
 "
-typeRenaming: Map[gapt.expr.TBase,gapt.expr.TBase] = Map(o -> Bool, i -> t_i)
+typeRenaming: Map[gapt.expr.ty.TBase,gapt.expr.ty.TBase] = Map(o -> Bool, i -> t_i)
 constantRenaming: Map[gapt.expr.Const,gapt.expr.Const] = Map(b -> f_b:t_i, P:i>o -> f_P:t_i>Bool, c -> f_c:t_i, a -> f_a:t_i)
 
 \end{clilisting}

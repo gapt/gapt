@@ -8,7 +8,6 @@ import gapt.expr.Const
 import gapt.expr.Ex
 import gapt.expr.Expr
 import gapt.expr.Formula
-import gapt.expr.FunctionType
 import gapt.expr.Imp
 import gapt.expr.Neg
 import gapt.expr.Or
@@ -16,6 +15,7 @@ import gapt.expr.Polarity
 import gapt.expr.Top
 import gapt.expr.containedNames
 import gapt.expr.subst.Substitution
+import gapt.expr.ty.FunctionType
 import gapt.expr.util.constants
 import gapt.expr.util.rename
 import gapt.proofs.HOLSequent

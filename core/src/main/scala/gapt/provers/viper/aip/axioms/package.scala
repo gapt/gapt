@@ -2,9 +2,10 @@ package gapt.provers.viper.aip
 
 import gapt.expr.Expr
 import gapt.expr.subst.Substitution
+import gapt.expr.ty.FunctionType
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
-import gapt.expr.{ All, And, Formula, FunctionType, Var, Const => Con }
+import gapt.expr.{ All, And, Formula, Var, Const => Con }
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 

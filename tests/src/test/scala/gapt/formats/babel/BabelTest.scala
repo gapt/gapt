@@ -1,6 +1,8 @@
 package gapt.formats.babel
 
 import gapt.expr._
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
 import org.specs2.mutable.Specification
 import org.specs2.specification.core.Fragments
 

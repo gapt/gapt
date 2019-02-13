@@ -11,6 +11,9 @@ import gapt.provers.Session._
 import gapt.utils.{ Logger, Maybe, NameGenerator, Tree }
 import cats.implicits._
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.To
+import gapt.expr.ty.Ty
 import gapt.expr.util.constants
 import gapt.expr.util.freeVariables
 import gapt.proofs.context.Context

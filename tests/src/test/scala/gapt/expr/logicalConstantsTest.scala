@@ -1,4 +1,7 @@
 package gapt.expr
+import gapt.expr.ty.TBase
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
 import org.specs2.mutable._
 
 class LogicalConstantsTest extends Specification {

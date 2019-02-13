@@ -6,6 +6,8 @@ import gapt.provers.Session.Runners._
 import gapt.provers.Session._
 import cats.implicits._
 import gapt.expr.subst.Substitution
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.TBase
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 

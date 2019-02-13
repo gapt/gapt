@@ -3,11 +3,11 @@ package gapt.expr.subst
 import gapt.expr.Expr
 import gapt.expr.FOLTerm
 import gapt.expr.FOLVar
-import gapt.expr.TVar
-import gapt.expr.Ty
 import gapt.expr.Var
 import gapt.expr.util.freeVariables
 import gapt.expr.subst.Substitutable.SubstitutableTy
+import gapt.expr.ty.TVar
+import gapt.expr.ty.Ty
 
 /**
  * An unvalidated substitution, you should use [[Substitution]] instead.

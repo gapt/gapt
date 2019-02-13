@@ -1,6 +1,8 @@
 package gapt.proofs.lk
 
 import gapt.expr._
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
 import gapt.proofs.lk.rules.ExistsLeftRule
 import gapt.proofs.lk.rules.ExistsRightRule
 import gapt.proofs.lk.rules.ForallLeftRule

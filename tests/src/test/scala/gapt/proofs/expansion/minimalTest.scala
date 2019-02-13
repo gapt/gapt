@@ -1,6 +1,8 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
 import gapt.proofs.Sequent
 import gapt.provers.sat.Sat4j
 import org.specs2.mutable._

@@ -1,6 +1,5 @@
 package gapt.expr.util
 
-import gapt.expr.->:
 import gapt.expr.Abs
 import gapt.expr.App
 import gapt.expr.Const
@@ -8,13 +7,14 @@ import gapt.expr.Expr
 import gapt.expr.FOLExpression
 import gapt.expr.FOLTerm
 import gapt.expr.FOLVar
-import gapt.expr.TBase
-import gapt.expr.TVar
-import gapt.expr.Ty
 import gapt.expr.Var
 import gapt.expr.subst.FOLSubstitution
 import gapt.expr.subst.PreSubstitution
 import gapt.expr.subst.Substitution
+import gapt.expr.ty.->:
+import gapt.expr.ty.TBase
+import gapt.expr.ty.TVar
+import gapt.expr.ty.Ty
 import gapt.utils.UNone
 import gapt.utils.UOption
 import gapt.utils.USome

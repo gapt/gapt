@@ -3,6 +3,11 @@ package gapt.expr
 import gapt.expr.fol.FOLPosition._
 import gapt.expr.fol.FOLPosition
 import gapt.expr.hol.HOLPosition
+import gapt.expr.ty.->:
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
+import gapt.expr.ty.Ty
 
 trait Formula extends Expr {
   override def replace( pos: HOLPosition, exp: Expr ) = HOLPosition.replace( this, pos, exp )

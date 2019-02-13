@@ -1,6 +1,9 @@
 package gapt.expr.hol
 
 import gapt.expr._
+import gapt.expr.ty.->:
+import gapt.expr.ty.TBase
+import gapt.expr.ty.Ty
 
 /**
  * Ordering for HOL Formulas (also for FOL)

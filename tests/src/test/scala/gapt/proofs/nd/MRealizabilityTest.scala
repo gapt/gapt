@@ -1,6 +1,9 @@
 package gapt.proofs.nd
 
 import gapt.expr._
+import gapt.expr.ty.TBase
+import gapt.expr.ty.TVar
+import gapt.expr.ty.Ty
 import gapt.formats.babel.Notation
 import gapt.formats.babel.Precedence
 import gapt.proofs.context.update.InductiveType

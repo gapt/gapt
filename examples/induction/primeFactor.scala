@@ -1,6 +1,8 @@
 package gapt.examples.induction
 
 import gapt.expr._
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
 import gapt.formats.babel.Notation
 import gapt.formats.babel.Precedence
 import gapt.proofs.context.update.Sort

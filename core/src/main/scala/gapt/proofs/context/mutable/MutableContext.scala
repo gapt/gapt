@@ -4,12 +4,12 @@ import gapt.expr.Abs
 import gapt.expr.Const
 import gapt.expr.Definition
 import gapt.expr.Expr
-import gapt.expr.FunctionType
 import gapt.expr.Quant
 import gapt.expr.Replaceable
-import gapt.expr.baseTypes
 import gapt.expr.containedNames
 import gapt.expr.hol.SkolemFunctions
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.baseTypes
 import gapt.expr.util.constants
 import gapt.expr.util.typeVariables
 import gapt.proofs.Sequent

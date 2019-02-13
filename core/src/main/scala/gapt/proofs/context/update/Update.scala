@@ -7,11 +7,11 @@ import gapt.expr.Definition
 import gapt.expr.Eq
 import gapt.expr.Expr
 import gapt.expr.Formula
-import gapt.expr.FunctionType
-import gapt.expr.TBase
-import gapt.expr.Ti
 import gapt.expr.Var
 import gapt.expr.VarOrConst
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.TBase
+import gapt.expr.ty.Ti
 import gapt.expr.util.freeVariables
 import gapt.proofs.HOLSequent
 import gapt.proofs.context.Context

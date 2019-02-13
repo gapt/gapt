@@ -4,6 +4,7 @@ import gapt.examples._
 import gapt.expr._
 import gapt.expr.fol.Numeral
 import gapt.expr.hol.{ containsQuantifierOnLogicalLevel, isAtom }
+import gapt.expr.ty.To
 import gapt.proofs.HOLSequent
 import gapt.proofs.ceres.CERES
 import gapt.proofs.expansion.{ ExpansionProof, eliminateCutsET }

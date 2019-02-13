@@ -2,6 +2,7 @@ package gapt.formats.tptp
 
 import gapt.expr._
 import gapt.expr.hol.{ instantiate, universalClosure }
+import gapt.expr.ty.FunctionType
 import gapt.proofs.context.Context
 import gapt.proofs.resolution._
 

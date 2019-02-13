@@ -10,6 +10,8 @@ import gapt.proofs.lk._
 import scala.annotation.tailrec
 import EquationVerifier._
 import gapt.expr.subst.Substitution
+import gapt.expr.ty.To
+import gapt.expr.ty.Ty
 import gapt.expr.util.freeVariables
 import gapt.expr.util.syntacticMatching
 import gapt.proofs.lk.rules.AndLeftRule

@@ -5,12 +5,12 @@ import gapt.expr.App
 import gapt.expr.Apps
 import gapt.expr.Const
 import gapt.expr.Expr
-import gapt.expr.FunctionType
 import gapt.expr.ReductionRule
-import gapt.expr.TBase
-import gapt.expr.TVar
 import gapt.expr.Var
 import gapt.expr.fol.folSubTerms
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.TBase
+import gapt.expr.ty.TVar
 import gapt.expr.util.typeVariables
 import gapt.proofs.context.Context
 import gapt.proofs.context.parseDefinitionalEquation
