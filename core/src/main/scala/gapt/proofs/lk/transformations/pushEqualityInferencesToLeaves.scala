@@ -7,7 +7,7 @@ import gapt.expr.Ex
 import gapt.expr.Imp
 import gapt.expr.Neg
 import gapt.expr.Or
-import gapt.expr.Substitution
+import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.proofs.Ant

@@ -3,6 +3,7 @@ package gapt.formats.ivy
 
 import gapt.formats.lisp._
 import gapt.expr._
+import gapt.expr.subst.FOLSubstitution
 import gapt.formats.InputFile
 import gapt.proofs._
 import gapt.utils.Logger

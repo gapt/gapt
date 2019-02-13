@@ -4,6 +4,7 @@ import java.io.IOException
 
 import gapt.expr._
 import gapt.expr.hol.universalClosure
+import gapt.expr.subst.FOLSubstitution
 import gapt.expr.util.clauseSubsumption
 import gapt.expr.util.constants
 import gapt.expr.util.freeVariables

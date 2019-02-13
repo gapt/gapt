@@ -2,6 +2,7 @@ package gapt.proofs.expansion
 
 import gapt.expr._
 import gapt.expr.hol.containsQuantifierOnLogicalLevel
+import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.proofs.Sequent

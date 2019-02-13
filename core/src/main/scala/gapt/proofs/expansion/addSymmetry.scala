@@ -3,6 +3,7 @@ package gapt.proofs.expansion
 
 import gapt.expr._
 import gapt.expr.fol._
+import gapt.expr.subst.Substitution
 
 /**
  * Given an expansion sequent S which is a tautology modulo symmetry of equality,

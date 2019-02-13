@@ -3,6 +3,8 @@ package gapt.grammars
 import gapt.expr.fol._
 import gapt.expr._
 import gapt.expr.hol._
+import gapt.expr.subst.FOLSubstitution
+import gapt.expr.subst.Substitution
 import gapt.expr.util.constants
 import gapt.expr.util.expressionSize
 import gapt.expr.util.freeVariables

@@ -1,6 +1,7 @@
 package gapt.formats.tptp
 
 import gapt.expr._
+import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 

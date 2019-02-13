@@ -2,9 +2,9 @@ package gapt.proofs.lk.rules.macros
 
 import gapt.expr.Atom
 import gapt.expr.Const
-import gapt.expr.Substitution
 import gapt.expr.TermReplacement
 import gapt.expr.containedNames
+import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.proofs.HOLSequent

@@ -2,6 +2,7 @@ package gapt.proofs.expansion
 
 import gapt.expr._
 import gapt.expr.hol.{ HOLPosition, instantiate }
+import gapt.expr.subst.Substitution
 import gapt.formats.babel.BabelSignature
 import gapt.proofs.{ Checkable, DagProof, HOLSequent, Sequent }
 import gapt.proofs.context.Context
@@ -265,7 +266,7 @@ object ETImp extends ETBinaryCompanion( Imp, isImp = true )
  *
  */
 object ETWeakQuantifier {
-  import ExprSubstWithβ._
+  import gapt.expr.subst.ExprSubstWithβ._
   def apply( shallow: Formula, instances: Map[Expr, ExpansionTree] ): ExpansionTree = {
     val ( polarity, boundVar, qfFormula ) = shallow match {
       case Ex( x, t )  => ( Polarity.InSuccedent, x, t )

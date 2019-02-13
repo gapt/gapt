@@ -1,6 +1,8 @@
 package gapt.provers.escargot.impl
 
 import gapt.expr._
+import gapt.expr.subst.PreSubstitution
+import gapt.expr.subst.Substitution
 import gapt.expr.util.syntacticMatching
 import gapt.proofs.{ HOLSequent, Sequent }
 

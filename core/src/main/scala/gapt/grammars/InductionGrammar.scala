@@ -10,6 +10,7 @@ import gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import gapt.utils.{ Doc, NameGenerator }
 import cats.instances.list._
 import cats.syntax.traverse._
+import gapt.expr.subst.Substitution
 import gapt.expr.util.constants
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename

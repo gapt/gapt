@@ -9,6 +9,7 @@ import gapt.provers.smtlib.{ SmtInterpol, Z3 }
 import gapt.utils.Tree
 import cats.implicits._
 import gapt.expr.bdt.BDT
+import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }

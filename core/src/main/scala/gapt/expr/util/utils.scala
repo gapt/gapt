@@ -22,13 +22,13 @@ import gapt.expr.Imp
 import gapt.expr.LogicalConstant
 import gapt.expr.Neg
 import gapt.expr.Or
-import gapt.expr.Substitution
 import gapt.expr.TBase
 import gapt.expr.TVar
 import gapt.expr.To
 import gapt.expr.Ty
 import gapt.expr.Var
 import gapt.expr.VarOrConst
+import gapt.expr.subst.Substitution
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.utils.NameGenerator

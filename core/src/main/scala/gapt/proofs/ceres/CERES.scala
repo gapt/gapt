@@ -6,6 +6,7 @@ import gapt.proofs.lk._
 import gapt.proofs.resolution._
 import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.expr._
+import gapt.expr.subst.Substitution
 import gapt.expr.util.clauseSubsumption
 import gapt.expr.util.freeVariables
 import gapt.proofs.context.Context

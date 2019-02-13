@@ -2,6 +2,7 @@ package gapt.proofs.epsilon
 
 import gapt.expr.hol.instantiate
 import gapt.expr._
+import gapt.expr.subst.Substitution
 import gapt.proofs.HOLSequent
 
 case class CriticalFormula( existential: Formula, term: Expr ) {

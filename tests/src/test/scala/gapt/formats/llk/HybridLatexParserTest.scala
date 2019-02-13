@@ -2,6 +2,7 @@ package gapt.formats.llk
 
 import gapt.formats.llk.ast.LambdaAST
 import gapt.expr._
+import gapt.expr.subst.Substitution
 import gapt.formats.ClasspathInputFile
 import org.specs2.mutable._
 

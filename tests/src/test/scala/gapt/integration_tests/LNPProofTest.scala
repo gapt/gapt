@@ -9,6 +9,7 @@ import gapt.expr._
 import gapt.provers.prover9.Prover9
 import org.specs2.mutable._
 import BetaReduction._
+import gapt.expr.subst.Substitution
 import gapt.proofs.lk.util.regularize
 
 object PDAnalysis extends AnalysisWithCeresOmega {

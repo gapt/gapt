@@ -4,6 +4,7 @@ import java.io.IOException
 
 import gapt.expr._
 import gapt.expr.hol._
+import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.syntacticMatching
 import gapt.formats.{ InputFile, StringInputFile }

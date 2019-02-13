@@ -5,6 +5,7 @@ import gapt.proofs.HOLSequent
 import gapt.provers.Session.Runners._
 import gapt.provers.Session._
 import cats.implicits._
+import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 

@@ -2,6 +2,8 @@ package gapt.provers.simp
 
 import gapt.expr._
 import gapt.expr.hol.instantiate
+import gapt.expr.subst.PreSubstitution
+import gapt.expr.subst.Substitution
 import gapt.expr.util.LambdaPosition
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename

@@ -1,6 +1,6 @@
 package gapt.proofs.lk.reductions
 
-import gapt.expr.Substitution
+import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.proofs.context.Context

@@ -2,6 +2,7 @@ package gapt.proofs.resolution
 
 import gapt.expr._
 import gapt.expr.hol.SkolemFunctions
+import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.expr.util.replacementContext
@@ -243,7 +244,7 @@ object MguFactor {
  * }}}
  */
 case class Subst( subProof: ResolutionProof, substitution: Substitution ) extends ResolutionProof {
-  import ExprSubstWithβ._
+  import gapt.expr.subst.ExprSubstWithβ._
   override val conclusion: Sequent[Formula] = subProof.conclusion.map( substitution( _ ) )
   override def mainIndices: Seq[SequentIndex] = subProof.conclusion.indices
   override def auxIndices: Seq[Seq[SequentIndex]] = Seq( subProof.conclusion.indices )

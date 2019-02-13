@@ -1,6 +1,7 @@
 package gapt.proofs.nd
 
 import gapt.expr._
+import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.replacementContext
 import gapt.proofs.IndexOrFormula.{ IsFormula, IsIndex }

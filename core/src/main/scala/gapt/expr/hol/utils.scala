@@ -5,6 +5,8 @@
 package gapt.expr.hol
 
 import gapt.expr._
+import gapt.expr.subst.FOLSubstitution
+import gapt.expr.subst.Substitution
 import gapt.expr.util.LambdaPosition
 import gapt.expr.util.freeVariables
 import gapt.proofs.{ FOLClause, HOLSequent, Sequent }

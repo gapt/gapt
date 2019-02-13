@@ -2,6 +2,7 @@ package gapt.proofs.resolution
 
 import gapt.expr._
 import gapt.expr.hol.CNFn
+import gapt.expr.subst.Substitution
 import gapt.expr.util.clauseSubsumption
 import gapt.expr.util.constants
 import gapt.expr.util.freeVariables

@@ -7,6 +7,7 @@ package gapt.expr.hol
 import org.specs2.mutable._
 import gapt.expr._
 import BetaReduction._
+import gapt.expr.subst.Substitution
 
 class HigherOrderLogicTest extends Specification {
 

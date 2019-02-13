@@ -4,8 +4,8 @@ import gapt.expr.All
 import gapt.expr.BetaReduction
 import gapt.expr.Expr
 import gapt.expr.Formula
-import gapt.expr.Substitution
 import gapt.expr.Var
+import gapt.expr.subst.Substitution
 import gapt.proofs.Ant
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent

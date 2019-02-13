@@ -3,6 +3,7 @@ package gapt.grammars
 import gapt.expr._
 import cats.instances.list._
 import cats.syntax.traverse._
+import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 
 object instantiateRS {

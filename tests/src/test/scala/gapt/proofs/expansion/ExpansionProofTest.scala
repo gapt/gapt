@@ -3,6 +3,7 @@ package gapt.proofs.expansion
 import gapt.cutintro.CutIntroduction
 import gapt.examples.{ LinearExampleProof, Pi2Pigeonhole }
 import gapt.expr._
+import gapt.expr.subst.Substitution
 import gapt.formats.ClasspathInputFile
 import gapt.formats.llk.LLKProofParser
 import gapt.proofs.context.Context

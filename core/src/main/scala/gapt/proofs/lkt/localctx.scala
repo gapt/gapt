@@ -2,6 +2,7 @@ package gapt.proofs.lkt
 
 import gapt.expr._
 import gapt.expr.hol.instantiate
+import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.proofs.{ HOLSequent, Sequent }
@@ -17,7 +18,7 @@ object BinConn {
 }
 
 case class LocalCtx( hyps: Map[Hyp, Formula], subst: Substitution ) extends ALCtx[LocalCtx] {
-  import ExprSubstWithβ._
+  import gapt.expr.subst.ExprSubstWithβ._
 
   def toSequent: HOLSequent = Sequent { for ( ( h, f ) <- hyps ) yield f -> h.polarity }
 

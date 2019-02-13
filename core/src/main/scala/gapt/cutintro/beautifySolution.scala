@@ -2,6 +2,7 @@ package gapt.cutintro
 
 import gapt.expr._
 import gapt.expr.hol.{ CNFn, CNFp, instantiate, simplify }
+import gapt.expr.subst.FOLSubstitution
 import gapt.expr.util.clauseSubsumption
 import gapt.expr.util.syntacticMatching
 import gapt.proofs.{ Ant, FOLClause, SequentIndex, Suc }

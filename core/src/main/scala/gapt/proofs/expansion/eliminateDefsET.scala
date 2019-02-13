@@ -1,6 +1,7 @@
 package gapt.proofs.expansion
 import gapt.expr._
 import gapt.expr.hol.HOLPosition
+import gapt.expr.subst.Substitution
 import gapt.proofs.context.Context
 
 object eliminateDefsET {

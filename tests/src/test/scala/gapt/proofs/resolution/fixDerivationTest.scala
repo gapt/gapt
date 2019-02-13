@@ -1,6 +1,7 @@
 package gapt.proofs.resolution
 
 import gapt.expr._
+import gapt.expr.subst.Substitution
 import gapt.expr.util.clauseSubsumption
 import gapt.proofs._
 import gapt.provers.escargot.{ Escargot, NonSplittingEscargot }

@@ -7,6 +7,8 @@ import gapt.proofs.{ FOLClause, HOLClause, HOLSequent, RichFOLSequent, Sequent }
 import gapt.provers.Prover
 import gapt.provers.Session._
 import cats.implicits._
+import gapt.expr.subst.FOLSubstitution
+import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 

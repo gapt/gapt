@@ -2,6 +2,7 @@ package gapt.formats.tptp.statistics
 
 import ammonite.ops.{ Path, exists }
 import gapt.expr._
+import gapt.expr.subst.Substitution
 import gapt.expr.util.expressionDepth
 import gapt.expr.util.expressionSize
 import gapt.formats.csv.{ CSVFile, CSVRow }

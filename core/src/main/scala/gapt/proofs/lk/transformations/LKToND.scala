@@ -1,6 +1,7 @@
 package gapt.proofs.lk.transformations
 
 import gapt.expr._
+import gapt.expr.subst.Substitution
 import gapt.proofs.Ant
 import gapt.proofs.ProofBuilder
 import gapt.proofs.SequentIndex

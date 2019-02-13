@@ -2,9 +2,9 @@ package gapt.proofs.lk.transformations
 
 import gapt.expr.All
 import gapt.expr.Ex
-import gapt.expr.Substitution
 import gapt.expr.Var
 import gapt.expr.hol.instantiate
+import gapt.expr.subst.Substitution
 import gapt.expr.util.rename
 import gapt.proofs.Ant
 import gapt.proofs.Sequent

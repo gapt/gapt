@@ -1,5 +1,8 @@
 package gapt
 
+import gapt.expr.subst.FOLSubstitution
+import gapt.expr.subst.Substitutable
+import gapt.expr.subst.Substitution
 import gapt.expr.util.ExpressionParseHelper
 import gapt.formats.babel.BabelSignature
 import gapt.utils.NameGenerator

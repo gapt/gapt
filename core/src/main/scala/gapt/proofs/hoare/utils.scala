@@ -1,6 +1,7 @@
 package gapt.proofs.hoare
 
 import gapt.expr._
+import gapt.expr.subst.FOLSubstitution
 import gapt.expr.util.freeVariables
 
 object usedVariables {

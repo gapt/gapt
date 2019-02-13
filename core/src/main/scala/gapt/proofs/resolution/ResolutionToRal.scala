@@ -3,6 +3,7 @@ package gapt.proofs.resolution
 import gapt.expr._
 import gapt.expr.fol.undoHol2Fol.Signature
 import gapt.expr.fol.{ replaceAbstractions, undoHol2Fol }
+import gapt.expr.subst.Substitution
 import gapt.expr.util.toVNF
 import gapt.proofs.{ Ant, Suc }
 

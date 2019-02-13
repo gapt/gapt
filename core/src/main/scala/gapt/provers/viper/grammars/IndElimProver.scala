@@ -2,6 +2,7 @@ package gapt.provers.viper.grammars
 
 import gapt.expr._
 import gapt.expr.hol.containsStrongQuantifier
+import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.syntacticMatching
 import gapt.proofs.context.Context

@@ -12,6 +12,8 @@ import gapt.provers.prover9.Prover9
 import gapt.provers.viper.aip.AnalyticInductionProver
 import gapt.provers.viper.aip.axioms._
 import cats.syntax.all._
+import gapt.expr.subst.PreSubstitution
+import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.expr.util.syntacticMatching

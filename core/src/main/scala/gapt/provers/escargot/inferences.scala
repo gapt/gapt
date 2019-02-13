@@ -2,6 +2,7 @@ package gapt.provers.escargot.impl
 
 import gapt.expr._
 import gapt.expr.hol.universalClosure
+import gapt.expr.subst.Substitution
 import gapt.expr.util.LambdaPosition
 import gapt.expr.util.clauseSubsumption
 import gapt.expr.util.constants

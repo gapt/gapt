@@ -3,6 +3,8 @@ package gapt.proofs.resolution
 import gapt.examples.{ BussTautology, CountingEquivalence }
 import gapt.expr._
 import gapt.expr.fol.{ naive, thresholds }
+import gapt.expr.subst.FOLSubstitution
+import gapt.expr.subst.Substitution
 import gapt.proofs.lk._
 import gapt.proofs._
 import gapt.proofs.lk.rules.LogicalAxiom

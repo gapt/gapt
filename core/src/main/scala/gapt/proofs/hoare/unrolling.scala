@@ -2,6 +2,7 @@ package gapt.proofs.hoare
 
 import gapt.expr._
 import gapt.expr.fol.Utils.numeral
+import gapt.expr.subst.FOLSubstitution
 import gapt.proofs.HOLSequent
 
 object unrollLoop {

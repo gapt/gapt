@@ -13,9 +13,9 @@ import gapt.expr.Imp
 import gapt.expr.Neg
 import gapt.expr.Or
 import gapt.expr.Polarity
-import gapt.expr.Substitution
 import gapt.expr.Top
 import gapt.expr.containedNames
+import gapt.expr.subst.Substitution
 import gapt.expr.util.constants
 import gapt.expr.util.rename
 import gapt.proofs.HOLSequent

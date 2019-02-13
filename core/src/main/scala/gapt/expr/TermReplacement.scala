@@ -1,6 +1,7 @@
 
 package gapt.expr
 
+import gapt.expr.subst.Substitution
 import gapt.expr.util.constants
 import gapt.expr.util.rename
 import gapt.expr.util.variables

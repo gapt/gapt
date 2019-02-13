@@ -1,5 +1,6 @@
 package gapt.expr
 
+import gapt.expr.subst.Substitution
 import gapt.proofs.resolution._
 import gapt.proofs.{ Ant, Clause, Suc }
 import org.specs2.mutable._

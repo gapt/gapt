@@ -6,6 +6,7 @@ import gapt.expr._
 import gapt.expr.hol.instantiate
 import gapt.expr.hol.simplify
 import gapt.expr.hol.universalClosure
+import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.syntacticMatching
 import gapt.expr.util.typeVariables

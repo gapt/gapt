@@ -1,6 +1,7 @@
 package gapt.proofs.lkt
 
 import gapt.expr._
+import gapt.expr.subst.Substitution
 import gapt.proofs.Sequent
 import gapt.proofs.lk
 import gapt.proofs.lk.rules

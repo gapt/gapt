@@ -1,6 +1,7 @@
 package gapt.proofs.lkt
 
 import gapt.expr._
+import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.formats.babel.{ BabelExporter, BabelSignature }
@@ -338,7 +339,7 @@ object AllRBlock {
 }
 
 trait ImplicitInstances {
-  import ExprSubstWithβ._
+  import gapt.expr.subst.ExprSubstWithβ._
 
   implicit val closedUnderSubstitutionBound1: ClosedUnderSub[Bound1] =
     ( sub: Substitution, bnd: Bound1 ) => bnd.copy( p = sub( bnd.p ) )

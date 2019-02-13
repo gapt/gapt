@@ -2,6 +2,7 @@ package gapt.proofs.reduction
 
 import gapt.expr._
 import gapt.expr.hol._
+import gapt.expr.subst.Substitution
 import gapt.expr.util.constants
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename

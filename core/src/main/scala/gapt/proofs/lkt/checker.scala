@@ -2,6 +2,7 @@ package gapt.proofs.lkt
 
 import gapt.expr.Polarity._
 import gapt.expr._
+import gapt.expr.subst.Substitution
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.{ Checkable, Sequent }

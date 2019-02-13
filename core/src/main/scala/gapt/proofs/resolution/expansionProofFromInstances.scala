@@ -1,6 +1,7 @@
 package gapt.proofs.resolution
 
 import gapt.expr._
+import gapt.expr.subst.Substitution
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext

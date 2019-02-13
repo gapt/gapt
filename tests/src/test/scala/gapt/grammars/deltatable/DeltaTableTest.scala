@@ -1,6 +1,7 @@
 package gapt.grammars.deltatable
 
-import gapt.expr.{ FOLFunctionConst, Substitution, FOLConst, FOLVar }
+import gapt.expr.subst.Substitution
+import gapt.expr.{ FOLConst, FOLFunctionConst, FOLVar }
 import gapt.grammars.deltaTableAlgorithm
 import org.specs2.mutable.Specification
 

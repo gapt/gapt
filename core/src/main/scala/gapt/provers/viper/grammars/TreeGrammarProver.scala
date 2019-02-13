@@ -3,6 +3,7 @@ package gapt.provers.viper.grammars
 import gapt.expr._
 import gapt.expr.fol.{ folSubTerms, folTermSize }
 import gapt.expr.hol._
+import gapt.expr.subst.Substitution
 import gapt.expr.util.expressionSize
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename

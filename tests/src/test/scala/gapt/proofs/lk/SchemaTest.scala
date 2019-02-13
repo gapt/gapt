@@ -5,6 +5,7 @@ import gapt.examples._
 import gapt.proofs.ceres._
 import gapt.expr.fol.natMaker
 import gapt.expr.hol.CNFp
+import gapt.expr.subst.Substitution
 import gapt.expr.util.clauseSubsumption
 import gapt.expr.util.freeVariables
 import gapt.proofs.context.Context._

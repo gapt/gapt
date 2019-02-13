@@ -1,5 +1,6 @@
 package gapt.expr
 
+import gapt.expr.subst.FOLSubstitution
 import gapt.expr.util.syntacticMGU
 import org.specs2.mutable._
 
