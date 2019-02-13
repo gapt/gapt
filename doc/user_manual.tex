@@ -2442,7 +2442,7 @@ we use this function for lists of numbers, we would use the instance
 In GAPT, a sequent is a pair of lists, more precisely of Scala \cli{Vector}s.
 The rules of LK are listed below. Proof trees are constructed top-down,
 starting with axioms and with each rule introducing new inferences. With the
-exception of the definition rules, Skolem rules, proof links, and induction rules, the
+exception of the conversion rules, Skolem rules, proof links, and induction rules, the
 constructors of the rules only allow inferences that are actually valid. Note
 that the rules are presented here as if they always act on the outermost
 formulas in the upper sequent, but this is only for convenience of
@@ -2672,18 +2672,18 @@ The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$.
 
 \end{multicols}
 
-\subsubsection*{Definition rules}
+\subsubsection*{Conversion rules}
 \begin{center}
  \AxiomCm{A, \Gamma \seq \Delta}
- \RightLabelm{(\mt{def:l})}
+ \RightLabelm{(\mt{conv:l})}
  \UnaryInfCm{B, \Gamma \seq \Delta}
  \DisplayProof
  \AxiomCm{\Gamma \seq \Delta, A}
- \RightLabelm{(\mt{def:r})}
+ \RightLabelm{(\mt{conv:r})}
  \UnaryInfCm{\Gamma \seq \Delta, B}
  \DisplayProof
 \end{center}
-These definition rules are extremely liberal, as they allow the replacement of
+These conversion rules are extremely liberal, as they allow the replacement of
 any formula by any other formula.  When checking these rule against a context,
 we verify that both $A$ and $B$ normalize to the same normal form.
 
