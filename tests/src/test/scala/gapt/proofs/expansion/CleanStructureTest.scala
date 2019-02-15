@@ -1,7 +1,15 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
-import gapt.expr.hol.universalClosure
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.FOLTerm
+import gapt.expr.formula.FOLVar
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Or
+import gapt.expr.formula.hol.universalClosure
 import org.specs2.mutable._
 
 class CleanStructureTest extends Specification {

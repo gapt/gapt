@@ -6,6 +6,9 @@ import gapt.proofs.loadExpansionProof
 
 import scala.App
 import ammonite.ops._
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.FOLFunction
+import gapt.expr.formula.FOLTerm
 import gapt.expr.ty.Ti
 import gapt.expr.util.constants
 import gapt.expr.util.freeVariables

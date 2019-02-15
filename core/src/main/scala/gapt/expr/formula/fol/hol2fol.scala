@@ -1,7 +1,29 @@
-package gapt.expr.fol
+package gapt.expr.formula.fol
 
 import gapt.expr._
-import gapt.expr.hol._
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.AndC
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Ex
+import gapt.expr.formula.ExistsC
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.FOLExpression
+import gapt.expr.formula.FOLFormula
+import gapt.expr.formula.FOLFunction
+import gapt.expr.formula.FOLTerm
+import gapt.expr.formula.FOLVar
+import gapt.expr.formula.ForallC
+import gapt.expr.formula.Formula
+import gapt.expr.formula.HOLFunction
+import gapt.expr.formula.Imp
+import gapt.expr.formula.ImpC
+import gapt.expr.formula.Neg
+import gapt.expr.formula.NegC
+import gapt.expr.formula.Or
+import gapt.expr.formula.OrC
+import gapt.expr.formula.hol._
 import gapt.expr.subst.FOLSubstitution
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.FunctionType
@@ -319,7 +341,7 @@ object undoReplaceAbstractions extends undoReplaceAbstractions
  * Replaces the constants introduced by [[replaceAbstractions]] with the original lambda-abstractions.
  */
 class undoReplaceAbstractions {
-  import gapt.expr.fol.replaceAbstractions.ConstantsMap
+  import gapt.expr.formula.fol.replaceAbstractions.ConstantsMap
 
   def apply( fs: HOLSequent, map: ConstantsMap ): HOLSequent = HOLSequent(
     fs.antecedent.map( apply( _, map ) ),

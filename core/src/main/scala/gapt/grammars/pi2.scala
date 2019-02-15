@@ -1,7 +1,10 @@
 package gapt.grammars
 import gapt.expr._
-import gapt.expr.fol.{ folSubTerms, thresholds }
-import gapt.expr.hol.{ lcomp, simplify, toNNF }
+import gapt.expr.formula.And
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Or
+import gapt.expr.formula.fol.{ folSubTerms, thresholds }
+import gapt.expr.formula.hol.{ lcomp, simplify, toNNF }
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename

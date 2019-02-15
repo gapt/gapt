@@ -4,6 +4,7 @@ import gapt.expr._
 import gapt.proofs.hoare._
 import org.specs2.mutable._
 import ProgramParser._
+import gapt.expr.formula.FOLAtom
 
 class ProgramParserTest extends Specification {
   "ProgramParser" should {

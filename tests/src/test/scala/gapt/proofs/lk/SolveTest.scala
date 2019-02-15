@@ -3,7 +3,9 @@ package gapt.proofs.lk
 import gapt.examples
 import gapt.examples.{ BussTautology, primediv }
 import gapt.expr._
-import gapt.expr.hol.existentialClosure
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Top
+import gapt.expr.formula.hol.existentialClosure
 import gapt.proofs.expansion._
 import gapt.proofs.lk.rules.BottomAxiom
 import gapt.proofs.lk.rules.TopAxiom

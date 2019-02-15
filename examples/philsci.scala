@@ -1,6 +1,6 @@
 package gapt.examples
 
-import gapt.expr.FOLAtom
+import gapt.expr.formula.FOLAtom
 import gapt.proofs.{ Ant, Suc }
 import gapt.proofs.ceres.Projections
 import gapt.proofs.lk._

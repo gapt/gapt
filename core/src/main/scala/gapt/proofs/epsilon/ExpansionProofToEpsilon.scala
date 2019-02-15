@@ -1,7 +1,11 @@
 package gapt.proofs.epsilon
 
 import gapt.expr._
-import gapt.expr.hol.{ SkolemFunctions, instantiate }
+import gapt.expr.formula.All
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Quant
+import gapt.expr.formula.hol.{ SkolemFunctions, instantiate }
 import gapt.expr.util.rename
 import gapt.proofs.context.Context
 import gapt.proofs.expansion._

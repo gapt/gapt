@@ -1,6 +1,7 @@
 package gapt.grammars
 
 import gapt.expr._
+import gapt.expr.formula.And
 import gapt.expr.ty.TBase
 import gapt.expr.ty.Ti
 import gapt.grammars.InductionGrammar.Production

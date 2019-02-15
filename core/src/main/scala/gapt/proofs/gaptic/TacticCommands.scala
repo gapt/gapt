@@ -1,6 +1,10 @@
 package gapt.proofs.gaptic
 
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
 import gapt.expr.subst.PreSubstitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.syntacticMatching

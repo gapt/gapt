@@ -5,6 +5,7 @@ import gapt.formats.lisp.{ LFun, LList, LSymbol, SExpression }
 import org.specs2.mutable._
 import gapt.provers.Session._
 import cats.implicits._
+import gapt.expr.formula.Atom
 import gapt.expr.ty.TBase
 import gapt.expr.ty.To
 import gapt.utils.EitherHelpers._

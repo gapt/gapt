@@ -2,8 +2,13 @@ package gapt.provers.sat
 
 import gapt.examples.PigeonHolePrinciple
 import gapt.expr._
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.FOLFormula
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
 import gapt.models.PropositionalModel
-import gapt.proofs.{ HOLSequent, HOLClause }
+import gapt.proofs.{ HOLClause, HOLSequent }
 
 object SATProblems {
   val c = FOLConst( "c" )

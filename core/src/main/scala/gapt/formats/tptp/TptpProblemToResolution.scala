@@ -1,6 +1,6 @@
 package gapt.formats.tptp
 
-import gapt.expr.hol.CNFp
+import gapt.expr.formula.hol.CNFp
 import gapt.proofs.Sequent
 import gapt.proofs.resolution.{ Input, ResolutionProof }
 

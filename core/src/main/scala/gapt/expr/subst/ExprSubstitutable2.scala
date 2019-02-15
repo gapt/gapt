@@ -1,7 +1,7 @@
 package gapt.expr.subst
 
 import gapt.expr.ClosedUnderSub
-import gapt.expr.Formula
+import gapt.expr.formula.Formula
 
 trait ExprSubstitutable2 extends ExprSubstitutable1 {
   implicit val FormulaClosedUnderSub: ClosedUnderSub[Formula] =

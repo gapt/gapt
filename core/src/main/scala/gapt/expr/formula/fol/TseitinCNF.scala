@@ -1,8 +1,19 @@
-package gapt.expr.fol
+package gapt.expr.formula.fol
 
 import gapt.expr._
-import gapt.expr.hol.{ toNNF, simplify }
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Ex
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.FOLFormula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.Top
+import gapt.expr.formula.hol.{ simplify, toNNF }
 import gapt.proofs.FOLClause
+
 import scala.annotation.tailrec
 import scala.collection.mutable
 

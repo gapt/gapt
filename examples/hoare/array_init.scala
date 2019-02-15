@@ -1,7 +1,8 @@
 package gapt.examples.hoare
 
 import gapt.examples.Script
-import gapt.expr.{ FOLAtom, Neg }
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.Neg
 import gapt.formats.hoare.ProgramParser
 import gapt.proofs.expansion.extractInstances
 import gapt.proofs.hoare.{ ForLoop, SimpleLoopProblem }

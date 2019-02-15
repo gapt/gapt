@@ -1,6 +1,12 @@
 package gapt.proofs.lkt
 
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Or
 import gapt.expr.subst.Substitution
 import gapt.proofs.Sequent
 import gapt.proofs.lk

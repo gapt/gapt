@@ -1,6 +1,11 @@
 package gapt.proofs.lk
 
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Ex
+import gapt.expr.formula.HOLFunction
+import gapt.expr.formula.Imp
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
 import gapt.proofs.lk.rules.ExistsLeftRule

@@ -1,6 +1,12 @@
 package gapt.examples.nd
 import gapt.examples.Script
 import gapt.expr._
+import gapt.expr.formula.Eq
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.FOLFunction
+import gapt.expr.formula.FOLFunctionConst
+import gapt.expr.formula.FOLVar
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.update.InductiveType

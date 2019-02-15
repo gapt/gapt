@@ -1,6 +1,11 @@
 package gapt.examples
 
 import gapt.expr._
+import gapt.expr.formula.Eq
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.FOLFunction
+import gapt.expr.formula.FOLTerm
+import gapt.expr.formula.FOLVar
 import gapt.proofs.Sequent
 import gapt.proofs.lk.rules.ContractionLeftRule
 import gapt.proofs.lk.rules.CutRule

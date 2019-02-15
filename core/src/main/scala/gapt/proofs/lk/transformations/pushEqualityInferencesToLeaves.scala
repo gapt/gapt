@@ -1,12 +1,12 @@
 package gapt.proofs.lk.transformations
 
 import gapt.expr.Abs
-import gapt.expr.All
-import gapt.expr.And
-import gapt.expr.Ex
-import gapt.expr.Imp
-import gapt.expr.Neg
-import gapt.expr.Or
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename

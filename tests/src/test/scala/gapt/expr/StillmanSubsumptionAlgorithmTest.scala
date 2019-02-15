@@ -5,6 +5,12 @@
 
 package gapt.expr
 
+import gapt.expr.formula.Atom
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.FOLFunction
+import gapt.expr.formula.FOLVar
+import gapt.expr.formula.HOLFunction
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
 import gapt.expr.util.clauseSubsumption
@@ -33,9 +39,9 @@ class StillmanSubsumptionAlgorithmFOLTest extends Specification {
     val Pfba = FOLAtom( P, fba :: Nil )
     val Pxx = FOLAtom( P, x :: x :: Nil )
     val Pxa = FOLAtom( P, x :: a :: Nil )
-    val Paa = FOLAtom( P, a :: a :: Nil )
+    val Paa = formula.FOLAtom( P, a :: a :: Nil )
     val Pxb = FOLAtom( P, x :: b :: Nil )
-    val Pab = FOLAtom( P, a :: b :: Nil )
+    val Pab = formula.FOLAtom( P, a :: b :: Nil )
     val Pba = FOLAtom( P, b :: a :: Nil )
     val fx = FOLFunction( f, x :: Nil )
     val fa = FOLFunction( f, a :: Nil )
@@ -43,7 +49,7 @@ class StillmanSubsumptionAlgorithmFOLTest extends Specification {
     val Pfx = FOLAtom( P, fx :: Nil )
     val Pfa = FOLAtom( P, fa :: Nil )
     val Pfb = FOLAtom( P, fb :: Nil )
-    val Qxy = FOLAtom( Q, x :: y :: Nil )
+    val Qxy = formula.FOLAtom( Q, x :: y :: Nil )
     val Qay = FOLAtom( Q, a :: y :: Nil )
     val Rx = FOLAtom( R, x :: Nil )
 

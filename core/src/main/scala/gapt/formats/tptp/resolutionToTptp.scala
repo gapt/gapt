@@ -1,7 +1,13 @@
 package gapt.formats.tptp
 
 import gapt.expr._
-import gapt.expr.hol.{ instantiate, universalClosure }
+import gapt.expr.formula.All
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Ex
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.Formula
+import gapt.expr.formula.HOLAtomConst
+import gapt.expr.formula.hol.{ instantiate, universalClosure }
 import gapt.expr.ty.FunctionType
 import gapt.proofs.context.Context
 import gapt.proofs.resolution._

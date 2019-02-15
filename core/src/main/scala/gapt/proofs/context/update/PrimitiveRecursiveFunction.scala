@@ -7,7 +7,7 @@ import gapt.expr.Const
 import gapt.expr.Expr
 import gapt.expr.ReductionRule
 import gapt.expr.Var
-import gapt.expr.fol.folSubTerms
+import gapt.expr.formula.fol.folSubTerms
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.ty.TVar

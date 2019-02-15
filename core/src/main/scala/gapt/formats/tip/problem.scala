@@ -1,7 +1,8 @@
 package gapt.formats.tip
 
 import gapt.expr._
-import gapt.expr.hol.{ existentialClosure, universalClosure }
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol.{ existentialClosure, universalClosure }
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.ty.To

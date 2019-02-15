@@ -2,6 +2,11 @@ package gapt.proofs.lk
 
 import gapt.examples.{ Pi2Pigeonhole, lattice, tape }
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Ex
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.FOLVar
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
 import gapt.formats.ClasspathInputFile

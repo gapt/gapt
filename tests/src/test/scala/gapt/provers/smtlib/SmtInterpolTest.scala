@@ -6,6 +6,11 @@ package gapt.provers.smtlib
 
 import gapt.examples.BussTautology
 import gapt.expr._
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.Top
 import gapt.proofs.HOLSequent
 import org.specs2.mutable._
 

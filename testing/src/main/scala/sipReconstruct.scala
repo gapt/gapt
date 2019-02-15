@@ -3,6 +3,7 @@ import cats.{ Eval, Later }
 import gapt.examples.Script
 import gapt.examples.theories._
 import gapt.expr._
+import gapt.expr.formula.All
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.TBase
 import gapt.expr.util.typeVariables

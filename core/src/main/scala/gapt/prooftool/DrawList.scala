@@ -5,6 +5,7 @@ import Font._
 
 import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.expr._
+import gapt.expr.formula.Formula
 import gapt.formats.latex.LatexExporter
 
 import scala.swing.{ Component, FlowPanel, GridPanel, Label }

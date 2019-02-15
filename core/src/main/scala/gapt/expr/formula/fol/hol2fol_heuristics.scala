@@ -1,6 +1,15 @@
-package gapt.expr.fol
+package gapt.expr.formula.fol
 
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.HOLFunction
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
 import gapt.expr.ty.Ti
 import gapt.expr.util.freeVariables
 import gapt.expr.ty.To
@@ -10,7 +19,7 @@ import gapt.utils.Logger
 
 /**
  * This is implements some heuristics to convert a fol formula obtained by
- * [[gapt.expr.fol.replaceAbstractions]] and [[gapt.expr.fol.reduceHolToFol]] back to its original signature.
+ * [[gapt.expr.formula.fol.replaceAbstractions]] and [[gapt.expr.formula.fol.reduceHolToFol]] back to its original signature.
  * Sometimes, types have to be guessed and the code is poorly tested, so it is unclear
  * how general it is. It works (and is necessary) during the acnf creation of the n-tape proof.
  *

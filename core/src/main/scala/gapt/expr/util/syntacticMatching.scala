@@ -4,10 +4,10 @@ import gapt.expr.Abs
 import gapt.expr.App
 import gapt.expr.Const
 import gapt.expr.Expr
-import gapt.expr.FOLExpression
-import gapt.expr.FOLTerm
-import gapt.expr.FOLVar
 import gapt.expr.Var
+import gapt.expr.formula.FOLExpression
+import gapt.expr.formula.FOLTerm
+import gapt.expr.formula.FOLVar
 import gapt.expr.subst.FOLSubstitution
 import gapt.expr.subst.PreSubstitution
 import gapt.expr.subst.Substitution

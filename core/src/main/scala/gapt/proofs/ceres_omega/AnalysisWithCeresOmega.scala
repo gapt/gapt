@@ -1,10 +1,12 @@
 package gapt.proofs.ceres_omega
 
 import gapt.expr._
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.Formula
 import gapt.formats.tptp.TptpHOLExporter
 import gapt.proofs.expansion._
 import gapt.proofs.lk._
-import gapt.expr.fol.{ reduceHolToFol, replaceAbstractions, undoHol2Fol }
+import gapt.expr.formula.fol.{ reduceHolToFol, replaceAbstractions, undoHol2Fol }
 import gapt.formats.llk.ExtendedProofDatabase
 import gapt.proofs.ceres._
 import gapt.proofs.lk.transformations.LKToExpansionProof

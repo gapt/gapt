@@ -1,7 +1,9 @@
 package gapt.provers.viper.grammars
 
 import gapt.expr._
-import gapt.expr.hol.{ containsQuantifierOnLogicalLevel, universalClosure }
+import gapt.expr.formula.All
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol.{ containsQuantifierOnLogicalLevel, universalClosure }
 import gapt.expr.subst.Substitution
 import gapt.expr.util.rename
 import gapt.proofs._

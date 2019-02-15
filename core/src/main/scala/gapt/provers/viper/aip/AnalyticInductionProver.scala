@@ -1,8 +1,8 @@
 package gapt.provers.viper.aip
 
 import cats.syntax.all._
-import gapt.expr.Formula
 import gapt.expr.Var
+import gapt.expr.formula.Formula
 import gapt.formats.tip.TipProblem
 import gapt.proofs.gaptic.{ escargot => escargotTactic }
 import gapt.proofs.gaptic._

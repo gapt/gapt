@@ -1,5 +1,6 @@
 package gapt.cutintro
 import gapt.expr._
+import gapt.expr.formula.Formula
 
 /**
  * Computes the unified literals, i.e. the set of literals that are used to contruct the cut formula

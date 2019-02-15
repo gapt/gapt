@@ -1,11 +1,23 @@
 package gapt.formats.leancop
 
 import gapt.expr._
-import gapt.expr.fol._
-import gapt.expr.hol._
+import gapt.expr.formula.fol._
+import gapt.expr.formula.hol._
 import gapt.proofs.expansion.{ ExpansionSequent, ExpansionTree, formulaToExpansionTree }
 import java.io.{ FileReader, Reader, StringReader }
 
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Ex
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.FOLFormula
+import gapt.expr.formula.FOLFunction
+import gapt.expr.formula.FOLTerm
+import gapt.expr.formula.FOLVar
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
 import gapt.expr.subst.FOLSubstitution
 import gapt.expr.util.clauseSubsumption
 import gapt.expr.util.freeVariables

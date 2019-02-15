@@ -1,6 +1,6 @@
 package gapt.proofs.lk.reductions
 
-import gapt.expr.hol.containsQuantifier
+import gapt.expr.formula.hol.containsQuantifier
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.CutRule
 

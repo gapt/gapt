@@ -1,6 +1,7 @@
 package gapt.examples
 import gapt.expr._
-import gapt.expr.hol.universalClosure
+import gapt.expr.formula.FOLFormula
+import gapt.expr.formula.hol.universalClosure
 import gapt.expr.subst.FOLSubstitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename

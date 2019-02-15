@@ -1,9 +1,9 @@
 package gapt.proofs.lk.rules
 
-import gapt.expr.All
 import gapt.expr.BetaReduction
-import gapt.expr.Formula
 import gapt.expr.Var
+import gapt.expr.formula.All
+import gapt.expr.formula.Formula
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.proofs.HOLSequent

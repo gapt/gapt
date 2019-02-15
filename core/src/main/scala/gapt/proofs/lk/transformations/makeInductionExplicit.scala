@@ -1,8 +1,8 @@
 package gapt.proofs.lk.transformations
 
 import gapt.expr.Abs
-import gapt.expr.All
-import gapt.expr.hol.inductionPrinciple
+import gapt.expr.formula.All
+import gapt.expr.formula.hol.inductionPrinciple
 import gapt.expr.ty.FunctionType
 import gapt.proofs.Ant
 import gapt.proofs.ProofBuilder

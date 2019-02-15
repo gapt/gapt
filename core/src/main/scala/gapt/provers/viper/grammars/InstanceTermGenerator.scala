@@ -1,6 +1,6 @@
 package gapt.provers.viper.grammars
 
-import gapt.expr.fol.folTermSize
+import gapt.expr.formula.fol.folTermSize
 import gapt.expr.Expr
 import cats.instances.list._
 import cats.syntax.traverse._

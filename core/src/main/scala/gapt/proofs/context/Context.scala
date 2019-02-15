@@ -1,7 +1,18 @@
 package gapt.proofs.context
 
 import gapt.expr._
-import gapt.expr.hol.SkolemFunctions
+import gapt.expr.formula.AndC
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.BottomC
+import gapt.expr.formula.EqC
+import gapt.expr.formula.ExistsC
+import gapt.expr.formula.ForallC
+import gapt.expr.formula.ImpC
+import gapt.expr.formula.NegC
+import gapt.expr.formula.OrC
+import gapt.expr.formula.Top
+import gapt.expr.formula.TopC
+import gapt.expr.formula.hol.SkolemFunctions
 import gapt.expr.ty.TBase
 import gapt.expr.ty.TVar
 import gapt.expr.ty.To

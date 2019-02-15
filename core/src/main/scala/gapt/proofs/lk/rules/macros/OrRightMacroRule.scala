@@ -1,8 +1,8 @@
 package gapt.proofs.lk.rules.macros
 
-import gapt.expr.Bottom
-import gapt.expr.Formula
-import gapt.expr.Or
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Or
 import gapt.proofs.IndexOrFormula
 import gapt.proofs.IndexOrFormula.IsFormula
 import gapt.proofs.SequentConnector

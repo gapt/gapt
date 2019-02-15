@@ -3,9 +3,11 @@
  *
  */
 
-package gapt.expr.hol
+package gapt.expr.formula.hol
 
 import gapt.expr._
+import gapt.expr.formula.Atom
+import gapt.expr.formula.HOLFunction
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To

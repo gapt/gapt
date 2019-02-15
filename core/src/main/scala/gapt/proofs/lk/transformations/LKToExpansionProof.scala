@@ -1,8 +1,8 @@
 package gapt.proofs.lk.transformations
 
-import gapt.expr.Atom
-import gapt.expr.Eq
 import gapt.expr.Polarity
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Eq
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.expansion.ETAnd

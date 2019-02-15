@@ -1,7 +1,10 @@
 package gapt.proofs.lk.util
 
 import gapt.expr._
-import gapt.expr.hol.containsQuantifier
+import gapt.expr.formula.All
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol.containsQuantifier
 import gapt.expr.ty.->:
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.To

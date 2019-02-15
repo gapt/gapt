@@ -3,8 +3,8 @@ package gapt.integration_tests
 import gapt.cutintro._
 import gapt.examples.LinearExampleProof
 import gapt.expr._
-import gapt.expr.fol.Numeral
-import gapt.expr.hol.containsQuantifier
+import gapt.expr.formula.fol.Numeral
+import gapt.expr.formula.hol.containsQuantifier
 import gapt.grammars.DeltaTableMethod
 import gapt.proofs.Sequent
 import gapt.proofs.expansion.ETWeakening

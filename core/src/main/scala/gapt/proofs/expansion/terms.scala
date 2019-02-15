@@ -1,5 +1,14 @@
 package gapt.proofs.expansion
 import gapt.expr._
+import gapt.expr.formula.And
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.Quant
+import gapt.expr.formula.Top
+import gapt.expr.formula.VarOrConst
 import gapt.expr.subst.Substitution
 import gapt.formats.babel.BabelSignature
 import gapt.utils.Doc

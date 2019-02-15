@@ -1,8 +1,11 @@
 package gapt.proofs.lk.transformations
 
 import gapt.expr._
-import gapt.expr.hol.HOLPosition
-import gapt.expr.hol.instantiate
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Quant
+import gapt.expr.formula.hol.HOLPosition
+import gapt.expr.formula.hol.instantiate
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.proofs._

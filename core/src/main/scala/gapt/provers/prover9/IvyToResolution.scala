@@ -4,6 +4,7 @@ import gapt.formats.ivy.{ IvyResolutionProof, NewSymbol, Flip => IFlip, InitialC
 import gapt.proofs.{ Ant, Clause, HOLClause, Suc }
 import gapt.proofs.resolution._
 import gapt.expr._
+import gapt.expr.formula.Eq
 import gapt.expr.subst.Substitution
 import gapt.expr.util.clauseSubsumption
 import gapt.expr.util.freeVariables

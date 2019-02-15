@@ -1,6 +1,13 @@
-package gapt.expr.hol
+package gapt.expr.formula.hol
 
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
 import gapt.expr.util
 import gapt.expr.util
 import gapt.expr.util.LambdaPosition

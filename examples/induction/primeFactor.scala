@@ -1,6 +1,7 @@
 package gapt.examples.induction
 
 import gapt.expr._
+import gapt.expr.formula.FOLTerm
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
 import gapt.formats.babel.Notation

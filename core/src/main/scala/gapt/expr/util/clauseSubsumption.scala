@@ -1,7 +1,7 @@
 package gapt.expr.util
 
-import gapt.expr.Eq
 import gapt.expr.Expr
+import gapt.expr.formula.Eq
 import gapt.expr.subst.PreSubstitution
 import gapt.expr.subst.Substitution
 import gapt.proofs.Sequent

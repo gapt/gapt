@@ -1,6 +1,7 @@
 package gapt.proofs.resolution
 
-import gapt.expr.{ Formula, Polarity }
+import gapt.expr.Polarity
+import gapt.expr.formula.Formula
 import gapt.proofs.SequentIndex
 
 import scala.collection.mutable

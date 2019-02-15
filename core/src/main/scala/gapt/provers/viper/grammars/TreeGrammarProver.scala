@@ -1,8 +1,11 @@
 package gapt.provers.viper.grammars
 
 import gapt.expr._
-import gapt.expr.fol.{ folSubTerms, folTermSize }
-import gapt.expr.hol._
+import gapt.expr.formula.All
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.fol.{ folSubTerms, folTermSize }
+import gapt.expr.formula.hol._
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.TBase
 import gapt.expr.ty.To

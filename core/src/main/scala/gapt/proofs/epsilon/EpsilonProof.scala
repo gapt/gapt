@@ -1,7 +1,17 @@
 package gapt.proofs.epsilon
 
-import gapt.expr.hol.instantiate
+import gapt.expr.formula.hol.instantiate
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.Top
 import gapt.expr.subst.Substitution
 import gapt.proofs.HOLSequent
 

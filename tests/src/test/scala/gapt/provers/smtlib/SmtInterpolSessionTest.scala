@@ -6,6 +6,7 @@ import gapt.provers.Session._
 import gapt.formats.lisp.{ LFun, LList, LSymbol }
 import org.specs2.mutable._
 import cats.implicits._
+import gapt.expr.formula.Atom
 import gapt.expr.ty.TBase
 import gapt.expr.ty.To
 import gapt.proofs.context.Context

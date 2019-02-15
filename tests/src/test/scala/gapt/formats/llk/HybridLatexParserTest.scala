@@ -2,6 +2,9 @@ package gapt.formats.llk
 
 import gapt.formats.llk.ast.LambdaAST
 import gapt.expr._
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
+import gapt.expr.formula.HOLFunction
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To

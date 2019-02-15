@@ -1,6 +1,10 @@
 package gapt.provers.viper.grammars
 
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.To
 import gapt.expr.util.freeVariables

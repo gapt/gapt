@@ -1,5 +1,7 @@
-package gapt.expr
+package gapt.expr.formula
 
+import gapt.expr.Const
+import gapt.expr.Expr
 import gapt.expr.ty.->:
 import gapt.expr.ty.To
 import gapt.expr.ty.Ty

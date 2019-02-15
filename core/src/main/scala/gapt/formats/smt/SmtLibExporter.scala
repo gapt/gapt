@@ -5,6 +5,12 @@ import gapt.proofs.HOLSequent
 import gapt.provers.Session.Runners._
 import gapt.provers.Session._
 import cats.implicits._
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.PropAtom
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase

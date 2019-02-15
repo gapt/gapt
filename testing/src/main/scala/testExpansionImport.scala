@@ -1,6 +1,6 @@
 package gapt.testing
 import ammonite.ops.FilePath
-import gapt.expr.hol.lcomp
+import gapt.expr.formula.hol.lcomp
 import gapt.expr.Const
 import gapt.expr.util.expressionSize
 import gapt.formats.tptp.TptpImporter

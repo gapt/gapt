@@ -1,7 +1,8 @@
 package gapt.proofs.resolution
 
 import gapt.expr.util.LambdaPosition
-import gapt.expr.{ Atom, Eq }
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Eq
 import gapt.proofs.{ FOLClause, HOLClause }
 
 object forgetfulPropResolve {

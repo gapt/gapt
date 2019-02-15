@@ -1,8 +1,9 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
-import gapt.expr.fol.Numeral
-import gapt.expr.hol.containsQuantifierOnLogicalLevel
+import gapt.expr.formula.Formula
+import gapt.expr.formula.fol.Numeral
+import gapt.expr.formula.hol.containsQuantifierOnLogicalLevel
 import gapt.proofs.lk.util.isMaeharaMG3i
 import gapt.proofs.{ Sequent, SequentMatchers }
 import gapt.provers.escargot.Escargot

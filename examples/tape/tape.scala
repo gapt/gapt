@@ -1,6 +1,7 @@
 package gapt.examples
 
 import gapt.expr._
+import gapt.expr.formula.FOLVar
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context

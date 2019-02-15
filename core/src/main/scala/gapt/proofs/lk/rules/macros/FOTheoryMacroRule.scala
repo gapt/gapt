@@ -1,9 +1,9 @@
 package gapt.proofs.lk.rules.macros
 
-import gapt.expr.Atom
 import gapt.expr.Const
 import gapt.expr.TermReplacement
 import gapt.expr.containedNames
+import gapt.expr.formula.Atom
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename

@@ -1,7 +1,10 @@
 package gapt.proofs.lkt
 
 import gapt.expr._
-import gapt.expr.hol.{ containsQuantifierOnLogicalLevel, instantiate, isAtom }
+import gapt.expr.formula.And
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Neg
+import gapt.expr.formula.hol.{ containsQuantifierOnLogicalLevel, instantiate, isAtom }
 import gapt.expr.subst.Substitution
 import gapt.expr.util.rename
 import gapt.proofs.context.Context

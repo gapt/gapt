@@ -1,7 +1,9 @@
 package gapt.proofs.resolution
 
 import gapt.expr._
-import gapt.expr.hol.CNFn
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.hol.CNFn
 import gapt.expr.subst.Substitution
 import gapt.expr.util.clauseSubsumption
 import gapt.expr.util.constants

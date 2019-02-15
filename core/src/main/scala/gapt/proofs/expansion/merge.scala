@@ -1,6 +1,7 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
+import gapt.expr.formula.Formula
 import gapt.expr.subst.Substitution
 import gapt.proofs.Sequent
 

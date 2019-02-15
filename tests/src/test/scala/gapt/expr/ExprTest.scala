@@ -1,5 +1,24 @@
 package gapt.expr
 
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.AndC
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Ex
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.FOLFormula
+import gapt.expr.formula.FOLFormulaWithBoundVar
+import gapt.expr.formula.FOLFunction
+import gapt.expr.formula.FOLHeadType
+import gapt.expr.formula.FOLPartialAtom
+import gapt.expr.formula.FOLPartialFormula
+import gapt.expr.formula.FOLTerm
+import gapt.expr.formula.FOLVar
+import gapt.expr.formula.ForallC
+import gapt.expr.formula.LogicalConstant
+import gapt.expr.formula.Top
+import gapt.expr.formula.TopC
 import gapt.expr.ty.->:
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To

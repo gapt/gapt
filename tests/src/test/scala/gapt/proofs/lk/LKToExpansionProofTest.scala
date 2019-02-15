@@ -2,6 +2,12 @@ package gapt.proofs.lk
 
 import gapt.examples.{ LinearExampleProof, Pi2Pigeonhole, lattice }
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Ex
+import gapt.expr.formula.FOLAtomConst
+import gapt.expr.formula.FOLVar
+import gapt.expr.formula.Top
 import gapt.expr.ty.TBase
 import gapt.proofs.context.Context
 import gapt.proofs.{ Ant, ProofBuilder, Sequent, SequentMatchers, Suc }

@@ -1,8 +1,14 @@
-package gapt.expr
+package gapt.expr.formula
 
-import gapt.expr.fol.FOLPosition._
-import gapt.expr.fol.FOLPosition
-import gapt.expr.hol.HOLPosition
+import gapt.expr.Abs
+import gapt.expr.App
+import gapt.expr.Apps
+import gapt.expr.Const
+import gapt.expr.Expr
+import gapt.expr.Var
+import gapt.expr.formula.fol.FOLPosition
+import gapt.expr.formula.fol.FOLPosition._
+import gapt.expr.formula.hol.HOLPosition
 import gapt.expr.ty.->:
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.Ti

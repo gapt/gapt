@@ -2,7 +2,7 @@ package gapt.proofs.resolution
 
 import gapt.expr._
 import gapt.examples.{ BussTautology, CountingEquivalence }
-import gapt.expr.fol.{ naive, thresholds }
+import gapt.expr.formula.fol.{ naive, thresholds }
 import gapt.provers.escargot.Escargot
 import org.specs2.mutable.Specification
 

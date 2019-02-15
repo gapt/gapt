@@ -4,11 +4,11 @@ import gapt.expr.Abs
 import gapt.expr.Apps
 import gapt.expr.Const
 import gapt.expr.Definition
-import gapt.expr.Eq
 import gapt.expr.Expr
-import gapt.expr.Formula
 import gapt.expr.Var
-import gapt.expr.VarOrConst
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
+import gapt.expr.formula.VarOrConst
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.ty.Ti

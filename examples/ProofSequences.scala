@@ -2,10 +2,20 @@ package gapt.examples
 
 import gapt.examples.Formulas._
 import gapt.expr._
-import gapt.expr.fol.Numeral
-import gapt.expr.fol.Utils
-import gapt.expr.hol.instantiate
-import gapt.expr.hol.universalClosure
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Eq
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.FOLFormula
+import gapt.expr.formula.FOLFunction
+import gapt.expr.formula.FOLTerm
+import gapt.expr.formula.FOLVar
+import gapt.expr.formula.Imp
+import gapt.expr.formula.fol.Numeral
+import gapt.expr.formula.fol.Utils
+import gapt.expr.formula.hol.instantiate
+import gapt.expr.formula.hol.universalClosure
 import gapt.expr.subst.FOLSubstitution
 import gapt.expr.util.syntacticMatching
 import gapt.formats.babel.Notation
@@ -937,7 +947,7 @@ object FactorialFunctionEqualityExampleProof extends ProofSequence {
 }
 
 object FactorialFunctionEqualityExampleProof2 extends ProofSequence {
-  import gapt.expr.fol.Utils.{ numeral => num }
+  import gapt.expr.formula.fol.Utils.{ numeral => num }
 
   val zero = FOLConst( "0" )
   val one = s( zero )

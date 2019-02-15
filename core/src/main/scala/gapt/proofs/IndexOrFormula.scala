@@ -1,6 +1,6 @@
 package gapt.proofs
 
-import gapt.expr.Formula
+import gapt.expr.formula.Formula
 
 sealed trait IndexOrFormula {
   def getFormula( sequent: HOLSequent ): Formula

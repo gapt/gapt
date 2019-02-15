@@ -1,7 +1,11 @@
 package gapt.provers.escargot.impl
 
 import gapt.expr._
-import gapt.expr.hol.universalClosure
+import gapt.expr.formula.All
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol.universalClosure
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.To
 import gapt.expr.ty.arity

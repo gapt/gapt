@@ -4,6 +4,11 @@ import gapt.utils.SatMatchers
 import org.specs2.matcher.MatchResult
 import org.specs2.mutable._
 import gapt.expr._
+import gapt.expr.formula.And
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.FOLTerm
+import gapt.expr.formula.FOLVar
+import gapt.expr.formula.Neg
 import gapt.expr.ty.TBase
 import gapt.formats.prover9.Prover9TermParserLadrStyle.parseTerm
 import org.specs2.specification.core.Fragments

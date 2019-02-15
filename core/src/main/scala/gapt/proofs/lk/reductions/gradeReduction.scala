@@ -1,7 +1,7 @@
 package gapt.proofs.lk.reductions
 
-import gapt.expr.Bottom
-import gapt.expr.Top
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Top
 import gapt.expr.subst.Substitution
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.AndLeftRule

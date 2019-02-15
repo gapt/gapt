@@ -1,9 +1,18 @@
 package gapt.expr.bdt
 
-import gapt.expr.{ And, Atom, Bottom, Formula, Imp, Neg, Or, Polarity, Top }
-import gapt.expr.bdt.BDT.{ F, Ite, T }
+import gapt.expr.Polarity
+import gapt.expr.bdt.BDT.F
+import gapt.expr.bdt.BDT.Ite
+import gapt.expr.bdt.BDT.T
+import gapt.expr.formula.And
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.Top
 import gapt.proofs.Sequent
-import gapt.proofs.lk.util.solvePropositional
 import gapt.provers.congruence.CC
 
 sealed trait BDT {

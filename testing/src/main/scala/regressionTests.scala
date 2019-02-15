@@ -6,7 +6,10 @@ import java.io.PrintWriter
 import ammonite.ops._
 import gapt.cutintro._
 import gapt.expr._
-import gapt.expr.fol.isFOLPrenexSigma1
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Atom
+import gapt.expr.formula.fol.isFOLPrenexSigma1
 import gapt.expr.util.subTerms
 import gapt.formats.InputFile
 import gapt.formats.babel.BabelParser

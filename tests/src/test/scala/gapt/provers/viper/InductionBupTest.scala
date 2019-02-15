@@ -1,7 +1,8 @@
 package gapt.provers.viper
 
 import gapt.expr._
-import gapt.expr.hol.{ instantiate, skolemize }
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol.{ instantiate, skolemize }
 import gapt.expr.ty.TBase
 import gapt.expr.ty.Ti
 import gapt.grammars.InductionGrammar

@@ -1,6 +1,7 @@
 package gapt.proofs.lkt
 
 import gapt.expr._
+import gapt.expr.formula.Formula
 import gapt.expr.subst.Substitution
 import gapt.proofs.context.Context
 import gapt.proofs.context.immutable.ImmutableContext

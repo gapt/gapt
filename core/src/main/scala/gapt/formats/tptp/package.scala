@@ -1,7 +1,10 @@
 package gapt.formats
 
 import gapt.expr._
-import gapt.expr.hol.existentialClosure
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol.existentialClosure
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To

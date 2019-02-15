@@ -1,6 +1,11 @@
-package gapt.expr.hol
+package gapt.expr.formula.hol
 
 import gapt.expr._
+import gapt.expr.formula.And
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
 import gapt.proofs.HOLClause
 import org.specs2.mutable._
 

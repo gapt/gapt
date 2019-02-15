@@ -1,6 +1,9 @@
 package gapt.provers.viper
 import gapt.expr._
-import gapt.expr.hol.{ instantiate, skolemize, universalClosure }
+import gapt.expr.formula.And
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol.{ instantiate, skolemize, universalClosure }
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.lk.LKProof
 import gapt.proofs.HOLSequent

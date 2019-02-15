@@ -1,11 +1,16 @@
 package gapt.provers.viper.aip.axioms
 
-import gapt.expr.{ All, Eq, Ex, Formula, Or, Var, Const => Con }
+import gapt.expr.{ Var, Const => Con }
 import gapt.proofs.gaptic.{ ProofState, allR, escargot, induction }
 import gapt.proofs.Sequent
 import gapt.provers.viper.aip.{ LabelledSequent, ThrowsError, getConstructors }
 import cats.instances.all._
 import cats.syntax.all._
+import gapt.expr.formula.All
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Or
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.util.rename

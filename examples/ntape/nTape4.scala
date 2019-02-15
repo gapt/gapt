@@ -1,8 +1,9 @@
 package gapt.examples
 
-import gapt.expr.hol.freeHOVariables
+import gapt.expr.formula.hol.freeHOVariables
 import gapt.expr.ty.Ti
-import gapt.expr.{ Eq, Var }
+import gapt.expr.Var
+import gapt.expr.formula.Eq
 import gapt.formats.ClasspathInputFile
 import gapt.formats.llk.loadLLK
 import gapt.proofs.ceres.{ deleteTautologies, subsumedClausesRemoval }

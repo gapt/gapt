@@ -1,7 +1,8 @@
 package gapt.provers.viper
 
+import gapt.expr.formula.Formula
 import gapt.expr.ty.TBase
-import gapt.expr.{ Formula, Var, Const => Con }
+import gapt.expr.{ Var, Const => Con }
 import gapt.formats.tip.TipProblem
 import gapt.proofs.context.Context
 import gapt.proofs.{ Ant, Sequent }

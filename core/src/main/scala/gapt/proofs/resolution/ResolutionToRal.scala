@@ -1,8 +1,10 @@
 package gapt.proofs.resolution
 
 import gapt.expr._
-import gapt.expr.fol.undoHol2Fol.Signature
-import gapt.expr.fol.{ replaceAbstractions, undoHol2Fol }
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
+import gapt.expr.formula.fol.undoHol2Fol.Signature
+import gapt.expr.formula.fol.{ replaceAbstractions, undoHol2Fol }
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.To
 import gapt.expr.ty.Ty

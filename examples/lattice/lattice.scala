@@ -1,7 +1,7 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.expr.hol.CNFp
+import gapt.expr.formula.hol.CNFp
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context

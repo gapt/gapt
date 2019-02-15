@@ -1,7 +1,18 @@
-package gapt.expr.fol
+package gapt.expr.formula.fol
 
 import gapt.expr._
-import gapt.expr.hol.HOLPosition
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Ex
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.FOLExpression
+import gapt.expr.formula.FOLFormula
+import gapt.expr.formula.FOLFunction
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.hol.HOLPosition
 import gapt.expr.util
 import gapt.expr.util.LambdaPosition
 
@@ -13,7 +24,8 @@ object FOLPosition {
   /**
    * Returns a list of positions of subexpressions that satisfy some predicate.
    *
-   * This function is a wrapper around [[gapt.expr.hol.HOLPosition.getPositions]].
+   * This function is a wrapper around [[gapt.expr.formula.hol.HOLPosition.getPositions]].
+   *
    * @param exp The expression under consideration.
    * @param pred The predicate to be evaluated. Defaults to "always true", i.e. if called without this argument, the function will return all positions.
    * @return Positions of subexpressions satisfying pred.

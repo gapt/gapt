@@ -1,7 +1,9 @@
 package gapt.provers.metis
 
 import gapt.expr._
-import gapt.expr.fol.{ naive, thresholds }
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Top
+import gapt.expr.formula.fol.{ naive, thresholds }
 import gapt.proofs.{ Clause, HOLSequent, Sequent, SequentMatchers }
 import gapt.utils.SatMatchers
 import org.specs2.mutable._

@@ -3,6 +3,9 @@ package gapt.formats.ivy
 import gapt.proofs._
 import gapt.formats.lisp.SExpression
 import gapt.expr._
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.FOLTerm
 import gapt.expr.subst.FOLSubstitution
 
 /**

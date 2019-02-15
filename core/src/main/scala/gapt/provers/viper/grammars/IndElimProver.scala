@@ -1,7 +1,8 @@
 package gapt.provers.viper.grammars
 
 import gapt.expr._
-import gapt.expr.hol.containsStrongQuantifier
+import gapt.expr.formula.All
+import gapt.expr.formula.hol.containsStrongQuantifier
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.syntacticMatching

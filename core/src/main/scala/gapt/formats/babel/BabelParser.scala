@@ -1,11 +1,12 @@
 package gapt.formats.babel
 
 import gapt.{ expr => real }
-import gapt.expr.{ Expr, Formula, preExpr }
+import gapt.expr.{ Expr, preExpr }
 import gapt.proofs.gaptic.guessLabels
 import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.utils.NameGenerator
 import cats.syntax.either._
+import gapt.expr.formula.Formula
 import gapt.expr.ty.Ty
 
 object Precedence {

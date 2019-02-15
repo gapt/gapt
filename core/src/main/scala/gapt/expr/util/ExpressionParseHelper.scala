@@ -1,16 +1,16 @@
 package gapt.expr.util
 
-import gapt.expr.Atom
 import gapt.expr.Const
 import gapt.expr.Expr
-import gapt.expr.FOLAtom
-import gapt.expr.FOLConst
-import gapt.expr.FOLExpression
-import gapt.expr.FOLFormula
-import gapt.expr.FOLTerm
-import gapt.expr.FOLVar
-import gapt.expr.Formula
 import gapt.expr.Var
+import gapt.expr.formula.Atom
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.FOLExpression
+import gapt.expr.formula.FOLFormula
+import gapt.expr.formula.FOLTerm
+import gapt.expr.formula.FOLVar
+import gapt.expr.formula.Formula
 import gapt.expr.preExpr
 import gapt.expr.ty.Ty
 import gapt.expr.util.ExpressionParseHelper.Splice

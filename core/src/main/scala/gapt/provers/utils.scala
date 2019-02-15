@@ -1,6 +1,8 @@
 package gapt.provers
 
 import gapt.expr._
+import gapt.expr.formula.EqC
+import gapt.expr.formula.Formula
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.TBase
 import gapt.expr.util.constants

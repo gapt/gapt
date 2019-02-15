@@ -1,5 +1,8 @@
 package gapt.expr
 
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.FOLFunctionConst
+import gapt.expr.formula.FOLVar
 import gapt.expr.subst.FOLSubstitution
 import gapt.expr.ty.Ti
 import gapt.expr.util.syntacticMGU

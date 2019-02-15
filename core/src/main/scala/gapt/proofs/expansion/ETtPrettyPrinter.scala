@@ -1,6 +1,7 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
+import gapt.expr.formula.VarOrConst
 import gapt.formats.babel.{ BabelExporter, BabelSignature, Precedence }
 import gapt.utils.Doc
 import gapt.utils.Doc._

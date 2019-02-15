@@ -1,6 +1,9 @@
 package gapt.proofs.hoare
 
 import gapt.expr._
+import gapt.expr.formula.FOLFormula
+import gapt.expr.formula.FOLTerm
+import gapt.expr.formula.FOLVar
 
 abstract class Program {
   override def toString = this match {

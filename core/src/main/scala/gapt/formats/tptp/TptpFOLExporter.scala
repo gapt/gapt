@@ -1,7 +1,8 @@
 package gapt.formats.tptp
 
 import gapt.expr._
-import gapt.expr.hol.universalClosure
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol.universalClosure
 import gapt.expr.util.freeVariables
 import gapt.proofs.{ HOLClause, HOLSequent }
 

@@ -1,7 +1,7 @@
 package gapt.provers.escargot.impl
 
 import gapt.expr._
-import gapt.expr.hol.universalClosure
+import gapt.expr.formula.hol.universalClosure
 import gapt.proofs.{ HOLClause, HOLSequent, Sequent }
 import gapt.proofs.resolution._
 import gapt.provers.escargot.{ LPO, TermOrdering }
@@ -9,6 +9,9 @@ import gapt.provers.sat.Sat4j
 import gapt.utils.Logger
 import org.sat4j.minisat.SolverFactory
 import Sat4j._
+import gapt.expr.formula.And
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Formula
 import gapt.expr.util.expressionSize
 import gapt.expr.util.freeVariables
 import gapt.proofs.context.mutable.MutableContext

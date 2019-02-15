@@ -1,20 +1,29 @@
 package gapt.expr
 
-import gapt.formats.babel.{ BabelSignature, Notation }
-import gapt.utils.NameGenerator
-import gapt.{ expr => real }
 import cats.Monad
 import cats.data.StateT
-import cats.syntax.traverse._
-import cats.syntax.either._
-import cats.instances.list._
 import cats.instances.either._
+import cats.instances.list._
+import cats.syntax.either._
+import cats.syntax.traverse._
 import gapt.expr
+import gapt.expr.formula.AndC
+import gapt.expr.formula.EqC
+import gapt.expr.formula.ExistsC
+import gapt.expr.formula.ForallC
+import gapt.expr.formula.ImpC
+import gapt.expr.formula.MonomorphicLogicalC
+import gapt.expr.formula.NegC
+import gapt.expr.formula.OrC
 import gapt.expr.ty.->:
 import gapt.expr.ty.TBase
 import gapt.expr.ty.TVar
 import gapt.expr.ty.Ty
 import gapt.expr.util.freeVariables
+import gapt.formats.babel.BabelSignature
+import gapt.formats.babel.Notation
+import gapt.utils.NameGenerator
+import gapt.{ expr => real }
 
 import scala.collection.mutable
 
@@ -92,28 +101,28 @@ object preExpr {
   def Eq( a: Expr, b: Expr ) = {
     val argType = freshMetaType()
     val eqType = ArrType( argType, ArrType( argType, Bool ) )
-    App( App( Ident( real.EqC.name, eqType, Some( List( argType ) ) ), a ), b )
+    App( App( Ident( EqC.name, eqType, Some( List( argType ) ) ), a ), b )
   }
 
-  def Top = QuoteBlackbox( real.Top() )
-  def Bottom = QuoteBlackbox( real.Bottom() )
+  def Top = QuoteBlackbox( formula.Top() )
+  def Bottom = QuoteBlackbox( formula.Bottom() )
 
-  def UnaryConn( c: real.MonomorphicLogicalC ): Expr => Expr = a => App( QuoteBlackbox( c() ), a )
-  def Neg = UnaryConn( real.NegC )
+  def UnaryConn( c: MonomorphicLogicalC ): Expr => Expr = a => App( QuoteBlackbox( c() ), a )
+  def Neg = UnaryConn( NegC )
 
-  def BinaryConn( c: real.MonomorphicLogicalC ): ( Expr, Expr ) => Expr = ( a, b ) =>
+  def BinaryConn( c: MonomorphicLogicalC ): ( Expr, Expr ) => Expr = ( a, b ) =>
     App( App( QuoteBlackbox( c() ), a ), b )
-  def And = BinaryConn( real.AndC )
-  def Or = BinaryConn( real.OrC )
+  def And = BinaryConn( AndC )
+  def Or = BinaryConn( OrC )
   def Iff( a: Expr, b: Expr ) = And( Imp( a, b ), Imp( b, a ) )
-  def Imp = BinaryConn( real.ImpC )
+  def Imp = BinaryConn( ImpC )
 
   def Quant( name: String ): ( Ident, Expr ) => Expr = ( v, sub ) => {
     val quantTy = freshMetaType()
     App( Ident( name, ArrType( ArrType( quantTy, Bool ), Bool ), Some( List( quantTy ) ) ), Abs( v, sub ) )
   }
-  def Ex = Quant( real.ExistsC.name )
-  def All = Quant( real.ForallC.name )
+  def Ex = Quant( ExistsC.name )
+  def All = Quant( ForallC.name )
 
   def liftTypePoly( t: Ty, ps: List[Ty] ) = {
     val vars = mutable.Map[TVar, Type]()

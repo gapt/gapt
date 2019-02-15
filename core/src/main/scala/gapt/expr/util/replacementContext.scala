@@ -5,7 +5,7 @@ import gapt.expr.Expr
 import gapt.expr.ReplacementContext
 import gapt.expr.Var
 import gapt.expr.containedNames
-import gapt.expr.hol.HOLPosition
+import gapt.expr.formula.hol.HOLPosition
 import gapt.expr.ty.Ty
 
 /**

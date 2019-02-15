@@ -1,5 +1,11 @@
-package gapt.expr
+package gapt.expr.formula
 
+import gapt.expr.Abs
+import gapt.expr.App
+import gapt.expr.Apps
+import gapt.expr.Const
+import gapt.expr.Expr
+import gapt.expr.Var
 import gapt.expr.ty.->:
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To

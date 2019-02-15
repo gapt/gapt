@@ -1,6 +1,6 @@
 package gapt.proofs.lk.rules.macros
 
-import gapt.expr.Formula
+import gapt.expr.formula.Formula
 import gapt.proofs.SequentConnector
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.WeakeningRightRule

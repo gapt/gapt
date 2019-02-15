@@ -1,7 +1,14 @@
 package gapt.provers.viper.aip.axioms
 import gapt.expr._
-import gapt.expr.fol.folSubTerms
-import gapt.expr.hol.{ instantiate, universalClosure }
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Eq
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Top
+import gapt.expr.formula.fol.folSubTerms
+import gapt.expr.formula.hol.{ instantiate, universalClosure }
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.To
 import gapt.expr.util.freeVariables

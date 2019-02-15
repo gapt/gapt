@@ -1,7 +1,7 @@
 package gapt.proofs.rup
 import java.util
 
-import gapt.expr.Formula
+import gapt.expr.formula.Formula
 import gapt.proofs.DagProof
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.CutRule

@@ -3,8 +3,8 @@ package gapt.proofs.lk.rules
 import gapt.expr.Abs
 import gapt.expr.App
 import gapt.expr.BetaReduction
-import gapt.expr.Eq
-import gapt.expr.Formula
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
 import gapt.expr.util.replacementContext
 import gapt.proofs.Ant
 import gapt.proofs.HOLSequent

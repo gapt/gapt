@@ -3,7 +3,14 @@ package gapt.provers.prover9
 import java.io.IOException
 
 import gapt.expr._
-import gapt.expr.hol._
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.FOLFunction
+import gapt.expr.formula.FOLVar
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.Top
+import gapt.expr.formula.hol._
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.syntacticMatching

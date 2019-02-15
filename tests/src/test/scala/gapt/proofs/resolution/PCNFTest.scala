@@ -1,6 +1,12 @@
 package gapt.proofs.resolution
 
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.Ex
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.FOLAtomConst
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.FOLVar
 import gapt.proofs._
 import gapt.proofs.lk._
 import org.specs2.mutable._

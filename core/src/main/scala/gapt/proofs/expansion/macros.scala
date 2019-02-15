@@ -1,6 +1,8 @@
 package gapt.proofs.expansion
 import gapt.expr._
-import gapt.expr.hol.{ HOLPosition, inductionPrinciple }
+import gapt.expr.formula.All
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol.{ HOLPosition, inductionPrinciple }
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.ty.To

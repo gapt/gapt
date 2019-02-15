@@ -1,11 +1,11 @@
 package gapt.proofs.lk.rules.macros
 
-import gapt.expr.All
-import gapt.expr.And
-import gapt.expr.Eq
-import gapt.expr.FOLTerm
-import gapt.expr.FOLVar
-import gapt.expr.Imp
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Eq
+import gapt.expr.formula.FOLTerm
+import gapt.expr.formula.FOLVar
+import gapt.expr.formula.Imp
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.ContractionLeftRule

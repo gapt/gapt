@@ -2,8 +2,10 @@ package gapt.provers.viper
 
 import ammonite.ops._
 import gapt.expr._
-import gapt.expr.fol.folTermSize
-import gapt.expr.hol.containsQuantifierOnLogicalLevel
+import gapt.expr.formula.All
+import gapt.expr.formula.Formula
+import gapt.expr.formula.fol.folTermSize
+import gapt.expr.formula.hol.containsQuantifierOnLogicalLevel
 import gapt.expr.ty.TBase
 import gapt.expr.util.freeVariables
 import gapt.formats.InputFile

@@ -7,6 +7,8 @@ package gapt.formats.llk
 
 import gapt.expr.util.freeVariables
 import gapt.expr._
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
 import gapt.expr.subst.{ Substitution => SubstitutionLambda, _ }
 import gapt.expr.util.{ rename => renameLambda }
 

@@ -1,8 +1,8 @@
 package gapt.proofs.lk.rules
 
-import gapt.expr.Bottom
 import gapt.expr.Const
-import gapt.expr.PropFormula
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.PropFormula
 import gapt.proofs.HOLSequent
 
 /**

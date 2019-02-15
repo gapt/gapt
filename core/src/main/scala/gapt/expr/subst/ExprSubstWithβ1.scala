@@ -3,7 +3,7 @@ package gapt.expr.subst
 import gapt.expr.Abs
 import gapt.expr.ClosedUnderSub
 import gapt.expr.Expr
-import gapt.expr.Formula
+import gapt.expr.formula.Formula
 
 trait ExprSubstWithβ1 extends ExprSubstWithβ0 {
   implicit val formulaSubstWithβ: ClosedUnderSub[Formula] =

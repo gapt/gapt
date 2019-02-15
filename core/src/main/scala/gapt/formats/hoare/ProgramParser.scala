@@ -1,8 +1,11 @@
 package gapt.formats.hoare
 
 import gapt.expr._
+import gapt.expr.formula.FOLFormula
+import gapt.expr.formula.FOLTerm
 import gapt.proofs.hoare._
-import gapt.formats.prover9.{ Prover9TermParserLadrStyle, Prover9TermParserA }
+import gapt.formats.prover9.{ Prover9TermParserA, Prover9TermParserLadrStyle }
+
 import scala.util.parsing.combinator.PackratParsers
 
 trait ProgramParserA extends Prover9TermParserA {

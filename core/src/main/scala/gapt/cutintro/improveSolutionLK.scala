@@ -1,12 +1,15 @@
 package gapt.cutintro
 
 import gapt.expr._
-import gapt.expr.hol.{ CNFp, lcomp, simplify }
+import gapt.expr.formula.hol.{ CNFp, lcomp, simplify }
 import gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
 import gapt.proofs.{ FOLClause, HOLClause, HOLSequent, RichFOLSequent, Sequent }
 import gapt.provers.Prover
 import gapt.provers.Session._
 import cats.implicits._
+import gapt.expr.formula.And
+import gapt.expr.formula.FOLFormula
+import gapt.expr.formula.Formula
 import gapt.expr.subst.FOLSubstitution
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables

@@ -1,6 +1,9 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Formula
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.proofs._

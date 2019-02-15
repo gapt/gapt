@@ -1,6 +1,8 @@
 package gapt.proofs.lkt
 
 import gapt.expr._
+import gapt.expr.formula.Formula
+import gapt.expr.formula.VarOrConst
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename

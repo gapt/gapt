@@ -1,7 +1,16 @@
 package gapt.expr
 
-import gapt.expr.hol.HOLPosition
-import gapt.expr.hol.HOLPosition._
+import gapt.expr.formula.And
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Iff
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.VarOrConst
+import gapt.expr.formula.determineTraits
+import gapt.expr.formula.hol.HOLPosition
+import gapt.expr.formula.hol.HOLPosition._
 import gapt.expr.ty.->:
 import gapt.expr.ty.Ty
 import gapt.expr.util.LambdaPosition

@@ -1,4 +1,4 @@
-package gapt.expr.hol
+package gapt.expr.formula.hol
 
 import gapt.expr._
 import gapt.expr.ty.->:

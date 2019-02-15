@@ -1,7 +1,9 @@
 package gapt.provers.eprover
 
 import gapt.expr._
-import gapt.proofs.{ SequentMatchers, Clause, HOLSequent, Sequent }
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Top
+import gapt.proofs.{ Clause, HOLSequent, Sequent, SequentMatchers }
 import org.specs2.mutable._
 
 class EProverTest extends Specification with SequentMatchers {

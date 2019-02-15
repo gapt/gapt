@@ -2,10 +2,27 @@
  * Utility functions for first-order logic.
  */
 
-package gapt.expr.fol
+package gapt.expr.formula.fol
 
 import gapt.expr._
-import gapt.expr.hol.containsQuantifier
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Ex
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.FOLExpression
+import gapt.expr.formula.FOLFormula
+import gapt.expr.formula.FOLFunction
+import gapt.expr.formula.FOLTerm
+import gapt.expr.formula.FOLVar
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.Top
+import gapt.expr.formula.hol.containsQuantifier
 import gapt.expr.ty.Ti
 import gapt.proofs.HOLSequent
 import gapt.proofs.context.Context

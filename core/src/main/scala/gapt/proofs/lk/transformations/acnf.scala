@@ -1,7 +1,7 @@
 package gapt.proofs.lk.transformations
 
-import gapt.expr.Formula
-import gapt.expr.hol.isAtom
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol.isAtom
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.reductions.CutReduction
 import gapt.proofs.lk.reductions.gradeReduction

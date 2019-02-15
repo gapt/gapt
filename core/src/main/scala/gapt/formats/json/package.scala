@@ -1,6 +1,8 @@
 package gapt.formats
 
 import gapt.expr._
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Formula
 import gapt.proofs.{ DagProof, HOLSequent, SequentIndex }
 import io.circe.{ Decoder, Encoder, KeyDecoder, KeyEncoder }
 import gapt.formats.json.lk.LKProofCodec._

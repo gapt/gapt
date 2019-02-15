@@ -2,6 +2,15 @@ package gapt.provers.leancop
 
 import gapt.examples.BussTautology
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.FOLVar
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.Top
 import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.utils.SatMatchers
 import org.specs2.mutable._

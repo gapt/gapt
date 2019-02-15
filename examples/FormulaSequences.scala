@@ -1,6 +1,15 @@
 package gapt.examples
 import gapt.expr._
-import gapt.expr.fol.{ naive, thresholds }
+import gapt.expr.formula
+import gapt.expr.formula.And
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.FOLFormula
+import gapt.expr.formula.FOLTerm
+import gapt.expr.formula.FOLVar
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Or
+import gapt.expr.formula.fol.{ naive, thresholds }
 import gapt.proofs.{ FOLClause, HOLSequent }
 
 /**
@@ -70,7 +79,7 @@ object BussTautology {
   def B( i: Int ) = if ( i == 1 ) d( 1 ) else Imp( F( i - 1 ), d( i ) )
 
   // the antecedens of the final sequent
-  def Ant( i: Int ): List[FOLFormula] = if ( i == 0 ) Nil else Or( A( i ), B( i ) ) :: Ant( i - 1 )
+  def Ant( i: Int ): List[FOLFormula] = if ( i == 0 ) Nil else formula.Or( A( i ), B( i ) ) :: Ant( i - 1 )
 }
 
 /**

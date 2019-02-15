@@ -1,8 +1,7 @@
 
 package gapt.integration_tests
 
-import gapt.expr.{ Atom, Formula, Top }
-import gapt.expr.hol.containsStrongQuantifier
+import gapt.expr.formula.hol.containsStrongQuantifier
 import gapt.proofs.{ Ant, HOLClause, SequentConnector, Suc }
 import gapt.proofs.expansion.ExpansionSequent
 import gapt.formats.tptp.TptpFOLExporter
@@ -15,6 +14,7 @@ import java.io.File.separator
 import java.io.{ FileInputStream, FileReader, IOException, InputStreamReader }
 import java.util.zip.GZIPInputStream
 
+import gapt.expr.formula.Top
 import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.proofs.lk.transformations.eliminateDefinitions
 import gapt.proofs.lk.transformations.folSkolemize

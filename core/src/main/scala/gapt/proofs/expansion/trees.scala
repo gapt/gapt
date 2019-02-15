@@ -1,7 +1,19 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
-import gapt.expr.hol.{ HOLPosition, instantiate }
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.BinaryPropConnectiveHelper
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.Quant
+import gapt.expr.formula.Top
+import gapt.expr.formula.VarOrConst
+import gapt.expr.formula.hol.{ HOLPosition, instantiate }
 import gapt.expr.subst.Substitution
 import gapt.formats.babel.BabelSignature
 import gapt.proofs.{ Checkable, DagProof, HOLSequent, Sequent }
@@ -384,7 +396,7 @@ object ETStrongQuantifierBlock {
  *
  * As an example let us consider an expansion proof of ∀z P(c,z) :- ∃x ∀y P(x,y).
  * For Skolemization we introduce the Skolem function `s_1` (for the single strong quantifier), this function
- * has the Skolem definition `λx ∀y P(x,y)` (see [[gapt.expr.hol.SkolemFunctions]] for details).
+ * has the Skolem definition `λx ∀y P(x,y)` (see [[gapt.expr.formula.hol.SkolemFunctions]] for details).
  * The natural expansion proof has the deep formula `P(c,s_1(c)) :- P(c,s_1(c))`, so we need a Skolem node with the
  * shallow formula `∀y P(c,y)`, and deep formula `P(c,s_1(c))`.  This Skolem node is constructed as
  * `ETSkolemQuantifier(∀y P(c,y), s_1(c), λx ∀y P(x,y), ETAtom(P(c,s_1(c)), InSuc))`.

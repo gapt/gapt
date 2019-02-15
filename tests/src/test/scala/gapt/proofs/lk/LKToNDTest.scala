@@ -2,6 +2,13 @@ package gapt.proofs.lk
 
 import gapt.examples
 import gapt.expr._
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.FOLConst
+import gapt.expr.formula.FOLFunction
+import gapt.expr.formula.FOLVar
+import gapt.expr.formula.Neg
 import gapt.expr.ty.TBase
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.context.Context

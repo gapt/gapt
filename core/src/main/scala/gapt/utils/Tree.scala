@@ -1,8 +1,9 @@
 package gapt.utils
 
+import gapt.expr.formula.VarOrConst
 import gapt.expr.subst.Substitutable
 import gapt.expr.subst.Substitution
-import gapt.expr.{ Expr, Replaceable, VarOrConst }
+import gapt.expr.{ Expr, Replaceable }
 
 case class Tree[+T]( value: T, children: Vector[Tree[T]] ) {
   def zip[S]( that: Tree[S] ): Tree[( T, S )] =
