@@ -10,6 +10,7 @@ import gapt.expr.formula.FOLVar
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Or
 import gapt.expr.formula.hol.universalClosure
+import gapt.logic.Polarity
 import org.specs2.mutable._
 
 class CleanStructureTest extends Specification {

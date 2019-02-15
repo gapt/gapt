@@ -12,9 +12,10 @@ import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Top
-import gapt.expr.formula.hol.SkolemFunctions
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
+import gapt.logic.Polarity
+import gapt.logic.hol.SkolemFunctions
 import gapt.proofs._
 import gapt.proofs.context.mutable.MutableContext
 import gapt.utils.NameGenerator

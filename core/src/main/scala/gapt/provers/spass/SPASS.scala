@@ -6,7 +6,6 @@ import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.Bottom
 import gapt.expr.formula.Eq
-import gapt.expr.formula.EqC
 import gapt.expr.formula.FOLAtom
 import gapt.expr.formula.FOLConst
 import gapt.expr.formula.FOLFunction
@@ -16,6 +15,7 @@ import gapt.expr.formula.FOLTerm
 import gapt.expr.formula.FOLVar
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
+import gapt.expr.formula.constants.EqC
 import gapt.expr.formula.hol.universalClosure
 import gapt.expr.subst.FOLSubstitution
 import gapt.expr.ty.Ti

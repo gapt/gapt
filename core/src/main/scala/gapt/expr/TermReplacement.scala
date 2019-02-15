@@ -4,12 +4,12 @@ package gapt.expr
 import gapt.expr.formula.All
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Eq
-import gapt.expr.formula.EqC
 import gapt.expr.formula.Ex
-import gapt.expr.formula.ExistsC
-import gapt.expr.formula.ForallC
 import gapt.expr.formula.Formula
 import gapt.expr.formula.VarOrConst
+import gapt.expr.formula.constants.EqC
+import gapt.expr.formula.constants.ExistsC
+import gapt.expr.formula.constants.ForallC
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.->:
 import gapt.expr.ty.TBase

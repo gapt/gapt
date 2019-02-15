@@ -1,4 +1,4 @@
-package gapt.expr.formula.hol
+package gapt.logic.hol
 
 import gapt.expr._
 import gapt.expr.formula.All

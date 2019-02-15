@@ -12,6 +12,8 @@ import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Top
 import gapt.expr.formula.hol._
+import gapt.logic.hol.CNFn
+import gapt.logic.hol.CNFp
 import gapt.proofs.lk._
 import gapt.proofs._
 import gapt.proofs.lk.rules.AndLeftRule

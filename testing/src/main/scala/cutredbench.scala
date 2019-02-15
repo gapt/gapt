@@ -2,8 +2,8 @@ package gapt.testing
 import gapt.cutintro.CutIntroduction
 import gapt.examples._
 import gapt.expr._
-import gapt.expr.formula.EqC
 import gapt.expr.formula.Formula
+import gapt.expr.formula.constants.EqC
 import gapt.expr.formula.fol.Numeral
 import gapt.expr.formula.hol.{ containsQuantifierOnLogicalLevel, isAtom }
 import gapt.expr.ty.To

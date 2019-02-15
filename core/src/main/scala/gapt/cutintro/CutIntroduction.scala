@@ -17,6 +17,7 @@ import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.grammars._
 import gapt.grammars.reforest.Reforest
+import gapt.logic.hol.CNFp
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext

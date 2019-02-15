@@ -17,7 +17,6 @@ import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Bottom
 import gapt.expr.formula.Eq
-import gapt.expr.formula.EqC
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Imp
@@ -25,6 +24,7 @@ import gapt.expr.formula.LogicalConstant
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Top
+import gapt.expr.formula.constants.EqC
 import gapt.expr.ty.->:
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase

@@ -1,7 +1,7 @@
 package gapt.proofs.lk.transformations
 
-import gapt.expr.Polarity
 import gapt.expr.formula.Formula
+import gapt.logic.Polarity
 import gapt.proofs.SequentConnector
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.LKVisitor

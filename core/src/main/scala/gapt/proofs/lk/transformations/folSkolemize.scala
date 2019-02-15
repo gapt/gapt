@@ -2,7 +2,6 @@ package gapt.proofs.lk.transformations
 
 import gapt.expr.Const
 import gapt.expr.Expr
-import gapt.expr.Polarity
 import gapt.expr.containedNames
 import gapt.expr.formula.All
 import gapt.expr.formula.And
@@ -18,6 +17,7 @@ import gapt.expr.subst.Substitution
 import gapt.expr.ty.FunctionType
 import gapt.expr.util.constants
 import gapt.expr.util.rename
+import gapt.logic.Polarity
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
 import gapt.proofs.lk.LKProof

@@ -1,6 +1,6 @@
 package gapt.proofs.expansion
 
-import gapt.expr.Polarity.{ Negative, Positive }
+import gapt.logic.Polarity.{ Negative, Positive }
 import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.And
@@ -17,6 +17,7 @@ import gapt.expr.formula.hol.instantiate
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
+import gapt.logic.Polarity
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 

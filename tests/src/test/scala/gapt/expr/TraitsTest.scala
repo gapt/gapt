@@ -4,7 +4,6 @@ import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Bottom
 import gapt.expr.formula.Eq
-import gapt.expr.formula.ExistsC
 import gapt.expr.formula.FOLAtom
 import gapt.expr.formula.FOLConst
 import gapt.expr.formula.FOLExpression
@@ -12,13 +11,14 @@ import gapt.expr.formula.FOLFormula
 import gapt.expr.formula.FOLHeadType
 import gapt.expr.formula.FOLTerm
 import gapt.expr.formula.FOLVar
-import gapt.expr.formula.ForallC
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Imp
 import gapt.expr.formula.LogicalConstant
 import gapt.expr.formula.Or
 import gapt.expr.formula.PropFormula
 import gapt.expr.formula.Top
+import gapt.expr.formula.constants.ExistsC
+import gapt.expr.formula.constants.ForallC
 import gapt.expr.ty.Ti
 import org.specs2.mutable._
 

@@ -25,6 +25,7 @@ import gapt.expr.util.replacementContext
 import gapt.expr.util.syntacticMatching
 import gapt.expr.util.toVNF
 import gapt.expr.util.typeVariables
+import gapt.logic.Polarity
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames

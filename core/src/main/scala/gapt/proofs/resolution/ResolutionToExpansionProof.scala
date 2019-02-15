@@ -8,6 +8,7 @@ import gapt.expr.formula.Formula
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
+import gapt.logic.Polarity
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.{ HOLSequent, Sequent }

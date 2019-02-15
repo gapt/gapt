@@ -25,6 +25,7 @@ import gapt.expr.util.rename
 import gapt.expr.util.syntacticMatching
 import gapt.expr.util.toVNF
 import gapt.grammars.{ RecursionScheme, Rule }
+import gapt.logic.Polarity
 import gapt.proofs._
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.transformations.LKToExpansionProof

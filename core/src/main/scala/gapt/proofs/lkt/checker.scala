@@ -1,6 +1,5 @@
 package gapt.proofs.lkt
 
-import gapt.expr.Polarity._
 import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.And
@@ -14,8 +13,10 @@ import gapt.expr.formula.Top
 import gapt.expr.subst.Substitution
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames
-import gapt.proofs.{ Checkable, Sequent }
+import gapt.proofs.Checkable
+import gapt.proofs.Sequent
 import gapt.utils.Maybe
+import gapt.logic.Polarity.{ InAntecedent, InSuccedent }
 
 object check {
   private def requireEq( a: Expr, b: Expr ): Unit =

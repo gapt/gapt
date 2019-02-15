@@ -6,6 +6,7 @@ import gapt.expr.formula.FOLAtom
 import gapt.expr.formula.FOLConst
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
+import gapt.logic.hol.CNFp
 import gapt.proofs.HOLClause
 import org.specs2.mutable._
 

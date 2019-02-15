@@ -2,13 +2,13 @@ package gapt.provers.viper.grammars
 
 import gapt.expr._
 import gapt.expr.formula.fol.folTermSize
-import gapt.expr.formula.hol.{ CNFp, instantiate, simplify, skolemize }
+import gapt.expr.formula.hol.instantiate
 import gapt.proofs._
 import gapt.provers.{ Prover, Session }
 import gapt.provers.smtlib.{ SmtInterpol, Z3 }
 import gapt.utils.Tree
 import cats.implicits._
-import gapt.expr.bdt.BDT
+import gapt.logic.bdt.BDT
 import gapt.expr.formula.And
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Formula
@@ -17,6 +17,9 @@ import gapt.expr.formula.Top
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
+import gapt.logic.hol.CNFp
+import gapt.logic.hol.simplify
+import gapt.logic.hol.skolemize
 import gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
 
 import scala.collection.mutable

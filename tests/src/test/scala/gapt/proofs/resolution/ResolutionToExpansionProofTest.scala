@@ -9,9 +9,9 @@ import gapt.expr.formula.FOLAtomConst
 import gapt.expr.formula.FOLConst
 import gapt.expr.formula.FOLVar
 import gapt.expr.formula.fol.thresholds
-import gapt.expr.formula.hol.CNFn
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.Ti
+import gapt.logic.hol.CNFn
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.{ SkolemFunction => SkolemFun }
 import gapt.provers.escargot.Escargot

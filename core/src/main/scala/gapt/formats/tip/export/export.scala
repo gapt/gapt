@@ -2,15 +2,14 @@ package gapt.formats.tip.export
 
 import gapt.expr.Const
 import gapt.expr.formula.And
-import gapt.expr.formula.AndC
-import gapt.expr.formula.EqC
-import gapt.expr.formula.ExistsC
-import gapt.expr.formula.ForallC
 import gapt.expr.formula.Formula
-import gapt.expr.formula.ImpC
-import gapt.expr.formula.NegC
-import gapt.expr.formula.OrC
-import gapt.expr.formula.hol.SkolemFunctions
+import gapt.expr.formula.constants.AndC
+import gapt.expr.formula.constants.EqC
+import gapt.expr.formula.constants.ExistsC
+import gapt.expr.formula.constants.ForallC
+import gapt.expr.formula.constants.ImpC
+import gapt.expr.formula.constants.NegC
+import gapt.expr.formula.constants.OrC
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.ty.TVar
@@ -21,6 +20,7 @@ import gapt.formats.tip.TipProblem
 import gapt.formats.tip.parser.TipSmtProblem
 import gapt.formats.tip.parser.toSExpression
 import gapt.formats.tip.util.TipNameGenerator
+import gapt.logic.hol.SkolemFunctions
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.BaseTypes
 import gapt.proofs.context.facet.Definitions

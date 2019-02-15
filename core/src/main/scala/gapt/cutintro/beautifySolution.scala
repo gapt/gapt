@@ -8,10 +8,13 @@ import gapt.expr.formula.Ex
 import gapt.expr.formula.FOLConst
 import gapt.expr.formula.FOLTerm
 import gapt.expr.formula.Top
-import gapt.expr.formula.hol.{ CNFn, CNFp, instantiate, simplify }
+import gapt.expr.formula.hol.instantiate
 import gapt.expr.subst.FOLSubstitution
 import gapt.expr.util.clauseSubsumption
 import gapt.expr.util.syntacticMatching
+import gapt.logic.hol.CNFn
+import gapt.logic.hol.CNFp
+import gapt.logic.hol.simplify
 import gapt.proofs.{ Ant, FOLClause, SequentIndex, Suc }
 
 import scala.collection.mutable

@@ -1,6 +1,5 @@
-package gapt.expr.formula.fol
+package gapt.logic.fol
 
-import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Bottom
@@ -11,7 +10,8 @@ import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Top
-import gapt.expr.formula.hol.{ simplify, toNNF }
+import gapt.logic.hol.simplify
+import gapt.logic.hol.toNNF
 import gapt.proofs.FOLClause
 
 import scala.annotation.tailrec

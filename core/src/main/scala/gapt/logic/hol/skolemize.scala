@@ -1,6 +1,6 @@
-package gapt.expr.formula.hol
+package gapt.logic.hol
 
-import gapt.expr._
+import gapt.expr.Abs
 import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Atom
@@ -12,7 +12,9 @@ import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Quant
 import gapt.expr.formula.Top
+import gapt.expr.formula.hol.instantiate
 import gapt.expr.util.freeVariables
+import gapt.logic.Polarity
 import gapt.proofs.context.mutable.MutableContext
 
 object skolemize {

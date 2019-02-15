@@ -11,6 +11,7 @@ import gapt.expr.formula.Or
 import gapt.expr.formula.Quant
 import gapt.expr.formula.Top
 import gapt.expr.subst.Substitution
+import gapt.logic.Polarity
 import gapt.proofs.HOLSequent
 
 object formulaToExpansionTree {

@@ -10,10 +10,13 @@ import gapt.expr.formula.FOLVar
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
-import gapt.expr.formula.hol.{ CNFn, CNFp, containsStrongQuantifier, universalClosure }
+import gapt.expr.formula.hol.{ containsStrongQuantifier, universalClosure }
 import gapt.expr.util.clauseSubsumption
 import gapt.expr.util.freeVariables
 import gapt.formats.InputFile
+import gapt.logic.Polarity
+import gapt.logic.hol.CNFn
+import gapt.logic.hol.CNFp
 import gapt.proofs.resolution.{ AvatarDefinition, AvatarGroundComp, AvatarNonGroundComp, AvatarSplit }
 import gapt.proofs.sketch._
 import gapt.proofs.{ FOLClause, HOLClause, HOLSequent, Sequent }

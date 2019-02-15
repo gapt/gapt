@@ -12,6 +12,7 @@ import gapt.expr.formula.hol.containsQuantifierOnLogicalLevel
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
+import gapt.logic.Polarity
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 

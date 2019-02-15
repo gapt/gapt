@@ -14,6 +14,9 @@ import gapt.expr.util.rename
 import gapt.expr.util.syntacticMGU
 import gapt.expr.util.syntacticMatching
 import gapt.grammars.{ RecSchemTemplate, RecursionScheme, Rule }
+import gapt.logic.hol.CNFp
+import gapt.logic.hol.simplify
+import gapt.logic.hol.skolemize
 import gapt.proofs._
 import gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
 import gapt.provers.Prover

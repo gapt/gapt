@@ -1,18 +1,17 @@
 package gapt.proofs.context
 
 import gapt.expr._
-import gapt.expr.formula.AndC
 import gapt.expr.formula.Bottom
-import gapt.expr.formula.BottomC
-import gapt.expr.formula.EqC
-import gapt.expr.formula.ExistsC
-import gapt.expr.formula.ForallC
-import gapt.expr.formula.ImpC
-import gapt.expr.formula.NegC
-import gapt.expr.formula.OrC
 import gapt.expr.formula.Top
-import gapt.expr.formula.TopC
-import gapt.expr.formula.hol.SkolemFunctions
+import gapt.expr.formula.constants.AndC
+import gapt.expr.formula.constants.BottomC
+import gapt.expr.formula.constants.EqC
+import gapt.expr.formula.constants.ExistsC
+import gapt.expr.formula.constants.ForallC
+import gapt.expr.formula.constants.ImpC
+import gapt.expr.formula.constants.NegC
+import gapt.expr.formula.constants.OrC
+import gapt.expr.formula.constants.TopC
 import gapt.expr.ty.TBase
 import gapt.expr.ty.TVar
 import gapt.expr.ty.To
@@ -24,6 +23,7 @@ import gapt.formats.babel.BabelSignature
 import gapt.formats.babel.Notation
 import gapt.formats.babel.Notations
 import gapt.formats.babel.Precedence
+import gapt.logic.hol.SkolemFunctions
 import gapt.proofs.Checkable
 import gapt.proofs.context.facet.BaseTypes
 import gapt.proofs.context.facet.Constants

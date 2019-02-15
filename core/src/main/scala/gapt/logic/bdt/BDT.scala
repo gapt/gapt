@@ -1,9 +1,8 @@
-package gapt.expr.bdt
+package gapt.logic.bdt
 
-import gapt.expr.Polarity
-import gapt.expr.bdt.BDT.F
-import gapt.expr.bdt.BDT.Ite
-import gapt.expr.bdt.BDT.T
+import gapt.logic.bdt.BDT.F
+import gapt.logic.bdt.BDT.Ite
+import gapt.logic.bdt.BDT.T
 import gapt.expr.formula.And
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Bottom
@@ -12,6 +11,7 @@ import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Top
+import gapt.logic.Polarity
 import gapt.proofs.Sequent
 import gapt.provers.congruence.CC
 

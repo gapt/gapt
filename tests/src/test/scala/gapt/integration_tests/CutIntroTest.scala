@@ -6,6 +6,7 @@ import gapt.expr._
 import gapt.expr.formula.fol.Numeral
 import gapt.expr.formula.hol.containsQuantifier
 import gapt.grammars.DeltaTableMethod
+import gapt.logic.Polarity
 import gapt.proofs.Sequent
 import gapt.proofs.expansion.ETWeakening
 import gapt.proofs.expansion.ExpansionProof

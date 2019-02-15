@@ -4,9 +4,9 @@ import gapt.expr._
 import gapt.expr.formula.And
 import gapt.expr.formula.FOLFormula
 import gapt.expr.formula.Formula
-import gapt.expr.formula.hol.simplify
 import gapt.expr.subst.Substitution
 import gapt.expr.util.rename
+import gapt.logic.hol.simplify
 import gapt.provers.smtlib.SmtInterpol
 import gapt.utils.Tree
 

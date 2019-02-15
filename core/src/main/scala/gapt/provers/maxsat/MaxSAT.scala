@@ -4,6 +4,8 @@ import gapt.expr._
 import gapt.expr.formula.Formula
 import gapt.expr.formula.hol._
 import gapt.formats.dimacs._
+import gapt.logic.hol.CNFp
+import gapt.logic.hol.fastStructuralCNF
 import gapt.models.PropositionalModel
 import gapt.proofs.HOLClause
 import gapt.utils.Logger

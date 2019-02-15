@@ -10,6 +10,7 @@ import gapt.expr.formula.Top
 import gapt.expr.formula.hol.instantiate
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
+import gapt.logic.Polarity
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext

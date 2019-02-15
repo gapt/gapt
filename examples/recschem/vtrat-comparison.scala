@@ -7,8 +7,10 @@ import gapt.expr.formula.FOLFunction
 import gapt.expr.formula.FOLFunctionConst
 import gapt.expr.formula.FOLVar
 import gapt.expr.formula.fol.Numeral
-import gapt.expr.formula.hol.{ lcomp, simplify, toNNF }
+import gapt.expr.formula.hol.lcomp
 import gapt.grammars._
+import gapt.logic.hol.simplify
+import gapt.logic.hol.toNNF
 import gapt.provers.maxsat.bestAvailableMaxSatSolver
 import gapt.utils.{ LogHandler, time, verbose }
 

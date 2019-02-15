@@ -7,13 +7,13 @@ import gapt.expr.Var
 import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Bottom
-import gapt.expr.formula.BottomC
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Top
-import gapt.expr.formula.TopC
+import gapt.expr.formula.constants.BottomC
+import gapt.expr.formula.constants.TopC
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.ty.To

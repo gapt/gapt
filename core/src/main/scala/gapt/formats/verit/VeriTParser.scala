@@ -17,6 +17,7 @@ import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.hol.instantiate
 import gapt.formats.InputFile
+import gapt.logic.Polarity
 import gapt.proofs.Sequent
 import gapt.proofs.expansion._
 

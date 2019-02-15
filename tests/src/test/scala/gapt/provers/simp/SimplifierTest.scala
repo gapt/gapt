@@ -2,6 +2,7 @@ package gapt.provers.simp
 
 import gapt.expr._
 import gapt.expr.formula.Top
+import gapt.logic.Polarity
 import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.TopAxiom
 import gapt.proofs.{ HOLSequent, Sequent }

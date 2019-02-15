@@ -17,7 +17,7 @@ import gapt.utils.NameGenerator
 import scala.collection.mutable
 
 object tautAtomicExpansionET {
-  import Polarity._
+  import gapt.logic.Polarity._
   def apply( formula: Formula )( implicit nameGen: NameGenerator ): ( ExpansionTree, ExpansionTree ) = {
     val ( f1, f2 ) = asTerm( formula )
     ExpansionTree( formula, InAntecedent, f1 ) -> ExpansionTree( formula, InSuccedent, f2 )

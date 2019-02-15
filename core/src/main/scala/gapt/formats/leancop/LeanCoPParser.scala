@@ -22,6 +22,10 @@ import gapt.expr.subst.FOLSubstitution
 import gapt.expr.util.clauseSubsumption
 import gapt.expr.util.freeVariables
 import gapt.formats.InputFile
+import gapt.logic.Polarity
+import gapt.logic.hol.CNFn
+import gapt.logic.hol.DNFp
+import gapt.logic.hol.toNNF
 
 import scala.util.parsing.combinator._
 import scala.collection.immutable.HashMap

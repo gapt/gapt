@@ -2,7 +2,7 @@ package gapt.proofs.epsilon
 
 import gapt.expr._
 import gapt.expr.formula.Formula
-import gapt.expr.formula.LogicalC
+import gapt.expr.formula.constants.LogicalC
 import gapt.expr.ty.->:
 import gapt.expr.ty.To
 import gapt.expr.ty.Ty

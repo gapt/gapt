@@ -10,6 +10,7 @@ import gapt.expr.formula.Or
 import gapt.expr.formula.hol.instantiate
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
+import gapt.logic.Polarity
 import gapt.proofs._
 
 /**

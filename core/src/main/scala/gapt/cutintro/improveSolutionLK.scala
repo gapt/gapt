@@ -1,7 +1,7 @@
 package gapt.cutintro
 
 import gapt.expr._
-import gapt.expr.formula.hol.{ CNFp, lcomp, simplify }
+import gapt.expr.formula.hol.lcomp
 import gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
 import gapt.proofs.{ FOLClause, HOLClause, HOLSequent, RichFOLSequent, Sequent }
 import gapt.provers.Prover
@@ -14,6 +14,8 @@ import gapt.expr.subst.FOLSubstitution
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
+import gapt.logic.hol.CNFp
+import gapt.logic.hol.simplify
 
 import scala.collection.mutable
 

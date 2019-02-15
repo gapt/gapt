@@ -1,6 +1,7 @@
 package gapt.proofs.expansion
 import gapt.expr._
 import gapt.expr.subst.Substitution
+import gapt.logic.Polarity
 import org.specs2.mutable.Specification
 
 class FormulaToExpansionTreeTest extends Specification {

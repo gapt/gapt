@@ -4,10 +4,12 @@ import gapt.expr.formula.And
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Or
 import gapt.expr.formula.fol.{ folSubTerms, thresholds }
-import gapt.expr.formula.hol.{ lcomp, simplify, toNNF }
+import gapt.expr.formula.hol.lcomp
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
+import gapt.logic.hol.simplify
+import gapt.logic.hol.toNNF
 import gapt.provers.maxsat.MaxSATSolver
 import gapt.utils.Logger
 

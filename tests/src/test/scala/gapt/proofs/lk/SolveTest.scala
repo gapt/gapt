@@ -6,6 +6,7 @@ import gapt.expr._
 import gapt.expr.formula.Bottom
 import gapt.expr.formula.Top
 import gapt.expr.formula.hol.existentialClosure
+import gapt.logic.Polarity
 import gapt.proofs.expansion._
 import gapt.proofs.lk.rules.BottomAxiom
 import gapt.proofs.lk.rules.TopAxiom

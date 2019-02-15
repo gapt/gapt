@@ -11,7 +11,7 @@ import gapt.utils.{ LogHandler, Maybe }
 import ammonite.ops._
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Eq
-import gapt.expr.formula.EqC
+import gapt.expr.formula.constants.EqC
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.To
 import gapt.expr.ty.arity

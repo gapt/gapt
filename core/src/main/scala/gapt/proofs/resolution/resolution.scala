@@ -13,7 +13,6 @@ import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Top
-import gapt.expr.formula.hol.SkolemFunctions
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.->:
 import gapt.expr.ty.FunctionType
@@ -23,6 +22,7 @@ import gapt.expr.util.rename
 import gapt.expr.util.replacementContext
 import gapt.expr.util.syntacticMGU
 import gapt.formats.babel.BabelSignature
+import gapt.logic.hol.SkolemFunctions
 import gapt.proofs._
 import gapt.proofs.context.Context
 

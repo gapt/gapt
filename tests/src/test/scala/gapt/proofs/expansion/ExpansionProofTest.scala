@@ -6,6 +6,7 @@ import gapt.expr._
 import gapt.expr.subst.Substitution
 import gapt.formats.ClasspathInputFile
 import gapt.formats.llk.LLKProofParser
+import gapt.logic.Polarity
 import gapt.proofs.context.Context
 import gapt.proofs.context.update.Sort
 import gapt.proofs.lk.transformations.LKToExpansionProof

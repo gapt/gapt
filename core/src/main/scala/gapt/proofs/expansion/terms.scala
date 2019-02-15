@@ -11,6 +11,7 @@ import gapt.expr.formula.Top
 import gapt.expr.formula.VarOrConst
 import gapt.expr.subst.Substitution
 import gapt.formats.babel.BabelSignature
+import gapt.logic.Polarity
 import gapt.utils.Doc
 
 import scala.runtime.ScalaRunTime

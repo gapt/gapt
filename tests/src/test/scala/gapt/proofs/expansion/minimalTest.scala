@@ -7,6 +7,7 @@ import gapt.expr.formula.Ex
 import gapt.expr.formula.FOLAtom
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
+import gapt.logic.Polarity
 import gapt.proofs.Sequent
 import gapt.provers.sat.Sat4j
 import org.specs2.mutable._

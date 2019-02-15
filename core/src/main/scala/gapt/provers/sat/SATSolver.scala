@@ -2,8 +2,8 @@ package gapt.provers.sat
 
 import gapt.expr.formula.Formula
 import gapt.expr.formula.HOLAtomConst
-import gapt.expr.formula.hol.fastStructuralCNF
 import gapt.formats.dimacs.{ DIMACS, DIMACSEncoding }
+import gapt.logic.hol.fastStructuralCNF
 import gapt.models.PropositionalModel
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext

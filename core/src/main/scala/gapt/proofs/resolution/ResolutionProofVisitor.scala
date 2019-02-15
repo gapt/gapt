@@ -1,7 +1,7 @@
 package gapt.proofs.resolution
 
-import gapt.expr.Polarity
 import gapt.expr.formula.Formula
+import gapt.logic.Polarity
 import gapt.proofs.SequentIndex
 
 import scala.collection.mutable

@@ -7,6 +7,7 @@ import gapt.expr.formula.HOLAtomConst
 import gapt.expr.formula.Iff
 import gapt.expr.formula.hol.HOLPosition
 import gapt.expr.subst.Substitution
+import gapt.logic.Polarity
 import gapt.proofs.context.Context
 
 object eliminateDefsET {

@@ -7,6 +7,7 @@ import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.formats.babel.{ BabelExporter, BabelSignature }
+import gapt.logic.Polarity
 import gapt.utils.Doc
 
 case class Hyp( idx: Int ) extends AnyVal {

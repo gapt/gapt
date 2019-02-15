@@ -2,8 +2,9 @@ package gapt.formats.json
 
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Formula
-import gapt.expr.{ Abs, Const, Expr, Polarity, Var, preExpr }
+import gapt.expr.{ Abs, Const, Expr, Var, preExpr }
 import gapt.formats.babel.BabelParser
+import gapt.logic.Polarity
 import io.circe.{ Decoder, Encoder, KeyDecoder, KeyEncoder }
 
 /**

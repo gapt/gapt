@@ -18,6 +18,7 @@ import gapt.expr.util.replacementContext
 import gapt.expr.util.syntacticMGU
 import gapt.expr.util.syntacticMatching
 import gapt.expr.util.typeVariables
+import gapt.logic.Polarity
 import gapt.proofs._
 import gapt.proofs.resolution._
 import gapt.provers.escargot.LPO

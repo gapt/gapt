@@ -6,6 +6,7 @@ import gapt.expr.formula.Atom
 import gapt.expr.formula.Ex
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
+import gapt.logic.Polarity
 import org.specs2.mutable._
 
 class ReplaceAtHOLPositionTest extends Specification {

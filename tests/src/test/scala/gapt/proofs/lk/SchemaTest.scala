@@ -4,11 +4,11 @@ import gapt.expr._
 import gapt.examples._
 import gapt.proofs.ceres._
 import gapt.expr.formula.fol.natMaker
-import gapt.expr.formula.hol.CNFp
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.TBase
 import gapt.expr.util.clauseSubsumption
 import gapt.expr.util.freeVariables
+import gapt.logic.hol.CNFp
 import gapt.proofs.context.Context._
 import gapt.proofs.Sequent
 import gapt.proofs.context.facet.ProofDefinitions

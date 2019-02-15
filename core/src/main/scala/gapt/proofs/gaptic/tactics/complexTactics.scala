@@ -24,6 +24,7 @@ import gapt.expr.ty.TBase
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.expr.util.syntacticMatching
+import gapt.logic.Polarity
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.lk.rules.AndRightRule

@@ -1,6 +1,5 @@
-package gapt.expr.formula.hol
+package gapt.logic.hol
 
-import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Atom

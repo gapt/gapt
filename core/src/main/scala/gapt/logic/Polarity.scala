@@ -1,4 +1,4 @@
-package gapt.expr
+package gapt.logic
 
 /**
  * Polarity of a formula.

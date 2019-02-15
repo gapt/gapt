@@ -1,6 +1,9 @@
-package gapt.expr.formula.hol
+package gapt.logic.hol
 
-import gapt.expr._
+import gapt.expr.Abs
+import gapt.expr.Const
+import gapt.expr.Expr
+import gapt.expr.Var
 import gapt.expr.formula
 import gapt.expr.formula.All
 import gapt.expr.formula.And
@@ -18,8 +21,14 @@ import gapt.expr.ty.FunctionType
 import gapt.expr.util.constants
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
-import gapt.proofs._
-import gapt.proofs.expansion._
+import gapt.proofs.Ant
+import gapt.proofs.FOLClause
+import gapt.proofs.FOLSequent
+import gapt.proofs.HOLClause
+import gapt.proofs.HOLSequent
+import gapt.proofs.Sequent
+import gapt.proofs.SequentIndex
+import gapt.proofs.Suc
 import gapt.utils.NameGenerator
 
 import scala.collection.mutable

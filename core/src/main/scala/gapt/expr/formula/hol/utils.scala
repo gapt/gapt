@@ -30,6 +30,7 @@ import gapt.expr.ty.To
 import gapt.expr.ty.Ty
 import gapt.expr.util.LambdaPosition
 import gapt.expr.util.freeVariables
+import gapt.logic.Polarity
 import gapt.proofs.{ FOLClause, HOLSequent, Sequent }
 
 /**

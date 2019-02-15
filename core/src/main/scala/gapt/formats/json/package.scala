@@ -11,6 +11,7 @@ import gapt.formats.json.et.ExpansionTreeCodec._
 import gapt.proofs.lk.LKProof
 import gapt.formats.json.ExprCodec._
 import gapt.formats.json.SequentCodec._
+import gapt.logic.Polarity
 import gapt.proofs.expansion.{ ETt, ExpansionProof, ExpansionSequent, ExpansionTree }
 import gapt.proofs.nd.NDProof
 

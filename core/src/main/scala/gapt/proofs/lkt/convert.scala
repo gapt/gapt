@@ -8,6 +8,7 @@ import gapt.expr.formula.Ex
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Or
 import gapt.expr.subst.Substitution
+import gapt.logic.Polarity
 import gapt.proofs.Sequent
 import gapt.proofs.lk
 import gapt.proofs.lk.rules

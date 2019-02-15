@@ -1,4 +1,4 @@
-package gapt.expr.formula.hol
+package gapt.logic.hol
 
 import gapt.expr._
 import gapt.expr.formula.All
@@ -13,8 +13,13 @@ import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Quant
 import gapt.expr.formula.Top
-import gapt.proofs.resolution.{ Input, structuralCNF }
-import gapt.proofs.{ Clause, FOLClause, HOLClause, Sequent }
+import gapt.expr.formula.hol.containsStrongQuantifier
+import gapt.logic.Polarity
+import gapt.proofs.FOLClause
+import gapt.proofs.HOLClause
+import gapt.proofs.Sequent
+import gapt.proofs.resolution.Input
+import gapt.proofs.resolution.structuralCNF
 
 /**
  * Transforms a formula to negation normal form (transforming also

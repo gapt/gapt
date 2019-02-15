@@ -18,6 +18,8 @@ import gapt.formats.latex.LatexExporter
 import gapt.formats.smt.SmtLibExporter
 import gapt.grammars.{ InductionGrammar, findMinimalInductionGrammar }
 import gapt.grammars.InductionGrammar.Production
+import gapt.logic.hol.CNFp
+import gapt.logic.hol.skolemize
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.{ BaseTypes, StructurallyInductiveTypes }
 import gapt.proofs.context.mutable.MutableContext

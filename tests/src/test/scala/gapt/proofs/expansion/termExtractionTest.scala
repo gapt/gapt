@@ -6,6 +6,7 @@ import gapt.expr.formula.All
 import gapt.expr.formula.Ex
 import gapt.expr.formula.FOLAtom
 import gapt.expr.formula.FOLVar
+import gapt.logic.Polarity
 import gapt.proofs.{ HOLSequent, Sequent }
 import org.specs2.mutable._
 

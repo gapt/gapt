@@ -9,6 +9,7 @@ import gapt.expr.formula.FOLAtomConst
 import gapt.expr.formula.FOLVar
 import gapt.expr.formula.Top
 import gapt.expr.ty.TBase
+import gapt.logic.Polarity
 import gapt.proofs.context.Context
 import gapt.proofs.{ Ant, ProofBuilder, Sequent, SequentMatchers, Suc }
 import gapt.proofs.expansion._

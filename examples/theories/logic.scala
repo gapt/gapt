@@ -10,7 +10,6 @@ import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Top
 import gapt.expr.formula.hol.instantiate
-import gapt.expr.formula.hol.simplify
 import gapt.expr.formula.hol.universalClosure
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.FunctionType
@@ -23,6 +22,7 @@ import gapt.expr.util.freeVariables
 import gapt.expr.util.syntacticMatching
 import gapt.expr.util.typeVariables
 import gapt.formats.babel.Notation
+import gapt.logic.hol.simplify
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.context.immutable.ImmutableContext

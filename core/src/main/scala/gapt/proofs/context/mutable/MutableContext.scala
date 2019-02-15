@@ -7,11 +7,11 @@ import gapt.expr.Expr
 import gapt.expr.Replaceable
 import gapt.expr.containedNames
 import gapt.expr.formula.Quant
-import gapt.expr.formula.hol.SkolemFunctions
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.baseTypes
 import gapt.expr.util.constants
 import gapt.expr.util.typeVariables
+import gapt.logic.hol.SkolemFunctions
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.State

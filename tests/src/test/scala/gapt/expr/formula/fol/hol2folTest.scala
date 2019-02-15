@@ -15,7 +15,7 @@ import gapt.expr.formula.FOLFunction
 import gapt.expr.formula.FOLVar
 import gapt.expr.formula.HOLFunction
 import gapt.expr.formula.Imp
-import gapt.expr.formula.ImpC
+import gapt.expr.formula.constants.ImpC
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
 import gapt.expr.ty.Ty

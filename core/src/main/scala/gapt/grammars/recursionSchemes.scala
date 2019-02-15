@@ -30,6 +30,8 @@ import gapt.expr.util.subTerms
 import gapt.expr.util.syntacticMGU
 import gapt.expr.util.syntacticMatching
 import gapt.formats.babel.{ BabelExporter, BabelSignature, MapBabelSignature, Precedence }
+import gapt.logic.hol.simplify
+import gapt.logic.hol.toNNF
 import gapt.proofs.context.Context
 import gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import gapt.utils.{ Doc, Logger }

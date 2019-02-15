@@ -6,6 +6,17 @@ import gapt.expr.Apps
 import gapt.expr.Const
 import gapt.expr.Expr
 import gapt.expr.Var
+import gapt.expr.formula.constants.AndC
+import gapt.expr.formula.constants.BottomC
+import gapt.expr.formula.constants.EqC
+import gapt.expr.formula.constants.ExistsC
+import gapt.expr.formula.constants.ForallC
+import gapt.expr.formula.constants.ImpC
+import gapt.expr.formula.constants.MonomorphicLogicalC
+import gapt.expr.formula.constants.NegC
+import gapt.expr.formula.constants.OrC
+import gapt.expr.formula.constants.QuantifierC
+import gapt.expr.formula.constants.TopC
 import gapt.expr.ty.->:
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
