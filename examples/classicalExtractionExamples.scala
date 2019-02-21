@@ -4471,95 +4471,6 @@ object booleanDetTwoVars extends Script {
   println( normalize( lam( bTrue )( bTrue ) ).toUntypedString )
 }
 
-object booleanDetTwoVarsNoExcludedMiddle extends Script {
-  import gapt.proofs.context.Context
-  import gapt.proofs.nd.ClassicalExtraction
-  var ctx = Context.default
-  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
-  ctx += InductiveType( "bool", hoc"bFalse: bool", hoc"bTrue: bool" )
-  val Some( bFalse ) = ctx.constant( "bFalse" )
-  val Some( bTrue ) = ctx.constant( "bTrue" )
-  val bIsTrue = hoc"p : bool>o"
-  ctx += PrimitiveRecursiveFunction(
-    bIsTrue,
-    List(
-      ( bIsTrue( bFalse ) -> hof"false" ),
-      ( bIsTrue( bTrue ) -> hof"true" ) ) )( ctx )
-  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
-  val p1 = ProofBuilder.
-    c( gapt.proofs.nd.LogicalAxiom( hof"-p(x1)" ) ).
-    c( gapt.proofs.nd.LogicalAxiom( hof"-p(x2)" ) ).
-    b( AndIntroRule( _, _ ) ).
-    c( gapt.proofs.nd.LogicalAxiom( hof"-p(x1)" ) ).
-    b( AndIntroRule( _, _ ) ).
-    u( ContractionRule( _, hof"-p(x1)" ) ).
-    u( OrIntro1Rule( _, hof"-p(x1) & p(x2) & p(x1)" ) ).
-    u( OrIntro1Rule( _, hof"p(x1) & -p(x2) & p(x1)" ) ).
-    u( OrIntro1Rule( _, hof"p(x1) & p(x2) & -p(x1)" ) ).
-    u( ExistsIntroRule( _, hof"?y ((-p(x1) & -p(x2) & -p(y)) | (-p(x1) & p(x2) & p(y)) | (p(x1) & -p(x2) & p(y)) | (p(x1) & p(x2) & -p(y)))" ) ).
-    qed
-  println( p1 )
-  val p2 = ProofBuilder.
-    c( gapt.proofs.nd.LogicalAxiom( hof"-p(x1)" ) ).
-    c( gapt.proofs.nd.LogicalAxiom( hof"p(x2)" ) ).
-    b( AndIntroRule( _, _ ) ).
-    c( gapt.proofs.nd.LogicalAxiom( hof"p(x2)" ) ).
-    b( AndIntroRule( _, _ ) ).
-    u( ContractionRule( _, hof"p(x2)" ) ).
-    u( OrIntro2Rule( _, hof"-p(x1) & -p(x2) & -p(x2)" ) ).
-    u( OrIntro1Rule( _, hof"p(x1) & -p(x2) & p(x2)" ) ).
-    u( OrIntro1Rule( _, hof"p(x1) & p(x2) & -p(x2)" ) ).
-    u( ExistsIntroRule( _, hof"?y ((-p(x1) & -p(x2) & -p(y)) | (-p(x1) & p(x2) & p(y)) | (p(x1) & -p(x2) & p(y)) | (p(x1) & p(x2) & -p(y)))" ) ).
-    qed
-  println( p2 )
-  val p3 = ProofBuilder.
-    c( gapt.proofs.nd.LogicalAxiom( hof"p(x1)" ) ).
-    c( gapt.proofs.nd.LogicalAxiom( hof"-p(x2)" ) ).
-    b( AndIntroRule( _, _ ) ).
-    c( gapt.proofs.nd.LogicalAxiom( hof"p(x1)" ) ).
-    b( AndIntroRule( _, _ ) ).
-    u( ContractionRule( _, hof"p(x1)" ) ).
-    u( OrIntro2Rule( _, hof"-p(x1) & -p(x2) & -p(x1) | (-p(x1) & p(x2) & p(x1))" ) ).
-    u( OrIntro1Rule( _, hof"p(x1) & p(x2) & -p(x1)" ) ).
-    u( ExistsIntroRule( _, hof"?y ((-p(x1) & -p(x2) & -p(y)) | (-p(x1) & p(x2) & p(y)) | (p(x1) & -p(x2) & p(y)) | (p(x1) & p(x2) & -p(y)))" ) ).
-    qed
-  println( p3 )
-  val p4 = ProofBuilder.
-    c( gapt.proofs.nd.LogicalAxiom( hof"p(x1)" ) ).
-    c( gapt.proofs.nd.LogicalAxiom( hof"p(x2)" ) ).
-    b( AndIntroRule( _, _ ) ).
-    c( gapt.proofs.nd.TheoryAxiom( hof"-p(bFalse)" ) ).
-    b( AndIntroRule( _, _ ) ).
-    u( OrIntro2Rule( _, hof"(-p(x1) & -p(x2) & -p(bFalse)) | (-p(x1) & p(x2) & p(bFalse)) | (p(x1) & -p(x2) & p(bFalse))" ) ).
-    u( ExistsIntroRule( _, hof"?y ((-p(x1) & -p(x2) & -p(y)) | (-p(x1) & p(x2) & p(y)) | (p(x1) & -p(x2) & p(y)) | (p(x1) & p(x2) & -p(y)))" ) ).
-    qed
-  println( p4 )
-  val p = ProofBuilder.
-    c( TheoryAxiom( hof"p(x1) | -p(x1)" ) ).
-    c( TheoryAxiom( hof"p(x2) | -p(x2)" ) ).
-    c( p4 ).
-    c( p3 ).
-    t( OrElimRule( _, _, _ ) ).
-    u( ContractionRule( _, hof"p(x1)" ) ).
-    c( TheoryAxiom( hof"p(x2) | -p(x2)" ) ).
-    c( p2 ).
-    c( p1 ).
-    t( OrElimRule( _, _, _ ) ).
-    u( ContractionRule( _, hof"-p(x1)" ) ).
-    t( OrElimRule( _, _, _ ) ).
-    u( ForallIntroRule( _, hof"!x2?y ((-p(x1) & -p(x2) & -p(y)) | (-p(x1) & p(x2) & p(y)) | (p(x1) & -p(x2) & p(y)) | (p(x1) & p(x2) & -p(y)))", hov"x2:bool" ) ).
-    u( ForallIntroRule( _, hof"!x1!x2?y ((-p(x1) & -p(x2) & -p(y)) | (-p(x1) & p(x2) & p(y)) | (p(x1) & -p(x2) & p(y)) | (p(x1) & p(x2) & -p(y)))", hov"x1:bool" ) ).
-    qed
-  println( p )
-  prooftool( p )
-  val lam = ClassicalExtraction.extractCases( p )
-  println( lam.toUntypedString )
-  println( normalize( lam( bTrue )( bTrue ) ).toUntypedString )
-  /*
-  println(normalize(lam(bFalse)))
-  */
-}
-
 object higherOrderTypingProblem extends Script {
   // from gitter conversation
   import gapt.proofs.context.Context
@@ -4611,6 +4522,28 @@ object higherOrderTypingProblemSimple extends Script {
   val p = ProofBuilder.
     c( gapt.proofs.nd.LogicalAxiom( hof"?x P(0,x)" ) ).
     u( ExistsIntroRule( _, hof"?y y" ) ).
+    qed
+  println( p )
+  prooftool( p )
+  val lam = ClassicalExtraction.extractCases( p )
+  println( lam )
+}
+object forallProvesNotExistsNot extends Script {
+  import gapt.proofs.context.Context
+  import gapt.proofs.nd.ClassicalExtraction
+
+  var ctx = Context.default
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += hoc"P: nat>o"
+  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+  val p = ProofBuilder.
+    c( gapt.proofs.nd.LogicalAxiom( hof"?x -P(x)" ) ).
+    c( gapt.proofs.nd.LogicalAxiom( hof"-P(x)" ) ).
+    c( gapt.proofs.nd.LogicalAxiom( hof"!x P(x)" ) ).
+    u( ForallElimRule( _, le"x:nat" ) ).
+    b( NegElimRule( _, _ ) ).
+    b( ExistsElimRule( _, _ ) ).
+    u( NegIntroRule( _, hof"?x -P(x)" ) ).
     qed
   println( p )
   prooftool( p )

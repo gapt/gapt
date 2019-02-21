@@ -132,11 +132,7 @@ class BetaReductionTest extends Specification {
     implicit val ctxClassical = ClassicalExtraction.systemT( ctx )
     normalize(
       le"""
-s((^(y1: nat>exn) tryCatch(y1,
-   0,
-  handle(y1(x1:nat),
-    s(0)))
-)(exnV))""" ) must_== le"s(0)"
+s(tryCatch(y0, y1, 0, s(0)))""" ) must_== le"s(0)"
   }
   "normalize try/catch with commuting conversion left" in {
     var ctx = Context.default

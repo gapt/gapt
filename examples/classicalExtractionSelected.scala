@@ -13,6 +13,7 @@ import gapt.proofs.nd.{ ClassicalExtraction, ExcludedMiddleRule }
 import gapt.proofs.resolution.PCNF
 import gapt.prooftool.prooftool
 import gapt.provers.smtlib.Z3
+import gapt.utils.LogHandler
 
 object sqrtProofManualCorrectAxiom extends Script {
 
@@ -768,7 +769,7 @@ println( "expecting inr(i)" + normalize( m1Args( ClassicalExtraction.flat( defle
 */
 }
 
-object booleanDet extends Script {
+object booleanDetVampire extends Script {
 
   import gapt.expr._
   import gapt.proofs.nd._
@@ -804,16 +805,29 @@ object booleanDet extends Script {
   val lk = ExpansionProofToLK( desk ).getOrElse( throw new Exception( "LK proof not obtained" ) )
   val nd = LKToND( lk, Some( Suc( 0 ) ) )
   println( nd )
-  prooftool( nd )
+  //prooftool( nd )
+  val emSubProofs =
+    nd.subProofs.filter {
+      case ExcludedMiddleRule( _, _, _, _ ) => true
+      case _                                => false
+    }
+  println( s"contains ${
+    emSubProofs.size
+  } excluded middle inferences" )
+  println( emSubProofs.map( _.endSequent.succedent ).mkString( "\n" ) )
   val m1 = ClassicalExtraction.extractCases( nd )
   val Some( i ) = ctxClassical.constant( "i" )
   val Some( exception ) = ctxClassical.constant( "exception", List( ty"1" ) )
 
   val realm1 = m1( exception )( i )
-  println( normalize( realm1( bFalse )( bFalse ) ) )
-  println( normalize( realm1( bFalse )( bTrue ) ) )
-  println( normalize( realm1( bTrue )( bFalse ) ) )
-  println( normalize( realm1( bTrue )( bTrue ) ) )
+  LogHandler.current.value = LogHandler.silent
+  /*
+  println( normalize( realm1( bFalse )( bFalse ) ).toUntypedString )
+  println( normalize( realm1( bFalse )( bTrue ) ).toUntypedString )
+  println( normalize( realm1( bTrue )( bFalse ) ).toUntypedString )
+  */
+  println( realm1( bTrue )( bTrue ).toUntypedString )
+  println( normalize( realm1( bTrue )( bTrue ) ).toUntypedString )
 }
 
 object simpleNatDet extends Script {
