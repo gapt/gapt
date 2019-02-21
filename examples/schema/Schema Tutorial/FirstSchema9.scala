@@ -10,7 +10,7 @@ import gapt.proofs.context.update.ProofDefinitionDeclaration
 import gapt.proofs.context.update.ProofNameDeclaration
 import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
-import gapt.proofs.lk.instantiateProof
+import gapt.proofs.lk.util.instantiateProof
 
 object FirstSchema9 extends TacticsProof {
   ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )

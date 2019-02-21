@@ -5,6 +5,11 @@ import gapt.examples.{ BussTautology, primediv }
 import gapt.expr._
 import gapt.expr.hol.existentialClosure
 import gapt.proofs.expansion._
+import gapt.proofs.lk.rules.BottomAxiom
+import gapt.proofs.lk.rules.TopAxiom
+import gapt.proofs.lk.transformations.LKToExpansionProof
+import gapt.proofs.lk.transformations.eliminateDefinitions
+import gapt.proofs.lk.util.solvePropositional
 import gapt.proofs.{ Sequent, SequentMatchers }
 import gapt.provers.escargot.Escargot
 import org.specs2.mutable._

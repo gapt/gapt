@@ -8,6 +8,24 @@ import ch.randelshofer.tree._
 import javax.swing.event.ChangeListener
 import java.awt.Color
 
+import gapt.proofs.lk.rules.AndLeftRule
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.ContractionLeftRule
+import gapt.proofs.lk.rules.ContractionRightRule
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.EqualityRule
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.ImpRightRule
+import gapt.proofs.lk.rules.InitialSequent
+import gapt.proofs.lk.rules.NegLeftRule
+import gapt.proofs.lk.rules.NegRightRule
+import gapt.proofs.lk.rules.OrLeftRule
+import gapt.proofs.lk.rules.OrRightRule
+import gapt.proofs.lk.rules.SkolemQuantifierRule
+import gapt.proofs.lk.rules.StrongQuantifierRule
+import gapt.proofs.lk.rules.WeakQuantifierRule
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.WeakeningRightRule
 import gapt.proofs.resolution.{ AvatarComponent, AvatarContradiction, AvatarSplit, Factor, Paramod, Refl, Resolution, Subst, Taut }
 
 /** Wrapper from gapt proofs to TreeViz trees */

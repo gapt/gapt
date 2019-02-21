@@ -1,8 +1,8 @@
 package gapt.proofs.lk.reductions
 
 import gapt.expr.hol.containsQuantifier
-import gapt.proofs.context.Context
-import gapt.proofs.lk.{ CutRule, LKProof }
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.rules.CutRule
 
 trait RedexFilter {
   def filter( reduction: Reduction ): Reduction

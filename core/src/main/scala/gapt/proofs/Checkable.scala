@@ -4,8 +4,31 @@ import gapt.expr._
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.context.update.Update
-import gapt.proofs.expansion.ExpansionProof
 import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.rules.AndLeftRule
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.BottomAxiom
+import gapt.proofs.lk.rules.ContractionRule
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.ConversionRule
+import gapt.proofs.lk.rules.EqualityRule
+import gapt.proofs.lk.rules.ExistsRightRule
+import gapt.proofs.lk.rules.ForallLeftRule
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.ImpRightRule
+import gapt.proofs.lk.rules.InductionRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.NegLeftRule
+import gapt.proofs.lk.rules.NegRightRule
+import gapt.proofs.lk.rules.OrLeftRule
+import gapt.proofs.lk.rules.OrRightRule
+import gapt.proofs.lk.rules.ProofLink
+import gapt.proofs.lk.rules.ReflexivityAxiom
+import gapt.proofs.lk.rules.SkolemQuantifierRule
+import gapt.proofs.lk.rules.StrongQuantifierRule
+import gapt.proofs.lk.rules.TopAxiom
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.WeakeningRightRule
 import gapt.proofs.resolution.ResolutionProof
 
 import scala.collection.mutable
@@ -109,7 +132,7 @@ object Checkable {
           | _: ImpLeftRule | _: ImpRightRule =>
         case _: ContractionRule | _: WeakeningLeftRule | _: WeakeningRightRule =>
         case _: CutRule =>
-        case d: DefinitionRule =>
+        case d: ConversionRule =>
           requireDefEq( d.mainFormula, d.auxFormula )( ctx )
       }
     }

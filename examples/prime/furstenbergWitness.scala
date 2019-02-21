@@ -3,7 +3,10 @@ package gapt.examples.prime
 import gapt.expr._
 import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.expansion.ETWeakQuantifier
-import gapt.proofs.lk.{ LKToExpansionProof, eliminateDefinitions, normalizeLKt, skolemizeLK }
+import gapt.proofs.lk.transformations.LKToExpansionProof
+import gapt.proofs.lk.transformations.eliminateDefinitions
+import gapt.proofs.lk.transformations.skolemizeLK
+import gapt.proofs.lk.normalizeLKt
 import gapt.proofs.lkt._
 
 object furstenbergWitness {

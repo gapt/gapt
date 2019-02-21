@@ -1,6 +1,6 @@
 package gapt.examples
 
-import gapt.proofs.lk.eliminateDefinitions
+import gapt.proofs.lk.transformations.eliminateDefinitions
 import org.specs2.mutable.Specification
 
 class TapeTest extends Specification {

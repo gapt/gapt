@@ -9,21 +9,15 @@ import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.{ Sequent, SequentMatchers }
 import gapt.proofs.gaptic.{ Lemma, ProofState, allR, cut, escargot, induction, insert, refl, rewrite }
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.InductionRule
+import gapt.proofs.lk.transformations.inductionNormalForm
+import gapt.proofs.lk.util.instanceProof
+import gapt.proofs.lk.util.isInductionFree
+import gapt.proofs.lk.util.regularize
 import org.specs2.mutable.Specification
 
 class InductionEliminationTests extends Specification with SequentMatchers {
-
-  private def isCutFree( proof: LKProof ): Boolean =
-    !proof.subProofs.exists {
-      case CutRule( _, _, _, _ ) => true
-      case _                     => false
-    }
-
-  private def isInductionFree( proof: LKProof ): Boolean =
-    !proof.subProofs.exists {
-      case InductionRule( _, _, _ ) => true
-      case _                        => false
-    }
 
   "isaplanner prop_08: induction should be eliminated" in {
     implicit val ctx = prop_08.ctx

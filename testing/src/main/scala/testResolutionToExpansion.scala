@@ -6,7 +6,7 @@ import gapt.expr.{ Atom, Const }
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion.{ eliminateCutsET, eliminateDefsET }
-import gapt.proofs.lk.LKToExpansionProof
+import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.proofs.resolution._
 import gapt.provers.prover9.Prover9Importer
 import gapt.utils.{ LogHandler, Logger, MetricsPrinter }

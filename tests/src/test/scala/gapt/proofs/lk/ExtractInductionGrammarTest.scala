@@ -5,6 +5,7 @@ import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.expansion.InstanceTermEncoding
 import gapt.proofs.gaptic.TacticsProof
+import gapt.proofs.lk.util.extractInductionGrammar
 import gapt.utils.SatMatchers
 import org.specs2.mutable.Specification
 

@@ -1,8 +1,39 @@
 package gapt.proofs.lk
 
-import gapt.expr.Formula
 import gapt.proofs.SequentConnector
 import gapt.proofs.gaptic.OpenAssumption
+import gapt.proofs.lk.rules.AndLeftRule
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.BottomAxiom
+import gapt.proofs.lk.rules.ContractionLeftRule
+import gapt.proofs.lk.rules.ContractionRightRule
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
+import gapt.proofs.lk.rules.EqualityLeftRule
+import gapt.proofs.lk.rules.EqualityRightRule
+import gapt.proofs.lk.rules.ExistsLeftRule
+import gapt.proofs.lk.rules.ExistsRightRule
+import gapt.proofs.lk.rules.ExistsSkLeftRule
+import gapt.proofs.lk.rules.ForallLeftRule
+import gapt.proofs.lk.rules.ForallRightRule
+import gapt.proofs.lk.rules.ForallSkRightRule
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.ImpRightRule
+import gapt.proofs.lk.rules.InductionCase
+import gapt.proofs.lk.rules.InductionRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.NegLeftRule
+import gapt.proofs.lk.rules.NegRightRule
+import gapt.proofs.lk.rules.OrLeftRule
+import gapt.proofs.lk.rules.OrRightRule
+import gapt.proofs.lk.rules.ProofLink
+import gapt.proofs.lk.rules.ReflexivityAxiom
+import gapt.proofs.lk.rules.TopAxiom
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.WeakeningRightRule
+import gapt.proofs.lk.rules.macros.ContractionLeftMacroRule
+import gapt.proofs.lk.rules.macros.ContractionRightMacroRule
 
 /**
  * Implementation of the visitor pattern for [[gapt.proofs.lk.LKProof]].
@@ -114,10 +145,10 @@ trait LKVisitor[T] {
     case p: InductionRule =>
       visitInduction( p, otherArg )
 
-    case p: DefinitionLeftRule =>
+    case p: ConversionLeftRule =>
       visitDefinitionLeft( p, otherArg )
 
-    case p: DefinitionRightRule =>
+    case p: ConversionRightRule =>
       visitDefinitionRight( p, otherArg )
   }
 
@@ -269,16 +300,16 @@ trait LKVisitor[T] {
         proof.formula, proof.term )
     }
 
-  protected def visitDefinitionLeft( proof: DefinitionLeftRule, otherArg: T ): ( LKProof, SequentConnector ) =
+  protected def visitDefinitionLeft( proof: ConversionLeftRule, otherArg: T ): ( LKProof, SequentConnector ) =
     one2one( proof, otherArg ) {
       case Seq( ( subProof, subConn ) ) =>
-        DefinitionLeftRule( subProof, subConn.child( proof.aux ), proof.mainFormula )
+        ConversionLeftRule( subProof, subConn.child( proof.aux ), proof.mainFormula )
     }
 
-  protected def visitDefinitionRight( proof: DefinitionRightRule, otherArg: T ): ( LKProof, SequentConnector ) =
+  protected def visitDefinitionRight( proof: ConversionRightRule, otherArg: T ): ( LKProof, SequentConnector ) =
     one2one( proof, otherArg ) {
       case Seq( ( subProof, subConn ) ) =>
-        DefinitionRightRule( subProof, subConn.child( proof.aux ), proof.mainFormula )
+        ConversionRightRule( subProof, subConn.child( proof.aux ), proof.mainFormula )
     }
 
   /**

@@ -2,6 +2,7 @@ package gapt.proofs.lk
 
 import gapt.expr._
 import gapt.proofs._
+import gapt.proofs.lk.util.AtomicExpansion
 import org.specs2.mutable._
 
 class AtomicExpansionTest extends Specification {

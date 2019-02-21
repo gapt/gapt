@@ -26,7 +26,7 @@ object factorial extends TacticsProof {
           :- !x qfact (s 0) x = fact x
         """ ) {
       treeGrammarInduction
-        .quantTys( "nat" )
+        .quantTys( TBase( "nat" ) )
         .equationalTheory( hof"x*(y*z) = (x*y)*z", hof"x*s(0) = x", hof"s(0)*x = x" )
         .canSolSize( 1 )
         .tautCheckSize( 0.5f, 1 ) // exponential blowup of canonical solution...

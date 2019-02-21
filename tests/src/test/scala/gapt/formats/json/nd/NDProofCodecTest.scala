@@ -1,6 +1,6 @@
 package gapt.formats.json.nd
 
-import gapt.proofs.lk.LKToND
+import gapt.proofs.lk.transformations.LKToND
 import gapt.proofs.nd.NDProof
 import org.specs2.mutable.Specification
 

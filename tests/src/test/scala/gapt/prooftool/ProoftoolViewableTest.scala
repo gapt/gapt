@@ -4,7 +4,8 @@ import gapt.formats.llk.ExtendedProofDatabase
 import gapt.proofs.HOLSequent
 import gapt.proofs.ceres.Struct
 import gapt.proofs.expansion.ExpansionProof
-import gapt.proofs.lk.{ ImpRightRule, LKProof }
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.rules.ImpRightRule
 import gapt.proofs.resolution.ResolutionProof
 import gapt.proofs.sketch.RefutationSketch
 import org.specs2.mutable.Specification

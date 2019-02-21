@@ -2,6 +2,8 @@ package gapt.proofs.lk
 
 import gapt.expr._
 import gapt.proofs.SequentMatchers
+import gapt.proofs.lk.rules.InductionRule
+import gapt.proofs.lk.transformations.makeInductionExplicit
 import org.specs2.mutable.Specification
 
 class MakeInductionExplicitTest extends Specification with SequentMatchers {

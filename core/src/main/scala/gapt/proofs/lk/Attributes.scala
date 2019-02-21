@@ -7,7 +7,7 @@ import gapt.proofs.context.facet.Facet
 import gapt.proofs.context.update.Update
 
 case class Attributes( attrs: Map[String, Set[String]] ) {
-  def +( lemmaName: String, attrName: String ) = copy( attrs =
+  def +( lemmaName: String, attrName: String ): Attributes = copy( attrs =
     attrs.updated( lemmaName, attrs( lemmaName ) + attrName ) )
 
   def has( lem: String, attr: String ): Boolean =

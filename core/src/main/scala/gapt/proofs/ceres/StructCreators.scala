@@ -7,6 +7,14 @@ import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofDefinitions
 import gapt.proofs.lk._
+import gapt.proofs.lk.rules.BinaryLKProof
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.EqualityLeftRule
+import gapt.proofs.lk.rules.EqualityRightRule
+import gapt.proofs.lk.rules.InitialSequent
+import gapt.proofs.lk.rules.ProofLink
+import gapt.proofs.lk.rules.ReflexivityAxiom
+import gapt.proofs.lk.rules.UnaryLKProof
 
 /**
  * Algorithms extracting structs from LK proofs, preparing them for gui code etc.

@@ -5,7 +5,7 @@ import gapt.examples.Script
 import gapt.expr._
 import gapt.grammars.DeltaTableMethod
 import gapt.proofs.expansion._
-import gapt.proofs.lk.LKToExpansionProof
+import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.provers.prover9.Prover9
 import gapt.provers.sat.Sat4j
 import gapt.utils.verbose

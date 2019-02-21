@@ -1,47 +1,42 @@
-/*
- * longNormalForm.scala
- *
- * Transforms a function f: i0 -> ... -> in -> o into
- * \lambda x0:i0. ... \lambda xn:in f x0 ... xn
- * i.e. adds the lambda abstraction and new variables.
- * Note that etaExpantion is applied only to expressions in beta-normal form.
- *
- * Implemented according to Definition 2.25 of Higher-Order Unification and
- * Matching by Gilles Dowek (http://who.rocq.inria.fr/Gilles.Dowek/Publi/unification.ps)
- */
 
 package gapt.expr
 
+import gapt.utils.NameGenerator
+
+/**
+ * If t = λx₁...λxₘ(y u₁ ... uₚ) is a normal term of type T₁ → ... → Tₙ → U, with
+ * U atomic and m ≤ n, then its long normal form is the term
+ *
+ * λx₁...λxₘλxₘ₊₁...λxₙ(y u₁'... uₚ' xₘ₊₁' ... xₙ'),
+ *
+ * where uᵢ' is the long normal form of uᵢ and xⱼ' is the long normal form of xⱼ.
+ *
+ * Implemented according to Definition 2.25, Higher-Order Unification and
+ * Matching by Gilles Dowek.
+ */
 object longNormalForm {
-  def apply( term: Expr ): Expr = apply( term, List() )
-  def apply( term: Expr, disallowedVars: List[Var] ): Expr = term match {
-    case Var( _, exptype ) => exptype match {
-      case Ti => term
-      case To => term
-      case FunctionType( _, args ) => {
-        val binders: List[Var] = args.foldRight( List[Var]() )( ( z, acc ) => {
-          val newVar = Var( "eta", z ) // Creating a new var of appropriate type
-          rename( newVar, disallowedVars ++ acc ) :: acc // Rename if needed
-        } )
-        val dv = disallowedVars ++ binders
-        Abs( binders, App( term, binders.map( ( z => apply( z, dv ) ) ) ) )
-      }
-    }
 
-    case App( m, n ) => term.ty match {
-      case Ti => term
-      case To => term
-      case FunctionType( _, args ) => {
-        val binders: List[Var] = args.foldRight( List[Var]() )( ( z, acc ) => {
-          val newVar = Var( "eta", z ) // Creating a new var of appropriate type
-          rename( newVar, disallowedVars ++ acc ) :: acc // Rename if needed
-        } )
-        val dv = disallowedVars ++ binders
-        Abs( binders, App( App( m, apply( n, dv ) ), binders.map( ( z => apply( z, dv ) ) ) ) )
-      }
+  /**
+   * Computes the long normal form.
+   *
+   * @param term A term.
+   * @return The long normal form of `term`. Note that η-expansion is applied
+   * only to expressions in β-normal form.
+   */
+  def apply( e: Expr ): Expr =
+    e match {
+      case Abs( v, e_ ) => Abs( v, longNormalForm( e_ ) )
+      case Apps( e, es ) =>
+        e.ty match {
+          case FunctionType( _, ts ) =>
+            val names = new NameGenerator( freeVariables( e ).map { _.name } )
+            val etaVars = ts.drop( es.length ).map { t => names.fresh( Var( "η", t ) ) }
+            Abs.Block(
+              etaVars,
+              Apps(
+                e,
+                es.map { longNormalForm( _ ) } ++ etaVars.map { longNormalForm( _ ) } ) )
+        }
     }
-
-    case Abs( x, t ) => Abs( x, apply( t, disallowedVars ) )
-  }
 }
 

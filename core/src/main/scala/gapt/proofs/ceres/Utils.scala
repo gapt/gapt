@@ -4,6 +4,29 @@ import gapt.expr.Formula
 import gapt.proofs._
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk._
+import gapt.proofs.lk.rules.AndLeftRule
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.ContractionLeftRule
+import gapt.proofs.lk.rules.ContractionRightRule
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
+import gapt.proofs.lk.rules.EqualityLeftRule
+import gapt.proofs.lk.rules.EqualityRightRule
+import gapt.proofs.lk.rules.ExistsLeftRule
+import gapt.proofs.lk.rules.ExistsRightRule
+import gapt.proofs.lk.rules.ExistsSkLeftRule
+import gapt.proofs.lk.rules.ForallLeftRule
+import gapt.proofs.lk.rules.ForallRightRule
+import gapt.proofs.lk.rules.ForallSkRightRule
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.ImpRightRule
+import gapt.proofs.lk.rules.NegLeftRule
+import gapt.proofs.lk.rules.NegRightRule
+import gapt.proofs.lk.rules.OrLeftRule
+import gapt.proofs.lk.rules.OrRightRule
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.WeakeningRightRule
 
 /**
  * The pick* functions generalize the convenience constructors of the LK rules which allow to specify arguments by
@@ -119,11 +142,11 @@ object Pickrule {
         List(
           pick( old_parents( 0 ), old_aux( 0 ), s( 0 ).antecedent ),
           pick( old_parents( 0 ), old_aux( 1 ), s( 0 ).succedent ) )
-      case _: DefinitionLeftRule =>
+      case _: ConversionLeftRule =>
         require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
         require( old_aux.nonEmpty, p.name + " rule needs at least one old_aux formula for lookup!" )
         List( pick( old_parents( 0 ), old_aux( 0 ), s( 0 ).antecedent ) )
-      case _: DefinitionRightRule =>
+      case _: ConversionRightRule =>
         require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
         require( old_aux.nonEmpty, p.name + " rule needs at least one old_aux formula for lookup!" )
         List( pick( old_parents( 0 ), old_aux( 0 ), s( 0 ).succedent ) )

@@ -3,7 +3,7 @@ package gapt.proofs.expansion
 import gapt.expr._
 import gapt.expr.fol.Numeral
 import gapt.expr.hol.containsQuantifierOnLogicalLevel
-import gapt.proofs.lk.isMaeharaMG3i
+import gapt.proofs.lk.util.isMaeharaMG3i
 import gapt.proofs.{ Sequent, SequentMatchers }
 import gapt.provers.escargot.Escargot
 import org.specs2.matcher.Matcher

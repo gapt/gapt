@@ -5,7 +5,10 @@ import gapt.examples.{ LinearExampleProof, Pi2Pigeonhole, Pi3Pigeonhole, nTape4 
 import gapt.expr._
 import gapt.expr.hol.containsQuantifierOnLogicalLevel
 import gapt.proofs.context.Context
-import gapt.proofs.lk.{ LKProof, eliminateDefinitions, instanceProof, normalizeLKt, solvePropositional }
+import gapt.proofs.lk.transformations.eliminateDefinitions
+import gapt.proofs.lk.util.instanceProof
+import gapt.proofs.lk.util.solvePropositional
+import gapt.proofs.lk.{ LKProof, normalizeLKt }
 import gapt.proofs.{ SequentMatchers, lk }
 import gapt.provers.escargot.Escargot
 import gapt.utils.Maybe
@@ -57,12 +60,12 @@ class LktTest extends Specification with SequentMatchers {
   "reduce 1" in {
     val Right( l ) = solvePropositional( hos"a & (a -> b) :- ~ ~b" )
     val Right( r ) = solvePropositional( hos"~ ~b :- b" )
-    lk.CutRule( l, r, hof"~ ~b" ) must beGood
+    lk.rules.CutRule( l, r, hof"~ ~b" ) must beGood
   }
   "fol 1" in {
     val Some( l ) = Escargot.withDeskolemization.getLKProof( hos"!x (p x -> p (s x)) :- !x (p x -> p (s (s x)))" )
     val Some( r ) = Escargot.withDeskolemization.getLKProof( hos"!x (p x -> p (s (s x))), p 0 :- p (s (s (s (s 0))))" )
-    lk.CutRule( l, r, hof"!x (p x -> p (s (s x)))" ) must beGood
+    lk.rules.CutRule( l, r, hof"!x (p x -> p (s (s x)))" ) must beGood
   }
   "fol 2" in {
     CutIntroduction( LinearExampleProof( 18 ) ).get must beGood
