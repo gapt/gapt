@@ -2,8 +2,8 @@ package gapt.formats.prover9
 
 import org.specs2.mutable._
 import gapt.expr._
-import gapt.expr.formula.FOLFunction
 import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFunction
 
 class Prover9ParserTest extends Specification {
   "The Prover9 language parser" should {

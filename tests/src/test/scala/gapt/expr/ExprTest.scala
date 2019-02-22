@@ -4,8 +4,6 @@ import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Bottom
 import gapt.expr.formula.Ex
-import gapt.expr.formula.FOLFunction
-import gapt.expr.formula.FOLHeadType
 import gapt.expr.formula.Top
 import gapt.expr.formula.constants.AndC
 import gapt.expr.formula.constants.ForallC
@@ -15,6 +13,8 @@ import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLFormula
 import gapt.expr.formula.fol.FOLFormulaWithBoundVar
+import gapt.expr.formula.fol.FOLFunction
+import gapt.expr.formula.fol.FOLHeadType
 import gapt.expr.formula.fol.FOLPartialAtom
 import gapt.expr.formula.fol.FOLPartialFormula
 import gapt.expr.formula.fol.FOLTerm

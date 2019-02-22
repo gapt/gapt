@@ -5,9 +5,7 @@ import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Ex
-import gapt.expr.formula.FOLFunction
 import gapt.expr.formula.Formula
-import gapt.expr.formula.HOLFunction
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
@@ -17,6 +15,7 @@ import gapt.expr.formula.constants.ForallC
 import gapt.expr.formula.constants.ImpC
 import gapt.expr.formula.constants.NegC
 import gapt.expr.formula.constants.OrC
+import gapt.expr.formula.hol.HOLFunction
 import gapt.expr.formula.hol._
 import gapt.expr.subst.FOLSubstitution
 import gapt.expr.subst.Substitution

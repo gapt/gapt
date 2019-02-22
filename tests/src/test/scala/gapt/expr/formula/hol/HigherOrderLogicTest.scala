@@ -13,7 +13,6 @@ import gapt.expr.formula.Atom
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
-import gapt.expr.formula.HOLFunction
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or

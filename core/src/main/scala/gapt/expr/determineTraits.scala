@@ -1,7 +1,6 @@
 package gapt.expr
 
 import gapt.expr.formula.Atom
-import gapt.expr.formula.FOLHeadType
 import gapt.expr.formula.Formula
 import gapt.expr.formula.constants.AndC
 import gapt.expr.formula.constants.BottomC
@@ -18,6 +17,7 @@ import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLFormula
 import gapt.expr.formula.fol.FOLFormulaWithBoundVar
 import gapt.expr.formula.fol.FOLFunctionConst
+import gapt.expr.formula.fol.FOLHeadType
 import gapt.expr.formula.fol.FOLPartialAtom
 import gapt.expr.formula.fol.FOLPartialFormula
 import gapt.expr.formula.fol.FOLPartialTerm

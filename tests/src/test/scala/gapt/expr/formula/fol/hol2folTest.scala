@@ -9,10 +9,9 @@ import gapt.expr.formula
 import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Atom
-import gapt.expr.formula.FOLFunction
-import gapt.expr.formula.HOLFunction
 import gapt.expr.formula.Imp
 import gapt.expr.formula.constants.ImpC
+import gapt.expr.formula.hol.HOLFunction
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
 import gapt.expr.ty.Ty

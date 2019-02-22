@@ -6,10 +6,10 @@ import gapt.expr.formula.And
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
-import gapt.expr.formula.HOLFunction
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
+import gapt.expr.formula.hol.HOLFunction
 import gapt.expr.ty.Ti
 import gapt.expr.util.freeVariables
 import gapt.expr.ty.To

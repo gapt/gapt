@@ -3,8 +3,8 @@ package gapt.expr.formula.hol
 import HOLPosition._
 import gapt.expr._
 import gapt.expr.formula.Atom
-import gapt.expr.formula.FOLFunction
 import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFunction
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
 import org.specs2.mutable._

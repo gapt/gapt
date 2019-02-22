@@ -10,7 +10,6 @@ import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Ex
-import gapt.expr.formula.FOLFunction
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or

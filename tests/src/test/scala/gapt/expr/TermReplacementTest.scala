@@ -1,8 +1,8 @@
 package gapt.expr
 
-import gapt.expr.formula.FOLFunction
 import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFunction
 import gapt.expr.formula.fol.FOLVar
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.TBase

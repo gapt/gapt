@@ -3,9 +3,9 @@ package gapt.examples
 import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.Eq
-import gapt.expr.formula.FOLFunction
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLFormula
+import gapt.expr.formula.fol.FOLFunction
 import gapt.expr.formula.fol.FOLVar
 
 /**

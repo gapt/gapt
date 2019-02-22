@@ -2,7 +2,6 @@ package gapt.expr.formula.fol
 
 import gapt.expr.Const
 import gapt.expr.Expr
-import gapt.expr.formula.FOLHeadType
 import gapt.expr.formula.NonLogicalConstant
 import gapt.expr.ty.Ty
 

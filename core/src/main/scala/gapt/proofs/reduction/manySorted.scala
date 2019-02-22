@@ -8,7 +8,6 @@ import gapt.expr.formula.Atom
 import gapt.expr.formula.Bottom
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Ex
-import gapt.expr.formula.FOLFunction
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Iff
 import gapt.expr.formula.Imp
@@ -20,6 +19,7 @@ import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.fol.FOLAtomConst
 import gapt.expr.formula.fol.FOLExpression
 import gapt.expr.formula.fol.FOLFormula
+import gapt.expr.formula.fol.FOLFunction
 import gapt.expr.formula.fol.FOLFunctionConst
 import gapt.expr.formula.fol.FOLTerm
 import gapt.expr.formula.fol.FOLVar

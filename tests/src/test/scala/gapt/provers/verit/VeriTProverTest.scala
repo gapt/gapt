@@ -8,13 +8,13 @@ import gapt.examples.BussTautology
 import gapt.expr._
 import gapt.expr.formula.Bottom
 import gapt.expr.formula.Eq
-import gapt.expr.formula.FOLFunction
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Top
 import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.fol.FOLAtomConst
 import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFunction
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
 import gapt.proofs.{ HOLSequent, Sequent }

@@ -8,7 +8,6 @@ package gapt.expr.formula.fol
 import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.And
-import gapt.expr.formula.FOLFunction
 import gapt.expr.util.syntacticMatching
 import org.specs2.mutable._
 

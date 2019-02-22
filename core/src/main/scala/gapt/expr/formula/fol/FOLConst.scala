@@ -1,7 +1,6 @@
 package gapt.expr.formula.fol
 
 import gapt.expr.Const
-import gapt.expr.formula.FOLFunction
 
 trait FOLConst extends Const with FOLTerm with FOLFunctionConst
 

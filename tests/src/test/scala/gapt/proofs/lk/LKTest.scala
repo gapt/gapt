@@ -6,12 +6,12 @@ import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Ex
-import gapt.expr.formula.FOLFunction
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFunction
 import gapt.expr.formula.fol.FOLFunctionConst
 import gapt.expr.formula.fol.FOLTerm
 import gapt.expr.formula.fol.FOLVar
