@@ -1,8 +1,8 @@
 package gapt.proofs
 
+import gapt.expr.VarOrConst
 import gapt.expr._
-import gapt.expr.formula.HOLAtomConst
-import gapt.expr.formula.VarOrConst
+import gapt.expr.formula.hol.HOLAtomConst
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename

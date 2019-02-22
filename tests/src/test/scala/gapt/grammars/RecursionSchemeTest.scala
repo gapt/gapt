@@ -1,10 +1,10 @@
 package gapt.grammars
 
 import gapt.expr._
-import gapt.expr.formula.FOLAtomConst
-import gapt.expr.formula.FOLConst
-import gapt.expr.formula.FOLFunctionConst
-import gapt.expr.formula.FOLVar
+import gapt.expr.formula.fol.FOLAtomConst
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFunctionConst
+import gapt.expr.formula.fol.FOLVar
 import gapt.expr.ty.TBase
 import gapt.expr.ty.To
 import gapt.utils.SatMatchers

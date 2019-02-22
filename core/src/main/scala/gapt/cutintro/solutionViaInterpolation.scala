@@ -2,8 +2,8 @@ package gapt.cutintro
 
 import gapt.expr._
 import gapt.expr.formula.And
-import gapt.expr.formula.FOLFormula
 import gapt.expr.formula.Formula
+import gapt.expr.formula.fol.FOLFormula
 import gapt.expr.subst.Substitution
 import gapt.expr.util.rename
 import gapt.logic.hol.simplify

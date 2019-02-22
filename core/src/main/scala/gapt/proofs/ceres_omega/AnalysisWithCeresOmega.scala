@@ -1,8 +1,8 @@
 package gapt.proofs.ceres_omega
 
 import gapt.expr._
-import gapt.expr.formula.FOLAtom
 import gapt.expr.formula.Formula
+import gapt.expr.formula.fol.FOLAtom
 import gapt.formats.tptp.TptpHOLExporter
 import gapt.proofs.expansion._
 import gapt.proofs.lk._

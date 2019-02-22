@@ -4,15 +4,15 @@ import gapt.expr._
 import gapt.expr.formula
 import gapt.expr.formula.All
 import gapt.expr.formula.Ex
-import gapt.expr.formula.FOLAtom
-import gapt.expr.formula.FOLVar
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLVar
 import gapt.logic.Polarity
 import gapt.proofs.{ HOLSequent, Sequent }
 import org.specs2.mutable._
 
 class TermExtractionTest extends Specification {
   val Seq( x, y ) = Seq( "x", "y" ).map( FOLVar( _ ) )
-  val esP = All( x, formula.FOLAtom( "P", x, y ) )
+  val esP = All( x, formula.fol.FOLAtom( "P", x, y ) )
   val esR = Ex( x, FOLAtom( "R", x ) )
   val endSequent = hos"!x P x y :- ?x R x"
 

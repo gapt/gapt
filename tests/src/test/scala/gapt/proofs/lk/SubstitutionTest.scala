@@ -3,10 +3,10 @@ package gapt.proofs.lk
 import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.Atom
-import gapt.expr.formula.FOLAtomConst
-import gapt.expr.formula.FOLConst
-import gapt.expr.formula.FOLFunctionConst
-import gapt.expr.formula.FOLVar
+import gapt.expr.formula.fol.FOLAtomConst
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFunctionConst
+import gapt.expr.formula.fol.FOLVar
 import gapt.expr.subst.Substitution
 import gapt.proofs._
 import gapt.proofs.context.Context

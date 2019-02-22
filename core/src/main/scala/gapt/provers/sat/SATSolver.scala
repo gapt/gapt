@@ -1,7 +1,7 @@
 package gapt.provers.sat
 
 import gapt.expr.formula.Formula
-import gapt.expr.formula.HOLAtomConst
+import gapt.expr.formula.hol.HOLAtomConst
 import gapt.formats.dimacs.{ DIMACS, DIMACSEncoding }
 import gapt.logic.hol.fastStructuralCNF
 import gapt.models.PropositionalModel

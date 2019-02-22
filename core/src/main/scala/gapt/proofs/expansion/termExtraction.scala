@@ -6,12 +6,12 @@ import gapt.expr.formula.And
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Bottom
 import gapt.expr.formula.Ex
-import gapt.expr.formula.FOLTerm
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Top
+import gapt.expr.formula.fol.FOLTerm
 import gapt.expr.formula.hol._
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.FunctionType

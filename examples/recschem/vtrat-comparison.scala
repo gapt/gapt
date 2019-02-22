@@ -2,10 +2,10 @@ package gapt.examples.recschem
 
 import gapt.examples.Script
 import gapt.expr._
-import gapt.expr.formula.FOLConst
 import gapt.expr.formula.FOLFunction
-import gapt.expr.formula.FOLFunctionConst
-import gapt.expr.formula.FOLVar
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFunctionConst
+import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.fol.Numeral
 import gapt.expr.formula.hol.lcomp
 import gapt.grammars._

@@ -3,7 +3,7 @@ package gapt.cutintro
 import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.Ex
-import gapt.expr.formula.FOLFormula
+import gapt.expr.formula.fol.FOLFormula
 import gapt.expr.formula.fol.isFOLPrenexSigma1
 import gapt.expr.formula.hol.containsQuantifier
 import gapt.expr.subst.Substitution

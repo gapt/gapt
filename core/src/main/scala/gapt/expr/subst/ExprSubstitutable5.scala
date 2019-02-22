@@ -1,7 +1,7 @@
 package gapt.expr.subst
 
 import gapt.expr.formula.Atom
-import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.fol.FOLAtom
 
 trait ExprSubstitutable5 extends ExprSubstitutable4 {
   implicit val FOLAtomSubstitutable: Substitutable[Substitution, FOLAtom, Atom] =

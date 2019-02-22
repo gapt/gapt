@@ -1,7 +1,7 @@
 package gapt.expr.subst
 
 import gapt.expr.ClosedUnderFOLSub
-import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.fol.FOLAtom
 
 trait ExprSubstitutable7 extends ExprSubstitutable6 {
   implicit val FOLAtomClosedUnderFOLSub: ClosedUnderFOLSub[FOLAtom] =

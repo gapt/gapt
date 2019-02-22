@@ -9,10 +9,7 @@ import gapt.expr.formula
 import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Atom
-import gapt.expr.formula.FOLAtom
-import gapt.expr.formula.FOLConst
 import gapt.expr.formula.FOLFunction
-import gapt.expr.formula.FOLVar
 import gapt.expr.formula.HOLFunction
 import gapt.expr.formula.Imp
 import gapt.expr.formula.constants.ImpC
@@ -49,7 +46,7 @@ class hol2folTest extends Specification {
         val hB = Atom( Const( "B", ( Ti ->: Ti ) ->: ( ( To ->: Ti ) ->: To ) ), hx :: hb :: Nil )
         val hol = And( hA, hB )
         val fA = FOLAtom( "A", fx :: fa :: Nil )
-        val fB = formula.FOLAtom( "B", fx :: fb :: Nil )
+        val fB = formula.fol.FOLAtom( "B", fx :: fb :: Nil )
         val fol = And( fA, fB )
         reduceHolToFol( hol ) must beEqualTo( fol )
       }

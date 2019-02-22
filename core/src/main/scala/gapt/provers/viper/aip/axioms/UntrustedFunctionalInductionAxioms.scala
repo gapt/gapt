@@ -3,10 +3,10 @@ import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Eq
-import gapt.expr.formula.FOLConst
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Top
+import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.folSubTerms
 import gapt.expr.formula.hol.{ instantiate, universalClosure }
 import gapt.expr.ty.FunctionType

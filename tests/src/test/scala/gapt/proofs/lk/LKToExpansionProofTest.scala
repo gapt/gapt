@@ -5,9 +5,9 @@ import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.Bottom
 import gapt.expr.formula.Ex
-import gapt.expr.formula.FOLAtomConst
-import gapt.expr.formula.FOLVar
 import gapt.expr.formula.Top
+import gapt.expr.formula.fol.FOLAtomConst
+import gapt.expr.formula.fol.FOLVar
 import gapt.expr.ty.TBase
 import gapt.logic.Polarity
 import gapt.proofs.context.Context

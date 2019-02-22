@@ -1,6 +1,6 @@
 package gapt.proofs
 
-import gapt.expr.formula.VarOrConst
+import gapt.expr.VarOrConst
 import gapt.expr.{ ClosedUnderReplacement, Expr, containedNames }
 import gapt.proofs.lk.rules.EqualityRule
 import gapt.proofs.lk.rules.SkolemQuantifierRule

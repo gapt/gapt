@@ -2,8 +2,8 @@ package gapt.provers.viper.grammars
 
 import cats.instances.list._
 import cats.syntax.traverse._
+import gapt.expr.VarOrConst
 import gapt.expr._
-import gapt.expr.formula.VarOrConst
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.ty.Ty

@@ -4,12 +4,12 @@ import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Bottom
 import gapt.expr.formula.Ex
-import gapt.expr.formula.FOLAtom
-import gapt.expr.formula.FOLFormula
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Top
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLFormula
 import gapt.logic.hol.simplify
 import gapt.logic.hol.toNNF
 import gapt.proofs.FOLClause

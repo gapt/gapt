@@ -4,6 +4,7 @@ import gapt.expr._
 import gapt.proofs.{ HOLSequent, SequentProof }
 import gapt.utils.Doc
 import Doc._
+import gapt.expr.VarOrConst
 import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Atom
@@ -15,7 +16,6 @@ import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Top
-import gapt.expr.formula.VarOrConst
 import gapt.expr.ty.->:
 import gapt.expr.ty.TBase
 import gapt.expr.ty.TVar

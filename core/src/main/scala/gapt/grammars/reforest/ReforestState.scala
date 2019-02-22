@@ -1,7 +1,7 @@
 package gapt.grammars.reforest
 
 import gapt.expr._
-import gapt.expr.formula.FOLConst
+import gapt.expr.formula.fol.FOLConst
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.Ti
 import gapt.expr.util.freeVariables

@@ -9,12 +9,12 @@ import gapt.expr.formula.Eq
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Imp
-import gapt.expr.formula.LogicalConstant
 import gapt.expr.formula.Neg
 import gapt.expr.formula.NonLogicalConstant
 import gapt.expr.formula.Or
 import gapt.expr.formula.Top
 import gapt.expr.formula.constants.EqC
+import gapt.expr.formula.constants.LogicalConstant
 import gapt.expr.formula.fol.replaceAbstractions
 import gapt.expr.formula.hol._
 import gapt.expr.ty.->:

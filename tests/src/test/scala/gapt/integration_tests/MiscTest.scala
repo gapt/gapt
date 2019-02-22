@@ -9,8 +9,8 @@ import gapt.proofs.expansion.{ ExpansionProofToLK, addSymmetry, eliminateCutsET 
 import gapt.proofs._
 import gapt.expr._
 import gapt.expr.formula.All
-import gapt.expr.formula.FOLAtom
-import gapt.expr.formula.FOLVar
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLVar
 import gapt.formats.verit.VeriTParser
 import gapt.proofs.lk._
 import gapt.provers.prover9.{ Prover9, Prover9Importer }

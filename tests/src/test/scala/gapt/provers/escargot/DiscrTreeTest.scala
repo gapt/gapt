@@ -1,7 +1,7 @@
 package gapt.provers.escargot
 
 import gapt.expr._
-import gapt.expr.formula.FOLFunctionConst
+import gapt.expr.formula.fol.FOLFunctionConst
 import gapt.expr.formula.fol.{ Numeral, folSubTerms }
 import gapt.expr.util.syntacticMGU
 import gapt.expr.util.syntacticMatching

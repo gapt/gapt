@@ -1,7 +1,7 @@
 package gapt.proofs.lk
 
 import gapt.expr.formula.And
-import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.fol.FOLAtom
 import gapt.proofs.ProofBuilder
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.LogicalAxiom

@@ -5,10 +5,10 @@ import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Ex
-import gapt.expr.formula.FOLConst
-import gapt.expr.formula.FOLFormula
-import gapt.expr.formula.FOLTerm
-import gapt.expr.formula.FOLVar
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFormula
+import gapt.expr.formula.fol.FOLTerm
+import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.fol.{ isFOLPrenexSigma1, isPrenexSigma1 }
 import gapt.expr.formula.hol._
 import gapt.expr.subst.FOLSubstitution

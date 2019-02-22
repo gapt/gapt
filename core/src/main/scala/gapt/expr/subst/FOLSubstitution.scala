@@ -2,8 +2,8 @@ package gapt.expr.subst
 
 import gapt.expr.Expr
 import gapt.expr.Var
-import gapt.expr.formula.FOLTerm
-import gapt.expr.formula.FOLVar
+import gapt.expr.formula.fol.FOLTerm
+import gapt.expr.formula.fol.FOLVar
 
 import scala.collection.GenTraversable
 

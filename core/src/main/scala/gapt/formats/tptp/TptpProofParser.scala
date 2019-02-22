@@ -3,13 +3,13 @@ package gapt.formats.tptp
 import gapt.expr._
 import gapt.expr.formula.And
 import gapt.expr.formula.Bottom
-import gapt.expr.formula.FOLAtom
-import gapt.expr.formula.FOLConst
-import gapt.expr.formula.FOLFormula
-import gapt.expr.formula.FOLVar
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFormula
+import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.hol.{ containsStrongQuantifier, universalClosure }
 import gapt.expr.util.clauseSubsumption
 import gapt.expr.util.freeVariables

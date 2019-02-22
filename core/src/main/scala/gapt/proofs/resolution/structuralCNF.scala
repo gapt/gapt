@@ -7,11 +7,11 @@ import gapt.expr.formula.Atom
 import gapt.expr.formula.Bottom
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
-import gapt.expr.formula.HOLAtomConst
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Top
+import gapt.expr.formula.hol.HOLAtomConst
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.logic.Polarity

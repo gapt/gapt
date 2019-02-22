@@ -2,9 +2,9 @@ package gapt.proofs.lk.rules.macros
 
 import gapt.expr.Abs
 import gapt.expr.formula.All
-import gapt.expr.formula.FOLConst
-import gapt.expr.formula.FOLFormula
-import gapt.expr.formula.FOLFunctionConst
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFormula
+import gapt.expr.formula.fol.FOLFunctionConst
 import gapt.expr.util.syntacticMatching
 import gapt.proofs.Ant
 import gapt.proofs.IndexOrFormula

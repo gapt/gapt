@@ -1,8 +1,8 @@
 package gapt.proofs.reduction
 
 import gapt.expr._
-import gapt.expr.formula.FOLAtom
-import gapt.expr.formula.FOLVar
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLVar
 import gapt.logic.Polarity
 import gapt.proofs._
 import gapt.proofs.context.Context

@@ -14,12 +14,12 @@ import gapt.expr.formula.And
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Ex
-import gapt.expr.formula.FOLAtom
 import gapt.expr.formula.Formula
 import gapt.expr.formula.HOLFunction
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
+import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.To
 import gapt.expr.ty.Ty

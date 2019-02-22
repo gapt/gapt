@@ -5,8 +5,8 @@ import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Ex
-import gapt.expr.formula.FOLAtom
-import gapt.expr.formula.FOLVar
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLVar
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
 import gapt.formats.ClasspathInputFile

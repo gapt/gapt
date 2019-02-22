@@ -309,7 +309,7 @@ manually.
 Here is an example of parsing a first-order formula:
 \begin{clilisting}
 gapt> val F = fof"!x (P(x,f(x)) -> ?y P(x,y))"
-F: gapt.expr.formula.FOLFormula = ∀x (P(x, f(x)) → ∃y P(x, y))
+F: gapt.expr.formula.fol.FOLFormula = ∀x (P(x, f(x)) → ∃y P(x, y))
 
 \end{clilisting}
 
@@ -334,10 +334,10 @@ The prefix indicates the Scala type of the expression. The following prefixes ar
 This parser supports Scala string interpolation. For example, you can do:
 \begin{clilisting}
 gapt> val t = fot"f(f(x))"
-t: gapt.expr.formula.FOLTerm = f(f(x))
+t: gapt.expr.formula.fol.FOLTerm = f(f(x))
 
 gapt> val G = fof"!x (P(x,$t) -> ?y P(x,y))"
-G: gapt.expr.formula.FOLFormula = ∀x (P(x, f(f(x))) → ∃y P(x, y))
+G: gapt.expr.formula.fol.FOLFormula = ∀x (P(x, f(f(x))) → ∃y P(x, y))
 
 \end{clilisting}
 
@@ -388,7 +388,7 @@ Every kind of expression that exists in GAPT can be constructed manually. For in
 and constants like this:
 \begin{clilisting}
 gapt> val x = FOLVar("x")
-x: gapt.expr.formula.FOLVar = x
+x: gapt.expr.formula.fol.FOLVar = x
 
 gapt> val P = Const("P", Ti ->: To)
 P: gapt.expr.Const = P:i>o
@@ -399,13 +399,13 @@ P: gapt.expr.Const = P:i>o
 similarly:
 \begin{clilisting}
 gapt> val x = FOLVar("x")
-x: gapt.expr.formula.FOLVar = x
+x: gapt.expr.formula.fol.FOLVar = x
 
 gapt> val fx = FOLFunction("f",x)
-fx: gapt.expr.formula.FOLTerm = f(x)
+fx: gapt.expr.formula.fol.FOLTerm = f(x)
 
 gapt> val Pfx = FOLAtom("P", fx)
-Pfx: gapt.expr.formula.FOLAtom = P(f(x)): o
+Pfx: gapt.expr.formula.fol.FOLAtom = P(f(x)): o
 
 \end{clilisting}
 
@@ -421,16 +421,16 @@ On the formulas themselves, there are operators for the various Boolean connecti
  
 \begin{clilisting}
 gapt> val A = FOLAtom("A")
-A: gapt.expr.formula.FOLAtom = A:o
+A: gapt.expr.formula.fol.FOLAtom = A:o
 
 gapt> val B = FOLAtom("B")
-B: gapt.expr.formula.FOLAtom = B:o
+B: gapt.expr.formula.fol.FOLAtom = B:o
 
 gapt> val C = FOLAtom("C")
-C: gapt.expr.formula.FOLAtom = C:o
+C: gapt.expr.formula.fol.FOLAtom = C:o
 
 gapt> (A & B) --> C
-res2: gapt.expr.formula.FOLFormula = A ∧ B → C
+res2: gapt.expr.formula.fol.FOLFormula = A ∧ B → C
 
 \end{clilisting}
 
@@ -472,7 +472,7 @@ gapt> val S2 = Sequent(List(1,2), List(3,4))
 S2: gapt.proofs.Sequent[Int] = 1, 2 :- 3, 4
 
 gapt> val S3 = Sequent(List(foa"A", foa"B"), List(foa"C", foa"D"))
-S3: gapt.proofs.Sequent[gapt.expr.formula.FOLAtom] = A, B ⊢ C, D
+S3: gapt.proofs.Sequent[gapt.expr.formula.fol.FOLAtom] = A, B ⊢ C, D
 
 \end{clilisting}
 
@@ -500,13 +500,13 @@ gapt> val S1 = fcl"B :- C"
 S1: gapt.proofs.FOLClause = B ⊢ C
 
 gapt> val S2 = foa"A" +: S1
-S2: gapt.proofs.Sequent[gapt.expr.formula.FOLAtom] = A, B ⊢ C
+S2: gapt.proofs.Sequent[gapt.expr.formula.fol.FOLAtom] = A, B ⊢ C
 
 gapt> val S3 = S2 :+ foa"D"
-S3: gapt.proofs.Sequent[gapt.expr.formula.FOLAtom] = A, B ⊢ C, D
+S3: gapt.proofs.Sequent[gapt.expr.formula.fol.FOLAtom] = A, B ⊢ C, D
 
 gapt> foa"A" +: foa"B" +: Sequent() :+ foa"C" :+ foa"D"
-res1: gapt.proofs.Sequent[gapt.expr.formula.FOLAtom] = A, B ⊢ C, D
+res1: gapt.proofs.Sequent[gapt.expr.formula.fol.FOLAtom] = A, B ⊢ C, D
 
 \end{clilisting}
 
@@ -517,10 +517,10 @@ gapt> val S = fcl"A, B :- C, D"
 S: gapt.proofs.FOLClause = A, B ⊢ C, D
 
 gapt> val b = S.antecedent(1)
-b: gapt.expr.formula.FOLAtom = B:o
+b: gapt.expr.formula.fol.FOLAtom = B:o
 
 gapt> val c = S.succedent(0)
-c: gapt.expr.formula.FOLAtom = C:o
+c: gapt.expr.formula.fol.FOLAtom = C:o
 
 \end{clilisting}
 ... or by using the \cli{SequentIndex} class:
@@ -533,10 +533,10 @@ gapt> val j = Suc(1)
 j: gapt.proofs.Suc = Suc(1)
 
 gapt> val a = S(i)
-a: gapt.expr.formula.FOLAtom = A:o
+a: gapt.expr.formula.fol.FOLAtom = A:o
 
 gapt> val d = S(j)
-d: gapt.expr.formula.FOLAtom = D:o
+d: gapt.expr.formula.fol.FOLAtom = D:o
 
 \end{clilisting}
 
@@ -1860,10 +1860,10 @@ R(p_3, h_3): o -> true
 yields a model of $\neg\mathrm{PHP}_{3,3}$ that can be queried:
 \begin{clilisting}
 gapt> val p1 = PigeonHolePrinciple.inHole(1, 1)
-p1: gapt.expr.formula.FOLAtom = R(p_1, h_1): o
+p1: gapt.expr.formula.fol.FOLAtom = R(p_1, h_1): o
 
 gapt> val p2 = PigeonHolePrinciple.inHole(2, 1)
-p2: gapt.expr.formula.FOLAtom = R(p_2, h_1): o
+p2: gapt.expr.formula.fol.FOLAtom = R(p_2, h_1): o
 
 gapt> m(p1) // Is pigeon 1 in hole 1?
 res2: Boolean = true
@@ -2040,7 +2040,7 @@ the same interface as \cli{Prover9} and the other first-order provers:
 
 \begin{clilisting}
 gapt> val formula = fof"!x!y!z (x+y)+z=x+(y+z) & !x!y x+y=y+x -> d+a+c+b=a+b+c+d"
-formula: gapt.expr.formula.FOLFormula =
+formula: gapt.expr.formula.fol.FOLFormula =
 ∀x ∀y ∀z x + y + z = x + (y + z) ∧ ∀x ∀y x + y = y + x →
   d + a + c + b = a + b + c + d
 
@@ -2352,7 +2352,7 @@ able to automatically find a (V)TRATG that covers this language:
 
 \begin{clilisting}[OpenWBO.isInstalled]
 gapt> val lang = 1 to 18 map { Numeral(_) }
-lang: scala.collection.immutable.IndexedSeq[gapt.expr.formula.FOLTerm] = Vector(s(0), s(s(0)), s(s(s(0))), s(s(s(s(0)))), s(s(s(s(s(0))))), s(s(s(s(s(s(0)))))), s(s(s(s(s(s(s(0))))))), s(s(s(s(s(s(s(s(0)))))))), s(s(s(s(s(s(s(s(s(0))))))))), s(s(s(s(s(s(s(s(s(s(0)))))))))), s(s(s(s(s(s(s(s(s(s(s(0))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))))))
+lang: scala.collection.immutable.IndexedSeq[gapt.expr.formula.fol.FOLTerm] = Vector(s(0), s(s(0)), s(s(s(0))), s(s(s(s(0)))), s(s(s(s(s(0))))), s(s(s(s(s(s(0)))))), s(s(s(s(s(s(s(0))))))), s(s(s(s(s(s(s(s(0)))))))), s(s(s(s(s(s(s(s(s(0))))))))), s(s(s(s(s(s(s(s(s(s(0)))))))))), s(s(s(s(s(s(s(s(s(s(s(0))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))))))
 
 gapt> val grammar = findMinimalVTRATG(lang.toSet, 2)
 grammar: gapt.grammars.VTRATG =

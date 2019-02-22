@@ -1,6 +1,5 @@
 package gapt.expr.formula.fol
 
-import gapt.expr.formula.FOLAtom
 import gapt.utils.SatMatchers
 import org.specs2.mutable._
 

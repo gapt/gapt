@@ -6,9 +6,9 @@ import gapt.expr.Const
 import gapt.expr.Definition
 import gapt.expr.Expr
 import gapt.expr.Var
+import gapt.expr.VarOrConst
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Formula
-import gapt.expr.formula.VarOrConst
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.ty.Ti

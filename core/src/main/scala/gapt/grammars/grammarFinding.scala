@@ -4,12 +4,12 @@ import gapt.expr._
 import gapt.expr.formula.And
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Bottom
-import gapt.expr.formula.FOLConst
-import gapt.expr.formula.FOLTerm
-import gapt.expr.formula.FOLVar
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Or
 import gapt.expr.formula.Top
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLTerm
+import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.fol.folSubTerms
 import gapt.expr.formula.fol.thresholds._
 import gapt.expr.formula.hol.{ atoms, lcomp }

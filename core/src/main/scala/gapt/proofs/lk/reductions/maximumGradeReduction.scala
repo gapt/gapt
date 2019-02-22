@@ -1,6 +1,6 @@
 package gapt.proofs.lk.reductions
 
-import gapt.expr.formula.FOLFormula
+import gapt.expr.formula.fol.FOLFormula
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.transformations.Selector

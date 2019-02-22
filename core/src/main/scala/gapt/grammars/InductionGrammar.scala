@@ -10,11 +10,11 @@ import gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import gapt.utils.{ Doc, NameGenerator }
 import cats.instances.list._
 import cats.syntax.traverse._
+import gapt.expr.VarOrConst
 import gapt.expr.formula.And
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Or
-import gapt.expr.formula.VarOrConst
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.Ty

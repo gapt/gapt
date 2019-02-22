@@ -10,7 +10,7 @@ import gapt.expr.formula.And
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Imp
-import gapt.expr.formula.PropAtom
+import gapt.expr.formula.prop.PropAtom
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase

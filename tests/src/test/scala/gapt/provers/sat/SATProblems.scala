@@ -2,11 +2,11 @@ package gapt.provers.sat
 
 import gapt.examples.PigeonHolePrinciple
 import gapt.expr._
-import gapt.expr.formula.FOLAtom
-import gapt.expr.formula.FOLConst
-import gapt.expr.formula.FOLFormula
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFormula
 import gapt.models.PropositionalModel
 import gapt.proofs.{ HOLClause, HOLSequent }
 

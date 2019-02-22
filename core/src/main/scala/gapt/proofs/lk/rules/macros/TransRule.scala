@@ -3,9 +3,9 @@ package gapt.proofs.lk.rules.macros
 import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Eq
-import gapt.expr.formula.FOLTerm
-import gapt.expr.formula.FOLVar
 import gapt.expr.formula.Imp
+import gapt.expr.formula.fol.FOLTerm
+import gapt.expr.formula.fol.FOLVar
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.ContractionLeftRule

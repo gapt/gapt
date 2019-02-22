@@ -1,8 +1,8 @@
 package gapt.formats.hoare
 
 import gapt.expr._
-import gapt.expr.formula.FOLFormula
-import gapt.expr.formula.FOLTerm
+import gapt.expr.formula.fol.FOLFormula
+import gapt.expr.formula.fol.FOLTerm
 import gapt.proofs.hoare._
 import gapt.formats.prover9.{ Prover9TermParserA, Prover9TermParserLadrStyle }
 

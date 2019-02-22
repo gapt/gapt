@@ -2,10 +2,10 @@ package gapt.proofs.resolution
 
 import gapt.expr._
 import gapt.expr.formula.Eq
-import gapt.expr.formula.FOLAtom
-import gapt.expr.formula.FOLAtomConst
-import gapt.expr.formula.FOLConst
-import gapt.expr.formula.FOLVar
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLAtomConst
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLVar
 import gapt.expr.subst.Substitution
 import gapt.expr.util.clauseSubsumption
 import gapt.proofs._

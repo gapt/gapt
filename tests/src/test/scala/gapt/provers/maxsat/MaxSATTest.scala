@@ -9,10 +9,10 @@ import gapt.proofs.HOLClause
 import org.specs2.mutable._
 import gapt.expr._
 import gapt.expr.formula.And
-import gapt.expr.formula.FOLAtom
-import gapt.expr.formula.FOLConst
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLConst
 import org.specs2.specification.core.Fragment
 
 class MaxSATTest extends Specification {

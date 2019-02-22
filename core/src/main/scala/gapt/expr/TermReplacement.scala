@@ -6,7 +6,6 @@ import gapt.expr.formula.Atom
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
-import gapt.expr.formula.VarOrConst
 import gapt.expr.formula.constants.EqC
 import gapt.expr.formula.constants.ExistsC
 import gapt.expr.formula.constants.ForallC

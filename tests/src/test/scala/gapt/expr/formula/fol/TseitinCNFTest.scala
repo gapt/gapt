@@ -2,7 +2,6 @@ package gapt.expr.formula.fol
 
 import gapt.expr._
 import gapt.expr.formula.And
-import gapt.expr.formula.FOLAtom
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or

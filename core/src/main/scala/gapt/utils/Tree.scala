@@ -1,6 +1,6 @@
 package gapt.utils
 
-import gapt.expr.formula.VarOrConst
+import gapt.expr.VarOrConst
 import gapt.expr.subst.Substitutable
 import gapt.expr.subst.Substitution
 import gapt.expr.{ Expr, Replaceable }

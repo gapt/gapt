@@ -6,13 +6,13 @@ import gapt.expr.formula.And
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Bottom
 import gapt.expr.formula.Ex
-import gapt.expr.formula.FOLFormula
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Quant
 import gapt.expr.formula.Top
+import gapt.expr.formula.fol.FOLFormula
 import gapt.expr.formula.hol.containsStrongQuantifier
 import gapt.logic.Polarity
 import gapt.proofs.FOLClause

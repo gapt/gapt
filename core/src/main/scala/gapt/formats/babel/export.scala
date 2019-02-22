@@ -4,11 +4,11 @@ import gapt.expr._
 import gapt.proofs.HOLSequent
 import gapt.utils.Doc
 import Doc._
+import gapt.expr.VarOrConst
 import gapt.expr.formula.Eq
-import gapt.expr.formula.FOLConst
 import gapt.expr.formula.Iff
 import gapt.expr.formula.Neg
-import gapt.expr.formula.VarOrConst
+import gapt.expr.formula.fol.FOLConst
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.->:
 import gapt.expr.ty.FunctionType

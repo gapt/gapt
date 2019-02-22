@@ -7,7 +7,6 @@ import gapt.expr.formula.Atom
 import gapt.expr.formula.Bottom
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Ex
-import gapt.expr.formula.FOLVar
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Iff
 import gapt.expr.formula.Imp
@@ -15,6 +14,7 @@ import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Quant
 import gapt.expr.formula.Top
+import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.hol.instantiate
 import gapt.expr.subst.PreSubstitution
 import gapt.expr.subst.Substitution

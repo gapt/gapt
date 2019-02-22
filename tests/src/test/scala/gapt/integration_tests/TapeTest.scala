@@ -2,7 +2,7 @@ package gapt.integration_tests
 
 import gapt.examples.tape
 import gapt.expr.formula.Eq
-import gapt.expr.formula.FOLAtom
+import gapt.expr.formula.fol.FOLAtom
 import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.SequentMatchers
 import gapt.proofs.ceres._

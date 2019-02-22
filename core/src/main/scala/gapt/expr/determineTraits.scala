@@ -1,132 +1,40 @@
-package gapt.expr.formula
+package gapt.expr
 
-import gapt.expr.Abs
-import gapt.expr.App
-import gapt.expr.Apps
-import gapt.expr.Const
-import gapt.expr.Expr
-import gapt.expr.Var
+import gapt.expr.formula.Atom
+import gapt.expr.formula.FOLHeadType
+import gapt.expr.formula.Formula
 import gapt.expr.formula.constants.AndC
 import gapt.expr.formula.constants.BottomC
-import gapt.expr.formula.constants.EqC
 import gapt.expr.formula.constants.ExistsC
 import gapt.expr.formula.constants.ForallC
 import gapt.expr.formula.constants.ImpC
+import gapt.expr.formula.constants.LogicalConstant
 import gapt.expr.formula.constants.NegC
 import gapt.expr.formula.constants.OrC
 import gapt.expr.formula.constants.TopC
-import gapt.expr.formula.fol.FOLPosition
-import gapt.expr.formula.fol.FOLPosition._
-import gapt.expr.formula.hol.HOLPosition
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLAtomConst
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFormula
+import gapt.expr.formula.fol.FOLFormulaWithBoundVar
+import gapt.expr.formula.fol.FOLFunctionConst
+import gapt.expr.formula.fol.FOLPartialAtom
+import gapt.expr.formula.fol.FOLPartialFormula
+import gapt.expr.formula.fol.FOLPartialTerm
+import gapt.expr.formula.fol.FOLQuantifier
+import gapt.expr.formula.fol.FOLTerm
+import gapt.expr.formula.fol.FOLVar
+import gapt.expr.formula.hol.HOLAtomConst
+import gapt.expr.formula.hol.HOLPartialAtom
+import gapt.expr.formula.prop.PropAtom
+import gapt.expr.formula.prop.PropConnective
+import gapt.expr.formula.prop.PropFormula
+import gapt.expr.formula.prop.PropPartialFormula
 import gapt.expr.ty.->:
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
 import gapt.expr.ty.Ty
-
-trait Formula extends Expr {
-  override def replace( pos: HOLPosition, exp: Expr ) = HOLPosition.replace( this, pos, exp )
-}
-trait Atom extends Formula with HOLPartialAtom {
-  private[expr] override def numberOfArguments: Int = 0
-}
-
-trait VarOrConst extends Expr {
-  def name: String
-}
-
-trait LogicalConstant extends Const
-
-trait FOLExpression extends Expr {
-  /**
-   * Retrieves this expression's subexpression at a given position.
-   *
-   * @param pos The position to be retrieved.
-   * @return The subexpression at pos.
-   */
-  def apply( pos: FOLPosition ): FOLExpression = get( pos ) match {
-    case Some( f ) => f
-    case None      => throw new Exception( "Position " + pos + " does not exist in expression " + this + "." )
-  }
-
-  /**
-   * Retrieves this expression's subexpression at a given position, if there is one.
-   *
-   * @param pos The position to be retrieved.
-   * @return If there is a subexpression at that position, return Some(that expression). Otherwise None.
-   */
-  def get( pos: FOLPosition ): Option[FOLExpression] =
-    FOLPosition.toHOLPositionOption( this )( pos ).flatMap( get ).asInstanceOf[Option[FOLExpression]]
-
-  def replace( pos: FOLPosition, replacement: FOLExpression ): FOLExpression =
-    FOLPosition.replace( this, pos, replacement )
-
-  /**
-   * Tests whether this expression has a subexpression at a given position.
-   *
-   * @param pos The position to be tested.
-   * @return Whether this(pos) is defined.
-   */
-  def isDefinedAt( pos: FOLPosition ): Boolean = get( pos ).isDefined
-
-  /**
-   * Finds all HOL positions of a subexpression in this expression.
-   *
-   * @param exp The subexpression to be found.
-   * @return A list containing all positions where exp occurs.
-   */
-  def find( exp: FOLExpression ): List[FOLPosition] = getPositions( this, _ == exp )
-
-}
-
-trait FOLPartialAtom extends HOLPartialAtom
-trait FOLAtomConst extends HOLAtomConst with FOLPartialAtom {
-  def apply( that: FOLTerm* )( implicit dummyImplicit: DummyImplicit ) = App( this, that ).asInstanceOf[FOLAtom]
-}
-
-private[expr] trait FOLPartialFormula extends Expr {
-  private[expr] def numberOfArguments: Int
-}
-
-trait FOLPartialTerm extends Expr {
-  private[expr] def numberOfArguments: Int
-}
-trait FOLFunctionConst extends Const with FOLPartialTerm {
-  def apply( that: FOLTerm* )( implicit dummyImplicit: DummyImplicit ) = App( this, that ).asInstanceOf[FOLTerm]
-}
-
-trait HOLPartialAtom extends Expr {
-  private[expr] def numberOfArguments: Int
-
-  def apply( that: Expr* )( implicit dummyImplicit: DummyImplicit ) = App( this, that ).asInstanceOf[Atom]
-}
-trait HOLAtomConst extends Const with HOLPartialAtom
-
-trait FOLTerm extends FOLPartialTerm with FOLExpression {
-  private[expr] override val numberOfArguments = 0
-}
-trait FOLVar extends Var with FOLTerm
-trait FOLConst extends Const with FOLTerm with FOLFunctionConst
-trait FOLFormula extends FOLPartialFormula with Formula with FOLExpression {
-  private[expr] override val numberOfArguments = 0
-
-  def &( that: FOLFormula ): FOLFormula = And( this, that )
-  def |( that: FOLFormula ): FOLFormula = Or( this, that )
-  override def unary_- : FOLFormula = Neg( this )
-  def -->( that: FOLFormula ): FOLFormula = Imp( this, that )
-  def <->( that: FOLFormula ) = Iff( this, that ).asInstanceOf[FOLFormula]
-}
-trait FOLAtom extends FOLPartialAtom with Atom with FOLFormula {
-  private[expr] override val numberOfArguments: Int = 0
-}
-
-private[expr] trait FOLFormulaWithBoundVar extends Expr
-trait FOLQuantifier extends LogicalConstant
-
-private[expr] trait PropPartialFormula extends FOLPartialFormula
-trait PropFormula extends PropPartialFormula with FOLFormula
-trait PropConnective extends LogicalConstant with PropPartialFormula
-trait PropAtom extends Const with PropFormula with FOLAtom with FOLAtomConst
 
 /**
  * Determine the correct traits for a given lambda expression.
@@ -229,90 +137,3 @@ private[expr] object determineTraits {
     case _                     => new Abs( v, t )
   }
 }
-
-object FOLVar {
-  def apply( sym: String ): FOLVar = Var( sym, Ti ).asInstanceOf[FOLVar]
-  def unapply( e: FOLVar ) = Some( e.name )
-}
-
-object FOLConst {
-  def apply( sym: String ): FOLConst = FOLFunction( sym ).asInstanceOf[FOLConst]
-  def unapply( e: FOLConst ) = Some( e.name )
-}
-
-private[expr] class FOLHead( ret: Ty ) {
-  def apply( sym: String, arity: Int ): Const =
-    Const( sym, FOLHeadType( ret, arity ) )
-  def unapply( e: Expr ): Option[( String, Int )] = e match {
-    case NonLogicalConstant( sym, FOLHeadType( `ret`, arity ), Nil ) => Some( ( sym, arity ) )
-    case _ => None
-  }
-}
-
-object FOLAtomConst extends FOLHead( To ) {
-  override def apply( sym: String, arity: Int ): FOLAtomConst =
-    if ( sym == "=" && arity == 2 ) EqC( Ti ).asInstanceOf[FOLAtomConst] else
-      super.apply( sym, arity ).asInstanceOf[FOLAtomConst]
-  override def unapply( e: Expr ): Option[( String, Int )] = e match {
-    case EqC( Ti ) => Some( "=", 2 )
-    case _         => super.unapply( e )
-  }
-}
-object FOLFunctionConst extends FOLHead( Ti ) {
-  override def apply( sym: String, arity: Int ): FOLFunctionConst =
-    super.apply( sym, arity ).asInstanceOf[FOLFunctionConst]
-}
-
-object FOLAtom {
-  def apply( sym: String, args: FOLTerm* )( implicit dummyImplicit: DummyImplicit ): FOLAtom = FOLAtom( sym, args )
-  def apply( sym: String, args: Seq[FOLTerm] ): FOLAtom =
-    Apps( FOLAtomConst( sym, args.size ), args ).asInstanceOf[FOLAtom]
-
-  def unapply( e: FOLAtom ): Option[( String, List[FOLTerm] )] = e match {
-    case Apps( FOLAtomConst( sym, _ ), args ) if e.isInstanceOf[FOLAtom] =>
-      Some( ( sym, args.asInstanceOf[List[FOLTerm]] ) )
-    case _ => None
-  }
-}
-
-object PropAtom {
-  def apply( sym: String ): PropAtom = Const( sym, To ).asInstanceOf[PropAtom]
-}
-
-object HOLAtomConst {
-  def apply( name: String, argTypes: Ty* ): HOLAtomConst =
-    Const( name, FunctionType( To, argTypes ) ).asInstanceOf[HOLAtomConst]
-
-  def unapply( e: Const with HOLPartialAtom ): Option[( String, Seq[Ty] )] = e match {
-    case Const( name, FunctionType( To, argTypes ), _ ) => Some( name -> argTypes )
-  }
-}
-
-object Atom {
-  def apply( head: String, args: Expr* )( implicit dummyImplicit: DummyImplicit ): Atom =
-    apply( head, args )
-  def apply( head: String, args: Seq[Expr] ): Atom =
-    Apps( Const( head, FunctionType( To, args.map( _.ty ) ) ), args ).asInstanceOf[Atom]
-
-  def apply( head: Expr, args: Expr* ): Atom =
-    apply( head, args toList )
-  def apply( head: Expr, args: List[Expr] ): Atom =
-    Apps( head, args ).asInstanceOf[Atom]
-
-  def unapply( e: Atom ): Option[( Expr, List[Expr] )] = e match {
-    case Apps( head @ ( NonLogicalConstant( _, _, _ ) | Var( _, _ ) ), args ) if e.ty == To => Some( head, args )
-    case _ => None
-  }
-}
-
-/**
- * Matches constants and variables, but nothing else.
- */
-object VarOrConst {
-  def unapply( e: VarOrConst ): Some[( String, Ty, List[Ty] )] =
-    e match {
-      case Const( n, t, p ) => Some( n, t, p )
-      case Var( n, t )      => Some( n, t, Nil )
-    }
-}
-

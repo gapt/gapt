@@ -11,11 +11,11 @@ import gapt.expr.formula.Atom
 import gapt.expr.formula.Bottom
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
-import gapt.expr.formula.HOLAtomConst
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Top
+import gapt.expr.formula.hol.HOLAtomConst
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.FunctionType
 import gapt.expr.util.constants
@@ -170,7 +170,7 @@ case class fastStructuralCNF( propositional: Boolean = true, bidirectionalDefs: 
       val alreadyDefined = defs isDefinedAt Abs( fvs, f )
       val const = defs.getOrElseUpdate(
         Abs( fvs, f ),
-        formula.HOLAtomConst( mkAbbrevSym(), fvs map { _.ty }: _* ) )
+        formula.hol.HOLAtomConst( mkAbbrevSym(), fvs map { _.ty }: _* ) )
       val repl = const( fvs: _* )
       if ( !alreadyDefined ) {
         if ( i.isAnt || bidirectionalDefs ) expand( Sequent( Seq( f ), Seq( repl ) ) )

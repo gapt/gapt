@@ -3,8 +3,8 @@ import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Formula
-import gapt.expr.formula.HOLAtomConst
 import gapt.expr.formula.Iff
+import gapt.expr.formula.hol.HOLAtomConst
 import gapt.expr.formula.hol.HOLPosition
 import gapt.expr.subst.Substitution
 import gapt.logic.Polarity

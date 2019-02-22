@@ -8,9 +8,9 @@ package gapt.proofs.ceres
 import gapt.expr._
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Bottom
-import gapt.expr.formula.FOLAtom
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Top
+import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.ty.To
 import gapt.proofs.Sequent
 

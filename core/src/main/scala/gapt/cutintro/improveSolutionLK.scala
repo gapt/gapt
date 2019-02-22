@@ -8,8 +8,8 @@ import gapt.provers.Prover
 import gapt.provers.Session._
 import cats.implicits._
 import gapt.expr.formula.And
-import gapt.expr.formula.FOLFormula
 import gapt.expr.formula.Formula
+import gapt.expr.formula.fol.FOLFormula
 import gapt.expr.subst.FOLSubstitution
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables

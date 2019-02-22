@@ -2,7 +2,7 @@ package gapt.proofs.lk.rules
 
 import gapt.expr.Const
 import gapt.expr.formula.Bottom
-import gapt.expr.formula.PropFormula
+import gapt.expr.formula.prop.PropFormula
 import gapt.proofs.HOLSequent
 
 /**

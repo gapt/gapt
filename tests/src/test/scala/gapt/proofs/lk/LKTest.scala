@@ -6,15 +6,15 @@ import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Ex
-import gapt.expr.formula.FOLAtom
-import gapt.expr.formula.FOLConst
 import gapt.expr.formula.FOLFunction
-import gapt.expr.formula.FOLFunctionConst
-import gapt.expr.formula.FOLTerm
-import gapt.expr.formula.FOLVar
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFunctionConst
+import gapt.expr.formula.fol.FOLTerm
+import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.hol.HOLPosition
 import gapt.proofs._
 import gapt.proofs.lk.rules.AndLeftRule
@@ -52,7 +52,7 @@ class LKTest extends Specification {
   val x = FOLVar( "x" )
   val y = FOLVar( "y" )
 
-  def P( t: FOLTerm ) = formula.FOLAtom( "P", t )
+  def P( t: FOLTerm ) = formula.fol.FOLAtom( "P", t )
 
   val A = FOLAtom( "A", Nil )
   val B = FOLAtom( "B", Nil )
