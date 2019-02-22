@@ -12,6 +12,7 @@ import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.logic.Polarity
 import gapt.proofs._
+import gapt.proofs.context.update.Definition
 
 /**
  * Removes a clause component.

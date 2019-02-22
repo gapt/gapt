@@ -11,6 +11,7 @@ import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
 import gapt.proofs.Ant
 import gapt.proofs.Checkable
 import gapt.proofs.context.Context
+import gapt.proofs.context.update.Definition
 import org.specs2.mutable.Specification
 
 class MRealizabilityTest extends Specification {

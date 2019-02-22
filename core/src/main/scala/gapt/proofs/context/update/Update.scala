@@ -3,7 +3,6 @@ package gapt.proofs.context.update
 import gapt.expr.Abs
 import gapt.expr.Apps
 import gapt.expr.Const
-import gapt.expr.Definition
 import gapt.expr.Expr
 import gapt.expr.Var
 import gapt.expr.VarOrConst

@@ -10,6 +10,7 @@ import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.expr.util.typeVariables
 import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.context.update.Definition
 import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.utils.{ Maybe, NameGenerator }
 

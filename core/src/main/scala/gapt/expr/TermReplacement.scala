@@ -19,6 +19,7 @@ import gapt.expr.util.rename
 import gapt.expr.util.variables
 import gapt.proofs.Sequent
 import gapt.proofs.ceres._
+import gapt.proofs.context.update.Definition
 
 trait Replaceable[-I, +O] {
   def replace( obj: I, p: PartialFunction[Expr, Expr] ): O

@@ -18,6 +18,7 @@ import gapt.logic.Polarity
 import gapt.logic.hol.SkolemFunctions
 import gapt.proofs._
 import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.context.update.Definition
 import gapt.utils.NameGenerator
 
 import scala.collection.mutable

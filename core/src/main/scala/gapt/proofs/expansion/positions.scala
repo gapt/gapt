@@ -15,6 +15,7 @@ import gapt.expr.util.replacementContext
 import gapt.expr.util.syntacticMGU
 import gapt.expr.util.syntacticMatching
 import gapt.proofs.context.Context
+import gapt.proofs.context.update.Definition
 
 private object getAtHOLPosition {
   def apply( et: ExpansionTree, pos: HOLPosition ): Set[ExpansionTree] = et( pos )

@@ -25,6 +25,7 @@ import gapt.formats.babel.BabelSignature
 import gapt.logic.hol.SkolemFunctions
 import gapt.proofs._
 import gapt.proofs.context.Context
+import gapt.proofs.context.update.Definition
 
 import scala.collection.mutable
 

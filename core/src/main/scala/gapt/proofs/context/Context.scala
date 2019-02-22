@@ -34,6 +34,7 @@ import gapt.proofs.context.facet.StructurallyInductiveTypes
 import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.mutable.ReadOnlyMutableContext
+import gapt.proofs.context.update.Definition
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.Sort
 import gapt.proofs.context.update.Update

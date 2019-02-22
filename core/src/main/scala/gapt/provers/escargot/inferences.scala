@@ -20,6 +20,7 @@ import gapt.expr.util.syntacticMatching
 import gapt.expr.util.typeVariables
 import gapt.logic.Polarity
 import gapt.proofs._
+import gapt.proofs.context.update.Definition
 import gapt.proofs.resolution._
 import gapt.provers.escargot.LPO
 

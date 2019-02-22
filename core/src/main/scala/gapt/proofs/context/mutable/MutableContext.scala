@@ -2,7 +2,6 @@ package gapt.proofs.context.mutable
 
 import gapt.expr.Abs
 import gapt.expr.Const
-import gapt.expr.Definition
 import gapt.expr.Expr
 import gapt.expr.Replaceable
 import gapt.expr.containedNames
@@ -17,6 +16,7 @@ import gapt.proofs.context.Context
 import gapt.proofs.context.State
 import gapt.proofs.context.facet.Definitions
 import gapt.proofs.context.immutable.ImmutableContext
+import gapt.proofs.context.update.Definition
 import gapt.proofs.context.update.Sort
 import gapt.proofs.context.update.Update
 import gapt.proofs.context.update.{ SkolemFunction => SkolemFun }

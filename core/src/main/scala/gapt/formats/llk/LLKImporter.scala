@@ -25,6 +25,7 @@ import gapt.expr.ty.To
 import gapt.expr.ty.Ty
 import gapt.expr.util.freeVariables
 import gapt.expr.util.syntacticMatching
+import gapt.proofs.context.update.Definition
 import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.CutRule

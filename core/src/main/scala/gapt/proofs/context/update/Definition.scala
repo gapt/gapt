@@ -1,5 +1,7 @@
-package gapt.expr
+package gapt.proofs.context.update
 
+import gapt.expr.Const
+import gapt.expr.Expr
 import gapt.expr.ty.TVar
 import gapt.expr.util.freeVariables
 import gapt.expr.util.typeVariables
@@ -8,7 +10,6 @@ import gapt.proofs.context.State
 import gapt.proofs.context.facet.Constants
 import gapt.proofs.context.facet.Definitions
 import gapt.proofs.context.facet.Reductions
-import gapt.proofs.context.update.Update
 
 case class Definition( what: Const, by: Expr ) extends Update {
   val Const( name, ty, ps ) = what
