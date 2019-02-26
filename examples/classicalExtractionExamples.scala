@@ -10,7 +10,8 @@ import gapt.proofs
 import gapt.proofs.context.Context
 import gapt.proofs.{ Ant, Checkable, ProofBuilder, Sequent, Suc }
 import gapt.proofs.context.update.{ InductiveType, PrimitiveRecursiveFunction, ReductionRuleUpdate }
-import gapt.proofs.lk._
+import gapt.proofs.lk.rules._
+import gapt.proofs.lk.transformations.{ LKToND, eliminateDefinitions }
 import gapt.prooftool.prooftool
 
 object example1 extends Script {
@@ -211,7 +212,7 @@ object example10 extends Script {
 
 object example11 extends Script {
   implicit var ctx = Context()
-  val s1 = gapt.proofs.lk.LogicalAxiom( hof"A" )
+  val s1 = gapt.proofs.lk.rules.LogicalAxiom( hof"A" )
   val s2 = NegRightRule( s1, hof"A" )
   val s3 = NegLeftRule( s2, hof"-A" )
   val s4 = ImpRightRule( s3, hof"-(-A) -> A" )
@@ -4463,12 +4464,16 @@ object booleanDetTwoVars extends Script {
     qed
   println( p )
   prooftool( p )
+  val lam = ClassicalExtraction.extractCases( p4 )
+  println( lam.toUntypedString )
+  /*
   val lam = ClassicalExtraction.extractCases( p )
   println( lam.toUntypedString )
   println( normalize( lam( bFalse )( bFalse ) ).toUntypedString )
   println( normalize( lam( bFalse )( bTrue ) ).toUntypedString )
   println( normalize( lam( bTrue )( bFalse ) ).toUntypedString )
   println( normalize( lam( bTrue )( bTrue ) ).toUntypedString )
+  */
 }
 
 object higherOrderTypingProblem extends Script {
@@ -4549,4 +4554,74 @@ object forallProvesNotExistsNot extends Script {
   prooftool( p )
   val lam = ClassicalExtraction.extractCases( p )
   println( lam )
+}
+
+object testCase extends Script {
+  var ctx = Context.default
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+
+  implicit val ctxClassical = ClassicalExtraction.systemT( ctx )
+
+  //val tryConst = hoc"try{?a ?c}: o > (?a > (?c > exn)) > (?a > (?c > exn))"
+  //val catchConst = hoc"catch{?a ?c}: o > (exconj ?a ?c) > (exconj ?a ?c)"
+  //val tryCatch = hoc"tryCatch{?a ?b ?c}: ?a > ?b > ?c > ?c > ?c"
+
+  val sC = ctxClassical.constant("s").get
+  val inlC = ctxClassical.constant("inl", List(ty"nat > (o > exn)", ty"exconj (nat) (o)")).get
+  val inrC = ctxClassical.constant("inr", List(ty"nat > (o > exn)", ty"exconj (nat) (o)")).get
+  val tryC = ctxClassical.constant("try", List(ty"nat", To)).get
+  val catchC = ctxClassical.constant("catch", List(ty"nat", To)).get
+  val tryCatchC = ctxClassical.constant("tryCatch", List(ty"nat > (o > exn)", ty"exconj (nat) (o)", ty"sum (nat > (o > exn)) (exconj (nat) (o))")).get
+  val a = le"(y0: (nat > (o > exn)))"
+  val b = le"(y1: (exconj (nat) (o)))"
+  val tryT = inlC(tryC(hof"!(x:nat) -false", a))
+  val catchT = inrC(catchC(hof"?(x:nat) false", b))
+  val res = normalize(tryCatchC(a, b, tryT, catchT))
+  println(res)
+}
+
+object testCase2 extends Script {
+  var ctx = Context.default
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "bool", hoc"bFalse: bool", hoc"bTrue: bool" )
+  val Some( bFalse ) = ctx.constant( "bFalse" )
+  val Some( bTrue ) = ctx.constant( "bTrue" )
+  val bIsTrue = hoc"p : bool>o"
+  ctx += PrimitiveRecursiveFunction(
+    bIsTrue,
+    List(
+      ( bIsTrue( bFalse ) -> hof"false" ),
+      ( bIsTrue( bTrue ) -> hof"true" ) ) )( ctx )
+
+  implicit val ctxClassical = ClassicalExtraction.systemT( ctx )
+
+  //val tryConst = hoc"try{?a ?c}: o > (?a > (?c > exn)) > (?a > (?c > exn))"
+  //val catchConst = hoc"catch{?a ?c}: o > (exconj ?a ?c) > (exconj ?a ?c)"
+  //val tryCatch = hoc"tryCatch{?a ?b ?c}: ?a > ?b > ?c > ?c > ?c"
+
+  val prf = ProofBuilder.
+    c(gapt.proofs.nd.LogicalAxiom(hof"?(x:bool) p(x)")).
+    u(OrIntro2Rule(_, hof"-(?(x:bool) p(x))")).
+    c(gapt.proofs.nd.LogicalAxiom(hof"-(?(x:bool) p(x))")).
+    //u(ForallElimRule(_, le"bFalse:bool")).
+    u(OrIntro1Rule(_, hof"?(x:bool) p(x)")).
+    b(ExcludedMiddleRule(_,_)).
+    qed
+  val lam = ClassicalExtraction.extractCases(prf)
+  println(lam.toUntypedString)
+
+  val sC = ctxClassical.constant("s").get
+  val inlC = ctxClassical.constant("inl", List(ty"(o > exn)", ty"exconj (bool) (o)")).get
+  val inrC = ctxClassical.constant("inr", List(ty"(o > exn)", ty"exconj (bool) (o)")).get
+  val tryC = ctxClassical.constant("try", List(ty"bool", To)).get
+  val catchC = ctxClassical.constant("catch", List(ty"bool", To)).get
+  val tryCatchC = ctxClassical.constant("tryCatch", List(ty"bool > (o > exn)", ty"exconj (bool) (o)", ty"sum (o > exn) (exconj (bool) (o))")).get
+  val a = le"(y0: (bool > (o > exn)))"
+  val b = le"(y1: (exconj (bool) (o)))"
+  val tmp = hof"-false"
+  println(tmp)
+  val tryT = inlC(tryC(hof"!(x:bool) -p(x)", a)(le"bTrue:bool"))
+  val catchT = inrC(catchC(hof"?(x:bool) p(x)", b))
+  val res = normalize(tryCatchC(a, b, tryT, catchT))
+  println(res.toUntypedString)
 }

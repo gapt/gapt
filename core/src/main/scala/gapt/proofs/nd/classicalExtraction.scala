@@ -89,9 +89,16 @@ object ClassicalExtraction {
     val exconj = ty"exconj ?a ?b"
     val expair = hoc"expair{?a ?b}: ?a > ?b > (exconj ?a ?b)"
     systemT += InductiveType( exconj, expair )
+
+    val catchConst = hoc"catch{?a ?b}: o > (exconj ?a ?b) > (exconj ?a ?b)"
+    systemT += catchConst
+    val q = hof"q: o"
+
     systemT += PrimitiveRecursiveFunction(
       existsElim,
-      List( ( existsElim( expair( x, y ), w3 ) -> w3( x )( y ) ) ) )( systemT )
+      List( ( existsElim( expair( x, y ), w3 ) -> w3( x )( y ) ),
+            ( existsElim( catchConst( q, expair(x, y ) ), w3 ) -> w3( x )( y ) )
+      ) )( systemT )
     val expi1 = hoc"expi1{?a ?b}: (exconj ?a ?b) > ?a"
     val expi2 = hoc"expi2{?a ?b}: (exconj ?a ?b) > ?b"
     systemT += PrimitiveRecursiveFunction(
@@ -147,10 +154,8 @@ object ClassicalExtraction {
 
     //val handle = hoc"handle{?a ?b}: (?a > ?b) > ((?a > (exn ?a)) > ?b) > ?b"
     //val tryCatch = hoc"tryCatch{?a ?c}: ((?a > exn) > ?c) > (?a > ?c) > ?c"
-    val tryConst = hoc"try{?a ?c}: o > (?a > (?c > exn)) > (?a > (?c > exn))"
+    val tryConst = hoc"try{?a ?b}: o > (?a > (?b > exn)) > (?a > (?b > exn))"
     systemT += tryConst
-    val catchConst = hoc"catch{?a ?c}: o > (exconj ?a ?c) > (exconj ?a ?c)"
-    systemT += catchConst
     val tryCatch = hoc"tryCatch{?a ?b ?c}: ?a > ?b > ?c > ?c > ?c"
     systemT += tryCatch
     /*
@@ -234,10 +239,13 @@ object ClassicalExtraction {
     import gapt.proofs.context.update.ReductionRuleUpdate._
     systemT += ReductionRule( hof"(true & x) = x" )
     systemT += ReductionRule( hof"(false & x) = false" )
+    systemT += ReductionRule( hof"(x & true) = x" )
+    systemT += ReductionRule( hof"(x & false) = false" )
     systemT += ReductionRule( hof"(-true) = false" )
     systemT += ReductionRule( hof"(-false) = true" )
-    systemT += ReductionRule( hof"(true | x) = true" )
+    systemT += ReductionRule( hof"(x | true) = true" )
     systemT += ReductionRule( hof"(false | x) = x" )
+    systemT += ReductionRule( hof"(x | false) = x" )
     val sg = hoc"sg: nat>o"
     systemT += PrimitiveRecursiveFunction(
       sg,
@@ -544,11 +552,11 @@ object ClassicalExtraction {
           val l = extractCases( leftSubProof, ng, exEm1HypVars, forallEm1HypVars )
           val r = extractCases( rightSubProof, ng, exEm1HypVars, forallEm1HypVars )
 
-          val sub1 = Substitution( eigenVariable, le"expi1(${l( Suc( 0 ) )})" )
+          //val sub1 = Substitution( eigenVariable, le"expi1(${l( Suc( 0 ) )})" )
           //val extraVar = Var( ng.fresh( "y" ), flat( rightSubProof.conclusion( aux ) ) )
           // use deleted var instead of fresh one
           val extraVar = r( aux ).asInstanceOf[Var]
-          val sub2 = Substitution( extraVar, le"expi2(${l( Suc( 0 ) )})" )
+          //val sub2 = Substitution( extraVar, le"expi2(${l( Suc( 0 ) )})" )
           //val res = l.antecedent ++: r.delete( aux ).antecedent ++: Sequent() :+ sub1( sub2( r( Suc( 0 ) ) ) )
           val param2 = le"^$eigenVariable (^$extraVar ${r( Suc( 0 ) )})"
           val res = l.antecedent ++: r.delete( aux ).antecedent ++: Sequent() :+ le"existsElim(${l( Suc( 0 ) )}, $param2)"

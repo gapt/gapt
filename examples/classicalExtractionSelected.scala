@@ -8,7 +8,8 @@ import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.context.Context
 import gapt.proofs.ProofBuilder
 import gapt.proofs.context.update.{ InductiveType, PrimitiveRecursiveFunction }
-import gapt.proofs.lk.{ LKProof, LKToND }
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.transformations.LKToND
 import gapt.proofs.nd.{ ClassicalExtraction, ExcludedMiddleRule }
 import gapt.proofs.resolution.PCNF
 import gapt.prooftool.prooftool
@@ -826,8 +827,11 @@ object booleanDetVampire extends Script {
   println( normalize( realm1( bFalse )( bTrue ) ).toUntypedString )
   println( normalize( realm1( bTrue )( bFalse ) ).toUntypedString )
   */
-  println( realm1( bTrue )( bTrue ).toUntypedString )
-  println( normalize( realm1( bTrue )( bTrue ) ).toUntypedString )
+  //println( realm1( bTrue )( bTrue ).toUntypedString )
+  //println( normalize( realm1( bTrue )( bTrue ) ).toUntypedString )
+  //println( normalize( realm1( bTrue )( bFalse ) ).toUntypedString )
+  //println( normalize( realm1( bFalse )( bTrue ) ).toUntypedString )
+  println( normalize( realm1( bFalse )( bFalse ) ).toUntypedString )
 }
 
 object simpleNatDet extends Script {
