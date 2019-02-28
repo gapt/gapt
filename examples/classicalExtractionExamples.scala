@@ -4694,3 +4694,72 @@ object zIffaAndb extends Script {
   val lam = ClassicalExtraction.extractCases(p)
   println(lam.toUntypedString)
 }
+
+object zIffaAndbShortCircuit extends Script {
+
+  import gapt.proofs.context.Context
+  import gapt.proofs.nd.ClassicalExtraction
+  var ctx = Context.default
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "bool", hoc"bFalse: bool", hoc"bTrue: bool" )
+  val Some( bFalse ) = ctx.constant( "bFalse" )
+  val Some( bTrue ) = ctx.constant( "bTrue" )
+  val bIsTrue = hoc"p : bool>o"
+  ctx += PrimitiveRecursiveFunction(
+    bIsTrue,
+    List(
+      ( bIsTrue( bFalse ) -> hof"false" ),
+      ( bIsTrue( bTrue ) -> hof"true" ) ) )( ctx )
+  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+  val p1 = ProofBuilder.
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(x) & p(y)" ) ).
+    u(AndElim2Rule(_)).
+    u(ImpIntroRule(_, Ant(0))).
+    qed
+  val p2 = ProofBuilder.
+    c(gapt.proofs.nd.LogicalAxiom(hof"p(x)")).
+    c(gapt.proofs.nd.LogicalAxiom(hof"p(y)")).
+    b(AndIntroRule(_, _)).
+    u(ImpIntroRule(_, Ant(1))).
+    qed
+  val q1 = ProofBuilder.
+    c(p1).
+    c(p2).
+    b(AndIntroRule(_, _)).
+    u(ExistsIntroRule(_, hof"?z (((p(x) & p(y)) -> p(z)) & (p(z) -> (p(x) & p(y))))")).
+    qed
+
+  val p3 = ProofBuilder.
+    c(gapt.proofs.nd.LogicalAxiom(hof"-p(x)")).
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(x) & p(y)" ) ).
+    u(AndElim1Rule(_)).
+    b(NegElimRule(_,_)).
+    u(BottomElimRule(_, hof"p(bFalse)")).
+    u(ImpIntroRule(_, Ant(1))).
+    qed
+  val p4 = ProofBuilder.
+    c( gapt.proofs.nd.TheoryAxiom( hof"-p(bFalse)" ) ).
+    c( gapt.proofs.nd.LogicalAxiom(hof"p(bFalse)")).
+    b(NegElimRule(_,_)).
+    u(BottomElimRule(_, hof"p(x) & p(y)")).
+    u(ImpIntroRule(_, Ant(0))).
+    qed
+  val q2 = ProofBuilder.
+    c(p3).
+    c(p4).
+    b(AndIntroRule(_,_)).
+    u(ExistsIntroRule(_, hof"?z (((p(x) & p(y)) -> p(z)) & (p(z) -> (p(x) & p(y))))")).
+    qed
+
+  val p = ProofBuilder.
+    c(q1).
+    c(q2).
+    b(ExcludedMiddleRule(_,_)).
+    u(ForallIntroRule(_, hov"y:bool", hov"y:bool")).
+    u(ForallIntroRule(_, hov"x:bool", hov"x:bool")).
+    qed
+
+  prooftool(p)
+  val lam = ClassicalExtraction.extractCases(p)
+  println(lam.toUntypedString)
+}
