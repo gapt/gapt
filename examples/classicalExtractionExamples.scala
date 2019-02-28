@@ -4269,8 +4269,8 @@ object booleanDeterminization2 extends Script {
     qed
   println( p )
   prooftool( p )
-  //val lam = ClassicalExtraction.extractCases( p )
-  //println(lam)
+  val lam = ClassicalExtraction.extractCases( p )
+  println(lam)
 }
 
 object booleanDeterminization3 extends Script {
@@ -4464,12 +4464,14 @@ object booleanDetTwoVars extends Script {
     qed
   println( p )
   prooftool( p )
+  /*
   val lam = ClassicalExtraction.extractCases( p4 )
   println( lam.toUntypedString )
-  /*
+  */
   val lam = ClassicalExtraction.extractCases( p )
   println( lam.toUntypedString )
   println( normalize( lam( bFalse )( bFalse ) ).toUntypedString )
+  /*
   println( normalize( lam( bFalse )( bTrue ) ).toUntypedString )
   println( normalize( lam( bTrue )( bFalse ) ).toUntypedString )
   println( normalize( lam( bTrue )( bTrue ) ).toUntypedString )
@@ -4624,4 +4626,71 @@ object testCase2 extends Script {
   val catchT = inrC(catchC(hof"?(x:bool) p(x)", b))
   val res = normalize(tryCatchC(a, b, tryT, catchT))
   println(res.toUntypedString)
+}
+
+object zIffaAndb extends Script {
+
+  import gapt.proofs.context.Context
+  import gapt.proofs.nd.ClassicalExtraction
+  var ctx = Context.default
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "bool", hoc"bFalse: bool", hoc"bTrue: bool" )
+  val Some( bFalse ) = ctx.constant( "bFalse" )
+  val Some( bTrue ) = ctx.constant( "bTrue" )
+  val bIsTrue = hoc"p : bool>o"
+  ctx += PrimitiveRecursiveFunction(
+    bIsTrue,
+    List(
+      ( bIsTrue( bFalse ) -> hof"false" ),
+      ( bIsTrue( bTrue ) -> hof"true" ) ) )( ctx )
+  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+  val p1 = ProofBuilder.
+    c( gapt.proofs.nd.LogicalAxiom( hof"-(p(x) & p(y))" ) ).
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(x) & p(y)" ) ).
+    b(NegElimRule(_,_)).
+    u(BottomElimRule(_, hof"p(bFalse)")).
+    u(ImpIntroRule(_, Ant(1))).
+    qed
+  val p2 = ProofBuilder.
+    c( gapt.proofs.nd.TheoryAxiom( hof"-p(bFalse)" ) ).
+    c(gapt.proofs.nd.LogicalAxiom(hof"p(bFalse)")).
+    b(NegElimRule(_,_)).
+    u(BottomElimRule(_, hof"p(x) & p(y)")).
+    u(ImpIntroRule(_, Ant(0))).
+    qed
+  val q1 = ProofBuilder.
+    c(p1).
+    c(p2).
+    b(AndIntroRule(_, _)).
+    u(ExistsIntroRule(_, hof"?z (((p(x) & p(y)) -> p(z)) & (p(z) -> (p(x) & p(y))))")).
+    qed
+
+  val p3 = ProofBuilder.
+    c( gapt.proofs.nd.TheoryAxiom( hof"p(bTrue)" ) ).
+    u(WeakeningRule(_, hof"p(x) & p(y)")).
+    u(ImpIntroRule(_, Ant(0))).
+    qed
+  val p4 = ProofBuilder.
+    c( gapt.proofs.nd.LogicalAxiom(hof"p(x) & p(y)")).
+    u(WeakeningRule(_, hof"p(bTrue)")).
+    u(ImpIntroRule(_, Ant(0))).
+    qed
+  val q2 = ProofBuilder.
+    c(p3).
+    c(p4).
+    b(AndIntroRule(_,_)).
+    u(ExistsIntroRule(_, hof"?z (((p(x) & p(y)) -> p(z)) & (p(z) -> (p(x) & p(y))))")).
+    qed
+
+  val p = ProofBuilder.
+    c(q2).
+    c(q1).
+    b(ExcludedMiddleRule(_,_)).
+    u(ForallIntroRule(_, hov"y:bool", hov"y:bool")).
+    u(ForallIntroRule(_, hov"x:bool", hov"x:bool")).
+    qed
+
+  prooftool(p)
+  val lam = ClassicalExtraction.extractCases(p)
+  println(lam.toUntypedString)
 }

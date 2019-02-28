@@ -807,15 +807,20 @@ object booleanDetVampire extends Script {
   val nd = LKToND( lk, Some( Suc( 0 ) ) )
   println( nd )
   //prooftool( nd )
-  val emSubProofs =
+  val em1SubProofs =
     nd.subProofs.filter {
-      case ExcludedMiddleRule( _, _, _, _ ) => true
+      case e @ ExcludedMiddleRule( _, _, _, _) =>
+        e.formulaA match {
+          case Ex(_, _) => true
+          case _ => false
+        }
       case _                                => false
     }
   println( s"contains ${
-    emSubProofs.size
+    em1SubProofs.size
   } excluded middle inferences" )
-  println( emSubProofs.map( _.endSequent.succedent ).mkString( "\n" ) )
+  em1SubProofs.foreach( prooftool(_) )
+  println( em1SubProofs.map( _.endSequent.succedent ) )
   val m1 = ClassicalExtraction.extractCases( nd )
   val Some( i ) = ctxClassical.constant( "i" )
   val Some( exception ) = ctxClassical.constant( "exception", List( ty"1" ) )
