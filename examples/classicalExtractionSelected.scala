@@ -1053,157 +1053,132 @@ println( "expecting inr(i)" + normalize( m1Args( ClassicalExtraction.flat( defle
 */
 }
 
-object booleanDeterminizationVampire extends Script {
+object vampireZIffAAndB extends Script {
 
+  import gapt.expr._
+  import gapt.proofs.nd._
   import gapt.proofs._
   import gapt.proofs.expansion.{ ExpansionProof, ETWeakQuantifier, ExpansionProofToLK }
-  import gapt.proofs.nd.InductionRule
-  import gapt.proofs.reduction._
   import gapt.provers.vampire.Vampire
+
   import gapt.proofs.context.Context
   import gapt.proofs.nd.ClassicalExtraction
-
   var ctx = Context.default
   ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
   ctx += InductiveType( "bool", hoc"bFalse: bool", hoc"bTrue: bool" )
-  ctx += Notation.Infix( "||", Precedence.disj )
-  ctx += Notation.Infix( "&&", Precedence.conj )
   val Some( bFalse ) = ctx.constant( "bFalse" )
   val Some( bTrue ) = ctx.constant( "bTrue" )
-
-  val x = hov"x:bool"
-  val bNot = hoc"-- : bool>bool"
-  ctx += PrimitiveRecursiveFunction(
-    bNot,
-    List(
-      ( bNot( bFalse ) -> bTrue ),
-      ( bNot( bTrue ) -> bFalse ) ) )( ctx )
-
-  val bOr = hoc"|| : bool>bool>bool"
-  ctx += PrimitiveRecursiveFunction(
-    bOr,
-    List(
-      ( bOr( bFalse, x ) -> x ),
-      ( bOr( bTrue, x ) -> bTrue ) ) )( ctx )
-
-  val bAnd = hoc"&& : bool>bool>bool"
-  ctx += PrimitiveRecursiveFunction(
-    bAnd,
-    List(
-      ( bAnd( bFalse, x ) -> bFalse ),
-      ( bAnd( bTrue, x ) -> x ) ) )( ctx )
-  //ctx += hof"!x!y (bAnd(x,y) = bTrue <-> (x = bTrue & y = bTrue))"
-
-  /*
-  val bEx = hoc"bEx : bool>bool>bool"
-  val f = le"f:bool"
-  ctx += PrimitiveRecursiveFunction(
-    bEx,
-    List(
-      ( bEx( x, f ) -> bOr(Substitution(x -> bTrue)(f), Substitution(x -> bFalse)(f)))))( ctx )
-  */
-
-  val bIsTrue = hoc"bIsTrue : bool>o"
+  val bIsTrue = hoc"p : bool>o"
   ctx += PrimitiveRecursiveFunction(
     bIsTrue,
     List(
       ( bIsTrue( bFalse ) -> hof"false" ),
       ( bIsTrue( bTrue ) -> hof"true" ) ) )( ctx )
-
   implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
-
-  // TODO embedding of QBF into FOL
-  val lem1 = hof"bIsTrue(bTrue)"
-  val lem2 = hof"-bIsTrue(bFalse)"
-  val lem3 = hof"!x (bIsTrue(x) | -bIsTrue(x))"
-  val thm = hof"(!(x:bool)?(y:bool) ((bIsTrue(x) & bIsTrue(y)) | (bIsTrue(x) & -bIsTrue(y)))) & bIsTrue(bTrue) & -bIsTrue(bFalse)"
-  val problem = lem1 +: lem2 +: lem3 +: Sequent() :+ thm
-  println( problem )
-
-  val tmp: ( HOLSequent, ExpansionProof => ExpansionProof ) = ErasureReductionET forward problem
-  //val ind2 = tmp._1( Ant( 9 ) )
-  //println( ind2 )
-
-  import java.io._
-  import gapt.formats.json._
-  val f = new File( "/home/matthias/tmp/booleanDeterminizationVampire.json" )
-  val lk = if ( f.isFile() && f.canRead() ) {
-    println( "Reading proof from JSON file..." )
-    JsonImporter.load[LKProof]( f )
-  } else {
-    println( "Proving using Vampire..." )
-
-    val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "45m" ) ).withDeskolemization.extendToManySortedViaErasure ) getExpansionProof problem
-    //val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
-    println( "Done." )
-    println( "Deskolemization..." )
-    val desk: ExpansionProof = expansionProof.get
-    println( "Done." )
-    //prooftool( desk )
-    val deskInd = ExpansionProof( desk.expansionSequent.map {
-      case et =>
-        et.shallow match {
-          /*
-          case `ind` =>
-
-            ETWeakQuantifier(
-              hof"!X (X(0) ∧ ∀x (X(x) → X(s(x))) → ∀x X(x))",
-              Map( le"^x ?y (f x y)" -> et ) )
-              */
-          /*
-case `ind2` =>
-ETWeakQuantifier(
-  hof"!X (X(#c(f_0:i)) ∧ ∀x_0 (X(x_0) → X(#c(f_s:i>i)(x_0))) → ∀x_0 X(x_0))", Map( le"^x_0 ?y_0 (#c(P_f:i>i>o) x_0 y_0)" -> et ) )
-          */
-          case _ => et
-        }
-    } )
-    //prooftool( deskInd )
-
-    println( "Expansion proof to LK..." )
-    val lk = ExpansionProofToLK( deskInd ).getOrElse( throw new Exception( "LK proof not obtained" ) )
-    println( "Done." )
-    ctx.check( lk )
-    val jsonLk = gapt.formats.json.JsonExporter( lk )
-    val bw = new BufferedWriter( new FileWriter( f ) )
-    bw.write( jsonLk.render( 80 ) )
-    bw.close()
-    lk
-  }
-  //println( "LK: num inferences: " + lk.subProofs.size )
-
-  println( "LK to ND..." )
-  val nd = LKToND( lk, Some( Suc( 0 ) ) )
+  val axiom1 = hof"p(bTrue)"
+  val axiom2 = hof"-p(bFalse)"
+  val thmfof = hof"!x!y?z (((p(x) & p(y)) -> p(z)) & (p(z) -> (p(x) & p(y))))"
+  val problem = axiom1 +: axiom2 +: Sequent() :+ thmfof
+  println( TptpFOLExporter.tptpProofProblem( problem ).toString() )
+  val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "45m" ) ).withDeskolemization.extendToManySortedViaErasure ) getExpansionProof problem
+  //val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
   println( "Done." )
-  //println( nd )
+  println( "Deskolemization..." )
+  val desk: ExpansionProof = expansionProof.get
+  println( "Done." )
+  val lk = ExpansionProofToLK( desk ).getOrElse( throw new Exception( "LK proof not obtained" ) )
+  val nd = LKToND( lk, Some( Suc( 0 ) ) )
+  println( nd )
   //prooftool( nd )
-  if ( nd.subProofs.exists {
-    case InductionRule( _, _, _ ) => true
-    case _                        => false
-  } )
-    println( "contains Induction" )
-  println( s"contains ${
+  val em1SubProofs =
     nd.subProofs.filter {
-      case ExcludedMiddleRule( _, _, _, _ ) => true
+      case e @ ExcludedMiddleRule( _, _, _, _) =>
+        e.formulaA match {
+          case Ex(_, _) => true
+          case _ => false
+        }
       case _                                => false
-    }.size
+    }
+  println( s"contains ${
+    em1SubProofs.size
   } excluded middle inferences" )
-
-  //val m1 = MRealizability.mrealize( nd, false )._2
+  em1SubProofs.foreach( prooftool(_) )
+  println( em1SubProofs.map( _.endSequent.succedent ) )
   val m1 = ClassicalExtraction.extractCases( nd )
-  println( "var map\n" + ClassicalExtraction.getVarMap.mkString( "\n" ) )
-  //print( m1 ); print( " of type " ); println( m1.ty )
-  //println( "free variables in m1: " + freeVariables( m1 ) )
-  //println( "ND: num inferences: " + nd.subProofs.size )
-  //println( "ND: num EM: " + nd.subProofs.count {
-  //case _: ExcludedMiddleRule => true
-  //case _                     => false
-  //} )
-  //FSharpCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
-  val scalaProg = ScalaCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
-  val scalaFile = new File( "/home/matthias/tmp/synthexManySorted.scala" )
-  val bw = new BufferedWriter( new FileWriter( scalaFile ) )
-  bw.write( scalaProg )
-  bw.close()
+  //val Some( i ) = ctxClassical.constant( "i" )
+  val Some( exception ) = ctxClassical.constant( "exception", List( ty"1" ) )
 
+  val realm1 = m1( exception )//( i )
+  LogHandler.current.value = LogHandler.silent
+  /*
+  println( normalize( realm1( bFalse )( bFalse ) ).toUntypedString )
+  println( normalize( realm1( bFalse )( bTrue ) ).toUntypedString )
+  println( normalize( realm1( bTrue )( bFalse ) ).toUntypedString )
+  */
+  //println( realm1( bTrue )( bTrue ).toUntypedString )
+  //println( normalize( realm1( bTrue )( bTrue ) ).toUntypedString )
+  //println( normalize( realm1( bTrue )( bFalse ) ).toUntypedString )
+  //println( normalize( realm1( bFalse )( bTrue ) ).toUntypedString )
+  println( normalize( realm1( bFalse )( bFalse ) ).toUntypedString )
+}
+
+object vampireAIffB extends Script {
+
+  import gapt.expr._
+  import gapt.proofs.nd._
+  import gapt.proofs._
+  import gapt.proofs.expansion.{ ExpansionProof, ETWeakQuantifier, ExpansionProofToLK }
+  import gapt.provers.vampire.Vampire
+
+  import gapt.proofs.context.Context
+  import gapt.proofs.nd.ClassicalExtraction
+  var ctx = Context.default
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "bool", hoc"bFalse: bool", hoc"bTrue: bool" )
+  val Some( bFalse ) = ctx.constant( "bFalse" )
+  val Some( bTrue ) = ctx.constant( "bTrue" )
+  val bIsTrue = hoc"p : bool>o"
+  ctx += PrimitiveRecursiveFunction(
+    bIsTrue,
+    List(
+      ( bIsTrue( bFalse ) -> hof"false" ),
+      ( bIsTrue( bTrue ) -> hof"true" ) ) )( ctx )
+  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+  val axiom1 = hof"p(bTrue)"
+  val axiom2 = hof"-p(bFalse)"
+  val thmfof = hof"!x?y ((p(x) -> p(y)) & (p(y) -> p(x)))"
+  val problem = axiom1 +: axiom2 +: Sequent() :+ thmfof
+  println( TptpFOLExporter.tptpProofProblem( problem ).toString() )
+  val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "45m" ) ).withDeskolemization.extendToManySortedViaErasure ) getExpansionProof problem
+  //val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
+  println( "Done." )
+  println( "Deskolemization..." )
+  val desk: ExpansionProof = expansionProof.get
+  println( "Done." )
+  val lk = ExpansionProofToLK( desk ).getOrElse( throw new Exception( "LK proof not obtained" ) )
+  val nd = LKToND( lk, Some( Suc( 0 ) ) )
+  println( nd )
+  //prooftool( nd )
+  val em1SubProofs =
+    nd.subProofs.filter {
+      case e @ ExcludedMiddleRule( _, _, _, _) =>
+        e.formulaA match {
+          case Ex(_, _) => true
+          case _ => false
+        }
+      case _                                => false
+    }
+  println( s"contains ${
+    em1SubProofs.size
+  } excluded middle inferences" )
+  em1SubProofs.foreach( prooftool(_) )
+  println( em1SubProofs.map( _.endSequent.succedent ) )
+  val m1 = ClassicalExtraction.extractCases( nd )
+  val Some( i ) = ctxClassical.constant( "i" )
+  val Some( exception ) = ctxClassical.constant( "exception", List( ty"1" ) )
+
+  val realm1 = m1( exception )( i )
+  LogHandler.current.value = LogHandler.silent
+  println( normalize( realm1( bTrue ) ).toUntypedString )
+  //println( normalize( realm1( bFalse ) ).toUntypedString )
 }
