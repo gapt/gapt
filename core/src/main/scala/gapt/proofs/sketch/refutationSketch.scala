@@ -10,7 +10,7 @@ import scala.collection.mutable
 import cats.instances.all._
 import cats.syntax.all._
 import gapt.expr.formula.fol.FOLAtom
-import gapt.expr.util.clauseSubsumption
+import gapt.logic.clauseSubsumption
 
 /**
  * Intermediate data structure intendend for the proof replay in the TPTP proof import.

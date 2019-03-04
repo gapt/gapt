@@ -7,7 +7,7 @@ import gapt.expr.formula.fol.FOLAtomConst
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLVar
 import gapt.expr.subst.Substitution
-import gapt.expr.util.clauseSubsumption
+import gapt.logic.clauseSubsumption
 import gapt.proofs._
 import gapt.provers.escargot.{ Escargot, NonSplittingEscargot }
 import org.specs2.mutable._

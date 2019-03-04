@@ -13,9 +13,9 @@ import gapt.expr.formula.Or
 import gapt.expr.formula.Top
 import gapt.expr.formula.hol.HOLPosition
 import gapt.expr.formula.hol.instantiate
-import gapt.expr.util.clauseSubsumption
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
+import gapt.logic.clauseSubsumption
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames

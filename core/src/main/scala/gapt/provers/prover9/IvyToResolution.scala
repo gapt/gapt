@@ -6,9 +6,9 @@ import gapt.proofs.resolution._
 import gapt.expr._
 import gapt.expr.formula.Eq
 import gapt.expr.subst.Substitution
-import gapt.expr.util.clauseSubsumption
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
+import gapt.logic.clauseSubsumption
 
 import scala.collection.mutable
 

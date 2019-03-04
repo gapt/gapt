@@ -19,10 +19,10 @@ import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.hol.universalClosure
 import gapt.expr.subst.FOLSubstitution
 import gapt.expr.ty.Ti
-import gapt.expr.util.clauseSubsumption
 import gapt.expr.util.constants
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
+import gapt.logic.clauseSubsumption
 import gapt.proofs._
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.resolution.{ AvatarNegNonGroundComp, AvatarNonGroundComp, ResolutionProof, fixDerivation }

@@ -19,10 +19,10 @@ import gapt.expr.formula.fol.FOLFunction
 import gapt.expr.formula.fol.FOLTerm
 import gapt.expr.formula.fol.FOLVar
 import gapt.expr.subst.FOLSubstitution
-import gapt.expr.util.clauseSubsumption
 import gapt.expr.util.freeVariables
 import gapt.formats.InputFile
 import gapt.logic.Polarity
+import gapt.logic.clauseSubsumption
 import gapt.logic.hol.CNFn
 import gapt.logic.hol.DNFp
 import gapt.logic.hol.toNNF

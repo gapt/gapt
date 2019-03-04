@@ -1,6 +1,6 @@
 package gapt.proofs.gaptic.tactics
 
-import gapt.expr.util.clauseSubsumption
+import gapt.logic.clauseSubsumption
 import gapt.proofs.gaptic._
 import gapt.proofs.lk._
 

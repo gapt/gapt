@@ -1,9 +1,10 @@
-package gapt.expr.util
+package gapt.logic
 
 import gapt.expr.Expr
 import gapt.expr.formula.Eq
 import gapt.expr.subst.PreSubstitution
 import gapt.expr.subst.Substitution
+import gapt.expr.util.syntacticMatching
 import gapt.proofs.Sequent
 
 object clauseSubsumption {

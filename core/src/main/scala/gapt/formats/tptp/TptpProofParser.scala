@@ -11,10 +11,10 @@ import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLFormula
 import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.hol.{ containsStrongQuantifier, universalClosure }
-import gapt.expr.util.clauseSubsumption
 import gapt.expr.util.freeVariables
 import gapt.formats.InputFile
 import gapt.logic.Polarity
+import gapt.logic.clauseSubsumption
 import gapt.logic.hol.CNFn
 import gapt.logic.hol.CNFp
 import gapt.proofs.resolution.{ AvatarDefinition, AvatarGroundComp, AvatarNonGroundComp, AvatarSplit }

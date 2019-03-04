@@ -20,8 +20,8 @@ import gapt.expr.formula.Top
 import gapt.expr.formula.hol.HOLAtomConst
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.Ti
-import gapt.expr.util.clauseSubsumption
 import gapt.expr.util.freeVariables
+import gapt.logic.clauseSubsumption
 import gapt.proofs.context.Context
 import gapt.proofs.expansion.{ ExpansionProof, ExpansionSequent }
 import gapt.proofs.lk.rules.macros.WeakeningContractionMacroRule

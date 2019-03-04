@@ -4,9 +4,9 @@ package gapt.proofs.ceres
 import gapt.expr._
 import gapt.expr.formula.Formula
 import gapt.expr.subst.PreSubstitution
-import gapt.expr.util.clauseSubsumption
 import gapt.expr.util.freeVariables
 import gapt.expr.util.syntacticMatching
+import gapt.logic.clauseSubsumption
 import gapt.proofs.{ HOLSequent, Sequent }
 
 object deleteTautologies {

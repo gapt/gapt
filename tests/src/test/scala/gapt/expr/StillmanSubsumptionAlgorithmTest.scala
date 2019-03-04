@@ -13,7 +13,7 @@ import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.hol.HOLFunction
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
-import gapt.expr.util.clauseSubsumption
+import gapt.logic.clauseSubsumption
 import gapt.proofs.HOLSequent
 import org.specs2.mutable._
 
