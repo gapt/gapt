@@ -1,5 +1,7 @@
 # Release notes for GAPT
 
+## Version 2.15 (unreleased)
+
 ## Version 2.14 (released on 2019-03-04)
 
 * Bug fixes
