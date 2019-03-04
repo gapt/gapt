@@ -39,7 +39,7 @@ class QuantifierHelper( val q: QuantifierC ) {
       apply( vars, formula.asInstanceOf[Expr] ).asInstanceOf[FOLFormula]
 
     private object SingleQ {
-      def unapply( e: Expr ) = QuantifierHelper.this.unapply( e )
+      def unapply( e: Expr ): Option[( Var, Formula )] = QuantifierHelper.this.unapply( e )
     }
     def unapply( e: Expr ): Some[( List[Var], Expr )] = e match {
       case SingleQ( v, Block( vs, f ) ) => Some( ( v :: vs, f ) )

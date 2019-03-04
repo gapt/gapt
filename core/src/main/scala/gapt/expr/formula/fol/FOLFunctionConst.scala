@@ -5,7 +5,7 @@ import gapt.expr.Const
 import gapt.expr.ty.Ti
 
 trait FOLFunctionConst extends Const with FOLPartialTerm {
-  def apply( that: FOLTerm* )( implicit dummyImplicit: DummyImplicit ) = App( this, that ).asInstanceOf[FOLTerm]
+  def apply( that: FOLTerm* )( implicit dummyImplicit: DummyImplicit ): FOLTerm = App( this, that ).asInstanceOf[FOLTerm]
 }
 
 object FOLFunctionConst extends FOLHead( Ti ) {

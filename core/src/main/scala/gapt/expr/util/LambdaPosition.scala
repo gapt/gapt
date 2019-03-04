@@ -13,7 +13,7 @@ import gapt.expr.Var
 
 object LambdaPosition {
   def apply( xs: Int* ) = new LambdaPosition( xs.toList )
-  def toList( p: LambdaPosition ) = p.list
+  def toList( p: LambdaPosition ): List[Int] = p.list
 
   /**
    * Returns a list of positions of subexpressions that satisfy some predicate.
@@ -91,11 +91,11 @@ object LambdaPosition {
 case class LambdaPosition( list: List[Int] ) {
   require( list.forall( i => i == 1 || i == 2 ) )
 
-  def toList = list
-  def head = list.head
-  def headOption = list.headOption
+  def toList: List[Int] = list
+  def head: Int = list.head
+  def headOption: Option[Int] = list.headOption
   def tail = LambdaPosition( list.tail )
-  def isEmpty = list.isEmpty
+  def isEmpty: Boolean = list.isEmpty
   override def toString = s"[${list.mkString( "," )}]"
 
   def ::( x: Int ): LambdaPosition = LambdaPosition( x :: list )

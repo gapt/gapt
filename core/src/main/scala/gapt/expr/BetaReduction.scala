@@ -22,7 +22,7 @@ case class ReductionRule( lhs: Expr, rhs: Expr ) {
       + ( lhs === rhs ) )
 
   val Apps( lhsHead @ Const( lhsHeadName, _, _ ), lhsArgs ) = lhs
-  val lhsArgsSize = lhsArgs.size
+  val lhsArgsSize: Int = lhsArgs.size
 
   val isNonLinear: Boolean = {
     val seen = mutable.Set[Var]()
@@ -63,7 +63,7 @@ object ReductionRule {
 }
 
 case class Normalizer( rules: Set[ReductionRule] ) {
-  val headMap = Map() ++ rules.groupBy( _.lhsHeadName ).mapValues { rs =>
+  val headMap: Map[String, ( Set[ReductionRule], Set[Int], Set[Int] )] = Map() ++ rules.groupBy( _.lhsHeadName ).mapValues { rs =>
     val normalizeArgs = rs.flatMap( _.normalizeArgs )
     val whnfArgs = rs.flatMap( _.whnfArgs ) -- normalizeArgs
     ( rs, whnfArgs, normalizeArgs )
@@ -72,7 +72,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
   def +( rule: ReductionRule ): Normalizer =
     Normalizer( rules + rule )
 
-  def toFormula = And( rules.map { case ReductionRule( lhs, rhs ) => universalClosure( lhs === rhs ) } )
+  def toFormula: Formula = And( rules.map { case ReductionRule( lhs, rhs ) => universalClosure( lhs === rhs ) } )
 
   def normalize( expr: Expr ): Expr = {
     val Apps( hd_, as_ ) = whnf( expr )

@@ -8,7 +8,7 @@ import gapt.expr.ty.Ti
 import gapt.expr.ty.To
 
 trait FOLAtomConst extends HOLAtomConst with FOLPartialAtom {
-  def apply( that: FOLTerm* )( implicit dummyImplicit: DummyImplicit ) = App( this, that ).asInstanceOf[FOLAtom]
+  def apply( that: FOLTerm* )( implicit dummyImplicit: DummyImplicit ): FOLAtom = App( this, that ).asInstanceOf[FOLAtom]
 }
 
 object FOLAtomConst extends FOLHead( To ) {

@@ -15,7 +15,7 @@ import gapt.expr.util.LambdaPosition
 object FOLPosition {
   def apply( is: Int* ) = new FOLPosition( is.toList )
 
-  def toList( pos: FOLPosition ) = pos.list
+  def toList( pos: FOLPosition ): List[Int] = pos.list
 
   /**
    * Returns a list of positions of subexpressions that satisfy some predicate.
@@ -239,18 +239,18 @@ object FOLPosition {
 case class FOLPosition( list: List[Int] ) {
   require( list.forall( _ > 0 ) )
 
-  def toList = list
-  def head = list.head
-  def headOption = list.headOption
+  def toList: List[Int] = list
+  def head: Int = list.head
+  def headOption: Option[Int] = list.headOption
   def tail = FOLPosition( list.tail )
-  def isEmpty = list.isEmpty
+  def isEmpty: Boolean = list.isEmpty
   override def toString = s"[${list.mkString( "," )}]"
 
   def ::( x: Int ): FOLPosition = FOLPosition( x :: list )
 }
 
 object BinaryConnective {
-  def unapply( exp: FOLExpression ) = exp match {
+  def unapply( exp: FOLExpression ): Option[( FOLExpression, FOLExpression )] = exp match {
     case And( l, r ) => Some( l, r )
     case Or( l, r )  => Some( l, r )
     case Imp( l, r ) => Some( l, r )

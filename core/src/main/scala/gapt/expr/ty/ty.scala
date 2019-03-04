@@ -6,7 +6,7 @@ import gapt.formats.babel.BabelExporter
 sealed abstract class Ty {
   def ->:( that: Ty ) = TArr( that, this )
 
-  override def toString =
+  override def toString: String =
     new BabelExporter( unicode = true, sig = implicitly ).export( this )
 }
 

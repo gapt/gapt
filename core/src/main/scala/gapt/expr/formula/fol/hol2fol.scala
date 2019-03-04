@@ -15,6 +15,7 @@ import gapt.expr.formula.constants.ForallC
 import gapt.expr.formula.constants.ImpC
 import gapt.expr.formula.constants.NegC
 import gapt.expr.formula.constants.OrC
+import gapt.expr.formula.fol
 import gapt.expr.formula.hol.HOLFunction
 import gapt.expr.formula.hol._
 import gapt.expr.subst.FOLSubstitution
@@ -121,7 +122,7 @@ class reduceHolToFol {
    * @param id an object with a function which nextId, which provides new numbers.
    * @return a pair of the reduced expression and the updated scope
    */
-  def apply( term: Expr, scope: Map[Expr, String], id: Counter ) = {
+  def apply( term: Expr, scope: Map[Expr, String], id: Counter ): ( FOLExpression, fol.replaceAbstractions.ConstantsMap ) = {
     val ( scope_, qterm ) = replaceAbstractions( term, scope, id )
     ( apply_( qterm ), scope_ )
   }

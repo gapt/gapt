@@ -76,7 +76,7 @@ object isExtendedAtom {
  * Returns true iff the given Formula starts with a negation.
  */
 object isNeg {
-  def apply( formula: Formula ) = formula match {
+  def apply( formula: Formula ): Boolean = formula match {
     case Neg( _ ) => true
     case _        => false
   }
@@ -86,7 +86,7 @@ object isNeg {
  * Remove the leading negation from a formula.
  */
 object removeNeg {
-  def apply( formula: Formula ) = formula match {
+  def apply( formula: Formula ): Formula = formula match {
     case Neg( f ) => f
     case _        => throw new Exception( "Formula does not start with negation." )
   }
@@ -193,7 +193,7 @@ object freeHOVariables {
    * @param f the expressions to extract from
    * @return the list of free variables with type != Ti in e
    */
-  def apply( f: Expr ) = freeVariables( f ).filter( _ match { case Var( _, Ti ) => false; case _ => true } )
+  def apply( f: Expr ): Set[Var] = freeVariables( f ).filter( _ match { case Var( _, Ti ) => false; case _ => true } )
 
 }
 
@@ -482,7 +482,7 @@ object formulaToSequent {
 }
 
 object inductionPrinciple {
-  def apply( indty: Ty, constrs: Seq[Const] ) = {
+  def apply( indty: Ty, constrs: Seq[Const] ): Formula = {
     val pred = Var( "X", indty ->: To )
 
     val hyps = constrs.map { constr =>

@@ -36,12 +36,12 @@ object isFOLFunction {
 
 /** Unsafely extracts the function name from a term. Fails if the term is not a function. */
 object FOLFunctionName {
-  def apply( t: FOLTerm ) = t match { case FOLFunction( f, _ ) => f }
+  def apply( t: FOLTerm ): String = t match { case FOLFunction( f, _ ) => f }
 }
 
 /** Unsafely extracts the function arguments from a term. Fails if the term is not a function. */
 object FOLFunctionArgs {
-  def apply( t: FOLTerm ) = t match { case FOLFunction( _, a ) => a }
+  def apply( t: FOLTerm ): List[FOLTerm] = t match { case FOLFunction( _, a ) => a }
 }
 
 /**

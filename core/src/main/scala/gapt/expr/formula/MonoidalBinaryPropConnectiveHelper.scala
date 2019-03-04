@@ -23,7 +23,7 @@ class MonoidalBinaryPropConnectiveHelper( c: MonomorphicLogicalC, val neutral: M
     def apply( fs: FOLFormula* )( implicit d: DummyImplicit ): FOLFormula = leftAssociative( fs: _* )
 
     private object Binary {
-      def unapply( formula: Expr ) = MonoidalBinaryPropConnectiveHelper.this.unapply( formula )
+      def unapply( formula: Expr ): Option[( Formula, Formula )] = MonoidalBinaryPropConnectiveHelper.this.unapply( formula )
     }
 
     def unapply( formula: Formula ): Some[List[Formula]] = formula match {

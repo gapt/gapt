@@ -17,6 +17,8 @@ import gapt.expr.ty.Ty
 import gapt.proofs.SequentProof
 import gapt.utils.Logger
 
+import scala.util.matching.Regex
+
 /**
  * This is implements some heuristics to convert a fol formula obtained by
  * [[gapt.expr.formula.fol.replaceAbstractions]] and [[gapt.expr.formula.fol.reduceHolToFol]] back to its original signature.
@@ -134,7 +136,7 @@ object undoHol2Fol {
     }
   }
 
-  val ivy_varname = """(v[0-9]+)""".r
+  val ivy_varname: Regex = """(v[0-9]+)""".r
 
   def getSignature[F, T <: SequentProof[F, T]]( proof: SequentProof[F, T], extract: F => Expr ): Signature = {
     val exprs = for ( p <- proof.subProofs; f <- p.conclusion.elements map extract ) yield f

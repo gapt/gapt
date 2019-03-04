@@ -12,7 +12,7 @@ import gapt.expr.ty.Ty
  */
 class MonomorphicLogicalC( name: String, val ty: Ty ) extends LogicalC( name ) {
   private lazy val singleton = Const( name, ty )
-  def apply() = singleton
+  def apply(): Const = singleton
   def unapply( e: Expr ): Boolean = singleton == e
   def unapply( p: ( String, Ty, List[Ty] ) ): Boolean = p._1 == name && p._2 == ty && p._3.isEmpty
 }
