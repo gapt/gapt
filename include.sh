@@ -1,4 +1,4 @@
-gapt_version="2.14-SNAPSHOT"
+gapt_version="2.14"
 
 heap_size="2g"
 stack_size="20m"

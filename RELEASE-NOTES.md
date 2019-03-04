@@ -1,6 +1,6 @@
 # Release notes for GAPT
 
-## Version 2.14 (unreleased)
+## Version 2.14 (released on 2019-03-04)
 
 * Bug fixes
 * Slakje: performance improvements
