@@ -240,7 +240,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
         val Ex( alpha, p ) = as( 0 )
         as(1) match {
           case exp @ Apps(Const("expair", _, _), as_) =>
-            assert(normalize(Substitution(alpha, as_(0))(p)) == hof"true")
+            //assert(normalize(Substitution(alpha, as_(0))(p)) == hof"true")
             Some(exp)
           case _ =>
             None //throw new Exception("error reducing in catch")

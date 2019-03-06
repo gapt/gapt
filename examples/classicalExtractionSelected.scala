@@ -31,7 +31,13 @@ object sqrtProofManualCorrectAxiom extends Script {
   val Some( z ) = cctx.constant( "0" )
   val Some( s ) = cctx.constant( "s" )
   val Some( gt ) = cctx.constant( "gt" )
-  val Some( not ) = cctx.constant( "not" )
+  //val Some( not ) = cctx.constant( "not" )
+  val not = hoc"'not': o>o"
+  cctx += PrimitiveRecursiveFunction(
+    not,
+    List(
+      ( not( hof"true" ) -> hof"false" ),
+      ( not( hof"false" ) -> hof"true" ) ) )( cctx )
 
   val x = hov"x:nat"
   val y = hov"y:nat"
@@ -307,9 +313,10 @@ object sqrtProofManualCorrectAxiom extends Script {
   //import extraction.{ ScalaCodeGenerator, FSharpCodeGenerator }
   val m1 = ClassicalExtraction.extractCases( proof )
   val realm1 = assignArgs( m1, progArgs )
+  println(realm1.toUntypedString)
   //ScalaCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
-  println( normalize( proj1( realm1( le"s(s(s(s(0))))" ) ) ) )
-  println( normalize( proj1( realm1( le"s(s(0))" ) ) ) )
+  //println( normalize( proj1( realm1( le"s(s(s(s(0))))" ) ) ) )
+  //println( normalize( proj1( realm1( le"s(s(0))" ) ) ) )
 
   /*
   val m = MRealizability.mrealize( proof )
@@ -576,7 +583,13 @@ object synthexManySorted extends Script {
   val Some( z ) = cctx.constant( "0" )
   val Some( s ) = cctx.constant( "s" )
   val Some( gt ) = cctx.constant( "gt" )
-  val Some( not ) = cctx.constant( "not" )
+  //val Some( not ) = cctx.constant( "not" )
+  val not = hoc"'not': o>o"
+  cctx += PrimitiveRecursiveFunction(
+    not,
+    List(
+      ( not( hof"true" ) -> hof"false" ),
+      ( not( hof"false" ) -> hof"true" ) ) )( cctx )
 
   val x = hov"x:nat"
   val y = hov"y:nat"
@@ -1179,6 +1192,97 @@ object vampireAIffB extends Script {
 
   val realm1 = m1( exception )( i )
   LogHandler.current.value = LogHandler.silent
-  println( normalize( realm1( bTrue ) ).toUntypedString )
+  //println( normalize( realm1( bTrue ) ).toUntypedString )
   //println( normalize( realm1( bFalse ) ).toUntypedString )
+
+  val All(_, Ex(y, fEx)) = nd.endSequent(Suc(0))
+  // Check if optimization of the ctr:r translation is possible to prevent introduction of EM1
+  // as described in email on Mar 4, 2019
+  def canBeOptimized(nd: NDProof, f: Formula): Boolean = {
+    val containsNegPx = nd.endSequent.antecedent.exists{
+      case Neg(curr) => syntacticMGU(f, curr).nonEmpty
+      case _ => false
+    }
+    // TODO: Does it need to match with variable y?
+    val containsExPx = nd.endSequent(Suc(0)) == Ex(y, f)
+    if( containsNegPx && containsExPx ) {
+      true
+    } else {
+      nd match {
+        case LogicalAxiom(_) => false
+        case ForallIntroRule(subProof, eigenVariable, quantifiedVariable) =>
+          canBeOptimized(subProof, Substitution(quantifiedVariable, eigenVariable)(f))
+        case UnaryNDProof(_, subProof) => canBeOptimized(subProof, f)
+        case BinaryNDProof(_, leftSubProof, rightSubProof) =>
+          canBeOptimized(leftSubProof, f) || canBeOptimized(rightSubProof, f)
+        case TernaryNDProof(_, leftSubProof, middleSubProof, rightSubProof) =>
+          canBeOptimized(leftSubProof, f) || canBeOptimized(middleSubProof, f) || canBeOptimized(rightSubProof, f)
+      }
+    }
+  }
+  println(canBeOptimized(nd, fEx))
+  prooftool(lk)
+}
+
+object vampireAIffBEncodingb extends Script {
+
+import gapt.expr._
+import gapt.proofs.nd._
+import gapt.proofs._
+import gapt.proofs.expansion.{ ExpansionProof, ETWeakQuantifier, ExpansionProofToLK }
+import gapt.provers.vampire.Vampire
+
+import gapt.proofs.context.Context
+import gapt.proofs.nd.ClassicalExtraction
+var ctx = Context.default
+ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+ctx += InductiveType( "bool", hoc"bFalse: bool", hoc"bTrue: bool" )
+val Some( bFalse ) = ctx.constant( "bFalse" )
+val Some( bTrue ) = ctx.constant( "bTrue" )
+val bIsTrue = hoc"p : bool>o"
+ctx += PrimitiveRecursiveFunction(
+  bIsTrue,
+  List(
+    ( bIsTrue( bFalse ) -> hof"false" ),
+    ( bIsTrue( bTrue ) -> hof"true" ) ) )( ctx )
+implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+val axiom1 = hof"p(bTrue)"
+val axiom2 = hof"-p(bFalse)"
+val axiom3 = hof"!x (x = bTrue | x = bFalse)"
+val thmfof = hof"!x?y ((p(x) -> p(y)) & (p(y) -> p(x)))"
+val problem = axiom1 +: axiom2 +: axiom3 +: Sequent() :+ thmfof
+println( TptpFOLExporter.tptpProofProblem( problem ).toString() )
+val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "45m" ) ).withDeskolemization.extendToManySortedViaErasure ) getExpansionProof problem
+//val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
+println( "Done." )
+println( "Deskolemization..." )
+val desk: ExpansionProof = expansionProof.get
+println( "Done." )
+val lk = ExpansionProofToLK( desk ).getOrElse( throw new Exception( "LK proof not obtained" ) )
+val nd = LKToND( lk, Some( Suc( 0 ) ) )
+println( nd )
+//prooftool( nd )
+val em1SubProofs =
+  nd.subProofs.filter {
+    case e @ ExcludedMiddleRule( _, _, _, _) =>
+      e.formulaA match {
+        case Ex(_, _) => true
+        case _ => false
+      }
+    case _                                => false
+  }
+println( s"contains ${
+  em1SubProofs.size
+} excluded middle inferences" )
+em1SubProofs.foreach( prooftool(_) )
+println( em1SubProofs.map( _.endSequent.succedent ) )
+val m1 = ClassicalExtraction.extractCases( nd )
+val Some( i ) = ctxClassical.constant( "i" )
+val Some( exception ) = ctxClassical.constant( "exception", List( ty"1" ) )
+
+val realm1 = m1( exception )( i )
+LogHandler.current.value = LogHandler.silent
+//println( normalize( realm1( bTrue ) ).toUntypedString )
+//println( normalize( realm1( bFalse ) ).toUntypedString )
+prooftool(lk)
 }
