@@ -57,57 +57,57 @@ case class PrimitiveRecursiveFunction(
     ctx.state.update[Constants]( _ + c )
       .update[Reductions]( _ ++ equations.map( ReductionRule.apply ) )
   }
-}
 
-object PrimitiveRecursiveFunctionValidator {
+  private object PrimitiveRecursiveFunctionValidator {
 
-  private type Equation = ( Expr, Expr )
+    private type Equation = ( Expr, Expr )
 
-  /**
-   * Checks whether the given definition is syntactically well-formed.
-   *
-   * @param input The definition to be checked.
-   * @return Returns unit if the definition is well-formed, otherwise
-   *         an exception is thrown.
-   */
-  def validate( input: PrimitiveRecursiveFunction ): Unit = {
+    /**
+     * Checks whether the given definition is syntactically well-formed.
+     *
+     * @param input The definition to be checked.
+     * @return Returns unit if the definition is well-formed, otherwise
+     *         an exception is thrown.
+     */
+    def validate( input: PrimitiveRecursiveFunction ): Unit = {
 
-    val PrimitiveRecursiveFunction( c, nArgs, recIdx, equations ) = input
-    val typeVars: Set[TVar] = typeVariables( c.ty )
-    val Const( name, FunctionType( _, argTypes ), _ ) = c
+      val PrimitiveRecursiveFunction( c, nArgs, recIdx, equations ) = input
+      val typeVars: Set[TVar] = typeVariables( c.ty )
+      val Const( name, FunctionType( _, argTypes ), _ ) = c
 
-    require( 0 <= recIdx && recIdx < nArgs && nArgs <= argTypes.size )
+      require( 0 <= recIdx && recIdx < nArgs && nArgs <= argTypes.size )
 
-    def validateEquation( input: Equation ): Unit = {
+      def validateEquation( input: Equation ): Unit = {
 
-      val ( lhs, rhs ) = input
+        val ( lhs, rhs ) = input
 
-      require( lhs.ty == rhs.ty )
-      require( typeVariables( lhs.ty ) subsetOf typeVars )
-      require( typeVariables( rhs.ty ) subsetOf typeVars )
+        require( lhs.ty == rhs.ty )
+        require( typeVariables( lhs.ty ) subsetOf typeVars )
+        require( typeVariables( rhs.ty ) subsetOf typeVars )
 
-      val Apps( `c`, lhsArgs ) = lhs
-      require( lhsArgs.size == nArgs )
+        val Apps( `c`, lhsArgs ) = lhs
+        require( lhsArgs.size == nArgs )
 
-      val nonRecLhsArgs =
-        lhsArgs.zipWithIndex.filter( _._2 != recIdx ).map( _._1 )
-      val Apps( Const( _, _, _ ), ctrArgs ) = lhsArgs( recIdx )
+        val nonRecLhsArgs =
+          lhsArgs.zipWithIndex.filter( _._2 != recIdx ).map( _._1 )
+        val Apps( Const( _, _, _ ), ctrArgs ) = lhsArgs( recIdx )
 
-      val matchVars = nonRecLhsArgs ++ ctrArgs
+        val matchVars = nonRecLhsArgs ++ ctrArgs
 
-      matchVars.foreach( a => { require( a.isInstanceOf[Var] ) } )
-      require( matchVars == matchVars.distinct )
+        matchVars.foreach( a => { require( a.isInstanceOf[Var] ) } )
+        require( matchVars == matchVars.distinct )
 
-      folSubTerms( rhs ).foreach {
-        case Apps( fn @ Const( `name`, _, _ ), args ) =>
-          require( fn == c )
-          require( ctrArgs.contains( args( recIdx ) ) )
-        case _ =>
+        folSubTerms( rhs ).foreach {
+          case Apps( fn @ Const( `name`, _, _ ), args ) =>
+            require( fn == c )
+            require( ctrArgs.contains( args( recIdx ) ) )
+          case _ =>
+        }
       }
-    }
 
-    for ( equation <- equations ) {
-      validateEquation( equation )
+      for ( equation <- equations ) {
+        validateEquation( equation )
+      }
     }
   }
 }
