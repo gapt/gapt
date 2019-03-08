@@ -127,9 +127,9 @@ object ClassicalExtraction {
     systemT += exception
     val efq = hoc"efq{?c}: exn > ?c"
     systemT += efq
+    /*
     val handle = hoc"handle{?a ?c}: exn > ?c > (?a > ?c)"
     systemT += handle
-    /*
     systemT += PrimRecFun(
       handle,
       List( ( handle( exception( x ), w1 ) -> w1( x ) ) ) )( systemT )
@@ -246,6 +246,8 @@ object ClassicalExtraction {
     systemT += ReductionRule( hof"(x | true) = true" )
     systemT += ReductionRule( hof"(false | x) = x" )
     systemT += ReductionRule( hof"(x | false) = x" )
+    systemT += ReductionRule( hof"(true -> x) = x" )
+    systemT += ReductionRule( hof"(false -> x) = true" )
     val sg = hoc"sg: nat>o"
     systemT += PrimitiveRecursiveFunction(
       sg,
@@ -655,7 +657,8 @@ object ClassicalExtraction {
                 b( ExistsElimRule( _, _ ) ).
                 u( NegIntroRule( _, Ex( x, g ) ) ). //hof"?x -P(x)")).
                 b( ImpElimRule( _, _ ) ).
-                qed, ng, exEm1FormulasPrime, forallEm1HypVarsPrime )
+              //  qed, ng, exEm1FormulasPrime, forallEm1HypVarsPrime )
+                qed, ng, exEm1HypVars, forallEm1HypVarsPrime )
 
               val newAux2 = r.find( _.ty == flat( All( x, -g ) ) ).get
 

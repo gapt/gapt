@@ -75,36 +75,17 @@ case class Normalizer( rules: Set[ReductionRule] ) {
 
   def commute( block: Expr, appOrArg: Either[Expr, Expr] ): Expr = {
     debug( "in commute" )
-    block match {
-      case Apps( Const( "handle", ty, params ), as ) =>
-        val newCatchB = appOrArg match {
-          case Left( app_ )  => app_( as( 1 ) )
-          case Right( arg_ ) => as( 1 )( arg_ )
-        }
-        //val handle = hoc"handle{?a ?c}: exn > ?c > (?a > ?c)"
-        val App( f, arg ) = newCatchB
-        val a = params( 0 )
-        val c = newCatchB.ty
-        val newTy = ty"exn" ->: c ->: ( a ->: c )
-        //val newParams = params.map( replaceTy( _, params( 1 ), newCatchB.ty ) )
-        val newParams = List( a, c )
-        val newHandle = Const( "handle", newTy, newParams )
-
-        debug( s"catch: ${as( 0 )}" )
-        Apps( newHandle, Seq( as( 0 ), newCatchB ) )
-
-      case tryB =>
-        appOrArg match {
-          case Left( app_ )  => app_( tryB )
-          case Right( arg_ ) => tryB( arg_ )
-        }
+    appOrArg match {
+      case Left( app_ )  => app_( block )
+      case Right( arg_ ) => block( arg_ )
     }
   }
 
   object SplitEfq {
     def unapply( xs: List[Expr] ): Option[( List[Expr], Expr, List[Expr] )] = {
       val index = xs.indexWhere {
-        case Apps( Const( "exception", _, _ ), _ ) => true
+        case Apps( Const( "efq", _, _ ), _ ) => true
+        //case Apps( Const( "exception", _, _ ), _ ) => true
         case _                               => false
       }
       if ( index == -1 ) {
@@ -146,7 +127,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
             val tryCatchBlocks = tryCatchArgs.drop( 2 ).take( 2 )
             debug( s"@@@@@@ tryCatch exnVs: $exnVs" )
             //debug( s"input:\n$expr" )
-            //debug( s"commuting:\n${hd_( front )}" )
+            println( s"commuting:\n${hd_( front )}" )
 
             //val tryCatch = hoc"tryCatch{?a ?c}: ((?a > exn) > ?c) > (?a > ?c) > ?c"
             val tryCatchBlocksCommuted = tryCatchBlocks.map( commute( _, Left( hd_( front ) ) ) )
@@ -161,10 +142,15 @@ case class Normalizer( rules: Set[ReductionRule] ) {
             debug( s"after cc left: tryCatch.ty: $tmpTy" )
             normalize( res )
           // raise left
-          case SplitEfq( front, e @ Apps( Const( "exception", TArr(ty1_, TArr(ty2_,_)), params ), as2_ ), back ) =>
+          // TODO: what if efq without exception?
+          //       what if we had other EM1, i.e., All x. P |- C  -All x. P |- C
+          //case SplitEfq( front, e @ Apps( Const( "exception", TArr(ty1_, TArr(ty2_,_)), params ), as2_ ), back ) =>
+          case SplitEfq( front, Apps( Const( "efq", _, params ), as2_ ), back ) =>
             debug( "raise left" )
-            val newEfq = Const( "exception", ty1_ ->: ty2_ ->: expr.ty, List( expr.ty ) )
-            val res = normalize( newEfq( as2_) )
+            val newEfq = Const( "efq", as2_( 0 ).ty ->: expr.ty, List( expr.ty ) )
+            val res = normalize( newEfq( as2_( 0 ) ) )
+            //val newEfq = Const( "exception", ty1_ ->: ty2_ ->: expr.ty, List( expr.ty ) )
+            //val res = normalize( newEfq( as2_) )
             res
           case _ =>
             val nHd = hd_ match {
@@ -246,14 +232,12 @@ case class Normalizer( rules: Set[ReductionRule] ) {
             None //throw new Exception("error reducing in catch")
         }
 
-      /*
       // raise right
-      case Const( "exception", _, _ ) if as.size > 1 =>
+      case Const( "exception", _, _ ) if as.size > 2 =>
         debug( "raise right" )
-        val newEfq = Const( "exception", as( 0 ).ty ->: expr.ty, List( expr.ty ) )
-        Some( newEfq( as( 0 ) ) )
+        val newEfq = Const( "exception", as( 0 ).ty ->: as(1).ty ->: expr.ty, List( expr.ty ) )
+        Some( newEfq( as( 0 ) )(as(1)) )
       //Some( hd( as( 0 ) ) )
-      */
 
       /*
       case Const( "efq", _, _ ) if as.size == 1 =>
@@ -288,7 +272,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
       // Commuting conversion (right) for try/catch
       // (tryCatch v0 v1 tryBlock catchBlock) extraArgs
       case Const( "tryCatch", ty, _ ) if as.size > 4 =>
-        //debug( s"cc right: commuting ${as( 2 )}" )
+        println( s"cc right: commuting ${as( 2 )}" )
         debug( s"cc right" )
         debug( s"before cc right: tryCatch.ty: $ty" )
         val exnVs = as.take( 2 )
@@ -335,19 +319,20 @@ case class Normalizer( rules: Set[ReductionRule] ) {
           Some(tryB)
         } else {
           // TODO: distribute inl over try/exception? otherwise need a second normalize here, which is not right
-                 normalize(tryB) match {
-          //tryB match {
+          val tmp1 = normalize(tryB)
+          val tmp2 = normalize(normalize(tryB))
+          tmp1 match {
             case Const("true", _, _) =>
               Some(le"true")
-            case Apps(Const("exception",_,_), as_) =>
+            case App(Const("efq", _, _), Apps(Const("exception",_,_), as_)) =>
               assert(as_(0) == exnVs(0))
               val TBase(_, tyParams) = exnVs(1).ty
               val expair = Const("expair", as_(1).ty ->: To ->: exnVs(1).ty, tyParams)
               // TODO: replace the whole catch term, not just exnVs(1)
               //       or reduce catch without free variable to its argument maybe?
               Some(normalize(Substitution(exnVs(1), expair(as_(1), le"true"))(catchB)))
-            case _ =>
-              Some(tryB)
+            case term =>
+              Some(term)
           }
         }
       case hd @ Const( c, _, _ ) =>
