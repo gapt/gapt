@@ -41,10 +41,9 @@ object FunctionIterationSchema extends TacticsProof {
       trivial
     }
     allL( "cut", le"(if n a)" )
-    orL
-    by {
+    orL left by {
       forget( "Suc_0" )
-      forget( "cut" )
+      forget( "Ant_1" )
       negL
       ref( "phi" )
     }

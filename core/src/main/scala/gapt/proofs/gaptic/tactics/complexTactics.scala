@@ -233,14 +233,11 @@ case class FoldTacticHelper( definition: String )( implicit ctx: Context ) {
 }
 case class FoldTactic( target: String, definition: String )( implicit ctx: Context ) extends Tactical1[Unit] {
   def fold( main: Formula ): Expr = {
-    val base = ctx.normalizer
-    val rules = base.rules.filter( x => x.lhsHeadName.matches( definition ) )
+    val rules = ctx.normalizer.rules.filter( x => x.lhsHeadName.matches( definition ) )
     if ( rules.isEmpty ) main
-    else {
-      val trans = rules.map( x => {
-        val fvL = freeVariables( x.lhs )
-        val fvPos = fvL.map( y => ( x.lhs.find( y ), x.rhs.find( y ) ) )
-        val matchForm = fvPos.foldLeft( ( x.lhs, x.rhs ) )( ( form, posList ) => {
+    else try {
+      rules.map( x => {
+        val matchForm = freeVariables( x.lhs ).map( y => ( x.lhs.find( y ), x.rhs.find( y ) ) ).foldLeft( ( x.lhs, x.rhs ) )( ( form, posList ) => {
           val mRF = posList._2.foldLeft( ( Set[Expr](), form._2 ) )( ( form2, pos ) => {
             if ( main.isDefinedAt( pos ) ) {
               val term = main.get( pos ).get
@@ -250,22 +247,11 @@ case class FoldTactic( target: String, definition: String )( implicit ctx: Conte
             } else ( form2._1.asInstanceOf[Set[Expr]] + x.rhs.get( pos ).get, form2._2 )
           } )
           if ( mRF._1.size > 1 ) form
-          else {
-            val res = posList._1.foldLeft( form._1 )( ( form2, pos ) => {
-              try {
-                form2.replace( pos, mRF._1.head )
-              } catch { case _: Throwable => form2 }
-            } )
-            ( res, mRF._2 )
-          }
-
+          else ( posList._1.foldLeft( form._1 )( ( form2, pos ) => { try { form2.replace( pos, mRF._1.head ) } catch { case _: Throwable => form2 } } ), mRF._2 )
         } )
         matchForm
-      } ).filter( x => x._2.alphaEquals( main ) )
-      if ( trans.size == 1 ) trans.head._1
-      else main
-
-    }
+      } ).filter( x => x._2.alphaEquals( main ) ).head._1
+    } catch { case _: Throwable => main }
   }
   def apply( goal: OpenAssumption ): Tactic[Unit] =
     for {

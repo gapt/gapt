@@ -27,11 +27,17 @@ object instantiateProof {
    *         together with the instantiated proof
    */
   def withConnector( proofName: Expr )( implicit ctx: Context ): ( SequentConnector, LKProof ) = {
+    println( "**************When Some************" )
+    println( proofName + "   ctx.get[ProofDefinitions].findWithConnector( proofName ).isEmpty:" + ctx.get[ProofDefinitions].findWithConnector( proofName ).isEmpty )
+    ctx.get[ProofDefinitions].components.keySet.foreach( s => println( s + "   ctx.get[ProofDefinitions].components.get( s ).isEmpty:" + ctx.get[ProofDefinitions].components.get( s ).isEmpty ) )
     ctx.get[ProofDefinitions].findWithConnector( proofName ).headOption match {
       case Some( ( connDefPrf2Link, subst, defPrf ) ) =>
         val ( instPrf, connInstPrf2SubstDefPrf ) = buildProof.withSequentConnector( subst( defPrf ), ctx )
         connInstPrf2SubstDefPrf * connDefPrf2Link -> instPrf
       case None =>
+        println( "**************When NONE************" )
+        println( proofName + "    ctx.get[ProofNames].lookup( proofName ).isEmpty:" + ctx.get[ProofNames].lookup( proofName ).isEmpty )
+        ctx.get[ProofNames].names.keySet.foreach( s => println( s + "     ctx.get[ProofNames].names.get( s ).get._1:" + ctx.get[ProofNames].names.get( s ).get._1.toString + "    freeVariables:" + freeVariables( ctx.get[ProofNames].names.get( s ).get._1 ) + "     ctx.get[ProofNames].names.get( s ).get._2:" + ctx.get[ProofNames].names.get( s ).get._2.toString ) )
         val Some( sequent ) = ctx.get[ProofNames].lookup( proofName )
         SequentConnector( sequent ) -> ProofLink( proofName, sequent )
     }
