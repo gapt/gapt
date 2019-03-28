@@ -1,7 +1,7 @@
 package gapt.formats.tip
 
 import gapt.expr._
-import gapt.expr.hol.{ existentialClosure, universalClosure }
+import gapt.expr.hol._
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.immutable.ImmutableContext
@@ -58,7 +58,7 @@ case class TipProblem(
       f match {
         case All( y, a ) if x == y => a
         case All( y, a )           => All( y, go( a ) )
-        case _ => throw new IllegalArgumentException("Variable " + x + " is not outermost universally bound")
+        case _                     => throw new IllegalArgumentException( "Variable " + x + " is not outermost universally bound" )
       }
 
     val ctrs = ctx getConstructors x.ty get
