@@ -51,6 +51,24 @@ case class TipProblem(
       Sequent()
       :+ goal )
 
+  def toInductiveSequent( x: Var ): Sequent[Formula] = {
+    require( ctx getConstructors x.ty isDefined )
+
+    def go( f: Formula ): Formula =
+      f match {
+        case All( y, a ) if x == y => a
+        case All( y, a )           => All( y, go( a ) )
+        case _ => throw new IllegalArgumentException("Variable " + x + " is not outermost universally bound")
+      }
+
+    val ctrs = ctx getConstructors x.ty get
+    val principle = inductionPrinciple( x.ty, ctrs )
+    val target = Abs( x, go( goal ) )
+    val inst = BetaReduction.betaNormalize( instantiate( principle, target ) )
+
+    inst +: toSequent
+  }
+
   def context: ImmutableContext = ctx
 
   override def toString: String = toSequent.toSigRelativeString( context )
