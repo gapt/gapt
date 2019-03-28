@@ -1,11 +1,12 @@
 package gapt.formats.tip
 
 import gapt.expr._
-import gapt.expr.hol.{ existentialClosure, universalClosure }
-import gapt.proofs.Sequent
+import gapt.expr.hol._
+import gapt.proofs.{ ContextSection, Sequent }
 import gapt.proofs.context.Context
 import gapt.proofs.context.immutable.ImmutableContext
-import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.{ InductiveType, SkolemFunction }
+import gapt.proofs.resolution.structuralCNF
 
 case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
   val FunctionType( datatype, fieldTypes ) = constr.ty
@@ -50,6 +51,24 @@ case class TipProblem(
       assumptions ++:
       Sequent()
       :+ goal )
+
+  def toInductiveSequent( x: Var ): Sequent[Formula] = {
+    require( ctx getConstructors x.ty isDefined )
+
+    def go( f: Formula ): Formula =
+      f match {
+        case All( y, a ) if x == y => a
+        case All( y, a )           => All( y, go( a ) )
+        case _ => throw new IllegalArgumentException("Variable " + x + " is not outermost universally bound")
+      }
+
+    val ctrs = ctx getConstructors x.ty get
+    val principle = inductionPrinciple( x.ty, ctrs )
+    val target = Abs( x, go( goal ) )
+    val inst = BetaReduction.betaNormalize( instantiate( principle, target ) )
+
+    inst +: toSequent
+  }
 
   def context: ImmutableContext = ctx
 
