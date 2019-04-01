@@ -82,6 +82,8 @@ object ViperOptions {
       case "--analytic" :: rest =>
         val ( rest_, opts_ ) = parseAnalytic( rest, opts.aipOptions )
         parse( rest_, opts.copy( aipOptions = opts_, mode = "analytic" ) )
+      case "--spind" :: rest =>
+        parse( rest, opts.copy( mode = "spind" ) )
       case _ => ( args, opts )
     }
 
@@ -165,6 +167,9 @@ object Viper {
           }
         List( Duration.Inf -> AnalyticInductionTactic( opts.aipOptions.axioms, opts.aipOptions.prover ).
           aka( s"analytic $axiomsName" ) )
+      case "spind" =>
+        List( Duration.Inf -> AnalyticInductionTactic( IndependentInductionAxioms(), opts.aipOptions.prover ).
+          aka( "spind" ) )
     }
 
   private def timeit[T]( f: => T ): ( T, Duration ) = {
