@@ -1,11 +1,14 @@
 package gapt.provers.viper.spind
 
-import gapt.expr.{ Const, Formula, Var, constants }
+import gapt.expr.{ Atom, Const, Formula, Var, constants }
 import gapt.proofs.lk.LKProof
-import gapt.proofs.Sequent
+import gapt.proofs.{ Sequent, withSection }
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.macros.WeakeningContractionMacroRule
+import gapt.proofs.resolution.{ ResolutionToLKProof, mapInputClauses, structuralCNF }
 import gapt.provers.escargot.Escargot
+import gapt.provers.escargot.impl.Cls
 import gapt.provers.viper.aip.axioms.{ Axiom, StandardInductionAxioms }
 
 object SuperpositionInductionProver extends SuperpositionInductionProver
@@ -31,34 +34,42 @@ class SuperpositionInductionProver {
 
     def isInductive( c: Const ) = ctx getConstructors c.ty isDefined
 
-    val seq = labeledSequentToHOLSequent( sequent )
+    val seq0 = labeledSequentToHOLSequent( sequent )
 
-    def go( axioms: Seq[Axiom] ): Option[LKProof] = {
-      val prf = Escargot.getLKProof( axioms.map( _.formula ) ++: seq )
+    def go( axioms: Seq[Axiom] ): Option[LKProof] =
+      withSection { section =>
+        val seq = axioms.map( _.formula ) ++: seq0
+        val ground = section.groundSequent( seq )
 
-      prf match {
-        case None =>
-          val clses = Escargot.state.workedOff.clauses
+        val cnf = structuralCNF( ground )( ctx )
+        val cnfMap = cnf.view.map( p => p.conclusion -> p ).toMap
 
-          val candidates = clses flatMap ( cls => cls.clause.antecedent flatMap ( f =>
-            constants( f ) filter isInductive map ( ( f, _ ) ) ) )
+        val prf = Escargot.getResolutionProofOrClauses( cnfMap.keySet.map( _.map( _.asInstanceOf[Atom] ) ) )
 
-          val newAxioms = candidates flatMap {
-            case ( f, c ) =>
-              val v = Var( nameGen.fresh( c.name ), c.ty )
-              val target = replaceConst( f, c, v )
-              StandardInductionAxioms( v, target ) toOption
-          } filterNot ( a1 => axioms.exists( a2 => a1.formula.alphaEquals( a2.formula ) ) )
+        prf match {
+          case Left( clses ) =>
+            val candidates = clses flatMap ( cls => cls.clause.antecedent flatMap ( f =>
+              constants( f ) filter isInductive map ( ( f, _ ) ) ) )
 
-          if ( newAxioms.isEmpty )
-            None
-          else
-            go( axioms ++ newAxioms )
-        case Some( lk ) =>
-          val cut = cutAxioms( lk, axioms.toList )
-          Some( cut )
+            val newAxioms = candidates flatMap {
+              case ( f, c ) =>
+                val v = Var( nameGen.fresh( c.name ), c.ty )
+                val target = replaceConst( f, c, v )
+                StandardInductionAxioms( v, target ) toOption
+            } filterNot ( a1 => axioms.exists( a2 => a1.formula.alphaEquals( a2.formula ) ) )
+
+            if ( newAxioms.isEmpty )
+              None
+            else
+              go( axioms ++ newAxioms )
+          case Right( resolution ) =>
+            val res = mapInputClauses( resolution )( cnfMap )
+            val lk = ResolutionToLKProof( res )
+            val wlk = WeakeningContractionMacroRule( lk, seq )
+            val cut = cutAxioms( wlk, axioms.toList )
+            Some( cut )
+        }
       }
-    }
 
     go( Seq() )
   }

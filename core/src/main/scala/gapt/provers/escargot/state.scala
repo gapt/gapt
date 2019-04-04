@@ -308,9 +308,7 @@ class EscargotState( val ctx: MutableContext ) {
       } )
 
   /** Main inference loop. */
-  def loop(): Option[ResolutionProof] = mainLoop() toOption
-
-  def mainLoop(): Either[Set[Cls], ResolutionProof] = try {
+  def loop(): Either[Set[Cls], ResolutionProof] = try {
     preprocessing()
     clauseProcessing()
 

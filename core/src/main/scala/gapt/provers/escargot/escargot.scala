@@ -11,6 +11,7 @@ import gapt.utils.{ LogHandler, Maybe }
 import ammonite.ops._
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.lk.rules.macros.WeakeningContractionMacroRule
 
 object Escargot extends Escargot( splitting = true, equality = true, propositional = false ) {
   def lpoHeuristic( cnf: Traversable[HOLSequent], extraConsts: Iterable[Const] ): LPO = {
@@ -105,19 +106,8 @@ object NonSplittingEscargot extends Escargot( splitting = false, equality = true
 object QfUfEscargot extends Escargot( splitting = true, propositional = true, equality = true )
 
 class Escargot( splitting: Boolean, equality: Boolean, propositional: Boolean ) extends ResolutionProver {
-  var state: EscargotState = _
-
   override def getResolutionProof( cnf: Traversable[HOLClause] )( implicit ctx0: Maybe[MutableContext] ): Option[ResolutionProof] = {
-    implicit val ctx: MutableContext = ctx0.getOrElse( MutableContext.guess( cnf ) )
-    val hasEquality = equality && cnf.flatMap( _.elements ).exists { case Eq( _, _ ) => true; case _ => false }
-    val isPropositional = propositional || cnf.flatMap { freeVariables( _ ) }.isEmpty
-
-    state = new EscargotState( ctx )
-    Escargot.setupDefaults( state, splitting, hasEquality, isPropositional )
-    state.nameGen = rename.awayFrom( ctx.constants.toSet ++ cnf.view.flatMap( constants( _ ) ) )
-    state.termOrdering = Escargot.lpoHeuristic( cnf, ctx.constants )
-    state.newlyDerived ++= cnf.map { state.InputCls }
-    state.loop()
+    getResolutionProofOrClauses( cnf ) toOption
   }
 
   def getResolutionProofOrClauses( cnf: Traversable[HOLClause] )( implicit ctx0: Maybe[MutableContext] ): Either[Set[Cls], ResolutionProof] = {
@@ -130,7 +120,7 @@ class Escargot( splitting: Boolean, equality: Boolean, propositional: Boolean ) 
     state.nameGen = rename.awayFrom( ctx.constants.toSet ++ cnf.view.flatMap( constants( _ ) ) )
     state.termOrdering = Escargot.lpoHeuristic( cnf, ctx.constants )
     state.newlyDerived ++= cnf.map { state.InputCls }
-    state.mainLoop()
+    state.loop()
   }
 
   def getAtomicLKProof( sequent: HOLClause )( implicit ctx0: Maybe[Context] ): Option[LKProof] = {
