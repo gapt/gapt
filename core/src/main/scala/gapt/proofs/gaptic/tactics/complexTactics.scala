@@ -28,6 +28,7 @@ import gapt.proofs.lk.rules.macros.ForallLeftBlock
 import gapt.proofs.lk.rules.macros.WeakeningMacroRule
 import gapt.proofs.lk.util.solvePropositional
 import gapt.proofs.lk.util.solveQuasiPropositional
+import gapt.provers.viper.spind.SuperpositionInductionProver
 
 /**
  * Performs backwards chaining:
@@ -307,6 +308,14 @@ case class AnalyticInductionTactic( axioms: AxiomFactory, prover: ResolutionProv
 
   def withProver( prover: ResolutionProver ): AnalyticInductionTactic =
     copy( prover = prover )
+}
+
+case class SuperpositionInductionTactic()( implicit ctx: MutableContext ) extends Tactical1[Unit] {
+  override def apply( goal: OpenAssumption ) =
+    SuperpositionInductionProver inductiveLKProof goal.labelledSequent match {
+      case None       => TacticFailure( this, "structural induction prover failed" )
+      case Some( lk ) => replace( lk )
+    }
 }
 
 case class SubstTactic( mode: TacticApplyMode ) extends Tactical1[Unit] {
