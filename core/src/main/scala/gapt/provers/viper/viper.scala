@@ -12,7 +12,7 @@ import gapt.grammars.InductionGrammar
 import gapt.proofs.HOLSequent
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.gaptic._
-import gapt.proofs.gaptic.tactics.AnalyticInductionTactic
+import gapt.proofs.gaptic.tactics.{ AnalyticInductionTactic, SuperpositionInductionTactic }
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.NegRightRule
@@ -168,8 +168,7 @@ object Viper {
         List( Duration.Inf -> AnalyticInductionTactic( opts.aipOptions.axioms, opts.aipOptions.prover ).
           aka( s"analytic $axiomsName" ) )
       case "spind" =>
-        List( Duration.Inf -> AnalyticInductionTactic( IndependentInductionAxioms(), opts.aipOptions.prover ).
-          aka( "spind" ) )
+        List( Duration.Inf -> SuperpositionInductionTactic().aka( "spind" ) )
     }
 
   private def timeit[T]( f: => T ): ( T, Duration ) = {
