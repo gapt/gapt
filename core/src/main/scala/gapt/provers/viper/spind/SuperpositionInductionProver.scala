@@ -1,6 +1,6 @@
 package gapt.provers.viper.spind
 
-import gapt.expr.{ Atom, Const, Formula, Var, constants }
+import gapt.expr.{ Atom, Const, Formula, Neg, Var, constants }
 import gapt.proofs.lk.LKProof
 import gapt.proofs.{ Sequent, withSection }
 import gapt.proofs.context.mutable.MutableContext
@@ -48,13 +48,13 @@ class SuperpositionInductionProver {
 
         prf match {
           case Left( clses ) =>
-            val candidates = clses flatMap ( cls => cls.clause.antecedent flatMap ( f =>
-              constants( f ) filter isInductive map ( ( f, _ ) ) ) )
+            val candidates = clses flatMap ( cls => cls.clause.elements flatMap ( f =>
+              constants( f ) filter isInductive map ( ( cls, _ ) ) ) )
 
             val newAxioms = candidates flatMap {
-              case ( f, c ) =>
+              case ( cls, c ) =>
                 val v = Var( nameGen.fresh( c.name ), c.ty )
-                val target = replaceConst( f, c, v )
+                val target = Neg( cls.clause map ( replaceConst( _, c, v ) ) toFormula )
                 StandardInductionAxioms( v, target ) toOption
             } filterNot ( a1 => axioms.exists( a2 => a1.formula.alphaEquals( a2.formula ) ) )
 
