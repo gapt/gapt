@@ -27,51 +27,27 @@ class SuperpositionInductionProver {
    *         the method does not terminate.
    */
   def inductiveLKProof( sequent: Sequent[( String, Formula )] )( implicit ctx: MutableContext ): Option[LKProof] = {
-    val nameGen = ctx.newNameGenerator
+    val seq = labeledSequentToHOLSequent( sequent )
 
-    def replaceConst( f: Formula, c: Const, v: Var ): Formula =
-      f.find( c ).foldLeft( f )( ( f, pos ) => f.replace( pos, v ) )
+    withSection { section =>
+      val ground = section.groundSequent( seq )
 
-    def isInductive( c: Const ) = ctx getConstructors c.ty isDefined
+      val cnf = structuralCNF( ground )( ctx )
+      val cnfMap = cnf.view.map( p => p.conclusion -> p ).toMap
 
-    val seq0 = labeledSequentToHOLSequent( sequent )
+      val clauses = cnfMap.keySet.map( _.map( _.asInstanceOf[Atom] ) )
 
-    def go( axioms: Seq[Axiom] ): Option[LKProof] =
-      withSection { section =>
-        val seq = axioms.map( _.formula ) ++: seq0
-        val ground = section.groundSequent( seq )
+      val prf = Escargot.getResolutionProofWithAxioms( clauses )
 
-        val cnf = structuralCNF( ground )( ctx )
-        val cnfMap = cnf.view.map( p => p.conclusion -> p ).toMap
-
-        val prf = Escargot.getResolutionProofOrClauses( cnfMap.keySet.map( _.map( _.asInstanceOf[Atom] ) ) )
-
-        prf match {
-          case Left( clses ) =>
-            val candidates = clses flatMap ( cls => cls.clause.elements flatMap ( f =>
-              constants( f ) filter isInductive map ( ( cls, _ ) ) ) )
-
-            val newAxioms = candidates flatMap {
-              case ( cls, c ) =>
-                val v = Var( nameGen.fresh( c.name ), c.ty )
-                val target = Neg( cls.clause map ( replaceConst( _, c, v ) ) toFormula )
-                StandardInductionAxioms( v, target ) toOption
-            } filterNot ( a1 => axioms.exists( a2 => a1.formula.alphaEquals( a2.formula ) ) )
-
-            if ( newAxioms.isEmpty )
-              None
-            else
-              go( axioms ++ newAxioms )
-          case Right( resolution ) =>
-            val res = mapInputClauses( resolution )( cnfMap )
-            val lk = ResolutionToLKProof( res )
-            val wlk = WeakeningContractionMacroRule( lk, seq )
-            val cut = cutAxioms( wlk, axioms.toList )
-            Some( cut )
-        }
+      prf map {
+        case ( resolution, axioms, indMap ) =>
+          val res = mapInputClauses( resolution )( cnfMap ++ indMap )
+          val lk = ResolutionToLKProof( res )
+          val wlk = WeakeningContractionMacroRule( lk, axioms.map( _.formula ) ++: seq )
+          val cut = cutAxioms( wlk, axioms.toSeq )
+          cut
       }
-
-    go( Seq() )
+    }
   }
 
   /**
@@ -82,7 +58,7 @@ class SuperpositionInductionProver {
    * @param axioms The axioms to be cut out of the proof.
    * @return A proof whose end-sequent does not contain the specified axioms.
    */
-  private def cutAxioms( proof: LKProof, axioms: List[Axiom] ): LKProof =
+  private def cutAxioms( proof: LKProof, axioms: Seq[Axiom] ): LKProof =
     axioms.foldRight( proof ) { ( axiom, mainProof ) =>
       if ( mainProof.conclusion.antecedent contains axiom.formula )
         CutRule( axiom.proof, mainProof, axiom.formula )

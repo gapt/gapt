@@ -1,8 +1,8 @@
 package gapt.provers.escargot.impl
 
 import gapt.expr._
-import gapt.expr.hol.{ inductionPrinciple, instantiate, universalClosure }
-import gapt.proofs.{ ContextSection, HOLClause, HOLSequent, Sequent }
+import gapt.expr.hol.universalClosure
+import gapt.proofs.{ ContextSection, HOLClause, HOLSequent, Sequent, withSection }
 import gapt.proofs.resolution._
 import gapt.provers.escargot.{ LPO, TermOrdering }
 import gapt.provers.sat.Sat4j
@@ -11,6 +11,7 @@ import org.sat4j.minisat.SolverFactory
 import Sat4j._
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.rup.RupProof
+import gapt.provers.viper.aip.axioms.{ Axiom, StandardInductionAxioms }
 import org.sat4j.specs.{ ContradictionException, IConstr, ISolverService }
 import org.sat4j.tools.SearchListenerAdapter
 
@@ -307,42 +308,101 @@ class EscargotState( val ctx: MutableContext ) {
         if ( p.assertions.isEmpty ) p else AvatarContradiction( p )
       } )
 
+  def inductiveAxioms: Set[Axiom] = {
+    def isInductive( c: Const ) = ctx getConstructors c.ty isDefined
+
+    def replaceConst( f: Formula, c: Const, v: Var ): Formula =
+      f.find( c ).foldLeft( f )( ( f, pos ) => f.replace( pos, v ) )
+
+    val clauses = workedOff.clauses union usable
+
+    val candidates = clauses flatMap ( cls => cls.clause.elements flatMap ( f =>
+      constants( f ) filter isInductive map ( ( cls, _ ) ) ) )
+
+    candidates flatMap {
+      case ( cls, c ) =>
+        val v = Var( nameGen.fresh( c.name ), c.ty )
+        val target = Neg( cls.clause map ( replaceConst( _, c, v ) ) toFormula )
+        StandardInductionAxioms( v, target )( ctx ) toOption
+    }
+  }
+
+  def axiomClauses( section: ContextSection, axioms: Set[Axiom] ): ( Set[Cls], Map[HOLSequent, ResolutionProof] ) = {
+    val seq = axioms.map( _.formula ) ++: Sequent()
+    val ground = section groundSequent seq
+    val cnf = structuralCNF( ground )( ctx )
+
+    val cnfMap = cnf.view.map( p => p.conclusion -> p ).toMap
+    val clauses = cnfMap.keySet.map( _.map( _.asInstanceOf[Atom] ) )
+
+    ( clauses map InputCls, cnfMap )
+  }
+
   /** Main inference loop. */
-  def loop(): Either[Set[Cls], ResolutionProof] = try {
-    preprocessing()
-    clauseProcessing()
+  def loop( addInductions: Boolean = false ): Option[( ResolutionProof, Set[Axiom], Map[HOLSequent, ResolutionProof] )] = {
+    var addedAxioms = Set.empty[Axiom]
+    var cnfMap = Map.empty[HOLSequent, ResolutionProof]
 
-    while ( true ) {
-      if ( usable exists { _.clause.isEmpty } ) {
-        for ( cls <- usable if cls.clause.isEmpty && cls.assertion.isEmpty )
-          return Right( cls.proof )
-        if ( solver.isSatisfiable ) {
-          info( s"sat splitting model: ${
-            solver.model().filter( _ >= 0 ).map( deintern ).
-              sortBy( _.toString ).mkString( ", " )
-          }".replace( '\n', ' ' ) )
-          switchToNewModel()
-        } else {
-          return Right( mkSatProof() )
-        }
-      }
-      if ( usable.isEmpty )
-        return Left( workedOff.clauses )
-
-      val given = choose()
-      usable -= given
-
-      val discarded = inferenceComputation( given )
-
-      info( s"[wo=${workedOff.size},us=${usable.size}] ${if ( discarded ) "discarded" else "kept"}: $given".replace( '\n', ' ' ) )
-
+    try {
       preprocessing()
       clauseProcessing()
-    }
 
-    Left( workedOff.clauses )
-  } catch {
-    case _: ContradictionException =>
-      Right( mkSatProof() )
+      var loopCount = 0
+      var inductCutoff = 64
+
+      val section = new ContextSection( ctx )
+
+      while ( true ) {
+        if ( usable exists {
+          _.clause.isEmpty
+        } ) {
+          for ( cls <- usable if cls.clause.isEmpty && cls.assertion.isEmpty )
+            return Some( cls.proof, addedAxioms, cnfMap )
+          if ( solver.isSatisfiable ) {
+            info( s"sat splitting model: ${
+              solver.model().filter( _ >= 0 ).map( deintern ).
+                sortBy( _.toString ).mkString( ", " )
+            }".replace( '\n', ' ' ) )
+            switchToNewModel()
+          } else {
+            return Some( mkSatProof(), addedAxioms, cnfMap )
+          }
+        }
+        if ( addInductions && ( usable.isEmpty || loopCount >= inductCutoff ) ) {
+          loopCount = 0
+          inductCutoff *= 2
+
+          val newAxioms = inductiveAxioms
+          val ( clauses, newMap ) = axiomClauses( section, newAxioms )
+
+          addedAxioms ++= newAxioms
+          cnfMap ++= newMap
+
+          newlyDerived ++= clauses
+          preprocessing()
+          clauseProcessing()
+        }
+
+        if ( usable.isEmpty )
+          return None
+
+        val given = choose()
+        usable -= given
+
+        val discarded = inferenceComputation( given )
+
+        info( s"[wo=${workedOff.size},us=${usable.size}] ${if ( discarded ) "discarded" else "kept"}: $given".replace( '\n', ' ' ) )
+
+        preprocessing()
+        clauseProcessing()
+
+        loopCount += 1
+      }
+
+      None
+    } catch {
+      case _: ContradictionException =>
+        Some( mkSatProof(), addedAxioms, cnfMap )
+    }
   }
 }
