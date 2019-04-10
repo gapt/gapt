@@ -144,4 +144,8 @@ p101(Y))) & (-(all X (-r1(Y,X) | -(-p2(X) & -p102(X) & p101(X)))) & -(all X (-r1
     Prover9TermParser.parseTerm( "X'" ) must beEqualTo( le"'\'' X" )
   }
 
+  "infix \\" in {
+    Prover9TermParser.parseTerm( "X \\ Y" ) must_== le"'\\' X Y"
+  }
+
 }
