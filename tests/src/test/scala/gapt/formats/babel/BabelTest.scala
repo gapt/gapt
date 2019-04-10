@@ -77,6 +77,7 @@ class BabelTest extends Specification {
       "^(y:i) #v(y:j)",
       "'\\u0000'",
       "#c(true: o)",
+      "'\\\\'", "'\\\\' a", "'^' a b", "'^'",
       "true", "'true'", "'all' x" )
     Fragments.foreach( strings ) { string =>
       string in {

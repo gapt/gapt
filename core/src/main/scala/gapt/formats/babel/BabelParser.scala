@@ -37,6 +37,7 @@ object BabelLexical {
 
   def isOpChar( c: Char ) =
     c != 'λ' && c != '⊢' && c != ',' && c != '(' && c != ')' && c != '\'' && c != '#' && c != ':' &&
+      c != '\\' && c != '^' &&
       !isUnquotNameChar( c ) && {
         val ty = c.getType
         ty != Character.SPACE_SEPARATOR && (
