@@ -135,6 +135,8 @@ object LatexExporter {
     'Ω' -> "\\Omega",
     'ω' -> "\\omega",
 
+    '\\' -> "\\backslash",
+
     '-' -> "\\text{-}",
     '_' -> "\\_" )
   private val indexedName = """(.*)_(\d+)""".r

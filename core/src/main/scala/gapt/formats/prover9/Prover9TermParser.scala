@@ -103,7 +103,7 @@ trait Prover9TermParserA extends RegexParsers with PackratParsers {
   lazy val atomsymb: Parser[String] = """[a-zA-Z][a-zA-Z0-9_]*""".r
   lazy val term: PackratParser[FOLTerm] = ifunction | pfunction | noniterm
   lazy val ifunction: PackratParser[FOLTerm] =
-    pfunction ~ """[+\-*/^v]""".r ~ pfunction ^^ {
+    pfunction ~ """[+\-*/\\^v]""".r ~ pfunction ^^ {
       case t1 ~ sym ~ t2 => FOLFunction( sym, List( t1, t2 ) )
     }
   lazy val pfunction: PackratParser[FOLTerm] =
