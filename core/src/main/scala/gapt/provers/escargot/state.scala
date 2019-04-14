@@ -343,14 +343,14 @@ class EscargotState( val ctx: MutableContext ) {
     var addedAxioms = Set.empty[Axiom]
     var cnfMap = Map.empty[HOLSequent, ResolutionProof]
 
+    var loopCount = 0
+    var inductCutoff = 64
+
+    val section = new ContextSection( ctx )
+
     try {
       preprocessing()
       clauseProcessing()
-
-      var loopCount = 0
-      var inductCutoff = 64
-
-      val section = new ContextSection( ctx )
 
       while ( true ) {
         if ( usable exists {
@@ -374,6 +374,8 @@ class EscargotState( val ctx: MutableContext ) {
 
           val newAxioms = inductiveAxioms
           val ( clauses, newMap ) = axiomClauses( section, newAxioms )
+
+          println( "Adding " + newAxioms.size + " new axioms" )
 
           addedAxioms ++= newAxioms
           cnfMap ++= newMap
