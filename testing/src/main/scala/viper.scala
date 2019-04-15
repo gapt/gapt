@@ -36,7 +36,7 @@ object testViper extends App {
 
   logger.time( "total" ) {
     val problem = try logger.time( "parse" ) {
-      TipSmtImporter.load( fileName )
+      TipSmtImporter.fixupAndLoad( fileName )
     } catch {
       case e: Throwable =>
         logger.metric( "status", e match {
@@ -51,10 +51,10 @@ object testViper extends App {
     val options = parseMode( mode )
 
     try logger.time( "viper" ) {
-      withTimeout( 30 seconds ) {
+      withTimeout( 45 seconds ) {
         Viper( problem, options ) match {
           case Some( _ ) => logger.metric( "status", "ok" )
-          case None      => logger.metric( "status", "failed" )
+          case None      => logger.metric( "status", "saturated" )
         }
       }
     }
