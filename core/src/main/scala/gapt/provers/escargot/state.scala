@@ -327,6 +327,17 @@ class EscargotState( val ctx: MutableContext ) {
     }
   }
 
+  def axiomClause( section: ContextSection, axiom: Axiom ): ( Set[Cls], Map[HOLSequent, ResolutionProof] ) = {
+    val seq = axiom.formula +: Sequent()
+    val ground = section groundSequent seq
+    val cnf = structuralCNF( ground )( ctx )
+
+    val cnfMap = cnf.view.map( p => p.conclusion -> p ).toMap
+    val clauses = cnfMap.keySet.map( _.map( _.asInstanceOf[Atom] ) )
+
+    ( clauses map InputCls, cnfMap )
+  }
+
   def axiomClauses( section: ContextSection, axioms: Set[Axiom] ): ( Set[Cls], Map[HOLSequent, ResolutionProof] ) = {
     val seq = axioms.map( _.formula ) ++: Sequent()
     val ground = section groundSequent seq
@@ -338,13 +349,30 @@ class EscargotState( val ctx: MutableContext ) {
     ( clauses map InputCls, cnfMap )
   }
 
+  /*
+  These two are enough
+
+  ∀m
+  ((⊤ → '<2'(#c(Z: Nat), S('+2'(#c(Z: Nat), m:Nat): Nat): Nat)) ∧
+      ∀i_0
+      ('<2'(i_0, S('+2'(i_0, m))) → '<2'(S(i_0), S('+2'(S(i_0), m)))) →
+    ∀i '<2'(i, S('+2'(i, m))))
+
+  ∀i
+  ((⊤ → '<2'(i:Nat, S('+2'(i, #c(Z: Nat)): Nat): Nat)) ∧
+      ∀m_0
+      ('<2'(i, S('+2'(i, m_0))) → '<2'(i, S('+2'(i, S(m_0))))) →
+    ∀m '<2'(i, S('+2'(i, m))))
+   */
+
   /** Main inference loop. */
   def loop( addInductions: Boolean = false ): Option[( ResolutionProof, Set[Axiom], Map[HOLSequent, ResolutionProof] )] = {
     var addedAxioms = Set.empty[Axiom]
+    var possibleAxioms = Set.empty[Axiom]
     var cnfMap = Map.empty[HOLSequent, ResolutionProof]
 
     var loopCount = 0
-    var inductCutoff = 64
+    var inductCutoff = 8
 
     val section = new ContextSection( ctx )
 
@@ -370,19 +398,27 @@ class EscargotState( val ctx: MutableContext ) {
         }
         if ( addInductions && ( usable.isEmpty || loopCount >= inductCutoff ) ) {
           loopCount = 0
-          inductCutoff *= 2
 
-          val newAxioms = inductiveAxioms
-          val ( clauses, newMap ) = axiomClauses( section, newAxioms )
+          do {
+            if ( possibleAxioms.isEmpty ) {
+              possibleAxioms ++= inductiveAxioms
+              possibleAxioms --= addedAxioms
 
-          println( "Adding " + newAxioms.size + " new axioms" )
+              if ( possibleAxioms.isEmpty )
+                return None
+            }
 
-          addedAxioms ++= newAxioms
-          cnfMap ++= newMap
+            val newAxiom = possibleAxioms.head
+            possibleAxioms -= newAxiom
+            val ( clauses, newMap ) = axiomClause( section, newAxiom )
 
-          newlyDerived ++= clauses
-          preprocessing()
-          clauseProcessing()
+            addedAxioms += newAxiom
+            cnfMap ++= newMap
+
+            newlyDerived ++= clauses
+            preprocessing()
+            clauseProcessing()
+          } while ( usable.isEmpty )
         }
 
         if ( usable.isEmpty )
