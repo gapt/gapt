@@ -36,7 +36,7 @@ object testViper extends App {
 
   logger.time( "total" ) {
     val problem = try logger.time( "parse" ) {
-      TipSmtImporter.load( fileName )
+      TipSmtImporter.fixupAndLoad( fileName )
     } catch {
       case e: Throwable =>
         logger.metric( "status", e match {
