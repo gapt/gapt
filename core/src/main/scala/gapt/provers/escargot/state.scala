@@ -12,6 +12,7 @@ import Sat4j._
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.rup.RupProof
 import gapt.provers.viper.aip.axioms.{ Axiom, StandardInductionAxioms }
+import gapt.provers.viper.grammars.enumerateTerms
 import org.sat4j.specs.{ ContradictionException, IConstr, ISolverService }
 import org.sat4j.tools.SearchListenerAdapter
 
@@ -200,7 +201,10 @@ class EscargotState( val ctx: MutableContext ) {
 
   /** Current propositional Avatar model. */
   var avatarModel = Set[Int]()
-  /** Empty clauses that have already been derived.  All assertions in the empty clauses are false. */
+  /**
+   * Empty clauses
+   * println( "CONSTS: " + consts ) that have already been derived.  All assertions in the empty clauses are false.
+   */
   var emptyClauses = mutable.Map[Set[Int], Cls]()
   /** Is the assertion of cls true in the current model? */
   def isActive( cls: Cls ): Boolean = isActive( cls.ass )
@@ -308,11 +312,48 @@ class EscargotState( val ctx: MutableContext ) {
         if ( p.assertions.isEmpty ) p else AvatarContradiction( p )
       } )
 
-  def inductiveAxioms: Set[Axiom] = {
-    def isInductive( c: Const ) = ctx getConstructors c.ty isDefined
+  def replaceExpr( f: Formula, x: Expr, e: Expr ): Formula =
+    f.find( x ).foldLeft( f )( ( f, pos ) => f.replace( pos, e ) )
 
-    def replaceConst( f: Formula, c: Const, v: Var ): Formula =
-      f.find( c ).foldLeft( f )( ( f, pos ) => f.replace( pos, v ) )
+  def isInductive( c: Const ): Boolean =
+    ctx.getConstructors( c.ty ) match {
+      case None            => false
+      case Some( constrs ) => !constrs.contains( c )
+    }
+
+  def testFormula( form: Formula ): Boolean = {
+    val numberOfTestTerms = 5 // TODO: should be an option
+
+    def go( f: Formula, consts: Set[Const] ): Stream[Formula] = {
+      consts.headOption match {
+        case None => Stream( f )
+        case Some( c ) =>
+          val termStream = enumerateTerms.forType( c.ty )( ctx )
+          val terms = termStream.take( numberOfTestTerms ) filter ( _.ty == c.ty )
+          terms.flatMap( t => go( replaceExpr( f, c, t ), consts - c ) )
+      }
+    }
+
+    val consts = constants( form ) filter isInductive
+
+    val fs = go( form, consts )
+
+    // TODO: not sure this is robust ( or complete )
+    fs forall {
+      case Eq( lhs, rhs )         => ctx.isDefEq( lhs, rhs )
+      case Iff( lhs, rhs )        => ctx.isDefEq( lhs, rhs )
+      case Neg( Eq( lhs, rhs ) )  => !ctx.isDefEq( lhs, rhs )
+      case Neg( Iff( lhs, rhs ) ) => !ctx.isDefEq( lhs, rhs )
+      case Neg( lhs )             => ctx.isDefEq( lhs, Bottom() )
+      case lhs                    => ctx.isDefEq( lhs, Top() )
+    }
+  }
+
+  def inductiveAxioms: Set[Axiom] = {
+    def negate( f: Formula ) = f match {
+      case Neg( g ) => g
+      case _        => Neg( f )
+    }
 
     val clauses = workedOff.clauses union usable
 
@@ -321,9 +362,14 @@ class EscargotState( val ctx: MutableContext ) {
 
     candidates flatMap {
       case ( cls, c ) =>
-        val v = Var( nameGen.fresh( c.name ), c.ty )
-        val target = Neg( cls.clause map ( replaceConst( _, c, v ) ) toFormula )
-        StandardInductionAxioms( v, target )( ctx ) toOption
+        val f = negate( cls.clause.toFormula )
+        if ( testFormula( f ) ) {
+          val v = Var( nameGen.fresh( c.name ), c.ty )
+          val target = replaceExpr( f, c, v )
+          StandardInductionAxioms( v, target )( ctx ) toOption
+        } else {
+          None
+        }
     }
   }
 
@@ -338,33 +384,6 @@ class EscargotState( val ctx: MutableContext ) {
     ( clauses map InputCls, cnfMap )
   }
 
-  def axiomClauses( section: ContextSection, axioms: Set[Axiom] ): ( Set[Cls], Map[HOLSequent, ResolutionProof] ) = {
-    val seq = axioms.map( _.formula ) ++: Sequent()
-    val ground = section groundSequent seq
-    val cnf = structuralCNF( ground )( ctx )
-
-    val cnfMap = cnf.view.map( p => p.conclusion -> p ).toMap
-    val clauses = cnfMap.keySet.map( _.map( _.asInstanceOf[Atom] ) )
-
-    ( clauses map InputCls, cnfMap )
-  }
-
-  /*
-  These two are enough
-
-  ∀m
-  ((⊤ → '<2'(#c(Z: Nat), S('+2'(#c(Z: Nat), m:Nat): Nat): Nat)) ∧
-      ∀i_0
-      ('<2'(i_0, S('+2'(i_0, m))) → '<2'(S(i_0), S('+2'(S(i_0), m)))) →
-    ∀i '<2'(i, S('+2'(i, m))))
-
-  ∀i
-  ((⊤ → '<2'(i:Nat, S('+2'(i, #c(Z: Nat)): Nat): Nat)) ∧
-      ∀m_0
-      ('<2'(i, S('+2'(i, m_0))) → '<2'(i, S('+2'(i, S(m_0))))) →
-    ∀m '<2'(i, S('+2'(i, m))))
-   */
-
   /** Main inference loop. */
   def loop( addInductions: Boolean = false ): Option[( ResolutionProof, Set[Axiom], Map[HOLSequent, ResolutionProof] )] = {
     var addedAxioms = Set.empty[Axiom]
@@ -372,7 +391,7 @@ class EscargotState( val ctx: MutableContext ) {
     var cnfMap = Map.empty[HOLSequent, ResolutionProof]
 
     var loopCount = 0
-    var inductCutoff = 8
+    var inductCutoff = 4
 
     val section = new ContextSection( ctx )
 

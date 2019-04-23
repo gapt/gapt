@@ -263,7 +263,7 @@ object Viper {
     val file = files.head
 
     val problem = if ( opts.fixup ) TipSmtImporter.fixupAndLoad( file ) else TipSmtImporter.load( file )
-    implicit val ctx: MutableContext = problem.ctx.newMutable
+    implicit val ctx: MutableContext = problem.context.newMutable
 
     apply( problem.toSequent, opts ) match {
       case Some( proof ) =>

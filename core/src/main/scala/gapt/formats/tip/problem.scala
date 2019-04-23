@@ -51,7 +51,16 @@ case class TipProblem(
       Sequent()
       :+ goal )
 
-  def context: ImmutableContext = ctx
+  def context: ImmutableContext = ctx ++ reductionRules
+
+  // TODO: not sure this is robust
+  def reductionRules: Seq[ReductionRule] =
+    functions flatMap ( _.definitions map ( removeAllQuantifiers( _ ) match {
+      case Eq( lhs, rhs )  => ReductionRule( lhs, rhs )
+      case Iff( lhs, rhs ) => ReductionRule( lhs, rhs )
+      case Neg( lhs )      => ReductionRule( lhs, Bottom() )
+      case lhs             => ReductionRule( lhs, Top() )
+    } ) )
 
   override def toString: String = toSequent.toSigRelativeString( context )
 }
