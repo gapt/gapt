@@ -205,13 +205,13 @@ object Viper {
   }
 
   def apply( problem: TipProblem ): Option[LKProof] =
-    apply( problem.toSequent )( problem.ctx.newMutable )
+    apply( problem.toSequent )( problem.context.newMutable )
 
   def apply( problem: TipProblem, verbosity: Int ): Option[LKProof] =
     apply( problem, ViperOptions( verbosity = verbosity ) )
 
   def apply( problem: TipProblem, options: ViperOptions ): Option[LKProof] =
-    apply( problem.toSequent, options )( problem.ctx.newMutable )
+    apply( problem.toSequent, options )( problem.context.newMutable )
 
   def apply( sequent: HOLSequent )( implicit ctx: MutableContext ): Option[LKProof] =
     apply( sequent, ViperOptions( verbosity = 3 ) )
