@@ -321,33 +321,24 @@ class EscargotState( val ctx: MutableContext ) {
       case Some( constrs ) => !constrs.contains( c )
     }
 
-  def testFormula( form: Formula ): Boolean = {
+  def testFormula( form: Formula, c: Const ): Boolean = {
     val numberOfTestTerms = 5 // TODO: should be an option
 
-    def go( f: Formula, consts: Set[Const] ): Stream[Formula] = {
-      consts.headOption match {
-        case None => Stream( f )
-        case Some( c ) =>
-          val termStream = enumerateTerms.forType( c.ty )( ctx )
-          val terms = termStream.take( numberOfTestTerms ) filter ( _.ty == c.ty )
-          terms.flatMap( t => go( replaceExpr( f, c, t ), consts - c ) )
-      }
-    }
+    val termStream = enumerateTerms.forType( c.ty )( ctx )
+    val terms = termStream filter ( _.ty == c.ty ) take numberOfTestTerms
+    val fs = terms.map( replaceExpr( form, c, _ ) )
 
-    val consts = constants( form ) filter isInductive
-
-    val fs = go( form, consts )
-
-    // TODO: not sure this is robust ( or complete )
     fs forall {
       case Eq( lhs, rhs )         => ctx.isDefEq( lhs, rhs )
       case Iff( lhs, rhs )        => ctx.isDefEq( lhs, rhs )
       case Neg( Eq( lhs, rhs ) )  => !ctx.isDefEq( lhs, rhs )
       case Neg( Iff( lhs, rhs ) ) => !ctx.isDefEq( lhs, rhs )
-      case Neg( lhs )             => ctx.isDefEq( lhs, Bottom() )
-      case lhs                    => ctx.isDefEq( lhs, Top() )
+      case Neg( lhs )             => !ctx.isDefEq( lhs, Top() )
+      case lhs                    => !ctx.isDefEq( lhs, Bottom() )
     }
   }
+
+  var clausesForInduction = Set.empty[Cls]
 
   def inductiveAxioms: Set[Axiom] = {
     def negate( f: Formula ) = f match {
@@ -355,15 +346,15 @@ class EscargotState( val ctx: MutableContext ) {
       case _        => Neg( f )
     }
 
-    val clauses = workedOff.clauses union usable
-
-    val candidates = clauses flatMap ( cls => cls.clause.elements flatMap ( f =>
+    val candidates = clausesForInduction flatMap ( cls => cls.clause.elements flatMap ( f =>
       constants( f ) filter isInductive map ( ( cls, _ ) ) ) )
+
+    clausesForInduction = Set()
 
     candidates flatMap {
       case ( cls, c ) =>
         val f = negate( cls.clause.toFormula )
-        if ( testFormula( f ) ) {
+        if ( testFormula( f, c ) ) {
           val v = Var( nameGen.fresh( c.name ), c.ty )
           val target = replaceExpr( f, c, v )
           StandardInductionAxioms( v, target )( ctx ) toOption
@@ -391,7 +382,7 @@ class EscargotState( val ctx: MutableContext ) {
     var cnfMap = Map.empty[HOLSequent, ResolutionProof]
 
     var loopCount = 0
-    var inductCutoff = 4
+    var inductCutoff = 8
 
     val section = new ContextSection( ctx )
 
@@ -420,23 +411,23 @@ class EscargotState( val ctx: MutableContext ) {
 
           do {
             if ( possibleAxioms.isEmpty ) {
-              possibleAxioms ++= inductiveAxioms
-              possibleAxioms --= addedAxioms
-
-              if ( possibleAxioms.isEmpty )
-                return None
+              possibleAxioms ++= ( inductiveAxioms -- addedAxioms )
             }
 
-            val newAxiom = possibleAxioms.head
-            possibleAxioms -= newAxiom
-            val ( clauses, newMap ) = axiomClause( section, newAxiom )
+            if ( possibleAxioms.nonEmpty ) {
+              val newAxiom = possibleAxioms.head
+              possibleAxioms -= newAxiom
+              val ( clauses, newMap ) = axiomClause( section, newAxiom )
 
-            addedAxioms += newAxiom
-            cnfMap ++= newMap
+              addedAxioms += newAxiom
+              cnfMap ++= newMap
 
-            newlyDerived ++= clauses
-            preprocessing()
-            clauseProcessing()
+              newlyDerived ++= clauses
+              preprocessing()
+              clauseProcessing()
+            } else if ( usable.isEmpty ) {
+              return None
+            }
           } while ( usable.isEmpty )
         }
 
@@ -445,6 +436,7 @@ class EscargotState( val ctx: MutableContext ) {
 
         val given = choose()
         usable -= given
+        clausesForInduction += given
 
         val discarded = inferenceComputation( given )
 
