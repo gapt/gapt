@@ -51,7 +51,7 @@ object testViper extends App {
     val options = parseMode( mode )
 
     try logger.time( "viper" ) {
-      withTimeout( 45 seconds ) {
+      withTimeout( 60 seconds ) {
         Viper( problem, options ) match {
           case Some( _ ) => logger.metric( "status", "ok" )
           case None      => logger.metric( "status", "saturated" )
