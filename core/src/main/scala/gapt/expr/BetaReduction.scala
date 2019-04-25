@@ -92,6 +92,7 @@ object ReductionRule {
   }
 }
 
+// TODO: maybe belongs in a different file
 case class Positions( rules: Set[ReductionRule] ) {
   require( rules.nonEmpty )
   require( rules.forall( _.lhsHead == rules.head.lhsHead ) )
@@ -112,8 +113,16 @@ case class Positions( rules: Set[ReductionRule] ) {
     intersectArgs( rules, _.primaryArgs )
 }
 object Positions {
-  def apply( rules: Set[ReductionRule], c: Const ): Positions =
-    Positions( rules.filter( _.lhsHead == c ) )
+  def apply( rules: Set[ReductionRule], c: Const ): Option[Positions] = {
+    val rs = rules.filter( _.lhsHead == c )
+    if ( rs.isEmpty )
+      None
+    else
+      Some( Positions( rs ) )
+  }
+
+  def splitRules( rules: Set[ReductionRule] ): Map[Const, Positions] =
+    rules.map( r => r.lhsHead -> Positions( rules, r.lhsHead ).get ).toMap
 }
 
 case class Normalizer( rules: Set[ReductionRule] ) {

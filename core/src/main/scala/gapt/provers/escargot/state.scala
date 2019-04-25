@@ -338,6 +338,23 @@ class EscargotState( val ctx: MutableContext ) {
     }
   }
 
+  val allPositions = Positions.splitRules( ctx.normalizer.rules )
+
+  def primaryOccurrences( formula: Formula ): Set[Expr] = {
+    def go( e: Expr ): Set[Expr] =
+      e match {
+        case Apps( f @ Const( _, _, _ ), rhsArgs ) =>
+          allPositions.get( f ) match {
+            case None              => ( rhsArgs flatMap go ).toSet
+            case Some( positions ) => positions.primaryArgs.flatMap( i => go( rhsArgs( i ) ) + rhsArgs( i ) )
+          }
+        case App( a, b ) => go( a ) ++ go( b )
+        case _           => Set()
+      }
+
+    go( formula )
+  }
+
   var clausesForInduction = Set.empty[Cls]
 
   def inductiveAxioms: Set[Axiom] = {
@@ -354,7 +371,8 @@ class EscargotState( val ctx: MutableContext ) {
     candidates flatMap {
       case ( cls, c ) =>
         val f = negate( cls.clause.toFormula )
-        if ( testFormula( f, c ) ) {
+        val primOccs = primaryOccurrences( f )
+        if ( primOccs.contains( c ) && testFormula( f, c ) ) {
           val v = Var( nameGen.fresh( c.name ), c.ty )
           val target = replaceExpr( f, c, v )
           StandardInductionAxioms( v, target )( ctx ) toOption
