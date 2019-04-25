@@ -53,6 +53,34 @@ case class ReductionRule( lhs: Expr, rhs: Expr ) extends Update {
 
   val whnfArgs: Set[Int] =
     structuralRecArgs -- normalizeArgs
+
+  val allArgs: Set[Int] = lhsArgs.zipWithIndex.map( _._2 ).toSet
+
+  val passiveArgs: Option[Set[Int]] = {
+    def go( e: Expr ): Option[Set[Int]] =
+      e match {
+        case Apps( f, rhsArgs ) if f == lhsHead =>
+          val args = lhsArgs.zip( rhsArgs ).zipWithIndex collect {
+            case ( ( l, r ), i ) if l == r => i
+          }
+          Some( args.toSet )
+        case App( a, b ) =>
+          go( a ) match {
+            case None         => go( b )
+            case Some( args ) => Some( args.intersect( go( b ).getOrElse( allArgs ) ) )
+          }
+        case _ => None
+      }
+
+    go( rhs )
+  }
+
+  val accumulatorArgs: Option[Set[Int]] =
+    passiveArgs.map( passive => lhsArgs.zipWithIndex.collect { case ( e, i ) if e.isInstanceOf[Var] => i }.toSet -- passive )
+
+  val primaryArgs: Option[Set[Int]] =
+    passiveArgs.flatMap( passive => accumulatorArgs.map( accumulator => ( allArgs -- accumulator ) -- passive ) )
+
 }
 object ReductionRule {
   implicit def apply( rule: ( Expr, Expr ) ): ReductionRule =
@@ -62,6 +90,30 @@ object ReductionRule {
     val Eq( lhs, rhs ) = atom
     ReductionRule( lhs, rhs )
   }
+}
+
+case class Positions( rules: Set[ReductionRule] ) {
+  require( rules.nonEmpty )
+  require( rules.forall( _.lhsHead == rules.head.lhsHead ) )
+
+  val lhsHead: Const = rules.head.lhsHead
+  val allArgs: Set[Int] = rules.head.allArgs
+
+  private def intersectArgs( rules: Set[ReductionRule], f: ReductionRule => Option[Set[Int]] ): Set[Int] =
+    rules.foldLeft( allArgs )( ( args, rule ) => args.intersect( f( rule ).getOrElse( allArgs ) ) )
+
+  val passiveArgs: Set[Int] =
+    intersectArgs( rules, _.passiveArgs )
+
+  val accumulatorArgs: Set[Int] =
+    intersectArgs( rules, _.accumulatorArgs )
+
+  val primaryArgs: Set[Int] =
+    intersectArgs( rules, _.primaryArgs )
+}
+object Positions {
+  def apply( rules: Set[ReductionRule], c: Const ): Positions =
+    Positions( rules.filter( _.lhsHead == c ) )
 }
 
 case class Normalizer( rules: Set[ReductionRule] ) {
