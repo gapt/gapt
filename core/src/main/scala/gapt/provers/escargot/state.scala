@@ -11,7 +11,7 @@ import org.sat4j.minisat.SolverFactory
 import Sat4j._
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.rup.RupProof
-import gapt.provers.viper.aip.axioms.{ Axiom, StandardInductionAxioms }
+import gapt.provers.viper.aip.axioms.{ Axiom, SequentialInductionAxioms, StandardInductionAxioms }
 import gapt.provers.viper.grammars.enumerateTerms
 import org.sat4j.specs.{ ContradictionException, IConstr, ISolverService }
 import org.sat4j.tools.SearchListenerAdapter
@@ -351,8 +351,13 @@ class EscargotState( val ctx: MutableContext ) {
   var skipTesting = false
 
   // TODO: this is kinda heavy
-  def occurrences( formula: Expr ): ( Map[Expr, Seq[LambdaPosition]], Map[Expr, Seq[LambdaPosition]] ) = {
+  def occurrences( formula: Expr ): ( Map[Expr, Seq[LambdaPosition]], Map[Expr, Seq[LambdaPosition]], Set[Set[Expr]] ) = {
     val empty = Seq.empty[( Expr, List[Int] )]
+
+    def newPos( i: Int, size: Int, pos: List[Int] ): List[Int] =
+      2 :: List.fill( size - i - 1 )( 1 ) ++ pos
+
+    var underSame = Set.empty[Set[Expr]]
 
     def go( expr: Expr, pos: List[Int] ): ( Seq[( Expr, List[Int] )], Seq[( Expr, List[Int] )] ) =
       expr match {
@@ -361,21 +366,29 @@ class EscargotState( val ctx: MutableContext ) {
             case None =>
               rhsArgs.zipWithIndex.foldLeft( ( empty, empty ) ) {
                 case ( ( prim, pass ), ( e, i ) ) =>
-                  val newPos = 2 :: List.fill( rhsArgs.size - i - 1 )( 1 ) ++ pos
-                  val ( l, r ) = go( e, newPos )
+                  val ( l, r ) = go( e, newPos( i, rhsArgs.size, pos ) )
                   ( l ++ prim, r ++ pass )
               }
             case Some( positions ) =>
               val pass1 = positions.passiveArgs.toSeq flatMap { i =>
-                val newPos = 2 :: List.fill( rhsArgs.size - i - 1 )( 1 ) ++ pos
-                val ( l, r ) = go( rhsArgs( i ), newPos )
-                ( rhsArgs( i ), newPos ) +: ( l ++ r )
+                val p = newPos( i, rhsArgs.size, pos )
+                val ( l, r ) = go( rhsArgs( i ), p )
+                ( rhsArgs( i ), p ) +: ( l ++ r )
               }
+
+              val same = positions.primaryArgs map rhsArgs
+              underSame.find( _.intersect( same ).nonEmpty ) match {
+                case None => underSame += same
+                case Some( existing ) =>
+                  underSame -= existing
+                  underSame += existing union same
+              }
+
               val ( prim1, pass2 ) = positions.primaryArgs.toSeq.foldLeft( ( empty, empty ) ) {
                 case ( ( prim, pass ), i ) =>
-                  val newPos = 2 :: List.fill( rhsArgs.size - i - 1 )( 1 ) ++ pos
-                  val ( l, r ) = go( rhsArgs( i ), newPos )
-                  ( ( rhsArgs( i ), newPos ) +: ( l ++ prim ), r ++ pass )
+                  val p = newPos( i, rhsArgs.size, pos )
+                  val ( l, r ) = go( rhsArgs( i ), p )
+                  ( ( rhsArgs( i ), p ) +: ( l ++ prim ), r ++ pass )
               }
               ( prim1, pass1 ++ pass2 )
           }
@@ -391,7 +404,7 @@ class EscargotState( val ctx: MutableContext ) {
     val primMap = prim.groupBy( _._1 ).mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } )
     val passMap = pass.groupBy( _._1 ).mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } )
 
-    ( primMap, passMap )
+    ( primMap, passMap, underSame )
   }
 
   var clausesForInduction = Set.empty[Cls]
@@ -404,21 +417,30 @@ class EscargotState( val ctx: MutableContext ) {
 
     val axioms = clausesForInduction flatMap { cls =>
       val f = negate( cls.clause.toFormula ).asInstanceOf[Expr]
-      val ( primMap, passMap ) = occurrences( f )
+      val ( primMap, passMap, underSame ) = occurrences( f )
 
-      // TODO: if two variables have primary occurrences under same symbol, we need to induct on both
-      // We currently do one at a time, which is useless but gets thrown away by the sample testing
+      def isInductiveConst( e: Expr ) =
+        e match {
+          case c @ Const( _, _, _ ) => isInductive( c )
+          case _                    => false
+        }
 
-      primMap.flatMap {
-        case ( c @ Const( _, _, _ ), primPoses ) if isInductive( c ) =>
+      val underSameConsts = underSame map ( _.filter( isInductiveConst ) )
+
+      underSameConsts.flatMap {
+        case cs if cs.isEmpty => Seq()
+        case cs if cs.size == 1 =>
+          val c = cs.head
+
+          val primPoses = primMap.getOrElse( c, Seq() )
           val passPoses = passMap.getOrElse( c, Seq() )
-          val v = Var( nameGen.fresh( c.name ), c.ty )
+          val v = Var( nameGen.fresh( "ind" ), c.ty )
 
           val axiom = if ( primPoses.size >= 2 && passPoses.nonEmpty ) {
             // Induct only on primary occurences, i.e. generalize
             val target = primPoses.foldLeft( f )( ( g, pos ) => g.replace( pos, v ) )
             if ( skipTesting || testFormula( target, List( v ) ) ) {
-              StandardInductionAxioms( v, target.asInstanceOf[Formula] )( ctx ) toOption
+              StandardInductionAxioms( v, target.asInstanceOf[Formula] )( ctx ).toOption.map( Seq( _ ) )
             } else {
               None
             }
@@ -429,14 +451,25 @@ class EscargotState( val ctx: MutableContext ) {
           axiom.orElse {
             val target = replaceExpr( f, c, v )
             if ( skipTesting || testFormula( target, List( v ) ) ) {
-              StandardInductionAxioms( v, target.asInstanceOf[Formula] )( ctx ) toOption
+              StandardInductionAxioms( v, target.asInstanceOf[Formula] )( ctx ).toOption.map( Seq( _ ) )
             } else {
               None
             }
           }
-        case _ => None
+        case cs =>
+          val ( vars, target ) = cs.foldLeft( ( Seq.empty[Var], f ) ) {
+            case ( ( vs, g ), c ) =>
+              val v = Var( nameGen.fresh( "ind" ), c.ty )
+              ( v +: vs, replaceExpr( g, c, v ) )
+          }
+
+          if ( skipTesting || testFormula( target, vars.toList ) ) {
+            SequentialInductionAxioms()( Sequent() :+ ( "axiom", target.asInstanceOf[Formula] ) )( ctx ) toOption
+          } else {
+            None
+          }
       }
-    }
+    } flatten
 
     clausesForInduction = Set()
 
