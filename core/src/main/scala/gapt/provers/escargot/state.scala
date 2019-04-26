@@ -1,7 +1,7 @@
 package gapt.provers.escargot.impl
 
 import gapt.expr._
-import gapt.expr.hol.universalClosure
+import gapt.expr.hol.{ HOLPosition, universalClosure }
 import gapt.proofs.{ ContextSection, HOLClause, HOLSequent, Sequent, withSection }
 import gapt.proofs.resolution._
 import gapt.provers.escargot.{ LPO, TermOrdering }
@@ -15,6 +15,7 @@ import gapt.provers.viper.aip.axioms.{ Axiom, StandardInductionAxioms }
 import gapt.provers.viper.grammars.enumerateTerms
 import org.sat4j.specs.{ ContradictionException, IConstr, ISolverService }
 import org.sat4j.tools.SearchListenerAdapter
+import cats.implicits._
 
 object EscargotLogger extends Logger( "escargot" ); import EscargotLogger._
 
@@ -312,7 +313,7 @@ class EscargotState( val ctx: MutableContext ) {
         if ( p.assertions.isEmpty ) p else AvatarContradiction( p )
       } )
 
-  def replaceExpr( f: Formula, x: Expr, e: Expr ): Formula =
+  def replaceExpr( f: Expr, x: Expr, e: Expr ): Expr =
     f.find( x ).foldLeft( f )( ( f, pos ) => f.replace( pos, e ) )
 
   def isInductive( c: Const ): Boolean =
@@ -321,12 +322,20 @@ class EscargotState( val ctx: MutableContext ) {
       case Some( constrs ) => !constrs.contains( c )
     }
 
-  def testFormula( form: Formula, c: Const ): Boolean = {
+  def testFormula( expr: Expr, vars: List[Var] ): Boolean = {
     val numberOfTestTerms = 5 // TODO: should be an option
 
-    val termStream = enumerateTerms.forType( c.ty )( ctx )
-    val terms = termStream filter ( _.ty == c.ty ) take numberOfTestTerms
-    val fs = terms.map( replaceExpr( form, c, _ ) )
+    def go( e: Expr, vars: List[Var] ): Seq[Expr] = {
+      vars match {
+        case List() => Seq( e )
+        case v :: vs =>
+          val termStream = enumerateTerms.forType( v.ty )( ctx )
+          val terms = termStream filter ( _.ty == v.ty ) take numberOfTestTerms
+          terms.flatMap( t => go( e, vs ) map ( replaceExpr( _, v, t ) ) )
+      }
+    }
+
+    val fs = go( expr, vars )
 
     fs forall {
       case Eq( lhs, rhs )         => ctx.isDefEq( lhs, rhs )
@@ -338,21 +347,50 @@ class EscargotState( val ctx: MutableContext ) {
     }
   }
 
-  val allPositions = Positions.splitRules( ctx.normalizer.rules )
+  val allPositions: Map[Const, Positions] = Positions.splitRules( ctx.normalizer.rules )
 
-  def primaryOccurrences( formula: Formula ): Set[Expr] = {
-    def go( e: Expr ): Set[Expr] =
-      e match {
-        case Apps( f @ Const( _, _, _ ), rhsArgs ) =>
-          allPositions.get( f ) match {
-            case None              => ( rhsArgs flatMap go ).toSet
-            case Some( positions ) => positions.primaryArgs.flatMap( i => go( rhsArgs( i ) ) + rhsArgs( i ) )
+  // TODO: this is kinda heavy
+  def occurrences( formula: Expr ): ( Map[Expr, Seq[LambdaPosition]], Map[Expr, Seq[LambdaPosition]] ) = {
+    val empty = Seq.empty[( Expr, List[Int] )]
+
+    def go( expr: Expr, pos: List[Int] ): ( Seq[( Expr, List[Int] )], Seq[( Expr, List[Int] )] ) =
+      expr match {
+        case Apps( c @ Const( _, _, _ ), rhsArgs ) =>
+          allPositions.get( c ) match {
+            case None =>
+              rhsArgs.zipWithIndex.foldLeft( ( empty, empty ) ) {
+                case ( ( prim, pass ), ( e, i ) ) =>
+                  val newPos = 2 :: List.fill( rhsArgs.size - i - 1 )( 1 ) ++ pos
+                  val ( l, r ) = go( e, newPos )
+                  ( l ++ prim, r ++ pass )
+              }
+            case Some( positions ) =>
+              val pass1 = positions.passiveArgs.toSeq flatMap { i =>
+                val newPos = 2 :: List.fill( rhsArgs.size - i - 1 )( 1 ) ++ pos
+                val ( l, r ) = go( rhsArgs( i ), newPos )
+                ( rhsArgs( i ), newPos ) +: ( l ++ r )
+              }
+              val ( prim1, pass2 ) = positions.primaryArgs.toSeq.foldLeft( ( empty, empty ) ) {
+                case ( ( prim, pass ), i ) =>
+                  val newPos = 2 :: List.fill( rhsArgs.size - i - 1 )( 1 ) ++ pos
+                  val ( l, r ) = go( rhsArgs( i ), newPos )
+                  ( ( rhsArgs( i ), newPos ) +: ( l ++ prim ), r ++ pass )
+              }
+              ( prim1, pass1 ++ pass2 )
           }
-        case App( a, b ) => go( a ) ++ go( b )
-        case _           => Set()
+        case App( a, b ) =>
+          val ( l1, r1 ) = go( a, 1 :: pos )
+          val ( l2, r2 ) = go( b, 2 :: pos )
+          ( l1 ++ l2, r1 ++ r2 )
+        case _ => ( Seq(), Seq() )
       }
 
-    go( formula )
+    val ( prim, pass ) = go( formula, List() )
+
+    val primMap = prim.groupBy( _._1 ).mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } )
+    val passMap = pass.groupBy( _._1 ).mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } )
+
+    ( primMap, passMap )
   }
 
   var clausesForInduction = Set.empty[Cls]
@@ -363,23 +401,45 @@ class EscargotState( val ctx: MutableContext ) {
       case _        => Neg( f )
     }
 
-    val candidates = clausesForInduction flatMap ( cls => cls.clause.elements flatMap ( f =>
-      constants( f ) filter isInductive map ( ( cls, _ ) ) ) )
+    val axioms = clausesForInduction flatMap { cls =>
+      val f = negate( cls.clause.toFormula ).asInstanceOf[Expr]
+      val ( primMap, passMap ) = occurrences( f )
+
+      // TODO: if two variables have primary occurrences under same symbol, we need to induct on both
+      // We currently do one at a time, which is useless but gets thrown away by the sample testing
+
+      primMap.flatMap {
+        case ( c @ Const( _, _, _ ), primPoses ) if isInductive( c ) =>
+          val passPoses = passMap.getOrElse( c, Seq() )
+          val v = Var( nameGen.fresh( c.name ), c.ty )
+
+          val axiom = if ( primPoses.size >= 2 && passPoses.nonEmpty ) {
+            // Induct only on primary occurences, i.e. generalize
+            val target = primPoses.foldLeft( f )( ( g, pos ) => g.replace( pos, v ) )
+            if ( testFormula( target, List( v ) ) ) {
+              StandardInductionAxioms( v, target.asInstanceOf[Formula] )( ctx ) toOption
+            } else {
+              None
+            }
+          } else {
+            None
+          }
+
+          axiom.orElse {
+            val target = replaceExpr( f, c, v )
+            if ( testFormula( target, List( v ) ) ) {
+              StandardInductionAxioms( v, target.asInstanceOf[Formula] )( ctx ) toOption
+            } else {
+              None
+            }
+          }
+        case _ => None
+      }
+    }
 
     clausesForInduction = Set()
 
-    candidates flatMap {
-      case ( cls, c ) =>
-        val f = negate( cls.clause.toFormula )
-        val primOccs = primaryOccurrences( f )
-        if ( primOccs.contains( c ) && testFormula( f, c ) ) {
-          val v = Var( nameGen.fresh( c.name ), c.ty )
-          val target = replaceExpr( f, c, v )
-          StandardInductionAxioms( v, target )( ctx ) toOption
-        } else {
-          None
-        }
-    }
+    axioms
   }
 
   def axiomClause( section: ContextSection, axiom: Axiom ): ( Set[Cls], Map[HOLSequent, ResolutionProof] ) = {
