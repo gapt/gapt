@@ -407,16 +407,16 @@ class EscargotState( val ctx: MutableContext ) {
     ( primMap, passMap, underSame )
   }
 
-  var clausesForInduction = Set.empty[Cls]
+  var clausesForInduction = List.empty[HOLSequent]
 
-  def inductiveAxioms: Set[Axiom] = {
+  def inductiveAxioms: List[Axiom] = {
     def negate( f: Formula ) = f match {
       case Neg( g ) => g
       case _        => Neg( f )
     }
 
     val axioms = clausesForInduction flatMap { cls =>
-      val f = negate( cls.clause.toFormula ).asInstanceOf[Expr]
+      val f = negate( cls.toFormula ).asInstanceOf[Expr]
       val ( primMap, passMap, underSame ) = occurrences( f )
 
       def isInductiveConst( e: Expr ) =
@@ -471,9 +471,9 @@ class EscargotState( val ctx: MutableContext ) {
       }
     } flatten
 
-    clausesForInduction = Set()
+    clausesForInduction = List()
 
-    axioms
+    axioms.reverse
   }
 
   def axiomClause( section: ContextSection, axiom: Axiom ): ( Set[Cls], Map[HOLSequent, ResolutionProof] ) = {
@@ -489,12 +489,13 @@ class EscargotState( val ctx: MutableContext ) {
 
   /** Main inference loop. */
   def loop( addInductions: Boolean = false ): Option[( ResolutionProof, Set[Axiom], Map[HOLSequent, ResolutionProof] )] = {
+    var inductedClauses = Set.empty[HOLSequent]
     var addedAxioms = Set.empty[Axiom]
-    var possibleAxioms = Set.empty[Axiom]
+    var possibleAxioms = List.empty[Axiom]
     var cnfMap = Map.empty[HOLSequent, ResolutionProof]
 
     var loopCount = 0
-    var inductCutoff = 8
+    var inductCutoff = 16
 
     val section = new ContextSection( ctx )
 
@@ -523,22 +524,23 @@ class EscargotState( val ctx: MutableContext ) {
 
           do {
             if ( possibleAxioms.isEmpty ) {
-              possibleAxioms ++= ( inductiveAxioms -- addedAxioms )
+              possibleAxioms ++= inductiveAxioms
+              inductCutoff += 1
             }
 
-            if ( possibleAxioms.nonEmpty ) {
-              val newAxiom = possibleAxioms.head
-              possibleAxioms -= newAxiom
-              val ( clauses, newMap ) = axiomClause( section, newAxiom )
+            possibleAxioms match {
+              case List() if usable.isEmpty => return None
+              case List()                   =>
+              case newAxiom :: rest =>
+                possibleAxioms = rest
+                val ( clauses, newMap ) = axiomClause( section, newAxiom )
 
-              addedAxioms += newAxiom
-              cnfMap ++= newMap
+                addedAxioms += newAxiom
+                cnfMap ++= newMap
 
-              newlyDerived ++= clauses
-              preprocessing()
-              clauseProcessing()
-            } else if ( usable.isEmpty ) {
-              return None
+                newlyDerived ++= clauses
+                preprocessing()
+                clauseProcessing()
             }
           } while ( usable.isEmpty )
         }
@@ -548,7 +550,10 @@ class EscargotState( val ctx: MutableContext ) {
 
         val given = choose()
         usable -= given
-        clausesForInduction += given
+        if ( given.clause.exists( constants( _ ) exists isInductive ) && !inductedClauses.contains( given.clause ) ) {
+          clausesForInduction ::= given.clause
+          inductedClauses += given.clause
+        }
 
         val discarded = inferenceComputation( given )
 
