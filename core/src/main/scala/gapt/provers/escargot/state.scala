@@ -348,6 +348,7 @@ class EscargotState( val ctx: MutableContext ) {
   }
 
   val allPositions: Map[Const, Positions] = Positions.splitRules( ctx.normalizer.rules )
+  var skipTesting = false
 
   // TODO: this is kinda heavy
   def occurrences( formula: Expr ): ( Map[Expr, Seq[LambdaPosition]], Map[Expr, Seq[LambdaPosition]] ) = {
@@ -416,7 +417,7 @@ class EscargotState( val ctx: MutableContext ) {
           val axiom = if ( primPoses.size >= 2 && passPoses.nonEmpty ) {
             // Induct only on primary occurences, i.e. generalize
             val target = primPoses.foldLeft( f )( ( g, pos ) => g.replace( pos, v ) )
-            if ( testFormula( target, List( v ) ) ) {
+            if ( skipTesting || testFormula( target, List( v ) ) ) {
               StandardInductionAxioms( v, target.asInstanceOf[Formula] )( ctx ) toOption
             } else {
               None
@@ -427,7 +428,7 @@ class EscargotState( val ctx: MutableContext ) {
 
           axiom.orElse {
             val target = replaceExpr( f, c, v )
-            if ( testFormula( target, List( v ) ) ) {
+            if ( skipTesting || testFormula( target, List( v ) ) ) {
               StandardInductionAxioms( v, target.asInstanceOf[Formula] )( ctx ) toOption
             } else {
               None
