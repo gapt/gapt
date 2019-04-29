@@ -419,54 +419,52 @@ class EscargotState( val ctx: MutableContext ) {
       val f = negate( cls.toFormula ).asInstanceOf[Expr]
       val ( primMap, passMap, underSame ) = occurrences( f )
 
-      def isInductiveConst( e: Expr ) =
+      def asInductiveConst( e: Expr ): Option[Const] =
         e match {
-          case c @ Const( _, _, _ ) => isInductive( c )
-          case _                    => false
+          case c @ Const( _, _, _ ) if isInductive( c ) => Some( c )
+          case _                                        => None
         }
 
-      val underSameConsts = underSame map ( _.filter( isInductiveConst ) )
+      def getTargets( c: Const, f: Expr ): ( Var, Seq[Expr] ) = {
+        val primPoses = primMap.getOrElse( c, Seq() )
+        val passPoses = passMap.getOrElse( c, Seq() )
+        val v = Var( nameGen.fresh( "ind" ), c.ty )
+
+        if ( primPoses.size >= 2 && passPoses.nonEmpty ) {
+          // Induct only on primary occurences, i.e. generalize
+          (
+            v,
+            Seq(
+              primPoses.foldLeft( f )( ( g, pos ) => g.replace( pos, v ) ),
+              replaceExpr( f, c, v ) ) )
+        } else {
+          ( v, Seq( replaceExpr( f, c, v ) ) )
+        }
+      }
+
+      val underSameConsts = underSame map ( _.flatMap( asInductiveConst ) )
 
       underSameConsts.flatMap {
         case cs if cs.isEmpty => Seq()
         case cs if cs.size == 1 =>
           val c = cs.head
-
-          val primPoses = primMap.getOrElse( c, Seq() )
-          val passPoses = passMap.getOrElse( c, Seq() )
-          val v = Var( nameGen.fresh( "ind" ), c.ty )
-
-          val axiom = if ( primPoses.size >= 2 && passPoses.nonEmpty ) {
-            // Induct only on primary occurences, i.e. generalize
-            val target = primPoses.foldLeft( f )( ( g, pos ) => g.replace( pos, v ) )
-            if ( skipTesting || testFormula( target, List( v ) ) ) {
-              StandardInductionAxioms( v, target.asInstanceOf[Formula] )( ctx ).toOption.map( Seq( _ ) )
-            } else {
-              None
-            }
-          } else {
-            None
-          }
-
-          axiom.orElse {
-            val target = replaceExpr( f, c, v )
-            if ( skipTesting || testFormula( target, List( v ) ) ) {
-              StandardInductionAxioms( v, target.asInstanceOf[Formula] )( ctx ).toOption.map( Seq( _ ) )
-            } else {
-              None
-            }
+          val ( v, targets ) = getTargets( c, f )
+          targets.find( testFormula( _, List( v ) ) ) flatMap { target =>
+            StandardInductionAxioms( v, target.asInstanceOf[Formula] )( ctx ).toOption.map( Seq( _ ) )
           }
         case cs =>
-          val ( vars, target ) = cs.foldLeft( ( Seq.empty[Var], f ) ) {
-            case ( ( vs, g ), c ) =>
-              val v = Var( nameGen.fresh( "ind" ), c.ty )
-              ( v +: vs, replaceExpr( g, c, v ) )
+          val targets = cs.foldLeft( Seq( ( Seq.empty[Var], f ) ) ) {
+            case ( vsfs, c ) =>
+              vsfs.flatMap {
+                case ( vs, g ) =>
+                  val ( v, ts ) = getTargets( c, g )
+                  ts map ( ( v +: vs, _ ) )
+              }
           }
 
-          if ( skipTesting || testFormula( target, vars.toList ) ) {
-            SequentialInductionAxioms()( Sequent() :+ ( "axiom", target.asInstanceOf[Formula] ) )( ctx ) toOption
-          } else {
-            None
+          targets.find { case ( vs, target ) => testFormula( target, vs.toList ) } flatMap {
+            case ( vs, target ) =>
+              SequentialInductionAxioms()( Sequent() :+ ( "axiom", target.asInstanceOf[Formula] ) )( ctx ) toOption
           }
       }
     } flatten
