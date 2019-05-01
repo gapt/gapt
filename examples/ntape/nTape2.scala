@@ -1,7 +1,9 @@
 package gapt.examples
 
-import gapt.expr.fol.{ Counter, replaceAbstractions }
-import gapt.expr.{ Abs, Const, Atom, Expr, To }
+import gapt.expr.formula.Atom
+import gapt.expr.formula.fol.{ Counter, replaceAbstractions }
+import gapt.expr.ty.To
+import gapt.expr.{ Abs, Const, Expr }
 import gapt.formats.ClasspathInputFile
 import gapt.proofs.ceres_omega.AnalysisWithCeresOmega
 import gapt.formats.llk.loadLLK

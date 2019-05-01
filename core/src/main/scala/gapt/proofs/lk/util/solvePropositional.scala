@@ -1,6 +1,15 @@
 package gapt.proofs.lk.util
 
 import gapt.expr._
+import gapt.expr.formula.And
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.Top
+import gapt.logic.Polarity
 import gapt.proofs._
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.AndRightRule

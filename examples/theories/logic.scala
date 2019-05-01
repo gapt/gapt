@@ -3,10 +3,26 @@ package gapt.examples.theories
 import cats.Eval
 import cats.Later
 import gapt.expr._
-import gapt.expr.hol.instantiate
-import gapt.expr.hol.simplify
-import gapt.expr.hol.universalClosure
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Top
+import gapt.expr.formula.hol.instantiate
+import gapt.expr.formula.hol.universalClosure
+import gapt.expr.subst.Substitution
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.TBase
+import gapt.expr.ty.TVar
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
+import gapt.expr.ty.Ty
+import gapt.expr.util.freeVariables
+import gapt.expr.util.syntacticMatching
+import gapt.expr.util.typeVariables
 import gapt.formats.babel.Notation
+import gapt.logic.hol.simplify
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.context.immutable.ImmutableContext
@@ -36,6 +52,7 @@ import gapt.proofs.ProofBuilder
 import gapt.proofs.Sequent
 import gapt.proofs.SequentConnector
 import gapt.proofs.Suc
+import gapt.proofs.context.update.Definition
 import gapt.utils.LogHandler
 
 import scala.collection.mutable

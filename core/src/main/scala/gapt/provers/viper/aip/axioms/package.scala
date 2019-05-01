@@ -1,7 +1,14 @@
 package gapt.provers.viper.aip
 
 import gapt.expr.Expr
-import gapt.expr.{ All, And, Formula, FunctionType, Substitution, Var, freeVariables, rename, Const => Con }
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Formula
+import gapt.expr.subst.Substitution
+import gapt.expr.ty.FunctionType
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.expr.{ Var, Const => Con }
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 

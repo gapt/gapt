@@ -3,7 +3,7 @@ package gapt.proofs.lkt
 import gapt.cutintro.CutIntroduction
 import gapt.examples.{ LinearExampleProof, Pi2Pigeonhole, Pi3Pigeonhole, nTape4 }
 import gapt.expr._
-import gapt.expr.hol.containsQuantifierOnLogicalLevel
+import gapt.expr.formula.hol.containsQuantifierOnLogicalLevel
 import gapt.proofs.context.Context
 import gapt.proofs.lk.transformations.eliminateDefinitions
 import gapt.proofs.lk.util.instanceProof

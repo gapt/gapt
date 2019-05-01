@@ -1,6 +1,6 @@
 package gapt.proofs.lk.rules
 
-import gapt.expr.Formula
+import gapt.expr.formula.Formula
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
 import gapt.proofs.SequentIndex

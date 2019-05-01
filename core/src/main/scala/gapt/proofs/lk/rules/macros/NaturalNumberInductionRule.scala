@@ -1,11 +1,11 @@
 package gapt.proofs.lk.rules.macros
 
 import gapt.expr.Abs
-import gapt.expr.All
-import gapt.expr.FOLConst
-import gapt.expr.FOLFormula
-import gapt.expr.FOLFunctionConst
-import gapt.expr.syntacticMatching
+import gapt.expr.formula.All
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFormula
+import gapt.expr.formula.fol.FOLFunctionConst
+import gapt.expr.util.syntacticMatching
 import gapt.proofs.Ant
 import gapt.proofs.IndexOrFormula
 import gapt.proofs.SequentIndex

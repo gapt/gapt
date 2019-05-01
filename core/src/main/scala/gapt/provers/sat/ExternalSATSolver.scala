@@ -2,11 +2,10 @@ package gapt.provers.sat
 
 import java.io.IOException
 
-import gapt.expr.Top
 import gapt.formats.dimacs._
 import gapt.utils.{ ExternalProgram, runProcess, withTempFile }
-
 import ammonite.ops._
+import gapt.expr.formula.Top
 
 class ExternalSATSolver( val command: String* ) extends SATSolver with ExternalProgram {
   protected def runProgram( dimacsInput: String ): Option[String] =

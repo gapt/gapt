@@ -1,6 +1,6 @@
 package gapt.proofs.lk.reductions
 
-import gapt.expr.isConstructorForm
+import gapt.expr.util.isConstructorForm
 import gapt.proofs.context.Context
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.InductionRule

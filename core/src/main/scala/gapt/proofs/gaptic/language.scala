@@ -1,6 +1,11 @@
 package gapt.proofs.gaptic
 
 import gapt.expr._
+import gapt.expr.formula.Formula
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.Ti
+import gapt.expr.util.freeVariables
+import gapt.expr.util.typeVariables
 import gapt.formats.babel.BabelSignature
 import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.proofs.context.Context

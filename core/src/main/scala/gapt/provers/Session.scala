@@ -13,6 +13,25 @@ import cats.free.Free.liftF
 import cats.free._
 import cats.implicits._
 import cats.{ Id, ~> }
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.Top
+import gapt.expr.formula.constants.EqC
+import gapt.expr.formula.constants.LogicalConstant
+import gapt.expr.ty.->:
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.TBase
+import gapt.expr.ty.To
+import gapt.expr.ty.Ty
+import gapt.expr.ty.baseTypes
+import gapt.expr.util.constants
 
 import scala.collection.mutable
 

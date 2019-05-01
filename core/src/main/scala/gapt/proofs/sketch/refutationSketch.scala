@@ -1,6 +1,5 @@
 package gapt.proofs.sketch
 
-import gapt.expr.{ FOLAtom, Atom, clauseSubsumption }
 import gapt.proofs.resolution._
 import gapt.proofs.{ FOLClause, HOLClause, SequentConnector, SequentProof }
 import gapt.provers.ResolutionProver
@@ -10,6 +9,8 @@ import gapt.provers.sat.Sat4j
 import scala.collection.mutable
 import cats.instances.all._
 import cats.syntax.all._
+import gapt.expr.formula.fol.FOLAtom
+import gapt.logic.clauseSubsumption
 
 /**
  * Intermediate data structure intendend for the proof replay in the TPTP proof import.

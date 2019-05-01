@@ -2,6 +2,12 @@ package gapt.proofs.lk
 
 import gapt.expr._
 import BetaReduction.{ betaNormalize, _ }
+import gapt.expr.formula.All
+import gapt.expr.formula.Ex
+import gapt.expr.subst.Substitutable
+import gapt.expr.subst.Substitution
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.proofs.SequentConnector
 import gapt.proofs.gaptic.OpenAssumption
 import gapt.proofs.lk.rules.AndLeftRule

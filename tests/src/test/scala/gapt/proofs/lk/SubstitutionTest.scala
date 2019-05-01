@@ -1,6 +1,13 @@
 package gapt.proofs.lk
 
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.Atom
+import gapt.expr.formula.fol.FOLAtomConst
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFunctionConst
+import gapt.expr.formula.fol.FOLVar
+import gapt.expr.subst.Substitution
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.update.InductiveType

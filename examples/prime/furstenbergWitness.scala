@@ -1,6 +1,8 @@
 package gapt.examples.prime
 
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.Iff
 import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.expansion.ETWeakQuantifier
 import gapt.proofs.lk.transformations.LKToExpansionProof

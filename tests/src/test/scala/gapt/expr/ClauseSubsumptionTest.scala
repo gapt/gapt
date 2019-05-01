@@ -1,5 +1,6 @@
 package gapt.expr
 
+import gapt.logic.clauseSubsumption
 import gapt.proofs.Sequent
 import org.specs2.mutable.Specification
 

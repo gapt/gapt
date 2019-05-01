@@ -3,7 +3,17 @@ package gapt.provers.prover9
 import java.io.IOException
 
 import gapt.expr._
-import gapt.expr.hol._
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.Top
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLFunction
+import gapt.expr.formula.fol.FOLVar
+import gapt.expr.formula.hol._
+import gapt.expr.subst.Substitution
+import gapt.expr.util.freeVariables
+import gapt.expr.util.syntacticMatching
 import gapt.formats.{ InputFile, StringInputFile }
 import gapt.formats.ivy.IvyParser
 import gapt.formats.ivy.conversion.IvyToResolution

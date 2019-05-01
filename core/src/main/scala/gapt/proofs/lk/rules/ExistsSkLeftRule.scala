@@ -3,10 +3,10 @@ package gapt.proofs.lk.rules
 import gapt.expr.Apps
 import gapt.expr.BetaReduction
 import gapt.expr.Const
-import gapt.expr.Ex
 import gapt.expr.Expr
-import gapt.expr.Formula
-import gapt.expr.hol.instantiate
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol.instantiate
 import gapt.proofs.Ant
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent

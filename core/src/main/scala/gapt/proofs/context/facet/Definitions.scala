@@ -1,7 +1,7 @@
 package gapt.proofs.context.facet
 
-import gapt.expr.Definition
 import gapt.expr.Expr
+import gapt.proofs.context.update.Definition
 
 /** Definitions that define a constant by an expression of the same type. */
 case class Definitions( definitions: Map[String, Expr] ) {

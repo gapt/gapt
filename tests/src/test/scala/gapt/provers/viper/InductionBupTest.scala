@@ -1,9 +1,13 @@
 package gapt.provers.viper
 
 import gapt.expr._
-import gapt.expr.hol.{ instantiate, skolemize }
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol.instantiate
+import gapt.expr.ty.TBase
+import gapt.expr.ty.Ti
 import gapt.grammars.InductionGrammar
 import gapt.grammars.InductionGrammar.Production
+import gapt.logic.hol.skolemize
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.expansion.InstanceTermEncoding

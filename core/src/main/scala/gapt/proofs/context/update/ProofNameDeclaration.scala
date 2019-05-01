@@ -3,10 +3,10 @@ package gapt.proofs.context.update
 import gapt.expr.Apps
 import gapt.expr.Const
 import gapt.expr.Expr
-import gapt.expr.TVar
 import gapt.expr.Var
-import gapt.expr.freeVariables
-import gapt.expr.typeVariables
+import gapt.expr.ty.TVar
+import gapt.expr.util.freeVariables
+import gapt.expr.util.typeVariables
 import gapt.proofs.HOLSequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames

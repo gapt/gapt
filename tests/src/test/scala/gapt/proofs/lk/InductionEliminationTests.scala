@@ -2,7 +2,7 @@ package gapt.proofs.lk
 
 import gapt.expr._
 import gapt.examples.tip.isaplanner.{ prop_08, prop_15, prop_59 }
-import gapt.expr.Substitution
+import gapt.expr.subst.Substitution
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext

@@ -4,9 +4,14 @@
 
 package gapt.expr
 
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
+import gapt.expr.util.freeVariables
+import gapt.expr.util.isInVNF
+import gapt.expr.util.rename
 import org.specs2.mutable._
 
-import scala.collection.immutable.{ HashSet, HashMap }
+import scala.collection.immutable.{ HashMap, HashSet }
 import scala.math.signum
 
 class LambdaCalculusTest extends Specification {

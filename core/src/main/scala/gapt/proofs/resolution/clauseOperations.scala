@@ -1,7 +1,9 @@
 package gapt.proofs.resolution
 
-import gapt.expr.{ Atom, LambdaPosition, Eq }
-import gapt.proofs.{ HOLClause, FOLClause }
+import gapt.expr.util.LambdaPosition
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Eq
+import gapt.proofs.{ FOLClause, HOLClause }
 
 object forgetfulPropResolve {
   def apply( cnf: Set[HOLClause] ): Set[Set[HOLClause]] =

@@ -4,8 +4,13 @@ package gapt.formats.llk
  * Tests for FormulaParser
  */
 import org.specs2.mutable._
+
 import util.parsing.input.Position
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Imp
 
 class LLKASTParserTest extends Specification {
 

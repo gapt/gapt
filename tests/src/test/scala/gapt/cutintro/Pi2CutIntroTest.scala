@@ -1,6 +1,7 @@
 package gapt.cutintro
 
 import gapt.expr._
+import gapt.expr.ty.Ti
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.gaptic._
 import gapt.proofs.lk.rules.CutRule

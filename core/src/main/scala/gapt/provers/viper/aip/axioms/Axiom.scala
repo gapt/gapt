@@ -1,6 +1,6 @@
 package gapt.provers.viper.aip.axioms
 
-import gapt.expr.Formula
+import gapt.expr.formula.Formula
 import gapt.proofs.lk.LKProof
 
 trait Axiom {

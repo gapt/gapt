@@ -1,7 +1,16 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
-import gapt.expr.hol.instantiate
+import gapt.expr.formula.All
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Top
+import gapt.expr.formula.hol.instantiate
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.logic.Polarity
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext

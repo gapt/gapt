@@ -3,6 +3,16 @@ package gapt.formats.ivy
 
 import gapt.formats.lisp._
 import gapt.expr._
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Neg
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLExpression
+import gapt.expr.formula.fol.FOLFunction
+import gapt.expr.formula.fol.FOLTerm
+import gapt.expr.formula.fol.FOLVar
+import gapt.expr.subst.FOLSubstitution
 import gapt.formats.InputFile
 import gapt.proofs._
 import gapt.utils.Logger

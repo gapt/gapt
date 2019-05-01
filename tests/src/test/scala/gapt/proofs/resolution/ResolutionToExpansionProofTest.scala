@@ -2,9 +2,18 @@ package gapt.proofs.resolution
 
 import gapt.examples.CountingEquivalence
 import gapt.expr._
-import gapt.expr.fol.thresholds
-import gapt.expr.hol.CNFn
+import gapt.expr.formula.All
+import gapt.expr.formula.Ex
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLAtomConst
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLVar
+import gapt.expr.formula.fol.thresholds
+import gapt.expr.subst.Substitution
+import gapt.expr.ty.Ti
+import gapt.logic.hol.CNFn
 import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.context.update.Definition
 import gapt.proofs.context.update.{ SkolemFunction => SkolemFun }
 import gapt.provers.escargot.Escargot
 import gapt.proofs.{ ProofBuilder, _ }

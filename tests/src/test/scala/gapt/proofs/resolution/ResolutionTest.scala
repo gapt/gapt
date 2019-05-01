@@ -1,6 +1,8 @@
 package gapt.proofs.resolution
 
 import gapt.expr._
+import gapt.expr.formula.Eq
+import gapt.expr.subst.Substitution
 import gapt.proofs.{ Ant, Clause, ProofBuilder, Sequent, Suc }
 import gapt.utils.SatMatchers
 import org.specs2.mutable._

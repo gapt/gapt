@@ -1,7 +1,7 @@
 package gapt.proofs.lk.rules
 
-import gapt.expr.Formula
-import gapt.expr.Polarity
+import gapt.expr.formula.Formula
+import gapt.logic.Polarity
 import gapt.proofs.IndexOrFormula
 import gapt.proofs.SequentIndex
 import gapt.proofs.lk.LKProof

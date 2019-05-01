@@ -1,6 +1,7 @@
 package gapt.formats.dimacs
 
 import gapt.expr._
+import gapt.expr.formula.Atom
 import gapt.models.PropositionalModel
 import gapt.proofs.rup.RupProof
 import gapt.proofs.{ Clause, HOLClause }

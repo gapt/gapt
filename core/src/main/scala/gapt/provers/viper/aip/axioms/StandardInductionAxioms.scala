@@ -1,5 +1,5 @@
 package gapt.provers.viper.aip.axioms
-import gapt.expr.{ Formula, Substitution, Var, Const => Con }
+import gapt.expr.{ Var, Const => Con }
 import gapt.proofs.gaptic._
 import gapt.proofs.lk.LKProof
 import gapt.proofs.Sequent
@@ -7,6 +7,8 @@ import gapt.prooftool.prooftool
 import gapt.provers.viper.aip._
 import cats.instances.all._
 import cats.syntax.all._
+import gapt.expr.formula.Formula
+import gapt.expr.subst.Substitution
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 

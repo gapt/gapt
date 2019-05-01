@@ -6,6 +6,22 @@ import gapt.proofs.lk._
 import gapt.proofs.resolution._
 import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.Top
+import gapt.expr.formula.hol.HOLAtomConst
+import gapt.expr.subst.Substitution
+import gapt.expr.ty.Ti
+import gapt.expr.util.freeVariables
+import gapt.logic.clauseSubsumption
 import gapt.proofs.context.Context
 import gapt.proofs.expansion.{ ExpansionProof, ExpansionSequent }
 import gapt.proofs.lk.rules.macros.WeakeningContractionMacroRule

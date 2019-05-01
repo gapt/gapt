@@ -1,6 +1,8 @@
 package gapt.provers.prover9
 
 import gapt.expr._
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Top
 import gapt.formats.ClasspathInputFile
 import gapt.proofs._
 import gapt.proofs.resolution.Input

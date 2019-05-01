@@ -1,15 +1,15 @@
 package gapt.proofs.lk.transformations
 
-import gapt.expr.All
-import gapt.expr.And
-import gapt.expr.Formula
-import gapt.expr.Polarity
-import gapt.expr.clauseSubsumption
-import gapt.expr.freeVariables
-import gapt.expr.hol.CNFp
-import gapt.expr.hol.containsStrongQuantifier
-import gapt.expr.hol.isPrenex
-import gapt.expr.hol.universalClosure
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol.containsStrongQuantifier
+import gapt.expr.formula.hol.isPrenex
+import gapt.expr.formula.hol.universalClosure
+import gapt.expr.util.freeVariables
+import gapt.logic.Polarity
+import gapt.logic.clauseSubsumption
+import gapt.logic.hol.CNFp
 import gapt.proofs.SequentConnector
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames

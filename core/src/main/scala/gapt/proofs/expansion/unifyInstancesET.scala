@@ -1,6 +1,10 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
+import gapt.expr.subst.Substitution
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.expr.util.syntacticMGU
 
 /** Decreases the number of instances in an expansion proof by unifying the instance terms. */
 object unifyInstancesET {

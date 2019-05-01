@@ -1,6 +1,7 @@
 package gapt.proofs.lk.transformations
 
 import gapt.expr._
+import gapt.expr.formula.Formula
 import gapt.proofs.context.Context
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.AndLeftRule

@@ -1,7 +1,15 @@
 package gapt.proofs.gaptic
 
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.subst.PreSubstitution
+import gapt.expr.util.freeVariables
+import gapt.expr.util.syntacticMatching
 import gapt.formats.babel.BabelSignature
+import gapt.logic.Polarity
 import gapt.proofs._
 import gapt.proofs.context
 import gapt.proofs.context.Context

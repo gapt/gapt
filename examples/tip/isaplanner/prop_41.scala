@@ -1,6 +1,7 @@
 package gapt.examples.tip.isaplanner
 
 import gapt.expr._
+import gapt.expr.ty.TBase
 import gapt.proofs.gaptic._
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context

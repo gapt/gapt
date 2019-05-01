@@ -1,8 +1,8 @@
 package gapt.proofs.lk.rules
 
-import gapt.expr.Eq
 import gapt.expr.Expr
-import gapt.expr.Formula
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
 import gapt.proofs.HOLSequent
 
 /**

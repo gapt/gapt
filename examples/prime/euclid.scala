@@ -1,6 +1,7 @@
 package gapt.examples.prime
 
 import gapt.expr._
+import gapt.expr.util.syntacticMatching
 import gapt.proofs.Sequent
 import gapt.proofs.gaptic._
 import gapt.proofs.lk.LKProof

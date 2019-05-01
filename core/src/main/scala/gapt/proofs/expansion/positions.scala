@@ -1,8 +1,21 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
-import gapt.expr.hol.{ HOLPosition, instantiate }
+import gapt.expr.formula.And
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.Quant
+import gapt.expr.formula.hol.{ HOLPosition, instantiate }
+import gapt.expr.subst.Substitution
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.expr.util.replacementContext
+import gapt.expr.util.syntacticMGU
+import gapt.expr.util.syntacticMatching
 import gapt.proofs.context.Context
+import gapt.proofs.context.update.Definition
 
 private object getAtHOLPosition {
   def apply( et: ExpansionTree, pos: HOLPosition ): Set[ExpansionTree] = et( pos )

@@ -1,6 +1,6 @@
 package gapt.proofs.lk.util
 
-import gapt.expr.To
+import gapt.expr.ty.To
 import gapt.proofs.SequentIndex
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.ForallRightRule

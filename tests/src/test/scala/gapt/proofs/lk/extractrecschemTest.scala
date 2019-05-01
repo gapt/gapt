@@ -2,7 +2,9 @@ package gapt.proofs.lk
 
 import gapt.examples.{ Pi2Pigeonhole, tape, tapeUrban }
 import gapt.expr._
-import gapt.expr.fol.Numeral
+import gapt.expr.formula.And
+import gapt.expr.formula.Formula
+import gapt.expr.formula.fol.Numeral
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.grammars.RecursionScheme
 import gapt.proofs.gaptic._

@@ -2,8 +2,10 @@ import ammonite.ops.{read => _, write => _, _}
 import gapt._
 import gapt.examples._
 import gapt.expr._
-import gapt.expr.fol._
-import gapt.expr.hol._
+import gapt.expr.ty._
+import gapt.expr.formula._
+import gapt.expr.formula.fol._
+import gapt.expr.formula.hol._
 import gapt.formats.babel.BabelParser.parseFormula
 import gapt.formats.dimacs._
 import gapt.formats.tip._

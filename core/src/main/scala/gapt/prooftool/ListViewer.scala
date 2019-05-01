@@ -5,7 +5,7 @@ import ammonite.ops._
 import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.{ HOLSequent, Sequent }
 
-import gapt.expr.hol.existentialClosure
+import gapt.expr.formula.hol.existentialClosure
 
 import scala.swing.{ Action, FileChooser, Menu, Separator }
 

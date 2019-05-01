@@ -1,6 +1,7 @@
 package gapt
 
-import gapt.expr.{ ClosedUnderReplacement, ClosedUnderSub, Const, Expr, Substitution, TermReplacement, containedNames }
+import gapt.expr.subst.Substitution
+import gapt.expr.{ ClosedUnderReplacement, ClosedUnderSub, Const, Expr, TermReplacement, containedNames }
 
 package object grammars {
 

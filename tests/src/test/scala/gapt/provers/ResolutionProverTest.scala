@@ -1,6 +1,7 @@
 package gapt.provers
 
 import gapt.expr._
+import gapt.expr.ty.TBase
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.context.mutable.MutableContext
 import gapt.provers.escargot.Escargot

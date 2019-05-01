@@ -7,8 +7,8 @@ Script started on Fri 30 Oct 2015 02:24:50 PM CET
 [0m[[0minfo[0m] [0m[0m
 import at.logic.gapt.examples._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol._
-import at.logic.gapt.expr.hol._
+import at.logic.gapt.expr.formula.fol._
+import at.logic.gapt.expr.formula.hol._
 import at.logic.gapt.formats.simple._
 import at.logic.gapt.formats.prover9._
 import at.logic.gapt.formats.hlk._
@@ -35,7 +35,7 @@ scala> :load poset-experiment.scala
 Loading poset-experiment.scala...
 import java.nio.file.{Paths, Files, Path}
 import at.logic.gapt.algorithms.rewriting.NameReplacement
-import at.logic.gapt.expr.fol.FOLSubstitution
+import at.logic.gapt.expr.formula.fol.FOLSubstitution
 import at.logic.gapt.grammars.{findMinimalVectGrammar, findMinimalGrammar}
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansionTrees._
@@ -47,10 +47,10 @@ import at.logic.gapt.provers.maxsat.{ExternalMaxSATSolver, OpenWBO}
 import at.logic.gapt.provers.sat.MiniSAT
 import at.logic.gapt.provers.veriT.VeriT
 import at.logic.gapt.utils.time
-C: at.logic.gapt.expr.FOLFormula = ∀x.∀y.f(x,y)=f(y,x)
-AS: at.logic.gapt.expr.FOLFormula = ∀u.∀v.(f(u,v)=u⊃(f(v,u)=v⊃u=v))
-A: at.logic.gapt.expr.FOLFormula = ∀x.∀y.∀z.f(f(x,y),z)=f(x,f(y,z))
-Tpo: at.logic.gapt.expr.FOLFormula = ∀x.∀y.∀z.(f(x,y)=x⊃(f(y,z)=y⊃f(x,z)=x))
+C: at.logic.gapt.expr.formula.fol.FOLFormula = ∀x.∀y.f(x,y)=f(y,x)
+AS: at.logic.gapt.expr.formula.fol.FOLFormula = ∀u.∀v.(f(u,v)=u⊃(f(v,u)=v⊃u=v))
+A: at.logic.gapt.expr.formula.fol.FOLFormula = ∀x.∀y.∀z.f(f(x,y),z)=f(x,f(y,z))
+Tpo: at.logic.gapt.expr.formula.fol.FOLFormula = ∀x.∀y.∀z.(f(x,y)=x⊃(f(y,z)=y⊃f(x,z)=x))
 trans: at.logic.gapt.proofs.lkNew.ForallRightRule
 antisymm: at.logic.gapt.proofs.lkNew.ForallRightRule
 lhs: at.logic.gapt.proofs.lkNew.LKProof
@@ -59,7 +59,7 @@ pwc: at.logic.gapt.proofs.lkNew.CutRule
 p: at.logic.gapt.proofs.lkNew.LKProof =
 [p198] ∀x.∀y.∀z.((x=y∧y=z)⊃x=z), ∀x.∀y.(x=y⊃y=x), ∀x1.∀x2.∀y1.∀y2.((x1=y1∧x2=y2)⊃f(x1,x2)=f(y1,y2)), ∀x.x=x, ∀x.∀y.∀z.f(f(x,y),z)=f(x,f(y,z)), ∀x.∀y.f(x,y)=f(y,x) :- ((f(a,b)=a∧(f(b,c)=b∧f(c,a)=c))⊃(a=b∧b=c))    (ContractionLeftRule(p197, Ant(1), Ant(6)))
 [p197] ∀x.∀y.(x=y⊃y=x), ∀x.∀y.∀z.((x=y∧y=z)⊃x=z), ∀x1.∀x2.∀y1.∀y2.((x1=y1∧x2=y2)⊃f(x1,x2)=f(y1,y2)), ∀x.x=x, ∀x.∀y.∀z.f(f(x,y),z)=f(x,f(y,z)), ∀x.∀y.f(x,y)=f(y,x), ∀x.∀y.∀z.((x=y∧y=z)⊃x=z) :- ((f(a,b)=a∧(f(b,c)=b∧f(c,a)=c))⊃(a=b∧b=c))    (ContractionLeftRule(p196, Ant(3), Ant(6)))
-[p196] ∀x.∀y.∀z.((x=y∧y=z)⊃x=z), ∀x1.∀x2.∀y1.∀y2.((x1=y1∧x2=y2)⊃f(x1,x2)=f(y1,y2)), ∀x.x=x, ∀x.∀y.(x=y⊃y=x), ∀x.∀y.∀z.f(f(x,y),z)=f(x,f(y,z)), ∀x.∀y.f(x,y)=f(y,x), ∀x.∀y.(x=y⊃y=x), ∀x.∀y.∀z.((x=y∧y=z)⊃x=z) :- ((f(a,b)=a...terms: Set[at.logic.gapt.expr.FOLTerm] = Set(-{∀x.∀y.(x=y⊃y=x)}_a1(c,b), -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a0(b,f(b,f(c,a)),f(f(b,c),a)), -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a0(c,f(c,b),f(b,c)), -{∀x.∀y.(x=y⊃y=x)}_a1(b,f(b,a)), -{∀x1.∀x2.∀y1.∀y2.((x1=y1∧x2=y2)⊃f(x1,x2)=f(y1,y2))}_a2(c,a,c,f(a,b)), -{∀x.x=x}_a3(b), -{∀x.∀y.(x=y⊃y=x)}_a1(f(b,c),b), -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a0(b,f(a,b),a), -{∀x.∀y.f(x,y)=f(y,x)}_a5(b,c), -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a0(b,f(f(b,c),a),f(b,a)), -{∀x.∀y.(x=y⊃y=x)}_a1(c,f(c,b)), -{∀x.∀y.(x=y⊃y=x)}_a1(f(a,b),a), -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a0(b,f(b,a),f(a,b)), -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a0(c,f(f(c,a),b),f(c,b)), -{∀x.∀y.(x=y⊃y=x)}_a1(f(f(c,a),b),f(c,f(a,b))), -{∀x.∀y.∀z.f(f(x,y),z)=f(x,f(y,z))}_a4(b,c,a), -{∀x.∀y.∀z.f(f(x,y),z)=f(x,f(y,z))}_a4(c,a,b), {((f(a,b)=a∧(f(b,c)=b...c
+[p196] ∀x.∀y.∀z.((x=y∧y=z)⊃x=z), ∀x1.∀x2.∀y1.∀y2.((x1=y1∧x2=y2)⊃f(x1,x2)=f(y1,y2)), ∀x.x=x, ∀x.∀y.(x=y⊃y=x), ∀x.∀y.∀z.f(f(x,y),z)=f(x,f(y,z)), ∀x.∀y.f(x,y)=f(y,x), ∀x.∀y.(x=y⊃y=x), ∀x.∀y.∀z.((x=y∧y=z)⊃x=z) :- ((f(a,b)=a...terms: Set[at.logic.gapt.expr.formula.fol.FOLTerm] = Set(-{∀x.∀y.(x=y⊃y=x)}_a1(c,b), -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a0(b,f(b,f(c,a)),f(f(b,c),a)), -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a0(c,f(c,b),f(b,c)), -{∀x.∀y.(x=y⊃y=x)}_a1(b,f(b,a)), -{∀x1.∀x2.∀y1.∀y2.((x1=y1∧x2=y2)⊃f(x1,x2)=f(y1,y2))}_a2(c,a,c,f(a,b)), -{∀x.x=x}_a3(b), -{∀x.∀y.(x=y⊃y=x)}_a1(f(b,c),b), -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a0(b,f(a,b),a), -{∀x.∀y.f(x,y)=f(y,x)}_a5(b,c), -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a0(b,f(f(b,c),a),f(b,a)), -{∀x.∀y.(x=y⊃y=x)}_a1(c,f(c,b)), -{∀x.∀y.(x=y⊃y=x)}_a1(f(a,b),a), -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a0(b,f(b,a),f(a,b)), -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a0(c,f(f(c,a),b),f(c,b)), -{∀x.∀y.(x=y⊃y=x)}_a1(f(f(c,a),b),f(c,f(a,b))), -{∀x.∀y.∀z.f(f(x,y),z)=f(x,f(y,z))}_a4(b,c,a), -{∀x.∀y.∀z.f(f(x,y),z)=f(x,f(y,z))}_a4(c,a,b), {((f(a,b)=a∧(f(b,c)=b...c
 c Open-WBO:	 a Modular MaxSAT Solver -- based on Glucose3.0 (core version)
 c Version:	 1.3.1 -- 18 February 2015
 c Authors:	 Ruben Martins, Vasco Manquinho, Ines Lynce
@@ -224,7 +224,7 @@ Size of the minimized solution: 66
 Minimized cut formulas:
 ∀α_0_0.∀α_0_1.∀α_0_2.((((((((((((f(f(α_0_2,α_0_0),α_0_1)=f(α_0_2,f(α_0_0,α_0_1))∧(f(c,α_0_0)=c⊃c=f(c,α_0_0)))∧(f(f(α_0_1,α_0_2),α_0_0)=f(α_0_1,f(α_0_2,α_0_0))⊃f(α_0_1,f(α_0_2,α_0_0))=f(f(α_0_1,α_0_2),α_0_0)))∧(α_0_2=α_0_1⊃α_0_1=α_0_2))∧((f(α_0_0,α_0_2)=f(α_0_2,α_0_0)⊃(f(f(α_0_0,α_0_1),α_0_2)=f(α_0_0,α_0_2)⊃(α_0_0=f(α_0_0,f(α_0_1,α_0_2))⊃f(α_0_0,f(α_0_1,α_0_2))≠f(f(α_0_0,α_0_1),α_0_2))))∨α_0_0=f(α_0_2,α_0_0)))∧(f(b,α_0_0)=b⊃b=f(b,α_0_0)))∧((α_0_2=f(α_0_2,α_0_0)⊃(α_0_2=α_0_2⊃α_0_0≠f(α_0_0,α_0_1)))∨α_0_2=f(α_0_2,f(α_0_0,α_0_1))))∧((α_0_0=f(α_0_1,α_0_0)⊃f(α_0_1,α_0_0)≠α_0_1)∨α_0_0=α_0_1))∧α_0_2=α_0_2)∧(f(α_0_1,α_0_0)=f(α_0_0,α_0_1)⊃f(α_0_0,α_0_1)=f(α_0_1,α_0_0)))∧((f(α_0_2,α_0_0)=α_0_2⊃α_0_1≠α_0_1)∨f(f(α_0_2,α_0_0),α_0_1)=f(α_0_2,α_0_1)))∧(α_0_0=f(α_0_0,α_0_2)⊃f(α_0_0,α_0_2)=α_0_0))∧f(α_0_2,α_0_0)=f(α_0_0,α_0_2))
 java.lang.OutOfMemoryError: Java heap space
-  at at.logic.gapt.expr.determineTraits$.forApp(traits.scala:163)
+  at at.logic.gapt.expr.formula.determineTraits$.forApp(traits.scala:163)
   at at.logic.gapt.expr.App$.apply(typedLambdaCalculus.scala:244)
   at at.logic.gapt.algorithms.rewriting.TermReplacement$.apply(TermReplacement.scala:48)
   at at.logic.gapt.algorithms.rewriting.TermReplacement$.apply(TermReplacement.scala:48)

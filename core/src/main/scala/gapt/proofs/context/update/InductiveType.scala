@@ -1,11 +1,11 @@
 package gapt.proofs.context.update
 
 import gapt.expr.Const
-import gapt.expr.FunctionType
-import gapt.expr.TBase
-import gapt.expr.TVar
-import gapt.expr.Ty
-import gapt.expr.typeVariables
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.TBase
+import gapt.expr.ty.TVar
+import gapt.expr.ty.Ty
+import gapt.expr.util.typeVariables
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.Constants
 import gapt.proofs.context.facet.StructurallyInductiveTypes

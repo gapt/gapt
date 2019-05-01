@@ -1,6 +1,9 @@
 package gapt.proofs.resolution
 
 import gapt.expr._
+import gapt.expr.formula.Atom
+import gapt.expr.subst.Substitution
+import gapt.expr.util.rename
 import gapt.proofs.HOLSequent
 
 import scala.collection.mutable

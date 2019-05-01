@@ -7,6 +7,7 @@ import gapt.formats.babel.BabelSignature
 import gapt.utils.{ Logger, NameGenerator }
 import cats.syntax.all._
 import cats.instances.all._
+import gapt.expr.formula.Formula
 import gapt.proofs.lk.rules.InitialSequent
 import gapt.proofs.lk.rules.macros.WeakeningContractionMacroRule
 

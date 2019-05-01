@@ -4,7 +4,7 @@ import java.io.PrintWriter
 
 import gapt.cutintro._
 import gapt.examples._
-import gapt.expr.{ Apps, FOLVar }
+import gapt.expr.Apps
 import gapt.grammars.DeltaTableMethod
 import gapt.proofs.expansion._
 import gapt.proofs.lk._
@@ -19,6 +19,7 @@ import org.json4s.native.JsonMethods._
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
 import ammonite.ops._
+import gapt.expr.formula.fol.FOLVar
 import gapt.proofs.lk.util.rulesNumber
 
 object parseMethod {

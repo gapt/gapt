@@ -4,7 +4,7 @@ import gapt.examples.Script
 import gapt.proofs.ceres.StructCreators
 import java.nio.file.{ Files, Paths }
 
-import gapt.expr.hol._
+import gapt.expr.formula.hol._
 import gapt.formats.latex.SequentsListLatexExporter
 import gapt.formats.tptp.TptpHOLExporter
 import gapt.proofs.HOLSequent

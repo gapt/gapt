@@ -1,8 +1,26 @@
 package gapt.provers.escargot.impl
 
 import gapt.expr._
-import gapt.expr.hol.universalClosure
+import gapt.expr.formula.All
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol.universalClosure
+import gapt.expr.subst.Substitution
+import gapt.expr.ty.To
+import gapt.expr.ty.arity
+import gapt.expr.util.LambdaPosition
+import gapt.expr.util.constants
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.expr.util.replacementContext
+import gapt.expr.util.syntacticMGU
+import gapt.expr.util.syntacticMatching
+import gapt.expr.util.typeVariables
+import gapt.logic.Polarity
+import gapt.logic.clauseSubsumption
 import gapt.proofs._
+import gapt.proofs.context.update.Definition
 import gapt.proofs.resolution._
 import gapt.provers.escargot.LPO
 

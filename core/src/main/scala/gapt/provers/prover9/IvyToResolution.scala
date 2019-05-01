@@ -1,18 +1,15 @@
 package gapt.formats.ivy.conversion
 
-import gapt.formats.ivy.{
-  InitialClause => IInitialClause,
-  Instantiate => IInstantiate,
-  Resolution => IResolution,
-  Paramodulation => IParamodulation,
-  Propositional => IPropositional,
-  NewSymbol,
-  IvyResolutionProof,
-  Flip => IFlip
-}
-import gapt.proofs.{ Clause, HOLClause, Suc, Ant }
+import gapt.formats.ivy.{ IvyResolutionProof, NewSymbol, Flip => IFlip, InitialClause => IInitialClause, Instantiate => IInstantiate, Paramodulation => IParamodulation, Propositional => IPropositional, Resolution => IResolution }
+import gapt.proofs.{ Ant, Clause, HOLClause, Suc }
 import gapt.proofs.resolution._
 import gapt.expr._
+import gapt.expr.formula.Eq
+import gapt.expr.subst.Substitution
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.logic.clauseSubsumption
+
 import scala.collection.mutable
 
 /**

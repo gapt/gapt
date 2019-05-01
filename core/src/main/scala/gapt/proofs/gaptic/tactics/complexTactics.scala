@@ -1,7 +1,7 @@
 package gapt.proofs.gaptic.tactics
 
 import gapt.expr._
-import gapt.expr.hol.HOLPosition
+import gapt.expr.formula.hol.HOLPosition
 import gapt.proofs._
 import gapt.proofs.expansion.{ ExpansionProofToLK, deskolemizeET }
 import gapt.proofs.gaptic._
@@ -12,6 +12,19 @@ import gapt.provers.prover9.Prover9
 import gapt.provers.viper.aip.AnalyticInductionProver
 import gapt.provers.viper.aip.axioms._
 import cats.syntax.all._
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.subst.PreSubstitution
+import gapt.expr.subst.Substitution
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.TBase
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.expr.util.syntacticMatching
+import gapt.logic.Polarity
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.lk.rules.AndRightRule

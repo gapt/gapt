@@ -2,7 +2,7 @@ package gapt.proofs.lk.transformations
 
 import gapt.expr.Apps
 import gapt.expr.Expr
-import gapt.expr.Substitution
+import gapt.expr.subst.Substitution
 import gapt.proofs.SequentIndex
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.CutRule

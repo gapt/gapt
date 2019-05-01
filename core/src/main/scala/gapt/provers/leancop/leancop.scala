@@ -3,10 +3,10 @@ package gapt.provers.leancop
 import java.io.IOException
 import java.io.StringReader
 
-import gapt.expr.hol.universalClosure
-import gapt.expr.All
-import gapt.expr.Eq
-import gapt.expr.Substitution
+import gapt.expr.formula.hol.universalClosure
+import gapt.expr.formula.All
+import gapt.expr.formula.Eq
+import gapt.expr.subst.Substitution
 import gapt.formats.leancop.LeanCoPParser
 import gapt.proofs.expansion.ETWeakQuantifierBlock
 import gapt.proofs.expansion.ExpansionProof

@@ -1,6 +1,9 @@
 package gapt.proofs.nd
 
 import gapt.expr._
+import gapt.expr.ty.TBase
+import gapt.expr.ty.TVar
+import gapt.expr.ty.Ty
 import gapt.formats.babel.Notation
 import gapt.formats.babel.Precedence
 import gapt.proofs.context.update.InductiveType
@@ -8,6 +11,7 @@ import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
 import gapt.proofs.Ant
 import gapt.proofs.Checkable
 import gapt.proofs.context.Context
+import gapt.proofs.context.update.Definition
 import org.specs2.mutable.Specification
 
 class MRealizabilityTest extends Specification {

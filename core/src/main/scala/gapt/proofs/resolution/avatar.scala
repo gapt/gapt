@@ -1,8 +1,18 @@
 package gapt.proofs.resolution
 
 import gapt.expr._
-import gapt.expr.hol.instantiate
+import gapt.expr.formula.All
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.hol.HOLAtomConst
+import gapt.expr.formula.hol.instantiate
+import gapt.expr.subst.Substitution
+import gapt.expr.util.freeVariables
+import gapt.logic.Polarity
 import gapt.proofs._
+import gapt.proofs.context.update.Definition
 
 /**
  * Removes a clause component.

@@ -9,6 +9,16 @@ import gapt.provers.{ ResolutionProver, groundFreeVariables }
 import gapt.provers.escargot.impl._
 import gapt.utils.{ LogHandler, Maybe }
 import ammonite.ops._
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.constants.EqC
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.To
+import gapt.expr.ty.arity
+import gapt.expr.ty.baseTypes
+import gapt.expr.util.constants
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 

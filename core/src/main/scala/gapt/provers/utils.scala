@@ -1,7 +1,16 @@
 package gapt.provers
 
 import gapt.expr._
+import gapt.expr.formula.Formula
+import gapt.expr.formula.constants.EqC
+import gapt.expr.subst.Substitution
+import gapt.expr.ty.TBase
+import gapt.expr.util.constants
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.expr.util.typeVariables
 import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.context.update.Definition
 import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.utils.{ Maybe, NameGenerator }
 

@@ -1,13 +1,13 @@
 package gapt.prooftool
 
 import javax.swing.WindowConstants
-
-import gapt.expr.Formula
-import gapt.proofs.{ SequentProof, DagProof }
+import gapt.proofs.{ DagProof, SequentProof }
 
 import scala.swing._
 import scala.swing.event._
 import java.awt.Color
+
+import gapt.expr.formula.Formula
 
 class SunburstTreeDialog[F, T <: SequentProof[F, T]]( val mainWindow: DagProofViewer[T], name: String, proof: DagProof[T], sequent_element_renderer: F => String ) extends Frame {
   title = "Sunburst view of " + name

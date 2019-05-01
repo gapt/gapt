@@ -1,6 +1,6 @@
 package gapt.proofs.ceres
 
-import gapt.expr.Formula
+import gapt.expr.formula.Formula
 import gapt.proofs.context.Context
 import gapt.proofs.lk.LKProof
 

@@ -4,6 +4,24 @@ import gapt.expr._
 import gapt.formats.InputFile
 import org.parboiled2._
 import ammonite.ops._
+import gapt.expr
+import gapt.expr.formula.And
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.QuantifierHelper
+import gapt.expr.formula.Top
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLVar
+import gapt.expr.ty.TBase
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
+import gapt.expr.ty.Ty
 
 import scala.util.{ Failure, Success }
 
@@ -46,7 +64,7 @@ class TptpParser( val input: ParserInput ) extends Parser {
   private def defined_prop = rule { "$" ~ Ws ~ ( "true" ~ push( Top() ) | "false" ~ push( Bottom() ) ) ~ Ws }
   private def infix_formula = rule { term ~ ( "=" ~ Ws ~ term ~> ( Eq( _: Expr, _ ) ) | "!=" ~ Ws ~ term ~> ( ( _: Expr ) !== _ ) ) }
 
-  private def fol_quantifier = rule { ( "!" ~ push( gapt.expr.All ) | "?" ~ push( Ex ) ) ~ Ws }
+  private def fol_quantifier = rule { ( "!" ~ push( expr.formula.All ) | "?" ~ push( Ex ) ) ~ Ws }
   private def binary_connective = rule {
     ( ( "<=>" ~ push( ( a: Expr, b: Expr ) => a <-> b ) ) |
       ( "=>" ~ push( Imp( _: Expr, _: Expr ) ) ) |

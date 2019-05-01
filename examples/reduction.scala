@@ -1,7 +1,7 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.expr.hol.universalClosure
+import gapt.expr.formula.hol.universalClosure
 import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.ceres.{ CharacteristicClauseSet, extractStruct }
 import gapt.proofs.reduction._

@@ -1,8 +1,22 @@
 package gapt.formats.tptp
 
 import gapt.expr._
-import gapt.expr.hol.{ CNFn, CNFp, containsStrongQuantifier, universalClosure }
+import gapt.expr.formula.And
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFormula
+import gapt.expr.formula.fol.FOLVar
+import gapt.expr.formula.hol.{ containsStrongQuantifier, universalClosure }
+import gapt.expr.util.freeVariables
 import gapt.formats.InputFile
+import gapt.logic.Polarity
+import gapt.logic.clauseSubsumption
+import gapt.logic.hol.CNFn
+import gapt.logic.hol.CNFp
 import gapt.proofs.resolution.{ AvatarDefinition, AvatarGroundComp, AvatarNonGroundComp, AvatarSplit }
 import gapt.proofs.sketch._
 import gapt.proofs.{ FOLClause, HOLClause, HOLSequent, Sequent }

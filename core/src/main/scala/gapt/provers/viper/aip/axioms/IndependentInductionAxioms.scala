@@ -1,11 +1,14 @@
 package gapt.provers.viper.aip.axioms
 
-import gapt.expr.{ All, Formula, Var, freeVariables }
+import gapt.expr.Var
 import gapt.proofs.gaptic._
 import gapt.proofs.Sequent
 import gapt.provers.viper.aip._
 import cats.instances.all._
 import cats.syntax.all._
+import gapt.expr.formula.All
+import gapt.expr.formula.Formula
+import gapt.expr.util.freeVariables
 import gapt.proofs.context.mutable.MutableContext
 
 /**

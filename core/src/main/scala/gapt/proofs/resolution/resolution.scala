@@ -1,10 +1,31 @@
 package gapt.proofs.resolution
 
 import gapt.expr._
-import gapt.expr.hol.SkolemFunctions
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.Top
+import gapt.expr.formula.hol.HOLAtomConst
+import gapt.expr.subst.Substitution
+import gapt.expr.ty.->:
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.To
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.expr.util.replacementContext
+import gapt.expr.util.syntacticMGU
 import gapt.formats.babel.BabelSignature
+import gapt.logic.hol.SkolemFunctions
 import gapt.proofs._
 import gapt.proofs.context.Context
+import gapt.proofs.context.update.Definition
 
 import scala.collection.mutable
 
@@ -239,7 +260,7 @@ object MguFactor {
  * }}}
  */
 case class Subst( subProof: ResolutionProof, substitution: Substitution ) extends ResolutionProof {
-  import ExprSubstWithβ._
+  import gapt.expr.subst.ExprSubstWithβ._
   override val conclusion: Sequent[Formula] = subProof.conclusion.map( substitution( _ ) )
   override def mainIndices: Seq[SequentIndex] = subProof.conclusion.indices
   override def auxIndices: Seq[Seq[SequentIndex]] = Seq( subProof.conclusion.indices )

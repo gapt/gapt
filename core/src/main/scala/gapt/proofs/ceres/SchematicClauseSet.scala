@@ -1,6 +1,10 @@
 package gapt.proofs.ceres
 
 import gapt.expr._
+import gapt.expr.formula.Formula
+import gapt.expr.subst.Substitution
+import gapt.expr.util.rename
+import gapt.expr.util.syntacticMatching
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.ProofDefinition

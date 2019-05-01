@@ -1,7 +1,7 @@
 package gapt.prooftool
 
 import ammonite.ops._
-import gapt.expr.Formula
+import gapt.expr.formula.Formula
 import gapt.formats.json._
 import gapt.formats.latex.LatexExporter
 import gapt.proofs._

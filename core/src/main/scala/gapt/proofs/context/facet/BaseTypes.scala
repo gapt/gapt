@@ -1,7 +1,7 @@
 package gapt.proofs.context.facet
 
-import gapt.expr.TBase
-import gapt.expr.TVar
+import gapt.expr.ty.TBase
+import gapt.expr.ty.TVar
 
 /** Base types, including inductive types. */
 case class BaseTypes( baseTypes: Map[String, TBase] ) {

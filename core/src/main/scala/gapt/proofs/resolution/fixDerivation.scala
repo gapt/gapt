@@ -1,7 +1,14 @@
 package gapt.proofs.resolution
 
 import gapt.expr._
-import gapt.expr.hol.CNFn
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Eq
+import gapt.expr.subst.Substitution
+import gapt.expr.util.constants
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.logic.clauseSubsumption
+import gapt.logic.hol.CNFn
 import gapt.proofs._
 import gapt.provers.escargot.{ Escargot, NonSplittingEscargot }
 import gapt.provers.{ ResolutionProver, groundFreeVariables }

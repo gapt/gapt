@@ -1,10 +1,24 @@
 package gapt.formats.llk
 
 import gapt.formats.llk.LLKTypes.{ LLKSignature, emptyLLKSignature }
-import scala.util.parsing.combinator.JavaTokenParsers
 
+import scala.util.parsing.combinator.JavaTokenParsers
 import scala.util.parsing.combinator.PackratParsers
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.Top
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
+import gapt.expr.ty.Ty
 
 /**
  * Extension of prover9 parser to hol

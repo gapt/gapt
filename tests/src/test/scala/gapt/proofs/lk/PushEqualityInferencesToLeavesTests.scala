@@ -2,6 +2,7 @@ package gapt.proofs.lk
 
 import gapt.expr._
 import gapt.expr.Abs
+import gapt.expr.ty.Ti
 import gapt.proofs.context.Context
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.{ Ant, ProofBuilder, Sequent, SequentMatchers, Suc }

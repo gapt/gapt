@@ -1,6 +1,7 @@
 package gapt.provers.viper.aip.axioms
 
 import gapt.expr._
+import gapt.expr.formula.Formula
 import gapt.proofs.gaptic.OpenAssumption
 import gapt.proofs.Sequent
 import gapt.proofs.context.mutable.MutableContext

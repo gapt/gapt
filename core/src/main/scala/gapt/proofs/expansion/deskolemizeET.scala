@@ -1,6 +1,7 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
+import gapt.expr.util.rename
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.transformations.LKToExpansionProof
 

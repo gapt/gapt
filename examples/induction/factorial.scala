@@ -1,5 +1,6 @@
 package gapt.examples.induction
 import gapt.expr._
+import gapt.expr.ty.TBase
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic._
 import gapt.provers.prover9.Prover9

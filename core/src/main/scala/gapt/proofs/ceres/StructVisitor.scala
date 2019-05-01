@@ -1,6 +1,8 @@
 package gapt.proofs.ceres
 
-import gapt.expr.{ Atom, Expr, Formula }
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Formula
+import gapt.expr.{ Expr }
 import gapt.proofs.Sequent
 
 trait StructVisitor[Ret, T] {

@@ -1,6 +1,13 @@
 package gapt.cutintro
 import gapt.expr._
-import gapt.expr.hol.CNFp
+import gapt.expr.formula.And
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.subst.Substitution
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.logic.hol.CNFp
 import gapt.proofs.{ FOLClause, Sequent }
 
 /**

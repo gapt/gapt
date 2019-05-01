@@ -1,6 +1,6 @@
 package gapt.proofs.expansion
 
-import gapt.expr.fol.{ Numeral, isFOLPrenexSigma1 }
+import gapt.expr.formula.fol.{ Numeral, isFOLPrenexSigma1 }
 import gapt.expr._
 import gapt.provers.escargot.Escargot
 import gapt.utils.SatMatchers

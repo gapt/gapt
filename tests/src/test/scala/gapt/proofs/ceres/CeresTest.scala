@@ -3,8 +3,8 @@ package gapt.proofs.ceres
 import gapt.cutintro.CutIntroduction
 import gapt.examples._
 import gapt.expr._
-import gapt.expr.fol.Numeral
-import gapt.expr.hol.isAtom
+import gapt.expr.formula.fol.Numeral
+import gapt.expr.formula.hol.isAtom
 import gapt.formats.ClasspathInputFile
 import gapt.formats.llk._
 import gapt.proofs.context.Context

@@ -1,6 +1,6 @@
 package gapt.provers.viper.aip.axioms
 
-import gapt.expr.{ All, Eq, Formula, Or, Var, freeVariables }
+import gapt.expr.{ Var }
 import gapt.formats.tip.{ TipConstructor, TipDatatype }
 import gapt.proofs.gaptic.{ ProofState, allR, escargot, forget, induction, orR, repeat }
 import gapt.proofs.lk.LKProof
@@ -8,6 +8,11 @@ import gapt.proofs.Sequent
 import gapt.provers.viper.aip.{ LabelledSequent, ThrowsError }
 import cats.instances.all._
 import cats.syntax.all._
+import gapt.expr.formula.All
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Or
+import gapt.expr.util.freeVariables
 import gapt.proofs.context.mutable.MutableContext
 
 case class TipDomainClosureAxioms( types: List[TipDatatype] = Nil ) extends AxiomFactory {

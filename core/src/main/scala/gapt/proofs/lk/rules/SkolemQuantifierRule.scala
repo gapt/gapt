@@ -4,9 +4,9 @@ import gapt.expr.Apps
 import gapt.expr.BetaReduction
 import gapt.expr.Const
 import gapt.expr.Expr
-import gapt.expr.Formula
 import gapt.expr.Var
-import gapt.expr.hol.instantiate
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol.instantiate
 import gapt.proofs.SequentIndex
 
 trait SkolemQuantifierRule extends UnaryLKProof with CommonRule {

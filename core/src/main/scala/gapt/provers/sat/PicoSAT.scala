@@ -2,10 +2,10 @@ package gapt.provers.sat
 
 import java.io.IOException
 
-import gapt.expr.Top
 import gapt.formats.dimacs.{ DIMACS, readDIMACS, readDRUP, writeDIMACS }
 import gapt.utils.{ ExternalProgram, runProcess, withTempFile }
 import ammonite.ops._
+import gapt.expr.formula.Top
 import gapt.proofs.rup.RupProof
 
 private object picoSatHelper {

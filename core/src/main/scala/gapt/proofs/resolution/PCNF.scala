@@ -1,7 +1,19 @@
 package gapt.proofs.resolution
 
 import gapt.expr._
-import gapt.expr.hol._
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.Top
+import gapt.expr.formula.hol._
+import gapt.logic.hol.CNFn
+import gapt.logic.hol.CNFp
 import gapt.proofs.lk._
 import gapt.proofs._
 import gapt.proofs.lk.rules.AndLeftRule

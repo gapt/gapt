@@ -1,7 +1,10 @@
 package gapt.provers.escargot
 
 import gapt.expr._
-import gapt.expr.fol.{ Numeral, folSubTerms }
+import gapt.expr.formula.fol.FOLFunctionConst
+import gapt.expr.formula.fol.{ Numeral, folSubTerms }
+import gapt.expr.util.syntacticMGU
+import gapt.expr.util.syntacticMatching
 import gapt.provers.escargot.impl.DiscrTree
 import org.specs2.mutable.Specification
 
