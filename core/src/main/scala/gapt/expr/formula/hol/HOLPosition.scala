@@ -20,7 +20,7 @@ object HOLPosition {
   /**
    * Returns a list of positions of subexpressions that satisfy some predicate.
    *
-   * This function is a wrapper around [[LambdaPosition.getPositions]].
+   * This function is a wrapper around [[gapt.expr.util.LambdaPosition.getPositions]].
    *
    * @param exp The expression under consideration.
    * @param pred The predicate to be evaluated. Defaults to "always true", i.e. if called without this argument, the function will return all positions.
@@ -256,7 +256,7 @@ object HOLPosition {
  * Positions are represented by lists of Integers. The empty list denotes the expression itself.
  * A nonempty list denotes a position in the left or right subexpression according to whether it starts with 1 or 2.
  *
- * The difference between this and [[LambdaPosition]] lies in the handling of quantifiers and binary logical
+ * The difference between this and [[gapt.expr.util.LambdaPosition]] lies in the handling of quantifiers and binary logical
  * connectives. LambdaPositions treat e.g. conjunctions like any other function, while HOLPositions treat them naturally,
  * i.e. 1 denotes the left conjunct and 2 the right conjunct.
  *

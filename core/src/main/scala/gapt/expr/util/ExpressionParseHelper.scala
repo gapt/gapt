@@ -98,7 +98,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
   def le( args: Splice[Expr]* ): Expr = interpolate( args, identity )
 
   /**
-   * Parses a string as a [[Formula]].
+   * Parses a string as a [[gapt.expr.formula.Formula]].
    *
    * @param args
    * @return
@@ -106,7 +106,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
   def hof( args: Splice[Expr]* ): Formula = interpolate( args, preExpr.TypeAnnotation( _, preExpr.Bool ) ).asInstanceOf[Formula]
 
   /**
-   * Parses a string as a [[Atom]].
+   * Parses a string as a [[gapt.expr.formula.Atom]].
    *
    * @param args
    * @return
@@ -145,7 +145,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
   // First order parsers
 
   /**
-   * Parses a string as a [[FOLExpression]].
+   * Parses a string as a [[gapt.expr.formula.fol.FOLExpression]].
    *
    * @param args
    * @return
@@ -157,7 +157,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
   }
 
   /**
-   * Parses a string as a [[FOLFormula]].
+   * Parses a string as a [[gapt.expr.formula.fol.FOLFormula]].
    *
    * @param args
    * @return
@@ -169,7 +169,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
   }
 
   /**
-   * Parses a string as a [[FOLAtom]].
+   * Parses a string as a [[gapt.expr.formula.fol.FOLAtom]].
    *
    * @param args
    * @return
@@ -181,7 +181,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
   }
 
   /**
-   * Parses a string as a [[FOLTerm]].
+   * Parses a string as a [[gapt.expr.formula.fol.FOLTerm]].
    *
    * @param args
    * @return
@@ -193,7 +193,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
   }
 
   /**
-   * Parses a string as a [[FOLVar]].
+   * Parses a string as a [[gapt.expr.formula.fol.FOLVar]].
    *
    * @param args
    * @return
@@ -205,7 +205,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
   }
 
   /**
-   * Parses a string as a [[FOLConst]].
+   * Parses a string as a [[gapt.expr.formula.fol.FOLConst]].
    *
    * @param args
    * @return
