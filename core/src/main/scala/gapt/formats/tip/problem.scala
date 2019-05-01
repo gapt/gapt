@@ -98,7 +98,6 @@ object tipScalaEncoding {
       compileSorts( problem ).mkString( "\n" ) + "\n\n" +
       "// Inductive types\n" +
       compileInductiveTypes( problem ).mkString( "\n\n" ) + "\n" +
-      compileConstants( problem ) + "\n" +
       compileFunctionConstants( problem ) + "\n\n" +
       s"""|val sequent =
           |  hols\"\"\"
@@ -140,17 +139,19 @@ object tipScalaEncoding {
     val constructors = problem.datatypes.flatMap( _.constructors )
     ( constructors.flatMap( _.projectors ).map( _.name ) zip
       constructors.flatMap( _.projectorDefinitions ) ) map
-      { case ( name, definition ) => s"def_$name: ${stripNewlines( universalClosure( definition ).toString() )}" }
+      {
+        case ( name, definition ) =>
+          s"def_${
+            name.map { c => if ( c == '-' ) '_' else c }
+          }: ${
+            stripNewlines( universalClosure( definition ).toString() )
+          }"
+      }
   }
 
   private def compileFunctionConstants( problem: TipProblem ): String = {
     "\n//Function constants\n" +
       ( problem.functions map { f => "ctx += " + compileConst( f.fun ) } mkString ( "\n" ) )
-  }
-
-  private def compileConstants( problem: TipProblem ): String = {
-    "\n//Constants\n" +
-      ( "" )
   }
 
   private def compileInductiveTypes( problem: TipProblem ): Seq[String] = {
