@@ -77,9 +77,6 @@ import scala.collection.mutable
 
 class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
 
-  ( new ReconstructDatatypes( problem ) )()
-  problem.symbolTable = Some( SymbolTable( problem ) )
-
   var ctx = Context()
 
   val typeDecls = mutable.Map[String, TBase]()
@@ -208,6 +205,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
             ReductionRule( subst( lhs ), ctx.normalizer.whnf( subst( rhs ) ) )
         }
         caseRules
+      case _ => Seq( lhs -> rhs )
     }
   }
 
@@ -441,6 +439,22 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
     Apps( matchConstant, compiledMatchedExpression +: compiledCases )
   }
 
+  // looks up a constructor by name for a given instance of an inductive type
+  private def lookupConstructor( name: String, inductiveType: TBase ): Const = {
+    name match {
+      case "false" if inductiveType == To =>
+        BottomC()
+      case "true" if inductiveType == To =>
+        TopC()
+      case _ =>
+        ctx.getConstructors( inductiveType ).get.find( _.name == name ) match {
+          case Some( c ) => c
+          case _ => throw TipSmtParserException(
+            s"constant ${name} is not a constructor of type ${inductiveType}" )
+        }
+    }
+  }
+
   private def fixupMatchCases(
     matchedType: TBase,
     tipCases:    Seq[TipSmtCase],
@@ -464,10 +478,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
       }
     // check that only constructors occur in the patterns
     constructorCases.map { _._1 }.foreach {
-      c =>
-        if ( constructors.find { _.name == c }.isEmpty ) {
-          throw TipSmtParserException( s"match: ${c} is not a constructor of type ${matchedType}." )
-        }
+      c => lookupConstructor( c, matchedType )
     }
     // check that every constructor occurs at most once
     constructorCases.groupBy { _._1 }.toSet.filter { _._2.size > 1 }.foreach {
@@ -477,7 +488,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
     // check that the constructors have the correct arity
     constructorCases.foreach {
       case ( c, xs, _ ) =>
-        val FunctionType( _, as ) = constructors.find( _.name == c ).get.ty
+        val FunctionType( _, as ) = lookupConstructor( c, matchedType ).ty
         if ( xs.size != as.size ) {
           throw TipSmtParserException( s"match: invalid constructor pattern: constructor ${c} " +
             s"expects ${as.size} arguments but got ${xs.size}." )
@@ -505,7 +516,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
     val allCases: Seq[( Const, Seq[Var], TipSmtExpression )] =
       ( constructorCases ++ missingCases ).map {
         case ( c, xs, e ) =>
-          val constructor = constructors.find( _.name == c ).get
+          val constructor = lookupConstructor( c, matchedType )
           val FunctionType( _, ats ) = constructor.ty
           ( constructor, xs.zip( ats ).map { case ( x, t ) => Var( x, t ) }, e )
       }.sortWith {
@@ -585,12 +596,13 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
 
   private def compileTipType( ty: TipSmtType, typeVariables: Seq[TVar] ): Ty = {
     ty match {
+      case TipSmtType( "Bool" ) => To
       case TipSmtType( name ) =>
         // check that the base type exists
         if ( ctx.isType( TBase( name ) ) ) {
           TBase( name )
         } else {
-          throw TipSmtParserException( "unknown base type" )
+          throw TipSmtParserException( s"type: unknown base type ${name}" )
         }
       case _ => ???
     }
@@ -600,7 +612,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
     tipSmtExists: TipSmtExists, freeVars: Seq[Var], expectedType: Option[Ty] ): Expr = {
     expectedType match {
       case Some( ety ) =>
-        if ( expectedType != To ) {
+        if ( ety != To ) {
           throw TipSmtParserException( s"expected type ${ety} but got ${To}." )
         }
       case _ =>
@@ -690,9 +702,9 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
     val matchConstant = Const( matchConstantName( inductiveType ), matchType, List( resultType ) )
     // add this constant as a primitive recursively defined function
     // functions f_1, ..., f_m corresponding to the cases.
+    val names = new NameGenerator( Seq() )
     val caseArguments: Map[Const, Var] = inductiveType.constructors.map {
       constructor =>
-        val names = new NameGenerator( Seq() )
         val FunctionType( _, argumentTypes ) = constructor.ty
         val caseVariable = Var( names.fresh( "f" ), FunctionType( resultType, argumentTypes ) )
         ( constructor, caseVariable )
