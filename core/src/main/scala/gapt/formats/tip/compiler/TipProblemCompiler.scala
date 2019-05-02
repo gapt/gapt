@@ -1,7 +1,6 @@
 package gapt.formats.tip.compiler
 
 import gapt.expr.Abs
-import gapt.expr.App
 import gapt.expr.Apps
 import gapt.expr.Const
 import gapt.expr.Expr
@@ -43,6 +42,7 @@ import gapt.formats.tip.parser.TipSmtConstructorField
 import gapt.formats.tip.parser.TipSmtConstructorPattern
 import gapt.formats.tip.parser.TipSmtDatatype
 import gapt.formats.tip.parser.TipSmtDatatypesDeclaration
+import gapt.formats.tip.parser.TipSmtDefault
 import gapt.formats.tip.parser.TipSmtDistinct
 import gapt.formats.tip.parser.TipSmtEq
 import gapt.formats.tip.parser.TipSmtExists
@@ -67,27 +67,15 @@ import gapt.formats.tip.parser.TipSmtSortDeclaration
 import gapt.formats.tip.parser.TipSmtTrue
 import gapt.formats.tip.parser.TipSmtType
 import gapt.formats.tip.parser.TipSmtVariableDecl
-import gapt.formats.tip.transformation.desugarDistinctExpressions
-import gapt.formats.tip.transformation.eliminateBooleanConstants
-import gapt.formats.tip.transformation.eliminateRedundantQuantifiers
-import gapt.formats.tip.transformation.expandConstructorMatchExpressions
-import gapt.formats.tip.transformation.expandDefaultPatterns
-import gapt.formats.tip.transformation.expandVariableMatchExpressions
-import gapt.formats.tip.transformation.moveUniversalQuantifiersInwards
-import gapt.formats.tip.transformation.toOuterConditionalNormalForm
-import gapt.formats.tip.transformation.useDefiningFormulas
 import gapt.proofs.context.Context
-import gapt.proofs.context.facet.StructurallyInductiveTypes
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.PrimitiveRecursiveFunction
-import gapt.utils.NameGenerator
 import gapt.proofs.context.update.ReductionRuleUpdate.reductionRulesAsReductionRuleUpdate
+import gapt.utils.NameGenerator
 
 import scala.collection.mutable
 
 class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
-
-  problem = problem >>: ( expandDefaultPatterns )
 
   ( new ReconstructDatatypes( problem ) )()
   problem.symbolTable = Some( SymbolTable( problem ) )
@@ -296,7 +284,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
       .init
       .flatMap { es => es.tail.map { ( es.head, _ ) } }
 
-  private def compileExpression( e: TipSmtDistinct, ctxVars: Seq[Var], expectedType: Option[Ty]): Expr = {
+  private def compileExpression( e: TipSmtDistinct, ctxVars: Seq[Var], expectedType: Option[Ty] ): Expr = {
     expectedType match {
       case Some( ety ) =>
         if ( ety != To ) {
@@ -304,12 +292,12 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
         }
       case _ =>
     }
-    val compiledExpressions = e.expressions.map { compileExpression( _, ctxVars, None)}
+    val compiledExpressions = e.expressions.map { compileExpression( _, ctxVars, None ) }
     val expressionTypes = compiledExpressions.map { _.ty }.toSet
-    if (expressionTypes.size > 1) {
-      throw TipSmtParserException(s"distinct: expressions have differing types: ${expressionTypes.mkString}")
+    if ( expressionTypes.size > 1 ) {
+      throw TipSmtParserException( s"distinct: expressions have differing types: ${expressionTypes.mkString}" )
     }
-    And(pairAll( compiledExpressions ).map { case (l, r) => Neg(Eq(l,r)) })
+    And( pairAll( compiledExpressions ).map { case ( l, r ) => Neg( Eq( l, r ) ) } )
   }
 
   private def compileExpression(
@@ -436,42 +424,94 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
   }
 
   private def compileExpression(
-    tipSmtMatch: TipSmtMatch, freeVars: Seq[Var], expectedType: Option[Ty] ): Expr = {
-    val TipSmtMatch( matchedExpression, cases ) = tipSmtMatch
-
+    tipMatchExpression: TipSmtMatch, freeVars: Seq[Var], expectedType: Option[Ty] ): Expr = {
+    val TipSmtMatch( matchedExpression, cases ) = tipMatchExpression
     val compiledMatchedExpression =
       compileExpression( matchedExpression, freeVars, None )
-
     if ( !compiledMatchedExpression.ty.isInstanceOf[TBase] ) {
       throw TipSmtParserException( "matching expression having complex type" )
     }
-
     if ( ctx.getConstructors( compiledMatchedExpression.ty ).isEmpty ) {
       throw TipSmtParserException( "matching expression with non-inductive base type" )
     }
-
     val matchedType: TBase = compiledMatchedExpression.ty.asInstanceOf[TBase]
-
-    // todo: check that the number of cases and the names are valid.
-
-    val compiledCases =
-      reorderCases( matchedType, cases ) map { compileCase( _, freeVars, matchedType, expectedType ) }
-
-    val compiledCasesTypes = compiledCases.map { _._2 }.toSet
-    if ( compiledCasesTypes.size > 1 ) {
-      throw TipSmtParserException( s"match cases have differing types ${compiledCasesTypes}" )
-    }
-    val resultType = compiledCases.head._2
-    expectedType match {
-      case Some( ety ) =>
-        if ( resultType != ety ) {
-          throw TipSmtParserException( s"match cases have unexpected type: expected ${ety} but got ${resultType}." )
-        }
-      case _ =>
-    }
+    val completedMatchCases = fixupMatchCases( matchedType, cases, freeVars )
+    val ( compiledCases, resultType ) = compileCases( completedMatchCases, freeVars, matchedType, expectedType )
     val Some( matchConstant ) = ctx.constant( matchConstantName( matchedType ), List( resultType ) )
-    Apps( matchConstant, compiledMatchedExpression +: compiledCases.map { _._1 } )
+    Apps( matchConstant, compiledMatchedExpression +: compiledCases )
+  }
 
+  private def fixupMatchCases(
+    matchedType: TBase,
+    tipCases:    Seq[TipSmtCase],
+    ctxVars:     Seq[Var] ): Seq[( Const, Seq[Var], TipSmtExpression )] = {
+
+    val constructors = ctx.getConstructors( matchedType ).get
+
+    // check that there is at most one default case
+    val defaultCases = tipCases.flatMap {
+      case TipSmtCase( TipSmtDefault, e ) => Some( e )
+      case _                              => None
+    }
+    if ( defaultCases.size > 1 ) {
+      throw TipSmtParserException( "match: more than one default case" )
+    }
+    val constructorCases: Seq[( String, Seq[String], TipSmtExpression )] =
+      tipCases.flatMap {
+        case TipSmtCase( TipSmtConstructorPattern( c, xs ), e ) =>
+          Some( ( c.name, xs.map { _.name }, e ) )
+        case _ => None
+      }
+    // check that only constructors occur in the patterns
+    constructorCases.map { _._1 }.foreach {
+      c =>
+        if ( constructors.find { _.name == c }.isEmpty ) {
+          throw TipSmtParserException( s"match: ${c} is not a constructor of type ${matchedType}." )
+        }
+    }
+    // check that every constructor occurs at most once
+    constructorCases.groupBy { _._1 }.toSet.filter { _._2.size > 1 }.foreach {
+      case ( c, _ ) =>
+        throw TipSmtParserException( s"match: multiple occurrences of constructor ${c}." )
+    }
+    // check that the constructors have the correct arity
+    constructorCases.foreach {
+      case ( c, xs, _ ) =>
+        val FunctionType( _, as ) = constructors.find( _.name == c ).get.ty
+        if ( xs.size != as.size ) {
+          throw TipSmtParserException( s"match: invalid constructor pattern: constructor ${c} " +
+            s"expects ${as.size} arguments but got ${xs.size}." )
+        }
+    }
+    // expand the default case
+    val missingCases = defaultCases match {
+      case Seq( e ) =>
+        // todo use proper dummy variables
+        val dummyName = "_"
+        val missingConstructors = constructors.filterNot {
+          c =>
+            constructorCases.map { _._1 }.contains( c.name )
+        }
+        missingConstructors.map {
+          c =>
+            val FunctionType( _, ats ) = c.ty
+            ( c.name, ats.map { _ => dummyName }, e )
+        }
+      case _ => Seq()
+    }
+    def constructorOrder( c1: Const, c2: Const ) = {
+      constructors.indexOf( c1 ) < constructors.indexOf( c2 )
+    }
+    val allCases: Seq[( Const, Seq[Var], TipSmtExpression )] =
+      ( constructorCases ++ missingCases ).map {
+        case ( c, xs, e ) =>
+          val constructor = constructors.find( _.name == c ).get
+          val FunctionType( _, ats ) = constructor.ty
+          ( constructor, xs.zip( ats ).map { case ( x, t ) => Var( x, t ) }, e )
+      }.sortWith {
+        case ( l, r ) => constructorOrder( l._1, r._1 )
+      }
+    allCases
   }
 
   private def reorderCases( inductiveType: TBase, cases: Seq[TipSmtCase] ): Seq[TipSmtCase] = {
@@ -483,38 +523,22 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
     } )
   }
 
-  private def compileCase(
-    tipSmtCase:  TipSmtCase,
-    freeVars:    Seq[Var],
-    matchedType: TBase,
-    resultType:  Option[Ty] ): ( Expr, Ty ) = {
+  private def compileCases(
+    cases:        Seq[( Const, Seq[Var], TipSmtExpression )],
+    ctxVars:      Seq[Var],
+    matchedType:  TBase,
+    expectedType: Option[Ty] ): ( Seq[Expr], Ty ) = {
 
-    val Some( constructors ) = ctx.getConstructors( matchedType )
-    val TipSmtCase(
-      TipSmtConstructorPattern( constructorName, identifiers ),
-      expr ) = tipSmtCase
-
-    constructors.find { _.name == constructorName.name } match {
-      case Some( const ) => const
-      case None          => throw TipSmtParserException( "invalid constructor in case" )
+    val compiledCases = cases map {
+      case ( c, xs, e ) =>
+        ( c, xs, compileExpression( e, xs ++ ctxVars, expectedType ) )
     }
-    val constructorConstant = ctx.constant( constructorName.name, matchedType.params ).get
-    val FunctionType( _, constructorArgumentTypes ) = constructorConstant.ty
-    if ( identifiers.size != constructorArgumentTypes.size ) {
-      throw TipSmtParserException( "invalid number of variables in constructor pattern" )
+    // check that all compiled expressions have the same type
+    val resultTypes = compiledCases.map { _._3.ty }.toSet
+    if ( resultTypes.size > 1 ) {
+      throw new TipSmtParserException( s"match: cases have differing types ${resultTypes.mkString}" )
     }
-
-    val abstractionVariables: Seq[Var] =
-      identifiers
-        .map { _.name }
-        .zip( constructorArgumentTypes )
-        .map {
-          case ( name, ty ) => Var( name, ty )
-        }
-
-    val compiledExpr = compileExpression( expr, abstractionVariables ++ freeVars, resultType )
-
-    ( Abs( abstractionVariables, compiledExpr ), compiledExpr.ty )
+    ( compiledCases map { case ( _, xs, e ) => Abs( xs, e ) }, resultTypes.head )
   }
 
   private def compileExpression(
