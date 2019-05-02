@@ -17,11 +17,13 @@ import gapt.expr.formula.Or
 import gapt.expr.formula.Top
 import gapt.expr.formula.constants.BottomC
 import gapt.expr.formula.constants.TopC
+import gapt.expr.subst.Substitution
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.ty.TVar
 import gapt.expr.ty.To
 import gapt.expr.ty.Ty
+import gapt.expr.util.freeVariables
 import gapt.expr.util.syntacticMatching
 import gapt.formats.tip.TipConstructor
 import gapt.formats.tip.TipDatatype
@@ -78,7 +80,7 @@ import gapt.proofs.context.facet.StructurallyInductiveTypes
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.PrimitiveRecursiveFunction
 import gapt.utils.NameGenerator
-import gapt.proofs.context.update.ReductionRuleUpdate.reductionRuleAsReductionRuleUpdate
+import gapt.proofs.context.update.ReductionRuleUpdate.reductionRulesAsReductionRuleUpdate
 
 import scala.collection.mutable
 
@@ -185,7 +187,39 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
     val returnType = compileTipType( functionDefinition.returnType, typeParameters )
     val compiledFunctionBody = compileExpression( functionDefinition.body, formalParameters, Some( returnType ) )
 
-    ctx += ReductionRule( functionConstant( formalParameters ), compiledFunctionBody )
+    ctx += splitReductionRules( ReductionRule( functionConstant( formalParameters ), compiledFunctionBody ) )
+  }
+
+  private object Match {
+    def unapply( expr: Expr ): Option[( TBase, Expr, Seq[Expr] )] = {
+      expr match {
+        case Apps( matchConst @ Const( _, _, _ ), Seq( matchedExpr, cases @ _* ) ) =>
+          if ( matchConst.name.startsWith( "match_" ) ) {
+            Some( ( matchedExpr.ty.asInstanceOf[TBase], matchedExpr, cases ) )
+          } else {
+            None
+          }
+        case _ => None
+      }
+    }
+  }
+
+  private def splitReductionRules( rule: ReductionRule ): Seq[ReductionRule] = {
+    val ReductionRule( lhs, rhs ) = rule
+    rhs match {
+      case Match( _, x @ Var( _, _ ), _ ) =>
+        val constructors = ctx.getConstructors( x.ty ).get
+        val caseRules = constructors.map {
+          c =>
+            val names = new NameGenerator( freeVariables( lhs ).map { _.name } )
+            val FunctionType( _, argumentTypes ) = c.ty
+            val variables = argumentTypes.map { t => Var( names.fresh( "x" ), t ) }
+            val constructorTerm = Apps( c, variables )
+            val subst = Substitution( x, constructorTerm )
+            ReductionRule( subst( lhs ), ctx.normalizer.whnf( subst( rhs ) ) )
+        }
+        caseRules
+    }
   }
 
   private def compileAssertion( tipSmtAssertion: TipSmtAssertion ): Unit = {
