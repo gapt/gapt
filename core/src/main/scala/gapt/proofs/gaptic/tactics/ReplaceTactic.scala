@@ -1,8 +1,8 @@
 package gapt.proofs.gaptic.tactics
 
 import gapt.expr.Expr
-import gapt.expr.Formula
-import gapt.expr.hol.HOLPosition
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol.HOLPosition
 import gapt.proofs.SequentIndex
 import gapt.proofs.context.Context
 import gapt.proofs.gaptic.OnLabel
