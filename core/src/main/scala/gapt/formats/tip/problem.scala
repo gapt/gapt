@@ -22,6 +22,14 @@ case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
     val fieldVars = fieldTypes.zipWithIndex.map { case ( t, i ) => Var( s"x$i", t ) }
     ( projectors, fieldVars ).zipped map { ( p, f ) => p( constr( fieldVars: _* ) ) === f }
   }
+
+  def projectReductionRules: Seq[ReductionRule] = {
+    val fieldVars = fieldTypes.zipWithIndex.map { case ( t, i ) => Var( s"x$i", t ) }
+    val constructorTerm = Apps( constr, fieldVars )
+    projectors.zipWithIndex.map {
+      case ( p, i ) => ReductionRule( App( p, constructorTerm ), fieldVars( i ) )
+    }
+  }
 }
 case class TipDatatype( t: TBase, constructors: Seq[TipConstructor] ) {
   constructors foreach { ctr => require( ctr.datatype == t ) }

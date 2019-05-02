@@ -740,6 +740,9 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
     // declare the corresponding match constant
     declareMatchConstant( inductiveType )
     datatypes += dt
+    dt.constructors.foreach {
+      c => ctx += c.projectReductionRules
+    }
     dt.constructors foreach { ctr =>
       declare( ctr.constr )
       for ( proj <- ctr.projectors ) {
