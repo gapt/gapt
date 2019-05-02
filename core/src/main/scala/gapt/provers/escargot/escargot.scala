@@ -116,20 +116,6 @@ class Escargot( splitting: Boolean, equality: Boolean, propositional: Boolean ) 
     val hasEquality = equality && cnf.flatMap( _.elements ).exists { case Eq( _, _ ) => true; case _ => false }
     val isPropositional = propositional || cnf.flatMap { freeVariables( _ ) }.isEmpty
 
-    val res = {
-      val state = new EscargotState( ctx )
-      Escargot.setupDefaults( state, splitting, hasEquality, isPropositional )
-      state.nameGen = rename.awayFrom( ctx.constants.toSet ++ cnf.view.flatMap( constants( _ ) ) )
-      state.termOrdering = Escargot.lpoHeuristic( cnf, ctx.constants )
-      state.newlyDerived ++= cnf.map {
-        state.InputCls
-      }
-      state.loop( addInductions )
-    }
-
-    if ( res.isDefined || !addInductions )
-      return res
-
     val state = new EscargotState( ctx )
     Escargot.setupDefaults( state, splitting, hasEquality, isPropositional )
     state.nameGen = rename.awayFrom( ctx.constants.toSet ++ cnf.view.flatMap( constants( _ ) ) )
@@ -137,7 +123,6 @@ class Escargot( splitting: Boolean, equality: Boolean, propositional: Boolean ) 
     state.newlyDerived ++= cnf.map {
       state.InputCls
     }
-    state.skipTesting = true
     state.loop( addInductions )
   }
 

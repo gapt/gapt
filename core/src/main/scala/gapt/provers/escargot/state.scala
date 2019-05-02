@@ -337,18 +337,21 @@ class EscargotState( val ctx: MutableContext ) {
 
     val fs = go( expr, vars )
 
-    fs forall {
-      case Eq( lhs, rhs )         => ctx.isDefEq( lhs, rhs )
-      case Iff( lhs, rhs )        => ctx.isDefEq( lhs, rhs )
-      case Neg( Eq( lhs, rhs ) )  => !ctx.isDefEq( lhs, rhs )
-      case Neg( Iff( lhs, rhs ) ) => !ctx.isDefEq( lhs, rhs )
-      case Neg( lhs )             => !ctx.isDefEq( lhs, Top() )
-      case lhs                    => !ctx.isDefEq( lhs, Bottom() )
+    fs forall { f =>
+      val nf = ctx.normalize( f )
+      nf match {
+        case Eq( lhs, rhs )         => lhs == rhs
+        case Iff( lhs, rhs )        => lhs == rhs
+        case Neg( Eq( lhs, rhs ) )  => lhs != rhs
+        case Neg( Iff( lhs, rhs ) ) => lhs != rhs
+        case Neg( lhs )             => lhs != Top()
+        case lhs                    => lhs != Bottom()
+      }
+      equal
     }
   }
 
   val allPositions: Map[Const, Positions] = Positions.splitRules( ctx.normalizer.rules )
-  var skipTesting = false
 
   // TODO: this is kinda heavy
   def occurrences( formula: Expr ): ( Map[Expr, Seq[LambdaPosition]], Map[Expr, Seq[LambdaPosition]], Set[Set[Expr]] ) = {
