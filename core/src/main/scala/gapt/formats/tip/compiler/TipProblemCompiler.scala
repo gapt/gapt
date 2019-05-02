@@ -10,6 +10,7 @@ import gapt.expr.Var
 import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Bottom
+import gapt.expr.formula.Eq
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Neg
@@ -86,7 +87,7 @@ import scala.collection.mutable
 
 class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
 
-  problem = problem >>: ( desugarDistinctExpressions ->>: expandDefaultPatterns )
+  problem = problem >>: ( expandDefaultPatterns )
 
   ( new ReconstructDatatypes( problem ) )()
   problem.symbolTable = Some( SymbolTable( problem ) )
@@ -284,13 +285,41 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
         Bottom()
       case TipSmtTrue =>
         Top()
-      case TipSmtDistinct( _ ) => throw new IllegalArgumentException
+      case expr @ TipSmtDistinct( _ ) =>
+        compileExpression( expr, freeVars, resultType )
     }
 
+  private def pairAll[T]( elements: Seq[T] ): Seq[( T, T )] =
+    elements
+      .tails
+      .toList
+      .init
+      .flatMap { es => es.tail.map { ( es.head, _ ) } }
+
+  private def compileExpression( e: TipSmtDistinct, ctxVars: Seq[Var], expectedType: Option[Ty]): Expr = {
+    expectedType match {
+      case Some( ety ) =>
+        if ( ety != To ) {
+          throw TipSmtParserException( s"expected type ${ety} but got ${To}." )
+        }
+      case _ =>
+    }
+    val compiledExpressions = e.expressions.map { compileExpression( _, ctxVars, None)}
+    val expressionTypes = compiledExpressions.map { _.ty }.toSet
+    if (expressionTypes.size > 1) {
+      throw TipSmtParserException(s"distinct: expressions have differing types: ${expressionTypes.mkString}")
+    }
+    And(pairAll( compiledExpressions ).map { case (l, r) => Neg(Eq(l,r)) })
+  }
+
   private def compileExpression(
-    tipSmtAnd: TipSmtAnd, freeVars: Seq[Var], expectedType: Ty ): Expr = {
-    if ( expectedType != To ) {
-      throw TipSmtParserException( "type mismatch" )
+    tipSmtAnd: TipSmtAnd, freeVars: Seq[Var], expectedType: Option[Ty] ): Expr = {
+    expectedType match {
+      case Some( ety ) =>
+        if ( ety != To ) {
+          throw TipSmtParserException( s"expected type ${ety} but got ${To}." )
+        }
+      case _ =>
     }
     And(
       tipSmtAnd.exprs
@@ -298,9 +327,13 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
   }
 
   private def compileExpression(
-    tipSmtOr: TipSmtOr, freeVars: Seq[Var], expectedType: Ty ): Expr = {
-    if ( expectedType != To ) {
-      throw TipSmtParserException( "type mismatch" )
+    tipSmtOr: TipSmtOr, freeVars: Seq[Var], expectedType: Option[Ty] ): Expr = {
+    expectedType match {
+      case Some( ety ) =>
+        if ( ety != To ) {
+          throw TipSmtParserException( s"expected type ${ety} but got ${To}." )
+        }
+      case _ =>
     }
     Or(
       tipSmtOr.exprs
@@ -308,17 +341,25 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
   }
 
   private def compileExpression(
-    tipSmtNot: TipSmtNot, freeVars: Seq[Var], expectedType: Ty ): Expr = {
-    if ( expectedType != To ) {
-      throw TipSmtParserException( "type mismatch" )
+    tipSmtNot: TipSmtNot, freeVars: Seq[Var], expectedType: Option[Ty] ): Expr = {
+    expectedType match {
+      case Some( ety ) =>
+        if ( ety != To ) {
+          throw TipSmtParserException( s"expected type ${ety} but got ${To}." )
+        }
+      case _ =>
     }
     Neg( compileExpression( tipSmtNot.expr, freeVars, Some( To ) ) )
   }
 
   private def compileExpression(
-    tipSmtImp: TipSmtImp, freeVars: Seq[Var], expectedType: Ty ): Expr = {
-    if ( expectedType != To ) {
-      throw TipSmtParserException( "type mismatch" )
+    tipSmtImp: TipSmtImp, freeVars: Seq[Var], expectedType: Option[Ty] ): Expr = {
+    expectedType match {
+      case Some( ety ) =>
+        if ( ety != To ) {
+          throw TipSmtParserException( s"expected type ${ety} but got ${To}." )
+        }
+      case _ =>
     }
     tipSmtImp.exprs
       .map { compileExpression( _, freeVars, Some( To ) ) } reduceRight { _ --> _ }
