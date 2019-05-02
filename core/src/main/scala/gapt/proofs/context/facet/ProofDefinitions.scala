@@ -1,8 +1,8 @@
 package gapt.proofs.context.facet
 
 import gapt.expr.Expr
-import gapt.expr.Substitution
-import gapt.expr.syntacticMatching
+import gapt.expr.subst.Substitution
+import gapt.expr.util.syntacticMatching
 import gapt.proofs.SequentConnector
 import gapt.proofs.context.ProofDefinition
 import gapt.proofs.lk.LKProof

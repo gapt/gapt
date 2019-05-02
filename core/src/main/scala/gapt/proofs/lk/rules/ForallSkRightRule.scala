@@ -1,11 +1,11 @@
 package gapt.proofs.lk.rules
 
-import gapt.expr.All
 import gapt.expr.Apps
 import gapt.expr.BetaReduction
 import gapt.expr.Expr
-import gapt.expr.Formula
-import gapt.expr.hol.instantiate
+import gapt.expr.formula.All
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol.instantiate
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
 import gapt.proofs.SequentIndex

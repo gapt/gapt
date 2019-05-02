@@ -1,6 +1,8 @@
 package gapt.examples
 import gapt.expr._
-import gapt.expr.hol.universalClosure
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol.universalClosure
+import gapt.expr.ty.TBase
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context

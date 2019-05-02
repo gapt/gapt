@@ -7,7 +7,12 @@
 
 package gapt.expr
 
+import gapt.expr.ty.->:
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
 import org.specs2.mutable._
+
 import scala.util.parsing.combinator._
 
 class TypesTest extends Specification {

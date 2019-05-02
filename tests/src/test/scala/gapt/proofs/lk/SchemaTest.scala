@@ -3,8 +3,12 @@ package gapt.proofs.lk
 import gapt.expr._
 import gapt.examples._
 import gapt.proofs.ceres._
-import gapt.expr.fol.natMaker
-import gapt.expr.hol.CNFp
+import gapt.expr.formula.fol.natMaker
+import gapt.expr.subst.Substitution
+import gapt.expr.ty.TBase
+import gapt.expr.util.freeVariables
+import gapt.logic.clauseSubsumption
+import gapt.logic.hol.CNFp
 import gapt.proofs.context.Context._
 import gapt.proofs.Sequent
 import gapt.proofs.context.facet.ProofDefinitions

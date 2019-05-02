@@ -1,6 +1,6 @@
 package gapt.proofs.expansion
 import gapt.expr._
-import Polarity._
+import gapt.logic.Polarity.{ InSuccedent, InAntecedent }
 import gapt.proofs.Sequent
 import gapt.utils.SatMatchers
 import org.specs2.mutable.Specification

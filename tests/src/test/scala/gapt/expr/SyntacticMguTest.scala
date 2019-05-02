@@ -1,5 +1,11 @@
 package gapt.expr
 
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFunctionConst
+import gapt.expr.formula.fol.FOLVar
+import gapt.expr.subst.FOLSubstitution
+import gapt.expr.ty.Ti
+import gapt.expr.util.syntacticMGU
 import org.specs2.mutable._
 
 class SyntacticMguTest extends Specification {

@@ -1,8 +1,9 @@
 package gapt.testing
 
 import ammonite.ops.FilePath
-import gapt.expr.hol.CNFn
-import gapt.expr.{ Atom, Const }
+import gapt.expr.Const
+import gapt.expr.formula.Atom
+import gapt.logic.hol.CNFn
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion.{ eliminateCutsET, eliminateDefsET }

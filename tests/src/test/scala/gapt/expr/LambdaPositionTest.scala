@@ -1,7 +1,8 @@
 package gapt.expr
 
-import LambdaPosition._
-
+import gapt.expr.ty.Ti
+import gapt.expr.util.LambdaPosition
+import gapt.expr.util.LambdaPosition._
 import org.specs2.mutable._
 
 class LambdaPositionTest extends Specification {

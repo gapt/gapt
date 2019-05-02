@@ -1,10 +1,10 @@
 package gapt.proofs
 
-import gapt.expr.Polarity.{ Negative, Positive }
-import gapt.expr.{ Formula, Polarity }
 import gapt.formats.babel.{ BabelExporter, BabelSignature }
 import cats.Functor
 import cats.kernel.Monoid
+import gapt.expr.formula.Formula
+import gapt.logic.Polarity
 
 import scala.collection.GenTraversable
 

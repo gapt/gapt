@@ -1,7 +1,18 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
-import gapt.expr.hol.containsQuantifierOnLogicalLevel
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.hol.containsQuantifierOnLogicalLevel
+import gapt.expr.subst.Substitution
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.logic.Polarity
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 

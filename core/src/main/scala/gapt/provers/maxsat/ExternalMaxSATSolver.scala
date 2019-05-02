@@ -2,7 +2,7 @@ package gapt.provers.maxsat
 
 import java.io.IOException
 
-import gapt.expr.FOLAtom
+import gapt.expr.formula.fol.FOLAtom
 import gapt.formats.dimacs.{ DIMACS, readWDIMACS, writeWDIMACS }
 import gapt.utils.{ ExternalProgram, runProcess, withTempFile }
 

@@ -1,6 +1,7 @@
 package gapt.proofs.lk
 
 import gapt.expr._
+import gapt.expr.util.freeVariables
 import gapt.formats.babel.Notation
 import gapt.formats.babel.Precedence
 import gapt.proofs.Sequent

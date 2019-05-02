@@ -1,9 +1,9 @@
 package gapt.proofs.lk.rules.macros
 
-import gapt.expr.All
-import gapt.expr.Ex
 import gapt.expr.Expr
-import gapt.expr.Formula
+import gapt.expr.formula.All
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
 import gapt.proofs.lk.LKProof
 
 object WeakQuantifierBlock {

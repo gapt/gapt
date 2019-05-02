@@ -1,6 +1,6 @@
 package gapt.provers.verit
 
-import gapt.expr.hol.containsQuantifier
+import gapt.expr.formula.hol.containsQuantifier
 import gapt.formats.verit._
 import gapt.proofs.HOLSequent
 import gapt.proofs.expansion._
@@ -9,6 +9,15 @@ import java.io._
 
 import gapt.provers._
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Top
+import gapt.expr.formula.fol.FOLAtomConst
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFunctionConst
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.TBase
+import gapt.expr.util.freeVariables
 import gapt.formats.smt.SmtLibExporter
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext

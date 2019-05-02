@@ -1,8 +1,11 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
-import gapt.expr.fol.folSubTerms
-import gapt.expr.hol.instantiate
+import gapt.expr.formula.All
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Imp
+import gapt.expr.formula.fol.folSubTerms
+import gapt.expr.formula.hol.instantiate
 import gapt.provers.escargot.LPO
 import gapt.provers.verit.VeriT
 

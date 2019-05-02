@@ -1,10 +1,9 @@
 package gapt.formats.llk
 
-import gapt.expr.{ Formula, Expr }
+import gapt.expr.{ Expr }
 import gapt.proofs.lk.LKProof
-
 import ammonite.ops._
-
+import gapt.expr.formula.Formula
 import gapt.formats.InputFile
 
 /**

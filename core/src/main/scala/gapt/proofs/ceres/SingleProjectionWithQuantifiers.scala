@@ -2,6 +2,9 @@
 package gapt.proofs.ceres
 
 import gapt.expr._
+import gapt.expr.formula.Formula
+import gapt.expr.util.freeVariables
+import gapt.expr.util.variables
 import gapt.proofs._
 import gapt.proofs.ceres.Pickrule._
 import gapt.proofs.lk._

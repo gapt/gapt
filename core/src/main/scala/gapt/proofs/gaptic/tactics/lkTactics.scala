@@ -1,8 +1,21 @@
 package gapt.proofs.gaptic.tactics
 
 import gapt.expr._
-import gapt.expr.hol.HOLPosition
-import gapt.expr.hol.instantiate
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.Top
+import gapt.expr.formula.hol.HOLPosition
+import gapt.expr.formula.hol.instantiate
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.logic.clauseSubsumption
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames

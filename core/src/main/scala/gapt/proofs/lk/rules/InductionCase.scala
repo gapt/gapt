@@ -2,8 +2,8 @@ package gapt.proofs.lk.rules
 
 import gapt.expr.Const
 import gapt.expr.Expr
-import gapt.expr.FunctionType
 import gapt.expr.Var
+import gapt.expr.ty.FunctionType
 import gapt.proofs.SequentIndex
 import gapt.proofs.lk.LKProof
 

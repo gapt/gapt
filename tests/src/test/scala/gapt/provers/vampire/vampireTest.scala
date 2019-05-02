@@ -2,6 +2,13 @@ package gapt.provers.vampire
 
 import gapt.examples.CountingEquivalence
 import gapt.expr._
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Top
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFunction
+import gapt.expr.formula.fol.FOLVar
 import gapt.proofs.Clause
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent

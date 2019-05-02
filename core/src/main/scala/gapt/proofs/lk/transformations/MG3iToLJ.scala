@@ -1,8 +1,8 @@
 package gapt.proofs.lk.transformations
 
-import gapt.expr.Bottom
-import gapt.expr.Formula
-import gapt.expr.Top
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Top
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule

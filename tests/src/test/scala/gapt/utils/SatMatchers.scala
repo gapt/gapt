@@ -1,6 +1,6 @@
 package gapt.utils
 
-import gapt.expr.Formula
+import gapt.expr.formula.Formula
 import gapt.proofs.HOLSequent
 import gapt.provers.escargot.Escargot
 import gapt.provers.renameConstantsToFi

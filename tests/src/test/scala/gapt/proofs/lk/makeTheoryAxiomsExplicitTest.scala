@@ -1,7 +1,7 @@
 package gapt.proofs.lk
 
 import gapt.examples.tape
-import gapt.expr.hol.universalClosure
+import gapt.expr.formula.hol.universalClosure
 import gapt.proofs.SequentMatchers
 import gapt.proofs.context.facet.ProofDefinitions
 import gapt.proofs.context.facet.ProofNames

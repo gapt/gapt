@@ -1,7 +1,7 @@
 package gapt.formats.babel
 
 import gapt.expr.Const
-import gapt.expr.LogicalC
+import gapt.expr.formula.constants.LogicalC
 import gapt.proofs.context.Context
 import gapt.proofs.context.State
 import gapt.proofs.context.facet.Facet

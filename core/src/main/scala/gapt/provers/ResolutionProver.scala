@@ -1,6 +1,8 @@
 package gapt.provers
 
 import gapt.expr._
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Formula
 import gapt.proofs.expansion.ExpansionProof
 import gapt.proofs.expansion.ExpansionProofToLK
 import gapt.proofs.expansion.deskolemizeET

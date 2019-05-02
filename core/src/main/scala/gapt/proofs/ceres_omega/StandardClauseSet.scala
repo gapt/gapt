@@ -7,6 +7,8 @@ package gapt.proofs.ceres_omega
 
 import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.expr._
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Top
 import gapt.proofs.ceres._
 
 object StandardClauseSet extends StandardClauseSet

@@ -1,10 +1,9 @@
 package gapt.examples.prime
 
-import gapt.expr.ExpressionParseHelper.Splice
 import gapt.expr._
+import gapt.expr.util.ExpressionParseHelper.Splice
 import gapt.formats.babel.Notation
 import gapt.formats.babel.Precedence
-import gapt.proofs.context.Context
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
 import gapt.proofs.gaptic.TacticsProof

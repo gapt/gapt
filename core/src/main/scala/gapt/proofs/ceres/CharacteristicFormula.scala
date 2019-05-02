@@ -1,7 +1,23 @@
 package gapt.proofs.ceres
 
 import gapt.expr._
-import gapt.expr.hol.toNNF
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Iff
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.Top
+import gapt.expr.formula.constants.ExistsC
+import gapt.expr.formula.constants.ForallC
+import gapt.expr.formula.constants.QuantifierC
+import gapt.expr.util.freeVariables
+import gapt.logic.hol.toNNF
 import gapt.proofs.Sequent
 import gapt.proofs.context.mutable.MutableContext
 

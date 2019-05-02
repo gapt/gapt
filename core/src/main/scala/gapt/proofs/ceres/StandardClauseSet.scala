@@ -7,6 +7,9 @@ package gapt.proofs.ceres
 
 import gapt.proofs.{ HOLClause, Sequent, SetSequent }
 import gapt.expr._
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Top
 
 /**
  * Calculates the characteristic clause set

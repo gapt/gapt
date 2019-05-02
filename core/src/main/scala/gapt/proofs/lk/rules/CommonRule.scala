@@ -1,6 +1,6 @@
 package gapt.proofs.lk.rules
 
-import gapt.expr.Formula
+import gapt.expr.formula.Formula
 import gapt.proofs.ContextRule
 import gapt.proofs.lk.LKProof
 

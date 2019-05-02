@@ -1,8 +1,9 @@
 package gapt.proofs.expansion
 
 import gapt.examples.CountingEquivalence
-import gapt.expr.Polarity.{ Negative, Positive }
+import gapt.logic.Polarity.{ Negative, Positive }
 import gapt.expr._
+import gapt.logic.Polarity
 import gapt.proofs.Sequent
 import gapt.provers.escargot.Escargot
 import gapt.utils.SatMatchers

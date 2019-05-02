@@ -1,6 +1,16 @@
 package gapt.proofs.lk.transformations
 
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.subst.Substitution
+import gapt.logic.Polarity
 import gapt.proofs.Ant
 import gapt.proofs.ProofBuilder
 import gapt.proofs.SequentIndex

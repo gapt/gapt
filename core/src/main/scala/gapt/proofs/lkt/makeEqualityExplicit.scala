@@ -1,6 +1,12 @@
 package gapt.proofs.lkt
 
-import gapt.expr.{ All, BetaReduction, Eq, Expr, Formula, Ty, Var, freeVariables, rename }
+import gapt.expr.formula.All
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
+import gapt.expr.ty.Ty
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.expr.{ BetaReduction, Expr, Var }
 
 import scala.collection.mutable
 

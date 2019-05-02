@@ -1,6 +1,6 @@
 package gapt.provers.viper.spind
 
-import gapt.expr.{ Atom, Const, Formula, Neg, Var, constants }
+import gapt.expr.formula._
 import gapt.proofs.lk.LKProof
 import gapt.proofs.{ Sequent, withSection }
 import gapt.proofs.context.mutable.MutableContext
@@ -8,8 +8,7 @@ import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.macros.WeakeningContractionMacroRule
 import gapt.proofs.resolution.{ ResolutionToLKProof, mapInputClauses, structuralCNF }
 import gapt.provers.escargot.Escargot
-import gapt.provers.escargot.impl.Cls
-import gapt.provers.viper.aip.axioms.{ Axiom, StandardInductionAxioms }
+import gapt.provers.viper.aip.axioms.Axiom
 
 object SuperpositionInductionProver extends SuperpositionInductionProver
 

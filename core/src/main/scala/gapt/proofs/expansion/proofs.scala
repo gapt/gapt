@@ -1,6 +1,10 @@
 package gapt.proofs.expansion
 
+import gapt.expr.VarOrConst
 import gapt.expr._
+import gapt.expr.subst.Substitution
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.formats.babel.BabelSignature
 import gapt.proofs.context.Context
 import gapt.proofs.{ Checkable, HOLSequent, Sequent }

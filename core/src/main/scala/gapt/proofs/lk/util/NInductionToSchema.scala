@@ -1,6 +1,11 @@
 package gapt.proofs.lk.util
 
 import gapt.expr._
+import gapt.expr.formula.Formula
+import gapt.expr.ty.FunctionType
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.expr.util.syntacticMatching
 import gapt.proofs.SequentConnector
 import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.context.mutable.MutableContext

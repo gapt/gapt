@@ -1,8 +1,8 @@
 package gapt.grammars
 
 import gapt.expr._
-import gapt.expr.fol.{ folSubTerms, folTermSize }
-import gapt.expr.hol.atoms
+import gapt.expr.formula.fol.{ folSubTerms, folTermSize }
+import gapt.expr.formula.hol.atoms
 import gapt.formats.babel.{ BabelExporter, MapBabelSignature, Precedence }
 import gapt.grammars.InductionGrammar._
 import gapt.proofs.Checkable
@@ -10,6 +10,17 @@ import gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import gapt.utils.{ Doc, NameGenerator }
 import cats.instances.list._
 import cats.syntax.traverse._
+import gapt.expr.VarOrConst
+import gapt.expr.formula.And
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Or
+import gapt.expr.subst.Substitution
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.Ty
+import gapt.expr.util.constants
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.proofs.context.Context
 
 case class InductionGrammar(

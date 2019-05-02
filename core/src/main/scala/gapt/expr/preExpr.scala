@@ -1,14 +1,29 @@
 package gapt.expr
 
-import gapt.formats.babel.{ BabelSignature, Notation }
-import gapt.utils.NameGenerator
-import gapt.{ expr => real }
 import cats.Monad
 import cats.data.StateT
-import cats.syntax.traverse._
-import cats.syntax.either._
-import cats.instances.list._
 import cats.instances.either._
+import cats.instances.list._
+import cats.syntax.either._
+import cats.syntax.traverse._
+import gapt.expr
+import gapt.expr.formula.constants.AndC
+import gapt.expr.formula.constants.EqC
+import gapt.expr.formula.constants.ExistsC
+import gapt.expr.formula.constants.ForallC
+import gapt.expr.formula.constants.ImpC
+import gapt.expr.formula.constants.MonomorphicLogicalC
+import gapt.expr.formula.constants.NegC
+import gapt.expr.formula.constants.OrC
+import gapt.expr.ty.->:
+import gapt.expr.ty.TBase
+import gapt.expr.ty.TVar
+import gapt.expr.ty.Ty
+import gapt.expr.util.freeVariables
+import gapt.formats.babel.BabelSignature
+import gapt.formats.babel.Notation
+import gapt.utils.NameGenerator
+import gapt.{ expr => real }
 
 import scala.collection.mutable
 
@@ -86,44 +101,44 @@ object preExpr {
   def Eq( a: Expr, b: Expr ) = {
     val argType = freshMetaType()
     val eqType = ArrType( argType, ArrType( argType, Bool ) )
-    App( App( Ident( real.EqC.name, eqType, Some( List( argType ) ) ), a ), b )
+    App( App( Ident( EqC.name, eqType, Some( List( argType ) ) ), a ), b )
   }
 
-  def Top = QuoteBlackbox( real.Top() )
-  def Bottom = QuoteBlackbox( real.Bottom() )
+  def Top = QuoteBlackbox( formula.Top() )
+  def Bottom = QuoteBlackbox( formula.Bottom() )
 
-  def UnaryConn( c: real.MonomorphicLogicalC ): Expr => Expr = a => App( QuoteBlackbox( c() ), a )
-  def Neg = UnaryConn( real.NegC )
+  def UnaryConn( c: MonomorphicLogicalC ): Expr => Expr = a => App( QuoteBlackbox( c() ), a )
+  def Neg = UnaryConn( NegC )
 
-  def BinaryConn( c: real.MonomorphicLogicalC ): ( Expr, Expr ) => Expr = ( a, b ) =>
+  def BinaryConn( c: MonomorphicLogicalC ): ( Expr, Expr ) => Expr = ( a, b ) =>
     App( App( QuoteBlackbox( c() ), a ), b )
-  def And = BinaryConn( real.AndC )
-  def Or = BinaryConn( real.OrC )
+  def And = BinaryConn( AndC )
+  def Or = BinaryConn( OrC )
   def Iff( a: Expr, b: Expr ) = And( Imp( a, b ), Imp( b, a ) )
-  def Imp = BinaryConn( real.ImpC )
+  def Imp = BinaryConn( ImpC )
 
   def Quant( name: String ): ( Ident, Expr ) => Expr = ( v, sub ) => {
     val quantTy = freshMetaType()
     App( Ident( name, ArrType( ArrType( quantTy, Bool ), Bool ), Some( List( quantTy ) ) ), Abs( v, sub ) )
   }
-  def Ex = Quant( real.ExistsC.name )
-  def All = Quant( real.ForallC.name )
+  def Ex = Quant( ExistsC.name )
+  def All = Quant( ForallC.name )
 
-  def liftTypePoly( t: real.Ty, ps: List[real.Ty] ) = {
-    val vars = mutable.Map[real.TVar, Type]()
-    def lift( t: real.Ty ): Type = t match {
-      case t: real.TVar               => vars.getOrElseUpdate( t, freshMetaType() )
-      case real.TBase( name, params ) => BaseType( name, params.map( lift ) )
-      case real.`->:`( in, out )      => ArrType( lift( in ), lift( out ) )
+  def liftTypePoly( t: Ty, ps: List[Ty] ) = {
+    val vars = mutable.Map[TVar, Type]()
+    def lift( t: Ty ): Type = t match {
+      case t: TVar                       => vars.getOrElseUpdate( t, freshMetaType() )
+      case real.ty.TBase( name, params ) => BaseType( name, params.map( lift ) )
+      case ->:( in, out )                => ArrType( lift( in ), lift( out ) )
     }
     val res = ( lift( t ), ps.map( lift ) )
     res
   }
 
-  def liftTypeMono( t: real.Ty ): Type = t match {
-    case real.TVar( name )          => VarType( name )
-    case real.TBase( name, params ) => BaseType( name, params.map( liftTypeMono ) )
-    case real.`->:`( in, out )      => ArrType( liftTypeMono( in ), liftTypeMono( out ) )
+  def liftTypeMono( t: Ty ): Type = t match {
+    case real.ty.TVar( name )          => VarType( name )
+    case real.ty.TBase( name, params ) => BaseType( name, params.map( liftTypeMono ) )
+    case ->:( in, out )                => ArrType( liftTypeMono( in ), liftTypeMono( out ) )
   }
 
   def QuoteBlackbox( e: real.Expr ) =
@@ -131,7 +146,7 @@ object preExpr {
 
   def QuoteWhitebox( e: real.Expr ) =
     Quoted( e, liftTypeMono( e.ty ),
-      real.freeVariables( e ).
+      freeVariables( e ).
         map { case real.Var( name, ty ) => name -> liftTypeMono( ty ) }.
         toMap )
 
@@ -440,9 +455,9 @@ object preExpr {
     }.toSet
   }
 
-  def toRealType( ty: Type, assg: Map[MetaTypeIdx, Type] ): real.Ty = ty match {
-    case BaseType( name, params ) => real.TBase( name, params.map( toRealType( _, assg ) ) )
-    case VarType( name )          => real.TVar( name )
+  def toRealType( ty: Type, assg: Map[MetaTypeIdx, Type] ): Ty = ty match {
+    case BaseType( name, params ) => TBase( name, params.map( toRealType( _, assg ) ) )
+    case VarType( name )          => expr.ty.TVar( name )
     case ArrType( a, b )          => toRealType( a, assg ) ->: toRealType( b, assg )
     case MetaType( idx )          => toRealType( assg( idx ), assg )
   }

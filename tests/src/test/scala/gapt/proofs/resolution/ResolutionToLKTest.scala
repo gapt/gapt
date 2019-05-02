@@ -2,7 +2,14 @@ package gapt.proofs.resolution
 
 import gapt.examples.{ BussTautology, CountingEquivalence }
 import gapt.expr._
-import gapt.expr.fol.{ naive, thresholds }
+import gapt.expr.formula.All
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLAtomConst
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLVar
+import gapt.expr.formula.fol.{ naive, thresholds }
+import gapt.expr.subst.FOLSubstitution
+import gapt.expr.subst.Substitution
 import gapt.proofs.lk._
 import gapt.proofs._
 import gapt.proofs.lk.rules.LogicalAxiom

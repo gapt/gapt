@@ -1,7 +1,15 @@
 package gapt.proofs.hoare
 
 import gapt.expr._
-import gapt.expr.fol.Utils.numeral
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Eq
+import gapt.expr.formula.fol.FOLFormula
+import gapt.expr.formula.fol.FOLFunction
+import gapt.expr.formula.fol.FOLTerm
+import gapt.expr.formula.fol.FOLVar
+import gapt.expr.formula.fol.Utils.numeral
+import gapt.expr.subst.FOLSubstitution
 import gapt.proofs.HOLSequent
 
 object unrollLoop {

@@ -3,6 +3,9 @@ package gapt.proofs.ceres
 import gapt.expr.Apps
 import gapt.expr.Const
 import gapt.expr._
+import gapt.expr.formula.And
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofDefinitions

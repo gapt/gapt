@@ -1,6 +1,6 @@
 package gapt.proofs.lk.transformations
 
-import gapt.expr.isConstructorForm
+import gapt.expr.util.isConstructorForm
 import gapt.proofs.SequentIndex
 import gapt.proofs.context.Context
 import gapt.proofs.lk.LKProof

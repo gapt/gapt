@@ -1,31 +1,32 @@
 package gapt.formats.tip.export
 
-import gapt.expr.hol.SkolemFunctions
-import gapt.expr.And
-import gapt.expr.AndC
 import gapt.expr.Const
-import gapt.expr.EqC
-import gapt.expr.ExistsC
-import gapt.expr.ForallC
-import gapt.expr.Formula
-import gapt.expr.FunctionType
-import gapt.expr.ImpC
-import gapt.expr.NegC
-import gapt.expr.OrC
-import gapt.expr.TBase
-import gapt.expr.TVar
-import gapt.expr.Ty
-import gapt.formats.tip.parser.TipSmtProblem
-import gapt.formats.tip.parser.toSExpression
-import gapt.formats.tip.util.TipNameGenerator
+import gapt.expr.formula.And
+import gapt.expr.formula.Formula
+import gapt.expr.formula.constants.AndC
+import gapt.expr.formula.constants.EqC
+import gapt.expr.formula.constants.ExistsC
+import gapt.expr.formula.constants.ForallC
+import gapt.expr.formula.constants.ImpC
+import gapt.expr.formula.constants.NegC
+import gapt.expr.formula.constants.OrC
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.TBase
+import gapt.expr.ty.TVar
+import gapt.expr.ty.Ty
 import gapt.formats.tip.TipConstructor
 import gapt.formats.tip.TipDatatype
 import gapt.formats.tip.TipProblem
+import gapt.formats.tip.parser.TipSmtProblem
+import gapt.formats.tip.parser.toSExpression
+import gapt.formats.tip.util.TipNameGenerator
+import gapt.logic.hol.SkolemFunctions
 import gapt.proofs.context.Context
-import gapt.proofs.context.facet.Definitions
 import gapt.proofs.context.facet.BaseTypes
+import gapt.proofs.context.facet.Definitions
 import gapt.proofs.context.facet.StructurallyInductiveTypes
-import gapt.proofs.{ HOLSequent, Sequent }
+import gapt.proofs.HOLSequent
+import gapt.proofs.Sequent
 import gapt.utils.Doc
 
 package object export {

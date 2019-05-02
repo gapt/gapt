@@ -1,9 +1,29 @@
 package gapt.grammars
 
 import gapt.expr._
-import gapt.expr.fol.folSubTerms
-import gapt.expr.fol.thresholds._
-import gapt.expr.hol.{ atoms, lcomp, simplify, toNNF }
+import gapt.expr.formula.And
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Or
+import gapt.expr.formula.Top
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLTerm
+import gapt.expr.formula.fol.FOLVar
+import gapt.expr.formula.fol.folSubTerms
+import gapt.expr.formula.fol.thresholds._
+import gapt.expr.formula.hol.{ atoms, lcomp }
+import gapt.expr.subst.PreSubstitution
+import gapt.expr.ty.TBase
+import gapt.expr.ty.Ti
+import gapt.expr.util.LambdaPosition
+import gapt.expr.util.constants
+import gapt.expr.util.expressionSize
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.expr.util.syntacticMatching
+import gapt.logic.hol.simplify
+import gapt.logic.hol.toNNF
 import gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import gapt.utils.{ Logger, UNone, UOption, USome }
 

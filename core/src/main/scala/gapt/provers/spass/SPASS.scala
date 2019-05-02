@@ -3,7 +3,26 @@ package gapt.provers.spass
 import java.io.IOException
 
 import gapt.expr._
-import gapt.expr.hol.universalClosure
+import gapt.expr.formula.All
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.constants.EqC
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFunction
+import gapt.expr.formula.fol.FOLPartialAtom
+import gapt.expr.formula.fol.FOLPartialTerm
+import gapt.expr.formula.fol.FOLTerm
+import gapt.expr.formula.fol.FOLVar
+import gapt.expr.formula.hol.universalClosure
+import gapt.expr.subst.FOLSubstitution
+import gapt.expr.ty.Ti
+import gapt.expr.util.constants
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.logic.clauseSubsumption
 import gapt.proofs._
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.resolution.{ AvatarNegNonGroundComp, AvatarNonGroundComp, ResolutionProof, fixDerivation }

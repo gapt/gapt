@@ -1,6 +1,6 @@
 package gapt.proofs.context.update
 
-import gapt.expr.TBase
+import gapt.expr.ty.TBase
 
 /**
  * Represents the definition of a base type ( uninterpreted base type,

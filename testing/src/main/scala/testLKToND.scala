@@ -1,7 +1,7 @@
 package gapt.testing
 
 import ammonite.ops.FilePath
-import gapt.expr.hol.containsQuantifierOnLogicalLevel
+import gapt.expr.formula.hol.containsQuantifierOnLogicalLevel
 import gapt.formats.tptp.TptpImporter
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion.ExpansionProofToLK

@@ -1,6 +1,7 @@
 package gapt.proofs
 
 import gapt.expr._
+import gapt.expr.ty.Ti
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext

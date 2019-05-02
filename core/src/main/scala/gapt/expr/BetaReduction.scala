@@ -1,9 +1,16 @@
 package gapt.expr
 
-import gapt.expr.hol.universalClosure
-import gapt.proofs.context.{ Context, State }
+import gapt.proofs.context.State
 import gapt.proofs.context.update.Update
 import gapt.proofs.context.facet.Reductions
+import gapt.expr.formula.And
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol.universalClosure
+import gapt.expr.subst.Substitution
+import gapt.expr.util.freeVariables
+import gapt.expr.util.syntacticMatching
+import gapt.proofs.context.Context
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -24,7 +31,7 @@ case class ReductionRule( lhs: Expr, rhs: Expr ) extends Update {
   }
 
   val Apps( lhsHead @ Const( lhsHeadName, _, _ ), lhsArgs ) = lhs
-  val lhsArgsSize = lhsArgs.size
+  val lhsArgsSize: Int = lhsArgs.size
 
   val isNonLinear: Boolean = {
     val seen = mutable.Set[Var]()
@@ -126,7 +133,7 @@ object Positions {
 }
 
 case class Normalizer( rules: Set[ReductionRule] ) {
-  val headMap = Map() ++ rules.groupBy( _.lhsHeadName ).mapValues { rs =>
+  val headMap: Map[String, ( Set[ReductionRule], Set[Int], Set[Int] )] = Map() ++ rules.groupBy( _.lhsHeadName ).mapValues { rs =>
     val normalizeArgs = rs.flatMap( _.normalizeArgs )
     val whnfArgs = rs.flatMap( _.whnfArgs ) -- normalizeArgs
     ( rs, whnfArgs, normalizeArgs )
@@ -135,7 +142,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
   def +( rule: ReductionRule ): Normalizer =
     Normalizer( rules + rule )
 
-  def toFormula = And( rules.map { case ReductionRule( lhs, rhs ) => universalClosure( lhs === rhs ) } )
+  def toFormula: Formula = And( rules.map { case ReductionRule( lhs, rhs ) => universalClosure( lhs === rhs ) } )
 
   def normalize( expr: Expr ): Expr = {
     val Apps( hd_, as_ ) = whnf( expr )

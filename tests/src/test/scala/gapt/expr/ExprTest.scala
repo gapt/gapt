@@ -1,5 +1,30 @@
 package gapt.expr
 
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Top
+import gapt.expr.formula.constants.AndC
+import gapt.expr.formula.constants.ForallC
+import gapt.expr.formula.constants.LogicalConstant
+import gapt.expr.formula.constants.TopC
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFormula
+import gapt.expr.formula.fol.FOLFormulaWithBoundVar
+import gapt.expr.formula.fol.FOLFunction
+import gapt.expr.formula.fol.FOLHeadType
+import gapt.expr.formula.fol.FOLPartialAtom
+import gapt.expr.formula.fol.FOLPartialFormula
+import gapt.expr.formula.fol.FOLTerm
+import gapt.expr.formula.fol.FOLVar
+import gapt.expr.ty.->:
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
+import gapt.expr.util.constants
+import gapt.expr.util.freeVariables
+import gapt.expr.util.variables
 import org.specs2.mutable._
 
 class ExprTest extends Specification {

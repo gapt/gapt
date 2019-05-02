@@ -1,12 +1,31 @@
 package gapt.formats.leancop
 
 import gapt.expr._
-import gapt.expr.fol._
-import gapt.expr.hol._
+import gapt.expr.formula.fol._
+import gapt.expr.formula.hol._
 import gapt.proofs.expansion.{ ExpansionSequent, ExpansionTree, formulaToExpansionTree }
 import java.io.{ FileReader, Reader, StringReader }
 
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFormula
+import gapt.expr.formula.fol.FOLFunction
+import gapt.expr.formula.fol.FOLTerm
+import gapt.expr.formula.fol.FOLVar
+import gapt.expr.subst.FOLSubstitution
+import gapt.expr.util.freeVariables
 import gapt.formats.InputFile
+import gapt.logic.Polarity
+import gapt.logic.clauseSubsumption
+import gapt.logic.hol.CNFn
+import gapt.logic.hol.DNFp
+import gapt.logic.hol.toNNF
 
 import scala.util.parsing.combinator._
 import scala.collection.immutable.HashMap

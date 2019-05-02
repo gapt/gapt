@@ -1,5 +1,12 @@
 package gapt.expr
 
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFunction
+import gapt.expr.formula.fol.FOLVar
+import gapt.expr.subst.Substitution
+import gapt.expr.ty.TBase
+import gapt.expr.ty.TVar
 import gapt.proofs.resolution._
 import gapt.proofs.{ Ant, Clause, Suc }
 import org.specs2.mutable._

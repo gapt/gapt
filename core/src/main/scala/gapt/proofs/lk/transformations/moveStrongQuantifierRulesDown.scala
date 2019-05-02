@@ -1,11 +1,11 @@
 package gapt.proofs.lk.transformations
 
-import gapt.expr.All
-import gapt.expr.Ex
-import gapt.expr.Substitution
 import gapt.expr.Var
-import gapt.expr.hol.instantiate
-import gapt.expr.rename
+import gapt.expr.formula.All
+import gapt.expr.formula.Ex
+import gapt.expr.formula.hol.instantiate
+import gapt.expr.subst.Substitution
+import gapt.expr.util.rename
 import gapt.proofs.Ant
 import gapt.proofs.Sequent
 import gapt.proofs.SequentConnector

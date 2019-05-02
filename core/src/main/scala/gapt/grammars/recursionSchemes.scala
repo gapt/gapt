@@ -1,9 +1,37 @@
 package gapt.grammars
 
-import gapt.expr.fol._
+import gapt.expr.formula.fol._
 import gapt.expr._
-import gapt.expr.hol._
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.Top
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLFormula
+import gapt.expr.formula.fol.FOLVar
+import gapt.expr.formula.hol._
+import gapt.expr.subst.FOLSubstitution
+import gapt.expr.subst.Substitution
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.TBase
+import gapt.expr.ty.To
+import gapt.expr.ty.arity
+import gapt.expr.util.constants
+import gapt.expr.util.expressionSize
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.expr.util.subTerms
+import gapt.expr.util.syntacticMGU
+import gapt.expr.util.syntacticMatching
 import gapt.formats.babel.{ BabelExporter, BabelSignature, MapBabelSignature, Precedence }
+import gapt.logic.hol.simplify
+import gapt.logic.hol.toNNF
 import gapt.proofs.context.Context
 import gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import gapt.utils.{ Doc, Logger }

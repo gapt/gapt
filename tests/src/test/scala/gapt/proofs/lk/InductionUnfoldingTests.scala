@@ -1,6 +1,7 @@
 package gapt.proofs.lk
 
 import gapt.expr._
+import gapt.expr.subst.Substitution
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.gaptic.{ ProofState, _ }
 import gapt.proofs.Sequent

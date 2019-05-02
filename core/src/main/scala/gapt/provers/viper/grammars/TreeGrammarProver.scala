@@ -1,13 +1,25 @@
 package gapt.provers.viper.grammars
 
 import gapt.expr._
-import gapt.expr.fol.{ folSubTerms, folTermSize }
-import gapt.expr.hol._
+import gapt.expr.formula.All
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.fol.{ folSubTerms, folTermSize }
+import gapt.expr.formula.hol._
+import gapt.expr.subst.Substitution
+import gapt.expr.ty.TBase
+import gapt.expr.ty.To
+import gapt.expr.ty.Ty
+import gapt.expr.util.expressionSize
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.formats.babel.BabelSignature
 import gapt.formats.latex.LatexExporter
 import gapt.formats.smt.SmtLibExporter
 import gapt.grammars.{ InductionGrammar, findMinimalInductionGrammar }
 import gapt.grammars.InductionGrammar.Production
+import gapt.logic.hol.CNFp
+import gapt.logic.hol.skolemize
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.{ BaseTypes, StructurallyInductiveTypes }
 import gapt.proofs.context.mutable.MutableContext

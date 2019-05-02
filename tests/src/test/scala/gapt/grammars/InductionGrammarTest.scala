@@ -1,6 +1,9 @@
 package gapt.grammars
 
 import gapt.expr._
+import gapt.expr.formula.And
+import gapt.expr.ty.TBase
+import gapt.expr.ty.Ti
 import gapt.grammars.InductionGrammar.Production
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.InductiveType

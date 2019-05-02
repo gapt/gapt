@@ -1,6 +1,6 @@
 package gapt
 
-import gapt.expr.{ Expr, Formula }
+import gapt.expr.Expr
 import gapt.formats.latex.LatexExporter
 import gapt.formats.llk.ExtendedProofDatabase
 import gapt.proofs.ceres.Struct

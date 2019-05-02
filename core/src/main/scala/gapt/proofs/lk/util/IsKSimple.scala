@@ -2,9 +2,9 @@ package gapt.proofs.lk.util
 
 import gapt.expr.Const
 import gapt.expr.Expr
-import gapt.expr.TArr
-import gapt.expr.TBase
-import gapt.expr.Ty
+import gapt.expr.ty.TArr
+import gapt.expr.ty.TBase
+import gapt.expr.ty.Ty
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.InductionRule

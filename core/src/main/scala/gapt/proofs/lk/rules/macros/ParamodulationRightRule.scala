@@ -1,7 +1,7 @@
 package gapt.proofs.lk.rules.macros
 
 import gapt.expr.Abs
-import gapt.expr.Formula
+import gapt.expr.formula.Formula
 import gapt.proofs.Ant
 import gapt.proofs.IndexOrFormula
 import gapt.proofs.lk.LKProof

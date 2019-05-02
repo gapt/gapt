@@ -2,7 +2,10 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
-import gapt.expr.fol._
+import gapt.expr.formula.Eq
+import gapt.expr.formula.fol._
+import gapt.expr.subst.Substitution
+import gapt.logic.Polarity
 
 /**
  * Given an expansion sequent S which is a tautology modulo symmetry of equality,

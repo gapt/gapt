@@ -2,9 +2,21 @@ package gapt.provers.slakje
 
 import ammonite.ops.FilePath
 import gapt.expr._
-import gapt.expr.fol.folSubTerms
-import gapt.expr.hol.{ atoms, containsQuantifierOnLogicalLevel, isOrevkovClass1 }
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.fol.folSubTerms
+import gapt.expr.formula.hol.{ atoms, containsQuantifierOnLogicalLevel }
+import gapt.expr.subst.Substitution
+import gapt.expr.ty.Ty
+import gapt.expr.util.boundVariables
 import gapt.formats.tptp.{ TptpImporter, sequentProofToTptp }
+import gapt.logic.Polarity
+import gapt.logic.hol.isOrevkovClass1
 import gapt.proofs.HOLSequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext

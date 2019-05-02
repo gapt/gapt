@@ -1,6 +1,6 @@
 package gapt.proofs
 
-import gapt.expr.Polarity
+import gapt.logic.Polarity
 
 package object lkt extends ImplicitInstances {
 

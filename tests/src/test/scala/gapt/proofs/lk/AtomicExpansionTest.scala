@@ -1,6 +1,15 @@
 package gapt.proofs.lk
 
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Top
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLAtomConst
+import gapt.expr.formula.fol.FOLVar
 import gapt.proofs._
 import gapt.proofs.lk.util.AtomicExpansion
 import org.specs2.mutable._

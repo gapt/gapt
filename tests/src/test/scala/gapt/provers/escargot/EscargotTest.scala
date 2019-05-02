@@ -1,9 +1,9 @@
 package gapt.provers.escargot
 
 import gapt.examples.{ BussTautology, CountingEquivalence, Permutations, PigeonHolePrinciple }
-import gapt.expr.fol.{ naive, thresholds }
+import gapt.expr.formula.fol.{ naive, thresholds }
 import gapt.expr._
-import gapt.expr.hol.existentialClosure
+import gapt.expr.formula.hol.existentialClosure
 import gapt.formats.babel.BabelParser
 import gapt.proofs.Sequent
 import gapt.proofs.context.mutable.MutableContext

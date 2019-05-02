@@ -1,8 +1,8 @@
 package gapt.formats.tip
 
 import gapt.expr.Const
-import gapt.expr.TBase
-import gapt.expr.hol.instantiate
+import gapt.expr.formula.hol.instantiate
+import gapt.expr.ty.TBase
 import gapt.formats.ClasspathInputFile
 import gapt.provers.escargot.Escargot
 import org.specs2.mutable.Specification

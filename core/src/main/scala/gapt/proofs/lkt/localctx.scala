@@ -1,7 +1,16 @@
 package gapt.proofs.lkt
 
 import gapt.expr._
-import gapt.expr.hol.instantiate
+import gapt.expr.formula.And
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.hol.instantiate
+import gapt.expr.subst.Substitution
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
 import gapt.proofs.{ HOLSequent, Sequent }
 
 object BinConn {
@@ -15,7 +24,7 @@ object BinConn {
 }
 
 case class LocalCtx( hyps: Map[Hyp, Formula], subst: Substitution ) extends ALCtx[LocalCtx] {
-  import ExprSubstWithβ._
+  import gapt.expr.subst.ExprSubstWithβ._
 
   def toSequent: HOLSequent = Sequent { for ( ( h, f ) <- hyps ) yield f -> h.polarity }
 

@@ -1,6 +1,14 @@
 package gapt
 
 import gapt.expr._
+import gapt.expr.formula.And
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.FOLFormula
 
 package object proofs {
 

@@ -2,13 +2,30 @@ package gapt.formats.llk
 
 import gapt.proofs.HOLSequent
 import gapt.formats.llk.ast.LambdaAST
-import gapt.expr.hol._
+import gapt.expr.formula.hol._
 import gapt.expr._
 import gapt.expr.BetaReduction._
 import gapt.proofs.lk._
 
 import scala.annotation.tailrec
 import EquationVerifier._
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.hol.HOLFunction
+import gapt.expr.subst.Substitution
+import gapt.expr.ty.To
+import gapt.expr.ty.Ty
+import gapt.expr.util.freeVariables
+import gapt.expr.util.syntacticMatching
+import gapt.proofs.context.update.Definition
 import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.CutRule

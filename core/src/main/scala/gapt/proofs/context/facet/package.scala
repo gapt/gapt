@@ -1,6 +1,6 @@
 package gapt.proofs.context
 
-import gapt.expr.hol.SkolemFunctions
+import gapt.logic.hol.SkolemFunctions
 
 package object facet {
 

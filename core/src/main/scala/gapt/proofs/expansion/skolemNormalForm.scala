@@ -1,11 +1,23 @@
 package gapt.proofs.expansion
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Or
+import gapt.expr.formula.Top
+import gapt.expr.util.rename
+import gapt.expr.util.subTerms
 import gapt.utils.NameGenerator
 
 import scala.collection.mutable
 
 object tautAtomicExpansionET {
-  import Polarity._
+  import gapt.logic.Polarity._
   def apply( formula: Formula )( implicit nameGen: NameGenerator ): ( ExpansionTree, ExpansionTree ) = {
     val ( f1, f2 ) = asTerm( formula )
     ExpansionTree( formula, InAntecedent, f1 ) -> ExpansionTree( formula, InSuccedent, f2 )

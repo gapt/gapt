@@ -1,11 +1,11 @@
 package gapt.proofs.lk.rules
 
 import gapt.expr.BetaReduction
-import gapt.expr.Ex
-import gapt.expr.Formula
-import gapt.expr.Substitution
 import gapt.expr.Var
-import gapt.expr.freeVariables
+import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
+import gapt.expr.subst.Substitution
+import gapt.expr.util.freeVariables
 import gapt.proofs.Ant
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent

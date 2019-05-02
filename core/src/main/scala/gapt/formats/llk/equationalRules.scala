@@ -5,7 +5,12 @@
 
 package gapt.formats.llk
 
-import gapt.expr.{ Substitution => SubstitutionLambda, rename => renameLambda, _ }
+import gapt.expr.util.freeVariables
+import gapt.expr._
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
+import gapt.expr.subst.{ Substitution => SubstitutionLambda, _ }
+import gapt.expr.util.{ rename => renameLambda }
 
 //TODO: perhaps there is a better place for this
 object EquationVerifier {

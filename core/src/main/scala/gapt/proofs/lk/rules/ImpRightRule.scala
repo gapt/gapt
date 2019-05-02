@@ -1,7 +1,7 @@
 package gapt.proofs.lk.rules
 
-import gapt.expr.Formula
-import gapt.expr.Imp
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
 import gapt.proofs.Ant
 import gapt.proofs.HOLSequent
 import gapt.proofs.IndexOrFormula

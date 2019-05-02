@@ -1,7 +1,9 @@
 package gapt.cutintro
 
 import gapt.expr._
-import gapt.expr.hol.lcomp
+import gapt.expr.formula.hol.lcomp
+import gapt.expr.subst.Substitution
+import gapt.expr.util.freeVariables
 import gapt.grammars.{ Pi2Grammar, Pi2PreGrammar, VtratgParameter, findMinimalPi2Grammar, findMinimalVTRATG }
 import gapt.proofs.Sequent
 import gapt.proofs.expansion.InstanceTermEncoding

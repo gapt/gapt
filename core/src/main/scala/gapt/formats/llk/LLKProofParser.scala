@@ -6,6 +6,9 @@ import gapt.proofs.HOLSequent
 import gapt.proofs.lk.LKProof
 import java.io.FileReader
 
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Formula
+import gapt.expr.ty.Ty
 import gapt.formats.InputFile
 
 import scala.collection.immutable.PagedSeq

@@ -1,8 +1,8 @@
 package gapt.proofs.context.update
 
-import gapt.expr.Eq
 import gapt.expr.Expr
 import gapt.expr.ReductionRule
+import gapt.expr.formula.Eq
 import gapt.expr.preExpr
 import gapt.formats.babel.BabelParser
 import gapt.proofs.context.Context

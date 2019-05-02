@@ -1,7 +1,12 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
-import gapt.expr.hol.lcomp
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol.lcomp
+import gapt.expr.util.freeVariables
+import gapt.logic.Polarity
 import gapt.proofs._
 import gapt.proofs.lk._
 import gapt.proofs.lk.rules.AndRightRule

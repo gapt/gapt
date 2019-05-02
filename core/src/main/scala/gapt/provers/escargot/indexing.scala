@@ -1,6 +1,9 @@
 package gapt.provers.escargot.impl
 import DiscrTree._
 import gapt.expr._
+import gapt.expr.ty.->:
+import gapt.expr.ty.TBase
+import gapt.expr.ty.TVar
 import gapt.utils._
 
 class TermString( private val stack: List[Any] ) extends AnyVal {

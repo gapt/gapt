@@ -1,8 +1,22 @@
 package gapt.provers.viper.grammars
 
 import gapt.expr._
-import gapt.expr.hol._
+import gapt.expr.formula.All
+import gapt.expr.formula.And
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol._
+import gapt.expr.subst.Substitution
+import gapt.expr.util.expressionSize
+import gapt.expr.util.freeVariables
+import gapt.expr.util.rename
+import gapt.expr.util.syntacticMGU
+import gapt.expr.util.syntacticMatching
 import gapt.grammars.{ RecSchemTemplate, RecursionScheme, Rule }
+import gapt.logic.hol.CNFp
+import gapt.logic.hol.simplify
+import gapt.logic.hol.skolemize
 import gapt.proofs._
 import gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
 import gapt.provers.Prover

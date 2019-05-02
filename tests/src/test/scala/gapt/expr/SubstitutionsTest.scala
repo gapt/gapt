@@ -5,8 +5,14 @@
 package gapt.expr
 
 import org.specs2.mutable._
-
 import BetaReduction._
+import gapt.expr.formula.All
+import gapt.expr.formula.fol.FOLFunctionConst
+import gapt.expr.subst.Substitution
+import gapt.expr.ty.TVar
+import gapt.expr.ty.Ti
+import gapt.expr.ty.To
+import gapt.expr.util.rename
 import org.specs2.execute.Success
 
 class SubstitutionsTest extends Specification {

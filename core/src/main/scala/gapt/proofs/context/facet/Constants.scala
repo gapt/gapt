@@ -1,9 +1,9 @@
 package gapt.proofs.context.facet
 
 import gapt.expr.Const
-import gapt.expr.Substitution
-import gapt.expr.TVar
-import gapt.expr.Ty
+import gapt.expr.subst.Substitution
+import gapt.expr.ty.TVar
+import gapt.expr.ty.Ty
 
 /** Constant symbols, including defined constants, constructors, etc. */
 case class Constants( constants: Map[String, Const] ) {

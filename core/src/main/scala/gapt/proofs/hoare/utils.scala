@@ -1,6 +1,15 @@
 package gapt.proofs.hoare
 
 import gapt.expr._
+import gapt.expr.formula.And
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.fol.FOLExpression
+import gapt.expr.formula.fol.FOLFormula
+import gapt.expr.formula.fol.FOLTerm
+import gapt.expr.formula.fol.FOLVar
+import gapt.expr.subst.FOLSubstitution
+import gapt.expr.util.freeVariables
 
 object usedVariables {
   def apply( p: Program ): List[FOLVar] = p match {

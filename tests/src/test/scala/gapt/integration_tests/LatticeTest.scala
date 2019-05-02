@@ -4,7 +4,7 @@
 package gapt.integration_tests
 
 import gapt.examples.lattice
-import gapt.expr.hol.isAtom
+import gapt.expr.formula.hol.isAtom
 import gapt.proofs.{ HOLClause, SequentMatchers }
 import gapt.proofs.ceres._
 import gapt.proofs.lk._

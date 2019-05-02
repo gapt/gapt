@@ -2,6 +2,8 @@ package gapt.provers.sat
 
 import gapt.examples.{ BussTautology, PigeonHolePrinciple }
 import gapt.expr._
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Top
 import org.specs2.mutable._
 
 class GlucoseTest extends Specification {

@@ -1,7 +1,9 @@
 package gapt.testing
 
 import ammonite.ops.FilePath
-import gapt.expr.{ All, Eq, Var }
+import gapt.expr.formula.All
+import gapt.expr.formula.Eq
+import gapt.expr.{ Var }
 import gapt.formats.tip.TipSmtImporter
 import gapt.proofs.gaptic.tactics.AnalyticInductionTactic
 import gapt.proofs.gaptic.{ ProofState, Tactic }
