@@ -63,6 +63,8 @@ case class ReductionRule( lhs: Expr, rhs: Expr ) extends Update {
 
   val allArgs: Set[Int] = lhsArgs.zipWithIndex.map( _._2 ).toSet
 
+  // Positions of arguments which do not change in recursive calls
+  // or None if there are no recursive calls on the rhs.
   val passiveArgs: Option[Set[Int]] = {
     def go( e: Expr ): Option[Set[Int]] =
       e match {
@@ -82,9 +84,12 @@ case class ReductionRule( lhs: Expr, rhs: Expr ) extends Update {
     go( rhs )
   }
 
+  // Positions of non-passive arguments which are not matched on or None if no recursive calls on the rhs.
   val accumulatorArgs: Option[Set[Int]] =
     passiveArgs.map( passive => lhsArgs.zipWithIndex.collect { case ( e, i ) if e.isInstanceOf[Var] => i }.toSet -- passive )
 
+  // Positions of non-passive, non-accumulator arguments, that is, args which are matched on in the lhs and
+  // change in the recursive calls on the rhs. Or None if no recursive calls on the rhs.
   val primaryArgs: Option[Set[Int]] =
     passiveArgs.flatMap( passive => accumulatorArgs.map( accumulator => ( allArgs -- accumulator ) -- passive ) )
 
@@ -107,6 +112,8 @@ case class Positions( rules: Set[ReductionRule] ) {
   val lhsHead: Const = rules.head.lhsHead
   val allArgs: Set[Int] = rules.head.allArgs
 
+  // Intersection of the different argument types, taking reduction rules without recursive calls into account
+  // by having them not restrict their arguments to any specific type.
   private def intersectArgs( rules: Set[ReductionRule], f: ReductionRule => Option[Set[Int]] ): Set[Int] =
     rules.foldLeft( allArgs )( ( args, rule ) => args.intersect( f( rule ).getOrElse( allArgs ) ) )
 
