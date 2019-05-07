@@ -1,6 +1,8 @@
 package gapt.formats.tip
 
 import gapt.expr._
+import gapt.expr.formula.All
+import gapt.expr.formula.Eq
 import gapt.expr.formula.Formula
 import gapt.expr.formula.hol.{ existentialClosure, universalClosure }
 import gapt.expr.ty.FunctionType
@@ -10,6 +12,7 @@ import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.ReductionRuleUpdate.reductionRulesAsReductionRuleUpdate
 
 case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
   val FunctionType( datatype, fieldTypes ) = constr.ty
@@ -38,10 +41,13 @@ case class TipDatatype( t: TBase, constructors: Seq[TipConstructor] ) {
 case class TipFun( fun: Const, definitions: Seq[Formula] )
 
 case class TipProblem(
-    ctx:   ImmutableContext,
-    sorts: Seq[TBase], datatypes: Seq[TipDatatype],
-    uninterpretedConsts: Seq[Const], functions: Seq[TipFun],
-    assumptions: Seq[Formula], goal: Formula ) {
+    ctx:                 ImmutableContext,
+    sorts:               Seq[TBase],
+    datatypes:           Seq[TipDatatype],
+    uninterpretedConsts: Seq[Const],
+    functions:           Seq[TipFun],
+    assumptions:         Seq[Formula],
+    goal:                Formula ) {
   def constructorInjectivity =
     for {
       TipDatatype( ty, ctrs ) <- datatypes
@@ -64,6 +70,21 @@ case class TipProblem(
       :+ goal )
 
   def context: ImmutableContext = ctx
+
+  def reductionRules: Seq[ReductionRule] = {
+    val destructorReductionRules = datatypes.flatMap {
+      _.constructors.flatMap { _.projectReductionRules }
+    }
+    val functionReductionRules = functions.flatMap {
+      case TipFun( functionConstant, definitions ) =>
+        definitions.flatMap {
+          case All.Block( xs, Eq( lhs @ Apps( f, _ ), rhs ) ) if f == functionConstant =>
+            Some( ReductionRule( lhs, rhs ) )
+          case _ => None
+        }
+    }
+    functionReductionRules ++ destructorReductionRules
+  }
 
   override def toString: String = toSequent.toSigRelativeString( context )
 }
