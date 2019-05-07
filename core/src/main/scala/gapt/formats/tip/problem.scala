@@ -83,7 +83,14 @@ case class TipProblem(
           case _ => None
         }
     }
-    functionReductionRules ++ destructorReductionRules
+    val definitionReductionRules = assumptions.flatMap {
+      case All.Block( _, Eq( lhs @ Apps( Const( _, _, _ ), _ ), rhs ) ) =>
+        Some( ReductionRule( lhs, rhs ) )
+      case _ => None
+    }
+    functionReductionRules ++
+      destructorReductionRules ++
+      definitionReductionRules
   }
 
   override def toString: String = toSequent.toSigRelativeString( context )
