@@ -8,7 +8,12 @@ import org.json4s.native.JsonMethods._
 
 import scala.concurrent.duration._
 import ammonite.ops._
+import gapt.expr.formula.{ All, Formula, Imp }
 import gapt.formats.tip.TipSmtImporter
+import gapt.proofs.expansion.ExpansionProofToLK
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.transformations.{ LKToExpansionProof, cleanStructuralRules, inductionNormalForm }
+import gapt.proofs.lk.util.extractInductionAxioms
 import gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, SequentialInductionAxioms }
 import gapt.provers.viper.{ AipOptions, Viper, ViperOptions }
 
@@ -22,6 +27,37 @@ object parseMode {
 }
 
 object testViper extends App {
+  def countInductions( prf: LKProof, axioms: Set[Formula] ): ( Int, Int ) = {
+    def go( prf: LKProof ): ( Int, Int ) = {
+      if ( prf.name == "cut" ) {
+        prf.immediateSubProofs.head.conclusion.succedent match {
+          case Seq( p ) if axioms.contains( p ) =>
+            val ( n, d ) = prf.immediateSubProofs.tail.map( go ).foldLeft( ( 0, 0 ) ) {
+              case ( ( l1, r1 ), ( l2, r2 ) ) => ( l1 + l2, r1 max r2 )
+            }
+
+            ( n + 1, d + 1 )
+          case _ =>
+            prf.immediateSubProofs.map( go ).foldLeft( ( 0, 0 ) ) {
+              case ( ( l1, r1 ), ( l2, r2 ) ) => ( l1 + l2, r1 max r2 )
+            }
+        }
+      } else {
+        prf.immediateSubProofs.map( go ).foldLeft( ( 0, 0 ) ) {
+          case ( ( l1, r1 ), ( l2, r2 ) ) => ( l1 + l2, r1 max r2 )
+        }
+      }
+    }
+
+    go( prf )
+  }
+
+  def cleanProof( prf: LKProof ): LKProof = {
+    val prf1 = cleanStructuralRules( prf )
+    val expPrf = LKToExpansionProof( prf1 )
+    ExpansionProofToLK( expPrf ).toOption.get
+  }
+
   val logger = Logger( "testViper" )
 
   val ( fileName, mode ) =
@@ -53,8 +89,18 @@ object testViper extends App {
     try logger.time( "viper" ) {
       withTimeout( 60 seconds ) {
         Viper( problem, options ) match {
-          case Some( _ ) => logger.metric( "status", "ok" )
-          case None      => logger.metric( "status", "saturated" )
+          case Some( prf1 ) =>
+            logger.metric( "status", "ok" )
+            val axioms = extractInductionAxioms( prf1 )( problem.ctx ).toSet
+            val ( inds1, depth1 ) = countInductions( prf1, axioms )
+            val prf2 = cleanProof( prf1 )
+            val ( inds2, depth2 ) = countInductions( prf2, axioms )
+
+            logger.metric( "inductions_init", inds1 )
+            logger.metric( "max_ind_depth_init", depth1 )
+            logger.metric( "inductions_clean", inds2 )
+            logger.metric( "max_ind_depth_clean", depth2 )
+          case None => logger.metric( "status", "saturated" )
         }
       }
     }
