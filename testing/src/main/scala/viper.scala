@@ -86,24 +86,33 @@ object testViper extends App {
 
     val options = parseMode( mode )
 
+    var prf: Option[LKProof] = None
+
     try logger.time( "viper" ) {
       withTimeout( 60 seconds ) {
         Viper( problem, options ) match {
           case Some( prf1 ) =>
             logger.metric( "status", "ok" )
-            val axioms = extractInductionAxioms( prf1 )( problem.ctx ).toSet
-            val ( inds1, depth1 ) = countInductions( prf1, axioms )
-            val prf2 = cleanProof( prf1 )
-            val ( inds2, depth2 ) = countInductions( prf2, axioms )
-
-            logger.metric( "inductions_init", inds1 )
-            logger.metric( "max_ind_depth_init", depth1 )
-            logger.metric( "inductions_clean", inds2 )
-            logger.metric( "max_ind_depth_clean", depth2 )
+            prf = Some( prf1 )
           case None => logger.metric( "status", "saturated" )
         }
       }
     }
+
+    prf match {
+      case None =>
+      case Some( prf1 ) =>
+        val axioms = extractInductionAxioms( prf1 )( problem.ctx ).toSet
+        val ( inds1, depth1 ) = countInductions( prf1, axioms )
+        val prf2 = cleanProof( prf1 )
+        val ( inds2, depth2 ) = countInductions( prf2, axioms )
+
+        logger.metric( "inductions_init", inds1 )
+        logger.metric( "max_ind_depth_init", depth1 )
+        logger.metric( "inductions_clean", inds2 )
+        logger.metric( "max_ind_depth_clean", depth2 )
+    }
+
     catch {
       case e: Throwable =>
         logger.metric( "status", e match {
