@@ -97,6 +97,16 @@ object testViper extends App {
           case None => logger.metric( "status", "saturated" )
         }
       }
+    } catch {
+      case e: Throwable =>
+        logger.metric( "status", e match {
+          case _: OutOfMemoryError   => "viper_out_of_memory"
+          case _: StackOverflowError => "viper_stack_overflow"
+          case _: TimeOutException   => "viper_timeout"
+          case _: Throwable          => "viper_other_exception"
+        } )
+        logger.metric( "exception", e.toString )
+        throw e
     }
 
     prf match {
@@ -113,16 +123,5 @@ object testViper extends App {
         logger.metric( "max_ind_depth_clean", depth2 )
     }
 
-    catch {
-      case e: Throwable =>
-        logger.metric( "status", e match {
-          case _: OutOfMemoryError   => "viper_out_of_memory"
-          case _: StackOverflowError => "viper_stack_overflow"
-          case _: TimeOutException   => "viper_timeout"
-          case _: Throwable          => "viper_other_exception"
-        } )
-        logger.metric( "exception", e.toString )
-        throw e
-    }
   }
 }
