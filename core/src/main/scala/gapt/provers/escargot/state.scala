@@ -6,6 +6,7 @@ import gapt.expr.formula.hol.universalClosure
 import gapt.proofs.{ ContextSection, HOLClause, HOLSequent, Sequent }
 import gapt.proofs.resolution._
 import gapt.provers.escargot.{ LPO, TermOrdering }
+import gapt.provers.viper.spind.SuperpositionInductionProver._
 import gapt.provers.sat.Sat4j
 import gapt.utils.Logger
 import org.sat4j.minisat.SolverFactory
@@ -318,184 +319,7 @@ class EscargotState( val ctx: MutableContext ) {
         if ( p.assertions.isEmpty ) p else AvatarContradiction( p )
       } )
 
-  // Replaces x with e in f.
-  def replaceExpr( f: Expr, x: Expr, e: Expr ): Expr =
-    f.find( x ).foldLeft( f )( ( f, pos ) => f.replace( pos, e ) )
-
-  // Is c an inductive skolem constant, i.e. not a constructor
-  def isInductive( c: Const ): Boolean =
-    ctx.getConstructors( c.ty ) match {
-      case None            => false
-      case Some( constrs ) => !constrs.contains( c )
-    }
-
-  // Tests expr by substituting small concrete terms for vars and normalizing the resulting expression.
-  def testFormula( expr: Expr, vars: List[Var] ): Boolean = {
-    val numberOfTestTerms = 5 // TODO: should be an option
-
-    def go( e: Expr, vars: List[Var] ): Seq[Expr] = {
-      vars match {
-        case List() => Seq( e )
-        case v :: vs =>
-          val termStream = enumerateTerms.forType( v.ty )( ctx )
-          val terms = termStream filter ( _.ty == v.ty ) take numberOfTestTerms
-          terms.flatMap( t => go( e, vs ) map ( replaceExpr( _, v, t ) ) )
-      }
-    }
-
-    val fs = go( expr, vars )
-
-    fs forall { f =>
-      val nf = ctx.normalize( f )
-      nf match {
-        case Eq( lhs, rhs )         => lhs == rhs
-        case Iff( lhs, rhs )        => lhs == rhs
-        case Neg( Eq( lhs, rhs ) )  => lhs != rhs
-        case Neg( Iff( lhs, rhs ) ) => lhs != rhs
-        case Neg( lhs )             => lhs != Top()
-        case lhs                    => lhs != Bottom()
-      }
-    }
-  }
-
-  val allPositions: Map[Const, Positions] = Positions.splitRules( ctx.normalizer.rules )
-
-  // TODO: this is kinda heavy
-  // Given an expression, returns a triple:
-  // 1: A map from subexpressions that occur in primary positions to those positions.
-  // 2: A map from subexpressions that occur in passive positions to those positions.
-  // 3: A set of subexpressions that occur in primary positions together directly under the same symbol.
-  //  The sets are transitive, so if a and b occur together and b and c occur together, 3 will contain a set
-  //  containing all of a, b and c.
-  def occurrences( formula: Expr ): ( Map[Expr, Seq[LambdaPosition]], Map[Expr, Seq[LambdaPosition]], Set[Set[Expr]] ) = {
-    val empty = Seq.empty[( Expr, List[Int] )]
-
-    def newPos( i: Int, size: Int, pos: List[Int] ): List[Int] =
-      2 :: List.fill( size - i - 1 )( 1 ) ++ pos
-
-    var underSame = Set.empty[Set[Expr]]
-
-    def go( expr: Expr, pos: List[Int] ): ( Seq[( Expr, List[Int] )], Seq[( Expr, List[Int] )] ) =
-      expr match {
-        case Apps( c @ Const( _, _, _ ), rhsArgs ) =>
-          allPositions.get( c ) match {
-            case None =>
-              rhsArgs.zipWithIndex.foldLeft( ( empty, empty ) ) {
-                case ( ( prim, pass ), ( e, i ) ) =>
-                  val ( l, r ) = go( e, newPos( i, rhsArgs.size, pos ) )
-                  ( l ++ prim, r ++ pass )
-              }
-            case Some( positions ) =>
-              val pass1 = positions.passiveArgs.toSeq flatMap { i =>
-                val p = newPos( i, rhsArgs.size, pos )
-                val ( l, r ) = go( rhsArgs( i ), p )
-                ( rhsArgs( i ), p ) +: ( l ++ r )
-              }
-
-              val same = positions.primaryArgs map rhsArgs
-              underSame.find( _.intersect( same ).nonEmpty ) match {
-                case None => underSame += same
-                case Some( existing ) =>
-                  underSame -= existing
-                  underSame += existing union same
-              }
-
-              val ( prim1, pass2 ) = positions.primaryArgs.toSeq.foldLeft( ( empty, empty ) ) {
-                case ( ( prim, pass ), i ) =>
-                  val p = newPos( i, rhsArgs.size, pos )
-                  val ( l, r ) = go( rhsArgs( i ), p )
-                  ( ( rhsArgs( i ), p ) +: ( l ++ prim ), r ++ pass )
-              }
-              ( prim1, pass1 ++ pass2 )
-          }
-        case App( a, b ) =>
-          val ( l1, r1 ) = go( a, 1 :: pos )
-          val ( l2, r2 ) = go( b, 2 :: pos )
-          ( l1 ++ l2, r1 ++ r2 )
-        case _ => ( Seq(), Seq() )
-      }
-
-    val ( prim, pass ) = go( formula, List() )
-
-    val primMap = prim.groupBy( _._1 ).mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } )
-    val passMap = pass.groupBy( _._1 ).mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } )
-
-    ( primMap, passMap, underSame )
-  }
-
   var clausesForInduction = List.empty[HOLSequent]
-
-  // Inductive axioms that will prove the negation of one of the clauses in clausesForInduction.
-  def inductiveAxioms: List[Axiom] = {
-    def negate( f: Formula ) = f match {
-      case Neg( g ) => g
-      case _        => Neg( f )
-    }
-
-    def asInductiveConst( e: Expr ): Option[Const] =
-      e match {
-        case c @ Const( _, _, _ ) if isInductive( c ) => Some( c )
-        case _                                        => None
-      }
-
-    val axioms = clausesForInduction flatMap { cls =>
-      val f = negate( cls.toFormula ).asInstanceOf[Expr]
-      val ( primMap, passMap, underSame ) = occurrences( f )
-
-      // Given a constant c to induct over in f, returns a fresh induction variable
-      // and a prioritized list of induction goals, the first more general than the next.
-      def getTargets( c: Const, f: Expr ): ( Var, Seq[Expr] ) = {
-        val primPoses = primMap.getOrElse( c, Seq() )
-        val passPoses = passMap.getOrElse( c, Seq() )
-        val v = Var( nameGen.fresh( "ind" ), c.ty )
-
-        if ( primPoses.size >= 2 && passPoses.nonEmpty ) {
-          // Induct only on primary occurences, i.e. generalize
-          (
-            v,
-            Seq(
-              primPoses.foldLeft( f )( ( g, pos ) => g.replace( pos, v ) ),
-              replaceExpr( f, c, v ) ) )
-        } else {
-          ( v, Seq( replaceExpr( f, c, v ) ) )
-        }
-      }
-
-      val underSameConsts = underSame map ( _.flatMap( asInductiveConst ) )
-
-      underSameConsts.flatMap {
-        case cs if cs.isEmpty => Seq()
-        case cs if cs.size == 1 =>
-          // This constant only appears alone in primary position, so we do a regular induction on it.
-          val c = cs.head
-          val ( v, targets ) = getTargets( c, f )
-          targets.find( testFormula( _, List( v ) ) ) flatMap { target =>
-            StandardInductionAxioms( v, target.asInstanceOf[Formula] )( ctx ).toOption.map( Seq( _ ) )
-          }
-        case cs =>
-          // These constants appear together so we need to induct on all of them together for the definitions to reduce.
-          // For each of them, we might need to generalize passive occurrences, so we calculate a sequence of less and
-          // less general formulas to be tested.
-          val targets = cs.foldLeft( Seq( ( Seq.empty[Var], f ) ) ) {
-            case ( vsfs, c ) =>
-              vsfs.flatMap {
-                case ( vs, g ) =>
-                  val ( v, ts ) = getTargets( c, g )
-                  ts map ( ( v +: vs, _ ) )
-              }
-          }
-
-          targets.find { case ( vs, target ) => testFormula( target, vs.toList ) } flatMap {
-            case ( vs, target ) =>
-              SequentialInductionAxioms()( Sequent() :+ ( "axiom", target.asInstanceOf[Formula] ) )( ctx ) toOption
-          }
-      }
-    } flatten
-
-    clausesForInduction = List()
-
-    axioms.reverse
-  }
 
   def axiomClause( section: ContextSection, axiom: Axiom ): ( Set[Cls], Map[HOLSequent, ResolutionProof] ) = {
     val seq = axiom.formula +: Sequent()
@@ -545,7 +369,8 @@ class EscargotState( val ctx: MutableContext ) {
 
           do {
             if ( possibleAxioms.isEmpty ) {
-              possibleAxioms ++= inductiveAxioms
+              possibleAxioms ++= inductiveAxioms( clausesForInduction )( ctx )
+              clausesForInduction = List()
               inductCutoff += 1
             }
 
@@ -571,7 +396,7 @@ class EscargotState( val ctx: MutableContext ) {
 
         val given = choose()
         usable -= given
-        if ( given.clause.exists( constants( _ ) exists isInductive ) && !inductedClauses.contains( given.clause ) ) {
+        if ( given.clause.exists( constants( _ ) exists ( isInductive( _ )( ctx ) ) ) && !inductedClauses.contains( given.clause ) ) {
           clausesForInduction ::= given.clause
           inductedClauses += given.clause
         }
