@@ -1,9 +1,10 @@
 package gapt.formats.tip
 
 import gapt.expr._
-import gapt.expr.util._
-import gapt.expr.formula._
-import gapt.expr.formula.hol.{ existentialClosure, universalClosure, removeAllQuantifiers }
+import gapt.expr.formula.All
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
+import gapt.expr.formula.hol.{ existentialClosure, universalClosure }
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.ty.To
@@ -11,6 +12,7 @@ import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.ReductionRuleUpdate.reductionRulesAsReductionRuleUpdate
 
 case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
   val FunctionType( datatype, fieldTypes ) = constr.ty
@@ -23,6 +25,14 @@ case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
     val fieldVars = fieldTypes.zipWithIndex.map { case ( t, i ) => Var( s"x$i", t ) }
     ( projectors, fieldVars ).zipped map { ( p, f ) => p( constr( fieldVars: _* ) ) === f }
   }
+
+  def projectReductionRules: Seq[ReductionRule] = {
+    val fieldVars = fieldTypes.zipWithIndex.map { case ( t, i ) => Var( s"x$i", t ) }
+    val constructorTerm = Apps( constr, fieldVars )
+    projectors.zipWithIndex.map {
+      case ( p, i ) => ReductionRule( App( p, constructorTerm ), fieldVars( i ) )
+    }
+  }
 }
 case class TipDatatype( t: TBase, constructors: Seq[TipConstructor] ) {
   constructors foreach { ctr => require( ctr.datatype == t ) }
@@ -31,10 +41,13 @@ case class TipDatatype( t: TBase, constructors: Seq[TipConstructor] ) {
 case class TipFun( fun: Const, definitions: Seq[Formula] )
 
 case class TipProblem(
-    ctx:   ImmutableContext,
-    sorts: Seq[TBase], datatypes: Seq[TipDatatype],
-    uninterpretedConsts: Seq[Const], functions: Seq[TipFun],
-    assumptions: Seq[Formula], goal: Formula ) {
+    ctx:                 ImmutableContext,
+    sorts:               Seq[TBase],
+    datatypes:           Seq[TipDatatype],
+    uninterpretedConsts: Seq[Const],
+    functions:           Seq[TipFun],
+    assumptions:         Seq[Formula],
+    goal:                Formula ) {
   def constructorInjectivity =
     for {
       TipDatatype( ty, ctrs ) <- datatypes
@@ -58,14 +71,27 @@ case class TipProblem(
 
   def context: ImmutableContext = ctx ++ reductionRules
 
-  // TODO: not sure this is robust
-  def reductionRules: Seq[ReductionRule] =
-    functions flatMap ( _.definitions map ( removeAllQuantifiers( _ ) match {
-      case Eq( lhs, rhs )  => ReductionRule( lhs, rhs )
-      case Iff( lhs, rhs ) => ReductionRule( lhs, rhs )
-      case Neg( lhs )      => ReductionRule( lhs, Bottom() )
-      case lhs             => ReductionRule( lhs, Top() )
-    } ) )
+  def reductionRules: Seq[ReductionRule] = {
+    val destructorReductionRules = datatypes.flatMap {
+      _.constructors.flatMap { _.projectReductionRules }
+    }
+    val functionReductionRules = functions.flatMap {
+      case TipFun( functionConstant, definitions ) =>
+        definitions.flatMap {
+          case All.Block( xs, Eq( lhs @ Apps( f, _ ), rhs ) ) if f == functionConstant =>
+            Some( ReductionRule( lhs, rhs ) )
+          case _ => None
+        }
+    }
+    val definitionReductionRules = assumptions.flatMap {
+      case All.Block( _, Eq( lhs @ Apps( Const( _, _, _ ), _ ), rhs ) ) =>
+        Some( ReductionRule( lhs, rhs ) )
+      case _ => None
+    }
+    functionReductionRules ++
+      destructorReductionRules ++
+      definitionReductionRules
+  }
 
   override def toString: String = toSequent.toSigRelativeString( context )
 }
