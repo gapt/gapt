@@ -2,7 +2,7 @@ package gapt.provers.viper.spind
 
 import gapt.expr._
 import gapt.expr.formula._
-import gapt.expr.util.LambdaPosition
+import gapt.expr.util.{ LambdaPosition, constants, variables }
 import gapt.logic.hol.skolemize
 import gapt.proofs.context.Context
 import gapt.proofs.lk.LKProof
@@ -41,6 +41,7 @@ class SuperpositionInductionProver {
       val ground = section.groundSequent( seq )
 
       // Perform an initial induction while the goal has not been split across several clauses
+      // TODO: check if this is even necessary
       val goals = ground.succedent
       val goalAxioms = goals flatMap ( goal => clauseAxioms( skolemize( goal ) +: Sequent() ) )
       val goalGround = goalAxioms.map( _.formula ) ++: ground
@@ -88,8 +89,8 @@ class SuperpositionInductionProver {
   def testFormula( expr: Expr, vars: List[Var] )( implicit ctx: Context ): Boolean = {
     val numberOfTestTerms = 5 // TODO: should be an option
 
-    def go( e: Expr, vars: List[Var] ): Seq[Expr] = {
-      vars match {
+    def go( e: Expr, subs: List[VarOrConst] ): Seq[Expr] = {
+      subs match {
         case List() => Seq( e )
         case v :: vs =>
           val termStream = enumerateTerms.forType( v.ty )( ctx )
@@ -98,21 +99,35 @@ class SuperpositionInductionProver {
       }
     }
 
-    val fs = go( expr, vars )
+    val indConsts = constants( expr ).toList.filter( isInductive( _ )( ctx ) )
+    val subs = indConsts ++ variables( expr ).toList
 
-    fs forall { f =>
-      val nf = ctx.normalize( f )
+    println( subs )
+    val fs = go( expr, subs )
+
+    def check( nf: Expr ): Boolean =
       nf match {
-        // NOTE: This may throw out formulas valid due to constraints in other clauses
-        case Eq( lhs, rhs )         => lhs == rhs
-        case Iff( lhs, rhs )        => lhs == rhs
-        case Neg( Eq( lhs, rhs ) )  => lhs != rhs
-        case Neg( Iff( lhs, rhs ) ) => lhs != rhs
-        // NOTE: And this may include invalid formulas
-        case Neg( lhs )             => lhs != Top()
-        case lhs                    => lhs != Bottom()
+        case Eq( lhs, rhs )  => lhs == rhs
+        case Iff( lhs, rhs ) => check( lhs ) == check( rhs )
+        case Imp( lhs, rhs ) => !check( lhs ) || check( rhs )
+        case Neg( lhs )      => !check( lhs )
+        case lhs             => lhs == Top()
       }
+
+    val counters = fs flatMap { f =>
+      val nf = ctx.normalize( f )
+      val ok = check( nf )
+      if ( ok ) None else Some( nf )
     }
+
+    val msg = if ( counters.isEmpty ) "ACCEPTED" else "REJECTED"
+
+    println( msg + ": " + expr )
+    if ( counters.nonEmpty )
+      println( "COUNTER: " + counters.head )
+    println()
+
+    counters.isEmpty
   }
 
   // TODO: this is kinda heavy
@@ -148,11 +163,11 @@ class SuperpositionInductionProver {
               }
 
               val same = positions.primaryArgs map rhsArgs
-              underSame.find( _.intersect( same ).nonEmpty ) match {
-                case None => underSame += same
-                case Some( existing ) =>
-                  underSame -= existing
-                  underSame += existing union same
+              underSame.filter( _.intersect( same ).nonEmpty ) match {
+                case Seq() => underSame += same
+                case existings =>
+                  existings foreach { underSame -= _ }
+                  underSame += existings.foldLeft( same ) { case ( acc, set ) => acc union set }
               }
 
               val ( prim1, pass2 ) = positions.primaryArgs.toSeq.foldLeft( ( empty, empty ) ) {
