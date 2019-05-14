@@ -213,16 +213,16 @@ class SuperpositionInductionProver {
       val passPoses = passMap.getOrElse( c, Seq() )
       val v = Var( nameGen.fresh( "ind" ), c.ty )
 
-      if ( primPoses.size >= 2 && passPoses.nonEmpty ) {
+      val targets = if ( primPoses.size >= 2 && passPoses.nonEmpty ) {
         // Induct only on primary occurences, i.e. generalize
-        (
-          v,
-          Seq(
-            primPoses.foldLeft( f )( ( g, pos ) => g.replace( pos, v ) ),
-            replaceExpr( f, c, v ) ) )
+        Seq(
+          primPoses.foldLeft( f )( ( g, pos ) => g.replace( pos, v ) ),
+          replaceExpr( f, c, v ) )
       } else {
-        ( v, Seq( replaceExpr( f, c, v ) ) )
+        Seq( replaceExpr( f, c, v ) )
       }
+
+      ( v, targets )
     }
 
     underSameConsts.toSeq.flatMap {
