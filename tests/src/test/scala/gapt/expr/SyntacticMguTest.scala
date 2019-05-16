@@ -82,4 +82,11 @@ class SyntacticMguTest extends Specification {
 
   "x x" in { syntacticMGU( le"x:i", le"x:?a" ) must beSome }
 
+  "unify with type variables" in {
+    val t1 = le"P(x:?a)"
+    val t2 = le"P(c)"
+    val Some( mgu ) = syntacticMGU( t1, t2 )
+    mgu( t1 ) mustEqual mgu( t2 )
+  }
+
 }
