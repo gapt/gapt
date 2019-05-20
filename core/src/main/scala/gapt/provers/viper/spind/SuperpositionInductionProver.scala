@@ -99,11 +99,7 @@ class SuperpositionInductionProver {
       }
     }
 
-    val indConsts = constants( expr ).toList.filter( isInductive( _ )( ctx ) )
-    val subs = indConsts ++ variables( expr ).toList
-
-    println( subs )
-    val fs = go( expr, subs )
+    val fs = go( expr, vars )
 
     def check( nf: Expr ): Boolean =
       nf match {
@@ -114,10 +110,27 @@ class SuperpositionInductionProver {
         case lhs             => lhs == Top()
       }
 
-    val counters = fs flatMap { f =>
-      val nf = ctx.normalize( f )
+    val counters = fs.map( ctx.normalize ).filter { nf =>
       val ok = check( nf )
-      if ( ok ) None else Some( nf )
+
+      if ( ok ) {
+        false
+      } else {
+        val skolems = constants( nf ).flatMap( asInductiveConst( _ )( ctx ) )
+        if ( skolems.isEmpty ) {
+          true
+        } else {
+          // Try to unblock overly specific reduction rules by casing on skolems
+          val alts = skolems.foldLeft( Stream( nf ) ) {
+            case ( ts, c ) =>
+              val nConstrs = ctx.getConstructors( c.ty ).map( _.size ).getOrElse( 0 )
+              val constrs = enumerateTerms.forType( c.ty ).filter( _.ty == c.ty ).take( nConstrs )
+              ts.flatMap( t => constrs.map( s => replaceExpr( t, c, s ) ) )
+          }
+
+          !alts.exists( alt => check( ctx.normalize( alt ) ) )
+        }
+      }
     }
 
     val msg = if ( counters.isEmpty ) "ACCEPTED" else "REJECTED"
