@@ -10,8 +10,10 @@ import scala.concurrent.duration._
 import ammonite.ops._
 import gapt.expr.formula.{ All, Formula, Imp }
 import gapt.formats.tip.TipSmtImporter
+import gapt.proofs.context.Context
 import gapt.proofs.expansion.ExpansionProofToLK
 import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.rules.InductionRule
 import gapt.proofs.lk.transformations.{ LKToExpansionProof, cleanStructuralRules, inductionNormalForm }
 import gapt.proofs.lk.util.extractInductionAxioms
 import gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, SequentialInductionAxioms }
@@ -27,35 +29,22 @@ object parseMode {
 }
 
 object testViper extends App {
-  def countInductions( prf: LKProof, axioms: Set[Formula] ): ( Int, Int ) = {
-    def go( prf: LKProof ): ( Int, Int ) = {
-      if ( prf.name == "cut" ) {
-        prf.immediateSubProofs.head.conclusion.succedent match {
-          case Seq( p ) if axioms.contains( p ) =>
-            val ( n, d ) = prf.immediateSubProofs.tail.map( go ).foldLeft( ( 0, 0 ) ) {
-              case ( ( l1, r1 ), ( l2, r2 ) ) => ( l1 + l2, r1 max r2 )
-            }
-
-            ( n + 1, d + 1 )
-          case _ =>
-            prf.immediateSubProofs.map( go ).foldLeft( ( 0, 0 ) ) {
-              case ( ( l1, r1 ), ( l2, r2 ) ) => ( l1 + l2, r1 max r2 )
-            }
-        }
-      } else {
-        prf.immediateSubProofs.map( go ).foldLeft( ( 0, 0 ) ) {
-          case ( ( l1, r1 ), ( l2, r2 ) ) => ( l1 + l2, r1 max r2 )
-        }
-      }
+  def countInductions( prf: LKProof ): ( Int, Int ) = {
+    val ( n, d ) = prf.immediateSubProofs.map( countInductions ).foldLeft( ( 0, 0 ) ) {
+      case ( ( n1, d1 ), ( n2, d2 ) ) => ( n1 + n2, d1 max d2 )
     }
 
-    go( prf )
+    prf match {
+      case InductionRule( _, _, _ ) => ( n + 1, d + 1 )
+      case _                        => ( n, d )
+    }
   }
 
-  def cleanProof( prf: LKProof ): LKProof = {
+  // This turns the cuts into induction inferences
+  def cleanProof( prf: LKProof )( implicit ctx: Context ): LKProof = {
     val prf1 = cleanStructuralRules( prf )
-    val expPrf = LKToExpansionProof( prf1 )
-    ExpansionProofToLK( expPrf ).toOption.get
+    val expPrf = LKToExpansionProof( prf1 )( ctx )
+    ExpansionProofToLK( expPrf )( ctx ).toOption.get
   }
 
   val logger = Logger( "testViper" )
@@ -112,15 +101,11 @@ object testViper extends App {
     prf match {
       case None =>
       case Some( prf1 ) =>
-        val axioms = extractInductionAxioms( prf1 )( problem.ctx ).toSet
-        val ( inds1, depth1 ) = countInductions( prf1, axioms )
-        val prf2 = cleanProof( prf1 )
-        val ( inds2, depth2 ) = countInductions( prf2, axioms )
+        val prf2 = cleanProof( prf1 )( problem.context )
+        val ( inds, depth ) = countInductions( prf2 )
 
-        logger.metric( "inductions_init", inds1 )
-        logger.metric( "max_ind_depth_init", depth1 )
-        logger.metric( "inductions_clean", inds2 )
-        logger.metric( "max_ind_depth_clean", depth2 )
+        logger.metric( "inductions", inds )
+        logger.metric( "induction_depth", depth )
     }
 
   }

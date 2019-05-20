@@ -415,6 +415,11 @@ class EscargotState( val ctx: MutableContext ) {
     } catch {
       case _: ContradictionException =>
         Some( mkSatProof(), addedAxioms, cnfMap )
+    } finally {
+      if ( addInductions ) {
+        EscargotLogger.metric( "candidates", inductedClauses.size )
+        EscargotLogger.metric( "added_axioms", addedAxioms.size )
+      }
     }
   }
 }
