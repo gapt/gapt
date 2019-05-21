@@ -1,13 +1,13 @@
 package gapt.formats.tip
 
 import gapt.expr._
-import gapt.expr.formula.All
-import gapt.expr.formula.Eq
-import gapt.expr.formula.Formula
+import gapt.expr.formula.{ All, Atom, Bottom, Eq, Formula, Iff, Imp, Neg, Top }
 import gapt.expr.formula.hol.{ existentialClosure, universalClosure }
+import gapt.expr.subst.Substitution
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.ty.To
+import gapt.expr.util.{ LambdaPosition, freeVariables, syntacticMatching }
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.immutable.ImmutableContext
@@ -71,29 +71,126 @@ case class TipProblem(
 
   def context: ImmutableContext = ctx ++ reductionRules
 
-  def reductionRules: Seq[ReductionRule] = {
+  def reductionRules: Seq[ConditionalReductionRule] = {
     val destructorReductionRules = datatypes.flatMap {
-      _.constructors.flatMap { _.projectReductionRules }
-    }
-    val functionReductionRules = functions.flatMap {
-      case TipFun( functionConstant, definitions ) =>
-        definitions.flatMap {
-          case All.Block( xs, Eq( lhs @ Apps( f, _ ), rhs ) ) if f == functionConstant =>
-            Some( ReductionRule( lhs, rhs ) )
-          case _ => None
-        }
+      _.constructors.flatMap { _.projectReductionRules }.map {
+        case ReductionRule( lhs, rhs ) => ConditionalReductionRule( Nil, lhs, rhs )
+      }
     }
     val definitionReductionRules = assumptions.flatMap {
       case All.Block( _, Eq( lhs @ Apps( Const( _, _, _ ), _ ), rhs ) ) =>
-        Some( ReductionRule( lhs, rhs ) )
+        Some( ConditionalReductionRule( Nil, lhs, rhs ) )
       case _ => None
     }
-    functionReductionRules ++
+    functionDefinitionReductionRules ++
       destructorReductionRules ++
-      definitionReductionRules
+      definitionReductionRules :+
+      ConditionalReductionRule( Nil, le"x = x", le"⊤" ) :+
+      ConditionalReductionRule( Nil, hof"¬ ⊥", hof"⊤" ) :+
+      ConditionalReductionRule( Nil, hof"¬ ⊤", hof"⊥" )
+  }
+
+  private val functionDefinitionReductionRules: Seq[ConditionalReductionRule] = {
+    functions.flatMap { _.definitions }.map {
+      case All.Block( _, Imp.Block( cs, Eq( lhs @ Apps( _: Const, _ ), rhs ) ) ) =>
+        ConditionalReductionRule( cs, lhs, rhs )
+      case All.Block( _, Imp.Block( cs, Neg( lhs @ Atom( _, _ ) ) ) ) =>
+        ConditionalReductionRule( cs, lhs, Bottom() )
+      case All.Block( _, Imp.Block( cs, lhs @ Atom( _, _ ) ) ) =>
+        ConditionalReductionRule( cs, lhs, Top() )
+      case All.Block( _, Imp.Block( cs, Iff( lhs, rhs ) ) ) =>
+        ConditionalReductionRule( cs, lhs, rhs )
+    }
   }
 
   override def toString: String = toSequent.toSigRelativeString( context )
+}
+
+/**
+ * A conditional rewrite rule.
+ *
+ * An instance of this rule can be used to rewrite the left hand side
+ * into its right hand side only if the conditions all rewrite to ⊤.
+ *
+ * The free variables of the conditions together with those of the
+ * right hand side must form a subset of the free variables of the
+ * left hand side. The left hand side must not be a variable.
+ *
+ * @param conditions The conditions of this rewrite rule.
+ * @param lhs The left hand side of this rewrite rule.
+ * @param rhs The right hand side of this rewrite rule.
+ */
+case class ConditionalReductionRule( conditions: Seq[Formula], lhs: Expr, rhs: Expr ) {
+
+  require(
+    ( conditions.flatMap { freeVariables( _ ) } ++
+      freeVariables( rhs ) ).toSet.subsetOf( freeVariables( lhs ) ),
+    """free variables in conditions and right hand side do not form a
+      |subset of the free variables of the left hand side""".stripMargin )
+
+  require( !lhs.isInstanceOf[Var], "left hand side must not be a variable" )
+
+}
+
+case class ConditionalNormalizer( rewriteRules: Set[ConditionalReductionRule] ) {
+
+  private val unconditionalRules =
+    rewriteRules
+      .filter { _.conditions.isEmpty }
+      .map { r => ReductionRule( r.lhs, r.rhs ) }
+
+  private val conditionalRules = rewriteRules.diff( rewriteRules.filter { _.conditions.isEmpty } )
+
+  private val unconditionalNormalizer = Normalizer( unconditionalRules )
+
+  /**
+   * Normalizes an expression.
+   *
+   * @param e The expression to be normalized.
+   * @return Returns the normalized expression, if the rewrite rules are terminating.
+   */
+  def normalize( e: Expr ): Expr = {
+    normalize_( unconditionalNormalizer.normalize( e ) )
+  }
+
+  private def normalize_( e: Expr ): Expr = {
+    for {
+      ConditionalReductionRule( conditions, lhs, rhs ) <- conditionalRules
+      ( instance, position ) <- findInstances( e, lhs, Nil )
+    } {
+      if ( conditions.map { instance( _ ) }.map { normalize( _ ) }.forall { _ == Top() } ) {
+        return normalize( e.replace( position, instance( rhs ) ) )
+      }
+    }
+    e
+  }
+
+  private def findInstances( e: Expr, l: Expr, position: List[Int] ): Set[( Substitution, LambdaPosition )] = {
+    subterms( e ).flatMap {
+      case ( t, p ) =>
+        for {
+          subst <- syntacticMatching( l, t )
+        } yield { subst -> p }
+    }.toSet
+  }
+}
+
+object subterms {
+  def apply( e: Expr ): Seq[( Expr, LambdaPosition )] = {
+    subterms( e, LambdaPosition() ).map {
+      case ( t, LambdaPosition( ps ) ) => t -> LambdaPosition( ps.reverse )
+    }
+  }
+  private def apply( e: Expr, position: LambdaPosition ): Seq[( Expr, LambdaPosition )] = {
+    val LambdaPosition( xs ) = position
+    ( e -> position ) +: ( e match {
+      case Abs( _, e1 ) =>
+        subterms( e1, LambdaPosition( 1 :: xs ) )
+      case App( e1, e2 ) =>
+        subterms( e1, LambdaPosition( 1 +: xs ) ) ++ subterms( e2, LambdaPosition( 2 +: xs ) )
+      case _ => Seq()
+    } )
+  }
 }
 
 trait TipProblemDefinition {
