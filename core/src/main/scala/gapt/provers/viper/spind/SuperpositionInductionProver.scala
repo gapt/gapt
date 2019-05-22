@@ -3,6 +3,7 @@ package gapt.provers.viper.spind
 import gapt.expr._
 import gapt.expr.formula._
 import gapt.expr.util.{ LambdaPosition, constants, variables }
+import gapt.formats.tip.ConditionalNormalizer
 import gapt.logic.hol.skolemize
 import gapt.proofs.context.Context
 import gapt.proofs.lk.LKProof
@@ -35,15 +36,15 @@ class SuperpositionInductionProver {
   def inductiveLKProof( sequent: Sequent[( String, Formula )] )( implicit ctx: MutableContext ): Option[LKProof] = {
     val seq = labeledSequentToHOLSequent( sequent )
 
-    allPositions = Positions.splitRules( ctx.normalizer.rules )
+    allPositions = Positions.splitRules( ctx.conditionalNormalizer.rewriteRules )
 
     withSection { section =>
       val ground = section.groundSequent( seq )
 
       // Perform an initial induction while the goal has not been split across several clauses
-      // TODO: check if this is even necessary
+      // TODO: we add things twice because of this
       val goals = ground.succedent
-      val goalAxioms = goals flatMap ( goal => clauseAxioms( skolemize( goal ) +: Sequent() ) )
+      val goalAxioms = goals flatMap ( goal => clauseAxioms( skolemize( goal ) +: Sequent() )( ctx ) )
       val goalGround = goalAxioms.map( _.formula ) ++: ground
 
       val cnf = structuralCNF( goalGround )( ctx )
@@ -55,7 +56,7 @@ class SuperpositionInductionProver {
 
       prf map {
         case ( resolution, prfAxioms, indMap ) =>
-          val axioms = goalAxioms ++ prfAxioms
+          val axioms = goalAxioms ++ prfAxioms.toSeq
           val res = mapInputClauses( resolution )( cnfMap ++ indMap )
           val lk = ResolutionToLKProof( res )
           val wlk = WeakeningContractionMacroRule( lk, axioms.map( _.formula ) ++: seq )
@@ -85,6 +86,39 @@ class SuperpositionInductionProver {
   def replaceExpr( f: Expr, x: Expr, e: Expr ): Expr =
     f.find( x ).foldLeft( f )( ( f, pos ) => f.replace( pos, e ) )
 
+  def makeNormalizer( normalizer: ConditionalNormalizer )( expr: Expr ): Expr = {
+    def go( e: Expr ): Expr =
+      normalizer.normalize( e ) match {
+        case Or( Top(), _ )       => Top()
+        case Or( _, Top() )       => Top()
+        case Or( Bottom(), rhs )  => rhs
+        case Or( lhs, Bottom() )  => lhs
+
+        case And( Top(), rhs )    => rhs
+        case And( lhs, Top() )    => lhs
+        case And( Bottom(), _ )   => Bottom()
+        case And( _, Bottom() )   => Bottom()
+
+        case Imp( Top(), rhs )    => rhs
+        case Imp( _, Top() )      => Top()
+        case Imp( Bottom(), _ )   => Top()
+        case Imp( lhs, Bottom() ) => Neg( lhs )
+
+        case lhs                  => lhs
+      }
+
+    var last = expr
+    while ( true ) {
+      val next = go( last )
+      if ( next == last )
+        return last
+      else
+        last = next
+    }
+
+    last
+  }
+
   // Tests expr by substituting small concrete terms for vars and normalizing the resulting expression.
   def testFormula( expr: Expr, vars: List[Var] )( implicit ctx: Context ): Boolean = {
     val numberOfTestTerms = 5 // TODO: should be an option
@@ -101,36 +135,65 @@ class SuperpositionInductionProver {
 
     val fs = go( expr, vars )
 
-    def check( nf: Expr ): Boolean =
+    val normalize = makeNormalizer( ctx.conditionalNormalizer ) _
+    def isNormalized( e: Expr ): Boolean = constants( e ).intersect( allPositions.keySet ).isEmpty
+
+    def unblock( nf: Expr ): Boolean = {
+      // NOTE: this has dubious positives like `elem(s_0:Nat, ++(#v(ind: list), s_2:list): list)` in isaplanner/prop_26
+      val skolems = constants( nf ).flatMap( asInductiveConst( _ )( ctx ) )
+
+      if ( skolems.isEmpty )
+        return false
+
+      // Try to unblock overly specific reduction rules by casing on skolems
+      val alts = skolems.foldLeft( Stream( nf ) ) {
+        case ( ts, c ) =>
+          val nConstrs = ctx.getConstructors( c.ty ).map( _.size ).getOrElse( 0 )
+          val constrs = enumerateTerms.forType( c.ty ).filter( _.ty == c.ty ).take( nConstrs )
+          ts.flatMap( t => constrs.map( s => replaceExpr( t, c, s ) ) )
+      }
+
+      alts.exists( alt => check( normalize( alt ) ).getOrElse( false ) )
+    }
+
+    // Returns Some( true ) if nf holds, Some( false ) if nf does not hold
+    // and everything normalized and None if nf does not hold but something did not normalize
+    // NOTE: In isaplanner/prop_26 we get something of the form A => A \/ B which we do not recognize as okay,
+    // but it is solved by unblocking.
+    def check( nf: Expr ): Option[Boolean] =
       nf match {
-        case Eq( lhs, rhs )  => lhs == rhs
-        case Iff( lhs, rhs ) => check( lhs ) == check( rhs )
-        case Imp( lhs, rhs ) => !check( lhs ) || check( rhs )
-        case Neg( lhs )      => !check( lhs )
-        case lhs             => lhs == Top()
-      }
-
-    val counters = fs.map( ctx.normalize ).filter { nf =>
-      val ok = check( nf )
-
-      if ( ok ) {
-        false
-      } else {
-        val skolems = constants( nf ).flatMap( asInductiveConst( _ )( ctx ) )
-        if ( skolems.isEmpty ) {
-          true
-        } else {
-          // Try to unblock overly specific reduction rules by casing on skolems
-          val alts = skolems.foldLeft( Stream( nf ) ) {
-            case ( ts, c ) =>
-              val nConstrs = ctx.getConstructors( c.ty ).map( _.size ).getOrElse( 0 )
-              val constrs = enumerateTerms.forType( c.ty ).filter( _.ty == c.ty ).take( nConstrs )
-              ts.flatMap( t => constrs.map( s => replaceExpr( t, c, s ) ) )
+        case Eq( lhs, rhs ) =>
+          if ( lhs == rhs )
+            Some( true )
+          else if ( isNormalized( lhs ) && isNormalized( rhs ) )
+            Some( false )
+          else if ( unblock( nf ) )
+            Some( true )
+          else
+            None
+        case Iff( lhs, rhs ) => for {
+          l <- check( lhs )
+          r <- check( rhs )
+        } yield l == r
+        case Imp( lhs, rhs ) =>
+          check( normalize( lhs ) ) match {
+            case Some( false ) => Some( true )
+            case _             => check( normalize( rhs ) )
           }
-
-          !alts.exists( alt => check( ctx.normalize( alt ) ) )
-        }
+        case Neg( lhs ) => check( lhs ).map( !_ )
+        case lhs =>
+          if ( lhs == Top() )
+            Some( true )
+          else if ( isNormalized( lhs ) )
+            Some( false )
+          else if ( unblock( nf ) )
+            Some( true )
+          else
+            None
       }
+
+    val counters = fs.map( normalize ).filterNot { nf =>
+      check( nf ).getOrElse( false )
     }
 
     val msg = if ( counters.isEmpty ) "ACCEPTED" else "REJECTED"
@@ -179,7 +242,9 @@ class SuperpositionInductionProver {
               underSame.filter( _.intersect( same ).nonEmpty ) match {
                 case Seq() => underSame += same
                 case existings =>
-                  existings foreach { underSame -= _ }
+                  existings foreach {
+                    underSame -= _
+                  }
                   underSame += existings.foldLeft( same ) { case ( acc, set ) => acc union set }
               }
 

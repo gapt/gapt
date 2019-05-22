@@ -1,5 +1,7 @@
 package gapt.formats.tip
 
+import gapt.proofs.context.State
+import gapt.proofs.context.update.Update
 import gapt.expr._
 import gapt.expr.formula.{ All, Atom, Bottom, Eq, Formula, Iff, Imp, Neg, Top }
 import gapt.expr.formula.hol.{ existentialClosure, universalClosure }
@@ -10,9 +12,10 @@ import gapt.expr.ty.To
 import gapt.expr.util.{ LambdaPosition, freeVariables, syntacticMatching }
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
+import gapt.proofs.context.facet.{ ConditionalReductions, Reductions }
 import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.update.InductiveType
-import gapt.proofs.context.update.ReductionRuleUpdate.reductionRulesAsReductionRuleUpdate
+import gapt.provers.viper.spind.Positions
 
 case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
   val FunctionType( datatype, fieldTypes ) = constr.ty
@@ -120,7 +123,7 @@ case class TipProblem(
  * @param lhs The left hand side of this rewrite rule.
  * @param rhs The right hand side of this rewrite rule.
  */
-case class ConditionalReductionRule( conditions: Seq[Formula], lhs: Expr, rhs: Expr ) {
+case class ConditionalReductionRule( conditions: Seq[Formula], lhs: Expr, rhs: Expr ) extends Update {
 
   require(
     ( conditions.flatMap { freeVariables( _ ) } ++
@@ -130,6 +133,79 @@ case class ConditionalReductionRule( conditions: Seq[Formula], lhs: Expr, rhs: E
 
   require( !lhs.isInstanceOf[Var], "left hand side must not be a variable" )
 
+  override def apply( ctx: Context ): State = {
+    // TODO: why does this not work?
+    // ctx.check( lhs )
+    // ctx.check( rhs )
+    ctx.state.update[ConditionalReductions]( _ + this )
+  }
+
+  val Apps( lhsHead @ Const( lhsHeadName, _, _ ), lhsArgs ) = lhs
+  val lhsArgsSize: Int = lhsArgs.size
+
+  val allArgs: Set[Int] = lhsArgs.zipWithIndex.map( _._2 ).toSet
+
+  // TODO: think about expressing these in a nicer way
+  def primariesIn( condition: Formula, allPositions: Map[Const, Positions] ): Set[Int] = {
+    def go( e: Expr ): Set[Int] =
+      e match {
+        case Apps( f @ Const( _, _, _ ), rhsArgs ) if allPositions.isDefinedAt( f ) =>
+          val poses = allPositions( f )
+          val prims = poses.primaryArgs.map( rhsArgs )
+          val immediate = lhsArgs.zipWithIndex.flatMap {
+            case ( arg, idx ) => if ( prims.contains( arg ) ) Some( idx ) else None
+          }
+          val nested = prims flatMap go
+          immediate.toSet ++ nested
+        case App( a, b ) => go( a ) ++ go( b )
+        case _           => Set()
+      }
+
+    go( condition )
+  }
+
+  def conditionalPrimaries( allPositions: Map[Const, Positions] ): Set[Int] =
+    conditions.flatMap( cond => primariesIn( cond, allPositions ) ).toSet
+
+  // Positions of arguments which do not change in recursive calls
+  // or None if there are no recursive calls on the rhs.
+  def passiveArgs( allPositions: Map[Const, Positions] ): Option[Set[Int]] = {
+    def go( e: Expr ): Option[Set[Int]] =
+      e match {
+        case Apps( f, rhsArgs ) if f == lhsHead =>
+          val args = lhsArgs.zip( rhsArgs ).zipWithIndex collect {
+            case ( ( l, r ), i ) if l == r => i
+          }
+          Some( args.toSet )
+        case App( a, b ) =>
+          go( a ) match {
+            case None         => go( b )
+            case Some( args ) => Some( args.intersect( go( b ).getOrElse( allArgs ) ) )
+          }
+        case _ => None
+      }
+
+    go( rhs ) map ( _ -- conditionalPrimaries( allPositions ) )
+  }
+
+  // Positions of non-passive arguments which are not matched on or None if no recursive calls on the rhs.
+  def accumulatorArgs( allPositions: Map[Const, Positions] ): Option[Set[Int]] =
+    passiveArgs( allPositions ).map( passive =>
+      lhsArgs.zipWithIndex.collect { case ( e, i ) if e.isInstanceOf[Var] => i }.toSet -- passive )
+
+  // Positions of non-passive, non-accumulator arguments, that is, args which are matched on in the lhs and
+  // change in the recursive calls on the rhs. Or None if no recursive calls on the rhs.
+  def primaryArgs( allPositions: Map[Const, Positions] ): Option[Set[Int]] = {
+    val conds = conditionalPrimaries( allPositions )
+    val rhs = passiveArgs( allPositions ).flatMap( passive =>
+      accumulatorArgs( allPositions ).map( accumulator =>
+        ( allArgs -- accumulator ) -- passive ) )
+
+    if ( rhs.isEmpty && conds.nonEmpty )
+      Some( conds )
+    else
+      rhs.map( _ ++ conds )
+  }
 }
 
 case class ConditionalNormalizer( rewriteRules: Set[ConditionalReductionRule] ) {
