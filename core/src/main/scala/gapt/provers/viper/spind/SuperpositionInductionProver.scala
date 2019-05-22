@@ -196,12 +196,14 @@ class SuperpositionInductionProver {
       check( nf ).getOrElse( false )
     }
 
+    /*
     val msg = if ( counters.isEmpty ) "ACCEPTED" else "REJECTED"
 
     println( msg + ": " + expr )
     if ( counters.nonEmpty )
       println( "COUNTER: " + counters.head )
     println()
+     */
 
     counters.isEmpty
   }
