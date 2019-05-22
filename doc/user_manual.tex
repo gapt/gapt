@@ -1132,17 +1132,17 @@ with quantifier-free conclusions.
 \begin{clilisting}
 gapt> val p = instanceProof(examples.theories.nat.addcomm.combined(),                                     Seq(le"s (s 0 : nat)", le"0 : nat"))
 p: gapt.proofs.lk.LKProof =
-[p128] ∀x ((x:nat) + (0:nat): nat) = x,
+[p116] ∀x ((x:nat) + (0:nat): nat) = x,
 ∀x ∀y x + s(y:nat) = s(x + y)
 ⊢
-s(s(0)) + 0 = 0 + s(s(0))    (CutRule(p124, Suc(0), p127, Ant(0)))
-[p127] ∀x ∀y ((x:nat) + (y:nat): nat) = y + x ⊢ s(s(0:nat): nat) + 0 = 0 + s(s(0))    (ForallLeftRule(p126, Ant(0), ∀y ((x:nat) + (y:nat): nat) = y + x, s(s(0:nat): nat), x:nat))
-[p126] ∀y (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (ForallLeftRule(p125, Ant(0), (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)), 0:nat, y:nat))
-[p125] (s(s(0:nat): nat) + 0: nat) = 0 + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (LogicalAxiom((s(s(0:nat): nat) + 0: nat) = 0 + s(s(0))))
-[p124] ∀x ((x:nat) + (0:nat): nat) = x,
+s(s(0)) + 0 = 0 + s(s(0))    (CutRule(p112, Suc(0), p115, Ant(0)))
+[p115] ∀x ∀y ((x:nat) + (y:nat): nat) = y + x ⊢ s(s(0:nat): nat) + 0 = 0 + s(s(0))    (ForallLeftRule(p114, Ant(0), ∀y ((x:nat) + (y:nat): nat) = y + x, s(s(0:nat): nat), x:nat))
+[p114] ∀y (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (ForallLeftRule(p113, Ant(0), (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)), 0:nat, y:nat))
+[p113] (s(s(0:nat): nat) + 0: nat) = 0 + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (LogicalAxiom((s(s(0:nat): nat) + 0: nat) = 0 + s(s(0))))
+[p112] ∀x ((x:nat) + (0:nat): nat) = x,
 ∀x ∀y x + s(y:nat) = s(x + y)
 ⊢
-∀x ∀y x + y = y + x    (CutRule(p3, Suc(0), p123, Ant(0)))...
+∀x ∀y x + y = y + x    (CutRule(p3, Suc(0), p111, Ant(0)))...
 
 gapt> val q = inductionNormalForm(p)(                                         examples.theories.nat.ctx)
 q: gapt.proofs.lk.LKProof =
