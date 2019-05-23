@@ -106,18 +106,18 @@ object syntacticMGU {
           case Some( x_ ) => go( x_, t, subst, bound )
           case None =>
             val t_ = subst.toSubstitution( t )
-            if ( x == t_ ) {
+            val x_ @ Var( _, _ ) = subst.toSubstitution( x )
+            if ( x_ == t_ ) {
               USome( subst )
-            } else if ( freeVariables( t_ ) intersect ( bound + x ) nonEmpty ) {
+            } else if ( freeVariables( t_ ) intersect ( bound + x_ ) nonEmpty ) {
               UNone()
-            } else if ( x.ty == t_.ty ) {
-              val subst1 = Substitution( x -> t_ )
+            } else if ( x_.ty == t_.ty ) {
+              val subst1 = Substitution( x -> t_ :: Nil, subst.typeMap.toSeq )
               USome( new PreSubstitution( Map() ++ subst.map.mapValues( subst1( _ ) ) + ( x -> t_ ), subst.typeMap ) )
             } else {
-              go( x.ty, t_.ty, subst, bound ) match {
+              go( x_.ty, t_.ty, subst, bound ) match {
                 case USome( subst1 ) =>
-                  val subst1_ = subst1.toSubstitution
-                  go( subst1_( x ), subst1_( t_ ), subst, bound )
+                  go( x, t_, subst1, bound )
                 case _ => UNone()
               }
             }

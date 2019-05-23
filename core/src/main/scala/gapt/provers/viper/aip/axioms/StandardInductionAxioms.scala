@@ -72,8 +72,8 @@ case class StandardInductionAxioms(
           proofState += repeat( allR )
           proofState += impR
           proofState += allR( inductionVariable )
+          proofState += repeat( andL )
           proofState += induction( inductionVariable )
-          proofState += repeat( andL ).onAllSubGoals
           inductiveCaseProofs foreach {
             proofState += insert( _ )
           }
