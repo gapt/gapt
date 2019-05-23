@@ -120,27 +120,29 @@ class SuperpositionInductionProver {
           else
             Eq( r, l )
 
-        case Neg( Top() )           => Bottom()
-        case Neg( Bottom() )        => Top()
-        case Neg( And( lhs, rhs ) ) => Or( Neg( go( lhs ) ), Neg( go( rhs ) ) )
-        case Neg( Or( lhs, rhs ) )  => And( Neg( go( lhs ) ), Neg( go( rhs ) ) )
-        case Neg( lhs )             => Neg( go( lhs ) )
+        case Neg( Top() )                 => Bottom()
+        case Neg( Bottom() )              => Top()
+        case Neg( And( lhs, rhs ) )       => Or( Neg( go( lhs ) ), Neg( go( rhs ) ) )
+        case Neg( Or( lhs, rhs ) )        => And( Neg( go( lhs ) ), Neg( go( rhs ) ) )
+        case Neg( lhs )                   => Neg( go( lhs ) )
 
-        case Or( Top(), _ )         => Top()
-        case Or( _, Top() )         => Top()
-        case Or( Bottom(), rhs )    => go( rhs )
-        case Or( lhs, Bottom() )    => go( lhs )
+        case Or( Top(), _ )               => Top()
+        case Or( _, Top() )               => Top()
+        case Or( Bottom(), rhs )          => go( rhs )
+        case Or( lhs, Bottom() )          => go( lhs )
+        case Or( And( lhs1, lhs2 ), rhs ) => And( go( Or( lhs1, rhs ) ), go( Or( lhs2, rhs ) ) )
+        case Or( lhs, And( rhs1, rhs2 ) ) => And( go( Or( lhs, rhs1 ) ), go( Or( lhs, rhs2 ) ) )
 
-        case And( Top(), rhs )      => go( rhs )
-        case And( lhs, Top() )      => go( lhs )
-        case And( Bottom(), _ )     => Bottom()
-        case And( _, Bottom() )     => Bottom()
+        case And( Top(), rhs )            => go( rhs )
+        case And( lhs, Top() )            => go( lhs )
+        case And( Bottom(), _ )           => Bottom()
+        case And( _, Bottom() )           => Bottom()
 
-        case Imp( lhs, rhs )        => go( Or( Neg( lhs ), rhs ) )
-        case Iff( lhs, rhs )        => go( Eq( lhs, rhs ) )
+        case Imp( lhs, rhs )              => go( Or( Neg( lhs ), rhs ) )
+        case Iff( lhs, rhs )              => go( Eq( lhs, rhs ) )
 
-        case App( a, b )            => App( go( a ), go( b ) )
-        case lhs                    => lhs
+        case App( a, b )                  => App( go( a ), go( b ) )
+        case lhs                          => lhs
       }
 
     var last = expr
