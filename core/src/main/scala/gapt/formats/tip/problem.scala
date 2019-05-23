@@ -72,7 +72,22 @@ case class TipProblem(
       Sequent()
       :+ goal )
 
-  def context: ImmutableContext = ctx ++ reductionRules
+  def context: ImmutableContext = ctx ++ reductionRules.filter( rule =>
+    // TODO: hotfix, to be removed
+    rule match {
+      case ConditionalReductionRule(
+        List(),
+        Apps( c1 @ Const( _, _, _ ), Seq( x1, y1 ) ),
+        Apps( c2 @ Const( _, _, _ ), Seq( y2, x2 ) )
+        ) if c1 == c2 && x1 == x2 && y1 == y2 => false
+      // TODO: maybe not important?
+      case ConditionalReductionRule(
+        List(),
+        Apps( c1 @ Const( _, _, _ ), Seq( x1, Apps( c2 @ Const( _, _, _ ), Seq( y1, z1 ) ) ) ),
+        Apps( c3 @ Const( _, _, _ ), Seq( Apps( c4 @ Const( _, _, _ ), Seq( x2, y2 ) ), z2 ) )
+        ) if c1 == c2 && c2 == c3 && c3 == c4 && x1 == x2 && y1 == y2 && z1 == z2 => false
+      case _ => true
+    } )
 
   def reductionRules: Seq[ConditionalReductionRule] = {
     val destructorReductionRules = datatypes.flatMap {
