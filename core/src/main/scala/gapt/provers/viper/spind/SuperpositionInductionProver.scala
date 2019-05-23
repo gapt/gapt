@@ -104,12 +104,12 @@ class SuperpositionInductionProver {
           val nConstrs = ctx.getConstructors( x.ty ).map( _.size ).getOrElse( 0 )
           val constrs = enumerateTerms.forType( x.ty ).filter( _.ty == x.ty ).take( nConstrs )
           val tests = constrs.map( s => replaceExpr( f, x, s ) )
-          tests.foldLeft( Bottom().asInstanceOf[Formula] )( ( acc, test ) => Or( acc, test ) )
+          go( tests.foldLeft( Bottom().asInstanceOf[Formula] )( ( acc, test ) => Or( acc, test ) ) )
 
         case Eq( lhs @ VarOrConst( _, _, _ ), rhs @ VarOrConst( _, _, _ ) ) if lhs == rhs => Top()
         case Eq( lhs @ Apps( lhsHead @ Const( _, _, _ ), lhsArgs ), rhs @ Apps( rhsHead @ Const( _, _, _ ), rhsArgs ) ) if isConstructor( lhs.ty, lhsHead ) && isConstructor( rhs.ty, rhsHead ) =>
           if ( lhsHead == rhsHead )
-            lhsArgs.zip( rhsArgs ).foldLeft( Top().asInstanceOf[Formula] ) { case ( acc, ( l, r ) ) => And( acc, Eq( l, r ) ) }
+            go( lhsArgs.zip( rhsArgs ).foldLeft( Top().asInstanceOf[Formula] ) { case ( acc, ( l, r ) ) => And( acc, Eq( l, r ) ) } )
           else
             Bottom()
         case Eq( lhs, rhs ) =>
@@ -248,14 +248,12 @@ class SuperpositionInductionProver {
       check( nf ).getOrElse( false )
     }
 
-    /*
     val msg = if ( counters.isEmpty ) "ACCEPTED" else "REJECTED"
 
     println( msg + ": " + expr )
     if ( counters.nonEmpty )
       println( "COUNTER: " + counters.head )
     println()
-     */
 
     counters.isEmpty
   }
@@ -399,15 +397,6 @@ class SuperpositionInductionProver {
             SequentialInductionAxioms()( Sequent() :+ ( "axiom", target.asInstanceOf[Formula] ) )( ctx ) toOption
         }
     } flatten
-  }
-
-  // Inductive axioms that will prove the negation of one of the clauses in clausesForInduction.
-  def inductiveAxioms( clausesForInduction: List[HOLSequent] )( implicit ctx: MutableContext ): List[Axiom] = {
-    val axioms = clausesForInduction flatMap { cls =>
-      clauseAxioms( cls )
-    }
-
-    axioms.reverse
   }
 
 }

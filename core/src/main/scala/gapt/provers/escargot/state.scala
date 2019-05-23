@@ -336,7 +336,7 @@ class EscargotState( val ctx: MutableContext ) {
   def loop( addInductions: Boolean = false ): Option[( ResolutionProof, Set[Axiom], Map[HOLSequent, ResolutionProof] )] = {
     var inductedClauses = Set.empty[HOLSequent]
     var addedAxioms = Set.empty[Axiom]
-    var possibleAxioms = List.empty[Axiom]
+    val possibleAxioms = mutable.Queue.empty[Axiom]
     var cnfMap = Map.empty[HOLSequent, ResolutionProof]
 
     var loopCount = 0
@@ -368,25 +368,22 @@ class EscargotState( val ctx: MutableContext ) {
           loopCount = 0
 
           do {
-            if ( possibleAxioms.isEmpty ) {
-              possibleAxioms ++= inductiveAxioms( clausesForInduction )( ctx )
-              clausesForInduction = List()
-              inductCutoff += 1
-            }
+            if ( possibleAxioms.isEmpty && usable.isEmpty )
+              return None
 
-            possibleAxioms match {
-              case List() if usable.isEmpty => return None
-              case List()                   =>
-              case newAxiom :: rest =>
-                possibleAxioms = rest
-                val ( clauses, newMap ) = axiomClause( section, newAxiom )
+            if ( possibleAxioms.nonEmpty ) {
+              val newAxiom = possibleAxioms.dequeue()
+              val ( clauses, newMap ) = axiomClause( section, newAxiom )
 
-                addedAxioms += newAxiom
-                cnfMap ++= newMap
+              addedAxioms += newAxiom
+              cnfMap ++= newMap
 
-                newlyDerived ++= clauses
-                preprocessing()
-                clauseProcessing()
+              newlyDerived ++= clauses
+              preprocessing()
+              clauseProcessing()
+
+              if ( addedAxioms.size % 5 == 0 )
+                inductCutoff += 1
             }
           } while ( usable.isEmpty )
         }
@@ -397,7 +394,7 @@ class EscargotState( val ctx: MutableContext ) {
         val given = choose()
         usable -= given
         if ( given.clause.exists( constants( _ ) exists ( isInductive( _ )( ctx ) ) ) && !inductedClauses.contains( given.clause ) ) {
-          clausesForInduction ::= given.clause
+          clauseAxioms( given.clause )( ctx ) foreach ( possibleAxioms.enqueue( _ ) )
           inductedClauses += given.clause
         }
 
