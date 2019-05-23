@@ -2,6 +2,7 @@ package gapt.provers.viper.spind
 
 import gapt.expr._
 import gapt.expr.formula._
+import gapt.expr.ty.Ty
 import gapt.expr.util.{ LambdaPosition, constants, variables }
 import gapt.formats.tip.ConditionalNormalizer
 import gapt.logic.hol.skolemize
@@ -86,25 +87,60 @@ class SuperpositionInductionProver {
   def replaceExpr( f: Expr, x: Expr, e: Expr ): Expr =
     f.find( x ).foldLeft( f )( ( f, pos ) => f.replace( pos, e ) )
 
-  def makeNormalizer( normalizer: ConditionalNormalizer )( expr: Expr ): Expr = {
+  // Is c a constructor
+  def isConstructor( t: Ty, c: Const )( implicit ctx: Context ): Boolean =
+    ctx.getConstructors( t ) match {
+      case None            => false
+      case Some( constrs ) => constrs.contains( c )
+    }
+
+  def makeNormalizer( normalizer: ConditionalNormalizer, expr: Expr )( implicit ctx: Context ): Expr = {
+    // Normalizes into CNF, does some unification along the way
+    // and unfolds existentials to a concrete instance for each constructor for the variable type
+    // and orients equalities the same way around
     def go( e: Expr ): Expr =
       normalizer.normalize( e ) match {
-        case Or( Top(), _ )       => Top()
-        case Or( _, Top() )       => Top()
-        case Or( Bottom(), rhs )  => rhs
-        case Or( lhs, Bottom() )  => lhs
+        case Ex( x, f ) =>
+          val nConstrs = ctx.getConstructors( x.ty ).map( _.size ).getOrElse( 0 )
+          val constrs = enumerateTerms.forType( x.ty ).filter( _.ty == x.ty ).take( nConstrs )
+          val tests = constrs.map( s => replaceExpr( f, x, s ) )
+          tests.foldLeft( Bottom().asInstanceOf[Formula] )( ( acc, test ) => Or( acc, test ) )
 
-        case And( Top(), rhs )    => rhs
-        case And( lhs, Top() )    => lhs
-        case And( Bottom(), _ )   => Bottom()
-        case And( _, Bottom() )   => Bottom()
+        case Eq( lhs @ VarOrConst( _, _, _ ), rhs @ VarOrConst( _, _, _ ) ) if lhs == rhs => Top()
+        case Eq( lhs @ Apps( lhsHead @ Const( _, _, _ ), lhsArgs ), rhs @ Apps( rhsHead @ Const( _, _, _ ), rhsArgs ) ) if isConstructor( lhs.ty, lhsHead ) && isConstructor( rhs.ty, rhsHead ) =>
+          if ( lhsHead == rhsHead )
+            lhsArgs.zip( rhsArgs ).foldLeft( Top().asInstanceOf[Formula] ) { case ( acc, ( l, r ) ) => And( acc, Eq( l, r ) ) }
+          else
+            Bottom()
+        case Eq( lhs, rhs ) =>
+          val l = go( lhs )
+          val r = go( rhs )
+          if ( l.toRawAsciiString <= r.toRawAsciiString )
+            Eq( l, r )
+          else
+            Eq( r, l )
 
-        case Imp( Top(), rhs )    => rhs
-        case Imp( _, Top() )      => Top()
-        case Imp( Bottom(), _ )   => Top()
-        case Imp( lhs, Bottom() ) => Neg( lhs )
+        case Neg( Top() )           => Bottom()
+        case Neg( Bottom() )        => Top()
+        case Neg( And( lhs, rhs ) ) => Or( Neg( go( lhs ) ), Neg( go( rhs ) ) )
+        case Neg( Or( lhs, rhs ) )  => And( Neg( go( lhs ) ), Neg( go( rhs ) ) )
+        case Neg( lhs )             => Neg( go( lhs ) )
 
-        case lhs                  => lhs
+        case Or( Top(), _ )         => Top()
+        case Or( _, Top() )         => Top()
+        case Or( Bottom(), rhs )    => go( rhs )
+        case Or( lhs, Bottom() )    => go( lhs )
+
+        case And( Top(), rhs )      => go( rhs )
+        case And( lhs, Top() )      => go( lhs )
+        case And( Bottom(), _ )     => Bottom()
+        case And( _, Bottom() )     => Bottom()
+
+        case Imp( lhs, rhs )        => go( Or( Neg( lhs ), rhs ) )
+        case Iff( lhs, rhs )        => go( Eq( lhs, rhs ) )
+
+        case App( a, b )            => App( go( a ), go( b ) )
+        case lhs                    => lhs
       }
 
     var last = expr
@@ -115,7 +151,6 @@ class SuperpositionInductionProver {
       else
         last = next
     }
-
     last
   }
 
@@ -135,11 +170,10 @@ class SuperpositionInductionProver {
 
     val fs = go( expr, vars )
 
-    val normalize = makeNormalizer( ctx.conditionalNormalizer ) _
+    val normalize = makeNormalizer( ctx.conditionalNormalizer, _ )
     def isNormalized( e: Expr ): Boolean = constants( e ).intersect( allPositions.keySet ).isEmpty
 
     def unblock( nf: Expr ): Boolean = {
-      // NOTE: this has dubious positives like `elem(s_0:Nat, ++(#v(ind: list), s_2:list): list)` in isaplanner/prop_26
       val skolems = constants( nf ).flatMap( asInductiveConst( _ )( ctx ) )
 
       if ( skolems.isEmpty )
@@ -153,41 +187,59 @@ class SuperpositionInductionProver {
           ts.flatMap( t => constrs.map( s => replaceExpr( t, c, s ) ) )
       }
 
-      alts.exists( alt => check( normalize( alt ) ).getOrElse( false ) )
+      alts.forall( alt => check( normalize( alt ) ).getOrElse( false ) )
+    }
+
+    def disjuncts( e: Expr ): Set[Expr] = {
+      e match {
+        case Or( lhs, rhs ) => disjuncts( lhs ) union disjuncts( rhs )
+        case _              => Set( e )
+      }
     }
 
     // Returns Some( true ) if nf holds, Some( false ) if nf does not hold
-    // and everything normalized and None if nf does not hold but something did not normalize
-    // NOTE: In isaplanner/prop_26 we get something of the form A => A \/ B which we do not recognize as okay,
-    // but it is solved by unblocking.
+    // and we have a concrete counter-example and None otherwise
     def check( nf: Expr ): Option[Boolean] =
       nf match {
         case Eq( lhs, rhs ) =>
           if ( lhs == rhs )
             Some( true )
-          else if ( isNormalized( lhs ) && isNormalized( rhs ) )
-            Some( false )
           else if ( unblock( nf ) )
             Some( true )
+          else if ( isNormalized( nf ) )
+            Some( false )
           else
             None
-        case Iff( lhs, rhs ) => for {
+        case And( lhs, rhs ) => for {
           l <- check( lhs )
           r <- check( rhs )
-        } yield l == r
-        case Imp( lhs, rhs ) =>
-          check( normalize( lhs ) ) match {
-            case Some( false ) => Some( true )
-            case _             => check( normalize( rhs ) )
-          }
+        } yield l && r
+        case Or( lhs, rhs ) =>
+          val regular = for {
+            l <- check( lhs )
+            r <- check( rhs )
+          } yield l || r
+
+          val disjs = disjuncts( nf )
+
+          if ( regular.getOrElse( false ) )
+            Some( true )
+          else if ( disjs.exists( p => disjs.contains( Neg( p ) ) ) )
+            Some( true )
+          else if ( unblock( nf ) )
+            Some( true )
+          else if ( isNormalized( nf ) )
+            Some( false )
+          else
+            None
         case Neg( lhs ) => check( lhs ).map( !_ )
         case lhs =>
           if ( lhs == Top() )
             Some( true )
-          else if ( isNormalized( lhs ) )
-            Some( false )
           else if ( unblock( nf ) )
             Some( true )
+          else if ( isNormalized( nf ) )
+            Some( false )
           else
             None
       }
