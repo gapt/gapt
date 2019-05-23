@@ -4,7 +4,7 @@ import gapt.expr._
 import gapt.expr.formula._
 import gapt.expr.ty.Ty
 import gapt.expr.util.{ LambdaPosition, constants, variables }
-import gapt.formats.tip.ConditionalNormalizer
+import gapt.formats.tip.{ ConditionalNormalizer, ConditionalReductionRule }
 import gapt.logic.hol.skolemize
 import gapt.proofs.context.Context
 import gapt.proofs.lk.LKProof
@@ -248,12 +248,14 @@ class SuperpositionInductionProver {
       check( nf ).getOrElse( false )
     }
 
+    /*
     val msg = if ( counters.isEmpty ) "ACCEPTED" else "REJECTED"
 
     println( msg + ": " + expr )
     if ( counters.nonEmpty )
       println( "COUNTER: " + counters.head )
     println()
+     */
 
     counters.isEmpty
   }
@@ -332,7 +334,7 @@ class SuperpositionInductionProver {
   def isInductive( c: Const )( implicit ctx: Context ): Boolean =
     ctx.getConstructors( c.ty ) match {
       case None            => false
-      case Some( constrs ) => !constrs.contains( c )
+      case Some( constrs ) => !constrs.contains( c ) && !ctx.conditionalNormalizer.rewriteRules.exists( rule => rule.lhsHead == c )
     }
 
   def asInductiveConst( e: Expr )( implicit ctx: Context ): Option[Const] =
@@ -342,7 +344,7 @@ class SuperpositionInductionProver {
     }
 
   def clauseAxioms( cls: HOLSequent )( implicit ctx: MutableContext ): Seq[Axiom] = {
-    val nameGen = ctx.newNameGenerator // TODO: is this a problem?
+    val nameGen = ctx.newNameGenerator
 
     val f = negate( cls.toFormula ).asInstanceOf[Expr]
     val ( primMap, passMap, underSame ) = occurrences( f )

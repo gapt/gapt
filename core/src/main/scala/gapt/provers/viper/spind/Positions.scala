@@ -11,21 +11,30 @@ case class Positions( rules: Set[ConditionalReductionRule], allPositions: Map[Co
   val lhsHead: Const = rules.head.lhsHead
   val allArgs: Set[Int] = rules.head.allArgs
 
-  // Intersection of the different argument types, taking reduction rules without recursive calls into account
-  // by having them not restrict their arguments to any specific type.
-  private def intersectArgs( rules: Set[ConditionalReductionRule], f: ConditionalReductionRule => Option[Set[Int]] ): Set[Int] =
-    rules.foldLeft( allArgs )( ( args, rule ) => args.intersect( f( rule ).getOrElse( allArgs ) ) )
+  // An argument is only passive if it is passive locally in every rule.
+  // This is because we might have goals with primary positions under non-recursive functions.
+  // A neater option might be to use Option's instead and make the distinction at each use site.
+  val passiveArgs: Set[Int] = {
+    val defined = rules.flatMap( _.passiveArgs( allPositions ) )
+    defined.headOption match {
+      case None         => Set()
+      case Some( args ) => defined.foldLeft( args )( ( acc, pass ) => acc intersect pass )
+    }
+  }
 
-  // TODO: these argument positions are a mess
+  // An argument is an accumulator globally if it is so locally
+  val accumulatorArgs: Set[Int] = {
+    val defined = rules.flatMap( _.accumulatorArgs( allPositions ) )
+    defined.headOption match {
+      case None         => Set()
+      case Some( args ) => defined.foldLeft( args )( ( acc, pass ) => acc intersect pass )
+    }
+  }
 
+  // An argument is primary otherwise
   val primaryArgs: Set[Int] =
-    rules.foldLeft( Set.empty[Int] )( ( args, rule ) => args.union( rule.primaryArgs( allPositions ).getOrElse( Set() ) ) )
+    ( allArgs -- passiveArgs ) -- accumulatorArgs
 
-  val accumulatorArgs: Set[Int] =
-    intersectArgs( rules, _.accumulatorArgs( allPositions ) ) -- primaryArgs
-
-  val passiveArgs: Set[Int] =
-    ( intersectArgs( rules, _.passiveArgs( allPositions ) ) -- primaryArgs ) -- accumulatorArgs
 }
 
 object Positions {
@@ -47,20 +56,35 @@ object Positions {
     while ( groups.nonEmpty ) {
       // Find a group of rules where all conditional rules have been processed already.
       // We need this order to process conditionals correctly.
-      // NOTE: This does not support mutually defined rules.
-
-      val Some( ( c, ruleGroup ) ) = groups.find {
+      val next = groups.find {
         case ( _, group ) =>
           group.forall { rule =>
-            rule.conditions.forall { cond =>
-              val usedRules = constants( cond ).intersect( symbols )
-              usedRules.forall( allPositions.isDefinedAt )
-            }
+            var usedRules = rule.conditions.flatMap( constants( _ ) ).toSet.union( constants( rule.rhs ) ).intersect( symbols )
+            usedRules -= rule.lhsHead
+            usedRules.forall( allPositions.isDefinedAt )
           }
       }
 
-      allPositions += c -> Positions( ruleGroup, allPositions )
-      groups -= c
+      next match {
+        case Some( ( c, ruleGroup ) ) =>
+          allPositions += c -> Positions( ruleGroup, allPositions )
+          groups -= c
+        case None =>
+          val calls = groups.mapValues( rules =>
+            rules.flatMap( rule => constants( rule.rhs ) ++ rule.conditions.flatMap( constants( _ ) ) ) )
+
+          val independent = calls.filterKeys( c => calls.forall { case ( d, fs ) => c == d || !fs.contains( c ) } )
+          val mutual = groups -- independent.keys
+
+          // Map mutually inductive calls to null. Currently we treat every argument as primary in this case.
+          mutual foreach { case ( c, _ ) => allPositions += c -> null }
+          mutual foreach {
+            case ( c, ruleGroup ) =>
+              allPositions += c -> Positions( ruleGroup, allPositions )
+              groups -= c
+          }
+      }
+
     }
 
     allPositions

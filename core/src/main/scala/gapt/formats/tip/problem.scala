@@ -9,7 +9,7 @@ import gapt.expr.subst.Substitution
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.ty.To
-import gapt.expr.util.{ LambdaPosition, freeVariables, syntacticMatching }
+import gapt.expr.util.{ LambdaPosition, freeVariables, syntacticMatching, variables }
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.{ ConditionalReductions, Reductions }
@@ -160,15 +160,37 @@ case class ConditionalReductionRule( conditions: Seq[Formula], lhs: Expr, rhs: E
 
   val allArgs: Set[Int] = lhsArgs.zipWithIndex.map( _._2 ).toSet
 
-  // TODO: think about expressing these in a nicer way
-  def primariesIn( condition: Formula, allPositions: Map[Const, Positions] ): Set[Int] = {
+  // Argument positions that occur only passively or not at all in expr
+  def passivesIn( expr: Expr, allPositions: Map[Const, Positions] ): Set[Int] = {
     def go( e: Expr ): Set[Int] =
       e match {
         case Apps( f @ Const( _, _, _ ), rhsArgs ) if allPositions.isDefinedAt( f ) =>
           val poses = allPositions( f )
-          val prims = poses.primaryArgs.map( rhsArgs )
-          val immediate = lhsArgs.zipWithIndex.flatMap {
-            case ( arg, idx ) => if ( prims.contains( arg ) ) Some( idx ) else None
+          val passArgs = if ( poses == null ) Set() else poses.passiveArgs
+          val passives = passArgs.map( rhsArgs )
+          val passVars = passives.flatMap( variables( _ ) )
+          val immediate = lhsArgs.zipWithIndex.collect {
+            case ( l, i ) if passVars.intersect( variables( l ) ).nonEmpty => i
+          }
+          val nested = rhsArgs flatMap go
+          immediate.toSet.intersect( nested.toSet )
+        case App( a, b ) => go( a ) intersect go( b )
+        case _           => allArgs
+      }
+
+    go( expr )
+  }
+
+  def primariesIn( expr: Expr, allPositions: Map[Const, Positions] ): Set[Int] = {
+    def go( e: Expr ): Set[Int] =
+      e match {
+        case Apps( f @ Const( _, _, _ ), rhsArgs ) if allPositions.isDefinedAt( f ) =>
+          val poses = allPositions( f )
+          val primArgs = if ( poses == null ) rhsArgs.zipWithIndex.map( _._2 ).toSet else poses.primaryArgs
+          val prims = primArgs.map( rhsArgs )
+          val primVars = prims.flatMap( variables( _ ) )
+          val immediate = lhsArgs.zipWithIndex.collect {
+            case ( l, i ) if primVars.intersect( variables( l ) ).nonEmpty => i
           }
           val nested = prims flatMap go
           immediate.toSet ++ nested
@@ -176,7 +198,7 @@ case class ConditionalReductionRule( conditions: Seq[Formula], lhs: Expr, rhs: E
         case _           => Set()
       }
 
-    go( condition )
+    go( expr )
   }
 
   def conditionalPrimaries( allPositions: Map[Const, Positions] ): Set[Int] =
@@ -184,7 +206,7 @@ case class ConditionalReductionRule( conditions: Seq[Formula], lhs: Expr, rhs: E
 
   // Positions of arguments which do not change in recursive calls
   // or None if there are no recursive calls on the rhs.
-  def passiveArgs( allPositions: Map[Const, Positions] ): Option[Set[Int]] = {
+  def selfPassiveArgs( allPositions: Map[Const, Positions] ): Option[Set[Int]] = {
     def go( e: Expr ): Option[Set[Int]] =
       e match {
         case Apps( f, rhsArgs ) if f == lhsHead =>
@@ -200,27 +222,32 @@ case class ConditionalReductionRule( conditions: Seq[Formula], lhs: Expr, rhs: E
         case _ => None
       }
 
-    go( rhs ) map ( _ -- conditionalPrimaries( allPositions ) )
+    go( rhs )
+  }
+
+  // Positions of arguments that are self-passive and also passive in calls to other functions.
+  def passiveArgs( allPositions: Map[Const, Positions] ): Option[Set[Int]] = {
+    val conds = conditions.foldLeft( allArgs )( ( acc, cond ) => acc intersect passivesIn( cond, allPositions ) )
+    selfPassiveArgs( allPositions ).map( _ intersect conds )
   }
 
   // Positions of non-passive arguments which are not matched on or None if no recursive calls on the rhs.
-  def accumulatorArgs( allPositions: Map[Const, Positions] ): Option[Set[Int]] =
-    passiveArgs( allPositions ).map( passive =>
-      lhsArgs.zipWithIndex.collect { case ( e, i ) if e.isInstanceOf[Var] => i }.toSet -- passive )
+  def accumulatorArgs( allPositions: Map[Const, Positions] ): Option[Set[Int]] = {
+    passiveArgs( allPositions ).map { passives =>
+      val own = lhsArgs.zipWithIndex.collect { case ( e, i ) if e.isInstanceOf[Var] => i }.toSet -- passives
+      ( own -- primariesIn( rhs, allPositions ) ) -- conditionalPrimaries( allPositions )
+    }
+  }
 
   // Positions of non-passive, non-accumulator arguments, that is, args which are matched on in the lhs and
-  // change in the recursive calls on the rhs. Or None if no recursive calls on the rhs.
-  def primaryArgs( allPositions: Map[Const, Positions] ): Option[Set[Int]] = {
-    val conds = conditionalPrimaries( allPositions )
-    val rhs = passiveArgs( allPositions ).flatMap( passive =>
-      accumulatorArgs( allPositions ).map( accumulator =>
-        ( allArgs -- accumulator ) -- passive ) )
-
-    if ( rhs.isEmpty && conds.nonEmpty )
-      Some( conds )
-    else
-      rhs.map( _ ++ conds )
-  }
+  // change in the recursive calls on the rhs or are passed on in primary position.
+  // None if no recursive calls on the rhs.
+  def primaryArgs( allPositions: Map[Const, Positions] ): Option[Set[Int]] =
+    passiveArgs( allPositions ).flatMap { passives =>
+      accumulatorArgs( allPositions ).map { accumulators =>
+        ( allArgs -- passives ) -- accumulators
+      }
+    }
 }
 
 case class ConditionalNormalizer( rewriteRules: Set[ConditionalReductionRule] ) {
