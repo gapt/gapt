@@ -1,21 +1,13 @@
 package gapt.testing
 
-import java.io.PrintWriter
-
 import gapt.utils._
-import org.json4s._
-import org.json4s.native.JsonMethods._
-
 import scala.concurrent.duration._
-import ammonite.ops._
-import gapt.expr.formula.{ All, Formula, Imp }
 import gapt.formats.tip.TipSmtImporter
 import gapt.proofs.context.Context
 import gapt.proofs.expansion.ExpansionProofToLK
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.InductionRule
-import gapt.proofs.lk.transformations.{ LKToExpansionProof, cleanStructuralRules, inductionNormalForm }
-import gapt.proofs.lk.util.extractInductionAxioms
+import gapt.proofs.lk.transformations.{ LKToExpansionProof, cleanStructuralRules }
 import gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, SequentialInductionAxioms }
 import gapt.provers.viper.{ AipOptions, Viper, ViperOptions }
 
@@ -24,7 +16,7 @@ object parseMode {
     case "analytic_sequential"  => ViperOptions( mode = "analytic", aipOptions = AipOptions( axioms = SequentialInductionAxioms() ) )
     case "analytic_independent" => ViperOptions( mode = "analytic", aipOptions = AipOptions( axioms = IndependentInductionAxioms() ) )
     case "treegrammar"          => ViperOptions( mode = "treegrammar" )
-    case "spind"                => ViperOptions( mode = "spind" )
+    case "spin"                 => ViperOptions( mode = "spin" )
   }
 }
 

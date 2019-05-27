@@ -1,4 +1,4 @@
-package gapt.provers.viper.spind
+package gapt.provers.viper.spin
 
 import gapt.expr.Const
 import gapt.expr.util.constants

@@ -1,7 +1,6 @@
 package gapt.provers.viper
 
 import ammonite.ops._
-import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.Formula
 import gapt.expr.formula.fol.folTermSize
@@ -57,7 +56,7 @@ object ViperOptions {
   val usage =
     """Vienna Inductive Prover
       |
-      |Usage: viper [common options] [--portfolio|--treegrammar|--analytic [options]] problem.smt2
+      |Usage: viper [common options] [--portfolio|--treegrammar|--analytic [options]|--spin] problem.smt2
       |
       |common options:
       |  -v --verbose
@@ -86,8 +85,8 @@ object ViperOptions {
       case "--analytic" :: rest =>
         val ( rest_, opts_ ) = parseAnalytic( rest, opts.aipOptions )
         parse( rest_, opts.copy( aipOptions = opts_, mode = "analytic" ) )
-      case "--spind" :: rest =>
-        parse( rest, opts.copy( mode = "spind" ) )
+      case "--spin" :: rest =>
+        parse( rest, opts.copy( mode = "spin" ) )
       case _ => ( args, opts )
     }
 
@@ -171,8 +170,8 @@ object Viper {
           }
         List( Duration.Inf -> AnalyticInductionTactic( opts.aipOptions.axioms, opts.aipOptions.prover ).
           aka( s"analytic $axiomsName" ) )
-      case "spind" =>
-        List( Duration.Inf -> SuperpositionInductionTactic().aka( "spind" ) )
+      case "spin" =>
+        List( Duration.Inf -> SuperpositionInductionTactic().aka( "spin" ) )
     }
 
   private def timeit[T]( f: => T ): ( T, Duration ) = {

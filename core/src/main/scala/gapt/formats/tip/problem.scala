@@ -15,7 +15,7 @@ import gapt.proofs.context.Context
 import gapt.proofs.context.facet.{ ConditionalReductions, Reductions }
 import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.update.InductiveType
-import gapt.provers.viper.spind.Positions
+import gapt.provers.viper.spin.Positions
 
 case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
   val FunctionType( datatype, fieldTypes ) = constr.ty

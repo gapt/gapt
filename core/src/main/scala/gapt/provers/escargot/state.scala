@@ -6,7 +6,7 @@ import gapt.expr.formula.hol.universalClosure
 import gapt.proofs.{ ContextSection, HOLClause, HOLSequent, Sequent }
 import gapt.proofs.resolution._
 import gapt.provers.escargot.{ LPO, TermOrdering }
-import gapt.provers.viper.spind.SuperpositionInductionProver._
+import gapt.provers.viper.spin.SuperpositionInductionProver._
 import gapt.provers.sat.Sat4j
 import gapt.utils.Logger
 import org.sat4j.minisat.SolverFactory

@@ -41,7 +41,7 @@ import gapt.proofs.lk.rules.macros.ForallLeftBlock
 import gapt.proofs.lk.rules.macros.WeakeningMacroRule
 import gapt.proofs.lk.util.solvePropositional
 import gapt.proofs.lk.util.solveQuasiPropositional
-import gapt.provers.viper.spind.SuperpositionInductionProver
+import gapt.provers.viper.spin.SuperpositionInductionProver
 
 /**
  * Performs backwards chaining:
