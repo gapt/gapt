@@ -8,7 +8,6 @@ import gapt.expr.Var
 import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Bottom
-import gapt.expr.formula.Eq
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Neg
@@ -66,19 +65,20 @@ import gapt.formats.tip.transformation.eliminateRedundantQuantifiers
 import gapt.formats.tip.transformation.expandConstructorMatchExpressions
 import gapt.formats.tip.transformation.expandDefaultPatterns
 import gapt.formats.tip.transformation.expandVariableMatchExpressions
+import gapt.formats.tip.transformation.integersToNaturals
 import gapt.formats.tip.transformation.moveUniversalQuantifiersInwards
 import gapt.formats.tip.transformation.toOuterConditionalNormalForm
 import gapt.formats.tip.transformation.useDefiningFormulas
 import gapt.proofs.context.Context
 import gapt.proofs.context.update.InductiveType
-import gapt.proofs.context.update.ReductionRuleUpdate.reductionRulesAsReductionRuleUpdate
 
 import scala.collection.mutable
 
 class TipTransformationCompiler( var problem: TipSmtProblem ) {
 
   val transformation =
-    desugarDistinctExpressions ->>:
+    integersToNaturals ->>:
+      desugarDistinctExpressions ->>:
       expandDefaultPatterns ->>:
       useDefiningFormulas ->>:
       toOuterConditionalNormalForm ->>:

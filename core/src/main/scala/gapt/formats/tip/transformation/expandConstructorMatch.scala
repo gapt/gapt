@@ -145,14 +145,23 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
     matchExpression.expr match {
       case TipSmtFun( identifier, expressions ) //
       if isConstructor( identifier ) =>
-        val cas = retrieveCase( matchExpression, identifier )
-        val TipSmtConstructorPattern( _, variables ) = cas.pattern
-        val substitution = Substitution( variables zip expressions: _* )
-        val newExpression =
-          new Substitute( problem )( cas.expr, substitution )
-        expandConstructorMatch( newExpression )
+        retrieveCase( matchExpression, identifier ) match {
+          case Some( cas ) =>
+            val TipSmtConstructorPattern( _, variables ) = cas.pattern
+            val substitution = Substitution( variables zip expressions: _* )
+            val newExpression =
+              new Substitute( problem )( cas.expr, substitution )
+            expandConstructorMatch( newExpression )
+          case _ =>
+            TipSmtMatch(
+              expandConstructorMatch( matchExpression.expr ),
+              matchExpression.cases.map { expandConstructorMatch( _ ) } )
+        }
       case id @ TipSmtIdentifier( _ ) if isConstructor( id ) =>
-        expandConstructorMatch( retrieveCase( matchExpression, id ).expr )
+        retrieveCase( matchExpression, id ) match {
+          case Some( c ) => expandConstructorMatch( c.expr )
+          case _         => TipSmtMatch( id, matchExpression.cases.map { expandConstructorMatch } )
+        }
       case _ =>
         matchExpression.copy(
           cases = matchExpression.cases map { expandConstructorMatch } )
@@ -273,7 +282,7 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
    * based on the given constructor symbol.
    */
   private def retrieveCase(
-    matchExpression: TipSmtMatch, constructor: TipSmtIdentifier ): TipSmtCase =
+    matchExpression: TipSmtMatch, constructor: TipSmtIdentifier ): Option[TipSmtCase] =
     retrieveCase( matchExpression, constructor.name )
 
   /**
@@ -287,13 +296,13 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
    * based on the given constructor symbol.
    */
   private def retrieveCase(
-    matchExpression: TipSmtMatch, constructor: String ): TipSmtCase =
-    matchExpression.cases.filter {
+    matchExpression: TipSmtMatch, constructor: String ): Option[TipSmtCase] =
+    matchExpression.cases.find {
       case TipSmtCase(
         TipSmtConstructorPattern( TipSmtIdentifier( symbol ), _ ), _ ) //
         if constructor == symbol => true
       case _ => false
-    } head
+    }
 
   /**
    * Checks whether the given identifier is a constructor.
