@@ -74,7 +74,7 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
           val axioms = goalAxioms ++ prfAxioms.toSeq
           val res = mapInputClauses( resolution )( cnfMap ++ indMap )
           val lk = ResolutionToLKProof( res )
-          val wlk = WeakeningContractionMacroRule( lk, axioms.map( _.formula ) ++: seq )
+          val wlk = WeakeningContractionMacroRule( lk, axioms.map( _.formula ) ++: ground )
           val cut = cutAxioms( wlk, axioms )
           cut
       }
