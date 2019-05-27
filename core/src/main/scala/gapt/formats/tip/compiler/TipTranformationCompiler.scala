@@ -1,5 +1,6 @@
 package gapt.formats.tip.compiler
 
+import gapt.expr.Abs.Block
 import gapt.expr.Apps
 import gapt.expr.Const
 import gapt.expr.Expr
@@ -50,6 +51,7 @@ import gapt.formats.tip.parser.TipSmtGoal
 import gapt.formats.tip.parser.TipSmtIdentifier
 import gapt.formats.tip.parser.TipSmtImp
 import gapt.formats.tip.parser.TipSmtIte
+import gapt.formats.tip.parser.TipSmtKeyword
 import gapt.formats.tip.parser.TipSmtMatch
 import gapt.formats.tip.parser.TipSmtMutualRecursiveFunctionDefinition
 import gapt.formats.tip.parser.TipSmtNot
@@ -106,6 +108,7 @@ class TipTransformationCompiler( var problem: TipSmtProblem ) {
   val assumptions = mutable.Buffer[Formula]()
   val goals = mutable.Buffer[Formula]()
   val reductionRules = mutable.Buffer[ReductionRule]()
+  val definitions = mutable.Buffer[Formula]()
 
   typeDecls( "Bool" ) = To
   datatypes += TipDatatype(
@@ -206,10 +209,17 @@ class TipTransformationCompiler( var problem: TipSmtProblem ) {
 
   private def compileAssertion( tipSmtAssertion: TipSmtAssertion ): Unit = {
 
-    val TipSmtAssertion( _, formula ) = tipSmtAssertion
+    val TipSmtAssertion( keywords, formula ) = tipSmtAssertion
 
-    assumptions += compileExpression( formula, Nil )
-      .asInstanceOf[Formula]
+    val compiledExpression = compileExpression( formula, Nil )
+
+    if ( keywords.contains( TipSmtKeyword( "definition", None ) ) &&
+      keywords.contains( TipSmtKeyword( "lambda", None ) ) ) {
+      definitions += compiledExpression.asInstanceOf[Formula]
+    } else {
+      assumptions += compileExpression( formula, Nil )
+        .asInstanceOf[Formula]
+    }
   }
 
   private def compileGoal( tipSmtGoal: TipSmtGoal ): Unit = {
@@ -466,7 +476,9 @@ class TipTransformationCompiler( var problem: TipSmtProblem ) {
   def toProblem: TipProblem =
     TipProblem(
       ctx,
-      typeDecls.values.toSeq diff datatypes.map { _.t }, datatypes,
+      definitions,
+      typeDecls.values.toSeq diff datatypes.map { _.t },
+      datatypes,
       funDecls.values.toSeq diff functions.map { _.fun },
       functions,
       assumptions, And( goals ) )
