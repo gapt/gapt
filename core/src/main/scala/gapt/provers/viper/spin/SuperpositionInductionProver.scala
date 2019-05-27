@@ -13,6 +13,7 @@ import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.macros.WeakeningContractionMacroRule
 import gapt.proofs.resolution.{ ResolutionToLKProof, mapInputClauses, structuralCNF }
 import gapt.provers.escargot.Escargot
+import gapt.provers.escargot.impl.EscargotLogger
 import gapt.provers.viper.aip.axioms.{ Axiom, SequentialInductionAxioms, StandardInductionAxioms }
 import gapt.provers.viper.grammars.enumerateTerms
 
@@ -152,10 +153,7 @@ class SuperpositionInductionProver( performGeneralization: Boolean, sampleTestTe
   }
 
   // Tests expr by substituting small concrete terms for vars and normalizing the resulting expression.
-  def testFormula( expr: Expr, vars: List[Var] )( implicit ctx: Context ): Boolean = {
-    if ( sampleTestTerms == 0 )
-      return true
-
+  def testFormulaRaw( expr: Expr, vars: List[Var] )( implicit ctx: Context ): Boolean = {
     def go( e: Expr, subs: List[VarOrConst] ): Seq[Expr] = {
       subs match {
         case List() => Seq( e )
@@ -169,6 +167,7 @@ class SuperpositionInductionProver( performGeneralization: Boolean, sampleTestTe
     val fs = go( expr, vars )
 
     val normalize = makeNormalizer( ctx.conditionalNormalizer, _ )
+
     def isNormalized( e: Expr ): Boolean = constants( e ).intersect( allPositions.keySet ).isEmpty
 
     def unblock( nf: Expr ): Boolean = {
@@ -254,6 +253,15 @@ class SuperpositionInductionProver( performGeneralization: Boolean, sampleTestTe
     println()
 
     counters.isEmpty
+  }
+
+  def testFormula( expr: Expr, vars: List[Var] )( implicit ctx: Context ): Boolean = {
+    if ( sampleTestTerms == 0 )
+      return true
+
+    EscargotLogger.time( "testing" ) {
+      testFormulaRaw( expr, vars )
+    }
   }
 
   // TODO: this is kinda heavy
