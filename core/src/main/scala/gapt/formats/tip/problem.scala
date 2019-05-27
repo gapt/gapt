@@ -91,15 +91,16 @@ case class TipProblem(
   }
 
   private val functionDefinitionReductionRules: Seq[ConditionalReductionRule] = {
-    functions.flatMap { _.definitions }.map {
+    functions.flatMap { _.definitions }.flatMap {
       case All.Block( _, Imp.Block( cs, Eq( lhs @ Apps( _: Const, _ ), rhs ) ) ) =>
-        ConditionalReductionRule( cs, lhs, rhs )
+        Some( ConditionalReductionRule( cs, lhs, rhs ) )
       case All.Block( _, Imp.Block( cs, Neg( lhs @ Atom( _, _ ) ) ) ) =>
-        ConditionalReductionRule( cs, lhs, Bottom() )
+        Some( ConditionalReductionRule( cs, lhs, Bottom() ) )
       case All.Block( _, Imp.Block( cs, lhs @ Atom( _, _ ) ) ) =>
-        ConditionalReductionRule( cs, lhs, Top() )
+        Some( ConditionalReductionRule( cs, lhs, Top() ) )
       case All.Block( _, Imp.Block( cs, Iff( lhs, rhs ) ) ) =>
-        ConditionalReductionRule( cs, lhs, rhs )
+        Some( ConditionalReductionRule( cs, lhs, rhs ) )
+      case _ => None
     }
   }
 
