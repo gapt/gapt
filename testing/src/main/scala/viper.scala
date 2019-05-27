@@ -10,7 +10,8 @@ import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.InductionRule
 import gapt.proofs.lk.transformations.{ LKToExpansionProof, cleanStructuralRules }
 import gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, SequentialInductionAxioms }
-import gapt.provers.viper.{ AipOptions, SpinOptions, Viper, ViperOptions }
+import gapt.provers.viper.spin.SpinOptions
+import gapt.provers.viper.{ AipOptions, Viper, ViperOptions }
 
 object parseMode {
   def apply( modeName: String ): ViperOptions = modeName match {
@@ -19,6 +20,7 @@ object parseMode {
     case "treegrammar"          => ViperOptions( mode = "treegrammar" )
     case "spin"                 => ViperOptions( mode = "spin" )
     case "spin_nogen"           => ViperOptions( mode = "spin", spinOptions = SpinOptions( performGeneralization = false ) )
+    case "spin_notest"          => ViperOptions( mode = "spin", spinOptions = SpinOptions( sampleTestTerms = 0 ) )
   }
 }
 
