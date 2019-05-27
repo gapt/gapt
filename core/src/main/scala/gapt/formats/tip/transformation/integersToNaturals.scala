@@ -67,7 +67,7 @@ class IntegerToNaturalConversion( problem: TipSmtProblem ) {
       case expr @ TipSmtForall( vs, f ) =>
         TipSmtForall( vs, convertIntegersToNaturals( f ) )
       case expr @ TipSmtExists( vs, f ) =>
-        TipSmtForall( vs, convertIntegersToNaturals( f ) )
+        TipSmtExists( vs, convertIntegersToNaturals( f ) )
       case expr @ TipSmtIte( cond, ifTrue, ifFalse ) =>
         TipSmtIte(
           convertIntegersToNaturals( cond ),

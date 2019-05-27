@@ -755,6 +755,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
   def toProblem: TipProblem =
     TipProblem(
       ctx,
+      Nil,
       typeDecls.values.toSeq diff datatypes.map { _.t }, datatypes,
       funDecls.values.toSeq diff functions.map { _.fun },
       functions,

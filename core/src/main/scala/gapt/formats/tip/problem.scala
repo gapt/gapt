@@ -45,6 +45,7 @@ case class TipFun( fun: Const, definitions: Seq[Formula] )
 
 case class TipProblem(
     ctx:                 ImmutableContext,
+    definitions:         Seq[Formula],
     sorts:               Seq[TBase],
     datatypes:           Seq[TipDatatype],
     uninterpretedConsts: Seq[Const],
@@ -66,6 +67,7 @@ case class TipProblem(
 
   def toSequent = existentialClosure(
     datatypes.flatMap( _.constructors ).flatMap( _.projectorDefinitions ) ++:
+      definitions ++:
       functions.flatMap( _.definitions ) ++:
       constructorInjectivity ++:
       assumptions ++:
@@ -95,9 +97,13 @@ case class TipProblem(
         case ReductionRule( lhs, rhs ) => ConditionalReductionRule( Nil, lhs, rhs )
       }
     }
-    val definitionReductionRules = assumptions.flatMap {
+    val definitionReductionRules = definitions.flatMap {
       case All.Block( _, Eq( lhs @ Apps( Const( _, _, _ ), _ ), rhs ) ) =>
         Some( ConditionalReductionRule( Nil, lhs, rhs ) )
+      case All.Block( _, Neg( lhs @ Atom( _, _ ) ) ) =>
+        Some( ConditionalReductionRule( Nil, lhs, Bottom() ) )
+      case All.Block( _, lhs @ Atom( _, _ ) ) =>
+        Some( ConditionalReductionRule( Nil, lhs, Top() ) )
       case _ => None
     }
     functionDefinitionReductionRules ++
@@ -344,7 +350,7 @@ trait TipProblemDefinition {
     functions foreach { function =>
       ctx += function.fun
     }
-    TipProblem( ctx, sorts, datatypes, uninterpretedConsts, functions, assumptions, goal )
+    TipProblem( ctx, Nil, sorts, datatypes, uninterpretedConsts, functions, assumptions, goal )
   }
 }
 
