@@ -16,7 +16,9 @@ import gapt.provers.escargot.Escargot
 import gapt.provers.escargot.impl.EscargotLogger
 import gapt.provers.viper.aip.axioms.{ Axiom, SequentialInductionAxioms, StandardInductionAxioms }
 import gapt.provers.viper.grammars.enumerateTerms
+import gapt.utils.NameGenerator
 
+// TODO: sampleTestTerms should probably not be 5 but something dependent on the number of constructors
 case class SpinOptions( performGeneralization: Boolean = true, sampleTestTerms: Int = 5 )
 
 object SuperpositionInductionProver {
@@ -32,7 +34,9 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
   private implicit def labeledSequentToHOLSequent( sequent: Sequent[( String, Formula )] ): Sequent[Formula] =
     sequent map { case ( _, f ) => f }
 
+  // TODO: this is questionable
   var allPositions: Map[Const, Positions] = Map()
+  var nameGen: NameGenerator = new NameGenerator( List() )
 
   /**
    * Proves the given sequent by using induction.
@@ -46,6 +50,7 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
     val seq = labeledSequentToHOLSequent( sequent )
 
     allPositions = Positions.splitRules( ctx.conditionalNormalizer.rewriteRules )
+    nameGen = ctx.newNameGenerator
 
     withSection { section =>
       val ground = section.groundSequent( seq )
@@ -273,7 +278,13 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
   // 3: A set of subexpressions that occur in primary positions together directly under the same symbol.
   //  The sets are transitive, so if a and b occur together and b and c occur together, 3 will contain a set
   //  containing all of a, b and c.
-  def occurrences( formula: Expr ): ( Map[Expr, Seq[LambdaPosition]], Map[Expr, Seq[LambdaPosition]], Set[Set[Expr]] ) = {
+  case class Occurences(
+      primary:      Map[Expr, Seq[LambdaPosition]],
+      accumulators: Map[Expr, Seq[LambdaPosition]],
+      passive:      Map[Expr, Seq[LambdaPosition]],
+      underSame:    Set[Set[Expr]] )
+
+  def occurrences( formula: Expr ): Occurences = {
     val empty = Seq.empty[( Expr, List[Int] )]
 
     def newPos( i: Int, size: Int, pos: List[Int] ): List[Int] =
@@ -281,21 +292,27 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
 
     var underSame = Set.empty[Set[Expr]]
 
-    def go( expr: Expr, pos: List[Int] ): ( Seq[( Expr, List[Int] )], Seq[( Expr, List[Int] )] ) =
+    def go( expr: Expr, pos: List[Int] ): ( Seq[( Expr, List[Int] )], Seq[( Expr, List[Int] )], Seq[( Expr, List[Int] )] ) =
       expr match {
         case Apps( c @ Const( _, _, _ ), rhsArgs ) =>
           allPositions.get( c ) match {
             case None =>
-              rhsArgs.zipWithIndex.foldLeft( ( empty, empty ) ) {
-                case ( ( prim, pass ), ( e, i ) ) =>
-                  val ( l, r ) = go( e, newPos( i, rhsArgs.size, pos ) )
-                  ( l ++ prim, r ++ pass )
+              rhsArgs.zipWithIndex.foldLeft( ( empty, empty, empty ) ) {
+                case ( ( prim, accs, pass ), ( e, i ) ) =>
+                  val ( l, m, r ) = go( e, newPos( i, rhsArgs.size, pos ) )
+                  ( l ++ prim, m ++ accs, r ++ pass )
               }
             case Some( positions ) =>
               val pass1 = positions.passiveArgs.toSeq flatMap { i =>
                 val p = newPos( i, rhsArgs.size, pos )
-                val ( l, r ) = go( rhsArgs( i ), p )
-                ( rhsArgs( i ), p ) +: ( l ++ r )
+                val ( l, m, r ) = go( rhsArgs( i ), p )
+                ( rhsArgs( i ), p ) +: ( l ++ m ++ r )
+              }
+
+              val accs1 = positions.accumulatorArgs.toSeq flatMap { i =>
+                val p = newPos( i, rhsArgs.size, pos )
+                val ( l, m, _ ) = go( rhsArgs( i ), p )
+                ( rhsArgs( i ), p ) +: ( l ++ m )
               }
 
               val same = positions.primaryArgs map rhsArgs
@@ -308,63 +325,75 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
                   underSame += existings.foldLeft( same ) { case ( acc, set ) => acc union set }
               }
 
-              val ( prim1, pass2 ) = positions.primaryArgs.toSeq.foldLeft( ( empty, empty ) ) {
-                case ( ( prim, pass ), i ) =>
+              val ( prim1, accs2, pass2 ) = positions.primaryArgs.toSeq.foldLeft( ( empty, empty, empty ) ) {
+                case ( ( prim, accs, pass ), i ) =>
                   val p = newPos( i, rhsArgs.size, pos )
-                  val ( l, r ) = go( rhsArgs( i ), p )
-                  ( ( rhsArgs( i ), p ) +: ( l ++ prim ), r ++ pass )
+                  val ( l, m, r ) = go( rhsArgs( i ), p )
+                  ( ( rhsArgs( i ), p ) +: ( l ++ prim ), m ++ accs, r ++ pass )
               }
-              ( prim1, pass1 ++ pass2 )
+              ( prim1, accs1 ++ accs2, pass1 ++ pass2 )
           }
         case App( a, b ) =>
-          val ( l1, r1 ) = go( a, 1 :: pos )
-          val ( l2, r2 ) = go( b, 2 :: pos )
-          ( l1 ++ l2, r1 ++ r2 )
-        case _ => ( Seq(), Seq() )
+          val ( l1, m1, r1 ) = go( a, 1 :: pos )
+          val ( l2, m2, r2 ) = go( b, 2 :: pos )
+          ( l1 ++ l2, m1 ++ m2, r1 ++ r2 )
+        case _ => ( Seq(), Seq(), Seq() )
       }
 
-    val ( prim, pass ) = go( formula, List() )
+    val ( prim, accs, pass ) = go( formula, List() )
 
     val primMap = prim.groupBy( _._1 ).mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } )
+    val accsMap = accs.groupBy( _._1 ).mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } )
     val passMap = pass.groupBy( _._1 ).mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } )
 
-    ( primMap, passMap, underSame )
+    Occurences( primMap, accsMap, passMap, underSame )
+  }
+
+  // Given a constant c to induct over in f, returns a fresh induction variable
+  // and a prioritized list of induction goals, the first more general than the next.
+  def getTargets( c: Const, f: Expr, occs: Occurences ): ( Var, Seq[Expr] ) = {
+    val primPoses = occs.primary.getOrElse( c, Seq() )
+    val passPoses = occs.passive.getOrElse( c, Seq() )
+    val v = Var( nameGen.fresh( "ind" ), c.ty )
+
+    var targets = List( replaceExpr( f, c, v ) )
+
+    if ( opts.performGeneralization && primPoses.size >= 2 && passPoses.nonEmpty ) {
+      // Induct only on primary occurences, i.e. generalize
+      targets ::= primPoses.foldLeft( f )( ( g, pos ) => g.replace( pos, v ) )
+    }
+
+    ( v, targets )
+  }
+
+  def quantifyAccumulators( f: Expr, occs: Occurences )( implicit ctx: Context ): Expr = {
+    val accsPoses = occs.accumulators.filterKeys( asInductiveConst( _ )( ctx ).isDefined )
+
+    accsPoses.foldLeft( f ) {
+      case ( g, ( acc, _ ) ) =>
+        val w = Var( nameGen.fresh( "ind" ), acc.ty )
+        All( w, replaceExpr( g, acc, w ) )
+    }
   }
 
   def clauseAxioms( cls: HOLSequent )( implicit ctx: MutableContext ): Seq[Axiom] = {
     val nameGen = ctx.newNameGenerator
 
     val f = negate( cls.toFormula ).asInstanceOf[Expr]
-    val ( primMap, passMap, underSame ) = occurrences( f )
+    val occs = occurrences( f )
 
     // TODO: we should do this for non-constructor headed subterms as well as constants
-    val underSameConsts = underSame map ( _.flatMap( asInductiveConst( _ )( ctx ) ) )
-
-    // Given a constant c to induct over in f, returns a fresh induction variable
-    // and a prioritized list of induction goals, the first more general than the next.
-    // TODO: CLEAN up this confusing passing of f which must coincide with f above except for substitutions
-    def getTargets( c: Const, f: Expr ): ( Var, Seq[Expr] ) = {
-      val primPoses = primMap.getOrElse( c, Seq() )
-      val passPoses = passMap.getOrElse( c, Seq() )
-      val v = Var( nameGen.fresh( "ind" ), c.ty )
-
-      var targets = List( replaceExpr( f, c, v ) )
-
-      if ( opts.performGeneralization && primPoses.size >= 2 && passPoses.nonEmpty ) {
-        // Induct only on primary occurences, i.e. generalize
-        targets ::= primPoses.foldLeft( f )( ( g, pos ) => g.replace( pos, v ) )
-      }
-
-      ( v, targets )
-    }
+    val underSameConsts = occs.underSame map ( _.flatMap( asInductiveConst( _ )( ctx ) ) )
 
     underSameConsts.toSeq.flatMap {
       case cs if cs.isEmpty => Seq()
       case cs if cs.size == 1 =>
         // This constant only appears alone in primary position, so we do a regular induction on it.
         val c = cs.head
-        val ( v, targets ) = getTargets( c, f )
-        targets.find( testFormula( _, List( v ) )( ctx ) ) flatMap { target =>
+        // Passing in the same occurrences is okay, as we only change constants
+        val ( v, targets ) = getTargets( c, f, occs )
+        targets.find( testFormula( _, List( v ) )( ctx ) ) flatMap { targ =>
+          val target = quantifyAccumulators( targ, occs )
           StandardInductionAxioms( v, target.asInstanceOf[Formula] )( ctx ).toOption.map( Seq( _ ) )
         }
       case cs =>
@@ -375,13 +404,14 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
           case ( vsfs, c ) =>
             vsfs.flatMap {
               case ( vs, g ) =>
-                val ( v, ts ) = getTargets( c, g )
+                val ( v, ts ) = getTargets( c, g, occs )
                 ts map ( ( v +: vs, _ ) )
             }
         }
 
         targets.find { case ( vs, target ) => testFormula( target, vs.toList )( ctx ) } flatMap {
-          case ( vs, target ) =>
+          case ( vs, targ ) =>
+            val target = quantifyAccumulators( targ, occs )
             SequentialInductionAxioms()( Sequent() :+ ( "axiom", target.asInstanceOf[Formula] ) )( ctx ) toOption
         }
     } flatten
