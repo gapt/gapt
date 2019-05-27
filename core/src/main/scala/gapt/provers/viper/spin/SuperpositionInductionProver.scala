@@ -17,15 +17,17 @@ import gapt.provers.escargot.impl.EscargotLogger
 import gapt.provers.viper.aip.axioms.{ Axiom, SequentialInductionAxioms, StandardInductionAxioms }
 import gapt.provers.viper.grammars.enumerateTerms
 
+case class SpinOptions( performGeneralization: Boolean = true, sampleTestTerms: Int = 5 )
+
 object SuperpositionInductionProver {
   def apply(): SuperpositionInductionProver =
-    new SuperpositionInductionProver( performGeneralization = true, sampleTestTerms = 5 )
+    new SuperpositionInductionProver( SpinOptions() )
 
-  def apply( performGeneralization: Boolean, sampleTestTerms: Int ): SuperpositionInductionProver =
-    new SuperpositionInductionProver( performGeneralization, sampleTestTerms )
+  def apply( opts: SpinOptions ): SuperpositionInductionProver =
+    new SuperpositionInductionProver( opts )
 }
 
-class SuperpositionInductionProver( performGeneralization: Boolean, sampleTestTerms: Int ) {
+class SuperpositionInductionProver( opts: SpinOptions ) {
 
   private implicit def labeledSequentToHOLSequent( sequent: Sequent[( String, Formula )] ): Sequent[Formula] =
     sequent map { case ( _, f ) => f }
@@ -159,7 +161,7 @@ class SuperpositionInductionProver( performGeneralization: Boolean, sampleTestTe
         case List() => Seq( e )
         case v :: vs =>
           val termStream = enumerateTerms.forType( v.ty )( ctx )
-          val terms = termStream filter ( _.ty == v.ty ) take sampleTestTerms
+          val terms = termStream filter ( _.ty == v.ty ) take opts.sampleTestTerms
           terms.flatMap( t => go( e, vs ) map ( replaceExpr( _, v, t ) ) )
       }
     }
@@ -256,7 +258,7 @@ class SuperpositionInductionProver( performGeneralization: Boolean, sampleTestTe
   }
 
   def testFormula( expr: Expr, vars: List[Var] )( implicit ctx: Context ): Boolean = {
-    if ( sampleTestTerms == 0 )
+    if ( opts.sampleTestTerms == 0 )
       return true
 
     EscargotLogger.time( "testing" ) {
@@ -348,7 +350,7 @@ class SuperpositionInductionProver( performGeneralization: Boolean, sampleTestTe
 
       var targets = List( replaceExpr( f, c, v ) )
 
-      if ( performGeneralization && primPoses.size >= 2 && passPoses.nonEmpty ) {
+      if ( opts.performGeneralization && primPoses.size >= 2 && passPoses.nonEmpty ) {
         // Induct only on primary occurences, i.e. generalize
         targets ::= primPoses.foldLeft( f )( ( g, pos ) => g.replace( pos, v ) )
       }
