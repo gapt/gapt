@@ -248,8 +248,11 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
             None
       }
 
+    // Ignore non-normalized counter examples if the problem has lambdas
+    val acceptNotNormalized = ctx.names.exists( _.matches( "fun[0-9]+" ) )
+
     val counters = fs.map( normalize ).filterNot { nf =>
-      check( nf ).getOrElse( false )
+      check( nf ).getOrElse( acceptNotNormalized )
     }
 
     val msg = if ( counters.isEmpty ) "ACCEPTED" else "REJECTED"
