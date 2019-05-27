@@ -2,9 +2,8 @@ package gapt.provers.viper.spin
 
 import gapt.expr._
 import gapt.expr.formula._
-import gapt.expr.ty.Ty
-import gapt.expr.util.{ LambdaPosition, constants, variables }
-import gapt.formats.tip.{ ConditionalNormalizer, ConditionalReductionRule }
+import gapt.expr.util.{ LambdaPosition, constants }
+import gapt.formats.tip.ConditionalNormalizer
 import gapt.logic.hol.skolemize
 import gapt.proofs.context.Context
 import gapt.proofs.lk.LKProof
@@ -18,13 +17,14 @@ import gapt.provers.viper.aip.axioms.{ Axiom, SequentialInductionAxioms, Standar
 import gapt.provers.viper.grammars.enumerateTerms
 
 object SuperpositionInductionProver {
-  def apply(): SuperpositionInductionProver = new SuperpositionInductionProver( performGeneralization = true )
+  def apply(): SuperpositionInductionProver =
+    new SuperpositionInductionProver( performGeneralization = true, sampleTestTerms = 5 )
 
-  def apply( performGeneralization: Boolean ): SuperpositionInductionProver =
-    new SuperpositionInductionProver( performGeneralization )
+  def apply( performGeneralization: Boolean, sampleTestTerms: Int ): SuperpositionInductionProver =
+    new SuperpositionInductionProver( performGeneralization, sampleTestTerms )
 }
 
-class SuperpositionInductionProver( performGeneralization: Boolean ) {
+class SuperpositionInductionProver( performGeneralization: Boolean, sampleTestTerms: Int ) {
 
   private implicit def labeledSequentToHOLSequent( sequent: Sequent[( String, Formula )] ): Sequent[Formula] =
     sequent map { case ( _, f ) => f }
@@ -49,6 +49,7 @@ class SuperpositionInductionProver( performGeneralization: Boolean ) {
 
       // Perform an initial induction while the goal has not been split across several clauses
       // TODO: we add things twice because of this
+      //    Could store variables in this object instead of the state loop to avoid it
       val goals = ground.succedent
       val goalAxioms = goals flatMap ( goal => clauseAxioms( skolemize( goal ) +: Sequent() )( ctx ) )
       val goalGround = goalAxioms.map( _.formula ) ++: ground
@@ -152,14 +153,15 @@ class SuperpositionInductionProver( performGeneralization: Boolean ) {
 
   // Tests expr by substituting small concrete terms for vars and normalizing the resulting expression.
   def testFormula( expr: Expr, vars: List[Var] )( implicit ctx: Context ): Boolean = {
-    val numberOfTestTerms = 5 // TODO: should be an option
+    if ( sampleTestTerms == 0 )
+      return true
 
     def go( e: Expr, subs: List[VarOrConst] ): Seq[Expr] = {
       subs match {
         case List() => Seq( e )
         case v :: vs =>
           val termStream = enumerateTerms.forType( v.ty )( ctx )
-          val terms = termStream filter ( _.ty == v.ty ) take numberOfTestTerms
+          val terms = termStream filter ( _.ty == v.ty ) take sampleTestTerms
           terms.flatMap( t => go( e, vs ) map ( replaceExpr( _, v, t ) ) )
       }
     }

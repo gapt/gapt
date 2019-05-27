@@ -45,7 +45,7 @@ import scala.util.Try
 
 case class AipOptions( axioms: AxiomFactory = SequentialInductionAxioms(), prover: ResolutionProver = Escargot )
 
-case class SpinOptions( performGeneralization: Boolean = true )
+case class SpinOptions( performGeneralization: Boolean = true, sampleTestTerms: Int = 5 )
 
 case class ViperOptions(
     verbosity:                Int                      = 2,
@@ -73,6 +73,7 @@ object ViperOptions {
       |
       |--spin options:
       |  --generalization true|false
+      |  --testing        on|off|1|2|...
       |""".stripMargin
 
   def parse( args: List[String], opts: ViperOptions ): ( List[String], ViperOptions ) =
@@ -113,6 +114,11 @@ object ViperOptions {
       case "--generalization" :: toggle :: rest => parseSpin( rest, opts.copy( performGeneralization = toggle match {
         case "true"  => true
         case "false" => false
+      } ) )
+      case "--testing" :: toggle :: rest => parseSpin( rest, opts.copy( sampleTestTerms = toggle match {
+        case "on"                       => 5
+        case "off"                      => 0
+        case d if d.forall( _.isDigit ) => d.toInt
       } ) )
       case _ => ( args, opts )
     }
@@ -188,8 +194,9 @@ object Viper {
           aka( s"analytic $axiomsName" ) )
       case "spin" =>
         val generalize = opts.spinOptions.performGeneralization
-        List( Duration.Inf -> SuperpositionInductionTactic( generalize )
-          .aka( s"spin (generalization = $generalize)" ) )
+        val testTerms = opts.spinOptions.sampleTestTerms
+        List( Duration.Inf -> SuperpositionInductionTactic( generalize, testTerms )
+          .aka( s"spin (generalization = $generalize, test terms = $testTerms)" ) )
     }
 
   private def timeit[T]( f: => T ): ( T, Duration ) = {
