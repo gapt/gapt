@@ -17,9 +17,14 @@ import gapt.provers.escargot.Escargot
 import gapt.provers.viper.aip.axioms.{ Axiom, SequentialInductionAxioms, StandardInductionAxioms }
 import gapt.provers.viper.grammars.enumerateTerms
 
-object SuperpositionInductionProver extends SuperpositionInductionProver
+object SuperpositionInductionProver {
+  def apply(): SuperpositionInductionProver = new SuperpositionInductionProver( performGeneralization = true )
 
-class SuperpositionInductionProver {
+  def apply( performGeneralization: Boolean ): SuperpositionInductionProver =
+    new SuperpositionInductionProver( performGeneralization )
+}
+
+class SuperpositionInductionProver( performGeneralization: Boolean ) {
 
   private implicit def labeledSequentToHOLSequent( sequent: Sequent[( String, Formula )] ): Sequent[Formula] =
     sequent map { case ( _, f ) => f }
@@ -53,7 +58,7 @@ class SuperpositionInductionProver {
 
       val clauses = cnfMap.keySet.map( _.map( _.asInstanceOf[Atom] ) )
 
-      val prf = Escargot.getResolutionProofWithAxioms( clauses )
+      val prf = Escargot.getResolutionProofWithAxioms( clauses, Some( this ) )
 
       prf map {
         case ( resolution, prfAxioms, indMap ) =>
@@ -81,17 +86,6 @@ class SuperpositionInductionProver {
         CutRule( axiom.proof, mainProof, axiom.formula )
       else
         mainProof
-    }
-
-  // Replaces x with e in f.
-  def replaceExpr( f: Expr, x: Expr, e: Expr ): Expr =
-    f.find( x ).foldLeft( f )( ( f, pos ) => f.replace( pos, e ) )
-
-  // Is c a constructor
-  def isConstructor( t: Ty, c: Const )( implicit ctx: Context ): Boolean =
-    ctx.getConstructors( t ) match {
-      case None            => false
-      case Some( constrs ) => constrs.contains( c )
     }
 
   def makeNormalizer( normalizer: ConditionalNormalizer, expr: Expr )( implicit ctx: Context ): Expr = {
@@ -325,24 +319,6 @@ class SuperpositionInductionProver {
     ( primMap, passMap, underSame )
   }
 
-  def negate( f: Formula ): Formula = f match {
-    case Neg( g ) => g
-    case _        => Neg( f )
-  }
-
-  // Is c an inductive skolem constant, i.e. not a constructor
-  def isInductive( c: Const )( implicit ctx: Context ): Boolean =
-    ctx.getConstructors( c.ty ) match {
-      case None            => false
-      case Some( constrs ) => !constrs.contains( c ) && !ctx.conditionalNormalizer.rewriteRules.exists( rule => rule.lhsHead == c )
-    }
-
-  def asInductiveConst( e: Expr )( implicit ctx: Context ): Option[Const] =
-    e match {
-      case c @ Const( _, _, _ ) if isInductive( c ) => Some( c )
-      case _                                        => None
-    }
-
   def clauseAxioms( cls: HOLSequent )( implicit ctx: MutableContext ): Seq[Axiom] = {
     val nameGen = ctx.newNameGenerator
 
@@ -360,13 +336,11 @@ class SuperpositionInductionProver {
       val passPoses = passMap.getOrElse( c, Seq() )
       val v = Var( nameGen.fresh( "ind" ), c.ty )
 
-      val targets = if ( primPoses.size >= 2 && passPoses.nonEmpty ) {
+      var targets = List( replaceExpr( f, c, v ) )
+
+      if ( performGeneralization && primPoses.size >= 2 && passPoses.nonEmpty ) {
         // Induct only on primary occurences, i.e. generalize
-        Seq(
-          primPoses.foldLeft( f )( ( g, pos ) => g.replace( pos, v ) ),
-          replaceExpr( f, c, v ) )
-      } else {
-        Seq( replaceExpr( f, c, v ) )
+        targets ::= primPoses.foldLeft( f )( ( g, pos ) => g.replace( pos, v ) )
       }
 
       ( v, targets )

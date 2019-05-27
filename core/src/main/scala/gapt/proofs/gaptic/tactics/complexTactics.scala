@@ -323,9 +323,9 @@ case class AnalyticInductionTactic( axioms: AxiomFactory, prover: ResolutionProv
     copy( prover = prover )
 }
 
-case class SuperpositionInductionTactic()( implicit ctx: MutableContext ) extends Tactical1[Unit] {
-  override def apply( goal: OpenAssumption ) =
-    SuperpositionInductionProver inductiveLKProof goal.labelledSequent match {
+case class SuperpositionInductionTactic( performGeneralization: Boolean )( implicit ctx: MutableContext ) extends Tactical1[Unit] {
+  override def apply( goal: OpenAssumption ): Tactic[Unit] =
+    SuperpositionInductionProver( performGeneralization ) inductiveLKProof goal.labelledSequent match {
       case None       => TacticFailure( this, "structural induction prover failed" )
       case Some( lk ) => replace( lk )
     }

@@ -45,18 +45,21 @@ import scala.util.Try
 
 case class AipOptions( axioms: AxiomFactory = SequentialInductionAxioms(), prover: ResolutionProver = Escargot )
 
+case class SpinOptions( performGeneralization: Boolean = true )
+
 case class ViperOptions(
     verbosity:                Int                      = 2,
     mode:                     String                   = "portfolio",
     fixup:                    Boolean                  = true,
     prooftool:                Boolean                  = false,
     treeGrammarProverOptions: TreeGrammarProverOptions = TreeGrammarProverOptions(),
-    aipOptions:               AipOptions               = AipOptions() )
+    aipOptions:               AipOptions               = AipOptions(),
+    spinOptions:              SpinOptions              = SpinOptions() )
 object ViperOptions {
   val usage =
     """Vienna Inductive Prover
       |
-      |Usage: viper [common options] [--portfolio|--treegrammar|--analytic [options]|--spin] problem.smt2
+      |Usage: viper [common options] [--portfolio|--treegrammar|--analytic [options]|--spin [options]] problem.smt2
       |
       |common options:
       |  -v --verbose
@@ -67,6 +70,9 @@ object ViperOptions {
       |--analytic options:
       |  --prover escargot|vampire|prover9|spass|eprover
       |  --axioms sequential|independent|...
+      |
+      |--spin options:
+      |  --generalization true|false
       |""".stripMargin
 
   def parse( args: List[String], opts: ViperOptions ): ( List[String], ViperOptions ) =
@@ -86,7 +92,8 @@ object ViperOptions {
         val ( rest_, opts_ ) = parseAnalytic( rest, opts.aipOptions )
         parse( rest_, opts.copy( aipOptions = opts_, mode = "analytic" ) )
       case "--spin" :: rest =>
-        parse( rest, opts.copy( mode = "spin" ) )
+        val ( rest_, opts_ ) = parseSpin( rest, opts.spinOptions )
+        parse( rest_, opts.copy( spinOptions = opts_, mode = "spin" ) )
       case _ => ( args, opts )
     }
 
@@ -99,6 +106,15 @@ object ViperOptions {
       } ) )
       case "--prover" :: prover :: rest => parseAnalytic( rest, opts.copy( prover = provers( prover ) ) )
       case _                            => ( args, opts )
+    }
+
+  def parseSpin( args: List[String], opts: SpinOptions ): ( List[String], SpinOptions ) =
+    args match {
+      case "--generalization" :: toggle :: rest => parseSpin( rest, opts.copy( performGeneralization = toggle match {
+        case "true"  => true
+        case "false" => false
+      } ) )
+      case _ => ( args, opts )
     }
 
   val provers = Map[String, ResolutionProver](
@@ -171,7 +187,9 @@ object Viper {
         List( Duration.Inf -> AnalyticInductionTactic( opts.aipOptions.axioms, opts.aipOptions.prover ).
           aka( s"analytic $axiomsName" ) )
       case "spin" =>
-        List( Duration.Inf -> SuperpositionInductionTactic().aka( "spin" ) )
+        val generalize = opts.spinOptions.performGeneralization
+        List( Duration.Inf -> SuperpositionInductionTactic( generalize )
+          .aka( s"spin (generalization = $generalize)" ) )
     }
 
   private def timeit[T]( f: => T ): ( T, Duration ) = {

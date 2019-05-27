@@ -1,12 +1,10 @@
 package gapt.provers.escargot.impl
 
-import gapt.expr._
-import gapt.expr.formula._
 import gapt.expr.formula.hol.universalClosure
 import gapt.proofs.{ ContextSection, HOLClause, HOLSequent, Sequent }
 import gapt.proofs.resolution._
 import gapt.provers.escargot.{ LPO, TermOrdering }
-import gapt.provers.viper.spin.SuperpositionInductionProver._
+import gapt.provers.viper.spin._
 import gapt.provers.sat.Sat4j
 import gapt.utils.Logger
 import org.sat4j.minisat.SolverFactory
@@ -14,11 +12,10 @@ import Sat4j._
 import gapt.expr.formula.And
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Formula
-import gapt.expr.util.{ LambdaPosition, constants, expressionSize, freeVariables }
+import gapt.expr.util.{ constants, expressionSize, freeVariables }
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.rup.RupProof
-import gapt.provers.viper.aip.axioms.{ Axiom, SequentialInductionAxioms, StandardInductionAxioms }
-import gapt.provers.viper.grammars.enumerateTerms
+import gapt.provers.viper.aip.axioms.Axiom
 import org.sat4j.specs.{ ContradictionException, IConstr, ISolverService }
 import org.sat4j.tools.SearchListenerAdapter
 import cats.implicits._
@@ -333,12 +330,13 @@ class EscargotState( val ctx: MutableContext ) {
   }
 
   /** Main inference loop. */
-  def loop( addInductions: Boolean = false ): Option[( ResolutionProof, Set[Axiom], Map[HOLSequent, ResolutionProof] )] = {
+  def loop( spin: Option[SuperpositionInductionProver] = None ): Option[( ResolutionProof, Set[Axiom], Map[HOLSequent, ResolutionProof] )] = {
     var inductedClauses = Set.empty[HOLSequent]
     var addedAxioms = Set.empty[Axiom]
     val possibleAxioms = mutable.Queue.empty[Axiom]
     var cnfMap = Map.empty[HOLSequent, ResolutionProof]
 
+    val addInductions = spin.isDefined
     var loopCount = 0
     var inductCutoff = 16
 
@@ -393,9 +391,13 @@ class EscargotState( val ctx: MutableContext ) {
 
         val given = choose()
         usable -= given
-        if ( given.clause.exists( constants( _ ) exists ( isInductive( _ )( ctx ) ) ) && !inductedClauses.contains( given.clause ) ) {
-          clauseAxioms( given.clause )( ctx ) foreach ( possibleAxioms.enqueue( _ ) )
-          inductedClauses += given.clause
+        spin match {
+          case Some( s ) =>
+            if ( given.clause.exists( constants( _ ) exists ( isInductive( _ )( ctx ) ) ) && !inductedClauses.contains( given.clause ) ) {
+              s.clauseAxioms( given.clause )( ctx ) foreach ( possibleAxioms.enqueue( _ ) )
+              inductedClauses += given.clause
+            }
+          case None =>
         }
 
         val discarded = inferenceComputation( given )
