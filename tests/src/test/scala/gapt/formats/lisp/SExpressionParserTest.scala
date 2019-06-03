@@ -35,4 +35,23 @@ class SExpressionParserTest extends Specification {
       SExpressionParser.parse( StringInputFile( "(:atom1)" ) ) must_== List( LList( LKeyword( "atom1" ) ) )
     }
   }
+
+  "empty list should be a list" in {
+    SExpressionParser.parse( StringInputFile( "()" ) ) must_== List( LList() )
+  }
+
+  "dotted pairs" in {
+
+    "symbol starting with dot should parse" in {
+      SExpressionParser.parse( StringInputFile( ".a" ) ) must_== List( LSymbol( ".a" ) )
+    }
+
+    "dot should not be a symbol" in {
+      SExpressionParser.parse( StringInputFile( "." ) ) must throwA[Exception]
+    }
+
+    "dotted pair" in {
+      SExpressionParser.parse( StringInputFile( "( a . b )" ) ) must_== List( LCons( LSymbol( "a" ), LSymbol( "b" ) ) )
+    }
+  }
 }
