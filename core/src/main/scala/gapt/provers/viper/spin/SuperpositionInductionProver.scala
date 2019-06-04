@@ -316,7 +316,20 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
                 ( rhsArgs( i ), p ) +: ( l ++ m )
               }
 
-              val same = positions.primaryArgs map rhsArgs
+              val directSame = positions.primaryArgs map rhsArgs
+
+              def collectNestedSame( exprs: Set[Expr] ): Set[Expr] = {
+                exprs.flatMap {
+                  case Apps( d @ Const( _, _, _ ), nestedArgs ) if c == d =>
+                    val here = positions.primaryArgs map nestedArgs
+                    val there = collectNestedSame( here )
+                    here ++ there
+                  case _ => List()
+                }
+              }
+
+              val same = directSame ++ collectNestedSame( directSame )
+
               underSame.filter( _.intersect( same ).nonEmpty ) match {
                 case Seq() => underSame += same
                 case existings =>
