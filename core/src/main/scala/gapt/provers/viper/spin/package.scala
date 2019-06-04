@@ -2,7 +2,7 @@ package gapt.provers.viper
 
 import gapt.expr.{ Const, Expr }
 import gapt.expr.formula.{ Formula, Neg }
-import gapt.expr.ty.Ty
+import gapt.expr.ty.{ TArr, Ty }
 import gapt.proofs.context.Context
 
 package object spin {
@@ -16,9 +16,15 @@ package object spin {
     case _        => Neg( f )
   }
 
+  def resType( ty: Ty ): Ty =
+    ty match {
+      case TArr( _, t ) => resType( t )
+      case _            => ty
+    }
+
   // Is c a constructor
-  def isConstructor( t: Ty, c: Const )( implicit ctx: Context ): Boolean =
-    ctx.getConstructors( t ) match {
+  def isConstructor( c: Const )( implicit ctx: Context ): Boolean =
+    ctx.getConstructors( resType( c.ty ) ) match {
       case None            => false
       case Some( constrs ) => constrs.contains( c )
     }

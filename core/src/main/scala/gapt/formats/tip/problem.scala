@@ -246,6 +246,10 @@ case class ConditionalReductionRule( conditions: Seq[Formula], lhs: Expr, rhs: E
       }
     }
 }
+object ConditionalReductionRule {
+  def apply( rule: ReductionRule ): ConditionalReductionRule =
+    ConditionalReductionRule( List(), rule.lhs, rule.rhs )
+}
 
 case class ConditionalNormalizer( rewriteRules: Set[ConditionalReductionRule] ) {
 

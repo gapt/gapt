@@ -2,10 +2,12 @@ package gapt.provers.viper.spin
 
 import gapt.expr._
 import gapt.expr.formula._
+import gapt.expr.ty.{ TArr, TBase, Ty }
 import gapt.expr.util.{ LambdaPosition, constants }
-import gapt.formats.tip.ConditionalNormalizer
+import gapt.formats.tip.{ ConditionalNormalizer, ConditionalReductionRule }
 import gapt.logic.hol.skolemize
 import gapt.proofs.context.Context
+import gapt.proofs.context.facet.BaseTypes
 import gapt.proofs.lk.LKProof
 import gapt.proofs.{ HOLSequent, Sequent, withSection }
 import gapt.proofs.context.mutable.MutableContext
@@ -14,6 +16,7 @@ import gapt.proofs.lk.rules.macros.WeakeningContractionMacroRule
 import gapt.proofs.resolution.{ ResolutionToLKProof, mapInputClauses, structuralCNF }
 import gapt.provers.escargot.Escargot
 import gapt.provers.escargot.impl.EscargotLogger
+import gapt.provers.sat.Sat4j
 import gapt.provers.viper.aip.axioms.{ Axiom, SequentialInductionAxioms, StandardInductionAxioms }
 import gapt.provers.viper.grammars.enumerateTerms
 import gapt.utils.NameGenerator
@@ -37,6 +40,9 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
   // TODO: this is questionable
   var allPositions: Map[Const, Positions] = Map()
   var nameGen: NameGenerator = new NameGenerator( List() )
+  val sat = new Sat4j()
+
+  var normalizer: ConditionalNormalizer = ConditionalNormalizer( Set() )
 
   /**
    * Proves the given sequent by using induction.
@@ -51,6 +57,10 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
 
     allPositions = Positions.splitRules( ctx.conditionalNormalizer.rewriteRules )
     nameGen = ctx.newNameGenerator
+    val rules = ctx.conditionalNormalizer.rewriteRules ++ simplificationRules.conditionalRules ++
+      ( reflRules( ctx ) ++ constructorRules( ctx ) ).map( ConditionalReductionRule( _ ) )
+
+    normalizer = ConditionalNormalizer( rules )
 
     withSection { section =>
       val ground = section.groundSequent( seq )
@@ -97,24 +107,78 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
         mainProof
     }
 
-  def makeNormalizer( normalizer: ConditionalNormalizer, expr: Expr )( implicit ctx: Context ): Expr = {
-    // Normalizes into CNF, does some unification along the way
-    // and unfolds existentials to a concrete instance for each constructor for the variable type
-    // and orients equalities the same way around
-    def go( e: Expr ): Expr =
-      normalizer.normalize( e ) match {
-        case Ex( x, f ) =>
-          val nConstrs = ctx.getConstructors( x.ty ).map( _.size ).getOrElse( 0 )
-          val constrs = enumerateTerms.forType( x.ty ).filter( _.ty == x.ty ).take( nConstrs )
-          val tests = constrs.map( s => replaceExpr( f, x, s ) )
-          go( tests.foldLeft( Bottom().asInstanceOf[Formula] )( ( acc, test ) => Or( acc, test ) ) )
+  // Equality is reflexive for all base types
+  def reflRules( ctx: Context ): Set[ReductionRule] = {
+    val baseTypes = ctx.get[BaseTypes].baseTypes.values.toSet
 
-        case Eq( lhs @ VarOrConst( _, _, _ ), rhs @ VarOrConst( _, _, _ ) ) if lhs == rhs => Top()
-        case Eq( lhs @ Apps( lhsHead @ Const( _, _, _ ), lhsArgs ), rhs @ Apps( rhsHead @ Const( _, _, _ ), rhsArgs ) ) if isConstructor( lhs.ty, lhsHead ) && isConstructor( rhs.ty, rhsHead ) =>
-          if ( lhsHead == rhsHead )
-            go( lhsArgs.zip( rhsArgs ).foldLeft( Top().asInstanceOf[Formula] ) { case ( acc, ( l, r ) ) => And( acc, Eq( l, r ) ) } )
-          else
-            Bottom()
+    baseTypes.map { ty =>
+      val x = Var( "x", ty )
+      ReductionRule( Eq( x, x ), Top() )
+    }
+  }
+
+  // Reduction rules for reducing equalities between equal constructors to equalities on their arguments
+  // and equalities between distinct constructors to bottom.
+  def constructorRules( ctx: Context ): Set[ReductionRule] = {
+    def makeArgs( ty: Ty ): List[Var] =
+      ty match {
+        case TArr( s, t ) => Var( nameGen.fresh( "arg" ), s ) :: makeArgs( t )
+        case _            => List()
+      }
+
+    val baseTypes = ctx.get[BaseTypes].baseTypes.values
+    val constructors = baseTypes.flatMap( ty => ctx.getConstructors( ty ).getOrElse( List() ) ).toSet
+
+    val same = constructors.map { constr =>
+      val lhsArgs = makeArgs( constr.ty )
+      val rhsArgs = makeArgs( constr.ty )
+
+      val res = lhsArgs.zip( rhsArgs )
+        .foldLeft( Top().asInstanceOf[Formula] ) { case ( acc, ( l, r ) ) => And( acc, Eq( l, r ) ) }
+
+      ReductionRule( Eq( Apps( constr, lhsArgs ), Apps( constr, rhsArgs ) ), res )
+    }
+
+    val diff = constructors.flatMap { constr1 =>
+      constructors.filter( constr2 => constr1 != constr2 && resType( constr1.ty ) == resType( constr2.ty ) ).map { constr2 =>
+        val lhsArgs = makeArgs( constr1.ty )
+        val rhsArgs = makeArgs( constr2.ty )
+
+        ReductionRule( Eq( Apps( constr1, lhsArgs ), Apps( constr2, rhsArgs ) ), Bottom() )
+      }
+    }
+
+    same ++ diff
+  }
+
+  // Replace universals and existentials with a fixed number of tests of the formula
+  def unfoldQuantifiers( e: Expr )( implicit ctx: Context ): Expr = {
+    def samples( x: Var, f: Expr ): Stream[Expr] = {
+      val constrs = enumerateTerms.forType( x.ty ).filter( _.ty == x.ty ).take( opts.sampleTestTerms )
+      constrs.map( replaceExpr( f, x, _ ) )
+    }
+
+    def go( e: Expr ): Expr =
+      e match {
+        case Ex( x, f ) =>
+          val tests = samples( x, f )
+          tests.foldLeft( Bottom().asInstanceOf[Formula] )( ( acc, test ) => Or( acc, go( test ) ) )
+
+        case All( x, f ) =>
+          val tests = samples( x, f )
+          tests.foldLeft( Top().asInstanceOf[Formula] )( ( acc, test ) => And( acc, go( test ) ) )
+
+        case App( a, b ) => App( go( a ), go( b ) )
+        case lhs         => lhs
+      }
+
+    go( e )
+  }
+
+  // We need to orient equalities the same way around for the SAT solver to treat them the same
+  def orientEqualities( e: Expr ): Expr = {
+    def go( e: Expr ): Expr =
+      e match {
         case Eq( lhs, rhs ) =>
           val l = go( lhs )
           val r = go( rhs )
@@ -123,40 +187,11 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
           else
             Eq( r, l )
 
-        case Neg( Top() )                 => Bottom()
-        case Neg( Bottom() )              => Top()
-        case Neg( And( lhs, rhs ) )       => Or( Neg( go( lhs ) ), Neg( go( rhs ) ) )
-        case Neg( Or( lhs, rhs ) )        => And( Neg( go( lhs ) ), Neg( go( rhs ) ) )
-        case Neg( lhs )                   => Neg( go( lhs ) )
-
-        case Or( Top(), _ )               => Top()
-        case Or( _, Top() )               => Top()
-        case Or( Bottom(), rhs )          => go( rhs )
-        case Or( lhs, Bottom() )          => go( lhs )
-        case Or( And( lhs1, lhs2 ), rhs ) => And( go( Or( lhs1, rhs ) ), go( Or( lhs2, rhs ) ) )
-        case Or( lhs, And( rhs1, rhs2 ) ) => And( go( Or( lhs, rhs1 ) ), go( Or( lhs, rhs2 ) ) )
-
-        case And( Top(), rhs )            => go( rhs )
-        case And( lhs, Top() )            => go( lhs )
-        case And( Bottom(), _ )           => Bottom()
-        case And( _, Bottom() )           => Bottom()
-
-        case Imp( lhs, rhs )              => go( Or( Neg( lhs ), rhs ) )
-        case Iff( lhs, rhs )              => go( Eq( lhs, rhs ) )
-
-        case App( a, b )                  => App( go( a ), go( b ) )
-        case lhs                          => lhs
+        case App( a, b ) => App( go( a ), go( b ) )
+        case lhs         => lhs
       }
 
-    var last = expr
-    while ( true ) {
-      val next = go( last )
-      if ( next == last )
-        return last
-      else
-        last = next
-    }
-    last
+    go( e )
   }
 
   // Tests expr by substituting small concrete terms for vars and normalizing the resulting expression.
@@ -173,10 +208,15 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
 
     val fs = go( expr, vars )
 
-    val normalize = makeNormalizer( ctx.conditionalNormalizer, _ )
+    def normalize( e: Expr ): Expr = orientEqualities( normalizer.normalize( unfoldQuantifiers( e ) ) )
 
-    def isNormalized( e: Expr ): Boolean = constants( e ).intersect( allPositions.keySet ).isEmpty
+    val origConstants = Context().constants.toSet
+    def isNormalized( e: Expr ): Boolean = constants( e ).forall( c => origConstants.contains( c ) || isConstructor( c ) )
 
+    def isValid( e: Expr ): Boolean = sat.isValid( e.asInstanceOf[Formula] )
+
+    // Some terms, like `sk_0 == sk_0` do not reduce even though any instantiation of the skolem terms reduces
+    // to the same value. Attempt to unblock such terms by testing for all constructor forms of the terms involved.
     def unblock( nf: Expr ): Boolean = {
       val skolems = constants( nf ).flatMap( asInductiveConst( _ )( ctx ) )
 
@@ -194,58 +234,15 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
       alts.forall( alt => check( normalize( alt ) ).getOrElse( false ) )
     }
 
-    def disjuncts( e: Expr ): Set[Expr] = {
-      e match {
-        case Or( lhs, rhs ) => disjuncts( lhs ) union disjuncts( rhs )
-        case _              => Set( e )
-      }
-    }
-
     // Returns Some( true ) if nf holds, Some( false ) if nf does not hold
-    // and we have a concrete counter-example and None otherwise
+    // and we have a normalised counter-example and None otherwise
     def check( nf: Expr ): Option[Boolean] =
       nf match {
-        case Eq( lhs, rhs ) =>
-          if ( lhs == rhs )
-            Some( true )
-          else if ( unblock( nf ) )
-            Some( true )
-          else if ( isNormalized( nf ) )
-            Some( false )
-          else
-            None
-        case And( lhs, rhs ) => for {
-          l <- check( lhs )
-          r <- check( rhs )
-        } yield l && r
-        case Or( lhs, rhs ) =>
-          val regular = for {
-            l <- check( lhs )
-            r <- check( rhs )
-          } yield l || r
-
-          val disjs = disjuncts( nf )
-
-          if ( regular.getOrElse( false ) )
-            Some( true )
-          else if ( disjs.exists( p => disjs.contains( Neg( p ) ) ) )
-            Some( true )
-          else if ( unblock( nf ) )
-            Some( true )
-          else if ( isNormalized( nf ) )
-            Some( false )
-          else
-            None
-        case Neg( lhs ) => check( lhs ).map( !_ )
-        case lhs =>
-          if ( lhs == Top() )
-            Some( true )
-          else if ( unblock( nf ) )
-            Some( true )
-          else if ( isNormalized( nf ) )
-            Some( false )
-          else
-            None
+        case Top()                               => Some( true )
+        case Bottom()                            => Some( false )
+        case _ if isValid( nf ) || unblock( nf ) => Some( true )
+        case _ if isNormalized( nf )             => Some( false )
+        case _                                   => None
       }
 
     // Ignore non-normalized counter examples if the problem has lambdas
@@ -276,7 +273,6 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
     }
   }
 
-  // TODO: this is kinda heavy
   // Given an expression, returns a triple:
   // 1: A map from subexpressions that occur in primary positions to those positions.
   // 2: A map from subexpressions that occur in passive positions to those positions.
