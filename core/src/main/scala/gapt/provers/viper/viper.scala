@@ -35,9 +35,7 @@ import gapt.provers.spass.SPASS
 import gapt.provers.vampire.Vampire
 import gapt.provers.viper.aip.axioms._
 import gapt.provers.viper.grammars._
-import gapt.utils.LogHandler
-import gapt.utils.TimeOutException
-import gapt.utils.withTimeout
+import gapt.utils.{ LogHandler, Logger, MetricsPrinter, MetricsPrinterWithMessages, TimeOutException, withTimeout }
 
 import scala.concurrent.duration.Duration
 import scala.util.Failure
@@ -51,6 +49,7 @@ case class ViperOptions(
     mode:                     String                   = "portfolio",
     fixup:                    Boolean                  = true,
     prooftool:                Boolean                  = false,
+    metrics:                  Boolean                  = false,
     treeGrammarProverOptions: TreeGrammarProverOptions = TreeGrammarProverOptions(),
     aipOptions:               AipOptions               = AipOptions() )
 object ViperOptions {
@@ -77,6 +76,7 @@ object ViperOptions {
       case ( "-h" | "--help" ) :: _     => ( Nil, opts.copy( mode = "help" ) )
       case "--prooftool" :: rest        => parse( rest, opts.copy( prooftool = true ) )
       case "--fixup" :: rest            => parse( rest, opts.copy( fixup = true ) )
+      case "--metrics" :: rest          => parse( rest, opts.copy( metrics = true ) )
       case "--no-fixup" :: rest         => parse( rest, opts.copy( fixup = false ) )
       case "--portfolio" :: rest        => parse( rest, opts.copy( mode = "portfolio" ) )
       case "--untrusted_funind" :: rest => parse( rest, opts.copy( mode = "untrusted_funind" ) )
@@ -122,9 +122,9 @@ object ViperOptions {
         rest,
         opts.copy( quantTys = Some( qtys.split( "," ).toSeq.filter( _.nonEmpty ).map( TBase( _ ) ) ) ) )
       case "--gramw" :: w :: rest =>
-        val f: InductionGrammar.Production => Int = w match {
-          case "scomp" => r => folTermSize( r.lhs ) + folTermSize( r.rhs )
-          case "nprods" => _ => 1
+        val f = w match {
+          case "scomp"  => TreeGrammarProverOptions.SymbolicWeight
+          case "nprods" => TreeGrammarProverOptions.NumProductionsWeight
         }
         parseTreeGrammar( rest, opts.copy( grammarWeighting = f ) )
       case "--tchknum" :: num :: rest => parseTreeGrammar( rest, opts.copy( tautCheckNumber = num.toInt ) )
@@ -133,11 +133,13 @@ object ViperOptions {
         opts.copy( tautCheckSize = a.toFloat -> b.toFloat ) )
       case "--cansolsize" :: a :: b :: rest => parseTreeGrammar( rest, opts.copy( canSolSize = a.toFloat -> b.toFloat ) )
       case "--interp" :: rest               => parseTreeGrammar( rest, opts.copy( useInterpolation = true ) )
+      case "--nointerp" :: rest             => parseTreeGrammar( rest, opts.copy( useInterpolation = false ) )
       case _                                => ( args, opts )
     }
 }
 
 object Viper {
+  val logger = Logger( "Viper" )
 
   def getStrategies( sequent: HOLSequent, opts: ViperOptions )( implicit ctx: MutableContext ): List[( Duration, Tactic[_] )] =
     opts.mode match {
@@ -259,8 +261,18 @@ object Viper {
       case fn  => InputFile.fromPath( FilePath( fn ) )
     }
 
+    if ( opts.metrics ) LogHandler.current.value = new MetricsPrinterWithMessages
+
     if ( opts.mode == "help" || files.size != 1 ) return print( ViperOptions.usage )
     val file = files.head
+    logger.metric( "file", file.fileName )
+
+    logger.metric( "mode", opts.mode )
+    logger.metric( "fixup", opts.fixup )
+    logger.metric( "tgp_goal_qt", opts.treeGrammarProverOptions.goalQuantifier )
+    logger.metric( "tgp_qtys", opts.treeGrammarProverOptions.quantTys )
+    logger.metric( "tgp_interp", opts.treeGrammarProverOptions.useInterpolation )
+    logger.metric( "tgp_prodw", opts.treeGrammarProverOptions.grammarWeighting )
 
     val problem = if ( opts.fixup ) TipSmtImporter.fixupAndLoad( file ) else TipSmtImporter.load( file )
     implicit val ctx: MutableContext = problem.ctx.newMutable

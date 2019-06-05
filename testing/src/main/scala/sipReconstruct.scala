@@ -19,7 +19,7 @@ import gapt.proofs.lk.util.extractInductionGrammar
 import gapt.proofs.lk.util.instanceProof
 import gapt.provers.viper.grammars.{ TreeGrammarProver, TreeGrammarProverOptions, indElimReversal }
 import gapt.utils.LogHandler.VerbosityLevel
-import gapt.utils.{ LogHandler, Logger, MetricsPrinter, verbose }
+import gapt.utils.{ LogHandler, Logger, MetricsPrinter, MetricsPrinterWithMessages, verbose }
 
 object sipReconstruct extends Script {
 
@@ -146,10 +146,7 @@ object sipReconstruct extends Script {
 
   def go( name: String, atp: Boolean, interp: Boolean, minProof: Boolean ): Unit = {
     val logger = Logger( "sipReconstruct" )
-    val metricsPrinter = new MetricsPrinter {
-      override def message( domain: String, level: VerbosityLevel, msg: => Any ): Unit =
-        LogHandler.default.message( domain, level, msg )
-    }
+    val metricsPrinter = new MetricsPrinterWithMessages
     LogHandler.current.value = metricsPrinter
     logger.metric( "proof", name )
     logger.metric( "atp", atp )

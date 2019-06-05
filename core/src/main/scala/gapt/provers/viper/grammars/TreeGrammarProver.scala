@@ -53,7 +53,7 @@ case class TreeGrammarProverOptions(
     smtSolver:        Prover             = DefaultProvers.smt,
     smtEquationMode:  SmtEquationMode    = AddNormalizedFormula,
     quantTys:         Option[Seq[TBase]] = None,
-    grammarWeighting: Production => Int = _ => 1,
+    grammarWeighting: ProductionWeight   = NumProductionsWeight,
     tautCheckNumber:  Int                = 10,
     tautCheckSize:    FloatRange         = ( 2, 3 ),
     useInterpolation: Boolean            = false,
@@ -86,6 +86,16 @@ object TreeGrammarProverOptions {
         override def isValid( seq: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean =
           p.isValid( eqTh ++: seq )
       }
+  }
+
+  trait ProductionWeight {
+    def apply( p: Production ): Int
+  }
+  case object NumProductionsWeight extends ProductionWeight {
+    override def apply( p: Production ): Int = 1
+  }
+  case object SymbolicWeight extends ProductionWeight {
+    override def apply( p: Production ): Int = folTermSize( p.lhs ) + folTermSize( p.rhs )
   }
 }
 
@@ -173,7 +183,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     val grammar = findMinimalInductionGrammar(
       indexedTermset,
       tau, alpha, nus, gamma,
-      options.maxSATSolver, options.grammarWeighting )
+      options.maxSATSolver, options.grammarWeighting( _ ) )
       .getOrElse {
         metric( "uncoverable_grammar", true )
         throw new Exception( s"cannot cover termset\n" +
@@ -312,7 +322,7 @@ class TreeGrammarInductionTactic( options: TreeGrammarProverOptions = TreeGramma
   def smtSolver( prover: Prover ) = copy( options.copy( smtSolver = prover ) )
   def smtEquationMode( mode: TreeGrammarProverOptions.SmtEquationMode ) = copy( options.copy( smtEquationMode = mode ) )
   def quantTys( tys: TBase* ) = copy( options.copy( quantTys = Some( tys ) ) )
-  def grammarWeighting( w: InductionGrammar.Production => Int ) = copy( options.copy( grammarWeighting = w ) )
+  def grammarWeighting( w: ProductionWeight ) = copy( options.copy( grammarWeighting = w ) )
   def tautCheckNumber( n: Int ) = copy( options.copy( tautCheckNumber = n ) )
   def tautCheckSize( from: Float, to: Float ) = copy( options.copy( tautCheckSize = ( from, to ) ) )
   def canSolSize( from: Float, to: Float ) = copy( options.copy( canSolSize = ( from, to ) ) )
