@@ -204,6 +204,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     val testInstances =
       ( instanceGen.generate( 0, 5, 10 ) ++
         instanceGen.generate( options.tautCheckSize._1 * scale, options.tautCheckSize._2 * scale, options.tautCheckNumber ) ).map( _.head )
+    metric( "mincex_num_cex", testInstances.size )
     val failedInstOption = testInstances.toSeq.
       sortBy( folTermSize( _ ) ).view.
       filterNot { inst =>
@@ -265,6 +266,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
       solution,
       if ( options.equationalTheory.isEmpty ) EquationalLKProver else Escargot )( ctx.newMutable )
     info( s"Found proof with ${proof.dagLike.size} inferences" )
+    metric( "ind_pr_size", proof.dagLike.size )
 
     ctx.check( proof )
 
