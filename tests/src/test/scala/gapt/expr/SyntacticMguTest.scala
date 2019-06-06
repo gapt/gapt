@@ -89,4 +89,11 @@ class SyntacticMguTest extends Specification {
     mgu( t1 ) mustEqual mgu( t2 )
   }
 
+  "unify with type variables and bound variables" in {
+    val t1 = le"^x ((x:?a) = y)"
+    val t2 = le"^x (x = c)"
+    val Some( mgu ) = syntacticMGU( t1, t2 )
+    mgu( t1 ) must_== mgu( t2 )
+  }
+
 }
