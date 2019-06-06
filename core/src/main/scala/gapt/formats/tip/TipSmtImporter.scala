@@ -26,6 +26,7 @@ object TipSmtImporter extends ExternalProgram {
         "--commute-match",
         "--lambda-lift", "--axiomatize-lambdas",
         "--monomorphise",
+        "--remove-builtin-bool",
         "--if-to-bool-op",
         "--int-to-nat",
         "--uncurry-theory",
