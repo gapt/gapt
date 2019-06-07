@@ -38,8 +38,7 @@ case class Positions( rules: Set[ConditionalReductionRule], allPositions: Map[Co
 }
 
 object Positions {
-  // TODO: this should maybe be private
-  def apply( rules: Set[ConditionalReductionRule], c: Const, allPositions: Map[Const, Positions] ): Option[Positions] = {
+  private def apply( rules: Set[ConditionalReductionRule], c: Const, allPositions: Map[Const, Positions] ): Option[Positions] = {
     val rs = rules.filter( _.lhsHead == c )
     if ( rs.isEmpty )
       None

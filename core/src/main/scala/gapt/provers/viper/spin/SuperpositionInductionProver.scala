@@ -37,7 +37,6 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
   private implicit def labeledSequentToHOLSequent( sequent: Sequent[( String, Formula )] ): Sequent[Formula] =
     sequent map { case ( _, f ) => f }
 
-  // TODO: this is questionable
   var allPositions: Map[Const, Positions] = Map()
   var nameGen: NameGenerator = new NameGenerator( List() )
   val sat = new Sat4j()
@@ -66,8 +65,6 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
       val ground = section.groundSequent( seq )
 
       // Perform an initial induction while the goal has not been split across several clauses
-      // TODO: we add things twice because of this
-      //    Could store variables in this object instead of the state loop to avoid it
       val goals = ground.succedent
       val goalAxioms = goals flatMap ( goal => clauseAxioms( skolemize( goal ) +: Sequent() )( ctx ) )
       val goalGround = goalAxioms.map( _.formula ) ++: ground
