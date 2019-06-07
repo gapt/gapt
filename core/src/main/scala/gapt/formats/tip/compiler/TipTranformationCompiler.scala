@@ -267,6 +267,8 @@ class TipTransformationCompiler( var problem: TipSmtProblem ) {
           formula, freeVars ++ ( bound map { _.name } ) )
           .map { All.Block( bound, _ ) }
         result
+      case matchExpression: TipSmtMatch =>
+        And.Flat.unapply( compileExpression( matchExpression, freeVars ).asInstanceOf[Formula] ).get
       case _ => Seq( compileExpression( body, freeVars ).asInstanceOf[Formula] )
     }
   }
