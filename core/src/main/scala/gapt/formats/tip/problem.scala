@@ -79,8 +79,8 @@ case class TipProblem(
   def toSequent: HOLSequent = {
     val bool2Axioms = {
       implicit val c = ctx
-      if (ctx.isType(BOOL2)) {
-        Seq(hof"!x (x = True | x = False)")
+      if ( ctx.isType( BOOL2 ) ) {
+        Seq( hof"!x (x = True | x = False)" )
       } else {
         Seq()
       }
@@ -116,9 +116,9 @@ case class TipProblem(
 
     val bool2ReductionRules = {
       implicit val c = ctx
-      if (ctx.isType(BOOL2)) {
-        ConditionalReductionRule(Nil, hof"True = False", hof"⊥") ::
-          ConditionalReductionRule(Nil, hof"False = True", hof"⊥") :: Nil
+      if ( ctx.isType( BOOL2 ) ) {
+        ConditionalReductionRule( Nil, hof"True = False", hof"⊥" ) ::
+          ConditionalReductionRule( Nil, hof"False = True", hof"⊥" ) :: Nil
       } else {
         Nil
       }
