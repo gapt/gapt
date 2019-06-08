@@ -1,6 +1,6 @@
 package gapt.provers.viper
 
-import gapt.expr.{ Const, Expr }
+import gapt.expr.{ Apps, Const, Expr }
 import gapt.expr.formula.{ Formula, Neg }
 import gapt.expr.ty.{ TArr, Ty }
 import gapt.proofs.context.Context
@@ -41,6 +41,15 @@ package object spin {
     e match {
       case c @ Const( _, _, _ ) if isInductive( c ) => Some( c )
       case _                                        => None
+    }
+
+  def lambdaType( t: String ): Boolean = t.matches( "fun[0-9]+" )
+
+  def funHeaded( e: Expr )( implicit ctx: Context ): Boolean =
+    e match {
+      case Apps( c @ Const( _, _, _ ), _ ) =>
+        ctx.conditionalNormalizer.rewriteRules.exists( _.lhsHead == c ) && !lambdaType( c.ty.toString )
+      case _ => false
     }
 
 }
