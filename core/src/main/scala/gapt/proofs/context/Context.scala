@@ -264,13 +264,6 @@ trait Context extends BabelSignature {
   def normalizer = get[Reductions].normalizer
 
   /**
-   * The context's normalizer.
-   *
-   * @return The context's normalizer.
-   */
-  def conditionalNormalizer: ConditionalNormalizer = get[ConditionalReductions].normalizer
-
-  /**
    * Normalizes an expression.
    *
    * @param expression The expression to be normalized.

@@ -1,8 +1,5 @@
 package gapt.expr
 
-import gapt.proofs.context.State
-import gapt.proofs.context.update.Update
-import gapt.proofs.context.facet.Reductions
 import gapt.expr.formula._
 import gapt.expr.formula.hol.universalClosure
 import gapt.expr.subst.Substitution
@@ -15,7 +12,7 @@ import gapt.proofs.context.Context
 import scala.annotation.tailrec
 import scala.collection.mutable
 
-case class ReductionRule( lhs: Expr, rhs: Expr ) extends Update {
+case class ReductionRule( lhs: Expr, rhs: Expr ) {
   require( lhs.ty == rhs.ty )
   require(
     freeVariables( rhs ).subsetOf( freeVariables( lhs ) ),
@@ -23,12 +20,6 @@ case class ReductionRule( lhs: Expr, rhs: Expr ) extends Update {
       freeVariables( rhs ) -- freeVariables( lhs ) mkString ", "
     } which are not in the left hand side:\n"
       + ( lhs === rhs ) )
-
-  override def apply( ctx: Context ): State = {
-    ctx.check( lhs )
-    ctx.check( rhs )
-    ctx.state.update[Reductions]( _ + this )
-  }
 
   val Apps( lhsHead @ Const( lhsHeadName, _, _ ), lhsArgs ) = lhs
   val lhsArgsSize: Int = lhsArgs.size

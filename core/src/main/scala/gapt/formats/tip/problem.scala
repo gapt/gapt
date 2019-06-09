@@ -74,7 +74,7 @@ case class TipProblem(
       Sequent()
       :+ goal )
 
-  def context: ImmutableContext = ctx ++ reductionRules
+  def context: ImmutableContext = ctx
 
   def reductionRules: Seq[ConditionalReductionRule] = {
     val destructorReductionRules = datatypes.flatMap {
@@ -135,7 +135,7 @@ case class TipProblem(
  * @param lhs The left hand side of this rewrite rule.
  * @param rhs The right hand side of this rewrite rule.
  */
-case class ConditionalReductionRule( conditions: Seq[Formula], lhs: Expr, rhs: Expr ) extends Update {
+case class ConditionalReductionRule( conditions: Seq[Formula], lhs: Expr, rhs: Expr ) {
 
   require(
     ( conditions.flatMap { freeVariables( _ ) } ++
@@ -144,13 +144,6 @@ case class ConditionalReductionRule( conditions: Seq[Formula], lhs: Expr, rhs: E
       |subset of the free variables of the left hand side""".stripMargin )
 
   require( !lhs.isInstanceOf[Var], "left hand side must not be a variable" )
-
-  override def apply( ctx: Context ): State = {
-    // TODO: why does this not work?
-    // ctx.check( lhs )
-    // ctx.check( rhs )
-    ctx.state.update[ConditionalReductions]( _ + this )
-  }
 
   val Apps( lhsHead @ Const( lhsHeadName, _, _ ), lhsArgs ) = lhs
   val lhsArgsSize: Int = lhsArgs.size

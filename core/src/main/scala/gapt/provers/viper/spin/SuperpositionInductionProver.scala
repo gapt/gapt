@@ -4,10 +4,11 @@ import gapt.expr._
 import gapt.expr.formula._
 import gapt.expr.ty.{ TArr, TBase, Ty }
 import gapt.expr.util.{ LambdaPosition, constants }
-import gapt.formats.tip.{ ConditionalNormalizer, ConditionalReductionRule }
+import gapt.formats.tip.{ ConditionalNormalizer, ConditionalReductionRule, TipProblem }
 import gapt.logic.hol.skolemize
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.BaseTypes
+import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.lk.LKProof
 import gapt.proofs.{ HOLSequent, Sequent, withSection }
 import gapt.proofs.context.mutable.MutableContext
@@ -22,7 +23,10 @@ import gapt.provers.viper.grammars.enumerateTerms
 import gapt.utils.NameGenerator
 
 // TODO: sampleTestTerms should probably not be 5 but something dependent on the number of constructors
-case class SpinOptions( performGeneralization: Boolean = true, sampleTestTerms: Int = 5 )
+case class SpinOptions(
+    performGeneralization: Boolean    = true,
+    sampleTestTerms:       Int        = 5,
+    problem:               TipProblem = null )
 
 object SuperpositionInductionProver {
   def apply(): SuperpositionInductionProver =
@@ -33,18 +37,47 @@ object SuperpositionInductionProver {
 }
 
 class SuperpositionInductionProver( opts: SpinOptions ) {
+  require( opts.problem != null )
 
   private implicit def labeledSequentToHOLSequent( sequent: Sequent[( String, Formula )] ): Sequent[Formula] =
     sequent map { case ( _, f ) => f }
 
-  var allPositions: Map[Const, Positions] = Map()
-  var nameGen: NameGenerator = new NameGenerator( List() )
+  val ctx: ImmutableContext = opts.problem.ctx
+  private val conditionalRefl = reflRules( ctx ).map( ConditionalReductionRule( _ ) )
+
+  // Split on the refl rules as well to treat = as having two primary positions
+  val allPositions: Map[Const, Positions] = Positions.splitRules( opts.problem.reductionRules.toSet ++ conditionalRefl )
+  val nameGen: NameGenerator = ctx.newNameGenerator
   val sat = new Sat4j()
 
-  var normalizer: ConditionalNormalizer = ConditionalNormalizer( Set() )
+  val normalizer: ConditionalNormalizer =
+    ConditionalNormalizer(
+      opts.problem.reductionRules.toSet ++ conditionalRefl ++ simplificationRules.conditionalRules ++
+        constructorRules( ctx ).map( ConditionalReductionRule( _ ) ) )
 
   // Ignore non-normalized counter examples if the problem has lambdas
-  var acceptNotNormalized: Boolean = false
+  val acceptNotNormalized: Boolean = ctx.names.exists( lambdaType )
+
+  // Is c an inductive skolem constant, i.e. not a constructor
+  def isInductive( c: Const )( implicit ctx: Context ): Boolean =
+    ctx.getConstructors( c.ty ) match {
+      case None => false
+      case Some( constrs ) =>
+        !constrs.contains( c ) && !opts.problem.reductionRules.exists( rule => rule.lhsHead == c )
+    }
+
+  def asInductiveConst( e: Expr )( implicit ctx: Context ): Option[Const] =
+    e match {
+      case c @ Const( _, _, _ ) if isInductive( c ) => Some( c )
+      case _                                        => None
+    }
+
+  def funHeaded( e: Expr ): Boolean =
+    e match {
+      case Apps( c @ Const( _, _, _ ), _ ) =>
+        opts.problem.reductionRules.exists( _.lhsHead == c ) && !lambdaType( c.ty.toString )
+      case _ => false
+    }
 
   /**
    * Proves the given sequent by using induction.
@@ -56,17 +89,6 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
    */
   def inductiveLKProof( sequent: Sequent[( String, Formula )] )( implicit ctx: MutableContext ): Option[LKProof] = {
     val seq = labeledSequentToHOLSequent( sequent )
-
-    val conditionalRefl = reflRules( ctx ).map( ConditionalReductionRule( _ ) )
-
-    // Split on the refl rules as well to treat = as having two primary positions
-    allPositions = Positions.splitRules( ctx.conditionalNormalizer.rewriteRules ++ conditionalRefl )
-    nameGen = ctx.newNameGenerator
-    val rules = ctx.conditionalNormalizer.rewriteRules ++ simplificationRules.conditionalRules ++ conditionalRefl ++
-      constructorRules( ctx ).map( ConditionalReductionRule( _ ) )
-
-    normalizer = ConditionalNormalizer( rules )
-    acceptNotNormalized = ctx.names.exists( lambdaType )
 
     withSection { section =>
       val ground = section.groundSequent( seq )
@@ -396,15 +418,13 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
   }
 
   def clauseAxioms( cls: HOLSequent )( implicit ctx: MutableContext ): Seq[Axiom] = {
-    val nameGen = ctx.newNameGenerator
-
     val f = negate( cls.toFormula ).asInstanceOf[Expr]
     val occs = occurrences( f )
 
     val underSame = occs.underSame.map( _.filter { t =>
       asInductiveConst( t )( ctx ).isDefined ||
         // Only generalise function-headed subterms with at least two primary occurences
-        ( opts.performGeneralization && funHeaded( t )( ctx ) && occs.primary( t ) /*.getOrElse( t, List() ) */ .size >= 2 )
+        ( opts.performGeneralization && funHeaded( t ) && occs.primary( t ).size >= 2 )
     } )
 
     underSame.toSeq.flatMap {

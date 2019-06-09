@@ -393,7 +393,8 @@ class EscargotState( val ctx: MutableContext ) {
         usable -= given
         spin match {
           case Some( s ) =>
-            if ( given.clause.exists( constants( _ ) exists ( isInductive( _ )( ctx ) ) ) && !inductedClauses.contains( given.clause ) ) {
+            if ( given.clause.exists( constants( _ ) exists ( s.isInductive( _ )( ctx ) ) ) &&
+              !inductedClauses.contains( given.clause ) ) {
               s.clauseAxioms( given.clause )( ctx ) foreach ( possibleAxioms.enqueue( _ ) )
               inductedClauses += given.clause
             }

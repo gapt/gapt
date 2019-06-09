@@ -232,13 +232,13 @@ object Viper {
   }
 
   def apply( problem: TipProblem ): Option[LKProof] =
-    apply( problem.toSequent )( problem.context.newMutable )
+    apply( problem.toSequent, ViperOptions( spinOptions = SpinOptions( problem = problem ) ) )( problem.ctx.newMutable )
 
   def apply( problem: TipProblem, verbosity: Int ): Option[LKProof] =
-    apply( problem, ViperOptions( verbosity = verbosity ) )
+    apply( problem, ViperOptions( verbosity = verbosity, spinOptions = SpinOptions( problem = problem ) ) )
 
   def apply( problem: TipProblem, options: ViperOptions ): Option[LKProof] =
-    apply( problem.toSequent, options )( problem.context.newMutable )
+    apply( problem.toSequent, options.copy( spinOptions = options.spinOptions.copy( problem = problem ) ) )( problem.ctx.newMutable )
 
   def apply( sequent: HOLSequent )( implicit ctx: MutableContext ): Option[LKProof] =
     apply( sequent, ViperOptions( verbosity = 3 ) )
@@ -290,9 +290,9 @@ object Viper {
     val file = files.head
 
     val problem = if ( opts.fixup ) TipSmtImporter.fixupAndLoad( file ) else TipSmtImporter.load( file )
-    implicit val ctx: MutableContext = problem.context.newMutable
+    implicit val ctx: MutableContext = problem.ctx.newMutable
 
-    apply( problem.toSequent, opts ) match {
+    apply( problem.toSequent, opts.copy( spinOptions = opts.spinOptions.copy( problem = problem ) ) ) match {
       case Some( proof ) =>
         ctx check proof
         require( proof.conclusion isSubsetOf problem.toSequent )
