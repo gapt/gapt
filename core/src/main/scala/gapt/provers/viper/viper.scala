@@ -281,9 +281,11 @@ object Viper {
       case Some( proof ) =>
         ctx check proof
         require( proof.conclusion isSubsetOf problem.toSequent )
+        logger.metric( "success", true )
         println( "proof found" )
         if ( opts.prooftool ) prooftool( proof )
       case None =>
+        logger.metric( "success", false )
         println( "could not solve problem" )
         sys.exit( 1 )
     }

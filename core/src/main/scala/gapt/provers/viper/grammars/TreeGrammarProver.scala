@@ -167,6 +167,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
           loop( iter + 1 )
 
         case None =>
+          metric( "candidate_grammar_found", true )
           val solution = solveBUP( bup )
           constructProof( bup, solution )
       }
