@@ -151,6 +151,7 @@ object sipReconstruct extends Script {
     logger.metric( "proof", name )
     logger.metric( "atp", atp )
     logger.metric( "use_interp", interp )
+    logger.metric( "min_proof", minProof )
 
     try {
       val ( ctx0, proof ) = indProofs( name ).value
