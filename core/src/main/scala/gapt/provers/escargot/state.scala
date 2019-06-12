@@ -12,7 +12,7 @@ import Sat4j._
 import gapt.expr.formula.And
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Formula
-import gapt.expr.util.{ constants, expressionSize, freeVariables }
+import gapt.expr.util.{ constants, expressionSize, freeVariables, variables }
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.rup.RupProof
 import gapt.provers.viper.aip.axioms.Axiom
@@ -393,6 +393,7 @@ class EscargotState( val ctx: MutableContext ) {
         usable -= given
         spin match {
           case Some( s ) =>
+            // TODO: this should probably be less restrictive now that we perform more subgoal generalization
             if ( given.clause.exists( constants( _ ) exists ( s.isInductive( _ )( ctx ) ) ) &&
               !inductedClauses.contains( given.clause ) ) {
               s.clauseAxioms( given.clause )( ctx ) foreach ( possibleAxioms.enqueue( _ ) )

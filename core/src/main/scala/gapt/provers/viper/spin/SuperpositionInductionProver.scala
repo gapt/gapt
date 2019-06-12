@@ -3,7 +3,7 @@ package gapt.provers.viper.spin
 import gapt.expr._
 import gapt.expr.formula._
 import gapt.expr.ty.{ TArr, TBase, Ty }
-import gapt.expr.util.{ LambdaPosition, constants }
+import gapt.expr.util.{ LambdaPosition, constants, variables }
 import gapt.formats.tip.{ ConditionalNormalizer, ConditionalReductionRule, TipProblem }
 import gapt.logic.hol.skolemize
 import gapt.proofs.context.Context
@@ -29,8 +29,8 @@ case class SpinOptions(
     problem:               TipProblem = null )
 
 object SuperpositionInductionProver {
-  def apply(): SuperpositionInductionProver =
-    new SuperpositionInductionProver( SpinOptions() )
+  def apply( problem: TipProblem ): SuperpositionInductionProver =
+    new SuperpositionInductionProver( SpinOptions( problem = problem ) )
 
   def apply( opts: SpinOptions ): SuperpositionInductionProver =
     new SuperpositionInductionProver( opts )
@@ -38,6 +38,8 @@ object SuperpositionInductionProver {
 
 class SuperpositionInductionProver( opts: SpinOptions ) {
   require( opts.problem != null )
+
+  val performGeneralization: Boolean = opts.performGeneralization
 
   private implicit def labeledSequentToHOLSequent( sequent: Sequent[( String, Formula )] ): Sequent[Formula] =
     sequent map { case ( _, f ) => f }
@@ -272,7 +274,7 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
       }
 
     val counters = fs.map( normalize ).filterNot { nf =>
-      check( nf ).getOrElse( acceptNotNormalized )
+      check( nf ).getOrElse( acceptNotNormalized || constants( nf ).exists( uninterpretedFun( _ )( ctx ) ) )
     }
 
     /*
@@ -296,6 +298,9 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
     }
   }
 
+  def uninterpretedFun( c: Const )( implicit ctx: Context ): Boolean =
+    opts.problem.uninterpretedConsts.contains( c ) && !isConstructor( c )
+
   // Given an expression, returns a triple:
   // 1: A map from subexpressions that occur in primary positions to those positions.
   // 2: A map from subexpressions that occur in passive positions to those positions.
@@ -308,7 +313,7 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
       passive:      Map[Expr, Seq[LambdaPosition]],
       underSame:    Set[Set[Expr]] )
 
-  def occurrences( formula: Expr ): Occurences = {
+  def occurrences( formula: Expr )( implicit ctx: Context ): Occurences = {
     val empty = Seq.empty[( Expr, List[Int] )]
 
     def newPos( i: Int, size: Int, pos: List[Int] ): List[Int] =
@@ -319,60 +324,76 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
     def go( expr: Expr, pos: List[Int], inPrimary: Boolean ): ( Seq[( Expr, List[Int] )], Seq[( Expr, List[Int] )], Seq[( Expr, List[Int] )] ) =
       expr match {
         case Apps( c @ Const( _, _, _ ), rhsArgs ) =>
+          if ( !allPositions.isDefinedAt( c ) && !uninterpretedFun( c )( ctx ) ) {
+            rhsArgs.zipWithIndex.foldLeft( ( empty, empty, empty ) ) {
+              case ( ( prim, accs, pass ), ( e, i ) ) =>
+                val p = newPos( i, rhsArgs.size, pos )
+                val ( l, m, r ) = go( e, newPos( i, rhsArgs.size, pos ), inPrimary )
+                ( l ++ prim, m ++ accs, r ++ pass )
+            }
+          } else {
+            val ( primaryArgs: Set[Int], accumulatorArgs: Set[Int], passiveArgs: Set[Int] ) =
+              allPositions.get( c )
+                .map( pos => ( pos.primaryArgs, pos.accumulatorArgs, pos.passiveArgs ) )
+                .getOrElse( rhsArgs.zipWithIndex.map( _._2 ).toSet, Set(), Set() )
+
+            /*
           allPositions.get( c ) match {
             case None =>
               rhsArgs.zipWithIndex.foldLeft( ( empty, empty, empty ) ) {
                 case ( ( prim, accs, pass ), ( e, i ) ) =>
+                  val p = newPos( i, rhsArgs.size, pos )
                   val ( l, m, r ) = go( e, newPos( i, rhsArgs.size, pos ), inPrimary )
-                  ( l ++ prim, m ++ accs, r ++ pass )
+                  ( ( e, p ) +: ( l ++ prim ), m ++ accs, r ++ pass )
               }
             case Some( positions ) =>
-              val pass1 = positions.passiveArgs.toSeq flatMap { i =>
-                val p = newPos( i, rhsArgs.size, pos )
-                val ( l, m, r ) = go( rhsArgs( i ), p, inPrimary = false )
-                ( rhsArgs( i ), p ) +: ( l ++ m ++ r )
+           */
+            val pass1 = passiveArgs.toSeq flatMap { i =>
+              val p = newPos( i, rhsArgs.size, pos )
+              val ( l, m, r ) = go( rhsArgs( i ), p, inPrimary = false )
+              ( rhsArgs( i ), p ) +: ( l ++ m ++ r )
+            }
+
+            val accs1 = accumulatorArgs.toSeq flatMap { i =>
+              val p = newPos( i, rhsArgs.size, pos )
+              val ( l, m, _ ) = go( rhsArgs( i ), p, inPrimary = false )
+              ( rhsArgs( i ), p ) +: ( l ++ m )
+            }
+
+            if ( inPrimary ) {
+              val directSame = primaryArgs map rhsArgs
+
+              def collectNestedSame( exprs: Set[Expr] ): Set[Expr] = {
+                exprs.flatMap {
+                  case Apps( d @ Const( _, _, _ ), nestedArgs ) if c == d =>
+                    val here = primaryArgs map nestedArgs
+                    val there = collectNestedSame( here )
+                    here ++ there
+                  case _ => List()
+                }
               }
 
-              val accs1 = positions.accumulatorArgs.toSeq flatMap { i =>
-                val p = newPos( i, rhsArgs.size, pos )
-                val ( l, m, _ ) = go( rhsArgs( i ), p, inPrimary = false )
-                ( rhsArgs( i ), p ) +: ( l ++ m )
-              }
+              val same = directSame ++ collectNestedSame( directSame )
 
-              if ( inPrimary ) {
-                val directSame = positions.primaryArgs map rhsArgs
-
-                def collectNestedSame( exprs: Set[Expr] ): Set[Expr] = {
-                  exprs.flatMap {
-                    case Apps( d @ Const( _, _, _ ), nestedArgs ) if c == d =>
-                      val here = positions.primaryArgs map nestedArgs
-                      val there = collectNestedSame( here )
-                      here ++ there
-                    case _ => List()
+              // If any of the ones we just found, appear in another cluster, we should merge that cluster and this one
+              underSame.filter( _.intersect( same ).nonEmpty ) match {
+                case Seq() => underSame += same
+                case existings =>
+                  existings foreach {
+                    underSame -= _
                   }
-                }
-
-                val same = directSame ++ collectNestedSame( directSame )
-
-                // If any of the ones we just found, appear in another cluster, we should merge that cluster and this one
-                underSame.filter( _.intersect( same ).nonEmpty ) match {
-                  case Seq() => underSame += same
-                  case existings =>
-                    existings foreach {
-                      underSame -= _
-                    }
-                    // The current expr may be in one of the clusters, so remove it as it is replaced by subterms
-                    underSame += existings.foldLeft( same ) { case ( acc, set ) => acc union set } - expr
-                }
+                  // The current expr may be in one of the clusters, so remove it as it is replaced by subterms
+                  underSame += existings.foldLeft( same ) { case ( acc, set ) => acc union set } - expr
               }
+            }
 
-              val ( prim1, accs2, pass2 ) = positions.primaryArgs.toSeq.foldLeft( ( empty, empty, empty ) ) {
-                case ( ( prim, accs, pass ), i ) =>
-                  val p = newPos( i, rhsArgs.size, pos )
-                  val ( l, m, r ) = go( rhsArgs( i ), p, inPrimary )
-                  ( ( rhsArgs( i ), p ) +: ( l ++ prim ), m ++ accs, r ++ pass )
-              }
-              ( prim1, accs1 ++ accs2, pass1 ++ pass2 )
+            val ( prim1, accs2, pass2 ) = primaryArgs.toSeq.foldLeft( ( empty, empty, empty ) ) {
+              case ( ( prim, accs, pass ), i ) =>
+                val p = newPos( i, rhsArgs.size, pos )
+                val ( l, m, r ) = go( rhsArgs( i ), p, inPrimary )
+                ( ( rhsArgs( i ), p ) +: ( l ++ prim ), m ++ accs, r ++ pass )
+            }
+            ( prim1, accs1 ++ accs2, pass1 ++ pass2 )
           }
         case App( a, b ) =>
           val ( l1, m1, r1 ) = go( a, 1 :: pos, inPrimary )
@@ -417,9 +438,12 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
     }
   }
 
+  def universalClosureExcept( f: Formula, vars: Set[Var] ): Formula =
+    ( variables( f ) -- vars ).foldLeft( f ) { case ( g, x ) => All( x, g ) }
+
   def clauseAxioms( cls: HOLSequent )( implicit ctx: MutableContext ): Seq[Axiom] = {
     val f = negate( cls.toFormula ).asInstanceOf[Expr]
-    val occs = occurrences( f )
+    val occs = occurrences( f )( ctx )
 
     val underSame = occs.underSame.map( _.filter { t =>
       asInductiveConst( t )( ctx ).isDefined ||
@@ -441,8 +465,8 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
           if ( acceptNotNormalized ) targets.filter( f ) else targets.find( f ).toSeq
 
         findOrFilter( testFormula( _, List( v ) )( ctx ) ) flatMap { targ =>
-          val target = quantifyAccumulators( targ, occs )
-          StandardInductionAxioms( v, target.asInstanceOf[Formula] )( ctx ).toOption.map( Seq( _ ) )
+          val target = universalClosureExcept( quantifyAccumulators( targ, occs ).asInstanceOf[Formula], Set( v ) )
+          StandardInductionAxioms( v, target )( ctx ).toOption.map( Seq( _ ) )
         }
       case ts =>
         // These terms appear together so we need to induct on all of them together for the definitions to reduce.
@@ -465,7 +489,7 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
 
         targets.find { case ( vs, target ) => testFormula( target, vs.toList )( ctx ) } flatMap {
           case ( vs, targ ) =>
-            val target = quantifyAccumulators( targ, occs )
+            val target = universalClosureExcept( quantifyAccumulators( targ, occs ).asInstanceOf[Formula], vs.toSet )
             SequentialInductionAxioms()( Sequent() :+ ( "axiom", target.asInstanceOf[Formula] ) )( ctx ).toOption
         }
     } flatten
