@@ -53,7 +53,8 @@ case class ViperOptions(
     prooftool:                Boolean                  = false,
     treeGrammarProverOptions: TreeGrammarProverOptions = TreeGrammarProverOptions(),
     aipOptions:               AipOptions               = AipOptions(),
-    spinOptions:              SpinOptions              = SpinOptions() )
+    spinOptions:              SpinOptions              = SpinOptions(),
+    tipProblem:               Option[TipProblem]       = None )
 object ViperOptions {
   val usage =
     """Vienna Inductive Prover
@@ -192,9 +193,12 @@ object Viper {
         List( Duration.Inf -> AnalyticInductionTactic( opts.aipOptions.axioms, opts.aipOptions.prover ).
           aka( s"analytic $axiomsName" ) )
       case "spin" =>
+        if ( opts.tipProblem.isEmpty )
+          throw new IllegalStateException( "No TipProblem given." )
+
         val generalize = opts.spinOptions.performGeneralization
         val testTerms = opts.spinOptions.sampleTestTerms
-        List( Duration.Inf -> SuperpositionInductionTactic( opts.spinOptions )
+        List( Duration.Inf -> SuperpositionInductionTactic( opts.spinOptions, opts.tipProblem.get )
           .aka( s"spin (generalization = $generalize, test terms = $testTerms)" ) )
     }
 
@@ -232,13 +236,13 @@ object Viper {
   }
 
   def apply( problem: TipProblem ): Option[LKProof] =
-    apply( problem.toSequent, ViperOptions( spinOptions = SpinOptions( problem = problem ) ) )( problem.ctx.newMutable )
+    apply( problem.toSequent, ViperOptions( tipProblem = Some( problem ) ) )( problem.ctx.newMutable )
 
   def apply( problem: TipProblem, verbosity: Int ): Option[LKProof] =
-    apply( problem, ViperOptions( verbosity = verbosity, spinOptions = SpinOptions( problem = problem ) ) )
+    apply( problem, ViperOptions( verbosity = verbosity, tipProblem = Some( problem ) ) )
 
   def apply( problem: TipProblem, options: ViperOptions ): Option[LKProof] =
-    apply( problem.toSequent, options.copy( spinOptions = options.spinOptions.copy( problem = problem ) ) )( problem.ctx.newMutable )
+    apply( problem.toSequent, options.copy( tipProblem = Some( problem ) ) )( problem.ctx.newMutable )
 
   def apply( sequent: HOLSequent )( implicit ctx: MutableContext ): Option[LKProof] =
     apply( sequent, ViperOptions( verbosity = 3 ) )
@@ -292,7 +296,7 @@ object Viper {
     val problem = if ( opts.fixup ) TipSmtImporter.fixupAndLoad( file ) else TipSmtImporter.load( file )
     implicit val ctx: MutableContext = problem.ctx.newMutable
 
-    apply( problem.toSequent, opts.copy( spinOptions = opts.spinOptions.copy( problem = problem ) ) ) match {
+    apply( problem.toSequent, opts.copy( tipProblem = Some( problem ) ) ) match {
       case Some( proof ) =>
         ctx check proof
         require( proof.conclusion isSubsetOf problem.toSequent )

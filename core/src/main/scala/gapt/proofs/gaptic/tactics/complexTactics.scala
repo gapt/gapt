@@ -24,6 +24,7 @@ import gapt.expr.ty.TBase
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.expr.util.syntacticMatching
+import gapt.formats.tip.TipProblem
 import gapt.logic.Polarity
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
@@ -323,9 +324,9 @@ case class AnalyticInductionTactic( axioms: AxiomFactory, prover: ResolutionProv
     copy( prover = prover )
 }
 
-case class SuperpositionInductionTactic( opts: SpinOptions )( implicit ctx: MutableContext ) extends Tactical1[Unit] {
+case class SuperpositionInductionTactic( opts: SpinOptions, problem: TipProblem )( implicit ctx: MutableContext ) extends Tactical1[Unit] {
   override def apply( goal: OpenAssumption ): Tactic[Unit] =
-    SuperpositionInductionProver( opts ) inductiveLKProof goal.labelledSequent match {
+    SuperpositionInductionProver( opts, problem ) inductiveLKProof goal.labelledSequent match {
       case None       => TacticFailure( this, "structural induction prover failed" )
       case Some( lk ) => replace( lk )
     }

@@ -24,37 +24,34 @@ import gapt.utils.NameGenerator
 
 // TODO: sampleTestTerms should probably not be 5 but something dependent on the number of constructors
 case class SpinOptions(
-    performGeneralization: Boolean    = true,
-    sampleTestTerms:       Int        = 5,
-    problem:               TipProblem = null )
+    performGeneralization: Boolean = true,
+    sampleTestTerms:       Int     = 5 )
 
 object SuperpositionInductionProver {
   def apply( problem: TipProblem ): SuperpositionInductionProver =
-    new SuperpositionInductionProver( SpinOptions( problem = problem ) )
+    new SuperpositionInductionProver( SpinOptions(), problem )
 
-  def apply( opts: SpinOptions ): SuperpositionInductionProver =
-    new SuperpositionInductionProver( opts )
+  def apply( opts: SpinOptions, problem: TipProblem ): SuperpositionInductionProver =
+    new SuperpositionInductionProver( opts, problem )
 }
 
-class SuperpositionInductionProver( opts: SpinOptions ) {
-  require( opts.problem != null )
-
+class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
   val performGeneralization: Boolean = opts.performGeneralization
 
   private implicit def labeledSequentToHOLSequent( sequent: Sequent[( String, Formula )] ): Sequent[Formula] =
     sequent map { case ( _, f ) => f }
 
-  val ctx: ImmutableContext = opts.problem.ctx
+  val ctx: ImmutableContext = problem.ctx
   private val conditionalRefl = reflRules( ctx ).map( ConditionalReductionRule( _ ) )
 
   // Split on the refl rules as well to treat = as having two primary positions
-  val allPositions: Map[Const, Positions] = Positions.splitRules( opts.problem.reductionRules.toSet ++ conditionalRefl )
+  val allPositions: Map[Const, Positions] = Positions.splitRules( problem.reductionRules.toSet ++ conditionalRefl )
   val nameGen: NameGenerator = ctx.newNameGenerator
   val sat = new Sat4j()
 
   val normalizer: ConditionalNormalizer =
     ConditionalNormalizer(
-      opts.problem.reductionRules.toSet ++ conditionalRefl ++ simplificationRules.conditionalRules ++
+      problem.reductionRules.toSet ++ conditionalRefl ++ simplificationRules.conditionalRules ++
         constructorRules( ctx ).map( ConditionalReductionRule( _ ) ) )
 
   // Ignore non-normalized counter examples if the problem has lambdas
@@ -65,7 +62,7 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
     ctx.getConstructors( c.ty ) match {
       case None => false
       case Some( constrs ) =>
-        !constrs.contains( c ) && !opts.problem.reductionRules.exists( rule => rule.lhsHead == c )
+        !constrs.contains( c ) && !problem.reductionRules.exists( rule => rule.lhsHead == c )
     }
 
   def asInductiveConst( e: Expr )( implicit ctx: Context ): Option[Const] =
@@ -77,7 +74,7 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
   def funHeaded( e: Expr ): Boolean =
     e match {
       case Apps( c @ Const( _, _, _ ), _ ) =>
-        opts.problem.reductionRules.exists( _.lhsHead == c ) && !lambdaType( c.ty.toString )
+        problem.reductionRules.exists( _.lhsHead == c ) && !lambdaType( c.ty.toString )
       case _ => false
     }
 
@@ -299,7 +296,7 @@ class SuperpositionInductionProver( opts: SpinOptions ) {
   }
 
   def uninterpretedFun( c: Const )( implicit ctx: Context ): Boolean =
-    opts.problem.uninterpretedConsts.contains( c ) && !isConstructor( c )
+    problem.uninterpretedConsts.contains( c ) && !isConstructor( c )
 
   // Given an expression, returns a triple:
   // 1: A map from subexpressions that occur in primary positions to those positions.
