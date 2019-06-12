@@ -158,19 +158,20 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
       val lhsArgs = makeArgs( constr.ty )
       val rhsArgs = makeArgs( constr.ty )
 
-      val res = lhsArgs.zip( rhsArgs )
-        .foldLeft( Top().asInstanceOf[Formula] ) { case ( acc, ( l, r ) ) => And( acc, Eq( l, r ) ) }
+      val res = And( lhsArgs.zip( rhsArgs ) map { case ( l, r ) => Eq( l, r ) } )
 
       ReductionRule( Eq( Apps( constr, lhsArgs ), Apps( constr, rhsArgs ) ), res )
     }
 
-    val diff = constructors.flatMap { constr1 =>
-      constructors.filter( constr2 => constr1 != constr2 && resType( constr1.ty ) == resType( constr2.ty ) ).map { constr2 =>
-        val lhsArgs = makeArgs( constr1.ty )
-        val rhsArgs = makeArgs( constr2.ty )
-
-        ReductionRule( Eq( Apps( constr1, lhsArgs ), Apps( constr2, rhsArgs ) ), Bottom() )
-      }
+    val diff = for {
+      c1 <- constructors
+      c2 <- constructors
+      if c1 != c2
+      if resType( c1.ty ) == resType( c2.ty )
+      lhsArgs = makeArgs( c1.ty )
+      rhsArgs = makeArgs( c2.ty )
+    } yield {
+      ReductionRule( Eq( Apps( c1, lhsArgs ), Apps( c2, rhsArgs ) ), Bottom() )
     }
 
     same ++ diff
@@ -187,11 +188,11 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
       e match {
         case Ex( x, f ) =>
           val tests = samples( x, f )
-          tests.foldLeft( Bottom().asInstanceOf[Formula] )( ( acc, test ) => Or( acc, go( test ) ) )
+          tests.foldLeft[Formula]( Bottom() )( ( acc, test ) => Or( acc, go( test ) ) )
 
         case All( x, f ) =>
           val tests = samples( x, f )
-          tests.foldLeft( Top().asInstanceOf[Formula] )( ( acc, test ) => And( acc, go( test ) ) )
+          tests.foldLeft[Formula]( Top() )( ( acc, test ) => And( acc, go( test ) ) )
 
         case App( a, b ) => App( go( a ), go( b ) )
         case lhs         => lhs
@@ -334,17 +335,6 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
                 .map( pos => ( pos.primaryArgs, pos.accumulatorArgs, pos.passiveArgs ) )
                 .getOrElse( rhsArgs.zipWithIndex.map( _._2 ).toSet, Set(), Set() )
 
-            /*
-          allPositions.get( c ) match {
-            case None =>
-              rhsArgs.zipWithIndex.foldLeft( ( empty, empty, empty ) ) {
-                case ( ( prim, accs, pass ), ( e, i ) ) =>
-                  val p = newPos( i, rhsArgs.size, pos )
-                  val ( l, m, r ) = go( e, newPos( i, rhsArgs.size, pos ), inPrimary )
-                  ( ( e, p ) +: ( l ++ prim ), m ++ accs, r ++ pass )
-              }
-            case Some( positions ) =>
-           */
             val pass1 = passiveArgs.toSeq flatMap { i =>
               val p = newPos( i, rhsArgs.size, pos )
               val ( l, m, r ) = go( rhsArgs( i ), p, inPrimary = false )
