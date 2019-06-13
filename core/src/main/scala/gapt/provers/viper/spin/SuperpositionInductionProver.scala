@@ -6,7 +6,7 @@ import gapt.expr.ty.{ TArr, TBase, Ty }
 import gapt.expr.util.{ LambdaPosition, constants, variables }
 import gapt.formats.tip.{ ConditionalNormalizer, ConditionalReductionRule, TipProblem }
 import gapt.logic.hol.skolemize
-import gapt.proofs.context.Context
+import gapt.proofs.context.{ Context, simplificationRules }
 import gapt.proofs.context.facet.BaseTypes
 import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.lk.LKProof
