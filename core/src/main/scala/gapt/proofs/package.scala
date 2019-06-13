@@ -16,6 +16,19 @@ package object proofs {
   val HOLSequent = Sequent
   type HOLSequent = Sequent[Formula]
 
+  type Label = String
+  type LabelledFormula = ( Label, Formula )
+  type LabelledSequent = Sequent[LabelledFormula]
+
+  /**
+   * Converts a labelled sequent to a sequent.
+   *
+   * @param sequent The sequent to be converted.
+   * @return The sequent obtained from the given sequent by dropping the labels.
+   */
+  implicit def labelledSequentToSequent( sequent: LabelledSequent ): Sequent[Formula] =
+    sequent map { _._2 }
+
   implicit class RichFormulaSequent( private val sequent: HOLSequent ) extends AnyVal {
     def formulas = sequent.elements
 

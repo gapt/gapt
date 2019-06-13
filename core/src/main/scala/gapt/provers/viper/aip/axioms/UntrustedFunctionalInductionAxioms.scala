@@ -13,12 +13,13 @@ import gapt.expr.ty.FunctionType
 import gapt.expr.ty.To
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
+import gapt.proofs.LabelledSequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.ProofLink
 import gapt.proofs.{ HOLSequent, Sequent }
-import gapt.provers.viper.aip.{ LabelledSequent, ThrowsError }
+import gapt.provers.viper.aip.ThrowsError
 
 case object UntrustedFunctionalInductionAxioms extends AxiomFactory {
   def generateScheme( eqns: Vector[( Const, List[Formula], Expr, Expr )] ): Formula = {
