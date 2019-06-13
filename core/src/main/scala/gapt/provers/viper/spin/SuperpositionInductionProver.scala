@@ -67,13 +67,13 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
 
   def asInductiveConst( e: Expr )( implicit ctx: Context ): Option[Const] =
     e match {
-      case c @ Const( _, _, _ ) if isInductive( c ) => Some( c )
-      case _                                        => None
+      case c: Const if isInductive( c ) => Some( c )
+      case _                            => None
     }
 
   def funHeaded( e: Expr ): Boolean =
     e match {
-      case Apps( c @ Const( _, _, _ ), _ ) =>
+      case Apps( c: Const, _ ) =>
         problem.reductionRules.exists( _.lhsHead == c ) && !lambdaType( c.ty.toString )
       case _ => false
     }
@@ -284,11 +284,11 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
   def uninterpretedFun( c: Const )( implicit ctx: Context ): Boolean =
     problem.uninterpretedConsts.contains( c ) && !isConstructor( c )
 
-  // Given an expression, returns a triple:
-  // 1: A map from subexpressions that occur in primary positions to those positions.
-  // 2: A map from subexpressions that occur in passive positions to those positions.
-  // 3: A set of subexpressions that occur in primary positions together directly under the same symbol.
-  //  The sets are transitive, so if a and b occur together and b and c occur together, 3 will contain a set
+  // primary: A map from subexpressions that occur in primary positions to those positions.
+  // accumulators: A map from subexpressions that occur in accumulator positions to those positions.
+  // passive: A map from subexpressions that occur in passive positions to those positions.
+  // underSame: A set of subexpressions that occur in primary positions together directly under the same symbol.
+  //  The sets are transitive, so if a and b occur together and b and c occur together, underSame should contain a set
   //  containing all of a, b and c.
   case class Occurences(
       primary:      Map[Expr, Seq[LambdaPosition]],
@@ -296,77 +296,84 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
       passive:      Map[Expr, Seq[LambdaPosition]],
       underSame:    Set[Set[Expr]] )
 
-  def occurrences( formula: Expr )( implicit ctx: Context ): Occurences = {
-    val empty = Seq.empty[( Expr, List[Int] )]
-
+  object occurrences {
     def newPos( i: Int, size: Int, pos: List[Int] ): List[Int] =
       2 :: List.fill( size - i - 1 )( 1 ) ++ pos
 
     var underSame = Set.empty[Set[Expr]]
 
-    def go( expr: Expr, pos: List[Int], inPrimary: Boolean ): ( Seq[( Expr, List[Int] )], Seq[( Expr, List[Int] )], Seq[( Expr, List[Int] )] ) =
+    type Occs = ( Expr, List[Int] )
+    type Groups = ( Seq[Occs], Seq[Occs], Seq[Occs] ) // Primary, accumulator, passive
+
+    def go( expr: Expr, pos: List[Int], inPrimary: Boolean ): Groups =
       expr match {
-        case Apps( c @ Const( _, _, _ ), rhsArgs ) =>
-          if ( !allPositions.isDefinedAt( c ) && !uninterpretedFun( c )( ctx ) ) {
-            rhsArgs.zipWithIndex.foldLeft( ( empty, empty, empty ) ) {
-              case ( ( prim, accs, pass ), ( e, i ) ) =>
-                val p = newPos( i, rhsArgs.size, pos )
-                val ( l, m, r ) = go( e, newPos( i, rhsArgs.size, pos ), inPrimary )
-                ( l ++ prim, m ++ accs, r ++ pass )
-            }
-          } else {
-            val ( primaryArgs: Set[Int], accumulatorArgs: Set[Int], passiveArgs: Set[Int] ) =
-              allPositions.get( c )
-                .map( pos => ( pos.primaryArgs, pos.accumulatorArgs, pos.passiveArgs ) )
-                .getOrElse( rhsArgs.zipWithIndex.map( _._2 ).toSet, Set(), Set() )
-
-            val pass1 = passiveArgs.toSeq flatMap { i =>
+        case Apps( c: Const, rhsArgs ) if !allPositions.isDefinedAt( c ) && !uninterpretedFun( c )( ctx ) =>
+          rhsArgs.zipWithIndex.foldLeft[Groups]( ( Seq(), Seq(), Seq() ) ) {
+            case ( ( prim, accs, pass ), ( e, i ) ) =>
               val p = newPos( i, rhsArgs.size, pos )
-              val ( l, m, r ) = go( rhsArgs( i ), p, inPrimary = false )
-              ( rhsArgs( i ), p ) +: ( l ++ m ++ r )
+              val ( l, m, r ) = go( e, newPos( i, rhsArgs.size, pos ), inPrimary )
+              ( l ++ prim, m ++ accs, r ++ pass )
+          }
+        case Apps( c: Const, rhsArgs ) =>
+          // Treat uninterpreted functions as primary in all arguments
+          val ( primaryArgs: Set[Int], accumulatorArgs: Set[Int], passiveArgs: Set[Int] ) =
+            allPositions.get( c )
+              .map( pos => ( pos.primaryArgs, pos.accumulatorArgs, pos.passiveArgs ) )
+              .getOrElse( rhsArgs.zipWithIndex.map( _._2 ).toSet, Set(), Set() )
+
+          // Anything occurring as a passive argument becomes passive, even subterms that appear in primary position.
+          val pass1 = passiveArgs.toSeq flatMap { i =>
+            val p = newPos( i, rhsArgs.size, pos )
+            val ( l, m, r ) = go( rhsArgs( i ), p, inPrimary = false )
+            ( rhsArgs( i ), p ) +: ( l ++ m ++ r )
+          }
+
+          // Treat passive and accumulator subterms of accumulator arguments as accumulators.
+          val accs1 = accumulatorArgs.toSeq flatMap { i =>
+            val p = newPos( i, rhsArgs.size, pos )
+            val ( l, m, _ ) = go( rhsArgs( i ), p, inPrimary = false )
+            ( rhsArgs( i ), p ) +: ( l ++ m )
+          }
+
+          // Gather subterms that occur together in primary position under the same defined symbol
+          if ( inPrimary ) {
+            val directSame = primaryArgs map rhsArgs
+
+            // Consider all of e1, e2 and e3 under the same symbol in f(e1, f(e2, e3))
+            // when f is primary in both positions.
+            def collectNestedSame( exprs: Set[Expr] ): Set[Expr] = {
+              exprs.flatMap {
+                case Apps( d: Const, nestedArgs ) if c == d =>
+                  val here = primaryArgs map nestedArgs
+                  val there = collectNestedSame( here )
+                  here ++ there
+                case _ => List()
+              }
             }
 
-            val accs1 = accumulatorArgs.toSeq flatMap { i =>
-              val p = newPos( i, rhsArgs.size, pos )
-              val ( l, m, _ ) = go( rhsArgs( i ), p, inPrimary = false )
-              ( rhsArgs( i ), p ) +: ( l ++ m )
-            }
+            val same = directSame ++ collectNestedSame( directSame )
 
-            if ( inPrimary ) {
-              val directSame = primaryArgs map rhsArgs
-
-              def collectNestedSame( exprs: Set[Expr] ): Set[Expr] = {
-                exprs.flatMap {
-                  case Apps( d @ Const( _, _, _ ), nestedArgs ) if c == d =>
-                    val here = primaryArgs map nestedArgs
-                    val there = collectNestedSame( here )
-                    here ++ there
-                  case _ => List()
+            // If any of the ones we just found appear in another cluster, we should merge that cluster and this one
+            underSame.filter( _.intersect( same ).nonEmpty ) match {
+              case Seq() => underSame += same
+              case existings =>
+                existings foreach {
+                  underSame -= _
                 }
-              }
-
-              val same = directSame ++ collectNestedSame( directSame )
-
-              // If any of the ones we just found, appear in another cluster, we should merge that cluster and this one
-              underSame.filter( _.intersect( same ).nonEmpty ) match {
-                case Seq() => underSame += same
-                case existings =>
-                  existings foreach {
-                    underSame -= _
-                  }
-                  // The current expr may be in one of the clusters, so remove it as it is replaced by subterms
-                  underSame += existings.foldLeft( same ) { case ( acc, set ) => acc union set } - expr
-              }
+                // The current expr may be in one of the clusters, so remove it as it is replaced by subterms
+                underSame += existings.foldLeft( same ) { case ( acc, set ) => acc union set } - expr
             }
+          }
 
-            val ( prim1, accs2, pass2 ) = primaryArgs.toSeq.foldLeft( ( empty, empty, empty ) ) {
+          // Primary occurences. Anything non-primary below keeps its status.
+          val ( prim1, accs2, pass2 ) =
+            primaryArgs.toSeq.foldLeft[Groups]( Seq(), Seq(), Seq() ) {
               case ( ( prim, accs, pass ), i ) =>
                 val p = newPos( i, rhsArgs.size, pos )
                 val ( l, m, r ) = go( rhsArgs( i ), p, inPrimary )
                 ( ( rhsArgs( i ), p ) +: ( l ++ prim ), m ++ accs, r ++ pass )
             }
-            ( prim1, accs1 ++ accs2, pass1 ++ pass2 )
-          }
+          ( prim1, accs1 ++ accs2, pass1 ++ pass2 )
         case App( a, b ) =>
           val ( l1, m1, r1 ) = go( a, 1 :: pos, inPrimary )
           val ( l2, m2, r2 ) = go( b, 2 :: pos, inPrimary )
@@ -374,13 +381,16 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
         case _ => ( Seq(), Seq(), Seq() )
       }
 
-    val ( prim, accs, pass ) = go( formula, List(), inPrimary = true )
+    def apply( formula: Expr )( implicit ctx: Context ): Occurences = {
+      underSame = Set.empty
+      val ( prim, accs, pass ) = go( formula, List(), inPrimary = true )
 
-    val primMap = prim.groupBy( _._1 ).mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } )
-    val accsMap = accs.groupBy( _._1 ).mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } )
-    val passMap = pass.groupBy( _._1 ).mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } )
+      val primMap = prim.groupBy( _._1 ).mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } )
+      val accsMap = accs.groupBy( _._1 ).mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } )
+      val passMap = pass.groupBy( _._1 ).mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } )
 
-    Occurences( primMap, accsMap, passMap, underSame )
+      Occurences( primMap, accsMap, passMap, underSame )
+    }
   }
 
   // Given a term c to induct over in f, returns a fresh induction variable
