@@ -305,7 +305,7 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
     type Occs = ( Expr, List[Int] )
     type Groups = ( Seq[Occs], Seq[Occs], Seq[Occs] ) // Primary, accumulator, passive
 
-    def go( expr: Expr, pos: List[Int], inPrimary: Boolean ): Groups =
+    def go( expr: Expr, pos: List[Int], inPrimary: Boolean )( implicit ctx: Context ): Groups =
       expr match {
         case Apps( c: Const, rhsArgs ) if !allPositions.isDefinedAt( c ) && !uninterpretedFun( c )( ctx ) =>
           rhsArgs.zipWithIndex.foldLeft[Groups]( ( Seq(), Seq(), Seq() ) ) {
@@ -336,7 +336,7 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
           }
 
           // Gather subterms that occur together in primary position under the same defined symbol
-          if ( inPrimary ) {
+          if ( inPrimary && !isConstructor( c )( ctx ) ) {
             val directSame = primaryArgs map rhsArgs
 
             // Consider all of e1, e2 and e3 under the same symbol in f(e1, f(e2, e3))
