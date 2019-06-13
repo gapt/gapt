@@ -196,48 +196,45 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
   }
 
   // We need to orient equalities the same way around for the SAT solver to treat them the same
-  def orientEqualities( e: Expr ): Expr = {
-    def go( e: Expr ): Expr =
-      e match {
-        case Eq( lhs, rhs ) =>
-          val l = go( lhs )
-          val r = go( rhs )
-          if ( l.toRawAsciiString <= r.toRawAsciiString )
-            Eq( l, r )
-          else
-            Eq( r, l )
+  def orientEqualities( e: Expr ): Expr =
+    e match {
+      case Eq( lhs, rhs ) =>
+        val l = orientEqualities( lhs )
+        val r = orientEqualities( rhs )
+        if ( l.toRawAsciiString <= r.toRawAsciiString )
+          Eq( l, r )
+        else
+          Eq( r, l )
 
-        case App( a, b ) => App( go( a ), go( b ) )
-        case lhs         => lhs
-      }
+      case App( a, b ) => App( orientEqualities( a ), orientEqualities( b ) )
+      case lhs         => lhs
+    }
 
-    go( e )
-  }
-
-  // Tests expr by substituting small concrete terms for vars and normalizing the resulting expression.
-  def testFormulaRaw( expr: Expr, vars: List[Var] )( implicit ctx: Context ): Boolean = {
-    def go( e: Expr, subs: List[VarOrConst] ): Seq[Expr] = {
+  object testFormulaRaw {
+    // Replaces each occurrence of a VarOrConst from subs in e with opts.sampleTestTerms concrete values.
+    // Returns a sequence of all permutations.
+    def makeSampleTerms( e: Expr, subs: List[VarOrConst] ): Seq[Expr] = {
       subs match {
         case List() => Seq( e )
         case v :: vs =>
           val termStream = enumerateTerms.forType( v.ty )( ctx )
           val terms = termStream filter ( _.ty == v.ty ) take opts.sampleTestTerms
-          terms.flatMap( t => go( e, vs ) map ( replaceExpr( _, v, t ) ) )
+          terms.flatMap( t => makeSampleTerms( e, vs ) map ( replaceExpr( _, v, t ) ) )
       }
     }
 
-    val fs = go( expr, vars )
+    def normalize( e: Expr )( implicit ctx: Context ): Expr =
+      orientEqualities( normalizer.normalize( unfoldQuantifiers( e )( ctx ) ) )
 
-    def normalize( e: Expr ): Expr = orientEqualities( normalizer.normalize( unfoldQuantifiers( e ) ) )
+    val origConstants: Set[Const] = Context().constants.toSet
+    def isNormalized( e: Expr )( implicit ctx: Context ): Boolean =
+      constants( e ).forall( c => origConstants.contains( c ) || isConstructor( c )( ctx ) )
 
-    val origConstants = Context().constants.toSet
-    def isNormalized( e: Expr ): Boolean = constants( e ).forall( c => origConstants.contains( c ) || isConstructor( c ) )
-
-    def isValid( e: Expr ): Boolean = sat.isValid( e.asInstanceOf[Formula] )
+    def isValid( e: Formula ): Boolean = sat.isValid( e )
 
     // Some terms, like `sk_0 == sk_0` do not reduce even though any instantiation of the skolem terms reduces
     // to the same value. Attempt to unblock such terms by testing for all constructor forms of the terms involved.
-    def unblock( nf: Expr ): Boolean = {
+    def unblock( nf: Expr )( implicit ctx: Context ): Boolean = {
       val skolems = constants( nf ).flatMap( asInductiveConst( _ )( ctx ) )
 
       if ( skolems.isEmpty )
@@ -256,29 +253,23 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
 
     // Returns Some( true ) if nf holds, Some( false ) if nf does not hold
     // and we have a normalised counter-example and None otherwise
-    def check( nf: Expr ): Option[Boolean] =
+    def check( nf: Expr )( implicit ctx: Context ): Option[Boolean] =
       nf match {
-        case Top()                               => Some( true )
-        case Bottom()                            => Some( false )
-        case _ if isValid( nf ) || unblock( nf ) => Some( true )
-        case _ if isNormalized( nf )             => Some( false )
-        case _                                   => None
+        case Top() => Some( true )
+        case Bottom() => Some( false )
+        case _ if isValid( nf.asInstanceOf[Formula] ) || unblock( nf ) => Some( true )
+        case _ if isNormalized( nf ) => Some( false )
+        case _ => None
       }
 
-    val counters = fs.map( normalize ).filterNot { nf =>
-      check( nf ).getOrElse( acceptNotNormalized || constants( nf ).exists( uninterpretedFun( _ )( ctx ) ) )
+    // Tests expr by substituting small concrete terms for vars and normalizing the resulting expression.
+    def apply( expr: Expr, vars: List[Var] )( implicit ctx: Context ): Boolean = {
+      val samples = makeSampleTerms( expr, vars )
+
+      samples.map( normalize ).forall { nf =>
+        check( nf ).getOrElse( acceptNotNormalized || constants( nf ).exists( uninterpretedFun( _ )( ctx ) ) )
+      }
     }
-
-    /*
-    val msg = if ( counters.isEmpty ) "ACCEPTED" else "REJECTED"
-
-    println( msg + ": " + expr )
-    if ( counters.nonEmpty )
-      println( "COUNTER: " + counters.head )
-    println()
-     */
-
-    counters.isEmpty
   }
 
   def testFormula( expr: Expr, vars: List[Var] )( implicit ctx: Context ): Boolean = {
