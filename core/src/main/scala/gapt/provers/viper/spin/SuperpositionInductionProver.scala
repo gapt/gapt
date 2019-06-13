@@ -2,23 +2,23 @@ package gapt.provers.viper.spin
 
 import gapt.expr._
 import gapt.expr.formula._
-import gapt.expr.ty.{ TArr, TBase, Ty }
-import gapt.expr.util.{ LambdaPosition, constants, variables }
-import gapt.formats.tip.{ ConditionalNormalizer, ConditionalReductionRule, TipProblem }
+import gapt.expr.ty.{TArr, TBase, Ty}
+import gapt.expr.util.{LambdaPosition, constants, freeVariables, variables}
+import gapt.formats.tip.{ConditionalNormalizer, ConditionalReductionRule, TipProblem}
 import gapt.logic.hol.skolemize
-import gapt.proofs.context.{ Context, simplificationRules }
+import gapt.proofs.context.{Context, simplificationRules}
 import gapt.proofs.context.facet.BaseTypes
 import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.lk.LKProof
-import gapt.proofs.{ HOLSequent, Sequent, withSection }
+import gapt.proofs.{HOLSequent, Sequent, withSection}
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.macros.WeakeningContractionMacroRule
-import gapt.proofs.resolution.{ ResolutionToLKProof, mapInputClauses, structuralCNF }
+import gapt.proofs.resolution.{ResolutionToLKProof, mapInputClauses, structuralCNF}
 import gapt.provers.escargot.Escargot
 import gapt.provers.escargot.impl.EscargotLogger
 import gapt.provers.sat.Sat4j
-import gapt.provers.viper.aip.axioms.{ Axiom, SequentialInductionAxioms, StandardInductionAxioms }
+import gapt.provers.viper.aip.axioms.{Axiom, SequentialInductionAxioms, StandardInductionAxioms}
 import gapt.provers.viper.grammars.enumerateTerms
 import gapt.utils.NameGenerator
 
@@ -421,7 +421,7 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
   }
 
   def universalClosureExcept( f: Formula, vars: Set[Var] ): Formula =
-    ( variables( f ) -- vars ).foldLeft( f ) { case ( g, x ) => All( x, g ) }
+    All.Block( (freeVariables( f ) -- vars).toSeq, f )
 
   def clauseAxioms( cls: HOLSequent )( implicit ctx: MutableContext ): Seq[Axiom] = {
     val f = negate( cls.toFormula ).asInstanceOf[Expr]
