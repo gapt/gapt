@@ -186,14 +186,8 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
 
     def go( e: Expr ): Expr =
       e match {
-        case Ex( x, f ) =>
-          val tests = samples( x, f )
-          tests.foldLeft[Formula]( Bottom() )( ( acc, test ) => Or( acc, go( test ) ) )
-
-        case All( x, f ) =>
-          val tests = samples( x, f )
-          tests.foldLeft[Formula]( Top() )( ( acc, test ) => And( acc, go( test ) ) )
-
+        case Ex( x, f )  => Or( samples( x, f ) map go )
+        case All( x, f ) => And( samples( x, f ) map go )
         case App( a, b ) => App( go( a ), go( b ) )
         case lhs         => lhs
       }
