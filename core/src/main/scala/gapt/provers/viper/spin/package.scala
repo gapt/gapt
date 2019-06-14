@@ -8,7 +8,7 @@ import gapt.proofs.context.Context
 package object spin {
 
   // Replaces x with e in f.
-  def replaceExpr( f: Expr, x: Expr, e: Expr ): Expr =
+  def replaceExpr( f: Formula, x: Expr, e: Expr ): Formula =
     f.find( x ).foldLeft( f )( ( f, pos ) => f.replace( pos, e ) )
 
   def negate( f: Formula ): Formula = f match {

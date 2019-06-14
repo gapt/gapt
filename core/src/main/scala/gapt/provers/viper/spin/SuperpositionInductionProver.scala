@@ -2,6 +2,7 @@ package gapt.provers.viper.spin
 
 import gapt.expr._
 import gapt.expr.formula._
+import gapt.expr.formula.hol.HOLPosition
 import gapt.expr.ty.{ TArr, TBase, Ty }
 import gapt.expr.util.{ LambdaPosition, constants, freeVariables, variables }
 import gapt.formats.tip.{ ConditionalNormalizer, ConditionalReductionRule, TipProblem }
@@ -178,63 +179,69 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
   }
 
   // Replace universals and existentials with a fixed number of tests of the formula
-  def unfoldQuantifiers( e: Expr )( implicit ctx: Context ): Expr = {
-    def samples( x: Var, f: Expr ): Stream[Expr] = {
+  def unfoldQuantifiers( formula: Formula )( implicit ctx: Context ): Formula = {
+    def samples( x: Var, f: Formula ): Stream[Formula] = {
       val constrs = enumerateTerms.forType( x.ty ).filter( _.ty == x.ty ).take( opts.sampleTestTerms )
       constrs.map( replaceExpr( f, x, _ ) )
     }
 
-    def go( e: Expr ): Expr =
-      e match {
+    def go( f: Formula ): Formula =
+      f match {
         case Ex( x, f )  => Or( samples( x, f ) map go )
         case All( x, f ) => And( samples( x, f ) map go )
-        case App( a, b ) => App( go( a ), go( b ) )
-        case lhs         => lhs
+        case Neg( a )    => Neg( go( a ) )
+        case And( a, b ) => And( go( a ), go( b ) )
+        case Or( a, b )  => Or( go( a ), go( b ) )
+        case Imp( a, b ) => Imp( go( a ), go( b ) )
+        case Iff( a, b ) => Iff( go( a ), go( b ) )
+        case _           => f
       }
 
-    go( e )
+    go( formula )
   }
 
   // We need to orient equalities the same way around for the SAT solver to treat them the same
-  def orientEqualities( e: Expr ): Expr =
-    e match {
+  def orientEqualities( f: Formula ): Formula =
+    f match {
       case Eq( lhs, rhs ) =>
-        val l = orientEqualities( lhs )
-        val r = orientEqualities( rhs )
-        if ( l.toRawAsciiString <= r.toRawAsciiString )
-          Eq( l, r )
+        if ( lhs.toRawAsciiString <= rhs.toRawAsciiString )
+          Eq( lhs, rhs )
         else
-          Eq( r, l )
+          Eq( rhs, lhs )
 
-      case App( a, b ) => App( orientEqualities( a ), orientEqualities( b ) )
-      case lhs         => lhs
+      case Neg( a )    => Neg( orientEqualities( a ) )
+      case And( a, b ) => And( orientEqualities( a ), orientEqualities( b ) )
+      case Or( a, b )  => Or( orientEqualities( a ), orientEqualities( b ) )
+      case Imp( a, b ) => Imp( orientEqualities( a ), orientEqualities( b ) )
+      case Iff( a, b ) => Iff( orientEqualities( a ), orientEqualities( b ) )
+      case _           => f
     }
 
   object testFormulaRaw {
     // Replaces each occurrence of a VarOrConst from subs in e with opts.sampleTestTerms concrete values.
     // Returns a sequence of all permutations.
-    def makeSampleTerms( e: Expr, subs: List[VarOrConst] ): Seq[Expr] = {
+    def makeSampleFormulas( f: Formula, subs: List[VarOrConst] ): Seq[Formula] = {
       subs match {
-        case List() => Seq( e )
+        case List() => Seq( f )
         case v :: vs =>
           val termStream = enumerateTerms.forType( v.ty )( ctx )
           val terms = termStream filter ( _.ty == v.ty ) take opts.sampleTestTerms
-          terms.flatMap( t => makeSampleTerms( e, vs ) map ( replaceExpr( _, v, t ) ) )
+          terms.flatMap( t => makeSampleFormulas( f, vs ) map ( replaceExpr( _, v, t ) ) )
       }
     }
 
-    def normalize( e: Expr )( implicit ctx: Context ): Expr =
-      orientEqualities( normalizer.normalize( unfoldQuantifiers( e )( ctx ) ) )
+    def normalize( f: Formula )( implicit ctx: Context ): Formula =
+      orientEqualities( normalizer.normalize( unfoldQuantifiers( f )( ctx ) ).asInstanceOf[Formula] )
 
     val origConstants: Set[Const] = Context().constants.toSet
-    def isNormalized( e: Expr )( implicit ctx: Context ): Boolean =
-      constants( e ).forall( c => origConstants.contains( c ) || isConstructor( c )( ctx ) )
+    def isNormalized( f: Formula )( implicit ctx: Context ): Boolean =
+      constants( f ).forall( c => origConstants.contains( c ) || isConstructor( c )( ctx ) )
 
-    def isValid( e: Formula ): Boolean = sat.isValid( e )
+    def isValid( f: Formula ): Boolean = sat.isValid( f )
 
     // Some terms, like `sk_0 == sk_0` do not reduce even though any instantiation of the skolem terms reduces
     // to the same value. Attempt to unblock such terms by testing for all constructor forms of the terms involved.
-    def unblock( nf: Expr )( implicit ctx: Context ): Boolean = {
+    def unblock( nf: Formula )( implicit ctx: Context ): Boolean = {
       val skolems = constants( nf ).flatMap( asInductiveConst( _ )( ctx ) )
 
       if ( skolems.isEmpty )
@@ -253,7 +260,7 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
 
     // Returns Some( true ) if nf holds, Some( false ) if nf does not hold
     // and we have a normalised counter-example and None otherwise
-    def check( nf: Expr )( implicit ctx: Context ): Option[Boolean] =
+    def check( nf: Formula )( implicit ctx: Context ): Option[Boolean] =
       nf match {
         case Top() => Some( true )
         case Bottom() => Some( false )
@@ -263,8 +270,8 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
       }
 
     // Tests expr by substituting small concrete terms for vars and normalizing the resulting expression.
-    def apply( expr: Expr, vars: List[Var] )( implicit ctx: Context ): Boolean = {
-      val samples = makeSampleTerms( expr, vars )
+    def apply( f: Formula, vars: List[Var] )( implicit ctx: Context ): Boolean = {
+      val samples = makeSampleFormulas( f, vars )
 
       samples.map( normalize ).forall { nf =>
         check( nf ).getOrElse( acceptNotNormalized || constants( nf ).exists( uninterpretedFun( _ )( ctx ) ) )
@@ -272,12 +279,12 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
     }
   }
 
-  def testFormula( expr: Expr, vars: List[Var] )( implicit ctx: Context ): Boolean = {
+  def testFormula( f: Formula, vars: List[Var] )( implicit ctx: Context ): Boolean = {
     if ( opts.sampleTestTerms == 0 )
       return true
 
     EscargotLogger.time( "testing" ) {
-      testFormulaRaw( expr, vars )
+      testFormulaRaw( f, vars )
     }
   }
 
@@ -381,7 +388,7 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
         case _ => ( Seq(), Seq(), Seq() )
       }
 
-    def apply( formula: Expr )( implicit ctx: Context ): Occurences = {
+    def apply( formula: Formula )( implicit ctx: Context ): Occurences = {
       underSame = Set.empty
       val ( prim, accs, pass ) = go( formula, List(), inPrimary = true )
 
@@ -395,7 +402,7 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
 
   // Given a term c to induct over in f, returns a fresh induction variable
   // and a prioritized list of induction goals, the first more general than the next.
-  def getTargets( c: Expr, f: Expr, occs: Occurences ): ( Var, Seq[Expr] ) = {
+  def getTargets( c: Expr, f: Formula, occs: Occurences ): ( Var, Seq[Formula] ) = {
     val primPoses = occs.primary.getOrElse( c, Seq() )
     val passPoses = occs.passive.getOrElse( c, Seq() )
     val v = Var( nameGen.fresh( "ind" ), c.ty )
@@ -404,13 +411,13 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
 
     if ( opts.performGeneralization && primPoses.size >= 2 && passPoses.nonEmpty ) {
       // Induct only on primary occurences, i.e. generalize
-      targets ::= primPoses.foldLeft( f )( ( g, pos ) => g.replace( pos, v ) )
+      targets ::= primPoses.foldLeft( f )( ( g, pos ) => g.replace( HOLPosition.toHOLPosition( g )( pos ), v ) )
     }
 
     ( v, targets )
   }
 
-  def quantifyAccumulators( f: Expr, occs: Occurences )( implicit ctx: Context ): Expr = {
+  def quantifyAccumulators( f: Formula, occs: Occurences )( implicit ctx: Context ): Formula = {
     val accsPoses = occs.accumulators.filterKeys( asInductiveConst( _ )( ctx ).isDefined )
 
     accsPoses.foldLeft( f ) {
@@ -424,7 +431,7 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
     All.Block( ( freeVariables( f ) -- vars ).toSeq, f )
 
   def clauseAxioms( cls: HOLSequent )( implicit ctx: MutableContext ): Seq[Axiom] = {
-    val f = negate( cls.toFormula ).asInstanceOf[Expr]
+    val f = negate( cls.toFormula )
     val occs = occurrences( f )( ctx )
 
     val underSame = occs.underSame.map( _.filter { t =>
@@ -443,11 +450,11 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
 
         // If we accept non-normalized terms, we may accept a too-general target and miss the actual one,
         // so use filter in that case to get all of them. This only occurs when lambdas are in play.
-        def findOrFilter( f: Expr => Boolean ): Seq[Expr] =
+        def findOrFilter( f: Formula => Boolean ): Seq[Formula] =
           if ( acceptNotNormalized ) targets.filter( f ) else targets.find( f ).toSeq
 
         findOrFilter( testFormula( _, List( v ) )( ctx ) ) flatMap { targ =>
-          val target = universalClosureExcept( quantifyAccumulators( targ, occs ).asInstanceOf[Formula], Set( v ) )
+          val target = universalClosureExcept( quantifyAccumulators( targ, occs ), Set( v ) )
           StandardInductionAxioms( v, target )( ctx ).toOption.map( Seq( _ ) )
         }
       case ts =>
@@ -455,7 +462,7 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
         // For each of them, we might need to generalize passive occurrences, so we calculate a sequence of less and
         // less general formulas to be tested.
 
-        def buildTargets( ts: Set[Expr] ): Seq[( Seq[Var], Expr )] = {
+        def buildTargets( ts: Set[Expr] ): Seq[( Seq[Var], Formula )] = {
           ts.foldLeft( Seq( ( Seq.empty[Var], f ) ) ) {
             case ( vsfs, t ) =>
               vsfs.flatMap {
@@ -471,8 +478,8 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
 
         targets.find { case ( vs, target ) => testFormula( target, vs.toList )( ctx ) } flatMap {
           case ( vs, targ ) =>
-            val target = universalClosureExcept( quantifyAccumulators( targ, occs ).asInstanceOf[Formula], vs.toSet )
-            SequentialInductionAxioms()( Sequent() :+ ( "axiom", target.asInstanceOf[Formula] ) )( ctx ).toOption
+            val target = universalClosureExcept( quantifyAccumulators( targ, occs ), vs.toSet )
+            SequentialInductionAxioms()( Sequent() :+ ( "axiom", target ) )( ctx ).toOption
         }
     } flatten
   }
