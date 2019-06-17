@@ -160,7 +160,7 @@ object Positions {
   def passiveArgs( rule: ConditionalReductionRule, allPositions: Map[Const, Positions] ): Option[Set[Int]] = {
     val conds = rule.conditions.foldLeft( allArgs( rule ) )( ( acc, cond ) =>
       acc intersect passivesIn( cond, rule, allPositions ) )
-    selfPassiveArgs( rule, allPositions ).map( _ intersect conds )
+    selfPassiveArgs( rule, allPositions ).map( _ intersect conds ).map( _ -- primariesIn( rule.rhs, rule, allPositions ) )
   }
 
   // Positions of non-passive arguments which are not matched on or None if no recursive calls on the rhs.
