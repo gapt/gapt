@@ -23,6 +23,8 @@ import gapt.provers.viper.aip.axioms.{ Axiom, SequentialInductionAxioms, Standar
 import gapt.provers.viper.grammars.enumerateTerms
 import gapt.utils.NameGenerator
 
+import scala.collection.mutable
+
 // TODO: sampleTestTerms should probably not be 5 but something dependent on the number of constructors
 case class SpinOptions(
     performGeneralization: Boolean = true,
@@ -217,12 +219,12 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
       case _           => f
     }
 
-  object testFormulaRaw {
+  object testFormula {
     // Replaces each occurrence of a VarOrConst from subs in e with opts.sampleTestTerms concrete values.
     // Returns a sequence of all permutations.
-    def makeSampleFormulas( f: Formula, subs: List[VarOrConst] ): Seq[Formula] = {
+    def makeSampleFormulas( f: Formula, subs: List[VarOrConst] ): Stream[Formula] = {
       subs match {
-        case List() => Seq( f )
+        case List() => Stream( f )
         case v :: vs =>
           val termStream = enumerateTerms.forType( v.ty )( ctx )
           val terms = termStream filter ( _.ty == v.ty ) take opts.sampleTestTerms
@@ -230,8 +232,17 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
       }
     }
 
-    def normalize( f: Formula )( implicit ctx: Context ): Formula =
-      orientEqualities( normalizer.normalize( unfoldQuantifiers( f )( ctx ) ).asInstanceOf[Formula] )
+    var normalized = mutable.Map.empty[Formula, Formula]
+
+    def normalize( f: Formula )( implicit ctx: Context ): Formula = {
+      normalized.get( f ) match {
+        case Some( nf ) => nf
+        case None =>
+          val nf = orientEqualities( normalizer.normalize( unfoldQuantifiers( f )( ctx ) ).asInstanceOf[Formula] )
+          normalized += f -> nf
+          nf
+      }
+    }
 
     val origConstants: Set[Const] = Context().constants.toSet
     def isNormalized( f: Formula )( implicit ctx: Context ): Boolean =
@@ -271,20 +282,14 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
 
     // Tests expr by substituting small concrete terms for vars and normalizing the resulting expression.
     def apply( f: Formula, vars: List[Var] )( implicit ctx: Context ): Boolean = {
+      if ( opts.sampleTestTerms == 0 )
+        return true
+
       val samples = makeSampleFormulas( f, vars )
 
       samples.map( normalize ).forall { nf =>
         check( nf ).getOrElse( acceptNotNormalized || constants( nf ).exists( uninterpretedFun( _ )( ctx ) ) )
       }
-    }
-  }
-
-  def testFormula( f: Formula, vars: List[Var] )( implicit ctx: Context ): Boolean = {
-    if ( opts.sampleTestTerms == 0 )
-      return true
-
-    EscargotLogger.time( "testing" ) {
-      testFormulaRaw( f, vars )
     }
   }
 
