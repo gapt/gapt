@@ -391,9 +391,11 @@ class EscargotState( val ctx: MutableContext ) {
         spin match {
           case Some( s ) =>
             // TODO: this should probably be less restrictive now that we perform more subgoal generalization
-            if ( given.clause.exists( constants( _ ) exists ( s.isInductive( _ )( ctx ) ) ) &&
+            if ( s.performGeneralization || given.clause.exists( constants( _ ) exists ( s.isInductive( _ )( ctx ) ) ) &&
               !inductedClauses.contains( given.clause ) ) {
-              s.clauseAxioms( given.clause )( ctx ) foreach ( possibleAxioms.enqueue( _ ) )
+              EscargotLogger.time( "axiom_gen" ) {
+                s.clauseAxioms( given.clause )( ctx ) foreach ( possibleAxioms.enqueue( _ ) )
+              }
               inductedClauses += given.clause
             }
           case None =>
