@@ -89,7 +89,7 @@ object testViper extends App {
     var prf: Option[LKProof] = None
 
     try logger.time( "viper" ) {
-      withTimeout( 60 seconds ) {
+      withTimeout( 120 seconds ) {
         Viper( problem, options ) match {
           case Some( prf1 ) =>
             logger.metric( "status", "ok" )
