@@ -263,7 +263,17 @@ private[expansion] class ETBinaryCompanion( conn: BinaryPropConnectiveHelper, is
     }
 }
 /** Expansion tree for ∧. */
-object ETAnd extends ETBinaryCompanion( And, isImp = false )
+object ETAnd extends ETBinaryCompanion( And, isImp = false ) {
+  object Flat {
+    def apply( expansionTree: ExpansionTree ): Seq[ExpansionTree] =
+      expansionTree match {
+        case ETAnd( Flat( ls ), Flat( rs ) ) => ls ++ rs
+        case _                               => Seq( expansionTree )
+      }
+    def unapply( expansionTree: ExpansionTree ): Option[Seq[ExpansionTree]] =
+      Some( Flat( expansionTree ) )
+  }
+}
 /** Expansion tree for ∨. */
 object ETOr extends ETBinaryCompanion( Or, isImp = false )
 /** Expansion tree for →. */
