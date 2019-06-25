@@ -2,6 +2,7 @@ package gapt.proofs.context.facet
 
 import gapt.expr.Normalizer
 import gapt.expr.ReductionRule
+import gapt.formats.tip.{ ConditionalNormalizer, ConditionalReductionRule }
 
 /** Definitional reductions. */
 case class Reductions( normalizer: Normalizer ) {
@@ -17,4 +18,20 @@ case class Reductions( normalizer: Normalizer ) {
 
 object Reductions {
   implicit val reductionsFacet: Facet[Reductions] = Facet( Reductions( Normalizer( Set() ) ) )
+}
+
+case class ConditionalReductions( normalizer: ConditionalNormalizer ) {
+  def ++( rules: Vector[ConditionalReductionRule] ): ConditionalReductions =
+    copy( ConditionalNormalizer( normalizer.rewriteRules ++ rules ) )
+
+  def +( conditionalReductionRule: ConditionalReductionRule ): ConditionalReductions =
+    copy( ConditionalNormalizer( normalizer.rewriteRules + conditionalReductionRule ) )
+
+  override def toString: String =
+    normalizer.rewriteRules.map { case ConditionalReductionRule( conds, lhs, rhs ) => s"$conds => $lhs -> $rhs" }.mkString( "\n" )
+}
+
+object ConditionalReductions {
+  implicit val conditionalReductionsFacet: Facet[ConditionalReductions] =
+    Facet( ConditionalReductions( ConditionalNormalizer( Set() ) ) )
 }

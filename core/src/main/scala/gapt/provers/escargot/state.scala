@@ -1,10 +1,10 @@
 package gapt.provers.escargot.impl
 
-import gapt.expr._
 import gapt.expr.formula.hol.universalClosure
-import gapt.proofs.{ HOLClause, HOLSequent, Sequent }
+import gapt.proofs.{ ContextSection, HOLClause, HOLSequent, Sequent }
 import gapt.proofs.resolution._
 import gapt.provers.escargot.{ LPO, TermOrdering }
+import gapt.provers.viper.spin._
 import gapt.provers.sat.Sat4j
 import gapt.utils.Logger
 import org.sat4j.minisat.SolverFactory
@@ -12,12 +12,13 @@ import Sat4j._
 import gapt.expr.formula.And
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Formula
-import gapt.expr.util.expressionSize
-import gapt.expr.util.freeVariables
+import gapt.expr.util.{ constants, expressionSize, freeVariables, variables }
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.rup.RupProof
+import gapt.provers.viper.aip.axioms.Axiom
 import org.sat4j.specs.{ ContradictionException, IConstr, ISolverService }
 import org.sat4j.tools.SearchListenerAdapter
+import cats.implicits._
 
 object EscargotLogger extends Logger( "escargot" ); import EscargotLogger._
 
@@ -204,7 +205,7 @@ class EscargotState( val ctx: MutableContext ) {
 
   /** Current propositional Avatar model. */
   var avatarModel = Set[Int]()
-  /** Empty clauses that have already been derived.  All assertions in the empty clauses are false. */
+  /** * Empty clauses that have already been derived.  All assertions in the empty clauses are false. */
   var emptyClauses = mutable.Map[Set[Int], Cls]()
   /** Is the assertion of cls true in the current model? */
   def isActive( cls: Cls ): Boolean = isActive( cls.ass )
@@ -312,42 +313,113 @@ class EscargotState( val ctx: MutableContext ) {
         if ( p.assertions.isEmpty ) p else AvatarContradiction( p )
       } )
 
+  var clausesForInduction = List.empty[HOLSequent]
+
+  def axiomClause( section: ContextSection, axiom: Axiom ): ( Set[Cls], Map[HOLSequent, ResolutionProof] ) = {
+    val seq = axiom.formula +: Sequent()
+    val ground = section groundSequent seq
+    val cnf = structuralCNF( ground )( ctx )
+
+    val cnfMap = cnf.view.map( p => p.conclusion -> p ).toMap
+    val clauses = cnfMap.keySet.map( _.map( _.asInstanceOf[Atom] ) )
+
+    ( clauses map InputCls, cnfMap )
+  }
+
   /** Main inference loop. */
-  def loop(): Option[ResolutionProof] = try {
-    preprocessing()
-    clauseProcessing()
+  def loop( spin: Option[SuperpositionInductionProver] = None ): Option[( ResolutionProof, Set[Axiom], Map[HOLSequent, ResolutionProof] )] = {
+    var inductedClauses = Set.empty[HOLSequent]
+    var addedAxioms = Set.empty[Axiom]
+    val possibleAxioms = mutable.Queue.empty[Axiom]
+    var cnfMap = Map.empty[HOLSequent, ResolutionProof]
 
-    while ( true ) {
-      if ( usable exists { _.clause.isEmpty } ) {
-        for ( cls <- usable if cls.clause.isEmpty && cls.assertion.isEmpty )
-          return Some( cls.proof )
-        if ( solver.isSatisfiable ) {
-          info( s"sat splitting model: ${
-            solver.model().filter( _ >= 0 ).map( deintern ).
-              sortBy( _.toString ).mkString( ", " )
-          }".replace( '\n', ' ' ) )
-          switchToNewModel()
-        } else {
-          return Some( mkSatProof() )
-        }
-      }
-      if ( usable.isEmpty )
-        return None
+    val addInductions = spin.isDefined
+    var loopCount = 0
+    var inductCutoff = 16
 
-      val given = choose()
-      usable -= given
+    val section = new ContextSection( ctx )
 
-      val discarded = inferenceComputation( given )
-
-      info( s"[wo=${workedOff.size},us=${usable.size}] ${if ( discarded ) "discarded" else "kept"}: $given".replace( '\n', ' ' ) )
-
+    try {
       preprocessing()
       clauseProcessing()
-    }
 
-    None
-  } catch {
-    case _: ContradictionException =>
-      Some( mkSatProof() )
+      while ( true ) {
+        if ( usable exists {
+          _.clause.isEmpty
+        } ) {
+          for ( cls <- usable if cls.clause.isEmpty && cls.assertion.isEmpty )
+            return Some( cls.proof, addedAxioms, cnfMap )
+          if ( solver.isSatisfiable ) {
+            info( s"sat splitting model: ${
+              solver.model().filter( _ >= 0 ).map( deintern ).
+                sortBy( _.toString ).mkString( ", " )
+            }".replace( '\n', ' ' ) )
+            switchToNewModel()
+          } else {
+            return Some( mkSatProof(), addedAxioms, cnfMap )
+          }
+        }
+        if ( addInductions && ( usable.isEmpty || loopCount >= inductCutoff ) ) {
+          loopCount = 0
+
+          do {
+            if ( possibleAxioms.isEmpty && usable.isEmpty )
+              return None
+
+            if ( possibleAxioms.nonEmpty ) {
+              val newAxiom = possibleAxioms.dequeue()
+              val ( clauses, newMap ) = axiomClause( section, newAxiom )
+
+              addedAxioms += newAxiom
+              cnfMap ++= newMap
+
+              newlyDerived ++= clauses
+              preprocessing()
+              clauseProcessing()
+
+              if ( addedAxioms.size % 5 == 0 )
+                inductCutoff += 1
+            }
+          } while ( usable.isEmpty )
+        }
+
+        if ( usable.isEmpty )
+          return None
+
+        val given = choose()
+        usable -= given
+        spin match {
+          case Some( s ) =>
+            // TODO: this should probably be less restrictive now that we perform more subgoal generalization
+            if ( s.performGeneralization || given.clause.exists( constants( _ ) exists ( s.isInductive( _ )( ctx ) ) ) &&
+              !inductedClauses.contains( given.clause ) ) {
+              EscargotLogger.time( "axiom_gen" ) {
+                s.clauseAxioms( given.clause )( ctx ) foreach ( possibleAxioms.enqueue( _ ) )
+              }
+              inductedClauses += given.clause
+            }
+          case None =>
+        }
+
+        val discarded = inferenceComputation( given )
+
+        info( s"[wo=${workedOff.size},us=${usable.size}] ${if ( discarded ) "discarded" else "kept"}: $given".replace( '\n', ' ' ) )
+
+        preprocessing()
+        clauseProcessing()
+
+        loopCount += 1
+      }
+
+      None
+    } catch {
+      case _: ContradictionException =>
+        Some( mkSatProof(), addedAxioms, cnfMap )
+    } finally {
+      if ( addInductions ) {
+        EscargotLogger.metric( "candidates", inductedClauses.size )
+        EscargotLogger.metric( "added_axioms", addedAxioms.size )
+      }
+    }
   }
 }

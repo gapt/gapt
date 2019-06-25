@@ -1,12 +1,12 @@
 package gapt.expr
 
-import gapt.expr.formula.And
-import gapt.expr.formula.Eq
-import gapt.expr.formula.Formula
+import gapt.expr.formula._
 import gapt.expr.formula.hol.universalClosure
 import gapt.expr.subst.Substitution
+import gapt.expr.ty.{ Ti, To }
 import gapt.expr.util.freeVariables
 import gapt.expr.util.syntacticMatching
+import gapt.formats.tip.ConditionalReductionRule
 import gapt.proofs.context.Context
 
 import scala.annotation.tailrec

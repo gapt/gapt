@@ -1,15 +1,21 @@
 package gapt.formats.tip
 
+import gapt.proofs.context.State
+import gapt.proofs.context.update.Update
 import gapt.expr._
-import gapt.expr.formula.Formula
+import gapt.expr.formula.{ All, Atom, Bottom, Eq, Formula, Iff, Imp, Neg, Top }
 import gapt.expr.formula.hol.{ existentialClosure, universalClosure }
+import gapt.expr.subst.Substitution
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.ty.To
+import gapt.expr.util.{ LambdaPosition, freeVariables, syntacticMatching, variables }
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
+import gapt.proofs.context.facet.{ ConditionalReductions, Reductions }
 import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.update.InductiveType
+import gapt.provers.viper.spin.Positions
 
 case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
   val FunctionType( datatype, fieldTypes ) = constr.ty
@@ -22,6 +28,14 @@ case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
     val fieldVars = fieldTypes.zipWithIndex.map { case ( t, i ) => Var( s"x$i", t ) }
     ( projectors, fieldVars ).zipped map { ( p, f ) => p( constr( fieldVars: _* ) ) === f }
   }
+
+  def projectReductionRules: Seq[ReductionRule] = {
+    val fieldVars = fieldTypes.zipWithIndex.map { case ( t, i ) => Var( s"x$i", t ) }
+    val constructorTerm = Apps( constr, fieldVars )
+    projectors.zipWithIndex.map {
+      case ( p, i ) => ReductionRule( App( p, constructorTerm ), fieldVars( i ) )
+    }
+  }
 }
 case class TipDatatype( t: TBase, constructors: Seq[TipConstructor] ) {
   constructors foreach { ctr => require( ctr.datatype == t ) }
@@ -30,10 +44,14 @@ case class TipDatatype( t: TBase, constructors: Seq[TipConstructor] ) {
 case class TipFun( fun: Const, definitions: Seq[Formula] )
 
 case class TipProblem(
-    ctx:   ImmutableContext,
-    sorts: Seq[TBase], datatypes: Seq[TipDatatype],
-    uninterpretedConsts: Seq[Const], functions: Seq[TipFun],
-    assumptions: Seq[Formula], goal: Formula ) {
+    ctx:                 ImmutableContext,
+    definitions:         Seq[Formula],
+    sorts:               Seq[TBase],
+    datatypes:           Seq[TipDatatype],
+    uninterpretedConsts: Seq[Const],
+    functions:           Seq[TipFun],
+    assumptions:         Seq[Formula],
+    goal:                Formula ) {
   def constructorInjectivity =
     for {
       TipDatatype( ty, ctrs ) <- datatypes
@@ -49,6 +67,7 @@ case class TipProblem(
 
   def toSequent = existentialClosure(
     datatypes.flatMap( _.constructors ).flatMap( _.projectorDefinitions ) ++:
+      definitions ++:
       functions.flatMap( _.definitions ) ++:
       constructorInjectivity ++:
       assumptions ++:
@@ -57,7 +76,142 @@ case class TipProblem(
 
   def context: ImmutableContext = ctx
 
+  def reductionRules: Seq[ConditionalReductionRule] = {
+    val destructorReductionRules = datatypes.flatMap {
+      _.constructors.flatMap { _.projectReductionRules }.map {
+        case ReductionRule( lhs, rhs ) => ConditionalReductionRule( Nil, lhs, rhs )
+      }
+    }
+    val definitionReductionRules = definitions.flatMap {
+      case All.Block( _, Eq( lhs @ Apps( Const( _, _, _ ), _ ), rhs ) ) =>
+        Some( ConditionalReductionRule( Nil, lhs, rhs ) )
+      case All.Block( _, Neg( lhs @ Atom( _, _ ) ) ) =>
+        Some( ConditionalReductionRule( Nil, lhs, Bottom() ) )
+      case All.Block( _, lhs @ Atom( _, _ ) ) =>
+        Some( ConditionalReductionRule( Nil, lhs, Top() ) )
+      case _ => None
+    }
+    functionDefinitionReductionRules ++
+      destructorReductionRules ++
+      definitionReductionRules :+
+      ConditionalReductionRule( Nil, le"x = x", le"⊤" ) :+
+      ConditionalReductionRule( Nil, hof"¬ ⊥", hof"⊤" ) :+
+      ConditionalReductionRule( Nil, hof"¬ ⊤", hof"⊥" )
+  }
+
+  private val functionDefinitionReductionRules: Seq[ConditionalReductionRule] = {
+    functions.flatMap { _.definitions }.flatMap {
+      case All.Block( _, Imp.Block( cs, Eq( lhs @ Apps( _: Const, _ ), rhs ) ) ) if isReductionRule( cs, lhs, rhs ) =>
+        Some( ConditionalReductionRule( cs, lhs, rhs ) )
+      case All.Block( _, Imp.Block( cs, Neg( lhs @ Atom( _, _ ) ) ) ) if isReductionRule( cs, lhs, Bottom() ) =>
+        Some( ConditionalReductionRule( cs, lhs, Bottom() ) )
+      case All.Block( _, Imp.Block( cs, lhs @ Atom( _, _ ) ) ) if isReductionRule( cs, lhs, Top() ) =>
+        Some( ConditionalReductionRule( cs, lhs, Top() ) )
+      case All.Block( _, Imp.Block( cs, Iff( lhs, rhs ) ) ) if isReductionRule( cs, lhs, rhs ) =>
+        Some( ConditionalReductionRule( cs, lhs, rhs ) )
+      case _ => None
+    }
+  }
+
+  private def isReductionRule( cs: Seq[Formula], lhs: Expr, rhs: Expr ): Boolean = {
+    ( cs.flatMap { freeVariables( _ ) } ++ freeVariables( rhs ) ).toSet.subsetOf( freeVariables( lhs ) ) &&
+      !lhs.isInstanceOf[Var]
+  }
+
   override def toString: String = toSequent.toSigRelativeString( context )
+}
+
+/**
+ * A conditional rewrite rule.
+ *
+ * An instance of this rule can be used to rewrite the left hand side
+ * into its right hand side only if the conditions all rewrite to ⊤.
+ *
+ * The free variables of the conditions together with those of the
+ * right hand side must form a subset of the free variables of the
+ * left hand side. The left hand side must not be a variable.
+ *
+ * @param conditions The conditions of this rewrite rule.
+ * @param lhs The left hand side of this rewrite rule.
+ * @param rhs The right hand side of this rewrite rule.
+ */
+case class ConditionalReductionRule( conditions: Seq[Formula], lhs: Expr, rhs: Expr ) {
+
+  require(
+    ( conditions.flatMap { freeVariables( _ ) } ++
+      freeVariables( rhs ) ).toSet.subsetOf( freeVariables( lhs ) ),
+    """free variables in conditions and right hand side do not form a
+      |subset of the free variables of the left hand side""".stripMargin )
+
+  require( !lhs.isInstanceOf[Var], "left hand side must not be a variable" )
+
+  val Apps( lhsHead @ Const( lhsHeadName, _, _ ), lhsArgs ) = lhs
+  val lhsArgsSize: Int = lhsArgs.size
+}
+object ConditionalReductionRule {
+  def apply( rule: ReductionRule ): ConditionalReductionRule =
+    ConditionalReductionRule( List(), rule.lhs, rule.rhs )
+}
+
+case class ConditionalNormalizer( rewriteRules: Set[ConditionalReductionRule] ) {
+
+  private val unconditionalRules =
+    rewriteRules
+      .filter { _.conditions.isEmpty }
+      .map { r => ReductionRule( r.lhs, r.rhs ) }
+
+  private val conditionalRules = rewriteRules.diff( rewriteRules.filter { _.conditions.isEmpty } )
+
+  private val unconditionalNormalizer = Normalizer( unconditionalRules )
+
+  /**
+   * Normalizes an expression.
+   *
+   * @param e The expression to be normalized.
+   * @return Returns the normalized expression, if the rewrite rules are terminating.
+   */
+  def normalize( e: Expr ): Expr = {
+    normalize_( unconditionalNormalizer.normalize( e ) )
+  }
+
+  private def normalize_( e: Expr ): Expr = {
+    for {
+      ConditionalReductionRule( conditions, lhs, rhs ) <- conditionalRules
+      ( instance, position ) <- findInstances( e, lhs, Nil )
+    } {
+      if ( conditions.map { instance( _ ) }.map { normalize( _ ) }.forall { _ == Top() } ) {
+        return normalize( e.replace( position, instance( rhs ) ) )
+      }
+    }
+    e
+  }
+
+  private def findInstances( e: Expr, l: Expr, position: List[Int] ): Set[( Substitution, LambdaPosition )] = {
+    subterms( e ).flatMap {
+      case ( t, p ) =>
+        for {
+          subst <- syntacticMatching( l, t )
+        } yield { subst -> p }
+    }.toSet
+  }
+}
+
+object subterms {
+  def apply( e: Expr ): Seq[( Expr, LambdaPosition )] = {
+    subterms( e, LambdaPosition() ).map {
+      case ( t, LambdaPosition( ps ) ) => t -> LambdaPosition( ps.reverse )
+    }
+  }
+  private def apply( e: Expr, position: LambdaPosition ): Seq[( Expr, LambdaPosition )] = {
+    val LambdaPosition( xs ) = position
+    ( e -> position ) +: ( e match {
+      case Abs( _, e1 ) =>
+        subterms( e1, LambdaPosition( 1 :: xs ) )
+      case App( e1, e2 ) =>
+        subterms( e1, LambdaPosition( 1 +: xs ) ) ++ subterms( e2, LambdaPosition( 2 +: xs ) )
+      case _ => Seq()
+    } )
+  }
 }
 
 trait TipProblemDefinition {
@@ -87,7 +241,7 @@ trait TipProblemDefinition {
     functions foreach { function =>
       ctx += function.fun
     }
-    TipProblem( ctx, sorts, datatypes, uninterpretedConsts, functions, assumptions, goal )
+    TipProblem( ctx, Nil, sorts, datatypes, uninterpretedConsts, functions, assumptions, goal )
   }
 }
 

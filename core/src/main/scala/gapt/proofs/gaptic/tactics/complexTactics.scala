@@ -24,6 +24,7 @@ import gapt.expr.ty.TBase
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.expr.util.syntacticMatching
+import gapt.formats.tip.TipProblem
 import gapt.logic.Polarity
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
@@ -41,6 +42,7 @@ import gapt.proofs.lk.rules.macros.ForallLeftBlock
 import gapt.proofs.lk.rules.macros.WeakeningMacroRule
 import gapt.proofs.lk.util.solvePropositional
 import gapt.proofs.lk.util.solveQuasiPropositional
+import gapt.provers.viper.spin.{ SpinOptions, SuperpositionInductionProver }
 
 /**
  * Performs backwards chaining:
@@ -320,6 +322,14 @@ case class AnalyticInductionTactic( axioms: AxiomFactory, prover: ResolutionProv
 
   def withProver( prover: ResolutionProver ): AnalyticInductionTactic =
     copy( prover = prover )
+}
+
+case class SuperpositionInductionTactic( opts: SpinOptions, problem: TipProblem )( implicit ctx: MutableContext ) extends Tactical1[Unit] {
+  override def apply( goal: OpenAssumption ): Tactic[Unit] =
+    SuperpositionInductionProver( opts, problem ) inductiveLKProof goal.labelledSequent match {
+      case None       => TacticFailure( this, "structural induction prover failed" )
+      case Some( lk ) => replace( lk )
+    }
 }
 
 case class SubstTactic( mode: TacticApplyMode ) extends Tactical1[Unit] {

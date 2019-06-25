@@ -90,7 +90,12 @@ object SExpressionParser {
     private def WhiteSpace = rule { zeroOrMore( anyOf( " \n\r\t\f" ) | ( ';' ~ zeroOrMore( noneOf( "\n" ) ) ) ) }
 
     private def Str = rule { '"' ~ capture( zeroOrMore( noneOf( "\"" ) ) ) ~ '"' ~ WhiteSpace ~> lisp.LSymbol }
-    private def Symbol = rule { capture( noneOf( ":() |\n\r\t\f;\"" ) ~ zeroOrMore( noneOf( "() |\n\r\t\f;\"" ) ) ) ~ WhiteSpace ~> lisp.LSymbol }
+
+    private def Symbol = rule {
+      capture( '.' ~ oneOrMore( noneOf( "() |\n\r\t\f;\"" ) ) ) ~ WhiteSpace ~> lisp.LSymbol |
+        capture( noneOf( ".:() |\n\r\t\f;\"" ) ~ zeroOrMore( noneOf( "() |\n\r\t\f;\"" ) ) ) ~ WhiteSpace ~>
+        lisp.LSymbol
+    }
 
     private def QuotedSymbolEscapeSequence: Rule0 = rule { '\\' ~ ( ch( '|' ) | '\\' ) }
 
@@ -109,13 +114,15 @@ object SExpressionParser {
     }
 
     private def SExpr: Rule1[lisp.SExpression] = rule {
-      ( Str | QuotedSymbol | Symbol | Keyword | Parens )
+      ( Str | QuotedSymbol | Symbol | Keyword | Parens2 | Parens1 )
     }
 
-    private def Parens = rule {
-      '(' ~ WhiteSpace ~ optional( SExpr ~ (
-        ( '.' ~ WhiteSpace ~ SExpr ~> LCons ) |
-        ( zeroOrMore( SExpr ) ~> ( ( car: lisp.SExpression, cdr: Seq[lisp.SExpression] ) => LList( ( car +: cdr ): _* ) ) ) ) ) ~ ')' ~ WhiteSpace ~> { _.getOrElse( LList() ) }
+    private def Parens2 = rule {
+      '(' ~ WhiteSpace ~ optional( oneOrMore( SExpr ) ~> { ts => LList( ts ) } ) ~ ')' ~ WhiteSpace ~> { _.getOrElse( LList() ) }
+    }
+
+    private def Parens1 = rule {
+      ( '(' ~ WhiteSpace ~ SExpr ~ '.' ~ WhiteSpace ~ SExpr ~ ')' ~ WhiteSpace ) ~> LCons
     }
 
     def File: Rule1[Seq[lisp.SExpression]] = rule { WhiteSpace ~ zeroOrMore( SExpr ) ~ EOI }

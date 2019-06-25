@@ -152,6 +152,7 @@ package object export {
 
       TipProblem(
         context.toImmutable,
+        Nil,
         sorts,
         datatypes,
         constants.toSeq,
