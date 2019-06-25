@@ -56,6 +56,7 @@ import gapt.formats.tip.parser.TipSmtMatch
 import gapt.formats.tip.parser.TipSmtMutualRecursiveFunctionDefinition
 import gapt.formats.tip.parser.TipSmtNot
 import gapt.formats.tip.parser.TipSmtOr
+import gapt.formats.tip.parser.TipSmtParserException
 import gapt.formats.tip.parser.TipSmtProblem
 import gapt.formats.tip.parser.TipSmtSortDeclaration
 import gapt.formats.tip.parser.TipSmtTrue
@@ -77,6 +78,12 @@ import gapt.proofs.context.update.InductiveType
 import scala.collection.mutable
 
 class TipTransformationCompiler( var problem: TipSmtProblem ) {
+
+  if ( problem.containsMutuallyRecursiveDatatypes ) {
+    throw TipSmtParserException(
+      s"cannot compile mutually recursive types: " +
+        s"${problem.mutuallyRecursiveDatatypes.map { _.datatypes.map { _.name }.mkString( "(", ",", ")" ) }.mkString( "; " )}" )
+  }
 
   val transformation =
     integersToNaturals ->>:
@@ -114,6 +121,11 @@ class TipTransformationCompiler( var problem: TipSmtProblem ) {
   datatypes += TipDatatype(
     To,
     Seq( TipConstructor( TopC(), Seq() ), TipConstructor( BottomC(), Seq() ) ) )
+
+  if ( problem.containsNat ) {
+    declare( Const( "is-succ", TBase( "Nat" ) ->: To ) )
+    declare( Const( "is-zero", TBase( "Nat" ) ->: To ) )
+  }
 
   private def compileSortDeclaration(
     tipSmtSortDeclaration: TipSmtSortDeclaration ): Unit = {

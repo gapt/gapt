@@ -1,4 +1,4 @@
-(declare-datatypes () ((nat (o) (s (p nat)))))
+(declare-datatypes ((nat 0)) (( (o) (s (p nat)))))
 
 (declare-fun P (nat nat) Bool)
 (assert (P o o))

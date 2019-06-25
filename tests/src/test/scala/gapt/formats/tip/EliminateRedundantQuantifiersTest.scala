@@ -10,7 +10,7 @@ class EliminateRedundantQuantifiersTest extends Specification {
   "useless quantifiers should be eliminated everywhere" in {
     val originalProblem = TipSmtParser.parse(
       StringInputFile( """
-        | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+        | (declare-datatype nat ((Z) (S (p nat))))
         | (define-fun
         |   f1
         |   ((x nat))
@@ -24,7 +24,7 @@ class EliminateRedundantQuantifiersTest extends Specification {
       """.stripMargin ) )
     val expectedProblem = TipSmtParser.parse(
       StringInputFile( """
-        | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+        | (declare-datatype nat ((Z) (S (p nat))))
         | (define-fun
         |   f1
         |   ((x nat))
@@ -45,7 +45,7 @@ class EliminateRedundantQuantifiersTest extends Specification {
       "not all variables are unnecessary" in {
         val originalProblem = TipSmtParser.parse(
           StringInputFile( """
-            | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+            | (declare-datatype nat ((Z) (S (p nat))))
             | (define-fun
             |   f1
             |   ((x nat))
@@ -54,7 +54,7 @@ class EliminateRedundantQuantifiersTest extends Specification {
           """.stripMargin ) )
         val expectedProblem = TipSmtParser.parse(
           StringInputFile( """
-            | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+            | (declare-datatype nat ((Z) (S (p nat))))
             | (define-fun
             |   f1
             |   ((x nat))
@@ -67,7 +67,7 @@ class EliminateRedundantQuantifiersTest extends Specification {
       "quantifier should be discarded if it binds no variables" in {
         val originalProblem = TipSmtParser.parse(
           StringInputFile( """
-            | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+            | (declare-datatype nat ((Z) (S (p nat))))
             | (define-fun
             |   f1
             |   ((x nat))
@@ -76,7 +76,7 @@ class EliminateRedundantQuantifiersTest extends Specification {
           """.stripMargin ) )
         val expectedProblem = TipSmtParser.parse(
           StringInputFile( """
-            | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+            | (declare-datatype nat ((Z) (S (p nat))))
             | (define-fun
             |   f1
             |   ((x nat))
@@ -91,7 +91,7 @@ class EliminateRedundantQuantifiersTest extends Specification {
       "not all variables are unnecessary" in {
         val originalProblem = TipSmtParser.parse(
           StringInputFile( """
-            | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+            | (declare-datatype nat ((Z) (S (p nat))))
             | (define-fun
             |   f1
             |   ((x nat))
@@ -100,7 +100,7 @@ class EliminateRedundantQuantifiersTest extends Specification {
           """.stripMargin ) )
         val expectedProblem = TipSmtParser.parse(
           StringInputFile( """
-            | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+            | (declare-datatype nat ((Z) (S (p nat))))
             | (define-fun
             |   f1
             |   ((x nat))
@@ -113,7 +113,7 @@ class EliminateRedundantQuantifiersTest extends Specification {
       "quantifier should be discarded if it binds no variables" in {
         val originalProblem = TipSmtParser.parse(
           StringInputFile( """
-            | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+            | (declare-datatype nat ((Z) (S (p nat))))
             | (define-fun
             |   f1
             |   ((x nat))
@@ -122,7 +122,7 @@ class EliminateRedundantQuantifiersTest extends Specification {
           """.stripMargin ) )
         val expectedProblem = TipSmtParser.parse(
           StringInputFile( """
-            | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+            | (declare-datatype nat ((Z) (S (p nat))))
             | (define-fun
             |   f1
             |   ((x nat))

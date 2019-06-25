@@ -45,6 +45,22 @@ case class TipSmtFunctionDefinition(
 case class TipSmtProblem(
     definitions: Seq[TipSmtCommand] ) {
   var symbolTable: Option[SymbolTable] = None
+
+  def containsNat: Boolean =
+    definitions.flatMap {
+      case TipSmtDatatypesDeclaration( datatypes ) => datatypes
+      case _                                       => Seq()
+    }.exists { _.name == "Nat" }
+
+  def mutuallyRecursiveDatatypes: Seq[TipSmtDatatypesDeclaration] =
+    definitions.flatMap {
+      case mutuallyRecursiveTypes @ TipSmtDatatypesDeclaration( datatypes ) if datatypes.size > 1 =>
+        Some( mutuallyRecursiveTypes )
+      case _ => None
+    }
+
+  def containsMutuallyRecursiveDatatypes: Boolean =
+    mutuallyRecursiveDatatypes.nonEmpty
 }
 
 case class TipSmtKeyword(

@@ -15,7 +15,7 @@ class DesugarDistinctExpressionsTest extends Specification {
   "distinct expressions should be desugared everywhere" in {
     val originalProblem = TipSmtParser.parse(
       StringInputFile( """
-        | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+        | (declare-datatype nat ((Z) (S (p nat))))
         | (define-fun
         |   f1
         |   ((x nat))
@@ -39,7 +39,7 @@ class DesugarDistinctExpressionsTest extends Specification {
   "distinct expressions should be desugared correctly" in {
     val originalProblem = TipSmtParser.parse(
       StringInputFile( """
-        | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+        | (declare-datatype nat ((Z) (S (p nat))))
         | (define-fun
         |   f1
         |   ((x nat))

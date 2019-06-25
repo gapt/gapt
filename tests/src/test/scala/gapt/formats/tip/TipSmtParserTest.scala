@@ -117,9 +117,9 @@ class TipSmtParserTest extends Specification {
   "parsing datatype declaration" in {
     "parsing well-formed datatype declaration should succeed" in {
       val Seq( datatypeDeclaration ) = SExpressionParser.parse( StringInputFile(
-        """( declare-datatypes
-          | ()
-          | ((nat :attr1 val1 (z :attr2) (s :attr3 val3 :attr4 (p nat) ) ))
+        """( declare-datatype
+          | nat
+          | ((z :attr2) (s :attr3 val3 :attr4 (p nat)))
           | )""".stripMargin ) )
       val output = parser.TipSmtParser.parseCommand( datatypeDeclaration )
 
@@ -130,7 +130,7 @@ class TipSmtParserTest extends Specification {
       datatypeDecl.datatypes must_== Seq(
         TipSmtDatatype(
           "nat",
-          Seq( TipSmtKeyword( "attr1", Some( "val1" ) ) ),
+          Seq(),
           Seq(
             TipSmtConstructor(
               "z",
@@ -793,7 +793,7 @@ class TipSmtParserTest extends Specification {
     "parsing well-formed match-expression should succeed" in {
       "non-empty sequence of cases" in {
         val Seq( input ) = SExpressionParser.parse( StringInputFile(
-          "(match t (case c1 e1) (case c2 e2))" ) )
+          "(match t ((c1 e1) (c2 e2)))" ) )
         parser.TipSmtParser.parseExpression( input ) must_==
           TipSmtMatch(
             TipSmtIdentifier( "t" ),
@@ -805,11 +805,16 @@ class TipSmtParserTest extends Specification {
                 TipSmtConstructorPattern( TipSmtIdentifier( "c2" ), Seq() ),
                 TipSmtIdentifier( "e2" ) ) ) )
       }
-      "empty sequence of case statements" in {
+      "empty sequence of case statements should be parsed" in {
         val Seq( input ) = SExpressionParser.parse( StringInputFile(
-          "(match t)" ) )
+          "(match t ())" ) )
         parser.TipSmtParser.parseExpression( input ) must_==
           TipSmtMatch( TipSmtIdentifier( "t" ), Seq() )
+      }
+      "missing sequence of case statements" in {
+        val Seq( input ) = SExpressionParser.parse( StringInputFile(
+          "(match t)" ) )
+        parser.TipSmtParser.parseExpression( input ) must throwA[TipSmtParserException]
       }
     }
     "parsing ill-formed match-expression should throw exception" in {

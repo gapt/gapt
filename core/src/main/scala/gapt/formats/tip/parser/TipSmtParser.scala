@@ -53,6 +53,8 @@ object TipSmtParser {
         head match {
           case "declare-sort" =>
             parseSortDeclaration( sexp )
+          case "declare-datatype" =>
+            parseDatatypeDeclaration( sexp )
           case "declare-datatypes" =>
             parseDatatypesDeclaration( sexp )
           case "declare-const" =>
@@ -147,7 +149,7 @@ object TipSmtParser {
    *
    * Accepted datatype declarations are s-expressions of the form:
    * datatype_declaration
-   *     ::= type_name keyword_sequence { constructor_declaration }
+   *     ::= "(" type_name keyword_sequence { constructor_declaration } ")"
    * where type_name is a symbol.
    * @param sexp The expression to be parsed.
    * @return A parsed datatype declaration.
@@ -165,18 +167,55 @@ object TipSmtParser {
     }
 
   /**
+   * Parses a declaration of mutually dependent datatypes.
+   * @param sexp The expression to be parsed.
+   * @return A declaration of mutually dependent datatypes if sexp is well
+   * formed, otherwise an exception is thrown.
+   */
+  private def parseDatatypesDeclaration(
+    sexp: SExpression ): TipSmtDatatypesDeclaration = sexp match {
+    case LFun( "declare-datatypes", LList( datatypeNames @ _* ), LList( datatypes @ _* ) ) =>
+      val names = datatypeNames map { parseDatatypeName }
+      if ( names.size != datatypes.size ) {
+        throw TipSmtParserException( "malformed datatypes declaration: number of names and datatypes differ" )
+      }
+      TipSmtDatatypesDeclaration(
+        names.zip( datatypes ) map {
+          case ( datatypeName, LList( constructors @ _* ) ) =>
+            TipSmtDatatype( datatypeName, Nil, parseConstructors( constructors ) )
+          case _ => throw TipSmtParserException( s"malformed datatypes declaration ${sexp.toDoc.toString}" )
+        } )
+    case _ => throw TipSmtParserException( "malformed datatypes declaration" )
+  }
+
+  /**
+   * Parses the name of a datatype.
+   * @param sexp The expression to be parsed as the name of a datatype.
+   * @return A string if the given expression is a well formed name of a datatype, i.e. if
+   * `sexp` is of the form "(" Symbol Integer ")". If the input expression is not well formed in the above
+   * sense, then an exception is thrown.
+   */
+  private def parseDatatypeName( sexp: SExpression ): String = {
+    sexp match {
+      case LList( LSymbol( name ), LSymbol( i ) ) if i.forall( _.isDigit ) =>
+        name
+      case _ => throw TipSmtParserException( "malformed datatype name" )
+    }
+  }
+
+  /**
    * Parses a datatypes declaration.
    *
    * A datatypes declaration is of the form:
-   * datatypes_declaration ::= '(' "declare-datatypes" '(' ')' { datatype } ')'.
+   * datatypes_declaration ::= '(' "declare-datatype" datatype ')'.
    *
    * @param sexp The expression to be parsed.
    * @return The parsed datatype declarations.
    */
-  private def parseDatatypesDeclaration(
+  private def parseDatatypeDeclaration(
     sexp: SExpression ): TipSmtDatatypesDeclaration = sexp match {
-    case LFun( "declare-datatypes", LList(), LList( datatypes @ _* ) ) =>
-      TipSmtDatatypesDeclaration( datatypes.map { parseDatatype } )
+    case LFun( "declare-datatype", LSymbol( datatypeName ), LList( constructors @ _* ) ) =>
+      TipSmtDatatypesDeclaration( TipSmtDatatype( datatypeName, Nil, parseConstructors( constructors ) ) :: Nil )
     case _ => throw TipSmtParserException( "malformed datatypes declaration" )
   }
 
@@ -498,7 +537,7 @@ object TipSmtParser {
    * @return The parsed match expression.
    */
   def parseMatch( sexp: SExpression ): TipSmtMatch = sexp match {
-    case LFun( "match", expr, cases @ _* ) =>
+    case LFun( "match", expr, LList( cases @ _* ) ) =>
       TipSmtMatch( parseExpression( expr ), cases map { parseCase } )
     case _ => throw TipSmtParserException(
       "malformed match-expression: " + sexp )
@@ -514,7 +553,7 @@ object TipSmtParser {
    * @return The parsed case expression.
    */
   def parseCase( sexp: SExpression ): TipSmtCase = sexp match {
-    case LFun( "case", pattern, expr ) =>
+    case LList( pattern, expr ) =>
       TipSmtCase( parsePattern( pattern ), parseExpression( expr ) )
     case _ => throw TipSmtParserException(
       "malformed case-expression: " + sexp )
@@ -530,7 +569,7 @@ object TipSmtParser {
    * @return The parsed pattern.
    */
   def parsePattern( sexp: SExpression ): TipSmtPattern = sexp match {
-    case LSymbol( "default" ) =>
+    case LSymbol( "_" ) =>
       TipSmtDefault
     case p @ LSymbol( _ ) =>
       TipSmtConstructorPattern( parseTipSmtIdentifier( p ), Seq() )

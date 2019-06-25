@@ -5,11 +5,11 @@
 ; solve with: viper --treegrammar --cansolsize 2 3 --gramw scomp --qtys list
 
 (declare-sort sk 0)
-(declare-datatypes () ((list (nil) (cons (head sk) (tail list)))))
+(declare-datatypes ((list 0)) (( (nil) (cons (head sk) (tail list)))))
 (define-fun-rec
   qrev
     ((x list) (y list)) list
     (match x
-      (case nil y)
-      (case (cons z xs) (qrev xs (cons z y)))))
+      (( nil y)
+      ( (cons z xs) (qrev xs (cons z y))))))
 (prove (forall ((x list)) (= (qrev (qrev x nil) nil) x)))
