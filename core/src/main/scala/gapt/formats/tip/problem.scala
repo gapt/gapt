@@ -1,21 +1,29 @@
 package gapt.formats.tip
 
-import gapt.proofs.context.State
-import gapt.proofs.context.update.Update
 import gapt.expr._
-import gapt.expr.formula.{ All, Atom, Bottom, Eq, Formula, Iff, Imp, Neg, Top }
-import gapt.expr.formula.hol.{ existentialClosure, universalClosure }
+import gapt.expr.formula.All
+import gapt.expr.formula.Atom
+import gapt.expr.formula.Bottom
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Iff
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
+import gapt.expr.formula.Top
+import gapt.expr.formula.hol.existentialClosure
+import gapt.expr.formula.hol.universalClosure
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.ty.To
-import gapt.expr.util.{ LambdaPosition, freeVariables, syntacticMatching, variables }
+import gapt.expr.util.LambdaPosition
+import gapt.expr.util.freeVariables
+import gapt.expr.util.syntacticMatching
+import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
-import gapt.proofs.context.facet.{ ConditionalReductions, Reductions }
 import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.update.InductiveType
-import gapt.provers.viper.spin.Positions
 
 case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
   val FunctionType( datatype, fieldTypes ) = constr.ty
@@ -52,6 +60,9 @@ case class TipProblem(
     functions:           Seq[TipFun],
     assumptions:         Seq[Formula],
     goal:                Formula ) {
+
+  private val BOOL2: TBase = TBase( "Bool2" )
+
   def constructorInjectivity =
     for {
       TipDatatype( ty, ctrs ) <- datatypes
@@ -65,14 +76,25 @@ case class TipProblem(
       ctr1( ( for ( ( t, j ) <- args1.zipWithIndex ) yield Var( s"x$j", t ) ): _* ) !==
         ctr2( ( for ( ( t, j ) <- args2.zipWithIndex ) yield Var( s"y$j", t ) ): _* ) )
 
-  def toSequent = existentialClosure(
-    datatypes.flatMap( _.constructors ).flatMap( _.projectorDefinitions ) ++:
-      definitions ++:
-      functions.flatMap( _.definitions ) ++:
-      constructorInjectivity ++:
-      assumptions ++:
-      Sequent()
-      :+ goal )
+  def toSequent: HOLSequent = {
+    val bool2Axioms = {
+      implicit val c = ctx
+      if ( ctx.isType( BOOL2 ) ) {
+        Seq( hof"!x (x = True | x = False)" )
+      } else {
+        Seq()
+      }
+    }
+    existentialClosure(
+      bool2Axioms ++:
+        datatypes.flatMap( _.constructors ).flatMap( _.projectorDefinitions ) ++:
+        definitions ++:
+        functions.flatMap( _.definitions ) ++:
+        constructorInjectivity ++:
+        assumptions ++:
+        Sequent()
+        :+ goal )
+  }
 
   def context: ImmutableContext = ctx
 
@@ -91,12 +113,25 @@ case class TipProblem(
         Some( ConditionalReductionRule( Nil, lhs, Top() ) )
       case _ => None
     }
-    functionDefinitionReductionRules ++
+
+    val bool2ReductionRules = {
+      implicit val c = ctx
+      if ( ctx.isType( BOOL2 ) ) {
+        ConditionalReductionRule( Nil, hof"True = False", hof"⊥" ) ::
+          ConditionalReductionRule( Nil, hof"False = True", hof"⊥" ) :: Nil
+      } else {
+        Nil
+      }
+    }
+
+    bool2ReductionRules ++
+      functionDefinitionReductionRules ++
       destructorReductionRules ++
       definitionReductionRules :+
       ConditionalReductionRule( Nil, le"x = x", le"⊤" ) :+
       ConditionalReductionRule( Nil, hof"¬ ⊥", hof"⊤" ) :+
       ConditionalReductionRule( Nil, hof"¬ ⊤", hof"⊥" )
+
   }
 
   private val functionDefinitionReductionRules: Seq[ConditionalReductionRule] = {
