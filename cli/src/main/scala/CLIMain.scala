@@ -9,20 +9,6 @@ import ammonite.ops._
 
 object CLIMain {
 
-  val welcomeMessage = """
-    *************************************
-    *    Welcome to the GAPT shell!     *
-    *************************************
-
- Copyright (C) 2009-2019  GAPT developers
-
- This program comes with ABSOLUTELY NO WARRANTY. This is free
- software, and you are welcome to redistribute it under certain
- conditions; type `copying' for details.
-"""
-
-  val imports = ClasspathInputFile( "gapt-cli-prelude.scala", getClass ).read
-
   class ScriptsResultHolder( var result: Seq[Script] = Seq() ) {
     def add( script: Script ): Unit = result :+= script
   }

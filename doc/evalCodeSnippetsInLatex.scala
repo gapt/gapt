@@ -6,6 +6,8 @@ import java.nio.charset.Charset
 
 import ammonite.ops._
 import gapt.cli.CLIMain
+import gapt.cli.predefFileName
+import gapt.formats.ClasspathInputFile
 
 import scala.tools.nsc.Settings
 import scala.tools.nsc.interpreter._
@@ -100,7 +102,7 @@ class CommandEvaluator {
     NamedParam[IMain]( "$intp", repl.intp )(
       StdReplTags.tagOfIMain, reflect.classTag[IMain] ) )
 
-  repl command CLIMain.imports
+  repl command ClasspathInputFile( predefFileName ).read
 
   // don't open prooftool
   repl command "def prooftool[T: gapt.prooftool.ProoftoolViewable](x: T, name: String = \"\"): Unit = ()"

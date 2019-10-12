@@ -1,6 +1,5 @@
 package gapt.cli
 
-import gapt.cli.CLIMain.{ imports, welcomeMessage }
 import gapt.formats.ClasspathInputFile
 
 import scala.tools.nsc.Settings
@@ -22,9 +21,10 @@ case class GaptRepl() {
 
   private val repl = new ILoop {
     override def createInterpreter() = {
+      val predefCode: String = readPredefFile
       in = InteractiveReader()
       intp = new ILoopInterpreter()
-      intp.beQuietDuring( intp.interpret( imports ) )
+      intp.beQuietDuring( intp.interpret( predefCode ) )
     }
     override def printWelcome() = print( welcomeMessage )
   }

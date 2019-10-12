@@ -1,8 +1,9 @@
 package gapt.cli
 
 import ammonite.ops.{ Path, pwd, read }
-import gapt.cli.CLIMain.{ ScriptsResultHolder, imports }
+import gapt.cli.CLIMain.{ ScriptsResultHolder }
 import gapt.examples.Script
+import gapt.formats.ClasspathInputFile
 
 import scala.tools.nsc.Settings
 import scala.tools.nsc.interpreter.IMain
@@ -19,6 +20,7 @@ object GaptScriptInterpreter {
   settings.deprecation.value = true
 
   def run( scriptFileName: String, scriptArguments: Seq[String] ): Unit = {
+    val predefCode: String = readPredefFile
     // Strip package declaration, the script compiler doesn't like it.
     val packageRegex = """(?s)package [A-Za-z.]+\n(.*)""".r
     val scriptSrc = read( Path( scriptFileName, pwd ) ) match {
@@ -28,7 +30,7 @@ object GaptScriptInterpreter {
 
     val interpreter = new IMain( settings )
     interpreter.beQuietDuring {
-      interpreter.interpret( imports + scriptSrc )
+      interpreter.interpret( predefCode + scriptSrc )
 
       val scriptsName = interpreter.naming.freshUserTermName()
       val scripts = new ScriptsResultHolder
@@ -45,4 +47,7 @@ object GaptScriptInterpreter {
         script.main( scriptArguments.toArray )
     }
   }
+
+  private def readPredefFile: String =
+    ClasspathInputFile( predefFileName ).read
 }
