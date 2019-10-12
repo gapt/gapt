@@ -28,45 +28,12 @@ object CLIMain {
   }
 
   def main( args: Array[String] ): Unit = {
-    val settings = new Settings
-    settings.usejavacp.value = true
-    settings.language.value = {
-      import settings.language.domain._
-      ValueSet( postfixOps, implicitConversions )
-    }
-    settings.feature.value = true
-    settings.deprecation.value = true
 
     args match {
 
-      // If invoked as ./gapt.sh script.scala,
-      // then load script.scala and exit.
+      // If invoked as ./gapt.sh `script`, then execute `script` and exit.
       case Array( scriptFile, scriptArgs @ _* ) =>
-        // Strip package declaration, the script compiler doesn't like it.
-        val packageRegex = """(?s)package [A-Za-z.]+\n(.*)""".r
-        val scriptSrc = read( Path( scriptFile, pwd ) ) match {
-          case packageRegex( restOfScript ) => restOfScript
-          case scriptWithoutPackage         => scriptWithoutPackage
-        }
-
-        val intp = new IMain( settings )
-        intp.beQuietDuring {
-          intp.interpret( imports + scriptSrc )
-
-          val scriptsName = intp.naming.freshUserTermName()
-          val scripts = new ScriptsResultHolder
-          intp.bind( scriptsName.toString, scripts )
-
-          // Execute all defined objects of type Script.
-          // TODO(gabriel): use reflection again
-          for {
-            defTerm <- intp.namedDefinedTerms
-            if intp.typeOfTerm( defTerm.toString ) <:< intp.global.typeOf[Script]
-          } intp.interpret( s"$scriptsName.add($defTerm)\n" )
-
-          for ( script <- scripts.result )
-            script.main( scriptArgs.toArray )
-        }
+        GaptScriptInterpreter.run( scriptFile, scriptArgs )
 
       case _ =>
         GaptRepl().run()
