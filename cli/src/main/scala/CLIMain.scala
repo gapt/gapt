@@ -69,21 +69,7 @@ object CLIMain {
         }
 
       case _ =>
-        settings.Yreplsync.value = true
-
-        sys.props( "scala.shell.prompt" ) = sys.props( "line.separator" ) + "gapt> "
-
-        val repl = new ILoop {
-          override def createInterpreter() = {
-            in = InteractiveReader()
-            intp = new ILoopInterpreter()
-            intp.beQuietDuring( intp.interpret( imports ) )
-          }
-          override def printWelcome() = print( welcomeMessage )
-        }
-
-        repl process settings
-
+        GaptRepl().run()
     }
   }
 
