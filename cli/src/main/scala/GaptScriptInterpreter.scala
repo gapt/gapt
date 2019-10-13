@@ -1,8 +1,7 @@
 package gapt.cli
 
 import ammonite.ops.{ Path, pwd, read }
-import gapt.cli.CLIMain.{ ScriptsResultHolder }
-import gapt.examples.Script
+
 import gapt.formats.ClasspathInputFile
 
 import scala.tools.nsc.Settings
@@ -27,27 +26,20 @@ object GaptScriptInterpreter {
       case packageRegex( restOfScript ) => restOfScript
       case scriptWithoutPackage         => scriptWithoutPackage
     }
-
     val interpreter = new IMain( settings )
     interpreter.beQuietDuring {
-      interpreter.interpret( predefCode + scriptSrc )
-
-      val scriptsName = interpreter.naming.freshUserTermName()
-      val scripts = new ScriptsResultHolder
-      interpreter.bind( scriptsName.toString, scripts )
-
-      // Execute all defined objects of type Script.
-      // TODO(gabriel): use reflection again
-      for {
-        defTerm <- interpreter.namedDefinedTerms
-        if interpreter.typeOfTerm( defTerm.toString ) <:< interpreter.global.typeOf[Script]
-      } interpreter.interpret( s"$scriptsName.add($defTerm)\n" )
-
-      for ( script <- scripts.result )
-        script.main( scriptArguments.toArray )
+      interpreter.interpret( predefCode )
+      interpreter.interpret(
+        s"""
+           |val args: Array[String] = Array(${scriptArguments.map( quote ).mkString( "," )})
+           |${scriptSrc}
+           |""".stripMargin )
     }
   }
 
   private def readPredefFile: String =
     ClasspathInputFile( predefFileName ).read
+
+  private def quote( string: String ): String = s"""\"\"\"$string\"\"\""""
+
 }
