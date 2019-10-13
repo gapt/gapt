@@ -279,7 +279,7 @@ class SchemaTest extends Specification {
                   case _ => z
                 }
               } )
-              val ret: Expr = Substitution( freeVariables( p.formula.term ).head -> succ )( p.formula.term )
+              val ret: Expr = Substitution( p.formula.variable -> succ )( p.formula.term )
               InductionRule( p.cases, Abs( succ, ret ), succ ) :: z
             case _ => z
           }
