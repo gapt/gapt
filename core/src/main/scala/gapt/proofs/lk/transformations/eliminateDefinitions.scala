@@ -45,7 +45,7 @@ object eliminateDefinitions {
    * @param dmap The definitions to be eliminated.
    */
   def apply( dmap: Map[_ <: Const, _ <: Expr] ): eliminateDefinitions =
-    new eliminateDefinitions( Normalizer( dmap.map( ReductionRule.apply ) ) )
+    new eliminateDefinitions( Normalizer( dmap.map[ReductionRule]( ReductionRule.apply ) ) )
 
   /**
    * Given an implicit [[gapt.proofs.context.Context]] in scope, this removes all definitions in that context from a

@@ -44,7 +44,7 @@ sealed trait DiscrTree[+T] {
   def filter( p: T => Boolean ): DiscrTree[T] =
     this match {
       case Leaf( elems ) => Leaf( elems.filter( p ) )
-      case Node( next )  => Node( Map() ++ next.mapValues( _.filter( p ) ) )
+      case Node( next )  => Node( Map() ++ next.view.mapValues( _.filter( p ) ).toMap )
     }
 
   def remove[S >: T]( t: S ): DiscrTree[T] = filter( _ != t )

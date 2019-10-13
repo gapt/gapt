@@ -315,7 +315,7 @@ trait Context extends BabelSignature {
    * @return An immutable context obtained by applying iteratively applying
    * the updates from left to right.
    */
-  def ++( updates: Traversable[Update] ): ImmutableContext =
+  def ++( updates: Iterable[Update] ): ImmutableContext =
     updates.foldLeft( toImmutable )( _ + _ )
 
   /**
@@ -351,7 +351,7 @@ object Context {
 
   val empty: ImmutableContext = ImmutableContext.empty
   def apply(): ImmutableContext = default
-  def apply( updates: Traversable[Update] ): ImmutableContext =
+  def apply( updates: Iterable[Update] ): ImmutableContext =
     empty ++ updates
 
   val default: ImmutableContext = empty ++ Seq(
@@ -384,7 +384,7 @@ object Context {
     Notation.Infix( "=", EqC, Precedence.infixRel ),
     Notation.Infix( "!=", Notation.NeqName, Precedence.infixRel ) )
 
-  def guess( exprs: Traversable[Expr] ): ImmutableContext = {
+  def guess( exprs: Iterable[Expr] ): ImmutableContext = {
     val names = exprs.view.flatMap( containedNames( _ ) ).toSet
     val tys = names.flatMap( c => baseTypes( c.ty ) )
     var ctx = default

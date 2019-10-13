@@ -39,7 +39,7 @@ class TseitinCNF {
 
   val hc = "x"
   var fsyms = Set[String]()
-  var auxsyms = mutable.MutableList[String]()
+  var auxsyms: List[String] = List()
 
   /**
    * Get a list of all Atoms symbols used in f
@@ -86,7 +86,7 @@ class TseitinCNF {
         if ( fsyms.contains( auxsym ) ) {
           addIfNotExists( f )
         } else {
-          auxsyms += auxsym
+          auxsyms :+= auxsym
           val auxAtom = FOLAtom( auxsym )
           subformulaMap( f ) = auxAtom
           auxAtom

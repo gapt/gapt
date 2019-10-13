@@ -81,7 +81,10 @@ class SchemaTest extends Specification {
     }
   }
   {
+
     import tautSchema.ctx
+    //    implicit val ctx: ImmutableContext = tautSchema.ctx
+
     "simple schema basecase" in {
       val proof = instantiateProof.Instantiate( le"taut ${natMaker( 0 )}" )
       ctx.check( proof )

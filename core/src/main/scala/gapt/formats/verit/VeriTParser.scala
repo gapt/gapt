@@ -119,7 +119,7 @@ object VeriTParser extends RegexParsers {
     def gen_eq_congr( n: Int, fname: Const ): FOLFormula = {
       val listX = ( for { i <- 1 to n } yield FOLVar( "x" + i ) ).toList
       val listY = ( for { i <- 1 to n } yield FOLVar( "y" + i ) ).toList
-      val equalities = ( listX, listY ).zipped map ( Eq( _, _ ) )
+      val equalities = listX.lazyZip( listY ).map( Eq( _, _ ) )
       val matrix = And( equalities ) --> ( fname( listX ) === fname( listY ) )
 
       All.Block( listX ++ listY, matrix ).asInstanceOf[FOLFormula]
@@ -154,7 +154,7 @@ object VeriTParser extends RegexParsers {
     def gen_eq_congr_pred( n: Int, pname: String ): FOLFormula = {
       val listX = ( for { i <- 1 to n } yield FOLVar( "x" + i ) ).toList
       val listY = ( for { i <- 1 to n } yield FOLVar( "y" + i ) ).toList
-      val equalities = ( listX, listY ).zipped map ( Eq( _, _ ) )
+      val equalities = listX.lazyZip( listY ).map( Eq( _, _ ) )
       val name = pname
       val p1 = FOLAtom( name, listX )
       val p2 = FOLAtom( name, listY )
@@ -237,7 +237,7 @@ object VeriTParser extends RegexParsers {
       val inputET = input.map( p => formulaToExpansionTree( p, Polarity.InAntecedent ) )
 
       val axiomET = for {
-        ( ax @ All.Block( vs, _ ), insts ) <- axioms.flatten.groupBy( _._1 ).mapValues( _.map( _._2 ) )
+        ( ax @ All.Block( vs, _ ), insts ) <- axioms.flatten.groupBy( _._1 ).view.mapValues( _.map( _._2 ) ).toMap
       } yield ETWeakQuantifierBlock( ax, vs.size,
         insts.map( inst => inst -> formulaToExpansionTree( instantiate( ax, inst ), Polarity.InAntecedent ) ) )
 

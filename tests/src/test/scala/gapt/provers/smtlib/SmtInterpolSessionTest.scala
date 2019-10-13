@@ -40,7 +40,7 @@ class SmtInterpolSessionTest extends Specification {
     val s = Const( "s", nat ->: nat )
     val p = Const( "p", nat ->: To )
 
-    val numeral = Stream.iterate[Expr]( o )( s( _ ) )
+    val numeral = LazyList.iterate[Expr]( o )( s( _ ) )
 
     val n = 10
 

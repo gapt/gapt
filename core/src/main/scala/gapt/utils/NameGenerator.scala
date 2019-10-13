@@ -14,7 +14,7 @@ object NameGenerator {
 
 class NameGenerator( initiallyUsed: Iterable[String] ) {
 
-  private val usedNames = initiallyUsed.to[mutable.Set]
+  private val usedNames = initiallyUsed.iterator.to( mutable.Set )
 
   /**
    * Generates fresh names.
@@ -70,8 +70,8 @@ class NameGenerator( initiallyUsed: Iterable[String] ) {
    * generated.
    * @return A stream of fresh variants of the form `name`_<n>.
    */
-  def freshStream( name: String ): Stream[String] = {
-    Stream.continually( freshWithIndex( name ) )
+  def freshStream( name: String ): LazyList[String] = {
+    LazyList.continually( freshWithIndex( name ) )
   }
 
   /**

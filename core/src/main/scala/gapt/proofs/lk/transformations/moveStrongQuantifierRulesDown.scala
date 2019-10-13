@@ -115,11 +115,11 @@ object moveStrongQuantifierRulesDown {
           case EqualityRightRule( _, eq, aux, con )        => EqualityRightRule( qs( 0 ), oc( 0 ).child( eq ), oc( 0 ).child( aux ), con )
 
           case p @ InductionRule( cases, main, term ) =>
-            p.copy( ( cases, qs, oc ).zipped map { ( c, q, o ) =>
+            p.copy( cases.lazyZip( qs ).lazyZip( oc ).map { ( c, q, o ) =>
               c.copy( proof = q, hypotheses = c.hypotheses map o.child, conclusion = o.child( c.conclusion ) )
             } )
         }
-        ( q, ( q.occConnectors, oc, p.occConnectors ).zipped map { _ * _ * _.inv } reduce { _ + _ } )
+        ( q, q.occConnectors.lazyZip( oc ).lazyZip( p.occConnectors ) map { _ * _ * _.inv } reduce { _ + _ } )
     }
   }
 }

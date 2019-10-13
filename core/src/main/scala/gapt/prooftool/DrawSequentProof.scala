@@ -136,8 +136,8 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
   this.peer.setAutoscrolls( true )
   this.peer.addMouseMotionListener( this )
 
-  def mouseMoved( e: MouseEvent ) {}
-  def mouseDragged( e: MouseEvent ) {
+  def mouseMoved( e: MouseEvent ): Unit = {}
+  def mouseDragged( e: MouseEvent ): Unit = {
     //The user is dragging us, so scroll!
     val r = new Rectangle( e.getX, e.getY, 1, 1 )
     this.peer.scrollRectToVisible( r )
@@ -192,7 +192,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       border = defaultBorder
       endSequentPanel.border = Swing.EmptyBorder
 
-    case FontChanged =>
+    case FontChanged( _ ) =>
       revalidate()
       repaint()
 
@@ -343,7 +343,7 @@ class ProofLinePanel[F, T <: SequentProof[F, T]](
     case HideDebugBorders =>
       border = Swing.EmptyBorder
 
-    case FontChanged =>
+    case FontChanged( _ ) =>
       fSize = parent.main.currentFontSize
   }
 }

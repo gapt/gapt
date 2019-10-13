@@ -109,11 +109,11 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
   val atomToSh = shAtoms.map( _.swap )
   val atomToET = expansionProof.subProofs.groupBy( atom ).withDefaultValue( Set() )
 
-  def modelSequent( lits: Traversable[Int] ): HOLSequent =
+  def modelSequent( lits: Iterable[Int] ): HOLSequent =
     Sequent( lits.flatMap( l => atomToSh.get( math.abs( l ) ).map( _ -> Polarity( l < 0 ) ) ) )
-  def implication( lits: Traversable[Int] ): HOLSequent =
+  def implication( lits: Iterable[Int] ): HOLSequent =
     modelSequent( lits ).swapped
-  def expSeq( lits: Traversable[Int] ): ExpansionSequent =
+  def expSeq( lits: Iterable[Int] ): ExpansionSequent =
     Sequent( lits.flatMap( l => atomToET( math.abs( l ) ).map( e => e -> e.polarity ) ) )
 
   val drup = mutable.Buffer[RupProof.Line]()
@@ -203,11 +203,11 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
     }
 
   val atomToEigenvars: Map[Int, Set[Var]] =
-    Map() ++ atomToSh.mapValues( freeVariables( _ ).intersect( expansionProof.eigenVariables ) )
+    Map() ++ atomToSh.view.mapValues( freeVariables( _ ).intersect( expansionProof.eigenVariables ) ).toMap
   val atomsWithFreeEigenvar: Map[Var, Set[Int]] =
     Map().withDefaultValue( Set.empty[Int] ) ++
-      atomToEigenvars.view.flatMap { case ( a, vs ) => vs.map( _ -> a ) }.
-      groupBy( _._1 ).mapValues( _.map( _._2 ).toSet )
+      atomToEigenvars.view.flatMap { case ( a, vs: Set[Var] ) => vs.map( _ -> a ) }.
+      groupBy( _._1 ).view.mapValues( _.map( _._2 ).toSet )
 
   type Counterexample = Set[Int] // just the assumptions
   type Result = Either[Counterexample, Unit]

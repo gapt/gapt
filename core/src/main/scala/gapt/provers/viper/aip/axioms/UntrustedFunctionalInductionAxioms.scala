@@ -47,7 +47,7 @@ case object UntrustedFunctionalInductionAxioms extends AxiomFactory {
     Map() ++ sequent.antecedent.collect {
       case All.Block( vs, Imp.Block( conds, Eq( lhs @ Apps( c: Const, _ ), rhs ) ) ) =>
         ( c, conds, lhs, rhs )
-    }.groupBy( _._1 ).mapValues( generateScheme )
+    }.groupBy( _._1 ).view.mapValues( generateScheme ).toMap
 
   override def apply( sequent: LabelledSequent )( implicit ctx: MutableContext ): ThrowsError[List[Axiom]] = {
     val schemes = guessSchemes( sequent.map( _._2 ) )

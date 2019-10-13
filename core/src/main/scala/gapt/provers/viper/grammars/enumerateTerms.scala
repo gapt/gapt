@@ -55,18 +55,18 @@ object enumerateTerms {
         Seq( Var( "x", t ) )
     } ).toSet
 
-  def asStream( implicit ctx: Context ): Stream[Expr] = withSymbols( Set.empty
+  def asStream( implicit ctx: Context ): LazyList[Expr] = withSymbols( Set.empty
     ++ ctx.get[StructurallyInductiveTypes].constructors.values.flatten
     ++ ( ctx.get[BaseTypes].baseTypes -- ctx.get[StructurallyInductiveTypes].constructors.keySet ).values.map( Var( "x", _ ) ) )
 
-  def forType( ty: Ty* )( implicit ctx: Context ): Stream[Expr] =
+  def forType( ty: Ty* )( implicit ctx: Context ): LazyList[Expr] =
     forType( freeConstructors = false, ty: _* )
 
-  def forType( freeConstructors: Boolean, ty: Ty* )( implicit ctx: Context ): Stream[Expr] =
+  def forType( freeConstructors: Boolean, ty: Ty* )( implicit ctx: Context ): LazyList[Expr] =
     withSymbols( if ( freeConstructors ) freeConstructorsForType( ty: _* )
     else constructorsForType( ty: _* ) )
 
-  def withSymbols( syms: Set[VarOrConst] ): Stream[Expr] = {
+  def withSymbols( syms: Set[VarOrConst] ): LazyList[Expr] = {
     val nonConstantCtrs = syms.filter( sym => sym.isInstanceOf[Const] && !sym.ty.isInstanceOf[TBase] )
 
     val terms = mutable.Set[Expr]()
@@ -80,7 +80,7 @@ object enumerateTerms {
           take( argTypes ).map( ctr( _ ) ).map( normalizeFreeVars )
       }
 
-    ( terms.toVector +: Stream.continually {
+    ( terms.toVector +: LazyList.continually {
       val newTerms = iterate().filterNot( terms )
       terms ++= newTerms
       newTerms

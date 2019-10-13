@@ -65,11 +65,11 @@ class MutableContext(
 }
 object MutableContext {
   def default(): MutableContext = Context.default.newMutable
-  def guess( exprs: Traversable[Expr] ): MutableContext = Context.guess( exprs ).newMutable
+  def guess( exprs: Iterable[Expr] ): MutableContext = Context.guess( exprs ).newMutable
   def guess( exprs: Expr* ): MutableContext = guess( exprs )
   def guess( seq: Sequent[Expr] ): MutableContext = guess( seq.elements )
-  def guess( cnf: Traversable[Sequent[Expr]] )( implicit dummyImplicit: DummyImplicit ): MutableContext = guess( cnf.view.flatMap( _.elements ) )
-  def guess[R, S]( rs: Traversable[R] )( implicit ev: Replaceable[R, S] ): MutableContext =
+  def guess( cnf: Iterable[Sequent[Expr]] )( implicit dummyImplicit: DummyImplicit ): MutableContext = guess( cnf.view.flatMap( _.elements ) )
+  def guess[R, S]( rs: Iterable[R] )( implicit ev: Replaceable[R, S] ): MutableContext =
     guess( rs.view.flatMap( ev.names ) )
   def guess( p: LKProof ): MutableContext =
     guess( containedNames( p ) ) // TODO: add (Skolem) definitions

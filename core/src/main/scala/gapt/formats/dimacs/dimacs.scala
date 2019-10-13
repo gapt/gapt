@@ -40,7 +40,7 @@ class DIMACSEncoding {
   def encodeClause( clause: HOLClause ): DIMACS.Clause =
     clause.map( encodeAtom ).map( -_, +_ ).elements
 
-  def encodeCNF( cnf: Traversable[HOLClause] ): DIMACS.CNF =
+  def encodeCNF( cnf: Iterable[HOLClause] ): DIMACS.CNF =
     cnf.map( encodeClause ).toSeq
 
   def decodeAtom( i: DIMACS.Atom ) = reverseAtomMap( i )
@@ -62,7 +62,11 @@ object readDIMACS {
   private val whitespace = """\s""".r
 
   def apply( dimacsOutput: String ): DIMACS.Model =
-    whitespace split dimacsOutput.trim diff Seq( "SAT", "s", "SATISFIABLE", "v", "0", "" ) map { _.toInt }
+    whitespace
+      .split( dimacsOutput.trim )
+      .diff( Seq( "SAT", "s", "SATISFIABLE", "v", "0", "" ) )
+      .map { _.toInt }
+      .toIndexedSeq
 }
 
 object writeDIMACS {
@@ -119,13 +123,14 @@ object readWDIMACS {
     val lines = dimacsOutput.split( "\n" )
     if ( lines exists { _ startsWith "o " } ) {
       Some( lines
-        filter { _ startsWith "v " }
-        map { _ substring 2 trim }
-        flatMap { _ split " " }
-        map { _ replace ( "x", "" ) } // toysat :-(
-        filter { _ nonEmpty }
-        map { _ toInt }
-        filterNot { _ == 0 } )
+        .filter { _ startsWith "v " }
+        .map { _ substring 2 trim }
+        .flatMap[String] { _.split( " " ) }
+        .map { _ replace ( "x", "" ) } // toysat :-(
+        .filter { _ nonEmpty }
+        .map { _ toInt }
+        .filterNot { _ == 0 }
+        .toIndexedSeq )
     } else {
       None
     }

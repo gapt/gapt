@@ -44,14 +44,14 @@ import gapt.proofs.lk.rules.WeakeningRightRule
 import gapt.proofs.lk.rules.macros.ExchangeLeftMacroRule
 import gapt.proofs.lk.rules.macros.ExchangeRightMacroRule
 import gapt.utils.NameGenerator
-import gapt.utils.StreamUtils.even
 import gapt.utils.StreamUtils.odd
+import gapt.utils.StreamUtils.even
 
 object folSkolemize {
   private[lk] class SkolemSymbolFactory( usedConstants: Iterable[Const] ) {
     private var skolem_symbol_stream = new NameGenerator( usedConstants map { _.name } ).freshStream( "s" )
 
-    def getSkolemSymbols: Stream[String] = {
+    def getSkolemSymbols: LazyList[String] = {
       val stream = even( skolem_symbol_stream )
       skolem_symbol_stream = odd( skolem_symbol_stream )
       stream
@@ -64,7 +64,7 @@ object folSkolemize {
     }
   }
 
-  def apply( formula: Formula, pol: Polarity, context: Seq[Expr], skolemSymbols: Stream[String] ): Formula = formula match {
+  def apply( formula: Formula, pol: Polarity, context: Seq[Expr], skolemSymbols: LazyList[String] ): Formula = formula match {
     case Bottom() | Top() | Atom( _, _ ) =>
       formula
     case Neg( f )                => Neg( folSkolemize( f, !pol, context, skolemSymbols ) )
@@ -92,7 +92,7 @@ object folSkolemize {
       yield apply( f, i.polarity, Seq(), factory.freshStream( "s" ) )
   }
 
-  private def maybeSkolemize( formula: Formula, pol: Polarity, contextAndSymbols: Option[( Seq[Expr], Stream[String] )] ): Formula =
+  private def maybeSkolemize( formula: Formula, pol: Polarity, contextAndSymbols: Option[( Seq[Expr], LazyList[String] )] ): Formula =
     contextAndSymbols match {
       case Some( ( context, skolemSymbols ) ) => folSkolemize( formula, pol, context, skolemSymbols )
       case None                               => formula
@@ -104,7 +104,7 @@ object folSkolemize {
     cleanStructuralRules( apply( proof, contextAndSymbols ) )
   }
 
-  def apply( proof: LKProof, contextAndSymbols: Sequent[Option[( Seq[Expr], Stream[String] )]] ): LKProof = proof match {
+  def apply( proof: LKProof, contextAndSymbols: Sequent[Option[( Seq[Expr], LazyList[String] )]] ): LKProof = proof match {
     // Initial sequents are already skolemized
     case InitialSequent( _ ) => proof
 

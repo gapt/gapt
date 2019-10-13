@@ -42,8 +42,8 @@ class CharacteristicClauseSet {
       val ys = apply( y )
       xs.flatMap( ( x1: SetSequent[Atom] ) => ys.flatMap( ( y1: SetSequent[Atom] ) => {
         delta_compose( x1, y1 ) match {
-          case Some( m ) => Set( m ).toTraversable
-          case None      => Set().toTraversable
+          case Some( m ) => Set( m ).toIterable
+          case None      => Set().toIterable
         }
       } ) )
     case _ => throw new Exception( "Unhandled case: " + struct )

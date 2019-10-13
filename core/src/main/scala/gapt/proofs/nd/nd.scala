@@ -1313,7 +1313,7 @@ case class InductionRule( cases: Seq[InductionCase], formula: Abs, term: Expr ) 
   require( term.ty == indTy )
   cases foreach { c =>
     require( c.indTy == indTy )
-    ( c.hypotheses, c.hypVars ).zipped foreach { ( hyp, eigen ) =>
+    c.hypotheses.lazyZip( c.hypVars ) foreach { ( hyp, eigen ) =>
       require( c.proof.endSequent( hyp ) == Substitution( quant -> eigen )( qfFormula ) )
     }
     require( c.proof.endSequent( Suc( 0 ) ) == Substitution( quant -> c.term )( qfFormula ) )
@@ -1410,9 +1410,9 @@ class ConvenienceConstructor( val longName: String ) {
 
   def findIndicesOrFormulasInPremise( premise: HOLSequent )(
     antIndicesFormulas: Seq[IndexOrFormula], sucIndexFormula: IndexOrFormula ): ( Seq[Formula], Seq[Int], Formula, Int ) = {
-    val antReservedIndices = ( scala.collection.mutable.HashSet.empty[Int] /: antIndicesFormulas ) { ( acc, e ) =>
+    val antReservedIndices = ( antIndicesFormulas.foldLeft( scala.collection.mutable.HashSet.empty[Int] ) ) { ( acc, e ) =>
       e match {
-        case IsIndex( Ant( i ) ) => acc + i
+        case IsIndex( Ant( i ) ) => acc ++ Set( i )
         case IsIndex( i: Suc )   => throw NDRuleCreationException( s"Index $i should be in the antecedent." )
         case IsFormula( _ )      => acc
       }

@@ -64,10 +64,10 @@ private[lk] class extractRecSchem( includeTheoryAxioms: Boolean, includeEqTheory
     case _ if !containsQuantifier( f ) => To
   }
 
-  private val freshSymbols = Stream.from( 1 ).map( i => s"B$i" ).iterator
+  private val freshSymbols = LazyList.from( 1 ).map( i => s"B$i" ).iterator
   private def mkFreshSymbol(): String = freshSymbols.next()
 
-  private val freshVars = Stream.from( 1 ).map( i => s"X$i" ).iterator
+  private val freshVars = LazyList.from( 1 ).map( i => s"X$i" ).iterator
   private def mkFreshVar(): String = freshVars.next()
 
   private object QuantifiedCut {
@@ -154,11 +154,11 @@ private[lk] class extractRecSchem( includeTheoryAxioms: Boolean, includeEqTheory
           Const( mkFreshSymbol(), ty )( args.dropRight( vs.size + 1 ) )
       }
 
-      val caseRules = ( cases, p.occConnectors ).zipped flatMap { ( c, o ) =>
+      val caseRules = cases.lazyZip( p.occConnectors ).flatMap { ( c, o ) =>
         val caseAxiom = symbol( c.constructor( c.eigenVars ) )( findEigenVars( c.conclusion, c.proof ) )
 
         var caseSymbols = o.parents( symbols ).map( _.head )
-        ( c.hypotheses, c.hypVars ).zipped foreach { ( hyp, hypVar ) =>
+        c.hypotheses.lazyZip( c.hypVars ).foreach { ( hyp, hypVar ) =>
           caseSymbols = caseSymbols.updated( hyp, Some( symbol( hypVar ) ) )
         }
         caseSymbols = caseSymbols.updated( c.conclusion, None ) // FIXME: pi2-induction

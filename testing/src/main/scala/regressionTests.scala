@@ -66,6 +66,7 @@ import gapt.provers.viper.ViperOptions
 import gapt.utils.EitherHelpers._
 import gapt.utils._
 
+import scala.collection.parallel.CollectionConverters._
 import scala.concurrent.duration._
 import scala.util.Random
 import scala.xml.XML

@@ -22,7 +22,7 @@ object Vampire extends Vampire( commandName = "vampire", extraArgs = Seq() ) {
 import Vampire.logger.time
 object VampireCASC extends Vampire( commandName = "vampire", extraArgs = Seq( "--mode", "casc" ) )
 class Vampire( commandName: String = "vampire", extraArgs: Seq[String] = Seq() ) extends ResolutionProver with ExternalProgram {
-  override def getResolutionProof( seq: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] =
+  override def getResolutionProof( seq: Iterable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] =
     renameConstantsToFi.wrap( seq.toSeq )(
       ( renaming, cnf: Seq[HOLClause] ) => {
         val labelledCNF = cnf.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap

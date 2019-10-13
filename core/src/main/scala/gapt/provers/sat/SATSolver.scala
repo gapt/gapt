@@ -18,7 +18,7 @@ trait SATSolver extends OneShotProver {
 
   def solve( cnf: DIMACS.CNF ): Option[DIMACS.Model]
 
-  def solve( cnf: Traversable[HOLClause] ): Option[PropositionalModel] = {
+  def solve( cnf: Iterable[HOLClause] ): Option[PropositionalModel] = {
     val encoding = new DIMACSEncoding
     solve( encoding.encodeCNF( cnf ) ) map { dimacsModel =>
       encoding.decodeModel( dimacsModel )
@@ -29,10 +29,10 @@ trait SATSolver extends OneShotProver {
     val ( cnf, definitions ) = fastStructuralCNF()( formula )
     solve( cnf ) map { i =>
       // remove abbreviations for subformulas
-      PropositionalModel( Map() ++ i.assignment.filterKeys {
+      PropositionalModel( Map() ++ i.assignment.view.filterKeys {
         case c: HOLAtomConst => !definitions.isDefinedAt( c )
         case _               => true
-      } )
+      }.toMap )
     }
   }
 
@@ -52,13 +52,13 @@ trait DrupSolver extends SATSolver with ResolutionProver {
   def getDrupProof( formula: Formula ): Option[RupProof] = getDrupProof( Sequent() :+ formula )
   def getDrupProof( sequent: HOLSequent ): Option[RupProof] =
     getDrupProof( fastStructuralCNF()( sequent )._1 )
-  def getDrupProof( cnf: Traversable[HOLClause] ): Option[RupProof] = {
+  def getDrupProof( cnf: Iterable[HOLClause] ): Option[RupProof] = {
     val encoding = new DIMACSEncoding
     val dimacsCNF = encoding.encodeCNF( cnf )
     getDrupProof( dimacsCNF )
   }
 
-  override def getResolutionProof( cnf: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] = {
+  override def getResolutionProof( cnf: Iterable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] = {
     val cnf_ = cnf.map( c => Factor( Input( c ) ) )
     val encoding = new DIMACSEncoding
     val dimacsCNF = encoding.encodeCNF( cnf_.view.map( _.conclusion.asInstanceOf[HOLClause] ) )

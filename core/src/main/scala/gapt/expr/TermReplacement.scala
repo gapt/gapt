@@ -245,7 +245,7 @@ object TermReplacement {
       n <- namesInObj if !replacements.toMap[VarOrConst, Expr].contains( n )
     ) yield n -> replTyInN( if ( namesInRange.contains( replTyInN( n ) ) ) nameGen.fresh( n ) else n )
 
-    TermReplacement( t, replacements ++ renaming )
+    TermReplacement( t, replacements.asInstanceOf[Map[Expr, Expr]] ++ renaming )
   }
 
   def undoGrounding[T: ClosedUnderReplacement]( t: T, subst: Substitution ): T =

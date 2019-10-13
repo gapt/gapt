@@ -22,13 +22,13 @@ import scala.swing._
 class PopupMenu extends Component with Wrapper {
   override lazy val peer: JPopupMenu = new JPopupMenu
 
-  def show( invoker: Component, x: Int, y: Int ) { peer.show( invoker.peer, x, y ) }
+  def show( invoker: Component, x: Int, y: Int ): Unit = { peer.show( invoker.peer, x, y ) }
 }
 
 object PopupMenu {
 
   // PopupMenu for LKProofs.
-  def apply[T <: DagProof[T]]( main: DagProofViewer[T], tproof: DagProof[T], component: Component, x: Int, y: Int ) {
+  def apply[T <: DagProof[T]]( main: DagProofViewer[T], tproof: DagProof[T], component: Component, x: Int, y: Int ): Unit = {
     lazy val proof = tproof.asInstanceOf[LKProof]
     val popupMenu = new PopupMenu {
       contents += new MenuItem( Action( "Save Subproof as..." ) { /*main.fSave( ( proof.name, proof ) )*/ } )
@@ -36,7 +36,7 @@ object PopupMenu {
     popupMenu.show( component, x, y )
   }
 
-  def apply[F, T <: SequentProof[F, T]]( dsp: DrawSequentProof[F, T], x: Int, y: Int ) {
+  def apply[F, T <: SequentProof[F, T]]( dsp: DrawSequentProof[F, T], x: Int, y: Int ): Unit = {
     val popupMenu = new PopupMenu {
       contents += new MenuItem( Action( "View Subproof as Sunburst Tree" ) {
         dsp.main.initSunburstDialog( "subproof " + dsp.main.name, dsp.proof )
@@ -96,7 +96,7 @@ object PopupMenu {
   }
 
   // PopupMenu for Expansion Trees.
-  def apply( det: DrawETQuantifierBlock, component: Component, x: Int, y: Int ) {
+  def apply( det: DrawETQuantifierBlock, component: Component, x: Int, y: Int ): Unit = {
     val popupMenu = new PopupMenu {
       contents += new MenuItem( Action( "Close" ) { det.close() } )
       contents += new MenuItem( Action( "Open" ) { det.open() } )
@@ -106,7 +106,7 @@ object PopupMenu {
   }
 
   // PopupMenu for the title label of either cedent
-  def apply( main: ExpansionSequentViewer, ced: CedentPanel, x: Int, y: Int ) {
+  def apply( main: ExpansionSequentViewer, ced: CedentPanel, x: Int, y: Int ): Unit = {
     val popupMenu = new PopupMenu {
       val trees = ced.treeList.drawnTrees
       contents += new MenuItem( Action( "Close all" ) { trees.foreach( det => det.closeAll() ) } )

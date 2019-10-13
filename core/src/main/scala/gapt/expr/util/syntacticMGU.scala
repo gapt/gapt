@@ -45,8 +45,8 @@ object syntacticMGU {
             } else {
               val subst1 = Substitution( Map(), Map( x -> t_ ) )
               USome( new PreSubstitution(
-                Map() ++ subst.map.mapValues( subst1( _ ) ),
-                Map() ++ subst.typeMap.mapValues( subst1( _ ) ) + ( x -> t_ ) ) )
+                Map() ++ subst.map.view.mapValues( subst1( _ ) ).toMap,
+                Map() ++ subst.typeMap.view.mapValues( subst1( _ ) ).toMap + ( x -> t_ ) ) )
             }
         }
 
@@ -110,7 +110,7 @@ object syntacticMGU {
               UNone()
             } else if ( x_.ty == t_.ty ) {
               val subst1 = Substitution( x -> t_ :: Nil, subst.typeMap.toSeq )
-              USome( new PreSubstitution( Map() ++ subst.map.mapValues( subst1( _ ) ) + ( x -> t_ ), subst.typeMap ) )
+              USome( new PreSubstitution( Map() ++ subst.map.view.mapValues( subst1( _ ) ).toMap + ( x -> t_ ), subst.typeMap ) )
             } else {
               go( x_.ty, t_.ty, subst, bound ) match {
                 case USome( subst1 ) =>

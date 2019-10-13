@@ -24,7 +24,7 @@ case class CSVRow[T]( cells: Seq[T] ) {
 case class CSVFile[T]( header: CSVRow[T], rows: Seq[CSVRow[T]], sep: String ) {
 
   override def toString(): String = {
-    val sb = StringBuilder.newBuilder
+    val sb = new StringBuilder()
     sb.append( header.cells.mkString( "", sep, "\n" ) )
     for ( r <- rows ) {
       sb.append( r.cells.mkString( "", sep, "\n" ) )

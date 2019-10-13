@@ -170,7 +170,7 @@ case object PrimitiveRecursiveFunctions {
 
   def apply(
     rawDefinitions: Iterable[( Const, Iterable[( Expr, Expr )] )],
-    dummy:          Unit                                          = Unit )(
+    dummy:          Unit                                          = () )(
     implicit
     ctx: Context ): Iterable[PrimitiveRecursiveFunction] = {
 

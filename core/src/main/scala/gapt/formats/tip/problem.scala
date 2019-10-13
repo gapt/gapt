@@ -34,7 +34,7 @@ case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
 
   def projectorDefinitions: Seq[Formula] = {
     val fieldVars = fieldTypes.zipWithIndex.map { case ( t, i ) => Var( s"x$i", t ) }
-    ( projectors, fieldVars ).zipped map { ( p, f ) => p( constr( fieldVars: _* ) ) === f }
+    projectors.lazyZip( fieldVars ).map { ( p, f ) => p( constr( fieldVars: _* ) ) === f }
   }
 
   def projectReductionRules: Seq[ReductionRule] = {

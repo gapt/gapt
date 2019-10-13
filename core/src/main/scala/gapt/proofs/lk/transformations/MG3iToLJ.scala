@@ -42,7 +42,7 @@ object MG3iToLJ {
         ( f, Map( f -> LogicalAxiom( f ) ) )
       case f :: fs_ =>
         val ( d, ps ) = mkProjs( fs_ )
-        ( d | f, Map( f -> OrRightMacroRule( LogicalAxiom( f ), d, f ) ) ++ ps.mapValues( OrRightMacroRule( _, d, f ) ) )
+        ( d | f, Map( f -> OrRightMacroRule( LogicalAxiom( f ), d, f ) ) ++ ps.view.mapValues( OrRightMacroRule( _, d, f ) ).toMap )
     }
 
   def apply( proof: LKProof ): LKProof = proof.conclusion.succedent match {
@@ -71,7 +71,7 @@ object MG3iToLJ {
       } else {
         val newGoal = goal | addGoal
         val q = apply( p, newGoal, Map() ++
-          projections.mapValues( pr => CutRule( pr, OrRightMacroRule( LogicalAxiom( goal ), goal, addGoal ), goal ) ) +
+          projections.view.mapValues( pr => CutRule( pr, OrRightMacroRule( LogicalAxiom( goal ), goal, addGoal ), goal ) ).toMap +
           ( addGoal -> OrRightMacroRule( LogicalAxiom( addGoal ), goal, addGoal ) ) )
         ContractionMacroRule( CutRule( q, OrLeftRule( LogicalAxiom( goal ), r, newGoal ), newGoal ) )
       }

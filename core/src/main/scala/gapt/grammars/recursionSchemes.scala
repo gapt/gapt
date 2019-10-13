@@ -170,7 +170,7 @@ class RecSchemGenLangFormula(
   def derivable( from: Expr, to: Expr ) = FOLAtom( s"$from=>$to" )
 
   private val rulesPerNonTerminal = Map() ++ recursionScheme.rules.
-    groupBy { case Rule( _, Apps( nt: Const, _ ) ) => nt }.mapValues( _.toSeq )
+    groupBy { case Rule( _, Apps( nt: Const, _ ) ) => nt }.view.mapValues( _.toSeq ).toMap
   def reverseMatches( against: Expr ) =
     against match {
       case Apps( nt: Const, _ ) => rulesPerNonTerminal.getOrElse( nt, Seq() ).flatMap { rule =>
@@ -184,7 +184,7 @@ class RecSchemGenLangFormula(
     }
 
   type Target = ( Expr, Expr )
-  def apply( targets: Traversable[Target] ): FOLFormula = {
+  def apply( targets: Iterable[Target] ): FOLFormula = {
     val edges = mutable.ArrayBuffer[( Target, Rule, Target )]()
     val goals = mutable.Set[Target]()
 
@@ -244,7 +244,7 @@ class RecSchemGenLangFormula(
 object minimizeRecursionScheme {
   val logger = Logger( "minimizeRecursionScheme" ); import logger._
 
-  def apply( recSchem: RecursionScheme, targets: Traversable[( Expr, Expr )],
+  def apply( recSchem: RecursionScheme, targets: Iterable[( Expr, Expr )],
              targetFilter: TargetFilter.Type = TargetFilter.default,
              solver:       MaxSATSolver      = bestAvailableMaxSatSolver,
              weight:       Rule => Int = _ => 1 ) = {
@@ -262,7 +262,7 @@ object minimizeRecursionScheme {
       recSchem.rules.filter { rule => interp( formula ruleIncluded rule ) } )
   }
 
-  def viaInst( recSchem: RecursionScheme, targets: Traversable[( Expr, Expr )],
+  def viaInst( recSchem: RecursionScheme, targets: Iterable[( Expr, Expr )],
                targetFilter: TargetFilter.Type = TargetFilter.default,
                solver:       MaxSATSolver      = bestAvailableMaxSatSolver,
                weight:       Rule => Int = _ => 1 ) = {
@@ -307,7 +307,7 @@ case class RecSchemTemplate( startSymbol: Const, template: Set[( Expr, Expr )] )
     def get( from: Const, to: Const ): Formula =
       cache.getOrElseUpdate( from -> to, {
         var postCond = if ( from == to )
-          And( ( canonicalArgs( from ), canonicalArgs( to ) ).zipped map { Eq( _, _ ) } ) else Or( template collect {
+          And( canonicalArgs( from ).lazyZip( canonicalArgs( to ) ).map { Eq( _, _ ) } ) else Or( template collect {
           case ( Apps( prev: Const, prevArgs ), Apps( `to`, toArgs ) ) if prev != to =>
             def postCondition( preCond: Formula ): Formula = preCond match {
               case Top()       => Top()
@@ -318,7 +318,7 @@ case class RecSchemTemplate( startSymbol: Const, template: Set[( Expr, Expr )] )
               case Eq( a, b ) =>
                 prevArgs( canonicalArgs( prev ).indexOf( a ) ) match {
                   case v: Var =>
-                    And( for ( ( toArg, canToArg: Var ) <- ( toArgs, canonicalArgs( to ) ).zipped.toSeq if v == toArg )
+                    And( for ( ( toArg, canToArg: Var ) <- toArgs.lazyZip( canonicalArgs( to ) ).toSeq if v == toArg )
                       yield Eq( canToArg, b ) )
                   case constr =>
                     val vars = freeVariables( constr )

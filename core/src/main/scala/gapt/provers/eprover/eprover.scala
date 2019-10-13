@@ -17,7 +17,7 @@ object EProver extends EProver( Seq() ) {
 }
 import EProver.logger
 class EProver( extraArgs: Seq[String] ) extends ResolutionProver with ExternalProgram {
-  override def getResolutionProof( seq: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] =
+  override def getResolutionProof( seq: Iterable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] =
     renameConstantsToFi.wrap( seq.toSeq )(
       ( renaming, cnf: Seq[HOLClause] ) => {
         val labelledCNF = cnf.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
@@ -29,7 +29,7 @@ class EProver( extraArgs: Seq[String] ) extends ResolutionProver with ExternalPr
             logger.time( "eprover_import" ) {
               val sketch = TptpProofParser.parse(
                 StringInputFile( lines.filterNot( _ startsWith "#" ).mkString( "\n" ) ),
-                labelledCNF.mapValues( Seq( _ ) ) )
+                labelledCNF.view.mapValues( Seq( _ ) ).toMap )
               Some( RefutationSketchToResolution( sketch ).getOrElse( throw new Exception( "Could not reconstruct proof" ) ) )
             }
           case ( 1, output ) =>

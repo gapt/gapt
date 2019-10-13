@@ -115,7 +115,7 @@ case class ChainTactic( hyp: String, target: TacticApplyMode = UniqueFormula, su
  * @param once  Rewrite exactly once?
  */
 case class RewriteTactic(
-    equations:  Traversable[( String, Boolean )],
+    equations:  Iterable[( String, Boolean )],
     target:     Option[String],
     fixedSubst: Map[Var, Expr],
     once:       Boolean ) extends Tactical1[Unit] {
@@ -287,10 +287,10 @@ case class ResolutionProverTactic(
       if ( deskolemize )
         prover.getExpansionProof( goal.conclusion )
           .map( deskolemizeET( _ ) )
-          .map( ExpansionProofToLK( _ ).right.get )
+          .map( ExpansionProofToLK( _ ).toOption.get )
       else if ( viaExpansionProof )
         prover.getExpansionProof( goal.conclusion )
-          .map( ExpansionProofToLK( _ ).right.get )
+          .map( ExpansionProofToLK( _ ).toOption.get )
       else
         prover.getLKProof( goal.conclusion )
     proofOption match {

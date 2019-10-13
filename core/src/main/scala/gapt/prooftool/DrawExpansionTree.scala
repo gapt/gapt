@@ -267,7 +267,7 @@ class DrawETQuantifierBlock(
 
   close()
 
-  def close() {
+  def close(): Unit = {
     if ( state != Closed ) {
       state = Closed
       headLabel = LatexLabel( main, quantifiers )
@@ -286,7 +286,7 @@ class DrawETQuantifierBlock(
     }
   }
 
-  def open() {
+  def open(): Unit = {
     if ( state != Open ) {
       outerQuantifier.foreach { _.expand() }
       state = Open
@@ -306,7 +306,7 @@ class DrawETQuantifierBlock(
     }
   }
 
-  def expand() {
+  def expand(): Unit = {
     if ( state != Expanded ) {
       outerQuantifier.foreach { _.expand() }
       state = Expanded
@@ -337,7 +337,7 @@ class DrawETQuantifierBlock(
       contents += bp
     } )
 
-    override def paintComponent( g: Graphics2D ) {
+    override def paintComponent( g: Graphics2D ): Unit = {
       import java.awt.{ BasicStroke, RenderingHints }
       super.paintComponent( g )
 

@@ -302,7 +302,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
   object SubsumptionInterreduction extends PreprocessingRule {
     def preprocess( newlyInferred: Set[Cls], existing: IndexedClsSet ): Set[Cls] = {
-      val interreduced = newlyInferred.to[mutable.Set]
+      val interreduced = newlyInferred.to( mutable.Set )
       for {
         cls1 <- interreduced
         cls2 <- interreduced if cls1 != cls2

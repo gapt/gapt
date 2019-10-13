@@ -54,7 +54,7 @@ abstract class RegressionTestCase( val name: String ) extends Serializable {
   class TestRun {
     case class Step( name: Option[String], exception: Option[Throwable], runtime: Duration, isTimeout: Boolean )
 
-    var steps = mutable.MutableList[Step]()
+    var steps = List[Step]()
 
     private[RegressionTestCase] def runStep[T]( name: Option[String], timeout: Option[Duration] = None )( block: => T ) = {
       val beginTime = System.nanoTime()
@@ -76,7 +76,7 @@ abstract class RegressionTestCase( val name: String ) extends Serializable {
         case Left( t )  => ( Some( t ), false )
         case Right( _ ) => ( None, false )
       }
-      steps += Step( name, exception, runtime, isTimeout )
+      steps :+= Step( name, exception, runtime, isTimeout )
 
       if ( isTimeout )
         throw exception.get

@@ -72,7 +72,7 @@ object preExpr {
 
   class ReadablePrinter( assg: Map[MetaTypeIdx, Type], sig: BabelSignature ) {
     private val printMetaTypeIdx: MetaTypeIdx => String = {
-      val names = Stream.from( 1 ).map( i => s"_$i" ).iterator
+      val names = LazyList.from( 1 ).map( i => s"_$i" ).iterator
       val cache = mutable.Map[MetaTypeIdx, String]()
       idx => cache.getOrElseUpdate( idx, names.next() )
     }
@@ -181,7 +181,7 @@ object preExpr {
       case ( ArrType( a1, b1 ), ArrType( a2, b2 ) ) =>
         solve( ( a1 -> a2 ) :: ( b1 -> b2 ) :: rest, assg )
       case ( BaseType( n1, ps1 ), BaseType( n2, ps2 ) ) if n1 == n2 =>
-        solve( ( ps1, ps2 ).zipped.toList ::: rest, assg )
+        solve( ps1.lazyZip( ps2 ).toList ::: rest, assg )
       case ( VarType( n1 ), VarType( n2 ) ) if n1 == n2 => solve( rest, assg )
       case ( MetaType( i1 ), t2 ) if assg contains i1 =>
         solve( ( assg( i1 ) -> t2 ) :: rest, assg )

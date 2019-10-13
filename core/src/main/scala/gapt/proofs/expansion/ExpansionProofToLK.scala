@@ -180,7 +180,7 @@ class ExpansionProofToLK(
             if ( !p2.conclusion.contains( g.shallow, g.polarity ) ) p2
             else ImpLeftRule( p1, p2, e.shallow )
           }
-        }.right.toSeq
+        }.toSeq
       case _ => Nil
     }.headOption
 
@@ -210,7 +210,7 @@ class ExpansionProofToLK(
       ETStrongQuantifier( _, ev, _ ) <- et.subProofs
     } yield ev ).toSet
     def possibleInsts( insts: Map[Expr, ExpansionTree] ) =
-      Map() ++ insts.filterKeys( t => freeVariables( t ) intersect upcomingEVs isEmpty )
+      Map() ++ insts.view.filterKeys( t => freeVariables( t ) intersect upcomingEVs isEmpty ).toMap
 
     for ( ( ETWeakQuantifier( sh, insts ), i ) <- expSeq.zipWithIndex.elements ) {
       val insts_ = possibleInsts( insts )

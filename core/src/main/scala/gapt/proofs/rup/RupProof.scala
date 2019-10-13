@@ -202,7 +202,7 @@ private class Rup2Res extends UnitPropagationListener {
 
 /** Reverse unit propagation proof. */
 case class RupProof( lines: Vector[Line] ) {
-  def maxVar: Int = ( 0 +: lines.view.flatMap( _.clause ) ).max
+  def maxVar: Int = ( 0 +: lines.view.flatMap( _.clause ).toIndexedSeq ).max
 
   def toResProofs: Vector[Res] = {
     val rup2res = new Rup2Res

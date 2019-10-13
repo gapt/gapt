@@ -159,7 +159,7 @@ trait LKVisitor[T] {
       for ( ( subProof, idx ) <- proof.immediateSubProofs.zipWithIndex )
         yield recurse( subProof, transportToSubProof( arg, proof, idx ) )
     val newProof = func( visitedChildren )
-    val conn = ( newProof.occConnectors, visitedChildren, proof.occConnectors ).zipped.map( _ * _._2 * _.inv ).reduce( _ + _ )
+    val conn = newProof.occConnectors.lazyZip( visitedChildren ).lazyZip( proof.occConnectors ).map( _ * _._2 * _.inv ).reduce( _ + _ )
     ( newProof, conn )
   }
 

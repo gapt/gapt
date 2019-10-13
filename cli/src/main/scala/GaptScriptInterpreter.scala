@@ -1,11 +1,11 @@
 package gapt.cli
 
 import ammonite.ops.{ Path, pwd, read }
-
 import gapt.formats.ClasspathInputFile
 
 import scala.tools.nsc.Settings
 import scala.tools.nsc.interpreter.IMain
+import scala.tools.nsc.interpreter.shell.ReplReporterImpl
 
 object GaptScriptInterpreter {
 
@@ -26,10 +26,10 @@ object GaptScriptInterpreter {
       case packageRegex( restOfScript ) => restOfScript
       case scriptWithoutPackage         => scriptWithoutPackage
     }
-    val interpreter = new IMain( settings )
-    interpreter.beQuietDuring {
-      interpreter.interpret( predefCode )
-      interpreter.interpret(
+    val i = new IMain( settings, new ReplReporterImpl( settings ) )
+    i.beQuietDuring {
+      i.interpret( predefCode )
+      i.interpret(
         s"""
            |val args: Array[String] = Array(${scriptArguments.map( quote ).mkString( "," )})
            |${scriptSrc}

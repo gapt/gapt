@@ -64,7 +64,7 @@ case class ReforestState(
       rules = Map( newNT( newNTArgs: _* ) -> Set( digram.c1( newNTArgs.take( digram.i )
         ++ Seq( digram.c2( newNTArgs.slice( digram.i, digram.i + ts2.size ): _* ) )
         ++ newNTArgs.drop( digram.i + ts2.size ): _* ) ) ) ++
-        rules.mapValues { _ map abbr },
+        rules.view.mapValues { _ map abbr }.toMap,
       highestNTIndex = highestNTIndex + 1 )
   }
 
@@ -85,12 +85,12 @@ case class ReforestState(
         newNTArgs.take( rigidTrigram.j ) ++
           Seq( newNTArgs( rigidTrigram.i ) ) ++
           newNTArgs.drop( rigidTrigram.j ): _* ) ) ) ++
-        rules.mapValues { _ map abbr },
+        rules.view.mapValues { _ map abbr }.toMap,
       highestNTIndex = highestNTIndex + 1 )
   }
 
   def decompose( nonTerminal: Expr ): ReforestState = {
-    val rhss = rules( nonTerminal ).to[mutable.Set]
+    val rhss = rules( nonTerminal ).to( mutable.Set )
 
     require( freeVariables( nonTerminal ).isEmpty ) // TODO
 
@@ -127,7 +127,7 @@ case class ReforestState(
 
       if ( rhss.nonEmpty ) {
         val rhs @ Apps( f, as ) = rhss.maxBy { case Apps( _, args ) => args.size }
-        args1 += as ++ Stream.continually( FOLConst( "c" ) ).take( maxArity - as.size )
+        args1 += as ++ LazyList.continually( FOLConst( "c" ) ).take( maxArity - as.size )
       }
     }
 
@@ -156,12 +156,12 @@ case class ReforestState(
       highestNTIndex = highestNTIndex + 1 )
   }
 
-  def expand( nts: Traversable[Expr] ): ReforestState = {
+  def expand( nts: Iterable[Expr] ): ReforestState = {
     for ( nt <- nts ) require( rules( nt ).size == 1 )
 
     val reduceUnambiguousNonTerminals = Normalizer( nts.map( nt => ReductionRule( nt -> rules( nt ).head ) ) )
 
-    copy( rules = Map() ++ ( rules -- nts ).mapValues( _.map( reduceUnambiguousNonTerminals.normalize ) ) )
+    copy( rules = Map() ++ ( rules -- nts ).view.mapValues( _.map( reduceUnambiguousNonTerminals.normalize ) ).toMap )
   }
 
   def expandUseless: ReforestState = {
@@ -195,7 +195,7 @@ case class ReforestState(
 }
 
 object Reforest {
-  def start( lang: Traversable[Expr] ): ReforestState = {
+  def start( lang: Iterable[Expr] ): ReforestState = {
     val termType = lang.headOption.map( _.ty ).getOrElse( Ti )
     val startSymbol = Const( "A", termType )
     ReforestState( startSymbol, rules = Map( startSymbol -> lang.toSet ), highestNTIndex = 0 )

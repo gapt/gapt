@@ -96,7 +96,7 @@ class TreeListPanel( main: ExpansionSequentViewer, trees: Seq[ExpansionTree] ) e
 
   drawLines()
 
-  private def drawLines() {
+  private def drawLines(): Unit = {
     contents.clear()
     val lines = numLabels zip drawnTrees
 
@@ -136,7 +136,7 @@ class TreeListPanel( main: ExpansionSequentViewer, trees: Seq[ExpansionTree] ) e
    * @param number The number to be displayed
    */
   class NumLabel( val number: Int ) extends Label {
-    text = number + ": "
+    text = s"${number}: "
     val panel = TreeListPanel.this // We need access to the TreeListPanel this is contained in
 
     listenTo( this.mouse.clicks )

@@ -55,7 +55,7 @@ case class LPO( precedence: Seq[String] = Seq(), typeOrderLt: ( Ty, Ty ) => Bool
 
 case class KBO( precedence: Seq[Const], constWeights: Map[Const, Int] = Map() ) extends TermOrdering {
   val precIdx: Map[Const, Int] = precedence.zipWithIndex.toMap
-  val varWeight = ( constWeights.filterKeys { arity( _ ) == 1 }.values.toSet + 1 ).min
+  val varWeight = ( constWeights.view.filterKeys { arity( _ ) == 1 }.toMap.values.toSet + 1 ).min
 
   def lt( e1: Expr, e2: Expr, treatVarsAsConsts: Boolean ): Boolean = {
     val w1 = weight( e1 )

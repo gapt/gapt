@@ -30,7 +30,7 @@ import gapt.proofs.resolution.{ AvatarComponent, AvatarContradiction, AvatarSpli
 
 /** Wrapper from gapt proofs to TreeViz trees */
 case class ProofNode[T <: DagProof[T]]( proof: DagProof[T] ) extends TreeNode {
-  import scala.collection.JavaConverters._
+  import scala.jdk.CollectionConverters._
   val children: java.util.List[TreeNode] = proof.immediateSubProofs.map { ProofNode( _ ): TreeNode }.asJava
 
   val getAllowsChildren = !children.isEmpty

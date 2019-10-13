@@ -38,7 +38,7 @@ object atomicExpansionET {
       case ETOr( a, b ) => ETOr( mapDefinedAtom( a )( f ), mapDefinedAtom( b )( f ) )
       case ETImp( a, b ) => ETImp( mapDefinedAtom( a )( f ), mapDefinedAtom( b )( f ) )
       case ETWeakQuantifier( sh, insts ) =>
-        ETWeakQuantifier( sh, Map() ++ insts.mapValues( mapDefinedAtom( _ )( f ) ) )
+        ETWeakQuantifier( sh, Map() ++ insts.view.mapValues( mapDefinedAtom( _ )( f ) ).toMap )
       case ETStrongQuantifier( sh, ev, ch ) =>
         ETStrongQuantifier( sh, ev, mapDefinedAtom( ch )( f ) )
       case ETSkolemQuantifier( sh, skT, ch ) =>

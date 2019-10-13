@@ -12,7 +12,11 @@ package object lkt extends ImplicitInstances {
     def fresh( p: Polarity ): Hyp = if ( p.inAnt ) freshAnt else freshSuc
     def freshSameSide( h: Hyp ): Hyp = if ( h.inAnt ) freshAnt else freshSuc
     def freshSameSide( hs: List[Hyp] ): List[Hyp] =
-      ( freshIdx until Int.MaxValue, hs ).zipped.map( ( i, h ) => if ( h.inAnt ) Hyp( -i ) else Hyp( i ) ).toList
+      freshIdx
+        .until( Int.MaxValue )
+        .lazyZip( hs )
+        .map( ( i, h ) => if ( h.inAnt ) Hyp( -i ) else Hyp( i ) )
+        .toList
   }
 
 }

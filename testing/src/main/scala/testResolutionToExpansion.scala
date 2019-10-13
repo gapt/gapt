@@ -37,7 +37,7 @@ object testResolutionToExpansion extends scala.App {
     val proof = time( "extraction" ) {
       method match {
         case "vialk" =>
-          val resolution = time( "fixderivation" ) { fixDerivation( resolution0, CNFn( endSequent.toImplication ) ) }
+          val resolution = time( "fixderivation" ) { fixDerivation( resolution0, CNFn( endSequent.toImplication ).toSeq ) }
           val projections = time( "projections" ) {
             Map() ++ resolution.subProofs.collect {
               case in @ Input( clause ) =>

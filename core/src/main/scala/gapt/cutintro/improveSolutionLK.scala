@@ -29,7 +29,7 @@ object improveSolutionLK {
   def apply( ehs: SolutionStructure, prover: Prover, hasEquality: Boolean,
              forgetOne:    Boolean = false,
              minimizeBack: Boolean = false ): SolutionStructure = {
-    val formulasInImprovement = ehs.formulas.to[mutable.Seq]
+    val formulasInImprovement = ehs.formulas.to( mutable.Seq )
 
     for ( i <- formulasInImprovement.indices.reverse ) {
       val eigenVariablesInScope = for ( ( evs, j ) <- ehs.sehs.eigenVariables.zipWithIndex; ev <- evs if i < j ) yield ev
@@ -50,7 +50,7 @@ object improveSolutionLK {
       formulasInImprovement( 0 ) = improveBack( ehs.endSequentInstances, formulasInImprovement( 0 ), prover )
     }
 
-    ehs.copy( formulas = formulasInImprovement )
+    ehs.copy( formulas = formulasInImprovement.toSeq )
   }
 
   /**

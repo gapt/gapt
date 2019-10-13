@@ -30,7 +30,7 @@ object ForLoop {
 }
 
 object Sequence {
-  def apply( programs: Seq[Program] ): Program = apply( programs.to[List] )
+  def apply( programs: Seq[Program] ): Program = apply( programs.to( List ) )
 
   def apply( programs: List[Program] ): Program = programs match {
     case p :: ps => ps.foldLeft( p )( Sequence( _, _ ) )

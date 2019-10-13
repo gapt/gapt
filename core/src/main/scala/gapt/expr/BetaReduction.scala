@@ -63,11 +63,11 @@ object ReductionRule {
 }
 
 case class Normalizer( rules: Set[ReductionRule] ) {
-  val headMap: Map[String, ( Set[ReductionRule], Set[Int], Set[Int] )] = Map() ++ rules.groupBy( _.lhsHeadName ).mapValues { rs =>
+  val headMap: Map[String, ( Set[ReductionRule], Set[Int], Set[Int] )] = Map() ++ rules.groupBy( _.lhsHeadName ).view.mapValues { rs =>
     val normalizeArgs = rs.flatMap( _.normalizeArgs )
     val whnfArgs = rs.flatMap( _.whnfArgs ) -- normalizeArgs
     ( rs, whnfArgs, normalizeArgs )
-  }
+  }.toMap
 
   def +( rule: ReductionRule ): Normalizer =
     Normalizer( rules + rule )
@@ -120,7 +120,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
 }
 
 object Normalizer {
-  def apply( rules: Traversable[ReductionRule] ): Normalizer =
+  def apply( rules: Iterable[ReductionRule] ): Normalizer =
     Normalizer( rules.toSet )
 
   def apply( rules: ReductionRule* ): Normalizer =

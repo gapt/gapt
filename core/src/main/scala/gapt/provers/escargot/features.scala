@@ -111,13 +111,13 @@ object fastSubsumption {
     if ( c1.sizes == ( 1, 0 ) ) {
       val l1 = c1.antecedent.head
       val lf1 = lfv1.antecedent.head
-      return ( c2.antecedent, lfv2.antecedent ).zipped.view.
+      return c2.antecedent.lazyZip( lfv2.antecedent ).view.
         filter( lf1 <= _._2 ).map( _._1 ).flatMap( syntacticMatching( l1, _ ) ).headOption
     }
     if ( c1.sizes == ( 0, 1 ) ) {
       val l1 = c1.succedent.head
       val lf1 = lfv1.succedent.head
-      return ( c2.succedent, lfv2.succedent ).zipped.view.
+      return c2.succedent.lazyZip( lfv2.succedent ).view.
         filter( lf1 <= _._2 ).map( _._1 ).flatMap( syntacticMatching( l1, _ ) ).headOption
     }
     apply( c1 zip lfv1, c2 zip lfv2, PreSubstitution() )

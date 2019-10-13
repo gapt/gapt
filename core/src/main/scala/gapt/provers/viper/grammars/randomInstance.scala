@@ -30,6 +30,6 @@ object randomInstance {
   }
 
   def generate( tys: Seq[TBase], cond: Float => Boolean )( implicit ctx: Context ): Seq[Expr] =
-    Stream.continually( generate( tys ) ).filter( insts => cond( folTermSize( insts ).toFloat / insts.size ) ).head
+    LazyList.continually( generate( tys ) ).filter( insts => cond( folTermSize( insts ).toFloat / insts.size ) ).head
 
 }

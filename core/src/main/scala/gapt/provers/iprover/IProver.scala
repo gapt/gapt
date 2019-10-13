@@ -15,7 +15,7 @@ import gapt.utils.{ ExternalProgram, Maybe, runProcess }
 object IProver extends IProver
 
 class IProver extends ResolutionProver with ExternalProgram {
-  override def getResolutionProof( seq: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] =
+  override def getResolutionProof( seq: Iterable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] =
     renameConstantsToFi.wrap( seq.toSeq )(
       ( renaming, cnf: Seq[HOLClause] ) => {
         val labelledCNF = cnf.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
@@ -33,7 +33,7 @@ class IProver extends ResolutionProver with ExternalProgram {
             mkString( "\n" )
           RefutationSketchToResolution( TptpProofParser.parse(
             StringInputFile( tptpDerivation ),
-            labelledCNF mapValues { Seq( _ ) } ) ) match {
+            labelledCNF.view.mapValues { Seq( _ ) }.toMap ) ) match {
             case Right( proof ) => Some( proof )
             case Left( error )  => throw new IllegalArgumentException( error.toString )
           }

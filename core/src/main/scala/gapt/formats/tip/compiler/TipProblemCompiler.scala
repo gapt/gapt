@@ -756,10 +756,10 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
     TipProblem(
       ctx,
       Nil,
-      typeDecls.values.toSeq diff datatypes.map { _.t }, datatypes,
+      typeDecls.values.toSeq diff datatypes.map { _.t }, datatypes.toSeq,
       funDecls.values.toSeq diff functions.map { _.fun },
-      functions,
-      assumptions, And( goals ) )
+      functions.toSeq,
+      assumptions.toSeq, And( goals ) )
 
   def compileTipProblem(): TipSmtToTipProblemCompiler = {
     declareIteConstant()

@@ -66,7 +66,7 @@ private class MergeNode {
     if ( unary != null ) write( ETtUnary( unary.toETt ) )
     if ( binaryLeft != null || binaryRight != null )
       write( ETtBinary( binaryLeft.toETt, binaryRight.toETt ) )
-    if ( weak != null ) write( ETtWeak( Map() ++ weak.mapValues( _.toETt ) ) )
+    if ( weak != null ) write( ETtWeak( Map() ++ weak.view.mapValues( _.toETt ).toMap ) )
     if ( strongEV != null ) write( ETtStrong( strongEV, strongChild.toETt ) )
     if ( defs != null ) for ( ( sh, ch ) <- defs ) write( ETtDef( sh, ch.toETt ) )
     if ( skolems != null ) for ( ( skT, ch ) <- skolems ) write( ETtSkolem( skT, ch.toETt ) )

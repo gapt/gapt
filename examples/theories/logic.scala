@@ -132,7 +132,7 @@ class Theory0( val imports: List[Theory] ) {
  */
 class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
   val transitiveImports: Vector[Theory] =
-    ( imports.view.flatMap( _.transitiveImports ) ++ imports ).distinct.toVector
+    ( imports.view.flatMap( _.transitiveImports ) ++ imports ).toVector.distinct
   def allProofs: Vector[( String, Eval[Theory.DelayedProofResult] )] =
     ( transitiveImports :+ this ).flatMap( _.proofsHere ).distinct
   def ctxWithProofDefinitions(): ImmutableContext =

@@ -21,9 +21,8 @@ lazy val commonSettings = Seq(
     devConnection = Some( "scm:git:git@github.com:gapt/gapt.git" ) ) ),
   bintrayOrganization := Some( "gapt" ),
 
-  scalaVersion := "2.12.8",
+  scalaVersion := "2.13.1",
   scalacOptions in Compile ++= Seq(
-    "-Ypartial-unification",
     "-deprecation",
     "-language:postfixOps",
     "-language:implicitConversions",
@@ -44,7 +43,7 @@ lazy val scalariformSettings =
     .setPreference( DoubleIndentConstructorArguments, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "4.3.6"
+val specs2Version = "4.7.1"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   javaOptions in Test += "-Xmx2g",
@@ -171,6 +170,7 @@ lazy val core = project.in( file( "core" ) ).
     scalacOptions in Compile += "-Xfatal-warnings",
 
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0",
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.parboiled" %% "parboiled" % "2.1.8",
@@ -178,6 +178,7 @@ lazy val core = project.in( file( "core" ) ).
       "com.lihaoyi" %% "sourcecode" % "0.1.7",
       "org.typelevel" %% "cats-free" % "2.0.0",
       "org.scala-lang.modules" %% "scala-xml" % "1.2.0",
+      "org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0",
       "org.apache.commons" % "commons-lang3" % "3.9",
       "com.lihaoyi" %% "ammonite-ops" % "1.7.4",
       "de.uni-freiburg.informatik.ultimate" % "smtinterpol" % "2.5",

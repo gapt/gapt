@@ -86,7 +86,7 @@ object solveBupViaInterpolationBoundedDepth {
     val generalized =
       tree.zip( interpolants ).map {
         case ( ( ( nu_, gam ), _ ), interp ) =>
-          TermReplacement( simplify( interp ), Map( nu_ -> nu ) ++ gam.zip( bup.grammar.gamma ) ): Formula
+          TermReplacement( simplify( interp ), Map[Expr, Expr]( nu_ -> nu ) ++ gam.zip( bup.grammar.gamma ) ): Formula
       }
 
     val solution = simplify( Or(
@@ -247,12 +247,12 @@ object solveBupViaInterpolationConcreteTerms {
     interps.keys.toSeq.sortBy( -folTermSize( _ ) ).foldLeft( interps )( ( interps, t ) =>
       interps.updated( t, improveAt( interps, t, bup, nu ) ) )
 
-  def apply( bup: InductionBUP, ts: Stream[Expr] ): Expr =
+  def apply( bup: InductionBUP, ts: LazyList[Expr] ): Expr =
     apply( bup, ts, Map(), rename(
       ( bup.grammar.nus.values.toSeq.flatten :+ bup.grammar.alpha ).
         find( _.ty == bup.grammar.indTy ).head, bup.grammar.gamma.toSet + bup.grammar.alpha ) )
 
-  def apply( bup: InductionBUP, ts: Stream[Expr], prev: Map[Expr, Formula], nu: Var ): Expr = {
+  def apply( bup: InductionBUP, ts: LazyList[Expr], prev: Map[Expr, Formula], nu: Var ): Expr = {
     val tree = boundedUnfolding( bup, ts.head )
     val Some( interpolants ) = SmtInterpol.getInterpolant( tree.map( _._2 ) ).
       map( _.map( simplify( _ ) ) )
@@ -260,12 +260,12 @@ object solveBupViaInterpolationConcreteTerms {
     val generalized =
       tree.zip( interpolants ).map {
         case ( ( ( t, nu_, gam ), _ ), interp ) =>
-          t -> ( TermReplacement( simplify( interp ), Map( nu_ -> nu ) ++ gam.zip( bup.grammar.gamma ) ): Formula )
+          t -> ( TermReplacement( simplify( interp ), Map[Expr, Expr]( nu_ -> nu ) ++ gam.zip( bup.grammar.gamma ) ): Formula )
       }
 
     val grouped = Map() ++
       generalized.postOrder.dropRight( 1 ).groupBy( _._1 ).
-      mapValues( fs => And( fs.map( _._2 ) ) )
+      view.mapValues( fs => And( fs.map( _._2 ) ) ).toMap
 
     val groupedAndPrev =
       ( grouped.keySet ++ prev.keySet ).

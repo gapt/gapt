@@ -250,7 +250,7 @@ class TptpHOLExporter {
 
   def thf_formula_dec( i: Int, f: Formula, role: TptpFormulaRole, vmap: NameMap, cmap: CNameMap ): String = {
     val f_str = thf_formula( f, vmap, cmap, outermost = true )
-    val internal_str = f.toString.flatMap( { case '\n' => "\n% "; case x => x :: Nil } ) //add comment after newline
+    val internal_str = f.toString.flatMap( { case '\n' => "\n% "; case x => s"$x" } ) //add comment after newline
     s"$nLine% formula: $internal_str ${nLine}thf($i, $role, $f_str )."
   }
 
@@ -301,7 +301,7 @@ class TptpHOLExporter {
       "V"
     } else fstr_
     val prefix = if ( fstr.head.isDigit ) "X" + fstr
-    else fstr.head.toUpper + fstr.tail
+    else s"${fstr.head.toUpper}" + fstr.tail
     val values = map.toList.map( _._2 )
     if ( values contains prefix )
       appendPostfix( prefix, values )
@@ -325,7 +325,7 @@ class TptpHOLExporter {
       "c"
     } else fstr_
     val prefix = if ( fstr.head.isDigit ) "c" + fstr
-    else fstr.head.toLower + fstr.tail
+    else fstr.head.toLower.toString + fstr.tail
     val values = map.toList.map( _._2 )
     if ( values contains prefix )
       appendPostfix( prefix, values )

@@ -3,7 +3,8 @@ package gapt.cli
 import gapt.formats.ClasspathInputFile
 
 import scala.tools.nsc.Settings
-import scala.tools.nsc.interpreter.{ ILoop, InteractiveReader }
+import scala.tools.nsc.interpreter.shell.{ ILoop, ShellConfig }
+import scala.tools.nsc.interpreter.InteractiveReader
 
 case class GaptRepl() {
 
@@ -17,19 +18,20 @@ case class GaptRepl() {
     ValueSet( postfixOps, implicitConversions )
   }
 
+  private val shellConfiguration = ShellConfig( replSettings )
+
   sys.props( "scala.shell.prompt" ) = sys.props( "line.separator" ) + "gapt> "
 
-  private val repl = new ILoop {
-    override def createInterpreter() = {
+  private val repl = new ILoop( shellConfiguration ) {
+    override def createInterpreter( settings: Settings ) = {
+      super.createInterpreter( settings )
       val predefCode: String = readPredefFile
-      in = InteractiveReader()
-      intp = new ILoopInterpreter()
       intp.beQuietDuring( intp.interpret( predefCode ) )
     }
     override def printWelcome() = print( welcomeMessage )
   }
 
-  def run(): Unit = repl.process( replSettings )
+  def run(): Unit = repl.run( replSettings )
 
   private def readPredefFile: String =
     ClasspathInputFile( predefFileName ).read

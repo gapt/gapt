@@ -198,8 +198,8 @@ object Session {
   /**
    * Declares all symbols (sorts and functions) in a list of Exprs.
    */
-  def declareSymbolsIn( expressions: TraversableOnce[Expr] ): Session[Unit] = {
-    val cs = expressions.toSet[Expr] flatMap { constants( _ ) } filter {
+  def declareSymbolsIn( expressions: IterableOnce[Expr] ): Session[Unit] = {
+    val cs = expressions.iterator.to( Set ) flatMap { constants( _ ) } filter {
       case EqC( _ )           => false
       case _: LogicalConstant => false
       case _                  => true

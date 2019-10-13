@@ -51,7 +51,7 @@ object FOLFunctionArgs {
 object folSubTerms {
   def apply( t: Expr ): Set[Expr] = apply( Some( t ) )
 
-  def apply( language: Traversable[Expr] ): Set[Expr] = {
+  def apply( language: Iterable[Expr] ): Set[Expr] = {
     val subTerms = mutable.Set[Expr]()
     for ( t <- language ) walk( t, subTerms )
     subTerms.toSet
@@ -59,8 +59,8 @@ object folSubTerms {
 
   def apply( t: FOLTerm ): Set[FOLTerm] = apply( Some( t ) )
 
-  def apply( language: Traversable[FOLTerm] )( implicit dummyImplicit: DummyImplicit ): Set[FOLTerm] =
-    apply( language: Traversable[Expr] ).asInstanceOf[Set[FOLTerm]]
+  def apply( language: Iterable[FOLTerm] )( implicit dummyImplicit: DummyImplicit ): Set[FOLTerm] =
+    apply( language: Iterable[Expr] ).asInstanceOf[Set[FOLTerm]]
 
   private def walk( term: Expr, subterms: mutable.Set[Expr] ): Unit =
     // if the term is not in the set of subterms yet, add it and add all its subterms
@@ -77,7 +77,7 @@ object folTermSize {
   def apply( t: Expr ): Int =
     t match { case Apps( hd, as ) => 1 + apply( as ) }
 
-  def apply( ts: Traversable[Expr] ): Int =
+  def apply( ts: Iterable[Expr] ): Int =
     ts.view.map( apply ).sum
 }
 

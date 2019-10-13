@@ -34,7 +34,7 @@ final class MutCC private (
     val klass:   Array[Vector[Int]],
     val use:     Array[Vector[Eqn]],
     val lookup:  mutable.Map[( Int, Int ), Eqn],
-    val pending: mutable.ArrayStack[Pending],
+    val pending: mutable.Stack[Pending],
 
     val parent: Array[Int],
     val reason: Array[Pending] ) {
@@ -42,13 +42,13 @@ final class MutCC private (
   def this( n: Int ) =
     this(
       n,
-      repr = ( 0 until n ).to[Array],
-      klass = ( 0 until n ).view.map( i => Vector( i ): Vector[Int] ).to[Array],
-      use = ( 0 until n ).view.map( _ => Vector.empty[Eqn]: Vector[Eqn] ).to[Array],
+      repr = ( 0 until n ).to( Array ),
+      klass = ( 0 until n ).view.map( i => Vector( i ): Vector[Int] ).to( Array ),
+      use = ( 0 until n ).view.map( _ => Vector.empty[Eqn]: Vector[Eqn] ).to( Array ),
       lookup = mutable.AnyRefMap[( Int, Int ), Eqn](),
-      pending = mutable.ArrayStack[Pending](),
+      pending = mutable.Stack[Pending](),
 
-      parent = ( 0 until n ).to[Array],
+      parent = ( 0 until n ).to( Array ),
       reason = new Array[Pending]( n ) )
 
   override def clone(): MutCC =
@@ -204,7 +204,7 @@ class CC( mutCC0: MutCC, val termToIdx: Map[Expr, Int], val idxToTerm: Map[Int, 
           val es = expl( termToIdx( t ), termToIdx( s ) )
           ( es.size, () => Sequent( es.map( idxToTerm( _ ).asInstanceOf[Atom] ).toVector, Vector( e ) ) )
       } ++ {
-        val reprClause = clause.map( termToIdx.mapValues( mutCC0.repr ) )
+        val reprClause = clause.map( termToIdx.view.mapValues( mutCC0.repr ).toMap )
         reprClause.antecedent.toSet.intersect( reprClause.succedent.toSet ).map { r =>
           val i = reprClause.indexOfInAnt( r )
           val j = reprClause.indexOfInSuc( r )

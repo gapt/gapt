@@ -18,7 +18,7 @@ class Sat4j extends DrupSolver {
       solver.addAllClauses( cnf )
 
       if ( solver.isSatisfiable ) {
-        Some( solver.model() )
+        Some( solver.model().toIndexedSeq )
       } else {
         None
       }

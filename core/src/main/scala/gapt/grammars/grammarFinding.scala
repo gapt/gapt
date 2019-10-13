@@ -27,10 +27,10 @@ import gapt.logic.hol.toNNF
 import gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import gapt.utils.{ Logger, UNone, UOption, USome }
 
-import scala.collection.{ GenTraversable, mutable }
+import scala.collection.{ Iterable, mutable }
 
 object subsetLGGs {
-  def apply( terms: Traversable[Expr], maxSize: Int ): Set[Expr] = {
+  def apply( terms: Iterable[Expr], maxSize: Int ): Set[Expr] = {
     val lggs = Set.newBuilder[Expr]
 
     def findLGGs( currentLGG: UOption[Expr], terms: List[Expr], maxSize: Int ): Unit =
@@ -77,10 +77,10 @@ object stsSubsumedByLGG {
 }
 
 object stableTerms {
-  def apply( lang: Traversable[FOLTerm], nonTerminals: Seq[FOLVar] )( implicit dummyImplicit: DummyImplicit ): Set[FOLTerm] =
-    apply( lang: Traversable[Expr], nonTerminals ).map( _.asInstanceOf[FOLTerm] )
+  def apply( lang: Iterable[FOLTerm], nonTerminals: Seq[FOLVar] )( implicit dummyImplicit: DummyImplicit ): Set[FOLTerm] =
+    apply( lang: Iterable[Expr], nonTerminals ).map( _.asInstanceOf[FOLTerm] )
 
-  def apply( lang: Traversable[Expr], nonTerminals: Seq[Var] ): Set[Expr] = {
+  def apply( lang: Iterable[Expr], nonTerminals: Seq[Var] ): Set[Expr] = {
     val lggs = subsetLGGs( lang, nonTerminals.size + 1 )
     lggs flatMap { stsSubsumedByLGG( _, nonTerminals.toSet ) }
   }
@@ -104,7 +104,7 @@ class VtratgTermGenerationFormula( g: VTRATG, t: Expr ) {
         val lowestNTVectIdx = pa.keys.map( containingNTIdx ).min
         val lowestNTVect = g.nonTerminals( lowestNTVectIdx )
         g.productions( lowestNTVect ) foreach { p =>
-          val pairs = for ( ( nt, s ) <- p.zipped; t <- pa.get( nt ) ) yield s -> t
+          val pairs = for ( ( nt, s ) <- p._1.lazyZip( p._2 ); t <- pa.get( nt ) ) yield s -> t
           syntacticMatching( pairs.toList, PreSubstitution( pa ) ) foreach { matching =>
             discoverAssignments( matching.map -- lowestNTVect )
           }
@@ -114,7 +114,7 @@ class VtratgTermGenerationFormula( g: VTRATG, t: Expr ) {
       }
     for ( ( ntv, i ) <- g.nonTerminals.zipWithIndex ) possibleAssignments += ( i -> ntv.map { _ => notASubTerm } )
     discoverAssignments( Map( g.startSymbol -> t ) )
-    val possibleValues = Map() ++ handledPAs.toSet.flatten.groupBy( _._1 ).mapValues( _.map( _._2 ) )
+    val possibleValues = Map() ++ handledPAs.toSet.flatten.groupBy( _._1 ).view.mapValues( _.map( _._2 ) ).toMap
 
     def Match( ntIdx: Int, t: List[Expr], s: List[Expr] ) =
       syntacticMatching( s zip t filter { _._2 != notASubTerm } ) match {
@@ -129,7 +129,7 @@ class VtratgTermGenerationFormula( g: VTRATG, t: Expr ) {
 
     def Case( ntIdx: Int, t: List[Expr] ) =
       if ( t forall { _ == notASubTerm } ) Top()
-      else And( ( g.nonTerminals( ntIdx ), t ).zipped map valueOfNonTerminal ) --> Or( g.productions( g.nonTerminals( ntIdx ) ).toSeq map {
+      else And( ( g.nonTerminals( ntIdx ).lazyZip( t ) ).map( valueOfNonTerminal ) ) --> Or( g.productions( g.nonTerminals( ntIdx ) ).toSeq map {
         case p @ ( _, s ) =>
           vectProductionIsIncluded( p ) & Match( ntIdx, t, s )
       } )
@@ -147,7 +147,7 @@ class VtratgTermGenerationFormula( g: VTRATG, t: Expr ) {
       cs += atMost oneOf ( ts + notASubTerm ).toSeq.map { valueOfNonTerminal( x, _ ) }
 
     for ( ( i, assignments ) <- possibleAssignments groupBy { _._1 } )
-      cs += exactly oneOf ( assignments.toSeq map { assignment => And( ( g.nonTerminals( i ), assignment._2 ).zipped map valueOfNonTerminal ) } )
+      cs += exactly oneOf ( assignments.toSeq map { assignment => And( g.nonTerminals( i ).lazyZip( assignment._2 ).map( valueOfNonTerminal ) ) } )
 
     And( cs.result() )
   }
@@ -166,7 +166,7 @@ class VectGrammarMinimizationFormula( g: VTRATG ) {
       VectGrammarMinimizationFormula.this.valueOfNonTerminal( t, n, value )
   }.formula
 
-  def coversLanguage( lang: Traversable[Expr] ) = And( lang map generatesTerm )
+  def coversLanguage( lang: Iterable[Expr] ) = And( lang map generatesTerm )
 }
 
 object stableVTRATG {

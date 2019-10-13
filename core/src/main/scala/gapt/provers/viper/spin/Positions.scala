@@ -69,10 +69,10 @@ object Positions {
           allPositions += c -> Positions( ruleGroup, allPositions )
           groups -= c
         case None =>
-          val calls = groups.mapValues( rules =>
-            rules.flatMap( rule => constants( rule.rhs ) ++ rule.conditions.flatMap( constants( _ ) ) ) )
+          val calls = groups.view.mapValues( rules =>
+            rules.flatMap( rule => constants( rule.rhs ) ++ rule.conditions.flatMap( constants( _ ) ) ) ).toMap
 
-          val independent = calls.filterKeys( c => calls.forall { case ( d, fs ) => c == d || !fs.contains( c ) } )
+          val independent = calls.view.filterKeys( c => calls.forall { case ( d, fs ) => c == d || !fs.contains( c ) } ).toMap
           val mutual = groups -- independent.keys
 
           // Map mutually inductive calls to null. Currently we treat every argument as primary in this case.

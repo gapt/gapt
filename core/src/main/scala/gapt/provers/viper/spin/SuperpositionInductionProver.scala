@@ -182,7 +182,7 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
 
   // Replace universals and existentials with a fixed number of tests of the formula
   def unfoldQuantifiers( formula: Formula )( implicit ctx: Context ): Formula = {
-    def samples( x: Var, f: Formula ): Stream[Formula] = {
+    def samples( x: Var, f: Formula ): LazyList[Formula] = {
       val constrs = enumerateTerms.forType( x.ty ).filter( _.ty == x.ty ).take( opts.sampleTestTerms )
       constrs.map( replaceExpr( f, x, _ ) )
     }
@@ -222,9 +222,9 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
   object testFormula {
     // Replaces each occurrence of a VarOrConst from subs in e with opts.sampleTestTerms concrete values.
     // Returns a sequence of all permutations.
-    def makeSampleFormulas( f: Formula, subs: List[VarOrConst] ): Stream[Formula] = {
+    def makeSampleFormulas( f: Formula, subs: List[VarOrConst] ): LazyList[Formula] = {
       subs match {
-        case List() => Stream( f )
+        case List() => LazyList( f )
         case v :: vs =>
           val termStream = enumerateTerms.forType( v.ty )( ctx )
           val terms = termStream filter ( _.ty == v.ty ) take opts.sampleTestTerms
@@ -259,7 +259,7 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
         return false
 
       // Try to unblock overly specific reduction rules by casing on skolems
-      val alts = skolems.foldLeft( Stream( nf ) ) {
+      val alts = skolems.foldLeft( LazyList( nf ) ) {
         case ( ts, c ) =>
           val nConstrs = ctx.getConstructors( c.ty ).map( _.size ).getOrElse( 0 )
           val constrs = enumerateTerms.forType( c.ty ).filter( _.ty == c.ty ).take( nConstrs )
@@ -397,9 +397,9 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
       underSame = Set.empty
       val ( prim, accs, pass ) = go( formula, List(), inPrimary = true )
 
-      val primMap = prim.groupBy( _._1 ).mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } )
-      val accsMap = accs.groupBy( _._1 ).mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } )
-      val passMap = pass.groupBy( _._1 ).mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } )
+      val primMap = prim.groupBy( _._1 ).view.mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } ) toMap
+      val accsMap = accs.groupBy( _._1 ).view.mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } ) toMap
+      val passMap = pass.groupBy( _._1 ).view.mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } ) toMap
 
       Occurences( primMap, accsMap, passMap, underSame )
     }
@@ -423,7 +423,7 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
   }
 
   def quantifyAccumulators( f: Formula, occs: Occurences )( implicit ctx: Context ): Formula = {
-    val accsPoses = occs.accumulators.filterKeys( asInductiveConst( _ )( ctx ).isDefined )
+    val accsPoses = occs.accumulators.view.filterKeys( asInductiveConst( _ )( ctx ).isDefined ).toMap
 
     accsPoses.foldLeft( f ) {
       case ( g, ( acc, _ ) ) =>

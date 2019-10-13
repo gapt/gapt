@@ -212,7 +212,7 @@ object ResolutionToLKProof {
       val extraSequent =
         if ( idx.isSuc ) proofToInsert.conclusion.removeFromAntecedent( formula )
         else proofToInsert.conclusion.removeFromSuccedent( formula )
-      val formulaMultiplicities = Map() ++ extraSequent.polarizedElements.groupBy( identity ).mapValues( _.size )
+      val formulaMultiplicities = Map() ++ extraSequent.polarizedElements.groupBy( identity ).view.mapValues( _.size ).toMap
 
       override def transportToSubProof( isAncestor: Sequent[Boolean], proof: LKProof, subProofIdx: Int ) =
         proof.occConnectors( subProofIdx ).parent( isAncestor, false )

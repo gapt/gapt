@@ -24,7 +24,7 @@ class MaxSat4j extends MaxSATSolver {
       soft foreach { case ( clause, weight ) => decorator.addSoftClause( weight, clause ) }
 
       if ( solver.isSatisfiable ) {
-        Some( solver.model() )
+        Some( solver.model().toIndexedSeq )
       } else {
         None
       }

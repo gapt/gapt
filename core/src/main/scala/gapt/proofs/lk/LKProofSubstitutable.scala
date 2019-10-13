@@ -183,7 +183,7 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
       EqualityRightRule( subProofNew, eq, aux, substitution( con ).asInstanceOf[Abs] )
 
     case InductionRule( cases, main, term ) =>
-      rules.InductionRule( cases map {
+      InductionRule( cases map {
         indCase( substitution, _ )
       }, substitution( main ).asInstanceOf[Abs], substitution( term ) )
 

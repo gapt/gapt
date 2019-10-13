@@ -89,10 +89,10 @@ class PTContentPanel(
   this.peer.setAutoscrolls( true )
   this.peer.addMouseMotionListener( this )
 
-  def mouseMoved( e: MouseEvent ) {
+  def mouseMoved( e: MouseEvent ): Unit = {
     //println("mouse: " + e.getX + "/" + e.getY)
   }
-  def mouseDragged( e: MouseEvent ) {
+  def mouseDragged( e: MouseEvent ): Unit = {
     //The user is dragging us, so scroll!
     val r = new Rectangle( e.getX, e.getY, 1, 1 )
     this.peer.scrollRectToVisible( r )
@@ -104,21 +104,21 @@ class Spinner[T]( model: SpinnerModel ) extends Component {
   override lazy val peer: JSpinner = new JSpinner( model ) with SuperMixin
 
   def value = peer.getValue.asInstanceOf[T]
-  def value_=( a: T ) { peer.setValue( a ) }
+  def value_=( a: T ): Unit = { peer.setValue( a ) }
 
   private lazy val changeListener = Swing.ChangeListener { e =>
     publish( new ValueChanged( Spinner.this ) )
   }
 
-  protected override def onFirstSubscribe() {
+  protected override def onFirstSubscribe(): Unit = {
     super.onFirstSubscribe()
     peer.addChangeListener( changeListener )
     peer.addFocusListener( new FocusAdapter {
-      override def focusLost( e: java.awt.event.FocusEvent ) { publish( new ValueChanged( Spinner.this ) ) }
+      override def focusLost( e: java.awt.event.FocusEvent ): Unit = { publish( new ValueChanged( Spinner.this ) ) }
     } )
   }
 
-  protected override def onLastUnsubscribe() {
+  protected override def onLastUnsubscribe(): Unit = {
     super.onLastUnsubscribe()
     peer.removeChangeListener( changeListener )
   }

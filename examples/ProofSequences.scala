@@ -296,7 +296,7 @@ object LinearEqExampleProof extends TacticsProof with ProofSequence with Explici
 
   // f^k(a)
   private def fk( k: Int ): Expr =
-    Stream.iterate( le"a" )( x => le"f $x" )( k )
+    LazyList.iterate( le"a" )( x => le"f $x" )( k )
 
   def apply( n: Int ) =
     Proof(

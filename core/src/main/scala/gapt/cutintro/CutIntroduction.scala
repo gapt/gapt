@@ -409,8 +409,8 @@ object CutIntroduction {
     val esInstances = for ( ( u, is ) <- sehs.us; i <- is ) yield instantiate( u, i )
     val esInstancesPerCut = esInstances.map( identity, -_ ).elements.
       groupBy { freeVariables( _ ).collect( eigenVarIdx ).union( Set( sehs.eigenVariables.size ) ).min }
-    lazy val canSol: Stream[FOLFormula] =
-      for ( idx <- sehs.eigenVariables.indices.toStream )
+    lazy val canSol: LazyList[FOLFormula] =
+      for ( idx <- sehs.eigenVariables.indices.to( LazyList ) )
         yield And( esInstancesPerCut.getOrElse( idx, Seq() ) ++
         ( if ( idx == 0 ) Seq() else sehs.ss( idx - 1 )._2.map { s => FOLSubstitution( sehs.ss( idx - 1 )._1 zip s )( canSol( idx - 1 ) ) } ) )
     canSol.toList

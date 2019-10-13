@@ -43,22 +43,22 @@ trait ResolutionProver extends OneShotProver { self =>
   override def isValid( seq: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean =
     getResolutionProof( seq )( ctx.map( _.newMutable ) ).isDefined
 
-  def getResolutionProof( cnf: Iterable[ResolutionProof] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] = {
+  def getResolutionProof( cnf: Iterable[ResolutionProof] )( implicit ctx: Maybe[MutableContext], dummyImplicit: DummyImplicit ): Option[ResolutionProof] = {
     val cnfMap = cnf.view.map( p => p.conclusion -> p ).toMap
     getResolutionProof( cnfMap.keySet.map( _.map( _.asInstanceOf[Atom] ) ) ) map { resolution =>
       mapInputClauses( resolution )( cnfMap )
     }
   }
 
-  def getResolutionProof( sequentSet: Traversable[HOLSequent] )( implicit ctx0: Maybe[MutableContext], dummyImplicit: DummyImplicit ): Option[ResolutionProof] = {
-    implicit val ctx = ctx0.getOrElse( MutableContext.guess( sequentSet ) )
+  def getResolutionProof( sequentSet: Iterable[HOLSequent] )( implicit ctx0: Maybe[MutableContext], dummyImplicit1: DummyImplicit, dummyImplicit2: DummyImplicit ): Option[ResolutionProof] = {
+    implicit val ctx = ctx0.getOrElse( MutableContext.guess( sequentSet )( dummyImplicit1 ) )
     val cnf = structuralCNF.onProofs(
       sequentSet.map( Input ).toSet,
       propositional = false,
       structural = true,
       bidirectionalDefs = false,
       cse = false )
-    getResolutionProof( cnf )( ctx )
+    getResolutionProof( cnf )( ctx, dummyImplicit1 )
   }
 
   def getResolutionProof( formula: Formula )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] = getResolutionProof( Sequent() :+ formula )
@@ -69,10 +69,10 @@ trait ResolutionProver extends OneShotProver { self =>
     val ground = section.groundSequent( seq )
 
     val cnf = structuralCNF( ground, propositional = false )( ctx )
-    getResolutionProof( cnf )( ctx )
+    getResolutionProof( cnf )( ctx, implicitly )
   }
 
-  def getResolutionProof( seq: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof]
+  def getResolutionProof( seq: Iterable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof]
 
   override def getExpansionProof( seq: HOLSequent )( implicit ctx0: Maybe[MutableContext] ): Option[ExpansionProof] = {
     implicit val ctx: MutableContext = ctx0.getOrElse( MutableContext.guess( seq ) )
@@ -101,7 +101,7 @@ trait ResolutionProver extends OneShotProver { self =>
       self.getResolutionProof( folProblem ).map( proof => back( eliminateSplitting( proof ) ) )
     }
 
-    override def getResolutionProof( seq: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] = {
+    override def getResolutionProof( seq: Iterable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] = {
       val reduction = PredicateReductionCNF |> ErasureReductionCNF
       val ( folProblem, back ) = reduction forward seq.toSet
       self.getResolutionProof( folProblem ).map( eliminateSplitting( _ ) ).map( back )
@@ -130,7 +130,7 @@ trait ResolutionProver extends OneShotProver { self =>
       self.getResolutionProof( folProblem ).map( proof => back( eliminateSplitting( proof ) ) )
     }
 
-    override def getResolutionProof( seq: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] = {
+    override def getResolutionProof( seq: Iterable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] = {
       val reduction = ErasureReductionCNF
       val ( folProblem, back ) = reduction forward seq.toSet
       self.getResolutionProof( folProblem ).map( eliminateSplitting( _ ) ).map( back )
@@ -152,7 +152,7 @@ trait ResolutionProver extends OneShotProver { self =>
         case Left( _ )   => None
       } )
 
-    override def getResolutionProof( seq: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] =
+    override def getResolutionProof( seq: Iterable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] =
       self.getResolutionProof( seq )
 
     override def toString = s"$self.withDeskolemization"

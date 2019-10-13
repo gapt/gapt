@@ -490,12 +490,12 @@ class TipTransformationCompiler( var problem: TipSmtProblem ) {
   def toProblem: TipProblem =
     TipProblem(
       ctx,
-      definitions,
+      definitions.toSeq,
       typeDecls.values.toSeq diff datatypes.map { _.t },
-      datatypes,
+      datatypes.toSeq,
       funDecls.values.toSeq diff functions.map { _.fun },
-      functions,
-      assumptions, And( goals ) )
+      functions.toSeq,
+      assumptions.toSeq, And( goals ) )
 
   def compileTipProblem(): TipTransformationCompiler = {
     problem.definitions.foreach {

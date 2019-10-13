@@ -301,10 +301,10 @@ object ETWeakQuantifier {
       val correctShallow = Substitution( boundVar -> inst )( qfFormula )
       require( child.shallow == correctShallow, s"Incorrect shallow formula:\n${child.shallow} !=\n$correctShallow" )
     }
-    ExpansionTree( ETtWeak( Map() ++ instances.mapValues( _.term ) ), polarity, shallow )
+    ExpansionTree( ETtWeak( Map() ++ instances.view.mapValues( _.term ).toMap ), polarity, shallow )
   }
   def withMerge( shallow: Formula, instances: Iterable[( Expr, ExpansionTree )] ): ExpansionTree =
-    ETWeakQuantifier( shallow, Map() ++ instances.groupBy( _._1 ).mapValues( children => ETMerge( children.map( _._2 ) ) ) )
+    ETWeakQuantifier( shallow, Map() ++ instances.groupBy( _._1 ).view.mapValues( children => ETMerge( children.map( _._2 ) ) ).toMap )
   def unapply( et: ExpansionTree ): Option[( Formula, Map[Expr, ExpansionTree] )] =
     et match {
       case ExpansionTree( ETtWeak( instances ), polarity, shallow @ Quant( bv, sh, isAll ) ) if isAll == polarity.inAnt =>
@@ -320,10 +320,10 @@ object ETWeakQuantifierBlock {
     if ( blockSize == 0 ) {
       ETMerge( instances map { _._2 } )
     } else {
-      ETWeakQuantifier( shallow, Map() ++ instances.groupBy( _._1.head ).mapValues { children =>
+      ETWeakQuantifier( shallow, Map() ++ instances.groupBy( _._1.head ).view.mapValues { children =>
         apply( instantiate( shallow, children.head._1.head ), blockSize - 1,
           children map { case ( ts, et ) => ts.tail -> et } )
-      } )
+      }.toMap )
     }
 
   def unapply( et: ExpansionTree ): Some[( Formula, Int, Map[Seq[Expr], ExpansionTree] )] = {
@@ -361,7 +361,7 @@ object ETWeakQuantifierBlock {
       }
     walk( et, Seq(), numberQuants )
 
-    Some( ( et.shallow, numberQuants, Map() ++ instances.mapValues( ETMerge( _ ) ) ) )
+    Some( ( et.shallow, numberQuants, Map() ++ instances.view.mapValues( ETMerge( _ ) ).toMap ) )
   }
 }
 

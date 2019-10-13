@@ -74,7 +74,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
     }
   }
 
-  def showFrame() {
+  def showFrame(): Unit = {
     top.preferredSize = new Dimension( 700, 500 )
     top.pack()
     top.centerOnScreen()
@@ -120,7 +120,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
   /**
    * Opens a proof db and displays all its contents.
    */
-  def fOpen() {
+  def fOpen(): Unit = {
     val chooser = createChooser( ".gz", ".ivy", ".lks", ".lksc", ".llk", ".pdf", ".png", ".rs", ".tex", ".tptp", ".xml" )
     chooser.showOpenDialog( mBar ) match {
       case FileChooser.Result.Approve =>
@@ -140,7 +140,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
    *
    * @param component The component to be exported.
    */
-  def fExportPdf( component: Component ) {
+  def fExportPdf( component: Component ): Unit = {
     val chooser = createChooser( ".pdf" )
     chooser.showSaveDialog( mBar ) match {
       case FileChooser.Result.Approve => try {
@@ -176,7 +176,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
    *
    * @param component The component to be exported.
    */
-  def fExportPng( component: Component ) {
+  def fExportPng( component: Component ): Unit = {
     val chooser = createChooser( ".png" )
     chooser.showSaveDialog( mBar ) match {
       case FileChooser.Result.Approve => try {
@@ -202,7 +202,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
   /**
    * Zooms in by multiplying font size by 3/2.
    */
-  def increaseFontSize() {
+  def increaseFontSize(): Unit = {
     currentFontSize * 3 / 2 match {
       case j: Int if j > 72 =>
       case j: Int =>
@@ -213,7 +213,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
   /**
    * Zooms out by multiplying font size by 2/3.
    */
-  def decreaseFontSize() {
+  def decreaseFontSize(): Unit = {
     currentFontSize / 3 * 2 match {
       case j: Int if j < 1 =>
       case j: Int =>
@@ -230,7 +230,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
    *
    * @param info The text of the message.
    */
-  def infoMessage( info: String ) {
+  def infoMessage( info: String ): Unit = {
     Dialog.showMessage( mainPanel, info, "ProofTool Information" )
   }
 
@@ -239,7 +239,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
    *
    * @param warning The text of the message.
    */
-  def warningMessage( warning: String ) {
+  def warningMessage( warning: String ): Unit = {
     Dialog.showMessage( mainPanel, warning, "ProofTool Warning", Dialog.Message.Warning )
   }
 
@@ -248,7 +248,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
    *
    * @param error The text of the message.
    */
-  def errorMessage( error: String ) {
+  def errorMessage( error: String ): Unit = {
     Dialog.showMessage( mainPanel, error, "ProofTool Error", Dialog.Message.Error )
   }
 

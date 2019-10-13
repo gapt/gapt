@@ -21,13 +21,13 @@ class DrawStruct( val main: StructViewer, val struct: Struct, private var str: S
 
   initialize()
 
-  def search_=( s: String ) {
+  def search_=( s: String ): Unit = {
     str = s
     initialize()
   }
   def search = str
 
-  def initialize() {
+  def initialize(): Unit = {
     struct match {
       case utree if struct.children.size == 1 =>
         val mylabel = utree.label match {
@@ -156,7 +156,7 @@ class DrawStruct( val main: StructViewer, val struct: Struct, private var str: S
     }
   }
 
-  override def paintComponent( g: Graphics2D ) {
+  override def paintComponent( g: Graphics2D ): Unit = {
     super.paintComponent( g )
 
     g.setStroke( new BasicStroke( fSize / 25, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND ) )
@@ -199,8 +199,8 @@ class DrawStruct( val main: StructViewer, val struct: Struct, private var str: S
   this.peer.setAutoscrolls( true )
   this.peer.addMouseMotionListener( this )
 
-  def mouseMoved( e: MouseEvent ) {}
-  def mouseDragged( e: MouseEvent ) {
+  def mouseMoved( e: MouseEvent ): Unit = {}
+  def mouseDragged( e: MouseEvent ): Unit = {
     //The user is dragging us, so scroll!
     val r = new Rectangle( e.getX, e.getY, 1, 1 )
     this.peer.scrollRectToVisible( r )
