@@ -1,4 +1,4 @@
-package gapt.testing.latex
+package gapt.doc
 
 import java.io.{ ByteArrayOutputStream, PrintStream, Writer }
 import java.nio.ByteBuffer

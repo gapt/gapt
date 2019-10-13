@@ -148,7 +148,7 @@ lazy val root = project.in( file( "." ) ).
     evalUserManual := {
       val userManFn = "doc/user_manual.tex"
       val out = new ByteArrayOutputStream
-      val exitVal = new Fork( "java", Some( "gapt.testing.latex.evalCodeSnippets" ) ).fork(
+      val exitVal = new Fork( "java", Some( "gapt.doc.evalCodeSnippets" ) ).fork(
         ForkOptions(
           javaHome = javaHome.value,
           outputStrategy = Some( CustomOutput( out ) ),
