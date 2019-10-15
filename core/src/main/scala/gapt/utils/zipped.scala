@@ -15,7 +15,7 @@ object zipped {
     is1.lazyZip( is2 )
 
   /**
-   * See [[zipped.apply[T1, T2](Iterable[T1], Iterable[T2])]].
+   * @see `zipped.apply[T1,T2](T1,T2)`.
    */
   def apply[T1, T2]( is: ( Iterable[T1], Iterable[T2] ) ): Iterable[( T1, T2 )] =
     zipped( is._1, is._2 )
