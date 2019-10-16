@@ -2,14 +2,13 @@ package gapt.proofs.lk
 
 import gapt.expr._
 import gapt.examples._
+import gapt.expr.formula.{ All, And }
 import gapt.proofs.ceres._
 import gapt.expr.formula.fol.natMaker
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.TBase
-import gapt.expr.util.freeVariables
 import gapt.logic.clauseSubsumption
 import gapt.logic.hol.CNFp
-import gapt.proofs.context.Context._
 import gapt.proofs.Sequent
 import gapt.proofs.context.facet.ProofDefinitions
 import gapt.proofs.context.facet.Reductions
@@ -20,7 +19,6 @@ import org.specs2.mutable.Specification
 import gapt.proofs.gaptic._
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.ForallRightRule
-import gapt.proofs.lk.rules.InductionCase
 import gapt.proofs.lk.rules.InductionRule
 import gapt.proofs.lk.util.ArithmeticInductionToSchema
 import gapt.proofs.lk.util.IsKSimple
@@ -272,32 +270,32 @@ class SchemaTest extends Specification {
 
     "Test if K-simple PlusComm induction proof is K-simple" in {
       import gapt.examples.theories.nat._
-      val result: LKProof = {
-        val proofs = addcomm.proof.subProofs.toList.foldRight( List[LKProof]() )( ( a, z ) => {
-          a match {
-            case p: InductionRule =>
-              val succ: Var = p.cases.foldRight( Var( "wrong", p.indTy ): Var )( ( a, z ) => {
-                a match {
-                  case InductionCase( _, Const( "s", _, _ ), _, e, _ ) => e.head
-                  case _ => z
-                }
-              } )
-              val ret: Expr = Substitution( p.formula.variable -> succ )( p.formula.term )
-              InductionRule( p.cases, Abs( succ, ret ), succ ) :: z
-            case _ => z
-          }
-        } )
-        if ( proofs.nonEmpty ) {
-          if ( proofs.tail.nonEmpty ) {
-            val nonq = proofs.tail.foldRight( ( proofs.head, proofs.head.mainFormulas.head ) )(
-              ( a, z ) => {
-                val newp = AndRightRule( z._1, z._1.conclusion.indexOfInSuc( z._2 ), a, a.conclusion.indexOfInSuc( a.mainFormulas.head ) )
-                ( newp, newp.mainFormula )
-              } )._1
-            val InductionRule( _, _, x: Var ) = proofs.head
-            ForallRightRule( nonq, nonq.mainIndices.head, x, Var( "x", x.ty ) )
-          } else proofs.head
-        } else addcomm.proof
+
+      /**
+       * Builds the conjunction of the main formulas of the given inference
+       * by repeated application of the and:r rule.
+       * @param p The default proof for the conjunction.
+       * @param ps The proofs whose main formulas are to be connected by conjunction.
+       */
+      def inductionAndRightMacro( p: InductionRule, ps: Seq[InductionRule] ): LKProof = {
+        ps.foldRight[LKProof]( p ) {
+          case ( l, r ) => AndRightRule( l, r, And( l.mainFormula, r.mainFormulas.head ) )
+        }
+      }
+
+      val proofs: List[InductionRule] = addcomm.proof.subProofs.collect {
+        case p: InductionRule =>
+          val v: Var = p.cases.flatMap { _.eigenVars }.head
+          val f: Expr = Substitution( p.formula.variable -> v )( p.formula.term )
+          InductionRule( p.cases, Abs( v, f ), v )
+      }.toList
+
+      val result: LKProof = proofs match {
+        case p :: ps =>
+          val x @ Var( _, _ ) = p.term
+          val r = inductionAndRightMacro( p, ps )
+          ForallRightRule( r, All( x, r.mainFormulas.head ), x )
+        case _ => addcomm.proof
       }
       IsKSimple( result ) must_== true
     }
