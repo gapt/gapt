@@ -208,39 +208,21 @@ object Delta {
   }
 }
 
-/**
- * Constructors for counting formula schemes.
- */
-trait CountingFormulas {
-  def exactly: {
+object thresholds {
+
+  object exactly {
+
     /**
      * @param fs The input formulas A1, ..., An.
      * @return A formula that is logically equivalent to -A1 & ... & -An.
      */
-    def noneOf( fs: Seq[Formula] ): Formula
+    def noneOf( fs: Seq[Formula] ): Formula = -Or( fs )
 
     /**
      * @param fs The input formulas A₁, ..., Aₙ.
      * @return A formula that is logically equivalent to
      *         (A₁ ∨ ... ∨ Aₙ) ∧ ( ∧(1 ≤ i < j ≤ n) ¬Aᵢ ∨ ¬Aⱼ ).
      */
-    def oneOf( fs: Seq[Formula] ): Formula
-  }
-  def atMost: {
-    /**
-     * @param fs The input formulas A₁, ..., Aₙ.
-     * @return A formula that is logically equivalent to ( ∧(1 ≤ i < j ≤ n) ¬Aᵢ ∨ ¬Aⱼ ).
-     */
-    def oneOf( fs: Seq[Formula] ): Formula
-  }
-}
-
-object thresholds extends CountingFormulas {
-
-  object exactly {
-
-    def noneOf( fs: Seq[Formula] ): Formula = -Or( fs )
-
     def oneOf( fs: Seq[Formula] ): Formula = fs match {
       case Seq()    => Bottom()
       case Seq( f ) => f
@@ -253,6 +235,10 @@ object thresholds extends CountingFormulas {
 
   object atMost {
 
+    /**
+     * @param fs The input formulas A₁, ..., Aₙ.
+     * @return A formula that is logically equivalent to ( ∧(1 ≤ i < j ≤ n) ¬Aᵢ ∨ ¬Aⱼ ).
+     */
     def oneOf( fs: Seq[Formula] ): Formula = fs match {
       case Seq() | Seq( _ ) => Top()
       case _ =>
@@ -264,18 +250,31 @@ object thresholds extends CountingFormulas {
 
 }
 
-object naive extends CountingFormulas {
+object naive {
 
   object exactly {
 
+    /**
+     * @param fs The input formulas A1, ..., An.
+     * @return A formula that is logically equivalent to -A1 & ... & -An.
+     */
     def noneOf( fs: Seq[Formula] ): Formula = -Or( fs )
 
+    /**
+     * @param fs The input formulas A₁, ..., Aₙ.
+     * @return A formula that is logically equivalent to
+     *         (A₁ ∨ ... ∨ Aₙ) ∧ ( ∧(1 ≤ i < j ≤ n) ¬Aᵢ ∨ ¬Aⱼ ).
+     */
     def oneOf( fs: Seq[Formula] ): Formula = Or( fs ) & atMost.oneOf( fs )
 
   }
 
   object atMost {
 
+    /**
+     * @param fs The input formulas A₁, ..., Aₙ.
+     * @return A formula that is logically equivalent to ( ∧(1 ≤ i < j ≤ n) ¬Aᵢ ∨ ¬Aⱼ ).
+     */
     def oneOf( fs: Seq[Formula] ): Formula = And( for ( a <- fs; b <- fs if a != b ) yield -a | -b )
 
   }
