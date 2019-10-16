@@ -208,12 +208,29 @@ object Delta {
   }
 }
 
+/**
+ * Constructors for counting formula schemes.
+ */
 trait CountingFormulas {
   def exactly: {
+    /**
+     * @param fs The input formulas A1, ..., An.
+     * @return A formula that is logically equivalent to -A1 & ... & -An.
+     */
     def noneOf( fs: Seq[Formula] ): Formula
+
+    /**
+     * @param fs The input formulas A₁, ..., Aₙ.
+     * @return A formula that is logically equivalent to
+     *         (A₁ ∨ ... ∨ Aₙ) ∧ ( ∧(1 ≤ i < j ≤ n) ¬Aᵢ ∨ ¬Aⱼ ).
+     */
     def oneOf( fs: Seq[Formula] ): Formula
   }
   def atMost: {
+    /**
+     * @param fs The input formulas A₁, ..., Aₙ.
+     * @return A formula that is logically equivalent to ( ∧(1 ≤ i < j ≤ n) ¬Aᵢ ∨ ¬Aⱼ ).
+     */
     def oneOf( fs: Seq[Formula] ): Formula
   }
 }
