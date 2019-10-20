@@ -115,8 +115,8 @@ abstract class RegressionTestCase( val name: String ) extends Serializable {
      *
      * @param name Name of the step.
      * @return The return value of block.
-     * @throws Throwable If block raises an exception, it is rethrown.
      */
+    @throws[java.lang.Throwable]( "If block raises an exception, it is rethrown." )
     def ---( name: String )( implicit testRun: TestRun ) =
       testRun.runStep( Some( name ) )( block ) match {
         case Left( t )    => throw t
