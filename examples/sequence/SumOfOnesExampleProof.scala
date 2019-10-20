@@ -21,14 +21,14 @@ import gapt.examples.Formulas.TransitivityEq
 /**
  * Functions to construct cut-free FOL LK proofs of the sequents
  *
- * Refl, Trans, CongSuc, ABase, ASuc, :- sum( n ) = s^n^(0)
+ * Refl, Trans, CongSuc, ABase, ASuc :- sum( n ) = s^n^(0)
  *
  * where n is an Integer parameter >= 0.
  */
 object SumOfOnesExampleProof extends ProofSequence {
   import Utils.{ numeral => num }
 
-  def apply( n: Int ) = {
+  def apply( n: Int ): LKProof = {
     val goal = if ( n == 0 ) foa"0 = 0" else foa"${sum( n )} = ${num( n )}"
     val endSequent = Sequent(
       Seq(
@@ -90,9 +90,13 @@ object SumOfOnesExampleProof extends ProofSequence {
     }
   }
 
-  // the term (.((1 + 1) + 1 ) + ... + 1 ), k must be at least 1
-  private def sum( k: Int ): FOLTerm = {
-    if ( k == 1 ) Utils.numeral( 1 )
-    else FOLFunction( "+", sum( k - 1 ) :: Utils.numeral( 1 ) :: Nil )
-  }
+  /**
+   * Constructs the term `(...((1 + 1) + 1 ) + ... + 1 )`
+   * @param k The size ≥ 1 of the term i.e. the number of occurrences of `1`.
+   * @return The term `(...((1 + 1) + 1 ) + ... + 1 )`
+   */
+  private def sum( k: Int ): FOLTerm =
+    ( 1 until k ).foldLeft( Utils.numeral( 1 ) ) {
+      case ( sum, _ ) => FOLFunction( "+", sum :: Utils.numeral( 1 ) :: Nil )
+    }
 }
