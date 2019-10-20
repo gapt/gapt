@@ -4,7 +4,7 @@ package gapt.integration_tests
 import gapt.formats.llk.LLKProofParser
 import gapt.cutintro._
 import gapt.grammars.DeltaTableMethod
-import gapt.proofs.expansion.{ExpansionProofToLK, addSymmetry, eliminateCutsET}
+import gapt.proofs.expansion.{ ExpansionProofToLK, addSymmetry, eliminateCutsET }
 import gapt.proofs._
 import gapt.expr._
 import gapt.expr.formula.All
@@ -12,7 +12,7 @@ import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.fol.FOLVar
 import gapt.formats.verit.VeriTParser
 import gapt.proofs.lk._
-import gapt.provers.prover9.{Prover9, Prover9Importer}
+import gapt.provers.prover9.{ Prover9, Prover9Importer }
 import gapt.provers.sat.Sat4j
 import gapt.provers.verit.VeriT
 import gapt.formats.ClasspathInputFile
@@ -28,7 +28,7 @@ import gapt.proofs.lk.util.isCutFree
 import gapt.proofs.lk.util.regularize
 import gapt.proofs.lk.util.solvePropositional
 import org.specs2.mutable._
-import sequence.LinearExampleProof
+import gapt.examples.sequence.LinearExampleProof
 
 class MiscTest extends Specification {
 

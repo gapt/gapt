@@ -3,7 +3,7 @@ package gapt.formats.json.et
 import gapt.proofs.expansion._
 import gapt.proofs.lk.transformations.LKToExpansionProof
 import org.specs2.mutable.Specification
-import sequence.LinearExampleProof
+import gapt.examples.sequence.LinearExampleProof
 
 class ExpansionProofCodecTest extends Specification {
   import gapt.formats.json.et.ExpansionTreeCodec._

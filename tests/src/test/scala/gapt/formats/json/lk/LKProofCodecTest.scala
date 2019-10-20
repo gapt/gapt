@@ -2,7 +2,7 @@ package gapt.formats.json.lk
 
 import gapt.proofs.lk._
 import org.specs2.mutable.Specification
-import sequence.LinearExampleProof
+import gapt.examples.sequence.LinearExampleProof
 
 class LKProofCodecTest extends Specification {
   import gapt.formats.json.lk.LKProofCodec._

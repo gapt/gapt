@@ -1,4 +1,4 @@
-package sequence
+package gapt.examples.sequence
 
 import gapt.examples.implicationLeftMacro
 import gapt.expr.formula.All

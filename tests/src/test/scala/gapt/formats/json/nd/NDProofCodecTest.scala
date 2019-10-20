@@ -3,7 +3,7 @@ package gapt.formats.json.nd
 import gapt.proofs.lk.transformations.LKToND
 import gapt.proofs.nd.NDProof
 import org.specs2.mutable.Specification
-import sequence.LinearExampleProof
+import gapt.examples.sequence.LinearExampleProof
 
 class NDProofCodecTest extends Specification {
   import gapt.formats.json.nd.NDProofCodec._

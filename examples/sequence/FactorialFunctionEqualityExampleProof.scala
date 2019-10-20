@@ -1,4 +1,4 @@
-package sequence
+package gapt.examples.sequence
 
 import gapt.expr._
 import gapt.expr.formula.All

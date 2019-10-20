@@ -1,19 +1,19 @@
 package gapt
 
-import sequence.FactorialFunctionEqualityExampleProof
-import sequence.FactorialFunctionEqualityExampleProof2
-import sequence.LinearCutExampleProof
-import sequence.LinearEqExampleProof
-import sequence.LinearExampleProof
-import sequence.ProofSequence
-import sequence.SquareDiagonalExampleProof
-import sequence.SquareEdges2DimExampleProof
-import sequence.SquareEdgesExampleProof
-import sequence.SumExampleProof
-import sequence.SumOfOnesExampleProof
-import sequence.SumOfOnesF2ExampleProof
-import sequence.SumOfOnesFExampleProof
-import sequence.UniformAssociativity3ExampleProof
+import gapt.examples.sequence.FactorialFunctionEqualityExampleProof
+import gapt.examples.sequence.FactorialFunctionEqualityExampleProof2
+import gapt.examples.sequence.LinearCutExampleProof
+import gapt.examples.sequence.LinearEqExampleProof
+import gapt.examples.sequence.LinearExampleProof
+import gapt.examples.sequence.ProofSequence
+import gapt.examples.sequence.SquareDiagonalExampleProof
+import gapt.examples.sequence.SquareEdges2DimExampleProof
+import gapt.examples.sequence.SquareEdgesExampleProof
+import gapt.examples.sequence.SumExampleProof
+import gapt.examples.sequence.SumOfOnesExampleProof
+import gapt.examples.sequence.SumOfOnesF2ExampleProof
+import gapt.examples.sequence.SumOfOnesFExampleProof
+import gapt.examples.sequence.UniformAssociativity3ExampleProof
 
 package object examples {
   val proofSequences = Seq[ProofSequence](

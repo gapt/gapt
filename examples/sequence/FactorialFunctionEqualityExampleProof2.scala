@@ -1,4 +1,4 @@
-package sequence
+package gapt.examples.sequence
 
 import gapt.expr.formula.fol.{ FOLConst, FOLFunction, FOLTerm, FOLVar }
 import gapt.expr.formula.hol.universalClosure
