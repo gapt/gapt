@@ -450,7 +450,7 @@ class AllQuantifiedConditionalAxiomHelper(
    */
   def getAxiom: FOLFormula = {
     // TODO: refactor apply_conditional_equality, combine duplicate code
-    val impl_chain = ( conditions :\ consequence )( ( c, acc ) => Imp( c, acc ) )
+    val impl_chain = conditions.foldRight( consequence )( ( c, acc ) => Imp( c, acc ) )
 
     All.Block( variables, impl_chain )
   }
@@ -465,7 +465,7 @@ class AllQuantifiedConditionalAxiomHelper(
 
     // construct implication with instantiated conditions and consequence
     val ( instantiated_conditions, instantiated_consequence ) =
-      ( ( conditions -> consequence ) /: variables.indices ) { ( acc, i ) =>
+      variables.indices.foldLeft( conditions -> consequence ) { ( acc, i ) =>
         val substitute = ( x: FOLFormula ) => FOLSubstitution( variables( i ), expressions( i ) )( x )
         ( acc._1.map( substitute ).asInstanceOf[List[FOLAtom]], substitute( acc._2 ) )
       }
@@ -502,7 +502,7 @@ class AllQuantifiedConditionalAxiomHelper(
 
       case head :: tail =>
         val ax = LogicalAxiom( head )
-        val impl_chain = ( tail :\ result )( ( c, acc ) => Imp( c, acc ) )
+        val impl_chain = tail.foldRight( result )( ( c, acc ) => Imp( c, acc ) )
 
         val s2 = apply_conditional_equality( tail, result, p )
         ImpLeftRule( ax, head, s2, impl_chain )
@@ -981,7 +981,7 @@ object FactorialFunctionEqualityExampleProof2 extends ProofSequence {
      *
      */
     def product( k: Int ) =
-      ( one /: ( k until n + 1 ).reverse ) { ( acc: FOLTerm, i: Int ) =>
+      ( k until n + 1 ).reverse.foldLeft( one ) { ( acc: FOLTerm, i: Int ) =>
         m( acc, num( i ) )
       }
 
