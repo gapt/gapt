@@ -1,7 +1,6 @@
 package gapt.integration_tests
 
 import gapt.cutintro._
-import gapt.examples.LinearExampleProof
 import gapt.expr._
 import gapt.expr.formula.fol.Numeral
 import gapt.expr.formula.hol.containsQuantifier
@@ -16,6 +15,7 @@ import gapt.proofs.lk.util.quantRulesNumber
 import gapt.proofs.lk.util.weakQuantRulesNumber
 import gapt.provers.escargot.Escargot
 import org.specs2.mutable._
+import sequence.LinearExampleProof
 
 class CutIntroTest extends Specification {
   "deltatable method" in {

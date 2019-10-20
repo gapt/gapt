@@ -4,6 +4,8 @@ import gapt.cutintro.{ CutIntroduction, ReforestMethod }
 import gapt.grammars.reforest.Reforest
 import gapt.proofs.expansion.InstanceTermEncoding
 import gapt.utils.verbose
+import sequence.LinearExampleProof
+import sequence.SumExampleProof
 
 object ReforestDemo extends Script {
   val ( lang, _ ) = InstanceTermEncoding(
