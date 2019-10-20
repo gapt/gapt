@@ -991,41 +991,6 @@ object FactorialFunctionEqualityExampleProof2 extends ProofSequence {
         m( acc, num( i ) )
       }
 
-    /*val axiom = ReflexivityAxiom( product( 1 ) )
-
-    val p1 = ParamodulationRightRule( LogicalAxiom( uR( product( 1 ) ) ),
-     uR( product( 1 ) ), axiom, Eq( product( 1 ), product( 1 ) ), Eq( m( product( 1 ), one ), product( 1 ) ) )
-    val p2 = ParamodulationRightRule( LogicalAxiom( f0 ), f0, p1, Eq( m( product( 1 ), one ), product( 1 ) ),
-     Eq( m( product( 1 ), f( zero ) ), product( 1 ) ) )
-    val p3 = ParamodulationRightRule( LogicalAxiom( g0( product( 1 ) ) ),
-     g0( product( 1 ) ), p2, Eq( m( product( 1 ), f( zero ) ), product( 1 ) ),
-      Eq( m( product( 1 ), f( zero ) ), g( product( 1 ), zero ) ) )
-    val p4 = ForallLeftRule( p3, All( x, uR( x ) ), product( 1 ) )
-    val p5 = ForallLeftRule( p4, All( x, g0( x ) ), product( 1 ) )
-
-    val p6 = ( 0 until n ).foldLeft[LKProof]( p5 ) { ( acc: LKProof, i: Int ) =>
-      val tmp1 = ParamodulationRightRule( LogicalAxiom( ASSO( product( i + 2 ), num( i + 1 ), f( num( i ) ) ) ),
-       ASSO( product( i + 2 ), num( i + 1 ), f( num( i ) ) ), acc,
-       Eq( m( product( i + 1 ), f( num( i ) ) ), g( product( i + 1 ), num( i ) ) ),
-       Eq( m( product( i + 2 ), m( num( i + 1 ), f( num( i ) ) ) ), g( product( i + 1 ), num( i ) ) ) )
-      val tmp2 = ForallLeftBlock( tmp1, univclosure( ASSO( x, y, z ) ),
-       List( product( i + 2 ), num( i + 1 ), f( num( i ) ) ) )
-      val tmp3 = ParamodulationRightRule( LogicalAxiom( fST( num( i ) ) ), fST( num( i ) ),
-       tmp2, Eq( m( product( i + 2 ), m( num( i + 1 ), f( num( i ) ) ) ), g( product( i + 1 ), num( i ) ) ),
-        Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 1 ), num( i ) ) ) )
-      val tmp4 = ParamodulationRightRule( LogicalAxiom( gST( product( i + 2 ), num( i ) ) ),
-       gST( product( i + 2 ), num( i ) ), tmp3, Eq( m( product( i + 2 ), f( num( i + 1 ) ) ),
-        g( product( i + 1 ), num( i ) ) ), Eq( m( product( i + 2 ), f( num( i + 1 ) ) ),
-        g( product( i + 2 ), num( i + 1 ) ) ) )
-      val tmp5 = ForallLeftRule( tmp4, univclosure( fST( x ) ), num( i ) )
-      val tmp6 = ForallLeftBlock( tmp5, univclosure( gST( x, y ) ), List( product( i + 2 ), num( i ) ) )
-      ContractionMacroRule( tmp6 )
-    }
-
-    val p7 = ParamodulationRightRule( LogicalAxiom( uL( f( num( n ) ) ) ),
-     uL( f( num( n ) ) ), p6, Eq( m( one, f( num( n ) ) ), g( one, num( n ) ) ), target( num( n ) ) )
-    WeakeningContractionMacroRule( ForallLeftRule( p7, All( x, uL( x ) ), f( num( n ) ) ), endSequent( n ) )
-*/
     val p1 = ( ProofBuilder
       c ReflexivityAxiom( product( 1 ) )
       u ( WeakeningLeftMacroRule( _, Seq( uR( product( 1 ) ), f0, g0( product( 1 ) ) ) ) )
