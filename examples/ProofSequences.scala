@@ -494,27 +494,6 @@ class AllQuantifiedConditionalAxiomHelper(
       equalities.map { e => LogicalAxiom( e ) -> e }.toMap,
       result,
       p )
-
-  /**
-   * Iterates the implication left rule.
-   *
-   * @param left Proofs P₁, ..., Pₙ, where pᵢ has end-sequent Γᵢ ⇒ Δᵢ, Fᵢ for i = 1, ..., n.
-   * @param premises Associates Pᵢ with Fᵢ.
-   * @param conclusion A formula C.
-   * @param right A proof with end-sequent C, Π ⇒ Λ.
-   * @return A proof of the end-sequent F₁ → ... → Fₙ → C, Γ₁, ...,Γₙ,Π ⇒ Δ₁,...,Δₙ, Λ.
-   */
-  private def implicationLeftMacro(
-    left:       Seq[LKProof],
-    premises:   Map[LKProof, Formula],
-    conclusion: Formula,
-    right:      LKProof ): LKProof = {
-    left.foldRight( ( conclusion, right ) ) {
-      case ( l, ( c, r ) ) =>
-        val p = premises( l )
-        ( Imp( p, c ), ImpLeftRule( l, p, r, c ) )
-    }._2
-  }
 }
 
 object UniformAssociativity3ExampleProof extends ProofSequence {
@@ -722,24 +701,12 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
     ContractionLeftRule( p3, refl_ax() )
   }
 
-  def apply_conditional_equality( equalities: List[FOLFormula], result: FOLFormula, p: LKProof ): LKProof = {
-    equalities match {
-      case Nil => p
-      case head :: Nil => {
-        val ax = LogicalAxiom( head )
-        ImpLeftRule( ax, head, p, result )
-      }
-      case head :: tail => {
-        val ax = LogicalAxiom( head )
-        var impl_chain = result
-        for ( elem <- tail.reverse ) {
-          impl_chain = Imp( elem, impl_chain )
-        }
-        val s2 = apply_conditional_equality( tail, result, p )
-        ImpLeftRule( ax, head, s2, impl_chain )
-      }
-    }
-  }
+  private def apply_conditional_equality( equalities: List[FOLFormula], result: FOLFormula, p: LKProof ): LKProof =
+    implicationLeftMacro(
+      equalities.map { LogicalAxiom },
+      equalities.map { e => LogicalAxiom( e ) -> e }.toMap,
+      result,
+      p )
 }
 
 /**
@@ -1048,5 +1015,28 @@ object FactorialFunctionEqualityExampleProof2 extends ProofSequence {
       ASSO( x, y, z ) ) map universalClosure.apply,
     List(
       target( num( n ) ) ) )
+}
+
+object implicationLeftMacro {
+  /**
+   * Iterates the implication left rule.
+   *
+   * @param left Proofs P₁, ..., Pₙ, where pᵢ has end-sequent Γᵢ ⇒ Δᵢ, Fᵢ for i = 1, ..., n.
+   * @param premises Associates Pᵢ with Fᵢ.
+   * @param conclusion A formula C.
+   * @param right A proof with end-sequent C, Π ⇒ Λ.
+   * @return A proof of the end-sequent F₁ → ... → Fₙ → C, Γ₁, ...,Γₙ,Π ⇒ Δ₁,...,Δₙ, Λ.
+   */
+  def apply(
+    left:       Seq[LKProof],
+    premises:   Map[LKProof, Formula],
+    conclusion: Formula,
+    right:      LKProof ): LKProof = {
+    left.foldRight( ( conclusion, right ) ) {
+      case ( l, ( c, r ) ) =>
+        val p = premises( l )
+        ( Imp( p, c ), ImpLeftRule( l, p, r, c ) )
+    }._2
+  }
 }
 
