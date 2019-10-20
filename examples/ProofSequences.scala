@@ -6,6 +6,7 @@ import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Imp
+import gapt.expr.formula.Formula
 import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLFormula
@@ -448,12 +449,8 @@ class AllQuantifiedConditionalAxiomHelper(
   /**
    * Returns the full axiom
    */
-  def getAxiom: FOLFormula = {
-    // TODO: refactor apply_conditional_equality, combine duplicate code
-    val impl_chain = conditions.foldRight( consequence )( ( c, acc ) => Imp( c, acc ) )
-
-    All.Block( variables, impl_chain )
-  }
+  val getAxiom: FOLFormula =
+    All.Block( variables, Imp.Block( conditions, consequence ) ).asInstanceOf[FOLFormula]
 
   /**
    * Use axiom with given expressions in proof.
@@ -491,23 +488,32 @@ class AllQuantifiedConditionalAxiomHelper(
     ContractionLeftRule( p2, ax )
   }
 
-  private def apply_conditional_equality( equalities: List[FOLAtom], result: FOLFormula, p: LKProof ): LKProof = {
-    equalities match {
-      case Nil =>
-        p // no conditions at all
+  private def apply_conditional_equality( equalities: List[FOLAtom], result: FOLFormula, p: LKProof ): LKProof =
+    implicationLeftMacro(
+      equalities.map { LogicalAxiom },
+      equalities.map { e => LogicalAxiom( e ) -> e }.toMap,
+      result,
+      p )
 
-      case head :: Nil =>
-        val ax = LogicalAxiom( head )
-        ImpLeftRule( ax, head, p, result )
-
-      case head :: tail =>
-        val ax = LogicalAxiom( head )
-        val impl_chain = tail.foldRight( result )( ( c, acc ) => Imp( c, acc ) )
-
-        val s2 = apply_conditional_equality( tail, result, p )
-        ImpLeftRule( ax, head, s2, impl_chain )
-
-    }
+  /**
+   * Iterates the implication left rule.
+   *
+   * @param left Proofs P₁, ..., Pₙ, where pᵢ has end-sequent Γᵢ ⇒ Δᵢ, Fᵢ for i = 1, ..., n.
+   * @param premises Associates Pᵢ with Fᵢ.
+   * @param conclusion A formula C.
+   * @param right A proof with end-sequent C, Π ⇒ Λ.
+   * @return A proof of the end-sequent F₁ → ... → Fₙ → C, Γ₁, ...,Γₙ,Π ⇒ Δ₁,...,Δₙ, Λ.
+   */
+  private def implicationLeftMacro(
+    left:       Seq[LKProof],
+    premises:   Map[LKProof, Formula],
+    conclusion: Formula,
+    right:      LKProof ): LKProof = {
+    left.foldRight( ( conclusion, right ) ) {
+      case ( l, ( c, r ) ) =>
+        val p = premises( l )
+        ( Imp( p, c ), ImpLeftRule( l, p, r, c ) )
+    }._2
   }
 }
 
