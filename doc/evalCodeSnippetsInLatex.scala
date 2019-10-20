@@ -67,7 +67,6 @@ class WriterOutputStream( writer: Writer, charset: Charset = Charset.forName( "U
 class ResultHolder( var result: Any )
 class CommandEvaluator {
   val settings = new Settings
-  settings.Yreplsync.value = true
   settings.usejavacp.value = true
 
   sys.props( "scala.shell.prompt" ) = "\ngapt> "

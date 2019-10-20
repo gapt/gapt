@@ -12,7 +12,6 @@ case class GaptRepl() {
   replSettings.usejavacp.value = true
   replSettings.feature.value = true
   replSettings.deprecation.value = true
-  replSettings.Yreplsync.value = true
   replSettings.language.value = {
     import replSettings.language.domain._
     ValueSet( postfixOps, implicitConversions )
