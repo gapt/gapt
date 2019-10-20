@@ -120,7 +120,7 @@ class RecursionSchemeTest extends Specification with SatMatchers {
       val o = FOLConst( "o" )
       val s = FOLFunctionConst( "s", 1 )
       val r = FOLFunctionConst( "r", 1 )
-      val terms = 0 until ( 4 * 4 ) map { Stream.iterate[Expr]( o )( s( _ ) )( _ ) } map { r( _ ) }
+      val terms = 0 until ( 4 * 4 ) map { LazyList.iterate[Expr]( o )( s( _ ) )( _ ) } map { r( _ ) }
 
       val A = FOLConst( "A" )
       val B = FOLFunctionConst( "B", 1 )
@@ -134,7 +134,7 @@ class RecursionSchemeTest extends Specification with SatMatchers {
       val o = FOLConst( "o" )
       val s = FOLFunctionConst( "s", 1 )
       val r = FOLAtomConst( "r", 1 )
-      val terms = 0 until ( 4 * 4 ) map { Stream.iterate[Expr]( o )( s( _ ) )( _ ) } map { r( _ ) }
+      val terms = 0 until ( 4 * 4 ) map { LazyList.iterate[Expr]( o )( s( _ ) )( _ ) } map { r( _ ) }
 
       val A = FOLAtomConst( "A", 0 )
       val B = FOLAtomConst( "B", 1 )
