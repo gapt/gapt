@@ -235,10 +235,9 @@ lazy val cli = project.in( file( "cli" ) ).
   settings( commonSettings: _* ).
   settings(
     mainClass := Some( "gapt.cli.CLIMain" ),
-
+    scalacOptions in Compile += "-Xfatal-warnings",
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value ),
-
     bintrayReleaseOnPublish := false,
     packagedArtifacts := Map() )
 
@@ -250,7 +249,7 @@ lazy val testing = project.in( file( "testing" ) ).
   settings(
     name := "gapt-testing",
     description := "gapt extended regression tests",
-
+    scalacOptions in Compile += "-Xfatal-warnings",
     bintrayReleaseOnPublish := false,
     packagedArtifacts := Map() )
 
