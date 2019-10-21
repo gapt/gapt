@@ -1,6 +1,7 @@
 import ammonite.ops.{read => _, write => _, _}
 import gapt._
 import gapt.examples._
+import gapt.examples.sequence._
 import gapt.expr._
 import gapt.expr.ty._
 import gapt.expr.formula._
