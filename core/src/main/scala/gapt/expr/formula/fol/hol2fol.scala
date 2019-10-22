@@ -18,8 +18,6 @@ import gapt.expr.formula.constants.OrC
 import gapt.expr.formula.fol
 import gapt.expr.formula.hol.HOLFunction
 import gapt.expr.formula.hol._
-import gapt.expr.subst.FOLSubstitution
-import gapt.expr.subst.Substitution
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.To
 import gapt.expr.ty.Ty
@@ -353,70 +351,71 @@ class undoReplaceAbstractions {
  * you can change them back.
  */
 object changeTypeIn {
+
   type TypeMap = Map[String, Ty]
 
-  /* TODO: this broken, since e.g. for (a b) q with type(q)=alpha, type(b)=beta then type(a)=beta > (alpha > gamma)
-     we need to actually change the type of a when changing the type of q
-    */
-  /*
-  def oldapply(e:Expr, tmap : TypeMap) : Expr = e match {
-    case Var(name, ta) =>
-      if (tmap.contains(name.toString()))
-        e.factory.createVar(name, tmap(name.toString()))
-      else
-        e
-    case App(s,t) => s.factory.createApp(oldapply(s,tmap), oldapply(t,tmap))
-    case Abs(x,t) => t.factory.createAbs(oldapply(x,tmap).asInstanceOf[Var], oldapply(t,tmap))
-  } */
-
-  //Remark: this only works for changing the type of leaves in the term tree!
-  def apply( e: Expr, tmap: TypeMap ): Expr = e match {
-    case Var( name, ta ) => if ( tmap contains name.toString ) Var( name, tmap( name.toString ) ) else
-      Var( name, ta )
-    case Const( name, ta, _ ) => if ( tmap contains name.toString ) Const( name, tmap( name.toString ) ) else
-      Const( name, ta )
-    case HOLFunction( Const( f, exptype, _ ), args ) =>
-      val args_ = args.map( x => apply( x, tmap ) )
-      val freturntype = exptype match { case FunctionType( r, _ ) => r }
-      val f_ = Const( f, FunctionType( freturntype, args.map( _.ty ) ) )
-      HOLFunction( f_, args_ )
-    case HOLFunction( Var( f, exptype ), args ) =>
-      val args_ = args.map( x => apply( x, tmap ) )
-      val freturntype = exptype match { case FunctionType( r, _ ) => r }
-      val f_ = Var( f, FunctionType( freturntype, args.map( _.ty ) ) )
-      HOLFunction( f_, args_ )
-    case Atom( Const( f, exptype, _ ), args ) =>
-      val args_ = args.map( x => apply( x, tmap ) )
-      val f_ = Const( f, FunctionType( To, args.map( _.ty ) ) )
-      Atom( f_, args_ )
-    case Atom( Var( f, exptype ), args ) =>
-      val args_ = args.map( x => apply( x, tmap ) )
-      val f_ = Var( f, FunctionType( To, args.map( _.ty ) ) )
-      Atom( f_, args_ )
-    case Neg( x )    => Neg( apply( x, tmap ) )
-    case And( s, t ) => And( apply( s, tmap ), apply( t, tmap ) )
-    case Or( s, t )  => Or( apply( s, tmap ), apply( t, tmap ) )
-    case Imp( s, t ) => Imp( apply( s, tmap ), apply( t, tmap ) )
-    case All( x, t ) => All( apply( x.asInstanceOf[Var], tmap ).asInstanceOf[Var], apply( t, tmap ) )
-    case Ex( x, t )  => Ex( apply( x.asInstanceOf[Var], tmap ).asInstanceOf[Var], apply( t, tmap ) )
-    case Abs( x, t ) => Abs( apply( x.asInstanceOf[Var], tmap ).asInstanceOf[Var], apply( t, tmap ) )
-    case App( s, t ) => App( apply( s, tmap ), apply( t, tmap ) )
-    case _           => throw new Exception( "Unhandled case of a HOL Formula! " + e )
-
+  /**
+   * Maps types of constants and variables to the given types.
+   *
+   * @param expression The expression in which the types are to be replaced.
+   * @param typeMap Specifies the names of constants and variables whose type
+   *                is to be replaced by the associated type.
+   * @return An expression obtained from `expression` by replacing the types of leaf-occurrences of variables and
+   *         constants by the given types. The types of inner constants and variables are changed according
+   *         to the new types of their arguments.
+   */
+  def apply( expression: Expr, typeMap: TypeMap ): Expr = expression match {
+    case v @ Var( n, _ ) =>
+      typeMap.get( n ).map { Var( n, _ ) }.getOrElse( v )
+    case c @ Const( n, _, _ ) =>
+      typeMap.get( n ).map { Const( n, _ ) }.getOrElse( c )
+    case HOLFunction( Const( f, FunctionType( r, _ ), _ ), as ) =>
+      val newAs = as.map { changeTypeIn( _, typeMap ) }
+      val newTs = newAs.map { _.ty }
+      HOLFunction( Const( f, FunctionType( r, newTs ) ), newAs )
+    case HOLFunction( Var( x, FunctionType( r, _ ) ), as ) =>
+      val newAs = as.map { changeTypeIn( _, typeMap ) }
+      val newTs = newAs.map { _.ty }
+      HOLFunction( Var( x, FunctionType( r, newTs ) ), newAs )
+    case Atom( Const( f, FunctionType( r, _ ), _ ), as ) =>
+      val newAs = as.map { changeTypeIn( _, typeMap ) }
+      val newTs = newAs.map { _.ty }
+      Atom( Const( f, FunctionType( r, newTs ) ), newAs )
+    case Atom( Var( f, FunctionType( r, _ ) ), as ) =>
+      val newAs = as.map { changeTypeIn( _, typeMap ) }
+      val newTs = newAs.map { _.ty }
+      Atom( Const( f, FunctionType( r, newTs ) ), newAs )
+    case Neg( x ) =>
+      Neg( changeTypeIn( x, typeMap ) )
+    case And( s, t ) =>
+      And( changeTypeIn( s, typeMap ), changeTypeIn( t, typeMap ) )
+    case Or( s, t ) =>
+      Or( changeTypeIn( s, typeMap ), changeTypeIn( t, typeMap ) )
+    case Imp( s, t ) =>
+      Imp( changeTypeIn( s, typeMap ), changeTypeIn( t, typeMap ) )
+    case All( x, f ) =>
+      val newX = typeMap.get( x.name ).map { Var( x.name, _ ) }.getOrElse( x )
+      All( newX, changeTypeIn( f, typeMap ) )
+    case Ex( x, f ) =>
+      val newX = typeMap.get( x.name ).map { Var( x.name, _ ) }.getOrElse( x )
+      Ex( newX, changeTypeIn( f, typeMap ) )
+    case Abs( x, t ) =>
+      val newX = typeMap.get( x.name ).map { Var( x.name, _ ) }.getOrElse( x )
+      Abs( newX, changeTypeIn( t, typeMap ) )
+    case App( s, t ) =>
+      App( changeTypeIn( s, typeMap ), changeTypeIn( t, typeMap ) )
+    case _ =>
+      throw new Exception( "Unhandled case of a HOL Formula! " + expression )
   }
-  def apply( e: FOLTerm, tmap: TypeMap ): FOLTerm = apply( e.asInstanceOf[Expr], tmap ).asInstanceOf[FOLTerm]
-  def apply( e: Formula, tmap: TypeMap ): Formula = apply( e.asInstanceOf[Expr], tmap ).asInstanceOf[Formula]
-  def apply( e: FOLFormula, tmap: TypeMap ): FOLFormula = apply( e.asInstanceOf[Expr], tmap ).asInstanceOf[FOLFormula]
+
+  /**
+   * @see `changeTypeIn.apply( Expr, TypeMap )`.
+   */
+  def apply( e: Formula, tmap: TypeMap ): Formula =
+    changeTypeIn( e.asInstanceOf[Expr], tmap ).asInstanceOf[Formula]
+
   def apply( fs: HOLSequent, tmap: TypeMap ): HOLSequent = HOLSequent(
-    fs.antecedent.map( x => apply( x, tmap ) ),
-    fs.succedent.map( x => apply( x, tmap ) ) )
-
-  //different names bc of type erasure
-  private def holsub( s: Substitution, tmap: TypeMap ): Substitution = Substitution(
-    s.map.map( x =>
-      ( apply( x._1, tmap ).asInstanceOf[Var], apply( x._2, tmap ) ) ) )
-
-  private def folsub( s: FOLSubstitution, tmap: TypeMap ): FOLSubstitution = FOLSubstitution( s.folmap.map( x =>
-    ( apply( x._1, tmap ).asInstanceOf[FOLVar], apply( x._2, tmap ) ) ) )
+    fs.antecedent.map( x => changeTypeIn( x, tmap ) ),
+    fs.succedent.map( x => changeTypeIn( x, tmap ) ) )
 }
 
