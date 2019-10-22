@@ -306,16 +306,10 @@ class replaceAbstractions {
     // identical up to variant use the same symbol
     case Abs( v, exp ) =>
       //systematically rename free variables for the index
-      //val normalizeda = e.variant(new VariantGenerator(
-      // new {var idd = 0; def nextId = {idd = idd+1; idd}}, "myVariantName"))
       //TODO: check if variable renaming is really what we want
       val ( normalizeda, mapping ) = normalizeFreeVariables( e )
-      //println("e: "+e)
-      //println("norm: "+normalizeda)
       //update scope with a new constant if neccessary
-      //println(scope)
       val scope_ = if ( scope contains normalizeda ) scope else scope + ( ( normalizeda, "q_{" + id.nextId + "}" ) )
-      //println(scope_)
       val sym = scope_( normalizeda )
       val freeVarList = freeVariables( e ).toList.sortBy( _.toString ).asInstanceOf[List[Expr]]
       if ( freeVarList.isEmpty )
