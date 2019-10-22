@@ -88,22 +88,14 @@ class hol2folTest extends Specification {
 
   "Type replacement" should {
     "work for simple terms" in {
-      skipped( "TODO: fix this!" )
-      val fterm1 = FOLFunction( "f", List(
-        FOLConst( "q_1" ),
-        FOLConst( "c" ) ) )
-
-      val fterm2 = All(
-        FOLVar( "x" ),
-        FOLAtom(
-          "P",
-          List(
-            FOLVar( "q_1" ),
-            FOLConst( "q_1" ) ) ) )
-
-      val hterm1 = changeTypeIn( fterm1, Map[String, Ty]( ( "q_1", Ti ->: Ti ) ) )
-      val hterm2 = changeTypeIn( fterm2, Map[String, Ty]( ( "q_1", Ti ->: Ti ) ) )
-      ok
+      val folTerm: FOLTerm = fot"f q_1 c"
+      val holTerm = changeTypeIn( folTerm, Map[String, Ty]( ( "q_1", Ti ->: Ti ) ) )
+      holTerm mustEqual le"(f : (i > i) > i > i) (q_1 : i > i) c"
+    }
+    "work for simple formulas" in {
+      val folFormula: FOLFormula = fof"!x (P #v( q_1 : i) #c( q_1 : i ) )"
+      val holFormula = changeTypeIn( folFormula, Map[String, Ty]( ( "q_1", Ti ->: Ti ) ) )
+      holFormula mustEqual hof"!x ((P : (i > i) > (i > i) > o) #v( q_1 : i > i) #c( q_1 : i > i) )"
     }
   }
 }
