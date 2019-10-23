@@ -15,6 +15,7 @@ import gapt.expr.formula.hol.HOLFunction
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
 import gapt.expr.ty.Ty
+import gapt.utils.Counter
 import org.specs2.mutable._
 
 class hol2folTest extends Specification {

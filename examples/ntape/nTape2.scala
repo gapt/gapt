@@ -1,13 +1,14 @@
 package gapt.examples
 
 import gapt.expr.formula.Atom
-import gapt.expr.formula.fol.{ Counter, replaceAbstractions }
+import gapt.expr.formula.fol.replaceAbstractions
 import gapt.expr.ty.To
 import gapt.expr.{ Abs, Const, Expr }
 import gapt.formats.ClasspathInputFile
 import gapt.proofs.ceres_omega.AnalysisWithCeresOmega
 import gapt.formats.llk.loadLLK
 import gapt.proofs.expansion.{ ETAnd, ETImp, ETSkolemQuantifier, ETWeakQuantifier, ExpansionProof, ExpansionTree }
+import gapt.utils.Counter
 
 /**
  * Version 2 of the higher-order n-Tape proof.

@@ -23,14 +23,7 @@ import gapt.expr.ty.To
 import gapt.expr.ty.Ty
 import gapt.expr.util.freeVariables
 import gapt.proofs.HOLSequent
-
-class Counter {
-  private var state = 0
-  def nextId(): Int = {
-    state = state + 1
-    state
-  }
-}
+import gapt.utils.Counter
 
 object reduceHolToFol extends reduceHolToFol
 /**
