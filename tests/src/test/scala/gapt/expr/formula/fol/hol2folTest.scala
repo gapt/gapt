@@ -12,9 +12,13 @@ import gapt.expr.formula.Atom
 import gapt.expr.formula.Imp
 import gapt.expr.formula.constants.ImpC
 import gapt.expr.formula.hol.HOLFunction
+import gapt.expr.subst.Substitution
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
 import gapt.expr.ty.Ty
+import gapt.expr.util
+import gapt.expr.util.constants
+import gapt.expr.util.subTerms
 import gapt.utils.Counter
 import org.specs2.mutable._
 
@@ -97,6 +101,65 @@ class hol2folTest extends Specification {
       val folFormula: FOLFormula = fof"!x (P #v( q_1 : i) #c( q_1 : i ) )"
       val holFormula = changeTypeIn( folFormula, Map[String, Ty]( ( "q_1", Ti ->: Ti ) ) )
       holFormula mustEqual hof"!x ((P : (i > i) > (i > i) > o) #v( q_1 : i > i) #c( q_1 : i > i) )"
+    }
+  }
+
+  "replacing abstractions" should {
+    "replace outermost abstractions by constants" in {
+      val t: Expr = le"^x ^y ^z (x y z)"
+      val r = replaceAbstractions( t )
+      r must beAnInstanceOf[Const]
+    }
+    "types of defining constants should agree with defined abstraction" in {
+      val t: Expr = le"^(x:i) ^(y:i) ^(z:i) (#c(f:i>i>i>i) x y z)"
+      val c @ Const( _, _, _ ) = replaceAbstractions( t )
+      c.ty mustEqual ty"i > i > i >i"
+    }
+    "defining constant must be applied to free variables of defined abstraction" in {
+      val t: Expr = le"^(x:i>i>i) (x #v(a:i) #v(b:i))"
+      val Apps( _: Const, a :: b :: Nil ) = replaceAbstractions( t )
+      a mustEqual Var( "a", Ti )
+      b mustEqual Var( "b", Ti )
+    }
+    "replace all outermost abstractions by constants" in {
+      val t: Expr = le"(^x x)(^x (f x))"
+      val r = replaceAbstractions( t )
+      subTerms( r ) foreach { case _: Abs => failure; case _ => }
+      ok
+    }
+    "should introduce one constant per abstraction modulo uniformity" in {
+      val t: Expr = le"#c(f: (i>i)>(i>i)>i) (^x x) (^x x)"
+      val Apps( _: Const, ( c1: Const ) :: ( c2: Const ) :: Nil ) = replaceAbstractions( t )
+      c1 mustEqual c2
+    }
+    "introduced constants must be mapped to closure of their abstraction" in {
+      skipped
+      val t: Expr = le"(^(x:i>i) x)(^x (#v(f:i>i) x))"
+      val ( d, App( c1: Const, c2: Const ) ) = replaceAbstractions( t, Map(), new Counter )
+      d.get( c1 ) mustEqual le"^(x:i>i) x"
+      d.get( c2 ) mustEqual le"^(f:i>i) ^x (f x)"
+    }
+    "no unnecessary constants should be introduced" in {
+      skipped
+      val t: Expr = le"(^(x:i>i) x)(^x (#v(f:i>i) x))"
+      val ( d, r @ App( c1: Const, c2: Const ) ) = replaceAbstractions( t, Map(), new Counter )
+      d.keys mustEqual Set( c1, c2 )
+      util.constants( r ) mustEqual Set( c1, c2 )
+    }
+    "replace non-uniform abstracts by different constants" in {
+      val t: Expr = le"#v(f:(i>i)>((i>i)>(i>i))>i) (^x x) (^x x)"
+      val Apps( _, ( c1: Const ) :: ( c2: Const ) :: Nil ) = replaceAbstractions( t )
+      c1 must_!= c2
+    }
+    "keep introducing new constants" in {
+      val t1: Expr = le"^x x"
+      val counter = new Counter
+      val ( d1, c1: Const ) = replaceAbstractions( t1, Map(), counter )
+      val t2: Expr = le"^(x:i>i) x"
+      val ( d2, c2: Const ) = replaceAbstractions( t2, d1, counter )
+      c1 must_!= c2
+      d1.size mustEqual 1
+      d2.size mustEqual 2
     }
   }
 }
