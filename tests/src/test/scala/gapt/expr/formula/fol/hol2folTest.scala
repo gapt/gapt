@@ -162,4 +162,11 @@ class hol2folTest extends Specification {
       d2.size mustEqual 2
     }
   }
+  "undoing abstractions should" in {
+    "restore restore original expression" in {
+      val t: Expr = le"#v(f:(i>i)>((i>i)>(i>i))>i) (^x x) (^x x)"
+      val ( d, r ) = replaceAbstractions( t, Map(), new Counter )
+      undoReplaceAbstractions( r, d ) mustEqual t
+    }
+  }
 }
