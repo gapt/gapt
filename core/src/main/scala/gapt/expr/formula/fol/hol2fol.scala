@@ -315,28 +315,43 @@ class replaceAbstractions {
   }
 }
 
-object undoReplaceAbstractions extends undoReplaceAbstractions
 /**
- * Replaces the constants introduced by [[replaceAbstractions]] with the original lambda-abstractions.
+ * Replaces the constants introduced by [[replaceAbstractions]] with the
+ * original lambda-abstractions.
  */
-class undoReplaceAbstractions {
+object undoReplaceAbstractions {
+
   import gapt.expr.formula.fol.replaceAbstractions.ConstantsMap
 
   def apply( fs: HOLSequent, map: ConstantsMap ): HOLSequent = HOLSequent(
     fs.antecedent.map( apply( _, map ) ),
     fs.succedent.map( apply( _, map ) ) )
-  def apply( f: Formula, map: ConstantsMap ): Formula = apply( f.asInstanceOf[Expr], map ).asInstanceOf[Formula]
-  def apply( e: Expr, map: ConstantsMap ): Expr = {
-    val stringsmap = map.map( x => ( x._2.toString, x._1 ) ) //inverting the map works because the symbols are unique
-    HOLPosition.getPositions( e ).foldLeft( e )( ( exp, position ) =>
-      //we check if the position is a constant with an abstraction symbol
-      e( position ) match {
-        case Const( name, _, _ ) if stringsmap.contains( name ) =>
-          //if yes, we replace it by the original expression
-          exp.replace( position, stringsmap( name ) )
-        case _ => exp
-      } )
+
+  def apply( f: Formula, map: ConstantsMap ): Formula =
+    apply( f.asInstanceOf[Expr], map ).asInstanceOf[Formula]
+
+  /**
+   * Replace all occurrences of defined constants by their abstractions.
+   *
+   * @param expression The expression in which definitions are unfolded.
+   * @param abstractionDefinitions The definition to be be unfolded.
+   * @return An expression obtained from `expression` by unfolding all the
+   * constants defined in `h2fDefinitions` by their defining term.
+   */
+  def apply( expression: Expr, abstractionDefinitions: ConstantsMap ): Expr = {
+    val definitions = invertBijectiveMap( abstractionDefinitions )
+    HOLPosition.getPositions( expression ).foldLeft( expression ) {
+      ( e, p ) =>
+        expression( p ) match {
+          case c: Const if definitions.contains( c.name ) =>
+            e.replace( p, definitions( c.name ) )
+          case _ => e
+        }
+    }
   }
+
+  private def invertBijectiveMap[A, B]( map: Map[A, B] ): Map[B, A] =
+    map.map[B, A] { _.swap }
 }
 
 /**
