@@ -316,56 +316,42 @@ object replaceAbstractions {
  */
 class replaceAbstractions( val definitions: Hol2FolDefinitions ) {
 
-  // FIXME Not reversing the list of sequents breaks the nTapeTest
-  def apply( l: List[HOLSequent] ): List[HOLSequent] = {
-    l map { this.apply } reverse
-  }
+  def apply( sequents: List[HOLSequent] ): List[HOLSequent] =
+    sequents map { this.apply }
 
-  def apply( f: HOLSequent ): HOLSequent = {
-    f.map { this.apply }
-  }
+  def apply( sequent: HOLSequent ): HOLSequent =
+    sequent.map { this.apply }
 
   def apply( formula: Formula ): Formula =
-    apply( formula.asInstanceOf[Expr] ).asInstanceOf[Formula]
+    this.apply( formula.asInstanceOf[Expr] ).asInstanceOf[Formula]
 
-  // scope and id are used to give the same names for new functions and constants between different calls of this method
-  def apply( e: Expr ): Expr = e match {
-    case Var( _, _ ) =>
-      e
-    case Const( _, _, _ ) =>
-      e
-    //quantifiers should be kept
-    case All( x, f ) =>
-      val ( e_ ) = this( f )
-      ( All( x, e_.asInstanceOf[Formula] ) )
-    case Ex( x, f ) =>
-      val ( e_ ) = this( f )
-      ( Ex( x, e_.asInstanceOf[Formula] ) )
-    case App( s, t ) =>
-      val ( s1 ) = this( s )
-      val ( t1 ) = this( t )
-      ( App( s1, t1 ) )
-    // This case replaces an abstraction by a function term.
-    // the scope we choose for the variant is the Abs itself as we want all abs
-    // identical up to variant use the same symbol
-    case Abs( v, exp ) =>
-      //systematically rename free variables for the index
-      //TODO: check if variable renaming is really what we want
-      val ( normalizeda, mapping ) = normalizeFreeVariables( e )
-      //update scope with a new constant if neccessary
-      if ( !definitions.toMap.contains( normalizeda ) )
-        definitions += freshConstantName -> normalizeda
-      else ()
-      val sym = definitions.toMap( normalizeda )
-      val freeVarList = freeVariables( e ).toList.sortBy( _.toString ).asInstanceOf[List[Expr]]
-      if ( freeVarList.isEmpty )
-        ( Const( sym, e.ty ) )
-      else {
-        val c = Const( sym, FunctionType( e.ty, freeVarList.map( _.ty ) ) )
-        ( HOLFunction( c, freeVarList ) )
-      }
-    case _ =>
-      throw new Exception( "Unhandled case in abstraction replacement!" + e )
+  def apply( expression: Expr ): Expr = expression match {
+    case App( e1, e2 ) =>
+      App( this.apply( e1 ), this.apply( e2 ) )
+    case _: Abs =>
+      abstractExpression( expression )
+    case _ => expression
+  }
+
+  private def abstractExpression( expression: Expr ): Expr = {
+    //TODO: check if variable renaming is really what we want
+    val ( uniform, _ ) = normalizeFreeVariables( expression )
+    introduceDefinitionIfNecessary( uniform )
+    val definiendum = definitions.definiendum( uniform ).get
+    // FIXME This order on the variables is fragile
+    val freeVars = freeVariables( expression ).toList.sortBy( _.toString )
+    val c = Const( definiendum, FunctionType( expression.ty, freeVars.map( _.ty ) ) )
+    HOLFunction( c, freeVars )
+  }
+
+  private def introduceDefinitionIfNecessary( expression: Expr ): Unit = {
+    definitions.definiendum( expression ).getOrElse {
+      introduceDefinition( expression )
+    }
+  }
+
+  private def introduceDefinition( expression: Expr ): Unit = {
+    definitions += freshConstantName -> expression
   }
 
   private def freshConstantName: String =
