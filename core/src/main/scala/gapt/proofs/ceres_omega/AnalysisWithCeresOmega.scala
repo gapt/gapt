@@ -160,8 +160,8 @@ abstract class AnalysisWithCeresOmega {
    */
   lazy val fol_refutation = {
     val some_rp = try {
-      val css = fol_css //evaluate lazy val, otherwise the thread stays blocked
-      withTimeout( timeout() ) { Prover9.getResolutionProof( css ) }
+      //evaluate lazy val, otherwise the computation takes longer than the times out.
+      fol_css; withTimeout( timeout() ) { Prover9.getResolutionProof( fol_css ) }
     } catch {
       case e: TimeOutException =>
         println( s"Could not refute the clause set within ${timeout()}." )
