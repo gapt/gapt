@@ -141,7 +141,8 @@ abstract class AnalysisWithCeresOmega {
    */
   lazy val ( abstracted_constants_map, fol_css ) = {
     val css_nolabels = preprocessed_css // remove labels from css
-    val ( abs_consts, abs_css ) = replaceAbstractions( css_nolabels )
+    // FIXME Not reversing the list of sequents breaks the nTapeTest
+    val ( abs_consts, abs_css ) = replaceAbstractions( css_nolabels.reverse )
     /* map types to first order*/
     val fol_css = reduceHolToFol( abs_css )
     /* converting to clause form, this is cleaner than casting */
