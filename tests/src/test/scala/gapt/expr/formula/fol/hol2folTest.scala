@@ -169,4 +169,11 @@ class hol2folTest extends Specification {
       undoReplaceAbstractions( r, d ) mustEqual t
     }
   }
+  "reversing lifting of abstractions with free variables should" in {
+    "be beta equivalent to original expression" in {
+      val t: Expr = le"^x #v(a:i)"
+      val ( d, r ) = replaceAbstractions( t, Map(), new Counter )
+      BetaReduction.normalize( undoReplaceAbstractions( r, d ) ) mustEqual t
+    }
+  }
 }
