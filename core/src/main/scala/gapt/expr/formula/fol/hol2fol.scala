@@ -16,6 +16,8 @@ import gapt.expr.formula.constants.ImpC
 import gapt.expr.formula.constants.NegC
 import gapt.expr.formula.constants.OrC
 import gapt.expr.formula.fol
+import gapt.expr.formula.fol.replaceAbstractions.ConstantsMap
+import gapt.expr.formula.fol.replaceAbstractions.Hol2FolDefinitions
 import gapt.expr.formula.hol.HOLFunction
 import gapt.expr.formula.hol._
 import gapt.expr.ty.FunctionType
@@ -24,6 +26,7 @@ import gapt.expr.ty.Ty
 import gapt.expr.util.freeVariables
 import gapt.proofs.HOLSequent
 import gapt.utils.Counter
+import gapt.utils.NameGenerator
 
 object reduceHolToFol extends reduceHolToFol
 /**
@@ -231,7 +234,79 @@ class reduceHolToFol {
 
 }
 
-object replaceAbstractions extends replaceAbstractions
+object replaceAbstractions {
+
+  type ConstantsMap = Map[Expr, String]
+
+  class Hol2FolDefinitions {
+
+    private var definitions: Map[String, Expr] = Map()
+
+    def +=( definition: ( String, Expr ) ): Unit = {
+      definitions += definition
+    }
+
+    def definedConstants: Set[String] =
+      definitions.keySet
+
+    def apply( c: String ): Expr =
+      definitions( c )
+
+    def definiens( c: String ): Option[Expr] =
+      definitions.get( c )
+
+    def definiendum( expr: Expr ): Option[String] =
+      definitions.map[Expr, String] { _.swap }.get( expr )
+
+    def isDefined( c: String ): Boolean =
+      definitions.contains( c )
+
+    def toMap: Map[Expr, String] =
+      definitions.map[Expr, String] { _.swap }
+
+    override def equals( obj: Any ): Boolean =
+      obj match {
+        case o: Hol2FolDefinitions => o.definitions == definitions
+        case _                     => false
+      }
+  }
+
+  def apply( l: List[HOLSequent] ): ( ConstantsMap, List[HOLSequent] ) = {
+    val abstractionReplacer = new replaceAbstractions( new Hol2FolDefinitions )
+    val r = abstractionReplacer( l )
+    ( abstractionReplacer.definitions.toMap, r )
+  }
+
+  def apply( f: HOLSequent, scope: ConstantsMap, id: Counter ): ( ConstantsMap, HOLSequent ) = {
+    val abstractionReplacer =
+      new replaceAbstractions( h2fDefinitionsFromMap( scope ) )
+    val r = abstractionReplacer( f )
+    ( abstractionReplacer.definitions.toMap, r )
+  }
+
+  def apply( e: Expr ): Expr =
+    ( new replaceAbstractions( new Hol2FolDefinitions ) )( e )
+
+  def apply( formula: Formula ): Formula =
+    ( new replaceAbstractions( new Hol2FolDefinitions ) )( formula )
+
+  def apply( e: Expr, scope: ConstantsMap, id: Counter ): ( ConstantsMap, Expr ) = {
+    val abstractionReplacer =
+      new replaceAbstractions( h2fDefinitionsFromMap( scope ) )
+    val r = abstractionReplacer( e )
+    ( abstractionReplacer.definitions.toMap, r )
+  }
+
+  object h2fDefinitionsFromMap {
+    def apply( definitions: Map[Expr, String] ): Hol2FolDefinitions = {
+      val h2fDefinitions = new Hol2FolDefinitions
+      definitions foreach {
+        case ( e, n ) => h2fDefinitions += ( n, e )
+      }
+      h2fDefinitions
+    }
+  }
+}
 
 /**
  * Replace lambda-abstractions by constants.
@@ -239,59 +314,37 @@ object replaceAbstractions extends replaceAbstractions
  * Each abstraction in an [[gapt.proofs.HOLSequent]] is replaced by a separate constant symbol; the used
  * constants are returned in a Map.
  */
-class replaceAbstractions {
-  type ConstantsMap = Map[Expr, String]
+class replaceAbstractions( val definitions: Hol2FolDefinitions ) {
 
-  def apply( l: List[HOLSequent] ): ( ConstantsMap, List[HOLSequent] ) = {
-    val counter = new Counter
-    l.foldLeft( ( Map[Expr, String](), List[HOLSequent]() ) )( ( rec, el ) => {
-      val ( scope_, f ) = rec
-      val ( nscope, rfs ) = replaceAbstractions( el, scope_, counter )
-      ( nscope, rfs :: f )
-
-    } )
+  // FIXME Not reversing the list of sequents breaks the nTapeTest
+  def apply( l: List[HOLSequent] ): List[HOLSequent] = {
+    l map { this.apply } reverse
   }
 
-  def apply( f: HOLSequent, scope: ConstantsMap, id: Counter ): ( ConstantsMap, HOLSequent ) = {
-    val ( scope1, ant ) = f.antecedent.foldLeft( ( scope, List[Formula]() ) )( ( rec, formula ) => {
-      val ( scope_, f ) = rec
-      val ( nscope, nformula ) = replaceAbstractions( formula, scope_, id )
-      ( nscope, nformula.asInstanceOf[Formula] :: f )
-    } )
-    val ( scope2, succ ) = f.succedent.foldLeft( ( scope1, List[Formula]() ) )( ( rec, formula ) => {
-      val ( scope_, f ) = rec
-      val ( nscope, nformula ) = replaceAbstractions( formula, scope_, id )
-      ( nscope, nformula.asInstanceOf[Formula] :: f )
-    } )
-
-    ( scope2, HOLSequent( ant.reverse, succ.reverse ) )
-  }
-
-  def apply( e: Expr ): Expr = {
-    val counter = new Counter
-    apply( e, Map[Expr, String](), counter )._2
+  def apply( f: HOLSequent ): HOLSequent = {
+    f.map { this.apply }
   }
 
   def apply( formula: Formula ): Formula =
     apply( formula.asInstanceOf[Expr] ).asInstanceOf[Formula]
 
   // scope and id are used to give the same names for new functions and constants between different calls of this method
-  def apply( e: Expr, scope: ConstantsMap, id: Counter ): ( ConstantsMap, Expr ) = e match {
+  def apply( e: Expr ): Expr = e match {
     case Var( _, _ ) =>
-      ( scope, e )
+      e
     case Const( _, _, _ ) =>
-      ( scope, e )
+      e
     //quantifiers should be kept
     case All( x, f ) =>
-      val ( scope_, e_ ) = replaceAbstractions( f, scope, id )
-      ( scope_, All( x, e_.asInstanceOf[Formula] ) )
+      val ( e_ ) = this( f )
+      ( All( x, e_.asInstanceOf[Formula] ) )
     case Ex( x, f ) =>
-      val ( scope_, e_ ) = replaceAbstractions( f, scope, id )
-      ( scope_, Ex( x, e_.asInstanceOf[Formula] ) )
+      val ( e_ ) = this( f )
+      ( Ex( x, e_.asInstanceOf[Formula] ) )
     case App( s, t ) =>
-      val ( scope1, s1 ) = replaceAbstractions( s, scope, id )
-      val ( scope2, t1 ) = replaceAbstractions( t, scope1, id )
-      ( scope2, App( s1, t1 ) )
+      val ( s1 ) = this( s )
+      val ( t1 ) = this( t )
+      ( App( s1, t1 ) )
     // This case replaces an abstraction by a function term.
     // the scope we choose for the variant is the Abs itself as we want all abs
     // identical up to variant use the same symbol
@@ -300,19 +353,23 @@ class replaceAbstractions {
       //TODO: check if variable renaming is really what we want
       val ( normalizeda, mapping ) = normalizeFreeVariables( e )
       //update scope with a new constant if neccessary
-      val scope_ = if ( scope contains normalizeda ) scope else scope + ( ( normalizeda, "q_{" + id.nextId + "}" ) )
-      val sym = scope_( normalizeda )
+      if ( !definitions.toMap.contains( normalizeda ) )
+        definitions += freshConstantName -> normalizeda
+      else ()
+      val sym = definitions.toMap( normalizeda )
       val freeVarList = freeVariables( e ).toList.sortBy( _.toString ).asInstanceOf[List[Expr]]
       if ( freeVarList.isEmpty )
-        ( scope_, Const( sym, e.ty ) )
+        ( Const( sym, e.ty ) )
       else {
         val c = Const( sym, FunctionType( e.ty, freeVarList.map( _.ty ) ) )
-        ( scope_, HOLFunction( c, freeVarList ) )
+        ( HOLFunction( c, freeVarList ) )
       }
     case _ =>
       throw new Exception( "Unhandled case in abstraction replacement!" + e )
-
   }
+
+  private def freshConstantName: String =
+    ( new NameGenerator( definitions.definedConstants ) ).freshWithIndex { n => s"q_{${n + 1}}" }
 }
 
 /**
