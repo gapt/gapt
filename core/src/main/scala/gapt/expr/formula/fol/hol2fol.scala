@@ -326,6 +326,11 @@ class replaceAbstractions( val definitions: Hol2FolDefinitions ) {
     this.apply( formula.asInstanceOf[Expr] ).asInstanceOf[Formula]
 
   def apply( expression: Expr ): Expr = expression match {
+    // leave quantifiers intact
+    case Ex( v, f ) =>
+      Ex( v, this.apply( f ) )
+    case All( v, f ) =>
+      All( v, this.apply( f ) )
     case App( e1, e2 ) =>
       App( this.apply( e1 ), this.apply( e2 ) )
     case _: Abs =>

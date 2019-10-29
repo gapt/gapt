@@ -9,6 +9,7 @@ import gapt.expr.formula
 import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Atom
+import gapt.expr.formula.Formula
 import gapt.expr.formula.Imp
 import gapt.expr.formula.constants.ImpC
 import gapt.expr.formula.hol.HOLFunction
@@ -160,6 +161,11 @@ class hol2folTest extends Specification {
       c1 must_!= c2
       d1.size mustEqual 1
       d2.size mustEqual 2
+    }
+    "leave abstractions of quantifiers intact" in {
+      val f: Formula = hof"!x x = x & ?y y = y"
+      val ( _, r ) = replaceAbstractions( f, Map(), new Counter )
+      r mustEqual f
     }
   }
   "undoing abstractions should" in {
