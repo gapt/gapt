@@ -144,7 +144,10 @@ abstract class AnalysisWithCeresOmega {
     val css_nolabels = preprocessed_css // remove labels from css
     // FIXME Not reversing the list of sequents breaks the nTapeTest
     implicit val abs_consts = new Hol2FolDefinitions()
-    val abs_css = replaceAbstractions( css_nolabels.reverse )
+    val abs_css =
+      css_nolabels
+        .reverse
+        .map { s => s.map { replaceAbstractions( _ ) } }
     /* map types to first order*/
     val fol_css = reduceHolToFol( abs_css )
     /* converting to clause form, this is cleaner than casting */

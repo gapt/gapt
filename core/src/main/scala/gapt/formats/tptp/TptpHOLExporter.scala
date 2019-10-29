@@ -393,7 +393,7 @@ class TptpHOLExporter {
 
   def lambda_lift_and_add_definitions( seq: HOLSequent ): HOLSequent = {
     implicit val cmap = new Hol2FolDefinitions()
-    val seq0 :: Nil = replaceAbstractions( seq :: Nil )
+    val seq0 = seq.map { replaceAbstractions( _ ) }
     val qaxioms: Seq[Formula] = cmap.toLegacyMap.toSeq.map {
       case ( term_, name ) =>
         //term_ should be closed, but to be sure we add the free variables the variables stripped from the outer-most

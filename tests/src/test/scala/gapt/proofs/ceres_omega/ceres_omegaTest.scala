@@ -107,9 +107,9 @@ class ceres_omegaTest extends Specification with SequentMatchers {
 
       val pcss = proj.map( _.conclusion )
       val pqs = new Hol2FolDefinitions()
-      val abspcss = replaceAbstractions( pcss.toList )( pqs )
+      val abspcss = pcss.toList.map { s => s.map { replaceAbstractions( _ )( pqs ) } }
       val cqs = new Hol2FolDefinitions()
-      val abscss = replaceAbstractions( css.toList )( cqs )
+      val abscss = css.toList.map { s => s.map { replaceAbstractions( _ )( cqs ) } }
 
       info( "=== projection css ===" )
       abspcss.map( x => info( x.toString ) )

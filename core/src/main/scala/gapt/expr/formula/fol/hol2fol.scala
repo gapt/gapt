@@ -248,14 +248,6 @@ class Hol2FolDefinitions( implicit val context: Context = Context.default ) {
 
 object replaceAbstractions {
 
-  type ConstantsMap = Map[Expr, String]
-
-  def apply( sequents: List[HOLSequent] )( implicit definitions: Hol2FolDefinitions ): List[HOLSequent] =
-    new replaceAbstractions( definitions )( sequents )
-
-  def apply( sequent: HOLSequent )( implicit definitions: Hol2FolDefinitions ): HOLSequent =
-    new replaceAbstractions( definitions )( sequent )
-
   def apply( expression: Expr )( implicit definitions: Hol2FolDefinitions ): Expr =
     new replaceAbstractions( definitions )( expression )
 
@@ -269,13 +261,7 @@ object replaceAbstractions {
  * Each abstraction in an [[gapt.proofs.HOLSequent]] is replaced by a separate constant symbol; the used
  * constants are returned in a Map.
  */
-class replaceAbstractions( val definitions: Hol2FolDefinitions ) {
-
-  def apply( sequents: List[HOLSequent] ): List[HOLSequent] =
-    sequents map { this.apply }
-
-  def apply( sequent: HOLSequent ): HOLSequent =
-    sequent.map { this.apply }
+class replaceAbstractions( private val definitions: Hol2FolDefinitions ) {
 
   def apply( formula: Formula ): Formula =
     this.apply( formula.asInstanceOf[Expr] ).asInstanceOf[Formula]
