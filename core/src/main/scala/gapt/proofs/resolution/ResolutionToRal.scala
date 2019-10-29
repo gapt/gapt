@@ -3,6 +3,7 @@ package gapt.proofs.resolution
 import gapt.expr._
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Formula
+import gapt.expr.formula.fol.Hol2FolDefinitions
 import gapt.expr.formula.fol.undoHol2Fol.Signature
 import gapt.expr.formula.fol.{ replaceAbstractions, undoHol2Fol }
 import gapt.expr.subst.Substitution
@@ -64,12 +65,10 @@ abstract class ResolutionToRal {
 class Resolution2RalWithAbstractions(
     sig_vars:   Map[String, List[Var]],
     sig_consts: Map[String, List[Const]],
-    cmap:       replaceAbstractions.ConstantsMap ) extends ResolutionToRal {
-  //we know that the cmap is a bijection and define absmap as the inverse of cmap
-  val absmap = Map[String, Expr]() ++ ( cmap.toList.map( x => ( x._2.toString, x._1 ) ) )
+    cmap:       Hol2FolDefinitions ) extends ResolutionToRal {
 
   private def bt( e: Expr, t_expected: Option[Ty] ) = BetaReduction.betaNormalize(
-    undoHol2Fol.backtranslate( e, sig_vars, sig_consts, absmap, t_expected ) )
+    undoHol2Fol.backtranslate( e, sig_vars, sig_consts, cmap, t_expected ) )
 
   override def convert_formula( e: Formula ): Formula = bt( e, Some( To ) ).asInstanceOf[Formula]
 
@@ -100,7 +99,7 @@ object Resolution2RalWithAbstractions {
    * @param cmap The mapping of abstracted symbols to lambda terms. The abstracted symbols must be unique (i.e. cmap
    *             must be a bijection)
    */
-  def apply( signature: Signature, cmap: replaceAbstractions.ConstantsMap ) = {
+  def apply( signature: Signature, cmap: Hol2FolDefinitions ) = {
     val ( sigc, sigv ) = signature
     new Resolution2RalWithAbstractions(
       sigv.map( x => ( x._1, x._2.toList ) ),
@@ -116,6 +115,6 @@ object Resolution2RalWithAbstractions {
   def apply(
     sig_vars:   Map[String, List[Var]],
     sig_consts: Map[String, List[Const]],
-    cmap:       replaceAbstractions.ConstantsMap ) = new Resolution2RalWithAbstractions( sig_vars, sig_consts, cmap )
+    cmap:       Hol2FolDefinitions ) = new Resolution2RalWithAbstractions( sig_vars, sig_consts, cmap )
 
 }

@@ -15,6 +15,7 @@ import gapt.expr.formula.Or
 import gapt.expr.formula.Top
 import gapt.expr.formula.constants.EqC
 import gapt.expr.formula.constants.LogicalConstant
+import gapt.expr.formula.fol.Hol2FolDefinitions
 import gapt.expr.formula.fol.replaceAbstractions
 import gapt.expr.formula.hol._
 import gapt.expr.ty.->:
@@ -391,8 +392,9 @@ class TptpHOLExporter {
     }
 
   def lambda_lift_and_add_definitions( seq: HOLSequent ): HOLSequent = {
-    val ( cmap, seq0 :: Nil ) = replaceAbstractions( seq :: Nil )
-    val qaxioms: Seq[Formula] = cmap.toSeq.map {
+    implicit val cmap = new Hol2FolDefinitions()
+    val seq0 :: Nil = replaceAbstractions( seq :: Nil )
+    val qaxioms: Seq[Formula] = cmap.toLegacyMap.toSeq.map {
       case ( term_, name ) =>
         //term_ should be closed, but to be sure we add the free variables the variables stripped from the outer-most
         //lambda-block in term_

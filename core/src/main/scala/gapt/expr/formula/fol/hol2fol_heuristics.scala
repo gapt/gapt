@@ -46,8 +46,9 @@ object undoHol2Fol {
     e:             Expr,
     sig_vars:      Map[String, List[Var]],
     sig_consts:    Map[String, List[Const]],
-    abssymbol_map: Map[String, Expr] ): Formula =
+    abssymbol_map: Hol2FolDefinitions ): Formula =
     backtranslate( e.asInstanceOf[Expr], sig_vars, sig_consts, abssymbol_map, Some( To ) ).asInstanceOf[Formula]
+
   /**
    * We do some dirty stuff in here to translate a prover9 term back to the richer type signature of hol proofs, undoing
    * replace abstractions at the same time.
@@ -56,7 +57,7 @@ object undoHol2Fol {
     e:             Expr,
     sig_vars:      Map[String, List[Var]],
     sig_consts:    Map[String, List[Const]],
-    abssymbol_map: Map[String, Expr],
+    abssymbol_map: Hol2FolDefinitions,
     expected_type: Option[Ty] ): Expr = {
     e match {
       // --------------- logical structure ------------------------
@@ -90,8 +91,9 @@ object undoHol2Fol {
         }
       // --------------- term structure ------------------------
       //cases for term replacement
-      case Const( name, _, _ ) if abssymbol_map.contains( name ) =>
-        val qterm_ = abssymbol_map( name )
+
+      case Const( name, _, _ ) if abssymbol_map.lookupByName( name ).isDefined =>
+        val Some( qterm_ ) = abssymbol_map.lookupByName( name )
         val qterm: Expr = freeVariables( qterm_ ).toList.foldRight( qterm_ )( ( v, term ) => Abs( v, term ) )
         expected_type match {
           case Some( expt ) =>
@@ -101,8 +103,8 @@ object undoHol2Fol {
             qterm
         }
 
-      case HOLFunction( Const( name, _, _ ), args ) if abssymbol_map.contains( name ) =>
-        val qterm_ = abssymbol_map( name )
+      case HOLFunction( Const( name, _, _ ), args ) if abssymbol_map.lookupByName( name ).isDefined =>
+        val Some( qterm_ ) = abssymbol_map.lookupByName( name )
         val qterm: Expr = freeVariables( qterm_ ).toList.foldRight( qterm_ )( ( v, term ) => Abs( v, term ) )
         val btargs = args.map( x => backtranslate( x.asInstanceOf[Expr], sig_vars, sig_consts, abssymbol_map, None ) )
         val r = btargs.foldLeft( qterm )( ( term, nextarg ) => App( term, nextarg ) )
@@ -113,6 +115,7 @@ object undoHol2Fol {
           case None =>
             r
         }
+
       //normal ones
       case HOLFunction( Const( name, _, _ ), args ) if sig_consts contains name =>
         val btargs = args.map( x => backtranslate( x.asInstanceOf[Expr], sig_vars, sig_consts, abssymbol_map, None ) )
