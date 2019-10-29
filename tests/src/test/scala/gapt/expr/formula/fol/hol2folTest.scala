@@ -152,6 +152,12 @@ class hol2folTest extends Specification {
       val Apps( _: Const, f :: Nil ) = d.getDefinedExpression( le"^x (#v(f:i>i) x)" )
       f mustEqual le"#v(f:i>i)"
     }
+    "definition must match over free variables" in {
+      implicit val d = new Hol2FolDefinitions
+      val t: Expr = le"(^x (#v(f:i>i) x))"
+      replaceAbstractions( t )
+      val Apps( _: Const, a :: Nil ) = d.getDefinedExpression( le"^x (#c(a:i>i) x)" )
+      a mustEqual hoc"a:i>i"
     }
     "no unnecessary constants should be introduced" in {
       implicit val d = new Hol2FolDefinitions
