@@ -144,13 +144,14 @@ class hol2folTest extends Specification {
       val Apps( _: Const, ( c1: Const ) :: ( c2: Const ) :: Nil ) = replaceAbstractions( t )
       c1 mustEqual c2
     }
-    "introduced constants must be mapped to closure of their abstraction" in {
-      skipped
+    "definition must account for free variables" in {
       implicit val d = new Hol2FolDefinitions
       val t: Expr = le"(^(x:i>i) x)(^x (#v(f:i>i) x))"
-      val App( c1: Const, c2: Const ) = replaceAbstractions( t )
-      d.getDefinedExpression( c1 ) mustEqual le"^(x:i>i) x"
-      d.getDefinedExpression( c2 ) mustEqual le"^(f:i>i) ^x (f x)"
+      replaceAbstractions( t )
+      val Apps( _: Const, Nil ) = d.getDefinedExpression( le"^(x:i>i) x" )
+      val Apps( _: Const, f :: Nil ) = d.getDefinedExpression( le"^x (#v(f:i>i) x)" )
+      f mustEqual le"#v(f:i>i)"
+    }
     }
     "no unnecessary constants should be introduced" in {
       implicit val d = new Hol2FolDefinitions
