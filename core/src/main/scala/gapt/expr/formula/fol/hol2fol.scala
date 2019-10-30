@@ -196,11 +196,22 @@ class Hol2FolDefinitions( implicit val context: Context = Context.default ) {
       .collectFirst { case ( e, Some( m ) ) => ( e, m ) }
   }
 
-  // FIXME This test is currently useless
   override def equals( obj: Any ): Boolean =
     obj match {
-      case o: Hol2FolDefinitions => o.definitions == definitions
+      case o: Hol2FolDefinitions => isEqualTo( o )
       case _                     => false
+    }
+
+  private def isEqualTo( otherDefinitions: Hol2FolDefinitions ): Boolean =
+    lambdaClosedDefinitionsPairs == otherDefinitions.lambdaClosedDefinitionsPairs
+
+  private def lambdaClosedDefinitionsPairs: Set[( Expr, Expr )] =
+    definitions.toSet.map { lambdaCloseDefinitionPair }
+
+  private def lambdaCloseDefinitionPair( definitionPair: ( Expr, Expr ) ): ( Expr, Expr ) =
+    definitionPair match {
+      case ( d @ Apps( _: Const, xs ), e ) =>
+        Abs.Block( xs.asInstanceOf[List[Var]], d ) -> Abs.Block( xs.asInstanceOf[List[Var]], e )
     }
 
   private def freshConstantName: String =

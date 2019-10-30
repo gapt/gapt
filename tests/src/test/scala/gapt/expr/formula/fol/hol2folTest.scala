@@ -204,4 +204,29 @@ class hol2folTest extends Specification {
       BetaReduction.normalize( undoReplaceAbstractions( r, d ) ) mustEqual t
     }
   }
+  "definitions" should {
+    "be equal if identical" in {
+      val d = new Hol2FolDefinitions()
+      d mustEqual d
+    }
+    "be equal if they differ only in the naming of free variables (empty case)" in {
+      val d1 = new Hol2FolDefinitions()
+      val d2 = new Hol2FolDefinitions()
+      d1 mustEqual d2
+    }
+    "be equal if they differ only in the naming of free variables (nonempty case)" in {
+      val d1 = new Hol2FolDefinitions()
+      val d2 = new Hol2FolDefinitions()
+      d1.getDefinedExpression( le"#v(a:i)" )
+      d2.getDefinedExpression( le"#v(b:i)" )
+      d1 mustEqual d2
+    }
+    "not be equal if definitions differ not only in free variables" in {
+      val d1 = new Hol2FolDefinitions()
+      val d2 = new Hol2FolDefinitions()
+      d1.getDefinedExpression( le"#v(a:i)" )
+      d2.getDefinedExpression( le"#c(b:i)" )
+      d1 must_!== d2
+    }
+  }
 }
