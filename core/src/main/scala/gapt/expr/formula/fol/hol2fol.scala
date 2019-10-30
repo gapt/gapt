@@ -4,11 +4,13 @@ import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Atom
+import gapt.expr.formula.Bottom
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
+import gapt.expr.formula.Top
 import gapt.expr.formula.constants.AndC
 import gapt.expr.formula.constants.ExistsC
 import gapt.expr.formula.constants.ForallC
@@ -53,7 +55,7 @@ class reduceHolToFol {
    * @return a pair of the reduced formula and the updated scope
    */
   def apply( formula: Formula )( implicit definition: Hol2FolDefinitions ): FOLFormula =
-    apply_( replaceAbstractions( formula ) )
+    convertHolFormulaToFolFormula( replaceAbstractions( formula ) )
 
   /**
    * Apply method for a an expression when scope needs to passed on in a recursion.
@@ -61,74 +63,76 @@ class reduceHolToFol {
    * @return a pair of the reduced expression and the updated scope
    */
   def apply( term: Expr )( implicit definition: Hol2FolDefinitions ): FOLExpression =
-    apply_( replaceAbstractions( term ) )
+    ( replaceAbstractions( term ) ) match {
+      case f: Formula => convertHolFormulaToFolFormula( f )
+      case t          => convertHolTermToFolTerm( t )
+    }
 
-  private def apply_( f: Formula ): FOLFormula =
-    apply_( f.asInstanceOf[Expr] ).asInstanceOf[FOLFormula]
-
-  //assumes we are on the logical level of the hol formula - all types are mapped to i, i>o or i>i>o respectively
-  private def apply_( term: Expr ): FOLExpression = {
-    term match {
-      case e: FOLExpression  => e // if it's already FOL - great, we are done.
-      case Const( n, To, _ ) => FOLAtom( n, Nil )
-      case Var( n, _ )       => FOLVar( n )
-      case Const( n, _, _ )  => FOLConst( n )
-      case Neg( n )          => Neg( apply_( n ) )
-      case And( n1, n2 )     => And( apply_( n1 ), apply_( n2 ) )
-      case Or( n1, n2 )      => Or( apply_( n1 ), apply_( n2 ) )
-      case Imp( n1, n2 )     => Imp( apply_( n1 ), apply_( n2 ) )
-      case All( v: Var, n )  => All( apply_( v ).asInstanceOf[FOLVar], apply_( n ) )
-      case Ex( v: Var, n )   => Ex( apply_( v ).asInstanceOf[FOLVar], apply_( n ) )
-      case Atom( Const( n, _, _ ), ls ) =>
-        FOLAtom( n, ls.map( x => folexp2term( apply_termlevel( x ) ) ) )
-      case Atom( Var( n, _ ), ls ) =>
-        FOLAtom( n, ls.map( x => folexp2term( apply_termlevel( x ) ) ) )
-      case HOLFunction( Const( n, _, _ ), ls ) =>
-        FOLFunction( n, ls.map( x => folexp2term( apply_( x ) ) ) )
-      case HOLFunction( Var( n, _ ), ls ) =>
-        FOLFunction( n, ls.map( x => folexp2term( apply_( x ) ) ) )
-      case _ => throw new IllegalArgumentException(
-        // for cases of higher order atoms and functions
-        "Cannot reduce hol term: " + term.toString + " to fol as it is a higher order variable function or atom" )
+  /**
+   * Assumes we are on the logical level of the hol formula - all types are
+   * mapped to i, i>o or i>i>o respectively
+   */
+  private def convertHolFormulaToFolFormula( formula: Formula ): FOLFormula = {
+    formula match {
+      case Top()    => Top()
+      case Bottom() => Bottom()
+      case Neg( f ) =>
+        Neg( convertHolFormulaToFolFormula( f ) )
+      case And( f1, f2 ) =>
+        And(
+          convertHolFormulaToFolFormula( f1 ),
+          convertHolFormulaToFolFormula( f2 ) )
+      case Or( f1, f2 ) =>
+        Or(
+          convertHolFormulaToFolFormula( f1 ),
+          convertHolFormulaToFolFormula( f2 ) )
+      case Imp( f1, f2 ) =>
+        Imp(
+          convertHolFormulaToFolFormula( f1 ),
+          convertHolFormulaToFolFormula( f2 ) )
+      case All( v: Var, f ) =>
+        All(
+          convertHolVariableToFolVariable( v ),
+          convertHolFormulaToFolFormula( f ) )
+      case Ex( v: Var, f ) =>
+        Ex(
+          convertHolVariableToFolVariable( v ),
+          convertHolFormulaToFolFormula( f ) )
+      case Const( n, To, _ ) =>
+        FOLAtom( n, Nil )
+      case Atom( Const( n, _, _ ), as ) =>
+        FOLAtom( n, as.map { convertHolTermToFolTerm } )
+      case Atom( Var( n, _ ), as ) =>
+        FOLAtom( n, as.map { convertHolTermToFolTerm } )
+      case HOLFunction( Const( n, _, _ ), as ) =>
+        FOLAtom( n, as.map { convertHolTermToFolTerm } )
+      case HOLFunction( Var( n, _ ), as ) =>
+        FOLAtom( n, as.map { convertHolTermToFolTerm } )
     }
   }
 
+  private def convertHolVariableToFolVariable( v: Var ): FOLVar =
+    FOLVar( v.name )
+
   //if we encountered an atom, we need to convert logical formulas to the term level too
-  private def apply_termlevel( term: Expr ): FOLTerm = {
+  private def convertHolTermToFolTerm( term: Expr ): FOLTerm = {
     term match {
       case e: FOLTerm       => e // if it's already FOL - great, we are done.
       case Var( n, _ )      => FOLVar( n )
       case Const( n, _, _ ) => FOLConst( n )
       //we cannot use the logical symbols directly because they are treated differently by the Function matcher
-      case Neg( n )         => FOLFunction( NegC.name, List( apply_termlevel( n ) ) )
-      case And( n1, n2 )    => FOLFunction( AndC.name, List( apply_termlevel( n1 ), apply_termlevel( n2 ) ) )
-      case Or( n1, n2 )     => FOLFunction( OrC.name, List( apply_termlevel( n1 ), apply_termlevel( n2 ) ) )
-      case Imp( n1, n2 )    => FOLFunction( ImpC.name, List( apply_termlevel( n1 ), apply_termlevel( n2 ) ) )
+      case Neg( n )         => FOLFunction( NegC.name, List( convertHolTermToFolTerm( n ) ) )
+      case And( n1, n2 )    => FOLFunction( AndC.name, List( convertHolTermToFolTerm( n1 ), convertHolTermToFolTerm( n2 ) ) )
+      case Or( n1, n2 )     => FOLFunction( OrC.name, List( convertHolTermToFolTerm( n1 ), convertHolTermToFolTerm( n2 ) ) )
+      case Imp( n1, n2 )    => FOLFunction( ImpC.name, List( convertHolTermToFolTerm( n1 ), convertHolTermToFolTerm( n2 ) ) )
       case All( v: Var, n ) =>
-        FOLFunction( ForallC.name, List( apply_termlevel( v ).asInstanceOf[FOLVar], apply_termlevel( n ) ) )
+        FOLFunction( ForallC.name, List( convertHolTermToFolTerm( v ).asInstanceOf[FOLVar], convertHolTermToFolTerm( n ) ) )
       case Ex( v: Var, n ) =>
-        FOLFunction( ExistsC.name, List( apply_termlevel( v ).asInstanceOf[FOLVar], apply_termlevel( n ) ) )
+        FOLFunction( ExistsC.name, List( convertHolTermToFolTerm( v ).asInstanceOf[FOLVar], convertHolTermToFolTerm( n ) ) )
       case Atom( head, ls ) =>
-        FOLFunction( head.toString, ls.map( x => folexp2term( apply_termlevel( x ) ) ) )
+        FOLFunction( head.toString, ls.map( x => folexp2term( convertHolTermToFolTerm( x ) ) ) )
       case HOLFunction( Const( name, _, _ ), ls ) =>
-        FOLFunction( name, ls.map( x => folexp2term( apply_termlevel( x ) ) ) )
-
-      // This case replaces an abstraction by a function term.
-      //
-      // the scope we choose for the variant is the Abs itself as we want all abs identical up to variant
-      // use the same symbol
-      //
-      // TODO: at the moment, syntactic equality is used here... This means that alpha-equivalent terms may be replaced
-      // by different constants, which is undesirable.
-      /*
-      case a @ Abs(v, exp) => {
-        val sym = scope.getOrElseUpdate(a.variant(new VariantGenerator(
-         new {var idd = 0; def nextId = {idd = idd+1; idd}}, "myVariantName")), ConstantString("q_{" + id.nextId + "}"))
-        val freeVarList = a.getFreeVariables.toList.sortWith((x,y) => x.toString < y.toString)
-        .map(x => apply(x.asInstanceOf[Expr],scope,id))
-        if (freeVarList.isEmpty) FOLConst(sym) else Function(sym, freeVarList.asInstanceOf[List[FOLTerm]])
-      }
-      */
+        FOLFunction( name, ls.map( x => folexp2term( convertHolTermToFolTerm( x ) ) ) )
       case _ =>
         throw new IllegalArgumentException(
           // for cases of higher order atoms and functions
