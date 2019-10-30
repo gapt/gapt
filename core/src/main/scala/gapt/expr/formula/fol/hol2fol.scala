@@ -44,11 +44,6 @@ object reduceHolToFol extends reduceHolToFol
  */
 class reduceHolToFol {
 
-  private def folexp2term( exp: FOLExpression ) = exp match {
-    case e: FOLTerm => exp.asInstanceOf[FOLTerm]
-    case _          => throw new Exception( "Cannot cast " + exp + " to a fol term!" + exp.getClass )
-  }
-
   /**
    * Apply method for a formula when scope needs to passed on in a recursion.
    * @param formula the formula to convert
