@@ -114,32 +114,24 @@ class reduceHolToFol {
   private def convertHolVariableToFolVariable( v: Var ): FOLVar =
     FOLVar( v.name )
 
-  //if we encountered an atom, we need to convert logical formulas to the term level too
+  /**
+   * Converts a term to a first-order term.
+   *
+   * @param term The term to be converted to a first-order term.
+   * @return A first-order term obtained from `term` by erasing types of
+   * constants and variables in leaf position by `i` and by replacing types of
+   * inner constants by i > i > ... > i of adequate arity. In particular logical
+   * constants are replaced in this way e.g. ¬ : o > o occurring in a term of
+   * the form (¬ f) is replaced by ¬ : i > i.
+   */
   private def convertHolTermToFolTerm( term: Expr ): FOLTerm = {
     term match {
-      case e: FOLTerm       => e // if it's already FOL - great, we are done.
-      case Var( n, _ )      => FOLVar( n )
+      case v: Var           => convertHolVariableToFolVariable( v )
       case Const( n, _, _ ) => FOLConst( n )
-      //we cannot use the logical symbols directly because they are treated differently by the Function matcher
-      case Neg( n )         => FOLFunction( NegC.name, List( convertHolTermToFolTerm( n ) ) )
-      case And( n1, n2 )    => FOLFunction( AndC.name, List( convertHolTermToFolTerm( n1 ), convertHolTermToFolTerm( n2 ) ) )
-      case Or( n1, n2 )     => FOLFunction( OrC.name, List( convertHolTermToFolTerm( n1 ), convertHolTermToFolTerm( n2 ) ) )
-      case Imp( n1, n2 )    => FOLFunction( ImpC.name, List( convertHolTermToFolTerm( n1 ), convertHolTermToFolTerm( n2 ) ) )
-      case All( v: Var, n ) =>
-        FOLFunction( ForallC.name, List( convertHolTermToFolTerm( v ).asInstanceOf[FOLVar], convertHolTermToFolTerm( n ) ) )
-      case Ex( v: Var, n ) =>
-        FOLFunction( ExistsC.name, List( convertHolTermToFolTerm( v ).asInstanceOf[FOLVar], convertHolTermToFolTerm( n ) ) )
-      case Atom( head, ls ) =>
-        FOLFunction( head.toString, ls.map( x => folexp2term( convertHolTermToFolTerm( x ) ) ) )
-      case HOLFunction( Const( name, _, _ ), ls ) =>
-        FOLFunction( name, ls.map( x => folexp2term( convertHolTermToFolTerm( x ) ) ) )
-      case _ =>
-        throw new IllegalArgumentException(
-          // for cases of higher order atoms and functions
-          "Cannot reduce hol term: " + term.toString + " to fol as it is a higher order variable function or atom" )
+      case Apps( h: VarOrConst, as ) =>
+        FOLFunction( h.name, as.map { convertHolTermToFolTerm } )
     }
   }
-
 }
 
 object invertBijectiveMap {
