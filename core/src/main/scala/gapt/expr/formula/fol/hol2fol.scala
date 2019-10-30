@@ -11,12 +11,6 @@ import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Top
-import gapt.expr.formula.constants.AndC
-import gapt.expr.formula.constants.ExistsC
-import gapt.expr.formula.constants.ForallC
-import gapt.expr.formula.constants.ImpC
-import gapt.expr.formula.constants.NegC
-import gapt.expr.formula.constants.OrC
 import gapt.expr.formula.hol.HOLFunction
 import gapt.expr.formula.hol._
 import gapt.expr.subst.Substitution
