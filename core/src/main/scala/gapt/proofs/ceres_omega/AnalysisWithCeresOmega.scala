@@ -149,7 +149,7 @@ abstract class AnalysisWithCeresOmega {
         .reverse
         .map { s => s.map { replaceAbstractions( _ ) } }
     /* map types to first order*/
-    val fol_css = reduceHolToFol( abs_css )
+    val fol_css = abs_css.map { s => s.map { reduceHolToFol( _ ) } }
     /* converting to clause form, this is cleaner than casting */
     val fol_ccs = fol_css map {
       case Sequent( ant, succ ) =>

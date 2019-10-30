@@ -63,23 +63,6 @@ class reduceHolToFol {
   def apply( term: Expr )( implicit definition: Hol2FolDefinitions ): FOLExpression =
     apply_( replaceAbstractions( term ) )
 
-  /**
-   * Apply method for a an FSequent when scope needs to passed on in a recursion.
-   * @param sequent the fsequent to convert
-   * @return a pair of the reduced expression and the updated scope
-   */
-  def apply( sequent: HOLSequent )( implicit definition: Hol2FolDefinitions ): HOLSequent =
-    sequent.map { reduceHolToFol( _ ) }
-
-  /**
-   * Apply method for a an FSequent when scope needs to passed on in a recursion.
-   * @param sequents the fsequent to convert
-   * @return a pair of the reduced expression and the updated scope
-   */
-  def apply( sequents: List[HOLSequent] )( implicit definition: Hol2FolDefinitions ): List[HOLSequent] = {
-    sequents.map { reduceHolToFol( _ ) }
-  }
-
   private def apply_( f: Formula ): FOLFormula =
     apply_( f.asInstanceOf[Expr] ).asInstanceOf[FOLFormula]
 
