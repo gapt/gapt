@@ -245,22 +245,44 @@ class replaceAbstractions( private val definitions: Hol2FolDefinitions ) {
   def apply( formula: Formula ): Formula =
     this.apply( formula.asInstanceOf[Expr] ).asInstanceOf[Formula]
 
-  def apply( expression: Expr ): Expr = expression match {
-    // leave quantifiers intact
-    case Ex( v, f ) =>
-      Ex( v, this.apply( f ) )
-    case All( v, f ) =>
-      All( v, this.apply( f ) )
-    case App( e1, e2 ) =>
-      App( this.apply( e1 ), this.apply( e2 ) )
-    case _: Abs =>
-      abstractExpression( expression )
-    case _ => expression
+  def apply( expression: Expr ): Expr = {
+    defineOutermostNonQuantifierAbstractions( expression )
+    liftOutermostNonQuantifierAbstractions( expression )
   }
 
-  private def abstractExpression( expression: Expr ): Expr = {
-    definitions.getDefinedExpression( expression )
+  private def getOutermostNonQuantifierAbstractions( expression: Expr ): Seq[Expr] =
+    expression match {
+      case Ex( _, f )  => getOutermostNonQuantifierAbstractions( f )
+      case All( _, f ) => getOutermostNonQuantifierAbstractions( f )
+      case App( e1, e2 ) =>
+        getOutermostNonQuantifierAbstractions( e1 ) ++
+          getOutermostNonQuantifierAbstractions( e2 )
+      case _: Abs => Seq( expression )
+      case _      => Seq()
+    }
+
+  private def defineOutermostNonQuantifierAbstractions( expression: Expr ): Unit = {
+    defineExpressions( getOutermostNonQuantifierAbstractions( expression ) )
   }
+
+  private def defineExpressions( expressions: Seq[Expr] ): Unit =
+    expressions.foreach { definitions.getDefiningExpression }
+
+  private def liftOutermostNonQuantifierAbstractions( expression: Expr ): Expr =
+    expression match {
+      case Ex( v, f ) =>
+        Ex( v, liftOutermostNonQuantifierAbstractions( f ) )
+      case All( v, f ) =>
+        All( v, liftOutermostNonQuantifierAbstractions( f ) )
+      case App( e1, e2 ) =>
+        App(
+          liftOutermostNonQuantifierAbstractions( e1 ),
+          liftOutermostNonQuantifierAbstractions( e2 ) )
+      case _: Abs =>
+        definitions.getDefinedExpression( expression )
+      case _ => expression
+    }
+
 }
 
 /**
