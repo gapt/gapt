@@ -22,7 +22,6 @@ import gapt.expr.util.freeVariables
 import gapt.proofs.HOLSequent
 import gapt.proofs.context.Context
 
-object reduceHolToFol extends reduceHolToFol
 /**
  * Creates a FOL formula from a HOL formula, but applies transformations which do _not_ preserve validity!
  * Transformations applied:
@@ -36,7 +35,7 @@ object reduceHolToFol extends reduceHolToFol
  * @note Make sure you need all of these tricks. To only replace abstraction subterms, use [[replaceAbstractions]].
  *
  */
-class reduceHolToFol {
+object reduceHolToFol {
 
   /**
    * Apply method for a formula when scope needs to passed on in a recursion.
