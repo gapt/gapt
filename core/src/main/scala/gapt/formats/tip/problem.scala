@@ -241,9 +241,9 @@ object subterms {
     val LambdaPosition( xs ) = position
     ( e -> position ) +: ( e match {
       case Abs( _, e1 ) =>
-        subterms( e1, LambdaPosition( 1 :: xs ) )
+        subterms( e1, LambdaPosition( LambdaPosition.Left :: xs ) )
       case App( e1, e2 ) =>
-        subterms( e1, LambdaPosition( 1 +: xs ) ) ++ subterms( e2, LambdaPosition( 2 +: xs ) )
+        subterms( e1, LambdaPosition( LambdaPosition.Left +: xs ) ) ++ subterms( e2, LambdaPosition( LambdaPosition.Right +: xs ) )
       case _ => Seq()
     } )
   }

@@ -74,7 +74,7 @@ object getFOPositions {
   def apply( exp: Expr ): Map[Expr, Seq[LambdaPosition]] = {
     val poss = mutable.Map[Expr, Seq[LambdaPosition]]().withDefaultValue( Seq() )
     def walk( exp: Expr, pos: List[Int] ): Unit = {
-      poss( exp ) :+= LambdaPosition( pos.reverse )
+      poss( exp ) :+= LambdaPosition( pos.reverse: _* )
       walkApp( exp, pos )
     }
     def walkApp( exp: Expr, pos: List[Int] ): Unit = exp match {
@@ -414,9 +414,9 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
   object Superposition extends InferenceRule {
     def isReductive( atom: Formula, i: SequentIndex, pos: LambdaPosition ): Boolean =
       ( atom, i, pos.toList ) match {
-        case ( Eq( t, s ), _: Suc, 2 :: _ )      => !termOrdering.lt( s, t )
-        case ( Eq( t, s ), _: Suc, 1 :: 2 :: _ ) => !termOrdering.lt( t, s )
-        case _                                   => true
+        case ( Eq( t, s ), _: Suc, LambdaPosition.Right :: _ ) => !termOrdering.lt( s, t )
+        case ( Eq( t, s ), _: Suc, LambdaPosition.Left :: LambdaPosition.Right :: _ ) => !termOrdering.lt( t, s )
+        case _ => true
       }
 
     def eligible( c: Cls, c1: HOLSequent, mgu: Substitution, i: SequentIndex ): Boolean = {

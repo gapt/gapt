@@ -10,10 +10,13 @@ import gapt.expr.App
 import gapt.expr.Const
 import gapt.expr.Expr
 import gapt.expr.Var
+import gapt.expr.util.LambdaPosition.Choice
 
 object LambdaPosition {
-  def apply( xs: Int* ) = new LambdaPosition( xs.toList )
-  def toList( p: LambdaPosition ): List[Int] = p.list
+
+  trait Choice
+  case object Left extends Choice
+  case object Right extends Choice
 
   /**
    * Returns a list of positions of subexpressions that satisfy some predicate.
@@ -25,13 +28,13 @@ object LambdaPosition {
   def getPositions( exp: Expr, pred: Expr => Boolean = _ => true ): List[LambdaPosition] = exp match {
     case Var( _, _ ) | Const( _, _, _ ) => if ( pred( exp ) ) List( LambdaPosition() ) else Nil
     case App( f, arg ) =>
-      val fPositions = getPositions( f, pred ) map { p => 1 :: p }
-      val argPositions = getPositions( arg, pred ) map { p => 2 :: p }
+      val fPositions = getPositions( f, pred ) map { p => Left :: p }
+      val argPositions = getPositions( arg, pred ) map { p => Right :: p }
 
       if ( pred( exp ) ) LambdaPosition() :: fPositions ::: argPositions else fPositions ::: argPositions
 
     case Abs( _, subExp ) =>
-      val subPositions = getPositions( subExp, pred ) map { p => 1 :: p }
+      val subPositions = getPositions( subExp, pred ) map { p => Left :: p }
 
       if ( pred( exp ) ) LambdaPosition() :: subPositions else subPositions
 
@@ -49,11 +52,11 @@ object LambdaPosition {
     case ( Var( n1, t1 ), Var( n2, t2 ) ) if n1 == n2 && t1 == t2 => Nil
     case ( c1: Const, c2: Const ) if c1 == c2                     => Nil
     case ( App( f1, arg1 ), App( f2, arg2 ) ) =>
-      val list1 = differingPositions( f1, f2 ) map { p => 1 :: p }
-      val list2 = differingPositions( arg1, arg2 ) map { p => 2 :: p }
+      val list1 = differingPositions( f1, f2 ) map { p => Left :: p }
+      val list2 = differingPositions( arg1, arg2 ) map { p => Right :: p }
       list1 ++ list2
     case ( Abs( v1, term1 ), Abs( v2, term2 ) ) if v1 == v2 =>
-      differingPositions( term1, term2 ) map { p => 1 :: p }
+      differingPositions( term1, term2 ) map { p => Left :: p }
     case _ => List( LambdaPosition() )
   }
 
@@ -71,13 +74,30 @@ object LambdaPosition {
     else {
       val rest = pos.tail
       exp match {
-        case Abs( t, subExp ) if pos.head == 1 => Abs( t, replace( subExp, rest, repTerm ) )
-        case App( f, arg ) if pos.head == 1    => App( replace( f, rest, repTerm ), arg )
-        case App( f, arg ) if pos.head == 2    => App( f, replace( arg, rest, repTerm ) )
-        case _                                 => throw new IllegalArgumentException( "Not possible to replace at position " + pos + " in expression " + exp + "." )
+        case Abs( t, subExp ) if pos.head == LambdaPosition.Left => Abs( t, replace( subExp, rest, repTerm ) )
+        case App( f, arg ) if pos.head == LambdaPosition.Left => App( replace( f, rest, repTerm ), arg )
+        case App( f, arg ) if pos.head == LambdaPosition.Right => App( f, replace( arg, rest, repTerm ) )
+        case _ => throw new IllegalArgumentException( "Not possible to replace at position " + pos + " in expression " + exp + "." )
       }
     }
 
+  // FIXME remove these legacy methods
+  def apply( xs: Int* ) = new LambdaPosition( choiceListFromIntList( xs.toList ) )
+  def toList( p: LambdaPosition ): List[Int] = choiceListToIntList( p.list )
+  private def choiceListToIntList( path: List[Choice] ): List[Int] =
+    path map choiceToInt
+  private def choiceToInt( choice: Choice ): Int =
+    choice match {
+      case Left  => 1
+      case Right => 2
+    }
+  private def choiceListFromIntList( path: List[Int] ): List[Choice] =
+    path map choiceFromInt
+  private def choiceFromInt( choice: Int ): Choice = choice match {
+    case 1 => Left
+    case 2 => Right
+    case _ => throw new IllegalArgumentException( "choice must be 1 or 2" )
+  }
 }
 
 /**
@@ -88,25 +108,24 @@ object LambdaPosition {
  *
  * @param list The list of integers describing the position.
  */
-case class LambdaPosition( list: List[Int] ) {
-  require( list.forall( i => i == 1 || i == 2 ) )
+case class LambdaPosition( list: List[Choice] ) {
 
-  def toList: List[Int] = list
-  def head: Int = list.head
-  def headOption: Option[Int] = list.headOption
-  def tail = LambdaPosition( list.tail )
+  def toList: List[Choice] = list
+  def head: Choice = list.head
+  def headOption: Option[Choice] = list.headOption
+  def tail: LambdaPosition = LambdaPosition( list.tail )
   def isEmpty: Boolean = list.isEmpty
   override def toString = s"[${list.mkString( "," )}]"
 
-  def ::( x: Int ): LambdaPosition = LambdaPosition( x :: list )
+  def ::( x: Choice ): LambdaPosition = LambdaPosition( x :: list )
 
   def isDefined( exp: Expr ): Boolean = get( exp ).isDefined
 
   def get( exp: Expr ): Option[Expr] = exp match {
-    case _ if isEmpty             => Some( exp )
-    case App( f, a ) if head == 1 => tail.get( f )
-    case App( f, a ) if head == 2 => tail.get( a )
-    case Abs( v, t ) if head == 1 => tail.get( t )
-    case _                        => None
+    case _ if isEmpty => Some( exp )
+    case App( f, a ) if head == LambdaPosition.Left => tail.get( f )
+    case App( f, a ) if head == LambdaPosition.Right => tail.get( a )
+    case Abs( v, t ) if head == LambdaPosition.Left => tail.get( t )
+    case _ => None
   }
 }

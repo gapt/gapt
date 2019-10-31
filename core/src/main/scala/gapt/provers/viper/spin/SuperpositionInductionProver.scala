@@ -397,9 +397,9 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
       underSame = Set.empty
       val ( prim, accs, pass ) = go( formula, List(), inPrimary = true )
 
-      val primMap = prim.groupBy( _._1 ).view.mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } ) toMap
-      val accsMap = accs.groupBy( _._1 ).view.mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } ) toMap
-      val passMap = pass.groupBy( _._1 ).view.mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse ) } ) toMap
+      val primMap = prim.groupBy( _._1 ).view.mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse: _* ) } ) toMap
+      val accsMap = accs.groupBy( _._1 ).view.mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse: _* ) } ) toMap
+      val passMap = pass.groupBy( _._1 ).view.mapValues( seq => seq.map { case ( _, pos ) => LambdaPosition( pos.reverse: _* ) } ) toMap
 
       Occurences( primMap, accsMap, passMap, underSame )
     }

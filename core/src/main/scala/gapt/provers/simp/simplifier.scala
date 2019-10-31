@@ -363,7 +363,7 @@ case class Simplifier( lemmas: Seq[SimpProc] ) {
   def getLambdaPositions( exp: Expr ): Map[Expr, Seq[LambdaPosition]] = {
     val poss = mutable.Map[Expr, Seq[LambdaPosition]]().withDefaultValue( Seq() )
     def walk( exp: Expr, pos: List[Int] ): Unit = {
-      poss( exp ) :+= LambdaPosition( pos.reverse )
+      poss( exp ) :+= LambdaPosition( pos.reverse: _* )
       exp match {
         case App( a, b ) =>
           walk( a, 1 :: pos )
@@ -410,7 +410,7 @@ case class Simplifier( lemmas: Seq[SimpProc] ) {
         ( subterm, pos ) <- getLambdaPositions( t ) if !didRewrite
         lem <- lemmas if !didRewrite
         SimpEqResult.Prf( lemP, _, subterm_ ) <- Some( lem.simpEq( subterm ) ) if !didRewrite
-        ctx = replacementContext( subterm_.ty, t0 === t, pos.map( 2 :: _ ) )
+        ctx = replacementContext( subterm_.ty, t0 === t, pos.map( LambdaPosition.Right :: _ ) )
       } {
         p = ContractionMacroRule(
           ParamodulationRightRule( lemP, subterm === subterm_, p, t0 === t, ctx ) )
