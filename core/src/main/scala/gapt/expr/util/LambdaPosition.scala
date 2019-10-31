@@ -81,23 +81,8 @@ object LambdaPosition {
       }
     }
 
-  // FIXME remove these legacy methods
-  def apply( xs: Int* ) = new LambdaPosition( choiceListFromIntList( xs.toList ) )
-  def toList( p: LambdaPosition ): List[Int] = choiceListToIntList( p.list )
-  private def choiceListToIntList( path: List[Choice] ): List[Int] =
-    path map choiceToInt
-  private def choiceToInt( choice: Choice ): Int =
-    choice match {
-      case Left  => 1
-      case Right => 2
-    }
-  private def choiceListFromIntList( path: List[Int] ): List[Choice] =
-    path map choiceFromInt
-  private def choiceFromInt( choice: Int ): Choice = choice match {
-    case 1 => Left
-    case 2 => Right
-    case _ => throw new IllegalArgumentException( "choice must be 1 or 2" )
-  }
+  def apply( xs: Choice* ) = new LambdaPosition( xs.toList )
+  def toList( p: LambdaPosition ): List[Choice] = p.list
 }
 
 /**

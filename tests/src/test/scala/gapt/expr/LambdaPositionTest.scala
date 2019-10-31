@@ -14,7 +14,7 @@ class LambdaPositionTest extends Specification {
       val exp = Abs( x, fx )
 
       getPositions( x ).head must beEqualTo( LambdaPosition( Nil ) )
-      getPositions( exp ) must beEqualTo( List( LambdaPosition( Nil ), LambdaPosition( 1 ), LambdaPosition( 1, 1 ), LambdaPosition( 1, 2 ) ) )
+      getPositions( exp ) must beEqualTo( List( LambdaPosition( Nil ), LambdaPosition( LambdaPosition.Left ), LambdaPosition( LambdaPosition.Left, LambdaPosition.Left ), LambdaPosition( LambdaPosition.Left, LambdaPosition.Right ) ) )
     }
 
     "be replaced correctly" in {
@@ -24,9 +24,9 @@ class LambdaPositionTest extends Specification {
       val fx = App( f, x )
       val fy = App( f, y )
       val exp = Abs( x, fx )
-      val expNew = replace( exp, LambdaPosition( 1, 2 ), y )
+      val expNew = replace( exp, LambdaPosition( Left, Right ), y )
 
-      expNew( LambdaPosition( 1 ) ) must beEqualTo( fy )
+      expNew( LambdaPosition( Left ) ) must beEqualTo( fy )
     }
   }
 }

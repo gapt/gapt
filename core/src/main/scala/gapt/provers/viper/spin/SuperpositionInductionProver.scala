@@ -4,6 +4,7 @@ import gapt.expr._
 import gapt.expr.formula._
 import gapt.expr.formula.hol.HOLPosition
 import gapt.expr.ty.{ TArr, TBase, Ty }
+import gapt.expr.util.LambdaPosition.Choice
 import gapt.expr.util.{ LambdaPosition, constants, freeVariables, variables }
 import gapt.formats.tip.{ ConditionalNormalizer, ConditionalReductionRule, TipProblem }
 import gapt.logic.hol.skolemize
@@ -309,15 +310,15 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
       underSame:    Set[Set[Expr]] )
 
   object occurrences {
-    def newPos( i: Int, size: Int, pos: List[Int] ): List[Int] =
-      2 :: List.fill( size - i - 1 )( 1 ) ++ pos
+    def newPos( i: Int, size: Int, pos: List[Choice] ): List[Choice] =
+      LambdaPosition.Right :: List.fill( size - i - 1 )( LambdaPosition.Left ) ++ pos
 
     var underSame = Set.empty[Set[Expr]]
 
-    type Occs = ( Expr, List[Int] )
+    type Occs = ( Expr, List[Choice] )
     type Groups = ( Seq[Occs], Seq[Occs], Seq[Occs] ) // Primary, accumulator, passive
 
-    def go( expr: Expr, pos: List[Int], inPrimary: Boolean )( implicit ctx: Context ): Groups =
+    def go( expr: Expr, pos: List[Choice], inPrimary: Boolean )( implicit ctx: Context ): Groups =
       expr match {
         case Apps( c: Const, rhsArgs ) if !allPositions.isDefinedAt( c ) && !uninterpretedFun( c )( ctx ) =>
           rhsArgs.zipWithIndex.foldLeft[Groups]( ( Seq(), Seq(), Seq() ) ) {
@@ -387,8 +388,8 @@ class SuperpositionInductionProver( opts: SpinOptions, problem: TipProblem ) {
             }
           ( prim1, accs1 ++ accs2, pass1 ++ pass2 )
         case App( a, b ) =>
-          val ( l1, m1, r1 ) = go( a, 1 :: pos, inPrimary )
-          val ( l2, m2, r2 ) = go( b, 2 :: pos, inPrimary )
+          val ( l1, m1, r1 ) = go( a, LambdaPosition.Left :: pos, inPrimary )
+          val ( l2, m2, r2 ) = go( b, LambdaPosition.Right :: pos, inPrimary )
           ( l1 ++ l2, m1 ++ m2, r1 ++ r2 )
         case _ => ( Seq(), Seq(), Seq() )
       }

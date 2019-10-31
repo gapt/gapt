@@ -10,6 +10,7 @@ import gapt.expr.subst.Substitution
 import gapt.expr.ty.To
 import gapt.expr.ty.arity
 import gapt.expr.util.LambdaPosition
+import gapt.expr.util.LambdaPosition.Choice
 import gapt.expr.util.constants
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
@@ -73,14 +74,14 @@ trait SimplificationRule extends InferenceRule {
 object getFOPositions {
   def apply( exp: Expr ): Map[Expr, Seq[LambdaPosition]] = {
     val poss = mutable.Map[Expr, Seq[LambdaPosition]]().withDefaultValue( Seq() )
-    def walk( exp: Expr, pos: List[Int] ): Unit = {
+    def walk( exp: Expr, pos: List[Choice] ): Unit = {
       poss( exp ) :+= LambdaPosition( pos.reverse: _* )
       walkApp( exp, pos )
     }
-    def walkApp( exp: Expr, pos: List[Int] ): Unit = exp match {
+    def walkApp( exp: Expr, pos: List[Choice] ): Unit = exp match {
       case App( f, arg ) =>
-        walk( arg, 2 :: pos )
-        walkApp( f, 1 :: pos )
+        walk( arg, LambdaPosition.Right :: pos )
+        walkApp( f, LambdaPosition.Left :: pos )
       case _ =>
     }
     walk( exp, Nil )
