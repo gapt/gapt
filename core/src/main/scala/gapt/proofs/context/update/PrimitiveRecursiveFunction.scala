@@ -7,7 +7,7 @@ import gapt.expr.Const
 import gapt.expr.Expr
 import gapt.expr.ReductionRule
 import gapt.expr.Var
-import gapt.expr.formula.fol.folSubTerms
+import gapt.expr.formula.fol.flatSubterms
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.ty.TVar
@@ -97,7 +97,7 @@ case class PrimitiveRecursiveFunction(
         matchVars.foreach( a => { require( a.isInstanceOf[Var] ) } )
         require( matchVars == matchVars.distinct )
 
-        folSubTerms( rhs ).foreach {
+        flatSubterms( rhs ).foreach {
           case Apps( fn @ Const( `name`, _, _ ), args ) =>
             require( fn == c )
             require( ctrArgs.contains( args( recIdx ) ) )

@@ -4,7 +4,7 @@ import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Imp
-import gapt.expr.formula.fol.folSubTerms
+import gapt.expr.formula.fol.flatSubterms
 import gapt.expr.formula.hol.instantiate
 import gapt.provers.escargot.LPO
 import gapt.provers.verit.VeriT
@@ -35,7 +35,7 @@ object removeSkolemCongruences {
 
   def getAllPossibleCongruences( ep: ExpansionProof ): Vector[( Expr, Expr )] = {
     val skSyms = ep.skolemSymbols
-    val skTerms = folSubTerms( ep.deep.elements ).collect {
+    val skTerms = flatSubterms( ep.deep.elements ).collect {
       case skTerm @ Apps( skSym: Const, _ ) if skSyms( skSym ) => skTerm
     }
     skTerms.groupBy { case Apps( c: Const, _ ) => c }.

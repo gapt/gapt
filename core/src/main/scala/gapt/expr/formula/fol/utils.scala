@@ -45,10 +45,12 @@ object FOLFunctionArgs {
 }
 
 /**
- * Generation of first-order subterms (note that this notion differs from
- * lambda subterms).
+ * Retrieves the "flat" subterms of a term.
+ * Flat subterms are obtained by decomposing a sequence of applications in one
+ * step i.e. the flat subterms of f x₁ ... xₙ are the term itself and the
+ * variables x₁,...,xₙ.
  */
-object folSubTerms {
+object flatSubterms {
   def apply( t: Expr ): Set[Expr] = apply( Some( t ) )
 
   def apply( language: Iterable[Expr] ): Set[Expr] = {

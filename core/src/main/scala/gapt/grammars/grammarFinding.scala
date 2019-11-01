@@ -10,7 +10,7 @@ import gapt.expr.formula.Top
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLTerm
 import gapt.expr.formula.fol.FOLVar
-import gapt.expr.formula.fol.folSubTerms
+import gapt.expr.formula.fol.flatSubterms
 import gapt.expr.formula.fol.thresholds._
 import gapt.expr.formula.hol.{ atoms, lcomp }
 import gapt.expr.subst.PreSubstitution
@@ -182,7 +182,7 @@ object stableVTRATG {
   }
 
   def apply( lang: Set[Expr], startSymbol: Var, nonTermVects: Seq[NonTerminalVect] ): VTRATG = {
-    val subTermsPerType = folSubTerms( lang ).groupBy( _.ty )
+    val subTermsPerType = flatSubterms( lang ).groupBy( _.ty )
     val startSymbolNFs = stableTerms( lang, nonTermVects flatten )
     val argumentNFsPerType = nonTermVects.flatten.map( _.ty ).distinct.map { t =>
       t -> stableTerms( subTermsPerType( t ), nonTermVects.tail.flatten )

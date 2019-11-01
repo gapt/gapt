@@ -3,7 +3,7 @@ import gapt.expr._
 import gapt.expr.formula.And
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Or
-import gapt.expr.formula.fol.{ folSubTerms, thresholds }
+import gapt.expr.formula.fol.{ flatSubterms, thresholds }
 import gapt.expr.formula.hol.lcomp
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
@@ -78,13 +78,13 @@ object Pi2Grammar {
 object stablePi2Grammar {
   def apply( startSymbol: Var, alpha: Var, betas: Vector[Var], language: Iterable[Expr] ): Pi2PreGrammar = {
     val betaTy = betas.head.ty
-    val argStableTermsBetas = stableTerms( folSubTerms( language ).filter( _.ty == betaTy ), betas )
+    val argStableTermsBetas = stableTerms( flatSubterms( language ).filter( _.ty == betaTy ), betas )
 
     Pi2PreGrammar( startSymbol, alpha, betas,
       Vector() ++
         ( for ( rhs <- stableTerms( language, Seq( alpha ) ) ++ stableTerms( language, betas ) )
           yield startSymbol -> rhs ) ++
-        ( for ( rhs <- stableTerms( folSubTerms( language ).filter( _.ty == alpha.ty ), Seq( alpha ) ) )
+        ( for ( rhs <- stableTerms( flatSubterms( language ).filter( _.ty == alpha.ty ), Seq( alpha ) ) )
           yield alpha -> rhs ) ++
         ( for {
           ( beta, j ) <- betas.zipWithIndex

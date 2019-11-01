@@ -4,7 +4,7 @@ import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
-import gapt.expr.formula.fol.{ folSubTerms, folTermSize }
+import gapt.expr.formula.fol.{ flatSubterms, folTermSize }
 import gapt.expr.formula.hol._
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.TBase
@@ -213,7 +213,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
       }.headOption
     failedInstOption map { failedInst =>
       val minimalCounterExample = (
-        folSubTerms( failedInst ).filter( _.ty == indTy ).toList.filterNot( checkInst )
+        flatSubterms( failedInst ).filter( _.ty == indTy ).toList.filterNot( checkInst )
         :+ failedInst ).minBy( expressionSize( _ ) )
       info( s"Minimal counterexample: ${minimalCounterExample.toSigRelativeString}" )
       minimalCounterExample
