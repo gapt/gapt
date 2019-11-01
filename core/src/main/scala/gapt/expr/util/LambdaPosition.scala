@@ -56,17 +56,18 @@ object LambdaPosition {
    * @param exp2 The second expression.
    * @return The list of outermost positions at which exp1 and exp2 differ.
    */
-  def differingPositions( exp1: Expr, exp2: Expr ): List[LambdaPosition] = ( exp1, exp2 ) match {
-    case ( Var( n1, t1 ), Var( n2, t2 ) ) if n1 == n2 && t1 == t2 => Nil
-    case ( c1: Const, c2: Const ) if c1 == c2                     => Nil
-    case ( App( f1, arg1 ), App( f2, arg2 ) ) =>
-      val list1 = differingPositions( f1, f2 ) map { p => Left :: p }
-      val list2 = differingPositions( arg1, arg2 ) map { p => Right :: p }
-      list1 ++ list2
-    case ( Abs( v1, term1 ), Abs( v2, term2 ) ) if v1 == v2 =>
-      differingPositions( term1, term2 ) map { p => Left :: p }
-    case _ => List( LambdaPosition() )
-  }
+  def differingPositions( exp1: Expr, exp2: Expr ): List[LambdaPosition] =
+    ( exp1, exp2 ) match {
+      case ( Var( n1, t1 ), Var( n2, t2 ) ) if n1 == n2 && t1 == t2 => Nil
+      case ( c1: Const, c2: Const ) if c1 == c2                     => Nil
+      case ( App( f1, arg1 ), App( f2, arg2 ) ) =>
+        val list1 = differingPositions( f1, f2 ) map { p => Left :: p }
+        val list2 = differingPositions( arg1, arg2 ) map { p => Right :: p }
+        list1 ++ list2
+      case ( Abs( v1, term1 ), Abs( v2, term2 ) ) if v1 == v2 =>
+        differingPositions( term1, term2 ) map { p => Left :: p }
+      case _ => List( LambdaPosition() )
+    }
 
   /**
    * Replaces a a subexpression in a Expr.
@@ -82,10 +83,14 @@ object LambdaPosition {
     else {
       val rest = pos.tail
       exp match {
-        case Abs( t, subExp ) if pos.head == LambdaPosition.Left => Abs( t, replace( subExp, rest, repTerm ) )
-        case App( f, arg ) if pos.head == LambdaPosition.Left => App( replace( f, rest, repTerm ), arg )
-        case App( f, arg ) if pos.head == LambdaPosition.Right => App( f, replace( arg, rest, repTerm ) )
-        case _ => throw new IllegalArgumentException( "Not possible to replace at position " + pos + " in expression " + exp + "." )
+        case Abs( t, subExp ) if pos.head == LambdaPosition.Left =>
+          Abs( t, replace( subExp, rest, repTerm ) )
+        case App( f, arg ) if pos.head == LambdaPosition.Left =>
+          App( replace( f, rest, repTerm ), arg )
+        case App( f, arg ) if pos.head == LambdaPosition.Right =>
+          App( f, replace( arg, rest, repTerm ) )
+        case _ => throw new IllegalArgumentException(
+          "Not possible to replace at position " + pos + " in expression " + exp + "." )
       }
     }
 
