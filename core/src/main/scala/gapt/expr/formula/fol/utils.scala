@@ -54,8 +54,18 @@ object flatSubterms {
   def apply( t: Expr ): Set[Expr] = apply( Some( t ) )
 
   def apply( language: Iterable[Expr] ): Set[Expr] = {
+
     val subTerms = mutable.Set[Expr]()
-    for ( t <- language ) walk( t, subTerms )
+
+    def getFlatSubterms( expr: Expr ): Unit = {
+      if ( !subTerms.contains( expr ) ) {
+        subTerms += expr
+        val Apps( _, as ) = expr
+        as.foreach { getFlatSubterms }
+      }
+    }
+
+    language.foreach { getFlatSubterms }
     subTerms.toSet
   }
 
@@ -63,16 +73,6 @@ object flatSubterms {
 
   def apply( language: Iterable[FOLTerm] )( implicit dummyImplicit: DummyImplicit ): Set[FOLTerm] =
     apply( language: Iterable[Expr] ).asInstanceOf[Set[FOLTerm]]
-
-  private def walk( term: Expr, subterms: mutable.Set[Expr] ): Unit =
-    // if the term is not in the set of subterms yet, add it and add all its subterms
-    // this check avoids duplicate addition of all subterms of a subterm
-    if ( !subterms.contains( term ) ) {
-      subterms += term
-      val Apps( _, args ) = term
-      args.foreach( walk( _, subterms ) )
-    }
-
 }
 
 object folTermSize {
