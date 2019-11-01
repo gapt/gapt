@@ -45,15 +45,25 @@ object FOLFunctionArgs {
 }
 
 /**
- * Retrieves the "flat" subterms of a term.
  * Flat subterms are obtained by decomposing a sequence of applications in one
  * step i.e. the flat subterms of f x₁ ... xₙ are the term itself and the
  * variables x₁,...,xₙ.
  */
 object flatSubterms {
+
+  /**
+   * Retrieves "flat" subterms occurrences.
+   * @param t The term whose flat subterms are to be retrieved.
+   * @return All the flat subterms of `t`.
+   */
   def apply( t: Expr ): Set[Expr] = apply( Some( t ) )
 
-  def apply( language: Iterable[Expr] ): Set[Expr] = {
+  /**
+   * Retrieves "flat" subterm occurrences.
+   * @param expressions The expressions whose flat subterms are to be retrieved.
+   * @return All flat subterm occurrences of the given expressions.
+   */
+  def apply( expressions: Iterable[Expr] ): Set[Expr] = {
 
     val subTerms = mutable.Set[Expr]()
 
@@ -65,12 +75,18 @@ object flatSubterms {
       }
     }
 
-    language.foreach { getFlatSubterms }
+    expressions.foreach { getFlatSubterms }
     subTerms.toSet
   }
 
+  /**
+   * @see [[gapt.expr.formula.fol.flatSubterms]].
+   */
   def apply( t: FOLTerm ): Set[FOLTerm] = apply( Some( t ) )
 
+  /**
+   * @see [[gapt.expr.formula.fol.flatSubterms]].
+   */
   def apply( language: Iterable[FOLTerm] )( implicit dummyImplicit: DummyImplicit ): Set[FOLTerm] =
     apply( language: Iterable[Expr] ).asInstanceOf[Set[FOLTerm]]
 }
