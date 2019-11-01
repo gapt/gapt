@@ -21,25 +21,33 @@ object LambdaPosition {
   /**
    * Returns a list of positions of subexpressions that satisfy some predicate.
    *
-   * @param exp The expression under consideration.
-   * @param pred The predicate to be evaluated. Defaults to "always true", i.e. if called without this argument, the function will return all positions.
-   * @return Positions of subexpressions satisfying pred.
+   * @param expression The expression under consideration.
+   * @param predicate The predicate to be evaluated.
+   * @return Positions of subexpressions satisfying the predicate.
    */
-  def getPositions( exp: Expr, pred: Expr => Boolean = _ => true ): List[LambdaPosition] = exp match {
-    case Var( _, _ ) | Const( _, _, _ ) => if ( pred( exp ) ) List( LambdaPosition() ) else Nil
-    case App( f, arg ) =>
-      val fPositions = getPositions( f, pred ) map { p => Left :: p }
-      val argPositions = getPositions( arg, pred ) map { p => Right :: p }
+  def filterPositions( predicate: Expr => Boolean )( expression: Expr ): List[LambdaPosition] =
+    getPositions( expression )
+      .map { p => p -> expression( p ) }
+      .filter { case ( _, e ) => predicate( e ) }
+      .map { _._1 }
 
-      if ( pred( exp ) ) LambdaPosition() :: fPositions ::: argPositions else fPositions ::: argPositions
-
-    case Abs( _, subExp ) =>
-      val subPositions = getPositions( subExp, pred ) map { p => Left :: p }
-
-      if ( pred( exp ) ) LambdaPosition() :: subPositions else subPositions
-
-    case _ => throw new IllegalArgumentException( "This case is not handled." )
-  }
+  /**
+   * Retrieves all subterm positions of a term.
+   *
+   * @param expression The expression whose subterm positions are to be computed.
+   * @return All subterm positions of the given expression.
+   */
+  def getPositions( expression: Expr ): List[LambdaPosition] =
+    expression match {
+      case App( e1, e2 ) =>
+        val leftPositions = getPositions( e1 ).map { Left :: _ }
+        val rightPositions = getPositions( e2 ).map { Right :: _ }
+        List( LambdaPosition() ) ++ leftPositions ++ rightPositions
+      case Abs( _, e ) =>
+        val subtermPositions = getPositions( e ).map { Left :: _ }
+        List( LambdaPosition() ) ++ subtermPositions
+      case _ => List( LambdaPosition() )
+    }
 
   /**
    * Compares to Exprs and returns the list of outermost positions where they differ.

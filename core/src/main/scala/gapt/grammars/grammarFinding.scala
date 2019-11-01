@@ -55,7 +55,7 @@ object subsetLGGs {
 
 object stsSubsumedByLGG {
   def apply( lgg: Expr, nts: Set[Var] ): Set[Expr] = apply( lgg, nts, nts,
-    LambdaPosition.getPositions( lgg, _.ty.isInstanceOf[TBase] ).
+    LambdaPosition.filterPositions( _.ty.isInstanceOf[TBase] )( lgg ).
       groupBy( lgg( _ ) ).toList.
       sortBy { case ( st, _ ) => expressionSize( st ) }.
       map( _._2 ) )

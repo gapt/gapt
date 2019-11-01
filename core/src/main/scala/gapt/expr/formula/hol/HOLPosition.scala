@@ -20,17 +20,17 @@ object HOLPosition {
   /**
    * Returns a list of positions of subexpressions that satisfy some predicate.
    *
-   * This function is a wrapper around [[gapt.expr.util.LambdaPosition.getPositions]].
+   * This function is a wrapper around [[gapt.expr.util.LambdaPosition.filterPositions]].
    *
    * @param exp The expression under consideration.
    * @param pred The predicate to be evaluated. Defaults to "always true", i.e. if called without this argument, the function will return all positions.
    * @return Positions of subexpressions satisfying pred.
    */
   def getPositions( exp: Expr, pred: Expr => Boolean = _ => true ): List[HOLPosition] = {
-    LambdaPosition.getPositions( exp, {
+    LambdaPosition.filterPositions {
       case e: Expr => pred( e )
       case _       => false
-    } ) filter { definesHOLPosition( exp ) } map { toHOLPosition( exp ) }
+    }( exp ) filter { definesHOLPosition( exp ) } map { toHOLPosition( exp ) }
   }
 
   /**
