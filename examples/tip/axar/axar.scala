@@ -2,98 +2,191 @@ package gapt.examples.tip.axar
 
 import gapt.expr._
 import gapt.expr.formula.Formula
+import gapt.expr.formula.fol.FOLTerm
 import gapt.formats.babel.Notation
 import gapt.formats.babel.Precedence
 import gapt.proofs.Sequent
+import gapt.proofs.context.Context
+import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic.Lemma
 import gapt.proofs.gaptic.TacticsProof
 import gapt.proofs.gaptic._
+import gapt.prooftool.prooftool
 
-object prop_01 extends TacticsProof {
+case class Language(
+    inductiveTypes: Seq[InductiveType],
+    constants:      Set[Const],
+    notations:      Set[Notation] ) {
 
-  ctx += InductiveType( "nat", hoc"0:nat", hoc"s:nat>nat" )
-  ctx += hoc"+:nat>nat>nat"
-  ctx += hoc"*:nat>nat>nat"
-  ctx += hoc"≤:nat>nat>o"
-  ctx += Notation.Infix( "+", Precedence.plusMinus )
-  ctx += Notation.Infix( "*", Precedence.timesDiv )
-  ctx += Notation.Infix( "≤", Precedence.infixRel )
+  def extend( constant: Const ) = Language(
+    inductiveTypes,
+    constants + constant,
+    notations )
 
-  val Q: List[Formula] = List(
-    hof"!x 0 != s(x)",
-    hof"!x !y ( s(x) = s(y) -> x = y )",
-    hof"!x (x != 0 -> ?y x = s(y))",
-    hof"!x x + 0 = x",
-    hof"!x !y x + s(y) = s(x + y)",
-    hof"!x x * 0 = 0",
-    hof"!x !y x * s(y) = x*y + x",
-    hof"!x !y ( x ≤ y <-> ?z z + x = y)" )
+  implicit def context: ImmutableContext = {
+    var ctx = Context.default
+    inductiveTypes.foreach { ctx += _ }
+    constants.foreach { ctx += _ }
+    notations.foreach { ctx += _ }
+    ctx
+  }
+}
 
-  lazy val noind_1 = Lemma(
-    Q ++: Sequent() :+ hof"s(s(0)) * s(s(s(0))) + s(s(s(s(s(0))))) = s(s(s(s(s(s(s(s(s(s(s(0)))))))))))" ) {
-      rewrite.many ltr "h_6" in "g"
-      rewrite ltr "h_5" in "g"
-      rewrite.many ltr "h_4" in "g"
-      rewrite.many ltr "h_3" in "g"
-      refl
+object PeanoArithmetic {
+  val language: Language = {
+    val inductiveTypes = Seq(
+      InductiveType( "nat", hoc"0:nat", hoc"s:nat>nat" ) )
+    val constants = Set(
+      hoc"+:nat>nat>nat",
+      hoc"*:nat>nat>nat",
+      hoc"≤:nat>nat>o" )
+    val notations: Set[Notation] = Set(
+      Notation.Infix( "+", Precedence.plusMinus ),
+      Notation.Infix( "*", Precedence.timesDiv ),
+      Notation.Infix( "≤", Precedence.infixRel ) )
+    Language( inductiveTypes, constants, notations )
+  }
+  def numeral( n: Int ): Expr = {
+    import language.context
+    n match {
+      case 0 => le"0"
+      case _ => le"s(${numeral( n - 1 )})"
     }
+  }
+}
 
-  lazy val noind_2 = Lemma(
-    Q ++: Sequent() :+ hof"s(s(s(s(s(s(s(s(s(s(0)))))))))) ≤ s(s(0)) * s(s(s(0))) + s(s(s(s(s(0)))))" ) {
-      allL( "h_7", le"s(s(s(s(s(s(s(s(s(s(0))))))))))", le"s(s(0)) * s(s(s(0))) + s(s(s(s(s(0)))))" )
-      andL( "h_7_0" )
-      forget( "h_7_0_0" )
-      impL( "h_7_0_1" )
-      // 1
-      forget( "g" )
-      exR( le"s(0)" )
-      forget( "h_7_0_1" )
-      rewrite.many ltr "h_6" in "h_7_0_1_0"
-      rewrite ltr "h_5" in "h_7_0_1_0"
-      rewrite.many ltr "h_4" in "h_7_0_1_0"
-      rewrite.many ltr "h_3" in "h_7_0_1_0"
-      refl
-      // 2
-      trivial
-    }
+object RobinsonArithmetic {
+  val name = "Q"
+  val language: Language = PeanoArithmetic.language
+  val axioms: Seq[Formula] = {
+    import language.context
+    Seq(
+      hof"!x 0 != s(x)",
+      hof"!x !y ( s(x) = s(y) -> x = y )",
+      hof"!x (x != 0 -> ?y x = s(y))",
+      hof"!x x + 0 = x",
+      hof"!x !y x + s(y) = s(x + y)",
+      hof"!x x * 0 = 0",
+      hof"!x !y x * s(y) = x*y + x",
+      hof"!x !y ( x ≤ y <-> ?z z + x = y)" )
+  }
+}
+object GaussianArithmetic {
+  val language: Language = PeanoArithmetic.language.extend( hoc"g:nat>nat" )
+  val axioms: Seq[Formula] = RobinsonArithmetic.axioms ++ {
+    import language.context
+    Seq(
+      hof"g(0) = 0",
+      hof"!x g(s(x)) = g(x) + s(x)" )
+  }
+}
 
-  lazy val noind_3 = Lemma(
-    Q ++: Sequent() :+ hof"?x x*s(s(s(0))) + s(s(s(s(s(0))))) = s(s(s(s(s(s(s(s(s(s(s(0)))))))))))" ) {
-      forget( "h_0", "h_1", "h_2", "h_7" )
-      exR( le"s(s(0))" )
-      forget( "g" )
-      rewrite.many ltr "h_6" in "g_0"
-      rewrite ltr "h_5" in "g_0"
-      rewrite.many ltr "h_4" in "g_0"
-      rewrite.many ltr "h_3" in "g_0"
-      refl
-    }
+abstract class Problem( val language: Language )
+  extends TacticsProof( language.context ) {
+  val sequent: Sequent[Formula]
+  val comment: Option[String] = None
+  val name: String
+}
 
-  lazy val noind_4 = Lemma(
-    Q ++: Sequent() :+ hof"?x s(s(s(s(s(s(s(s(s(s(0)))))))))) ≤ s(s(0)) * x + s(s(s(s(s(0)))))" ) {
-      forget( "h_0", "h_1", "h_2" )
-      exR( le"s(s(s(0)))" )
-      forget( "g" )
-      allL( "h_7", le"s(s(s(s(s(s(s(s(s(s(0))))))))))", le"s(s(0)) * s(s(s(0))) + s(s(s(s(s(0)))))" )
-      forget( "h_7" )
-      andL( "h_7_0" )
-      forget( "h_7_0_0" )
-      impL( "h_7_0_1" )
-      // 1
-      forget( "g_0" )
-      exR( "h_7_0_1", le"s(0)" )
-      forget( "h_7_0_1" )
-      rewrite.many ltr "h_6" in "h_7_0_1_0"
-      rewrite ltr "h_5" in "h_7_0_1_0"
-      rewrite.many ltr "h_4" in "h_7_0_1_0"
-      rewrite.many ltr "h_3" in "h_7_0_1_0"
-      refl
-      // 2
-      trivial
-    }
+object noind_1 extends Problem( PeanoArithmetic.language ) {
 
-  lazy val noind_lemma_1 = Lemma( Q ++: Sequent() :+ hof"!x !y (x ≤ y -> s(x) ≤ s(y))" ) {
+  import PeanoArithmetic.numeral
+
+  val name = "noind_1"
+
+  val sequent =
+    RobinsonArithmetic.axioms ++:
+      Sequent() :+
+      hof"${numeral( 2 )} * ${numeral( 3 )} + ${numeral( 5 )} = ${numeral( 11 )}"
+
+  lazy val proof = Lemma( sequent ) {
+    rewrite.many ltr "h_6" in "g"
+    rewrite ltr "h_5" in "g"
+    rewrite.many ltr "h_4" in "g"
+    rewrite.many ltr "h_3" in "g"
+    refl
+  }
+  prooftool( proof )
+}
+object noind_2 extends Problem( PeanoArithmetic.language ) {
+
+  import PeanoArithmetic.numeral
+
+  val name = "noind_2"
+
+  val sequent =
+    RobinsonArithmetic.axioms ++:
+      Sequent() :+
+      hof"${numeral( 10 )} ≤ ${numeral( 2 )} * ${numeral( 3 )} + ${numeral( 5 )}"
+
+  lazy val proof = Lemma(
+    sequent ) {
+    allL( "h_7", numeral( 10 ), le"${numeral( 2 )} * ${numeral( 3 )} + ${numeral( 5 )}" )
+    andL( "h_7_0" )
+    forget( "h_7_0_0" )
+    impL( "h_7_0_1" )
+    // 1
+    forget( "g" )
+    exR( le"s(0)" )
+    forget( "h_7_0_1" )
+    rewrite.many ltr "h_6" in "h_7_0_1_0"
+    rewrite ltr "h_5" in "h_7_0_1_0"
+    rewrite.many ltr "h_4" in "h_7_0_1_0"
+    rewrite.many ltr "h_3" in "h_7_0_1_0"
+    refl
+    // 2
+    trivial
+  }
+}
+object noind_3 extends Problem( PeanoArithmetic.language ) {
+  import PeanoArithmetic.numeral
+  val name = "noind_3"
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"?x x*${numeral( 3 )} + ${numeral( 5 )} = ${numeral( 11 )}"
+  lazy val proof = Lemma( sequent ) {
+    forget( "h_0", "h_1", "h_2", "h_7" )
+    exR( le"s(s(0))" )
+    forget( "g" )
+    rewrite.many ltr "h_6" in "g_0"
+    rewrite ltr "h_5" in "g_0"
+    rewrite.many ltr "h_4" in "g_0"
+    rewrite.many ltr "h_3" in "g_0"
+    refl
+  }
+}
+
+object noind_4 extends Problem( PeanoArithmetic.language ) {
+  import PeanoArithmetic.numeral
+  val name = "noind_4"
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"?x ${numeral( 10 )} ≤ ${numeral( 2 )} * x + ${numeral( 5 )}"
+  lazy val proof = Lemma(
+    sequent ) {
+    forget( "h_0", "h_1", "h_2" )
+    exR( le"s(s(s(0)))" )
+    forget( "g" )
+    allL( "h_7", numeral( 10 ), le"${numeral( 2 )} * ${numeral( 3 )} + ${numeral( 5 )}" )
+    forget( "h_7" )
+    andL( "h_7_0" )
+    forget( "h_7_0_0" )
+    impL( "h_7_0_1" )
+    // 1
+    forget( "g_0" )
+    exR( "h_7_0_1", le"s(0)" )
+    forget( "h_7_0_1" )
+    rewrite.many ltr "h_6" in "h_7_0_1_0"
+    rewrite ltr "h_5" in "h_7_0_1_0"
+    rewrite.many ltr "h_4" in "h_7_0_1_0"
+    rewrite.many ltr "h_3" in "h_7_0_1_0"
+    refl
+    // 2
+    trivial
+  }
+}
+
+object noind_lemma_1 extends Problem( PeanoArithmetic.language ) {
+  val name = "noind _1_lemma"
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y (x ≤ y -> s(x) ≤ s(y))"
+  lazy val proof = Lemma( sequent ) {
     decompose
     allL( "h_7", le"s(x)", le"s(y)" )
     andL( "h_7_0" )
@@ -108,48 +201,57 @@ object prop_01 extends TacticsProof {
     exR( le"z:nat" )
     escargot
   }
+}
+object openind_1 extends Problem( PeanoArithmetic.language ) {
+  val name = "openind_1"
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y !z x + (y + z) = (x + y) + z"
+  lazy val proof = Lemma(
+    sequent ) {
+    allR( "g" )
+    allR( "g" )
+    allR( "g" )
+    induction( hov"z:nat" )
+    // 1
+    rewrite.many ltr "h_3" in "g"
+    refl
+    // 2
+    rewrite.many ltr "h_4" in "g"
+    rewrite ltr "IHz_0" in "g"
+    refl
+  }
+}
 
-  lazy val openind_1 = Lemma(
-    Q ++: Sequent() :+ hof"!x !y !z x + (y + z) = (x + y) + z" ) {
-      allR( "g" )
-      allR( "g" )
-      allR( "g" )
-      induction( hov"z:nat" )
-      // 1
-      rewrite.many ltr "h_3" in "g"
-      refl
-      // 2
-      rewrite.many ltr "h_4" in "g"
-      rewrite ltr "IHz_0" in "g"
-      refl
-    }
-
-  lazy val openind_2 = Lemma(
-    Q ++: Sequent() :+ hof"!x !y !z (y + x = z + x -> y = z)" ) {
-      allR( "g" )
-      allR( "g" )
-      allR( "g" )
-      induction( hov"x:nat" )
-      // 1
-      rewrite.many ltr "h_3" in "g"
-      impR
-      trivial
-      // 2
-      impR // assume y + s(x) = z + s(x)
-      rewrite.many ltr "h_4" in "g_0" // by def of + we have s(y + x) = s(z + x)
-      allL( "h_1", le"y + x_0", le"z + x_0" ) // by injectivity of + we have y + x = z + x
-      impL( "h_1_0" )
-      // 2.1
-      trivial
-      // 2.2
-      impL( "IHx_0" ) // by the induction hypothesis we obtain y = z
-      // 2.1
-      trivial
-      // 2.2
-      trivial
-    }
-
-  lazy val openind_3a = Lemma( Q ++: Sequent() :+ hof"!x 0 + x = x" ) {
+object openind_2 extends Problem( PeanoArithmetic.language ) {
+  val name = "openind_2"
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y !z (y + x = z + x -> y = z)"
+  val proof = Lemma( sequent ) {
+    allR( "g" )
+    allR( "g" )
+    allR( "g" )
+    induction( hov"x:nat" )
+    // 1
+    rewrite.many ltr "h_3" in "g"
+    impR
+    trivial
+    // 2
+    impR // assume y + s(x) = z + s(x)
+    rewrite.many ltr "h_4" in "g_0" // by def of + we have s(y + x) = s(z + x)
+    allL( "h_1", le"y + x_0", le"z + x_0" ) // by injectivity of + we have y + x = z + x
+    impL( "h_1_0" )
+    // 2.1
+    trivial
+    // 2.2
+    impL( "IHx_0" ) // by the induction hypothesis we obtain y = z
+    // 2.1
+    trivial
+    // 2.2
+    trivial
+  }
+}
+object openind_3a extends Problem( PeanoArithmetic.language ) {
+  val name = "openind_3a"
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x 0 + x = x"
+  val proof = Lemma( sequent ) {
     allR
     induction( hov"x:nat" )
     // 1.1
@@ -161,7 +263,12 @@ object prop_01 extends TacticsProof {
     refl
   }
 
-  lazy val openind_3b = Lemma( Q ++: Sequent() :+ hof"!x !y s(x) + y = s(x + y)" ) {
+}
+
+object openind_3b extends Problem( PeanoArithmetic.language ) {
+  val name = ""
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y s(x) + y = s(x + y)"
+  val proof = Lemma( sequent ) {
     allR
     allR
     induction( hov"y:nat" )
@@ -173,11 +280,14 @@ object prop_01 extends TacticsProof {
     rewrite ltr "IHy_0" in "g"
     refl
   }
-
-  lazy val openind_3 = Lemma( Q ++: Sequent() :+ hof"!x !y x + y = y + x" ) {
-    include( "l_1", openind_3a )
+}
+object openind_3 extends Problem( PeanoArithmetic.language ) {
+  val name = ""
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y x + y = y + x"
+  val proof = Lemma( sequent ) {
+    include( "l_1", openind_3a.proof )
     // 2
-    include( "l_2", openind_3b )
+    include( "l_2", openind_3b.proof )
     // 3
     allR( "g" )
     allR( "g" )
@@ -192,10 +302,13 @@ object prop_01 extends TacticsProof {
     rewrite ltr "IHx_0" in "g"
     refl
   }
-
-  lazy val openind_4 = Lemma( Q ++: Sequent() :+ hof"!x !y !z (x + y = x + z -> y = z)" ) {
-    include( "l_1", openind_3 )
-    include( "l_2", openind_2 )
+}
+object openind_4 extends Problem( PeanoArithmetic.language ) {
+  val name = ""
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y !z (x + y = x + z -> y = z)"
+  val proof = Lemma( sequent ) {
+    include( "l_1", openind_3.proof )
+    include( "l_2", openind_2.proof )
     allR( "g" )
     allR( "g" )
     allR( "g" )
@@ -207,18 +320,25 @@ object prop_01 extends TacticsProof {
     allL( "l_2", le"x:nat", le"y:nat", le"z:nat" )
     trivial
   }
-
-  lazy val openind_5a = Lemma( Q ++: Sequent() :+ hof"!x !y !z x * (y + z) = x*y + x*z" ) {
+}
+object openind_5a extends Problem( PeanoArithmetic.language ) {
+  val name = ""
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y !z x * (y + z) = x*y + x*z"
+  val proof = Lemma( sequent ) {
     allR
     allR
     allR
     induction( hov"z:nat" )
     escargot
-    include( "l_1", openind_1 )
+    include( "l_1", openind_1.proof )
     escargot
   }
+}
 
-  lazy val openind_5 = Lemma( Q ++: Sequent() :+ hof"!x !y !z x * (y * z) = (x * y) * z" ) {
+object openind_5 extends Problem( PeanoArithmetic.language ) {
+  val name = ""
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y !z x * (y * z) = (x * y) * z"
+  val proof = Lemma( sequent ) {
     allR
     allR
     allR
@@ -228,18 +348,24 @@ object prop_01 extends TacticsProof {
     refl
     // 2
     rewrite.many ltr "h_6" in "g"
-    include( "l_1", openind_5a )
+    include( "l_1", openind_5a.proof )
     escargot
   }
-
-  lazy val openind_6a = Lemma( Q ++: Sequent() :+ hof"!x 0 * x = 0" ) {
+}
+object openind_6a extends Problem( PeanoArithmetic.language ) {
+  val name = ""
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x 0 * x = 0"
+  val proof = Lemma( sequent ) {
     allR
     induction( hov"x:nat" )
     escargot
     escargot
   }
-
-  lazy val openind_6b = Lemma( Q ++: Sequent() :+ hof"!x !y s(x) * y = x*y + y" ) {
+}
+object openind_6b extends Problem( PeanoArithmetic.language ) {
+  val name = ""
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y s(x) * y = x*y + y"
+  val proof = Lemma( sequent ) {
     allR
     allR
     induction( hov"y:nat" )
@@ -248,22 +374,28 @@ object prop_01 extends TacticsProof {
     refl
     rewrite.many ltr "h_6" in "g"
     rewrite.many ltr "h_4" in "g"
-    include( "plus_assoc", openind_1 )
-    include( "plus_comm", openind_3 )
+    include( "plus_assoc", openind_1.proof )
+    include( "plus_comm", openind_3.proof )
     escargot
   }
-
-  lazy val openind_6 = Lemma( Q ++: Sequent() :+ hof"!x !y x * y = y * x" ) {
+}
+object openind_6 extends Problem( PeanoArithmetic.language ) {
+  val name = ""
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y x * y = y * x"
+  val proof = Lemma( sequent ) {
     allR
     allR
     induction( hov"x:nat" )
-    include( "l_1", openind_6a )
+    include( "l_1", openind_6a.proof )
     escargot
-    include( "msl", openind_6b )
+    include( "msl", openind_6b.proof )
     escargot
   }
-
-  lazy val openind_7 = Lemma( Q ++: Sequent() :+ hof"!x !y (x ≤ y | y ≤ x)" ) {
+}
+object openind_7 extends Problem( PeanoArithmetic.language ) {
+  val name = ""
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y (x ≤ y | y ≤ x)"
+  val proof = Lemma( sequent ) {
     allR
     allR
     induction( hov"x:nat" )
@@ -281,7 +413,7 @@ object prop_01 extends TacticsProof {
     impL
     negR
     rewrite ltr "h_2_0" in "h_7_0_0"
-    include( "l_1", openind_3a )
+    include( "l_1", openind_3a.proof )
     rewrite ltr "l_1" in "h_7_0_0"
     orR
     forget( "g_0" )
@@ -292,7 +424,7 @@ object prop_01 extends TacticsProof {
     forget( "g_1" )
     exR( le"s(0)" )
     forget( "h_7_1_1" )
-    include( "l_2", openind_3b )
+    include( "l_2", openind_3b.proof )
     rewrite ltr "l_2" in "h_7_1_1_0"
     rewrite ltr "l_1" in "h_7_1_1_0"
     rewrite ltr "h_7_0_0" in "h_7_1_1_0"
@@ -300,7 +432,7 @@ object prop_01 extends TacticsProof {
     trivial
     exL
     rewrite ltr "h_2_0" in "h_7_0_0"
-    include( "l_1", openind_3b )
+    include( "l_1", openind_3b.proof )
     rewrite ltr "l_1" in "h_7_0_0"
     forget( "l_1" )
     rewrite rtl "h_4" in "h_7_0_0"
@@ -328,14 +460,17 @@ object prop_01 extends TacticsProof {
     forget( "h_7_1_0" )
     impL
     exR( le"s(z:nat)" )
-    include( "l_1", openind_3b )
+    include( "l_1", openind_3b.proof )
     rewrite ltr "l_1" in "h_7_1_1_0"
     rewrite ltr "h_7_0_0" in "h_7_1_1_0"
     refl
     trivial
   }
-
-  lazy val openind_8a = Lemma( Q ++: Sequent() :+ hof"!x !y (x != 0 | y != 0 -> x + y != 0)" ) {
+}
+object openind_8a extends Problem( PeanoArithmetic.language ) {
+  val name = ""
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y (x != 0 | y != 0 -> x + y != 0)"
+  val proof = Lemma( sequent ) {
     decompose
     orL( "g_0" )
     // case x != 0
@@ -344,7 +479,7 @@ object prop_01 extends TacticsProof {
     trivial
     exL
     rewrite ltr "h_2_0" in "g_1"
-    include( "l", openind_3b )
+    include( "l", openind_3b.proof )
     rewrite ltr "l" in "g_1"
     allL( "h_0", le"y_0 + y" )
     negL( "h_0_0" )
@@ -360,8 +495,11 @@ object prop_01 extends TacticsProof {
     negL( "h_0_0" )
     quasiprop
   }
-
-  lazy val openind_8 = Lemma( Q ++: Sequent() :+ hof"∀x ∀y ∀z ( x != 0 ∧ y * x = z * x  →  y = z )" ) {
+}
+object openind_8 extends Problem( PeanoArithmetic.language ) {
+  val name = ""
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"∀x ∀y ∀z ( x != 0 ∧ y * x = z * x  →  y = z )"
+  val proof = Lemma( sequent ) {
 
     cut( "l", hof"!x !y (x ≤ y & x != y -> ?z (z != 0 & z + x = y))" )
     forget( "g" )
@@ -379,7 +517,7 @@ object prop_01 extends TacticsProof {
     impL
     negR
     rewrite ltr "h_2_0" in "h_7_0_0"
-    include( "l_1", openind_3a )
+    include( "l_1", openind_3a.proof )
     rewrite ltr "l_1" in "h_7_0_0"
     negL
     trivial
@@ -423,7 +561,7 @@ object prop_01 extends TacticsProof {
     rewrite.many ltr "h_2_0" in "f_1"
     rewrite.many ltr "h_6" in "f_1"
     rewrite.many ltr "h_5" in "f_1"
-    include( "l_1", openind_3a )
+    include( "l_1", openind_3a.proof )
     rewrite.many ltr "l_1" in "f_1"
     prop
     // end case z_0 = 0
@@ -475,9 +613,9 @@ object prop_01 extends TacticsProof {
     rewrite.many ltr "h_6" in "f_1"
     rewrite.many rtl "l_0_1" in "f_1"
     rewrite.many rtl "l_1_1" in "f_1"
-    include( "plus_asso", openind_1 )
-    include( "plus_comm", openind_3 )
-    include( "lem", openind_8a )
+    include( "plus_asso", openind_1.proof )
+    include( "plus_comm", openind_3.proof )
+    include( "lem", openind_8a.proof )
     andR
 
     // begin <=
@@ -492,7 +630,7 @@ object prop_01 extends TacticsProof {
     // end <=
 
     // begin !=
-    include( "plus_canc", openind_4 )
+    include( "plus_canc", openind_4.proof )
     allL( "lem", le"u:nat", le"v:nat" )
     forget( "h_7_0_1", "h_1", "h_2", "h_4", "h_5", "h_6", "h_7", "l_1_1", "l_0_1", "IHz_0_0", "IHz_0_1", "h_2_0_0", "f_0_0_0", "f_0_0_1", "f_0_1", "l", "h_0", "lem" )
     allL( "plus_canc", le"x * z_0", le"0", le"u + v" )
@@ -508,7 +646,7 @@ object prop_01 extends TacticsProof {
     // begin apply main lemma
     decompose
     // begin case distinction y <= z | z <= y
-    include( "leq_dico", openind_7 )
+    include( "leq_dico", openind_7.proof )
     allL( "leq_dico", le"y:nat", le"z:nat" )
     allL( "h_7", le"y:nat", le"z:nat" )
     forget( "leq_dico", "l", "h_1", "h_5", "h_6", "h_7" )
@@ -526,8 +664,11 @@ object prop_01 extends TacticsProof {
 
     // end apply main lemma
   }
-
-  lazy val openind_9a = Lemma( Q ++: Sequent() :+ hof"!x !y (x + y = 0 -> x = 0 & y = 0)" ) {
+}
+object openind_9a extends Problem( PeanoArithmetic.language ) {
+  val name = ""
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y (x + y = 0 -> x = 0 & y = 0)"
+  val proof = Lemma( sequent ) {
     decompose
     andR
     allL( "h_2", le"x:nat" )
@@ -535,12 +676,16 @@ object prop_01 extends TacticsProof {
     prop
     exL( "h_2_0" )
     rewrite ltr "h_2_0" in "g_0"
-    include( "plus_slef", openind_3b )
+    include( "plus_slef", openind_3b.proof )
     escargot
     escargot
   }
 
-  lazy val openind_9 = Lemma( Q ++: Sequent() :+ hof"!x !y ( x ≤ y & y ≤ x -> x = y )" ) {
+}
+object openind_9 extends Problem( PeanoArithmetic.language ) {
+  val name = ""
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y ( x ≤ y & y ≤ x -> x = y )"
+  val proof = Lemma( sequent ) {
     decompose
     allL( "h_7", le"x:nat", le"y:nat" )
     allL( "h_7", le"y:nat", le"x:nat" )
@@ -553,9 +698,9 @@ object prop_01 extends TacticsProof {
     impL( "h_7_1_0" )
     trivial
     forget( "g_0_0", "g_0_1" )
-    include( "plus_canc", openind_4 )
-    include( "plus_asso", openind_1 )
-    include( "plus_comm", openind_3 )
+    include( "plus_canc", openind_4.proof )
+    include( "plus_asso", openind_1.proof )
+    include( "plus_comm", openind_3.proof )
     forget( "h_7" )
     exL( "h_7_0_0", hov"u:nat" )
     exL( "h_7_1_0", hov"v:nat" )
@@ -563,33 +708,31 @@ object prop_01 extends TacticsProof {
     allL( "plus_canc", le"x:nat", le"0", le"u + v" )
     escargot
   }
-
-  ctx += hoc"g:nat>nat"
-
-  lazy val GaussianAxioms = Seq(
-    hof"g(0) = 0",
-    hof"!x g(s(x)) = g(x) + s(x)" )
-
-  lazy val openind_10 = Lemma( ( Q ++ GaussianAxioms ) ++: Sequent() :+ hof"!x s(s(0)) * g(x) = x * s(x)" ) {
-    include( "plus_asso", openind_1 )
-    include( "plus_comm", openind_3 )
-    include( "mult_comm", openind_6 )
+}
+object openind_10 extends Problem( GaussianArithmetic.language ) {
+  val name = ""
+  val sequent = ( GaussianArithmetic.axioms ) ++: Sequent() :+ hof"!x s(s(0)) * g(x) = x * s(x)"
+  val proof = Lemma( sequent ) {
+    include( "plus_asso", openind_1.proof )
+    include( "plus_comm", openind_3.proof )
+    include( "mult_comm", openind_6.proof )
     allR( "g", hov"x:nat" )
     induction( hov"x:nat" )
     escargot
     escargot
   }
-
-  lazy val openind_11a = Q ++: Sequent() :+ hof"!x !y !z ( y ≤ z & y != z -> x + y ≤ x + z & x + y != x + z )"
-
-  lazy val openind_11a_proof = Lemma( openind_11a ) {
+}
+object openind_11a extends Problem( PeanoArithmetic.language ) {
+  val name = ""
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y !z ( y ≤ z & y != z -> x + y ≤ x + z & x + y != x + z )"
+  val proof = Lemma( sequent ) {
     allR
     allR
     allR
     induction( hov"x:nat" )
 
     // begin base case
-    include( "plus_lzer", openind_3a )
+    include( "plus_lzer", openind_3a.proof )
     forget( "h_0", "h_1", "h_2", "h_3", "h_4", "h_5", "h_6", "h_7" )
     escargot
     // end base case
@@ -604,12 +747,12 @@ object prop_01 extends TacticsProof {
     andL
     // end apply the IH
 
-    include( "plus_lsuc", openind_3b )
+    include( "plus_lsuc", openind_3b.proof )
     rewrite.many ltr "plus_lsuc" in "g_1"
     andR
 
     // begin sx_0 + y <= sx_0 + z
-    include( "leq_succ", noind_lemma_1 )
+    include( "leq_succ", noind_lemma_1.proof )
     chain( "leq_succ" )
     trivial
     // end sx_0 + y <= sx_0 + z
@@ -623,17 +766,18 @@ object prop_01 extends TacticsProof {
 
     // end step case
   }
-
-  lazy val openind_11 = Q ++: Sequent() :+ hof"!x !y ( x + x = y + y -> x = y )"
-
-  // via induction with multiplication ( 2*x = 2*y -> x = y ) via lemma above.
-  lazy val openind_11_proof_1 = Lemma( openind_11 ) {
+}
+object openind_11 extends Problem( PeanoArithmetic.language ) {
+  val name = ""
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y ( x + x = y + y -> x = y )"
+  // via induction with multiplication ( 2*x = 2*y -> x = y )
+  val proof = Lemma( sequent ) {
     cut( "l", hof"!x x + x = x*s(s(0))" )
     // begin lemma x + x = x*2
     allR( "l" )
     rewrite.many ltr "h_6" in "l"
     rewrite ltr "h_5" in "l"
-    include( "plus_lzer", openind_3a )
+    include( "plus_lzer", openind_3a.proof )
     rewrite ltr "plus_lzer" in "l"
     refl
     // end lemma
@@ -641,7 +785,7 @@ object prop_01 extends TacticsProof {
     allR
     impR
     rewrite.many ltr "l" in "g_0"
-    include( "mult_canc", openind_8 )
+    include( "mult_canc", openind_8.proof )
     allL( "mult_canc", le"s(s(0))", le"x:nat", le"y:nat" )
     impL( "mult_canc_0" )
     andR
@@ -653,21 +797,12 @@ object prop_01 extends TacticsProof {
 
     trivial
   }
-
-  lazy val openind_lemma_1 = Lemma( Q ++: Sequent() :+ hof"!x !y ( y != 0 -> x + y != x)" ) {
-    decompose
-    allL( "h_2", le"y:nat" )
-    include( "plus_canc", openind_4 )
-    forget( "h_2" )
-    escargot
-  }
-
   //   via pure s, 0, +, ≤ induction
-  lazy val openind_11_proof_2 = Lemma( openind_11 ) {
+  val proof2 = Lemma( sequent ) {
     allR
     allR
     impR
-    include( "leq_dico", openind_7 )
+    include( "leq_dico", openind_7.proof )
     allL( "leq_dico", le"x:nat", le"y:nat" )
     orL
 
@@ -685,7 +820,7 @@ object prop_01 extends TacticsProof {
     // begin z_0 = 0
     negR
     rewrite ltr "h_2_0" in "h_7_0_0"
-    include( "plus_lzer", openind_3a )
+    include( "plus_lzer", openind_3a.proof )
     escargot
     // end z_0 = 0
 
@@ -693,9 +828,9 @@ object prop_01 extends TacticsProof {
     cut( "z_ne_zero", hof"z != 0" )
     escargot
     rewrite.many rtl "h_7_0_0" in "g_0"
-    include( "plus_comm", openind_3 )
-    include( "plus_asso", openind_1 )
-    include( "plus_canc", openind_4 )
+    include( "plus_comm", openind_3.proof )
+    include( "plus_asso", openind_1.proof )
+    include( "plus_canc", openind_4.proof )
     escargot
     // end z_0 != 0
 
@@ -715,7 +850,7 @@ object prop_01 extends TacticsProof {
     // begin z_0 = 0
     negR
     rewrite ltr "h_2_0" in "h_7_0_0"
-    include( "plus_lzer", openind_3a )
+    include( "plus_lzer", openind_3a.proof )
     escargot
     // end z_0 = 0
 
@@ -723,9 +858,9 @@ object prop_01 extends TacticsProof {
     cut( "z_ne_zero", hof"z != 0" )
     escargot
     rewrite.many rtl "h_7_0_0" in "g_0"
-    include( "plus_comm", openind_3 )
-    include( "plus_asso", openind_1 )
-    include( "plus_canc", openind_4 )
+    include( "plus_comm", openind_3.proof )
+    include( "plus_asso", openind_1.proof )
+    include( "plus_canc", openind_4.proof )
     forget( "h_2_0", "h_5", "h_6" )
     escargot
     // end z_0 != 0
@@ -733,4 +868,15 @@ object prop_01 extends TacticsProof {
     // end y <= x
   }
 
+}
+object openind_lemma_1 extends Problem( PeanoArithmetic.language ) {
+  val name = ""
+  val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y ( y != 0 -> x + y != x)"
+  val proof = Lemma( sequent ) {
+    decompose
+    allL( "h_2", le"y:nat" )
+    include( "plus_canc", openind_4.proof )
+    forget( "h_2" )
+    escargot
+  }
 }
