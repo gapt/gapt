@@ -1,8 +1,8 @@
 package gapt.examples.tip.axar
 
+import ammonite.ops._
 import gapt.expr._
 import gapt.expr.formula.Formula
-import gapt.expr.formula.fol.FOLTerm
 import gapt.formats.babel.Notation
 import gapt.formats.babel.Precedence
 import gapt.proofs.Sequent
@@ -13,6 +13,50 @@ import gapt.proofs.gaptic.Lemma
 import gapt.proofs.gaptic.TacticsProof
 import gapt.proofs.gaptic._
 import gapt.prooftool.prooftool
+import gapt.utils.Doc
+import gapt.formats.tip.export.export.{ export => exportTip }
+
+object AxarProblems {
+
+  val problems = List(
+    noind_1,
+    noind_2,
+    noind_3,
+    noind_4,
+    openind_1,
+    openind_2,
+    openind_3,
+    openind_3a,
+    openind_3b,
+    openind_4,
+    openind_5,
+    openind_5a,
+    openind_6,
+    openind_6a,
+    openind_6b,
+    openind_7,
+    openind_8a,
+    openind_8,
+    openind_9,
+    openind_9a,
+    openind_10 )
+
+  private val SMT2_LINE_WIDTH = 80
+
+  def axarProblemToSmt2String( problem: Problem ): String =
+    exportTip( problem.sequent, problem.language.context )
+      .render( SMT2_LINE_WIDTH ) + "\n"
+
+  def exportAxarProblemToSmt2File( prefix: Path, problem: Problem ): Unit = {
+    val outputFilePath = prefix / ( problem.name + ".smt2" )
+    val output = axarProblemToSmt2String( problem )
+    ammonite.ops.write( outputFilePath, output )
+  }
+
+  def exportAxarProblems( prefix: Path ): Unit = {
+    problems.foreach { exportAxarProblemToSmt2File( prefix, _ ) }
+  }
+}
 
 case class Language(
     inductiveTypes: Seq[InductiveType],
@@ -184,7 +228,7 @@ object noind_4 extends Problem( PeanoArithmetic.language ) {
 }
 
 object noind_lemma_1 extends Problem( PeanoArithmetic.language ) {
-  val name = "noind _1_lemma"
+  val name = "noind lemma_1"
   val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y (x ≤ y -> s(x) ≤ s(y))"
   lazy val proof = Lemma( sequent ) {
     decompose
@@ -224,7 +268,7 @@ object openind_1 extends Problem( PeanoArithmetic.language ) {
 object openind_2 extends Problem( PeanoArithmetic.language ) {
   val name = "openind_2"
   val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y !z (y + x = z + x -> y = z)"
-  val proof = Lemma( sequent ) {
+  lazy val proof = Lemma( sequent ) {
     allR( "g" )
     allR( "g" )
     allR( "g" )
@@ -251,7 +295,7 @@ object openind_2 extends Problem( PeanoArithmetic.language ) {
 object openind_3a extends Problem( PeanoArithmetic.language ) {
   val name = "openind_3a"
   val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x 0 + x = x"
-  val proof = Lemma( sequent ) {
+  lazy val proof = Lemma( sequent ) {
     allR
     induction( hov"x:nat" )
     // 1.1
@@ -266,9 +310,9 @@ object openind_3a extends Problem( PeanoArithmetic.language ) {
 }
 
 object openind_3b extends Problem( PeanoArithmetic.language ) {
-  val name = ""
+  val name = "openind_3b"
   val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y s(x) + y = s(x + y)"
-  val proof = Lemma( sequent ) {
+  lazy val proof = Lemma( sequent ) {
     allR
     allR
     induction( hov"y:nat" )
@@ -282,9 +326,9 @@ object openind_3b extends Problem( PeanoArithmetic.language ) {
   }
 }
 object openind_3 extends Problem( PeanoArithmetic.language ) {
-  val name = ""
+  val name = "openind_3"
   val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y x + y = y + x"
-  val proof = Lemma( sequent ) {
+  lazy val proof = Lemma( sequent ) {
     include( "l_1", openind_3a.proof )
     // 2
     include( "l_2", openind_3b.proof )
@@ -304,9 +348,9 @@ object openind_3 extends Problem( PeanoArithmetic.language ) {
   }
 }
 object openind_4 extends Problem( PeanoArithmetic.language ) {
-  val name = ""
+  val name = "openind_4"
   val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y !z (x + y = x + z -> y = z)"
-  val proof = Lemma( sequent ) {
+  lazy val proof = Lemma( sequent ) {
     include( "l_1", openind_3.proof )
     include( "l_2", openind_2.proof )
     allR( "g" )
@@ -322,9 +366,9 @@ object openind_4 extends Problem( PeanoArithmetic.language ) {
   }
 }
 object openind_5a extends Problem( PeanoArithmetic.language ) {
-  val name = ""
+  val name = "openind_5a"
   val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y !z x * (y + z) = x*y + x*z"
-  val proof = Lemma( sequent ) {
+  lazy val proof = Lemma( sequent ) {
     allR
     allR
     allR
@@ -336,9 +380,9 @@ object openind_5a extends Problem( PeanoArithmetic.language ) {
 }
 
 object openind_5 extends Problem( PeanoArithmetic.language ) {
-  val name = ""
+  val name = "openind_5"
   val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y !z x * (y * z) = (x * y) * z"
-  val proof = Lemma( sequent ) {
+  lazy val proof = Lemma( sequent ) {
     allR
     allR
     allR
@@ -353,9 +397,9 @@ object openind_5 extends Problem( PeanoArithmetic.language ) {
   }
 }
 object openind_6a extends Problem( PeanoArithmetic.language ) {
-  val name = ""
+  val name = "openind_6a"
   val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x 0 * x = 0"
-  val proof = Lemma( sequent ) {
+  lazy val proof = Lemma( sequent ) {
     allR
     induction( hov"x:nat" )
     escargot
@@ -363,9 +407,9 @@ object openind_6a extends Problem( PeanoArithmetic.language ) {
   }
 }
 object openind_6b extends Problem( PeanoArithmetic.language ) {
-  val name = ""
+  val name = "openind_6b"
   val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y s(x) * y = x*y + y"
-  val proof = Lemma( sequent ) {
+  lazy val proof = Lemma( sequent ) {
     allR
     allR
     induction( hov"y:nat" )
@@ -380,9 +424,9 @@ object openind_6b extends Problem( PeanoArithmetic.language ) {
   }
 }
 object openind_6 extends Problem( PeanoArithmetic.language ) {
-  val name = ""
+  val name = "openind_6"
   val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y x * y = y * x"
-  val proof = Lemma( sequent ) {
+  lazy val proof = Lemma( sequent ) {
     allR
     allR
     induction( hov"x:nat" )
@@ -393,9 +437,9 @@ object openind_6 extends Problem( PeanoArithmetic.language ) {
   }
 }
 object openind_7 extends Problem( PeanoArithmetic.language ) {
-  val name = ""
+  val name = "openind_7"
   val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y (x ≤ y | y ≤ x)"
-  val proof = Lemma( sequent ) {
+  lazy val proof = Lemma( sequent ) {
     allR
     allR
     induction( hov"x:nat" )
@@ -468,9 +512,9 @@ object openind_7 extends Problem( PeanoArithmetic.language ) {
   }
 }
 object openind_8a extends Problem( PeanoArithmetic.language ) {
-  val name = ""
+  val name = "openind_8a"
   val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y (x != 0 | y != 0 -> x + y != 0)"
-  val proof = Lemma( sequent ) {
+  lazy val proof = Lemma( sequent ) {
     decompose
     orL( "g_0" )
     // case x != 0
@@ -497,9 +541,9 @@ object openind_8a extends Problem( PeanoArithmetic.language ) {
   }
 }
 object openind_8 extends Problem( PeanoArithmetic.language ) {
-  val name = ""
+  val name = "openind_8"
   val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"∀x ∀y ∀z ( x != 0 ∧ y * x = z * x  →  y = z )"
-  val proof = Lemma( sequent ) {
+  lazy val proof = Lemma( sequent ) {
 
     cut( "l", hof"!x !y (x ≤ y & x != y -> ?z (z != 0 & z + x = y))" )
     forget( "g" )
@@ -666,9 +710,9 @@ object openind_8 extends Problem( PeanoArithmetic.language ) {
   }
 }
 object openind_9a extends Problem( PeanoArithmetic.language ) {
-  val name = ""
+  val name = "openind_9a"
   val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y (x + y = 0 -> x = 0 & y = 0)"
-  val proof = Lemma( sequent ) {
+  lazy val proof = Lemma( sequent ) {
     decompose
     andR
     allL( "h_2", le"x:nat" )
@@ -683,9 +727,9 @@ object openind_9a extends Problem( PeanoArithmetic.language ) {
 
 }
 object openind_9 extends Problem( PeanoArithmetic.language ) {
-  val name = ""
+  val name = "openind_9"
   val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y ( x ≤ y & y ≤ x -> x = y )"
-  val proof = Lemma( sequent ) {
+  lazy val proof = Lemma( sequent ) {
     decompose
     allL( "h_7", le"x:nat", le"y:nat" )
     allL( "h_7", le"y:nat", le"x:nat" )
@@ -710,9 +754,9 @@ object openind_9 extends Problem( PeanoArithmetic.language ) {
   }
 }
 object openind_10 extends Problem( GaussianArithmetic.language ) {
-  val name = ""
+  val name = "openind_10"
   val sequent = ( GaussianArithmetic.axioms ) ++: Sequent() :+ hof"!x s(s(0)) * g(x) = x * s(x)"
-  val proof = Lemma( sequent ) {
+  lazy val proof = Lemma( sequent ) {
     include( "plus_asso", openind_1.proof )
     include( "plus_comm", openind_3.proof )
     include( "mult_comm", openind_6.proof )
@@ -768,7 +812,7 @@ object openind_11a extends Problem( PeanoArithmetic.language ) {
   }
 }
 object openind_11 extends Problem( PeanoArithmetic.language ) {
-  val name = ""
+  val name = "openind_11"
   val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y ( x + x = y + y -> x = y )"
   // via induction with multiplication ( 2*x = 2*y -> x = y )
   val proof = Lemma( sequent ) {
@@ -870,7 +914,7 @@ object openind_11 extends Problem( PeanoArithmetic.language ) {
 
 }
 object openind_lemma_1 extends Problem( PeanoArithmetic.language ) {
-  val name = ""
+  val name = "openind_lemma_1"
   val sequent = RobinsonArithmetic.axioms ++: Sequent() :+ hof"!x !y ( y != 0 -> x + y != x)"
   val proof = Lemma( sequent ) {
     decompose
