@@ -17,6 +17,7 @@ import gapt.expr.formula.Or
 import gapt.expr.formula.Top
 import gapt.expr.formula.hol.containsQuantifier
 import gapt.expr.ty.Ti
+import gapt.expr.util.subTerms
 import gapt.proofs.HOLSequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.Constants
@@ -179,51 +180,44 @@ object getArityOfConstants {
   }
 }
 
-/**
- * Matcher for Sigma,,n,,
- * A FOLFormula f will match Sigma(k) if f is Sigma,,k,,, but not Sigma,,k-1,,.
- */
-object Sigma {
-  def unapply( f: FOLFormula ): Option[Int] = f match {
-    case FOLAtom( _, _ ) => Some( 0 )
-    case Neg( g )        => unapply( g )
-    case And( g, h )     => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
-    case Or( g, h )      => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
-    case Imp( g, h )     => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
-    case Ex.Block( vars, g ) =>
-      g match {
-        case Pi( i ) => Some( i + 1 )
+object QuantifierStructure {
+  object Exists {
+    /**
+     * Matches ∃ₖ formulas.
+     * @param formula The formula to be matched.
+     * @return k if `formula` is ∃ₖ.
+     */
+    def unapply( formula: FOLFormula ): Option[Int] =
+      if ( isQuantifierFree( formula ) ) {
+        Some( 0 )
+      } else {
+        formula match {
+          case Ex.Block( _ :: _, Forall( k ) ) => Some( k + 1 )
+          case _                               => None
+        }
       }
   }
-}
-
-/**
- * Matcher for Pi,,n,,
- * A FOLFormula f will match Pi(k) if f is Pi,,k,,, but not Pi,,k-1,,.
- */
-object Pi {
-  def unapply( f: FOLFormula ): Option[Int] = f match {
-    case FOLAtom( _, _ ) => Some( 0 )
-    case Neg( g )        => unapply( g )
-    case And( g, h )     => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
-    case Or( g, h )      => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
-    case Imp( g, h )     => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
-    case All.Block( _, g ) => g match {
-      case Sigma( i ) => Some( i + 1 )
-    }
+  object Forall {
+    /**
+     * Matches ∀ₖ formulas.
+     * @param formula The formula to be matched.
+     * @return k if `formula` is ∀ₖ.
+     */
+    def unapply( formula: FOLFormula ): Option[Int] =
+      if ( isQuantifierFree( formula ) ) {
+        Some( 0 )
+      } else {
+        formula match {
+          case All.Block( _ :: _, Exists( k ) ) => Some( k + 1 )
+          case _                                => None
+        }
+      }
   }
-}
-
-/**
- * Matcher for Delta,,n,,
- * A FOLFormula f will match Delta(k) if it is both Sigma,,k,, and Pi,,k,,, but not Sigma,,k-1,, or Pi,,k-1,,.
- */
-object Delta {
-  def unapply( f: FOLFormula ): Option[Int] = f match {
-    case Sigma( k ) => f match {
-      case Pi( j ) => Some( Math.min( k, j ) )
+  private def isQuantifierFree( formula: FOLFormula ): Boolean =
+    !subTerms( formula ).exists {
+      case All( _, _ ) | Ex( _, _ ) => true
+      case _                        => false
     }
-  }
 }
 
 object thresholds {
