@@ -33,7 +33,7 @@ class IProver extends ResolutionProver with ExternalProgram {
   private class IProverInvoker( val inputCNF: Seq[FOLClause] ) {
 
     def getResolutionProof(): Option[ResolutionProof] =
-      parseProverOutput( proverOutput )
+      new iProverTptpOutputParser( inputClauseLabels ).parse( proverOutput )
 
     private val inputClauseLabels: Labels =
       Labels( inputCNF )
@@ -49,37 +49,53 @@ class IProver extends ResolutionProver with ExternalProgram {
 
     private def convertInputCnfToTptp: String =
       TptpFOLExporter.exportLabelledCNF( inputClauseLabels.toMap ).toString
+  }
 
-    private def parseProverOutput( proverOutput: String ): Option[ResolutionProof] =
-      tryExtractTptpDerivation( proverOutput ).map { parseResolutionProof }
+  class iProverTptpOutputParser( val labels: Labels ) {
+
+    def parse( tptpOutput: String ): Option[ResolutionProof] =
+      extractTptpDerivationIfPresent( tptpOutput ).map { parseResolutionProof }
 
     private def parseResolutionProof( tptpDerivation: String ): ResolutionProof = {
       RefutationSketchToResolution( TptpProofParser.parse(
         StringInputFile( tptpDerivation ),
-        inputClauseLabels.toMap.view.mapValues { Seq( _ ) }.toMap ) ) match {
+        labels.toMap.view.mapValues { Seq( _ ) }.toMap ) ) match {
         case Right( proof ) => proof
         case Left( error )  => throw new IllegalArgumentException( error.toString )
       }
     }
 
-    private def tryExtractTptpDerivation( proverOutput: String ): Option[String] = {
-      val lines = proverOutput.split( "\n" ).toSeq
-      if ( lines.exists( _.startsWith( "% SZS status Unsatisfiable" ) ) ) {
-        val derivation = lines
-          .dropWhile( !_.startsWith( "% SZS output start CNFRefutation" ) )
-          .drop( 1 ).
-          takeWhile( !_.startsWith( "% SZS output end CNFRefutation" ) ).
-          mkString( "\n" )
-        Some( derivation )
-      } else if ( lines.exists( _.startsWith( "% SZS status Satisfiable" ) ) ) {
+    private def extractTptpDerivationIfPresent( proverOutput: String ): Option[String] = {
+      if ( statusIsUnsatisfiable( proverOutput ) ) {
+        Some( extractTptpDerivation( proverOutput ) )
+      } else if ( statusIsSatisfiable( proverOutput ) ) {
         None
       } else {
         throw new IllegalArgumentException
       }
     }
+
+    private def statusIsSatisfiable( proverOutput: String ): Boolean =
+      proverOutput
+        .split( "\n" )
+        .exists( _.startsWith( "% SZS status Satisfiable" ) )
+
+    private def statusIsUnsatisfiable( proverOutput: String ): Boolean =
+      proverOutput
+        .split( "\n" )
+        .exists( _.startsWith( "% SZS status Unsatisfiable" ) )
+
+    private def extractTptpDerivation( proverOutput: String ): String = {
+      proverOutput
+        .split( "\n" )
+        .dropWhile( !_.startsWith( "% SZS output start CNFRefutation" ) )
+        .drop( 1 ).
+        takeWhile( !_.startsWith( "% SZS output end CNFRefutation" ) ).
+        mkString( "\n" )
+    }
   }
 
-  private case class Labels( cnf: Seq[FOLClause] ) {
+  case class Labels( cnf: Seq[FOLClause] ) {
 
     def toMap: Map[String, FOLClause] =
       labelledCNF
