@@ -33,7 +33,11 @@ class IProver extends ResolutionProver with ExternalProgram {
   private class IProverInvoker( val inputCNF: Seq[FOLClause] ) {
 
     def getResolutionProof(): Option[ResolutionProof] =
-      new iProverTptpOutputParser( inputClauseLabels ).parse( proverOutput )
+      runIProverOn( tptpInput ).tptpDerivation.map { parseResolutionProof }
+
+    private def parseResolutionProof( tptpDerivation: String ): ResolutionProof =
+      new TptpDerivationParser( inputClauseLabels )
+        .parseAsResolutionProof( tptpDerivation )
 
     private val inputClauseLabels: Labels =
       Labels( inputCNF )
@@ -41,57 +45,53 @@ class IProver extends ResolutionProver with ExternalProgram {
     private val tptpInput: String =
       convertInputCnfToTptp
 
-    private def proverOutput: String =
-      runIProverOnTptpInput()
+    private def runIProverOn( input: String ): IProverOutput =
+      new IProverOutput( iProver( input ) )
 
-    private def runIProverOnTptpInput(): String =
-      runProcess.withTempInputFile( iproverOptions, tptpInput )
+    private def iProver( input: String ): String =
+      runProcess.withTempInputFile( iproverOptions, input )
 
     private def convertInputCnfToTptp: String =
       TptpFOLExporter.exportLabelledCNF( inputClauseLabels.toMap ).toString
   }
 
-  class iProverTptpOutputParser( val labels: Labels ) {
+  class IProverOutput( val rawOutput: String ) {
 
-    def parse( tptpOutput: String ): Option[ResolutionProof] =
-      extractTptpDerivationIfPresent( tptpOutput ).map { parseResolutionProof }
+    private val outputLines: Array[String] =
+      rawOutput.split( "\n" )
 
-    private def parseResolutionProof( tptpDerivation: String ): ResolutionProof = {
+    val tptpDerivation: Option[String] =
+      if ( statusIsUnsatisfiable )
+        Some( extractTptpDerivation )
+      else if ( isStatusSatisfiable )
+        None
+      else
+        throw new IllegalArgumentException( "invalid prover output" )
+
+    private def isStatusSatisfiable: Boolean =
+      outputLines.exists( _.startsWith( "% SZS status Satisfiable" ) )
+
+    private def statusIsUnsatisfiable: Boolean =
+      outputLines.exists( _.startsWith( "% SZS status Unsatisfiable" ) )
+
+    private def extractTptpDerivation: String = {
+      outputLines
+        .dropWhile( !_.startsWith( "% SZS output start CNFRefutation" ) )
+        .drop( 1 ).
+        takeWhile( !_.startsWith( "% SZS output end CNFRefutation" ) ).
+        mkString( "\n" )
+    }
+  }
+
+  class TptpDerivationParser( val labels: Labels ) {
+
+    def parseAsResolutionProof( tptpDerivation: String ): ResolutionProof = {
       RefutationSketchToResolution( TptpProofParser.parse(
         StringInputFile( tptpDerivation ),
         labels.toMap.view.mapValues { Seq( _ ) }.toMap ) ) match {
         case Right( proof ) => proof
         case Left( error )  => throw new IllegalArgumentException( error.toString )
       }
-    }
-
-    private def extractTptpDerivationIfPresent( proverOutput: String ): Option[String] = {
-      if ( statusIsUnsatisfiable( proverOutput ) ) {
-        Some( extractTptpDerivation( proverOutput ) )
-      } else if ( statusIsSatisfiable( proverOutput ) ) {
-        None
-      } else {
-        throw new IllegalArgumentException
-      }
-    }
-
-    private def statusIsSatisfiable( proverOutput: String ): Boolean =
-      proverOutput
-        .split( "\n" )
-        .exists( _.startsWith( "% SZS status Satisfiable" ) )
-
-    private def statusIsUnsatisfiable( proverOutput: String ): Boolean =
-      proverOutput
-        .split( "\n" )
-        .exists( _.startsWith( "% SZS status Unsatisfiable" ) )
-
-    private def extractTptpDerivation( proverOutput: String ): String = {
-      proverOutput
-        .split( "\n" )
-        .dropWhile( !_.startsWith( "% SZS output start CNFRefutation" ) )
-        .drop( 1 ).
-        takeWhile( !_.startsWith( "% SZS output end CNFRefutation" ) ).
-        mkString( "\n" )
     }
   }
 
