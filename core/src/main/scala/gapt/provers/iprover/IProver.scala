@@ -24,26 +24,28 @@ class IProver extends ResolutionProver with ExternalProgram {
     "--sub_typing", "false",
     "--tptp_safe_out", "true" )
 
-  override def getResolutionProof( seq: Iterable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] =
-    renameConstantsToFi.wrap( seq.toSeq )(
-      ( _, cnf: Seq[HOLClause] ) =>
-        new IProverInvoker( cnf.map { _.asInstanceOf[FOLClause] } )
-          .getResolutionProof() )
+  override def getResolutionProof( seq: Iterable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] = {
+    val input = new IProverInput( seq.toSeq.map { _.asInstanceOf[FOLClause] } )
+    new IProverInvoker( input ).getResolutionProof()
+  }
 
-  private class IProverInvoker( val inputCNF: Seq[FOLClause] ) {
+  private class IProverInvoker( val input: IProverInput ) {
 
     def getResolutionProof(): Option[ResolutionProof] =
-      runIProverOn( tptpInput ).tptpDerivation.map { parseResolutionProof }
+      runIProverOn( input.tptpWithSafeNames )
+        .tptpDerivation
+        .map { parseResolutionProof }
+        .map { revertToOriginalNames }
+
+    private def revertToOriginalNames(
+      refutation: ResolutionProof ): ResolutionProof = {
+      val originalNames: Map[Const, Const] = input.originalNamesToSafeNames.map( _.swap )
+      TermReplacement.hygienic( refutation, originalNames )
+    }
 
     private def parseResolutionProof( tptpDerivation: String ): ResolutionProof =
-      new TptpDerivationParser( inputClauseLabels )
+      new TptpDerivationParser( input.clauseLabels )
         .parseAsResolutionProof( tptpDerivation )
-
-    private val inputClauseLabels: Labels =
-      Labels( inputCNF )
-
-    private val tptpInput: String =
-      convertInputCnfToTptp
 
     private def runIProverOn( input: String ): IProverOutput =
       new IProverOutput( iProver( input ) )
@@ -51,8 +53,25 @@ class IProver extends ResolutionProver with ExternalProgram {
     private def iProver( input: String ): String =
       runProcess.withTempInputFile( iproverOptions, input )
 
-    private def convertInputCnfToTptp: String =
-      TptpFOLExporter.exportLabelledCNF( inputClauseLabels.toMap ).toString
+  }
+
+  class IProverInput( val cnf: Seq[FOLClause] ) {
+
+    private type Renaming = Map[Const, Const]
+
+    val ( cnfWithSafeNames, originalNamesToSafeNames ) = useSafeNames( cnf )
+
+    val clauseLabels: Labels = Labels( cnfWithSafeNames )
+
+    val tptpWithSafeNames: String =
+      TptpFOLExporter.exportLabelledCNF( clauseLabels.toMap ).toString
+
+    private def useSafeNames( cnf: Seq[FOLClause] ): ( Seq[FOLClause], Renaming ) = {
+      val ( cnfWithSafeNames, safeNames ) =
+        renameConstantsToFi[Seq[HOLClause], Seq[HOLClause]]( cnf )
+      ( cnfWithSafeNames.map { _.asInstanceOf[FOLClause] }, safeNames )
+    }
+
   }
 
   class IProverOutput( val rawOutput: String ) {
