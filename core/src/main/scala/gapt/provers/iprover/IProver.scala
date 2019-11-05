@@ -7,6 +7,7 @@ import gapt.formats.StringInputFile
 import gapt.proofs.context.mutable.MutableContext
 import gapt.formats.tptp.{ TptpFOLExporter, TptpProofParser }
 import gapt.proofs.resolution.ResolutionProof
+import gapt.proofs.sketch.RefutationSketch
 import gapt.proofs.sketch.RefutationSketchToResolution
 import gapt.proofs.{ FOLClause, HOLClause }
 import gapt.provers.{ ResolutionProver, renameConstantsToFi }
@@ -50,7 +51,7 @@ class IProverInstance( val input: IProverInput ) {
 
   private def parseResolutionProof( tptpDerivation: String ): ResolutionProof =
     new TptpDerivationParser( input.clauseLabels )
-      .parseAsResolutionProof( tptpDerivation )
+      .parseResolutionProofFrom( tptpDerivation )
 
   private def runIProverOn( input: String ): IProverOutput =
     new IProverOutput( iProver( input ) )
@@ -109,14 +110,20 @@ class IProverOutput( val rawOutput: String ) {
 
 class TptpDerivationParser( val labels: Labels ) {
 
-  def parseAsResolutionProof( tptpDerivation: String ): ResolutionProof = {
-    RefutationSketchToResolution( TptpProofParser.parse(
-      StringInputFile( tptpDerivation ),
-      labels.toMap.view.mapValues { Seq( _ ) }.toMap ) ) match {
+  def parseResolutionProofFrom( tptpDerivation: String ): ResolutionProof = {
+    tryParseResolutionProofFrom( tptpDerivation ) match {
       case Right( proof ) => proof
       case Left( error )  => throw new IllegalArgumentException( error.toString )
     }
   }
+
+  private def tryParseResolutionProofFrom( tptpDerivation: String ) =
+    RefutationSketchToResolution( parseRefutationSketchFrom( tptpDerivation ) )
+
+  private def parseRefutationSketchFrom( tptpDerivation: String ): RefutationSketch =
+    TptpProofParser.parse(
+      StringInputFile( tptpDerivation ),
+      labels.toMap.view.mapValues { Seq( _ ) }.toMap )
 }
 
 case class Labels( cnf: Seq[FOLClause] ) {
