@@ -59,7 +59,8 @@ case class TipProblem(
     uninterpretedConsts: Seq[Const],
     functions:           Seq[TipFun],
     assumptions:         Seq[Formula],
-    goal:                Formula ) {
+    goal:                Formula,
+    info:                Option[String]   = None ) {
 
   private val BOOL2: TBase = TBase( "Bool2" )
 

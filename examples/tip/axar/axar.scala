@@ -5,6 +5,7 @@ import gapt.expr._
 import gapt.expr.formula.Formula
 import gapt.formats.babel.Notation
 import gapt.formats.babel.Precedence
+import gapt.formats.tip.export.export.{ export => exportTip }
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.immutable.ImmutableContext
@@ -12,9 +13,6 @@ import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic.Lemma
 import gapt.proofs.gaptic.TacticsProof
 import gapt.proofs.gaptic._
-import gapt.prooftool.prooftool
-import gapt.utils.Doc
-import gapt.formats.tip.export.export.{ export => exportTip }
 
 object AxarProblems {
 
@@ -44,7 +42,7 @@ object AxarProblems {
   private val SMT2_LINE_WIDTH = 80
 
   def axarProblemToSmt2String( problem: Problem ): String =
-    exportTip( problem.sequent, problem.language.context )
+    exportTip( problem.sequent, problem.language.context, problem.comment )
       .render( SMT2_LINE_WIDTH ) + "\n"
 
   def exportAxarProblemToSmt2File( prefix: Path, problem: Problem ): Unit = {
@@ -139,10 +137,16 @@ object noind_1 extends Problem( PeanoArithmetic.language ) {
 
   val name = "noind_1"
 
-  val sequent =
-    RobinsonArithmetic.axioms ++:
-      Sequent() :+
-      hof"${numeral( 2 )} * ${numeral( 3 )} + ${numeral( 5 )} = ${numeral( 11 )}"
+  override val comment = Some(
+    s"""
+       | Provable without induction.
+       |
+       |""".stripMargin )
+
+  val goal = hof"${numeral( 2 )} * ${numeral( 3 )} + ${numeral( 5 )} = ${numeral( 11 )}"
+
+  val sequent: Sequent[Formula] =
+    RobinsonArithmetic.axioms ++: Sequent() :+ goal
 
   lazy val proof = Lemma( sequent ) {
     rewrite.many ltr "h_6" in "g"
@@ -151,7 +155,6 @@ object noind_1 extends Problem( PeanoArithmetic.language ) {
     rewrite.many ltr "h_3" in "g"
     refl
   }
-  prooftool( proof )
 }
 object noind_2 extends Problem( PeanoArithmetic.language ) {
 

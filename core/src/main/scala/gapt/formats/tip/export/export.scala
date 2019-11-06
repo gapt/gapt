@@ -36,8 +36,21 @@ package object export {
   }
 
   def export( problem: TipProblem ): Doc = {
-    Doc.stack( toSExpression( problem ).map { _.toDoc } )
+    val problemDoc = Doc.stack( toSExpression( problem ).map { _.toDoc } )
+    addInfoHeaderToProblem( problem.info, problemDoc )
   }
+
+  private def addInfoHeaderToProblem( maybeInfo: Option[String], doc: Doc ) =
+    maybeInfo match {
+      case Some( info ) => commentDocument( info ) </> doc
+      case _            => doc
+    }
+
+  private def commentDocument( comment: String ): Doc =
+    Doc.stack( commentLines( comment ) )
+
+  private def commentLines( comment: String ): Seq[Doc] =
+    comment.split( "\n" ).map { "; " ++ _ }.map { Doc.text } toSeq
 
   /**
    * Encodes the given sequent and context in TIP SMT2 format.
@@ -51,9 +64,9 @@ package object export {
    * @return A document that represents the SMT2 encoding of the sequent and
    * the context.
    */
-  def export( sequent: Sequent[Formula], context: Context ): Doc = {
+  def export( sequent: Sequent[Formula], context: Context, comment: Option[String] = None ): Doc = {
     export(
-      new SequentContextToTipProblemConverter( sequent, context ).convert )
+      new SequentContextToTipProblemConverter( sequent, context, comment ).convert )
   }
 
   def export( sequent: HOLSequent )(
@@ -68,7 +81,8 @@ package object export {
 
   private class SequentContextToTipProblemConverter(
       sequent: Sequent[Formula],
-      context: Context ) {
+      context: Context,
+      comment: Option[String]   = None ) {
 
     private def contextSymbols( context: Context ): Set[String] = {
       context.constants.map { _.name }.toSet ++
@@ -158,7 +172,8 @@ package object export {
         constants.toSeq,
         Seq(),
         assertions,
-        goal )
+        goal,
+        comment )
     }
 
   }
