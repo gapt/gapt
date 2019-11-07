@@ -2,7 +2,8 @@ package gapt.proofs.context.facet
 
 import gapt.expr.Normalizer
 import gapt.expr.ReductionRule
-import gapt.formats.tip.{ ConditionalNormalizer, ConditionalReductionRule }
+import gapt.expr.util.ConditionalNormalizer
+import gapt.expr.util.ConditionalReductionRule
 
 /** Definitional reductions. */
 case class Reductions( normalizer: Normalizer ) {

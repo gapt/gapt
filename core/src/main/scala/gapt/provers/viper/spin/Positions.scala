@@ -1,8 +1,8 @@
 package gapt.provers.viper.spin
 
+import gapt.expr.util.ConditionalReductionRule
 import gapt.expr.{ App, Apps, Const, Expr, Var }
 import gapt.expr.util.{ constants, variables }
-import gapt.formats.tip.ConditionalReductionRule
 
 case class Positions( rules: Set[ConditionalReductionRule], allPositions: Map[Const, Positions] ) {
   require( rules.nonEmpty )

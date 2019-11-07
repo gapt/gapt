@@ -17,16 +17,20 @@ import gapt.expr.ty.TVar
 import gapt.expr.ty.To
 import gapt.expr.ty.Ty
 import gapt.expr.ty.baseTypes
+import gapt.expr.util.ConditionalReductionRule
 import gapt.expr.util.syntacticMatching
-import gapt.formats.babel.BabelParser
 import gapt.formats.babel.BabelSignature
 import gapt.formats.babel.Notation
 import gapt.formats.babel.Notations
 import gapt.formats.babel.Precedence
-import gapt.formats.tip.{ ConditionalNormalizer, ConditionalReductionRule }
 import gapt.logic.hol.SkolemFunctions
 import gapt.proofs.Checkable
-import gapt.proofs.context.facet.{ BaseTypes, ConditionalReductions, Constants, Definitions, Facet, Reductions, StructurallyInductiveTypes }
+import gapt.proofs.context.facet.BaseTypes
+import gapt.proofs.context.facet.Constants
+import gapt.proofs.context.facet.Definitions
+import gapt.proofs.context.facet.Facet
+import gapt.proofs.context.facet.Reductions
+import gapt.proofs.context.facet.StructurallyInductiveTypes
 import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.mutable.ReadOnlyMutableContext

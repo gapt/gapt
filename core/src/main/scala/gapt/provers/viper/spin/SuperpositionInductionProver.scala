@@ -4,9 +4,11 @@ import gapt.expr._
 import gapt.expr.formula._
 import gapt.expr.formula.hol.HOLPosition
 import gapt.expr.ty.{ TArr, TBase, Ty }
+import gapt.expr.util.ConditionalNormalizer
+import gapt.expr.util.ConditionalReductionRule
 import gapt.expr.util.LambdaPosition.Choice
 import gapt.expr.util.{ LambdaPosition, constants, freeVariables, variables }
-import gapt.formats.tip.{ ConditionalNormalizer, ConditionalReductionRule, TipProblem }
+import gapt.formats.tip.TipProblem
 import gapt.logic.hol.skolemize
 import gapt.proofs.context.{ Context, simplificationRules }
 import gapt.proofs.context.facet.BaseTypes

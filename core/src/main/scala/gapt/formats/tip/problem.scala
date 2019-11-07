@@ -16,6 +16,7 @@ import gapt.expr.subst.Substitution
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.ty.To
+import gapt.expr.util.ConditionalReductionRule
 import gapt.expr.util.LambdaPosition
 import gapt.expr.util.freeVariables
 import gapt.expr.util.syntacticMatching
@@ -157,81 +158,6 @@ case class TipProblem(
   }
 
   override def toString: String = toSequent.toSigRelativeString( context )
-}
-
-/**
- * A conditional rewrite rule.
- *
- * An instance of this rule can be used to rewrite the left hand side
- * into its right hand side only if the conditions all rewrite to ⊤.
- *
- * The free variables of the conditions together with those of the
- * right hand side must form a subset of the free variables of the
- * left hand side. The left hand side must not be a variable.
- *
- * @param conditions The conditions of this rewrite rule.
- * @param lhs The left hand side of this rewrite rule.
- * @param rhs The right hand side of this rewrite rule.
- */
-case class ConditionalReductionRule( conditions: Seq[Formula], lhs: Expr, rhs: Expr ) {
-
-  require(
-    ( conditions.flatMap { freeVariables( _ ) } ++
-      freeVariables( rhs ) ).toSet.subsetOf( freeVariables( lhs ) ),
-    """free variables in conditions and right hand side do not form a
-      |subset of the free variables of the left hand side""".stripMargin )
-
-  require( !lhs.isInstanceOf[Var], "left hand side must not be a variable" )
-
-  val Apps( lhsHead @ Const( lhsHeadName, _, _ ), lhsArgs ) = lhs
-  val lhsArgsSize: Int = lhsArgs.size
-}
-object ConditionalReductionRule {
-  def apply( rule: ReductionRule ): ConditionalReductionRule =
-    ConditionalReductionRule( List(), rule.lhs, rule.rhs )
-}
-
-case class ConditionalNormalizer( rewriteRules: Set[ConditionalReductionRule] ) {
-
-  private val unconditionalRules =
-    rewriteRules
-      .filter { _.conditions.isEmpty }
-      .map { r => ReductionRule( r.lhs, r.rhs ) }
-
-  private val conditionalRules = rewriteRules.diff( rewriteRules.filter { _.conditions.isEmpty } )
-
-  private val unconditionalNormalizer = Normalizer( unconditionalRules )
-
-  /**
-   * Normalizes an expression.
-   *
-   * @param e The expression to be normalized.
-   * @return Returns the normalized expression, if the rewrite rules are terminating.
-   */
-  def normalize( e: Expr ): Expr = {
-    normalize_( unconditionalNormalizer.normalize( e ) )
-  }
-
-  private def normalize_( e: Expr ): Expr = {
-    for {
-      ConditionalReductionRule( conditions, lhs, rhs ) <- conditionalRules
-      ( instance, position ) <- findInstances( e, lhs, Nil )
-    } {
-      if ( conditions.map { instance( _ ) }.map { normalize( _ ) }.forall { _ == Top() } ) {
-        return normalize( e.replace( position, instance( rhs ) ) )
-      }
-    }
-    e
-  }
-
-  private def findInstances( e: Expr, l: Expr, position: List[Int] ): Set[( Substitution, LambdaPosition )] = {
-    subterms( e ).flatMap {
-      case ( t, p ) =>
-        for {
-          subst <- syntacticMatching( l, t )
-        } yield { subst -> p }
-    }.toSet
-  }
 }
 
 object subterms {

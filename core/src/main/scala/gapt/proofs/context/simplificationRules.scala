@@ -2,8 +2,9 @@ package gapt.proofs.context
 
 import gapt.expr.formula._
 import gapt.expr.ty.{ Ti, To }
+import gapt.expr.util
+import gapt.expr.util.ConditionalReductionRule
 import gapt.expr.{ ReductionRule, Var }
-import gapt.formats.tip.ConditionalReductionRule
 
 // Simple constant simplification and double-negation elimination
 object simplificationRules {
@@ -40,6 +41,6 @@ object simplificationRules {
   }
 
   val conditionalRules: Set[ConditionalReductionRule] =
-    rules map { case ReductionRule( lhs, rhs ) => ConditionalReductionRule( List(), lhs, rhs ) }
+    rules map { case ReductionRule( lhs, rhs ) => util.ConditionalReductionRule( List(), lhs, rhs ) }
 }
 
