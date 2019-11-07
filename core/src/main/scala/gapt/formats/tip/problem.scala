@@ -64,7 +64,7 @@ case class TipProblem(
 
   private val BOOL2: TBase = TBase( "Bool2" )
 
-  def constructorInjectivity: Seq[Formula] =
+  def constructorDisjointness: Seq[Formula] =
     datatypes
       .filter( _.t != To )
       .map( tipDatatypeToInductiveType )
@@ -87,7 +87,7 @@ case class TipProblem(
         datatypes.flatMap( _.constructors ).flatMap( _.projectorDefinitions ) ++:
         definitions ++:
         functions.flatMap( _.definitions ) ++:
-        constructorInjectivity ++:
+        constructorDisjointness ++:
         assumptions ++:
         Sequent()
         :+ goal )
@@ -310,7 +310,7 @@ object tipScalaEncoding {
   }
 
   private def compileConstructorInjectivityAxioms( problem: TipProblem ): Seq[String] = {
-    problem.constructorInjectivity.zipWithIndex.map {
+    problem.constructorDisjointness.zipWithIndex.map {
       case ( axiom, index ) => s"constr_inj_$index: ${stripNewlines( universalClosure( axiom ).toString() )}"
     }
   }
