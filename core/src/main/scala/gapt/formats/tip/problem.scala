@@ -1,5 +1,6 @@
 package gapt.formats.tip
 
+import gapt.logic.disjointnessAxioms
 import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.Atom
@@ -63,18 +64,14 @@ case class TipProblem(
 
   private val BOOL2: TBase = TBase( "Bool2" )
 
-  def constructorInjectivity =
-    for {
-      TipDatatype( ty, ctrs ) <- datatypes
-      if ty != To // FIXME
-      ( TipConstructor( ctr1, _ ), i1 ) <- ctrs.zipWithIndex
-      ( TipConstructor( ctr2, _ ), i2 ) <- ctrs.zipWithIndex
-      if i1 < i2 // ignore symmetric pairs
-      FunctionType( _, args1 ) = ctr1.ty
-      FunctionType( _, args2 ) = ctr2.ty
-    } yield universalClosure(
-      ctr1( ( for ( ( t, j ) <- args1.zipWithIndex ) yield Var( s"x$j", t ) ): _* ) !==
-        ctr2( ( for ( ( t, j ) <- args2.zipWithIndex ) yield Var( s"y$j", t ) ): _* ) )
+  def constructorInjectivity: Seq[Formula] =
+    datatypes
+      .filter( _.t != To )
+      .map( tipDatatypeToInductiveType )
+      .flatMap( disjointnessAxioms )
+
+  private def tipDatatypeToInductiveType( datatype: TipDatatype ): InductiveType =
+    InductiveType( datatype.t, datatype.constructors.map( _.constr ): _* )
 
   def toSequent: HOLSequent = {
     val bool2Axioms = {
