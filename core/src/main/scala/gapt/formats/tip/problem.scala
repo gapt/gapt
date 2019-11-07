@@ -1,6 +1,5 @@
 package gapt.formats.tip
 
-import gapt.logic.disjointnessAxioms
 import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.Atom
@@ -20,6 +19,8 @@ import gapt.expr.ty.To
 import gapt.expr.util.LambdaPosition
 import gapt.expr.util.freeVariables
 import gapt.expr.util.syntacticMatching
+import gapt.logic.disjointnessAxioms
+import gapt.logic.injectivityAxioms
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
@@ -69,6 +70,11 @@ case class TipProblem(
       .filter( _.t != To )
       .map( tipDatatypeToInductiveType )
       .flatMap( disjointnessAxioms )
+
+  def constructorInjectivity: Seq[Formula] =
+    datatypes
+      .map( tipDatatypeToInductiveType )
+      .flatMap( injectivityAxioms )
 
   private def tipDatatypeToInductiveType( datatype: TipDatatype ): InductiveType =
     InductiveType( datatype.t, datatype.constructors.map( _.constr ): _* )
