@@ -14,23 +14,18 @@ import gapt.proofs.context.facet.BaseTypes
 
 /** Inductive base type with constructors. */
 case class InductiveType( ty: TBase, constructors: Vector[Const] ) extends TypeDefinition {
-  val params: List[TVar] = ty.params.map( _.asInstanceOf[TVar] )
-  for ( constr <- constructors ) {
-    val FunctionType( ty_, _ ) = constr.ty
-    require(
-      ty == ty_,
-      s"Base type $ty and type constructor $constr don't agree." )
-    require( constr.params == params )
-    require( typeVariables( constr ) subsetOf params.toSet )
-  }
-  require(
-    constructors.map( _.name ) == constructors.map( _.name ).distinct,
-    s"Names of type constructors are not distinct." )
 
-  val baseCases = constructors.find { case Const( _, FunctionType( _, argTys ), _ ) => !argTys.contains( ty ) }
-  require(
-    baseCases.nonEmpty,
-    s"Inductive type is empty, all of the constructors are recursive: ${constructors.mkString( ", " )}" )
+  val params: List[TVar] =
+    ty.params.map( _.asInstanceOf[TVar] )
+
+  val baseCases = constructors.find {
+    case Const( _, FunctionType( _, argTys ), _ ) =>
+      !argTys.contains( ty )
+  }
+
+  requireConstructorsToBeConstructorsForType()
+  requireDistinctConstructorNames()
+  requireAtLeastOneBaseCase()
 
   override def apply( ctx: Context ): State = {
     require( !ctx.isType( ty ), s"Type $ty already defined" )
@@ -48,6 +43,26 @@ case class InductiveType( ty: TBase, constructors: Vector[Const] ) extends TypeD
       .update[Constants]( _ ++ constructors )
       .update[StructurallyInductiveTypes]( _ + ( ty.name, constructors ) )
   }
+
+  private def requireConstructorsToBeConstructorsForType(): Unit =
+    for ( constr <- constructors ) {
+      val FunctionType( ty_, _ ) = constr.ty
+      require(
+        ty == ty_,
+        s"Base type $ty and type constructor $constr don't agree." )
+      require( constr.params == params )
+      require( typeVariables( constr ) subsetOf params.toSet )
+    }
+
+  private def requireDistinctConstructorNames(): Unit =
+    require(
+      constructors.map( _.name ) == constructors.map( _.name ).distinct,
+      s"Names of type constructors are not distinct." )
+
+  private def requireAtLeastOneBaseCase(): Unit =
+    require(
+      baseCases.nonEmpty,
+      s"Inductive type is empty, all of the constructors are recursive: ${constructors.mkString( ", " )}" )
 }
 
 object InductiveType {
