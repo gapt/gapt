@@ -22,10 +22,6 @@ case class InductiveType(
   val ty: TBase = baseType
   val baseCases: Seq[Const] = constructors.filter( isBaseConstructor )
 
-  requireConstructorsToBeConstructorsForType()
-  requireDistinctConstructorNames()
-  requireAtLeastOneBaseCase()
-
   override def apply( ctx: Context ): State = {
     require( !ctx.isType( baseType ), s"Type $baseType already defined" )
     for ( Const( ctr, FunctionType( _, fieldTys ), _ ) <- constructors ) {
@@ -47,35 +43,64 @@ case class InductiveType(
     val FunctionType( _, argTys ) = constructor.ty
     !argTys.contains( baseType )
   }
+}
+
+class InductiveTypeValidator( inductiveType: InductiveType ) {
+
+  def validate(): Unit = {
+    requireConstructorsToBeConstructorsForType()
+    requireDistinctConstructorNames()
+    requireAtLeastOneBaseCase()
+  }
 
   private def requireConstructorsToBeConstructorsForType(): Unit =
-    for ( constr <- constructors ) {
-      val FunctionType( ty_, _ ) = constr.ty
-      require(
-        ty == ty_,
-        s"Base type $ty and type constructor $constr don't agree." )
-      require( constr.params == typeParameters )
-      require( typeVariables( constr ) subsetOf typeParameters.toSet )
+    for ( constr <- inductiveType.constructors ) {
+      constructorMustConstructInductiveType( constr )
+      typeParametersMustAgreeWithInductiveType( constr )
+      typeVariablesMustBeSubsetOfTypeParameters( constr )
     }
+
+  private def constructorMustConstructInductiveType( constructor: Const ): Unit = {
+    val FunctionType( ty_, _ ) = constructor.ty
+    require(
+      inductiveType.baseType == ty_,
+      s"Base type ${inductiveType.baseType} and type constructor $constructor don't agree." )
+  }
+
+  private def typeParametersMustAgreeWithInductiveType( constructor: Const ): Unit =
+    require( constructor.params == inductiveType.typeParameters )
+
+  private def typeVariablesMustBeSubsetOfTypeParameters( constructor: Const ): Unit =
+    require( typeVariables( constructor ) subsetOf inductiveType.typeParameters.toSet )
 
   private def requireDistinctConstructorNames(): Unit =
     require(
-      constructors.map( _.name ) == constructors.map( _.name ).distinct,
+      inductiveType.constructors.map( _.name ) == inductiveType.constructors.map( _.name ).distinct,
       s"Names of type constructors are not distinct." )
 
   private def requireAtLeastOneBaseCase(): Unit =
     require(
-      baseCases.nonEmpty,
-      s"Inductive type is empty, all of the constructors are recursive: ${constructors.mkString( ", " )}" )
+      inductiveType.baseCases.nonEmpty,
+      s"Inductive type is empty, all of the constructors are recursive: ${inductiveType.constructors.mkString( ", " )}" )
 }
 
 object InductiveType {
 
   def apply( ty: Ty, constructors: Const* ): InductiveType = {
+    val inductiveType = buildInductiveType( ty, constructors: _* )
+    validate( inductiveType )
+    inductiveType
+  }
+
+  def apply( tyName: String, constructors: Const* ): InductiveType =
+    InductiveType( TBase( tyName ), constructors: _* )
+
+  private def buildInductiveType( ty: Ty, constructors: Const* ): InductiveType = {
     val baseType = ty.asInstanceOf[TBase]
     val typeParameters = baseType.params.map( _.asInstanceOf[TVar] )
     InductiveType( baseType.name, typeParameters, constructors.toVector )
   }
-  def apply( tyName: String, constructors: Const* ): InductiveType =
-    InductiveType( TBase( tyName ), constructors: _* )
+
+  private def validate( inductiveType: InductiveType ): Unit =
+    new InductiveTypeValidator( inductiveType ).validate()
 }
