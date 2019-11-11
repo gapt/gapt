@@ -13,35 +13,39 @@ import gapt.proofs.context.State
 import gapt.proofs.context.facet.BaseTypes
 
 /** Inductive base type with constructors. */
-case class InductiveType( ty: TBase, constructors: Vector[Const] ) extends TypeDefinition {
+case class InductiveType(
+    baseTypeName:   String,
+    typeParameters: Seq[TVar],
+    constructors:   Vector[Const] ) extends TypeDefinition {
 
-  val params: List[TVar] =
-    ty.params.map( _.asInstanceOf[TVar] )
-
-  val baseCases = constructors.find {
-    case Const( _, FunctionType( _, argTys ), _ ) =>
-      !argTys.contains( ty )
-  }
+  val baseType: TBase = TBase( baseTypeName, typeParameters.toList )
+  val ty: TBase = baseType
+  val baseCases: Seq[Const] = constructors.filter( isBaseConstructor )
 
   requireConstructorsToBeConstructorsForType()
   requireDistinctConstructorNames()
   requireAtLeastOneBaseCase()
 
   override def apply( ctx: Context ): State = {
-    require( !ctx.isType( ty ), s"Type $ty already defined" )
-    for ( Const( ctr, FunctionType( _, fieldTys ), ctrPs ) <- constructors ) {
+    require( !ctx.isType( baseType ), s"Type $baseType already defined" )
+    for ( Const( ctr, FunctionType( _, fieldTys ), _ ) <- constructors ) {
       require( ctx.constant( ctr ).isEmpty, s"Constructor $ctr is already a declared constant" )
       for ( fieldTy <- fieldTys ) {
-        if ( fieldTy == ty ) {
+        if ( fieldTy == baseType ) {
           // positive occurrence of the inductive type
         } else {
           ctx.check( fieldTy )
         }
       }
     }
-    ctx.state.update[BaseTypes]( _ + ty )
+    ctx.state.update[BaseTypes]( _ + baseType )
       .update[Constants]( _ ++ constructors )
-      .update[StructurallyInductiveTypes]( _ + ( ty.name, constructors ) )
+      .update[StructurallyInductiveTypes]( _ + ( baseType.name, constructors.toVector ) )
+  }
+
+  private def isBaseConstructor( constructor: Const ): Boolean = {
+    val FunctionType( _, argTys ) = constructor.ty
+    !argTys.contains( baseType )
   }
 
   private def requireConstructorsToBeConstructorsForType(): Unit =
@@ -50,8 +54,8 @@ case class InductiveType( ty: TBase, constructors: Vector[Const] ) extends TypeD
       require(
         ty == ty_,
         s"Base type $ty and type constructor $constr don't agree." )
-      require( constr.params == params )
-      require( typeVariables( constr ) subsetOf params.toSet )
+      require( constr.params == typeParameters )
+      require( typeVariables( constr ) subsetOf typeParameters.toSet )
     }
 
   private def requireDistinctConstructorNames(): Unit =
@@ -66,8 +70,12 @@ case class InductiveType( ty: TBase, constructors: Vector[Const] ) extends TypeD
 }
 
 object InductiveType {
-  def apply( ty: Ty, constructors: Const* ): InductiveType =
-    InductiveType( ty.asInstanceOf[TBase], constructors.toVector )
+
+  def apply( ty: Ty, constructors: Const* ): InductiveType = {
+    val baseType = ty.asInstanceOf[TBase]
+    val typeParameters = baseType.params.map( _.asInstanceOf[TVar] )
+    InductiveType( baseType.name, typeParameters, constructors.toVector )
+  }
   def apply( tyName: String, constructors: Const* ): InductiveType =
     InductiveType( TBase( tyName ), constructors: _* )
 }
