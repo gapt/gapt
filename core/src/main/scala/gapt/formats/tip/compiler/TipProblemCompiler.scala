@@ -696,7 +696,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
     val argumentTypes =
       inductiveType
         .constructors
-        .map { _.ty }
+        .map { _.constant.ty }
         .map { case FunctionType( _, from ) => FunctionType( resultType, from ) }
     val matchType: Ty = FunctionType( resultType, inductiveType.ty +: argumentTypes )
     val matchConstant = Const( matchConstantName( inductiveType ), matchType, List( resultType ) )
@@ -705,24 +705,24 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
     val names = new NameGenerator( Seq() )
     val caseArguments: Map[Const, Var] = inductiveType.constructors.map {
       constructor =>
-        val FunctionType( _, argumentTypes ) = constructor.ty
+        val FunctionType( _, argumentTypes ) = constructor.constant.ty
         val caseVariable = Var( names.fresh( "f" ), FunctionType( resultType, argumentTypes ) )
-        ( constructor, caseVariable )
+        ( constructor.constant, caseVariable )
     }.toMap
     // equations of the form `match (c_i x_1 ... x_n) f_1 ... f_{i-1} f_i f_{i+1} ... f_m = f_i x_1 ... x_n`
     val equations: Vector[( Expr, Expr )] =
       inductiveType.constructors.map {
         constructor =>
           val names = new NameGenerator( Seq() )
-          val FunctionType( _, argumentTypes ) = constructor.ty
+          val FunctionType( _, argumentTypes ) = constructor.constant.ty
           val constructorArguments = argumentTypes.map { Var( names.fresh( "x" ), _ ) }
           val leftHandSide =
             Apps(
               matchConstant,
-              Apps( constructor, constructorArguments ) +: inductiveType.constructors.map { caseArguments( _ ) } )
-          val rightHandSide = Apps( caseArguments( constructor ), constructorArguments )
+              Apps( constructor.constant, constructorArguments ) +: inductiveType.constructors.map( _.constant ).map { caseArguments( _ ) } )
+          val rightHandSide = Apps( caseArguments( constructor.constant ), constructorArguments )
           leftHandSide -> rightHandSide
-      }
+      }.toVector
     val matchPrfDefinition =
       PrimitiveRecursiveFunction( matchConstant, inductiveType.constructors.size + 1, 0, equations )
     ctx += matchPrfDefinition

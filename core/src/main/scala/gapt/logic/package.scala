@@ -12,7 +12,7 @@ import gapt.proofs.context.update.InductiveType
 package object logic {
 
   def disjointnessAxioms( inductiveType: InductiveType ): Iterable[Formula] = {
-    unorderedPairsOf( inductiveType.constructors ).map {
+    unorderedPairsOf( inductiveType.constructors.map( _.constant ) ).map {
       case ( c1, c2 ) => disjointnessAxiom( c1, c2 )
     }
   }
@@ -29,7 +29,8 @@ package object logic {
   }
 
   def injectivityAxioms( inductiveType: InductiveType ): Iterable[Formula] =
-    inductiveType.constructors.filter( isPolyadic ).map { injectivityAxiom }
+    inductiveType.constructors.map( _.constant )
+      .filter( isPolyadic ).map { injectivityAxiom }
 
   def injectivityAxiom( constructor: Const ): Formula = {
     val vs1 = argumentVariablesWithPatternFor( n => s"x${n}" )( constructor )

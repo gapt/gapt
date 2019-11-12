@@ -11,20 +11,43 @@ import gapt.proofs.context.facet.Constants
 import gapt.proofs.context.facet.StructurallyInductiveTypes
 import gapt.proofs.context.State
 import gapt.proofs.context.facet.BaseTypes
+import gapt.proofs.context.update.InductiveType.Constructor
+import gapt.proofs.context.update.InductiveType.Constructor.Field
 
 /** Inductive base type with constructors. */
 case class InductiveType(
-    baseTypeName:   String,
-    typeParameters: Seq[TVar],
-    constructors:   Vector[Const] ) extends TypeDefinition {
+    private val baseTypeName:           String,
+    typeParameters:                     Seq[TVar],
+    private val constructorDefinitions: Seq[( String, Seq[( Option[String], Ty )] )] ) extends TypeDefinition {
 
   val baseType: TBase = TBase( baseTypeName, typeParameters.toList )
   val ty: TBase = baseType
-  val baseCases: Seq[Const] = constructors.filter( isBaseConstructor )
+
+  val constructors: Seq[Constructor] =
+    constructorDefinitions.map {
+      case ( constrName, fieldDefs ) =>
+        new Constructor {
+          val constant = Const(
+            constrName,
+            FunctionType( baseType, fieldDefs.map { _._2 } ),
+            typeParameters.toList )
+          val fields = fieldDefs.map {
+            case ( maybeProj, t ) => new Field {
+              override val projector: Option[Const] =
+                maybeProj.map( Const( _, baseType ->: t, typeParameters.toList ) )
+              override val ty: Ty = t
+            }
+          }
+        }
+    }
+
+  val baseCases: Seq[Constructor] = constructors.filter( isBaseConstructor )
+
+  private val constructorConstants = constructors.map( _.constant )
 
   override def apply( ctx: Context ): State = {
     require( !ctx.isType( baseType ), s"Type $baseType already defined" )
-    for ( Const( ctr, FunctionType( _, fieldTys ), _ ) <- constructors ) {
+    for ( Const( ctr, FunctionType( _, fieldTys ), _ ) <- constructorConstants ) {
       require( ctx.constant( ctr ).isEmpty, s"Constructor $ctr is already a declared constant" )
       for ( fieldTy <- fieldTys ) {
         if ( fieldTy == baseType ) {
@@ -35,17 +58,20 @@ case class InductiveType(
       }
     }
     ctx.state.update[BaseTypes]( _ + baseType )
-      .update[Constants]( _ ++ constructors )
-      .update[StructurallyInductiveTypes]( _ + ( baseType.name, constructors.toVector ) )
+      .update[Constants]( _ ++ constructorConstants )
+      .update[StructurallyInductiveTypes]( _ + ( baseType.name, constructorConstants.toVector ) )
   }
 
-  private def isBaseConstructor( constructor: Const ): Boolean = {
-    val FunctionType( _, argTys ) = constructor.ty
-    !argTys.contains( baseType )
+  private def isBaseConstructor( constructor: Constructor ): Boolean = {
+    !constructor.fields.map( _.ty ).contains( baseType )
   }
 }
 
-class InductiveTypeValidator( inductiveType: InductiveType ) {
+class InductiveTypeInputValidator( ty: Ty, constructors: Seq[Const] ) {
+
+  private val baseType: TBase = ty.asInstanceOf[TBase]
+  private val typeParameters = baseType.params.map( _.asInstanceOf[TVar] )
+  private val baseCases = constructors.filter( isBaseCase )
 
   def validate(): Unit = {
     requireConstructorsToBeConstructorsForType()
@@ -54,7 +80,7 @@ class InductiveTypeValidator( inductiveType: InductiveType ) {
   }
 
   private def requireConstructorsToBeConstructorsForType(): Unit =
-    for ( constr <- inductiveType.constructors ) {
+    for ( constr <- constructors ) {
       constructorMustConstructInductiveType( constr )
       typeParametersMustAgreeWithInductiveType( constr )
       typeVariablesMustBeSubsetOfTypeParameters( constr )
@@ -63,32 +89,49 @@ class InductiveTypeValidator( inductiveType: InductiveType ) {
   private def constructorMustConstructInductiveType( constructor: Const ): Unit = {
     val FunctionType( ty_, _ ) = constructor.ty
     require(
-      inductiveType.baseType == ty_,
-      s"Base type ${inductiveType.baseType} and type constructor $constructor don't agree." )
+      baseType == ty_,
+      s"Base type ${baseType} and type constructor $constructor don't agree." )
   }
 
   private def typeParametersMustAgreeWithInductiveType( constructor: Const ): Unit =
-    require( constructor.params == inductiveType.typeParameters )
+    require( constructor.params == typeParameters )
 
   private def typeVariablesMustBeSubsetOfTypeParameters( constructor: Const ): Unit =
-    require( typeVariables( constructor ) subsetOf inductiveType.typeParameters.toSet )
+    require( typeVariables( constructor ) subsetOf typeParameters.toSet )
 
   private def requireDistinctConstructorNames(): Unit =
     require(
-      inductiveType.constructors.map( _.name ) == inductiveType.constructors.map( _.name ).distinct,
+      constructors.map( _.name ) == constructors.map( _.name ).distinct,
       s"Names of type constructors are not distinct." )
 
   private def requireAtLeastOneBaseCase(): Unit =
     require(
-      inductiveType.baseCases.nonEmpty,
-      s"Inductive type is empty, all of the constructors are recursive: ${inductiveType.constructors.mkString( ", " )}" )
+      baseCases.nonEmpty,
+      s"Inductive type is empty, all of the constructors are recursive: ${constructors.mkString( ", " )}" )
+
+  private def isBaseCase( constructor: Const ): Boolean = {
+    val FunctionType( _, ts ) = constructor.ty
+    !ts.contains( baseType )
+  }
 }
 
 object InductiveType {
 
+  trait Constructor {
+    val constant: Const
+    val fields: Seq[Constructor.Field]
+  }
+
+  object Constructor {
+    trait Field {
+      val projector: Option[Const]
+      val ty: Ty
+    }
+  }
+
   def apply( ty: Ty, constructors: Const* ): InductiveType = {
     val inductiveType = buildInductiveType( ty, constructors: _* )
-    validate( inductiveType )
+    validate( ty, constructors )
     inductiveType
   }
 
@@ -98,9 +141,13 @@ object InductiveType {
   private def buildInductiveType( ty: Ty, constructors: Const* ): InductiveType = {
     val baseType = ty.asInstanceOf[TBase]
     val typeParameters = baseType.params.map( _.asInstanceOf[TVar] )
-    InductiveType( baseType.name, typeParameters, constructors.toVector )
+    val constructorDefinitions = constructors.map { c =>
+      val FunctionType( _, ts ) = c.ty
+      c.name -> ts.map { ( None, _ ) }
+    }
+    InductiveType( baseType.name, typeParameters, constructorDefinitions )
   }
 
-  private def validate( inductiveType: InductiveType ): Unit =
-    new InductiveTypeValidator( inductiveType ).validate()
+  private def validate( ty: Ty, constructors: Seq[Const] ): Unit =
+    new InductiveTypeInputValidator( ty, constructors ).validate()
 }
