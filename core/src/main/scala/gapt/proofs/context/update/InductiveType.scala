@@ -22,28 +22,14 @@ case class InductiveType(
 
   val baseType: TBase = TBase( baseTypeName, typeParameters.toList )
   val ty: TBase = baseType
-
   val constructors: Seq[Constructor] =
-    constructorDefinitions.map {
-      case ( constrName, fieldDefs ) =>
-        new Constructor {
-          val constant = Const(
-            constrName,
-            FunctionType( baseType, fieldDefs.map { _._2 } ),
-            typeParameters.toList )
-          val fields = fieldDefs.map {
-            case ( maybeProj, t ) => new Field {
-              override val projector: Option[Const] =
-                maybeProj.map( Const( _, baseType ->: t, typeParameters.toList ) )
-              override val ty: Ty = t
-            }
-          }
-        }
-    }
-
+    constructorDefinitions.map( parseConstructorDefinition )
   val baseCases: Seq[Constructor] = constructors.filter( isBaseConstructor )
 
   private val constructorConstants = constructors.map( _.constant )
+
+  private type FieldDefinition = ( Option[String], Ty )
+  private type ConstructorDefinition = ( String, Seq[FieldDefinition] )
 
   override def apply( ctx: Context ): State = {
     require( !ctx.isType( baseType ), s"Type $baseType already defined" )
@@ -61,6 +47,33 @@ case class InductiveType(
       .update[Constants]( _ ++ constructorConstants )
       .update[StructurallyInductiveTypes]( _ + ( baseType.name, constructorConstants.toVector ) )
   }
+
+  private def parseConstructorDefinition( definition: ConstructorDefinition ): Constructor = {
+    val ( constrName, fieldDefs ) = definition
+    val fieldTypes = fieldDefs.map { _._2 }
+    new Constructor {
+      val constant = constructorConstant( constrName, fieldTypes )
+      val fields = fieldDefs.map( parseFieldDefinition )
+    }
+  }
+
+  private def constructorConstant( name: String, fieldTypes: Seq[Ty] ): Const =
+    Const(
+      name,
+      FunctionType( baseType, fieldTypes ),
+      typeParameters.toList )
+
+  private def parseFieldDefinition( definition: FieldDefinition ): Field = {
+    val ( projectorName, projectorType ) = definition
+    new Field {
+      override val projector: Option[Const] =
+        projectorName.map( projectorConstant( _, projectorType ) )
+      override val ty: Ty = projectorType
+    }
+  }
+
+  private def projectorConstant( name: String, ty: Ty ): Const =
+    Const( name, baseType ->: ty, typeParameters.toList )
 
   private def isBaseConstructor( constructor: Constructor ): Boolean = {
     !constructor.fields.map( _.ty ).contains( baseType )
