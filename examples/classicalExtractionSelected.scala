@@ -756,7 +756,7 @@ $pair(
   //while ( normalize( normalized ) != normalized ) {
   normalized = normalize( normalized )
   //}
-  println( normalized )
+  println( "normalized: " + normalized )
   /*
 println( "expecting inr(i)" + normalize( m1Args( ClassicalExtraction.flat( lem4 ) )( le"0:nat" )( le"0:nat" ) ) )
 println( "expecting inl(inl(i))" + normalize( m1Args( ClassicalExtraction.flat( lem4 ) )( le"0:nat" )( le"s(0):nat" ) ) )

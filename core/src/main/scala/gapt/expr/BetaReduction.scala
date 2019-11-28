@@ -211,7 +211,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
     hd match {
       case Abs.Block( vs, hd_ ) if vs.nonEmpty && as.nonEmpty =>
         val n = math.min( as.size, vs.size )
-        println( s"beta reduction: ${vs.take( n )}" )
+        //println( s"beta reduction: ${vs.take( n )}" )
         Some( Apps( Substitution( vs.take( n ) zip as.take( n ) )( Abs.Block( vs.drop( n ), hd_ ) ), as.drop( n ) ) )
       // raise right
       case Const( "efq", _, _ ) if as.size > 1 =>
@@ -348,10 +348,10 @@ case class Normalizer( rules: Set[ReductionRule] ) {
           case ( rs, whnfArgs, normalizeArgs ) =>
             val as_ = as.zipWithIndex.map {
               case ( a, i ) if whnfArgs( i ) =>
-                println( s"whnf: a: ${a}" )
+                //println( s"whnf: a: ${a}" )
                 whnf( a )
               case ( a, i ) if normalizeArgs( i ) =>
-                println( s"normalize: a: ${a}" )
+                //println( s"normalize: a: ${a}" )
                 normalize( a )
               case ( a, _ ) => a
             }
