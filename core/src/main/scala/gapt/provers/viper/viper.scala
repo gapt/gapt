@@ -4,17 +4,25 @@ import ammonite.ops._
 import gapt.expr._
 import gapt.expr.fol.folTermSize
 import gapt.expr.hol.containsQuantifierOnLogicalLevel
+import gapt.formats.InputFile
+import gapt.formats.StdinInputFile
 import gapt.formats.tip.TipProblem
 import gapt.formats.tip.TipSmtImporter
-import gapt.formats.{ InputFile, StdinInputFile }
 import gapt.grammars.InductionGrammar
 import gapt.proofs.HOLSequent
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.gaptic._
 import gapt.proofs.gaptic.tactics.AnalyticInductionTactic
-import gapt.proofs.lk.{ ContractionMacroRule, CutRule, ForallRightBlock, ForallRightRule, LKProof, NegRightRule, OrRightMacroRule }
-import gapt.proofs.resolution.{ ResolutionToLKProof, structuralCNF }
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.NegRightRule
+import gapt.proofs.lk.rules.macros.ContractionMacroRule
+import gapt.proofs.lk.rules.macros.ForallRightBlock
+import gapt.proofs.lk.rules.macros.OrRightMacroRule
+import gapt.proofs.resolution.ResolutionToLKProof
+import gapt.proofs.resolution.structuralCNF
 import gapt.prooftool.prooftool
+import gapt.provers.ResolutionProver
 import gapt.provers.eprover.EProver
 import gapt.provers.escargot.Escargot
 import gapt.provers.iprover.IProver
@@ -22,12 +30,15 @@ import gapt.provers.prover9.Prover9
 import gapt.provers.spass.SPASS
 import gapt.provers.vampire.Vampire
 import gapt.provers.viper.aip.axioms._
-import gapt.provers.ResolutionProver
 import gapt.provers.viper.grammars._
-import gapt.utils.{ LogHandler, TimeOutException, withTimeout }
+import gapt.utils.LogHandler
+import gapt.utils.TimeOutException
+import gapt.utils.withTimeout
 
 import scala.concurrent.duration.Duration
-import scala.util.{ Failure, Success, Try }
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
 case class AipOptions( axioms: AxiomFactory = SequentialInductionAxioms(), prover: ResolutionProver = Escargot )
 
@@ -105,7 +116,7 @@ object ViperOptions {
       case "--instsize" :: a :: b :: rest => parseTreeGrammar( rest, opts.copy( instanceSize = a.toFloat -> b.toFloat ) )
       case "--qtys" :: qtys :: rest => parseTreeGrammar(
         rest,
-        opts.copy( quantTys = Some( qtys.split( "," ).toSeq.filter( _.nonEmpty ) ) ) )
+        opts.copy( quantTys = Some( qtys.split( "," ).toSeq.filter( _.nonEmpty ).map( TBase( _ ) ) ) ) )
       case "--gramw" :: w :: rest =>
         val f: InductionGrammar.Production => Int = w match {
           case "scomp" => r => folTermSize( r.lhs ) + folTermSize( r.rhs )

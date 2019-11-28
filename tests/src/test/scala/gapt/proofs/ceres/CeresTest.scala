@@ -10,7 +10,8 @@ import gapt.formats.llk._
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.Sort
-import gapt.proofs.lk.{ CutRule, cutNormal }
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.transformations.cutNormal
 import gapt.proofs.{ Sequent, SequentMatchers, gaptic }
 import gapt.provers.escargot.Escargot
 import gapt.utils.SatMatchers

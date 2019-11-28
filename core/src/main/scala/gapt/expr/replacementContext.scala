@@ -3,40 +3,43 @@ package gapt.expr
 import gapt.expr.hol.HOLPosition
 
 /**
- * Creates a lambda expression that designates positions to be replaced.
+ * Creates capture avoiding replacement contexts.
  */
 object replacementContext {
 
   /**
-   * Given an expression φ, creates an expression λx.φ', where φ' results from replacing some terms in φ with x.
-   * The name of the variable x is automatically chosen to be fresh.
-   * @param ty The type of x.
-   * @param exp The expression φ.
-   * @param positions The list of positions in φ to be replaced with x.
-   * @return
+   * Creates a replacement context.
+   *
+   * @param ty The type of the holes.
+   * @param exp An expression φ for which a context is to be created.
+   * @param positions A list of non-overlapping positions p_1, ..., p_n in φ.
+   * @return An expression of the form λx.φ', where x is a fresh variable of
+   * type `ty` and φ' = φ[p_1/x, ..., p_n/x].
    */
-  def apply( ty: Ty, exp: Expr, positions: Iterable[LambdaPosition] ): Abs = {
+  def apply( ty: Ty, exp: Expr, positions: Iterable[LambdaPosition] ): ReplacementContext = {
     val x = rename( Var( "x", ty ), containedNames( exp ) )
     Abs( x, positions.foldLeft( exp ) { ( acc, p ) => acc.replace( p, x ) } )
   }
 
   /**
-   * Given an expression φ, creates an expression λx.φ', where φ' results from replacing some terms in φ with x.
-   * The name of the variable x is automatically chosen to be fresh.
-   * @param ty The type of x.
-   * @param exp The expression φ.
-   * @param positions The list of positions in φ to be replaced with x.
-   * @return
+   * Creates a replacement context.
+   *
+   * @param ty The type of the holes.
+   * @param exp An expression φ for which a context is to be created.
+   * @param positions A list of non-overlapping positions p_1, ..., p_n in φ.
+   * @return See `replacementContext.apply()`.
    */
-  def apply( ty: Ty, exp: Expr, positions: Iterable[HOLPosition] )( implicit d: DummyImplicit ): Abs =
+  def apply( ty: Ty, exp: Expr, positions: Iterable[HOLPosition] )( implicit d: DummyImplicit ): ReplacementContext =
     apply( ty, exp, positions map { HOLPosition.toLambdaPosition( exp ) } )
 
   /**
-   * Transforms the expression φ to λx.φ' by replacing all occurrences of t in φ with x.
-   * @param exp The expression φ.
-   * @param t The term t.
-   * @return
+   * Creates a replacement context.
+   *
+   * @param exp The expression φ for which a context is to be created.
+   * @param t The term t to be replaced by holes.
+   * @return An expression of the form λx.φ', where x is a fresh variable and
+   * φ' = φ[t/x].
    */
-  def abstractTerm( exp: Expr )( t: Expr ): Abs =
+  def abstractTerm( exp: Expr )( t: Expr ): ReplacementContext =
     apply( t.ty, exp, exp.find( t ) )
 }

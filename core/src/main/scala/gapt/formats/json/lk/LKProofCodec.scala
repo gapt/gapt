@@ -1,7 +1,36 @@
 package gapt.formats.json.lk
 
-import gapt.formats.json.{ lkProofEncoder => _, lkProofDecoder => _, _ }
+import gapt.formats.json.{ lkProofDecoder => _, lkProofEncoder => _, _ }
 import gapt.proofs.lk._
+import gapt.proofs.lk.rules.AndLeftRule
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.BottomAxiom
+import gapt.proofs.lk.rules.ContractionLeftRule
+import gapt.proofs.lk.rules.ContractionRightRule
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
+import gapt.proofs.lk.rules.EqualityLeftRule
+import gapt.proofs.lk.rules.EqualityRightRule
+import gapt.proofs.lk.rules.ExistsLeftRule
+import gapt.proofs.lk.rules.ExistsRightRule
+import gapt.proofs.lk.rules.ExistsSkLeftRule
+import gapt.proofs.lk.rules.ForallLeftRule
+import gapt.proofs.lk.rules.ForallRightRule
+import gapt.proofs.lk.rules.ForallSkRightRule
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.ImpRightRule
+import gapt.proofs.lk.rules.InductionRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.NegLeftRule
+import gapt.proofs.lk.rules.NegRightRule
+import gapt.proofs.lk.rules.OrLeftRule
+import gapt.proofs.lk.rules.OrRightRule
+import gapt.proofs.lk.rules.ProofLink
+import gapt.proofs.lk.rules.ReflexivityAxiom
+import gapt.proofs.lk.rules.TopAxiom
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.WeakeningRightRule
 import io.circe.Decoder.Result
 import io.circe._
 import io.circe.generic.auto._
@@ -50,8 +79,8 @@ object LKProofCodec {
       case p @ EqualityLeftRule( _, _, _, _ )   => p.asJson
       case p @ EqualityRightRule( _, _, _, _ )  => p.asJson
       case p @ InductionRule( _, _, _ )         => p.asJson
-      case p @ DefinitionLeftRule( _, _, _ )    => p.asJson
-      case p @ DefinitionRightRule( _, _, _ )   => p.asJson
+      case p @ ConversionLeftRule( _, _, _ )    => p.asJson
+      case p @ ConversionRightRule( _, _, _ )   => p.asJson
     }
   }
 
@@ -88,8 +117,8 @@ object LKProofCodec {
       case "EqualityLeftRule"     => c.as[EqualityLeftRule]
       case "EqualityRightRule"    => c.as[EqualityRightRule]
       case "InductionRule"        => c.as[InductionRule]
-      case "DefinitionLeftRule"   => c.as[DefinitionLeftRule]
-      case "DefinitionRightRule"  => c.as[DefinitionRightRule]
+      case "DefinitionLeftRule"   => c.as[ConversionLeftRule]
+      case "DefinitionRightRule"  => c.as[ConversionRightRule]
       case _                      => Left( DecodingFailure( s"Rule $name not recognized.", Nil ) )
     }
   }

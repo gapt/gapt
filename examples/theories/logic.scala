@@ -1,23 +1,42 @@
 package gapt.examples.theories
 
+import cats.Eval
+import cats.Later
 import gapt.expr._
-import gapt.expr.hol.{ instantiate, simplify, universalClosure }
+import gapt.expr.hol.instantiate
+import gapt.expr.hol.simplify
+import gapt.expr.hol.universalClosure
 import gapt.formats.babel.Notation
-import gapt.proofs.epsilon.EpsilonC
-import gapt.proofs.{ HOLSequent, ProofBuilder, Sequent, SequentConnector, Suc }
-import gapt.proofs.gaptic._
-import gapt.proofs.lk._
-import gapt.utils.LogHandler
-import cats.{ Eval, Later }
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.context.immutable.ImmutableContext
-import gapt.proofs.context.update.{ SkolemFunction => SkolemFun }
 import gapt.proofs.context.update.InductiveType
-import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
 import gapt.proofs.context.update.ProofDefinitionDeclaration
 import gapt.proofs.context.update.ProofNameDeclaration
 import gapt.proofs.context.update.Update
+import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
+import gapt.proofs.context.update.{ SkolemFunction => SkolemFun }
+import gapt.proofs.epsilon.EpsilonC
+import gapt.proofs.gaptic._
+import gapt.proofs.lk._
+import gapt.proofs.lk.rules
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.ExistsSkLeftRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.ProofLink
+import gapt.proofs.lk.rules.macros.ContractionMacroRule
+import gapt.proofs.lk.rules.macros.ForallLeftBlock
+import gapt.proofs.lk.rules.macros.ForallRightBlock
+import gapt.proofs.lk.transformations.cleanCuts
+import gapt.proofs.lk.transformations.cleanStructuralRules
+import gapt.proofs.lk.transformations.eliminateDefinitions
+import gapt.proofs.HOLSequent
+import gapt.proofs.ProofBuilder
+import gapt.proofs.Sequent
+import gapt.proofs.SequentConnector
+import gapt.proofs.Suc
+import gapt.utils.LogHandler
 
 import scala.collection.mutable
 import scala.util.DynamicVariable
@@ -235,7 +254,7 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
             u( ExistsSkLeftRule( _, skC( xs ), skDef ) ).
             u( ForallLeftBlock( _, desc, xs ) ).
             u( ForallRightBlock( _, spec, xs ) ).
-            u( CutRule( exProof, _, desc ) ).
+            u( rules.CutRule( exProof, _, desc ) ).
             qed
         }
       }

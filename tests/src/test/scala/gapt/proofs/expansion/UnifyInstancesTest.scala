@@ -5,7 +5,7 @@ import gapt.proofs.Sequent
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
-import gapt.proofs.lk.LKToExpansionProof
+import gapt.proofs.lk.transformations.LKToExpansionProof
 import org.specs2.mutable.Specification
 
 class UnifyInstancesTest extends Specification {

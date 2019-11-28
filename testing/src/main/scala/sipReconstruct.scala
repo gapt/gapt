@@ -8,6 +8,11 @@ import gapt.proofs.context.Context
 import gapt.proofs.expansion._
 import gapt.proofs.gaptic.TacticsProof
 import gapt.proofs.lk._
+import gapt.proofs.lk.rules.ForallRightRule
+import gapt.proofs.lk.rules.InductionRule
+import gapt.proofs.lk.transformations.LKToExpansionProof
+import gapt.proofs.lk.util.extractInductionGrammar
+import gapt.proofs.lk.util.instanceProof
 import gapt.provers.viper.grammars.{ TreeGrammarProver, TreeGrammarProverOptions, indElimReversal }
 import gapt.utils.{ LogHandler, verbose }
 
@@ -40,6 +45,15 @@ object sipReconstruct extends Script {
       val n = lem.usedLemmas.maxBy( _.number ).name
       lem.combined( included = Set( n ) )
     }
+
+  def groundTypeVars( p: LKProof )( implicit ctx: Context ): ( Context, LKProof ) = {
+    val mutCtx = ctx.newMutable
+    val tyVars = typeVariables( p.endSequent.elements )
+    val nameGen = mutCtx.newNameGenerator
+    val grounding = tyVars.map( v => v -> TBase( nameGen.fresh( v.name ) ) ).toMap
+    grounding.values.foreach( mutCtx += _ )
+    mutCtx.toImmutable -> Substitution( Map.empty, grounding )( p )
+  }
 
   val indProofs = ( Map()
     ++ getIsaplanner( "03", "proof", "proof2", "proof3" )
@@ -108,13 +122,15 @@ object sipReconstruct extends Script {
     ++ getProd( "35", "proof" )
     ++ {
       val thy = new Theory(
-        nat, natorder, natdivision, natdivisible
-      // list, listlength, listdrop, listfold
-      )
+        nat, natorder, natdivision, natdivisible,
+        list, listlength, listdrop, listfold )
       import thy._
-      allProofs.view.flatMap( p => Seq(
-        s"theory.${p._1}" -> Later( ctx -> LemmaHandle( p._1 ).proof ),
-        s"theory1.${p._1}" -> Later( ctx -> inlineLast( thy )( LemmaHandle( p._1 ) ) ) ) )
+      // Blacklist: contain partially applied functions
+      val blacklist = Set( "foldrapp", "filterapp", "lallapp", "lallrev",
+        "lenmap", "mapapp", "mapmap", "revfilter", "revmap" )
+      allProofs.view.filterNot( p => blacklist( p._1 ) ).flatMap( p => Seq(
+        s"theory.${p._1}" -> Later( groundTypeVars( LemmaHandle( p._1 ).proof ) ),
+        s"theory1.${p._1}" -> Later( groundTypeVars( inlineLast( thy )( LemmaHandle( p._1 ) ) ) ) ) )
     } )
 
   LogHandler.current.value = ( domain, level, msg ) => if ( level <= LogHandler.Warn ) println( msg )
@@ -148,17 +164,22 @@ object sipReconstruct extends Script {
 
     val indG = extractInductionGrammar( p )
     println( s"SIP with induction grammar:\n$indG" )
-    val qtys = Some( indG.gamma.map { case Var( _, TBase( n, _ ) ) => n } )
+    for ( InductionRule( _, Abs( x, f ), _ ) <- p.subProofs )
+      println( s"SIP with induction formula: ${All( x, f ).toSigRelativeString}\n" )
+    val qtys = indG.gamma.map { case Var( _, t @ TBase( _, _ ) ) => t }
+    println( s"SIP of problem: ${p.endSequent.succedent.head.toSigRelativeString}\n" )
 
+    val opts = TreeGrammarProverOptions( quantTys = Some( qtys ) )
     verbose.only( TreeGrammarProver.logger ) {
       mode match {
         case "cansol" =>
-          indElimReversal( p, TreeGrammarProverOptions( minInstProof = false, quantTys = qtys ) )
+          indElimReversal( p, opts.copy( minInstProof = false ) )
         case "interp" =>
-          indElimReversal( p, TreeGrammarProverOptions( minInstProof = false, quantTys = qtys,
-            useInterpolation = true ) )
+          indElimReversal( p, opts.copy( minInstProof = false, useInterpolation = true ) )
         case "atp" =>
-          TreeGrammarProver( p.endSequent, TreeGrammarProverOptions( quantTys = qtys ) )
+          TreeGrammarProver( p.endSequent, opts )
+        case "atpintp" =>
+          TreeGrammarProver( p.endSequent, opts.copy( useInterpolation = true ) )
       }
     }
   }

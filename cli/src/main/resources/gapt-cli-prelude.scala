@@ -29,6 +29,10 @@ import gapt.proofs.context.update._
 import gapt.proofs.context.facet._
 import gapt.proofs.ceres._
 import gapt.proofs.lk._
+import gapt.proofs.lk.rules._
+import gapt.proofs.lk.rules.macros._
+import gapt.proofs.lk.transformations._
+import gapt.proofs.lk.util._
 import gapt.cutintro._
 import gapt.proofs.resolution._
 import gapt.provers.sat._

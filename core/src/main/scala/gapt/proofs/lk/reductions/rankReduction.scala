@@ -1,9 +1,40 @@
 package gapt.proofs.lk.reductions
 
-import gapt.expr.{ Substitution, freeVariables, rename }
+import gapt.expr.Substitution
+import gapt.expr.freeVariables
+import gapt.expr.rename
 import gapt.proofs.context.Context
-import gapt.proofs.lk.{ AndLeftRule, AndRightRule, ContractionLeftRule, ContractionMacroRule, ContractionRightRule, CutRule, DefinitionLeftRule, DefinitionRightRule, EqualityLeftRule, EqualityRightRule, ExistsLeftRule, ExistsRightRule, ExistsSkLeftRule, ForallLeftRule, ForallRightRule, ForallSkRightRule, ImpLeftRule, ImpRightRule, InductionCase, InductionRule, LKProof, NegLeftRule, NegRightRule, OrLeftRule, OrRightRule, WeakeningLeftRule, WeakeningMacroRule, WeakeningRightRule, inductionEigenvariables }
-import gapt.proofs.{ SequentConnector, guessPermutation }
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.rules.AndLeftRule
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.ContractionLeftRule
+import gapt.proofs.lk.rules.ContractionRightRule
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
+import gapt.proofs.lk.rules.EqualityLeftRule
+import gapt.proofs.lk.rules.EqualityRightRule
+import gapt.proofs.lk.rules.ExistsLeftRule
+import gapt.proofs.lk.rules.ExistsRightRule
+import gapt.proofs.lk.rules.ExistsSkLeftRule
+import gapt.proofs.lk.rules.ForallLeftRule
+import gapt.proofs.lk.rules.ForallRightRule
+import gapt.proofs.lk.rules.ForallSkRightRule
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.ImpRightRule
+import gapt.proofs.lk.rules.InductionCase
+import gapt.proofs.lk.rules.InductionRule
+import gapt.proofs.lk.rules.NegLeftRule
+import gapt.proofs.lk.rules.NegRightRule
+import gapt.proofs.lk.rules.OrLeftRule
+import gapt.proofs.lk.rules.OrRightRule
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.WeakeningRightRule
+import gapt.proofs.lk.util.inductionEigenvariables
+import gapt.proofs.SequentConnector
+import gapt.proofs.guessPermutation
+import gapt.proofs.lk.rules.macros.ContractionMacroRule
+import gapt.proofs.lk.rules.macros.WeakeningMacroRule
 
 object LeftRankWeakeningLeftReduction extends CutReduction {
   override def reduce( cut: CutRule ): Option[LKProof] =
@@ -92,11 +123,11 @@ object LeftRankCutReduction extends CutReduction {
 object LeftRankDefinitionLeftReduction extends CutReduction {
   override def reduce( cut: CutRule ): Option[LKProof] =
     cut.leftSubProof match {
-      case l @ DefinitionLeftRule( subProof, a, m ) =>
+      case l @ ConversionLeftRule( subProof, a, m ) =>
         val aux1Sub = l.getSequentConnector.parent( cut.aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, cut.rightSubProof, cut.aux2 )
         val aNew = cutSub.getLeftSequentConnector.child( a )
-        Some( DefinitionLeftRule( cutSub, aNew, m ) )
+        Some( ConversionLeftRule( cutSub, aNew, m ) )
 
       case _ => None
     }
@@ -105,11 +136,11 @@ object LeftRankDefinitionLeftReduction extends CutReduction {
 object LeftRankDefinitionRightReduction extends CutReduction {
   override def reduce( cut: CutRule ): Option[LKProof] =
     cut.leftSubProof match {
-      case l @ DefinitionRightRule( subProof, a, m ) if cut.leftSubProof.mainIndices.head != cut.aux1 =>
+      case l @ ConversionRightRule( subProof, a, m ) if cut.leftSubProof.mainIndices.head != cut.aux1 =>
         val aux1Sub = l.getSequentConnector.parent( cut.aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, cut.rightSubProof, cut.aux2 )
         val aNew = cutSub.getLeftSequentConnector.child( a )
-        Some( DefinitionRightRule( cutSub, aNew, m ) )
+        Some( ConversionRightRule( cutSub, aNew, m ) )
 
       case _ => None
     }
@@ -545,11 +576,11 @@ object RightRankCutReduction extends CutReduction {
 object RightRankDefinitionLeftReduction extends CutReduction {
   def reduce( cut: CutRule ): Option[LKProof] =
     cut.rightSubProof match {
-      case definition @ DefinitionLeftRule( subProof, a, m ) if cut.rightSubProof.mainIndices.head != cut.aux2 =>
+      case definition @ ConversionLeftRule( subProof, a, m ) if cut.rightSubProof.mainIndices.head != cut.aux2 =>
         val aux2Sub = definition.getSequentConnector.parent( cut.aux2 )
         val cutSub = CutRule( cut.leftSubProof, cut.aux1, definition.subProof, aux2Sub )
         val aNew = cutSub.getRightSequentConnector.child( a )
-        Some( DefinitionLeftRule( cutSub, aNew, m ) )
+        Some( ConversionLeftRule( cutSub, aNew, m ) )
       case _ => None
     }
 }
@@ -557,11 +588,11 @@ object RightRankDefinitionLeftReduction extends CutReduction {
 object RightRankDefinitionRightReduction extends CutReduction {
   def reduce( cut: CutRule ): Option[LKProof] =
     cut.rightSubProof match {
-      case definition @ DefinitionRightRule( subProof, a, m ) =>
+      case definition @ ConversionRightRule( subProof, a, m ) =>
         val aux2Sub = definition.getSequentConnector.parent( cut.aux2 )
         val cutSub = CutRule( cut.leftSubProof, cut.aux1, definition.subProof, aux2Sub )
         val aNew = cutSub.getRightSequentConnector.child( a )
-        Some( DefinitionLeftRule( cutSub, aNew, m ) )
+        Some( ConversionLeftRule( cutSub, aNew, m ) )
       case _ => None
     }
 }

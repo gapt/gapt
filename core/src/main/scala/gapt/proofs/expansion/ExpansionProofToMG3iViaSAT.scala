@@ -2,21 +2,51 @@ package gapt.proofs.expansion
 
 import gapt.expr._
 import gapt.expr.hol.lcomp
-import gapt.proofs.rup._
-import gapt.proofs.lk._
 import gapt.proofs._
+import gapt.proofs.lk._
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.BottomAxiom
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
+import gapt.proofs.lk.rules.ExistsLeftRule
+import gapt.proofs.lk.rules.ExistsRightRule
+import gapt.proofs.lk.rules.ForallLeftRule
+import gapt.proofs.lk.rules.ForallRightRule
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.NegLeftRule
+import gapt.proofs.lk.rules.NegRightRule
+import gapt.proofs.lk.rules.OrLeftRule
+import gapt.proofs.lk.rules.TopAxiom
+import gapt.proofs.lk.rules.macros.AndLeftMacroRule
+import gapt.proofs.lk.rules.macros.ImpRightMacroRule
+import gapt.proofs.lk.rules.macros.OrRightMacroRule
+import gapt.proofs.lk.rules.macros.WeakeningMacroRule
+import gapt.proofs.rup._
 import gapt.provers.congruence.CC
 import gapt.provers.escargot.Escargot
+import gapt.provers.sat.Sat4j._
+import gapt.utils.quiet
+import org.sat4j.core.VecInt
 import org.sat4j.minisat.SolverFactory
 import org.sat4j.specs._
-import gapt.provers.sat.Sat4j._
-import gapt.utils.{ generatedUpperSetInPO, quiet }
-import org.sat4j.core.VecInt
 import org.sat4j.tools.SearchListenerAdapter
 
 import scala.annotation.tailrec
 import scala.collection.mutable
 
+/**
+ * Efficient tree-based data structure for sets of counter-examples.
+ *
+ * A counter-example is a set of non-zero integers without duplicate
+ * absolute values, e.g. `{1,-2,3}`---think of how a SAT solver
+ * returns a model.  (All operations expect a list sorted by absolute
+ * value instead of a set.)
+ *
+ * The important query operation that we're interested in is: given a
+ * counter-example Q, do we already have a counter-example Q' such
+ * that Q ⊆ Q'.
+ */
 private sealed trait CExSet {
   import CExSet._
   def insert( is: List[Int] ): CExSet = ( is, this ) match {
@@ -145,8 +175,8 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
       val pol = if ( e.polarity.inSuc ) 1 else -1
       solver.addClause( Seq( -classical, -pol * atom( ch.shallow ), pol * atom( e.shallow ) ) )
     case ETDefinition( sh, ch ) =>
-      addClause( DefinitionRightRule( LogicalAxiom( ch.shallow ), ch.shallow, sh ) )
-      addClause( DefinitionLeftRule( LogicalAxiom( ch.shallow ), ch.shallow, sh ) )
+      addClause( ConversionRightRule( LogicalAxiom( ch.shallow ), ch.shallow, sh ) )
+      addClause( ConversionLeftRule( LogicalAxiom( ch.shallow ), ch.shallow, sh ) )
     case ETSkolemQuantifier( _, _, _ ) => throw new IllegalArgumentException
   }
 

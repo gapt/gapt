@@ -4,6 +4,19 @@ import gapt.examples.{ Pi2Pigeonhole, lattice, tape }
 import gapt.expr._
 import gapt.formats.ClasspathInputFile
 import gapt.formats.llk.loadLLK
+import gapt.proofs.lk.rules.ContractionLeftRule
+import gapt.proofs.lk.rules.ContractionRightRule
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.ForallLeftRule
+import gapt.proofs.lk.rules.ForallRightRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.OrLeftRule
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.WeakeningRightRule
+import gapt.proofs.lk.transformations.eliminateDefinitions
+import gapt.proofs.lk.transformations.skolemizeLK
+import gapt.proofs.lk.util.AtomicExpansion
+import gapt.proofs.lk.util.regularize
 import gapt.proofs.{ Ant, Suc }
 import org.specs2.mutable._
 

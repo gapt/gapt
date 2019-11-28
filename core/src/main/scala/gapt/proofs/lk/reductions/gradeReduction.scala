@@ -1,8 +1,34 @@
 package gapt.proofs.lk.reductions
 
-import gapt.expr.{ Bottom, Substitution, Top }
-import gapt.proofs.lk.{ AndLeftRule, AndRightRule, BottomAxiom, CutRule, DefinitionLeftRule, DefinitionRightRule, EqualityLeftRule, EqualityRightRule, ExistsLeftRule, ExistsRightRule, ForallLeftRule, ForallRightRule, ImpLeftRule, ImpRightRule, LKProof, LogicalAxiom, NegLeftRule, NegRightRule, OrLeftRule, OrRightRule, TopAxiom, WeakeningLeftRule, WeakeningMacroRule, WeakeningRightRule }
-import gapt.proofs.{ SequentConnector, guessPermutation }
+import gapt.expr.Bottom
+import gapt.expr.Substitution
+import gapt.expr.Top
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.rules.AndLeftRule
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.BottomAxiom
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
+import gapt.proofs.lk.rules.EqualityLeftRule
+import gapt.proofs.lk.rules.EqualityRightRule
+import gapt.proofs.lk.rules.ExistsLeftRule
+import gapt.proofs.lk.rules.ExistsRightRule
+import gapt.proofs.lk.rules.ForallLeftRule
+import gapt.proofs.lk.rules.ForallRightRule
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.ImpRightRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.NegLeftRule
+import gapt.proofs.lk.rules.NegRightRule
+import gapt.proofs.lk.rules.OrLeftRule
+import gapt.proofs.lk.rules.OrRightRule
+import gapt.proofs.lk.rules.TopAxiom
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.WeakeningRightRule
+import gapt.proofs.SequentConnector
+import gapt.proofs.guessPermutation
+import gapt.proofs.lk.rules.macros.WeakeningMacroRule
 
 object GradeReductionAxiomLeft extends CutReduction {
   override def reduce( cut: CutRule ): Option[LKProof] =
@@ -130,7 +156,7 @@ object GradeReductionExists extends CutReduction {
 object GradeReductionDefinition extends CutReduction {
   override def reduce( cut: CutRule ): Option[LKProof] =
     ( cut.leftSubProof, cut.rightSubProof ) match {
-      case ( DefinitionRightRule( lSubProof, a1, definition1 ), DefinitionLeftRule( rSubProof, a2, definition2 )
+      case ( ConversionRightRule( lSubProof, a1, definition1 ), ConversionLeftRule( rSubProof, a2, definition2 )
         ) if cut.leftSubProof.mainIndices.head == cut.aux1 && cut.rightSubProof.mainIndices.head == cut.aux2 =>
         Some( CutRule( lSubProof, a1, rSubProof, a2 ) )
       case _ => None

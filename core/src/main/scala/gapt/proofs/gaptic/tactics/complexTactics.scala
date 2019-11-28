@@ -14,6 +14,20 @@ import gapt.provers.viper.aip.axioms._
 import cats.syntax.all._
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.ContractionLeftRule
+import gapt.proofs.lk.rules.ConversionRule
+import gapt.proofs.lk.rules.EqualityLeftRule
+import gapt.proofs.lk.rules.EqualityRightRule
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.InductionCase
+import gapt.proofs.lk.rules.InductionRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.macros.ForallLeftBlock
+import gapt.proofs.lk.rules.macros.WeakeningMacroRule
+import gapt.proofs.lk.util.solvePropositional
+import gapt.proofs.lk.util.solveQuasiPropositional
 
 /**
  * Performs backwards chaining:
@@ -224,7 +238,7 @@ case class UnfoldTactic( target: String, definitions: Seq[String], maxSteps: Opt
     for {
       ( label: String, main: Formula, idx: SequentIndex ) <- findFormula( goal, OnLabel( target ) )
       newGoal = OpenAssumption( goal.labelledSequent.updated( idx, label -> unfold( main ) ) )
-      _ <- replace( DefinitionRule( newGoal, idx, main ) )
+      _ <- replace( ConversionRule( newGoal, idx, main ) )
     } yield ()
 }
 

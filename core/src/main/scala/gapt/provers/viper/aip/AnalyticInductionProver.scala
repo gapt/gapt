@@ -6,11 +6,11 @@ import gapt.expr.Var
 import gapt.formats.tip.TipProblem
 import gapt.proofs.gaptic.{ escargot => escargotTactic }
 import gapt.proofs.gaptic._
-import gapt.proofs.lk.CutRule
 import gapt.proofs.lk.LKProof
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
 import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.lk.rules.CutRule
 import gapt.provers.ResolutionProver
 import gapt.provers.escargot.Escargot
 import gapt.provers.viper.aip.axioms.Axiom

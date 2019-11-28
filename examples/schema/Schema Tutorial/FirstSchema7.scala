@@ -11,7 +11,8 @@ import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
 import gapt.proofs.context.update.ProofDefinitionDeclaration
 import gapt.proofs.context.update.ProofNameDeclaration
 import gapt.proofs.context.update.Sort
-import gapt.proofs.lk.instantiateProof //used for struct extraction
+import gapt.proofs.lk.util.instantiateProof
+//used for struct extraction
 
 object FirstSchema7 extends TacticsProof {
   //Type

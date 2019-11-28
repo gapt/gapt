@@ -26,14 +26,17 @@ case class LKeyword( name: String ) extends LAtom {
 
 case class LSymbol( name: String ) extends LAtom {
   def toDoc = Doc.text {
-    if ( name == "" ) {
-      s"|$name|"
-    } else if ( name.matches( ".*[\n\r\t\f \")(;:|\\\\].*" ) ) {
-      "|" + name.replace( "\\", "\\\\" ).replace( "|", "\\|" ) + "|"
-    } else {
-      name
+    name match {
+      case "" => "||"
+      case LSymbol.needsToBeEscaped() =>
+        "|" + name.replace( "\\", "\\\\" ).replace( "|", "\\|" ) + "|"
+      case _ => name
     }
   }
+}
+
+object LSymbol extends ( String => LAtom ) {
+  private val needsToBeEscaped = ".*[\n\r\t\f \")(;:|\\\\].*".r
 }
 
 case class LList( elements: SExpression* ) extends SExpression {

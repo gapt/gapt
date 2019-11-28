@@ -44,7 +44,7 @@ lazy val scalariformSettings =
     .setPreference( DoubleIndentConstructorArguments, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "4.3.5"
+val specs2Version = "4.3.6"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   javaOptions in Test += "-Xmx2g",
@@ -112,7 +112,7 @@ lazy val root = project.in( file( "." ) ).
 
       val archiveFile = file( "." ) / "target" / s"gapt-$version.tar.gz"
 
-      Process( List( "latexmk", "-pdf", "user_manual.tex" ), baseDir / "doc" ) !
+      Process( List( "latexmk", "-pdf", "-silent", "user_manual.tex" ), baseDir / "doc" ) !
 
       val filesToIncludeAsIs = List(
         "COPYING", "gapt.sh", "slakje.sh", "escargot.sh", "viper.sh", "include.sh", "examples" )
@@ -176,10 +176,10 @@ lazy val core = project.in( file( "core" ) ).
       "org.parboiled" %% "parboiled" % "2.1.5",
       "com.lihaoyi" %% "fastparse" % "2.0.5",
       "com.lihaoyi" %% "sourcecode" % "0.1.5",
-      "org.typelevel" %% "cats-free" % "1.4.0",
+      "org.typelevel" %% "cats-free" % "1.5.0",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
       "org.apache.commons" % "commons-lang3" % "3.8.1",
-      "com.lihaoyi" %% "ammonite-ops" % "1.5.0",
+      "com.lihaoyi" %% "ammonite-ops" % "1.6.0",
       "de.uni-freiburg.informatik.ultimate" % "smtinterpol" % "2.5",
       "com.github.scopt" %% "scopt" % "3.7.1",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
@@ -187,7 +187,7 @@ lazy val core = project.in( file( "core" ) ).
 
     // UI
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-swing" % "2.0.3",
+      "org.scala-lang.modules" %% "scala-swing" % "2.1.0",
       "com.itextpdf" % "itextpdf" % "5.5.13",
       "org.scilab.forge" % "jlatexmath" % "1.0.7" ),
 
@@ -197,7 +197,7 @@ lazy val core = project.in( file( "core" ) ).
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
       "io.circe" %% "circe-parser",
-      "io.circe" %% "circe-generic-extras" ).map( _ % "0.10.1" ) )
+      "io.circe" %% "circe-generic-extras" ).map( _ % "0.11.0" ) )
 
 lazy val examples = project.in( file( "examples" ) ).
   dependsOn( core ).

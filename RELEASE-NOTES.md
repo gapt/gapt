@@ -2,6 +2,9 @@
 
 ## Version 2.14 (unreleased)
 
+* Bug fixes
+* Slakje: performance improvements
+
 ## Version 2.13 (released on 2018-12-03)
 
 * Escargot: discrimination trees and feature vector indices.

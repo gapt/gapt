@@ -2,8 +2,47 @@ package gapt.proofs.resolution
 
 import gapt.expr._
 import gapt.expr.hol.instantiate
-import gapt.proofs.{ Ant, ProofBuilder, Sequent, SequentConnector, SequentIndex, Suc }
 import gapt.proofs.lk._
+import gapt.proofs.lk.rules.AndLeftRule
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.BottomAxiom
+import gapt.proofs.lk.rules.ContractionLeftRule
+import gapt.proofs.lk.rules.ContractionRightRule
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.ConversionLeftRule
+import gapt.proofs.lk.rules.ConversionRightRule
+import gapt.proofs.lk.rules.EqualityRightRule
+import gapt.proofs.lk.rules.ExistsRightRule
+import gapt.proofs.lk.rules.ExistsSkLeftRule
+import gapt.proofs.lk.rules.ForallLeftRule
+import gapt.proofs.lk.rules.ForallSkRightRule
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.ImpRightRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.NegLeftRule
+import gapt.proofs.lk.rules.NegRightRule
+import gapt.proofs.lk.rules.OrLeftRule
+import gapt.proofs.lk.rules.OrRightRule
+import gapt.proofs.lk.rules.ProofLink
+import gapt.proofs.lk.rules.ReflexivityAxiom
+import gapt.proofs.lk.rules.TopAxiom
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.WeakeningRightRule
+import gapt.proofs.lk.rules.macros.ContractionMacroRule
+import gapt.proofs.lk.rules.macros.ForallLeftBlock
+import gapt.proofs.lk.rules.macros.ForallRightBlock
+import gapt.proofs.lk.rules.macros.OrRightMacroRule
+import gapt.proofs.lk.rules.macros.ParamodulationLeftRule
+import gapt.proofs.lk.rules.macros.ParamodulationRightRule
+import gapt.proofs.lk.transformations.cutNormal
+import gapt.proofs.lk.transformations.eliminateDefinitions
+import gapt.proofs.lk.util.solvePropositional
+import gapt.proofs.Ant
+import gapt.proofs.ProofBuilder
+import gapt.proofs.Sequent
+import gapt.proofs.SequentConnector
+import gapt.proofs.SequentIndex
+import gapt.proofs.Suc
 
 import scala.collection.mutable
 
@@ -52,10 +91,10 @@ object ResolutionToLKProof {
 
         ProofBuilder.
           c( LogicalAxiom( phi ) ).
-          u( DefinitionLeftRule( _, Ant( 0 ), defAtom ) ).
+          u( ConversionLeftRule( _, Ant( 0 ), defAtom ) ).
           u( ImpRightRule( _, Ant( 0 ), Suc( 0 ) ) ).
           c( LogicalAxiom( phi ) ).
-          u( DefinitionRightRule( _, Suc( 0 ), defAtom ) ).
+          u( ConversionRightRule( _, Suc( 0 ), defAtom ) ).
           u( ImpRightRule( _, Ant( 0 ), Suc( 0 ) ) ).
           b( AndRightRule( _, Suc( 0 ), _, Suc( 0 ) ) ).
           u( ForallRightBlock( _, p.definitionFormula, p.vars ) ).
@@ -81,13 +120,13 @@ object ResolutionToLKProof {
         val Right( p1 ) = solvePropositional( comp.disjunction +: comp.clause )
         val p2 = ForallLeftBlock( p1, aux, vars )
 
-        val p3 = DefinitionLeftRule( p2, aux, splAtom )
+        val p3 = ConversionLeftRule( p2, aux, splAtom )
         p3
       case AvatarComponent( AvatarGroundComp( atom, _ ) ) => LogicalAxiom( atom )
       case AvatarComponent( comp @ AvatarNegNonGroundComp( splAtom, aux, vars, idx ) ) =>
         val Right( p1 ) = solvePropositional( comp.clause :+ comp.disjunction )
         val p2 = ForallRightBlock( p1, aux, vars )
-        val p3 = DefinitionRightRule( p2, aux, splAtom )
+        val p3 = ConversionRightRule( p2, aux, splAtom )
         p3
       case AvatarSplit( q, indices, AvatarGroundComp( _, _ ) ) => f( q )
       case p @ AvatarSplit( q, _, comp @ AvatarNonGroundComp( splAtom, aux, vars ) ) =>
@@ -107,14 +146,14 @@ object ResolutionToLKProof {
           }
         mkOr( comp.disjunction )
         p_ = ForallRightBlock( p_, aux, vars )
-        p_ = DefinitionRightRule( p_, aux, splAtom )
+        p_ = ConversionRightRule( p_, aux, splAtom )
         p_
 
       case p @ DefIntro( q, i: Suc, definition, args ) =>
-        DefinitionRightRule( f( q ), q.conclusion( i ), p.defAtom )
+        ConversionRightRule( f( q ), q.conclusion( i ), p.defAtom )
 
       case p @ DefIntro( q, i: Ant, definition, args ) =>
-        DefinitionLeftRule( f( q ), q.conclusion( i ), p.defAtom )
+        ConversionLeftRule( f( q ), q.conclusion( i ), p.defAtom )
 
       case p @ Flip( q, i: Ant ) =>
         CutRule( mkSymmProof( p.s, p.t ), f( q ), q.conclusion( i ) )

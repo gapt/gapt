@@ -1,7 +1,13 @@
 package gapt.proofs.lk
 
 import gapt.expr._
-import gapt.proofs.lk.folSkolemize.SkolemSymbolFactory
+import gapt.proofs.lk.rules.ExistsLeftRule
+import gapt.proofs.lk.rules.ExistsRightRule
+import gapt.proofs.lk.rules.ForallLeftRule
+import gapt.proofs.lk.rules.ForallRightRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.transformations.folSkolemize
+import gapt.proofs.lk.transformations.folSkolemize.SkolemSymbolFactory
 import org.specs2.mutable._
 
 class SkolemizationTest extends Specification {
@@ -21,7 +27,7 @@ class SkolemizationTest extends Specification {
       val stream = new SkolemSymbolFactory( Seq() ).getSkolemSymbols
       val skfun = Const( stream.head, Ti )
       val skf = Atom( p, skfun :: Nil )
-      folSkolemize( f, Polarity.InSuccedent, Seq(), stream ) must beEqualTo( skf )
+      transformations.folSkolemize( f, Polarity.InSuccedent, Seq(), stream ) must beEqualTo( skf )
     }
 
     "handle a binary formula correctly" in {
@@ -36,14 +42,14 @@ class SkolemizationTest extends Specification {
       val skf2 = Atom( r, x :: skfun1 :: Nil )
 
       val skf = Imp( skf1, All( x, skf2 ) )
-      folSkolemize( f2, Polarity.InAntecedent, Seq(), stream ) must beEqualTo( skf )
+      transformations.folSkolemize( f2, Polarity.InAntecedent, Seq(), stream ) must beEqualTo( skf )
 
       // now we skolemize the skolemize formula, with opposite polarity
       val skfun2 = Const( stream.tail.tail.head, Ti )
       val skfun3 = HOLFunction( Const( stream.tail.head, Ti ->: Ti ), skfun2 :: Nil )
       val skf3 = Atom( r, skfun2 :: skfun3 :: Nil )
       val skf4 = Imp( skf1, skf3 )
-      folSkolemize( folSkolemize( f2, Polarity.InAntecedent, Seq(), stream ), Polarity.InSuccedent, Seq(), stream.tail ) must beEqualTo( skf4 )
+      folSkolemize( transformations.folSkolemize( f2, Polarity.InAntecedent, Seq(), stream ), Polarity.InSuccedent, Seq(), stream.tail ) must beEqualTo( skf4 )
     }
 
     "handle a simple proof correctly" in {

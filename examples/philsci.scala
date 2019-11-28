@@ -1,9 +1,17 @@
 package gapt.examples
 
 import gapt.expr.FOLAtom
-import gapt.proofs.{ Suc, Ant }
+import gapt.proofs.{ Ant, Suc }
 import gapt.proofs.ceres.Projections
 import gapt.proofs.lk._
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.ImpLeftRule
+import gapt.proofs.lk.rules.ImpRightRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.NegLeftRule
+import gapt.proofs.lk.rules.NegRightRule
+import gapt.proofs.lk.rules.OrLeftRule
+import gapt.proofs.lk.rules.WeakeningLeftRule
 
 object philsci {
   def apply(): ( LKProof, LKProof ) = {

@@ -4,7 +4,8 @@ import gapt.expr._
 import gapt.expr.hol._
 import gapt.grammars.{ RecursionScheme, Rule }
 import gapt.proofs._
-import gapt.proofs.lk.{ LKToExpansionProof, LKProof }
+import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.transformations.LKToExpansionProof
 
 /**
  * Extracts the instances used in a prenex FOL Pi_1 expansion tree / Sigma_1 expansion sequent.

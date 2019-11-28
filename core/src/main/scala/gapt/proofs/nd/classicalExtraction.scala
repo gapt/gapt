@@ -13,7 +13,8 @@ import scala.collection.mutable
 object ClassicalExtraction {
 
   private val varMap: mutable.Map[Formula, Var] = mutable.Map.empty
-  private def getVar( name: String, f: Formula, nameGenerator: NameGenerator )( implicit ctx: Context ) = {
+  private def getVar( f: Formula, nameGenerator: NameGenerator )( implicit ctx: Context ) = {
+    val name = "vLambda"
     if ( varMap.contains( f ) ) {
       varMap( f )
     } else {
@@ -83,11 +84,29 @@ object ClassicalExtraction {
         ( matchSum( inl( x ), w1, w2 ) -> w1( x ) ),
         ( matchSum( inr( y ), w1, w2 ) -> w2( y ) ) ) )( systemT )
 
-    val existsElim = hoc"existsElim{?a ?b ?c}: (conj ?a ?b) > (?a > ?b > ?c) > ?c"
+    val existsElim = hoc"existsElim{?a ?b ?c}: (exconj ?a ?b) > (?a > ?b > ?c) > ?c"
     val w3: Expr = hov"w3: ?a > ?b > ?c"
+    val exconj = ty"exconj ?a ?b"
+    val expair = hoc"expair{?a ?b}: ?a > ?b > (exconj ?a ?b)"
+    systemT += InductiveType( exconj, expair )
+
+    val catchConst = hoc"catch{?a ?b}: o > (exconj ?a ?b) > (exconj ?a ?b)"
+    systemT += catchConst
+    val q = hof"q: o"
+
     systemT += PrimitiveRecursiveFunction(
       existsElim,
-      List( ( existsElim( pair( x, y ), w3 ) -> w3( x )( y ) ) ) )( systemT )
+      List( ( existsElim( expair( x, y ), w3 ) -> w3( x )( y ) ),
+            ( existsElim( catchConst( q, expair(x, y ) ), w3 ) -> w3( x )( y ) )
+      ) )( systemT )
+    val expi1 = hoc"expi1{?a ?b}: (exconj ?a ?b) > ?a"
+    val expi2 = hoc"expi2{?a ?b}: (exconj ?a ?b) > ?b"
+    systemT += PrimitiveRecursiveFunction(
+      expi1,
+      List( ( expi1( expair( x, y ) ) -> x ) ) )( systemT )
+    systemT += PrimitiveRecursiveFunction(
+      expi2,
+      List( ( expi2( expair( x, y ) ) -> y ) ) )( systemT )
 
     //val bar = hoc"bar{?a}: ?a > ?a > hyp > ?a"
     //val hyp = ty"hyp"
@@ -108,9 +127,9 @@ object ClassicalExtraction {
     systemT += exception
     val efq = hoc"efq{?c}: exn > ?c"
     systemT += efq
+    /*
     val handle = hoc"handle{?a ?c}: exn > ?c > (?a > ?c)"
     systemT += handle
-    /*
     systemT += PrimRecFun(
       handle,
       List( ( handle( exception( x ), w1 ) -> w1( x ) ) ) )( systemT )
@@ -135,7 +154,9 @@ object ClassicalExtraction {
 
     //val handle = hoc"handle{?a ?b}: (?a > ?b) > ((?a > (exn ?a)) > ?b) > ?b"
     //val tryCatch = hoc"tryCatch{?a ?c}: ((?a > exn) > ?c) > (?a > ?c) > ?c"
-    val tryCatch = hoc"tryCatch{?a ?c}: (?a > exn) > ?c > (?a > ?c) > ?c"
+    val tryConst = hoc"try{?a ?b}: o > (?a > (?b > exn)) > (?a > (?b > exn))"
+    systemT += tryConst
+    val tryCatch = hoc"tryCatch{?a ?b ?c}: ?a > ?b > ?c > ?c > ?c"
     systemT += tryCatch
     /*
     val w5 = hov"w5:?a"
@@ -204,22 +225,29 @@ object ClassicalExtraction {
       List(
         subtr( u )( z ) -> u,
         subtr( u )( s( v ) ) -> subtr( pred( u ) )( v ) ) )
-    val ite = hoc"ite{?a}:o>?a>?a>?a"
     val x1: Expr = hov"x1 : ?a"
     val x2: Expr = hov"x2 : ?a"
+    val x3: Expr = hov"x3 : o"
     val Some( trueC ) = systemT.constant( "⊤" )
     val Some( falseC ) = systemT.constant( "⊥" )
-    val not = hoc"not: o>o"
-    systemT += PrimitiveRecursiveFunction(
-      not,
-      List(
-        not( falseC ) -> trueC,
-        not( trueC ) -> falseC ) )
+    val ite = hoc"ite{?a}:o>?a>?a>?a"
     systemT += PrimitiveRecursiveFunction(
       ite,
       List(
         ite( trueC )( x1 )( x2 ) -> x1,
         ite( falseC )( x1 )( x2 ) -> x2 ) )
+    import gapt.proofs.context.update.ReductionRuleUpdate._
+    systemT += ReductionRule( hof"(true & x) = x" )
+    systemT += ReductionRule( hof"(false & x) = false" )
+    systemT += ReductionRule( hof"(x & true) = x" )
+    systemT += ReductionRule( hof"(x & false) = false" )
+    systemT += ReductionRule( hof"(-true) = false" )
+    systemT += ReductionRule( hof"(-false) = true" )
+    systemT += ReductionRule( hof"(x | true) = true" )
+    systemT += ReductionRule( hof"(false | x) = x" )
+    systemT += ReductionRule( hof"(x | false) = x" )
+    systemT += ReductionRule( hof"(true -> x) = x" )
+    systemT += ReductionRule( hof"(false -> x) = true" )
     val sg = hoc"sg: nat>o"
     systemT += PrimitiveRecursiveFunction(
       sg,
@@ -261,7 +289,7 @@ object ClassicalExtraction {
       case InductionRule( cases, _, _ ) => cases( 1 ).eigenVars
     }.flatten.map( _.name )
     val ng = new NameGenerator( evs )
-    val lambda = extractCases( proof, ng ) //systemT( ctx ) )
+    val lambda = extractCases( proof, ng, Map.empty, Map.empty ) //systemT( ctx ) )
     //val res = lambda( Suc( 0 ) )
     //lambda.antecedent.foreach( e => println( s"abstracting ${e.asInstanceOf[Var]}" ) )
     val res = lambda.antecedent.fold( lambda( Suc( 0 ) ) )( ( agg, v ) => Abs( v.asInstanceOf[Var], agg ) )
@@ -279,19 +307,19 @@ object ClassicalExtraction {
     res
   }
 
-  def extractCases( proof: NDProof, ng: NameGenerator )( implicit systemT: Context ): Sequent[Expr] = {
+  def extractCases( proof: NDProof, ng: NameGenerator, exEm1HypVars: Map[Formula, Var], forallEm1HypVars: Map[Formula, Var] )( implicit systemT: Context ): Sequent[Expr] = {
 
     val res =
       proof match {
         case WeakeningRule( subProof, formula ) =>
-          val s = extractCases( subProof, ng )
-          val v = getVar( "vLambda", formula, ng ) //Var( ng.fresh( "y" ), flat( formula ) )
+          val s = extractCases( subProof, ng, exEm1HypVars, forallEm1HypVars )
+          val v = getVar( formula, ng ) //Var( ng.fresh( "y" ), flat( formula ) )
           val res = v +: s
           //println( "Weakening, fresh " + v )
           res
 
         case ContractionRule( subProof, aux1, aux2 ) =>
-          val s = extractCases( subProof, ng )
+          val s = extractCases( subProof, ng, exEm1HypVars, forallEm1HypVars )
           assert( s( aux1 ) == s( aux2 ) )
           val v = s( aux1 )
           val res = v +: s.delete( List( aux1, aux2 ) )
@@ -335,35 +363,50 @@ object ClassicalExtraction {
             }
           }
           */
-          val v = getVar( "vLambda", formula, ng ) //Var( ng.fresh( "y" ), flat( formula ) )
-          val res = v +: Sequent() :+ v
+          val res = if ( forallEm1HypVars.contains( formula ) ) {
+            println( "nonempty" )
+            val All( alpha, Neg( p ) ) = formula
+            val tryConst = systemT.constant( "try", List( alpha.ty, flat( p ) ) ).get
+            val a = forallEm1HypVars( formula )
+            a +: Sequent() :+ tryConst( formula, a )
+
+          } else if ( exEm1HypVars.contains( formula ) ) {
+            println( "nonempty" )
+            val Ex( alpha, p ) = formula
+            val catchConst = systemT.constant( "catch", List( alpha.ty, flat( p ) ) ).get
+            val a = exEm1HypVars( formula )
+            a +: Sequent() :+ catchConst( formula, a )
+          } else {
+            val v = getVar( formula, ng ) //Var( ng.fresh( "y" ), flat( formula ) )
+            v +: Sequent() :+ v
+          }
           //println( "LogicalAxiom " + formula + ", fresh v " + v )
           res
 
         case AndElim1Rule( subProof ) =>
-          val s = extractCases( subProof, ng )
+          val s = extractCases( subProof, ng, exEm1HypVars, forallEm1HypVars )
           val res = s.replaceAt( Suc( 0 ), le"pi1(${s( Suc( 0 ) )})" )
           //println( "AndElim1" )
           res
 
         case AndElim2Rule( subProof ) =>
-          val s = extractCases( subProof, ng )
+          val s = extractCases( subProof, ng, exEm1HypVars, forallEm1HypVars )
           val res = s.replaceAt( Suc( 0 ), le"pi2(${s( Suc( 0 ) )})" )
           //println( "AndElim2" )
           res
 
         case AndIntroRule( leftSubProof, rightSubProof ) =>
-          val l = extractCases( leftSubProof, ng )
-          val r = extractCases( rightSubProof, ng )
+          val l = extractCases( leftSubProof, ng, exEm1HypVars, forallEm1HypVars )
+          val r = extractCases( rightSubProof, ng, exEm1HypVars, forallEm1HypVars )
           // TODO: order
           val res = l.antecedent ++: r.antecedent ++: Sequent() :+ le"pair(${l( Suc( 0 ) )},${r( Suc( 0 ) )})"
           //println( "AndIntro" )
           res
 
         case OrElimRule( leftSubProof, middleSubProof, aux1, rightSubProof, aux2 ) =>
-          val l = extractCases( leftSubProof, ng )
-          val m = extractCases( middleSubProof, ng )
-          val r = extractCases( rightSubProof, ng )
+          val l = extractCases( leftSubProof, ng, exEm1HypVars, forallEm1HypVars )
+          val m = extractCases( middleSubProof, ng, exEm1HypVars, forallEm1HypVars )
+          val r = extractCases( rightSubProof, ng, exEm1HypVars, forallEm1HypVars )
           val varA = m( aux1 ).asInstanceOf[Var]
           val varB = r( aux2 ).asInstanceOf[Var]
           // TODO: order
@@ -382,7 +425,7 @@ object ClassicalExtraction {
           val leftType = flat( subProof.endSequent( Suc( 0 ) ) )
           val rightType = flat( rightDisjunct )
           val inl = systemT.constant( "inl", List( leftType, rightType ) ).get
-          val s = extractCases( subProof, ng )
+          val s = extractCases( subProof, ng, exEm1HypVars, forallEm1HypVars )
           val res = s.replaceAt( Suc( 0 ), inl( s( Suc( 0 ) ) ) )
           //println( "OrIntro1" )
           res
@@ -391,21 +434,21 @@ object ClassicalExtraction {
           val leftType = flat( leftDisjunct )
           val rightType = flat( subProof.endSequent( Suc( 0 ) ) )
           val inr = systemT.constant( "inr", List( leftType, rightType ) ).get
-          val s = extractCases( subProof, ng )
+          val s = extractCases( subProof, ng, exEm1HypVars, forallEm1HypVars )
           val res = s.replaceAt( Suc( 0 ), inr( s( Suc( 0 ) ) ) )
           //println( "OrIntro2" )
           res
 
         case ImpElimRule( leftSubProof, rightSubProof ) =>
-          val l = extractCases( leftSubProof, ng )
-          val r = extractCases( rightSubProof, ng )
+          val l = extractCases( leftSubProof, ng, exEm1HypVars, forallEm1HypVars )
+          val r = extractCases( rightSubProof, ng, exEm1HypVars, forallEm1HypVars )
 
           val res = l.antecedent ++: r.antecedent ++: Sequent() :+ App( l( Suc( 0 ) ), r( Suc( 0 ) ) )
           //println( "ImpElim" )
           res
 
         case ImpIntroRule( subProof, aux ) =>
-          val s = extractCases( subProof, ng )
+          val s = extractCases( subProof, ng, exEm1HypVars, forallEm1HypVars )
           val extraVar = s( aux ).asInstanceOf[Var]
 
           /*
@@ -424,8 +467,8 @@ object ClassicalExtraction {
           res
 
         case NegElimRule( leftSubProof, rightSubProof ) =>
-          val l = extractCases( leftSubProof, ng )
-          val r = extractCases( rightSubProof, ng )
+          val l = extractCases( leftSubProof, ng, exEm1HypVars, forallEm1HypVars )
+          val r = extractCases( rightSubProof, ng, exEm1HypVars, forallEm1HypVars )
           val res = l.antecedent ++: r.antecedent ++: Sequent() :+ App( l( Suc( 0 ) ), r( Suc( 0 ) ) )
           //val res = l.antecedent ++: r.antecedent ++: Sequent() :+ le"exception ${r( Suc( 0 ) )}"
           //println( "NegElim" )
@@ -433,7 +476,7 @@ object ClassicalExtraction {
 
         // TODO: I think NegIntroRule should produce a term of type ?a > (exn ?a)
         case NegIntroRule( subProof, aux ) =>
-          val s = extractCases( subProof, ng )
+          val s = extractCases( subProof, ng, exEm1HypVars, forallEm1HypVars )
           val extraVar = s( aux ).asInstanceOf[Var]
           val res = s.delete( aux ).antecedent ++: Sequent() :+ Abs( extraVar, s( Suc( 0 ) ) )
           //println( "NegIntro" )
@@ -456,7 +499,7 @@ object ClassicalExtraction {
         //Abs( varr, varr )
 
         case BottomElimRule( subProof, mainFormula ) =>
-          val s = extractCases( subProof, ng )
+          val s = extractCases( subProof, ng, exEm1HypVars, forallEm1HypVars )
           // TODO is this true in general?
           /*
           val exnTypeParameter = s( Suc( 0 ) ).ty match {
@@ -487,32 +530,35 @@ object ClassicalExtraction {
           res
 
         case ForallIntroRule( subProof, eigenVariable, quantifiedVariable ) =>
-          val s = extractCases( subProof, ng )
+          val s = extractCases( subProof, ng, exEm1HypVars, forallEm1HypVars )
           val res = s.replaceAt( Suc( 0 ), Abs( eigenVariable, s( Suc( 0 ) ) ) )
           //println( s"AllIntro, $eigenVariable, $quantifiedVariable" )
           res
 
         case ForallElimRule( subProof, term ) =>
-          val s = extractCases( subProof, ng )
+          val s = extractCases( subProof, ng, exEm1HypVars, forallEm1HypVars )
           val res = s.replaceAt( Suc( 0 ), App( s( Suc( 0 ) ), term ) )
           //println( "AllElim" )
           res
 
         case ExistsIntroRule( subProof, formula, term, variable ) =>
-          val s = extractCases( subProof, ng )
-          val res = s.replaceAt( Suc( 0 ), le"pair($term,${s( Suc( 0 ) )})" )
-          //println( "ExIntro" )
+          val s = extractCases( subProof, ng, exEm1HypVars, forallEm1HypVars )
+          val subst = Substitution( variable, term )( formula )
+          val res = s.replaceAt( Suc( 0 ), le"expair($term,${s( Suc( 0 ) )})" )
+          val t = res( Suc( 0 ) )
+          println( "ExIntro" )
+          println( res( Suc( 0 ) ) )
           res
 
         case ExistsElimRule( leftSubProof, rightSubProof, aux, eigenVariable ) =>
-          val l = extractCases( leftSubProof, ng )
-          val r = extractCases( rightSubProof, ng )
+          val l = extractCases( leftSubProof, ng, exEm1HypVars, forallEm1HypVars )
+          val r = extractCases( rightSubProof, ng, exEm1HypVars, forallEm1HypVars )
 
-          val sub1 = Substitution( eigenVariable, le"pi1(${l( Suc( 0 ) )})" )
+          //val sub1 = Substitution( eigenVariable, le"expi1(${l( Suc( 0 ) )})" )
           //val extraVar = Var( ng.fresh( "y" ), flat( rightSubProof.conclusion( aux ) ) )
           // use deleted var instead of fresh one
           val extraVar = r( aux ).asInstanceOf[Var]
-          val sub2 = Substitution( extraVar, le"pi2(${l( Suc( 0 ) )})" )
+          //val sub2 = Substitution( extraVar, le"expi2(${l( Suc( 0 ) )})" )
           //val res = l.antecedent ++: r.delete( aux ).antecedent ++: Sequent() :+ sub1( sub2( r( Suc( 0 ) ) ) )
           val param2 = le"^$eigenVariable (^$extraVar ${r( Suc( 0 ) )})"
           val res = l.antecedent ++: r.delete( aux ).antecedent ++: Sequent() :+ le"existsElim(${l( Suc( 0 ) )}, $param2)"
@@ -526,8 +572,8 @@ object ClassicalExtraction {
         case eq @ EqualityElimRule( leftSubProof, rightSubProof, formulaA, variablex ) =>
           // TODO
           //mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ), ng )
-          val l = extractCases( leftSubProof, ng )
-          val r = extractCases( rightSubProof, ng )
+          val l = extractCases( leftSubProof, ng, exEm1HypVars, forallEm1HypVars )
+          val r = extractCases( rightSubProof, ng, exEm1HypVars, forallEm1HypVars )
           //val res = l.antecedent ++: r.antecedent ++: Sequent() :+ Var( ng.fresh( s"eq(${eq.mainFormula})" ), flat( eq.mainFormula ) )
           //val res = l.antecedent ++: r.antecedent ++: Sequent() :+ le"subst ${l( Suc( 0 ) )} ${r( Suc( 0 ) )}"
           val res = l.antecedent ++: r.antecedent ++: Sequent() :+ le"i"
@@ -548,8 +594,8 @@ object ClassicalExtraction {
         // Works only for the type of natural numbers at the moment
         // Assumes that the induction cases for the constructors are in the same order as the inductive type definition in the context.
         case InductionRule( cases, formula, term ) =>
-          val baseCase = extractCases( cases( 0 ).proof, ng )
-          val inductionCase = extractCases( cases( 1 ).proof, ng )
+          val baseCase = extractCases( cases( 0 ).proof, ng, exEm1HypVars, forallEm1HypVars )
+          val inductionCase = extractCases( cases( 1 ).proof, ng, exEm1HypVars, forallEm1HypVars )
           // TODO same for base case, should be empty in our case
           val inductionCaseDel = inductionCase.delete( cases( 1 ).hypotheses )
           /*
@@ -591,24 +637,62 @@ object ClassicalExtraction {
               //val res = delL ++: delR ++: Sequent() :+ le"bar3 ${Abs( x1, Ex( x2, g ) )} ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
               val res = delL ++: delR ++: Sequent() :+ le"tryCatch ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
               res
-            case f @ Ex( x, g ) if !containsQuantifierOnLogicalLevel( g ) =>
-              val l = extractCases( leftSubProof, ng )
-              val r = extractCases( rightSubProof, ng )
-              val varL = l( aux1 ).asInstanceOf[Var]
-              val varR = r( aux2 ).asInstanceOf[Var]
-              //assert( varL.ty ->: ty"exn" == varR.ty )
-              // TODO find index to delete somehow
-              val delL = l.delete( aux1 ).antecedent
-              val delR = r.delete( aux2 ).antecedent
-              //val res = delL ++: delR ++: Sequent() :+ le"bar2 ${Abs( x, g )} ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
-              //val res = delL ++: delR ++: Sequent() :+ le"bar2 ${Abs( x, g )} ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, ( r( Suc( 0 ) ) ) )}"
-              val res = delL ++: delR ++: Sequent() :+ le"tryCatch ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, ( r( Suc( 0 ) ) ) )}"
-              res
               */
+            case f @ Ex( x, g ) if !containsQuantifierOnLogicalLevel( g ) =>
+              val exHypVar = ng.fresh( "aLambda" )
+              val forallHypVar = ng.fresh( "aLambda" )
 
-            case f =>
-              val l = extractCases( leftSubProof, ng )
-              val r = extractCases( rightSubProof, ng )
+              val exEm1FormulasPrime = exEm1HypVars + ( Ex( x, g ) -> Var( exHypVar, flat( Ex( x, g ) ) ) )
+              val forallEm1HypVarsPrime = forallEm1HypVars + ( All( x, -g ) -> Var( forallHypVar, flat( All( x, -g ) ) ) )
+
+              val l = extractCases( leftSubProof, ng, exEm1FormulasPrime, forallEm1HypVarsPrime )
+              val r = extractCases( ProofBuilder.
+                c( rightSubProof ).
+                u( ImpIntroRule( _, aux2 ) ).
+                c( gapt.proofs.nd.LogicalAxiom( Ex( x, g ) ) ). //hof"?x -P(x)" ) ).
+                c( gapt.proofs.nd.LogicalAxiom( All( x, -g ) ) ). //hof"!x P(x)" ) ).
+                u( ForallElimRule( _, x ) ). //le"x:nat" ) ).
+                c( gapt.proofs.nd.LogicalAxiom( g ) ). //hof"-P(x)" ) ).
+                b( NegElimRule( _, _ ) ).
+                b( ExistsElimRule( _, _ ) ).
+                u( NegIntroRule( _, Ex( x, g ) ) ). //hof"?x -P(x)")).
+                b( ImpElimRule( _, _ ) ).
+              //  qed, ng, exEm1FormulasPrime, forallEm1HypVarsPrime )
+                qed, ng, exEm1HypVars, forallEm1HypVarsPrime )
+
+              val newAux2 = r.find( _.ty == flat( All( x, -g ) ) ).get
+
+              val varL = l( aux1 ).asInstanceOf[Var]
+              val varR = r( newAux2 ).asInstanceOf[Var]
+              println( leftSubProof.endSequent( aux1 ) )
+              println( rightSubProof.endSequent( newAux2 ) )
+
+              //val rNew = normalize(le"(^$varR ${r(Suc(0))}) ${allRight(Suc(0))}")
+              /*
+              varR.ty match {
+                case TArr( varL.ty, TBase( "exn", varL.ty ) ) => assert( true )
+                case _                                        => assert( false )
+              }
+              */
+              //val exnVar = ng.fresh( "vException" )
+              assert( l( aux1 ).toUntypedString == exHypVar )
+              val delL = l.delete( aux1 ).antecedent
+              assert( r( newAux2 ).toUntypedString == forallHypVar )
+              val delR = r.delete( newAux2 ).antecedent
+              //val res = delL ++: delR ++: Sequent() :+ le"tryCatch ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
+              //if ( freeVariables( r( Suc( 0 ) ) ).contains( varR ) )
+              //println( s"contains $varR" )
+              //val res = delL ++: delR ++: Sequent() :+ le"(^$varR tryCatch($varR, ${r( Suc( 0 ) )}, handle($varR($varL), ${l( Suc( 0 ) )})))($exnVar)"
+              val tmp1 = r( Suc( 0 ) )
+              val tmp2 = l( Suc( 0 ) )
+              val res = delL ++: delR ++: Sequent() :+ le"tryCatch(${forallEm1HypVarsPrime( All( x, -g ) )}, ${exEm1FormulasPrime( Ex( x, g ) )}, ${r( Suc( 0 ) )}, ${l( Suc( 0 ) )})"
+              //println( s"tryCatch var: $varR, catch: ${varR( varL )}, tryCatch.ty: ${res( Suc( 0 ) ).ty}" )
+              println( s"EM1: ${f}" )
+              res
+
+            case f if !containsQuantifierOnLogicalLevel( f ) =>
+              val l = extractCases( leftSubProof, ng, exEm1HypVars, forallEm1HypVars )
+              val r = extractCases( rightSubProof, ng, exEm1HypVars, forallEm1HypVars )
               val varL = l( aux1 ).asInstanceOf[Var]
               val varR = r( aux2 ).asInstanceOf[Var]
               /*
@@ -617,17 +701,20 @@ object ClassicalExtraction {
                 case _                                        => assert( false )
               }
               */
-              val exnVar = ng.fresh( "vException" )
+              //val exnVar = ng.fresh( "vException" )
               val delL = l.delete( aux1 ).antecedent
               val delR = r.delete( aux2 ).antecedent
               //val res = delL ++: delR ++: Sequent() :+ le"tryCatch ${Abs( varL, l( Suc( 0 ) ) )} ${Abs( varR, r( Suc( 0 ) ) )}"
               //if ( freeVariables( r( Suc( 0 ) ) ).contains( varR ) )
               //println( s"contains $varR" )
-              val res = delL ++: delR ++: Sequent() :+ le"(^$varR tryCatch($varR, ${r( Suc( 0 ) )}, handle($varR($varL), ${l( Suc( 0 ) )})))($exnVar)"
+              //val res = delL ++: delR ++: Sequent() :+ le"(^$varR tryCatch($varR, ${r( Suc( 0 ) )}, handle($varR($varL), ${l( Suc( 0 ) )})))($exnVar)"
+              val res = delL ++: delR ++: Sequent() :+ le"ite(${leftSubProof.endSequent( aux1 )}, ${l( Suc( 0 ) )}, ${r( Suc( 0 ) )})"
               //val res = delL ++: delR ++: Sequent() :+ le"tryCatch($varR, ${r( Suc( 0 ) )}, handle($varR($varL), ${l( Suc( 0 ) )}))"
               println( s"tryCatch var: $varR, catch: ${varR( varL )}, tryCatch.ty: ${res( Suc( 0 ) ).ty}" )
               //println( s"EM0: ${f}" )
               res
+
+            case _ => throw new Exception( "EM_k for k > 1 not supported." )
           }
       }
     if ( res.indices != proof.conclusion.indices ) {
@@ -687,7 +774,7 @@ object ClassicalExtraction {
       //TBase( e.toUntypedString, es.map( x => TBase( x.toString ) ) )
       // Losing information of dependent types:
       //TBase( e.toUntypedString )
-      ty"1" // ?
+      ty"1" // ? e.ty ?
     case And( leftformula, rightformula ) =>
       TBase( "conj", flat( leftformula ), flat( rightformula ) )
     case Or( leftformula, rightformula ) =>
@@ -698,7 +785,7 @@ object ClassicalExtraction {
       val typeParam = flat( subformula )
       flat( subformula ) ->: ty"exn" //TBase( "exn", typeParam )
     case Ex( variable, subformula ) =>
-      TBase( "conj", variable.ty, flat( subformula ) )
+      TBase( "exconj", variable.ty, flat( subformula ) )
     case All( variable, subformula ) =>
       variable.ty ->: flat( subformula )
   }

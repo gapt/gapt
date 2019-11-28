@@ -9,7 +9,9 @@ import gapt.proofs.HOLSequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion._
-import gapt.proofs.lk.{ LKProof, MG3iToLJ, isMaeharaMG3i, normalizeLKt }
+import gapt.proofs.lk.transformations.MG3iToLJ
+import gapt.proofs.lk.util.isMaeharaMG3i
+import gapt.proofs.lk.{ LKProof, normalizeLKt }
 import gapt.prooftool.LKProofViewer
 import gapt.provers.eprover.EProver
 import gapt.provers.escargot.Escargot

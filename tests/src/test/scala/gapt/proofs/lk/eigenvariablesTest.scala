@@ -8,6 +8,7 @@ import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic._
+import gapt.proofs.lk.util.EigenVariablesLK
 import org.specs2.mutable._
 
 class eigenvariablesTest extends Specification {

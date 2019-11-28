@@ -3,7 +3,7 @@ package gapt.cutintro
 import gapt.expr._
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.gaptic._
-import gapt.proofs.lk.CutRule
+import gapt.proofs.lk.rules.CutRule
 import gapt.provers.maxsat.OpenWBO
 import org.specs2.mutable.Specification
 

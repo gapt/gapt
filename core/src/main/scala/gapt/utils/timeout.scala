@@ -14,13 +14,15 @@ class TimeOutException( cause: Throwable, val duration: Duration )
  * throw a TimeOutException. If f throws an exception it is propagated to
  * the caller of withTimeout.
  *
- * Use this as follows:
+ * @example
+ * {{{
  * try { withTimeout( 1234 ) {
- *   ... your code ...
+ *   /* ... your code ... */
  * } } catch {
- *   case e: TimeOutException ...
- *   case ... other exception
+ *   case e: TimeOutException /* ... */
+ *   /* other exceptions */
  * }
+ * }}}
  */
 object withTimeout {
   val logger = Logger( "withTimeout" )

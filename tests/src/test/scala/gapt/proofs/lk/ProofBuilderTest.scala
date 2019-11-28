@@ -2,6 +2,10 @@ package gapt.proofs.lk
 
 import gapt.expr.{ And, FOLAtom }
 import gapt.proofs.ProofBuilder
+import gapt.proofs.lk.rules.AndRightRule
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.lk.rules.WeakeningLeftRule
+import gapt.proofs.lk.rules.WeakeningRightRule
 import org.specs2.mutable._
 
 class ProofBuilderTest extends Specification {
