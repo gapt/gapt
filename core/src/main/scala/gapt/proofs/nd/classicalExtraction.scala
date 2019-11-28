@@ -96,9 +96,9 @@ object ClassicalExtraction {
 
     systemT += PrimitiveRecursiveFunction(
       existsElim,
-      List( ( existsElim( expair( x, y ), w3 ) -> w3( x )( y ) ),
-            ( existsElim( catchConst( q, expair(x, y ) ), w3 ) -> w3( x )( y ) )
-      ) )( systemT )
+      List(
+        ( existsElim( expair( x, y ), w3 ) -> w3( x )( y ) ),
+        ( existsElim( catchConst( q, expair( x, y ) ), w3 ) -> w3( x )( y ) ) ) )( systemT )
     val expi1 = hoc"expi1{?a ?b}: (exconj ?a ?b) > ?a"
     val expi2 = hoc"expi2{?a ?b}: (exconj ?a ?b) > ?b"
     systemT += PrimitiveRecursiveFunction(
@@ -657,7 +657,7 @@ object ClassicalExtraction {
                 b( ExistsElimRule( _, _ ) ).
                 u( NegIntroRule( _, Ex( x, g ) ) ). //hof"?x -P(x)")).
                 b( ImpElimRule( _, _ ) ).
-              //  qed, ng, exEm1FormulasPrime, forallEm1HypVarsPrime )
+                //  qed, ng, exEm1FormulasPrime, forallEm1HypVarsPrime )
                 qed, ng, exEm1HypVars, forallEm1HypVarsPrime )
 
               val newAux2 = r.find( _.ty == flat( All( x, -g ) ) ).get

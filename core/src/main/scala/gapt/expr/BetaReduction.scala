@@ -100,7 +100,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
     def unapply( xs: List[Expr] ): Option[( List[Expr], Expr, List[Expr] )] = {
       val index = xs.indexWhere {
         case Apps( Const( "tryCatch", _, _ ), _ ) => true
-        case _ => false
+        case _                                    => false
       }
       if ( index == -1 ) {
         None
@@ -208,7 +208,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
         val All( alpha, p ) = as( 0 )
         val pPrime = Substitution( alpha, as( 2 ) )( p )
         println( freeVariables( pPrime ) )
-        println(normalize(pPrime))
+        println( normalize( pPrime ) )
         if ( freeVariables( pPrime ).isEmpty && normalize( pPrime ) == hof"true" )
           Some( hof"true" )
         else if ( freeVariables( pPrime ).isEmpty && normalize( pPrime ) == hof"false" ) {
@@ -216,18 +216,17 @@ case class Normalizer( rules: Set[ReductionRule] ) {
           //       tryCatch of type ${expr.ty}
           //       exception(n) should be treated like efq in deGroote
           //val res = Some(as(1)(as(2)))
-          val res = Some(Const("exception", as(1).ty ->: as(2).ty ->: expr.ty, List(expr.ty))(as(1))(as(2)))
+          val res = Some( Const( "exception", as( 1 ).ty ->: as( 2 ).ty ->: expr.ty, List( expr.ty ) )( as( 1 ) )( as( 2 ) ) )
           res
 
-        }
-        else
+        } else
           None
       case Const( "catch", _, _ ) if as.size == 2 =>
         val Ex( alpha, p ) = as( 0 )
-        as(1) match {
-          case exp @ Apps(Const("expair", _, _), as_) =>
+        as( 1 ) match {
+          case exp @ Apps( Const( "expair", _, _ ), as_ ) =>
             //assert(normalize(Substitution(alpha, as_(0))(p)) == hof"true")
-            Some(exp)
+            Some( exp )
           case _ =>
             None //throw new Exception("error reducing in catch")
         }
@@ -235,8 +234,8 @@ case class Normalizer( rules: Set[ReductionRule] ) {
       // raise right
       case Const( "exception", _, _ ) if as.size > 2 =>
         debug( "raise right" )
-        val newEfq = Const( "exception", as( 0 ).ty ->: as(1).ty ->: expr.ty, List( expr.ty ) )
-        Some( newEfq( as( 0 ) )(as(1)) )
+        val newEfq = Const( "exception", as( 0 ).ty ->: as( 1 ).ty ->: expr.ty, List( expr.ty ) )
+        Some( newEfq( as( 0 ) )( as( 1 ) ) )
       //Some( hd( as( 0 ) ) )
 
       /*
@@ -316,23 +315,23 @@ case class Normalizer( rules: Set[ReductionRule] ) {
         if ( !freeVariables( tryB ).contains( exnVs( 0 ) ) ) {
           // handle simp
           debug( s"handle simp" )
-          Some(tryB)
+          Some( tryB )
         } else {
           // TODO: distribute inl over try/exception? otherwise need a second normalize here, which is not right
-          val tmp1 = normalize(tryB)
-          val tmp2 = normalize(normalize(tryB))
+          val tmp1 = normalize( tryB )
+          val tmp2 = normalize( normalize( tryB ) )
           tmp1 match {
-            case Const("true", _, _) =>
-              Some(le"true")
-            case App(Const("efq", _, _), Apps(Const("exception",_,_), as_)) =>
-              assert(as_(0) == exnVs(0))
-              val TBase(_, tyParams) = exnVs(1).ty
-              val expair = Const("expair", as_(1).ty ->: To ->: exnVs(1).ty, tyParams)
+            case Const( "true", _, _ ) =>
+              Some( le"true" )
+            case App( Const( "efq", _, _ ), Apps( Const( "exception", _, _ ), as_ ) ) =>
+              assert( as_( 0 ) == exnVs( 0 ) )
+              val TBase( _, tyParams ) = exnVs( 1 ).ty
+              val expair = Const( "expair", as_( 1 ).ty ->: To ->: exnVs( 1 ).ty, tyParams )
               // TODO: replace the whole catch term, not just exnVs(1)
               //       or reduce catch without free variable to its argument maybe?
-              Some(normalize(Substitution(exnVs(1), expair(as_(1), le"true"))(catchB)))
+              Some( normalize( Substitution( exnVs( 1 ), expair( as_( 1 ), le"true" ) )( catchB ) ) )
             case term =>
-              Some(term)
+              Some( term )
           }
         }
       case hd @ Const( c, _, _ ) =>

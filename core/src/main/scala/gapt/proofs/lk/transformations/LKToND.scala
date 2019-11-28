@@ -67,7 +67,7 @@ object LKToND {
     }
     assert( lk.endSequent.antecedent.forall( nd.endSequent.antecedent.contains( _ ) ) )
     //assert( lk.endSequent.succedent.filter( _ != nd.endSequent( Suc( 0 ) ) ).forall( x =>
-      //nd.endSequent.antecedent.contains( Neg( x ) ) ) )
+    //nd.endSequent.antecedent.contains( Neg( x ) ) ) )
   }
 
   private def exchange( subProof: NDProof, mainFormula: Option[Formula] ): NDProof =
@@ -132,7 +132,7 @@ object LKToND {
   private def heuristicIndex( proof: LKProof ) =
     if ( proof.endSequent.succedent.isEmpty ) None else Some( Suc( 0 ) )
 
-  private def translate(proof: LKProof, forbidTranslation: ListBuffer[Formula], focus: Option[SequentIndex] )(implicit ctx: Context ): NDProof = {
+  private def translate( proof: LKProof, forbidTranslation: ListBuffer[Formula], focus: Option[SequentIndex] )( implicit ctx: Context ): NDProof = {
 
     assert( focus.forall( _ => proof.endSequent.succedent.nonEmpty ) )
     assert( focus.forall( _.isSuc ) )
@@ -236,42 +236,42 @@ object LKToND {
           val l = subProof.endSequent( aux1 )
 
           val optimize = l match {
-            case Ex(_, _) => true
-            case _ => false
+            case Ex( _, _ ) => true
+            case _          => false
           }
-          if(!optimize) {
+          if ( !optimize ) {
             // No optimization
             val t = translate( subProof, forbidTranslation, Some( aux1 ) )
             val il = t.endSequent.indexOf( -l, Polarity.InAntecedent )
             ProofBuilder.
-              c( nd.LogicalAxiom(l) ).
+              c( nd.LogicalAxiom( l ) ).
               c( t ).
               b( ExcludedMiddleRule( _, Ant( 0 ), _, il ) ).
               qed
           } else {
 
             //val t = exchange( translate(subProof, l :: forbidTranslation, Some(aux1)), focus.map(p.endSequent.apply))
-            val t = translate(subProof, l +: l +: forbidTranslation, Some(aux1))
+            val t = translate( subProof, l +: l +: forbidTranslation, Some( aux1 ) )
 
-            def decompose(f: Formula): Formula = f match {
-              case Ex(_, fPrime) => decompose(fPrime)
-              case _ => f
+            def decompose( f: Formula ): Formula = f match {
+              case Ex( _, fPrime ) => decompose( fPrime )
+              case _               => f
             }
 
-            t.endSequent.foreach(f => println(syntacticMGU(l, f)))
-            val il = t.endSequent.find(f => syntacticMGU(Neg(decompose(l)), f).nonEmpty).get
-            val Neg(fWithoutEx) = t.endSequent(il)
+            t.endSequent.foreach( f => println( syntacticMGU( l, f ) ) )
+            val il = t.endSequent.find( f => syntacticMGU( Neg( decompose( l ) ), f ).nonEmpty ).get
+            val Neg( fWithoutEx ) = t.endSequent( il )
 
-            def buildProof(f: Formula, ax: Formula): NDProof = f match {
-              case Ex(_, fPrime) => ExistsIntroRule(buildProof(fPrime, ax), f)
-              case _ => nd.LogicalAxiom(ax)
+            def buildProof( f: Formula, ax: Formula ): NDProof = f match {
+              case Ex( _, fPrime ) => ExistsIntroRule( buildProof( fPrime, ax ), f )
+              case _               => nd.LogicalAxiom( ax )
             }
 
             ProofBuilder.
-              c(buildProof(l, fWithoutEx)).
-              c(t).
-              u(ExistsIntroRule(_, l)).
-              b(ExcludedMiddleRule(_, Ant(0), _, il)).
+              c( buildProof( l, fWithoutEx ) ).
+              c( t ).
+              u( ExistsIntroRule( _, l ) ).
+              b( ExcludedMiddleRule( _, Ant( 0 ), _, il ) ).
               qed
           }
         } else {
@@ -562,20 +562,20 @@ object LKToND {
       case p @ ExistsRightRule( subProof, aux, _, t, _ ) =>
 
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
-          if(forbidTranslation.contains(p.mainFormula)) {
+          if ( forbidTranslation.contains( p.mainFormula ) ) {
             // Forbid nested exists introductions
-            val Ex(_, f) = p.mainFormula
-            val forbidTranslationUpdated = (p.mainFormula match {
-              case Ex(_, f) => f +: forbidTranslation
-              case _ => forbidTranslation
-            }) - p.mainFormula
+            val Ex( _, f ) = p.mainFormula
+            val forbidTranslationUpdated = ( p.mainFormula match {
+              case Ex( _, f ) => f +: forbidTranslation
+              case _          => forbidTranslation
+            } ) - p.mainFormula
 
             val retVal = translate( subProof, forbidTranslationUpdated, Some( aux ) )
             retVal
           } else {
             ProofBuilder.
-              c(translate(subProof, forbidTranslation, Some(aux))).
-              u(ExistsIntroRule(_, p.mainFormula, t)).
+              c( translate( subProof, forbidTranslation, Some( aux ) ) ).
+              u( ExistsIntroRule( _, p.mainFormula, t ) ).
               qed
           }
         } else {

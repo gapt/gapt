@@ -2,12 +2,12 @@ package gapt.examples
 
 import extraction.ScalaCodeGenerator
 import gapt.expr._
-import gapt.expr.hol.{CNFn, CNFp}
+import gapt.expr.hol.{ CNFn, CNFp }
 import gapt.formats.babel._
 import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.context.Context
-import gapt.proofs.{Ant, ProofBuilder}
-import gapt.proofs.context.update.{InductiveType, PrimitiveRecursiveFunction}
+import gapt.proofs.{ Ant, ProofBuilder }
+import gapt.proofs.context.update.{ InductiveType, PrimitiveRecursiveFunction }
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.transformations.LKToND
 import gapt.proofs.nd._
@@ -313,7 +313,7 @@ object sqrtProofManualCorrectAxiom extends Script {
   //import extraction.{ ScalaCodeGenerator, FSharpCodeGenerator }
   val m1 = ClassicalExtraction.extractCases( proof )
   val realm1 = assignArgs( m1, progArgs )
-  println(realm1.toUntypedString)
+  println( realm1.toUntypedString )
   //ScalaCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
   //println( normalize( proj1( realm1( le"s(s(s(s(0))))" ) ) ) )
   //println( normalize( proj1( realm1( le"s(s(0))" ) ) ) )
@@ -822,17 +822,17 @@ object booleanDetVampire extends Script {
   //prooftool( nd )
   val em1SubProofs =
     nd.subProofs.filter {
-      case e @ ExcludedMiddleRule( _, _, _, _) =>
+      case e @ ExcludedMiddleRule( _, _, _, _ ) =>
         e.formulaA match {
-          case Ex(_, _) => true
-          case _ => false
+          case Ex( _, _ ) => true
+          case _          => false
         }
-      case _                                => false
+      case _ => false
     }
   println( s"contains ${
     em1SubProofs.size
   } excluded middle inferences" )
-  em1SubProofs.foreach( prooftool(_) )
+  em1SubProofs.foreach( prooftool( _ ) )
   println( em1SubProofs.map( _.endSequent.succedent ) )
   val m1 = ClassicalExtraction.extractCases( nd )
   val Some( i ) = ctxClassical.constant( "i" )
@@ -1105,23 +1105,23 @@ object vampireZIffAAndB extends Script {
   //prooftool( nd )
   val em1SubProofs =
     nd.subProofs.filter {
-      case e @ ExcludedMiddleRule( _, _, _, _) =>
+      case e @ ExcludedMiddleRule( _, _, _, _ ) =>
         e.formulaA match {
-          case Ex(_, _) => true
-          case _ => false
+          case Ex( _, _ ) => true
+          case _          => false
         }
-      case _                                => false
+      case _ => false
     }
   println( s"contains ${
     em1SubProofs.size
   } excluded middle inferences" )
-  em1SubProofs.foreach( prooftool(_) )
+  em1SubProofs.foreach( prooftool( _ ) )
   println( em1SubProofs.map( _.endSequent.succedent ) )
   val m1 = ClassicalExtraction.extractCases( nd )
   //val Some( i ) = ctxClassical.constant( "i" )
   val Some( exception ) = ctxClassical.constant( "exception", List( ty"1" ) )
 
-  val realm1 = m1( exception )//( i )
+  val realm1 = m1( exception ) //( i )
   LogHandler.current.value = LogHandler.silent
   /*
   println( normalize( realm1( bFalse )( bFalse ) ).toUntypedString )
@@ -1174,17 +1174,17 @@ object vampireAIffB extends Script {
   //prooftool( nd )
   val em1SubProofs =
     nd.subProofs.filter {
-      case e @ ExcludedMiddleRule( _, _, _, _) =>
+      case e @ ExcludedMiddleRule( _, _, _, _ ) =>
         e.formulaA match {
-          case Ex(_, _) => true
-          case _ => false
+          case Ex( _, _ ) => true
+          case _          => false
         }
-      case _                                => false
+      case _ => false
     }
   println( s"contains ${
     em1SubProofs.size
   } excluded middle inferences" )
-  em1SubProofs.foreach( prooftool(_) )
+  em1SubProofs.foreach( prooftool( _ ) )
   println( em1SubProofs.map( _.endSequent.succedent ) )
   val m1 = ClassicalExtraction.extractCases( nd )
   val Some( i ) = ctxClassical.constant( "i" )
@@ -1195,96 +1195,96 @@ object vampireAIffB extends Script {
   //println( normalize( realm1( bTrue ) ).toUntypedString )
   //println( normalize( realm1( bFalse ) ).toUntypedString )
 
-  val All(_, Ex(y, fEx)) = nd.endSequent(Suc(0))
+  val All( _, Ex( y, fEx ) ) = nd.endSequent( Suc( 0 ) )
   // Check if optimization of the ctr:r translation is possible to prevent introduction of EM1
   // as described in email on Mar 4, 2019
-  def canBeOptimized(nd: NDProof, f: Formula): Boolean = {
-    val containsNegPx = nd.endSequent.antecedent.exists{
-      case Neg(curr) => syntacticMGU(f, curr).nonEmpty
-      case _ => false
+  def canBeOptimized( nd: NDProof, f: Formula ): Boolean = {
+    val containsNegPx = nd.endSequent.antecedent.exists {
+      case Neg( curr ) => syntacticMGU( f, curr ).nonEmpty
+      case _           => false
     }
     // TODO: Does it need to match with variable y?
-    val containsExPx = nd.endSequent(Suc(0)) == Ex(y, f)
-    if( containsNegPx && containsExPx ) {
+    val containsExPx = nd.endSequent( Suc( 0 ) ) == Ex( y, f )
+    if ( containsNegPx && containsExPx ) {
       true
     } else {
       nd match {
-        case LogicalAxiom(_) => false
-        case ForallIntroRule(subProof, eigenVariable, quantifiedVariable) =>
-          canBeOptimized(subProof, Substitution(quantifiedVariable, eigenVariable)(f))
-        case UnaryNDProof(_, subProof) => canBeOptimized(subProof, f)
-        case BinaryNDProof(_, leftSubProof, rightSubProof) =>
-          canBeOptimized(leftSubProof, f) || canBeOptimized(rightSubProof, f)
-        case TernaryNDProof(_, leftSubProof, middleSubProof, rightSubProof) =>
-          canBeOptimized(leftSubProof, f) || canBeOptimized(middleSubProof, f) || canBeOptimized(rightSubProof, f)
+        case LogicalAxiom( _ ) => false
+        case ForallIntroRule( subProof, eigenVariable, quantifiedVariable ) =>
+          canBeOptimized( subProof, Substitution( quantifiedVariable, eigenVariable )( f ) )
+        case UnaryNDProof( _, subProof ) => canBeOptimized( subProof, f )
+        case BinaryNDProof( _, leftSubProof, rightSubProof ) =>
+          canBeOptimized( leftSubProof, f ) || canBeOptimized( rightSubProof, f )
+        case TernaryNDProof( _, leftSubProof, middleSubProof, rightSubProof ) =>
+          canBeOptimized( leftSubProof, f ) || canBeOptimized( middleSubProof, f ) || canBeOptimized( rightSubProof, f )
       }
     }
   }
-  println(canBeOptimized(nd, fEx))
-  prooftool(lk)
+  println( canBeOptimized( nd, fEx ) )
+  prooftool( lk )
 }
 
 object vampireAIffBEncodingb extends Script {
 
-import gapt.expr._
-import gapt.proofs.nd._
-import gapt.proofs._
-import gapt.proofs.expansion.{ ExpansionProof, ETWeakQuantifier, ExpansionProofToLK }
-import gapt.provers.vampire.Vampire
+  import gapt.expr._
+  import gapt.proofs.nd._
+  import gapt.proofs._
+  import gapt.proofs.expansion.{ ExpansionProof, ETWeakQuantifier, ExpansionProofToLK }
+  import gapt.provers.vampire.Vampire
 
-import gapt.proofs.context.Context
-import gapt.proofs.nd.ClassicalExtraction
-var ctx = Context.default
-ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
-ctx += InductiveType( "bool", hoc"bFalse: bool", hoc"bTrue: bool" )
-val Some( bFalse ) = ctx.constant( "bFalse" )
-val Some( bTrue ) = ctx.constant( "bTrue" )
-val bIsTrue = hoc"p : bool>o"
-ctx += PrimitiveRecursiveFunction(
-  bIsTrue,
-  List(
-    ( bIsTrue( bFalse ) -> hof"false" ),
-    ( bIsTrue( bTrue ) -> hof"true" ) ) )( ctx )
-implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
-val axiom1 = hof"p(bTrue)"
-val axiom2 = hof"-p(bFalse)"
-val axiom3 = hof"!x (x = bTrue | x = bFalse)"
-val thmfof = hof"!x?y ((p(x) -> p(y)) & (p(y) -> p(x)))"
-val problem = axiom1 +: axiom2 +: axiom3 +: Sequent() :+ thmfof
-println( TptpFOLExporter.tptpProofProblem( problem ).toString() )
-val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "45m" ) ).withDeskolemization.extendToManySortedViaErasure ) getExpansionProof problem
-//val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
-println( "Done." )
-println( "Deskolemization..." )
-val desk: ExpansionProof = expansionProof.get
-println( "Done." )
-val lk = ExpansionProofToLK( desk ).getOrElse( throw new Exception( "LK proof not obtained" ) )
-val nd = LKToND( lk, Some( Suc( 0 ) ) )
-println( nd )
-//prooftool( nd )
-val em1SubProofs =
-  nd.subProofs.filter {
-    case e @ ExcludedMiddleRule( _, _, _, _) =>
-      e.formulaA match {
-        case Ex(_, _) => true
-        case _ => false
-      }
-    case _                                => false
-  }
-println( s"contains ${
-  em1SubProofs.size
-} excluded middle inferences" )
-em1SubProofs.foreach( prooftool(_) )
-println( em1SubProofs.map( _.endSequent.succedent ) )
-val m1 = ClassicalExtraction.extractCases( nd )
-val Some( i ) = ctxClassical.constant( "i" )
-val Some( exception ) = ctxClassical.constant( "exception", List( ty"1" ) )
+  import gapt.proofs.context.Context
+  import gapt.proofs.nd.ClassicalExtraction
+  var ctx = Context.default
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "bool", hoc"bFalse: bool", hoc"bTrue: bool" )
+  val Some( bFalse ) = ctx.constant( "bFalse" )
+  val Some( bTrue ) = ctx.constant( "bTrue" )
+  val bIsTrue = hoc"p : bool>o"
+  ctx += PrimitiveRecursiveFunction(
+    bIsTrue,
+    List(
+      ( bIsTrue( bFalse ) -> hof"false" ),
+      ( bIsTrue( bTrue ) -> hof"true" ) ) )( ctx )
+  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+  val axiom1 = hof"p(bTrue)"
+  val axiom2 = hof"-p(bFalse)"
+  val axiom3 = hof"!x (x = bTrue | x = bFalse)"
+  val thmfof = hof"!x?y ((p(x) -> p(y)) & (p(y) -> p(x)))"
+  val problem = axiom1 +: axiom2 +: axiom3 +: Sequent() :+ thmfof
+  println( TptpFOLExporter.tptpProofProblem( problem ).toString() )
+  val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "45m" ) ).withDeskolemization.extendToManySortedViaErasure ) getExpansionProof problem
+  //val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
+  println( "Done." )
+  println( "Deskolemization..." )
+  val desk: ExpansionProof = expansionProof.get
+  println( "Done." )
+  val lk = ExpansionProofToLK( desk ).getOrElse( throw new Exception( "LK proof not obtained" ) )
+  val nd = LKToND( lk, Some( Suc( 0 ) ) )
+  println( nd )
+  //prooftool( nd )
+  val em1SubProofs =
+    nd.subProofs.filter {
+      case e @ ExcludedMiddleRule( _, _, _, _ ) =>
+        e.formulaA match {
+          case Ex( _, _ ) => true
+          case _          => false
+        }
+      case _ => false
+    }
+  println( s"contains ${
+    em1SubProofs.size
+  } excluded middle inferences" )
+  em1SubProofs.foreach( prooftool( _ ) )
+  println( em1SubProofs.map( _.endSequent.succedent ) )
+  val m1 = ClassicalExtraction.extractCases( nd )
+  val Some( i ) = ctxClassical.constant( "i" )
+  val Some( exception ) = ctxClassical.constant( "exception", List( ty"1" ) )
 
-val realm1 = m1( exception )( i )
-LogHandler.current.value = LogHandler.silent
-//println( normalize( realm1( bTrue ) ).toUntypedString )
-//println( normalize( realm1( bFalse ) ).toUntypedString )
-prooftool(lk)
+  val realm1 = m1( exception )( i )
+  LogHandler.current.value = LogHandler.silent
+  //println( normalize( realm1( bTrue ) ).toUntypedString )
+  //println( normalize( realm1( bFalse ) ).toUntypedString )
+  prooftool( lk )
 }
 
 object zIffaAndb extends Script {
@@ -1306,52 +1306,52 @@ object zIffaAndb extends Script {
   val p1 = ProofBuilder.
     c( gapt.proofs.nd.LogicalAxiom( hof"-(p(x) & p(y))" ) ).
     c( gapt.proofs.nd.LogicalAxiom( hof"p(x) & p(y)" ) ).
-    b(NegElimRule(_,_)).
-    u(BottomElimRule(_, hof"p(bFalse)")).
-    u(ImpIntroRule(_, Ant(1))).
+    b( NegElimRule( _, _ ) ).
+    u( BottomElimRule( _, hof"p(bFalse)" ) ).
+    u( ImpIntroRule( _, Ant( 1 ) ) ).
     qed
   val p2 = ProofBuilder.
     c( gapt.proofs.nd.TheoryAxiom( hof"-p(bFalse)" ) ).
-    c(gapt.proofs.nd.LogicalAxiom(hof"p(bFalse)")).
-    b(NegElimRule(_,_)).
-    u(BottomElimRule(_, hof"p(x) & p(y)")).
-    u(ImpIntroRule(_, Ant(0))).
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(bFalse)" ) ).
+    b( NegElimRule( _, _ ) ).
+    u( BottomElimRule( _, hof"p(x) & p(y)" ) ).
+    u( ImpIntroRule( _, Ant( 0 ) ) ).
     qed
   val q1 = ProofBuilder.
-    c(p1).
-    c(p2).
-    b(AndIntroRule(_, _)).
-    u(ExistsIntroRule(_, hof"?z (((p(x) & p(y)) -> p(z)) & (p(z) -> (p(x) & p(y))))")).
+    c( p1 ).
+    c( p2 ).
+    b( AndIntroRule( _, _ ) ).
+    u( ExistsIntroRule( _, hof"?z (((p(x) & p(y)) -> p(z)) & (p(z) -> (p(x) & p(y))))" ) ).
     qed
 
   val p3 = ProofBuilder.
     c( gapt.proofs.nd.TheoryAxiom( hof"p(bTrue)" ) ).
-    u(WeakeningRule(_, hof"p(x) & p(y)")).
-    u(ImpIntroRule(_, Ant(0))).
+    u( WeakeningRule( _, hof"p(x) & p(y)" ) ).
+    u( ImpIntroRule( _, Ant( 0 ) ) ).
     qed
   val p4 = ProofBuilder.
-    c( gapt.proofs.nd.LogicalAxiom(hof"p(x) & p(y)")).
-    u(WeakeningRule(_, hof"p(bTrue)")).
-    u(ImpIntroRule(_, Ant(0))).
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(x) & p(y)" ) ).
+    u( WeakeningRule( _, hof"p(bTrue)" ) ).
+    u( ImpIntroRule( _, Ant( 0 ) ) ).
     qed
   val q2 = ProofBuilder.
-    c(p3).
-    c(p4).
-    b(AndIntroRule(_,_)).
-    u(ExistsIntroRule(_, hof"?z (((p(x) & p(y)) -> p(z)) & (p(z) -> (p(x) & p(y))))")).
+    c( p3 ).
+    c( p4 ).
+    b( AndIntroRule( _, _ ) ).
+    u( ExistsIntroRule( _, hof"?z (((p(x) & p(y)) -> p(z)) & (p(z) -> (p(x) & p(y))))" ) ).
     qed
 
   val p = ProofBuilder.
-    c(q2).
-    c(q1).
-    b(ExcludedMiddleRule(_,_)).
-    u(ForallIntroRule(_, hov"y:bool", hov"y:bool")).
-    u(ForallIntroRule(_, hov"x:bool", hov"x:bool")).
+    c( q2 ).
+    c( q1 ).
+    b( ExcludedMiddleRule( _, _ ) ).
+    u( ForallIntroRule( _, hov"y:bool", hov"y:bool" ) ).
+    u( ForallIntroRule( _, hov"x:bool", hov"x:bool" ) ).
     qed
 
-  prooftool(p)
-  val lam = ClassicalExtraction.extractCases(p)
-  println(lam.toUntypedString)
+  prooftool( p )
+  val lam = ClassicalExtraction.extractCases( p )
+  println( lam.toUntypedString )
 }
 
 object zIffaAndbShortCircuit extends Script {
@@ -1372,55 +1372,55 @@ object zIffaAndbShortCircuit extends Script {
   implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
   val p1 = ProofBuilder.
     c( gapt.proofs.nd.LogicalAxiom( hof"p(x) & p(y)" ) ).
-    u(AndElim2Rule(_)).
-    u(ImpIntroRule(_, Ant(0))).
+    u( AndElim2Rule( _ ) ).
+    u( ImpIntroRule( _, Ant( 0 ) ) ).
     qed
   val p2 = ProofBuilder.
-    c(gapt.proofs.nd.LogicalAxiom(hof"p(x)")).
-    c(gapt.proofs.nd.LogicalAxiom(hof"p(y)")).
-    b(AndIntroRule(_, _)).
-    u(ImpIntroRule(_, Ant(1))).
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(x)" ) ).
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(y)" ) ).
+    b( AndIntroRule( _, _ ) ).
+    u( ImpIntroRule( _, Ant( 1 ) ) ).
     qed
   val q1 = ProofBuilder.
-    c(p1).
-    c(p2).
-    b(AndIntroRule(_, _)).
-    u(ExistsIntroRule(_, hof"?z (((p(x) & p(y)) -> p(z)) & (p(z) -> (p(x) & p(y))))")).
+    c( p1 ).
+    c( p2 ).
+    b( AndIntroRule( _, _ ) ).
+    u( ExistsIntroRule( _, hof"?z (((p(x) & p(y)) -> p(z)) & (p(z) -> (p(x) & p(y))))" ) ).
     qed
 
   val p3 = ProofBuilder.
-    c(gapt.proofs.nd.LogicalAxiom(hof"-p(x)")).
+    c( gapt.proofs.nd.LogicalAxiom( hof"-p(x)" ) ).
     c( gapt.proofs.nd.LogicalAxiom( hof"p(x) & p(y)" ) ).
-    u(AndElim1Rule(_)).
-    b(NegElimRule(_,_)).
-    u(BottomElimRule(_, hof"p(bFalse)")).
-    u(ImpIntroRule(_, Ant(1))).
+    u( AndElim1Rule( _ ) ).
+    b( NegElimRule( _, _ ) ).
+    u( BottomElimRule( _, hof"p(bFalse)" ) ).
+    u( ImpIntroRule( _, Ant( 1 ) ) ).
     qed
   val p4 = ProofBuilder.
     c( gapt.proofs.nd.TheoryAxiom( hof"-p(bFalse)" ) ).
-    c( gapt.proofs.nd.LogicalAxiom(hof"p(bFalse)")).
-    b(NegElimRule(_,_)).
-    u(BottomElimRule(_, hof"p(x) & p(y)")).
-    u(ImpIntroRule(_, Ant(0))).
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(bFalse)" ) ).
+    b( NegElimRule( _, _ ) ).
+    u( BottomElimRule( _, hof"p(x) & p(y)" ) ).
+    u( ImpIntroRule( _, Ant( 0 ) ) ).
     qed
   val q2 = ProofBuilder.
-    c(p3).
-    c(p4).
-    b(AndIntroRule(_,_)).
-    u(ExistsIntroRule(_, hof"?z (((p(x) & p(y)) -> p(z)) & (p(z) -> (p(x) & p(y))))")).
+    c( p3 ).
+    c( p4 ).
+    b( AndIntroRule( _, _ ) ).
+    u( ExistsIntroRule( _, hof"?z (((p(x) & p(y)) -> p(z)) & (p(z) -> (p(x) & p(y))))" ) ).
     qed
 
   val p = ProofBuilder.
-    c(q1).
-    c(q2).
-    b(ExcludedMiddleRule(_,_)).
-    u(ForallIntroRule(_, hov"y:bool", hov"y:bool")).
-    u(ForallIntroRule(_, hov"x:bool", hov"x:bool")).
+    c( q1 ).
+    c( q2 ).
+    b( ExcludedMiddleRule( _, _ ) ).
+    u( ForallIntroRule( _, hov"y:bool", hov"y:bool" ) ).
+    u( ForallIntroRule( _, hov"x:bool", hov"x:bool" ) ).
     qed
 
-  prooftool(p)
-  val lam = ClassicalExtraction.extractCases(p)
-  println(lam.toUntypedString)
+  prooftool( p )
+  val lam = ClassicalExtraction.extractCases( p )
+  println( lam.toUntypedString )
 }
 
 object aIffbVampireManuallySimplified extends Script {
@@ -1441,52 +1441,52 @@ object aIffbVampireManuallySimplified extends Script {
   implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
 
   val p1 = ProofBuilder.
-    c(gapt.proofs.nd.LogicalAxiom(hof"-((p(v) -> p(bTrue)) & (p(bTrue) -> p(v)))")).
+    c( gapt.proofs.nd.LogicalAxiom( hof"-((p(v) -> p(bTrue)) & (p(bTrue) -> p(v)))" ) ).
     c( gapt.proofs.nd.TheoryAxiom( hof"p(bTrue)" ) ).
-    u(WeakeningRule(_, hof"p(v)")).
-    u(ImpIntroRule(_, Ant(0))).
-    c(gapt.proofs.nd.LogicalAxiom(hof"p(v)")).
-    u(WeakeningRule(_, hof"p(bTrue)")).
-    u(ImpIntroRule(_, Ant(0))).
-    b(AndIntroRule(_, _)).
-    b(NegElimRule(_, _)).
-    u(BottomElimRule(_, hof"p(bFalse)")).
-    u(ImpIntroRule(_, Ant(1))).
+    u( WeakeningRule( _, hof"p(v)" ) ).
+    u( ImpIntroRule( _, Ant( 0 ) ) ).
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(v)" ) ).
+    u( WeakeningRule( _, hof"p(bTrue)" ) ).
+    u( ImpIntroRule( _, Ant( 0 ) ) ).
+    b( AndIntroRule( _, _ ) ).
+    b( NegElimRule( _, _ ) ).
+    u( BottomElimRule( _, hof"p(bFalse)" ) ).
+    u( ImpIntroRule( _, Ant( 1 ) ) ).
     qed
   val p2 = ProofBuilder.
-    c(gapt.proofs.nd.TheoryAxiom(hof"-p(bFalse)")).
-    c(gapt.proofs.nd.LogicalAxiom(hof"p(bFalse)")).
-    b(NegElimRule(_, _)).
-    u(BottomElimRule(_, hof"p(v)")).
-    u(ImpIntroRule(_, Ant(0))).
+    c( gapt.proofs.nd.TheoryAxiom( hof"-p(bFalse)" ) ).
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(bFalse)" ) ).
+    b( NegElimRule( _, _ ) ).
+    u( BottomElimRule( _, hof"p(v)" ) ).
+    u( ImpIntroRule( _, Ant( 0 ) ) ).
     qed
-  println(p1.endSequent)
-  println(p2.endSequent)
+  println( p1.endSequent )
+  println( p2.endSequent )
   val p = ProofBuilder.
-    c(gapt.proofs.nd.LogicalAxiom(hof"?y ((p(v) -> p(y)) & (p(y) -> p(v)))")).
-    c(gapt.proofs.nd.LogicalAxiom(hof"(p(v) -> p(bTrue)) & (p(bTrue) -> p(v))")).
-    c(gapt.proofs.nd.LogicalAxiom(hof"-(?y ((p(v) -> p(y)) & (p(y) -> p(v))))")).
-    c(p1).
-    c(p2).
-    b(AndIntroRule(_, _)).
-    u(ExistsIntroRule(_, hof"?y ((p(v) -> p(y)) & (p(y) -> p(v)))")).
-    b(NegElimRule(_, _)).
-    u(BottomElimRule(_, hof"(p(v) -> p(bTrue)) & (p(bTrue) -> p(v))")).
-    b(ExcludedMiddleRule(_,_)).
-    u(ExistsIntroRule(_, hof"?y ((p(v) -> p(y)) & (p(y) -> p(v)))")).
-    b(ExcludedMiddleRule(_,_)).
-    u(ForallIntroRule(_, hov"v:bool", hov"x:bool")).
+    c( gapt.proofs.nd.LogicalAxiom( hof"?y ((p(v) -> p(y)) & (p(y) -> p(v)))" ) ).
+    c( gapt.proofs.nd.LogicalAxiom( hof"(p(v) -> p(bTrue)) & (p(bTrue) -> p(v))" ) ).
+    c( gapt.proofs.nd.LogicalAxiom( hof"-(?y ((p(v) -> p(y)) & (p(y) -> p(v))))" ) ).
+    c( p1 ).
+    c( p2 ).
+    b( AndIntroRule( _, _ ) ).
+    u( ExistsIntroRule( _, hof"?y ((p(v) -> p(y)) & (p(y) -> p(v)))" ) ).
+    b( NegElimRule( _, _ ) ).
+    u( BottomElimRule( _, hof"(p(v) -> p(bTrue)) & (p(bTrue) -> p(v))" ) ).
+    b( ExcludedMiddleRule( _, _ ) ).
+    u( ExistsIntroRule( _, hof"?y ((p(v) -> p(y)) & (p(y) -> p(v)))" ) ).
+    b( ExcludedMiddleRule( _, _ ) ).
+    u( ForallIntroRule( _, hov"v:bool", hov"x:bool" ) ).
     qed
 
-  prooftool(p)
-  val lam = ClassicalExtraction.extractCases(p)
-  println(lam.toUntypedString)
+  prooftool( p )
+  val lam = ClassicalExtraction.extractCases( p )
+  println( lam.toUntypedString )
   //val resTop = normalize(lam(bTrue))
-  val resBot = normalize(lam(bFalse))
+  val resBot = normalize( lam( bFalse ) )
   //println("normalize(lam(bTrue)):")
   //println(resTop.toUntypedString)
-  println("normalize(lam(bFalse)):")
-  println(resBot.toUntypedString)
+  println( "normalize(lam(bFalse)):" )
+  println( resBot.toUntypedString )
 }
 
 object pairingDemonstration extends Script {
@@ -1508,104 +1508,104 @@ object pairingDemonstration extends Script {
   val p1 = ProofBuilder.
     c( gapt.proofs.nd.LogicalAxiom( hof"-(p(x) & p(y))" ) ).
     c( gapt.proofs.nd.LogicalAxiom( hof"p(x) & p(y)" ) ).
-    b(NegElimRule(_,_)).
-    u(BottomElimRule(_, hof"p(bFalse)")).
-    u(ImpIntroRule(_, Ant(1))).
+    b( NegElimRule( _, _ ) ).
+    u( BottomElimRule( _, hof"p(bFalse)" ) ).
+    u( ImpIntroRule( _, Ant( 1 ) ) ).
     qed
   val p2 = ProofBuilder.
     c( gapt.proofs.nd.TheoryAxiom( hof"-p(bFalse)" ) ).
-    c(gapt.proofs.nd.LogicalAxiom(hof"p(bFalse)")).
-    b(NegElimRule(_,_)).
-    u(BottomElimRule(_, hof"p(x) & p(y)")).
-    u(ImpIntroRule(_, Ant(0))).
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(bFalse)" ) ).
+    b( NegElimRule( _, _ ) ).
+    u( BottomElimRule( _, hof"p(x) & p(y)" ) ).
+    u( ImpIntroRule( _, Ant( 0 ) ) ).
     qed
   val q1 = ProofBuilder.
-    c(p1).
-    c(p2).
-    b(AndIntroRule(_, _)).
-    u(ExistsIntroRule(_, hof"?z (((p(x) & p(y)) -> p(z)) & (p(z) -> (p(x) & p(y))))")).
+    c( p1 ).
+    c( p2 ).
+    b( AndIntroRule( _, _ ) ).
+    u( ExistsIntroRule( _, hof"?z (((p(x) & p(y)) -> p(z)) & (p(z) -> (p(x) & p(y))))" ) ).
     qed
 
   val p3 = ProofBuilder.
     c( gapt.proofs.nd.TheoryAxiom( hof"p(bTrue)" ) ).
-    u(WeakeningRule(_, hof"p(x) & p(y)")).
-    u(ImpIntroRule(_, Ant(0))).
+    u( WeakeningRule( _, hof"p(x) & p(y)" ) ).
+    u( ImpIntroRule( _, Ant( 0 ) ) ).
     qed
   val p4 = ProofBuilder.
-    c( gapt.proofs.nd.LogicalAxiom(hof"p(x) & p(y)")).
-    u(WeakeningRule(_, hof"p(bTrue)")).
-    u(ImpIntroRule(_, Ant(0))).
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(x) & p(y)" ) ).
+    u( WeakeningRule( _, hof"p(bTrue)" ) ).
+    u( ImpIntroRule( _, Ant( 0 ) ) ).
     qed
   val q2 = ProofBuilder.
-    c(p3).
-    c(p4).
-    b(AndIntroRule(_,_)).
-    u(ExistsIntroRule(_, hof"?z (((p(x) & p(y)) -> p(z)) & (p(z) -> (p(x) & p(y))))")).
+    c( p3 ).
+    c( p4 ).
+    b( AndIntroRule( _, _ ) ).
+    u( ExistsIntroRule( _, hof"?z (((p(x) & p(y)) -> p(z)) & (p(z) -> (p(x) & p(y))))" ) ).
     qed
 
   val lemPrf1 = ProofBuilder.
-    c(gapt.proofs.nd.LogicalAxiom(hof"p(x)")).
-    u(OrIntro1Rule(_, hof"-p(x)")).
-    c(gapt.proofs.nd.LogicalAxiom(hof"-p(x)")).
-    u(OrIntro2Rule(_, hof"p(x)")).
-    b(ExcludedMiddleRule(_,_)).
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(x)" ) ).
+    u( OrIntro1Rule( _, hof"-p(x)" ) ).
+    c( gapt.proofs.nd.LogicalAxiom( hof"-p(x)" ) ).
+    u( OrIntro2Rule( _, hof"p(x)" ) ).
+    b( ExcludedMiddleRule( _, _ ) ).
     qed
   val lemPrf2 = ProofBuilder.
-    c(gapt.proofs.nd.LogicalAxiom(hof"p(x)")).
-    c(gapt.proofs.nd.LogicalAxiom(hof"p(y)")).
-    b(AndIntroRule(_,_)).
-    u(OrIntro1Rule(_, hof"-(p(x) & p(y))")).
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(x)" ) ).
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(y)" ) ).
+    b( AndIntroRule( _, _ ) ).
+    u( OrIntro1Rule( _, hof"-(p(x) & p(y))" ) ).
     qed
   val lemPrf3 = ProofBuilder.
-    c(gapt.proofs.nd.LogicalAxiom(hof"-p(x)")).
-    c(gapt.proofs.nd.LogicalAxiom(hof"p(x) & p(y)")).
-    u(AndElim1Rule(_)).
-    b(NegElimRule(_,_)).
-    u(NegIntroRule(_, Ant(1))).
-    u(OrIntro2Rule(_, hof"p(x) & p(y)")).
+    c( gapt.proofs.nd.LogicalAxiom( hof"-p(x)" ) ).
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(x) & p(y)" ) ).
+    u( AndElim1Rule( _ ) ).
+    b( NegElimRule( _, _ ) ).
+    u( NegIntroRule( _, Ant( 1 ) ) ).
+    u( OrIntro2Rule( _, hof"p(x) & p(y)" ) ).
     qed
   val lemPrf4 = ProofBuilder.
-    c(lemPrf1).
-    c(lemPrf2).
-    c(lemPrf3).
-    t(OrElimRule(_,_,_)).
+    c( lemPrf1 ).
+    c( lemPrf2 ).
+    c( lemPrf3 ).
+    t( OrElimRule( _, _, _ ) ).
     qed
   val lemPrf5 = ProofBuilder.
-    c(gapt.proofs.nd.LogicalAxiom(hof"p(y)")).
-    u(OrIntro1Rule(_, hof"-p(y)")).
-    c(gapt.proofs.nd.LogicalAxiom(hof"-p(y)")).
-    u(OrIntro2Rule(_, hof"p(y)")).
-    b(ExcludedMiddleRule(_,_)).
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(y)" ) ).
+    u( OrIntro1Rule( _, hof"-p(y)" ) ).
+    c( gapt.proofs.nd.LogicalAxiom( hof"-p(y)" ) ).
+    u( OrIntro2Rule( _, hof"p(y)" ) ).
+    b( ExcludedMiddleRule( _, _ ) ).
     qed
   val lemPrf6 = ProofBuilder.
-    c(gapt.proofs.nd.LogicalAxiom(hof"-p(y)")).
-    c(gapt.proofs.nd.LogicalAxiom(hof"p(x) & p(y)")).
-    u(AndElim2Rule(_)).
-    b(NegElimRule(_,_)).
-    u(NegIntroRule(_, Ant(1))).
-    u(OrIntro2Rule(_, hof"p(x) & p(y)")).
+    c( gapt.proofs.nd.LogicalAxiom( hof"-p(y)" ) ).
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(x) & p(y)" ) ).
+    u( AndElim2Rule( _ ) ).
+    b( NegElimRule( _, _ ) ).
+    u( NegIntroRule( _, Ant( 1 ) ) ).
+    u( OrIntro2Rule( _, hof"p(x) & p(y)" ) ).
     qed
   val lemPrf7 = ProofBuilder.
-    c(lemPrf5).
-    c(lemPrf4).
-    c(lemPrf6).
-    t(OrElimRule(_,_,_)).
+    c( lemPrf5 ).
+    c( lemPrf4 ).
+    c( lemPrf6 ).
+    t( OrElimRule( _, _, _ ) ).
     qed
 
   val p = ProofBuilder.
-    c(lemPrf7).
-    c(q2).
-    c(q1).
-    t(OrElimRule(_,_,_)).
-    u(ForallIntroRule(_, hov"y:bool", hov"y:bool")).
-    u(ForallIntroRule(_, hov"x:bool", hov"x:bool")).
+    c( lemPrf7 ).
+    c( q2 ).
+    c( q1 ).
+    t( OrElimRule( _, _, _ ) ).
+    u( ForallIntroRule( _, hov"y:bool", hov"y:bool" ) ).
+    u( ForallIntroRule( _, hov"x:bool", hov"x:bool" ) ).
     qed
 
-  prooftool(p)
-  val lam = ClassicalExtraction.extractCases(p)
-  println(lam.toUntypedString)
+  prooftool( p )
+  val lam = ClassicalExtraction.extractCases( p )
+  println( lam.toUntypedString )
 
-  println(normalize(lam(bFalse)(bFalse)).toUntypedString)
+  println( normalize( lam( bFalse )( bFalse ) ).toUntypedString )
 }
 
 object sumTypeDemonstration extends Script {
@@ -1626,62 +1626,62 @@ object sumTypeDemonstration extends Script {
   implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
   val p1 = ProofBuilder.
     c( gapt.proofs.nd.LogicalAxiom( hof"p(x) & p(y)" ) ).
-    u(AndElim2Rule(_)).
-    u(ImpIntroRule(_, Ant(0))).
+    u( AndElim2Rule( _ ) ).
+    u( ImpIntroRule( _, Ant( 0 ) ) ).
     qed
   val p2 = ProofBuilder.
-    c(gapt.proofs.nd.LogicalAxiom(hof"p(x)")).
-    c(gapt.proofs.nd.LogicalAxiom(hof"p(y)")).
-    b(AndIntroRule(_, _)).
-    u(ImpIntroRule(_, Ant(1))).
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(x)" ) ).
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(y)" ) ).
+    b( AndIntroRule( _, _ ) ).
+    u( ImpIntroRule( _, Ant( 1 ) ) ).
     qed
   val q1 = ProofBuilder.
-    c(p1).
-    c(p2).
-    b(AndIntroRule(_, _)).
-    u(ExistsIntroRule(_, hof"?z (((p(x) & p(y)) -> p(z)) & (p(z) -> (p(x) & p(y))))")).
+    c( p1 ).
+    c( p2 ).
+    b( AndIntroRule( _, _ ) ).
+    u( ExistsIntroRule( _, hof"?z (((p(x) & p(y)) -> p(z)) & (p(z) -> (p(x) & p(y))))" ) ).
     qed
 
   val p3 = ProofBuilder.
-    c(gapt.proofs.nd.LogicalAxiom(hof"-p(x)")).
+    c( gapt.proofs.nd.LogicalAxiom( hof"-p(x)" ) ).
     c( gapt.proofs.nd.LogicalAxiom( hof"p(x) & p(y)" ) ).
-    u(AndElim1Rule(_)).
-    b(NegElimRule(_,_)).
-    u(BottomElimRule(_, hof"p(bFalse)")).
-    u(ImpIntroRule(_, Ant(1))).
+    u( AndElim1Rule( _ ) ).
+    b( NegElimRule( _, _ ) ).
+    u( BottomElimRule( _, hof"p(bFalse)" ) ).
+    u( ImpIntroRule( _, Ant( 1 ) ) ).
     qed
   val p4 = ProofBuilder.
     c( gapt.proofs.nd.TheoryAxiom( hof"-p(bFalse)" ) ).
-    c( gapt.proofs.nd.LogicalAxiom(hof"p(bFalse)")).
-    b(NegElimRule(_,_)).
-    u(BottomElimRule(_, hof"p(x) & p(y)")).
-    u(ImpIntroRule(_, Ant(0))).
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(bFalse)" ) ).
+    b( NegElimRule( _, _ ) ).
+    u( BottomElimRule( _, hof"p(x) & p(y)" ) ).
+    u( ImpIntroRule( _, Ant( 0 ) ) ).
     qed
   val q2 = ProofBuilder.
-    c(p3).
-    c(p4).
-    b(AndIntroRule(_,_)).
-    u(ExistsIntroRule(_, hof"?z (((p(x) & p(y)) -> p(z)) & (p(z) -> (p(x) & p(y))))")).
+    c( p3 ).
+    c( p4 ).
+    b( AndIntroRule( _, _ ) ).
+    u( ExistsIntroRule( _, hof"?z (((p(x) & p(y)) -> p(z)) & (p(z) -> (p(x) & p(y))))" ) ).
     qed
 
   val lem = ProofBuilder.
-    c(gapt.proofs.nd.LogicalAxiom(hof"p(x)")).
-    u(OrIntro1Rule(_, hof"-p(x)")).
-    c(gapt.proofs.nd.LogicalAxiom(hof"-p(x)")).
-    u(OrIntro2Rule(_, hof"p(x)")).
-    b(ExcludedMiddleRule(_,_)).
+    c( gapt.proofs.nd.LogicalAxiom( hof"p(x)" ) ).
+    u( OrIntro1Rule( _, hof"-p(x)" ) ).
+    c( gapt.proofs.nd.LogicalAxiom( hof"-p(x)" ) ).
+    u( OrIntro2Rule( _, hof"p(x)" ) ).
+    b( ExcludedMiddleRule( _, _ ) ).
     qed
 
   val p = ProofBuilder.
-    c(lem).
-    c(q1).
-    c(q2).
-    t(OrElimRule(_,_,_)).
-    u(ForallIntroRule(_, hov"y:bool", hov"y:bool")).
-    u(ForallIntroRule(_, hov"x:bool", hov"x:bool")).
+    c( lem ).
+    c( q1 ).
+    c( q2 ).
+    t( OrElimRule( _, _, _ ) ).
+    u( ForallIntroRule( _, hov"y:bool", hov"y:bool" ) ).
+    u( ForallIntroRule( _, hov"x:bool", hov"x:bool" ) ).
     qed
 
-  prooftool(p)
-  val lam = ClassicalExtraction.extractCases(p)
-  println(lam.toUntypedString)
+  prooftool( p )
+  val lam = ClassicalExtraction.extractCases( p )
+  println( lam.toUntypedString )
 }

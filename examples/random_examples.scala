@@ -4,6 +4,7 @@ import gapt.examples.theories.nat.addcomm
 import gapt.proofs.ProofBuilder
 import gapt.proofs.lk._
 import gapt.proofs.expansion._
+import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.prooftool.prooftool
 
 import scala.annotation.tailrec
