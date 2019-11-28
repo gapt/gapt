@@ -574,9 +574,13 @@ object ClassicalExtraction {
           //mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ), ng )
           val l = extractCases( leftSubProof, ng, exEm1HypVars, forallEm1HypVars )
           val r = extractCases( rightSubProof, ng, exEm1HypVars, forallEm1HypVars )
+          println( "l: " + l )
+          println( "r: " + r )
+          println( Var( ng.fresh( s"eq(${eq.mainFormula})" ), flat( eq.mainFormula ) ).ty )
+          val res = l.antecedent ++: r.antecedent ++: Sequent() :+ r.succedent.head
           //val res = l.antecedent ++: r.antecedent ++: Sequent() :+ Var( ng.fresh( s"eq(${eq.mainFormula})" ), flat( eq.mainFormula ) )
           //val res = l.antecedent ++: r.antecedent ++: Sequent() :+ le"subst ${l( Suc( 0 ) )} ${r( Suc( 0 ) )}"
-          val res = l.antecedent ++: r.antecedent ++: Sequent() :+ le"i"
+          //val res = l.antecedent ++: r.antecedent ++: Sequent() :+ le"i"
           //le"eq(${l( Suc( 0 ) )}, ${r( Suc( 0 ) )})" // ), flat( eq.mainFormula ) )
           //println( "EqElim" )
           res

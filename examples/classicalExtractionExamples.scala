@@ -534,6 +534,71 @@ object sqrtProofManualCorrectAxiomClassical extends Script {
   println( normalize( m._2( le"s(s(s(s(0))))" ) ) )
 }
 
+object extractBug1 extends Script {
+
+  import gapt.expr._
+  import gapt.formats.babel.{ Notation, Precedence }
+  import gapt.proofs.context.Context
+  import gapt.proofs.nd._
+
+  implicit var ctx = Context.default
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += Notation.Infix( "<", Precedence.infixRel )
+  ctx += Notation.Infix( "*", Precedence.timesDiv )
+  ctx += Notation.Infix( "<=", Precedence.infixRel )
+  ctx += hoc"'*': nat>nat>nat"
+  ctx += hoc"'<': nat>nat>o"
+  ctx += hoc"'<=': nat>nat>o"
+
+  val peano2 = hof"!x (s(0) * x = x)"
+  val lem8 = hof"!x (x < s(x))"
+
+  val base = ProofBuilder.
+    c( LogicalAxiom( peano2 ) ).
+    u( ForallElimRule( _, le"s(0)" ) ).
+    c( LogicalAxiom( lem8 ) ).
+    u( ForallElimRule( _, le"0:nat" ) ).
+    b( EqualityElimRule( _, _, hof"0 < x", hov"x:nat" ) ).
+    qed
+
+  val m1 = ClassicalExtraction.extractCases( base )
+}
+
+object extractBug2 extends Script {
+
+  import gapt.expr._
+  import gapt.formats.babel.{ Notation, Precedence }
+  import gapt.proofs.context.Context
+  import gapt.proofs.nd._
+
+  implicit var ctx = Context.default
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += Notation.Infix( "<", Precedence.infixRel )
+  ctx += Notation.Infix( "*", Precedence.timesDiv )
+  ctx += Notation.Infix( "<=", Precedence.infixRel )
+  ctx += hoc"'*': nat>nat>nat"
+  ctx += hoc"'<': nat>nat>o"
+  ctx += hoc"'<=': nat>nat>o"
+
+  val defleq = hof"!x!y (x<=y <-> (x=y | x<y))"
+  val peano1 = hof"!x (0 * x = 0)"
+
+  val base = ProofBuilder.
+    c( LogicalAxiom( defleq ) ).
+    u( ForallElimBlock( _, List( le"0 * 0", le"0:nat" ) ) ).
+    u( AndElim2Rule( _ ) ).
+    /*
+    c( LogicalAxiom( peano1 ) ).
+    u( ForallElimRule( _, le"0:nat" ) ).
+    u( OrIntro1Rule( _, hof"0 * 0 < 0" ) ).
+    */
+    //b( ImpElimRule( _, _ ) ). // end 0 * 0 <= 0
+    qed
+  prooftool( base )
+
+  val m1 = ClassicalExtraction.extractCases( base )
+}
+
 object sqrtProofManualCorrectAxiomClassicalDifferentEMFormulasUsingEFQ extends Script {
 
   import gapt.expr._
