@@ -297,7 +297,7 @@ object sqrtProofManualCorrectAxiom extends Script {
   val Some( cmp2 ) = cctx.constant( "cmp2" )
   val Some( inl ) = cctx.constant( "inl", List( ty"1", ty"1" ) )
   val Some( inr ) = cctx.constant( "inr", List( ty"1", ty"1" ) )
-  val Some( proj1 ) = cctx.constant( "pi1", List( ty"nat", ty"conj(1)(1)" ) )
+  val Some( proj1 ) = cctx.constant( "expi1", List( ty"nat", ty"conj(1)(1)" ) )
   //(x < y -> (s(x) = y | s(x) < y))"
   progArgs += ( ClassicalExtraction.flat( lem1 ) ->
     le"""
@@ -313,9 +313,8 @@ object sqrtProofManualCorrectAxiom extends Script {
   //import extraction.{ ScalaCodeGenerator, FSharpCodeGenerator }
   val m1 = ClassicalExtraction.extractCases( proof )
   val realm1 = assignArgs( m1, progArgs )
-  println( realm1.toUntypedString )
   //ScalaCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
-  //println( normalize( proj1( realm1( le"s(s(s(s(0))))" ) ) ) )
+  println( normalize( proj1( realm1( le"s(s(s(s(0))))" ) ) ) )
   //println( normalize( proj1( realm1( le"s(s(0))" ) ) ) )
 
   /*

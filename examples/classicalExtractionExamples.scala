@@ -312,18 +312,51 @@ object sqrtProofManualCorrectAxiomClassical extends Script {
 
   import gapt.expr._
   import gapt.formats.babel.{ Notation, Precedence }
-  import gapt.proofs.context.Context
   import gapt.proofs.nd._
 
-  implicit var ctx = Context.default
+  var ctx = Context.default
   ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
   ctx += Notation.Infix( "<", Precedence.infixRel )
   ctx += Notation.Infix( "*", Precedence.timesDiv )
   ctx += Notation.Infix( "<=", Precedence.infixRel )
-  ctx += hoc"'*': nat>nat>nat"
-  ctx += hoc"'<': nat>nat>o"
-  ctx += hoc"'<=': nat>nat>o"
+  implicit var cctx = ClassicalExtraction.systemT( ctx )
+  val Some( z ) = cctx.constant( "0" )
+  val Some( s ) = cctx.constant( "s" )
+  val Some( gt ) = cctx.constant( "gt" )
+  //val Some( not ) = cctx.constant( "not" )
+  val not = hoc"'not': o>o"
+  cctx += PrimitiveRecursiveFunction(
+    not,
+    List(
+      ( not( hof"true" ) -> hof"false" ),
+      ( not( hof"false" ) -> hof"true" ) ) )( cctx )
 
+  val x = hov"x:nat"
+  val y = hov"y:nat"
+  val plus = hoc"'+': nat>nat>nat"
+  cctx += PrimitiveRecursiveFunction(
+    plus,
+    List(
+      ( plus( z, y ) -> y ),
+      ( plus( s( x ), y ) -> s( plus( x, y ) ) ) ) )( cctx )
+  val times = hoc"'*': nat>nat>nat"
+  cctx += PrimitiveRecursiveFunction(
+    times,
+    List(
+      ( times( z, y ) -> z ),
+      ( times( s( x ), y ) -> plus( y, times( x, y ) ) ) ) )( cctx )
+  val lt = hoc"'<': nat>nat>o"
+  cctx += PrimitiveRecursiveFunction(
+    lt,
+    List(
+      ( lt( z, y ) -> gt( y, z ) ),
+      ( lt( s( x ), y ) -> gt( y, s( x ) ) ) ) )( cctx )
+  val leq = hoc"'<=': nat>nat>o"
+  cctx += PrimitiveRecursiveFunction(
+    leq,
+    List(
+      ( leq( z, y ) -> not( gt( z, y ) ) ),
+      ( leq( s( x ), y ) -> not( gt( s( x ), y ) ) ) ) )( cctx )
   val defleq = hof"!x!y (x<=y <-> (x=y | x<y))"
   val trans = hof"!x!y!z (x<y & y<z -> x<z)"
   val lem1 = hof"!x!y (x < y -> (s(x) = y | s(x) < y))"
@@ -341,13 +374,19 @@ object sqrtProofManualCorrectAxiomClassical extends Script {
   val Dn = hof"?y (n < s(y) * s(y) & y * y <= n)"
   val Dsn = hof"?y (s(n) < s(y) * s(y) & y * y <= s(n))"
 
+  val minorLem1 = hof"s(n) = s(y0) * s(y0)"
+  val minorLem2 = hof"s(n) < s(y0) * s(y0)"
+  val minorLem3 = hof"y0 * y0 < n"
+  val minorLem4 = hof"n < s(y0) * s(y0) & y0 * y0 <= n"
+  val minorLem5 = hof"y0 * y0 = n"
+
   val pi1Case1 = ProofBuilder.
     // Trans
     c( LogicalAxiom( trans ) ).
     u( ForallElimBlock( _, List( le"s(n)", le"s(s(y0) * s(y0))", le"s(s(y0)) * s(s(y0))" ) ) ).
     c( LogicalAxiom( lem5 ) ).
     u( ForallElimBlock( _, List( le"s(n)", le"s(y0) * s(y0)" ) ) ).
-    c( LogicalAxiom( hof"s(n) = s(y0) * s(y0)" ) ).
+    c( LogicalAxiom( minorLem1 ) ).
     b( ImpElimRule( _, _ ) ).
     c( LogicalAxiom( lem4 ) ).
     u( ForallElimRule( _, le"y0: nat" ) ).
@@ -364,20 +403,20 @@ object sqrtProofManualCorrectAxiomClassical extends Script {
     u( OrIntro1Rule( _, hof"s(y0) * s(y0) < s(n)" ) ).
     b( ImpElimRule( _, _ ) ). // end Rewrite <->
     b( AndIntroRule( _, _ ) ).
-    u( ContractionRule( _, hof"s(n) = s(y0) * s(y0)" ) ).
+    u( ContractionRule( _, minorLem1 ) ).
     u( ExistsIntroRule( _, Dsn ) ).
     qed
   //println( pi3 )
 
   val pi1Case2 = ProofBuilder.
-    c( LogicalAxiom( hof"s(n) < s(y0) * s(y0)" ) ).
+    c( LogicalAxiom( minorLem2 ) ).
     // Rewrite <->
     c( LogicalAxiom( defleq ) ).
     u( ForallElimBlock( _, List( le"y0 * y0", le"s(n)" ) ) ).
     u( AndElim2Rule( _ ) ).
     c( LogicalAxiom( lem7 ) ).
     u( ForallElimBlock( _, List( le"y0 * y0", le"n: nat" ) ) ).
-    c( LogicalAxiom( hof"y0 * y0 < n" ) ).
+    c( LogicalAxiom( minorLem3 ) ).
     b( ImpElimRule( _, _ ) ).
     u( OrIntro2Rule( _, hof"y0 * y0 = s(n)" ) ).
     b( ImpElimRule( _, _ ) ). // end Rewrite <->
@@ -389,7 +428,7 @@ object sqrtProofManualCorrectAxiomClassical extends Script {
   val pi1 = ProofBuilder.
     c( LogicalAxiom( lem1 ) ).
     u( ForallElimBlock( _, List( le"n:nat", le"s(y0) * s(y0)" ) ) ).
-    c( LogicalAxiom( hof"n < s(y0) * s(y0) & y0 * y0 <= n" ) ).
+    c( LogicalAxiom( minorLem4 ) ).
     u( AndElim1Rule( _ ) ).
     b( ImpElimRule( _, _ ) ).
     c( pi1Case1 ).
@@ -404,7 +443,7 @@ object sqrtProofManualCorrectAxiomClassical extends Script {
     u( ForallElimBlock( _, List( le"s(n)", le"s(s(y0) * s(y0))", le"s(s(y0)) * s(s(y0))" ) ) ).
     c( LogicalAxiom( lem5 ) ).
     u( ForallElimBlock( _, List( le"s(n)", le"s(y0) * s(y0)" ) ) ).
-    c( LogicalAxiom( hof"s(n) = s(y0) * s(y0)" ) ).
+    c( LogicalAxiom( minorLem1 ) ).
     b( ImpElimRule( _, _ ) ).
     c( LogicalAxiom( lem4 ) ).
     u( ForallElimRule( _, le"y0: nat" ) ).
@@ -416,25 +455,25 @@ object sqrtProofManualCorrectAxiomClassical extends Script {
     u( AndElim2Rule( _ ) ).
     c( LogicalAxiom( symm ) ).
     u( ForallElimBlock( _, List( le"s(n)", le"s(y0) * s(y0)" ) ) ).
-    c( LogicalAxiom( hof"s(n) = s(y0) * s(y0)" ) ).
+    c( LogicalAxiom( minorLem1 ) ).
     b( ImpElimRule( _, _ ) ).
     u( OrIntro1Rule( _, hof"s(y0) * s(y0) < s(n)" ) ).
     b( ImpElimRule( _, _ ) ). // end Rewrite <->
     b( AndIntroRule( _, _ ) ).
-    u( ContractionRule( _, hof"s(n) = s(y0) * s(y0)" ) ).
+    u( ContractionRule( _, minorLem1 ) ).
     u( ExistsIntroRule( _, Dsn ) ).
     qed
   //println( pi32 )
 
   val pi2Case2 = ProofBuilder.
-    c( LogicalAxiom( hof"s(n) < s(y0) * s(y0)" ) ).
+    c( LogicalAxiom( minorLem2 ) ).
     // Rewrite <->
     c( LogicalAxiom( defleq ) ).
     u( ForallElimBlock( _, List( le"y0 * y0", le"s(n)" ) ) ).
     u( AndElim2Rule( _ ) ).
     c( LogicalAxiom( lem5 ) ).
     u( ForallElimBlock( _, List( le"y0 * y0", le"n:nat" ) ) ).
-    c( LogicalAxiom( hof"y0 * y0 = n" ) ).
+    c( LogicalAxiom( minorLem5 ) ).
     b( ImpElimRule( _, _ ) ).
     u( OrIntro2Rule( _, hof"y0 * y0 = s(n)" ) ).
     b( ImpElimRule( _, _ ) ). // end Rewrite <->
@@ -446,7 +485,7 @@ object sqrtProofManualCorrectAxiomClassical extends Script {
   val pi2 = ProofBuilder.
     c( LogicalAxiom( lem1 ) ).
     u( ForallElimBlock( _, List( le"n:nat", le"s(y0) * s(y0)" ) ) ).
-    c( LogicalAxiom( hof"n < s(y0) * s(y0) & y0 * y0 <= n" ) ).
+    c( LogicalAxiom( minorLem4 ) ).
     u( AndElim1Rule( _ ) ).
     b( ImpElimRule( _, _ ) ).
     c( pi2Case1 ).
@@ -459,14 +498,14 @@ object sqrtProofManualCorrectAxiomClassical extends Script {
     c( LogicalAxiom( defleq ) ).
     u( ForallElimBlock( _, List( le"y0 * y0", le"n:nat" ) ) ).
     u( AndElim1Rule( _ ) ).
-    c( LogicalAxiom( hof"n < s(y0) * s(y0) & y0 * y0 <= n" ) ).
+    c( LogicalAxiom( minorLem4 ) ).
     u( AndElim2Rule( _ ) ).
     b( ImpElimRule( _, _ ) ).
     c( pi2 ).
     c( pi1 ).
     t( OrElimRule( _, _, _ ) ).
-    u( ContractionRule( _, hof"n < s(y0) * s(y0) & y0 * y0 <= n" ) ).
-    u( ContractionRule( _, hof"n < s(y0) * s(y0) & y0 * y0 <= n" ) ).
+    u( ContractionRule( _, minorLem4 ) ).
+    u( ContractionRule( _, minorLem4 ) ).
     u( ContractionRule( _, lem4 ) ).
     u( ContractionRule( _, lem5 ) ).
     u( ContractionRule( _, defleq ) ).
@@ -524,14 +563,52 @@ object sqrtProofManualCorrectAxiomClassical extends Script {
     qed
   //println( proof )
   prooftool( proof )
-  import extraction.{ ScalaCodeGenerator, FSharpCodeGenerator }
+  import scala.collection._
+  def assignArgs( prog: Expr, args: mutable.Map[Ty, Expr] ): Expr = prog.ty match {
+    case TArr( TBase( "nat", _ ), _ ) | TBase( "conj", _ ) => prog
+    case TArr( argTy, _ ) =>
+      val arg = args( argTy )
+      println( s"assigning $arg to ${prog.ty}" )
+      assignArgs( prog( arg ), args )
+  }
+  val progArgs = mutable.Map[Ty, Expr](
+    List( trans, lem3, lem4, lem5, symm, lem7, peano1, peano2, lem8, D0, Dn, Dsn, minorLem1, minorLem2, minorLem3, minorLem4, minorLem5 ).zipWithIndex.map {
+      case ( f, i ) => ClassicalExtraction.flat( f ) -> Const( s"arg$i", ClassicalExtraction.flat( f ) )
+    }: _* )
+
+  val Some( i ) = cctx.constant( "i" )
+  val Some( ite ) = cctx.constant( "ite", List( ty"sum(1)(1)" ) )
+  val Some( pair ) = cctx.constant( "pair", List( ty"1>sum(1)(1)", ty"sum(1)(1)>1" ) )
+  val Some( cmp ) = cctx.constant( "cmp" )
+  val Some( cmp2 ) = cctx.constant( "cmp2" )
+  val Some( inl ) = cctx.constant( "inl", List( ty"1", ty"1" ) )
+  val Some( inr ) = cctx.constant( "inr", List( ty"1", ty"1" ) )
+  val Some( proj1 ) = cctx.constant( "expi1", List( ty"nat", ty"conj(1)(1)" ) )
+  //(x < y -> (s(x) = y | s(x) < y))"
+  progArgs += ( ClassicalExtraction.flat( lem1 ) ->
+    le"""
+  (^(tmp1:nat) (^(tmp2:nat) (^(tmp3:1) ($ite($lt($s(tmp1), tmp2))($inr($i))($inl($i))))))
+  """ )
+  // (x<=y <-> (x=y | x<y))"
+  progArgs += ( ClassicalExtraction.flat( defleq ) ->
+    le"""(^(tmp3:nat) (^(tmp4:nat)
+  $pair(
+    (^(tmp5:1) ($cmp2 tmp3 tmp4)),
+    (^(tmp6:sum(1)(1)) $i)
+  )))""" )
+  //import extraction.{ ScalaCodeGenerator, FSharpCodeGenerator }
   val m1 = ClassicalExtraction.extractCases( proof )
+  val realm1 = assignArgs( m1, progArgs )
+  //ScalaCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
+  println( normalize( proj1( realm1( le"s(s(s(s(0))))" ) ) ) )
+  /*
   ScalaCodeGenerator( m1 )( ClassicalExtraction.systemT( ctx ) )
 
-  val m = MRealizability.mrealize( proof )
+  val m = MRealizability.mrealize( proof )( MRealizability.systemT( ctx ) )
   implicit var systemT = MRealizability.systemT( ctx )
-  println( "free vars: " + freeVariables( m._2( le"s(s(s(s(0))))" ) ) )
-  println( normalize( m._2( le"s(s(s(s(0))))" ) ) )
+  */
+  //println( "free vars: " + freeVariables( m._2( le"s(s(s(s(0))))" ) ) )
+  //println( normalize( m._2( le"s(s(s(s(0))))" ) ) )
 }
 
 object extractBug1 extends Script {
@@ -562,6 +639,7 @@ object extractBug1 extends Script {
     qed
 
   val m1 = ClassicalExtraction.extractCases( base )
+  println( m1 )
 }
 
 object extractBug2 extends Script {
@@ -583,6 +661,8 @@ object extractBug2 extends Script {
   val defleq = hof"!x!y (x<=y <-> (x=y | x<y))"
   val peano1 = hof"!x (0 * x = 0)"
 
+  println( "defleq " + defleq )
+
   val base = ProofBuilder.
     c( LogicalAxiom( defleq ) ).
     u( ForallElimBlock( _, List( le"0 * 0", le"0:nat" ) ) ).
@@ -594,9 +674,11 @@ object extractBug2 extends Script {
     */
     //b( ImpElimRule( _, _ ) ). // end 0 * 0 <= 0
     qed
+  println( base.endSequent.succedent.head )
   prooftool( base )
 
   val m1 = ClassicalExtraction.extractCases( base )
+  println( m1 )
 }
 
 object sqrtProofManualCorrectAxiomClassicalDifferentEMFormulasUsingEFQ extends Script {

@@ -33,6 +33,7 @@ object ClassicalExtraction {
     // add recursors for all inductive types
     for ( ( name, constructors ) <- systemT.get[StructurallyInductiveTypes].constructors.filter( _._1 != "o" ) ) {
       val typ = systemT.get[BaseTypes].baseTypes( name )
+      println( s"typ: ${typ}" )
       val argTypes = constructors.map( x => x -> FunctionType.unapply( x.ty ).get._2 ) toMap
       val resultVariable = TVar( new NameGenerator( typeVariables( typ ) map ( _.name ) ).fresh( "a" ) )
       val ngTermVariableNames = new NameGenerator( systemT.constants map ( _.name ) )
@@ -289,7 +290,8 @@ object ClassicalExtraction {
       case InductionRule( cases, _, _ ) => cases( 1 ).eigenVars
     }.flatten.map( _.name )
     val ng = new NameGenerator( evs )
-    val lambda = extractCases( proof, ng, Map.empty, Map.empty ) //systemT( ctx ) )
+    println( ctx )
+    val lambda = extractCases( proof, ng, Map.empty, Map.empty ) //( systemT( ctx ) )
     //val res = lambda( Suc( 0 ) )
     //lambda.antecedent.foreach( e => println( s"abstracting ${e.asInstanceOf[Var]}" ) )
     val res = lambda.antecedent.fold( lambda( Suc( 0 ) ) )( ( agg, v ) => Abs( v.asInstanceOf[Var], agg ) )
@@ -377,6 +379,8 @@ object ClassicalExtraction {
             val a = exEm1HypVars( formula )
             a +: Sequent() :+ catchConst( formula, a )
           } else {
+
+            println( "getting a vLambda for " + formula )
             val v = getVar( formula, ng ) //Var( ng.fresh( "y" ), flat( formula ) )
             v +: Sequent() :+ v
           }
@@ -391,8 +395,17 @@ object ClassicalExtraction {
 
         case AndElim2Rule( subProof ) =>
           val s = extractCases( subProof, ng, exEm1HypVars, forallEm1HypVars )
+          println( s( Suc( 0 ) ) )
+          println( s( Suc( 0 ) ).ty )
+          val pi2 = s( Suc( 0 ) ).ty match {
+            case TBase( "conj", params ) => systemT.constant( "pi2", params ).get
+            case _                       => throw new Exception()
+          }
+          println( "s: " + s( Suc( 0 ) ) )
           val res = s.replaceAt( Suc( 0 ), le"pi2(${s( Suc( 0 ) )})" )
+          //val res = s.replaceAt( Suc( 0 ), pi2( s( Suc( 0 ) ) ) )
           //println( "AndElim2" )
+          println( "res: " + res )
           res
 
         case AndIntroRule( leftSubProof, rightSubProof ) =>
@@ -574,13 +587,13 @@ object ClassicalExtraction {
           //mrealizeCases( rightSubProof, varsAntPrem( proof, variables, 1 ), ng )
           val l = extractCases( leftSubProof, ng, exEm1HypVars, forallEm1HypVars )
           val r = extractCases( rightSubProof, ng, exEm1HypVars, forallEm1HypVars )
-          println( "l: " + l )
-          println( "r: " + r )
-          println( Var( ng.fresh( s"eq(${eq.mainFormula})" ), flat( eq.mainFormula ) ).ty )
-          val res = l.antecedent ++: r.antecedent ++: Sequent() :+ r.succedent.head
+          //println( "l: " + l )
+          //println( "r: " + r )
+          //println( Var( ng.fresh( s"eq(${eq.mainFormula})" ), flat( eq.mainFormula ) ).ty )
+          //val res = l.antecedent ++: r.antecedent ++: Sequent() :+ r.succedent.head
           //val res = l.antecedent ++: r.antecedent ++: Sequent() :+ Var( ng.fresh( s"eq(${eq.mainFormula})" ), flat( eq.mainFormula ) )
           //val res = l.antecedent ++: r.antecedent ++: Sequent() :+ le"subst ${l( Suc( 0 ) )} ${r( Suc( 0 ) )}"
-          //val res = l.antecedent ++: r.antecedent ++: Sequent() :+ le"i"
+          val res = l.antecedent ++: r.antecedent ++: Sequent() :+ le"i"
           //le"eq(${l( Suc( 0 ) )}, ${r( Suc( 0 ) )})" // ), flat( eq.mainFormula ) )
           //println( "EqElim" )
           res
