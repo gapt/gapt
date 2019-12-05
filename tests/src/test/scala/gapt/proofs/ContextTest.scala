@@ -1,7 +1,9 @@
 package gapt.proofs
 
 import gapt.expr._
+import gapt.expr.ty.FunctionType
 import gapt.expr.ty.Ti
+import gapt.expr.ty.To
 import gapt.formats.babel.{ Notation, Precedence }
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
@@ -18,6 +20,43 @@ class ContextTest extends Specification {
   import Context._
 
   "inductive type" in {
+
+    "constructors should have distinct names" in {
+      InductiveType( "A", hoc"C:A", hoc"C:A" ) must throwAn[IllegalArgumentException]
+    }
+
+    "constructors should not intersect projectors" in {
+      InductiveType( "A", Nil, "B" -> Seq(), "C" -> Seq( Some( "B" ) -> Ti ) ) must
+        throwAn[IllegalArgumentException]
+    }
+
+    "projectors should have distinct names" in {
+      InductiveType( "A", Nil,
+        "B" -> Seq( Some( "P" ) -> Ti ),
+        "C" -> Seq( Some( "P" ) -> Ti ) ) must
+        throwAn[IllegalArgumentException]
+    }
+
+    "constructors should construct inductive type" in {
+      val it = InductiveType( "A", Nil,
+        "B" -> Seq( None -> Ti ),
+        "C" -> Seq( None -> Ti ) )
+      it.constructorConstants.foreach {
+        c =>
+          val FunctionType( to, _ ) = c.ty
+          to mustEqual it.baseType
+      }
+      success
+    }
+
+    "projectors should have correct types" in {
+      val it = InductiveType( "A", Nil,
+        "B" -> Seq( Some( "P" ) -> Ti ),
+        "C" -> Seq( Some( "Q" ) -> To ) )
+      it.constructors.flatMap( _.fields.flatMap( _.projector ) ).toSet mustEqual
+        Set( hoc"P : A > i", hoc"Q : A > o" )
+    }
+
     "negative occurrences" in {
       default +
         InductiveType(
