@@ -202,6 +202,8 @@ class InductiveTypeValidator( inductiveType: InductiveType ) {
   def validate(): Unit = {
     requireConstructorsToBeConstructorsForType()
     requireDistinctConstructorNames()
+    projectorNamesShouldNotIntersectConstructorNames()
+    projectorNamesShouldNotIntersectOtherProjectorNames()
     requireAtLeastOneBaseCase()
   }
 
@@ -231,6 +233,32 @@ class InductiveTypeValidator( inductiveType: InductiveType ) {
       inductiveType.constructorConstants.map( _.name ) ==
         inductiveType.constructorConstants.map( _.name ).distinct,
       s"Names of type constructors are not distinct." )
+
+  private def projectorNamesShouldNotIntersectConstructorNames(): Unit = {
+    val projectorNames: Seq[String] = inductiveType.constructors.flatMap {
+      c => c.fields.flatMap( _.projector.map( _.name ) )
+    }
+    val constructorNames = inductiveType.constructorConstants.map( _.name )
+    val intersectingNames = projectorNames.intersect( constructorNames )
+    require(
+      intersectingNames.isEmpty,
+      s"Invalid inductive type: Symbol(s) ${intersectingNames.mkString( ", " )} occur as " +
+        s"constructor and as projector" )
+  }
+
+  private def projectorNamesShouldNotIntersectOtherProjectorNames(): Unit = {
+    val projectorGroups = inductiveType.constructors.flatMap {
+      c => c.fields.flatMap( _.projector.map( _.name ) )
+    }.groupBy( n => n )
+    val nonUniqueProjectors = projectorGroups.find {
+      case ( _, ns ) if ns.size != 1 => true
+      case _                         => false
+    }.map( _._1 )
+    require(
+      nonUniqueProjectors.isEmpty,
+      s"Invalid inductive type: Multiple occurrences of projector " +
+        s"symbol(s) ${nonUniqueProjectors.mkString( ", " )}" )
+  }
 
   private def requireAtLeastOneBaseCase(): Unit =
     require(
