@@ -11,6 +11,19 @@ import gapt.proofs.context.update.InductiveType
 
 package object logic {
 
+  def projectorDefinitions( it: InductiveType ): Iterable[Formula] = {
+    it.constructors.flatMap( projectorDefinitions )
+  }
+
+  private def projectorDefinitions( constructor: InductiveType.Constructor ): Iterable[Formula] = {
+    val c = constructor.constant
+    val xs = argumentVariablesWithPatternFor( n => s"x$n" )( c )
+    constructor.fields.zipWithIndex.flatMap {
+      case ( f, i ) =>
+        f.projector.map { p => p( c( xs ) ) === xs( i ) }
+    }
+  }
+
   def disjointnessAxioms( inductiveType: InductiveType ): Iterable[Formula] = {
     unorderedPairsOf( inductiveType.constructors.map( _.constant ) ).map {
       case ( c1, c2 ) => disjointnessAxiom( c1, c2 )
