@@ -13,6 +13,8 @@ import gapt.proofs.context.facet.Constants
 import gapt.proofs.context.facet.StructurallyInductiveTypes
 import gapt.proofs.context.update.InductiveType.Constructor
 import gapt.proofs.context.update.InductiveType.Constructor.Field
+import gapt.proofs.context.update.InductiveType.ConstructorDefinition
+import gapt.proofs.context.update.InductiveType.FieldDefinition
 
 /** Inductive base type with constructors. */
 case class InductiveType private (
@@ -55,12 +57,17 @@ object InductiveType {
     case class Field( projector: Option[Const], ty: Ty )
   }
 
-  def apply( baseType: Ty, constructors: Const* ): InductiveType = {
-    new InductiveTypeBaseTypeConstructorsParser( baseType, constructors ).parse
-  }
+  type FieldDefinition = ( Option[String], Ty )
+  type ConstructorDefinition = ( String, Seq[FieldDefinition] )
+
+  def apply( baseType: Ty, constructors: Const* ): InductiveType =
+    new InductiveTypeLegacyParser( baseType, constructors ).parse
 
   def apply( tyName: String, constructors: Const* ): InductiveType =
     InductiveType( TBase( tyName ), constructors: _* )
+
+  def apply( name: String, parameters: Seq[TVar], constructors: ConstructorDefinition* ): InductiveType =
+    new InductiveTypeInternalParser( name, parameters, constructors ).parse
 }
 
 trait InductiveTypeParser {
@@ -70,49 +77,96 @@ trait InductiveTypeParser {
   def parse: InductiveType
 }
 
-class InductiveTypeBaseTypeConstructorsParser(
-    ty: Ty, constructors: Seq[Const] ) extends InductiveTypeParser {
+class InductiveTypeLegacyParser( ty: Ty, constructors: Seq[Const] ) extends InductiveTypeParser {
 
-  type FieldDefinition = ( Option[String], Ty )
-  type ConstructorDefinition = ( String, Seq[FieldDefinition] )
-
+  private var parameters: Seq[TVar] = _
   private var baseType: TBase = _
-  private var typeParameters: Seq[TVar] = _
-  private var constructorDefinitions: Seq[ConstructorDefinition] = _
+  private var constructorDefs: Seq[ConstructorDefinition] = _
 
   override def parse: InductiveType = {
-    val inductiveType = parseInput
+    parseBaseType()
+    parseParameters()
+    parseConstructorDefinitions()
+    new InductiveTypeInternalParser( baseType.name, parameters, constructorDefs ).parse
+  }
+
+  private def parseBaseType(): Unit = {
+    require(
+      ty.isInstanceOf[TBase],
+      s"Cannot parse inductive type: expected base type but got type ${ty}." )
+    baseType = ty.asInstanceOf[TBase]
+  }
+
+  private def parseParameters(): Unit = {
+    val allParametersAreVariables = baseType.params.forall( _.isInstanceOf[TVar] )
+    require(
+      allParametersAreVariables,
+      s"Cannot parse inductive type: type parameter " +
+        s"${baseType.params.find( !_.isInstanceOf[TVar] )} is not a type variable." )
+    parameters = baseType.params.map( _.asInstanceOf[TVar] )
+  }
+
+  private def parseConstructorDefinitions(): Unit = {
+    require(
+      allConstructorsReturnBaseType,
+      s"Cannot parse inductive type: constructor " +
+        s"${constructorNotReturningBaseType.get} does not construct ${baseType}" )
+    require(
+      constructorsDoNotContainForeignParameters,
+      s"Cannot parse inductive type: constructor " +
+        s"${constructorWithForeignParameters} involves foreign parameters" )
+    constructorDefs = constructors.map( projectorlessConstructorDefinition )
+  }
+
+  private def allConstructorsReturnBaseType: Boolean =
+    constructorNotReturningBaseType.isEmpty
+
+  private def constructorNotReturningBaseType: Option[Const] =
+    constructors.find {
+      c => val FunctionType( to, _ ) = c.ty; to != baseType
+    }
+
+  private def constructorsDoNotContainForeignParameters: Boolean =
+    constructorWithForeignParameters.isEmpty
+
+  private def constructorWithForeignParameters: Option[Const] =
+    constructors.find {
+      !typeVariables( _ ).subsetOf( parameters.toSet )
+    }
+
+  private def projectorlessConstructorDefinition( c: Const ): ConstructorDefinition = {
+    val FunctionType( _, ts ) = c.ty
+    c.name -> ts.map { ( None, _ ) }
+  }
+}
+
+/**
+ * Parses an inductive type from an intermediary representation.
+ *
+ * This parser can be used to parse an inductive type from an intermediary
+ * representation obtained by parsing some other input source or to construct
+ * an inductive type manually.
+ */
+class InductiveTypeInternalParser(
+    name:                   String,
+    typeParameters:         Seq[TVar],
+    constructorDefinitions: Seq[ConstructorDefinition] ) extends InductiveTypeParser {
+
+  private val baseType: TBase = TBase( name, typeParameters: _* )
+
+  override def parse: InductiveType = {
+    val inductiveType = assembleInductiveType
     validateInductiveType( inductiveType )
     inductiveType
   }
-
-  private def parseInput: InductiveType = {
-    parseBaseType()
-    parseTypeParameters()
-    parseConstructorDefinitions()
-    assembleInductiveType()
-  }
-
-  private def validateInductiveType( it: InductiveType ): Unit =
-    InductiveTypeValidator.validate( it )
-
-  private def parseBaseType(): Unit =
-    baseType = ty.asInstanceOf[TBase]
-
-  private def parseTypeParameters(): Unit =
-    typeParameters = baseType.params.map( _.asInstanceOf[TVar] )
-
-  private def parseConstructorDefinitions(): Unit =
-    constructorDefinitions =
-      constructors.map { c =>
-        val FunctionType( _, ts ) = c.ty
-        c.name -> ts.map { ( None, _ ) }
-      }
 
   private def assembleInductiveType(): InductiveType = {
     val constructors = assembleConstructors()
     InductiveType( baseType, constructors, typeParameters )
   }
+
+  private def validateInductiveType( it: InductiveType ): Unit =
+    InductiveTypeValidator.validate( it )
 
   private def assembleConstructors(): Seq[Constructor] =
     constructorDefinitions.map( assembleConstructor )
@@ -130,7 +184,6 @@ class InductiveTypeBaseTypeConstructorsParser(
     Field(
       projectorName.map( projectorConstant( _, projectorType ) ),
       projectorType )
-
   }
 
   private def constructorConstant( name: String, fields: Seq[Ty] ): Const =
