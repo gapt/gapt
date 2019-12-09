@@ -1248,20 +1248,24 @@ ctx += PrimitiveRecursiveFunction(
 implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
 val axiom1 = hof"p(bTrue)"
 val axiom2 = hof"-p(bFalse)"
-val axiom3 = hof"!x (x = bTrue | x = bFalse)"
+//val axiom3 = hof"!x (x = bTrue | x = bFalse)"
 val thmfof = hof"!x?y ((p(x) -> p(y)) & (p(y) -> p(x)))"
-val problem = axiom1 +: axiom2 +: axiom3 +: Sequent() :+ thmfof
+val problem = axiom1 +: axiom2 +: Sequent() :+ thmfof
+//val problem = axiom1 +: axiom2 +: hof"p(x)" +: Sequent() :+ hof"x = bTrue"
+//val problem = axiom1 +: axiom2 +: hof"x = bTrue" +: Sequent() :+ hof"p(x)"
 println( TptpFOLExporter.tptpProofProblem( problem ).toString() )
 val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "45m" ) ).withDeskolemization.extendToManySortedViaErasure ) getExpansionProof problem
 //val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
 println( "Done." )
 println( "Deskolemization..." )
 val desk: ExpansionProof = expansionProof.get
+prooftool(desk)
+println(desk)
 println( "Done." )
 val lk = ExpansionProofToLK( desk ).getOrElse( throw new Exception( "LK proof not obtained" ) )
+prooftool(lk)
 val nd = LKToND( lk, Some( Suc( 0 ) ) )
-println( nd )
-//prooftool( nd )
+prooftool( nd )
 val em1SubProofs =
   nd.subProofs.filter {
     case e @ ExcludedMiddleRule( _, _, _, _) =>
@@ -1284,7 +1288,6 @@ val realm1 = m1( exception )( i )
 LogHandler.current.value = LogHandler.silent
 //println( normalize( realm1( bTrue ) ).toUntypedString )
 //println( normalize( realm1( bFalse ) ).toUntypedString )
-prooftool(lk)
 }
 
 object zIffaAndb extends Script {
@@ -1684,4 +1687,366 @@ object sumTypeDemonstration extends Script {
   prooftool(p)
   val lam = ClassicalExtraction.extractCases(p)
   println(lam.toUntypedString)
+}
+
+object vampireDNETest extends Script {
+
+  import gapt.expr._
+  import gapt.proofs.nd._
+  import gapt.proofs._
+  import gapt.proofs.expansion.{ ExpansionProof, ETWeakQuantifier, ExpansionProofToLK }
+  import gapt.provers.vampire.Vampire
+
+  import gapt.proofs.context.Context
+  import gapt.proofs.nd.ClassicalExtraction
+  var ctx = Context.default
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "bool", hoc"bFalse: bool", hoc"bTrue: bool" )
+  val Some( bFalse ) = ctx.constant( "bFalse" )
+  val Some( bTrue ) = ctx.constant( "bTrue" )
+  val bIsTrue = hoc"p : bool>o"
+  ctx += PrimitiveRecursiveFunction(
+    bIsTrue,
+    List(
+      ( bIsTrue( bFalse ) -> hof"false" ),
+      ( bIsTrue( bTrue ) -> hof"true" ) ) )( ctx )
+  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+  val axiom1 = hof"p(bTrue)"
+  val axiom2 = hof"-p(bFalse)"
+  val axiom3 = hof"!x ((-(-p(x)) -> p(x)) & (p(x) -> -(-(p(x)))))"
+  val thmfof = hof"!x!y?z ((-(-(p(x))) & p(y) -> p(z)) & (p(z) -> (-(-(p(x))) & p(y))))"
+  val problem = axiom1 +: axiom2 +: Sequent() :+ thmfof
+  println( TptpFOLExporter.tptpProofProblem( problem ).toString() )
+  val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "45m" ) ).withDeskolemization.extendToManySortedViaErasure ) getExpansionProof problem
+  //val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
+  println( "Done." )
+  println( "Deskolemization..." )
+  val desk: ExpansionProof = expansionProof.get
+  println( "Done." )
+  val lk = ExpansionProofToLK( desk ).getOrElse( throw new Exception( "LK proof not obtained" ) )
+  val nd = LKToND( lk, Some( Suc( 0 ) ) )
+  println( nd )
+  //prooftool( nd )
+  val em1SubProofs =
+    nd.subProofs.filter {
+      case e @ ExcludedMiddleRule( _, _, _, _) =>
+        e.formulaA match {
+          case Ex(_, _) => true
+          case _ => false
+        }
+      case _                                => false
+    }
+  println( s"contains ${ em1SubProofs.size } EM1 excluded middle inferences" )
+  em1SubProofs.foreach( prooftool(_) )
+  println( em1SubProofs.map( _.endSequent.succedent ) )
+  val m1 = ClassicalExtraction.extractCases( nd )
+  val Some( i ) = ctxClassical.constant( "i" )
+  val Some( exception ) = ctxClassical.constant( "exception", List( ty"1" ) )
+  prooftool(nd)
+  prooftool(lk)
+
+  val realm1 = m1( exception )( i )
+  LogHandler.current.value = LogHandler.silent
+  //println( normalize( realm1( bTrue ) ).toUntypedString )
+  //println( normalize( realm1( bFalse ) ).toUntypedString )
+
+  val All(_, Ex(y, fEx)) = nd.endSequent(Suc(0))
+  // Check if optimization of the ctr:r translation is possible to prevent introduction of EM1
+  // as described in email on Mar 4, 2019
+  def canBeOptimized(nd: NDProof, f: Formula): Boolean = {
+    val containsNegPx = nd.endSequent.antecedent.exists{
+      case Neg(curr) => syntacticMGU(f, curr).nonEmpty
+      case _ => false
+    }
+    // TODO: Does it need to match with variable y?
+    val containsExPx = nd.endSequent(Suc(0)) == Ex(y, f)
+    if( containsNegPx && containsExPx ) {
+      true
+    } else {
+      nd match {
+        case LogicalAxiom(_) => false
+        case ForallIntroRule(subProof, eigenVariable, quantifiedVariable) =>
+          canBeOptimized(subProof, Substitution(quantifiedVariable, eigenVariable)(f))
+        case UnaryNDProof(_, subProof) => canBeOptimized(subProof, f)
+        case BinaryNDProof(_, leftSubProof, rightSubProof) =>
+          canBeOptimized(leftSubProof, f) || canBeOptimized(rightSubProof, f)
+        case TernaryNDProof(_, leftSubProof, middleSubProof, rightSubProof) =>
+          canBeOptimized(leftSubProof, f) || canBeOptimized(middleSubProof, f) || canBeOptimized(rightSubProof, f)
+      }
+    }
+  }
+  println(canBeOptimized(nd, fEx))
+}
+
+object vampireJiang extends Script {
+
+  import gapt.expr._
+  import gapt.proofs.nd._
+  import gapt.proofs._
+  import gapt.proofs.expansion.{ ExpansionProof, ETWeakQuantifier, ExpansionProofToLK }
+  import gapt.provers.vampire.Vampire
+
+  import gapt.proofs.context.Context
+  import gapt.proofs.nd.ClassicalExtraction
+  var ctx = Context.default
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "bool", hoc"bFalse: bool", hoc"bTrue: bool" )
+  val Some( bFalse ) = ctx.constant( "bFalse" )
+  val Some( bTrue ) = ctx.constant( "bTrue" )
+  val bIsTrue = hoc"p : bool>o"
+  ctx += PrimitiveRecursiveFunction(
+    bIsTrue,
+    List(
+      ( bIsTrue( bFalse ) -> hof"false" ),
+      ( bIsTrue( bTrue ) -> hof"true" ) ) )( ctx )
+  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+  val axiom1 = hof"p(bTrue)"
+  val axiom2 = hof"-p(bFalse)"
+  val thmfof = hof"!x1!x2?y1?y2 ((-p(x1) & -p(x2) & -p(y1) & p(y2)) | (-p(x1) & p(x2) & -p(y1) & -p(y2)) | (-p(x1) & p(x2) & p(y1) & p(y2)) | (p(x1) & -p(x2) & -p(y1) & -p(y2)) | (p(x1) & p(x2) & p(y1) & -p(y2)))"
+  val problem = axiom1 +: axiom2 +: Sequent() :+ thmfof
+  println( TptpFOLExporter.tptpProofProblem( problem ).toString() )
+  val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "45m" ) ).withDeskolemization.extendToManySortedViaErasure ) getExpansionProof problem
+  //val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
+  println( "Done." )
+  println( "Deskolemization..." )
+  val desk: ExpansionProof = expansionProof.get
+  println( "Done." )
+  val lk = ExpansionProofToLK( desk ).getOrElse( throw new Exception( "LK proof not obtained" ) )
+  val nd = LKToND( lk, Some( Suc( 0 ) ) )
+  prooftool(nd)
+  prooftool(lk)
+
+  val All(_, All(_, Ex(y, fEx))) = nd.endSequent(Suc(0))
+  // Check if optimization of the ctr:r translation is possible to prevent introduction of EM1
+  // as described in email on Mar 4, 2019
+  def canBeOptimized(nd: NDProof, f: Formula): Boolean = {
+    val containsNegPx = nd.endSequent.antecedent.exists{
+      case Neg(curr) => syntacticMGU(f, curr).nonEmpty
+      case _ => false
+    }
+    // TODO: Does it need to match with variable y?
+    val containsExPx = nd.endSequent(Suc(0)) == Ex(y, f)
+    if( containsNegPx && containsExPx ) {
+      true
+    } else {
+      nd match {
+        case LogicalAxiom(_) => false
+        case ForallIntroRule(subProof, eigenVariable, quantifiedVariable) =>
+          canBeOptimized(subProof, Substitution(quantifiedVariable, eigenVariable)(f))
+        case UnaryNDProof(_, subProof) => canBeOptimized(subProof, f)
+        case BinaryNDProof(_, leftSubProof, rightSubProof) =>
+          canBeOptimized(leftSubProof, f) || canBeOptimized(rightSubProof, f)
+        case TernaryNDProof(_, leftSubProof, middleSubProof, rightSubProof) =>
+          canBeOptimized(leftSubProof, f) || canBeOptimized(middleSubProof, f) || canBeOptimized(rightSubProof, f)
+      }
+    }
+  }
+  println(canBeOptimized(nd, fEx))
+  val em1SubProofs =
+    nd.subProofs.filter {
+      case e @ ExcludedMiddleRule( _, _, _, _) =>
+        e.formulaA match {
+          case Ex(_, _) => true
+          case _ => false
+        }
+      case _                                => false
+    }
+  println( s"contains ${
+    em1SubProofs.size
+  } excluded middle inferences" )
+  val m1 = ClassicalExtraction.extractCases( nd )
+  val Some( i ) = ctxClassical.constant( "i" )
+  val Some( exception ) = ctxClassical.constant( "exception", List( ty"1" ) )
+
+  val realm1 = m1( exception )( i )
+  LogHandler.current.value = LogHandler.silent
+  //println( normalize( realm1( bTrue ) ).toUntypedString )
+  //println( normalize( realm1( bFalse ) ).toUntypedString )
+
+}
+
+object em1Optimization extends Script {
+  import gapt.expr._
+  import gapt.proofs.lk.rules._
+  import gapt.proofs._
+  import gapt.proofs.expansion.{ ExpansionProof, ETWeakQuantifier, ExpansionProofToLK }
+  import gapt.provers.vampire.Vampire
+
+  import gapt.proofs.context.Context
+  import gapt.proofs.nd.ClassicalExtraction
+  var ctx = Context.default
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "bool", hoc"bFalse: bool", hoc"bTrue: bool" )
+  val Some( bFalse ) = ctx.constant( "bFalse" )
+  val Some( bTrue ) = ctx.constant( "bTrue" )
+  val bIsTrue = hoc"p : bool>o"
+  ctx += PrimitiveRecursiveFunction(
+    bIsTrue,
+    List(
+      ( bIsTrue( bFalse ) -> hof"false" ),
+      ( bIsTrue( bTrue ) -> hof"true" ) ) )( ctx )
+  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+
+  val lkProofTmp = ProofBuilder.
+    c(lk.rules.LogicalAxiom(hof"p(bTrue) & p(bTrue)")).
+    u(WeakeningRightRule(_, hof"p(bTrue) & p(bTrue)")).
+    u(WeakeningRightRule(_, hof"p(x1) & p(x2)")).
+    u(WeakeningRightRule(_, hof"p(x1) & p(x2)")).
+    qed
+  val lkProof = ProofBuilder.
+    c(lkProofTmp).
+    u(ExistsRightRule(_, Suc(0), hof"p(x1) & p(bTrue)", le"bTrue", hov"x1: bool")).
+    u(ExistsRightRule(_, Suc(0), hof"p(x1) & p(bTrue)", le"bTrue", hov"x1: bool")).
+    u(ExistsRightRule(_, Suc(0), hof"p(x1) & p(x2)", le"x1: bool", hov"x1: bool")).
+    u(ExistsRightRule(_, Suc(0), hof"p(x1) & p(x2)", le"x1: bool", hov"x1: bool")).
+    u(ContractionRightRule(_, Suc(2), Suc(3))).
+    u(ContractionRightRule(_, Suc(0), Suc(1))).
+    qed
+  prooftool(lkProof)
+  val ndProof = LKToND(lkProof)
+  prooftool(ndProof)
+}
+
+object negQuantifier extends Script {
+
+  import gapt.expr._
+  import gapt.proofs.nd._
+  import gapt.proofs._
+  import gapt.proofs.expansion.{ ExpansionProof, ETWeakQuantifier, ExpansionProofToLK }
+  import gapt.provers.vampire.Vampire
+
+  import gapt.proofs.context.Context
+  import gapt.proofs.nd.ClassicalExtraction
+  var ctx = Context.default
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "bool", hoc"bFalse: bool", hoc"bTrue: bool" )
+  val Some( bFalse ) = ctx.constant( "bFalse" )
+  val Some( bTrue ) = ctx.constant( "bTrue" )
+  val bIsTrue = hoc"p : bool>o"
+  ctx += PrimitiveRecursiveFunction(
+    bIsTrue,
+    List(
+      ( bIsTrue( bFalse ) -> hof"false" ),
+      ( bIsTrue( bTrue ) -> hof"true" ) ) )( ctx )
+  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+  val thmfof = hof"(-(!x p(x))) -> (?x -p(x))"
+  val problem = Sequent() :+ thmfof
+  println( TptpFOLExporter.tptpProofProblem( problem ).toString() )
+  val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "45m" ) ).withDeskolemization.extendToManySortedViaErasure ) getExpansionProof problem
+  //val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
+  println( "Done." )
+  println( "Deskolemization..." )
+  val desk: ExpansionProof = expansionProof.get
+  println( "Done." )
+  val lk = ExpansionProofToLK( desk ).getOrElse( throw new Exception( "LK proof not obtained" ) )
+  val nd = LKToND( lk, Some( Suc( 0 ) ) )
+  prooftool(nd)
+  prooftool(lk)
+}
+
+object vampireSimpleDet extends Script {
+
+  import gapt.expr._
+  import gapt.proofs.nd._
+  import gapt.proofs._
+  import gapt.proofs.expansion.{ ExpansionProof, ETWeakQuantifier, ExpansionProofToLK }
+  import gapt.provers.vampire.Vampire
+
+  import gapt.proofs.context.Context
+  import gapt.proofs.nd.ClassicalExtraction
+  var ctx = Context.default
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "bool", hoc"bFalse: bool", hoc"bTrue: bool" )
+  val Some( bFalse ) = ctx.constant( "bFalse" )
+  val Some( bTrue ) = ctx.constant( "bTrue" )
+  val bIsTrue = hoc"p : bool>o"
+  ctx += PrimitiveRecursiveFunction(
+    bIsTrue,
+    List(
+      ( bIsTrue( bFalse ) -> hof"false" ),
+      ( bIsTrue( bTrue ) -> hof"true" ) ) )( ctx )
+  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+  val axiom1 = hof"p(bTrue)"
+  val axiom2 = hof"-p(bFalse)"
+  val thmfof = hof"!x?y ((-p(x) & p(y)) | (p(x) & p(y)))"
+  //val thmfof = hof"!x?y ((-p(x) & -p(y)) | (-p(x) & p(y)) | (p(x) & p(y)))"
+  val problem = axiom1 +: axiom2 +: Sequent() :+ thmfof
+  println( TptpFOLExporter.tptpProofProblem( problem ).toString() )
+  val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "45m" ) ).withDeskolemization.extendToManySortedViaErasure ) getExpansionProof problem
+  //val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
+  println( "Done." )
+  println( "Deskolemization..." )
+  val desk: ExpansionProof = expansionProof.get
+  println( "Done." )
+  val lk = ExpansionProofToLK( desk ).getOrElse( throw new Exception( "LK proof not obtained" ) )
+  val nd = LKToND( lk, Some( Suc( 0 ) ) )
+  prooftool(nd)
+  prooftool(lk)
+
+  val m1 = ClassicalExtraction.extractCases( nd )
+  val Some( i ) = ctxClassical.constant( "i" )
+  //val Some( exception ) = ctxClassical.constant( "exception", List( ty"1" ) )
+
+  //val realm1 = m1( i )
+  val realm1 = normalize( m1( i ) )
+  LogHandler.current.value = LogHandler.silent
+  println("1\n" + realm1.toUntypedString)
+  println("2\n" + normalize( realm1( bTrue ) ).toUntypedString )
+  println("3\n" + normalize( realm1( bFalse ) ).toUntypedString )
+
+}
+
+
+object vampireQBF extends Script {
+
+  import gapt.expr._
+  import gapt.proofs.nd._
+  import gapt.proofs._
+  import gapt.proofs.expansion.{ ExpansionProof, ETWeakQuantifier, ExpansionProofToLK }
+  import gapt.provers.vampire.Vampire
+
+  import gapt.proofs.context.Context
+  import gapt.proofs.nd.ClassicalExtraction
+  var ctx = Context.default
+  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType( "bool", hoc"bFalse: bool", hoc"bTrue: bool" )
+  val Some( bFalse ) = ctx.constant( "bFalse" )
+  val Some( bTrue ) = ctx.constant( "bTrue" )
+  val bIsTrue = hoc"p : bool>o"
+  ctx += PrimitiveRecursiveFunction(
+    bIsTrue,
+    List(
+      ( bIsTrue( bFalse ) -> hof"false" ),
+      ( bIsTrue( bTrue ) -> hof"true" ) ) )( ctx )
+  implicit var ctxClassical = ClassicalExtraction.systemT( ctx )
+  val axiom1 = hof"p(bTrue)"
+  val axiom2 = hof"-p(bFalse)"
+  val thmfof = hof"!x?u!y?v!z ((-p(y) & -p(v) & -p(z)) | (p(y) & p(v) & -p(z)) | (-p(x) & -p(u) & p(z)) | (p(x) & -p(u) & p(z)) | (p(x) & p(u) & p(z)))"
+  //val thmfof = hof"!x?y ((-p(x) & -p(y)) | (-p(x) & p(y)) | (p(x) & p(y)))"
+  val problem = axiom1 +: axiom2 +: Sequent() :+ thmfof
+  println( TptpFOLExporter.tptpProofProblem( problem ).toString() )
+  val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "45m" ) ).withDeskolemization.extendToManySortedViaErasure ) getExpansionProof problem
+  //val expansionProof: Option[ExpansionProof] = ( new Vampire( extraArgs = Seq( "--time_limit", "5m" ) ) ) getExpansionProof tmp._1
+  println( "Done." )
+  println( "Deskolemization..." )
+  val desk: ExpansionProof = expansionProof.get
+  println( "Done." )
+  prooftool(desk)
+  val lk = ExpansionProofToLK( desk ).getOrElse( throw new Exception( "LK proof not obtained" ) )
+  println("lk done")
+  val nd = LKToND( lk, Some( Suc( 0 ) ) )
+  println("nd done")
+  println(nd)
+  prooftool(nd)
+  prooftool(lk)
+
+  val m1 = ClassicalExtraction.extractCases( nd )
+  val Some( i ) = ctxClassical.constant( "i" )
+  //val Some( exception ) = ctxClassical.constant( "exception", List( ty"1" ) )
+
+  //val realm1 = m1( i )
+  val realm1 = normalize( m1( i ) )
+  LogHandler.current.value = LogHandler.silent
+  println("1\n" + realm1.toUntypedString)
+
 }

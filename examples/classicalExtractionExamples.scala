@@ -1,17 +1,18 @@
 package gapt.examples
 
-import extraction.{ FSharpCodeGenerator, ScalaCodeGenerator }
+import extraction.{FSharpCodeGenerator, ScalaCodeGenerator}
 import gapt.examples.theories.nat
 import gapt.proofs.nd._
-import gapt.expr.{ TBase, _ }
-import gapt.formats.babel.{ Notation, Precedence }
+import gapt.expr.{TBase, _}
+import gapt.formats.babel.{Notation, Precedence}
 import gapt.formats.json.JsonImporter
 import gapt.proofs
 import gapt.proofs.context.Context
-import gapt.proofs.{ Ant, Checkable, ProofBuilder, Sequent, Suc }
-import gapt.proofs.context.update.{ InductiveType, PrimitiveRecursiveFunction, ReductionRuleUpdate }
+import gapt.proofs.{Ant, Checkable, ProofBuilder, Sequent, Suc}
+import gapt.proofs.context.update.{InductiveType, PrimitiveRecursiveFunction, ReductionRuleUpdate}
 import gapt.proofs.lk.rules._
-import gapt.proofs.lk.transformations.{ LKToND, eliminateDefinitions }
+import gapt.proofs.lk.transformations.{LKToND, eliminateDefinitions}
+import gapt.proofs.resolution.PCNF
 import gapt.prooftool.prooftool
 
 object example1 extends Script {
@@ -4658,4 +4659,75 @@ object testCase3 extends Script {
   val Some( i ) = classicalCtx.constant( "i" )
   val res = normalize(lam(i))
   println(res)
+}
+
+
+object testCase4 extends Script {
+  var ctx = Context.default
+
+  ctx += InductiveType( ty"nat", hoc"0 : nat", hoc"s : nat > nat")
+  ctx += InductiveType( "bool", hoc"bFalse: bool", hoc"bTrue: bool" )
+  val Some( bFalse ) = ctx.constant( "bFalse" )
+  val Some( bTrue ) = ctx.constant( "bTrue" )
+  val bIsTrue = hoc"p : bool>o"
+  ctx += PrimitiveRecursiveFunction(
+    bIsTrue,
+    List(
+      ( bIsTrue( bFalse ) -> hof"false" ),
+      ( bIsTrue( bTrue ) -> hof"true" ) ) )( ctx )
+
+  implicit var classicalCtx = ClassicalExtraction.systemT(ctx)
+
+  val prf = ProofBuilder.
+    c(gapt.proofs.nd.LogicalAxiom(hof"?x p(x)")).
+    //c(gapt.proofs.nd.LogicalAxiom(hof"-p(x)")).
+    c(gapt.proofs.nd.LogicalAxiom(hof"p(x)")).
+    //b(NegElimRule(_,_)).
+    b(ExistsElimRule(_,_)).
+    qed
+
+  prooftool(prf)
+
+  /*
+  val lam = ClassicalExtraction.extractCases(prf)
+  println(lam)
+
+  val Some( i ) = classicalCtx.constant( "i" )
+  val res = normalize(lam(i))
+  println(res)
+  */
+}
+
+object pcnfTest extends Script {
+  var ctx = Context.default
+
+  ctx += InductiveType( ty"nat", hoc"0 : nat", hoc"s : nat > nat")
+  ctx += InductiveType( "bool", hoc"bFalse: bool", hoc"bTrue: bool" )
+  val Some( bFalse ) = ctx.constant( "bFalse" )
+  val Some( bTrue ) = ctx.constant( "bTrue" )
+  val bIsTrue = hoc"p : bool>o"
+  ctx += PrimitiveRecursiveFunction(
+    bIsTrue,
+    List(
+      ( bIsTrue( bFalse ) -> hof"false" ),
+      ( bIsTrue( bTrue ) -> hof"true" ) ) )( ctx )
+
+  implicit var classicalCtx = ClassicalExtraction.systemT(ctx)
+
+  val p1 = PCNF(Sequent() :+ hof"( (-p(x1) & -p(x2) & p(bTrue)) | (p(x1) & p(bTrue)) | (p(x2) & p(bTrue)) )", hoa"p(bTrue)" +: Sequent() :+ hoa"p(x1)" :+ hoa"p(x2)")
+  println(p1)
+  val p2 = PCNF(Sequent() :+ hof"( (-p(x1) & -p(x2) & p(bTrue)) | (p(x1) & p(bTrue)) | (p(x2) & p(bTrue)) )", hoa"p(x1)" +: hoa"p(y)" +: Sequent())
+  println(p2)
+  val p3 = PCNF(Sequent() :+ hof"( (-p(x1) & -p(x2) & p(bTrue)) | (p(x1) & p(bTrue)) | (p(x2) & p(bTrue)) )", hoa"p(x2)" +: hoa"p(y)" +: Sequent())
+  println(p3)
+
+  val p = ProofBuilder.
+    c(p1).
+    c(p2).
+    b(CutRule(_, _, hof"p(x1)")).
+    c(p3).
+    b(CutRule(_, _, hof"p(x2)")).
+    qed
+  prooftool(p)
+
 }

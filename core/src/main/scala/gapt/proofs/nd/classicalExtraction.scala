@@ -714,7 +714,7 @@ object ClassicalExtraction {
               //println( s"EM0: ${f}" )
               res
 
-            case _ => throw new Exception( "EM_k for k > 1 not supported." )
+            case f => throw new Exception( s"EM_k for k > 1 not supported. $f" )
           }
       }
     if ( res.indices != proof.conclusion.indices ) {

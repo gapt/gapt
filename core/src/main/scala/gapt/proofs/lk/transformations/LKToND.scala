@@ -61,7 +61,7 @@ object LKToND {
       assert( ( lk.endSequent.size + 1 ) == nd.endSequent.size )
       assert( nd.endSequent( Suc( 0 ) ) == Bottom() )
     } else {
-      assert( lk.endSequent.size == nd.endSequent.size )
+      //assert( lk.endSequent.size == nd.endSequent.size )
       //assert( lk.endSequent.succedent.contains( nd.endSequent( Suc( 0 ) ) ) )
       //assert( lk.endSequent( focus.get ) == nd.endSequent( Suc( 0 ) ) )
     }
@@ -259,19 +259,22 @@ object LKToND {
             }
 
             t.endSequent.foreach(f => println(syntacticMGU(l, f)))
-            val il = t.endSequent.find(f => syntacticMGU(Neg(decompose(l)), f).nonEmpty).get
-            val Neg(fWithoutEx) = t.endSequent(il)
+            val lPrime = Neg(decompose(l))
+            val il = t.endSequent.find(f => syntacticMGU(lPrime, f).nonEmpty)
+            val Neg(fWithoutEx) = t.endSequent(il.get)
 
-            def buildProof(f: Formula, ax: Formula): NDProof = f match {
-              case Ex(_, fPrime) => ExistsIntroRule(buildProof(fPrime, ax), f)
-              case _ => nd.LogicalAxiom(ax)
+            println(t.endSequent)
+
+            def buildProof(f: Formula, bc: NDProof): NDProof = f match {
+              case Ex(_, fPrime) => ExistsIntroRule(buildProof(fPrime, bc), f)
+              case _ => bc
             }
 
             ProofBuilder.
-              c(buildProof(l, fWithoutEx)).
+              c(buildProof(l, nd.LogicalAxiom(fWithoutEx))).
               c(t).
-              u(ExistsIntroRule(_, l)).
-              b(ExcludedMiddleRule(_, Ant(0), _, il)).
+              u(buildProof(l, _)).
+              b(ExcludedMiddleRule(_, Ant(0), _, il.get)).
               qed
           }
         } else {
@@ -564,9 +567,8 @@ object LKToND {
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
           if(forbidTranslation.contains(p.mainFormula)) {
             // Forbid nested exists introductions
-            val Ex(_, f) = p.mainFormula
-            val forbidTranslationUpdated = (p.mainFormula match {
-              case Ex(_, f) => f +: forbidTranslation
+            val forbidTranslationUpdated = (subProof.endSequent(aux) match {
+              case Ex(_, _) => subProof.endSequent(aux) +: forbidTranslation
               case _ => forbidTranslation
             }) - p.mainFormula
 
