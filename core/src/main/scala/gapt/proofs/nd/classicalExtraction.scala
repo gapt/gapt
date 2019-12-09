@@ -237,6 +237,12 @@ object ClassicalExtraction {
       List(
         ite( trueC )( x1 )( x2 ) -> x1,
         ite( falseC )( x1 )( x2 ) -> x2 ) )
+    val and = hoc"and:o>o>o"
+    systemT += PrimitiveRecursiveFunction(
+      and,
+      List(
+        and( trueC )( x3 ) -> x3,
+        and( falseC )( x3 ) -> falseC ) )
     import gapt.proofs.context.update.ReductionRuleUpdate._
     systemT += ReductionRule( hof"(true & x) = x" )
     systemT += ReductionRule( hof"(false & x) = false" )

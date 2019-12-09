@@ -331,6 +331,7 @@ object manualExistsMinimumNoDefinitions extends Script {
   import gapt.formats.babel.{ Notation, Precedence }
   import gapt.proofs.context.Context
   import gapt.proofs.nd._
+  import gapt.proofs._
 
   var ctx = Context.default
   ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
@@ -345,18 +346,16 @@ object manualExistsMinimumNoDefinitions extends Script {
   val Some( subtr ) = cctx.constant( "subtr" )
   val Some( ite ) = cctx.constant( "ite", List( ty"nat" ) )
   val Some( gt ) = cctx.constant( "gt" )
-  val Some( not ) = cctx.constant( "not" )
+  val not = hoc"'not': o>o"
+  cctx += PrimitiveRecursiveFunction(
+    not,
+    List(
+      ( not( hof"true" ) -> hof"false" ),
+      ( not( hof"false" ) -> hof"true" ) ) )( cctx )
 
   val x = hov"x:nat"
   val y = hov"y:nat"
-  // def f( x: Int ) = if ( x > 1 ) 0 else 1 - x
-  // min at x = 1
-  val f = hoc"'f': nat>nat"
-  cctx += PrimitiveRecursiveFunction(
-    f,
-    List(
-      ( f( z ) -> subtr( s( z ), z ) ),
-      ( f( s( x ) ) -> ite( gt( s( x ), s( z ) ) )( z )( subtr( s( z ), s( x ) ) ) ) ) )( cctx )
+
   val plus = hoc"'+': nat>nat>nat"
   cctx += PrimitiveRecursiveFunction(
     plus,
@@ -380,6 +379,30 @@ object manualExistsMinimumNoDefinitions extends Script {
   println( s"normalize 1 - 0: ${normalize( subtr( s( z ), z ) )}" )
   println( s"normalize 0 - 1: ${normalize( subtr( z, s( z ) ) )}" )
   println( s"normalize 2 - 1: ${normalize( subtr( s( s( z ) ), s( z ) ) )}" )
+
+  /*
+  // def f( x: Int ) = if ( x > 1 ) 0 else 1 - x
+  // min at x = 1
+  val f = hoc"'f': nat>nat"
+  cctx += PrimitiveRecursiveFunction(
+    f,
+    List(
+      ( f( z ) -> subtr( s( z ), z ) ),
+      ( f( s( x ) ) -> ite( gt( s( x ), s( z ) ) )( z )( subtr( s( z ), s( x ) ) ) ) ) )( cctx )
+  */
+
+  // def f(x: Int) = if(x == 2) 0 else 1
+  // mit at x = 2
+  val f = hoc"'f': nat>nat"
+  cctx += PrimitiveRecursiveFunction(
+    f,
+    List(
+      ( f( z ) -> s( z ) ),
+      ( f( s( x ) ) -> ite( leq( s( x ), s( s( z ) ) ) )( ite( leq( s( s( z ) ), s( x ) ) )( z )( s( z ) ) )( s( z ) ) ) ) )( cctx )
+  println( s"normalize f(0): ${normalize( f( z ) )}" )
+  println( s"normalize f(1): ${normalize( f( s( z ) ) )}" )
+  println( s"normalize f(2): ${normalize( f( s( s( z ) ) ) )}" )
+  println( s"normalize f(3): ${normalize( f( s( s( s( z ) ) ) ) )}" )
 
   val lem1 = hof"!x!y (x < s(y) -> x <= y)"
   val lem2 = hof"!x (x <= 0 -> x = 0)"
@@ -454,14 +477,13 @@ object manualExistsMinimumNoDefinitions extends Script {
     u( ExistsIntroRule( _, hof"?x (f(x) <= f(0))" ) ).
     b( ImpElimRule( _, _ ) ).
     qed
-  prooftool( proof )
   import extraction.{ ScalaCodeGenerator, FSharpCodeGenerator }
   val m1 = ClassicalExtraction.extractCases( proof )
   //ScalaCodeGenerator( "hasmin" )( m1 )( ClassicalExtraction.systemT( ctx ) )
 
   import scala.collection._
   def assignArgs( prog: Expr, args: mutable.Map[Ty, Expr] ): Expr = prog.ty match {
-    case TArr( TBase( "nat", _ ), _ ) | TBase( "conj", _ ) => prog
+    case TArr( TBase( "nat", _ ), _ ) | TBase( "conj", _ ) | TBase( "exconj", _ ) => prog
     case TArr( argTy, _ ) =>
       val arg = args( argTy )
       println( s"assigning $arg to ${prog.ty}" )
@@ -473,8 +495,19 @@ object manualExistsMinimumNoDefinitions extends Script {
       case ( f, i ) => ClassicalExtraction.flat( f ) -> Const( s"arg$i", ClassicalExtraction.flat( f ) )
     }: _* )
 
+  println( "m1:\n" + m1 )
   val realm1 = assignArgs( m1, m1Args )
+  var normalized = normalize( realm1 )
+  println( proof.endSequent( Suc( 0 ) ) )
+  println( normalized )
+  println( normalized.toUntypedAsciiString )
+  val test = le"existsElim(vLambda_9, ^x ^vLambda_6 try(!x ~f(x) < s(0), aLambda_0, x:nat, vLambda_6))"
+  println( test )
+  println( normalize( test ) )
+  //prooftool( proof )
+  //println( proof )
 
+  /*
   // Constructive proof
   val lem13 = hof"!x!y (-(x < y) -> (y <= x))"
   val lem14 = hof"-(?x (f(x) < y))"
@@ -562,6 +595,7 @@ val lem19 = ProofBuilder.
     normalized = normalize( normalized )
   }
   println( normalized )
+  */
 }
 
 object synthexManySorted extends Script {
@@ -577,11 +611,11 @@ object synthexManySorted extends Script {
   ctx += Notation.Infix( "<", Precedence.infixRel )
   ctx += Notation.Infix( "*", Precedence.timesDiv )
   ctx += Notation.Infix( "<=", Precedence.infixRel )
-  ctx += hoc"'f': nat>nat>o"
   implicit var cctx = ClassicalExtraction.systemT( ctx )
   val Some( z ) = cctx.constant( "0" )
   val Some( s ) = cctx.constant( "s" )
   val Some( gt ) = cctx.constant( "gt" )
+  val Some( and ) = cctx.constant( "and" )
   //val Some( not ) = cctx.constant( "not" )
   val not = hoc"'not': o>o"
   cctx += PrimitiveRecursiveFunction(
@@ -623,6 +657,14 @@ object synthexManySorted extends Script {
       ( leq( z, y ) -> not( gt( z, y ) ) ),
       ( leq( s( x ), y ) -> not( gt( s( x ), y ) ) ) ) )( cctx )
   //println( s"normalizing pow2(2): ${normalize( pow2( s( s( z ) ) ) )}" )
+
+  // val defind = hof"!x!y ((f x y) <-> (x < pow2(s y) & pow2(y) <= x))"
+  val funf = hoc"'f': nat>nat>o"
+  cctx += PrimitiveRecursiveFunction(
+    funf,
+    List(
+      ( funf( z, y ) -> and( lt( z, pow2( s( y ) ) ), leq( pow2( y ), z ) ) ),
+      ( funf( s( x ), y ) -> and( lt( s( x ), pow2( s( y ) ) ), leq( pow2( y ), s( x ) ) ) ) ) )( cctx )
 
   val peano5 = hof"!x 0 = x*0"
   val peano7 = hof"!x!y (x<y -> s(x)<s(y))"
@@ -709,7 +751,6 @@ ETWeakQuantifier(
     }.size
   } excluded middle inferences" )
 
-  //val m1 = MRealizability.mrealize( nd, false )._2
   val m1 = ClassicalExtraction.extractCases( nd )
   println( "var map\n" + ClassicalExtraction.getVarMap.mkString( "\n" ) )
   //print( m1 ); print( " of type " ); println( m1.ty )
@@ -766,13 +807,20 @@ $pair(
   println( realm1 )
   println( s"normalize\n${normalize( proj1( realm1( le"s(s(s(s(0))))" ) ) )}" )
   */
-  var normalized = proj1( realm1( le"s(s(s(s(0))))" ) )
+  //var normalized = proj1( realm1( le"s(s(s(s(0))))" ) )
 
-  println( "synthex program:\n" + normalized )
+  println( "synthex program:\n" + realm1 )
   //while ( normalize( normalized ) != normalized ) {
-  normalized = normalize( normalized )
+  val normalized = normalize( realm1( le"s(s(s(s(0))))" ) )
   //}
   println( "normalized: " + normalized )
+
+  /*
+  val m2 = MRealizability.mrealize( nd, false )._2
+  val realm2 = assignArgs( m2 )
+  val normalized2 = normalize( realm2(le"s(s(s(s(0))))") )
+  println( "normalized2: " + normalized2 )
+  */
   /*
 println( "expecting inr(i)" + normalize( m1Args( ClassicalExtraction.flat( lem4 ) )( le"0:nat" )( le"0:nat" ) ) )
 println( "expecting inl(inl(i))" + normalize( m1Args( ClassicalExtraction.flat( lem4 ) )( le"0:nat" )( le"s(0):nat" ) ) )
@@ -869,7 +917,12 @@ object simpleNatDet extends Script {
   val Some( z ) = cctx.constant( "0" )
   val Some( s ) = cctx.constant( "s" )
   val Some( gt ) = cctx.constant( "gt" )
-  val Some( not ) = cctx.constant( "not" )
+  val not = hoc"'not': o>o"
+  cctx += PrimitiveRecursiveFunction(
+    not,
+    List(
+      ( not( hof"true" ) -> hof"false" ),
+      ( not( hof"false" ) -> hof"true" ) ) )( cctx )
 
   val x = hov"x:nat"
   val y = hov"y:nat"

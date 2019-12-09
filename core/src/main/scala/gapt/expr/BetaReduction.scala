@@ -215,10 +215,15 @@ case class Normalizer( rules: Set[ReductionRule] ) {
           // TODO: return ${Some(try(n))}, i.e., an exception carrying ${as(2)}, which can be unwrapped in
           //       tryCatch of type ${expr.ty}
           //       exception(n) should be treated like efq in deGroote
-          //val res = Some(as(1)(as(2)))
-          val res = Some( Const( "exception", as( 1 ).ty ->: as( 2 ).ty ->: expr.ty, List( expr.ty ) )( as( 1 ) )( as( 2 ) ) )
-          res
+          //val res = Some( Const( "exception", as( 1 ).ty ->: as( 2 ).ty ->: expr.ty, List( expr.ty ) )( as( 1 ) )( as( 2 ) ) )
 
+          // term: try(All(x,-A), a, N, P) coming from All(x, -A) :- -Ex(x, A) proof
+          // a: variable assigned to All(x, -A) in Axiom
+          // N: constant introduced in All-Elim rule
+          // P: variable assigned to A in Axiom
+          // rewrite try to exception, so not to loop here
+          val res = Some( Const( "exception", as( 0 ).ty ->: as( 1 ).ty ->: as( 2 ).ty ->: as( 3 ).ty ->: expr.ty, List( expr.ty ) )( as( 0 ) )( as( 1 ) )( as( 2 ) )( as( 3 ) ) )
+          res
         } else
           None
       case Const( "catch", _, _ ) if as.size == 2 =>
@@ -232,10 +237,11 @@ case class Normalizer( rules: Set[ReductionRule] ) {
         }
 
       // raise right
-      case Const( "exception", _, _ ) if as.size > 2 =>
+      case Const( "exception", _, _ ) if as.size > 4 =>
         debug( "raise right" )
-        val newEfq = Const( "exception", as( 0 ).ty ->: as( 1 ).ty ->: expr.ty, List( expr.ty ) )
-        Some( newEfq( as( 0 ) )( as( 1 ) ) )
+        val newEfq = Const( "exception", as( 0 ).ty ->: as( 1 ).ty ->: as( 2 ).ty ->: as( 3 ).ty ->: expr.ty, List( expr.ty ) )
+        val res = Some( newEfq( as( 0 ) )( as( 1 ) )( as( 2 ) )( as( 3 ) ) )
+        res
       //Some( hd( as( 0 ) ) )
 
       /*
@@ -322,14 +328,18 @@ case class Normalizer( rules: Set[ReductionRule] ) {
           val tmp2 = normalize( normalize( tryB ) )
           tmp1 match {
             case Const( "true", _, _ ) =>
+              // handle/simp
               Some( le"true" )
             case App( Const( "efq", _, _ ), Apps( Const( "exception", _, _ ), as_ ) ) =>
-              assert( as_( 0 ) == exnVs( 0 ) )
+              // handle/raise
+              assert( as_( 1 ) == exnVs( 0 ) )
               val TBase( _, tyParams ) = exnVs( 1 ).ty
-              val expair = Const( "expair", as_( 1 ).ty ->: To ->: exnVs( 1 ).ty, tyParams )
+              //val expair = Const( "expair", as_( 1 ).ty ->: To ->: exnVs( 1 ).ty, tyParams )
+              val expair = Const( "expair", tyParams( 0 ) ->: tyParams( 1 ) ->: exnVs( 1 ).ty, tyParams )
               // TODO: replace the whole catch term, not just exnVs(1)
               //       or reduce catch without free variable to its argument maybe?
-              Some( normalize( Substitution( exnVs( 1 ), expair( as_( 1 ), le"true" ) )( catchB ) ) )
+              val res = Some( normalize( Substitution( exnVs( 1 ), expair( as_( 2 ), as_( 3 ) ) )( catchB ) ) )
+              res
             case term =>
               Some( term )
           }

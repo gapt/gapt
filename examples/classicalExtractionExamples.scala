@@ -562,7 +562,7 @@ object sqrtProofManualCorrectAxiomClassical extends Script {
     u( ContractionRule( _, defleq ) ).
     qed
   //println( proof )
-  prooftool( proof )
+  //prooftool( proof )
   import scala.collection._
   def assignArgs( prog: Expr, args: mutable.Map[Ty, Expr] ): Expr = prog.ty match {
     case TArr( TBase( "nat", _ ), _ ) | TBase( "conj", _ ) => prog
