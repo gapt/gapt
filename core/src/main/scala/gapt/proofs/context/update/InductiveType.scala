@@ -30,20 +30,36 @@ case class InductiveType private (
 
   override def apply( ctx: Context ): State = {
     require( !ctx.isType( baseType ), s"Type $baseType already defined" )
-    for ( Const( ctr, FunctionType( _, fieldTys ), _ ) <- constructors.map( _.constant ) ) {
-      require( ctx.constant( ctr ).isEmpty, s"Constructor $ctr is already a declared constant" )
-      for ( fieldTy <- fieldTys ) {
-        if ( fieldTy == baseType ) {
-          // positive occurrence of the inductive type
-        } else {
-          ctx.check( fieldTy )
+    for ( c <- constructors ) {
+      checkConstructor( c, ctx )
+      for ( f <- c.fields ) {
+        f.projector match {
+          case Some( p ) =>
+            require(
+              ctx.constant( p.name ).isEmpty,
+              s"Projector $p is already a declared constant" )
+          case _ =>
+        }
+        if ( f.ty != baseType ) {
+          ctx.check( f.ty )
         }
       }
     }
-    ctx.state.update[BaseTypes]( _ + baseType )
+    ctx.state
+      .update[BaseTypes]( _ + baseType )
       .update[Constants]( _ ++ constructors.map( _.constant ) )
+      .update[Constants]( _ ++ projectors )
       .update[StructurallyInductiveTypes]( _ + ( baseType.name, constructors.map( _.constant ).toVector ) )
   }
+
+  private def checkConstructor( c: Constructor, ctx: Context ): Unit = {
+    require(
+      ctx.constant( c.constant.name ).isEmpty,
+      s"Constructor $c is already a declared constant" )
+  }
+
+  private def projectors: Seq[Const] =
+    constructors.flatMap( _.fields.flatMap( _.projector ) )
 
   private def isBaseCase( constructor: Constructor ): Boolean =
     !constructor.fields.map( _.ty ).contains( baseType )
