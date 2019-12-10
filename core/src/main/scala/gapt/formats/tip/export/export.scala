@@ -10,23 +10,20 @@ import gapt.expr.formula.constants.ForallC
 import gapt.expr.formula.constants.ImpC
 import gapt.expr.formula.constants.NegC
 import gapt.expr.formula.constants.OrC
-import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.ty.TVar
 import gapt.expr.ty.Ty
-import gapt.formats.tip.TipConstructor
-import gapt.formats.tip.TipDatatype
 import gapt.formats.tip.TipProblem
 import gapt.formats.tip.parser.TipSmtProblem
 import gapt.formats.tip.parser.toSExpression
-import gapt.formats.tip.util.TipNameGenerator
 import gapt.logic.hol.SkolemFunctions
+import gapt.proofs.HOLSequent
+import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.BaseTypes
 import gapt.proofs.context.facet.Definitions
 import gapt.proofs.context.facet.StructurallyInductiveTypes
-import gapt.proofs.HOLSequent
-import gapt.proofs.Sequent
+import gapt.proofs.context.update.InductiveType
 import gapt.utils.Doc
 
 package object export {
@@ -75,39 +72,24 @@ package object export {
         context.get[BaseTypes].baseTypes.keys.toSet
     }
 
-    private def toTipDatatype(
-      structurallyInductiveType: ( String, Vector[Const] ) ): TipDatatype = {
-
+    private def toInductiveTyp(
+      structurallyInductiveType: ( String, Vector[Const] ) ): InductiveType = {
       val ( typeName, constructors ) = structurallyInductiveType
-
-      val tipConstructors = constructors.map {
-        constructor =>
-          val FunctionType( _, argumentTypes ) = constructor.ty
-          TipConstructor(
-            constructor,
-            argumentTypes.map {
-              at =>
-                Const(
-                  nameGenerator.fresh( "p" ),
-                  TBase( typeName ) ->: at )
-            } )
-      }
-      TipDatatype( TBase( typeName ), tipConstructors )
+      InductiveType( TBase( typeName ), constructors: _* )
     }
-
-    private val nameGenerator: TipNameGenerator =
-      new TipNameGenerator( contextSymbols( context ) ++ Set( "p" ) )
 
     def convert: TipProblem = {
       val assertions = sequent.antecedent
       val goal = And( sequent.succedent )
+      // Fixme: The conversion below could be avoided if the facet would save the
+      //        entire inductive type structure.
       val datatypes =
         context.get[StructurallyInductiveTypes]
           .constructors
           .filter {
             case ( name, _ ) => name != "o"
           }
-          .map { toTipDatatype }
+          .map { toInductiveTyp }
           .toSeq
 
       val sorts =

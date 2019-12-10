@@ -12,45 +12,17 @@ import gapt.expr.formula.Neg
 import gapt.expr.formula.Top
 import gapt.expr.formula.hol.existentialClosure
 import gapt.expr.formula.hol.universalClosure
-import gapt.expr.subst.Substitution
-import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
-import gapt.expr.ty.To
 import gapt.expr.util.ConditionalReductionRule
 import gapt.expr.util.LambdaPosition
 import gapt.expr.util.freeVariables
-import gapt.expr.util.syntacticMatching
-import gapt.logic.disjointnessAxioms
-import gapt.logic.injectivityAxioms
+import gapt.logic
+import gapt.logic.projectorDefinitions
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.update.InductiveType
-
-case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
-  val FunctionType( datatype, fieldTypes ) = constr.ty
-  require( fieldTypes.size == projectors.size )
-  projectors foreach { case Const( _, FunctionType( to, from ), _ ) => require( from == Seq( datatype ) ) }
-
-  def arity = projectors size
-
-  def projectorDefinitions: Seq[Formula] = {
-    val fieldVars = fieldTypes.zipWithIndex.map { case ( t, i ) => Var( s"x$i", t ) }
-    projectors.lazyZip( fieldVars ).map { ( p, f ) => p( constr( fieldVars: _* ) ) === f }
-  }
-
-  def projectReductionRules: Seq[ReductionRule] = {
-    val fieldVars = fieldTypes.zipWithIndex.map { case ( t, i ) => Var( s"x$i", t ) }
-    val constructorTerm = Apps( constr, fieldVars )
-    projectors.zipWithIndex.map {
-      case ( p, i ) => ReductionRule( App( p, constructorTerm ), fieldVars( i ) )
-    }
-  }
-}
-case class TipDatatype( t: TBase, constructors: Seq[TipConstructor] ) {
-  constructors foreach { ctr => require( ctr.datatype == t ) }
-}
 
 case class TipFun( fun: Const, definitions: Seq[Formula] )
 
@@ -58,7 +30,7 @@ case class TipProblem(
     ctx:                 ImmutableContext,
     definitions:         Seq[Formula],
     sorts:               Seq[TBase],
-    datatypes:           Seq[TipDatatype],
+    datatypes:           Seq[InductiveType],
     uninterpretedConsts: Seq[Const],
     functions:           Seq[TipFun],
     assumptions:         Seq[Formula],
@@ -66,19 +38,18 @@ case class TipProblem(
 
   private val BOOL2: TBase = TBase( "Bool2" )
 
-  def constructorDisjointness: Seq[Formula] =
-    datatypes
-      .filter( _.t != To )
-      .map( tipDatatypeToInductiveType )
-      .flatMap( disjointnessAxioms )
+  val constructorDisjointness: Seq[Formula] =
+    datatypes.flatMap( logic.disjointnessAxioms )
 
-  def constructorInjectivity: Seq[Formula] =
-    datatypes
-      .map( tipDatatypeToInductiveType )
-      .flatMap( injectivityAxioms )
+  val constructorInjectivity: Seq[Formula] =
+    datatypes.flatMap( logic.injectivityAxioms )
 
-  private def tipDatatypeToInductiveType( datatype: TipDatatype ): InductiveType =
-    InductiveType( datatype.t, datatype.constructors.map( _.constr ): _* )
+  val projectorDefinitions: Seq[Formula] =
+    datatypes.flatMap( logic.projectorDefinitions )
+
+  val projectorDefinitionRules: Seq[ConditionalReductionRule] =
+    datatypes.flatMap( logic.projectorDefinitionRules )
+      .map( ConditionalReductionRule( _ ) )
 
   def toSequent: HOLSequent = {
     val bool2Axioms = {
@@ -91,7 +62,7 @@ case class TipProblem(
     }
     existentialClosure(
       bool2Axioms ++:
-        datatypes.flatMap( _.constructors ).flatMap( _.projectorDefinitions ) ++:
+        projectorDefinitions ++:
         definitions ++:
         functions.flatMap( _.definitions ) ++:
         constructorDisjointness ++:
@@ -103,11 +74,6 @@ case class TipProblem(
   def context: ImmutableContext = ctx
 
   def reductionRules: Seq[ConditionalReductionRule] = {
-    val destructorReductionRules = datatypes.flatMap {
-      _.constructors.flatMap { _.projectReductionRules }.map {
-        case ReductionRule( lhs, rhs ) => ConditionalReductionRule( Nil, lhs, rhs )
-      }
-    }
     val definitionReductionRules = definitions.flatMap {
       case All.Block( _, Eq( lhs @ Apps( Const( _, _, _ ), _ ), rhs ) ) =>
         Some( ConditionalReductionRule( Nil, lhs, rhs ) )
@@ -130,7 +96,7 @@ case class TipProblem(
 
     bool2ReductionRules ++
       functionDefinitionReductionRules ++
-      destructorReductionRules ++
+      projectorDefinitionRules ++
       definitionReductionRules :+
       ConditionalReductionRule( Nil, le"x = x", le"⊤" ) :+
       ConditionalReductionRule( Nil, hof"¬ ⊥", hof"⊤" ) :+
@@ -180,7 +146,7 @@ object subterms {
 
 trait TipProblemDefinition {
   def sorts: Seq[TBase]
-  def datatypes: Seq[TipDatatype]
+  def datatypes: Seq[InductiveType]
   def uninterpretedConsts: Seq[Const]
   def assumptions: Seq[Formula]
   def functions: Seq[TipFun]
@@ -191,10 +157,13 @@ trait TipProblemDefinition {
     datatypes foreach {
       dt =>
         {
-          if ( !ctx.isType( dt.t ) ) {
-            ctx += InductiveType( dt.t, dt.constructors.map( _.constr ): _* )
+          if ( !ctx.isType( dt.baseType ) ) {
+            ctx += dt
           }
-          dt.constructors.foreach { ctr => ctr.projectors.foreach { ctx += _ } }
+          val projectors = dt.constructors.flatMap {
+            _.fields.flatMap( _.projector )
+          }
+          projectors.foreach { ctx += _ }
         }
     }
     uninterpretedConsts foreach { constant =>
@@ -258,17 +227,15 @@ object tipScalaEncoding {
   }
 
   private def compileProjectorDefinitions( problem: TipProblem ): Seq[String] = {
-    val constructors = problem.datatypes.flatMap( _.constructors )
-    ( constructors.flatMap( _.projectors ).map( _.name ) zip
-      constructors.flatMap( _.projectorDefinitions ) ) map
-      {
-        case ( name, definition ) =>
-          s"def_${
-            name.map { c => if ( c == '-' ) '_' else c }
-          }: ${
-            stripNewlines( universalClosure( definition ).toString() )
-          }"
-      }
+    val definitions = problem.datatypes.flatMap( projectorDefinitions )
+    definitions.map { d =>
+      val All.Block( _, Eq( Apps( p: Const, _ ), _ ) ) = d
+      s"def_${
+        p.name.map { c => if ( c == '-' ) '_' else c }
+      }: ${
+        stripNewlines( d.toString() )
+      }"
+    }
   }
 
   private def compileFunctionConstants( problem: TipProblem ): String = {
@@ -280,10 +247,10 @@ object tipScalaEncoding {
     problem.datatypes.tail map compileInductiveType
   }
 
-  private def compileInductiveType( datatype: TipDatatype ): String = {
-    val constructors = datatype.constructors.map { c => compileConst( c.constr ) } mkString ( ", " )
-    val projectors = compileProjectors( datatype.constructors.flatMap( _.projectors ) )
-    s"ctx += InductiveType(ty${"\"" + datatype.t.name + "\""}, ${constructors})" + "\n" + projectors
+  private def compileInductiveType( datatype: InductiveType ): String = {
+    val constructors = datatype.constructorConstants.map { c => compileConst( c ) } mkString ( ", " )
+    val projectors = compileProjectors( datatype.constructors.flatMap( _.fields.flatMap( _.projector ) ) )
+    s"ctx += InductiveType(ty${"\"" + datatype.baseType.name + "\""}, ${constructors})" + "\n" + projectors
   }
 
   private def compileProjectors( projectors: Seq[Const] ): String = {

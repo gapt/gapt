@@ -1,6 +1,5 @@
 package gapt.formats.tip.compiler
 
-import gapt.expr.Abs.Block
 import gapt.expr.Apps
 import gapt.expr.Const
 import gapt.expr.Expr
@@ -14,14 +13,10 @@ import gapt.expr.formula.Formula
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Top
-import gapt.expr.formula.constants.BottomC
-import gapt.expr.formula.constants.TopC
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.ty.To
 import gapt.expr.ty.Ty
-import gapt.formats.tip.TipConstructor
-import gapt.formats.tip.TipDatatype
 import gapt.formats.tip.TipFun
 import gapt.formats.tip.TipProblem
 import gapt.formats.tip.analysis.SymbolTable
@@ -32,7 +27,6 @@ import gapt.formats.tip.parser.TipSmtAssertion
 import gapt.formats.tip.parser.TipSmtCase
 import gapt.formats.tip.parser.TipSmtCheckSat
 import gapt.formats.tip.parser.TipSmtConstantDeclaration
-import gapt.formats.tip.parser.TipSmtConstructor
 import gapt.formats.tip.parser.TipSmtConstructorField
 import gapt.formats.tip.parser.TipSmtConstructorPattern
 import gapt.formats.tip.parser.TipSmtDatatype
@@ -110,7 +104,7 @@ class TipTransformationCompiler( var problem: TipSmtProblem ) {
   def declare( t: TBase ): Unit = typeDecls( t.name ) = t
   def declare( f: Const ): Unit = funDecls( f.name ) = f
 
-  val datatypes = mutable.Buffer[TipDatatype]()
+  val datatypes = mutable.Buffer[InductiveType]()
   val functions = mutable.Buffer[TipFun]()
   val assumptions = mutable.Buffer[Formula]()
   val goals = mutable.Buffer[Formula]()
@@ -118,9 +112,7 @@ class TipTransformationCompiler( var problem: TipSmtProblem ) {
   val definitions = mutable.Buffer[Formula]()
 
   typeDecls( "Bool" ) = To
-  datatypes += TipDatatype(
-    To,
-    Seq( TipConstructor( TopC(), Seq() ), TipConstructor( BottomC(), Seq() ) ) )
+  datatypes += InductiveType( To, Top(), Bottom() )
 
   if ( problem.containsNat ) {
     declare( Const( "is-succ", TBase( "Nat" ) ->: To ) )
@@ -245,19 +237,6 @@ class TipTransformationCompiler( var problem: TipSmtProblem ) {
   private def compileConstructorField(
     field: TipSmtConstructorField, ofType: Ty ): Const =
     Const( field.name, ofType ->: typeDecls( field.typ.typename ) )
-
-  private def compileTipSmtConstructor(
-    constructor: TipSmtConstructor, ofType: Ty ): TipConstructor = {
-    val destructors = constructor.fields map {
-      compileConstructorField( _, ofType )
-    }
-    val fieldTypes = constructor.fields map { field =>
-      typeDecls( field.typ.typename )
-    }
-    TipConstructor(
-      Const( constructor.name, FunctionType( ofType, fieldTypes ) ),
-      destructors )
-  }
 
   def compileFunctionBody(
     body: TipSmtExpression, freeVars: Seq[String] ): Seq[Formula] = {
@@ -471,27 +450,20 @@ class TipTransformationCompiler( var problem: TipSmtProblem ) {
   }
 
   private def declareDatatype( tipSmtDatatype: TipSmtDatatype ): Unit = {
-    val t = TBase( tipSmtDatatype.name )
-    declare( t )
-    val dt = TipDatatype(
-      t,
-      tipSmtDatatype.constructors.map { compileTipSmtConstructor( _, t ) } )
-    ctx += InductiveType( t, dt.constructors.map( _.constr ): _* )
-    datatypes += dt
-    dt.constructors foreach { ctr =>
-      declare( ctr.constr )
-      for ( proj <- ctr.projectors ) {
-        declare( proj )
-        ctx += proj
-      }
-    }
+    val inductiveType = tipSmtDatatypeToInductiveType( tipSmtDatatype )
+    declare( inductiveType.baseType )
+    ctx += inductiveType
+    datatypes += inductiveType
+    inductiveType.constructorConstants.foreach( declare )
+    inductiveType.constructors.flatMap( _.fields.flatMap( _.projector ) )
+      .foreach( declare )
   }
 
   def toProblem: TipProblem =
     TipProblem(
       ctx,
       definitions.toSeq,
-      typeDecls.values.toSeq diff datatypes.map { _.t },
+      typeDecls.values.toSeq diff datatypes.map { _.baseType },
       datatypes.toSeq,
       funDecls.values.toSeq diff functions.map { _.fun },
       functions.toSeq,

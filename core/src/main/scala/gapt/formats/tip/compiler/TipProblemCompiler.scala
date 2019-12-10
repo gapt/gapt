@@ -25,19 +25,14 @@ import gapt.expr.ty.To
 import gapt.expr.ty.Ty
 import gapt.expr.util.freeVariables
 import gapt.expr.util.syntacticMatching
-import gapt.formats.tip.TipConstructor
-import gapt.formats.tip.TipDatatype
 import gapt.formats.tip.TipFun
 import gapt.formats.tip.TipProblem
-import gapt.formats.tip.analysis.SymbolTable
-import gapt.formats.tip.decoration.ReconstructDatatypes
 import gapt.formats.tip.parser.Datatype
 import gapt.formats.tip.parser.TipSmtAnd
 import gapt.formats.tip.parser.TipSmtAssertion
 import gapt.formats.tip.parser.TipSmtCase
 import gapt.formats.tip.parser.TipSmtCheckSat
 import gapt.formats.tip.parser.TipSmtConstantDeclaration
-import gapt.formats.tip.parser.TipSmtConstructor
 import gapt.formats.tip.parser.TipSmtConstructorField
 import gapt.formats.tip.parser.TipSmtConstructorPattern
 import gapt.formats.tip.parser.TipSmtDatatype
@@ -67,6 +62,7 @@ import gapt.formats.tip.parser.TipSmtSortDeclaration
 import gapt.formats.tip.parser.TipSmtTrue
 import gapt.formats.tip.parser.TipSmtType
 import gapt.formats.tip.parser.TipSmtVariableDecl
+import gapt.logic.projectorDefinitionRules
 import gapt.proofs.context.Context
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.PrimitiveRecursiveFunction
@@ -85,15 +81,15 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
   def declare( t: TBase ): Unit = typeDecls( t.name ) = t
   def declare( f: Const ): Unit = funDecls( f.name ) = f
 
-  val datatypes = mutable.Buffer[TipDatatype]()
+  val datatypes = mutable.Buffer[InductiveType]()
   val functions = mutable.Buffer[TipFun]()
   val assumptions = mutable.Buffer[Formula]()
   val goals = mutable.Buffer[Formula]()
 
   typeDecls( "Bool" ) = To
-  datatypes += TipDatatype(
-    To,
-    Seq( TipConstructor( TopC(), Seq() ), TipConstructor( BottomC(), Seq() ) ) )
+
+  datatypes +=
+    InductiveType( To, Top(), Bottom() )
 
   private def compileSortDeclaration(
     tipSmtSortDeclaration: TipSmtSortDeclaration ): Unit = {
@@ -228,19 +224,6 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
   private def compileConstructorField(
     field: TipSmtConstructorField, ofType: Ty ): Const =
     Const( field.name, ofType ->: typeDecls( field.typ.typename ) )
-
-  private def compileTipSmtConstructor(
-    constructor: TipSmtConstructor, ofType: Ty ): TipConstructor = {
-    val destructors = constructor.fields map {
-      compileConstructorField( _, ofType )
-    }
-    val fieldTypes = constructor.fields map { field =>
-      typeDecls( field.typ.typename )
-    }
-    TipConstructor(
-      Const( constructor.name, FunctionType( ofType, fieldTypes ) ),
-      destructors )
-  }
 
   def compileExpression(
     expression: TipSmtExpression, freeVars: Seq[Var], resultType: Option[Ty] ): Expr =
@@ -729,34 +712,21 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
   }
 
   private def declareDatatype( tipSmtDatatype: TipSmtDatatype ): Unit = {
-    val t = TBase( tipSmtDatatype.name )
-    declare( t )
-    // add the inductive datatype
-    val dt = TipDatatype(
-      t,
-      tipSmtDatatype.constructors.map { compileTipSmtConstructor( _, t ) } )
-    val inductiveType = InductiveType( t, dt.constructors.map( _.constr ): _* )
+    val inductiveType = tipSmtDatatypeToInductiveType( tipSmtDatatype )
     ctx += inductiveType
-    // declare the corresponding match constant
     declareMatchConstant( inductiveType )
-    datatypes += dt
-    dt.constructors.foreach {
-      c => ctx += c.projectReductionRules
-    }
-    dt.constructors foreach { ctr =>
-      declare( ctr.constr )
-      for ( proj <- ctr.projectors ) {
-        declare( proj )
-        ctx += proj
-      }
-    }
+    datatypes += inductiveType
+    ctx += projectorDefinitionRules( inductiveType ).toSeq
+    inductiveType.constructorConstants.foreach( declare )
+    inductiveType.constructors.flatMap( _.fields.flatMap( _.projector ) )
+      .foreach( declare )
   }
 
   def toProblem: TipProblem =
     TipProblem(
       ctx,
       Nil,
-      typeDecls.values.toSeq diff datatypes.map { _.t }, datatypes.toSeq,
+      typeDecls.values.toSeq diff datatypes.map { _.baseType }, datatypes.toSeq,
       funDecls.values.toSeq diff functions.map { _.fun },
       functions.toSeq,
       assumptions.toSeq, And( goals ) )

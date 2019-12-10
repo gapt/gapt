@@ -2,8 +2,11 @@ package gapt
 
 import gapt.utils.unorderedPairsOf
 import gapt.expr.Const
+import gapt.expr.ReductionRule
 import gapt.expr.Var
+import gapt.expr.formula.All
 import gapt.expr.formula.And
+import gapt.expr.formula.Eq
 import gapt.expr.formula.Formula
 import gapt.expr.formula.hol.universalClosure
 import gapt.expr.ty.FunctionType
@@ -15,12 +18,17 @@ package object logic {
     it.constructors.flatMap( projectorDefinitions )
   }
 
+  def projectorDefinitionRules( it: InductiveType ): Iterable[ReductionRule] =
+    projectorDefinitions( it ) map {
+      case All.Block( _, Eq( lhs, rhs ) ) => ReductionRule( lhs, rhs )
+    }
+
   private def projectorDefinitions( constructor: InductiveType.Constructor ): Iterable[Formula] = {
     val c = constructor.constant
     val xs = argumentVariablesWithPatternFor( n => s"x$n" )( c )
     constructor.fields.zipWithIndex.flatMap {
       case ( f, i ) =>
-        f.projector.map { p => p( c( xs ) ) === xs( i ) }
+        f.projector.map { p => All.Block( xs, p( c( xs ) ) === xs( i ) ) }
     }
   }
 

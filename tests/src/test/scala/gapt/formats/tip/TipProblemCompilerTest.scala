@@ -7,6 +7,7 @@ import gapt.formats.{ InputFile, StringInputFile }
 import gapt.formats.tip.compiler.TipTransformationCompiler
 import gapt.formats.tip.compiler.TipTransformationCompiler
 import gapt.formats.tip.parser.TipSmtParser
+import gapt.proofs.context.update.InductiveType
 import org.specs2.mutable.Specification
 
 class TipProblemCompilerTest extends Specification {
@@ -48,16 +49,14 @@ class TipProblemCompilerTest extends Specification {
 
     inputProblem.datatypes.toSet must
       contain( Set(
-        TipDatatype(
-          TBase( "Nat", Nil ),
-          Seq(
-            TipConstructor( hoc"Z", Nil ),
-            TipConstructor( hoc"S", Seq( hoc"P" ) ) ) ),
-        TipDatatype(
-          TBase( "list", Nil ),
-          Seq(
-            TipConstructor( hoc"nil", Nil ),
-            TipConstructor( hoc"cons", Seq( hoc"head", hoc"tail" ) ) ) ) ) )
+        InductiveType( "Nat", Nil,
+          "Z" -> Nil,
+          "S" -> Seq( Some( "P" ) -> ty"Nat" ) ),
+        InductiveType( "list", Nil,
+          "nil" -> Nil,
+          "cons" -> Seq(
+            Some( "head" ) -> ty"Nat",
+            Some( "tail" ) -> ty"list" ) ) ) )
   }
 
   "Compiler should add inductive definition of Booleans" in {
@@ -71,11 +70,10 @@ class TipProblemCompilerTest extends Specification {
 
     inputProblem.datatypes.toSet must
       contain(
-        TipDatatype(
-          To,
-          Seq(
-            TipConstructor( hoc"⊤", Nil ),
-            TipConstructor( hoc"⊥", Nil ) ) ) )
+        InductiveType(
+          To.name, Nil,
+          "⊤" -> Nil,
+          "⊥" -> Nil ) )
   }
 
   "Mutually recursive function definitions should compile to formulas" in {

@@ -22,8 +22,8 @@ import gapt.formats.lisp.LKeyword
 import gapt.formats.lisp.LList
 import gapt.formats.lisp.LSymbol
 import gapt.formats.lisp.SExpression
-import gapt.formats.tip.TipConstructor
 import gapt.formats.tip.TipProblem
+import gapt.proofs.context.update.InductiveType
 
 object toTipAst {
 
@@ -75,15 +75,11 @@ object toSExpression {
     }
 
     def constructorToTipAst(
-      constructor: TipConstructor ): TipSmtConstructor = {
+      constructor: InductiveType.Constructor ): TipSmtConstructor =
       TipSmtConstructor(
-        constructor.constr.name,
+        constructor.constant.name,
         Seq(),
-        constructor
-          .projectors
-          .zip( constructor.fieldTypes )
-          .map { case ( p, f ) => projectorToTipAst( p, f ) } )
-    }
+        constructor.fields.map { f => projectorToTipAst( f.projector.get, f.ty ) } )
 
     def projectorToTipAst(
       projector: Const, fieldType: Ty ): TipSmtConstructorField = {
@@ -98,9 +94,10 @@ object toSExpression {
       }
 
     val constructors =
-      problem.datatypes.flatMap { _.constructors.map { _.constr } }
+      problem.datatypes.flatMap { _.constructorConstants }
+
     val destructors =
-      problem.datatypes.flatMap { _.constructors.flatMap { _.projectors } }
+      problem.datatypes.flatMap { _.constructors.flatMap { _.fields.flatMap( _.projector ) } }
 
     val constantDeclarations =
       problem.uninterpretedConsts
@@ -136,11 +133,11 @@ object toSExpression {
 
     val datatypeDeclarations =
       problem.datatypes
-        .filter { _.t != To }
+        .filter { _.baseType != To }
         .map {
           dt =>
             TipSmtDatatype(
-              dt.t.name, Seq(),
+              dt.baseType.name, Seq(),
               dt.constructors.map { constructorToTipAst } )
         }
 
