@@ -13,6 +13,7 @@ import gapt.expr.formula.Top
 import gapt.expr.formula.hol.existentialClosure
 import gapt.expr.formula.hol.universalClosure
 import gapt.expr.ty.TBase
+import gapt.expr.ty.To
 import gapt.expr.util.ConditionalReductionRule
 import gapt.expr.util.LambdaPosition
 import gapt.expr.util.freeVariables
@@ -39,7 +40,7 @@ case class TipProblem(
   private val BOOL2: TBase = TBase( "Bool2" )
 
   val constructorDisjointness: Seq[Formula] =
-    datatypes.flatMap( logic.disjointnessAxioms )
+    datatypes.filter( _.baseType != To ).flatMap( logic.disjointnessAxioms )
 
   val constructorInjectivity: Seq[Formula] =
     datatypes.flatMap( logic.injectivityAxioms )
