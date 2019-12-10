@@ -446,6 +446,13 @@ object manualExistsMinimumNoDefinitions extends Script {
     //u( ImpIntroRule( _, hof"lesseqf(n) -> hasminf" ) ).
     //u( ForallIntroRule( _, hof"!n ((lesseqf(n) -> hasminf) -> (lesseqf(s(n)) -> hasminf))", hov"(n:nat)" ) ).
     qed
+  /*
+  println(step)
+  val stepP = ClassicalExtraction.extractCases( step )
+  println(stepP.toUntypedString)
+  println(normalize(stepP).toUntypedString)
+  */
+
   //prooftool( step )
   val icStep = InductionCase( step, hoc"s", List( step.endSequent.indexOfInAnt( hof"(?x (f(x) <= n)) -> (?y ((-(?x (f(x) < y))) & (?x (f(x) <= y))))" ) ), List( hov"n:nat" ) )
 
@@ -501,9 +508,6 @@ object manualExistsMinimumNoDefinitions extends Script {
   println( proof.endSequent( Suc( 0 ) ) )
   println( normalized )
   println( normalized.toUntypedAsciiString )
-  val test = le"existsElim(vLambda_9, ^x ^vLambda_6 try(!x ~f(x) < s(0), aLambda_0, x:nat, vLambda_6))"
-  println( test )
-  println( normalize( test ) )
   //prooftool( proof )
   //println( proof )
 
@@ -659,12 +663,12 @@ object synthexManySorted extends Script {
   //println( s"normalizing pow2(2): ${normalize( pow2( s( s( z ) ) ) )}" )
 
   // val defind = hof"!x!y ((f x y) <-> (x < pow2(s y) & pow2(y) <= x))"
-  val funf = hoc"'f': nat>nat>o"
+  val fun = hoc"'f': nat>nat>o"
   cctx += PrimitiveRecursiveFunction(
-    funf,
+    fun,
     List(
-      ( funf( z, y ) -> and( lt( z, pow2( s( y ) ) ), leq( pow2( y ), z ) ) ),
-      ( funf( s( x ), y ) -> and( lt( s( x ), pow2( s( y ) ) ), leq( pow2( y ), s( x ) ) ) ) ) )( cctx )
+      ( fun( z, y ) -> and( lt( z, pow2( s( y ) ) ), leq( pow2( y ), z ) ) ),
+      ( fun( s( x ), y ) -> and( lt( s( x ), pow2( s( y ) ) ), leq( pow2( y ), s( x ) ) ) ) ) )( cctx )
 
   val peano5 = hof"!x 0 = x*0"
   val peano7 = hof"!x!y (x<y -> s(x)<s(y))"

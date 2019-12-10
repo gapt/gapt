@@ -232,6 +232,30 @@ object LKToND {
 
       case p @ ContractionRightRule( subProof, aux1, aux2 ) =>
 
+        /**
+          * Optimization in combination with ∃:r translation:
+          *
+          * LK proof
+          *
+          * <pre>
+          *      (π)
+          *   Γ :- Δ, ∃x.B, ∃x.B
+          *  -----------------
+          *   Γ :- Δ, ∃x.B
+          * </pre>
+          *
+          * translates to ND proof
+          *
+          * <pre>
+          *                    (Tr(π, ∃x.B) and forbid translating ∃x.B)
+          *   B[t/x] :- B[t/x]       -B[t/x], Γ, -Δ :- B[t/x]
+          *  ------------------     --------------------------
+          *   B[t/x] :- ∃x.B         -B[t/x], Γ, -Δ :- ∃x.B
+          *  -----------------------------------------------
+          *                  Γ, -Δ :- ∃x.B
+          * </pre>
+          */
+
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
           val l = subProof.endSequent( aux1 )
 
@@ -258,7 +282,6 @@ object LKToND {
               case _               => f
             }
 
-            t.endSequent.foreach( f => println( syntacticMGU( l, f ) ) )
             val il = t.endSequent.find( f => syntacticMGU( Neg( decompose( l ) ), f ).nonEmpty ).get
             val Neg( fWithoutEx ) = t.endSequent( il )
 
@@ -560,6 +583,26 @@ object LKToND {
           "LK proofs containing skolem functions are not supported." )
 
       case p @ ExistsRightRule( subProof, aux, _, t, _ ) =>
+
+        /** Optimization in combination with ContractionRightRule
+          *
+          * LK proof
+          *
+          * <pre>
+          *        (π)
+          *     Γ :- Δ, B[t/x]
+          *    --------------------
+          *     Γ :- Δ, ∃x.B
+          * </pre>
+          *
+          * translates to
+          *
+          * <pre>
+          *     (Tr(π, B[t/x]))
+          * </pre>
+          *
+          * if ∃x.B is in forbidTranslation
+          */
 
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
           if ( forbidTranslation.contains( p.mainFormula ) ) {
