@@ -10,43 +10,64 @@ import gapt.expr.containedNames
 import gapt.expr.formula.hol.HOLPosition
 import gapt.expr.subst._
 import gapt.expr._
+import gapt.proofs.HOLClause
 
+/**
+ * Uses the DLS algorithm to find a witness for formula equations
+ * of the form ?X φ where φ is a first order formula
+ *
+ * At the moment φ may only be a quantifier free formula
+ * and the quantified relation must be unary
+ */
 object solveFormulaEquation {
+
+  private def relationOccurrences( clause: HOLClause, quantifierVariable: Var ): ( Vector[Formula], Vector[Formula] ) = {
+    val positiveOccurrences = clause.succedent.filter(
+      atom => atom match {
+        case Atom( variable, _ ) => variable == quantifierVariable
+        case _                   => false
+      } )
+    val nonPositiveOcurrences = clause.antecedent.map( Neg.apply ) ++
+      clause.succedent.filterNot( positiveOccurrences.contains )
+
+    ( positiveOccurrences, nonPositiveOcurrences )
+  }
+
+  private def partialWitness( positiveOccurrences: Vector[Formula] ): Formula = {
+    Or( positiveOccurrences.map( {
+      // todo: handle multiple arguments
+      // todo: unique name for unbound variable "x"
+      case Atom( _, args ) => Eq( FOLVar( "x" ), args.head )
+    } ) )
+  }
+
+  private def substituteWitness( formula: Formula, variable: Var, witness: Formula ): Expr = {
+    val substitutionMap = Map( variable -> Abs( FOLVar( "x" ), witness ) )
+    normalize( Substitution( substitutionMap )( formula ) )
+  }
+
+  private def completeWitness( dnf: Set[HOLClause], quantifierVariable: Var ): Formula = {
+    val witnessClauses = for {
+      clause <- dnf
+      ( positiveOccurrences, nonPositiveOcurrences ) = relationOccurrences( clause, quantifierVariable )
+      witnessPart = partialWitness( positiveOccurrences )
+    } yield ( witnessPart, And( nonPositiveOcurrences.map( substituteWitness( _, quantifierVariable, witnessPart ) ) ) )
+
+    val witnessConjuncts = witnessClauses.toList.inits.toTraversable.init.map( initList => {
+      val witnessPart = initList.last._1
+      val nonPositiveOcurrence = initList.last._2
+      Imp( And( initList.init.map( element => Neg( element._2 ) ) :+ nonPositiveOcurrence ), witnessPart )
+    } )
+
+    And( witnessConjuncts )
+  }
+
   def apply( formula: Formula ): Try[Formula] = Try( formula match {
     case Ex( quantifierVariable, innerFormula ) => {
       // todo: allow multiple argument relations
-      require( quantifierVariable.ty == Ti ->: To, "first existential quantifier variable must be of a relation type" )
-      require( !containsHOQuantifier( innerFormula ), "inner formula must be first order" )
-
-      require( !containsQuantifier( innerFormula ), "inner formula must be quantifier-free" )
 
       val dnf = DNFp( innerFormula )
-
-      val witnessClauses = for {
-        clause <- dnf
-        positiveOccurrences = clause.succedent.filter(
-          atom => atom match {
-            case Atom( variable, _ ) => variable == quantifierVariable
-            case _                   => false
-          } )
-        otherOccurrences = clause.antecedent.map( Neg.apply ) ++ clause.succedent.filterNot( positiveOccurrences.contains )
-        witnessComponent = Or( positiveOccurrences.map(
-          atom => atom match {
-            // todo: handle multiple arguments
-            // todo: unique name for unbound variable "x"
-            case Atom( _, args ) => Eq( FOLVar( "x" ), args.head )
-          } ) )
-      } yield ( witnessComponent, otherOccurrences.map( occurrence => normalize( Substitution( Map( quantifierVariable -> Abs( FOLVar( "x" ), witnessComponent ) ) )( occurrence ) ) ) )
-
-      val result = witnessClauses.tail.foldLeft( ( Imp( And( witnessClauses.head._2 ), witnessClauses.head._1 ), Vector( Neg( And( witnessClauses.head._2 ) ) ) ) )( ( current, next ) => {
-        ( current, next ) match {
-          case ( ( witness, implicationPrefix ), ( witnessComponent, otherOccurrences ) ) => {
-            ( And( witness, Imp( And( implicationPrefix ++ otherOccurrences ), witnessComponent ) ), implicationPrefix :+ Neg( And( otherOccurrences ) ) )
-          }
-        }
-      } )
-
-      result._1
+      completeWitness( dnf, quantifierVariable )
     }
     case _ => throw new Exception( "formula does not start with existential quantifier" )
   } )
