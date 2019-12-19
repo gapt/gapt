@@ -27,6 +27,7 @@ case class ReductionRule( lhs: Expr, rhs: Expr ) {
       e match {
         case App( a, b )      => go( a ) || go( b )
         case Abs( _, _ )      => true
+        //case Const( "tryCatch", _, _ ) => true
         case Const( _, _, _ ) => false
         case v: Var =>
           seen( v ) || { seen += v; false }
@@ -201,17 +202,20 @@ case class Normalizer( rules: Set[ReductionRule] ) {
     hd match {
       case Abs.Block( vs, hd_ ) if vs.nonEmpty && as.nonEmpty =>
         val n = math.min( as.size, vs.size )
-        debug( s"beta reduction: ${vs.take( n )}" )
+        println( s"beta reduction: vs.take: ${vs.take( n )}, as.drop: ${as.drop(n)}" )
         Some( Apps( Substitution( vs.take( n ) zip as.take( n ) )( Abs.Block( vs.drop( n ), hd_ ) ), as.drop( n ) ) )
-      case Const( "try", _, _ ) if as.size > 2 =>
-        println( expr )
+      case Const( "try", _, _ ) if as.size > 3 =>
+        println( s"try: before:\n$expr" )
         val All( alpha, p ) = as( 0 )
         val pPrime = Substitution( alpha, as( 2 ) )( p )
-        println( freeVariables( pPrime ) )
-        println( normalize( pPrime ) )
-        if ( freeVariables( pPrime ).isEmpty && normalize( pPrime ) == hof"true" )
-          Some( hof"true" )
-        else if ( freeVariables( pPrime ).isEmpty && normalize( pPrime ) == hof"false" ) {
+        if ( freeVariables( pPrime ).isEmpty && normalize( pPrime ) == hof"true" ) {
+          val exc = Const("True", expr.ty)
+          println( s"try: res true:\n${normalize(pPrime)}" )
+          println( s"try: res true:\n$exc" )
+          Some(exc)
+          //Some( hof"true" )
+        } else if ( freeVariables( pPrime ).isEmpty && normalize( pPrime ) == hof"false" ) {
+        //else if ( true ) {
           // TODO: return ${Some(try(n))}, i.e., an exception carrying ${as(2)}, which can be unwrapped in
           //       tryCatch of type ${expr.ty}
           //       exception(n) should be treated like efq in deGroote
@@ -222,15 +226,22 @@ case class Normalizer( rules: Set[ReductionRule] ) {
           // N: constant introduced in All-Elim rule
           // P: variable assigned to A in Axiom
           // rewrite try to exception, so not to loop here
-          val res = Some( Const( "exception", as( 0 ).ty ->: as( 1 ).ty ->: as( 2 ).ty ->: as( 3 ).ty ->: expr.ty, List( expr.ty ) )( as( 0 ) )( as( 1 ) )( as( 2 ) )( as( 3 ) ) )
+          val exc = Const( "exception", as( 0 ).ty ->: as( 1 ).ty ->: as( 2 ).ty ->: as( 3 ).ty ->: expr.ty, List( expr.ty ) )( as( 0 ) )( as( 1 ) )( as( 2 ) )( as( 3 ) )
+          val newEfq = Const( "efq", exc.ty ->: expr.ty, List( expr.ty ) )
+          val res = Some( App( newEfq, exc))
+          //val res = Some( Const( "exception", as( 0 ).ty ->: as( 1 ).ty ->: as( 2 ).ty ->: as( 3 ).ty ->: expr.ty, List( expr.ty ) )( as( 0 ) )( as( 1 ) )( as( 2 ) )( as( 3 ) ) )
+          println( s"try: res raise:\n${normalize(pPrime)}" )
+          println( s"try: res raise:\n$res" )
           res
-        } else
+        } else {
+          println("try: res None")
           None
+        }
       case Const( "catch", _, _ ) if as.size == 2 =>
         val Ex( alpha, p ) = as( 0 )
         as( 1 ) match {
           case exp @ Apps( Const( "expair", _, _ ), as_ ) =>
-            //assert(normalize(Substitution(alpha, as_(0))(p)) == hof"true")
+            assert(normalize(Substitution(alpha, as_(0))(p)) == hof"true")
             Some( exp )
           case _ =>
             None //throw new Exception("error reducing in catch")
@@ -277,11 +288,12 @@ case class Normalizer( rules: Set[ReductionRule] ) {
       // Commuting conversion (right) for try/catch
       // (tryCatch v0 v1 tryBlock catchBlock) extraArgs
       case Const( "tryCatch", ty, _ ) if as.size > 4 =>
-        println( s"cc right: commuting ${as( 2 )}" )
-        debug( s"cc right" )
-        debug( s"before cc right: tryCatch.ty: $ty" )
+        println( s"cc right: before:\n$expr" )
+        println( s"cc right: commuting try block ${as( 2 )} with ${as.drop(4)}" )
+        println( s"cc right: also commuting catch block ${as( 3 )} with ${as.drop(4)}" )
+        println( s"before cc right: tryCatch.ty: $ty" )
         val exnVs = as.take( 2 )
-        debug( s"@@@@@@ tryCatch exnVs: $exnVs" )
+        println( s"@@@@@@ tryCatch exnVs: $exnVs" )
         val tryCatchBlocks = as.drop( 2 ).take( 2 )
         val tryCatchBlocksCommuted = tryCatchBlocks.map( commute( _, Right( as( 4 ) ) ) )
         val a = exnVs( 0 ).ty
@@ -292,32 +304,15 @@ case class Normalizer( rules: Set[ReductionRule] ) {
         val tmpParams = List( a, b, c )
         val newTryCatch = Const( "tryCatch", tmpTy, tmpParams )
         val res = Apps( newTryCatch, exnVs ++ tryCatchBlocksCommuted ++ as.drop( 5 ) )
-        debug( s"cc right: res:\n$res" )
-        debug( s"after cc right: tryCatch.ty: ${newTryCatch.ty}" )
+        println( s"cc right: res:\n$res" )
+        println( s"after cc right: tryCatch.ty: ${newTryCatch.ty}" )
         Some( res )
-
-      /*
-        debug( s"cc right: commuting ${as( 2 )}" )
-        debug( s"before cc right: tryCatch.ty: $ty" )
-        //debug( s"input:\n$expr" )
-        //debug( s"commuting:\n${as( 2 )}" )
-        //val tryB = commute( normalize( as( 0 ) ), Right( normalize( as( 2 ) ) ) )
-        val tryB = commute( as( 0 ), Right( as( 2 ) ) )
-        //val catchB = commute( normalize( as( 1 ) ), Right( normalize( as( 2 ) ) ) )
-        val catchB = commute( as( 1 ), Right( as( 2 ) ) )
-        val Abs( _, arg ) = tryB
-        val newTryCatch = Const( "tryCatch", replaceTy( ty, params( 1 ), arg.ty ), params.map( replaceTy( _, params( 1 ), arg.ty ) ) )
-        val res = Apps( newTryCatch, List( tryB, catchB ) ++ as.drop( 3 ) )
-        debug( s"cc right: res:\n$res" )
-        debug( s"after cc right: tryCatch.ty: ${newTryCatch.ty}" )
-        //Some( normalize( res ) )
-        Some( res )
-        */
       case Const( "tryCatch", ty, params ) =>
         val exnVs = as.take( 2 ).map( _.asInstanceOf[Var] )
         val tryB = normalize( as( 2 ) )
         val catchB = normalize( as( 3 ) )
-        println( freeVariables( tryB ) )
+        println( s"tryCatch: free vars tryB:${freeVariables( tryB )}" )
+        println( s"tryCatch: free vars catchB:${freeVariables( catchB )}" )
         if ( !freeVariables( tryB ).contains( exnVs( 0 ) ) ) {
           // handle simp
           debug( s"handle simp" )
@@ -325,11 +320,10 @@ case class Normalizer( rules: Set[ReductionRule] ) {
         } else {
           // TODO: distribute inl over try/exception? otherwise need a second normalize here, which is not right
           val tmp1 = normalize( tryB )
-          val tmp2 = normalize( normalize( tryB ) )
           tmp1 match {
-            case Const( "true", _, _ ) =>
+            case Const( "True", _, _ ) =>
               // handle/simp
-              Some( le"true" )
+              None
             case App( Const( "efq", _, _ ), Apps( Const( "exception", _, _ ), as_ ) ) =>
               // handle/raise
               assert( as_( 1 ) == exnVs( 0 ) )
@@ -338,10 +332,12 @@ case class Normalizer( rules: Set[ReductionRule] ) {
               val expair = Const( "expair", tyParams( 0 ) ->: tyParams( 1 ) ->: exnVs( 1 ).ty, tyParams )
               // TODO: replace the whole catch term, not just exnVs(1)
               //       or reduce catch without free variable to its argument maybe?
-              val res = Some( normalize( Substitution( exnVs( 1 ), expair( as_( 2 ), as_( 3 ) ) )( catchB ) ) )
+              //val res = Some( normalize( Substitution( exnVs( 1 ), expair( as_( 2 ), as_( 3 ) ) )( catchB ) ) )
+              val res = Some( Substitution( exnVs( 1 ), expair( as_( 2 ), as_( 3 ) ) )( catchB ) )
               res
             case term =>
-              Some( term )
+              None
+              //Some( term )
           }
         }
       case hd @ Const( c, _, _ ) =>
@@ -349,7 +345,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
           case "matchSum" =>
             debug( "reducing matchSum" )
           case "natRec" =>
-            debug( "reducing natRec" )
+            println( "reducing natRec: headMap.get(natRec):\n" + headMap.get(c) )
           case "existsElim" =>
             debug( "reducing existsElim" )
           /*

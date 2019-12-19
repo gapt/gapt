@@ -147,6 +147,13 @@ class BetaReductionTest extends Specification {
     //normalize(
     //le"s(tryCatch(y0, y1, try(!(x:nat) -true, y0, 0), catch(?(x:nat) true, (y1: (exconj nat o)))))" ) must_== le"true"
   }
+  "normalize natRec with try/catch" in {
+    var ctx = Context.default
+    ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+
+    implicit val ctxClassical = ClassicalExtraction.systemT( ctx )
+
+  }
 
   /*
   "normalize try/catch with commuting conversion right" in {

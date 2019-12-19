@@ -391,18 +391,15 @@ object manualExistsMinimumNoDefinitions extends Script {
       ( f( s( x ) ) -> ite( gt( s( x ), s( z ) ) )( z )( subtr( s( z ), s( x ) ) ) ) ) )( cctx )
   */
 
-  // def f(x: Int) = if(x == 2) 0 else 1
-  // mit at x = 2
+  // def f(x: Int) = if(x == 2) 0 else 2
+  // min at x = 2
   val f = hoc"'f': nat>nat"
   cctx += PrimitiveRecursiveFunction(
     f,
     List(
       ( f( z ) -> s( z ) ),
       ( f( s( x ) ) -> ite( leq( s( x ), s( s( z ) ) ) )( ite( leq( s( s( z ) ), s( x ) ) )( z )( s( z ) ) )( s( z ) ) ) ) )( cctx )
-  println( s"normalize f(0): ${normalize( f( z ) )}" )
-  println( s"normalize f(1): ${normalize( f( s( z ) ) )}" )
-  println( s"normalize f(2): ${normalize( f( s( s( z ) ) ) )}" )
-  println( s"normalize f(3): ${normalize( f( s( s( s( z ) ) ) ) )}" )
+
 
   val lem1 = hof"!x!y (x < s(y) -> x <= y)"
   val lem2 = hof"!x (x <= 0 -> x = 0)"
@@ -485,6 +482,7 @@ object manualExistsMinimumNoDefinitions extends Script {
     b( ImpElimRule( _, _ ) ).
     qed
   import extraction.{ ScalaCodeGenerator, FSharpCodeGenerator }
+
   val m1 = ClassicalExtraction.extractCases( proof )
   //ScalaCodeGenerator( "hasmin" )( m1 )( ClassicalExtraction.systemT( ctx ) )
 
@@ -502,16 +500,17 @@ object manualExistsMinimumNoDefinitions extends Script {
       case ( f, i ) => ClassicalExtraction.flat( f ) -> Const( s"arg$i", ClassicalExtraction.flat( f ) )
     }: _* )
 
-  println( "m1:\n" + m1 )
   val realm1 = assignArgs( m1, m1Args )
+  /*
   var normalized = normalize( realm1 )
-  println( proof.endSequent( Suc( 0 ) ) )
+  println( "m1:\n" + m1 )
+  println( "untyped m1:\n" + m1.toUntypedString )
   println( normalized )
   println( normalized.toUntypedAsciiString )
+  println( proof.endSequent )
   //prooftool( proof )
-  //println( proof )
+  */
 
-  /*
   // Constructive proof
   val lem13 = hof"!x!y (-(x < y) -> (y <= x))"
   val lem14 = hof"-(?x (f(x) < y))"
@@ -580,7 +579,7 @@ val lem19 = ProofBuilder.
     u( ContractionRule( _, hof"(-(?x (f(x) < y))) & (?x (f(x) <= y))" ) ).
     b( ExistsElimRule( _, _ ) ).
     qed
-  prooftool( coquand )
+  //prooftool( coquand )
   val m2 = ClassicalExtraction.extractCases( coquand )
   //ScalaCodeGenerator( "coquand" )( m2 )( ClassicalExtraction.systemT( ctx ) )
   val m2Args = mutable.Map[Ty, Expr](
@@ -590,16 +589,25 @@ val lem19 = ProofBuilder.
   m2Args += realm1.ty -> realm1
 
   val realm2 = assignArgs( m2, m2Args )
+  println("realm2:\n" + realm2)
+  println("realm2 untyped:\n" + realm2.toUntypedAsciiString)
   println( s"realm1.ty: ${realm1.ty}" )
-  println( s"realm2.ty: ${realm2.ty}" )
-  val Some( proj1 ) = cctx.constant( "pi1", List( ty"nat", ty"1" ) )
-  //assert( normalized == normalize( normalized ) )
-  var normalized = proj1( realm2( le"s(0)" ) )
-  while ( normalize( normalized ) != normalized ) {
-    normalized = normalize( normalized )
-  }
-  println( normalized )
-  */
+  var normalized2 = realm2//( le"s(0)" )
+  //while ( normalize( normalized2 ) != normalized2 ) {
+    //println("normalized")
+    //println( normalized2.toUntypedAsciiString )
+    //println("normalizing again")
+    //normalized2 = normalize( normalized2 )
+  //}
+  // reduction seems to be relatively independent of the argument a
+  //println( normalize(normalized2(le"s(0)") ) )
+  //println( normalize(normalize(normalized2)(cctx)(le"s(s(0))") ))
+  println( normalize(normalize(normalized2)(cctx)(le"s(s(0))") ))
+  println(coquand.endSequent(Suc(0)))
+  println( s"normalize f(0): ${normalize( f( z ) )}" )
+  println( s"normalize f(1): ${normalize( f( s( z )) )}" )
+  println( s"normalize f(2): ${normalize( f( s( s( z ) ) ) )}" )
+  println( s"normalize f(3): ${normalize( f( s( s( s( z ) ) ) ) )}" )
 }
 
 object synthexManySorted extends Script {

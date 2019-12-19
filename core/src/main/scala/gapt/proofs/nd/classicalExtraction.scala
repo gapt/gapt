@@ -95,11 +95,7 @@ object ClassicalExtraction {
     systemT += catchConst
     val q = hof"q: o"
 
-    systemT += PrimitiveRecursiveFunction(
-      existsElim,
-      List(
-        ( existsElim( expair( x, y ), w3 ) -> w3( x )( y ) ),
-        ( existsElim( catchConst( q, expair( x, y ) ), w3 ) -> w3( x )( y ) ) ) )( systemT )
+
     val expi1 = hoc"expi1{?a ?b}: (exconj ?a ?b) > ?a"
     val expi2 = hoc"expi2{?a ?b}: (exconj ?a ?b) > ?b"
     systemT += PrimitiveRecursiveFunction(
@@ -108,6 +104,15 @@ object ClassicalExtraction {
     systemT += PrimitiveRecursiveFunction(
       expi2,
       List( ( expi2( expair( x, y ) ) -> y ) ) )( systemT )
+
+    val w4 = hov"w4: (exconj ?a ?b)"
+    systemT += PrimitiveRecursiveFunction(
+      existsElim,
+      List(
+        ( existsElim( expair( x, y ), w3 ) -> w3( x )( y ) ) ) )( systemT )
+    // should not be needed, permutation rules need to take care of this
+    // ( existsElim( expair( x, y ), w3 ) -> w3( x )( y ) ),// ) )( systemT )
+    // ( existsElim( catchConst( q, expair( x, y ) ), w3 ) -> w3( x )( y ) ) ) )( systemT )
 
     //val bar = hoc"bar{?a}: ?a > ?a > hyp > ?a"
     //val hyp = ty"hyp"
