@@ -61,7 +61,7 @@ object solveFormulaEquation {
       witnessPart = partialWitness( positiveOccurrences )
     } yield ( witnessPart, And( nonPositiveOcurrences.map( substituteWitness( _, quantifierVariable, witnessPart ) ) ) )
 
-    val witnessConjuncts = witnessClauses.toList.inits.toTraversable.init.map( initList => {
+    val witnessConjuncts = witnessClauses.toList.inits.toList.init.map( initList => {
       val ( witnessPart, nonPositiveOcurrence ) = initList.last
       Imp( And( initList.init.map( element => Neg( element._2 ) ) :+ nonPositiveOcurrence ), witnessPart )
     } )
