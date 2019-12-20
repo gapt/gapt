@@ -10,7 +10,7 @@ import _root_.gapt.expr.Const
 import gapt.expr.formula.fol.FOLFunction
 import gapt.expr._
 import scala.util.Success
-import gapt.provers.sat._
+import gapt.provers.escargot.Escargot
 import org.specs2.matcher.Matcher
 import gapt.expr.subst.Substitution
 import gapt.expr.formula.hol.instantiate
@@ -22,8 +22,8 @@ class SolveFormulaEquationTest extends Specification {
     val firstOrderPart = solveFormulaEquation.extractFirstOrderPart( formula )
     val substitutedFormula = BetaReduction.betaNormalize( substitution( firstOrderPart ) )
     val equivalentSubstitutedFormula = BetaReduction.betaNormalize( equivalentSubstitution( firstOrderPart ) )
-    val isValid = Sat4j isValid Iff( substitutedFormula, equivalentSubstitutedFormula )
-    ( isValid, s"$substitution is not an equivalent substitution for $formula" )
+    val isValid = Escargot isValid Iff( substitutedFormula, equivalentSubstitutedFormula )
+    ( isValid, s"applying $substitution is not equivalent to applying $equivalentSubstitution to $formula" )
   }
 
   private def succeedFor( formulaEquation: Formula, expectedEquivalentSubstitution: Substitution ): Fragment = {
