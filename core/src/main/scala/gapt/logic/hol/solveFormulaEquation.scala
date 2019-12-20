@@ -14,12 +14,20 @@ import gapt.proofs.HOLClause
 
 /**
  * Uses the DLS algorithm to find a witness for formula equations
- * of the form ?X φ where φ is a first order formula
+ * of the form ?X φ where φ is a first order formula and X is a second order variable
+ *
+ * The return value is a substitution of the occurring second order variables such that
+ * applying the substitution to φ yields a first order formula which is equivalent to ?X φ
  *
  * At the moment φ may only be a quantifier free formula
  * and the quantified relation must be unary
  */
 object solveFormulaEquation {
+
+  def extractFirstOrderPart( formula: Formula ): Formula = formula match {
+    case Quant( Var( _, FunctionType( To, _ ) ), innerFormula, _ ) => extractFirstOrderPart( innerFormula )
+    case _ => formula
+  }
 
   private def relationOccurrences( clause: HOLClause, quantifierVariable: Var ): ( Vector[Formula], Vector[Formula] ) = {
     val positiveOccurrences = clause.succedent.filter(
@@ -54,21 +62,21 @@ object solveFormulaEquation {
     } yield ( witnessPart, And( nonPositiveOcurrences.map( substituteWitness( _, quantifierVariable, witnessPart ) ) ) )
 
     val witnessConjuncts = witnessClauses.toList.inits.toTraversable.init.map( initList => {
-      val witnessPart = initList.last._1
-      val nonPositiveOcurrence = initList.last._2
+      val ( witnessPart, nonPositiveOcurrence ) = initList.last
       Imp( And( initList.init.map( element => Neg( element._2 ) ) :+ nonPositiveOcurrence ), witnessPart )
     } )
 
     And( witnessConjuncts )
   }
 
-  def apply( formula: Formula ): Try[Formula] = Try( formula match {
+  def apply( formula: Formula ): Substitution = formula match {
     case Ex( quantifierVariable, innerFormula ) => {
       // todo: allow multiple argument relations
 
       val dnf = DNFp( innerFormula )
-      completeWitness( dnf, quantifierVariable )
+      val witness = completeWitness( dnf, quantifierVariable )
+      Substitution( Map( quantifierVariable -> Abs( FOLVar( "x" ), witness ) ) )
     }
     case _ => throw new Exception( "formula does not start with existential quantifier" )
-  } )
+  }
 }

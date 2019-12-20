@@ -20,13 +20,15 @@ class SolveFormulaEquationTest extends Specification {
 
   "solveFormulaEquation" should {
     "succeed for ?X X(a)" in {
-      solveFormulaEquation( hof"?X X(a)" ) must
-        beSuccessfulTry.withValue( beLogicallyEquivalentTo( fof"x=a" ) )
+      solveFormulaEquation( hof"?X X(a)" ).map.get( Var( "X", Ti ->: To ) ) must beSome.which {
+        case Abs( FOLVar( "x" ), witness ) => witness.asInstanceOf[Formula] must beLogicallyEquivalentTo( fof"x=a" )
+      }
     }
 
     "succeed for ?X ((X(a) & -X(f(b))) | (X(f(b)) & -X(a)))" in {
-      solveFormulaEquation( hof"?X ((X(a) & -X(f(b))) | (X(f(b)) & -X(a)))" ) must
-        beSuccessfulTry.withValue( beLogicallyEquivalentTo( fof"(-f(b)=a -> x=a) & ((-(-f(b)=a)) & -a=f(b) -> x=f(b))" ) )
+      solveFormulaEquation( hof"?X ((X(a) & -X(f(b))) | (X(f(b)) & -X(a)))" ).map.get( Var( "X", Ti ->: To ) ) must beSome.which {
+        case Abs( FOLVar( "x" ), witness ) => witness.asInstanceOf[Formula] must beLogicallyEquivalentTo( fof"(-f(b)=a -> x=a) & ((-(-f(b)=a)) & -a=f(b) -> x=f(b))" )
+      }
     }
   }
 }
