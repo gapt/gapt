@@ -29,12 +29,16 @@ class SolveFormulaEquationTest extends Specification {
   private def succeedFor( formulaEquation: Formula, expectedEquivalentSubstitution: Substitution ): Fragment = {
     s"succeed for $formulaEquation" >> {
       solveFormulaEquation( formulaEquation ) must
-        beAnEquivalentSubstitutionFor( formulaEquation, expectedEquivalentSubstitution )
+        beSome( beAnEquivalentSubstitutionFor( formulaEquation, expectedEquivalentSubstitution ) )
     }
   }
 
   "solveFormulaEquation" should {
-    succeedFor( hof"?X X(a)", Substitution( Map( Var( "X", Ti ->: To ) -> le"^x x=a" ) ) )
-    succeedFor( hof"?X ((X(a) & -X(f(b))) | (X(f(b)) & -X(a)))", Substitution( Map( Var( "X", Ti ->: To ) -> le"^x (-f(b)=a -> x=a) & ((-(-f(b)=a)) & -a=f(b) -> x=f(b))" ) ) )
+    val X = Var( "X", Ti ->: To )
+    succeedFor( hof"?X X(a)", Substitution( X, le"^x x=a" ) )
+    succeedFor( hof"?X ((X(a) & -X(f(b))) | (X(f(b)) & -X(a)))", Substitution( X, le"^x (-f(b)=a -> x=a) & ((-(-f(b)=a)) & -a=f(b) -> x=f(b))" ) )
+    succeedFor( hof"?X (X(a) & X(b))", Substitution( X, le"^x x=a | x=b" ) )
+    succeedFor( hof"?X (X(a) | X(b))", Substitution( X, le"^x x=a" ) )
+    succeedFor( hof"?X (-X(a) -> X(b))", Substitution( X, le"^x x=a" ) )
   }
 }
