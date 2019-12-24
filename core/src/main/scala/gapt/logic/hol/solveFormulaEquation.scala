@@ -9,7 +9,7 @@ import gapt.expr.containedNames
 import gapt.expr.formula.hol.HOLPosition
 import gapt.expr.subst._
 import gapt.expr._
-import gapt.proofs.HOLClause
+import gapt.proofs._
 import gapt.expr.util.rename
 import gapt.expr.util.freeVariables
 import gapt.expr.util.variables
@@ -18,6 +18,7 @@ import gapt.expr.formula.constants.AndC
 import gapt.expr.formula.fol.FOLVar
 import gapt.logic.Polarity
 import gapt.provers.escargot.impl.DiscrTree.Variable
+import gapt.proofs.Sequent
 
 /**
  * Uses the DLS algorithm to find a witness for formula equations
@@ -31,15 +32,11 @@ import gapt.provers.escargot.impl.DiscrTree.Variable
  */
 object solveFormulaEquation {
 
-  def extractFirstOrderPart( formula: Formula ): Formula = formula match {
-    case Quant( Var( _, FunctionType( To, _ ) ), innerFormula, _ ) => extractFirstOrderPart( innerFormula )
-    case _ => formula
-  }
-
   private def partialWitness( positiveOccurrences: Iterable[Formula] ): Formula = {
     Or( positiveOccurrences.map( {
       // todo: handle multiple arguments
       // todo: unique name for unbound variable "x"
+      // todo: identify quantifier variable
       case Atom( _, args ) => Eq( FOLVar( "x" ), args.head )
     } ) )
   }
@@ -49,52 +46,100 @@ object solveFormulaEquation {
     normalize( Substitution( substitutionMap )( formula ) )
   }
 
-  private def completeWitness( splitDisjunctions: Set[( List[Formula], List[Formula] )], quantifierVariable: Var ): Formula = {
+  private def completeWitness(
+    disjuncts:          Set[HOLSequent],
+    quantifierVariable: Var ): Formula = {
     val witnessClauses = for {
-      clause <- splitDisjunctions
-      ( positiveOccurrences, nonPositiveOcurrences ) = clause
+      disjunct <- disjuncts
+      ( positiveOccurrences, nonPositiveOcurrences ) = ( disjunct.succedent, disjunct.antecedent )
       witnessPart = partialWitness( positiveOccurrences )
-    } yield ( witnessPart, And( nonPositiveOcurrences.map( substituteWitness( _, quantifierVariable, witnessPart ) ) ) )
+      substituteWitnessPart = substituteWitness( _, quantifierVariable, witnessPart )
+    } yield ( witnessPart, And( nonPositiveOcurrences.map( substituteWitnessPart ) ) )
 
     val witnessConjuncts = witnessClauses.toList.inits.toList.init.map( initList => {
       val ( witnessPart, nonPositiveOcurrence ) = initList.last
-      Imp( And( initList.init.map( element => Neg( element._2 ) ) :+ nonPositiveOcurrence ), witnessPart )
+      val negatedInit = initList.init.map( element => Neg( element._2 ) )
+      val antecedent = And( negatedInit :+ nonPositiveOcurrence )
+      Imp( antecedent, witnessPart )
     } )
 
     And( witnessConjuncts )
   }
 
-  private def withNewVariable[T]( variable: Var, formulaAlpha: Formula, formulaBeta: Formula, transform: ( Var, Formula, Formula ) => T ): T = {
-    val newVariable = rename( variable, variables( formulaAlpha ) ++ variables( formulaBeta ) )
-    val substitution = Substitution( variable, newVariable )
-    transform( newVariable, substitution( formulaAlpha ), substitution( formulaBeta ) )
-  }
+  private def replaceVariablesWithNewVariable[T](
+    variablesInFormulas: Iterable[( Var, Formula )] ): ( Var, Iterable[Formula] ) =
+    variablesInFormulas match {
+      case ( headVariable: Var, _ ) :: _ => {
+        val blackListVariables = variablesInFormulas.flatMap( x => variables( x._2 ) )
+        val newVariable = rename( headVariable, blackListVariables )
+        val substitute = Substitution( _: Var, newVariable )( _: Formula )
+        ( newVariable, variablesInFormulas.map( x => substitute( x._1, x._2 ) ) )
+      }
+      case _ => throw new Exception( "list must be non-empty" )
+    }
 
   private object AndOr {
-    def unapply( formula: Formula ): Option[( Formula, Formula, ( Formula, Formula ) => Formula )] = formula match {
-      case And( alpha, beta ) => Some( ( alpha, beta, And.apply ) )
-      case Or( alpha, beta )  => Some( ( alpha, beta, Or.apply ) )
-      case _                  => None
-    }
+    def unapply(
+      formula: Formula ): Option[( Formula, Formula, MonoidalBinaryPropConnectiveHelper )] =
+      formula match {
+        case And( alpha, beta ) => Some( ( alpha, beta, And ) )
+        case Or( alpha, beta )  => Some( ( alpha, beta, Or ) )
+        case _                  => None
+      }
+  }
+
+  private def isFreeIn( variable: Var, formula: Formula ): Boolean = {
+    freeVariables( formula ).contains( variable )
   }
 
   private def moveUniversalQuantifiersDown( formula: Formula ): Formula = formula match {
-    case All( variable, And( alpha, beta ) ) => And( moveUniversalQuantifiersDown( All( variable, alpha ) ), moveUniversalQuantifiersDown( All( variable, beta ) ) )
-    case All( variable, AndOr( alpha, beta, connective ) ) if !freeVariables( alpha ).contains( variable ) => connective( moveUniversalQuantifiersDown( alpha ), moveUniversalQuantifiersDown( All( variable, beta ) ) )
-    case All( variable, AndOr( beta, alpha, connective ) ) if !freeVariables( alpha ).contains( variable ) => connective( moveUniversalQuantifiersDown( All( variable, beta ) ), moveUniversalQuantifiersDown( alpha ) )
+    case All( variable, And( alpha, beta ) ) =>
+      And(
+        moveUniversalQuantifiersDown( All( variable, alpha ) ),
+        moveUniversalQuantifiersDown( All( variable, beta ) ) )
 
-    case Quant( variable, alpha, pol ) => Quant( variable, moveUniversalQuantifiersDown( alpha ), pol )
-    case AndOr( alpha, beta, connective ) => connective( moveUniversalQuantifiersDown( alpha ), moveUniversalQuantifiersDown( beta ) )
+    case All( variable, AndOr( alpha, beta, connective ) ) if !isFreeIn( variable, alpha ) =>
+      connective(
+        moveUniversalQuantifiersDown( alpha ),
+        moveUniversalQuantifiersDown( All( variable, beta ) ) )
+
+    case All( variable, AndOr( beta, alpha, connective ) ) if !isFreeIn( variable, alpha ) =>
+      moveUniversalQuantifiersDown( All( variable, connective( alpha, beta ) ) )
+
+    case Quant( variable, alpha, pol ) =>
+      Quant( variable, moveUniversalQuantifiersDown( alpha ), pol )
+
+    case AndOr( alpha, beta, connective ) =>
+      connective(
+        moveUniversalQuantifiersDown( alpha ),
+        moveUniversalQuantifiersDown( beta ) )
 
     case _ => formula
   }
 
   private def moveExistentialQuantifiersUp( formula: Formula ): Formula = formula match {
-    case Or( Ex( variableAlpha, alpha ), Ex( variableBeta, beta ) ) => withNewVariable( variableAlpha, alpha, beta, { ( v, a, b ) => Ex( v, moveExistentialQuantifiersUp( Or( a, b ) ) ) } )
-    case AndOr( alpha, Ex( variable, beta ), connective )           => withNewVariable( variable, alpha, beta, { ( v, a, b ) => Ex( v, moveExistentialQuantifiersUp( connective( a, b ) ) ) } )
-    case AndOr( Ex( variable, beta ), alpha, connective )           => withNewVariable( variable, beta, alpha, { ( v, b, a ) => Ex( v, moveExistentialQuantifiersUp( connective( b, a ) ) ) } )
+    case Or( Ex( variableAlpha, alpha ), Ex( variableBeta, beta ) ) => {
+      val ( newVariable, substitutedFormulas ) = replaceVariablesWithNewVariable(
+        List(
+          ( variableAlpha, alpha ),
+          ( variableBeta, beta ) ) )
+      Ex( newVariable, moveExistentialQuantifiersUp( Or( substitutedFormulas ) ) )
+    }
 
-    case Quant( variable, alpha, pol )                              => Quant( variable, moveExistentialQuantifiersUp( alpha ), pol )
+    case AndOr( alpha, Ex( variable, beta ), connective ) => {
+      val ( newVariable, substitutedFormulas ) = replaceVariablesWithNewVariable(
+        List(
+          ( variable, alpha ),
+          ( variable, beta ) ) )
+      Ex( newVariable, moveExistentialQuantifiersUp( Or( substitutedFormulas ) ) )
+    }
+
+    case AndOr( Ex( variable, beta ), alpha, connective ) =>
+      moveExistentialQuantifiersUp( connective( alpha, Ex( variable, beta ) ) )
+
+    case Quant( variable, alpha, pol ) =>
+      Quant( variable, moveExistentialQuantifiersUp( alpha ), pol )
+
     case AndOr( alpha, beta, connective ) => {
       val movedAlpha = moveExistentialQuantifiersUp( alpha )
       val movedBeta = moveExistentialQuantifiersUp( beta )
@@ -107,54 +152,53 @@ object solveFormulaEquation {
     case _ => formula
   }
 
-  def distributeConjunctionsOverDisjunctions( formula: Formula ): Formula = formula match {
-    case Ex( variable, alpha )           => Ex( variable, distributeConjunctionsOverDisjunctions( alpha ) )
-    case And( alpha, Or( beta, gamma ) ) => Or( ( And( alpha, beta ) ), ( And( alpha, gamma ) ) )
-    case And( Or( alpha, beta ), gamma ) => Or( ( And( alpha, gamma ) ), ( And( beta, gamma ) ) )
-    case And( alpha, beta ) => {
-      val distributedAlpha = distributeConjunctionsOverDisjunctions( alpha )
-      val distributedBeta = distributeConjunctionsOverDisjunctions( beta )
-      if ( distributedAlpha != alpha || distributedBeta != beta )
-        distributeConjunctionsOverDisjunctions( And( distributedAlpha, distributedBeta ) )
-      else
-        formula
-    }
-    case _ => formula
+  private def crossProduct[T]( lists: List[List[T]] ): List[List[T]] = lists match {
+    case Nil          => List( Nil )
+    case head :: rest => for { x <- head; y <- crossProduct( rest ) } yield x :: y
   }
 
-  def moveQuantifiers: Formula => Formula =
-    moveUniversalQuantifiersDown _ andThen
-      moveExistentialQuantifiersUp _
-
-  def disjunctions( formula: Formula ): Set[Formula] = formula match {
-    case Or.nAry( disjunctions ) => disjunctions.toSet
-    case _                       => Set( formula )
+  private def distributeTopLevelConjunctionsOverDisjunctions( formula: Formula ): Set[Formula] = formula match {
+    case And.nAry( conjuncts ) => {
+      val disjunctsInConjuncts = conjuncts.map( { case Or.nAry( disjuncts ) => disjuncts } )
+      crossProduct( disjunctsInConjuncts ).map( And.apply( _ ) ).toSet
+    }
   }
 
-  private object ExPrefix {
-    def apply( existentialVariables: List[Var], formula: Formula ): Formula = existentialVariables match {
-      case Nil              => formula
-      case variable :: rest => Ex( variable, apply( rest, formula ) )
-    }
+  private def moveQuantifiers( formula: Formula ): Formula = {
+    moveExistentialQuantifiersUp( moveUniversalQuantifiersDown( formula ) )
+  }
 
-    def unapply( formula: Formula ): Option[( List[Var], Formula )] = formula match {
-      case Ex( variable, formula ) => {
-        val ( variables, innerFormula ) = unapply( formula ).getOrElse( ( Nil, formula ) )
-        Some( ( variable :: variables, innerFormula ) )
+  private object FirstOrderExPrefix {
+    def apply( existentialVariables: List[FOLVar], formula: Formula ): Formula =
+      existentialVariables match {
+        case Nil              => formula
+        case variable :: rest => Ex( variable, apply( rest, formula ) )
+      }
+
+    def unapply( formula: Formula ): Option[( List[FOLVar], Formula )] = formula match {
+      case Ex( variable: FOLVar, innerFormula ) => {
+        val ( variables, extractedFormula ) = unapply( innerFormula ).get
+        Some( variable :: variables, extractedFormula )
       }
       case _ => Some( Nil, formula )
     }
   }
 
-  def polaritiesWithRespectTo( formula: Formula, variable: Var, polarity: Polarity = Polarity.Positive ): Set[Polarity] = formula match {
+  private def polaritiesWithRespectTo(
+    formula:  Formula,
+    variable: Var,
+    polarity: Polarity = Polarity.Positive ): Set[Polarity] = formula match {
     case Atom( atomVariable, _ ) if atomVariable == variable => Set( polarity )
-    case Neg( alpha ) => polaritiesWithRespectTo( alpha, variable, !polarity )
-    case AndOr( alpha, beta, _ ) => polaritiesWithRespectTo( alpha, variable, polarity ) ++ polaritiesWithRespectTo( beta, variable, polarity )
+    case Neg( alpha ) =>
+      polaritiesWithRespectTo( alpha, variable, !polarity )
+    case AndOr( alpha, beta, _ ) =>
+      polaritiesWithRespectTo( alpha, variable, polarity ) ++
+        polaritiesWithRespectTo( beta, variable, polarity )
     case Quant( _, alpha, _ ) => polaritiesWithRespectTo( alpha, variable, polarity )
-    case _ => Set()
+    case _                    => Set()
   }
 
-  def polarityWithRespectTo( formula: Formula, variable: Var ): Option[Polarity] = {
+  private def uniquePolarityWithRespectTo( formula: Formula, variable: Var ): Option[Polarity] = {
     val polarities = polaritiesWithRespectTo( formula, variable )
     if ( polarities.size <= 1 )
       Some( polarities.headOption.getOrElse( Polarity.Positive ) )
@@ -162,47 +206,54 @@ object solveFormulaEquation {
       None
   }
 
-  def splitConjunctionWithRespectTo( formula: Formula, variable: Var ): Option[( List[Formula], List[Formula] )] = formula match {
+  private def polarizedConjuncts( formula: Formula, variable: Var ): Option[HOLSequent] = formula match {
     case And.nAry( conjuncts ) => {
-      val conjunctsWithPolarities = conjuncts.map( conjunct => ( conjunct, polarityWithRespectTo( conjunct, variable ) ) )
+      val conjunctsWithPolarities = conjuncts
+        .map( conjunct => ( conjunct, uniquePolarityWithRespectTo( conjunct, variable ) ) )
 
       if ( conjunctsWithPolarities.exists( { case ( _, polarity ) => polarity == None } ) )
         None
-      else {
-        val positiveConjuncts = conjunctsWithPolarities.filter( _._2.get.positive ).map( _._1 )
-        val negativeConjuncts = conjunctsWithPolarities.filter( _._2.get.negative ).map( _._1 )
-        Some( ( positiveConjuncts, negativeConjuncts ) )
-      }
+      else
+        Some( Sequent( conjunctsWithPolarities.map( f => ( f._1, f._2.get ) ) ) )
     }
   }
 
-  def preprocess( formula: Formula, variable: Var ): Option[Set[( List[Formula], List[Formula] )]] = {
+  def preprocess(
+    secondOrderVariable: Var,
+    formula:             Formula ): Try[( List[FOLVar], Set[HOLSequent] )] = {
     val nnf = toNNF( formula )
+    moveQuantifiers( nnf ) match {
+      case FirstOrderExPrefix( variables, innerFormula ) => {
+        val disjuncts = distributeTopLevelConjunctionsOverDisjunctions( innerFormula )
 
-    val movedQuantifiers = moveQuantifiers( nnf )
-    movedQuantifiers match {
-      case ExPrefix( variables, innerFormula ) => {
-        val distributedDisjunctions = distributeConjunctionsOverDisjunctions( innerFormula )
-
-        val splits = disjunctions( distributedDisjunctions ).map( splitConjunctionWithRespectTo( _, variable ) )
-        if ( splits.exists( _.isEmpty ) )
-          None
+        val polarizedConjunctsInDisjuncts = disjuncts
+          .map( polarizedConjuncts( _, secondOrderVariable ) )
+        if ( polarizedConjunctsInDisjuncts.exists( _.isEmpty ) )
+          Failure(
+            new Exception( "formula cannot be separated into positive and negative conjuncts" ) )
         else
-          Some( splits.map( _.get ) )
+          Success( ( variables, polarizedConjunctsInDisjuncts.map( _.get ) ) )
       }
     }
   }
 
-  def apply( formula: Formula ): Option[Substitution] = formula match {
-    case Ex( quantifierVariable, innerFormula ) => {
-      // todo: allow multiple argument relations
-
-      val splitDisjunctions = preprocess( formula, quantifierVariable )
-      splitDisjunctions.map( disjunctions => {
-        val witness = completeWitness( disjunctions, quantifierVariable )
-        Substitution( Map( quantifierVariable -> Abs( FOLVar( "x" ), witness ) ) )
+  def apply( formula: Formula ): Try[( Substitution, Formula )] = formula match {
+    case Ex( variable @ Var( _, _ ->: To ), innerFormula ) => {
+      apply( innerFormula ).flatMap( {
+        case ( substitution, firstOrderPart ) =>
+          val firstOrderFormula = BetaReduction.betaNormalize( substitution( firstOrderPart ) )
+          preprocess( variable, firstOrderFormula )
+            .map( {
+              case ( existentialVariables, disjuncts ) => {
+                val witness = completeWitness( disjuncts, variable )
+                val newSubstitution = variable -> Abs( FOLVar( "x" ), witness )
+                val substitutionMap = substitution.map + newSubstitution
+                val updatedSubstitution = Substitution( substitutionMap )
+                ( updatedSubstitution, firstOrderFormula )
+              }
+            } )
       } )
     }
-    case _ => throw new Exception( "formula does not start with existential quantifier" )
+    case _ => Success( ( Substitution(), formula ) )
   }
 }
