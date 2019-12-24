@@ -38,8 +38,7 @@ class SolveFormulaEquationTest extends Specification {
       ( areEqual, errorMessage )
     }
 
-  private def beAnEquivalentSubstitutionFor(
-    formula:                Formula,
+  private def beAnEquivalentSubstitutionTo(
     equivalentSubstitution: Substitution ): Matcher[( Substitution, Formula )] =
     ( input: ( Substitution, Formula ) ) => {
       val ( substitution, firstOrderPart ) = input
@@ -48,7 +47,7 @@ class SolveFormulaEquationTest extends Specification {
       val equivalentSubstitutedFormula = BetaReduction.betaNormalize(
         equivalentSubstitution( firstOrderPart ) )
       val isValid = Escargot isValid Iff( substitutedFormula, equivalentSubstitutedFormula )
-      ( isValid, s"applying $substitution is not equivalent to applying $equivalentSubstitution to $formula" )
+      ( isValid, s"applying $substitution is not equivalent to applying $equivalentSubstitution to $firstOrderPart" )
     }
 
   "preprocess" should {
@@ -78,9 +77,8 @@ class SolveFormulaEquationTest extends Specification {
       }
     }
 
-    val X = Var( "X", Ti ->: To )
     def formulaEquation( variable: Var, formula: Formula ) = ( variable, formula )
-    def formulaEquationInX( formula: Formula ) = formulaEquation( X, formula )
+    def formulaEquationInX( formula: Formula ) = formulaEquation( hov"X:i>o", formula )
     val fe = formulaEquationInX _ // alias to shorten test cases
     succeedWithSequents( fe( hof"R(a)" ), Set( hos":- R(a)" ) )
     succeedWithSequents( fe( hof"X(a)" ), Set( hos":- X(a)" ) )
@@ -121,13 +119,11 @@ class SolveFormulaEquationTest extends Specification {
       expectedEquivalentSubstitution: Substitution ): Fragment = {
       s"succeed for $formulaEquation" in {
         solveFormulaEquation( formulaEquation ) must
-          beSuccessfulTry( beAnEquivalentSubstitutionFor(
-            formulaEquation,
-            expectedEquivalentSubstitution ) )
+          beSuccessfulTry( beAnEquivalentSubstitutionTo( expectedEquivalentSubstitution ) )
       }
     }
 
-    val X = Var( "X", Ti ->: To )
+    val X = hov"X:i>o"
     succeedFor( hof"?(X: i>o) R(a)", Substitution( X, le"^x ⊤" ) )
     succeedFor( hof"?X X(a)", Substitution( X, le"^x x=a" ) )
     succeedFor(
@@ -140,5 +136,8 @@ class SolveFormulaEquationTest extends Specification {
     succeedFor(
       hof"?X (?Y (X(a) & Y(b)))",
       Substitution( Map( hov"X:i>o" -> le"^x x=a", hov"Y:i>o" -> le"^x x=b" ) ) )
+    succeedFor(
+      hof"?X X(a,b)",
+      Substitution( Map( hov"X:i>i>o" -> le"^x_1 (^x_2 x_1 = a & x_2 = b)" ) ) )
   }
 }

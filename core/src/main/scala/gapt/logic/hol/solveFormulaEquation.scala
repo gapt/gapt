@@ -19,6 +19,7 @@ import gapt.expr.formula.fol.FOLVar
 import gapt.logic.Polarity
 import gapt.provers.escargot.impl.DiscrTree.Variable
 import gapt.proofs.Sequent
+import gapt.utils.NameGenerator
 
 /**
  * Uses the DLS algorithm to find a witness for formula equations
@@ -32,28 +33,52 @@ import gapt.proofs.Sequent
  */
 object solveFormulaEquation {
 
-  private def partialWitness( positiveOccurrences: Iterable[Formula] ): Formula = {
-    Or( positiveOccurrences.map( {
-      // todo: handle multiple arguments
-      // todo: unique name for unbound variable "x"
-      // todo: identify quantifier variable
-      case Atom( _, args ) => Eq( FOLVar( "x" ), args.head )
+  private def vectorEq( expressionsA: Iterable[Expr], expressionsB: Iterable[Expr] ): Formula = {
+    And( expressionsA.zip( expressionsB ) map { case ( a, b ) => Eq( a, b ) } )
+  }
+
+  private def freshArgumentVariables(
+    secondOrderVariable: Var,
+    disjuncts:           Set[HOLSequent] ): List[FOLVar] = secondOrderVariable match {
+    case Var( _, FunctionType( To, inputTypes ) ) if inputTypes.forall( _ == Ti ) => {
+      val blackListVariableNames = disjuncts.flatMap( variables( _ ) ).map( _.name )
+      val argumentName = secondOrderVariable.name.toLowerCase()
+      new NameGenerator( blackListVariableNames )
+        .freshStream( argumentName )
+        .map( FOLVar( _ ) )
+        .take( inputTypes.length )
+        .toList
+    }
+  }
+
+  private def partialWitness(
+    positiveOccurrences: Iterable[Formula],
+    secondOrderVariable: Var,
+    argumentVariables:   Iterable[FOLVar] ): Formula = {
+    Or( positiveOccurrences.flatMap( {
+      // todo: implement Ackermann's lemma
+      case Atom( relationVariable, arguments ) if relationVariable == secondOrderVariable => {
+        List( vectorEq( arguments, argumentVariables ) )
+      }
+      case _ => Nil
     } ) )
   }
 
-  private def substituteWitness( formula: Formula, variable: Var, witness: Formula ): Expr = {
-    val substitutionMap = Map( variable -> Abs( FOLVar( "x" ), witness ) )
-    normalize( Substitution( substitutionMap )( formula ) )
+  private def substituteWitness( formula: Formula, variable: Var, witness: Expr ): Expr = {
+    val substitution = Substitution( Map( variable -> witness ) )
+    BetaReduction.betaNormalize( substitution( formula ) )
   }
 
   private def completeWitness(
-    disjuncts:          Set[HOLSequent],
-    quantifierVariable: Var ): Formula = {
+    disjuncts:           Set[HOLSequent],
+    secondOrderVariable: Var ): Expr = {
+    val argumentVariables = freshArgumentVariables( secondOrderVariable, disjuncts )
     val witnessClauses = for {
       disjunct <- disjuncts
       ( positiveOccurrences, nonPositiveOcurrences ) = ( disjunct.succedent, disjunct.antecedent )
-      witnessPart = partialWitness( positiveOccurrences )
-      substituteWitnessPart = substituteWitness( _, quantifierVariable, witnessPart )
+      witnessPart = partialWitness( positiveOccurrences, secondOrderVariable, argumentVariables )
+      absWitnessPart = Abs( argumentVariables, witnessPart )
+      substituteWitnessPart = substituteWitness( _, secondOrderVariable, absWitnessPart )
     } yield ( witnessPart, And( nonPositiveOcurrences.map( substituteWitnessPart ) ) )
 
     val witnessConjuncts = witnessClauses.toList.inits.toList.init.map( initList => {
@@ -63,7 +88,7 @@ object solveFormulaEquation {
       Imp( antecedent, witnessPart )
     } )
 
-    And( witnessConjuncts )
+    Abs( argumentVariables, simplify( And( witnessConjuncts ) ) )
   }
 
   private def replaceVariablesWithNewVariable[T](
@@ -238,7 +263,7 @@ object solveFormulaEquation {
   }
 
   def apply( formula: Formula ): Try[( Substitution, Formula )] = formula match {
-    case Ex( variable @ Var( _, _ ->: To ), innerFormula ) => {
+    case Ex( variable @ Var( _, FunctionType( To, _ ) ), innerFormula ) => {
       apply( innerFormula ).flatMap( {
         case ( substitution, firstOrderPart ) =>
           val firstOrderFormula = BetaReduction.betaNormalize( substitution( firstOrderPart ) )
@@ -246,8 +271,7 @@ object solveFormulaEquation {
             .map( {
               case ( existentialVariables, disjuncts ) => {
                 val witness = completeWitness( disjuncts, variable )
-                val newSubstitution = variable -> Abs( FOLVar( "x" ), witness )
-                val substitutionMap = substitution.map + newSubstitution
+                val substitutionMap = substitution.map + ( variable -> witness )
                 val updatedSubstitution = Substitution( substitutionMap )
                 ( updatedSubstitution, firstOrderFormula )
               }
