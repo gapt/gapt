@@ -39,16 +39,25 @@ class SolveFormulaEquationTest extends Specification {
     }
 
   private def beAnEquivalentSubstitutionTo(
-    equivalentSubstitution: Substitution ): Matcher[( Substitution, Formula )] =
-    ( input: ( Substitution, Formula ) ) => {
-      val ( substitution, firstOrderPart ) = input
-      val substitutedFormula = BetaReduction.betaNormalize(
-        substitution( firstOrderPart ) )
-      val equivalentSubstitutedFormula = BetaReduction.betaNormalize(
-        equivalentSubstitution( firstOrderPart ) )
-      val isValid = Escargot isValid Iff( substitutedFormula, equivalentSubstitutedFormula )
-      ( isValid, s"applying $substitution is not equivalent to applying $equivalentSubstitution to $firstOrderPart" )
-    }
+    equivalentSubstitution: Substitution ): Matcher[( Substitution, Formula )] = {
+    ( input: ( Substitution, Formula ) ) =>
+      {
+        val ( substitution, firstOrderPart ) = input
+        val substitutedFormula = simplify( BetaReduction.betaNormalize(
+          substitution( firstOrderPart ) ) )
+        val equivalentSubstitutedFormula = simplify( BetaReduction.betaNormalize(
+          equivalentSubstitution( firstOrderPart ) ) )
+        val isValid = Escargot isValid Iff( substitutedFormula, equivalentSubstitutedFormula )
+        val errorMessage =
+          s"""|applying $substitution is not equivalent to applying $equivalentSubstitution to $firstOrderPart
+              |applying $substitution 
+              |gives $substitutedFormula
+              |applying $equivalentSubstitution 
+              |gives $equivalentSubstitutedFormula
+           """.stripMargin
+        ( isValid, errorMessage )
+      }
+  }
 
   "preprocess" should {
     def succeedWithSequents(
@@ -111,6 +120,33 @@ class SolveFormulaEquationTest extends Specification {
     succeedWithExPrefixAndSequents(
       fe( hof"(?y X(a,y)) | (?x X(b,x))" ),
       ( List( FOLVar( "z" ) ), Set( hos":- X(a, z)", hos":- X(b, z)" ) ) )
+    succeedWithSequents(
+      fe( hof"(!x (X(x) -> (!y R(x,y)))) & (X(a) | X(b))" ),
+      Set( hos"!x (-X(x) | (!y R(x, y))) :- X(a)", hos"!x (-X(x) | (!y R(x, y))) :- X(b)" ) )
+  }
+
+  "ackermannSubstitutions" should {
+    def succeedFor(
+      secondOrderVariable: Var,
+      sequent:             HOLSequent,
+      expectedWitness:     Expr ): Fragment = {
+      s"succeed for $sequent" >> {
+        // todo: check both substitutions
+        val ( substitution, _ ) = solveFormulaEquation.witnessSubstitutions(
+          secondOrderVariable,
+          sequent )
+        val formula = And( sequent.antecedent ++ sequent.succedent )
+        val expectedSubstitution = Substitution( secondOrderVariable -> expectedWitness )
+        ( substitution, formula ) must beAnEquivalentSubstitutionTo( expectedSubstitution )
+      }
+    }
+
+    succeedFor( hov"X:i>o", hos"R(a) :-", le"^x ⊤" )
+    succeedFor( hov"X:i>o", hos":- X(a)", le"^x x=a" )
+    succeedFor( hov"X:i>o", hos":- !x X(x)", le"^x ⊤" )
+    succeedFor( hov"X:i>o", hos":- !x (X(x) | R(x))", le"^x ?t x=t" )
+    succeedFor( hov"X:i>o", hos"!x (-X(x) | (!y R(x, y))) :- X(a)", le"^x x=a" )
+    succeedFor( hov"X:i>o", hos"!x (-X(x) | (!y R(x, y))) :- X(b)", le"^x x=b" )
   }
 
   "solveFormulaEquation" should {
@@ -124,20 +160,33 @@ class SolveFormulaEquationTest extends Specification {
     }
 
     val X = hov"X:i>o"
-    succeedFor( hof"?(X: i>o) R(a)", Substitution( X, le"^x ⊤" ) )
-    succeedFor( hof"?X X(a)", Substitution( X, le"^x x=a" ) )
+    succeedFor( hof"?(X: i>o) R(a)", Substitution( X -> le"^x ⊤" ) )
+    succeedFor( hof"?X X(a)", Substitution( X -> le"^x x=a" ) )
+    succeedFor( hof"?X (X(a) & -X(b))", Substitution( X -> le"^x x=a" ) )
     succeedFor(
       hof"?X ((X(a) & -X(f(b))) | (X(f(b)) & -X(a)))",
-      Substitution( X, le"^x (-f(b)=a -> x=a) & ((-(-f(b)=a)) & -a=f(b) -> x=f(b))" ) )
-    succeedFor( hof"?X (X(a) & X(b))", Substitution( X, le"^x x=a | x=b" ) )
-    succeedFor( hof"?X (X(a) | X(b))", Substitution( X, le"^x x=a" ) )
-    succeedFor( hof"?X (-X(a) -> X(b))", Substitution( X, le"^x x=a" ) )
-    succeedFor( hof"?(X: i>o) (R(a) & X(b))", Substitution( X, le"^x x=b" ) )
+      Substitution( X -> le"^x (-f(b)=a -> x=a) & ((-(-f(b)=a)) & -a=f(b) -> x=f(b))" ) )
+    succeedFor( hof"?X (X(a) & X(b))", Substitution( X -> le"^x x=a | x=b" ) )
+    succeedFor( hof"?X (X(a) | X(b))", Substitution( X -> le"^x x=a" ) )
+    succeedFor( hof"?X (-X(a) -> X(b))", Substitution( X -> le"^x x=a" ) )
+    succeedFor( hof"?(X: i>o) (R(a) & X(b))", Substitution( X -> le"^x x=b" ) )
     succeedFor(
       hof"?X (?Y (X(a) & Y(b)))",
-      Substitution( Map( hov"X:i>o" -> le"^x x=a", hov"Y:i>o" -> le"^x x=b" ) ) )
+      Substitution( hov"X:i>o" -> le"^x x=a", hov"Y:i>o" -> le"^x x=b" ) )
     succeedFor(
       hof"?X X(a,b)",
-      Substitution( Map( hov"X:i>i>o" -> le"^x_1 (^x_2 x_1 = a & x_2 = b)" ) ) )
+      Substitution( hov"X:i>i>o" -> le"^x_1 (^x_2 x_1 = a & x_2 = b)" ) )
+    succeedFor(
+      hof"?X ((!x (X(x) -> (!y R(x, y)))) & X(a))",
+      Substitution( X -> le"^t !y R(t, y)" ) )
+    succeedFor(
+      hof"?X ((!x (X(x) -> R(x))) & (X(a) | X(b)))",
+      Substitution( X -> le"^t (R:i>o)(t)" ) )
+    succeedFor(
+      hof"?X ((!x (X(x) -> (!y R(x, y)))) & (X(a) | X(b)))",
+      Substitution( X -> le"^t !y R(t, y)" ) )
+    succeedFor(
+      hof"?X (!x (X(x) | R(x)))",
+      Substitution( hov"X:i>o" -> le"^x ?t x=t" ) )
   }
 }

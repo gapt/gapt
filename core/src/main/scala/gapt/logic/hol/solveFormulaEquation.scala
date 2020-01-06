@@ -22,14 +22,16 @@ import gapt.proofs.Sequent
 import gapt.utils.NameGenerator
 
 /**
- * Uses the DLS algorithm to find a witness for formula equations
- * of the form ?X φ where φ is a first order formula and X is a second order variable
+ * Uses the DLS algorithm to find a witness for formula equations of the form
+ * ?X_1 ... ?X_n φ where φ is a first order formula and X_1,...,X_n are second order variables.
  *
  * The return value is a substitution of the occurring second order variables such that
- * applying the substitution to φ yields a first order formula which is equivalent to ?X φ
+ * applying the substitution to φ gives a first order formula which is equivalent to
+ * ?X_1 ... ?X_n φ.
  *
- * At the moment φ may only be a quantifier free formula
- * and the quantified relation must be unary
+ * Does not yet work for formulas where a positive occurrence of the second order variable is
+ * inside the scope of an existential quantifier which is itself inside the scope of an
+ * universal quantifier.
  */
 object solveFormulaEquation {
 
@@ -51,44 +53,74 @@ object solveFormulaEquation {
     }
   }
 
-  private def partialWitness(
-    positiveOccurrences: Iterable[Formula],
+  /**
+   * Returns the succedent of the implication in Ackermann's lemma which is equivalent to the given
+   * positive formula
+   */
+  private def positiveOccurrenceWitness(
+    formula:             Formula,
     secondOrderVariable: Var,
-    argumentVariables:   Iterable[FOLVar] ): Formula = {
-    Or( positiveOccurrences.flatMap( {
-      // todo: implement Ackermann's lemma
-      case Atom( relationVariable, arguments ) if relationVariable == secondOrderVariable => {
-        List( vectorEq( arguments, argumentVariables ) )
-      }
-      case _ => Nil
-    } ) )
+    argumentVariables:   Seq[FOLVar] ): Formula = formula match {
+    case _ if !formula.contains( secondOrderVariable ) => Top()
+    case Atom( variable, arguments ) if variable == secondOrderVariable =>
+      vectorEq( argumentVariables, arguments )
+    case Neg( alpha ) =>
+      Neg( positiveOccurrenceWitness( alpha, secondOrderVariable, argumentVariables ) )
+    case And( alpha, beta ) =>
+      Or(
+        positiveOccurrenceWitness( alpha, secondOrderVariable, argumentVariables ),
+        positiveOccurrenceWitness( beta, secondOrderVariable, argumentVariables ) )
+    case Or.nAry( disjuncts ) if disjuncts.length >= 2 => {
+      val partialWitnesses = disjuncts.map(
+        disjunct => {
+          val witness = positiveOccurrenceWitness(
+            disjunct,
+            secondOrderVariable,
+            argumentVariables )
+          val substitution = Substitution( secondOrderVariable, Abs( argumentVariables, witness ) )
+          ( applySubstitutionBetaReduced( substitution, disjunct ), witness )
+        } )
+      disjunctiveWitnessCombination( partialWitnesses )
+    }
+    case All( variable, innerFormula ) => Ex(
+      variable,
+      positiveOccurrenceWitness( innerFormula, secondOrderVariable, argumentVariables ) )
+
+    // todo: handle Ex by skolemization
   }
 
-  private def substituteWitness( formula: Formula, variable: Var, witness: Expr ): Expr = {
-    val substitution = Substitution( Map( variable -> witness ) )
+  private def positiveOccurrencesWitness(
+    secondOrderVariable: Var,
+    disjunct:            HOLSequent ): Expr = {
+    val argumentVariables = freshArgumentVariables( secondOrderVariable, Set( disjunct ) )
+    val witness = positiveOccurrenceWitness(
+      And( disjunct.succedent ),
+      secondOrderVariable,
+      argumentVariables )
+    Abs( argumentVariables, simplify( witness ) )
+  }
+
+  def witnessSubstitutions(
+    secondOrderVariable: Var,
+    disjunct:            HOLSequent ): ( Substitution, Substitution ) = {
+    val witnessA = positiveOccurrencesWitness( secondOrderVariable, disjunct )
+    ( Substitution( secondOrderVariable, witnessA ), Substitution() )
+  }
+
+  private def applySubstitutionBetaReduced(
+    substitution: Substitution,
+    formula:      Formula ): Formula = {
     BetaReduction.betaNormalize( substitution( formula ) )
   }
 
-  private def completeWitness(
-    disjuncts:           Set[HOLSequent],
-    secondOrderVariable: Var ): Expr = {
-    val argumentVariables = freshArgumentVariables( secondOrderVariable, disjuncts )
-    val witnessClauses = for {
-      disjunct <- disjuncts
-      ( positiveOccurrences, nonPositiveOcurrences ) = ( disjunct.succedent, disjunct.antecedent )
-      witnessPart = partialWitness( positiveOccurrences, secondOrderVariable, argumentVariables )
-      absWitnessPart = Abs( argumentVariables, witnessPart )
-      substituteWitnessPart = substituteWitness( _, secondOrderVariable, absWitnessPart )
-    } yield ( witnessPart, And( nonPositiveOcurrences.map( substituteWitnessPart ) ) )
-
-    val witnessConjuncts = witnessClauses.toList.inits.toList.init.map( initList => {
-      val ( witnessPart, nonPositiveOcurrence ) = initList.last
-      val negatedInit = initList.init.map( element => Neg( element._2 ) )
-      val antecedent = And( negatedInit :+ nonPositiveOcurrence )
-      Imp( antecedent, witnessPart )
-    } )
-
-    Abs( argumentVariables, simplify( And( witnessConjuncts ) ) )
+  private def disjunctiveWitnessCombination(
+    disjunctsWithWitnesses: Iterable[( Formula, Formula )] ): Formula = {
+    And( disjunctsWithWitnesses.toList.inits.toList.init.map( initList => {
+      val ( disjunct, witness ) = initList.last
+      val negatedInit = initList.init.map( element => Neg( element._1 ) )
+      val antecedent = And( negatedInit :+ disjunct )
+      Imp( antecedent, witness )
+    } ) )
   }
 
   private def replaceVariablesWithNewVariable[T](
@@ -182,7 +214,8 @@ object solveFormulaEquation {
     case head :: rest => for { x <- head; y <- crossProduct( rest ) } yield x :: y
   }
 
-  private def distributeTopLevelConjunctionsOverDisjunctions( formula: Formula ): Set[Formula] = formula match {
+  private def distributeTopLevelConjunctionsOverDisjunctions(
+    formula: Formula ): Set[Formula] = formula match {
     case And.nAry( conjuncts ) => {
       val disjunctsInConjuncts = conjuncts.map( { case Or.nAry( disjuncts ) => disjuncts } )
       crossProduct( disjunctsInConjuncts ).map( And.apply( _ ) ).toSet
@@ -193,7 +226,7 @@ object solveFormulaEquation {
     moveExistentialQuantifiersUp( moveUniversalQuantifiersDown( formula ) )
   }
 
-  private object FirstOrderExPrefix {
+  private object FirstOrderExBlock {
     def apply( existentialVariables: List[FOLVar], formula: Formula ): Formula =
       existentialVariables match {
         case Nil              => formula
@@ -231,7 +264,9 @@ object solveFormulaEquation {
       None
   }
 
-  private def polarizedConjuncts( formula: Formula, variable: Var ): Option[HOLSequent] = formula match {
+  private def polarizedConjuncts(
+    formula:  Formula,
+    variable: Var ): Option[HOLSequent] = formula match {
     case And.nAry( conjuncts ) => {
       val conjunctsWithPolarities = conjuncts
         .map( conjunct => ( conjunct, uniquePolarityWithRespectTo( conjunct, variable ) ) )
@@ -248,7 +283,7 @@ object solveFormulaEquation {
     formula:             Formula ): Try[( List[FOLVar], Set[HOLSequent] )] = {
     val nnf = toNNF( formula )
     moveQuantifiers( nnf ) match {
-      case FirstOrderExPrefix( variables, innerFormula ) => {
+      case FirstOrderExBlock( variables, innerFormula ) => {
         val disjuncts = distributeTopLevelConjunctionsOverDisjunctions( innerFormula )
 
         val polarizedConjunctsInDisjuncts = disjuncts
@@ -263,15 +298,27 @@ object solveFormulaEquation {
   }
 
   def apply( formula: Formula ): Try[( Substitution, Formula )] = formula match {
-    case Ex( variable @ Var( _, FunctionType( To, _ ) ), innerFormula ) => {
+    case Ex( secondOrderVariable @ Var( _, FunctionType( To, _ :: _ ) ), innerFormula ) => {
       apply( innerFormula ).flatMap( {
         case ( substitution, firstOrderPart ) =>
-          val firstOrderFormula = BetaReduction.betaNormalize( substitution( firstOrderPart ) )
-          preprocess( variable, firstOrderFormula )
+          val firstOrderFormula = applySubstitutionBetaReduced( substitution, firstOrderPart )
+          preprocess( secondOrderVariable, firstOrderFormula )
             .map( {
               case ( existentialVariables, disjuncts ) => {
-                val witness = completeWitness( disjuncts, variable )
-                val substitutionMap = substitution.map + ( variable -> witness )
+                val partialSubstitutions = disjuncts.map(
+                  disjunct => ( disjunct, witnessSubstitutions( secondOrderVariable, disjunct ) ) )
+                val variables = freshArgumentVariables( secondOrderVariable, disjuncts )
+                val witnessCombination = disjunctiveWitnessCombination( partialSubstitutions.map( {
+                  case ( disjunct, ( positiveSubstitution, _ ) ) => {
+                    ( applySubstitutionBetaReduced( positiveSubstitution, And( disjunct.antecedent ) ),
+                      BetaReduction.betaNormalize(
+                        Apps( positiveSubstitution.map.get( secondOrderVariable ).get, variables ) ) match {
+                          case f: Formula => f
+                        } )
+                  }
+                } ) )
+                val witnessCombinationRelation = Abs( variables, simplify( witnessCombination ) )
+                val substitutionMap = substitution.map + ( secondOrderVariable -> witnessCombinationRelation )
                 val updatedSubstitution = Substitution( substitutionMap )
                 ( updatedSubstitution, firstOrderFormula )
               }
