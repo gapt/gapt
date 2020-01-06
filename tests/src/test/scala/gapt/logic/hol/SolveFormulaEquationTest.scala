@@ -16,48 +16,9 @@ import gapt.expr.subst.Substitution
 import gapt.expr.formula.hol.instantiate
 import org.specs2.specification.core.Fragment
 import gapt.proofs._
+import scala.util.Try
 
 class SolveFormulaEquationTest extends Specification {
-
-  private def beSetEqualsWithCustomEquality[A](
-    expectedSet: Set[A],
-    equals:      ( A, A ) => Boolean ): Matcher[Set[A]] =
-    ( thisSet: Set[A] ) => {
-      val inExpectedAndNotInThis = expectedSet.filterNot( x => thisSet.exists( equals( x, _ ) ) )
-      val inThisAndNotInExpected = thisSet.filterNot( x => expectedSet.exists( equals( x, _ ) ) )
-      val errorMessage =
-        s"""
-      |$thisSet is not equal to $expectedSet according to the given equality
-      |Expected, but not present:
-      |${inExpectedAndNotInThis.mkString( "\n" )}
-      |
-      |Unexpected, but present:
-      |${inThisAndNotInExpected.mkString( "\n" )}
-      """.stripMargin
-      val areEqual = inExpectedAndNotInThis.isEmpty && inThisAndNotInExpected.isEmpty
-      ( areEqual, errorMessage )
-    }
-
-  private def beAnEquivalentSubstitutionTo(
-    equivalentSubstitution: Substitution ): Matcher[( Substitution, Formula )] = {
-    ( input: ( Substitution, Formula ) ) =>
-      {
-        val ( substitution, firstOrderPart ) = input
-        val substitutedFormula = simplify( BetaReduction.betaNormalize(
-          substitution( firstOrderPart ) ) )
-        val equivalentSubstitutedFormula = simplify( BetaReduction.betaNormalize(
-          equivalentSubstitution( firstOrderPart ) ) )
-        val isValid = Escargot isValid Iff( substitutedFormula, equivalentSubstitutedFormula )
-        val errorMessage =
-          s"""|applying $substitution is not equivalent to applying $equivalentSubstitution to $firstOrderPart
-              |applying $substitution 
-              |gives $substitutedFormula
-              |applying $equivalentSubstitution 
-              |gives $equivalentSubstitutedFormula
-           """.stripMargin
-        ( isValid, errorMessage )
-      }
-  }
 
   "preprocess" should {
     def succeedWithSequents(
@@ -72,7 +33,7 @@ class SolveFormulaEquationTest extends Specification {
       val ( secondOrderVariable, formula ) = formulaEquation
       val ( existentialVariables, expectedSequents ) = expectedResult
       s"succeed for $formula" >> {
-        solveFormulaEquation.preprocess( secondOrderVariable, formula ) must beSuccessfulTry(
+        Try( solveFormulaEquation.preprocess( secondOrderVariable, formula ) ) must beSuccessfulTry(
           { result: ( List[FOLVar], Set[HOLSequent] ) =>
             val ( variables, disjuncts ) = result
             val substitution = Substitution( existentialVariables.zip( variables ).toMap )
@@ -125,18 +86,22 @@ class SolveFormulaEquationTest extends Specification {
       Set( hos"!x (-X(x) | (!y R(x, y))) :- X(a)", hos"!x (-X(x) | (!y R(x, y))) :- X(b)" ) )
   }
 
-  "ackermannSubstitutions" should {
+  "findPartialWitness" should {
     def succeedFor(
       secondOrderVariable: Var,
       sequent:             HOLSequent,
       expectedWitness:     Expr ): Fragment = {
       s"succeed for $sequent" >> {
-        // todo: check both substitutions
-        val ( substitution, _ ) = solveFormulaEquation.witnessSubstitutions(
+        val argumentVariables = expectedWitness match {
+          case Abs.Block( variables, _ ) => variables.asInstanceOf[List[FOLVar]]
+        }
+        val witness = solveFormulaEquation.findPartialWitness(
           secondOrderVariable,
+          argumentVariables,
           sequent )
         val formula = And( sequent.antecedent ++ sequent.succedent )
         val expectedSubstitution = Substitution( secondOrderVariable -> expectedWitness )
+        val substitution = Substitution( secondOrderVariable -> Abs( argumentVariables, witness ) )
         ( substitution, formula ) must beAnEquivalentSubstitutionTo( expectedSubstitution )
       }
     }
@@ -188,5 +153,44 @@ class SolveFormulaEquationTest extends Specification {
     succeedFor(
       hof"?X (!x (X(x) | R(x)))",
       Substitution( hov"X:i>o" -> le"^x ?t x=t" ) )
+  }
+
+  private def beSetEqualsWithCustomEquality[A](
+    expectedSet: Set[A],
+    equals:      ( A, A ) => Boolean ): Matcher[Set[A]] = ( thisSet: Set[A] ) => {
+    val inExpectedAndNotInThis = expectedSet.filterNot( x => thisSet.exists( equals( x, _ ) ) )
+    val inThisAndNotInExpected = thisSet.filterNot( x => expectedSet.exists( equals( x, _ ) ) )
+    val errorMessage =
+      s"""
+    |$thisSet is not equal to $expectedSet according to the given equality
+    |Expected, but not present:
+    |${inExpectedAndNotInThis.mkString( "\n" )}
+    |
+    |Unexpected, but present:
+    |${inThisAndNotInExpected.mkString( "\n" )}
+    """.stripMargin
+    val areEqual = inExpectedAndNotInThis.isEmpty && inThisAndNotInExpected.isEmpty
+    ( areEqual, errorMessage )
+  }
+
+  private def beAnEquivalentSubstitutionTo(
+    equivalentSubstitution: Substitution ): Matcher[( Substitution, Formula )] = {
+    ( input: ( Substitution, Formula ) ) =>
+      {
+        val ( substitution, firstOrderPart ) = input
+        val substitutedFormula = simplify( BetaReduction.betaNormalize(
+          substitution( firstOrderPart ) ) )
+        val equivalentSubstitutedFormula = simplify( BetaReduction.betaNormalize(
+          equivalentSubstitution( firstOrderPart ) ) )
+        val isValid = Escargot isValid Iff( substitutedFormula, equivalentSubstitutedFormula )
+        val errorMessage =
+          s"""|applying $substitution is not equivalent to applying $equivalentSubstitution to $firstOrderPart
+            |applying $substitution 
+            |gives $substitutedFormula
+            |applying $equivalentSubstitution 
+            |gives $equivalentSubstitutedFormula
+          """.stripMargin
+        ( isValid, errorMessage )
+      }
   }
 }
