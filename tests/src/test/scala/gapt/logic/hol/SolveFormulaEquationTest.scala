@@ -1,21 +1,15 @@
 package gapt.logic.hol
 
-import org.specs2.mutable._
-import gapt.expr.Var
-import gapt.expr.ty.Ti
-import gapt.expr.ty.To
-import gapt.expr.formula._
-import gapt.expr.formula.fol._
-import _root_.gapt.expr.Const
-import gapt.expr.formula.fol.FOLFunction
 import gapt.expr._
-import scala.util.Success
+import gapt.expr.formula.fol.FOLVar
+import gapt.expr.formula.{And, Formula, Iff}
+import gapt.expr.subst.Substitution
+import gapt.proofs.HOLSequent
 import gapt.provers.escargot.Escargot
 import org.specs2.matcher.Matcher
-import gapt.expr.subst.Substitution
-import gapt.expr.formula.hol.instantiate
+import org.specs2.mutable.Specification
 import org.specs2.specification.core.Fragment
-import gapt.proofs._
+
 import scala.util.Try
 
 class SolveFormulaEquationTest extends Specification {
@@ -175,7 +169,7 @@ class SolveFormulaEquationTest extends Specification {
 
   private def beAnEquivalentSubstitutionTo(
     equivalentSubstitution: Substitution ): Matcher[( Substitution, Formula )] = {
-    ( input: ( Substitution, Formula ) ) =>
+    input: ( Substitution, Formula ) =>
       {
         val ( substitution, firstOrderPart ) = input
         val substitutedFormula = simplify( BetaReduction.betaNormalize(

@@ -1,25 +1,16 @@
 package gapt.logic.hol
+
+import gapt.expr.{Abs, BetaReduction, Expr, Var}
 import gapt.expr.formula._
-import gapt.expr.ty._
-import scala.util.{ Success, Try, Failure }
-import gapt.expr.formula.prop.PropFormula
-import gapt.expr.formula.hol.containsHOQuantifier
-import gapt.expr.formula.hol.containsQuantifier
-import gapt.expr.containedNames
-import gapt.expr.formula.hol.HOLPosition
-import gapt.expr.subst._
-import gapt.expr._
-import gapt.proofs._
-import gapt.expr.util.rename
-import gapt.expr.util.freeVariables
-import gapt.expr.util.variables
-import gapt.expr.formula.hol.BinaryConnective
-import gapt.expr.formula.constants.AndC
 import gapt.expr.formula.fol.FOLVar
+import gapt.expr.subst.Substitution
+import gapt.expr.ty.{FunctionType, Ti, To, Ty}
+import gapt.expr.util.{freeVariables, rename, variables}
 import gapt.logic.Polarity
-import gapt.provers.escargot.impl.DiscrTree.Variable
-import gapt.proofs.Sequent
+import gapt.proofs.HOLSequent
 import gapt.utils.NameGenerator
+
+import scala.util.Try
 
 object solveFormulaEquation {
 
@@ -36,7 +27,7 @@ object solveFormulaEquation {
    * universal quantifier.
    */
   def apply( formula: Formula ): Try[( Substitution, Formula )] = Try( formula match {
-    case Ex( StrictSecondOrderVariable( secondOrderVariable, _ ), innerFormula ) => {
+    case Ex( StrictSecondOrderVariable( secondOrderVariable, _ ), innerFormula ) =>
       val ( substitution, firstOrderPart ) = apply( innerFormula ).get
       val firstOrderFormula = applySubstitutionBetaReduced( substitution, firstOrderPart )
       val ( existentialVariables, disjuncts ) = preprocess( secondOrderVariable, firstOrderFormula )
@@ -45,13 +36,12 @@ object solveFormulaEquation {
       val updatedSubstitution = Substitution( substitutionMap )
       val updatedInnerFormula = FirstOrderExBlock( existentialVariables, firstOrderFormula )
       ( updatedSubstitution, updatedInnerFormula )
-    }
     case _ => ( Substitution(), formula )
   } )
 
   private object StrictSecondOrderVariable {
     def unapply( variable: Var ): Option[( Var, ( Seq[Ty], Ty ) )] = variable match {
-      case Var( _, FunctionType( To, inputTypes @ ( _ :: _ ) ) ) if inputTypes.forall( _ == Ti ) =>
+      case Var( _, FunctionType( To, inputTypes @ _ :: _ ) ) if inputTypes.forall( _ == Ti ) =>
         Some( ( variable, ( inputTypes, To ) ) )
       case _ => None
     }
@@ -68,7 +58,7 @@ object solveFormulaEquation {
     formula:             Formula ): ( List[FOLVar], Set[HOLSequent] ) = {
     val nnf = toNNF( formula )
     moveQuantifiers( nnf ) match {
-      case FirstOrderExBlock( variables, innerFormula ) => {
+      case FirstOrderExBlock( variables, innerFormula ) =>
         val disjuncts = distributeTopLevelConjunctionsOverDisjunctions( innerFormula )
 
         val polarizedConjunctsInDisjuncts = disjuncts
@@ -77,7 +67,6 @@ object solveFormulaEquation {
           throw new Exception( "formula cannot be separated into positive and negative conjuncts" )
         else
           ( variables, polarizedConjunctsInDisjuncts.map( _.get ) )
-      }
     }
   }
 
@@ -86,21 +75,19 @@ object solveFormulaEquation {
   }
 
   private def moveExistentialQuantifiersUp( formula: Formula ): Formula = formula match {
-    case Or( Ex( variableAlpha, alpha ), Ex( variableBeta, beta ) ) => {
+    case Or( Ex( variableAlpha, alpha ), Ex( variableBeta, beta ) ) =>
       val ( newVariable, substitutedFormulas ) = replaceVariablesWithNewVariable(
         List(
           ( variableAlpha, alpha ),
           ( variableBeta, beta ) ) )
       Ex( newVariable, moveExistentialQuantifiersUp( Or( substitutedFormulas ) ) )
-    }
 
-    case AndOr( alpha, Ex( variable, beta ), connective ) => {
+    case AndOr( alpha, Ex( variable, beta ), connective ) =>
       val ( newVariable, substitutedFormulas ) = replaceVariablesWithNewVariable(
         List(
           ( variable, alpha ),
           ( variable, beta ) ) )
-      Ex( newVariable, moveExistentialQuantifiersUp( Or( substitutedFormulas ) ) )
-    }
+      Ex( newVariable, moveExistentialQuantifiersUp( connective( substitutedFormulas ) ) )
 
     case AndOr( Ex( variable, beta ), alpha, connective ) =>
       moveExistentialQuantifiersUp( connective( alpha, Ex( variable, beta ) ) )
@@ -108,14 +95,13 @@ object solveFormulaEquation {
     case Quant( variable, alpha, pol ) =>
       Quant( variable, moveExistentialQuantifiersUp( alpha ), pol )
 
-    case AndOr( alpha, beta, connective ) => {
+    case AndOr( alpha, beta, connective ) =>
       val movedAlpha = moveExistentialQuantifiersUp( alpha )
       val movedBeta = moveExistentialQuantifiersUp( beta )
       if ( movedAlpha != alpha || movedBeta != beta )
         moveExistentialQuantifiersUp( connective( movedAlpha, movedBeta ) )
       else
         formula
-    }
 
     case _ => formula
   }
@@ -123,12 +109,11 @@ object solveFormulaEquation {
   private def replaceVariablesWithNewVariable[T](
     variablesInFormulas: Iterable[( Var, Formula )] ): ( Var, Iterable[Formula] ) =
     variablesInFormulas match {
-      case ( headVariable: Var, _ ) :: _ => {
+      case ( headVariable: Var, _ ) :: _ =>
         val blackListVariables = variablesInFormulas.flatMap( x => variables( x._2 ) )
         val newVariable = rename( headVariable, blackListVariables )
         val substitute = Substitution( _: Var, newVariable )( _: Formula )
         ( newVariable, variablesInFormulas.map( x => substitute( x._1, x._2 ) ) )
-      }
     }
 
   private def moveUniversalQuantifiersDown( formula: Formula ): Formula = formula match {
@@ -172,10 +157,9 @@ object solveFormulaEquation {
 
   private def distributeTopLevelConjunctionsOverDisjunctions(
     formula: Formula ): Set[Formula] = formula match {
-    case And.nAry( conjuncts ) => {
+    case And.nAry( conjuncts ) =>
       val disjunctsInConjuncts = conjuncts.map( { case Or.nAry( disjuncts ) => disjuncts } )
       crossProduct( disjunctsInConjuncts ).map( And.apply( _ ) ).toSet
-    }
   }
 
   private def crossProduct[T]( lists: Seq[Seq[T]] ): Seq[List[T]] = lists match {
@@ -186,15 +170,14 @@ object solveFormulaEquation {
   private def polarizedConjuncts(
     formula:  Formula,
     variable: Var ): Option[HOLSequent] = formula match {
-    case And.nAry( conjuncts ) => {
+    case And.nAry( conjuncts ) =>
       val conjunctsWithPolarities = conjuncts
         .map( conjunct => ( conjunct, uniquePolarityWithRespectTo( conjunct, variable ) ) )
 
-      if ( conjunctsWithPolarities.exists( { case ( _, polarity ) => polarity == None } ) )
+      if ( conjunctsWithPolarities.exists( { case ( _, polarity ) => polarity.isEmpty } ) )
         None
       else
-        Some( Sequent( conjunctsWithPolarities.map( f => ( f._1, f._2.get ) ) ) )
-    }
+        Some( HOLSequent( conjunctsWithPolarities.map( f => ( f._1, f._2.get ) ) ) )
   }
 
   private def uniquePolarityWithRespectTo( formula: Formula, variable: Var ): Option[Polarity] = {
@@ -235,7 +218,7 @@ object solveFormulaEquation {
   private def freshArgumentVariables(
     secondOrderVariable: Var,
     disjuncts:           Set[HOLSequent] ): List[FOLVar] = secondOrderVariable match {
-    case StrictSecondOrderVariable( secondOrderVariable, ( inputTypes, _ ) ) => {
+    case StrictSecondOrderVariable( secondOrderVariable, ( inputTypes, _ ) ) =>
       val blackListVariableNames = disjuncts.flatMap( variables( _ ) ).map( _.name )
       val argumentName = secondOrderVariable.name.toLowerCase()
       new NameGenerator( blackListVariableNames )
@@ -243,7 +226,6 @@ object solveFormulaEquation {
         .map( FOLVar( _ ) )
         .take( inputTypes.length )
         .toList
-    }
   }
 
   def findPartialWitness(
@@ -282,7 +264,7 @@ object solveFormulaEquation {
       Or(
         positiveOccurrenceWitness( alpha, secondOrderVariable, argumentVariables ),
         positiveOccurrenceWitness( beta, secondOrderVariable, argumentVariables ) )
-    case Or.nAry( disjuncts ) if disjuncts.length >= 2 => {
+    case Or.nAry( disjuncts ) if disjuncts.length >= 2 =>
       val partialWitnesses = disjuncts.map( disjunct => {
         val witness = positiveOccurrenceWitness(
           disjunct,
@@ -292,7 +274,6 @@ object solveFormulaEquation {
         ( applySubstitutionBetaReduced( substitution, disjunct ), witness )
       } )
       disjunctiveWitnessCombination( partialWitnesses )
-    }
     case All( variable, innerFormula ) =>
       Ex( variable, positiveOccurrenceWitness( innerFormula, secondOrderVariable, argumentVariables ) )
 
@@ -324,10 +305,9 @@ object solveFormulaEquation {
       }
 
     def unapply( formula: Formula ): Option[( List[FOLVar], Formula )] = formula match {
-      case Ex( variable: FOLVar, innerFormula ) => {
+      case Ex( variable: FOLVar, innerFormula ) =>
         val ( variables, extractedFormula ) = unapply( innerFormula ).get
         Some( variable :: variables, extractedFormula )
-      }
       case _ => Some( Nil, formula )
     }
   }
