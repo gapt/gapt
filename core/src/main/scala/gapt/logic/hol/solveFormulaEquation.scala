@@ -1,11 +1,11 @@
 package gapt.logic.hol
 
-import gapt.expr.{Abs, BetaReduction, Expr, Var}
+import gapt.expr.{ Abs, BetaReduction, Expr, Var }
 import gapt.expr.formula._
 import gapt.expr.formula.fol.FOLVar
 import gapt.expr.subst.Substitution
-import gapt.expr.ty.{FunctionType, Ti, To, Ty}
-import gapt.expr.util.{freeVariables, rename, variables}
+import gapt.expr.ty.{ FunctionType, Ti, To, Ty }
+import gapt.expr.util.{ freeVariables, rename, variables }
 import gapt.logic.Polarity
 import gapt.proofs.HOLSequent
 import gapt.utils.NameGenerator
@@ -27,7 +27,7 @@ object solveFormulaEquation {
    * universal quantifier.
    */
   def apply( formula: Formula ): Try[( Substitution, Formula )] = Try( formula match {
-    case Ex( StrictSecondOrderVariable( secondOrderVariable, _ ), innerFormula ) =>
+    case Ex( StrictSecondOrderRelationVariable( secondOrderVariable, _ ), innerFormula ) =>
       val ( substitution, firstOrderPart ) = apply( innerFormula ).get
       val firstOrderFormula = applySubstitutionBetaReduced( substitution, firstOrderPart )
       val ( existentialVariables, disjuncts ) = preprocess( secondOrderVariable, firstOrderFormula )
@@ -39,7 +39,7 @@ object solveFormulaEquation {
     case _ => ( Substitution(), formula )
   } )
 
-  private object StrictSecondOrderVariable {
+  private object StrictSecondOrderRelationVariable {
     def unapply( variable: Var ): Option[( Var, ( Seq[Ty], Ty ) )] = variable match {
       case Var( _, FunctionType( To, inputTypes @ _ :: _ ) ) if inputTypes.forall( _ == Ti ) =>
         Some( ( variable, ( inputTypes, To ) ) )
@@ -218,7 +218,7 @@ object solveFormulaEquation {
   private def freshArgumentVariables(
     secondOrderVariable: Var,
     disjuncts:           Set[HOLSequent] ): List[FOLVar] = secondOrderVariable match {
-    case StrictSecondOrderVariable( secondOrderVariable, ( inputTypes, _ ) ) =>
+    case StrictSecondOrderRelationVariable( secondOrderVariable, ( inputTypes, _ ) ) =>
       val blackListVariableNames = disjuncts.flatMap( variables( _ ) ).map( _.name )
       val argumentName = secondOrderVariable.name.toLowerCase()
       new NameGenerator( blackListVariableNames )
@@ -255,15 +255,17 @@ object solveFormulaEquation {
     formula:             Formula,
     secondOrderVariable: Var,
     argumentVariables:   Seq[FOLVar] ): Formula = formula match {
-    case _ if !formula.contains( secondOrderVariable ) => Top()
     case Atom( variable, arguments ) if variable == secondOrderVariable =>
       vectorEq( argumentVariables, arguments )
+
     case Neg( alpha ) =>
       Neg( positiveOccurrenceWitness( alpha, secondOrderVariable, argumentVariables ) )
+
     case And( alpha, beta ) =>
       Or(
         positiveOccurrenceWitness( alpha, secondOrderVariable, argumentVariables ),
         positiveOccurrenceWitness( beta, secondOrderVariable, argumentVariables ) )
+
     case Or.nAry( disjuncts ) if disjuncts.length >= 2 =>
       val partialWitnesses = disjuncts.map( disjunct => {
         val witness = positiveOccurrenceWitness(
@@ -274,13 +276,15 @@ object solveFormulaEquation {
         ( applySubstitutionBetaReduced( substitution, disjunct ), witness )
       } )
       disjunctiveWitnessCombination( partialWitnesses )
+
     case All( variable, innerFormula ) =>
       Ex( variable, positiveOccurrenceWitness( innerFormula, secondOrderVariable, argumentVariables ) )
 
+    // todo: handle Ex by skolemization
     case Ex( _, _ ) =>
       throw new NotImplementedError( "cannot handle positive occurrences inside the scope of existential quantifiers yet" )
 
-    // todo: handle Ex by skolemization
+    case _ if !formula.contains( secondOrderVariable ) => Top()
   }
 
   private def vectorEq( expressionsA: Iterable[Expr], expressionsB: Iterable[Expr] ): Formula = {
