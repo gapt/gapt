@@ -2,7 +2,7 @@ package gapt.logic.hol
 
 import gapt.expr._
 import gapt.expr.formula.fol.FOLVar
-import gapt.expr.formula.{And, Formula, Iff}
+import gapt.expr.formula.{ And, Formula, Iff }
 import gapt.expr.subst.Substitution
 import gapt.proofs.HOLSequent
 import gapt.provers.escargot.Escargot
@@ -118,6 +118,12 @@ class SolveFormulaEquationTest extends Specification {
       }
     }
 
+    def failFor( formulaEquation: Formula ): Fragment = {
+      s"fail for $formulaEquation" in {
+        solveFormulaEquation( formulaEquation ) must beFailedTry
+      }
+    }
+
     val X = hov"X:i>o"
     succeedFor( hof"?(X: i>o) R(a)", Substitution( X -> le"^x ⊤" ) )
     succeedFor( hof"?X X(a)", Substitution( X -> le"^x x=a" ) )
@@ -147,6 +153,22 @@ class SolveFormulaEquationTest extends Specification {
     succeedFor(
       hof"?X (!x (X(x) | R(x)))",
       Substitution( hov"X:i>o" -> le"^x ?t x=t" ) )
+    succeedFor(
+      hof"?X (X(a) & ?x X(x))",
+      Substitution( X -> le"^t t=a" ) )
+    succeedFor(
+      hof"?X ((?x X(x)) & -R(a))",
+      Substitution( X -> le"^t ⊤" ) )
+    succeedFor(
+      hof"?X ?x X(x,a)",
+      Substitution( hov"X:i>i>o" -> le"^t ^s s=a" ) )
+    succeedFor(
+      hof"?X ((R(a) & ?x X(x)) | ((?y R(y)) | X(b)))",
+      Substitution( X -> le"^t t=b" ) )
+    succeedFor(
+      hof"?X !x (R(a) | X(x) | R(b))",
+      Substitution( X -> le"^t ?x t=x" ) )
+    failFor( hof"?X !x (X(x,a) | !y -X(x, y))" )
   }
 
   private def beSetEqualsWithCustomEquality[A](
