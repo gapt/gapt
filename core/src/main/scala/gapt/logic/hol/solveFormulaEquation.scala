@@ -1,11 +1,11 @@
 package gapt.logic.hol
 
-import gapt.expr.{ Abs, BetaReduction, Expr, Var }
 import gapt.expr.formula._
 import gapt.expr.formula.fol.FOLVar
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.{ FunctionType, Ti, To, Ty }
-import gapt.expr.util.{ freeVariables, rename, variables }
+import gapt.expr.util.variables
+import gapt.expr.{ Abs, BetaReduction, Expr, Var }
 import gapt.logic.Polarity
 import gapt.proofs.HOLSequent
 import gapt.utils.NameGenerator
@@ -57,102 +57,19 @@ object solveFormulaEquation {
     secondOrderVariable: Var,
     formula:             Formula ): ( List[FOLVar], Set[HOLSequent] ) = {
     val nnf = toNNF( formula )
-    moveQuantifiers( nnf ) match {
-      case FirstOrderExBlock( variables, innerFormula ) =>
-        val disjuncts = distributeTopLevelConjunctionsOverDisjunctions( innerFormula )
+    val FirstOrderExBlock( variables, innerFormula ) = moveQuantifiersInFormula( nnf )
+    val disjuncts = distributeTopLevelConjunctionsOverDisjunctions( innerFormula )
 
-        val polarizedConjunctsInDisjuncts = disjuncts
-          .map( polarizedConjuncts( _, secondOrderVariable ) )
-        if ( polarizedConjunctsInDisjuncts.exists( _.isEmpty ) )
-          throw new Exception( "formula cannot be separated into positive and negative conjuncts" )
-        else
-          ( variables, polarizedConjunctsInDisjuncts.map( _.get ) )
-    }
+    val polarizedConjunctsInDisjuncts = disjuncts
+      .map( polarizedConjuncts( _, secondOrderVariable ) )
+    if ( polarizedConjunctsInDisjuncts.exists( _.isEmpty ) )
+      throw new Exception( "formula cannot be separated into positive and negative conjuncts" )
+    else
+      ( variables, polarizedConjunctsInDisjuncts.map( _.get ) )
   }
 
-  private def moveQuantifiers( formula: Formula ): Formula = {
-    moveExistentialQuantifiersUp( moveUniversalQuantifiersDown( formula ) )
-  }
-
-  private def moveExistentialQuantifiersUp( formula: Formula ): Formula = formula match {
-    case Or( Ex( variableAlpha, alpha ), Ex( variableBeta, beta ) ) =>
-      val ( newVariable, substitutedFormulas ) = replaceVariablesWithNewVariable(
-        List(
-          ( variableAlpha, alpha ),
-          ( variableBeta, beta ) ) )
-      Ex( newVariable, moveExistentialQuantifiersUp( Or( substitutedFormulas ) ) )
-
-    case AndOr( alpha, Ex( variable, beta ), connective ) =>
-      val ( newVariable, substitutedFormulas ) = replaceVariablesWithNewVariable(
-        List(
-          ( variable, alpha ),
-          ( variable, beta ) ) )
-      Ex( newVariable, moveExistentialQuantifiersUp( connective( substitutedFormulas ) ) )
-
-    case AndOr( Ex( variable, beta ), alpha, connective ) =>
-      moveExistentialQuantifiersUp( connective( alpha, Ex( variable, beta ) ) )
-
-    case Quant( variable, alpha, pol ) =>
-      Quant( variable, moveExistentialQuantifiersUp( alpha ), pol )
-
-    case AndOr( alpha, beta, connective ) =>
-      val movedAlpha = moveExistentialQuantifiersUp( alpha )
-      val movedBeta = moveExistentialQuantifiersUp( beta )
-      if ( movedAlpha != alpha || movedBeta != beta )
-        moveExistentialQuantifiersUp( connective( movedAlpha, movedBeta ) )
-      else
-        formula
-
-    case _ => formula
-  }
-
-  private def replaceVariablesWithNewVariable[T](
-    variablesInFormulas: Iterable[( Var, Formula )] ): ( Var, Iterable[Formula] ) =
-    variablesInFormulas match {
-      case ( headVariable: Var, _ ) :: _ =>
-        val blackListVariables = variablesInFormulas.flatMap( x => variables( x._2 ) )
-        val newVariable = rename( headVariable, blackListVariables )
-        val substitute = Substitution( _: Var, newVariable )( _: Formula )
-        ( newVariable, variablesInFormulas.map( x => substitute( x._1, x._2 ) ) )
-    }
-
-  private def moveUniversalQuantifiersDown( formula: Formula ): Formula = formula match {
-    case All( variable, And( alpha, beta ) ) =>
-      And(
-        moveUniversalQuantifiersDown( All( variable, alpha ) ),
-        moveUniversalQuantifiersDown( All( variable, beta ) ) )
-
-    case All( variable, AndOr( alpha, beta, connective ) ) if !isFreeIn( variable, alpha ) =>
-      connective(
-        moveUniversalQuantifiersDown( alpha ),
-        moveUniversalQuantifiersDown( All( variable, beta ) ) )
-
-    case All( variable, AndOr( beta, alpha, connective ) ) if !isFreeIn( variable, alpha ) =>
-      moveUniversalQuantifiersDown( All( variable, connective( alpha, beta ) ) )
-
-    case Quant( variable, alpha, pol ) =>
-      Quant( variable, moveUniversalQuantifiersDown( alpha ), pol )
-
-    case AndOr( alpha, beta, connective ) =>
-      connective(
-        moveUniversalQuantifiersDown( alpha ),
-        moveUniversalQuantifiersDown( beta ) )
-
-    case _ => formula
-  }
-
-  private def isFreeIn( variable: Var, formula: Formula ): Boolean = {
-    freeVariables( formula ).contains( variable )
-  }
-
-  private object AndOr {
-    def unapply(
-      formula: Formula ): Option[( Formula, Formula, MonoidalBinaryPropConnectiveHelper )] =
-      formula match {
-        case And( alpha, beta ) => Some( ( alpha, beta, And ) )
-        case Or( alpha, beta )  => Some( ( alpha, beta, Or ) )
-        case _                  => None
-      }
+  private def moveQuantifiersInFormula( formula: Formula ): Formula = {
+    moveQuantifiers.up( Ex, moveQuantifiers.down( All, formula ) )
   }
 
   private def distributeTopLevelConjunctionsOverDisjunctions(
@@ -182,10 +99,11 @@ object solveFormulaEquation {
 
   private def uniquePolarityWithRespectTo( formula: Formula, variable: Var ): Option[Polarity] = {
     val polarities = polaritiesWithRespectTo( formula, variable )
-    if ( polarities.size <= 1 )
-      Some( polarities.headOption.getOrElse( Polarity.Positive ) )
-    else
-      None
+    polarities.size match {
+      case 0 => Some( Polarity.Positive )
+      case 1 => polarities.headOption
+      case _ => None
+    }
   }
 
   private def polaritiesWithRespectTo(
@@ -315,4 +233,5 @@ object solveFormulaEquation {
       case _ => Some( Nil, formula )
     }
   }
+
 }

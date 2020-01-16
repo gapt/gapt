@@ -42,7 +42,9 @@ class SolveFormulaEquationTest extends Specification {
     }
 
     def formulaEquation( variable: Var, formula: Formula ) = ( variable, formula )
+
     def formulaEquationInX( formula: Formula ) = formulaEquation( hov"X:i>o", formula )
+
     val fe = formulaEquationInX _ // alias to shorten test cases
     succeedWithSequents( fe( hof"R(a)" ), Set( hos":- R(a)" ) )
     succeedWithSequents( fe( hof"X(a)" ), Set( hos":- X(a)" ) )
@@ -178,12 +180,12 @@ class SolveFormulaEquationTest extends Specification {
     val inThisAndNotInExpected = thisSet.filterNot( x => expectedSet.exists( equals( x, _ ) ) )
     val errorMessage =
       s"""
-    |$thisSet is not equal to $expectedSet according to the given equality
-    |Expected, but not present:
-    |${inExpectedAndNotInThis.mkString( "\n" )}
-    |
-    |Unexpected, but present:
-    |${inThisAndNotInExpected.mkString( "\n" )}
+         |$thisSet is not equal to $expectedSet according to the given equality
+         |Expected, but not present:
+         |${inExpectedAndNotInThis.mkString( "\n" )}
+         |
+         |Unexpected, but present:
+         |${inThisAndNotInExpected.mkString( "\n" )}
     """.stripMargin
     val areEqual = inExpectedAndNotInThis.isEmpty && inThisAndNotInExpected.isEmpty
     ( areEqual, errorMessage )
@@ -201,9 +203,9 @@ class SolveFormulaEquationTest extends Specification {
         val isValid = Escargot isValid Iff( substitutedFormula, equivalentSubstitutedFormula )
         val errorMessage =
           s"""|applying $substitution is not equivalent to applying $equivalentSubstitution to $firstOrderPart
-            |applying $substitution 
+            |applying $substitution
             |gives $substitutedFormula
-            |applying $equivalentSubstitution 
+            |applying $equivalentSubstitution
             |gives $equivalentSubstitutedFormula
           """.stripMargin
         ( isValid, errorMessage )
