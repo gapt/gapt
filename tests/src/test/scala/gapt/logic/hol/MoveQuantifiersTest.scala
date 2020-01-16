@@ -20,7 +20,7 @@ class MoveQuantifiersTest extends Specification {
 
   "moveQuantifiers.up" should {
     def succeedFor = testWithMessage( _, _, _, moveQuantifiers.up, {
-      case ( quantifier, formula, expectedFormula ) => s"move '$quantifier' up in $formula to get $expectedFormula"
+      case ( quantifier, formula, expectedFormula ) => s"move '${quantifier.q.name}' up in $formula to get $expectedFormula"
     } )
 
     def notMove( quantifier: QuantifierHelper, formula: Formula ) =
