@@ -170,6 +170,9 @@ class SolveFormulaEquationTest extends Specification {
     succeedFor(
       hof"?X !x (R(a) | X(x) | R(b))",
       Substitution( X -> le"^t ?x t=x" ) )
+    succeedFor(
+      hof"?X (!x ?y X(x))",
+      Substitution( X -> le"^t ?x x=t" ) )
     failFor( hof"?X !x (X(x,a) | !y -X(x, y))" )
   }
 

@@ -57,7 +57,8 @@ object solveFormulaEquation {
     secondOrderVariable: Var,
     formula:             Formula ): ( List[FOLVar], Set[HOLSequent] ) = {
     val nnf = toNNF( formula )
-    val FirstOrderExBlock( variables, innerFormula ) = moveQuantifiersInFormula( nnf )
+    val formulaWithoutRedundantQuantifiers = removeRedundantQuantifiers( nnf )
+    val FirstOrderExBlock( variables, innerFormula ) = moveQuantifiersInFormula( formulaWithoutRedundantQuantifiers )
     val disjuncts = distributeTopLevelConjunctionsOverDisjunctions( innerFormula )
 
     val polarizedConjunctsInDisjuncts = disjuncts
