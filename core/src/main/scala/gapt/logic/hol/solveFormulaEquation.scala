@@ -126,7 +126,7 @@ object solveFormulaEquation {
     val disjunctsWithWitnesses = disjuncts.map(
       disjunct => {
         val witness = findPartialWitness( secondOrderVariable, variables, disjunct )
-        val negativePart = And( disjunct.antecedent )
+        val negativePart = And( disjunct.antecedent ++ disjunct.succedent )
         val substitution = Substitution( secondOrderVariable -> Abs( variables, witness ) )
         ( applySubstitutionBetaReduced( substitution, negativePart ), witness )
       } )
@@ -136,15 +136,15 @@ object solveFormulaEquation {
 
   private def freshArgumentVariables(
     secondOrderVariable: Var,
-    disjuncts:           Set[HOLSequent] ): List[FOLVar] = secondOrderVariable match {
-    case StrictSecondOrderRelationVariable( secondOrderVariable, ( inputTypes, _ ) ) =>
-      val blackListVariableNames = disjuncts.flatMap( variables( _ ) ).map( _.name )
-      val argumentName = secondOrderVariable.name.toLowerCase()
-      new NameGenerator( blackListVariableNames )
-        .freshStream( argumentName )
-        .map( FOLVar( _ ) )
-        .take( inputTypes.length )
-        .toList
+    disjuncts:           Set[HOLSequent] ): List[FOLVar] = {
+    val StrictSecondOrderRelationVariable( _, ( inputTypes, _ ) ) = secondOrderVariable
+    val blackListVariableNames = disjuncts.flatMap( variables( _ ) ).map( _.name )
+    val argumentName = secondOrderVariable.name.toLowerCase()
+    new NameGenerator( blackListVariableNames )
+      .freshStream( argumentName )
+      .map( FOLVar( _ ) )
+      .take( inputTypes.length )
+      .toList
   }
 
   def findPartialWitness(
@@ -152,17 +152,11 @@ object solveFormulaEquation {
     argumentVariables:   List[FOLVar],
     disjunct:            HOLSequent ): Formula = {
     // todo: implement negativeOccurrencesWitness
-    findPositiveOccurrencesWitness( secondOrderVariable, argumentVariables, disjunct )
-  }
-
-  private def findPositiveOccurrencesWitness(
-    secondOrderVariable: Var,
-    argumentVariables:   List[FOLVar],
-    disjunct:            HOLSequent ): Formula = {
     val witness = positiveOccurrenceWitness(
       And( disjunct.succedent ),
       secondOrderVariable,
       argumentVariables )
+
     simplify( witness )
   }
 
@@ -203,7 +197,7 @@ object solveFormulaEquation {
     case Ex( _, _ ) =>
       throw new NotImplementedError( "cannot handle positive occurrences inside the scope of existential quantifiers yet" )
 
-    case _ if !formula.contains( secondOrderVariable ) => Top()
+    case _ if !formula.contains( secondOrderVariable ) => Bottom()
   }
 
   private def vectorEq( expressionsA: Iterable[Expr], expressionsB: Iterable[Expr] ): Formula = {
@@ -234,5 +228,4 @@ object solveFormulaEquation {
       case _ => Some( Nil, formula )
     }
   }
-
 }

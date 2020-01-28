@@ -102,12 +102,12 @@ class SolveFormulaEquationTest extends Specification {
       }
     }
 
-    succeedFor( hov"X:i>o", hos"R(a) :-", le"^x ⊤" )
-    succeedFor( hov"X:i>o", hos":- X(a)", le"^x x=a" )
-    succeedFor( hov"X:i>o", hos":- !x X(x)", le"^x ⊤" )
-    succeedFor( hov"X:i>o", hos":- !x (X(x) | R(x))", le"^x ?t x=t" )
-    succeedFor( hov"X:i>o", hos"!x (-X(x) | (!y R(x, y))) :- X(a)", le"^x x=a" )
-    succeedFor( hov"X:i>o", hos"!x (-X(x) | (!y R(x, y))) :- X(b)", le"^x x=b" )
+    succeedFor( hov"X:i>o", hos"R(a) :-", le"^t ⊤" )
+    succeedFor( hov"X:i>o", hos":- X(a)", le"^t t=a" )
+    succeedFor( hov"X:i>o", hos":- !x X(x)", le"^t ⊤" )
+    succeedFor( hov"X:i>o", hos":- !x (X(x) | R(x))", le"^t ?y t=y" )
+    succeedFor( hov"X:i>o", hos"!x (-X(x) | (!y R(x, y))) :- X(a)", le"^t t=a" )
+    succeedFor( hov"X:i>o", hos"!x (-X(x) | (!y R(x, y))) :- X(b)", le"^t t=b" )
   }
 
   "solveFormulaEquation" should {
@@ -130,6 +130,8 @@ class SolveFormulaEquationTest extends Specification {
     succeedFor( hof"?(X: i>o) R(a)", Substitution( X -> le"^x ⊤" ) )
     succeedFor( hof"?X X(a)", Substitution( X -> le"^x x=a" ) )
     succeedFor( hof"?X (X(a) & -X(b))", Substitution( X -> le"^x x=a" ) )
+    succeedFor( hof"?X (X(c) -> P(c))", Substitution( X -> le"^t t!=c" ) )
+    succeedFor( hof"?X (-X(c) & P(c))", Substitution( X -> le"^t -(⊤)" ) )
     succeedFor(
       hof"?X ((X(a) & -X(f(b))) | (X(f(b)) & -X(a)))",
       Substitution( X -> le"^x (-f(b)=a -> x=a) & ((-(-f(b)=a)) & -a=f(b) -> x=f(b))" ) )
@@ -143,6 +145,7 @@ class SolveFormulaEquationTest extends Specification {
     succeedFor(
       hof"?X X(a,b)",
       Substitution( hov"X:i>i>o" -> le"^x_1 (^x_2 x_1 = a & x_2 = b)" ) )
+    succeedFor( hof"?X ((!x (X(x) -> R(x))) & X(a))", Substitution( X -> le"^t R(t):o" ) )
     succeedFor(
       hof"?X ((!x (X(x) -> (!y R(x, y)))) & X(a))",
       Substitution( X -> le"^t !y R(t, y)" ) )
@@ -169,10 +172,13 @@ class SolveFormulaEquationTest extends Specification {
       Substitution( X -> le"^t t=b" ) )
     succeedFor(
       hof"?X !x (R(a) | X(x) | R(b))",
-      Substitution( X -> le"^t ?x t=x" ) )
+      Substitution( X -> le"^t -R(a) & -R(b)" ) )
     succeedFor(
       hof"?X (!x ?y X(x))",
       Substitution( X -> le"^t ?x x=t" ) )
+    succeedFor(
+      hof"?X (!x (P(x) -> X(x)))",
+      Substitution( X -> le"^t P(t):o" ) )
     failFor( hof"?X !x (X(x,a) | !y -X(x, y))" )
   }
 
