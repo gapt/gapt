@@ -60,12 +60,14 @@ object solveFormulaEquation {
     val nnf = toNNF( formula )
     val formulaWithoutRedundantQuantifiers = removeRedundantQuantifiers( nnf )
     val FirstOrderExBlock( variables, innerFormula ) = moveQuantifiersInFormula( formulaWithoutRedundantQuantifiers )
-    val disjuncts = distributeTopLevelConjunctionsOverDisjunctions( innerFormula )
+    val disjuncts = extractDisjuncts( innerFormula )
 
     val polarizedConjunctsInDisjuncts = disjuncts
       .map( polarizedConjuncts( _, secondOrderVariable ) )
     if ( polarizedConjunctsInDisjuncts.exists( _.isEmpty ) )
-      throw new Exception( "formula cannot be separated into positive and negative conjuncts" )
+      throw new Exception(
+        s"""formula cannot be separated into positive and negative conjuncts of occurrences of $secondOrderVariable
+           |formula: $formulaWithoutRedundantQuantifiers""".stripMargin )
     else
       ( variables, polarizedConjunctsInDisjuncts.map( _.get ) )
   }
@@ -74,14 +76,15 @@ object solveFormulaEquation {
     moveQuantifiers.up( Ex, moveQuantifiers.down( All, formula ) )
   }
 
-  private def distributeTopLevelConjunctionsOverDisjunctions(
-    formula: Formula ): Set[Formula] = formula match {
-    case And.nAry( conjuncts ) =>
-      val disjunctsInConjuncts = conjuncts.map( { case Or.nAry( disjuncts ) => disjuncts } )
-      crossProduct( disjunctsInConjuncts ).map( And.apply( _ ) ).toSet
+  private def extractDisjuncts( formula: Formula ): Set[Formula] = formula match {
+    case And.nAry( conjuncts ) if conjuncts.length >= 2 =>
+      val innerDisjuncts = conjuncts.map( extractDisjuncts )
+      crossProduct( innerDisjuncts ).map( And.apply( _ ) ).toSet
+    case Or.nAry( disjuncts ) if disjuncts.length >= 2 => disjuncts.flatMap( extractDisjuncts ).toSet
+    case _ => Set( formula )
   }
 
-  private def crossProduct[T]( lists: Seq[Seq[T]] ): Seq[List[T]] = lists match {
+  private def crossProduct[T]( lists: Iterable[Iterable[T]] ): Iterable[List[T]] = lists match {
     case Nil          => List( Nil )
     case head :: rest => for { x <- head; y <- crossProduct( rest ) } yield x :: y
   }
