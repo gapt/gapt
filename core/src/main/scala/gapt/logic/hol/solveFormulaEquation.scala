@@ -16,13 +16,14 @@ object solveFormulaEquation {
 
   /**
    * Uses the DLS algorithm to find a witness for formula equations of the form
-   * ?X_1 ... ?X_n φ where φ is a first order formula and X_1,...,X_n are second order variables.
+   * ∃X_1 ... ∃X_n φ where φ is a first order formula and X_1,...,X_n are strict
+   * second order variables.
    *
-   * The return value is a substitution of the occurring second order variables such that
-   * applying the substitution to φ gives a first order formula which is equivalent to
-   * ?X_1 ... ?X_n φ.
+   * The return value is a tuple of a substitution of the second order variables in the formula equation
+   * and a first order formula such that applying the substitution to the first order formula gives a
+   * first order formula which is equivalent to ∃X_1 ... ∃X_n φ
    *
-   * Does not yet work for formulas where a positive occurrence of the second order variable is
+   * Does not yet work for formulas where an occurrence of the second order variable is
    * inside the scope of an existential quantifier which is itself inside the scope of an
    * universal quantifier.
    */
