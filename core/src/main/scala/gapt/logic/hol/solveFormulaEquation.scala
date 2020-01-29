@@ -10,7 +10,7 @@ import gapt.logic.Polarity
 import gapt.proofs.HOLSequent
 import gapt.utils.NameGenerator
 
-import scala.util.Try
+import scala.util.{ Failure, Success, Try }
 
 object solveFormulaEquation {
 
@@ -151,53 +151,69 @@ object solveFormulaEquation {
     secondOrderVariable: Var,
     argumentVariables:   List[FOLVar],
     disjunct:            HOLSequent ): Formula = {
-    // todo: implement negativeOccurrencesWitness
-    val witness = positiveOccurrenceWitness(
-      And( disjunct.succedent ),
+    val positiveOccurrenceWitness = Try( polarityOccurrenceWitness(
+      Polarity.Positive,
       secondOrderVariable,
-      argumentVariables )
+      argumentVariables,
+      And( disjunct.succedent ) ) )
+    val negativeOccurrenceWitness = Try( polarityOccurrenceWitness(
+      Polarity.Negative,
+      secondOrderVariable,
+      argumentVariables,
+      And( disjunct.antecedent ) ) )
+
+    val witness = ( positiveOccurrenceWitness, negativeOccurrenceWitness ) match {
+      case ( Success( positiveWitness ), Success( negativeWitness ) ) => chooseWitness( positiveWitness, negativeWitness )
+      case ( Success( witness ), _ )                                  => witness
+      case ( _, Success( witness ) )                                  => witness
+      case ( Failure( exception ), _ )                                => throw new Exception( s"cannot find witness for positive occurrences nor for negative occurrences in disjunct:\n$disjunct", exception )
+    }
 
     simplify( witness )
   }
 
+  private def chooseWitness( positiveWitness: Formula, negativeWitness: Formula ): Formula = positiveWitness
+
   /**
-   * Returns the succedent of the implication in Ackermann's lemma which is equivalent to the given
-   * positive formula
+   * Returns the antecedent/succeedent (when given positive/negative polarity) of the implication in Ackermann's lemma
+   * which is a witness for the given formula given that the formula has the respective polarity with respect to the
+   * given second order variable
    */
-  private def positiveOccurrenceWitness(
-    formula:             Formula,
+  private def polarityOccurrenceWitness(
+    polarity:            Polarity,
     secondOrderVariable: Var,
-    argumentVariables:   Seq[FOLVar] ): Formula = formula match {
-    case Atom( variable, arguments ) if variable == secondOrderVariable =>
-      vectorEq( argumentVariables, arguments )
+    argumentVariables:   Seq[FOLVar],
+    formula:             Formula ): Formula = {
+    val polarityConnective = if ( polarity.positive ) Or else And
+    val dualPolarityConnective = if ( polarity.positive ) And else Or
+    val polarityQuantifier = if ( polarity.positive ) Ex else All
+    val polarityInversion = if ( polarity.positive ) ( f: Formula ) => Neg( f ) else ( f: Formula ) => f
+    val recur = polarityOccurrenceWitness( polarity, secondOrderVariable, argumentVariables, _ )
+    formula match {
+      case _ if !formula.contains( secondOrderVariable ) => polarityInversion( formula )
 
-    case Neg( alpha ) =>
-      Neg( positiveOccurrenceWitness( alpha, secondOrderVariable, argumentVariables ) )
+      case Atom( variable, arguments ) if variable == secondOrderVariable =>
+        vectorEq( argumentVariables, arguments )
 
-    case And( alpha, beta ) =>
-      Or(
-        positiveOccurrenceWitness( alpha, secondOrderVariable, argumentVariables ),
-        positiveOccurrenceWitness( beta, secondOrderVariable, argumentVariables ) )
+      case Neg( Atom( variable, arguments ) ) if variable == secondOrderVariable =>
+        Neg( vectorEq( argumentVariables, arguments ) )
 
-    case Or.nAry( disjuncts ) if disjuncts.length >= 2 =>
-      val partialWitnesses = disjuncts.map( disjunct => {
-        val witness = positiveOccurrenceWitness(
-          disjunct,
-          secondOrderVariable,
-          argumentVariables )
-        val substitution = Substitution( secondOrderVariable, Abs( argumentVariables, witness ) )
-        ( applySubstitutionBetaReduced( substitution, disjunct ), witness )
-      } )
-      disjunctiveWitnessCombination( partialWitnesses )
+      case And( alpha, beta ) =>
+        polarityConnective(
+          recur( alpha ),
+          recur( beta ) )
 
-    case All( variable, innerFormula ) =>
-      Ex( variable, positiveOccurrenceWitness( innerFormula, secondOrderVariable, argumentVariables ) )
+      case Or( alpha, beta ) =>
+        dualPolarityConnective(
+          recur( alpha ),
+          recur( beta ) )
 
-    // todo: handle Ex by skolemization
-    case Ex( _, _ ) =>
-      throw new NotImplementedError( "cannot handle positive occurrences inside the scope of existential quantifiers yet" )
+      case All( variable, innerFormula ) =>
+        polarityQuantifier( variable, recur( innerFormula ) )
 
-    case _ if !formula.contains( secondOrderVariable ) => Bottom()
+      case Ex( _, _ ) =>
+        throw new Exception( "cannot handle occurrences inside the scope of existential quantifiers" )
+    }
   }
 
   private def vectorEq( expressionsA: Iterable[Expr], expressionsB: Iterable[Expr] ): Formula = {
