@@ -46,40 +46,40 @@ class SolveFormulaEquationTest extends Specification {
     def formulaEquationInX( formula: Formula ) = formulaEquation( hov"X:i>o", formula )
 
     val fe = formulaEquationInX _ // alias to shorten test cases
-    succeedWithSequents( fe( hof"R(a)" ), Set( hos":- R(a)" ) )
-    succeedWithSequents( fe( hof"X(a)" ), Set( hos":- X(a)" ) )
-    succeedWithSequents( fe( hof"-X(a)" ), Set( hos"-X(a) :-" ) )
-    succeedWithSequents( fe( hof"X(b) & -X(a)" ), Set( hos"-X(a) :- X(b)" ) )
+    succeedWithSequents( fe( hof"R(a)" ), Set( hos"⊢ R(a)" ) )
+    succeedWithSequents( fe( hof"X(a)" ), Set( hos"⊢ X(a)" ) )
+    succeedWithSequents( fe( hof"¬X(a)" ), Set( hos"¬X(a) ⊢" ) )
+    succeedWithSequents( fe( hof"X(b) ∧ ¬X(a)" ), Set( hos"¬X(a) ⊢ X(b)" ) )
     succeedWithSequents(
-      fe( hof"R(a) & X(b) & -X(a)" ),
-      Set( hos"-X(a) :- R(a), X(b)" ) )
+      fe( hof"R(a) ∧ X(b) ∧ ¬X(a)" ),
+      Set( hos"¬X(a) ⊢ R(a), X(b)" ) )
     succeedWithSequents(
-      fe( hof"X(a) | X(b)" ),
-      Set( hos":- X(a)", hos":- X(b)" ) )
+      fe( hof"X(a) ∨ X(b)" ),
+      Set( hos"⊢ X(a)", hos"⊢ X(b)" ) )
     succeedWithSequents(
-      fe( hof"X(a) & (-X(b) | X(c))" ),
-      Set( hos"-X(b) :- X(a)", hos":- X(c), X(a)" ) )
+      fe( hof"X(a) ∧ (¬X(b) ∨ X(c))" ),
+      Set( hos"¬X(b) ⊢ X(a)", hos"⊢ X(c), X(a)" ) )
     succeedWithSequents(
-      fe( hof"X(a) & (-X(b) | X(c)) & -X(d)" ),
-      Set( hos"-X(b), -X(d) :- X(a)", hos"-X(d) :- X(c), X(a)" ) )
+      fe( hof"X(a) ∧ (¬X(b) ∨ X(c)) ∧ ¬X(d)" ),
+      Set( hos"¬X(b), ¬X(d) ⊢ X(a)", hos"¬X(d) ⊢ X(c), X(a)" ) )
     succeedWithSequents(
-      fe( hof"Y(a) & (-Y(b) | Y(c)) & -Y(d)" ),
-      Set( hos":- Y(a), -Y(b), -Y(d)", hos":- Y(a), Y(c), -Y(d)" ) )
+      fe( hof"Y(a) ∧ (¬Y(b) ∨ Y(c)) ∧ ¬Y(d)" ),
+      Set( hos"⊢ Y(a), ¬Y(b), ¬Y(d)", hos"⊢ Y(a), Y(c), ¬Y(d)" ) )
     succeedWithSequents(
-      fe( hof"!x (X(x) & X(a))" ),
-      Set( hos":- !x X(x), !x X(a)" ) )
+      fe( hof"∀x (X(x) ∧ X(a))" ),
+      Set( hos"⊢ ∀x X(x), ∀x X(a)" ) )
     succeedWithExPrefixAndSequents(
-      fe( hof"?x X(x)" ),
-      ( List( FOLVar( "x" ) ), Set( hos":- X(x)" ) ) )
+      fe( hof"∃x X(x)" ),
+      ( List( FOLVar( "x" ) ), Set( hos"⊢ X(x)" ) ) )
     succeedWithSequents(
-      fe( hof"!x ?y X(x,y)" ),
-      Set( hos":- !x ?y X(x,y)" ) )
+      fe( hof"∀x ∃y X(x,y)" ),
+      Set( hos"⊢ ∀x ∃y X(x,y)" ) )
     succeedWithExPrefixAndSequents(
-      fe( hof"(?y X(a,y)) | (?x X(b,x))" ),
-      ( List( FOLVar( "z" ) ), Set( hos":- X(a, z)", hos":- X(b, z)" ) ) )
+      fe( hof"(∃y X(a,y)) ∨ (∃x X(b,x))" ),
+      ( List( FOLVar( "z" ) ), Set( hos"⊢ X(a, z)", hos"⊢ X(b, z)" ) ) )
     succeedWithSequents(
-      fe( hof"(!x (X(x) -> (!y R(x,y)))) & (X(a) | X(b))" ),
-      Set( hos"!x (-X(x) | (!y R(x, y))) :- X(a)", hos"!x (-X(x) | (!y R(x, y))) :- X(b)" ) )
+      fe( hof"(∀x (X(x) -> (∀y R(x,y)))) ∧ (X(a) ∨ X(b))" ),
+      Set( hos"∀x (¬X(x) ∨ (∀y R(x, y))) ⊢ X(a)", hos"∀x (¬X(x) ∨ (∀y R(x, y))) ⊢ X(b)" ) )
   }
 
   "findPartialWitness" should {
@@ -102,14 +102,14 @@ class SolveFormulaEquationTest extends Specification {
       }
     }
 
-    succeedFor( hov"X:i>o", hos"R(a) :-", le"^t ⊤" )
-    succeedFor( hov"X:i>o", hos":- X(a)", le"^t t=a" )
-    succeedFor( hov"X:i>o", hos":- !x X(x)", le"^t ⊤" )
-    succeedFor( hov"X:i>o", hos":- !x (X(x) | R(x))", le"^t -R(t)" )
-    succeedFor( hov"X:i>o", hos"!x (-X(x) | (!y R(x, y))) :- X(a)", le"^t t=a" )
-    succeedFor( hov"X:i>o", hos"!x (-X(x) | (!y R(x, y))) :- X(a)", le"^t !y R(t, y)" )
-    succeedFor( hov"X:i>o", hos"-X(a) :- !x (X(x) | (!y R(x, y)))", le"^t t!=a" )
-    succeedFor( hov"X:i>o", hos":- !x X(x)", le"^t ⊤" )
+    succeedFor( hov"X:i>o", hos"R(a) ⊢", le"λt ⊤" )
+    succeedFor( hov"X:i>o", hos"⊢ X(a)", le"λt t=a" )
+    succeedFor( hov"X:i>o", hos"⊢ ∀x X(x)", le"λt ⊤" )
+    succeedFor( hov"X:i>o", hos"⊢ ∀x (X(x) ∨ R(x))", le"λt ¬R(t)" )
+    succeedFor( hov"X:i>o", hos"∀x (¬X(x) ∨ (∀y R(x, y))) ⊢ X(a)", le"λt t=a" )
+    succeedFor( hov"X:i>o", hos"∀x (¬X(x) ∨ (∀y R(x, y))) ⊢ X(a)", le"λt ∀y R(t, y)" )
+    succeedFor( hov"X:i>o", hos"¬X(a) ⊢ ∀x (X(x) ∨ (∀y R(x, y)))", le"λt t!=a" )
+    succeedFor( hov"X:i>o", hos"⊢ ∀x X(x)", le"λt ⊤" )
   }
 
   "solveFormulaEquation" should {
@@ -129,73 +129,75 @@ class SolveFormulaEquationTest extends Specification {
     }
 
     val X = hov"X:i>o"
-    succeedFor( hof"?(X: i>o) R(a)", Substitution( X -> le"^x ⊤" ) )
-    succeedFor( hof"?X X(a)", Substitution( X -> le"^x x=a" ) )
-    succeedFor( hof"?X (X(a) & -X(b))", Substitution( X -> le"^x x=a" ) )
-    succeedFor( hof"?X (X(c) -> P(c))", Substitution( X -> le"^t t!=c" ) )
-    succeedFor( hof"?X (-X(c) & P(c))", Substitution( X -> le"^t -(⊤)" ) )
+    succeedFor( hof"∃(X: i>o) R(a)", Substitution( X -> le"λx ⊤" ) )
+    succeedFor( hof"∃X X(a)", Substitution( X -> le"λx x=a" ) )
+    succeedFor( hof"∃X (X(a) ∧ ¬X(b))", Substitution( X -> le"λx x=a" ) )
+    succeedFor( hof"∃X (X(c) -> P(c))", Substitution( X -> le"λt t!=c" ) )
+    succeedFor( hof"∃X (¬X(c) ∧ P(c))", Substitution( X -> le"λt ⊥" ) )
     succeedFor(
-      hof"?X ((X(a) & -X(f(b))) | (X(f(b)) & -X(a)))",
-      Substitution( X -> le"^x (-f(b)=a -> x=a) & ((-(-f(b)=a)) & -a=f(b) -> x=f(b))" ) )
-    succeedFor( hof"?X (X(a) & X(b))", Substitution( X -> le"^x x=a | x=b" ) )
-    succeedFor( hof"?X (X(a) | X(b))", Substitution( X -> le"^x x=a" ) )
-    succeedFor( hof"?X (-X(a) -> X(b))", Substitution( X -> le"^x x=a" ) )
-    succeedFor( hof"?(X: i>o) (R(a) & X(b))", Substitution( X -> le"^x x=b" ) )
+      hof"∃X ((X(a) ∧ ¬X(f(b))) ∨ (X(f(b)) ∧ ¬X(a)))",
+      Substitution( X -> le"λx (¬f(b)=a -> x=a) ∧ ((¬(¬f(b)=a)) ∧ ¬a=f(b) -> x=f(b))" ) )
+    succeedFor( hof"∃X (X(a) ∧ X(b))", Substitution( X -> le"λx x=a ∨ x=b" ) )
+    succeedFor( hof"∃X (X(a) ∨ X(b))", Substitution( X -> le"λx x=a" ) )
+    succeedFor( hof"∃X (¬X(a) -> X(b))", Substitution( X -> le"λx x=a" ) )
+    succeedFor( hof"∃(X: i>o) (R(a) ∧ X(b))", Substitution( X -> le"λx x=b" ) )
     succeedFor(
-      hof"?X (?Y (X(a) & Y(b)))",
-      Substitution( hov"X:i>o" -> le"^x x=a", hov"Y:i>o" -> le"^x x=b" ) )
+      hof"∃X (∃Y (X(a) ∧ Y(b)))",
+      Substitution( hov"X:i>o" -> le"λx x=a", hov"Y:i>o" -> le"λx x=b" ) )
     succeedFor(
-      hof"?X X(a,b)",
-      Substitution( hov"X:i>i>o" -> le"^x_1 (^x_2 x_1 = a & x_2 = b)" ) )
-    succeedFor( hof"?X ((!x (X(x) -> R(x))) & X(a))", Substitution( X -> le"^t R(t):o" ) )
+      hof"∃X X(a,b)",
+      Substitution( hov"X:i>i>o" -> le"λx_1 (λx_2 x_1 = a ∧ x_2 = b)" ) )
+    succeedFor( hof"∃X ((∀x (X(x) -> R(x))) ∧ X(a))", Substitution( X -> le"λt R(t):o" ) )
     succeedFor(
-      hof"?X ((!x (X(x) -> (!y R(x, y)))) & X(a))",
-      Substitution( X -> le"^t !y R(t, y)" ) )
+      hof"∃X ((∀x (X(x) -> (∀y R(x, y)))) ∧ X(a))",
+      Substitution( X -> le"λt ∀y R(t, y)" ) )
     succeedFor(
-      hof"?X ((!x (X(x) -> R(x))) & (X(a) | X(b)))",
-      Substitution( X -> le"^t (R:i>o)(t)" ) )
+      hof"∃X ((∀x (X(x) -> R(x))) ∧ (X(a) ∨ X(b)))",
+      Substitution( X -> le"λt (R:i>o)(t)" ) )
     succeedFor(
-      hof"?X ((!x (X(x) -> (!y R(x, y)))) & (X(a) | X(b)))",
-      Substitution( X -> le"^t !y R(t, y)" ) )
+      hof"∃X ((∀x (X(x) -> (∀y R(x, y)))) ∧ (X(a) ∨ X(b)))",
+      Substitution( X -> le"λt ∀y R(t, y)" ) )
     succeedFor(
-      hof"?X (!x ((!y R(x,y)) -> X(x)) ∧ (¬X(a) ∨ ¬X(b)))",
-      Substitution( X -> le"^t !y R(t,y)" ) )
+      hof"∃X (∀x ((∀y R(x,y)) -> X(x)) ∧ (¬X(a) ∨ ¬X(b)))",
+      Substitution( X -> le"λt ∀y R(t,y)" ) )
     succeedFor(
-      hof"?X (!x !y (R(x,y) -> X(x)) ∧ (¬X(a) ∨ ¬X(b)))",
-      Substitution( X -> le"^t ?y R(t,y)" ) )
-    succeedFor(hof"?X (!x !y (X(x, y) -> R(x, y)) ∧ (X(a, b) ∨ X(b, c)))",
+      hof"∃X (∀x ∀y (R(x,y) -> X(x)) ∧ (¬X(a) ∨ ¬X(b)))",
+      Substitution( X -> le"λt ∃y R(t,y)" ) )
+    succeedFor(
+      hof"∃X (∀x ∀y (X(x, y) -> R(x, y)) ∧ (X(a, b) ∨ X(b, c)))",
       Substitution( hov"X:i>i>o" -> le"R:i>i>o" ) )
-    succeedFor(hof"?X (!x ((!y R(x,y)) -> X(x)) ∧ (X(a) ∨ ¬X(b)) ∧ ¬X(c))",
-      Substitution(X -> le"^t ((¬(c=a ∨ ∀y R(c, y))) -> (t=a ∨ !y R(t,y))) ∧ (((c=a ∨ ∀y R(c, y)) ∧ ¬(∀y R(b, y)) ∧ ¬(∀y R(c, y))) -> ∀y R(t, y))"))
     succeedFor(
-      hof"?X (!x (X(x) | R(x)))",
-      Substitution( hov"X:i>o" -> le"^x ?t x=t" ) )
+      hof"∃X (∀x ((∀y R(x,y)) -> X(x)) ∧ (X(a) ∨ ¬X(b)) ∧ ¬X(c))",
+      Substitution( X -> le"λt ((¬(c=a ∨ ∀y R(c, y))) -> (t=a ∨ ∀y R(t,y))) ∧ (((c=a ∨ ∀y R(c, y)) ∧ ¬(∀y R(b, y)) ∧ ¬(∀y R(c, y))) -> ∀y R(t, y))" ) )
     succeedFor(
-      hof"?X (X(a) & ?x X(x))",
-      Substitution( X -> le"^t t=a" ) )
+      hof"∃X (∀x (X(x) ∨ R(x)))",
+      Substitution( hov"X:i>o" -> le"λx ∃t x=t" ) )
     succeedFor(
-      hof"?X ((?x X(x)) & -R(a))",
-      Substitution( X -> le"^t ⊤" ) )
+      hof"∃X (X(a) ∧ ∃x X(x))",
+      Substitution( X -> le"λt t=a" ) )
     succeedFor(
-      hof"?X ?x X(x,a)",
-      Substitution( hov"X:i>i>o" -> le"^t ^s s=a" ) )
+      hof"∃X ((∃x X(x)) ∧ ¬R(a))",
+      Substitution( X -> le"λt ⊤" ) )
     succeedFor(
-      hof"?X ((R(a) & ?x X(x)) | ((?y R(y)) | X(b)))",
-      Substitution( X -> le"^t t=b" ) )
+      hof"∃X ∃x X(x,a)",
+      Substitution( hov"X:i>i>o" -> le"λt λs s=a" ) )
     succeedFor(
-      hof"?X !x (R(a) | X(x) | R(b))",
-      Substitution( X -> le"^t -R(a) & -R(b)" ) )
+      hof"∃X ((R(a) ∧ ∃x X(x)) ∨ ((∃y R(y)) ∨ X(b)))",
+      Substitution( X -> le"λt t=b" ) )
     succeedFor(
-      hof"?X (!x ?y X(x))",
-      Substitution( X -> le"^t ?x x=t" ) )
+      hof"∃X ∀x (R(a) ∨ X(x) ∨ R(b))",
+      Substitution( X -> le"λt ¬R(a) ∧ ¬R(b)" ) )
     succeedFor(
-      hof"?X (!x (P(x) -> X(x)))",
+      hof"∃X (∀x ∃y X(x))",
+      Substitution( X -> le"λt ∃x x=t" ) )
+    succeedFor(
+      hof"∃X (∀x (P(x) -> X(x)))",
       Substitution( X -> le"P:i>o" ) )
     succeedFor( hof"∃X (¬X(a, b) ∧ ∀x ∃y X(x, y))", Substitution( hov"X:i>i>o" -> le"λt_1 λt_2 (t_1 != a ∨ t_2 != b)" ) )
     succeedFor( hof"∃X ∀x ∃y X(x,y)", Substitution( hov"X:i>i>o" -> le"λt_1 λt_2 ⊤" ) )
-    succeedFor( hof"?X !x (X(x) & R(x))", Substitution( X -> le"^t ?x x=t" ) )
-    succeedFor( hof"?X !x (X(f(x)) | R(x))", Substitution( X -> le"^t ?x (t=f(x) & -R(x))" ) )
-    failFor( hof"∃X ∀x (X(x,a) | ∀y -X(x, y))" )
+    succeedFor( hof"∃X ∀x (X(x) ∧ R(x))", Substitution( X -> le"λt ∃x x=t" ) )
+    succeedFor( hof"∃X ∀x (X(f(x)) ∨ R(x))", Substitution( X -> le"λt ∃x (t=f(x) ∧ ¬R(x))" ) )
+    failFor( hof"∃X ∀x (X(x,a) ∨ ∀y ¬X(x, y))" )
     failFor( hof"∃X ((∀x ∃y X(x, y)) ∧ (∀x ∃y ¬X(y, x)))" )
   }
 
