@@ -158,6 +158,16 @@ class SolveFormulaEquationTest extends Specification {
       hof"?X ((!x (X(x) -> (!y R(x, y)))) & (X(a) | X(b)))",
       Substitution( X -> le"^t !y R(t, y)" ) )
     succeedFor(
+      hof"?X (!x ((!y R(x,y)) -> X(x)) ∧ (¬X(a) ∨ ¬X(b)))",
+      Substitution( X -> le"^t !y R(t,y)" ) )
+    succeedFor(
+      hof"?X (!x !y (R(x,y) -> X(x)) ∧ (¬X(a) ∨ ¬X(b)))",
+      Substitution( X -> le"^t ?y R(t,y)" ) )
+    succeedFor(hof"?X (!x !y (X(x, y) -> R(x, y)) ∧ (X(a, b) ∨ X(b, c)))",
+      Substitution( hov"X:i>i>o" -> le"R:i>i>o" ) )
+    succeedFor(hof"?X (!x ((!y R(x,y)) -> X(x)) ∧ (X(a) ∨ ¬X(b)) ∧ ¬X(c))",
+      Substitution(X -> le"^t ((¬(c=a ∨ ∀y R(c, y))) -> (t=a ∨ !y R(t,y))) ∧ (((c=a ∨ ∀y R(c, y)) ∧ ¬(∀y R(b, y)) ∧ ¬(∀y R(c, y))) -> ∀y R(t, y))"))
+    succeedFor(
       hof"?X (!x (X(x) | R(x)))",
       Substitution( hov"X:i>o" -> le"^x ?t x=t" ) )
     succeedFor(
@@ -180,11 +190,10 @@ class SolveFormulaEquationTest extends Specification {
       Substitution( X -> le"^t ?x x=t" ) )
     succeedFor(
       hof"?X (!x (P(x) -> X(x)))",
-      Substitution( X -> le"^t P(t):o" ) )
+      Substitution( X -> le"P:i>o" ) )
     succeedFor( hof"∃X (¬X(a, b) ∧ ∀x ∃y X(x, y))", Substitution( hov"X:i>i>o" -> le"λt_1 λt_2 (t_1 != a ∨ t_2 != b)" ) )
     succeedFor( hof"∃X ∀x ∃y X(x,y)", Substitution( hov"X:i>i>o" -> le"λt_1 λt_2 ⊤" ) )
     succeedFor( hof"?X !x (X(x) & R(x))", Substitution( X -> le"^t ?x x=t" ) )
-    succeedFor( hof"?X !x (X(x) | R(x))", Substitution( X -> le"^t ?x (t=x & -R(x))" ) )
     succeedFor( hof"?X !x (X(f(x)) | R(x))", Substitution( X -> le"^t ?x (t=f(x) & -R(x))" ) )
     failFor( hof"∃X ∀x (X(x,a) | ∀y -X(x, y))" )
     failFor( hof"∃X ((∀x ∃y X(x, y)) ∧ (∀x ∃y ¬X(y, x)))" )
