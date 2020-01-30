@@ -10,19 +10,20 @@ import gapt.logic.Polarity
 import gapt.proofs.HOLSequent
 import gapt.utils.NameGenerator
 
-import scala.util.Try
+import scala.util.{ Failure, Success, Try }
 
 object solveFormulaEquation {
 
   /**
    * Uses the DLS algorithm to find a witness for formula equations of the form
-   * ?X_1 ... ?X_n φ where φ is a first order formula and X_1,...,X_n are second order variables.
+   * ∃X_1 ... ∃X_n φ where φ is a first order formula and X_1,...,X_n are strict
+   * second order variables.
    *
-   * The return value is a substitution of the occurring second order variables such that
-   * applying the substitution to φ gives a first order formula which is equivalent to
-   * ?X_1 ... ?X_n φ.
+   * The return value is a tuple of a substitution of the second order variables in the formula equation
+   * and a first order formula such that applying the substitution to the first order formula gives a
+   * first order formula which is equivalent to ∃X_1 ... ∃X_n φ
    *
-   * Does not yet work for formulas where a positive occurrence of the second order variable is
+   * Does not yet work for formulas where an occurrence of the second order variable is
    * inside the scope of an existential quantifier which is itself inside the scope of an
    * universal quantifier.
    */
@@ -59,12 +60,14 @@ object solveFormulaEquation {
     val nnf = toNNF( formula )
     val formulaWithoutRedundantQuantifiers = removeRedundantQuantifiers( nnf )
     val FirstOrderExBlock( variables, innerFormula ) = moveQuantifiersInFormula( formulaWithoutRedundantQuantifiers )
-    val disjuncts = distributeTopLevelConjunctionsOverDisjunctions( innerFormula )
+    val disjuncts = extractDisjuncts( innerFormula )
 
     val polarizedConjunctsInDisjuncts = disjuncts
       .map( polarizedConjuncts( _, secondOrderVariable ) )
     if ( polarizedConjunctsInDisjuncts.exists( _.isEmpty ) )
-      throw new Exception( "formula cannot be separated into positive and negative conjuncts" )
+      throw new Exception(
+        s"""formula cannot be separated into positive and negative conjuncts of occurrences of $secondOrderVariable
+           |formula: $formulaWithoutRedundantQuantifiers""".stripMargin )
     else
       ( variables, polarizedConjunctsInDisjuncts.map( _.get ) )
   }
@@ -73,14 +76,15 @@ object solveFormulaEquation {
     moveQuantifiers.up( Ex, moveQuantifiers.down( All, formula ) )
   }
 
-  private def distributeTopLevelConjunctionsOverDisjunctions(
-    formula: Formula ): Set[Formula] = formula match {
-    case And.nAry( conjuncts ) =>
-      val disjunctsInConjuncts = conjuncts.map( { case Or.nAry( disjuncts ) => disjuncts } )
-      crossProduct( disjunctsInConjuncts ).map( And.apply( _ ) ).toSet
+  private def extractDisjuncts( formula: Formula ): Set[Formula] = formula match {
+    case And.nAry( conjuncts ) if conjuncts.length >= 2 =>
+      val innerDisjuncts = conjuncts.map( extractDisjuncts )
+      crossProduct( innerDisjuncts ).map( And.apply( _ ) ).toSet
+    case Or.nAry( disjuncts ) if disjuncts.length >= 2 => disjuncts.flatMap( extractDisjuncts ).toSet
+    case _ => Set( formula )
   }
 
-  private def crossProduct[T]( lists: Seq[Seq[T]] ): Seq[List[T]] = lists match {
+  private def crossProduct[T]( lists: Iterable[Iterable[T]] ): Iterable[List[T]] = lists match {
     case Nil          => List( Nil )
     case head :: rest => for { x <- head; y <- crossProduct( rest ) } yield x :: y
   }
@@ -126,7 +130,7 @@ object solveFormulaEquation {
     val disjunctsWithWitnesses = disjuncts.map(
       disjunct => {
         val witness = findPartialWitness( secondOrderVariable, variables, disjunct )
-        val negativePart = And( disjunct.antecedent )
+        val negativePart = And( disjunct.antecedent ++ disjunct.succedent )
         val substitution = Substitution( secondOrderVariable -> Abs( variables, witness ) )
         ( applySubstitutionBetaReduced( substitution, negativePart ), witness )
       } )
@@ -136,74 +140,84 @@ object solveFormulaEquation {
 
   private def freshArgumentVariables(
     secondOrderVariable: Var,
-    disjuncts:           Set[HOLSequent] ): List[FOLVar] = secondOrderVariable match {
-    case StrictSecondOrderRelationVariable( secondOrderVariable, ( inputTypes, _ ) ) =>
-      val blackListVariableNames = disjuncts.flatMap( variables( _ ) ).map( _.name )
-      val argumentName = secondOrderVariable.name.toLowerCase()
-      new NameGenerator( blackListVariableNames )
-        .freshStream( argumentName )
-        .map( FOLVar( _ ) )
-        .take( inputTypes.length )
-        .toList
+    disjuncts:           Set[HOLSequent] ): List[FOLVar] = {
+    val StrictSecondOrderRelationVariable( _, ( inputTypes, _ ) ) = secondOrderVariable
+    val blackListVariableNames = disjuncts.flatMap( variables( _ ) ).map( _.name )
+    val argumentName = secondOrderVariable.name.toLowerCase()
+    new NameGenerator( blackListVariableNames )
+      .freshStream( argumentName )
+      .map( FOLVar( _ ) )
+      .take( inputTypes.length )
+      .toList
   }
 
   def findPartialWitness(
     secondOrderVariable: Var,
     argumentVariables:   List[FOLVar],
     disjunct:            HOLSequent ): Formula = {
-    // todo: implement negativeOccurrencesWitness
-    findPositiveOccurrencesWitness( secondOrderVariable, argumentVariables, disjunct )
-  }
-
-  private def findPositiveOccurrencesWitness(
-    secondOrderVariable: Var,
-    argumentVariables:   List[FOLVar],
-    disjunct:            HOLSequent ): Formula = {
-    val witness = positiveOccurrenceWitness(
-      And( disjunct.succedent ),
+    val positiveOccurrenceWitness = Try( polarityOccurrenceWitness(
+      Polarity.Positive,
       secondOrderVariable,
-      argumentVariables )
+      argumentVariables,
+      And( disjunct.succedent ) ) )
+    val negativeOccurrenceWitness = Try( polarityOccurrenceWitness(
+      Polarity.Negative,
+      secondOrderVariable,
+      argumentVariables,
+      And( disjunct.antecedent ) ) )
+
+    val witness = ( positiveOccurrenceWitness, negativeOccurrenceWitness ) match {
+      case ( Success( positiveWitness ), Success( negativeWitness ) ) => chooseWitness( positiveWitness, negativeWitness )
+      case ( Success( witness ), _ )                                  => witness
+      case ( _, Success( witness ) )                                  => witness
+      case ( Failure( exception ), _ )                                => throw new Exception( s"cannot find witness for positive occurrences nor for negative occurrences in disjunct:\n$disjunct", exception )
+    }
+
     simplify( witness )
   }
 
+  private def chooseWitness( positiveWitness: Formula, negativeWitness: Formula ): Formula = positiveWitness
+
   /**
-   * Returns the succedent of the implication in Ackermann's lemma which is equivalent to the given
-   * positive formula
+   * Returns the antecedent/succeedent (when given positive/negative polarity) of the implication in Ackermann's lemma
+   * which is a witness for the given formula given that the formula has the respective polarity with respect to the
+   * given second order variable
    */
-  private def positiveOccurrenceWitness(
-    formula:             Formula,
+  private def polarityOccurrenceWitness(
+    polarity:            Polarity,
     secondOrderVariable: Var,
-    argumentVariables:   Seq[FOLVar] ): Formula = formula match {
-    case Atom( variable, arguments ) if variable == secondOrderVariable =>
-      vectorEq( argumentVariables, arguments )
+    argumentVariables:   Seq[FOLVar],
+    formula:             Formula ): Formula = {
+    val polarityConnective = if ( polarity.positive ) Or else And
+    val dualPolarityConnective = if ( polarity.positive ) And else Or
+    val polarityQuantifier = if ( polarity.positive ) Ex else All
+    val polarityInversion = if ( polarity.positive ) ( f: Formula ) => Neg( f ) else ( f: Formula ) => f
+    val recur = polarityOccurrenceWitness( polarity, secondOrderVariable, argumentVariables, _ )
+    formula match {
+      case _ if !formula.contains( secondOrderVariable ) => polarityInversion( formula )
 
-    case Neg( alpha ) =>
-      Neg( positiveOccurrenceWitness( alpha, secondOrderVariable, argumentVariables ) )
+      case Atom( variable, arguments ) if variable == secondOrderVariable =>
+        vectorEq( argumentVariables, arguments )
 
-    case And( alpha, beta ) =>
-      Or(
-        positiveOccurrenceWitness( alpha, secondOrderVariable, argumentVariables ),
-        positiveOccurrenceWitness( beta, secondOrderVariable, argumentVariables ) )
+      case Neg( Atom( variable, arguments ) ) if variable == secondOrderVariable =>
+        Neg( vectorEq( argumentVariables, arguments ) )
 
-    case Or.nAry( disjuncts ) if disjuncts.length >= 2 =>
-      val partialWitnesses = disjuncts.map( disjunct => {
-        val witness = positiveOccurrenceWitness(
-          disjunct,
-          secondOrderVariable,
-          argumentVariables )
-        val substitution = Substitution( secondOrderVariable, Abs( argumentVariables, witness ) )
-        ( applySubstitutionBetaReduced( substitution, disjunct ), witness )
-      } )
-      disjunctiveWitnessCombination( partialWitnesses )
+      case And( alpha, beta ) =>
+        polarityConnective(
+          recur( alpha ),
+          recur( beta ) )
 
-    case All( variable, innerFormula ) =>
-      Ex( variable, positiveOccurrenceWitness( innerFormula, secondOrderVariable, argumentVariables ) )
+      case Or( alpha, beta ) =>
+        dualPolarityConnective(
+          recur( alpha ),
+          recur( beta ) )
 
-    // todo: handle Ex by skolemization
-    case Ex( _, _ ) =>
-      throw new NotImplementedError( "cannot handle positive occurrences inside the scope of existential quantifiers yet" )
+      case All( variable, innerFormula ) =>
+        polarityQuantifier( variable, recur( innerFormula ) )
 
-    case _ if !formula.contains( secondOrderVariable ) => Top()
+      case Ex( _, _ ) =>
+        throw new Exception( "cannot handle occurrences inside the scope of existential quantifiers" )
+    }
   }
 
   private def vectorEq( expressionsA: Iterable[Expr], expressionsB: Iterable[Expr] ): Formula = {
@@ -234,5 +248,4 @@ object solveFormulaEquation {
       case _ => Some( Nil, formula )
     }
   }
-
 }
