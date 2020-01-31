@@ -613,6 +613,15 @@ trait TacticCommands {
   def chain( h: String ) = ChainTactic( h )
 
   /**
+   * @see [[gapt.proofs.gaptic.tactics.ForwardChain]].
+   */
+  def forwardChain(
+    lemma:        String,
+    target:       TacticApplyMode = UniqueFormula,
+    substitution: Map[Var, Expr]  = Map() ) =
+    ForwardChain( lemma, target, substitution )
+
+  /**
    * Calls the builtin tableau prover on the current subgoal. If the goal is a tautology, a proof will automatically be
    * found and inserted.
    */

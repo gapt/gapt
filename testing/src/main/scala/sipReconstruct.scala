@@ -17,6 +17,7 @@ import gapt.proofs.lk.rules.InductionRule
 import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.proofs.lk.util.extractInductionGrammar
 import gapt.proofs.lk.util.instanceProof
+import gapt.provers.viper.grammars.InductionBupSolver
 import gapt.provers.viper.grammars.{ TreeGrammarProver, TreeGrammarProverOptions, indElimReversal }
 import gapt.utils.{ LogHandler, verbose }
 
@@ -179,11 +180,11 @@ object sipReconstruct extends Script {
         case "cansol" =>
           indElimReversal( p, opts.copy( minInstProof = false ) )
         case "interp" =>
-          indElimReversal( p, opts.copy( minInstProof = false, useInterpolation = true ) )
+          indElimReversal( p, opts.copy( minInstProof = false, bupSolver = InductionBupSolver.Interpolation ) )
         case "atp" =>
           TreeGrammarProver( p.endSequent, opts )
         case "atpintp" =>
-          TreeGrammarProver( p.endSequent, opts.copy( useInterpolation = true ) )
+          TreeGrammarProver( p.endSequent, opts.copy( bupSolver = InductionBupSolver.Interpolation ) )
       }
     }
   }
