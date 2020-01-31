@@ -155,7 +155,7 @@ object ViperOptions {
         rest,
         opts.copy( tautCheckSize = a.toFloat -> b.toFloat ) )
       case "--cansolsize" :: a :: b :: rest => parseTreeGrammar( rest, opts.copy( canSolSize = a.toFloat -> b.toFloat ) )
-      case "--interp" :: rest               => parseTreeGrammar( rest, opts.copy( useInterpolation = true ) )
+      case "--interp" :: rest               => parseTreeGrammar( rest, opts.copy( bupSolver = InductionBupSolver.Interpolation ) )
       case _                                => ( args, opts )
     }
 }
