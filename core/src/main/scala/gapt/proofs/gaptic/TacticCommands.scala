@@ -613,7 +613,7 @@ trait TacticCommands {
   def chain( h: String ) = ChainTactic( h )
 
   /**
-   * @see [[ForwardChain]].
+   * @see [[gapt.proofs.gaptic.tactics.ForwardChain]].
    */
   def forwardChain(
     lemma:        String,
