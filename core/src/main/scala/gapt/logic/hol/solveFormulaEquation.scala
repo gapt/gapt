@@ -3,7 +3,7 @@ package gapt.logic.hol
 import gapt.expr.formula._
 import gapt.expr.formula.fol.FOLVar
 import gapt.expr.subst.Substitution
-import gapt.expr.ty.{ FunctionType, Ti, To, Ty }
+import gapt.expr.ty.{ FunctionType, To, Ty }
 import gapt.expr.util.variables
 import gapt.expr.{ Abs, BetaReduction, Expr, Var }
 import gapt.logic.Polarity
@@ -42,7 +42,7 @@ object solveFormulaEquation {
 
   private object StrictSecondOrderRelationVariable {
     def unapply( variable: Var ): Option[( Var, ( Seq[Ty], Ty ) )] = variable match {
-      case Var( _, FunctionType( To, inputTypes @ _ :: _ ) ) if inputTypes.forall( _ == Ti ) =>
+      case Var( _, FunctionType( To, inputTypes @ _ :: _ ) ) =>
         Some( ( variable, ( inputTypes, To ) ) )
       case _ => None
     }
@@ -140,20 +140,20 @@ object solveFormulaEquation {
 
   private def freshArgumentVariables(
     secondOrderVariable: Var,
-    disjuncts:           Set[HOLSequent] ): List[FOLVar] = {
+    disjuncts:           Set[HOLSequent] ): List[Var] = {
     val StrictSecondOrderRelationVariable( _, ( inputTypes, _ ) ) = secondOrderVariable
     val blackListVariableNames = disjuncts.flatMap( variables( _ ) ).map( _.name )
     val argumentName = secondOrderVariable.name.toLowerCase()
     new NameGenerator( blackListVariableNames )
       .freshStream( argumentName )
-      .map( FOLVar( _ ) )
-      .take( inputTypes.length )
+      .zip(inputTypes)
+      .map { case (name, inputType) => Var(name, inputType) }
       .toList
   }
 
   def findPartialWitness(
     secondOrderVariable: Var,
-    argumentVariables:   List[FOLVar],
+    argumentVariables:   List[Var],
     disjunct:            HOLSequent ): Formula = {
     val positiveOccurrenceWitness = Try( polarityOccurrenceWitness(
       Polarity.Positive,
@@ -186,7 +186,7 @@ object solveFormulaEquation {
   private def polarityOccurrenceWitness(
     polarity:            Polarity,
     secondOrderVariable: Var,
-    argumentVariables:   Seq[FOLVar],
+    argumentVariables:   Seq[Var],
     formula:             Formula ): Formula = {
     val polarityConnective = if ( polarity.positive ) Or else And
     val dualPolarityConnective = if ( polarity.positive ) And else Or
