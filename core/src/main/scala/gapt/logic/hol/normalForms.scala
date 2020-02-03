@@ -1,19 +1,10 @@
 package gapt.logic.hol
 
-import gapt.expr._
-import gapt.expr.formula.All
-import gapt.expr.formula.And
-import gapt.expr.formula.Atom
-import gapt.expr.formula.Bottom
-import gapt.expr.formula.Ex
-import gapt.expr.formula.Formula
-import gapt.expr.formula.Imp
-import gapt.expr.formula.Neg
-import gapt.expr.formula.Or
-import gapt.expr.formula.Quant
-import gapt.expr.formula.Top
+import gapt.expr.BetaReduction
+import gapt.expr.formula.{ All, And, Atom, Bottom, Eq, Ex, Formula, Imp, Neg, Or, Quant, Top }
 import gapt.expr.formula.fol.FOLFormula
 import gapt.expr.formula.hol.containsStrongQuantifier
+import gapt.expr.subst.Substitution
 import gapt.logic.Polarity
 import gapt.proofs.FOLClause
 import gapt.proofs.HOLClause
@@ -57,7 +48,19 @@ object toNNF {
  * well as idempotence of conjunction and disjunction.
  */
 object simplify {
-  def apply( f: Formula ): Formula = f match {
+  def apply( f: Formula ): Formula = toNNF(f) match {
+    case And(a, Or(b, c)) if a isSimplifiedEqualToOneOf(b, c) => simplify(a)
+    case And(Or(b, c), a) if a isSimplifiedEqualToOneOf(b, c) => simplify(a)
+    case Or(a, And(b, c)) if a isSimplifiedEqualToOneOf(b, c) => simplify(a)
+    case Or(And(b, c), a) if a isSimplifiedEqualToOneOf(b, c) => simplify(a)
+
+    case All(x, Or(Neg(Eq(l, r)), p)) if x == l => simplify(BetaReduction.betaNormalize(Substitution(x -> r)(p)))
+    case All(x, Or(Neg(Eq(l, r)), p)) if x == r => simplify(BetaReduction.betaNormalize(Substitution(x -> l)(p)))
+    case All(x, Or(Neg(p), Neg(Eq(l, r)))) if x == l => simplify(BetaReduction.betaNormalize(Substitution(x -> r)(Neg(p))))
+    case All(x, Or(Neg(p), Neg(Eq(l, r)))) if x == r => simplify(BetaReduction.betaNormalize(Substitution(x -> l)(Neg(p))))
+
+    case Ex(x, Eq(l, r)) if x == l || x == r => Top()
+
     case And( l, r ) => ( simplify( l ), simplify( r ) ) match {
       case ( Top(), r )       => r
       case ( r, Top() )       => r
@@ -74,18 +77,10 @@ object simplify {
       case ( l, r ) if l == r => l
       case ( l, r )           => Or( l, r )
     }
-    case Imp( l, r ) => ( simplify( l ), simplify( r ) ) match {
-      case ( Top(), r )       => r
-      case ( _, Top() )       => Top()
-      case ( Bottom(), _ )    => Top()
-      case ( r, Bottom() )    => simplify( Neg( r ) )
-      case ( l, r ) if l == r => Top()
-      case ( l, r )           => Imp( l, r )
-    }
-    case Neg( s ) => simplify( s ) match {
+    case n @ Neg( s ) => simplify( s ) match {
       case Top()    => Bottom()
       case Bottom() => Top()
-      case s        => Neg( s )
+      case _ => n
     }
     case Quant( x, g, isAll ) =>
       simplify( g ) match {
@@ -93,10 +88,19 @@ object simplify {
         case Bottom() => Bottom()
         case g_       => Quant( x, g_, isAll )
       }
-    case _ => f
+    case Eq(l, r) if l == r => Top()
+    case p => p
   }
 
   def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[Formula] ).asInstanceOf[FOLFormula]
+
+  private implicit class FormulaHelper(formula: Formula)
+  {
+    def isSimplifiedEqualToOneOf(formulas: Formula*): Boolean = {
+      val simplified = simplify( formula )
+      formulas.map( simplify( _ ) ).contains( simplified )
+    }
+  }
 }
 
 /**
