@@ -2,6 +2,7 @@ package gapt.proofs
 
 import gapt.expr._
 import gapt.expr.ty.FunctionType
+import gapt.expr.ty.TBase
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
 import gapt.formats.babel.{ Notation, Precedence }
@@ -82,6 +83,50 @@ class ContextTest extends Specification {
 
     "nonemptiness" in {
       default + InductiveType( "conat", hoc"s: conat>conat" ) must throwAn[IllegalArgumentException]
+    }
+  }
+
+  "adding inductive type to context should" in {
+    "declare base type" in {
+      val ctx = MutableContext.default()
+      val nat = InductiveType( "nat", Nil, "0" -> Nil, "S" -> Seq( None -> ty"nat" ) )
+      ctx += nat
+      ctx.isType( nat.baseType ) must beTrue
+    }
+    "declare constructors" in {
+      val ctx = MutableContext.default()
+      val nat = InductiveType( "nat", Nil, "0" -> Nil, "S" -> Seq( None -> ty"nat" ) )
+      ctx += nat
+      ctx.constants must contain( hoc"0:nat", hoc"S:nat>nat" )
+    }
+    "declare projectors" in {
+      val ctx = MutableContext.default()
+      val nat = InductiveType( "nat", Nil, "0" -> Nil, "S" -> Seq( Some( "P" ) -> ty"nat" ) )
+      ctx += nat
+      ctx.constants must contain( hoc"P:nat>nat" )
+    }
+    "fail if name of base type is already declared" in {
+      val ctx = MutableContext.default()
+      val nat = InductiveType( "nat", Nil, "0" -> Nil, "S" -> Seq( None -> ty"nat" ) )
+      ctx += TBase( "nat" )
+      ( ctx += nat ) must throwAn[IllegalArgumentException]
+    }
+    "fail if name of some constructor is already declared" in {
+      val ctx = MutableContext.default()
+      val nat = InductiveType( "nat", Nil, "0" -> Nil, "S" -> Seq( None -> ty"nat" ) )
+      ctx += hoc"0:o"
+      ( ctx += nat ) must throwAn[IllegalArgumentException]
+    }
+    "fail if name of some projector is already declared" in {
+      val ctx = MutableContext.default()
+      val nat = InductiveType( "nat", Nil, "0" -> Nil, "S" -> Seq( Some( "P" ) -> ty"nat" ) )
+      ctx += hoc"P:o"
+      ( ctx += nat ) must throwAn[IllegalArgumentException]
+    }
+    "fail if inductive type contains undeclared type" in {
+      val ctx = MutableContext.default()
+      val list = InductiveType( "list", Nil, "nil" -> Nil, "cons" -> Seq( None -> ty"nat", None -> ty"list" ) )
+      ( ctx += list ) must throwAn[IllegalArgumentException]
     }
   }
 
