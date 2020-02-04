@@ -44,8 +44,14 @@ object toNNF {
 }
 
 /**
- * Simplify a Formula using the equations for bottom and top as
- * well as idempotence of conjunction and disjunction.
+ * Simplify a formula using
+ * - the equations for bottom and top,
+ * - idempotence of conjunction and disjunction,
+ * - absorption laws of conjunction and disjunction,
+ * - commutativity and reflexivity of equality
+ * - simple quantifier elimination (e.g. ∃x x = t ∧ φ(x) simplifies to φ[x/t])
+ * - law of excluded middle and its dual and
+ * - elimination of double negation.
  */
 object simplify {
   def apply( f: Formula ): Formula = toNNF( f ) match {
