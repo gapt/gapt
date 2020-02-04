@@ -24,19 +24,38 @@ class CNFTest extends Specification {
 
 class SimplifyTest extends Specification {
   "simplify" should {
-    def succeedFor(inputFormula: Formula, expectedSimplifiedFormula: Formula): Fragment = {
+    def succeedFor( inputFormula: Formula, expectedSimplifiedFormula: Formula ): Fragment = {
       s"""map "$inputFormula" to "$expectedSimplifiedFormula"""" in {
-        simplify(inputFormula) must beEqualTo(expectedSimplifiedFormula)
+        simplify( inputFormula ) must beEqualTo( expectedSimplifiedFormula )
       }
     }
 
-    succeedFor(hof"(P ∨ Q) ∧ P", hof"P")
-    succeedFor(hof"c=c", hof"⊤")
-    succeedFor(hof"c!=c", hof"⊥")
-    succeedFor(hof"P ∧ P ∧ P", hof"P")
-    succeedFor(hof"!x (x=t -> P(x))", hof"P(t)")
-    succeedFor(hof"P -> ¬P", hof"¬P")
-    succeedFor(hof"¬(¬P)", hof"P")
+    succeedFor( hof"(P ∨ Q) ∧ P", hof"P" )
+    succeedFor( hof"c=c", hof"⊤" )
+    succeedFor( hof"c!=c", hof"⊥" )
+    succeedFor( hof"P ∧ P ∧ P", hof"P" )
+    succeedFor( hof"!x (x=t -> P(x))", hof"P(t)" )
+    succeedFor( hof"!x (P(x) ∨ x!=t)", hof"P(t)" )
+    succeedFor( hof"P -> ¬P", hof"¬P" )
+    succeedFor( hof"¬(¬P)", hof"P" )
+    succeedFor( hof"P ∨ Q ∨ P", hof"P ∨ Q" )
+    succeedFor( hof"(P ∧ Q ∧ R) ∨ P", hof"P" )
+    succeedFor( hof"(P ∨ Q ∨ R) ∧ P", hof"P" )
+    succeedFor( hof"P ∧ ⊤", hof"P" )
+    succeedFor( hof"P ∧ ⊥", hof"⊥" )
+    succeedFor( hof"⊥ ∨ P", hof"P" )
+    succeedFor( hof"⊤ ∨ P", hof"⊤" )
+    succeedFor( hof"P ∧ ¬P ∧ Q", hof"⊥" )
+    succeedFor( hof"P ∨ ¬P ∨ Q", hof"⊤" )
+    succeedFor( hof"a=b ∧ b=a", hof"a=b" )
+    succeedFor( hof"∀x (x=a ∧ x=b -> R(x))", hof"a!=b ∨ R(a)" )
+    succeedFor( hof"∃x x=a", hof"⊤" )
+    succeedFor( hof"∃x (x=a ∧ R(x))", hof"R(a)" )
+    succeedFor( hof"∀x ⊤", hof"⊤" )
+    succeedFor( hof"∃x ⊤", hof"⊤" )
+    succeedFor( hof"∀x ⊥", hof"⊥" )
+    succeedFor( hof"∃x ⊥", hof"⊥" )
+    succeedFor( hof"∀x (R(a))", hof"R(a)" )
   }
 }
 

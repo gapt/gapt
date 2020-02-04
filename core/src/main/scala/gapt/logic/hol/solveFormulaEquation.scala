@@ -146,8 +146,8 @@ object solveFormulaEquation {
     val argumentName = secondOrderVariable.name.toLowerCase()
     new NameGenerator( blackListVariableNames )
       .freshStream( argumentName )
-      .zip(inputTypes)
-      .map { case (name, inputType) => Var(name, inputType) }
+      .zip( inputTypes )
+      .map { case ( name, inputType ) => Var( name, inputType ) }
       .toList
   }
 

@@ -122,11 +122,11 @@ class SolveFormulaEquationTest extends Specification {
       }
     }
 
-    def extractCorrectly(formulaEquation: Formula, expectedInnerFormula: Formula): Fragment = {
+    def extractCorrectly( formulaEquation: Formula, expectedInnerFormula: Formula ): Fragment = {
       s"extract $expectedInnerFormula from $formulaEquation" in {
-        solveFormulaEquation(formulaEquation) must beSuccessfulTry((_:(Substitution, Formula)) must beLike {
-          case (_, innerFormula: Formula) => innerFormula must beEqualTo(expectedInnerFormula)
-        })
+        solveFormulaEquation( formulaEquation ) must beSuccessfulTry( ( _: ( Substitution, Formula ) ) must beLike {
+          case ( _, innerFormula: Formula ) => innerFormula must beEqualTo( expectedInnerFormula )
+        } )
       }
     }
 
@@ -205,8 +205,8 @@ class SolveFormulaEquationTest extends Specification {
     succeedFor( hof"∃X ∀x ∃y X(x,y)", Substitution( hov"X:i>i>o" -> le"λt_1 λt_2 ⊤" ) )
     succeedFor( hof"∃X ∀x (X(x) ∧ R(x))", Substitution( X -> le"λt ∃x x=t" ) )
     succeedFor( hof"∃X ∀x (X(f(x)) ∨ R(x))", Substitution( X -> le"λt ∃x (t=f(x) ∧ ¬R(x))" ) )
-    succeedFor(hof"∃X X(a, P:o)", Substitution(hov"X:i>o>o" -> le"λ(t:i) λ(p:o) t=a ∧ p=P"))
-    extractCorrectly(hof"∃X X(a, P:o)", hof"X(a, P:o)")
+    succeedFor( hof"∃X X(a, P:o)", Substitution( hov"X:i>o>o" -> le"λ(t:i) λ(p:o) t=a ∧ p=P" ) )
+    extractCorrectly( hof"∃X X(a, P:o)", hof"X(a, P:o)" )
     failFor( hof"∃X ∀x (X(x,a) ∨ ∀y ¬X(x, y))" )
     failFor( hof"∃X ((∀x ∃y X(x, y)) ∧ (∀x ∃y ¬X(y, x)))" )
   }

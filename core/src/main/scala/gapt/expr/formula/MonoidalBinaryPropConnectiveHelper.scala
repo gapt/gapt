@@ -28,7 +28,6 @@ class MonoidalBinaryPropConnectiveHelper( c: MonomorphicLogicalC, val neutral: M
 
     def unapply( formula: Formula ): Some[List[Formula]] = formula match {
       case Binary( nAry( as ), nAry( bs ) ) => Some( as ::: bs )
-      case neutral()                        => Some( List() )
       case _                                => Some( List( formula ) )
     }
 
