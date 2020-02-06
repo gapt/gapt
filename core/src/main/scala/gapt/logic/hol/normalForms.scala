@@ -1,16 +1,11 @@
 package gapt.logic.hol
 
-import gapt.expr.{ BetaReduction, Var, VarOrConst }
-import gapt.expr.formula.{ All, And, Atom, Bottom, Eq, Ex, Formula, Imp, MonoidalBinaryPropConnectiveHelper, Neg, Or, Quant, Top }
+import gapt.expr.formula._
 import gapt.expr.formula.fol.FOLFormula
 import gapt.expr.formula.hol.containsStrongQuantifier
-import gapt.expr.subst.Substitution
 import gapt.logic.Polarity
-import gapt.proofs.FOLClause
-import gapt.proofs.HOLClause
-import gapt.proofs.Sequent
-import gapt.proofs.resolution.Input
-import gapt.proofs.resolution.structuralCNF
+import gapt.proofs.{ FOLClause, HOLClause, Sequent }
+import gapt.proofs.resolution.{ Input, structuralCNF }
 
 /**
  * Transforms a formula to negation normal form (transforming also
@@ -44,71 +39,50 @@ object toNNF {
 }
 
 /**
- * Simplify a formula using
- * - the equations for bottom and top,
- * - idempotence of conjunction and disjunction,
- * - absorption laws of conjunction and disjunction,
- * - commutativity and reflexivity of equality
- * - simple quantifier elimination (e.g. ∃x x = t ∧ φ(x) simplifies to φ[x/t])
- * - law of excluded middle and its dual and
- * - elimination of double negation.
+ * Simplify a Formula using the equations for bottom and top as
+ * well as idempotence of conjunction and disjunction.
  */
 object simplify {
-  def apply( f: Formula ): Formula = toNNF( f ) match {
-    case And.nAry( conjuncts ) if conjuncts.length >= 2 => simplifyMonoidalBinaryPropConnective( conjuncts, And, Or )
-    case Or.nAry( disjuncts ) if disjuncts.length >= 2  => simplifyMonoidalBinaryPropConnective( disjuncts, Or, And )
-
-    case Quant( x, innerFormula, isAll )                => simplifyQuantifier( x, innerFormula, isAll )
-
-    case n @ Neg( s ) => simplify( s ) match {
+  def apply( f: Formula ): Formula = f match {
+    case And( l, r ) => ( simplify( l ), simplify( r ) ) match {
+      case ( Top(), r )       => r
+      case ( r, Top() )       => r
+      case ( Bottom(), _ )    => Bottom()
+      case ( _, Bottom() )    => Bottom()
+      case ( l, r ) if l == r => l
+      case ( l, r )           => And( l, r )
+    }
+    case Or( l, r ) => ( simplify( l ), simplify( r ) ) match {
+      case ( Top(), _ )       => Top()
+      case ( _, Top() )       => Top()
+      case ( Bottom(), r )    => r
+      case ( r, Bottom() )    => r
+      case ( l, r ) if l == r => l
+      case ( l, r )           => Or( l, r )
+    }
+    case Imp( l, r ) => ( simplify( l ), simplify( r ) ) match {
+      case ( Top(), r )       => r
+      case ( _, Top() )       => Top()
+      case ( Bottom(), _ )    => Top()
+      case ( r, Bottom() )    => simplify( Neg( r ) )
+      case ( l, r ) if l == r => Top()
+      case ( l, r )           => Imp( l, r )
+    }
+    case Neg( s ) => simplify( s ) match {
       case Top()    => Bottom()
       case Bottom() => Top()
-      case _        => n
+      case s        => Neg( s )
     }
-    case Eq( l, r ) if l == r               => Top()
-    case Eq( l: VarOrConst, r: VarOrConst ) => Eq( List( l, r ).minBy( _.name ), List( l, r ).maxBy( _.name ) )
-    case p                                  => p
+    case Quant( x, g, isAll ) =>
+      simplify( g ) match {
+        case Top()    => Top()
+        case Bottom() => Bottom()
+        case g_       => Quant( x, g_, isAll )
+      }
+    case _ => f
   }
 
   def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[Formula] ).asInstanceOf[FOLFormula]
-
-  private def simplifyMonoidalBinaryPropConnective(
-    arguments:      List[Formula],
-    connective:     MonoidalBinaryPropConnectiveHelper,
-    dualConnective: MonoidalBinaryPropConnectiveHelper ): Formula = {
-    val simplifiedArguments = arguments.map( simplify( _ ) )
-    val dualNeutral = dualConnective.neutral().asInstanceOf[Formula]
-    if ( simplifiedArguments.contains( dualNeutral ) || containsPropAndItsNegation( simplifiedArguments ) )
-      dualNeutral
-    else {
-      val neutralRemoved = simplifiedArguments.toSet.filterNot( _ == connective.neutral() )
-      val absorbedRemoved = neutralRemoved.filterNot {
-        case dualConnective.nAry( dualArguments ) if dualArguments.length >= 2 => dualArguments.exists( neutralRemoved.contains )
-        case _ => false
-      }
-      connective( absorbedRemoved )
-    }
-  }
-
-  private def simplifyQuantifier( variable: Var, innerFormula: Formula, isAll: Boolean ): Formula = {
-    val simplificationConnective = if ( isAll ) Or else And
-    val formula @ simplificationConnective.nAry( arguments ) = simplify( innerFormula )
-    object UnaryPolarityConnective {
-      def unapply( formula: Formula ): Option[Formula] = if ( isAll ) Neg.unapply( formula ) else Some( formula )
-    }
-    arguments.collectFirst {
-      case UnaryPolarityConnective( Eq( lhs, rhs ) ) if lhs == variable || rhs == variable =>
-        val substitute = if ( lhs == variable ) rhs else lhs
-        val substitution = Substitution( variable -> substitute )
-        simplify( BetaReduction.betaNormalize( substitution( simplificationConnective( arguments ) ) ) )
-    }.getOrElse( formula match {
-      case _ if !formula.contains( variable ) => formula
-      case _                                  => Quant( variable, formula, isAll )
-    } )
-  }
-
-  private def containsPropAndItsNegation( formulas: Seq[Formula] ): Boolean =
-    formulas.exists( p => formulas.contains( simplify( Neg( p ) ) ) )
 }
 
 /**

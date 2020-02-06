@@ -5,7 +5,7 @@ import gapt.expr.formula.fol.FOLVar
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.{ FunctionType, To, Ty }
 import gapt.expr.util.variables
-import gapt.expr.{ Abs, BetaReduction, Expr, Var }
+import gapt.expr.{ Abs, BetaReduction, Expr, Var, VarOrConst }
 import gapt.logic.Polarity
 import gapt.proofs.HOLSequent
 import gapt.utils.NameGenerator
@@ -219,6 +219,70 @@ object solveFormulaEquation {
         throw new Exception( "cannot handle occurrences inside the scope of existential quantifiers" )
     }
   }
+
+  /**
+   * Simplify a formula using
+   * - the equations for bottom and top,
+   * - idempotence of conjunction and disjunction,
+   * - absorption laws of conjunction and disjunction,
+   * - commutativity and reflexivity of equality
+   * - simple quantifier elimination (e.g. ∃x x = t ∧ φ(x) simplifies to φ[x/t])
+   * - law of excluded middle and its dual and
+   * - elimination of double negation.
+   */
+  def simplify( f: Formula ): Formula = toNNF( f ) match {
+    case And.nAry( conjuncts ) if conjuncts.length >= 2 => simplifyMonoidalBinaryPropConnective( conjuncts, And, Or )
+    case Or.nAry( disjuncts ) if disjuncts.length >= 2  => simplifyMonoidalBinaryPropConnective( disjuncts, Or, And )
+
+    case Quant( x, innerFormula, isAll )                => simplifyQuantifier( x, innerFormula, isAll )
+
+    case n @ Neg( s ) => simplify( s ) match {
+      case Top()    => Bottom()
+      case Bottom() => Top()
+      case _        => n
+    }
+    case Eq( l, r ) if l == r               => Top()
+    case Eq( l: VarOrConst, r: VarOrConst ) => Eq( List( l, r ).minBy( _.name ), List( l, r ).maxBy( _.name ) )
+    case p                                  => p
+  }
+
+  private def simplifyMonoidalBinaryPropConnective(
+    arguments:      List[Formula],
+    connective:     MonoidalBinaryPropConnectiveHelper,
+    dualConnective: MonoidalBinaryPropConnectiveHelper ): Formula = {
+    val simplifiedArguments = arguments.map( simplify( _ ) )
+    val dualNeutral = dualConnective.neutral().asInstanceOf[Formula]
+    if ( simplifiedArguments.contains( dualNeutral ) || containsPropAndItsNegation( simplifiedArguments ) )
+      dualNeutral
+    else {
+      val neutralRemoved = simplifiedArguments.toSet.filterNot( _ == connective.neutral() )
+      val absorbedRemoved = neutralRemoved.filterNot {
+        case dualConnective.nAry( dualArguments ) if dualArguments.length >= 2 => dualArguments.exists( neutralRemoved.contains )
+        case _ => false
+      }
+      connective( absorbedRemoved )
+    }
+  }
+
+  private def simplifyQuantifier( variable: Var, innerFormula: Formula, isAll: Boolean ): Formula = {
+    val simplificationConnective = if ( isAll ) Or else And
+    val formula @ simplificationConnective.nAry( arguments ) = simplify( innerFormula )
+    object UnaryPolarityConnective {
+      def unapply( formula: Formula ): Option[Formula] = if ( isAll ) Neg.unapply( formula ) else Some( formula )
+    }
+    arguments.collectFirst {
+      case UnaryPolarityConnective( Eq( lhs, rhs ) ) if lhs == variable || rhs == variable =>
+        val substitute = if ( lhs == variable ) rhs else lhs
+        val substitution = Substitution( variable -> substitute )
+        simplify( BetaReduction.betaNormalize( substitution( simplificationConnective( arguments ) ) ) )
+    }.getOrElse( formula match {
+      case _ if !formula.contains( variable ) => formula
+      case _                                  => Quant( variable, formula, isAll )
+    } )
+  }
+
+  private def containsPropAndItsNegation( formulas: Seq[Formula] ): Boolean =
+    formulas.exists( p => formulas.contains( simplify( Neg( p ) ) ) )
 
   private def vectorEq( expressionsA: Iterable[Expr], expressionsB: Iterable[Expr] ): Formula = {
     And( expressionsA.zip( expressionsB ) map { case ( a, b ) => Eq( a, b ) } )
