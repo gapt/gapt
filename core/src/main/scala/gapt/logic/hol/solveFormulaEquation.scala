@@ -1,6 +1,5 @@
 package gapt.logic.hol
 
-import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.{ Formula, _ }
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.{ FunctionType, To, Ty }
@@ -300,20 +299,5 @@ object solveFormulaEquation {
       val antecedent = And( negatedInit :+ disjunct )
       Imp( antecedent, witness )
     } ) )
-  }
-
-  private object FirstOrderExBlock {
-    def apply( existentialVariables: List[FOLVar], formula: Formula ): Formula =
-      existentialVariables match {
-        case Nil              => formula
-        case variable :: rest => Ex( variable, apply( rest, formula ) )
-      }
-
-    def unapply( formula: Formula ): Option[( List[FOLVar], Formula )] = formula match {
-      case Ex( variable: FOLVar, innerFormula ) =>
-        val ( variables, extractedFormula ) = unapply( innerFormula ).get
-        Some( variable :: variables, extractedFormula )
-      case _ => Some( Nil, formula )
-    }
   }
 }
