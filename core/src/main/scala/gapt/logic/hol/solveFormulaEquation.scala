@@ -1,7 +1,7 @@
 package gapt.logic.hol
 
-import gapt.expr.formula._
 import gapt.expr.formula.fol.FOLVar
+import gapt.expr.formula.{ Formula, _ }
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.{ FunctionType, To, Ty }
 import gapt.expr.util.variables
@@ -23,21 +23,20 @@ object solveFormulaEquation {
    * and a first order formula such that applying the substitution to the first order formula gives a
    * first order formula which is equivalent to ∃X_1 ... ∃X_n φ
    *
-   * Does not yet work for formulas where an occurrence of the second order variable is
+   * Does not work for formulas where an occurrence of the second order variable is
    * inside the scope of an existential quantifier which is itself inside the scope of an
    * universal quantifier.
    */
-  def apply( formula: Formula ): Try[( Substitution, Formula )] = Try( formula match {
+  def apply( formula: Formula ): Try[( Substitution, Formula )] = Try( simplify(formula) match {
     case Ex( StrictSecondOrderRelationVariable( secondOrderVariable, _ ), innerFormula ) =>
       val ( substitution, firstOrderPart ) = apply( innerFormula ).get
       val firstOrderFormula = applySubstitutionBetaReduced( substitution, firstOrderPart )
-      val ( existentialVariables, disjuncts ) = preprocess( secondOrderVariable, firstOrderFormula )
+      val disjuncts = preprocess( secondOrderVariable, firstOrderFormula )
       val witness = findWitness( secondOrderVariable, disjuncts )
       val substitutionMap = substitution.map + ( secondOrderVariable -> witness )
       val updatedSubstitution = Substitution( substitutionMap )
-      val updatedInnerFormula = FirstOrderExBlock( existentialVariables, firstOrderFormula )
-      ( updatedSubstitution, updatedInnerFormula )
-    case _ => ( Substitution(), formula )
+      ( updatedSubstitution, firstOrderPart )
+    case f => ( Substitution(), f )
   } )
 
   private object StrictSecondOrderRelationVariable {
@@ -56,11 +55,12 @@ object solveFormulaEquation {
 
   def preprocess(
     secondOrderVariable: Var,
-    formula:             Formula ): ( List[FOLVar], Set[HOLSequent] ) = {
-    val nnf = toNNF( formula )
+    formula:             Formula ): Set[HOLSequent] = {
+    val nnf = toNNF( simplify( formula ) )
     val formulaWithoutRedundantQuantifiers = removeRedundantQuantifiers( nnf )
-    val FirstOrderExBlock( variables, innerFormula ) = moveQuantifiersInFormula( formulaWithoutRedundantQuantifiers )
-    val disjuncts = extractDisjuncts( innerFormula )
+    val movedQuantifiersFormula = moveQuantifiersInFormula( formulaWithoutRedundantQuantifiers )
+
+    val disjuncts = extractDisjuncts( movedQuantifiersFormula, secondOrderVariable )
 
     val polarizedConjunctsInDisjuncts = disjuncts
       .map( polarizedConjuncts( _, secondOrderVariable ) )
@@ -69,18 +69,21 @@ object solveFormulaEquation {
         s"""formula cannot be separated into positive and negative conjuncts of occurrences of $secondOrderVariable
            |formula: $formulaWithoutRedundantQuantifiers""".stripMargin )
     else
-      ( variables, polarizedConjunctsInDisjuncts.map( _.get ) )
+      polarizedConjunctsInDisjuncts.map( _.get )
   }
 
   private def moveQuantifiersInFormula( formula: Formula ): Formula = {
-    moveQuantifiers.up( Ex, moveQuantifiers.down( All, formula ) )
+    moveQuantifiers.down( Ex, moveQuantifiers.down( All, formula ) )
   }
 
-  private def extractDisjuncts( formula: Formula ): Set[Formula] = formula match {
+  private def extractDisjuncts( formula: Formula, secondOrderVariable: Var ): Set[Formula] = formula match {
     case And.nAry( conjuncts ) if conjuncts.length >= 2 =>
-      val innerDisjuncts = conjuncts.map( extractDisjuncts )
-      crossProduct( innerDisjuncts ).map( And.apply( _ ) ).toSet
-    case Or.nAry( disjuncts ) if disjuncts.length >= 2 => disjuncts.flatMap( extractDisjuncts ).toSet
+      val ( uniquePolarityConjuncts, nonUniquePolarityConjuncts ) = conjuncts
+        .partition( uniquePolarityWithRespectTo( _, secondOrderVariable ).isDefined )
+      val innerDisjuncts = nonUniquePolarityConjuncts.map( extractDisjuncts( _, secondOrderVariable ) )
+      crossProduct( innerDisjuncts :+ Set( And( uniquePolarityConjuncts ) ) ).map( And( _ ) ).toSet
+
+    case Or.nAry( disjuncts ) if disjuncts.length >= 2 => disjuncts.flatMap( extractDisjuncts( _, secondOrderVariable ) ).toSet
     case _ => Set( formula )
   }
 
@@ -207,10 +210,11 @@ object solveFormulaEquation {
           recur( alpha ),
           recur( beta ) )
 
-      case Or( alpha, beta ) =>
-        dualPolarityConnective(
-          recur( alpha ),
-          recur( beta ) )
+      case Or.nAry( disjuncts ) if disjuncts.count( _.contains( secondOrderVariable ) ) >= 2 =>
+        throw new Exception( "cannot handle disjunction of occurrences inside conjuncts" )
+
+      case Or.nAry( disjuncts ) if disjuncts.length >= 2 =>
+        dualPolarityConnective( disjuncts.map( recur ) )
 
       case All( variable, innerFormula ) =>
         polarityQuantifier( variable, recur( innerFormula ) )
@@ -250,7 +254,7 @@ object solveFormulaEquation {
     arguments:      List[Formula],
     connective:     MonoidalBinaryPropConnectiveHelper,
     dualConnective: MonoidalBinaryPropConnectiveHelper ): Formula = {
-    val simplifiedArguments = arguments.map( simplify( _ ) )
+    val simplifiedArguments = arguments.map( simplify )
     val dualNeutral = dualConnective.neutral().asInstanceOf[Formula]
     if ( simplifiedArguments.contains( dualNeutral ) || containsPropAndItsNegation( simplifiedArguments ) )
       dualNeutral

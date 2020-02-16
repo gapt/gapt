@@ -4,8 +4,10 @@ import gapt.expr._
 import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.{ And, Formula, Iff }
 import gapt.expr.subst.Substitution
+import gapt.expr.ty.FunctionType
 import gapt.proofs.HOLSequent
 import gapt.provers.escargot.Escargot
+import gapt.utils.NameGenerator
 import org.specs2.matcher.Matcher
 import org.specs2.mutable.Specification
 import org.specs2.specification.core.Fragment
@@ -18,24 +20,19 @@ class SolveFormulaEquationTest extends Specification {
     def succeedWithSequents(
       formulaEquation:  ( Var, Formula ),
       expectedSequents: Set[HOLSequent] ): Fragment = {
-      succeedWithExPrefixAndSequents( formulaEquation, ( Nil, expectedSequents ) )
+      succeedWithExPrefixAndSequents( formulaEquation, expectedSequents )
     }
 
     def succeedWithExPrefixAndSequents(
       formulaEquation: ( Var, Formula ),
-      expectedResult:  ( List[FOLVar], Set[HOLSequent] ) ): Fragment = {
+      expectedResult:  Set[HOLSequent] ): Fragment = {
       val ( secondOrderVariable, formula ) = formulaEquation
-      val ( existentialVariables, expectedSequents ) = expectedResult
       s"succeed for $formula" >> {
         Try( solveFormulaEquation.preprocess( secondOrderVariable, formula ) ) must beSuccessfulTry(
-          { result: ( List[FOLVar], Set[HOLSequent] ) =>
-            val ( variables, disjuncts ) = result
-            val substitution = Substitution( existentialVariables.zip( variables ).toMap )
-            val substitutedSequents = expectedSequents
-              .map( sequent => sequent.map( f => substitution( f ) ) )
+          { result: Set[HOLSequent] =>
             val multiSetEquals = ( s1: HOLSequent, s2: HOLSequent ) => s1.multiSetEquals( s2 )
-            disjuncts must beSetEqualsWithCustomEquality(
-              substitutedSequents,
+            result must beSetEqualsWithCustomEquality(
+              expectedResult,
               multiSetEquals )
           } )
       }
@@ -64,22 +61,18 @@ class SolveFormulaEquationTest extends Specification {
       Set( hos"¬X(b), ¬X(d) ⊢ X(a)", hos"¬X(d) ⊢ X(c), X(a)" ) )
     succeedWithSequents(
       fe( hof"Y(a) ∧ (¬Y(b) ∨ Y(c)) ∧ ¬Y(d)" ),
-      Set( hos"⊢ Y(a), ¬Y(b), ¬Y(d)", hos"⊢ Y(a), Y(c), ¬Y(d)" ) )
+      Set( hos"⊢ Y(a), ¬Y(b) ∨ Y(c), ¬Y(d)" ) )
     succeedWithSequents(
       fe( hof"∀x (X(x) ∧ X(a))" ),
       Set( hos"⊢ ∀x X(x), ∀x X(a)" ) )
-    succeedWithExPrefixAndSequents(
-      fe( hof"∃x X(x)" ),
-      ( List( FOLVar( "x" ) ), Set( hos"⊢ X(x)" ) ) )
+    succeedWithSequents(
+      fe( hof"∃x X(x)" ), Set( hos"⊢ ∃x X(x)" ) )
     succeedWithSequents(
       fe( hof"∀x ∃y X(x,y)" ),
       Set( hos"⊢ ∀x ∃y X(x,y)" ) )
-    succeedWithExPrefixAndSequents(
-      fe( hof"(∃y X(a,y)) ∨ (∃x X(b,x))" ),
-      ( List( FOLVar( "z" ) ), Set( hos"⊢ X(a, z)", hos"⊢ X(b, z)" ) ) )
     succeedWithSequents(
       fe( hof"(∀x (X(x) -> (∀y R(x,y)))) ∧ (X(a) ∨ X(b))" ),
-      Set( hos"∀x (¬X(x) ∨ (∀y R(x, y))) ⊢ X(a)", hos"∀x (¬X(x) ∨ (∀y R(x, y))) ⊢ X(b)" ) )
+      Set( hos"∀x (¬X(x) ∨ (∀y R(x, y))) ⊢ X(a) ∨ X(b)" ) )
   }
 
   "findPartialWitness" should {
@@ -102,6 +95,16 @@ class SolveFormulaEquationTest extends Specification {
       }
     }
 
+    def failFor(
+      secondOrderVariable: Var,
+      sequent:             HOLSequent ): Fragment = {
+      s"fail for $sequent" >> {
+        val FunctionType( _, argumentTypes ) = secondOrderVariable.ty
+        val argumentVariables = new NameGenerator( Nil ).freshStream( secondOrderVariable.name ).take( argumentTypes.length ).map( FOLVar( _ ) ).toList
+        solveFormulaEquation.findPartialWitness( secondOrderVariable, argumentVariables, sequent ) must throwA()
+      }
+    }
+
     succeedFor( hov"X:i>o", hos"R(a) ⊢", le"λt ⊤" )
     succeedFor( hov"X:i>o", hos"⊢ X(a)", le"λt t=a" )
     succeedFor( hov"X:i>o", hos"⊢ ∀x X(x)", le"λt ⊤" )
@@ -110,6 +113,8 @@ class SolveFormulaEquationTest extends Specification {
     succeedFor( hov"X:i>o", hos"∀x (¬X(x) ∨ (∀y R(x, y))) ⊢ X(a)", le"λt ∀y R(t, y)" )
     succeedFor( hov"X:i>o", hos"¬X(a) ⊢ ∀x (X(x) ∨ (∀y R(x, y)))", le"λt t!=a" )
     succeedFor( hov"X:i>o", hos"⊢ ∀x X(x)", le"λt ⊤" )
+    succeedFor( hov"X:i>o", hos"(∀x (¬X(x) ∨ S(x))) ⊢ (∀x (¬R(x) ∨ X(x)))", le"λt R(t):o" )
+    failFor( hov"X:i>o", hos"¬X(c) ∨ ¬X(d) ⊢ X(a) ∨ X(b)" )
   }
 
   "simplify" should {
@@ -222,16 +227,16 @@ class SolveFormulaEquationTest extends Specification {
       Substitution( hov"X:i>o" -> le"λx ∃t x=t" ) )
     succeedFor(
       hof"∃X (X(a) ∧ ∃x X(x))",
-      Substitution( X -> le"λt t=a" ) )
+      Substitution( X -> le"λt ⊤" ) )
     succeedFor(
       hof"∃X ((∃x X(x)) ∧ ¬R(a))",
       Substitution( X -> le"λt ⊤" ) )
     succeedFor(
       hof"∃X ∃x X(x,a)",
-      Substitution( hov"X:i>i>o" -> le"λt λs s=a" ) )
+      Substitution( hov"X:i>i>o" -> le"λt λs ⊤" ) )
     succeedFor(
       hof"∃X ((R(a) ∧ ∃x X(x)) ∨ ((∃y R(y)) ∨ X(b)))",
-      Substitution( X -> le"λt t=b" ) )
+      Substitution( X -> le"λt ⊤" ) )
     succeedFor(
       hof"∃X ∀x (R(a) ∨ X(x) ∨ R(b))",
       Substitution( X -> le"λt ¬R(a) ∧ ¬R(b)" ) )
@@ -247,8 +252,11 @@ class SolveFormulaEquationTest extends Specification {
     succeedFor( hof"∃X ∀x (X(f(x)) ∨ R(x))", Substitution( X -> le"λt ∃x (t=f(x) ∧ ¬R(x))" ) )
     succeedFor( hof"∃X X(a, P:o)", Substitution( hov"X:i>o>o" -> le"λ(t:i) λ(p:o) t=a ∧ p=P" ) )
     extractCorrectly( hof"∃X X(a, P:o)", hof"X(a, P:o)" )
+    succeedFor( hof"?X ?x X(x)", Substitution( X -> le"λt ⊤" ) )
+    succeedFor( hof"∃X !x (X(a,x) ∨ X(b,x))", Substitution( hov"X:i>i>o", le"λt_1 λt_2 ⊤" ) )
     failFor( hof"∃X ∀x (X(x,a) ∨ ∀y ¬X(x, y))" )
     failFor( hof"∃X ((∀x ∃y X(x, y)) ∧ (∀x ∃y ¬X(y, x)))" )
+    failFor( hof"∃X ((¬X(a) ∨ ¬X(b)) ∧ (X(c) ∨ X(d)))" )
   }
 
   private def beSetEqualsWithCustomEquality[A](
