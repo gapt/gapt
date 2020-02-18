@@ -22,9 +22,26 @@ object solveFormulaEquation {
    * and a first order formula such that applying the substitution to the first order formula gives a
    * first order formula which is equivalent to ∃X_1 ... ∃X_n φ
    *
-   * Does not work for formulas where an occurrence of the second order variable is
-   * inside the scope of an existential quantifier which is itself inside the scope of an
-   * universal quantifier.
+   * A sufficient criterion for the success of the method in the case of formula equations of the form ∃X φ is that
+   * φ can be put into the form
+   *
+   * (α_1(X) ∧ β_1(X)) ∨ ... ∨ (α_n(X) ∧ β_n(X))
+   *
+   * where
+   * - α_i(X) is positive with respect to X and β_i(X) is negative with respect to X,
+   * - no occurrences of X is inside the scope of a first-order existential quantifier and
+   * - for every disjunction in α_i(X) and β_i(X) one disjunct does not contain X and
+   *   the other disjunct contains at most one occurrence of X
+   *
+   * by
+   * - simplifying φ,
+   * - moving quantifiers as far down as possible to reduce their scope and
+   * - distributing conjunctions over disjunctions in subformulae where positive and negative occurrences of X are not
+   *   already separated by a conjunction.
+   *
+   * For formula equations with more than one variable the innermost formula equation is solved first,
+   * then reduced to a first-order formula by applying the found substitution.
+   * The method is then applied recursively on the resulting formula equation with one variable less.
    */
   def apply( formula: Formula ): Try[( Substitution, Formula )] = Try( simplify( formula ) match {
     case Ex( StrictSecondOrderRelationVariable( secondOrderVariable, _ ), innerFormula ) =>
