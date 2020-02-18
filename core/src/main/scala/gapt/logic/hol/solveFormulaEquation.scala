@@ -29,11 +29,10 @@ object solveFormulaEquation {
   def apply( formula: Formula ): Try[( Substitution, Formula )] = Try( simplify( formula ) match {
     case Ex( StrictSecondOrderRelationVariable( secondOrderVariable, _ ), innerFormula ) =>
       val ( substitution, firstOrderPart ) = apply( innerFormula ).get
-      val firstOrderFormula = applySubstitutionBetaReduced( substitution, firstOrderPart )
+      val firstOrderFormula = simplify(applySubstitutionBetaReduced( substitution, firstOrderPart ))
       val disjuncts = preprocess( secondOrderVariable, firstOrderFormula )
       val witness = findWitness( secondOrderVariable, disjuncts )
-      val substitutionMap = substitution.map + ( secondOrderVariable -> witness )
-      val updatedSubstitution = Substitution( substitutionMap )
+      val updatedSubstitution = updateSubstitutionWithBetaReduction(substitution, secondOrderVariable -> witness)
       ( updatedSubstitution, firstOrderPart )
     case f => ( Substitution(), f )
   } )
@@ -46,9 +45,18 @@ object solveFormulaEquation {
     }
   }
 
+  private def updateSubstitutionWithBetaReduction(substitution: Substitution, entry: (Var, Expr)): Substitution = {
+    val newSubstitution = Substitution(entry)
+    Substitution(newSubstitution.map ++ substitution.map.map({
+      case (v, e) => v -> (e match {
+        case Abs.Block(variables, f:Formula) => Abs.Block(variables, simplify(applySubstitutionBetaReduced(newSubstitution, f)))
+      })
+    }))
+  }
+
   private def applySubstitutionBetaReduced(
-    substitution: Substitution,
-    formula:      Formula ): Formula = {
+                                            substitution: Substitution,
+                                            formula:      Formula ): Formula = {
     BetaReduction.betaNormalize( substitution( formula ) )
   }
 
@@ -67,8 +75,11 @@ object solveFormulaEquation {
       throw new Exception(
         s"""formula cannot be separated into positive and negative conjuncts of occurrences of $secondOrderVariable
            |formula: $formulaWithoutRedundantQuantifiers""".stripMargin )
-    else
-      polarizedConjunctsInDisjuncts.map( _.get )
+    else {
+      val (occurrenceDisjuncts, nonOccurrenceDisjuncts) = polarizedConjunctsInDisjuncts.map( _.get ).partition(d => d.exists(_.contains(secondOrderVariable)))
+      val addedSet = if(nonOccurrenceDisjuncts.isEmpty) Set() else Set(HOLSequent(Vector(), Vector(Or(nonOccurrenceDisjuncts.map(d => And(d.succedent))))))
+      occurrenceDisjuncts ++ addedSet
+    }
   }
 
   private def moveQuantifiersInFormula( formula: Formula ): Formula = {
@@ -196,7 +207,7 @@ object solveFormulaEquation {
     val polarityInversion = if ( polarity.positive ) ( f: Formula ) => Neg( f ) else ( f: Formula ) => f
     val recur = polarityOccurrenceWitness( polarity, secondOrderVariable, argumentVariables, _ )
     formula match {
-      case _ if !formula.contains( secondOrderVariable ) => polarityInversion( formula )
+      case _ if !formula.contains( secondOrderVariable ) => polarityInversion( Top() )
 
       case Atom( variable, arguments ) if variable == secondOrderVariable =>
         vectorEq( argumentVariables, arguments )
@@ -213,7 +224,9 @@ object solveFormulaEquation {
         throw new Exception( "cannot handle disjunction of occurrences inside conjuncts" )
 
       case Or.nAry( disjuncts ) if disjuncts.length >= 2 =>
-        dualPolarityConnective( disjuncts.map( recur ) )
+        val ( occurrenceDisjuncts, nonOccurrenceDisjuncts ) = disjuncts.partition( _.contains( secondOrderVariable ) )
+        val occurrenceWitness = recur( occurrenceDisjuncts.head )
+        dualPolarityConnective( occurrenceWitness, polarityInversion( Or( nonOccurrenceDisjuncts ) ) )
 
       case All( variable, innerFormula ) =>
         polarityQuantifier( variable, recur( innerFormula ) )

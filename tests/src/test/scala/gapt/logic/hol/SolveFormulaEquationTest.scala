@@ -61,7 +61,7 @@ class SolveFormulaEquationTest extends Specification {
       Set( hos"¬X(b), ¬X(d) ⊢ X(a)", hos"¬X(d) ⊢ X(c), X(a)" ) )
     succeedWithSequents(
       fe( hof"Y(a) ∧ (¬Y(b) ∨ Y(c)) ∧ ¬Y(d)" ),
-      Set( hos"⊢ Y(a), ¬Y(b) ∨ Y(c), ¬Y(d)" ) )
+      Set( hos"⊢ Y(a) ∧ (¬Y(b) ∨ Y(c)) ∧ ¬Y(d)" ) )
     succeedWithSequents(
       fe( hof"∀x (X(x) ∧ X(a))" ),
       Set( hos"⊢ ∀x X(x), ∀x X(a)" ) )
@@ -114,6 +114,7 @@ class SolveFormulaEquationTest extends Specification {
     succeedFor( hov"X:i>o", hos"¬X(a) ⊢ ∀x (X(x) ∨ (∀y R(x, y)))", le"λt t!=a" )
     succeedFor( hov"X:i>o", hos"⊢ ∀x X(x)", le"λt ⊤" )
     succeedFor( hov"X:i>o", hos"(∀x (¬X(x) ∨ S(x))) ⊢ (∀x (¬R(x) ∨ X(x)))", le"λt R(t):o" )
+    succeedFor(hov"X:i>o", hos"¬X(c) ∨ P(c) ⊢", le"λt t != c")
     failFor( hov"X:i>o", hos"¬X(c) ∨ ¬X(d) ⊢ X(a) ∨ X(b)" )
   }
 
@@ -252,11 +253,13 @@ class SolveFormulaEquationTest extends Specification {
     succeedFor( hof"∃X ∀x (X(f(x)) ∨ R(x))", Substitution( X -> le"λt ∃x (t=f(x) ∧ ¬R(x))" ) )
     succeedFor( hof"∃X X(a, P:o)", Substitution( hov"X:i>o>o" -> le"λ(t:i) λ(p:o) t=a ∧ p=P" ) )
     extractCorrectly( hof"∃X X(a, P:o)", hof"X(a, P:o)" )
-    succeedFor( hof"?X ?x X(x)", Substitution( X -> le"λt ⊤" ) )
+    succeedFor( hof"∃X ∃x X(x)", Substitution( X -> le"λt ⊤" ) )
     succeedFor( hof"∃X !x (X(a,x) ∨ X(b,x))", Substitution( hov"X:i>i>o", le"λt_1 λt_2 ⊤" ) )
     failFor( hof"∃X ∀x (X(x,a) ∨ ∀y ¬X(x, y))" )
     failFor( hof"∃X ((∀x ∃y X(x, y)) ∧ (∀x ∃y ¬X(y, x)))" )
     failFor( hof"∃X ((¬X(a) ∨ ¬X(b)) ∧ (X(c) ∨ X(d)))" )
+    succeedFor(hof"∃X ((X(a) ∧ R(b)) ∨ R(c))", Substitution(X -> le"λt ¬R(c)"))
+    succeedFor(hof"∃X ((X(a) ∨ R(b)) ∧ (X(c) ∨ S(d)))", Substitution(X -> le"λt (t=a ∧ ¬R(b)) ∨ (t=c ∧ ¬S(d))"))
   }
 
   private def beSetEqualsWithCustomEquality[A](
