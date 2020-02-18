@@ -26,7 +26,7 @@ object solveFormulaEquation {
    * inside the scope of an existential quantifier which is itself inside the scope of an
    * universal quantifier.
    */
-  def apply( formula: Formula ): Try[( Substitution, Formula )] = Try( simplify(formula) match {
+  def apply( formula: Formula ): Try[( Substitution, Formula )] = Try( simplify( formula ) match {
     case Ex( StrictSecondOrderRelationVariable( secondOrderVariable, _ ), innerFormula ) =>
       val ( substitution, firstOrderPart ) = apply( innerFormula ).get
       val firstOrderFormula = applySubstitutionBetaReduced( substitution, firstOrderPart )
