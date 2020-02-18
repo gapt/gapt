@@ -46,10 +46,10 @@ object solveFormulaEquation {
   def apply( formula: Formula ): Try[( Substitution, Formula )] = Try( simplify( formula ) match {
     case Ex( StrictSecondOrderRelationVariable( secondOrderVariable, _ ), innerFormula ) =>
       val ( substitution, firstOrderPart ) = apply( innerFormula ).get
-      val firstOrderFormula = simplify(applySubstitutionBetaReduced( substitution, firstOrderPart ))
+      val firstOrderFormula = simplify( applySubstitutionBetaReduced( substitution, firstOrderPart ) )
       val disjuncts = preprocess( secondOrderVariable, firstOrderFormula )
       val witness = findWitness( secondOrderVariable, disjuncts )
-      val updatedSubstitution = updateSubstitutionWithBetaReduction(substitution, secondOrderVariable -> witness)
+      val updatedSubstitution = updateSubstitutionWithBetaReduction( substitution, secondOrderVariable -> witness )
       ( updatedSubstitution, firstOrderPart )
     case f => ( Substitution(), f )
   } )
@@ -62,18 +62,18 @@ object solveFormulaEquation {
     }
   }
 
-  private def updateSubstitutionWithBetaReduction(substitution: Substitution, entry: (Var, Expr)): Substitution = {
-    val newSubstitution = Substitution(entry)
-    Substitution(newSubstitution.map ++ substitution.map.map({
-      case (v, e) => v -> (e match {
-        case Abs.Block(variables, f:Formula) => Abs.Block(variables, simplify(applySubstitutionBetaReduced(newSubstitution, f)))
-      })
-    }))
+  private def updateSubstitutionWithBetaReduction( substitution: Substitution, entry: ( Var, Expr ) ): Substitution = {
+    val newSubstitution = Substitution( entry )
+    Substitution( newSubstitution.map ++ substitution.map.map( {
+      case ( v, e ) => v -> ( e match {
+        case Abs.Block( variables, f: Formula ) => Abs.Block( variables, simplify( applySubstitutionBetaReduced( newSubstitution, f ) ) )
+      } )
+    } ) )
   }
 
   private def applySubstitutionBetaReduced(
-                                            substitution: Substitution,
-                                            formula:      Formula ): Formula = {
+    substitution: Substitution,
+    formula:      Formula ): Formula = {
     BetaReduction.betaNormalize( substitution( formula ) )
   }
 
@@ -93,8 +93,8 @@ object solveFormulaEquation {
         s"""formula cannot be separated into positive and negative conjuncts of occurrences of $secondOrderVariable
            |formula: $formulaWithoutRedundantQuantifiers""".stripMargin )
     else {
-      val (occurrenceDisjuncts, nonOccurrenceDisjuncts) = polarizedConjunctsInDisjuncts.map( _.get ).partition(d => d.exists(_.contains(secondOrderVariable)))
-      val addedSet = if(nonOccurrenceDisjuncts.isEmpty) Set() else Set(HOLSequent(Vector(), Vector(Or(nonOccurrenceDisjuncts.map(d => And(d.succedent))))))
+      val ( occurrenceDisjuncts, nonOccurrenceDisjuncts ) = polarizedConjunctsInDisjuncts.map( _.get ).partition( d => d.exists( _.contains( secondOrderVariable ) ) )
+      val addedSet = if ( nonOccurrenceDisjuncts.isEmpty ) Set() else Set( HOLSequent( Vector(), Vector( Or( nonOccurrenceDisjuncts.map( d => And( d.succedent ) ) ) ) ) )
       occurrenceDisjuncts ++ addedSet
     }
   }
