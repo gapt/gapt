@@ -30,8 +30,10 @@ object solveFormulaEquation {
    * where
    * - α_i(X) is positive with respect to X and β_i(X) is negative with respect to X,
    * - no occurrences of X is inside the scope of a first-order existential quantifier and
-   * - for every disjunction in α_i(X) and β_i(X) one disjunct does not contain X and
-   *   the other disjunct contains at most one occurrence of X
+   * - for every i either
+   *   - α_i(X) or β_i(X) do not contain X or
+   *   - for every disjunction in α_i(X) and β_i(X) one disjunct does not contain X and
+   *     the other disjunct contains at most one occurrence of X
    *
    * by
    * - simplifying φ,
