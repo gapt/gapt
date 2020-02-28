@@ -166,8 +166,13 @@ object solveFormulaEquation {
         val substitution = Substitution( secondOrderVariable -> Abs( variables, witness ) )
         ( applySubstitutionBetaReduced( substitution, negativePart ), witness )
       } )
-    val witnessCombination = disjunctiveWitnessCombination( disjunctsWithWitnesses )
-    Abs( variables, simplify( witnessCombination ) )
+    val combinedWitness =
+      if(disjunctsWithWitnesses.size == 1)
+        disjunctsWithWitnesses.head._2
+      else
+        disjunctiveWitnessCombination( disjunctsWithWitnesses )
+
+    Abs( variables, simplify( combinedWitness ) )
   }
 
   private def freshArgumentVariables(

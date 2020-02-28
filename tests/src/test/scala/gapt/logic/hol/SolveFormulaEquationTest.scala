@@ -260,6 +260,7 @@ class SolveFormulaEquationTest extends Specification {
     failFor( hof"∃X ((¬X(a) ∨ ¬X(b)) ∧ (X(c) ∨ X(d)))" )
     succeedFor( hof"∃X ((X(a) ∧ R(b)) ∨ R(c))", Substitution( X -> le"λt ¬R(c)" ) )
     succeedFor( hof"∃X ((X(a) ∨ R(b)) ∧ (X(c) ∨ S(d)))", Substitution( X -> le"λt (t=a ∧ ¬R(b)) ∨ (t=c ∧ ¬S(d))" ) )
+    succeedFor(hof"∃X (X(a) ∧ ¬X(b))", Substitution(X -> le"λt t=a"))
   }
 
   private def beSetEqualsWithCustomEquality[A](
