@@ -277,10 +277,10 @@ object solveFormulaEquation {
 
     case Quant( x, innerFormula, isAll )                => simplifyQuantifier( x, innerFormula, isAll )
 
-    case n @ Neg( s ) => simplify( s ) match {
+    case Neg( s ) => simplify( s ) match {
       case Top()    => Bottom()
       case Bottom() => Top()
-      case _        => n
+      case simplified => Neg(simplified)
     }
     case Eq( l, r ) if l == r               => Top()
     case Eq( l: VarOrConst, r: VarOrConst ) => Eq( List( l, r ).minBy( _.name ), List( l, r ).maxBy( _.name ) )

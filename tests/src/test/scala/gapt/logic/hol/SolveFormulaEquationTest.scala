@@ -156,6 +156,7 @@ class SolveFormulaEquationTest extends Specification {
     succeedFor( hof"(P -> Q) ∧ ¬P", hof"¬P" )
     succeedFor( hof"P ∧ (Q ∨ (P ∧ Q))", hof"P ∧ Q" )
     succeedFor( hof"P ∨ (Q ∨ (P ∧ Q))", hof"P ∨ Q" )
+    succeedFor(hof"a!=b ∧ b!=a", hof"a!=b")
   }
 
   "solveFormulaEquation" should {
