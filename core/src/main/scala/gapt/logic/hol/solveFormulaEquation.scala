@@ -86,7 +86,7 @@ object solveFormulaEquation {
     val formulaWithoutRedundantQuantifiers = removeRedundantQuantifiers( nnf )
     val movedQuantifiersFormula = moveQuantifiersInFormula( formulaWithoutRedundantQuantifiers )
 
-    val disjuncts = extractDisjuncts( movedQuantifiersFormula, secondOrderVariable )
+    val disjuncts = extractDisjuncts( movedQuantifiersFormula ).filter(_.contains(secondOrderVariable))
 
     val polarizedConjunctsInDisjuncts = disjuncts
       .map( polarizedConjuncts( _, secondOrderVariable ) )
@@ -105,15 +105,12 @@ object solveFormulaEquation {
     moveQuantifiers.down( Ex, moveQuantifiers.down( All, formula ) )
   }
 
-  private def extractDisjuncts( formula: Formula, secondOrderVariable: Var ): Set[Formula] = formula match {
+  private def extractDisjuncts( formula: Formula ): Set[Formula] = formula match {
     case And.nAry( conjuncts ) if conjuncts.length >= 2 =>
-      crossProduct( conjuncts.map(extractDisjuncts(_, secondOrderVariable)) ).map( And( _ ) ).toSet
+      crossProduct( conjuncts.map(extractDisjuncts) ).map( And( _ ) ).toSet
 
     case Or.nAry( disjuncts ) if disjuncts.length >= 2 =>
-        disjuncts
-          .flatMap( extractDisjuncts( _, secondOrderVariable ) )
-          .filter(_.contains(secondOrderVariable))
-          .toSet
+      disjuncts.flatMap( extractDisjuncts ).toSet
     case _ => Set( formula )
   }
 

@@ -43,7 +43,7 @@ class SolveFormulaEquationTest extends Specification {
     def formulaEquationInX( formula: Formula ) = formulaEquation( hov"X:i>o", formula )
 
     val fe = formulaEquationInX _ // alias to shorten test cases
-    succeedWithSequents( fe( hof"R(a)" ), Set( hos"⊢ R(a)" ) )
+    succeedWithSequents( fe( hof"R(a)" ), Set( ) )
     succeedWithSequents( fe( hof"X(a)" ), Set( hos"⊢ X(a)" ) )
     succeedWithSequents( fe( hof"¬X(a)" ), Set( hos"¬X(a) ⊢" ) )
     succeedWithSequents( fe( hof"X(b) ∧ ¬X(a)" ), Set( hos"¬X(a) ⊢ X(b)" ) )
@@ -68,7 +68,7 @@ class SolveFormulaEquationTest extends Specification {
     succeedWithSequents(
       fe( hof"∃x X(x)" ), Set( hos"⊢ ∃x X(x)" ) )
     succeedWithSequents(
-      fe( hof"∀x ∃y X(x,y)" ),
+      formulaEquation(hov"X:i>i>o", hof"∀x ∃y X(x,y)"),
       Set( hos"⊢ ∀x ∃y X(x,y)" ) )
     succeedWithSequents(
       fe( hof"(∀x (X(x) -> (∀y R(x,y)))) ∧ (X(a) ∨ X(b))" ),
