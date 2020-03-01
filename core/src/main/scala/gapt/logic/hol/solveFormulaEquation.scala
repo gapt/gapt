@@ -107,12 +107,13 @@ object solveFormulaEquation {
 
   private def extractDisjuncts( formula: Formula, secondOrderVariable: Var ): Set[Formula] = formula match {
     case And.nAry( conjuncts ) if conjuncts.length >= 2 =>
-      val ( uniquePolarityConjuncts, nonUniquePolarityConjuncts ) = conjuncts
-        .partition( uniquePolarityWithRespectTo( _, secondOrderVariable ).isDefined )
-      val innerDisjuncts = nonUniquePolarityConjuncts.map( extractDisjuncts( _, secondOrderVariable ) )
-      crossProduct( innerDisjuncts :+ Set( And( uniquePolarityConjuncts ) ) ).map( And( _ ) ).toSet
+      crossProduct( conjuncts.map(extractDisjuncts(_, secondOrderVariable)) ).map( And( _ ) ).toSet
 
-    case Or.nAry( disjuncts ) if disjuncts.length >= 2 => disjuncts.flatMap( extractDisjuncts( _, secondOrderVariable ) ).toSet
+    case Or.nAry( disjuncts ) if disjuncts.length >= 2 =>
+        disjuncts
+          .flatMap( extractDisjuncts( _, secondOrderVariable ) )
+          .filter(_.contains(secondOrderVariable))
+          .toSet
     case _ => Set( formula )
   }
 

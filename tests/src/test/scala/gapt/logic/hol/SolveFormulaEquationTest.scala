@@ -61,7 +61,7 @@ class SolveFormulaEquationTest extends Specification {
       Set( hos"¬X(b), ¬X(d) ⊢ X(a)", hos"¬X(d) ⊢ X(c), X(a)" ) )
     succeedWithSequents(
       fe( hof"Y(a) ∧ (¬Y(b) ∨ Y(c)) ∧ ¬Y(d)" ),
-      Set( hos"⊢ Y(a) ∧ (¬Y(b) ∨ Y(c)) ∧ ¬Y(d)" ) )
+      Set( ) )
     succeedWithSequents(
       fe( hof"∀x (X(x) ∧ X(a))" ),
       Set( hos"⊢ ∀x X(x), ∀x X(a)" ) )
@@ -72,7 +72,7 @@ class SolveFormulaEquationTest extends Specification {
       Set( hos"⊢ ∀x ∃y X(x,y)" ) )
     succeedWithSequents(
       fe( hof"(∀x (X(x) -> (∀y R(x,y)))) ∧ (X(a) ∨ X(b))" ),
-      Set( hos"∀x (¬X(x) ∨ (∀y R(x, y))) ⊢ X(a) ∨ X(b)" ) )
+      Set( hos"∀x (¬X(x) ∨ (∀y R(x, y))) ⊢ X(a)", hos"∀x (¬X(x) ∨ (∀y R(x, y))) ⊢ X(b)" ) )
   }
 
   "findPartialWitness" should {
@@ -257,7 +257,7 @@ class SolveFormulaEquationTest extends Specification {
     succeedFor( hof"∃X !x (X(a,x) ∨ X(b,x))", Substitution( hov"X:i>i>o", le"λt_1 λt_2 ⊤" ) )
     failFor( hof"∃X ∀x (X(x,a) ∨ ∀y ¬X(x, y))" )
     failFor( hof"∃X ((∀x ∃y X(x, y)) ∧ (∀x ∃y ¬X(y, x)))" )
-    failFor( hof"∃X ((¬X(a) ∨ ¬X(b)) ∧ (X(c) ∨ X(d)))" )
+    succeedFor( hof"∃X ((¬X(a) ∨ ¬X(b)) ∧ (X(c) ∨ X(d)))", Substitution(X -> le"λt (a!=c ∨ b!=c -> t=c) ∧ (a=c ∧ b=c ∧ (a!=d ∨ b!=d) -> t=d)") )
     succeedFor( hof"∃X ((X(a) ∧ R(b)) ∨ R(c))", Substitution( X -> le"λt ¬R(c)" ) )
     succeedFor( hof"∃X ((X(a) ∨ R(b)) ∧ (X(c) ∨ S(d)))", Substitution( X -> le"λt (t=a ∧ ¬R(b)) ∨ (t=c ∧ ¬S(d))" ) )
     succeedFor(hof"∃X (X(a) ∧ ¬X(b))", Substitution(X -> le"λt t=a"))
