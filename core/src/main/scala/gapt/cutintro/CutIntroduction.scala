@@ -22,7 +22,7 @@ import gapt.expr.util.rename
 import gapt.grammars._
 import gapt.grammars.reforest.Reforest
 import gapt.logic.hol.CNFp
-import gapt.logic.hol.solveFormulaEquation
+import gapt.logic.hol.witnessForSecondOrderQuantifierElimination
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
@@ -473,7 +473,7 @@ object CutIntroduction {
       def schematicExtendedHerbrandSequentToDlsInstance( h: SchematicExtendedHerbrandSequent ): Formula =
         Ex.Block( schematicVariables, ( schematicCutImplications ++: formulaInstances ).toFormula )
       val dlsInstance = schematicExtendedHerbrandSequentToDlsInstance( h )
-      val solution = solveFormulaEquation( dlsInstance ) match {
+      val solution = witnessForSecondOrderQuantifierElimination( dlsInstance ) match {
         case Success( s ) => s._1
         case Failure( e ) =>
           throw new Exception( "failed to solve schematic extended herbrand sequent via DLS", e )

@@ -21,7 +21,7 @@ import gapt.grammars.{ InductionGrammar, findMinimalInductionGrammar }
 import gapt.grammars.InductionGrammar.Production
 import gapt.logic.hol.CNFp
 import gapt.logic.hol.skolemize
-import gapt.logic.hol.solveFormulaEquation
+import gapt.logic.hol.witnessForSecondOrderQuantifierElimination
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.{ BaseTypes, StructurallyInductiveTypes }
 import gapt.proofs.context.mutable.MutableContext
@@ -260,7 +260,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
             }
         case InductionBupSolver.Dls =>
           val p = bup.formula
-          solveFormulaEquation( p ) match {
+          witnessForSecondOrderQuantifierElimination( p ) match {
             case Success( ( s, _ ) ) => s( bup.X )
             case Failure( e ) =>
               throw new IllegalArgumentException( s"Could not solve BUP ${bup}", e )

@@ -7,44 +7,49 @@ import gapt.expr.util.variables
 import gapt.expr.{ Abs, BetaReduction, Expr, Var, VarOrConst }
 import gapt.logic.Polarity
 import gapt.proofs.HOLSequent
+import gapt.provers.escargot.Escargot
 import gapt.utils.NameGenerator
 
 import scala.util.{ Failure, Success, Try }
 
-object solveFormulaEquation {
+/**
+ * Uses the DLS algorithm to find a witness for formula equations of the form
+ * ∃X_1 ... ∃X_n φ where φ is a first order formula and X_1,...,X_n are second-order variables.
+ *
+ * If the method succeeds, the return value is a tuple of a substitution of the second order variables in the
+ * formula equation and a first order formula such that applying the substitution to the first-order formula
+ * is a first-order formula which is equivalent to the given formula equation.
+ *
+ * A sufficient criterion for the success of the method in the case of formula equations of the form ∃X φ is that
+ * φ can be put into the form
+ *
+ * (α_1(X) ∧ β_1(X)) ∨ ... ∨ (α_n(X) ∧ β_n(X))
+ *
+ * where
+ * - no occurrences of X are inside the scope of a first-order existential quantifier,
+ * - α_i(X) is positive with respect to X and β_i(X) is negative with respect to X and
+ * - for every i either
+ *   - α_i(X) does not contain X or
+ *   - β_i(X) does not contain X or
+ *   - every disjunction in α_i(X) ∧ β_i(X) contains at most one occurrence of X
+ *
+ * by
+ * - simplifying φ,
+ * - moving quantifiers as far down as possible to reduce their scope and
+ * - distributing conjunctions over disjunctions in subformulae where positive and negative occurrences of X are not
+ *   already separated by a conjunction.
+ *
+ * For formula equations with more than one variable the innermost formula equation is solved first,
+ * then reduced to a first-order formula by applying the found substitution.
+ * The method is then applied recursively on the resulting formula equation with one variable less.
+ *
+ * A Failure return value does not mean that the quantifier elimination is impossible.
+ * It just means that this algorithm could not find a witness which allows elimination of the second order quantifier.
+ * A Success return value does not mean that the returned first-order formula is valid, but only that it's equivalent
+ * to the given formula equation.
+ */
+object witnessForSecondOrderQuantifierElimination {
 
-  /**
-   * Uses the DLS algorithm to find a witness for formula equations of the form
-   * ∃X_1 ... ∃X_n φ where φ is a first order formula and X_1,...,X_n are strict
-   * second order variables.
-   *
-   * The return value is a tuple of a substitution of the second order variables in the formula equation
-   * and a first order formula such that applying the substitution to the first order formula gives a
-   * first order formula which is equivalent to ∃X_1 ... ∃X_n φ
-   *
-   * A sufficient criterion for the success of the method in the case of formula equations of the form ∃X φ is that
-   * φ can be put into the form
-   *
-   * (α_1(X) ∧ β_1(X)) ∨ ... ∨ (α_n(X) ∧ β_n(X))
-   *
-   * where
-   * - no occurrences of X are inside the scope of a first-order existential quantifier,
-   * - α_i(X) is positive with respect to X and β_i(X) is negative with respect to X and
-   * - for every i either
-   *   - α_i(X) does not contain X or
-   *   - β_i(X) does not contain X or
-   *   - every disjunction in α_i(X) ∧ β_i(X) contains at most one occurrence of X
-   *
-   * by
-   * - simplifying φ,
-   * - moving quantifiers as far down as possible to reduce their scope and
-   * - distributing conjunctions over disjunctions in subformulae where positive and negative occurrences of X are not
-   *   already separated by a conjunction.
-   *
-   * For formula equations with more than one variable the innermost formula equation is solved first,
-   * then reduced to a first-order formula by applying the found substitution.
-   * The method is then applied recursively on the resulting formula equation with one variable less.
-   */
   def apply( formula: Formula ): Try[( Substitution, Formula )] = Try( simplify( formula ) match {
     case Ex( StrictSecondOrderRelationVariable( secondOrderVariable, _ ), innerFormula ) =>
       val ( substitution, firstOrderPart ) = apply( innerFormula ).get
@@ -86,7 +91,7 @@ object solveFormulaEquation {
     val formulaWithoutRedundantQuantifiers = removeRedundantQuantifiers( nnf )
     val movedQuantifiersFormula = moveQuantifiersInFormula( formulaWithoutRedundantQuantifiers )
 
-    val disjuncts = extractDisjuncts( movedQuantifiersFormula ).filter(_.contains(secondOrderVariable))
+    val disjuncts = extractDisjuncts( movedQuantifiersFormula ).filter( _.contains( secondOrderVariable ) )
 
     val polarizedConjunctsInDisjuncts = disjuncts
       .map( polarizedConjuncts( _, secondOrderVariable ) )
@@ -107,7 +112,7 @@ object solveFormulaEquation {
 
   private def extractDisjuncts( formula: Formula ): Set[Formula] = formula match {
     case And.nAry( conjuncts ) if conjuncts.length >= 2 =>
-      crossProduct( conjuncts.map(extractDisjuncts) ).map( And( _ ) ).toSet
+      crossProduct( conjuncts.map( extractDisjuncts ) ).map( And( _ ) ).toSet
 
     case Or.nAry( disjuncts ) if disjuncts.length >= 2 =>
       disjuncts.flatMap( extractDisjuncts ).toSet
@@ -165,7 +170,7 @@ object solveFormulaEquation {
         ( applySubstitutionBetaReduced( substitution, negativePart ), witness )
       } )
     val combinedWitness =
-      if(disjunctsWithWitnesses.size == 1)
+      if ( disjunctsWithWitnesses.size == 1 )
         disjunctsWithWitnesses.head._2
       else
         disjunctiveWitnessCombination( disjunctsWithWitnesses )
@@ -275,9 +280,9 @@ object solveFormulaEquation {
     case Quant( x, innerFormula, isAll )                => simplifyQuantifier( x, innerFormula, isAll )
 
     case Neg( s ) => simplify( s ) match {
-      case Top()    => Bottom()
-      case Bottom() => Top()
-      case simplified => Neg(simplified)
+      case Top()      => Bottom()
+      case Bottom()   => Top()
+      case simplified => Neg( simplified )
     }
     case Eq( l, r ) if l == r               => Top()
     case Eq( l: VarOrConst, r: VarOrConst ) => Eq( List( l, r ).minBy( _.name ), List( l, r ).maxBy( _.name ) )
@@ -334,5 +339,24 @@ object solveFormulaEquation {
       val antecedent = And( negatedInit :+ disjunct )
       Imp( antecedent, witness )
     } ) )
+  }
+}
+
+/**
+ * Takes a formula equation ∃X_1 ... ∃X_n φ and if successful returns a substitution of the second order
+ * variables X_1,...,X_n such that applying the substitution to φ is a valid first-order formula.
+ * See [[witnessForSecondOrderQuantifierElimination]] for a detailed description when this succeeds and when it fails.
+ * In addition, this method uses Escargot to check if the found first-order formula is valid and returns a Failure,
+ * if it is not.
+ */
+object solveFormulaEquation {
+  def apply( formula: Formula ): Try[Substitution] = {
+    witnessForSecondOrderQuantifierElimination( formula ).flatMap( {
+      case ( substitution, firstOrderPart ) =>
+        if ( Escargot.isValid( BetaReduction.betaNormalize( substitution( firstOrderPart ) ) ) )
+          Success( substitution )
+        else
+          Failure( new Exception( s"""the given formula equation ${formula} is not valid""" ) )
+    } )
   }
 }
