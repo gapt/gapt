@@ -28,12 +28,12 @@ object solveFormulaEquation {
    * (α_1(X) ∧ β_1(X)) ∨ ... ∨ (α_n(X) ∧ β_n(X))
    *
    * where
-   * - α_i(X) is positive with respect to X and β_i(X) is negative with respect to X,
-   * - no occurrences of X is inside the scope of a first-order existential quantifier and
+   * - no occurrences of X are inside the scope of a first-order existential quantifier,
+   * - α_i(X) is positive with respect to X and β_i(X) is negative with respect to X and
    * - for every i either
-   *   - α_i(X) or β_i(X) do not contain X or
-   *   - for every disjunction in α_i(X) and β_i(X) one disjunct does not contain X and
-   *     the other disjunct contains at most one occurrence of X
+   *   - α_i(X) does not contain X or
+   *   - β_i(X) does not contain X or
+   *   - every disjunction in α_i(X) ∧ β_i(X) contains at most one occurrence of X
    *
    * by
    * - simplifying φ,
