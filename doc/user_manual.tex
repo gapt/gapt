@@ -2402,9 +2402,9 @@ x_2 → 0
 
 
 \section{Formula equations}
-A second-order formula of the form $\exists X_1 ... \exists X_n \varphi$, where the $X_i$ are second-order relation variables with arity $a_i$ and $\varphi$ is a first-order formula is called a \emph{formula equation}.
+A second-order formula of the form $\exists X_1 \dots \exists X_n \varphi$, where the $X_i$ are second-order relation variables with arity $a_i$ and $\varphi$ is a first-order formula is called a \emph{formula equation}.
 Solving a formula equation means finding lambda expressions $\psi_i$ with arity $a_i$ such that
-$\exists X_1 ... \exists X_n \varphi \leftrightarrow \varphi[X_1/\psi_1,...,X_n/\psi_n]$
+$\varphi[X_1/\psi_1,\dots,X_n/\psi_n]$
 is valid.
 The $\psi_i$ are called \emph{witnesses} of the formula equation.
 
@@ -2413,7 +2413,30 @@ GAPT supports solving formula equations for certain classes of formula equations
 gapt> import gapt.logic.hol._
 import gapt.logic.hol._
 
-gapt> val solution = solveFormulaEquation(hof"∃X X(a)")
+gapt> val formulaEquationSolution = solveFormulaEquation(hof"∃X X(a)")
+formulaEquationSolution: scala.util.Try[gapt.expr.subst.Substitution] = Success(Substitution(X:i>o -> λx_0 a = x_0))
+
+\end{clilisting}
+
+The return value of \texttt{solveFormulaEquation} is a \texttt{Try} which succeeds if the algorithm could find witnesses for the given second order variables and fails otherwise.
+Failure does not mean that the formula equation is not solvable, but only that the algorithm we use couldn't find a witness.
+If the \texttt{Try} is successful the return value is a substitution such that applying the substitution to the first order part of the formula equation gives a valid formula.
+
+Another version of this method is called \texttt{witnessForSecondOrderQuantifierElimination}.
+This method solves the related problem of finding lambda expressions $\psi_i$ such that 
+\begin{equation}
+  \label{eq:second-order-elimination-with-witness}
+  \exists X_1 \dots \exists X_n \varphi \leftrightarrow \varphi[X_1/\psi_1,\dots,X_n/\psi_n]
+\end{equation}
+is valid.
+If successful, the return value is a tuple of a substitution and the first order part of the given formula equation (possibly simplified) such that applying the substitution to the first-order part fulfils that \eqref{eq:second-order-elimination-with-witness} is valid.
+Again, failure of the method does not mean that there is no witness such that the equivalence holds, but merely that our algorithm could not find a witness.
+
+\begin{clilisting}
+gapt> import gapt.logic.hol._
+import gapt.logic.hol._
+
+gapt> val solution = witnessForSecondOrderQuantifierElimination(hof"∃X X(a)")
 solution: scala.util.Try[(gapt.expr.subst.Substitution, gapt.expr.formula.Formula)] = Success((Substitution(X:i>o -> λx_0 a = x_0),X(a): o))
 
 gapt> Escargot.isValid(BetaReduction.betaNormalize(solution.get._1(solution.get._2)))
@@ -2421,10 +2444,9 @@ res0: Boolean = true
 
 \end{clilisting}
 
-The return value of \texttt{solveFormulaEquation} is a \texttt{Try} which succeeds if the algorithm could find witnesses for the given second order variables and fails otherwise.
-If the \texttt{Try} is successful the return value is a tuple of a substitution and the first order part (possibly simplified) of the given formula equation such that applying the substitution to the first order part gives a first-order formula which is equivalent to the formula equation (after $\beta$-reduction).
-The algorithm for finding witnesses is based on the DLS algorithm in \cite{Doherty1997Computing}.
-Check the documentation of \texttt{solveFormulaEquation} for a more detailed description of the kinds of formulas for which the algorithm can find a witness.
+Both methods are based on the DLS algorithm in \cite{Doherty1997Computing}.
+To get a more detailed description of the kinds of formulas for which the algorithm succeeds check the documentation of \texttt{solveFormulaEquation} and \texttt{witnessForSecondOrderQuantifierElimination}.
+
 
 \vfill
 \pagebreak
