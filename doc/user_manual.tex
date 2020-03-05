@@ -2422,7 +2422,7 @@ The return value of \texttt{solveFormulaEquation} is a \texttt{Try} which succee
 Failure does not mean that the formula equation is not solvable, but only that the algorithm we use couldn't find a witness.
 If the \texttt{Try} is successful the return value is a substitution such that applying the substitution to the first order part of the formula equation gives a valid formula.
 
-Another version of this method is called \texttt{witnessForSecondOrderQuantifierElimination}.
+Another version of this method is called \texttt{dls}.
 This method solves the related problem of finding lambda expressions $\psi_i$ such that 
 \begin{equation}
   \label{eq:second-order-elimination-with-witness}
@@ -2436,7 +2436,7 @@ Again, failure of the method does not mean that there is no witness such that th
 gapt> import gapt.logic.hol._
 import gapt.logic.hol._
 
-gapt> val solution = witnessForSecondOrderQuantifierElimination(hof"∃X X(a)")
+gapt> val solution = dls(hof"∃X X(a)")
 solution: scala.util.Try[(gapt.expr.subst.Substitution, gapt.expr.formula.Formula)] = Success((Substitution(X:i>o -> λx_0 a = x_0),X(a): o))
 
 gapt> Escargot.isValid(BetaReduction.betaNormalize(solution.get._1(solution.get._2)))
@@ -2445,7 +2445,7 @@ res0: Boolean = true
 \end{clilisting}
 
 Both methods are based on the DLS algorithm in \cite{Doherty1997Computing}.
-To get a more detailed description of the kinds of formulas for which the algorithm succeeds check the documentation of \texttt{solveFormulaEquation} and \texttt{witnessForSecondOrderQuantifierElimination}.
+To get a more detailed description of the kinds of formulas for which the algorithm succeeds check the documentation of \texttt{solveFormulaEquation} and \texttt{dls}.
 
 
 \vfill

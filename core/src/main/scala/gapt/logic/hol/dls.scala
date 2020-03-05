@@ -50,7 +50,7 @@ import scala.util.{ Failure, Success, Try }
  * A Success return value does not mean that the returned first-order formula is valid, but only that it's equivalent
  * to the given formula equation.
  */
-object witnessForSecondOrderQuantifierElimination {
+object dls {
 
   def apply( formula: Formula ): Try[( Substitution, Formula )] = Try( simplify( formula ) match {
     case Ex( StrictSecondOrderRelationVariable( secondOrderVariable, _ ), innerFormula ) =>

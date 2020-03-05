@@ -28,7 +28,7 @@ class FormulaEquationsTest extends Specification {
       expectedResult:  Set[HOLSequent] ): Fragment = {
       val ( secondOrderVariable, formula ) = formulaEquation
       s"succeed for $formula" >> {
-        Try( witnessForSecondOrderQuantifierElimination.preprocess( secondOrderVariable, formula ) ) must beSuccessfulTry(
+        Try( dls.preprocess( secondOrderVariable, formula ) ) must beSuccessfulTry(
           { result: Set[HOLSequent] =>
             val multiSetEquals = ( s1: HOLSequent, s2: HOLSequent ) => s1.multiSetEquals( s2 )
             result must beSetEqualsWithCustomEquality(
@@ -84,7 +84,7 @@ class FormulaEquationsTest extends Specification {
         val argumentVariables = expectedWitness match {
           case Abs.Block( variables, _ ) => variables.asInstanceOf[List[FOLVar]]
         }
-        val witness = witnessForSecondOrderQuantifierElimination.findPartialWitness(
+        val witness = dls.findPartialWitness(
           secondOrderVariable,
           argumentVariables,
           sequent )
@@ -101,7 +101,7 @@ class FormulaEquationsTest extends Specification {
       s"fail for $sequent" >> {
         val FunctionType( _, argumentTypes ) = secondOrderVariable.ty
         val argumentVariables = new NameGenerator( Nil ).freshStream( secondOrderVariable.name ).take( argumentTypes.length ).map( FOLVar( _ ) ).toList
-        witnessForSecondOrderQuantifierElimination.findPartialWitness( secondOrderVariable, argumentVariables, sequent ) must throwA()
+        dls.findPartialWitness( secondOrderVariable, argumentVariables, sequent ) must throwA()
       }
     }
 
@@ -121,7 +121,7 @@ class FormulaEquationsTest extends Specification {
   "simplify" should {
     def succeedFor( inputFormula: Formula, expectedSimplifiedFormula: Formula ): Fragment = {
       s"""map "$inputFormula" to "$expectedSimplifiedFormula"""" in {
-        witnessForSecondOrderQuantifierElimination.simplify( inputFormula ) must beEqualTo( expectedSimplifiedFormula )
+        dls.simplify( inputFormula ) must beEqualTo( expectedSimplifiedFormula )
       }
     }
 
@@ -164,14 +164,14 @@ class FormulaEquationsTest extends Specification {
       formulaEquation:                Formula,
       expectedEquivalentSubstitution: Substitution ): Fragment = {
       s"succeed for $formulaEquation" in {
-        witnessForSecondOrderQuantifierElimination( formulaEquation ) must
+        dls( formulaEquation ) must
           beSuccessfulTry( beAnEquivalentSubstitutionTo( expectedEquivalentSubstitution ) )
       }
     }
 
     def extractCorrectly( formulaEquation: Formula, expectedInnerFormula: Formula ): Fragment = {
       s"extract $expectedInnerFormula from $formulaEquation" in {
-        witnessForSecondOrderQuantifierElimination( formulaEquation ) must beSuccessfulTry( ( _: ( Substitution, Formula ) ) must beLike {
+        dls( formulaEquation ) must beSuccessfulTry( ( _: ( Substitution, Formula ) ) must beLike {
           case ( _, innerFormula: Formula ) => innerFormula must beEqualTo( expectedInnerFormula )
         } )
       }
@@ -179,7 +179,7 @@ class FormulaEquationsTest extends Specification {
 
     def failFor( formulaEquation: Formula ): Fragment = {
       s"fail for $formulaEquation" in {
-        witnessForSecondOrderQuantifierElimination( formulaEquation ) must beFailedTry
+        dls( formulaEquation ) must beFailedTry
       }
     }
 

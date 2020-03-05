@@ -18,7 +18,7 @@ import scala.util.Try
 /**
  * Takes a formula equation F[X₁,...,Xₙ] and if successful returns a substitution of the second order
  * variables X_1,...,X_n such that applying the substitution to F is a valid first-order formula.
- * See [[witnessForSecondOrderQuantifierElimination]] for a detailed description when this succeeds and when it fails.
+ * See [[dls]] for a detailed description when this succeeds and when it fails.
  * In addition, this method uses Escargot to check if the found first-order formula is valid and returns a Failure,
  * if it is not.
  */
@@ -40,7 +40,7 @@ object solveFormulaEquation {
   def apply( f: Formula ): Try[Substitution] = {
     val xs = freeVariables( f ).filter( isHigherOrderPredicateVariable ).toSeq
     val h = Ex.Block( xs, f )
-    witnessForSecondOrderQuantifierElimination( h ).flatMap( {
+    dls( h ).flatMap( {
       case ( substitution, firstOrderPart ) =>
         if ( Escargot.isValid( BetaReduction.betaNormalize( substitution( firstOrderPart ) ) ) )
           Success( substitution )
