@@ -22,7 +22,7 @@ import gapt.expr.util.freeVariables
 import gapt.expr.util.syntacticMatching
 import gapt.expr.util.typeVariables
 import gapt.formats.babel.Notation
-import gapt.logic.hol.simplify
+import gapt.logic.hol.simplifyPropositional
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.context.immutable.ImmutableContext
@@ -214,7 +214,7 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
       val eqns = ctrs.map( ctr2 => discr( freeTerms( ctr2 ) ) -> ( if ( ctr == ctr2 ) Top() else Bottom() ) )
       addNow( PrimRecFun( discr, eqns ) )
       val discrLemName = asciify( discr.name )
-      auxLemma( discrLemName, universalClosure( simplify(
+      auxLemma( discrLemName, universalClosure( simplifyPropositional(
         And( eqns.map { case ( lhs, rhs ) => lhs <-> rhs } ) ) ) ) {
         unfold( discr.name ).in( "g" )
         decompose
@@ -226,7 +226,7 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
 
   private def auxEqnLemma( name: String, constName: String, lhs: Expr, rhs: Expr, nocombine: Boolean = false ): Expr = {
     val proofName = auxLemma( name, universalClosure(
-      if ( lhs.ty == To ) simplify( lhs <-> rhs ) else lhs === rhs ) ) {
+      if ( lhs.ty == To ) simplifyPropositional( lhs <-> rhs ) else lhs === rhs ) ) {
       decompose
       unfold( constName ).in( "g" )
       if ( lhs.ty == To ) prop else refl

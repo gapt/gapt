@@ -15,7 +15,7 @@ import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.logic.hol.CNFp
-import gapt.logic.hol.simplify
+import gapt.logic.hol.simplifyPropositional
 
 import scala.collection.mutable
 
@@ -95,7 +95,7 @@ object improveSolutionLK {
     }
 
     val solutions = isSolution collect {
-      case ( cnf, true ) => simplify( And( cnf map { _.toImplication } ) )
+      case ( cnf, true ) => simplifyPropositional( And( cnf map { _.toImplication } ) )
     }
     solutions minBy { lcomp( _ ) }
   }
@@ -110,7 +110,7 @@ object improveSolutionLK {
    * @param prover  Prover to check the validity of the constraint.
    */
   private def improveBack( context: Sequent[FOLFormula], start: FOLFormula, prover: Prover ): FOLFormula =
-    simplify( And( CNFp( start ) map { improveBack( context, _, prover ).toImplication } ) )
+    simplifyPropositional( And( CNFp( start ) map { improveBack( context, _, prover ).toImplication } ) )
 
   private def improveBack( context: Sequent[FOLFormula], start: FOLClause, prover: Prover ): FOLClause = {
     val isSolution = mutable.Map[FOLClause, Boolean]()

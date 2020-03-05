@@ -30,7 +30,7 @@ import gapt.expr.util.subTerms
 import gapt.expr.util.syntacticMGU
 import gapt.expr.util.syntacticMatching
 import gapt.formats.babel.{ BabelExporter, BabelSignature, MapBabelSignature, Precedence }
-import gapt.logic.hol.simplify
+import gapt.logic.hol.simplifyPropositional
 import gapt.logic.hol.toNNF
 import gapt.proofs.context.Context
 import gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
@@ -255,7 +255,7 @@ object minimizeRecursionScheme {
 
     val formula = new RecSchemGenLangFormula( recSchem, targetFilter )
     val hard = formula( targets_ )
-    debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
+    debug( s"Logical complexity of the minimization formula: ${lcomp( simplifyPropositional( toNNF( hard ) ) )}" )
     val soft = recSchem.rules map { rule => Neg( formula.ruleIncluded( rule ) ) -> weight( rule ) }
     val interp = time( "maxsat" ) { solver.solve( hard, soft ).get }
     RecursionScheme( recSchem.startSymbol, recSchem.nonTerminals,
@@ -281,7 +281,7 @@ object minimizeRecursionScheme {
         _ <- syntacticMatching( List( r.lhs -> ir.lhs, r.rhs -> ir.rhs ) )
       } yield formula.ruleIncluded( r ) )
     val hard = formula( targets_ ) & And( ruleCorrespondence )
-    debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
+    debug( s"Logical complexity of the minimization formula: ${lcomp( simplifyPropositional( toNNF( hard ) ) )}" )
     val soft = recSchem.rules map { rule => Neg( formula.ruleIncluded( rule ) ) -> weight( rule ) }
     val interp = solver.solve( hard, soft ).get
     RecursionScheme( recSchem.startSymbol, recSchem.nonTerminals,
@@ -377,7 +377,7 @@ case class RecSchemTemplate( startSymbol: Const, template: Set[( Expr, Expr )] )
           postCond = appRecConstr( postCond )
         }
 
-        simplify( toNNF( postCond ) )
+        simplifyPropositional( toNNF( postCond ) )
       } )
 
     ( for ( from <- nonTerminals; to <- nonTerminals )

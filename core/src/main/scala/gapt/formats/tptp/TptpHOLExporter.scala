@@ -26,7 +26,7 @@ import gapt.expr.ty.Ty
 import gapt.expr.ty.baseTypes
 import gapt.expr.util.freeVariables
 import gapt.expr.util.subTerms
-import gapt.logic.hol.simplify
+import gapt.logic.hol.simplifyPropositional
 import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.proofs.expansion.{ ETAnd, ETAtom, ETTop, ExpansionProof, ExpansionSequent, ExpansionTree }
 import gapt.provers.groundFreeVariables
@@ -90,7 +90,7 @@ class TptpHOLExporter {
     val es1: HOLSequent = if ( lambda_lifting ) lambda_lift_and_add_definitions( ep1.deep ) else ep1.deep
     val ( es2, _ ) = groundFreeVariables( es1 )
     val es3 = if ( maximize_axiom_declarations ) simplify_antecedent2( es2 ) else es2 //the deep conversion in the antecedent also introduces conjunctions
-    val es4 = es3.map( simplify.apply ) //remove top / bottom if possible
+    val es4 = es3.map( simplifyPropositional.apply ) //remove top / bottom if possible
     export_positive( es4, maximize_axiom_declarations )
   }
 
