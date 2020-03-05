@@ -56,9 +56,9 @@ object toNNF {
  * Simplify a Formula using the equations for bottom and top as
  * well as idempotence of conjunction and disjunction.
  */
-object simplify {
+object simplifyPropositional {
   def apply( f: Formula ): Formula = f match {
-    case And( l, r ) => ( simplify( l ), simplify( r ) ) match {
+    case And( l, r ) => ( simplifyPropositional( l ), simplifyPropositional( r ) ) match {
       case ( Top(), r )       => r
       case ( r, Top() )       => r
       case ( Bottom(), _ )    => Bottom()
@@ -66,7 +66,7 @@ object simplify {
       case ( l, r ) if l == r => l
       case ( l, r )           => And( l, r )
     }
-    case Or( l, r ) => ( simplify( l ), simplify( r ) ) match {
+    case Or( l, r ) => ( simplifyPropositional( l ), simplifyPropositional( r ) ) match {
       case ( Top(), _ )       => Top()
       case ( _, Top() )       => Top()
       case ( Bottom(), r )    => r
@@ -74,21 +74,21 @@ object simplify {
       case ( l, r ) if l == r => l
       case ( l, r )           => Or( l, r )
     }
-    case Imp( l, r ) => ( simplify( l ), simplify( r ) ) match {
+    case Imp( l, r ) => ( simplifyPropositional( l ), simplifyPropositional( r ) ) match {
       case ( Top(), r )       => r
       case ( _, Top() )       => Top()
       case ( Bottom(), _ )    => Top()
-      case ( r, Bottom() )    => simplify( Neg( r ) )
+      case ( r, Bottom() )    => simplifyPropositional( Neg( r ) )
       case ( l, r ) if l == r => Top()
       case ( l, r )           => Imp( l, r )
     }
-    case Neg( s ) => simplify( s ) match {
+    case Neg( s ) => simplifyPropositional( s ) match {
       case Top()    => Bottom()
       case Bottom() => Top()
       case s        => Neg( s )
     }
     case Quant( x, g, isAll ) =>
-      simplify( g ) match {
+      simplifyPropositional( g ) match {
         case Top()    => Top()
         case Bottom() => Bottom()
         case g_       => Quant( x, g_, isAll )

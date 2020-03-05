@@ -22,7 +22,7 @@ import gapt.expr.util.expressionSize
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.expr.util.syntacticMatching
-import gapt.logic.hol.simplify
+import gapt.logic.hol.simplifyPropositional
 import gapt.logic.hol.toNNF
 import gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import gapt.utils.{ Logger, UNone, UOption, USome }
@@ -140,7 +140,7 @@ class VtratgTermGenerationFormula( g: VTRATG, t: Expr ) {
     cs += valueOfNonTerminal( g.startSymbol, t )
 
     possibleAssignments foreach { assignment =>
-      cs += simplify( Case( assignment._1, assignment._2 ) )
+      cs += simplifyPropositional( Case( assignment._1, assignment._2 ) )
     }
 
     for ( ( x, ts ) <- possibleValues )
@@ -207,7 +207,7 @@ object minimizeVTRATG {
              weight: VTRATG.Production => Int = _ => 1 ): VTRATG = {
     val formula = new VectGrammarMinimizationFormula( g )
     val hard = logger.time( "minform" ) { formula.coversLanguage( lang ) }
-    logger.metric( "minform_lcomp", lcomp( simplify( toNNF( hard ) ) ) )
+    logger.metric( "minform_lcomp", lcomp( simplifyPropositional( toNNF( hard ) ) ) )
     val atomsInHard = atoms( hard )
     val soft = for {
       p <- g.productions

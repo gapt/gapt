@@ -10,7 +10,7 @@ import gapt.expr.formula.Or
 import gapt.expr.formula.Top
 import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.fol.FOLFormula
-import gapt.logic.hol.simplify
+import gapt.logic.hol.simplifyPropositional
 import gapt.logic.hol.toNNF
 import gapt.proofs.FOLClause
 
@@ -26,7 +26,7 @@ object TseitinCNF {
   def apply( f: FOLFormula ): List[FOLClause] = {
     val tseitin = new TseitinCNF()
 
-    simplify( toNNF( f ) ) match {
+    simplifyPropositional( toNNF( f ) ) match {
       case And.nAry( conjuncts ) => conjuncts.flatMap( tseitin.apply )
     }
   }

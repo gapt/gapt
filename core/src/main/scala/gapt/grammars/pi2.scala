@@ -8,7 +8,7 @@ import gapt.expr.formula.hol.lcomp
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
-import gapt.logic.hol.simplify
+import gapt.logic.hol.simplifyPropositional
 import gapt.logic.hol.toNNF
 import gapt.provers.maxsat.MaxSATSolver
 import gapt.utils.Logger
@@ -152,7 +152,7 @@ object minimizePi2Grammar {
 
     val hard = tratgFormula.coversLanguage( lang ) & correspondenceFormula & betaCardinality &
       expressibilityCondition & alphaNonempty
-    logger.metric( "minform_lcomp", lcomp( simplify( toNNF( hard ) ) ) )
+    logger.metric( "minform_lcomp", lcomp( simplifyPropositional( toNNF( hard ) ) ) )
 
     val soft = for ( p <- g.productions ) yield -prodinc( p ) -> 1
 

@@ -6,7 +6,7 @@ import gapt.expr.formula.Formula
 import gapt.expr.formula.fol.FOLFormula
 import gapt.expr.subst.Substitution
 import gapt.expr.util.rename
-import gapt.logic.hol.simplify
+import gapt.logic.hol.simplifyPropositional
 import gapt.provers.smtlib.SmtInterpol
 import gapt.utils.Tree
 
@@ -39,7 +39,7 @@ object solutionViaInterpolation {
 
     val tree = mkAss( sehs.ss.size - 1, Substitution() )
     val Some( interpolants ) = SmtInterpol.getInterpolant( tree.map( _._3 ) )
-    val simplified = interpolants.map( simplify( _ ) )
+    val simplified = interpolants.map( simplifyPropositional( _ ) )
 
     val generalized =
       simplified.zip( tree.map( _._2 ) ).map {
