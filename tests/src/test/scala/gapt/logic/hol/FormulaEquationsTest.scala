@@ -345,9 +345,9 @@ class FormulaEquationsTest extends Specification {
     input: ( Substitution, Formula ) =>
       {
         val ( substitution, firstOrderPart ) = input
-        val substitutedFormula = simplify( BetaReduction.betaNormalize(
+        val substitutedFormula = simplifyPropositional( BetaReduction.betaNormalize(
           substitution( firstOrderPart ) ) )
-        val equivalentSubstitutedFormula = simplify( BetaReduction.betaNormalize(
+        val equivalentSubstitutedFormula = simplifyPropositional( BetaReduction.betaNormalize(
           equivalentSubstitution( firstOrderPart ) ) )
         val isValid = Escargot isValid Iff( substitutedFormula, equivalentSubstitutedFormula )
         val errorMessage =
