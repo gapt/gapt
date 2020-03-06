@@ -62,64 +62,8 @@ object dls {
   private def dls_( f: Formula, X: Var ): Expr =
     findWitness( X, preprocess( X, f ) )
 
-  def preprocess( X: Var, f: Formula ): Set[HOLSequent] = {
-    separateConjuncts( X, extractDisjuncts( X, f ) ) match {
-      case Left( inseparables ) =>
-        throw new Exception(
-          s"failed to separate positive and negative occurrences of ${X} in ${inseparables}" )
-      case Right( separated ) => separated
-    }
-  }
-
-  private def extractDisjuncts( X: Var, f: Formula ): Set[Formula] =
-    toDisjuncts( moveQuantifiersInFormula( removeRedundantQuantifiers( toNNF( simplify( f ) ) ) ) )
-      .filter( _.contains( X ) )
-
-  private def separateConjuncts( X: Var, fs: Set[Formula] ): Either[Set[Formula], Set[HOLSequent]] = {
-    val ( separable, inseparable ) = fs.partition( isSeparable( _, X ) )
-    if ( inseparable.nonEmpty )
-      Left( inseparable )
-    else
-      Right( separable.map( separateConjuncts( _, X ).get ) )
-  }
-
-  private def separateConjuncts( f: Formula, X: Var ): Option[HOLSequent] = {
-    if ( !isSeparable( f, X ) )
-      None
-    else {
-      val And.nAry( cs ) = f
-      Some( HOLSequent( cs.map { c => c -> selectPolarity( c, X ).get } ) )
-    }
-  }
-
-  private def isSeparable( d: Formula, X: Var ): Boolean = {
-    val And.nAry( cs ) = d
-    cs.forall( hasPolarity( X, _ ) )
-  }
-
-  private def hasPolarity( X: Var, f: Formula ): Boolean =
-    occurrencePolarities( f, X ).size < 2
-
-  private def selectPolarity( f: Formula, X: Var ): Option[Polarity] =
-    occurrencePolarities( f, X ).toSeq match {
-      case Seq()    => Some( Polarity.Positive )
-      case Seq( p ) => Some( p )
-      case _        => None
-    }
-
-  private def occurrencePolarities(
-    formula:  Formula,
-    variable: Var,
-    polarity: Polarity = Polarity.Positive ): Set[Polarity] = formula match {
-    case Atom( atomVariable, _ ) if atomVariable == variable => Set( polarity )
-    case Neg( alpha ) =>
-      occurrencePolarities( alpha, variable, !polarity )
-    case AndOr( alpha, beta, _ ) =>
-      occurrencePolarities( alpha, variable, polarity ) ++
-        occurrencePolarities( beta, variable, polarity )
-    case Quant( _, alpha, _ ) => occurrencePolarities( alpha, variable, polarity )
-    case _                    => Set()
-  }
+  private def preprocess( X: Var, f: Formula ): Set[HOLSequent] =
+    new DlsPreprocessor( X ).preprocess( f )
 
   private def findWitness( secondOrderVariable: Var, disjuncts: Set[HOLSequent] ): Expr = {
     val variables = freshArgumentVariables( secondOrderVariable, disjuncts )
@@ -165,10 +109,6 @@ object dls {
 
   private def chooseWitness( candidates: Seq[Formula] ): Formula = candidates.head
 
-  private def moveQuantifiersInFormula( formula: Formula ): Formula = {
-    moveQuantifiers.down( Ex, moveQuantifiers.down( All, formula ) )
-  }
-
   private def disjunctiveWitnessCombination(
     disjunctsWithWitnesses: Iterable[( Formula, Formula )] ): Formula = {
     And( disjunctsWithWitnesses.toList.inits.toList.init.map( initList => {
@@ -177,15 +117,6 @@ object dls {
       val antecedent = And( negatedInit :+ disjunct )
       Imp( antecedent, witness )
     } ) )
-  }
-
-  private def toDisjuncts( formula: Formula ): Set[Formula] = formula match {
-    case And.nAry( conjuncts ) if conjuncts.length >= 2 =>
-      crossProduct( conjuncts.map( toDisjuncts ) ).map( And( _ ) ).toSet
-
-    case Or.nAry( disjuncts ) if disjuncts.length >= 2 =>
-      disjuncts.flatMap( toDisjuncts ).toSet
-    case _ => Set( formula )
   }
 
   private def freshArgumentVariables(
@@ -222,6 +153,85 @@ object dls {
     substitution: Substitution,
     formula:      Formula ): Formula = {
     BetaReduction.betaNormalize( substitution( formula ) )
+  }
+}
+
+/**
+ * Implements the preprocessing phase for the DLS algorithm.
+ *
+ * @param X The predicate variable with respect to which formulas are preprocessed.
+ */
+class DlsPreprocessor( X: Var ) {
+
+  def preprocess( f: Formula ): Set[HOLSequent] =
+    separateConjuncts( extractDisjuncts( f ) ) match {
+      case Left( inseparables ) =>
+        throw new Exception(
+          s"failed to separate positive and negative occurrences of ${X} in ${inseparables}" )
+      case Right( separated ) => separated
+    }
+
+  private def extractDisjuncts( f: Formula ): Set[Formula] =
+    toDisjuncts( moveQuantifiersInFormula( removeRedundantQuantifiers( toNNF( simplify( f ) ) ) ) )
+      .filter( _.contains( X ) )
+
+  private def separateConjuncts( fs: Set[Formula] ): Either[Set[Formula], Set[HOLSequent]] = {
+    val ( separable, inseparable ) = fs.partition( isSeparable )
+    if ( inseparable.nonEmpty )
+      Left( inseparable )
+    else
+      Right( separable.map( separateConjuncts( _ ).get ) )
+  }
+
+  private def separateConjuncts( f: Formula ): Option[HOLSequent] = {
+    if ( !isSeparable( f ) )
+      None
+    else {
+      val And.nAry( cs ) = f
+      Some( HOLSequent( cs.map { c => c -> selectPolarity( c ).get } ) )
+    }
+  }
+
+  private def isSeparable( d: Formula ): Boolean = {
+    val And.nAry( cs ) = d
+    cs.forall( hasPolarity )
+  }
+
+  private def hasPolarity( f: Formula ): Boolean =
+    occurrencePolarities( f, X ).size < 2
+
+  private def selectPolarity( f: Formula ): Option[Polarity] =
+    occurrencePolarities( f, X ).toSeq match {
+      case Seq()    => Some( Polarity.Positive )
+      case Seq( p ) => Some( p )
+      case _        => None
+    }
+
+  private def occurrencePolarities(
+    formula:  Formula,
+    variable: Var,
+    polarity: Polarity = Polarity.Positive ): Set[Polarity] = formula match {
+    case Atom( atomVariable, _ ) if atomVariable == variable => Set( polarity )
+    case Neg( alpha ) =>
+      occurrencePolarities( alpha, variable, !polarity )
+    case AndOr( alpha, beta, _ ) =>
+      occurrencePolarities( alpha, variable, polarity ) ++
+        occurrencePolarities( beta, variable, polarity )
+    case Quant( _, alpha, _ ) => occurrencePolarities( alpha, variable, polarity )
+    case _                    => Set()
+  }
+
+  private def toDisjuncts( formula: Formula ): Set[Formula] = formula match {
+    case And.nAry( conjuncts ) if conjuncts.length >= 2 =>
+      crossProduct( conjuncts.map( toDisjuncts ) ).map( And( _ ) ).toSet
+
+    case Or.nAry( disjuncts ) if disjuncts.length >= 2 =>
+      disjuncts.flatMap( toDisjuncts ).toSet
+    case _ => Set( formula )
+  }
+
+  private def moveQuantifiersInFormula( formula: Formula ): Formula = {
+    moveQuantifiers.down( Ex, moveQuantifiers.down( All, formula ) )
   }
 }
 

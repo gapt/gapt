@@ -28,7 +28,7 @@ class FormulaEquationsTest extends Specification {
       expectedResult:  Set[HOLSequent] ): Fragment = {
       val ( secondOrderVariable, formula ) = formulaEquation
       s"succeed for $formula" >> {
-        Try( dls.preprocess( secondOrderVariable, formula ) ) must beSuccessfulTry(
+        Try( new DlsPreprocessor( secondOrderVariable ).preprocess( formula ) ) must beSuccessfulTry(
           { result: Set[HOLSequent] =>
             val multiSetEquals = ( s1: HOLSequent, s2: HOLSequent ) => s1.multiSetEquals( s2 )
             result must beSetEqualsWithCustomEquality(
