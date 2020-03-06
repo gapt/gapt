@@ -192,28 +192,27 @@ object dls {
     secondOrderVariable: Var,
     argumentVariables:   List[Var],
     disjunct:            HOLSequent ): Formula = {
-    val positiveOccurrenceWitness = Try(
-      polarityOccurrenceWitness.positive(
-        secondOrderVariable,
-        argumentVariables,
-        And( disjunct.succedent ) ) )
-    val negativeOccurrenceWitness = Try(
-      polarityOccurrenceWitness.negative(
-        secondOrderVariable,
-        argumentVariables,
-        And( disjunct.antecedent ) ) )
-
-    val witness = ( positiveOccurrenceWitness, negativeOccurrenceWitness ) match {
-      case ( Success( positiveWitness ), Success( negativeWitness ) ) => chooseWitness( positiveWitness, negativeWitness )
-      case ( Success( witness ), _ )                                  => witness
-      case ( _, Success( witness ) )                                  => witness
-      case ( Failure( exception ), _ )                                => throw new Exception( s"cannot find witness for positive occurrences nor for negative occurrences in disjunct:\n$disjunct", exception )
+    val candidates = witnessCandidates( secondOrderVariable, argumentVariables, disjunct )
+    val successfulCandidates = candidates.collect { case Success( w ) => w }
+    val errors = candidates.collect { case Failure( e ) => e }
+    if ( successfulCandidates.isEmpty ) {
+      throw new Exception(
+        s"cannot find witness for positive occurrences nor for negative occurrences " +
+          s"in disjunct:\n$disjunct", errors.head )
     }
-
-    simplify( witness )
+    simplify( chooseWitness( successfulCandidates ) )
   }
 
-  private def chooseWitness( positiveWitness: Formula, negativeWitness: Formula ): Formula = positiveWitness
+  private def witnessCandidates( X: Var, xs: Seq[Var], disjunct: HOLSequent ): Seq[Try[Formula]] =
+    LazyList( positiveCandidate( X, xs, disjunct ), negativeCandidate( X, xs, disjunct ) )
+
+  private def positiveCandidate( X: Var, xs: Seq[Var], disjunct: HOLSequent ): Try[Formula] =
+    Try( polarityOccurrenceWitness.positive( X, xs, And( disjunct.succedent ) ) )
+
+  private def negativeCandidate( X: Var, xs: Seq[Var], disjunct: HOLSequent ): Try[Formula] =
+    Try( polarityOccurrenceWitness.negative( X, xs, And( disjunct.antecedent ) ) )
+
+  private def chooseWitness( candidates: Seq[Formula] ): Formula = candidates.head
 
   /**
    * Simplify a formula using
