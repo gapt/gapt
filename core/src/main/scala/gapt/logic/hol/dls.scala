@@ -192,16 +192,16 @@ object dls {
     secondOrderVariable: Var,
     argumentVariables:   List[Var],
     disjunct:            HOLSequent ): Formula = {
-    val positiveOccurrenceWitness = Try( polarityOccurrenceWitness(
-      Polarity.Positive,
-      secondOrderVariable,
-      argumentVariables,
-      And( disjunct.succedent ) ) )
-    val negativeOccurrenceWitness = Try( polarityOccurrenceWitness(
-      Polarity.Negative,
-      secondOrderVariable,
-      argumentVariables,
-      And( disjunct.antecedent ) ) )
+    val positiveOccurrenceWitness = Try(
+      polarityOccurrenceWitness.positive(
+        secondOrderVariable,
+        argumentVariables,
+        And( disjunct.succedent ) ) )
+    val negativeOccurrenceWitness = Try(
+      polarityOccurrenceWitness.negative(
+        secondOrderVariable,
+        argumentVariables,
+        And( disjunct.antecedent ) ) )
 
     val witness = ( positiveOccurrenceWitness, negativeOccurrenceWitness ) match {
       case ( Success( positiveWitness ), Success( negativeWitness ) ) => chooseWitness( positiveWitness, negativeWitness )
@@ -291,12 +291,19 @@ object dls {
 }
 
 object polarityOccurrenceWitness {
+
+  def positive( x: Var, ys: Seq[Var], f: Formula ): Formula =
+    polarityOccurrenceWitness( Polarity.Positive, x, ys, f )
+
+  def negative( x: Var, ys: Seq[Var], f: Formula ): Formula =
+    polarityOccurrenceWitness( Polarity.Negative, x, ys, f )
+
   /**
    * Returns the antecedent/succeedent (when given positive/negative polarity) of the implication in Ackermann's lemma
    * which is a witness for the given formula given that the formula has the respective polarity with respect to the
    * given second order variable
    */
-  def apply(
+  private def apply(
     polarity:            Polarity,
     secondOrderVariable: Var,
     argumentVariables:   Seq[Var],
