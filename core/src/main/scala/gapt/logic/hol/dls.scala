@@ -83,31 +83,8 @@ object dls {
     Abs( variables, simplify( combinedWitness ) )
   }
 
-  def findPartialWitness(
-    secondOrderVariable: Var,
-    argumentVariables:   List[Var],
-    disjunct:            HOLSequent ): Formula = {
-    val candidates = witnessCandidates( secondOrderVariable, argumentVariables, disjunct )
-    val successfulCandidates = candidates.collect { case Success( w ) => w }
-    val errors = candidates.collect { case Failure( e ) => e }
-    if ( successfulCandidates.isEmpty ) {
-      throw new Exception(
-        s"cannot find witness for positive occurrences nor for negative occurrences " +
-          s"in disjunct:\n$disjunct", errors.head )
-    }
-    simplify( chooseWitness( successfulCandidates ) )
-  }
-
-  private def witnessCandidates( X: Var, xs: Seq[Var], disjunct: HOLSequent ): Seq[Try[Formula]] =
-    LazyList( positiveCandidate( X, xs, disjunct ), negativeCandidate( X, xs, disjunct ) )
-
-  private def positiveCandidate( X: Var, xs: Seq[Var], disjunct: HOLSequent ): Try[Formula] =
-    Try( polarityOccurrenceWitness.positive( X, xs, And( disjunct.succedent ) ) )
-
-  private def negativeCandidate( X: Var, xs: Seq[Var], disjunct: HOLSequent ): Try[Formula] =
-    Try( polarityOccurrenceWitness.negative( X, xs, And( disjunct.antecedent ) ) )
-
-  private def chooseWitness( candidates: Seq[Formula] ): Formula = candidates.head
+  private def findPartialWitness( X: Var, xs: Seq[Var], d: HOLSequent ): Formula =
+    new DlsPartialWitnessExtraction( X ).findPartialWitness( xs, d )
 
   private def disjunctiveWitnessCombination(
     disjunctsWithWitnesses: Iterable[( Formula, Formula )] ): Formula = {
@@ -132,14 +109,6 @@ object dls {
       .toList
   }
 
-  private object SecondOrderRelationVariable {
-    def unapply( variable: Var ): Option[( Var, ( Seq[Ty], Ty ) )] = variable match {
-      case Var( _, FunctionType( To, inputTypes @ _ ) ) =>
-        Some( ( variable, ( inputTypes, To ) ) )
-      case _ => None
-    }
-  }
-
   private def updateSubstitutionWithBetaReduction( substitution: Substitution, entry: ( Var, Expr ) ): Substitution = {
     val newSubstitution = Substitution( entry )
     Substitution( newSubstitution.map ++ substitution.map.map( {
@@ -154,6 +123,39 @@ object dls {
     formula:      Formula ): Formula = {
     BetaReduction.betaNormalize( substitution( formula ) )
   }
+}
+
+/**
+ * Implements the extraction of a witness for disjunct.
+ *
+ * @param X The predicate variable for which the witness is extracted.
+ */
+class DlsPartialWitnessExtraction( X: Var ) {
+
+  def findPartialWitness(
+    argumentVariables: Seq[Var],
+    disjunct:          HOLSequent ): Formula = {
+    val candidates = witnessCandidates( argumentVariables, disjunct )
+    val successfulCandidates = candidates.collect { case Success( w ) => w }
+    val errors = candidates.collect { case Failure( e ) => e }
+    if ( successfulCandidates.isEmpty ) {
+      throw new Exception(
+        s"cannot find witness for positive occurrences nor for negative occurrences " +
+          s"in disjunct:\n$disjunct", errors.head )
+    }
+    simplify( chooseWitness( successfulCandidates ) )
+  }
+
+  private def witnessCandidates( xs: Seq[Var], disjunct: HOLSequent ): Seq[Try[Formula]] =
+    LazyList( positiveCandidate( xs, disjunct ), negativeCandidate( xs, disjunct ) )
+
+  private def positiveCandidate( xs: Seq[Var], disjunct: HOLSequent ): Try[Formula] =
+    Try( polarityOccurrenceWitness.positive( X, xs, And( disjunct.succedent ) ) )
+
+  private def negativeCandidate( xs: Seq[Var], disjunct: HOLSequent ): Try[Formula] =
+    Try( polarityOccurrenceWitness.negative( X, xs, And( disjunct.antecedent ) ) )
+
+  private def chooseWitness( candidates: Seq[Formula] ): Formula = candidates.head
 }
 
 /**
@@ -358,5 +360,13 @@ object polarityOccurrenceWitness {
 object vectorEq {
   def apply( expressionsA: Iterable[Expr], expressionsB: Iterable[Expr] ): Formula = {
     And( expressionsA.zip( expressionsB ) map { case ( a, b ) => Eq( a, b ) } )
+  }
+}
+
+object SecondOrderRelationVariable {
+  def unapply( variable: Var ): Option[( Var, ( Seq[Ty], Ty ) )] = variable match {
+    case Var( _, FunctionType( To, inputTypes @ _ ) ) =>
+      Some( ( variable, ( inputTypes, To ) ) )
+    case _ => None
   }
 }

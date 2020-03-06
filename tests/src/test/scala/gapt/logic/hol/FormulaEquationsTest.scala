@@ -84,10 +84,9 @@ class FormulaEquationsTest extends Specification {
         val argumentVariables = expectedWitness match {
           case Abs.Block( variables, _ ) => variables.asInstanceOf[List[FOLVar]]
         }
-        val witness = dls.findPartialWitness(
-          secondOrderVariable,
-          argumentVariables,
-          sequent )
+        val witness =
+          new DlsPartialWitnessExtraction(secondOrderVariable)
+          .findPartialWitness(argumentVariables, sequent )
         val formula = And( sequent.antecedent ++ sequent.succedent )
         val expectedSubstitution = Substitution( secondOrderVariable -> expectedWitness )
         val substitution = Substitution( secondOrderVariable -> Abs( argumentVariables, witness ) )
@@ -101,7 +100,8 @@ class FormulaEquationsTest extends Specification {
       s"fail for $sequent" >> {
         val FunctionType( _, argumentTypes ) = secondOrderVariable.ty
         val argumentVariables = new NameGenerator( Nil ).freshStream( secondOrderVariable.name ).take( argumentTypes.length ).map( FOLVar( _ ) ).toList
-        dls.findPartialWitness( secondOrderVariable, argumentVariables, sequent ) must throwA()
+        new DlsPartialWitnessExtraction(secondOrderVariable)
+          .findPartialWitness( argumentVariables, sequent ) must throwA()
       }
     }
 
