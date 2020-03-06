@@ -121,7 +121,7 @@ class FormulaEquationsTest extends Specification {
   "simplify" should {
     def succeedFor( inputFormula: Formula, expectedSimplifiedFormula: Formula ): Fragment = {
       s"""map "$inputFormula" to "$expectedSimplifiedFormula"""" in {
-        dls.simplify( inputFormula ) must beEqualTo( expectedSimplifiedFormula )
+        simplify( inputFormula ) must beEqualTo( expectedSimplifiedFormula )
       }
     }
 
