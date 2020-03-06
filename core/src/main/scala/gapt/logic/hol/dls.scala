@@ -216,51 +216,6 @@ object dls {
   private def chooseWitness( positiveWitness: Formula, negativeWitness: Formula ): Formula = positiveWitness
 
   /**
-   * Returns the antecedent/succeedent (when given positive/negative polarity) of the implication in Ackermann's lemma
-   * which is a witness for the given formula given that the formula has the respective polarity with respect to the
-   * given second order variable
-   */
-  private def polarityOccurrenceWitness(
-    polarity:            Polarity,
-    secondOrderVariable: Var,
-    argumentVariables:   Seq[Var],
-    formula:             Formula ): Formula = {
-    val polarityConnective = if ( polarity.positive ) Or else And
-    val dualPolarityConnective = if ( polarity.positive ) And else Or
-    val polarityQuantifier = if ( polarity.positive ) Ex else All
-    val polarityInversion = if ( polarity.positive ) ( f: Formula ) => Neg( f ) else ( f: Formula ) => f
-    val recur = polarityOccurrenceWitness( polarity, secondOrderVariable, argumentVariables, _ )
-    formula match {
-      case _ if !formula.contains( secondOrderVariable ) => polarityInversion( Top() )
-
-      case Atom( variable, arguments ) if variable == secondOrderVariable =>
-        vectorEq( argumentVariables, arguments )
-
-      case Neg( Atom( variable, arguments ) ) if variable == secondOrderVariable =>
-        Neg( vectorEq( argumentVariables, arguments ) )
-
-      case And( alpha, beta ) =>
-        polarityConnective(
-          recur( alpha ),
-          recur( beta ) )
-
-      case Or.nAry( disjuncts ) if disjuncts.count( _.contains( secondOrderVariable ) ) >= 2 =>
-        throw new Exception( "cannot handle disjunction of occurrences inside conjuncts" )
-
-      case Or.nAry( disjuncts ) if disjuncts.length >= 2 =>
-        val ( occurrenceDisjuncts, nonOccurrenceDisjuncts ) = disjuncts.partition( _.contains( secondOrderVariable ) )
-        val occurrenceWitness = recur( occurrenceDisjuncts.head )
-        dualPolarityConnective( occurrenceWitness, polarityInversion( Or( nonOccurrenceDisjuncts ) ) )
-
-      case All( variable, innerFormula ) =>
-        polarityQuantifier( variable, recur( innerFormula ) )
-
-      case Ex( _, _ ) =>
-        throw new Exception( "cannot handle occurrences inside the scope of existential quantifiers" )
-    }
-  }
-
-  /**
    * Simplify a formula using
    * - the equations for bottom and top,
    * - idempotence of conjunction and disjunction,
@@ -324,10 +279,6 @@ object dls {
   private def containsPropAndItsNegation( formulas: Seq[Formula] ): Boolean =
     formulas.exists( p => formulas.contains( simplify( Neg( p ) ) ) )
 
-  private def vectorEq( expressionsA: Iterable[Expr], expressionsB: Iterable[Expr] ): Formula = {
-    And( expressionsA.zip( expressionsB ) map { case ( a, b ) => Eq( a, b ) } )
-  }
-
   private def disjunctiveWitnessCombination(
     disjunctsWithWitnesses: Iterable[( Formula, Formula )] ): Formula = {
     And( disjunctsWithWitnesses.toList.inits.toList.init.map( initList => {
@@ -336,5 +287,58 @@ object dls {
       val antecedent = And( negatedInit :+ disjunct )
       Imp( antecedent, witness )
     } ) )
+  }
+}
+
+object polarityOccurrenceWitness {
+  /**
+   * Returns the antecedent/succeedent (when given positive/negative polarity) of the implication in Ackermann's lemma
+   * which is a witness for the given formula given that the formula has the respective polarity with respect to the
+   * given second order variable
+   */
+  def apply(
+    polarity:            Polarity,
+    secondOrderVariable: Var,
+    argumentVariables:   Seq[Var],
+    formula:             Formula ): Formula = {
+    val polarityConnective = if ( polarity.positive ) Or else And
+    val dualPolarityConnective = if ( polarity.positive ) And else Or
+    val polarityQuantifier = if ( polarity.positive ) Ex else All
+    val polarityInversion = if ( polarity.positive ) ( f: Formula ) => Neg( f ) else ( f: Formula ) => f
+    val recur = polarityOccurrenceWitness( polarity, secondOrderVariable, argumentVariables, _ )
+    formula match {
+      case _ if !formula.contains( secondOrderVariable ) => polarityInversion( Top() )
+
+      case Atom( variable, arguments ) if variable == secondOrderVariable =>
+        vectorEq( argumentVariables, arguments )
+
+      case Neg( Atom( variable, arguments ) ) if variable == secondOrderVariable =>
+        Neg( vectorEq( argumentVariables, arguments ) )
+
+      case And( alpha, beta ) =>
+        polarityConnective(
+          recur( alpha ),
+          recur( beta ) )
+
+      case Or.nAry( disjuncts ) if disjuncts.count( _.contains( secondOrderVariable ) ) >= 2 =>
+        throw new Exception( "cannot handle disjunction of occurrences inside conjuncts" )
+
+      case Or.nAry( disjuncts ) if disjuncts.length >= 2 =>
+        val ( occurrenceDisjuncts, nonOccurrenceDisjuncts ) = disjuncts.partition( _.contains( secondOrderVariable ) )
+        val occurrenceWitness = recur( occurrenceDisjuncts.head )
+        dualPolarityConnective( occurrenceWitness, polarityInversion( Or( nonOccurrenceDisjuncts ) ) )
+
+      case All( variable, innerFormula ) =>
+        polarityQuantifier( variable, recur( innerFormula ) )
+
+      case Ex( _, _ ) =>
+        throw new Exception( "cannot handle occurrences inside the scope of existential quantifiers" )
+    }
+  }
+}
+
+object vectorEq {
+  def apply( expressionsA: Iterable[Expr], expressionsB: Iterable[Expr] ): Formula = {
+    And( expressionsA.zip( expressionsB ) map { case ( a, b ) => Eq( a, b ) } )
   }
 }
