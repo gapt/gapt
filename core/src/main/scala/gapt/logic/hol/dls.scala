@@ -3,14 +3,11 @@ package gapt.logic.hol
 import gapt.expr.formula.{ Formula, _ }
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.{ FunctionType, To, Ty }
-import gapt.expr.util.freeVariables
 import gapt.expr.util.variables
 import gapt.expr.{ Abs, BetaReduction, Expr, Var, VarOrConst }
 import gapt.logic.Polarity
 import gapt.proofs.HOLSequent
-import gapt.provers.escargot.Escargot
-import gapt.utils.NameGenerator
-import gapt.utils.crossProduct
+import gapt.utils.{ NameGenerator, crossProduct }
 
 import scala.util.{ Failure, Success, Try }
 
@@ -53,7 +50,7 @@ import scala.util.{ Failure, Success, Try }
 object dls {
 
   def apply( formula: Formula ): Try[( Substitution, Formula )] = Try( simplify( formula ) match {
-    case Ex( StrictSecondOrderRelationVariable( secondOrderVariable, _ ), innerFormula ) =>
+    case Ex( SecondOrderRelationVariable( secondOrderVariable, _ ), innerFormula ) =>
       val ( substitution, firstOrderPart ) = apply( innerFormula ).get
       val firstOrderFormula = simplify( applySubstitutionBetaReduced( substitution, firstOrderPart ) )
       val disjuncts = preprocess( secondOrderVariable, firstOrderFormula )
@@ -63,9 +60,9 @@ object dls {
     case f => ( Substitution(), f )
   } )
 
-  private object StrictSecondOrderRelationVariable {
+  private object SecondOrderRelationVariable {
     def unapply( variable: Var ): Option[( Var, ( Seq[Ty], Ty ) )] = variable match {
-      case Var( _, FunctionType( To, inputTypes @ _ :: _ ) ) =>
+      case Var( _, FunctionType( To, inputTypes @ _ ) ) =>
         Some( ( variable, ( inputTypes, To ) ) )
       case _ => None
     }
@@ -178,7 +175,7 @@ object dls {
   private def freshArgumentVariables(
     secondOrderVariable: Var,
     disjuncts:           Set[HOLSequent] ): List[Var] = {
-    val StrictSecondOrderRelationVariable( _, ( inputTypes, _ ) ) = secondOrderVariable
+    val SecondOrderRelationVariable( _, ( inputTypes, _ ) ) = secondOrderVariable
     val blackListVariableNames = disjuncts.flatMap( variables( _ ) ).map( _.name )
     val argumentName = secondOrderVariable.name.toLowerCase()
     new NameGenerator( blackListVariableNames )

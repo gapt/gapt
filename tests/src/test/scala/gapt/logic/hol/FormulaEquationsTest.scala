@@ -159,7 +159,7 @@ class FormulaEquationsTest extends Specification {
     succeedFor( hof"a!=b ∧ b!=a", hof"a!=b" )
   }
 
-  "witnessForSecondOrderQuantifierElimination" should {
+  "dls" should {
     def succeedFor(
       formulaEquation:                Formula,
       expectedEquivalentSubstitution: Substitution ): Fragment = {
@@ -262,6 +262,7 @@ class FormulaEquationsTest extends Specification {
     succeedFor( hof"∃X ((X(a) ∧ R(b)) ∨ R(c))", Substitution( X -> le"λt ¬R(c)" ) )
     succeedFor( hof"∃X ((X(a) ∨ R(b)) ∧ (X(c) ∨ S(d)))", Substitution( X -> le"λt (t=a ∧ ¬R(b)) ∨ (t=c ∧ ¬S(d))" ) )
     succeedFor( hof"∃X (X(a) ∧ ¬X(b))", Substitution( X -> le"λt t=a" ) )
+    succeedFor(hof"∃X X", Substitution( hov"X:o" -> le"⊤"))
   }
 
   "solveFormulaEquation" should {
