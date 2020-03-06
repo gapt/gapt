@@ -53,107 +53,74 @@ import scala.util.{ Failure, Success, Try }
 object dls {
 
   def apply( formula: Formula ): Try[( Substitution, Formula )] = Try( simplify( formula ) match {
-    case Ex( StrictSecondOrderRelationVariable( secondOrderVariable, _ ), innerFormula ) =>
-      val ( substitution, firstOrderPart ) = apply( innerFormula ).get
-      val firstOrderFormula = simplify( applySubstitutionBetaReduced( substitution, firstOrderPart ) )
-      val disjuncts = preprocess( secondOrderVariable, firstOrderFormula )
-      val witness = findWitness( secondOrderVariable, disjuncts )
-      val updatedSubstitution = updateSubstitutionWithBetaReduction( substitution, secondOrderVariable -> witness )
-      ( updatedSubstitution, firstOrderPart )
+    case Ex( StrictSecondOrderRelationVariable( x, _ ), innerFormula ) =>
+      val ( s_, folPart ) = dls( innerFormula ).get
+      val folInnerFormula = simplify( applySubstitutionBetaReduced( s_, folPart ) )
+      val w = dls_( folInnerFormula, x )
+      val s = updateSubstitutionWithBetaReduction( s_, x -> w )
+      ( s, folPart )
     case f => ( Substitution(), f )
   } )
 
-  private object StrictSecondOrderRelationVariable {
-    def unapply( variable: Var ): Option[( Var, ( Seq[Ty], Ty ) )] = variable match {
-      case Var( _, FunctionType( To, inputTypes @ _ :: _ ) ) =>
-        Some( ( variable, ( inputTypes, To ) ) )
-      case _ => None
+  private def dls_( f: Formula, X: Var ): Expr =
+    findWitness( X, preprocess( X, f ) )
+
+  def preprocess( X: Var, f: Formula ): Set[HOLSequent] = {
+    separateConjuncts( X, extractDisjuncts( X, f ) ) match {
+      case Left( inseparables ) =>
+        throw new Exception(
+          s"failed to separate positive and negative occurrences of ${X} in ${inseparables}" )
+      case Right( separated ) => separated
     }
   }
 
-  private def updateSubstitutionWithBetaReduction( substitution: Substitution, entry: ( Var, Expr ) ): Substitution = {
-    val newSubstitution = Substitution( entry )
-    Substitution( newSubstitution.map ++ substitution.map.map( {
-      case ( v, e ) => v -> ( e match {
-        case Abs.Block( variables, f: Formula ) => Abs.Block( variables, simplify( applySubstitutionBetaReduced( newSubstitution, f ) ) )
-      } )
-    } ) )
+  private def extractDisjuncts( X: Var, f: Formula ): Set[Formula] =
+    toDisjuncts( moveQuantifiersInFormula( removeRedundantQuantifiers( toNNF( simplify( f ) ) ) ) )
+      .filter( _.contains( X ) )
+
+  private def separateConjuncts( X: Var, fs: Set[Formula] ): Either[Set[Formula], Set[HOLSequent]] = {
+    val ( separable, inseparable ) = fs.partition( isSeparable( _, X ) )
+    if ( inseparable.nonEmpty )
+      Left( inseparable )
+    else
+      Right( separable.map( separateConjuncts( _, X ).get ) )
   }
 
-  private def applySubstitutionBetaReduced(
-    substitution: Substitution,
-    formula:      Formula ): Formula = {
-    BetaReduction.betaNormalize( substitution( formula ) )
-  }
-
-  def preprocess(
-    secondOrderVariable: Var,
-    formula:             Formula ): Set[HOLSequent] = {
-    val nnf = toNNF( simplify( formula ) )
-    val formulaWithoutRedundantQuantifiers = removeRedundantQuantifiers( nnf )
-    val movedQuantifiersFormula = moveQuantifiersInFormula( formulaWithoutRedundantQuantifiers )
-
-    val disjuncts = extractDisjuncts( movedQuantifiersFormula ).filter( _.contains( secondOrderVariable ) )
-
-    val polarizedConjunctsInDisjuncts = disjuncts
-      .map( polarizedConjuncts( _, secondOrderVariable ) )
-    if ( polarizedConjunctsInDisjuncts.exists( _.isEmpty ) )
-      throw new Exception(
-        s"""formula cannot be separated into positive and negative conjuncts of occurrences of $secondOrderVariable
-           |formula: $formulaWithoutRedundantQuantifiers""".stripMargin )
+  private def separateConjuncts( f: Formula, X: Var ): Option[HOLSequent] = {
+    if ( !isSeparable( f, X ) )
+      None
     else {
-      val ( occurrenceDisjuncts, nonOccurrenceDisjuncts ) = polarizedConjunctsInDisjuncts.map( _.get ).partition( d => d.exists( _.contains( secondOrderVariable ) ) )
-      val addedSet = if ( nonOccurrenceDisjuncts.isEmpty ) Set() else Set( HOLSequent( Vector(), Vector( Or( nonOccurrenceDisjuncts.map( d => And( d.succedent ) ) ) ) ) )
-      occurrenceDisjuncts ++ addedSet
+      val And.nAry( cs ) = f
+      Some( HOLSequent( cs.map { c => c -> selectPolarity( c, X ).get } ) )
     }
   }
 
-  private def moveQuantifiersInFormula( formula: Formula ): Formula = {
-    moveQuantifiers.down( Ex, moveQuantifiers.down( All, formula ) )
+  private def isSeparable( d: Formula, X: Var ): Boolean = {
+    val And.nAry( cs ) = d
+    cs.forall( hasPolarity( X, _ ) )
   }
 
-  private def extractDisjuncts( formula: Formula ): Set[Formula] = formula match {
-    case And.nAry( conjuncts ) if conjuncts.length >= 2 =>
-      crossProduct( conjuncts.map( extractDisjuncts ) ).map( And( _ ) ).toSet
+  private def hasPolarity( X: Var, f: Formula ): Boolean =
+    occurrencePolarities( f, X ).size < 2
 
-    case Or.nAry( disjuncts ) if disjuncts.length >= 2 =>
-      disjuncts.flatMap( extractDisjuncts ).toSet
-    case _ => Set( formula )
-  }
-
-  private def polarizedConjuncts(
-    formula:  Formula,
-    variable: Var ): Option[HOLSequent] = formula match {
-    case And.nAry( conjuncts ) =>
-      val conjunctsWithPolarities = conjuncts
-        .map( conjunct => ( conjunct, uniquePolarityWithRespectTo( conjunct, variable ) ) )
-
-      if ( conjunctsWithPolarities.exists( { case ( _, polarity ) => polarity.isEmpty } ) )
-        None
-      else
-        Some( HOLSequent( conjunctsWithPolarities.map( f => ( f._1, f._2.get ) ) ) )
-  }
-
-  private def uniquePolarityWithRespectTo( formula: Formula, variable: Var ): Option[Polarity] = {
-    val polarities = polaritiesWithRespectTo( formula, variable )
-    polarities.size match {
-      case 0 => Some( Polarity.Positive )
-      case 1 => polarities.headOption
-      case _ => None
+  private def selectPolarity( f: Formula, X: Var ): Option[Polarity] =
+    occurrencePolarities( f, X ).toSeq match {
+      case Seq()    => Some( Polarity.Positive )
+      case Seq( p ) => Some( p )
+      case _        => None
     }
-  }
 
-  private def polaritiesWithRespectTo(
+  private def occurrencePolarities(
     formula:  Formula,
     variable: Var,
     polarity: Polarity = Polarity.Positive ): Set[Polarity] = formula match {
     case Atom( atomVariable, _ ) if atomVariable == variable => Set( polarity )
     case Neg( alpha ) =>
-      polaritiesWithRespectTo( alpha, variable, !polarity )
+      occurrencePolarities( alpha, variable, !polarity )
     case AndOr( alpha, beta, _ ) =>
-      polaritiesWithRespectTo( alpha, variable, polarity ) ++
-        polaritiesWithRespectTo( beta, variable, polarity )
-    case Quant( _, alpha, _ ) => polaritiesWithRespectTo( alpha, variable, polarity )
+      occurrencePolarities( alpha, variable, polarity ) ++
+        occurrencePolarities( beta, variable, polarity )
+    case Quant( _, alpha, _ ) => occurrencePolarities( alpha, variable, polarity )
     case _                    => Set()
   }
 
@@ -173,19 +140,6 @@ object dls {
         disjunctiveWitnessCombination( disjunctsWithWitnesses )
 
     Abs( variables, simplify( combinedWitness ) )
-  }
-
-  private def freshArgumentVariables(
-    secondOrderVariable: Var,
-    disjuncts:           Set[HOLSequent] ): List[Var] = {
-    val StrictSecondOrderRelationVariable( _, ( inputTypes, _ ) ) = secondOrderVariable
-    val blackListVariableNames = disjuncts.flatMap( variables( _ ) ).map( _.name )
-    val argumentName = secondOrderVariable.name.toLowerCase()
-    new NameGenerator( blackListVariableNames )
-      .freshStream( argumentName )
-      .zip( inputTypes )
-      .map { case ( name, inputType ) => Var( name, inputType ) }
-      .toList
   }
 
   def findPartialWitness(
@@ -213,6 +167,29 @@ object dls {
     Try( polarityOccurrenceWitness.negative( X, xs, And( disjunct.antecedent ) ) )
 
   private def chooseWitness( candidates: Seq[Formula] ): Formula = candidates.head
+
+  private def moveQuantifiersInFormula( formula: Formula ): Formula = {
+    moveQuantifiers.down( Ex, moveQuantifiers.down( All, formula ) )
+  }
+
+  private def disjunctiveWitnessCombination(
+    disjunctsWithWitnesses: Iterable[( Formula, Formula )] ): Formula = {
+    And( disjunctsWithWitnesses.toList.inits.toList.init.map( initList => {
+      val ( disjunct, witness ) = initList.last
+      val negatedInit = initList.init.map( element => Neg( element._1 ) )
+      val antecedent = And( negatedInit :+ disjunct )
+      Imp( antecedent, witness )
+    } ) )
+  }
+
+  private def toDisjuncts( formula: Formula ): Set[Formula] = formula match {
+    case And.nAry( conjuncts ) if conjuncts.length >= 2 =>
+      crossProduct( conjuncts.map( toDisjuncts ) ).map( And( _ ) ).toSet
+
+    case Or.nAry( disjuncts ) if disjuncts.length >= 2 =>
+      disjuncts.flatMap( toDisjuncts ).toSet
+    case _ => Set( formula )
+  }
 
   /**
    * Simplify a formula using
@@ -278,14 +255,40 @@ object dls {
   private def containsPropAndItsNegation( formulas: Seq[Formula] ): Boolean =
     formulas.exists( p => formulas.contains( simplify( Neg( p ) ) ) )
 
-  private def disjunctiveWitnessCombination(
-    disjunctsWithWitnesses: Iterable[( Formula, Formula )] ): Formula = {
-    And( disjunctsWithWitnesses.toList.inits.toList.init.map( initList => {
-      val ( disjunct, witness ) = initList.last
-      val negatedInit = initList.init.map( element => Neg( element._1 ) )
-      val antecedent = And( negatedInit :+ disjunct )
-      Imp( antecedent, witness )
+  private def freshArgumentVariables(
+    secondOrderVariable: Var,
+    disjuncts:           Set[HOLSequent] ): List[Var] = {
+    val StrictSecondOrderRelationVariable( _, ( inputTypes, _ ) ) = secondOrderVariable
+    val blackListVariableNames = disjuncts.flatMap( variables( _ ) ).map( _.name )
+    val argumentName = secondOrderVariable.name.toLowerCase()
+    new NameGenerator( blackListVariableNames )
+      .freshStream( argumentName )
+      .zip( inputTypes )
+      .map { case ( name, inputType ) => Var( name, inputType ) }
+      .toList
+  }
+
+  private object StrictSecondOrderRelationVariable {
+    def unapply( variable: Var ): Option[( Var, ( Seq[Ty], Ty ) )] = variable match {
+      case Var( _, FunctionType( To, inputTypes @ _ :: _ ) ) =>
+        Some( ( variable, ( inputTypes, To ) ) )
+      case _ => None
+    }
+  }
+
+  private def updateSubstitutionWithBetaReduction( substitution: Substitution, entry: ( Var, Expr ) ): Substitution = {
+    val newSubstitution = Substitution( entry )
+    Substitution( newSubstitution.map ++ substitution.map.map( {
+      case ( v, e ) => v -> ( e match {
+        case Abs.Block( variables, f: Formula ) => Abs.Block( variables, simplify( applySubstitutionBetaReduced( newSubstitution, f ) ) )
+      } )
     } ) )
+  }
+
+  private def applySubstitutionBetaReduced(
+    substitution: Substitution,
+    formula:      Formula ): Formula = {
+    BetaReduction.betaNormalize( substitution( formula ) )
   }
 }
 
