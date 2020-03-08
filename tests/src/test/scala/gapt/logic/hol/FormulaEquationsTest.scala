@@ -16,6 +16,9 @@ import scala.util.Try
 
 class FormulaEquationsTest extends Specification {
 
+  def toDisjunct( s: HOLSequent ): Disjunct =
+    Disjunct( s.antecedent, s.succedent )
+
   "preprocess" should {
     def succeedWithSequents(
       formulaEquation:  ( Var, Formula ),
@@ -29,10 +32,10 @@ class FormulaEquationsTest extends Specification {
       val ( secondOrderVariable, formula ) = formulaEquation
       s"succeed for $formula" >> {
         Try( new DlsPreprocessor( secondOrderVariable ).preprocess( formula ) ) must beSuccessfulTry(
-          { result: Set[HOLSequent] =>
-            val multiSetEquals = ( s1: HOLSequent, s2: HOLSequent ) => s1.multiSetEquals( s2 )
+          { result: Set[Disjunct] =>
+            val multiSetEquals = ( s1: Disjunct, s2: Disjunct ) => s1.multiSetEquals( s2 )
             result must beSetEqualsWithCustomEquality(
-              expectedResult,
+              expectedResult.map( toDisjunct ),
               multiSetEquals )
           } )
       }
@@ -76,6 +79,7 @@ class FormulaEquationsTest extends Specification {
   }
 
   "findPartialWitness" should {
+
     def succeedFor(
       secondOrderVariable: Var,
       sequent:             HOLSequent,
@@ -86,7 +90,7 @@ class FormulaEquationsTest extends Specification {
         }
         val witness =
           new DlsPartialWitnessExtraction( secondOrderVariable )
-            .findPartialWitness( argumentVariables, sequent )
+            .findPartialWitness( argumentVariables, toDisjunct( sequent ) )
         val formula = And( sequent.antecedent ++ sequent.succedent )
         val expectedSubstitution = Substitution( secondOrderVariable -> expectedWitness )
         val substitution = Substitution( secondOrderVariable -> Abs( argumentVariables, witness ) )
@@ -101,7 +105,7 @@ class FormulaEquationsTest extends Specification {
         val FunctionType( _, argumentTypes ) = secondOrderVariable.ty
         val argumentVariables = new NameGenerator( Nil ).freshStream( secondOrderVariable.name ).take( argumentTypes.length ).map( FOLVar( _ ) ).toList
         new DlsPartialWitnessExtraction( secondOrderVariable )
-          .findPartialWitness( argumentVariables, sequent ) must throwA()
+          .findPartialWitness( argumentVariables, toDisjunct( sequent ) ) must throwA()
       }
     }
 

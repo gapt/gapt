@@ -3,7 +3,6 @@ package gapt.logic.hol
 import gapt.expr.formula.{ Formula, _ }
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.{ FunctionType, To, Ty }
-import gapt.expr.util.variables
 import gapt.expr.{ Abs, BetaReduction, Expr, Var, VarOrConst }
 import gapt.logic.Polarity
 import gapt.proofs.HOLSequent
@@ -62,25 +61,25 @@ object dls {
   private def dls_( f: Formula, X: Var ): Expr =
     findWitness( X, preprocess( X, f ) )
 
-  private def preprocess( X: Var, f: Formula ): Set[HOLSequent] =
+  private def preprocess( X: Var, f: Formula ): Set[Disjunct] =
     new DlsPreprocessor( X ).preprocess( f )
 
-  private def findWitness( X: Var, disjuncts: Set[HOLSequent] ): Expr = {
+  private def findWitness( X: Var, disjuncts: Set[Disjunct] ): Expr = {
     val xs = freshArgumentVariables( X, disjuncts )
     val combinedWitness =
       if ( disjuncts.size == 1 )
         findPartialWitness( X, xs, disjuncts.head )
       else {
-        val ds = disjuncts.map( toFormula ).toSeq
+        val ds = disjuncts.map( _.toFormula ).toSeq
         val ws = disjuncts.map { d =>
-          toFormula( d ) -> findPartialWitness( X, xs, d )
+          d.toFormula -> findPartialWitness( X, xs, d )
         }.toMap
         witnessCombination( X, xs, ds, ws )
       }
     Abs( xs, simplify( combinedWitness ) )
   }
 
-  private def findPartialWitness( X: Var, xs: Seq[Var], d: HOLSequent ): Formula =
+  private def findPartialWitness( X: Var, xs: Seq[Var], d: Disjunct ): Formula =
     new DlsPartialWitnessExtraction( X ).findPartialWitness( xs, d )
 
   private def witnessCombination( X: Var, xs: Seq[Var], fs: Seq[Formula], g: Map[Formula, Formula] ): Formula = {
@@ -94,9 +93,9 @@ object dls {
 
   private def freshArgumentVariables(
     secondOrderVariable: Var,
-    disjuncts:           Set[HOLSequent] ): List[Var] = {
+    disjuncts:           Set[Disjunct] ): List[Var] = {
     val SecondOrderRelationVariable( _, ( inputTypes, _ ) ) = secondOrderVariable
-    val blackListVariableNames = disjuncts.flatMap( variables( _ ) ).map( _.name )
+    val blackListVariableNames = disjuncts.flatMap( _.variables ).map( _.name )
     val argumentName = secondOrderVariable.name.toLowerCase()
     new NameGenerator( blackListVariableNames )
       .freshStream( argumentName )
@@ -104,9 +103,6 @@ object dls {
       .map { case ( name, inputType ) => Var( name, inputType ) }
       .toList
   }
-
-  private def toFormula( d: HOLSequent ): Formula =
-    And( d.antecedent ++ d.succedent )
 
   private def updateSubstitutionWithBetaReduction( substitution: Substitution, entry: ( Var, Expr ) ): Substitution = {
     val newSubstitution = Substitution( entry )
@@ -125,6 +121,26 @@ object dls {
 }
 
 /**
+ * A formula of the form α ∧ β.
+ *
+ * @param as The conjuncts of α.
+ * @param bs The conjuncts of β.
+ */
+case class Disjunct( as: Seq[Formula], bs: Seq[Formula] ) {
+  private val sequent = HOLSequent( as, bs )
+  def toFormula = And( as ++ bs )
+  def variables = gapt.expr.util.variables( toFormula )
+  def multiSetEquals( other: Disjunct ): Boolean = sequent multiSetEquals other.sequent
+}
+
+object Disjunct {
+  def apply( fs: Iterable[( Formula, Polarity )] ): Disjunct = {
+    val ( as, bs ) = fs.partition( _._2 == Polarity.Negative )
+    Disjunct( as.map( _._1 ).toSeq, bs.map( _._1 ).toSeq )
+  }
+}
+
+/**
  * Implements the extraction of a witness for disjunct.
  *
  * @param X The predicate variable for which the witness is extracted.
@@ -133,7 +149,7 @@ class DlsPartialWitnessExtraction( X: Var ) {
 
   def findPartialWitness(
     argumentVariables: Seq[Var],
-    disjunct:          HOLSequent ): Formula = {
+    disjunct:          Disjunct ): Formula = {
     val candidates = witnessCandidates( argumentVariables, disjunct )
     val successfulCandidates = candidates.collect { case Success( w ) => w }
     val errors = candidates.collect { case Failure( e ) => e }
@@ -145,14 +161,14 @@ class DlsPartialWitnessExtraction( X: Var ) {
     simplify( chooseWitness( successfulCandidates ) )
   }
 
-  private def witnessCandidates( xs: Seq[Var], disjunct: HOLSequent ): Seq[Try[Formula]] =
+  private def witnessCandidates( xs: Seq[Var], disjunct: Disjunct ): Seq[Try[Formula]] =
     LazyList( positiveCandidate( xs, disjunct ), negativeCandidate( xs, disjunct ) )
 
-  private def positiveCandidate( xs: Seq[Var], disjunct: HOLSequent ): Try[Formula] =
-    Try( polarityOccurrenceWitness.positive( X, xs, And( disjunct.succedent ) ) )
+  private def positiveCandidate( xs: Seq[Var], disjunct: Disjunct ): Try[Formula] =
+    Try( polarityOccurrenceWitness.positive( X, xs, And( disjunct.bs ) ) )
 
-  private def negativeCandidate( xs: Seq[Var], disjunct: HOLSequent ): Try[Formula] =
-    Try( polarityOccurrenceWitness.negative( X, xs, And( disjunct.antecedent ) ) )
+  private def negativeCandidate( xs: Seq[Var], disjunct: Disjunct ): Try[Formula] =
+    Try( polarityOccurrenceWitness.negative( X, xs, And( disjunct.as ) ) )
 
   private def chooseWitness( candidates: Seq[Formula] ): Formula = candidates.head
 }
@@ -164,7 +180,7 @@ class DlsPartialWitnessExtraction( X: Var ) {
  */
 class DlsPreprocessor( X: Var ) {
 
-  def preprocess( f: Formula ): Set[HOLSequent] =
+  def preprocess( f: Formula ): Set[Disjunct] =
     separateConjuncts( extractDisjuncts( f ) ) match {
       case Left( inseparables ) =>
         throw new Exception(
@@ -176,7 +192,7 @@ class DlsPreprocessor( X: Var ) {
     toDisjuncts( moveQuantifiersInFormula( removeRedundantQuantifiers( toNNF( simplify( f ) ) ) ) )
       .filter( _.contains( X ) )
 
-  private def separateConjuncts( fs: Set[Formula] ): Either[Set[Formula], Set[HOLSequent]] = {
+  private def separateConjuncts( fs: Set[Formula] ): Either[Set[Formula], Set[Disjunct]] = {
     val ( separable, inseparable ) = fs.partition( isSeparable )
     if ( inseparable.nonEmpty )
       Left( inseparable )
@@ -184,12 +200,12 @@ class DlsPreprocessor( X: Var ) {
       Right( separable.map( separateConjuncts( _ ).get ) )
   }
 
-  private def separateConjuncts( f: Formula ): Option[HOLSequent] = {
+  private def separateConjuncts( f: Formula ): Option[Disjunct] = {
     if ( !isSeparable( f ) )
       None
     else {
       val And.nAry( cs ) = f
-      Some( HOLSequent( cs.map { c => c -> selectPolarity( c ).get } ) )
+      Some( Disjunct( cs.map { c => c -> selectPolarity( c ).get } ) )
     }
   }
 
