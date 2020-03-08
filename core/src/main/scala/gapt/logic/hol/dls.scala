@@ -49,7 +49,7 @@ import scala.util.{ Failure, Success, Try }
 object dls {
 
   def apply( formula: Formula ): Try[( Substitution, Formula )] = Try( simplify( formula ) match {
-    case Ex( SecondOrderRelationVariable( x, _ ), innerFormula ) =>
+    case Ex( PredicateVariable( x, _ ), innerFormula ) =>
       val ( s_, folPart ) = dls( innerFormula ).get
       val folInnerFormula = simplify( util.applySubstitutionBetaReduced( s_, folPart ) )
       val w = dls_( folInnerFormula, x )
@@ -354,7 +354,7 @@ object vectorEq {
   }
 }
 
-object SecondOrderRelationVariable {
+object PredicateVariable {
   def unapply( variable: Var ): Option[( Var, ( Seq[Ty], Ty ) )] = variable match {
     case Var( _, FunctionType( To, inputTypes @ _ ) ) =>
       Some( ( variable, ( inputTypes, To ) ) )
@@ -381,7 +381,7 @@ private object util {
   def freshArgumentVariables(
     secondOrderVariable: Var,
     disjuncts:           Set[Disjunct] ): List[Var] = {
-    val SecondOrderRelationVariable( _, ( inputTypes, _ ) ) = secondOrderVariable
+    val PredicateVariable( _, ( inputTypes, _ ) ) = secondOrderVariable
     val blackListVariableNames = disjuncts.flatMap( _.variables ).map( _.name )
     val argumentName = secondOrderVariable.name.toLowerCase()
     new NameGenerator( blackListVariableNames )
