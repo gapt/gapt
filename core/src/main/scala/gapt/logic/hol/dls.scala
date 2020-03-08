@@ -65,35 +65,31 @@ object dls {
   private def preprocess( X: Var, f: Formula ): Set[HOLSequent] =
     new DlsPreprocessor( X ).preprocess( f )
 
-  private def findWitness( secondOrderVariable: Var, disjuncts: Set[HOLSequent] ): Expr = {
-    val variables = freshArgumentVariables( secondOrderVariable, disjuncts )
-    val disjunctsWithWitnesses = disjuncts.map(
-      disjunct => {
-        val witness = findPartialWitness( secondOrderVariable, variables, disjunct )
-        val negativePart = And( disjunct.antecedent ++ disjunct.succedent )
-        val substitution = Substitution( secondOrderVariable -> Abs( variables, witness ) )
-        ( applySubstitutionBetaReduced( substitution, negativePart ), witness )
-      } )
+  private def findWitness( X: Var, disjuncts: Set[HOLSequent] ): Expr = {
+    val xs = freshArgumentVariables( X, disjuncts )
     val combinedWitness =
-      if ( disjunctsWithWitnesses.size == 1 )
-        disjunctsWithWitnesses.head._2
-      else
-        disjunctiveWitnessCombination( disjunctsWithWitnesses )
-
-    Abs( variables, simplify( combinedWitness ) )
+      if ( disjuncts.size == 1 )
+        findPartialWitness( X, xs, disjuncts.head )
+      else {
+        val ds = disjuncts.map( toFormula ).toSeq
+        val ws = disjuncts.map { d =>
+          toFormula( d ) -> findPartialWitness( X, xs, d )
+        }.toMap
+        witnessCombination( X, xs, ds, ws )
+      }
+    Abs( xs, simplify( combinedWitness ) )
   }
 
   private def findPartialWitness( X: Var, xs: Seq[Var], d: HOLSequent ): Formula =
     new DlsPartialWitnessExtraction( X ).findPartialWitness( xs, d )
 
-  private def disjunctiveWitnessCombination(
-    disjunctsWithWitnesses: Iterable[( Formula, Formula )] ): Formula = {
-    And( disjunctsWithWitnesses.toList.inits.toList.init.map( initList => {
-      val ( disjunct, witness ) = initList.last
-      val negatedInit = initList.init.map( element => Neg( element._1 ) )
-      val antecedent = And( negatedInit :+ disjunct )
-      Imp( antecedent, witness )
-    } ) )
+  private def witnessCombination( X: Var, xs: Seq[Var], fs: Seq[Formula], g: Map[Formula, Formula] ): Formula = {
+    val fg = fs.map( f => f -> applySubstitutionBetaReduced( Substitution( X -> Abs( xs, g( f ) ) ), f ) ).toMap
+    val cs = fs.inits.toSeq.init.map { fss =>
+      val f = fss.last
+      And( fss.init.map { f => Neg( fg( f ) ) } :+ fg( f ) ) --> g( f )
+    }
+    And( cs )
   }
 
   private def freshArgumentVariables(
@@ -108,6 +104,9 @@ object dls {
       .map { case ( name, inputType ) => Var( name, inputType ) }
       .toList
   }
+
+  private def toFormula( d: HOLSequent ): Formula =
+    And( d.antecedent ++ d.succedent )
 
   private def updateSubstitutionWithBetaReduction( substitution: Substitution, entry: ( Var, Expr ) ): Substitution = {
     val newSubstitution = Substitution( entry )
