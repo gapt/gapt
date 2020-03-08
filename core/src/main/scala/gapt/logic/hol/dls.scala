@@ -51,39 +51,43 @@ object dls {
   def apply( formula: Formula ): Try[( Substitution, Formula )] = Try( simplify( formula ) match {
     case Ex( SecondOrderRelationVariable( x, _ ), innerFormula ) =>
       val ( s_, folPart ) = dls( innerFormula ).get
-      val folInnerFormula = simplify( applySubstitutionBetaReduced( s_, folPart ) )
+      val folInnerFormula = simplify( util.applySubstitutionBetaReduced( s_, folPart ) )
       val w = dls_( folInnerFormula, x )
-      val s = updateSubstitutionWithBetaReduction( s_, x -> w )
+      val s = util.updateSubstitutionWithBetaReduction( s_, x -> w )
       ( s, folPart )
     case f => ( Substitution(), f )
   } )
 
-  private def dls_( f: Formula, X: Var ): Expr =
-    findWitness( X, preprocess( X, f ) )
+  private def dls_( f: Formula, X: Var ): Expr = new dls( X ).solve( f )
+}
 
-  private def preprocess( X: Var, f: Formula ): Set[Disjunct] =
+private class dls( X: Var ) {
+
+  def solve( f: Formula ): Expr = findWitness( preprocess( f ) )
+
+  private def preprocess( f: Formula ): Set[Disjunct] =
     new DlsPreprocessor( X ).preprocess( f )
 
-  private def findWitness( X: Var, disjuncts: Set[Disjunct] ): Expr = {
+  private def findWitness( disjuncts: Set[Disjunct] ): Expr = {
     val xs = freshArgumentVariables( X, disjuncts )
     val combinedWitness =
       if ( disjuncts.size == 1 )
-        findPartialWitness( X, xs, disjuncts.head )
+        findPartialWitness( xs, disjuncts.head )
       else {
         val ds = disjuncts.map( _.toFormula ).toSeq
         val ws = disjuncts.map { d =>
-          d.toFormula -> findPartialWitness( X, xs, d )
+          d.toFormula -> findPartialWitness( xs, d )
         }.toMap
-        witnessCombination( X, xs, ds, ws )
+        witnessCombination( xs, ds, ws )
       }
     Abs( xs, simplify( combinedWitness ) )
   }
 
-  private def findPartialWitness( X: Var, xs: Seq[Var], d: Disjunct ): Formula =
+  private def findPartialWitness( xs: Seq[Var], d: Disjunct ): Formula =
     new DlsPartialWitnessExtraction( X ).findPartialWitness( xs, d )
 
-  private def witnessCombination( X: Var, xs: Seq[Var], fs: Seq[Formula], g: Map[Formula, Formula] ): Formula = {
-    val fg = fs.map( f => f -> applySubstitutionBetaReduced( Substitution( X -> Abs( xs, g( f ) ) ), f ) ).toMap
+  private def witnessCombination( xs: Seq[Var], fs: Seq[Formula], g: Map[Formula, Formula] ): Formula = {
+    val fg = fs.map( f => f -> util.applySubstitutionBetaReduced( Substitution( X -> Abs( xs, g( f ) ) ), f ) ).toMap
     val cs = fs.inits.toSeq.init.map { fss =>
       val f = fss.last
       And( fss.init.map { f => Neg( fg( f ) ) } :+ fg( f ) ) --> g( f )
@@ -102,21 +106,6 @@ object dls {
       .zip( inputTypes )
       .map { case ( name, inputType ) => Var( name, inputType ) }
       .toList
-  }
-
-  private def updateSubstitutionWithBetaReduction( substitution: Substitution, entry: ( Var, Expr ) ): Substitution = {
-    val newSubstitution = Substitution( entry )
-    Substitution( newSubstitution.map ++ substitution.map.map( {
-      case ( v, e ) => v -> ( e match {
-        case Abs.Block( variables, f: Formula ) => Abs.Block( variables, simplify( applySubstitutionBetaReduced( newSubstitution, f ) ) )
-      } )
-    } ) )
-  }
-
-  private def applySubstitutionBetaReduced(
-    substitution: Substitution,
-    formula:      Formula ): Formula = {
-    BetaReduction.betaNormalize( substitution( formula ) )
   }
 }
 
@@ -383,5 +372,22 @@ object SecondOrderRelationVariable {
     case Var( _, FunctionType( To, inputTypes @ _ ) ) =>
       Some( ( variable, ( inputTypes, To ) ) )
     case _ => None
+  }
+}
+
+object util {
+  def updateSubstitutionWithBetaReduction( substitution: Substitution, entry: ( Var, Expr ) ): Substitution = {
+    val newSubstitution = Substitution( entry )
+    Substitution( newSubstitution.map ++ substitution.map.map( {
+      case ( v, e ) => v -> ( e match {
+        case Abs.Block( variables, f: Formula ) => Abs.Block( variables, simplify( applySubstitutionBetaReduced( newSubstitution, f ) ) )
+      } )
+    } ) )
+  }
+
+  def applySubstitutionBetaReduced(
+    substitution: Substitution,
+    formula:      Formula ): Formula = {
+    BetaReduction.betaNormalize( substitution( formula ) )
   }
 }
