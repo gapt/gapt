@@ -102,14 +102,14 @@ private class dls( X: Var ) {
  * @param as The conjuncts of α.
  * @param bs The conjuncts of β.
  */
-case class Disjunct( as: Seq[Formula], bs: Seq[Formula] ) {
+private case class Disjunct( as: Seq[Formula], bs: Seq[Formula] ) {
   private val sequent = HOLSequent( as, bs )
   def toFormula = And( as ++ bs )
   def variables = gapt.expr.util.variables( toFormula )
   def multiSetEquals( other: Disjunct ): Boolean = sequent multiSetEquals other.sequent
 }
 
-object Disjunct {
+private object Disjunct {
   def apply( fs: Iterable[( Formula, Polarity )] ): Disjunct = {
     val ( as, bs ) = fs.partition( _._2 == Polarity.Negative )
     Disjunct( as.map( _._1 ).toSeq, bs.map( _._1 ).toSeq )
@@ -121,7 +121,7 @@ object Disjunct {
  *
  * @param X The predicate variable for which the witness is extracted.
  */
-class DlsPartialWitnessExtraction( X: Var ) {
+private class DlsPartialWitnessExtraction( X: Var ) {
 
   def findPartialWitness(
     argumentVariables: Seq[Var],
@@ -154,7 +154,7 @@ class DlsPartialWitnessExtraction( X: Var ) {
  *
  * @param X The predicate variable with respect to which formulas are preprocessed.
  */
-class DlsPreprocessor( X: Var ) {
+private class DlsPreprocessor( X: Var ) {
 
   def preprocess( f: Formula ): Set[Disjunct] =
     separateConjuncts( extractDisjuncts( f ) ) match {
@@ -294,7 +294,7 @@ object simplify {
     formulas.exists( p => formulas.contains( apply( Neg( p ) ) ) )
 }
 
-object polarityOccurrenceWitness {
+private object polarityOccurrenceWitness {
 
   def positive( x: Var, ys: Seq[Var], f: Formula ): Formula =
     polarityOccurrenceWitness( Polarity.Positive, x, ys, f )
@@ -362,7 +362,7 @@ object SecondOrderRelationVariable {
   }
 }
 
-object util {
+private object util {
   def updateSubstitutionWithBetaReduction( substitution: Substitution, entry: ( Var, Expr ) ): Substitution = {
     val newSubstitution = Substitution( entry )
     Substitution( newSubstitution.map ++ substitution.map.map( {
