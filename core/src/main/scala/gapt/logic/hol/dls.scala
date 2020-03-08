@@ -69,7 +69,7 @@ private class dls( X: Var ) {
     new DlsPreprocessor( X ).preprocess( f )
 
   private def findWitness( disjuncts: Set[Disjunct] ): Expr = {
-    val xs = freshArgumentVariables( X, disjuncts )
+    val xs = util.freshArgumentVariables( X, disjuncts )
     val combinedWitness =
       if ( disjuncts.size == 1 )
         findPartialWitness( xs, disjuncts.head )
@@ -93,19 +93,6 @@ private class dls( X: Var ) {
       And( fss.init.map { f => Neg( fg( f ) ) } :+ fg( f ) ) --> g( f )
     }
     And( cs )
-  }
-
-  private def freshArgumentVariables(
-    secondOrderVariable: Var,
-    disjuncts:           Set[Disjunct] ): List[Var] = {
-    val SecondOrderRelationVariable( _, ( inputTypes, _ ) ) = secondOrderVariable
-    val blackListVariableNames = disjuncts.flatMap( _.variables ).map( _.name )
-    val argumentName = secondOrderVariable.name.toLowerCase()
-    new NameGenerator( blackListVariableNames )
-      .freshStream( argumentName )
-      .zip( inputTypes )
-      .map { case ( name, inputType ) => Var( name, inputType ) }
-      .toList
   }
 }
 
@@ -389,5 +376,18 @@ object util {
     substitution: Substitution,
     formula:      Formula ): Formula = {
     BetaReduction.betaNormalize( substitution( formula ) )
+  }
+
+  def freshArgumentVariables(
+    secondOrderVariable: Var,
+    disjuncts:           Set[Disjunct] ): List[Var] = {
+    val SecondOrderRelationVariable( _, ( inputTypes, _ ) ) = secondOrderVariable
+    val blackListVariableNames = disjuncts.flatMap( _.variables ).map( _.name )
+    val argumentName = secondOrderVariable.name.toLowerCase()
+    new NameGenerator( blackListVariableNames )
+      .freshStream( argumentName )
+      .zip( inputTypes )
+      .map { case ( name, inputType ) => Var( name, inputType ) }
+      .toList
   }
 }
