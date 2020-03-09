@@ -1,14 +1,28 @@
-package gapt.logic.hol
+package gapt.logic.hol.dls
 
-import gapt.expr.formula.{ Formula, _ }
+import gapt.expr.Abs
+import gapt.expr.BetaReduction
+import gapt.expr.Expr
+import gapt.expr.Var
+import gapt.expr.VarOrConst
+import gapt.expr.formula.Formula
+import gapt.expr.formula._
 import gapt.expr.subst.Substitution
-import gapt.expr.ty.{ FunctionType, To, Ty }
-import gapt.expr.{ Abs, BetaReduction, Expr, Var, VarOrConst }
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.To
+import gapt.expr.ty.Ty
 import gapt.logic.Polarity
+import gapt.logic.hol.AndOr
+import gapt.logic.hol.moveQuantifiers
+import gapt.logic.hol.removeRedundantQuantifiers
+import gapt.logic.hol.toNNF
 import gapt.proofs.HOLSequent
-import gapt.utils.{ NameGenerator, crossProduct }
+import gapt.utils.NameGenerator
+import gapt.utils.crossProduct
 
-import scala.util.{ Failure, Success, Try }
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
 /**
  * Uses the DLS algorithm to find a witness for formula equations of the form

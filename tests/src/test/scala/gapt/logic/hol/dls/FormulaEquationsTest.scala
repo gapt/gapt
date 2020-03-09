@@ -1,10 +1,14 @@
-package gapt.logic.hol
+package gapt.logic.hol.dls
 
 import gapt.expr._
 import gapt.expr.formula.fol.FOLVar
-import gapt.expr.formula.{ And, Formula, Iff }
+import gapt.expr.formula.And
+import gapt.expr.formula.Formula
+import gapt.expr.formula.Iff
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.FunctionType
+import gapt.logic.hol.simplifyPropositional
+import gapt.logic.hol.solveFormulaEquation
 import gapt.proofs.HOLSequent
 import gapt.provers.escargot.Escargot
 import gapt.utils.NameGenerator
@@ -16,7 +20,7 @@ import scala.util.Try
 
 class FormulaEquationsTest extends Specification {
 
-  def toDisjunct( s: HOLSequent ): Disjunct =
+  private def toDisjunct( s: HOLSequent ): Disjunct =
     Disjunct( s.antecedent, s.succedent )
 
   "preprocess" should {
