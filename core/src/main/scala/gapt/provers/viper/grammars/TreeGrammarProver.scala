@@ -2,6 +2,7 @@ package gapt.provers.viper.grammars
 
 import gapt.expr._
 import gapt.expr.formula.All
+import gapt.expr.formula.And
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
 import gapt.expr.formula.fol.{ flatSubterms, folTermSize }
@@ -19,6 +20,7 @@ import gapt.formats.smt.SmtLibExporter
 import gapt.grammars.{ InductionGrammar, findMinimalInductionGrammar }
 import gapt.grammars.InductionGrammar.Production
 import gapt.logic.hol.CNFp
+import gapt.logic.hol.dls.dls
 import gapt.logic.hol.skolemize
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.{ BaseTypes, StructurallyInductiveTypes }
@@ -37,6 +39,8 @@ import gapt.utils._
 import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.collection.mutable
+import scala.util.Failure
+import scala.util.Success
 
 object DefaultProvers {
   val firstOrder: Prover = Escargot
@@ -66,6 +70,7 @@ sealed trait InductionBupSolver
 object InductionBupSolver {
   case object Interpolation extends InductionBupSolver
   case object Canonical extends InductionBupSolver
+  case object Dls extends InductionBupSolver
 }
 
 object TreeGrammarProverOptions {
@@ -253,6 +258,13 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
               metric( "bup_solve_failed", true )
               throw new IllegalArgumentException( s"Could not solve:\n${qbupMatrix.toSigRelativeString}" )
             }
+        case InductionBupSolver.Dls =>
+          val p = bup.formula
+          dls( p ) match {
+            case Success( ( s, _ ) ) => s( bup.X )
+            case Failure( e ) =>
+              throw new IllegalArgumentException( s"Could not solve BUP ${bup}", e )
+          }
       }
 
     info( s"Found solution: ${solution.toSigRelativeString}\n" )

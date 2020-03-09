@@ -11,4 +11,9 @@ package object utils {
     } yield ( e1, e2 )
   }
 
+  def crossProduct[T]( xs: Seq[Iterable[T]] ): Iterable[Seq[T]] =
+    xs match {
+      case Seq()              => Seq( Seq() )
+      case Seq( x, xss @ _* ) => for { y <- x; ys <- crossProduct( xss ) } yield y +: ys
+    }
 }

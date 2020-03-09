@@ -5,6 +5,7 @@ import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Ex
+import gapt.expr.formula.Formula
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLFormula
 import gapt.expr.formula.fol.FOLTerm
@@ -12,12 +13,16 @@ import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.fol.{ isFOLPrenexSigma1, isPrenexSigma1 }
 import gapt.expr.formula.hol._
 import gapt.expr.subst.FOLSubstitution
+import gapt.expr.subst.Substitution
+import gapt.expr.ty.FunctionType
+import gapt.expr.ty.To
 import gapt.expr.util.expressionSize
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.grammars._
 import gapt.grammars.reforest.Reforest
 import gapt.logic.hol.CNFp
+import gapt.logic.hol.dls.dls
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
@@ -40,6 +45,9 @@ import gapt.provers.sat.Sat4j
 import gapt.provers.smtlib.Z3
 import gapt.provers.verit.VeriT
 import gapt.utils.{ Logger, Maybe }
+
+import scala.util.Failure
+import scala.util.Success
 
 trait GrammarFindingMethod {
   def findGrammars( lang: Set[Expr] ): Option[VTRATG]
@@ -447,6 +455,34 @@ object CutIntroduction {
     state += insertProofOfSolutionCondition( -1 )
 
     state.result
+  }
+
+  object computeSolutionViaDls {
+
+    def apply( h: SchematicExtendedHerbrandSequent ): Seq[FOLFormula] = {
+      val formulaInstances = h.us.flatMap {
+        case ( All.Block( xs, f ), tss ) => tss.map { ts => Substitution( xs.zip( ts ).toMap )( f ) }
+      }
+      val schematicVariables = h.ss.zipWithIndex.map {
+        case ( ( vs, _ ), i ) => Var( s"X_$i", FunctionType( To, vs.map( _.ty ) ) )
+      }
+      val schematicCutImplications = h.ss.zip( schematicVariables ).map {
+        case ( ( vs, tss ), x ) =>
+          x( vs ) --> And( tss.map { ts => x( ts ) } )
+      }
+      def schematicExtendedHerbrandSequentToDlsInstance( h: SchematicExtendedHerbrandSequent ): Formula =
+        Ex.Block( schematicVariables, ( schematicCutImplications ++: formulaInstances ).toFormula )
+      val dlsInstance = schematicExtendedHerbrandSequentToDlsInstance( h )
+      val solution = dls( dlsInstance ) match {
+        case Success( s ) => s._1
+        case Failure( e ) =>
+          throw new Exception( "failed to solve schematic extended herbrand sequent via DLS", e )
+      }
+      schematicCutImplications.map {
+        c =>
+          BetaReduction.betaNormalize( solution( c ) ).asInstanceOf[FOLFormula]
+      }
+    }
   }
 }
 

@@ -1,25 +1,11 @@
 package gapt.logic.hol
 
-import gapt.expr._
-import gapt.expr.formula.All
-import gapt.expr.formula.And
-import gapt.expr.formula.Atom
-import gapt.expr.formula.Bottom
-import gapt.expr.formula.Ex
-import gapt.expr.formula.Formula
-import gapt.expr.formula.Imp
-import gapt.expr.formula.Neg
-import gapt.expr.formula.Or
-import gapt.expr.formula.Quant
-import gapt.expr.formula.Top
+import gapt.expr.formula._
 import gapt.expr.formula.fol.FOLFormula
 import gapt.expr.formula.hol.containsStrongQuantifier
 import gapt.logic.Polarity
-import gapt.proofs.FOLClause
-import gapt.proofs.HOLClause
-import gapt.proofs.Sequent
-import gapt.proofs.resolution.Input
-import gapt.proofs.resolution.structuralCNF
+import gapt.proofs.{ FOLClause, HOLClause, Sequent }
+import gapt.proofs.resolution.{ Input, structuralCNF }
 
 /**
  * Transforms a formula to negation normal form (transforming also

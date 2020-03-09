@@ -22,6 +22,7 @@ import gapt.grammars._
 import gapt.logic._
 import gapt.logic.fol._
 import gapt.logic.hol._
+import gapt.logic.hol.dls._
 import gapt.proofs.reduction._
 import gapt.proofs.rup._
 import gapt.proofs.epsilon._
