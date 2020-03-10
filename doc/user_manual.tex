@@ -2405,46 +2405,60 @@ x_2 → 0
 
 
 \section{Formula equations}
-A second-order formula of the form $\exists X_1 \dots \exists X_n \varphi$, where the $X_i$ are second-order relation variables with arity $a_i$ and $\varphi$ is a first-order formula is called a \emph{formula equation}.
-Solving a formula equation means finding lambda expressions $\psi_i$ with arity $a_i$ such that
-$\varphi[X_1/\psi_1,\dots,X_n/\psi_n]$
-is valid.
-The $\psi_i$ are called \emph{witnesses} of the formula equation.
-
-GAPT supports solving formula equations for certain classes of formula equations:
+A \emph{formula equation} is a first-order formula \(F[X_{1}, \dots, X_{n}]\) with free second-order predicate variables \(X_{1}/k_{1}, \dots, X_{n}/k_{n}\).
+A solution of a formula equation \(F[X_{1}, \dots, X_{n}]\) is a vector of first-order formulas \((G_{1}[x_{1}, \dots, x_{k_{1}}], \dots, G_{n}[x_{1}, \dots, x_{k_{n}}])\) such that \(F[X_{1}/G_{1}, \dots, X_{n}/G_{n}]\) is valid.
+GAPT supports solving certain classes of formula equations.
+For example let
 \begin{clilisting}
-gapt> val formulaEquationSolution = solveFormulaEquation(hof"∃X X(a)")
-val formulaEquationSolution: scala.util.Try[gapt.expr.subst.Substitution] = Success(Substitution(X:i>o -> λx_0 a = x_0))
+gapt> val F = hof"X(a) ∧ X(b)"
+val F: gapt.expr.formula.Formula = X(a) ∧ X(b)
+
+\end{clilisting}
+We can solve the formula equation above by
+\begin{clilisting}
+gapt> val scala.util.Success(s) = solveFormulaEquation(F)
+val s: gapt.expr.subst.Substitution = Substitution(X:i>o -> λx_0 a = x_0 ∨ b = x_0)
 
 \end{clilisting}
 
-The return value of \texttt{solveFormulaEquation} is a \texttt{Try} which succeeds if the algorithm could find witnesses for the given second order variables and fails otherwise.
-Failure does not mean that the formula equation is not solvable, but only that the algorithm we use couldn't find a witness.
-If the \texttt{Try} is successful the return value is a substitution such that applying the substitution to the first order part of the formula equation gives a valid formula.
-
-Another version of this method is called \texttt{dls}.
-This method solves the related problem of finding lambda expressions $\psi_i$ such that 
-\begin{equation}
-  \label{eq:second-order-elimination-with-witness}
-  \exists X_1 \dots \exists X_n \varphi \leftrightarrow \varphi[X_1/\psi_1,\dots,X_n/\psi_n]
-\end{equation}
-is valid.
-If successful, the return value is a tuple of a substitution and the first order part of the given formula equation (possibly simplified) such that applying the substitution to the first-order part fulfils that \eqref{eq:second-order-elimination-with-witness} is valid.
-Again, failure of the method does not mean that there is no witness such that the equivalence holds, but merely that our algorithm could not find a witness.
-
+On success a substitution is returned, which when applied to the input formula yields a valid formula.
 \begin{clilisting}
-gapt> val solution = dls(hof"∃X X(a)")
-val solution: scala.util.Try[(gapt.expr.subst.Substitution, gapt.expr.formula.Formula)] = Success((Substitution(X:i>o -> λx_0 a = x_0),X(a): o))
-
-gapt> Escargot.isValid(BetaReduction.betaNormalize(solution.get._1(solution.get._2)))
+gapt> Escargot.isValid( BetaReduction.betaNormalize( s(F) ) )
 val res0: Boolean = true
 
 \end{clilisting}
+If \texttt{solveFormulaEquation} fails to find a solution, this does not mean that the formula equation is not solvable, but only that the algorithm we use could not find~it.
 
-Both methods are based on the DLS algorithm in \cite{Doherty1997Computing}.
-To get a more detailed description of the kinds of formulas for which the algorithm succeeds check the documentation of \texttt{solveFormulaEquation} and \texttt{dls}.
+The function \texttt{solveFormulaEquation} proceeds by a reduction to the related problem of finding first-order formulas $G_{i}$ such that 
+\begin{equation}
+  \label{eq:second-order-elimination-with-witness}
+  \exists X_1 \dots \exists X_n F \leftrightarrow F[X_1/G_1,\dots,X_n/G_n]
+\end{equation}
+is valid.
+This problem is a variant of second-order quantifier elimination.
+The \emph{DLS} algorithm \cite{Doherty1997Computing} can eliminate second-order quantifiers for certain formulas by computing equivalent first-order formulas.
+GAPT contains an implementation of a variant of the DLS algorithm that computes actual witnesses for second-order quantifiers.
+For example consider the following formula
+\begin{clilisting}
+gapt> val H = hof"?X ?Y( X(a) ∧ ¬Y(a) )"
+val H: gapt.expr.formula.Formula = ∃X ∃Y (X(a) ∧ ¬Y(a))
 
+\end{clilisting}
+We can eliminate the second-order quantifiers and obtain witnesses by
+\begin{clilisting}
+gapt> val scala.util.Success( (solution, folPart) ) = dls(H)
+val solution: gapt.expr.subst.Substitution = Substitution(X:i>o -> λx_0 a = x_0, Y:i>o -> λy_0 ⊥)
+val folPart: gapt.expr.formula.Formula = X(a) ∧ ¬Y(a)
 
+\end{clilisting}
+The returned value is a tuple of a substitution and the possibly simplified first-order part of the input formula such that applying the substitution to the first-order part fulfils \eqref{eq:second-order-elimination-with-witness}.
+\begin{clilisting}
+gapt> Escargot.isValid(BetaReduction.betaNormalize(solution(folPart)))
+val res1: Boolean = true
+
+\end{clilisting}
+Again, failure of the method does not mean that there is no witness such that the equivalence holds, but merely that our algorithm could not find a witness.
+A more detailed description of the formulas that can be solved by our implementation of the DLS algorithm can be found in the documentation of \texttt{dls}.
 \vfill
 \pagebreak
 \begin{appendix}
