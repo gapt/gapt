@@ -2410,9 +2410,6 @@ The $\psi_i$ are called \emph{witnesses} of the formula equation.
 
 GAPT supports solving formula equations for certain classes of formula equations:
 \begin{clilisting}
-gapt> import gapt.logic.hol._
-import gapt.logic.hol._
-
 gapt> val formulaEquationSolution = solveFormulaEquation(hof"∃X X(a)")
 formulaEquationSolution: scala.util.Try[gapt.expr.subst.Substitution] = Success(Substitution(X:i>o -> λx_0 a = x_0))
 
@@ -2433,9 +2430,6 @@ If successful, the return value is a tuple of a substitution and the first order
 Again, failure of the method does not mean that there is no witness such that the equivalence holds, but merely that our algorithm could not find a witness.
 
 \begin{clilisting}
-gapt> import gapt.logic.hol.dls._
-import gapt.logic.hol.dls._
-
 gapt> val solution = dls(hof"∃X X(a)")
 solution: scala.util.Try[(gapt.expr.subst.Substitution, gapt.expr.formula.Formula)] = Success((Substitution(X:i>o -> λx_0 a = x_0),X(a): o))
 
