@@ -1,5 +1,7 @@
 # Release notes for GAPT
 
+## Version 2.16 (unreleased)
+
 ## Version 2.15 (released on 2020-03-30)
 
 * DLS algorithm for formula equations
