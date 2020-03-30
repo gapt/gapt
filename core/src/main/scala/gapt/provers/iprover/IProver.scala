@@ -101,9 +101,9 @@ class IProverOutput( val rawOutput: String ) {
 
   private def extractTptpDerivation: String = {
     outputLines
-      .dropWhile( !_.startsWith( "% SZS output start CNFRefutation" ) )
+      .dropWhile( !_.startsWith( "% % SZS output start CNFRefutation" ) )
       .drop( 1 ).
-      takeWhile( !_.startsWith( "% SZS output end CNFRefutation" ) ).
+      takeWhile( !_.startsWith( "% % SZS output end CNFRefutation" ) ).
       mkString( "\n" )
   }
 }
