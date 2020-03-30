@@ -2,6 +2,10 @@
 
 ## Version 2.15 (unreleased)
 
+* DLS algorithm for formula equations
+* Update to Scala 2.13
+* Refactoring of TIP tools, HOL to FOL translation and iProver interface
+
 ## Version 2.14 (released on 2019-03-04)
 
 * Bug fixes
