@@ -35,7 +35,9 @@ class IProverInstance( val input: IProverInput ) {
     "--pure_diseq_elim", "false",
     "--splitting_mode", "none",
     "--sub_typing", "false",
-    "--tptp_safe_out", "true" )
+    "--tptp_safe_out", "true",
+    "--non_eq_to_eq", "false",
+    "--superposition_flag", "false" )
 
   def getResolutionProof(): Option[ResolutionProof] =
     runIProverOn( input.tptpWithSafeNames )
