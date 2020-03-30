@@ -1,6 +1,6 @@
 # Release notes for GAPT
 
-## Version 2.15 (unreleased)
+## Version 2.15 (released on 2020-03-30)
 
 * DLS algorithm for formula equations
 * Update to Scala 2.13
