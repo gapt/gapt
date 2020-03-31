@@ -1,14 +1,7 @@
 package gapt.provers.escargot
 
-import gapt.expr._
-import gapt.formats.tptp.{ TptpImporter, TptpProblemToResolution, resolutionToTptp }
-import gapt.proofs._
-import gapt.proofs.lk.LKProof
-import gapt.proofs.resolution._
-import gapt.provers.{ ResolutionProver, groundFreeVariables }
-import gapt.provers.escargot.impl._
-import gapt.utils.{ LogHandler, Maybe }
 import ammonite.ops._
+import gapt.expr._
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Eq
 import gapt.expr.formula.constants.EqC
@@ -19,11 +12,18 @@ import gapt.expr.ty.baseTypes
 import gapt.expr.util.constants
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
+import gapt.formats.tptp.TptpImporter
+import gapt.formats.tptp.TptpProblemToResolution
+import gapt.formats.tptp.resolutionToTptp
+import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
-import gapt.proofs.lk.rules.macros.WeakeningContractionMacroRule
-import gapt.provers.viper.aip.axioms.Axiom
-import gapt.provers.viper.spin.SuperpositionInductionProver
+import gapt.proofs.lk.LKProof
+import gapt.proofs.resolution._
+import gapt.provers.ResolutionProver
+import gapt.provers.escargot.impl._
+import gapt.utils.LogHandler
+import gapt.utils.Maybe
 
 object Escargot extends Escargot( splitting = true, equality = true, propositional = false ) {
   def lpoHeuristic( cnf: Iterable[HOLSequent], extraConsts: Iterable[Const] ): LPO = {
@@ -119,10 +119,6 @@ object QfUfEscargot extends Escargot( splitting = true, propositional = true, eq
 
 class Escargot( splitting: Boolean, equality: Boolean, propositional: Boolean ) extends ResolutionProver {
   override def getResolutionProof( cnf: Iterable[HOLClause] )( implicit ctx0: Maybe[MutableContext] ): Option[ResolutionProof] = {
-    getResolutionProofWithAxioms( cnf, spin = None ) map ( _._1 )
-  }
-
-  def getResolutionProofWithAxioms( cnf: Iterable[HOLClause], spin: Option[SuperpositionInductionProver] = None )( implicit ctx0: Maybe[MutableContext] ): Option[( ResolutionProof, Set[Axiom], Map[HOLSequent, ResolutionProof] )] = {
     implicit val ctx: MutableContext = ctx0.getOrElse( MutableContext.guess( cnf ) )
     val hasEquality = equality && cnf.flatMap( _.elements ).exists { case Eq( _, _ ) => true; case _ => false }
     val isPropositional = propositional || cnf.flatMap { freeVariables( _ ) }.isEmpty
@@ -134,7 +130,7 @@ class Escargot( splitting: Boolean, equality: Boolean, propositional: Boolean ) 
     state.newlyDerived ++= cnf.map {
       state.InputCls
     }
-    state.loop( spin )
+    state.loop()
   }
 
   def getAtomicLKProof( sequent: HOLClause )( implicit ctx0: Maybe[Context] ): Option[LKProof] = {
@@ -148,3 +144,4 @@ class Escargot( splitting: Boolean, equality: Boolean, propositional: Boolean ) 
     }
   }
 }
+

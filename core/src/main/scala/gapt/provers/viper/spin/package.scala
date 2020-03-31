@@ -3,6 +3,7 @@ package gapt.provers.viper
 import gapt.expr.{ Const, Expr }
 import gapt.expr.formula.{ Formula, Neg }
 import gapt.expr.ty.{ TArr, Ty }
+import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 
 package object spin {
@@ -31,4 +32,6 @@ package object spin {
 
   def lambdaType( t: String ): Boolean = t.matches( "fun[0-9]+" )
 
+  private[spin] implicit def labeledSequentToHOLSequent( sequent: Sequent[( String, Formula )] ): Sequent[Formula] =
+    sequent map { case ( _, f ) => f }
 }

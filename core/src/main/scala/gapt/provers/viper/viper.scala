@@ -198,7 +198,7 @@ object Viper {
 
         val generalize = opts.spinOptions.performGeneralization
         val testTerms = opts.spinOptions.sampleTestTerms
-        List( Duration.Inf -> SuperpositionInductionTactic( opts.spinOptions, opts.tipProblem.get )
+        List( Duration.Inf -> SuperpositionInductionTactic( opts.spinOptions )
           .aka( s"spin (generalization = $generalize, test terms = $testTerms)" ) )
     }
 
