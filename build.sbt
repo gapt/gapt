@@ -173,13 +173,13 @@ lazy val core = project.in( file( "core" ) ).
       "org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0",
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "org.parboiled" %% "parboiled" % "2.1.8",
-      "com.lihaoyi" %% "fastparse" % "2.1.3",
-      "com.lihaoyi" %% "sourcecode" % "0.1.7",
-      "org.typelevel" %% "cats-free" % "2.1.0",
-      "org.scala-lang.modules" %% "scala-xml" % "1.2.0",
+      "org.parboiled" %% "parboiled" % "2.2.0",
+      "com.lihaoyi" %% "fastparse" % "2.2.4",
+      "com.lihaoyi" %% "sourcecode" % "0.2.1",
+      "org.typelevel" %% "cats-free" % "2.1.1",
+      "org.scala-lang.modules" %% "scala-xml" % "1.3.0",
       "org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0",
-      "org.apache.commons" % "commons-lang3" % "3.9",
+      "org.apache.commons" % "commons-lang3" % "3.10",
       "com.lihaoyi" %% "ammonite-ops" % "2.0.4",
       "de.uni-freiburg.informatik.ultimate" % "smtinterpol" % "2.5",
       "com.github.scopt" %% "scopt" % "3.7.1",
@@ -198,7 +198,7 @@ lazy val core = project.in( file( "core" ) ).
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
       "io.circe" %% "circe-parser",
-      "io.circe" %% "circe-generic-extras" ).map( _ % "0.12.1" ) )
+      "io.circe" %% "circe-generic-extras" ).map( _ % "0.13.0" ) )
 
 lazy val examples = project.in( file( "examples" ) ).
   dependsOn( core ).
