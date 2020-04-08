@@ -2,9 +2,14 @@
 
 ## Version 2.16 (unreleased)
 
+## Version 2.15.1 (released on 2020-04-08)
+
+* Updates to the 2.15 release notes
+
 ## Version 2.15 (released on 2020-03-30)
 
 * DLS algorithm for formula equations
+* Spin: saturation-based induction prover
 * Update to Scala 2.13
 * Refactoring of TIP tools, HOL to FOL translation and iProver interface
 
