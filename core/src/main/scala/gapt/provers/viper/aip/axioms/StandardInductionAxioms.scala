@@ -1,20 +1,19 @@
 package gapt.provers.viper.aip.axioms
-import gapt.expr.{ Var, Const => Con }
-import gapt.proofs.gaptic._
-import gapt.proofs.lk.LKProof
-import gapt.proofs.Sequent
-import gapt.prooftool.prooftool
-import gapt.provers.viper.aip._
 import cats.instances.all._
 import cats.syntax.all._
+import gapt.expr.Var
 import gapt.expr.formula.Formula
 import gapt.expr.subst.Substitution
+import gapt.expr.{ Const => Con }
 import gapt.proofs.LabelledSequent
+import gapt.proofs.Sequent
 import gapt.proofs.context.Context
-import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.gaptic._
+import gapt.proofs.lk.LKProof
+import gapt.provers.viper.aip._
 
 object StandardInductionAxioms {
-  def apply( variable: Var, formula: Formula )( implicit ctx: MutableContext ): ThrowsError[Axiom] = {
+  def apply( variable: Var, formula: Formula )( implicit ctx: Context ): ThrowsError[Axiom] = {
     apply( ( _, _ ) => variable :: Nil, ( _ ) => Right( formula ) )( Sequent() ).map( _.head )
   }
 }
@@ -39,7 +38,7 @@ case class StandardInductionAxioms(
    * @return Either a list of induction axioms or a non empty list of strings describing the why induction axioms
    *         could not be generated.
    */
-  override def apply( sequent: LabelledSequent )( implicit ctx: MutableContext ): ThrowsError[List[Axiom]] =
+  override def apply( sequent: LabelledSequent )( implicit ctx: Context ): ThrowsError[List[Axiom]] =
     for {
       formula <- formulaSelector( sequent )
       variables = variableSelector( formula, ctx )
