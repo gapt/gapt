@@ -35,7 +35,7 @@ package object aip {
         case ( f, Ant( i ) ) => s"h$i" -> f
         case ( f, _ )        => "goal" -> f
       },
-      problem.ctx )
+      problem.context )
 
   /**
    * Reads the constructors of type `typ` from the context.

@@ -77,7 +77,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
   override protected def test( implicit testRun: TestRun ): Unit = {
     val bench = TipSmtImporter.fixupAndLoad( f ) --- "tip parser"
 
-    implicit val ctx: MutableContext = bench.ctx.newMutable
+    implicit val ctx: MutableContext = bench.context.newMutable
     val sequent = bench.toSequent
     val lkProofWithSk = Viper.getStrategies( sequent, ViperOptions() ).reverse.view.flatMap {
       case ( duration, strategy ) =>
