@@ -26,6 +26,7 @@ import gapt.formats.babel.Precedence
 import gapt.logic.hol.SkolemFunctions
 import gapt.proofs.Checkable
 import gapt.proofs.context.facet.BaseTypes
+import gapt.proofs.context.facet.ConditionalReductions
 import gapt.proofs.context.facet.Constants
 import gapt.proofs.context.facet.Definitions
 import gapt.proofs.context.facet.Facet
@@ -220,7 +221,7 @@ trait Context extends BabelSignature {
    * @return Returns all the expression-level reduction rules currently stored
    * in this context.
    */
-  def reductionRules: Iterable[ReductionRule] = state.getAll[ReductionRule]
+  def reductionRules: Iterable[ReductionRule] = state.get[Reductions].normalizer.rules
 
   /**
    * Retrieves all expression-level conditional reduction rules.
@@ -228,7 +229,8 @@ trait Context extends BabelSignature {
    * @return Returns all the expression-level conditional reduction rules currently stored
    * in this context.
    */
-  def conditionalReductionRules: Iterable[ConditionalReductionRule] = state.getAll[ConditionalReductionRule]
+  def conditionalReductionRules: Iterable[ConditionalReductionRule] =
+    state.get[ConditionalReductions].normalizer.rewriteRules
 
   /**
    * Checks whether the context contains a given definition.

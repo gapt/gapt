@@ -1,9 +1,5 @@
 package gapt.provers.viper.aip.axioms
 
-import gapt.expr.{ Var, Const => Con }
-import gapt.proofs.gaptic.{ ProofState, allR, escargot, induction }
-import gapt.proofs.Sequent
-import gapt.provers.viper.aip.{ ThrowsError, getConstructors }
 import cats.instances.all._
 import cats.syntax.all._
 import gapt.expr.formula.All
@@ -14,8 +10,17 @@ import gapt.expr.formula.Or
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.util.rename
+import gapt.expr.Var
+import gapt.expr.{ Const => Con }
 import gapt.proofs.LabelledSequent
-import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.Sequent
+import gapt.proofs.context.Context
+import gapt.proofs.gaptic.ProofState
+import gapt.proofs.gaptic.allR
+import gapt.proofs.gaptic.escargot
+import gapt.proofs.gaptic.induction
+import gapt.provers.viper.aip.ThrowsError
+import gapt.provers.viper.aip.getConstructors
 
 case class DomainClosureAxioms( types: List[TBase] = Nil ) extends AxiomFactory {
 
@@ -28,7 +33,7 @@ case class DomainClosureAxioms( types: List[TBase] = Nil ) extends AxiomFactory 
    * @param ctx Defines the constants, types, etc.
    * @return A list of domain closure axioms or an error message if the axioms could not be constructed.
    */
-  override def apply( sequent: LabelledSequent )( implicit ctx: MutableContext ): ThrowsError[List[Axiom]] =
+  override def apply( sequent: LabelledSequent )( implicit ctx: Context ): ThrowsError[List[Axiom]] =
     types.traverse[ThrowsError, Axiom] { t => domainClosureAxiom( t ) }
 
   /**
@@ -39,7 +44,7 @@ case class DomainClosureAxioms( types: List[TBase] = Nil ) extends AxiomFactory 
    * @return A domain closure axiom for the specified inductive type or an error message if the given type is
    *         not inductive.
    */
-  private def domainClosureAxiom( caseType: TBase )( implicit ctx: MutableContext ): ThrowsError[Axiom] = {
+  private def domainClosureAxiom( caseType: TBase )( implicit ctx: Context ): ThrowsError[Axiom] = {
     for {
       constructors <- getConstructors( caseType, ctx )
     } yield new Axiom {
@@ -50,7 +55,7 @@ case class DomainClosureAxioms( types: List[TBase] = Nil ) extends AxiomFactory 
         proofState += allR
         proofState += induction( variable )
         constructors foreach {
-          _ => proofState += escargot
+          _ => proofState += escargot( ctx.newMutable )
         }
         proofState.result
       }

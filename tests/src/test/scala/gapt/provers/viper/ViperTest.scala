@@ -40,8 +40,8 @@ class ViperTest extends Specification with SequentMatchers {
         val file = ClasspathInputFile( s"induction/$prob.smt2" )
         val ( Nil, options ) = ViperOptions.parse( extractOptions( file.read ), opts0 )
         val problem = if ( options.fixup ) TipSmtImporter.fixupAndLoad( file ) else TipSmtImporter.load( file )
-        val lk = new TreeGrammarProver( problem.ctx, problem.toSequent, options.treeGrammarProverOptions ).solve()
-        problem.ctx check lk
+        val lk = new TreeGrammarProver( problem.context, problem.toSequent, options.treeGrammarProverOptions ).solve()
+        problem.context check lk
         lk.conclusion.distinct.diff( problem.toSequent ) must_== Sequent()
       }
     }

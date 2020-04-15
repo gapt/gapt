@@ -9,6 +9,7 @@ import cats.syntax.all._
 import gapt.expr.formula.All
 import gapt.expr.formula.Formula
 import gapt.expr.util.freeVariables
+import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 
 /**
@@ -46,7 +47,7 @@ case class SequentialInductionAxioms(
    *         x in X
    *         {X < x} and {X > x} are subsets of X containing all variables with index smaller/greater than the index of x.
    */
-  override def apply( sequent: Sequent[( String, Formula )] )( implicit ctx: MutableContext ): ThrowsError[List[Axiom]] = {
+  override def apply( sequent: Sequent[( String, Formula )] )( implicit ctx: Context ): ThrowsError[List[Axiom]] = {
     for {
       formula <- fsel( sequent )
       variables = vsel( formula, ctx )
@@ -64,7 +65,7 @@ case class SequentialInductionAxioms(
    * @return A sequential induction axiom.
    */
   private def inductionAxiom(
-    variables: List[Var], variable: Var, formula: Formula )( implicit ctx: MutableContext ): ThrowsError[Axiom] = {
+    variables: List[Var], variable: Var, formula: Formula )( implicit ctx: Context ): ThrowsError[Axiom] = {
     val ( outerVariables, _ :: innerVariables ) = variables span { _ != variable }
     val inductionFormula = All.Block( innerVariables, inductionQuantifierForm( variables, formula ) )
 

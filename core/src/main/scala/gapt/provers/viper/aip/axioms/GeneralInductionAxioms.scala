@@ -1,13 +1,13 @@
 package gapt.provers.viper.aip.axioms
 
-import gapt.expr.Var
-import gapt.proofs.Sequent
-import gapt.provers.viper.aip._
 import cats.instances.all._
 import cats.syntax.all._
+import gapt.expr.Var
 import gapt.expr.formula.All
 import gapt.expr.formula.Formula
-import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.Sequent
+import gapt.proofs.context.Context
+import gapt.provers.viper.aip._
 
 case class GeneralInductionAxioms(
     vsel: VariableSelector = allVariablesSelector( _ )( _ ),
@@ -29,7 +29,7 @@ case class GeneralInductionAxioms(
    * @param sequent The sequent for which the induction axioms are generated.
    * @return Either a list of induction axioms, or a list of error-messages if the axioms could not be created
    */
-  override def apply( sequent: Sequent[( String, Formula )] )( implicit ctx: MutableContext ): ThrowsError[List[Axiom]] = {
+  override def apply( sequent: Sequent[( String, Formula )] )( implicit ctx: Context ): ThrowsError[List[Axiom]] = {
     for {
       formula <- fsel( sequent )
       variables = vsel( formula, ctx )
@@ -40,7 +40,7 @@ case class GeneralInductionAxioms(
   }
 
   private def inductionAxiom(
-    inductionVariables: List[Var], variable: Var, formula: Formula )( implicit ctx: MutableContext ): ThrowsError[Axiom] = {
+    inductionVariables: List[Var], variable: Var, formula: Formula )( implicit ctx: Context ): ThrowsError[Axiom] = {
     val closedVariables = inductionVariables filter { _ != variable }
     val inductionFormula = All.Block( closedVariables, formula )
     StandardInductionAxioms( variable, inductionFormula ) map { axiom =>

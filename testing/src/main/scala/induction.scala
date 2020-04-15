@@ -68,7 +68,7 @@ object testInduction extends App {
   logger.metric( "strategy", strategyName )
   try logger.time( "total" ) {
     val tipProblem = logger.time( "tip" ) { TipSmtImporter.fixupAndLoad( FilePath( fileName ) ) }
-    implicit val ctx: MutableContext = tipProblem.ctx.newMutable
+    implicit val ctx: MutableContext = tipProblem.context.newMutable
     logger.metric( "goal", tipProblem.goal.toSigRelativeString )
     val proof = logger.time( "prover" ) {
       ( ProofState( tipProblem.toSequent ) + resolveStrategy( strategyName ) ).result
@@ -91,13 +91,13 @@ object computeStrategies extends scala.App {
   args foreach { fileName =>
     try {
       val problem = TipSmtImporter.fixupAndLoad( FilePath( fileName ) )
-      import problem.ctx
+      import problem.context
       val sequent = problem.toSequent
       val All.Block( goalQuants, _ ) = sequent.succedent.head
       val inductiveGoalQuantIdcs =
         for {
           ( q @ Var( _, t ), i ) <- goalQuants.zipWithIndex
-          if ctx.getConstructors( t ).isDefined
+          if context.getConstructors( t ).isDefined
         } yield i
       val equationIdcs = for ( ( All.Block( _, Eq( _, _ ) ), i ) <- sequent.antecedent.zipWithIndex ) yield i
       val equationIdxSubsets = ( 0 to 2 ).flatMap( equationIdcs.toSet.subsets )
