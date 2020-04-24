@@ -2,6 +2,11 @@
 
 ## Version 2.16 (unreleased)
 
+## Version 2.15.2 (released on 2020-04-24)
+
+* CLI is the entry point of the JAR file
+* Fixes some occurrences of the Scala version number
+
 ## Version 2.15.1 (released on 2020-04-08)
 
 * Updates to the 2.15 release notes
