@@ -103,6 +103,7 @@ lazy val root = project.in( file( "." ) ).
     },
 
     // Release stuff
+    mainClass in assembly := Some( "gapt.cli.CLIMain" ),
     aggregate in assembly := false,
     releaseDist := {
       val baseDir = file( "." )
