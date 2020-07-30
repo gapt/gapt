@@ -30,6 +30,9 @@ abstract class NDProof extends SequentProof[Formula, NDProof] {
    */
   final def endSequent = conclusion
 
+  /** The unique formula in the succedent of the end-sequent. */
+  final def target: Formula = conclusion.succedent.head
+
   /**
    * Checks whether indices are in the right place and premise is defined at all of them.
    *
@@ -919,6 +922,9 @@ object ForallIntroRule extends ConvenienceConstructor( "ForallIntroRule" ) {
       case _ => throw NDRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
     }
   }
+
+  def apply( subProof: NDProof, eigenVariable: Var ): ForallIntroRule =
+    ForallIntroRule( subProof, eigenVariable, eigenVariable )
 }
 
 /**
@@ -1276,7 +1282,7 @@ case class EqualityIntroRule( t: Expr ) extends InitialSequent {
  *                   (these need to correspond to the order in c)
  */
 case class InductionCase( proof: NDProof, constructor: Const,
-                          hypotheses: Seq[SequentIndex], eigenVars: Seq[Var] ) {
+                          hypotheses: List[SequentIndex], eigenVars: List[Var] ) {
   val FunctionType( indTy, fieldTypes ) = constructor.ty
   require( fieldTypes == eigenVars.map( _.ty ) )
 

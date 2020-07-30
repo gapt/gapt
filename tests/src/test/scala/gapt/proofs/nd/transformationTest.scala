@@ -171,9 +171,9 @@ class transformationTest extends Specification {
       val s4 = LogicalAxiom( hof"(((x0: nat) + (0: nat)): nat) = x0" )
       val s5 = EqualityElimRule( s4, s3, hof"((((s(x0): nat) + (0: nat)): nat) = s(z: nat))", hov"z: nat" )
 
-      val cases = Seq(
-        InductionCase( b2, hoc"0: nat", Seq.empty, Seq.empty ),
-        InductionCase( s5, hoc"s: nat>nat", Seq( Ant( 0 ) ), Seq( hov"x0: nat" ) ) )
+      val cases = List(
+        InductionCase( b2, hoc"0: nat", List.empty, List.empty ),
+        InductionCase( s5, hoc"s: nat>nat", List( Ant( 0 ) ), List( hov"x0: nat" ) ) )
 
       val p = InductionRule( cases, Abs( Var( "x", TBase( "nat" ) ), hof"(((x: nat) + (0:nat)): nat) = x" ), le"x: nat" )
 

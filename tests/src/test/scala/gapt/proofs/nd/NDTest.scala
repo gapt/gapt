@@ -101,8 +101,8 @@ class NDTest extends Specification with SatMatchers {
     s5.conclusion( Suc( 0 ) ) mustEqual hof"(((s(x0:nat): nat) + (0:nat)): nat) = s(x0)"
 
     val cases = Seq(
-      InductionCase( b2, hoc"0: nat", Seq.empty, Seq.empty ),
-      InductionCase( s5, hoc"s: nat>nat", Seq( Ant( 0 ) ), Seq( hov"x0: nat" ) ) )
+      InductionCase( b2, hoc"0: nat", List.empty, List.empty ),
+      InductionCase( s5, hoc"s: nat>nat", List( Ant( 0 ) ), List( hov"x0: nat" ) ) )
     val p = InductionRule( cases, Abs( Var( "x", TBase( "nat" ) ), hof"(((x: nat) + (0:nat)): nat) = x" ), le"x: nat" )
 
     p.conclusion mustEqual Seq( hof"!(x: nat) ((x + (0:nat)): nat) = x", hof"!(x: nat) !(y: nat) (((s(x): nat) + y): nat) = s(x + y)" ) ++: Sequent() :+ hof"(((x: nat) + (0: nat)): nat) = x"
@@ -125,9 +125,9 @@ class NDTest extends Specification with SatMatchers {
     val b3 = LogicalAxiom( px )
     val b4 = ImpElimRule( b2, b3 )
 
-    val c1 = InductionCase( a1, c0, Seq(), Seq() )
-    val c2 = InductionCase( b4, cs, Seq( Ant( 1 ) ), Seq( x ) )
-    val c3 = InductionRule( Seq( c1, c2 ), Abs( x, px ), x )
+    val c1 = InductionCase( a1, c0, List(), List() )
+    val c2 = InductionCase( b4, cs, List( Ant( 1 ) ), List( x ) )
+    val c3 = InductionRule( List( c1, c2 ), Abs( x, px ), x )
 
     val d1 = ForallIntroRule( c3, x, x )
     val d2 = ImpIntroRule( d1, Ant( 0 ) )
