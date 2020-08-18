@@ -20,6 +20,6 @@ case class SkolemFunction( sym: Const, defn: Expr ) extends Update {
     ctx.check( sym.ty )
     ctx.check( defn )
     ctx.state.update[Constants]( _ + sym )
-      .update[SkolemFunctions]( _ + ( sym, defn ) )
+      .update[SkolemFunctions]( _.+( sym, defn ) )
   }
 }

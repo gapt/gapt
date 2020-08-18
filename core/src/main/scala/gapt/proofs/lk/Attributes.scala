@@ -28,7 +28,7 @@ object Attributes {
   case class AddAttributeUpdate( lemmaName: String, attrName: String ) extends Update {
     override def apply( ctx: Context ): State = {
       require( ctx.get[ProofNames].names.contains( lemmaName ), s"unknown lemma: $lemmaName" )
-      ctx.state.update[Attributes]( _ + ( lemmaName, attrName ) )
+      ctx.state.update[Attributes]( _.+( lemmaName, attrName ) )
     }
   }
 }

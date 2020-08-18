@@ -126,7 +126,7 @@ object readWDIMACS {
         .filter { _ startsWith "v " }
         .map { _ substring 2 trim }
         .flatMap[String] { _.split( " " ) }
-        .map { _ replace ( "x", "" ) } // toysat :-(
+        .map { _.replace( "x", "" ) } // toysat :-(
         .filter { _ nonEmpty }
         .map { _ toInt }
         .filterNot { _ == 0 }

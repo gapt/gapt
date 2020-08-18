@@ -24,6 +24,6 @@ case class ProofNameDeclaration( lhs: Expr, endSequent: HOLSequent ) extends Upd
       require( vs.contains( fv ) )
     for ( tv <- typeVariables( endSequent.toImplication ) )
       require( ps.contains( tv ) )
-    ctx.state.update[ProofNames]( _ + ( c, lhs, endSequent ) )
+    ctx.state.update[ProofNames]( _.+( c, lhs, endSequent ) )
   }
 }

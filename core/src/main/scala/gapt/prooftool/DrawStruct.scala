@@ -159,7 +159,7 @@ class DrawStruct( val main: StructViewer, val struct: Struct, private var str: S
   override def paintComponent( g: Graphics2D ): Unit = {
     super.paintComponent( g )
 
-    g.setStroke( new BasicStroke( fSize / 25, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND ) )
+    g.setStroke( new BasicStroke( fSize.toFloat / 25, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND ) )
     g.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB )
 
     if ( drawLines ) struct match {

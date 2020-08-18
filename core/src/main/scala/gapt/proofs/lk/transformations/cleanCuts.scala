@@ -25,14 +25,16 @@ object cleanCuts {
         case ( LogicalAxiom( _ ), _ ) =>
           val ( subProofNew, subConnector ) = recurse( rightSubProof, () )
           ( subProofNew,
-            subConnector * p.getRightSequentConnector.inv
-            + ( subConnector.child( aux2 ), p.getLeftSequentConnector.child( Ant( 0 ) ) ) )
+            subConnector * p.getRightSequentConnector.inv.+(
+              subConnector.child( aux2 ),
+              p.getLeftSequentConnector.child( Ant( 0 ) ) ) )
 
         case ( _, LogicalAxiom( _ ) ) =>
           val ( subProofNew, subConnector ) = recurse( leftSubProof, () )
           ( subProofNew,
-            subConnector * p.getLeftSequentConnector.inv
-            + ( subConnector.child( aux1 ), p.getRightSequentConnector.child( Suc( 0 ) ) ) )
+            subConnector * p.getLeftSequentConnector.inv.+(
+              subConnector.child( aux1 ),
+              p.getRightSequentConnector.child( Suc( 0 ) ) ) )
 
         case _ => super.visitCut( p, () )
       }

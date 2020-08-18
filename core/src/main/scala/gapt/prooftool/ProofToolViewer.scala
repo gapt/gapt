@@ -152,14 +152,14 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
 
         val width = component.size.width
         val height = component.size.height
-        val document = new Document( new PdfRectangle( width, height + 20 ) )
+        val document = new Document( new PdfRectangle( width.toFloat, height.toFloat + 20.0f ) )
         val result = chooser.selectedFile.getPath
         val path = if ( result.endsWith( ".pdf" ) ) result else result + ".pdf"
         val writer = PdfWriter.getInstance( document, new FileOutputStream( path ) )
         document.open()
         val content = writer.getDirectContent
-        val template = content.createTemplate( width, height )
-        val g2 = new PdfGraphics2D( template, width, height, true )
+        val template = content.createTemplate( width.toFloat, height.toFloat )
+        val g2 = new PdfGraphics2D( template, width.toFloat, height.toFloat, true )
         component.paint( g2 )
         g2.dispose()
         content.addTemplate( template, 0, 10 )

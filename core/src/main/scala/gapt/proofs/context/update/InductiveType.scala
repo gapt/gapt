@@ -49,7 +49,7 @@ case class InductiveType private (
       .update[BaseTypes]( _ + baseType )
       .update[Constants]( _ ++ constructors.map( _.constant ) )
       .update[Constants]( _ ++ projectors )
-      .update[StructurallyInductiveTypes]( _ + ( baseType.name, constructors.map( _.constant ).toVector ) )
+      .update[StructurallyInductiveTypes]( _.+( baseType.name, constructors.map( _.constant ).toVector ) )
   }
 
   private def checkConstructor( c: Constructor, ctx: Context ): Unit = {
@@ -171,7 +171,7 @@ class InductiveTypeInternalParser(
   private val baseType: TBase = TBase( name, typeParameters: _* )
 
   override def parse: InductiveType = {
-    val inductiveType = assembleInductiveType
+    val inductiveType = assembleInductiveType()
     validateInductiveType( inductiveType )
     inductiveType
   }
