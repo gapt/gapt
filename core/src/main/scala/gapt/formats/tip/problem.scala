@@ -198,7 +198,7 @@ object tipScalaEncoding {
         ( compileProjectorDefinitions( problem ) ++
           compileFunctionDefinitions( problem ) ++
           compileConstructorInjectivityAxioms( problem ) ++
-          compileProblemAssumptions( problem ) ) mkString ( "", ",\n    ", "" )
+          compileProblemAssumptions( problem ) ).mkString( "", ",\n    ", "" )
       }
           |    :-
           |    goal: ${stripNewlines( problem.goal.toString )}
@@ -256,7 +256,7 @@ object tipScalaEncoding {
   }
 
   private def compileProjectors( projectors: Seq[Const] ): String = {
-    projectors.map { compileProjector } mkString ( "", "\n", "" )
+    projectors.map { compileProjector }.mkString( "", "\n", "" )
   }
 
   private def compileProjector( projector: Const ): String = {

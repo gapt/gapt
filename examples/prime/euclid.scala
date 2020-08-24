@@ -81,7 +81,7 @@ case class euclid( k: Int ) extends PrimeDefinitions {
       destruct( "fk_0" ); trivial
       include( "ldivprod", ldivprod( k ) )
       unfold( "PRIME" ) in "primediv_0"
-      unfold( "DIV" ) in ( "ldivprod", "primediv_1" )
+      unfold( "DIV" ).in( "ldivprod", "primediv_1" )
       decompose
       rewrite rtl "ldivprod" in "primediv_1"
       theory

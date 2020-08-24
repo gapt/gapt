@@ -28,7 +28,7 @@ object syntacticMatching {
       case ( a: TVar, _ ) if subst.typeMap.get( a ).contains( b ) =>
         USome( subst )
       case ( a: TVar, _ ) if !subst.typeMap.contains( a ) =>
-        USome( subst + ( a, b ) )
+        USome( subst.+( a, b ) )
       case ( a1 ->: a2, b1 ->: b2 ) =>
         go( a1, b1, subst ) match {
           case USome( subst1 ) => go( a2, b2, subst1 )
@@ -64,7 +64,7 @@ object syntacticMatching {
           case USome( subst1 ) =>
             val v1_ = rename( v1, subst1.domain ++ subst1.range ++ freeVariables( List( a, b ) ) )
             val v2_ = Var( v1_.name, v2.ty )
-            go( Substitution( v1 -> v1_ )( e1 ), Substitution( v2 -> v2_ )( e2 ), subst1 + ( v1_, v2_ ) ).
+            go( Substitution( v1 -> v1_ )( e1 ), Substitution( v2 -> v2_ )( e2 ), subst1.+( v1_, v2_ ) ).
               map( subst2 => new PreSubstitution( subst2.map - v1_, subst2.typeMap ) )
           case _ => UNone()
         }
@@ -73,7 +73,7 @@ object syntacticMatching {
         USome( subst )
 
       case ( v: Var, exp ) if !subst.map.contains( v ) =>
-        go( v.ty, exp.ty, subst ).map( _ + ( v, exp ) )
+        go( v.ty, exp.ty, subst ).map( _.+( v, exp ) )
 
       case _ => UNone()
     }

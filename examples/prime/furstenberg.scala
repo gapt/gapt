@@ -28,7 +28,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
   }
 
   val intersectionOpen: LKProof = Lemma( hols"O(X), O(Y) :- O(intersection X Y)" ) {
-    unfold( "O" ) in ( "h_0", "h_1", "g" )
+    unfold( "O" ).in( "h_0", "h_1", "g" )
     allR
     impR
     allL( "h_0", hov"m:nat" ).forget
@@ -58,7 +58,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
       impL right trivial
 
       forget( "g_1_1" )
-      unfold( "ν" ) in ( "g_1_0", "h_0" )
+      unfold( "ν" ).in( "g_1_0", "h_0" )
       exL
       exR( le"n_0 * (l_1 + 1)" ).forget
       theory
@@ -71,7 +71,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
       impL right trivial
 
       forget( "g_1_1" )
-      unfold( "ν" ) in ( "g_1_0", "h_1" )
+      unfold( "ν" ).in( "g_1_0", "h_1" )
       exL
       exR( le"n_0 * (l_0 + 1)" ).forget
       theory
@@ -79,7 +79,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
   }
 
   val unionClosed = Lemma( hols"C(X : nat>o), C(Y) :- C(union X Y)" ) {
-    unfold( "C" ) in ( "h_0", "h_1", "g" )
+    unfold( "C" ).in( "h_0", "h_1", "g" )
     cut( "CF", hof" compN(union (X : nat>o) Y) =_s intersection(compN X)(compN Y)" ) left insert( deMorgan1 )
 
     cut( "g_2", hof"O(intersection (compN X) (compN Y))" ) left by { insert( intersectionOpen ) }
@@ -101,7 +101,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
         forget( "REM" )
         unfold( "compN", "U" ) in "CF"
         decompose
-        unfold( "ν" ) in ( "CF_0_1", "CF_1" )
+        unfold( "ν" ).in( "CF_0_1", "CF_1" )
         exL( "CF_0_1" )
         exL( "CF_1" )
         eql( "CF_0_1", "CF_1" )
@@ -173,10 +173,10 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
 
     by {
       forget( "g_0_0_0", "g_0_0_1" )
-      unfold( "ν" ) in ( "g_0_1", "g_1_0", "g_1_1" )
+      unfold( "ν" ).in( "g_0_1", "g_1_0", "g_1_1" )
       decompose
       exR( le"n_0 + n_1" ).forget
-      rewrite.many ltr ( "g_0_1", "g_1_0" )
+      rewrite.many.ltr( "g_0_1", "g_1_0" )
       theory
     }
   }
@@ -223,7 +223,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
   // Proof of INF(Set), Set subset X :- INF(X).
   // Set and X are free.
   val infiniteSubset = Lemma( hols"subset_inf: INF(Set), subset: subset Set X :- set_inf: INF(X)" ) {
-    unfold( "INF" ) in ( "subset_inf", "set_inf" )
+    unfold( "INF" ).in( "subset_inf", "set_inf" )
     allR( "set_inf" )
     allL( "subset_inf", hov"k:nat" ).forget
     exL( "subset_inf" )
@@ -275,7 +275,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
           }
 
           by {
-            unfold( "ν" ) in ( "h_0", "g" )
+            unfold( "ν" ).in( "h_0", "g" )
             exL
             exR( hov"n:nat" ).forget
             trivial
@@ -300,7 +300,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
             }
             by {
               andL
-              unfold( "ν" ) in ( "CF_1", "g" )
+              unfold( "ν" ).in( "CF_1", "g" )
               exL
               exR( "g", hov"n:nat" ).forget
               trivial
@@ -316,7 +316,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
               trivial
             }
             by {
-              unfold( "ν" ) in ( "h_0", "g" )
+              unfold( "ν" ).in( "h_0", "g" )
               exL
               exR( "g", hov"n:nat" ).forget
               trivial
@@ -343,8 +343,8 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
         decompose
         forget( "h_0_0", "h" )
         impL left by {
-          unfold( "P" ) in ( "CF2_0", "h_0_1" )
-          unfold( "union", "set_1" ) in ( "CF2_0", "h_0_1" )
+          unfold( "P" ).in( "CF2_0", "h_0_1" )
+          unfold( "union", "set_1" ).in( "CF2_0", "h_0_1" )
           prop
         }
 

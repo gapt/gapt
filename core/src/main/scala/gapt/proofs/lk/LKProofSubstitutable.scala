@@ -251,13 +251,13 @@ class LKProofReplacer( repl: PartialFunction[Expr, Expr] ) {
     override protected def visitWeakeningLeft( proof: WeakeningLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) = {
       val ( subProofNew, subConnector ) = recurse( proof.subProof, () )
       val proofNew = WeakeningLeftRule( subProofNew, TermReplacement( proof.formula, repl ) )
-      ( proofNew, ( proofNew.getSequentConnector * subConnector * proof.getSequentConnector.inv ) + ( proofNew.mainIndices( 0 ), proof.mainIndices( 0 ) ) )
+      ( proofNew, ( proofNew.getSequentConnector * subConnector * proof.getSequentConnector.inv ).+( proofNew.mainIndices( 0 ), proof.mainIndices( 0 ) ) )
     }
 
     override protected def visitWeakeningRight( proof: WeakeningRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) = {
       val ( subProofNew, subConnector ) = recurse( proof.subProof, () )
       val proofNew = WeakeningRightRule( subProofNew, TermReplacement( proof.formula, repl ) )
-      ( proofNew, ( proofNew.getSequentConnector * subConnector * proof.getSequentConnector.inv ) + ( proofNew.mainIndices( 0 ), proof.mainIndices( 0 ) ) )
+      ( proofNew, ( proofNew.getSequentConnector * subConnector * proof.getSequentConnector.inv ).+( proofNew.mainIndices( 0 ), proof.mainIndices( 0 ) ) )
     }
 
     override protected def visitForallLeft( proof: ForallLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) =

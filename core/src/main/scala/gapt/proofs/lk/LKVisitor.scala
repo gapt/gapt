@@ -186,7 +186,7 @@ trait LKVisitor[T] {
   protected def visitWeakeningLeft( proof: WeakeningLeftRule, otherArg: T ): ( LKProof, SequentConnector ) = {
     val ( subProofNew, subConnector ) = recurse( proof.subProof, transportToSubProof( otherArg, proof, 0 ) )
     val proofNew = WeakeningLeftRule( subProofNew, proof.mainFormula )
-    val connector = ( proofNew.getSequentConnector * subConnector * proof.getSequentConnector.inv ) + ( proofNew.mainIndices( 0 ), proof.mainIndices( 0 ) )
+    val connector = ( proofNew.getSequentConnector * subConnector * proof.getSequentConnector.inv ).+( proofNew.mainIndices( 0 ), proof.mainIndices( 0 ) )
 
     ( proofNew, connector )
   }
@@ -194,7 +194,7 @@ trait LKVisitor[T] {
   protected def visitWeakeningRight( proof: WeakeningRightRule, otherArg: T ): ( LKProof, SequentConnector ) = {
     val ( subProofNew, subConnector ) = recurse( proof.subProof, transportToSubProof( otherArg, proof, 0 ) )
     val proofNew = WeakeningRightRule( subProofNew, proof.mainFormula )
-    val connector = ( proofNew.getSequentConnector * subConnector * proof.getSequentConnector.inv ) + ( proofNew.mainIndices( 0 ), proof.mainIndices( 0 ) )
+    val connector = ( proofNew.getSequentConnector * subConnector * proof.getSequentConnector.inv ).+( proofNew.mainIndices( 0 ), proof.mainIndices( 0 ) )
 
     ( proofNew, connector )
   }

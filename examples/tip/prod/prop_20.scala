@@ -57,7 +57,7 @@ object prop_20 extends TacticsProof {
   val lemma_openind_proof = Lemma( lemma ) {
     allR; allR; allR; induction( hov"xs:list" )
     //- BC
-    rewrite.many ltr ( "a0", "l1" ) in "lemma"; refl
+    rewrite.many.ltr( "a0", "l1" ) in "lemma"; refl
     //- SC
     escargot
   }

@@ -137,7 +137,7 @@ trait LatexReplacementParser extends DeclarationParser {
     ( ( """(-|\\neg)""".r ) ~> literal2 ^^ { x => ast.Neg( x ) } ) | absOrAtomWeq
 
   lazy val reservedset = Set( "\\neg", "\\land", "\\lor", "\\impl", "\\forall", "\\exists" )
-  override lazy val atomsymb: Parser[String] = atomsymb2 ^? (
+  override lazy val atomsymb: Parser[String] = atomsymb2.^?(
     { case x if !( reservedset contains x ) => x },
     ( x => "error: \\neg,\\land,\\lor,\\impl,\\forall,\\exists are reserved names" ) )
 
