@@ -43,7 +43,7 @@ lazy val scalariformSettings =
     .setPreference( DoubleIndentConstructorArguments, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "4.7.1"
+val specs2Version = "4.10.3"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   javaOptions in Test += "-Xmx2g",
@@ -175,13 +175,12 @@ lazy val core = project.in( file( "core" ) ).
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.parboiled" %% "parboiled" % "2.2.0",
-      "com.lihaoyi" %% "fastparse" % "2.2.4",
+      "com.lihaoyi" %% "fastparse" % "2.3.0",
       "com.lihaoyi" %% "sourcecode" % "0.2.1",
       "org.typelevel" %% "cats-free" % "2.1.1",
       "org.scala-lang.modules" %% "scala-xml" % "1.3.0",
-      "org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0",
-      "org.apache.commons" % "commons-lang3" % "3.10",
-      "com.lihaoyi" %% "ammonite-ops" % "2.0.4",
+      "org.apache.commons" % "commons-lang3" % "3.11",
+      "com.lihaoyi" %% "ammonite-ops" % "2.2.0",
       "de.uni-freiburg.informatik.ultimate" % "smtinterpol" % "2.5",
       "com.github.scopt" %% "scopt" % "3.7.1",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
@@ -194,7 +193,7 @@ lazy val core = project.in( file( "core" ) ).
       "org.scilab.forge" % "jlatexmath" % "1.0.7" ),
 
     // JSON serialization
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.7",
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.9",
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
