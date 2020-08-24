@@ -15,7 +15,7 @@ class nTape3 extends AnalysisWithCeresOmega {
 
   override def printStatistics() = {
     super.printStatistics()
-    nTapeInstances.printInstances( this.expansion_proof, this.proofdb.Definitions )
+    nTapeInstances.printInstances( this.expansion_proof, this.proofdb().Definitions )
   }
 
 }

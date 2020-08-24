@@ -42,7 +42,7 @@ object CutReductionBenchmarkTools {
         math.max( 2, math.round( 1.second / time0 ) ),
         math.floor( 10.seconds / time0 ).toLong ) )
     val time1 = measure( ( 0L until extraRuns ).foreach( _ => f ) )
-    ( time0 + time1 ) / ( 1 + extraRuns )
+    ( time0 + time1 ) / ( 1 + extraRuns.toDouble )
   }
 
   trait Method {
