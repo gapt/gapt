@@ -50,7 +50,7 @@ object furstenbergWitness {
     def apply[V]( coeffs: Iterable[( Multiset[V], Int )] ): ZZMPolynomial[V] =
       new ZZMPolynomial( ( Map() ++ coeffs.view.
         groupBy( _._1 ).
-        mapValues( _.map( _._2 ).sum ) ).
+        view.mapValues( _.map( _._2 ).sum ) ).
         filter( _._2 != 0 ) )
   }
 

@@ -110,7 +110,7 @@ object lattice extends TacticsProof {
   val p_2 = Lemma( hols":- T" ) {
     unfold( "T" ) in "T"
     decompose
-    unfold( "<=" ) in ( "T_0_0", "T_0_1", "T_1" )
+    unfold( "<=" ).in( "T_0_0", "T_0_1", "T_1" )
     foTheory
   }
 
@@ -119,7 +119,7 @@ object lattice extends TacticsProof {
     andR left by {
       unfold( "AS" ) in "g"
       decompose
-      unfold( "<=" ) in ( "g_0_0", "g_0_1" ); foTheory
+      unfold( "<=" ).in( "g_0_0", "g_0_1" ); foTheory
     }
     insert( p_2 )
   }
