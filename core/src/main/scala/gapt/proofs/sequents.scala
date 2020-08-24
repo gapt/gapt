@@ -230,7 +230,7 @@ case class Sequent[+A]( antecedent: Vector[A], succedent: Vector[A] ) {
    * @tparam B The return type of f
    * @return The sequent of type B that results from mapping f over both cedents.
    */
-  def map[B]( f: ( A ) => B ): Sequent[B] = this map ( f, f )
+  def map[B]( f: ( A ) => B ): Sequent[B] = this.map( f, f )
 
   def flatMap[B]( f: A => IterableOnce[B] ): Sequent[B] = flatMap( f, f )
 

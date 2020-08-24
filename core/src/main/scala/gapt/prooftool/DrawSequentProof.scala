@@ -96,8 +96,8 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
   def endSequentWidth() = endSequentPanel.width()
   def subProofsWidth() = subProofsPanel.width()
   def width() = size.width
-  def endSequentLeftMarginWidth() = ( width * subProofsPanel.xLayoutAlignment - endSequentWidth * endSequentPanel.xLayoutAlignment ).toInt
-  def endSequentRightMarginWidth() = ( width * ( 1 - subProofsPanel.xLayoutAlignment ) - endSequentWidth * ( 1 - endSequentPanel.xLayoutAlignment ) ).toInt
+  def endSequentLeftMarginWidth() = ( width() * subProofsPanel.xLayoutAlignment - endSequentWidth() * endSequentPanel.xLayoutAlignment ).toInt
+  def endSequentRightMarginWidth() = ( width() * ( 1 - subProofsPanel.xLayoutAlignment ) - endSequentWidth() * ( 1 - endSequentPanel.xLayoutAlignment ) ).toInt
 
   linePanel.xLayoutAlignment = 0.5
   endSequentPanel.xLayoutAlignment = 0.5

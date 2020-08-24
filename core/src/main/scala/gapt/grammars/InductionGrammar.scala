@@ -269,7 +269,7 @@ case class InductionGrammarMinimizationFormula( g: InductionGrammar ) {
             cs += vtratgProdInc --> Or( l.map( _._2 ).map( productionIsIncluded ) )
         }
     }
-    And( cs.result )
+    And( cs.result() )
   }
 }
 

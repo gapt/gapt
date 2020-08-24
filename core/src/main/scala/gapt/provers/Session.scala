@@ -407,7 +407,7 @@ object Session {
         case Push =>
           formulaStack push assertedFormulas; ()
         case Pop =>
-          assertedFormulas = formulaStack.pop; ()
+          assertedFormulas = formulaStack.pop(); ()
         case Assert( formula ) =>
           assertedFormulas += formula; ()
         case AssertLabelled( formula, _ ) =>

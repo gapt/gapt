@@ -21,7 +21,7 @@ lazy val commonSettings = Seq(
     devConnection = Some( "scm:git:git@github.com:gapt/gapt.git" ) ) ),
   bintrayOrganization := Some( "gapt" ),
 
-  scalaVersion := "2.13.1",
+  scalaVersion := "2.13.3",
   scalacOptions in Compile ++= Seq(
     "-deprecation",
     "-language:postfixOps",
