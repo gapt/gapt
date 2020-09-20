@@ -1,17 +1,24 @@
 package gapt.formats.tptp
 
 import gapt.expr._
+import gapt.expr.preExpr.FlatOpsChild
 
 object TptpToString {
 
   def tptpInput( input: TptpInput ): String = input match {
     case AnnotatedFormula( language, name, role, formula, annots ) =>
       s"${atomic_word( language )}(${atomic_word( name )}, $role, ${expression( formula )}${annotations( annots )}).\n"
+    //TODO: fix pre formula printing
+    case AnnotatedPreFormula( language, name, role, formula, annots ) =>
+      s"${atomic_word( language )}(${atomic_word( name )}, $role, ${pre_expression( formula )}, ${annotations( annots )}).\n"
     case IncludeDirective( fileName, None ) => s"include(${single_quoted( fileName )}).\n"
     case IncludeDirective( fileName, Some( seq ) ) =>
       //TODO: check what seq actually contains
       val args = seq.map( single_quoted ).mkString( "[", ", ", "]" )
       s"include(${single_quoted( fileName )}, ${args}).\n"
+
+    case TypeDeclaration( language, name, ty_name, ty_definition, annots ) =>
+      s"${atomic_word( language )}(${atomic_word( name )}, type, ${ty_name} : ${complex_type( ty_definition )}, ${annotations( annots )}).\n"
   }
 
   def annotations( annots: Seq[Expr] ): String = annots.map( expression ).map( ", " + _ ).mkString
@@ -66,6 +73,30 @@ object TptpToString {
     case App( a, b ) => binExpr( a, b, p, prio.term, s"@" )
   }
 
+  //TODO: do typed expression printing
+  private def pre_expression( expr: preExpr.Expr ): String = expr match {
+    case preExpr.Ident( name, ty, None )           => s"Ident(${name}, ${pre_type( ty )})"
+    case preExpr.Ident( name, ty, Some( params ) ) => s"Ident(${name}, ${pre_type( ty )}, ${params.map( pre_type ).mkString( ", " )})"
+    case preExpr.App( s, t )                       => s"App(${pre_expression( s )}, ${pre_expression( t )})"
+    case preExpr.Abs( s, t )                       => s"Abs(${pre_expression( s )}, ${pre_expression( t )})"
+    case preExpr.Quoted( e, _, _ )                 => s"Quoted(${expression( e )}, _, _)"
+    case preExpr.TypeAnnotation( expr, ty )        => pre_expression( expr )
+    case preExpr.LocAnnotation( expr, loc )        => pre_expression( expr )
+    case preExpr.FlatOps( children )               => s"FlatOps(${children.map( flatops_child ).mkString( ", " )})"
+  }
+
+  private def flatops_child( fo: FlatOpsChild ): String = fo match {
+    case Left( ( str, loc ) ) => s"String($str)"
+    case Right( expr )        => s"Expr(${pre_expression( expr )})"
+  }
+
+  private def pre_type( t: preExpr.Type ): String = t match {
+    case preExpr.BaseType( name, params ) => s"BaseType(${name}, ${params.map( pre_type ).mkString( ", " )},)"
+    case preExpr.VarType( name )          => s"VarType(${name}})"
+    case preExpr.MetaType( name )         => s"VarType(${name.toString}})"
+    case preExpr.ArrType( a, b )          => s"ArrType(${pre_type( a )}, ${pre_type( b )})"
+  }
+
   def renameVarName( name: String ) =
     name.toUpperCase match {
       case upper @ upperWordRegex() => upper
@@ -91,6 +122,14 @@ object TptpToString {
     case lowerWordRegex()      => name
     case definedOrSystemWord() => name
     case _                     => single_quoted( name )
+  }
+  def complex_type( ty: preExpr.Type ): String = ty match {
+    case preExpr.VarType( name )                             => s"${name}"
+    case preExpr.MetaType( name )                            => s"${name}"
+    case preExpr.BaseType( name, Nil )                       => s"${name}"
+    case preExpr.BaseType( name, args )                      => s"${name}${args.map( complex_type ).mkString( "(", ", ", ")" )}"
+    case preExpr.ArrType( t1 @ preExpr.ArrType( _, _ ), t2 ) => s"(${complex_type( t1 )}) > ${complex_type( t2 )}"
+    case preExpr.ArrType( t1, t2 )                           => s"${complex_type( t1 )} > ${complex_type( t2 )}"
   }
   def single_quoted( name: String ): String =
     "'" + name.replace( "\\", "\\\\" ).replace( "'", "\\'" ) + "'"

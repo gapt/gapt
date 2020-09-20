@@ -15,6 +15,8 @@ trait VarOrConst extends Expr {
   def name: String
 }
 
+trait InterpretedConstant extends Const
+
 trait LogicalConstant extends Const
 
 trait FOLExpression extends Expr {
@@ -133,6 +135,7 @@ private[expr] object determineTraits {
 
   private class Const_with_FOLQuantifier( s: String, t: Ty, ps: List[Ty] ) extends Const( s, t, ps ) with FOLQuantifier
   private class Const_with_LogicalConstant( s: String, t: Ty, ps: List[Ty] ) extends Const( s, t, ps ) with LogicalConstant
+  private class Const_with_InterpretedConstant( s: String, t: Ty, ps: List[Ty] ) extends Const( s, t, ps ) with InterpretedConstant
   private class Const_with_PropConnective_with_PropFormula( s: String, t: Ty, ps: List[Ty] ) extends Const( s, t, ps ) with PropConnective with PropFormula
   private class Const_with_FOLConst( s: String, t: Ty, ps: List[Ty] ) extends Const( s, t, ps ) with FOLConst
   private class Const_with_PropAtom( s: String, t: Ty, ps: List[Ty] ) extends Const( s, t, ps ) with PropAtom
