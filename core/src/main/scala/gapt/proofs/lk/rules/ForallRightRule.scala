@@ -28,23 +28,9 @@ import gapt.proofs.lk.LKProof
  * @param quantifiedVariable The variable x.
  */
 case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable: Var, quantifiedVariable: Var )
-  extends UnaryLKProof with CommonRule with Eigenvariable {
+  extends StrongQuantifierRule {
 
   validateIndices( premise, Seq(), Seq( aux ) )
-
-  val ( auxFormula, context ) = premise focus aux
-
-  //eigenvariable condition
-  if ( freeVariables( context ) contains eigenVariable )
-    throw LKRuleCreationException( s"Eigenvariable condition is violated: $context contains $eigenVariable" )
-
-  val subFormula: Formula = BetaReduction.betaNormalize( Substitution( eigenVariable, quantifiedVariable )( auxFormula ) )
-
-  if ( BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) ) != auxFormula )
-    throw LKRuleCreationException(
-      s"Aux formula should be $subFormula[$quantifiedVariable\\$eigenVariable] = " +
-        BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) ) +
-        s", but is $auxFormula." )
 
   val mainFormula: Formula = BetaReduction.betaNormalize( All( quantifiedVariable, subFormula ) )
 

@@ -83,4 +83,8 @@ object CutRule extends ConvenienceConstructor( "CutRule" ) {
 
     new CutRule( leftSubProof, Suc( sucIndices( 0 ) ), rightSubProof, Ant( antIndices( 0 ) ) )
   }
+
+  def apply( leftSubProof: LKProof, rightSubProof: LKProof ): CutRule =
+    apply( leftSubProof, rightSubProof,
+      leftSubProof.endSequent.succedent.intersect( rightSubProof.endSequent.antecedent ).head )
 }

@@ -54,3 +54,18 @@ abstract class EqualityRule extends UnaryLKProof with CommonRule {
   def eqInConclusion: SequentIndex = getSequentConnector.child( eq )
 
 }
+
+object EqualityRule {
+  def apply( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, replacementContext: Abs ): EqualityRule =
+    if ( aux.isAnt )
+      EqualityLeftRule( subProof, eq, aux, replacementContext )
+    else
+      EqualityRightRule( subProof, eq, aux, replacementContext )
+
+  def unapply( proof: EqualityRule ): Option[( LKProof, SequentIndex, SequentIndex, Abs )] =
+    proof match {
+      case proof: EqualityLeftRule  => EqualityLeftRule.unapply( proof )
+      case proof: EqualityRightRule => EqualityRightRule.unapply( proof )
+      case _                        => None
+    }
+}
