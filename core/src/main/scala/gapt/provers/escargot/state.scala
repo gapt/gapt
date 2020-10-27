@@ -328,7 +328,7 @@ class EscargotState( val ctx: MutableContext ) {
 
   protected def handleEmptyClauses(): Option[ResolutionProof] = {
     if ( !( usable exists { _.clause.isEmpty } ) )
-      None
+      return None
     for ( cls <- usable if cls.clause.isEmpty && cls.assertion.isEmpty )
       return Some( cls.proof )
     if ( solver.isSatisfiable ) {
