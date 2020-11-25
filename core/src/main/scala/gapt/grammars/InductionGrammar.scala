@@ -1,7 +1,7 @@
 package gapt.grammars
 
 import gapt.expr._
-import gapt.expr.formula.fol.{ folSubTerms, folTermSize }
+import gapt.expr.formula.fol.{ flatSubterms, folTermSize }
 import gapt.expr.formula.hol.atoms
 import gapt.formats.babel.{ BabelExporter, MapBabelSignature, Precedence }
 import gapt.grammars.InductionGrammar._
@@ -62,7 +62,7 @@ case class InductionGrammar(
 
   def defaultInstGammas( term: Expr ): Map[Expr, VTRATG.NonTerminalVect] = {
     val nameGen = rename.awayFrom( List( tau, alpha ) ++ gamma ++ nus.values.flatten )
-    folSubTerms( term ).filter( _.ty == term.ty ).map( s => s -> gamma.map( nameGen.fresh( _ ) ) ).toMap
+    flatSubterms( term ).filter( _.ty == term.ty ).map( s => s -> gamma.map( nameGen.fresh( _ ) ) ).toMap
   }
 
   def inst( term: Expr ): Instantiation =
@@ -230,7 +230,7 @@ object stableInductionGrammar {
         stable.map( Production( tau, _ ) )
     }.distinct
     val gammaProds = if ( gamma.isEmpty ) Vector() else {
-      val subTerms = terms.flatMap { case Apps( _, as ) => folSubTerms( as ) }
+      val subTerms = terms.flatMap { case Apps( _, as ) => flatSubterms( as ) }
       nus.toVector.flatMap {
         case ( _, nu ) =>
           val stable = stableTerms( subTerms, Seq( alpha ) ++ nu ++ gamma ).toList

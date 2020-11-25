@@ -10,6 +10,7 @@ import gapt.expr.subst.Substitution
 import gapt.expr.ty.To
 import gapt.expr.ty.arity
 import gapt.expr.util.LambdaPosition
+import gapt.expr.util.LambdaPosition.Choice
 import gapt.expr.util.constants
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
@@ -73,14 +74,14 @@ trait SimplificationRule extends InferenceRule {
 object getFOPositions {
   def apply( exp: Expr ): Map[Expr, Seq[LambdaPosition]] = {
     val poss = mutable.Map[Expr, Seq[LambdaPosition]]().withDefaultValue( Seq() )
-    def walk( exp: Expr, pos: List[Int] ): Unit = {
-      poss( exp ) :+= LambdaPosition( pos.reverse )
+    def walk( exp: Expr, pos: List[Choice] ): Unit = {
+      poss( exp ) :+= LambdaPosition( pos.reverse: _* )
       walkApp( exp, pos )
     }
-    def walkApp( exp: Expr, pos: List[Int] ): Unit = exp match {
+    def walkApp( exp: Expr, pos: List[Choice] ): Unit = exp match {
       case App( f, arg ) =>
-        walk( arg, 2 :: pos )
-        walkApp( f, 1 :: pos )
+        walk( arg, LambdaPosition.Right :: pos )
+        walkApp( f, LambdaPosition.Left :: pos )
       case _ =>
     }
     walk( exp, Nil )
@@ -302,7 +303,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
   object SubsumptionInterreduction extends PreprocessingRule {
     def preprocess( newlyInferred: Set[Cls], existing: IndexedClsSet ): Set[Cls] = {
-      val interreduced = newlyInferred.to[mutable.Set]
+      val interreduced = newlyInferred.to( mutable.Set )
       for {
         cls1 <- interreduced
         cls2 <- interreduced if cls1 != cls2
@@ -414,9 +415,9 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
   object Superposition extends InferenceRule {
     def isReductive( atom: Formula, i: SequentIndex, pos: LambdaPosition ): Boolean =
       ( atom, i, pos.toList ) match {
-        case ( Eq( t, s ), _: Suc, 2 :: _ )      => !termOrdering.lt( s, t )
-        case ( Eq( t, s ), _: Suc, 1 :: 2 :: _ ) => !termOrdering.lt( t, s )
-        case _                                   => true
+        case ( Eq( t, s ), _: Suc, LambdaPosition.Right :: _ ) => !termOrdering.lt( s, t )
+        case ( Eq( t, s ), _: Suc, LambdaPosition.Left :: LambdaPosition.Right :: _ ) => !termOrdering.lt( t, s )
+        case _ => true
       }
 
     def eligible( c: Cls, c1: HOLSequent, mgu: Substitution, i: SequentIndex ): Boolean = {

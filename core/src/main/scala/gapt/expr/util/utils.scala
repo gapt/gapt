@@ -33,7 +33,7 @@ import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.utils.NameGenerator
 
-import scala.collection.GenTraversable
+import scala.collection.Iterable
 import scala.collection.mutable
 
 /**
@@ -135,7 +135,7 @@ object boundVariables {
 object freeVariables {
   def apply( e: Expr ): Set[Var] = freeVariables( Some( e ) )
 
-  def apply( es: TraversableOnce[Expr] ): Set[Var] = {
+  def apply( es: IterableOnce[Expr] ): Set[Var] = {
     val free = Set.newBuilder[Var]
     def visit( e: Expr, bound: Set[Var] ): Unit = e match {
       case v: Var =>
@@ -147,15 +147,15 @@ object freeVariables {
         visit( a, bound + x )
       case _: Const =>
     }
-    es.foreach( visit( _, Set() ) )
+    es.iterator.foreach( visit( _, Set() ) )
     free.result()
   }
 
   def apply( seq: HOLSequent ): Set[Var] = apply( seq.elements )
 
   def apply( e: FOLExpression ): Set[FOLVar] = apply( Some( e ) )
-  def apply( es: TraversableOnce[FOLExpression] )( implicit dummyImplicit: DummyImplicit ): Set[FOLVar] =
-    freeVariables( es.asInstanceOf[TraversableOnce[Expr]] ).asInstanceOf[Set[FOLVar]]
+  def apply( es: IterableOnce[FOLExpression] )( implicit dummyImplicit: DummyImplicit ): Set[FOLVar] =
+    freeVariables( es.asInstanceOf[IterableOnce[Expr]] ).asInstanceOf[Set[FOLVar]]
   def apply( seq: FOLSequent )( implicit dummyImplicit: DummyImplicit ): Set[FOLVar] = apply( seq.elements )
 }
 
@@ -212,7 +212,7 @@ object constants {
   def apply( expression: Expr ): Set[Const] =
     all( expression ).filter { !_.isInstanceOf[LogicalConstant] }
 
-  def apply( es: GenTraversable[Expr] ): Set[Const] = ( Set.empty[Const] /: es ) { ( acc, e ) => acc union apply( e ) }
+  def apply( es: Iterable[Expr] ): Set[Const] = ( es.foldLeft( Set.empty[Const] ) ) { ( acc, e ) => acc union apply( e ) }
 
   def apply( s: HOLSequent ): Set[Const] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Const]() )( ( x, y ) => x ++ apply( y ) )
 }

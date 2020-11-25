@@ -9,7 +9,7 @@ import java.nio.file.{ Files, Paths }
  */
 object help {
   private val tarballPathBase = Paths.get( "apidocs" ).toAbsolutePath
-  private val devPathBase = Paths.get( "target", "scala-2.12", "unidoc" ).toAbsolutePath
+  private val devPathBase = Paths.get( "target", "scala-2.13", "unidoc" ).toAbsolutePath
 
   private val websitePath = "https://logic.at/gapt/api/"
 
@@ -57,7 +57,7 @@ object help {
    *
    * @param a An object. If it's not of a type defined within gapt, this won't work.
    */
-  def apply( a: AnyRef ) {
+  def apply( a: AnyRef ): Unit = {
     val className_ = a.getClass.getName
     val ( className, objectName ) = if ( className_ endsWith "$" ) {
       ( className_.init, className_ )

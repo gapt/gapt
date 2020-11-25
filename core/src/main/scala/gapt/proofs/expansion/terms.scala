@@ -191,6 +191,6 @@ object ETtMerge {
 object ETtWeak {
   def apply( instances: ( Expr, ETt )* ): ETtWeak = ETtWeak( instances.toMap )
   def withMerge( instances: Iterable[( Expr, ETt )] ): ETt =
-    ETtWeak( Map() ++ instances.groupBy( _._1 ).mapValues( chs => ETtMerge( chs.map( _._2 ) ) ) )
+    ETtWeak( Map() ++ instances.groupBy( _._1 ).view.mapValues( chs => ETtMerge( chs.map( _._2 ) ) ).toMap )
 }
 

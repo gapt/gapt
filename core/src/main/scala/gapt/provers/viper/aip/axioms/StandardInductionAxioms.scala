@@ -9,6 +9,7 @@ import cats.instances.all._
 import cats.syntax.all._
 import gapt.expr.formula.Formula
 import gapt.expr.subst.Substitution
+import gapt.proofs.LabelledSequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 

@@ -2,12 +2,13 @@ package gapt.formats.tptp.statistics
 
 import ammonite.ops.{ Path, exists }
 import gapt.expr._
+import gapt.expr.formula.Formula
 import gapt.expr.subst.Substitution
 import gapt.expr.util.expressionDepth
 import gapt.expr.util.expressionSize
 import gapt.formats.csv.{ CSVFile, CSVRow }
 import gapt.formats.tptp._
-import gapt.proofs.HOLSequent
+import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.proofs.resolution._
 import gapt.proofs.sketch.{ RefutationSketch, RefutationSketchToResolution }
 import gapt.utils.{ Statistic, TimeOutException, withTimeout }
@@ -15,6 +16,7 @@ import gapt.utils.{ Statistic, TimeOutException, withTimeout }
 import scala.collection.mutable
 import scala.compat.Platform.StackOverflowError
 import scala.concurrent.duration._
+import scala.collection.parallel.CollectionConverters._
 
 //TODO: make a common superclass for TstpProofStats and RPProofStats
 
@@ -490,7 +492,7 @@ object TstpStatistics {
     }
 
     val reused_proofs = freq.flatMap {
-      case ( n, freq ) if freq > 1 =>
+      case ( n, freq: Int ) if freq > 1 =>
         val p = names( n )
         ( n, ( p.conclusion, freq, p.immediateSubProofs.isEmpty ) ) :: Nil
       case _ => Nil

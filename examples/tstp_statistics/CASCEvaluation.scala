@@ -6,7 +6,7 @@ import gapt.formats.leancop.{ LeanCoPParser, LeanCoPParserException }
 import gapt.formats.tptp.statistics._
 import gapt.utils.{ Statistic, TimeOutException, time, withTimeout }
 
-import scala.compat.Platform.StackOverflowError
+import scala.collection.parallel.CollectionConverters._
 import scala.concurrent.duration._
 
 object CASCEvaluation {

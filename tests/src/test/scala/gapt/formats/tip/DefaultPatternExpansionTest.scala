@@ -13,42 +13,56 @@ import org.specs2.mutable.Specification
 
 class DefaultPatternExpansionTest extends Specification {
 
+  "default cases should be expanded in matched expressions" in {
+    val originalProblem = TipSmtParser.parse(
+      StringInputFile( """
+                         | (declare-datatype nat ((Z) (S (p nat))))
+                         | (prove (forall ((x nat)) (match (match x ((_ x))) ((Z Z) ( _ x)))))
+                       """.stripMargin ) )
+    val expectedProblem = TipSmtParser.parse(
+      StringInputFile( """
+                         | (declare-datatype nat ( (Z) (S (p nat))))
+                         | (prove (forall ((x nat)) (match ( match x ((Z x) ( (S x_0) x ) ) ) (( Z Z) ( (S x_0) x) ))))
+                       """.stripMargin ) )
+    expandDefaultPatterns.transform( originalProblem ) must_== expectedProblem
+  }
+
   "default cases should be expanded everywhere" in {
     val originalProblem = TipSmtParser.parse(
       StringInputFile( """
-        | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+        | (declare-datatype nat ((Z) (S (p nat))))
         | (define-fun
         |   f1
         |   ((x nat))
         |   nat
-        |   (forall ((x nat)) (match x (case Z Z) (case default x) )))
+        |   (forall ((x nat)) (match x ((Z Z) (_ x)))))
         | (define-funs-rec
         |   (
         |     (f2 ((x nat)) nat)
         |   )
         |   (
-        |     (forall ((x nat)) (match x (case Z Z) (case default x) ))
+        |     (forall ((x nat)) (match x ((Z Z) (_ x))))
         |   ))
-        | (prove (forall ((x nat)) (match x (case Z Z) (case default x) )))
-        | (assert (forall ((x nat)) (match x (case Z Z) (case default x) )))
+        | (prove (forall ((x nat)) (match x ((Z Z) ( _ x)))))
+        | (assert (forall ((x nat)) (match x (( Z Z) ( _ x)))))
       """.stripMargin ) )
     val expectedProblem = TipSmtParser.parse(
       StringInputFile( """
-        | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+        | (declare-datatype nat ( (Z) (S (p nat))))
         | (define-fun
         |   f1
         |   ((x nat))
         |   nat
-        |   (forall ((x nat)) (match x (case Z Z) (case (S x_0) x) )))
+        |   (forall ((x nat)) (match x (( Z Z) ( (S x_0) x)))))
         | (define-funs-rec
         |   (
         |     (f2 ((x nat)) nat)
         |   )
         |   (
-        |     (forall ((x nat)) (match x (case Z Z) (case (S x_0) x) ))
+        |     (forall ((x nat)) (match x (( Z Z) ( (S x_0) x) )))
         |   ))
-        | (prove (forall ((x nat)) (match x (case Z Z) (case (S x_0) x) )))
-        | (assert (forall ((x nat)) (match x (case Z Z) (case (S x_0) x) )))
+        | (prove (forall ((x nat)) (match x (( Z Z) ( (S x_0) x) ))))
+        | (assert (forall ((x nat)) (match x (( Z Z) ( (S x_0) x) ))))
       """.stripMargin ) )
     expandDefaultPatterns.transform( originalProblem ) must_== expectedProblem
   }
@@ -56,19 +70,19 @@ class DefaultPatternExpansionTest extends Specification {
   "default case should be replaced by missing constructors" in {
     val originalProblem = TipSmtParser.parse(
       StringInputFile( """
-        | (declare-datatypes () ( (it (Z) (S1 (p nat)) (S2 (p nat)) )))
+        | (declare-datatype it ((Z) (S1 (p nat)) (S2 (p nat))))
         | (define-fun
         |   f1 ((x it)) it
         |   (forall ((x it)) (match x
-        |   (case (S1 x_0) x) (case default x) )))
+        |   (( (S1 x_0) x) ( _ x)))))
       """.stripMargin ) )
     val expectedProblem = TipSmtParser.parse(
       StringInputFile( """
-        | (declare-datatypes () ( (it (Z) (S1 (p nat)) (S2 (p nat)) )))
+        | (declare-datatype it ((Z) (S1 (p nat)) (S2 (p nat))))
         | (define-fun
         |   f1 ((x it)) it
         |   (forall ((x it)) (match x
-        |   (case (S1 x_0) x) (case Z x) (case (S2 x_0) x) )))
+        |   (( (S1 x_0) x) ( Z x) ( (S2 x_0) x)))))
       """.stripMargin ) )
     expandDefaultPatterns.transform( originalProblem ) must_== expectedProblem
   }
@@ -76,11 +90,11 @@ class DefaultPatternExpansionTest extends Specification {
   "default case expansion should avoid variable capture" in {
     val originalProblem = TipSmtParser.parse(
       StringInputFile( """
-        | (declare-datatypes () ( (it (Z) (S1 (p nat)) (S2 (p nat)) )))
+        | (declare-datatype it ((Z) (S1 (p nat)) (S2 (p nat))))
         | (define-fun
         |   f1 ((x_0 it)) it
         |   (forall ((x_0 it)) (match x_0
-        |   (case (S1 x_1) x_0) (case default x_0) )))
+        |   (( (S1 x_1) x_0) ( _ x_0) ))))
       """.stripMargin ) )
     val TipSmtFunctionDefinition( _, _, _, _,
       TipSmtForall(

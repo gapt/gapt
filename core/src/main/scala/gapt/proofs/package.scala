@@ -16,6 +16,19 @@ package object proofs {
   val HOLSequent = Sequent
   type HOLSequent = Sequent[Formula]
 
+  type Label = String
+  type LabelledFormula = ( Label, Formula )
+  type LabelledSequent = Sequent[LabelledFormula]
+
+  /**
+   * Converts a labelled sequent to a sequent.
+   *
+   * @param sequent The sequent to be converted.
+   * @return The sequent obtained from the given sequent by dropping the labels.
+   */
+  implicit def labelledSequentToSequent( sequent: LabelledSequent ): Sequent[Formula] =
+    sequent map { _._2 }
+
   implicit class RichFormulaSequent( private val sequent: HOLSequent ) extends AnyVal {
     def formulas = sequent.elements
 
@@ -57,10 +70,10 @@ package object proofs {
   }
 
   // The "S" suffixes are necessary to disambiguate from the flatten and flatMap member methods.
-  implicit class SequentFlattenOp[A]( private val sequentCollection: Traversable[Sequent[A]] ) extends AnyVal {
+  implicit class SequentFlattenOp[A]( private val sequentCollection: Iterable[Sequent[A]] ) extends AnyVal {
     def flattenS: Sequent[A] = sequentCollection.fold( Sequent() )( _ ++ _ )
   }
-  implicit class SequentFlatMapOp[A]( private val collection: Traversable[A] ) extends AnyVal {
+  implicit class SequentFlatMapOp[A]( private val collection: Iterable[A] ) extends AnyVal {
     def flatMapS[B]( f: A => Sequent[B] ) = collection.view.map( f ).flattenS
   }
 }

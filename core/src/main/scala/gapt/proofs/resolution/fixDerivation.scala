@@ -59,10 +59,9 @@ object fixDerivation {
 
   def apply( p: ResolutionProof, cs: Iterable[ResolutionProof] ): ResolutionProof = {
     val csMap = cs.view.map( c => c.conclusion -> c ).toMap
-    mapInputClauses( apply( p, csMap.keySet.map( _.map( _.asInstanceOf[Atom] ) ) ) )( csMap )
+    mapInputClauses( apply( p, csMap.keySet.map( _.map( _.asInstanceOf[Atom] ) ).toSeq ) )( csMap )
   }
-  def apply( p: ResolutionProof, cs: Traversable[HOLClause] ): ResolutionProof =
-    apply( p, cs.toSeq )
+
   def apply( p: ResolutionProof, cs: Seq[HOLClause] ): ResolutionProof =
     mapInputClauses( p ) { seq =>
       val cls = seq.map( _.asInstanceOf[Atom] )
@@ -76,7 +75,7 @@ object fixDerivation {
 
   def apply( p: ResolutionProof, endSequent: HOLSequent ): ResolutionProof = {
     val cnf = structuralCNF( endSequent, structural = false )
-    mapInputClauses( fixDerivation( p, cnf.map( _.conclusion.map( _.asInstanceOf[Atom] ) ) ) )( cls => cnf.find( _.conclusion == cls ).get )
+    mapInputClauses( fixDerivation( p, cnf.map( _.conclusion.map( _.asInstanceOf[Atom] ) ).toSeq ) )( cls => cnf.find( _.conclusion == cls ).get )
   }
 }
 

@@ -56,8 +56,8 @@ object syntacticMatching {
           case _               => UNone()
         }
 
-      case ( Const( n1, _, ps1 ), Const( n2, _, ps2 ) ) if n1 == n2 =>
-        go( ps1, ps2, subst )
+      case ( Const( n1, ty1, ps1 ), Const( n2, ty2, ps2 ) ) if n1 == n2 =>
+        go( ty1 :: ps1, ty2 :: ps2, subst )
 
       case ( Abs( v1, e1 ), Abs( v2, e2 ) ) =>
         go( v1.ty, v2.ty, subst ) match {

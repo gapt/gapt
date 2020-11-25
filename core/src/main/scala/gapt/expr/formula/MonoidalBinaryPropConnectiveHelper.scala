@@ -5,8 +5,8 @@ import gapt.expr.formula.constants.MonomorphicLogicalC
 import gapt.expr.formula.fol.FOLFormula
 
 class MonoidalBinaryPropConnectiveHelper( c: MonomorphicLogicalC, val neutral: MonomorphicLogicalC ) extends BinaryPropConnectiveHelper( c ) {
-  def apply( fs: TraversableOnce[Expr] ): Formula = nAry( fs.toSeq: _* )
-  def apply( fs: TraversableOnce[FOLFormula] )( implicit d: DummyImplicit ): FOLFormula = nAry( fs.toSeq: _* )
+  def apply( fs: IterableOnce[Expr] ): Formula = nAry( fs.iterator.to( Seq ): _* )
+  def apply( fs: IterableOnce[FOLFormula] )( implicit d: DummyImplicit ): FOLFormula = nAry( fs.iterator.to( Seq ): _* )
 
   def leftAssociative( fs: Expr* ): Formula =
     fs.reduceLeftOption( super.apply ).getOrElse( neutral() ).asInstanceOf[Formula]
@@ -28,7 +28,6 @@ class MonoidalBinaryPropConnectiveHelper( c: MonomorphicLogicalC, val neutral: M
 
     def unapply( formula: Formula ): Some[List[Formula]] = formula match {
       case Binary( nAry( as ), nAry( bs ) ) => Some( as ::: bs )
-      case neutral()                        => Some( List() )
       case _                                => Some( List( formula ) )
     }
 

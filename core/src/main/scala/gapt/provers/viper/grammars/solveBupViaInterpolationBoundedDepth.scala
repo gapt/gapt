@@ -18,7 +18,7 @@ import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.logic.hol.CNFp
-import gapt.logic.hol.simplify
+import gapt.logic.hol.simplifyPropositional
 import gapt.logic.hol.skolemize
 import gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
 
@@ -86,10 +86,10 @@ object solveBupViaInterpolationBoundedDepth {
     val generalized =
       tree.zip( interpolants ).map {
         case ( ( ( nu_, gam ), _ ), interp ) =>
-          TermReplacement( simplify( interp ), Map( nu_ -> nu ) ++ gam.zip( bup.grammar.gamma ) ): Formula
+          TermReplacement( simplifyPropositional( interp ), Map[Expr, Expr]( nu_ -> nu ) ++ gam.zip( bup.grammar.gamma ) ): Formula
       }
 
-    val solution = simplify( Or(
+    val solution = simplifyPropositional( Or(
       generalized.zipWithDepth.postOrder.groupBy( _._2 ).
         values.map( _.map( _._1 ) ).map( And( _ ) ).
         filterNot( _ == Top() ) ) )
@@ -247,36 +247,36 @@ object solveBupViaInterpolationConcreteTerms {
     interps.keys.toSeq.sortBy( -folTermSize( _ ) ).foldLeft( interps )( ( interps, t ) =>
       interps.updated( t, improveAt( interps, t, bup, nu ) ) )
 
-  def apply( bup: InductionBUP, ts: Stream[Expr] ): Expr =
+  def apply( bup: InductionBUP, ts: LazyList[Expr] ): Expr =
     apply( bup, ts, Map(), rename(
       ( bup.grammar.nus.values.toSeq.flatten :+ bup.grammar.alpha ).
         find( _.ty == bup.grammar.indTy ).head, bup.grammar.gamma.toSet + bup.grammar.alpha ) )
 
-  def apply( bup: InductionBUP, ts: Stream[Expr], prev: Map[Expr, Formula], nu: Var ): Expr = {
+  def apply( bup: InductionBUP, ts: LazyList[Expr], prev: Map[Expr, Formula], nu: Var ): Expr = {
     val tree = boundedUnfolding( bup, ts.head )
     val Some( interpolants ) = SmtInterpol.getInterpolant( tree.map( _._2 ) ).
-      map( _.map( simplify( _ ) ) )
+      map( _.map( simplifyPropositional( _ ) ) )
 
     val generalized =
       tree.zip( interpolants ).map {
         case ( ( ( t, nu_, gam ), _ ), interp ) =>
-          t -> ( TermReplacement( simplify( interp ), Map( nu_ -> nu ) ++ gam.zip( bup.grammar.gamma ) ): Formula )
+          t -> ( TermReplacement( simplifyPropositional( interp ), Map[Expr, Expr]( nu_ -> nu ) ++ gam.zip( bup.grammar.gamma ) ): Formula )
       }
 
     val grouped = Map() ++
       generalized.postOrder.dropRight( 1 ).groupBy( _._1 ).
-      mapValues( fs => And( fs.map( _._2 ) ) )
+      view.mapValues( fs => And( fs.map( _._2 ) ) ).toMap
 
     val groupedAndPrev =
       ( grouped.keySet ++ prev.keySet ).
-        map( k => k -> simplify( grouped.getOrElse( k, Top() ) & prev.getOrElse( k, Top() ) ) ).
+        map( k => k -> simplifyPropositional( grouped.getOrElse( k, Top() ) & prev.getOrElse( k, Top() ) ) ).
         toMap
 
     // val improved = groupedAndPrev
     // val improved = improve( groupedAndPrev, bup, nu )
     val improved = groupedAndPrev.map { case ( k, f ) => k -> BDT( f ).simpEq.toFormula }
 
-    val solution = simplify( BDT( Or( improved.values.filterNot( _ == Top() ) ) ).simpEq.toFormula )
+    val solution = simplifyPropositional( BDT( Or( improved.values.filterNot( _ == Top() ) ) ).simpEq.toFormula )
     TreeGrammarProver.logger.info( s"candidate solution: ${solution.toUntypedString}" )
 
     val sol = Abs.Block( bup.grammar.alpha +: nu +: bup.grammar.gamma, solution )

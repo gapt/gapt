@@ -15,21 +15,21 @@ class VariableMatchExpansionTest extends Specification {
 
     val input =
       StringInputFile( """
-        | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+        | (declare-datatypes ((nat 0)) ( ( (Z) (S (p nat)))))
         | (define-fun
         |   f1
         |   ((x nat))
         |   nat
-        |   (forall ((x nat)) (match x (case Z Z) (case (S y) x) )))
+        |   (forall ((x nat)) (match x (( Z Z) ( (S y) x)) )))
         | (define-funs-rec
         |   (
         |     (f2 ((x nat)) nat)
         |   )
         |   (
-        |     (forall ((x nat)) (match x (case Z Z) (case (S y) x) ))
+        |     (forall ((x nat)) (match x (( Z Z) ( (S y) x)) ))
         |   ))
-        | (prove (forall ((x nat)) (match x (case Z Z) (case (S y) x) )))
-        | (assert (forall ((x nat)) (match x (case Z Z) (case (S y) x) )))
+        | (prove (forall ((x nat)) (match x (( Z Z) ( (S y) x)) )))
+        | (assert (forall ((x nat)) (match x (( Z Z) ( (S y) x)) )))
       """.stripMargin )
 
     val originalProblem = TipSmtParser.parse( input )
@@ -54,12 +54,12 @@ class VariableMatchExpansionTest extends Specification {
   "unquantified variables should not be expanded" in {
     val input =
       StringInputFile( """
-        | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+        | (declare-datatypes ((nat 0)) ( ( (Z) (S (p nat)))))
         | (define-fun
         |   f1
         |   ((x nat))
         |   nat
-        |   (forall ((x nat)) (match y (case Z Z) (case (S y) x) )))
+        |   (forall ((x nat)) (match y (( Z Z) ( (S y) x)) )))
       """.stripMargin )
     val originalProblem = TipSmtParser.parse( input )
     val transformedProblem =
@@ -70,16 +70,16 @@ class VariableMatchExpansionTest extends Specification {
   "existential variable should be expanded properly" in {
     val originalProblem = TipSmtParser.parse(
       StringInputFile( """
-        | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+        | (declare-datatypes ((nat 0)) ( ( (Z) (S (p nat)))))
         | (define-fun
         |   f1
         |   ((x nat))
         |   nat
-        |   (exists ((x nat)) (match x (case Z Z) (case (S y) x) )))
+        |   (exists ((x nat)) (match x (( Z Z) ( (S y) x)) )))
       """.stripMargin ) )
     val expectedProblem = TipSmtParser.parse(
       StringInputFile( """
-        | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+        | (declare-datatypes ((nat 0)) ( ( (Z) (S (p nat)))))
         | (define-fun
         |   f1
         |   ((x nat))
@@ -93,16 +93,16 @@ class VariableMatchExpansionTest extends Specification {
   "universal variable should be expanded properly" in {
     val originalProblem = TipSmtParser.parse(
       StringInputFile( """
-        | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+        | (declare-datatypes ((nat 0)) ( ( (Z) (S (p nat)))))
         | (define-fun
         |   f1
         |   ((x nat))
         |   nat
-        |   (forall ((x nat)) (match x (case Z Z) (case (S y) x) )))
+        |   (forall ((x nat)) (match x (( Z Z) ( (S y) x)) )))
       """.stripMargin ) )
     val expectedProblem = TipSmtParser.parse(
       StringInputFile( """
-        | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+        | (declare-datatypes ((nat 0)) ( ( (Z) (S (p nat)))))
         | (define-fun
         |   f1
         |   ((x nat))
@@ -116,7 +116,7 @@ class VariableMatchExpansionTest extends Specification {
   "variable capture should be avoided" in {
     val originalProblem = TipSmtParser.parse(
       StringInputFile( """
-        | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+        | (declare-datatypes ((nat 0)) ( ( (Z) (S (p nat)))))
         | (define-fun
         |   f1
         |   ((x nat))
@@ -124,12 +124,12 @@ class VariableMatchExpansionTest extends Specification {
         |   (forall
         |     ((x nat))
         |     (match x
-        |       (case Z Z)
-        |       (case (S y) (forall ((y Nat)) (= y x) ) ) )))
+        |       (( Z Z)
+        |       ( (S y) (forall ((y Nat)) (= y x) )) ) )))
       """.stripMargin ) )
     val expectedProblem = TipSmtParser.parse(
       StringInputFile( """
-        | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+        | (declare-datatypes ((nat 0)) ( ( (Z) (S (p nat)))))
         | (define-fun
         |   f1
         |   ((x nat))

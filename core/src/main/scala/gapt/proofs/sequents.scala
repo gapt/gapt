@@ -6,7 +6,7 @@ import cats.kernel.Monoid
 import gapt.expr.formula.Formula
 import gapt.logic.Polarity
 
-import scala.collection.GenTraversable
+import scala.collection.GenIterable
 
 /**
  * Represents an index of an element in a sequent.
@@ -199,7 +199,7 @@ case class Sequent[+A]( antecedent: Vector[A], succedent: Vector[A] ) {
    * @param es A collection of elements of type B > A.
    * @return The sequent with es added to the antecedent.
    */
-  def ++:[B >: A]( es: Traversable[B] ): Sequent[B] = es.foldRight[Sequent[B]]( this )( _ +: _ )
+  def ++:[B >: A]( es: Iterable[B] ): Sequent[B] = es.foldRight[Sequent[B]]( this )( _ +: _ )
 
   /**
    * Adds an element to the succedent. New elements are always outermost, i.e. on the very right.
@@ -215,7 +215,7 @@ case class Sequent[+A]( antecedent: Vector[A], succedent: Vector[A] ) {
    * @param es A collection of elements of type B > A.
    * @return The sequent with es added to the succedent.
    */
-  def :++[B >: A]( es: Traversable[B] ): Sequent[B] = es.foldLeft[Sequent[B]]( this )( _ :+ _ )
+  def :++[B >: A]( es: Iterable[B] ): Sequent[B] = es.foldLeft[Sequent[B]]( this )( _ :+ _ )
 
   def ++[B >: A]( that: Sequent[B] ) = Sequent( this.antecedent ++ that.antecedent, this.succedent ++ that.succedent )
 
@@ -232,7 +232,7 @@ case class Sequent[+A]( antecedent: Vector[A], succedent: Vector[A] ) {
    */
   def map[B]( f: ( A ) => B ): Sequent[B] = this map ( f, f )
 
-  def flatMap[B]( f: A => TraversableOnce[B] ): Sequent[B] = flatMap( f, f )
+  def flatMap[B]( f: A => IterableOnce[B] ): Sequent[B] = flatMap( f, f )
 
   def collect[B]( f: PartialFunction[A, B] ): Sequent[B] =
     Sequent( antecedent collect f, succedent collect f )
@@ -247,7 +247,7 @@ case class Sequent[+A]( antecedent: Vector[A], succedent: Vector[A] ) {
    */
   def map[B]( f: ( A ) => B, g: ( A ) => B ) = Sequent( antecedent map f, succedent map g )
 
-  def flatMap[B]( f: A => TraversableOnce[B], g: A => TraversableOnce[B] ): Sequent[B] =
+  def flatMap[B]( f: A => IterableOnce[B], g: A => IterableOnce[B] ): Sequent[B] =
     Sequent( antecedent flatMap f, succedent flatMap g )
 
   /**
@@ -463,9 +463,9 @@ case class Sequent[+A]( antecedent: Vector[A], succedent: Vector[A] ) {
 object Sequent {
   def apply[A](): Sequent[A] = Sequent( Vector(), Vector() )
 
-  def apply[A]( ant: Traversable[A], suc: Traversable[A] ): Sequent[A] = Sequent( ant.toVector, suc.toVector )
+  def apply[A]( ant: Iterable[A], suc: Iterable[A] ): Sequent[A] = Sequent( ant.toVector, suc.toVector )
 
-  def apply[A]( polarizedElements: Traversable[( A, Polarity )] ): Sequent[A] = {
+  def apply[A]( polarizedElements: Iterable[( A, Polarity )] ): Sequent[A] = {
     val ( ant, suc ) = polarizedElements.view.partition( _._2.inAnt )
     Sequent( ant.map( _._1 ), suc.map( _._1 ) )
   }

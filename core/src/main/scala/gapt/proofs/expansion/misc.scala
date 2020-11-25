@@ -21,7 +21,7 @@ object formulaToExpansionTree {
   def apply( formula: Formula, pol: Polarity ): ExpansionTree =
     apply( formula, Set.empty, pol )
 
-  def apply( formula: Formula, substitutions: Traversable[Substitution], pol: Polarity ): ExpansionTree =
+  def apply( formula: Formula, substitutions: Iterable[Substitution], pol: Polarity ): ExpansionTree =
     ExpansionTree( formula, pol, conv( formula, substitutions.toSet, pol ) )
 
   private def conv( origFormula: Formula, substitutions: Set[Substitution], pol: Polarity ): ETt = origFormula match {
@@ -142,7 +142,7 @@ object pushWeakeningsUp {
     case ETAnd( a, b )                               => ETAnd( apply( a ), apply( b ) )
     case ETOr( a, b )                                => ETOr( apply( a ), apply( b ) )
     case ETImp( a, b )                               => ETImp( apply( a ), apply( b ) )
-    case ETWeakQuantifier( sh, insts )               => ETWeakQuantifier( sh, Map() ++ insts.mapValues( apply ) )
+    case ETWeakQuantifier( sh, insts )               => ETWeakQuantifier( sh, Map() ++ insts.view.mapValues( apply ).toMap )
     case ETStrongQuantifier( sh, ev, ch )            => ETStrongQuantifier( sh, ev, apply( ch ) )
     case ETSkolemQuantifier( sh, skT, ch )           => ETSkolemQuantifier( sh, skT, apply( ch ) )
     case ETDefinition( sh, ch )                      => ETDefinition( sh, apply( ch ) )

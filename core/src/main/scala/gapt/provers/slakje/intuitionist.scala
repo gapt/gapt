@@ -9,7 +9,7 @@ import gapt.expr.formula.Formula
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
-import gapt.expr.formula.fol.folSubTerms
+import gapt.expr.formula.fol.flatSubterms
 import gapt.expr.formula.hol.{ atoms, containsQuantifierOnLogicalLevel }
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.Ty
@@ -38,7 +38,7 @@ object SlakjeLogger extends Logger( "slakje" ); import SlakjeLogger._
 
 object heuristicDecidabilityInstantiation {
   def apply( proof: ExpansionProof ): ExpansionProof = {
-    val terms = folSubTerms( proof.deep.toImplication ).groupBy( _.ty )
+    val terms = flatSubterms( proof.deep.toImplication ).groupBy( _.ty )
     val cands = proof.shallow.antecedent.filter( isCandidate )
     metric( "heuristic_inst_num_formulas", cands.size )
     ExpansionProof( ETMerge(

@@ -77,7 +77,7 @@ object nonProofTheoreticSkolemTerms {
           occs( skT ) += ( ( weak, pos ) )
       }
 
-    for ( ( e, i ) <- es.elements.zip( Stream.from( 1 ) ) ) gatherOccs( e.term, Nil, i :: Nil )
+    for ( ( e, i ) <- es.elements.zip( LazyList.from( 1 ) ) ) gatherOccs( e.term, Nil, i :: Nil )
 
     // Which Skolem terms 1) occur more than once?, or 2) occur in weak quantifier instances below them?
     occs.collect {

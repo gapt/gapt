@@ -45,8 +45,8 @@ object syntacticMGU {
             } else {
               val subst1 = Substitution( Map(), Map( x -> t_ ) )
               USome( new PreSubstitution(
-                Map() ++ subst.map.mapValues( subst1( _ ) ),
-                Map() ++ subst.typeMap.mapValues( subst1( _ ) ) + ( x -> t_ ) ) )
+                Map() ++ subst.map.view.mapValues( subst1( _ ) ).toMap,
+                Map() ++ subst.typeMap.view.mapValues( subst1( _ ) ).toMap + ( x -> t_ ) ) )
             }
         }
 
@@ -86,20 +86,17 @@ object syntacticMGU {
           }
 
       case ( Abs( v1, e1 ), Abs( v2, e2 ) ) =>
-        if ( v1.ty == v2.ty ) {
-          val v1_ = rename( v1, subst.domain ++ subst.range ++ freeVariables( List( a, b ) ) )
-          val v2_ = v1_
-          go( Substitution( v1 -> v1_ )( e1 ), Substitution( v2 -> v2_ )( e2 ), subst, bound + v1_ ).
-            map( subst2 => new PreSubstitution( subst2.map - v1_, subst2.typeMap ) )
-        } else go( v1.ty, v2.ty, subst, bound ) match {
+        go( v1.ty, v2.ty, subst, bound ) match {
           case USome( subst1 ) =>
-            val subst1_ = subst1.toSubstitution
-            go( subst1_( a ), subst1_( b ), subst1, bound )
+            val v1_ = rename( v1, subst1.domain ++ subst1.range ++ freeVariables( List( a, b ) ) )
+            val v2_ = Var( v1_.name, v2.ty )
+            go( Substitution( v1 -> v1_ )( e1 ), Substitution( v2 -> v2_ )( e2 ), subst1, bound + v1_ + v2_ ).
+              map( subst2 => new PreSubstitution( subst2.map - v1_ - v2_, subst2.typeMap ) )
           case _ => UNone()
         }
 
       case ( x: Var, y ) if bound.contains( x ) =>
-        if ( x == y ) USome( subst ) else UNone()
+        if ( subst.toSubstitution( x ) == subst.toSubstitution( y ) ) USome( subst ) else UNone()
 
       case ( x: Var, t ) =>
         subst.map.get( x ) match {
@@ -113,11 +110,11 @@ object syntacticMGU {
               UNone()
             } else if ( x_.ty == t_.ty ) {
               val subst1 = Substitution( x -> t_ :: Nil, subst.typeMap.toSeq )
-              USome( new PreSubstitution( Map() ++ subst.map.mapValues( subst1( _ ) ) + ( x -> t_ ), subst.typeMap ) )
+              USome( new PreSubstitution( Map() ++ subst.map.view.mapValues( subst1( _ ) ).toMap + ( x -> t_ ), subst.typeMap ) )
             } else {
               go( x_.ty, t_.ty, subst, bound ) match {
                 case USome( subst1 ) =>
-                  go( x, t_, subst1, bound )
+                  go( x, t, subst1, bound )
                 case _ => UNone()
               }
             }

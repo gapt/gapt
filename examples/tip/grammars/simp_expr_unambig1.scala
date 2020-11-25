@@ -4,6 +4,7 @@ import gapt.expr._
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.Sequent
 import gapt.proofs.gaptic._
+import gapt.proofs.gaptic.tactics.ForwardChain
 
 object simp_expr_unambig1 extends TacticsProof {
 
@@ -208,19 +209,15 @@ object simp_expr_unambig1 extends TacticsProof {
     forget( "goal_0" )
 
     rewrite.many rtl "app_assoc" in "eq1"
-    allL( "lem", hov"u_0:E", hov"v_0:E", // forward chaining would be useful here (FIXME?)
-      le"append(cons(Pl, nil), append(lin(u_1), cons(D, nil)))",
-      le"append(cons(Pl, nil), append(lin(v_1), cons(D, nil)))" )
-    impL( "lem_0" ); trivial
+    forwardChain( "lem", OnLabel( "eq1" ) )
+
     forget( "eq1" )
 
     andL( "lem_0" )
     rewrite.many ltr ( "def_append_1", "def_append_0" ) in "lem_0_1"
     cut( "eq2", hof"append(lin(u_1), cons(D, nil)) = append(lin(v_1), cons(D, nil))" ); insert( cong_pos_proof )
 
-    allL( "lem", hov"u_1:E", hov"v_1:E", le"cons(D, nil)", le"cons(D, nil)" )
-    // forward chaining would be useful here (FIXME?)
-    impL( "lem_1" ); trivial
+    forwardChain( "lem", OnLabel( "eq2" ) )
     quasiprop
 
     //- u starts with Plus, v is EX

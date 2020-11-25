@@ -109,7 +109,7 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
           |   (and
-          |     (match a (case Z b) (case (S y) (c y) ) ) d
+          |     (match a ( ( Z b) ( (S y) (c y)) ) ) d
           |   )
           | )
         """.stripMargin ) )
@@ -117,8 +117,8 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
           |   (match a
-          |     (case Z (and b d))
-          |     (case (S y) (and (c y) d))
+          |     (( Z (and b d))
+          |     ( (S y) (and (c y) d)))
           |   )
           | )
         """.stripMargin ) )
@@ -151,7 +151,7 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
             | (define-fun f1 ((y nat)) nat
             |   (and
-            |     (match a (case Z b) (case (S y) (c y) ) ) y
+            |     (match a (( Z b) ( (S y) (c y) )) ) y
             |   )
             | )
           """.stripMargin ) )
@@ -159,8 +159,8 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
             | (define-fun f1 ((y nat)) nat
             |   (match a
-            |     (case Z (and b y))
-            |     (case (S y_0) (and (c y_0) y))
+            |     (( Z (and b y))
+            |     ( (S y_0) (and (c y_0) y)))
             |   )
             | )
           """.stripMargin ) )
@@ -196,7 +196,7 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
           |   (or
-          |     (match a (case Z b) (case (S y) (c y) ) ) d
+          |     (match a (( Z b) ( (S y) (c y) )) ) d
           |   )
           | )
         """.stripMargin ) )
@@ -204,8 +204,8 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
           |   (match a
-          |     (case Z (or b d))
-          |     (case (S y) (or (c y) d))
+          |     (( Z (or b d))
+          |     ( (S y) (or (c y) d)))
           |   )
           | )
         """.stripMargin ) )
@@ -238,7 +238,7 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((y nat)) nat
           |   (or
-          |     (match a (case Z b) (case (S y) (c y) ) ) y
+          |     (match a (( Z b) ( (S y) (c y) )) ) y
           |   )
           | )
         """.stripMargin ) )
@@ -246,8 +246,8 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((y nat)) nat
           |   (match a
-          |     (case Z (or b y))
-          |     (case (S y_0) (or (c y_0) y))
+          |     (( Z (or b y))
+          |     ( (S y_0) (or (c y_0) y)))
           |   )
           | )
         """.stripMargin ) )
@@ -283,7 +283,7 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
           |   (eq
-          |     (match a (case Z b) (case (S y) (c y) ) ) d
+          |     (match a (( Z b) ( (S y) (c y) ) )) d
           |   )
           | )
         """.stripMargin ) )
@@ -291,8 +291,8 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
           |   (match a
-          |     (case Z (eq b d))
-          |     (case (S y) (eq (c y) d))
+          |     (( Z (eq b d))
+          |     ( (S y) (eq (c y) d)))
           |   )
           | )
         """.stripMargin ) )
@@ -325,7 +325,7 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((y nat)) nat
           |   (eq
-          |     (match a (case Z b) (case (S y) (c y) ) ) y
+          |     (match a (( Z b) ( (S y) (c y) ) ) ) y
           |   )
           | )
         """.stripMargin ) )
@@ -333,8 +333,8 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((y nat)) nat
           |   (match a
-          |     (case Z (eq b y))
-          |     (case (S y_0) (eq (c y_0) y))
+          |     (( Z (eq b y))
+          |     ( (S y_0) (eq (c y_0) y)))
           |   )
           | )
         """.stripMargin ) )
@@ -370,7 +370,7 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
           |   (not
-          |     (match a (case Z b) (case (S y) (c y) ) )
+          |     (match a (( Z b) ( (S y) (c y) ) ) )
           |   )
           | )
         """.stripMargin ) )
@@ -378,8 +378,8 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
           |   (match a
-          |     (case Z (not b))
-          |     (case (S y) (not (c y)))
+          |     (( Z (not b))
+          |     ( (S y) (not (c y))))
           |   )
           | )
         """.stripMargin ) )
@@ -522,13 +522,13 @@ class ToOuterConditionalNormalFormTest extends Specification {
       val originalProblem = TipSmtParser.parse(
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
-          |   (ite (match a (case Z b) (case (S y) (c y))) d e)
+          |   (ite (match a (( Z b) ( (S y) (c y)))) d e)
           | )
         """.stripMargin ) )
       val expectedProblem = TipSmtParser.parse(
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
-          |   (match a (case Z (ite b d e)) (case (S y) (ite (c y) d e)))
+          |   (match a (( Z (ite b d e)) ( (S y) (ite (c y) d e))))
           | )
         """.stripMargin ) )
       toOuterConditionalNormalForm.transform( originalProblem ) must_==
@@ -538,13 +538,13 @@ class ToOuterConditionalNormalFormTest extends Specification {
       val originalProblem = TipSmtParser.parse(
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
-          |   (ite (match a (case Z b) (case (S y) (c y))) y e)
+          |   (ite (match a (( Z b) ( (S y) (c y)))) y e)
           | )
         """.stripMargin ) )
       val expectedProblem = TipSmtParser.parse(
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
-          |   (match a (case Z (ite b y e)) (case (S y_0) (ite (c y_0) y e)))
+          |   (match a (( Z (ite b y e)) ( (S y_0) (ite (c y_0) y e))))
           | )
         """.stripMargin ) )
       toOuterConditionalNormalForm.transform( originalProblem ) must_==
@@ -554,13 +554,13 @@ class ToOuterConditionalNormalFormTest extends Specification {
       val originalProblem = TipSmtParser.parse(
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
-          |   (ite (match a (case Z b) (case (S y) (c y))) d y)
+          |   (ite (match a (( Z b) ( (S y) (c y)))) d y)
           | )
         """.stripMargin ) )
       val expectedProblem = TipSmtParser.parse(
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
-          |   (match a (case Z (ite b d y)) (case (S y_0) (ite (c y_0) d y)))
+          |   (match a (( Z (ite b d y)) ( (S y_0) (ite (c y_0) d y))))
           | )
         """.stripMargin ) )
       toOuterConditionalNormalForm.transform( originalProblem ) must_==
@@ -589,15 +589,15 @@ class ToOuterConditionalNormalFormTest extends Specification {
       val originalProblem = TipSmtParser.parse(
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
-          |   (match (ite a b c) (case Z d) (case (S y) (e y)))
+          |   (match (ite a b c) (( Z d) ( (S y) (e y))))
           | )
         """.stripMargin ) )
       val expectedProblem = TipSmtParser.parse(
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
           |   (ite a
-          |     (match b (case Z d) (case (S y) (e y) ))
-          |     (match c (case Z d) (case (S y) (e y) ))
+          |     (match b (( Z d) ( (S y) (e y) )))
+          |     (match c (( Z d) ( (S y) (e y) )))
           |   )
           | )
         """.stripMargin ) )
@@ -609,9 +609,9 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
           |   (match
-          |     (match a (case Z b) (case (S y) (c y) ))
-          |     (case Z2 d)
-          |     (case (S2 z) (e z))
+          |     (match a (( Z b) ( (S y) (c y) )))
+          |     (( Z2 d)
+          |     ( (S2 z) (e z)))
           |   )
           | )
         """.stripMargin ) )
@@ -619,8 +619,8 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
           |   (match a
-          |     (case Z     (match b     (case Z2 d) (case (S2 z) (e z) )))
-          |     (case (S y) (match (c y) (case Z2 d) (case (S2 z) (e z) )))
+          |     (( Z     (match b     (( Z2 d) ( (S2 z) (e z) ))))
+          |     ( (S y) (match (c y) (( Z2 d) ( (S2 z) (e z) )))))
           |   )
           | )
         """.stripMargin ) )
@@ -631,13 +631,13 @@ class ToOuterConditionalNormalFormTest extends Specification {
       val originalProblem = TipSmtParser.parse(
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
-          |   (match a (case Z (or (ite y b c) d)) (case (S y) (e y)))
+          |   (match a (( Z (or (ite y b c) d)) ( (S y) (e y))))
           | )
         """.stripMargin ) )
       val expectedProblem = TipSmtParser.parse(
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
-          |   (match a (case Z (ite y (or b d) (or c d))) (case (S y) (e y)))
+          |   (match a (( Z (ite y (or b d) (or c d))) ( (S y) (e y))))
           | )
         """.stripMargin ) )
       toOuterConditionalNormalForm.transform( originalProblem ) must_==
@@ -648,9 +648,9 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
           |   (match
-          |     (match a (case Z b) (case (S y) (c y) ))
-          |     (case Z2 d)
-          |     (case (S2 z) (e z y))
+          |     (match a (( Z b) ( (S y) (c y) )))
+          |     (( Z2 d)
+          |     ( (S2 z) (e z y)))
           |   )
           | )
         """.stripMargin ) )
@@ -658,12 +658,13 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
           |   (match a
-          |     (case Z     (match b
-          |       (case Z2 d) (case (S2 z) (e z y) ))
+          |     (( Z
+          |     (match b
+          |       (( Z2 d) ( (S2 z) (e z y) )))
           |     )
-          |     (case (S y_0)
-          |       (match (c y_0) (case Z2 d) (case (S2 z) (e z y)))
-          |     )
+          |     ( (S y_0)
+          |       (match (c y_0) (( Z2 d) ( (S2 z) (e z y))))
+          |     ))
           |   )
           | )
         """.stripMargin ) )
@@ -699,7 +700,7 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
           |   (=>
-          |     (match a (case Z b) (case (S y) (c y) ) ) d
+          |     (match a (( Z b) ( (S y) (c y) ) ) ) d
           |   )
           | )
         """.stripMargin ) )
@@ -707,8 +708,8 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
           |   (match a
-          |     (case Z (=> b d))
-          |     (case (S y) (=> (c y) d))
+          |     (( Z (=> b d))
+          |     ( (S y) (=> (c y) d)))
           |   )
           | )
         """.stripMargin ) )
@@ -741,7 +742,7 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((y nat)) nat
           |   (=>
-          |     (match a (case Z b) (case (S y) (c y) ) ) y
+          |     (match a (( Z b) ( (S y) (c y) ) ) ) y
           |   )
           | )
         """.stripMargin ) )
@@ -749,8 +750,8 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((y nat)) nat
           |   (match a
-          |     (case Z (=> b y))
-          |     (case (S y_0) (=> (c y_0) y))
+          |     (( Z (=> b y))
+          |     ( (S y_0) (=> (c y_0) y)))
           |   )
           | )
         """.stripMargin ) )
@@ -786,7 +787,7 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
           |   (f2
-          |     (match a (case Z b) (case (S y) (c y) ) ) d
+          |     (match a (( Z b) ( (S y) (c y) ) ) ) d
           |   )
           | )
         """.stripMargin ) )
@@ -794,8 +795,8 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((x nat)) nat
           |   (match a
-          |     (case Z (f2 b d))
-          |     (case (S y) (f2 (c y) d))
+          |     (( Z (f2 b d))
+          |     ( (S y) (f2 (c y) d)))
           |   )
           | )
         """.stripMargin ) )
@@ -828,7 +829,7 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((y nat)) nat
           |   (f2
-          |     (match a (case Z b) (case (S y) (c y) ) ) y
+          |     (match a (( Z b) ( (S y) (c y) ) ) ) y
           |   )
           | )
         """.stripMargin ) )
@@ -836,8 +837,8 @@ class ToOuterConditionalNormalFormTest extends Specification {
         StringInputFile( """
           | (define-fun f1 ((y nat)) nat
           |   (match a
-          |     (case Z (f2 b y))
-          |     (case (S y_0) (f2 (c y_0) y))
+          |     (( Z (f2 b y))
+          |     ( (S y_0) (f2 (c y_0) y)))
           |   )
           | )
         """.stripMargin ) )

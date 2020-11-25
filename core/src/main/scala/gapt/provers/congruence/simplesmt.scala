@@ -17,7 +17,7 @@ object SimpleSmtSolver extends OneShotProver {
   override def isValid( seq: HOLSequent )( implicit ctx0: Maybe[Context] ): Boolean = {
     val cnf = structuralCNF( seq, propositional = true )
       .map( _.conclusion.asInstanceOf[HOLClause] )
-      .to[mutable.Buffer]
+      .to( mutable.Buffer )
     val cc = CC().intern( cnf.flatMap( _.elements ) )
     while ( true ) {
       Sat4j.solve( cnf ) match {

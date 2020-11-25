@@ -519,7 +519,7 @@ object cleanStructuralRules {
                                    toBeIntroduced: Seq[SequentIndex] ): ( LKProof, SequentConnector ) = {
     val premise = subProofOld.endSequent
 
-    ( ( subProofNew, subConnector ) /: toBeIntroduced ) { ( acc, idx ) =>
+    ( toBeIntroduced.foldLeft( ( subProofNew, subConnector ) ) ) { ( acc, idx ) =>
       // Iterate over toBeIntroduced, generating a new subproof and connector in each step
       val ( currentProof, currentOC ) = acc
 

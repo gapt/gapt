@@ -5,7 +5,7 @@ import gapt.expr.Var
 import gapt.expr.formula.fol.FOLTerm
 import gapt.expr.formula.fol.FOLVar
 
-import scala.collection.GenTraversable
+import scala.collection.Iterable
 
 class FOLSubstitution( val folmap: Map[FOLVar, FOLTerm] ) extends Substitution( folmap.asInstanceOf[Map[Var, Expr]] ) {
   /**
@@ -28,7 +28,7 @@ class FOLSubstitution( val folmap: Map[FOLVar, FOLTerm] ) extends Substitution( 
   }
 }
 object FOLSubstitution {
-  def apply( subs: GenTraversable[( FOLVar, FOLTerm )] ): FOLSubstitution = new FOLSubstitution( Map() ++ subs )
+  def apply( subs: Iterable[( FOLVar, FOLTerm )] ): FOLSubstitution = new FOLSubstitution( Map() ++ subs )
   def apply( subs: ( FOLVar, FOLTerm )* ): FOLSubstitution = new FOLSubstitution( Map() ++ subs )
   def apply( variable: FOLVar, term: FOLTerm ): FOLSubstitution = new FOLSubstitution( Map( variable -> term ) )
   def apply( map: Map[FOLVar, FOLTerm] ): FOLSubstitution = new FOLSubstitution( map )

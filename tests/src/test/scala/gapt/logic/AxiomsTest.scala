@@ -1,0 +1,35 @@
+package gapt.logic
+
+import gapt.expr._
+import gapt.proofs.context.update.InductiveType
+import org.specs2.mutable.Specification
+
+class AxiomsTest extends Specification {
+
+  "injectivity axioms" should {
+    "not be generated for nullary constructors" in {
+      val natType = InductiveType( "Nat", hoc"0:Nat", hoc"S:Nat>Nat" )
+      injectivityAxioms( natType ).size mustEqual 1
+    }
+    "cover all non-nullary constructors" in {
+      val natType = InductiveType( "Nat", hoc"0:Nat", hoc"S:Nat>Nat" )
+      injectivityAxioms( natType ) must contain( hof"!x !y (#c(S:Nat>Nat)(x) = S(y) -> x = y)" )
+    }
+    "have the form c(x₁,...,xₙ) = c(y₁,...,yₙ) → x₁ = y₁ ∧ ... ∧ xₙ = yₙ" in {
+      injectivityAxiom( hoc"c:i>i" ) mustEqual hof"!x !y (c(x) = c(y) -> x = y)"
+    }
+  }
+
+  "disjointness axioms" should {
+    "be generated for all unordered pairs of constructors" in {
+      val natType = InductiveType( "Nat", hoc"0:Nat", hoc"S:Nat>Nat" )
+      disjointnessAxioms( natType ) mustEqual Iterable( hof"!x #c(0:Nat) != #c(S:Nat>Nat)(x)" )
+    }
+    "have the form " in {
+      disjointnessAxiom( hoc"c:i", hoc"d:i" ) mustEqual hof"c != d"
+      disjointnessAxiom( hoc"c:i", hoc"d:i>i" ) mustEqual hof"!x c != d(x)"
+      disjointnessAxiom( hoc"c:i>i", hoc"d:i>i" ) mustEqual hof"!x !y c(x) != d(y)"
+    }
+  }
+
+}

@@ -21,7 +21,7 @@ sealed trait BDT {
       case Ite( c, a, b ) =>
         ( assg.get( c ) match {
           case None if withEq =>
-            val seq = Sequent( assg.mapValues( v => Polarity( !v ) ) )
+            val seq = Sequent( assg.view.mapValues( v => Polarity( !v ) ).toMap )
             if ( CC.isValid( seq :+ c ).isDefined )
               Some( true )
             else if ( CC.isValid( c +: seq ).isDefined )

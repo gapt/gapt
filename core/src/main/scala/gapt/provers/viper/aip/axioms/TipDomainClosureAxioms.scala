@@ -1,23 +1,32 @@
 package gapt.provers.viper.aip.axioms
 
-import gapt.expr.{ Var }
-import gapt.formats.tip.{ TipConstructor, TipDatatype }
-import gapt.proofs.gaptic.{ ProofState, allR, escargot, forget, induction, orR, repeat }
-import gapt.proofs.lk.LKProof
-import gapt.proofs.Sequent
-import gapt.provers.viper.aip.{ LabelledSequent, ThrowsError }
 import cats.instances.all._
 import cats.syntax.all._
+import gapt.expr.Var
 import gapt.expr.formula.All
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Or
 import gapt.expr.util.freeVariables
+import gapt.logic.projectorDefinitions
+import gapt.proofs.LabelledSequent
+import gapt.proofs.Sequent
 import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.InductiveType.Constructor
+import gapt.proofs.gaptic.ProofState
+import gapt.proofs.gaptic.allR
+import gapt.proofs.gaptic.escargot
+import gapt.proofs.gaptic.forget
+import gapt.proofs.gaptic.induction
+import gapt.proofs.gaptic.orR
+import gapt.proofs.gaptic.repeat
+import gapt.proofs.lk.LKProof
+import gapt.provers.viper.aip.ThrowsError
 
-case class TipDomainClosureAxioms( types: List[TipDatatype] = Nil ) extends AxiomFactory {
+case class TipDomainClosureAxioms( types: List[InductiveType] = Nil ) extends AxiomFactory {
 
-  def forTypes( types: TipDatatype* ) = copy( types = types.toList )
+  def forTypes( types: InductiveType* ) = copy( types = types.toList )
 
   /**
    * Computes domain closure axioms.
@@ -31,12 +40,12 @@ case class TipDomainClosureAxioms( types: List[TipDatatype] = Nil ) extends Axio
       Right( new TipDomainClosureAxiom( t ) )
     }
 
-  private class TipDomainClosureAxiom( datatype: TipDatatype )( implicit ctx: MutableContext ) extends Axiom {
+  private class TipDomainClosureAxiom( datatype: InductiveType )( implicit ctx: MutableContext ) extends Axiom {
     /**
      * @return The formula representing the axiom.
      */
     override def formula: Formula = {
-      val caseVariable = Var( "x", datatype.t )
+      val caseVariable = Var( "x", datatype.baseType )
       All(
         caseVariable,
         Or( datatype.constructors map {
@@ -50,7 +59,7 @@ case class TipDomainClosureAxioms( types: List[TipDatatype] = Nil ) extends Axio
     override def proof: LKProof = {
       val All.Block( Seq( variable, _* ), _ ) = formula
       var proofState = ProofState(
-        datatype.constructors.flatMap( _.projectorDefinitions ).map( definition => "" -> All.Block( freeVariables( definition ).toSeq, definition ) ) ++:
+        projectorDefinitions( datatype ).map( definition => "" -> All.Block( freeVariables( definition ).toSeq, definition ) ) ++:
           Sequent() :+ ( "goal" -> formula ) )
       proofState += allR
       proofState += induction( variable )
@@ -62,9 +71,13 @@ case class TipDomainClosureAxioms( types: List[TipDatatype] = Nil ) extends Axio
       proofState.result
     }
 
-    private def caseDistinction( caseVariable: Var, constructor: TipConstructor ): Formula = {
-      val projectedValues = constructor.projectors.map( projector => projector( caseVariable ) )
-      Eq( caseVariable, constructor.constr( projectedValues ) )
+    private def caseDistinction( caseVariable: Var, constructor: Constructor ): Formula = {
+      val projectedValues = constructor.fields.map {
+        f =>
+          val p = f.projector.get
+          p( caseVariable )
+      }
+      Eq( caseVariable, constructor.constant( projectedValues ) )
     }
   }
 }

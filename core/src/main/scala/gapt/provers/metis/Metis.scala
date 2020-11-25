@@ -19,7 +19,7 @@ import gapt.utils.runProcess
 object Metis extends Metis
 
 class Metis extends ResolutionProver with ExternalProgram {
-  override def getResolutionProof( seq: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] =
+  override def getResolutionProof( seq: Iterable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] =
     renameConstantsToFi.wrap( seq.toSeq )(
       ( renaming, cnf: Seq[HOLClause] ) => {
         val labelledCNF = cnf.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
@@ -31,9 +31,9 @@ class Metis extends ResolutionProver with ExternalProgram {
             dropWhile( !_.contains( "SZS output start CNFRefutation " ) ).drop( 1 ).
             takeWhile( !_.contains( "SZS output end CNFRefutation " ) ).
             mkString( "\n" )
-          RefutationSketchToResolution( TptpProofParser.parse( StringInputFile( tptpDerivation ), labelledCNF mapValues {
+          RefutationSketchToResolution( TptpProofParser.parse( StringInputFile( tptpDerivation ), labelledCNF.view.mapValues {
             Seq( _ )
-          } ) ) match {
+          }.toMap ) ) match {
             case Right( proof ) => Some( proof )
             case Left( error )  => throw new IllegalArgumentException( error.toString )
           }

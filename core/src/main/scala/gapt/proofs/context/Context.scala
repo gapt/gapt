@@ -17,8 +17,8 @@ import gapt.expr.ty.TVar
 import gapt.expr.ty.To
 import gapt.expr.ty.Ty
 import gapt.expr.ty.baseTypes
+import gapt.expr.util.ConditionalReductionRule
 import gapt.expr.util.syntacticMatching
-import gapt.formats.babel.BabelParser
 import gapt.formats.babel.BabelSignature
 import gapt.formats.babel.Notation
 import gapt.formats.babel.Notations
@@ -223,6 +223,14 @@ trait Context extends BabelSignature {
   def reductionRules: Iterable[ReductionRule] = state.getAll[ReductionRule]
 
   /**
+   * Retrieves all expression-level conditional reduction rules.
+   *
+   * @return Returns all the expression-level conditional reduction rules currently stored
+   * in this context.
+   */
+  def conditionalReductionRules: Iterable[ConditionalReductionRule] = state.getAll[ConditionalReductionRule]
+
+  /**
    * Checks whether the context contains a given definition.
    *
    * @param defn The definition that is to be checked.
@@ -311,7 +319,7 @@ trait Context extends BabelSignature {
    * @return An immutable context obtained by applying iteratively applying
    * the updates from left to right.
    */
-  def ++( updates: Traversable[Update] ): ImmutableContext =
+  def ++( updates: Iterable[Update] ): ImmutableContext =
     updates.foldLeft( toImmutable )( _ + _ )
 
   /**
@@ -347,7 +355,7 @@ object Context {
 
   val empty: ImmutableContext = ImmutableContext.empty
   def apply(): ImmutableContext = default
-  def apply( updates: Traversable[Update] ): ImmutableContext =
+  def apply( updates: Iterable[Update] ): ImmutableContext =
     empty ++ updates
 
   val default: ImmutableContext = empty ++ Seq(
@@ -380,7 +388,7 @@ object Context {
     Notation.Infix( "=", EqC, Precedence.infixRel ),
     Notation.Infix( "!=", Notation.NeqName, Precedence.infixRel ) )
 
-  def guess( exprs: Traversable[Expr] ): ImmutableContext = {
+  def guess( exprs: Iterable[Expr] ): ImmutableContext = {
     val names = exprs.view.flatMap( containedNames( _ ) ).toSet
     val tys = names.flatMap( c => baseTypes( c.ty ) )
     var ctx = default

@@ -90,6 +90,12 @@ case class SymbolTable( problem: TipSmtProblem ) {
         case _ =>
       }
     }
+
+    if ( problem.containsNat ) {
+      symbols += "is-zero" -> Type( Datatype( "Nat" ) :: Nil, Datatype( "Bool" ) )
+      symbols += "is-succ" -> Type( Datatype( "Nat" ) :: Nil, Datatype( "Bool" ) )
+    }
+
     symbols
   }
 

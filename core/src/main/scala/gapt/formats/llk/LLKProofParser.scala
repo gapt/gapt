@@ -11,9 +11,6 @@ import gapt.expr.formula.Formula
 import gapt.expr.ty.Ty
 import gapt.formats.InputFile
 
-import scala.collection.immutable.PagedSeq
-import scala.util.parsing.input.PagedSeqReader
-
 /**
  *  An extended proof database allows to label subproofs by formulas. It provides mappings from formulas to proofs
  * additionally to the list of pairs.

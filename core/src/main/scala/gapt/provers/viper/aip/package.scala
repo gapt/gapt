@@ -10,7 +10,6 @@ import gapt.proofs.{ Ant, Sequent }
 package object aip {
 
   type ThrowsError[T] = Either[String, T]
-  type LabelledSequent = Sequent[( String, Formula )]
 
   /**
    * Checks whether the given variable has is of inductive type in the given context.

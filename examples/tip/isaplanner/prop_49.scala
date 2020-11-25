@@ -2,10 +2,8 @@ package gapt.examples.tip.isaplanner
 
 import gapt.expr._
 import gapt.expr.ty.TBase
-import gapt.formats.tip.TipConstructor
-import gapt.formats.tip.TipDatatype
-import gapt.proofs.context.update.InductiveType
 import gapt.proofs.Sequent
+import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic._
 import gapt.proofs.gaptic.tactics.AnalyticInductionTactic._
 
@@ -83,16 +81,6 @@ object prop_49 extends TacticsProof {
     escargot
     escargot
   }
-
-  val listType: TipDatatype = TipDatatype(
-    TBase( "list", Nil ),
-    Seq(
-      TipConstructor(
-        hoc"nil: list",
-        Seq() ),
-      TipConstructor(
-        hoc"cons: sk>list>list",
-        Seq( hoc"head: list>sk", hoc"tail: list>list" ) ) ) )
 
   val list_domain_closure = hof"xs_0 = nil | ?v ?vs xs_0 = cons(v,vs)"
 

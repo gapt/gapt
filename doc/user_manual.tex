@@ -160,7 +160,7 @@
 {\Huge User manual}
 
 \vspace*{10mm}
-{\Large Version 2.15-SNAPSHOT}
+{\Large Version 2.15.2}
 \vspace*{10mm}
 
 {\Large \today}
@@ -229,7 +229,7 @@ sbt console
   two lines to your \verb,build.sbt,:
 \begin{lstlisting}
 resolvers += Resolver.bintrayRepo("gapt", "maven")
-libraryDependencies += "at.logic.gapt" %% "gapt" % "2.14"
+libraryDependencies += "at.logic.gapt" %% "gapt" % "2.15.2"
 \end{lstlisting}
 
 \end{enumerate}
@@ -1132,41 +1132,39 @@ with quantifier-free conclusions.
 \begin{clilisting}
 gapt> val p = instanceProof(examples.theories.nat.addcomm.combined(),                                     Seq(le"s (s 0 : nat)", le"0 : nat"))
 p: gapt.proofs.lk.LKProof =
-[p116] ∀x ((x:nat) + (0:nat): nat) = x,
+[p118] ∀x ((x:nat) + (0:nat): nat) = x,
 ∀x ∀y x + s(y:nat) = s(x + y)
 ⊢
-s(s(0)) + 0 = 0 + s(s(0))    (CutRule(p112, Suc(0), p115, Ant(0)))
-[p115] ∀x ∀y ((x:nat) + (y:nat): nat) = y + x ⊢ s(s(0:nat): nat) + 0 = 0 + s(s(0))    (ForallLeftRule(p114, Ant(0), ∀y ((x:nat) + (y:nat): nat) = y + x, s(s(0:nat): nat), x:nat))
-[p114] ∀y (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (ForallLeftRule(p113, Ant(0), (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)), 0:nat, y:nat))
-[p113] (s(s(0:nat): nat) + 0: nat) = 0 + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (LogicalAxiom((s(s(0:nat): nat) + 0: nat) = 0 + s(s(0))))
-[p112] ∀x ((x:nat) + (0:nat): nat) = x,
+s(s(0)) + 0 = 0 + s(s(0))    (CutRule(p114, Suc(0), p117, Ant(0)))
+[p117] ∀x ∀y ((x:nat) + (y:nat): nat) = y + x ⊢ s(s(0:nat): nat) + 0 = 0 + s(s(0))    (ForallLeftRule(p116, Ant(0), ∀y ((x:nat) + (y:nat): nat) = y + x, s(s(0:nat): nat), x:nat))
+[p116] ∀y (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (ForallLeftRule(p115, Ant(0), (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)), 0:nat, y:nat))
+[p115] (s(s(0:nat): nat) + 0: nat) = 0 + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (LogicalAxiom((s(s(0:nat): nat) + 0: nat) = 0 + s(s(0))))
+[p114] ∀x ((x:nat) + (0:nat): nat) = x,
 ∀x ∀y x + s(y:nat) = s(x + y)
 ⊢
-∀x ∀y x + y = y + x    (CutRule(p3, Suc(0), p111, Ant(0)))...
+∀x ∀y x + y = y + x    (CutRule(p3, Suc(0), p113, Ant(0)))...
 
 gapt> val q = inductionNormalForm(p)(                                         examples.theories.nat.ctx)
 q: gapt.proofs.lk.LKProof =
-[p42] ∀x_1 ((x_1:nat) + (0:nat): nat) = x_1,
-∀x_1 ∀y_0 x_1 + s(y_0:nat) = s(x_1 + y_0)
+[p16] ∀x_1 ((x_1:nat) + (0:nat): nat) = x_1,
+∀x_1 ∀y x_1 + s(y:nat) = s(x_1 + y)
 ⊢
-s(s(0)) + 0 = 0 + s(s(0))    (ContractionLeftRule(p41, Ant(1), Ant(0)))
-[p41] ∀x_1 ((x_1:nat) + (0:nat): nat) = x_1,
-∀x_1 x_1 + 0 = x_1,
-∀x_1 ∀y_0 x_1 + s(y_0:nat) = s(x_1 + y_0)
+s(s(0)) + 0 = 0 + s(s(0))    (ContractionLeftRule(p15, Ant(0), Ant(2)))
+[p15] ∀x_1 ((x_1:nat) + (0:nat): nat) = x_1,
+∀x_1 ∀y x_1 + s(y:nat) = s(x_1 + y),
+∀x_0 x_0 + 0 = x_0
 ⊢
-s(s(0)) + 0 = 0 + s(s(0))    (ContractionLeftRule(p40, Ant(3), Ant(2)))
-[p40] ∀x_1 ((x_1:nat) + (0:nat): nat) = x_1,
-∀x_1 ∀y_0 x_1 + s(y_0:nat) = s(x_1 + y_0),
-∀x_1 x_1 + 0 = x_1,
-∀x_1 x_1 + 0 = x_1
-⊢
-s(s(0)) + 0 = 0 + s(s(0))    (ForallLeftRule(p39, Ant(3), ((x_1:nat) + (0:nat): nat) = x_1, 0:nat, x_1:nat))
-[p39] ∀x_1 ∀y_0 ((x_1:nat) + (s(y_0:nat): nat): nat) = s(x_1 + y_0),
-∀x_1 x_1 + 0 = x_1,
-∀x_1 x_1 + 0 = x_1,
+s(s(0)) + 0 = 0 + s(s(0))    (ForallLeftRule(p14, Ant(2), ((x_1:nat) + (0:nat): nat) = x_1, 0:nat, x_1:nat))
+[p14] ∀x_1 ∀y ((x_1:nat) + (s(y:nat): nat): nat) = s(x_1 + y),
+∀x_0 x_0 + 0 = x_0,
 0 + 0 = 0
 ⊢
-s(s(0)) + 0 = 0 + s(s(0))    (ForallLeftRule(p38, Ant(2), ∀y_0 ((x_1...
+s(s(0)) + 0 = 0 + s(s(0))    (ForallLeftRule(p13, Ant(1), ∀y ((x_1:nat) + (s(y:nat): nat): nat) = s(x_1 + y), 0:nat, x_1:nat))
+[p13] ∀x_0 ((x_0:nat) + (0:nat): nat) = x_0,
+∀y 0 + s(y:nat) = s(0 + y),
+0 + 0 = 0
+⊢
+s(s(0)) + 0 = 0 + s(s(0))    (ForallLeftRule(p12, Ant(2), ((x_0:nat) + (0:nat): nat) = x_0, s(s...
 
 \end{clilisting}
 
@@ -1178,9 +1176,8 @@ gapt> LKToExpansionProof(q)
 res0: gapt.proofs.expansion.ExpansionProof =
 ∀x_1 ((x_1:nat) + (0:nat): nat) = x_1
   +^{0} (0 + 0 = 0)-
-  +^{s(0)} (s(0) + 0 = s(0))-
   +^{s(s(0): nat)} (s(s(0)) + 0 = s(s(0)))-,
-∀x_1 ∀y_0 ((x_1:nat) + (s(y_0:nat): nat): nat) = s(x_1 + y_0)
+∀x_1 ∀y ((x_1:nat) + (s(y:nat): nat): nat) = s(x_1 + y)
   +^{0, 0} (0 + s(0) = s(0 + 0))-
   +^{0, s(0)} (0 + s(s(0)) = s(0 + s(0)))-
 :-
@@ -1200,20 +1197,20 @@ clauses follow from the negation of the sequent:
 \begin{clilisting}
 gapt> val proofs = structuralCNF(hos":- ?z ?x (drinksat z x -> !y drinksat z y)")
 proofs: Set[gapt.proofs.resolution.ResolutionProof] =
-Set([p5] drinksat(z, s_0(z)) ⊢    (AllL(p4, Ant(0), s_0(z)))
-[p4] ∀y drinksat(z, y) ⊢    (ImpL2(p3, Ant(0)))
+Set([p4]  ⊢ drinksat(z, x)   (ImpL1(p3, Ant(0)))
 [p3] drinksat(z, x) → ∀y drinksat(z, y) ⊢    (ExL(p2, Ant(0), x))
 [p2] ∃x (drinksat(z, x) → ∀y drinksat(z, y)) ⊢    (ExL(p1, Ant(0), z))
 [p1] ∃z ∃x (drinksat(z, x) → ∀y drinksat(z, y)) ⊢    (Input(∃z ∃x (drinksat(z, x) → ∀y drinksat(z, y)) ⊢ ))
-, [p4]  ⊢ drinksat(z, x)   (ImpL1(p3, Ant(0)))
+, [p5] drinksat(z, s_0(z)) ⊢    (AllL(p4, Ant(0), s_0(z)))
+[p4] ∀y drinksat(z, y) ⊢    (ImpL2(p3, Ant(0)))
 [p3] drinksat(z, x) → ∀y drinksat(z, y) ⊢    (ExL(p2, Ant(0), x))
 [p2] ∃x (drinksat(z, x) → ∀y drinksat(z, y)) ⊢    (ExL(p1, Ant(0), z))
 [p1] ∃z ∃x (drinksat(z, x) → ∀y drinksat(z, y)) ⊢    (Input(∃z ∃x (drinksat(z, x) → ∀y drinksat(z, y)) ⊢ ))
 )
 
 gapt> for (p <- proofs) println(p.conclusion)
-drinksat(z, s_0(z)) ⊢ 
  ⊢ drinksat(z, x)
+drinksat(z, s_0(z)) ⊢ 
 
 \end{clilisting}
 
@@ -1729,8 +1726,8 @@ problem: gapt.proofs.HOLSequent = ∀x ∀y (x:a) = (y:a), ∀x f(f(x:b): b) = x
 gapt> val (firstOrderProblem, back) = reduction forward problem
 firstOrderProblem: gapt.proofs.HOLSequent =
 ∀x0 ∀x1 (P_is_a(x0) ∧ P_is_a(x1) → P_is_o('f_='(x0, x1))),
-∀x0 ∀x1 (P_is_b(x0) ∧ P_is_b(x1) → P_is_o('f_='(x0, x1))),
 ∀x0 (P_is_b(x0) → P_is_b(f_f(x0))),
+∀x0 ∀x1 (P_is_b(x0) ∧ P_is_b(x1) → P_is_o('f_='(x0, x1))),
 ⊤ → P_is_b(f_c),
 P_is_o(f_nonempty_o),
 P_is_a(f_nonempty_a),
@@ -1784,10 +1781,10 @@ gapt> val (benchmark, typeRenaming, constantRenaming) = SmtLibExporter(Sequent()
 benchmark: String =
 "(set-logic QF_UF)
 (declare-sort t_i 0)
-(declare-fun f_b () t_i)
 (declare-fun f_P (t_i) Bool)
 (declare-fun f_c () t_i)
 (declare-fun f_a () t_i)
+(declare-fun f_b () t_i)
 (assert
   (not
     (=> (and (and (or (= f_a f_b) (= f_a f_c)) (f_P f_c)) (f_P f_b))
@@ -1795,7 +1792,7 @@ benchmark: String =
 (check-sat)
 "
 typeRenaming: Map[gapt.expr.ty.TBase,gapt.expr.ty.TBase] = Map(o -> Bool, i -> t_i)
-constantRenaming: Map[gapt.expr.Const,gapt.expr.Const] = Map(b -> f_b:t_i, P:i>o -> f_P:t_i>Bool, c -> f_c:t_i, a -> f_a:t_i)
+constantRenaming: Map[gapt.expr.Const,gapt.expr.Const] = Map(a -> f_a:t_i, b -> f_b:t_i, c -> f_c:t_i, P:i>o -> f_P:t_i>Bool)
 
 \end{clilisting}
 
@@ -1814,10 +1811,10 @@ expansionProof: gapt.proofs.expansion.ExpansionProof =
 ((a = b)- ∨ (a = c)-) ∧ P(c)- ∧ P(b)- → P(a)+
 
 gapt> extractInstances(expansionProof) foreach println
-a = b → b = a
 a = c → c = a
-b = a ∧ P(b) → P(a)
+a = b → b = a
 c = a ∧ P(c) → P(a)
+b = a ∧ P(b) → P(a)
 (a = b ∨ a = c) ∧ P(c) ∧ P(b) → P(a)
 
 \end{clilisting}
@@ -1882,7 +1879,7 @@ res4: Boolean = false
 We can also convert $\neg\mathrm{PHP}_{3,3}$ into DIMACS format:
 \begin{clilisting}
 gapt> val cnf = structuralCNF(Sequent() :+ PigeonHolePrinciple(3,3)).map(_.conclusion.asInstanceOf[HOLClause])
-cnf: scala.collection.immutable.Set[gapt.proofs.HOLClause] = Set( ⊢ R(p_2, h_3), R(p_2, h_1), R(p_2, h_2), R(p_1, h_3), R(p_2, h_3) ⊢ , R(p_1, h_1), R(p_2, h_1) ⊢ ,  ⊢ R(p_1, h_3), R(p_1, h_1), R(p_1, h_2), R(p_2, h_3), R(p_3, h_3) ⊢ , R(p_1, h_2), R(p_3, h_2) ⊢ , R(p_1, h_2), R(p_2, h_2) ⊢ , R(p_2, h_1), R(p_3, h_1) ⊢ , R(p_1, h_1), R(p_3, h_1) ⊢ ,  ⊢ R(p_3, h_3), R(p_3, h_1), R(p_3, h_2), R(p_2, h_2), R(p_3, h_2) ⊢ , R(p_1, h_3), R(p_3, h_3) ⊢ )
+cnf: scala.collection.immutable.Set[gapt.proofs.HOLClause] = HashSet( ⊢ R(p_3, h_3), R(p_3, h_1), R(p_3, h_2), R(p_1, h_2), R(p_3, h_2) ⊢ , R(p_1, h_2), R(p_2, h_2) ⊢ , R(p_1, h_3), R(p_2, h_3) ⊢ , R(p_2, h_1), R(p_3, h_1) ⊢ ,  ⊢ R(p_1, h_3), R(p_1, h_1), R(p_1, h_2), R(p_1, h_1), R(p_2, h_1) ⊢ , R(p_1, h_1), R(p_3, h_1) ⊢ ,  ⊢ R(p_2, h_3), R(p_2, h_1), R(p_2, h_2), R(p_1, h_3), R(p_3, h_3) ⊢ , R(p_2, h_3), R(p_3, h_3) ⊢ , R(p_2, h_2), R(p_3, h_2) ⊢ )
 
 gapt> val encoding = new DIMACSEncoding
 encoding: gapt.formats.dimacs.DIMACSEncoding = DIMACSEncoding()
@@ -1890,18 +1887,18 @@ encoding: gapt.formats.dimacs.DIMACSEncoding = DIMACSEncoding()
 gapt> writeDIMACS(encoding encodeCNF cnf)
 res5: String =
 "p cnf 9 12
--4 -1 0
--6 -3 0
-7 9 8 0
-4 5 6 0
+-9 -2 0
+7 8 5 0
 1 2 3 0
--6 -8 0
--2 -9 0
--4 -7 0
--5 -9 0
--3 -8 0
--1 -7 0
--5 -2 0
+-8 -2 0
+-9 -8 0
+-4 -5 0
+-5 -3 0
+-6 -1 0
+-6 -7 0
+-4 -3 0
+-7 -1 0
+6 9 4 0
 "
 
 \end{clilisting}
@@ -1910,7 +1907,7 @@ If you want to know which variable in the DIMACS output corresponds to which
 atom in GAPT, you can query the \cli{DIMACSEncoding} object:
 \begin{clilisting}
 gapt> encoding decodeAtom 1
-res6: gapt.expr.formula.Atom = R(p_2, h_3): o
+res6: gapt.expr.formula.Atom = R(p_3, h_3): o
 
 \end{clilisting}
 
@@ -1941,31 +1938,31 @@ GAPT can import DRUP proofs from Sat4j, Glucose, and PicoSAT:
 \begin{clilisting}
 gapt> Sat4j getDrupProof PigeonHolePrinciple(4,3)
 res10: Option[gapt.proofs.rup.RupProof] =
-Some(c input -10 -6 0
-c input -11 -3 0
-c input -1 -3 0
-c input -11 -2 0
-c input -8 -4 0
-c input -6 -7 0
-c input -12 -5 0
-c input -8 -5 0
-c input 9 8 2 0
+Some(c input 12 11 8 0
 c input -1 -2 0
-c input -2 -3 0
-c input -9 -7 0
-c input 11 6 12 0
+c input -4 -8 0
+c input 7 9 1 0
 c input -9 -6 0
+c input -9 -3 0
+c input -11 -5 0
+c input -5 -2 0
+c input -10 -8 0
+c input -7 -8 0
+c input -1 -5 0
+c input -4 -10 0
+c input -7 -4 0
+c input -3 -12 0
+c input -3 -6 0
+c input 6 10 2 0
+c input -9 -12 0
+c input -6 -12 0
+c input -11 -2 0
+c input -7 -10 0
+c input 3 4 5 0
 c input -11 -1 0
-c input -10 -7 0
-c input -4 -12 0
-c input -9 -10 0
-c input 1 7 5 0
-c input -4 -5 0
-c input 10 4 3 0
-c input -8 -12 0
--6 1 0
--5 6 0
--11 9 10 0
+-8 1 0
+-9 8 0
+-11 10 4 0
 1 0
 -12 0
  0)
@@ -1978,7 +1975,7 @@ format:
 \begin{clilisting}
 gapt> Sat4j getLKProof PigeonHolePrinciple(4,3)
 res11: Option[gapt.proofs.lk.LKProof] =
-Some([p566]
+Some([p575]
 ⊢
 (R(p_1, h_1) ∨ R(p_1, h_2) ∨ R(p_1, h_3)) ∧
     (R(p_2, h_1) ∨ R(p_2, h_2) ∨ R(p_2, h_3)) ∧
@@ -2046,13 +2043,13 @@ formula: gapt.expr.formula.fol.FOLFormula =
 
 gapt> Escargot getResolutionProof formula
 res0: Option[gapt.proofs.resolution.ResolutionProof] =
-Some([p34]  ⊢    (Resolution(p1, Suc(0), p33, Ant(0)))
-[p33] d + (b + (c + a)) = d + (b + (c + a)) ⊢    (Paramod(p17, Suc(0), true, p32, Ant(0), λx d + (b + (c + a)) = d + x))
-[p32] d + (b + (c + a)) = d + (c + (b + a)) ⊢    (Paramod(p18, Suc(0), true, p31, Ant(0), λx x = d + (c + (b + a))))
-[p31] b + (d + (c + a)) = d + (c + (b + a)) ⊢    (Paramod(p19, Suc(0), true, p30, Ant(0), λx b + x = d + (c + (b + a))))
-[p30] b + (c + (d + a)) = d + (c + (b + a)) ⊢    (Paramod(p20, Suc(0), true, p29, Ant(0), λx b + (c + (d + a)) = d + x))
-[p29] b + (c + (d + a)) = d + (b + a + c) ⊢    (Paramod(p21, Suc(0), true, p28, Ant(0), λx b + (c + (d + a)) = d + (x + c)))
-[p28] b + (c + (d + a)) = d + (a + b + c) ⊢    (Paramod(p22, Suc(0), true, p27, An...
+Some([p44]  ⊢    (Resolution(p1, Suc(0), p43, Ant(0)))
+[p43] c + (a + (b + d)) = c + (a + (b + d)) ⊢    (Paramod(p17, Suc(0), true, p42, Ant(0), λx c + (a + (b + d)) = c + x))
+[p42] c + (a + (b + d)) = c + (b + (a + d)) ⊢    (Paramod(p21, Suc(0), false, p41, Ant(0), λx c + (a + (b + d)) = c + x))
+[p41] c + (a + (b + d)) = c + (a + (d + b)) ⊢    (Paramod(p22, Suc(0), true, p40, Ant(0), λx c + (a + (b + d)) = c + x))
+[p40] c + (a + (b + d)) = c + (d + (a + b)) ⊢    (Paramod(p23, Suc(0), true, p39, Ant(0), λx c + (a + (b + d)) = x))
+[p39] c + (a + (b + d)) = d + (c + (a + b)) ⊢    (Paramod(p17, Suc(0), true, p38, Ant(0), λx c + x = d + (c + (a + b))))
+[p38] c + (b + (a + d)) = d + (c + (a + b)) ⊢    (Paramod(p24, Suc(0), true, p37, Ant...
 
 \end{clilisting}
 
@@ -2118,18 +2115,18 @@ problem: gapt.formats.tip.TipProblem =
 
 gapt> val Some(proof) = Viper(problem, ViperOptions(verbosity=0))
 proof: gapt.proofs.lk.LKProof =
-[p172] ∀z ('-2'(S(z:Nat): Nat, #c(Z: Nat)): Nat) = S(z),
+[p168] ∀y0 #c(Z: Nat) != (S(y0:Nat): Nat),
 ∀x0 ('proj1-S'(S(x0)): Nat) = x0,
-∀y0 #c(Z: Nat) != S(y0),
+∀z ('-2'(S(z), #c(Z: Nat)): Nat) = S(z),
 ∀y ('+2'(#c(Z: Nat), y:Nat): Nat) = y,
 ∀y '-2'(#c(Z: Nat), y) = #c(Z: Nat),
 ∀z ∀x2 '-2'(S(z), S(x2)) = '-2'(z, x2),
 ∀y ∀z '+2'(S(z), y) = S('+2'(z, y))
 ⊢
-∀n ∀m '-2'(n, '+2'(n, m)) = #c(Z: Nat)    (CutRule(p21, Suc(0), p171, Ant(3)))
-[p171] ∀z ('-2'(S(z:Nat): Nat, #c(Z: Nat)): Nat) = S(z),
+∀n ∀m '-2'(n, '+2'(n, m)) = #c(Z: Nat)    (CutRule(p21, Suc(0), p167, Ant(3)))
+[p167] ∀y0 #c(Z: Nat) != (S(y0:Nat): Nat),
 ∀x0 ('proj1-S'(S(x0)): Nat) = x0,
-∀y0 #c(Z: Nat) != S(y0),
+∀z ('-2'(S(z), #c(Z: Nat)): Nat) = S(z),
 (⊤ → ∀m '-2'(#c(Z: Nat), '+2'(#c(Z: Nat), m:Nat)) = #c(Z: Nat)) ∧
     ∀n_0
     (∀m '-2'(n_0, '+2'(n_0, m)) = #c(Z: Nat) →
@@ -2137,7 +2134,7 @@ proof: gapt.proofs.lk.LKProof =
   ∀n ∀m '-2'(n, '+2'(n, m)) = #c(Z: Nat),
 ∀y '+2'(#c(Z: Nat), y) = y,
 ∀y '-2'(#c(Z: Nat), y) = #c(Z: Nat),
-∀z ∀x2 '-2'(S(z)...
+∀z ∀x2 '-2'(...
 
 \end{clilisting}
 
@@ -2162,13 +2159,13 @@ gapt> solveQuasiPropositional(hof"a = b & f a = b -> a = f(f(b))").get
 res1: gapt.proofs.lk.LKProof =
 [p9]  ⊢ a = b ∧ f(a) = b → a = f(f(b))    (ImpRightRule(p8, Ant(0), Suc(0)))
 [p8] a = b ∧ f(a) = b ⊢ a = f(f(b))    (AndLeftRule(p7, Ant(1), Ant(0)))
-[p7] f(a) = b, a = b ⊢ a = f(f(b))    (EqualityLeftRule(p6, Ant(0), Ant(1), λx f(x) = b))
-[p6] a = b, f(b) = b ⊢ a = f(f(b))    (EqualityRightRule(p5, Ant(0), Suc(0), λx x = f(f(b))))
-[p5] a = b, f(b) = b ⊢ b = f(f(b))    (WeakeningLeftRule(p4, a = b))
-[p4] f(b) = b ⊢ b = f(f(b))    (EqualityRightRule(p3, Ant(0), Suc(0), λx b = f(x)))
-[p3] f(b) = b ⊢ b = f(b)    (EqualityRightRule(p2, Ant(0), Suc(0), λx b = x))
-[p2] f(b) = b ⊢ b = b    (WeakeningLeftRule(p1, f(b) = b))
-[p1]  ⊢ b = b    (ReflexivityAxiom(b))
+[p7] f(a) = b, a = b ⊢ a = f(f(b))    (EqualityLeftRule(p6, Ant(0), Ant(1), λx f(a) = x))
+[p6] a = b, f(a) = a ⊢ a = f(f(b))    (EqualityRightRule(p5, Ant(0), Suc(0), λx a = f(f(x))))
+[p5] a = b, f(a) = a ⊢ a = f(f(a))    (WeakeningLeftRule(p4, a = b))
+[p4] f(a) = a ⊢ a = f(f(a))    (EqualityRightRule(p3, Ant(0), Suc(0), λx a = f(x)))
+[p3] f(a) = a ⊢ a = f(a)    (EqualityRightRule(p2, Ant(0), Suc(0), λx a = x))
+[p2] f(a) = a ⊢ a = a    (WeakeningLeftRule(p1, f(a) = a))
+[p1]  ⊢ a = a    (ReflexivityAxiom(a))
 
 \end{clilisting}
 
@@ -2239,44 +2236,47 @@ gapt> cutFormulas(Pi2Pigeonhole.proof) filter {containsQuantifier(_)} foreach pr
 
 gapt> val acnf = CERES(Pi2Pigeonhole.proof)
 acnf: gapt.proofs.lk.LKProof =
-[p293] ∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0)),
+[p366] ∀x ∀y (x <= M(x, y) ∧ y <= M(x, y)),
 ∀x (f(x) = 0 ∨ f(x) = s(0))
 ⊢
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionRightRule(p292, Suc(1), Suc(0)))
-[p292] ∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0)),
+∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionRightRule(p365, Suc(1), Suc(0)))
+[p365] ∀x ∀y (x <= M(x, y) ∧ y <= M(x, y)),
 ∀x (f(x) = 0 ∨ f(x) = s(0))
 ⊢
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1)),
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p291, Ant(2), Ant(1)))
-[p291] ∀x (f(x) = 0 ∨ f(x) = s(0)),
-∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0)),
-∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0))
+∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0)),
+∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionLeftRule(p364, Ant(2), Ant(1)))
+[p364] ∀x (f(x) = 0 ∨ f(x) = s(0)),
+∀x ∀y (x <= M(x, y) ∧ y <= M(x, y)),
+∀x ∀y (x <= M(x, y) ∧ y <= M(x, y))
 ⊢
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1)),
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p290, Ant(3), Ant(0)))
-[p290] ∀x (f(x) = 0 ∨ f(x) = s(0)),
-∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0)),
-∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0)),
-∀x (f(x) = 0 ∨ ...
+∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0)),
+∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionLeftRule(p363, Ant(3), Ant(0)))
+[p363] ∀x (f(x) = 0 ∨ f(x) = s(0)),
+∀x ∀y (x <= M(x, y) ∧ y <= M(x, y)),
+∀x ∀y (x <= M(x, y) ∧ y <= M(x, y)),
+∀x (f(x) = 0 ∨ f(x) = s(0))
+⊢
+∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y...
 
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
 et: gapt.proofs.expansion.ExpansionProof =
-∀x ∀y_0 (x <= M(x, y_0) ∧ y_0 <= M(x, y_0))
-  +^{s(M(v_1, s(M(v_2, v_3)))), s(M(s(M(v_4, v)), v_0))}
-    (s(M(v_1, s(M(v_2, v_3)))) <=
-        M(s(M(v_1, s(M(v_2, v_3)))), s(M(s(M(v_4, v)), v_0))))- ∧
-    (s(M(s(M(v_4, v)), v_0)) <=
-        M(s(M(v_1, s(M(v_2, v_3)))), s(M(s(M(v_4, v)), v_0))))-
-  +^{s(M(v_1, s(M(v_2, v_3)))), s(M(v_4, v))}
-    (s(M(v_1, s(M(v_2, v_3)))) <= M(s(M(v_1, s(M(v_2, v_3)))), s(M(v_4, v))))- ∧
-    (s(M(v_4, v)) <= M(s(M(v_1, s(M(v_2, v_3)))), s(M(v_4, v))))-
-  +^{s(M(v_2, v_3)), s(M(s(M(v_4, v)), v_0))}
-    (s(M(v_2, v_3)) <= M(s(M(v_2, v_3)), s(M(s(M(v_4, v)), v_0))))- ∧
-    (s(M(s(M(v_4, v)), v_0)) <= M(s(M(v_2, v_3)), s(M(s(M(v_4, v)), v_0))))-
-  +^{s(M(v_2, v_3)), s(M(v_4, v))}
-    (s(M(v_2, v_3)) <= M(s(M(v_2, v_...
+∀x ∀y (x <= M(x, y) ∧ y <= M(x, y))
+  +^{s(M(s(M(v, v_0)), v_0)), s(M(s(M(s(M(v, v_0)), v_0)), v_0))}
+    (s(M(s(M(v, v_0)), v_0)) <=
+        M(s(M(s(M(v, v_0)), v_0)), s(M(s(M(s(M(v, v_0)), v_0)), v_0))))- ∧
+    (s(M(s(M(s(M(v, v_0)), v_0)), v_0)) <=
+        M(s(M(s(M(v, v_0)), v_0)), s(M(s(M(s(M(v, v_0)), v_0)), v_0))))-
+  +^{s(M(s(M(v, v_0)), v_0)), s(M(s(M(v, v_0)), v_0))}
+    (s(M(s(M(v, v_0)), v_0)) <=
+        M(s(M(s(M(v, v_0)), v_0)), s(M(s(M(v, v_0)), v_0))))- ∧
+    (s(M(s(M(v, v_0)), v_0)) <=
+        M(s(M(s(M(v, v_0)), v_0)), s(M(s(M(v, v_0)), v_0))))-
+  +^{s(M(s(M(v, v_0)), v_0)), v_0}
+    (s(M(s(M(v, v_0)), v_0)) <= M(s(M(s(M(v, v_0)), v_0)), v_0))- ∧
+    wk-{v_0 <= M(s(M(s(M(v, v_0)), v_0)), v_0)}
+  +^{s(M(v, v_0)), s(M(s(M(v, v_0...
 
 gapt> prooftool(et)
 
@@ -2312,19 +2312,18 @@ Some([p27] ∀x (P(x) → P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    
 ∀x1 (P(x1) → P(s(s(s(x1))))),
 P(0)
 ⊢
-P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p24, Ant(1), P(x1) → P(s(s(s(x1)))), 0, x1))
+P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p24, Ant(1), P(x1) → P(s(s(s(x1)))), s(s(s(0))), x1))
 [p24] ∀x1 (P(x1) → P(s(s(s(x1))))),
-P(0) → P(s(s(s(0)))),
+P(s(s(s(0)))) → P(s(s(s(s(s(s(0))))))),
 P(0)
 ⊢
 P(s(s(s(s(s(s(s(s(s(0))))))))))    (ContractionLeftRule(p23, Ant(1), Ant(0)))
 [p23] ∀x1 (P(x1) → P(s(s(s(x1))))),
 ∀x1 (P(x1) → P(s(s(s(x1))))),
-P(0) → P(s(s(s(0)))),
+P(s(s(s(0)))) → P(s(s(s(s(s(s(0))))))),
 P(0)
 ⊢
-P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p22, Ant(3), P(x1) → P(s(s(s(x1)))), s(s(s(0))), x1))
-[p22] ∀x1 (P(x1) →...
+P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p22, Ant(2), P(x1) → P(s(s(...
 
 \end{clilisting}
 
@@ -2352,28 +2351,28 @@ able to automatically find a (V)TRATG that covers this language:
 
 \begin{clilisting}[OpenWBO.isInstalled]
 gapt> val lang = 1 to 18 map { Numeral(_) }
-lang: scala.collection.immutable.IndexedSeq[gapt.expr.formula.fol.FOLTerm] = Vector(s(0), s(s(0)), s(s(s(0))), s(s(s(s(0)))), s(s(s(s(s(0))))), s(s(s(s(s(s(0)))))), s(s(s(s(s(s(s(0))))))), s(s(s(s(s(s(s(s(0)))))))), s(s(s(s(s(s(s(s(s(0))))))))), s(s(s(s(s(s(s(s(s(s(0)))))))))), s(s(s(s(s(s(s(s(s(s(s(0))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))))))
+lang: IndexedSeq[gapt.expr.formula.fol.FOLTerm] = Vector(s(0), s(s(0)), s(s(s(0))), s(s(s(s(0)))), s(s(s(s(s(0))))), s(s(s(s(s(s(0)))))), s(s(s(s(s(s(s(0))))))), s(s(s(s(s(s(s(s(0)))))))), s(s(s(s(s(s(s(s(s(0))))))))), s(s(s(s(s(s(s(s(s(s(0)))))))))), s(s(s(s(s(s(s(s(s(s(s(0))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))))))
 
 gapt> val grammar = findMinimalVTRATG(lang.toSet, 2)
 grammar: gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s
 
+x_0 → s(s(s(x_1)))
+
+x_0 → s(s(x_1))
+
 x_0 → s(x_1)
 
-x_0 → x_1
+x_1 → s(s(s(s(s(s(x_2))))))
 
-x_1 → s(s(s(s(s(s(s(s(s(s(s(s(s(x_2)))))))))))))
+x_1 → s(s(s(x_2)))
 
-x_1 → s(s(s(s(s(s(s(x_2)))))))
-
-x_1 → s(x_2)
+x_1 → x_2
 
 x_2 → 0
 
-x_2 → s(s(0))
-
-x_2 → s(s(s(s(0))))
+x_2 → s(s(s(s(s(s(s(s(s(0)))))))))
 
 gapt> lang.toSet subsetOf grammar.language
 res0: Boolean = true
@@ -2387,22 +2386,60 @@ res1: gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s
 
+x_0 → s(s(s(x_1)))
+
+x_0 → s(s(x_1))
+
 x_0 → s(x_1)
 
-x_0 → x_1
+x_1 → s(s(s(x_2)))
 
-x_1 → s(x_2)
+x_1 → x_2
 
 x_2 → 0
-
-x_2 → s(s(0))
-
-x_2 → s(s(s(s(0))))
 
 \end{clilisting}
 
 
+\section{Formula equations}
+A second-order formula of the form $\exists X_1 \dots \exists X_n \varphi$, where the $X_i$ are second-order relation variables with arity $a_i$ and $\varphi$ is a first-order formula is called a \emph{formula equation}.
+Solving a formula equation means finding lambda expressions $\psi_i$ with arity $a_i$ such that
+$\varphi[X_1/\psi_1,\dots,X_n/\psi_n]$
+is valid.
+The $\psi_i$ are called \emph{witnesses} of the formula equation.
 
+GAPT supports solving formula equations for certain classes of formula equations:
+\begin{clilisting}
+gapt> val formulaEquationSolution = solveFormulaEquation(hof"∃X X(a)")
+formulaEquationSolution: scala.util.Try[gapt.expr.subst.Substitution] = Success(Substitution(X:i>o -> λx_0 a = x_0))
+
+\end{clilisting}
+
+The return value of \texttt{solveFormulaEquation} is a \texttt{Try} which succeeds if the algorithm could find witnesses for the given second order variables and fails otherwise.
+Failure does not mean that the formula equation is not solvable, but only that the algorithm we use couldn't find a witness.
+If the \texttt{Try} is successful the return value is a substitution such that applying the substitution to the first order part of the formula equation gives a valid formula.
+
+Another version of this method is called \texttt{dls}.
+This method solves the related problem of finding lambda expressions $\psi_i$ such that 
+\begin{equation}
+  \label{eq:second-order-elimination-with-witness}
+  \exists X_1 \dots \exists X_n \varphi \leftrightarrow \varphi[X_1/\psi_1,\dots,X_n/\psi_n]
+\end{equation}
+is valid.
+If successful, the return value is a tuple of a substitution and the first order part of the given formula equation (possibly simplified) such that applying the substitution to the first-order part fulfils that \eqref{eq:second-order-elimination-with-witness} is valid.
+Again, failure of the method does not mean that there is no witness such that the equivalence holds, but merely that our algorithm could not find a witness.
+
+\begin{clilisting}
+gapt> val solution = dls(hof"∃X X(a)")
+solution: scala.util.Try[(gapt.expr.subst.Substitution, gapt.expr.formula.Formula)] = Success((Substitution(X:i>o -> λx_0 a = x_0),X(a): o))
+
+gapt> Escargot.isValid(BetaReduction.betaNormalize(solution.get._1(solution.get._2)))
+res0: Boolean = true
+
+\end{clilisting}
+
+Both methods are based on the DLS algorithm in \cite{Doherty1997Computing}.
+To get a more detailed description of the kinds of formulas for which the algorithm succeeds check the documentation of \texttt{solveFormulaEquation} and \texttt{dls}.
 
 
 \vfill

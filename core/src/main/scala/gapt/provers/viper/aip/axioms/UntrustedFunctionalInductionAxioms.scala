@@ -7,18 +7,19 @@ import gapt.expr.formula.Formula
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Top
 import gapt.expr.formula.fol.FOLConst
-import gapt.expr.formula.fol.folSubTerms
+import gapt.expr.formula.fol.flatSubterms
 import gapt.expr.formula.hol.{ instantiate, universalClosure }
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.To
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
+import gapt.proofs.LabelledSequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.ProofLink
 import gapt.proofs.{ HOLSequent, Sequent }
-import gapt.provers.viper.aip.{ LabelledSequent, ThrowsError }
+import gapt.provers.viper.aip.ThrowsError
 
 case object UntrustedFunctionalInductionAxioms extends AxiomFactory {
   def generateScheme( eqns: Vector[( Const, List[Formula], Expr, Expr )] ): Formula = {
@@ -33,7 +34,7 @@ case object UntrustedFunctionalInductionAxioms extends AxiomFactory {
     val premises = eqns.map {
       case ( c, conds, lhs @ Apps( _, lhsArgs ), rhs ) =>
         val fvs = freeVariables( lhs +: conds :+ rhs )
-        val indHyps = folSubTerms( rhs ).collect {
+        val indHyps = flatSubterms( rhs ).collect {
           case recOcc @ Apps( `c`, recOccArgs ) => motive( recOcc +: recOccArgs )
         }
         All.Block( fvs.toSeq, And( conds ++ indHyps ) --> motive( rhs +: lhsArgs ) )
@@ -46,7 +47,7 @@ case object UntrustedFunctionalInductionAxioms extends AxiomFactory {
     Map() ++ sequent.antecedent.collect {
       case All.Block( vs, Imp.Block( conds, Eq( lhs @ Apps( c: Const, _ ), rhs ) ) ) =>
         ( c, conds, lhs, rhs )
-    }.groupBy( _._1 ).mapValues( generateScheme )
+    }.groupBy( _._1 ).view.mapValues( generateScheme ).toMap
 
   override def apply( sequent: LabelledSequent )( implicit ctx: MutableContext ): ThrowsError[List[Axiom]] = {
     val schemes = guessSchemes( sequent.map( _._2 ) )
@@ -57,7 +58,7 @@ case object UntrustedFunctionalInductionAxioms extends AxiomFactory {
         case ( defConst, indScheme ) =>
 
           val motives =
-            folSubTerms( goal ).collect {
+            flatSubterms( goal ).collect {
               case t @ Apps( `defConst`, args ) =>
                 val nameGen = rename.awayFrom( freeVariables( goal ) )
                 val repl = Vector( t -> Var( nameGen.fresh( "z" ), t.ty ) ) ++

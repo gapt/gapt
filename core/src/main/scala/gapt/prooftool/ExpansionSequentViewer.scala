@@ -19,7 +19,7 @@ class ExpansionSequentViewer( name: String, es: ExpansionSequent ) extends Proof
 
   override def viewMenuContents = super.viewMenuContents ++ Seq( new Separator(), viewLKProofButton )
 
-  def lkproof() {
+  def lkproof(): Unit = {
     try {
       mainPanel.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
       val Right( p ) = ExpansionProofToLK( ExpansionProof( content ) )

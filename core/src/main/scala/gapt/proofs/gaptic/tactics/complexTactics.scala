@@ -24,6 +24,7 @@ import gapt.expr.ty.TBase
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.expr.util.syntacticMatching
+import gapt.formats.tip.TipProblem
 import gapt.logic.Polarity
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
@@ -41,6 +42,64 @@ import gapt.proofs.lk.rules.macros.ForallLeftBlock
 import gapt.proofs.lk.rules.macros.WeakeningMacroRule
 import gapt.proofs.lk.util.solvePropositional
 import gapt.proofs.lk.util.solveQuasiPropositional
+import gapt.provers.viper.spin.{ SpinOptions, SuperpositionInductionProver }
+
+// Todo: Add an option that allows us to discard the original target.
+/**
+ * Creates forward chaining tactics.
+ *
+ * A forward chaining tactic replaces a goal of the form `Γ, A(t), ∀x(A(t) → B(t)) ⇒ Δ`
+ * by `Γ, A(t), ∀x(A(t) → B(t)), B(t) ⇒ Δ`.
+ */
+case class ForwardChain(
+    lemmaLabel:   String,
+    targetMode:   TacticApplyMode = UniqueFormula,
+    substitution: Map[Var, Expr]  = Map() ) extends Tactical1[Unit] {
+
+  override def apply( goal: OpenAssumption ): Tactic[Unit] = {
+    for {
+      lemma <- retrieveLemma( goal )
+      target <- retrieveTarget( goal, lemma )
+      ( _, targetFormula, _ ) = target
+      _ <- forwardChain( targetFormula, lemma )
+    } yield ()
+  }
+
+  private def retrieveLemma( goal: OpenAssumption ): Tactic[Formula] = {
+    findFormula( goal, OnLabel( lemmaLabel ) ).withFilter {
+      case ( _, _, i ) => i.isAnt
+    }.flatMap { case ( _, l @ All.Block( _, Imp( _, _ ) ), _ ) => Tactic.pure( l ) }
+  }
+
+  private def retrieveTarget(
+    goal: OpenAssumption, lemma: Formula ): Tactic[( String, Formula, SequentIndex )] = {
+    findFormula( goal, targetMode ).withFilter {
+      case ( _, f, i ) => i.isAnt && matchingLemma( lemma, f ).isDefined
+    }.flatMap( Tactic.pure )
+  }
+
+  private def forwardChain( targetFormula: Formula, lemma: Formula ): Tactic[Unit] = {
+    for {
+      instanceLabel <- instantiateLemma( targetFormula, lemma )
+      _ <- applyInstantiatedLemma( instanceLabel )
+    } yield ()
+  }
+
+  private def instantiateLemma( targetFormula: Formula, lemma: Formula ): Tactic[String] = {
+    val All.Block( lemmaVars, _ ) = lemma
+    val instance = matchingLemma( lemma, targetFormula ).get
+    ForallLeftTactic( OnLabel( lemmaLabel ), lemmaVars.map( instance( _ ) ), false )
+  }
+
+  private def applyInstantiatedLemma( instanceLabel: String ): Tactic[Unit] =
+    ImpLeftTactic( OnLabel( instanceLabel ) ) andThen LogicalAxiomTactic
+
+  private def matchingLemma( lemma: Formula, formula: Formula ): Option[Substitution] = {
+    val fixedVariables = freeVariables( lemma ).map { v => v -> v }
+    val All.Block( _, Imp( hyp, _ ) ) = lemma
+    syntacticMatching( hyp, formula, PreSubstitution( substitution ++ fixedVariables ) )
+  }
+}
 
 /**
  * Performs backwards chaining:
@@ -113,7 +172,7 @@ case class ChainTactic( hyp: String, target: TacticApplyMode = UniqueFormula, su
  * @param once  Rewrite exactly once?
  */
 case class RewriteTactic(
-    equations:  Traversable[( String, Boolean )],
+    equations:  Iterable[( String, Boolean )],
     target:     Option[String],
     fixedSubst: Map[Var, Expr],
     once:       Boolean ) extends Tactical1[Unit] {
@@ -285,10 +344,10 @@ case class ResolutionProverTactic(
       if ( deskolemize )
         prover.getExpansionProof( goal.conclusion )
           .map( deskolemizeET( _ ) )
-          .map( ExpansionProofToLK( _ ).right.get )
+          .map( ExpansionProofToLK( _ ).toOption.get )
       else if ( viaExpansionProof )
         prover.getExpansionProof( goal.conclusion )
-          .map( ExpansionProofToLK( _ ).right.get )
+          .map( ExpansionProofToLK( _ ).toOption.get )
       else
         prover.getLKProof( goal.conclusion )
     proofOption match {
@@ -320,6 +379,14 @@ case class AnalyticInductionTactic( axioms: AxiomFactory, prover: ResolutionProv
 
   def withProver( prover: ResolutionProver ): AnalyticInductionTactic =
     copy( prover = prover )
+}
+
+case class SuperpositionInductionTactic( opts: SpinOptions, problem: TipProblem )( implicit ctx: MutableContext ) extends Tactical1[Unit] {
+  override def apply( goal: OpenAssumption ): Tactic[Unit] =
+    SuperpositionInductionProver( opts, problem ) inductiveLKProof goal.labelledSequent match {
+      case None       => TacticFailure( this, "structural induction prover failed" )
+      case Some( lk ) => replace( lk )
+    }
 }
 
 case class SubstTactic( mode: TacticApplyMode ) extends Tactical1[Unit] {

@@ -161,12 +161,12 @@ object FOLPosition {
       case FOLFunction( _, args ) =>
         val k = pos.head
         val subPos = toHOLPosition( args( k - 1 ) )( pos.tail )
-        ( List.fill( args.length - k )( 1 ) :\ ( 2 :: subPos ) )( ( i, acc ) => i :: acc )
+        List.fill( args.length - k )( 1 ).foldRight( 2 :: subPos )( ( i, acc ) => i :: acc )
 
       case FOLAtom( _, args ) =>
         val k = pos.head
         val subPos = toHOLPosition( args( k - 1 ) )( pos.tail )
-        ( List.fill( args.length - k )( 1 ) :\ ( 2 :: subPos ) )( ( i, acc ) => i :: acc )
+        List.fill( args.length - k )( 1 ).foldRight( 2 :: subPos )( ( i, acc ) => i :: acc )
 
       case Neg( f ) if pos.head == 1 =>
         1 :: toHOLPosition( f )( pos.tail )
@@ -194,12 +194,12 @@ object FOLPosition {
       case FOLFunction( _, args ) =>
         val k = pos.head
         val subPos = toHOLPosition( args( k - 1 ) )( pos.tail )
-        Some( ( List.fill( args.length - k )( 1 ) :\ ( 2 :: subPos ) )( ( i, acc ) => i :: acc ) )
+        Some( List.fill( args.length - k )( 1 ).foldRight( 2 :: subPos )( ( i, acc ) => i :: acc ) )
 
       case FOLAtom( _, args ) =>
         val k = pos.head
         val subPos = toHOLPosition( args( k - 1 ) )( pos.tail )
-        Some( ( List.fill( args.length - k )( 1 ) :\ ( 2 :: subPos ) )( ( i, acc ) => i :: acc ) )
+        Some( List.fill( args.length - k )( 1 ).foldRight( 2 :: subPos )( ( i, acc ) => i :: acc ) )
 
       case Neg( f ) if pos.head == 1 =>
         Some( 1 :: toHOLPosition( f )( pos.tail ) )

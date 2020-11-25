@@ -1,7 +1,7 @@
 package gapt.proofs.expansion
 
 import gapt.cutintro.CutIntroduction
-import gapt.examples.{ LinearExampleProof, Pi2Pigeonhole }
+import gapt.examples.Pi2Pigeonhole
 import gapt.expr._
 import gapt.expr.subst.Substitution
 import gapt.formats.ClasspathInputFile
@@ -16,6 +16,7 @@ import gapt.provers.escargot.Escargot
 import gapt.provers.verit.VeriT
 import gapt.utils.SatMatchers
 import org.specs2.mutable.Specification
+import gapt.examples.sequence.LinearExampleProof
 
 class ExpansionProofTest extends Specification with SatMatchers with SequentMatchers {
 

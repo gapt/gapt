@@ -51,7 +51,7 @@ class DrawSingleSequentInference[F, T <: SequentProof[F, T]](
     xLayoutAlignment = 0
   }
 
-  def setContents() {
+  def setContents(): Unit = {
     contents = new BoxPanel( orientation ) {
       contents += rule
       contents += auxiliaries
@@ -62,7 +62,7 @@ class DrawSingleSequentInference[F, T <: SequentProof[F, T]](
 
   setContents()
 
-  def init() {
+  def init(): Unit = {
     rule.contents.clear()
     if ( p() != None ) rule.contents += LatexLabel( main, p().get.name )
     rule.contents += Swing.Glue

@@ -1,7 +1,6 @@
 package gapt.provers.viper
 
 import ammonite.ops._
-import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.Formula
 import gapt.expr.formula.fol.folTermSize
@@ -16,7 +15,7 @@ import gapt.grammars.InductionGrammar
 import gapt.proofs.HOLSequent
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.gaptic._
-import gapt.proofs.gaptic.tactics.AnalyticInductionTactic
+import gapt.proofs.gaptic.tactics.{ AnalyticInductionTactic, SuperpositionInductionTactic }
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.NegRightRule
@@ -35,8 +34,8 @@ import gapt.provers.spass.SPASS
 import gapt.provers.vampire.Vampire
 import gapt.provers.viper.aip.axioms._
 import gapt.provers.viper.grammars._
+import gapt.provers.viper.spin.SpinOptions
 import gapt.utils.{ LogHandler, Logger, MetricsPrinter, MetricsPrinterWithMessages, TimeOutException, withTimeout }
-
 import scala.concurrent.duration.Duration
 import scala.util.Failure
 import scala.util.Success
@@ -51,12 +50,14 @@ case class ViperOptions(
     prooftool:                Boolean                  = false,
     metrics:                  Boolean                  = false,
     treeGrammarProverOptions: TreeGrammarProverOptions = TreeGrammarProverOptions(),
-    aipOptions:               AipOptions               = AipOptions() )
+    aipOptions:               AipOptions               = AipOptions(),
+    spinOptions:              SpinOptions              = SpinOptions(),
+    tipProblem:               Option[TipProblem]       = None )
 object ViperOptions {
   val usage =
     """Vienna Inductive Prover
       |
-      |Usage: viper [common options] [--portfolio|--treegrammar|--analytic [options]] problem.smt2
+      |Usage: viper [common options] [--portfolio|--treegrammar|--analytic [options]|--spin [options]] problem.smt2
       |
       |common options:
       |  -v --verbose
@@ -67,6 +68,10 @@ object ViperOptions {
       |--analytic options:
       |  --prover escargot|vampire|prover9|spass|eprover
       |  --axioms sequential|independent|...
+      |
+      |--spin options:
+      |  --generalization true|false
+      |  --testing        true|false|1|2|...
       |""".stripMargin
 
   def parse( args: List[String], opts: ViperOptions ): ( List[String], ViperOptions ) =
@@ -86,6 +91,9 @@ object ViperOptions {
       case "--analytic" :: rest =>
         val ( rest_, opts_ ) = parseAnalytic( rest, opts.aipOptions )
         parse( rest_, opts.copy( aipOptions = opts_, mode = "analytic" ) )
+      case "--spin" :: rest =>
+        val ( rest_, opts_ ) = parseSpin( rest, opts.spinOptions )
+        parse( rest_, opts.copy( spinOptions = opts_, mode = "spin" ) )
       case _ => ( args, opts )
     }
 
@@ -98,6 +106,20 @@ object ViperOptions {
       } ) )
       case "--prover" :: prover :: rest => parseAnalytic( rest, opts.copy( prover = provers( prover ) ) )
       case _                            => ( args, opts )
+    }
+
+  def parseSpin( args: List[String], opts: SpinOptions ): ( List[String], SpinOptions ) =
+    args match {
+      case "--generalization" :: toggle :: rest => parseSpin( rest, opts.copy( performGeneralization = toggle match {
+        case "true"  => true
+        case "false" => false
+      } ) )
+      case "--testing" :: toggle :: rest => parseSpin( rest, opts.copy( sampleTestTerms = toggle match {
+        case "true"                     => SpinOptions().sampleTestTerms
+        case "false"                    => 0
+        case d if d.forall( _.isDigit ) => d.toInt
+      } ) )
+      case _ => ( args, opts )
     }
 
   val provers = Map[String, ResolutionProver](
@@ -132,8 +154,8 @@ object ViperOptions {
         rest,
         opts.copy( tautCheckSize = a.toFloat -> b.toFloat ) )
       case "--cansolsize" :: a :: b :: rest => parseTreeGrammar( rest, opts.copy( canSolSize = a.toFloat -> b.toFloat ) )
-      case "--interp" :: rest               => parseTreeGrammar( rest, opts.copy( useInterpolation = true ) )
-      case "--nointerp" :: rest             => parseTreeGrammar( rest, opts.copy( useInterpolation = false ) )
+      case "--interp" :: rest               => parseTreeGrammar( rest, opts.copy( bupSolver = InductionBupSolver.Interpolation ) )
+      case "--nointerp" :: rest             => parseTreeGrammar( rest, opts.copy( bupSolver = InductionBupSolver.Canonical ) )
       case _                                => ( args, opts )
     }
 }
@@ -171,6 +193,14 @@ object Viper {
           }
         List( Duration.Inf -> AnalyticInductionTactic( opts.aipOptions.axioms, opts.aipOptions.prover ).
           aka( s"analytic $axiomsName" ) )
+      case "spin" =>
+        if ( opts.tipProblem.isEmpty )
+          throw new IllegalStateException( "No TipProblem given." )
+
+        val generalize = opts.spinOptions.performGeneralization
+        val testTerms = opts.spinOptions.sampleTestTerms
+        List( Duration.Inf -> SuperpositionInductionTactic( opts.spinOptions, opts.tipProblem.get )
+          .aka( s"spin (generalization = $generalize, test terms = $testTerms)" ) )
     }
 
   private def timeit[T]( f: => T ): ( T, Duration ) = {
@@ -207,13 +237,13 @@ object Viper {
   }
 
   def apply( problem: TipProblem ): Option[LKProof] =
-    apply( problem.toSequent )( problem.ctx.newMutable )
+    apply( problem.toSequent, ViperOptions( tipProblem = Some( problem ) ) )( problem.ctx.newMutable )
 
   def apply( problem: TipProblem, verbosity: Int ): Option[LKProof] =
-    apply( problem, ViperOptions( verbosity = verbosity ) )
+    apply( problem, ViperOptions( verbosity = verbosity, tipProblem = Some( problem ) ) )
 
   def apply( problem: TipProblem, options: ViperOptions ): Option[LKProof] =
-    apply( problem.toSequent, options )( problem.ctx.newMutable )
+    apply( problem.toSequent, options.copy( tipProblem = Some( problem ) ) )( problem.ctx.newMutable )
 
   def apply( sequent: HOLSequent )( implicit ctx: MutableContext ): Option[LKProof] =
     apply( sequent, ViperOptions( verbosity = 3 ) )
@@ -277,7 +307,7 @@ object Viper {
     val problem = if ( opts.fixup ) TipSmtImporter.fixupAndLoad( file ) else TipSmtImporter.load( file )
     implicit val ctx: MutableContext = problem.ctx.newMutable
 
-    apply( problem.toSequent, opts ) match {
+    apply( problem.toSequent, opts.copy( tipProblem = Some( problem ) ) ) match {
       case Some( proof ) =>
         ctx check proof
         require( proof.conclusion isSubsetOf problem.toSequent )

@@ -1,13 +1,13 @@
-(declare-datatypes () ((nat (o) (s (p nat)))))
+(declare-datatypes ((nat 0)) (( (o) (s (p nat)))))
 
 (define-fun-rec even ((x nat)) Bool
   (match x
-    (case (s x) (not (even x)))
-    (case o true)))
+    (( (s x) (not (even x)))
+    ( o true))))
 (define-fun-rec odd ((x nat)) Bool
   (match x
-    (case (s x) (not (odd x)))
-    (case o false)))
+    (( (s x) (not (odd x)))
+    ( o false))))
 
 (prove (forall ((x nat))
   (= (even x) (odd (s x)))))

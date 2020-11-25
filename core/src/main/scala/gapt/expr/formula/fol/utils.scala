@@ -17,6 +17,7 @@ import gapt.expr.formula.Or
 import gapt.expr.formula.Top
 import gapt.expr.formula.hol.containsQuantifier
 import gapt.expr.ty.Ti
+import gapt.expr.util.subTerms
 import gapt.proofs.HOLSequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.Constants
@@ -45,39 +46,57 @@ object FOLFunctionArgs {
 }
 
 /**
- * Generation of first-order subterms (note that this notion differs from
- * lambda subterms).
+ * Flat subterms are obtained by decomposing a sequence of applications in one
+ * step i.e. the flat subterms of f x₁ ... xₙ are the term itself and the
+ * variables x₁,...,xₙ.
  */
-object folSubTerms {
+object flatSubterms {
+
+  /**
+   * Retrieves "flat" subterms occurrences.
+   * @param t The term whose flat subterms are to be retrieved.
+   * @return All the flat subterms of `t`.
+   */
   def apply( t: Expr ): Set[Expr] = apply( Some( t ) )
 
-  def apply( language: Traversable[Expr] ): Set[Expr] = {
+  /**
+   * Retrieves "flat" subterm occurrences.
+   * @param expressions The expressions whose flat subterms are to be retrieved.
+   * @return All flat subterm occurrences of the given expressions.
+   */
+  def apply( expressions: Iterable[Expr] ): Set[Expr] = {
+
     val subTerms = mutable.Set[Expr]()
-    for ( t <- language ) walk( t, subTerms )
+
+    def getFlatSubterms( expr: Expr ): Unit = {
+      if ( !subTerms.contains( expr ) ) {
+        subTerms += expr
+        val Apps( _, as ) = expr
+        as.foreach { getFlatSubterms }
+      }
+    }
+
+    expressions.foreach { getFlatSubterms }
     subTerms.toSet
   }
 
+  /**
+   * @see [[gapt.expr.formula.fol.flatSubterms]].
+   */
   def apply( t: FOLTerm ): Set[FOLTerm] = apply( Some( t ) )
 
-  def apply( language: Traversable[FOLTerm] )( implicit dummyImplicit: DummyImplicit ): Set[FOLTerm] =
-    apply( language: Traversable[Expr] ).asInstanceOf[Set[FOLTerm]]
-
-  private def walk( term: Expr, subterms: mutable.Set[Expr] ): Unit =
-    // if the term is not in the set of subterms yet, add it and add all its subterms
-    // this check avoids duplicate addition of all subterms of a subterm
-    if ( !subterms.contains( term ) ) {
-      subterms += term
-      val Apps( _, args ) = term
-      args.foreach( walk( _, subterms ) )
-    }
-
+  /**
+   * @see [[gapt.expr.formula.fol.flatSubterms]].
+   */
+  def apply( language: Iterable[FOLTerm] )( implicit dummyImplicit: DummyImplicit ): Set[FOLTerm] =
+    apply( language: Iterable[Expr] ).asInstanceOf[Set[FOLTerm]]
 }
 
 object folTermSize {
   def apply( t: Expr ): Int =
     t match { case Apps( hd, as ) => 1 + apply( as ) }
 
-  def apply( ts: Traversable[Expr] ): Int =
+  def apply( ts: Iterable[Expr] ): Int =
     ts.view.map( apply ).sum
 }
 
@@ -161,69 +180,61 @@ object getArityOfConstants {
   }
 }
 
-/**
- * Matcher for Sigma,,n,,
- * A FOLFormula f will match Sigma(k) if f is Sigma,,k,,, but not Sigma,,k-1,,.
- */
-object Sigma {
-  def unapply( f: FOLFormula ): Option[Int] = f match {
-    case FOLAtom( _, _ ) => Some( 0 )
-    case Neg( g )        => unapply( g )
-    case And( g, h )     => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
-    case Or( g, h )      => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
-    case Imp( g, h )     => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
-    case Ex.Block( vars, g ) =>
-      g match {
-        case Pi( i ) => Some( i + 1 )
+object QuantifierStructure {
+  object Exists {
+    /**
+     * Matches ∃ₖ formulas.
+     * @param formula The formula to be matched.
+     * @return k if `formula` is ∃ₖ.
+     */
+    def unapply( formula: FOLFormula ): Option[Int] =
+      if ( isQuantifierFree( formula ) ) {
+        Some( 0 )
+      } else {
+        formula match {
+          case Ex.Block( _ :: _, Forall( k ) ) => Some( k + 1 )
+          case _                               => None
+        }
       }
   }
-}
-
-/**
- * Matcher for Pi,,n,,
- * A FOLFormula f will match Pi(k) if f is Pi,,k,,, but not Pi,,k-1,,.
- */
-object Pi {
-  def unapply( f: FOLFormula ): Option[Int] = f match {
-    case FOLAtom( _, _ ) => Some( 0 )
-    case Neg( g )        => unapply( g )
-    case And( g, h )     => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
-    case Or( g, h )      => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
-    case Imp( g, h )     => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
-    case All.Block( _, g ) => g match {
-      case Sigma( i ) => Some( i + 1 )
+  object Forall {
+    /**
+     * Matches ∀ₖ formulas.
+     * @param formula The formula to be matched.
+     * @return k if `formula` is ∀ₖ.
+     */
+    def unapply( formula: FOLFormula ): Option[Int] =
+      if ( isQuantifierFree( formula ) ) {
+        Some( 0 )
+      } else {
+        formula match {
+          case All.Block( _ :: _, Exists( k ) ) => Some( k + 1 )
+          case _                                => None
+        }
+      }
+  }
+  private def isQuantifierFree( formula: FOLFormula ): Boolean =
+    !subTerms( formula ).exists {
+      case All( _, _ ) | Ex( _, _ ) => true
+      case _                        => false
     }
-  }
 }
 
-/**
- * Matcher for Delta,,n,,
- * A FOLFormula f will match Delta(k) if it is both Sigma,,k,, and Pi,,k,,, but not Sigma,,k-1,, or Pi,,k-1,,.
- */
-object Delta {
-  def unapply( f: FOLFormula ): Option[Int] = f match {
-    case Sigma( k ) => f match {
-      case Pi( j ) => Some( Math.min( k, j ) )
-    }
-  }
-}
-
-trait CountingFormulas {
-  def exactly: {
-    def noneOf( fs: Seq[Formula] ): Formula
-    def oneOf( fs: Seq[Formula] ): Formula
-  }
-  def atMost: {
-    def oneOf( fs: Seq[Formula] ): Formula
-  }
-}
-
-object thresholds extends CountingFormulas {
+object thresholds {
 
   object exactly {
 
+    /**
+     * @param fs The input formulas A1, ..., An.
+     * @return A formula that is logically equivalent to -A1 & ... & -An.
+     */
     def noneOf( fs: Seq[Formula] ): Formula = -Or( fs )
 
+    /**
+     * @param fs The input formulas A₁, ..., Aₙ.
+     * @return A formula that is logically equivalent to
+     *         (A₁ ∨ ... ∨ Aₙ) ∧ ( ∧(1 ≤ i < j ≤ n) ¬Aᵢ ∨ ¬Aⱼ ).
+     */
     def oneOf( fs: Seq[Formula] ): Formula = fs match {
       case Seq()    => Bottom()
       case Seq( f ) => f
@@ -236,6 +247,10 @@ object thresholds extends CountingFormulas {
 
   object atMost {
 
+    /**
+     * @param fs The input formulas A₁, ..., Aₙ.
+     * @return A formula that is logically equivalent to ( ∧(1 ≤ i < j ≤ n) ¬Aᵢ ∨ ¬Aⱼ ).
+     */
     def oneOf( fs: Seq[Formula] ): Formula = fs match {
       case Seq() | Seq( _ ) => Top()
       case _ =>
@@ -247,18 +262,31 @@ object thresholds extends CountingFormulas {
 
 }
 
-object naive extends CountingFormulas {
+object naive {
 
   object exactly {
 
+    /**
+     * @param fs The input formulas A1, ..., An.
+     * @return A formula that is logically equivalent to -A1 & ... & -An.
+     */
     def noneOf( fs: Seq[Formula] ): Formula = -Or( fs )
 
+    /**
+     * @param fs The input formulas A₁, ..., Aₙ.
+     * @return A formula that is logically equivalent to
+     *         (A₁ ∨ ... ∨ Aₙ) ∧ ( ∧(1 ≤ i < j ≤ n) ¬Aᵢ ∨ ¬Aⱼ ).
+     */
     def oneOf( fs: Seq[Formula] ): Formula = Or( fs ) & atMost.oneOf( fs )
 
   }
 
   object atMost {
 
+    /**
+     * @param fs The input formulas A₁, ..., Aₙ.
+     * @return A formula that is logically equivalent to ( ∧(1 ≤ i < j ≤ n) ¬Aᵢ ∨ ¬Aⱼ ).
+     */
     def oneOf( fs: Seq[Formula] ): Formula = And( for ( a <- fs; b <- fs if a != b ) yield -a | -b )
 
   }

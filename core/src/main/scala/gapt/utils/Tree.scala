@@ -7,7 +7,7 @@ import gapt.expr.{ Expr, Replaceable }
 
 case class Tree[+T]( value: T, children: Vector[Tree[T]] ) {
   def zip[S]( that: Tree[S] ): Tree[( T, S )] =
-    Tree( ( this.value, that.value ), ( this.children, that.children ).zipped.map( _ zip _ ) )
+    Tree( ( this.value, that.value ), this.children.lazyZip( that.children ).map( _ zip _ ) )
 
   def map[S]( f: T => S ): Tree[S] =
     Tree( f( value ), children.map( _.map( f ) ) )

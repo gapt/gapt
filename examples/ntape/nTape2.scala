@@ -1,13 +1,15 @@
 package gapt.examples
 
 import gapt.expr.formula.Atom
-import gapt.expr.formula.fol.{ Counter, replaceAbstractions }
+import gapt.expr.formula.fol.Hol2FolDefinitions
+import gapt.expr.formula.fol.replaceAbstractions
 import gapt.expr.ty.To
 import gapt.expr.{ Abs, Const, Expr }
 import gapt.formats.ClasspathInputFile
 import gapt.proofs.ceres_omega.AnalysisWithCeresOmega
 import gapt.formats.llk.loadLLK
 import gapt.proofs.expansion.{ ETAnd, ETImp, ETSkolemQuantifier, ETWeakQuantifier, ExpansionProof, ExpansionTree }
+import gapt.utils.Counter
 
 /**
  * Version 2 of the higher-order n-Tape proof.
@@ -82,15 +84,14 @@ object nTapeInstances {
 
     ( ( ind1base, ind1step, ind2base, ind2step ): @unchecked ) match {
       case ( Abs( xb, sb ), Abs( xs, ss ), Abs( yb, tb ), Abs( ys, ts ) ) =>
-        val map = Map[Expr, String]()
-        val counter = new Counter
+        implicit val defs = new Hol2FolDefinitions()
 
-        val ( map1, sb1 ) = replaceAbstractions( sb, map, counter )
-        val ( map2, ss1 ) = replaceAbstractions( ss, map1, counter )
-        val ( map3, tb1 ) = replaceAbstractions( tb, map2, counter )
-        val ( map4, ts1 ) = replaceAbstractions( ts, map3, counter )
+        val sb1 = replaceAbstractions( sb )
+        val ss1 = replaceAbstractions( ss )
+        val tb1 = replaceAbstractions( tb )
+        val ts1 = replaceAbstractions( ts )
 
-        ( Abs( xb, sb1 ), Abs( yb, tb1 ), Abs( xs, ss1 ), Abs( ys, ts1 ), map4 )
+        ( Abs( xb, sb1 ), Abs( yb, tb1 ), Abs( xs, ss1 ), Abs( ys, ts1 ), defs.toLegacyMap )
     }
   }
 

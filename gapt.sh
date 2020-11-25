@@ -10,6 +10,7 @@ while getopts "hm:" FLAG; do
       echo ""
       echo "usage: gapt.sh [-h] [-m MEM]"
       echo ""
+      echo "   -h : Prints usage information."
       echo "   -m : give MEM amount of memory to the java virtual machine (default: 2g)"
       exit 1
       ;;

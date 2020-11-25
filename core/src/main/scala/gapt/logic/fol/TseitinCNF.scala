@@ -10,7 +10,7 @@ import gapt.expr.formula.Or
 import gapt.expr.formula.Top
 import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.fol.FOLFormula
-import gapt.logic.hol.simplify
+import gapt.logic.hol.simplifyPropositional
 import gapt.logic.hol.toNNF
 import gapt.proofs.FOLClause
 
@@ -26,7 +26,7 @@ object TseitinCNF {
   def apply( f: FOLFormula ): List[FOLClause] = {
     val tseitin = new TseitinCNF()
 
-    simplify( toNNF( f ) ) match {
+    simplifyPropositional( toNNF( f ) ) match {
       case And.nAry( conjuncts ) => conjuncts.flatMap( tseitin.apply )
     }
   }
@@ -39,7 +39,7 @@ class TseitinCNF {
 
   val hc = "x"
   var fsyms = Set[String]()
-  var auxsyms = mutable.MutableList[String]()
+  var auxsyms: List[String] = List()
 
   /**
    * Get a list of all Atoms symbols used in f
@@ -86,7 +86,7 @@ class TseitinCNF {
         if ( fsyms.contains( auxsym ) ) {
           addIfNotExists( f )
         } else {
-          auxsyms += auxsym
+          auxsyms :+= auxsym
           val auxAtom = FOLAtom( auxsym )
           subformulaMap( f ) = auxAtom
           auxAtom

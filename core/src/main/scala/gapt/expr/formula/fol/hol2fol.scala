@@ -4,37 +4,24 @@ import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Atom
+import gapt.expr.formula.Bottom
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
-import gapt.expr.formula.constants.AndC
-import gapt.expr.formula.constants.ExistsC
-import gapt.expr.formula.constants.ForallC
-import gapt.expr.formula.constants.ImpC
-import gapt.expr.formula.constants.NegC
-import gapt.expr.formula.constants.OrC
-import gapt.expr.formula.fol
+import gapt.expr.formula.Top
 import gapt.expr.formula.hol.HOLFunction
 import gapt.expr.formula.hol._
-import gapt.expr.subst.FOLSubstitution
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.To
 import gapt.expr.ty.Ty
+import gapt.expr.util
 import gapt.expr.util.freeVariables
 import gapt.proofs.HOLSequent
+import gapt.proofs.context.Context
 
-class Counter {
-  private var state = 0
-  def nextId(): Int = {
-    state = state + 1
-    state
-  }
-}
-
-object reduceHolToFol extends reduceHolToFol
 /**
  * Creates a FOL formula from a HOL formula, but applies transformations which do _not_ preserve validity!
  * Transformations applied:
@@ -48,199 +35,194 @@ object reduceHolToFol extends reduceHolToFol
  * @note Make sure you need all of these tricks. To only replace abstraction subterms, use [[replaceAbstractions]].
  *
  */
-class reduceHolToFol {
-
-  private def folexp2term( exp: FOLExpression ) = exp match {
-    case e: FOLTerm => exp.asInstanceOf[FOLTerm]
-    case _          => throw new Exception( "Cannot cast " + exp + " to a fol term!" + exp.getClass )
-  }
-
-  /**
-   * Convenience method when only a single expression is converted. Multiple expressions need to pass a scope which
-   * holds the replacements which happened so far.
-   * @param term a HOL expression to convert
-   * @return the reduced FOL expression
-   */
-  def apply( term: Expr ): FOLExpression = {
-    val counter = new Counter
-    val emptymap = Map[Expr, String]()
-    apply( term, emptymap, counter )._1
-  }
-
-  /**
-   * Convenience method when only a single formula is converted. Multiple expressions need to pass a scope which
-   * holds the replacements which happened so far.
-   * @param formula a HOL formula to convert
-   * @return the reduced FOL formula
-   */
-  def apply( formula: Formula ): FOLFormula =
-    //inner cast needed to call the correct apply method
-    reduceHolToFol( formula.asInstanceOf[Expr] ).asInstanceOf[FOLFormula]
-
-  /**
-   * Convenience method when only a single fsequent is converted. Multiple expressions need to pass a scope which
-   * holds the replacements which happened so far.
-   * @param fs an fsequent to convert
-   * @return the reduced fsequent
-   */
-  def apply( fs: HOLSequent ): HOLSequent = {
-    val counter = new Counter
-    val emptymap = Map[Expr, String]()
-    apply( fs, emptymap, counter )._1
-  }
-
-  /**
-   * Convenience method when a single  list of fsequents is converted. Multiple expressions need to pass a scope which
-   * holds the replacements which happened so far.
-   * @param fs an fsequent to convert
-   * @return the reduced fsequent
-   */
-  def apply( fs: List[HOLSequent] ): List[HOLSequent] = {
-    val counter = new Counter
-    val emptymap = Map[Expr, String]()
-    apply( fs, emptymap, counter )._1
-  }
+object reduceHolToFol {
 
   /**
    * Apply method for a formula when scope needs to passed on in a recursion.
    * @param formula the formula to convert
-   * @param scope a mapping of replaced subterms to the constant names which replaced them. you need this for
-   *              chained applications, like sequents or lists of formulas.
-   * @param id an object with a function which nextId, which provides new numbers.
    * @return a pair of the reduced formula and the updated scope
    */
-  def apply( formula: Formula, scope: Map[Expr, String], id: Counter ): ( FOLFormula, Map[Expr, String] ) = {
-    val ( scope_, qterm ) = replaceAbstractions( formula, scope, id )
-    ( apply_( qterm ).asInstanceOf[FOLFormula], scope_ )
-  }
+  def apply( formula: Formula )( implicit definition: Hol2FolDefinitions ): FOLFormula =
+    convertHolFormulaToFolFormula( replaceAbstractions( formula ) )
 
   /**
    * Apply method for a an expression when scope needs to passed on in a recursion.
    * @param term the expression to convert
-   * @param scope a mapping of replaced subterms to the constant names which replaced them. you need this for
-   *              chained applications, like sequents or lists of formulas.
-   * @param id an object with a function which nextId, which provides new numbers.
    * @return a pair of the reduced expression and the updated scope
    */
-  def apply( term: Expr, scope: Map[Expr, String], id: Counter ): ( FOLExpression, fol.replaceAbstractions.ConstantsMap ) = {
-    val ( scope_, qterm ) = replaceAbstractions( term, scope, id )
-    ( apply_( qterm ), scope_ )
-  }
+  def apply( term: Expr )( implicit definition: Hol2FolDefinitions ): FOLExpression =
+    ( replaceAbstractions( term ) ) match {
+      case f: Formula => convertHolFormulaToFolFormula( f )
+      case t          => convertHolTermToFolTerm( t )
+    }
 
   /**
-   * Apply method for a an FSequent when scope needs to passed on in a recursion.
-   * @param s the fsequent to convert
-   * @param scope a mapping of replaced subterms to the constant names which replaced them. you need this for
-   *              chained applications, like sequents or lists of formulas.
-   * @param id an object with a function which nextId, which provides new numbers.
-   * @return a pair of the reduced expression and the updated scope
+   * Assumes we are on the logical level of the hol formula - all types are
+   * mapped to i, i>o or i>i>o respectively
    */
-  def apply( s: HOLSequent, scope: Map[Expr, String], id: Counter ): ( HOLSequent, Map[Expr, String] ) = {
-    val ( scope1, ant ) = s.antecedent.foldLeft( ( scope, List[Formula]() ) )( ( r, formula ) => {
-      val ( scope_, f_ ) = replaceAbstractions( formula, r._1, id )
-      ( scope_, f_.asInstanceOf[Formula] :: r._2 )
-    } )
-    val ( scope2, succ ) = s.succedent.foldLeft( ( scope1, List[Formula]() ) )( ( r, formula ) => {
-      val ( scope_, f_ ) = replaceAbstractions( formula, r._1, id )
-      ( scope_, f_.asInstanceOf[Formula] :: r._2 )
-    } )
-
-    ( HOLSequent( ant.reverse map apply_, succ.reverse map apply_ ), scope ++ scope2 )
-  }
-
-  /**
-   * Apply method for a an FSequent when scope needs to passed on in a recursion.
-   * @param fss the fsequent to convert
-   * @param scope a mapping of replaced subterms to the constant names which replaced them. you need this for
-   *              chained applications, like sequents or lists of formulas.
-   * @param id an object with a function which nextId, which provides new numbers.
-   * @return a pair of the reduced expression and the updated scope
-   */
-  def apply( fss: List[HOLSequent], scope: Map[Expr, String], id: Counter ): ( List[HOLSequent], Map[Expr, String] ) = {
-    fss.foldRight( ( List[HOLSequent](), scope ) )( ( fs, pair ) => {
-      val ( list, scope ) = pair
-      val ( fs_, scope_ ) = apply( fs, scope, id )
-      ( fs_ :: list, scope_ )
-    } )
-
-  }
-
-  private def apply_( f: Formula ): FOLFormula =
-    apply_( f.asInstanceOf[Expr] ).asInstanceOf[FOLFormula]
-
-  //assumes we are on the logical level of the hol formula - all types are mapped to i, i>o or i>i>o respectively
-  private def apply_( term: Expr ): FOLExpression = {
-    term match {
-      case e: FOLExpression  => e // if it's already FOL - great, we are done.
-      case Const( n, To, _ ) => FOLAtom( n, Nil )
-      case Var( n, _ )       => FOLVar( n )
-      case Const( n, _, _ )  => FOLConst( n )
-      case Neg( n )          => Neg( apply_( n ) )
-      case And( n1, n2 )     => And( apply_( n1 ), apply_( n2 ) )
-      case Or( n1, n2 )      => Or( apply_( n1 ), apply_( n2 ) )
-      case Imp( n1, n2 )     => Imp( apply_( n1 ), apply_( n2 ) )
-      case All( v: Var, n )  => All( apply_( v ).asInstanceOf[FOLVar], apply_( n ) )
-      case Ex( v: Var, n )   => Ex( apply_( v ).asInstanceOf[FOLVar], apply_( n ) )
-      case Atom( Const( n, _, _ ), ls ) =>
-        FOLAtom( n, ls.map( x => folexp2term( apply_termlevel( x ) ) ) )
-      case Atom( Var( n, _ ), ls ) =>
-        FOLAtom( n, ls.map( x => folexp2term( apply_termlevel( x ) ) ) )
-      case HOLFunction( Const( n, _, _ ), ls ) =>
-        FOLFunction( n, ls.map( x => folexp2term( apply_( x ) ) ) )
-      case HOLFunction( Var( n, _ ), ls ) =>
-        FOLFunction( n, ls.map( x => folexp2term( apply_( x ) ) ) )
-      case _ => throw new IllegalArgumentException(
-        // for cases of higher order atoms and functions
-        "Cannot reduce hol term: " + term.toString + " to fol as it is a higher order variable function or atom" )
+  private def convertHolFormulaToFolFormula( formula: Formula ): FOLFormula = {
+    formula match {
+      case Top()    => Top()
+      case Bottom() => Bottom()
+      case Neg( f ) =>
+        Neg( convertHolFormulaToFolFormula( f ) )
+      case And( f1, f2 ) =>
+        And(
+          convertHolFormulaToFolFormula( f1 ),
+          convertHolFormulaToFolFormula( f2 ) )
+      case Or( f1, f2 ) =>
+        Or(
+          convertHolFormulaToFolFormula( f1 ),
+          convertHolFormulaToFolFormula( f2 ) )
+      case Imp( f1, f2 ) =>
+        Imp(
+          convertHolFormulaToFolFormula( f1 ),
+          convertHolFormulaToFolFormula( f2 ) )
+      case All( v: Var, f ) =>
+        All(
+          convertHolVariableToFolVariable( v ),
+          convertHolFormulaToFolFormula( f ) )
+      case Ex( v: Var, f ) =>
+        Ex(
+          convertHolVariableToFolVariable( v ),
+          convertHolFormulaToFolFormula( f ) )
+      case Const( n, To, _ ) =>
+        FOLAtom( n, Nil )
+      case Atom( Const( n, _, _ ), as ) =>
+        FOLAtom( n, as.map { convertHolTermToFolTerm } )
+      case Atom( Var( n, _ ), as ) =>
+        FOLAtom( n, as.map { convertHolTermToFolTerm } )
+      case HOLFunction( Const( n, _, _ ), as ) =>
+        FOLAtom( n, as.map { convertHolTermToFolTerm } )
+      case HOLFunction( Var( n, _ ), as ) =>
+        FOLAtom( n, as.map { convertHolTermToFolTerm } )
     }
   }
 
-  //if we encountered an atom, we need to convert logical formulas to the term level too
-  private def apply_termlevel( term: Expr ): FOLTerm = {
+  private def convertHolVariableToFolVariable( v: Var ): FOLVar =
+    FOLVar( v.name )
+
+  /**
+   * Converts a term to a first-order term.
+   *
+   * @param term The term to be converted to a first-order term.
+   * @return A first-order term obtained from `term` by erasing types of
+   * constants and variables in leaf position by `i` and by replacing types of
+   * inner constants by i > i > ... > i of adequate arity. In particular logical
+   * constants are replaced in this way e.g. ¬ : o > o occurring in a term of
+   * the form (¬ f) is replaced by ¬ : i > i.
+   */
+  private def convertHolTermToFolTerm( term: Expr ): FOLTerm = {
     term match {
-      case e: FOLTerm       => e // if it's already FOL - great, we are done.
-      case Var( n, _ )      => FOLVar( n )
+      case v: Var           => convertHolVariableToFolVariable( v )
       case Const( n, _, _ ) => FOLConst( n )
-      //we cannot use the logical symbols directly because they are treated differently by the Function matcher
-      case Neg( n )         => FOLFunction( NegC.name, List( apply_termlevel( n ) ) )
-      case And( n1, n2 )    => FOLFunction( AndC.name, List( apply_termlevel( n1 ), apply_termlevel( n2 ) ) )
-      case Or( n1, n2 )     => FOLFunction( OrC.name, List( apply_termlevel( n1 ), apply_termlevel( n2 ) ) )
-      case Imp( n1, n2 )    => FOLFunction( ImpC.name, List( apply_termlevel( n1 ), apply_termlevel( n2 ) ) )
-      case All( v: Var, n ) =>
-        FOLFunction( ForallC.name, List( apply_termlevel( v ).asInstanceOf[FOLVar], apply_termlevel( n ) ) )
-      case Ex( v: Var, n ) =>
-        FOLFunction( ExistsC.name, List( apply_termlevel( v ).asInstanceOf[FOLVar], apply_termlevel( n ) ) )
-      case Atom( head, ls ) =>
-        FOLFunction( head.toString, ls.map( x => folexp2term( apply_termlevel( x ) ) ) )
-      case HOLFunction( Const( name, _, _ ), ls ) =>
-        FOLFunction( name, ls.map( x => folexp2term( apply_termlevel( x ) ) ) )
-
-      // This case replaces an abstraction by a function term.
-      //
-      // the scope we choose for the variant is the Abs itself as we want all abs identical up to variant
-      // use the same symbol
-      //
-      // TODO: at the moment, syntactic equality is used here... This means that alpha-equivalent terms may be replaced
-      // by different constants, which is undesirable.
-      /*
-      case a @ Abs(v, exp) => {
-        val sym = scope.getOrElseUpdate(a.variant(new VariantGenerator(
-         new {var idd = 0; def nextId = {idd = idd+1; idd}}, "myVariantName")), ConstantString("q_{" + id.nextId + "}"))
-        val freeVarList = a.getFreeVariables.toList.sortWith((x,y) => x.toString < y.toString)
-        .map(x => apply(x.asInstanceOf[Expr],scope,id))
-        if (freeVarList.isEmpty) FOLConst(sym) else Function(sym, freeVarList.asInstanceOf[List[FOLTerm]])
-      }
-      */
-      case _ =>
-        throw new IllegalArgumentException(
-          // for cases of higher order atoms and functions
-          "Cannot reduce hol term: " + term.toString + " to fol as it is a higher order variable function or atom" )
+      case Apps( h: VarOrConst, as ) =>
+        FOLFunction( h.name, as.map { convertHolTermToFolTerm } )
     }
   }
-
 }
 
-object replaceAbstractions extends replaceAbstractions
+object invertBijectiveMap {
+  def apply[A, B]( map: Map[A, B] ): Map[B, A] =
+    map.map[B, A] { _.swap }
+}
+
+/**
+ * Definitions of the form cₜ(x₁,...,xₙ) := t(x₁,...,xₙ), where c is a constant
+ * and t is a term having as only free variables x₁,...,xₙ.
+ * @param context The context with respect to which these definitions are made.
+ * In particular the context defines the already used names.
+ */
+class Hol2FolDefinitions( implicit val context: Context = Context.default ) {
+
+  type Definiendum = Expr
+  type Definiens = Expr
+
+  private var definitions: Map[Definiendum, Definiens] = Map()
+
+  private val nameGenerator = context.newNameGenerator
+
+  /**
+   * Looks up the defined expression.
+   * @param expression An expression t(s₁,...,sₙ).
+   * @return The defined expression cₜ(s₁,...,sₙ).
+   * If there is no definition of the form cₜ(x₁,...,xₙ) ↔ t(x₁,...,xₙ),
+   * then such a definition is created where cₜ is a new constant that does
+   * not intersect the context.
+   */
+  def getDefinedExpression( expression: Definiens ): Definiendum = {
+    addDefinitionIfNecessary( expression )
+    val Some( ( e, m ) ) = getMatchingDefiniens( expression )
+    m( invertBijectiveMap( definitions )( e ) )
+  }
+
+  private def addDefinitionIfNecessary( expression: Definiens ): Unit = {
+    getMatchingDefiniens( expression ) match {
+      case None =>
+        val freeVars = freeVariables( expression ).toList
+        val constant = Const(
+          freshConstantName,
+          Abs.Block( freeVars, expression ).ty )
+        definitions += Apps( constant, freeVars ) -> expression
+      case _ =>
+    }
+  }
+
+  def getDefiningExpression( expression: Definiendum ): Option[Definiens] = {
+    for {
+      ( c, m ) <- getMatchingDefiniendum( expression )
+      d <- definitions.get( c )
+    } yield {
+      m( d )
+    }
+  }
+
+  private def getMatchingDefiniendum( expression: Expr ): Option[( Expr, Substitution )] = {
+    definitions.keys.view
+      .map { e => e -> util.syntacticMatching( e, expression ) }
+      .collectFirst { case ( e, Some( m ) ) => ( e, m ) }
+  }
+
+  private def getMatchingDefiniens( expression: Expr ): Option[( Expr, Substitution )] = {
+    definitions.values.view
+      .map { e => e -> util.syntacticMatching( e, expression ) }
+      .collectFirst { case ( e, Some( m ) ) => ( e, m ) }
+  }
+
+  override def equals( obj: Any ): Boolean =
+    obj match {
+      case o: Hol2FolDefinitions => isEqualTo( o )
+      case _                     => false
+    }
+
+  private def isEqualTo( otherDefinitions: Hol2FolDefinitions ): Boolean =
+    lambdaClosedDefinitionsPairs == otherDefinitions.lambdaClosedDefinitionsPairs
+
+  private def lambdaClosedDefinitionsPairs: Set[( Expr, Expr )] =
+    definitions.toSet.map { lambdaCloseDefinitionPair }
+
+  private def lambdaCloseDefinitionPair( definitionPair: ( Expr, Expr ) ): ( Expr, Expr ) =
+    definitionPair match {
+      case ( d @ Apps( _: Const, xs ), e ) =>
+        Abs.Block( xs.asInstanceOf[List[Var]], d ) -> Abs.Block( xs.asInstanceOf[List[Var]], e )
+    }
+
+  private def freshConstantName: String =
+    nameGenerator.freshWithIndex { n => s"q_{${n + 1}}" }
+
+  // FIXME These methods only exist to maintain compatibility with legacy
+
+  def toMap: Map[Expr, Expr] = definitions
+
+  def toLegacyMap: Map[Expr, String] = definitions.map {
+    case ( Apps( Const( n, _, _ ), _ ), e ) => e -> n
+  }
+
+  def lookupByName( name: String ): Option[Expr] =
+    definitions
+      .find { case ( Apps( c: Const, _ ), _ ) => c.name == name }
+      .map { _._2 }
+}
 
 /**
  * Replace lambda-abstractions by constants.
@@ -248,109 +230,96 @@ object replaceAbstractions extends replaceAbstractions
  * Each abstraction in an [[gapt.proofs.HOLSequent]] is replaced by a separate constant symbol; the used
  * constants are returned in a Map.
  */
-class replaceAbstractions {
-  type ConstantsMap = Map[Expr, String]
+object replaceAbstractions {
 
-  def apply( l: List[HOLSequent] ): ( ConstantsMap, List[HOLSequent] ) = {
-    val counter = new Counter
-    l.foldLeft( ( Map[Expr, String](), List[HOLSequent]() ) )( ( rec, el ) => {
-      val ( scope_, f ) = rec
-      val ( nscope, rfs ) = replaceAbstractions( el, scope_, counter )
-      ( nscope, rfs :: f )
+  def apply( expression: Expr )( implicit definitions: Hol2FolDefinitions ): Expr =
+    new NonQuantifierAbstractionLifter( definitions ).lift( expression )
 
-    } )
-  }
+  def apply( formula: Formula )( implicit definitions: Hol2FolDefinitions ): Formula =
+    new NonQuantifierAbstractionLifter( definitions ).lift( formula )
 
-  def apply( f: HOLSequent, scope: ConstantsMap, id: Counter ): ( ConstantsMap, HOLSequent ) = {
-    val ( scope1, ant ) = f.antecedent.foldLeft( ( scope, List[Formula]() ) )( ( rec, formula ) => {
-      val ( scope_, f ) = rec
-      val ( nscope, nformula ) = replaceAbstractions( formula, scope_, id )
-      ( nscope, nformula.asInstanceOf[Formula] :: f )
-    } )
-    val ( scope2, succ ) = f.succedent.foldLeft( ( scope1, List[Formula]() ) )( ( rec, formula ) => {
-      val ( scope_, f ) = rec
-      val ( nscope, nformula ) = replaceAbstractions( formula, scope_, id )
-      ( nscope, nformula.asInstanceOf[Formula] :: f )
-    } )
+  private class NonQuantifierAbstractionLifter(
+      private val definitions: Hol2FolDefinitions ) {
 
-    ( scope2, HOLSequent( ant.reverse, succ.reverse ) )
-  }
+    def lift( formula: Formula ): Formula =
+      lift( formula.asInstanceOf[Expr] ).asInstanceOf[Formula]
 
-  def apply( e: Expr ): Expr = {
-    val counter = new Counter
-    apply( e, Map[Expr, String](), counter )._2
-  }
+    def lift( expression: Expr ): Expr = {
+      defineOutermostNonQuantifierAbstractions( expression )
+      liftOutermostNonQuantifierAbstractions( expression )
+    }
 
-  def apply( formula: Formula ): Formula =
-    apply( formula.asInstanceOf[Expr] ).asInstanceOf[Formula]
-
-  // scope and id are used to give the same names for new functions and constants between different calls of this method
-  def apply( e: Expr, scope: ConstantsMap, id: Counter ): ( ConstantsMap, Expr ) = e match {
-    case Var( _, _ ) =>
-      ( scope, e )
-    case Const( _, _, _ ) =>
-      ( scope, e )
-    //quantifiers should be kept
-    case All( x, f ) =>
-      val ( scope_, e_ ) = replaceAbstractions( f, scope, id )
-      ( scope_, All( x, e_.asInstanceOf[Formula] ) )
-    case Ex( x, f ) =>
-      val ( scope_, e_ ) = replaceAbstractions( f, scope, id )
-      ( scope_, Ex( x, e_.asInstanceOf[Formula] ) )
-    case App( s, t ) =>
-      val ( scope1, s1 ) = replaceAbstractions( s, scope, id )
-      val ( scope2, t1 ) = replaceAbstractions( t, scope1, id )
-      ( scope2, App( s1, t1 ) )
-    // This case replaces an abstraction by a function term.
-    // the scope we choose for the variant is the Abs itself as we want all abs
-    // identical up to variant use the same symbol
-    case Abs( v, exp ) =>
-      //systematically rename free variables for the index
-      //val normalizeda = e.variant(new VariantGenerator(
-      // new {var idd = 0; def nextId = {idd = idd+1; idd}}, "myVariantName"))
-      //TODO: check if variable renaming is really what we want
-      val ( normalizeda, mapping ) = normalizeFreeVariables( e )
-      //println("e: "+e)
-      //println("norm: "+normalizeda)
-      //update scope with a new constant if neccessary
-      //println(scope)
-      val scope_ = if ( scope contains normalizeda ) scope else scope + ( ( normalizeda, "q_{" + id.nextId + "}" ) )
-      //println(scope_)
-      val sym = scope_( normalizeda )
-      val freeVarList = freeVariables( e ).toList.sortBy( _.toString ).asInstanceOf[List[Expr]]
-      if ( freeVarList.isEmpty )
-        ( scope_, Const( sym, e.ty ) )
-      else {
-        val c = Const( sym, FunctionType( e.ty, freeVarList.map( _.ty ) ) )
-        ( scope_, HOLFunction( c, freeVarList ) )
+    private def getOutermostNonQuantifierAbstractions( expression: Expr ): Seq[Expr] =
+      expression match {
+        case Ex( _, f )  => getOutermostNonQuantifierAbstractions( f )
+        case All( _, f ) => getOutermostNonQuantifierAbstractions( f )
+        case App( e1, e2 ) =>
+          getOutermostNonQuantifierAbstractions( e1 ) ++
+            getOutermostNonQuantifierAbstractions( e2 )
+        case _: Abs => Seq( expression )
+        case _      => Seq()
       }
-    case _ =>
-      throw new Exception( "Unhandled case in abstraction replacement!" + e )
 
+    private def defineOutermostNonQuantifierAbstractions( expression: Expr ): Unit = {
+      defineExpressions( getOutermostNonQuantifierAbstractions( expression ) )
+    }
+
+    private def defineExpressions( expressions: Seq[Expr] ): Unit =
+      expressions.foreach {
+        definitions.getDefiningExpression
+      }
+
+    private def liftOutermostNonQuantifierAbstractions( expression: Expr ): Expr =
+      expression match {
+        case Ex( v, f ) =>
+          Ex( v, liftOutermostNonQuantifierAbstractions( f ) )
+        case All( v, f ) =>
+          All( v, liftOutermostNonQuantifierAbstractions( f ) )
+        case App( e1, e2 ) =>
+          App(
+            liftOutermostNonQuantifierAbstractions( e1 ),
+            liftOutermostNonQuantifierAbstractions( e2 ) )
+        case _: Abs =>
+          definitions.getDefinedExpression( expression )
+        case _ => expression
+      }
   }
 }
-
-object undoReplaceAbstractions extends undoReplaceAbstractions
 /**
- * Replaces the constants introduced by [[replaceAbstractions]] with the original lambda-abstractions.
+ * Replaces the constants introduced by [[replaceAbstractions]] with the
+ * original lambda-abstractions.
+ *
+ * Two lambda abstractions that are matching may have the same abstracting
+ * constant. However no effort is made to detect matching lambda abstractions in
+ * order to minimize the number of definitions.
  */
-class undoReplaceAbstractions {
-  import gapt.expr.formula.fol.replaceAbstractions.ConstantsMap
+object undoReplaceAbstractions {
 
-  def apply( fs: HOLSequent, map: ConstantsMap ): HOLSequent = HOLSequent(
-    fs.antecedent.map( apply( _, map ) ),
-    fs.succedent.map( apply( _, map ) ) )
-  def apply( f: Formula, map: ConstantsMap ): Formula = apply( f.asInstanceOf[Expr], map ).asInstanceOf[Formula]
-  def apply( e: Expr, map: ConstantsMap ): Expr = {
-    val stringsmap = map.map( x => ( x._2.toString, x._1 ) ) //inverting the map works because the symbols are unique
-    HOLPosition.getPositions( e ).foldLeft( e )( ( exp, position ) =>
-      //we check if the position is a constant with an abstraction symbol
-      e( position ) match {
-        case Const( name, _, _ ) if stringsmap.contains( name ) =>
-          //if yes, we replace it by the original expression
-          exp.replace( position, stringsmap( name ) )
-        case _ => exp
-      } )
+  def apply( sequent: HOLSequent, definitions: Hol2FolDefinitions ): HOLSequent =
+    sequent.map { undoReplaceAbstractions( _, definitions ) }
+
+  def apply( f: Formula, definitions: Hol2FolDefinitions ): Formula =
+    apply( f.asInstanceOf[Expr], definitions ).asInstanceOf[Formula]
+
+  /**
+   * Replace all occurrences of defined constants by their abstractions.
+   *
+   * @param expression The expression in which definitions are unfolded.
+   * @param definitions The definition to be be unfolded.
+   * @return An expression obtained from `expression` by unfolding all the
+   * constants defined in `h2fDefinitions` by their defining term.
+   */
+  def apply( expression: Expr, definitions: Hol2FolDefinitions ): Expr = {
+    HOLPosition.getPositions( expression ).foldLeft( expression ) {
+      ( e, p ) =>
+        expression( p ) match {
+          case Apps( _: Const, _ ) =>
+            definitions.getDefiningExpression( expression( p ) ).map {
+              e.replace( p, _ )
+            }.getOrElse( e )
+          case _ => e
+        }
+    }
   }
 }
 
@@ -359,70 +328,71 @@ class undoReplaceAbstractions {
  * you can change them back.
  */
 object changeTypeIn {
+
   type TypeMap = Map[String, Ty]
 
-  /* TODO: this broken, since e.g. for (a b) q with type(q)=alpha, type(b)=beta then type(a)=beta > (alpha > gamma)
-     we need to actually change the type of a when changing the type of q
-    */
-  /*
-  def oldapply(e:Expr, tmap : TypeMap) : Expr = e match {
-    case Var(name, ta) =>
-      if (tmap.contains(name.toString()))
-        e.factory.createVar(name, tmap(name.toString()))
-      else
-        e
-    case App(s,t) => s.factory.createApp(oldapply(s,tmap), oldapply(t,tmap))
-    case Abs(x,t) => t.factory.createAbs(oldapply(x,tmap).asInstanceOf[Var], oldapply(t,tmap))
-  } */
-
-  //Remark: this only works for changing the type of leaves in the term tree!
-  def apply( e: Expr, tmap: TypeMap ): Expr = e match {
-    case Var( name, ta ) => if ( tmap contains name.toString ) Var( name, tmap( name.toString ) ) else
-      Var( name, ta )
-    case Const( name, ta, _ ) => if ( tmap contains name.toString ) Const( name, tmap( name.toString ) ) else
-      Const( name, ta )
-    case HOLFunction( Const( f, exptype, _ ), args ) =>
-      val args_ = args.map( x => apply( x, tmap ) )
-      val freturntype = exptype match { case FunctionType( r, _ ) => r }
-      val f_ = Const( f, FunctionType( freturntype, args.map( _.ty ) ) )
-      HOLFunction( f_, args_ )
-    case HOLFunction( Var( f, exptype ), args ) =>
-      val args_ = args.map( x => apply( x, tmap ) )
-      val freturntype = exptype match { case FunctionType( r, _ ) => r }
-      val f_ = Var( f, FunctionType( freturntype, args.map( _.ty ) ) )
-      HOLFunction( f_, args_ )
-    case Atom( Const( f, exptype, _ ), args ) =>
-      val args_ = args.map( x => apply( x, tmap ) )
-      val f_ = Const( f, FunctionType( To, args.map( _.ty ) ) )
-      Atom( f_, args_ )
-    case Atom( Var( f, exptype ), args ) =>
-      val args_ = args.map( x => apply( x, tmap ) )
-      val f_ = Var( f, FunctionType( To, args.map( _.ty ) ) )
-      Atom( f_, args_ )
-    case Neg( x )    => Neg( apply( x, tmap ) )
-    case And( s, t ) => And( apply( s, tmap ), apply( t, tmap ) )
-    case Or( s, t )  => Or( apply( s, tmap ), apply( t, tmap ) )
-    case Imp( s, t ) => Imp( apply( s, tmap ), apply( t, tmap ) )
-    case All( x, t ) => All( apply( x.asInstanceOf[Var], tmap ).asInstanceOf[Var], apply( t, tmap ) )
-    case Ex( x, t )  => Ex( apply( x.asInstanceOf[Var], tmap ).asInstanceOf[Var], apply( t, tmap ) )
-    case Abs( x, t ) => Abs( apply( x.asInstanceOf[Var], tmap ).asInstanceOf[Var], apply( t, tmap ) )
-    case App( s, t ) => App( apply( s, tmap ), apply( t, tmap ) )
-    case _           => throw new Exception( "Unhandled case of a HOL Formula! " + e )
-
+  /**
+   * Maps types of constants and variables to the given types.
+   *
+   * @param expression The expression in which the types are to be replaced.
+   * @param typeMap Specifies the names of constants and variables whose type
+   *                is to be replaced by the associated type.
+   * @return An expression obtained from `expression` by replacing the types of leaf-occurrences of variables and
+   *         constants by the given types. The types of inner constants and variables are changed according
+   *         to the new types of their arguments.
+   */
+  def apply( expression: Expr, typeMap: TypeMap ): Expr = expression match {
+    case v @ Var( n, _ ) =>
+      typeMap.get( n ).map { Var( n, _ ) }.getOrElse( v )
+    case c @ Const( n, _, _ ) =>
+      typeMap.get( n ).map { Const( n, _ ) }.getOrElse( c )
+    case HOLFunction( Const( f, FunctionType( r, _ ), _ ), as ) =>
+      val newAs = as.map { changeTypeIn( _, typeMap ) }
+      val newTs = newAs.map { _.ty }
+      HOLFunction( Const( f, FunctionType( r, newTs ) ), newAs )
+    case HOLFunction( Var( x, FunctionType( r, _ ) ), as ) =>
+      val newAs = as.map { changeTypeIn( _, typeMap ) }
+      val newTs = newAs.map { _.ty }
+      HOLFunction( Var( x, FunctionType( r, newTs ) ), newAs )
+    case Atom( Const( f, FunctionType( r, _ ), _ ), as ) =>
+      val newAs = as.map { changeTypeIn( _, typeMap ) }
+      val newTs = newAs.map { _.ty }
+      Atom( Const( f, FunctionType( r, newTs ) ), newAs )
+    case Atom( Var( f, FunctionType( r, _ ) ), as ) =>
+      val newAs = as.map { changeTypeIn( _, typeMap ) }
+      val newTs = newAs.map { _.ty }
+      Atom( Const( f, FunctionType( r, newTs ) ), newAs )
+    case Neg( x ) =>
+      Neg( changeTypeIn( x, typeMap ) )
+    case And( s, t ) =>
+      And( changeTypeIn( s, typeMap ), changeTypeIn( t, typeMap ) )
+    case Or( s, t ) =>
+      Or( changeTypeIn( s, typeMap ), changeTypeIn( t, typeMap ) )
+    case Imp( s, t ) =>
+      Imp( changeTypeIn( s, typeMap ), changeTypeIn( t, typeMap ) )
+    case All( x, f ) =>
+      val newX = typeMap.get( x.name ).map { Var( x.name, _ ) }.getOrElse( x )
+      All( newX, changeTypeIn( f, typeMap ) )
+    case Ex( x, f ) =>
+      val newX = typeMap.get( x.name ).map { Var( x.name, _ ) }.getOrElse( x )
+      Ex( newX, changeTypeIn( f, typeMap ) )
+    case Abs( x, t ) =>
+      val newX = typeMap.get( x.name ).map { Var( x.name, _ ) }.getOrElse( x )
+      Abs( newX, changeTypeIn( t, typeMap ) )
+    case App( s, t ) =>
+      App( changeTypeIn( s, typeMap ), changeTypeIn( t, typeMap ) )
+    case _ =>
+      throw new Exception( "Unhandled case of a HOL Formula! " + expression )
   }
-  def apply( e: FOLTerm, tmap: TypeMap ): FOLTerm = apply( e.asInstanceOf[Expr], tmap ).asInstanceOf[FOLTerm]
-  def apply( e: Formula, tmap: TypeMap ): Formula = apply( e.asInstanceOf[Expr], tmap ).asInstanceOf[Formula]
-  def apply( e: FOLFormula, tmap: TypeMap ): FOLFormula = apply( e.asInstanceOf[Expr], tmap ).asInstanceOf[FOLFormula]
+
+  /**
+   * @see `changeTypeIn.apply( Expr, TypeMap )`.
+   */
+  def apply( e: Formula, tmap: TypeMap ): Formula =
+    changeTypeIn( e.asInstanceOf[Expr], tmap ).asInstanceOf[Formula]
+
   def apply( fs: HOLSequent, tmap: TypeMap ): HOLSequent = HOLSequent(
-    fs.antecedent.map( x => apply( x, tmap ) ),
-    fs.succedent.map( x => apply( x, tmap ) ) )
-
-  //different names bc of type erasure
-  private def holsub( s: Substitution, tmap: TypeMap ): Substitution = Substitution(
-    s.map.map( x =>
-      ( apply( x._1, tmap ).asInstanceOf[Var], apply( x._2, tmap ) ) ) )
-
-  private def folsub( s: FOLSubstitution, tmap: TypeMap ): FOLSubstitution = FOLSubstitution( s.folmap.map( x =>
-    ( apply( x._1, tmap ).asInstanceOf[FOLVar], apply( x._2, tmap ) ) ) )
+    fs.antecedent.map( x => changeTypeIn( x, tmap ) ),
+    fs.succedent.map( x => changeTypeIn( x, tmap ) ) )
 }
 

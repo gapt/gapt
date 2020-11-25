@@ -168,7 +168,7 @@ object regularize {
 
       val ( casesNew, subConnectors ) = newCasesConnectors.unzip
       val proofNew = InductionRule( casesNew, proof.formula, term )
-      val subConnectors_ = for ( ( c1, c2, c3 ) <- ( proofNew.occConnectors, subConnectors, proof.occConnectors ).zipped ) yield c1 * c2 * c3.inv
+      val subConnectors_ = for ( ( c1, c2, c3 ) <- proofNew.occConnectors.lazyZip( subConnectors ).lazyZip( proof.occConnectors ) ) yield c1 * c2 * c3.inv
       val connector = if ( subConnectors_.isEmpty ) SequentConnector( proofNew.endSequent ) else subConnectors_.reduceLeft( _ + _ )
 
       ( proofNew, connector )

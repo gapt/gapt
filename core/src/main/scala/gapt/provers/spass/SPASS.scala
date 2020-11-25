@@ -56,14 +56,14 @@ class SPASS extends ResolutionProver with ExternalProgram {
     s"formula(${expr2dfg( universalClosure( cls_.toDisjunction ) )})."
   }
 
-  override def getResolutionProof( clauses: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] = renameConstantsToFi.wrap( clauses.toSeq )(
+  override def getResolutionProof( clauses: Iterable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] = renameConstantsToFi.wrap( clauses.toSeq )(
     ( renaming, cnf: Seq[HOLClause] ) => {
       if ( cnf isEmpty ) return None // SPASS doesn't like empty input
 
       val list_of_formulae =
         s"""
          |list_of_formulae(axioms).
-         |${cnf.asInstanceOf[Traversable[FOLClause]] map cls2dfg mkString "\n"}
+         |${cnf.asInstanceOf[Iterable[FOLClause]] map cls2dfg mkString "\n"}
          |end_of_list.
        """.stripMargin
 

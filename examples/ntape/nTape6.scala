@@ -128,7 +128,7 @@ object nTape6 {
    *
    * @param path
    */
-  def export( path: String = ".", separate_axioms: Boolean = false ) {
+  def export( path: String = ".", separate_axioms: Boolean = false ): Unit = {
     val f = path + File.separator + fn
     //sc
     TptpHOLExporter( s0a, f + "0-minimal.tptp", separate_axioms ) //provable by agsyhol

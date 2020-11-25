@@ -4,26 +4,26 @@ import gapt.expr._
 import gapt.expr.ty.TBase
 import gapt.expr.ty.To
 import gapt.formats.{ InputFile, StringInputFile }
-import gapt.formats.tip.compiler.TipSmtToTipProblemCompiler
+import gapt.formats.tip.compiler.TipTransformationCompiler
+import gapt.formats.tip.compiler.TipTransformationCompiler
 import gapt.formats.tip.parser.TipSmtParser
+import gapt.proofs.context.update.InductiveType
 import org.specs2.mutable.Specification
 
 class TipProblemCompilerTest extends Specification {
 
   "Compiler should simplify problem definitions properly" in {
-    val inputProblem = new TipSmtToTipProblemCompiler( TipSmtParser.parse(
+    val inputProblem = new TipTransformationCompiler( TipSmtParser.parse(
       StringInputFile( """
-        |(declare-datatypes ()
-        |  ((Nat (Z) (S (P Nat)))))
+        |(declare-datatype Nat ((Z) (S (P Nat))))
         |
-        |(declare-datatypes ()
-        | ((list (nil)
-        |    (cons (head Nat) (tail list)))))
+        |(declare-datatype list ((nil)
+        |    (cons (head Nat) (tail list))))
         |
         |(define-fun-rec f ((x list)) Nat
         |  ( match x
-        |    (case (cons y ys) (f ys))
-        |    (case default Z)
+        |    (((cons y ys) (f ys))
+        |    (_ Z))
         |  )
         |)
       """.stripMargin ) ) ).compileTipProblem().toProblem
@@ -35,13 +35,13 @@ class TipProblemCompilerTest extends Specification {
   }
 
   "Compiler should compile inductive datatypes properly" in {
-    val inputProblem = new TipSmtToTipProblemCompiler( TipSmtParser.parse(
+    val inputProblem = new TipTransformationCompiler( TipSmtParser.parse(
       StringInputFile( """
-        |(declare-datatypes ()
-        |  ((Nat (Z) (S (P Nat)))))
+        |(declare-datatypes ((Nat 0))
+        |  ( ((Z) (S (P Nat))) ) )
         |
-        |(declare-datatypes ()
-        | ((list (nil)
+        |(declare-datatypes ((list 0))
+        | (((nil)
         |    (cons (head Nat) (tail list)))))
       """.stripMargin ) ) ).compileTipProblem().toProblem
 
@@ -49,21 +49,19 @@ class TipProblemCompilerTest extends Specification {
 
     inputProblem.datatypes.toSet must
       contain( Set(
-        TipDatatype(
-          TBase( "Nat", Nil ),
-          Seq(
-            TipConstructor( hoc"Z", Nil ),
-            TipConstructor( hoc"S", Seq( hoc"P" ) ) ) ),
-        TipDatatype(
-          TBase( "list", Nil ),
-          Seq(
-            TipConstructor( hoc"nil", Nil ),
-            TipConstructor( hoc"cons", Seq( hoc"head", hoc"tail" ) ) ) ) ) )
+        InductiveType( "Nat", Nil,
+          "Z" -> Nil,
+          "S" -> Seq( Some( "P" ) -> ty"Nat" ) ),
+        InductiveType( "list", Nil,
+          "nil" -> Nil,
+          "cons" -> Seq(
+            Some( "head" ) -> ty"Nat",
+            Some( "tail" ) -> ty"list" ) ) ) )
   }
 
   "Compiler should add inductive definition of Booleans" in {
     val inputProblem =
-      new TipSmtToTipProblemCompiler(
+      new TipTransformationCompiler(
         TipSmtParser.parse( StringInputFile( "" ) ) )
         .compileTipProblem()
         .toProblem
@@ -72,21 +70,20 @@ class TipProblemCompilerTest extends Specification {
 
     inputProblem.datatypes.toSet must
       contain(
-        TipDatatype(
-          To,
-          Seq(
-            TipConstructor( hoc"⊤", Nil ),
-            TipConstructor( hoc"⊥", Nil ) ) ) )
+        InductiveType(
+          To.name, Nil,
+          "⊤" -> Nil,
+          "⊥" -> Nil ) )
   }
 
   "Mutually recursive function definitions should compile to formulas" in {
-    val inputProblem = new TipSmtToTipProblemCompiler( TipSmtParser.parse(
+    val inputProblem = new TipTransformationCompiler( TipSmtParser.parse(
       StringInputFile( """
-        |(declare-datatypes ()
-        |  ((Nat (Z) (S (P Nat)))))
+        |(declare-datatypes ((Nat 0))
+        |  (( (Z) (S (P Nat)))))
         |
-        |(declare-datatypes ()
-        | ((list (nil)
+        |(declare-datatypes ((list 0))
+        | (( (nil)
         |    (cons (head Nat) (tail list)))))
         |
         |(define-funs-rec
@@ -107,19 +104,19 @@ class TipProblemCompilerTest extends Specification {
   }
 
   "Compiler should compile ite-expression properly" in {
-    val inputProblem = new TipSmtToTipProblemCompiler( TipSmtParser.parse(
+    val inputProblem = new TipTransformationCompiler( TipSmtParser.parse(
       StringInputFile( """
-        |(declare-datatypes ()
-        |  ((Nat (Z) (S (P Nat)))))
+        |(declare-datatypes ((Nat 0))
+        |  (( (Z) (S (P Nat)))))
         |
-        |(declare-datatypes ()
-        | ((list (nil)
+        |(declare-datatypes ((list 0))
+        | (( (nil)
         |    (cons (head Nat) (tail list)))))
         |
         |(define-fun-rec f ((x list)) Nat
         |  ( match x
-        |    (case (cons y ys) (f ys))
-        |    (case default Z)
+        |    (( (cons y ys) (f ys))
+        |    ( _ Z))
         |  )
         |)
         |(prove (ite (= Z Z) (= (f nil) Z) (= (f nil) Z) ))
@@ -132,27 +129,27 @@ class TipProblemCompilerTest extends Specification {
   }
 
   "Compiler should simplify match-expression properly" in {
-    val inputProblem = new TipSmtToTipProblemCompiler( TipSmtParser.parse(
+    val inputProblem = new TipTransformationCompiler( TipSmtParser.parse(
       StringInputFile( """
-        |(declare-datatypes ()
-        |  ((Nat (Z) (S (P Nat)))))
+        |(declare-datatypes ((Nat 0))
+        |  (( (Z) (S (P Nat)))))
         |
-        |(declare-datatypes ()
-        | ((list (nil)
+        |(declare-datatypes ((list 0))
+        | (( (nil)
         |    (cons (head Nat) (tail list)))))
         |
         |(define-fun-rec f ((x list)) Nat
         |  ( match x
-        |    (case (cons y ys) (f ys))
-        |    (case default Z)
+        |    (( (cons y ys) (f ys))
+        |    ( _ Z))
         |  )
         |)
         |(prove
         |  (forall
         |    ((xs list))
         |      (match xs
-        |        (case nil (= Z Z) )
-        |         ( case (cons y ys) (= ys ys) ) ) ) )
+        |        (( nil (= Z Z) )
+        |         (  (cons y ys) (= ys ys) ) ) ) ))
       """.stripMargin ) ) ).compileTipProblem().toProblem
 
     implicit val ctx = inputProblem.ctx
@@ -161,19 +158,19 @@ class TipProblemCompilerTest extends Specification {
   }
 
   "Repeated matches on same variable should be allowed" in {
-    val inputProblem = new TipSmtToTipProblemCompiler( TipSmtParser.parse(
+    val inputProblem = new TipTransformationCompiler( TipSmtParser.parse(
       StringInputFile( """
-        |(declare-datatypes ()
-        |  ((Nat (Z) (S (P Nat)))))
+        |(declare-datatypes ((Nat 0))
+        |  (( (Z) (S (P Nat)))))
         |
-        |(declare-datatypes ()
-        | ((list (nil)
+        |(declare-datatypes ((list 0))
+        | (( (nil)
         |    (cons (head Nat) (tail list)))))
         |
         |(define-fun-rec f ((x list)) Nat
         |  ( match x
-        |    (case (cons y ys) (match x (case nil Z) (case (cons z zs) (f zs))))
-        |    (case default Z)
+        |    (( (cons y ys) (match x (( nil Z) ( (cons z zs) (f zs)))))
+        |    ( _ Z))
         |  )
         |)
       """.stripMargin ) ) ).compileTipProblem().toProblem
@@ -181,13 +178,13 @@ class TipProblemCompilerTest extends Specification {
   }
 
   "Distinct-expression should be compiled" in {
-    val inputProblem = new TipSmtToTipProblemCompiler( TipSmtParser.parse(
+    val inputProblem = new TipTransformationCompiler( TipSmtParser.parse(
       StringInputFile( """
-        |(declare-datatypes ()
-        |  ((Nat (Z) (S (P Nat)))))
+        |(declare-datatypes ((Nat 0))
+        |  (( (Z) (S (P Nat)))))
         |
-        |(declare-datatypes ()
-        | ((list (nil)
+        |(declare-datatypes ((list 0))
+        | (( (nil)
         |    (cons (head Nat) (tail list)))))
         |
         |(define-fun-rec f ((x list) (y list) (z list)) Bool
@@ -198,7 +195,7 @@ class TipProblemCompilerTest extends Specification {
   }
 
   "Equation between Boolean expressions should become equivalence" in {
-    val inputProblem = new TipSmtToTipProblemCompiler( TipSmtParser.parse(
+    val inputProblem = new TipTransformationCompiler( TipSmtParser.parse(
       StringInputFile( """
         | (declare-const a Bool)
         |
@@ -210,7 +207,7 @@ class TipProblemCompilerTest extends Specification {
   }
 
   "Constants should be compiled" in {
-    val inputProblem = new TipSmtToTipProblemCompiler( TipSmtParser.parse(
+    val inputProblem = new TipTransformationCompiler( TipSmtParser.parse(
       StringInputFile( """
         | (declare-const a Bool)
       """.stripMargin ) ) ).compileTipProblem().toProblem
@@ -218,15 +215,15 @@ class TipProblemCompilerTest extends Specification {
   }
 
   "Compiler should simplify constructor match-expressions" in {
-    val inputProblem = new TipSmtToTipProblemCompiler( TipSmtParser.parse(
+    val inputProblem = new TipTransformationCompiler( TipSmtParser.parse(
       StringInputFile( """
-        |(declare-datatypes ()
-        |  ((Nat (Z) (S (P Nat)))))
+        |(declare-datatypes ((Nat 0))
+        |  (( (Z) (S (P Nat)))))
         |
         |(prove
         |      (match Z
-        |        (case Z true)
-        |         ( case (S x) false ) ) )
+        |        (( Z true)
+        |         (  (S x) false ) ) ))
       """.stripMargin ) ) ).compileTipProblem().toProblem
 
     implicit val ctx = inputProblem.ctx

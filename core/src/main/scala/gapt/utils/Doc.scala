@@ -131,18 +131,18 @@ object Doc {
   /**
    * Concatenate a series of docs with a separator between them.
    */
-  def sep( docs: Traversable[Doc], by: Doc ): Doc =
+  def sep( docs: Iterable[Doc], by: Doc ): Doc =
     docs.reduceLeftOption( _ <> by <> _ ).getOrElse( Text( "" ) )
 
   /**
    * Concatenate a series of docs with spaces between them.
    */
-  def spread( cols: Traversable[Doc] ): Doc = sep( cols, Text( " " ) )
+  def spread( cols: Iterable[Doc] ): Doc = sep( cols, Text( " " ) )
 
   /**
    * Concatenate a series of docs with line breaks between them.
    */
-  def stack( lines: Traversable[Doc] ): Doc = sep( lines, line )
+  def stack( lines: Iterable[Doc] ): Doc = sep( lines, line )
 
   /**
    * Groups a series of [[Doc]]s such that as many as possible will

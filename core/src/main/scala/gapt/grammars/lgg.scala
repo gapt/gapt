@@ -12,7 +12,7 @@ abstract class GeneralLeastGeneralGeneralization {
   def apply( as: Expr* ): ( Expr, Map[Expr, Substitution] ) =
     apply( as )
 
-  def apply( as: Traversable[Expr] ): ( Expr, Map[Expr, Substitution] ) =
+  def apply( as: Iterable[Expr] ): ( Expr, Map[Expr, Substitution] ) =
     apply( as.toList )
 
   def apply( as: List[Expr] ): ( Expr, Map[Expr, Substitution] ) =
@@ -24,7 +24,7 @@ abstract class GeneralLeastGeneralGeneralization {
         val ( lgg, map_, mapA ) = fast( lgg_, a )
         val subst_ = Substitution( map_ )
         val substA = Substitution( mapA )
-        ( lgg, Map() ++ substs_.mapValues( s_ => subst_.compose( s_ ).restrict( map_.keySet ) ) + ( a -> substA ) )
+        ( lgg, Map() ++ substs_.view.mapValues( s_ => subst_.compose( s_ ).restrict( map_.keySet ) ).toMap + ( a -> substA ) )
     }
 }
 
@@ -48,7 +48,7 @@ class leastGeneralGeneralization {
     val Apps( fa, as ) = a
     val Apps( fb, bs ) = b
     if ( fa.isInstanceOf[Const] && fa == fb ) {
-      fa( ( as, bs ).zipped map apply: _* )
+      fa( as.lazyZip( bs ).map { apply }: _* )
     } else {
       vars.getOrElseUpdate( a -> b, {
         i = i + 1
@@ -72,7 +72,7 @@ object leastGeneralGeneralization1 extends GeneralLeastGeneralGeneralization {
       val Apps( fa, as ) = a
       val Apps( fb, bs ) = b
       if ( fa.isInstanceOf[Const] && fa == fb ) {
-        val ( as_, s_ ) = ( as, bs ).zipped.map( lgg ).unzip
+        val ( as_, s_ ) = as.lazyZip( bs ).map( lgg ).unzip
         if ( s_.flatten.distinct.size <= 1 ) {
           ( fa( as_ : _* ), s_.flatten.headOption )
         } else {

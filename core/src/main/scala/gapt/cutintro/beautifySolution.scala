@@ -14,7 +14,7 @@ import gapt.expr.util.syntacticMatching
 import gapt.logic.clauseSubsumption
 import gapt.logic.hol.CNFn
 import gapt.logic.hol.CNFp
-import gapt.logic.hol.simplify
+import gapt.logic.hol.simplifyPropositional
 import gapt.proofs.{ Ant, FOLClause, SequentIndex, Suc }
 
 import scala.collection.mutable
@@ -70,7 +70,7 @@ object beautifySolution {
           } map { _._1 }
         }
 
-        simplify( And( cnf map { _.toImplication } ) )
+        simplifyPropositional( And( cnf map { _.toImplication } ) )
     }
 
     val newUs = for ( ( ( u, uInst ), j ) <- ehs.sehs.us.zipWithIndex ) yield u -> ( uInst ++ addUs.filter { _._1 == j }.map { _._2 } )

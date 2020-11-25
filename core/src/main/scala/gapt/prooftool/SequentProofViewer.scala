@@ -59,13 +59,13 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
   /**
    * Displays the dag proof in sunburst form.
    */
-  def sunburstView() {
+  def sunburstView(): Unit = {
     scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
     initSunburstDialog( name, content )
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }
 
-  def initSunburstDialog( name: String, proof: DagProof[T] ) {
+  def initSunburstDialog( name: String, proof: DagProof[T] ): Unit = {
     val d = new SunburstTreeDialog( this, name, proof, sequent_element_renderer )
     d.pack()
     d.centerOnScreen()
@@ -150,7 +150,7 @@ class LKProofViewer( name: String, proof: LKProof )
   /**
    * Displays the expansion proof of proof in a new window.
    */
-  def expansionTree() {
+  def expansionTree(): Unit = {
     try {
       scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
       prooftool( LKToExpansionProof( content ), "Expansion tree" )
@@ -170,7 +170,7 @@ class LKProofViewer( name: String, proof: LKProof )
   def hideStructuralRules(): Unit = publisher.publish( HideStructuralRules )
   def showAllRules(): Unit = publisher.publish( ShowAllRules( Nil ) )
 
-  def markCutAncestors() {
+  def markCutAncestors(): Unit = {
     scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
     publisher.publish( MarkCutAncestors )
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor

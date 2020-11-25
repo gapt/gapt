@@ -64,7 +64,7 @@ class Substitution( map: Map[Var, Expr], typeMap: Map[TVar, Ty] = Map() ) extend
 }
 
 object Substitution {
-  def apply( subs: Traversable[( Var, Expr )], tySubs: Traversable[( TVar, Ty )] = Nil ): Substitution =
+  def apply( subs: Iterable[( Var, Expr )], tySubs: Iterable[( TVar, Ty )] = Nil ): Substitution =
     new Substitution( Map() ++ subs, Map() ++ tySubs )
   def apply( subs: ( Var, Expr )* ): Substitution = new Substitution( Map() ++ subs )
   def apply( variable: Var, expression: Expr ): Substitution = new Substitution( Map( variable -> expression ) )

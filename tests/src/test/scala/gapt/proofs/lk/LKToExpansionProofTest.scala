@@ -1,6 +1,6 @@
 package gapt.proofs.lk
 
-import gapt.examples.{ LinearExampleProof, Pi2Pigeonhole, lattice }
+import gapt.examples.{ Pi2Pigeonhole, lattice }
 import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.Bottom
@@ -37,6 +37,7 @@ import gapt.proofs.lk.rules.macros.OrRightMacroRule
 import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.utils.SatMatchers
 import org.specs2.mutable._
+import gapt.examples.sequence.LinearExampleProof
 
 class LKToExpansionProofTest extends Specification with SatMatchers with SequentMatchers {
 

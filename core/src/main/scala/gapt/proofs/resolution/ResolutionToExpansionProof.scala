@@ -261,10 +261,10 @@ object ResolutionToExpansionProof {
       case p: WeakQuantResolutionRule =>
         val Seq( oc ) = p.occConnectors
         val subFVs = freeVariables( p.subProof.conclusion )
-        propg( p, p.subProof, _.groupBy( _._1.restrict( subFVs ) ).mapValues( ess =>
+        propg( p, p.subProof, _.groupBy( _._1.restrict( subFVs ) ).view.mapValues( ess =>
           for ( i <- p.subProof.conclusion.indicesSequent; j = oc.child( i ) )
             yield if ( i == p.idx )
-            ETtWeak( Map() ++ ess.groupBy( _._1( p.variable ) ).mapValues( _.map( _._2( j ) ) ).mapValues( ETtMerge( _ ) ) )
+            ETtWeak( Map() ++ ess.groupBy( _._1( p.variable ) ).view.mapValues( _.map( _._2( j ) ) ).mapValues( ETtMerge( _ ) ).toMap )
           else
             ETtMerge( ess.map( _._2( j ) ) ) ).toSet )
 

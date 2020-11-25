@@ -2,7 +2,7 @@ package gapt.provers.escargot
 
 import gapt.expr._
 import gapt.expr.formula.fol.FOLFunctionConst
-import gapt.expr.formula.fol.{ Numeral, folSubTerms }
+import gapt.expr.formula.fol.{ Numeral, flatSubterms }
 import gapt.expr.util.syntacticMGU
 import gapt.expr.util.syntacticMatching
 import gapt.provers.escargot.impl.DiscrTree
@@ -10,7 +10,7 @@ import org.specs2.mutable.Specification
 
 class DiscrTreeTest extends Specification {
 
-  val terms = folSubTerms( Set(
+  val terms = flatSubterms( Set(
     le"x*(y*z) = (x*y)*z", le"x*0 != x*1",
     le"g(g(x1,x2), g(x3,x4))", le"g(x5,x6)",
     le"cons{?a}(u:?a, us:list?a)",

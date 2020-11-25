@@ -1,7 +1,6 @@
 
 package gapt.integration_tests
 
-import gapt.examples.LinearExampleProof
 import gapt.formats.llk.LLKProofParser
 import gapt.cutintro._
 import gapt.grammars.DeltaTableMethod
@@ -29,6 +28,7 @@ import gapt.proofs.lk.util.isCutFree
 import gapt.proofs.lk.util.regularize
 import gapt.proofs.lk.util.solvePropositional
 import org.specs2.mutable._
+import gapt.examples.sequence.LinearExampleProof
 
 class MiscTest extends Specification {
 

@@ -58,7 +58,7 @@ object CharFormN extends StructVisitor[Formula, Unit] {
           else Or( x, y )
         }
       }, Bottom(), { ( x, _ ) => Neg( x ) },
-      { ( _, _, _ ) => throw new Exception( "Should not contain CLS terms" ) } ), Unit )
+      { ( _, _, _ ) => throw new Exception( "Should not contain CLS terms" ) } ), () )
     All.Block( freeVariables( csf ).toSeq, csf )
   }
 }
@@ -88,7 +88,7 @@ object CharFormP extends StructVisitor[Formula, Unit] {
           else And( x, y )
         }
       }, Top(), { ( x, _ ) => Neg( x ) },
-      { ( _, _, _ ) => throw new Exception( "Should not contain CLS terms" ) } ), Unit )
+      { ( _, _, _ ) => throw new Exception( "Should not contain CLS terms" ) } ), () )
     Ex.Block( freeVariables( csf ).toSeq, csf )
   }
 }
@@ -189,7 +189,7 @@ private object Support {
     sss.keySet.map {
       case CLS( Apps( Const( name, _, _ ), _ ), cc ) =>
         val cutConfigChars = cc.map( b => if ( b ) 'T' else 'F' )
-        ( ( name, cc ), name + "S" ++ cutConfigChars.succedent + "A" ++ cutConfigChars.antecedent )
+        ( ( name, cc ), name + "S" + cutConfigChars.succedent.mkString + "A" + cutConfigChars.antecedent.mkString )
     }.toMap
   private object constructingForm extends StructVisitor[Formula, Map[( String, Sequent[Boolean] ), String]] {
     def apply( struct: Struct, names: Map[( String, Sequent[Boolean] ), String],

@@ -4,10 +4,11 @@ import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Imp
-import gapt.expr.formula.fol.folSubTerms
+import gapt.expr.formula.fol.flatSubterms
 import gapt.expr.formula.hol.instantiate
 import gapt.provers.escargot.LPO
 import gapt.provers.verit.VeriT
+import gapt.utils.zipped
 
 object removeSkolemCongruences {
 
@@ -34,7 +35,7 @@ object removeSkolemCongruences {
 
   def getAllPossibleCongruences( ep: ExpansionProof ): Vector[( Expr, Expr )] = {
     val skSyms = ep.skolemSymbols
-    val skTerms = folSubTerms( ep.deep.elements ).collect {
+    val skTerms = flatSubterms( ep.deep.elements ).collect {
       case skTerm @ Apps( skSym: Const, _ ) if skSyms( skSym ) => skTerm
     }
     skTerms.groupBy { case Apps( c: Const, _ ) => c }.
@@ -50,7 +51,7 @@ object removeSkolemCongruences {
     epwc.expansionSequent.antecedent.flatMap {
       case ETWeakQuantifierBlock( All.Block( _, Imp( _, Eq( Apps( f: Const, _ ), Apps( f_, _ ) ) ) ), n,
         insts ) if n > 0 && f == f_ && skSyms( f ) =>
-        insts.flatMap { case ( inst, _ ) => inst.splitAt( n / 2 ).zipped.view }
+        insts.flatMap { case ( inst, _ ) => zipped( inst.splitAt( n / 2 ) ).view }
       case _ => Seq()
     }
   }
@@ -59,9 +60,9 @@ object removeSkolemCongruences {
     val lpo = LPO( containedNames( congrs ).collect { case c: Const => c.name }.toSeq.sorted )
     def lt( a: Expr, b: Expr ): Boolean = lpo.lt( a, b, true )
     congrs.view.
-      filter( c => c._1 != c._2 ).
+      iterator.filter( c => c._1 != c._2 ).
       map( c => if ( lt( c._1, c._2 ) ) c.swap else c ).
-      distinct.
+      distinct.toIndexedSeq.
       sortWith( ( c1, c2 ) => lt( c1._1, c2._1 ) ).
       reverseIterator.toVector
   }

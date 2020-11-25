@@ -49,7 +49,7 @@ object eliminateDefsET {
       repl <- repls
     } yield as -> repl
 
-    var insts = Map() ++ insts0.groupBy( _._1 ).mapValues( _.map( _._2 ) )
+    var insts = Map() ++ insts0.groupBy( _._1 ).view.mapValues( _.map( _._2 ) ).toMap
 
     val rest = ep.expansionSequent.filterNot { et => et.polarity.inAnt && et.shallow == definitionFormula }
     val usesites: Set[( Seq[Expr], Polarity )] = rest.elements.flatMap { _.subProofs }.

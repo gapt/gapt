@@ -18,7 +18,7 @@ import scala.collection.mutable
 
 object instprover extends Script {
 
-  val endSequent = Stream.continually( Console.in.readLine() ).
+  val endSequent = LazyList.continually( Console.in.readLine() ).
     takeWhile( _ != null ).map( _.trim ).filter( _.nonEmpty ).
     map( parseFormula ).map( universalClosure( _ ).asInstanceOf[FOLFormula] ) ++: Sequent()
 

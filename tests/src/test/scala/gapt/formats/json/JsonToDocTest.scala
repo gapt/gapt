@@ -5,6 +5,7 @@ import gapt.formats.json.lk.LKProofCodec._
 import io.circe.Json
 import org.specs2.mutable.Specification
 import org.specs2.specification.core.Fragments
+import gapt.examples.sequence.LinearExampleProof
 
 class JsonToDocTest extends Specification {
   private def roundtrip( d: Json ) =
@@ -12,7 +13,7 @@ class JsonToDocTest extends Specification {
 
   "The JSON to Doc converter" should {
     "convert and parse a small LK proof" in {
-      val p: LKProof = gapt.examples.LinearExampleProof( 3 )
+      val p: LKProof = LinearExampleProof( 3 )
       roundtrip( _lkProofEncoder( p ) )
     }
 

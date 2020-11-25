@@ -27,7 +27,7 @@ object NDSequent {
   def apply[A]( polarizedElements: Seq[( A, Polarity )] ): NDSequent[A] = {
     val ( ant, suc ) = polarizedElements.view.partition( _._2.inAnt )
     require( suc.size == 1 )
-    NDSequent( ant.map( _._1 ), suc.head._1 )
+    NDSequent( ant.map( _._1 ).toSeq, suc.head._1 )
   }
 
   /**

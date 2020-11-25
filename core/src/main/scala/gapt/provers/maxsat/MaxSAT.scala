@@ -30,7 +30,7 @@ abstract class MaxSATSolver {
    */
   def solve( hard: DIMACS.CNF, soft: Seq[( DIMACS.Clause, Int )] ): Option[DIMACS.Model]
 
-  def solve( hard: Traversable[HOLClause], soft: Traversable[( HOLClause, Int )] ): Option[PropositionalModel] = {
+  def solve( hard: Iterable[HOLClause], soft: Iterable[( HOLClause, Int )] ): Option[PropositionalModel] = {
     val encoding = new DIMACSEncoding
     debug( s"${hard.size} hard clauses with ${hard.toSeq.map( _.size ).sum} literals and ${hard.flatMap( _.elements ).toSet.size} unique variables" )
     solve(
@@ -46,7 +46,7 @@ abstract class MaxSATSolver {
    * @return None if hard is unsatisfiable, otherwise Some(model), where model is a model
    * of hard maximizing the sum of the weights of soft.
    */
-  def solve( hard: Formula, soft: Traversable[( Formula, Int )] ): Option[PropositionalModel] = {
+  def solve( hard: Formula, soft: Iterable[( Formula, Int )] ): Option[PropositionalModel] = {
     solve(
       time( "tseitin" ) { fastStructuralCNF()( hard )._1 },
       soft.map( s => CNFp( s._1 ).map( f => ( f, s._2 ) ) ).flatten )

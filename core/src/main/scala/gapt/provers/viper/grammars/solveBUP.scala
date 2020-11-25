@@ -15,7 +15,7 @@ import gapt.expr.util.syntacticMGU
 import gapt.expr.util.syntacticMatching
 import gapt.grammars.{ RecSchemTemplate, RecursionScheme, Rule }
 import gapt.logic.hol.CNFp
-import gapt.logic.hol.simplify
+import gapt.logic.hol.simplifyPropositional
 import gapt.logic.hol.skolemize
 import gapt.proofs._
 import gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
@@ -73,7 +73,7 @@ object hSolveQBUP {
       }
     for ( ( cnf, true ) <- isSolution.toSeq ) forgetClauses( cnf )
 
-    isSolution collect { case ( sol, true ) => simplify( And( sol map { _.toImplication } ) ) } toSet
+    isSolution collect { case ( sol, true ) => simplifyPropositional( And( sol map { _.toImplication } ) ) } toSet
   }
 
   def getSequents( qbupMatrix: Formula, x: Var ): Seq[HOLSequent] = {

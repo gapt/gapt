@@ -10,17 +10,17 @@ import ammonite.ops._
 
 class FileParser( main: ProofToolViewer[_] ) {
 
-  def ivyFileReader( path: String ) {
+  def ivyFileReader( path: String ): Unit = {
     val ivy = IvyToResolution( IvyParser( FilePath( path ) ) )
     resProofs = ( "ivy_proof", ivy ) :: Nil
   }
 
-  def llkFileReader( filename: String ) {
+  def llkFileReader( filename: String ): Unit = {
     resProofs = Nil
     proofdb = loadLLK( FilePath( filename ) )
   }
 
-  def parseFile( path: String ) {
+  def parseFile( path: String ): Unit = {
     val dnLine = sys.props( "line.separator" ) + sys.props( "line.separator" )
     try {
       if ( path.endsWith( ".llk" ) ) llkFileReader( path )

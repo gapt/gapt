@@ -30,7 +30,7 @@ import scala.collection.mutable.ArrayBuffer
 
 object Prover9 extends Prover9( extraCommands = _ => Seq() )
 class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Seq() ) extends ResolutionProver with ExternalProgram {
-  override def getResolutionProof( cnf: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] =
+  override def getResolutionProof( cnf: Iterable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] =
     renameConstantsToFi.wrap( cnf.toSeq )(
       ( renaming, cnf: Seq[HOLClause] ) => {
         val p9Input = toP9Input( cnf, renaming )
@@ -54,7 +54,7 @@ class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Se
     IvyToResolution( ivyProof )
   }
 
-  private def toP9Input( cnf: Traversable[HOLClause], renaming: Map[Const, Const] ): String = {
+  private def toP9Input( cnf: Iterable[HOLClause], renaming: Map[Const, Const] ): String = {
     val commands = ArrayBuffer[String]()
 
     commands += "set(quiet)" // suppresses noisy output on stderr

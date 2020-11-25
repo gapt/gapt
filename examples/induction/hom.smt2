@@ -1,12 +1,12 @@
-(declare-datatypes () ((nat (o) (s (p nat)))))
+(declare-datatypes ((nat 0)) (( (o) (s (p nat)))))
 
 (declare-fun f (nat) nat)
 (assert (forall ((x nat)) (= (f (s x)) (s (f x)))))
 
 (define-fun-rec plus ((x nat) (y nat)) nat
   (match y
-    (case o x)
-    (case (s y1) (s (plus x y1)))))
+    (( o x)
+    ( (s y1) (s (plus x y1))))))
 (assert (forall ((x nat))
   (= (plus o x) x)))
 (assert (forall ((x nat) (y nat))

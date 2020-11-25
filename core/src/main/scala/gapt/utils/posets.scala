@@ -21,7 +21,7 @@ object linearizeStrictPartialOrder {
     apply(
       set,
       Map().withDefaultValue( Nil ) ++
-        relation.groupBy( _._1 ).mapValues( Nil ++ _.map( _._2 ) ) )
+        relation.groupBy( _._1 ).view.mapValues( Nil ++ _.map( _._2 ) ).toMap )
 
   def apply[T](
     set:      Iterable[T],

@@ -3,6 +3,7 @@ package gapt.proofs.ceres_omega
 import gapt.expr._
 import gapt.expr.formula.Formula
 import gapt.expr.formula.fol.FOLAtom
+import gapt.expr.formula.fol.Hol2FolDefinitions
 import gapt.formats.tptp.TptpHOLExporter
 import gapt.proofs.expansion._
 import gapt.proofs.lk._
@@ -141,9 +142,14 @@ abstract class AnalysisWithCeresOmega {
    */
   lazy val ( abstracted_constants_map, fol_css ) = {
     val css_nolabels = preprocessed_css // remove labels from css
-    val ( abs_consts, abs_css ) = replaceAbstractions( css_nolabels )
+    // FIXME Not reversing the list of sequents breaks the nTapeTest
+    implicit val abs_consts = new Hol2FolDefinitions()
+    val abs_css =
+      css_nolabels
+        .reverse
+        .map { s => s.map { replaceAbstractions( _ ) } }
     /* map types to first order*/
-    val fol_css = reduceHolToFol( abs_css )
+    val fol_css = abs_css.map { s => s.map { reduceHolToFol( _ ) } }
     /* converting to clause form, this is cleaner than casting */
     val fol_ccs = fol_css map {
       case Sequent( ant, succ ) =>
@@ -159,8 +165,8 @@ abstract class AnalysisWithCeresOmega {
    */
   lazy val fol_refutation = {
     val some_rp = try {
-      val css = fol_css //evaluate lazy val, otherwise the thread stays blocked
-      withTimeout( timeout() ) { Prover9.getResolutionProof( css ) }
+      //evaluate lazy val, otherwise the computation takes longer than the times out.
+      fol_css; withTimeout( timeout() ) { Prover9.getResolutionProof( fol_css ) }
     } catch {
       case e: TimeOutException =>
         println( s"Could not refute the clause set within ${timeout()}." )
@@ -216,7 +222,7 @@ abstract class AnalysisWithCeresOmega {
   /**
    * A first-order conversion of the deep formula of the [[expansion_proof]].
    */
-  lazy val expansion_proof_fol_deep = reduceHolToFol( replaceAbstractions( expansion_proof.expansionSequent.deep.toImplication ) )
+  lazy val expansion_proof_fol_deep = reduceHolToFol( replaceAbstractions( expansion_proof.expansionSequent.deep.toImplication )( new Hol2FolDefinitions ) )( new Hol2FolDefinitions )
 
   /**
    * The proof of the deep formula of the [[expansion_proof]].

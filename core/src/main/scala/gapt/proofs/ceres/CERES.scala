@@ -208,7 +208,7 @@ class CERES {
 
     var retSeq: ExpansionSequent = Sequent()
 
-    for ( subst <- set.map( _._1 ).seq ) {
+    for ( subst <- set.map( _._1 ) ) {
       retSeq ++= subst( expansionSequent )
     }
 

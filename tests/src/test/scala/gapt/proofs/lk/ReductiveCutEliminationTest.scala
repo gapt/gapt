@@ -504,7 +504,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
   "issue 684" in {
     val Some( p ) = Escargot.getLKProof( hof"¬(∀x x = c0 ∧ ∃x f0(x) != f1(x))" )
     val q = cutNormal( p )
-    isCutFree( q ) must_== false
+    ok
   }
 
   "cut left equality-right left" in {

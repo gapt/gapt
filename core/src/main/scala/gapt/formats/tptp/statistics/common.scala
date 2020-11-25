@@ -31,11 +31,10 @@ package object statistics {
 
     def file = FilePath( fileName )
 
-    def fileAsPath = file match {
-      case p: Path     => p;
-      case rp: RelPath => Path( rp, pwd )
-    }
+    def fileAsPath: Path = makeAbsolutePath( file )
 
+    private def makeAbsolutePath( relativePath: FilePath ): Path =
+      Path( relativePath, pwd )
   }
 
   case object UnknownFile extends FileData {

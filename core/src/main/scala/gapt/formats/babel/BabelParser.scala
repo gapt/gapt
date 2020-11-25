@@ -32,7 +32,7 @@ object Precedence {
 sealed abstract class BabelParseError( message: String ) extends IllegalArgumentException( message )
 case class BabelElabError( reason: String ) extends BabelParseError( reason )
 case class BabelParsingError( parseError: fastparse.Parsed.Failure )
-  extends BabelParseError( parseError.trace.longAggregateMsg )
+  extends BabelParseError( parseError.trace().longAggregateMsg )
 
 object BabelLexical {
   import fastparse._, NoWhitespace._

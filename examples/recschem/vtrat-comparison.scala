@@ -9,7 +9,7 @@ import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.fol.Numeral
 import gapt.expr.formula.hol.lcomp
 import gapt.grammars._
-import gapt.logic.hol.simplify
+import gapt.logic.hol.simplifyPropositional
 import gapt.logic.hol.toNNF
 import gapt.provers.maxsat.bestAvailableMaxSatSolver
 import gapt.utils.{ LogHandler, time, verbose }
@@ -26,10 +26,10 @@ object vtrat_comparison extends Script {
     val targets = terms.map( A -> _ ).toSet[( Expr, Expr )]
     val nfRecSchem = rst.stableRecSchem( targets )
 
-    println( lcomp( simplify( toNNF( ( new RecSchemGenLangFormula( nfRecSchem ) )( targets ) ) ) ) )
+    println( lcomp( simplifyPropositional( toNNF( ( new RecSchemGenLangFormula( nfRecSchem ) )( targets ) ) ) ) )
 
     val nfG = stableVTRATG( terms.toSet, Seq( 2 ) )
-    println( lcomp( simplify( toNNF( new VectGrammarMinimizationFormula( nfG ).coversLanguage( terms ) ) ) ) )
+    println( lcomp( simplifyPropositional( toNNF( new VectGrammarMinimizationFormula( nfG ).coversLanguage( terms ) ) ) ) )
 
     val minimized = time { minimizeRecursionScheme( nfRecSchem, targets, solver = bestAvailableMaxSatSolver ) }
     println( minimized )

@@ -2,9 +2,9 @@ sudo: true
 
 language: scala
 jdk:
-- oraclejdk8
+- oraclejdk9
 scala: 
-- 2.11.5
+- 2.13.1
 
 # Workaround for https://github.com/travis-ci/travis-ci/issues/7703
 before_script:

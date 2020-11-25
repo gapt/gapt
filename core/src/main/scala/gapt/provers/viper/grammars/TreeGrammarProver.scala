@@ -2,9 +2,10 @@ package gapt.provers.viper.grammars
 
 import gapt.expr._
 import gapt.expr.formula.All
+import gapt.expr.formula.And
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
-import gapt.expr.formula.fol.{ folSubTerms, folTermSize }
+import gapt.expr.formula.fol.{ flatSubterms, folTermSize }
 import gapt.expr.formula.hol._
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.TBase
@@ -19,6 +20,7 @@ import gapt.formats.smt.SmtLibExporter
 import gapt.grammars.{ InductionGrammar, findMinimalInductionGrammar }
 import gapt.grammars.InductionGrammar.Production
 import gapt.logic.hol.CNFp
+import gapt.logic.hol.dls.dls
 import gapt.logic.hol.skolemize
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.{ BaseTypes, StructurallyInductiveTypes }
@@ -37,6 +39,8 @@ import gapt.utils._
 import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.collection.mutable
+import scala.util.Failure
+import scala.util.Success
 
 object DefaultProvers {
   val firstOrder: Prover = Escargot
@@ -44,6 +48,7 @@ object DefaultProvers {
 }
 
 import TreeGrammarProverOptions._
+
 case class TreeGrammarProverOptions(
     goalQuantifier:   Int                = 0,
     instanceNumber:   Int                = 10,
@@ -56,10 +61,17 @@ case class TreeGrammarProverOptions(
     grammarWeighting: ProductionWeight   = NumProductionsWeight,
     tautCheckNumber:  Int                = 10,
     tautCheckSize:    FloatRange         = ( 2, 3 ),
-    useInterpolation: Boolean            = false,
+    bupSolver:        InductionBupSolver = InductionBupSolver.Canonical,
     canSolSize:       FloatRange         = ( 2, 4 ),
     maxSATSolver:     MaxSATSolver       = bestAvailableMaxSatSolver,
     equationalTheory: Seq[Formula]       = Seq() )
+
+sealed trait InductionBupSolver
+object InductionBupSolver {
+  case object Interpolation extends InductionBupSolver
+  case object Canonical extends InductionBupSolver
+  case object Dls extends InductionBupSolver
+}
 
 object TreeGrammarProverOptions {
   type FloatRange = ( Float, Float )
@@ -225,7 +237,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
       }.headOption
     failedInstOption map { failedInst =>
       val minimalCounterExample = (
-        folSubTerms( failedInst ).filter( _.ty == indTy ).toList.filterNot( checkInst )
+        flatSubterms( failedInst ).filter( _.ty == indTy ).toList.filterNot( checkInst )
         :+ failedInst ).minBy( expressionSize( _ ) )
       info( s"Minimal counterexample: ${minimalCounterExample.toSigRelativeString}" )
       minimalCounterExample
@@ -241,23 +253,29 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     } catch { case e: Throwable => info( ExceptionUtils.getStackTrace( e ) ) }
 
     val solution =
-      if ( options.useInterpolation )
-        //        solveBupViaInterpolation( bup )
-        solveBupViaInterpolationConcreteTerms( bup, instanceGen.terms.map( _._1 ).filter( _.ty == indTy ) )
-      else {
+      options.bupSolver match {
+        case InductionBupSolver.Interpolation =>
+          solveBupViaInterpolationConcreteTerms( bup, instanceGen.terms.map( _._1 ).filter( _.ty == indTy ) )
+        case InductionBupSolver.Canonical =>
+          val canSolInst = instanceGen.generate( options.canSolSize._1, options.canSolSize._2, 1 ).head.head
+          val xInst = bup.X( alpha, canSolInst )( gamma ).asInstanceOf[Formula]
 
-        val canSolInst = instanceGen.generate( options.canSolSize._1, options.canSolSize._2, 1 ).head.head
-        val xInst = bup.X( alpha, canSolInst )( gamma ).asInstanceOf[Formula]
+          info( s"Canonical solution at ${xInst.toSigRelativeString}:" )
+          val canSol = hSolveQBUP.canonicalSolution( qbupMatrix, xInst )
+          for ( cls <- CNFp( canSol ) )
+            info( cls map { _.toSigRelativeString } )
 
-        info( s"Canonical solution at ${xInst.toSigRelativeString}:" )
-        val canSol = hSolveQBUP.canonicalSolution( qbupMatrix, xInst )
-        for ( cls <- CNFp( canSol ) )
-          info( cls map { _.toSigRelativeString } )
-
-        hSolveQBUP( qbupMatrix, xInst, smtSolver, options.equationalTheory ).
-          getOrElse {
-            metric( "bup_solve_failed", true )
-            throw new IllegalArgumentException( s"Could not solve:\n${qbupMatrix.toSigRelativeString}" )
+          hSolveQBUP( qbupMatrix, xInst, smtSolver, options.equationalTheory ).
+            getOrElse {
+              metric( "bup_solve_failed", true )
+              throw new IllegalArgumentException( s"Could not solve:\n${qbupMatrix.toSigRelativeString}" )
+            }
+        case InductionBupSolver.Dls =>
+          val p = bup.formula
+          dls( p ) match {
+            case Success( ( s, _ ) ) => s( bup.X )
+            case Failure( e ) =>
+              throw new IllegalArgumentException( s"Could not solve BUP ${bup}", e )
           }
       }
 
@@ -330,7 +348,7 @@ class TreeGrammarInductionTactic( options: TreeGrammarProverOptions = TreeGramma
   def canSolSize( size: Int ) = copy( options.copy( canSolSize = ( size, size ) ) )
   def equationalTheory( equations: Formula* ) = copy( options.copy( equationalTheory = equations ) )
   def maxsatSolver( solver: MaxSATSolver ) = copy( options.copy( maxSATSolver = solver ) )
-  def useInterpolation = copy( options.copy( useInterpolation = true ) )
+  def useInterpolation = copy( options.copy( bupSolver = InductionBupSolver.Interpolation ) )
 
   override def apply( goal: OpenAssumption ): Tactic[Unit] = {
     implicit val ctx2: MutableContext = ctx.newMutable

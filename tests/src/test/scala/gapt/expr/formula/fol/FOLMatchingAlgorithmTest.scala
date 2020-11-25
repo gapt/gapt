@@ -22,6 +22,10 @@ class FOLMatchingAlgorithmTest extends Specification {
     val c = FOLConst( "c" )
     val d = FOLConst( "d" )
 
+    "not match constants with same name and distinct types" in {
+      syntacticMatching( le"#c(a:i>i)", le"#c(a:i)" ) must beNone
+    }
+
     "match correctly the lambda expressions f(x, x) and f(a,b)" in {
       val term = FOLFunction( "f", x :: x :: Nil )
       val posInstance = FOLFunction( "f", a :: b :: Nil )

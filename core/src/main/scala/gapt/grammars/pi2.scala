@@ -3,12 +3,12 @@ import gapt.expr._
 import gapt.expr.formula.And
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Or
-import gapt.expr.formula.fol.{ folSubTerms, thresholds }
+import gapt.expr.formula.fol.{ flatSubterms, thresholds }
 import gapt.expr.formula.hol.lcomp
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
-import gapt.logic.hol.simplify
+import gapt.logic.hol.simplifyPropositional
 import gapt.logic.hol.toNNF
 import gapt.provers.maxsat.MaxSATSolver
 import gapt.utils.Logger
@@ -76,15 +76,15 @@ object Pi2Grammar {
 }
 
 object stablePi2Grammar {
-  def apply( startSymbol: Var, alpha: Var, betas: Vector[Var], language: Traversable[Expr] ): Pi2PreGrammar = {
+  def apply( startSymbol: Var, alpha: Var, betas: Vector[Var], language: Iterable[Expr] ): Pi2PreGrammar = {
     val betaTy = betas.head.ty
-    val argStableTermsBetas = stableTerms( folSubTerms( language ).filter( _.ty == betaTy ), betas )
+    val argStableTermsBetas = stableTerms( flatSubterms( language ).filter( _.ty == betaTy ), betas )
 
     Pi2PreGrammar( startSymbol, alpha, betas,
       Vector() ++
         ( for ( rhs <- stableTerms( language, Seq( alpha ) ) ++ stableTerms( language, betas ) )
           yield startSymbol -> rhs ) ++
-        ( for ( rhs <- stableTerms( folSubTerms( language ).filter( _.ty == alpha.ty ), Seq( alpha ) ) )
+        ( for ( rhs <- stableTerms( flatSubterms( language ).filter( _.ty == alpha.ty ), Seq( alpha ) ) )
           yield alpha -> rhs ) ++
         ( for {
           ( beta, j ) <- betas.zipWithIndex
@@ -98,7 +98,7 @@ object stablePi2Grammar {
 object minimizePi2Grammar {
   val logger = Logger( "minimizePi2Grammar" )
 
-  def apply( g: Pi2PreGrammar, lang: Traversable[Expr], solver: MaxSATSolver ): Option[Pi2Grammar] = {
+  def apply( g: Pi2PreGrammar, lang: Iterable[Expr], solver: MaxSATSolver ): Option[Pi2Grammar] = {
     def prodinc( p: ( Var, Expr ) ): Atom = Atom( "prodinc2", p._1, p._2 )
 
     val productionSources: Vector[( VTRATG.Production, List[( Var, Expr )] )] =
@@ -152,7 +152,7 @@ object minimizePi2Grammar {
 
     val hard = tratgFormula.coversLanguage( lang ) & correspondenceFormula & betaCardinality &
       expressibilityCondition & alphaNonempty
-    logger.metric( "minform_lcomp", lcomp( simplify( toNNF( hard ) ) ) )
+    logger.metric( "minform_lcomp", lcomp( simplifyPropositional( toNNF( hard ) ) ) )
 
     val soft = for ( p <- g.productions ) yield -prodinc( p ) -> 1
 
@@ -165,7 +165,7 @@ object minimizePi2Grammar {
 object findMinimalPi2Grammar {
   val logger = minimizePi2Grammar.logger
 
-  def apply( lang: Traversable[Expr], alpha: Var, betas: Vector[Var], solver: MaxSATSolver ): Option[Pi2Grammar] = {
+  def apply( lang: Iterable[Expr], alpha: Var, betas: Vector[Var], solver: MaxSATSolver ): Option[Pi2Grammar] = {
     require( freeVariables( lang ).isEmpty )
     val startSymbol = rename( Var( "x0", lang.head.ty ), alpha +: betas )
     val stableG = logger.time( "stabgrammar" ) { stablePi2Grammar( startSymbol, alpha, betas, lang ) }

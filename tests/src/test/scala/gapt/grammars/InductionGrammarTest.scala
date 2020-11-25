@@ -108,7 +108,7 @@ class InductionGrammarTest extends Specification with SatMatchers {
     ctx += hoc"p: list>o"
     def list( as: List[Expr] ): Expr =
       as match { case a :: as_ => le"cons $a ${list( as_ )}" case Nil => le"nil" }
-    val as = Stream.from( 0 ).map( i => Var( s"a$i", Ti ) )
+    val as = LazyList.from( 0 ).map( i => Var( s"a$i", Ti ) )
     val indexedTermset = ( 0 to 3 ).map( n => list( as.take( n ).toList ) ->
       ( 1 to n ).map( i => le"p ${list( as.slice( i, n ).toList )}" ).toSet ).toMap
     val Some( minimal ) = findMinimalInductionGrammar( indexedTermset, List( hov"γ: i" ) )

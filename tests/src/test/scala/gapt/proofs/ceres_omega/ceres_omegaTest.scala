@@ -4,6 +4,7 @@ import gapt.examples._
 import gapt.expr._
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Formula
+import gapt.expr.formula.fol.Hol2FolDefinitions
 import gapt.expr.formula.fol.replaceAbstractions
 import gapt.expr.formula.hol.{ HOLOrdering, containsQuantifierOnLogicalLevel, freeHOVariables }
 import gapt.expr.subst.Substitution
@@ -105,13 +106,15 @@ class ceres_omegaTest extends Specification with SequentMatchers {
       //css.map( println )
 
       val pcss = proj.map( _.conclusion )
-      val ( pqs, abspcss ) = replaceAbstractions( pcss.toList )
-      val ( cqs, abscss ) = replaceAbstractions( css.toList )
+      val pqs = new Hol2FolDefinitions()
+      val abspcss = pcss.toList.map { s => s.map { replaceAbstractions( _ )( pqs ) } }
+      val cqs = new Hol2FolDefinitions()
+      val abscss = css.toList.map { s => s.map { replaceAbstractions( _ )( cqs ) } }
 
       info( "=== projection css ===" )
       abspcss.map( x => info( x.toString ) )
       info( "=== projection replacement terms ===" )
-      pqs.map( x => info( x._2 + " -> " + x._1 ) )
+      pqs.toLegacyMap.foreach( x => info( x._2 + " -> " + x._1 ) )
       info( TptpFOLExporter.tptpProblem( abspcss.asInstanceOf[List[HOLClause]] ).toString )
 
       info( "=== computed css ===" )
@@ -119,7 +122,7 @@ class ceres_omegaTest extends Specification with SequentMatchers {
       info( TptpFOLExporter.tptpProblem( abscss.asInstanceOf[List[HOLClause]] ).toString )
 
       info( "=== css replacement terms ===" )
-      cqs.map( x => info( x._2 + " -> " + x._1 ) )
+      cqs.toLegacyMap.foreach( x => info( x._2 + " -> " + x._1 ) )
 
       /*
       pcss.forall( x => css.exists( y =>

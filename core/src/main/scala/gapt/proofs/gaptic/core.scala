@@ -416,7 +416,7 @@ object NewLabels {
    * @param fromLabel
    * @return
    */
-  def apply( sequent: Sequent[( String, Formula )], fromLabel: String ): Stream[String] = {
+  def apply( sequent: Sequent[( String, Formula )], fromLabel: String ): LazyList[String] = {
     val regex = f"$fromLabel%s_([0-9]+)".r
 
     // Get integer subscripts (i.e 1, 2, 3 for x_1, x_2, x_3)
@@ -425,7 +425,7 @@ object NewLabels {
         yield Integer parseInt ( m group 1 )
     }.toSet
 
-    for ( i <- Stream from 0 if !usedVariableSubscripts( i ) ) yield f"$fromLabel%s_$i%d"
+    for ( i <- LazyList from 0 if !usedVariableSubscripts( i ) ) yield f"$fromLabel%s_$i%d"
   }
 }
 

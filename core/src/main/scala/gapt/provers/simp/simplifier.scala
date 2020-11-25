@@ -19,6 +19,7 @@ import gapt.expr.formula.hol.instantiate
 import gapt.expr.subst.PreSubstitution
 import gapt.expr.subst.Substitution
 import gapt.expr.util.LambdaPosition
+import gapt.expr.util.LambdaPosition.Choice
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.expr.util.replacementContext
@@ -362,12 +363,12 @@ case class Simplifier( lemmas: Seq[SimpProc] ) {
 
   def getLambdaPositions( exp: Expr ): Map[Expr, Seq[LambdaPosition]] = {
     val poss = mutable.Map[Expr, Seq[LambdaPosition]]().withDefaultValue( Seq() )
-    def walk( exp: Expr, pos: List[Int] ): Unit = {
-      poss( exp ) :+= LambdaPosition( pos.reverse )
+    def walk( exp: Expr, pos: List[Choice] ): Unit = {
+      poss( exp ) :+= LambdaPosition( pos.reverse: _* )
       exp match {
         case App( a, b ) =>
-          walk( a, 1 :: pos )
-          walk( b, 2 :: pos )
+          walk( a, LambdaPosition.Left :: pos )
+          walk( b, LambdaPosition.Right :: pos )
         case _ =>
       }
     }
@@ -410,11 +411,11 @@ case class Simplifier( lemmas: Seq[SimpProc] ) {
         ( subterm, pos ) <- getLambdaPositions( t ) if !didRewrite
         lem <- lemmas if !didRewrite
         SimpEqResult.Prf( lemP, _, subterm_ ) <- Some( lem.simpEq( subterm ) ) if !didRewrite
-        ctx = replacementContext( subterm_.ty, t0 === t, pos.map( 2 :: _ ) )
+        ctx = replacementContext( subterm_.ty, t0 === t, pos.map( LambdaPosition.Right :: _ ) )
       } {
         p = ContractionMacroRule(
           ParamodulationRightRule( lemP, subterm === subterm_, p, t0 === t, ctx ) )
-        t = Substitution( ctx.variable -> subterm_ )( ctx.term( LambdaPosition( 2 ) ) )
+        t = Substitution( ctx.variable -> subterm_ )( ctx.term( LambdaPosition( LambdaPosition.Right ) ) )
         didRewrite = true
       }
     }

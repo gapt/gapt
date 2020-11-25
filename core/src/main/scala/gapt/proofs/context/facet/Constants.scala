@@ -14,7 +14,7 @@ case class Constants( constants: Map[String, Const] ) {
     copy( constants + ( const.name -> const ) )
   }
 
-  def ++( consts: Traversable[Const] ): Constants =
+  def ++( consts: Iterable[Const] ): Constants =
     consts.foldLeft( this )( _ + _ )
 
   def lookup( name: String, params: List[Ty] ): Option[Const] =

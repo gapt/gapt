@@ -3,7 +3,7 @@ package gapt.provers.viper.aip.axioms
 import gapt.expr.{ Var, Const => Con }
 import gapt.proofs.gaptic.{ ProofState, allR, escargot, induction }
 import gapt.proofs.Sequent
-import gapt.provers.viper.aip.{ LabelledSequent, ThrowsError, getConstructors }
+import gapt.provers.viper.aip.{ ThrowsError, getConstructors }
 import cats.instances.all._
 import cats.syntax.all._
 import gapt.expr.formula.All
@@ -14,6 +14,7 @@ import gapt.expr.formula.Or
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.util.rename
+import gapt.proofs.LabelledSequent
 import gapt.proofs.context.mutable.MutableContext
 
 case class DomainClosureAxioms( types: List[TBase] = Nil ) extends AxiomFactory {

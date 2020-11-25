@@ -28,9 +28,9 @@ class ConvenienceConstructor( val longName: String ) {
   def findIndicesOrFormulasInPremise( premise: HOLSequent )(
     antIndicesFormulas: Seq[IndexOrFormula],
     sucIndicesFormulas: Seq[IndexOrFormula] ): ( Seq[Formula], Seq[Int], Seq[Formula], Seq[Int] ) = {
-    val antReservedIndices = ( scala.collection.mutable.HashSet.empty[Int] /: antIndicesFormulas ) { ( acc, e ) =>
+    val antReservedIndices = ( antIndicesFormulas.foldLeft( scala.collection.mutable.HashSet.empty[Int] ) ) { ( acc, e ) =>
       e match {
-        case IsIndex( Ant( i ) ) => acc + i
+        case IsIndex( Ant( i ) ) => acc ++ Set( i )
         case IsIndex( i: Suc )   => throw LKRuleCreationException( s"Index $i should be in the antecedent." )
         case IsFormula( _ )      => acc
       }
@@ -59,9 +59,9 @@ class ConvenienceConstructor( val longName: String ) {
       }
     }
 
-    val sucReservedIndices = ( scala.collection.mutable.HashSet.empty[Int] /: sucIndicesFormulas ) { ( acc, e ) =>
+    val sucReservedIndices = ( sucIndicesFormulas.foldLeft( scala.collection.mutable.HashSet.empty[Int] ) ) { ( acc, e ) =>
       e match {
-        case IsIndex( Suc( i ) ) => acc + i
+        case IsIndex( Suc( i ) ) => acc ++ Set( i )
         case IsIndex( i: Ant )   => throw LKRuleCreationException( s"Index $i should be in the succedent." )
         case IsFormula( _ )      => acc
       }

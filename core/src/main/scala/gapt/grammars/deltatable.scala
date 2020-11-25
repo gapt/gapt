@@ -39,7 +39,7 @@ object deltaTableAlgorithm {
 
       if ( !newLGG.isInstanceOf[Var] && maxArity.forall { substCurLGG.size <= _ } ) {
         val newSubst =
-          currentSubst.map( subst => Substitution( Map.empty ++ substCurLGG.mapValues( subst( _ ) ) ) ) +
+          currentSubst.map( subst => Substitution( Map.empty ++ substCurLGG.view.mapValues( subst( _ ) ).toMap ) ) +
             Substitution( substNewTerm )
         val newCover = currentCover + newTerm
         deltatable( newSubst ) ::= ( newLGG -> newCover )
@@ -51,7 +51,7 @@ object deltaTableAlgorithm {
 
     populate( termSet.toList, UNone(), Set.empty, Set.empty )
 
-    Map.empty ++ deltatable.mapValues( _.toSet )
+    Map.empty ++ deltatable.view.mapValues( _.toSet ).toMap
   }
 
   def keySubsumption( a: Set[Substitution], b: Set[Substitution] ): Set[Map[Var, Var]] =
@@ -70,14 +70,14 @@ object deltaTableAlgorithm {
     for {
       ( corrK, `chosenV` ) <- b.flatten
       newAlreadyFixed = alreadyFixed + ( chosenK -> corrK )
-      if a.map( Map() ++ _.filterKeys( newAlreadyFixed.keySet ) ) subsetOf b.map( bi => Map() ++ newAlreadyFixed.mapValues( bi ) )
+      if a.map( Map() ++ _.view.filterKeys( newAlreadyFixed.keySet ).toMap ) subsetOf b.map( bi => Map() ++ newAlreadyFixed.view.mapValues( bi ).toMap )
       solution <- keySubsumption( a, b, newAlreadyFixed )
     } yield solution
   }
 
   def mergeSubsumedRows( table: Map[Set[Substitution], Row] ): Map[Set[Substitution], Row] =
     for ( ( s1, row1 ) <- table ) yield if ( s1.head.map.size <= 1 ) s1 -> row1 else {
-      var newRow = row1.to[mutable.Set]
+      var newRow = row1.to( mutable.Set )
       for {
         ( s2, row2 ) <- table
         if s2.head.map.nonEmpty // do not add ground terms
@@ -85,7 +85,7 @@ object deltaTableAlgorithm {
         subst = Substitution( subs )
         ( u2, t2 ) <- row2
       } newRow += subst( u2 ) -> t2
-      newRow = newRow.groupBy { _._1 }.mapValues { _ flatMap { _._2 } toSet }.to[mutable.Set]
+      newRow = newRow.groupBy { _._1 }.view.mapValues { _ flatMap { _._2 } toSet }.toMap.to( mutable.Set )
       for {
         e1 @ ( u1, t1 ) <- newRow
         e2 @ ( u2, t2 ) <- newRow

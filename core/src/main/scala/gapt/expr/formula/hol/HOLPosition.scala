@@ -20,17 +20,17 @@ object HOLPosition {
   /**
    * Returns a list of positions of subexpressions that satisfy some predicate.
    *
-   * This function is a wrapper around [[gapt.expr.util.LambdaPosition.getPositions]].
+   * This function is a wrapper around [[gapt.expr.util.LambdaPosition.filterPositions]].
    *
    * @param exp The expression under consideration.
    * @param pred The predicate to be evaluated. Defaults to "always true", i.e. if called without this argument, the function will return all positions.
    * @return Positions of subexpressions satisfying pred.
    */
   def getPositions( exp: Expr, pred: Expr => Boolean = _ => true ): List[HOLPosition] = {
-    LambdaPosition.getPositions( exp, {
+    LambdaPosition.filterPositions {
       case e: Expr => pred( e )
       case _       => false
-    } ) filter { definesHOLPosition( exp ) } map { toHOLPosition( exp ) }
+    }( exp ) filter { definesHOLPosition( exp ) } map { toHOLPosition( exp ) }
   }
 
   /**
@@ -90,7 +90,7 @@ object HOLPosition {
       ( pos.head, exp ) match {
         case ( 1, Neg( subExp ) ) =>
           toLambdaPositionOption( subExp )( rest ) match {
-            case Some( subPos ) => Some( 2 :: subPos )
+            case Some( subPos ) => Some( LambdaPosition.Right :: subPos )
             case None           => None
           }
 
@@ -98,7 +98,7 @@ object HOLPosition {
 
         case ( 1, Ex( _, subExp ) ) =>
           toLambdaPositionOption( subExp )( rest ) match {
-            case Some( subPos ) => Some( 2 :: 1 :: subPos )
+            case Some( subPos ) => Some( LambdaPosition.Right :: LambdaPosition.Left :: subPos )
             case None           => None
           }
 
@@ -106,36 +106,36 @@ object HOLPosition {
 
         case ( 1, All( _, subExp ) ) =>
           toLambdaPositionOption( subExp )( rest ) match {
-            case Some( subPos ) => Some( 2 :: 1 :: subPos )
+            case Some( subPos ) => Some( LambdaPosition.Right :: LambdaPosition.Left :: subPos )
             case None           => None
           }
 
         case ( 1, BinaryConnective( left, _ ) ) =>
           toLambdaPositionOption( left )( rest ) match {
-            case Some( leftPos ) => Some( 1 :: 2 :: leftPos )
+            case Some( leftPos ) => Some( LambdaPosition.Left :: LambdaPosition.Right :: leftPos )
             case None            => None
           }
 
         case ( 2, BinaryConnective( _, right ) ) =>
           toLambdaPositionOption( right )( rest ) match {
-            case Some( rightPos ) => Some( 2 :: rightPos )
+            case Some( rightPos ) => Some( LambdaPosition.Right :: rightPos )
             case None             => None
           }
 
         case ( _, BinaryConnective( _, _ ) ) => None
 
         case ( 1, App( f, _ ) ) => toLambdaPositionOption( f )( rest ) match {
-          case Some( subPos ) => Some( 1 :: subPos )
+          case Some( subPos ) => Some( LambdaPosition.Left :: subPos )
           case None           => None
         }
 
         case ( 2, App( _, arg ) ) => toLambdaPositionOption( arg )( rest ) match {
-          case Some( subPos ) => Some( 2 :: subPos )
+          case Some( subPos ) => Some( LambdaPosition.Right :: subPos )
           case None           => None
         }
 
         case ( 1, Abs( _, term ) ) => toLambdaPositionOption( term )( rest ) match {
-          case Some( subPos ) => Some( 1 :: subPos )
+          case Some( subPos ) => Some( LambdaPosition.Left :: subPos )
           case None           => None
         }
 
@@ -158,37 +158,37 @@ object HOLPosition {
       val rest = pos.tail
       exp match {
         case Neg( subExp ) =>
-          if ( pos.head == 2 )
+          if ( pos.head == LambdaPosition.Right )
             1 :: toHOLPosition( subExp )( rest )
           else
             throw new Exception( "Can't convert position " + pos + " for expression " + exp + " to HOLPosition." )
 
         case BinaryConnective( left, right ) =>
-          if ( pos.head == 1 && rest.headOption.contains( 2 ) )
+          if ( pos.head == LambdaPosition.Left && rest.headOption.contains( LambdaPosition.Right ) )
             1 :: toHOLPosition( left )( rest.tail )
-          else if ( pos.head == 2 )
+          else if ( pos.head == LambdaPosition.Right )
             2 :: toHOLPosition( right )( rest )
           else throw new Exception( "Can't convert position " + pos + " for expression " + exp + " to HOLPosition." )
 
         case Ex( _, subExp ) =>
-          if ( pos.head == 2 && rest.headOption.contains( 1 ) )
+          if ( pos.head == LambdaPosition.Right && rest.headOption.contains( LambdaPosition.Left ) )
             1 :: toHOLPosition( subExp )( rest.tail )
           else throw new Exception( "Can't convert position " + pos + " for expression " + exp + " to HOLPosition." )
 
         case All( _, subExp ) =>
-          if ( pos.head == 2 && rest.headOption.contains( 1 ) )
+          if ( pos.head == LambdaPosition.Right && rest.headOption.contains( LambdaPosition.Left ) )
             1 :: toHOLPosition( subExp )( rest.tail )
           else throw new Exception( "Can't convert position " + pos + " for expression " + exp + " to HOLPosition." )
 
         case App( f, arg ) =>
-          if ( pos.head == 1 )
+          if ( pos.head == LambdaPosition.Left )
             1 :: toHOLPosition( f )( rest )
-          else if ( pos.head == 2 )
+          else if ( pos.head == LambdaPosition.Right )
             2 :: toHOLPosition( arg )( rest )
           else throw new Exception( "Can't convert position " + pos + " for expression " + exp + " to HOLPosition." )
 
         case Abs( _, term ) =>
-          if ( pos.head == 1 )
+          if ( pos.head == LambdaPosition.Left )
             1 :: toHOLPosition( term )( rest )
           else throw new Exception( "Can't convert position " + pos + " for expression " + exp + " to HOLPosition." )
 
@@ -210,37 +210,37 @@ object HOLPosition {
       val rest = pos.tail
       exp match {
         case Neg( subExp ) =>
-          if ( pos.head == 2 )
+          if ( pos.head == LambdaPosition.Right )
             definesHOLPosition( subExp )( rest )
           else
             false
 
         case BinaryConnective( left, right ) =>
-          if ( pos.head == 1 && rest.headOption.contains( 2 ) )
+          if ( pos.head == LambdaPosition.Left && rest.headOption.contains( LambdaPosition.Right ) )
             definesHOLPosition( left )( rest.tail )
-          else if ( pos.head == 2 )
+          else if ( pos.head == LambdaPosition.Right )
             definesHOLPosition( right )( rest )
           else false
 
         case Ex( _, subExp ) =>
-          if ( pos.head == 2 && rest.headOption.contains( 1 ) )
+          if ( pos.head == LambdaPosition.Right && rest.headOption.contains( LambdaPosition.Left ) )
             definesHOLPosition( subExp )( rest.tail )
           else false
 
         case All( _, subExp ) =>
-          if ( pos.head == 2 && rest.headOption.contains( 1 ) )
+          if ( pos.head == LambdaPosition.Right && rest.headOption.contains( LambdaPosition.Left ) )
             definesHOLPosition( subExp )( rest.tail )
           else false
 
         case App( f, arg ) =>
-          if ( pos.head == 1 )
+          if ( pos.head == LambdaPosition.Left )
             definesHOLPosition( f )( rest )
-          else if ( pos.head == 2 )
+          else if ( pos.head == LambdaPosition.Right )
             definesHOLPosition( arg )( rest )
           else false
 
         case Abs( _, term ) =>
-          if ( pos.head == 1 )
+          if ( pos.head == LambdaPosition.Left )
             definesHOLPosition( term )( rest )
           else false
 
@@ -266,6 +266,7 @@ object HOLPosition {
  * @param list The list of integers describing the position.
  */
 case class HOLPosition( list: List[Int] ) {
+
   require( list.forall( i => i == 1 || i == 2 ) )
 
   def toList: List[Int] = list

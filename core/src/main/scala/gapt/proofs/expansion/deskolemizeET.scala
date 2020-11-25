@@ -13,7 +13,7 @@ import gapt.proofs.lk.transformations.LKToExpansionProof
  */
 object deskolemizeET {
   def apply( lkProof: LKProof ): LKProof =
-    ExpansionProofToLK( deskolemizeET( LKToExpansionProof( lkProof ) ) ).right.get
+    ExpansionProofToLK( deskolemizeET( LKToExpansionProof( lkProof ) ) ).toOption.get
 
   def apply( expansionProof: ExpansionProof, removeCongruences: Boolean = true ): ExpansionProof = {
     val woCongrs = if ( removeCongruences ) removeSkolemCongruences( expansionProof ) else expansionProof

@@ -1,14 +1,17 @@
-package gapt.testing.latex
+package gapt.doc
 
-import java.io.{ ByteArrayOutputStream, PrintStream, Writer }
+import java.io.{ ByteArrayOutputStream, PrintStream, PrintWriter, Writer }
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
 
 import ammonite.ops._
-import gapt.cli.CLIMain
+import gapt.cli
+import gapt.formats.ClasspathInputFile
 
+import scala.collection.parallel.CollectionConverters._
 import scala.tools.nsc.Settings
-import scala.tools.nsc.interpreter._
+import scala.tools.nsc.interpreter.IMain
+import scala.tools.nsc.interpreter.shell.{ ReplReporterImpl, ShellConfig }
 import scala.util.matching.Regex
 
 case class Document( sections: Vector[Section] ) {
@@ -64,7 +67,6 @@ class WriterOutputStream( writer: Writer, charset: Charset = Charset.forName( "U
 class ResultHolder( var result: Any )
 class CommandEvaluator {
   val settings = new Settings
-  settings.Yreplsync.value = true
   settings.usejavacp.value = true
 
   sys.props( "scala.shell.prompt" ) = "\ngapt> "
@@ -89,28 +91,24 @@ class CommandEvaluator {
     o
   }
 
-  val repl = new ILoop( None, new JPrintWriter( outWriter ) )
+  val interpreter = new IMain(
+    settings,
+    new ReplReporterImpl(
+      config = ShellConfig( settings ),
+      settings = settings,
+      writer = new PrintWriter( outWriter ) ) )
 
-  // the following is code that would be executed by repl.process()
-  repl.settings = settings
-  repl.createInterpreter()
-  repl.in = SimpleReader()
-  repl.intp.initializeSynchronous()
-  repl.intp.quietBind(
-    NamedParam[IMain]( "$intp", repl.intp )(
-      StdReplTags.tagOfIMain, reflect.classTag[IMain] ) )
-
-  repl command CLIMain.imports
+  interpreter.interpret( ClasspathInputFile( cli.predefFileName ).read )
 
   // don't open prooftool
-  repl command "def prooftool[T: gapt.prooftool.ProoftoolViewable](x: T, name: String = \"\"): Unit = ()"
+  interpreter.interpret( "def prooftool[T: gapt.prooftool.ProoftoolViewable](x: T, name: String = \"\"): Unit = ()" )
 
   // don't open help
-  repl command "def help(x: Any*): Unit = ()"
+  interpreter.interpret( "def help(x: Any*): Unit = ()" )
 
   def runCommand( cmd: String ): String = {
     out.clear()
-    Console.withOut( outPrintStream )( repl command cmd )
+    Console.withOut( outPrintStream )( interpreter.interpret( cmd ) )
     getOutput
   }
 
@@ -120,8 +118,8 @@ class CommandEvaluator {
   def evalCodeInInterp( code: String ): Any = {
     val resultHolder = new ResultHolder( null )
     val varName = "$evalCodeSnippetsInLatex_result"
-    repl.bind( varName, resultHolder )
-    repl interpret s"$varName.result = ($code)"
+    interpreter.bind( varName, resultHolder )
+    interpreter.interpret( s"$varName.result = ($code)" )
     resultHolder.result
   }
 }

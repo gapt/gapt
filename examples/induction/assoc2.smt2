@@ -1,9 +1,9 @@
-(declare-datatypes () ((nat (o) (s (p nat)))))
+(declare-datatypes ((nat 0)) (( (o) (s (p nat)))))
 
 (define-fun-rec plus ((x nat) (y nat)) nat
   (match y
-    (case (s y) (s (plus x y)))
-    (case o x)))
+    (( (s y) (s (plus x y)))
+    ( o x))))
 
 (prove (forall ((x nat))
   (= (plus (plus (s (s o)) x) x)

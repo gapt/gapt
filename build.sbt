@@ -4,7 +4,7 @@ import org.apache.commons.compress.archivers.tar.{ TarArchiveEntry, TarArchiveOu
 import scalariform.formatter.preferences._
 import sys.process._
 
-val Version = "2.15-SNAPSHOT"
+val Version = "2.15.2"
 
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
@@ -21,9 +21,8 @@ lazy val commonSettings = Seq(
     devConnection = Some( "scm:git:git@github.com:gapt/gapt.git" ) ) ),
   bintrayOrganization := Some( "gapt" ),
 
-  scalaVersion := "2.12.8",
+  scalaVersion := "2.13.0",
   scalacOptions in Compile ++= Seq(
-    "-Ypartial-unification",
     "-deprecation",
     "-language:postfixOps",
     "-language:implicitConversions",
@@ -44,7 +43,7 @@ lazy val scalariformSettings =
     .setPreference( DoubleIndentConstructorArguments, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "4.3.6"
+val specs2Version = "4.7.1"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   javaOptions in Test += "-Xmx2g",
@@ -104,6 +103,7 @@ lazy val root = project.in( file( "." ) ).
     },
 
     // Release stuff
+    mainClass in assembly := Some( "gapt.cli.CLIMain" ),
     aggregate in assembly := false,
     releaseDist := {
       val baseDir = file( "." )
@@ -148,7 +148,7 @@ lazy val root = project.in( file( "." ) ).
     evalUserManual := {
       val userManFn = "doc/user_manual.tex"
       val out = new ByteArrayOutputStream
-      val exitVal = new Fork( "java", Some( "gapt.testing.latex.evalCodeSnippets" ) ).fork(
+      val exitVal = new Fork( "java", Some( "gapt.doc.evalCodeSnippets" ) ).fork(
         ForkOptions(
           javaHome = javaHome.value,
           outputStrategy = Some( CustomOutput( out ) ),
@@ -171,15 +171,17 @@ lazy val core = project.in( file( "core" ) ).
     scalacOptions in Compile += "-Xfatal-warnings",
 
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.1",
+      "org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0",
+      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "org.parboiled" %% "parboiled" % "2.1.5",
-      "com.lihaoyi" %% "fastparse" % "2.0.5",
-      "com.lihaoyi" %% "sourcecode" % "0.1.5",
-      "org.typelevel" %% "cats-free" % "1.5.0",
-      "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
-      "org.apache.commons" % "commons-lang3" % "3.8.1",
-      "com.lihaoyi" %% "ammonite-ops" % "1.6.0",
+      "org.parboiled" %% "parboiled" % "2.1.8",
+      "com.lihaoyi" %% "fastparse" % "2.1.3",
+      "com.lihaoyi" %% "sourcecode" % "0.1.7",
+      "org.typelevel" %% "cats-free" % "2.1.0",
+      "org.scala-lang.modules" %% "scala-xml" % "1.2.0",
+      "org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0",
+      "org.apache.commons" % "commons-lang3" % "3.9",
+      "com.lihaoyi" %% "ammonite-ops" % "2.0.4",
       "de.uni-freiburg.informatik.ultimate" % "smtinterpol" % "2.5",
       "com.github.scopt" %% "scopt" % "3.7.1",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
@@ -187,17 +189,17 @@ lazy val core = project.in( file( "core" ) ).
 
     // UI
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-swing" % "2.1.0",
-      "com.itextpdf" % "itextpdf" % "5.5.13",
+      "org.scala-lang.modules" %% "scala-swing" % "2.1.1",
+      "com.itextpdf" % "itextpdf" % "5.5.13.1",
       "org.scilab.forge" % "jlatexmath" % "1.0.7" ),
 
     // JSON serialization
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.2",
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.7",
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
       "io.circe" %% "circe-parser",
-      "io.circe" %% "circe-generic-extras" ).map( _ % "0.11.0" ) )
+      "io.circe" %% "circe-generic-extras" ).map( _ % "0.12.1" ) )
 
 lazy val examples = project.in( file( "examples" ) ).
   dependsOn( core ).
@@ -234,10 +236,9 @@ lazy val cli = project.in( file( "cli" ) ).
   settings( commonSettings: _* ).
   settings(
     mainClass := Some( "gapt.cli.CLIMain" ),
-
+    scalacOptions in Compile += "-Xfatal-warnings",
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value ),
-
     bintrayReleaseOnPublish := false,
     packagedArtifacts := Map() )
 
@@ -249,7 +250,7 @@ lazy val testing = project.in( file( "testing" ) ).
   settings(
     name := "gapt-testing",
     description := "gapt extended regression tests",
-
+    scalacOptions in Compile += "-Xfatal-warnings",
     bintrayReleaseOnPublish := false,
     packagedArtifacts := Map() )
 

@@ -1,8 +1,8 @@
 package gapt.proofs.lkt
 
 import gapt.cutintro.CutIntroduction
-import gapt.examples.{ LinearExampleProof, Pi2Pigeonhole, Pi3Pigeonhole, nTape4 }
-import gapt.expr._
+import gapt.examples.{ Pi2Pigeonhole, Pi3Pigeonhole, nTape4 }
+import gapt.expr.{ normalize => norm, _ }
 import gapt.expr.formula.hol.containsQuantifierOnLogicalLevel
 import gapt.proofs.context.Context
 import gapt.proofs.lk.transformations.eliminateDefinitions
@@ -14,6 +14,7 @@ import gapt.provers.escargot.Escargot
 import gapt.utils.Maybe
 import org.specs2.matcher.Matcher
 import org.specs2.mutable.Specification
+import gapt.examples.sequence.LinearExampleProof
 
 class LktTest extends Specification with SequentMatchers {
 

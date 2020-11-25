@@ -19,6 +19,11 @@ import gapt.proofs.lk.{ LKProof, normalizeLKt }
 import gapt.proofs.lkt.{ LKToLKt, LKt, LocalCtx }
 import gapt.proofs.resolution.ResolutionToLKProof
 import gapt.provers.escargot.Escargot
+import sequence.FactorialFunctionEqualityExampleProof
+import sequence.LinearCutExampleProof
+import sequence.LinearEqExampleProof
+import sequence.LinearExampleProof
+import sequence.SquareDiagonalExampleProof
 
 import scala.concurrent.duration._
 

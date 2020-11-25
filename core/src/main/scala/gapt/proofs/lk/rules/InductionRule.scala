@@ -33,7 +33,7 @@ case class InductionRule( cases: Seq[InductionCase], formula: Abs, term: Expr ) 
   require( term.ty == indTy )
   cases foreach { c =>
     require( c.indTy == indTy )
-    ( c.hypotheses, c.hypVars ).zipped foreach { ( hyp, eigen ) =>
+    c.hypotheses.lazyZip( c.hypVars ).foreach { ( hyp, eigen ) =>
       require( c.proof.endSequent( hyp ) == Substitution( quant -> eigen )( qfFormula ) )
     }
     require( c.proof.endSequent( c.conclusion ) == Substitution( quant -> c.term )( qfFormula ) )

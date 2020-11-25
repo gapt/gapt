@@ -10,7 +10,7 @@ class UseDefiningFormulasTest extends Specification {
   "all function definitions should be transformed" in {
     val originalProblem = TipSmtParser.parse(
       StringInputFile( """
-        | (declare-datatypes () ( (nat (Z) (S (p nat)))))
+        | (declare-datatypes ((nat 0)) ( ( (Z) (S (p nat)))))
         | (define-fun f1 ((x nat)) nat a)
         | (define-fun f2 ((x nat)) nat b)
         | (define-funs-rec

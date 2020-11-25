@@ -25,10 +25,11 @@ private class VtratgExporter( unicode: Boolean, vtratg: VTRATG )
 
     val prods = stack( vtratg.productions.toList
       sortBy { case ( as, ts ) => ( vtratg.nonTerminals.indexOf( as ), ts.toString ) }
-      map { p =>
-        group( csep( p.zipped map ( ( a, t ) =>
-          group( show( a, false, Map(), knownTypes )._1.inPrec( Precedence.impl ) </> nest( "→" </>
-            show( t, true, Map(), knownTypes )._1.inPrec( Precedence.impl ) ) ) ) ) ) <> line
+      map {
+        case ( nonTerminals, expressions ) =>
+          group( csep( nonTerminals.lazyZip( expressions ).map( ( a, t ) =>
+            group( show( a, false, Map(), knownTypes )._1.inPrec( Precedence.impl ) </> nest( "→" </>
+              show( t, true, Map(), knownTypes )._1.inPrec( Precedence.impl ) ) ) ) ) ) <> line
       } )
 
     group( ntDecl <> line <> tDecl <> line <> line <> prods ).render( lineWidth )
@@ -78,8 +79,9 @@ case class VTRATG( startSymbol: Var, nonTerminals: Seq[VTRATG.NonTerminalVect], 
     nonTerminals.foreach { a =>
       val P_a = productions( a )
       if ( P_a.nonEmpty )
-        lang = P_a.flatMap { p =>
-          Substitution( p.zipped )( lang )
+        lang = P_a.flatMap {
+          case ( nonTerminals, expressions ) =>
+            Substitution( nonTerminals.lazyZip( expressions ) )( lang )
         }
     }
     lang filter ( freeVariables( _ ).isEmpty )
@@ -89,6 +91,6 @@ case class VTRATG( startSymbol: Var, nonTerminals: Seq[VTRATG.NonTerminalVect], 
 }
 
 object TRATG {
-  def apply( startSymbol: Var, nonTerminals: Seq[Var], productions: Traversable[( Var, Expr )] ): VTRATG =
+  def apply( startSymbol: Var, nonTerminals: Seq[Var], productions: Iterable[( Var, Expr )] ): VTRATG =
     VTRATG( startSymbol, nonTerminals.map( List( _ ) ), productions.view.map { case ( lhs, rhs ) => List( lhs ) -> List( rhs ) }.toSet )
 }

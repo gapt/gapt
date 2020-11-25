@@ -63,7 +63,7 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
     // The list of minimal expansion proofs will be constructed iteratively.
     val result = mutable.Buffer[ExpansionSequent]()
     // Invariant: the stack only contains valid expansion sequents.
-    val stack = mutable.ArrayStack[ExpansionSequent]()
+    val stack = mutable.Stack[ExpansionSequent]()
 
     if ( prover.isValid( sequent map { _.deep } ) ) {
       debug( "The starting sequent is tautological." )
@@ -82,7 +82,7 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
       debug( "Generating successors" )
       val newSequents = generateSuccessors( current ) // All successor expansion sequents are generated.
       val m = newSequents.length
-      debug( m + " successors generated" )
+      debug( s"$m successors generated" )
       var minimal = true // We assume that the current sequent is minimal unless we find a counterexample.
 
       for ( i <- 1 to m ) { // Iterate over the generated successors
@@ -104,7 +104,7 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
       }
     }
 
-    result
+    result.toSeq
   }
 
   /**
@@ -226,7 +226,7 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
         instanceCounter += numberOfInstancesET( tree )
       }
 
-      newSequents
+      newSequents.toSeq
   }
 
   /**

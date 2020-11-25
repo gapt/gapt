@@ -15,6 +15,7 @@ import gapt.expr.formula.Or
 import gapt.expr.formula.Top
 import gapt.expr.formula.constants.EqC
 import gapt.expr.formula.constants.LogicalConstant
+import gapt.expr.formula.fol.Hol2FolDefinitions
 import gapt.expr.formula.fol.replaceAbstractions
 import gapt.expr.formula.hol._
 import gapt.expr.ty.->:
@@ -25,7 +26,7 @@ import gapt.expr.ty.Ty
 import gapt.expr.ty.baseTypes
 import gapt.expr.util.freeVariables
 import gapt.expr.util.subTerms
-import gapt.logic.hol.simplify
+import gapt.logic.hol.simplifyPropositional
 import gapt.proofs.{ HOLSequent, Sequent }
 import gapt.proofs.expansion.{ ETAnd, ETAtom, ETTop, ExpansionProof, ExpansionSequent, ExpansionTree }
 import gapt.provers.groundFreeVariables
@@ -89,7 +90,7 @@ class TptpHOLExporter {
     val es1: HOLSequent = if ( lambda_lifting ) lambda_lift_and_add_definitions( ep1.deep ) else ep1.deep
     val ( es2, _ ) = groundFreeVariables( es1 )
     val es3 = if ( maximize_axiom_declarations ) simplify_antecedent2( es2 ) else es2 //the deep conversion in the antecedent also introduces conjunctions
-    val es4 = es3.map( simplify.apply ) //remove top / bottom if possible
+    val es4 = es3.map( simplifyPropositional.apply ) //remove top / bottom if possible
     export_positive( es4, maximize_axiom_declarations )
   }
 
@@ -250,7 +251,7 @@ class TptpHOLExporter {
 
   def thf_formula_dec( i: Int, f: Formula, role: TptpFormulaRole, vmap: NameMap, cmap: CNameMap ): String = {
     val f_str = thf_formula( f, vmap, cmap, outermost = true )
-    val internal_str = f.toString.flatMap( { case '\n' => "\n% "; case x => x :: Nil } ) //add comment after newline
+    val internal_str = f.toString.flatMap( { case '\n' => "\n% "; case x => s"$x" } ) //add comment after newline
     s"$nLine% formula: $internal_str ${nLine}thf($i, $role, $f_str )."
   }
 
@@ -301,7 +302,7 @@ class TptpHOLExporter {
       "V"
     } else fstr_
     val prefix = if ( fstr.head.isDigit ) "X" + fstr
-    else fstr.head.toUpper + fstr.tail
+    else s"${fstr.head.toUpper}" + fstr.tail
     val values = map.toList.map( _._2 )
     if ( values contains prefix )
       appendPostfix( prefix, values )
@@ -325,7 +326,7 @@ class TptpHOLExporter {
       "c"
     } else fstr_
     val prefix = if ( fstr.head.isDigit ) "c" + fstr
-    else fstr.head.toLower + fstr.tail
+    else fstr.head.toLower.toString + fstr.tail
     val values = map.toList.map( _._2 )
     if ( values contains prefix )
       appendPostfix( prefix, values )
@@ -391,8 +392,9 @@ class TptpHOLExporter {
     }
 
   def lambda_lift_and_add_definitions( seq: HOLSequent ): HOLSequent = {
-    val ( cmap, seq0 :: Nil ) = replaceAbstractions( seq :: Nil )
-    val qaxioms: Seq[Formula] = cmap.toSeq.map {
+    implicit val cmap = new Hol2FolDefinitions()
+    val seq0 = seq.map { replaceAbstractions( _ ) }
+    val qaxioms: Seq[Formula] = cmap.toLegacyMap.toSeq.map {
       case ( term_, name ) =>
         //term_ should be closed, but to be sure we add the free variables the variables stripped from the outer-most
         //lambda-block in term_
