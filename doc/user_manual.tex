@@ -160,7 +160,7 @@
 {\Huge User manual}
 
 \vspace*{10mm}
-{\Large Version 2.15.2}
+{\Large Version 2.16-SNAPSHOT}
 \vspace*{10mm}
 
 {\Large \today}
@@ -309,7 +309,7 @@ manually.
 Here is an example of parsing a first-order formula:
 \begin{clilisting}
 gapt> val F = fof"!x (P(x,f(x)) -> ?y P(x,y))"
-F: gapt.expr.formula.fol.FOLFormula = ∀x (P(x, f(x)) → ∃y P(x, y))
+val F: gapt.expr.formula.fol.FOLFormula = ∀x (P(x, f(x)) → ∃y P(x, y))
 
 \end{clilisting}
 
@@ -334,10 +334,10 @@ The prefix indicates the Scala type of the expression. The following prefixes ar
 This parser supports Scala string interpolation. For example, you can do:
 \begin{clilisting}
 gapt> val t = fot"f(f(x))"
-t: gapt.expr.formula.fol.FOLTerm = f(f(x))
+val t: gapt.expr.formula.fol.FOLTerm = f(f(x))
 
 gapt> val G = fof"!x (P(x,$t) -> ?y P(x,y))"
-G: gapt.expr.formula.fol.FOLFormula = ∀x (P(x, f(f(x))) → ∃y P(x, y))
+val G: gapt.expr.formula.fol.FOLFormula = ∀x (P(x, f(f(x))) → ∃y P(x, y))
 
 \end{clilisting}
 
@@ -348,7 +348,7 @@ prefixes make sure that the expression is of type $o$ (Boolean).  If no
 particular type is required, we default to $\iota$:
 \begin{clilisting}
 gapt> hof"!x?y!z x(z) = y(y(z))"
-res0: gapt.expr.formula.Formula = ∀x ∃y ∀z (x(z): i) = y(y(z): i)
+val res0: gapt.expr.formula.Formula = ∀x ∃y ∀z (x(z): i) = y(y(z): i)
 
 \end{clilisting}
 
@@ -357,7 +357,7 @@ input is of course supported as well---you can paste any of the output right
 back in:
 \begin{clilisting}
 gapt> hof"∀x ∃y ∀z x(z) = y(y(z))"
-res1: gapt.expr.formula.Formula = ∀x ∃y ∀z (x(z): i) = y(y(z): i)
+val res1: gapt.expr.formula.Formula = ∀x ∃y ∀z (x(z): i) = y(y(z): i)
 
 \end{clilisting}
 
@@ -388,10 +388,10 @@ Every kind of expression that exists in GAPT can be constructed manually. For in
 and constants like this:
 \begin{clilisting}
 gapt> val x = FOLVar("x")
-x: gapt.expr.formula.fol.FOLVar = x
+val x: gapt.expr.formula.fol.FOLVar = x
 
 gapt> val P = Const("P", Ti ->: To)
-P: gapt.expr.Const = P:i>o
+val P: gapt.expr.Const = P:i>o
 
 \end{clilisting}
 \cli{Var} and \cli{Const} require you to supply types, whereas \cli{FOLVar} and
@@ -399,13 +399,13 @@ P: gapt.expr.Const = P:i>o
 similarly:
 \begin{clilisting}
 gapt> val x = FOLVar("x")
-x: gapt.expr.formula.fol.FOLVar = x
+val x: gapt.expr.formula.fol.FOLVar = x
 
 gapt> val fx = FOLFunction("f",x)
-fx: gapt.expr.formula.fol.FOLTerm = f(x)
+val fx: gapt.expr.formula.fol.FOLTerm = f(x)
 
 gapt> val Pfx = FOLAtom("P", fx)
-Pfx: gapt.expr.formula.fol.FOLAtom = P(f(x)): o
+val Pfx: gapt.expr.formula.fol.FOLAtom = P(f(x)): o
 
 \end{clilisting}
 
@@ -421,16 +421,16 @@ On the formulas themselves, there are operators for the various Boolean connecti
  
 \begin{clilisting}
 gapt> val A = FOLAtom("A")
-A: gapt.expr.formula.fol.FOLAtom = A:o
+val A: gapt.expr.formula.fol.FOLAtom = A:o
 
 gapt> val B = FOLAtom("B")
-B: gapt.expr.formula.fol.FOLAtom = B:o
+val B: gapt.expr.formula.fol.FOLAtom = B:o
 
 gapt> val C = FOLAtom("C")
-C: gapt.expr.formula.fol.FOLAtom = C:o
+val C: gapt.expr.formula.fol.FOLAtom = C:o
 
 gapt> (A & B) --> C
-res2: gapt.expr.formula.fol.FOLFormula = A ∧ B → C
+val res2: gapt.expr.formula.fol.FOLFormula = A ∧ B → C
 
 \end{clilisting}
 
@@ -440,7 +440,7 @@ A collection of formula sequences can be found in the file \cli{examples/Formula
 You can generate instances of these formula sequences by entering for example:
 \begin{clilisting}
 gapt> val f = BussTautology( 5 )
-f: gapt.proofs.HOLSequent =
+val f: gapt.proofs.HOLSequent =
 ((c_1 ∨ d_1) ∧ (c_2 ∨ d_2) ∧ (c_3 ∨ d_3) ∧ (c_4 ∨ d_4) → c_5) ∨
   ((c_1 ∨ d_1) ∧ (c_2 ∨ d_2) ∧ (c_3 ∨ d_3) ∧ (c_4 ∨ d_4) → d_5),
 ((c_1 ∨ d_1) ∧ (c_2 ∨ d_2) ∧ (c_3 ∨ d_3) → c_4) ∨
@@ -466,20 +466,20 @@ In GAPT, you can create sequents by supplying an antecedent and a succedent:
 
 \begin{clilisting}
 gapt> val S1 = Sequent()
-S1: gapt.proofs.Sequent[Nothing] =  ⊢
+val S1: gapt.proofs.Sequent[Nothing] =  ⊢
 
 gapt> val S2 = Sequent(List(1,2), List(3,4))
-S2: gapt.proofs.Sequent[Int] = 1, 2 :- 3, 4
+val S2: gapt.proofs.Sequent[Int] = 1, 2 :- 3, 4
 
 gapt> val S3 = Sequent(List(foa"A", foa"B"), List(foa"C", foa"D"))
-S3: gapt.proofs.Sequent[gapt.expr.formula.fol.FOLAtom] = A, B ⊢ C, D
+val S3: gapt.proofs.Sequent[gapt.expr.formula.fol.FOLAtom] = A, B ⊢ C, D
 
 \end{clilisting}
 
 Sequents of formulas can also be parsed:
 \begin{clilisting}
 gapt> hos"P a, a = b :- P b"
-res0: gapt.proofs.HOLSequent = P(a), a = b ⊢ P(b)
+val res0: gapt.proofs.HOLSequent = P(a), a = b ⊢ P(b)
 
 \end{clilisting}
 
@@ -497,16 +497,16 @@ elements are appended to the left, in the succedent, to the right:
 
 \begin{clilisting}
 gapt> val S1 = fcl"B :- C"
-S1: gapt.proofs.FOLClause = B ⊢ C
+val S1: gapt.proofs.FOLClause = B ⊢ C
 
 gapt> val S2 = foa"A" +: S1
-S2: gapt.proofs.Sequent[gapt.expr.formula.fol.FOLAtom] = A, B ⊢ C
+val S2: gapt.proofs.Sequent[gapt.expr.formula.fol.FOLAtom] = A, B ⊢ C
 
 gapt> val S3 = S2 :+ foa"D"
-S3: gapt.proofs.Sequent[gapt.expr.formula.fol.FOLAtom] = A, B ⊢ C, D
+val S3: gapt.proofs.Sequent[gapt.expr.formula.fol.FOLAtom] = A, B ⊢ C, D
 
 gapt> foa"A" +: foa"B" +: Sequent() :+ foa"C" :+ foa"D"
-res1: gapt.proofs.Sequent[gapt.expr.formula.fol.FOLAtom] = A, B ⊢ C, D
+val res1: gapt.proofs.Sequent[gapt.expr.formula.fol.FOLAtom] = A, B ⊢ C, D
 
 \end{clilisting}
 
@@ -514,29 +514,29 @@ You can retrieve elements from a sequent either by accessing the antecedent
 or succedent directly ...
 \begin{clilisting}
 gapt> val S = fcl"A, B :- C, D"
-S: gapt.proofs.FOLClause = A, B ⊢ C, D
+val S: gapt.proofs.FOLClause = A, B ⊢ C, D
 
 gapt> val b = S.antecedent(1)
-b: gapt.expr.formula.fol.FOLAtom = B:o
+val b: gapt.expr.formula.fol.FOLAtom = B:o
 
 gapt> val c = S.succedent(0)
-c: gapt.expr.formula.fol.FOLAtom = C:o
+val c: gapt.expr.formula.fol.FOLAtom = C:o
 
 \end{clilisting}
 ... or by using the \cli{SequentIndex} class:
 
 \begin{clilisting}
 gapt> val i = Ant(0)
-i: gapt.proofs.Ant = Ant(0)
+val i: gapt.proofs.Ant = Ant(0)
 
 gapt> val j = Suc(1)
-j: gapt.proofs.Suc = Suc(1)
+val j: gapt.proofs.Suc = Suc(1)
 
 gapt> val a = S(i)
-a: gapt.expr.formula.fol.FOLAtom = A:o
+val a: gapt.expr.formula.fol.FOLAtom = A:o
 
 gapt> val d = S(j)
-d: gapt.expr.formula.fol.FOLAtom = D:o
+val d: gapt.expr.formula.fol.FOLAtom = D:o
 
 \end{clilisting}
 
@@ -570,11 +570,11 @@ We start with the axioms:
 %
 \begin{clilisting}
 gapt> val p1 = LogicalAxiom(fof"A")
-p1: gapt.proofs.lk.rules.LogicalAxiom =
+val p1: gapt.proofs.lk.rules.LogicalAxiom =
 [p1] A ⊢ A    (LogicalAxiom(A:o))
 
 gapt> val p2 = LogicalAxiom(fof"B")
-p2: gapt.proofs.lk.rules.LogicalAxiom =
+val p2: gapt.proofs.lk.rules.LogicalAxiom =
 [p1] B ⊢ B    (LogicalAxiom(B:o))
 
 \end{clilisting}
@@ -582,7 +582,7 @@ p2: gapt.proofs.lk.rules.LogicalAxiom =
 These are joined by an $(\land\mt{:r})$-inference.
 \begin{clilisting}
 gapt> val p3 = AndRightRule( p1, fof"A", p2, fof"B" )
-p3: gapt.proofs.lk.rules.AndRightRule =
+val p3: gapt.proofs.lk.rules.AndRightRule =
 [p3] A, B ⊢ A ∧ B    (AndRightRule(p1, Suc(0), p2, Suc(0)))
 [p2] B ⊢ B    (LogicalAxiom(B:o))
 [p1] A ⊢ A    (LogicalAxiom(A:o))
@@ -593,14 +593,14 @@ To finish the proof it remains to apply two $(\impl\mt{:r})$-inferences:
 %
 \begin{clilisting}
 gapt> val p4 = ImpRightRule( p3, fof"B", fof"A & B" )
-p4: gapt.proofs.lk.rules.ImpRightRule =
+val p4: gapt.proofs.lk.rules.ImpRightRule =
 [p4] A ⊢ B → A ∧ B    (ImpRightRule(p3, Ant(1), Suc(0)))
 [p3] A, B ⊢ A ∧ B    (AndRightRule(p1, Suc(0), p2, Suc(0)))
 [p2] B ⊢ B    (LogicalAxiom(B:o))
 [p1] A ⊢ A    (LogicalAxiom(A:o))
 
 gapt> val p5 = ImpRightRule( p4, fof"A", fof"B -> A&B" )
-p5: gapt.proofs.lk.rules.ImpRightRule =
+val p5: gapt.proofs.lk.rules.ImpRightRule =
 [p5]  ⊢ A → B → A ∧ B    (ImpRightRule(p4, Ant(0), Suc(0)))
 [p4] A ⊢ B → A ∧ B    (ImpRightRule(p3, Ant(1), Suc(0)))
 [p3] A, B ⊢ A ∧ B    (AndRightRule(p1, Suc(0), p2, Suc(0)))
@@ -619,11 +619,11 @@ There are also several macro rules that make proof construction more convenient.
 For instance:
 \begin{clilisting}
 gapt> val p1 = LogicalAxiom(fof"A")
-p1: gapt.proofs.lk.rules.LogicalAxiom =
+val p1: gapt.proofs.lk.rules.LogicalAxiom =
 [p1] A ⊢ A    (LogicalAxiom(A:o))
 
 gapt> val p2 = AndLeftMacroRule(p1, fof"A", fof"B")
-p2: gapt.proofs.lk.rules.AndLeftRule =
+val p2: gapt.proofs.lk.rules.AndLeftRule =
 [p3] A ∧ B ⊢ A    (AndLeftRule(p2, Ant(1), Ant(0)))
 [p2] B, A ⊢ A    (WeakeningLeftRule(p1, B:o))
 [p1] A ⊢ A    (LogicalAxiom(A:o))
@@ -638,7 +638,7 @@ Have a look at this code for more complicated proof constructions.
 You can generate instances of these proof sequences by entering, e.g.,
 \begin{clilisting}
 gapt> val p = SumExampleProof( 5 )
-p: gapt.proofs.lk.LKProof =
+val p: gapt.proofs.lk.LKProof =
 [p25] ∀x ∀y (P(s(x), y) → P(x, s(y))), P(s(s(s(s(s(0))))), 0) ⊢ P(0, s(s(s(s(s(0))))))    (ContractionLeftRule(p24, Ant(0), Ant(1)))
 [p24] ∀x ∀y (P(s(x), y) → P(x, s(y))),
 ∀x ∀y (P(s(x), y) → P(x, s(y))),
@@ -655,7 +655,7 @@ P(0, s(s(s(s(s(0))))))    (ForallLeftRule(p22, Ant(0), P(s(0), y) → P(0, s(y))
 P(s(s(s(s(s(0))))), 0)
 ⊢
 P(0, s(s(s(s(s(0))))))    (ImpLeftRule(p20, Suc(0), p21, Ant(0)))
-[p21] P(0, s(s(s(s(s(0)))))) ⊢ P(0, s(s(s(s(s(0))))))    (LogicalAxiom(P(0,...
+[p21] P(0, s(s(s(s(s(0)))))) ⊢ P(0, s(s(s(s(s(0))))))    (LogicalAxiom(...
 
 \end{clilisting}
 
@@ -672,15 +672,15 @@ the axioms:
 
 \begin{clilisting}
 gapt> val p1 = nd.LogicalAxiom( fof"P" )
-p1: gapt.proofs.nd.LogicalAxiom =
+val p1: gapt.proofs.nd.LogicalAxiom =
 [p1] P ⊢ P    (LogicalAxiom(P:o))
 
 gapt> val p2 = nd.LogicalAxiom( fof"Q" )
-p2: gapt.proofs.nd.LogicalAxiom =
+val p2: gapt.proofs.nd.LogicalAxiom =
 [p1] Q ⊢ Q    (LogicalAxiom(Q:o))
 
 gapt> val p3 = nd.LogicalAxiom( fof"P & Q -> R" )
-p3: gapt.proofs.nd.LogicalAxiom =
+val p3: gapt.proofs.nd.LogicalAxiom =
 [p1] P ∧ Q → R ⊢ P ∧ Q → R    (LogicalAxiom(P ∧ Q → R))
 
 \end{clilisting}
@@ -689,7 +689,7 @@ $P$ and $Q$ are joined by an $\land$-introduction inference.
 
 \begin{clilisting}
 gapt> val p4 = nd.AndIntroRule( p1, p2 )
-p4: gapt.proofs.nd.AndIntroRule =
+val p4: gapt.proofs.nd.AndIntroRule =
 [p3] P, Q ⊢ P ∧ Q    (AndIntroRule(p1, p2))
 [p2] Q ⊢ Q    (LogicalAxiom(Q:o))
 [p1] P ⊢ P    (LogicalAxiom(P:o))
@@ -701,7 +701,7 @@ and $P \land Q$ to arrive at $R$.
 
 \begin{clilisting}
 gapt> val p5 = nd.ImpElimRule( p3, p4 )
-p5: gapt.proofs.nd.ImpElimRule =
+val p5: gapt.proofs.nd.ImpElimRule =
 [p5] P ∧ Q → R, P, Q ⊢ R    (ImpElimRule(p1, p4))
 [p4] P, Q ⊢ P ∧ Q    (AndIntroRule(p2, p3))
 [p3] Q ⊢ Q    (LogicalAxiom(Q:o))
@@ -715,7 +715,7 @@ at the desired sequent.
 
 \begin{clilisting}
 gapt> val p6 = nd.ImpIntroRule( p5, Ant( 2 ) )
-p6: gapt.proofs.nd.ImpIntroRule =
+val p6: gapt.proofs.nd.ImpIntroRule =
 [p6] P ∧ Q → R, P ⊢ Q → R    (ImpIntroRule(p5, Ant(2)))
 [p5] P ∧ Q → R, P, Q ⊢ R    (ImpElimRule(p1, p4))
 [p4] P, Q ⊢ P ∧ Q    (AndIntroRule(p2, p3))
@@ -1084,6 +1084,9 @@ val catassoc =
 }
 \end{tacticslisting}
 \begin{tacticsoutput}
+        rewrite.many ltr ("conscat", "IHx_0"); refl
+                     ^
+On line 28: warning: multiarg infix syntax looks like a tuple and will be deprecated
 \end{tacticsoutput}
 
 
@@ -1097,7 +1100,7 @@ cuts:
 
 \begin{clilisting}
 gapt> val p = examples.fol1.proof
-p: gapt.proofs.lk.LKProof =
+val p: gapt.proofs.lk.LKProof =
 [p25] ∀x ∀y (P(x, y) → Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) → ¬P(x, y))    (CutRule(p9, Suc(0), p24, Ant(0)))
 [p24] ∀x ∃y (¬P(x, y) ∨ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) → ¬P(x, y))    (ForallLeftRule(p23, Ant(0), ∃y (¬P(x, y) ∨ Q(x, y)), b, x))
 [p23] ∃y (¬P(b, y) ∨ Q(b, y)) ⊢ ∃x ∃y (¬Q(x, y) → ¬P(x, y))    (ExistsLeftRule(p22, Ant(0), y, y))
@@ -1105,21 +1108,21 @@ p: gapt.proofs.lk.LKProof =
 [p21] ¬P(b, y) ∨ Q(b, y) ⊢ ∃y (¬Q(b, y) → ¬P(b, y))    (ExistsRightRule(p20, Suc(0), ¬Q(b, y) → ¬P(b, y), y, y))
 [p20] ¬P(b, y) ∨ Q(b, y) ⊢ ¬Q(b, y) → ¬P(b, y)    (ContractionRightRule(p19, Suc(1), Suc(0)))
 [p19] ¬P(b, y) ∨ Q(b, y) ⊢ ¬Q(b, y) → ¬P(b, y), ¬Q(b, y) → ¬P(b, y)    (OrLeftRule(p14, Ant(0), p18, Ant(0)))
-[p18]...
+[...
 
 \end{clilisting}
 %
 and then call the cut-elimination procedure:
 \begin{clilisting}
 gapt> val q = cutNormal( p )
-q: gapt.proofs.lk.LKProof =
+val q: gapt.proofs.lk.LKProof =
 [p14] ∀x ∀y (P(x, y) → Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) → ¬P(x, y))    (ForallLeftRule(p13, Ant(0), ∀y (P(x, y) → Q(x, y)), b, x))
 [p13] ∀y (P(b, y) → Q(b, y)) ⊢ ∃x ∃y (¬Q(x, y) → ¬P(x, y))    (ForallLeftRule(p12, Ant(0), P(b, y) → Q(b, y), a, y))
 [p12] P(b, a) → Q(b, a) ⊢ ∃x ∃y (¬Q(x, y) → ¬P(x, y))    (ExistsRightRule(p11, Suc(0), ∃y (¬Q(x, y) → ¬P(x, y)), b, x))
 [p11] P(b, a) → Q(b, a) ⊢ ∃y (¬Q(b, y) → ¬P(b, y))    (ExistsRightRule(p10, Suc(0), ¬Q(b, y) → ¬P(b, y), a, y))
 [p10] P(b, a) → Q(b, a) ⊢ ¬Q(b, a) → ¬P(b, a)    (ContractionRightRule(p9, Suc(1), Suc(0)))
 [p9] P(b, a) → Q(b, a) ⊢ ¬Q(b, a) → ¬P(b, a), ¬Q(b, a) → ¬P(b, a)    (ImpRightRule(p8, Ant(0), Suc(1)))
-[p8] ¬Q(b, a), P(b, a) → Q(b, a) ⊢ ¬Q(b, a) → ¬P(b, a), ¬P(b, a)    (WeakeningLeftRule(p7, ¬Q(b, a)...
+[p8] ¬Q(b, a), P(b, a) → Q(b, a) ⊢ ¬Q(b, a) → ¬P(b, a), ¬P(b, a)    (WeakeningLeftRule(p7, ¬Q(b...
 
 \end{clilisting}
 
@@ -1131,7 +1134,7 @@ with quantifier-free conclusions.
 
 \begin{clilisting}
 gapt> val p = instanceProof(examples.theories.nat.addcomm.combined(),                                     Seq(le"s (s 0 : nat)", le"0 : nat"))
-p: gapt.proofs.lk.LKProof =
+val p: gapt.proofs.lk.LKProof =
 [p118] ∀x ((x:nat) + (0:nat): nat) = x,
 ∀x ∀y x + s(y:nat) = s(x + y)
 ⊢
@@ -1142,10 +1145,10 @@ s(s(0)) + 0 = 0 + s(s(0))    (CutRule(p114, Suc(0), p117, Ant(0)))
 [p114] ∀x ((x:nat) + (0:nat): nat) = x,
 ∀x ∀y x + s(y:nat) = s(x + y)
 ⊢
-∀x ∀y x + y = y + x    (CutRule(p3, Suc(0), p113, Ant(0)))...
+∀x ∀y x + y = y + x    (CutRule(p3, Suc(0), p113, Ant(...
 
 gapt> val q = inductionNormalForm(p)(                                         examples.theories.nat.ctx)
-q: gapt.proofs.lk.LKProof =
+val q: gapt.proofs.lk.LKProof =
 [p16] ∀x_1 ((x_1:nat) + (0:nat): nat) = x_1,
 ∀x_1 ∀y x_1 + s(y:nat) = s(x_1 + y)
 ⊢
@@ -1164,7 +1167,7 @@ s(s(0)) + 0 = 0 + s(s(0))    (ForallLeftRule(p13, Ant(1), ∀y ((x_1:nat) + (s(y
 ∀y 0 + s(y:nat) = s(0 + y),
 0 + 0 = 0
 ⊢
-s(s(0)) + 0 = 0 + s(s(0))    (ForallLeftRule(p12, Ant(2), ((x_0:nat) + (0:nat): nat) = x_0, s(s...
+s(s(0)) + 0 = 0 + s(s(0))    (ForallLeftRule(p12, Ant(2), ((x_0:nat) + (0:nat): nat) = x_0,...
 
 \end{clilisting}
 
@@ -1173,7 +1176,7 @@ sequent by converting to an expansion proof:
 
 \begin{clilisting}
 gapt> LKToExpansionProof(q)
-res0: gapt.proofs.expansion.ExpansionProof =
+val res0: gapt.proofs.expansion.ExpansionProof =
 ∀x_1 ((x_1:nat) + (0:nat): nat) = x_1
   +^{0} (0 + 0 = 0)-
   +^{s(s(0): nat)} (s(s(0)) + 0 = s(s(0)))-,
@@ -1196,7 +1199,7 @@ sequent.  We actually get a set of resolution proofs witnessing that the
 clauses follow from the negation of the sequent:
 \begin{clilisting}
 gapt> val proofs = structuralCNF(hos":- ?z ?x (drinksat z x -> !y drinksat z y)")
-proofs: Set[gapt.proofs.resolution.ResolutionProof] =
+val proofs: Set[gapt.proofs.resolution.ResolutionProof] =
 Set([p4]  ⊢ drinksat(z, x)   (ImpL1(p3, Ant(0)))
 [p3] drinksat(z, x) → ∀y drinksat(z, y) ⊢    (ExL(p2, Ant(0), x))
 [p2] ∃x (drinksat(z, x) → ∀y drinksat(z, y)) ⊢    (ExL(p1, Ant(0), z))
@@ -1237,12 +1240,12 @@ the eigenvariable inferences by Skolem inference using
 \texttt{skolemizeLK}---this is called \emph{proof Skolemization}:
 \begin{clilisting}
 gapt> val p = ForallRightRule(ReflexivityAxiom(le"x"), hof"!x x=x")
-p: gapt.proofs.lk.rules.ForallRightRule =
+val p: gapt.proofs.lk.rules.ForallRightRule =
 [p2]  ⊢ ∀x x = x    (ForallRightRule(p1, Suc(0), x, x))
 [p1]  ⊢ x = x    (ReflexivityAxiom(x))
 
 gapt> skolemizeLK(p)
-res1: gapt.proofs.lk.LKProof =
+val res1: gapt.proofs.lk.LKProof =
 [p2]  ⊢ ∀x x = x    (ForallSkRightRule(p1, Suc(0), ∀x x = x, s_0))
 [p1]  ⊢ s_0 = s_0    (ReflexivityAxiom(s_0))
 
@@ -1264,7 +1267,7 @@ described in~\cite{Baaz2012Complexity} with an extension to support all forms
 of Skolemization allowed by Skolem definitions.
 \begin{clilisting}
 gapt> val Some(p) = Escargot.getExpansionProof(hof"?x (drinks x -> !y drinks y)")
-p: gapt.proofs.expansion.ExpansionProof =
+val p: gapt.proofs.expansion.ExpansionProof =
 
 :-
 ∃x (drinks(x) → ∀y drinks(y))
@@ -1272,7 +1275,7 @@ p: gapt.proofs.expansion.ExpansionProof =
   +^{x} (wk-{drinks(x)} → ∀y drinks(y) +sk^{s_0} drinks(s_0)+)
 
 gapt> deskolemizeET(p)
-res0: gapt.proofs.expansion.ExpansionProof =
+val res0: gapt.proofs.expansion.ExpansionProof =
 
 :-
 ∃x (drinks(x) → ∀y drinks(y))
@@ -1296,7 +1299,7 @@ contains only such predicate symbols that appear in both partitions.
 
 \begin{clilisting}
 gapt> val Right(p) = solvePropositional(hos"a -> b, b -> c :- a & d -> c")
-p: gapt.proofs.lk.LKProof =
+val p: gapt.proofs.lk.LKProof =
 [p8] a → b, b → c ⊢ a ∧ d → c    (ImpRightRule(p7, Ant(0), Suc(0)))
 [p7] a ∧ d, a → b, b → c ⊢ c    (AndLeftRule(p6, Ant(2), Ant(0)))
 [p6] d, a → b, a, b → c ⊢ c    (WeakeningLeftRule(p5, d:o))
@@ -1307,7 +1310,7 @@ p: gapt.proofs.lk.LKProof =
 [p1] a ⊢ a    (LogicalAxiom(a:o))
 
 gapt> ExtractInterpolant(p, Seq(Suc(0)))
-res0: gapt.expr.formula.Formula = ¬a ∨ (⊥ ∨ c)
+val res0: gapt.expr.formula.Formula = ¬a ∨ (⊥ ∨ c)
 
 \end{clilisting}
 
@@ -1324,7 +1327,7 @@ to natural deduction proofs (Appendix~\ref{app:natural_deduction}).
 Consider the following example:
 \begin{clilisting}
 gapt> examples.gapticExamples.lemma
-res0: gapt.proofs.lk.LKProof =
+val res0: gapt.proofs.lk.LKProof =
 [p7] A → B ⊢ A ∧ B ∨ ¬A    (OrRightRule(p6, Suc(0), Suc(1)))
 [p6] A → B ⊢ A ∧ B, ¬A    (NegRightRule(p5, Ant(0)))
 [p5] A, A → B ⊢ A ∧ B    (ContractionLeftRule(p4, Ant(2), Ant(0)))
@@ -1334,7 +1337,7 @@ res0: gapt.proofs.lk.LKProof =
 [p1] A ⊢ A    (LogicalAxiom(A:o))
 
 gapt> LKToND( examples.gapticExamples.lemma, Some( Suc( 0 ) ) )
-res1: gapt.proofs.nd.NDProof =
+val res1: gapt.proofs.nd.NDProof =
 [p15] A → B ⊢ A ∧ B ∨ ¬A    (ExcludedMiddleRule(p2, Ant(0), p14, Ant(0)))
 [p14] ¬(A ∧ B), A → B ⊢ A ∧ B ∨ ¬A    (OrIntro2Rule(p13, A ∧ B))
 [p13] ¬(A ∧ B), A → B ⊢ ¬A    (NegIntroRule(p12, Ant(1)))
@@ -1377,7 +1380,7 @@ strong quantifiers do not form cycles.
 For example we can obtain an expansion proof by:
 \begin{clilisting}
 gapt> val expansion = LKToExpansionProof(examples.fol1.proof)
-expansion: gapt.proofs.expansion.ExpansionProof =
+val expansion: gapt.proofs.expansion.ExpansionProof =
 ∀X (X → X)
   +^{∀x ∃y (¬P(x, y) ∨ Q(x, y))}
     (∀x ∃y (¬P(x, y) ∨ Q(x, y)) +ev^{x}
@@ -1403,13 +1406,13 @@ proven.  The deep sequent consists of instances of the shallow sequent: the
 sequent.
 \begin{clilisting}
 gapt> expansion.shallow
-res0: gapt.proofs.HOLSequent = ∀X (X → X), ∀x ∀y (P(x, y) → Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) → ¬P(x, y))
+val res0: gapt.proofs.HOLSequent = ∀X (X → X), ∀x ∀y (P(x, y) → Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) → ¬P(x, y))
 
 gapt> expansion.deep
-res1: gapt.proofs.HOLSequent = ¬P(x, a) ∨ Q(x, a) → ¬P(b, y) ∨ Q(b, y), P(x, a) → Q(x, a) ⊢ ¬Q(b, y) → ¬P(b, y)
+val res1: gapt.proofs.HOLSequent = ¬P(x, a) ∨ Q(x, a) → ¬P(b, y) ∨ Q(b, y), P(x, a) → Q(x, a) ⊢ ¬Q(b, y) → ¬P(b, y)
 
 gapt> Sat4j isValid expansion.deep
-res2: Boolean = true
+val res2: Boolean = true
 
 \end{clilisting}
 
@@ -1419,7 +1422,7 @@ a procedure to eliminate such cuts in expansion proofs as described
 in~\cite{Hetzl2013Expansion}:
 \begin{clilisting}
 gapt> eliminateCutsET(expansion)
-res3: gapt.proofs.expansion.ExpansionProof =
+val res3: gapt.proofs.expansion.ExpansionProof =
 ∀x ∀y (P(x, y) → Q(x, y)) +^{b, a} (P(b, a)+ → Q(b, a)-)
 :-
 ∃x ∃y (¬Q(x, y) → ¬P(x, y)) +^{b, a} (¬Q(b, a)+ → ¬P(b, a)-)
@@ -1430,7 +1433,7 @@ We can also convert expansion proofs to LK; this works even in the presence of
 cuts, and also if the proof requires equational reasoning:
 \begin{clilisting}
 gapt> ExpansionProofToLK(expansion).get
-res4: gapt.proofs.lk.LKProof =
+val res4: gapt.proofs.lk.LKProof =
 [p21] ∀x ∀y (P(x, y) → Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) → ¬P(x, y))    (ExistsRightRule(p20, Suc(0), ∃y (¬Q(x, y) → ¬P(x, y)), b, x))
 [p20] ∀x ∀y (P(x, y) → Q(x, y)) ⊢ ∃y (¬Q(b, y) → ¬P(b, y))    (CutRule(p9, Suc(0), p19, Ant(0)))
 [p19] ∀x ∃y (¬P(x, y) ∨ Q(x, y)) ⊢ ∃y (¬Q(b, y) → ¬P(b, y))    (ForallLeftRule(p18, Ant(0), ∃y (¬P(x, y) ∨ Q(x, y)), b, x))
@@ -1438,7 +1441,7 @@ res4: gapt.proofs.lk.LKProof =
 [p17] ¬P(b, y) ∨ Q(b, y) ⊢ ∃y (¬Q(b, y) → ¬P(b, y))    (ExistsRightRule(p16, Suc(0), ¬Q(b, y) → ¬P(b, y), y, y))
 [p16] ¬P(b, y) ∨ Q(b, y) ⊢ ¬Q(b, y) → ¬P(b, y)    (ImpRightRule(p15, Ant(0), Suc(0)))
 [p15] ¬Q(b, y), ¬P(b, y) ∨ Q(b, y) ⊢ ¬P(b, y)    (NegRightRule(p14, Ant(2)))
-[p14] ¬Q(b, y), ¬P(b, y) ∨ Q(b, y), P(b, y) ⊢...
+[p14] ¬Q(b, y), ¬P(b, y) ∨ Q(b, y), P(b, ...
 
 \end{clilisting}
 
@@ -1467,7 +1470,7 @@ Consider the following proof:
 
 \begin{clilisting}
 gapt> val p = examples.successor.proof
-p: gapt.proofs.nd.ForallIntroRule =
+val p: gapt.proofs.nd.ForallIntroRule =
 [p4]  ⊢ ∀x ∃y (y:nat) = ((s(0:nat): nat) + (x:nat): nat)    (ForallIntroRule(p3, x:nat, x:nat))
 [p3]  ⊢ ∃y (y:nat) = ((s(0:nat): nat) + (x:nat): nat)    (ExistsIntroRule(p2, (y:nat) = ((s(0:nat): nat) + (x:nat): nat), s(x:nat): nat, y:nat))
 [p2]  ⊢ (s(x:nat): nat) = (s(0) + x: nat)    (DefinitionRule(p1, (s(x:nat): nat) = (s(0) + x: nat)))
@@ -1479,7 +1482,7 @@ The implementation can then be used to extract a realizer in the following way:
 
 \begin{clilisting}
 gapt> val mr = nd.MRealizability.mrealize(p)(examples.successor.ctx)
-mr: (Map[gapt.proofs.SequentIndex,gapt.expr.Var], gapt.expr.Expr) = (Map(),λx s(x:nat): nat)
+val mr: (Map[gapt.proofs.SequentIndex,gapt.expr.Var], gapt.expr.Expr) = (Map(),λx s(x:nat): nat)
 
 \end{clilisting}
 
@@ -1494,13 +1497,13 @@ as well as all of their components such as formulas, sequents, indices, etc. For
 instance, this is how you export a sequent to JSON:
 \begin{clilisting}
 gapt> val s = JsonExporter(hos"A, B :- P(x)").render(80)
-s: String = {"antecedent" : ["A:o", "B:o"], "succedent" : ["P(x): o"]}
+val s: String = {"antecedent" : ["A:o", "B:o"], "succedent" : ["P(x): o"]}
 
 \end{clilisting}
 To read the JSON string back into a sequent:
 \begin{clilisting}
 gapt> val sequent = JsonImporter.load[HOLSequent](InputFile.fromString(s))
-sequent: gapt.proofs.HOLSequent = A, B ⊢ P(x)
+val sequent: gapt.proofs.HOLSequent = A, B ⊢ P(x)
 
 \end{clilisting}
 Serializing an LK proof to JSON works a little differently than you might
@@ -1508,28 +1511,28 @@ expect. Instead of naively serializing the proof as an object, its distinct
 subproofs are collected in a map.
 \begin{clilisting}
 gapt> val ax1 = LogicalAxiom(hof"A")
-ax1: gapt.proofs.lk.rules.LogicalAxiom =
+val ax1: gapt.proofs.lk.rules.LogicalAxiom =
 [p1] A ⊢ A    (LogicalAxiom(A:o))
 
 gapt> val ax2 = LogicalAxiom(hof"B")
-ax2: gapt.proofs.lk.rules.LogicalAxiom =
+val ax2: gapt.proofs.lk.rules.LogicalAxiom =
 [p1] B ⊢ B    (LogicalAxiom(B:o))
 
 gapt> val p1 = AndRightRule(ax1, hof"A", ax2, hof"B")
-p1: gapt.proofs.lk.rules.AndRightRule =
+val p1: gapt.proofs.lk.rules.AndRightRule =
 [p3] A, B ⊢ A ∧ B    (AndRightRule(p1, Suc(0), p2, Suc(0)))
 [p2] B ⊢ B    (LogicalAxiom(B:o))
 [p1] A ⊢ A    (LogicalAxiom(A:o))
 
 gapt> val p2 = AndRightRule(p1, hof"A∧B", ax1, hof"A")
-p2: gapt.proofs.lk.rules.AndRightRule =
+val p2: gapt.proofs.lk.rules.AndRightRule =
 [p4] A, B, A ⊢ A ∧ B ∧ A    (AndRightRule(p3, Suc(0), p1, Suc(0)))
 [p3] A, B ⊢ A ∧ B    (AndRightRule(p1, Suc(0), p2, Suc(0)))
 [p2] B ⊢ B    (LogicalAxiom(B:o))
 [p1] A ⊢ A    (LogicalAxiom(A:o))
 
 gapt> val p3: LKProof = AndRightRule(p2, hof"A∧B∧A", ax2, hof"B")
-p3: gapt.proofs.lk.LKProof =
+val p3: gapt.proofs.lk.LKProof =
 [p5] A, B, A, B ⊢ A ∧ B ∧ A ∧ B    (AndRightRule(p4, Suc(0), p2, Suc(0)))
 [p4] A, B, A ⊢ A ∧ B ∧ A    (AndRightRule(p3, Suc(0), p1, Suc(0)))
 [p3] A, B ⊢ A ∧ B    (AndRightRule(p1, Suc(0), p2, Suc(0)))
@@ -1537,7 +1540,7 @@ p3: gapt.proofs.lk.LKProof =
 [p1] A ⊢ A    (LogicalAxiom(A:o))
 
 gapt> val s = JsonExporter(p3).render(80)
-s: String =
+val s: String =
 {
   "0" : {"name" : "LogicalAxiom", "A" : "A:o"},
   "1" : {"name" : "LogicalAxiom", "A" : "B:o"},
@@ -1572,16 +1575,16 @@ used multiple times in the proof.
 You can export sequents as TPTP problems:
 \begin{clilisting}
 gapt> val sequent = hos"p(0), !x (p(x) -> p(s(x))) :- p(s(s(0)))"
-sequent: gapt.proofs.HOLSequent = p(0), ∀x (p(x) → p(s(x))) ⊢ p(s(s(0)))
+val sequent: gapt.proofs.HOLSequent = p(0), ∀x (p(x) → p(s(x))) ⊢ p(s(s(0)))
 
 gapt> TptpFOLExporter(sequent)
-res0: gapt.formats.tptp.TptpFile =
+val res0: gapt.formats.tptp.TptpFile =
 fof(ant_0, axiom, p('0')).
 fof(ant_1, axiom, ![X]: (p(X) => p(s(X)))).
 fof(suc_0, conjecture, p(s(s('0')))).
 
 gapt> TptpFOLExporter(sequent)
-res1: gapt.formats.tptp.TptpFile =
+val res1: gapt.formats.tptp.TptpFile =
 fof(ant_0, axiom, p('0')).
 fof(ant_1, axiom, ![X]: (p(X) => p(s(X)))).
 fof(suc_0, conjecture, p(s(s('0')))).
@@ -1591,7 +1594,7 @@ fof(suc_0, conjecture, p(s(s('0')))).
 You can also parse TPTP problems:
 \begin{clilisting}
 gapt> val tptp = TptpImporter.loadWithIncludes("examples/import/irrationals.p")
-tptp: gapt.formats.tptp.TptpFile =
+val tptp: gapt.formats.tptp.TptpFile =
 fof(a, axiom, i(sr2)).
 fof(b, axiom, ~ i(two)).
 fof(c, axiom, times(sr2, sr2) = two).
@@ -1600,7 +1603,7 @@ fof(e, axiom, ![X]: exp(X, two) = times(X, X)).
 fof(f, conjecture, ?[X,Y]: (~ i(exp(X, Y)) & i(X) & i(Y))).
 
 gapt> tptp.toSequent
-res2: gapt.proofs.HOLSequent =
+val res2: gapt.proofs.HOLSequent =
 i(sr2),
 ¬i(two),
 times(sr2, sr2) = two,
@@ -1624,16 +1627,16 @@ LeanCoP interface reads back expansion proofs (and converts them to LK if desire
 Here is how you can get all of these kinds of proofs using Prover9:
 \begin{clilisting}
 gapt> val sequent = hos"p(0), !x (p(x) -> p(s(x))) :- p(s(s(0)))"
-sequent: gapt.proofs.HOLSequent = p(0), ∀x (p(x) → p(s(x))) ⊢ p(s(s(0)))
+val sequent: gapt.proofs.HOLSequent = p(0), ∀x (p(x) → p(s(x))) ⊢ p(s(s(0)))
 
 \end{clilisting}
 
 \begin{clilisting}[Prover9.isInstalled]
 gapt> Prover9 isValid sequent
-res0: Boolean = true
+val res0: Boolean = true
 
 gapt> Prover9 getResolutionProof sequent
-res1: Option[gapt.proofs.resolution.ResolutionProof] =
+val res1: Option[gapt.proofs.resolution.ResolutionProof] =
 Some([p13]  ⊢    (Resolution(p8, Suc(0), p12, Ant(0)))
 [p12] p(s(0)) ⊢    (Resolution(p9, Suc(0), p11, Ant(0)))
 [p11] p(s(s(0))) ⊢    (Subst(p10, Substitution()))
@@ -1650,7 +1653,7 @@ Some([p13]  ⊢    (Resolution(p8, Suc(0), p12, Ant(0)))
 )
 
 gapt> Prover9 getLKProof sequent
-res2: Option[gapt.proofs.lk.LKProof] =
+val res2: Option[gapt.proofs.lk.LKProof] =
 Some([p11] ∀x (p(x) → p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(p10, Ant(2), Ant(1)))
 [p10] p(0), ∀x (p(x) → p(s(x))), ∀x (p(x) → p(s(x))) ⊢ p(s(s(0)))    (CutRule(p5, Suc(0), p9, Ant(1)))
 [p9] ∀x (p(x) → p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (CutRule(p8, Suc(0), p6, Ant(0)))
@@ -1659,10 +1662,10 @@ Some([p11] ∀x (p(x) → p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(
 [p6] p(s(s(0))) ⊢ p(s(s(0)))    (LogicalAxiom(p(s(s(0))): o))
 [p5] p(0), ∀x (p(x) → p(s(x))) ⊢ p(s(0))    (CutRule(p1, Suc(0), p4, Ant(1)))
 [p4] ∀x (p(x) → p(s(x))), p(0) ⊢ p(s(0))    (ForallLeftRule(p3, Ant(0), p(x) → p(s(x)), 0, x))
-[p3] p(0) → p(s(0)), p(0) ⊢ p(s(0))    (ImpLeft...
+[p3] p(0) → p(s(0)), p(0) ⊢ p(s(0))    (Imp...
 
 gapt> Prover9 getExpansionProof sequent
-res3: Option[gapt.proofs.expansion.ExpansionProof] =
+val res3: Option[gapt.proofs.expansion.ExpansionProof] =
 Some(∀x (p(x) → p(s(x))) +^{0} (p(0)+ → p(s(0))-) +^{s(0)} (p(s(0))+ → p(s(s(0)))-),
 p(0)-
 :-
@@ -1675,7 +1678,7 @@ Vampire (\cli{Vampire}), and Metis (\cli{Metis}) as well, we will just show
 \cli{EProver.getLKProof} as an example:
 \begin{clilisting}[EProver.isInstalled]
 gapt> EProver getLKProof sequent
-res4: Option[gapt.proofs.lk.LKProof] =
+val res4: Option[gapt.proofs.lk.LKProof] =
 Some([p11] ∀x (p(x) → p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(p10, Ant(2), Ant(1)))
 [p10] p(0), ∀x (p(x) → p(s(x))), ∀x (p(x) → p(s(x))) ⊢ p(s(s(0)))    (CutRule(p5, Suc(0), p9, Ant(1)))
 [p9] ∀x (p(x) → p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (CutRule(p8, Suc(0), p6, Ant(0)))
@@ -1684,7 +1687,7 @@ Some([p11] ∀x (p(x) → p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(
 [p6] p(s(s(0))) ⊢ p(s(s(0)))    (LogicalAxiom(p(s(s(0))): o))
 [p5] p(0), ∀x (p(x) → p(s(x))) ⊢ p(s(0))    (CutRule(p1, Suc(0), p4, Ant(1)))
 [p4] ∀x (p(x) → p(s(x))), p(0) ⊢ p(s(0))    (ForallLeftRule(p3, Ant(0), p(x) → p(s(x)), 0, x))
-[p3] p(0) → p(s(0)), p(0) ⊢ p(s(0))    (ImpLeft...
+[p3] p(0) → p(s(0)), p(0) ⊢ p(s(0))    (Imp...
 
 \end{clilisting}
 
@@ -1693,7 +1696,7 @@ Note that \cli{getLKProof} only works for sequents without strong quantifiers
 will happily return expansion proofs with Skolem quantifiers in that case:
 \begin{clilisting}[Prover9.isInstalled]
 gapt> Prover9 getExpansionProof hof"?x!y p x y -> !y?x p x y"
-res5: Option[gapt.proofs.expansion.ExpansionProof] =
+val res5: Option[gapt.proofs.expansion.ExpansionProof] =
 Some(
 :-
 ∃x ∀y p(x, y) +sk^{s_0} ∀y p(s_0, y) +^{s_1} p(s_0, s_1)- →
@@ -1704,7 +1707,7 @@ Some(
 The LeanCoP interface supports \cli{getExpansionProof} as well:
 \begin{clilisting}[LeanCoP.isInstalled]
 gapt> LeanCoP getExpansionProof sequent
-res6: Option[gapt.proofs.expansion.ExpansionProof] =
+val res6: Option[gapt.proofs.expansion.ExpansionProof] =
 Some(∀x (p(x) → p(s(x))) +^{0} (p(0)+ → p(s(0))-) +^{s(0)} (p(s(0))+ → p(s(s(0)))-),
 p(0)-
 :-
@@ -1718,13 +1721,13 @@ For example, we can obtain a many-sorted expansion proof from Prover9
 (which only supports a single sort) in the following way:
 \begin{clilisting}
 gapt> val reduction = PredicateReductionET |> ErasureReductionET
-reduction: gapt.proofs.reduction.Reduction[gapt.proofs.HOLSequent,gapt.proofs.HOLSequent,gapt.proofs.expansion.ExpansionProof,gapt.proofs.expansion.ExpansionProof] = PredicateReductionET |> ErasureReductionET
+val reduction: gapt.proofs.reduction.Reduction[gapt.proofs.HOLSequent,gapt.proofs.HOLSequent,gapt.proofs.expansion.ExpansionProof,gapt.proofs.expansion.ExpansionProof] = PredicateReductionET |> ErasureReductionET
 
 gapt> val problem = hos"!(x:a)!y x=y, !x f(f(x:b))=x :- ?y c=f(y)"
-problem: gapt.proofs.HOLSequent = ∀x ∀y (x:a) = (y:a), ∀x f(f(x:b): b) = x ⊢ ∃y (c:b) = f(y)
+val problem: gapt.proofs.HOLSequent = ∀x ∀y (x:a) = (y:a), ∀x f(f(x:b): b) = x ⊢ ∃y (c:b) = f(y)
 
 gapt> val (firstOrderProblem, back) = reduction forward problem
-firstOrderProblem: gapt.proofs.HOLSequent =
+val firstOrderProblem: gapt.proofs.HOLSequent =
 ∀x0 ∀x1 (P_is_a(x0) ∧ P_is_a(x1) → P_is_o('f_='(x0, x1))),
 ∀x0 (P_is_b(x0) → P_is_b(f_f(x0))),
 ∀x0 ∀x1 (P_is_b(x0) ∧ P_is_b(x1) → P_is_o('f_='(x0, x1))),
@@ -1736,10 +1739,10 @@ P_is_b(f_nonempty_b),
 ∀x (P_is_b(x) → f_f(f_f(x)) = x)
 ⊢
 ∃y (P_is_b(y) ∧ f_c = f_f(y))
-back: gapt.proofs.expansion.ExpansionProof => gapt.proofs.expansion.ExpansionProof = <function>
+val back: gapt.proofs.expansion.ExpansionProof => gapt.proofs.expansion.ExpansionProof = <function>
 
 gapt> Escargot getExpansionProof firstOrderProblem map back
-res7: Option[gapt.proofs.expansion.ExpansionProof] =
+val res7: Option[gapt.proofs.expansion.ExpansionProof] =
 Some(∀x f(f(x:b): b) = x +^{c} (f(f(c)) = c)-
 :-
 ∃y (c:b) = (f(y:b): b) +^{f(c)} (c = f(f(c)))+)
@@ -1753,23 +1756,23 @@ formulas.  For example we can check whether a quantifier-free formula is a
 quasi-tautology using veriT:
 \begin{clilisting}
 gapt> val f = hof"(a=b | a=c) & P(c) & P(b) -> P(a)"
-f: gapt.expr.formula.Formula = (a = b ∨ a = c) ∧ P(c) ∧ P(b) → P(a)
+val f: gapt.expr.formula.Formula = (a = b ∨ a = c) ∧ P(c) ∧ P(b) → P(a)
 
 \end{clilisting}
 
 \begin{clilisting}[VeriT.isInstalled]
 gapt> VeriT isValid f
-res0: Boolean = true
+val res0: Boolean = true
 
 \end{clilisting}
 
 GAPT also supports Z3 and CVC4 out of the box (if they are installed):
 \begin{clilisting}[Z3.isInstalled && CVC4.isInstalled]
 gapt> Z3 isValid f
-res1: Boolean = true
+val res1: Boolean = true
 
 gapt> CVC4 isValid f
-res2: Boolean = true
+val res2: Boolean = true
 
 \end{clilisting}
 
@@ -1778,7 +1781,7 @@ note that we apply a drastic renaming to the constant symbols in order to
 support arbitrary (even Unicode) names in GAPT:
 \begin{clilisting}
 gapt> val (benchmark, typeRenaming, constantRenaming) = SmtLibExporter(Sequent() :+ f)
-benchmark: String =
+val benchmark: String =
 "(set-logic QF_UF)
 (declare-sort t_i 0)
 (declare-fun f_P (t_i) Bool)
@@ -1791,8 +1794,8 @@ benchmark: String =
       (f_P f_a))))
 (check-sat)
 "
-typeRenaming: Map[gapt.expr.ty.TBase,gapt.expr.ty.TBase] = Map(o -> Bool, i -> t_i)
-constantRenaming: Map[gapt.expr.Const,gapt.expr.Const] = Map(a -> f_a:t_i, b -> f_b:t_i, c -> f_c:t_i, P:i>o -> f_P:t_i>Bool)
+val typeRenaming: Map[gapt.expr.ty.TBase,gapt.expr.ty.TBase] = Map(o -> Bool, i -> t_i)
+val constantRenaming: Map[gapt.expr.Const,gapt.expr.Const] = Map(a -> f_a:t_i, b -> f_b:t_i, c -> f_c:t_i, P:i>o -> f_P:t_i>Bool)
 
 \end{clilisting}
 
@@ -1800,7 +1803,7 @@ We can also extract instances for basic equality axioms (reflexivity, symmetry,
 and congruences) from veriT's proof output:
 \begin{clilisting}[VeriT.isInstalled]
 gapt> val Some(expansionProof) = VeriT getExpansionProof f
-expansionProof: gapt.proofs.expansion.ExpansionProof =
+val expansionProof: gapt.proofs.expansion.ExpansionProof =
 ∀x ∀y (x = y → y = x)
   +^{a, b} ((a = b)+ → (b = a)-)
   +^{a, c} ((a = c)+ → (c = a)-),
@@ -1829,20 +1832,20 @@ iff $m>n$. $\neg\mathrm{PHP}_{m,n}$ states that when putting $m$ pigeons into $n
 is no hole containing two pigeons. This is satisfiable iff $m\leq n$.
 \begin{clilisting}
 gapt> Sat4j isValid PigeonHolePrinciple(3, 2)
-res0: Boolean = true
+val res0: Boolean = true
 
 \end{clilisting}
 shows\footnote{In Scala, \cli{Sat4j isValid formula} is syntactic sugar for \cli{Sat4j.isValid(formula)}.} that $\mathrm{PHP}_{3,2}$ is valid, and
 \begin{clilisting}
 gapt> Sat4j isValid PigeonHolePrinciple(3, 3)
-res1: Boolean = false
+val res1: Boolean = false
 
 \end{clilisting}
 shows that $\mathrm{PHP}_{3,3}$ is not valid.
 Furthermore,
 \begin{clilisting}
 gapt> val Some(m) = Sat4j solve -PigeonHolePrinciple(3, 3)
-m: gapt.models.PropositionalModel =
+val m: gapt.models.PropositionalModel =
 R(p_1, h_1): o -> true
 R(p_1, h_2): o -> false
 R(p_1, h_3): o -> false
@@ -1857,35 +1860,35 @@ R(p_3, h_3): o -> true
 yields a model of $\neg\mathrm{PHP}_{3,3}$ that can be queried:
 \begin{clilisting}
 gapt> val p1 = PigeonHolePrinciple.inHole(1, 1)
-p1: gapt.expr.formula.fol.FOLAtom = R(p_1, h_1): o
+val p1: gapt.expr.formula.fol.FOLAtom = R(p_1, h_1): o
 
 gapt> val p2 = PigeonHolePrinciple.inHole(2, 1)
-p2: gapt.expr.formula.fol.FOLAtom = R(p_2, h_1): o
+val p2: gapt.expr.formula.fol.FOLAtom = R(p_2, h_1): o
 
 gapt> m(p1) // Is pigeon 1 in hole 1?
-res2: Boolean = true
+val res2: Boolean = true
 
 gapt> m(p2) // Is pigeon 2 in hole 1?
-res3: Boolean = false
+val res3: Boolean = false
 
 \end{clilisting}
 We can also interpret quantifier-free formulas:
 \begin{clilisting}
 gapt> m( And(p1, p2) )
-res4: Boolean = false
+val res4: Boolean = false
 
 \end{clilisting}
 
 We can also convert $\neg\mathrm{PHP}_{3,3}$ into DIMACS format:
 \begin{clilisting}
 gapt> val cnf = structuralCNF(Sequent() :+ PigeonHolePrinciple(3,3)).map(_.conclusion.asInstanceOf[HOLClause])
-cnf: scala.collection.immutable.Set[gapt.proofs.HOLClause] = HashSet( ⊢ R(p_3, h_3), R(p_3, h_1), R(p_3, h_2), R(p_1, h_2), R(p_3, h_2) ⊢ , R(p_1, h_2), R(p_2, h_2) ⊢ , R(p_1, h_3), R(p_2, h_3) ⊢ , R(p_2, h_1), R(p_3, h_1) ⊢ ,  ⊢ R(p_1, h_3), R(p_1, h_1), R(p_1, h_2), R(p_1, h_1), R(p_2, h_1) ⊢ , R(p_1, h_1), R(p_3, h_1) ⊢ ,  ⊢ R(p_2, h_3), R(p_2, h_1), R(p_2, h_2), R(p_1, h_3), R(p_3, h_3) ⊢ , R(p_2, h_3), R(p_3, h_3) ⊢ , R(p_2, h_2), R(p_3, h_2) ⊢ )
+val cnf: scala.collection.immutable.Set[gapt.proofs.HOLClause] = HashSet( ⊢ R(p_3, h_3), R(p_3, h_1), R(p_3, h_2), R(p_1, h_2), R(p_3, h_2) ⊢ , R(p_1, h_2), R(p_2, h_2) ⊢ , R(p_1, h_3), R(p_2, h_3) ⊢ , R(p_2, h_1), R(p_3, h_1) ⊢ ,  ⊢ R(p_1, h_3), R(p_1, h_1), R(p_1, h_2), R(p_1, h_1), R(p_2, h_1) ⊢ , R(p_1, h_1), R(p_3, h_1) ⊢ ,  ⊢ R(p_2, h_3), R(p_2, h_1), R(p_2, h_2), R(p_1, h_3), R(p_3, h_3) ⊢ , R(p_2, h_3), R(p_3, h_3) ⊢ , R(p_2, h_2), R(p_3, h_2) ⊢ )
 
 gapt> val encoding = new DIMACSEncoding
-encoding: gapt.formats.dimacs.DIMACSEncoding = DIMACSEncoding()
+val encoding: gapt.formats.dimacs.DIMACSEncoding = DIMACSEncoding()
 
 gapt> writeDIMACS(encoding encodeCNF cnf)
-res5: String =
+val res5: String =
 "p cnf 9 12
 -9 -2 0
 7 8 5 0
@@ -1907,19 +1910,19 @@ If you want to know which variable in the DIMACS output corresponds to which
 atom in GAPT, you can query the \cli{DIMACSEncoding} object:
 \begin{clilisting}
 gapt> encoding decodeAtom 1
-res6: gapt.expr.formula.Atom = R(p_3, h_3): o
+val res6: gapt.expr.formula.Atom = R(p_3, h_3): o
 
 \end{clilisting}
 
 GAPT also supports other SAT solvers such as MiniSAT or Glucose out of the box:
 \begin{clilisting}[MiniSAT.isInstalled]
 gapt> MiniSAT isValid PigeonHolePrinciple(3,2)
-res7: Boolean = true
+val res7: Boolean = true
 
 \end{clilisting}
 \begin{clilisting}[Glucose.isInstalled]
 gapt> Glucose isValid PigeonHolePrinciple(3,2)
-res8: Boolean = true
+val res8: Boolean = true
 
 \end{clilisting}
 
@@ -1927,17 +1930,17 @@ If you have another DIMACS-compliant solver installed or want to pass extra
 options to the SAT solver, you can pass a custom command to GAPT as well:
 \begin{clilisting}[MiniSAT.isInstalled]
 gapt> val solver = new ExternalSATSolver("minisat", "-mem-lim=1024")
-solver: gapt.provers.sat.ExternalSATSolver = ExternalSATSolver("minisat", "-mem-lim=1024")
+val solver: gapt.provers.sat.ExternalSATSolver = ExternalSATSolver("minisat", "-mem-lim=1024")
 
 gapt> solver isValid PigeonHolePrinciple(3,2)
-res9: Boolean = true
+val res9: Boolean = true
 
 \end{clilisting}
 
 GAPT can import DRUP proofs from Sat4j, Glucose, and PicoSAT:
 \begin{clilisting}
 gapt> Sat4j getDrupProof PigeonHolePrinciple(4,3)
-res10: Option[gapt.proofs.rup.RupProof] =
+val res10: Option[gapt.proofs.rup.RupProof] =
 Some(c input 12 11 8 0
 c input -1 -2 0
 c input -4 -8 0
@@ -1974,7 +1977,7 @@ Just as in the first-order prover interface (see Section~\ref{sec:fol_provers}),
 format:
 \begin{clilisting}
 gapt> Sat4j getLKProof PigeonHolePrinciple(4,3)
-res11: Option[gapt.proofs.lk.LKProof] =
+val res11: Option[gapt.proofs.lk.LKProof] =
 Some([p575]
 ⊢
 (R(p_1, h_1) ∨ R(p_1, h_2) ∨ R(p_1, h_3)) ∧
@@ -1998,7 +2001,7 @@ Some([p575]
     R(p_1, h_3) ∧ R(p_4, h_3) ∨
     R(p_2, h_3) ∧ R(p_3, h_3) ∨
     R(p_2, h_3) ∧ R(p_4, h_3) ∨
-    R(p_3, h_...
+    R(p_3...
 
 \end{clilisting}
 
@@ -2014,7 +2017,7 @@ Let us solve a simple example using the MaxSAT solver from SAT4J:
 
 \begin{clilisting}
 gapt> MaxSat4j.solve(hard = hof"a|b|c", soft = Seq(hof"-a" -> 4, hof"-b" -> 3))
-res0: Option[gapt.models.PropositionalModel] =
+val res0: Option[gapt.models.PropositionalModel] =
 Some(a:o -> false
 b:o -> false
 c:o -> true)
@@ -2037,37 +2040,37 @@ the same interface as \cli{Prover9} and the other first-order provers:
 
 \begin{clilisting}
 gapt> val formula = fof"!x!y!z (x+y)+z=x+(y+z) & !x!y x+y=y+x -> d+a+c+b=a+b+c+d"
-formula: gapt.expr.formula.fol.FOLFormula =
+val formula: gapt.expr.formula.fol.FOLFormula =
 ∀x ∀y ∀z x + y + z = x + (y + z) ∧ ∀x ∀y x + y = y + x →
   d + a + c + b = a + b + c + d
 
 gapt> Escargot getResolutionProof formula
-res0: Option[gapt.proofs.resolution.ResolutionProof] =
+val res0: Option[gapt.proofs.resolution.ResolutionProof] =
 Some([p44]  ⊢    (Resolution(p1, Suc(0), p43, Ant(0)))
 [p43] c + (a + (b + d)) = c + (a + (b + d)) ⊢    (Paramod(p17, Suc(0), true, p42, Ant(0), λx c + (a + (b + d)) = c + x))
 [p42] c + (a + (b + d)) = c + (b + (a + d)) ⊢    (Paramod(p21, Suc(0), false, p41, Ant(0), λx c + (a + (b + d)) = c + x))
 [p41] c + (a + (b + d)) = c + (a + (d + b)) ⊢    (Paramod(p22, Suc(0), true, p40, Ant(0), λx c + (a + (b + d)) = c + x))
 [p40] c + (a + (b + d)) = c + (d + (a + b)) ⊢    (Paramod(p23, Suc(0), true, p39, Ant(0), λx c + (a + (b + d)) = x))
 [p39] c + (a + (b + d)) = d + (c + (a + b)) ⊢    (Paramod(p17, Suc(0), true, p38, Ant(0), λx c + x = d + (c + (a + b))))
-[p38] c + (b + (a + d)) = d + (c + (a + b)) ⊢    (Paramod(p24, Suc(0), true, p37, Ant...
+[p38] c + (b + (a + d)) = d + (c + (a + b)) ⊢    (Paramod(p24, Suc(0), true, p37,...
 
 \end{clilisting}
 
 Escargot can natively solve many-sorted problems, for example:
 \begin{clilisting}
 gapt> val formula = hof"P(cons(0:nat, cons(s(0), nil)): list)"
-formula: gapt.expr.formula.Formula = P(cons(0:nat, cons(s(0): nat, nil:list): list)): o
+val formula: gapt.expr.formula.Formula = P(cons(0:nat, cons(s(0): nat, nil:list): list)): o
 
 gapt> val axiom = hof"P(nil) & !x!y!z (P(x) -> P(cons(y: nat, cons(z, x)): list))"
-axiom: gapt.expr.formula.Formula = P(nil:list) ∧ ∀x ∀y ∀z (P(x) → P(cons(y:nat, cons(z:nat, x): list)))
+val axiom: gapt.expr.formula.Formula = P(nil:list) ∧ ∀x ∀y ∀z (P(x) → P(cons(y:nat, cons(z:nat, x): list)))
 
 gapt> val problem = hof"$axiom -> $formula"
-problem: gapt.expr.formula.Formula =
+val problem: gapt.expr.formula.Formula =
 P(nil:list) ∧ ∀x ∀y ∀z (P(x) → P(cons(y:nat, cons(z:nat, x): list))) →
   P(cons(0, cons(s(0), nil)))
 
 gapt> Escargot.getExpansionProof(problem)
-res1: Option[gapt.proofs.expansion.ExpansionProof] =
+val res1: Option[gapt.proofs.expansion.ExpansionProof] =
 Some(
 :-
 P(nil:list)- ∧
@@ -2102,7 +2105,7 @@ $ ./viper.sh --treegrammar --cansolsize 2 3 --gramw scomp \
 You can also use Viper from within GAPT:
 \begin{clilisting}
 gapt> val problem = TipSmtImporter.load("examples/tip/isaplanner/prop_06.smt2")
-problem: gapt.formats.tip.TipProblem =
+val problem: gapt.formats.tip.TipProblem =
 ∀x0 'proj1-S'(S(x0)) = x0,
 ∀y '-2'(Z, y) = Z,
 ∀z '-2'(S(z), Z) = S(z),
@@ -2114,8 +2117,8 @@ problem: gapt.formats.tip.TipProblem =
 ∀n ∀m '-2'(n, '+2'(n, m)) = Z
 
 gapt> val Some(proof) = Viper(problem, ViperOptions(verbosity=0))
-proof: gapt.proofs.lk.LKProof =
-[p168] ∀y0 #c(Z: Nat) != (S(y0:Nat): Nat),
+val proof: gapt.proofs.lk.LKProof =
+[p171] ∀y0 #c(Z: Nat) != (S(y0:Nat): Nat),
 ∀x0 ('proj1-S'(S(x0)): Nat) = x0,
 ∀z ('-2'(S(z), #c(Z: Nat)): Nat) = S(z),
 ∀y ('+2'(#c(Z: Nat), y:Nat): Nat) = y,
@@ -2123,8 +2126,8 @@ proof: gapt.proofs.lk.LKProof =
 ∀z ∀x2 '-2'(S(z), S(x2)) = '-2'(z, x2),
 ∀y ∀z '+2'(S(z), y) = S('+2'(z, y))
 ⊢
-∀n ∀m '-2'(n, '+2'(n, m)) = #c(Z: Nat)    (CutRule(p21, Suc(0), p167, Ant(3)))
-[p167] ∀y0 #c(Z: Nat) != (S(y0:Nat): Nat),
+∀n ∀m '-2'(n, '+2'(n, m)) = #c(Z: Nat)    (CutRule(p21, Suc(0), p170, Ant(3)))
+[p170] ∀y0 #c(Z: Nat) != (S(y0:Nat): Nat),
 ∀x0 ('proj1-S'(S(x0)): Nat) = x0,
 ∀z ('-2'(S(z), #c(Z: Nat)): Nat) = S(z),
 (⊤ → ∀m '-2'(#c(Z: Nat), '+2'(#c(Z: Nat), m:Nat)) = #c(Z: Nat)) ∧
@@ -2134,7 +2137,7 @@ proof: gapt.proofs.lk.LKProof =
   ∀n ∀m '-2'(n, '+2'(n, m)) = #c(Z: Nat),
 ∀y '+2'(#c(Z: Nat), y) = y,
 ∀y '-2'(#c(Z: Nat), y) = #c(Z: Nat),
-∀z ∀x2 '-2'(...
+∀z ∀x2 '...
 
 \end{clilisting}
 
@@ -2144,7 +2147,7 @@ GAPT contains a built-in tableaux prover for propositional logic
 which can be called with the command \texttt{solvePropositional}, for example as in:
 \begin{clilisting}
 gapt> solvePropositional(hof"a -> b -> a&b").get
-res0: gapt.proofs.lk.LKProof =
+val res0: gapt.proofs.lk.LKProof =
 [p5]  ⊢ a → b → a ∧ b    (ImpRightRule(p4, Ant(0), Suc(0)))
 [p4] a ⊢ b → a ∧ b    (ImpRightRule(p3, Ant(1), Suc(0)))
 [p3] a, b ⊢ a ∧ b    (AndRightRule(p1, Suc(0), p2, Suc(0)))
@@ -2156,7 +2159,7 @@ res0: gapt.proofs.lk.LKProof =
 The tableaux prover can also prove quasi-tautologies if you call it as \texttt{solveQuasiPropositional}:
 \begin{clilisting}
 gapt> solveQuasiPropositional(hof"a = b & f a = b -> a = f(f(b))").get
-res1: gapt.proofs.lk.LKProof =
+val res1: gapt.proofs.lk.LKProof =
 [p9]  ⊢ a = b ∧ f(a) = b → a = f(f(b))    (ImpRightRule(p8, Ant(0), Suc(0)))
 [p8] a = b ∧ f(a) = b ⊢ a = f(f(b))    (AndLeftRule(p7, Ant(1), Ant(0)))
 [p7] f(a) = b, a = b ⊢ a = f(f(b))    (EqualityLeftRule(p6, Ant(0), Ant(1), λx f(a) = x))
@@ -2177,7 +2180,7 @@ function \texttt{Slakje.getLKProof} returns a cut-free intuitionistic proof in
 the calculus LJ:
 \begin{clilisting}
 gapt> Slakje.getLKProof(hof"¬ ¬ ∀x P(x) → ∀x ¬ ¬ P(x)")
-res0: Option[gapt.proofs.lk.LKProof] =
+val res0: Option[gapt.proofs.lk.LKProof] =
 Some([p8]  ⊢ ¬ ¬ ∀x P(x) → ∀x ¬ ¬P(x)    (ImpRightRule(p7, Ant(0), Suc(0)))
 [p7] ¬ ¬ ∀x P(x) ⊢ ∀x ¬ ¬P(x)    (ForallRightRule(p6, Suc(0), v, x))
 [p6] ¬ ¬ ∀x P(x) ⊢ ¬ ¬P(v)    (NegRightRule(p5, Ant(1)))
@@ -2235,7 +2238,7 @@ gapt> cutFormulas(Pi2Pigeonhole.proof) filter {containsQuantifier(_)} foreach pr
 ∀x ∃y (x <= y ∧ f(y) = 0)
 
 gapt> val acnf = CERES(Pi2Pigeonhole.proof)
-acnf: gapt.proofs.lk.LKProof =
+val acnf: gapt.proofs.lk.LKProof =
 [p366] ∀x ∀y (x <= M(x, y) ∧ y <= M(x, y)),
 ∀x (f(x) = 0 ∨ f(x) = s(0))
 ⊢
@@ -2256,12 +2259,12 @@ acnf: gapt.proofs.lk.LKProof =
 ∀x ∀y (x <= M(x, y) ∧ y <= M(x, y)),
 ∀x (f(x) = 0 ∨ f(x) = s(0))
 ⊢
-∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y...
+∃x ∃y_0 (s(x) <= y_0 ∧ f(x) =...
 
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
-et: gapt.proofs.expansion.ExpansionProof =
+val et: gapt.proofs.expansion.ExpansionProof =
 ∀x ∀y (x <= M(x, y) ∧ y <= M(x, y))
   +^{s(M(s(M(v, v_0)), v_0)), s(M(s(M(s(M(v, v_0)), v_0)), v_0))}
     (s(M(s(M(v, v_0)), v_0)) <=
@@ -2276,7 +2279,7 @@ et: gapt.proofs.expansion.ExpansionProof =
   +^{s(M(s(M(v, v_0)), v_0)), v_0}
     (s(M(s(M(v, v_0)), v_0)) <= M(s(M(s(M(v, v_0)), v_0)), v_0))- ∧
     wk-{v_0 <= M(s(M(s(M(v, v_0)), v_0)), v_0)}
-  +^{s(M(v, v_0)), s(M(s(M(v, v_0...
+  +^{s(M(v, v_0)), s(M(s(M(v,...
 
 gapt> prooftool(et)
 
@@ -2289,7 +2292,7 @@ implemented in GAPT for introducing $\Pi_1$-cuts into a sequent calculus
 proof. Take a cut-free example proof:
 \begin{clilisting}
 gapt> val p = LinearExampleProof(9)
-p: gapt.proofs.lk.LKProof =
+val p: gapt.proofs.lk.LKProof =
 [p36] ∀x (P(x) → P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (ContractionLeftRule(p35, Ant(0), Ant(1)))
 [p35] ∀x (P(x) → P(s(x))), ∀x (P(x) → P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p34, Ant(0), P(x) → P(s(x)), s(s(s(s(s(s(s(s(0)))))))), x))
 [p34] P(s(s(s(s(s(s(s(s(0))))))))) → P(s(s(s(s(s(s(s(s(s(0)))))))))),
@@ -2299,13 +2302,13 @@ P(0)
 P(s(s(s(s(s(s(s(s(s(0))))))))))    (ImpLeftRule(p32, Suc(0), p33, Ant(0)))
 [p33] P(s(s(s(s(s(s(s(s(s(0)))))))))) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (LogicalAxiom(P(s(s(s(s(s(s(s(s(s(0)))))))))): o))
 [p32] ∀x (P(x) → P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(0)))))))))    (ContractionLeftRule(p31, Ant(0), Ant(1)))
-[p31] ∀x (P(x) → P(s(x))), ∀x (P(x) → P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(0)))))))))...
+[p31] ∀x (P(x) → P(s(x))), ∀x (P(x) → P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(0)))))...
 
 \end{clilisting}
 Then compute a proof with a single cut that contains a single quantifier by:
 \begin{clilisting}
 gapt> val q = CutIntroduction(p, method=DeltaTableMethod())
-q: Option[gapt.proofs.lk.LKProof] =
+val q: Option[gapt.proofs.lk.LKProof] =
 Some([p27] ∀x (P(x) → P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (CutRule(p14, Suc(0), p26, Ant(0)))
 [p26] ∀x1 (P(x1) → P(s(s(s(x1))))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (ContractionLeftRule(p25, Ant(1), Ant(0)))
 [p25] ∀x1 (P(x1) → P(s(s(s(x1))))),
@@ -2323,7 +2326,7 @@ P(s(s(s(s(s(s(s(s(s(0))))))))))    (ContractionLeftRule(p23, Ant(1), Ant(0)))
 P(s(s(s(0)))) → P(s(s(s(s(s(s(0))))))),
 P(0)
 ⊢
-P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p22, Ant(2), P(x1) → P(s(s(...
+P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p22, Ant(2), P(x1) → P(...
 
 \end{clilisting}
 
@@ -2351,10 +2354,10 @@ able to automatically find a (V)TRATG that covers this language:
 
 \begin{clilisting}[OpenWBO.isInstalled]
 gapt> val lang = 1 to 18 map { Numeral(_) }
-lang: IndexedSeq[gapt.expr.formula.fol.FOLTerm] = Vector(s(0), s(s(0)), s(s(s(0))), s(s(s(s(0)))), s(s(s(s(s(0))))), s(s(s(s(s(s(0)))))), s(s(s(s(s(s(s(0))))))), s(s(s(s(s(s(s(s(0)))))))), s(s(s(s(s(s(s(s(s(0))))))))), s(s(s(s(s(s(s(s(s(s(0)))))))))), s(s(s(s(s(s(s(s(s(s(s(0))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))))))
+val lang: IndexedSeq[gapt.expr.formula.fol.FOLTerm] = Vector(s(0), s(s(0)), s(s(s(0))), s(s(s(s(0)))), s(s(s(s(s(0))))), s(s(s(s(s(s(0)))))), s(s(s(s(s(s(s(0))))))), s(s(s(s(s(s(s(s(0)))))))), s(s(s(s(s(s(s(s(s(0))))))))), s(s(s(s(s(s(s(s(s(s(0)))))))))), s(s(s(s(s(s(s(s(s(s(s(0))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))))))
 
 gapt> val grammar = findMinimalVTRATG(lang.toSet, 2)
-grammar: gapt.grammars.VTRATG =
+val grammar: gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s
 
@@ -2375,14 +2378,14 @@ x_2 → 0
 x_2 → s(s(s(s(s(s(s(s(s(0)))))))))
 
 gapt> lang.toSet subsetOf grammar.language
-res0: Boolean = true
+val res0: Boolean = true
 
 \end{clilisting}
 
 You can also find minimal sub-grammars that still generate certain terms:
 \begin{clilisting}[OpenWBO.isInstalled]
 gapt> minimizeVTRATG(grammar, (1 to 5).map(Numeral(_)).toSet)
-res1: gapt.grammars.VTRATG =
+val res1: gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s
 
@@ -2411,7 +2414,7 @@ The $\psi_i$ are called \emph{witnesses} of the formula equation.
 GAPT supports solving formula equations for certain classes of formula equations:
 \begin{clilisting}
 gapt> val formulaEquationSolution = solveFormulaEquation(hof"∃X X(a)")
-formulaEquationSolution: scala.util.Try[gapt.expr.subst.Substitution] = Success(Substitution(X:i>o -> λx_0 a = x_0))
+val formulaEquationSolution: scala.util.Try[gapt.expr.subst.Substitution] = Success(Substitution(X:i>o -> λx_0 a = x_0))
 
 \end{clilisting}
 
@@ -2431,10 +2434,10 @@ Again, failure of the method does not mean that there is no witness such that th
 
 \begin{clilisting}
 gapt> val solution = dls(hof"∃X X(a)")
-solution: scala.util.Try[(gapt.expr.subst.Substitution, gapt.expr.formula.Formula)] = Success((Substitution(X:i>o -> λx_0 a = x_0),X(a): o))
+val solution: scala.util.Try[(gapt.expr.subst.Substitution, gapt.expr.formula.Formula)] = Success((Substitution(X:i>o -> λx_0 a = x_0),X(a): o))
 
 gapt> Escargot.isValid(BetaReduction.betaNormalize(solution.get._1(solution.get._2)))
-res0: Boolean = true
+val res0: Boolean = true
 
 \end{clilisting}
 

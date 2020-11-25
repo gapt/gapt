@@ -35,7 +35,9 @@ class IProverInstance( val input: IProverInput ) {
     "--pure_diseq_elim", "false",
     "--splitting_mode", "none",
     "--sub_typing", "false",
-    "--tptp_safe_out", "true" )
+    "--tptp_safe_out", "true",
+    "--non_eq_to_eq", "false",
+    "--superposition_flag", "false" )
 
   def getResolutionProof(): Option[ResolutionProof] =
     runIProverOn( input.tptpWithSafeNames )
@@ -101,9 +103,9 @@ class IProverOutput( val rawOutput: String ) {
 
   private def extractTptpDerivation: String = {
     outputLines
-      .dropWhile( !_.startsWith( "% SZS output start CNFRefutation" ) )
+      .dropWhile( !_.startsWith( "% % SZS output start CNFRefutation" ) )
       .drop( 1 ).
-      takeWhile( !_.startsWith( "% SZS output end CNFRefutation" ) ).
+      takeWhile( !_.startsWith( "% % SZS output end CNFRefutation" ) ).
       mkString( "\n" )
   }
 }

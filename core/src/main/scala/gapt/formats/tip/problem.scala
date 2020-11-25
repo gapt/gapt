@@ -24,11 +24,12 @@ import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.update.ConditionalReductionRuleUpdate.conditionalReductionRulesToUpdate
 
 case class TipFun( fun: Const, definitions: Seq[Formula] )
 
 case class TipProblem(
-    ctx:                 ImmutableContext,
+    private val ctx:     ImmutableContext,
     definitions:         Seq[Formula],
     sorts:               Seq[TBase],
     datatypes:           Seq[InductiveType],
@@ -72,7 +73,7 @@ case class TipProblem(
         :+ goal )
   }
 
-  def context: ImmutableContext = ctx
+  def context: ImmutableContext = ctx + reductionRules
 
   def reductionRules: Seq[ConditionalReductionRule] = {
     val definitionReductionRules = definitions.flatMap {
@@ -197,7 +198,7 @@ object tipScalaEncoding {
         ( compileProjectorDefinitions( problem ) ++
           compileFunctionDefinitions( problem ) ++
           compileConstructorInjectivityAxioms( problem ) ++
-          compileProblemAssumptions( problem ) ) mkString ( "", ",\n    ", "" )
+          compileProblemAssumptions( problem ) ).mkString( "", ",\n    ", "" )
       }
           |    :-
           |    goal: ${stripNewlines( problem.goal.toString )}
@@ -255,7 +256,7 @@ object tipScalaEncoding {
   }
 
   private def compileProjectors( projectors: Seq[Const] ): String = {
-    projectors.map { compileProjector } mkString ( "", "\n", "" )
+    projectors.map { compileProjector }.mkString( "", "\n", "" )
   }
 
   private def compileProjector( projector: Const ): String = {

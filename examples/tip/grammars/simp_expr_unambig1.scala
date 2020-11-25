@@ -104,7 +104,7 @@ object simp_expr_unambig1 extends TacticsProof {
     allR; allR; impR
     rewrite.many ltr "def_lin_0" in "goal_0"
     rewrite.many rtl "app_assoc" in "goal_0"
-    rewrite.many ltr ( "def_append_0", "def_append_1" ) in "goal_0"
+    rewrite.many.ltr( "def_append_0", "def_append_1" ) in "goal_0"
 
     allL( "IHa_0", le"b_0:E" ).forget
     allL( "IHa_1", le"b_1:E" ).forget
@@ -132,16 +132,16 @@ object simp_expr_unambig1 extends TacticsProof {
 
     //- a starts with Plus, b is EX
     allR; allR; impR
-    rewrite.many ltr ( "def_lin_0", "def_lin_1" ) in "goal_0"
+    rewrite.many.ltr( "def_lin_0", "def_lin_1" ) in "goal_0"
     rewrite.many rtl "app_assoc" in "goal_0"
-    rewrite.many ltr ( "def_append_0", "def_append_1" ) in "goal_0"
+    rewrite.many.ltr( "def_append_0", "def_append_1" ) in "goal_0"
     insert( cong_neg_proof )
 
     //- a starts with Plus, b is EY
     allR; allR; impR
-    rewrite.many ltr ( "def_lin_0", "def_lin_2" ) in "goal_0"
+    rewrite.many.ltr( "def_lin_0", "def_lin_2" ) in "goal_0"
     rewrite.many rtl "app_assoc" in "goal_0"
-    rewrite.many ltr ( "def_append_0", "def_append_1" ) in "goal_0"
+    rewrite.many.ltr( "def_append_0", "def_append_1" ) in "goal_0"
     insert( cong_neg_proof )
 
     //-- a is EX
@@ -150,20 +150,20 @@ object simp_expr_unambig1 extends TacticsProof {
 
     //- a is EX, b starts with Plus
     allR; allR; impR
-    rewrite.many ltr ( "def_lin_0", "def_lin_1" ) in "goal_0"
+    rewrite.many.ltr( "def_lin_0", "def_lin_1" ) in "goal_0"
     rewrite.many rtl "app_assoc" in "goal_0"
-    rewrite.many ltr ( "def_append_0", "def_append_1" ) in "goal_0"
+    rewrite.many.ltr( "def_append_0", "def_append_1" ) in "goal_0"
     insert( cong_neg_symm_proof )
 
     //- a is EX, b is EX
     allR; allR; impR
-    rewrite.many ltr ( "def_append_0", "def_append_1", "def_lin_1" ) in "goal_0"
+    rewrite.many.ltr( "def_append_0", "def_append_1", "def_lin_1" ) in "goal_0"
     cut( "step_1", hof"(x:list) = y" ); insert( cong_pos_proof )
     quasiprop
 
     //- a is EX, b is EY
     allR; allR; impR
-    rewrite.many ltr ( "def_append_0", "def_append_1", "def_lin_1", "def_lin_2" ) in "goal_0"
+    rewrite.many.ltr( "def_append_0", "def_append_1", "def_lin_1", "def_lin_2" ) in "goal_0"
     insert( cong_neg_proof )
 
     //-- a is EY
@@ -172,19 +172,19 @@ object simp_expr_unambig1 extends TacticsProof {
 
     //- a is EY, b starts with Plus
     allR; allR; impR
-    rewrite.many ltr ( "def_lin_0", "def_lin_2" ) in "goal_0"
+    rewrite.many.ltr( "def_lin_0", "def_lin_2" ) in "goal_0"
     rewrite.many rtl "app_assoc" in "goal_0"
-    rewrite.many ltr ( "def_append_0", "def_append_1" ) in "goal_0"
+    rewrite.many.ltr( "def_append_0", "def_append_1" ) in "goal_0"
     insert( cong_neg_symm_proof )
 
     //- a is EY, b is EX
     allR; allR; impR
-    rewrite.many ltr ( "def_append_0", "def_append_1", "def_lin_1", "def_lin_2" ) in "goal_0"
+    rewrite.many.ltr( "def_append_0", "def_append_1", "def_lin_1", "def_lin_2" ) in "goal_0"
     insert( cong_neg_symm_proof )
 
     //- a is EY, b is EY
     allR; allR; impR
-    rewrite.many ltr ( "def_append_0", "def_append_1", "def_lin_2" ) in "goal_0"
+    rewrite.many.ltr( "def_append_0", "def_append_1", "def_lin_2" ) in "goal_0"
     cut( "step_1", hof"(x:list) = y" ); insert( cong_pos_proof )
     quasiprop
   }
@@ -201,7 +201,7 @@ object simp_expr_unambig1 extends TacticsProof {
     cut( "lem", lem ); insert( lem_proof ) // introduce lemma
 
     impR
-    rewrite.many ltr ( "def_lin_0", "def_append_1", "def_append_0" ) in "goal_0"
+    rewrite.many.ltr( "def_lin_0", "def_append_1", "def_append_0" ) in "goal_0"
     cut(
       "eq1",
       hof"""append(append(append(lin(u_0), cons(Pl, nil)), lin(u_1)), cons(D, nil)) =
@@ -214,7 +214,7 @@ object simp_expr_unambig1 extends TacticsProof {
     forget( "eq1" )
 
     andL( "lem_0" )
-    rewrite.many ltr ( "def_append_1", "def_append_0" ) in "lem_0_1"
+    rewrite.many.ltr( "def_append_1", "def_append_0" ) in "lem_0_1"
     cut( "eq2", hof"append(lin(u_1), cons(D, nil)) = append(lin(v_1), cons(D, nil))" ); insert( cong_pos_proof )
 
     forwardChain( "lem", OnLabel( "eq2" ) )
@@ -222,14 +222,14 @@ object simp_expr_unambig1 extends TacticsProof {
 
     //- u starts with Plus, v is EX
     impR
-    rewrite.many ltr ( "def_lin_1", "def_lin_0" ) in "goal_0"
+    rewrite.many.ltr( "def_lin_1", "def_lin_0" ) in "goal_0"
     rewrite.many rtl ( "app_assoc" ) in "goal_0"
     rewrite ltr "def_append_1" in "goal_0"
     insert( cong_neg_proof )
 
     //- u starts with Plus, v is EY
     impR
-    rewrite.many ltr ( "def_lin_2", "def_lin_0" ) in "goal_0"
+    rewrite.many.ltr( "def_lin_2", "def_lin_0" ) in "goal_0"
     rewrite.many rtl ( "app_assoc" ) in "goal_0"
     rewrite ltr "def_append_1" in "goal_0"
     insert( cong_neg_proof )
@@ -239,7 +239,7 @@ object simp_expr_unambig1 extends TacticsProof {
 
     //- u is EX, v starts with Plus
     impR
-    rewrite.many ltr ( "def_lin_1", "def_lin_0" ) in "goal_0"
+    rewrite.many.ltr( "def_lin_1", "def_lin_0" ) in "goal_0"
     rewrite.many rtl ( "app_assoc" ) in "goal_0"
     rewrite ltr "def_append_1" in "goal_0"
     insert( cong_neg_symm_proof )
@@ -249,7 +249,7 @@ object simp_expr_unambig1 extends TacticsProof {
 
     //- u is EX, v is EY
     impR
-    rewrite.many ltr ( "def_lin_1", "def_lin_2" ) in "goal_0"
+    rewrite.many.ltr( "def_lin_1", "def_lin_2" ) in "goal_0"
     insert( cong_neg_proof )
 
     //-- u is EY
@@ -257,14 +257,14 @@ object simp_expr_unambig1 extends TacticsProof {
 
     //- u is EY, v starts with Plus
     impR
-    rewrite.many ltr ( "def_lin_2", "def_lin_0" ) in "goal_0"
+    rewrite.many.ltr( "def_lin_2", "def_lin_0" ) in "goal_0"
     rewrite.many rtl ( "app_assoc" ) in "goal_0"
     rewrite ltr "def_append_1" in "goal_0"
     insert( cong_neg_symm_proof )
 
     //- u is EY, v is EX
     impR
-    rewrite.many ltr ( "def_lin_1", "def_lin_2" ) in "goal_0"
+    rewrite.many.ltr( "def_lin_1", "def_lin_2" ) in "goal_0"
     insert( cong_neg_symm_proof )
 
     //- u is EY, v is EY

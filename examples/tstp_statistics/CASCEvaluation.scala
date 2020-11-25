@@ -116,7 +116,7 @@ object CASCEvaluation {
 
     val before_replayed = for ( f <- bundle.rp_stats.keySet.toList ) yield { ( bundle.tstp_stats( f ), bundle.rp_stats( f ) ) }
 
-    println
+    println()
 
     println( "=== Tstp DAG vs Replayed Proof Statistics" )
     eval_before_after( before_replayed, depthRatio[T], "depth ratio" )

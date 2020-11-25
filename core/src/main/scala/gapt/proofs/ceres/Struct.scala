@@ -117,8 +117,8 @@ case class Dual( sub: Struct ) extends Struct {
   override def size() = 1 + sub.size()
   override def alternations() = {
     sub match {
-      case Dual( _ ) => sub.alternations
-      case _         => 1 + sub.size
+      case Dual( _ ) => sub.alternations()
+      case _         => 1 + sub.size()
     }
   }
 

@@ -112,13 +112,13 @@ object testViper extends App {
     prf match {
       case None =>
       case Some( prf1 ) =>
-        val prf2 = cleanProof( prf1 )( problem.ctx )
+        val prf2 = cleanProof( prf1 )( problem.context )
         val ( inds, depth ) = countInductions( prf2 )
 
         logger.metric( "inductions", inds )
         logger.metric( "induction_depth", depth )
 
-        val axs = extractInductionAxioms( prf2 )( problem.ctx )
+        val axs = extractInductionAxioms( prf2 )( problem.context )
         val targets = axs.map( inductionTarget )
 
         val atomic = targets.count( e => isExtendedAtom( e.asInstanceOf[Formula] ) )

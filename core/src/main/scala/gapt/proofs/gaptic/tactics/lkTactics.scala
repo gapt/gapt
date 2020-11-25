@@ -56,7 +56,7 @@ case class ProofLinkTactic( proofName: String )( implicit ctx: Context ) extends
   }
 }
 /**
- * Closes a goal of the form A, Γ :- Δ, Δ
+ * Closes a goal of the form A, Γ :- Γ, Δ
  */
 case object LogicalAxiomTactic extends Tactical1[Unit] {
   def apply( goal: OpenAssumption ) = {

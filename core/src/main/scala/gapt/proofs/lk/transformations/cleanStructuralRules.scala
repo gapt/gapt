@@ -540,7 +540,7 @@ object cleanStructuralRules {
         // Hook up the SequentConnector properly
         val oc = proofNew.getSequentConnector
         val mainIdx = proofNew.mainIndices.head
-        ( proofNew, ( oc * currentOC ) + ( mainIdx, idx ) )
+        ( proofNew, ( oc * currentOC ).+( mainIdx, idx ) )
       }
     }
   }

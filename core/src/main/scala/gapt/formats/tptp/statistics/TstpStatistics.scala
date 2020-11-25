@@ -378,7 +378,7 @@ object TstpStatistics {
    */
   def resultToCSV[T <: FileData]( rpstats: Iterable[RPProofStats[T]] ) = {
     //TODO: move to RPProofStats
-    CSVFile( RPProofStats.csv_header, rpstats.toSeq.map( _.toCSV ), CSVFile.defaultSep )
+    CSVFile( RPProofStats.csv_header, rpstats.toSeq.map( _.toCSV() ), CSVFile.defaultSep )
   }
 
   //some tools for pre- and postprocessing

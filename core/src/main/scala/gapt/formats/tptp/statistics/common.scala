@@ -198,8 +198,8 @@ package object statistics {
         case other                               => ( "unknown", other.fileName )
       }
       CSVRow(
-        List( problem, solver, dagSize.toString, treeSize.toString,
-          sizeRatio.toString, depth.toString )
+        List( problem, solver, dagSize.toString(), treeSize.toString(),
+          sizeRatio().toString(), depth.toString() )
           ++ Statistic.alsoEmptyDataToCSV( clause_frequency.toList.map( _._2 ) )
           ++ Statistic.alsoEmptyDataToCSV( rule_histogram.toList.map( _._2 ) )
           ++ Statistic.optCSV( subst_term_sizes )
@@ -288,8 +288,8 @@ package object statistics {
         case other                               => ( "unknown", other.fileName )
       }
       CSVRow(
-        List( problem, solver, dagSize.toString, treeSize.toString,
-          sizeRatio.toString, depth.toString )
+        List( problem, solver, dagSize.toString(), treeSize.toString(),
+          sizeRatio().toString(), depth.toString() )
           ++ Statistic.alsoEmptyDataToCSV( clause_frequency.toList.map( _._2 ) )
           ++ Statistic.alsoEmptyDataToCSV( rule_histogram.toList.map( _._2 ) )
           ++ Statistic.alsoEmptyDataToCSV( reused_axioms.toList.map( _._2._2 ) )
@@ -355,7 +355,7 @@ package object statistics {
       val namecol = name.toCSV()
 
       namecol ++ CSVRow(
-        List( axiom_count, input_formula_count, constants, unary_funs, binary_funs ).map( _.toString ) ++
+        List( axiom_count, input_formula_count, constants, unary_funs, binary_funs ).map( _.toString() ) ++
           Statistic.optCSV( arity_statistics ) //arity_statistics contains the signature size
       )
     }

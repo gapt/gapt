@@ -51,10 +51,10 @@ object primediv extends TacticsProof {
       destruct( "g_0" ); chain( "mulleq" ).at( "g_0" ).subst( hov"y:nat" -> le"z_0:nat" ); prop; prop
       destruct( "g_0" ); unfold( ">" ) in "g_0"; chain( "oneleqeq" ).at( "g_0" ); prop
       decompose; exR( le"w:nat" ).forget
-      unfold( "PD", "D" ) in ( "g_0", "g_1_1" )
+      unfold( "PD", "D" ).in( "g_0", "g_1_1" )
       destruct( "g_1_1" ); prop; decompose
       exR( le"z_1*z_0" ).forget
-      rewrite.many ltr ( "assoc", "g_0_1" ) in "g_1_1"; trivial
+      rewrite.many.ltr( "assoc", "g_0_1" ) in "g_1_1"; trivial
     }
     by { // case a
       unfold( "PD" ) in "g_1_1"

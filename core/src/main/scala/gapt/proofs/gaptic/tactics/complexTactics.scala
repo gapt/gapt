@@ -42,7 +42,7 @@ import gapt.proofs.lk.rules.macros.ForallLeftBlock
 import gapt.proofs.lk.rules.macros.WeakeningMacroRule
 import gapt.proofs.lk.util.solvePropositional
 import gapt.proofs.lk.util.solveQuasiPropositional
-import gapt.provers.viper.spin.{ SpinOptions, SuperpositionInductionProver }
+import gapt.provers.viper.spin.{ SpinOptions, Spin }
 
 // Todo: Add an option that allows us to discard the original target.
 /**
@@ -381,9 +381,9 @@ case class AnalyticInductionTactic( axioms: AxiomFactory, prover: ResolutionProv
     copy( prover = prover )
 }
 
-case class SuperpositionInductionTactic( opts: SpinOptions, problem: TipProblem )( implicit ctx: MutableContext ) extends Tactical1[Unit] {
+case class SuperpositionInductionTactic( opts: SpinOptions )( implicit ctx: MutableContext ) extends Tactical1[Unit] {
   override def apply( goal: OpenAssumption ): Tactic[Unit] =
-    SuperpositionInductionProver( opts, problem ) inductiveLKProof goal.labelledSequent match {
+    Spin( opts ).inductiveLKProof( goal.labelledSequent )( ctx ) match {
       case None       => TacticFailure( this, "structural induction prover failed" )
       case Some( lk ) => replace( lk )
     }

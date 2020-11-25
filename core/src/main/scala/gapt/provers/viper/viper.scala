@@ -199,7 +199,7 @@ object Viper {
 
         val generalize = opts.spinOptions.performGeneralization
         val testTerms = opts.spinOptions.sampleTestTerms
-        List( Duration.Inf -> SuperpositionInductionTactic( opts.spinOptions, opts.tipProblem.get )
+        List( Duration.Inf -> SuperpositionInductionTactic( opts.spinOptions )
           .aka( s"spin (generalization = $generalize, test terms = $testTerms)" ) )
     }
 
@@ -237,13 +237,13 @@ object Viper {
   }
 
   def apply( problem: TipProblem ): Option[LKProof] =
-    apply( problem.toSequent, ViperOptions( tipProblem = Some( problem ) ) )( problem.ctx.newMutable )
+    apply( problem.toSequent, ViperOptions( tipProblem = Some( problem ) ) )( problem.context.newMutable )
 
   def apply( problem: TipProblem, verbosity: Int ): Option[LKProof] =
     apply( problem, ViperOptions( verbosity = verbosity, tipProblem = Some( problem ) ) )
 
   def apply( problem: TipProblem, options: ViperOptions ): Option[LKProof] =
-    apply( problem.toSequent, options.copy( tipProblem = Some( problem ) ) )( problem.ctx.newMutable )
+    apply( problem.toSequent, options.copy( tipProblem = Some( problem ) ) )( problem.context.newMutable )
 
   def apply( sequent: HOLSequent )( implicit ctx: MutableContext ): Option[LKProof] =
     apply( sequent, ViperOptions( verbosity = 3 ) )
@@ -305,7 +305,7 @@ object Viper {
     logger.metric( "tgp_prodw", opts.treeGrammarProverOptions.grammarWeighting )
 
     val problem = if ( opts.fixup ) TipSmtImporter.fixupAndLoad( file ) else TipSmtImporter.load( file )
-    implicit val ctx: MutableContext = problem.ctx.newMutable
+    implicit val ctx: MutableContext = problem.context.newMutable
 
     apply( problem.toSequent, opts.copy( tipProblem = Some( problem ) ) ) match {
       case Some( proof ) =>
