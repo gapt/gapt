@@ -301,7 +301,8 @@ object Viper {
     logger.metric( "fixup", opts.fixup )
     logger.metric( "tgp_goal_qt", opts.treeGrammarProverOptions.goalQuantifier )
     logger.metric( "tgp_qtys", opts.treeGrammarProverOptions.quantTys )
-    logger.metric( "tgp_interp", opts.treeGrammarProverOptions.useInterpolation )
+    logger.metric( "tgp_bupsolver", opts.treeGrammarProverOptions.bupSolver.toString )
+    logger.metric( "tgp_interp", opts.treeGrammarProverOptions.bupSolver == InductionBupSolver.Interpolation )
     logger.metric( "tgp_prodw", opts.treeGrammarProverOptions.grammarWeighting )
 
     val problem = if ( opts.fixup ) TipSmtImporter.fixupAndLoad( file ) else TipSmtImporter.load( file )
