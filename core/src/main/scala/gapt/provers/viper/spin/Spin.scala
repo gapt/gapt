@@ -121,7 +121,7 @@ class Spin( opts: SpinOptions ) {
 
     val state = new SpinState( ctx )
     Escargot.setupDefaults( state, opts.splitting, hasEquality, isPropositional )
-    state.nameGen = rename.awayFrom( ctx.constants.toSet ++ cnf.view.flatMap( constants( _ ) ) )
+    state.nameGen = rename.awayFrom( ctx.constants.toSet ++ cnf.view.flatMap( constants.nonLogical( _ ) ) )
     state.termOrdering = Escargot.lpoHeuristic( cnf, ctx.constants )
     state.newlyDerived ++= cnf.map {
       state.InputCls
@@ -231,7 +231,7 @@ class Spin( opts: SpinOptions ) {
 
     private def generatePotentialInductionAxioms( given: Cls ): Unit = {
       // TODO: this should probably be less restrictive now that we perform more subgoal generalization
-      if ( performGeneralization || given.clause.exists( constants( _ ) exists ( isInductive( _ )( ctx ) ) ) &&
+      if ( performGeneralization || given.clause.exists( constants.nonLogical( _ ) exists ( isInductive( _ )( ctx ) ) ) &&
         !inductedClauses.contains( given.clause ) ) {
         EscargotLogger.time( "axiom_gen" ) {
           clauseAxioms( given.clause )( ctx ) foreach ( possibleAxioms.enqueue( _ ) )
@@ -590,7 +590,7 @@ class FormulaTester( acceptNotNormalized: Boolean, numberTestTerms: Int )( impli
   // Some terms, like `sk_0 == sk_0` do not reduce even though any instantiation of the skolem terms reduces
   // to the same value. Attempt to unblock such terms by testing for all constructor forms of the terms involved.
   private def unblock( nf: Formula )( implicit ctx: Context ): Boolean = {
-    val skolems = constants( nf ).flatMap( asInductiveConst( _ )( ctx ) )
+    val skolems = constants.nonLogical( nf ).flatMap( asInductiveConst( _ )( ctx ) )
 
     if ( skolems.isEmpty )
       return false
@@ -617,7 +617,7 @@ class FormulaTester( acceptNotNormalized: Boolean, numberTestTerms: Int )( impli
   }
 
   private def isEvaluable( f: Formula )( implicit ctx: Context ): Boolean =
-    constants( f ).forall( c => origConstants.contains( c ) || isConstructor( c )( ctx ) )
+    constants.nonLogical( f ).forall( c => origConstants.contains( c ) || isConstructor( c )( ctx ) )
 
   private def isValid( f: Formula ): Boolean = sat.isValid( f )
 

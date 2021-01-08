@@ -180,9 +180,6 @@ object typeVariables {
     es.view.flatMap( apply ).toSet
 }
 
-/**
- * Returns the set of non-logical constants occurring in the given argument.
- */
 object constants {
   /**
    * Find all constants in the expression
@@ -209,12 +206,18 @@ object constants {
       case _                                 => false
     }
 
-  def apply( expression: Expr ): Set[Const] =
-    all( expression ).filter { !_.isInstanceOf[LogicalConstant] }
+  /**
+   * Returns the set of non-logical constants occurring in the given expression.
+   */
+  object nonLogical {
 
-  def apply( es: Iterable[Expr] ): Set[Const] = ( es.foldLeft( Set.empty[Const] ) ) { ( acc, e ) => acc union apply( e ) }
+    def apply( expression: Expr ): Set[Const] =
+      all( expression ).filter { !_.isInstanceOf[LogicalConstant] }
 
-  def apply( s: HOLSequent ): Set[Const] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Const]() )( ( x, y ) => x ++ apply( y ) )
+    def apply( es: Iterable[Expr] ): Set[Const] = ( es.foldLeft( Set.empty[Const] ) ) { ( acc, e ) => acc union apply( e ) }
+
+    def apply( s: HOLSequent ): Set[Const] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Const]() )( ( x, y ) => x ++ apply( y ) )
+  }
 }
 
 /**

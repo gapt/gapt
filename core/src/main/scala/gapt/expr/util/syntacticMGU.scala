@@ -144,7 +144,7 @@ object syntacticMGU {
     apply( a: Expr, b ).map( _.asFOLSubstitution )
 
   def apply( a: Expr, b: Expr, treatAsConstant: Set[Var] ): Option[Substitution] = {
-    val nameGen = rename.awayFrom( constants( a ) ++ constants( b ) )
+    val nameGen = rename.awayFrom( constants.nonLogical( a ) ++ constants.nonLogical( b ) )
     val grounding = treatAsConstant.map( v => v -> nameGen.fresh( Const( v.name, v.ty ) ) )
     apply( Substitution( grounding )( a ), Substitution( grounding )( b ) ).map( mgu =>
       TermReplacement( mgu, grounding.map( _.swap ).toMap ) )

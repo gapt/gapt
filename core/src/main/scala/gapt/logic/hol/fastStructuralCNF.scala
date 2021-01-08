@@ -51,7 +51,7 @@ case class fastStructuralCNF( propositional: Boolean = true, bidirectionalDefs: 
     val defs = mutable.Map[Expr, HOLAtomConst]()
     val skConsts = mutable.Map[Expr, Const]()
 
-    val nameGen = new NameGenerator( constants( endSequent ) map { _.name } )
+    val nameGen = new NameGenerator( constants.nonLogical( endSequent ) map { _.name } )
     def mkSkolemSym() = nameGen.freshWithIndex( "s" )
     def mkAbbrevSym() = nameGen.freshWithIndex( "D" )
 

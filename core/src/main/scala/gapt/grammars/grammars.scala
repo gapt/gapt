@@ -52,7 +52,7 @@ case class VTRATG( startSymbol: Var, nonTerminals: Seq[VTRATG.NonTerminalVect], 
   def productions( nonTerminalVect: NonTerminalVect ): Set[Production] = productions filter ( _._1 == nonTerminalVect )
   def rightHandSides( nonTerminal: NonTerminalVect ) = productions( nonTerminal ) map ( _._2 )
 
-  def terminals: Set[Const] = productions flatMap { p => constants( p._2 ) }
+  def terminals: Set[Const] = productions flatMap { p => constants.nonLogical( p._2 ) }
 
   def babelSignature = MapBabelSignature( terminals )
 

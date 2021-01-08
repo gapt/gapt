@@ -312,7 +312,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
  */
 case object ErasureReductionCNF extends Reduction_[Set[HOLClause], ResolutionProof] {
   override def forward( problem: Set[HOLClause] ): ( Set[HOLClause], ( ResolutionProof ) => ResolutionProof ) = {
-    val helper = new ErasureReductionHelper( problem flatMap { constants( _ ) } )
+    val helper = new ErasureReductionHelper( problem flatMap { constants.nonLogical( _ ) } )
     ( problem map helper.forward, helper.back( _, problem ) )
   }
 }
@@ -324,7 +324,7 @@ case object ErasureReductionCNF extends Reduction_[Set[HOLClause], ResolutionPro
  */
 case object ErasureReductionET extends Reduction_[HOLSequent, ExpansionProof] {
   override def forward( problem: HOLSequent ): ( HOLSequent, ( ExpansionProof ) => ExpansionProof ) = {
-    val helper = new ErasureReductionHelper( constants( problem ) )
+    val helper = new ErasureReductionHelper( constants.nonLogical( problem ) )
     ( helper.forward( problem ), helper.back( _, problem ) )
   }
 }
@@ -419,7 +419,7 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
  */
 case object PredicateReductionCNF extends Reduction_[Set[HOLClause], ResolutionProof] {
   override def forward( problem: Set[HOLClause] ): ( Set[HOLClause], ( ResolutionProof ) => ResolutionProof ) = {
-    val helper = new PredicateReductionHelper( problem flatMap { constants( _ ) } )
+    val helper = new PredicateReductionHelper( problem flatMap { constants.nonLogical( _ ) } )
     ( helper forward problem, helper.back )
   }
 }
@@ -430,7 +430,7 @@ case object PredicateReductionCNF extends Reduction_[Set[HOLClause], ResolutionP
  */
 case object PredicateReductionET extends Reduction_[HOLSequent, ExpansionProof] {
   override def forward( problem: HOLSequent ): ( HOLSequent, ( ExpansionProof ) => ExpansionProof ) = {
-    val helper = new PredicateReductionHelper( constants( problem ) )
+    val helper = new PredicateReductionHelper( constants.nonLogical( problem ) )
     ( helper.forward( problem ), helper.back( _, problem ) )
   }
 }
@@ -547,7 +547,7 @@ private class LambdaEliminationReductionHelper( constants: Set[Const], lambdas: 
 case class LambdaEliminationReduction( extraAxioms: Boolean = true ) extends OneWayReduction_[HOLSequent] {
   override def forward( problem: HOLSequent ) = {
     val lambdas = atoms( problem ).flatMap { subTerms( _ ) }.collect { case a: Abs => a }.toSet
-    val helper = new LambdaEliminationReductionHelper( constants( problem ), lambdas, extraAxioms )
+    val helper = new LambdaEliminationReductionHelper( constants.nonLogical( problem ), lambdas, extraAxioms )
     ( helper.forward( problem ), _ => throw new UnsupportedOperationException )
   }
 }
@@ -558,7 +558,7 @@ case class LambdaEliminationReduction( extraAxioms: Boolean = true ) extends One
 case class LambdaEliminationReductionET( extraAxioms: Boolean = true ) extends Reduction_[HOLSequent, ExpansionProof] {
   override def forward( problem: HOLSequent ): ( HOLSequent, ( ExpansionProof ) => ExpansionProof ) = {
     val lambdas = atoms( problem ).flatMap { subTerms( _ ) }.collect { case a: Abs => a }
-    val helper = new LambdaEliminationReductionHelper( constants( problem ), lambdas, extraAxioms )
+    val helper = new LambdaEliminationReductionHelper( constants.nonLogical( problem ), lambdas, extraAxioms )
     ( helper.forward( problem ), helper.back( _ ) )
   }
 }
@@ -569,7 +569,7 @@ case class LambdaEliminationReductionET( extraAxioms: Boolean = true ) extends R
 case class LambdaEliminationReductionRes( extraAxioms: Boolean = true ) extends Reduction_[HOLSequent, ResolutionProof] {
   override def forward( problem: HOLSequent ): ( HOLSequent, ( ResolutionProof ) => ResolutionProof ) = {
     val lambdas = atoms( problem ).flatMap { subTerms( _ ) }.collect { case a: Abs => a }
-    val helper = new LambdaEliminationReductionHelper( constants( problem ), lambdas, extraAxioms )
+    val helper = new LambdaEliminationReductionHelper( constants.nonLogical( problem ), lambdas, extraAxioms )
     ( helper.forward( problem ), helper.back( _ ) )
   }
 }
@@ -580,7 +580,7 @@ case class LambdaEliminationReductionRes( extraAxioms: Boolean = true ) extends 
 case class LambdaEliminationReductionCNFRes( extraAxioms: Boolean = true ) extends Reduction_[Set[HOLSequent], ResolutionProof] {
   override def forward( problem: Set[HOLSequent] ): ( Set[HOLSequent], ( ResolutionProof ) => ResolutionProof ) = {
     val lambdas = problem.flatMap( atoms( _ ) ).flatMap { subTerms( _ ) }.collect { case a: Abs => a }
-    val helper = new LambdaEliminationReductionHelper( problem.flatMap( constants( _ ) ), lambdas, extraAxioms )
+    val helper = new LambdaEliminationReductionHelper( problem.flatMap( constants.nonLogical( _ ) ), lambdas, extraAxioms )
     ( helper.forward( problem ), helper.back )
   }
 }
@@ -809,7 +809,7 @@ case object CNFReductionSequentsResRes extends Reduction[Set[HOLSequent], Set[HO
  */
 case object GroundingReductionET extends Reduction_[HOLSequent, ExpansionProof] {
   override def forward( problem: HOLSequent ): ( HOLSequent, ( ExpansionProof ) => ExpansionProof ) = {
-    val nameGen = rename.awayFrom( constants( problem ) )
+    val nameGen = rename.awayFrom( constants.nonLogical( problem ) )
     val subst = for ( v @ Var( name, ty ) <- freeVariables( problem ) ) yield v -> Const( nameGen fresh name, ty )
     ( Substitution( subst )( problem ), exp => {
       require( exp.eigenVariables intersect subst.map( _._1 ) isEmpty )

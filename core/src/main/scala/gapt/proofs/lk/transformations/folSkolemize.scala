@@ -81,7 +81,7 @@ object folSkolemize {
   }
 
   def apply( formula: Formula, pol: Polarity ): Formula =
-    apply( formula, pol, Seq(), new SkolemSymbolFactory( constants( formula ) ).getSkolemSymbols )
+    apply( formula, pol, Seq(), new SkolemSymbolFactory( constants.nonLogical( formula ) ).getSkolemSymbols )
 
   def apply( formula: Formula ): Formula =
     apply( formula, Polarity.InSuccedent )
@@ -99,7 +99,7 @@ object folSkolemize {
     }
 
   def apply( proof: LKProof ): LKProof = {
-    val factory = new SkolemSymbolFactory( proof.subProofs flatMap { _.conclusion.elements } flatMap { constants( _ ) } )
+    val factory = new SkolemSymbolFactory( proof.subProofs flatMap { _.conclusion.elements } flatMap { constants.nonLogical( _ ) } )
     val contextAndSymbols = proof.endSequent.map { _ => Some( Seq() -> factory.getSkolemSymbols ) }
     cleanStructuralRules( apply( proof, contextAndSymbols ) )
   }

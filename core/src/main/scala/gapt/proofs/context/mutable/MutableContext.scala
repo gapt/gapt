@@ -87,7 +87,7 @@ object MutableContext {
     def add( c: Const ): Unit =
       if ( ctx.constant( c.name ).isEmpty ) defs.get( c ) match {
         case Some( d ) =>
-          constants( d ).foreach( add )
+          constants.nonLogical( d ).foreach( add )
           ctx += Definition( c, d )
         case None =>
           ctx += c

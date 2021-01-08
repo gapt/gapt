@@ -20,7 +20,7 @@ object dumpTermset extends App {
 
   def simplifyNames( termset: Set[FOLTerm] ): Set[FOLTerm] = {
     val renaming: Map[Expr, Expr] =
-      ( constants( termset ).toSeq ++ freeVariables( termset ).toSeq ).sortBy( _.toString ).
+      ( constants.nonLogical( termset ).toSeq ++ freeVariables( termset ).toSeq ).sortBy( _.toString ).
         zipWithIndex.map { case ( c, i ) => c -> Const( s"f$i", c.ty ) }.
         toMap
     termset.map( TermReplacement( _, renaming ).asInstanceOf[FOLTerm] )

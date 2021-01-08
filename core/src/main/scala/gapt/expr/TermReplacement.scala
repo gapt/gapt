@@ -51,7 +51,7 @@ trait ReplaceableInstances0 {
       }
 
     def names( term: Expr ): Set[VarOrConst] =
-      constants( term ).toSet[VarOrConst] union variables( term ).toSet
+      constants.nonLogical( term ).toSet[VarOrConst] union variables( term ).toSet
   }
 
   implicit object structReplaceable extends ClosedUnderReplacement[Struct] {
@@ -66,8 +66,8 @@ trait ReplaceableInstances0 {
       }
     def names( st: Struct ): Set[VarOrConst] =
       st match {
-        case A( x )        => constants( x ).toSet[VarOrConst] union variables( x ).toSet
-        case CLS( x, y )   => constants( x ).toSet[VarOrConst] union variables( x ).toSet
+        case A( x )        => constants.nonLogical( x ).toSet[VarOrConst] union variables( x ).toSet
+        case CLS( x, y )   => constants.nonLogical( x ).toSet[VarOrConst] union variables( x ).toSet
         case Dual( x )     => names( x )
         case Times( x, y ) => names( x ) union names( y )
         case Plus( x, y )  => names( x ) union names( y )

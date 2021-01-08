@@ -67,7 +67,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
          |end_of_list.
        """.stripMargin
 
-      val consts = cnf.view.flatMap( constants( _ ) ).toSet
+      val consts = cnf.view.flatMap( constants.nonLogical( _ ) ).toSet
       val list_of_symbols = {
         val buf = new StringBuilder
         buf append "list_of_symbols.\n"

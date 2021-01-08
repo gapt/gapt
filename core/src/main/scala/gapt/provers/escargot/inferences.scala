@@ -189,7 +189,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       else {
         expand( given.proof )
 
-        val consts = constants( cnf.map( _.conclusion.elements ).flatMap( constants( _ ) ).
+        val consts = constants.nonLogical( cnf.map( _.conclusion.elements ).flatMap( constants.nonLogical( _ ) ).
           filter( _.name != "=" ) ).map( _.name )
         state.termOrdering match {
           case LPO( precedence, typeOrder ) =>

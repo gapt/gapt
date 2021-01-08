@@ -42,7 +42,7 @@ case class InductionGrammar(
     Vector( List( tau ), List( alpha ), gamma ) ++ nus.values
 
   def terminals: Set[Const] =
-    nus.keySet ++ constants( productions.flatMap( _.rhs ) )
+    nus.keySet ++ constants.nonLogical( productions.flatMap( _.rhs ) )
 
   def indTy: Ty =
     alpha.ty

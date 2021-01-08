@@ -88,7 +88,7 @@ case class RecursionScheme( startSymbol: Const, nonTerminals: Set[Const], rules:
   }
 
   def terminals: Set[Const] =
-    rules flatMap { case Rule( lhs, rhs ) => constants( lhs ) union constants( rhs ) } diff nonTerminals
+    rules flatMap { case Rule( lhs, rhs ) => constants.nonLogical( lhs ) union constants.nonLogical( rhs ) } diff nonTerminals
 
   def babelSignature = MapBabelSignature( terminals union nonTerminals )
 
@@ -249,7 +249,7 @@ object minimizeRecursionScheme {
              solver:       MaxSATSolver      = bestAvailableMaxSatSolver,
              weight:       Rule => Int = _ => 1 ) = {
     val fvs = freeVariables( targets.map( _._1 ) ) union freeVariables( targets.map( _._2 ) )
-    val nameGen = rename.awayFrom( constants( targets.map( _._1 ) ) union constants( targets.map( _._2 ) ) )
+    val nameGen = rename.awayFrom( constants.nonLogical( targets.map( _._1 ) ) union constants.nonLogical( targets.map( _._2 ) ) )
     val grounding = Substitution( for ( v @ Var( name, ty ) <- fvs ) yield v -> Const( nameGen fresh name, ty ) )
     val targets_ = grounding( targets.toSet )
 
@@ -267,7 +267,7 @@ object minimizeRecursionScheme {
                solver:       MaxSATSolver      = bestAvailableMaxSatSolver,
                weight:       Rule => Int = _ => 1 ) = {
     val fvs = freeVariables( targets.map( _._1 ) ) union freeVariables( targets.map( _._2 ) )
-    val nameGen = rename.awayFrom( constants( targets.map( _._1 ) ) union constants( targets.map( _._2 ) ) )
+    val nameGen = rename.awayFrom( constants.nonLogical( targets.map( _._1 ) ) union constants.nonLogical( targets.map( _._2 ) ) )
     val grounding = Substitution( for ( v @ Var( name, ty ) <- fvs ) yield v -> Const( nameGen fresh name, ty ) )
     val targets_ = grounding( targets.toSet )
 
@@ -408,7 +408,7 @@ case class RecSchemTemplate( startSymbol: Const, template: Set[( Expr, Expr )] )
             val bIdx = canonicalArgs( to ).indexOf( b )
             require( aIdx >= 0 && bIdx >= 0 )
             ( x, y ) => ( expressionSize( y( bIdx ) ) <= expressionSize( x( aIdx ) ) + 1 ) &&
-              constants( y( bIdx ) ).subsetOf( constants( x( aIdx ) ) )
+              constants.nonLogical( y( bIdx ) ).subsetOf( constants.nonLogical( x( aIdx ) ) )
         }
         ( from -> to ) -> mkEval( constr )
     }
@@ -494,7 +494,7 @@ object RecSchemTemplate {
 object recSchemToVTRATG {
   def orderedNonTerminals( rs: RecursionScheme ): Seq[Const] = {
     val ntDeps = rs.nonTerminals map { nt =>
-      nt -> ( rs rulesFrom nt map { _.rhs } flatMap { constants( _ ) } intersect rs.nonTerminals )
+      nt -> ( rs rulesFrom nt map { _.rhs } flatMap { constants.nonLogical( _ ) } intersect rs.nonTerminals )
     } toMap
 
     var nts = Seq[Const]()

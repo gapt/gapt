@@ -26,7 +26,7 @@ case class SkolemFunctions( skolemDefs: Map[Const, Expr] ) {
       skolemDefs.keySet,
       for {
         ( s, d ) <- skolemDefs
-        s_ <- constants( d )
+        s_ <- constants.nonLogical( d )
         if skolemDefs contains s_
       } yield s -> s_ ) match {
         case Right( depOrder ) => depOrder

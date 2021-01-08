@@ -40,7 +40,7 @@ class SmtInterpol(
   override def getInterpolant( tree: Tree[Formula] )( implicit ctx: Maybe[Context] ): Option[Tree[Formula]] = {
     val fvs = freeVariables( tree.postOrder )
     if ( fvs.nonEmpty ) return {
-      val groundingMap = groundFreeVariables.getGroundingMap( fvs, constants( tree.postOrder ) )
+      val groundingMap = groundFreeVariables.getGroundingMap( fvs, constants.nonLogical( tree.postOrder ) )
       TermReplacement.undoGrounding(
         getInterpolant( groundingMap( tree ) ),
         groundingMap )

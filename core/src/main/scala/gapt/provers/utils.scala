@@ -77,7 +77,7 @@ object groundFreeVariables {
   }
 
   def getGroundingMap( seq: HOLSequent ): Substitution =
-    getGroundingMap( freeVariables( seq ), constants( seq ) )
+    getGroundingMap( freeVariables( seq ), constants.nonLogical( seq ) )
 
   def apply( seq: HOLSequent ): ( HOLSequent, Substitution ) = {
     val groundingMap = getGroundingMap( seq )
@@ -91,7 +91,7 @@ object groundFreeVariables {
 
   def wrapWithConsts[T: ClosedUnderReplacement]( seq: HOLSequent )( f: ( HOLSequent, Set[Const] ) => Option[T] ): Option[T] = {
     val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
-    f( renamedSeq, constants( invertRenaming.range ) ).map( TermReplacement.undoGrounding( _, invertRenaming ) )
+    f( renamedSeq, constants.nonLogical( invertRenaming.range ) ).map( TermReplacement.undoGrounding( _, invertRenaming ) )
   }
 
   def wrap[T: ClosedUnderReplacement]( seq: HOLSequent )( f: HOLSequent => Option[T] ): Option[T] = {

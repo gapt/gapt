@@ -110,7 +110,7 @@ object groundTerms {
  * capture the instances used in the instance proofs--i.e. not alpha.
  */
 class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTermType: Ty ) {
-  private val nameGen = rename.awayFrom( constants( endSequent ) )
+  private val nameGen = rename.awayFrom( constants.nonLogical( endSequent ) )
 
   endSequent.elements foreach { formula =>
     require( isInVNF( formula ), s"$formula is not in variable normal form" )

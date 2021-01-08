@@ -27,7 +27,7 @@ import gapt.utils.Maybe
 
 object Escargot extends Escargot( splitting = true, equality = true, propositional = false ) {
   def lpoHeuristic( cnf: Iterable[HOLSequent], extraConsts: Iterable[Const] ): LPO = {
-    val consts = constants( cnf flatMap { _.elements } ) ++ extraConsts
+    val consts = constants.nonLogical( cnf flatMap { _.elements } ) ++ extraConsts
 
     val boolOnTermLevel = consts exists { case Const( _, FunctionType( _, from ), _ ) => from contains To }
     val types = consts flatMap { c => baseTypes( c.ty ) }
@@ -125,7 +125,7 @@ class Escargot( splitting: Boolean, equality: Boolean, propositional: Boolean ) 
 
     val state = new EscargotState( ctx )
     Escargot.setupDefaults( state, splitting, hasEquality, isPropositional )
-    state.nameGen = rename.awayFrom( ctx.constants.toSet ++ cnf.view.flatMap( constants( _ ) ) )
+    state.nameGen = rename.awayFrom( ctx.constants.toSet ++ cnf.view.flatMap( constants.nonLogical( _ ) ) )
     state.termOrdering = Escargot.lpoHeuristic( cnf, ctx.constants )
     state.newlyDerived ++= cnf.map {
       state.InputCls
