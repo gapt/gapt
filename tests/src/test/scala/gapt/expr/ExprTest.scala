@@ -6,8 +6,10 @@ import gapt.expr.formula.Bottom
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Top
 import gapt.expr.formula.constants.AndC
+import gapt.expr.formula.constants.EqC
 import gapt.expr.formula.constants.ForallC
 import gapt.expr.formula.constants.LogicalConstant
+import gapt.expr.formula.constants.OrC
 import gapt.expr.formula.constants.TopC
 import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.fol.FOLConst
@@ -25,6 +27,7 @@ import gapt.expr.ty.To
 import gapt.expr.util.constants
 import gapt.expr.util.freeVariables
 import gapt.expr.util.variables
+import gapt.proofs.Sequent
 import org.specs2.mutable._
 
 class ExprTest extends Specification {
@@ -117,6 +120,26 @@ class ExprTest extends Specification {
   }
 
   "constants" should {
+    "all" should {
+      "return all the occurring constants" in {
+        constants.all( hof"#c(A : o) & #v( B: o) | #v(x : i) = x | ! x #v( X : i > o)(x)" ) must_==
+          Set( OrC(), AndC(), ForallC( Ti ), EqC( Ti ), hoc"A : o" )
+      }
+    }
+    "equalities" should {
+      "return all equality constants and only equality constants" in {
+        constants.equalities( le"#v(x : i) = #c(y :i) & #c(f: i > i) = #v(g: i > i)" ) must_==
+          Set( EqC( Ti ), EqC( Ti ->: Ti ) )
+      }
+    }
+    "return all non-logical constants in iterable" in {
+      val es = Seq( le"#c(P : i > o)( #v(x : i) )", le"&", le"#c( c : i )" )
+      constants.nonLogical( es ) must_== Set( hoc"P : i > o", hoc"c : i" )
+    }
+    "return all non-logical constants in sequent" in {
+      val s = Sequent( Seq( hof"#c(P : i > o)( #v(x : i) )", le"|" ), Seq( hof"#c(A : o) & ! x #v( B : i > o )(x)" ) )
+      constants.nonLogical( s ) must_== Set( hoc"P : i > o", hoc"A : o" )
+    }
     "not return logic constants" in {
       val x = Var( "x", To )
 

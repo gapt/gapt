@@ -18,6 +18,7 @@ import gapt.expr.formula.Formula
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
+import gapt.expr.formula.constants.EqC
 import gapt.expr.formula.constants.LogicalConstant
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLExpression
@@ -182,7 +183,7 @@ object typeVariables {
 
 object constants {
   /**
-   * Find all constants in the expression
+   * Returns all constants occurring in the given expression.
    */
   def all( expression: Expr ): Set[Const] = {
     val cs = mutable.Set[Const]()
@@ -198,25 +199,31 @@ object constants {
   }
 
   /**
-   * Find all equality constants in the expression
+   * Returns all equality constants in the given expression.
    */
   def equalities( expression: Expr ): Set[Const] =
-    all( expression ).filter {
-      case Const( "=", t1 ->: t2 ->: To, _ ) => t1 == t2 //type arguments must agree
-      case _                                 => false
-    }
+    all( expression ).collect { case e @ EqC( _ ) => e }
 
-  /**
-   * Returns the set of non-logical constants occurring in the given expression.
-   */
   object nonLogical {
 
+    /**
+     * Returns the set of non-logical constants occurring in the given expression.
+     */
     def apply( expression: Expr ): Set[Const] =
       all( expression ).filter { !_.isInstanceOf[LogicalConstant] }
 
-    def apply( es: Iterable[Expr] ): Set[Const] = ( es.foldLeft( Set.empty[Const] ) ) { ( acc, e ) => acc union apply( e ) }
+    /**
+     * Returns the set of non-logical constants occurring in the given expressions.
+     */
+    def apply( es: Iterable[Expr] ): Set[Const] =
+      es.flatMap( nonLogical( _ ) ).toSet
 
-    def apply( s: HOLSequent ): Set[Const] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Const]() )( ( x, y ) => x ++ apply( y ) )
+    /**
+     * Returns the set of non-logical constants occurring in the given sequent.
+     */
+    def apply[T <: Expr]( s: Sequent[T] ): Set[Const] = {
+      nonLogical( s.antecedent ++ s.succedent )
+    }
   }
 }
 
