@@ -194,7 +194,7 @@ object constants {
       case c: Const => cs += c
       case App( exp, arg ) =>
         f( exp ); f( arg )
-      case Abs( v, exp ) => f( exp )
+      case Abs( _, exp ) => f( exp )
     }
     f( expression )
     cs.toSet
