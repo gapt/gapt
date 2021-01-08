@@ -116,11 +116,12 @@ class ExprTest extends Specification {
     }
   }
 
-  "constants" should {
-    "not return logic constants" in {
-      val x = Var( "x", To )
-
-      constants.nonLogical( Ex( x, All( x, ( x | Top() | Bottom() ) --> ( x & -x ) ) ) ) must_== Set()
+  "constants" in {
+    "non-logical" should {
+      "not return logic constants" in {
+        val x = Var( "x", To )
+        constants.nonLogical( Ex( x, All( x, ( x | x === x | Top() | Bottom() ) --> ( x & -x ) ) ) ) must_== Set()
+      }
     }
   }
 }
