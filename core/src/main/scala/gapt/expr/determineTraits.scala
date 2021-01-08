@@ -4,6 +4,7 @@ import gapt.expr.formula.Atom
 import gapt.expr.formula.Formula
 import gapt.expr.formula.constants.AndC
 import gapt.expr.formula.constants.BottomC
+import gapt.expr.formula.constants.EqC
 import gapt.expr.formula.constants.ExistsC
 import gapt.expr.formula.constants.ForallC
 import gapt.expr.formula.constants.ImpC
@@ -69,12 +70,23 @@ private[expr] object determineTraits {
   private class Const_with_FOLFunctionConst( s: String, t: Ty, ps: List[Ty], override val numberOfArguments: Int ) extends Const( s, t, ps ) with FOLFunctionConst
   private class Const_with_FOLAtomConst( s: String, t: Ty, ps: List[Ty], override val numberOfArguments: Int ) extends Const( s, t, ps ) with FOLAtomConst
   private class Const_with_HOLAtomConst( s: String, t: Ty, ps: List[Ty], override val numberOfArguments: Int ) extends Const( s, t, ps ) with HOLAtomConst
+
+  private class Const_with_FOLAtomConst_with_LogicalConstant(
+      s: String, t: Ty, ps: List[Ty], override val numberOfArguments: Int )
+    extends Const( s, t, ps ) with FOLAtomConst with LogicalConstant
+
+  private class Const_with_HOLAtomConst_with_LogicalConstant(
+      s: String, t: Ty, ps: List[Ty], override val numberOfArguments: Int )
+    extends Const( s, t, ps ) with HOLAtomConst with LogicalConstant
+
   def forConst( sym: String, exptype: Ty, ps: List[Ty] ): Const = ( sym, exptype, ps ) match {
     case ForallC( Ti ) | ExistsC( Ti )    => new Const_with_FOLQuantifier( sym, exptype, ps )
     case ForallC( _ ) | ExistsC( _ )      => new Const_with_LogicalConstant( sym, exptype, ps )
     case AndC() | OrC() | ImpC()          => new Const_with_PropConnective( sym, exptype, ps, 2 )
     case NegC()                           => new Const_with_PropConnective( sym, exptype, ps, 1 )
     case TopC() | BottomC()               => new Const_with_PropConnective_with_PropFormula( sym, exptype, ps )
+    case EqC( Ti )                        => new Const_with_FOLAtomConst_with_LogicalConstant( sym, exptype, ps, 2 )
+    case EqC( _ )                         => new Const_with_HOLAtomConst_with_LogicalConstant( sym, exptype, ps, 2 )
     case ( _, Ti, _ )                     => new Const_with_FOLConst( sym, exptype, ps )
     case ( _, To, _ )                     => new Const_with_PropAtom( sym, exptype, ps )
     case ( _, FOLHeadType( To, n ), _ )   => new Const_with_FOLAtomConst( sym, exptype, ps, n )

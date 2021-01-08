@@ -650,7 +650,7 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
     case And( g, h )           => And( reduce( g ), reduce( h ) )
     case Or( g, h )            => Or( reduce( g ), reduce( h ) )
     case Imp( g, h )           => Imp( reduce( g ), reduce( h ) )
-
+    case Eq( l, r )            => Eq( reduce( l ), reduce( r ) )
     case Var( n, t )           => Var( n, reduceArgTy( t ) )
     case Apps( f: Const, args ) if partiallyAppedTypes.contains( e.ty ) =>
       val Some( ( p, _, _ ) ) = partialApplicationFuns find { paf => paf._2 == f && paf._3 == e.ty }
