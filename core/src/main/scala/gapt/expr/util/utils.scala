@@ -181,7 +181,7 @@ object typeVariables {
 }
 
 /**
- * Returns the set of non-logical constants occuring in the given argument.
+ * Returns the set of non-logical constants occurring in the given argument.
  */
 object constants {
   /**
