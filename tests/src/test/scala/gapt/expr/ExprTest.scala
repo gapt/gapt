@@ -84,8 +84,6 @@ class ExprTest extends Specification {
 
   "FOL helpers" should {
     "have correct static types" in {
-      val a: FOLTerm = FOLFunction( "f", FOLVar( "x" ), FOLFunction( "c" ) )
-      val b: FOLFormula = FOLAtom( "R", FOLVar( "x" ), FOLFunction( "c" ) )
       val c: FOLFormula = And( FOLAtom( "R" ), FOLAtom( "P" ) )
       val d: FOLFormula = All( FOLVar( "x" ), FOLAtom( "R", FOLVar( "x" ) ) )
       val e: FOLFormula = Top()
