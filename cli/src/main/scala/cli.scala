@@ -8,7 +8,7 @@ package object cli {
     |*    Welcome to the GAPT shell!     *
     |*************************************
     |
-    |Copyright (C) 2009-2020  GAPT developers
+    |Copyright (C) 2009-2021  GAPT developers
     |
     |This program comes with ABSOLUTELY NO WARRANTY. This is free
     |software, and you are welcome to redistribute it under certain
