@@ -24,7 +24,7 @@ object Atom {
     Apps( head, args ).asInstanceOf[Atom]
 
   def unapply( e: Atom ): Option[( Expr, List[Expr] )] = e match {
-    case Apps( head @ ( NonLogicalConstant( _, _, _ ) | Var( _, _ ) ), args ) if e.ty == To => Some( head, args )
+    case Apps( head @ ( Const( _, _, _ ) | Var( _, _ ) ), args ) if e.ty == To => Some( head, args )
     case _ => None
   }
 }

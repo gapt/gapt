@@ -138,10 +138,13 @@ class ExprTest extends Specification {
       val s = Sequent( Seq( hof"#c(P : i > o)( #v(x : i) )", le"|" ), Seq( hof"#c(A : o) & ! x #v( B : i > o )(x)" ) )
       constants.nonLogical( s ) must_== Set( hoc"P : i > o", hoc"A : o" )
     }
-    "not return logic constants" in {
-      val x = Var( "x", To )
-
-      constants.nonLogical( Ex( x, All( x, ( x | Top() | Bottom() ) --> ( x & -x ) ) ) ) must_== Set()
+    "constants" in {
+      "non-logical" should {
+        "not return logic constants" in {
+          val x = Var( "x", To )
+          constants.nonLogical( Ex( x, All( x, ( x | x === x | Top() | Bottom() ) --> ( x & -x ) ) ) ) must_== Set()
+        }
+      }
     }
   }
 }
