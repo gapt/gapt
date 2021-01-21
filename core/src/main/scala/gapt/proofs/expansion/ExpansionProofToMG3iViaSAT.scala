@@ -35,7 +35,6 @@ import gapt.utils.quiet
 import org.sat4j.core.VecInt
 import org.sat4j.minisat.SolverFactory
 import org.sat4j.specs._
-import org.sat4j.tools.SearchListenerAdapter
 
 import scala.annotation.tailrec
 import scala.collection.mutable

@@ -183,8 +183,8 @@ lazy val core = project.in( file( "core" ) ).
       "com.lihaoyi" %% "ammonite-ops" % "2.3.8",
       "de.uni-freiburg.informatik.ultimate" % "smtinterpol" % "2.5",
       "com.github.scopt" %% "scopt" % "4.0.0",
-      "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
-      "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5" ),
+      "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.6",
+      "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.6" ),
 
     // UI
     libraryDependencies ++= Seq(

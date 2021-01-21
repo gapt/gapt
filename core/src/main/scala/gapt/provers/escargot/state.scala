@@ -17,7 +17,7 @@ import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.rup.RupProof
 import gapt.provers.viper.aip.axioms.Axiom
 import org.sat4j.specs.{ ContradictionException, IConstr, ISolverService }
-import org.sat4j.tools.SearchListenerAdapter
+import org.sat4j.specs.SearchListenerAdapter
 import cats.implicits._
 
 object EscargotLogger extends Logger( "escargot" ); import EscargotLogger._
