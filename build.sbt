@@ -43,7 +43,7 @@ lazy val scalariformSettings =
     .setPreference( DoubleIndentConstructorArguments, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "4.10.3"
+val specs2Version = "4.10.6"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   javaOptions in Test += "-Xmx2g",
@@ -171,29 +171,29 @@ lazy val core = project.in( file( "core" ) ).
     scalacOptions in Compile += "-Xfatal-warnings",
 
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0",
+      "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.0",
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "org.parboiled" %% "parboiled" % "2.2.0",
+      "org.parboiled" %% "parboiled" % "2.2.1",
       "com.lihaoyi" %% "fastparse" % "2.3.0",
       "com.lihaoyi" %% "sourcecode" % "0.2.1",
-      "org.typelevel" %% "cats-free" % "2.1.1",
+      "org.typelevel" %% "cats-free" % "2.3.1",
       "org.scala-lang.modules" %% "scala-xml" % "1.3.0",
       "org.apache.commons" % "commons-lang3" % "3.11",
-      "com.lihaoyi" %% "ammonite-ops" % "2.2.0",
+      "com.lihaoyi" %% "ammonite-ops" % "2.3.8",
       "de.uni-freiburg.informatik.ultimate" % "smtinterpol" % "2.5",
-      "com.github.scopt" %% "scopt" % "3.7.1",
+      "com.github.scopt" %% "scopt" % "4.0.0",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5" ),
 
     // UI
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-swing" % "2.1.1",
-      "com.itextpdf" % "itextpdf" % "5.5.13.1",
+      "com.itextpdf" % "itextpdf" % "5.5.13.2",
       "org.scilab.forge" % "jlatexmath" % "1.0.7" ),
 
     // JSON serialization
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.9",
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.10",
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
