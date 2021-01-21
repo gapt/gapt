@@ -1728,13 +1728,10 @@ val problem: gapt.proofs.HOLSequent = ∀x ∀y (x:a) = (y:a), ∀x f(f(x:b): b)
 
 gapt> val (firstOrderProblem, back) = reduction forward problem
 val firstOrderProblem: gapt.proofs.HOLSequent =
-∀x0 ∀x1 (P_is_a(x0) ∧ P_is_a(x1) → P_is_o('f_='(x0, x1))),
 ∀x0 (P_is_b(x0) → P_is_b(f_f(x0))),
-∀x0 ∀x1 (P_is_b(x0) ∧ P_is_b(x1) → P_is_o('f_='(x0, x1))),
 ⊤ → P_is_b(f_c),
-P_is_o(f_nonempty_o),
-P_is_a(f_nonempty_a),
 P_is_b(f_nonempty_b),
+P_is_a(f_nonempty_a),
 ∀x (P_is_a(x) → ∀y (P_is_a(y) → x = y)),
 ∀x (P_is_b(x) → f_f(f_f(x)) = x)
 ⊢

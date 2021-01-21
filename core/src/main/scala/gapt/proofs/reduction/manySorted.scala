@@ -329,21 +329,29 @@ case object ErasureReductionET extends Reduction_[HOLSequent, ExpansionProof] {
   }
 }
 
+/**
+ * Sets up the predicate reduction for first-order multi-sorted languages.
+ *
+ * @param constants The non-logical constants and the equality constants of the language for which
+ *                  the reduction is to be carried out.
+ */
 private class PredicateReductionHelper( constants: Set[Const] ) {
   private val nameGen = rename awayFrom constants
 
   val baseTypes = constants flatMap { case Const( _, FunctionType( ret, args ), _ ) => ret +: args }
-  val predicateForType = baseTypes.map { ty => ty -> HOLAtomConst( nameGen fresh s"is_$ty", ty ) }.toMap
-  val predicates = predicateForType.values.toSet
+  val sorts = baseTypes - To
 
-  val predicateAxioms = constants.map {
-    case c @ Const( _, FunctionType( retType, argTypes ), _ ) =>
+  val predicateForSort = sorts.map { ty => ty -> HOLAtomConst( nameGen fresh s"is_$ty", ty ) }.toMap
+  val predicates = predicateForSort.values.toSet
+
+  val predicateAxioms = constants.collect {
+    case c @ Const( _, FunctionType( retType, argTypes ), _ ) if retType != To =>
       val args = argTypes.zipWithIndex map { case ( t, i ) => Var( s"x$i", t ) }
-      And( args map { a => predicateForType( a.ty )( a ) } ) --> predicateForType( retType )( c( args: _* ) )
+      And( args map { a => predicateForSort( a.ty )( a ) } ) --> predicateForSort( retType )( c( args: _* ) )
   }
 
-  val nonEmptyWitnesses = baseTypes.map { ty => Const( nameGen fresh s"nonempty_$ty", ty ) }
-  val nonEmptyAxioms = nonEmptyWitnesses.map { w => predicateForType( w.ty )( w ) }
+  val nonEmptyWitnesses = sorts.map { ty => Const( nameGen fresh s"nonempty_$ty", ty ) }
+  val nonEmptyAxioms = nonEmptyWitnesses.map { w => predicateForSort( w.ty )( w ) }
 
   val extraAxioms = existentialClosure( predicateAxioms ++: nonEmptyAxioms ++: Sequent() )
   val extraAxiomClauses = CNFn( extraAxioms.toDisjunction )
@@ -354,8 +362,8 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
     case And( f, g )                     => And( guard( f ), guard( g ) )
     case Or( f, g )                      => Or( guard( f ), guard( g ) )
     case Imp( f, g )                     => Imp( guard( f ), guard( g ) )
-    case All( x @ Var( _, t ), f )       => All( x, predicateForType( t )( x ) --> guard( f ) )
-    case Ex( x @ Var( _, t ), f )        => Ex( x, predicateForType( t )( x ) & guard( f ) )
+    case All( x @ Var( _, t ), f )       => All( x, predicateForSort( t )( x ) --> guard( f ) )
+    case Ex( x @ Var( _, t ), f )        => Ex( x, predicateForSort( t )( x ) & guard( f ) )
   }
 
   private def guardAndAddAxioms( sequent: HOLSequent ): HOLSequent =
@@ -419,7 +427,8 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
  */
 case object PredicateReductionCNF extends Reduction_[Set[HOLClause], ResolutionProof] {
   override def forward( problem: Set[HOLClause] ): ( Set[HOLClause], ( ResolutionProof ) => ResolutionProof ) = {
-    val helper = new PredicateReductionHelper( problem flatMap { constants.nonLogical( _ ) } )
+    val helper = new PredicateReductionHelper( problem.flatMap { constants.nonLogical( _ ) } ++
+      problem.flatMap { c => ( c.antecedent ++ c.succedent ).flatMap( constants.equalities( _ ) ) } )
     ( helper forward problem, helper.back )
   }
 }
@@ -430,7 +439,8 @@ case object PredicateReductionCNF extends Reduction_[Set[HOLClause], ResolutionP
  */
 case object PredicateReductionET extends Reduction_[HOLSequent, ExpansionProof] {
   override def forward( problem: HOLSequent ): ( HOLSequent, ( ExpansionProof ) => ExpansionProof ) = {
-    val helper = new PredicateReductionHelper( constants.nonLogical( problem ) )
+    val helper = new PredicateReductionHelper( constants.nonLogical( problem ) ++
+      ( problem.antecedent ++ problem.succedent ).flatMap( constants.equalities ).toSet )
     ( helper.forward( problem ), helper.back( _, problem ) )
   }
 }
