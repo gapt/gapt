@@ -188,7 +188,7 @@ lazy val core = project.in( file( "core" ) ).
 
     // UI
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-swing" % "2.1.1",
+      "org.scala-lang.modules" %% "scala-swing" % "3.0.0",
       "com.itextpdf" % "itextpdf" % "5.5.13.2",
       "org.scilab.forge" % "jlatexmath" % "1.0.7" ),
 

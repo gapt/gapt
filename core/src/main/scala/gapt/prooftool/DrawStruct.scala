@@ -1,5 +1,6 @@
 package gapt.prooftool
 
+import scala.language.reflectiveCalls
 import scala.swing._
 import event._
 import BorderPanel._
