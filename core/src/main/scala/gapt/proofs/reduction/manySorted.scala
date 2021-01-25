@@ -335,10 +335,11 @@ case object ErasureReductionET extends Reduction_[HOLSequent, ExpansionProof] {
  * @param constants The non-logical constants and the equality constants of the language for which
  *                  the reduction is to be carried out.
  */
-private class PredicateReductionHelper( constants: Set[Const] ) {
+case class PredicateTranslation( constants: Set[Const] ) {
+
   private val nameGen = rename awayFrom constants
 
-  val baseTypes = constants flatMap { case Const( _, FunctionType( ret, args ), _ ) => ret +: args }
+  private val baseTypes = constants flatMap { case Const( _, FunctionType( ret, args ), _ ) => ret +: args }
   val sorts = baseTypes - To
 
   val predicateForSort = sorts.map { ty => ty -> HOLAtomConst( nameGen fresh s"is_$ty", ty ) }.toMap
@@ -353,10 +354,7 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
   val nonEmptyWitnesses = sorts.map { ty => Const( nameGen fresh s"nonempty_$ty", ty ) }
   val nonEmptyAxioms = nonEmptyWitnesses.map { w => predicateForSort( w.ty )( w ) }
 
-  val extraAxioms = existentialClosure( predicateAxioms ++: nonEmptyAxioms ++: Sequent() )
-  val extraAxiomClauses = CNFn( extraAxioms.toDisjunction )
-
-  private def guard( formula: Formula ): Formula = formula match {
+  def guard( formula: Formula ): Formula = formula match {
     case Top() | Bottom() | Atom( _, _ ) => formula
     case Neg( f )                        => Neg( guard( f ) )
     case And( f, g )                     => And( guard( f ), guard( g ) )
@@ -365,26 +363,6 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
     case All( x @ Var( _, t ), f )       => All( x, predicateForSort( t )( x ) --> guard( f ) )
     case Ex( x @ Var( _, t ), f )        => Ex( x, predicateForSort( t )( x ) & guard( f ) )
   }
-
-  private def guardAndAddAxioms( sequent: HOLSequent ): HOLSequent =
-    extraAxioms ++ sequent.map( guard )
-
-  def forward( sequent: HOLSequent ): HOLSequent =
-    guardAndAddAxioms( sequent )
-
-  def forward( cnf: Set[HOLClause] ): Set[HOLClause] =
-    extraAxiomClauses union cnf.map( forward )
-  def forward( clause: HOLClause )( implicit dummyImplicit: DummyImplicit ): HOLClause =
-    CNFp( guard( universalClosure( clause.toImplication ) ) ).head
-
-  def back( proof: ResolutionProof ): ResolutionProof =
-    mapInputClauses( proof ) { cls =>
-      val clauseWithoutPredicates = cls filterNot { case Apps( c: HOLAtomConst, _ ) => predicates contains c }
-      if ( clauseWithoutPredicates.nonEmpty )
-        Input( clauseWithoutPredicates )
-      else
-        Input( cls )
-    }
 
   def unguard( formula: Formula ): Formula = formula match {
     case Top() | Bottom() | Atom( _, _ ) => formula
@@ -395,30 +373,6 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
     case All( x, Imp( grd, f ) )         => All( x, unguard( f ) )
     case Ex( x, And( grd, f ) )          => Ex( x, unguard( f ) )
   }
-  def unguard( et: ExpansionTree ): ExpansionTree = et match {
-    case ETMerge( a, b )            => ETMerge( unguard( a ), unguard( b ) )
-    case ETWeakening( f, pol )      => ETWeakening( unguard( f ), pol )
-    case ETAtom( _, _ )             => et
-    case ETTop( _ ) | ETBottom( _ ) => et
-    case ETNeg( a )                 => ETNeg( unguard( a ) )
-    case ETAnd( a, b )              => ETAnd( unguard( a ), unguard( b ) )
-    case ETOr( a, b )               => ETOr( unguard( a ), unguard( b ) )
-    case ETImp( a, b )              => ETImp( unguard( a ), unguard( b ) )
-    case ETWeakQuantifier( shallow, insts ) =>
-      ETWeakQuantifier(
-        unguard( shallow ),
-        insts map {
-          case ( t, ETImp( _, inst ) ) if et.polarity.inAnt => t -> unguard( inst )
-          case ( t, ETAnd( _, inst ) ) if et.polarity.inSuc => t -> unguard( inst )
-        } )
-    case ETDefinition( _, _ ) | ETSkolemQuantifier( _, _, _ ) | ETStrongQuantifier( _, _, _ ) => throw new IllegalArgumentException
-  }
-
-  def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof =
-    ExpansionProof( expansionProof.expansionSequent.zipWithIndex collect {
-      case ( et, i ) if !extraAxioms.contains( et.shallow, i.polarity ) =>
-        unguard( et )
-    } )
 }
 
 /**
@@ -426,10 +380,38 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
  * predicates for each of the sorts.  The resulting problem is still many-sorted.
  */
 case object PredicateReductionCNF extends Reduction_[Set[HOLClause], ResolutionProof] {
+
   override def forward( problem: Set[HOLClause] ): ( Set[HOLClause], ( ResolutionProof ) => ResolutionProof ) = {
-    val helper = new PredicateReductionHelper( problem.flatMap { constants.nonLogical( _ ) } ++
-      problem.flatMap { c => ( c.antecedent ++ c.succedent ).flatMap( constants.equalities( _ ) ) } )
-    ( helper forward problem, helper.back )
+    val ctx = problem.flatMap { constants.nonLogical( _ ) } ++
+      problem.flatMap { c => ( c.antecedent ++ c.succedent ).flatMap( constants.equalities( _ ) ) }
+
+    val predicateTranslation = PredicateTranslation( ctx )
+
+    import predicateTranslation.{ guard => guardFormula }
+    import predicateTranslation.predicates
+
+    val extraAxioms = existentialClosure(
+      predicateTranslation.predicateAxioms ++:
+        predicateTranslation.nonEmptyAxioms ++: Sequent() )
+
+    val extraAxiomClauses = CNFn( extraAxioms.toDisjunction )
+
+    def guardClause( clause: HOLClause )( implicit dummyImplicit: DummyImplicit ): HOLClause =
+      CNFp( guardFormula( universalClosure( clause.toImplication ) ) ).head
+
+    def guardClauses( cnf: Set[HOLClause] ): Set[HOLClause] =
+      extraAxiomClauses union cnf.map( guardClause )
+
+    def back( proof: ResolutionProof ): ResolutionProof =
+      mapInputClauses( proof ) { cls =>
+        val clauseWithoutPredicates = cls filterNot { case Apps( c: HOLAtomConst, _ ) => predicates contains c }
+        if ( clauseWithoutPredicates.nonEmpty )
+          Input( clauseWithoutPredicates )
+        else
+          Input( cls )
+      }
+
+    ( guardClauses( problem ), back )
   }
 }
 
@@ -439,10 +421,51 @@ case object PredicateReductionCNF extends Reduction_[Set[HOLClause], ResolutionP
  */
 case object PredicateReductionET extends Reduction_[HOLSequent, ExpansionProof] {
   override def forward( problem: HOLSequent ): ( HOLSequent, ( ExpansionProof ) => ExpansionProof ) = {
-    val helper = new PredicateReductionHelper( constants.nonLogical( problem ) ++
-      ( problem.antecedent ++ problem.succedent ).flatMap( constants.equalities ).toSet )
-    ( helper.forward( problem ), helper.back( _, problem ) )
+    val cs = constants.nonLogical( problem ) ++
+      ( problem.antecedent ++ problem.succedent ).flatMap( constants.equalities ).toSet
+
+    val predicateTranslation = PredicateTranslation( cs )
+
+    val extraAxioms = existentialClosure(
+      predicateTranslation.predicateAxioms ++:
+        predicateTranslation.nonEmptyAxioms ++: Sequent() )
+
+    def guardAndAddAxioms( sequent: HOLSequent ): HOLSequent =
+      extraAxioms ++ sequent.map( predicateTranslation.guard )
+
+    def forward( sequent: HOLSequent ): HOLSequent =
+      guardAndAddAxioms( sequent )
+
+    def unguard( et: ExpansionTree ): ExpansionTree = et match {
+      case ETMerge( a, b )            => ETMerge( unguard( a ), unguard( b ) )
+      case ETWeakening( f, pol )      => ETWeakening( predicateTranslation.unguard( f ), pol )
+      case ETAtom( _, _ )             => et
+      case ETTop( _ ) | ETBottom( _ ) => et
+      case ETNeg( a )                 => ETNeg( unguard( a ) )
+      case ETAnd( a, b )              => ETAnd( unguard( a ), unguard( b ) )
+      case ETOr( a, b )               => ETOr( unguard( a ), unguard( b ) )
+      case ETImp( a, b )              => ETImp( unguard( a ), unguard( b ) )
+      case ETWeakQuantifier( shallow, insts ) =>
+        ETWeakQuantifier(
+          predicateTranslation.unguard( shallow ),
+          insts map {
+            case ( t, ETImp( _, inst ) ) if et.polarity.inAnt => t -> unguard( inst )
+            case ( t, ETAnd( _, inst ) ) if et.polarity.inSuc => t -> unguard( inst )
+          } )
+      case ETDefinition( _, _ ) |
+        ETSkolemQuantifier( _, _, _ ) |
+        ETStrongQuantifier( _, _, _ ) => throw new IllegalArgumentException
+    }
+
+    def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof =
+      ExpansionProof( expansionProof.expansionSequent.zipWithIndex collect {
+        case ( et, i ) if !extraAxioms.contains( et.shallow, i.polarity ) =>
+          unguard( et )
+      } )
+
+    ( forward( problem ), back( _, problem ) )
   }
+
 }
 
 private object removeReflsAndTauts {
