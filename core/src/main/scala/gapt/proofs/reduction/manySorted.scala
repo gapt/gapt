@@ -340,19 +340,24 @@ case class PredicateTranslation( constants: Set[Const] ) {
   private val nameGen = rename awayFrom constants
 
   private val baseTypes = constants flatMap { case Const( _, FunctionType( ret, args ), _ ) => ret +: args }
-  val sorts = baseTypes - To
+  private val sorts: Set[TBase] = ( baseTypes - To ).map { _.asInstanceOf[TBase] }
 
-  val predicateForSort = sorts.map { ty => ty -> HOLAtomConst( nameGen fresh s"is_$ty", ty ) }.toMap
+  val predicateForSort: Map[Ty, HOLAtomConst] =
+    sorts.map { ty => ty -> HOLAtomConst( nameGen fresh s"is_$ty", ty ) }.toMap
+
   val predicates = predicateForSort.values.toSet
 
-  val predicateAxioms = constants.collect {
-    case c @ Const( _, FunctionType( retType, argTypes ), _ ) if retType != To =>
-      val args = argTypes.zipWithIndex map { case ( t, i ) => Var( s"x$i", t ) }
-      And( args map { a => predicateForSort( a.ty )( a ) } ) --> predicateForSort( retType )( c( args: _* ) )
-  }
+  val functionAxiom: Map[Const, Formula] = constants.collect {
+    case c @ Const( _, FunctionType( retType: TBase, argTypes ), _ ) if retType != To =>
+      val xs = argTypes.zipWithIndex map { case ( t, i ) => Var( s"x$i", t ) }
+      c -> ( And( xs map { x => predicateForSort( x.ty )( x ) } ) -->
+        predicateForSort( retType )( c( xs: _* ) ) )
+  }.toMap
 
-  val nonEmptyWitnesses = sorts.map { ty => Const( nameGen fresh s"nonempty_$ty", ty ) }
-  val nonEmptyAxioms = nonEmptyWitnesses.map { w => predicateForSort( w.ty )( w ) }
+  val predicateAxioms: Set[Formula] = functionAxiom.values.toSet
+
+  val nonEmptyWitnesses: Set[Const] = sorts.map { ty => Const( nameGen fresh s"nonempty_$ty", ty ) }
+  val nonEmptyAxioms: Set[Formula] = nonEmptyWitnesses.map { w => predicateForSort( w.ty )( w ) }
 
   def guard( formula: Formula ): Formula = formula match {
     case Top() | Bottom() | Atom( _, _ ) => formula
@@ -370,8 +375,8 @@ case class PredicateTranslation( constants: Set[Const] ) {
     case And( f, g )                     => And( unguard( f ), unguard( g ) )
     case Or( f, g )                      => Or( unguard( f ), unguard( g ) )
     case Imp( f, g )                     => Imp( unguard( f ), unguard( g ) )
-    case All( x, Imp( grd, f ) )         => All( x, unguard( f ) )
-    case Ex( x, And( grd, f ) )          => Ex( x, unguard( f ) )
+    case All( x, Imp( _, f ) )           => All( x, unguard( f ) )
+    case Ex( x, And( _, f ) )            => Ex( x, unguard( f ) )
   }
 }
 

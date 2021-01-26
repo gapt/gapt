@@ -38,10 +38,12 @@ class PredicateTranslationTest extends Specification with SequentMatchers {
       cs must not contain ( predicateTranslation.nonEmptyWitnesses )
     }
 
-    "generate predicate axioms for all function constants" in {
-      predicateTranslation.predicateAxioms mustEqual Set(
-        hof"(${pa}( x0 ) -> ${pb}( f(x0) ))",
-        hof"(${pa}( x0 ) -> ${pi}( g(x0) ))" )
+    "generate function axioms for all function constants" in {
+      predicateTranslation.functionAxiom( hoc"f : a > b" ) mustEqual
+        hof"(${pa}( x0 ) -> ${pb}( f(x0) ))"
+      predicateTranslation.functionAxiom( hoc"g : a > i" ) mustEqual
+        hof"(${pa}( x0 ) -> ${pi}( g(x0) ))"
+      predicateTranslation.predicateAxioms.size mustEqual 2
     }
 
     "guard" in {
