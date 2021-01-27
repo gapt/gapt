@@ -5,15 +5,20 @@ import gapt.expr.stringInterpolationForExpressions
 import gapt.expr.ty.TBase
 import gapt.expr.ty.Ti
 import gapt.proofs.SequentMatchers
+import gapt.proofs.context.Context
 import org.specs2.mutable._
 
 class PredicateTranslationTest extends Specification with SequentMatchers {
 
-  val cs = Set( hoc"P : a > o", hoc"f : a > b", hoc"g : a > i" )
+  implicit var ctx: Context = Context.default
 
+  val constants = Set( hoc"P : a > o", hoc"f : a > b", hoc"g : a > i" )
   val sorts = Set( TBase( "a" ), TBase( "b" ), Ti )
 
-  val predicateTranslation = PredicateTranslation( cs )
+  sorts.foreach { ctx += _ }
+  constants.foreach { ctx += _ }
+
+  val predicateTranslation = PredicateTranslation( ctx )
 
   val pa = predicateTranslation.predicateForSort( TBase( "a" ) )
   val pb = predicateTranslation.predicateForSort( TBase( "b" ) )
@@ -21,7 +26,7 @@ class PredicateTranslationTest extends Specification with SequentMatchers {
 
   "predicate translation" should {
     "generate fresh predicate constants" in {
-      cs must not contain ( predicateTranslation.predicates.asInstanceOf[Set[Const]] )
+      constants must not contain ( predicateTranslation.predicates.asInstanceOf[Set[Const]] )
     }
 
     "generate predicates for all base types except o" in {
@@ -30,12 +35,12 @@ class PredicateTranslationTest extends Specification with SequentMatchers {
 
     "generate a non-emptiness axiom for each sort" in {
       predicateTranslation.nonEmptyAxioms mustEqual sorts.map {
-        s => hof"${predicateTranslation.predicateForSort( s )}( ${"nonempty_" + s.name} )"
+        s => hof"${predicateTranslation.predicateForSort( s )}( ${Const( "nonempty_" + s.name, s )} )"
       }
     }
 
     "generate fresh non-emptiness Skolem constants" in {
-      cs must not contain ( predicateTranslation.nonEmptyWitnesses )
+      constants must not contain ( predicateTranslation.nonEmptyWitnesses )
     }
 
     "generate function axioms for all function constants" in {

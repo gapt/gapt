@@ -40,6 +40,8 @@ import gapt.expr.util.syntacticMatching
 import gapt.logic.hol.CNFn
 import gapt.logic.hol.CNFp
 import gapt.proofs._
+import gapt.proofs.context.Context
+import gapt.proofs.context.facet.BaseTypes
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion._
 import gapt.proofs.lk.LKProof
@@ -332,22 +334,20 @@ case object ErasureReductionET extends Reduction_[HOLSequent, ExpansionProof] {
 /**
  * Sets up the predicate reduction for first-order multi-sorted languages.
  *
- * @param constants The non-logical constants and the equality constants of the language for which
- *                  the reduction is to be carried out.
+ * @param context The context for which the predicate translation is to be constructed.
  */
-case class PredicateTranslation( constants: Set[Const] ) {
+case class PredicateTranslation( context: Context ) {
 
-  private val nameGen = rename awayFrom constants
+  private val nameGen = rename awayFrom context.constants
 
-  private val baseTypes = constants flatMap { case Const( _, FunctionType( ret, args ), _ ) => ret +: args }
-  private val sorts: Set[TBase] = ( baseTypes - To ).map { _.asInstanceOf[TBase] }
+  private val sorts: Set[TBase] = ( context.get[BaseTypes].baseTypes.values.toSet - To )
 
   val predicateForSort: Map[Ty, HOLAtomConst] =
     sorts.map { ty => ty -> HOLAtomConst( nameGen fresh s"is_$ty", ty ) }.toMap
 
-  val predicates = predicateForSort.values.toSet
+  val predicates: Set[HOLAtomConst] = predicateForSort.values.toSet
 
-  val functionAxiom: Map[Const, Formula] = constants.collect {
+  val functionAxiom: Map[Const, Formula] = context.constants.collect {
     case c @ Const( _, FunctionType( retType: TBase, argTypes ), _ ) if retType != To =>
       val xs = argTypes.zipWithIndex map { case ( t, i ) => Var( s"x$i", t ) }
       c -> ( And( xs map { x => predicateForSort( x.ty )( x ) } ) -->
@@ -380,6 +380,15 @@ case class PredicateTranslation( constants: Set[Const] ) {
   }
 }
 
+object guessContext {
+  def apply( s: HOLSequent ): Context = {
+    guessContext( List( s ) )
+  }
+  def apply( ss: Iterable[HOLSequent] ): Context = {
+    Context.guess( ss.flatMap { s => s.antecedent ++ s.succedent } )
+  }
+}
+
 /**
  * Simplifies the problem of finding a resolution refutation of a many-sorted clause set by adding
  * predicates for each of the sorts.  The resulting problem is still many-sorted.
@@ -387,10 +396,8 @@ case class PredicateTranslation( constants: Set[Const] ) {
 case object PredicateReductionCNF extends Reduction_[Set[HOLClause], ResolutionProof] {
 
   override def forward( problem: Set[HOLClause] ): ( Set[HOLClause], ( ResolutionProof ) => ResolutionProof ) = {
-    val ctx = problem.flatMap { constants.nonLogical( _ ) } ++
-      problem.flatMap { c => ( c.antecedent ++ c.succedent ).flatMap( constants.equalities( _ ) ) }
 
-    val predicateTranslation = PredicateTranslation( ctx )
+    val predicateTranslation = PredicateTranslation( guessContext( problem ) )
 
     import predicateTranslation.{ guard => guardFormula }
     import predicateTranslation.predicates
@@ -426,10 +433,8 @@ case object PredicateReductionCNF extends Reduction_[Set[HOLClause], ResolutionP
  */
 case object PredicateReductionET extends Reduction_[HOLSequent, ExpansionProof] {
   override def forward( problem: HOLSequent ): ( HOLSequent, ( ExpansionProof ) => ExpansionProof ) = {
-    val cs = constants.nonLogical( problem ) ++
-      ( problem.antecedent ++ problem.succedent ).flatMap( constants.equalities ).toSet
 
-    val predicateTranslation = PredicateTranslation( cs )
+    val predicateTranslation = PredicateTranslation( guessContext( problem ) )
 
     val extraAxioms = existentialClosure(
       predicateTranslation.predicateAxioms ++:
