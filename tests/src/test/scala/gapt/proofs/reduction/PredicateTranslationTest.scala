@@ -35,19 +35,15 @@ class PredicateTranslationTest extends Specification with SequentMatchers {
 
     "generate a non-emptiness axiom for each sort" in {
       predicateTranslation.nonEmptyAxioms mustEqual sorts.map {
-        s => hof"${predicateTranslation.predicateForSort( s )}( ${Const( "nonempty_" + s.name, s )} )"
+        s => hof"?x ${predicateTranslation.predicateForSort( s )}( x )"
       }
-    }
-
-    "generate fresh non-emptiness Skolem constants" in {
-      constants must not contain ( predicateTranslation.nonEmptyWitnesses )
     }
 
     "generate function axioms for all function constants" in {
       predicateTranslation.functionAxiom( hoc"f : a > b" ) mustEqual
-        hof"(${pa}( x0 ) -> ${pb}( f(x0) ))"
+        hof"!x0 (${pa}( x0 ) -> ${pb}( f(x0) ))"
       predicateTranslation.functionAxiom( hoc"g : a > i" ) mustEqual
-        hof"(${pa}( x0 ) -> ${pi}( g(x0) ))"
+        hof"!x0 (${pa}( x0 ) -> ${pi}( g(x0) ))"
       predicateTranslation.predicateAxioms.size mustEqual 2
     }
 

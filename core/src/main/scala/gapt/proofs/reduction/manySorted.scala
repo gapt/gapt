@@ -39,6 +39,7 @@ import gapt.expr.util.subTerms
 import gapt.expr.util.syntacticMatching
 import gapt.logic.hol.CNFn
 import gapt.logic.hol.CNFp
+import gapt.logic.hol.skolemize
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.BaseTypes
@@ -350,14 +351,17 @@ case class PredicateTranslation( context: Context ) {
   val functionAxiom: Map[Const, Formula] = context.constants.collect {
     case c @ Const( _, FunctionType( retType: TBase, argTypes ), _ ) if retType != To =>
       val xs = argTypes.zipWithIndex map { case ( t, i ) => Var( s"x$i", t ) }
-      c -> ( And( xs map { x => predicateForSort( x.ty )( x ) } ) -->
+      c -> universalClosure( And( xs map { x => predicateForSort( x.ty )( x ) } ) -->
         predicateForSort( retType )( c( xs: _* ) ) )
   }.toMap
 
   val predicateAxioms: Set[Formula] = functionAxiom.values.toSet
 
-  val nonEmptyWitnesses: Set[Const] = sorts.map { ty => Const( nameGen fresh s"nonempty_$ty", ty ) }
-  val nonEmptyAxioms: Set[Formula] = nonEmptyWitnesses.map { w => predicateForSort( w.ty )( w ) }
+  def nonEmptyAxiom( s: TBase ): Formula = {
+    val x = Var( "x", s )
+    Ex( x, predicateForSort( s )( x ) )
+  }
+  val nonEmptyAxioms: Set[Formula] = sorts.map { nonEmptyAxiom }
 
   def guard( formula: Formula ): Formula = formula match {
     case Top() | Bottom() | Atom( _, _ ) => formula
@@ -402,11 +406,10 @@ case object PredicateReductionCNF extends Reduction_[Set[HOLClause], ResolutionP
     import predicateTranslation.{ guard => guardFormula }
     import predicateTranslation.predicates
 
-    val extraAxioms = existentialClosure(
-      predicateTranslation.predicateAxioms ++:
-        predicateTranslation.nonEmptyAxioms ++: Sequent() )
+    val extraAxioms = predicateTranslation.predicateAxioms ++:
+      predicateTranslation.nonEmptyAxioms ++: Sequent()
 
-    val extraAxiomClauses = CNFn( extraAxioms.toDisjunction )
+    val extraAxiomClauses = CNFn( skolemize( extraAxioms.toDisjunction ) )
 
     def guardClause( clause: HOLClause )( implicit dummyImplicit: DummyImplicit ): HOLClause =
       CNFp( guardFormula( universalClosure( clause.toImplication ) ) ).head
