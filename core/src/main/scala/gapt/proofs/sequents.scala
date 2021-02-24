@@ -177,7 +177,11 @@ case class Sequent[+A]( antecedent: Vector[A], succedent: Vector[A] ) {
    */
   def isSubsetOf[B >: A]( other: Sequent[B] ) = ( this.distinct diff other.distinct ).isEmpty
 
-  def isTaut: Boolean = antecedent intersect succedent nonEmpty
+  def tautFormulas: Vector[A] = antecedent.intersect( succedent )
+
+  def tautFormula: Option[A] = tautFormulas.headOption
+
+  def isTaut: Boolean = tautFormulas.nonEmpty
 
   /**
    *

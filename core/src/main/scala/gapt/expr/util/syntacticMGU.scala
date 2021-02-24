@@ -129,14 +129,17 @@ object syntacticMGU {
     val exprs_ = exprs.toSeq
     apply( exprs_ zip exprs_.tail )
   }
-  def apply( eqs: Iterable[( Expr, Expr )] ): Option[Substitution] = {
-    var subst: UOption[PreSubstitution] = USome( PreSubstitution() )
+  def apply( eqs: Iterable[( Expr, Expr )], alreadyAssigned: PreSubstitution ): Option[Substitution] = {
+    var subst: UOption[PreSubstitution] = USome( alreadyAssigned )
     eqs.foreach { case ( l, r ) => subst = subst.flatMap( go( l, r, _, Set.empty[Var] ) ) }
     subst.map( _.toSubstitution ).toOption
   }
+  def apply( eqs: Iterable[( Expr, Expr )] ): Option[Substitution] =
+    apply( eqs, PreSubstitution.empty )
+  def apply( a: Expr, b: Expr, alreadyAssigned: PreSubstitution ): Option[Substitution] =
+    go( a, b, alreadyAssigned, Set.empty[Var] ).map( _.toSubstitution ).toOption
   def apply( a: Expr, b: Expr ): Option[Substitution] =
-    go( a, b, PreSubstitution(), Set.empty[Var] ).
-      map( _.toSubstitution ).toOption
+    apply( a, b, PreSubstitution.empty )
 
   def apply( eqs: Iterable[( FOLExpression, FOLExpression )] )( implicit dummyImplicit: DummyImplicit, dummyImplicit2: DummyImplicit ): Option[FOLSubstitution] =
     apply( eqs: Iterable[( Expr, Expr )] ).map( _.asFOLSubstitution )

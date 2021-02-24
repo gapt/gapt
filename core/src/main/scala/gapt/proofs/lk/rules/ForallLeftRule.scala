@@ -28,13 +28,9 @@ import gapt.proofs.lk.LKProof
  * @param v The variable x.
  */
 case class ForallLeftRule( subProof: LKProof, aux: SequentIndex, A: Formula, term: Expr, v: Var )
-  extends UnaryLKProof with CommonRule {
+  extends WeakQuantifierRule {
 
   validateIndices( premise, Seq( aux ), Seq() )
-
-  def auxFormula: Formula = premise( aux )
-  if ( auxFormula != BetaReduction.betaNormalize( Substitution( v, term )( A ) ) )
-    throw LKRuleCreationException( s"Substituting $term for $v in $A does not result in ${premise( aux )}." )
 
   val mainFormula: Formula = BetaReduction.betaNormalize( All( v, A ) )
 
