@@ -80,7 +80,7 @@ object divisionByTwo extends TacticsProof {
   val i3 = OrElimRule( i2, l7, r7 )
   val i4 = ExistsElimRule( i1, i3, hov"z:nat" )
 
-  val cases = Seq( InductionCase( b4, hoc"0", Seq(), Seq() ), InductionCase( i4, hoc"s", Seq( Ant( 0 ) ), Seq( hov"x:nat" ) ) )
+  val cases = List( InductionCase( b4, hoc"0", List(), List() ), InductionCase( i4, hoc"s", List( Ant( 0 ) ), List( hov"x:nat" ) ) )
   val a1 = InductionRule( cases, Abs( hov"x:nat", hof"?y (x = s(s(0)) * y | x = (s(s(0)) * y) + s(0))" ), hov"x:nat" )
   val proof = ForallIntroRule( a1, hov"x:nat", hov"x:nat" )
 }
@@ -200,23 +200,23 @@ object elemAtIndex extends TacticsProof {
   val bb = DefinitionRule( bb6, hof"?x (?n length(nil{?a}) = s(0) + n -> ?ys ?zs (nil{?a} = app(ys,cons(x,zs)) & length(ys) = 0))" )
 
   val i1 = InductionRule(
-    Seq(
-      InductionCase( ib, hoc"nil{?a}", Seq(), Seq() ),
-      InductionCase( ii, hoc"cons", Seq( Ant( 0 ) ), Seq( hov"x0 : ?a", hov"xs0 : list ?a" ) ) ),
+    List(
+      InductionCase( ib, hoc"nil{?a}", List(), List() ),
+      InductionCase( ii, hoc"cons", List( Ant( 0 ) ), List( hov"x0 : ?a", hov"xs0 : list ?a" ) ) ),
     Abs( hov"xs : list ?a", hof"?x (?n length(xs) = s(s(n0)) + n -> ?ys ?zs (xs = app(ys,cons(x,zs)) & length(ys) = s(n0)))" ),
     hov"xs : list ?a" )
   val i2 = ForallIntroRule( i1, hov"xs : list ?a", hov"xs : list ?a" )
   val i3 = InductionRule(
-    Seq(
-      InductionCase( bb, hoc"nil{?a}", Seq(), Seq() ),
-      InductionCase( bi, hoc"cons", Seq( Ant( 0 ) ), Seq( hov"x0 : ?a", hov"xs0 : list ?a" ) ) ),
+    List(
+      InductionCase( bb, hoc"nil{?a}", List(), List() ),
+      InductionCase( bi, hoc"cons", List( Ant( 0 ) ), List( hov"x0 : ?a", hov"xs0 : list ?a" ) ) ),
     Abs( hov"xs : list ?a", hof"?x (?n length(xs) = s(0) + n -> ?ys ?zs (xs = app(ys,cons(x,zs)) & length(ys) = 0))" ),
     hov"xs : list ?a" )
   val i4 = ForallIntroRule( i3, hov"xs : list ?a", hov"xs : list ?a" )
   val i5 = InductionRule(
-    Seq(
-      InductionCase( i4, hoc"0", Seq(), Seq() ),
-      InductionCase( i2, hoc"s", Seq( Ant( 0 ) ), Seq( hov"n0:nat" ) ) ),
+    List(
+      InductionCase( i4, hoc"0", List(), List() ),
+      InductionCase( i2, hoc"s", List( Ant( 0 ) ), List( hov"n0:nat" ) ) ),
     Abs( hov"n0 : nat", hof"!xs ?x (?n length(xs) = s(n0) + n -> ?ys ?zs (xs = app(ys,cons(x,zs)) & length(ys) = n0))" ),
     hov"n0 : nat" )
   val proof = ForallIntroRule( i5, hov"n0:nat", hov"n0:nat" )
