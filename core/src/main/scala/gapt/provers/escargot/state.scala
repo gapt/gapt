@@ -205,7 +205,7 @@ class EscargotState( val ctx: MutableContext ) {
 
   /** Current propositional Avatar model. */
   var avatarModel = Set[Int]()
-  /** * Empty clauses that have already been derived.  All assertions in the empty clauses are false. */
+  /** Empty clauses that have already been derived.  All assertions in the empty clauses are false. */
   var emptyClauses = mutable.Map[Set[Int], Cls]()
   /** Is the assertion of cls true in the current model? */
   def isActive( cls: Cls ): Boolean = isActive( cls.ass )
