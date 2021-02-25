@@ -14,6 +14,7 @@ object prop_07 extends TacticsProof {
   ctx += hoc"p:Nat>Nat"
   ctx += hoc"le:Nat>Nat>o"
   ctx += hoc"plus:Nat>Nat>Nat"
+  ctx += hoc"minus:Nat>Nat>Nat"
 
   val sequent = hols"""
                          def_pred: ∀x p(S(x)) = x,

@@ -40,7 +40,7 @@ object enumerateTerms {
             fields.foreach( go )
           }
         case None =>
-          out += Var( "x", t )
+          out += Const( "skc", t ) //changed this case here from Var("x",t)
       }
     }
     t.foreach( go )
