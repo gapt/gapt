@@ -13,7 +13,7 @@ object prop_31 extends TacticsProof {
       qrevcons: !x!xs!y qrev (cons x xs) y = qrev xs (cons x y)
       :- !x qrev (qrev x nil) nil = x
   """
-  val revrev = Lemma( sequent ) {
+  lazy val revrev = Lemma( sequent ) {
     treeGrammarInduction
   }
 }
