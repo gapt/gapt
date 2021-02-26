@@ -11,7 +11,7 @@ import gapt.provers.OneShotProver
 import gapt.utils.Maybe
 import gapt.proofs.reduction._
 import java.io.File
-import gapt.formats.ClasspathInputFile
+import gapt.formats._
 import gapt.formats.leancop._
 
 case class DummyProver( insts: Map[Formula, Option[ExpansionProof]] ) extends OneShotProver {
@@ -22,7 +22,7 @@ case class DummyProver( insts: Map[Formula, Option[ExpansionProof]] ) extends On
       case Sequent( _, Seq( f ) ) => {
         insts.get( f ) match {
           case Some( Some( t ) ) => Some( back( t ) )
-          case _                 => None
+          case _ =>  None
         }
       }
       case _ => None
@@ -34,14 +34,13 @@ object DummyProverHelper {
   def getListOfExpPrf( dir: String ): List[ExpansionProof] = {
     val d = new File( dir )
     if ( d.exists && d.isDirectory ) {
-      val ClassPaths = d.listFiles.toList.map( t => ClasspathInputFile( t.toString ) )
-      val expSeq = ClassPaths.map( t => LeanCoPParser.getExpansionProof( t ) ).flatten
+      val paths = d.listFiles.toList.map( t => InputFile.fromJavaFile( t ) )
+      val expSeq = paths.map( t => LeanCoPParser.getExpansionProof( t ) ).flatten
       val expPrf = expSeq.map( t => ExpansionProof( t ) )
-      if ( expSeq.size != ClassPaths.size ) List[ExpansionProof]()
+      if ( expSeq.size != paths.size ) List[ExpansionProof]()
       expPrf
     } else List[ExpansionProof]()
   }
-  getListOfExpPrf( "PLCOP/prop_9_proofs" )
   def MakeProofDict( dir: String ): Map[Formula, Option[ExpansionProof]] = {
     val ExpPrf = getListOfExpPrf( dir )
     val lPairs = ExpPrf.map( t => ExpansionProofToLK( t ) match {
