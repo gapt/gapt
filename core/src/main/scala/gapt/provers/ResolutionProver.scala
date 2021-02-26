@@ -139,6 +139,35 @@ trait ResolutionProver extends OneShotProver { self =>
     override def toString = s"$self.extendToManySortedViaErasure"
   }
 
+  def extendToManySortedViaTagging = new ResolutionProver {
+    import gapt.proofs.reduction._
+    override def isValid( sequent: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean = {
+      val reduction = CNFReductionLKRes |> TagReductionCNF
+      val ( folProblem, _ ) = reduction forward sequent
+      self.getResolutionProof( folProblem )( ctx.map( _.newMutable ) ).isDefined
+    }
+
+    override def getExpansionProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = {
+      val reduction = TagReductionET
+      val ( folProblem, back ) = reduction forward sequent
+      self.getExpansionProof( folProblem ).map( back )
+    }
+
+    override def getLKProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = {
+      val reduction = CNFReductionLKRes |> TagReductionCNF
+      val ( folProblem, back ) = reduction forward sequent
+      self.getResolutionProof( folProblem ).map( proof => back( eliminateSplitting( proof ) ) )
+    }
+
+    override def getResolutionProof( seq: Iterable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] = {
+      val reduction = TagReductionCNF
+      val ( folProblem, back ) = reduction forward seq.toSet
+      self.getResolutionProof( folProblem ).map( eliminateSplitting( _ ) ).map( back )
+    }
+
+    override def toString = s"$self.extendToManySortedViaTagging"
+  }
+
   def withDeskolemization = new ResolutionProver {
     override def isValid( sequent: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean =
       self.isValid( sequent )

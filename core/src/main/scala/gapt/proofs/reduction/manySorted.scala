@@ -26,12 +26,7 @@ import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.hol.HOLAtomConst
 import gapt.expr.formula.hol._
 import gapt.expr.subst.Substitution
-import gapt.expr.ty.FunctionType
-import gapt.expr.ty.TBase
-import gapt.expr.ty.Ti
-import gapt.expr.ty.To
-import gapt.expr.ty.Ty
-import gapt.expr.ty.baseTypes
+import gapt.expr.ty.{ FunctionType, TBase, Ti, To, Ty, arity, baseTypes }
 import gapt.expr.util.constants
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
@@ -479,6 +474,143 @@ case object PredicateReductionET extends Reduction_[HOLSequent, ExpansionProof] 
     ( forward( problem ), back( _, problem ) )
   }
 
+}
+
+private class TagReductionHelper {
+  private val nameGen = new NameGenerator( None )
+
+  val tags: mutable.Map[Ty, FOLFunctionConst] = mutable.Map.empty
+  def mkTag( t: Ty ): FOLFunctionConst =
+    tags.getOrElseUpdate(
+      t,
+      FOLFunctionConst( nameGen.fresh( t match { case TBase( n, _ ) => n case _ => "ty" } ), 1 ) )
+
+  val fns: mutable.Map[Const, FOLFunctionConst] = mutable.Map.empty
+  def forwardFn( c: Const ): FOLFunctionConst =
+    fns.getOrElseUpdate( c, FOLFunctionConst( nameGen.fresh( c.name ), arity( c ) ) )
+
+  val preds: mutable.Map[Const, FOLAtomConst] = mutable.Map.empty
+  def forwardPred( c: Const ): FOLAtomConst =
+    preds.getOrElseUpdate( c, FOLAtomConst( nameGen.fresh( c.name ), arity( c ) ) )
+
+  def forwardTerm( t: Expr ): FOLTerm = mkTag( t.ty )( t match {
+    case Var( n, _ ) => FOLVar( n )
+    case Apps( fn: Const, args ) =>
+      forwardFn( fn )( args.map( forwardTerm ): _* )
+  } )
+
+  def forward( f: Formula ): FOLFormula = f match {
+    case Top()                  => Top()
+    case Bottom()               => Bottom()
+    case Eq( a, b )             => Eq( forwardTerm( a ), forwardTerm( b ) )
+    case All( x, f )            => All( FOLVar( x.name ), forward( f ) )
+    case Ex( x, f )             => Ex( FOLVar( x.name ), forward( f ) )
+    case Neg( f )               => Neg( forward( f ) )
+    case And( f, g )            => And( forward( f ), forward( g ) )
+    case Or( f, g )             => Or( forward( f ), forward( g ) )
+    case Imp( f, g )            => Imp( forward( f ), forward( g ) )
+    case Apps( p: Const, args ) => forwardPred( p )( args.map( forwardTerm ): _* )
+  }
+
+  def forward( seq: HOLSequent ): FOLSequent = seq.map( forward )
+
+  def forward( cnf: Set[HOLClause] ): Set[FOLClause] =
+    cnf.map( forward( _ ).asInstanceOf[FOLClause] )
+
+  def mkBack(): Expr => Expr = {
+    val tagsRev = tags.view.map( _.swap ).toMap[Expr, Ty]
+    val fnsRev = ( fns.view ++ preds ).map( _.swap ).toMap[Const, Const]
+
+    def back( e: Expr ): Expr = e match {
+      case Top() | Bottom() => e
+      case Eq( a, Var( x, _ ) ) =>
+        val a_ = back( a )
+        Eq( a_, Var( x, a_.ty ) )
+      case Eq( Var( x, _ ), b ) =>
+        val b_ = back( b )
+        Eq( Var( x, b_.ty ), b_ )
+      case Eq( a, b ) => Eq( back( a ), back( b ) )
+      case All.Block( xs, f ) if xs.nonEmpty =>
+        val g = back( f )
+        val fvs = freeVariables( g ).groupBy( _.name )
+        All.Block( xs.map( x => fvs( x.name ).head ), g )
+      case Ex.Block( xs, f ) if xs.nonEmpty =>
+        val g = back( f )
+        val fvs = freeVariables( g ).groupBy( _.name )
+        Ex.Block( xs.map( x => fvs( x.name ).head ), g )
+      case Neg( f )                              => Neg( back( f ) )
+      case And( f, g )                           => And( back( f ), back( g ) )
+      case Or( f, g )                            => Or( back( f ), back( g ) )
+      case Imp( f, g )                           => Imp( back( f ), back( g ) )
+
+      case App( tag, Var( x, _ ) )               => Var( x, tagsRev( tag ) )
+      case App( tag, e ) if tagsRev contains tag => back( e )
+      case Apps( fn: Const, as )                 => fnsRev( fn )( as.map( back ) )
+    }
+
+    back
+  }
+
+  def back( e: ExpansionProof ): ExpansionProof = {
+    val back = mkBack()
+    if ( e.eigenVariables.isEmpty ) {
+      TermReplacement( e, { case x => back( x ) } )
+    } else {
+      val evs = freeVariables( e.deep.map( back( _ ).asInstanceOf[Formula] ) ).groupBy( _.name )
+      TermReplacement( e, {
+        case Var( ev, _ ) => evs( ev ).head
+        case x            => back( x )
+      } )
+    }
+  }
+
+  def back( proof: ResolutionProof ): ResolutionProof = {
+    import gapt.proofs.resolution._
+
+    val back = mkBack()
+    def backSeq( seq: HOLSequent ): HOLSequent = seq.map( back( _ ).asInstanceOf[Formula] )
+
+    val memo = mutable.Map[ResolutionProof, ResolutionProof]()
+    def f( p: ResolutionProof ): ResolutionProof = memo.getOrElseUpdate( p, p match {
+      case Input( sequent ) => Input( backSeq( sequent ) )
+      case Refl( term )     => Refl( back( term ) )
+      case Taut( formula )  => Taut( back( formula ).asInstanceOf[Formula] )
+      case Defn( defConst, definition ) =>
+        Defn( back( defConst ).asInstanceOf[HOLAtomConst], back( definition ) )
+      case Factor( q, i1, i2 ) => Factor( f( q ), i1, i2 )
+      case Subst( q, subst ) =>
+        val q_ = f( q )
+        val vs = freeVariables( q_.conclusion ).groupBy( _.name )
+        Subst( f( q ), Substitution( subst.map.flatMap {
+          case ( x, t ) if !vs.contains( x.name ) => None
+          case ( x, Var( y, _ ) )                 => Some( vs( x.name ).head -> Var( y, vs( x.name ).head.ty ) )
+          case ( x, t )                           => Some( vs( x.name ).head -> back( t ) )
+        } ) )
+      case Resolution( q1, l1, q2, l2 ) => Resolution( f( q1 ), l1, f( q2 ), l2 )
+      case Paramod( q1, l1, dir, q2, l2, Abs( Var( v, _ ), subContext ) ) =>
+        val q1New = f( q1 )
+        val Eq( eqLhs, _ ) = q1New.conclusion( l1 )
+        Paramod( q1New, l1, dir, f( q2 ), l2, Abs( Var( v, eqLhs.ty ), back( subContext ) ) )
+      case Flip( q, i ) => Flip( f( q ), i )
+    } )
+
+    f( proof )
+  }
+
+}
+
+case object TagReductionCNF extends Reduction_[Set[HOLClause], ResolutionProof] {
+  override def forward( problem: Set[HOLClause] ): ( Set[HOLClause], ResolutionProof => ResolutionProof ) = {
+    val helper = new TagReductionHelper
+    ( helper.forward( problem ).toSet, helper.back )
+  }
+}
+
+case object TagReductionET extends Reduction_[HOLSequent, ExpansionProof] {
+  override def forward( problem: HOLSequent ): ( HOLSequent, ExpansionProof => ExpansionProof ) = {
+    val helper = new TagReductionHelper
+    ( helper.forward( problem ), helper.back )
+  }
 }
 
 private object removeReflsAndTauts {

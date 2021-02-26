@@ -107,12 +107,58 @@ class ReductionTest extends Specification {
       ok
     }
 
+    "resolution tagging" in {
+      val reduction =
+        LambdaEliminationReductionRes() |>
+          HOFunctionReductionRes() |>
+          CNFReductionResRes |>
+          TagReductionCNF
+
+      val ( folCNF, back ) = reduction.forward( sequent )
+
+      val Some( folProof ) = Escargot.getResolutionProof( folCNF )
+
+      val proof = back( eliminateSplitting( folProof ) )
+      proof.subProofs foreach {
+        case Input( Sequent( Seq( conj ), Seq() ) )  => conj must_== sequent.succedent.head
+        case Input( Sequent( Seq(), Seq( axiom ) ) ) => axiom must_== sequent.antecedent.head
+        case Input( _ )                              => ko
+        case _                                       => ok
+      }
+      ok
+    }
+
     "expansion" in {
       val reduction =
         LambdaEliminationReductionET() |>
           HOFunctionReductionET() |>
           // PredicateReductionET |>
           ErasureReductionET
+
+      val ( folSequent, back ) = reduction.forward( sequent )
+
+      val Some( folProof ) = Escargot.getExpansionProof( folSequent )
+
+      val proof = back( folProof )
+      proof.shallow must_== sequent
+
+      val reductionForChecking =
+        LambdaEliminationReduction() |>
+          HOFunctionReduction()
+      val ( tffDeep, _ ) = reductionForChecking.forward( proof.deep )
+
+      Escargot isValid tffDeep must_== true
+
+      val z3WithQuantifiers = new Z3( "UF" )
+      if ( !z3WithQuantifiers.isInstalled ) skipped
+      z3WithQuantifiers.isValid( tffDeep ) must_== true
+    }
+
+    "expansion tag" in {
+      val reduction =
+        LambdaEliminationReductionET() |>
+          HOFunctionReductionET() |>
+          TagReductionET
 
       val ( folSequent, back ) = reduction.forward( sequent )
 
