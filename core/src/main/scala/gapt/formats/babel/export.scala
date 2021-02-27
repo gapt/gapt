@@ -296,7 +296,11 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
             showName( vn )
           else
             parens( showName( vn ) <> ":" <> show( vt, false ) )
-        return ( Parenable( prec, tok.token <> v_ </> e_.inPrec( prec ) ),
+        return ( Parenable(
+          prec,
+          tok.token <>
+            ( if ( vn.startsWith( "_" ) ) " " else "" ) <> v_ </>
+            e_.inPrec( prec ) ),
           t1 - vn ++ t0.get( vn ).map { vn -> _ } )
       case _ =>
     }
