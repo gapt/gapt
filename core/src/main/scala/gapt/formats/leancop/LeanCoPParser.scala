@@ -307,12 +307,10 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
 
   lazy val quantified: PackratParser[FOLFormula] = (
     "!" ~ "[" ~> repsep( variable, "," ) ~ "] : " ~ quantified ^^ {
-      case vars ~ _ ~ form =>
-        vars.foldLeft( form )( ( f, v ) => All( v, f ) )
+      case vs ~ _ ~ f => All.Block( vs, f )
     }
     | "?" ~ "[" ~> repsep( variable, "," ) ~ "] : " ~ quantified ^^ {
-      case vars ~ _ ~ form =>
-        vars.foldLeft( form )( ( f, v ) => Ex( v, f ) )
+      case vs ~ _ ~ f => Ex.Block( vs, f )
     }
     | neg | atom )
 
