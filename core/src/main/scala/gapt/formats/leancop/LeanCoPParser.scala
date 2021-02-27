@@ -37,6 +37,8 @@ class LeanCoPLeanPredWrongArityException( msg: String ) extends Exception( msg: 
 
 object LeanCoPParser extends RegexParsers with PackratParsers {
 
+  override def skipWhitespace: Boolean = true
+
   private val nLine = sys.props( "line.separator" )
 
   def getExpansionProof( file: InputFile ): Option[ExpansionSequent] = {
@@ -47,7 +49,8 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     parseAll( expansionSequent, reader ) match {
       case Success( r, _ ) => r
       case Failure( msg, next ) =>
-        throw new LeanCoPParserException( "leanCoP parsing: syntax failure " + msg + nLine + "at line " + next.pos.line + " and column " + next.pos.column )
+        throw new LeanCoPParserException(
+          "leanCoP parsing: syntax failure " + msg + nLine + "at line " + next.pos.line + " and column " + next.pos.column )
       case Error( msg, next ) =>
         throw new LeanCoPParserException( "leanCoP parsing: syntax error " + msg + nLine + "at line " + next.pos.line + " and column " + next.pos.column )
     }
@@ -241,19 +244,21 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
         }
     }
 
-  def input: Parser[( String, String, FOLFormula )] = language ~ "(" ~> name ~ "," ~ role ~ "," ~ formula <~ ", file(" ~ "[^()]*".r ~ "))." ^^ {
-    case n ~ _ ~ r ~ _ ~ f => ( n, r, f )
-  }
-  def clauses: Parser[( Int, FOLFormula, String )] = language ~ "(" ~> integer ~ ", plain," ~ clause ~ ", clausify(" ~ name <~ "))." ^^ {
-    case i ~ _ ~ f ~ _ ~ n =>
-      assert( n != "lean_eq_theory" )
-      ( i, f, n )
-  } | language ~ "(" ~> integer ~ ", plain," ~ clause <~ ", theory(equality))." ^^ {
-    // Equality theory added by leanCoP
-    case i ~ _ ~ f => ( i, f, "lean_eq_theory" )
-  }
+  def input: Parser[( String, String, FOLFormula )] =
+    language ~ "(" ~> name ~ "," ~ role ~ "," ~ formula <~ "," ~ "file" ~ "(" ~ "[^()]*".r ~ ")" ~ ")" ~ "." ^^ {
+      case n ~ _ ~ r ~ _ ~ f => ( n, r, f )
+    }
+  def clauses: Parser[( Int, FOLFormula, String )] =
+    language ~ "(" ~> integer ~ "," ~ "plain" ~ "," ~ clause ~ "," ~ "clausify" ~ "(" ~ name <~ ")" ~ ")" ~ "." ^^ {
+      case i ~ _ ~ _ ~ _ ~ f ~ _ ~ _ ~ _ ~ n =>
+        assert( n != "lean_eq_theory" )
+        ( i, f, n )
+    } | language ~ "(" ~> integer ~ "," ~ "plain" ~ "," ~ clause <~ "," ~ "theory" ~ "(" ~ "equality" ~ ")" ~ ")" ~ "." ^^ {
+      // Equality theory added by leanCoP
+      case i ~ _ ~ _ ~ _ ~ f => ( i, f, "lean_eq_theory" )
+    }
 
-  def inferences: Parser[Option[( Int, List[FOLVar], List[FOLTerm] )]] = language ~ "(" ~ name ~ ",plain," ~ clause ~ "," ~> info <~ ")." ^^ {
+  def inferences: Parser[Option[( Int, List[FOLVar], List[FOLTerm] )]] = language ~ "(" ~ name ~ "," ~ "plain" ~ "," ~ clause ~ "," ~> info <~ ")" ~ "." ^^ {
     case bindings => bindings
   }
 
@@ -263,17 +268,17 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   def info: Parser[Option[( Int, List[FOLVar], List[FOLTerm] )]] = start | start_bind | reduction | extension | ext_w_bind
 
   def start: Parser[Option[( Int, List[FOLVar], List[FOLTerm] )]] = "start(" ~> integer <~ ")" ^^ { case _ => None }
-  def start_bind: Parser[Option[( Int, List[FOLVar], List[FOLTerm] )]] = "start(" ~> integer ~ ",bind(" ~ list_subs <~ "))" ^^ {
-    case n ~ _ ~ ls => Some( ( n, ls._1, ls._2 ) )
+  def start_bind: Parser[Option[( Int, List[FOLVar], List[FOLTerm] )]] = "start(" ~> integer ~ "," ~ "bind" ~ "(" ~ list_subs <~ ")" ~ ")" ^^ {
+    case n ~ _ ~ _ ~ _ ~ ls => Some( ( n, ls._1, ls._2 ) )
   }
-  def reduction: Parser[Option[( Int, List[FOLVar], List[FOLTerm] )]] = "reduction('" ~> integer <~ "')" ^^ { case _ => None }
-  def extension: Parser[Option[( Int, List[FOLVar], List[FOLTerm] )]] = "extension(" ~> integer <~ ")" ^^ { case _ => None }
-  def ext_w_bind: Parser[Option[( Int, List[FOLVar], List[FOLTerm] )]] = "extension(" ~> integer ~ ",bind(" ~ list_subs <~ "))" ^^ {
-    case n ~ _ ~ ls => Some( ( n, ls._1, ls._2 ) )
+  def reduction: Parser[Option[( Int, List[FOLVar], List[FOLTerm] )]] = "reduction" ~ "(" ~ "'" ~> integer <~ "'" ~ ")" ^^ { case _ => None }
+  def extension: Parser[Option[( Int, List[FOLVar], List[FOLTerm] )]] = "extension" ~ "(" ~> integer <~ ")" ^^ { case _ => None }
+  def ext_w_bind: Parser[Option[( Int, List[FOLVar], List[FOLTerm] )]] = "extension" ~ "(" ~> integer ~ "," ~ "bind" ~ "(" ~ list_subs <~ ")" ~ ")" ^^ {
+    case n ~ _ ~ _ ~ _ ~ ls => Some( ( n, ls._1, ls._2 ) )
   }
 
-  def list_subs: Parser[( List[FOLVar], List[FOLTerm] )] = "[[" ~> repsep( variable, "," ) ~ "], [" ~ repsep( term, "," ) <~ "]]" ^^ {
-    case t ~ _ ~ v => ( t, v )
+  def list_subs: Parser[( List[FOLVar], List[FOLTerm] )] = "[" ~ "[" ~> repsep( variable, "," ) ~ "]" ~ "," ~ "[" ~ repsep( term, "," ) <~ "]" ~ "]" ^^ {
+    case t ~ _ ~ _ ~ _ ~ v => ( t, v )
   }
 
   def clause: Parser[FOLFormula] = "[" ~> repsep( formula, "," ) <~ "]" ^^ {
@@ -306,11 +311,11 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     | quantified )
 
   lazy val quantified: PackratParser[FOLFormula] = (
-    "!" ~ "[" ~> repsep( variable, "," ) ~ "] : " ~ quantified ^^ {
-      case vs ~ _ ~ f => All.Block( vs, f )
+    "!" ~ "[" ~> repsep( variable, "," ) ~ "]" ~ ":" ~ quantified ^^ {
+      case vs ~ _ ~ _ ~ f => All.Block( vs, f )
     }
-    | "?" ~ "[" ~> repsep( variable, "," ) ~ "] : " ~ quantified ^^ {
-      case vs ~ _ ~ f => Ex.Block( vs, f )
+    | "?" ~ "[" ~> repsep( variable, "," ) ~ "]" ~ ":" ~ quantified ^^ {
+      case vs ~ _ ~ _ ~ f => Ex.Block( vs, f )
     }
     | neg | atom )
 
@@ -327,7 +332,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   lazy val eq: PackratParser[FOLFormula] = term ~ "=" ~ term ^^ {
     case t1 ~ _ ~ t2 => FOLAtom( "=", List( t1, t2 ) )
   }
-  lazy val not_eq: PackratParser[FOLFormula] = "(!" ~> term ~ ")" ~ "=" ~ term ^^ {
+  lazy val not_eq: PackratParser[FOLFormula] = "(" ~ "!" ~> term ~ ")" ~ "=" ~ term ^^ {
     case t1 ~ _ ~ _ ~ t2 => Neg( FOLAtom( "=", List( t1, t2 ) ) )
   }
 
