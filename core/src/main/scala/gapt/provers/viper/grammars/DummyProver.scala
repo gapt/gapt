@@ -22,7 +22,7 @@ case class DummyProver( insts: Map[Formula, Option[ExpansionProof]] ) extends On
       case Sequent( _, Seq( f ) ) => {
         insts.get( f ) match {
           case Some( Some( t ) ) => Some( back( t ) )
-          case _ =>  None
+          case _                 => None
         }
       }
       case _ => None
@@ -38,15 +38,12 @@ object DummyProverHelper {
       val expSeq = paths.map( t => LeanCoPParser.getExpansionProof( t ) ).flatten
       val expPrf = expSeq.map( t => ExpansionProof( t ) )
       if ( expSeq.size != paths.size ) List[ExpansionProof]()
-      expPrf
+      else expPrf
     } else List[ExpansionProof]()
   }
   def MakeProofDict( dir: String ): Map[Formula, Option[ExpansionProof]] = {
     val ExpPrf = getListOfExpPrf( dir )
-    val lPairs = ExpPrf.map( t => ExpansionProofToLK( t ) match {
-      case Left( r )  => None
-      case Right( r ) => Some( ( r.conclusion.succedent.toList( 0 ) -> Some( t ) ) )
-    } ).flatten
+    val lPairs = ExpPrf.map( t => ( t.shallow.succedent.toList( 0 ) -> Some( t ) ) )
     if ( lPairs.size != ExpPrf.size ) Map[Formula, Option[ExpansionProof]]()
     else lPairs.toMap
   }

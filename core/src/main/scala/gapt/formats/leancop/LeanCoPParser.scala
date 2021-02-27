@@ -308,11 +308,11 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   lazy val quantified: PackratParser[FOLFormula] = (
     "!" ~ "[" ~> repsep( variable, "," ) ~ """\]\s*:\s*""".r ~ quantified ^^ {
       case vars ~ _ ~ form =>
-        vars.foldLeft( form )( ( f, v ) => All( v, f ) )
+        vars.foldRight( form )( ( v, f ) => All( v, f ) )
     }
     | "?" ~ "[" ~> repsep( variable, "," ) ~ """\]\s*:\s*""".r ~ quantified ^^ {
       case vars ~ _ ~ form =>
-        vars.foldLeft( form )( ( f, v ) => Ex( v, f ) )
+        vars.foldRight( form )( ( v, f ) => Ex( v, f ) )
     }
     | neg | atom )
 
@@ -336,7 +336,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   def term: Parser[FOLTerm] = skolem_term | variable | function | constant
   def function: Parser[FOLTerm] = name ~ "(" ~ repsep( term, "," ) <~ ")" ^^ { case f ~ _ ~ args => FOLFunction( f, args ) }
   def constant: Parser[FOLConst] = name ^^ { case n => FOLConst( n ) }
-  def variable: Parser[FOLVar] = """_[A-Z0-9]+""".r ^^ { case n => FOLVar( n ) }
+  def variable: Parser[FOLVar] = """_[A-Z0-9]+""".r ^^ { case n => FOLVar( "x" + n ) }
   def skolem_term: Parser[FOLTerm] = lean_var ^^ {
     case ( i, _ ) =>
       // Pretend it's an eigenvariable.
