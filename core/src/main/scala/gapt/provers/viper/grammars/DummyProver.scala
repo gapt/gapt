@@ -11,15 +11,7 @@ import gapt.provers.OneShotProver
 import gapt.utils.Maybe
 import gapt.proofs.reduction._
 import java.io.File
-<<<<<<< HEAD
-<<<<<<< HEAD
 import gapt.formats._
-=======
-import gapt.formats.ClasspathInputFile
->>>>>>> Current stage of development
-=======
-import gapt.formats._
->>>>>>> Updating Dummy Prover
 import gapt.formats.leancop._
 
 case class DummyProver( insts: Map[Formula, Option[ExpansionProof]] ) extends OneShotProver {
@@ -43,7 +35,6 @@ object DummyProverHelper {
     val d = new File( dir )
     if ( d.exists && d.isDirectory ) {
 <<<<<<< HEAD
-<<<<<<< HEAD
       val paths = d.listFiles.toList.map( t => InputFile.fromJavaFile( t ) )
       val expSeq = paths.map( t => LeanCoPParser.getExpansionProof( t ) ).flatten
       val expPrf = expSeq.map( t => ExpansionProof( t ) )
@@ -54,13 +45,6 @@ object DummyProverHelper {
   def MakeProofDict( dir: String ): Map[Formula, Option[ExpansionProof]] = {
     val ExpPrf = getListOfExpPrf( dir )
     val lPairs = ExpPrf.map( t => ( t.shallow.succedent.toList( 0 ) -> Some( t ) ) )
-=======
-      val ClassPaths = d.listFiles.toList.map( t => ClasspathInputFile( t.toString ) )
-      val expSeq = ClassPaths.map( t => LeanCoPParser.getExpansionProof( t ) ).flatten
-=======
-      val paths = d.listFiles.toList.map( t => InputFile.fromJavaFile( t ) )
-      val expSeq = paths.map( t => LeanCoPParser.getExpansionProof( t ) ).flatten
->>>>>>> Updating Dummy Prover
       val expPrf = expSeq.map( t => ExpansionProof( t ) )
       if ( expSeq.size != paths.size ) List[ExpansionProof]()
       expPrf
