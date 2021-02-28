@@ -1,11 +1,14 @@
 package gapt.formats.leancop
 
+import gapt.expr.Apps
 import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
+import gapt.expr.formula.constants.AndC
+import gapt.expr.formula.constants.OrC
 import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLFormula
@@ -13,6 +16,7 @@ import gapt.expr.formula.fol.FOLFunction
 import gapt.expr.formula.fol.FOLTerm
 import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.hol._
+import gapt.expr.formula.prop.PropConnective
 import gapt.expr.subst.FOLSubstitution
 import gapt.expr.util.freeVariables
 import gapt.formats.InputFile
@@ -28,6 +32,7 @@ import gapt.proofs.expansion.formulaToExpansionTree
 import java.io.Reader
 import java.io.StringReader
 import scala.collection.immutable.HashMap
+import scala.collection.mutable
 import scala.util.parsing.combinator._
 
 class LeanCoPParserException( msg: String ) extends Exception( msg: String )
@@ -58,71 +63,72 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     }
   }
 
-  // Restricted definitional clausal form (implemented by leanCoP)
-  // Takes a formula in NNF and returns a list of clauses in DNF (possibly with
-  // introduced definitions)
-  // (reverse engineering leanCoP)
-  def toDefinitionalClausalForm( f: FOLFormula, lean_preds: List[( String, Int )] ): List[FOLFormula] = {
-
-    def toDCF( f: FOLFormula, lean_preds: List[( String, Int )], inConj: Boolean ): ( FOLFormula, List[FOLFormula] ) =
+  object FOLLiteral {
+    def unapply( f: FOLFormula ): Option[( Polarity, FOLAtom )] =
       f match {
-        case FOLAtom( _, _ )        => ( f, List() )
-        case Neg( FOLAtom( _, _ ) ) => ( f, List() )
-        case And( f1, f2 ) =>
-          val ( f1d, d1 ) = toDCF( f1, lean_preds, true )
-          val used_preds = d1.flatMap( c => getLeanPreds( c ) )
-          val rest = lean_preds.filter( p => !used_preds.contains( p ) )
-          val ( f2d, d2 ) = toDCF( f2, rest, true )
-          ( And( f1d, f2d ), d1 ++ d2 )
-        case Or( f1, f2 ) => {
-          if ( inConj ) {
-            val vars = freeVariables( f ).toList
+        case a @ FOLAtom( _, _ )        => Some( Polarity.Positive, a )
+        case Neg( a @ FOLAtom( _, _ ) ) => Some( Polarity.Negative, a )
+        case _                          => None
+      }
+  }
 
-            val candidates = lean_preds.filter { case ( n, a ) => a == vars.length }
-            val ordered_candidates = candidates.sorted
+  type LeanPredicate = ( String, Int )
+  type DefinitionalTuple = ( FOLFormula, List[FOLFormula] )
 
-            if ( lean_preds.isEmpty ) {
-              throw new LeanCoPNoLeanPredException( "Formula: " + f )
-            }
-            if ( candidates.isEmpty ) {
-              throw new LeanCoPLeanPredWrongArityException(
-                "Formula: " + f + " Candidates: " + lean_preds + " Arity: " + vars.length )
-            }
+  /**
+   * Computes the definitional clausal form of a given formula.
+   *
+   * @param f The formula in NNF whose DCF is to be constructed.
+   * @param leanPredicates The predicates available for the DCF construction.
+   * @return A list list of clauses in DNF (possibly with introduced definitions) corresponding to the
+   *         definitional clausal form of the input formula
+   */
+  def toDefinitionalClausalForm( f: FOLFormula, leanPredicates: List[LeanPredicate] ): List[FOLFormula] = {
 
-            // Trusting that we have the same order as leanCoP
-            val pred_name = ordered_candidates.head._1
-            val new_pred = FOLAtom( pred_name, vars )
-            val rest = lean_preds.filter { case ( n, a ) => n != pred_name }
+    var unusedPredicates: mutable.Set[LeanPredicate] = mutable.Set( leanPredicates: _* )
 
-            val ( f1d, d1 ) = toDCF( f1, rest, inConj )
-            // TODO candidate for efficiency improvement
-            val used_preds = d1.flatMap( c => getLeanPreds( c ) )
-            val rest_of_rest = rest.filter( p => !used_preds.contains( p ) )
-            val ( f2d, d2 ) = toDCF( f2, rest_of_rest, inConj )
-
-            val def1 = And( Neg( new_pred ), f1d )
-            val def2 = And( Neg( new_pred ), f2d )
-
-            ( new_pred, def1 :: def2 :: d1 ++ d2 )
-
-          } else {
-            val ( f1d, d1 ) = toDCF( f1, lean_preds, inConj )
-            val used_preds = d1.flatMap( c => getLeanPreds( c ) )
-            val rest = lean_preds.filter( p => !used_preds.contains( p ) )
-            val ( f2d, d2 ) = toDCF( f2, rest, inConj )
-            ( Or( f1d, f2d ), d1 ++ d2 )
+    def definitionalTuple( f: FOLFormula, insideConjunction: Boolean ): DefinitionalTuple =
+      f match {
+        case FOLLiteral( _, _ ) => ( f, List() )
+        case Or( f1, f2 ) if insideConjunction => {
+          val xs = freeVariables( f )
+          getUnusedPredicate( xs.size ) match {
+            case Some( p ) =>
+              // Trusting that we have the same order as leanCoP
+              val pxs = FOLAtom( p._1, xs.toList )
+              unusedPredicates -= p
+              val ( f1d, d1 ) = definitionalTuple( f1, insideConjunction )
+              val ( f2d, d2 ) = definitionalTuple( f2, insideConjunction )
+              ( pxs, ( -pxs & f1d ) :: ( -pxs & f2d ) :: d1 ++ d2 )
+            case _ => throw new LeanCoPLeanPredWrongArityException(
+              "Formula: " + f + " Candidates: " + unusedPredicates + " Arity: " + xs.size )
           }
         }
+        case And( f1, f2 ) =>
+          val ( f1d, d1 ) = definitionalTuple( f1, true )
+          val ( f2d, d2 ) = definitionalTuple( f2, true )
+          ( And( f1d, f2d ), d1 ++ d2 )
+        case Or( f1, f2 ) =>
+          val ( f1d, d1 ) = definitionalTuple( f1, insideConjunction )
+          val ( f2d, d2 ) = definitionalTuple( f2, insideConjunction )
+          ( Or( f1d, f2d ), d1 ++ d2 )
         case _ => throw new Exception( "Unsupported format for definitional clausal transformation: " + f )
       }
 
-    val ( fd, defs ) = toDCF( f, lean_preds, false )
+    /**
+     * Retrieves a currently unused predicate of the given arity.
+     * @param n The arity of the predicate.
+     */
+    def getUnusedPredicate( n: Int ): Option[LeanPredicate] =
+      unusedPredicates.collectFirst { case p @ ( _, `n` ) => p }
+
+    val ( fd, defs ) = definitionalTuple( f, false )
     fd :: defs.flatMap( d => DNFp( d ).map( _.toConjunction ) )
   }
 
   // Collects all n ^ [...] predicates used and their arities
   def getLeanPreds( cls: FOLFormula ): List[( String, Int )] = cls match {
-    case FOLAtom( n, args ) if n.toString.startsWith( "leanP" ) => List( ( n.toString, args.length ) )
+    case FOLAtom( n, args ) if n.startsWith( "leanP" ) => List( ( n, args.length ) )
     case FOLAtom( _, _ ) => List()
     case Neg( f ) => getLeanPreds( f )
     case And( f1, f2 ) => getLeanPreds( f1 ) ++ getLeanPreds( f2 )
