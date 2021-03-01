@@ -13,16 +13,19 @@ import gapt.proofs.reduction._
 import java.io.File
 import gapt.formats._
 import gapt.formats.leancop._
+import gapt.provers.groundFreeVariables
+
 
 case class DummyProver( insts: Map[Formula, Option[ExpansionProof]] ) extends OneShotProver {
   override def getExpansionProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = {
+    val (seqground, subst) = groundFreeVariables( seq )
     val reduction = ErasureReductionET
-    val ( folProblem, back ) = reduction forward seq
+    val ( folProblem, back ) = reduction forward seqground
     folProblem match {
       case Sequent( _, Seq( f ) ) => {
         insts.get( f ) match {
-          case Some( Some( t ) ) => Some( back( t ) )
-          case _ =>  None
+          case Some( Some( t ) ) => Some(TermReplacement.undoGrounding(back( t ),subst ))
+          case _                 => None
         }
       }
       case _ => None
@@ -36,7 +39,10 @@ object DummyProverHelper {
     if ( d.exists && d.isDirectory ) {
 <<<<<<< HEAD
       val paths = d.listFiles.toList.map( t => InputFile.fromJavaFile( t ) )
-      val expSeq = paths.map( t => LeanCoPParser.getExpansionProof( t ) ).flatten
+      val expSeq = paths.map( t =>{
+        print("Parsing: "+t.toString()+"\n")
+        LeanCoPParser.getExpansionProof( t )
+       }).flatten
       val expPrf = expSeq.map( t => ExpansionProof( t ) )
       if ( expSeq.size != paths.size ) List[ExpansionProof]()
       else expPrf
