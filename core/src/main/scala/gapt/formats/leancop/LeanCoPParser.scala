@@ -3,6 +3,7 @@ package gapt.formats.leancop
 import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Ex
+import gapt.expr.formula.Iff
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
@@ -310,14 +311,12 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
       case formulas => And( formulas )
     }
 
-  lazy val formula: PackratParser[FOLFormula] = dbl_impl
+  lazy val formula: PackratParser[FOLFormula] = biconditional
 
-  lazy val dbl_impl: PackratParser[FOLFormula] = (
-    impl ~ "<=>" ~ dbl_impl ^^ {
-      case f1 ~ _ ~ f2 =>
-        And( Or( Neg( f1 ), f2 ), Or( f1, Neg( f2 ) ) )
-    }
-    | impl )
+  lazy val biconditional: PackratParser[FOLFormula] = (
+    impl ~ "<=>" ~ biconditional ^^ {
+      case f1 ~ _ ~ f2 => Iff( f1, f2 )
+    } | impl )
 
   lazy val impl: PackratParser[FOLFormula] = (
     and ~ "=>" ~ impl ^^ { case f1 ~ _ ~ f2 => Imp( f1, f2 ) }
