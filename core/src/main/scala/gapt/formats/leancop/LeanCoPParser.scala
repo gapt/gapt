@@ -200,7 +200,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
         case _ => throw new Exception( "Unsupported format for definitional clausal transformation: " + f )
       }
 
-    /**
+    /*
      * Retrieves a currently unused predicate of the given arity.
      * @param n The arity of the predicate.
      */
