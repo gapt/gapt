@@ -12,7 +12,11 @@ import gapt.proofs.context.Context
 import gapt.proofs.gaptic.TacticsProof
 import gapt.proofs.expansion._
 import gapt.proofs.lk._
+<<<<<<< HEAD
 import gapt.proofs.reduction._
+=======
+import gapt.proofs.reduction.ErasureReductionET
+>>>>>>> 6f1e56c47597225175de980bdf406a8d162966f3
 import gapt.expr.formula.hol.instantiate
 import gapt.proofs.lk.rules.ForallRightRule
 import gapt.formats.tptp.TptpFOLExporter
@@ -42,6 +46,7 @@ object ProblemProduction {
     tip( s"prod.prop_$name", seqName )
   // As suggested in sipReconstruct.scala, to not try at home
   val indProofs = ( Map()
+<<<<<<< HEAD
     + getIsaplanner( "03", "sequent" )
   // + getIsaplanner( "06", "sequent" )
   // + getIsaplanner( "07", "sequent" )
@@ -102,6 +107,68 @@ object ProblemProduction {
   // + getProd( "29", "sequent" )
   // + getProd( "30", "sequent" )
   //  + getProd( "31", "sequent" ) //too long to load
+=======
+    // + getIsaplanner( "03", "sequent" )
+    // + getIsaplanner( "06", "sequent" )
+    // + getIsaplanner( "07", "sequent" )
+    // + getIsaplanner( "08", "sequent" )
+    // + getIsaplanner( "09", "sequent" )
+    // + getIsaplanner( "10", "sequent" )
+    // + getIsaplanner( "11", "sequent" )
+    // + getIsaplanner( "12", "sequent" )
+    + getIsaplanner( "13", "sequent" )
+    // + getIsaplanner( "14", "sequent" )
+    // + getIsaplanner( "15", "sequent" )
+    // + getIsaplanner( "16", "sequent" )
+    // + getIsaplanner( "17", "sequent" )
+    // + getIsaplanner( "18", "sequent" )
+    // + getIsaplanner( "19", "sequent" )
+    // + getIsaplanner( "21", "sequent" )
+    // + getIsaplanner( "22", "sequent" )
+    // + getIsaplanner( "23", "sequent" )
+    // + getIsaplanner( "24", "sequent" )
+    // + getIsaplanner( "26", "sequent" )
+    // + getIsaplanner( "27", "sequent" )
+    // + getIsaplanner( "28", "sequent" )
+    // + getIsaplanner( "29", "sequent" )
+    // + getIsaplanner( "30", "sequent" )
+    // + getIsaplanner( "31", "sequent" )
+    // + getIsaplanner( "32", "sequent" )
+    // + getIsaplanner( "33", "sequent" )
+    // + getIsaplanner( "34", "sequent" )
+    // + getIsaplanner( "35", "sequent" )
+    // + getIsaplanner( "36", "sequent" )
+    // + getIsaplanner( "37", "sequent" )
+    // + getIsaplanner( "38", "sequent" )
+    // + getIsaplanner( "39", "sequent" )
+    // + getIsaplanner( "40", "sequent" )
+    // + getIsaplanner( "41", "sequent" )
+    // + getIsaplanner( "42", "sequent" )
+    // + getIsaplanner( "43", "sequent" )
+    // + getIsaplanner( "44", "sequent" )
+    // + getIsaplanner( "45", "sequent" )
+    // + getIsaplanner( "46", "sequent" )
+    // + getIsaplanner( "47", "sequent" )
+    // + getIsaplanner( "48", "sequent" )
+    // + getIsaplanner( "49", "sequent" )
+    // + getIsaplanner( "59", "sequent" )
+    // + getProd( "01", "sequent" )
+    // + getProd( "04", "sequent" )
+    // + getProd( "05", "sequent" )
+    // + getProd( "06", "sequent" )
+    // + getProd( "07", "sequent" )
+    // + getProd( "08", "sequent" )
+    // + getProd( "10", "sequent" )
+    // + getProd( "13", "sequent" )
+    // + getProd( "15", "sequent" )
+    // + getProd( "16", "sequent" )
+    // + getProd( "20", "sequent" )
+    // + getProd( "27", "sequent" )
+    // + getProd( "28", "sequent" )
+    // + getProd( "29", "sequent" )
+    // + getProd( "30", "sequent" )
+    + getProd( "31", "sequent" ) //too long to load
+>>>>>>> 6f1e56c47597225175de980bdf406a8d162966f3
   //+ getProd( "32", "sequent" )
   //+ getProd( "33", "sequent" )
   //+ getProd( "34", "sequent" )
@@ -118,7 +185,11 @@ object ProblemProduction {
   val asTptpProbs = produceProblems.map( p => {
     print( p._1 )
     try {
+<<<<<<< HEAD
       val reduction = CNFReductionLKRes |> PredicateReductionCNF |> ErasureReductionCNF
+=======
+      val reduction = ErasureReductionET
+>>>>>>> 6f1e56c47597225175de980bdf406a8d162966f3
       val ( folProblem, back ) = reduction forward ( groundFreeVariables( p._2 )._1 ) //TermReplacement.undoGrounding for the reverse action
       val ret = TptpFOLExporter( folProblem )
       print( " is complete" + "\n" )
