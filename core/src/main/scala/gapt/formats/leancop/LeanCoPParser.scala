@@ -311,40 +311,52 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
       case formulas => And( formulas )
     }
 
-  lazy val formula: PackratParser[FOLFormula] = biconditional
+  lazy val formula: PackratParser[FOLFormula] = biconditionals
 
-  lazy val biconditional: PackratParser[FOLFormula] = (
-    impl ~ "<=>" ~ biconditional ^^ {
+  lazy val biconditionals: PackratParser[FOLFormula] =
+    implications ~ "<=>" ~ biconditionals ^^ {
       case f1 ~ _ ~ f2 => Iff( f1, f2 )
-    } | impl )
+    } | implications
 
-  lazy val impl: PackratParser[FOLFormula] = (
-    and ~ "=>" ~ impl ^^ { case f1 ~ _ ~ f2 => Imp( f1, f2 ) }
-    | and )
+  lazy val implications: PackratParser[FOLFormula] =
+    disjunctions ~ "=>" ~ implications ^^ {
+      case f1 ~ _ ~ f2 => Imp( f1, f2 )
+    } | disjunctions
 
-  lazy val and: PackratParser[FOLFormula] = (
-    or ~ "&" ~ and ^^ { case f1 ~ _ ~ f2 => And( f1, f2 ) }
-    | or )
-
-  lazy val or: PackratParser[FOLFormula] = (
-    neg ~ "|" ~ or ^^ { case f1 ~ _ ~ f2 => Or( f1, f2 ) }
-    | neg )
-
-  lazy val neg: PackratParser[FOLFormula] = (
-    ( "-" | "~" ) ~> neg ^^ { case f => Neg( f ) }
-    | quantified )
-
-  lazy val quantified: PackratParser[FOLFormula] = (
-    "!" ~ "[" ~> repsep( variable, "," ) ~ "]" ~ ":" ~ quantified ^^ {
-      case vs ~ _ ~ _ ~ f => All.Block( vs, f )
+  lazy val disjunctions: PackratParser[FOLFormula] =
+    conjunctions ~ rep( "|" ~> conjunctions ) ^^ {
+      case f ~ fs => Or( f :: fs )
     }
-    | "?" ~ "[" ~> repsep( variable, "," ) ~ "]" ~ ":" ~ quantified ^^ {
+
+  lazy val conjunctions: PackratParser[FOLFormula] =
+    nonInfixFormula ~ rep( "&" ~> nonInfixFormula ) ^^ {
+      case f ~ fs => And( f :: fs )
+    }
+
+  lazy val nonInfixFormula: PackratParser[FOLFormula] =
+    neg | quantified | formulaInParentheses | not_eq | atom
+
+  lazy val neg: PackratParser[FOLFormula] =
+    ( "-" | "~" ) ~> nonInfixFormula ^^ {
+      case f => Neg( f )
+    }
+
+  lazy val quantified: PackratParser[FOLFormula] =
+    "!" ~ "[" ~> repsep( variable, "," ) ~ "]" ~ ":" ~ formula ^^ {
+      case vs ~ _ ~ _ ~ f => All.Block( vs, f )
+    } | "?" ~ "[" ~> repsep( variable, "," ) ~ "]" ~ ":" ~ formula ^^ {
       case vs ~ _ ~ _ ~ f => Ex.Block( vs, f )
     }
-    | neg | atom )
+
+  lazy val formulaInParentheses: PackratParser[FOLFormula] =
+    "(" ~> formula <~ ")"
+
+  lazy val not_eq: PackratParser[FOLFormula] = "(" ~ "!" ~> term ~ ")" ~ "=" ~ term ^^ {
+    case t1 ~ _ ~ _ ~ t2 => Neg( FOLAtom( "=", List( t1, t2 ) ) )
+  }
 
   lazy val atom: PackratParser[FOLFormula] =
-    not_eq | eq | lean_atom | real_atom | quantified | "(" ~> formula <~ ")"
+    eq | lean_atom | real_atom
 
   // These are introduced by leanCoP's (restricted) definitional clausal form translation
   lazy val lean_atom: PackratParser[FOLFormula] = lean_var ^^ {
@@ -359,10 +371,6 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
 
   lazy val eq: PackratParser[FOLFormula] = term ~ "=" ~ term ^^ {
     case t1 ~ _ ~ t2 => FOLAtom( "=", List( t1, t2 ) )
-  }
-
-  lazy val not_eq: PackratParser[FOLFormula] = "(" ~ "!" ~> term ~ ")" ~ "=" ~ term ^^ {
-    case t1 ~ _ ~ _ ~ t2 => Neg( FOLAtom( "=", List( t1, t2 ) ) )
   }
 
   def term: Parser[FOLTerm] =
