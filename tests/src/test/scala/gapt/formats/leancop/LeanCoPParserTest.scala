@@ -8,8 +8,57 @@ import org.specs2.mutable.Specification
 
 class LeanCoPParserTest extends Specification with SatMatchers {
 
+  "parse conjunctions and disjunctions left associatively" in {
+    LeanCoPParser.parseAll(
+      LeanCoPParser.formula,
+      "'A' & 'B' & 'C'" ) match {
+        case LeanCoPParser.Success( f, _ ) =>
+          f must_== fof"(A & B) & C"
+        case _ => failure
+      }
+    LeanCoPParser.parseAll(
+      LeanCoPParser.formula,
+      "'A' | 'B' | 'C'" ) match {
+        case LeanCoPParser.Success( f, _ ) =>
+          f must_== fof"(A | B) | C"
+        case _ => failure
+      }
+    ok
+  }
+
+  "conjunctions bind stronger than disjunctions" in {
+    LeanCoPParser.parseAll(
+      LeanCoPParser.formula,
+      "'A' & 'B' & 'C' | 'D'" ) match {
+        case LeanCoPParser.Success( f, _ ) =>
+          f must_== fof"((A & B) & C) | D"
+        case _ => failure
+      }
+    ok
+  }
+
+  "parse implications right associatively" in {
+    LeanCoPParser.parseAll(
+      LeanCoPParser.formula,
+      "'A' => 'B' => 'C'" ) match {
+        case LeanCoPParser.Success( f, _ ) =>
+          f must_== fof"A -> (B -> C)"
+        case _ => failure
+      }
+    ok
+  }
+
+  "implications bind stronger than biconditionals" in {
+    LeanCoPParser.parseAll( LeanCoPParser.formula, "'A' <=> 'B' => 'C'" ) match {
+      case LeanCoPParser.Success( f, _ ) =>
+        f must_== fof"A <-> (B -> C)"
+      case _ => failure
+    }
+    ok
+  }
+
   "parse biconditional to two implications" in {
-    LeanCoPParser.parseAll( LeanCoPParser.biconditional, "'P' <=> 'Q'" ) match {
+    LeanCoPParser.parseAll( LeanCoPParser.formula, "'P' <=> 'Q'" ) match {
       case LeanCoPParser.Success( f, _ ) =>
         f must_== fof"P <-> Q"
       case _ => failure
