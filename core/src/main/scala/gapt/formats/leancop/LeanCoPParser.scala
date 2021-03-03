@@ -146,7 +146,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
    *
    * The clausification makes use of the predicate symbols introduced by LeanCoP.
    */
-  def clausifyInitialFormula( f: InputFormula, leanPredicates: List[LeanPredicate] ): List[FOLFormula] = {
+  def clausifyInitialFormula( f: InputFormula, leanPredicates: List[LeanPredicate] ): List[FOLClause] = {
     val InputFormula( _, role, f_original ) = f
     val f_right_pol =
       if ( role == "conjecture" ) f_original
@@ -160,9 +160,8 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     }
   }
 
-  def toMagicalDNF( f: FOLFormula ): List[FOLFormula] = {
-    val normal_dnf = DNFp( f )
-    normal_dnf.map( _.toConjunction ).toList
+  def toMagicalDNF( f: FOLFormula ): List[FOLClause] = {
+    DNFp( f ).toList
   }
 
   /**
@@ -173,7 +172,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
    * @return A list list of clauses in DNF (possibly with introduced definitions) corresponding to the
    *         definitional clausal form of the input formula
    */
-  def toDefinitionalClausalForm( f: FOLFormula, leanPredicates: List[LeanPredicate] ): List[FOLFormula] = {
+  def toDefinitionalClausalForm( f: FOLFormula, leanPredicates: List[LeanPredicate] ): List[FOLClause] = {
 
     type DefinitionalTuple = ( FOLFormula, List[FOLFormula] )
 
@@ -215,20 +214,26 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
       unusedPredicates.collectFirst { case p @ ( _, `n` ) => p }
 
     val ( fd, defs ) = definitionalTuple( f, false )
-    fd :: defs.flatMap( d => DNFp( d ).map( _.toConjunction ) )
+    DNFp( fd ) ++ defs.flatMap( d => DNFp( d ) ) toList
   }
 
-  def matchClauses( my_clauses: List[FOLFormula], lean_clauses: List[FOLClause] ): Option[FOLSubstitution] = {
+  /**
+   *
+   * @param my_clauses DNFp clauses
+   * @param lean_clauses DNFp clauses
+   * @return
+   */
+  def matchClauses( my_clauses: List[FOLClause], lean_clauses: List[FOLClause] ): Option[FOLSubstitution] = {
     val num_clauses = lean_clauses.length
-    val goal = Or.rightAssociative( lean_clauses.map( _.toConjunction ): _* )
+    //    val goal = Or.rightAssociative( lean_clauses.map( _.toConjunction ): _* )
+    val goal = lean_clauses
 
     // Get all sub-lists of my_clauses of size num_clauses
-    val set_same_size = my_clauses.combinations( num_clauses )
-    val candidates = set_same_size.flatMap( s => s.permutations.map( p => Or.rightAssociative( p: _* ) ) )
+    val candidates = my_clauses.combinations( num_clauses ).flatMap( s => s.permutations )
 
-    def findSubstitution( lst: List[FOLFormula], goal: FOLFormula ): Option[FOLSubstitution] = lst match {
+    def findSubstitution( lst: List[List[FOLClause]], goal: List[FOLClause] ): Option[FOLSubstitution] = lst match {
       case Nil => None
-      case hd :: tl => clauseSubsumption( CNFn( hd ).head, CNFn( goal ).head ) match {
+      case hd :: tl => clauseSubsumption( hd.head, goal.head ) match {
         case None        => findSubstitution( tl, goal )
         case Some( sub ) => Some( sub.asFOLSubstitution )
       }
