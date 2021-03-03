@@ -84,6 +84,38 @@ class LeanCoPParserTest extends Specification with SatMatchers {
     ok
   }
 
+  "parse negation" in {
+    LeanCoPParser.parseAll( LeanCoPParser.formula, "- 'P'" ) match {
+      case LeanCoPParser.Success( f, _ ) =>
+        f must_== fof"- #c(P:o)"
+      case _ => failure
+    }
+    ok
+  }
+
+  "parse clause" in {
+    LeanCoPParser.parseAll( LeanCoPParser.clause, "[-'A', 'B', 'C']" ) match {
+      case LeanCoPParser.Success( f, _ ) =>
+        f must_== fos"A :- B, C"
+      case e => failure( e.toString )
+    }
+    ok
+  }
+
+  "parse clause with superfluous parentheses" in {
+    LeanCoPParser.parseAll( LeanCoPParser.clause, "[-('A'), 'B', 'C']" ) match {
+      case LeanCoPParser.Success( f, _ ) =>
+        f must_== fos"A :- B, C"
+      case e => failure( e.toString )
+    }
+    LeanCoPParser.parseAll( LeanCoPParser.clause, "[(-'A'), 'B', 'C']" ) match {
+      case LeanCoPParser.Success( f, _ ) =>
+        f must_== fos"A :- B, C"
+      case e => failure( e.toString )
+    }
+    ok
+  }
+
   "irrationals" in {
     LeanCoPParser.getExpansionProof( ClasspathInputFile( "irrationals.leancop.s" ) ) must beLike {
       case Some( expansion ) =>
