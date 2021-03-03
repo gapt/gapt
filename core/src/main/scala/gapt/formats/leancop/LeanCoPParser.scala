@@ -219,17 +219,10 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
 
   /**
    *
-   * @param my_clauses DNFp clauses
-   * @param lean_clauses DNFp clauses
-   * @return
+   * @param myClauses DNFp clauses
+   * @param leanClauses DNFp clauses
    */
-  def matchClauses( my_clauses: List[FOLClause], lean_clauses: List[FOLClause] ): Option[FOLSubstitution] = {
-    val num_clauses = lean_clauses.length
-    //    val goal = Or.rightAssociative( lean_clauses.map( _.toConjunction ): _* )
-    val goal = lean_clauses
-
-    // Get all sub-lists of my_clauses of size num_clauses
-    val candidates = my_clauses.combinations( num_clauses ).flatMap( s => s.permutations )
+  def matchClauses( myClauses: List[FOLClause], leanClauses: List[FOLClause] ): Option[FOLSubstitution] = {
 
     def findSubstitution( lst: List[List[FOLClause]], goal: List[FOLClause] ): Option[FOLSubstitution] = lst match {
       case Nil => None
@@ -239,7 +232,9 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
       }
     }
 
-    findSubstitution( candidates.toList, goal )
+    val candidates = myClauses.combinations( leanClauses.length ).flatMap( s => s.permutations )
+
+    findSubstitution( candidates.toList, leanClauses )
   }
 
   def expansionSequent: Parser[Option[ExpansionSequent]] =
