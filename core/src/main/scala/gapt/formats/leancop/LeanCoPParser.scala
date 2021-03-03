@@ -2,6 +2,7 @@ package gapt.formats.leancop
 
 import gapt.expr.formula.All
 import gapt.expr.formula.And
+import gapt.expr.formula.Atom
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Iff
 import gapt.expr.formula.Imp
@@ -22,6 +23,8 @@ import gapt.logic.clauseSubsumption
 import gapt.logic.hol.CNFn
 import gapt.logic.hol.DNFp
 import gapt.logic.hol.toNNF
+import gapt.proofs.FOLClause
+import gapt.proofs.Sequent
 import gapt.proofs.expansion.ExpansionSequent
 import gapt.proofs.expansion.formulaToExpansionTree
 
@@ -74,7 +77,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   type ClauseIndex = Int
 
   case class InputFormula( name: Name, role: Role, formula: FOLFormula )
-  case class Clause( index: ClauseIndex, cls: FOLFormula, origin: Name )
+  case class Clause( index: ClauseIndex, cls: FOLClause, origin: Name )
 
   def constructExpansionSequent(
     inputs:   List[InputFormula],
@@ -84,7 +87,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     val initialFormula: Map[Name, InputFormula] =
       ( inputs ++
         clauses.collect {
-          case Clause( i, f, n @ "lean_eq_theory" ) => InputFormula( n + "_" + i, "axiom", f )
+          case Clause( i, f, n @ "lean_eq_theory" ) => InputFormula( n + "_" + i, "axiom", f.toConjunction )
         } ).map { i => i.name -> i } toMap
 
     val derivedClauses: List[Clause] =
@@ -134,6 +137,9 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case Or( f1, f2 ) => getLeanPreds( f1 ) ++ getLeanPreds( f2 )
     case _ => throw new Exception( "Unsupported format for getLeanPreds: " + cls )
   }
+
+  def getLeanPreds( c: FOLClause ): List[( String, Int )] =
+    ( c.antecedent ++ c.succedent ).flatMap( getLeanPreds ).toList
 
   /**
    * Clausifies the given formula.
@@ -212,9 +218,9 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     fd :: defs.flatMap( d => DNFp( d ).map( _.toConjunction ) )
   }
 
-  def matchClauses( my_clauses: List[FOLFormula], lean_clauses: List[FOLFormula] ): Option[FOLSubstitution] = {
+  def matchClauses( my_clauses: List[FOLFormula], lean_clauses: List[FOLClause] ): Option[FOLSubstitution] = {
     val num_clauses = lean_clauses.length
-    val goal = Or.rightAssociative( lean_clauses: _* )
+    val goal = Or.rightAssociative( lean_clauses.map( _.toConjunction ): _* )
 
     // Get all sub-lists of my_clauses of size num_clauses
     val set_same_size = my_clauses.combinations( num_clauses )
@@ -257,7 +263,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
         case n ~ _ ~ r ~ _ ~ f => ( n, r, f )
       }
 
-  def clauses: Parser[( Int, FOLFormula, String )] =
+  def clauses: Parser[( Int, FOLClause, String )] =
     language ~ "(" ~>
       integer ~ "," ~ "plain" ~ "," ~ clause ~ "," ~ "clausify" ~ "(" ~ name <~
       ")" ~ ")" ~ "." ^^ {
@@ -306,10 +312,18 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
       case t ~ _ ~ _ ~ _ ~ v => ( t, v )
     }
 
-  def clause: Parser[FOLFormula] =
-    "[" ~> repsep( formula, "," ) <~ "]" ^^ {
-      case formulas => And( formulas )
-    }
+  def clause: Parser[FOLClause] =
+    "[" ~> repsep( literal, "," ) <~ "]" ^^ { Sequent( _ ) }
+
+  lazy val literal: PackratParser[( FOLAtom, Polarity )] = {
+    "(" ~> literal <~ ")" |
+      ( "~" | "-" ) ~> clauseAtom ^^ { ( _, Polarity.Negative ) } |
+      clauseAtom ^^ { ( _, Polarity.Positive ) } |
+      not_eq ^^ { case Neg( a @ FOLAtom( _, _ ) ) => ( a, Polarity.Negative ) }
+  }
+
+  lazy val clauseAtom: PackratParser[FOLAtom] =
+    atom | "(" ~> atom <~ ")"
 
   lazy val formula: PackratParser[FOLFormula] = biconditionals
 
@@ -355,21 +369,21 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case t1 ~ _ ~ _ ~ t2 => Neg( FOLAtom( "=", List( t1, t2 ) ) )
   }
 
-  lazy val atom: PackratParser[FOLFormula] =
+  lazy val atom: PackratParser[FOLAtom] =
     eq | lean_atom | real_atom
 
   // These are introduced by leanCoP's (restricted) definitional clausal form translation
-  lazy val lean_atom: PackratParser[FOLFormula] = lean_var ^^ {
+  lazy val lean_atom: PackratParser[FOLAtom] = lean_var ^^ {
     case ( i, terms ) =>
       FOLAtom( "leanP" + i, terms )
   }
 
-  lazy val real_atom: PackratParser[FOLFormula] = name ~ opt( "(" ~> repsep( term, "," ) <~ ")" ) ^^ {
+  lazy val real_atom: PackratParser[FOLAtom] = name ~ opt( "(" ~> repsep( term, "," ) <~ ")" ) ^^ {
     case pred ~ Some( args ) => FOLAtom( pred, args )
     case pred ~ None         => FOLAtom( pred )
   }
 
-  lazy val eq: PackratParser[FOLFormula] = term ~ "=" ~ term ^^ {
+  lazy val eq: PackratParser[FOLAtom] = term ~ "=" ~ term ^^ {
     case t1 ~ _ ~ t2 => FOLAtom( "=", List( t1, t2 ) )
   }
 
@@ -398,7 +412,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
 
   def name: Parser[String] = lower_word_or_integer | single_quoted
 
-  def lower_word_or_integer: Parser[String] = """[a-z0-9_-][A-Za-z0-9_-]*""".r
+  def lower_word_or_integer: Parser[String] = """[a-z0-9_][A-Za-z0-9_-]*""".r
 
   def single_quoted: Parser[String] = "'" ~> """[^']*""".r <~ "'"
 
