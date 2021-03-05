@@ -22,7 +22,7 @@ object loadExpansionProof {
       val Some( expSeq ) = VeriTParser.getExpansionProofWithSymmetry( FilePath( fileName ) )
       ExpansionProof( expSeq ) -> CutIntroduction.BackgroundTheory.PureFOL
     case fileName if fileName contains "/leanCoP" =>
-      val Some( expSeq ) = LeanCoPParser.getExpansionProof( extractFromTSTPCommentsIfNecessary( file ) )
+      val expSeq = LeanCoPParser.parseAsExpansionSequent( extractFromTSTPCommentsIfNecessary( file ) )
       val p = ExpansionProof( expSeq )
       p -> CutIntroduction.BackgroundTheory.guess( p.shallow )
     case fileName if fileName contains "/Prover9" =>

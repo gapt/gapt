@@ -2,7 +2,6 @@ package gapt.testing
 
 import java.io.FileWriter
 import java.io.PrintWriter
-
 import ammonite.ops._
 import gapt.cutintro._
 import gapt.expr._
@@ -300,7 +299,8 @@ class LeanCoPTestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
   override def timeout = Some( 2 minutes )
 
   override def test( implicit testRun: TestRun ) = {
-    val E = LeanCoPParser.getExpansionProof( loadExpansionProof.extractFromTSTPCommentsIfNecessary( f ) ).get --- "import"
+    val E = LeanCoPParser.parseAsExpansionSequent(
+      loadExpansionProof.extractFromTSTPCommentsIfNecessary( f ) ) --- "import"
 
     val deep = E.deep --- "toDeep"
     VeriT.isValid( deep.toDisjunction ) !-- "verit validity"
