@@ -171,18 +171,18 @@ lazy val core = project.in( file( "core" ) ).
     scalacOptions in Compile += "-Xfatal-warnings",
 
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.0",
+      "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.1",
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.parboiled" %% "parboiled" % "2.2.1",
       "com.lihaoyi" %% "fastparse" % "2.3.0",
       "com.lihaoyi" %% "sourcecode" % "0.2.1",
-      "org.typelevel" %% "cats-free" % "2.3.1",
+      "org.typelevel" %% "cats-free" % "2.4.2",
       "org.scala-lang.modules" %% "scala-xml" % "1.3.0",
       "org.apache.commons" % "commons-lang3" % "3.11",
       "com.lihaoyi" %% "ammonite-ops" % "2.3.8",
       "de.uni-freiburg.informatik.ultimate" % "smtinterpol" % "2.5",
-      "com.github.scopt" %% "scopt" % "4.0.0",
+      "com.github.scopt" %% "scopt" % "4.0.1",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.6",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.6" ),
 
