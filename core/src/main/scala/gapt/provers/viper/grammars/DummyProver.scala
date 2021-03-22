@@ -63,17 +63,10 @@ object DummyProverHelper {
     val d = new File( dir )
     if ( d.exists && d.isDirectory ) {
       val paths = d.listFiles.toList.map( t => InputFile.fromJavaFile( t ) )
-<<<<<<< HEAD
       val expSeq = paths.map( t => {
         print( "Parsing: " + t.toString() + "\n" )
         LeanCoPParser.getExpansionProof( t )
       } ).flatten
-=======
-      val expSeq = paths.map( t =>{
-        print("Parsing: "+t.toString()+"\n")
-        LeanCoPParser.getExpansionProof( t )
-       }).flatten
->>>>>>> a5277f887e23efddcf1ba5cf22d1fd410c136a94
       val expPrf = expSeq.map( t => ExpansionProof( t ) )
       if ( expSeq.size != paths.size ) List[ExpansionProof]()
       else expPrf
@@ -85,7 +78,6 @@ object DummyProverHelper {
     if ( lPairs.size != ExpPrf.size ) Map[Formula, Option[ExpansionProof]]()
     else lPairs.toMap
   }
-<<<<<<< HEAD
   def enoughSolutions( dir: String, n: Int ): List[String] = {
     val d = new File( dir )
     if ( d.exists && d.isDirectory ) {
@@ -95,6 +87,4 @@ object DummyProverHelper {
       else return dict.map( x => enoughSolutions( x.getAbsolutePath(), n ) ).flatten
     } else return List.empty[String]
   }
-=======
->>>>>>> a5277f887e23efddcf1ba5cf22d1fd410c136a94
 }

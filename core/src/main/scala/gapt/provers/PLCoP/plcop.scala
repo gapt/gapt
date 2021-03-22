@@ -38,6 +38,8 @@ trait AltProver extends OneShotProver { self =>
     override def getExpansionProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = {
       val reduction = PredicateReductionET |> ErasureReductionET
       val ( folProblem, back ) = reduction forward sequent
+      //error occur because expansionproof in PLCOP call clause transformations have.
+      //have to break the function apart....
       self.getExpansionProof( folProblem ).map( back )
     }
 
