@@ -1,4 +1,4 @@
-package gapt.provers.leancop
+package gapt.provers.PLcop
 
 import java.io.IOException
 import java.io.StringReader
