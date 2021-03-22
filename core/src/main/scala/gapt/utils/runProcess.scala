@@ -1,11 +1,12 @@
 package gapt.utils
 
 import java.io.IOException
+import java.io.File
 
 import scala.concurrent._
 import scala.concurrent.duration._
 import gapt.formats.InputFile
-
+import System.getProperty
 object runProcess {
 
   def withTempInputFile( cmd: Seq[String], input: String, catchStderr: Boolean = false ): String =
@@ -22,9 +23,9 @@ object runProcess {
   private implicit val newThreadExecutionContext: ExecutionContext =
     ExecutionContext.fromExecutor( runnable => new Thread( runnable ).start() )
 
-  def withExitValue( cmd: Seq[String], stdin: String = "", catchStderr: Boolean = false ): ( Int, String ) = {
+  def withExitValue( cmd: Seq[String], stdin: String = "", catchStderr: Boolean = false, exeDict: String = System.getProperty( "user.dir" ) ): ( Int, String ) = {
     val pb = new ProcessBuilder( cmd: _* )
-
+    pb.directory( new File( exeDict ) )
     if ( catchStderr ) pb.redirectErrorStream( true )
 
     val p = pb.start()

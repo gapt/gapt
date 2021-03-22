@@ -15,23 +15,48 @@ import gapt.formats._
 import gapt.formats.leancop._
 import gapt.provers.groundFreeVariables
 
-case class DummyProver( insts: Map[Formula, Option[ExpansionProof]] ) extends OneShotProver {
-  override def getExpansionProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = {
-    val ( seqground, subst ) = groundFreeVariables( seq )
-    val reduction = ErasureReductionET
-    val ( folProblem, back ) = reduction forward seqground
-    folProblem match {
-      case Sequent( _, Seq( f ) ) => {
-        print( "checking for proof: " + f + "\n" + insts.keySet.toString() + "\n" )
-        insts.get( f ) match {
-          case Some( Some( t ) ) => Some( TermReplacement.undoGrounding( back( t ), subst ) )
-          case _                 => None
+case class DummyProver( insts: Map[Formula, Option[ExpansionProof]] ) {
+
+  def erasureReduction = new OneShotProver {
+    import gapt.proofs.reduction._
+    override def getExpansionProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = {
+      val ( seqground, subst ) = groundFreeVariables( seq )
+      val reduction = ErasureReductionET
+      val ( folProblem, back ) = reduction forward seqground
+      folProblem match {
+        case Sequent( _, Seq( f ) ) => {
+          print( "checking for proof: " + f + "\n" + insts.keySet.toString() + "\n" )
+          insts.get( f ) match {
+            case Some( Some( t ) ) => Some( TermReplacement.undoGrounding( back( t ), subst ) )
+            case _                 => None
+          }
         }
+        case _ => None
       }
-      case _ => None
     }
+    override def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = None
+
   }
-  override def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = None
+  def predicateReduction = new OneShotProver {
+    import gapt.proofs.reduction._
+    override def getExpansionProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = {
+      val ( seqground, subst ) = groundFreeVariables( seq )
+      val reduction = PredicateReductionET |> ErasureReductionET
+      val ( folProblem, back ) = reduction forward seqground
+      folProblem match {
+        case Sequent( _, Seq( f ) ) => {
+          print( "checking for proof: " + f + "\n" + insts.keySet.toString() + "\n" )
+          insts.get( f ) match {
+            case Some( Some( t ) ) => Some( TermReplacement.undoGrounding( back( t ), subst ) )
+            case _                 => None
+          }
+        }
+        case _ => None
+      }
+    }
+    override def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = None
+
+  }
 }
 object DummyProverHelper {
   def getListOfExpPrf( dir: String ): List[ExpansionProof] = {
