@@ -42,19 +42,19 @@ object ProblemProduction {
     tip( s"prod.prop_$name", seqName )
   // As suggested in sipReconstruct.scala, to not try at home
   val indProofs = ( Map()
-    + getIsaplanner( "03", "sequent" )
-  // + getIsaplanner( "06", "sequent" )
-  // + getIsaplanner( "07", "sequent" )
-  // + getIsaplanner( "08", "sequent" )
-  // + getIsaplanner( "09", "sequent" )
-  // + getIsaplanner( "10", "sequent" )
-  // + getIsaplanner( "11", "sequent" )
+    //+ getIsaplanner( "03", "sequent" )
+    // + getIsaplanner( "06", "sequent" )
+    // + getIsaplanner( "07", "sequent" )
+    // + getIsaplanner( "08", "sequent" )
+    // + getIsaplanner( "09", "sequent" )
+    + getIsaplanner( "10", "sequent" )
+    + getIsaplanner( "11", "sequent" )
   // + getIsaplanner( "12", "sequent" )
-  // + getIsaplanner( "13", "sequent" )
+  //  + getIsaplanner( "13", "sequent" )
   // + getIsaplanner( "14", "sequent" )
   // + getIsaplanner( "15", "sequent" )
   // + getIsaplanner( "16", "sequent" )
-  // + getIsaplanner( "17", "sequent" )
+  //+ getIsaplanner( "17", "sequent" )
   // + getIsaplanner( "18", "sequent" )
   // + getIsaplanner( "19", "sequent" )
   // + getIsaplanner( "21", "sequent" )
@@ -118,7 +118,7 @@ object ProblemProduction {
   val asTptpProbs = produceProblems.map( p => {
     print( p._1 )
     try {
-      val reduction = CNFReductionLKRes |> PredicateReductionCNF |> ErasureReductionCNF
+      val reduction = PredicateReductionET |> ErasureReductionET
       val ( folProblem, back ) = reduction forward ( groundFreeVariables( p._2 )._1 ) //TermReplacement.undoGrounding for the reverse action
       val ret = TptpFOLExporter( folProblem )
       print( " is complete" + "\n" )
@@ -171,7 +171,7 @@ object ProblemProduction {
     val varWithInst = xs.map( va => ( va, xs ) ).map( dup => {
       val indTy = dup._1.ty.asInstanceOf[TBase]
       val instanceGen = new EnumeratingInstanceGenerator( Seq( indTy ), false, ctx )
-      val instances = ( if ( indTy.toString == "list" ) instanceGen.generate( 0, 20, 20 ) else instanceGen.generate( 0, 10, 10 ) ).toSeq.flatten
+      val instances = ( if ( indTy.toString == "list" ) instanceGen.generate( 0, 20, 10 ) else instanceGen.generate( 0, 10, 10 ) ).toSeq.flatten
       val names = ( 1 to 10 toList ).map( s => s.toString )
       val instWithName = instances zip names
       instWithName.map( ins => ( dup._1, ins, dup._2 ) ).toSeq
