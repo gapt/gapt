@@ -1,14 +1,13 @@
 package gapt.provers.PLcop
 
 import java.io.IOException
-import java.io.StringReader
+import gapt.expr.TermReplacement
 import gapt.expr.formula.hol.universalClosure
-import gapt.expr.formula.{ All, Atom, Eq, Neg, Or }
+import gapt.expr.formula._
 import gapt.expr.subst.Substitution
 import gapt.formats.PLCop.{ PLCopParser }
 import gapt.proofs.expansion.{ ETWeakQuantifierBlock, ExpansionProof, ExpansionProofToLK, ExpansionSequent, formulaToExpansionTree }
 import gapt.formats.tptp.TptpFOLExporter
-import gapt.logic.{ Polarity, clauseSubsumption }
 import gapt.proofs.{ Clause, HOLClause, HOLSequent, Sequent }
 import gapt.proofs.lk.LKProof
 import gapt.proofs.resolution.ResolutionToExpansionProof
@@ -25,7 +24,7 @@ import gapt.utils.runProcess
 import gapt.utils.withTempFile
 import java.io.File
 import gapt.formats.InputFile
-import gapt.proofs.expansion.deskolemizeET
+import gapt.provers.groundFreeVariables
 trait AltProver extends OneShotProver { self =>
   def extendToManySortedViaPredicates = new OneShotProver {
     import gapt.proofs.reduction._
@@ -35,10 +34,11 @@ trait AltProver extends OneShotProver { self =>
       self.getExpansionProof( folProblem )( ctx.map( _.newMutable ) ).isDefined
     }
     override def getExpansionProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = {
+      val ( seqground, subst ) = groundFreeVariables( sequent )
       val reduction = PredicateReductionET |> ErasureReductionET
       val ( folProblem, back ) = reduction forward sequent
       self.getExpansionProof( folProblem ).map( exp => {
-        back( deskolemizeET( exp ) )
+        TermReplacement.undoGrounding( back( exp ), subst )
       } )
     }
     override def getLKProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = {
@@ -57,10 +57,11 @@ trait AltProver extends OneShotProver { self =>
     }
 
     override def getExpansionProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = {
+      val ( seqground, subst ) = groundFreeVariables( sequent )
       val reduction = ErasureReductionET
-      val ( folProblem, back ) = reduction forward sequent
+      val ( folProblem, back ) = reduction forward seqground
       self.getExpansionProof( folProblem ).map( exp => {
-        back( deskolemizeET( exp ) )
+        TermReplacement.undoGrounding( back( exp ), subst )
       } )
     }
     override def getLKProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = {
@@ -78,7 +79,8 @@ class PLCop( ini: String = "ini/plcop0.ini", stage: String = "0", exeDic: String
     getExpansionProof( s )( ctx.map( _.newMutable ) ).isDefined
 
   override def getExpansionProof( s: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = {
-    val cnf = structuralCNF( s ).map( c => universalClosure( c.conclusion.toDisjunction ) -> c ).toMap
+    val ( seqground, subst ) = groundFreeVariables( s )
+    val cnf = structuralCNF( seqground ).map( c => universalClosure( c.conclusion.toDisjunction ) -> c ).toMap
     // LeanCoP doesn't like empty clauses
     for ( ( _, clause ) <- cnf if clause.isProof ) return Some( ResolutionToExpansionProof( clause ) )
     renameConstantsToFi.wrap( cnf.keys ++: Sequent() )( ( renaming, sequent: HOLSequent ) => {
@@ -89,7 +91,7 @@ class PLCop( ini: String = "ini/plcop0.ini", stage: String = "0", exeDic: String
         if ( new File( outputFile ).exists() ) ( 0, outputFile ) else ( 1, "" )
       }
       if ( exitValue == 1 ) None
-      else if ( exitValue == 0 ) Some( PLCopParser.getExpansionProof( InputFile.fromFileName( stdout ) ).get )
+      else if ( exitValue == 0 ) Some( TermReplacement.undoGrounding( PLCopParser.getExpansionProof( InputFile.fromFileName( stdout ) ).get, subst ) )
       else throw new IllegalArgumentException( s"Unexpected PLCop output with exit value ${exitValue}:\n${stdout}" )
 
     } ).map {
