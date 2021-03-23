@@ -2116,6 +2116,7 @@ val problem: gapt.formats.tip.TipProblem =
 gapt> val Some(proof) = Viper(problem, ViperOptions(verbosity=0))
 val proof: gapt.proofs.lk.LKProof =
 [p168] ∀y0 #c(Z: Nat) != (S(y0:Nat): Nat),
+[p171] ∀y0 #c(Z: Nat) != (S(y0:Nat): Nat),
 ∀x0 ('proj1-S'(S(x0)): Nat) = x0,
 ∀z ('-2'(S(z), #c(Z: Nat)): Nat) = S(z),
 ∀y ('+2'(#c(Z: Nat), y:Nat): Nat) = y,
@@ -2123,8 +2124,8 @@ val proof: gapt.proofs.lk.LKProof =
 ∀z ∀x2 '-2'(S(z), S(x2)) = '-2'(z, x2),
 ∀y ∀z '+2'(S(z), y) = S('+2'(z, y))
 ⊢
-∀n ∀m '-2'(n, '+2'(n, m)) = #c(Z: Nat)    (CutRule(p21, Suc(0), p167, Ant(3)))
-[p167] ∀y0 #c(Z: Nat) != (S(y0:Nat): Nat),
+∀n ∀m '-2'(n, '+2'(n, m)) = #c(Z: Nat)    (CutRule(p21, Suc(0), p170, Ant(3)))
+[p170] ∀y0 #c(Z: Nat) != (S(y0:Nat): Nat),
 ∀x0 ('proj1-S'(S(x0)): Nat) = x0,
 ∀z ('-2'(S(z), #c(Z: Nat)): Nat) = S(z),
 (⊤ → ∀m '-2'(#c(Z: Nat), '+2'(#c(Z: Nat), m:Nat)) = #c(Z: Nat)) ∧
