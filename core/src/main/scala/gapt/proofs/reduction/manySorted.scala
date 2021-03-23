@@ -202,7 +202,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
         }.toMap
         val subProof_ = f( subProof, subProofVars )
         val newSubst = Substitution( freeVariables( subProof.conclusion ) map {
-          case v @ FOLVar( name ) =>
+          case v @ FOLVar( _ ) =>
             subProofVars( v ) -> back( subst( v ).asInstanceOf[FOLTerm], vars )
         } )
         Subst( subProof_, newSubst )
@@ -245,7 +245,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
         eigenVariables( a, sha ) + ( ev -> Var( ev.name, shx.ty ) )
       case ( ETStrongQuantifier( _, ev: FOLVar, a ), Ex( shx, sha ) ) =>
         eigenVariables( a, sha ) + ( ev -> Var( ev.name, shx.ty ) )
-      case ( ETWeakQuantifier( _, insts ), Quant( x, sh, isForall ) ) =>
+      case ( ETWeakQuantifier( _, insts ), Quant( _, sh, _ ) ) =>
         insts.flatMap { case ( _, a ) => eigenVariables( a, sh ) }
     }
 
@@ -258,11 +258,11 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
     case ( ETAnd( a, b ), And( sha, shb ) )  => ETAnd( back( a, sha, freeVars ), back( b, shb, freeVars ) )
     case ( ETOr( a, b ), Or( sha, shb ) )    => ETOr( back( a, sha, freeVars ), back( b, shb, freeVars ) )
     case ( ETImp( a, b ), Imp( sha, shb ) )  => ETImp( back( a, sha, freeVars ), back( b, shb, freeVars ) )
-    case ( ETStrongQuantifier( _, ev: FOLVar, a ), All( shx, _ ) ) =>
+    case ( ETStrongQuantifier( _, ev: FOLVar, a ), All( _, _ ) ) =>
       ETStrongQuantifier( shallow, freeVars( ev ), back( a, instantiate( shallow, freeVars( ev ) ), freeVars ) )
     case ( ETStrongQuantifier( _, ev: FOLVar, a ), Ex( _, _ ) ) =>
       ETStrongQuantifier( shallow, freeVars( ev ), back( a, instantiate( shallow, freeVars( ev ) ), freeVars ) )
-    case ( ETWeakQuantifier( _, insts ), Quant( x, sh, isForall ) ) =>
+    case ( ETWeakQuantifier( _, insts ), Quant( x, sh, _ ) ) =>
       ETWeakQuantifier(
         shallow,
         for ( ( t: FOLTerm, inst ) <- insts ) yield {
@@ -469,13 +469,13 @@ case object PredicateReductionET extends Reduction_[HOLSequent, ExpansionProof] 
         ETStrongQuantifier( _, _, _ ) => throw new IllegalArgumentException
     }
 
-    def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof =
+    def back( expansionProof: ExpansionProof ): ExpansionProof =
       ExpansionProof( expansionProof.expansionSequent.zipWithIndex collect {
         case ( et, i ) if !extraAxioms.contains( et.shallow, i.polarity ) =>
           unguard( et )
       } )
 
-    ( forward( problem ), back( _, problem ) )
+    ( forward( problem ), back( _ ) )
   }
 
 }
@@ -586,7 +586,7 @@ private class TagReductionHelper {
         val q_ = f( q )
         val vs = freeVariables( q_.conclusion ).groupBy( _.name )
         Subst( f( q ), Substitution( subst.map.flatMap {
-          case ( x, t ) if !vs.contains( x.name ) => None
+          case ( x, _ ) if !vs.contains( x.name ) => None
           case ( x, Var( y, _ ) )                 => Some( vs( x.name ).head -> Var( y, vs( x.name ).head.ty ) )
           case ( x, t )                           => Some( vs( x.name ).head -> back( t ) )
         } ) )
@@ -640,7 +640,7 @@ private object definitionIntroducingBackReplacement {
         p.conclusion match {
           case Sequent( Seq(), Seq( Eq( t, t_ ) ) ) if t == t_ =>
             Refl( t )
-          case Sequent( Seq(), Seq( Iff( f @ Apps( c: HOLAtomConst, args ), g ) ) ) if defs.contains( c ) =>
+          case Sequent( Seq(), Seq( Iff( Apps( c: HOLAtomConst, args ), _ ) ) ) if defs.contains( c ) =>
             var defn: ResolutionProof = Defn( c, defs( c ) )
             for ( ev <- args ) defn = AllR( defn, Suc( 0 ), ev.asInstanceOf[Var] )
             defn
@@ -674,20 +674,9 @@ private class LambdaEliminationReductionHelper( constants: Set[Const], lambdas: 
       replacements( lam )
   }
 
-  private def setup( f: Formula ): Formula = f match {
-    case All( x, g )      => All( x, setup( g ) )
-    case Ex( x, g )       => Ex( x, setup( g ) )
-    case Top() | Bottom() => f
-    case Neg( g )         => Neg( setup( g ) )
-    case And( g, h )      => And( setup( g ), setup( h ) )
-    case Or( g, h )       => Or( setup( g ), setup( h ) )
-    case Imp( g, h )      => Imp( setup( g ), setup( h ) )
-    case Apps( hd, args ) => hd( args map setup: _* ).asInstanceOf[Formula]
-  }
-
   lambdas foreach setup
   if ( !addAxioms ) extraAxioms.clear()
-  val extraAxiomClauses = extraAxioms.flatMap { case All.Block( vs, f ) => Seq( Seq() :- Seq( f ) ) }
+  val extraAxiomClauses = extraAxioms.flatMap { case All.Block( _, f ) => Seq( Seq() :- Seq( f ) ) }
 
   def delambdaify( e: Expr ): Expr = e match {
     case App( a, b )       => App( delambdaify( a ), delambdaify( b ) )
@@ -783,7 +772,7 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
   val partiallyAppedTypes = partialAppTypes.map { _.swap }
 
   val applyFunctions = partialAppTypes.map {
-    case ( partialAppType, ty @ FunctionType( ret, args ) ) =>
+    case ( partialAppType, ty @ FunctionType( _, _ ) ) =>
       partialAppType -> Const( nameGen freshWithIndex "apply", partialAppType ->: ty )
   }
 
@@ -802,7 +791,7 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
 
   val extraAxioms = if ( !addExtraAxioms ) Set() else
     for {
-      f @ Const( _, FunctionType( ret, ( partialAppType: TBase ) :: argTypes ), _ ) <- applyFunctions.values
+      Const( _, FunctionType( _, ( partialAppType: TBase ) :: argTypes ), _ ) <- applyFunctions.values
       ( partialApplicationFun @ Const( _, FunctionType( `partialAppType`, pappArgTypes ), _ ), g, _ ) <- partialApplicationFuns
     } yield {
       val varGen = rename.awayFrom( Set[Var]() )
@@ -812,7 +801,7 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
         applyFunctions( partialAppType )( partialApplicationFun( gArgVars: _* ) )( fArgVars: _* ),
         newConstants( g )( gArgVars: _* )( fArgVars: _* ) ) )
     }
-  val extraAxiomClauses = extraAxioms.flatMap { case All.Block( vs, f ) => Seq( Seq() :- Seq( f ) ) }
+  val extraAxiomClauses = extraAxioms.flatMap { case All.Block( _, f ) => Seq( Seq() :- Seq( f ) ) }
 
   def reduceFunTy( t: Ty ): Ty = {
     val FunctionType( ret, args ) = t
@@ -841,7 +830,6 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
       applyFunctions( reduceArgTy( f.ty ) )( reduce( f ) )( args map reduce: _* )
     case Apps( f: Const, args ) =>
       newConstants( f )( args map reduce: _* )
-    //    case Abs( Var( x, t ), b ) => Abs( Var( x, reduceArgTy( t ) ), reduce( b ) )
   }
 
   def forward( sequent: HOLSequent ): HOLSequent = extraAxioms ++: sequent.map( reduce )
