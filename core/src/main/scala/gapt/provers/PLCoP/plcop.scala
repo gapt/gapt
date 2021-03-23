@@ -34,25 +34,41 @@ trait AltProver extends OneShotProver { self =>
       val ( folProblem, _ ) = reduction forward sequent
       self.getExpansionProof( folProblem )( ctx.map( _.newMutable ) ).isDefined
     }
-
     override def getExpansionProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = {
       val reduction = PredicateReductionET |> ErasureReductionET
       val ( folProblem, back ) = reduction forward sequent
-      print( folProblem.toString + "\n" )
-      //error occur because expansionproof in PLCOP call clause transformations have.
-      //have to break the function apart....
       self.getExpansionProof( folProblem ).map( exp => {
-        print( exp.toString + "\n" )
         back( deskolemizeET( exp ) )
       } )
     }
-
     override def getLKProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = {
       val reduction = PredicateReductionET |> ErasureReductionET
       val ( folProblem, back ) = reduction forward sequent
       getExpansionProof( folProblem ) map { ExpansionProofToLK( _ ).get }
     }
     override def toString = s"$self.extendToManySortedViaPredicates"
+  }
+  def extendToManySortedViaErasure = new OneShotProver {
+    import gapt.proofs.reduction._
+    override def isValid( sequent: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean = {
+      val reduction = ErasureReductionET
+      val ( folProblem, _ ) = reduction forward sequent
+      self.getExpansionProof( folProblem )( ctx.map( _.newMutable ) ).isDefined
+    }
+
+    override def getExpansionProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = {
+      val reduction = ErasureReductionET
+      val ( folProblem, back ) = reduction forward sequent
+      self.getExpansionProof( folProblem ).map( exp => {
+        back( deskolemizeET( exp ) )
+      } )
+    }
+    override def getLKProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = {
+      val reduction = ErasureReductionET
+      val ( folProblem, back ) = reduction forward sequent
+      getExpansionProof( folProblem ) map { ExpansionProofToLK( _ ).get }
+    }
+    override def toString = s"$self.extendToManySortedViaErasure"
   }
 }
 object PLCop extends PLCop( ini = "ini/plcop0.ini", stage = "0", exeDic = "./leancop_ml" )
