@@ -77,6 +77,9 @@ class ErasureReductionTest extends Specification with SatMatchers {
     Escargot.withDeskolemization.extendToManySortedViaErasure.
       getExpansionProof( hof"!x P(x:nat) -> !x P(x)" ).
       get.deep must beEValidSequent
+    Escargot.withDeskolemization.extendToManySortedViaErasure.
+      getExpansionProof( hof"?x P(x:nat) -> ?x P(x)" ).
+      get.deep must beEValidSequent
     ok
   }
 }
