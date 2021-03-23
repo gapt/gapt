@@ -1728,6 +1728,10 @@ val problem: gapt.proofs.HOLSequent = ∀x ∀y (x:a) = (y:a), ∀x f(f(x:b): b)
 
 gapt> val (firstOrderProblem, back) = reduction forward problem
 val firstOrderProblem: gapt.proofs.HOLSequent =
+<<<<<<< HEAD
+=======
+∀x0 ∀x1 (P_is_a(x0) ∧ P_is_a(x1) → P_is_o('f_='(x0, x1))),
+>>>>>>> evaluate user manual
 ∀x0 (P_is_b(x0) → P_is_b(f_f(x0))),
 ⊤ → P_is_b(f_c),
 ∃x P_is_b(x),
@@ -2115,7 +2119,6 @@ val problem: gapt.formats.tip.TipProblem =
 
 gapt> val Some(proof) = Viper(problem, ViperOptions(verbosity=0))
 val proof: gapt.proofs.lk.LKProof =
-[p168] ∀y0 #c(Z: Nat) != (S(y0:Nat): Nat),
 [p171] ∀y0 #c(Z: Nat) != (S(y0:Nat): Nat),
 ∀x0 ('proj1-S'(S(x0)): Nat) = x0,
 ∀z ('-2'(S(z), #c(Z: Nat)): Nat) = S(z),
@@ -2416,7 +2419,6 @@ We can solve the formula equation above by
 \begin{clilisting}
 gapt> val scala.util.Success(s) = solveFormulaEquation(F)
 val s: gapt.expr.subst.Substitution = Substitution(X:i>o -> λx_0 a = x_0 ∨ b = x_0)
-
 \end{clilisting}
 
 On success a substitution is returned, which when applied to the input formula yields a valid formula.
@@ -2438,8 +2440,16 @@ The \emph{DLS} algorithm \cite{Doherty1997Computing} can eliminate second-order 
 GAPT contains an implementation of a variant of the DLS algorithm that computes actual witnesses for second-order quantifiers.
 For example consider the following formula
 \begin{clilisting}
+<<<<<<< HEAD
 gapt> val H = hof"?X ?Y( X(a) ∧ ¬Y(a) )"
 val H: gapt.expr.formula.Formula = ∃X ∃Y (X(a) ∧ ¬Y(a))
+=======
+gapt> val solution = dls(hof"∃X X(a)")
+val solution: scala.util.Try[(gapt.expr.subst.Substitution, gapt.expr.formula.Formula)] = Success((Substitution(X:i>o -> λx_0 a = x_0),X(a): o))
+
+gapt> Escargot.isValid(BetaReduction.betaNormalize(solution.get._1(solution.get._2)))
+val res0: Boolean = true
+>>>>>>> evaluate user manual
 
 \end{clilisting}
 We can eliminate the second-order quantifiers and obtain witnesses by
