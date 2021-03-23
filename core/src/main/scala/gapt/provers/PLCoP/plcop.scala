@@ -25,7 +25,7 @@ import gapt.utils.runProcess
 import gapt.utils.withTempFile
 import java.io.File
 import gapt.formats.InputFile
-
+import gapt.proofs.expansion.deskolemizeET
 trait AltProver extends OneShotProver { self =>
   def extendToManySortedViaPredicates = new OneShotProver {
     import gapt.proofs.reduction._
@@ -38,9 +38,13 @@ trait AltProver extends OneShotProver { self =>
     override def getExpansionProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = {
       val reduction = PredicateReductionET |> ErasureReductionET
       val ( folProblem, back ) = reduction forward sequent
+      print( folProblem.toString + "\n" )
       //error occur because expansionproof in PLCOP call clause transformations have.
       //have to break the function apart....
-      self.getExpansionProof( folProblem ).map( back )
+      self.getExpansionProof( folProblem ).map( exp => {
+        print( exp.toString + "\n" )
+        back( deskolemizeET( exp ) )
+      } )
     }
 
     override def getLKProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = {
