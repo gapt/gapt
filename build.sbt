@@ -14,12 +14,18 @@ lazy val commonSettings = Seq(
   startYear := Some( 2008 ),
   version := Version,
   autoAPIMappings := true,
+  publishMavenStyle := true,
+
+  publishTo := Some(
+    if ( isSnapshot.value )
+      Opts.resolver.sonatypeSnapshots
+    else
+      Opts.resolver.sonatypeStaging ),
 
   scmInfo := Some( ScmInfo(
     browseUrl = url( "https://github.com/gapt/gapt" ),
     connection = "scm:git:https://github.com/gapt/gapt.git",
     devConnection = Some( "scm:git:git@github.com:gapt/gapt.git" ) ) ),
-  bintrayOrganization := Some( "gapt" ),
 
   scalaVersion := "2.13.1",
   scalacOptions in Compile ++= Seq(
@@ -63,7 +69,7 @@ lazy val root = project.in( file( "." ) ).
     fork in console := true,
     initialCommands in console := IO.read( resourceDirectory.in( cli, Compile ).value / "gapt-cli-prelude.scala" ),
 
-    bintrayReleaseOnPublish := false,
+    publish / skip := true,
     packagedArtifacts := Map(),
 
     inConfig( BuildSbtConfig )( SbtScalariform.configScalariformSettings ++ scalariformSettings ),
@@ -220,7 +226,7 @@ lazy val tests = project.in( file( "tests" ) ).
   disablePlugins( JUnitXmlReportPlugin ).
   settings(
     testForkedParallel := true,
-    bintrayReleaseOnPublish := false,
+    publish / skip := true,
     packagedArtifacts := Map() )
 
 lazy val userManual = project.in( file( "doc" ) ).
@@ -228,7 +234,7 @@ lazy val userManual = project.in( file( "doc" ) ).
   settings( commonSettings: _* ).
   settings(
     unmanagedSourceDirectories in Compile := Seq( baseDirectory.value ),
-    bintrayReleaseOnPublish := false,
+    publish / skip := true,
     packagedArtifacts := Map() )
 
 lazy val cli = project.in( file( "cli" ) ).
@@ -239,7 +245,7 @@ lazy val cli = project.in( file( "cli" ) ).
     scalacOptions in Compile += "-Xfatal-warnings",
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value ),
-    bintrayReleaseOnPublish := false,
+    publish / skip := true,
     packagedArtifacts := Map() )
 
 addCommandAlias( "format", "; scalariformFormat ; buildsbt:scalariformFormat" )
@@ -251,7 +257,7 @@ lazy val testing = project.in( file( "testing" ) ).
     name := "gapt-testing",
     description := "gapt extended regression tests",
     scalacOptions in Compile += "-Xfatal-warnings",
-    bintrayReleaseOnPublish := false,
+    publish / skip := true,
     packagedArtifacts := Map() )
 
 lazy val releaseDist = TaskKey[File]( "release-dist", "Creates the release tar ball." )
