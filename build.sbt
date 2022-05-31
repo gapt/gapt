@@ -4,7 +4,7 @@ import org.apache.commons.compress.archivers.tar.{ TarArchiveEntry, TarArchiveOu
 import scalariform.formatter.preferences._
 import sys.process._
 
-val Version = "2.15.3"
+val Version = "2.15.4"
 
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
@@ -26,6 +26,23 @@ lazy val commonSettings = Seq(
     browseUrl = url( "https://github.com/gapt/gapt" ),
     connection = "scm:git:https://github.com/gapt/gapt.git",
     devConnection = Some( "scm:git:git@github.com:gapt/gapt.git" ) ) ),
+
+  developers := List(
+    Developer(
+      id = "jvierling",
+      name = "Jannik Vierling",
+      email = "jannik.vierling@gmail.com",
+      url = url( "https://jvierling.github.io/" ) ),
+    Developer(
+      id = "shetzl",
+      name = "Stefan Hetzl",
+      email = "stefan.hetzl@tuwien.ac.at",
+      url = url( "http://dmg.tuwien.ac.at/hetzl/" ) ),
+    Developer(
+      id = "gebner",
+      name = "Gabriel Ebner",
+      email = "gebner@gebner.org",
+      url = url( "https://gebner.org/" ) ) ),
 
   scalaVersion := "2.13.1",
   scalacOptions in Compile ++= Seq(
