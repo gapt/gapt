@@ -2,6 +2,10 @@
 
 ## Version 2.16 (unreleased)
 
+## Version 2.15.3 (released on 2022-05-31)
+
+* Publish to Maven Central
+
 ## Version 2.15.2 (released on 2020-04-24)
 
 * CLI is the entry point of the JAR file
