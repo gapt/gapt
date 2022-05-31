@@ -27,6 +27,23 @@ lazy val commonSettings = Seq(
     connection = "scm:git:https://github.com/gapt/gapt.git",
     devConnection = Some( "scm:git:git@github.com:gapt/gapt.git" ) ) ),
 
+  developers := List(
+    Developer(
+      id = "jvierling",
+      name = "Jannik Vierling",
+      email = "jannik.vierling@gmail.com",
+      url = url( "https://jvierling.github.io/" ) ),
+    Developer(
+      id = "shetzl",
+      name = "Stefan Hetzl",
+      email = "stefan.hetzl@tuwien.ac.at",
+      url = url( "http://dmg.tuwien.ac.at/hetzl/" ) ),
+    Developer(
+      id = "gebner",
+      name = "Gabriel Ebner",
+      email = "gebner@gebner.org",
+      url = url( "https://gebner.org/" ) ) ),
+
   scalaVersion := "2.13.1",
   scalacOptions in Compile ++= Seq(
     "-deprecation",
