@@ -160,7 +160,7 @@
 {\Huge User manual}
 
 \vspace*{10mm}
-{\Large Version 2.15.2}
+{\Large Version 2.15.3}
 \vspace*{10mm}
 
 {\Large \today}
@@ -225,11 +225,10 @@ sbt console
 \end{lstlisting}
 
 \item If you like GAPT and want to use it as a library in your Scala project,
-  it is available as a Maven artifact on JCenter.  All you need to do is add
-  two lines to your \verb,build.sbt,:
+  it is available as a Maven artifact on Maven Central.  All you need to do is add
+  the following line to your \verb,build.sbt,:
 \begin{lstlisting}
-resolvers += Resolver.bintrayRepo("gapt", "maven")
-libraryDependencies += "at.logic.gapt" %% "gapt" % "2.15.2"
+libraryDependencies += "at.logic.gapt" %% "gapt" % "2.15.3"
 \end{lstlisting}
 
 \end{enumerate}
