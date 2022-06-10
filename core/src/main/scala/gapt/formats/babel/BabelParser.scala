@@ -45,32 +45,32 @@ object BabelLexical {
         ty != Character.SPACE_SEPARATOR && (
           ty == Character.MATH_SYMBOL || ty == Character.OTHER_SYMBOL || ( '\u0020' <= c && c <= '\u007e' ) )
       }
-  def OpChar[_: P] = CharPred( isOpChar )
-  def RestOpChar[_: P] = OpChar | CharIn( "_" ) | CharPred( isUnquotNameChar )
-  def Operator[_: P]: P[String] = P( ( OpChar.rep( 1 ) ~ ( "_" ~ RestOpChar.rep ).? ).! )
-  def OperatorAndNothingElse[_: P] = Operator ~ End
+  def OpChar[X: P] = CharPred( isOpChar )
+  def RestOpChar[X: P] = OpChar | CharIn( "_" ) | CharPred( isUnquotNameChar )
+  def Operator[X: P]: P[String] = P( ( OpChar.rep( 1 ) ~ ( "_" ~ RestOpChar.rep ).? ).! )
+  def OperatorAndNothingElse[X: P] = Operator ~ End
 
-  def Name[_: P]: P[String] = P( Operator | UnquotedName | QuotedName )
-  def TyName[_: P]: P[String] = P( UnquotedName | QuotedName )
+  def Name[X: P]: P[String] = P( Operator | UnquotedName | QuotedName )
+  def TyName[X: P]: P[String] = P( UnquotedName | QuotedName )
   def isEmoji( c: Char ) = ( '\ud83c' <= c && c <= '\udbff' ) || ( '\udc00' <= c && c <= '\udfff' )
   def isUnquotNameChar( c: Char ) = ( c.isUnicodeIdentifierPart || isEmoji( c ) || c == '_' || c == '$' ) && c != 'λ'
-  def UnquotedName[_: P]: P[String] = P( CharsWhile( isUnquotNameChar ).! )
-  def QuotedName[_: P]: P[String] = P( "'" ~ QuotedNameChar.rep ~ "'" ).map( _.mkString )
-  def QuotedNameChar[_: P]: P[String] = P(
+  def UnquotedName[X: P]: P[String] = P( CharsWhile( isUnquotNameChar ).! )
+  def QuotedName[X: P]: P[String] = P( "'" ~ QuotedNameChar.rep ~ "'" ).map( _.mkString )
+  def QuotedNameChar[X: P]: P[String] = P(
     CharsWhile( c => c != '\\' && c != '\'' ).! |
       ( "\\" ~ ( "'" | "\\" ).! ) |
       ( "\\u" ~ CharIn( "0123456789abcdef" ).
         rep( min = 4, max = 4 ).!.
         map( Integer.parseInt( _, 16 ).toChar.toString ) ) )
 
-  def kw[_: P]( name: String ) = P( name ~ !CharPred( isUnquotNameChar ) )
+  def kw[X: P]( name: String ) = P( name ~ !CharPred( isUnquotNameChar ) )
 }
 
 object BabelParserCombinators {
   import BabelLexical._
   import fastparse._, MultiLineWhitespace._
 
-  def MarkPos[_: P]( p: => P[preExpr.Expr] ): P[preExpr.Expr] = {
+  def MarkPos[X: P]( p: => P[preExpr.Expr] ): P[preExpr.Expr] = {
     val begin = P.current.index
     val result = p
     val end = P.current.index
@@ -82,63 +82,63 @@ object BabelParserCombinators {
     }
   }
 
-  def ExprAndNothingElse[_: P]: P[preExpr.Expr] = P( "" ~ Expr ~ End )
+  def ExprAndNothingElse[X: P]: P[preExpr.Expr] = P( "" ~ Expr ~ End )
 
-  def Expr[_: P]: P[preExpr.Expr] = P( Lam )
+  def Expr[X: P]: P[preExpr.Expr] = P( Lam )
 
-  def BoundVar[_: P]: P[preExpr.Ident] = P(
+  def BoundVar[X: P]: P[preExpr.Ident] = P(
     Name.map( preExpr.Ident( _, preExpr.freshMetaType(), None ) ) |
       ( "(" ~ Name ~ ":" ~ Type ~ ")" ).map( x => preExpr.Ident( x._1, x._2, None ) ) )
-  def Lam[_: P]: P[preExpr.Expr] = MarkPos( P( ( ( "^" | "λ" ) ~/ BoundVar ~ Lam ).
+  def Lam[X: P]: P[preExpr.Expr] = MarkPos( P( ( ( "^" | "λ" ) ~/ BoundVar ~ Lam ).
     map( x => preExpr.Abs( x._1, x._2 ) ) | TypeAnnotation ) )
 
-  def TypeAnnotation[_: P]: P[preExpr.Expr] = MarkPos( P( ( FlatOps ~/ ( ":" ~ Type ).? ) map {
+  def TypeAnnotation[X: P]: P[preExpr.Expr] = MarkPos( P( ( FlatOps ~/ ( ":" ~ Type ).? ) map {
     case ( expr, Some( ty ) ) => preExpr.TypeAnnotation( expr, ty )
     case ( expr, None )       => expr
   } ) )
 
-  def FlatOps[_: P]: P[preExpr.Expr] = MarkPos( P( FlatOpsElem.rep( 1 ).map( children => preExpr.FlatOps( children.view.flatten.toList ) ) ) )
-  def FlatOpsElem[_: P]: P[Seq[preExpr.FlatOpsChild]] = P(
+  def FlatOps[X: P]: P[preExpr.Expr] = MarkPos( P( FlatOpsElem.rep( 1 ).map( children => preExpr.FlatOps( children.view.flatten.toList ) ) ) )
+  def FlatOpsElem[X: P]: P[Seq[preExpr.FlatOpsChild]] = P(
     ( Ident.map { case preExpr.LocAnnotation( preExpr.Ident( n, _, None ), loc ) => Left( ( n, loc ) ) case e => Right( e ) } |
       ( VarLiteral | ConstLiteral ).map( Right( _ ) ) ).map( Seq( _ ) )
       | Tuple.map( _.map( Right( _ ) ) ) )
 
-  def Fn[_: P]: P[preExpr.Expr] = MarkPos( P( Ident | VarLiteral | ConstLiteral ) )
-  def Tuple[_: P]: P[Seq[preExpr.Expr]] = P( "(" ~/ Expr.rep( sep = "," ) ~ ")" )
+  def Fn[X: P]: P[preExpr.Expr] = MarkPos( P( Ident | VarLiteral | ConstLiteral ) )
+  def Tuple[X: P]: P[Seq[preExpr.Expr]] = P( "(" ~/ Expr.rep( sep = "," ) ~ ")" )
 
-  def Parens[_: P] = MarkPos( P( "(" ~/ Expr ~/ ")" ) )
+  def Parens[X: P] = MarkPos( P( "(" ~/ Expr ~/ ")" ) )
 
-  def Var[_: P] = P( Name ~ ":" ~ Type ) map {
+  def Var[X: P] = P( Name ~ ":" ~ Type ) map {
     case ( name, ty ) => real.Var( name, preExpr.toRealType( ty, Map() ) )
   }
-  def TyParams[_: P] = P( "{" ~ Type.rep ~ "}" )
-  def Const[_: P] = P( Name ~ TyParams.? ~ ":" ~ Type ) map {
+  def TyParams[X: P] = P( "{" ~ Type.rep ~ "}" )
+  def Const[X: P] = P( Name ~ TyParams.? ~ ":" ~ Type ) map {
     case ( name, ps, ty ) => real.Const( name, preExpr.toRealType( ty, Map() ),
       ps.getOrElse( Nil ).toList.map( preExpr.toRealType( _, Map() ) ) )
   }
-  def VarLiteral[_: P] = MarkPos( P( ( "#v(" ~/ Var ~ ")" ).map { preExpr.QuoteBlackbox } ) )
-  def ConstLiteral[_: P] = MarkPos( P( ( "#c(" ~/ Const ~ ")" ).map { preExpr.QuoteBlackbox } ) )
+  def VarLiteral[X: P] = MarkPos( P( ( "#v(" ~/ Var ~ ")" ).map { preExpr.QuoteBlackbox } ) )
+  def ConstLiteral[X: P] = MarkPos( P( ( "#c(" ~/ Const ~ ")" ).map { preExpr.QuoteBlackbox } ) )
 
-  def Ident[_: P]: P[preExpr.Expr] = MarkPos( P( ( Name ~ TyParams.? ).map {
+  def Ident[X: P]: P[preExpr.Expr] = MarkPos( P( ( Name ~ TyParams.? ).map {
     case ( n, ps ) =>
       preExpr.Ident( n, preExpr.freshMetaType(), ps.map( _.toList ) )
   } ) )
 
-  def TypeParens[_: P]: P[preExpr.Type] = P( "(" ~/ Type ~ ")" )
-  def TypeBase[_: P]: P[preExpr.Type] = P( TyName ~ TypeAtom.rep ).map { case ( n, ps ) => preExpr.BaseType( n, ps.toList ) }
-  def TypeVar[_: P]: P[preExpr.Type] = P( "?" ~/ TyName ).map( preExpr.VarType )
-  def TypeAtom[_: P]: P[preExpr.Type] = P( TypeParens | TypeVar | TypeBase )
-  def Type[_: P]: P[preExpr.Type] = P( TypeAtom.rep( min = 1, sep = ">" ) ).map { _.reduceRight( preExpr.ArrType ) }
-  def TypeAndNothingElse[_: P] = P( "" ~ Type ~ End )
+  def TypeParens[X: P]: P[preExpr.Type] = P( "(" ~/ Type ~ ")" )
+  def TypeBase[X: P]: P[preExpr.Type] = P( TyName ~ TypeAtom.rep ).map { case ( n, ps ) => preExpr.BaseType( n, ps.toList ) }
+  def TypeVar[X: P]: P[preExpr.Type] = P( "?" ~/ TyName ).map( preExpr.VarType )
+  def TypeAtom[X: P]: P[preExpr.Type] = P( TypeParens | TypeVar | TypeBase )
+  def Type[X: P]: P[preExpr.Type] = P( TypeAtom.rep( min = 1, sep = ">" ) ).map { _.reduceRight( preExpr.ArrType ) }
+  def TypeAndNothingElse[X: P] = P( "" ~ Type ~ End )
 
-  def Sequent[_: P] = P( Expr.rep( sep = "," ) ~ ( ":-" | "⊢" ) ~ Expr.rep( sep = "," ) ).
+  def Sequent[X: P] = P( Expr.rep( sep = "," ) ~ ( ":-" | "⊢" ) ~ Expr.rep( sep = "," ) ).
     map { case ( ant, suc ) => HOLSequent( ant, suc ) }
-  def SequentAndNothingElse[_: P] = P( "" ~ Sequent ~ End )
+  def SequentAndNothingElse[X: P] = P( "" ~ Sequent ~ End )
 
-  def LabelledFormula[_: P] = P( ( TyName ~ ":" ~ !"-" ).? ~ Expr )
-  def LabelledSequent[_: P] = P( LabelledFormula.rep( sep = "," ) ~ ( ":-" | "⊢" ) ~ LabelledFormula.rep( sep = "," ) ).
+  def LabelledFormula[X: P] = P( ( TyName ~ ":" ~ !"-" ).? ~ Expr )
+  def LabelledSequent[X: P] = P( LabelledFormula.rep( sep = "," ) ~ ( ":-" | "⊢" ) ~ LabelledFormula.rep( sep = "," ) ).
     map { case ( ant, suc ) => HOLSequent( ant, suc ) }
-  def LabelledSequentAndNothingElse[_: P] = P( "" ~ LabelledSequent ~ End )
+  def LabelledSequentAndNothingElse[X: P] = P( "" ~ LabelledSequent ~ End )
 }
 
 object BabelParser {

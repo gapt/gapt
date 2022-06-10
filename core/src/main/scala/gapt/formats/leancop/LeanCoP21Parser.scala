@@ -30,34 +30,34 @@ object LeanCoP21Parser {
 
   import fastparse._, MultiLineWhitespace._
 
-  def stdout[_: P]: P[Proof] =
+  def stdout[X: P]: P[Proof] =
     P( ( AnyChar ~ !"ompact Proof" ).rep ~
       "Compact Proof:\n--------------" ~ proof ~ "--------------" )
 
-  def proof[_: P]: P[Proof] =
+  def proof[X: P]: P[Proof] =
     P( "[" ~ clause ~ ( "," ~/ proof ).rep ~ "]" ).map {
       case ( main, sides ) => Proof( main, sides.toList )
     }
 
-  def clause[_: P]: P[Clause] =
+  def clause[X: P]: P[Clause] =
     P( "[" ~ lit.rep( sep = "," ) ~ "]" ).map( Clause( _: _* ) )
 
-  def lit[_: P]: P[Lit] = P( pos | neg | hash | negHash )
-  def pos[_: P]: P[Lit] = P( atom ).map( Pos )
-  def neg[_: P]: P[Lit] = P( "-" ~ atom ).map( Neg )
-  def hash[_: P]: P[Lit] = P( "#" ).map( _ => Hash )
-  def negHash[_: P]: P[Lit] = P( "-" ~ "#" ).map( _ => NegHash )
+  def lit[X: P]: P[Lit] = P( pos | neg | hash | negHash )
+  def pos[X: P]: P[Lit] = P( atom ).map( Pos )
+  def neg[X: P]: P[Lit] = P( "-" ~ atom ).map( Neg )
+  def hash[X: P]: P[Lit] = P( "#" ).map( _ => Hash )
+  def negHash[X: P]: P[Lit] = P( "-" ~ "#" ).map( _ => NegHash )
 
-  def atom[_: P]: P[FOLAtom] = P( ( ident ~ ( "(" ~ term.rep( sep = "," ) ~ ")" ).? ~ ( "=" ~ term ).? )
+  def atom[X: P]: P[FOLAtom] = P( ( ident ~ ( "(" ~ term.rep( sep = "," ) ~ ")" ).? ~ ( "=" ~ term ).? )
     .map {
       case ( n, as, None )        => FOLAtom( n, as.getOrElse( Nil ) )
       case ( n, as, Some( rhs ) ) => Eq( FOLFunction( n, as.getOrElse( Nil ) ), rhs )
     } | ( "(" ~ atom ~ ")" ) )
 
-  def term[_: P]: P[FOLTerm] = P( ident ~ ( "(" ~ term.rep( sep = "," ) ~ ")" ).? )
+  def term[X: P]: P[FOLTerm] = P( ident ~ ( "(" ~ term.rep( sep = "," ) ~ ")" ).? )
     .map { case ( n, as ) => FOLFunction( n, as.getOrElse( Nil ) ) }
 
-  def ident[_: P]: P[String] = P( CharsWhile( c => c.isLetterOrDigit || c == '_', 1 ).! )
+  def ident[X: P]: P[String] = P( CharsWhile( c => c.isLetterOrDigit || c == '_', 1 ).! )
 
   def parse( stdout: String ): Either[String, Proof] =
     fastparse.parse( stdout, LeanCoP21Parser.stdout( _ ) ) match {
