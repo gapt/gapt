@@ -175,7 +175,7 @@ class Spin( opts: SpinOptions ) {
           if ( usable.isEmpty )
             return None
 
-          val given = choose()
+          val `given` = choose()
           usable -= given
 
           generatePotentialInductionAxioms( given )
@@ -229,7 +229,7 @@ class Spin( opts: SpinOptions ) {
     private def allowInferClausesFromInductionAxioms(): Boolean =
       usable.isEmpty || loopCount >= inductCutoff
 
-    private def generatePotentialInductionAxioms( given: Cls ): Unit = {
+    private def generatePotentialInductionAxioms( `given`: Cls ): Unit = {
       // TODO: this should probably be less restrictive now that we perform more subgoal generalization
       if ( performGeneralization || given.clause.exists( constants.nonLogical( _ ) exists ( isInductive( _ )( ctx ) ) ) &&
         !inductedClauses.contains( given.clause ) ) {

@@ -26,13 +26,13 @@ import gapt.proofs.context.facet.StructurallyInductiveTypes
 import gapt.proofs.context.update.InductiveType
 import gapt.utils.Doc
 
-package object export {
+package object `export` {
 
-  def export( problem: TipSmtProblem ): Doc = {
+  def `export`( problem: TipSmtProblem ): Doc = {
     Doc.stack( toSExpression( problem ).map { _.toDoc } )
   }
 
-  def export( problem: TipProblem ): Doc = {
+  def `export`( problem: TipProblem ): Doc = {
     Doc.stack( toSExpression( problem ).map { _.toDoc } )
   }
 
@@ -48,17 +48,17 @@ package object export {
    * @return A document that represents the SMT2 encoding of the sequent and
    * the context.
    */
-  def export( sequent: Sequent[Formula], context: Context ): Doc = {
+  def `export`( sequent: Sequent[Formula], context: Context ): Doc = {
     export(
       new SequentContextToTipProblemConverter( sequent, context ).convert )
   }
 
-  def export( sequent: HOLSequent )(
+  def `export`( sequent: HOLSequent )(
     implicit
     ctx: Context, dummyImplicit: DummyImplicit ): Doc =
     export( sequent, ctx )
 
-  def export( formula: Formula )(
+  def `export`( formula: Formula )(
     implicit
     ctx: Context ): Doc =
     export( Sequent() :+ formula )

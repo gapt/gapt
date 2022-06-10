@@ -85,7 +85,7 @@ class TptpHOLExporter {
    * @param maximize_axiom_declarations if true, all conjunctions
    * @param lambda_lifting apply lambda lifting to deep formula and add the definitions into to the antecedent of the formula
    */
-  def export( ep: ExpansionSequent, maximize_axiom_declarations: Boolean = true, lambda_lifting: Boolean = false ): String = {
+  def `export`( ep: ExpansionSequent, maximize_axiom_declarations: Boolean = true, lambda_lifting: Boolean = false ): String = {
     val ep1 = if ( maximize_axiom_declarations ) simplify_antecedent( ep ) else ep
     val es1: HOLSequent = if ( lambda_lifting ) lambda_lift_and_add_definitions( ep1.deep ) else ep1.deep
     val ( es2, _ ) = groundFreeVariables( es1 )

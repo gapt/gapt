@@ -59,7 +59,7 @@ private class RecursionSchemeExporter( unicode: Boolean, rs: RecursionScheme )
 
   def csep( docs: List[Doc] ): Doc = wordwrap( docs, "," )
 
-  def export(): String = {
+  def `export`(): String = {
     val nonTerminals = rs.startSymbol +: ( rs.nonTerminals - rs.startSymbol ).toList.sortBy { _.name }
     val ntDecl = group( "Non-terminals:" <> nest( line <> csep(
       nonTerminals map { show( _, false, Map(), Map() )._1.inPrec( 0 ) } ) ) )
