@@ -13,8 +13,9 @@ import gapt.proofs.resolution._
 import gapt.proofs.sketch.{ RefutationSketch, RefutationSketchToResolution }
 import gapt.utils.{ Statistic, TimeOutException, withTimeout }
 
+import java.lang.StackOverflowError
+
 import scala.collection.mutable
-import scala.compat.Platform.StackOverflowError
 import scala.concurrent.duration._
 import scala.collection.parallel.CollectionConverters._
 
@@ -309,7 +310,7 @@ object TstpStatistics {
         println( s"parser error $v" )
       }
       Left( ParsingError( v ) )
-    case e: StackOverflowError =>
+    case e: java.lang.StackOverflowError =>
       if ( print_statistics ) {
         println( s"parser timeout $v" )
       }
