@@ -6,10 +6,7 @@ import gapt.expr.ClosedUnderSub
 import gapt.expr.Const
 import gapt.expr.Expr
 import gapt.expr.Var
-import gapt.expr.ty.->:
-import gapt.expr.ty.TBase
-import gapt.expr.ty.TVar
-import gapt.expr.ty.Ty
+import gapt.expr.ty.{ TArr, TBase, TVar, Ty }
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 
@@ -21,7 +18,7 @@ trait ExprSubstitutable1 {
       case _ if sub.typeMap.isEmpty => ty
       case ty @ TBase( _, Nil )     => ty
       case TBase( n, ps )           => TBase( n, ps.map( applySubstitution( sub, _ ) ) )
-      case in ->: out               => applySubstitution( sub, in ) ->: applySubstitution( sub, out )
+      case TArr( in, out )          => applySubstitution( sub, in ) ->: applySubstitution( sub, out )
       case v @ TVar( _ )            => sub.typeMap.getOrElse( v, v )
     }
   }

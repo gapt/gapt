@@ -53,12 +53,12 @@ object nTapeInstances {
     val ind_axiom = definitions.find( _._1 == ind_atom ).get._2
     val indet = conjuncts.find( _.shallow == ind_axiom ).get
 
-    val List( ind1, ind2 ): List[ExpansionTree] = indet match {
+    val List( ind1, ind2 ) = ( indet: @unchecked ) match {
       case ETWeakQuantifier( _, instances ) =>
         instances.values.toList
     }
 
-    val ( ind1base, ind1step ) = ind1 match {
+    val ( ind1base, ind1step ) = ( ind1: @unchecked ) match {
       case ETImp( ETAnd(
         ETWeakQuantifier( _, base_instances ),
         ETSkolemQuantifier( _, _,
@@ -70,7 +70,7 @@ object nTapeInstances {
         ( base, step )
     }
 
-    val ( ind2base, ind2step ) = ind2 match {
+    val ( ind2base, ind2step ) = ( ind2: @unchecked ) match {
       case ETImp( ETAnd(
         ETWeakQuantifier( _, base_instances ),
         ETSkolemQuantifier( _, _,

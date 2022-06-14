@@ -156,7 +156,7 @@ object InductionGrammar {
         case st @ Apps( c: Const, ss ) if prodCase.forall( _ == c ) =>
           val rhs = Substitution( List( alpha -> term ) ++ ( nus( c ) zip ss ) ++
             ( gamma zip instGammas( st ) ) )( prod.rhs )
-          prod.lhs match {
+          ( prod.lhs: @unchecked ) match {
             case List( `tau` )          => List( List( tau ) -> rhs )
             case g if containsOnlyAlpha => List( instGammas( st ) -> rhs )
             case g if !containsOnlyAlpha =>
@@ -195,7 +195,7 @@ private class IndGExporter( unicode: Boolean, g: InductionGrammar )
   def showNt( nt: Var ): Doc = show( nt, false, Map(), Map() )._1.inPrec( 0 )
   def showNt( nt: List[Var] ): Doc = csep( nt.map( showNt ) )
 
-  def export: String = {
+  def `export`: String = {
     val knownTypes = g.terminals.map { c => c.name -> c }.toMap ++ g.nonTerminals.flatten.map( nt => nt.name -> nt )
 
     val ntDecl =

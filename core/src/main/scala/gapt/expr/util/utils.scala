@@ -25,11 +25,7 @@ import gapt.expr.formula.fol.FOLExpression
 import gapt.expr.formula.fol.FOLFormula
 import gapt.expr.formula.fol.FOLVar
 import gapt.expr.subst.Substitution
-import gapt.expr.ty.->:
-import gapt.expr.ty.TBase
-import gapt.expr.ty.TVar
-import gapt.expr.ty.To
-import gapt.expr.ty.Ty
+import gapt.expr.ty.{ ->:, TArr, TBase, TVar, To, Ty }
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.utils.NameGenerator
@@ -162,7 +158,7 @@ object freeVariables {
 
 object typeVariables {
   def apply( t: Ty ): Set[TVar] = t match {
-    case a ->: b        => apply( a ) ++ apply( b )
+    case TArr( a, b )   => apply( a ) ++ apply( b )
     case TBase( _, ps ) => ps.view.flatMap( apply ).toSet
     case t: TVar        => Set( t )
   }

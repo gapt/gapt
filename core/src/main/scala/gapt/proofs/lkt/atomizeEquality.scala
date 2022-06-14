@@ -40,16 +40,18 @@ object atomizeEquality {
       AllR( main, ev, apply( q, lctx.up1( p ) ) )
     case Eql( main, eq, ltr, rwCtx @ Abs( _, _: Atom ), q ) =>
       Eql( main, eq, ltr, rwCtx, apply( q, lctx.up1( p ) ) )
-    case Eql( main, eq, ltr, rwCtx, q ) if main.inAnt =>
-      val aux = Set( main, eq ).fresh( !main.polarity )
-      val cutf = lctx.up1( p )( q.aux )
-      val sim = simulate( rwCtx, ltr, eq, main, aux )
-      Cut( cutf, Bound1( aux, sim ), apply( q, lctx.up1( p ) ) )
-    case Eql( main, eq, ltr, rwCtx, q ) if main.inSuc =>
-      val aux = Set( main, eq ).fresh( !main.polarity )
-      val cutf = lctx.up1( p )( q.aux )
-      val sim = simulate( rwCtx, !ltr, eq, aux, main )
-      Cut( cutf, apply( q, lctx.up1( p ) ), Bound1( aux, sim ) )
+    case Eql( main, eq, ltr, rwCtx, q ) =>
+      if ( main.inAnt ) {
+        val aux = Set( main, eq ).fresh( !main.polarity )
+        val cutf = lctx.up1( p )( q.aux )
+        val sim = simulate( rwCtx, ltr, eq, main, aux )
+        Cut( cutf, Bound1( aux, sim ), apply( q, lctx.up1( p ) ) )
+      } else {
+        val aux = Set( main, eq ).fresh( !main.polarity )
+        val cutf = lctx.up1( p )( q.aux )
+        val sim = simulate( rwCtx, !ltr, eq, aux, main )
+        Cut( cutf, apply( q, lctx.up1( p ) ), Bound1( aux, sim ) )
+      }
     case AllSk( main, term, q ) =>
       AllSk( main, term, apply( q, lctx.up1( p ) ) )
     case Def( main, f, q ) =>

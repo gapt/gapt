@@ -8,7 +8,7 @@ import gapt.utils.Doc
 import gapt.utils.Doc._
 
 class ETtPrettyPrinter( sig: BabelSignature ) extends BabelExporter( unicode = true, sig = sig ) {
-  def export( et: ETt ): Doc =
+  def `export`( et: ETt ): Doc =
     group( show( et, Map[String, VarOrConst]() )._1.inPrec( 0 ) )
 
   def addPol( doc: Doc, pol: Polarity ): Doc =

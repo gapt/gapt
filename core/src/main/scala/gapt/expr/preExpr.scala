@@ -15,10 +15,7 @@ import gapt.expr.formula.constants.ImpC
 import gapt.expr.formula.constants.MonomorphicLogicalC
 import gapt.expr.formula.constants.NegC
 import gapt.expr.formula.constants.OrC
-import gapt.expr.ty.->:
-import gapt.expr.ty.TBase
-import gapt.expr.ty.TVar
-import gapt.expr.ty.Ty
+import gapt.expr.ty.{ ->:, TArr, TBase, TVar, Ty }
 import gapt.expr.util.freeVariables
 import gapt.formats.babel.BabelSignature
 import gapt.formats.babel.Notation
@@ -129,7 +126,7 @@ object preExpr {
     def lift( t: Ty ): Type = t match {
       case t: TVar                       => vars.getOrElseUpdate( t, freshMetaType() )
       case real.ty.TBase( name, params ) => BaseType( name, params.map( lift ) )
-      case ->:( in, out )                => ArrType( lift( in ), lift( out ) )
+      case TArr( in, out )               => ArrType( lift( in ), lift( out ) )
     }
     val res = ( lift( t ), ps.map( lift ) )
     res
@@ -138,7 +135,7 @@ object preExpr {
   def liftTypeMono( t: Ty ): Type = t match {
     case real.ty.TVar( name )          => VarType( name )
     case real.ty.TBase( name, params ) => BaseType( name, params.map( liftTypeMono ) )
-    case ->:( in, out )                => ArrType( liftTypeMono( in ), liftTypeMono( out ) )
+    case TArr( in, out )               => ArrType( liftTypeMono( in ), liftTypeMono( out ) )
   }
 
   def QuoteBlackbox( e: real.Expr ) =
@@ -332,7 +329,7 @@ object preExpr {
         val expr = LocAnnotation( Ident( n, freshMetaType(), None ), idLoc )
         sig.notationsForToken( Notation.Token( n ) ) match {
           case Some( not ) if not.precedence < minPrec => elabError( "missing expression before", expr )
-          case Some( not ) if not.precedence >= minPrec =>
+          case Some( not ) =>
             val fn = not.const match {
               case Notation.RealConst( c ) =>
                 Some( LocAnnotation( Ident( c, freshMetaType(), None ), idLoc ) )
@@ -387,7 +384,7 @@ object preExpr {
         sig.notationsForToken( Notation.Token( n ) ) match {
           case Some( not ) if not.precedence < minPrec =>
             Monad[Elab].pure( lhsExpr -> flatOpsChildren )
-          case Some( not ) if not.precedence >= minPrec =>
+          case Some( not ) =>
             val fn = not.const match {
               case Notation.RealConst( c ) =>
                 Some( LocAnnotation( Ident( c, freshMetaType(), None ), idLoc ) )

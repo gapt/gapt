@@ -12,7 +12,7 @@ private class VtratgExporter( unicode: Boolean, vtratg: VTRATG )
 
   def csep( docs: List[Doc] ): Doc = wordwrap( docs, "," )
 
-  def export(): String = {
+  def `export`(): String = {
     val ntDecl = group( "Non-terminal vectors:" <> nest( line <> csep(
       vtratg.nonTerminals.toList map { nt =>
         "(" <> wordwrap( nt map { show( _, false, Map(), Map() )._1.inPrec( 0 ) }, "," ) <> ")"

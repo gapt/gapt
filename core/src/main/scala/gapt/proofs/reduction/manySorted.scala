@@ -234,7 +234,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
   }
 
   def eigenVariables( et: ExpansionTree, shallow: Formula ): Map[FOLVar, Var] =
-    ( et, shallow ) match {
+    ( ( et, shallow ): @unchecked ) match {
       case ( ETAtom( _, _ ) | ETWeakening( _, _ ) | ETBottom( _ ) | ETTop( _ ), _ ) => Map()
       case ( ETMerge( a, b ), _ ) => eigenVariables( a, shallow ) ++ eigenVariables( b, shallow )
       case ( ETNeg( a ), Neg( sha ) ) => eigenVariables( a, sha )
@@ -249,28 +249,29 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
         insts.flatMap { case ( _, a ) => eigenVariables( a, sh ) }
     }
 
-  def back( et: ExpansionTree, shallow: Formula, freeVars: Map[FOLVar, Var] ): ExpansionTree = ( et, shallow ) match {
-    case ( ETAtom( atom: FOLAtom, pol ), _ ) => ETAtom( back( atom, freeVars ), pol )
-    case ( ETWeakening( _, pol ), _ )        => ETWeakening( shallow, pol )
-    case ( ETMerge( a, b ), _ )              => ETMerge( back( a, shallow, freeVars ), back( b, shallow, freeVars ) )
-    case ( ETBottom( _ ) | ETTop( _ ), _ )   => et
-    case ( ETNeg( a ), Neg( sha ) )          => ETNeg( back( a, sha, freeVars ) )
-    case ( ETAnd( a, b ), And( sha, shb ) )  => ETAnd( back( a, sha, freeVars ), back( b, shb, freeVars ) )
-    case ( ETOr( a, b ), Or( sha, shb ) )    => ETOr( back( a, sha, freeVars ), back( b, shb, freeVars ) )
-    case ( ETImp( a, b ), Imp( sha, shb ) )  => ETImp( back( a, sha, freeVars ), back( b, shb, freeVars ) )
-    case ( ETStrongQuantifier( _, ev: FOLVar, a ), All( _, _ ) ) =>
-      ETStrongQuantifier( shallow, freeVars( ev ), back( a, instantiate( shallow, freeVars( ev ) ), freeVars ) )
-    case ( ETStrongQuantifier( _, ev: FOLVar, a ), Ex( _, _ ) ) =>
-      ETStrongQuantifier( shallow, freeVars( ev ), back( a, instantiate( shallow, freeVars( ev ) ), freeVars ) )
-    case ( ETWeakQuantifier( _, insts ), Quant( x, sh, _ ) ) =>
-      ETWeakQuantifier(
-        shallow,
-        for ( ( t: FOLTerm, inst ) <- insts ) yield {
-          val childFreeVars = infer( t, x.ty, freeVars )
-          val t_ = back( t, childFreeVars )
-          t_ -> back( inst, Substitution( x -> t_ )( sh ), childFreeVars )
-        } )
-  }
+  def back( et: ExpansionTree, shallow: Formula, freeVars: Map[FOLVar, Var] ): ExpansionTree =
+    ( ( et, shallow ): @unchecked ) match {
+      case ( ETAtom( atom: FOLAtom, pol ), _ ) => ETAtom( back( atom, freeVars ), pol )
+      case ( ETWeakening( _, pol ), _ )        => ETWeakening( shallow, pol )
+      case ( ETMerge( a, b ), _ )              => ETMerge( back( a, shallow, freeVars ), back( b, shallow, freeVars ) )
+      case ( ETBottom( _ ) | ETTop( _ ), _ )   => et
+      case ( ETNeg( a ), Neg( sha ) )          => ETNeg( back( a, sha, freeVars ) )
+      case ( ETAnd( a, b ), And( sha, shb ) )  => ETAnd( back( a, sha, freeVars ), back( b, shb, freeVars ) )
+      case ( ETOr( a, b ), Or( sha, shb ) )    => ETOr( back( a, sha, freeVars ), back( b, shb, freeVars ) )
+      case ( ETImp( a, b ), Imp( sha, shb ) )  => ETImp( back( a, sha, freeVars ), back( b, shb, freeVars ) )
+      case ( ETStrongQuantifier( _, ev: FOLVar, a ), All( _, _ ) ) =>
+        ETStrongQuantifier( shallow, freeVars( ev ), back( a, instantiate( shallow, freeVars( ev ) ), freeVars ) )
+      case ( ETStrongQuantifier( _, ev: FOLVar, a ), Ex( _, _ ) ) =>
+        ETStrongQuantifier( shallow, freeVars( ev ), back( a, instantiate( shallow, freeVars( ev ) ), freeVars ) )
+      case ( ETWeakQuantifier( _, insts ), Quant( x, sh, _ ) ) =>
+        ETWeakQuantifier(
+          shallow,
+          for ( ( t: FOLTerm, inst ) <- insts ) yield {
+            val childFreeVars = infer( t, x.ty, freeVars )
+            val t_ = back( t, childFreeVars )
+            t_ -> back( inst, Substitution( x -> t_ )( sh ), childFreeVars )
+          } )
+    }
 
   def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof = {
     require( expansionProof.shallow isSubsetOf endSequent.map( forward( _, Map[Var, FOLVar]() ) ) )
@@ -448,26 +449,30 @@ case object PredicateReductionET extends Reduction_[HOLSequent, ExpansionProof] 
     def forward( sequent: HOLSequent ): HOLSequent =
       guardAndAddAxioms( sequent )
 
-    def unguard( et: ExpansionTree ): ExpansionTree = et match {
-      case ETMerge( a, b )            => ETMerge( unguard( a ), unguard( b ) )
-      case ETWeakening( f, pol )      => ETWeakening( predicateTranslation.unguard( f ), pol )
-      case ETAtom( _, _ )             => et
-      case ETTop( _ ) | ETBottom( _ ) => et
-      case ETNeg( a )                 => ETNeg( unguard( a ) )
-      case ETAnd( a, b )              => ETAnd( unguard( a ), unguard( b ) )
-      case ETOr( a, b )               => ETOr( unguard( a ), unguard( b ) )
-      case ETImp( a, b )              => ETImp( unguard( a ), unguard( b ) )
-      case ETWeakQuantifier( shallow, insts ) =>
-        ETWeakQuantifier(
-          predicateTranslation.unguard( shallow ),
-          insts map {
-            case ( t, ETImp( _, inst ) ) if et.polarity.inAnt => t -> unguard( inst )
-            case ( t, ETAnd( _, inst ) ) if et.polarity.inSuc => t -> unguard( inst )
-          } )
-      case ETDefinition( _, _ ) |
-        ETSkolemQuantifier( _, _, _ ) |
-        ETStrongQuantifier( _, _, _ ) => throw new IllegalArgumentException
-    }
+    def unguard( et: ExpansionTree ): ExpansionTree =
+      ( et: @unchecked ) match {
+        case ETMerge( a, b )            => ETMerge( unguard( a ), unguard( b ) )
+        case ETWeakening( f, pol )      => ETWeakening( predicateTranslation.unguard( f ), pol )
+        case ETAtom( _, _ )             => et
+        case ETTop( _ ) | ETBottom( _ ) => et
+        case ETNeg( a )                 => ETNeg( unguard( a ) )
+        case ETAnd( a, b )              => ETAnd( unguard( a ), unguard( b ) )
+        case ETOr( a, b )               => ETOr( unguard( a ), unguard( b ) )
+        case ETImp( a, b )              => ETImp( unguard( a ), unguard( b ) )
+        case ETWeakQuantifier( shallow, insts ) =>
+          ETWeakQuantifier(
+            predicateTranslation.unguard( shallow ),
+            insts map {
+              x =>
+                ( x: @unchecked ) match {
+                  case ( t, ETImp( _, inst ) ) if et.polarity.inAnt => t -> unguard( inst )
+                  case ( t, ETAnd( _, inst ) ) if et.polarity.inSuc => t -> unguard( inst )
+                }
+            } )
+        case ETDefinition( _, _ ) |
+          ETSkolemQuantifier( _, _, _ ) |
+          ETStrongQuantifier( _, _, _ ) => throw new IllegalArgumentException
+      }
 
     def back( expansionProof: ExpansionProof ): ExpansionProof =
       ExpansionProof( expansionProof.expansionSequent.zipWithIndex collect {
@@ -762,8 +767,13 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
   private val typeNameGen = new NameGenerator( baseTys.map { _.name } )
 
   val partialAppTypes = names map { _.ty } flatMap {
-    case FunctionType( _, argTypes ) =>
-      argTypes.filterNot { _.isInstanceOf[TBase] }
+    t =>
+      {
+        val FunctionType( _, argTypes ) = t
+        argTypes.filterNot {
+          _.isInstanceOf[TBase]
+        }
+      }
   } map { t => ( TBase( typeNameGen freshWithIndex "fun" ), t ) } toMap
 
   def equalOrEquivalent( a: Expr, b: Expr ) =
@@ -772,7 +782,7 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
   val partiallyAppedTypes = partialAppTypes.map { _.swap }
 
   val applyFunctions = partialAppTypes.map {
-    case ( partialAppType, ty @ FunctionType( _, _ ) ) =>
+    case ( partialAppType, ty ) =>
       partialAppType -> Const( nameGen freshWithIndex "apply", partialAppType ->: ty )
   }
 
@@ -859,7 +869,7 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
     case Abs( v, f )            => Abs( back( v ).asInstanceOf[Var], back( f ) )
   }
 
-  def back( et: ExpansionTree ): ExpansionTree = et match {
+  def back( et: ExpansionTree ): ExpansionTree = ( et: @unchecked ) match {
     case ETMerge( a, b )            => ETMerge( back( a ), back( b ) )
     case ETWeakening( f, pol )      => ETWeakening( back( f ), pol )
     case ETAtom( atom, pol )        => ETAtom( back( atom ).asInstanceOf[Atom], pol )

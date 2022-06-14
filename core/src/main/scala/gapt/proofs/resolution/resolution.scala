@@ -178,7 +178,7 @@ case class Refl( term: Expr ) extends InitialClause {
  * }}}
  */
 case class Defn( defConst: HOLAtomConst, definition: Expr ) extends InitialClause {
-  val vars = defConst.ty match {
+  val vars = ( defConst.ty: @unchecked ) match {
     case FunctionType( To, argTypes ) =>
       definition match {
         case Abs.Block( vs, _ ) if vs.size == argTypes.size && vs == vs.distinct =>

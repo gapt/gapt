@@ -32,7 +32,7 @@ class MetricsPrinter extends LogHandler {
       value( "time_total", duration.toMillis )
     } else {
       value( s"time_$phase", duration.toMillis )
-      phaseStack.trimEnd( 1 )
+      phaseStack.dropRightInPlace( 1 )
     }
   def phase: String = phaseStack.mkString( "_" )
 

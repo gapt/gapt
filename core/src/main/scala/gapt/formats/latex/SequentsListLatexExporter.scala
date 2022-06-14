@@ -3,9 +3,7 @@ package gapt.formats.latex
 import gapt.proofs.HOLSequent
 import gapt.expr._
 import gapt.expr.formula.hol._
-import gapt.expr.ty.->:
-import gapt.expr.ty.TBase
-import gapt.expr.ty.Ty
+import gapt.expr.ty.{ TArr, TBase, TVar, Ty }
 
 trait SequentsListLatexExporter {
   def getOutput: java.io.Writer
@@ -117,20 +115,22 @@ trait SequentsListLatexExporter {
 
   def typeToString( t: Ty, outermost: Boolean = true ): String = t match {
     case TBase( name, _ ) => name
-    case t1 ->: t2 =>
+    case TArr( t1, t2 ) =>
       typeToString_( t1 ) +
         " > " +
         typeToString_( t2 )
+    case TVar( name ) => name
   }
 
   def typeToString_( t: Ty ): String = t match {
     case TBase( name, _ ) => name
-    case t1 ->: t2 =>
+    case TArr( t1, t2 ) =>
       ( "(" ) +
         typeToString_( t1 ) +
         " > " +
         typeToString_( t2 ) +
         ")"
+    case TVar( name ) => name
   }
 
   private def getTypes( l: List[HOLSequent] ) = {

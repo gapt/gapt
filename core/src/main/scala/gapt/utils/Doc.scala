@@ -80,12 +80,14 @@ sealed trait Doc {
           go( a, nest + i, flatMode, distToNextLine )
         case Text( t ) =>
           out ++= t
-        case Line( _ ) if !flatMode =>
-          out += '\n'
-          endOfLine = out.size + lineWidth
-          for ( _ <- 0 until nest ) out += ' '
-        case Line( orElse ) if flatMode =>
-          out ++= orElse
+        case Line( orElse ) =>
+          if ( !flatMode ) {
+            out += '\n'
+            endOfLine = out.size + lineWidth
+            for ( _ <- 0 until nest ) out += ' '
+          } else {
+            out ++= orElse
+          }
         case Group( a ) =>
           go( a, nest, flatMode || out.size + a.flatSize + distToNextLine <= endOfLine, distToNextLine )
       }

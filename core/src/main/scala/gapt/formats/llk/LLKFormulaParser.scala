@@ -54,20 +54,21 @@ class LLKASTParser extends JavaTokenParsers with PackratParsers {
   /* The main entry point to the parser for prover9 formulas. To parse literals, use literal as the entry point. */
   def parseFormula( s: String ): LambdaAST = parseAll( formula, s ) match {
     case Success( result, _ ) => result
-    case NoSuccess( msg, input ) =>
-      throw new Exception( "Error parsing HOL formula '" + s + "' at position " + input.pos +
-        ". Error message: " + msg )
+    case failure: NoSuccess =>
+      throw new Exception( "Error parsing HOL formula '" + s + "' at position " + failure.next.pos +
+        ". Error message: " + failure.msg )
   }
 
   lazy val pformula: PackratParser[LambdaAST] = parens( formula ) | allformula | exformula
   lazy val formula: PackratParser[LambdaAST] = implication ^^ flattenApps
   //precedence 800
   lazy val implication: PackratParser[LambdaAST] = ( dis_or_con ~ ( "<->" | "->" | "<-" ) ~ dis_or_con ) ^^ {
-    _ match {
-      case f ~ "->" ~ g  => ast.Imp( f, g )
-      case f ~ "<-" ~ g  => ast.Imp( g, f )
-      case f ~ "<->" ~ g => ast.And( ast.Imp( f, g ), ast.Imp( g, f ) )
-    }
+    r =>
+      ( r: @unchecked ) match {
+        case f ~ "->" ~ g  => ast.Imp( f, g )
+        case f ~ "<-" ~ g  => ast.Imp( g, f )
+        case f ~ "<->" ~ g => ast.And( ast.Imp( f, g ), ast.Imp( g, f ) )
+      }
   } | dis_or_con
 
   lazy val dis_or_con: PackratParser[LambdaAST] = ( disjunction | conlit )
@@ -112,10 +113,11 @@ class LLKASTParser extends JavaTokenParsers with PackratParsers {
 
   //infixatom
   lazy val eqatom: PackratParser[LambdaAST] = iatom1 ~ """(!?=)""".r ~ iatom1 ^^ {
-    _ match {
-      case t1 ~ "=" ~ t2  => ast.Eq( t1, t2 )
-      case t1 ~ "!=" ~ t2 => ast.Neg( ast.Eq( t1, t2 ) )
-    }
+    r =>
+      ( r: @unchecked ) match {
+        case t1 ~ "=" ~ t2  => ast.Eq( t1, t2 )
+        case t1 ~ "!=" ~ t2 => ast.Neg( ast.Eq( t1, t2 ) )
+      }
   } | iatom1
 
   lazy val iatom1: PackratParser[LambdaAST] = iatom2 ~ """((<|>)=?)""".r ~ iatom2 ^^ {
@@ -169,9 +171,9 @@ class DeclarationParser extends LLKASTParser {
   /* The main entry point to the parser for prover9 formulas. To parse literals, use literal as the entry point. */
   def parseDeclaration( s: String ): LLKSignature = parseAll( declaration_list, s ) match {
     case Success( result, _ ) => result
-    case NoSuccess( msg, input ) =>
-      throw new Exception( "Error parsing type declaration '" + s + "' at position " + input.pos +
-        ". Error message: " + msg )
+    case failure: NoSuccess =>
+      throw new Exception( "Error parsing type declaration '" + s + "' at position " + failure.next.pos +
+        ". Error message: " + failure.msg )
   }
 
   lazy val symbolnames = atomregexp | """((<|>)=?)|(!?=)|[+\-*]""".r
@@ -253,9 +255,9 @@ class LLKFormulaParser {
   def parse( create: String => Expr, s: CharSequence ): Expr = {
     DeclarationParser.parseAll( DeclarationParser.formula, s ) match {
       case DeclarationParser.Success( result, _ ) => ASTtoHOL( create, result )
-      case DeclarationParser.NoSuccess( msg, input ) =>
+      case failure: DeclarationParser.NoSuccess =>
         throw new Exception( "Error parsing HOL formula '" + s + "' at position " +
-          input.pos + ". Error message: " + msg )
+          failure.next.pos + ". Error message: " + failure.msg )
     }
 
   }
@@ -264,9 +266,9 @@ class LLKFormulaParser {
     DeclarationParser.parseAll( DeclarationParser.declaredformula, s ) match {
       case DeclarationParser.Success( ( declarations, tree ), _ ) =>
         ASTtoHOL( x => declarations( x ), tree )
-      case DeclarationParser.NoSuccess( msg, input ) =>
+      case failure: DeclarationParser.NoSuccess =>
         throw new Exception( "Error parsing HOL formula '" + s + "' at position " +
-          input.pos + ". Error message: " + msg )
+          failure.next.pos + ". Error message: " + failure.next )
     }
 
   }

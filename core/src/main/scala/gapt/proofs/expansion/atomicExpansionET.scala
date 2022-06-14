@@ -25,7 +25,7 @@ import scala.collection.mutable
 
 object atomicExpansionET {
   def mapDefinedAtom( et: ExpansionTree )( f: PartialFunction[( Formula, Formula, Polarity ), ExpansionTree] ): ExpansionTree =
-    et match {
+    ( et: @unchecked ) match {
       case ETDefinition( sh, ETAtom( at, pol ) ) =>
         f.lift( ( sh, at, pol ) ).getOrElse( et )
       case ETDefinition( sh, ETWeakening( _, pol ) ) => ETWeakening( sh, pol )

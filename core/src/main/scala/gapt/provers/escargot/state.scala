@@ -249,7 +249,7 @@ class EscargotState( val ctx: MutableContext ) {
   }
 
   /** Performs inferences between given and workedOff, and adds given to workedOff. */
-  def inferenceComputation( given: Cls ): Boolean = {
+  def inferenceComputation( `given`: Cls ): Boolean = {
     val inferred = mutable.Set[Cls]()
     var discarded = false
 
@@ -359,7 +359,7 @@ class EscargotState( val ctx: MutableContext ) {
         if ( usable.isEmpty )
           return None
 
-        val given = choose()
+        val `given` = choose()
         usable -= given
 
         val discarded = inferenceComputation( given )

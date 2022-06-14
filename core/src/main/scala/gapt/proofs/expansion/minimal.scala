@@ -234,7 +234,7 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
    * @param tree The tree under consideration.
    * @return All trees that have exactly one fewer instance than the input.
    */
-  def generateSuccessorTrees( tree: ExpansionTree ): List[ExpansionTree] = tree match {
+  def generateSuccessorTrees( tree: ExpansionTree ): List[ExpansionTree] = ( tree: @unchecked ) match {
     case ETAtom( _, _ )      => Nil
     case ETWeakening( _, _ ) => Nil
     case ETTop( _ )          => Nil

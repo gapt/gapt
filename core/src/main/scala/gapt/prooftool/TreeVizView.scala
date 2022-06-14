@@ -28,6 +28,8 @@ import gapt.proofs.lk.rules.WeakeningLeftRule
 import gapt.proofs.lk.rules.WeakeningRightRule
 import gapt.proofs.resolution.{ AvatarComponent, AvatarContradiction, AvatarSplit, Factor, Paramod, Refl, Resolution, Subst, Taut }
 
+import scala.reflect.classTag
+
 /** Wrapper from gapt proofs to TreeViz trees */
 case class ProofNode[T <: DagProof[T]]( proof: DagProof[T] ) extends TreeNode {
   import scala.jdk.CollectionConverters._
@@ -74,15 +76,15 @@ class ProofNodeInfo[T <: DagProof[T]] extends NodeInfo {
     }
   }*/
 
-  def init( root: TreeNode ) = root match {
-    case p: ProofNode[T] =>
-      this.root = Some( p )
+  def init( root: TreeNode ) = {
+    if ( classTag[ProofNode[T]].runtimeClass.isInstance( root ) ) {
+      this.root = Some( root.asInstanceOf[ProofNode[T]] )
       this.weighter = Some( new ProofWeighter() )
       this.weighter.get.init( this.root.get )
       this.actions = Map[DagProof[T], Array[Action]]()
-
-    case _ =>
+    } else {
       throw new Exception( "ProofNodeInfo only accepts ProofNodes as tree!" )
+    }
   }
 
   def getName( path: TreePath2[TreeNode] ) = path.getLastPathComponent match {
@@ -166,15 +168,11 @@ class ProofWeighter[T <: DagProof[T]] extends Weighter {
   var root: Option[ProofNode[T]] = None
   var histogram: Option[Array[Int]] = None
 
-  def init( root: TreeNode ) = {
-    root match {
-      case p: ProofNode[T] =>
-        this.root = Some( p )
-      case _ =>
-        throw new Exception( "Proof Weighter only works for ProofTrees!" )
-    }
-
-  }
+  def init( root: TreeNode ) =
+    if ( classTag[ProofNode[T]].runtimeClass.isInstance( root ) )
+      this.root = Some( root.asInstanceOf[ProofNode[T]] )
+    else
+      throw new Exception( "Proof Weighter only works for ProofTrees!" )
 
   def getWeight( path: TreePath2[_] ): Float = {
     1.0f

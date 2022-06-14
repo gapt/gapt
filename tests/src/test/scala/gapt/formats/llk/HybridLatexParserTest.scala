@@ -32,8 +32,8 @@ class LLKTest extends Specification {
     LLKProofParser.parseAll( LLKProofParser.formula, f ) match {
       case LLKProofParser.Success( r, _ ) =>
         ok( r.toString )
-      case LLKProofParser.NoSuccess( msg, input ) =>
-        ko( "Error at " + input.pos + ": " + msg )
+      case failure: LLKProofParser.NoSuccess =>
+        ko( "Error at " + failure.next.pos + ": " + failure.msg )
     }
   }
 
@@ -75,8 +75,8 @@ class LLKTest extends Specification {
           //println(lterms.flatMap(_.varnames).toSet)
 
           ok( "successfully parsed " + r )
-        case LLKProofParser.NoSuccess( msg, input ) =>
-          ko( "parsing error at " + input.pos + ": " + msg )
+        case failure: LLKProofParser.NoSuccess =>
+          ko( "parsing error at " + failure.next.pos + ": " + failure.msg )
       }
       ok
     }

@@ -259,7 +259,9 @@ object VeriTParser extends RegexParsers {
 
   // INPUT PROCESSING RULES
   def preprocess: Parser[( String, List[FOLFormula] )] =
-    "(set" ~> label ~ "(" ~ rulePreProc <~ "))" ^^ { case l ~ "(" ~ r => ( l, r ) }
+    "(set" ~> label ~ "(" ~ rulePreProc <~ "))" ^^ {
+      r => ( r: @unchecked ) match { case l ~ "(" ~ r => ( l, r ) }
+    }
   def rulePreProc: Parser[List[FOLFormula]] = input | tmp_distinct_elim | tmp_alphaconv | tmp_let_elim
   def input: Parser[List[FOLFormula]] = "input" ~> conclusion
   def tmp_distinct_elim: Parser[List[FOLFormula]] = "tmp_distinct_elim" ~ premises ~> conclusion

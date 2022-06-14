@@ -121,7 +121,7 @@ object hSolveQBUP {
       val seq = renaming( seq0 )
       val substs = substs0.map( renaming.compose )
 
-      seq.indicesWhere { case Apps( hd, _ ) => hd == x } match {
+      ( seq.indicesWhere { case Apps( hd, _ ) => hd == x }: @unchecked ) match {
         case occs if occs.exists( _.isSuc ) => None
         case Seq()                          => Some( substs -> seq.toImplication )
         case Seq( occ, _* ) =>

@@ -13,10 +13,7 @@ import gapt.expr.formula.Or
 import gapt.expr.formula.constants.EqC
 import gapt.expr.formula.constants.LogicalConstant
 import gapt.expr.formula.hol.HOLFunction
-import gapt.expr.ty.->:
-import gapt.expr.ty.Ti
-import gapt.expr.ty.To
-import gapt.expr.ty.Ty
+import gapt.expr.ty.{ ->:, TArr, Ti, To, Ty }
 import gapt.proofs.lk._
 import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule
@@ -163,10 +160,10 @@ class LLKExporter( val expandTex: Boolean ) {
         ( vmap, cmap )
     }
 
-  def getTypeString( t: Ty, outermost: Boolean = true ): String = t match {
+  def getTypeString( t: Ty, outermost: Boolean = true ): String = ( t: @unchecked ) match {
     case Ti => "i"
     case To => "o"
-    case t1 ->: t2 =>
+    case TArr( t1, t2 ) =>
       val s = getTypeString( t1, false ) + ">" + getTypeString( t2, false )
       if ( outermost ) s else "(" + s + ")"
   }

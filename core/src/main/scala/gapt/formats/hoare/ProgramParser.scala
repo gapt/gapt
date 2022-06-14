@@ -33,8 +33,8 @@ trait ProgramParserA extends Prover9TermParserA {
 object ProgramParser extends ProgramParserA {
   def parseProgram( input: String ): Program = parseAll( program, input ) match {
     case Success( p, _ ) => p
-    case NoSuccess( msg, input ) =>
-      throw new Exception( s"Error parsing program ${input.source} at ${input.pos}: $msg" )
+    case failure: NoSuccess =>
+      throw new Exception( s"Error parsing program ${failure.next.source} at ${failure.next.pos}: ${failure.msg}" )
   }
 
   override def conssymb: Parser[String] = """([a-tA-Z][a-zA-Z0-9_]*)|([0-9]+)""".r

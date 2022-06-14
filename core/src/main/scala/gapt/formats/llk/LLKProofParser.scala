@@ -113,12 +113,13 @@ trait LatexReplacementParser extends DeclarationParser {
 
   //accept latex connectives
   override lazy val implication: PackratParser[LambdaAST] = ( dis_or_con ~ ( "<->" | "->" | "<-" | "\\impl" ) ~ dis_or_con ) ^^ {
-    _ match {
-      case f ~ "->" ~ g     => ast.Imp( f, g )
-      case f ~ "\\impl" ~ g => ast.Imp( f, g )
-      case f ~ "<-" ~ g     => ast.Imp( g, f )
-      case f ~ "<->" ~ g    => ast.And( ast.Imp( f, g ), ast.Imp( g, f ) )
-    }
+    r =>
+      ( r: @unchecked ) match {
+        case f ~ "->" ~ g     => ast.Imp( f, g )
+        case f ~ "\\impl" ~ g => ast.Imp( f, g )
+        case f ~ "<-" ~ g     => ast.Imp( g, f )
+        case f ~ "<->" ~ g    => ast.And( ast.Imp( f, g ), ast.Imp( g, f ) )
+      }
   } | dis_or_con
 
   override lazy val disjunction: PackratParser[LambdaAST] =
@@ -154,8 +155,9 @@ class LLKProofParser extends DeclarationParser with LatexReplacementParser with 
   def parse( in: CharSequence ): List[Token] = {
     parseAll( rules, in ) match {
       case Success( r, _ ) => r
-      case NoSuccess( msg, input ) =>
-        throw new HybridLatexParserException( "Error parsing Hybrid Latex/LK at position " + input.pos + ": " + msg )
+      case failure: NoSuccess =>
+        throw new HybridLatexParserException(
+          "Error parsing Hybrid Latex/LK at position " + failure.next.pos + ": " + failure.msg )
     }
   }
 
@@ -206,10 +208,11 @@ class LLKProofParser extends DeclarationParser with LatexReplacementParser with 
 
   lazy val decl: PackratParser[TToken] = ( "\\" ~> "(CONSTDEC|VARDEC)".r <~ "{" ) ~
     ( rep1sep( symbolnames, "," ) <~ "}" ) ~ ( "{" ~> complexType <~ "}" ) ^^ {
-      _ match {
-        case "CONSTDEC" ~ namest ~ ( types: Ty ) => TToken( "CONST", namest, types )
-        case "VARDEC" ~ namest ~ ( types: Ty )   => TToken( "VAR", namest, types )
-      }
+      r =>
+        ( r: @unchecked ) match {
+          case "CONSTDEC" ~ namest ~ ( types: Ty ) => TToken( "CONST", namest, types )
+          case "VARDEC" ~ namest ~ ( types: Ty )   => TToken( "VAR", namest, types )
+        }
     }
 
   def splitAtOutermostComma( s: String ): List[String] = splitAtOutermostComma( s, "", List(), 0 ).reverse

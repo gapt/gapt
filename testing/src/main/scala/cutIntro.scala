@@ -42,7 +42,7 @@ object testCutIntro extends App {
   val logger = Logger( "testCutIntro" )
 
   val ( fileName, methodName, solutionAlg ) =
-    args.toList match {
+    ( args.toList: @unchecked ) match {
       case Seq( f, m )    => ( f, m, "canonical" )
       case Seq( f, m, s ) => ( f, m, s )
     }

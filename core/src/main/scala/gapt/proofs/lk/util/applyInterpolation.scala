@@ -91,7 +91,7 @@ object Interpolate {
        *
        * Case: A :- and :- A   => Interpolant: A   =>   Result: A :- A and A :- A
        */
-      color.elements match {
+      ( color.elements: @unchecked ) match {
         case Seq( false, false ) => ( WeakeningRightRule( p, Bottom() ), BottomAxiom, Bottom() )
         case Seq( false, true )  => ( p, p, atom )
         case Seq( true, false )  => ( NegRightRule( p, atom ), NegLeftRule( p, atom ), -atom )

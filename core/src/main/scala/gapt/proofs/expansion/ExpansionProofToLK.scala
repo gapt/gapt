@@ -225,9 +225,14 @@ class ExpansionProofToLK(
 
         return Some( solve( theory, newExpSeq ) map { p0 =>
           insts_.foldLeft( p0 ) {
-            case ( p, ( _, child ) ) if !p.conclusion.contains( child.shallow, i.polarity ) => p
-            case ( p, ( t, _ ) ) if i isAnt => ForallLeftRule( p, sh, t )
-            case ( p, ( t, _ ) ) if i isSuc => ExistsRightRule( p, sh, t )
+            case ( p, ( t, child ) ) => {
+              if ( !p.conclusion.contains( child.shallow, i.polarity ) )
+                p
+              else i match {
+                case Ant( _ ) => ForallLeftRule( p, sh, t )
+                case Suc( _ ) => ExistsRightRule( p, sh, t )
+              }
+            }
           }
         } )
       }

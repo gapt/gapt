@@ -226,8 +226,11 @@ object LKtToLK {
       case Rfl( main ) =>
         val Eq( t, _ ) = lctx( main )
         ( ReflexivityAxiom( t ), Sequent() :+ main )
-      case TopR( main ) if main.inAnt => ( rules.BottomAxiom, main +: Sequent() )
-      case TopR( main ) if main.inSuc => ( TopAxiom, Sequent() :+ main )
+      case TopR( main ) =>
+        if ( main.inAnt )
+          ( rules.BottomAxiom, main +: Sequent() )
+        else
+          ( TopAxiom, Sequent() :+ main )
       case NegR( main, q1 ) =>
         val ( r1, s1 ) = withMap( q1, lctx.up1( p ) )
         down( NegRightRule( r1, s1.indexOf( q1.aux ) ), s1, main )

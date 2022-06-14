@@ -95,7 +95,7 @@ object moveSkolemNodesToCuts {
     implicit val nameGen: NameGenerator = rename.awayFrom( ep.eigenVariables ++ freeVariablesET( ep ) )
     val cuts = mutable.Buffer[ETCut.Cut]()
     def go( et: ExpansionTree ): ExpansionTree =
-      et match {
+      ( et: @unchecked ) match {
         case ETWeakening( _, _ ) | ETBottom( _ ) | ETTop( _ ) | ETAtom( _, _ ) => et
         case ETNeg( f ) => ETNeg( go( f ) )
         case ETAnd( f, g ) => ETAnd( go( f ), go( g ) )

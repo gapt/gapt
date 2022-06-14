@@ -43,9 +43,11 @@ object Pi2CutIntroduction {
         alpha = alpha,
         betas = Vector( pi1grammar.nonTerminals.last.head ),
         productions = Vector( pi1grammar.nonTerminals.last.head -> fot"dummyTermGottIstTot" ) ++
-          pi1grammar.productions.map {
-            case ( List( nt ), List( rhs ) ) =>
-              if ( nt == pi1grammar.startSymbol ) nt -> rhs else alpha -> rhs
+          pi1grammar.productions.map { p =>
+            ( p: @unchecked ) match {
+              case ( List( nt ), List( rhs ) ) =>
+                if ( nt == pi1grammar.startSymbol ) nt -> rhs else alpha -> rhs
+            }
           } ) ) )
     } else {
       findMinimalPi2Grammar( lang, alpha, betas, solver )

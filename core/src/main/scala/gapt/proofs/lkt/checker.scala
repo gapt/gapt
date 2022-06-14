@@ -43,7 +43,7 @@ object check {
         require( main.inAnt && q.aux.inSuc )
         check( q.p, lctx.up1( p ) )
       case AndR( main, q1, q2 ) =>
-        ( lctx( main ), main.polarity, q1.aux.polarity, q2.aux.polarity ) match {
+        ( ( lctx( main ), main.polarity, q1.aux.polarity, q2.aux.polarity ): @unchecked ) match {
           case ( And( _, _ ), InSuccedent, InSuccedent, InSuccedent )   =>
           case ( Or( _, _ ), InAntecedent, InAntecedent, InAntecedent ) =>
           case ( Imp( _, _ ), InAntecedent, InSuccedent, InAntecedent ) =>
@@ -51,7 +51,7 @@ object check {
         check( q1.p, lctx.up1( p ) )
         check( q2.p, lctx.up2( p ) )
       case AndL( main, q ) =>
-        ( lctx( main ), main.polarity, q.aux1.polarity, q.aux2.polarity ) match {
+        ( ( lctx( main ), main.polarity, q.aux1.polarity, q.aux2.polarity ): @unchecked ) match {
           case ( And( _, _ ), InAntecedent, InAntecedent, InAntecedent ) =>
           case ( Or( _, _ ), InSuccedent, InSuccedent, InSuccedent )     =>
           case ( Imp( _, _ ), InSuccedent, InAntecedent, InSuccedent )   =>

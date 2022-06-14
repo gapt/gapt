@@ -7,7 +7,7 @@ import Doc._
 import gapt.expr.VarOrConst
 
 class ExpansionTreePrettyPrinter( sig: BabelSignature ) extends ETtPrettyPrinter( sig ) {
-  def export( et: ExpansionTree ): Doc =
+  def `export`( et: ExpansionTree ): Doc =
     group( show( et, Map[String, VarOrConst]() )._1.inPrec( 0 ) )
 
   def show( et: ExpansionTree, t0: Map[String, VarOrConst] ): ( Parenable, Map[String, VarOrConst] ) = et match {

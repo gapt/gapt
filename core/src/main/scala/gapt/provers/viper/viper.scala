@@ -170,7 +170,7 @@ object Viper {
           .aka( "functional induction" ) )
       case "portfolio" =>
         import scala.concurrent.duration._
-        val numVars = sequent.succedent match { case Seq( All.Block( xs, _ ) ) => xs.size }
+        val numVars = ( sequent.succedent: @unchecked ) match { case Seq( All.Block( xs, _ ) ) => xs.size }
         List(
           10.seconds -> AnalyticInductionTactic( SequentialInductionAxioms(), Escargot ).aka( "analytic sequential" ),
           10.seconds -> AnalyticInductionTactic( IndependentInductionAxioms(), Escargot ).aka( "analytic independent" ) ) ++
