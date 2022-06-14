@@ -107,8 +107,11 @@ private object Support {
     stT: StructTransformer[Formula, Map[( String, Sequent[Boolean] ), String]] ): Map[Formula, ( Formula, Set[Var] )] = {
     val names = structNames( scs )
     scs.map {
-      case ( CLS( Apps( Const( name, _, _ ), vs ), cc ), ( st, vars ) ) =>
-        ( Atom( names( ( name, cc ) ), vs ), ( constructingForm( st, names, stT ), vars ) )
+      s =>
+        ( s: @unchecked ) match {
+          case ( CLS( Apps( Const( name, _, _ ), vs ), cc ), ( st, vars ) ) =>
+            ( Atom( names( ( name, cc ) ), vs ), ( constructingForm( st, names, stT ), vars ) )
+        }
     }
   }
 
@@ -186,10 +189,12 @@ private object Support {
     }.toSeq
   }
   private def structNames( sss: Map[CLS, ( Struct, Set[Var] )] ): Map[( String, Sequent[Boolean] ), String] =
-    sss.keySet.map {
-      case CLS( Apps( Const( name, _, _ ), _ ), cc ) =>
+    sss.keySet.map { cls =>
+      {
+        val CLS( Apps( Const( name, _, _ ), _ ), cc ) = cls
         val cutConfigChars = cc.map( b => if ( b ) 'T' else 'F' )
         ( ( name, cc ), name + "S" + cutConfigChars.succedent.mkString + "A" + cutConfigChars.antecedent.mkString )
+      }
     }.toMap
   private object constructingForm extends StructVisitor[Formula, Map[( String, Sequent[Boolean] ), String]] {
     def apply( struct: Struct, names: Map[( String, Sequent[Boolean] ), String],

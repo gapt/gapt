@@ -93,7 +93,7 @@ object prenexifyET {
       ETWeakQuantifierBlock( apply( sh1, et.polarity ), n1, Map() ++ insts1.view.mapValues( apply ).toMap )
   }
 
-  def toSequent( et: ExpansionTree ): ExpansionSequent = et match {
+  def toSequent( et: ExpansionTree ): ExpansionSequent = ( et: @unchecked ) match {
     case ETNeg( a )                         => toSequent( a )
     case ETAnd( a, b ) if et.polarity.inAnt => toSequent( a ) ++ toSequent( b )
     case ETImp( a, b ) if et.polarity.inSuc => toSequent( a ) ++ toSequent( b )

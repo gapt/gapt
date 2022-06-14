@@ -147,41 +147,44 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
   val classical = newVar()
 
   expansionProof.subProofs.foreach {
-    case ETWeakening( _, _ )              =>
-    case ETMerge( _, _ ) | ETAtom( _, _ ) => // implicit because shallow formulas are the same
-    case ETTop( _ )                       => addClause( TopAxiom )
-    case ETBottom( _ )                    => addClause( BottomAxiom )
-    case ETAnd( a, b ) =>
-      addClause( AndLeftMacroRule( LogicalAxiom( a.shallow ), a.shallow, b.shallow ) )
-      addClause( AndLeftMacroRule( LogicalAxiom( b.shallow ), a.shallow, b.shallow ) )
-      addClause( AndRightRule( LogicalAxiom( a.shallow ), Suc( 0 ), LogicalAxiom( b.shallow ), Suc( 0 ) ) )
-    case ETOr( a, b ) =>
-      addClause( OrLeftRule( LogicalAxiom( a.shallow ), Ant( 0 ), LogicalAxiom( b.shallow ), Ant( 0 ) ) )
-      addClause( OrRightMacroRule( LogicalAxiom( a.shallow ), a.shallow, b.shallow ) )
-      addClause( OrRightMacroRule( LogicalAxiom( b.shallow ), a.shallow, b.shallow ) )
-    case e @ ETWeakQuantifier( sh, insts ) =>
-      for ( ( inst, a ) <- insts ) addClause {
-        if ( e.polarity.inSuc ) ExistsRightRule( LogicalAxiom( a.shallow ), sh, inst )
-        else ForallLeftRule( LogicalAxiom( a.shallow ), sh, inst )
+    et =>
+      ( et: @unchecked ) match {
+        case ETWeakening( _, _ )              =>
+        case ETMerge( _, _ ) | ETAtom( _, _ ) => // implicit because shallow formulas are the same
+        case ETTop( _ )                       => addClause( TopAxiom )
+        case ETBottom( _ )                    => addClause( BottomAxiom )
+        case ETAnd( a, b ) =>
+          addClause( AndLeftMacroRule( LogicalAxiom( a.shallow ), a.shallow, b.shallow ) )
+          addClause( AndLeftMacroRule( LogicalAxiom( b.shallow ), a.shallow, b.shallow ) )
+          addClause( AndRightRule( LogicalAxiom( a.shallow ), Suc( 0 ), LogicalAxiom( b.shallow ), Suc( 0 ) ) )
+        case ETOr( a, b ) =>
+          addClause( OrLeftRule( LogicalAxiom( a.shallow ), Ant( 0 ), LogicalAxiom( b.shallow ), Ant( 0 ) ) )
+          addClause( OrRightMacroRule( LogicalAxiom( a.shallow ), a.shallow, b.shallow ) )
+          addClause( OrRightMacroRule( LogicalAxiom( b.shallow ), a.shallow, b.shallow ) )
+        case e @ ETWeakQuantifier( sh, insts ) =>
+          for ( ( inst, a ) <- insts ) addClause {
+            if ( e.polarity.inSuc ) ExistsRightRule( LogicalAxiom( a.shallow ), sh, inst )
+            else ForallLeftRule( LogicalAxiom( a.shallow ), sh, inst )
+          }
+        case e @ ETNeg( a ) =>
+          addClause( NegLeftRule( LogicalAxiom( a.shallow ), a.shallow ) )
+          solver.addClause( Seq( -classical, atom( a.shallow ), atom( e.shallow ) ) )
+        case e @ ETImp( a, b ) =>
+          addClause( ImpLeftRule( LogicalAxiom( a.shallow ), Suc( 0 ), LogicalAxiom( b.shallow ), Ant( 0 ) ) )
+          addClause( ImpRightMacroRule( LogicalAxiom( b.shallow ), a.shallow, b.shallow ) )
+          solver.addClause( Seq( -classical, atom( e.shallow ), atom( a.shallow ) ) )
+        case e @ ETStrongQuantifier( sh, ev, ch ) =>
+          if ( e.polarity.inSuc )
+            addClause( ForallLeftRule( LogicalAxiom( ch.shallow ), Ant( 0 ), sh, ev ) )
+          else
+            addClause( ExistsRightRule( LogicalAxiom( ch.shallow ), Suc( 0 ), sh, ev ) )
+          val pol = if ( e.polarity.inSuc ) 1 else -1
+          solver.addClause( Seq( -classical, -pol * atom( ch.shallow ), pol * atom( e.shallow ) ) )
+        case ETDefinition( sh, ch ) =>
+          addClause( ConversionRightRule( LogicalAxiom( ch.shallow ), ch.shallow, sh ) )
+          addClause( ConversionLeftRule( LogicalAxiom( ch.shallow ), ch.shallow, sh ) )
+        case ETSkolemQuantifier( _, _, _ ) => throw new IllegalArgumentException
       }
-    case e @ ETNeg( a ) =>
-      addClause( NegLeftRule( LogicalAxiom( a.shallow ), a.shallow ) )
-      solver.addClause( Seq( -classical, atom( a.shallow ), atom( e.shallow ) ) )
-    case e @ ETImp( a, b ) =>
-      addClause( ImpLeftRule( LogicalAxiom( a.shallow ), Suc( 0 ), LogicalAxiom( b.shallow ), Ant( 0 ) ) )
-      addClause( ImpRightMacroRule( LogicalAxiom( b.shallow ), a.shallow, b.shallow ) )
-      solver.addClause( Seq( -classical, atom( e.shallow ), atom( a.shallow ) ) )
-    case e @ ETStrongQuantifier( sh, ev, ch ) =>
-      if ( e.polarity.inSuc )
-        addClause( ForallLeftRule( LogicalAxiom( ch.shallow ), Ant( 0 ), sh, ev ) )
-      else
-        addClause( ExistsRightRule( LogicalAxiom( ch.shallow ), Suc( 0 ), sh, ev ) )
-      val pol = if ( e.polarity.inSuc ) 1 else -1
-      solver.addClause( Seq( -classical, -pol * atom( ch.shallow ), pol * atom( e.shallow ) ) )
-    case ETDefinition( sh, ch ) =>
-      addClause( ConversionRightRule( LogicalAxiom( ch.shallow ), ch.shallow, sh ) )
-      addClause( ConversionLeftRule( LogicalAxiom( ch.shallow ), ch.shallow, sh ) )
-    case ETSkolemQuantifier( _, _, _ ) => throw new IllegalArgumentException
   }
 
   val clausificationClauses = drup.toVector

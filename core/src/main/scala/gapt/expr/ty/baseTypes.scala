@@ -9,7 +9,7 @@ object baseTypes {
    * @return The set of base types occurring in type `t`.
    */
   def apply( t: Ty ): Set[TBase] = t match {
-    case a ->: b            => apply( a ) union apply( b )
+    case TArr( a, b )       => apply( a ) union apply( b )
     case t @ TBase( _, ps ) => ps.view.flatMap( apply ).toSet + t
     case TVar( _ )          => Set()
   }

@@ -1064,7 +1064,7 @@ trait TokenToLKConverter {
     val mainsequent = fs diff ( oldproof.endSequent ++ axioms_prove_sequent )
     require( mainsequent.formulas.size == 1, "Exactly one main formula required, not " + f( mainsequent ) )
     require( auxsequent.formulas.size == 1, "Excatly one auxiliary formula needed in parent, not " + f( auxsequent ) )
-    val newproof = auxsequent match {
+    val newproof = ( auxsequent: @unchecked ) match {
       case HOLSequent( Vector(), Vector( formula ) ) =>
         require(
           mainsequent.antecedent.isEmpty && mainsequent.succedent.size == 1,

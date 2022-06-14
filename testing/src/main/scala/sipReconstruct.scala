@@ -139,7 +139,7 @@ object sipReconstruct extends Script {
         s"theory1.${p._1}" -> Later( groundTypeVars( inlineLast( thy )( LemmaHandle( p._1 ) ) ) ) ) )
     } )
 
-  args.toList match {
+  ( args.toList: @unchecked ) match {
     case Seq( "--list" ) => indProofs.keys.toSeq.sorted.foreach( println )
     case Seq( name, atp, interp, minProof ) =>
       go( name, atp.toBoolean, interp.toBoolean, minProof.toBoolean )

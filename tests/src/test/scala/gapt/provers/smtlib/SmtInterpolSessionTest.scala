@@ -45,7 +45,15 @@ class SmtInterpolSessionTest extends Specification {
     val n = 10
 
     val getUnsatCore = ask( LFun( "get-unsat-core" ) ) map {
-      case LList( labels @ _* ) => labels map { case LSymbol( l ) => l }
+      e =>
+        ( e: @unchecked ) match {
+          case LList( labels @ _* ) => labels map {
+            e =>
+              ( e: @unchecked ) match {
+                case LSymbol( l ) => l
+              }
+          }
+        }
     }
 
     val session: Session[( Boolean, Boolean, Seq[String] )] = for {

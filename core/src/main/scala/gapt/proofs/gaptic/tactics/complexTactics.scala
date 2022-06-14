@@ -68,7 +68,10 @@ case class ForwardChain(
   private def retrieveLemma( goal: OpenAssumption ): Tactic[Formula] = {
     findFormula( goal, OnLabel( lemmaLabel ) ).withFilter {
       case ( _, _, i ) => i.isAnt
-    }.flatMap { case ( _, l @ All.Block( _, Imp( _, _ ) ), _ ) => Tactic.pure( l ) }
+    }.flatMap { f =>
+      val ( _, l @ All.Block( _, Imp( _, _ ) ), _ ) = f
+      Tactic.pure( l )
+    }
   }
 
   private def retrieveTarget(
@@ -403,12 +406,13 @@ case class SubstTactic( mode: TacticApplyMode ) extends Tactical1[Unit] {
   private def mkProof( subst: Substitution, t: Expr, s: Expr, vLeft: Boolean, q: LKProof, todo: List[( Formula, Polarity )] ): LKProof =
     todo match {
       case Nil => q
-      case ( f, _ ) :: todo_ if freeVariables( f ).intersect( subst.domain ).isEmpty =>
-        mkProof( subst, t, s, vLeft, q, todo_ )
-      case ( f, pol ) :: todo_ if pol.inAnt =>
-        mkProof( subst, t, s, vLeft, EqualityLeftRule( q, t === s, subst( f ), f ), todo_ )
-      case ( f, pol ) :: todo_ if pol.inSuc =>
-        mkProof( subst, t, s, vLeft, EqualityRightRule( q, t === s, subst( f ), f ), todo_ )
+      case ( f, pol ) :: todo_ =>
+        if ( freeVariables( f ).intersect( subst.domain ).isEmpty )
+          mkProof( subst, t, s, vLeft, q, todo_ )
+        else if ( pol.inAnt )
+          mkProof( subst, t, s, vLeft, EqualityLeftRule( q, t === s, subst( f ), f ), todo_ )
+        else
+          mkProof( subst, t, s, vLeft, EqualityRightRule( q, t === s, subst( f ), f ), todo_ )
     }
 
   def apply( goal: OpenAssumption ): Tactic[Unit] =

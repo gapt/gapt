@@ -1,9 +1,7 @@
 package gapt.expr.formula.hol
 
 import gapt.expr._
-import gapt.expr.ty.->:
-import gapt.expr.ty.TBase
-import gapt.expr.ty.Ty
+import gapt.expr.ty.{ TArr, TBase, Ty }
 
 /**
  * Ordering for HOL Formulas (also for FOL)
@@ -59,13 +57,13 @@ class HOLOrdering extends Ordering[Expr] {
  */
 object TAOrdering extends TAOrdering
 class TAOrdering extends Ordering[Ty] {
-  override def compare( x: Ty, y: Ty ): Int = ( x, y ) match {
+  override def compare( x: Ty, y: Ty ): Int = ( ( x, y ): @unchecked ) match {
     case ( x, y ) if x == y => 0
-    case ( t1 ->: t2, t3 ->: t4 ) =>
+    case ( TArr( t1, t2 ), TArr( t3, t4 ) ) =>
       val r = compare( t1, t3 )
       if ( r == 0 ) compare( t2, t4 ) else r
-    case ( _, _ ->: _ )                     => -1
-    case ( _ ->: _, _ )                     => 1
+    case ( _, TArr( _, _ ) )                => -1
+    case ( TArr( _, _ ), _ )                => 1
 
     case ( TBase( x_, _ ), TBase( y_, _ ) ) => x_ compare y_
   }

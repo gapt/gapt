@@ -187,7 +187,7 @@ object BabelParser {
   def tryParse(
     text:           String,
     astTransformer: preExpr.Expr => preExpr.Expr = identity )( implicit sig: BabelSignature ): Either[BabelParseError, Expr] = {
-    fastparse.parse( text, ExprAndNothingElse( _ ) ) match {
+    ( fastparse.parse( text, ExprAndNothingElse( _ ) ): @unchecked ) match {
       case Parsed.Success( expr, _ ) =>
         val transformedExpr = astTransformer( expr )
         preExpr.toRealExpr( transformedExpr, sig ).leftMap( ppElabError( text, _ ) )
@@ -207,7 +207,7 @@ object BabelParser {
     fastparse.parse( text, TypeAndNothingElse( _ ) ) match {
       case Parsed.Success( expr, _ ) =>
         Right( preExpr.toRealType( expr, Map() ) )
-      case parseError @ Parsed.Failure( _, _, _ ) =>
+      case parseError: Parsed.Failure =>
         Left( BabelParsingError( parseError ) )
     }
   }
@@ -225,7 +225,7 @@ object BabelParser {
             splitAt( exprSequent.antecedent.size )
           HOLSequent( ant, suc )
         }
-      case parseError @ Parsed.Failure( _, _, _ ) =>
+      case parseError: Parsed.Failure =>
         Left( BabelParsingError( parseError ) )
     }
   }
@@ -250,7 +250,7 @@ object BabelParser {
               case ( ( None, f ), i )      => guessLabels.suggestLabel( f, i, nameGen ) -> f
             }
           }
-      case parseError @ Parsed.Failure( _, _, _ ) =>
+      case parseError: Parsed.Failure =>
         Left( BabelParsingError( parseError ) )
     }
   }

@@ -64,8 +64,8 @@ class LLKASTParserTest extends Specification {
         LLKASTParser.parseAll( LLKASTParser.formula, s ) match {
           case LLKASTParser.Success( result, _ ) =>
             true must beEqualTo( true )
-          case LLKASTParser.NoSuccess( msg, input ) =>
-            s must beEqualTo( input.pos.toString + ": " + msg )
+          case failure: LLKASTParser.NoSuccess =>
+            s must beEqualTo( failure.next.pos.toString + ": " + failure.msg )
         } )
       ok
     }
@@ -83,8 +83,8 @@ class LLKASTParserTest extends Specification {
         LLKASTParser.parseAll( LLKASTParser.formula, s ) match {
           case LLKASTParser.Success( result, _ ) =>
             true must beEqualTo( true )
-          case LLKASTParser.NoSuccess( msg, input ) =>
-            s must beEqualTo( input.pos.toString + ": " + msg )
+          case failure: LLKASTParser.NoSuccess =>
+            s must beEqualTo( failure.next.pos.toString + ": " + failure.msg )
         } )
       ok
     }
@@ -97,8 +97,8 @@ class LLKASTParserTest extends Specification {
         LLKASTParser.parseAll( LLKASTParser.formula, s ) match {
           case LLKASTParser.Success( result, _ ) =>
             true must beEqualTo( true )
-          case LLKASTParser.NoSuccess( msg, input ) =>
-            s must beEqualTo( input.pos.toString + ": " + msg )
+          case failure: LLKASTParser.NoSuccess =>
+            s must beEqualTo( failure.next.pos.toString + ": " + failure.msg )
         } )
       ok
     }
@@ -116,8 +116,8 @@ class LLKASTParserTest extends Specification {
         LLKASTParser.parseAll( LLKASTParser.formula, s ) match {
           case LLKASTParser.Success( result, _ ) =>
             true must beEqualTo( true )
-          case LLKASTParser.NoSuccess( msg, input ) =>
-            s must beEqualTo( input.pos.toString + ": " + msg )
+          case failure: LLKASTParser.NoSuccess =>
+            s must beEqualTo( failure.next.pos.toString + ": " + failure.msg )
         } )
       ok
     }
@@ -144,8 +144,8 @@ class LLKASTParserTest extends Specification {
       LLKASTParser.parseAll( LLKASTParser.formula, oendsequent ) match {
         case LLKASTParser.Success( result, _ ) =>
           "success" must beEqualTo( "success" )
-        case LLKASTParser.NoSuccess( msg, input ) =>
-          throw new Exception( "Could not parse endsequent! " + msg + " " + input.pos )
+        case failure: LLKASTParser.NoSuccess =>
+          throw new Exception( "Could not parse endsequent! " + failure.msg + " " + failure.next.pos )
       }
     }
 
@@ -153,8 +153,8 @@ class LLKASTParserTest extends Specification {
       LLKASTParser.parseAll( LLKASTParser.pformula, "(x+x)" ) match {
         case LLKASTParser.Success( result, _ ) =>
           ok
-        case LLKASTParser.NoSuccess( msg, input ) =>
-          ko( input.pos.toString + ": " + msg )
+        case failure: LLKASTParser.NoSuccess =>
+          ko( failure.next.pos.toString + ": " + failure.msg )
       }
       ok
     }
@@ -169,8 +169,8 @@ class LLKASTParserTest extends Specification {
         LLKASTParser.parseAll( LLKASTParser.formula, s ) match {
           case LLKASTParser.Success( result, _ ) =>
             ( s, "" )
-          case LLKASTParser.NoSuccess( msg, input ) =>
-            ( s, ( input.pos.toString + ": " + msg + sys.props( "line.separator" ) + "problem is:" + s ) )
+          case failure: LLKASTParser.NoSuccess =>
+            ( s, ( failure.next.pos.toString + ": " + failure.msg + sys.props( "line.separator" ) + "problem is:" + s ) )
         } ).filterNot( _._2 == "" )
 
       res.map( ( x: ( String, String ) ) => "" mustEqual ( x._2 ) )
@@ -185,8 +185,8 @@ leq(X2,Z))))))))))) | nil != X & nil = W | neq(U,nil) & frontsegP(V,U)))))))))""
       LLKASTParser.parseAll( LLKASTParser.formula, str ) match {
         case LLKASTParser.Success( result, _ ) =>
           "success" must beEqualTo( "success" )
-        case LLKASTParser.NoSuccess( msg, input ) =>
-          throw new Exception( "Could not parse endsequent! " + msg + " " + input.pos )
+        case failure: LLKASTParser.NoSuccess =>
+          throw new Exception( "Could not parse endsequent! " + failure.msg + " " + failure.next.pos )
       }
 
     }
@@ -233,8 +233,8 @@ p101(Y))) & (-(all X (-r1(Y,X) | -(-p2(X) & -p102(X) & p101(X)))) & -(all X (-r1
       LLKASTParser.parseAll( LLKASTParser.formula, str ) match {
         case LLKASTParser.Success( result, _ ) =>
           "success" must beEqualTo( "success" )
-        case LLKASTParser.NoSuccess( msg, input ) =>
-          throw new Exception( "Could not parse endsequent! " + msg + " " + input.pos )
+        case failure: LLKASTParser.NoSuccess =>
+          throw new Exception( "Could not parse endsequent! " + failure.msg + " " + failure.next.pos )
       }
 
     }

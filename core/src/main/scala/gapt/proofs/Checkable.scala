@@ -1,10 +1,7 @@
 package gapt.proofs
 
 import gapt.expr._
-import gapt.expr.ty.->:
-import gapt.expr.ty.TBase
-import gapt.expr.ty.TVar
-import gapt.expr.ty.Ty
+import gapt.expr.ty.{ ->:, TArr, TBase, TVar, Ty }
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.context.update.Update
@@ -59,7 +56,7 @@ object Checkable {
             s"Unknown base type: $name" )
           params.foreach( check )
         case TVar( _ ) =>
-        case in ->: out =>
+        case TArr( in, out ) =>
           check( in )
           check( out )
       }

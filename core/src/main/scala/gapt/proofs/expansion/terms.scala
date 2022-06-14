@@ -61,36 +61,37 @@ sealed abstract class ETt { self: Product =>
     result.result()
   }
 
-  def deep( shallow: Formula, polarity: Polarity ): Formula = ( this, shallow ) match {
-    case ( ETtAtom, _ )      => shallow
+  def deep( shallow: Formula, polarity: Polarity ): Formula =
+    ( ( this, shallow ): @unchecked ) match {
+      case ( ETtAtom, _ )      => shallow
 
-    case ( ETtWeakening, _ ) => if ( polarity.positive ) Bottom() else Top()
-    case ( ETtMerge( a, b ), _ ) =>
-      val d1 = a.deep( shallow, polarity )
-      val d2 = b.deep( shallow, polarity )
-      if ( polarity.positive ) d1 | d2 else d1 & d2
+      case ( ETtWeakening, _ ) => if ( polarity.positive ) Bottom() else Top()
+      case ( ETtMerge( a, b ), _ ) =>
+        val d1 = a.deep( shallow, polarity )
+        val d2 = b.deep( shallow, polarity )
+        if ( polarity.positive ) d1 | d2 else d1 & d2
 
-    case ( ETtNullary, Top() | Bottom() ) => shallow
-    case ( ETtUnary( ch1 ), Neg( sh1 ) )  => -ch1.deep( sh1, !polarity )
-    case ( ETtBinary( ch1, ch2 ), And( sh1, sh2 ) ) =>
-      ch1.deep( sh1, polarity ) & ch2.deep( sh2, polarity )
-    case ( ETtBinary( ch1, ch2 ), Or( sh1, sh2 ) ) =>
-      ch1.deep( sh1, polarity ) | ch2.deep( sh2, polarity )
-    case ( ETtBinary( ch1, ch2 ), Imp( sh1, sh2 ) ) =>
-      ch1.deep( sh1, !polarity ) --> ch2.deep( sh2, polarity )
+      case ( ETtNullary, Top() | Bottom() ) => shallow
+      case ( ETtUnary( ch1 ), Neg( sh1 ) )  => -ch1.deep( sh1, !polarity )
+      case ( ETtBinary( ch1, ch2 ), And( sh1, sh2 ) ) =>
+        ch1.deep( sh1, polarity ) & ch2.deep( sh2, polarity )
+      case ( ETtBinary( ch1, ch2 ), Or( sh1, sh2 ) ) =>
+        ch1.deep( sh1, polarity ) | ch2.deep( sh2, polarity )
+      case ( ETtBinary( ch1, ch2 ), Imp( sh1, sh2 ) ) =>
+        ch1.deep( sh1, !polarity ) --> ch2.deep( sh2, polarity )
 
-    case ( ETtWeak( insts ), Quant( bv, sh, isAll ) ) if isAll == polarity.negative =>
-      import gapt.expr.subst.ExprSubstWithβ._
-      val ds = for ( ( inst, ch ) <- insts )
-        yield ch.deep( Substitution( bv -> inst )( sh ), polarity )
-      if ( polarity.positive ) Or( ds ) else And( ds )
-    case ( ETtStrong( ev, ch ), Quant( bv, sh, isAll ) ) if isAll == polarity.positive =>
-      ch.deep( Substitution( bv -> ev )( sh ), polarity )
-    case ( ETtSkolem( skT, ch ), Quant( bv, sh, isAll ) ) if isAll == polarity.positive =>
-      ch.deep( Substitution( bv -> skT )( sh ), polarity )
+      case ( ETtWeak( insts ), Quant( bv, sh, isAll ) ) if isAll == polarity.negative =>
+        import gapt.expr.subst.ExprSubstWithβ._
+        val ds = for ( ( inst, ch ) <- insts )
+          yield ch.deep( Substitution( bv -> inst )( sh ), polarity )
+        if ( polarity.positive ) Or( ds ) else And( ds )
+      case ( ETtStrong( ev, ch ), Quant( bv, sh, isAll ) ) if isAll == polarity.positive =>
+        ch.deep( Substitution( bv -> ev )( sh ), polarity )
+      case ( ETtSkolem( skT, ch ), Quant( bv, sh, isAll ) ) if isAll == polarity.positive =>
+        ch.deep( Substitution( bv -> skT )( sh ), polarity )
 
-    case ( ETtDef( sh, ch ), _ ) => ch.deep( sh, polarity )
-  }
+      case ( ETtDef( sh, ch ), _ ) => ch.deep( sh, polarity )
+    }
 
   def toDoc( implicit sig: BabelSignature ): Doc = new ETtPrettyPrinter( sig ).export( this )
   def toSigRelativeString( implicit sig: BabelSignature ): String = toDoc.render( 80 )

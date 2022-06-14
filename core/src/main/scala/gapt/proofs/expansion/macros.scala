@@ -69,20 +69,20 @@ object ETInduction {
 
   def unapply( et: ExpansionTree )( implicit ctx: Context ): Option[Set[Induction]] = {
 
-    def getETs( et: ExpansionTree, sz: Int ): Seq[ExpansionTree] = {
-      et match {
-        case ETImp( ch1, ch2 ) if sz > 0 => ch1 +: getETs( ch2, sz - 1 )
-        case ret if sz == 0              => Seq( ret )
-      }
-    }
+    def getETs( et: ExpansionTree, sz: Int ): Seq[ExpansionTree] =
+      if ( sz > 0 ) {
+        val ETImp( ch1, ch2 ) = et
+        ch1 +: getETs( ch2, sz - 1 )
+      } else Seq( et )
+
     def getEvs( et: ExpansionTree, sz: Int ): ( ExpansionTree, Seq[Var] ) = {
-      et match {
-        case ETStrongQuantifier( _, ev, ch ) if sz > 0 =>
-          val ( ret, evs ) = getEvs( ch, sz - 1 )
-          ( ret, ev +: evs )
-        case ret if sz == 0 => ( ret, Seq.empty )
-      }
+      if ( sz > 0 ) {
+        val ETStrongQuantifier( _, ev, ch ) = et
+        val ( ret, evs ) = getEvs( ch, sz - 1 )
+        ( ret, ev +: evs )
+      } else ( et, Seq.empty )
     }
+
     def toCase( et: ExpansionTree, constrs: Seq[Const] ): Seq[Case] = {
       val eisp = et.immediateSubProofs
       constrs.zip( ETAnd.Flat( et ) ).map {

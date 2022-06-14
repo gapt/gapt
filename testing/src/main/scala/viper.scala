@@ -61,7 +61,7 @@ object testViper extends App {
   val logger = Logger( "testViper" )
 
   val ( fileName, mode ) =
-    args.toList match {
+    ( args.toList: @unchecked ) match {
       case Seq( f, m ) => ( f, m )
     }
 

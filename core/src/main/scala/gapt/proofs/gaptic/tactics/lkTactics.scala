@@ -445,7 +445,7 @@ case class EqualityTactic( equationLabel: String, formulaLabel: String, private 
               case Some( false ) =>
                 f( auxFormula.find( t ), auxFormula, s )
               case None =>
-                ( auxFormula.find( s ), auxFormula.find( t ) ) match {
+                ( ( auxFormula.find( s ), auxFormula.find( t ) ): @unchecked ) match {
                   case ( Nil, ps ) if ps.nonEmpty =>
                     f( ps, auxFormula, s )
                   case ( ps, Nil ) if ps.nonEmpty =>

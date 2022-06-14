@@ -42,7 +42,7 @@ object extractInstances {
   def apply( expansionTree: ExpansionTree ): Set[Formula] =
     if ( !containsQuantifier( expansionTree.shallow ) )
       Set( expansionTree.shallow )
-    else expansionTree match {
+    else ( expansionTree: @unchecked ) match {
       case ETMerge( t, s )     => extractInstances( t ) ++ extractInstances( s )
       case ETWeakening( _, _ ) => Set()
       case ETWeakQuantifier( _, instances ) =>
@@ -242,11 +242,13 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
         c -> Const( name, FunctionType( instanceTermType, argTypes ), ps )
     }.toMap
     RecursionScheme( encodedNTs( recursionScheme.startSymbol ), encodedNTs.values.toSet,
-      recursionScheme.rules map {
-        case Rule( Apps( lhsNT: Const, lhsArgs ), Apps( rhsNT: Const, rhsArgs ) ) if encodedNTs contains rhsNT =>
-          Rule( encodedNTs( lhsNT )( lhsArgs: _* ), encodedNTs( rhsNT )( rhsArgs: _* ) )
-        case Rule( Apps( lhsNT: Const, lhsArgs ), instance: Formula ) =>
-          Rule( encodedNTs( lhsNT )( lhsArgs: _* ), encode( instance ) )
+      recursionScheme.rules map { r =>
+        ( r: @unchecked ) match {
+          case Rule( Apps( lhsNT: Const, lhsArgs ), Apps( rhsNT: Const, rhsArgs ) ) if encodedNTs contains rhsNT =>
+            Rule( encodedNTs( lhsNT )( lhsArgs: _* ), encodedNTs( rhsNT )( rhsArgs: _* ) )
+          case Rule( Apps( lhsNT: Const, lhsArgs ), instance: Formula ) =>
+            Rule( encodedNTs( lhsNT )( lhsArgs: _* ), encode( instance ) )
+        }
       } )
   }
 
@@ -256,11 +258,13 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
         c -> Const( name, FunctionType( To, argTypes ), ps )
     }.toMap
     RecursionScheme( decodedNTs( recursionScheme.startSymbol ), decodedNTs.values.toSet,
-      recursionScheme.rules map {
-        case Rule( Apps( lhsNT: Const, lhsArgs ), Apps( rhsNT: Const, rhsArgs ) ) if decodedNTs contains rhsNT =>
-          Rule( decodedNTs( lhsNT )( lhsArgs: _* ), decodedNTs( rhsNT )( rhsArgs: _* ) )
-        case Rule( Apps( lhsNT: Const, lhsArgs ), term ) =>
-          Rule( decodedNTs( lhsNT )( lhsArgs: _* ), decodeToSignedFormula( term ) )
+      recursionScheme.rules map { r =>
+        ( r: @unchecked ) match {
+          case Rule( Apps( lhsNT: Const, lhsArgs ), Apps( rhsNT: Const, rhsArgs ) ) if decodedNTs contains rhsNT =>
+            Rule( decodedNTs( lhsNT )( lhsArgs: _* ), decodedNTs( rhsNT )( rhsArgs: _* ) )
+          case Rule( Apps( lhsNT: Const, lhsArgs ), term ) =>
+            Rule( decodedNTs( lhsNT )( lhsArgs: _* ), decodeToSignedFormula( term ) )
+        }
       } )
   }
 }

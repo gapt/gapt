@@ -531,8 +531,11 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
       if ( comps.size >= 2 ) {
         val propComps = comps.filter( freeVariables( _ ).isEmpty ).map {
-          case Sequent( Seq( a: Atom ), Seq() ) => AvatarGroundComp( a, Polarity.InAntecedent )
-          case Sequent( Seq(), Seq( a: Atom ) ) => AvatarGroundComp( a, Polarity.InSuccedent )
+          s =>
+            ( s: @unchecked ) match {
+              case Sequent( Seq( a: Atom ), Seq() ) => AvatarGroundComp( a, Polarity.InAntecedent )
+              case Sequent( Seq(), Seq( a: Atom ) ) => AvatarGroundComp( a, Polarity.InSuccedent )
+            }
         }
         val nonPropComps =
           for ( c <- comps if freeVariables( c ).nonEmpty )

@@ -65,7 +65,7 @@ object IvyToResolution {
     val ( newSymbols, justifications ) = ivy.subProofs.collect {
       case NewSymbol( _, _, _, sym, rt, _, parent ) =>
         val justification = convert( parent )
-        justification.conclusion match {
+        ( justification.conclusion: @unchecked ) match {
           case _ if freeVariables( rt ).isEmpty =>
             ( sym -> rt, Refl( rt ) )
           case HOLClause( Seq(), Seq( Eq( lhs, rhs ) ) ) if lhs == rt =>

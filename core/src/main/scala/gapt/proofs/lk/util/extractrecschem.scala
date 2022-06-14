@@ -5,10 +5,7 @@ import gapt.expr.formula.All
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
 import gapt.expr.formula.hol.containsQuantifier
-import gapt.expr.ty.->:
-import gapt.expr.ty.FunctionType
-import gapt.expr.ty.To
-import gapt.expr.ty.Ty
+import gapt.expr.ty.{ ->:, FunctionType, TArr, To, Ty }
 import gapt.grammars._
 import gapt.proofs.Ant
 import gapt.proofs.Sequent
@@ -117,11 +114,11 @@ private[lk] class extractRecSchem( includeTheoryAxioms: Boolean, includeEqTheory
           val eigenvars = findEigenVars( aux, q )
           val cpsSym = Apps( Const( mkFreshSymbol(), FunctionType( To, context.map( _.ty ) ++ argtypes ) ), context )
           val expCpsSym = Apps( cpsSym, eigenvars )
-          expCpsSym.ty match {
+          ( expCpsSym.ty: @unchecked ) match {
             case To =>
               getRules( q, expCpsSym, p.occConnectors.head.parent( symbols ).updated( aux, None ), eigenvars ++ context ) +
                 Rule( startSymbol, App( appSym, cpsSym ) )
-            case nextCpsType ->: To =>
+            case TArr( nextCpsType, To ) =>
               val nextCpsSym = Var( mkFreshVar(), nextCpsType )
               getRules( q, App( expCpsSym, nextCpsSym ), p.occConnectors.head.parent( symbols ).updated( aux, Some( nextCpsSym ) ), nextCpsSym :: eigenvars ++ context ) +
                 Rule( startSymbol, App( appSym, cpsSym ) )
@@ -138,9 +135,9 @@ private[lk] class extractRecSchem( includeTheoryAxioms: Boolean, includeEqTheory
 
       val eigenvars = findEigenVars( aux1, q1 )
       val hypSym = Apps( symbol, eigenvars )
-      val rules1 = hypSym.ty match {
+      val rules1 = ( hypSym.ty: @unchecked ) match {
         case To => getRules( q1, hypSym, occConn1.parent( symbols, None ), eigenvars ++ context )
-        case introType ->: To =>
+        case TArr( introType, To ) =>
           val introSym = Var( mkFreshVar(), introType )
           val fullHypSym = App( hypSym, introSym )
           getRules( q1, fullHypSym, occConn1.parent( symbols, Some( introSym ) ), introSym :: eigenvars ++ context )

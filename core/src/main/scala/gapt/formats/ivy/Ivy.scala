@@ -200,18 +200,22 @@ object IvyParser {
   }
 
   //Note:substitution are sometimes given as lists of cons and sometimes as two-element list...
-  def parse_substitution_( exp: Seq[SExpression] ): List[( FOLVar, FOLTerm )] = exp.toList map {
-    case LList( vexp, texp @ _* ) =>
-      val v = parse_term( vexp )
-      val t = parse_term( LList( texp: _* ) )
+  def parse_substitution_( exp: Seq[SExpression] ): List[( FOLVar, FOLTerm )] =
+    exp.toList map {
+      e =>
+        ( e: @unchecked ) match {
+          case LList( vexp, texp @ _* ) =>
+            val v = parse_term( vexp )
+            val t = parse_term( LList( texp: _* ) )
 
-      v.asInstanceOf[FOLVar] -> t
-    case LCons( vexp, texp ) =>
-      val v = parse_term( vexp )
-      val t = parse_term( texp )
+            v.asInstanceOf[FOLVar] -> t
+          case LCons( vexp, texp ) =>
+            val v = parse_term( vexp )
+            val t = parse_term( texp )
 
-      v.asInstanceOf[FOLVar] -> t
-  }
+            v.asInstanceOf[FOLVar] -> t
+        }
+    }
 
   /* parses a clause sexpression to a fclause -- the structure is (or lit1 (or lit2 .... (or litn-1 litn)...)) */
   def parse_clause( exp: SExpression ): FOLClause = {

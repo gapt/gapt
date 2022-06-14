@@ -134,7 +134,7 @@ object pushWeakeningsUp {
   def apply( ep: ExpansionProof ): ExpansionProof = ExpansionProof( apply( ep.expansionSequent ) )
   def apply( es: ExpansionSequent ): ExpansionSequent = es.map( apply )
 
-  def apply( et: ExpansionTree ): ExpansionTree = et match {
+  def apply( et: ExpansionTree ): ExpansionTree = ( et: @unchecked ) match {
     case ETAtom( _, _ ) | ETBottom( _ ) | ETTop( _ ) => et
     case ETWeakening( sh, pol )                      => apply( sh, pol )
     case ETMerge( a, b )                             => ETMerge( apply( a ), apply( b ) )

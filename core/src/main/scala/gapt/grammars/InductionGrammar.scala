@@ -156,7 +156,7 @@ object InductionGrammar {
         case st @ Apps( c: Const, ss ) if prodCase.forall( _ == c ) =>
           val rhs = Substitution( List( alpha -> term ) ++ ( nus( c ) zip ss ) ++
             ( gamma zip instGammas( st ) ) )( prod.rhs )
-          prod.lhs match {
+          ( prod.lhs: @unchecked ) match {
             case List( `tau` )          => List( List( tau ) -> rhs )
             case g if containsOnlyAlpha => List( instGammas( st ) -> rhs )
             case g if !containsOnlyAlpha =>
