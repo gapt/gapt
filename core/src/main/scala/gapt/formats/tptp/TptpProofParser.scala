@@ -204,7 +204,7 @@ object TptpProofParser {
           Seq( p )
         case AnnotatedFormula( "fof", _, "plain", Bottom(),
           ( justification @ TptpTerm( "inference", FOLVar( "AVATAR_sat_refutation" ) |
-            FOLConst( "avatar_sat_refutation" ), _, _ ) ) +: _ ) =>
+            FOLConst( "avatar_sat_refutation" | "avatar_smt_refutation" ), _, _ ) ) +: _ ) =>
           Seq( SketchSplitCombine( getParents( justification ).flatMap( convert ) ) )
         case AnnotatedFormula( "fof", _, "conjecture", _, TptpTerm( "file", _, TptpTerm( label ) ) +: _ ) =>
           labelledCNF( label ) map SketchAxiom
