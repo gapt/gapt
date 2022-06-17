@@ -202,7 +202,7 @@ object collectExperimentResults extends App {
   }
 
   val out = new PrintWriter( Console.out )
-  val writer = JsonWriter.streamingPretty( out ).startArray()
+  val writer = JsonWriter.streamingPretty( out, alwaysEscapeUnicode = false ).startArray()
   for ( f <- ls.rec( pwd ).filter( _.last == "stdout" ) ) {
     writer.addJValue( canonicalize( parseOut( f ) ) )
     out.flush()
