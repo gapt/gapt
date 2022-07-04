@@ -16,4 +16,8 @@ package object utils {
       case Seq()              => Seq( Seq() )
       case Seq( x, xss @ _* ) => for { y <- x; ys <- crossProduct( xss ) } yield y +: ys
     }
+
+  def symmetricClosure[T]( xs: Set[( T, T )] ): Set[( T, T )] =
+    xs ++ xs.map { case ( x1, x2 ) => x2 -> x1 }
+
 }
