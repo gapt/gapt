@@ -139,7 +139,7 @@ class MiscTest extends Specification {
           |(step t10 (cl (not false)) :rule false)
           |(step t11 (cl) :rule resolution :premises (t9 t10))
           |""".stripMargin
-      val proof = VeriTParser.getExpansionProofWithSymmetry( StringInputFile(veriTProof) ).get
+      val proof = VeriTParser.getExpansionProofWithSymmetry( StringInputFile( veriTProof ) ).get
       Sat4j.isValid( proof.deep ) must beTrue
     }
 
