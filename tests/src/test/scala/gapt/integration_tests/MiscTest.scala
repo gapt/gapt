@@ -1,21 +1,20 @@
 
 package gapt.integration_tests
 
-import gapt.formats.llk.LLKProofParser
 import gapt.cutintro._
-import gapt.grammars.DeltaTableMethod
-import gapt.proofs.expansion.{ ExpansionProofToLK, addSymmetry, eliminateCutsET }
-import gapt.proofs._
+import gapt.examples.sequence.LinearExampleProof
 import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.fol.FOLVar
-import gapt.formats.verit.VeriTParser
-import gapt.proofs.lk._
-import gapt.provers.prover9.{ Prover9, Prover9Importer }
-import gapt.provers.sat.Sat4j
-import gapt.provers.verit.VeriT
 import gapt.formats.ClasspathInputFile
+import gapt.formats.StringInputFile
+import gapt.formats.llk.LLKProofParser
+import gapt.formats.verit.VeriTParser
+import gapt.grammars.DeltaTableMethod
+import gapt.proofs._
+import gapt.proofs.expansion.ExpansionProofToLK
+import gapt.proofs.expansion.eliminateCutsET
 import gapt.proofs.lk.rules.ForallLeftRule
 import gapt.proofs.lk.rules.ForallRightRule
 import gapt.proofs.lk.rules.LogicalAxiom
@@ -27,8 +26,11 @@ import gapt.proofs.lk.util.AtomicExpansion
 import gapt.proofs.lk.util.isCutFree
 import gapt.proofs.lk.util.regularize
 import gapt.proofs.lk.util.solvePropositional
+import gapt.provers.prover9.Prover9
+import gapt.provers.prover9.Prover9Importer
+import gapt.provers.sat.Sat4j
+import gapt.provers.verit.VeriT
 import org.specs2.mutable._
-import gapt.examples.sequence.LinearExampleProof
 
 class MiscTest extends Specification {
 
@@ -121,14 +123,24 @@ class MiscTest extends Specification {
       isCutFree( q ) must beEqualTo( true )
     }
 
-    "load veriT proofs pi and verify the validity of Deep(pi) using sat4j" in {
-      for ( i <- List( 0, 1 ) ) { // Tests 2 and 4 take comparatively long, test 3 fails with StackOverflow
-        val taut_p = VeriTParser.getExpansionProofWithSymmetry( ClasspathInputFile( s"test$i.verit" ) ).get
-        val seq = taut_p.deep
-
-        Sat4j.isValid( seq ) must beTrue
-      }
-      ok
+    "load veriT proof of reflexivity and verify the validity using sat4j" in {
+      val veriTProof =
+        """
+          |unsat
+          |(assume h1 (not (= f_x_0 f_x_0)))
+          |(step t2 (cl (= (= f_x_0 f_x_0) true)) :rule eq_simplify)
+          |(step t3 (cl (= (not (= f_x_0 f_x_0)) (not true))) :rule cong :premises (t2))
+          |(step t4 (cl (= (not true) false)) :rule not_simplify)
+          |(step t5 (cl (= (not (= f_x_0 f_x_0)) false)) :rule trans :premises (t3 t4))
+          |(step t6 (cl (not (= (not (= f_x_0 f_x_0)) false)) (not (not (= f_x_0 f_x_0))) false) :rule equiv_pos2)
+          |(step t7 (cl (not (not (not (= f_x_0 f_x_0)))) (= f_x_0 f_x_0)) :rule not_not)
+          |(step t8 (cl (not (= (not (= f_x_0 f_x_0)) false)) (= f_x_0 f_x_0) false) :rule th_resolution :premises (t7 t6))
+          |(step t9 (cl false) :rule th_resolution :premises (h1 t5 t8))
+          |(step t10 (cl (not false)) :rule false)
+          |(step t11 (cl) :rule resolution :premises (t9 t10))
+          |""".stripMargin
+      val proof = VeriTParser.getExpansionProofWithSymmetry( StringInputFile(veriTProof) ).get
+      Sat4j.isValid( proof.deep ) must beTrue
     }
 
     "prove quasi-tautology by veriT and verify validity using sat4j (1/2)" in {
