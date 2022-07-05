@@ -1,6 +1,8 @@
 package gapt.formats.verit
 
 import gapt.formats.InputFile
+import gapt.formats.verit.alethe.AletheParser
+import gapt.formats.verit.alethe.AletheProof
 import gapt.logic.Polarity
 import gapt.proofs.Sequent
 import gapt.proofs.expansion._

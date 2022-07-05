@@ -1,5 +1,14 @@
 package gapt.formats.verit
 
+import gapt.formats.verit.alethe.AletheProof
+import gapt.formats.verit.alethe.Application
+import gapt.formats.verit.alethe.Assume
+import gapt.formats.verit.alethe.Forall
+import gapt.formats.verit.alethe.Identifier
+import gapt.formats.verit.alethe.Sort
+import gapt.formats.verit.alethe.Step
+import gapt.formats.verit.alethe.VariableDeclaration
+import gapt.formats.verit.alethe.parseAletheProof
 import org.specs2.mutable._
 
 class AletheParserTest extends Specification {

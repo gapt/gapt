@@ -15,26 +15,20 @@ import gapt.expr.ty.FunctionType
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
 import gapt.expr.ty.Ty
-import gapt.formats.verit.AletheException
-import gapt.formats.verit.AletheProof
-import gapt.formats.verit.Application
-import gapt.formats.verit.Assume
-import gapt.formats.verit.False
-import gapt.formats.verit.Identifier
-import gapt.formats.verit.Let
-import gapt.formats.verit.Step
-import gapt.formats.verit.Term
-import gapt.formats.verit.True
+import gapt.formats.verit.alethe.AletheException
+import gapt.formats.verit.alethe.AletheProof
+import gapt.formats.verit.alethe.Assume
+import gapt.formats.verit.alethe.Step
+import gapt.formats.verit.alethe._
 import gapt.logic.EqualityReflexivity
 import gapt.logic.EqualityTransitivity
 import gapt.logic.FunctionCongruence
 import gapt.logic.PredicateCongruence
+import gapt.provers.verit.alethe.toExpr
 import gapt.utils.shortestPath
 import gapt.utils.symmetricClosure
 
 object aletheQfUf {
-
-  import alethe.toExpr
 
   def collectUsedInputFormulas( proof: AletheProof, conversionTable: Map[String, Const] ): Seq[Formula] = {
     val usedLabels = collectUsedLabels( proof )
