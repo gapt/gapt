@@ -25,6 +25,7 @@ object mangleName {
       case '/' => "d"
       case 'ν' => "n"
       case 'α' => "a"
+      case 'β' => "b"
       case 'γ' => "g"
       case c   => c.toString
     }
