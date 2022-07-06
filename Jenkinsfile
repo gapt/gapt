@@ -61,6 +61,15 @@ pipeline {
         }
     }
     post {
+        success {
+            withCredentials([string(credentialsId: 'codecov-token', variable: 'CODECOV_TOKEN')]) {
+                sh '''
+                  curl -Os https://uploader.codecov.io/latest/linux/codecov
+                  chmod +x codecov
+                  ./codecov -t ${CODECOV_TOKEN}
+                '''
+            }
+        }
         fixed {
             emailext (
                 subject: "FIXED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
