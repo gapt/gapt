@@ -32,7 +32,7 @@ pipeline {
         stage('Testing') {
             steps {
                 echo 'Testing...'
-                sh 'sbt ${SBT_FLAGS} test'
+                sh 'sbt ${SBT_FLAGS} coverage test coverageReport coverageAggregate'
             }
         }
         stage('Documentation') {
