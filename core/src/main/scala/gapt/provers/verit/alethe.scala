@@ -20,6 +20,7 @@ import gapt.formats.verit.alethe.AletheProof
 import gapt.formats.verit.alethe.Assume
 import gapt.formats.verit.alethe.Step
 import gapt.formats.verit.alethe._
+import gapt.logic.AllDistinct
 import gapt.logic.EqualityReflexivity
 import gapt.logic.EqualityTransitivity
 import gapt.logic.FunctionCongruence
@@ -218,14 +219,11 @@ object alethe {
             And.nAry( ts.map {
               convertToExpr( _, Some( To ), bindings )
             }: _* )
-          case Application( "distinct", t1 :: t2 :: t3 :: Nil ) =>
+          case Application( "distinct", ts ) =>
             if ( exptype.isDefined && exptype.get != To ) {
               throw AletheException( s"Expected type ${exptype.get} but got ${To} in '${term}'" )
             }
-            val t1_ = convertToExpr( t1, None, bindings )
-            val t2_ = convertToExpr( t2, None, bindings )
-            val t3_ = convertToExpr( t3, None, bindings )
-            And.nAry( Neg( Eq( t1_, t2_ ) ), Neg( Eq( t1_, t3_ ) ), Neg( Eq( t2_, t3_ ) ) )
+            AllDistinct( ts.map { convertToExpr( _, None, bindings ) }: _* )
           case Application( f, as ) =>
             val as_ = as.map {
               convertToExpr( _, None, bindings )
