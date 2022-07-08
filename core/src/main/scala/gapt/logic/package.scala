@@ -2,6 +2,7 @@ package gapt
 
 import gapt.utils.unorderedPairsOf
 import gapt.expr.Const
+import gapt.expr.Expr
 import gapt.expr.ReductionRule
 import gapt.expr.Var
 import gapt.expr.formula.All
@@ -9,6 +10,7 @@ import gapt.expr.formula.And
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
 import gapt.expr.formula.hol.universalClosure
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.To
@@ -101,5 +103,10 @@ package object logic {
       val x = Var( "x", t )
       All( x, Eq( x, x ) )
     }
+  }
+
+  object AllDistinct {
+    def apply( ts: Expr* ): Formula =
+      And.nAry( unorderedPairsOf( ts ).map { case ( t1, t2 ) => Neg( Eq( t1, t2 ) ) }.toList: _* )
   }
 }

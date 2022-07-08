@@ -1,7 +1,11 @@
 package gapt.logic
 
 import gapt.expr._
+import gapt.expr.formula.And
+import gapt.expr.formula.Eq
+import gapt.expr.formula.Neg
 import gapt.proofs.context.update.InductiveType
+import gapt.utils.unorderedPairsOf
 import org.specs2.mutable.Specification
 
 class AxiomsTest extends Specification {
@@ -32,4 +36,13 @@ class AxiomsTest extends Specification {
     }
   }
 
+  "distinctness formula" should {
+    "be top for zero arguments" in { AllDistinct() must_== hof"⊤" }
+    "be top for one argument" in { AllDistinct() must_== hof"⊤" }
+    "contain a disequality for each unordered  pair of the arguments" in {
+      val terms = List( hov"x : i", hov"y: i", hov"z : i" )
+      val And.nAry( conjuncts ) = AllDistinct( terms: _* )
+      conjuncts.map { case Neg( Eq( t1, t2 ) ) => ( t1, t2 ) } must_== unorderedPairsOf( terms )
+    }
+  }
 }
