@@ -19,33 +19,77 @@ object groupexp {
   val linv = fof"∀x f(g(x), x) = e"
   val rinv = fof"∀x f(x, g(x)) = e"
 
-  // relations of some LOT groups
-  val G1rel = List(
-    LOGrel( 1, 2, 3 ),
-    LOGrel( 3, 2, 4 ),
-    LOGrel( 3, 4, 5 ),
-    LOGrel( 5, 4, 3 ) )
-  val G2rel = List(
-    LOGrel( 1, 5, 2 ),
-    LOGrel( 2, 1, 3 ),
-    LOGrel( 2, 3, 1 ),
-    LOGrel( 4, 2, 5 ) )
-  val G3rel = List(
-    LOGrel( 1, 5, 3 ),
-    LOGrel( 1, 2, 4 ),
-    LOGrel( 2, 3, 1 ),
-    LOGrel( 2, 4, 5 ) )
+  // some LOT groups
+  val G1 = List(
+    Edge( 1, 2, 3 ),
+    Edge( 3, 2, 4 ),
+    Edge( 3, 4, 5 ),
+    Edge( 5, 4, 3 ) )
+  val G2 = List(
+    Edge( 1, 5, 2 ),
+    Edge( 2, 1, 3 ),
+    Edge( 2, 3, 1 ),
+    Edge( 4, 2, 5 ) )
+  val G3 = List(
+    Edge( 1, 5, 3 ),
+    Edge( 1, 2, 4 ),
+    Edge( 2, 3, 1 ),
+    Edge( 2, 4, 5 ) )
 
   // options
-  var ngen = 5 // the number of generators in our group
-  var group = G1rel // (the relations of) our group
-  var ax = List( assoc, lunit, linv, runit, rinv ) ++ group // axiomatisation of our group
+  var ngen = 0 // the number of generators in our group
+  var ax: List[FOLFormula] = Nil // axiomatisation of our group
   var timeout = 1 second // the timeout
+  var verbose = true
+
+  case class Edge( from: Int, to: Int, lbl: Int )
+
+  def setGroup( ng: Int, rel: List[Edge] ) = {
+    ngen = ng
+    val group = rel map ( x => groupexp.LOGrel( x.from, x.to, x.lbl ) )
+    ax = List( assoc, lunit, linv, runit, rinv ) ++ group
+  }
 
   // check for equalities between generators
   def checkGenerators = {
     for { i <- 1 to ngen; j <- i + 1 to ngen }
       checkEquality( List( gen( i ) ), List( gen( j ) ) )
+  }
+
+  // find commuting words filtering out trivial cases
+  // lu length of u
+  // lv length of v
+  // n max exponent for is-power-of check
+  // TODO: additional filtering: rewrite words with f(x,g(x)) -> e and
+  // f(g(x),x) -> e and with edges oriented in length-decreasing way and
+  // with inverse of edge in length-decreasing way, check remaing words for
+  // trivial cases u = e, v = e, u = v, u = g(v)
+  def findCommutations( lu: Int, lv: Int, n: Int ) = {
+    val U = generateWordsOfLength( lu )
+    val V = generateWordsOfLength( lv )
+    for { u <- U; v <- V } {
+      vprint( "checking whether " + u + " and " + v + " commute..." )
+      val seq = Sequent( ax, List( Eq( op( u ++ v ), op( v ++ u ) ) ) )
+      if ( Prover9WithTimeout( seq ) ) {
+        vprintln( "yes." )
+
+        vprint( "checking whether " + u + " is a power of " + v + "..." )
+        if ( IsPowerOf( u, v, n ) )
+          vprintln( "yes." )
+        else {
+          vprintln( "no." )
+
+          vprint( "checking whether " + v + " is a power of " + u + "..." )
+          if ( IsPowerOf( v, u, n ) )
+            vprintln( "yes." )
+          else {
+            vprintln( "no." )
+            println( "! found commutation candidates: " + u + ", " + v )
+          }
+        }
+      } else
+        vprintln( "no." )
+    }
   }
 
   // check commutation of a words of length lu with all words of length lv
@@ -75,9 +119,19 @@ object groupexp {
     check( ax, LOGrel( from, to, lbl ) )
   }
 
-  // checks if u is a power of v from 0 to n
+  // returns true iff a power-of relation could be established
+  def IsPowerOf( u: word, v: word, n: Int ) = {
+    var rv = false
+    for ( i <- -n to n ) {
+      val seq = Sequent( ax, List( Eq( op( u ), op( pow( v, i ) ) ) ) )
+      rv = rv || Prover9WithTimeout( seq )
+    }
+    rv
+  }
+
+  // checks if u is a power of v from -n to n
   def checkIsPowerOf( u: word, v: word, n: Int ) = {
-    for ( i <- 0 to n )
+    for ( i <- -n to n )
       checkEquality( u, pow( v, i ) )
   }
 
@@ -94,22 +148,33 @@ object groupexp {
     }
   }
 
+  def Prover9WithTimeout( seq: FOLSequent ) = {
+    try withTimeout( timeout ) {
+      Prover9 isValid seq
+    } catch {
+      case _: TimeOutException => false
+    }
+  }
+
   def check( ax: Seq[FOLFormula], goal: FOLFormula ) = {
     try withTimeout( timeout ) {
-      print( "running prover9 on goal " + goal + "... " )
+      if ( verbose ) print( "running prover9 on goal " + goal + "... " )
       val seq = Sequent( ax, List( goal ) )
       if ( Prover9 isValid seq )
-        println( "proof found" )
-      else
-        println( "no proof found (prover terminated)" )
+        if ( verbose )
+          println( "proof found" )
+        else
+          println( "found proof of " + goal )
+      else if ( verbose ) println( "no proof found (prover terminated)" )
     } catch {
-      case _: TimeOutException => println( "no proof found (timeout)" )
+      case _: TimeOutException => if ( verbose ) println( "no proof found (timeout)" )
     }
   }
 
   // wrappers around group signature
   def unit = FOLFunction( "e" )
-  def inv( w: FOLTerm ) = FOLFunction( "g", w )
+  def inv( w: FOLTerm ): FOLTerm = FOLFunction( "g", w )
+  def inv( w: word ): word = w.reverse.map( inv( _ ) ) // FIXME: is not completely clean, may create inverses of inverses
   def gen( i: Int ) = FOLFunction( "a" + i )
   def op( w: word ): FOLTerm = {
     if ( w == Nil ) unit
@@ -117,10 +182,10 @@ object groupexp {
     else FOLFunction( "f", w.head, op( w.tail ) )
   }
 
-  // returns the word w^n
+  // returns the word w^n for an integer n
   def pow( w: word, n: Int ): word = {
-    if ( n == 0 ) Nil
-    else if ( n == 1 ) w
+    if ( n < 0 ) pow( inv( w ), -n )
+    else if ( n == 0 ) Nil
     else w ++ pow( w, n - 1 )
   }
 
@@ -131,4 +196,6 @@ object groupexp {
     Eq( lhs, rhs )
   }
 
+  private def vprint( s: String ) = if ( verbose ) print( s )
+  private def vprintln( s: String ) = if ( verbose ) println( s )
 }
