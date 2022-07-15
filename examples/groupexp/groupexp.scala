@@ -35,6 +35,11 @@ object groupexp {
     Edge( 1, 2, 4 ),
     Edge( 2, 3, 1 ),
     Edge( 2, 4, 5 ) )
+  val G4 = List(
+    Edge( 2, 1, 5 ),
+    Edge( 3, 2, 4 ),
+    Edge( 3, 4, 1 ),
+    Edge( 5, 4, 3 ) )
 
   // options
   var ngen = 0 // the number of generators in our group
@@ -62,7 +67,7 @@ object groupexp {
   // n max exponent for is-power-of check
   // TODO: additional filtering: rewrite words with f(x,g(x)) -> e and
   // f(g(x),x) -> e and with edges oriented in length-decreasing way and
-  // with inverse of edge in length-decreasing way, check remaing words for
+  // with inverse of edge in length-decreasing way, check remaining words for
   // trivial cases u = e, v = e, u = v, u = g(v)
   def findCommutations( lu: Int, lv: Int, n: Int ) = {
     val U = generateWordsOfLength( lu )
@@ -109,7 +114,7 @@ object groupexp {
   }
 
   def checkEdges = {
-    // TODO filter out trivially true where f = t = l
+    // TODO filter out trivially true where f = t = l, filter out known edges
     for { f <- 1 to ngen; t <- 1 to ngen; l <- 1 to ngen }
       checkEdge( f, t, l )
   }
