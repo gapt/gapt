@@ -2,6 +2,11 @@
 
 ## Version 2.16 (unreleased)
 
+* Update prover interfaces: Vampire, iProver, veriT, leanCoP
+* Add Jenkins CI pipeline
+* Add tagged many-sorted reduction
+* Update to Scala 2.13.8
+
 ## Version 2.15.4 (released on 2022-05-31)
 
 * Fix developer information
