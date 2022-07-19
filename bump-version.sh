@@ -40,17 +40,17 @@ esac
 case "$MODE" in
     release)
         sed -i "45,47s/$RELEASE_VERSION_PATTERN/$NEW_VERSION/" README.md
-        sed -i "56s/$RELEASE_VERSION_PATTERN/$NEW_VERSION/" README.md
+        sed -i "55s/$RELEASE_VERSION_PATTERN/$NEW_VERSION/" README.md
         sed -i "7s/$ANY_VERSION_PATTERN/$NEW_VERSION/" build.sbt
         sed -i "163s/$ANY_VERSION_PATTERN/$NEW_VERSION/" doc/user_manual.tex
-        sed -i "232s/$RELEASE_VERSION_PATTERN/$NEW_VERSION/" doc/user_manual.tex
+        sed -i "231s/$RELEASE_VERSION_PATTERN/$NEW_VERSION/" doc/user_manual.tex
         sed -i "1s/$ANY_VERSION_PATTERN/$NEW_VERSION/" include.sh
         ;;
     snapshot)
         NEW_SNAPSHOT_VERSION="${NEW_VERSION}-SNAPSHOT"
         sed -i "7s/$SNAPSHOT_VERSION_PATTERN/$NEW_SNAPSHOT_VERSION/" build.sbt
         sed -i "163s/$SNAPSHOT_VERSION_PATTERN/$NEW_SNAPSHOT_VERSION/" doc/user_manual.tex
-        sed -i "232s/$SNAPSHOT_VERSION_PATTERN/$NEW_SNAPSHOT_VERSION/" doc/user_manual.tex
+        sed -i "231s/$SNAPSHOT_VERSION_PATTERN/$NEW_SNAPSHOT_VERSION/" doc/user_manual.tex
         sed -i "1s/$SNAPSHOT_VERSION_PATTERN/$NEW_SNAPSHOT_VERSION/" include.sh
         sed -i "3i ## Version ${NEW_VERSION} (unreleased)\n" RELEASE-NOTES.md
         ;;
