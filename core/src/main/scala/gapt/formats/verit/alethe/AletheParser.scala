@@ -158,7 +158,7 @@ trait AletheParser extends RegexParsers {
 
   private def forall_term: Parser[Forall] =
     "(" ~ "forall" ~ "(" ~> rep( sorted_var ) ~ ")" ~ term <~ ")" ^^ {
-      case vs ~ _ ~ f => println( "detected quantifier" ); Forall( vs, f )
+      case vs ~ _ ~ f => Forall( vs, f )
     }
 
   private def exists_term: Parser[Exists] =
