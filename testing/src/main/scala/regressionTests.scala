@@ -308,7 +308,7 @@ class LeanCoPTestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
 }
 
 class VeriTTestCase( smtQfUfBenchmark: java.io.File ) extends RegressionTestCase( smtQfUfBenchmark.getName ) {
-  override def timeout: Option[Duration] = Some( 10 minutes )
+  override def timeout: Option[Duration] = Some( 2 minutes )
 
   override def test( implicit testRun: TestRun ) = {
 
