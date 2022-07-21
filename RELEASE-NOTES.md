@@ -1,6 +1,6 @@
 # Release notes for GAPT
 
-## Version 2.16 (unreleased)
+## Version 2.16.0 (released on 2022-07-21)
 
 * Update prover interfaces: Vampire, iProver, veriT, leanCoP
 * Add Jenkins CI pipeline
