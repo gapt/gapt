@@ -458,7 +458,7 @@ object SimpLemmas {
         arg.flatMap( proof.occConnectors( subProofIdx ).parentOption( _ ) )
       override def visitLogicalAxiom( proof: LogicalAxiom, idx: Option[SequentIndex] ): ( LKProof, SequentConnector ) =
         if ( idx.isEmpty ) super.visitLogicalAxiom( proof, idx ) else
-          ( proof.conclusion( idx.get ), idx.get, j ) match {
+          ( ( proof.conclusion( idx.get ), idx.get, j ): @unchecked ) match {
             case ( f @ And( a, b ), Suc( _ ), 1 ) =>
               AndLeftRule( WeakeningLeftRule( LogicalAxiom( a ), b ), f ) -> SequentConnector( proof.conclusion )
             case ( f @ And( a, b ), Suc( _ ), 2 ) =>

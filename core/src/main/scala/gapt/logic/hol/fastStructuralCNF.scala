@@ -51,7 +51,7 @@ case class fastStructuralCNF( propositional: Boolean = true, bidirectionalDefs: 
     val defs = mutable.Map[Expr, HOLAtomConst]()
     val skConsts = mutable.Map[Expr, Const]()
 
-    val nameGen = new NameGenerator( constants( endSequent ) map { _.name } )
+    val nameGen = new NameGenerator( constants.nonLogical( endSequent ) map { _.name } )
     def mkSkolemSym() = nameGen.freshWithIndex( "s" )
     def mkAbbrevSym() = nameGen.freshWithIndex( "D" )
 
@@ -135,11 +135,11 @@ case class fastStructuralCNF( propositional: Boolean = true, bidirectionalDefs: 
     // In order to combat exponential blow-up, we do something special if there are two or more such elements:
     // we introduce a definition for the first one.
     def split( seq: HOLSequent ): Unit = {
-      seq.zipWithIndex.elements collect {
+      ( seq.zipWithIndex.elements collect {
         case ( And( a, b ), i: Suc ) => i
         case ( Or( a, b ), i: Ant )  => i
         case ( Imp( a, b ), i: Ant ) => i
-      } match {
+      }: @unchecked ) match {
         case splits if splits.size > 1 || ( splits.size == 1 && seq.size > 3 ) =>
           abbrev( seq, splits.head )
         case Seq( i ) => splitAt( seq, i )

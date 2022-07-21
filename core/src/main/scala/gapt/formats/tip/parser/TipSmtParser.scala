@@ -74,6 +74,8 @@ object TipSmtParser {
           case _ => throw TipSmtParserException(
             "unknown head symbol: " + head )
         }
+      case _ =>
+        throw TipSmtParserException( s"invalid command expression: ${sexp}" )
     }
   }
 

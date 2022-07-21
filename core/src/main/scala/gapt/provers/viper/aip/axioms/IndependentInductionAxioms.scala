@@ -1,15 +1,15 @@
 package gapt.provers.viper.aip.axioms
 
-import gapt.expr.Var
-import gapt.proofs.gaptic._
-import gapt.proofs.Sequent
-import gapt.provers.viper.aip._
 import cats.instances.all._
 import cats.syntax.all._
+import gapt.expr.Var
 import gapt.expr.formula.All
 import gapt.expr.formula.Formula
 import gapt.expr.util.freeVariables
-import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.Sequent
+import gapt.proofs.context.Context
+import gapt.proofs.gaptic._
+import gapt.provers.viper.aip._
 
 /**
  * Generates independent induction axioms.
@@ -37,7 +37,7 @@ case class IndependentInductionAxioms(
    * @param sequent The sequent for which the induction axioms are generated.
    * @return Either a list of induction axioms, or a list of error-messages if the axioms could not be created
    */
-  override def apply( sequent: Sequent[( String, Formula )] )( implicit ctx: MutableContext ): ThrowsError[List[Axiom]] = {
+  override def apply( sequent: Sequent[( String, Formula )] )( implicit ctx: Context ): ThrowsError[List[Axiom]] = {
     for {
       formula <- fsel( sequent )
       variables = vsel( formula, ctx )
@@ -72,7 +72,7 @@ case class IndependentInductionAxioms(
    * @return An independent induction axiom.
    */
   private def inductionAxiom(
-    inductionVariables: List[Var], variable: Var, formula: Formula )( implicit ctx: MutableContext ): ThrowsError[Axiom] = {
+    inductionVariables: List[Var], variable: Var, formula: Formula )( implicit ctx: Context ): ThrowsError[Axiom] = {
     val auxiliaryVariables = inductionVariables filter { _ != variable }
     val inductionFormula = inductionQuantifierForm( inductionVariables, formula )
     StandardInductionAxioms( variable, inductionFormula ) map { axiom =>

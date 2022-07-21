@@ -34,7 +34,7 @@ object TPTPstatistics {
     val axiom_assertions = formula_assertions.filter( _.role == "axiom" )
 
     //get symbols in file
-    val consts = constants( sequent )
+    val consts = constants.nonLogical( sequent )
 
     //compute frequency of arities
     val sig = mutable.Map[Int, Set[Const]]()

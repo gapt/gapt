@@ -251,7 +251,8 @@ object ResolutionToLKProof {
         val newIndices = subConn.parentsSequent.indicesWhere( _.isEmpty )
         val newIndicesByFormula = newIndices.groupBy( i => subProof.conclusion( i ) -> i.polarity )
         newIndicesByFormula.find( ni => ni._2.size > formulaMultiplicities( ni._1 ) ) match {
-          case Some( ( _, Seq( i, j, _* ) ) ) =>
+          case Some( ( _, indices ) ) =>
+            val Seq( i, j, _* ) = indices
             val contracted = if ( i.isSuc ) ContractionRightRule( subProof, i, j ) else ContractionLeftRule( subProof, i, j )
             ( contracted, contracted.getSequentConnector * subConn )
           case None => ( subProof, subConn )

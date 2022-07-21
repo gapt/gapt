@@ -5,7 +5,6 @@ import gapt.proofs.rup.RupProof
 import org.sat4j.core.{ LiteralsUtils, Vec, VecInt }
 import org.sat4j.minisat.SolverFactory
 import org.sat4j.specs._
-import org.sat4j.tools.SearchListenerAdapter
 
 class Sat4j extends DrupSolver {
   import Sat4j._

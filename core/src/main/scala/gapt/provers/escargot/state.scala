@@ -17,7 +17,7 @@ import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.rup.RupProof
 import gapt.provers.viper.aip.axioms.Axiom
 import org.sat4j.specs.{ ContradictionException, IConstr, ISolverService }
-import org.sat4j.tools.SearchListenerAdapter
+import org.sat4j.specs.SearchListenerAdapter
 import cats.implicits._
 
 object EscargotLogger extends Logger( "escargot" ); import EscargotLogger._
@@ -205,7 +205,7 @@ class EscargotState( val ctx: MutableContext ) {
 
   /** Current propositional Avatar model. */
   var avatarModel = Set[Int]()
-  /** * Empty clauses that have already been derived.  All assertions in the empty clauses are false. */
+  /** Empty clauses that have already been derived.  All assertions in the empty clauses are false. */
   var emptyClauses = mutable.Map[Set[Int], Cls]()
   /** Is the assertion of cls true in the current model? */
   def isActive( cls: Cls ): Boolean = isActive( cls.ass )
@@ -249,7 +249,7 @@ class EscargotState( val ctx: MutableContext ) {
   }
 
   /** Performs inferences between given and workedOff, and adds given to workedOff. */
-  def inferenceComputation( given: Cls ): Boolean = {
+  def inferenceComputation( `given`: Cls ): Boolean = {
     val inferred = mutable.Set[Cls]()
     var discarded = false
 
@@ -326,80 +326,41 @@ class EscargotState( val ctx: MutableContext ) {
     ( clauses map InputCls, cnfMap )
   }
 
+  protected def handleEmptyClauses(): Option[ResolutionProof] = {
+    if ( !( usable exists { _.clause.isEmpty } ) )
+      return None
+    for ( cls <- usable if cls.clause.isEmpty && cls.assertion.isEmpty )
+      return Some( cls.proof )
+    if ( solver.isSatisfiable ) {
+      info( s"sat splitting model: ${
+        solver.model().filter( _ >= 0 ).map( deintern ).
+          sortBy( _.toString ).mkString( ", " )
+      }".replace( '\n', ' ' ) )
+      switchToNewModel()
+      None
+    } else {
+      Some( mkSatProof() )
+    }
+  }
+
   /** Main inference loop. */
-  def loop( spin: Option[SuperpositionInductionProver] = None ): Option[( ResolutionProof, Set[Axiom], Map[HOLSequent, ResolutionProof] )] = {
-    var inductedClauses = Set.empty[HOLSequent]
-    var addedAxioms = Set.empty[Axiom]
-    val possibleAxioms = mutable.Queue.empty[Axiom]
-    var cnfMap = Map.empty[HOLSequent, ResolutionProof]
-
-    val addInductions = spin.isDefined
-    var loopCount = 0
-    var inductCutoff = 16
-
-    val section = new ContextSection( ctx )
-
+  def loop(): Option[ResolutionProof] = {
     try {
       preprocessing()
       clauseProcessing()
 
       while ( true ) {
-        if ( usable exists {
-          _.clause.isEmpty
-        } ) {
-          for ( cls <- usable if cls.clause.isEmpty && cls.assertion.isEmpty )
-            return Some( cls.proof, addedAxioms, cnfMap )
-          if ( solver.isSatisfiable ) {
-            info( s"sat splitting model: ${
-              solver.model().filter( _ >= 0 ).map( deintern ).
-                sortBy( _.toString ).mkString( ", " )
-            }".replace( '\n', ' ' ) )
-            switchToNewModel()
-          } else {
-            return Some( mkSatProof(), addedAxioms, cnfMap )
-          }
-        }
-        if ( addInductions && ( usable.isEmpty || loopCount >= inductCutoff ) ) {
-          loopCount = 0
 
-          do {
-            if ( possibleAxioms.isEmpty && usable.isEmpty )
-              return None
-
-            if ( possibleAxioms.nonEmpty ) {
-              val newAxiom = possibleAxioms.dequeue()
-              val ( clauses, newMap ) = axiomClause( section, newAxiom )
-
-              addedAxioms += newAxiom
-              cnfMap ++= newMap
-
-              newlyDerived ++= clauses
-              preprocessing()
-              clauseProcessing()
-
-              if ( addedAxioms.size % 5 == 0 )
-                inductCutoff += 1
-            }
-          } while ( usable.isEmpty )
+        handleEmptyClauses() match {
+          case Some( p ) => return Some( p )
+          case _         =>
         }
 
         if ( usable.isEmpty )
           return None
 
-        val given = choose()
+        val `given` = choose()
         usable -= given
-        spin match {
-          case Some( s ) =>
-            // TODO: this should probably be less restrictive now that we perform more subgoal generalization
-            if ( s.performGeneralization || given.clause.exists( constants( _ ) exists ( s.isInductive( _ )( ctx ) ) ) &&
-              !inductedClauses.contains( given.clause ) ) {
-              EscargotLogger.time( "axiom_gen" ) {
-                s.clauseAxioms( given.clause )( ctx ) foreach ( possibleAxioms.enqueue( _ ) )
-              }
-              inductedClauses += given.clause
-            }
-          case None =>
-        }
 
         val discarded = inferenceComputation( given )
 
@@ -407,19 +368,13 @@ class EscargotState( val ctx: MutableContext ) {
 
         preprocessing()
         clauseProcessing()
-
-        loopCount += 1
       }
 
       None
     } catch {
       case _: ContradictionException =>
-        Some( mkSatProof(), addedAxioms, cnfMap )
-    } finally {
-      if ( addInductions ) {
-        EscargotLogger.metric( "candidates", inductedClauses.size )
-        EscargotLogger.metric( "added_axioms", addedAxioms.size )
-      }
+        Some( mkSatProof() )
     }
   }
 }
+

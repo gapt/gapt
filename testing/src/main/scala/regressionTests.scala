@@ -2,7 +2,6 @@ package gapt.testing
 
 import java.io.FileWriter
 import java.io.PrintWriter
-
 import ammonite.ops._
 import gapt.cutintro._
 import gapt.expr._
@@ -12,6 +11,7 @@ import gapt.expr.formula.Atom
 import gapt.expr.formula.fol.isFOLPrenexSigma1
 import gapt.expr.util.subTerms
 import gapt.formats.InputFile
+import gapt.formats.StringInputFile
 import gapt.formats.babel.BabelParser
 import gapt.formats.babel.BabelSignature
 import gapt.formats.json._
@@ -77,7 +77,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
   override protected def test( implicit testRun: TestRun ): Unit = {
     val bench = TipSmtImporter.fixupAndLoad( f ) --- "tip parser"
 
-    implicit val ctx: MutableContext = bench.ctx.newMutable
+    implicit val ctx: MutableContext = bench.context.newMutable
     val sequent = bench.toSequent
     val lkProofWithSk = Viper.getStrategies( sequent, ViperOptions() ).reverse.view.flatMap {
       case ( duration, strategy ) =>
@@ -307,9 +307,15 @@ class LeanCoPTestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
   }
 }
 
-class VeriTTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
+class VeriTTestCase( smtQfUfBenchmark: java.io.File ) extends RegressionTestCase( smtQfUfBenchmark.getName ) {
+  override def timeout: Option[Duration] = Some( 2 minutes )
+
   override def test( implicit testRun: TestRun ) = {
-    val E = VeriTParser.getExpansionProofWithSymmetry( f ).get --- "import"
+
+    val veriTOutput = runProcess(
+      Seq( "veriT", "--proof=-", "--disable-print-success", "--disable-banner", smtQfUfBenchmark.getAbsolutePath() ) ) --- "proof generation"
+
+    val E = VeriTParser.getExpansionProofWithSymmetry( StringInputFile( veriTOutput ) ).get --- "proof import"
 
     val deep = E.deep --- "toDeep"
     MiniSAT.isValid( deep.toDisjunction ) !-- "minisat validity"
@@ -353,13 +359,13 @@ class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
 object RegressionTests extends scala.App {
   def prover9Proofs = ls.rec( pwd / "testing" / "TSTP" / "prover9" ).filter( _.ext == "s" )
   def leancopProofs = ls.rec( pwd / "testing" / "TSTP" / "leanCoP" ).filter( _.ext == "s" )
-  def veritProofs = ls.rec( pwd / "testing" / "veriT-SMT-LIB" ).filter( _.ext == "proof_flat" )
+  def veritBenchmarks = ls.rec( pwd / "testing" / "veriT-SMT-LIB" ).filter( _.ext == "smt2" )
   def tptpProblems = ls.rec( pwd / "testing" / "TPTP" / "Problems" ).filter( _.ext == "p" )
   def tipProblems = ls.rec( pwd / "testing" / "TIP" ).filter( _.ext == "smt2" )
 
   def prover9TestCases = prover9Proofs map { fn => new Prover9TestCase( fn.toIO ) }
   def leancopTestCases = leancopProofs map { fn => new LeanCoPTestCase( fn.toIO ) }
-  def veritTestCases = veritProofs map { fn => new VeriTTestCase( fn.toIO ) }
+  def veritTestCases = veritBenchmarks map { fn => new VeriTTestCase( fn.toIO ) }
   def tptpTestCases = tptpProblems.map { fn => new TptpTestCase( fn.toIO ) }
   def tipTestCases = tipProblems.map { fn => new TipTestCase( fn.toIO ) }
   def theoryTestCases =

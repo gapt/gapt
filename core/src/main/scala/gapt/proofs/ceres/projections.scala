@@ -40,7 +40,7 @@ object Projections {
 
   // This method computes the standard projections according to the original CERES definition.
   def apply( proof: LKProof ): Set[LKProof] =
-    apply( proof, proof.endSequent.map( _ => false ), x => true )
+    apply( proof, proof.endSequent.map( _ => false ), CERES.skipNothing )
 
   def apply( proof: LKProof, pred: Formula => Boolean ): Set[LKProof] =
     apply( proof, proof.endSequent.map( _ => false ), pred )

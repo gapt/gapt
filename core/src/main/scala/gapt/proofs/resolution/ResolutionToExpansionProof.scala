@@ -221,8 +221,11 @@ object ResolutionToExpansionProof {
           formulaToExpansionTree( renaming( comp.disjunction ), Polarity.InSuccedent ) )
         val Seq( oc ) = p.occConnectors
         propg( p, q, _.map( es => renaming.compose( es._1 ) -> oc.parents( es._2 ).zipWithIndex.map {
-          case ( Seq( et ), _ ) => et
-          case ( Seq(), _ )     => ETtAtom
+          x =>
+            ( x: @unchecked ) match {
+              case ( Seq( et ), _ ) => et
+              case ( Seq(), _ )     => ETtAtom
+            }
         } ) )
       case p @ AvatarComponent( AvatarGroundComp( _, _ ) ) =>
         clear( p )

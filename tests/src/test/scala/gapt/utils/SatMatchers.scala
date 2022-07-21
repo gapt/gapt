@@ -2,6 +2,7 @@ package gapt.utils
 
 import gapt.expr.formula.Formula
 import gapt.proofs.HOLSequent
+import gapt.proofs.expansion.ExpansionProof
 import gapt.provers.escargot.Escargot
 import gapt.provers.renameConstantsToFi
 import gapt.provers.sat.Sat4j
@@ -29,5 +30,8 @@ trait SatMatchers extends OptionMatchers {
     }
   def beEUnsat = beEValid ^^ { ( f: Formula ) => -f }
   def beEValidSequent = beEValid ^^ { ( sequent: HOLSequent ) => sequent.toDisjunction }
+
+  def havingTautDeepSequent = beValidSequent ^^ { ( ep: ExpansionProof ) => ep.deep }
+  def havingQTautDeepSequent = beEValidSequent ^^ { ( ep: ExpansionProof ) => ep.deep }
 
 }

@@ -102,8 +102,8 @@ object isPrenex {
     case And( f1, f2 )    => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
     case Or( f1, f2 )     => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
     case Imp( f1, f2 )    => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
-    case Ex( v, f )       => isPrenex( f )
-    case All( v, f )      => isPrenex( f )
+    case Ex( _, f )       => isPrenex( f )
+    case All( _, f )      => isPrenex( f )
     case Atom( _, _ )     => true
     case _                => throw new Exception( "ERROR: Unknow operator encountered while checking for prenex formula: " + this )
   }
@@ -116,19 +116,19 @@ object isPrenex {
  */
 object containsQuantifier {
   def apply( e: Expr ): Boolean = e match {
-    case Top() | Bottom()   => false
-    case Var( x, tpe )      => false
-    case Const( x, tpe, _ ) => false
-    case And( x, y )        => containsQuantifier( x ) || containsQuantifier( y )
-    case Or( x, y )         => containsQuantifier( x ) || containsQuantifier( y )
-    case Imp( x, y )        => containsQuantifier( x ) || containsQuantifier( y )
-    case Neg( x )           => containsQuantifier( x )
-    case Ex( x, f )         => true
-    case All( x, f )        => true
+    case Top() | Bottom() => false
+    case Var( _, _ )      => false
+    case Const( _, _, _ ) => false
+    case And( x, y )      => containsQuantifier( x ) || containsQuantifier( y )
+    case Or( x, y )       => containsQuantifier( x ) || containsQuantifier( y )
+    case Imp( x, y )      => containsQuantifier( x ) || containsQuantifier( y )
+    case Neg( x )         => containsQuantifier( x )
+    case Ex( _, _ )       => true
+    case All( _, _ )      => true
     // Is this really necessary? Yes, they handle cases like P( (\x.x) a ) .
-    case Abs( v, exp )      => containsQuantifier( exp )
-    case App( l, r )        => containsQuantifier( l ) || containsQuantifier( r )
-    case _                  => throw new Exception( "Unrecognized symbol." )
+    case Abs( _, exp )    => containsQuantifier( exp )
+    case App( l, r )      => containsQuantifier( l ) || containsQuantifier( r )
+    case _                => throw new Exception( "Unrecognized symbol." )
   }
 }
 
@@ -143,9 +143,9 @@ object containsQuantifierOnLogicalLevel {
     case Or( x, y )       => containsQuantifierOnLogicalLevel( x ) || containsQuantifierOnLogicalLevel( y )
     case Imp( x, y )      => containsQuantifierOnLogicalLevel( x ) || containsQuantifierOnLogicalLevel( y )
     case Neg( x )         => containsQuantifierOnLogicalLevel( x )
-    case Ex( x, g )       => true
-    case All( x, g )      => true
-    case Atom( x, args )  => false // contents of atoms is ignored
+    case Ex( _, _ )       => true
+    case All( _, _ )      => true
+    case Atom( _, _ )     => false // contents of atoms is ignored
     case _                => throw new Exception( "Unrecognized symbol." )
   }
 }
@@ -169,8 +169,8 @@ object containsStrongQuantifier {
     case Or( s, t )       => containsStrongQuantifier( s, pol ) || containsStrongQuantifier( t, pol )
     case Imp( s, t )      => containsStrongQuantifier( s, !pol ) || containsStrongQuantifier( t, pol )
     case Neg( s )         => containsStrongQuantifier( s, !pol )
-    case All( x, s )      => pol.inSuc || containsStrongQuantifier( s, pol )
-    case Ex( x, s )       => pol.inAnt || containsStrongQuantifier( s, pol )
+    case All( _, s )      => pol.inSuc || containsStrongQuantifier( s, pol )
+    case Ex( _, s )       => pol.inAnt || containsStrongQuantifier( s, pol )
     case Atom( _, _ )     => false
   }
 
@@ -208,8 +208,8 @@ object atoms {
     case Imp( x, y )      => apply( x ) union apply( y )
     case Neg( x )         => apply( x )
     case Top() | Bottom() => Set()
-    case Ex( x, y )       => apply( y )
-    case All( x, y )      => apply( y )
+    case Ex( _, y )       => apply( y )
+    case All( _, y )      => apply( y )
   }
 
   def apply( f: FOLFormula ): Set[FOLAtom] = atoms( f: Formula ).asInstanceOf[Set[FOLAtom]]
@@ -245,8 +245,8 @@ object lcomp {
     case And( f, g )      => lcomp( f ) + lcomp( g ) + 1
     case Or( f, g )       => lcomp( f ) + lcomp( g ) + 1
     case Imp( f, g )      => lcomp( f ) + lcomp( g ) + 1
-    case Ex( x, f )       => lcomp( f ) + 1
-    case All( x, f )      => lcomp( f ) + 1
+    case Ex( _, f )       => lcomp( f ) + 1
+    case All( _, f )      => lcomp( f ) + 1
     case Atom( _, _ )     => 1
   }
 
@@ -312,8 +312,8 @@ object removeAllQuantifiers {
     case Imp( f1, f2 )                   => Imp( apply( f1 ), apply( f2 ) )
     case And( f1, f2 )                   => And( apply( f1 ), apply( f2 ) )
     case Or( f1, f2 )                    => Or( apply( f1 ), apply( f2 ) )
-    case Ex( x, f1 )                     => apply( f1 )
-    case All( x, f1 )                    => apply( f1 )
+    case Ex( _, f1 )                     => apply( f1 )
+    case All( _, f1 )                    => apply( f1 )
   }
   def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[Formula] ).asInstanceOf[FOLFormula]
 }

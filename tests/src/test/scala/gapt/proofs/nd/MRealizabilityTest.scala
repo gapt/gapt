@@ -414,8 +414,8 @@ class MRealizabilityTest extends Specification {
       val s4 = LogicalAxiom( hof"x0 + 0 = x0" )
       val s5 = EqualityElimRule( s4, s3, hof"s(x0) + 0 = s(z)", hov"z: nat" )
       val cases = Seq(
-        InductionCase( s01, hoc"0", Seq.empty, Seq.empty ),
-        InductionCase( s5, hoc"s", Seq( Ant( 0 ) ), Seq( hov"x0: nat" ) ) )
+        InductionCase( s01, hoc"0", List.empty, List.empty ),
+        InductionCase( s5, hoc"s", List( Ant( 0 ) ), List( hov"x0: nat" ) ) )
       val p = InductionRule( cases, Abs( Var( "x", TBase( "nat" ) ), hof"x + 0 = x" ), le"x : nat" )
       mrealizer( p ) must_== natRec( one )(
         Var( "y", nat ->: one )( zero ),
@@ -427,9 +427,9 @@ class MRealizabilityTest extends Specification {
       val b2 = ForallElimRule( b1, le"x:nat" )
       val b3 = LogicalAxiom( hof"P(x:nat)" )
       val b4 = ImpElimRule( b2, b3 )
-      val casess = Seq(
-        InductionCase( a1, hoc"0", Seq(), Seq() ),
-        InductionCase( b4, hoc"s", Seq( Ant( 1 ) ), Seq( hov"x:nat" ) ) )
+      val casess = List(
+        InductionCase( a1, hoc"0", List(), List() ),
+        InductionCase( b4, hoc"s", List( Ant( 1 ) ), List( hov"x:nat" ) ) )
       val c3 = InductionRule( casess, Abs( hov"x:nat", hof"P(x:nat)" ), le"x:nat" )
       val d1 = ForallIntroRule( c3, hov"x:nat", hov"x:nat" )
       val d2 = ImpIntroRule( d1, Ant( 0 ) )
@@ -448,9 +448,9 @@ class MRealizabilityTest extends Specification {
       val s3 = ForallElimRule( s2, le"nil" )
       val s4 = LogicalAxiom( hof"app(x0,nil) = x0" )
       val s5 = EqualityElimRule( s4, s3, hof"app(cons(a, x0),nil) = cons(a, z)", hov"z: list ?a" )
-      val cases = Seq(
-        InductionCase( s01, hoc"nil", Seq.empty, Seq.empty ),
-        InductionCase( s5, hoc"cons", Seq( Ant( 0 ) ), Seq( hov"a : ?a", hov"x0: list ?a" ) ) )
+      val cases = List(
+        InductionCase( s01, hoc"nil", List.empty, List.empty ),
+        InductionCase( s5, hoc"cons", List( Ant( 0 ) ), List( hov"a : ?a", hov"x0: list ?a" ) ) )
       val p = InductionRule( cases, Abs( Var( "x", ty"list ?a" ), hof"app(x,nil) = x" ), le"x : list ?a" )
 
       val y = Var( "y", list( TVar( "a" ) ) ->: one )
@@ -472,9 +472,9 @@ class MRealizabilityTest extends Specification {
       val b33 = LogicalAxiom( hof"P(y:bitree ?a)" )
       val b4 = ImpElimRule( b22, b3 )
       val b44 = ImpElimRule( b4, b33 )
-      val casess = Seq(
-        InductionCase( a11, hoc"leaf{?a}", Seq(), Seq( hov"a:?a" ) ),
-        InductionCase( b44, hoc"node{?a}", Seq( Ant( 1 ), Ant( 2 ) ), Seq( hov"x:bitree ?a", hov"y:bitree ?a" ) ) )
+      val casess = List(
+        InductionCase( a11, hoc"leaf{?a}", List(), List( hov"a:?a" ) ),
+        InductionCase( b44, hoc"node{?a}", List( Ant( 1 ), Ant( 2 ) ), List( hov"x:bitree ?a", hov"y:bitree ?a" ) ) )
       val c3 = InductionRule( casess, Abs( hov"x:bitree ?a", hof"P(x:bitree ?a)" ), le"x:bitree ?a" )
       val d1 = ForallIntroRule( c3, hov"x:bitree ?a", hov"x:bitree ?a" )
       val d2 = ImpIntroRule( d1, Ant( 0 ) )

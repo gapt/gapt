@@ -344,7 +344,7 @@ class DrawETQuantifierBlock(
       val fSize = ft.getSize
       val strokeSize = if ( fSize / 25 < 1 ) 1 else ft.getSize / 25
 
-      g.setStroke( new BasicStroke( strokeSize, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND ) )
+      g.setStroke( new BasicStroke( strokeSize.toFloat, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND ) )
       g.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB )
       g.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON )
 

@@ -32,9 +32,12 @@ object FOTheoryMacroRule {
     val cnf = axioms ++ Substitution( grounding )( sequent ).map( Sequent() :+ _, _ +: Sequent() ).elements
     prover.getResolutionProof( cnf.map( Input ) ) map { p =>
       var lk = ResolutionToLKProof( eliminateSplitting( p ), {
-        case Input( seq ) if axioms.contains( seq ) =>
-          ProofLink( ctx.get[ProofNames].find( seq ).get )
-        case Input( unit ) if unit.size == 1 => LogicalAxiom( unit.elements.head )
+        i =>
+          ( i: @unchecked ) match {
+            case Input( seq ) if axioms.contains( seq ) =>
+              ProofLink( ctx.get[ProofNames].find( seq ).get )
+            case Input( unit ) if unit.size == 1 => LogicalAxiom( unit.elements.head )
+          }
       } )
       lk = TermReplacement.hygienic( lk, grounding.map( _.swap ).toMap )
       lk = cleanCuts( lk )

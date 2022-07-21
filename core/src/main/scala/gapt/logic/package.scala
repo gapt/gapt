@@ -2,14 +2,19 @@ package gapt
 
 import gapt.utils.unorderedPairsOf
 import gapt.expr.Const
+import gapt.expr.Expr
 import gapt.expr.ReductionRule
 import gapt.expr.Var
 import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Formula
+import gapt.expr.formula.Imp
+import gapt.expr.formula.Neg
 import gapt.expr.formula.hol.universalClosure
 import gapt.expr.ty.FunctionType
+import gapt.expr.ty.To
+import gapt.expr.ty.Ty
 import gapt.proofs.context.update.InductiveType
 
 package object logic {
@@ -66,4 +71,42 @@ package object logic {
     ts.nonEmpty
   }
 
+  object PredicateCongruence {
+    def formula( p: Const ): Formula = {
+      val FunctionType( to, from ) = p.ty
+      require( to == To )
+      val xs = from.zipWithIndex.map { case ( t, i ) => Var( s"x${i}", t ) }
+      val ys = from.zipWithIndex.map { case ( t, i ) => Var( s"y${i}", t ) }
+      All.Block( xs ++ ys, Imp( And( xs.zip( ys ).map { case ( x, y ) => Eq( x, y ) } :+ p( xs ) ), p( ys ) ) )
+    }
+  }
+  object FunctionCongruence {
+    def formula( f: Const ): Formula = {
+      val FunctionType( _, from ) = f.ty
+      val xs = from.zipWithIndex.map { case ( t, i ) => Var( s"x${i}", t ) }
+      val ys = from.zipWithIndex.map { case ( t, i ) => Var( s"y${i}", t ) }
+      All.Block( xs ++ ys, Imp( And( xs.zip( ys ).map { case ( x, y ) => Eq( x, y ) } ), Eq( f( xs ), f( ys ) ) ) )
+    }
+  }
+
+  object EqualityTransitivity {
+    def formula( t: Ty ): Formula = {
+      val x = Var( "x", t )
+      val y = Var( "y", t )
+      val z = Var( "z", t )
+      All.Block( Seq( x, y, z ), Imp( And( Eq( x, y ), Eq( y, z ) ), Eq( x, z ) ) )
+    }
+  }
+
+  object EqualityReflexivity {
+    def formula( t: Ty ): Formula = {
+      val x = Var( "x", t )
+      All( x, Eq( x, x ) )
+    }
+  }
+
+  object AllDistinct {
+    def apply( ts: Expr* ): Formula =
+      And.nAry( unorderedPairsOf( ts ).map { case ( t1, t2 ) => Neg( Eq( t1, t2 ) ) }.toList: _* )
+  }
 }

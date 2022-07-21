@@ -10,10 +10,7 @@ import gapt.expr.formula.constants.EqC
 import gapt.expr.formula.constants.ExistsC
 import gapt.expr.formula.constants.ForallC
 import gapt.expr.subst.Substitution
-import gapt.expr.ty.->:
-import gapt.expr.ty.TBase
-import gapt.expr.ty.TVar
-import gapt.expr.ty.Ty
+import gapt.expr.ty.{ TArr, TBase, TVar, Ty }
 import gapt.expr.util.constants
 import gapt.expr.util.rename
 import gapt.expr.util.variables
@@ -51,7 +48,7 @@ trait ReplaceableInstances0 {
       }
 
     def names( term: Expr ): Set[VarOrConst] =
-      constants( term ).toSet[VarOrConst] union variables( term ).toSet
+      constants.nonLogical( term ).toSet[VarOrConst] union variables( term ).toSet
   }
 
   implicit object structReplaceable extends ClosedUnderReplacement[Struct] {
@@ -66,8 +63,8 @@ trait ReplaceableInstances0 {
       }
     def names( st: Struct ): Set[VarOrConst] =
       st match {
-        case A( x )        => constants( x ).toSet[VarOrConst] union variables( x ).toSet
-        case CLS( x, y )   => constants( x ).toSet[VarOrConst] union variables( x ).toSet
+        case A( x )        => constants.nonLogical( x ).toSet[VarOrConst] union variables( x ).toSet
+        case CLS( x, y )   => constants.nonLogical( x ).toSet[VarOrConst] union variables( x ).toSet
         case Dual( x )     => names( x )
         case Times( x, y ) => names( x ) union names( y )
         case Plus( x, y )  => names( x ) union names( y )
@@ -233,7 +230,7 @@ object TermReplacement {
         case t: TVar => t
         case t @ TBase( n, ps ) =>
           tyReplacements.getOrElse( t, TBase( n, ps map replTy ) )
-        case t1 ->: t2 =>
+        case TArr( t1, t2 ) =>
           replTy( t1 ) ->: replTy( t2 )
       }
 

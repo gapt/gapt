@@ -1,9 +1,7 @@
 package gapt.provers.escargot.impl
 import DiscrTree._
 import gapt.expr._
-import gapt.expr.ty.->:
-import gapt.expr.ty.TBase
-import gapt.expr.ty.TVar
+import gapt.expr.ty.{ TArr, TBase, TVar }
 import gapt.utils._
 
 class TermString( private val stack: List[Any] ) extends AnyVal {
@@ -16,9 +14,10 @@ class TermString( private val stack: List[Any] ) extends AnyVal {
         USome( ( Constant( n, as.length ), new TermString( as ++ rest ) ) )
       case TVar( _ ) :: rest =>
         USome( ( Variable, new TermString( rest ) ) )
-      case ( a ->: b ) :: rest =>
+      case TArr( a, b ) :: rest =>
         USome( ( Constant( "->", 2 ), new TermString( a :: b :: rest ) ) )
-      case Apps( hd, as ) :: rest =>
+      case top :: rest =>
+        val Apps( hd, as ) = top
         USome( hd match {
           case Const( n, _, _ ) => ( Constant( n, as.length ), new TermString( as ++ rest ) )
           case _                => ( Variable, new TermString( rest ) )

@@ -111,7 +111,7 @@ object findDerivationViaResolution {
   def apply( a: HOLClause, bs: Set[_ <: HOLClause], prover: ResolutionProver = NonSplittingEscargot ): Option[ResolutionProof] = {
     val grounding = groundFreeVariables.getGroundingMap(
       freeVariables( a ),
-      ( a.formulas ++ bs.flatMap( _.formulas ) ).flatMap( constants( _ ) ).toSet )
+      ( a.formulas ++ bs.flatMap( _.formulas ) ).flatMap( constants.nonLogical( _ ) ).toSet )
 
     val groundingSubst = grounding
     val negatedClausesA = a.

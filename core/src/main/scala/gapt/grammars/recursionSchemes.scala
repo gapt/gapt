@@ -59,7 +59,7 @@ private class RecursionSchemeExporter( unicode: Boolean, rs: RecursionScheme )
 
   def csep( docs: List[Doc] ): Doc = wordwrap( docs, "," )
 
-  def export(): String = {
+  def `export`(): String = {
     val nonTerminals = rs.startSymbol +: ( rs.nonTerminals - rs.startSymbol ).toList.sortBy { _.name }
     val ntDecl = group( "Non-terminals:" <> nest( line <> csep(
       nonTerminals map { show( _, false, Map(), Map() )._1.inPrec( 0 ) } ) ) )
@@ -83,18 +83,21 @@ private class RecursionSchemeExporter( unicode: Boolean, rs: RecursionScheme )
 case class RecursionScheme( startSymbol: Const, nonTerminals: Set[Const], rules: Set[Rule] ) {
   require( nonTerminals contains startSymbol )
   rules foreach {
-    case Rule( Apps( leftHead: Const, _ ), _ ) =>
-      require( nonTerminals contains leftHead )
+    r =>
+      ( r: @unchecked ) match {
+        case Rule( Apps( leftHead: Const, _ ), _ ) =>
+          require( nonTerminals contains leftHead )
+      }
   }
 
   def terminals: Set[Const] =
-    rules flatMap { case Rule( lhs, rhs ) => constants( lhs ) union constants( rhs ) } diff nonTerminals
+    rules flatMap { case Rule( lhs, rhs ) => constants.nonLogical( lhs ) union constants.nonLogical( rhs ) } diff nonTerminals
 
   def babelSignature = MapBabelSignature( terminals union nonTerminals )
 
   def language: Set[Expr] = parametricLanguage()
   def languageWithDummyParameters: Set[Expr] =
-    startSymbol.ty match {
+    ( startSymbol.ty: @unchecked ) match {
       case FunctionType( _, argtypes ) =>
         parametricLanguage( argtypes.zipWithIndex.map { case ( t, i ) => Const( s"dummy$i", t ) }: _* )
     }
@@ -135,7 +138,12 @@ object RecursionScheme {
     RecursionScheme( startSymbol, nonTerminals, rules map { case ( from, to ) => Rule( from, to ) } toSet )
 
   def apply( startSymbol: Const, rules: Set[Rule] ): RecursionScheme = {
-    val nonTerminals = rules.map { case Rule( Apps( head: Const, _ ), _ ) => head } + startSymbol
+    val nonTerminals = rules.map {
+      r =>
+        ( r: @unchecked ) match {
+          case Rule( Apps( head: Const, _ ), _ ) => head
+        }
+    } + startSymbol
     RecursionScheme( startSymbol, nonTerminals, rules )
   }
 }
@@ -170,7 +178,11 @@ class RecSchemGenLangFormula(
   def derivable( from: Expr, to: Expr ) = FOLAtom( s"$from=>$to" )
 
   private val rulesPerNonTerminal = Map() ++ recursionScheme.rules.
-    groupBy { case Rule( _, Apps( nt: Const, _ ) ) => nt }.view.mapValues( _.toSeq ).toMap
+    groupBy { r =>
+      ( r: @unchecked ) match {
+        case Rule( _, Apps( nt: Const, _ ) ) => nt
+      }
+    }.view.mapValues( _.toSeq ).toMap
   def reverseMatches( against: Expr ) =
     against match {
       case Apps( nt: Const, _ ) => rulesPerNonTerminal.getOrElse( nt, Seq() ).flatMap { rule =>
@@ -249,7 +261,7 @@ object minimizeRecursionScheme {
              solver:       MaxSATSolver      = bestAvailableMaxSatSolver,
              weight:       Rule => Int = _ => 1 ) = {
     val fvs = freeVariables( targets.map( _._1 ) ) union freeVariables( targets.map( _._2 ) )
-    val nameGen = rename.awayFrom( constants( targets.map( _._1 ) ) union constants( targets.map( _._2 ) ) )
+    val nameGen = rename.awayFrom( constants.nonLogical( targets.map( _._1 ) ) union constants.nonLogical( targets.map( _._2 ) ) )
     val grounding = Substitution( for ( v @ Var( name, ty ) <- fvs ) yield v -> Const( nameGen fresh name, ty ) )
     val targets_ = grounding( targets.toSet )
 
@@ -267,7 +279,7 @@ object minimizeRecursionScheme {
                solver:       MaxSATSolver      = bestAvailableMaxSatSolver,
                weight:       Rule => Int = _ => 1 ) = {
     val fvs = freeVariables( targets.map( _._1 ) ) union freeVariables( targets.map( _._2 ) )
-    val nameGen = rename.awayFrom( constants( targets.map( _._1 ) ) union constants( targets.map( _._2 ) ) )
+    val nameGen = rename.awayFrom( constants.nonLogical( targets.map( _._1 ) ) union constants.nonLogical( targets.map( _._2 ) ) )
     val grounding = Substitution( for ( v @ Var( name, ty ) <- fvs ) yield v -> Const( nameGen fresh name, ty ) )
     val targets_ = grounding( targets.toSet )
 
@@ -408,7 +420,7 @@ case class RecSchemTemplate( startSymbol: Const, template: Set[( Expr, Expr )] )
             val bIdx = canonicalArgs( to ).indexOf( b )
             require( aIdx >= 0 && bIdx >= 0 )
             ( x, y ) => ( expressionSize( y( bIdx ) ) <= expressionSize( x( aIdx ) ) + 1 ) &&
-              constants( y( bIdx ) ).subsetOf( constants( x( aIdx ) ) )
+              constants.nonLogical( y( bIdx ) ).subsetOf( constants.nonLogical( x( aIdx ) ) )
         }
         ( from -> to ) -> mkEval( constr )
     }
@@ -494,7 +506,7 @@ object RecSchemTemplate {
 object recSchemToVTRATG {
   def orderedNonTerminals( rs: RecursionScheme ): Seq[Const] = {
     val ntDeps = rs.nonTerminals map { nt =>
-      nt -> ( rs rulesFrom nt map { _.rhs } flatMap { constants( _ ) } intersect rs.nonTerminals )
+      nt -> ( rs rulesFrom nt map { _.rhs } flatMap { constants.nonLogical( _ ) } intersect rs.nonTerminals )
     } toMap
 
     var nts = Seq[Const]()
@@ -518,13 +530,16 @@ object recSchemToVTRATG {
     val startSymbol = Var( nameGen.fresh( s"x_${recSchem.startSymbol.name}" ), startSymbolType )
     val nonTerminals = List( startSymbol ) +: ( ntCorrespondence map { _._2 } filter { _.nonEmpty } )
     val productions = recSchem.rules map {
-      case Rule( Apps( nt1: Const, vars1 ), Apps( nt2: Const, args2 )
-        ) if recSchem.nonTerminals.contains( nt1 ) && recSchem.nonTerminals.contains( nt2 ) =>
-        val subst = Substitution( vars1.map( _.asInstanceOf[Var] ) zip ntMap( nt1 ) )
-        ntMap( nt2 ) -> args2.map( subst( _ ) )
-      case Rule( Apps( nt1: Const, vars1 ), rhs ) if recSchem.nonTerminals.contains( nt1 ) =>
-        val subst = Substitution( vars1.map( _.asInstanceOf[Var] ) zip ntMap( nt1 ) )
-        List( startSymbol ) -> List( subst( rhs ) )
+      r =>
+        ( r: @unchecked ) match {
+          case Rule( Apps( nt1: Const, vars1 ), Apps( nt2: Const, args2 )
+            ) if recSchem.nonTerminals.contains( nt1 ) && recSchem.nonTerminals.contains( nt2 ) =>
+            val subst = Substitution( vars1.map( _.asInstanceOf[Var] ) zip ntMap( nt1 ) )
+            ntMap( nt2 ) -> args2.map( subst( _ ) )
+          case Rule( Apps( nt1: Const, vars1 ), rhs ) if recSchem.nonTerminals.contains( nt1 ) =>
+            val subst = Substitution( vars1.map( _.asInstanceOf[Var] ) zip ntMap( nt1 ) )
+            List( startSymbol ) -> List( subst( rhs ) )
+        }
     }
     VTRATG( startSymbol, nonTerminals, productions )
   }

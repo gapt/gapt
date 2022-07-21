@@ -16,8 +16,8 @@ import org.sat4j.minisat.constraints.MixedDataStructureDanielWL
 import org.sat4j.minisat.constraints.cnf.OriginalBinaryClause
 import org.sat4j.minisat.constraints.cnf.OriginalWLClause
 import org.sat4j.minisat.constraints.cnf.UnitClause
-import org.sat4j.minisat.core.Constr
-import org.sat4j.minisat.core.Propagatable
+import org.sat4j.specs.Constr
+import org.sat4j.specs.Propagatable
 import org.sat4j.specs.UnitPropagationListener
 
 import scala.collection.mutable
@@ -55,6 +55,8 @@ private class Rup2Res extends UnitPropagationListener {
   import LiteralsUtils._
 
   def decisionLevel: Int = trailLim.size()
+
+  override def getPropagationLevel(): Int = trail.size()
 
   def assume(): Unit = {
     assert( trail.size() == queueHead )

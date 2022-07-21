@@ -11,7 +11,7 @@ import gapt.expr.util.freeVariables
 import gapt.logic.projectorDefinitions
 import gapt.proofs.LabelledSequent
 import gapt.proofs.Sequent
-import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.context.Context
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.InductiveType.Constructor
 import gapt.proofs.gaptic.ProofState
@@ -35,12 +35,12 @@ case class TipDomainClosureAxioms( types: List[InductiveType] = Nil ) extends Ax
    * @param ctx Defines the constants, types, etc.
    * @return A list of domain closure axioms or an error message if the axioms could not be constructed.
    */
-  override def apply( sequent: LabelledSequent )( implicit ctx: MutableContext ): ThrowsError[List[Axiom]] =
+  override def apply( sequent: LabelledSequent )( implicit ctx: Context ): ThrowsError[List[Axiom]] =
     types.traverse[ThrowsError, Axiom] { t =>
       Right( new TipDomainClosureAxiom( t ) )
     }
 
-  private class TipDomainClosureAxiom( datatype: InductiveType )( implicit ctx: MutableContext ) extends Axiom {
+  private class TipDomainClosureAxiom( datatype: InductiveType )( implicit ctx: Context ) extends Axiom {
     /**
      * @return The formula representing the axiom.
      */
@@ -66,7 +66,7 @@ case class TipDomainClosureAxioms( types: List[InductiveType] = Nil ) extends Ax
       datatype.constructors.foreach { _ =>
         forget( s"IH${variable}_0" )
         proofState += repeat( orR )
-        proofState += escargot
+        proofState += escargot( ctx.newMutable )
       }
       proofState.result
     }

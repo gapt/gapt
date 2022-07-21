@@ -172,11 +172,11 @@ class Clausifier(
   // In order to combat exponential blow-up, we do something special if there are two or more such elements:
   // we introduce a definition for the first one.
   def split( p: ResolutionProof ): Unit = {
-    p.conclusion.zipWithIndex.elements collect {
+    ( p.conclusion.zipWithIndex.elements collect {
       case ( And( a, b ), i: Suc ) => i
       case ( Or( a, b ), i: Ant )  => i
       case ( Imp( a, b ), i: Ant ) => i
-    } match {
+    }: @unchecked ) match {
       case splits if structural && ( splits.size > 1 || ( splits.size == 1 && p.conclusion.size > 3 ) ) =>
         expand( abbrev( p, splits.head ) )
       case Seq( i, _* ) => splitAt( p, i )

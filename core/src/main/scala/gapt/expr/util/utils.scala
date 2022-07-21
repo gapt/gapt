@@ -18,17 +18,14 @@ import gapt.expr.formula.Formula
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
+import gapt.expr.formula.constants.EqC
 import gapt.expr.formula.constants.LogicalConstant
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLExpression
 import gapt.expr.formula.fol.FOLFormula
 import gapt.expr.formula.fol.FOLVar
 import gapt.expr.subst.Substitution
-import gapt.expr.ty.->:
-import gapt.expr.ty.TBase
-import gapt.expr.ty.TVar
-import gapt.expr.ty.To
-import gapt.expr.ty.Ty
+import gapt.expr.ty.{ ->:, TArr, TBase, TVar, To, Ty }
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.utils.NameGenerator
@@ -161,7 +158,7 @@ object freeVariables {
 
 object typeVariables {
   def apply( t: Ty ): Set[TVar] = t match {
-    case a ->: b        => apply( a ) ++ apply( b )
+    case TArr( a, b )   => apply( a ) ++ apply( b )
     case TBase( _, ps ) => ps.view.flatMap( apply ).toSet
     case t: TVar        => Set( t )
   }
@@ -180,12 +177,9 @@ object typeVariables {
     es.view.flatMap( apply ).toSet
 }
 
-/**
- * Returns the set of non-logical constants occuring in the given argument.
- */
 object constants {
   /**
-   * Find all constants in the expression
+   * Returns all constants occurring in the given expression.
    */
   def all( expression: Expr ): Set[Const] = {
     val cs = mutable.Set[Const]()
@@ -194,27 +188,39 @@ object constants {
       case c: Const => cs += c
       case App( exp, arg ) =>
         f( exp ); f( arg )
-      case Abs( v, exp ) => f( exp )
+      case Abs( _, exp ) => f( exp )
     }
     f( expression )
     cs.toSet
   }
 
   /**
-   * Find all equality constants in the expression
+   * Returns all equality constants in the given expression.
    */
   def equalities( expression: Expr ): Set[Const] =
-    all( expression ).filter {
-      case Const( "=", t1 ->: t2 ->: To, _ ) => t1 == t2 //type arguments must agree
-      case _                                 => false
+    all( expression ).collect { case e @ EqC( _ ) => e }
+
+  object nonLogical {
+
+    /**
+     * Returns the set of non-logical constants occurring in the given expression.
+     */
+    def apply( expression: Expr ): Set[Const] =
+      all( expression ).filter { !_.isInstanceOf[LogicalConstant] }
+
+    /**
+     * Returns the set of non-logical constants occurring in the given expressions.
+     */
+    def apply( es: Iterable[Expr] ): Set[Const] =
+      es.flatMap( nonLogical( _ ) ).toSet
+
+    /**
+     * Returns the set of non-logical constants occurring in the given sequent.
+     */
+    def apply[T <: Expr]( s: Sequent[T] ): Set[Const] = {
+      nonLogical( s.antecedent ++ s.succedent )
     }
-
-  def apply( expression: Expr ): Set[Const] =
-    all( expression ).filter { !_.isInstanceOf[LogicalConstant] }
-
-  def apply( es: Iterable[Expr] ): Set[Const] = ( es.foldLeft( Set.empty[Const] ) ) { ( acc, e ) => acc union apply( e ) }
-
-  def apply( s: HOLSequent ): Set[Const] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Const]() )( ( x, y ) => x ++ apply( y ) )
+  }
 }
 
 /**

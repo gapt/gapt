@@ -136,7 +136,7 @@ class hol2folTest extends Specification {
       val t: Expr = le"(^(x:i>i) x)(^x (#v(f:i>i) x))"
       val r @ App( r1 @ Apps( c1: Const, _ ), r2 @ Apps( c2: Const, _ ) ) = replaceAbstractions( t )
       d.toMap.keys mustEqual Set( r1, r2 )
-      util.constants( r ) mustEqual Set( c1, c2 )
+      util.constants.nonLogical( r ) mustEqual Set( c1, c2 )
     }
     "replace non-uniform abstracts by different constants" in {
       implicit val d = new Hol2FolDefinitions

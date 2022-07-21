@@ -8,17 +8,18 @@ import gapt.expr.formula.Imp
 import gapt.expr.formula.Top
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.flatSubterms
-import gapt.expr.formula.hol.{ instantiate, universalClosure }
+import gapt.expr.formula.hol.instantiate
+import gapt.expr.formula.hol.universalClosure
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.To
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.proofs.LabelledSequent
 import gapt.proofs.context.Context
-import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.ProofLink
-import gapt.proofs.{ HOLSequent, Sequent }
+import gapt.proofs.HOLSequent
+import gapt.proofs.Sequent
 import gapt.provers.viper.aip.ThrowsError
 
 case object UntrustedFunctionalInductionAxioms extends AxiomFactory {
@@ -49,7 +50,7 @@ case object UntrustedFunctionalInductionAxioms extends AxiomFactory {
         ( c, conds, lhs, rhs )
     }.groupBy( _._1 ).view.mapValues( generateScheme ).toMap
 
-  override def apply( sequent: LabelledSequent )( implicit ctx: MutableContext ): ThrowsError[List[Axiom]] = {
+  override def apply( sequent: LabelledSequent )( implicit ctx: Context ): ThrowsError[List[Axiom]] = {
     val schemes = guessSchemes( sequent.map( _._2 ) )
 
     val All.Block( _, goal ) = sequent.succedent.headOption.map( _._2 ).getOrElse( Top() )

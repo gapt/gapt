@@ -40,7 +40,7 @@ class SmtInterpol(
   override def getInterpolant( tree: Tree[Formula] )( implicit ctx: Maybe[Context] ): Option[Tree[Formula]] = {
     val fvs = freeVariables( tree.postOrder )
     if ( fvs.nonEmpty ) return {
-      val groundingMap = groundFreeVariables.getGroundingMap( fvs, constants( tree.postOrder ) )
+      val groundingMap = groundFreeVariables.getGroundingMap( fvs, constants.nonLogical( tree.postOrder ) )
       TermReplacement.undoGrounding(
         getInterpolant( groundingMap( tree ) ),
         groundingMap )
@@ -147,7 +147,8 @@ class SmtInterpolSession( val script: Script ) extends SessionRunner {
     case Pop  => script.pop( 1 )
     case DeclareSort( sort ) =>
       declare( sort.name, sort, sortNames, sortNamesInv, script.declareSort( _, 0 ) )
-    case DeclareFun( c @ Const( fun, FunctionType( retType, argTypes ), _ ) ) =>
+    case DeclareFun( c ) =>
+      val Const( fun, FunctionType( retType, argTypes ), _ ) = c
       val argSorts = argTypes.map( sort ).toArray
       val retSort = sort( retType )
       declare( fun, c, funNames, funNamesInv, script.declareFun( _, argSorts, retSort ) )
@@ -167,6 +168,8 @@ class SmtInterpolSession( val script: Script ) extends SessionRunner {
       script.setLogic( logic )
     case SetOption( option, List( args ) ) =>
       script.setOption( ":" + option, args )
+    case SetOption( _, _ ) =>
+      throw new UnsupportedOperationException( command.toString )
     case Ask( LFun( "get-unsat-core" ) ) =>
       LList( script.getUnsatCore.map { case t: ApplicationTerm => LSymbol( t.getFunction.getName ) }.toList )
     case Ask( input ) =>

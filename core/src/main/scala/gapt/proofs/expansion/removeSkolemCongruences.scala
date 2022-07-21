@@ -41,8 +41,12 @@ object removeSkolemCongruences {
     skTerms.groupBy { case Apps( c: Const, _ ) => c }.
       values.flatMap( skTs =>
         skTs.subsets( 2 ).map( _.toList ).
-          flatMap { case List( Apps( _, as ), Apps( _, bs ) ) => as zip bs } ).
-      toVector
+          flatMap { s =>
+            {
+              val List( Apps( _, as ), Apps( _, bs ) ) = s
+              as zip bs
+            }
+          } ).toVector
   }
 
   def getCongruencesViaVeriT( ep: ExpansionProof ): Vector[( Expr, Expr )] = {
@@ -67,16 +71,18 @@ object removeSkolemCongruences {
       reverseIterator.toVector
   }
 
-  def remove( ep: ExpansionProof, congrs: Vector[( Expr, Expr )] ): ExpansionProof =
-    congrs match {
-      case Vector() => ep
-      case ( a, b ) +: congrs_ =>
-        val repl = Map( a -> b )
-        val ep_ = remove1( repl, ep )
-        remove(
-          ep_,
-          simplCongrs( congrs_ ++ TermReplacement( congrs_, repl ) ) )
+  def remove( ep: ExpansionProof, congrs: Vector[( Expr, Expr )] ): ExpansionProof = {
+    if ( congrs.isEmpty )
+      ep
+    else {
+      val ( a, b ) +: congrs_ = congrs
+      val repl = Map( a -> b )
+      val ep_ = remove1( repl, ep )
+      remove(
+        ep_,
+        simplCongrs( congrs_ ++ TermReplacement( congrs_, repl ) ) )
     }
+  }
 
   def apply( ep: ExpansionProof ): ExpansionProof =
     remove( ep, simplCongrs( getAllPossibleCongruences( ep ) ) )

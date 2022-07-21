@@ -39,5 +39,5 @@ abstract class UnaryLKProof extends LKProof {
 }
 
 object UnaryLKProof {
-  def unapply( p: UnaryLKProof ): Option[( HOLSequent, LKProof )] = Some( p.endSequent, p.subProof )
+  def unapply( p: UnaryLKProof ): Some[( HOLSequent, LKProof )] = Some( p.endSequent, p.subProof )
 }

@@ -580,7 +580,7 @@ object LKToND {
           case lk.rules.InductionCase( proof, constructor, hypotheses, eigenVars, conclusion ) =>
             val prfNd = translate( proof, Some( conclusion ) )
             val hypNd = hypotheses.map { case i: SequentIndex => prfNd.endSequent.indexOf( proof.endSequent( i ) ) }
-            nd.InductionCase( prfNd, constructor, hypNd, eigenVars )
+            nd.InductionCase( prfNd, constructor, hypNd.toList, eigenVars.toList )
         }
         nd.InductionRule( ndCases, formula, term )
 

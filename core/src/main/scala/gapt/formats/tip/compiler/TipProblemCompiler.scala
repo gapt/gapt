@@ -508,15 +508,6 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
     allCases
   }
 
-  private def reorderCases( inductiveType: TBase, cases: Seq[TipSmtCase] ): Seq[TipSmtCase] = {
-    val constructors = ctx.getConstructors( inductiveType ).get.map { _.name }
-    cases.sortWith( {
-      case ( TipSmtCase( TipSmtConstructorPattern( n1, _ ), _ ), TipSmtCase( TipSmtConstructorPattern( n2, _ ), _ ) ) =>
-        val constructorsWithIndex = constructors.zipWithIndex
-        constructorsWithIndex.find( { _._1 == n1.name } ).get._2 < constructorsWithIndex.find( { _._1 == n2.name } ).get._2
-    } )
-  }
-
   private def compileCases(
     cases:        Seq[( Const, Seq[Var], TipSmtExpression )],
     ctxVars:      Seq[Var],
@@ -680,7 +671,12 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
       inductiveType
         .constructors
         .map { _.constant.ty }
-        .map { case FunctionType( _, from ) => FunctionType( resultType, from ) }
+        .map {
+          t =>
+            ( t: @unchecked ) match {
+              case FunctionType( _, from ) => FunctionType( resultType, from )
+            }
+        }
     val matchType: Ty = FunctionType( resultType, inductiveType.ty +: argumentTypes )
     val matchConstant = Const( matchConstantName( inductiveType ), matchType, List( resultType ) )
     // add this constant as a primitive recursively defined function

@@ -4,7 +4,7 @@ import org.apache.commons.compress.archivers.tar.{ TarArchiveEntry, TarArchiveOu
 import scalariform.formatter.preferences._
 import sys.process._
 
-val Version = "2.15.4"
+val Version = "2.16.0"
 
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
@@ -27,6 +27,8 @@ lazy val commonSettings = Seq(
     connection = "scm:git:https://github.com/gapt/gapt.git",
     devConnection = Some( "scm:git:git@github.com:gapt/gapt.git" ) ) ),
 
+  scalaVersion := "2.13.8",
+
   developers := List(
     Developer(
       id = "jvierling",
@@ -44,7 +46,6 @@ lazy val commonSettings = Seq(
       email = "gebner@gebner.org",
       url = url( "https://gebner.org/" ) ) ),
 
-  scalaVersion := "2.13.1",
   scalacOptions in Compile ++= Seq(
     "-deprecation",
     "-language:postfixOps",
@@ -66,7 +67,7 @@ lazy val scalariformSettings =
     .setPreference( DoubleIndentConstructorArguments, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "4.7.1"
+val specs2Version = "4.16.0"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   javaOptions in Test += "-Xmx2g",
@@ -194,35 +195,34 @@ lazy val core = project.in( file( "core" ) ).
     scalacOptions in Compile += "-Xfatal-warnings",
 
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0",
-      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2",
+      "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.4",
+      "org.scala-lang.modules" %% "scala-parser-combinators" % "2.1.1",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "org.parboiled" %% "parboiled" % "2.1.8",
-      "com.lihaoyi" %% "fastparse" % "2.1.3",
-      "com.lihaoyi" %% "sourcecode" % "0.1.7",
-      "org.typelevel" %% "cats-free" % "2.1.0",
-      "org.scala-lang.modules" %% "scala-xml" % "1.2.0",
-      "org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0",
-      "org.apache.commons" % "commons-lang3" % "3.9",
-      "com.lihaoyi" %% "ammonite-ops" % "2.0.4",
+      "org.parboiled" %% "parboiled" % "2.4.0",
+      "com.lihaoyi" %% "fastparse" % "2.3.3",
+      "com.lihaoyi" %% "sourcecode" % "0.2.8",
+      "org.typelevel" %% "cats-free" % "2.7.0",
+      "org.scala-lang.modules" %% "scala-xml" % "2.1.0",
+      "org.apache.commons" % "commons-lang3" % "3.12.0",
+      "com.lihaoyi" %% "ammonite-ops" % "2.4.1",
       "de.uni-freiburg.informatik.ultimate" % "smtinterpol" % "2.5",
-      "com.github.scopt" %% "scopt" % "3.7.1",
-      "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
-      "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5" ),
+      "com.github.scopt" %% "scopt" % "4.0.1",
+      "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.6",
+      "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.6" ),
 
     // UI
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-swing" % "2.1.1",
-      "com.itextpdf" % "itextpdf" % "5.5.13.1",
+      "org.scala-lang.modules" %% "scala-swing" % "3.0.0",
+      "com.itextpdf" % "itextpdf" % "5.5.13.3",
       "org.scilab.forge" % "jlatexmath" % "1.0.7" ),
 
     // JSON serialization
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.7",
+    libraryDependencies += "org.json4s" %% "json4s-native" % "4.0.5",
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
       "io.circe" %% "circe-parser",
-      "io.circe" %% "circe-generic-extras" ).map( _ % "0.12.1" ) )
+      "io.circe" %% "circe-generic-extras" ).map( _ % "0.14.2" ) )
 
 lazy val examples = project.in( file( "examples" ) ).
   dependsOn( core ).

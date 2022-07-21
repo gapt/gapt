@@ -32,7 +32,7 @@ class MetricsPrinter extends LogHandler {
       value( "time_total", duration.toMillis )
     } else {
       value( s"time_$phase", duration.toMillis )
-      phaseStack.trimEnd( 1 )
+      phaseStack.dropRightInPlace( 1 )
     }
   def phase: String = phaseStack.mkString( "_" )
 
@@ -47,4 +47,9 @@ class MetricsPrinter extends LogHandler {
   }
 
   override def message( domain: String, level: VerbosityLevel, msg: => Any ): Unit = ()
+}
+
+class MetricsPrinterWithMessages extends MetricsPrinter {
+  override def message( domain: String, level: VerbosityLevel, msg: => Any ): Unit =
+    LogHandler.default.message( domain, level, msg )
 }

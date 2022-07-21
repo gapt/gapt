@@ -53,7 +53,7 @@ case class ExpansionTree( term: ETt, polarity: Polarity, shallow: Formula ) exte
 
   def immediateSubProofs: Seq[ExpansionTree] = {
     def seq[T]( as: T* ): Seq[T] = as
-    this match {
+    ( this: @unchecked ) match {
       case ETAtom( _, _ ) | ETWeakening( _, _ ) | ETTop( _ ) | ETBottom( _ ) => Seq.empty
       case ETMerge( a, b ) => seq( a, b )
       case ETNeg( a ) => seq( a )
@@ -94,38 +94,41 @@ case class ExpansionTree( term: ETt, polarity: Polarity, shallow: Formula ) exte
   /** Checks whether this expansion tree is correct (in the given Context). */
   def check()( implicit ctx: Maybe[Context] ): Unit = {
     def go: ExpansionTree => Unit = {
-      // assumes that the shallow formula is already checked
-      case ETAtom( _, _ ) | ETTop( _ ) | ETBottom( _ ) | ETWeakening( _, _ ) =>
-      case ETMerge( a, b ) =>
-        go( a ); go( b )
-      case ETNeg( child ) => go( child )
-      case ETAnd( a, b ) =>
-        go( a ); go( b )
-      case ETOr( a, b ) =>
-        go( a ); go( b )
-      case ETImp( a, b ) =>
-        go( a ); go( b )
-      case ETWeakQuantifier( _, instances ) =>
-        for ( ( inst, child ) <- instances ) {
-          ctx.foreach( _.check( inst ) )
-          go( child )
+      t =>
+        ( t: @unchecked ) match {
+          // assumes that the shallow formula is already checked
+          case ETAtom( _, _ ) | ETTop( _ ) | ETBottom( _ ) | ETWeakening( _, _ ) =>
+          case ETMerge( a, b ) =>
+            go( a ); go( b )
+          case ETNeg( child ) => go( child )
+          case ETAnd( a, b ) =>
+            go( a ); go( b )
+          case ETOr( a, b ) =>
+            go( a ); go( b )
+          case ETImp( a, b ) =>
+            go( a ); go( b )
+          case ETWeakQuantifier( _, instances ) =>
+            for ( ( inst, child ) <- instances ) {
+              ctx.foreach( _.check( inst ) )
+              go( child )
+            }
+          case ETStrongQuantifier( _, eigenVar, child ) =>
+            ctx.foreach( _.check( eigenVar ) )
+            go( child )
+          case ETSkolemQuantifier( sh, skT, child ) =>
+            val Apps( skConst: Const, skArgs ) = skT
+            ctx.foreach { ctx =>
+              val Some( skD ) = ctx.skolemDef( skConst )
+              Checkable.requireDefEq( skD( skArgs ), sh )( ctx )
+            }
+            go( child )
+          case ETDefinition( sh, child ) =>
+            ctx.foreach( Checkable.requireDefEq( sh, child.shallow )( _ ) )
+            go( child )
         }
-      case ETStrongQuantifier( _, eigenVar, child ) =>
-        ctx.foreach( _.check( eigenVar ) )
-        go( child )
-      case ETSkolemQuantifier( sh, skT, child ) =>
-        val Apps( skConst: Const, skArgs ) = skT
-        ctx.foreach { ctx =>
-          val Some( skD ) = ctx.skolemDef( skConst )
-          Checkable.requireDefEq( skD( skArgs ), sh )( ctx )
-        }
-        go( child )
-      case ETDefinition( sh, child ) =>
-        ctx.foreach( Checkable.requireDefEq( sh, child.shallow )( _ ) )
-        go( child )
+        ctx.foreach( _.check( shallow ) )
+        go( this )
     }
-    ctx.foreach( _.check( shallow ) )
-    go( this )
   }
 
   def toDoc( implicit sig: BabelSignature ): Doc = new ExpansionTreePrettyPrinter( sig ).export( this )

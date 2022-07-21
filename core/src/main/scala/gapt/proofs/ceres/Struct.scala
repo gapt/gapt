@@ -55,7 +55,7 @@ trait Struct {
 
 object Times {
   //create a series of of times applications and add the same data to each
-  def apply( structs: Vector[Struct] ): Struct = structs match {
+  def apply( structs: Vector[Struct] ): Struct = ( structs: @unchecked ) match {
     case Vector()                  => EmptyTimesJunction()
     case EmptyTimesJunction() +: l => apply( l )
     case Vector( s1 )              => s1
@@ -117,8 +117,8 @@ case class Dual( sub: Struct ) extends Struct {
   override def size() = 1 + sub.size()
   override def alternations() = {
     sub match {
-      case Dual( _ ) => sub.alternations
-      case _         => 1 + sub.size
+      case Dual( _ ) => sub.alternations()
+      case _         => 1 + sub.size()
     }
   }
 

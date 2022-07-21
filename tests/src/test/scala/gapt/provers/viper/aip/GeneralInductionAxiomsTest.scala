@@ -1,14 +1,16 @@
 package gapt.provers.viper.aip
 
 import gapt.expr._
+import gapt.expr.formula.Formula
 import gapt.proofs.Sequent
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.lk.LKProof
 import gapt.provers.viper.aip.axioms.GeneralInductionAxioms
+import org.specs2.matcher.ThrownMessages
 import org.specs2.mutable.Specification
 
-class GeneralInductionAxiomsTest extends Specification {
+class GeneralInductionAxiomsTest extends Specification with ThrownMessages {
 
   implicit var ctx = MutableContext.default()
   ctx += InductiveType( "nat", hoc"0:nat", hoc"s:nat>nat" )
@@ -17,15 +19,17 @@ class GeneralInductionAxiomsTest extends Specification {
   val axiomFactory = GeneralInductionAxioms()
   val axioms = axiomFactory.apply( Sequent() :+ ( "" -> hof"P(a,b)" ) )
 
-  val formulas = axioms match {
+  val formulas: List[Formula] = axioms match {
     case Right( list ) => list map {
       _.formula
     }
+    case _ => fail( "failed to obtain induction axioms" )
   }
   val proofs: List[LKProof] = axioms match {
     case Right( list ) => list map {
       _.proof
     }
+    case _ => fail( "failed to obtain induction axioms" )
   }
 
   "induction axioms should be as expected" in {

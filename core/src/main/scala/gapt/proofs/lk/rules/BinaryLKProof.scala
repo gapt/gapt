@@ -60,6 +60,6 @@ abstract class BinaryLKProof extends LKProof {
 }
 
 object BinaryLKProof {
-  def unapply( p: BinaryLKProof ): Option[( HOLSequent, LKProof, LKProof )] =
+  def unapply( p: BinaryLKProof ): Some[( HOLSequent, LKProof, LKProof )] =
     Some( p.endSequent, p.leftSubProof, p.rightSubProof )
 }

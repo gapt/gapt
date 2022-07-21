@@ -16,10 +16,7 @@ import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Top
-import gapt.expr.ty.->:
-import gapt.expr.ty.TBase
-import gapt.expr.ty.TVar
-import gapt.expr.ty.Ty
+import gapt.expr.ty.{ TArr, TBase, TVar, Ty }
 
 object LatexExporter {
 
@@ -163,7 +160,7 @@ object LatexExporter {
   }
 
   private def apply( ty: Ty, prio: Int ): Doc = ty match {
-    case t ->: s        => parenIf( prio, 0, apply( t, 0 ) <+> "\\rightarrow" </> apply( s, 1 ) )
+    case TArr( t, s )   => parenIf( prio, 0, apply( t, 0 ) <+> "\\rightarrow" </> apply( s, 1 ) )
     case TVar( t )      => escapeName( "?" + t )
     case TBase( t, ps ) => Doc.wordwrap2( escapeName( t ) :: ps.map( apply( _, 0 ) ) )
   }

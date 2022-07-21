@@ -31,7 +31,7 @@ object longNormalForm {
     e match {
       case Abs( v, e_ ) => Abs( v, longNormalForm( e_ ) )
       case Apps( e, es ) =>
-        e.ty match {
+        ( e.ty: @unchecked ) match {
           case FunctionType( _, ts ) =>
             val names = new NameGenerator( freeVariables( e ).map { _.name } )
             val etaVars = ts.drop( es.length ).map { t => names.fresh( Var( "η", t ) ) }

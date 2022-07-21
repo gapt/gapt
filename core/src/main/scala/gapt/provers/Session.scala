@@ -2,7 +2,6 @@ package gapt.provers
 
 import java.io.{ BufferedReader, InputStreamReader, PrintWriter }
 import java.lang.ProcessBuilder.Redirect
-
 import gapt.expr._
 import gapt.formats.StringInputFile
 import gapt.formats.lisp._
@@ -25,12 +24,7 @@ import gapt.expr.formula.Or
 import gapt.expr.formula.Top
 import gapt.expr.formula.constants.EqC
 import gapt.expr.formula.constants.LogicalConstant
-import gapt.expr.ty.->:
-import gapt.expr.ty.FunctionType
-import gapt.expr.ty.TBase
-import gapt.expr.ty.To
-import gapt.expr.ty.Ty
-import gapt.expr.ty.baseTypes
+import gapt.expr.ty.{ ->:, FunctionType, TArr, TBase, To, Ty, baseTypes }
 import gapt.expr.util.constants
 
 import scala.collection.mutable
@@ -199,7 +193,7 @@ object Session {
    * Declares all symbols (sorts and functions) in a list of Exprs.
    */
   def declareSymbolsIn( expressions: IterableOnce[Expr] ): Session[Unit] = {
-    val cs = expressions.iterator.to( Set ) flatMap { constants( _ ) } filter {
+    val cs = expressions.iterator.to( Set ) flatMap { constants.nonLogical( _ ) } filter {
       case EqC( _ )           => false
       case _: LogicalConstant => false
       case _                  => true
@@ -291,7 +285,7 @@ object Session {
 
       protected val nameGen = new NameGenerator( Set() ) // TODO: add reserved keywords?
 
-      def convert( ty: Ty ): SExpression = ty match {
+      def convert( ty: Ty ): SExpression = ( ty: @unchecked ) match {
         case TBase( argType, Nil ) => LSymbol( argType )
         case FunctionType( to, from ) =>
           val ts = ( from :+ to ) map convert
@@ -307,9 +301,9 @@ object Session {
             TBase( nameGen.fresh( mangleName( n, "t_" ) ), Nil )
         } )
 
-        def apply( t: Ty ): Ty = t match {
-          case base: TBase => apply( base )
-          case a ->: b     => apply( a ) ->: apply( b )
+        def apply( t: Ty ): Ty = ( t: @unchecked ) match {
+          case base: TBase  => apply( base )
+          case TArr( a, b ) => apply( a ) ->: apply( b )
         }
       }
 
@@ -407,7 +401,7 @@ object Session {
         case Push =>
           formulaStack push assertedFormulas; ()
         case Pop =>
-          assertedFormulas = formulaStack.pop; ()
+          assertedFormulas = formulaStack.pop(); ()
         case Assert( formula ) =>
           assertedFormulas += formula; ()
         case AssertLabelled( formula, _ ) =>

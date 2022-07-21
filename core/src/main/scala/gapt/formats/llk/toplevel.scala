@@ -71,8 +71,9 @@ package short {
     def apply( s: String )( implicit signature: LLKSignature ) = {
       DeclarationParser.parseAll( DeclarationParser.formula, s ) match {
         case DeclarationParser.Success( result, _ ) => LLKFormulaParser.ASTtoHOL( signature.apply, result )
-        case DeclarationParser.NoSuccess( msg, input ) =>
-          throw new Exception( "Error parsing HOL formula '" + s + "' at position " + input.pos + ". Error message: " + msg )
+        case failure: DeclarationParser.NoSuccess =>
+          throw new Exception( "Error parsing HOL formula '" +
+            s + "' at position " + failure.next.pos + ". Error message: " + failure.msg )
       }
     }
   }

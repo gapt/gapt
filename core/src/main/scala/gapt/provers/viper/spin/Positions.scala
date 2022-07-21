@@ -58,7 +58,7 @@ object Positions {
       val next = groups.find {
         case ( _, group ) =>
           group.forall { rule =>
-            var usedRules = rule.conditions.flatMap( constants( _ ) ).toSet.union( constants( rule.rhs ) ).intersect( symbols )
+            var usedRules = rule.conditions.flatMap( constants.nonLogical( _ ) ).toSet.union( constants.nonLogical( rule.rhs ) ).intersect( symbols )
             usedRules -= rule.lhsHead
             usedRules.forall( allPositions.isDefinedAt )
           }
@@ -70,7 +70,7 @@ object Positions {
           groups -= c
         case None =>
           val calls = groups.view.mapValues( rules =>
-            rules.flatMap( rule => constants( rule.rhs ) ++ rule.conditions.flatMap( constants( _ ) ) ) ).toMap
+            rules.flatMap( rule => constants.nonLogical( rule.rhs ) ++ rule.conditions.flatMap( constants.nonLogical( _ ) ) ) ).toMap
 
           val independent = calls.view.filterKeys( c => calls.forall { case ( d, fs ) => c == d || !fs.contains( c ) } ).toMap
           val mutual = groups -- independent.keys

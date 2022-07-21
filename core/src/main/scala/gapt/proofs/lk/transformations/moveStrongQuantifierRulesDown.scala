@@ -81,11 +81,11 @@ object moveStrongQuantifierRulesDown {
       case p @ WeakeningLeftRule( subProof, formula ) =>
         val ( q1, oc ) = apply( subProof, p.occConnectors( 0 ).parents( eigenVariables ).map( _.head ) )
         val q = WeakeningLeftRule( q1, instantiate( formula, eigenVariables( p.mainIndices.head ) ) )
-        ( q, q.getSequentConnector * oc * p.getSequentConnector.inv + ( q.mainIndices.head, p.mainIndices.head ) )
+        ( q, ( q.getSequentConnector * oc * p.getSequentConnector.inv ).+( q.mainIndices.head, p.mainIndices.head ) )
       case p @ WeakeningRightRule( subProof, formula ) =>
         val ( q1, oc ) = apply( subProof, p.occConnectors( 0 ).parents( eigenVariables ).map( _.head ) )
         val q = WeakeningRightRule( q1, instantiate( formula, eigenVariables( p.mainIndices.head ) ) )
-        ( q, q.getSequentConnector * oc * p.getSequentConnector.inv + ( q.mainIndices.head, p.mainIndices.head ) )
+        ( q, ( q.getSequentConnector * oc * p.getSequentConnector.inv ).+( q.mainIndices.head, p.mainIndices.head ) )
 
       case _ =>
         val ( qs, oc ) = ( for ( ( subProof, occConn ) <- p.immediateSubProofs zip p.occConnectors )

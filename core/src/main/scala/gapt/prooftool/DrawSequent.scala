@@ -168,7 +168,7 @@ object LatexIcon {
   def apply( latexText: String, font: Font ): TeXIcon = synchronized( cache.getOrElseUpdate(
     ( latexText, font ),
     new TeXFormula( latexText ).
-      createTeXIcon( TeXConstants.STYLE_DISPLAY, font.getSize, TeXFormula.SANSSERIF ) ) )
+      createTeXIcon( TeXConstants.STYLE_DISPLAY, font.getSize().toFloat, TeXFormula.SANSSERIF ) ) )
 }
 
 object LatexLabel {

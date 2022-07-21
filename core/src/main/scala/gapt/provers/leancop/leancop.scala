@@ -2,25 +2,18 @@ package gapt.provers.leancop
 
 import java.io.IOException
 import java.io.StringReader
-
 import gapt.expr.formula.hol.universalClosure
-import gapt.expr.formula.All
-import gapt.expr.formula.Eq
+import gapt.expr.formula.{ All, Atom, Eq, Neg, Or }
 import gapt.expr.subst.Substitution
-import gapt.formats.leancop.LeanCoPParser
-import gapt.proofs.expansion.ETWeakQuantifierBlock
-import gapt.proofs.expansion.ExpansionProof
-import gapt.proofs.expansion.ExpansionProofToLK
+import gapt.formats.leancop.{ LeanCoP21Parser, LeanCoPParser }
+import gapt.proofs.expansion.{ ETWeakQuantifierBlock, ExpansionProof, ExpansionProofToLK, ExpansionSequent, formulaToExpansionTree }
 import gapt.formats.tptp.TptpFOLExporter
-import gapt.proofs.{ HOLClause, HOLSequent, Sequent }
-import gapt.proofs.expansion.{ ETWeakQuantifierBlock, ExpansionProof, ExpansionProofToLK, ExpansionSequent }
+import gapt.logic.{ Polarity, clauseSubsumption }
+import gapt.proofs.{ Clause, HOLClause, HOLSequent, Sequent }
 import gapt.proofs.lk.LKProof
 import gapt.proofs.resolution.ResolutionToExpansionProof
 import gapt.proofs.resolution.expansionProofFromInstances
 import gapt.proofs.resolution.structuralCNF
-import gapt.proofs.HOLClause
-import gapt.proofs.HOLSequent
-import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.provers.OneShotProver
@@ -45,34 +38,51 @@ class LeanCoP extends OneShotProver with ExternalProgram {
 
     renameConstantsToFi.wrap( cnf.keys ++: Sequent() )( ( renaming, sequent: HOLSequent ) => {
       val tptp = TptpFOLExporter( sequent ).toString
-      ( withTempFile.fromString( tptp ) { leanCoPInput =>
+      val ( exitValue, stdout ) = withTempFile.fromString( tptp ) { leanCoPInput =>
         runProcess.withExitValue( Seq( "leancop", leanCoPInput.toString ) )
-      }: @unchecked ) match {
-        case ( 1, leanCopOutput ) if leanCopOutput contains "is Satisfiable" =>
-          None
-        case ( 0, leanCopOutput ) =>
+      }
+      if ( exitValue == 1 && stdout.contains( "is Satisfiable" ) ) {
+        None
+      } else if ( exitValue == 0 ) {
+        if ( stdout.contains( "%-" ) ) { // LeanCop TPTP format
           // extract the part between the %----- delimiters
-          val tptpProof = leanCopOutput.split( nLine ).
+          val tptpProof = stdout.split( nLine ).
             dropWhile( !_.startsWith( "%-" ) ).drop( 1 ).
             takeWhile( !_.startsWith( "%-" ) ).
             mkString( nLine )
 
-          LeanCoPParser.getExpansionProof( new StringReader( tptpProof ) )
-      }
-    } ) map { es =>
-      val hasEquality = cnf.values.flatMap( _.conclusion.elements ).exists {
-        case Eq( _, _ ) => true
-        case _          => false
-      }
+          Some( LeanCoPParser.getExpansionProof( new StringReader( tptpProof ) ).get )
+        } else { // LeanCoP 2.1 format (only compact atm)
+          val Right( connPrf ) = LeanCoP21Parser.parse( stdout )
 
-      val substs = for {
-        ETWeakQuantifierBlock( shallow, _, insts ) <- es.elements
-        ( formula @ All.Block( vars, _ ), clause ) <- cnf
-        if formula == shallow
-      } yield clause.conclusion.asInstanceOf[HOLClause] ->
-        insts.keys.map( s => Substitution( vars zip s ) ).toSet
+          val clauses = connPrf.toFOLClauses.map( _.swapped )
+          Some( sequent.map {
+            case fml @ All.Block( _, Or.nAry( lits ) ) =>
+              val cls = Clause( lits.collect { case Neg( a: Atom ) => a }, lits.collect { case a: Atom => a } )
+              formulaToExpansionTree(
+                fml,
+                for { inst <- clauses; subst <- clauseSubsumption( cls, inst ) } yield subst,
+                Polarity.InAntecedent )
+          } )
+        }
+      } else {
+        throw new IllegalArgumentException( s"Unexpected leancop output with exit value ${exitValue}:\n${stdout}" )
+      }
+    } ).map {
+      case es =>
+        val hasEquality = cnf.values.flatMap( _.conclusion.elements ).exists {
+          case Eq( _, _ ) => true
+          case _          => false
+        }
 
-      expansionProofFromInstances( substs.toMap, cnf.values.toSet, !hasEquality )
+        val substs = for {
+          ETWeakQuantifierBlock( shallow, _, insts ) <- es.elements
+          ( formula @ All.Block( vars, _ ), clause ) <- cnf
+          if formula == shallow
+        } yield clause.conclusion.asInstanceOf[HOLClause] ->
+          insts.keys.map( s => Substitution( vars zip s ) ).toSet
+
+        expansionProofFromInstances( substs.toMap, cnf.values.toSet, !hasEquality )
     }
   }
 

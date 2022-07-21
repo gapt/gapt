@@ -58,7 +58,7 @@ case class TreeGrammarProverOptions(
     smtSolver:        Prover             = DefaultProvers.smt,
     smtEquationMode:  SmtEquationMode    = AddNormalizedFormula,
     quantTys:         Option[Seq[TBase]] = None,
-    grammarWeighting: Production => Int = _ => 1,
+    grammarWeighting: ProductionWeight   = NumProductionsWeight,
     tautCheckNumber:  Int                = 10,
     tautCheckSize:    FloatRange         = ( 2, 3 ),
     bupSolver:        InductionBupSolver = InductionBupSolver.Canonical,
@@ -98,6 +98,16 @@ object TreeGrammarProverOptions {
         override def isValid( seq: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean =
           p.isValid( eqTh ++: seq )
       }
+  }
+
+  trait ProductionWeight {
+    def apply( p: Production ): Int
+  }
+  case object NumProductionsWeight extends ProductionWeight {
+    override def apply( p: Production ): Int = 1
+  }
+  case object SymbolicWeight extends ProductionWeight {
+    override def apply( p: Production ): Int = folTermSize( p.lhs ) + folTermSize( p.rhs )
   }
 }
 
@@ -169,6 +179,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
           loop( iter + 1 )
 
         case None =>
+          metric( "candidate_grammar_found", true )
           val solution = solveBUP( bup )
           constructProof( bup, solution )
       }
@@ -185,7 +196,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     val grammar = findMinimalInductionGrammar(
       indexedTermset,
       tau, alpha, nus, gamma,
-      options.maxSATSolver, options.grammarWeighting )
+      options.maxSATSolver, options.grammarWeighting( _ ) )
       .getOrElse {
         metric( "uncoverable_grammar", true )
         throw new Exception( s"cannot cover termset\n" +
@@ -216,6 +227,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     val testInstances =
       ( instanceGen.generate( 0, 5, 10 ) ++
         instanceGen.generate( options.tautCheckSize._1 * scale, options.tautCheckSize._2 * scale, options.tautCheckNumber ) ).map( _.head )
+    metric( "mincex_num_cex", testInstances.size )
     val failedInstOption = testInstances.toSeq.
       sortBy( folTermSize( _ ) ).view.
       filterNot { inst =>
@@ -283,6 +295,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
       solution,
       if ( options.equationalTheory.isEmpty ) EquationalLKProver else Escargot )( ctx.newMutable )
     info( s"Found proof with ${proof.dagLike.size} inferences" )
+    metric( "ind_pr_size", proof.dagLike.size )
 
     ctx.check( proof )
 
@@ -328,11 +341,11 @@ class TreeGrammarInductionTactic( options: TreeGrammarProverOptions = TreeGramma
   def smtSolver( prover: Prover ) = copy( options.copy( smtSolver = prover ) )
   def smtEquationMode( mode: TreeGrammarProverOptions.SmtEquationMode ) = copy( options.copy( smtEquationMode = mode ) )
   def quantTys( tys: TBase* ) = copy( options.copy( quantTys = Some( tys ) ) )
-  def grammarWeighting( w: InductionGrammar.Production => Int ) = copy( options.copy( grammarWeighting = w ) )
+  def grammarWeighting( w: ProductionWeight ) = copy( options.copy( grammarWeighting = w ) )
   def tautCheckNumber( n: Int ) = copy( options.copy( tautCheckNumber = n ) )
   def tautCheckSize( from: Float, to: Float ) = copy( options.copy( tautCheckSize = ( from, to ) ) )
-  def canSolSize( from: Float, to: Float ) = copy( options.copy( canSolSize = ( from, to ) ) )
-  def canSolSize( size: Int ) = copy( options.copy( canSolSize = ( size, size ) ) )
+  def canSolSize( from: Float, to: Float ) = copy( options.copy( canSolSize = ( from.toFloat, to.toFloat ) ) )
+  def canSolSize( size: Int ) = copy( options.copy( canSolSize = ( size.toFloat, size.toFloat ) ) )
   def equationalTheory( equations: Formula* ) = copy( options.copy( equationalTheory = equations ) )
   def maxsatSolver( solver: MaxSATSolver ) = copy( options.copy( maxSATSolver = solver ) )
   def useInterpolation = copy( options.copy( bupSolver = InductionBupSolver.Interpolation ) )

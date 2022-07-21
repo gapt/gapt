@@ -43,13 +43,13 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
 
   protected def parens( doc: Doc ): Doc = "(" <> doc <> ")"
 
-  def export( expr: Expr ): String =
+  def `export`( expr: Expr ): String =
     group( show( expr, false, Map(), Map() )._1.inPrec( 0 ) ).render( lineWidth )
   def exportRaw( expr: Expr ): String =
     group( showRaw( expr ).inPrec( 0 ) ).render( lineWidth )
-  def export( sequent: HOLSequent ): String =
+  def `export`( sequent: HOLSequent ): String =
     group( show( sequent, Map(), Map() )._1 ).render( lineWidth )
-  def export( ty: Ty ): String = show( ty, needParens = false ).group.render( lineWidth )
+  def `export`( ty: Ty ): String = show( ty, needParens = false ).group.render( lineWidth )
 
   def show( sequent: HOLSequent, bound: Map[String, Var], t0: Map[String, VarOrConst] ): ( Doc, Map[String, VarOrConst] ) = {
     var t1 = t0
@@ -296,7 +296,11 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
             showName( vn )
           else
             parens( showName( vn ) <> ":" <> show( vt, false ) )
-        return ( Parenable( prec, tok.token <> v_ </> e_.inPrec( prec ) ),
+        return ( Parenable(
+          prec,
+          tok.token <>
+            ( if ( vn.startsWith( "_" ) ) " " else "" ) <> v_ </>
+            e_.inPrec( prec ) ),
           t1 - vn ++ t0.get( vn ).map { vn -> _ } )
       case _ =>
     }

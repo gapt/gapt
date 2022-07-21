@@ -74,7 +74,8 @@ object extractInductionGrammar {
         ETWeakQuantifierBlock( _, _, insts ) <- c.auxiliary.antecedent
         ( inst, _ ) <- insts
       } yield InductionGrammar.Production( gamma, subst( inst ).toList )
-    InductionGrammar( tau, alpha, nus, gamma, tauProds ++ gammaProds1 ++ gammaProds2 )
+    InductionGrammar( tau, alpha, nus, gamma,
+      tauProds ++ ( gammaProds1 ++ gammaProds2 ).filter( _.lhs.nonEmpty ) )
   }
 
 }

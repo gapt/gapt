@@ -1,27 +1,28 @@
 package gapt.provers.verit
 
-import gapt.expr.formula.hol.containsQuantifier
-import gapt.formats.verit._
-import gapt.proofs.HOLSequent
-import gapt.proofs.expansion._
-import gapt.utils.{ ExternalProgram, Maybe, runProcess }
-import java.io._
-
-import gapt.provers._
 import gapt.expr._
-import gapt.expr.formula.All
-import gapt.expr.formula.Bottom
-import gapt.expr.formula.Top
-import gapt.expr.formula.fol.FOLAtomConst
-import gapt.expr.formula.fol.FOLConst
-import gapt.expr.formula.fol.FOLFunctionConst
-import gapt.expr.ty.FunctionType
-import gapt.expr.ty.TBase
+import gapt.expr.formula._
+import gapt.expr.formula.hol.containsQuantifier
+import gapt.expr.formula.hol.instantiate
 import gapt.expr.util.freeVariables
 import gapt.formats.smt.SmtLibExporter
+import gapt.formats.verit._
+import gapt.logic.Polarity
+import gapt.proofs.HOLSequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.expansion._
 import gapt.proofs.lk.LKProof
+import gapt.provers._
+import gapt.utils.ExternalProgram
+import gapt.utils.Maybe
+import gapt.utils.runProcess
+
+import java.io._
+
+case class FormulaInstance( formula: Formula, terms: Seq[Expr] ) {
+  val instance: Formula = instantiate( formula, terms )
+}
 
 object VeriT extends VeriT
 class VeriT extends OneShotProver with ExternalProgram {
@@ -31,7 +32,7 @@ class VeriT extends OneShotProver with ExternalProgram {
     // Generate the input file for veriT
     val veritInput = SmtLibExporter( groundFreeVariables( s )._1, lineWidth = Int.MaxValue )._1
 
-    val veritOutput = runProcess( Seq( "veriT" ), veritInput )
+    val veritOutput = runProcess( Seq( "veriT", "--disable-print-success", "--disable-banner" ), veritInput )
 
     // Parse the output
     VeriTParser.isUnsat( new StringReader( veritOutput ) )
@@ -45,25 +46,33 @@ class VeriT extends OneShotProver with ExternalProgram {
    * taking the quantified equality axioms from the proof returned by veriT and
    * merging them with the original end-sequent.
    */
-  override def getExpansionProof( s: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = groundFreeVariables.wrap( s ) { s =>
-    val ( smtBenchmark, _, renaming ) = SmtLibExporter( s, lineWidth = Int.MaxValue )
-    val output = runProcess( Seq( "veriT", "--proof=-", "--proof-version=1" ), smtBenchmark )
+  override def getExpansionProof( s: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = {
+    groundFreeVariables.wrap( s ) { inputSequent =>
+      val ( smtBenchmark, _, renaming ) = SmtLibExporter( inputSequent, lineWidth = Int.MaxValue )
+      val output = runProcess(
+        Seq( "veriT", "--proof=-", "--disable-print-success", "--disable-banner" ), smtBenchmark )
 
-    VeriTParser.getExpansionProof( new StringReader( output ) ) map { renamedExpansion =>
       val undoRenaming = renaming.map {
-        case ( from, to @ Const( smtName, FunctionType( TBase( "Bool", Nil ), argTypes ), _ ) ) => FOLAtomConst( smtName, argTypes.size ) -> from
-        case ( from, to @ Const( smtName, FunctionType( _, argTypes ), _ ) )                    => FOLFunctionConst( smtName, argTypes.size ) -> from
-      } ++ Map( FOLConst( "false" ) -> Bottom(), FOLConst( "true" ) -> Top() )
-      val exp_seq = for ( et <- renamedExpansion ) yield TermReplacement( et, undoRenaming.toMap[Expr, Expr] )
+        case ( from, to ) => to.name -> from
+      } ++ Map( "false" -> Bottom(), "true" -> Top() )
 
-      val exp_seq_quant = exp_seq filter { e => containsQuantifier( e.shallow ) }
-
-      val prop = for ( ( f, idx ) <- s.zipWithIndex ) yield formulaToExpansionTree( f, idx.polarity )
-
-      val quasi_taut = exp_seq_quant ++ prop
-      val taut = addSymmetry( quasi_taut )
-
-      ExpansionProof( taut )
+      val expansionProof = VeriTParser.parseProof( output ).map { proof =>
+        val equalityInstances = aletheQfUf.collectEqualityInstances( proof, undoRenaming )
+        val equalityExpansionTrees = equalityInstances
+          .groupBy { case FormulaInstance( f, ts ) => ( f, ts.size ) }
+          .map {
+            case ( ( ax, vs ), instances ) =>
+              ETWeakQuantifierBlock(
+                ax,
+                vs,
+                instances.map { i => ( i.terms, formulaToExpansionTree( i.instance, Polarity.InAntecedent ) ) } )
+          }
+        val inputExpansionSequent =
+          inputSequent.zipWithIndex.map { case ( f, idx ) => formulaToExpansionTree( f, idx.polarity ) }
+        val expansionSequentWithoutSymmetry = equalityExpansionTrees ++: inputExpansionSequent
+        ExpansionProof( addSymmetry( expansionSequentWithoutSymmetry ) )
+      }
+      expansionProof
     }
   }
 
@@ -85,6 +94,6 @@ class VeriT extends OneShotProver with ExternalProgram {
       runProcess( Seq( "veriT", "--version" ) )
       true
     } catch {
-      case ex: IOException => false
+      case _: IOException => false
     }
 }

@@ -27,12 +27,12 @@ object prop_01 extends TacticsProof {
     allR; allR
     induction( hov"x:nat" )
     rewrite.many ltr "p0" in "lem"; refl // IB
-    rewrite.many ltr ( "ps", "IHx_0" ); refl // IS
+    rewrite.many.ltr( "ps", "IHx_0" ); refl // IS
 
     allR
     induction( hov"x:nat" )
-    rewrite.many ltr ( "p0", "d0" ); refl // IB
-    rewrite.many ltr ( "ps", "ds", "lem", "IHx_0" ); refl // IS
+    rewrite.many.ltr( "p0", "d0" ); refl // IB
+    rewrite.many.ltr( "ps", "ds", "lem", "IHx_0" ); refl // IS
   }
 
   val openind = proof
@@ -41,9 +41,9 @@ object prop_01 extends TacticsProof {
     cut( "lem", hof"!x!y (x + S y = S (x + y) & d x = x + x)" ); forget( "g" )
     allR; induction( hov"x:nat" ).onAll( allR andThen destruct( "lem" ) )
     rewrite.many ltr "p0"; refl
-    rewrite.many ltr ( "d0", "p0" ); refl
+    rewrite.many.ltr( "d0", "p0" ); refl
     rewrite.many ltr "ps"; allL( "IHx_0", le"y:nat" ); quasiprop
-    rewrite.many ltr ( "ps", "ds" ); allL( "IHx_0", le"x_0:nat" ); quasiprop
+    rewrite.many.ltr( "ps", "ds" ); allL( "IHx_0", le"x_0:nat" ); quasiprop
     allR; allL( "lem", le"x:nat", le"x:nat" ); quasiprop
   }
 
@@ -51,9 +51,9 @@ object prop_01 extends TacticsProof {
     allR; cut( "lem", hof"!y (x + S y = S (x + y) & d x = x + x)" ); forget( "g" )
     induction( hov"x:nat" ).onAll( allR andThen destruct( "lem" ) )
     rewrite.many ltr "p0"; refl
-    rewrite.many ltr ( "d0", "p0" ); refl
+    rewrite.many.ltr( "d0", "p0" ); refl
     rewrite.many ltr "ps"; allL( "IHx_0", le"y:nat" ); quasiprop
-    rewrite.many ltr ( "ps", "ds" ); allL( "IHx_0", le"x_0:nat" ); quasiprop
+    rewrite.many.ltr( "ps", "ds" ); allL( "IHx_0", le"x_0:nat" ); quasiprop
     escargot
   }
 

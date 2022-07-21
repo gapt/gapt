@@ -24,7 +24,7 @@ class GapticTest extends Specification {
         ( "adds" -> hof"!x!y x+s(y) = s(x+y)" ) +:
         Sequent()
         :+ ( "goal" -> hof"s(s(0)) + s(s(0)) = s(s(s(s(0))))" ) ) {
-        rewrite.many ltr ( "add0", "adds" ) in "goal"
+        rewrite.many.ltr( "add0", "adds" ) in "goal"
         axiomRefl
       }
     ok

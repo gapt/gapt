@@ -56,14 +56,16 @@ trait Prover9TermParserA extends RegexParsers with PackratParsers {
 
   def parseFormula( s: String ): FOLFormula = parseAll( formula, s ) match {
     case Success( result, _ ) => result
-    case NoSuccess( msg, input ) =>
-      throw new Exception( "Error parsing prover9 formula '" + s + "' at position " + input.pos + ". Error message: " + msg )
+    case failure: NoSuccess =>
+      throw new Exception( "Error parsing prover9 formula '" +
+        s + "' at position " + failure.next.pos + ". Error message: " + failure.msg )
   }
 
   def parseTerm( s: String ): FOLTerm = parseAll( term, s ) match {
     case Success( result, _ ) => result
-    case NoSuccess( msg, input ) =>
-      throw new Exception( "Error parsing prover9 term '" + s + "' at position " + input.pos + ". Error message: " + msg )
+    case failure: NoSuccess =>
+      throw new Exception( "Error parsing prover9 term '" + s + "' at position " +
+        failure.next.pos + ". Error message: " + failure.msg )
   }
 
   lazy val pformula: PackratParser[FOLFormula] = parens( formula ) | allformula | exformula
@@ -71,9 +73,12 @@ trait Prover9TermParserA extends RegexParsers with PackratParsers {
   //precedence 800
   lazy val implication: PackratParser[FOLFormula] =
     ( dis_or_con ~ ( "<->" | "->" | "<-" ) ~ dis_or_con ) ^^ {
-      case f ~ "->" ~ g  => Imp( f, g )
-      case f ~ "<-" ~ g  => Imp( g, f )
-      case f ~ "<->" ~ g => And( Imp( f, g ), Imp( g, f ) )
+      r =>
+        ( r: @unchecked ) match {
+          case f ~ "->" ~ g  => Imp( f, g )
+          case f ~ "<-" ~ g  => Imp( g, f )
+          case f ~ "<->" ~ g => And( Imp( f, g ), Imp( g, f ) )
+        }
     } | dis_or_con
 
   lazy val dis_or_con: PackratParser[FOLFormula] = disjunction | conlit

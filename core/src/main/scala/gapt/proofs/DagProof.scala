@@ -27,10 +27,13 @@ trait DagProof[Proof <: DagProof[Proof]] extends Product { self: Proof =>
    */
   def longName: String = productPrefix
 
-  /** Operations that view the sub-proofs as a tree, see [[DagProof.TreeLikeOps]] for a list. */
+  /** Operations that view the sub-proofs as a tree, see [[gapt.proofs.DagProof.TreeLikeOps]] for a list. */
   def treeLike = new DagProof.TreeLikeOps( self )
 
-  /** Operations that view the sub-proofs as a DAG, which ignore duplicate sub-proofs, see [[DagProof.DagLikeOps]] for a list. */
+  /**
+   * Operations that view the sub-proofs as a DAG, which ignore duplicate sub-proofs, see
+   * [[gapt.proofs.DagProof.DagLikeOps]] for a list.
+   */
   def dagLike = new DagProof.DagLikeOps( self )
 
   /**

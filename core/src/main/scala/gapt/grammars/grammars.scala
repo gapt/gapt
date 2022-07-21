@@ -12,7 +12,7 @@ private class VtratgExporter( unicode: Boolean, vtratg: VTRATG )
 
   def csep( docs: List[Doc] ): Doc = wordwrap( docs, "," )
 
-  def export(): String = {
+  def `export`(): String = {
     val ntDecl = group( "Non-terminal vectors:" <> nest( line <> csep(
       vtratg.nonTerminals.toList map { nt =>
         "(" <> wordwrap( nt map { show( _, false, Map(), Map() )._1.inPrec( 0 ) }, "," ) <> ")"
@@ -52,7 +52,7 @@ case class VTRATG( startSymbol: Var, nonTerminals: Seq[VTRATG.NonTerminalVect], 
   def productions( nonTerminalVect: NonTerminalVect ): Set[Production] = productions filter ( _._1 == nonTerminalVect )
   def rightHandSides( nonTerminal: NonTerminalVect ) = productions( nonTerminal ) map ( _._2 )
 
-  def terminals: Set[Const] = productions flatMap { p => constants( p._2 ) }
+  def terminals: Set[Const] = productions flatMap { p => constants.nonLogical( p._2 ) }
 
   def babelSignature = MapBabelSignature( terminals )
 

@@ -178,7 +178,7 @@ case class Refl( term: Expr ) extends InitialClause {
  * }}}
  */
 case class Defn( defConst: HOLAtomConst, definition: Expr ) extends InitialClause {
-  val vars = defConst.ty match {
+  val vars = ( defConst.ty: @unchecked ) match {
     case FunctionType( To, argTypes ) =>
       definition match {
         case Abs.Block( vs, _ ) if vs.size == argTypes.size && vs == vs.distinct =>
@@ -409,12 +409,12 @@ case class DefIntro( subProof: ResolutionProof, idx: SequentIndex, definition: D
 
 case class TopL( subProof: ResolutionProof, idx: SequentIndex ) extends PropositionalResolutionRule {
   require( idx isAnt )
-  val Top() = subProof.conclusion( idx )
+  locally { val Top() = subProof.conclusion( idx ) }
   def mainFormulaSequent = Sequent()
 }
 case class BottomR( subProof: ResolutionProof, idx: SequentIndex ) extends PropositionalResolutionRule {
   require( idx isSuc )
-  val Bottom() = subProof.conclusion( idx )
+  locally { val Bottom() = subProof.conclusion( idx ) }
   def mainFormulaSequent = Sequent()
 }
 case class NegL( subProof: ResolutionProof, idx: SequentIndex ) extends PropositionalResolutionRule {

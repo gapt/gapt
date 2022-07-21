@@ -44,7 +44,7 @@ abstract class Expr {
    * @param that  Lambda expression to compare against.
    * @return whether this lambda expression is equal to that lambda expression modulo alpha-conversion.
    */
-  def alphaEquals( that: Expr ): Boolean = this alphaEquals ( that, 0, Map(), Map() )
+  def alphaEquals( that: Expr ): Boolean = this.alphaEquals( that, 0, Map(), Map() )
 
   /**
    * Alpha-equality in a bound variable context.

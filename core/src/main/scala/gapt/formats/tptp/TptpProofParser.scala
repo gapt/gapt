@@ -156,7 +156,7 @@ object TptpProofParser {
     def convert( stepName: String ): Seq[RefutationSketch] = {
       val step = steps.getOrElse( stepName, throw new MalformedInputFileException( s"unknown step $stepName" ) )
 
-      memo.getOrElseUpdate( stepName, step match {
+      memo.getOrElseUpdate( stepName, ( step: @unchecked ) match {
         case _ if haveAlreadyVisited( stepName ) =>
           throw new IllegalArgumentException( s"Cyclic inference: ${steps( stepName )}" )
         case AnnotatedFormula( "fof", _, "plain", And( Imp( defn, Neg( splAtom: FOLAtom ) ), _ ),
@@ -204,7 +204,7 @@ object TptpProofParser {
           Seq( p )
         case AnnotatedFormula( "fof", _, "plain", Bottom(),
           ( justification @ TptpTerm( "inference", FOLVar( "AVATAR_sat_refutation" ) |
-            FOLConst( "avatar_sat_refutation" ), _, _ ) ) +: _ ) =>
+            FOLConst( "avatar_sat_refutation" | "avatar_smt_refutation" ), _, _ ) ) +: _ ) =>
           Seq( SketchSplitCombine( getParents( justification ).flatMap( convert ) ) )
         case AnnotatedFormula( "fof", _, "conjecture", _, TptpTerm( "file", _, TptpTerm( label ) ) +: _ ) =>
           labelledCNF( label ) map SketchAxiom
