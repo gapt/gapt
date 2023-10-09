@@ -357,8 +357,8 @@ class TreeGrammarInductionTactic( options: TreeGrammarProverOptions = TreeGramma
       val viper = new TreeGrammarProver( ctx2, groundGoal, options )
       viper.solve()
     } ) catch {
-      case t: TimeOutException => throw t
-      case t: ThreadDeath      => throw t
+      case t: TimeOutException     => throw t
+      case t: InterruptedException => throw t
       case t: Throwable =>
         TacticFailure( this, ExceptionUtils.getStackTrace( t ) )
     }

@@ -33,12 +33,11 @@ object withTimeout {
   def apply[T]( duration: Duration )( f: => T ): T = if ( !duration.isFinite ) f else {
     var result: Either[Throwable, T] = Left( new TimeOutException( null, duration ) )
 
-    trait StoppableWithoutDeprecationWarning { def stop(): Unit }
-    val t = new Thread with StoppableWithoutDeprecationWarning {
+    val t = new Thread {
       override def run(): Unit = {
         result = try Right( f ) catch {
-          case e: ThreadDeath => Left( new TimeOutException( e, duration ) )
-          case t: Throwable   => Left( t )
+          case e: InterruptedException => Left( new TimeOutException( e, duration ) )
+          case t: Throwable            => Left( t )
         }
       }
     }
@@ -46,7 +45,7 @@ object withTimeout {
     t.setDaemon( true )
     t.start()
     blocking { t.join( duration toMillis ) }
-    ( t: StoppableWithoutDeprecationWarning ).stop()
+    t.interrupt()
 
     val nLine = sys.props( "line.separator" )
 
