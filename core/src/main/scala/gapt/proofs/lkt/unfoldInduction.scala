@@ -32,7 +32,7 @@ case class SimplifierSimpAdapter( simp: Simplifier, lctx: LocalCtx ) extends Sim
 }
 
 class unfoldInduction( simp: SimpAdapter, ctx0: ImmutableContext ) {
-  implicit val ctx = ctx0
+  implicit val ctx: ImmutableContext = ctx0
   var unfolded = false
 
   val simpHyps = simp.hyps

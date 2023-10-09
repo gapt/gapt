@@ -479,11 +479,11 @@ object Sequent {
    */
   def apply( m: Int, n: Int ): Sequent[SequentIndex] = ( 0 until m ).map { Ant } ++: Sequent() :++ ( 0 until n ).map { Suc }
 
-  implicit val SequentFunctor = new Functor[Sequent] {
+  implicit val SequentFunctor: Functor[Sequent] = new Functor[Sequent] {
     def map[A, B]( fa: Sequent[A] )( f: A => B ): Sequent[B] = fa.map( f )
   }
 
-  implicit def SequentMonoid[A] = new Monoid[Sequent[A]] {
+  implicit def SequentMonoid[A]: Monoid[Sequent[A]] = new Monoid[Sequent[A]] {
     override def empty = Sequent()
     override def combine( s1: Sequent[A], s2: Sequent[A] ): Sequent[A] = s1 ++ s2
   }

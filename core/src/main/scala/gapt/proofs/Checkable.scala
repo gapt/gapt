@@ -92,7 +92,7 @@ object Checkable {
       new ExpressionChecker().check( expr )
   }
 
-  implicit def sequentIsCheckable[T: Checkable] = new Checkable[Sequent[T]] {
+  implicit def sequentIsCheckable[T: Checkable]: Checkable[Sequent[T]] = new Checkable[Sequent[T]] {
     def check( sequent: Sequent[T] )( implicit context: Context ) =
       sequent.foreach( context.check( _ ) )
   }
