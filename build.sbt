@@ -1,7 +1,6 @@
 import java.io.ByteArrayOutputStream
 
 import org.apache.commons.compress.archivers.tar.{ TarArchiveEntry, TarArchiveOutputStream }
-import scalariform.formatter.preferences._
 import sys.process._
 
 val Version = "2.17.0-SNAPSHOT"
@@ -57,14 +56,7 @@ lazy val commonSettings = Seq(
   run / baseDirectory := file( "." ),
 
   sourcesInBase := false // people like to keep scripts lying around
-) ++ scalariformSettings
-
-lazy val scalariformSettings =
-  Seq( scalariformPreferences := scalariformPreferences.value
-    .setPreference( AlignParameters, true )
-    .setPreference( AlignSingleLineCaseStatements, true )
-    .setPreference( DoubleIndentConstructorArguments, true )
-    .setPreference( SpaceInsideParentheses, true ) )
+)
 
 val specs2Version = "4.16.0"
 lazy val testSettings = Seq(
@@ -88,10 +80,6 @@ lazy val root = project.in( file( "." ) ).
 
     publish / skip := true,
     packagedArtifacts := Map(),
-
-    inConfig( BuildSbtConfig )( SbtScalariform.configScalariformSettings ++ scalariformSettings ),
-    sourceDirectories in ( BuildSbtConfig, scalariformFormat ) := Seq( baseDirectory.value ),
-    includeFilter in ( BuildSbtConfig, scalariformFormat ) := ( "*.sbt": FileFilter ),
 
     apiURL := Some( url( "https://logic.at/gapt/api/" ) ),
     scalacOptions in ( ScalaUnidoc, unidoc ) ++= Seq(
@@ -264,7 +252,7 @@ lazy val cli = project.in( file( "cli" ) ).
     publish / skip := true,
     packagedArtifacts := Map() )
 
-addCommandAlias( "format", "; scalariformFormat ; buildsbt:scalariformFormat" )
+addCommandAlias( "format", ";" )
 
 lazy val testing = project.in( file( "testing" ) ).
   dependsOn( core, examples ).
