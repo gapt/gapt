@@ -758,7 +758,7 @@ The \cli{Context.default} object contains only the sort \cli{o} (truth values) a
 symbols. An example for a context is:
 \begin{tacticslisting}[bare]
 object ContextExample {
-  implicit val ctx = MutableContext.default()
+  implicit val ctx: MutableContext = MutableContext.default()
   ctx += InductiveType("Nat", hoc" 0: Nat", hoc" s: Nat > Nat") //Adding a type declaration
   ctx += hoc" '+' : Nat>Nat>Nat" //Adding a constant declaration
   ctx += "plus_zero" -> hos" :- ∀n (n + 0 = n)" //Adding a theory axiom
