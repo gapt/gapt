@@ -16,10 +16,10 @@ lazy val commonSettings = Seq(
   autoAPIMappings := true,
   publishMavenStyle := true,
 
-  publishTo := (if ( isSnapshot.value )
-      Opts.resolver.sonatypeOssSnapshots.headOption
-    else
-      Some(Opts.resolver.sonatypeStaging )),
+  publishTo := ( if ( isSnapshot.value )
+    Opts.resolver.sonatypeOssSnapshots.headOption
+  else
+    Some( Opts.resolver.sonatypeStaging ) ),
 
   scmInfo := Some( ScmInfo(
     browseUrl = url( "https://github.com/gapt/gapt" ),
