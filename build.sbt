@@ -85,7 +85,7 @@ lazy val root = project.in( file( "." ) ).
     scalacOptions in ( ScalaUnidoc, unidoc ) ++= Seq(
       "-doc-title", "gapt",
       "-doc-version", version.value,
-      "-doc-source-url", s"https://github.com/gapt/gapt/blob/${"git rev-parse HEAD" !!}/€{FILE_PATH}.scala",
+      "-doc-source-url", s"https://github.com/gapt/gapt/blob/${("git rev-parse HEAD" !!).strip}/€{FILE_PATH}.scala",
       "-doc-root-content", ( baseDirectory.value / "doc" / "rootdoc.txt" ).getAbsolutePath,
       "-sourcepath", baseDirectory.value.getAbsolutePath,
       "-skip-packages", "ammonite:ammonite.ops",
