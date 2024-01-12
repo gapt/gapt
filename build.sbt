@@ -171,7 +171,14 @@ lazy val root = project.in( file( "." ) ).
           envVars = envVars.value ),
         Seq( userManFn ) ).exitValue()
       if ( exitVal == 0 ) IO.write( file( userManFn ), out.toByteArray )
-    } )
+    } ,
+
+    dependencyOverrides ++= dependencyConflictResolutions
+    )
+
+val dependencyConflictResolutions = Seq(
+      "com.lihaoyi" %% "geny" % "1.0.0"
+    )
 
 lazy val core = project.in( file( "core" ) ).
   settings( commonSettings: _* ).
@@ -186,7 +193,7 @@ lazy val core = project.in( file( "core" ) ).
       "org.scala-lang.modules" %% "scala-parser-combinators" % "2.1.1",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.parboiled" %% "parboiled" % "2.4.0",
-      "com.lihaoyi" %% "fastparse" % "2.3.3",
+      "com.lihaoyi" %% "fastparse" % "3.0.2",
       "com.lihaoyi" %% "sourcecode" % "0.2.8",
       "org.typelevel" %% "cats-free" % "2.7.0",
       "org.scala-lang.modules" %% "scala-xml" % "2.1.0",
@@ -195,8 +202,9 @@ lazy val core = project.in( file( "core" ) ).
       "de.uni-freiburg.informatik.ultimate" % "smtinterpol" % "2.5",
       "com.github.scopt" %% "scopt" % "4.0.1",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.6",
-      "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.6" ),
+      "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.6"),
 
+    dependencyOverrides ++= dependencyConflictResolutions,
     // UI
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-swing" % "3.0.0",
@@ -221,7 +229,8 @@ lazy val examples = project.in( file( "examples" ) ).
     excludeFilter in ( Compile, unmanagedResources ) := {
       val target = ( baseDirectory.value / "target" ).getCanonicalPath
       new SimpleFileFilter( _.getCanonicalPath startsWith target )
-    } || "*.scala" )
+    } || "*.scala",
+    dependencyOverrides ++= dependencyConflictResolutions )
 
 lazy val tests = project.in( file( "tests" ) ).
   dependsOn( core, examples ).
@@ -231,7 +240,8 @@ lazy val tests = project.in( file( "tests" ) ).
   settings(
     testForkedParallel := true,
     publish / skip := true,
-    packagedArtifacts := Map() )
+    packagedArtifacts := Map(),
+    dependencyOverrides ++= dependencyConflictResolutions )
 
 lazy val userManual = project.in( file( "doc" ) ).
   dependsOn( cli ).
@@ -239,7 +249,8 @@ lazy val userManual = project.in( file( "doc" ) ).
   settings(
     Compile / unmanagedSourceDirectories := Seq( baseDirectory.value ),
     publish / skip := true,
-    packagedArtifacts := Map() )
+    packagedArtifacts := Map(),
+    dependencyOverrides ++= dependencyConflictResolutions )
 
 lazy val cli = project.in( file( "cli" ) ).
   dependsOn( core, examples ).
@@ -250,7 +261,8 @@ lazy val cli = project.in( file( "cli" ) ).
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value ),
     publish / skip := true,
-    packagedArtifacts := Map() )
+    packagedArtifacts := Map(),
+    dependencyOverrides ++= dependencyConflictResolutions )
 
 addCommandAlias( "format", ";" )
 
@@ -262,7 +274,8 @@ lazy val testing = project.in( file( "testing" ) ).
     description := "gapt extended regression tests",
     Compile / scalacOptions += "-Xfatal-warnings",
     publish / skip := true,
-    packagedArtifacts := Map() )
+    packagedArtifacts := Map(),
+    dependencyOverrides ++= dependencyConflictResolutions )
 
 lazy val releaseDist = TaskKey[File]( "release-dist", "Creates the release tar ball." )
 
