@@ -1,7 +1,6 @@
 import java.io.ByteArrayOutputStream
 
 import org.apache.commons.compress.archivers.tar.{ TarArchiveEntry, TarArchiveOutputStream }
-import scalariform.formatter.preferences._
 import sys.process._
 
 val Version = "2.17.0-SNAPSHOT"
@@ -16,18 +15,17 @@ lazy val commonSettings = Seq(
   autoAPIMappings := true,
   publishMavenStyle := true,
 
-  publishTo := Some(
-    if ( isSnapshot.value )
-      Opts.resolver.sonatypeSnapshots
-    else
-      Opts.resolver.sonatypeStaging ),
+  publishTo := ( if ( isSnapshot.value )
+    Opts.resolver.sonatypeOssSnapshots.headOption
+  else
+    Some( Opts.resolver.sonatypeStaging ) ),
 
   scmInfo := Some( ScmInfo(
     browseUrl = url( "https://github.com/gapt/gapt" ),
     connection = "scm:git:https://github.com/gapt/gapt.git",
     devConnection = Some( "scm:git:git@github.com:gapt/gapt.git" ) ) ),
 
-  scalaVersion := "2.13.8",
+  scalaVersion := "2.13.12",
 
   developers := List(
     Developer(
@@ -46,7 +44,7 @@ lazy val commonSettings = Seq(
       email = "gebner@gebner.org",
       url = url( "https://gebner.org/" ) ) ),
 
-  scalacOptions in Compile ++= Seq(
+  Compile / scalacOptions ++= Seq(
     "-deprecation",
     "-language:postfixOps",
     "-language:implicitConversions",
@@ -55,22 +53,15 @@ lazy val commonSettings = Seq(
 
   javaOptions ++= Seq( "-Xss40m", "-Xmx1g" ),
   fork := true,
-  baseDirectory in run := file( "." ),
+  run / baseDirectory := file( "." ),
 
   sourcesInBase := false // people like to keep scripts lying around
-) ++ scalariformSettings
-
-lazy val scalariformSettings =
-  Seq( scalariformPreferences := scalariformPreferences.value
-    .setPreference( AlignParameters, true )
-    .setPreference( AlignSingleLineCaseStatements, true )
-    .setPreference( DoubleIndentConstructorArguments, true )
-    .setPreference( SpaceInsideParentheses, true ) )
+)
 
 val specs2Version = "4.16.0"
 lazy val testSettings = Seq(
-  testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
-  javaOptions in Test += "-Xmx2g",
+  Test / testOptions += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
+  Test / javaOptions += "-Xmx2g",
   libraryDependencies ++= Seq(
     "org.specs2" %% "specs2-core" % specs2Version,
     "org.specs2" %% "specs2-junit" % specs2Version, // needed for junitxml output
@@ -84,21 +75,17 @@ lazy val root = project.in( file( "." ) ).
   settings( commonSettings: _* ).
   enablePlugins( ScalaUnidocPlugin ).
   settings(
-    fork in console := true,
-    initialCommands in console := IO.read( resourceDirectory.in( cli, Compile ).value / "gapt-cli-prelude.scala" ),
+    console / fork := true,
+    console / initialCommands := IO.read( resourceDirectory.in( cli, Compile ).value / "gapt-cli-prelude.scala" ),
 
     publish / skip := true,
     packagedArtifacts := Map(),
-
-    inConfig( BuildSbtConfig )( SbtScalariform.configScalariformSettings ++ scalariformSettings ),
-    sourceDirectories in ( BuildSbtConfig, scalariformFormat ) := Seq( baseDirectory.value ),
-    includeFilter in ( BuildSbtConfig, scalariformFormat ) := ( "*.sbt": FileFilter ),
 
     apiURL := Some( url( "https://logic.at/gapt/api/" ) ),
     scalacOptions in ( ScalaUnidoc, unidoc ) ++= Seq(
       "-doc-title", "gapt",
       "-doc-version", version.value,
-      "-doc-source-url", s"https://github.com/gapt/gapt/blob/${"git rev-parse HEAD" !!}/€{FILE_PATH}.scala",
+      "-doc-source-url", s"https://github.com/gapt/gapt/blob/${("git rev-parse HEAD" !!).strip}/€{FILE_PATH}.scala",
       "-doc-root-content", ( baseDirectory.value / "doc" / "rootdoc.txt" ).getAbsolutePath,
       "-sourcepath", baseDirectory.value.getAbsolutePath,
       "-skip-packages", "ammonite:ammonite.ops",
@@ -127,8 +114,8 @@ lazy val root = project.in( file( "." ) ).
     },
 
     // Release stuff
-    mainClass in assembly := Some( "gapt.cli.CLIMain" ),
-    aggregate in assembly := false,
+    assembly / mainClass := Some( "gapt.cli.CLIMain" ),
+    assembly / aggregate := false,
     releaseDist := {
       val baseDir = file( "." )
       val version = Keys.version.value
@@ -192,7 +179,7 @@ lazy val core = project.in( file( "core" ) ).
     name := "gapt",
     description := "General Architecture for Proof Theory",
 
-    scalacOptions in Compile += "-Xfatal-warnings",
+    Compile / scalacOptions += "-Xfatal-warnings",
 
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.4",
@@ -229,8 +216,8 @@ lazy val examples = project.in( file( "examples" ) ).
   settings( commonSettings: _* ).
   settings(
     name := "gapt-examples",
-    unmanagedSourceDirectories in Compile := Seq( baseDirectory.value ),
-    resourceDirectory in Compile := baseDirectory.value,
+    Compile / unmanagedSourceDirectories := Seq( baseDirectory.value ),
+    Compile / resourceDirectory := baseDirectory.value,
     excludeFilter in ( Compile, unmanagedResources ) := {
       val target = ( baseDirectory.value / "target" ).getCanonicalPath
       new SimpleFileFilter( _.getCanonicalPath startsWith target )
@@ -250,7 +237,7 @@ lazy val userManual = project.in( file( "doc" ) ).
   dependsOn( cli ).
   settings( commonSettings: _* ).
   settings(
-    unmanagedSourceDirectories in Compile := Seq( baseDirectory.value ),
+    Compile / unmanagedSourceDirectories := Seq( baseDirectory.value ),
     publish / skip := true,
     packagedArtifacts := Map() )
 
@@ -259,13 +246,13 @@ lazy val cli = project.in( file( "cli" ) ).
   settings( commonSettings: _* ).
   settings(
     mainClass := Some( "gapt.cli.CLIMain" ),
-    scalacOptions in Compile += "-Xfatal-warnings",
+    Compile / scalacOptions += "-Xfatal-warnings",
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value ),
     publish / skip := true,
     packagedArtifacts := Map() )
 
-addCommandAlias( "format", "; scalariformFormat ; buildsbt:scalariformFormat" )
+addCommandAlias( "format", ";" )
 
 lazy val testing = project.in( file( "testing" ) ).
   dependsOn( core, examples ).
@@ -273,7 +260,7 @@ lazy val testing = project.in( file( "testing" ) ).
   settings(
     name := "gapt-testing",
     description := "gapt extended regression tests",
-    scalacOptions in Compile += "-Xfatal-warnings",
+    Compile / scalacOptions += "-Xfatal-warnings",
     publish / skip := true,
     packagedArtifacts := Map() )
 

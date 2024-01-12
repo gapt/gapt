@@ -514,7 +514,7 @@ object negLeft extends Script {
 }
 
 object proofLink extends Script {
-  implicit var ctx = Context.default
+  implicit var ctx: Context = Context.default
   ctx += Sort( "i" )
   ctx += hoc"'<': i>i>o"
   ctx += hoc"'+': i>i>i"
@@ -552,7 +552,7 @@ object proofLink2 extends Script {
 }
 
 object proofLink3 extends Script {
-  implicit var ctx = Context.default
+  implicit var ctx: Context = Context.default
   ctx += Sort( "i" )
   ctx += hoc"'<': i>i>o"
   ctx += hoc"'1': i"
@@ -611,7 +611,7 @@ object inductionRule extends Script {
 
   val ax1 = LogicalAxiom( P0 )
 
-  implicit var ctx = Context.default
+  implicit var ctx: Context = Context.default
   ctx += InductiveType( "i", hoc"0: i", hoc"s: i>i" )
   ctx += hoc"'th': i>i"
   ctx += hoc"'P': i>o"

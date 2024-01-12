@@ -1,7 +1,8 @@
 package gapt.examples
 
-import java.io._
+import gapt.formats.llk.LLKTypes
 
+import java.io._
 import gapt.formats.llk.short._
 import gapt.formats.tptp.TptpHOLExporter
 import gapt.proofs.HOLSequent
@@ -42,7 +43,7 @@ object nTape6 {
    * Contains all the formulas used.
    */
   object formulas {
-    implicit val signature =
+    implicit val signature: LLKTypes.LLKSignature =
       sig(
         """var X:o; var U,V:i; var H:i>i; var x,y:i;
               const zero:i; const s:i>i;  const h:i>i;

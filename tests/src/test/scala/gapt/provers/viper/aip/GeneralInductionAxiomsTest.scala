@@ -12,7 +12,7 @@ import org.specs2.mutable.Specification
 
 class GeneralInductionAxiomsTest extends Specification with ThrownMessages {
 
-  implicit var ctx = MutableContext.default()
+  implicit var ctx: MutableContext = MutableContext.default()
   ctx += InductiveType( "nat", hoc"0:nat", hoc"s:nat>nat" )
   ctx += hoc"P:nat>nat>o"
 

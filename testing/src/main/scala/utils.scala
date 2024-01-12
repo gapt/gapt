@@ -70,7 +70,7 @@ abstract class RegressionTestCase( val name: String ) extends Serializable {
       val runtime = ( endTime - beginTime ) nanos
 
       val ( exception, isTimeout ) = result match {
-        case Left( t @ ( _: TimeOutException | _: ThreadDeath | _: OutOfMemoryError |
+        case Left( t @ ( _: TimeOutException | _: InterruptedException | _: OutOfMemoryError |
           _: InterruptedException | _: StackOverflowError | _: BootstrapMethodError |
           _: ClosedByInterruptException ) ) => ( Some( t ), true )
         case Left( t )  => ( Some( t ), false )

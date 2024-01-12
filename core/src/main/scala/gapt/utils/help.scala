@@ -1,6 +1,6 @@
 package gapt.utils
 
-import java.net.{ HttpURLConnection, URL }
+import java.net.{ HttpURLConnection, URI, URL }
 import java.nio.file.{ Files, Paths }
 
 /**
@@ -31,7 +31,7 @@ object help {
       path.fold( false )( Files.exists( _ ) )
     } else {
       val classNameURL = name.replace( '.', '/' ) ++ ".html"
-      val url = new URL( websitePath + classNameURL )
+      val url = new URI( websitePath + classNameURL ).toURL
       val huc = url.openConnection().asInstanceOf[HttpURLConnection]
       huc.setRequestMethod( "GET" )
       huc.connect()

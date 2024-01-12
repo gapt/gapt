@@ -133,7 +133,7 @@ object normalize {
 
 object BetaReduction extends Normalizer( Set() ) {
   def betaNormalize( expression: Expr ): Expr =
-    normalize( expression )
+    this.normalize( expression )
 
   def betaNormalize( f: Formula ): Formula =
     betaNormalize( f: Expr ).asInstanceOf[Formula]

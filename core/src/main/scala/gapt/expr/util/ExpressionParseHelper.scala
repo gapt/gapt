@@ -39,7 +39,7 @@ object ExpressionParseHelper {
  * @param sc A StringContext
  */
 class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sourcecode.Line, sig: BabelSignature ) {
-  private implicit def _sig = sig
+  private implicit def _sig: BabelSignature = sig
 
   private def interpolateHelper( expressions: Seq[Splice[Expr]] ): ( String, preExpr.Expr => preExpr.Expr ) = {
     def repls( name: String ): preExpr.Expr =
