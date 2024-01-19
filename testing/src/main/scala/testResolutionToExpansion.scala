@@ -1,6 +1,6 @@
 package gapt.testing
 
-import ammonite.ops.FilePath
+import os.FilePath
 import gapt.expr.Const
 import gapt.expr.formula.Atom
 import gapt.logic.hol.CNFn

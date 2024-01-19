@@ -1,6 +1,6 @@
 package gapt.provers.escargot
 
-import ammonite.ops._
+import os._
 import gapt.expr._
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Eq

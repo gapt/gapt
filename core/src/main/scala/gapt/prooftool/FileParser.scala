@@ -6,7 +6,7 @@ import gapt.expr._
 import gapt.formats.llk.{ ExtendedProofDatabase, loadLLK }
 import gapt.proofs.resolution.ResolutionProof
 
-import ammonite.ops._
+import os._
 
 class FileParser( main: ProofToolViewer[_] ) {
 

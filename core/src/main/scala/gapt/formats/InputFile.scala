@@ -2,7 +2,7 @@ package gapt.formats
 
 import java.io.InputStream
 
-import ammonite.ops._
+import os._
 
 import scala.io.Codec
 import scala.sys.process
@@ -28,7 +28,7 @@ case class StringInputFile( content: String ) extends InputFile {
 }
 case class OnDiskInputFile( file: Path ) extends InputFile {
   def fileName = file.toString
-  def read = ammonite.ops.read ! file
+  def read = os.read(file)
 }
 
 case class StdinInputFile( content: String ) extends InputFile {

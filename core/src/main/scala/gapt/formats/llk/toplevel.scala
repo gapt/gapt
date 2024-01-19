@@ -2,7 +2,7 @@ package gapt.formats.llk
 
 import gapt.expr.{ Expr }
 import gapt.proofs.lk.LKProof
-import ammonite.ops._
+import os._
 import gapt.expr.formula.Formula
 import gapt.formats.InputFile
 

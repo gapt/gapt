@@ -5,7 +5,7 @@ import java.awt.Font._
 import java.awt.image.BufferedImage
 import java.io.File
 
-import ammonite.ops.{ Path, write }
+import os.{ Path, write }
 import javax.imageio.ImageIO
 import javax.swing.WindowConstants
 import javax.swing.filechooser.FileFilter

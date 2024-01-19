@@ -1,6 +1,6 @@
 package gapt.prooftool
 
-import ammonite.ops._
+import os._
 import gapt.expr.formula.Formula
 import gapt.formats.json._
 import gapt.formats.latex.LatexExporter

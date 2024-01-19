@@ -5,7 +5,7 @@ import gapt.proofs.expansion.InstanceTermEncoding
 import gapt.proofs.loadExpansionProof
 
 import scala.App
-import ammonite.ops._
+import os._
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLFunction
 import gapt.expr.formula.fol.FOLTerm

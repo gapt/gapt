@@ -3,7 +3,7 @@ package gapt.formats.tptp
 import gapt.expr._
 import gapt.formats.InputFile
 import org.parboiled2._
-import ammonite.ops._
+import os._
 import gapt.expr
 import gapt.expr.formula.And
 import gapt.expr.formula.Bottom

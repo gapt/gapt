@@ -1,6 +1,6 @@
 package gapt.utils
 import Doc._
-import ammonite.ops.{ Path, write }
+import os.{ Path, write }
 
 import scala.language.implicitConversions
 

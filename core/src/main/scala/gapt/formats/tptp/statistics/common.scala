@@ -1,6 +1,6 @@
 package gapt.formats.tptp
 
-import ammonite.ops.{ Path, _ }
+import os.{ Path, _ }
 import gapt.formats.{ InputFile, csv }
 import gapt.formats.csv.{ CSVConvertible, CSVFile, CSVRow }
 import gapt.utils.Statistic
@@ -27,7 +27,7 @@ package object statistics {
   abstract class FileData extends InputFile with Serializable with CSVConvertible[String] {
     override def fileName: String
 
-    def read = ammonite.ops.read ! fileAsPath
+    def read = os.read(fileAsPath)
 
     def file = FilePath( fileName )
 

@@ -10,7 +10,7 @@ import gapt.proofs.resolution.{ ResolutionProof, ResolutionToExpansionProof, con
 import gapt.proofs.sketch.RefutationSketchToResolution
 import gapt.provers.prover9.Prover9Importer
 import gapt.utils.Logger
-import ammonite.ops._
+import os._
 
 object loadExpansionProof {
   val logger = Logger( "loadExpansionProof" )

@@ -1,6 +1,6 @@
 package gapt.provers.viper
 
-import ammonite.ops._
+import os._
 import gapt.expr.formula.All
 import gapt.expr.formula.Formula
 import gapt.expr.formula.fol.folTermSize

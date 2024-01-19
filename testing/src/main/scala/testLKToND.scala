@@ -1,6 +1,6 @@
 package gapt.testing
 
-import ammonite.ops.FilePath
+import os.FilePath
 import gapt.expr.formula.hol.containsQuantifierOnLogicalLevel
 import gapt.formats.tptp.TptpImporter
 import gapt.proofs.context.mutable.MutableContext

@@ -2,7 +2,7 @@ package gapt.testing
 
 import java.io.FileWriter
 import java.io.PrintWriter
-import ammonite.ops._
+import os._
 import gapt.cutintro._
 import gapt.expr._
 import gapt.expr.formula.All
@@ -357,11 +357,11 @@ class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
 
 // Usage: RegressionTests [<test number limit>]
 object RegressionTests extends scala.App {
-  def prover9Proofs = ls.rec( pwd / "testing" / "TSTP" / "prover9" ).filter( _.ext == "s" )
-  def leancopProofs = ls.rec( pwd / "testing" / "TSTP" / "leanCoP" ).filter( _.ext == "s" )
-  def veritBenchmarks = ls.rec( pwd / "testing" / "veriT-SMT-LIB" ).filter( _.ext == "smt2" )
-  def tptpProblems = ls.rec( pwd / "testing" / "TPTP" / "Problems" ).filter( _.ext == "p" )
-  def tipProblems = ls.rec( pwd / "testing" / "TIP" ).filter( _.ext == "smt2" )
+  def prover9Proofs = walk( pwd / "testing" / "TSTP" / "prover9" ).filter( _.ext == "s" )
+  def leancopProofs = walk( pwd / "testing" / "TSTP" / "leanCoP" ).filter( _.ext == "s" )
+  def veritBenchmarks = walk( pwd / "testing" / "veriT-SMT-LIB" ).filter( _.ext == "smt2" )
+  def tptpProblems = walk( pwd / "testing" / "TPTP" / "Problems" ).filter( _.ext == "p" )
+  def tipProblems = walk( pwd / "testing" / "TIP" ).filter( _.ext == "smt2" )
 
   def prover9TestCases = prover9Proofs map { fn => new Prover9TestCase( fn.toIO ) }
   def leancopTestCases = leancopProofs map { fn => new LeanCoPTestCase( fn.toIO ) }

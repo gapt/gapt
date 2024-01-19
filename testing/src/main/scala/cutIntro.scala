@@ -18,7 +18,7 @@ import org.json4s.native.JsonMethods._
 
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
-import ammonite.ops._
+import os._
 import gapt.expr.formula.fol.FOLVar
 import gapt.proofs.lk.util.rulesNumber
 
@@ -203,7 +203,7 @@ object collectExperimentResults extends App {
 
   val out = new PrintWriter( Console.out )
   val writer = JsonWriter.streamingPretty( out, alwaysEscapeUnicode = false ).startArray()
-  for ( f <- ls.rec( pwd ).filter( _.last == "stdout" ) ) {
+  for ( f <- walk( pwd ).filter( _.last == "stdout" ) ) {
     writer.addJValue( canonicalize( parseOut( f ) ) )
     out.flush()
   }
@@ -214,7 +214,7 @@ object collectExperimentResults extends App {
 object findNonTrivialTSTPExamples extends App {
   case class TermSetStats( file: Path, size: Int, numFuns: Int )
 
-  val p9Files = ls.rec( pwd / "testing" / "TSTP" / "prover9" ).filter( _.ext == "s" )
+  val p9Files = walk( pwd / "testing" / "TSTP" / "prover9" ).filter( _.ext == "s" )
 
   val stats = p9Files map { fn =>
     try {

@@ -10,7 +10,7 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.xml.Elem
 import scala.sys.process._
-import ammonite.ops._
+import os._
 
 /**
  * Single regression test case, e.g. Prover9TestCase.ALG-123.
