@@ -25,6 +25,7 @@ lazy val commonSettings = Seq(
     connection = "scm:git:https://github.com/gapt/gapt.git",
     devConnection = Some( "scm:git:git@github.com:gapt/gapt.git" ) ) ),
 
+  crossScalaVersions := Seq("2.13.12", "3.3.1"),
   scalaVersion := "2.13.12",
 
   developers := List(
@@ -184,7 +185,6 @@ lazy val core = project.in( file( "core" ) ).
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.4",
       "org.scala-lang.modules" %% "scala-parser-combinators" % "2.1.1",
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.parboiled" %% "parboiled" % "2.4.0",
       "com.lihaoyi" %% "fastparse" % "2.3.3",
       "com.lihaoyi" %% "sourcecode" % "0.2.8",
@@ -195,7 +195,15 @@ lazy val core = project.in( file( "core" ) ).
       "de.uni-freiburg.informatik.ultimate" % "smtinterpol" % "2.5",
       "com.github.scopt" %% "scopt" % "4.0.1",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.6",
-      "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.6" ),
+      "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.6")
+      ++ {
+        CrossVersion.partialVersion(scalaVersion.value) match {
+          case Some((2, 13)) => Seq(
+            "org.scala-lang" % "scala-reflect" % scalaVersion.value
+          )
+          case _ => Seq.empty
+        }
+      },
 
     // UI
     libraryDependencies ++= Seq(
