@@ -5,7 +5,7 @@ import gapt.formats.ClasspathInputFile
 
 import scala.tools.nsc.interpreter._
 import scala.tools.nsc.Settings
-import ammonite.ops._
+import os._
 
 object CLIMain {
 

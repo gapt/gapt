@@ -2,7 +2,7 @@ package gapt.testing
 
 import gapt.formats.{ InputFile, StdinInputFile }
 import gapt.formats.tptp._
-import ammonite.ops._
+import os._
 import gapt.proofs.resolution.structuralCNF
 
 object clausifier extends App {

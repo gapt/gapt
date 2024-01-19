@@ -1,6 +1,6 @@
 package gapt.cli
 
-import ammonite.ops.{ Path, pwd, read }
+import os.{ Path, pwd, read }
 import gapt.formats.ClasspathInputFile
 
 import scala.tools.nsc.Settings

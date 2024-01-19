@@ -1,6 +1,6 @@
 package gapt.testing
 
-import ammonite.ops.FilePath
+import os.FilePath
 import gapt.proofs.expansion.numberOfInstancesET
 import gapt.proofs.loadExpansionProof
 import gapt.utils.{ LogHandler, verbose }

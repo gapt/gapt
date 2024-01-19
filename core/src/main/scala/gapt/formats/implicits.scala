@@ -1,6 +1,6 @@
 package gapt.formats
 
-import ammonite.ops._
+import os._
 
 object implicits {
   implicit def stringToPath( s: String ): Path = Path( FilePath( s ), pwd )

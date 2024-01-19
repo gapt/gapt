@@ -1,6 +1,6 @@
 package gapt.provers.slakje
 
-import ammonite.ops.FilePath
+import os.FilePath
 import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.And

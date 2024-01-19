@@ -4,7 +4,7 @@ import java.io.{ ByteArrayOutputStream, PrintStream, PrintWriter, Writer }
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
 
-import ammonite.ops._
+import os._
 import gapt.cli
 import gapt.formats.ClasspathInputFile
 

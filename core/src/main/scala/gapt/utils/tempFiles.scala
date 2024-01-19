@@ -1,11 +1,11 @@
 package gapt.utils
 
-import ammonite.ops._
+import os._
 
 object withTempFile {
   def apply[T]( block: Path => T ): T = {
-    val tempFile = tmp( prefix = "gapt-" )
-    try block( tempFile ) finally rm ! tempFile
+    val tempFile = temp( prefix = "gapt-" )
+    try block( tempFile ) finally remove(tempFile)
   }
 
   def fromString[T]( content: String )( block: Path => T ): T =

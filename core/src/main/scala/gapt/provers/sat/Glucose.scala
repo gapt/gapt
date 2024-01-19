@@ -2,7 +2,7 @@ package gapt.provers.sat
 
 import gapt.formats.dimacs.{ DIMACS, readDRUP, writeDIMACS }
 import gapt.utils.{ runProcess, withTempFile }
-import ammonite.ops._
+import os._
 import gapt.proofs.rup.RupProof
 
 object Glucose extends Glucose( "glucose" )
@@ -15,7 +15,7 @@ class Glucose( command: String* ) extends ExternalSATSolver( command: _* ) with 
           dimacsInputFile.toString ) ) match {
           // Glucose segfaults when run with -certified on a satisfiable problem
           case ( 10 | 139, _ ) => /* SAT */ None
-          case ( 20 | 134, _ ) => /* UNSAT */ Some( read ! dimacsOutputFile )
+          case ( 20 | 134, _ ) => /* UNSAT */ Some( read(dimacsOutputFile) )
           case ( _, str ) =>
             throw new Exception( s"Error executing external sat prover $command:\n$str" )
         }

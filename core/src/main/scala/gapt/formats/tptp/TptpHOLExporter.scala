@@ -1,6 +1,6 @@
 package gapt.formats.tptp
 
-import ammonite.ops._
+import os._
 import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.And

@@ -1,4 +1,4 @@
-import ammonite.ops.{read => _, write => _, _}
+import os.{read => _, write => _, _}
 import gapt._
 import gapt.examples._
 import gapt.examples.sequence._

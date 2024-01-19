@@ -1,6 +1,6 @@
 package gapt.formats.tptp.statistics
 
-import ammonite.ops.FilePath
+import os.FilePath
 import gapt.expr._
 import gapt.expr.ty.arity
 import gapt.expr.util.constants

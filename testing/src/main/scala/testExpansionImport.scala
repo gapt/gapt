@@ -1,5 +1,5 @@
 package gapt.testing
-import ammonite.ops.FilePath
+import os.FilePath
 import gapt.expr.formula.hol.lcomp
 import gapt.expr.Const
 import gapt.expr.util.expressionSize

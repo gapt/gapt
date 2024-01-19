@@ -1,6 +1,6 @@
 package gapt.prooftool
 
-import ammonite.ops._
+import os._
 
 import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.{ HOLSequent, Sequent }

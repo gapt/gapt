@@ -1,6 +1,6 @@
 package gapt.formats.tptp.statistics
 
-import ammonite.ops.{ Path, exists }
+import os.{ Path, exists }
 import gapt.expr._
 import gapt.expr.formula.Formula
 import gapt.expr.subst.Substitution

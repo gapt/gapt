@@ -1,6 +1,6 @@
 package gapt.examples
 
-import ammonite.ops.exists
+import os.exists
 import gapt.formats.csv.{ CSVFile, CSVRow }
 import gapt.formats.leancop.{ LeanCoPParser, LeanCoPParserException }
 import gapt.formats.tptp.statistics._

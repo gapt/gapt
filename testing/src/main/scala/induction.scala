@@ -1,6 +1,6 @@
 package gapt.testing
 
-import ammonite.ops.FilePath
+import os.FilePath
 import gapt.expr.formula.All
 import gapt.expr.formula.Eq
 import gapt.expr.{ Var }

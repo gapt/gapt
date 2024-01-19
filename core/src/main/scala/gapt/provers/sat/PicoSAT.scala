@@ -4,7 +4,7 @@ import java.io.IOException
 
 import gapt.formats.dimacs.{ DIMACS, readDIMACS, readDRUP, writeDIMACS }
 import gapt.utils.{ ExternalProgram, runProcess, withTempFile }
-import ammonite.ops._
+import os._
 import gapt.expr.formula.Top
 import gapt.proofs.rup.RupProof
 
@@ -31,8 +31,8 @@ class PicoSAT( command: String* ) extends DrupSolver with ExternalProgram {
             "-r", drupOutputFile.toString,
             "-o", modelOutputFile.toString,
             dimacsInputFile.toString ) ) match {
-            case ( 10, _ ) => /* SAT */ Right( read ! modelOutputFile )
-            case ( 20, _ ) => /* UNSAT */ Left( read ! drupOutputFile )
+            case ( 10, _ ) => /* SAT */ Right( read(modelOutputFile) )
+            case ( 20, _ ) => /* UNSAT */ Left( read(drupOutputFile) )
             case ( _, str ) =>
               throw new Exception( s"Error executing external sat prover $command:\n$str" )
           }

@@ -3,7 +3,7 @@ package gapt.testing
 import gapt.proofs.expansion.InstanceTermEncoding
 import gapt.formats.prover9.Prover9TermParserLadrStyle._
 import gapt.proofs.loadExpansionProof
-import ammonite.ops._
+import os._
 
 object loadAndCompress extends App {
   val Array( methodName, fileName ) = args
