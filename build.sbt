@@ -50,7 +50,14 @@ lazy val commonSettings = Seq(
     "-language:postfixOps",
     "-language:implicitConversions",
     "-feature",
-    "-unchecked" ),
+    "-unchecked" ) ++ (
+        CrossVersion.partialVersion(scalaVersion.value) match {
+          case Some((3,_)) => Seq(
+            "-source:3.0-migration",
+            "-explain")
+          case _ => Seq()
+        }
+      ),
 
   javaOptions ++= Seq( "-Xss40m", "-Xmx1g" ),
   fork := true,
@@ -92,7 +99,7 @@ lazy val root = project.in( file( "." ) ).
       "-skip-packages", "ammonite:ammonite.ops",
       "-diagrams",
       "-implicits", "-implicits-show-all",
-      "-skip-packages", "scala" ),
+      "-skip-packages", "scala" ) ,
 
     scripts := {
       val runJVMOptions = javaOptions.value ++ Seq( "-cp", Path.makeString(
