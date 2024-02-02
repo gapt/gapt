@@ -131,7 +131,7 @@ case class ExpansionTree( term: ETt, polarity: Polarity, shallow: Formula ) exte
     }
   }
 
-  def toDoc( implicit sig: BabelSignature ): Doc = new ExpansionTreePrettyPrinter( sig ).export( this )
+  def toDoc( implicit sig: BabelSignature ): Doc = new ExpansionTreePrettyPrinter( sig ).`export`( this )
   def toSigRelativeString( implicit sig: BabelSignature ): String = toDoc.render( 80 )
   override def toString: String = toSigRelativeString
 }

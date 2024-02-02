@@ -56,8 +56,8 @@ trait InferenceRule extends PreprocessingRule {
 trait RedundancyRule extends InferenceRule {
   def isRedundant( `given`: Cls, existing: IndexedClsSet ): Option[Set[Int]]
   def apply( `given`: Cls, existing: IndexedClsSet ): ( Set[Cls], Set[( Cls, Set[Int] )] ) =
-    isRedundant( given, existing ) match {
-      case Some( reason ) => ( Set(), Set( given -> reason ) )
+    isRedundant( `given`, existing ) match {
+      case Some( reason ) => ( Set(), Set( `given` -> reason ) )
       case None           => ( Set(), Set() )
     }
 }
@@ -65,8 +65,8 @@ trait RedundancyRule extends InferenceRule {
 trait SimplificationRule extends InferenceRule {
   def simplify( `given`: Cls, existing: IndexedClsSet ): Option[( Cls, Set[Int] )]
   def apply( `given`: Cls, existing: IndexedClsSet ): ( Set[Cls], Set[( Cls, Set[Int] )] ) =
-    simplify( given, existing ) match {
-      case Some( ( simplified, reason ) ) => ( Set( simplified ), Set( given -> reason ) )
+    simplify( `given`, existing ) match {
+      case Some( ( simplified, reason ) ) => ( Set( simplified ), Set( `given` -> reason ) )
       case None                           => ( Set(), Set() )
     }
 }
@@ -185,9 +185,9 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
     ctx = state.ctx,
     nameGen = state.nameGen ) with InferenceRule {
     def apply( `given`: Cls, existing: IndexedClsSet ): ( Set[Cls], Set[( Cls, Set[Int] )] ) =
-      if ( given.clause.forall( _.isInstanceOf[Atom] ) ) ( Set(), Set() )
+      if ( `given`.clause.forall( _.isInstanceOf[Atom] ) ) ( Set(), Set() )
       else {
-        expand( given.proof )
+        expand( `given`.proof )
 
         val consts = constants.nonLogical( cnf.map( _.conclusion.elements ).flatMap( constants.nonLogical( _ ) ).
           filter( _.name != "=" ) ).map( _.name )
@@ -197,29 +197,29 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
             state.termOrdering = LPO( pc ++ consts.diff( precedence.toSet ) ++ precedence.drop( pc.size ), typeOrder )
         }
 
-        val inferred = cnf.map( SimpCls( given, _ ) ).toSet
+        val inferred = cnf.map( SimpCls( `given`, _ ) ).toSet
         cnf.clear()
-        ( inferred, Set( given -> Set() ) )
+        ( inferred, Set( `given` -> Set() ) )
       }
   }
 
   object TautologyDeletion extends RedundancyRule {
     def isRedundant( `given`: Cls, existing: IndexedClsSet ): Option[Set[Int]] =
-      if ( given.clause.isTaut || given.assertion.isTaut ) Some( Set() ) else None
+      if ( `given`.clause.isTaut || `given`.assertion.isTaut ) Some( Set() ) else None
   }
 
   object EqualityResolution extends SimplificationRule {
     def simplify( `given`: Cls, existing: IndexedClsSet ): Option[( Cls, Set[Int] )] = {
-      val refls = given.clause.antecedent collect { case Eq( t, t_ ) if t == t_ => t }
+      val refls = `given`.clause.antecedent collect { case Eq( t, t_ ) if t == t_ => t }
       if ( refls.isEmpty ) None
-      else Some( SimpCls( given, refls.foldRight( given.proof )( ( t, proof ) =>
+      else Some( SimpCls( `given`, refls.foldRight( `given`.proof )( ( t, proof ) =>
         Resolution( Refl( t ), Suc( 0 ), proof, proof.conclusion.indexOfInAnt( t === t ) ) ) ) -> Set() )
     }
   }
 
   object ReflexivityDeletion extends RedundancyRule {
     def isRedundant( `given`: Cls, existing: IndexedClsSet ): Option[Set[Int]] =
-      if ( given.clause.succedent exists {
+      if ( `given`.clause.succedent exists {
         case Eq( t, t_ ) if t == t_ => true
         case _                      => false
       } ) Some( Set() ) else None
@@ -227,24 +227,24 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
   object OrderEquations extends SimplificationRule {
     def simplify( `given`: Cls, existing: IndexedClsSet ): Option[( Cls, Set[Int] )] = {
-      val toFlip = given.clause filter {
+      val toFlip = `given`.clause filter {
         case Eq( t, s ) => termOrdering.lt( s, t )
         case _          => false
       }
       if ( toFlip.isEmpty ) {
         None
       } else {
-        var p = given.proof
+        var p = `given`.proof
         for ( e <- toFlip ) p = Flip( p, p.conclusion indexOf e )
-        Some( SimpCls( given, p ) -> Set() )
+        Some( SimpCls( `given`, p ) -> Set() )
       }
     }
   }
 
   object ClauseFactoring extends SimplificationRule {
     def simplify( `given`: Cls, existing: IndexedClsSet ): Option[( Cls, Set[Int] )] =
-      if ( given.clause == given.clause.distinct ) None
-      else Some( SimpCls( given, Factor( given.proof ) ) -> Set() )
+      if ( `given`.clause == `given`.clause.distinct ) None
+      else Some( SimpCls( `given`, Factor( `given`.proof ) ) -> Set() )
   }
 
   object DuplicateDeletion extends PreprocessingRule {
@@ -293,8 +293,8 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
     def isRedundant( `given`: Cls, existing: IndexedClsSet ): Option[Set[Int]] = {
       val eqs = existing.getIndex( ReflModEqIndex )
-      if ( !eqs.isEmpty && given.clause.succedent.exists {
-        case Eq( t, s ) => canonize( t, given.ass, eqs ) == canonize( s, given.ass, eqs )
+      if ( !eqs.isEmpty && `given`.clause.succedent.exists {
+        case Eq( t, s ) => canonize( t, `given`.ass, eqs ) == canonize( s, `given`.ass, eqs )
         case _          => false
       } ) Some( Set() ) else None
     }
@@ -317,12 +317,12 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
   object ForwardSubsumption extends RedundancyRule {
     def isRedundant( `given`: Cls, existing: IndexedClsSet ): Option[Set[Int]] =
-      existing.clauses.collectFirst { case e if subsume( e, given ).isDefined => e.ass }
+      existing.clauses.collectFirst { case e if subsume( e, `given` ).isDefined => e.ass }
   }
 
   object BackwardSubsumption extends InferenceRule {
     def apply( `given`: Cls, existing: IndexedClsSet ): ( Set[Cls], Set[( Cls, Set[Int] )] ) =
-      ( Set(), existing.clauses.collect { case e if subsume( given, e ).isDefined => e -> given.ass } )
+      ( Set(), existing.clauses.collect { case e if subsume( `given`, e ).isDefined => e -> `given`.ass } )
   }
 
   def choose[T]( ts: T* ): Seq[T] = ts
@@ -332,7 +332,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       val unitRwrLhs = existing.getIndex( UnitRwrLhsIndex )
       if ( unitRwrLhs.isEmpty ) return None
 
-      var p = given.proof
+      var p = `given`.proof
       var didRewrite = true
       var reason = Set[Int]()
       while ( didRewrite ) {
@@ -342,7 +342,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
           ( subterm, pos ) <- getFOPositions( p.conclusion( i ) ) if !didRewrite
           if !subterm.isInstanceOf[Var]
           ( t_, s_, leftToRight, c1 ) <- unitRwrLhs.generalizations( subterm ) if !didRewrite
-          if c1.ass subsetOf given.ass // FIXME: large performance difference? e.g. ALG200+1
+          if c1.ass subsetOf `given`.ass // FIXME: large performance difference? e.g. ALG200+1
           subst <- matching( t_, subterm )
           if termOrdering.lt( subst( s_ ), subterm )
         } {
@@ -353,8 +353,8 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
         }
       }
 
-      if ( p != given.proof ) {
-        Some( SimpCls( given, p ) -> reason )
+      if ( p != `given`.proof ) {
+        Some( SimpCls( `given`, p ) -> reason )
       } else {
         None
       }
@@ -366,7 +366,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       val inferred = mutable.Set[Cls]()
       val deleted = mutable.Set[( Cls, Set[Int] )]()
 
-      val givenSet = IndexedClsSet( state ).addIndex( UnitRwrLhsIndex ) + given
+      val givenSet = IndexedClsSet( state ).addIndex( UnitRwrLhsIndex ) + `given`
       for ( e <- existing.clauses ) {
         val ( i, d ) = ForwardUnitRewriting( e, givenSet )
         inferred ++= i
@@ -379,8 +379,8 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
   object OrderedResolution extends InferenceRule {
     def apply( `given`: Cls, existing: IndexedClsSet ): ( Set[Cls], Set[( Cls, Set[Int] )] ) = {
-      val givenSet = IndexedClsSet( state ).addIndex( SelectedLitIndex ).addIndex( MaxPosLitIndex ) + given
-      val existingPlusGiven = existing + given
+      val givenSet = IndexedClsSet( state ).addIndex( SelectedLitIndex ).addIndex( MaxPosLitIndex ) + `given`
+      val existingPlusGiven = existing + `given`
       val inferred1 =
         for {
           ( c1, i1 ) <- givenSet.getIndex( SelectedLitIndex ).elements
@@ -432,8 +432,8 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       val givenSet = IndexedClsSet( state ).
         addIndex( ForwardSuperpositionIndex ).
         addIndex( BackwardSuperpositionIndex ) +
-        given
-      val existingPlusGiven = existing + given
+        `given`
+      val existingPlusGiven = existing + `given`
       val inferred1 =
         for {
           ( c1, i1, t1, s1, ltr ) <- givenSet.getIndex( ForwardSuperpositionIndex ).elements
@@ -474,10 +474,10 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
     def apply( `given`: Cls, existing: IndexedClsSet ): ( Set[Cls], Set[( Cls, Set[Int] )] ) = {
       val inferred =
         for {
-          i <- given.maximal; j <- given.maximal
+          i <- `given`.maximal; j <- `given`.maximal
           if i < j && i.sameSideAs( j )
-          mgu <- unify( given.clause( i ), given.clause( j ) )
-        } yield DerivedCls( given, Subst( given.proof, mgu ) )
+          mgu <- unify( `given`.clause( i ), `given`.clause( j ) )
+        } yield DerivedCls( `given`, Subst( `given`.proof, mgu ) )
       ( inferred.toSet, Set() )
     }
   }
@@ -486,10 +486,10 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
     def apply( `given`: Cls, existing: IndexedClsSet ): ( Set[Cls], Set[( Cls, Set[Int] )] ) = {
       val inferred =
         for {
-          i <- if ( given.selected.nonEmpty ) given.selected else given.maximal if i.isAnt
-          Eq( t, s ) <- Some( given.clause( i ) )
+          i <- if ( `given`.selected.nonEmpty ) `given`.selected else `given`.maximal if i.isAnt
+          Eq( t, s ) <- Some( `given`.clause( i ) )
           mgu <- unify( t, s )
-        } yield DerivedCls( given, Subst( given.proof, mgu ) )
+        } yield DerivedCls( `given`, Subst( `given`.proof, mgu ) )
       ( inferred.toSet, Set() )
     }
   }
@@ -506,8 +506,8 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       }
 
     override def simplify( `given`: Cls, existing: IndexedClsSet ): Option[( Cls, Set[Int] )] = {
-      val q = simp( given.proof )
-      if ( q eq given.proof ) None else Some( SimpCls( given, q ) -> Set.empty )
+      val q = simp( `given`.proof )
+      if ( q eq `given`.proof ) None else Some( SimpCls( `given`, q ) -> Set.empty )
     }
   }
 
@@ -527,7 +527,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
     val componentAlreadyDefined = mutable.Set[Atom]()
     def apply( `given`: Cls, existing: IndexedClsSet ): ( Set[Cls], Set[( Cls, Set[Int] )] ) = {
-      val comps = AvatarSplit.getComponents( given.clause )
+      val comps = AvatarSplit.getComponents( `given`.clause )
 
       if ( comps.size >= 2 ) {
         val propComps = comps.filter( freeVariables( _ ).isEmpty ).map {
@@ -541,19 +541,19 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
           for ( c <- comps if freeVariables( c ).nonEmpty )
             yield boxComponent( c )
 
-        val split = AvatarSplit( given.proof, nonPropComps ++ propComps )
-        var inferred = Set( DerivedCls( given, split ) )
+        val split = AvatarSplit( `given`.proof, nonPropComps ++ propComps )
+        var inferred = Set( DerivedCls( `given`, split ) )
         for ( comp <- propComps; if !componentAlreadyDefined( comp.atom ) ) {
           componentAlreadyDefined += comp.atom
           for ( pol <- Polarity.values )
-            inferred += DerivedCls( given, AvatarComponent( AvatarGroundComp( comp.atom, pol ) ) )
+            inferred += DerivedCls( `given`, AvatarComponent( AvatarGroundComp( comp.atom, pol ) ) )
         }
         for ( comp <- nonPropComps if !componentAlreadyDefined( comp.atom ) ) {
           componentAlreadyDefined += comp.atom
-          inferred += DerivedCls( given, AvatarComponent( comp ) )
+          inferred += DerivedCls( `given`, AvatarComponent( comp ) )
         }
 
-        ( inferred, Set( given -> Set() ) )
+        ( inferred, Set( `given` -> Set() ) )
       } else {
         ( Set(), Set() )
       }

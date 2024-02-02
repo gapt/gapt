@@ -242,7 +242,7 @@ abstract class AnalysisWithCeresOmega {
         ()
     }
 
-    TptpHOLExporter.export( expansion_proof.expansionSequent, true, true )
+    TptpHOLExporter.`export`( expansion_proof.expansionSequent, true, true )
   }
 
   def collectStatistics() =

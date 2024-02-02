@@ -127,7 +127,7 @@ case class RecursionScheme( startSymbol: Const, nonTerminals: Set[Const], rules:
     gen.toSet
   }
 
-  override def toString: String = new RecursionSchemeExporter( unicode = true, rs = this ).export()
+  override def toString: String = new RecursionSchemeExporter( unicode = true, rs = this ).`export`()
 }
 
 object RecursionScheme {
