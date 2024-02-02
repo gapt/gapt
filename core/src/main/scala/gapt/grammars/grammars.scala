@@ -87,7 +87,7 @@ case class VTRATG( startSymbol: Var, nonTerminals: Seq[VTRATG.NonTerminalVect], 
     lang filter ( freeVariables( _ ).isEmpty )
   }
 
-  override def toString: String = new VtratgExporter( unicode = true, vtratg = this ).export()
+  override def toString: String = new VtratgExporter( unicode = true, vtratg = this ).`export`()
 }
 
 object TRATG {

@@ -131,14 +131,14 @@ abstract class Expr {
    * The output can be parsed using e.g. the string interpolators, and we
    * guarantee that the expression can be perfectly reconstructed from the string output.
    */
-  override def toString: String = new BabelExporter( unicode = true, sig = BabelSignature.defaultSignature ).export( this )
+  override def toString: String = new BabelExporter( unicode = true, sig = BabelSignature.defaultSignature ).`export`( this )
   /**
    * Converts this expression into a 7-bit safe ASCII string.
    *
    * The output can be parsed using e.g. the string interpolators, and we
    * guarantee that the expression can be perfectly reconstructed from the string output.
    */
-  def toAsciiString: String = new BabelExporter( unicode = false, sig = BabelSignature.defaultSignature ).export( this )
+  def toAsciiString: String = new BabelExporter( unicode = false, sig = BabelSignature.defaultSignature ).`export`( this )
   /**
    * Converts this expression into a string, taking the signature into account.
    *
@@ -147,12 +147,12 @@ abstract class Expr {
    * be a constant, then we output just x instead of the default #c(x: i).
    */
   def toSigRelativeString( implicit sig: BabelSignature ): String =
-    new BabelExporter( unicode = true, sig = sig ).export( this )
+    new BabelExporter( unicode = true, sig = sig ).`export`( this )
 
   def toUntypedString( implicit sig: BabelSignature ): String =
-    new BabelExporter( unicode = true, sig = implicitly, omitTypes = true ).export( this )
+    new BabelExporter( unicode = true, sig = implicitly, omitTypes = true ).`export`( this )
   def toUntypedAsciiString( implicit sig: BabelSignature ): String =
-    new BabelExporter( unicode = false, sig = implicitly, omitTypes = true ).export( this )
+    new BabelExporter( unicode = false, sig = implicitly, omitTypes = true ).`export`( this )
 
   def toRawString: String =
     new BabelExporter( unicode = true, sig = BabelSignature.defaultSignature ).exportRaw( this )

@@ -93,7 +93,7 @@ sealed abstract class ETt { self: Product =>
       case ( ETtDef( sh, ch ), _ ) => ch.deep( sh, polarity )
     }
 
-  def toDoc( implicit sig: BabelSignature ): Doc = new ETtPrettyPrinter( sig ).export( this )
+  def toDoc( implicit sig: BabelSignature ): Doc = new ETtPrettyPrinter( sig ).`export`( this )
   def toSigRelativeString( implicit sig: BabelSignature ): String = toDoc.render( 80 )
   override def toString: String = toSigRelativeString
 }

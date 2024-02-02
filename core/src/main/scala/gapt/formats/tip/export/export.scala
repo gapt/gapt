@@ -1,4 +1,4 @@
-package gapt.formats.tip.export
+package gapt.formats.tip.`export`
 
 import gapt.expr.Const
 import gapt.expr.formula.And
@@ -49,19 +49,19 @@ package object `export` {
    * the context.
    */
   def `export`( sequent: Sequent[Formula], context: Context ): Doc = {
-    export(
+    `export`(
       new SequentContextToTipProblemConverter( sequent, context ).convert )
   }
 
   def `export`( sequent: HOLSequent )(
     implicit
     ctx: Context, dummyImplicit: DummyImplicit ): Doc =
-    export( sequent, ctx )
+    `export`( sequent, ctx )
 
   def `export`( formula: Formula )(
     implicit
     ctx: Context ): Doc =
-    export( Sequent() :+ formula )
+    `export`( Sequent() :+ formula )
 
   private class SequentContextToTipProblemConverter(
       sequent: Sequent[Formula],

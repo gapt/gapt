@@ -76,7 +76,7 @@ class TptpHOLExporter {
    */
   def apply( seq: ExpansionSequent, filename: String,
              maximize_axiom_declarations: Boolean, lambda_lifting: Boolean ): Unit =
-    write( Path( filename, pwd ), export( seq, maximize_axiom_declarations, lambda_lifting ) )
+    write( Path( filename, pwd ), `export`( seq, maximize_axiom_declarations, lambda_lifting ) )
 
   /**
    * Exports an expansion proof as TPTP thf problem. The antedent of the

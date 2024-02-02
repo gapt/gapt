@@ -106,7 +106,7 @@ case class Sequent[+A]( antecedent: Vector[A], succedent: Vector[A] ) {
 
   def toSigRelativeString( implicit sig: BabelSignature ): String =
     if ( forall { _.isInstanceOf[Formula] } ) {
-      new BabelExporter( unicode = true, sig = sig ).export( this.asInstanceOf[HOLSequent] )
+      new BabelExporter( unicode = true, sig = sig ).`export`( this.asInstanceOf[HOLSequent] )
     } else {
       val stringified = this map { _.toString }
       val multiLine = stringified.exists { _ contains "\n" } || stringified.elements.map { _.length + 2 }.sum > 80
