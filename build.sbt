@@ -224,8 +224,16 @@ lazy val core = project.in( file( "core" ) ).
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
-      "io.circe" %% "circe-parser",
-      "io.circe" %% "circe-generic-extras" ).map( _ % "0.14.2" ) )
+      "io.circe" %% "circe-parser").map( _ % "0.14.6" )
+      ++ {
+        CrossVersion.partialVersion(scalaVersion.value) match {
+          case Some((2, 13)) => Seq(
+            "io.circe" %% "circe-generic-extras" % "0.14.3"
+          )
+          case _ => Seq.empty
+        }
+      }
+  )
 
 lazy val examples = project.in( file( "examples" ) ).
   dependsOn( core ).
