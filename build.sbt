@@ -253,6 +253,15 @@ lazy val examples = project.in( file( "examples" ) ).
       val target = ( baseDirectory.value / "target" ).getCanonicalPath
       new SimpleFileFilter( _.getCanonicalPath startsWith target )
     } || "*.scala",
+
+    excludeFilter in (Compile, unmanagedSources) := {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+          case Some((2, _)) =>
+            new SimpleFileFilter( _.getCanonicalPath startsWith (baseDirectory.value / "scala-3").getCanonicalPath)
+          
+          case _ => new SimpleFileFilter( _.getCanonicalPath startsWith (baseDirectory.value / "scala-2").getCanonicalPath)
+        }
+    },
     dependencyOverrides ++= dependencyConflictResolutions )
 
 lazy val tests = project.in( file( "tests" ) ).
