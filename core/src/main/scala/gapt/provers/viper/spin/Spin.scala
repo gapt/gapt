@@ -176,13 +176,13 @@ class Spin( opts: SpinOptions ) {
             return None
 
           val `given` = choose()
-          usable -= given
+          usable -= `given`
 
-          generatePotentialInductionAxioms( given )
+          generatePotentialInductionAxioms( `given` )
 
-          val discarded = inferenceComputation( given )
+          val discarded = inferenceComputation( `given` )
 
-          info( s"[wo=${workedOff.size},us=${usable.size}] ${if ( discarded ) "discarded" else "kept"}: $given".replace( '\n', ' ' ) )
+          info( s"[wo=${workedOff.size},us=${usable.size}] ${if ( discarded ) "discarded" else "kept"}: ${`given`}".replace( '\n', ' ' ) )
 
           preprocessing()
           clauseProcessing()
@@ -231,12 +231,12 @@ class Spin( opts: SpinOptions ) {
 
     private def generatePotentialInductionAxioms( `given`: Cls ): Unit = {
       // TODO: this should probably be less restrictive now that we perform more subgoal generalization
-      if ( performGeneralization || given.clause.exists( constants.nonLogical( _ ) exists ( isInductive( _ )( ctx ) ) ) &&
-        !inductedClauses.contains( given.clause ) ) {
+      if ( performGeneralization || `given`.clause.exists( constants.nonLogical( _ ) exists ( isInductive( _ )( ctx ) ) ) &&
+        !inductedClauses.contains( `given`.clause ) ) {
         EscargotLogger.time( "axiom_gen" ) {
-          clauseAxioms( given.clause )( ctx ) foreach ( possibleAxioms.enqueue( _ ) )
+          clauseAxioms( `given`.clause )( ctx ) foreach ( possibleAxioms.enqueue( _ ) )
         }
-        inductedClauses += given.clause
+        inductedClauses += `given`.clause
       }
     }
 

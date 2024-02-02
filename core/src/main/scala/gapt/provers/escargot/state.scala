@@ -254,17 +254,17 @@ class EscargotState( val ctx: MutableContext ) {
     var discarded = false
 
     for ( r <- inferences if !discarded ) {
-      val ( i, d ) = r( given, workedOff )
+      val ( i, d ) = r( `given`, workedOff )
       inferred ++= i
       for ( ( c, reason ) <- d ) {
         workedOff -= c
-        if ( c == given ) discarded = true
+        if ( c == `given` ) discarded = true
         if ( !reason.subsetOf( c.ass ) )
           locked += ( c -> Some( reason ) )
       }
     }
 
-    if ( !discarded ) workedOff += given
+    if ( !discarded ) workedOff += `given`
     newlyDerived ++= inferred
 
     discarded
@@ -360,11 +360,11 @@ class EscargotState( val ctx: MutableContext ) {
           return None
 
         val `given` = choose()
-        usable -= given
+        usable -= `given`
 
-        val discarded = inferenceComputation( given )
+        val discarded = inferenceComputation( `given` )
 
-        info( s"[wo=${workedOff.size},us=${usable.size}] ${if ( discarded ) "discarded" else "kept"}: $given".replace( '\n', ' ' ) )
+        info( s"[wo=${workedOff.size},us=${usable.size}] ${if ( discarded ) "discarded" else "kept"}: ${`given`}".replace( '\n', ' ' ) )
 
         preprocessing()
         clauseProcessing()
