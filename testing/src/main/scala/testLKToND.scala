@@ -98,7 +98,7 @@ object testLKToND2 extends scala.App {
 
     val tptp = time( "tptp" ) { TptpImporter.loadWithIncludes( FilePath( fileName ) ) }
     val problem = tptp.toSequent
-    implicit val ctx = MutableContext.guess( problem )
+    implicit val ctx: MutableContext = MutableContext.guess( problem )
     val cnf = time( "clausifier" ) { structuralCNF( problem ) }
     time( "prover" ) {
       new EProver(

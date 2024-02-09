@@ -143,7 +143,7 @@ abstract class AnalysisWithCeresOmega {
   lazy val ( abstracted_constants_map, fol_css ) = {
     val css_nolabels = preprocessed_css // remove labels from css
     // FIXME Not reversing the list of sequents breaks the nTapeTest
-    implicit val abs_consts = new Hol2FolDefinitions()
+    implicit val abs_consts: Hol2FolDefinitions = new Hol2FolDefinitions()
     val abs_css =
       css_nolabels
         .reverse

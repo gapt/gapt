@@ -121,14 +121,14 @@ class LLKTest extends Specification {
 
     "load the commutativity of + proof from file and parse it" in {
       val p = llkFromClasspath( "komm.llk" )
-      ( p.proof( "THEPROOF" ) ) must not throwAn //exception
+      ( p.proof( "THEPROOF" ) ) must not (throwAn[Throwable]) //exception
 
       ok
     }
 
     "load the 3-2 pigeon hole example from file and parse it" in {
       val p = llkFromClasspath( "pigeon32.llk" )
-      ( p.proof( "PROOF" ) ) must not throwAn //exception
+      ( p.proof( "PROOF" ) ) must not (throwAn[Throwable]) //exception
 
       ok
     }

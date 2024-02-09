@@ -102,7 +102,7 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
 
     val tptp = TptpImporter.loadWithIncludes( FilePath( tptpInputFile ) )
     val problem = TptpProblemToResolution( tptp )
-    implicit val ctx = MutableContext.guess( problem )
+    implicit val ctx: MutableContext = MutableContext.guess( problem )
     getResolutionProof( structuralCNF.onProofs( TptpProblemToResolution( tptp ) ) ) match {
       case Some( proof ) =>
         println( "% SZS status Unsatisfiable" )

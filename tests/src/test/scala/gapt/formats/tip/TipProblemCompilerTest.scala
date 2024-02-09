@@ -9,6 +9,7 @@ import gapt.formats.tip.compiler.TipTransformationCompiler
 import gapt.formats.tip.parser.TipSmtParser
 import gapt.proofs.context.update.InductiveType
 import org.specs2.mutable.Specification
+import gapt.proofs.context.Context
 
 class TipProblemCompilerTest extends Specification {
 
@@ -28,7 +29,7 @@ class TipProblemCompilerTest extends Specification {
         |)
       """.stripMargin ) ) ).compileTipProblem().toProblem
 
-    implicit val ctx = inputProblem.context
+    implicit val ctx: Context = inputProblem.context
 
     inputProblem.functions( 0 ).definitions.toSet must_==
       Set( hof"f(nil) = Z", hof"!y !ys f(cons(y,ys)) = f(ys)" )
@@ -45,7 +46,7 @@ class TipProblemCompilerTest extends Specification {
         |    (cons (head Nat) (tail list)))))
       """.stripMargin ) ) ).compileTipProblem().toProblem
 
-    implicit val ctx = inputProblem.context
+    implicit val ctx: Context = inputProblem.context
 
     inputProblem.datatypes.toSet must
       contain( Set(
@@ -66,7 +67,7 @@ class TipProblemCompilerTest extends Specification {
         .compileTipProblem()
         .toProblem
 
-    implicit val ctx = inputProblem.context
+    implicit val ctx: Context = inputProblem.context
 
     inputProblem.datatypes.toSet must
       contain(
@@ -95,7 +96,7 @@ class TipProblemCompilerTest extends Specification {
         |)
       """.stripMargin ) ) ).compileTipProblem().toProblem
 
-    implicit val ctx = inputProblem.context
+    implicit val ctx: Context = inputProblem.context
 
     inputProblem.functions.toSet must
       contain( Set(
@@ -122,7 +123,7 @@ class TipProblemCompilerTest extends Specification {
         |(prove (ite (= Z Z) (= (f nil) Z) (= (f nil) Z) ))
       """.stripMargin ) ) ).compileTipProblem().toProblem
 
-    implicit val ctx = inputProblem.context
+    implicit val ctx: Context = inputProblem.context
 
     inputProblem.goal must_==
       hof"(Z = Z -> f(nil) = Z) &  (-(Z = Z) -> f(nil) = Z)"
@@ -152,7 +153,7 @@ class TipProblemCompilerTest extends Specification {
         |         (  (cons y ys) (= ys ys) ) ) ) ))
       """.stripMargin ) ) ).compileTipProblem().toProblem
 
-    implicit val ctx = inputProblem.context
+    implicit val ctx: Context = inputProblem.context
 
     inputProblem.goal must_== hof"Z = Z & !(ys: list) ys = ys"
   }
@@ -226,7 +227,7 @@ class TipProblemCompilerTest extends Specification {
         |         (  (S x) false ) ) ))
       """.stripMargin ) ) ).compileTipProblem().toProblem
 
-    implicit val ctx = inputProblem.context
+    implicit val ctx: Context = inputProblem.context
 
     inputProblem.goal must_== hof"⊤"
   }

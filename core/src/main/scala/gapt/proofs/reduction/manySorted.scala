@@ -974,7 +974,7 @@ case object CNFReductionResRes extends Reduction[HOLSequent, Set[HOLClause], Res
  */
 case object CNFReductionSequentsResRes extends Reduction[Set[HOLSequent], Set[HOLClause], ResolutionProof, ResolutionProof] {
   override def forward( problem: Set[HOLSequent] ): ( Set[HOLClause], ( ResolutionProof ) => ResolutionProof ) = {
-    implicit val ctx = MutableContext.guess( problem ) // TODO(gabriel)
+    implicit val ctx: MutableContext = MutableContext.guess( problem ) // TODO(gabriel)
     val clausifier = new Clausifier( propositional = false, structural = false, bidirectionalDefs = false, cse = false,
       ctx = ctx, nameGen = ctx.newNameGenerator )
     problem.map( Input ).foreach( clausifier.expand )

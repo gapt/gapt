@@ -10,6 +10,7 @@ import gapt.proofs.expansion.eliminateDefsET
 import gapt.proofs.resolution._
 import gapt.provers.eprover.EProver
 import gapt.utils.{ LogHandler, Logger, MetricsPrinter }
+import gapt.proofs.HOLSequent
 
 object testExpansionImport extends scala.App {
   val logger = Logger( "testExpansionImport" )
@@ -23,7 +24,7 @@ object testExpansionImport extends scala.App {
 
   try time( "total" ) {
     val tptp = time( "tptpparser" ) { TptpImporter.loadWithIncludes( FilePath( tptpFileName ) ) }
-    val problem = tptp.toSequent
+    val problem: HOLSequent = tptp.toSequent
     metric( "problem_lcomp", lcomp( problem ) )
     metric( "problem_scomp", expressionSize( problem.toImplication ) )
     implicit val ctx = MutableContext.guess( problem )

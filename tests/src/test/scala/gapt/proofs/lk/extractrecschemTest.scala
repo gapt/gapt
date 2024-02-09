@@ -20,6 +20,7 @@ import gapt.proofs.lk.util.extractRecSchem
 import gapt.utils.SatMatchers
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragment
+import gapt.proofs.context.immutable.ImmutableContext
 
 class ExtractRecSchemTest extends Specification with SatMatchers {
   "simple" in {
@@ -118,7 +119,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
 }
 
 class Pi2FactorialPOC extends Specification with SatMatchers {
-  implicit var ctx = Context()
+  implicit var ctx: ImmutableContext = Context()
   ctx += InductiveType( "i", hoc"0:i", hoc"s:i>i" )
 
   ctx += hoc"'+': i>i>i"

@@ -281,7 +281,7 @@ object rename {
   }
   def apply( vs: Iterable[Var], blackList: Iterable[VarOrConst] )( implicit dummyImplicit: DummyImplicit ): Map[Var, Var] = {
     val nameGen = awayFrom( blackList )
-    vs map { v => v -> nameGen.fresh( v ) } toMap
+    vs map { (v: Var) => v -> nameGen.fresh( v ) } toMap
   }
 }
 
