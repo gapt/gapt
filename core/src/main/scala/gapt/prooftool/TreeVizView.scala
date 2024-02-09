@@ -88,7 +88,7 @@ class ProofNodeInfo[T <: DagProof[T]] extends NodeInfo {
   }
 
   def getName( path: TreePath2[TreeNode] ) = path.getLastPathComponent match {
-    case ProofNode( p: DagProof[_] ) =>
+    case ProofNode(p ) =>
       p.name
   }
 
