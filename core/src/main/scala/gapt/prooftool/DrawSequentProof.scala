@@ -192,7 +192,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       border = defaultBorder
       endSequentPanel.border = Swing.EmptyBorder
 
-    case FontChanged( _ ) =>
+    case scala.swing.event.FontChanged( _ ) =>
       revalidate()
       repaint()
 
@@ -343,7 +343,7 @@ class ProofLinePanel[F, T <: SequentProof[F, T]](
     case HideDebugBorders =>
       border = Swing.EmptyBorder
 
-    case FontChanged( _ ) =>
+    case scala.swing.event.FontChanged( _ ) =>
       fSize = parent.main.currentFontSize
   }
 }
