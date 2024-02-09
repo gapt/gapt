@@ -314,6 +314,7 @@ object Viper {
         require( proof.conclusion isSubsetOf problem.toSequent )
         logger.metric( "success", true )
         println( "proof found" )
+        import gapt.prooftool.LKProofViewable
         if ( opts.prooftool ) prooftool( proof )
       case None =>
         logger.metric( "success", false )
