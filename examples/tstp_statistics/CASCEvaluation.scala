@@ -242,7 +242,7 @@ object CASCEvaluation {
   }
 
   def eval_rp_stats[T <: FileData]( rp_stats: Set[RPProofStats[T]] ) = {
-    implicit def conv( v: BigInt ) = BigDecimal( v )
+    implicit def conv( v: BigInt ): BigDecimal = BigDecimal( v )
     def maxavgh( x: String ) = List( s"${x}_max", s"${x}_avg" )
     def maxavgsCSV[T]( s: Statistic[T] )( implicit num: Numeric[T], conv: T => BigDecimal ) = {
       val csv = roundedStatisticCSV( s )
