@@ -250,8 +250,8 @@ case class InductionTactic( mode: TacticApplyMode, v: Var, eigenVariables: Map[C
       constrs <- getConstructors( v.ty.asInstanceOf[TBase] )
       cases = constrs.map { constr =>
         val FunctionType( _, argTypes ) = constr.ty
-        val nameGen = rename.awayFrom( freeVariables( goal.conclusion ) )
-        val evs = eigenVariables.getOrElse( constr, argTypes map { at => nameGen.fresh( if ( at == v.ty ) v else Var( "x", at ) ) } )
+        val nameGen: ExprNameGenerator = rename.awayFrom( freeVariables( goal.conclusion ) )
+        val evs = eigenVariables.getOrElse( constr, argTypes map { at => nameGen.fresh(if ( at == v.ty ) v else Var( "x", at ) ) } )
         val hyps = NewLabels( goal.labelledSequent, s"IH${v.name}" ) zip ( evs filter { _.ty == v.ty } map { ev => Substitution( v -> ev )( formula ) } )
         val subGoal = hyps ++: goal.labelledSequent.delete( idx ) :+ ( label -> Substitution( v -> constr( evs: _* ) )( formula ) )
         InductionCase( OpenAssumption( subGoal ), constr, subGoal.indices.take( hyps.size ), evs, subGoal.indices.last )
