@@ -533,7 +533,7 @@ object proofLink extends Script {
 }
 
 object proofLink2 extends Script {
-  implicit var ctx = Context.default
+  implicit var ctx: Context = Context.default
   ctx += Sort( "i" )
   ctx += hoc"'<': i>i>o"
   ctx += hoc"'1': i"
