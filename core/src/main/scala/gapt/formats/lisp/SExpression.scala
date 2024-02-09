@@ -110,7 +110,9 @@ object SExpressionParser {
     }
 
     private def Keyword = rule {
-      ':' ~ capture( oneOrMore( noneOf( ":() |\n\r\t\f;\"" ) ) ) ~ WhiteSpace ~> lisp.LKeyword
+      ':' ~ capture( oneOrMore( noneOf( ":() |\n\r\t\f;\"" ) ) ) ~ WhiteSpace ~> {
+        lisp.LKeyword(_)
+      }
     }
 
     private def SExpr: Rule1[lisp.SExpression] = rule {
@@ -122,7 +124,9 @@ object SExpressionParser {
     }
 
     private def Parens1 = rule {
-      ( '(' ~ WhiteSpace ~ SExpr ~ '.' ~ WhiteSpace ~ SExpr ~ ')' ~ WhiteSpace ) ~> LCons
+      ( '(' ~ WhiteSpace ~ SExpr ~ '.' ~ WhiteSpace ~ SExpr ~ ')' ~ WhiteSpace ) ~> {
+        LCons(_,_)
+      }
     }
 
     def File: Rule1[Seq[lisp.SExpression]] = rule { WhiteSpace ~ zeroOrMore( SExpr ) ~ EOI }
