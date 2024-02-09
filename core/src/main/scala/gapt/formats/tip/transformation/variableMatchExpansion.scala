@@ -189,8 +189,8 @@ class VariableMatchExpansion( problem: TipSmtProblem ) {
             TipSmtVariableDecl( field.name, TipSmtType( ty.name ) )
         }
     val quantifier = polarity match {
-      case Forall => TipSmtForall
-      case Exists => TipSmtExists
+      case Forall => TipSmtForall.apply(_,_)
+      case Exists => TipSmtExists.apply(_,_)
     }
     if ( boundVariables.isEmpty )
       new Substitute( problem )(
