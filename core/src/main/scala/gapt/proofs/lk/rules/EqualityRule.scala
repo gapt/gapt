@@ -64,8 +64,8 @@ object EqualityRule {
 
   def unapply( proof: EqualityRule ): Option[( LKProof, SequentIndex, SequentIndex, Abs )] =
     proof match {
-      case proof: EqualityLeftRule  => EqualityLeftRule.unapply( proof )
-      case proof: EqualityRightRule => EqualityRightRule.unapply( proof )
+      case proof@EqualityLeftRule(subProof,eq,aux,replacementContext) => Some((subProof, eq,aux,replacementContext))
+      case proof@EqualityRightRule(subProof,eq,aux,replacementContext) => Some((subProof, eq,aux,replacementContext))
       case _                        => None
     }
 }
