@@ -50,6 +50,7 @@ object instprover extends Script {
   val Some( minimized ) = minimalExpansionSequent( expansionProof, Sat4j )
   val lkProof = ExpansionProofToLK( minimized )
 
+  implicit val prooftoolViewable: gapt.prooftool.ProoftoolViewable[gapt.proofs.expansion.ExpansionProofToLK.UnprovableOrLKProof] = implicitly
   prooftool( lkProof )
 
 }
