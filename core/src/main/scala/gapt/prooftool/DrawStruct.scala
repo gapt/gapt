@@ -10,6 +10,7 @@ import java.awt.event.{ MouseEvent, MouseMotionListener }
 
 import gapt.formats.latex.LatexExporter
 import gapt.proofs.ceres.Struct
+import javax.swing.Icon
 
 class DrawStruct( val main: StructViewer, val struct: Struct, private var str: String ) extends BorderPanel with MouseMotionListener {
   background = new Color( 255, 255, 255 )
@@ -31,7 +32,7 @@ class DrawStruct( val main: StructViewer, val struct: Struct, private var str: S
   def initialize(): Unit = {
     struct match {
       case utree if struct.children.size == 1 =>
-        val mylabel = utree.label match {
+        val mylabel: Label{val myicon: Icon} = utree.label match {
           case _ => new Label( tx ) {
             font = main.font
             val myicon = icon
