@@ -141,7 +141,7 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
  */
 class LKProofViewer( name: String, proof: LKProof )
   extends SequentProofViewer[Formula, LKProof]( name, proof, LatexExporter( _ ) )
-  with Savable[LKProof] with ContainsLKProof {
+  with Savable[DagProof[LKProof]] with ContainsLKProof {
   override val content: LKProof = proof
   override def viewMenuContents = super.viewMenuContents ++ Seq(
     hideStructuralRulesButton, markCutAncestorsButton, markNonIntuitionisticInferencesButton, new Separator(),
@@ -163,9 +163,9 @@ class LKProofViewer( name: String, proof: LKProof )
   }
 
   def saveFormats = Map(
-    ".llk" -> { p: LKProof => exportLLK( p ) },
-    ".tex" -> { p: LKProof => LatexExporter( p ) },
-    ".json" -> { p: LKProof => JsonExporter( p ).toString } )
+    ".llk" -> { p: DagProof[LKProof] => exportLLK( p.subProofAt(Nil) ) },
+    ".tex" -> { p: DagProof[LKProof] => LatexExporter( p.subProofAt(Nil) ) },
+    ".json" -> { p: DagProof[LKProof] => JsonExporter( p.subProofAt(Nil) ).toString } )
 
   def hideStructuralRules(): Unit = publisher.publish( HideStructuralRules )
   def showAllRules(): Unit = publisher.publish( ShowAllRules( Nil ) )
@@ -208,9 +208,9 @@ class LKProofViewer( name: String, proof: LKProof )
 }
 
 class NDProofViewer( name: String, proof: NDProof )
-  extends SequentProofViewer[Formula, NDProof]( name, proof, LatexExporter( _ ) ) with Savable[NDProof] {
+  extends SequentProofViewer[Formula, NDProof]( name, proof, LatexExporter( _ ) ) with Savable[DagProof[NDProof]] {
   override val content: NDProof = proof
 
   def saveFormats = Map(
-    ".json" -> { p: NDProof => JsonExporter( p ).toString } )
+    ".json" -> { p: DagProof[NDProof] => JsonExporter( p.subProofAt(Nil) ).toString } )
 }
