@@ -9,7 +9,6 @@ import gapt.expr.ty.FunctionType
 import gapt.expr.ty.To
 import gapt.expr.ty.Ty
 import gapt.expr.util.freeVariables
-import gapt.logic.hol.dls.dls
 import gapt.provers.escargot.Escargot
 
 import scala.util.Failure
@@ -41,7 +40,7 @@ object solveFormulaEquation {
   def apply( f: Formula ): Try[Substitution] = {
     val xs = freeVariables( f ).filter( isHigherOrderPredicateVariable ).toSeq
     val h = Ex.Block( xs, f )
-    dls( h ).flatMap( {
+    dls.dls( h ).flatMap( {
       case ( substitution, firstOrderPart ) =>
         if ( Escargot.isValid( BetaReduction.betaNormalize( substitution( firstOrderPart ) ) ) )
           Success( substitution )
