@@ -477,7 +477,7 @@ object Sequent {
   /**
    * Returns a generic sequent of sizes (m, n): Ant(0),…,Ant(m-1) :- Suc(0),…,Suc(n-1)
    */
-  def apply( m: Int, n: Int ): Sequent[SequentIndex] = ( 0 until m ).map { Ant } ++: Sequent() :++ ( 0 until n ).map { Suc }
+  def apply( m: Int, n: Int ): Sequent[SequentIndex] = ( 0 until m ).map { Ant.apply } ++: Sequent() :++ ( 0 until n ).map { Suc.apply }
 
   implicit val SequentFunctor: Functor[Sequent] = new Functor[Sequent] {
     def map[A, B]( fa: Sequent[A] )( f: A => B ): Sequent[B] = fa.map( f )

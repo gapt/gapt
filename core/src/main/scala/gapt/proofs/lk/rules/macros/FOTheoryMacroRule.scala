@@ -30,7 +30,7 @@ object FOTheoryMacroRule {
     val nameGen = rename.awayFrom( containedNames( axioms + sequent ) )
     val grounding = freeVariables( sequent ).map( v => v -> Const( nameGen.fresh( v.name ), v.ty ) )
     val cnf = axioms ++ Substitution( grounding )( sequent ).map( Sequent() :+ _, _ +: Sequent() ).elements
-    prover.getResolutionProof( cnf.map( Input ) ) map { p =>
+    prover.getResolutionProof( cnf.map( Input.apply ) ) map { p =>
       var lk = ResolutionToLKProof( eliminateSplitting( p ), {
         i =>
           ( i: @unchecked ) match {

@@ -977,7 +977,7 @@ case object CNFReductionSequentsResRes extends Reduction[Set[HOLSequent], Set[HO
     implicit val ctx: MutableContext = MutableContext.guess( problem ) // TODO(gabriel)
     val clausifier = new Clausifier( propositional = false, structural = false, bidirectionalDefs = false, cse = false,
       ctx = ctx, nameGen = ctx.newNameGenerator )
-    problem.map( Input ).foreach( clausifier.expand )
+    problem.map( Input.apply ).foreach( clausifier.expand )
     (
       Set() ++ clausifier.cnf.view.map( _.conclusion.map( _.asInstanceOf[Atom] ) ),
       fixDerivation( _, clausifier.cnf ) )

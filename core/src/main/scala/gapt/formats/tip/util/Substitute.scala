@@ -95,11 +95,11 @@ class Substitute( private val problem: TipSmtProblem ) {
 
       case expr @ TipSmtForall( _, _ ) =>
         substituteQuantifiedExpression(
-          substitution, expr.variables, expr.formula, TipSmtForall )
+          substitution, expr.variables, expr.formula, TipSmtForall.apply )
 
       case expr @ TipSmtExists( _, _ ) =>
         substituteQuantifiedExpression(
-          substitution, expr.variables, expr.formula, TipSmtExists )
+          substitution, expr.variables, expr.formula, TipSmtExists.apply )
 
       case expr @ TipSmtIte( _, _, _ ) =>
         substitute( substitution, expr )
@@ -275,14 +275,14 @@ class Substitute( private val problem: TipSmtProblem ) {
     val TipSmtConstructorPattern( constructor, _ ) = tipSmtCase.pattern
     val newPattern = TipSmtConstructorPattern(
       constructor,
-      newBoundNames.map { TipSmtIdentifier } )
+      newBoundNames.map { TipSmtIdentifier.apply } )
     val newExpression =
       apply(
         tipSmtCase.expr,
         Substitution(
           oldNames
-            .map { TipSmtIdentifier }
-            .zip( newBoundNames map { TipSmtIdentifier } ): _* ) )
+            .map { TipSmtIdentifier.apply }
+            .zip( newBoundNames map { TipSmtIdentifier.apply } ): _* ) )
     TipSmtCase( newPattern, newExpression )
   }
 }

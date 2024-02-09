@@ -207,14 +207,14 @@ object TptpProofParser {
             FOLConst( "avatar_sat_refutation" | "avatar_smt_refutation" ), _, _ ) ) +: _ ) =>
           Seq( SketchSplitCombine( getParents( justification ).flatMap( convert ) ) )
         case AnnotatedFormula( "fof", _, "conjecture", _, TptpTerm( "file", _, TptpTerm( label ) ) +: _ ) =>
-          labelledCNF( label ) map SketchAxiom
+          labelledCNF( label ) map SketchAxiom.apply
         case AnnotatedFormula( _, _, _, axiom: FOLFormula, TptpTerm( "file", _, TptpTerm( label ) ) +: _ ) =>
           CNFp( axiom ).toSeq match {
             case Seq( axiomClause ) =>
               Seq( SketchInference(
                 axiomClause,
-                labelledCNF( label ) map SketchAxiom ) )
-            case clauses => labelledCNF( label ) map SketchAxiom
+                labelledCNF( label ) map SketchAxiom.apply ) )
+            case clauses => labelledCNF( label ) map SketchAxiom.apply
           }
         case AnnotatedFormula( "cnf", _, "axiom", axiom: FOLFormula, Seq() ) =>
           val label = stepName
@@ -222,8 +222,8 @@ object TptpProofParser {
             case Seq( axiomClause ) =>
               Seq( SketchInference(
                 axiomClause,
-                labelledCNF( label ) map SketchAxiom ) )
-            case clauses => labelledCNF( label ) map SketchAxiom
+                labelledCNF( label ) map SketchAxiom.apply ) )
+            case clauses => labelledCNF( label ) map SketchAxiom.apply
           }
         case AnnotatedFormula( _, _, _, conclusion: FOLFormula, justification +: _ ) =>
           CNFp( conclusion ).toSeq match {

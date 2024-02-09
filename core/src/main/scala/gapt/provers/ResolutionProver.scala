@@ -53,7 +53,7 @@ trait ResolutionProver extends OneShotProver { self =>
   def getResolutionProof( sequentSet: Iterable[HOLSequent] )( implicit ctx0: Maybe[MutableContext], dummyImplicit1: DummyImplicit, dummyImplicit2: DummyImplicit ): Option[ResolutionProof] = {
     implicit val ctx = ctx0.getOrElse( MutableContext.guess( sequentSet )( dummyImplicit1 ) )
     val cnf = structuralCNF.onProofs(
-      sequentSet.map( Input ).toSet,
+      sequentSet.map( Input.apply ).toSet,
       propositional = false,
       structural = true,
       bidirectionalDefs = false,

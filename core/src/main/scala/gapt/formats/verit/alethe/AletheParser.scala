@@ -26,7 +26,7 @@ object parseAletheProof {
 trait AletheParser extends RegexParsers {
 
   def aletheProof: Parser[AletheProof] =
-    rep( proofCommand ) ^^ { AletheProof }
+    rep( proofCommand ) ^^ { AletheProof.apply }
 
   private def label: Parser[String] =
     """[A-Za-z0-9]+""".r

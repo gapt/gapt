@@ -126,9 +126,9 @@ object BabelParserCombinators {
 
   def TypeParens[X: P]: P[preExpr.Type] = P( "(" ~/ Type ~ ")" )
   def TypeBase[X: P]: P[preExpr.Type] = P( TyName ~ TypeAtom.rep ).map { case ( n, ps ) => preExpr.BaseType( n, ps.toList ) }
-  def TypeVar[X: P]: P[preExpr.Type] = P( "?" ~/ TyName ).map( preExpr.VarType )
+  def TypeVar[X: P]: P[preExpr.Type] = P( "?" ~/ TyName ).map( preExpr.VarType.apply )
   def TypeAtom[X: P]: P[preExpr.Type] = P( TypeParens | TypeVar | TypeBase )
-  def Type[X: P]: P[preExpr.Type] = P( TypeAtom.rep( min = 1, sep = ">" ) ).map { _.reduceRight( preExpr.ArrType ) }
+  def Type[X: P]: P[preExpr.Type] = P( TypeAtom.rep( min = 1, sep = ">" ) ).map { _.reduceRight( preExpr.ArrType.apply ) }
   def TypeAndNothingElse[X: P] = P( "" ~ Type ~ End )
 
   def Sequent[X: P] = P( Expr.rep( sep = "," ) ~ ( ":-" | "⊢" ) ~ Expr.rep( sep = "," ) ).

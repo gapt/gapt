@@ -331,7 +331,7 @@ class ExpansionProofToMG3i( theorySolver: HOLClause => Option[LKProof] )( implic
 
   private def solveAtomic( clause: HOLClause ): Option[LKProof] =
     clause.antecedent.intersect( clause.succedent ).headOption.
-      map( LogicalAxiom ).
+      map( LogicalAxiom.apply ).
       orElse( theorySolver( clause ) )
 
   private def tryPropag( theory: Theory, expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] = {

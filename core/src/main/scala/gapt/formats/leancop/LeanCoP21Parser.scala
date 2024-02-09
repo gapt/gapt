@@ -43,8 +43,8 @@ object LeanCoP21Parser {
     P( "[" ~ lit.rep( sep = "," ) ~ "]" ).map( Clause( _: _* ) )
 
   def lit[X: P]: P[Lit] = P( pos | neg | hash | negHash )
-  def pos[X: P]: P[Lit] = P( atom ).map( Pos )
-  def neg[X: P]: P[Lit] = P( "-" ~ atom ).map( Neg )
+  def pos[X: P]: P[Lit] = P( atom ).map( Pos.apply )
+  def neg[X: P]: P[Lit] = P( "-" ~ atom ).map( Neg.apply )
   def hash[X: P]: P[Lit] = P( "#" ).map( _ => Hash )
   def negHash[X: P]: P[Lit] = P( "-" ~ "#" ).map( _ => NegHash )
 

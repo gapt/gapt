@@ -250,11 +250,11 @@ object ResolutionToExpansionProof {
       case p @ BottomR( q, _ ) =>
         val Seq( oc ) = p.occConnectors
         propgm2( p, q, oc.parent( _, ETtNullary ) )
-      case p: NegL  => prop1( p, ETtUnary )
-      case p: NegR  => prop1( p, ETtUnary )
-      case p: AndL  => prop2( p, ETtBinary )
-      case p: OrR   => prop2( p, ETtBinary )
-      case p: ImpR  => prop2( p, ETtBinary )
+      case p: NegL  => prop1( p, ETtUnary.apply )
+      case p: NegR  => prop1( p, ETtUnary.apply )
+      case p: AndL  => prop2( p, ETtBinary.apply )
+      case p: OrR   => prop2( p, ETtBinary.apply )
+      case p: ImpR  => prop2( p, ETtBinary.apply )
       case p: AndR1 => prop1( p, ETtBinary( _, ETtWeakening ) )
       case p: OrL1  => prop1( p, ETtBinary( _, ETtWeakening ) )
       case p: ImpL1 => prop1( p, ETtBinary( _, ETtWeakening ) )

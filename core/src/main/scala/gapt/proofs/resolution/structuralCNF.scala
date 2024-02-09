@@ -36,7 +36,7 @@ object structuralCNF {
       require( freeVariables( endSequent ).isEmpty, "end-sequent has free variables" )
 
     onProofs(
-      endSequent.map( Sequent() :+ _, _ +: Sequent() ).map( Input ).elements,
+      endSequent.map( Sequent() :+ _, _ +: Sequent() ).map( Input.apply ).elements,
       propositional, structural, bidirectionalDefs, cse )
   }
 

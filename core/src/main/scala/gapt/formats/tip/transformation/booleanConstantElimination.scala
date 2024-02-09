@@ -132,7 +132,7 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
       eliminateBooleanConstants( TipSmtAnd( newSubExpressions ) )
     } else if ( newSubExpressions.contains( TipSmtFalse ) ) {
       eliminateBooleanConstants(
-        TipSmtAnd( newSubExpressions.map { TipSmtNot } ) )
+        TipSmtAnd( newSubExpressions.map { TipSmtNot.apply } ) )
     } else {
       TipSmtEq( newSubExpressions )
     }
