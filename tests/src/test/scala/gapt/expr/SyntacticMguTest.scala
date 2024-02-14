@@ -40,8 +40,8 @@ class SyntacticMguTest extends Specification {
       syntacticMGU( foa"P x_1", foa"P x_2" ) must_== Some(
         FOLSubstitution( fov"x_1" -> fot"x_2" ) )
     }
-    "a, b" in { syntacticMGU( fot"a", fot"b" ) must beEmpty }
-    "f(a), g(a)" in { syntacticMGU( fot"f a", fot"g a" ) must beEmpty }
+    "a, b" in { syntacticMGU( fot"a", fot"b" ) must beNone }
+    "f(a), g(a)" in { syntacticMGU( fot"f a", fot"g a" ) must beNone }
     "empty substitution" in {
       "constants" in { syntacticMGU( fot"a", fot"a" ) must_== Some( FOLSubstitution() ) }
       "constants" in { syntacticMGU( fot"f a", fot"f a" ) must_== Some( FOLSubstitution() ) }
@@ -50,10 +50,10 @@ class SyntacticMguTest extends Specification {
     "z, f(g(x,a),y,b)" in {
       syntacticMGU( fot"z", fot"f(g x a, y, b)" ) must_== Some( FOLSubstitution( fov"z" -> fot"f(g x a, y, b)" ) )
     }
-    "a,f(g(x,a),y,b)" in { syntacticMGU( fot"a", fot"f(g x a, y, b)" ) must beEmpty }
-    "x, f(g(x,a),y,b)" in { syntacticMGU( fot"x", fot"f(g(x,a),y,b)" ) must beEmpty }
+    "a,f(g(x,a),y,b)" in { syntacticMGU( fot"a", fot"f(g x a, y, b)" ) must beNone }
+    "x, f(g(x,a),y,b)" in { syntacticMGU( fot"x", fot"f(g(x,a),y,b)" ) must beNone }
 
-    "f(g(c),y), f(y,g(b))" in { syntacticMGU( fot"f(g(c),y)", fot"f(y,g(b))" ) must beEmpty }
+    "f(g(c),y), f(y,g(b))" in { syntacticMGU( fot"f(g(c),y)", fot"f(y,g(b))" ) must beNone }
     "f(g(x),y), f(y,g(b))" in {
       syntacticMGU( fot"f(g(x),y)", fot"f(y,g(b))" ) must_== Some( FOLSubstitution( fov"y" -> fot"g b", fov"x" -> fot"b" ) )
     }
@@ -78,7 +78,7 @@ class SyntacticMguTest extends Specification {
 
   }
 
-  "f(x, x), f(a, b)" in { syntacticMGU( le"f x x", le"f a b" ) must beEmpty }
+  "f(x, x), f(a, b)" in { syntacticMGU( le"f x x", le"f a b" ) must beNone }
 
   "x x" in { syntacticMGU( le"x:i", le"x:?a" ) must beSome }
 
