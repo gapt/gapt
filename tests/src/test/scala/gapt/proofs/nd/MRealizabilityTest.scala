@@ -25,11 +25,13 @@ class MRealizabilityTest extends Specification {
         hoc"0 : nat",
         hoc"s : nat > nat" )
 
-      implicit var systemT = MRealizability.systemT( ctx )
+      {
+        implicit var systemT: Context = MRealizability.systemT( ctx )
 
-      val plusTwo = le"natRec(s(s(0)))(^z1 ^z2 (s(z2)))"
+        val plusTwo = le"natRec(s(s(0)))(^z1 ^z2 (s(z2)))"
 
-      normalize( plusTwo( le"s(s(s(0)))" ) ) must_== le"s(s(s(s(s(0)))))"
+        normalize( plusTwo( le"s(s(s(0)))" ) ) must_== le"s(s(s(s(s(0)))))"
+      }
     }
     "pairs+naturalNumbers" in {
       var ctx = Context()
@@ -47,11 +49,13 @@ class MRealizabilityTest extends Specification {
         ty"conjj ?c  ?b",
         hoc"pairr{?c ?b}: ?c > ?b > conjj ?c ?b" )
 
-      implicit var systemT = MRealizability.systemT( ctx )
+      {
+        implicit var systemT = MRealizability.systemT( ctx )
 
-      val sumPair = le"conjjRec (^(x:nat) ^(y:nat) (x + y) )"
+        val sumPair = le"conjjRec (^(x:nat) ^(y:nat) (x + y) )"
 
-      normalize( sumPair( le"pairr(s(0),s(s(0)))" ) ) must_== le"s(s(s(0)))"
+        normalize( sumPair( le"pairr(s(0),s(s(0)))" ) ) must_== le"s(s(s(0)))"
+      }
     }
     "binaryTrees" in {
       var ctx = Context()
@@ -61,14 +65,16 @@ class MRealizabilityTest extends Specification {
         hoc"leaf{?a}: ?a > bitree ?a",
         hoc"node{?a}: bitree ?a > bitree ?a > bitree ?a" )
 
-      implicit var systemT = MRealizability.systemT( ctx )
+      {
+        implicit var systemT = MRealizability.systemT( ctx )
 
-      systemT += Definition(
-        Const( "mirror", ty"bitree ?a > bitree ?a", List( ty"?a" ) ),
-        le"bitreeRec( (^(x:?a)leaf(x)), (^(z1:bitree ?a)^(z2:bitree ?a)^(z3:bitree ?a)^(z4:bitree ?a) node(z4,z2)) )" )
+        systemT += Definition(
+          Const( "mirror", ty"bitree ?a > bitree ?a", List( ty"?a" ) ),
+          le"bitreeRec( (^(x:?a)leaf(x)), (^(z1:bitree ?a)^(z2:bitree ?a)^(z3:bitree ?a)^(z4:bitree ?a) node(z4,z2)) )" )
 
-      normalize( le"mirror( node(leaf(x), node(leaf(y), node(leaf(z1), leaf(z2)))) )" ) must_==
-        le"node(node(node(leaf(z2), leaf(z1)), leaf(y)), leaf(x))"
+        normalize( le"mirror( node(leaf(x), node(leaf(y), node(leaf(z1), leaf(z2)))) )" ) must_==
+          le"node(node(node(leaf(z2), leaf(z1)), leaf(y)), leaf(x))"
+      }
     }
     "lists" in {
       var ctx = Context()
@@ -87,17 +93,19 @@ class MRealizabilityTest extends Specification {
         hoc"nil{?a}: list ?a",
         hoc"cons{?a}: ?a > list ?a > list ?a" )
 
-      implicit var systemT = MRealizability.systemT( ctx )
+      {
+        implicit var systemT = MRealizability.systemT( ctx )
 
-      systemT += Definition(
-        Const( "length", ty"list ?a > nat", List( ty"?a" ) ),
-        le"listRec(0,^(z1:?a)^(z2: list ?a)^(z3:nat) s(z3))" )
+        systemT += Definition(
+          Const( "length", ty"list ?a > nat", List( ty"?a" ) ),
+          le"listRec(0,^(z1:?a)^(z2: list ?a)^(z3:nat) s(z3))" )
 
-      normalize( le"length( cons(1, cons(2, cons(3,nil))) )" ) must_== le"s(s(s(0)))"
+        normalize( le"length( cons(1, cons(2, cons(3,nil))) )" ) must_== le"s(s(s(0)))"
 
-      val sumList = le"listRec(0,(^v ^l ^r v+r))"
+        val sumList = le"listRec(0,(^v ^l ^r v+r))"
 
-      normalize( sumList( le"cons(0, cons(s(0), cons(s(s(0)), nil)))" ) ) must_== le"s(s(s(0)))"
+        normalize( sumList( le"cons(0, cons(s(0), cons(s(s(0)), nil)))" ) ) must_== le"s(s(s(0)))"
+      }
     }
   }
 
@@ -108,22 +116,24 @@ class MRealizabilityTest extends Specification {
       hoc"0 : nat",
       hoc"s : nat > nat" )
 
-    implicit var systemT = MRealizability.systemT( ctx )
+    {
+      implicit var systemT = MRealizability.systemT( ctx )
 
-    "emptyType" in {
-      MRealizability.remEmpProgType( ty"1" ) must_== ty"1"
-      MRealizability.remEmpProgType( ty"nat > nat" ) must_== ty"nat > nat"
-      MRealizability.remEmpProgType( ty"1 > nat" ) must_== ty"nat"
-      MRealizability.remEmpProgType( ty"(nat > nat) > 1" ) must_== ty"1"
-      MRealizability.remEmpProgType( TBase( "conj", List( ty"1 > nat", ty"1" ) ) ) must_== ty"nat"
-    }
-    "emptyTerm" in {
-      MRealizability.remEmpProg( le"x:nat>1" ) must_== le"i"
-      MRealizability.remEmpProg( le"inl(x:nat>1)" ) must_== le"inl(i)"
-      MRealizability.remEmpProg( le"natRec(i, (^x^y y), s(0))" ) must_== le"i"
-      MRealizability.remEmpProg( le"natRec(0, (^x^y y), s(0))" ) must_== le"natRec(0, (^x^y y), s(0))"
-      MRealizability.remEmpProg( le"natRec(pair(0,i), (^x^y y), s(0))" ) must_== le"natRec(0, (^x^y y), s(0))"
-      MRealizability.remEmpProg( le"natRec(inr(i), (^x^y y), s(0))" ) must_== le"natRec(inr(i), (^x^y y), s(0))"
+      "emptyType" in {
+        MRealizability.remEmpProgType( ty"1" ) must_== ty"1"
+        MRealizability.remEmpProgType( ty"nat > nat" ) must_== ty"nat > nat"
+        MRealizability.remEmpProgType( ty"1 > nat" ) must_== ty"nat"
+        MRealizability.remEmpProgType( ty"(nat > nat) > 1" ) must_== ty"1"
+        MRealizability.remEmpProgType( TBase( "conj", List( ty"1 > nat", ty"1" ) ) ) must_== ty"nat"
+      }
+      "emptyTerm" in {
+        MRealizability.remEmpProg( le"x:nat>1" ) must_== le"i"
+        MRealizability.remEmpProg( le"inl(x:nat>1)" ) must_== le"inl(i)"
+        MRealizability.remEmpProg( le"natRec(i, (^x^y y), s(0))" ) must_== le"i"
+        MRealizability.remEmpProg( le"natRec(0, (^x^y y), s(0))" ) must_== le"natRec(0, (^x^y y), s(0))"
+        MRealizability.remEmpProg( le"natRec(pair(0,i), (^x^y y), s(0))" ) must_== le"natRec(0, (^x^y y), s(0))"
+        MRealizability.remEmpProg( le"natRec(inr(i), (^x^y y), s(0))" ) must_== le"natRec(inr(i), (^x^y y), s(0))"
+      }
     }
   }
 
