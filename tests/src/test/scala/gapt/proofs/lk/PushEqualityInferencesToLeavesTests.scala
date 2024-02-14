@@ -395,7 +395,7 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
       c OpenAssumption( ( "" -> hof"A(s)" ) +: Sequent() )
       u ( WeakeningLeftRule( _, hof"s=t" ) )
       u ( EqualityLeftRule( _, Ant( 0 ), Ant( 1 ), Abs( hov"y", le"A(y):o" ) ) ) qed )
-    equalityLeftReduction( proof.asInstanceOf[EqualityLeftRule] ) must beEmpty
+    equalityLeftReduction( proof.asInstanceOf[EqualityLeftRule] ) must beNone
   }
 
   "equality left; upper sequent intro. by weakening left; aux is principal" in {
@@ -731,7 +731,7 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
         Abs( hov"x:nat", le"F(x)" ), le"r" ) )
       u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), Abs( hov"x:nat", le"F(x):o" ) ) ) qed )
     val reduction = equalityRightReduction( proof.asInstanceOf[EqualityRightRule] )
-    reduction must beEmpty
+    reduction must beNone
   }
 
   "equality right; upper sequent intro. by equality right; aux is not principal" in {
@@ -750,7 +750,7 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
       u ( EqualityRightRule( _, Ant( 1 ), Suc( 0 ), Abs( hov"x", le"A(x):o" ) ) )
       u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), Abs( hov"x", le"A(x):o" ) ) ) qed )
     val reduction = equalityRightReduction( proof.asInstanceOf[EqualityRightRule] )
-    reduction must beEmpty
+    reduction must beNone
   }
 
   "equality right; upper sequent intro. by equality left; eq is not principal" in {
@@ -769,7 +769,7 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
       u ( EqualityLeftRule( _, Ant( 1 ), Ant( 0 ), Abs( hov"x", le"s=x:o" ) ) )
       u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), Abs( hov"x", le"A(x):o" ) ) ) qed )
     val reduction = equalityRightReduction( proof.asInstanceOf[EqualityRightRule] )
-    reduction must beEmpty
+    reduction must beNone
   }
 
   "equality left; upper sequent intro. by equality right" in {
@@ -787,7 +787,7 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
       c OpenAssumption( ( "" -> hof"s=e" ) +: ( "" -> hof"e=t" ) +: ( "" -> hof"A(s)" ) +: Sequent() )
       u ( EqualityLeftRule( _, Ant( 1 ), Ant( 0 ), Abs( hov"x", le"s=x:o" ) ) )
       u ( EqualityLeftRule( _, Ant( 0 ), Ant( 2 ), Abs( hov"x", le"A(x):o" ) ) ) qed )
-    equalityLeftReduction( proof.asInstanceOf[EqualityLeftRule] ) must beEmpty
+    equalityLeftReduction( proof.asInstanceOf[EqualityLeftRule] ) must beNone
   }
 
   "equality left; upper sequent intro. by equality left; aux is principal" in {
@@ -795,7 +795,7 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
       c OpenAssumption( ( "" -> hof"s=e" ) +: ( "" -> hof"e=t" ) +: ( "" -> hof"A(s)" ) +: Sequent() )
       u ( EqualityLeftRule( _, Ant( 0 ), Ant( 2 ), Abs( hov"x", le"A(x):o" ) ) )
       u ( EqualityLeftRule( _, Ant( 2 ), Ant( 0 ), Abs( hov"x", le"A(x):o" ) ) ) qed )
-    equalityLeftReduction( proof.asInstanceOf[EqualityLeftRule] ) must beEmpty
+    equalityLeftReduction( proof.asInstanceOf[EqualityLeftRule] ) must beNone
   }
 
   "equality left; upper sequent intro. by equality left; neither aux nor eq is principal" in {
