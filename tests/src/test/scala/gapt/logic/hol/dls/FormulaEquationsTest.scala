@@ -109,7 +109,7 @@ class FormulaEquationsTest extends Specification {
         val FunctionType( _, argumentTypes ) = secondOrderVariable.ty
         val argumentVariables = new NameGenerator( Nil ).freshStream( secondOrderVariable.name ).take( argumentTypes.length ).map( FOLVar( _ ) ).toList
         new DlsPartialWitnessExtraction( secondOrderVariable )
-          .findPartialWitness( argumentVariables, toDisjunct( sequent ) ) must throwA()
+          .findPartialWitness( argumentVariables, toDisjunct( sequent ) ) must throwA[Exception]
       }
     }
 
