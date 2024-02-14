@@ -7,6 +7,8 @@ import gapt.provers.escargot.Escargot
 import gapt.provers.renameConstantsToFi
 import gapt.provers.sat.Sat4j
 import org.specs2.matcher.OptionMatchers
+import gapt.proofs.resolution.ResolutionProof
+import gapt.models.PropositionalModel
 
 trait SatMatchers extends OptionMatchers {
 
@@ -18,12 +20,12 @@ trait SatMatchers extends OptionMatchers {
         new Escargot( splitting = false, equality = false, propositional = true )
           .getResolutionProof( mangled ) )
     } and
-      beSome ^^ { ( f: Formula ) => Sat4j.solve( f ) }
+      (beSome[PropositionalModel]) ^^ { ( f: Formula ) => Sat4j.solve( f ) }
   def beValid = beUnsat ^^ { ( f: Formula ) => -f }
   def beValidSequent = beValid ^^ { ( sequent: HOLSequent ) => sequent.toDisjunction }
 
   def beEValid =
-    beSome ^^ { ( f: Formula ) =>
+    (beSome[ResolutionProof]) ^^ { ( f: Formula ) =>
       renameConstantsToFi.wrap( f )( ( _, mangled: Formula ) =>
         new Escargot( splitting = false, equality = true, propositional = true )
           .getResolutionProof( mangled ) )
