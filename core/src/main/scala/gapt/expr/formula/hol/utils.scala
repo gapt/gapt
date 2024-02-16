@@ -411,10 +411,10 @@ object normalizeFreeVariables {
 
     apply( f, () => {
       var name = "x_{" + i + "}"
-      do {
+      while ({ {
         i = i + 1
         name = "x_{" + i + "}"
-      } while ( blacklist.contains( name ) )
+      } ;  blacklist.contains( name ) }) ()
       name
     } )
   }

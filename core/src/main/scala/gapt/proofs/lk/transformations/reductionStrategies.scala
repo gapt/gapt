@@ -40,11 +40,11 @@ class IterativeParallelStrategy( reduction: Reduction ) extends ReductionStrateg
   override def run( proof: LKProof ): LKProof = {
     var intermediaryProof = proof
     val reducer = ( new LowerMostRedexReducer( reduction ) )
-    do {
+    while ({ {
       reducer.foundRedex = false
       intermediaryProof = reducer.apply( intermediaryProof )
       if ( reducer.foundRedex ) foundRedex = true
-    } while ( reducer.foundRedex )
+    } ;  reducer.foundRedex }) ()
     intermediaryProof
   }
   def appliedReduction: Boolean = foundRedex
@@ -90,7 +90,7 @@ class IterativeSelectiveStrategy( selector: Selector ) extends ReductionStrategy
   override def run( proof: LKProof ): LKProof = {
     var intermediaryProof = proof
     var continue = false
-    do {
+    while ({ {
       continue = false
       selector.createSelectorReduction( intermediaryProof ) match {
         case Some( selectorReduction ) =>
@@ -98,7 +98,7 @@ class IterativeSelectiveStrategy( selector: Selector ) extends ReductionStrategy
           intermediaryProof = ( new LowerMostRedexReducer( selectorReduction ) ).apply( intermediaryProof )
         case None =>
       }
-    } while ( continue )
+    } ;  continue }) ()
     intermediaryProof
   }
 }

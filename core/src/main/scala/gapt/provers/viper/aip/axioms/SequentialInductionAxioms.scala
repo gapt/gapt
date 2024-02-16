@@ -51,7 +51,7 @@ case class SequentialInductionAxioms(
     for {
       formula <- fsel( sequent )
       variables = vsel( formula, ctx )
-      axioms <- variables.traverse[ThrowsError, Axiom] { v: Var => inductionAxiom( variables, v, formula ) }
+      axioms <- variables.traverse[ThrowsError, Axiom] { (v: Var) => inductionAxiom( variables, v, formula ) }
     } yield axioms
   }
 

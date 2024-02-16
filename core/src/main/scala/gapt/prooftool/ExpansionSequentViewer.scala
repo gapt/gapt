@@ -38,5 +38,5 @@ class ExpansionSequentViewer( name: String, es: ExpansionSequent ) extends Proof
   } )
 
   override def saveFormats: Map[String, ExpansionSequent => String] = Map(
-    ".json" -> { es: ExpansionSequent => JsonExporter( es ).toString } )
+    ".json" -> { (es: ExpansionSequent) => JsonExporter( es ).toString } )
 }
