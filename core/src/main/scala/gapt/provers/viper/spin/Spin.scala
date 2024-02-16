@@ -202,14 +202,14 @@ class Spin( opts: SpinOptions ) {
     private def inferClausesByInduction(): Unit = {
       if ( allowInferClausesFromInductionAxioms() ) {
         loopCount = 0
-        do {
+        while ({ {
           if ( possibleAxioms.nonEmpty ) {
             inferClausesFromPotentialInductionAxioms()
             preprocessing()
             clauseProcessing()
             updateInductionCutoff()
           }
-        } while ( usable.isEmpty )
+        } ;  usable.isEmpty }) ()
       }
     }
 

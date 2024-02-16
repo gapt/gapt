@@ -163,9 +163,9 @@ class LKProofViewer( name: String, proof: LKProof )
   }
 
   def saveFormats = Map(
-    ".llk" -> { p: DagProof[LKProof] => exportLLK( p.subProofAt(Nil) ) },
-    ".tex" -> { p: DagProof[LKProof] => LatexExporter( p.subProofAt(Nil) ) },
-    ".json" -> { p: DagProof[LKProof] => JsonExporter( p.subProofAt(Nil) ).toString } )
+    ".llk" -> { (p: DagProof[LKProof]) => exportLLK( p.subProofAt(Nil) ) },
+    ".tex" -> { (p: DagProof[LKProof]) => LatexExporter( p.subProofAt(Nil) ) },
+    ".json" -> { (p: DagProof[LKProof]) => JsonExporter( p.subProofAt(Nil) ).toString } )
 
   def hideStructuralRules(): Unit = publisher.publish( HideStructuralRules )
   def showAllRules(): Unit = publisher.publish( ShowAllRules( Nil ) )
@@ -212,5 +212,5 @@ class NDProofViewer( name: String, proof: NDProof )
   override val content: NDProof = proof
 
   def saveFormats = Map(
-    ".json" -> { p: DagProof[NDProof] => JsonExporter( p.subProofAt(Nil) ).toString } )
+    ".json" -> { (p: DagProof[NDProof]) => JsonExporter( p.subProofAt(Nil) ).toString } )
 }

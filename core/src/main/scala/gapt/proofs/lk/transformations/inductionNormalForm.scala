@@ -15,14 +15,14 @@ object inductionNormalForm {
   def apply( proof: LKProof )( implicit ctx: Context ): LKProof = {
     var newProof = proof
     var continue = false
-    do {
+    while ({ {
       continue = false
       newProof = pushEqualityInferencesToLeaves( newProof )
       newProof = cutNormal( newProof )
       val inductionUnfolder = new UnfoldInductions
       newProof = inductionUnfolder( newProof )
       continue = inductionUnfolder.unfoldedInduction
-    } while ( continue )
+    } ;  continue }) ()
     newProof
   }
 }

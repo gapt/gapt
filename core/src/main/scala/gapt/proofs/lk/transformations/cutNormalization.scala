@@ -117,11 +117,11 @@ class ReductiveCutNormalization(
     override def run( proof: LKProof ): LKProof = {
       var intermediaryProof = proof
       val reducer = ( new LowerMostRedexReducer( ( new UppermostRedexFilter ).filter( reduction ) ) )
-      do {
+      while ({ {
         reducer.foundRedex = false
         intermediaryProof = reducer.apply( intermediaryProof )
         intermediaryProof = transformations.cleanStructuralRules( intermediaryProof )
-      } while ( reducer.foundRedex )
+      } ;  reducer.foundRedex }) ()
       intermediaryProof
     }
   }

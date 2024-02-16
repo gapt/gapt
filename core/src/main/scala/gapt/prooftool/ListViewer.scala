@@ -15,7 +15,7 @@ class ListViewer( name: String, list: List[HOLSequent] ) extends ScrollableProof
 
   def saveFormats = Map(
     ".tptp" -> {
-      ls: List[HOLSequent] => TptpFOLExporter( existentialClosure( ls.map( _.toImplication ) ++: Sequent() ) ).toString
+      (ls: List[HOLSequent]) => TptpFOLExporter( existentialClosure( ls.map( _.toImplication ) ++: Sequent() ) ).toString
     } )
 
 }
