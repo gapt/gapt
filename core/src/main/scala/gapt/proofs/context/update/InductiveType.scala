@@ -17,7 +17,7 @@ import gapt.proofs.context.update.InductiveType.ConstructorDefinition
 import gapt.proofs.context.update.InductiveType.FieldDefinition
 
 /** Inductive base type with constructors. */
-case class InductiveType private (
+case class InductiveType private[update] (
     baseType:       TBase,
     constructors:   Seq[Constructor],
     typeParameters: Seq[TVar] ) extends TypeDefinition {
