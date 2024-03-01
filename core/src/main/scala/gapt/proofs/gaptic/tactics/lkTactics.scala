@@ -455,7 +455,7 @@ case class EqualityTactic( equationLabel: String, formulaLabel: String, private 
 
             Option( r )
 
-          case _ => None
+          case null => None
         }
 
         replacement match {

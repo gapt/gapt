@@ -578,7 +578,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
         } else {
           throw TipSmtParserException( s"type: unknown base type ${name}" )
         }
-      case _ => ???
+      case null => ???
     }
   }
 

@@ -54,7 +54,7 @@ case class SymbolTable( problem: TipSmtProblem ) {
     datatypesDeclaration.datatypes flatMap {
       case TipSmtDatatype( _, _, constructors ) =>
         constructors map { _.name } toSet
-      case _ => Set[String]()
+      case null => Set[String]()
     } toSet
 
   private def computeSymbols(): Map[String, Type] = {

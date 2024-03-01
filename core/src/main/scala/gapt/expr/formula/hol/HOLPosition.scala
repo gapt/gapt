@@ -29,7 +29,7 @@ object HOLPosition {
   def getPositions( exp: Expr, pred: Expr => Boolean = _ => true ): List[HOLPosition] = {
     LambdaPosition.filterPositions {
       case e: Expr => pred( e )
-      case _       => false
+      case null       => false
     }( exp ) filter { definesHOLPosition( exp ) } map { toHOLPosition( exp ) }
   }
 
