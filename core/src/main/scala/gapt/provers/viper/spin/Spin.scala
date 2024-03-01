@@ -422,7 +422,6 @@ class OccurrencesFinder()( implicit ctx: Context ) {
 
           // If any of the ones we just found appear in another cluster, we should merge that cluster and this one
           underSame.filter( _.intersect( same ).nonEmpty ) match {
-            case Seq() => underSame += same
             case existings =>
               existings foreach {
                 underSame -= _
