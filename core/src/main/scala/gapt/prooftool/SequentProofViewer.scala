@@ -22,7 +22,6 @@ import scala.swing._
  */
 abstract class DagProofViewer[T <: DagProof[T]]( name: String, proof: DagProof[T] )
   extends ScrollableProofToolViewer[DagProof[T]]( name, proof ) {
-  override val content = proof
 }
 
 /**
@@ -142,7 +141,6 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
 class LKProofViewer( name: String, proof: LKProof )
   extends SequentProofViewer[Formula, LKProof]( name, proof, LatexExporter( _ ) )
   with Savable[DagProof[LKProof]] with ContainsLKProof {
-  override val content: LKProof = proof
   override def viewMenuContents = super.viewMenuContents ++ Seq(
     hideStructuralRulesButton, markCutAncestorsButton, markNonIntuitionisticInferencesButton, new Separator(),
     viewExpansionProofButton )
@@ -153,7 +151,7 @@ class LKProofViewer( name: String, proof: LKProof )
   def expansionTree(): Unit = {
     try {
       scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      prooftool( LKToExpansionProof( content ), "Expansion tree" )
+      prooftool( LKToExpansionProof( proof ), "Expansion tree" )
       scrollPane.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
       case e: Throwable =>
@@ -209,7 +207,6 @@ class LKProofViewer( name: String, proof: LKProof )
 
 class NDProofViewer( name: String, proof: NDProof )
   extends SequentProofViewer[Formula, NDProof]( name, proof, LatexExporter( _ ) ) with Savable[DagProof[NDProof]] {
-  override val content: NDProof = proof
 
   def saveFormats = Map(
     ".json" -> { (p: DagProof[NDProof]) => JsonExporter( p.subProofAt(Nil) ).toString } )
