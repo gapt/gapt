@@ -53,7 +53,7 @@ lazy val commonSettings = Seq(
     "-unchecked" ) ++ (
         CrossVersion.partialVersion(scalaVersion.value) match {
           case Some((3,_)) => Seq(
-            "-source:3.0-migration",
+            "-source:3.2-migration",
             "-explain")
           case _ => Seq()
         }
