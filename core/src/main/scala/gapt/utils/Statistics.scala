@@ -73,11 +73,11 @@ object Statistic {
 
     val _median: BigDecimal = _n % 2 match {
       case 0 =>
-        val m1: BigDecimal = sorted( _n / 2 )
-        val m2: BigDecimal = sorted( ( _n / 2 ) - 1 )
+        val m1: BigDecimal = conv(sorted( _n / 2 ))
+        val m2: BigDecimal = conv(sorted( ( _n / 2 ) - 1 ))
         ( m1 + m2 ) / 2
       case 1 =>
-        sorted( _n / 2 )
+        conv(sorted( _n / 2 ))
       case _ =>
         throw new IllegalArgumentException( "Result of % 2 should always be 0 or 1!" )
     }
