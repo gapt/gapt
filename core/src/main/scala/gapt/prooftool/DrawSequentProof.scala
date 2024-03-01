@@ -203,7 +203,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       updateSubProofAlignment()
 
     case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
-      PopupMenu( this, e.point.x, e.point.y )
+      gapt.prooftool.PopupMenu( this, e.point.x, e.point.y )
 
   }
 }

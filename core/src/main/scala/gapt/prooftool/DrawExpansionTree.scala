@@ -240,7 +240,7 @@ class DrawETQuantifierBlock(
   headLabelExpanded.reactions += {
     case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 => close()
     case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
-      PopupMenu( DrawETQuantifierBlock.this, headLabelExpanded, e.point.x, e.point.y )
+      gapt.prooftool.PopupMenu( DrawETQuantifierBlock.this, headLabelExpanded, e.point.x, e.point.y )
   }
 
   private var _headLabel = LatexLabel( main, quantifiers ) // Head symbol of the expansion tree. Quantifiers if open or closed, bigvee/bigwedge if expanded.
@@ -273,7 +273,7 @@ class DrawETQuantifierBlock(
       headLabel = LatexLabel( main, quantifiers )
       headLabel.reactions += {
         case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
-          PopupMenu( this, headLabel, e.point.x, e.point.y )
+          gapt.prooftool.PopupMenu( this, headLabel, e.point.x, e.point.y )
         case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 =>
           if ( state == Open ) expand()
           else open()
@@ -293,7 +293,7 @@ class DrawETQuantifierBlock(
       headLabel = LatexLabel( main, quantifiers )
       headLabel.reactions += {
         case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
-          PopupMenu( this, headLabel, e.point.x, e.point.y )
+          gapt.prooftool.PopupMenu( this, headLabel, e.point.x, e.point.y )
         case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 =>
           if ( state == Open ) expand()
           else open()

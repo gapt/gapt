@@ -53,7 +53,7 @@ class CedentPanel( val main: ExpansionSequentViewer, val cedent: Seq[ExpansionTr
       case e: MouseEntered => foreground = Color.blue
       case e: MouseExited  => foreground = Color.black
       case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
-        PopupMenu( main, CedentPanel.this, e.point.x, e.point.y ) //This brings up the menu that lets the user close/open/expand all trees on this side
+        gapt.prooftool.PopupMenu( main, CedentPanel.this, e.point.x, e.point.y ) //This brings up the menu that lets the user close/open/expand all trees on this side
     }
   }
 

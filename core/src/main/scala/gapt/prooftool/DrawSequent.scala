@@ -145,7 +145,7 @@ class DrawSequentInProof[F, T <: SequentProof[F, T]](
   for ( ( f, i ) <- elementLabelSequent.zipWithIndex ) {
     f.reactions += {
       case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 && e.clicks == 1 =>
-        PopupMenu( main, f, pos, i, e.point.x, e.point.y )
+        gapt.prooftool.PopupMenu( main, f, pos, i, e.point.x, e.point.y )
     }
   }
 
