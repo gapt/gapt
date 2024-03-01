@@ -3,7 +3,7 @@ package gapt.prooftool
 import os._
 
 import gapt.formats.tptp.TptpFOLExporter
-import gapt.proofs.{ HOLSequent, Sequent }
+import gapt.proofs.{ HOLSequent, Sequent, RichFormulaSequent }
 
 import gapt.expr.formula.hol.existentialClosure
 

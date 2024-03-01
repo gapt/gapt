@@ -31,7 +31,7 @@ import gapt.expr.ty.Ty
 import gapt.expr.util.LambdaPosition
 import gapt.expr.util.freeVariables
 import gapt.logic.Polarity
-import gapt.proofs.{ FOLClause, HOLSequent, Sequent }
+import gapt.proofs.{ FOLClause, HOLSequent, Sequent, RichFormulaSequent }
 
 /**
  * Returns true iff the given Expr consists of a logical constant.

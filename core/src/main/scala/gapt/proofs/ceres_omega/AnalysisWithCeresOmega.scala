@@ -10,13 +10,14 @@ import gapt.proofs.lk._
 import gapt.expr.formula.fol.{ reduceHolToFol, replaceAbstractions, undoHol2Fol }
 import gapt.formats.llk.ExtendedProofDatabase
 import gapt.proofs.ceres._
+import gapt.proofs.RichFormulaSequent
 import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.proofs.lk.transformations.eliminateDefinitions
 import gapt.proofs.lk.transformations.skolemizeLK
 import gapt.proofs.lk.util.AtomicExpansion
 import gapt.proofs.lk.util.regularize
 import gapt.proofs.{ HOLClause, HOLSequent, Sequent }
-import gapt.proofs.resolution.{ Resolution2RalWithAbstractions, ResolutionToLKProof }
+import gapt.proofs.resolution.{ Resolution2RalWithAbstractions, ResolutionToLKProof, resolutionProofsAreReplaceable }
 import gapt.provers.eprover.EProver
 import gapt.provers.prover9.Prover9
 import gapt.provers.renameConstantsToFi

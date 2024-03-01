@@ -14,6 +14,7 @@ import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.logic.Polarity
 import gapt.proofs.Sequent
+import gapt.proofs.SequentFlatMapOp
 import gapt.proofs.context.Context
 
 object prenexifyET {

@@ -2,7 +2,7 @@ package gapt.proofs.resolution
 
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Formula
-import gapt.proofs.{ Ant, Suc }
+import gapt.proofs.{ Ant, Suc, SequentFlattenOp }
 import gapt.proofs.lk._
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.EqualityRightRule

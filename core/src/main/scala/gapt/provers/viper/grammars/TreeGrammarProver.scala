@@ -27,9 +27,9 @@ import gapt.proofs.context.facet.{ BaseTypes, StructurallyInductiveTypes }
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, freeVariablesET, minimalExpansionSequent }
 import gapt.proofs.gaptic.Tactical1
-import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.{LKProof, lkProofReplaceable}
 import gapt.proofs.lk.util.EquationalLKProver
-import gapt.proofs.{ HOLSequent, Sequent, withSection }
+import gapt.proofs.{ HOLSequent, Sequent, withSection, RichFormulaSequent }
 import gapt.provers.escargot.{ Escargot, QfUfEscargot }
 import gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import gapt.provers.verit.VeriT

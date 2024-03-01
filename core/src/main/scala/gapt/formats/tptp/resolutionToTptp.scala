@@ -11,6 +11,7 @@ import gapt.expr.formula.hol.{ instantiate, universalClosure }
 import gapt.expr.ty.FunctionType
 import gapt.proofs.context.Context
 import gapt.proofs.resolution._
+import gapt.proofs.{RichFormulaSequent}
 
 import scala.collection.mutable
 

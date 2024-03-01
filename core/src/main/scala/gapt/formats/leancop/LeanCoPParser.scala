@@ -21,6 +21,7 @@ import gapt.logic.clauseSubsumption
 import gapt.logic.hol.CNFn
 import gapt.logic.hol.DNFp
 import gapt.logic.hol.toNNF
+import gapt.proofs.RichFOLSequent
 import gapt.proofs.expansion.ExpansionSequent
 import gapt.proofs.expansion.formulaToExpansionTree
 

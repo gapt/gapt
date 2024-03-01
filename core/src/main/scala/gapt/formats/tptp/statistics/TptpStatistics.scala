@@ -11,6 +11,7 @@ import gapt.formats.tptp.TptpFile
 import gapt.formats.tptp.TptpFormulaRoles
 import gapt.formats.tptp.TptpImporter
 import gapt.utils.Statistic
+import gapt.proofs.RichFormulaSequent
 
 import scala.collection.mutable
 

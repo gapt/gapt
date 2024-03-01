@@ -9,6 +9,7 @@ import gapt.expr.util.rename
 import gapt.logic.hol.simplifyPropositional
 import gapt.provers.smtlib.SmtInterpol
 import gapt.utils.Tree
+import gapt.proofs.RichFOLSequent
 
 /**
  * Solution finding algorithm for Π₁-cut-introduction based on the Duality algorithm for

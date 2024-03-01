@@ -6,7 +6,7 @@ import gapt.expr.formula.Formula
 import gapt.expr.ty.Ty
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
-import gapt.expr.{ BetaReduction, Expr, Var }
+import gapt.expr.{ BetaReduction, Expr, Var, ExprNameGenerator }
 
 import scala.collection.mutable
 

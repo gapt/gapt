@@ -17,7 +17,7 @@ import gapt.expr.util.boundVariables
 import gapt.formats.tptp.{ TptpImporter, sequentProofToTptp }
 import gapt.logic.Polarity
 import gapt.logic.hol.isOrevkovClass1
-import gapt.proofs.HOLSequent
+import gapt.proofs.{ HOLSequent, RichFormulaSequent }
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion._

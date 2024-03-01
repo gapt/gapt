@@ -15,13 +15,16 @@ import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.State
 import gapt.proofs.context.facet.Definitions
+import gapt.proofs.context.facet.skolemFunsFacet
 import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.update.Definition
 import gapt.proofs.context.update.Sort
 import gapt.proofs.context.update.Update
 import gapt.proofs.context.update.{ SkolemFunction => SkolemFun }
 import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.lkProofReplaceable
 import gapt.proofs.resolution.ResolutionProof
+import gapt.proofs.resolution.resolutionProofsAreReplaceable
 
 class MutableContext(
     private var ctx_ :ImmutableContext ) extends Context

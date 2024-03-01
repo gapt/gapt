@@ -3,6 +3,7 @@ package gapt.expr.util
 import gapt.expr.Abs
 import gapt.expr.Apps
 import gapt.expr.Expr
+import gapt.expr.ExprNameGenerator
 import gapt.expr.Var
 import gapt.expr.ty.FunctionType
 import gapt.utils.NameGenerator

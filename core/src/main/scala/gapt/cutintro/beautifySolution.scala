@@ -15,7 +15,7 @@ import gapt.logic.clauseSubsumption
 import gapt.logic.hol.CNFn
 import gapt.logic.hol.CNFp
 import gapt.logic.hol.simplifyPropositional
-import gapt.proofs.{ Ant, FOLClause, SequentIndex, Suc }
+import gapt.proofs.{ Ant, FOLClause, SequentIndex, Suc, RichFOLSequent }
 
 import scala.collection.mutable
 

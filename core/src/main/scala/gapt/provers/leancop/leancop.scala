@@ -9,7 +9,7 @@ import gapt.formats.leancop.{ LeanCoP21Parser, LeanCoPParser }
 import gapt.proofs.expansion.{ ETWeakQuantifierBlock, ExpansionProof, ExpansionProofToLK, ExpansionSequent, formulaToExpansionTree }
 import gapt.formats.tptp.TptpFOLExporter
 import gapt.logic.{ Polarity, clauseSubsumption }
-import gapt.proofs.{ Clause, HOLClause, HOLSequent, Sequent }
+import gapt.proofs.{ Clause, HOLClause, HOLSequent, Sequent, RichFormulaSequent }
 import gapt.proofs.lk.LKProof
 import gapt.proofs.resolution.ResolutionToExpansionProof
 import gapt.proofs.resolution.expansionProofFromInstances

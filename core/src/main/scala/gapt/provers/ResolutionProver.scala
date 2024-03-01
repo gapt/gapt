@@ -7,6 +7,7 @@ import gapt.proofs.expansion.ExpansionProof
 import gapt.proofs.expansion.ExpansionProofToLK
 import gapt.proofs.expansion.deskolemizeET
 import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.lkProofReplaceable
 import gapt.proofs.resolution.Input
 import gapt.proofs.resolution.ResolutionProof
 import gapt.proofs.resolution.ResolutionToExpansionProof

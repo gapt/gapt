@@ -12,6 +12,7 @@ import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.lkProofReplaceable
 import gapt.proofs.lk.rules.LogicalAxiom
 import gapt.proofs.lk.rules.ProofLink
 import gapt.proofs.lk.transformations.cleanCuts

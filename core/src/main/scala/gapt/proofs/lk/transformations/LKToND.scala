@@ -15,6 +15,7 @@ import gapt.proofs.Ant
 import gapt.proofs.ProofBuilder
 import gapt.proofs.SequentIndex
 import gapt.proofs.Suc
+import gapt.proofs.RichFormulaSequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.lk

@@ -14,7 +14,7 @@ import gapt.proofs.lk.transformations.skolemizeLK
 import gapt.proofs.lk.util.instanceProof
 import gapt.proofs.{ HOLSequent, Sequent, Suc }
 import gapt.proofs.lk.{ LKProof, normalizeLKt }
-import gapt.proofs.lkt.{ LKToLKt, LKt, LKtToLK, LocalCtx }
+import gapt.proofs.lkt.{ LKToLKt, LKt, LKtToLK, LocalCtx, closedUnderSubstitution }
 import gapt.provers.OneShotProver
 import gapt.utils.Maybe
 

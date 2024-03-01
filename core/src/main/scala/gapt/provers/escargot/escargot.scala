@@ -19,6 +19,7 @@ import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.lkProofReplaceable
 import gapt.proofs.resolution._
 import gapt.provers.ResolutionProver
 import gapt.provers.escargot.impl._

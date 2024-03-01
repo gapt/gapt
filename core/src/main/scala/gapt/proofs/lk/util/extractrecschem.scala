@@ -11,6 +11,7 @@ import gapt.proofs.Ant
 import gapt.proofs.Sequent
 import gapt.proofs.SequentIndex
 import gapt.proofs.Suc
+import gapt.proofs.RichFormulaSequent
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.BottomAxiom
 import gapt.proofs.lk.rules.ContractionRule

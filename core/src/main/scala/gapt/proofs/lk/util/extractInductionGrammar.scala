@@ -2,6 +2,7 @@ package gapt.proofs.lk.util
 
 import gapt.expr.Const
 import gapt.expr.Var
+import gapt.expr.ExprNameGenerator
 import gapt.expr.formula.All
 import gapt.expr.formula.hol.containsQuantifierOnLogicalLevel
 import gapt.expr.formula.hol.instantiate
@@ -17,6 +18,7 @@ import gapt.proofs.expansion.ExpansionProof
 import gapt.proofs.expansion.InstanceTermEncoding
 import gapt.proofs.expansion.eliminateCutsET
 import gapt.proofs.expansion.freeVariablesET
+import gapt.proofs.expansion.RichExpansionSequent
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.transformations.LKToExpansionProof
 

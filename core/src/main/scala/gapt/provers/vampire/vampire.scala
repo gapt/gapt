@@ -7,6 +7,7 @@ import gapt.formats.tptp.TptpFOLExporter
 import gapt.formats.tptp.TptpProofParser
 import gapt.proofs.resolution.ResolutionProof
 import gapt.proofs.resolution.fixDerivation
+import gapt.proofs.resolution.resolutionProofsAreReplaceable
 import gapt.proofs.sketch.RefutationSketchToResolution
 import gapt.proofs.FOLClause
 import gapt.proofs.HOLClause

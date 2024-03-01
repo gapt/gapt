@@ -12,6 +12,7 @@ import gapt.expr.ty.TBase
 import gapt.expr.util.rename
 import gapt.expr.Var
 import gapt.expr.{ Const => Con }
+import gapt.expr.ExprNameGenerator
 import gapt.proofs.LabelledSequent
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
@@ -88,7 +89,7 @@ case class DomainClosureAxioms( types: List[TBase] = Nil ) extends AxiomFactory 
   private def caseDistinction( caseVariable: Var, constructor: Con ): Formula = {
     val nameGenerator = rename.awayFrom( caseVariable :: Nil )
     val FunctionType( _, argumentTypes ) = constructor.ty
-    val newVariables = argumentTypes map {
+    val newVariables: List[Var] = argumentTypes map {
       argumentType => nameGenerator.fresh( Var( "x", argumentType ) )
     }
     Ex.Block( newVariables, Eq( caseVariable, constructor( newVariables ) ) )

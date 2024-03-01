@@ -21,6 +21,7 @@ import gapt.logic.Polarity
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
 import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.LKProofSubstitutableDefault
 import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.ContractionLeftRule

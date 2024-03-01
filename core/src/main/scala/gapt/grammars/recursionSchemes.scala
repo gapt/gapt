@@ -33,6 +33,7 @@ import gapt.formats.babel.{ BabelExporter, BabelSignature, MapBabelSignature, Pr
 import gapt.logic.hol.simplifyPropositional
 import gapt.logic.hol.toNNF
 import gapt.proofs.context.Context
+import gapt.proofs.RichFormulaSequent
 import gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import gapt.utils.{ Doc, Logger }
 

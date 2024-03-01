@@ -11,7 +11,7 @@ import gapt.expr.util.rename
 import gapt.logic.Polarity
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
-import gapt.proofs.{ HOLSequent, Sequent }
+import gapt.proofs.{ HOLSequent, Sequent, RichFormulaSequent }
 import gapt.proofs.expansion._
 import gapt.provers.sat.Sat4j
 import gapt.utils.Maybe

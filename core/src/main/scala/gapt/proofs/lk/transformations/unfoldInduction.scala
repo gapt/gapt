@@ -5,6 +5,7 @@ import gapt.expr.Expr
 import gapt.expr.subst.Substitution
 import gapt.proofs.SequentIndex
 import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.LKProofSubstitutableDefault
 import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.InductionCase
 import gapt.proofs.lk.rules.InductionRule

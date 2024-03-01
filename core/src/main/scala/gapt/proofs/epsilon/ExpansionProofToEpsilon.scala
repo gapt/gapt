@@ -9,6 +9,7 @@ import gapt.expr.formula.hol.instantiate
 import gapt.expr.util.rename
 import gapt.logic.hol.SkolemFunctions
 import gapt.proofs.context.Context
+import gapt.proofs.context.facet.skolemFunsFacet
 import gapt.proofs.expansion._
 
 object ExpansionProofToEpsilon {

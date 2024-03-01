@@ -11,6 +11,7 @@ import gapt.logic.Polarity
 import gapt.logic.clauseSubsumption
 import gapt.logic.hol.CNFp
 import gapt.proofs.SequentConnector
+import gapt.proofs.RichFormulaSequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.lk.LKProof

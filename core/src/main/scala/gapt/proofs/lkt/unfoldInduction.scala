@@ -5,6 +5,7 @@ import gapt.expr.formula.Formula
 import gapt.expr.subst.Substitution
 import gapt.proofs.context.Context
 import gapt.proofs.context.immutable.ImmutableContext
+import gapt.proofs.lk.LKProofSubstitutableDefault
 import gapt.provers.simp.{ SimpEqResult, Simplifier }
 
 trait SimpAdapter {

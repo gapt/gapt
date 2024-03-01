@@ -3,7 +3,7 @@ package gapt.cutintro
 import gapt.expr._
 import gapt.expr.formula.hol.lcomp
 import gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
-import gapt.proofs.{ FOLClause, HOLClause, HOLSequent, RichFOLSequent, Sequent }
+import gapt.proofs.{ FOLClause, HOLClause, HOLSequent, RichFOLSequent, RichFormulaSequent, Sequent }
 import gapt.provers.Prover
 import gapt.provers.Session._
 import cats.implicits._

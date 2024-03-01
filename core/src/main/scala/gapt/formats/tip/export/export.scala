@@ -24,6 +24,7 @@ import gapt.proofs.context.facet.BaseTypes
 import gapt.proofs.context.facet.Definitions
 import gapt.proofs.context.facet.StructurallyInductiveTypes
 import gapt.proofs.context.update.InductiveType
+import gapt.proofs.context.facet.skolemFunsFacet
 import gapt.utils.Doc
 
 package object `export` {

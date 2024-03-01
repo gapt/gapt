@@ -10,7 +10,7 @@ import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.lk.LKProof
 import gapt.proofs.resolution.{ Factor, Input, ResolutionProof }
 import gapt.proofs.rup.RupProof
-import gapt.proofs.{ HOLClause, HOLSequent, Sequent }
+import gapt.proofs.{ HOLClause, HOLSequent, Sequent, RichFormulaSequent }
 import gapt.provers.{ OneShotProver, ResolutionProver }
 import gapt.utils.Maybe
 

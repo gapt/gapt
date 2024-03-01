@@ -11,6 +11,7 @@ import gapt.expr.util.freeVariables
 import gapt.proofs._
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.lkProofReplaceable
 import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.BottomAxiom

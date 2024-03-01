@@ -1,6 +1,6 @@
 package gapt.formats.latex
 
-import gapt.proofs.HOLSequent
+import gapt.proofs.{HOLSequent, RichFormulaSequent}
 import gapt.expr._
 import gapt.expr.formula.hol._
 import gapt.expr.ty.{ TArr, TBase, TVar, Ty }

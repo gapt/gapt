@@ -32,6 +32,7 @@ import gapt.proofs.context.facet.Definitions
 import gapt.proofs.context.facet.Facet
 import gapt.proofs.context.facet.Reductions
 import gapt.proofs.context.facet.StructurallyInductiveTypes
+import gapt.proofs.context.facet.skolemFunsFacet
 import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.mutable.ReadOnlyMutableContext

@@ -4,6 +4,7 @@ import gapt.expr.Abs
 import gapt.expr.App
 import gapt.expr.Const
 import gapt.expr.Expr
+import gapt.expr.ExprNameGenerator
 import gapt.expr.TermReplacement
 import gapt.expr.Var
 import gapt.expr.formula.fol.FOLExpression

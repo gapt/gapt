@@ -27,8 +27,8 @@ import gapt.expr.ty.baseTypes
 import gapt.expr.util.freeVariables
 import gapt.expr.util.subTerms
 import gapt.logic.hol.simplifyPropositional
-import gapt.proofs.{ HOLSequent, Sequent }
-import gapt.proofs.expansion.{ ETAnd, ETAtom, ETTop, ExpansionProof, ExpansionSequent, ExpansionTree }
+import gapt.proofs.{ HOLSequent, Sequent, RichFormulaSequent }
+import gapt.proofs.expansion.{ ETAnd, ETAtom, ETTop, ExpansionProof, ExpansionSequent, ExpansionTree, RichExpansionSequent }
 import gapt.provers.groundFreeVariables
 
 sealed class TptpFormulaRole

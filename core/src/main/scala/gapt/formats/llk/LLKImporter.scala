@@ -1,6 +1,7 @@
 package gapt.formats.llk
 
 import gapt.proofs.HOLSequent
+import gapt.proofs.RichFormulaSequent
 import gapt.formats.llk.ast.LambdaAST
 import gapt.expr.formula.hol._
 import gapt.expr._

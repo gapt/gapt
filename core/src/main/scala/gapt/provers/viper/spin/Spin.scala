@@ -18,12 +18,14 @@ import gapt.proofs.ContextSection
 import gapt.proofs.HOLClause
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
+import gapt.proofs.RichFormulaSequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.BaseTypes
 import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.simplificationRules
 import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.lkProofReplaceable
 import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.macros.WeakeningContractionMacroRule
 import gapt.proofs.resolution.ResolutionProof

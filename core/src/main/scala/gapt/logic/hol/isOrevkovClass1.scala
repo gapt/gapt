@@ -11,6 +11,7 @@ import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Top
 import gapt.proofs.HOLSequent
+import gapt.proofs.RichFormulaSequent
 
 /**
  * Checks whether a sequent is in (a minor extension of) Orevkov's class 1.

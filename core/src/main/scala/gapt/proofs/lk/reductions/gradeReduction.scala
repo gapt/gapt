@@ -4,6 +4,7 @@ import gapt.expr.formula.Bottom
 import gapt.expr.formula.Top
 import gapt.expr.subst.Substitution
 import gapt.proofs.lk.LKProof
+import gapt.proofs.lk.LKProofSubstitutableDefault
 import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.BottomAxiom

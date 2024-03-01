@@ -4,7 +4,7 @@ import gapt.expr._
 import gapt.expr.formula.Formula
 import gapt.expr.formula.hol.universalClosure
 import gapt.expr.util.freeVariables
-import gapt.proofs.{ HOLClause, HOLSequent }
+import gapt.proofs.{ HOLClause, HOLSequent, RichFormulaSequent }
 
 object TptpFOLExporter {
   def apply( formula: Formula ): TptpFile =

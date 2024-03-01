@@ -8,7 +8,7 @@ import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.logic.hol.CNFp
-import gapt.proofs.{ FOLClause, Sequent }
+import gapt.proofs.{ FOLClause, Sequent, RichFormulaSequent }
 
 /**
  * Schematic extended Herbrand sequent for schematic Pi-2 grammars

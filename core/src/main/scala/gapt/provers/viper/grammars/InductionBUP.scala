@@ -12,6 +12,7 @@ import gapt.expr.util.rename
 import gapt.grammars.InductionGrammar
 import gapt.grammars.InductionGrammar.Production
 import gapt.proofs.HOLSequent
+import gapt.proofs.RichFormulaSequent
 import gapt.proofs.expansion.InstanceTermEncoding
 
 case class InductionBUP( grammar: InductionGrammar, enc: InstanceTermEncoding, goal: Formula ) {

@@ -1,7 +1,7 @@
 package gapt.provers.escargot.impl
 
 import gapt.expr.formula.hol.universalClosure
-import gapt.proofs.{ ContextSection, HOLClause, HOLSequent, Sequent }
+import gapt.proofs.{ ContextSection, HOLClause, HOLSequent, Sequent, RichFormulaSequent }
 import gapt.proofs.resolution._
 import gapt.provers.escargot.{ LPO, TermOrdering }
 import gapt.provers.viper.spin._

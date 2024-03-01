@@ -52,6 +52,7 @@ import gapt.proofs.Sequent
 import gapt.proofs.SequentConnector
 import gapt.proofs.SequentIndex
 import gapt.proofs.Suc
+import gapt.proofs.RichFormulaSequent
 
 import scala.collection.mutable
 

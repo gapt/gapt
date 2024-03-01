@@ -20,6 +20,8 @@ import gapt.proofs.SequentConnector
 import gapt.proofs.context.Context
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.LKVisitor
+import gapt.proofs.lk.LKProofSubstitutableDefault
+import gapt.proofs.lk.lkProofReplaceable
 import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.ConversionLeftRule
 import gapt.proofs.lk.rules.ConversionRightRule

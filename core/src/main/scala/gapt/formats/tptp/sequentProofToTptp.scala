@@ -4,7 +4,7 @@ import gapt.expr._
 import gapt.expr.formula.Formula
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.hol.universalClosure
-import gapt.proofs.{ Sequent, SequentProof }
+import gapt.proofs.{ Sequent, SequentProof, RichFormulaSequent }
 
 import scala.collection.mutable
 

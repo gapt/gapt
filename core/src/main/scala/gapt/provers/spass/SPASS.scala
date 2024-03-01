@@ -25,7 +25,7 @@ import gapt.expr.util.rename
 import gapt.logic.clauseSubsumption
 import gapt.proofs._
 import gapt.proofs.context.mutable.MutableContext
-import gapt.proofs.resolution.{ AvatarNegNonGroundComp, AvatarNonGroundComp, ResolutionProof, fixDerivation }
+import gapt.proofs.resolution.{ AvatarNegNonGroundComp, AvatarNonGroundComp, ResolutionProof, fixDerivation, resolutionProofsAreReplaceable }
 import gapt.proofs.sketch._
 import gapt.provers.{ ResolutionProver, extractIntroducedDefinitions, renameConstantsToFi }
 import gapt.utils.{ ExternalProgram, Maybe, runProcess }

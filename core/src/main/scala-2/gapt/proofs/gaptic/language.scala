@@ -7,7 +7,7 @@ import gapt.expr.ty.Ti
 import gapt.expr.util.freeVariables
 import gapt.expr.util.typeVariables
 import gapt.formats.babel.BabelSignature
-import gapt.proofs.{ HOLSequent, Sequent }
+import gapt.proofs.{ HOLSequent, Sequent, RichFormulaSequent }
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.ProofDeclaration
