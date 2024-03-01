@@ -39,7 +39,7 @@ object solutionViaInterpolation {
     }
 
     val tree = mkAss( sehs.ss.size - 1, Substitution() )
-    val Some( interpolants ) = SmtInterpol.getInterpolant( tree.map( _._3 ) )
+    val Some( interpolants ) = SmtInterpol.getInterpolant( tree.map( _._3 ) ): @unchecked
     val simplified = interpolants.map( simplifyPropositional( _ ) )
 
     val generalized =

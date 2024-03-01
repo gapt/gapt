@@ -87,7 +87,7 @@ package object axioms {
    */
   def inductionCaseConclusion(
     freeVariable: Var, constructor: Con, formula: Formula ): ( List[Var], List[Var], Formula ) = {
-    val FunctionType( _, argumentTypes ) = constructor.ty
+    val FunctionType( _, argumentTypes ) = constructor.ty: @unchecked
     val nameGenerator = rename.awayFrom( freeVariables( formula ) )
     val newVariables = argumentTypes map {
       argumentType =>
@@ -107,7 +107,7 @@ package object axioms {
 
   def inductionCaseConclusion(
     freeVariable: Var, constructor: Con, formula: Expr ): ( List[Var], List[Var], Expr ) = {
-    val FunctionType( _, argumentTypes ) = constructor.ty
+    val FunctionType( _, argumentTypes ) = constructor.ty: @unchecked
     val nameGenerator = rename.awayFrom( freeVariables( formula ) )
     val newVariables = argumentTypes map {
       argumentType =>

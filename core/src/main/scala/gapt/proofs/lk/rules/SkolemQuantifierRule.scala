@@ -21,7 +21,7 @@ trait SkolemQuantifierRule extends UnaryLKProof with CommonRule {
   def quantifiedVariable: Var
   def subFormula: Formula
 
-  val Apps( skolemConst: Const, skolemArgs ) = skolemTerm
+  val Apps( skolemConst: Const, skolemArgs ) = skolemTerm: @unchecked
 
   //  {
   //    val expectedMain = BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) )

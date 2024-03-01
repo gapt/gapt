@@ -78,7 +78,7 @@ object solveBupViaInterpolationBoundedDepth {
 
   def apply( bup: InductionBUP, i: Int = 0 ): Expr = {
     val tree = boundedUnfolding( bup, i )
-    val Some( interpolants ) = SmtInterpol.getInterpolant( tree.map( _._2 ) )
+    val Some( interpolants ) = SmtInterpol.getInterpolant( tree.map( _._2 ) ): @unchecked
 
     val nu = rename(
       ( bup.grammar.nus.values.toSeq.flatten :+ bup.grammar.alpha ).
@@ -121,7 +121,7 @@ object solveBupViaInterpolationConcreteTerms {
       val caseEqs = mutable.Buffer[Formula]()
       val children = mutable.Buffer[Tree[( PredVars, Formula )]]()
       val Apps( ctr, args ) = t
-      val Some( cas ) = bup.indCases.find( _.constructor == ctr )
+      val Some( cas ) = bup.indCases.find( _.constructor == ctr ): @unchecked
       val nus = cas.nu.map( nameGen.fresh( _ ) )
       val subst = Substitution( ( cas.nu zip nus ) ++ ( bup.grammar.gamma zip gam ) )
       bgth += subst( cas.theoryFormulas.toNegConjunction )
@@ -225,7 +225,7 @@ object solveBupViaInterpolationConcreteTerms {
         bup.endCut.theoryFormulas.toNegConjunction ) --> bup.goal
 
     for {
-      ( par @ Apps( ctr: Const, parArgs ), f ) <- interps
+      case ( par @ Apps( ctr: Const, parArgs ), f ) <- interps
       if parArgs contains t
       cas <- bup.indCases if cas.constructor == ctr
     } contexts +=
@@ -255,7 +255,7 @@ object solveBupViaInterpolationConcreteTerms {
   def apply( bup: InductionBUP, ts: LazyList[Expr], prev: Map[Expr, Formula], nu: Var ): Expr = {
     val tree = boundedUnfolding( bup, ts.head )
     val Some( interpolants ) = SmtInterpol.getInterpolant( tree.map( _._2 ) ).
-      map( _.map( simplifyPropositional( _ ) ) )
+      map( _.map( simplifyPropositional( _ ) ) ): @unchecked
 
     val generalized =
       tree.zip( interpolants ).map {

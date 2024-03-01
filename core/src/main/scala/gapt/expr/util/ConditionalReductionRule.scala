@@ -31,7 +31,7 @@ case class ConditionalReductionRule( conditions: Seq[Formula], lhs: Expr, rhs: E
 
   require( !lhs.isInstanceOf[Var], "left hand side must not be a variable" )
 
-  val Apps( lhsHead @ Const( lhsHeadName, _, _ ), lhsArgs ) = lhs
+  val Apps( lhsHead @ Const( lhsHeadName, _, _ ), lhsArgs ) = lhs: @unchecked
   val lhsArgsSize: Int = lhsArgs.size
 }
 

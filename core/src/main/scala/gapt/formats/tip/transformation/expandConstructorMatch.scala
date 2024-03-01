@@ -147,7 +147,7 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
       if isConstructor( identifier ) =>
         retrieveCase( matchExpression, identifier ) match {
           case Some( cas ) =>
-            val TipSmtConstructorPattern( _, variables ) = cas.pattern
+            val TipSmtConstructorPattern( _, variables ) = cas.pattern: @unchecked
             val substitution = Substitution( variables zip expressions: _* )
             val newExpression =
               new Substitute( problem )( cas.expr, substitution )

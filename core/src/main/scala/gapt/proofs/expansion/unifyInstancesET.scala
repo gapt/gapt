@@ -9,7 +9,7 @@ import gapt.expr.util.syntacticMGU
 /** Decreases the number of instances in an expansion proof by unifying the instance terms. */
 object unifyInstancesET {
   def apply( ep: ExpansionProof ): ExpansionProof = {
-    val instances = for ( ETWeakQuantifier( _, insts ) <- ep.subProofs.toSeq ) yield insts.keySet
+    val instances = for ( case ETWeakQuantifier( _, insts ) <- ep.subProofs.toSeq ) yield insts.keySet
 
     // TODO: this is not enough to ensure acyclicity
     val subst = unifyInstances( instances, ep.eigenVariables ++ freeVariables( ep.shallow ) )

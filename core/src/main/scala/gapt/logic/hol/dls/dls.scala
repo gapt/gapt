@@ -395,7 +395,7 @@ private object util {
   def freshArgumentVariables(
     secondOrderVariable: Var,
     disjuncts:           Set[Disjunct] ): List[Var] = {
-    val PredicateVariable( _, ( inputTypes, _ ) ) = secondOrderVariable
+    val PredicateVariable( _, ( inputTypes, _ ) ) = secondOrderVariable: @unchecked
     val blackListVariableNames = disjuncts.flatMap( _.variables ).map( _.name )
     val argumentName = secondOrderVariable.name.toLowerCase()
     new NameGenerator( blackListVariableNames )

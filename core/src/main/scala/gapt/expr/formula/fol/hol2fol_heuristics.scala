@@ -93,7 +93,7 @@ object undoHol2Fol {
       //cases for term replacement
 
       case Const( name, _, _ ) if abssymbol_map.lookupByName( name ).isDefined =>
-        val Some( qterm_ ) = abssymbol_map.lookupByName( name )
+        val Some( qterm_ ) = abssymbol_map.lookupByName( name ): @unchecked
         val qterm: Expr = freeVariables( qterm_ ).toList.foldRight( qterm_ )( ( v, term ) => Abs( v, term ) )
         expected_type match {
           case Some( expt ) =>
@@ -104,7 +104,7 @@ object undoHol2Fol {
         }
 
       case HOLFunction( Const( name, _, _ ), args ) if abssymbol_map.lookupByName( name ).isDefined =>
-        val Some( qterm_ ) = abssymbol_map.lookupByName( name )
+        val Some( qterm_ ) = abssymbol_map.lookupByName( name ): @unchecked
         val qterm: Expr = freeVariables( qterm_ ).toList.foldRight( qterm_ )( ( v, term ) => Abs( v, term ) )
         val btargs = args.map( x => backtranslate( x.asInstanceOf[Expr], sig_vars, sig_consts, abssymbol_map, None ) )
         val r = btargs.foldLeft( qterm )( ( term, nextarg ) => App( term, nextarg ) )

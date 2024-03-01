@@ -163,7 +163,7 @@ object LKToND {
         nd.LogicalAxiom( f )
 
       case lk.rules.ProofLink( prf, seq ) =>
-        val Apps( Const( proofName, _, _ ), args ) = prf
+        val Apps( Const( proofName, _, _ ), args ) = prf: @unchecked
         val ( genprf, genseq ) = ctx.get[ProofNames].names( proofName )
         val Apps( _, vs ) = genprf
 
@@ -282,7 +282,7 @@ object LKToND {
             val focusMain = subProof.endSequent.indexOf( f, Polarity.InSuccedent )
             translate( subProof, Some( focusMain ) )
           case None =>
-            val Neg( a ) = p.mainFormula
+            val Neg( a ) = p.mainFormula: @unchecked
             val focusMain = subProof.endSequent.indexOf( a, Polarity.InSuccedent )
             ProofBuilder.
               c( nd.LogicalAxiom( p.mainFormula ) ).
@@ -294,7 +294,7 @@ object LKToND {
       case p @ NegRightRule( subProof, aux ) =>
 
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
-          val Neg( a ) = p.mainFormula
+          val Neg( a ) = p.mainFormula: @unchecked
           val t = translate( subProof, heuristicIndex( subProof ) )
           if ( t.endSequent( Suc( 0 ) ) == Bottom() ) {
             NegIntroRule( t, a )
@@ -319,7 +319,7 @@ object LKToND {
             Some( p.getSequentConnector.parent( focus.get ) )
           else None )
 
-        val And( a, b ) = p.mainFormula
+        val And( a, b ) = p.mainFormula: @unchecked
 
         val ax = nd.LogicalAxiom( p.mainFormula )
         ProofBuilder.
@@ -394,7 +394,7 @@ object LKToND {
         ) if f == subProof1.endSequent( aux1 ) || f == subProof1.endSequent( aux2 ) =>
 
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
-          val Or( a, b ) = p.mainFormula
+          val Or( a, b ) = p.mainFormula: @unchecked
           f match {
             case `b` =>
               val i = subProof1.getSequentConnector.parent( aux1 )
@@ -417,7 +417,7 @@ object LKToND {
       case p @ OrRightRule( subProof, aux1, aux2 ) =>
 
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
-          val Or( a, b ) = p.mainFormula
+          val Or( a, b ) = p.mainFormula: @unchecked
           val rp = ProofBuilder.
             c( translate( subProof, Some( aux2 ) ) ).
             u( OrIntro2Rule( _, a ) ).
@@ -445,7 +445,7 @@ object LKToND {
             Some( p.getRightSequentConnector.parentOption( focus.get ).getOrElse( Suc( 0 ) ) )
           else None )
 
-        val Imp( _, b ) = p.mainFormula
+        val Imp( _, b ) = p.mainFormula: @unchecked
         val i = tr.endSequent.indexOf( b, Polarity.InAntecedent )
 
         val partialProof = ProofBuilder.
@@ -462,7 +462,7 @@ object LKToND {
       case p @ ImpRightRule( subProof, aux1, aux2 ) =>
 
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
-          val Imp( a, _ ) = p.mainFormula
+          val Imp( a, _ ) = p.mainFormula: @unchecked
           ProofBuilder.
             c( translate( subProof, Some( aux2 ) ) ).
             u( ImpIntroRule( _, a ) ).
@@ -515,7 +515,7 @@ object LKToND {
             Some( p.getSequentConnector.parent( focus.get ) )
           else None )
 
-        val Ex( _, a ) = p.mainFormula
+        val Ex( _, a ) = p.mainFormula: @unchecked
         val i = t.endSequent.indexOf( Substitution( v, eigen )( a ), Polarity.InAntecedent )
         ProofBuilder.
           c( nd.LogicalAxiom( p.mainFormula ) ).

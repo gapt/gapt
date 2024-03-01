@@ -111,7 +111,7 @@ trait TokenToLKConverter {
 
     var l = List[HOLSequent]()
 
-    for ( RToken( name, argname, antecedent, succedent, _ ) <- rules ) {
+    for ( case RToken( name, argname, antecedent, succedent, _ ) <- rules ) {
       val ant = antecedent.map( x => c( LLKFormulaParser.ASTtoHOL( naming, x ) ) )
       val suc = succedent.map( x => c( LLKFormulaParser.ASTtoHOL( naming, x ) ) )
       val fs = HOLSequent( ant, suc )
@@ -236,7 +236,7 @@ trait TokenToLKConverter {
               " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "AUTOPROP" =>
           try {
-            val Right( rule ) = solvePropositional( HOLSequent( ant, suc ) )
+            val Right( rule ) = solvePropositional( HOLSequent( ant, suc ) ): @unchecked
             proofstack = rule :: proofstack
             require(
               proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
@@ -415,7 +415,7 @@ trait TokenToLKConverter {
                             fs: HOLSequent, auxterm: Option[LambdaAST],
                             naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
-    val oldproof :: rest = current_proof
+    val oldproof :: rest = current_proof: @unchecked
 
     val ( mainsequent, auxsequent, _ ) = filterContext( oldproof.endSequent, fs )
     require(
@@ -542,7 +542,7 @@ trait TokenToLKConverter {
                                    fs: HOLSequent, auxterm: Option[LambdaAST],
                                    naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.size > 1, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
-    val rightproof :: leftproof :: stack = current_proof
+    val rightproof :: leftproof :: stack = current_proof: @unchecked
 
     val ( mainsequent, auxsequent, context ) = filterContext( leftproof.endSequent, rightproof.endSequent, fs )
 
@@ -625,7 +625,7 @@ trait TokenToLKConverter {
                                   fs: HOLSequent, auxterm: Option[LambdaAST],
                                   naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
-    val top :: stack = current_proof
+    val top :: stack = current_proof: @unchecked
 
     val ( mainsequent, auxsequent, context ) = filterContext( top.endSequent, fs )
 
@@ -698,7 +698,7 @@ trait TokenToLKConverter {
                       fs: HOLSequent, auxterm: Option[LambdaAST],
                       naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
-    val top :: stack = current_proof
+    val top :: stack = current_proof: @unchecked
     val ( main, aux, context ) = filterContext( top.endSequent, fs )
 
     val left = main.antecedent.foldLeft( top )( ( intermediate, f ) => {
@@ -736,7 +736,7 @@ trait TokenToLKConverter {
                       fs: HOLSequent, auxterm: Option[LambdaAST],
                       naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.size > 1, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
-    val rightproof :: leftproof :: stack = current_proof
+    val rightproof :: leftproof :: stack = current_proof: @unchecked
 
     //In the case the main formula is the same as an auxiliariy formula, filterContext cannot infer the main formula
     //we doe this now by hand
@@ -757,7 +757,7 @@ trait TokenToLKConverter {
         // f[t] = main[s]
         val righteqsante = rightproof.endSequent.antecedent
         val candidates = for (
-          e @ Eq( s, t ) <- lefteqs;
+          case e @ Eq( s, t ) <- lefteqs;
           f <- righteqsante;
           main <- fs.antecedent;
           if canReplace( s, t, f, main )
@@ -816,7 +816,7 @@ trait TokenToLKConverter {
         // from the right parent together with possible main formulas in the conclusion
         val righteqssucc = rightproof.endSequent.succedent
         val candidates = for (
-          e @ Eq( s, t ) <- lefteqs;
+          case e @ Eq( s, t ) <- lefteqs;
           f <- righteqssucc;
           main <- fs.succedent;
           if canReplace( s, t, f, main )
@@ -886,7 +886,7 @@ trait TokenToLKConverter {
   def handleDefinitions( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST],
                          naming: ( String ) => Expr, rt: RToken, llk_definitions: Map[Expr, Expr] ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
-    val parent :: stack = current_proof
+    val parent :: stack = current_proof: @unchecked
     val ( mainsequent, auxsequent, context ) = filterContext( parent.endSequent, fs )
     require(
       auxsequent.formulas.size == 1,
@@ -932,7 +932,7 @@ trait TokenToLKConverter {
                          fs: HOLSequent, auxterm: Option[LambdaAST],
                          naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
-    val parentproof :: stack = current_proof
+    val parentproof :: stack = current_proof: @unchecked
     val inf = ContractionMacroRule( parentproof, fs, strict = false )
     inf :: stack
   }
@@ -941,7 +941,7 @@ trait TokenToLKConverter {
                        fs: HOLSequent, auxterm: Option[LambdaAST],
                        naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
-    val parentproof :: stack = current_proof
+    val parentproof :: stack = current_proof: @unchecked
     //val inf = weaken(parentproof, fs)
     val inf = WeakeningMacroRule( parentproof, fs )
     inf :: stack
@@ -951,7 +951,7 @@ trait TokenToLKConverter {
                  fs: HOLSequent, auxterm: Option[LambdaAST],
                  naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.size > 1, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
-    val rightproof :: leftproof :: stack = current_proof
+    val rightproof :: leftproof :: stack = current_proof: @unchecked
 
     val auxsequent = ( leftproof.endSequent ++ rightproof.endSequent ) diff fs
     require(
@@ -1018,7 +1018,7 @@ trait TokenToLKConverter {
                      subterm: List[( ast.Var, LambdaAST )], naming: ( String ) => Expr,
                      rt: RToken, axioms: Map[Formula, Formula], definitions: Map[Expr, Expr] ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
-    val oldproof :: rest = current_proof
+    val oldproof :: rest = current_proof: @unchecked
     require( auxterm.isDefined, "Error creating an equational axiom rule: Need instantiation annotation!" )
     val auxf = c( LLKFormulaParser.ASTtoHOLnormalized( naming, auxterm.get ) )
 
@@ -1056,10 +1056,10 @@ trait TokenToLKConverter {
     val axiomconjunction = c( definitions( axformula ) )
     val defs = definitions.toList.map( x => llkDefinitionToLKDefinition( x._1, x._2 ) )
     val ( _, axproof ) = getAxiomLookupProof( name, axiom, auxf, axiomconjunction, LogicalAxiom( auxf ), sub2, defs )
-    val Some( axdef ) = defs.find( _.what == Const( "AX", To ) )
+    val Some( axdef ) = defs.find( _.what == Const( "AX", To ) ): @unchecked
     val axrule = ConversionLeftRule( axproof, axiomconjunction, axformula )
 
-    val Eq( s, t ) = auxf
+    val Eq( s, t ) = auxf: @unchecked
 
     val auxsequent = oldproof.endSequent diff fs
     val mainsequent = fs diff ( oldproof.endSequent ++ axioms_prove_sequent )
@@ -1093,7 +1093,7 @@ trait TokenToLKConverter {
                        naming: ( String ) => Expr, rt: RToken,
                        axioms: Map[Formula, Formula], definitions: Map[Expr, Expr] ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
-    val oldproof :: rest = current_proof
+    val oldproof :: rest = current_proof: @unchecked
     //require(auxterm.isDefined, "Error creating an stantiate axiom rule: Need instantiation annotation!")
     //val auxf = c(LLKFormulaParser.ASTtoHOL(naming, auxterm.get))
     val auxsequent = oldproof.endSequent diff fs
@@ -1151,7 +1151,7 @@ trait TokenToLKConverter {
     val axiomconjunction = c( definitions( axformula ) )
     val defs = definitions.toList.map( x => llkDefinitionToLKDefinition( x._1, x._2 ) )
     val ( _, axproof ) = getAxiomLookupProof( name, axiom, auxf, axiomconjunction, oldproof, sub2, defs )
-    val Some( axdef ) = defs.find( _.what == Const( "AX", To ) )
+    val Some( axdef ) = defs.find( _.what == Const( "AX", To ) ): @unchecked
     val axrule = ConversionLeftRule( axproof, axiomconjunction, axformula )
     ContractionMacroRule( axrule, fs, strict = false ) :: rest
   }

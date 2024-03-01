@@ -110,14 +110,14 @@ object Checkable {
         case q @ InductionRule( cases, formula, term ) =>
           ctx.check( formula )
           ctx.check( term )
-          val Some( ctrsInCtx ) = ctx.getConstructors( q.indTy.asInstanceOf[TBase] )
+          val Some( ctrsInCtx ) = ctx.getConstructors( q.indTy.asInstanceOf[TBase] ): @unchecked
           val ctrsInProof = cases.map( _.constructor )
           require(
             ctrsInProof == ctrsInCtx,
             s"Induction rule has incorrect constructors: ${ctrsInProof.mkString( ", " )}\n" +
               s"Expected: ${ctrsInCtx.mkString( ", " )}" )
         case sk: SkolemQuantifierRule =>
-          val Some( skolemDef ) = ctx.skolemDef( sk.skolemConst )
+          val Some( skolemDef ) = ctx.skolemDef( sk.skolemConst ): @unchecked
           Checkable.requireDefEq( skolemDef( sk.skolemArgs ), sk.mainFormula )
           ctx.check( sk.skolemTerm )
         case StrongQuantifierRule( _, _, _, _, _ ) =>
@@ -154,7 +154,7 @@ object Checkable {
         case Defn( df, by )             => require( ctx.isDefEq( df, by ) )
         case _: WeakQuantResolutionRule =>
         case q: SkolemQuantResolutionRule =>
-          val Some( skolemDef ) = ctx.skolemDef( q.skolemConst )
+          val Some( skolemDef ) = ctx.skolemDef( q.skolemConst ): @unchecked
           require( BetaReduction.betaNormalize( skolemDef( q.skolemArgs ) ) == q.subProof.conclusion( q.idx ) )
           ctx.check( q.skolemTerm )
         case DefIntro( _, _, definition, _ ) =>

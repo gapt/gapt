@@ -188,7 +188,7 @@ private class skolemizeLK(
             instantiateWeakQuantifier( freshVar ).
             addGeneralization( q.conclusion( a ) ) ),
           subst compose Substitution( freshVar -> term ) )
-        val Quant( v, matrix, _ ) = subf( p.mainFormulas.head )
+        val Quant( v, matrix, _ ) = subf( p.mainFormulas.head ): @unchecked
         if ( pol ) ExistsRightRule( q_, a, matrix, sub( term ), v )
         else ForallLeftRule( q_, a, matrix, sub( term ), v )
 
@@ -210,7 +210,7 @@ private class skolemizeLK(
 
       // Eigenvariable inferences that are Skolemized
       case p @ StrongQuantifierRule( q, a, eigen, quant, pol ) =>
-        val Some( genFormula ) = info( p.mainIndices.head ).generalizedFormulas.find( !_.isInstanceOf[Atom] )
+        val Some( genFormula ) = info( p.mainIndices.head ).generalizedFormulas.find( !_.isInstanceOf[Atom] ): @unchecked
         val argVars_ = info( p.mainIndices.head ).lowerWeakQuantifierTermVars ++ freeVariables( genFormula )
         val argVars = if ( proofTheoretic ) argVars_.distinct else argVars_.filter( freeVariables( genFormula ) ).distinct
         val skolemDef = Abs( argVars, genFormula )

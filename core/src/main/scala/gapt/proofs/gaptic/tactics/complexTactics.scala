@@ -69,7 +69,7 @@ case class ForwardChain(
     findFormula( goal, OnLabel( lemmaLabel ) ).withFilter {
       case ( _, _, i ) => i.isAnt
     }.flatMap { f =>
-      val ( _, l @ All.Block( _, Imp( _, _ ) ), _ ) = f
+      val ( _, l @ All.Block( _, Imp( _, _ ) ), _ ) = f: @unchecked
       Tactic.pure( l )
     }
   }
@@ -99,7 +99,7 @@ case class ForwardChain(
 
   private def matchingLemma( lemma: Formula, formula: Formula ): Option[Substitution] = {
     val fixedVariables = freeVariables( lemma ).map { v => v -> v }
-    val All.Block( _, Imp( hyp, _ ) ) = lemma
+    val All.Block( _, Imp( hyp, _ ) ) = lemma: @unchecked
     syntacticMatching( hyp, formula, PreSubstitution( substitution ++ fixedVariables ) )
   }
 }
@@ -127,7 +127,7 @@ case class ChainTactic( hyp: String, target: TacticApplyMode = UniqueFormula, su
         // Find target index and substitution
         findFormula( goal, target ).withFilter { case ( _, f, idx ) => idx.isSuc && getSubst( f ).isDefined }.flatMap {
           case ( targetLabel, f, targetIndex ) =>
-            val Some( sub ) = getSubst( f )
+            val Some( sub ) = getSubst( f ): @unchecked
 
             // Recursively apply implication left to the left until the end of the chain is reached,
             // where the sequent is an axiom (following some contractions).
@@ -190,8 +190,8 @@ case class RewriteTactic(
   def apply( goal: OpenAssumption, target: String ): Tactic[LKProof] = {
     for {
       ( eqLabel, leftToRight ) <- equations
-      ( ( `target`, tgt ), tgtIdx ) <- goal.labelledSequent.zipWithIndex.elements
-      ( `eqLabel`, quantEq @ All.Block( vs, eq @ Eq( t, s ) ) ) <- goal.labelledSequent.antecedent
+      case ( ( `target`, tgt ), tgtIdx ) <- goal.labelledSequent.zipWithIndex.elements
+      case ( `eqLabel`, quantEq @ All.Block( vs, eq @ Eq( t, s ) ) ) <- goal.labelledSequent.antecedent
       ( t_, s_ ) = if ( leftToRight ) ( t, s ) else ( s, t )
       pos <- HOLPosition getPositions tgt
       subst <- syntacticMatching( List( t_ -> tgt( pos ) ), PreSubstitution( fixedSubst ++ freeVariables( quantEq ).map { v => v -> v } ) )
@@ -245,11 +245,11 @@ case class InductionTactic( mode: TacticApplyMode, v: Var, eigenVariables: Map[C
 
   def apply( goal: OpenAssumption ): Tactic[Unit] =
     for {
-      ( label, main, idx: Suc ) <- findFormula( goal, mode )
+      case ( label, main, idx: Suc ) <- findFormula( goal, mode )
       formula = main
       constrs <- getConstructors( v.ty.asInstanceOf[TBase] )
       cases = constrs.map { constr =>
-        val FunctionType( _, argTypes ) = constr.ty
+        val FunctionType( _, argTypes ) = constr.ty: @unchecked
         val nameGen: ExprNameGenerator = rename.awayFrom( freeVariables( goal.conclusion ) )
         val evs = eigenVariables.getOrElse( constr, argTypes map { at => nameGen.fresh(if ( at == v.ty ) v else Var( "x", at ) ) } )
         val hyps = NewLabels( goal.labelledSequent, s"IH${v.name}" ) zip ( evs filter { _.ty == v.ty } map { ev => Substitution( v -> ev )( formula ) } )
@@ -417,7 +417,7 @@ case class SubstTactic( mode: TacticApplyMode ) extends Tactical1[Unit] {
 
   def apply( goal: OpenAssumption ): Tactic[Unit] =
     for {
-      ( existingLabel: String, VEq( t, s, vLeft ), i: Ant ) <- findFormula( goal, mode )
+      case ( existingLabel: String, VEq( t, s, vLeft ), i: Ant ) <- findFormula( goal, mode )
       subst = Substitution( if ( vLeft ) t.asInstanceOf[Var] -> s else s.asInstanceOf[Var] -> t )
       newGoal = subst( goal.labelledSequent.delete( i ) )
       _ <- replace(

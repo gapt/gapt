@@ -35,7 +35,7 @@ case class ExistsSkLeftRule( subProof: LKProof, aux: SequentIndex, mainFormula: 
 
   validateIndices( premise, Seq( aux ), Seq() )
 
-  val Ex( quantifiedVariable, subFormula ) = mainFormula
+  val Ex( quantifiedVariable, subFormula ) = mainFormula: @unchecked
 
   override def name: String = "∃sk:l"
 
@@ -67,7 +67,7 @@ object ExistsSkLeftRule extends ConvenienceConstructor( "ExistsSkLeftRule" ) {
   }
 
   def apply( subProof: LKProof, skolemTerm: Expr )( implicit ctx: Context ): ExistsSkLeftRule = {
-    val Apps( skC: Const, _ ) = skolemTerm
+    val Apps( skC: Const, _ ) = skolemTerm: @unchecked
     val skD = ctx.skolemDef( skC ).getOrElse(
       throw new IllegalArgumentException( s"not a defined Skolem function: $skC" ) )
     apply( subProof, skolemTerm, skD )

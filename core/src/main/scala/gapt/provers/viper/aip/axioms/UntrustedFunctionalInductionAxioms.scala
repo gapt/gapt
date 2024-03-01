@@ -25,7 +25,7 @@ import gapt.provers.viper.aip.ThrowsError
 case object UntrustedFunctionalInductionAxioms extends AxiomFactory {
   def generateScheme( eqns: Vector[( Const, List[Formula], Expr, Expr )] ): Formula = {
     val nameGen = rename.awayFrom( freeVariables( eqns.flatMap( _._2 ) ++ eqns.map( _._3 ) ) )
-    val fn @ Const( _, FunctionType( retType, argTypes ), _ ) = eqns.head._1
+    val fn @ Const( _, FunctionType( retType, argTypes ), _ ) = eqns.head._1: @unchecked
 
     val motive = Var( nameGen.fresh( "X" ), FunctionType( To, retType +: argTypes ) )
 

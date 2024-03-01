@@ -38,7 +38,7 @@ class Vampire( commandName: String = "vampire", extraArgs: Seq[String] = Seq() )
             val sketch = time( "tptp_parse" ) {
               TptpProofParser.parse( StringInputFile( refutationLines.mkString( "\n" ) ) )._2
             }
-            val Right( resolution ) = time( "replay" ) { RefutationSketchToResolution( sketch ) }
+            val Right( resolution ) = time( "replay" ) { RefutationSketchToResolution( sketch ) }: @unchecked
             Some( time( "fix_derivation" ) { fixDerivation( resolution, cnf ) } )
           case None =>
             require( output.exists( l => l.startsWith( "% SZS status Satisfiable " ) || l == "Satisfiable!" ) )

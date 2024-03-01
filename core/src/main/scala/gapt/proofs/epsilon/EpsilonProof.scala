@@ -16,7 +16,7 @@ import gapt.expr.subst.Substitution
 import gapt.proofs.HOLSequent
 
 case class CriticalFormula( existential: Formula, term: Expr ) {
-  val Ex( bound, qfFormula ) = existential
+  val Ex( bound, qfFormula ) = existential: @unchecked
   val eps = Epsilon( bound, qfFormula )
 
   val formula = instantiate( existential, term ) --> instantiate( existential, eps )

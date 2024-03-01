@@ -35,7 +35,7 @@ object subsetLGGs {
 
     def findLGGs( currentLGG: UOption[Expr], terms: List[Expr], maxSize: Int ): Unit =
       if ( maxSize > 0 && terms.nonEmpty ) {
-        val t :: rest = terms
+        val t :: rest = terms: @unchecked
 
         val newLGG = currentLGG match {
           case USome( lgg ) => leastGeneralGeneralization.fast( lgg, t )._1

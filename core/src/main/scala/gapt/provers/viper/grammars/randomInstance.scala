@@ -23,7 +23,7 @@ object randomInstance {
         Var( nameGen freshWithIndex "x", ty )
       case Some( ctrs ) =>
         val ctr = ctrs( Random.nextInt( ctrs.size ) )
-        val FunctionType( _, argTypes ) = ctr.ty
+        val FunctionType( _, argTypes ) = ctr.ty: @unchecked
         val args = argTypes.map { at => generate( at.asInstanceOf[TBase], nameGen ) }
         ctr( args: _* )
     }

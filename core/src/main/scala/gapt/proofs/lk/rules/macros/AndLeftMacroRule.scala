@@ -52,7 +52,7 @@ object AndLeftMacroRule extends ConvenienceConstructor( "AndLeftMacroRule" ) {
 
       case -1 +: i +: _ => // The right conjunct has been found at index Ant(i).
         // This match cannot fail: if the index of leftConjunct is -1, it cannot have been passed as an index.
-        val IsFormula( lc ) = leftConjunct
+        val IsFormula( lc ) = leftConjunct: @unchecked
         val subProof_ = WeakeningLeftRule( subProof, lc )
         val oc = subProof_.getSequentConnector
         val proof = AndLeftRule( subProof_, Ant( 0 ), oc.child( Ant( i ) ) )
@@ -60,7 +60,7 @@ object AndLeftMacroRule extends ConvenienceConstructor( "AndLeftMacroRule" ) {
 
       case i +: -1 +: _ => // The left conjunct has been found at index Ant(i).
         // This match cannot fail: if the index of rightConjunct is -1, it cannot have been passed as an index.
-        val IsFormula( rc ) = rightConjunct
+        val IsFormula( rc ) = rightConjunct: @unchecked
         val subProof_ = WeakeningLeftRule( subProof, rc )
         val oc = subProof_.getSequentConnector
         val proof = AndLeftRule( subProof_, oc.child( Ant( i ) ), Ant( 0 ) )

@@ -224,7 +224,7 @@ case class AtomSimpLemma( proj: SimpLemmaProjection ) extends SimpProc {
 case class IffSimpLemma( proj: SimpLemmaProjection ) extends SimpProc {
   override def freeVars = proj.fixed.domain
   require( proj.idx.isSuc )
-  val Iff( lhs, rhs ) = proj.formula
+  val Iff( lhs, rhs ) = proj.formula: @unchecked
 
   val lk1 = SimpLemmas.project( SimpLemmas.project( proj, j = 1 ) ).proof
   val lk2 = SimpLemmas.project( SimpLemmas.project( proj, j = 2 ) ).proof
@@ -241,7 +241,7 @@ case class IffSimpLemma( proj: SimpLemmaProjection ) extends SimpProc {
 case class EqSimpLemma( proj: SimpLemmaProjection ) extends SimpProc {
   override def freeVars = proj.fixed.domain
   require( proj.idx.isSuc )
-  val Eq( lhs, rhs ) = proj.formula
+  val Eq( lhs, rhs ) = proj.formula: @unchecked
 
   override def simpEq( target: Expr )( implicit simp: Simplifier ): SimpEqResult =
     syntacticMatching( lhs, target, proj.fixed ) match {
@@ -284,7 +284,7 @@ case object QPropSimpProc extends SimpProc {
       val sequent = if ( polarity.inAnt ) f +: Sequent() :+ g else g +: Sequent() :+ f
       val expansion = for ( ( a, i ) <- sequent.zipWithIndex ) yield formulaToExpansionTree( a, Set( Substitution() ), i.polarity )
       val Right( lk ) = new ExpansionProofToLK( cl =>
-        cl.succedent.collectFirst { case Eq( s, t ) if s == t => ReflexivityAxiom( t ) } )( ExpansionProof( expansion ) )
+        cl.succedent.collectFirst { case Eq( s, t ) if s == t => ReflexivityAxiom( t ) } )( ExpansionProof( expansion ) ): @unchecked
       SimpIffResult.Prf( lk, f, g, polarity )
     }
   }
@@ -387,7 +387,7 @@ case class Simplifier( lemmas: Seq[SimpProc] ) {
       for {
         ( subterm, pos ) <- getLambdaPositions( f ) if !didRewrite
         lem <- lemmas if !didRewrite
-        SimpEqResult.Prf( lemP, _, subterm_ ) <- Some( lem.simpEq( subterm ) ) if !didRewrite
+        case SimpEqResult.Prf( lemP, _, subterm_ ) <- Some( lem.simpEq( subterm ) ) if !didRewrite
         ctx = replacementContext( subterm_.ty, f, pos )
       } {
         p = ContractionMacroRule(
@@ -410,7 +410,7 @@ case class Simplifier( lemmas: Seq[SimpProc] ) {
       for {
         ( subterm, pos ) <- getLambdaPositions( t ) if !didRewrite
         lem <- lemmas if !didRewrite
-        SimpEqResult.Prf( lemP, _, subterm_ ) <- Some( lem.simpEq( subterm ) ) if !didRewrite
+        case SimpEqResult.Prf( lemP, _, subterm_ ) <- Some( lem.simpEq( subterm ) ) if !didRewrite
         ctx = replacementContext( subterm_.ty, t0 === t, pos.map( LambdaPosition.Right :: _ ) )
       } {
         p = ContractionMacroRule(
@@ -566,8 +566,8 @@ case class SimpTactic(
         if ( goal.conclusion.succedent.isEmpty ) TacticFailure( this, "no formula in succedent" )
         else copy( onLabel = Some( goal.labelledSequent.succedent.head._1 ) ).apply( goal )
       case Some( target ) if goal.labelledSequent.exists( _._1 == target ) =>
-        val Some( target ) = onLabel
-        val Some( idx ) = goal.labelledSequent.find( _._1 == target )
+        val Some( target ) = onLabel: @unchecked
+        val Some( idx ) = goal.labelledSequent.find( _._1 == target ): @unchecked
         val formula = goal.conclusion( idx )
         val simp = Simplifier( mkSimpLemmas( goal ) )
         val res = simp.simpIff( formula, idx.polarity )

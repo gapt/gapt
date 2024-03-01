@@ -148,7 +148,7 @@ class SmtInterpolSession( val script: Script ) extends SessionRunner {
     case DeclareSort( sort ) =>
       declare( sort.name, sort, sortNames, sortNamesInv, script.declareSort( _, 0 ) )
     case DeclareFun( c ) =>
-      val Const( fun, FunctionType( retType, argTypes ), _ ) = c
+      val Const( fun, FunctionType( retType, argTypes ), _ ) = c: @unchecked
       val argSorts = argTypes.map( sort ).toArray
       val retSort = sort( retType )
       declare( fun, c, funNames, funNamesInv, script.declareFun( _, argSorts, retSort ) )

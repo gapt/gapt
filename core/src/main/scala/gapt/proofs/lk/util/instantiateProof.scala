@@ -39,7 +39,7 @@ object instantiateProof {
         val ( instPrf, connInstPrf2SubstDefPrf ) = buildProof.withSequentConnector( subst( defPrf ), ctx )
         connInstPrf2SubstDefPrf * connDefPrf2Link -> instPrf
       case None =>
-        val Some( sequent ) = ctx.get[ProofNames].lookup( proofName )
+        val Some( sequent ) = ctx.get[ProofNames].lookup( proofName ): @unchecked
         SequentConnector( sequent ) -> ProofLink( proofName, sequent )
     }
   }

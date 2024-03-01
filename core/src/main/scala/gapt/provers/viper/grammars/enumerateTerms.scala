@@ -36,7 +36,7 @@ object enumerateTerms {
         case Some( ctrs ) =>
           for ( ctr <- ctrs ) {
             out += ctr
-            val FunctionType( _, fields ) = ctr.ty
+            val FunctionType( _, fields ) = ctr.ty: @unchecked
             fields.foreach( go )
           }
         case None =>

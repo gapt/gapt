@@ -57,7 +57,7 @@ case class TipDomainClosureAxioms( types: List[InductiveType] = Nil ) extends Ax
      * @return A proof of the axiom.
      */
     override def proof: LKProof = {
-      val All.Block( Seq( variable, _* ), _ ) = formula
+      val All.Block( Seq( variable, _* ), _ ) = formula: @unchecked
       var proofState = ProofState(
         projectorDefinitions( datatype ).map( definition => "" -> All.Block( freeVariables( definition ).toSeq, definition ) ) ++:
           Sequent() :+ ( "goal" -> formula ) )

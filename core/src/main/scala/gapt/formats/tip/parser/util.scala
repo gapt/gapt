@@ -121,7 +121,7 @@ object toSExpression {
             !c.ty.isInstanceOf[TBase]
         }.map {
           f =>
-            val FunctionType( returnType, parameterTypes ) = f.ty
+            val FunctionType( returnType, parameterTypes ) = f.ty: @unchecked
             TipSmtFunctionDeclaration(
               f.name,
               Seq(),
@@ -146,7 +146,7 @@ object toSExpression {
         .map {
           f =>
             val FunctionType( returnType @ TBase( _, _ ), parameterTypes ) =
-              f.fun.ty
+              f.fun.ty: @unchecked
 
             TipSmtFunctionDeclaration(
               f.fun.name,

@@ -20,7 +20,7 @@ object forgetfulPropParam {
   def apply( cnf: Set[HOLClause] ): Set[Set[HOLClause]] =
     for (
       clause1 <- cnf; clause2 <- cnf; if clause1 != clause2;
-      atom1 @ Eq( s, t ) <- clause1.succedent; ( atom2, atom2Idx ) <- clause2.zipWithIndex.elements;
+      case atom1 @ Eq( s, t ) <- clause1.succedent; ( atom2, atom2Idx ) <- clause2.zipWithIndex.elements;
       pos2 <- LambdaPosition.getPositions( atom2 ) if atom2( pos2 ) == s || atom2( pos2 ) == t
     ) yield cnf - clause1 - clause2 + ( clause1.removeFromSuccedent( atom1 ) ++ clause2.updated(
       atom2Idx,

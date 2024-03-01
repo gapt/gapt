@@ -44,10 +44,10 @@ object constructSIP {
 
     state += forget( "g" )
     state += allR( nu )
-    val Some( ctrs ) = ctx.getConstructors( g.indTy )
+    val Some( ctrs ) = ctx.getConstructors( g.indTy ): @unchecked
     state += induction( nu ).withEigenVariables( Map() ++ ( for ( ctr <- ctrs ) yield ctr -> g.nus( ctr ).toVector ) )
     for ( ctr <- ctrs ) {
-      val Some( bupCase ) = bup.indCases.find( _.constructor == ctr )
+      val Some( bupCase ) = bup.indCases.find( _.constructor == ctr ): @unchecked
       for ( g <- g.gamma ) state += allR( g )
       state += haveInstances( bupCase.theoryFormulas )
       state += haveInstances( bupCase.indHyps.map( substF ) :- Nil )

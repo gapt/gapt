@@ -44,7 +44,7 @@ object EqualityRightMacroRule extends ConvenienceConstructor( "EqualityRightMacr
         throw LKRuleCreationException( s"Aux formula has not been found in succedent of ${subProof.endSequent}." )
 
       case ( -1, i ) => // Aux formula has been found at index Suc(i).
-        val IsFormula( e ) = equation
+        val IsFormula( e ) = equation: @unchecked
         // This match cannot fail: if the index of the equation is -1, it cannot have been passed as an index.
         val subProof_ = WeakeningLeftRule( subProof, e )
         val oc = subProof_.getSequentConnector

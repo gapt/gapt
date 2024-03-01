@@ -321,7 +321,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       t1.get( n ).contains( hd ) || ( sig.signatureLookup( n ) match {
         case _ if t0.get( n ).exists( _ != hd ) => false
         case BabelSignature.IsConst( c ) =>
-          val FunctionType( retTy, argTys ) = c.ty
+          val FunctionType( retTy, argTys ) = c.ty: @unchecked
           typeVariables( retTy :: argTys.drop( args.size ) ).subsetOf( typeVariables( argTys.take( args.size ) ) )
         case BabelSignature.IsUnknownConst =>
           expr.ty == Ti

@@ -27,7 +27,7 @@ object deltaTableAlgorithm {
       currentLGG:     UOption[Expr],
       currentCover:   Set[Expr],
       currentSubst:   Set[Substitution] ): Unit = if ( remainingTerms.nonEmpty ) {
-      val newTerm :: rest = remainingTerms
+      val newTerm :: rest = remainingTerms: @unchecked
 
       val ( newLGG, substCurLGG, substNewTerm ) =
         currentLGG match {
@@ -68,7 +68,7 @@ object deltaTableAlgorithm {
     val chosenV = a.head( chosenK )
 
     for {
-      ( corrK, `chosenV` ) <- b.flatten
+      case ( corrK, `chosenV` ) <- b.flatten
       newAlreadyFixed = alreadyFixed + ( chosenK -> corrK )
       if a.map( Map() ++ _.view.filterKeys( newAlreadyFixed.keySet ).toMap ) subsetOf b.map( bi => Map() ++ newAlreadyFixed.view.mapValues( bi ).toMap )
       solution <- keySubsumption( a, b, newAlreadyFixed )

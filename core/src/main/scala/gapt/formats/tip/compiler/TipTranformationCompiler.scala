@@ -396,7 +396,7 @@ class TipTransformationCompiler( var problem: TipSmtProblem ) {
     tipSmtCase:        TipSmtCase,
     matchedExpression: Expr,
     freeVars:          Seq[String] ): Expr = {
-    val TipSmtConstructorPattern( constructor, fields ) = tipSmtCase.pattern
+    val TipSmtConstructorPattern( constructor, fields ) = tipSmtCase.pattern: @unchecked
     val constructorType = problem.symbolTable.get.typeOf( constructor.name )
     val boundVariables =
       fields

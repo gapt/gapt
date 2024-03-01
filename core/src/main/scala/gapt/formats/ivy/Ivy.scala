@@ -143,7 +143,7 @@ object IvyParser {
         require( fclause.antecedent.isEmpty, "Expecting only positive equations in parsing of new_symbol rule " + id )
         require( fclause.succedent.size == 1, "Expecting exactly one positive equation in parsing of new_symbol rule " + id )
 
-        val Eq( l: FOLTerm, r: FOLConst ) = fclause( Suc( 0 ) )
+        val Eq( l: FOLTerm, r: FOLConst ) = fclause( Suc( 0 ) ): @unchecked
 
         NewSymbol( id, clause, Suc( 0 ), r, l, fclause, parent_proof )
 
@@ -177,11 +177,11 @@ object IvyParser {
       exp match {
         case FOLAtom( sym, args ) =>
           require( 1 <= p && p <= args.length, "Error in parsing replacement: invalid argument position in atom!" )
-          val ( args1, rterm :: args2 ) = args.splitAt( p - 1 )
+          val ( args1, rterm :: args2 ) = args.splitAt( p - 1 ): @unchecked
           FOLAtom( sym, ( args1 ++ List( replaceTerm_by_in_at( what, by, rterm, ps ).asInstanceOf[FOLTerm] ) ++ args2 ) )
         case FOLFunction( sym, args ) =>
           require( 1 <= p && p <= args.length, "Error in parsing replacement: invalid argument position in function!" )
-          val ( args1, rterm :: args2 ) = args.splitAt( p - 1 )
+          val ( args1, rterm :: args2 ) = args.splitAt( p - 1 ): @unchecked
           FOLFunction( sym, ( args1 ++ List( replaceTerm_by_in_at( what, by, rterm, ps ).asInstanceOf[FOLTerm] ) ++ args2 ) )
         case _ => throw new Exception( "Error in parsing replacement: unexpected (sub)term " + exp + " )" )
       }

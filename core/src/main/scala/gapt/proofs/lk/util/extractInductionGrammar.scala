@@ -44,7 +44,7 @@ object extractInductionGrammar {
     val Vector( ind ) = p.inductions
     val nus = ind.constructorsSteps.map( c => c.constr -> c.evs.toList ).toMap
     val nameGen = rename.awayFrom( nus.values.flatten )
-    val All( _, indFormula @ All.Block( gamma0, indFormulaMatrix ) ) = ind.suc.shallow
+    val All( _, indFormula @ All.Block( gamma0, indFormulaMatrix ) ) = ind.suc.shallow: @unchecked
     require(
       !containsQuantifierOnLogicalLevel( indFormulaMatrix ),
       s"induction formula is not purely universal:\n$indFormula" )
@@ -54,7 +54,7 @@ object extractInductionGrammar {
       gammaC zip gamma
     } )
     require( p.expansionSequent.succedent.size == 1, s"Not exactly 1 expansion tree in succedent" )
-    val Seq( ETStrongQuantifier( _, alpha, _ ) ) = p.expansionSequent.succedent
+    val Seq( ETStrongQuantifier( _, alpha, _ ) ) = p.expansionSequent.succedent: @unchecked
     val goal = p.expansionSequent.succedent.head.shallow
     require(
       !containsQuantifierOnLogicalLevel( instantiate( goal, alpha ) ),

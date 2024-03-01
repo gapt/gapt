@@ -123,7 +123,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
 
   implicit def ctx_ : Context = ctx
 
-  val Sequent( theory, Seq( quantGoal @ All( v0, _ ) ) ) = sequent
+  val Sequent( theory, Seq( quantGoal @ All( v0, _ ) ) ) = sequent: @unchecked
   require( !containsQuantifierOnLogicalLevel( instantiate( quantGoal, v0 ) ) )
 
   val indTy = v0.ty.asInstanceOf[TBase]
@@ -245,7 +245,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
   }
 
   def solveBUP( bup: InductionBUP ): Expr = time( "solvebup" ) {
-    val qbup @ Ex( x_B, qbupMatrix ) = bup.formula
+    val qbup @ Ex( x_B, qbupMatrix ) = bup.formula: @unchecked
     info( s"Solution condition:\n${qbup.toSigRelativeString}\n" )
     try {
       info( s"latex:\n${LatexExporter( qbup )}\n" )
@@ -313,8 +313,8 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     val instProof0 = quiet( options.instanceProver.getExpansionProof( instanceSequent ) ).getOrElse {
       throw new IllegalArgumentException( s"Cannot prove:\n$instanceSequent" )
     }
-    val Some( instProof ) = if ( !options.minInstProof ) Some( instProof0 )
-    else minimalExpansionSequent( instProof0, smtSolver )
+    val Some( instProof ) = (if ( !options.minInstProof ) Some( instProof0 )
+    else minimalExpansionSequent( instProof0, smtSolver )): @unchecked
     require(
       smtSolver.isValid( instProof.deep ),
       s"Instance proof has invalid deep formula:\n${instProof.deep.toSigRelativeString}" )

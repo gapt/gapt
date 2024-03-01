@@ -210,7 +210,7 @@ object equalityRightReduction {
           if ( neg.mainIndices.head != equality.aux ) {
             equality.replacementContext
           } else {
-            val Abs( variable, Neg( formula ) ) = equality.replacementContext
+            val Abs( variable, Neg( formula ) ) = equality.replacementContext: @unchecked
             Abs( variable, formula )
           }
         val ( Seq( ( newSubProof, subConnector ) ), weakeningIntro ) = transformations.splitEquality(
@@ -234,7 +234,7 @@ object equalityRightReduction {
           if ( and.mainIndices.head != equality.aux ) {
             ( equality.replacementContext, equality.replacementContext )
           } else {
-            val Abs( variable, And( leftFormula, rightFormula ) ) = equality.replacementContext
+            val Abs( variable, And( leftFormula, rightFormula ) ) = equality.replacementContext: @unchecked
             ( Abs( variable, leftFormula ), Abs( variable, rightFormula ) )
           }
         val ( Seq( ( newLeftSubProof, leftConnector ), ( newRightSubProof, rightConnector ) ), weakeningIntro ) =
@@ -266,7 +266,7 @@ object equalityRightReduction {
           val newConnector = newEquality.getSequentConnector
           Some( OrRightRule( newEquality, newConnector.child( or.aux1 ), newConnector.child( or.aux2 ) ), false )
         } else {
-          val Abs( variable, Or( leftFormula, rightFormula ) ) = equality.replacementContext
+          val Abs( variable, Or( leftFormula, rightFormula ) ) = equality.replacementContext: @unchecked
           val newEquality1 = EqualityRightRule(
             subProof,
             or.getSequentConnector.parent( equality.eq ),
@@ -298,7 +298,7 @@ object equalityRightReduction {
           val newConnector = newEquality.getSequentConnector
           Some( ImpRightRule( newEquality, newConnector.child( imp.aux1 ), newConnector.child( imp.aux2 ) ), false )
         } else {
-          val Abs( variable, Imp( leftFormula, rightFormula ) ) = equality.replacementContext
+          val Abs( variable, Imp( leftFormula, rightFormula ) ) = equality.replacementContext: @unchecked
           val impConnector = imp.getSequentConnector
           val newEquality1 = EqualityLeftRule(
             subProof, impConnector.parent( equality.eq ), imp.aux1, Abs( variable, leftFormula ) )
@@ -327,8 +327,8 @@ object equalityRightReduction {
           if ( exists.mainIndices.head != equality.aux ) {
             ( equality.replacementContext, exists.A )
           } else {
-            val Abs( variable, Ex( exVar, formula ) ) = equality.replacementContext
-            val Ex( _, newAFormula ) = Substitution( variable, equality.by )( Ex( exVar, formula ) )
+            val Abs( variable, Ex( exVar, formula ) ) = equality.replacementContext: @unchecked
+            val Ex( _, newAFormula ) = Substitution( variable, equality.by )( Ex( exVar, formula ) ): @unchecked
             ( instReplCtx( equality.replacementContext, exists.term ), newAFormula )
           }
         val ( Seq( ( newSubProof, subConnector ) ), _ ) = transformations.splitEquality(
@@ -351,9 +351,9 @@ object equalityRightReduction {
           if ( forall.mainIndices.head != equality.aux ) {
             equality.replacementContext
           } else {
-            val Abs( oldVariable, all @ All( _, _ ) ) = equality.replacementContext
+            val Abs( oldVariable, all @ All( _, _ ) ) = equality.replacementContext: @unchecked
             val newReplVariable = rename( oldVariable, freeVariables( all ) + forall.eigenVariable )
-            val All( _, formula ) = Substitution( oldVariable, newReplVariable )( all )
+            val All( _, formula ) = Substitution( oldVariable, newReplVariable )( all ): @unchecked
             Abs( newReplVariable, formula )
           }
         val ( Seq( ( newSubProof, subConnector ) ), _ ) = transformations.splitEquality(
@@ -478,7 +478,7 @@ object equalityLeftReduction {
 
       case negation @ NegLeftRule( _, _ ) =>
         val context = if ( negation.mainIndices.head == equality.aux ) {
-          val Abs( variable, Neg( formula ) ) = equality.replacementContext
+          val Abs( variable, Neg( formula ) ) = equality.replacementContext: @unchecked
           Abs( variable, formula )
         } else {
           equality.replacementContext
@@ -499,7 +499,7 @@ object equalityLeftReduction {
       case or @ OrLeftRule( _, _, _, _ ) =>
         val ( leftContext, rightContext ) =
           if ( or.mainIndices.head == equality.aux ) {
-            val Abs( variable, Or( lf, rf ) ) = equality.replacementContext
+            val Abs( variable, Or( lf, rf ) ) = equality.replacementContext: @unchecked
             ( Abs( variable, lf ), Abs( variable, rf ) )
           } else {
             ( equality.replacementContext, equality.replacementContext )
@@ -526,7 +526,7 @@ object equalityLeftReduction {
       case and @ AndLeftRule( _, _, _ ) =>
         val andConnector = and.getSequentConnector
         if ( and.mainIndices.head == equality.aux ) {
-          val Abs( variable, And( leftFormula, rightFormula ) ) = equality.replacementContext
+          val Abs( variable, And( leftFormula, rightFormula ) ) = equality.replacementContext: @unchecked
           val Seq( parentAuxL, parentAuxR ) = andConnector.parents( equality.aux )
           val newEqInf1 = EqualityLeftRule(
             and.subProof,
@@ -565,7 +565,7 @@ object equalityLeftReduction {
         val impRightConnector = imp.getRightSequentConnector
         val ( leftContext, rightContext ) =
           if ( imp.mainIndices.head == equality.aux ) {
-            val Abs( variable, Imp( leftFormula, rightFormula ) ) = equality.replacementContext
+            val Abs( variable, Imp( leftFormula, rightFormula ) ) = equality.replacementContext: @unchecked
             ( Abs( variable, leftFormula ), Abs( variable, rightFormula ) )
           } else {
             ( equality.replacementContext, equality.replacementContext )
@@ -591,9 +591,9 @@ object equalityLeftReduction {
       case exists @ ExistsLeftRule( _, _, _, _ ) =>
         val context =
           if ( exists.mainIndices.head == equality.aux ) {
-            val Abs( oldVariable, ex @ Ex( _, _ ) ) = equality.replacementContext
+            val Abs( oldVariable, ex @ Ex( _, _ ) ) = equality.replacementContext: @unchecked
             val newReplVariable = rename( oldVariable, freeVariables( ex ) + exists.eigenVariable )
-            val Ex( _, formula ) = Substitution( oldVariable, newReplVariable )( ex )
+            val Ex( _, formula ) = Substitution( oldVariable, newReplVariable )( ex ): @unchecked
             Abs( newReplVariable, formula )
           } else {
             equality.replacementContext
@@ -610,9 +610,9 @@ object equalityLeftReduction {
 
       case all @ ForallLeftRule( _, _, _, _, _ ) =>
         val ( context, aFormula ) = if ( all.mainIndices.head == equality.aux ) {
-          val Abs( variable, All( allVar, formula ) ) = equality.replacementContext
+          val Abs( variable, All( allVar, formula ) ) = equality.replacementContext: @unchecked
           val newContext = instReplCtx( equality.replacementContext, all.term )
-          val All( _, newAFormula ) = Substitution( variable, equality.by )( All( allVar, formula ) )
+          val All( _, newAFormula ) = Substitution( variable, equality.by )( All( allVar, formula ) ): @unchecked
           ( newContext, newAFormula )
         } else {
           ( equality.replacementContext, all.A )

@@ -63,7 +63,7 @@ object NaturalNumberInductionRule extends ConvenienceConstructor( "NaturalNumber
     val baseCase = InductionCase( leftSubProof, FOLConst( "0" ), Seq(), Seq(), aux1 )
     val stepCase = InductionCase( rightSubProof, FOLFunctionConst( "s", 1 ), Seq( aux2 ), Seq( x ), aux3 )
 
-    val All( y, a ) = mainFormula
+    val All( y, a ) = mainFormula: @unchecked
     ForallRightRule( InductionRule( Seq( baseCase, stepCase ), Abs( y, a ), y ), mainFormula, y )
   }
 

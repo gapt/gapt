@@ -197,7 +197,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
     else cc.mergeAndExplain( modelSequent( solver.model() ).
       collect { case a: Atom => a } ) match {
       case Some( core ) =>
-        val Some( p ) = quiet( Escargot.getAtomicLKProof( core ) )
+        val Some( p ) = quiet( Escargot.getAtomicLKProof( core ) ): @unchecked
         addClause( p )
         isESatisfiable( assumptions )
       case None =>
@@ -358,7 +358,7 @@ class ExpansionProofToMG3iViaSAT( val expansionProof: ExpansionProof ) {
 
         val solver2 = SolverFactory.newDefault()
         solver2.newVar( solver.nVars() )
-        for ( RupProof.Input( cls ) <- clausificationClauses )
+        for ( case RupProof.Input( cls ) <- clausificationClauses )
           solver2.addClause( cls )
 
         def minimize( ls: List[Int], done: List[Int] ): List[Int] =

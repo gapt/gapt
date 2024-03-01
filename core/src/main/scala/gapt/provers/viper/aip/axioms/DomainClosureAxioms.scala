@@ -52,7 +52,7 @@ case class DomainClosureAxioms( types: List[TBase] = Nil ) extends AxiomFactory 
       val formula = domainClosureAxiom( caseType, constructors )
       def proof = {
         var proofState = ProofState( Sequent() :+ formula )
-        val All.Block( Seq( variable, _* ), _ ) = formula
+        val All.Block( Seq( variable, _* ), _ ) = formula: @unchecked
         proofState += allR
         proofState += induction( variable )
         constructors foreach {
@@ -88,7 +88,7 @@ case class DomainClosureAxioms( types: List[TBase] = Nil ) extends AxiomFactory 
    */
   private def caseDistinction( caseVariable: Var, constructor: Con ): Formula = {
     val nameGenerator = rename.awayFrom( caseVariable :: Nil )
-    val FunctionType( _, argumentTypes ) = constructor.ty
+    val FunctionType( _, argumentTypes ) = constructor.ty: @unchecked
     val newVariables: List[Var] = argumentTypes map {
       argumentType => nameGenerator.fresh( Var( "x", argumentType ) )
     }

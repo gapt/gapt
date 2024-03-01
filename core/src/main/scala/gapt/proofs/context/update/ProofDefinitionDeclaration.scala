@@ -14,7 +14,7 @@ import gapt.proofs.lk.LKProof
 case class ProofDefinitionDeclaration( lhs: Expr, referencedProof: LKProof ) extends Update {
   override def apply( ctx: Context ): State = {
     ctx.check( referencedProof )
-    val Apps( c: Const, vs ) = lhs
+    val Apps( c: Const, vs ) = lhs: @unchecked
     vs.foreach( ctx.check( _ ) )
     val declSeq = ctx.get[ProofNames].lookup( lhs )
       .getOrElse( throw new IllegalArgumentException( s"Proof name ${lhs.toSigRelativeString( ctx )} is not defined" ) )

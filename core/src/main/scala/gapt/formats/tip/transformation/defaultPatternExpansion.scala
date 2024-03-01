@@ -236,7 +236,7 @@ class TipSmtDefaultPatternExpansion( problem: TipSmtProblem ) {
     tipSmtMatch:      TipSmtMatch,
     visibleVariables: Seq[String] ): TipSmtMatch = {
     val TipSmtMatch( _, cases ) = tipSmtMatch
-    val Some( matchedType ) = tipSmtMatch.expr.datatype
+    val Some( matchedType ) = tipSmtMatch.expr.datatype: @unchecked
     val coveredConstructors: Seq[String] =
       coveredConstrs( cases )
     val missingConstructors =

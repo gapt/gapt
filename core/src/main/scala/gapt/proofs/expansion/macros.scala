@@ -71,13 +71,13 @@ object ETInduction {
 
     def getETs( et: ExpansionTree, sz: Int ): Seq[ExpansionTree] =
       if ( sz > 0 ) {
-        val ETImp( ch1, ch2 ) = et
+        val ETImp( ch1, ch2 ) = et: @unchecked
         ch1 +: getETs( ch2, sz - 1 )
       } else Seq( et )
 
     def getEvs( et: ExpansionTree, sz: Int ): ( ExpansionTree, Seq[Var] ) = {
       if ( sz > 0 ) {
-        val ETStrongQuantifier( _, ev, ch ) = et
+        val ETStrongQuantifier( _, ev, ch ) = et: @unchecked
         val ( ret, evs ) = getEvs( ch, sz - 1 )
         ( ret, ev +: evs )
       } else ( et, Seq.empty )
@@ -87,7 +87,7 @@ object ETInduction {
       val eisp = et.immediateSubProofs
       constrs.zip( ETAnd.Flat( et ) ).map {
         case ( constr, indCase ) =>
-          val FunctionType( indTy, argTypes ) = constr.ty
+          val FunctionType( indTy, argTypes ) = constr.ty: @unchecked
           val ( ch, evs ) = getEvs( indCase, argTypes.length )
           val ets = getETs( ch, argTypes.count( _ == indTy ) )
           val ( hyps, suc ) = ets.splitAt( ets.length - 1 )

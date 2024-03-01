@@ -37,7 +37,7 @@ object fixDerivation {
         case _ => return None
       }
 
-      for ( ( ( a, true ), i ) <- p.conclusion zip needToFlip zipWithIndex )
+      for ( case ( ( a, true ), i ) <- p.conclusion zip needToFlip zipWithIndex )
         p = Flip( p, p.conclusion.indexOf( a, i.polarity ) )
 
       p = Factor( p )

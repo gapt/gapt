@@ -47,7 +47,7 @@ object hSolveQBUP {
           for ( cnf_ <- forgetfulPropResolve( cnf ) ) forgetfulInferences( ( cnf_, equations ) )
           for ( cnf_ <- forgetfulPropParam( cnf ) ) forgetfulInferences( ( cnf_, equations ) )
           for {
-            ( Eq( lhs0, rhs0 ), i ) <- equations.zipWithIndex
+            case ( Eq( lhs0, rhs0 ), i ) <- equations.zipWithIndex
             ltr <- Seq( true, false )
             ( lhs, rhs ) = if ( ltr ) ( lhs0, rhs0 ) else ( rhs0, lhs0 )
             cls <- cnf
@@ -71,7 +71,7 @@ object hSolveQBUP {
         if ( checkSol( cnf ) ) for ( c <- cnf ) forgetClauses( cnf - c )
         didForget += cnf
       }
-    for ( ( cnf, true ) <- isSolution.toSeq ) forgetClauses( cnf )
+    for ( case ( cnf, true ) <- isSolution.toSeq ) forgetClauses( cnf )
 
     isSolution collect { case ( sol, true ) => simplifyPropositional( And( sol map { _.toImplication } ) ) } toSet
   }
@@ -90,12 +90,12 @@ object hSolveQBUP {
   }
 
   def canonicalSolution( qbupMatrix: Formula, xInst: Formula ): Formula = {
-    val Apps( x: Var, xInstArgs ) = xInst
+    val Apps( x: Var, xInstArgs ) = xInst: @unchecked
     val qbupSequents = getSequents( qbupMatrix, x )
 
     val posOccurs = for {
       seq <- qbupSequents
-      ( occ @ Apps( `x`, _ ), idx ) <- seq.zipWithIndex.succedent
+      case ( occ @ Apps( `x`, _ ), idx ) <- seq.zipWithIndex.succedent
     } yield occ -> seq.delete( idx )
     def mkCanSol( xInst: Formula ): Formula =
       ( for {
@@ -111,7 +111,7 @@ object hSolveQBUP {
   }
 
   def apply( qbupMatrix: Formula, xInst: Formula, prover: Prover, equations: Seq[Formula] = Seq() ): Option[Expr] = {
-    val Apps( x: Var, xInstArgs ) = xInst
+    val Apps( x: Var, xInstArgs ) = xInst: @unchecked
     val qbupSequents = getSequents( qbupMatrix, x )
 
     val start = canonicalSolution( qbupMatrix, xInst )
@@ -136,7 +136,7 @@ object hSolveQBUP {
 
     val xGenArgs = for ( ( a, i ) <- xInstArgs.zipWithIndex ) yield Var( s"x$i", a.ty )
     val xGen = x( xGenArgs: _* )
-    val Some( matching ) = syntacticMatching( xGen, xInst )
+    val Some( matching ) = syntacticMatching( xGen, xInst ): @unchecked
     def checkSolutionMatrix( matrix: Formula ) = {
       val sol = Abs( xGenArgs, matrix )
       if ( prover.isValid( skolemize( BetaReduction.betaNormalize( Substitution( x -> sol )( qbupMatrix ) ) ) ) )

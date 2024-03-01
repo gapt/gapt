@@ -76,14 +76,14 @@ object aletheQfUf {
     renaming: Map[String, Const] ): Set[PredicateCongruenceInstance] = {
     proof.steps.collect {
       case Step( "eq_congruent_pred", _, clause, _, _ ) =>
-        val Apps( p2: Const, bs ) = toExpr( clause.last, Some( To ), renaming ) match {
+        val Apps( p2: Const, bs ) = (toExpr( clause.last, Some( To ), renaming ) match {
           case Neg( f ) => f
           case f        => f
-        }
-        val Apps( p1: Const, as ) = toExpr( clause( clause.size - 2 ), Some( To ), renaming ) match {
+        }): @unchecked
+        val Apps( p1: Const, as ) = (toExpr( clause( clause.size - 2 ), Some( To ), renaming ) match {
           case Neg( f ) => f
           case f        => f
-        }
+        }): @unchecked
         require( p1 == p2 )
         require( as.size == bs.size )
         PredicateCongruenceInstance( p1, as.zip( bs ) )
@@ -105,7 +105,7 @@ object aletheQfUf {
     proof.steps.collect {
       case Step( "eq_congruent", _, clause, _, _ ) =>
         val Eq( Apps( f1: Const, as ), Apps( _: Const, bs ) ) =
-          toExpr( clause.last, Some( To ), renaming )
+          toExpr( clause.last, Some( To ), renaming ): @unchecked
         FunctionCongruenceInstance( f1, as.zip( bs ) )
     }.toSet
 
@@ -130,9 +130,9 @@ object aletheQfUf {
               case p                   => throw AletheException( s"Invalid transitivity premise: ${p}" )
             }
             .toSet
-        val Eq( start, target ) = toExpr( ts.last, Some( To ), renaming )
+        val Eq( start, target ) = toExpr( ts.last, Some( To ), renaming ): @unchecked
         val edges: Set[( Expr, Expr )] = symmetricClosure( transitivityPremises )
-        val Some( terms ) = shortestPath[Expr]( start, target, edges, { case ( _, _ ) => 1 } )
+        val Some( terms ) = shortestPath[Expr]( start, target, edges, { case ( _, _ ) => 1 } ): @unchecked
         transitivityAxioms( terms.toList )
     }.flatten.toSet
   }
@@ -166,7 +166,7 @@ object aletheQfUf {
           case _ => Nil
         }
       case Step( "eq_reflexive", _, f :: Nil, _, _ ) =>
-        val Application( "=", t :: _ ) = f
+        val Application( "=", t :: _ ) = f: @unchecked
         List( ReflexivityInstance( toExpr( t, None, renaming ) ) )
     }.flatten.toSet
   }

@@ -15,8 +15,8 @@ import gapt.logic.Polarity
 object addSymmetry {
 
   def apply( s: ExpansionSequent ): ExpansionSequent = {
-    val negativePairs = for ( et <- s.elements.view; ETAtom( Eq( l, r ), Polarity.Negative ) <- et.subProofs ) yield l -> r
-    val positivePairs = for ( et <- s.elements.view; ETAtom( Eq( l, r ), Polarity.Positive ) <- et.subProofs ) yield l -> r
+    val negativePairs = for ( et <- s.elements.view; case ETAtom( Eq( l, r ), Polarity.Negative ) <- et.subProofs ) yield l -> r
+    val positivePairs = for ( et <- s.elements.view; case ETAtom( Eq( l, r ), Polarity.Positive ) <- et.subProofs ) yield l -> r
 
     positivePairs.map( _.swap ).toSet.intersect( negativePairs.toSet ).
       groupBy( _._1.ty ).map {

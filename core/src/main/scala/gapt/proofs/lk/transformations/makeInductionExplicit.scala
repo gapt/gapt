@@ -33,7 +33,7 @@ object makeInductionExplicit {
 
       val hyps = proof.cases.map { indCase =>
         val constr = indCase.constructor
-        val FunctionType( `indty`, argtypes ) = constr.ty
+        val FunctionType( `indty`, argtypes ) = constr.ty: @unchecked
         val vars = indCase.eigenVars
 
         var p: LKProof = ExchangeRightMacroRule( indCase.proof, indCase.conclusion )

@@ -22,7 +22,7 @@ object UnitResolutionToLKProof {
     }
     def maybeFlip( atom: Formula, flip: Boolean ): Formula =
       if ( flip ) {
-        val Eq( t, s ) = atom
+        val Eq( t, s ) = atom: @unchecked
         Eq( s, t )
       } else {
         atom

@@ -34,7 +34,7 @@ class makeEqualityExplicit( debugging: Boolean ) extends FreshHyp {
       case Cut( f, q1, q2 )                      => Cut( f, go( q1, lctx.up1( p ) ), go( q2, lctx.up2( p ) ) )
       case Ax( _, _ ) | TopR( _ ) | Link( _, _ ) => p
       case Rfl( main ) =>
-        val Eq( t, _ ) = lctx( main )
+        val Eq( t, _ ) = lctx( main ): @unchecked
         val rflHyp = reflHyps.getOrElseUpdate( t.ty, {
           val x = Var( "x", t.ty )
           ( freshAnt(), All( x, x === x ) )
@@ -47,7 +47,7 @@ class makeEqualityExplicit( debugging: Boolean ) extends FreshHyp {
       case AllL( main, term, q ) => AllL( main, term, go( q, lctx.up1( p ) ) )
       case AllR( main, ev, q )   => AllR( main, ev, go( q, lctx.up1( p ) ) )
       case Eql( main, eq, ltr, rwCtx, q ) =>
-        val Eq( l, r ) = lctx( eq )
+        val Eq( l, r ) = lctx( eq ): @unchecked
         val extraVars = freeVariables( rwCtx ).toList
         val effLtr = ltr == main.inAnt
         val rwrHyp = rwrHyps.getOrElseUpdate( ( rwCtx, effLtr ), {

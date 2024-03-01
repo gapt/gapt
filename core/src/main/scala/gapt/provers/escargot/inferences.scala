@@ -129,7 +129,7 @@ object ForwardSuperpositionIndex extends Index[DiscrTree[( Cls, SequentIndex, Ex
   def add( t: I, c: Cls ): I =
     t.insert( for {
       i <- c.maximal if i.isSuc if c.selected.isEmpty
-      Eq( t, s ) <- choose( c.clause( i ) )
+      case Eq( t, s ) <- choose( c.clause( i ) )
       ( t_, s_, leftToRight ) <- choose( ( t, s, true ), ( s, t, false ) )
       if !c.state.termOrdering.lt( t_, s_ )
     } yield t_ -> ( c, i, t_, s_, leftToRight ) )
@@ -487,7 +487,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       val inferred =
         for {
           i <- if ( `given`.selected.nonEmpty ) `given`.selected else `given`.maximal if i.isAnt
-          Eq( t, s ) <- Some( `given`.clause( i ) )
+          case Eq( t, s ) <- Some( `given`.clause( i ) )
           mgu <- unify( t, s )
         } yield DerivedCls( `given`, Subst( `given`.proof, mgu ) )
       ( inferred.toSet, Set() )

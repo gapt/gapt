@@ -486,7 +486,7 @@ object inductionPrinciple {
     val pred = Var( "X", indty ->: To )
 
     val hyps = constrs.map { constr =>
-      val FunctionType( `indty`, argtypes ) = constr.ty
+      val FunctionType( `indty`, argtypes ) = constr.ty: @unchecked
       val vars = for ( ( at, i ) <- argtypes.zipWithIndex ) yield Var( s"x$i", at )
 
       All.Block( vars, vars.filter {

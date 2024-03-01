@@ -61,7 +61,7 @@ object generatedUpperSetInPO {
     def walk( el: T ): Unit =
       if ( !upper.contains( el ) ) {
         upper += el
-        for ( ( `el`, next ) <- rel ) walk( next )
+        for ( case ( `el`, next ) <- rel ) walk( next )
       }
     gen foreach walk
     upper.toSet

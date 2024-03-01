@@ -152,7 +152,7 @@ class Hol2FolDefinitions( implicit val context: Context = Context.default ) {
    */
   def getDefinedExpression( expression: Definiens ): Definiendum = {
     addDefinitionIfNecessary( expression )
-    val Some( ( e, m ) ) = getMatchingDefiniens( expression )
+    val Some( ( e, m ) ) = getMatchingDefiniens( expression ): @unchecked
     m( invertBijectiveMap( definitions )( e ) )
   }
 

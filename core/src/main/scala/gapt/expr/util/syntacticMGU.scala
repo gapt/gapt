@@ -104,7 +104,7 @@ object syntacticMGU {
           case Some( x_ ) => go( x_, t, subst, bound )
           case None =>
             val t_ = subst.toSubstitution( t )
-            val x_ @ Var( _, _ ) = subst.toSubstitution( x )
+            val x_ @ Var( _, _ ) = subst.toSubstitution( x ): @unchecked
             if ( x_ == t_ ) {
               USome( subst )
             } else if ( freeVariables( t_ ) intersect ( bound + x_ ) nonEmpty ) {

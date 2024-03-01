@@ -50,7 +50,7 @@ package object logic {
   }
 
   def argumentVariablesWithPatternFor( pattern: ( Int ) => String )( constant: Const ): Seq[Var] = {
-    val FunctionType( _, ts ) = constant.ty
+    val FunctionType( _, ts ) = constant.ty: @unchecked
     ts.zipWithIndex.map { case ( t, j ) => Var( pattern( j ), t ) }
   }
 
@@ -67,13 +67,13 @@ package object logic {
   }
 
   def isPolyadic( constant: Const ): Boolean = {
-    val FunctionType( _, ts ) = constant.ty
+    val FunctionType( _, ts ) = constant.ty: @unchecked
     ts.nonEmpty
   }
 
   object PredicateCongruence {
     def formula( p: Const ): Formula = {
-      val FunctionType( to, from ) = p.ty
+      val FunctionType( to, from ) = p.ty: @unchecked
       require( to == To )
       val xs = from.zipWithIndex.map { case ( t, i ) => Var( s"x${i}", t ) }
       val ys = from.zipWithIndex.map { case ( t, i ) => Var( s"y${i}", t ) }
@@ -82,7 +82,7 @@ package object logic {
   }
   object FunctionCongruence {
     def formula( f: Const ): Formula = {
-      val FunctionType( _, from ) = f.ty
+      val FunctionType( _, from ) = f.ty: @unchecked
       val xs = from.zipWithIndex.map { case ( t, i ) => Var( s"x${i}", t ) }
       val ys = from.zipWithIndex.map { case ( t, i ) => Var( s"y${i}", t ) }
       All.Block( xs ++ ys, Imp( And( xs.zip( ys ).map { case ( x, y ) => Eq( x, y ) } ), Eq( f( xs ), f( ys ) ) ) )

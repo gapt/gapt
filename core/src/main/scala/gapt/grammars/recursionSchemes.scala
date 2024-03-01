@@ -428,8 +428,8 @@ case class RecSchemTemplate( startSymbol: Const, template: Set[( Expr, Expr )] )
 
   val targetFilter: TargetFilter.Type = ( from, to ) =>
     TargetFilter.default( from, to ).orElse {
-      val Apps( fromNt: Const, fromArgs ) = from
-      val Apps( toNt: Const, toArgs ) = to
+      val Apps( fromNt: Const, fromArgs ) = from: @unchecked
+      val Apps( toNt: Const, toArgs ) = to: @unchecked
       val constrValue = constraintEvaluators( fromNt -> toNt )( fromArgs, toArgs )
       if ( constrValue ) None else Some( false )
     }
@@ -512,7 +512,7 @@ object recSchemToVTRATG {
 
     var nts = Seq[Const]()
     while ( rs.nonTerminals -- nts nonEmpty ) {
-      val Some( next ) = rs.nonTerminals -- nts find { nt => ntDeps( nt ) subsetOf nts.toSet }
+      val Some( next ) = rs.nonTerminals -- nts find { nt => ntDeps( nt ) subsetOf nts.toSet }: @unchecked
       nts = next +: nts
     }
     nts
@@ -527,7 +527,7 @@ object recSchemToVTRATG {
     }
     val ntMap = ntCorrespondence.toMap
 
-    val FunctionType( startSymbolType, _ ) = recSchem.startSymbol.ty
+    val FunctionType( startSymbolType, _ ) = recSchem.startSymbol.ty: @unchecked
     val startSymbol = Var( nameGen.fresh( s"x_${recSchem.startSymbol.name}" ), startSymbolType )
     val nonTerminals = List( startSymbol ) +: ( ntCorrespondence map { _._2 } filter { _.nonEmpty } )
     val productions = recSchem.rules map {
@@ -550,8 +550,8 @@ object simplePi1RecSchemTempl {
   def apply( startSymbol: Expr, pi1QTys: Seq[TBase] )( implicit ctx: Context ): RecSchemTemplate = {
     val nameGen = rename.awayFrom( ctx.constants )
 
-    val Apps( startSymbolNT: Const, startSymbolArgs ) = startSymbol
-    val FunctionType( instTT, startSymbolArgTys ) = startSymbolNT.ty
+    val Apps( startSymbolNT: Const, startSymbolArgs ) = startSymbol: @unchecked
+    val FunctionType( instTT, startSymbolArgTys ) = startSymbolNT.ty: @unchecked
     // TODO: handle strong quantifiers in conclusion correctly
     val startSymbolArgs2 = for ( ( t, i ) <- startSymbolArgTys.zipWithIndex ) yield Var( s"x_$i", t )
 
@@ -569,7 +569,7 @@ object simplePi1RecSchemTempl {
           case None => Seq()
           case Some( ctrs ) =>
             ctrs flatMap { ctr =>
-              val FunctionType( _, ctrArgTys ) = ctr.ty
+              val FunctionType( _, ctrArgTys ) = ctr.ty: @unchecked
               val ctrArgs = for ( ( t, i ) <- ctrArgTys.zipWithIndex )
                 yield Var( s"x_${indLemmaArgIdx}_$i", t )
               val lhs = indLemmaNT( startSymbolArgs )(
@@ -603,21 +603,21 @@ object simplePi1RecSchemTempl {
 object qbupForRecSchem {
   def canonicalRsLHS( recSchem: RecursionScheme )( implicit ctx: Context ): Set[Expr] =
     recSchem.nonTerminals flatMap { nt =>
-      val FunctionType( To, argTypes ) = nt.ty
+      val FunctionType( To, argTypes ) = nt.ty: @unchecked
       val args = for ( ( t, i ) <- argTypes.zipWithIndex ) yield Var( s"x$i", t )
       recSchem.rulesFrom( nt ).flatMap {
         case Rule( Apps( _, as ), _ ) => as.zipWithIndex.filterNot { _._1.isInstanceOf[Var] }.map { _._2 }
       }.toSeq match {
         case Seq() => Some( nt( args: _* ) )
         case idcs =>
-          val newArgs = for ( ( _: TBase, idx ) <- argTypes.zipWithIndex )
+          val newArgs = for ( case ( _: TBase, idx ) <- argTypes.zipWithIndex )
             yield if ( !idcs.contains( idx ) ) List( args( idx ) )
           else {
             val indTy = argTypes( idx ).asInstanceOf[TBase]
-            val Some( ctrs ) = ctx.getConstructors( indTy )
+            val Some( ctrs ) = ctx.getConstructors( indTy ): @unchecked
             for {
               ctr <- ctrs.toList
-              FunctionType( _, ctrArgTys ) = ctr.ty
+              FunctionType( _, ctrArgTys ) = ctr.ty: @unchecked
             } yield ctr(
               ( for ( ( t, i ) <- ctrArgTys.zipWithIndex ) yield Var( s"x${idx}_$i", t ) ): _* )
           }

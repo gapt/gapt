@@ -53,7 +53,7 @@ class LeanCoP extends OneShotProver with ExternalProgram {
 
           Some( LeanCoPParser.getExpansionProof( new StringReader( tptpProof ) ).get )
         } else { // LeanCoP 2.1 format (only compact atm)
-          val Right( connPrf ) = LeanCoP21Parser.parse( stdout )
+          val Right( connPrf ) = LeanCoP21Parser.parse( stdout ): @unchecked
 
           val clauses = connPrf.toFOLClauses.map( _.swapped )
           Some( sequent.map {

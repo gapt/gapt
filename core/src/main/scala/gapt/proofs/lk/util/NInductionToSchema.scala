@@ -56,7 +56,7 @@ object CreateASchemaVersion extends LKVisitor[MutableContext] {
 }
 object ArithmeticInductionToSchema {
   def apply( proof: LKProof, pe: Expr )( implicit ctx: MutableContext ): Unit = {
-    val Apps( c: Const, _ ) = pe
+    val Apps( c: Const, _ ) = pe: @unchecked
     val resProof: LKProof = CreateASchemaVersion( proof, ctx )
     if ( ctx.get[ProofNames].lookup( pe ).isEmpty ) {
       ctx += c

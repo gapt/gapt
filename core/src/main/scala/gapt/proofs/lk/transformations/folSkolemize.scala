@@ -190,13 +190,13 @@ object folSkolemize {
       val ctxAndSym = contextAndSymbols( proof.mainIndices.head )
       val subProof_ = apply( subProof, proof.getSequentConnector.parents( contextAndSymbols ).map( _.head )
         .updated( aux, ctxAndSym map { case ( context, symbols ) => ( context :+ term ) -> symbols } ) )
-      val All( v_, matrix_ ) = maybeSkolemize( proof.mainFormula, Polarity.InAntecedent, ctxAndSym )
+      val All( v_, matrix_ ) = maybeSkolemize( proof.mainFormula, Polarity.InAntecedent, ctxAndSym ): @unchecked
       ForallLeftRule( subProof_, aux, matrix_, term, v )
     case proof @ ExistsRightRule( subProof, aux, matrix, term, v ) =>
       val ctxAndSym = contextAndSymbols( proof.mainIndices.head )
       val subProof_ = apply( subProof, proof.getSequentConnector.parents( contextAndSymbols ).map( _.head )
         .updated( aux, ctxAndSym map { case ( context, symbols ) => ( context :+ term ) -> symbols } ) )
-      val Ex( v_, matrix_ ) = maybeSkolemize( proof.mainFormula, Polarity.InSuccedent, ctxAndSym )
+      val Ex( v_, matrix_ ) = maybeSkolemize( proof.mainFormula, Polarity.InSuccedent, ctxAndSym ): @unchecked
       ExistsRightRule( subProof_, aux, matrix_, term, v )
 
     // Strong quantifier rules:

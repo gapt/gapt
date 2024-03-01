@@ -31,9 +31,9 @@ object prenexifyET {
 
     val fvs = freeVariables( Seq( f1, f2 ) )
     val Some( ( vs1_, matrix1_ ) ) = weakQuantifier( p1 ).Block.unapply( f1_ )
-    val ( vs1: List[Var] @unchecked, matrix1 ) = Substitution( rename( vs1_, fvs ) )( ( vs1_, matrix1_ ) )
+    val ( vs1: List[Var] @unchecked, matrix1 ) = Substitution( rename( vs1_, fvs ) )( ( vs1_, matrix1_ ) ): @unchecked
     val Some( ( vs2_, matrix2_ ) ) = weakQuantifier( p2 ).Block.unapply( f2_ )
-    val ( vs2: List[Var] @unchecked, matrix2 ) = Substitution( rename( vs2_, fvs ++ vs1 ) )( ( vs2_, matrix2_ ) )
+    val ( vs2: List[Var] @unchecked, matrix2 ) = Substitution( rename( vs2_, fvs ++ vs1 ) )( ( vs2_, matrix2_ ) ): @unchecked
 
     weakQuantifier( newPol ).Block( vs1 ++ vs2, shConn( matrix1, matrix2 ) )
   }
@@ -59,9 +59,9 @@ object prenexifyET {
 
     val fvs = freeVariables( Seq( sh1, sh2 ) )
     val Some( ( vs1_, matrix1_ ) ) = weakQuantifier( et1.polarity ).Block.unapply( sh1 )
-    val ( vs1: List[Var] @unchecked, matrix1 ) = Substitution( rename( vs1_, fvs ) )( ( vs1_, matrix1_ ) )
+    val ( vs1: List[Var] @unchecked, matrix1 ) = Substitution( rename( vs1_, fvs ) )( ( vs1_, matrix1_ ) ): @unchecked
     val Some( ( vs2_, matrix2_ ) ) = weakQuantifier( et2.polarity ).Block.unapply( sh2 )
-    val ( vs2: List[Var] @unchecked, matrix2 ) = Substitution( rename( vs2_, fvs ++ vs1 ) )( ( vs2_, matrix2_ ) )
+    val ( vs2: List[Var] @unchecked, matrix2 ) = Substitution( rename( vs2_, fvs ++ vs1 ) )( ( vs2_, matrix2_ ) ): @unchecked
 
     val sh = weakQuantifier( newPol ).Block( vs1 ++ vs2, shConn( matrix1, matrix2 ) )
 

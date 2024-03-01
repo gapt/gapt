@@ -84,7 +84,7 @@ class FreeVariablesProblem( problem: TipSmtProblem ) {
 
   def freeVariablesCase(
     tipSmtCase: TipSmtCase ): Set[String] = {
-    val TipSmtConstructorPattern( constructor, fields ) = tipSmtCase.pattern
+    val TipSmtConstructorPattern( constructor, fields ) = tipSmtCase.pattern: @unchecked
     val boundVariables =
       ( constructor.name +: fields.map( _.name ) )
         .filter( isVariable )

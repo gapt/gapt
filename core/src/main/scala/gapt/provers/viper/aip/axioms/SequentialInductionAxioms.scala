@@ -66,7 +66,7 @@ case class SequentialInductionAxioms(
    */
   private def inductionAxiom(
     variables: List[Var], variable: Var, formula: Formula )( implicit ctx: Context ): ThrowsError[Axiom] = {
-    val ( outerVariables, _ :: innerVariables ) = variables span { _ != variable }
+    val ( outerVariables, _ :: innerVariables ) = variables span { _ != variable }: @unchecked
     val inductionFormula = All.Block( innerVariables, inductionQuantifierForm( variables, formula ) )
 
     StandardInductionAxioms( variable, inductionFormula ).map { axiom =>

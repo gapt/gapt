@@ -63,7 +63,7 @@ object atomicExpansionET {
   private def loop( ep: ExpansionProof, definedAtoms: Set[Const], purelyPropositional: Boolean )( implicit ctx: MutableContext ): ExpansionProof =
     if ( definedAtoms.isEmpty ) ep else {
       val d = definedAtoms.head
-      val Some( Abs.Block( xs, fml: Formula ) ) = ctx.definition( d )
+      val Some( Abs.Block( xs, fml: Formula ) ) = ctx.definition( d ): @unchecked
       fml match {
         case _ if !ep.subProofs.exists { case ETAtom( Apps( `d`, _ ), _ ) => true case _ => false } =>
           loop( ep, definedAtoms - d, purelyPropositional )

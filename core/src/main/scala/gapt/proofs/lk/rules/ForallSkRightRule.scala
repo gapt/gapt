@@ -33,7 +33,7 @@ case class ForallSkRightRule( subProof: LKProof, aux: SequentIndex, mainFormula:
 
   validateIndices( premise, Seq(), Seq( aux ) )
 
-  val All( quantifiedVariable, subFormula ) = mainFormula
+  val All( quantifiedVariable, subFormula ) = mainFormula: @unchecked
 
   override def name: String = "∀sk:r"
 

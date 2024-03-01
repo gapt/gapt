@@ -32,7 +32,7 @@ object eliminateDefsET {
       ep.expansionSequent.antecedent.map( _.shallow ).find {
         case DefinitionFormula( _, `definitionConst`, _ ) => true
         case _ => false
-      }.getOrElse( return ep )
+      }.getOrElse( return ep ): @unchecked
 
     def mkDefAtom( as: Seq[Expr], pol: Polarity ) =
       ETDefinition(
@@ -40,7 +40,7 @@ object eliminateDefsET {
         ETAtom( definitionConst( as ).asInstanceOf[Atom], pol ) )
 
     val insts0 = for {
-      ETWeakQuantifierBlock( `definitionFormula`, n, insts ) <- ep.expansionSequent.antecedent
+      case ETWeakQuantifierBlock( `definitionFormula`, n, insts ) <- ep.expansionSequent.antecedent
       ( as, inst ) <- insts
       // DO NOT INLINE THIS!  (otherwise the value of repls changes?!?!?)
       negRepls = inst( negReplPos )

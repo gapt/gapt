@@ -30,7 +30,7 @@ object resolutionToTptp {
     label:    String,
     defConst: HOLAtomConst,
     defn:     Expr ): TptpInput = {
-    val FunctionType( _, argtypes ) = defConst.ty
+    val FunctionType( _, argtypes ) = defConst.ty: @unchecked
     val vars = for ( ( t, i ) <- argtypes.zipWithIndex ) yield Var( s"X$i", t )
 
     AnnotatedFormula( "fof", label, "definition",
@@ -42,7 +42,7 @@ object resolutionToTptp {
     label:   String,
     skConst: Const,
     defn:    Expr ): AnnotatedFormula = {
-    val Abs.Block( vars, quantf: Formula ) = defn
+    val Abs.Block( vars, quantf: Formula ) = defn: @unchecked
     val instf = instantiate( quantf, skConst( vars ) )
 
     AnnotatedFormula( "fof", label, "definition",

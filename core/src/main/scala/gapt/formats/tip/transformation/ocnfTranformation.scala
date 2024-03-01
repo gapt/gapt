@@ -209,9 +209,9 @@ class TipOcnf( problem: TipSmtProblem ) {
     val Some( ( left, ite, right ) ) =
       find(
         newSubExpressions,
-        { (expr: TipSmtExpression) => expr.isInstanceOf[TipSmtIte] } )
+        { (expr: TipSmtExpression) => expr.isInstanceOf[TipSmtIte] } ): @unchecked
 
-    val TipSmtIte( cond, ifTrue, ifFalse ) = ite
+    val TipSmtIte( cond, ifTrue, ifFalse ) = ite: @unchecked
     val newIfTrue = connective.copy( left ++ Seq( ifTrue ) ++ right )
     val newIfFalse = connective.copy( left ++ Seq( ifFalse ) ++ right )
     TipSmtIte( cond, tipOcnf( newIfTrue ), tipOcnf( newIfFalse ) )
@@ -223,7 +223,7 @@ class TipOcnf( problem: TipSmtProblem ) {
     val Some( ( left, m, right ) ) =
       find(
         newSubExpressions,
-        { (expr: TipSmtExpression) => expr.isInstanceOf[TipSmtMatch] } )
+        { (expr: TipSmtExpression) => expr.isInstanceOf[TipSmtMatch] } ): @unchecked
     val matchExpr =
       captureAvoiding( m.asInstanceOf[TipSmtMatch], left ++ right )
     val TipSmtMatch( matchedTerm, cases ) = matchExpr

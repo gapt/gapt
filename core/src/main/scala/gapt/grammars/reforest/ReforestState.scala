@@ -25,13 +25,13 @@ case class ReforestState(
       for ( ( a, i ) <- as.zipWithIndex; ( b, j ) <- as.zipWithIndex if i < j if a == b ) {
         s( RigidTrigram( f, i, j ) ) += 1
       }
-      for ( ( Apps( g: Const, bs ), i ) <- as.zipWithIndex ) {
+      for ( case ( Apps( g: Const, bs ), i ) <- as.zipWithIndex ) {
         visit( g, bs )
         s( Digram( f, i, g ) ) += 1
       }
     }
 
-    for ( rhss <- rules.values; Apps( f: Const, as ) <- rhss ) visit( f, as )
+    for ( rhss <- rules.values; case Apps( f: Const, as ) <- rhss ) visit( f, as )
 
     s.toMap
   }
@@ -42,8 +42,8 @@ case class ReforestState(
   }
 
   def abbreviate( digram: Digram ): ReforestState = {
-    val FunctionType( rettype, ts1 ) = digram.c1.ty
-    val FunctionType( _, ts2 ) = digram.c2.ty
+    val FunctionType( rettype, ts1 ) = digram.c1.ty: @unchecked
+    val FunctionType( _, ts2 ) = digram.c2.ty: @unchecked
     val argtypes = ts1.take( digram.i ) ++ ts2 ++ ts1.drop( digram.i + 1 )
     val newNT = Const( s"B$highestNTIndex", FunctionType( rettype, argtypes ) )
     val newNTArgs = for ( ( t, i ) <- argtypes.zipWithIndex ) yield Var( s"x$i", t )
@@ -69,7 +69,7 @@ case class ReforestState(
   }
 
   def abbreviate( rigidTrigram: RigidTrigram ): ReforestState = {
-    val FunctionType( rettype, ts ) = rigidTrigram.c.ty
+    val FunctionType( rettype, ts ) = rigidTrigram.c.ty: @unchecked
     val argtypes = ts.take( rigidTrigram.j ) ++ ts.drop( rigidTrigram.j + 1 )
     val newNT = Const( s"B$highestNTIndex", FunctionType( rettype, argtypes ) )
     val newNTArgs = for ( ( t, i ) <- argtypes.zipWithIndex ) yield Var( s"x$i", t )

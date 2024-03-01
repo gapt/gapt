@@ -34,7 +34,7 @@ case class IndElimProver(
   }
 
   def getLKtProof( seq: HOLSequent ): ( LKt, LocalCtx ) = {
-    val Some( subst ) = syntacticMatching( goal, seq( Suc( 0 ) ) )
+    val Some( subst ) = syntacticMatching( goal, seq( Suc( 0 ) ) ): @unchecked
     require( subst( instSeq ) isSubsetOf seq )
     apply( subst( xs ) )
   }

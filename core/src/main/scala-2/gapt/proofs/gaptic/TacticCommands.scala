@@ -522,7 +522,7 @@ trait TacticCommands {
   }
 
   def include( names: Expr* )( implicit ctx: Context ): Tactic[Unit] = Tactic(
-    Tactic.sequence( for ( l @ Apps( Const( n, _, _ ), _ ) <- names ) yield include( n, ProofLink( l ) ) )
+    Tactic.sequence( for ( case l @ Apps( Const( n, _, _ ), _ ) <- names ) yield include( n, ProofLink( l ) ) )
       andThen TacticMonad.pure( () ) )
 
   def include( labels: String* )( implicit ctx: Context, dummyImplicit: DummyImplicit ): Tactic[Unit] =

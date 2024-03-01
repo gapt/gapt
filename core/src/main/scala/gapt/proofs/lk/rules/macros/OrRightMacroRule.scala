@@ -56,7 +56,7 @@ object OrRightMacroRule extends ConvenienceConstructor( "OrRightMacroRule" ) {
 
       case -1 +: i +: _ => // The right disjunct has been found at index Suc(i).
         // This match cannot fail: if the index of leftDisjunct is -1, it cannot have been passed as an index.
-        val IsFormula( ld ) = leftDisjunct
+        val IsFormula( ld ) = leftDisjunct: @unchecked
         val subProof_ = WeakeningRightRule( subProof, ld )
         val oc = subProof_.getSequentConnector
         val proof = OrRightRule( subProof_, subProof_.mainIndices( 0 ), oc.child( Suc( i ) ) )
@@ -64,7 +64,7 @@ object OrRightMacroRule extends ConvenienceConstructor( "OrRightMacroRule" ) {
 
       case i +: -1 +: _ => // The left conjunct has been found at indext Suc(i).
         // This match cannot fail: if the index of rightDisjunct is -1, it cannot have been passed as an index.
-        val IsFormula( rd ) = rightDisjunct
+        val IsFormula( rd ) = rightDisjunct: @unchecked
         val subProof_ = WeakeningRightRule( subProof, rd )
         val oc = subProof_.getSequentConnector
         val proof = OrRightRule( subProof_, oc.child( Suc( i ) ), subProof_.mainIndices( 0 ) )

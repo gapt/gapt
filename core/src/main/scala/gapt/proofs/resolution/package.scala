@@ -43,7 +43,7 @@ package object resolution {
           val q1New = f( q1 )
           val q2New = f( q2 )
           val ( equation, auxFormula ) = ( q1New.conclusion( l1 ), q2New.conclusion( l2 ) )
-          val Abs( v, subContext ) = con
+          val Abs( v, subContext ) = con: @unchecked
           val v_ = rename( v, freeVariables( equation ) ++ freeVariables( auxFormula ) )
           val contextNew = BetaReduction betaNormalize TermReplacement( Abs( v_, Substitution( v, v_ )( subContext ) ), repl )
           Paramod( q1New, l1, dir, q2New, l2, contextNew )

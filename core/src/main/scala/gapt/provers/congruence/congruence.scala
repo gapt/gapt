@@ -180,14 +180,14 @@ class CC( mutCC0: MutCC, val termToIdx: Map[Expr, Int], val idxToTerm: Map[Int, 
   def mkMut(): MutCC = mutCC0.clone()
   def merge( eqns: Iterable[Expr] ): CC = {
     val cc = mkMut()
-    for ( eqn @ Eq( a, b ) <- eqns ) cc.merge( termToIdx( a ), termToIdx( b ), termToIdx( eqn ) )
+    for ( case eqn @ Eq( a, b ) <- eqns ) cc.merge( termToIdx( a ), termToIdx( b ), termToIdx( eqn ) )
     new CC( cc, termToIdx, idxToTerm )
   }
   def intern( exprs: Iterable[Expr] ): CC = {
     val subExprs = exprs.flatMap( subTerms( _ ) ).toSet
     val tti = termToIdx ++ subExprs.diff( termToIdx.keySet ).zip( termToIdx.size until Int.MaxValue )
     val cc = mutCC0.resize( tti.size )
-    for ( e @ App( a, b ) <- subExprs ) cc.addEqn( tti( a ), tti( b ), tti( e ) )
+    for ( case e @ App( a, b ) <- subExprs ) cc.addEqn( tti( a ), tti( b ), tti( e ) )
     new CC( cc, tti, tti.map( _.swap ) )
   }
   def internAndMerge( exprs: Iterable[Expr] ): CC =

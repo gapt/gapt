@@ -206,7 +206,7 @@ object LKtToLK {
     val ( r1, s1 ) = res
     s1.elements.diff( s1.elements.distinct ).headOption match {
       case Some( dup ) =>
-        val Seq( a1, a2, _* ) = s1.indicesWhere( _ == dup )
+        val Seq( a1, a2, _* ) = s1.indicesWhere( _ == dup ): @unchecked
         val r2 = if ( dup.inAnt ) ContractionLeftRule( r1, a1, a2 )
         else ContractionRightRule( r1, a1, a2 )
         contract( down( r2, s1, dup ) )
@@ -224,7 +224,7 @@ object LKtToLK {
           map { case ( cs1, cs2 ) => ( cs1 ++ cs2 ).head }
       case Ax( main1, main2 ) => ( LogicalAxiom( lctx( main1 ) ), main1 +: Sequent() :+ main2 )
       case Rfl( main ) =>
-        val Eq( t, _ ) = lctx( main )
+        val Eq( t, _ ) = lctx( main ): @unchecked
         ( ReflexivityAxiom( t ), Sequent() :+ main )
       case TopR( main ) =>
         if ( main.inAnt )
@@ -297,7 +297,7 @@ object LKtToLK {
             val lctxn = lctx.upn( p, i )
             val evs = evs0.map( lctxn.subst( _ ).asInstanceOf[Var] )
             val ( r1, s1 ) = withMap( q, lctxn )
-            val goal +: ihs = q.auxs
+            val goal +: ihs = q.auxs: @unchecked
             InductionCase( r1, ctr, ihs.map( s1.indexOf ), evs, s1.indexOf( goal ) ) -> s1
         }.unzip
         val f = lctx.subst( f0 ).asInstanceOf[Abs]

@@ -42,7 +42,7 @@ object replaceWithContext {
 
     ( et, replacementContext ) match {
       case ( ETDefinition( sh, sub ), _ ) =>
-        val Some( matching ) = syntacticMatching( replacementContext.term, et.shallow )
+        val Some( matching ) = syntacticMatching( replacementContext.term, et.shallow ): @unchecked
         val newCtx = commuteReplacementCtxWithDefEq( replacementContext, matching( replacementContext.variable ), sub.shallow )
         ETDefinition.ifNecessary( newFormula, apply( sub, newCtx, exp ) )
 
@@ -63,7 +63,7 @@ object replaceWithContext {
 
         val newSkArgs = skArgs.map( a => nameGen.fresh( Var( "x", a.ty ) ) )
         val lhs = newFormula
-        val Some( skDef ) = ctx.skolemDef( skConst.asInstanceOf[Const] ) // FIXME
+        val Some( skDef ) = ctx.skolemDef( skConst.asInstanceOf[Const] ): @unchecked // FIXME
         val rhs = BetaReduction.betaNormalize( skDef( newSkArgs ) )
         val subst = syntacticMGU( lhs, rhs, boundVars ).
           getOrElse( throw new IllegalArgumentException( s"Cannot unify $lhs =?= $rhs" ) )

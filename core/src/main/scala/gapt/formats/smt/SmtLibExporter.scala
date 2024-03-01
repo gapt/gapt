@@ -61,10 +61,10 @@ object SmtLibExporter {
     val rec = new BenchmarkRecorder( lineWidth )
     rec.run( setOption( "fp.engine", "spacer" ) )
     rec.run( declareSymbolsIn( bup ) )
-    for ( c @ Const( _, FunctionType( _, tys ), _ ) <- groundRels )
+    for ( case c @ Const( _, FunctionType( _, tys ), _ ) <- groundRels )
       rec.run( ask( LFun( "declare-rel", rec.convert( c ),
         LList( tys.map( rec.typeRenaming( _ ).asInstanceOf[TBase].name ).map( LSymbol ) ) ) ) )
-    for ( c @ Const( _, ty: TBase, _ ) <- groundVars )
+    for ( case c @ Const( _, ty: TBase, _ ) <- groundVars )
       rec.run( ask( LFun( "declare-var", rec.convert( c ), LSymbol( rec.typeRenaming( ty ).name ) ) ) )
     for ( ( body, head ) <- clauses )
       rec.run( ask( LFun( "rule", rec.convert( body --> head.getOrElse( query ) ) ) ) )

@@ -22,7 +22,7 @@ class ExpansionSequentViewer( name: String, es: ExpansionSequent ) extends Proof
   def lkproof(): Unit = {
     try {
       mainPanel.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      val Right( p ) = ExpansionProofToLK( ExpansionProof( content ) )
+      val Right( p ) = ExpansionProofToLK( ExpansionProof( content ) ): @unchecked
       val viewer = new LKProofViewer( "LK proof", p )
       viewer.showFrame()
       mainPanel.cursor = java.awt.Cursor.getDefaultCursor

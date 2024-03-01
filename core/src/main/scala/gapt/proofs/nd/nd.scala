@@ -1283,7 +1283,7 @@ case class EqualityIntroRule( t: Expr ) extends InitialSequent {
  */
 case class InductionCase( proof: NDProof, constructor: Const,
                           hypotheses: List[SequentIndex], eigenVars: List[Var] ) {
-  val FunctionType( indTy, fieldTypes ) = constructor.ty
+  val FunctionType( indTy, fieldTypes ) = constructor.ty: @unchecked
   require( fieldTypes == eigenVars.map( _.ty ) )
 
   val hypVars = eigenVars filter { _.ty == indTy }

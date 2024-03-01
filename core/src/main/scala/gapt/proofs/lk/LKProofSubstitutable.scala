@@ -134,7 +134,7 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
 
     case p @ ForallLeftRule( subProof, aux, f, term, v ) =>
       val subProofNew = go( substitution, subProof )
-      val All( newV, newF ) = substitution( p.mainFormula )
+      val All( newV, newF ) = substitution( p.mainFormula ): @unchecked
       ForallLeftRule( subProofNew, aux, betaNormalize( newF ), betaNormalize( substitution( term ) ), newV )
 
     case ForallRightRule( subProof, aux, eigen, quant ) if substitution.range contains eigen =>
@@ -145,7 +145,7 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
         aux, renamedEigen, quant ) )
 
     case p @ ForallRightRule( subProof, aux, eigen, quant ) =>
-      val All( newQuant, _ ) = substitution( p.mainFormula )
+      val All( newQuant, _ ) = substitution( p.mainFormula ): @unchecked
       val newEigen = Var( eigen.name, substitution( eigen.ty ) )
       val newSubst = Substitution( substitution.map + ( eigen -> newEigen ), substitution.typeMap )
       ForallRightRule( go( newSubst, subProof ), aux, newEigen, newQuant )
@@ -158,14 +158,14 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
         aux, renamedEigen, quant ) )
 
     case p @ ExistsLeftRule( subProof, aux, eigen, quant ) =>
-      val Ex( newQuant, _ ) = substitution( p.mainFormula )
+      val Ex( newQuant, _ ) = substitution( p.mainFormula ): @unchecked
       val newEigen = Var( eigen.name, substitution( eigen.ty ) )
       val newSubst = Substitution( substitution.map + ( eigen -> newEigen ), substitution.typeMap )
       ExistsLeftRule( go( newSubst, subProof ), aux, newEigen, newQuant )
 
     case p @ ExistsRightRule( subProof, aux, f, term, v ) =>
       val subProofNew = go( substitution, subProof )
-      val Ex( newV, newF ) = substitution( p.mainFormula )
+      val Ex( newV, newF ) = substitution( p.mainFormula ): @unchecked
       ExistsRightRule( subProofNew, aux, betaNormalize( newF ), betaNormalize( substitution( term ) ), newV )
 
     case p @ ExistsSkLeftRule( subProof, aux, main, skT ) =>

@@ -41,7 +41,7 @@ object MRealizability {
    * @return recursor constant
    */
   def recursor( indType: TBase, resultType: Ty )( implicit ctx: Context ): Const = {
-    val Some( constructors ) = ctx.getConstructors( indType )
+    val Some( constructors ) = ctx.getConstructors( indType ): @unchecked
     val recTypes = constructors.map {
       case constr @ Const( _, FunctionType( _, constrArgTypes ), _ ) =>
         FunctionType( resultType, constrArgTypes.flatMap( argType => if ( argType == indType ) Seq( indType, resultType ) else Seq( argType ) ) )
@@ -64,7 +64,7 @@ object MRealizability {
       val indType = systemT.get[BaseTypes].baseTypes( name )
 
       val resultTypeVariable = TVar( new NameGenerator( typeVariables( indType ) map ( _.name ) ).fresh( "a" ) )
-      val rec @ Const( _, FunctionType( _, recCaseTypes :+ _ ), _ ) = recursor( indType, resultTypeVariable )( ctx )
+      val rec @ Const( _, FunctionType( _, recCaseTypes :+ _ ), _ ) = recursor( indType, resultTypeVariable )( ctx ): @unchecked
 
       val ngTermVariableNames = new NameGenerator( systemT.constants map ( _.name ) )
 
@@ -249,7 +249,7 @@ object MRealizability {
 
       // Assumes that the induction cases for the constructors are in the same order as the inductive type definition in the context.
       case InductionRule( cases, formula, term ) =>
-        val indType @ TBase( name, params ) = term.ty
+        val indType @ TBase( name, params ) = term.ty: @unchecked
         val resultType = flat( proof.conclusion( Suc( 0 ) ) )
         def mrealizerConstrCase( cas: InductionCase, index: Int ): Expr = {
           val eigenvarsIndTy = cas.eigenVars.filter( _.ty == indType ).zip( cas.hypotheses.map( _ -> Var( ng.fresh( "y" ), resultType ) ) ) toMap

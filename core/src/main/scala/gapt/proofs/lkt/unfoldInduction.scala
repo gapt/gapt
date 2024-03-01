@@ -65,7 +65,7 @@ class unfoldInduction( simp: SimpAdapter, ctx0: ImmutableContext ) {
     case Def( main, f, q )                                => Def( main, f, apply( q ) )
     case p @ Ind( main, f, term, cases0 ) =>
       val cases = cases0.map( c => c.copy( q = c.q.rename_( simpHyps union p.freeHyps ) ) )
-      val Some( ctrs ) = ctx.getConstructors( p.indTy )
+      val Some( ctrs ) = ctx.getConstructors( p.indTy ): @unchecked
       assert( !simpHyps( main ) )
       term match {
         case Apps( ctr: Const, as ) if ctrs.contains( ctr ) =>

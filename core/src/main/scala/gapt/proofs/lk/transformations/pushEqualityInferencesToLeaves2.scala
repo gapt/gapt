@@ -95,16 +95,16 @@ object pushEqualityInferencesToLeaves2 extends LKVisitor[Unit] {
         CutRule( pushLeft( p ), pushRight( p ), p.cutFormula )
 
       case p @ StrongQuantifierRule( _, _, ev, _, isForall ) if aux == p.mainIndices.head =>
-        val Abs( x, f: Formula ) = ctx
+        val Abs( x, f: Formula ) = ctx: @unchecked
         require( x != ev )
         StrongQuantifierRule( pushUnary( p, Abs( x, instantiate( f, ev ) ) ), mkEquality.mainFormula, ev, isForall )
       case p @ WeakQuantifierRule( _, _, _, t, _, isExists ) if aux == p.mainIndices.head =>
-        val Abs( x, f: Formula ) = ctx
+        val Abs( x, f: Formula ) = ctx: @unchecked
         require( !freeVariables( t )( x ) )
         WeakQuantifierRule( pushUnary( p, Abs( x, instantiate( f, t ) ) ), mkEquality.mainFormula, t, isExists )
 
       case p: SkolemQuantifierRule if aux == p.mainIndices.head =>
-        val Abs( x, f: Formula ) = ctx
+        val Abs( x, f: Formula ) = ctx: @unchecked
         require( !freeVariables( p.skolemTerm )( x ) )
         val q = pushUnary( p, Abs( x, instantiate( f, p.skolemTerm ) ) )
         if ( aux.isAnt )
@@ -113,22 +113,22 @@ object pushEqualityInferencesToLeaves2 extends LKVisitor[Unit] {
           ForallSkRightRule( q, mkEquality.mainFormula, p.skolemTerm )
 
       case p: NegLeftRule if aux == p.mainIndices.head =>
-        val Abs( x, Neg( f ) ) = ctx
-        val Neg( newAux ) = mkEquality.mainFormula
+        val Abs( x, Neg( f ) ) = ctx: @unchecked
+        val Neg( newAux ) = mkEquality.mainFormula: @unchecked
         NegLeftRule( pushUnary( p, Abs( x, f ) ), newAux )
       case p: NegRightRule if aux == p.mainIndices.head =>
-        val Abs( x, Neg( f ) ) = ctx
-        val Neg( newAux ) = mkEquality.mainFormula
+        val Abs( x, Neg( f ) ) = ctx: @unchecked
+        val Neg( newAux ) = mkEquality.mainFormula: @unchecked
         NegRightRule( pushUnary( p, Abs( x, f ) ), newAux )
 
       case p: AndLeftRule if aux == p.mainIndices.head =>
-        val Abs( x, And( f, g ) ) = ctx
+        val Abs( x, And( f, g ) ) = ctx: @unchecked
         AndLeftRule( pushUnary2( p, Abs( x, f ), Abs( x, g ) ), mkEquality.mainFormula )
       case p: OrRightRule if aux == p.mainIndices.head =>
-        val Abs( x, Or( f, g ) ) = ctx
+        val Abs( x, Or( f, g ) ) = ctx: @unchecked
         OrRightRule( pushUnary2( p, Abs( x, f ), Abs( x, g ) ), mkEquality.mainFormula )
       case p: ImpRightRule if aux == p.mainIndices.head =>
-        val Abs( x, Imp( f, g ) ) = ctx
+        val Abs( x, Imp( f, g ) ) = ctx: @unchecked
         ImpRightRule( pushUnary2( p, Abs( x, f ), Abs( x, g ) ), mkEquality.mainFormula )
     }
   }

@@ -207,12 +207,12 @@ class ExpansionProofToLK(
   private def tryWeakQ( theory: Theory, expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] = {
     lazy val upcomingEVs = ( for {
       et <- theory.getExpansionTrees ++ expSeq.elements
-      ETStrongQuantifier( _, ev, _ ) <- et.subProofs
+      case ETStrongQuantifier( _, ev, _ ) <- et.subProofs
     } yield ev ).toSet
     def possibleInsts( insts: Map[Expr, ExpansionTree] ) =
       Map() ++ insts.view.filterKeys( t => freeVariables( t ) intersect upcomingEVs isEmpty ).toMap
 
-    for ( ( ETWeakQuantifier( sh, insts ), i ) <- expSeq.zipWithIndex.elements ) {
+    for ( case ( ETWeakQuantifier( sh, insts ), i ) <- expSeq.zipWithIndex.elements ) {
       val insts_ = possibleInsts( insts )
 
       if ( insts_.nonEmpty ) {
@@ -243,7 +243,7 @@ class ExpansionProofToLK(
   private def tryCut( theory: Theory, expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] = {
     lazy val upcomingEVs = ( for {
       et <- theory.getExpansionTrees ++ expSeq.elements
-      ETStrongQuantifier( _, ev, _ ) <- et.subProofs
+      case ETStrongQuantifier( _, ev, _ ) <- et.subProofs
     } yield ev ).toSet
 
     theory.cuts.zipWithIndex collectFirst {
@@ -262,7 +262,7 @@ class ExpansionProofToLK(
   private def tryInduction( theory: Theory, expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] = {
     lazy val upcomingEVs = ( for {
       et <- theory.getExpansionTrees ++ expSeq.elements
-      ETStrongQuantifier( _, ev, _ ) <- et.subProofs
+      case ETStrongQuantifier( _, ev, _ ) <- et.subProofs
     } yield ev ).toSet
 
     theory.inductions.zipWithIndex.collectFirst {
@@ -284,7 +284,7 @@ class ExpansionProofToLK(
               solve( newTheory, suc +: expSeq ) map { p =>
                 if ( !p.conclusion.contains( suc.shallow, Polarity.InAntecedent ) ) p
                 else {
-                  val All( v, f ) = suc.shallow
+                  val All( v, f ) = suc.shallow: @unchecked
                   val freshVar = Var( rename.awayFrom( freeVariables( p.conclusion ) ).fresh( v.name ), v.ty )
                   ProofBuilder
                     .c( InductionRule( lkCases.reverse, Abs( v, f ), freshVar ) )

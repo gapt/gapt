@@ -145,7 +145,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
       case Apps( c: FOLAtomConst, args ) =>
         predicateReification( c ) match {
           case Const( _, FunctionType( _, argTypes ), _ ) =>
-            for ( ( a: FOLTerm, t ) <- args zip argTypes )
+            for ( case ( a: FOLTerm, t ) <- args zip argTypes )
               i( a, t )
         }
         expected
@@ -160,7 +160,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
       case Apps( c: FOLFunctionConst, args ) =>
         termReification( c ) match {
           case Const( _, FunctionType( retType, argTypes ), _ ) =>
-            for ( ( a: FOLTerm, t ) <- args zip argTypes )
+            for ( case ( a: FOLTerm, t ) <- args zip argTypes )
               i( a, t )
             retType
         }
@@ -266,7 +266,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
       case ( ETWeakQuantifier( _, insts ), Quant( x, sh, _ ) ) =>
         ETWeakQuantifier(
           shallow,
-          for ( ( t: FOLTerm, inst ) <- insts ) yield {
+          for ( case ( t: FOLTerm, inst ) <- insts ) yield {
             val childFreeVars = infer( t, x.ty, freeVars )
             val t_ = back( t, childFreeVars )
             t_ -> back( inst, Substitution( x -> t_ )( sh ), childFreeVars )
@@ -598,7 +598,7 @@ private class TagReductionHelper {
       case Resolution( q1, l1, q2, l2 ) => Resolution( f( q1 ), l1, f( q2 ), l2 )
       case Paramod( q1, l1, dir, q2, l2, Abs( Var( v, _ ), subContext ) ) =>
         val q1New = f( q1 )
-        val Eq( eqLhs, _ ) = q1New.conclusion( l1 )
+        val Eq( eqLhs, _ ) = q1New.conclusion( l1 ): @unchecked
         Paramod( q1New, l1, dir, f( q2 ), l2, Abs( Var( v, eqLhs.ty ), back( subContext ) ) )
       case Flip( q, i ) => Flip( f( q ), i )
     } )
@@ -627,7 +627,7 @@ private object removeReflsAndTauts {
     new ResolutionProofVisitor {
       override def apply( p: ResolutionProof ): ResolutionProof = {
         for {
-          Eq( t, t_ ) <- p.conclusion.succedent
+          case Eq( t, t_ ) <- p.conclusion.succedent
           if t == t_
         } return Refl( t )
         if ( p.conclusion.isTaut )
@@ -769,7 +769,7 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
   val partialAppTypes = names map { _.ty } flatMap {
     t =>
       {
-        val FunctionType( _, argTypes ) = t
+        val FunctionType( _, argTypes ) = t: @unchecked
         argTypes.filterNot {
           _.isInstanceOf[TBase]
         }
@@ -788,8 +788,8 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
 
   val partialApplicationFuns =
     for {
-      ( partialAppType, funType @ FunctionType( ret, argTypes ) ) <- partialAppTypes
-      g @ Const( _, FunctionType( `ret`, gArgTypes ), _ ) <- names
+      case ( partialAppType, funType @ FunctionType( ret, argTypes ) ) <- partialAppTypes
+      case g @ Const( _, FunctionType( `ret`, gArgTypes ), _ ) <- names
       if gArgTypes endsWith argTypes
     } yield ( Const(
       nameGen freshWithIndex "partial",
@@ -801,8 +801,8 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
 
   val extraAxioms = if ( !addExtraAxioms ) Set() else
     for {
-      Const( _, FunctionType( _, ( partialAppType: TBase ) :: argTypes ), _ ) <- applyFunctions.values
-      ( partialApplicationFun @ Const( _, FunctionType( `partialAppType`, pappArgTypes ), _ ), g, _ ) <- partialApplicationFuns
+      case Const( _, FunctionType( _, ( partialAppType: TBase ) :: argTypes ), _ ) <- applyFunctions.values
+      case ( partialApplicationFun @ Const( _, FunctionType( `partialAppType`, pappArgTypes ), _ ), g, _ ) <- partialApplicationFuns
     } yield {
       val varGen = rename.awayFrom( Set[Var]() )
       val gArgVars = pappArgTypes map { Var( varGen freshWithIndex "x", _ ) }
@@ -814,7 +814,7 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
   val extraAxiomClauses = extraAxioms.flatMap { case All.Block( _, f ) => Seq( Seq() :- Seq( f ) ) }
 
   def reduceFunTy( t: Ty ): Ty = {
-    val FunctionType( ret, args ) = t
+    val FunctionType( ret, args ) = t: @unchecked
     FunctionType( ret, args map reduceArgTy )
   }
   def reduceArgTy( t: Ty ): TBase = t match {
@@ -834,7 +834,7 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
     case Eq( l, r )            => Eq( reduce( l ), reduce( r ) )
     case Var( n, t )           => Var( n, reduceArgTy( t ) )
     case Apps( f: Const, args ) if partiallyAppedTypes.contains( e.ty ) =>
-      val Some( ( p, _, _ ) ) = partialApplicationFuns find { paf => paf._2 == f && paf._3 == e.ty }
+      val Some( ( p, _, _ ) ) = partialApplicationFuns find { paf => paf._2 == f && paf._3 == e.ty }: @unchecked
       p( args map reduce: _* )
     case Apps( f: Var, args ) =>
       applyFunctions( reduceArgTy( f.ty ) )( reduce( f ) )( args map reduce: _* )

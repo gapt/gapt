@@ -34,7 +34,7 @@ package object nd {
 
     case EqualityIntroRule( t )     => EqualityIntroRule( s( t ) )
     case EqualityElimRule( maj, min, f, x ) =>
-      val Abs( x_, f_ ) = s( Abs( x, f ) )
+      val Abs( x_, f_ ) = s( Abs( x, f ) ): @unchecked
       EqualityElimRule( s( maj ), s( min ), f_.asInstanceOf[Formula], x_ )
 
     case ExcludedMiddleRule( c1, a1, c2, a2 ) => ExcludedMiddleRule( s( c1 ), a1, s( c2 ), a2 )

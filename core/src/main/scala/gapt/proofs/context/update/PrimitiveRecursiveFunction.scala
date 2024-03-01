@@ -29,7 +29,7 @@ case class PrimitiveRecursiveFunction(
 
   PrimitiveRecursiveFunctionValidator.validate( this )
 
-  private val Const( _, FunctionType( _, argTypes ), _ ) = c
+  private val Const( _, FunctionType( _, argTypes ), _ ) = c: @unchecked
 
   val recursionType: TBase = argTypes( recIdx ).asInstanceOf[TBase]
 
@@ -51,7 +51,7 @@ case class PrimitiveRecursiveFunction(
     for ( ( ( lhs @ Apps( _, lhsArgs ), rhs ), ctr ) <- equations.zip( ctrs ) ) {
       ctx_.check( lhs )
       ctx_.check( rhs )
-      val Apps( Const( ctr_, _, _ ), _ ) = lhsArgs( recIdx )
+      val Apps( Const( ctr_, _, _ ), _ ) = lhsArgs( recIdx ): @unchecked
       require( ctr_ == ctr.name )
     }
     ctx.state.update[Constants]( _ + c )
@@ -73,7 +73,7 @@ case class PrimitiveRecursiveFunction(
 
       val PrimitiveRecursiveFunction( c, nArgs, recIdx, equations ) = input
       val typeVars: Set[TVar] = typeVariables( c.ty )
-      val Const( name, FunctionType( _, argTypes ), _ ) = c
+      val Const( name, FunctionType( _, argTypes ), _ ) = c: @unchecked
 
       require( 0 <= recIdx && recIdx < nArgs && nArgs <= argTypes.size )
 
@@ -85,12 +85,12 @@ case class PrimitiveRecursiveFunction(
         require( typeVariables( lhs.ty ) subsetOf typeVars )
         require( typeVariables( rhs.ty ) subsetOf typeVars )
 
-        val Apps( `c`, lhsArgs ) = lhs
+        val Apps( `c`, lhsArgs ) = lhs: @unchecked
         require( lhsArgs.size == nArgs )
 
         val nonRecLhsArgs =
           lhsArgs.zipWithIndex.filter( _._2 != recIdx ).map( _._1 )
-        val Apps( Const( _, _, _ ), ctrArgs ) = lhsArgs( recIdx )
+        val Apps( Const( _, _, _ ), ctrArgs ) = lhsArgs( recIdx ): @unchecked
 
         val matchVars = nonRecLhsArgs ++ ctrArgs
 
@@ -135,13 +135,13 @@ object PrimitiveRecursiveFunction {
         args.size -> args.indexWhere( !_.isInstanceOf[Var] )
     }
 
-    val Const( _, FunctionType( _, argTys ), _ ) = constant
+    val Const( _, FunctionType( _, argTys ), _ ) = constant: @unchecked
     val equationsByConst = equations.groupBy {
       case ( ( Apps( _, args ), _ ) ) =>
         val Apps( ctr, _ ) = args( recIdx )
         ctr
     }
-    val Some( recCtrs ) = ctx.getConstructors( argTys( recIdx ) )
+    val Some( recCtrs ) = ctx.getConstructors( argTys( recIdx ) ): @unchecked
 
     PrimitiveRecursiveFunction(
       constant, arity, recIdx, recCtrs.map( equationsByConst( _ ).head ) )

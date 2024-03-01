@@ -50,7 +50,7 @@ class Substitute( private val problem: TipSmtProblem ) {
   def awayFrom(
     tipSmtCase: TipSmtCase,
     blacklist:  Seq[String] ): TipSmtCase = {
-    val TipSmtConstructorPattern( constructor, fields ) = tipSmtCase.pattern
+    val TipSmtConstructorPattern( constructor, fields ) = tipSmtCase.pattern: @unchecked
     val oldNames = fields.map { _.name }
     val nameGenerator = createNameGenerator(
       constructor.name +: ( oldNames ++ blacklist ) )
@@ -226,7 +226,7 @@ class Substitute( private val problem: TipSmtProblem ) {
   private def substCase(
     cas:          TipSmtCase,
     substitution: Substitution ): TipSmtCase = {
-    val TipSmtConstructorPattern( constructor, boundVariables ) = cas.pattern
+    val TipSmtConstructorPattern( constructor, boundVariables ) = cas.pattern: @unchecked
 
     val newSubstitution: Substitution = substitution.filter {
       case ( identifier, _ ) => !boundVariables.contains( identifier )
@@ -272,7 +272,7 @@ class Substitute( private val problem: TipSmtProblem ) {
     tipSmtCase:    TipSmtCase,
     oldNames:      Seq[String],
     newBoundNames: Seq[String] ): TipSmtCase = {
-    val TipSmtConstructorPattern( constructor, _ ) = tipSmtCase.pattern
+    val TipSmtConstructorPattern( constructor, _ ) = tipSmtCase.pattern: @unchecked
     val newPattern = TipSmtConstructorPattern(
       constructor,
       newBoundNames.map { TipSmtIdentifier.apply } )

@@ -194,7 +194,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
         val caseRules = constructors.map {
           c =>
             val names = new NameGenerator( freeVariables( lhs ).map { _.name } )
-            val FunctionType( _, argumentTypes ) = c.ty
+            val FunctionType( _, argumentTypes ) = c.ty: @unchecked
             val variables = argumentTypes.map { t => Var( names.fresh( "x" ), t ) }
             val constructorTerm = Apps( c, variables )
             val subst = Substitution( x, constructorTerm )
@@ -380,7 +380,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
       case Some( fc ) =>
         expectedType match {
           case Some( ety ) =>
-            val FunctionType( returnType, argumentTypes ) = fc.ty
+            val FunctionType( returnType, argumentTypes ) = fc.ty: @unchecked
             syntacticMatching( returnType, ety ) match {
               case Some( matching ) => matching( fc )
               case _ =>
@@ -393,7 +393,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
       case _ =>
         throw TipSmtParserException( s"unknown constant ${tipSmtFun.name}" )
     }
-    val FunctionType( returnType, argumentTypes ) = functionConstant.ty
+    val FunctionType( returnType, argumentTypes ) = functionConstant.ty: @unchecked
     if ( tipSmtFun.arguments.size != argumentTypes.size ) {
       throw TipSmtParserException(
         s"illegal number of arguments: function ${functionConstant} expects " +
@@ -418,7 +418,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
     val matchedType: TBase = compiledMatchedExpression.ty.asInstanceOf[TBase]
     val completedMatchCases = fixupMatchCases( matchedType, cases, freeVars )
     val ( compiledCases, resultType ) = compileCases( completedMatchCases, freeVars, matchedType, expectedType )
-    val Some( matchConstant ) = ctx.constant( matchConstantName( matchedType ), List( resultType ) )
+    val Some( matchConstant ) = ctx.constant( matchConstantName( matchedType ), List( resultType ) ): @unchecked
     Apps( matchConstant, compiledMatchedExpression +: compiledCases )
   }
 
@@ -471,7 +471,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
     // check that the constructors have the correct arity
     constructorCases.foreach {
       case ( c, xs, _ ) =>
-        val FunctionType( _, as ) = lookupConstructor( c, matchedType ).ty
+        val FunctionType( _, as ) = lookupConstructor( c, matchedType ).ty: @unchecked
         if ( xs.size != as.size ) {
           throw TipSmtParserException( s"match: invalid constructor pattern: constructor ${c} " +
             s"expects ${as.size} arguments but got ${xs.size}." )
@@ -488,7 +488,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
         }
         missingConstructors.map {
           c =>
-            val FunctionType( _, ats ) = c.ty
+            val FunctionType( _, ats ) = c.ty: @unchecked
             ( c.name, ats.map { _ => dummyName }, e )
         }
       case _ => Seq()
@@ -500,7 +500,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
       ( constructorCases ++ missingCases ).map {
         case ( c, xs, e ) =>
           val constructor = lookupConstructor( c, matchedType )
-          val FunctionType( _, ats ) = constructor.ty
+          val FunctionType( _, ats ) = constructor.ty: @unchecked
           ( constructor, xs.zip( ats ).map { case ( x, t ) => Var( x, t ) }, e )
       }.sortWith {
         case ( l, r ) => constructorOrder( l._1, r._1 )
@@ -684,7 +684,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
     val names = new NameGenerator( Seq() )
     val caseArguments: Map[Const, Var] = inductiveType.constructors.map {
       constructor =>
-        val FunctionType( _, argumentTypes ) = constructor.constant.ty
+        val FunctionType( _, argumentTypes ) = constructor.constant.ty: @unchecked
         val caseVariable = Var( names.fresh( "f" ), FunctionType( resultType, argumentTypes ) )
         ( constructor.constant, caseVariable )
     }.toMap
@@ -693,7 +693,7 @@ class TipSmtToTipProblemCompiler( var problem: TipSmtProblem ) {
       inductiveType.constructors.map {
         constructor =>
           val names = new NameGenerator( Seq() )
-          val FunctionType( _, argumentTypes ) = constructor.constant.ty
+          val FunctionType( _, argumentTypes ) = constructor.constant.ty: @unchecked
           val constructorArguments = argumentTypes.map { Var( names.fresh( "x" ), _ ) }
           val leftHandSide =
             Apps(

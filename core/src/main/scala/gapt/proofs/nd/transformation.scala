@@ -270,13 +270,13 @@ object kolmogorov {
         ContractionRule( kolmogorov( subProof ), aux1, aux2 )
 
       case AndElim1Rule( subProof ) =>
-        val And( leftConjunct, rightConjunct ) = subProof.conclusion( Suc( 0 ) )
+        val And( leftConjunct, rightConjunct ) = subProof.conclusion( Suc( 0 ) ): @unchecked
         elimcase(
           kolmogorov( subProof ),
           AndElim1Rule( LogicalAxiom( And( k( leftConjunct ), k( rightConjunct ) ) ) ) )
 
       case AndElim2Rule( subProof ) =>
-        val And( leftConjunct, rightConjunct ) = subProof.conclusion( Suc( 0 ) )
+        val And( leftConjunct, rightConjunct ) = subProof.conclusion( Suc( 0 ) ): @unchecked
         elimcase(
           kolmogorov( subProof ),
           AndElim2Rule( LogicalAxiom( And( k( leftConjunct ), k( rightConjunct ) ) ) ) )
@@ -285,7 +285,7 @@ object kolmogorov {
         introcase( AndIntroRule( kolmogorov( leftSubProof ), kolmogorov( rightSubProof ) ) )
 
       case ImpElimRule( leftSubProof, rightSubProof ) =>
-        val Imp( antecedent, consequent ) = leftSubProof.conclusion( Suc( 0 ) )
+        val Imp( antecedent, consequent ) = leftSubProof.conclusion( Suc( 0 ) ): @unchecked
         elimcase(
           kolmogorov( leftSubProof ),
           ImpElimRule( LogicalAxiom( Imp( k( antecedent ), k( consequent ) ) ), kolmogorov( rightSubProof ) ) )
@@ -294,7 +294,7 @@ object kolmogorov {
         introcase( ImpIntroRule( kolmogorov( subProof ), aux ) )
 
       case OrElimRule( leftSubProof, middleSubProof, aux1, rightSubProof, aux2 ) =>
-        val Or( leftDisjunct, rightDisjunct ) = leftSubProof.conclusion( Suc( 0 ) )
+        val Or( leftDisjunct, rightDisjunct ) = leftSubProof.conclusion( Suc( 0 ) ): @unchecked
         elimcase(
           kolmogorov( leftSubProof ),
           OrElimRule(
@@ -324,7 +324,7 @@ object kolmogorov {
             NegIntroRule( LogicalAxiom( hof"⊥" ) ) ), aux )
 
       case BottomElimRule( subProof, mainFormula ) =>
-        val Neg( lessnegated ) = k( mainFormula )
+        val Neg( lessnegated ) = k( mainFormula ): @unchecked
         NegIntroRule(
           WeakeningRule(
             NegElimRule(
@@ -336,7 +336,7 @@ object kolmogorov {
         introcase( TopIntroRule )
 
       case ForallElimRule( subProof, term ) =>
-        val All( variable, formula ) = subProof.conclusion( Suc( 0 ) )
+        val All( variable, formula ) = subProof.conclusion( Suc( 0 ) ): @unchecked
         elimcase(
           kolmogorov( subProof ),
           ForallElimRule( LogicalAxiom( All( variable, k( formula ) ) ), term ) )
@@ -349,7 +349,7 @@ object kolmogorov {
             quantifiedVariable ) )
 
       case ExistsElimRule( leftSubProof, rightSubProof, aux, eigenVariable ) =>
-        val Ex( variable, formula ) = leftSubProof.conclusion( Suc( 0 ) )
+        val Ex( variable, formula ) = leftSubProof.conclusion( Suc( 0 ) ): @unchecked
         elimcase(
           kolmogorov( leftSubProof ),
           ExistsElimRule(
@@ -394,7 +394,7 @@ object kolmogorov {
         TheoryAxiom( k( formula ) )
 
       case ExcludedMiddleRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-        val Neg( lessnegated ) = k( leftSubProof.conclusion( Suc( 0 ) ) )
+        val Neg( lessnegated ) = k( leftSubProof.conclusion( Suc( 0 ) ) ): @unchecked
         val p = LogicalAxiom( lessnegated )
         val right =
           NegIntroRule(
@@ -420,7 +420,7 @@ object kolmogorov {
   }
 
   private def elimcase( elimproof: NDProof, conclproof: NDProof ): NDProof = {
-    val Neg( lessnegated ) = conclproof.conclusion( Suc( 0 ) )
+    val Neg( lessnegated ) = conclproof.conclusion( Suc( 0 ) ): @unchecked
     NegIntroRule(
       NegElimRule(
         elimproof,

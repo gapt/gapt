@@ -60,7 +60,7 @@ class MutableContext(
         return d
       }
     }
-    val Abs.Block( vs, Quant( v, _, _ ) ) = defn
+    val Abs.Block( vs, Quant( v, _, _ ) ) = defn: @unchecked
     val sym = Const( name, FunctionType( v.ty, vs.map( _.ty ) ) )
     this += SkolemFun( sym, defn )
     sym

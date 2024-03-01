@@ -231,7 +231,7 @@ object tipScalaEncoding {
   private def compileProjectorDefinitions( problem: TipProblem ): Seq[String] = {
     val definitions = problem.datatypes.flatMap( projectorDefinitions )
     definitions.map { d =>
-      val All.Block( _, Eq( Apps( p: Const, _ ), _ ) ) = d
+      val All.Block( _, Eq( Apps( p: Const, _ ), _ ) ) = d: @unchecked
       s"def_${
         p.name.map { c => if ( c == '-' ) '_' else c }
       }: ${

@@ -226,7 +226,7 @@ class DrawETQuantifierBlock(
     outerQuantifier: Option[DrawETQuantifierBlock] = None ) extends DrawExpansionTree( main, expansionTree, outerQuantifier ) {
   import ExpansionTreeState._
 
-  val ETQuantifierBlock( formula, depth, instances ) = expansionTree
+  val ETQuantifierBlock( formula, depth, instances ) = expansionTree: @unchecked
   val terms = instances.toVector.map( i => i._1 )
   val subTrees = for ( et <- instances.toVector.map( i => i._2 ) ) yield DrawExpansionTree( main, et, Some( this ) )
   val quantifiers = quantifierBlockString( takeQuants( formula, depth ), formula ) // quantifiers is a string containing the quantifier block represented by this weak node.

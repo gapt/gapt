@@ -38,7 +38,7 @@ object IvyToResolution {
       case IPropositional( id, exp, clause, parent ) if clause isSubMultisetOf parent.conclusion =>
         Factor( convert( parent ), clause )
       case IPropositional( id, exp, clause, parent ) =>
-        val Some( subst ) = clauseSubsumption( parent.conclusion, clause )
+        val Some( subst ) = clauseSubsumption( parent.conclusion, clause ): @unchecked
         Factor( Subst( convert( parent ), subst ), clause )
       case IFlip( id, exp, unflipped, clause, parent ) =>
         val q = convert( parent )

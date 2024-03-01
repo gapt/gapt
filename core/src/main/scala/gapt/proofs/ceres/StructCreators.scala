@@ -79,7 +79,7 @@ object StructCreators {
         else
           EmptyTimesJunction()
       case ProofLink( rp, rs ) =>
-        val Apps( Const( c, _, _ ), _ ) = rp
+        val Apps( Const( c, _, _ ), _ ) = rp: @unchecked
         if ( ctx.get[ProofDefinitions].components.keySet.contains( c ) ) handleProofLink( rs, cut_occs, rp )
         else handleAxiom( rs, cut_occs )
       case InitialSequent( so ) => handleAxiom( so, cut_occs )

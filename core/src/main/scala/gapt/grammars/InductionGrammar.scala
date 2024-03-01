@@ -132,9 +132,9 @@ object InductionGrammar {
   implicit object checkable extends Checkable[InductionGrammar] {
     override def check( g: InductionGrammar )( implicit ctx: Context ): Unit = {
       for ( nt <- g.nonTerminals; x <- nt ) ctx.check( x )
-      val Some( ctrs ) = ctx.getConstructors( g.indTy )
+      val Some( ctrs ) = ctx.getConstructors( g.indTy ): @unchecked
       require( g.nus.keySet == ctrs.toSet )
-      for ( ctr @ Const( _, FunctionType( _, argTypes ), _ ) <- ctrs ) {
+      for ( case ctr @ Const( _, FunctionType( _, argTypes ), _ ) <- ctrs ) {
         val nu = g.nus( ctr )
         require( nu.size == argTypes.size )
         for ( ( nui, argType ) <- nu zip argTypes )

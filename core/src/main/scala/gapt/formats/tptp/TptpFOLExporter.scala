@@ -44,7 +44,7 @@ object TptpFOLExporter {
     exportLabelledCNF( for ( ( c, i ) <- cnf.zipWithIndex ) yield s"clause_$i" -> c )
 
   def exportClause( clause: HOLClause, name: String ): TptpInput = {
-    val ( _, disj: Formula ) = TptpToString.renameVars( freeVariables( clause ).toSeq, clause.toDisjunction )
+    val ( _, disj: Formula ) = TptpToString.renameVars( freeVariables( clause ).toSeq, clause.toDisjunction ): @unchecked
     AnnotatedFormula( "cnf", name, "axiom", disj, Seq() )
   }
 

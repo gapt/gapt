@@ -19,10 +19,10 @@ object loadExpansionProof {
 
   def withBackgroundTheory( file: InputFile ): ( ExpansionProof, CutIntroduction.BackgroundTheory ) = file.fileName match {
     case fileName if fileName endsWith ".proof_flat" =>
-      val Some( expSeq ) = VeriTParser.getExpansionProofWithSymmetry( FilePath( fileName ) )
+      val Some( expSeq ) = VeriTParser.getExpansionProofWithSymmetry( FilePath( fileName ) ): @unchecked
       ExpansionProof( expSeq ) -> CutIntroduction.BackgroundTheory.PureFOL
     case fileName if fileName contains "/leanCoP" =>
-      val Some( expSeq ) = LeanCoPParser.getExpansionProof( extractFromTSTPCommentsIfNecessary( file ) )
+      val Some( expSeq ) = LeanCoPParser.getExpansionProof( extractFromTSTPCommentsIfNecessary( file ) ): @unchecked
       val p = ExpansionProof( expSeq )
       p -> CutIntroduction.BackgroundTheory.guess( p.shallow )
     case fileName if fileName contains "/Prover9" =>
@@ -36,7 +36,7 @@ object loadExpansionProof {
       val ( endSequent, sketch ) = TptpProofParser.parse( StringInputFile( tstpOutput ), ignoreStrongQuants = true )
       logger.metric( "tstp_sketch_size", sketch.subProofs.size )
 
-      val Right( resProof ) = RefutationSketchToResolution( sketch )
+      val Right( resProof ) = RefutationSketchToResolution( sketch ): @unchecked
       loadResolutionProof( resProof, endSequent )
   }
 

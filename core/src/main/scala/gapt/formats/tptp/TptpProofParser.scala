@@ -117,7 +117,7 @@ object TptpProofParser {
     } yield subst.map.map { case ( l, r ) => l -> r.asInstanceOf[Var] }
 
   def parseSteps( stepList: TptpFile, labelledCNF: Map[String, Seq[FOLClause]] ): RefutationSketch = {
-    val steps = ( for ( input @ AnnotatedFormula( _, name, _, _, _ ) <- stepList.inputs )
+    val steps = ( for ( case input @ AnnotatedFormula( _, name, _, _, _ ) <- stepList.inputs )
       yield name -> input ).toMap
 
     val memo = mutable.Map[String, Seq[RefutationSketch]]()
@@ -187,12 +187,12 @@ object TptpProofParser {
           ( justification @ TptpTerm( "inference", FOLVar( "AVATAR_split_clause" ) | FOLConst( "avatar_split_clause" ),
             _, _ ) ) +: _ ) =>
           val Seq( assertion ) = CNFp( disj ).toSeq
-          val Seq( splittedClause, _* ) = getParents( justification ) flatMap convert
+          val Seq( splittedClause, _* ) = getParents( justification ) flatMap convert: @unchecked
 
           var p = splittedClause
           for {
             clauseComponent <- AvatarSplit.getComponents( splittedClause.conclusion )
-            ( splAtom: FOLAtom, i ) <- assertion.zipWithIndex
+            case ( splAtom: FOLAtom, i ) <- assertion.zipWithIndex
             comp <- splDefs.get( ( splAtom, i.isSuc ) )
             renaming <- findClauseRenaming( comp.clause, clauseComponent )
           } p = SketchComponentElim( p, comp match {

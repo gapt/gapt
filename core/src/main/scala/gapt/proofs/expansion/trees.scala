@@ -116,9 +116,9 @@ case class ExpansionTree( term: ETt, polarity: Polarity, shallow: Formula ) exte
             ctx.foreach( _.check( eigenVar ) )
             go( child )
           case ETSkolemQuantifier( sh, skT, child ) =>
-            val Apps( skConst: Const, skArgs ) = skT
+            val Apps( skConst: Const, skArgs ) = skT: @unchecked
             ctx.foreach { ctx =>
-              val Some( skD ) = ctx.skolemDef( skConst )
+              val Some( skD ) = ctx.skolemDef( skConst ): @unchecked
               Checkable.requireDefEq( skD( skArgs ), sh )( ctx )
             }
             go( child )

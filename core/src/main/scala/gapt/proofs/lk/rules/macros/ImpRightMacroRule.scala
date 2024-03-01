@@ -54,7 +54,7 @@ object ImpRightMacroRule extends ConvenienceConstructor( "ImpRightMacroRule" ) {
 
       case ( -1, i ) => // The conclusion has been found at index Suc(i).
         // This match cannot fail: if the index of the premise is -1, it cannot have been passed as an index.
-        val IsFormula( ip ) = impPremise
+        val IsFormula( ip ) = impPremise: @unchecked
         val subProof_ = WeakeningLeftRule( subProof, ip )
         val oc = subProof_.getSequentConnector
         val proof = ImpRightRule( subProof_, subProof_.mainIndices( 0 ), oc.child( Suc( i ) ) )
@@ -62,7 +62,7 @@ object ImpRightMacroRule extends ConvenienceConstructor( "ImpRightMacroRule" ) {
 
       case ( i, -1 ) => // The premise has been found at indext Ant(i).
         // This match cannot fail: if the index of the conclusion is -1, it cannot have been passed as an index.
-        val IsFormula( ic ) = impConclusion
+        val IsFormula( ic ) = impConclusion: @unchecked
         val subProof_ = WeakeningRightRule( subProof, ic )
         val oc = subProof_.getSequentConnector
         val proof = ImpRightRule( subProof_, oc.child( Ant( i ) ), subProof_.mainIndices( 0 ) )

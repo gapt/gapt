@@ -32,7 +32,7 @@ object Viperize {
         All.Block( freeVariables( matrix ).toSeq, matrix )
       } else if ( !( x.lhs.ty.toString.matches( "o" ) ) ) {
         val matrix = Eq( x.lhs, x.rhs )
-        val App( name, args ) = x.lhs
+        val App( name, args ) = x.lhs: @unchecked
         println( name )
         All.Block( freeVariables( matrix ).toSeq, matrix )
       } else Bottom()
@@ -116,7 +116,7 @@ private object Support {
   }
 
   def cF( pn: Expr, cc: Sequent[Boolean], mn: Map[( String, Sequent[Boolean] ), String] ): Formula = {
-    val Apps( Const( name, _, _ ), vs ) = pn
+    val Apps( Const( name, _, _ ), vs ) = pn: @unchecked
     Atom( mn.getOrElse( ( name, cc ), { throw new Exception( "Should be in map" ) } ), vs )
   }
   //assuming NNFCNF
@@ -177,7 +177,7 @@ private object Support {
     import gapt.proofs.context.update.ReductionRuleUpdate.reductionRulesAsReductionRuleUpdate
 
     val definitions: Map[Const, List[( Atom, Formula )]] = {
-      for ( ( f @ Atom( newEx, _ ), ( form, vars ) ) <- chF.toList )
+      for ( case ( f @ Atom( newEx, _ ), ( form, vars ) ) <- chF.toList )
         yield ( newEx.asInstanceOf[Const], ( f,
         if ( qType.equals( ForallC ) ) QuantIntroForAll( form, vars )
         else QuantIntroExists( form, vars ) ) )
@@ -191,7 +191,7 @@ private object Support {
   private def structNames( sss: Map[CLS, ( Struct, Set[Var] )] ): Map[( String, Sequent[Boolean] ), String] =
     sss.keySet.map { cls =>
       {
-        val CLS( Apps( Const( name, _, _ ), _ ), cc ) = cls
+        val CLS( Apps( Const( name, _, _ ), _ ), cc ) = cls: @unchecked
         val cutConfigChars = cc.map( b => if ( b ) 'T' else 'F' )
         ( ( name, cc ), name + "S" + cutConfigChars.succedent.mkString + "A" + cutConfigChars.antecedent.mkString )
       }

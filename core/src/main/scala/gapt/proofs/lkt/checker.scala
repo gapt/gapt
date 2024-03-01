@@ -82,11 +82,11 @@ object check {
       case AllSk( main, term0, q ) =>
         require( main.inSuc == q.aux.inSuc )
         val term = lctx.subst( term0 )
-        val Apps( skSym: Const, skArgs ) = term
-        val m @ Quant( _, _, isAll ) = lctx( main )
+        val Apps( skSym: Const, skArgs ) = term: @unchecked
+        val m @ Quant( _, _, isAll ) = lctx( main ): @unchecked
         require( isAll == main.inSuc )
         for ( ctx_ <- ctx ) {
-          val Some( skDef ) = ctx_.skolemDef( skSym )
+          val Some( skDef ) = ctx_.skolemDef( skSym ): @unchecked
           Checkable.requireDefEq( skDef( skArgs ), m )( ctx_ )
         }
         check( q.p, lctx.up1( p ) )
@@ -96,10 +96,10 @@ object check {
           Checkable.requireDefEq( lctx( main ), f )( ctx_ )
         check( q.p, lctx.up1( p ) )
       case p @ Ind( main, f0, t0, cases ) =>
-        val ( f: Abs, t ) = lctx.subst( ( f0, t0 ) )
+        val ( f: Abs, t ) = lctx.subst( ( f0, t0 ) ): @unchecked
         requireEq( lctx( main ), Substitution( f.variable -> t )( f.term ) )
         for ( ctx_ <- ctx ) {
-          val Some( ctrs ) = ctx_.getConstructors( p.indTy )
+          val Some( ctrs ) = ctx_.getConstructors( p.indTy ): @unchecked
           require( ctrs.size == cases.size )
           for ( ( c, ctr ) <- cases.zip( ctrs ) ) {
             require( c.ctr == ctr )

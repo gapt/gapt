@@ -179,7 +179,7 @@ private class Rup2Res extends UnitPropagationListener {
     cls.forall( i =>
       enqueue( getFromPool( -i ) ) ) &&
       propagate()
-    val Some( p ) = conflict
+    val Some( p ) = conflict: @unchecked
     cancel()
     require( p.clause subsetOf cls )
     p

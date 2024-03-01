@@ -139,7 +139,7 @@ class InductiveTypeLegacyParser( ty: Ty, constructors: Seq[Const] ) extends Indu
 
   private def constructorNotReturningBaseType: Option[Const] =
     constructors.find {
-      c => val FunctionType( to, _ ) = c.ty; to != baseType
+      c => val FunctionType( to, _ ) = c.ty: @unchecked; to != baseType
     }
 
   private def constructorsDoNotContainForeignParameters: Boolean =
@@ -151,7 +151,7 @@ class InductiveTypeLegacyParser( ty: Ty, constructors: Seq[Const] ) extends Indu
     }
 
   private def projectorlessConstructorDefinition( c: Const ): ConstructorDefinition = {
-    val FunctionType( _, ts ) = c.ty
+    val FunctionType( _, ts ) = c.ty: @unchecked
     c.name -> ts.map { ( None, _ ) }
   }
 }
@@ -231,7 +231,7 @@ class InductiveTypeValidator( inductiveType: InductiveType ) {
     }
 
   private def constructorMustConstructInductiveType( constructor: Const ): Unit = {
-    val FunctionType( ty_, _ ) = constructor.ty
+    val FunctionType( ty_, _ ) = constructor.ty: @unchecked
     require(
       inductiveType.baseType == ty_,
       s"Base type ${inductiveType.baseType} and " +

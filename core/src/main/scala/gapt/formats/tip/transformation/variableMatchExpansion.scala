@@ -178,7 +178,7 @@ class VariableMatchExpansion( problem: TipSmtProblem ) {
     variable:   TipSmtIdentifier,
     tipSmtCase: TipSmtCase,
     polarity:   Polarity ): TipSmtExpression = {
-    val pattern @ TipSmtConstructorPattern( _, _ ) = tipSmtCase.pattern
+    val pattern @ TipSmtConstructorPattern( _, _ ) = tipSmtCase.pattern: @unchecked
     val boundVariables =
       problem
         .symbolTable.get.typeOf( pattern.constructor.name )

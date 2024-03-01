@@ -17,7 +17,7 @@ class TermString( private val stack: List[Any] ) extends AnyVal {
       case TArr( a, b ) :: rest =>
         USome( ( Constant( "->", 2 ), new TermString( a :: b :: rest ) ) )
       case top :: rest =>
-        val Apps( hd, as ) = top
+        val Apps( hd, as ) = top: @unchecked
         USome( hd match {
           case Const( n, _, _ ) => ( Constant( n, as.length ), new TermString( as ++ rest ) )
           case _                => ( Variable, new TermString( rest ) )

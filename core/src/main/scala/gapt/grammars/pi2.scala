@@ -53,7 +53,7 @@ case class Pi2PreGrammar(
       ( for ( ( lhs, rhs ) <- productions if betas.contains( lhs ) )
         yield alpha -> rhs ) ++
       ( for {
-        ( `alpha`, alphaRhs ) <- productions
+        case ( `alpha`, alphaRhs ) <- productions
         ( beta, betaRhs ) <- productions
         if betas.contains( beta )
       } yield beta -> Substitution( alpha -> betaRhs )( alphaRhs ) ) )
@@ -107,7 +107,7 @@ object minimizePi2Grammar {
         ( for ( p @ ( lhs, rhs ) <- g.productions if g.betas contains lhs )
           yield ( List( g.alpha ) -> List( rhs ) ) -> List( p ) ) ++
         ( for {
-          p1 @ ( g.alpha, alphaRhs ) <- g.productions
+          case p1 @ ( g.alpha, alphaRhs ) <- g.productions
           p2 @ ( beta, betaRhs ) <- g.productions
           if g.betas.contains( beta )
         } yield ( List( beta ) -> List( Substitution( g.alpha -> betaRhs )( alphaRhs ) ) ) -> List( p1, p2 ) )

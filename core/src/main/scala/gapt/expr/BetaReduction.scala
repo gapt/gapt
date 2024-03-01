@@ -19,7 +19,7 @@ case class ReductionRule( lhs: Expr, rhs: Expr ) {
     } which are not in the left hand side:\n"
       + ( lhs === rhs ) )
 
-  val Apps( lhsHead @ Const( lhsHeadName, _, _ ), lhsArgs ) = lhs
+  val Apps( lhsHead @ Const( lhsHeadName, _, _ ), lhsArgs ) = lhs: @unchecked
   val lhsArgsSize: Int = lhsArgs.size
 
   val isNonLinear: Boolean = {
@@ -55,7 +55,7 @@ object ReductionRule {
     ReductionRule( rule._1, rule._2 )
 
   implicit def apply( atom: Formula ): ReductionRule = {
-    val Eq( lhs, rhs ) = atom
+    val Eq( lhs, rhs ) = atom: @unchecked
     ReductionRule( lhs, rhs )
   }
 }

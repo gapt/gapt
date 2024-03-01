@@ -151,7 +151,7 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
       var n = ant.length
       for ( j <- 1 to n ) {
         // We iteratively focus each expansion tree in the antecedent of S.
-        val ( fst, tree +: snd ) = ant.splitAt( j - 1 )
+        val ( fst, tree +: snd ) = ant.splitAt( j - 1 ): @unchecked
         val newTrees = generateSuccessorTrees( tree ) // We generate all successor trees of the current tree.
 
         if ( newTrees.isEmpty ) {
@@ -196,7 +196,7 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
       // Loop over the succedent, analogous to the one over the antecedent.
       n = suc.length
       for ( j <- 1 to n ) {
-        val ( fst, tree +: snd ) = suc.splitAt( j - 1 )
+        val ( fst, tree +: snd ) = suc.splitAt( j - 1 ): @unchecked
         val newTrees = generateSuccessorTrees( tree )
 
         if ( newTrees.isEmpty ) {

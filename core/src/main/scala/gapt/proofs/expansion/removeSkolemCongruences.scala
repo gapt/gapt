@@ -51,7 +51,7 @@ object removeSkolemCongruences {
 
   def getCongruencesViaVeriT( ep: ExpansionProof ): Vector[( Expr, Expr )] = {
     val skSyms = ep.skolemSymbols
-    val Some( epwc ) = VeriT.getExpansionProof( ep.deep )
+    val Some( epwc ) = VeriT.getExpansionProof( ep.deep ): @unchecked
     epwc.expansionSequent.antecedent.flatMap {
       case ETWeakQuantifierBlock( All.Block( _, Imp( _, Eq( Apps( f: Const, _ ), Apps( f_, _ ) ) ) ), n,
         insts ) if n > 0 && f == f_ && skSyms( f ) =>
@@ -75,7 +75,7 @@ object removeSkolemCongruences {
     if ( congrs.isEmpty )
       ep
     else {
-      val ( a, b ) +: congrs_ = congrs
+      val ( a, b ) +: congrs_ = congrs: @unchecked
       val repl = Map( a -> b )
       val ep_ = remove1( repl, ep )
       remove(
