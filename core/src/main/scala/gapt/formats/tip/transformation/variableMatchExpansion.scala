@@ -49,9 +49,9 @@ class VariableMatchExpansion( problem: TipSmtProblem ) {
 
   problem.symbolTable = Some( SymbolTable( problem ) )
 
-  private sealed trait Polarity
-  private case object Forall extends Polarity
-  private case object Exists extends Polarity
+  sealed trait Polarity
+  case object Forall extends Polarity
+  case object Exists extends Polarity
 
   /**
    * Expands variable-match expressions in the given problem.
