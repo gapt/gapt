@@ -237,7 +237,7 @@ object CASCEvaluation {
     val total_n = s.map( x => BigDecimal( x.n ) ).sum
     val avg = s.map( x => ( x.avg * BigDecimal( x.n ) ) / total_n ).sum // need to create the weighted sum
     val max = Statistic( s.map( _.max ) ).max
-    Statistic( s.size, min, max, avg, num.zero, None )
+    Statistic( s.size, min, max, avg, conv(num.zero), None )
 
   }
 
