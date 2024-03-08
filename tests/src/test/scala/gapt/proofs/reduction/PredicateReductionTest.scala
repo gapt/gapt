@@ -10,6 +10,7 @@ import gapt.proofs.expansion.ETtStrong
 import gapt.proofs.expansion.ETtWeak
 import gapt.proofs.expansion.ExpansionProof
 import gapt.proofs.expansion.ExpansionTree
+import gapt.proofs.expansion.RichExpansionSequent
 import gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 

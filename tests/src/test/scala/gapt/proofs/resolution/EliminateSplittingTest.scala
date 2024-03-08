@@ -4,6 +4,7 @@ import gapt.expr._
 import gapt.examples.{ BussTautology, CountingEquivalence }
 import gapt.expr.formula.fol.{ naive, thresholds }
 import gapt.provers.escargot.Escargot
+import gapt.proofs.RichFormulaSequent
 import org.specs2.mutable.Specification
 
 class EliminateSplittingTest extends Specification {

@@ -15,6 +15,7 @@ import gapt.grammars.DeltaTableMethod
 import gapt.proofs._
 import gapt.proofs.expansion.ExpansionProofToLK
 import gapt.proofs.expansion.eliminateCutsET
+import gapt.proofs.expansion.RichExpansionSequent
 import gapt.proofs.lk.rules.ForallLeftRule
 import gapt.proofs.lk.rules.ForallRightRule
 import gapt.proofs.lk.rules.LogicalAxiom

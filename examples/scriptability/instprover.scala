@@ -11,7 +11,7 @@ import gapt.formats.babel.BabelParser.parseFormula
 import gapt.proofs.expansion.{ ExpansionProofToLK, minimalExpansionSequent }
 import gapt.proofs.resolution.{ expansionProofFromInstances, structuralCNF }
 import gapt.proofs.{ FOLClause, Sequent, RichFOLSequent }
-import gapt.prooftool._
+import gapt.prooftool.prooftool
 import gapt.provers.sat.Sat4j
 
 import scala.collection.mutable

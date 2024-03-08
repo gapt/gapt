@@ -1,7 +1,7 @@
 package gapt.proofs.resolution
 
 import gapt.expr._
-import gapt.proofs.{ Ant, Sequent, Suc }
+import gapt.proofs.{ Ant, Sequent, Suc, RichFormulaSequent }
 import org.specs2.mutable.Specification
 
 class UnitResolutionToLKProofTest extends Specification {

@@ -8,6 +8,8 @@ import gapt.provers.renameConstantsToFi
 import gapt.provers.sat.Sat4j
 import org.specs2.matcher.OptionMatchers
 import gapt.proofs.resolution.ResolutionProof
+import gapt.proofs.resolution.resolutionProofsAreReplaceable
+import gapt.proofs.RichFormulaSequent
 import gapt.models.PropositionalModel
 
 trait SatMatchers extends OptionMatchers {

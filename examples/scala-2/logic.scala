@@ -52,6 +52,7 @@ import gapt.proofs.ProofBuilder
 import gapt.proofs.Sequent
 import gapt.proofs.SequentConnector
 import gapt.proofs.Suc
+import gapt.proofs.RichFormulaSequent
 import gapt.proofs.context.update.Definition
 import gapt.utils.LogHandler
 

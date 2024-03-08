@@ -3,6 +3,7 @@ package gapt.proofs.lk
 import gapt.examples.tape
 import gapt.expr.formula.hol.universalClosure
 import gapt.proofs.SequentMatchers
+import gapt.proofs.RichFormulaSequent
 import gapt.proofs.context.facet.ProofDefinitions
 import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.lk.rules.ProofLink

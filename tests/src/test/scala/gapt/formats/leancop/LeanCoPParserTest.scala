@@ -4,6 +4,7 @@ import gapt.expr._
 import gapt.formats.ClasspathInputFile
 import gapt.utils.SatMatchers
 import org.specs2.mutable.Specification
+import gapt.proofs.expansion.RichExpansionSequent
 
 class LeanCoPParserTest extends Specification with SatMatchers {
 
