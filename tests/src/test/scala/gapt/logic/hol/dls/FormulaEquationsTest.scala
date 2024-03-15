@@ -36,7 +36,7 @@ class FormulaEquationsTest extends Specification {
       val ( secondOrderVariable, formula ) = formulaEquation
       s"succeed for $formula" >> {
         Try( new DlsPreprocessor( secondOrderVariable ).preprocess( formula ) ) must beSuccessfulTry(
-          { result: Set[Disjunct] =>
+          { (result: Set[Disjunct]) =>
             val multiSetEquals = ( s1: Disjunct, s2: Disjunct ) => s1.multiSetEquals( s2 )
             result must beSetEqualsWithCustomEquality(
               expectedResult.map( toDisjunct ),
@@ -351,7 +351,7 @@ class FormulaEquationsTest extends Specification {
 
   private def beAnEquivalentSubstitutionTo(
     equivalentSubstitution: Substitution ): Matcher[( Substitution, Formula )] = {
-    input: ( Substitution, Formula ) =>
+    (input: ( Substitution, Formula )) =>
       {
         val ( substitution, firstOrderPart ) = input
         val substitutedFormula = simplifyPropositional( BetaReduction.betaNormalize(

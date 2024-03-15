@@ -5,7 +5,7 @@ import org.specs2.matcher.{ Matcher, Matchers }
 
 trait SequentMatchers extends Matchers {
 
-  def beMultiSetEqual[A]( expected: Sequent[A] )( implicit sig: BabelSignature ): Matcher[Sequent[A]] = { actual: Sequent[A] =>
+  def beMultiSetEqual[A]( expected: Sequent[A] )( implicit sig: BabelSignature ): Matcher[Sequent[A]] = { (actual: Sequent[A]) =>
     ( actual multiSetEquals expected,
       s"""
          | Sequent
