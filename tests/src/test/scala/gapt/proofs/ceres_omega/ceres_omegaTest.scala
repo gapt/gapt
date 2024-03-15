@@ -165,7 +165,7 @@ class ceres_omegaTest extends Specification with SequentMatchers {
       if ( !Prover9.isInstalled ) skipped( "No Prover9 installed!" )
       object CE extends AnalysisWithCeresOmega {
         override def proofdb() = ExtendedProofDatabase( Map[Formula, LKProof]( hof"THEPROOF" -> fol2.proof ), Map(), Map() )
-        override def root_proof = "THEPROOF";
+        override def root_proof() = "THEPROOF";
         override def skip_strategy() = CERES.skipNothing
       }
 
