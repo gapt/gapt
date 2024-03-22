@@ -224,7 +224,7 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
 
   private def apply_conditional_equality( equalities: List[FOLFormula], result: FOLFormula, p: LKProof ): LKProof =
     implicationLeftMacro(
-      equalities.map { LogicalAxiom },
+      equalities.map { LogicalAxiom(_) },
       equalities.map { e => LogicalAxiom( e ) -> e }.toMap,
       result,
       p )
