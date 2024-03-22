@@ -47,7 +47,7 @@ object instprover extends Script {
       subst <- syntacticMatching( clause.toDisjunction, inst.toDisjunction )
     } yield subst ).toSet
   val expansionProof = expansionProofFromInstances( instances.toMap, justifications )
-  val Some( minimized ) = minimalExpansionSequent( expansionProof, Sat4j )
+  val Some( minimized ) = minimalExpansionSequent( expansionProof, Sat4j ): @unchecked
   val lkProof = ExpansionProofToLK( minimized )
 
   implicit val prooftoolViewable: gapt.prooftool.ProoftoolViewable[gapt.proofs.expansion.ExpansionProofToLK.UnprovableOrLKProof] = implicitly

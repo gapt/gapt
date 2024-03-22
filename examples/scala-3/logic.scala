@@ -64,7 +64,7 @@ object Theory {
     Context.empty ++ ctx.toVector.flatMap( _.updates.reverse ).distinct
 
   case class DelayedProofResult( proofName: Expr, usedLemmas: Seq[( Expr, Formula )], proof: LKProof ) {
-    val Apps( Const( name, _, _ ), _ ) = proofName
+    val Apps( Const( name, _, _ ), _ ) = proofName: @unchecked
 
     def inst( proofNameInst: Expr ): DelayedProofResult = {
       val subst = syntacticMatching( proofName, proofNameInst ).get
@@ -115,7 +115,7 @@ class Theory0( val imports: List[Theory] ) {
 
   protected def addNow( update: Update ): Unit = ifaceCtx += update
   protected def addProof( name: Expr, proof: => LKProof ): Unit = {
-    val Apps( Const( n, _, _ ), _ ) = name
+    val Apps( Const( n, _, _ ), _ ) = name: @unchecked
     val declCtx = ctx
     proofsBuf += ( n -> Later {
       val p = proof
@@ -253,7 +253,7 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
     val prf = PrimRecFun( c, equations: _* )
     addNow( prf )
     val PrimRecFun( _, _, _, eqns ) = prf
-    val Some( ctrs ) = ctx.getConstructors( prf.recursionType )
+    val Some( ctrs ) = ctx.getConstructors( prf.recursionType ): @unchecked
     val lems = for ( ( ctr, ( lhs, rhs ) ) <- ctrs zip eqns )
       yield auxEqnLemma( s"${asciify( c.name )}${ctr.name}", c.name, lhs, rhs, nocombine = true )
     val auxP = lems.map( ProofLink( _ ) ).
@@ -263,7 +263,7 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
 
   protected case class indfn( constName: String, desc: Formula ) extends LemmaHelper[Unit] {
     def handleTacticBlock( block: ProofState => ProofState ): Unit = {
-      val All.Block( xs, Ex( y, f ) ) = desc
+      val All.Block( xs, Ex( y, f ) ) = desc: @unchecked
       val skC = Const( constName, FunctionType( y.ty, xs.map( _.ty ) ) )
       val skDef = Abs.Block( xs, Ex( y, f ) )
       addNow( SkolemFun( skC, skDef ) )
@@ -293,7 +293,7 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
    * Captures an LKProof together with the set of previous lemmas used in it.
    */
   case class LemmaHandle( proofName: Expr ) {
-    val Apps( Const( name, _, _ ), _ ) = proofName
+    val Apps( Const( name, _, _ ), _ ) = proofName: @unchecked
 
     def proof: LKProof = combined( excluded = _ => true )
     def formula: Formula = ctx.get[ProofNames].lookup( proofName ).get.succedent.head
@@ -346,7 +346,7 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
       val nocombine = ctx.get[Attributes].lemmasWith( "nocombine" )
       val Theory.DelayedProofResult( _, used0, p0 ) = allProofs.toMap.apply( name ).value.inst( proofName )
       val used: mutable.Map[String, Set[Expr]] = mutable.Map().withDefaultValue( Set() )
-      for ( ( pn @ Apps( Const( n, _, _ ), _ ), _ ) <- used0.toSet ) yield used( n ) += pn
+      for ( case ( pn @ Apps( Const( n, _, _ ), _ ), _ ) <- used0.toSet ) yield used( n ) += pn
       var p = p0
       for {
         ( n, dpr ) <- allProofs.reverseIterator
@@ -356,14 +356,14 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
       } {
         for ( pn <- used( n ) ) {
           val Theory.DelayedProofResult( _, usedN, pN ) = dpr.value.inst( pn )
-          for ( ( pn @ Apps( Const( n, _, _ ), _ ), _ ) <- usedN.toSet ) yield used( n ) += pn
+          for ( case ( pn @ Apps( Const( n, _, _ ), _ ), _ ) <- usedN.toSet ) yield used( n ) += pn
           p = ContractionMacroRule( CutRule( pN, p, pN.conclusion.succedent.head ) )
         }
         used( n ) = Set()
       }
 
       val toUnfold = for {
-        c @ Const( _, _, _ ) <- containedNames( p )
+        case c @ Const( _, _, _ ) <- containedNames( p )
         by <- ctx.definition( c )
         if !excluded( asciify( c.name ) )
       } yield c -> by: ReductionRule

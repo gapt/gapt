@@ -80,7 +80,7 @@ object furstenbergWitness {
           case App( Const( "p", _, _ ), _ ) => false
           case _                            => true
         }
-    }
+    }: @unchecked
 
     def lowerBound( p: ZZMPolynomial[Expr] ): Int =
       p.coeffsMap.map { case ( _, c ) => require( c >= 0 ); c }.sum

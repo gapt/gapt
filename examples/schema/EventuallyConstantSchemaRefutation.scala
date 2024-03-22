@@ -158,7 +158,7 @@ object EventuallyConstantSchemaRefutation extends TacticsProof( EventuallyConsta
 
 object EventuallyConstantSchemaInductionRefutation extends TacticsProof( EventuallyConstantSchema.ctx ) {
   import gapt.proofs.gaptic._
-  val Some( scs ) = SchematicStruct( "phi" )
+  val Some( scs ) = SchematicStruct( "phi" ): @unchecked
   val CFPRN = CharFormPRN( scs )
   CharFormPRN.PR( CFPRN )
 

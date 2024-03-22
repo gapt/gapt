@@ -30,12 +30,12 @@ object ReductionDemo extends Script {
   val ( redSeq, back ) = reduction forward sequent
   println( TptpFOLExporter( redSeq ) )
   println()
-  var Some( res ) = Vampire getResolutionProof redSeq
+  var Some( res ) = Vampire getResolutionProof redSeq: @unchecked
   var res_ = back( simplifyResolutionProof( eliminateSplitting( res ) ) )
   println( s"Found a proof with ${res_.dagLike.size} inferences:" )
   println( res_ )
 
-  for ( Input( seq ) <- res_.subProofs )
+  for ( case Input( seq ) <- res_.subProofs )
     require( sequent.contains( seq.elements.head, !seq.indices.head.polarity ) )
 
 }

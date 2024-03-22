@@ -29,7 +29,7 @@ object epsilon extends Script {
           ∃x∃y (¬rat(x) ∧ ¬rat(y) ∧ rat(pow x y))"""
   println( s"Formalization: $irratProblem\n" )
   println( "Proof:" )
-  val Some( irratProof ) = Escargot getEpsilonProof irratProblem
+  val Some( irratProof ) = Escargot getEpsilonProof irratProblem: @unchecked
   println( irratProof )
 
   require( Escargot.isValid( irratProof.deep ) )
