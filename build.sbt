@@ -26,7 +26,7 @@ lazy val commonSettings = Seq(
     devConnection = Some( "scm:git:git@github.com:gapt/gapt.git" ) ) ),
 
   crossScalaVersions := Seq("2.13.12", "3.3.1"),
-  scalaVersion := "2.13.12",
+  scalaVersion := "3.3.1",
 
   developers := List(
     Developer(
@@ -53,7 +53,6 @@ lazy val commonSettings = Seq(
     "-unchecked" ) ++ (
         CrossVersion.partialVersion(scalaVersion.value) match {
           case Some((3,_)) => Seq(
-            "-source:3.2-migration",
             "-explain")
           case _ => Seq()
         }
