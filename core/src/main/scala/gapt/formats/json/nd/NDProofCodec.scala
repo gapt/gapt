@@ -16,6 +16,16 @@ object NDProofCodec {
 
   private[json] val _ndProofDecoder = proofDecoder[NDProof]( ndCollectionDecoder )
 
+  // the following def is needed as InductionRule overrides productElement and 
+  // productArity which messes with the generated encoders from circe which 
+  // depend on productElement and productArity to be the default implementation 
+  // for case classes.
+  // encoding induction rules as a standard 3-tuples circumvents this issue.
+  private[json] implicit def inductionRuleEncoder(implicit subEncoder: Encoder[NDProof]): Encoder[InductionRule] =
+    Encoder.forProduct3("cases", "formula", "term") {
+      (rule: InductionRule) => (rule.cases, rule.formula, rule.term)
+    }
+
   /**
    * Given an encoder for subproofs, this encodes a single LK proof.
    */
