@@ -83,13 +83,13 @@ lazy val root = project.in( file( "." ) ).
   enablePlugins( ScalaUnidocPlugin ).
   settings(
     console / fork := true,
-    console / initialCommands := IO.read( resourceDirectory.in( cli, Compile ).value / "gapt-cli-prelude.scala" ),
+    console / initialCommands := IO.read( (cli / Compile / resourceDirectory).value / "gapt-cli-prelude.scala" ),
 
     publish / skip := true,
     packagedArtifacts := Map(),
 
     apiURL := Some( url( "https://logic.at/gapt/api/" ) ),
-    scalacOptions in ( ScalaUnidoc, unidoc ) ++= Seq(
+    ScalaUnidoc / unidoc / scalacOptions ++= Seq(
       "-doc-title", "gapt",
       "-doc-version", version.value,
       "-doc-source-url", s"https://github.com/gapt/gapt/blob/${("git rev-parse HEAD" !!).strip}/€{FILE_PATH}.scala",
@@ -102,7 +102,7 @@ lazy val root = project.in( file( "." ) ).
 
     scripts := {
       val runJVMOptions = javaOptions.value ++ Seq( "-cp", Path.makeString(
-        Attributed.data( fullClasspath.in( cli, Compile ).value ++ fullClasspath.in( testing, Compile ).value distinct ) ) )
+        Attributed.data( (cli / Compile / fullClasspath).value ++ (testing / Compile / fullClasspath).value distinct ) ) )
       def mkScript( file: File, extraArgs: String* ) = {
         IO.write(
           file,
@@ -126,7 +126,7 @@ lazy val root = project.in( file( "." ) ).
     releaseDist := {
       val baseDir = file( "." )
       val version = Keys.version.value
-      val apidocs = doc.in( ScalaUnidoc, unidoc ).value
+      val apidocs = (ScalaUnidoc / unidoc / doc ).value
 
       val archiveFile = file( "." ) / "target" / s"gapt-$version.tar.gz"
 
@@ -173,7 +173,7 @@ lazy val root = project.in( file( "." ) ).
           bootJars = Vector(),
           workingDirectory = Some( new java.io.File( "." ) ),
           runJVMOptions = Vector() ++ javaOptions.value ++ Seq( "-cp", Path.makeString(
-            Attributed.data( fullClasspath.in( userManual, Compile ).value ) ) ),
+            Attributed.data( (userManual / Compile / fullClasspath).value ) ) ),
           connectInput = false,
           envVars = envVars.value ),
         Seq( userManFn ) ).exitValue()
@@ -248,12 +248,12 @@ lazy val examples = project.in( file( "examples" ) ).
     name := "gapt-examples",
     Compile / unmanagedSourceDirectories := Seq( baseDirectory.value ),
     Compile / resourceDirectory := baseDirectory.value,
-    excludeFilter in ( Compile, unmanagedResources ) := {
+    Compile / unmanagedResources / excludeFilter := {
       val target = ( baseDirectory.value / "target" ).getCanonicalPath
       new SimpleFileFilter( _.getCanonicalPath startsWith target )
     } || "*.scala",
 
-    excludeFilter in (Compile, unmanagedSources) := {
+    Compile / unmanagedSources / excludeFilter := {
       CrossVersion.partialVersion(scalaVersion.value) match {
           case Some((2, _)) =>
             new SimpleFileFilter( _.getCanonicalPath startsWith (baseDirectory.value / "scala-3").getCanonicalPath)
