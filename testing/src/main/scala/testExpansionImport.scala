@@ -8,6 +8,7 @@ import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion.eliminateCutsET
 import gapt.proofs.expansion.eliminateDefsET
 import gapt.proofs.resolution._
+import gapt.proofs.RichFormulaSequent
 import gapt.provers.eprover.EProver
 import gapt.utils.{ LogHandler, Logger, MetricsPrinter }
 import gapt.proofs.HOLSequent

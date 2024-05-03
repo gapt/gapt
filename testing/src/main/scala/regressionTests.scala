@@ -52,6 +52,7 @@ import gapt.proofs.resolution.ResolutionToLKProof
 import gapt.proofs.resolution.simplifyResolutionProof
 import gapt.proofs.Suc
 import gapt.proofs.loadExpansionProof
+import gapt.proofs.RichFormulaSequent
 import gapt.provers.congruence.SimpleSmtSolver
 import gapt.provers.escargot.Escargot
 import gapt.provers.prover9.Prover9Importer

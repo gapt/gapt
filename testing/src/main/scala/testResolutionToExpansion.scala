@@ -9,6 +9,7 @@ import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion.{ eliminateCutsET, eliminateDefsET }
 import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.proofs.resolution._
+import gapt.proofs.RichFormulaSequent
 import gapt.provers.prover9.Prover9Importer
 import gapt.utils.{ LogHandler, Logger, MetricsPrinter }
 

@@ -15,7 +15,7 @@ import gapt.proofs.lk.transformations.cutNormal
 import gapt.proofs.lk.transformations.eliminateDefinitions
 import gapt.proofs.lk.transformations.inductionNormalForm
 import gapt.proofs.lk.util.instanceProof
-import gapt.proofs.lk.{ LKProof, normalizeLKt }
+import gapt.proofs.lk.{ LKProof, normalizeLKt, lkProofReplaceable }
 import gapt.proofs.lkt.{ LKToLKt, LKt, LocalCtx }
 import gapt.proofs.resolution.ResolutionToLKProof
 import gapt.provers.escargot.Escargot
