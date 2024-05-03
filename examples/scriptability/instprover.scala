@@ -11,7 +11,7 @@ import gapt.formats.babel.BabelParser.parseFormula
 import gapt.proofs.expansion.{ ExpansionProofToLK, minimalExpansionSequent }
 import gapt.proofs.resolution.{ expansionProofFromInstances, structuralCNF }
 import gapt.proofs.{ FOLClause, Sequent, RichFOLSequent }
-import gapt.prooftool.prooftool
+import gapt.prooftool._
 import gapt.provers.sat.Sat4j
 
 import scala.collection.mutable
@@ -50,7 +50,5 @@ object instprover extends Script {
   val Some( minimized ) = minimalExpansionSequent( expansionProof, Sat4j ): @unchecked
   val lkProof = ExpansionProofToLK( minimized )
 
-  implicit val prooftoolViewable: gapt.prooftool.ProoftoolViewable[gapt.proofs.expansion.ExpansionProofToLK.UnprovableOrLKProof] = implicitly
   prooftool( lkProof )
-
 }
