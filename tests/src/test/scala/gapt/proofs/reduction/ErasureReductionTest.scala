@@ -98,7 +98,7 @@ class ReductionTest extends Specification {
 
       val ( folCNF, back ) = reduction.forward( sequent )
 
-      val Some( folProof ) = Escargot.getResolutionProof( folCNF )
+      val Some( folProof ) = Escargot.getResolutionProof( folCNF ): @unchecked
 
       val proof = back( eliminateSplitting( folProof ) )
       proof.subProofs foreach {
@@ -119,7 +119,7 @@ class ReductionTest extends Specification {
 
       val ( folCNF, back ) = reduction.forward( sequent )
 
-      val Some( folProof ) = Escargot.getResolutionProof( folCNF )
+      val Some( folProof ) = Escargot.getResolutionProof( folCNF ): @unchecked
 
       val proof = back( eliminateSplitting( folProof ) )
       proof.subProofs foreach {
@@ -140,7 +140,7 @@ class ReductionTest extends Specification {
 
       val ( folSequent, back ) = reduction.forward( sequent )
 
-      val Some( folProof ) = Escargot.getExpansionProof( folSequent )
+      val Some( folProof ) = Escargot.getExpansionProof( folSequent ): @unchecked
 
       val proof = back( folProof )
       proof.shallow must_== sequent
@@ -165,7 +165,7 @@ class ReductionTest extends Specification {
 
       val ( folSequent, back ) = reduction.forward( sequent )
 
-      val Some( folProof ) = Escargot.getExpansionProof( folSequent )
+      val Some( folProof ) = Escargot.getExpansionProof( folSequent ): @unchecked
 
       val proof = back( folProof )
       proof.shallow must_== sequent

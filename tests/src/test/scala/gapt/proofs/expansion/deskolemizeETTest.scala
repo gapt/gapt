@@ -29,7 +29,7 @@ class deskolemizeETTest extends Specification with SatMatchers {
   }
 
   "drinker" in {
-    val Some( drinker ) = Escargot.getExpansionProof( hof"?x (p(x) -> !y p(y))" )
+    val Some( drinker ) = Escargot.getExpansionProof( hof"?x (p(x) -> !y p(y))" ): @unchecked
     val deskolemized = deskolemizeET( drinker )
     deskolemized.deep must beValidSequent
     deskolemized.shallow must_== drinker.shallow
@@ -46,21 +46,21 @@ class deskolemizeETTest extends Specification with SatMatchers {
   }
 
   "counting 0" in {
-    val Some( proof ) = Escargot.getExpansionProof( CountingEquivalence( 0 ) )
+    val Some( proof ) = Escargot.getExpansionProof( CountingEquivalence( 0 ) ): @unchecked
     val deskolemized = deskolemizeET( proof )
     deskolemized.deep must beValidSequent
     deskolemized.shallow must_== proof.shallow
   }
 
   "counting 1" in {
-    val Some( proof ) = Escargot.getExpansionProof( CountingEquivalence( 1 ) )
+    val Some( proof ) = Escargot.getExpansionProof( CountingEquivalence( 1 ) ): @unchecked
     val deskolemized = deskolemizeET( proof )
     deskolemized.deep must beValidSequent
     deskolemized.shallow must_== proof.shallow
   }
 
   "quantifier shifting" in {
-    val Some( proof ) = Escargot.getExpansionProof( hof"!x?y!z?w P(x,y,z,w) -> !x!z?y?w P(x,y,z,w)" )
+    val Some( proof ) = Escargot.getExpansionProof( hof"!x?y!z?w P(x,y,z,w) -> !x!z?y?w P(x,y,z,w)" ): @unchecked
     val deskolemized = deskolemizeET( proof )
     deskolemized.deep must beValidSequent
     deskolemized.shallow must_== proof.shallow

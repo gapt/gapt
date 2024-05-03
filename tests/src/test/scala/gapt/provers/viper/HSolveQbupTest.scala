@@ -45,8 +45,8 @@ class HSolveQbupTest extends Specification with SatMatchers {
                 -> X(n, s(i))) ∧
              ∀n (X(n, n) -> d(n) = n+n)
            )
-         """
-    val Some( sol ) = hSolveQBUP( qbupMatrix, hof"$x(n, s(0))", QfUfEscargot )
+         """: @unchecked
+    val Some( sol ) = hSolveQBUP( qbupMatrix, hof"$x(n, s(0))", QfUfEscargot ): @unchecked
     skolemize( BetaReduction.betaNormalize( instantiate( qbup, sol ) ) ) must beEValid
   }
 
@@ -63,9 +63,9 @@ class HSolveQbupTest extends Specification with SatMatchers {
              ∀n ∀i (X(n, i) ∧ d(s(i)) = s(s(d(i))) -> X(n, s(i))) ∧
              ∀n (X(n, n) -> d(n) = n+n)
            )
-         """
+         """: @unchecked
     val eqTh = Seq( hof"0 + x = x", hof"x + 0 = x", hof"x+s(y)=s(x+y)", hof"s(x)+y=s(x+y)" )
-    val Some( sol ) = hSolveQBUP( qbupMatrix, hof"$x(n, s(0))", escargotSmtModNormalize( eqTh ), eqTh )
+    val Some( sol ) = hSolveQBUP( qbupMatrix, hof"$x(n, s(0))", escargotSmtModNormalize( eqTh ), eqTh ): @unchecked
     Escargot.isValid( universalClosure( And( eqTh ) ) --> BetaReduction.betaNormalize( instantiate( qbup, sol ) ) ) must_== true
   }
 

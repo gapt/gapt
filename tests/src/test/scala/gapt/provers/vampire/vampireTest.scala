@@ -131,7 +131,7 @@ class VampireTest extends Specification with SequentMatchers with SatMatchers {
   "splitting definitions" in {
     val formula = CountingEquivalence( 2 )
     implicit val ctx: MutableContext = MutableContext.guess( formula )
-    val Some( proof ) = Vampire.getResolutionProof( formula )
+    val Some( proof ) = Vampire.getResolutionProof( formula ): @unchecked
     ctx.check( proof )
     ok
   }

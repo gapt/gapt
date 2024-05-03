@@ -32,7 +32,7 @@ class Pi2CutIntroTest extends Specification {
     // If it doesn't work try random mutations in the variable names below...
     Pi2CutIntroduction( p, fov"xa", Vector( fov"b1", fov"b2" ) ) must beLike {
       case Some( q ) =>
-        val Some( cut ) = q.subProofs.find( _.isInstanceOf[CutRule] )
+        val Some( cut ) = q.subProofs.find( _.isInstanceOf[CutRule] ): @unchecked
         ok
     }
 

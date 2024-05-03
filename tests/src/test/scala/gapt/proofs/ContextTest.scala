@@ -44,7 +44,7 @@ class ContextTest extends Specification {
         "C" -> Seq( None -> Ti ) )
       it.constructorConstants.foreach {
         c =>
-          val FunctionType( to, _ ) = c.ty
+          val FunctionType( to, _ ) = c.ty: @unchecked
           to mustEqual it.baseType
       }
       success

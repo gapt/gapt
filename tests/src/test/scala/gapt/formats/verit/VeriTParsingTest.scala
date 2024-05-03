@@ -13,7 +13,7 @@ class VeriTParsingTest extends Specification {
         """
           |unsat
           |""".stripMargin
-      val Some( proof ) = VeriTParser.parseProof( input )
+      val Some( proof ) = VeriTParser.parseProof( input ): @unchecked
       proof must_== AletheProof( Nil )
     }
 

@@ -66,7 +66,7 @@ class SpassTest extends Specification with SequentMatchers with SatMatchers {
     }
 
     "bug with ground parts in quantified splits" in {
-      val Some( res ) = SPASS.getResolutionProof( CountingEquivalence( 1 ) )
+      val Some( res ) = SPASS.getResolutionProof( CountingEquivalence( 1 ) ): @unchecked
       res.subProofs.collect { case AvatarComponent( c: AvatarNegNonGroundComp ) => c } must not( beEmpty )
       ResolutionToLKProof( res )
       ok
@@ -75,7 +75,7 @@ class SpassTest extends Specification with SequentMatchers with SatMatchers {
     "splitting definitions" in {
       val formula = CountingEquivalence( 2 )
       implicit val ctx: MutableContext = MutableContext.guess( formula )
-      val Some( proof ) = SPASS.getResolutionProof( formula )
+      val Some( proof ) = SPASS.getResolutionProof( formula ): @unchecked
       ctx.check( proof )
       ok
     }

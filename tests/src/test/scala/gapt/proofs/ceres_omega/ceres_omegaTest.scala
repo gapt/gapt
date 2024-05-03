@@ -45,9 +45,9 @@ class ceres_omegaTest extends Specification with SequentMatchers {
   }
 
   def refutation1( cs: Set[HOLSequent] ) = {
-    val Some( c1 ) = cs.find( x => ( x.antecedent.size == 1 ) && ( x.succedent.size == 1 ) )
-    val Some( c2 ) = cs.find( x => ( x.antecedent.size == 1 ) && ( x.succedent.size == 0 ) )
-    val Some( c3 ) = cs.find( x => ( x.antecedent.size == 0 ) && ( x.succedent.size == 1 ) )
+    val Some( c1 ) = cs.find( x => ( x.antecedent.size == 1 ) && ( x.succedent.size == 1 ) ): @unchecked
+    val Some( c2 ) = cs.find( x => ( x.antecedent.size == 1 ) && ( x.succedent.size == 0 ) ): @unchecked
+    val Some( c3 ) = cs.find( x => ( x.antecedent.size == 0 ) && ( x.succedent.size == 1 ) ): @unchecked
 
     val y = Var( "y", Ti )
     val x0 = Var( "x", Ti )
@@ -71,9 +71,9 @@ class ceres_omegaTest extends Specification with SequentMatchers {
   }
 
   def refutation2( cs: Set[HOLSequent] ) = {
-    val Some( c1 ) = cs.find( x => ( x.antecedent.size == 1 ) && ( x.succedent.size == 1 ) )
-    val Some( c2 ) = cs.find( x => ( x.antecedent.size == 1 ) && ( x.succedent.size == 0 ) )
-    val Some( c3 ) = cs.find( x => ( x.antecedent.size == 0 ) && ( x.succedent.size == 1 ) )
+    val Some( c1 ) = cs.find( x => ( x.antecedent.size == 1 ) && ( x.succedent.size == 1 ) ): @unchecked
+    val Some( c2 ) = cs.find( x => ( x.antecedent.size == 1 ) && ( x.succedent.size == 0 ) ): @unchecked
+    val Some( c3 ) = cs.find( x => ( x.antecedent.size == 0 ) && ( x.succedent.size == 1 ) ): @unchecked
 
     val r1 = Input( c1 )
     val r2 = Input( c2 )

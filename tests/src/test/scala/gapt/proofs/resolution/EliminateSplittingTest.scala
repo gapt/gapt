@@ -10,7 +10,7 @@ import org.specs2.mutable.Specification
 class EliminateSplittingTest extends Specification {
 
   "example" in {
-    val Some( proofWithSplitting ) = Escargot getResolutionProof hof"!x p x | !x q x -> !x (p x | q x) & ${BussTautology( 2 ).toImplication}"
+    val Some( proofWithSplitting ) = Escargot getResolutionProof hof"!x p x | !x q x -> !x (p x | q x) & ${BussTautology( 2 ).toImplication}": @unchecked
     val proofWithoutSplitting = eliminateSplitting( proofWithSplitting )
     proofWithoutSplitting.subProofs foreach {
       case AvatarContradiction( _ ) => ko
@@ -22,7 +22,7 @@ class EliminateSplittingTest extends Specification {
   }
 
   "counting" in {
-    val Some( proofWithSplitting ) = Escargot getResolutionProof CountingEquivalence( 3 )
+    val Some( proofWithSplitting ) = Escargot getResolutionProof CountingEquivalence( 3 ): @unchecked
     val proofWithoutSplitting = eliminateSplitting( proofWithSplitting )
     proofWithoutSplitting.isProof must_== true
   }

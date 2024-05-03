@@ -777,7 +777,7 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
       c OpenAssumption( ( "" -> hof"s=t" ) +: ( "" -> hof"A(s)" ) +: Sequent() :+ "" -> hof"B(t)" )
       u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), Abs( hov"x", le"B(x):o" ) ) )
       u ( EqualityLeftRule( _, Ant( 0 ), Ant( 1 ), Abs( hov"x", le"A(x):o" ) ) ) qed )
-    val ( reduction, false ) = equalityLeftReduction( proof.asInstanceOf[EqualityLeftRule] ).get
+    val ( reduction, false ) = equalityLeftReduction( proof.asInstanceOf[EqualityLeftRule] ).get: @unchecked
     reduction.conclusion must beMultiSetEqual( proof.conclusion )
     reduction must beAnInstanceOf[EqualityRightRule]
   }
@@ -803,7 +803,7 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
       c OpenAssumption( ( "" -> hof"s=e" ) +: ( "" -> hof"e=t" ) +: ( "" -> hof"A(s)" ) +: ( "" -> hof"B(e)" ) +: Sequent() )
       u ( EqualityLeftRule( _, Ant( 1 ), Ant( 3 ), Abs( hov"x", le"B(x):o" ) ) )
       u ( EqualityLeftRule( _, Ant( 1 ), Ant( 3 ), Abs( hov"x", le"A(x):o" ) ) ) qed )
-    val ( reduction, false ) = equalityLeftReduction( proof.asInstanceOf[EqualityLeftRule] ).get
+    val ( reduction, false ) = equalityLeftReduction( proof.asInstanceOf[EqualityLeftRule] ).get: @unchecked
     reduction.conclusion must beMultiSetEqual( proof.conclusion )
     reduction mustNotEqual proof
   }

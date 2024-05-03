@@ -292,7 +292,7 @@ class SchemaTest extends Specification {
 
       val result: LKProof = proofs match {
         case p :: ps =>
-          val x @ Var( _, _ ) = p.term
+          val x @ Var( _, _ ) = p.term: @unchecked
           val r = inductionAndRightMacro( p, ps )
           ForallRightRule( r, All( x, r.mainFormulas.head ), x )
         case _ => addcomm.proof

@@ -106,7 +106,7 @@ class ResolutionTest extends Specification with SatMatchers {
     ResolutionToExpansionProof.withDefs( proof, ResolutionToExpansionProof.inputsAsExpansionSequent ).deep must beValidSequent
     val expansion = ResolutionToExpansionProof( proof )
     expansion.deep must beValidSequent
-    val Some( resFromExp ) = ExpansionToResolutionProof( expansion )
+    val Some( resFromExp ) = ExpansionToResolutionProof( expansion ): @unchecked
     resFromExp.isProof must_== true
 
     val lk = ResolutionToLKProof( proof )

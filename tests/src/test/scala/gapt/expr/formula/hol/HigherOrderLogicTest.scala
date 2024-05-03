@@ -169,7 +169,7 @@ class HigherOrderLogicTest extends Specification {
       val c1 = Const( "f1", Ti ->: Ti )
       val c2 = Const( "f2", Ti ->: Ti )
       val eq = Eq( c1, c2 )
-      val App( App( t, _ ), _ ) = eq
+      val App( App( t, _ ), _ ) = eq: @unchecked
       t.ty must beEqualTo( ( Ti ->: Ti ) ->: ( Ti ->: Ti ) ->: To )
     }
   }

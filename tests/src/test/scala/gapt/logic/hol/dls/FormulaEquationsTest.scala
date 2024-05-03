@@ -106,7 +106,7 @@ class FormulaEquationsTest extends Specification {
       secondOrderVariable: Var,
       sequent:             HOLSequent ): Fragment = {
       s"fail for $sequent" >> {
-        val FunctionType( _, argumentTypes ) = secondOrderVariable.ty
+        val FunctionType( _, argumentTypes ) = secondOrderVariable.ty: @unchecked
         val argumentVariables = new NameGenerator( Nil ).freshStream( secondOrderVariable.name ).take( argumentTypes.length ).map( FOLVar( _ ) ).toList
         new DlsPartialWitnessExtraction( secondOrderVariable )
           .findPartialWitness( argumentVariables, toDisjunct( sequent ) ) must throwA[Exception]

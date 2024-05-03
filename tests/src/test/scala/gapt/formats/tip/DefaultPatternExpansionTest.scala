@@ -108,7 +108,7 @@ class DefaultPatternExpansionTest extends Specification {
               TipSmtConstructorPattern(
                 _,
                 Seq( TipSmtIdentifier( name ) ) ), _ ) ) ) ) ) =
-      expandDefaultPatterns.transform( originalProblem ).definitions( 1 )
+      expandDefaultPatterns.transform( originalProblem ).definitions( 1 ): @unchecked
 
     name must_!= "x_0"
   }

@@ -52,7 +52,7 @@ class DesugarDistinctExpressionsTest extends Specification {
     val TipSmtAnd( expressions ) =
       resultingProblem.definitions( 1 )
         .asInstanceOf[TipSmtFunctionDefinition]
-        .body
+        .body: @unchecked
 
     expressions.size must_== 6
     expressions.contains(

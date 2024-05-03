@@ -22,7 +22,7 @@ class TptpProofParserTest extends Specification {
       val ( endSequent, sketch ) = TptpProofParser.parse( ClasspathInputFile( fn ) )
       sketch.conclusion must_== Clause()
 
-      val Right( robinson ) = RefutationSketchToResolution( sketch )
+      val Right( robinson ) = RefutationSketchToResolution( sketch ): @unchecked
       robinson.conclusion must_== Clause()
 
       val fixed = fixDerivation( robinson, endSequent )

@@ -23,7 +23,7 @@ class CutIntroTest extends Specification {
   }
 
   "maxsat method" in {
-    val Some( proof ) = Escargot.getLKProof( hos"!y p(0,y), !x!y (p x (f y) & p x (g y) -> p (s x) y) :- p ${Numeral( 2 )} c" )
+    val Some( proof ) = Escargot.getLKProof( hos"!y p(0,y), !x!y (p x (f y) & p x (g y) -> p (s x) y) :- p ${Numeral( 2 )} c" ): @unchecked
     CutIntroduction( proof, method = MaxSATMethod( 1 ) ) must beSome
   }
 
@@ -38,8 +38,8 @@ class CutIntroTest extends Specification {
   }
 
   "linear equality example" in {
-    val Some( p ) = Escargot getLKProof hos"!x f (s x) = f x :- f ${Numeral( 9 )} = f 0"
-    val Some( q ) = CutIntroduction( p )
+    val Some( p ) = Escargot getLKProof hos"!x f (s x) = f x :- f ${Numeral( 9 )} = f 0": @unchecked
+    val Some( q ) = CutIntroduction( p ): @unchecked
     val cutFormulas = q.subProofs collect { case c: CutRule => c.cutFormula } filter { containsQuantifier( _ ) }
     cutFormulas must contain( atMost(
       hof"!x f (s (s (s x))) = f x",
@@ -47,12 +47,12 @@ class CutIntroTest extends Specification {
   }
 
   "linear equality example with interpolation" in {
-    val Some( p ) = Escargot.getLKProof( hos"!x f (s x) = f x :- f ${Numeral( 9 )} = f 0" )
+    val Some( p ) = Escargot.getLKProof( hos"!x f (s x) = f x :- f ${Numeral( 9 )} = f 0" ): @unchecked
     CutIntroduction( p, useInterpolation = true ) must beSome
   }
 
   "non-prenex proofs" in {
-    val Some( expansion ) = Escargot.getExpansionProof( hof"p 0 & !x (p x -> p (s x)) -> p ${Numeral( 9 )}" )
+    val Some( expansion ) = Escargot.getExpansionProof( hof"p 0 & !x (p x -> p (s x)) -> p ${Numeral( 9 )}" ): @unchecked
     CutIntroduction( expansion ) must beSome
   }
 
@@ -63,7 +63,7 @@ class CutIntroTest extends Specification {
           !x (p x -> p (s x)),
           !x (q x -> q (s x))
        :- p ${Numeral( 6 )} & q ${Numeral( 6 )}
-      """
+      """: @unchecked
     CutIntroduction( expansion, method = DeltaTableMethod( subsumedRowMerging = true ) ) must beLike {
       case Some( lk ) =>
         weakQuantRulesNumber( lk ) must_== ( 2 * 2 + 3 )
@@ -93,8 +93,8 @@ class CutIntroTest extends Specification {
 
   "introduce weak quantifiers as low as possible" in {
     val endSequent = hos"!x q(x), q(c)->p(0), !x (p(x)&q(c)->p(s(x))) :- p(${Numeral( 9 )})"
-    val Some( proof ) = Escargot.getLKProof( endSequent )
-    val Some( proofWithCut ) = CutIntroduction( proof )
+    val Some( proof ) = Escargot.getLKProof( endSequent ): @unchecked
+    val Some( proofWithCut ) = CutIntroduction( proof ): @unchecked
 
     // !x q(x) must only be instantiated once, even though it is used in both branches of the cut.
     proofWithCut.treeLike.postOrder.filter {
@@ -104,7 +104,7 @@ class CutIntroTest extends Specification {
   }
 
   "filter bottom during beautification" in {
-    val Some( expansion ) = Escargot.getExpansionProof( hos"!x (p x -> p (s x)) :- p 0 -> p ${Numeral( 9 )}" )
+    val Some( expansion ) = Escargot.getExpansionProof( hos"!x (p x -> p (s x)) :- p 0 -> p ${Numeral( 9 )}" ): @unchecked
     val weirdExpansion = ExpansionProof(
       ETWeakening( hof"!x (p x & -p x)", Polarity.InAntecedent ) +:
         expansion.expansionSequent )

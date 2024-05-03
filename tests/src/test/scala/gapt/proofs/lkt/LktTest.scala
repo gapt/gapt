@@ -59,13 +59,13 @@ class LktTest extends Specification with SequentMatchers {
   }
 
   "reduce 1" in {
-    val Right( l ) = solvePropositional( hos"a & (a -> b) :- ~ ~b" )
-    val Right( r ) = solvePropositional( hos"~ ~b :- b" )
+    val Right( l ) = solvePropositional( hos"a & (a -> b) :- ~ ~b" ): @unchecked
+    val Right( r ) = solvePropositional( hos"~ ~b :- b" ): @unchecked
     lk.rules.CutRule( l, r, hof"~ ~b" ) must beGood
   }
   "fol 1" in {
-    val Some( l ) = Escargot.withDeskolemization.getLKProof( hos"!x (p x -> p (s x)) :- !x (p x -> p (s (s x)))" )
-    val Some( r ) = Escargot.withDeskolemization.getLKProof( hos"!x (p x -> p (s (s x))), p 0 :- p (s (s (s (s 0))))" )
+    val Some( l ) = Escargot.withDeskolemization.getLKProof( hos"!x (p x -> p (s x)) :- !x (p x -> p (s (s x)))" ): @unchecked
+    val Some( r ) = Escargot.withDeskolemization.getLKProof( hos"!x (p x -> p (s (s x))), p 0 :- p (s (s (s (s 0))))" ): @unchecked
     lk.rules.CutRule( l, r, hof"!x (p x -> p (s (s x)))" ) must beGood
   }
   "fol 2" in {

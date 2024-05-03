@@ -28,14 +28,14 @@ class LatticeTest extends Specification with SequentMatchers {
     "parse, skolemize and apply CERES to the lattice proof" in {
       val acnf = CERES( lattice.p, CERES.skipNothing, Escargot )
       acnf.endSequent must beMultiSetEqual( lattice.p.endSequent )
-      for ( CutRule( p1, a1, p2, a2 ) <- acnf.subProofs ) isAtom( p1.endSequent( a1 ) ) must beTrue
+      for ( case CutRule( p1, a1, p2, a2 ) <- acnf.subProofs ) isAtom( p1.endSequent( a1 ) ) must beTrue
       ok
     }
 
     "parse, skolemize and apply CERES to the lattice proof, skipping equational inferences" in {
       val acnf = CERES( lattice.p, CERES.skipEquations, Escargot )
       acnf.endSequent must beMultiSetEqual( lattice.p.endSequent )
-      for ( CutRule( p1, a1, p2, a2 ) <- acnf.subProofs ) isAtom( p1.endSequent( a1 ) ) must beTrue
+      for ( case CutRule( p1, a1, p2, a2 ) <- acnf.subProofs ) isAtom( p1.endSequent( a1 ) ) must beTrue
       ok
     }
 

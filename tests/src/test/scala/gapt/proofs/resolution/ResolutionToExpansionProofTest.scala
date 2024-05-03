@@ -31,7 +31,7 @@ class ResolutionToExpansionProofTest extends Specification with SatMatchers with
       :+ hof"?x Q(f(f(x)))" )
 
     "extract expansion sequent" in {
-      val Some( robinson ) = Escargot getResolutionProof es
+      val Some( robinson ) = Escargot getResolutionProof es: @unchecked
       val expansion = ResolutionToExpansionProof( robinson )
       expansion.deep must beValidSequent
     }
@@ -41,7 +41,7 @@ class ResolutionToExpansionProofTest extends Specification with SatMatchers with
     val p = FOLAtom( "p" )
     val endSequent = Sequent() :+ ( ( p --> -( -p ) ) & ( -( -p ) --> p ) )
     val cnf = CNFn( endSequent.toDisjunction )
-    val Some( robinson ) = Escargot getResolutionProof cnf
+    val Some( robinson ) = Escargot getResolutionProof cnf: @unchecked
     val expansion = ResolutionToExpansionProof( fixDerivation( robinson, endSequent ) )
     expansion.shallow must_== endSequent
     expansion.deep must beValidSequent
@@ -53,7 +53,7 @@ class ResolutionToExpansionProofTest extends Specification with SatMatchers with
     val as = ( 0 to 12 ) map { i => FOLAtomConst( s"a$i", 1 ) }
     val endSequent = thresholds.atMost.oneOf( as map { a => Ex( x, a( x ) ) } ) +: Sequent() :+ ( as( 0 )( c ) --> -as( 1 )( d ) )
 
-    val Some( ref ) = Escargot getResolutionProof endSequent
+    val Some( ref ) = Escargot getResolutionProof endSequent: @unchecked
     val expansion = ResolutionToExpansionProof( ref )
     expansion.shallow must_== endSequent
     expansion.deep must beValidSequent
@@ -62,7 +62,7 @@ class ResolutionToExpansionProofTest extends Specification with SatMatchers with
   "quantified definitions" in {
     val endSequent = Sequent() :+ CountingEquivalence( 2 )
 
-    val Some( ref ) = Escargot getResolutionProof endSequent
+    val Some( ref ) = Escargot getResolutionProof endSequent: @unchecked
     val expansion = ResolutionToExpansionProof( ref )
     expansion.shallow must_== endSequent
     expansion.deep must beValidSequent
@@ -75,7 +75,7 @@ class ResolutionToExpansionProofTest extends Specification with SatMatchers with
 
     val endSequent = Sequent() :+ ( ( All( x, p( x ) ) | All( x, q( x ) ) ) --> ( p( c ) | q( d ) ) )
 
-    val Some( ref ) = Escargot getResolutionProof endSequent
+    val Some( ref ) = Escargot getResolutionProof endSequent: @unchecked
     val expansion = ResolutionToExpansionProof( ref )
     expansion.shallow must_== endSequent
     expansion.deep must beValidSequent
@@ -85,7 +85,7 @@ class ResolutionToExpansionProofTest extends Specification with SatMatchers with
     implicit val ctx: MutableContext = MutableContext.default()
     ctx += Ti; ctx += hoc"P: i>o"; ctx += hoc"Q: i>o"
     ctx += hof"D = (!x (P x | Q x))"
-    val Some( d ) = ctx.updates.collectFirst { case d: Definition => d }
+    val Some( d ) = ctx.updates.collectFirst { case d: Definition => d }: @unchecked
     val p = ProofBuilder
       .c( Input( hos":- !x (P x | Q x)" ) )
       .u( DefIntro( _, Suc( 0 ), d, Seq() ) )
@@ -104,7 +104,7 @@ class ResolutionToExpansionProofTest extends Specification with SatMatchers with
     val f = Sequent() :+ CountingEquivalence( 1 )
     implicit val ctx: MutableContext = MutableContext.guess( f )
     val cnf = structuralCNF( f, cse = true )
-    val Some( res ) = Escargot.getResolutionProof( cnf )
+    val Some( res ) = Escargot.getResolutionProof( cnf ): @unchecked
     val exp = ResolutionToExpansionProof( res )
     val desk = deskolemizeET(
       exp,

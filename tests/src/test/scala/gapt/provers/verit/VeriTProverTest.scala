@@ -77,7 +77,7 @@ class VeriTProverTest extends Specification with SatMatchers {
       val f = Const( "f", To ->: Ti )
       val p = FOLAtomConst( "p", 1 )
       val formula = ( f( Top() ) === f( Bottom() ) ) --> ( p( f( Bottom() ) ) <-> p( f( Top() ) ) )
-      val Some( expansion ) = VeriT getExpansionProof ( Sequent() :+ formula )
+      val Some( expansion ) = VeriT getExpansionProof ( Sequent() :+ formula ): @unchecked
       expansion.deep must beValidSequent
     }
   }

@@ -89,10 +89,10 @@ class CeresTest extends Specification with SequentMatchers with SatMatchers {
   }
 
   "work for the example in issue 555" in {
-    val Some( proof ) = Escargot.getLKProof( hos"f 0 = t, !x (f (s x) = f x) :- f ${Numeral( 9 )} = t" )
-    val Some( proofWithCut ) = CutIntroduction( proof )
+    val Some( proof ) = Escargot.getLKProof( hos"f 0 = t, !x (f (s x) = f x) :- f ${Numeral( 9 )} = t" ): @unchecked
+    val Some( proofWithCut ) = CutIntroduction( proof ): @unchecked
     val acnf = CERES( proofWithCut )
-    for ( CutRule( p1, a1, p2, a2 ) <- acnf.subProofs ) isAtom( p1.endSequent( a1 ) ) must beTrue
+    for ( case CutRule( p1, a1, p2, a2 ) <- acnf.subProofs ) isAtom( p1.endSequent( a1 ) ) must beTrue
     ok
   }
 

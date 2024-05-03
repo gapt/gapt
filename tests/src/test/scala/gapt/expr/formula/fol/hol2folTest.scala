@@ -93,13 +93,13 @@ class hol2folTest extends Specification {
     "types of defining constants should agree with defined abstraction" in {
       implicit val d: Hol2FolDefinitions = new Hol2FolDefinitions
       val t: Expr = le"^(x:i) ^(y:i) ^(z:i) (#c(f:i>i>i>i) x y z)"
-      val c @ Const( _, _, _ ) = replaceAbstractions( t )
+      val c @ Const( _, _, _ ) = replaceAbstractions( t ): @unchecked
       c.ty mustEqual ty"i > i > i >i"
     }
     "defining constant must be applied to free variables of defined abstraction" in {
       implicit val d: Hol2FolDefinitions = new Hol2FolDefinitions
       val t: Expr = le"^(x:i>i>i) (x #v(a:i) #v(b:i))"
-      val Apps( _: Const, a :: b :: Nil ) = replaceAbstractions( t )
+      val Apps( _: Const, a :: b :: Nil ) = replaceAbstractions( t ): @unchecked
       a mustEqual Var( "a", Ti )
       b mustEqual Var( "b", Ti )
     }
@@ -113,44 +113,44 @@ class hol2folTest extends Specification {
     "should introduce one constant per abstraction modulo uniformity" in {
       implicit val d: Hol2FolDefinitions = new Hol2FolDefinitions
       val t: Expr = le"#c(f: (i>i)>(i>i)>i) (^x x) (^x x)"
-      val Apps( _: Const, ( c1: Const ) :: ( c2: Const ) :: Nil ) = replaceAbstractions( t )
+      val Apps( _: Const, ( c1: Const ) :: ( c2: Const ) :: Nil ) = replaceAbstractions( t ): @unchecked
       c1 mustEqual c2
     }
     "definition must account for free variables" in {
       implicit val d: Hol2FolDefinitions = new Hol2FolDefinitions
       val t: Expr = le"(^(x:i>i) x)(^x (#v(f:i>i) x))"
       replaceAbstractions( t )
-      val Apps( _: Const, Nil ) = d.getDefinedExpression( le"^(x:i>i) x" )
-      val Apps( _: Const, f :: Nil ) = d.getDefinedExpression( le"^x (#v(f:i>i) x)" )
+      val Apps( _: Const, Nil ) = d.getDefinedExpression( le"^(x:i>i) x" ): @unchecked
+      val Apps( _: Const, f :: Nil ) = d.getDefinedExpression( le"^x (#v(f:i>i) x)" ): @unchecked
       f mustEqual le"#v(f:i>i)"
     }
     "definition must match over free variables" in {
       implicit val d: Hol2FolDefinitions = new Hol2FolDefinitions
       val t: Expr = le"(^x (#v(f:i>i) x))"
       replaceAbstractions( t )
-      val Apps( _: Const, a :: Nil ) = d.getDefinedExpression( le"^x (#c(a:i>i) x)" )
+      val Apps( _: Const, a :: Nil ) = d.getDefinedExpression( le"^x (#c(a:i>i) x)" ): @unchecked
       a mustEqual hoc"a:i>i"
     }
     "no unnecessary constants should be introduced" in {
       implicit val d: Hol2FolDefinitions = new Hol2FolDefinitions
       val t: Expr = le"(^(x:i>i) x)(^x (#v(f:i>i) x))"
-      val r @ App( r1 @ Apps( c1: Const, _ ), r2 @ Apps( c2: Const, _ ) ) = replaceAbstractions( t )
+      val r @ App( r1 @ Apps( c1: Const, _ ), r2 @ Apps( c2: Const, _ ) ) = replaceAbstractions( t ): @unchecked
       d.toMap.keys mustEqual Set( r1, r2 )
       util.constants.nonLogical( r ) mustEqual Set( c1, c2 )
     }
     "replace non-uniform abstracts by different constants" in {
       implicit val d: Hol2FolDefinitions = new Hol2FolDefinitions
       val t: Expr = le"#v(f:(i>i)>((i>i)>(i>i))>i) (^x x) (^x x)"
-      val Apps( _, ( c1: Const ) :: ( c2: Const ) :: Nil ) = replaceAbstractions( t )
+      val Apps( _, ( c1: Const ) :: ( c2: Const ) :: Nil ) = replaceAbstractions( t ): @unchecked
       c1 must_!= c2
     }
     "keep introducing new constants" in {
       implicit val d: Hol2FolDefinitions = new Hol2FolDefinitions
       val t1: Expr = le"^x x"
-      val c1 @ Const( _, _, _ ) = replaceAbstractions( t1 )
+      val c1 @ Const( _, _, _ ) = replaceAbstractions( t1 ): @unchecked
       d.toMap.size mustEqual 1
       val t2: Expr = le"^(x:i>i) x"
-      val c2 @ Const( _, _, _ ) = replaceAbstractions( t2 )
+      val c2 @ Const( _, _, _ ) = replaceAbstractions( t2 ): @unchecked
       d.toMap.size mustEqual 2
       c1 must_!= c2
     }

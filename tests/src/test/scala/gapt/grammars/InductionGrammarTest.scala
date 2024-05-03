@@ -86,7 +86,7 @@ class InductionGrammarTest extends Specification with SatMatchers {
       gamma = List( hov"γ: nat" ) )
     for ( ( n, ts ) <- indexedTermset )
       ts diff stableGrammar.instanceLanguage( n ) must beEmpty
-    val Some( minimal ) = minimizeInductionGrammar( stableGrammar, indexedTermset )
+    val Some( minimal ) = minimizeInductionGrammar( stableGrammar, indexedTermset ): @unchecked
     minimal.size must_== 1
   }
 
@@ -96,7 +96,7 @@ class InductionGrammarTest extends Specification with SatMatchers {
     ctx += hoc"p: nat>o"
     def numeral( i: Int ): Expr = if ( i > 0 ) le"s ${numeral( i - 1 )}" else le"0"
     val indexedTermset = ( 0 to 3 ).map( n => numeral( n ) -> ( 0 until n ).map( i => le"p ${numeral( i )}" ).toSet ).toMap
-    val Some( minimal ) = findMinimalInductionGrammar( indexedTermset, List( hov"γ: nat" ) )
+    val Some( minimal ) = findMinimalInductionGrammar( indexedTermset, List( hov"γ: nat" ) ): @unchecked
     minimal.size must_== 1
   }
 
@@ -111,7 +111,7 @@ class InductionGrammarTest extends Specification with SatMatchers {
     val as = LazyList.from( 0 ).map( i => Var( s"a$i", Ti ) )
     val indexedTermset = ( 0 to 3 ).map( n => list( as.take( n ).toList ) ->
       ( 1 to n ).map( i => le"p ${list( as.slice( i, n ).toList )}" ).toSet ).toMap
-    val Some( minimal ) = findMinimalInductionGrammar( indexedTermset, List( hov"γ: i" ) )
+    val Some( minimal ) = findMinimalInductionGrammar( indexedTermset, List( hov"γ: i" ) ): @unchecked
     minimal.size must_== 1
   }
 

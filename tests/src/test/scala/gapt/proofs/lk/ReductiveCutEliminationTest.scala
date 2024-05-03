@@ -502,7 +502,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
   }
 
   "issue 684" in {
-    val Some( p ) = Escargot.getLKProof( hof"¬(∀x x = c0 ∧ ∃x f0(x) != f1(x))" )
+    val Some( p ) = Escargot.getLKProof( hof"¬(∀x x = c0 ∧ ∃x f0(x) != f1(x))" ): @unchecked
     val q = cutNormal( p )
     ok
   }
@@ -515,7 +515,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       b ( CutRule( _, _, hof"B(t)" ) )
       c OpenAssumption( ( "" -> hof"A" ) +: Sequent() )
       b ( CutRule( _, _, hof"A" ) ) qed )
-    val Some( newProof ) = StuckCutReduction.Left.reduce( proof )
+    val Some( newProof ) = StuckCutReduction.Left.reduce( proof ): @unchecked
     newProof.endSequent must beMultiSetEqual( proof.endSequent )
     newProof.subProofAt( 0 :: 0 :: Nil ) must beAnInstanceOf[CutRule]
   }
@@ -528,7 +528,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       b ( CutRule( _, _, hof"s=t" ) )
       c OpenAssumption( ( "" -> hof"A" ) +: Sequent() )
       b ( CutRule( _, _, hof"A" ) ) qed )
-    val Some( newProof ) = StuckCutReduction.Left.reduce( proof )
+    val Some( newProof ) = StuckCutReduction.Left.reduce( proof ): @unchecked
     newProof.endSequent must beMultiSetEqual( proof.endSequent )
     newProof.subProofAt( 0 :: 1 :: Nil ) must beAnInstanceOf[CutRule]
   }
@@ -552,7 +552,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       b ( CutRule( _, _, hof"s=t" ) )
       c OpenAssumption( ( "" -> hof"A" ) +: Sequent() )
       b ( CutRule( _, _, hof"A" ) ) qed )
-    val Some( newProof ) = StuckCutReduction.Left reduce proof
+    val Some( newProof ) = StuckCutReduction.Left reduce proof: @unchecked
     newProof.endSequent must beMultiSetEqual( proof.endSequent )
     newProof.subProofAt( 0 :: 1 :: Nil ) must beAnInstanceOf[CutRule]
   }
@@ -587,7 +587,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       u ( EqualityLeftRule( _, Ant( 1 ), Ant( 2 ), Abs( hov"x", le"B(x):o" ) ) )
       b ( CutRule( _, _, hof"B(t)" ) )
       b ( CutRule( _, _, hof"A" ) ) qed )
-    val Some( newProof ) = StuckCutReduction.Right reduce proof
+    val Some( newProof ) = StuckCutReduction.Right reduce proof: @unchecked
     newProof.endSequent must beMultiSetEqual( proof.endSequent )
     newProof.subProofAt( 0 :: 1 :: Nil ) must beAnInstanceOf[CutRule]
   }
@@ -611,7 +611,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       c OpenAssumption( ( "" -> hof"B(t)" ) +: Sequent() )
       b ( CutRule( _, _, hof"B(t)" ) )
       b ( CutRule( _, _, hof"A" ) ) qed )
-    val Some( newProof ) = StuckCutReduction.Right reduce proof
+    val Some( newProof ) = StuckCutReduction.Right reduce proof: @unchecked
     newProof.endSequent must beMultiSetEqual( proof.endSequent )
     newProof.subProofAt( 0 :: 0 :: Nil ) must beAnInstanceOf[CutRule]
   }
@@ -624,7 +624,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       u ( EqualityRightRule( _, Ant( 1 ), Suc( 0 ), Abs( hov"x", le"B(x):o" ) ) )
       b ( CutRule( _, _, hof"s=t" ) )
       b ( CutRule( _, _, hof"A" ) ) qed )
-    val Some( newProof ) = StuckCutReduction.Right reduce proof
+    val Some( newProof ) = StuckCutReduction.Right reduce proof: @unchecked
     newProof.endSequent must beMultiSetEqual( proof.endSequent )
     newProof.subProofAt( 0 :: 1 :: Nil ) must beAnInstanceOf[CutRule]
   }
@@ -639,7 +639,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       b ( CutRule( _, _, hof"B(t)" ) )
       c OpenAssumption( ( "" -> hof"A" ) +: Sequent() )
       b ( CutRule( _, _, hof"A" ) ) qed )
-    val Some( newProof ) = StuckCutReduction.Left.reduce( proof )
+    val Some( newProof ) = StuckCutReduction.Left.reduce( proof ): @unchecked
     newProof.endSequent must beMultiSetEqual( proof.endSequent )
     newProof.subProofAt( 0 :: 1 :: 0 :: Nil ) must beAnInstanceOf[CutRule]
   }
@@ -654,7 +654,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       b ( CutRule( _, _, hof"s=t" ) )
       c OpenAssumption( ( "" -> hof"A" ) +: Sequent() )
       b ( CutRule( _, _, hof"A" ) ) qed )
-    val Some( newProof ) = StuckCutReduction.Left.reduce( proof )
+    val Some( newProof ) = StuckCutReduction.Left.reduce( proof ): @unchecked
     newProof.endSequent must beMultiSetEqual( proof.endSequent )
     newProof.subProofAt( 0 :: 0 :: 1 :: Nil ) must beAnInstanceOf[CutRule]
   }
@@ -669,7 +669,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       b ( CutRule( _, _, hof"B(t)" ) )
       c OpenAssumption( ( "" -> hof"A" ) +: Sequent() )
       b ( CutRule( _, _, hof"A" ) ) qed )
-    val Some( newProof ) = StuckCutReduction.Left.reduce( proof )
+    val Some( newProof ) = StuckCutReduction.Left.reduce( proof ): @unchecked
     newProof.endSequent must beMultiSetEqual( proof.endSequent )
     newProof.subProofAt( 0 :: 1 :: 1 :: Nil ) must beAnInstanceOf[CutRule]
   }
@@ -684,7 +684,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       b ( CutRule( _, _, hof"s=t" ) )
       b ( CutRule( _, _, hof"B(t)" ) )
       b ( CutRule( _, _, hof"A" ) ) qed )
-    val Some( newProof ) = StuckCutReduction.Right.reduce( proof )
+    val Some( newProof ) = StuckCutReduction.Right.reduce( proof ): @unchecked
     newProof.endSequent must beMultiSetEqual( proof.endSequent )
     newProof.subProofAt( 0 :: 1 :: 1 :: Nil ) must beAnInstanceOf[CutRule]
   }
@@ -699,7 +699,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       b ( CutRule( _, _, hof"B(t)" ) )
       b ( CutRule( _, _, hof"s=t" ) )
       b ( CutRule( _, _, hof"A" ) ) qed )
-    val Some( newProof ) = StuckCutReduction.Right.reduce( proof )
+    val Some( newProof ) = StuckCutReduction.Right.reduce( proof ): @unchecked
     newProof.endSequent must beMultiSetEqual( proof.endSequent )
     newProof.subProofAt( 0 :: 0 :: 1 :: Nil ) must beAnInstanceOf[CutRule]
   }
@@ -714,7 +714,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       c OpenAssumption( ( "" -> hof"B(t)" ) +: Sequent() )
       b ( CutRule( _, _, hof"B(t)" ) )
       b ( CutRule( _, _, hof"A" ) ) qed )
-    val Some( newProof ) = StuckCutReduction.Right.reduce( proof )
+    val Some( newProof ) = StuckCutReduction.Right.reduce( proof ): @unchecked
     newProof.endSequent must beMultiSetEqual( proof.endSequent )
     newProof.subProofAt( 0 :: 1 :: 0 :: Nil ) must beAnInstanceOf[CutRule]
   }
@@ -727,7 +727,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       b ( CutRule( _, _, hof"!x A(x)" ) )
       c OpenAssumption( ( "" -> hof"B" ) +: Sequent() )
       b ( CutRule( _, _, hof"B" ) ) qed )
-    val Some( newProof ) = StuckCutReduction.Left reduce proof
+    val Some( newProof ) = StuckCutReduction.Left reduce proof: @unchecked
     newProof.endSequent must beMultiSetEqual( proof.endSequent )
     newProof.subProofAt( 0 :: 0 :: Nil ) must beAnInstanceOf[CutRule]
   }
@@ -740,7 +740,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       b ( CutRule( _, _, hof"?x A(x)" ) )
       c OpenAssumption( ( "" -> hof"B" ) +: Sequent() )
       b ( CutRule( _, _, hof"B" ) ) qed )
-    val Some( newProof ) = StuckCutReduction.Left reduce proof
+    val Some( newProof ) = StuckCutReduction.Left reduce proof: @unchecked
     newProof.endSequent must beMultiSetEqual( proof.endSequent )
     newProof.subProofAt( 0 :: 1 :: Nil ) must beAnInstanceOf[CutRule]
   }
@@ -753,7 +753,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       c OpenAssumption( ( "" -> hof"!x A(x)" ) +: Sequent() )
       b ( CutRule( _, _, hof"!x A(x)" ) )
       b ( CutRule( _, _, hof"B" ) ) qed )
-    val Some( newProof ) = StuckCutReduction.Right reduce proof
+    val Some( newProof ) = StuckCutReduction.Right reduce proof: @unchecked
     newProof.endSequent must beMultiSetEqual( proof.endSequent )
     newProof.subProofAt( 0 :: 0 :: Nil ) must beAnInstanceOf[CutRule]
   }
@@ -766,7 +766,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       u ( ExistsSkLeftRule( _, Ant( 1 ), hof"?x A(x)", le"s" ) )
       b ( CutRule( _, _, hof"?x A(x)" ) )
       b ( CutRule( _, _, hof"B" ) ) qed )
-    val Some( newProof ) = StuckCutReduction.Right reduce proof
+    val Some( newProof ) = StuckCutReduction.Right reduce proof: @unchecked
     newProof.endSequent must beMultiSetEqual( proof.endSequent )
     newProof.subProofAt( 0 :: 1 :: Nil ) must beAnInstanceOf[CutRule]
   }
@@ -791,7 +791,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       } )
       c OpenAssumption( ( "" -> hof"F(s(s(0)))" ) +: Sequent() )
       b ( CutRule( _, _, hof"F(s(s(0)))" ) ) qed )
-    val Some( newProof ) = new LeftRankInductionUnfoldingReduction reduce proof
+    val Some( newProof ) = new LeftRankInductionUnfoldingReduction reduce proof: @unchecked
     newProof.endSequent must beMultiSetEqual( proof.endSequent )
     isInductionFree( newProof ) must_== true
   }
@@ -818,7 +818,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       b ( CutRule( _, _, hof"F(x)" ) )
       c OpenAssumption( ( "" -> hof"A" ) +: Sequent() )
       b ( CutRule( _, _, hof"A" ) ) qed )
-    val Some( newProof ) = StuckCutReduction.Left.reduce( proof )
+    val Some( newProof ) = StuckCutReduction.Left.reduce( proof ): @unchecked
     newProof.endSequent must beMultiSetEqual( proof.endSequent )
     newProof.subProofAt( 1 :: 0 :: Nil ) must beAnInstanceOf[CutRule]
   }
@@ -845,7 +845,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       c OpenAssumption( ( "" -> hof"F(x)" ) +: Sequent() )
       b ( CutRule( _, _, hof"F(x)" ) )
       b ( CutRule( _, _, hof"A" ) ) qed )
-    val Some( newProof ) = StuckCutReduction.Right.reduce( proof )
+    val Some( newProof ) = StuckCutReduction.Right.reduce( proof ): @unchecked
     newProof.endSequent must beMultiSetEqual( proof.endSequent )
     newProof.subProofAt( 1 :: 0 :: Nil ) must beAnInstanceOf[CutRule]
   }
