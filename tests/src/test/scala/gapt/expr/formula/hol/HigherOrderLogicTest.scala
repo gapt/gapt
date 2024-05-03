@@ -51,7 +51,7 @@ class HigherOrderLogicTest extends Specification {
       // Another way to construct P's type is: FunctionType(To, args.map(a => a.exptype) )
       val result = at1 match {
         case x: Formula => true
-        case _          => false
+        case null       => false
       }
       result must beTrue
     }
