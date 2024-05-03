@@ -116,7 +116,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
     val instProof = instanceProof( proof, instanceTerms )
 
     val proofName @ Apps( proofNameC @ Const( proofNameStr, _, _ ), _ ) =
-      Atom( ctx.newNameGenerator.fresh( "proof" ), variables )
+      Atom( ctx.newNameGenerator.fresh( "proof" ), variables ): @unchecked
     ArithmeticInductionToSchema( proof, proofName ) --? "induction to schema" foreach { _ =>
       ProofLink( proofName ) --? "create schema proof link"
       instantiateProof.Instantiate( proofNameC( instanceTerms ) ) --? "schema instance"
@@ -200,7 +200,7 @@ class TheoryTestCase( name: String, combined: Boolean )
     {
       implicit val mctx: MutableContext = ctx.newMutable
       val proofName @ Apps( proofNameC @ Const( proofNameStr, _, _ ), _ ) =
-        Atom( mctx.newNameGenerator.fresh( "proof" ), variables )
+        Atom( mctx.newNameGenerator.fresh( "proof" ), variables ): @unchecked
       ArithmeticInductionToSchema( proof, proofName ) --? "induction to schema" foreach { _ =>
         ProofLink( proofName ) --? "create schema proof link"
         instantiateProof.Instantiate( proofNameC( instanceTerms ) ) --? "schema instance"

@@ -70,7 +70,7 @@ object testLKToND extends scala.App {
     val expansion = time( "import" ) { loadExpansionProof( FilePath( fileName ) ) }
     metric( "size_exp", expansion.size )
 
-    val Right( lk ) = time( "exp2lk" ) { ExpansionProofToLK.withIntuitionisticHeuristics( expansion ) }
+    val Right( lk ) = time( "exp2lk" ) { ExpansionProofToLK.withIntuitionisticHeuristics( expansion ) }: @unchecked
     lkStats( lk, logger )
 
     val nd = time( "lk2nd" ) { LKToND( lk ) }

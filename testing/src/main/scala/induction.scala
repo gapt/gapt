@@ -26,7 +26,7 @@ object testInduction extends App {
   def pickQuant( i: Int )( implicit ctx: Context ): Tactic[Unit] = {
     import gapt.proofs.gaptic._
     currentGoal.flatMap { goal =>
-      val Some( All.Block( vs, _ ) ) = goal.conclusion.succedent.headOption
+      val Some( All.Block( vs, _ ) ) = goal.conclusion.succedent.headOption: @unchecked
       if ( i < vs.size && ctx.getConstructors( vs( i ).ty ).isDefined ) introUnivsExcept( i )
       else throw new StrategyNotApplicable
     }
@@ -99,7 +99,7 @@ object computeStrategies extends scala.App {
           ( q @ Var( _, t ), i ) <- goalQuants.zipWithIndex
           if context.getConstructors( t ).isDefined
         } yield i
-      val equationIdcs = for ( ( All.Block( _, Eq( _, _ ) ), i ) <- sequent.antecedent.zipWithIndex ) yield i
+      val equationIdcs = for ( case ( All.Block( _, Eq( _, _ ) ), i ) <- sequent.antecedent.zipWithIndex ) yield i
       val equationIdxSubsets = ( 0 to 2 ).flatMap( equationIdcs.toSet.subsets )
       for ( goalQuant <- inductiveGoalQuantIdcs; eqTh <- equationIdxSubsets )
         printStrategy(

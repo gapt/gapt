@@ -117,7 +117,7 @@ object cutReductionBenchmark extends Script {
     bench( "ci_fact", n, turnEqualityIntoPredicate( p ), exclude = Set( BogoElim ) )
 
   for ( n <- 0 to 10 ) {
-    val Some( res ) = Escargot.getResolutionProof( fof"P(0) & !x (P(x) -> P(s(x))) -> P${Numeral( n )}" )
+    val Some( res ) = Escargot.getResolutionProof( fof"P(0) & !x (P(x) -> P(s(x))) -> P${Numeral( n )}" ): @unchecked
     val lk = ResolutionToLKProof( res )
     bench( "linearacnf", n, lk )
   }

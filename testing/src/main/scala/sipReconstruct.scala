@@ -164,11 +164,11 @@ object sipReconstruct extends Script {
         val proof0 = normalizeLKt.lk( instanceProof( proof, xs ) )
 
         val exp = eliminateCutsET( deskolemizeET( prenexifyET.exceptTheory( LKToExpansionProof( proof0 ) ) ) )
-        val ETWeakQuantifier( _, insts ) = exp.inductions.head.suc
+        val ETWeakQuantifier( _, insts ) = exp.inductions.head.suc: @unchecked
         val term = insts.head._1.asInstanceOf[Var]
 
         require( xs.contains( term ) )
-        val Right( proof1 ) = ExpansionProofToLK( exp )
+        val Right( proof1 ) = ExpansionProofToLK( exp ): @unchecked
         val proof2 = Substitution( for ( x <- xs if x != term ) yield x -> {
           val c = Const( ctx.newNameGenerator.fresh( x.name ), x.ty )
           ctx += c
@@ -186,7 +186,7 @@ object sipReconstruct extends Script {
       val indG = extractInductionGrammar( sip )
       println( s"SIP with induction grammar:\n$indG" )
       logger.metric( "sip_ind_gram_size", indG.size )
-      for ( InductionRule( _, Abs( x, f ), _ ) <- sip.subProofs )
+      for ( case InductionRule( _, Abs( x, f ), _ ) <- sip.subProofs )
         logger.metric( "sip_ind_form", f.toSigRelativeString )
       val qtys = indG.gamma.map { case Var( _, t @ TBase( _, _ ) ) => t }
       logger.metric( "sip_prob", sip.endSequent.succedent.head.toSigRelativeString )
