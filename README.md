@@ -65,7 +65,7 @@ for more details.
 ### System requirements
 
 * Java 8 (or later)
-* optional: [external tools](https://github.com/gapt/gapt/wiki/External-software)
+* optional: external tools like [Vampire](https://vprover.github.io/), [SPASS](http://www.spass-prover.org/), [E](https://wwwlehre.dhbw-stuttgart.de/~sschulz/E/E.html) and others. See the [website](https://www.logic.at/gapt/) for a complete list.
 * for development: [sbt](http://www.scala-sbt.org/)
 
 ### License
