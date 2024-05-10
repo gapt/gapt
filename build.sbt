@@ -278,7 +278,11 @@ lazy val userManual = project.in( file( "doc" ) ).
   dependsOn( cli ).
   settings( commonSettings: _* ).
   settings(
-    Compile / unmanagedSourceDirectories := Seq( baseDirectory.value ),
+    Compile / unmanagedSourceDirectories := 
+      (CrossVersion.partialVersion(scalaVersion.value) match {
+          case Some((2, _)) => Seq( baseDirectory.value / "scala-2")
+          case _ => Seq(baseDirectory.value / "scala-3")
+      }),
     publish / skip := true,
     packagedArtifacts := Map(),
     dependencyOverrides ++= dependencyConflictResolutions )
