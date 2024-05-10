@@ -289,9 +289,16 @@ lazy val cli = project.in( file( "cli" ) ).
   settings(
     mainClass := Some( "gapt.cli.CLIMain" ),
     Compile / scalacOptions += "-Xfatal-warnings",
-    crossScalaVersions := Seq("2.13.12"),
-    libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value ),
+    libraryDependencies ++= {
+        CrossVersion.partialVersion(scalaVersion.value) match {
+          case Some((2, 13)) => Seq(
+            "org.scala-lang" % "scala-compiler" % scalaVersion.value
+          )
+          case _ => Seq(
+            "org.scala-lang" %% "scala3-compiler" % scalaVersion.value
+          )
+        }
+      },
     publish / skip := true,
     packagedArtifacts := Map(),
     dependencyOverrides ++= dependencyConflictResolutions )

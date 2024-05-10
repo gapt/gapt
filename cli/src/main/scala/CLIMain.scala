@@ -3,8 +3,6 @@ package gapt.cli
 import gapt.examples.Script
 import gapt.formats.ClasspathInputFile
 
-import scala.tools.nsc.interpreter._
-import scala.tools.nsc.Settings
 import os._
 
 object CLIMain {
