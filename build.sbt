@@ -178,6 +178,7 @@ lazy val root = project.in( file( "." ) ).
           envVars = envVars.value ),
         Seq( userManFn ) ).exitValue()
       if ( exitVal == 0 ) IO.write( file( userManFn ), out.toByteArray )
+      else throw new Exception(s"evalUserManual failed with exit code ${exitVal}")
     } ,
 
     dependencyOverrides ++= dependencyConflictResolutions
