@@ -33,7 +33,7 @@ case class CliListing(
       "\n" +
       commands.map {
         case ( input, output ) =>
-          s"gapt> $input\n$output\n"
+          s"gapt> $input\n${if output.isBlank() then "\n" else s"${output.stripTrailing()}\n\n"}"
       }.mkString +
       "\\end{clilisting}\n"
   }
