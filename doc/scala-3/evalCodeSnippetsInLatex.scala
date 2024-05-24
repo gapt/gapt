@@ -120,7 +120,7 @@ class CommandEvaluator {
 
 object evaluate {
   def apply( doc: Document ): Document = {
-    Document( doc.sections.par.map( apply ).seq )
+    Document( doc.sections.map( apply ) )
   }
 
   def apply( section: Section ): Section = {
