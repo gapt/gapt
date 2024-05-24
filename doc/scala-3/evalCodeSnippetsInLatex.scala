@@ -143,7 +143,8 @@ object evaluate {
         CliListing( cond, commands.map { case ( in, _ ) => ( in, evaluator.runCommand( in ) ) } )
       case TacticsListing( options, input, _ ) =>
         var code = input
-        if ( !options.contains( "nosig" ) && !options.contains( "bare" ) ) code = s"""
+        if ( !options.contains( "nosig" ) && !options.contains( "bare" ) ) code = 
+          s"""{
           ctx += Sort("i")
           ctx += hoc"P: i>o"
           ctx += hoc"Q: i>o"
@@ -155,21 +156,20 @@ object evaluate {
           ctx += hoc"f: i>i"
           ctx += hoc"A: o"
           ctx += hoc"B: o"
-          $code
-        """
+          {$code}
+        }"""
         if ( !options.contains( "bare" ) ) code = s"""
           new TacticsProof {
-            $code
+            {$code}
           }
         """
         code = s"""
           val () = {
             import gapt.proofs.gaptic._
             import gapt.formats.babel._
-            $code
+            {$code}
             ()
-          }
-        """
+          }"""
         TacticsListing( options, input, evaluator.runCommand( code ) )
     }
 }
