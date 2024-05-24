@@ -94,11 +94,11 @@ class CommandEvaluator {
     val lambdaRegex = """\b[A-Za-z.0-9$]+\$\$\$?Lambda\$\d+/(\d+|0x[0-9a-f]+)@[0-9a-f]+""".r
     // "... 82 elided" is different between compile server and my machine
     val elidedRegex = """... \d+ elided""".r
-      var o = out.result()
-      o = lambdaRegex.replaceAllIn( o, "<function>" )
-      o = elidedRegex.replaceAllIn( o, "... elided" )
-      o
-    }
+    var o = out.result()
+    o = lambdaRegex.replaceAllIn( o, "<function>" )
+    o = elidedRegex.replaceAllIn( o, "... elided" )
+    o
+  }
 
   def runCommand( cmd: String ): String = {
     out.clear()
