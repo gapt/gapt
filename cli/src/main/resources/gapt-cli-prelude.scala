@@ -1,6 +1,6 @@
 import os.{read => _, write => _, _}
 import gapt._
-import gapt.examples._
+import gapt.examples.{nd => _, _}
 import gapt.examples.sequence._
 import gapt.expr._
 import gapt.expr.ty._
@@ -15,13 +15,13 @@ import gapt.formats.verit._
 import gapt.formats.smt._
 import gapt.formats.llk._
 import gapt.formats.latex._
-import gapt.formats.json._
+import gapt.formats.json.{nd => _, _}
 import gapt.formats.implicits._
 import gapt.formats.InputFile
 import gapt.grammars._
 import gapt.logic._
 import gapt.logic.fol._
-import gapt.logic.hol._
+import gapt.logic.hol.{dls => _, _}
 import gapt.logic.hol.dls._
 import gapt.proofs.reduction._
 import gapt.proofs.rup._
