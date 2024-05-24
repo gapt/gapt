@@ -241,7 +241,7 @@ object parse {
   val endTacticsOutput = """\end{tacticsoutput}"""
 
   def document: Parser[Document] =
-    section.*.map( Document )
+    section.*.map( Document(_) )
 
   def section: Parser[Section] =
     for {
