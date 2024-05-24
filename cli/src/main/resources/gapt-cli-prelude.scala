@@ -56,7 +56,7 @@ import gapt.provers.smtlib._
 import gapt.provers.escargot._
 import gapt.provers.slakje.Slakje
 import gapt.provers.spass._
-import gapt.prooftool.prooftool
+import gapt.prooftool._
 import gapt.utils._
 import cats.syntax.all._, cats.instances.all._, EitherHelpers._
 import gapt.cli.GPL.{ apply => copying, printLicense => license }

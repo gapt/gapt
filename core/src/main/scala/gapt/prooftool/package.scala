@@ -67,4 +67,17 @@ package object prooftool extends ProoftoolInstances2 {
   object ProoftoolViewable {
     def apply[T: ProoftoolViewable] = implicitly[ProoftoolViewable[T]]
   }
+
+  object prooftool {
+    /**
+     * Displays various objects in prooftool. Creates an instance of the appropriate viewer.
+     *
+     * This is implemented via a type class. For instances, see the prooftool package object.
+     *
+     * @param obj The object to be displayed.
+     * @param name The title to be displayed.
+     */
+    def apply[T: ProoftoolViewable]( obj: T, name: String = "prooftool" ): Unit = ProoftoolViewable[T].display( obj, name ).foreach( _.showFrame() )
+  }
+
 }
