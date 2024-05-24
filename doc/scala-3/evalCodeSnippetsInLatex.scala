@@ -103,8 +103,7 @@ class CommandEvaluator {
   def runCommand( cmd: String ): String = {
     out.clear()
     state = Console.withOut( outPrintStream )( repl.run( cmd )(using state) )
-    val result = getOutput
-    result
+    getOutput
   }
 
   def incrementCounter(): Unit =
