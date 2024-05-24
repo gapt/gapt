@@ -76,7 +76,7 @@ class CommandEvaluator {
   val outPrintStream = new PrintStream( new WriterOutputStream( outWriter ), true )
 
   val repl = new ReplDriver(
-    Array("-usejavacp", "-color:never"),
+    Array("-usejavacp", "-color:never", "-Vrepl-max-print-characters:766"),
     outPrintStream
   )
   var state = repl.initialState
