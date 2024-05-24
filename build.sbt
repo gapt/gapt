@@ -82,7 +82,6 @@ lazy val root = project.in( file( "." ) ).
   settings( commonSettings: _* ).
   enablePlugins( ScalaUnidocPlugin ).
   settings(
-    console / fork := true,
     console / initialCommands := IO.read( (cli / Compile / resourceDirectory).value / "gapt-cli-prelude.scala" ),
 
     publish / skip := true,
