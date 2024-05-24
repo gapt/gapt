@@ -180,6 +180,7 @@ object parse {
       case Some( ( doc, Nil ) ) => doc
     }
 
+  @FunctionalInterface
   trait Parser[+A] {
     def apply( lines: List[String] ): Option[( A, List[String] )]
 
