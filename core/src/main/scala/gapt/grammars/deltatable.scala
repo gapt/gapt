@@ -24,14 +24,14 @@ object deltaTableAlgorithm {
 
     def populate(
       remainingTerms: List[Expr],
-      currentLGG:     UOption[Expr],
+      currentLGG:     Option[Expr],
       currentCover:   Set[Expr],
       currentSubst:   Set[Substitution] ): Unit = if ( remainingTerms.nonEmpty ) {
       val newTerm :: rest = remainingTerms: @unchecked
 
       val ( newLGG, substCurLGG, substNewTerm ) =
         currentLGG match {
-          case USome( curLGG ) =>
+          case Some( curLGG ) =>
             if ( singleVariable ) leastGeneralGeneralization1.fast( curLGG, newTerm )
             leastGeneralGeneralization.fast( curLGG, newTerm )
           case _ => ( newTerm, Map.empty[Var, Expr], Map.empty[Var, Expr] )
@@ -43,13 +43,13 @@ object deltaTableAlgorithm {
             Substitution( substNewTerm )
         val newCover = currentCover + newTerm
         deltatable( newSubst ) ::= ( newLGG -> newCover )
-        populate( rest, USome( newLGG ), newCover, newSubst )
+        populate( rest, Some( newLGG ), newCover, newSubst )
       }
 
       populate( rest, currentLGG, currentCover, currentSubst )
     }
 
-    populate( termSet.toList, UNone(), Set.empty, Set.empty )
+    populate( termSet.toList, None, Set.empty, Set.empty )
 
     Map.empty ++ deltatable.view.mapValues( _.toSet ).toMap
   }

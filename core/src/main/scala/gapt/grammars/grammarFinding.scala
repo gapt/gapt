@@ -33,21 +33,21 @@ object subsetLGGs {
   def apply( terms: Iterable[Expr], maxSize: Int ): Set[Expr] = {
     val lggs = Set.newBuilder[Expr]
 
-    def findLGGs( currentLGG: UOption[Expr], terms: List[Expr], maxSize: Int ): Unit =
+    def findLGGs( currentLGG: Option[Expr], terms: List[Expr], maxSize: Int ): Unit =
       if ( maxSize > 0 && terms.nonEmpty ) {
         val t :: rest = terms: @unchecked
 
         val newLGG = currentLGG match {
-          case USome( lgg ) => leastGeneralGeneralization.fast( lgg, t )._1
+          case Some( lgg ) => leastGeneralGeneralization.fast( lgg, t )._1
           case _            => t
         }
         lggs += newLGG
-        if ( !newLGG.isInstanceOf[Var] ) findLGGs( USome( newLGG ), rest, maxSize - 1 )
+        if ( !newLGG.isInstanceOf[Var] ) findLGGs( Some( newLGG ), rest, maxSize - 1 )
 
         findLGGs( currentLGG, rest, maxSize )
       }
 
-    findLGGs( UNone(), terms.toList, maxSize )
+    findLGGs( None, terms.toList, maxSize )
 
     lggs.result()
   }
