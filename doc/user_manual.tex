@@ -1262,7 +1262,7 @@ variant of the expansion proof-based method for proof deskolemization
 described in~\cite{Baaz2012Complexity} with an extension to support all forms
 of Skolemization allowed by Skolem definitions.
 \begin{clilisting}
-gapt> val Some(p) = Escargot.getExpansionProof(hof"?x (drinks x -> !y drinks y)")
+gapt> val Some(p) = Escargot.getExpansionProof(hof"?x (drinks x -> !y drinks y)"): @unchecked
 val p: gapt.proofs.expansion.ExpansionProof =
 
 :-
@@ -1294,7 +1294,7 @@ $\Gamma_1\seq\Delta_1, I$ and $I,\Gamma_2\seq\Delta_2$ are provable and $I$
 contains only such predicate symbols that appear in both partitions.
 
 \begin{clilisting}
-gapt> val Right(p) = solvePropositional(hos"a -> b, b -> c :- a & d -> c")
+gapt> val Right(p) = solvePropositional(hos"a -> b, b -> c :- a & d -> c"): @unchecked
 val p: gapt.proofs.lk.LKProof =
 [p8] a → b, b → c ⊢ a ∧ d → c    (ImpRightRule(p7, Ant(0), Suc(0)))
 [p7] a ∧ d, a → b, b → c ⊢ c    (AndLeftRule(p6, Ant(2), Ant(0)))
@@ -1837,7 +1837,7 @@ val res1: Boolean = false
 shows that $\mathrm{PHP}_{3,3}$ is not valid.
 Furthermore,
 \begin{clilisting}
-gapt> val Some(m) = Sat4j solve -PigeonHolePrinciple(3, 3)
+gapt> val Some(m) = Sat4j solve -PigeonHolePrinciple(3, 3): @unchecked
 val m: gapt.models.PropositionalModel =
 R(p_1, h_1): o -> true
 R(p_1, h_2): o -> false
@@ -2109,7 +2109,7 @@ val problem: gapt.formats.tip.TipProblem =
 ⊢
 ∀n ∀m '-2'(n, '+2'(n, m)) = Z
 
-gapt> val Some(proof) = Viper(problem, ViperOptions(verbosity=0))
+gapt> val Some(proof) = Viper(problem, ViperOptions(verbosity=0)): @unchecked
 val proof: gapt.proofs.lk.LKProof =
 [p168] ∀y0 #c(Z: Nat) != (S(y0:Nat): Nat),
 ∀x0 ('proj1-S'(S(x0)): Nat) = x0,
@@ -2409,7 +2409,7 @@ val F: gapt.expr.formula.Formula = X(a) ∧ X(b)
 \end{clilisting}
 We can solve the formula equation above by
 \begin{clilisting}
-gapt> val scala.util.Success(s) = solveFormulaEquation(F)
+gapt> val scala.util.Success(s) = solveFormulaEquation(F): @unchecked
 val s: gapt.expr.subst.Substitution = Substitution(X:i>o -> λx_0 a = x_0 ∨ b = x_0)
 
 \end{clilisting}
@@ -2439,7 +2439,7 @@ val H: gapt.expr.formula.Formula = ∃X ∃Y (X(a) ∧ ¬Y(a))
 \end{clilisting}
 We can eliminate the second-order quantifiers and obtain witnesses by
 \begin{clilisting}
-gapt> val scala.util.Success( (solution, folPart) ) = dls(H)
+gapt> val scala.util.Success( (solution, folPart) ) = dls(H): @unchecked
 val solution: gapt.expr.subst.Substitution = Substitution(X:i>o -> λx_0 a = x_0, Y:i>o -> λy_0 ⊥)
 val folPart: gapt.expr.formula.Formula = X(a) ∧ ¬Y(a)
 
