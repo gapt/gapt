@@ -95,10 +95,10 @@ lazy val root = project.in( file( "." ) ).
       "-doc-source-url", s"https://github.com/gapt/gapt/blob/${("git rev-parse HEAD" !!).strip}/€{FILE_PATH}.scala",
       "-doc-root-content", ( baseDirectory.value / "doc" / "rootdoc.txt" ).getAbsolutePath,
       "-sourcepath", baseDirectory.value.getAbsolutePath,
-      "-skip-packages", "ammonite:ammonite.ops",
+      "-skip-packages:ammonite:ammonite.ops",
       "-diagrams",
       "-implicits", "-implicits-show-all",
-      "-skip-packages", "scala" ) ,
+      "-skip-packages:scala" ) ,
 
     scripts := {
       val runJVMOptions = javaOptions.value ++ Seq( "-cp", Path.makeString(
