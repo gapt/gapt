@@ -1,5 +1,5 @@
 import os.{read => _, write => _, _}
-import gapt._
+import gapt.{prooftool => _, _}
 import gapt.examples.{nd => _, _}
 import gapt.examples.sequence._
 import gapt.expr._
