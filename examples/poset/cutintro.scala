@@ -12,12 +12,13 @@ import gapt.utils.verbose
 
 object cutintro extends Script {
 
-  val constructedProof = eliminateCutsET( LKToExpansionProof( proof.cycleImpliesEqual4 ) )
+  val constructedProof = eliminateCutsET(LKToExpansionProof(proof.cycleImpliesEqual4))
 
   verbose {
     CutIntroduction(
-      CutIntroduction.InputProof( constructedProof, CutIntroduction.BackgroundTheory.PureFOL ),
-      method = DeltaTableMethod( singleQuantifier = false, subsumedRowMerging = true, keyLimit = Some( 3 ) ) )
+      CutIntroduction.InputProof(constructedProof, CutIntroduction.BackgroundTheory.PureFOL),
+      method = DeltaTableMethod(singleQuantifier = false, subsumedRowMerging = true, keyLimit = Some(3))
+    )
   }
 
 }

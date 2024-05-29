@@ -5,18 +5,19 @@ import org.specs2.mutable.Specification
 
 class TptpParserTest extends Specification {
 
-  def loadTPTP( fileName: String ) =
+  def loadTPTP(fileName: String) =
     resolveIncludes(
-      TptpFile( Seq( IncludeDirective( fileName, None ) ) ),
-      fileName => TptpImporter.loadWithoutIncludes( ClasspathInputFile( fileName ) ) )
+      TptpFile(Seq(IncludeDirective(fileName, None))),
+      fileName => TptpImporter.loadWithoutIncludes(ClasspathInputFile(fileName))
+    )
 
   "gra014p1" in {
-    loadTPTP( "GRA014+1.p" )
+    loadTPTP("GRA014+1.p")
     ok
   }
 
   "tautological clauses" in {
-    TptpProblemToResolution( loadTPTP( "HWV116-1_excerpt.p" ) )
+    TptpProblemToResolution(loadTPTP("HWV116-1_excerpt.p"))
     ok
   }
 

@@ -26,282 +26,356 @@ import org.specs2.mutable._
 class BooleanConstantEliminationTest extends Specification {
   "all expressions in problem should be simplified" in {
     val originalProblem =
-      TipSmtProblem( Seq(
+      TipSmtProblem(Seq(
         TipSmtFunctionDefinition(
           "f",
           Nil,
           Nil,
-          TipSmtType( "a" ),
-          TipSmtAnd( TipSmtTrue :: TipSmtFalse :: Nil ) ),
-        TipSmtMutualRecursiveFunctionDefinition( Seq(
+          TipSmtType("a"),
+          TipSmtAnd(TipSmtTrue :: TipSmtFalse :: Nil)
+        ),
+        TipSmtMutualRecursiveFunctionDefinition(Seq(
           TipSmtFunctionDefinition(
             "g",
             Nil,
             Nil,
-            TipSmtType( "a" ),
-            TipSmtNot( TipSmtTrue ) ),
+            TipSmtType("a"),
+            TipSmtNot(TipSmtTrue)
+          ),
           TipSmtFunctionDefinition(
             "h",
             Nil,
             Nil,
-            TipSmtType( "a" ),
-            TipSmtEq( TipSmtTrue :: TipSmtIdentifier( "A" ) :: Nil ) ) ) ),
+            TipSmtType("a"),
+            TipSmtEq(TipSmtTrue :: TipSmtIdentifier("A") :: Nil)
+          )
+        )),
         TipSmtGoal(
           Nil,
-          TipSmtOr( TipSmtTrue :: TipSmtFalse :: Nil ) ),
+          TipSmtOr(TipSmtTrue :: TipSmtFalse :: Nil)
+        ),
         TipSmtAssertion(
           Nil,
           TipSmtIte(
             TipSmtTrue,
-            TipSmtIdentifier( "x" ),
-            TipSmtIdentifier( "y" ) ) ) ) )
-    eliminateBooleanConstants.transform( originalProblem ) must_==
-      TipSmtProblem( Seq(
+            TipSmtIdentifier("x"),
+            TipSmtIdentifier("y")
+          )
+        )
+      ))
+    eliminateBooleanConstants.transform(originalProblem) must_==
+      TipSmtProblem(Seq(
         TipSmtFunctionDefinition(
           "f",
           Nil,
           Nil,
-          TipSmtType( "a" ),
-          TipSmtFalse ),
-        TipSmtMutualRecursiveFunctionDefinition( Seq(
+          TipSmtType("a"),
+          TipSmtFalse
+        ),
+        TipSmtMutualRecursiveFunctionDefinition(Seq(
           TipSmtFunctionDefinition(
             "g",
             Nil,
             Nil,
-            TipSmtType( "a" ),
-            TipSmtFalse ),
+            TipSmtType("a"),
+            TipSmtFalse
+          ),
           TipSmtFunctionDefinition(
             "h",
             Nil,
             Nil,
-            TipSmtType( "a" ),
-            TipSmtIdentifier( "A" ) ) ) ),
+            TipSmtType("a"),
+            TipSmtIdentifier("A")
+          )
+        )),
         TipSmtGoal(
           Nil,
-          TipSmtTrue ),
+          TipSmtTrue
+        ),
         TipSmtAssertion(
           Nil,
-          TipSmtIdentifier( "x" ) ) ) )
+          TipSmtIdentifier("x")
+        )
+      ))
   }
 
   "and-expression should be correctly simplified" in {
     "one sub-expression remaining" in {
       val expression = TipSmtAnd(
-        TipSmtTrue :: TipSmtIdentifier( "A" ) :: TipSmtTrue :: Nil )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
-          TipSmtGoal( Nil, TipSmtIdentifier( "A" ) ) ) )
+        TipSmtTrue :: TipSmtIdentifier("A") :: TipSmtTrue :: Nil
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
+          TipSmtGoal(Nil, TipSmtIdentifier("A"))
+        ))
     }
     "subexpressions contain false" in {
       val expression = TipSmtAnd(
-        TipSmtTrue :: TipSmtIdentifier( "A" ) :: TipSmtFalse :: Nil )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
-          TipSmtGoal( Nil, TipSmtFalse ) ) )
+        TipSmtTrue :: TipSmtIdentifier("A") :: TipSmtFalse :: Nil
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
+          TipSmtGoal(Nil, TipSmtFalse)
+        ))
     }
     "true should be eliminated" in {
       val expression = TipSmtAnd(
         TipSmtTrue ::
-          TipSmtIdentifier( "A" ) ::
+          TipSmtIdentifier("A") ::
           TipSmtTrue ::
-          TipSmtIdentifier( "B" ) :: Nil )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
+          TipSmtIdentifier("B") :: Nil
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
           TipSmtGoal(
             Nil,
             TipSmtAnd(
-              TipSmtIdentifier( "A" ) ::
-                TipSmtIdentifier( "B" ) :: Nil ) ) ) )
+              TipSmtIdentifier("A") ::
+                TipSmtIdentifier("B") :: Nil
+            )
+          )
+        ))
     }
     "subexpressions should be simplified" in {
       val expression = TipSmtAnd(
-        TipSmtIdentifier( "A" ) ::
+        TipSmtIdentifier("A") ::
           TipSmtAnd(
-            TipSmtIdentifier( "C" ) ::
+            TipSmtIdentifier("C") ::
               TipSmtTrue ::
-              TipSmtIdentifier( "B" ) :: Nil ) :: Nil )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
+              TipSmtIdentifier("B") :: Nil
+          ) :: Nil
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
           TipSmtGoal(
             Nil,
             TipSmtAnd(
-              TipSmtIdentifier( "A" ) ::
+              TipSmtIdentifier("A") ::
                 TipSmtAnd(
-                  TipSmtIdentifier( "C" ) ::
-                    TipSmtIdentifier( "B" ) :: Nil ) :: Nil ) ) ) )
+                  TipSmtIdentifier("C") ::
+                    TipSmtIdentifier("B") :: Nil
+                ) :: Nil
+            )
+          )
+        ))
     }
   }
 
   "or-expression should be correctly simplified" in {
     "one sub-expression remaining" in {
       val expression = TipSmtOr(
-        TipSmtFalse :: TipSmtIdentifier( "A" ) :: TipSmtFalse :: Nil )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
-          TipSmtGoal( Nil, TipSmtIdentifier( "A" ) ) ) )
+        TipSmtFalse :: TipSmtIdentifier("A") :: TipSmtFalse :: Nil
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
+          TipSmtGoal(Nil, TipSmtIdentifier("A"))
+        ))
     }
     "subexpressions contain true" in {
       val expression = TipSmtOr(
-        TipSmtTrue :: TipSmtIdentifier( "A" ) :: TipSmtFalse :: Nil )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
-          TipSmtGoal( Nil, TipSmtTrue ) ) )
+        TipSmtTrue :: TipSmtIdentifier("A") :: TipSmtFalse :: Nil
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
+          TipSmtGoal(Nil, TipSmtTrue)
+        ))
     }
     "false should be eliminated" in {
       val expression = TipSmtOr(
         TipSmtFalse ::
-          TipSmtIdentifier( "A" ) ::
+          TipSmtIdentifier("A") ::
           TipSmtFalse ::
-          TipSmtIdentifier( "B" ) :: Nil )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
+          TipSmtIdentifier("B") :: Nil
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
           TipSmtGoal(
             Nil,
             TipSmtOr(
-              TipSmtIdentifier( "A" ) ::
-                TipSmtIdentifier( "B" ) :: Nil ) ) ) )
+              TipSmtIdentifier("A") ::
+                TipSmtIdentifier("B") :: Nil
+            )
+          )
+        ))
     }
     "subexpressions should be simplified" in {
       val expression = TipSmtOr(
-        TipSmtIdentifier( "A" ) ::
+        TipSmtIdentifier("A") ::
           TipSmtOr(
-            TipSmtIdentifier( "C" ) ::
+            TipSmtIdentifier("C") ::
               TipSmtFalse ::
-              TipSmtIdentifier( "B" ) :: Nil ) :: Nil )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
+              TipSmtIdentifier("B") :: Nil
+          ) :: Nil
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
           TipSmtGoal(
             Nil,
             TipSmtOr(
-              TipSmtIdentifier( "A" ) ::
+              TipSmtIdentifier("A") ::
                 TipSmtOr(
-                  TipSmtIdentifier( "C" ) ::
-                    TipSmtIdentifier( "B" ) :: Nil ) :: Nil ) ) ) )
+                  TipSmtIdentifier("C") ::
+                    TipSmtIdentifier("B") :: Nil
+                ) :: Nil
+            )
+          )
+        ))
     }
   }
 
   "imp-expression should be correctly simplified" in {
     "true in negative polarity" in {
       val expression = TipSmtImp(
-        TipSmtTrue :: TipSmtIdentifier( "A" ) :: Nil )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
-          TipSmtGoal( Nil, TipSmtIdentifier( "A" ) ) ) )
+        TipSmtTrue :: TipSmtIdentifier("A") :: Nil
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
+          TipSmtGoal(Nil, TipSmtIdentifier("A"))
+        ))
     }
     "true in positive polarity" in {
       val expression = TipSmtImp(
-        TipSmtIdentifier( "A" ) :: TipSmtTrue :: Nil )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
-          TipSmtGoal( Nil, TipSmtTrue ) ) )
+        TipSmtIdentifier("A") :: TipSmtTrue :: Nil
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
+          TipSmtGoal(Nil, TipSmtTrue)
+        ))
     }
     "false in negative polarity" in {
       val expression = TipSmtImp(
-        TipSmtFalse :: TipSmtIdentifier( "A" ) :: Nil )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
-          TipSmtGoal( Nil, TipSmtTrue ) ) )
+        TipSmtFalse :: TipSmtIdentifier("A") :: Nil
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
+          TipSmtGoal(Nil, TipSmtTrue)
+        ))
     }
     "true in positive polarity" in {
       val expression = TipSmtImp(
-        TipSmtIdentifier( "A" ) :: TipSmtFalse :: Nil )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
-          TipSmtGoal( Nil, TipSmtNot( TipSmtIdentifier( "A" ) ) ) ) )
+        TipSmtIdentifier("A") :: TipSmtFalse :: Nil
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
+          TipSmtGoal(Nil, TipSmtNot(TipSmtIdentifier("A")))
+        ))
     }
     "subexpressions are right-associative" in {
       val expression = TipSmtImp(
-        TipSmtIdentifier( "A" ) ::
+        TipSmtIdentifier("A") ::
           TipSmtTrue ::
-          TipSmtIdentifier( "B" ) ::
-          TipSmtFalse :: Nil )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
+          TipSmtIdentifier("B") ::
+          TipSmtFalse :: Nil
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
           TipSmtGoal(
             Nil,
-            TipSmtImp( TipSmtIdentifier( "A" ) ::
-              TipSmtNot( TipSmtIdentifier( "B" ) ) :: Nil ) ) ) )
+            TipSmtImp(TipSmtIdentifier("A") ::
+              TipSmtNot(TipSmtIdentifier("B")) :: Nil)
+          )
+        ))
     }
 
     "subexpressions should be simplified" in {
       val expression = TipSmtImp(
-        TipSmtIdentifier( "A" ) ::
+        TipSmtIdentifier("A") ::
           TipSmtOr(
-            TipSmtIdentifier( "C" ) ::
+            TipSmtIdentifier("C") ::
               TipSmtFalse ::
-              TipSmtIdentifier( "B" ) :: Nil ) :: Nil )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
+              TipSmtIdentifier("B") :: Nil
+          ) :: Nil
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
           TipSmtGoal(
             Nil,
             TipSmtImp(
-              TipSmtIdentifier( "A" ) ::
+              TipSmtIdentifier("A") ::
                 TipSmtOr(
-                  TipSmtIdentifier( "C" ) ::
-                    TipSmtIdentifier( "B" ) :: Nil ) :: Nil ) ) ) )
+                  TipSmtIdentifier("C") ::
+                    TipSmtIdentifier("B") :: Nil
+                ) :: Nil
+            )
+          )
+        ))
     }
   }
 
   "eq-expression should be correctly simplified" in {
     "subexpressions should be simplified" in {
       val expression = TipSmtEq(
-        TipSmtIdentifier( "A" ) ::
+        TipSmtIdentifier("A") ::
           TipSmtOr(
-            TipSmtIdentifier( "C" ) ::
+            TipSmtIdentifier("C") ::
               TipSmtFalse ::
-              TipSmtIdentifier( "B" ) :: Nil ) :: Nil )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
+              TipSmtIdentifier("B") :: Nil
+          ) :: Nil
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
           TipSmtGoal(
             Nil,
             TipSmtEq(
-              TipSmtIdentifier( "A" ) ::
+              TipSmtIdentifier("A") ::
                 TipSmtOr(
-                  TipSmtIdentifier( "C" ) ::
-                    TipSmtIdentifier( "B" ) :: Nil ) :: Nil ) ) ) )
+                  TipSmtIdentifier("C") ::
+                    TipSmtIdentifier("B") :: Nil
+                ) :: Nil
+            )
+          )
+        ))
     }
     "immediate subexpr. true should result in conjunction of subexprs." in {
       val expression = TipSmtEq(
         TipSmtTrue ::
-          TipSmtIdentifier( "A" ) ::
-          TipSmtIdentifier( "B" ) :: Nil )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
+          TipSmtIdentifier("A") ::
+          TipSmtIdentifier("B") :: Nil
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
           TipSmtGoal(
             Nil,
             TipSmtAnd(
-              TipSmtIdentifier( "A" ) ::
-                TipSmtIdentifier( "B" ) :: Nil ) ) ) )
+              TipSmtIdentifier("A") ::
+                TipSmtIdentifier("B") :: Nil
+            )
+          )
+        ))
     }
     "imm. subexpr. false should yield conjunction of negated subexpression" in {
       val expression = TipSmtEq(
         TipSmtFalse ::
-          TipSmtIdentifier( "A" ) ::
-          TipSmtIdentifier( "B" ) :: Nil )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
+          TipSmtIdentifier("A") ::
+          TipSmtIdentifier("B") :: Nil
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
           TipSmtGoal(
             Nil,
             TipSmtAnd(
-              TipSmtNot( TipSmtIdentifier( "A" ) ) ::
-                TipSmtNot( TipSmtIdentifier( "B" ) ) :: Nil ) ) ) )
+              TipSmtNot(TipSmtIdentifier("A")) ::
+                TipSmtNot(TipSmtIdentifier("B")) :: Nil
+            )
+          )
+        ))
     }
   }
 
@@ -310,38 +384,48 @@ class BooleanConstantEliminationTest extends Specification {
       val expression = TipSmtForall(
         Nil,
         TipSmtOr(
-          TipSmtIdentifier( "C" ) ::
+          TipSmtIdentifier("C") ::
             TipSmtFalse ::
-            TipSmtIdentifier( "B" ) :: Nil ) )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
+            TipSmtIdentifier("B") :: Nil
+        )
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
           TipSmtGoal(
             Nil,
             TipSmtForall(
               Nil,
               TipSmtOr(
-                TipSmtIdentifier( "C" ) ::
-                  TipSmtIdentifier( "B" ) :: Nil ) ) ) ) )
+                TipSmtIdentifier("C") ::
+                  TipSmtIdentifier("B") :: Nil
+              )
+            )
+          )
+        ))
     }
 
     "imm. subexpr. true should eliminate quantifier" in {
-      val expression = TipSmtForall( Nil, TipSmtTrue )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
+      val expression = TipSmtForall(Nil, TipSmtTrue)
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
           TipSmtGoal(
             Nil,
-            TipSmtTrue ) ) )
+            TipSmtTrue
+          )
+        ))
     }
     "imm. subexpr. false should eliminate quantifier" in {
-      val expression = TipSmtForall( Nil, TipSmtFalse )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
+      val expression = TipSmtForall(Nil, TipSmtFalse)
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
           TipSmtGoal(
             Nil,
-            TipSmtFalse ) ) )
+            TipSmtFalse
+          )
+        ))
     }
   }
 
@@ -350,38 +434,48 @@ class BooleanConstantEliminationTest extends Specification {
       val expression = TipSmtExists(
         Nil,
         TipSmtOr(
-          TipSmtIdentifier( "C" ) ::
+          TipSmtIdentifier("C") ::
             TipSmtFalse ::
-            TipSmtIdentifier( "B" ) :: Nil ) )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
+            TipSmtIdentifier("B") :: Nil
+        )
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
           TipSmtGoal(
             Nil,
             TipSmtExists(
               Nil,
               TipSmtOr(
-                TipSmtIdentifier( "C" ) ::
-                  TipSmtIdentifier( "B" ) :: Nil ) ) ) ) )
+                TipSmtIdentifier("C") ::
+                  TipSmtIdentifier("B") :: Nil
+              )
+            )
+          )
+        ))
     }
 
     "imm. subexpr. true should eliminate quantifier" in {
-      val expression = TipSmtExists( Nil, TipSmtTrue )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
+      val expression = TipSmtExists(Nil, TipSmtTrue)
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
           TipSmtGoal(
             Nil,
-            TipSmtTrue ) ) )
+            TipSmtTrue
+          )
+        ))
     }
     "imm. subexpr. false should eliminate quantifier" in {
-      val expression = TipSmtExists( Nil, TipSmtFalse )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
+      val expression = TipSmtExists(Nil, TipSmtFalse)
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
           TipSmtGoal(
             Nil,
-            TipSmtFalse ) ) )
+            TipSmtFalse
+          )
+        ))
     }
   }
 
@@ -389,37 +483,47 @@ class BooleanConstantEliminationTest extends Specification {
     "subexpressions should be simplified" in {
       val expression = TipSmtNot(
         TipSmtOr(
-          TipSmtIdentifier( "C" ) ::
+          TipSmtIdentifier("C") ::
             TipSmtFalse ::
-            TipSmtIdentifier( "B" ) :: Nil ) )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
+            TipSmtIdentifier("B") :: Nil
+        )
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
           TipSmtGoal(
             Nil,
             TipSmtNot(
               TipSmtOr(
-                TipSmtIdentifier( "C" ) ::
-                  TipSmtIdentifier( "B" ) :: Nil ) ) ) ) )
+                TipSmtIdentifier("C") ::
+                  TipSmtIdentifier("B") :: Nil
+              )
+            )
+          )
+        ))
     }
     "immediate subexpression true should yield false" in {
-      val expression = TipSmtNot( TipSmtTrue )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
+      val expression = TipSmtNot(TipSmtTrue)
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
           TipSmtGoal(
             Nil,
-            TipSmtFalse ) ) )
+            TipSmtFalse
+          )
+        ))
     }
 
     "immediate subexpression false should yield true" in {
-      val expression = TipSmtNot( TipSmtFalse )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
+      val expression = TipSmtNot(TipSmtFalse)
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
           TipSmtGoal(
             Nil,
-            TipSmtTrue ) ) )
+            TipSmtTrue
+          )
+        ))
     }
   }
 
@@ -427,67 +531,86 @@ class BooleanConstantEliminationTest extends Specification {
     "subexpressions should be simplified" in {
       val expression = TipSmtIte(
         TipSmtOr(
-          TipSmtIdentifier( "C" ) ::
+          TipSmtIdentifier("C") ::
             TipSmtFalse ::
-            TipSmtIdentifier( "B" ) :: Nil ),
+            TipSmtIdentifier("B") :: Nil
+        ),
         TipSmtAnd(
-          TipSmtIdentifier( "C" ) ::
+          TipSmtIdentifier("C") ::
             TipSmtFalse ::
-            TipSmtIdentifier( "B" ) :: Nil ),
-        TipSmtNot( TipSmtFalse ) )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
+            TipSmtIdentifier("B") :: Nil
+        ),
+        TipSmtNot(TipSmtFalse)
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
           TipSmtGoal(
             Nil,
             TipSmtIte(
               TipSmtOr(
-                TipSmtIdentifier( "C" ) ::
-                  TipSmtIdentifier( "B" ) :: Nil ),
+                TipSmtIdentifier("C") ::
+                  TipSmtIdentifier("B") :: Nil
+              ),
               TipSmtFalse,
-              TipSmtTrue ) ) ) )
+              TipSmtTrue
+            )
+          )
+        ))
     }
 
     "condition true should yield ifTrue" in {
       val expression = TipSmtIte(
         TipSmtTrue,
-        TipSmtIdentifier( "B" ),
-        TipSmtIdentifier( "C" ) )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
+        TipSmtIdentifier("B"),
+        TipSmtIdentifier("C")
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
           TipSmtGoal(
             Nil,
-            TipSmtIdentifier( "B" ) ) ) )
+            TipSmtIdentifier("B")
+          )
+        ))
     }
 
     "condition false should yield ifFalse" in {
       val expression = TipSmtIte(
         TipSmtFalse,
-        TipSmtIdentifier( "B" ),
-        TipSmtIdentifier( "C" ) )
-      val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-      eliminateBooleanConstants.transform( problem ) must_==
-        TipSmtProblem( Seq(
+        TipSmtIdentifier("B"),
+        TipSmtIdentifier("C")
+      )
+      val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+      eliminateBooleanConstants.transform(problem) must_==
+        TipSmtProblem(Seq(
           TipSmtGoal(
             Nil,
-            TipSmtIdentifier( "C" ) ) ) )
+            TipSmtIdentifier("C")
+          )
+        ))
     }
   }
 
   "subexpression of match-expressions should be simplified" in {
     val expression = TipSmtMatch(
-      TipSmtAnd( TipSmtTrue :: TipSmtIdentifier( "A" ) :: Nil ),
+      TipSmtAnd(TipSmtTrue :: TipSmtIdentifier("A") :: Nil),
       Seq(
-        TipSmtCase( TipSmtDefault, TipSmtNot( TipSmtTrue ) ) ) )
-    val problem = TipSmtProblem( Seq( TipSmtGoal( Nil, expression ) ) )
-    eliminateBooleanConstants.transform( problem ) must_==
-      TipSmtProblem( Seq(
+        TipSmtCase(TipSmtDefault, TipSmtNot(TipSmtTrue))
+      )
+    )
+    val problem = TipSmtProblem(Seq(TipSmtGoal(Nil, expression)))
+    eliminateBooleanConstants.transform(problem) must_==
+      TipSmtProblem(Seq(
         TipSmtGoal(
           Nil,
           TipSmtMatch(
-            TipSmtIdentifier( "A" ),
+            TipSmtIdentifier("A"),
             Seq(
-              TipSmtCase( TipSmtDefault, TipSmtFalse ) ) ) ) ) )
+              TipSmtCase(TipSmtDefault, TipSmtFalse)
+            )
+          )
+        )
+      ))
   }
 }

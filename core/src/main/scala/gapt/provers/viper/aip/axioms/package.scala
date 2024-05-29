@@ -8,14 +8,14 @@ import gapt.expr.subst.Substitution
 import gapt.expr.ty.FunctionType
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
-import gapt.expr.{ Var, Const => Con }
+import gapt.expr.{Var, Const => Con}
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 
 package object axioms {
 
-  type VariableSelector = ( Formula, Context ) => List[Var]
-  type FormulaSelector = Sequent[( String, Formula )] => ThrowsError[Formula]
+  type VariableSelector = (Formula, Context) => List[Var]
+  type FormulaSelector = Sequent[(String, Formula)] => ThrowsError[Formula]
 
   /**
    * Selects variables of inductive types.
@@ -25,11 +25,11 @@ package object axioms {
    * @return A list of all free inductive variables and all universally quantified inductive variables
    *         that are bound in the universal quantifier prefix of the given formula.
    */
-  def allVariablesSelector( formula: Formula )( implicit ctx: Context ): List[Var] = {
-    val All.Block( _, f ) = formula
-    freeVariables( f ).filter( {
-      hasInductiveType( _ )
-    } ).toList
+  def allVariablesSelector(formula: Formula)(implicit ctx: Context): List[Var] = {
+    val All.Block(_, f) = formula
+    freeVariables(f).filter({
+      hasInductiveType(_)
+    }).toList
   }
 
   /**
@@ -37,10 +37,10 @@ package object axioms {
    * @param sequent The sequent from which the formula is selected.
    * @return The formula at the first position of the sequent's succedent.
    */
-  def firstFormulaSelector( sequent: Sequent[( String, Formula )] ): ThrowsError[Formula] =
+  def firstFormulaSelector(sequent: Sequent[(String, Formula)]): ThrowsError[Formula] =
     sequent.succedent match {
-      case ( _, f ) +: _ => Right( f )
-      case _             => Left( "Succedent is empty" )
+      case (_, f) +: _ => Right(f)
+      case _           => Left("Succedent is empty")
     }
 
   /**
@@ -53,9 +53,9 @@ package object axioms {
    * @return An induction axiom representing an induction on the specified variable and formula with one induction
    *         case for each of the constructors.
    */
-  def inductionAxiom( inductionVariable: Var, formula: Formula, constructors: Seq[Con] )( implicit ctx: Context ) =
-    And( constructors map { inductionCase( inductionVariable, formula, _ ) } ) -->
-      All( inductionVariable, formula )
+  def inductionAxiom(inductionVariable: Var, formula: Formula, constructors: Seq[Con])(implicit ctx: Context) =
+    And(constructors map { inductionCase(inductionVariable, formula, _) }) -->
+      All(inductionVariable, formula)
 
   /**
    * Constructs a formula representing an inductive case.
@@ -66,12 +66,12 @@ package object axioms {
    * @return A formula representing the inductive case for the given constructor for an induction on the specified
    *         formula and variable.
    */
-  def inductionCase( inductionVariable: Var, formula: Formula, constructor: Con ): Formula = {
-    val ( primaryVariables, secondaryVariables, caseConclusion ) =
-      inductionCaseConclusion( inductionVariable, constructor, formula )
-    val caseHypotheses = primaryVariables.map { pv => Substitution( inductionVariable -> pv )( formula ) }
+  def inductionCase(inductionVariable: Var, formula: Formula, constructor: Con): Formula = {
+    val (primaryVariables, secondaryVariables, caseConclusion) =
+      inductionCaseConclusion(inductionVariable, constructor, formula)
+    val caseHypotheses = primaryVariables.map { pv => Substitution(inductionVariable -> pv)(formula) }
 
-    All.Block( primaryVariables, And( caseHypotheses ) --> All.Block( secondaryVariables, caseConclusion ) )
+    All.Block(primaryVariables, And(caseHypotheses) --> All.Block(secondaryVariables, caseConclusion))
   }
 
   /**
@@ -86,42 +86,50 @@ package object axioms {
    *         the third component contains the result of the substitution.
    */
   def inductionCaseConclusion(
-    freeVariable: Var, constructor: Con, formula: Formula ): ( List[Var], List[Var], Formula ) = {
-    val FunctionType( _, argumentTypes ) = constructor.ty: @unchecked
-    val nameGenerator = rename.awayFrom( freeVariables( formula ) )
+      freeVariable: Var,
+      constructor: Con,
+      formula: Formula
+  ): (List[Var], List[Var], Formula) = {
+    val FunctionType(_, argumentTypes) = constructor.ty: @unchecked
+    val nameGenerator = rename.awayFrom(freeVariables(formula))
     val newVariables = argumentTypes map {
       argumentType =>
         val newName =
           nameGenerator.fresh(
-            if ( argumentType == freeVariable.ty )
+            if (argumentType == freeVariable.ty)
               freeVariable.name
             else
-              "x" )
-        Var( newName, argumentType )
+              "x"
+          )
+        Var(newName, argumentType)
     }
-    val ( primaryVariables, secondaryVariables ) = newVariables partition {
+    val (primaryVariables, secondaryVariables) = newVariables partition {
       _.ty == freeVariable.ty
     }
-    ( primaryVariables, secondaryVariables, Substitution( freeVariable -> constructor( newVariables: _* ) )( formula ) )
+    (primaryVariables, secondaryVariables, Substitution(freeVariable -> constructor(newVariables: _*))(formula))
   }
 
   def inductionCaseConclusion(
-    freeVariable: Var, constructor: Con, formula: Expr ): ( List[Var], List[Var], Expr ) = {
-    val FunctionType( _, argumentTypes ) = constructor.ty: @unchecked
-    val nameGenerator = rename.awayFrom( freeVariables( formula ) )
+      freeVariable: Var,
+      constructor: Con,
+      formula: Expr
+  ): (List[Var], List[Var], Expr) = {
+    val FunctionType(_, argumentTypes) = constructor.ty: @unchecked
+    val nameGenerator = rename.awayFrom(freeVariables(formula))
     val newVariables = argumentTypes map {
       argumentType =>
         val newName =
           nameGenerator.fresh(
-            if ( argumentType == freeVariable.ty )
+            if (argumentType == freeVariable.ty)
               freeVariable.name
             else
-              "x" )
-        Var( newName, argumentType )
+              "x"
+          )
+        Var(newName, argumentType)
     }
-    val ( primaryVariables, secondaryVariables ) = newVariables partition {
+    val (primaryVariables, secondaryVariables) = newVariables partition {
       _.ty == freeVariable.ty
     }
-    ( primaryVariables, secondaryVariables, Substitution( freeVariable -> constructor( newVariables: _* ) )( formula ) )
+    (primaryVariables, secondaryVariables, Substitution(freeVariable -> constructor(newVariables: _*))(formula))
   }
 }

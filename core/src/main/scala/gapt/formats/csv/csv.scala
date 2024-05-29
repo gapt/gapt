@@ -5,13 +5,14 @@ package gapt.formats.csv
  * @param cells the content of each column
  * @tparam T the type of cells
  */
-case class CSVRow[T]( cells: Seq[T] ) {
+case class CSVRow[T](cells: Seq[T]) {
+
   /**
    * Appends the given row to this row's columns
    * @param row
    * @return
    */
-  def ++( row: CSVRow[T] ) = CSVRow( cells ++ row.cells )
+  def ++(row: CSVRow[T]) = CSVRow(cells ++ row.cells)
 }
 
 /**
@@ -21,13 +22,13 @@ case class CSVRow[T]( cells: Seq[T] ) {
  * @param sep the column seprator
  * @tparam T the cell type
  */
-case class CSVFile[T]( header: CSVRow[T], rows: Seq[CSVRow[T]], sep: String ) {
+case class CSVFile[T](header: CSVRow[T], rows: Seq[CSVRow[T]], sep: String) {
 
   override def toString(): String = {
     val sb = new StringBuilder()
-    sb.append( header.cells.mkString( "", sep, "\n" ) )
-    for ( r <- rows ) {
-      sb.append( r.cells.mkString( "", sep, "\n" ) )
+    sb.append(header.cells.mkString("", sep, "\n"))
+    for (r <- rows) {
+      sb.append(r.cells.mkString("", sep, "\n"))
     }
     sb.toString()
   }
@@ -37,27 +38,27 @@ case class CSVFile[T]( header: CSVRow[T], rows: Seq[CSVRow[T]], sep: String ) {
    * @param file
    * @return the file with the extended rows and header
    */
-  def ++( file: CSVFile[T] ) = {
-    require( file.sep == sep, "can only merge csv files with the same seperator" )
-    require( file.rows.size == rows.size, "can only merge csv files with same number of rows" )
-    CSVFile( header ++ file.header, ( rows zip file.rows ).map { case ( x, y ) => x ++ y }, sep )
+  def ++(file: CSVFile[T]) = {
+    require(file.sep == sep, "can only merge csv files with the same seperator")
+    require(file.rows.size == rows.size, "can only merge csv files with same number of rows")
+    CSVFile(header ++ file.header, (rows zip file.rows).map { case (x, y) => x ++ y }, sep)
   }
 
   /**
    * Flips rows / columns
    */
   def transpose(): CSVFile[T] = {
-    val raw_header_rows = ( header +: rows ).map( _.cells )
-    val req_data = raw_header_rows.toSet.map( ( x: Seq[T] ) => x.size )
-    val cols = req_data.toList( 0 )
-    require( req_data.size == 1, "All rows must have the same number of columns" )
-    require( cols > 0, "Need columns to flip" )
+    val raw_header_rows = (header +: rows).map(_.cells)
+    val req_data = raw_header_rows.toSet.map((x: Seq[T]) => x.size)
+    val cols = req_data.toList(0)
+    require(req_data.size == 1, "All rows must have the same number of columns")
+    require(cols > 0, "Need columns to flip")
 
-    val new_rows = for ( i <- 1 to cols ) yield {
-      CSVRow( raw_header_rows.map( _.apply( i - 1 ) ) )
+    val new_rows = for (i <- 1 to cols) yield {
+      CSVRow(raw_header_rows.map(_.apply(i - 1)))
     }
 
-    CSVFile( new_rows.head, new_rows.tail, sep )
+    CSVFile(new_rows.head, new_rows.tail, sep)
 
   }
 
@@ -68,6 +69,7 @@ object CSVFile {
 }
 
 trait CSVConvertible[T] {
+
   /**
    * Returns the csv header decribing the data
    */

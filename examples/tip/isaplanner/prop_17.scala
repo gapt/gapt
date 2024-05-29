@@ -7,8 +7,8 @@ import gapt.proofs.gaptic._
 
 object prop_17 extends TacticsProof {
 
-  ctx += TBase( "sk" )
-  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += TBase("sk")
+  ctx += InductiveType(ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat")
   ctx += hoc"p:Nat>Nat"
   ctx += hoc"'le' :Nat>Nat>o"
   ctx += hoc"'equal' :Nat>Nat>o"
@@ -28,12 +28,12 @@ object prop_17 extends TacticsProof {
           goal: ∀n (le(n, Z) ↔ equal(n, Z))
         """
 
-  val proof = Lemma( sequent ) {
+  val proof = Lemma(sequent) {
     allR
-    induction( hov"n:Nat" )
+    induction(hov"n:Nat")
     by { // base case
-      allL( "def_le_1", le"Z:Nat" )
-      forget( "def_p", "def_le_1", "def_le_2", "def_le_3", "def_equal_2", "def_equal_3", "def_equal_4", "ax_nat" )
+      allL("def_le_1", le"Z:Nat")
+      forget("def_p", "def_le_1", "def_le_2", "def_le_3", "def_equal_2", "def_equal_3", "def_equal_4", "ax_nat")
       andR
       impR
       axiomLog
@@ -42,16 +42,16 @@ object prop_17 extends TacticsProof {
       axiomLog
     }
     by { // inductive case
-      allL( "def_le_2", le"n_0:Nat" )
-      allL( "def_equal_3", le"n_0:Nat" )
-      forget( "def_p", "def_le_1", "def_le_2", "def_le_3", "def_equal_2", "def_equal_3", "def_equal_4", "ax_nat" )
+      allL("def_le_2", le"n_0:Nat")
+      allL("def_equal_3", le"n_0:Nat")
+      forget("def_p", "def_le_1", "def_le_2", "def_le_3", "def_equal_2", "def_equal_3", "def_equal_4", "ax_nat")
       andR
       impR
-      negL( "def_le_2_0" )
+      negL("def_le_2_0")
       axiomLog
 
       impR
-      negL( "def_equal_3_0" )
+      negL("def_equal_3_0")
       axiomLog
     }
   }

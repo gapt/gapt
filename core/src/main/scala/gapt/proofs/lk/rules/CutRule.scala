@@ -23,26 +23,27 @@ import gapt.proofs.lk.LKProof
  * @param rightSubProof The proof π,,2,,.
  * @param aux2 The index of A in π,,2,,.
  */
-case class CutRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex )
-  extends BinaryLKProof with CommonRule {
+case class CutRule(leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex)
+    extends BinaryLKProof with CommonRule {
 
-  validateIndices( leftPremise, Seq(), Seq( aux1 ) )
-  validateIndices( rightPremise, Seq( aux2 ), Seq() )
+  validateIndices(leftPremise, Seq(), Seq(aux1))
+  validateIndices(rightPremise, Seq(aux2), Seq())
 
-  if ( leftPremise( aux1 ) != rightPremise( aux2 ) )
+  if (leftPremise(aux1) != rightPremise(aux2))
     throw LKRuleCreationException(
-      s"Auxiliary formulas are not the same:\n${leftPremise( aux1 )}\n${rightPremise( aux2 )}" )
+      s"Auxiliary formulas are not the same:\n${leftPremise(aux1)}\n${rightPremise(aux2)}"
+    )
 
-  def cutFormula: Formula = leftPremise( aux1 )
+  def cutFormula: Formula = leftPremise(aux1)
 
   override def name: String = "cut"
 
-  def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux1 ), Seq( aux2 ) )
+  def auxIndices: Seq[Seq[SequentIndex]] = Seq(Seq(aux1), Seq(aux2))
 
   override def mainFormulaSequent: HOLSequent = Sequent()
 }
 
-object CutRule extends ConvenienceConstructor( "CutRule" ) {
+object CutRule extends ConvenienceConstructor("CutRule") {
 
   /**
    * Convenience constructor for cut.
@@ -55,14 +56,13 @@ object CutRule extends ConvenienceConstructor( "CutRule" ) {
    * @param rightCutFormula Index of the right cut formula or the formula itself.
    * @return
    */
-  def apply( leftSubProof: LKProof, leftCutFormula: IndexOrFormula,
-             rightSubProof: LKProof, rightCutFormula: IndexOrFormula ): CutRule = {
-    val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
+  def apply(leftSubProof: LKProof, leftCutFormula: IndexOrFormula, rightSubProof: LKProof, rightCutFormula: IndexOrFormula): CutRule = {
+    val (leftPremise, rightPremise) = (leftSubProof.endSequent, rightSubProof.endSequent)
 
-    val ( _, sucIndices ) = findAndValidate( leftPremise )( Seq(), Seq( leftCutFormula ) )
-    val ( antIndices, _ ) = findAndValidate( rightPremise )( Seq( rightCutFormula ), Seq() )
+    val (_, sucIndices) = findAndValidate(leftPremise)(Seq(), Seq(leftCutFormula))
+    val (antIndices, _) = findAndValidate(rightPremise)(Seq(rightCutFormula), Seq())
 
-    new CutRule( leftSubProof, Suc( sucIndices( 0 ) ), rightSubProof, Ant( antIndices( 0 ) ) )
+    new CutRule(leftSubProof, Suc(sucIndices(0)), rightSubProof, Ant(antIndices(0)))
 
   }
 
@@ -75,16 +75,15 @@ object CutRule extends ConvenienceConstructor( "CutRule" ) {
    * @param cutFormula The cut formula.
    * @return
    */
-  def apply( leftSubProof: LKProof, rightSubProof: LKProof, cutFormula: Formula ): CutRule = {
-    val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
+  def apply(leftSubProof: LKProof, rightSubProof: LKProof, cutFormula: Formula): CutRule = {
+    val (leftPremise, rightPremise) = (leftSubProof.endSequent, rightSubProof.endSequent)
 
-    val ( _, sucIndices ) = findAndValidate( leftPremise )( Seq(), Seq( cutFormula ) )
-    val ( antIndices, _ ) = findAndValidate( rightPremise )( Seq( cutFormula ), Seq() )
+    val (_, sucIndices) = findAndValidate(leftPremise)(Seq(), Seq(cutFormula))
+    val (antIndices, _) = findAndValidate(rightPremise)(Seq(cutFormula), Seq())
 
-    new CutRule( leftSubProof, Suc( sucIndices( 0 ) ), rightSubProof, Ant( antIndices( 0 ) ) )
+    new CutRule(leftSubProof, Suc(sucIndices(0)), rightSubProof, Ant(antIndices(0)))
   }
 
-  def apply( leftSubProof: LKProof, rightSubProof: LKProof ): CutRule =
-    apply( leftSubProof, rightSubProof,
-      leftSubProof.endSequent.succedent.intersect( rightSubProof.endSequent.antecedent ).head )
+  def apply(leftSubProof: LKProof, rightSubProof: LKProof): CutRule =
+    apply(leftSubProof, rightSubProof, leftSubProof.endSequent.succedent.intersect(rightSubProof.endSequent.antecedent).head)
 }

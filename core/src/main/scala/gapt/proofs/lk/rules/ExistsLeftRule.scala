@@ -27,21 +27,21 @@ import gapt.proofs.lk.LKProof
  * @param eigenVariable The variable α.
  * @param quantifiedVariable The variable x.
  */
-case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: Var, quantifiedVariable: Var )
-  extends StrongQuantifierRule {
+case class ExistsLeftRule(subProof: LKProof, aux: SequentIndex, eigenVariable: Var, quantifiedVariable: Var)
+    extends StrongQuantifierRule {
 
-  validateIndices( premise, Seq( aux ), Seq() )
+  validateIndices(premise, Seq(aux), Seq())
 
-  val mainFormula: Formula = BetaReduction.betaNormalize( Ex( quantifiedVariable, subFormula ) )
+  val mainFormula: Formula = BetaReduction.betaNormalize(Ex(quantifiedVariable, subFormula))
 
   override def name: String = "∃:l"
 
-  def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux ) )
+  def auxIndices: Seq[Seq[SequentIndex]] = Seq(Seq(aux))
 
   override def mainFormulaSequent: HOLSequent = mainFormula +: Sequent()
 }
 
-object ExistsLeftRule extends ConvenienceConstructor( "ExistsLeftRule" ) {
+object ExistsLeftRule extends ConvenienceConstructor("ExistsLeftRule") {
 
   /**
    * Convenience constructor for ∃:l that, given a main formula and an eigenvariable,
@@ -52,21 +52,21 @@ object ExistsLeftRule extends ConvenienceConstructor( "ExistsLeftRule" ) {
    * @param eigenVariable A variable α such that A[α] occurs in the premise.
    * @return
    */
-  def apply( subProof: LKProof, mainFormula: Formula, eigenVariable: Var ): ExistsLeftRule = {
-    if ( freeVariables( mainFormula ) contains eigenVariable ) {
-      throw LKRuleCreationException( s"Illegal main formula: Eigenvariable $eigenVariable is free in $mainFormula." )
+  def apply(subProof: LKProof, mainFormula: Formula, eigenVariable: Var): ExistsLeftRule = {
+    if (freeVariables(mainFormula) contains eigenVariable) {
+      throw LKRuleCreationException(s"Illegal main formula: Eigenvariable $eigenVariable is free in $mainFormula.")
     } else mainFormula match {
-      case Ex( v, subFormula ) =>
-        val auxFormula = Substitution( v, eigenVariable )( subFormula )
+      case Ex(v, subFormula) =>
+        val auxFormula = Substitution(v, eigenVariable)(subFormula)
 
         val premise = subProof.endSequent
 
-        val ( indices, _ ) = findAndValidate( premise )( Seq( auxFormula ), Seq() )
-        val p = ExistsLeftRule( subProof, Ant( indices( 0 ) ), eigenVariable, v )
-        assert( p.mainFormula == mainFormula )
+        val (indices, _) = findAndValidate(premise)(Seq(auxFormula), Seq())
+        val p = ExistsLeftRule(subProof, Ant(indices(0)), eigenVariable, v)
+        assert(p.mainFormula == mainFormula)
         p
 
-      case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
+      case _ => throw LKRuleCreationException(s"Proposed main formula $mainFormula is not existentially quantified.")
     }
   }
 
@@ -77,17 +77,17 @@ object ExistsLeftRule extends ConvenienceConstructor( "ExistsLeftRule" ) {
    * @param mainFormula The formula to be inferred. Must be of the form ∃x.A. The premise must contain A.
    * @return
    */
-  def apply( subProof: LKProof, mainFormula: Formula ): ExistsLeftRule = mainFormula match {
-    case Ex( v, _ ) =>
-      val p = apply( subProof, mainFormula, v )
-      assert( p.mainFormula == mainFormula )
+  def apply(subProof: LKProof, mainFormula: Formula): ExistsLeftRule = mainFormula match {
+    case Ex(v, _) =>
+      val p = apply(subProof, mainFormula, v)
+      assert(p.mainFormula == mainFormula)
       p
 
-    case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
+    case _ => throw LKRuleCreationException(s"Proposed main formula $mainFormula is not existentially quantified.")
   }
 
-  def apply( subProof: LKProof, aux: SequentIndex, mainFormula: Formula, eigenVariable: Var ): ExistsLeftRule =
+  def apply(subProof: LKProof, aux: SequentIndex, mainFormula: Formula, eigenVariable: Var): ExistsLeftRule =
     mainFormula match {
-      case Ex( v, _ ) => ExistsLeftRule( subProof, aux, eigenVariable, v )
+      case Ex(v, _) => ExistsLeftRule(subProof, aux, eigenVariable, v)
     }
 }

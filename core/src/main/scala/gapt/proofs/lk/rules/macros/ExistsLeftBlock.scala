@@ -8,6 +8,7 @@ import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.ExistsLeftRule
 
 object ExistsLeftBlock {
+
   /**
    * Applies the ExistsLeft-rule n times.
    * This method expects a formula main with
@@ -31,8 +32,8 @@ object ExistsLeftBlock {
    * method has to ensure the correctness of these terms, and, specifically, that
    * A[x1\y1,...,xN\yN] indeed occurs at the bottom of the proof π.
    */
-  def apply( subProof: LKProof, main: Formula, eigenvariables: Seq[Var] ): LKProof =
-    withSequentConnector( subProof, main, eigenvariables )._1
+  def apply(subProof: LKProof, main: Formula, eigenvariables: Seq[Var]): LKProof =
+    withSequentConnector(subProof, main, eigenvariables)._1
 
   /**
    * Applies the ExistsLeft-rule n times.
@@ -58,18 +59,17 @@ object ExistsLeftBlock {
    * A[x1\y1,...,xN\yN] indeed occurs at the bottom of the proof π.
    * @return A pair consisting of an LKProof and an SequentConnector.
    */
-  def withSequentConnector( subProof: LKProof, main: Formula,
-                            eigenvariables: Seq[Var] ): ( LKProof, SequentConnector ) = {
-    val partiallyInstantiatedMains = ( 0 to eigenvariables.length ).toList.reverse.
-      map( n => instantiate( main, eigenvariables.take( n ) ) )
+  def withSequentConnector(subProof: LKProof, main: Formula, eigenvariables: Seq[Var]): (LKProof, SequentConnector) = {
+    val partiallyInstantiatedMains = (0 to eigenvariables.length).toList.reverse.map(n => instantiate(main, eigenvariables.take(n)))
 
     val series = eigenvariables.reverse.foldLeft(
-      ( subProof, partiallyInstantiatedMains, SequentConnector( subProof.endSequent ) ) ) { ( acc, ai ) =>
-        val newSubProof = ExistsLeftRule( acc._1, acc._2.tail.head, ai )
-        val newSequentConnector = newSubProof.getSequentConnector * acc._3
-        ( newSubProof, acc._2.tail, newSequentConnector )
-      }
+      (subProof, partiallyInstantiatedMains, SequentConnector(subProof.endSequent))
+    ) { (acc, ai) =>
+      val newSubProof = ExistsLeftRule(acc._1, acc._2.tail.head, ai)
+      val newSequentConnector = newSubProof.getSequentConnector * acc._3
+      (newSubProof, acc._2.tail, newSequentConnector)
+    }
 
-    ( series._1, series._3 )
+    (series._1, series._3)
   }
 }

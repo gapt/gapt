@@ -10,12 +10,12 @@ import gapt.provers.viper.aip.AnalyticInductionProver
 object prop_27 extends TacticsProof {
 
   // Sorts
-  ctx += TBase( "sk" )
+  ctx += TBase("sk")
 
   // Inductive types
-  ctx += InductiveType( ty"list", hoc"'nil' :list", hoc"'cons' :sk>list>list" )
+  ctx += InductiveType(ty"list", hoc"'nil' :list", hoc"'cons' :sk>list>list")
 
-  //Function constants
+  // Function constants
   ctx += hoc"'qrev' :list>list>list"
   ctx += hoc"'append' :list>list>list"
   ctx += hoc"'rev' :list>list"
@@ -35,30 +35,34 @@ object prop_27 extends TacticsProof {
         goal: ∀x (rev(x:list): list) = qrev(x, nil:list)
   """
 
-  val lemma_22 = (
-    ( "" -> hof"∀y append(nil, y) = y" ) +:
-    ( "" -> hof"∀z ∀xs ∀y append(cons(z, xs), y) = cons(z, append(xs, y))" ) +:
-    Sequent() :+ ( "" -> hof"!xs !ys !zs append(xs, append(ys, zs)) = append(append(xs,ys),zs)" ) )
+  val lemma_22 =
+    (
+      ("" -> hof"∀y append(nil, y) = y") +:
+        ("" -> hof"∀z ∀xs ∀y append(cons(z, xs), y) = cons(z, append(xs, y))") +:
+        Sequent() :+ ("" -> hof"!xs !ys !zs append(xs, append(ys, zs)) = append(append(xs,ys),zs)")
+    )
 
-  val lemma_22_proof = AnalyticInductionProver.singleInduction( lemma_22, hov"xs:list" )
+  val lemma_22_proof = AnalyticInductionProver.singleInduction(lemma_22, hov"xs:list")
 
-  val cong_1 = (
-    ( "" -> hof"∀y qrev(nil, y) = y" ) +:
-    ( "" -> hof"∀z ∀xs ∀y qrev(cons(z, xs), y) = qrev(xs, cons(z, y))" ) +:
-    ( "" -> hof"rev(nil) = nil" ) +:
-    ( "" -> hof"∀y ∀xs rev(cons(y, xs)) = append(rev(xs), cons(y, nil))" ) +:
-    ( "" -> hof"∀y append(nil, y) = y" ) +:
-    ( "" -> hof"∀z ∀xs ∀y append(cons(z, xs), y) = cons(z, append(xs, y))" ) +:
-    ( "" -> hof"!xs !ys !zs append(xs, append(ys, zs)) = append(append(xs,ys),zs)" ) +:
-    Sequent() :+ ( "" -> hof"!xs !ys append(rev(xs),ys) = qrev(xs, ys)" ) )
+  val cong_1 =
+    (
+      ("" -> hof"∀y qrev(nil, y) = y") +:
+        ("" -> hof"∀z ∀xs ∀y qrev(cons(z, xs), y) = qrev(xs, cons(z, y))") +:
+        ("" -> hof"rev(nil) = nil") +:
+        ("" -> hof"∀y ∀xs rev(cons(y, xs)) = append(rev(xs), cons(y, nil))") +:
+        ("" -> hof"∀y append(nil, y) = y") +:
+        ("" -> hof"∀z ∀xs ∀y append(cons(z, xs), y) = cons(z, append(xs, y))") +:
+        ("" -> hof"!xs !ys !zs append(xs, append(ys, zs)) = append(append(xs,ys),zs)") +:
+        Sequent() :+ ("" -> hof"!xs !ys append(rev(xs),ys) = qrev(xs, ys)")
+    )
 
-  val cong_1_proof = AnalyticInductionProver.singleInduction( cong_1, hov"xs:list" )
+  val cong_1_proof = AnalyticInductionProver.singleInduction(cong_1, hov"xs:list")
 
-  val proof = Lemma( sequent ) {
-    cut( "lemma_22", hof"!xs !ys !zs append(xs, append(ys, zs)) = append(append(xs,ys),zs)" )
-    insert( lemma_22_proof )
-    cut( "cong_1", hof"!xs !ys append(rev(xs),ys) = qrev(xs, ys)" )
-    insert( cong_1_proof )
-    allR; induction( hov"x:list" ); escargot.withDeskolemization.onAllSubGoals
+  val proof = Lemma(sequent) {
+    cut("lemma_22", hof"!xs !ys !zs append(xs, append(ys, zs)) = append(append(xs,ys),zs)")
+    insert(lemma_22_proof)
+    cut("cong_1", hof"!xs !ys append(rev(xs),ys) = qrev(xs, ys)")
+    insert(cong_1_proof)
+    allR; induction(hov"x:list"); escargot.withDeskolemization.onAllSubGoals
   }
 }

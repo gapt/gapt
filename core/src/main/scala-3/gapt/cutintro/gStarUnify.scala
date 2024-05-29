@@ -15,9 +15,10 @@ object gStarUnify {
    * @return Set of unified literals
    */
   def apply(
-    seHs:                      Pi2SeHs,
-    nameOfExistentialVariable: Var,
-    nameOfUniversalVariable:   Var ): Set[Formula] = {
+      seHs: Pi2SeHs,
+      nameOfExistentialVariable: Var,
+      nameOfUniversalVariable: Var
+  ): Set[Formula] = {
 
     // To compute the unified literals, we have to consider all unification pairs.
     // These are pairs of literals (P,Q) occurring in the reduced representation such that:
@@ -26,21 +27,25 @@ object gStarUnify {
     // Unification pairs are unifiable if there are terms s,t such that a replacement of terms in P by s and a replacement
     // of terms in Q by s turn the result into dual literals. Therefore, we can assume that exactly one literal is negated.
     // Note that the set itself indicates whether the literal is negated or not. The negation has already been dropped.
-    val ( alpha, beta, neutral ) = seHs.literalsInTheDNTAs
-    val ( alphaPos, alphaNeg ) = seHs.sortAndAtomize( alpha )
-    val ( betaPos, betaNeg ) = seHs.sortAndAtomize( beta )
-    val ( neutralPos, neutralNeg ) = seHs.sortAndAtomize( neutral )
+    val (alpha, beta, neutral) = seHs.literalsInTheDNTAs
+    val (alphaPos, alphaNeg) = seHs.sortAndAtomize(alpha)
+    val (betaPos, betaNeg) = seHs.sortAndAtomize(beta)
+    val (neutralPos, neutralNeg) = seHs.sortAndAtomize(neutral)
 
     // Set that eventually becomes the return value, i.e. the set of unified literals
-    ( for {
-      ( alphas, betas ) <- Seq(
-        alphaPos -> betaNeg, alphaPos -> neutralNeg,
-        alphaNeg -> betaPos, alphaNeg -> neutralPos,
-        neutralNeg -> betaPos, neutralPos -> betaNeg )
+    (for {
+      (alphas, betas) <- Seq(
+        alphaPos -> betaNeg,
+        alphaPos -> neutralNeg,
+        alphaNeg -> betaPos,
+        alphaNeg -> neutralPos,
+        neutralNeg -> betaPos,
+        neutralPos -> betaNeg
+      )
       posAt <- alphas
       negAt <- betas
-      lit <- unifyLiterals( seHs, posAt, negAt, nameOfExistentialVariable, nameOfUniversalVariable )
-    } yield lit ).toSet
+      lit <- unifyLiterals(seHs, posAt, negAt, nameOfExistentialVariable, nameOfUniversalVariable)
+    } yield lit).toSet
   }
 
   /**
@@ -55,29 +60,31 @@ object gStarUnify {
    *         nor one of the existential eigenvariables occurs, but maybe nameOfExistentialVariable or nameOfUniversalVariable
    */
   private def unifyLiterals(
-    seHs:                      Pi2SeHs,
-    posAt:                     Formula,
-    negAt:                     Formula,
-    nameOfExistentialVariable: Var,
-    nameOfUniversalVariable:   Var ): Option[Formula] = {
+      seHs: Pi2SeHs,
+      posAt: Formula,
+      negAt: Formula,
+      nameOfExistentialVariable: Var,
+      nameOfUniversalVariable: Var
+  ): Option[Formula] = {
 
     // nameOfPos and nameOfNeg are the names of the corresponding atoms that have to be equal. Otherwise, there is no unified literal.
     // In the case that the names are equal, we call the unify function with the arguments argsP and argsN of the corresponding literals.
-    val Apps( nameOfPos, argsP ): Formula = posAt
-    val Apps( nameOfNeg, argsN ): Formula = negAt
+    val Apps(nameOfPos, argsP): Formula = posAt
+    val Apps(nameOfNeg, argsN): Formula = negAt
 
     val unifiedLiteral: Option[Formula] = nameOfPos match {
-      case t if ( ( nameOfNeg == t ) && ( argsP.length == argsN.length ) ) => {
+      case t if ((nameOfNeg == t) && (argsP.length == argsN.length)) => {
         val unifiedArgs = unify(
           seHs,
-          argsP.zip( argsN ),
+          argsP.zip(argsN),
           nameOfExistentialVariable,
-          nameOfUniversalVariable )
+          nameOfUniversalVariable
+        )
 
         val theUnifiedLiteral = unifiedArgs match {
-          case Some( s ) => {
-            if ( s.length == argsP.length ) {
-              Some( Apps( nameOfPos, s ).asInstanceOf[Formula] )
+          case Some(s) => {
+            if (s.length == argsP.length) {
+              Some(Apps(nameOfPos, s).asInstanceOf[Formula])
             } else {
               None
             }
@@ -105,83 +112,88 @@ object gStarUnify {
    *         nor one of the existential eigenvariables occurs, but maybe nameOfExistentialVariable or nameOfUniversalVariable
    */
   private def unify(
-    seHs:                      Pi2SeHs,
-    zippedArgs:                List[( Expr, Expr )],
-    nameOfExistentialVariable: Var,
-    nameOfUniversalVariable:   Var ): Option[Seq[Expr]] = scala.util.boundary {
+      seHs: Pi2SeHs,
+      zippedArgs: List[(Expr, Expr)],
+      nameOfExistentialVariable: Var,
+      nameOfUniversalVariable: Var
+  ): Option[Seq[Expr]] = scala.util.boundary {
 
     var unifiedTerms: Option[Seq[Expr]] = None
 
     // A run through all pairs
-    zippedArgs.foreach( t => {
+    zippedArgs.foreach(t => {
 
       unifiedTerms = unifiedTerms match {
-        case Some( old ) => unifyPair( seHs, t, nameOfExistentialVariable, nameOfUniversalVariable ) match {
-          case Some( update ) => Option( old :+ update )
-          case None           => scala.util.boundary.break(None)
-        }
-        case None => unifyPair( seHs, t, nameOfExistentialVariable, nameOfUniversalVariable ) match {
-          case Some( update ) => Option( Seq( update ) )
-          case None           => scala.util.boundary.break(None)
-        }
+        case Some(old) => unifyPair(seHs, t, nameOfExistentialVariable, nameOfUniversalVariable) match {
+            case Some(update) => Option(old :+ update)
+            case None         => scala.util.boundary.break(None)
+          }
+        case None => unifyPair(seHs, t, nameOfExistentialVariable, nameOfUniversalVariable) match {
+            case Some(update) => Option(Seq(update))
+            case None         => scala.util.boundary.break(None)
+          }
       }
 
-    } )
+    })
 
     unifiedTerms
 
   }
 
   private def unifyPair(
-    seHs:                      Pi2SeHs,
-    termPair:                  ( Expr, Expr ),
-    nameOfExistentialVariable: Var,
-    nameOfUniversalVariable:   Var ): Option[Expr] = scala.util.boundary {
+      seHs: Pi2SeHs,
+      termPair: (Expr, Expr),
+      nameOfExistentialVariable: Var,
+      nameOfUniversalVariable: Var
+  ): Option[Expr] = scala.util.boundary {
 
     // If there are substitutions tL and tR for the universal variable of the cut formula then we can
     // replace tL or tR with nameOfUniversalVariable, i.e. we extend the current list of arguments with
     // nameOfUniversalVariable and stop the loop for the current pair of terms
-    unifyPairAccordingTo( seHs.productionRulesXS, termPair, nameOfUniversalVariable ) match {
-      case Some( update ) => return Option( update )
-      case None           =>
+    unifyPairAccordingTo(seHs.productionRulesXS, termPair, nameOfUniversalVariable) match {
+      case Some(update) => return Option(update)
+      case None         =>
     }
 
     // If there are substitutions tL and tR for the existential variable of the cut formula then we can
     // replace tL or tR with nameOfExistentialVariable, i.e. we extend the current list of arguments with
     // nameOfExistentialVariable and stop the loop for the current pair of terms
-    unifyPairAccordingTo( seHs.productionRulesYS, termPair, nameOfExistentialVariable ) match {
-      case Some( update ) => return Option( update )
-      case None           =>
+    unifyPairAccordingTo(seHs.productionRulesYS, termPair, nameOfExistentialVariable) match {
+      case Some(update) => return Option(update)
+      case None         =>
     }
 
     // Since we could not unify the pair so far, we have to check whether the outermost function of the terms
     // is equal, whether the terms are equal, whether the terms are eigenvariables, or whether the pair is
     // not unifiable
-    val ( tL, tR ) = termPair
-    val Apps( nameOfArgL, argsOfArgL ) = tL
-    val Apps( nameOfArgR, argsOfArgR ) = tR
+    val (tL, tR) = termPair
+    val Apps(nameOfArgL, argsOfArgL) = tL
+    val Apps(nameOfArgR, argsOfArgR) = tR
 
     // If the terms are equal, we have to check whether the terms contain eigenvariables and replace them
-    if ( ( nameOfArgL == nameOfArgR ) && ( argsOfArgL.length == argsOfArgR.length ) ) {
+    if ((nameOfArgL == nameOfArgR) && (argsOfArgL.length == argsOfArgR.length)) {
 
-      if ( tL.syntaxEquals( seHs.universalEigenvariable ) ) return Option( nameOfUniversalVariable )
+      if (tL.syntaxEquals(seHs.universalEigenvariable)) return Option(nameOfUniversalVariable)
 
-      seHs.existentialEigenvariables.foreach( existentialEigenvariable => if ( tL.syntaxEquals( existentialEigenvariable ) ) {
-        scala.util.boundary.break(Option( nameOfExistentialVariable ))
-      } )
+      seHs.existentialEigenvariables.foreach(existentialEigenvariable =>
+        if (tL.syntaxEquals(existentialEigenvariable)) {
+          scala.util.boundary.break(Option(nameOfExistentialVariable))
+        }
+      )
 
-      if ( argsOfArgL.length == 0 ) return Some( tL )
+      if (argsOfArgL.length == 0) return Some(tL)
 
       unify(
         seHs,
-        argsOfArgL.zip( argsOfArgR ),
+        argsOfArgL.zip(argsOfArgR),
         nameOfExistentialVariable,
-        nameOfUniversalVariable ) match {
-          case Some( r ) => {
-            if ( argsOfArgL.length == r.length ) return Some( Apps( nameOfArgL, r ) )
-          }
-          case None =>
+        nameOfUniversalVariable
+      ) match {
+        case Some(r) => {
+          if (argsOfArgL.length == r.length) return Some(Apps(nameOfArgL, r))
         }
+        case None =>
+      }
 
     }
 
@@ -189,9 +201,10 @@ object gStarUnify {
   }
 
   private def unifyPairAccordingTo(
-    productionRules: List[( Expr, Expr )],
-    termPair:        ( Expr, Expr ),
-    name:            Var ): Option[Expr] =
-    if ( productionRules contains termPair ) Some( name ) else None
+      productionRules: List[(Expr, Expr)],
+      termPair: (Expr, Expr),
+      name: Var
+  ): Option[Expr] =
+    if (productionRules contains termPair) Some(name) else None
 
 }

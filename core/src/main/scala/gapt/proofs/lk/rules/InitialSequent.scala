@@ -23,5 +23,5 @@ abstract class InitialSequent extends LKProof {
 }
 
 object InitialSequent {
-  def unapply( proof: InitialSequent ): Some[HOLSequent] = Some( proof.endSequent )
+  def unapply(proof: InitialSequent): Some[HOLSequent] = Some(proof.endSequent)
 }

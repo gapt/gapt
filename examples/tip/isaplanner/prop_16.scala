@@ -6,10 +6,10 @@ import gapt.proofs.gaptic._
 
 object prop_16 extends TacticsProof {
 
-  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += InductiveType(ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat")
   ctx += hoc"p:Nat>Nat"
 
-  ctx += InductiveType( ty"list", hoc"nil:list", hoc"cons:Nat>list>list" )
+  ctx += InductiveType(ty"list", hoc"nil:list", hoc"cons:Nat>list>list")
   ctx += hoc"head:list>Nat"
   ctx += hoc"tail:list>list"
 
@@ -28,12 +28,12 @@ object prop_16 extends TacticsProof {
                       goal: ∀x ∀xs ((xs:list) = nil → (last(cons(x:Nat, xs): list): Nat) = x)
     """
 
-  val proof = Lemma( sequent ) {
+  val proof = Lemma(sequent) {
     allR
     allR
     impR
-    eql( "goal_0", "goal_1" )
-    allL( "def_last_2", le"x:Nat" )
+    eql("goal_0", "goal_1")
+    allL("def_last_2", le"x:Nat")
     axiomLog
   }
 }

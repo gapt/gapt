@@ -13,18 +13,18 @@ trait Atom extends Formula with HOLPartialAtom {
 }
 
 object Atom {
-  def apply( head: String, args: Expr* )( implicit dummyImplicit: DummyImplicit ): Atom =
-    apply( head, args )
-  def apply( head: String, args: Seq[Expr] ): Atom =
-    Apps( Const( head, FunctionType( To, args.map( _.ty ) ) ), args ).asInstanceOf[Atom]
+  def apply(head: String, args: Expr*)(implicit dummyImplicit: DummyImplicit): Atom =
+    apply(head, args)
+  def apply(head: String, args: Seq[Expr]): Atom =
+    Apps(Const(head, FunctionType(To, args.map(_.ty))), args).asInstanceOf[Atom]
 
-  def apply( head: Expr, args: Expr* ): Atom =
-    apply( head, args toList )
-  def apply( head: Expr, args: List[Expr] ): Atom =
-    Apps( head, args ).asInstanceOf[Atom]
+  def apply(head: Expr, args: Expr*): Atom =
+    apply(head, args toList)
+  def apply(head: Expr, args: List[Expr]): Atom =
+    Apps(head, args).asInstanceOf[Atom]
 
-  def unapply( e: Atom ): Option[( Expr, List[Expr] )] = e match {
-    case Apps( head @ ( Const( _, _, _ ) | Var( _, _ ) ), args ) if e.ty == To => Some( head, args )
-    case _ => None
+  def unapply(e: Atom): Option[(Expr, List[Expr])] = e match {
+    case Apps(head @ (Const(_, _, _) | Var(_, _)), args) if e.ty == To => Some(head, args)
+    case _                                                             => None
   }
 }

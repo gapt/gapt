@@ -30,17 +30,17 @@ import gapt.proofs.lk.LKProof
  * @param aux The index of the formula in which the replacement is to be performed.
  * @param replacementContext A term λx.A[x] that designates the positions to be replaced.
  */
-case class EqualityRightRule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, replacementContext: Abs )
-  extends EqualityRule {
+case class EqualityRightRule(subProof: LKProof, eq: SequentIndex, aux: SequentIndex, replacementContext: Abs)
+    extends EqualityRule {
 
-  validateIndices( premise, Seq( eq ), Seq( aux ) )
+  validateIndices(premise, Seq(eq), Seq(aux))
 
   override def name: String = "eq:r"
 
   override def mainFormulaSequent: HOLSequent = Sequent() :+ mainFormula
 }
 
-object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
+object EqualityRightRule extends ConvenienceConstructor("EqualityRightRule") {
 
   /**
    * Convenience constructor for eq:r.
@@ -53,13 +53,12 @@ object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
    * @param replacementContext A term λx.A[x] that designates the positions to be replaced.
    * @return
    */
-  def apply( subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula,
-             replacementContext: Abs ): EqualityRightRule = {
+  def apply(subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula, replacementContext: Abs): EqualityRightRule = {
     val premise = subProof.endSequent
 
-    val ( indicesAnt, indicesSuc ) = findAndValidate( premise )( Seq( eqFormula ), Seq( auxFormula ) )
+    val (indicesAnt, indicesSuc) = findAndValidate(premise)(Seq(eqFormula), Seq(auxFormula))
 
-    EqualityRightRule( subProof, Ant( indicesAnt( 0 ) ), Suc( indicesSuc( 0 ) ), replacementContext )
+    EqualityRightRule(subProof, Ant(indicesAnt(0)), Suc(indicesSuc(0)), replacementContext)
 
   }
 
@@ -74,51 +73,56 @@ object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
    * @param mainFormula The proposed main formula.
    * @return
    */
-  def apply( subProof: LKProof, eq: IndexOrFormula, aux: IndexOrFormula, mainFormula: Formula ): EqualityRightRule = {
+  def apply(subProof: LKProof, eq: IndexOrFormula, aux: IndexOrFormula, mainFormula: Formula): EqualityRightRule = {
     val premise = subProof.endSequent
-    val ( indicesAnt, indicesSuc ) = findAndValidate( premise )( Seq( eq ), Seq( aux ) )
-    val ( eqFormula, auxFormula ) = ( premise( Ant( indicesAnt( 0 ) ) ), premise( Suc( indicesSuc( 0 ) ) ) )
+    val (indicesAnt, indicesSuc) = findAndValidate(premise)(Seq(eq), Seq(aux))
+    val (eqFormula, auxFormula) = (premise(Ant(indicesAnt(0))), premise(Suc(indicesSuc(0))))
 
     eqFormula match {
-      case Eq( s, t ) =>
-        if ( s == t && auxFormula == mainFormula ) {
-          val repContext = replacementContext.abstractTerm( auxFormula )( s )
+      case Eq(s, t) =>
+        if (s == t && auxFormula == mainFormula) {
+          val repContext = replacementContext.abstractTerm(auxFormula)(s)
 
-          val Abs( _, _ ) = repContext
-          if ( auxFormula.find( s ).isEmpty )
-            throw LKRuleCreationException( s"Eq is trivial, but term $s does not occur in $auxFormula." )
+          val Abs(_, _) = repContext
+          if (auxFormula.find(s).isEmpty)
+            throw LKRuleCreationException(s"Eq is trivial, but term $s does not occur in $auxFormula.")
 
-          EqualityRightRule( subProof, eq, aux, repContext )
+          EqualityRightRule(subProof, eq, aux, repContext)
 
-        } else if ( s == t && auxFormula != mainFormula ) {
-          throw LKRuleCreationException( s"Eq is trivial, but aux formula $auxFormula and main formula $mainFormula." )
+        } else if (s == t && auxFormula != mainFormula) {
+          throw LKRuleCreationException(s"Eq is trivial, but aux formula $auxFormula and main formula $mainFormula.")
 
-        } else if ( s != t && auxFormula == mainFormula ) {
-          throw LKRuleCreationException( "Nontrivial equation, but aux and main formula are equal." )
+        } else if (s != t && auxFormula == mainFormula) {
+          throw LKRuleCreationException("Nontrivial equation, but aux and main formula are equal.")
 
         } else {
-          val contextS = replacementContext( s.ty, auxFormula, auxFormula.find( s ) intersect mainFormula.find( t ) )
-          val contextT = replacementContext( t.ty, auxFormula, auxFormula.find( t ) intersect mainFormula.find( s ) )
+          val contextS = replacementContext(s.ty, auxFormula, auxFormula.find(s) intersect mainFormula.find(t))
+          val contextT = replacementContext(t.ty, auxFormula, auxFormula.find(t) intersect mainFormula.find(s))
 
-          val Abs( vS, restS ) = contextS
-          val Abs( vT, restT ) = contextT
+          val Abs(vS, restS) = contextS
+          val Abs(vT, restT) = contextT
 
-          if ( restS.find( vS ).isEmpty && restT.find( vT ).isEmpty )
-            throw LKRuleCreationException( s"Neither $s nor $t found in formula $auxFormula." )
+          if (restS.find(vS).isEmpty && restT.find(vT).isEmpty)
+            throw LKRuleCreationException(s"Neither $s nor $t found in formula $auxFormula.")
 
-          val p = if ( BetaReduction.betaNormalize( App( contextS, t ) ) ==
-            BetaReduction.betaNormalize( mainFormula ) ) {
-            EqualityRightRule( subProof, eq, aux, contextS )
-          } else if ( BetaReduction.betaNormalize( App( contextT, s ) ) ==
-            BetaReduction.betaNormalize( mainFormula ) ) {
-            EqualityRightRule( subProof, eq, aux, contextT )
-          } else throw LKRuleCreationException( "Replacement in neither direction leads to proposed main formula." )
+          val p =
+            if (
+              BetaReduction.betaNormalize(App(contextS, t)) ==
+                BetaReduction.betaNormalize(mainFormula)
+            ) {
+              EqualityRightRule(subProof, eq, aux, contextS)
+            } else if (
+              BetaReduction.betaNormalize(App(contextT, s)) ==
+                BetaReduction.betaNormalize(mainFormula)
+            ) {
+              EqualityRightRule(subProof, eq, aux, contextT)
+            } else throw LKRuleCreationException("Replacement in neither direction leads to proposed main formula.")
 
-          assert( p.mainFormula == mainFormula )
+          assert(p.mainFormula == mainFormula)
           p
         }
 
-      case _ => throw LKRuleCreationException( s"Formula $eqFormula is not an equation." )
+      case _ => throw LKRuleCreationException(s"Formula $eqFormula is not an equation.")
     }
   }
 }

@@ -1,6 +1,6 @@
 package gapt.formats.prover9
 
-import scala.util.parsing.combinator.{ PackratParsers, RegexParsers }
+import scala.util.parsing.combinator.{PackratParsers, RegexParsers}
 import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.And
@@ -54,90 +54,89 @@ trait Prover9TermParserA extends RegexParsers with PackratParsers {
   def conssymb: Parser[String]
   def varsymb: Parser[String]
 
-  def parseFormula( s: String ): FOLFormula = parseAll( formula, s ) match {
-    case Success( result, _ ) => result
+  def parseFormula(s: String): FOLFormula = parseAll(formula, s) match {
+    case Success(result, _) => result
     case failure: NoSuccess =>
-      throw new Exception( "Error parsing prover9 formula '" +
-        s + "' at position " + failure.next.pos + ". Error message: " + failure.msg )
+      throw new Exception("Error parsing prover9 formula '" +
+        s + "' at position " + failure.next.pos + ". Error message: " + failure.msg)
   }
 
-  def parseTerm( s: String ): FOLTerm = parseAll( term, s ) match {
-    case Success( result, _ ) => result
+  def parseTerm(s: String): FOLTerm = parseAll(term, s) match {
+    case Success(result, _) => result
     case failure: NoSuccess =>
-      throw new Exception( "Error parsing prover9 term '" + s + "' at position " +
-        failure.next.pos + ". Error message: " + failure.msg )
+      throw new Exception("Error parsing prover9 term '" + s + "' at position " +
+        failure.next.pos + ". Error message: " + failure.msg)
   }
 
-  lazy val pformula: PackratParser[FOLFormula] = parens( formula ) | allformula | exformula
+  lazy val pformula: PackratParser[FOLFormula] = parens(formula) | allformula | exformula
   lazy val formula: PackratParser[FOLFormula] = implication
-  //precedence 800
+  // precedence 800
   lazy val implication: PackratParser[FOLFormula] =
-    ( dis_or_con ~ ( "<->" | "->" | "<-" ) ~ dis_or_con ) ^^ {
+    (dis_or_con ~ ("<->" | "->" | "<-") ~ dis_or_con) ^^ {
       r =>
-        ( r: @unchecked ) match {
-          case f ~ "->" ~ g  => Imp( f, g )
-          case f ~ "<-" ~ g  => Imp( g, f )
-          case f ~ "<->" ~ g => And( Imp( f, g ), Imp( g, f ) )
+        (r: @unchecked) match {
+          case f ~ "->" ~ g  => Imp(f, g)
+          case f ~ "<-" ~ g  => Imp(g, f)
+          case f ~ "<->" ~ g => And(Imp(f, g), Imp(g, f))
         }
     } | dis_or_con
 
   lazy val dis_or_con: PackratParser[FOLFormula] = disjunction | conlit
-  //precedence 790
+  // precedence 790
   lazy val disjunction: PackratParser[FOLFormula] =
-    ( conlit ~ ( "|" ~> disjunction ) ^^ { case f ~ g => Or( f, g ) } ) | conlit
-  //precedence 780
+    (conlit ~ ("|" ~> disjunction) ^^ { case f ~ g => Or(f, g) }) | conlit
+  // precedence 780
   lazy val conlit: PackratParser[FOLFormula] = conjunction | qliteral
   lazy val conjunction: PackratParser[FOLFormula] =
-    ( qliteral ~ ( "&" ~> conjunction ) ^^ { case f ~ g => And( f, g ) } ) | qliteral
-  //precedence 750
+    (qliteral ~ ("&" ~> conjunction) ^^ { case f ~ g => And(f, g) }) | qliteral
+  // precedence 750
   lazy val qliteral: PackratParser[FOLFormula] = allformula | exformula | literal2
-  lazy val allformula: PackratParser[FOLFormula] = parens( allformula_ )
-  lazy val exformula: PackratParser[FOLFormula] = parens( exformula_ )
+  lazy val allformula: PackratParser[FOLFormula] = parens(allformula_)
+  lazy val exformula: PackratParser[FOLFormula] = parens(exformula_)
   lazy val allformula_ : PackratParser[FOLFormula] =
-    ( "all" ~> variable ~ ( allformula_ | exformula_ | literal2 ) ) ^^ { case v ~ f => All( v, f ) }
+    ("all" ~> variable ~ (allformula_ | exformula_ | literal2)) ^^ { case v ~ f => All(v, f) }
   lazy val exformula_ : PackratParser[FOLFormula] =
-    ( "exists" ~> variable ~ ( allformula_ | exformula_ | literal2 ) ) ^^ { case v ~ f => Ex( v, f ) }
+    ("exists" ~> variable ~ (allformula_ | exformula_ | literal2)) ^^ { case v ~ f => Ex(v, f) }
 
-  //precedence 300
+  // precedence 300
   lazy val literal2: PackratParser[FOLFormula] = pformula | atomWeq | negation
-  lazy val negation: PackratParser[FOLFormula] = "-" ~> ( pformula | negation | atomWeq ) ^^ { x => Neg( x ) }
+  lazy val negation: PackratParser[FOLFormula] = "-" ~> (pformula | negation | atomWeq) ^^ { x => Neg(x) }
 
-  def parens[T]( p: Parser[T] ): Parser[T] = "(" ~> p <~ ")"
+  def parens[T](p: Parser[T]): Parser[T] = "(" ~> p <~ ")"
 
   lazy val literal: PackratParser[FOLFormula] = iatom | negatom | posatom
   lazy val posatom: PackratParser[FOLFormula] = atom
-  lazy val negatom: PackratParser[FOLFormula] = "-" ~> atom ^^ ( Neg( _ ) )
+  lazy val negatom: PackratParser[FOLFormula] = "-" ~> atom ^^ (Neg(_))
   lazy val atomWeq: PackratParser[FOLFormula] = iatom | atom
   lazy val atom: PackratParser[FOLFormula] = atom1 | atom2 | topbottom
-  lazy val atom1: PackratParser[FOLFormula] = atomsymb ~ "(" ~ repsep( term, "," ) ~ ")" ^^ {
-    case x ~ _ ~ params ~ _ => FOLAtom( x, params )
+  lazy val atom1: PackratParser[FOLFormula] = atomsymb ~ "(" ~ repsep(term, ",") ~ ")" ^^ {
+    case x ~ _ ~ params ~ _ => FOLAtom(x, params)
   }
-  lazy val atom2: PackratParser[FOLFormula] = atomsymb ^^ ( FOLAtom( _, Nil ) )
+  lazy val atom2: PackratParser[FOLFormula] = atomsymb ^^ (FOLAtom(_, Nil))
 
-  //infixatom
+  // infixatom
   lazy val iatom: PackratParser[FOLFormula] = term ~ """((<|>)=?)|(!?=)|[+\-*]""".r ~ term ^^ {
-    case t1 ~ "=" ~ t2  => Eq( t1, t2 )
-    case t1 ~ "!=" ~ t2 => Neg( Eq( t1, t2 ) )
-    case t1 ~ sym ~ t2  => FOLAtom( sym, List( t1, t2 ) )
+    case t1 ~ "=" ~ t2  => Eq(t1, t2)
+    case t1 ~ "!=" ~ t2 => Neg(Eq(t1, t2))
+    case t1 ~ sym ~ t2  => FOLAtom(sym, List(t1, t2))
   }
   lazy val atomsymb: Parser[String] = """[a-zA-Z][a-zA-Z0-9_]*""".r
   lazy val term: PackratParser[FOLTerm] = ifunction | pfunction | noniterm
   lazy val ifunction: PackratParser[FOLTerm] =
     pfunction ~ """[+\-*/\\^v]""".r ~ pfunction ^^ {
-      case t1 ~ sym ~ t2 => FOLFunction( sym, List( t1, t2 ) )
+      case t1 ~ sym ~ t2 => FOLFunction(sym, List(t1, t2))
     }
   lazy val pfunction: PackratParser[FOLTerm] =
-    ( noniterm | parens( ifunction ) ) ~ "'".? ^^ {
-      case t1 ~ Some( _ ) => FOLFunction( "'", t1 )
-      case t1 ~ None      => t1
+    (noniterm | parens(ifunction)) ~ "'".? ^^ {
+      case t1 ~ Some(_) => FOLFunction("'", t1)
+      case t1 ~ None    => t1
     }
   lazy val noniterm: PackratParser[FOLTerm] = function | constant | variable
-  lazy val function: PackratParser[FOLTerm] = conssymb ~ "(" ~ repsep( term, "," ) ~ ")" ^^ {
-    case x ~ _ ~ params ~ _ => FOLFunction( x, params )
+  lazy val function: PackratParser[FOLTerm] = conssymb ~ "(" ~ repsep(term, ",") ~ ")" ^^ {
+    case x ~ _ ~ params ~ _ => FOLFunction(x, params)
   }
-  lazy val constant: PackratParser[FOLTerm] = conssymb ^^ ( FOLConst( _ ) )
-  lazy val variable: PackratParser[FOLVar] = varsymb ^^ { FOLVar( _ ) }
-  lazy val topbottom: PackratParser[FOLFormula] = "$" ~> ( "T" ^^ ( _ => Top() ) | "F" ^^ ( _ => Bottom() ) )
+  lazy val constant: PackratParser[FOLTerm] = conssymb ^^ (FOLConst(_))
+  lazy val variable: PackratParser[FOLVar] = varsymb ^^ { FOLVar(_) }
+  lazy val topbottom: PackratParser[FOLFormula] = "$" ~> ("T" ^^ (_ => Top()) | "F" ^^ (_ => Bottom()))
 
 }
-

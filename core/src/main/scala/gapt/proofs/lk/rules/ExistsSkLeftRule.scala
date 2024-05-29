@@ -29,22 +29,21 @@ import gapt.proofs.lk.LKProof
  * @param mainFormula The main formula A[x\s(...)]
  * @param skolemTerm The Skolem term s(...)
  */
-case class ExistsSkLeftRule( subProof: LKProof, aux: SequentIndex, mainFormula: Formula,
-                             skolemTerm: Expr )
-  extends SkolemQuantifierRule {
+case class ExistsSkLeftRule(subProof: LKProof, aux: SequentIndex, mainFormula: Formula, skolemTerm: Expr)
+    extends SkolemQuantifierRule {
 
-  validateIndices( premise, Seq( aux ), Seq() )
+  validateIndices(premise, Seq(aux), Seq())
 
-  val Ex( quantifiedVariable, subFormula ) = mainFormula: @unchecked
+  val Ex(quantifiedVariable, subFormula) = mainFormula: @unchecked
 
   override def name: String = "∃sk:l"
 
-  def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux ) )
+  def auxIndices: Seq[Seq[SequentIndex]] = Seq(Seq(aux))
 
   override def mainFormulaSequent: HOLSequent = mainFormula +: Sequent()
 }
 
-object ExistsSkLeftRule extends ConvenienceConstructor( "ExistsSkLeftRule" ) {
+object ExistsSkLeftRule extends ConvenienceConstructor("ExistsSkLeftRule") {
 
   /**
    * Convenience constructor for ∃sk:l that, given a Skolem term and Skolem definition,
@@ -53,23 +52,24 @@ object ExistsSkLeftRule extends ConvenienceConstructor( "ExistsSkLeftRule" ) {
    * @param subProof The subproof.
    * @return
    */
-  def apply( subProof: LKProof, skolemTerm: Expr, skolemDef: Expr ): ExistsSkLeftRule = {
-    val Apps( _, skolemArgs ) = skolemTerm
-    val mainFormula = BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) ).asInstanceOf[Formula]
-    apply( subProof, mainFormula, skolemTerm )
+  def apply(subProof: LKProof, skolemTerm: Expr, skolemDef: Expr): ExistsSkLeftRule = {
+    val Apps(_, skolemArgs) = skolemTerm
+    val mainFormula = BetaReduction.betaNormalize(skolemDef(skolemArgs: _*)).asInstanceOf[Formula]
+    apply(subProof, mainFormula, skolemTerm)
   }
 
-  def apply( subProof: LKProof, mainFormula: Formula, skolemTerm: Expr ): ExistsSkLeftRule = {
-    val auxFormula = instantiate( mainFormula, skolemTerm )
+  def apply(subProof: LKProof, mainFormula: Formula, skolemTerm: Expr): ExistsSkLeftRule = {
+    val auxFormula = instantiate(mainFormula, skolemTerm)
     val premise = subProof.endSequent
-    val ( indices, _ ) = findAndValidate( premise )( Seq( auxFormula ), Seq() )
-    ExistsSkLeftRule( subProof, Ant( indices( 0 ) ), mainFormula, skolemTerm )
+    val (indices, _) = findAndValidate(premise)(Seq(auxFormula), Seq())
+    ExistsSkLeftRule(subProof, Ant(indices(0)), mainFormula, skolemTerm)
   }
 
-  def apply( subProof: LKProof, skolemTerm: Expr )( implicit ctx: Context ): ExistsSkLeftRule = {
-    val Apps( skC: Const, _ ) = skolemTerm: @unchecked
-    val skD = ctx.skolemDef( skC ).getOrElse(
-      throw new IllegalArgumentException( s"not a defined Skolem function: $skC" ) )
-    apply( subProof, skolemTerm, skD )
+  def apply(subProof: LKProof, skolemTerm: Expr)(implicit ctx: Context): ExistsSkLeftRule = {
+    val Apps(skC: Const, _) = skolemTerm: @unchecked
+    val skD = ctx.skolemDef(skC).getOrElse(
+      throw new IllegalArgumentException(s"not a defined Skolem function: $skC")
+    )
+    apply(subProof, skolemTerm, skD)
   }
 }

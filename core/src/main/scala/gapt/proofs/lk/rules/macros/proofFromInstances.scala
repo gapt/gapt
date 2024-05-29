@@ -15,6 +15,7 @@ import gapt.proofs.lk.rules.ForallLeftRule
  *
  */
 object proofFromInstances {
+
   /**
    *
    * @param s1 An LKProof containing the instances in es in its end sequent.
@@ -22,8 +23,8 @@ object proofFromInstances {
    *           and which contains no strong or Skolem quantifiers.
    * @return A proof starting with s1 and ending with the deep sequent of es.
    */
-  def apply( s1: LKProof, es: ExpansionSequent ): LKProof =
-    ( es.antecedent ++ es.succedent ).foldLeft( s1 )( apply )
+  def apply(s1: LKProof, es: ExpansionSequent): LKProof =
+    (es.antecedent ++ es.succedent).foldLeft(s1)(apply)
 
   /**
    *
@@ -31,23 +32,23 @@ object proofFromInstances {
    * @param et A ExpansionTree whose shallow formula is prenex and which contains no strong or Skolem quantifiers.
    * @return A proof starting with s1 and ending with the deep formula of met.
    */
-  def apply( s1: LKProof, et: ExpansionTree ): LKProof = {
-    require( isPrenex( et.shallow ), "Shallow formula of " + et + " is not prenex" )
+  def apply(s1: LKProof, et: ExpansionTree): LKProof = {
+    require(isPrenex(et.shallow), "Shallow formula of " + et + " is not prenex")
 
     et match {
-      case ETWeakQuantifier( f @ All( _, _ ), instances ) =>
-        val tmp = instances.foldLeft( s1 ) {
-          ( acc, i ) => ForallLeftRule( apply( acc, i._2 ), f, i._1 )
+      case ETWeakQuantifier(f @ All(_, _), instances) =>
+        val tmp = instances.foldLeft(s1) {
+          (acc, i) => ForallLeftRule(apply(acc, i._2), f, i._1)
         }
 
-        ContractionLeftMacroRule( tmp, f )
+        ContractionLeftMacroRule(tmp, f)
 
-      case ETWeakQuantifier( f @ Ex( _, _ ), instances ) =>
-        val tmp = instances.foldLeft( s1 ) {
-          ( acc, i ) => ExistsRightRule( apply( acc, i._2 ), f, i._1 )
+      case ETWeakQuantifier(f @ Ex(_, _), instances) =>
+        val tmp = instances.foldLeft(s1) {
+          (acc, i) => ExistsRightRule(apply(acc, i._2), f, i._1)
         }
 
-        ContractionRightMacroRule( tmp, f )
+        ContractionRightMacroRule(tmp, f)
 
       case _ => s1
     }

@@ -23,23 +23,23 @@ import gapt.proofs.lk.LKProof
  * @param aux1 The index of A.
  * @param aux2 The index of B.
  */
-case class ImpRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex )
-  extends UnaryLKProof with CommonRule {
+case class ImpRightRule(subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex)
+    extends UnaryLKProof with CommonRule {
 
-  validateIndices( premise, Seq( aux1 ), Seq( aux2 ) )
+  validateIndices(premise, Seq(aux1), Seq(aux2))
 
-  val impPremise: Formula = premise( aux1 )
-  val impConclusion: Formula = premise( aux2 )
-  val mainFormula: Formula = Imp( impPremise, impConclusion )
+  val impPremise: Formula = premise(aux1)
+  val impConclusion: Formula = premise(aux2)
+  val mainFormula: Formula = Imp(impPremise, impConclusion)
 
-  override def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux1, aux2 ) )
+  override def auxIndices: Seq[Seq[SequentIndex]] = Seq(Seq(aux1, aux2))
 
   override def name: String = "→:r"
 
   override def mainFormulaSequent: HOLSequent = Sequent() :+ mainFormula
 }
 
-object ImpRightRule extends ConvenienceConstructor( "ImpRightRule" ) {
+object ImpRightRule extends ConvenienceConstructor("ImpRightRule") {
 
   /**
    * Convenience constructor for →:r.
@@ -51,12 +51,12 @@ object ImpRightRule extends ConvenienceConstructor( "ImpRightRule" ) {
    * @param impConclusion Index of the conclusion of the implication or the conclusion itself.
    * @return
    */
-  def apply( subProof: LKProof, impPremise: IndexOrFormula, impConclusion: IndexOrFormula ): ImpRightRule = {
+  def apply(subProof: LKProof, impPremise: IndexOrFormula, impConclusion: IndexOrFormula): ImpRightRule = {
     val premise = subProof.endSequent
 
-    val ( antIndices, sucIndices ) = findAndValidate( premise )( Seq( impPremise ), Seq( impConclusion ) )
+    val (antIndices, sucIndices) = findAndValidate(premise)(Seq(impPremise), Seq(impConclusion))
 
-    new ImpRightRule( subProof, Ant( antIndices( 0 ) ), Suc( sucIndices( 0 ) ) )
+    new ImpRightRule(subProof, Ant(antIndices(0)), Suc(sucIndices(0)))
   }
 
   /**
@@ -67,11 +67,11 @@ object ImpRightRule extends ConvenienceConstructor( "ImpRightRule" ) {
    * @param mainFormula The formula to be inferred. Must be of the form A → B.
    * @return
    */
-  def apply( subProof: LKProof, mainFormula: Formula ): ImpRightRule = mainFormula match {
-    case Imp( f, g ) =>
-      val p = apply( subProof, f, g )
-      assert( p.mainFormula == mainFormula )
+  def apply(subProof: LKProof, mainFormula: Formula): ImpRightRule = mainFormula match {
+    case Imp(f, g) =>
+      val p = apply(subProof, f, g)
+      assert(p.mainFormula == mainFormula)
       p
-    case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not an implication." )
+    case _ => throw LKRuleCreationException(s"Proposed main formula $mainFormula is not an implication.")
   }
 }

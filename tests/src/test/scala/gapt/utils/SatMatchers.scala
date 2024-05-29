@@ -14,28 +14,30 @@ import gapt.models.PropositionalModel
 
 trait SatMatchers extends OptionMatchers {
 
-  def beUnsat = beNone ^^ { ( f: Formula ) => Sat4j.solve( f ) }
+  def beUnsat = beNone ^^ { (f: Formula) => Sat4j.solve(f) }
 
   def beSat =
-    beNone ^^ { ( f: Formula ) =>
-      renameConstantsToFi.wrap( f )( ( _, mangled: Formula ) =>
-        new Escargot( splitting = false, equality = false, propositional = true )
-          .getResolutionProof( mangled ) )
+    beNone ^^ { (f: Formula) =>
+      renameConstantsToFi.wrap(f)((_, mangled: Formula) =>
+        new Escargot(splitting = false, equality = false, propositional = true)
+          .getResolutionProof(mangled)
+      )
     } and
-      (beSome[PropositionalModel]) ^^ { ( f: Formula ) => Sat4j.solve( f ) }
-  def beValid = beUnsat ^^ { ( f: Formula ) => -f }
-  def beValidSequent = beValid ^^ { ( sequent: HOLSequent ) => sequent.toDisjunction }
+      (beSome[PropositionalModel]) ^^ { (f: Formula) => Sat4j.solve(f) }
+  def beValid = beUnsat ^^ { (f: Formula) => -f }
+  def beValidSequent = beValid ^^ { (sequent: HOLSequent) => sequent.toDisjunction }
 
   def beEValid =
-    (beSome[ResolutionProof]) ^^ { ( f: Formula ) =>
-      renameConstantsToFi.wrap( f )( ( _, mangled: Formula ) =>
-        new Escargot( splitting = false, equality = true, propositional = true )
-          .getResolutionProof( mangled ) )
+    (beSome[ResolutionProof]) ^^ { (f: Formula) =>
+      renameConstantsToFi.wrap(f)((_, mangled: Formula) =>
+        new Escargot(splitting = false, equality = true, propositional = true)
+          .getResolutionProof(mangled)
+      )
     }
-  def beEUnsat = beEValid ^^ { ( f: Formula ) => -f }
-  def beEValidSequent = beEValid ^^ { ( sequent: HOLSequent ) => sequent.toDisjunction }
+  def beEUnsat = beEValid ^^ { (f: Formula) => -f }
+  def beEValidSequent = beEValid ^^ { (sequent: HOLSequent) => sequent.toDisjunction }
 
-  def havingTautDeepSequent = beValidSequent ^^ { ( ep: ExpansionProof ) => ep.deep }
-  def havingQTautDeepSequent = beEValidSequent ^^ { ( ep: ExpansionProof ) => ep.deep }
+  def havingTautDeepSequent = beValidSequent ^^ { (ep: ExpansionProof) => ep.deep }
+  def havingQTautDeepSequent = beEValidSequent ^^ { (ep: ExpansionProof) => ep.deep }
 
 }

@@ -9,7 +9,7 @@ import org.specs2.mutable.Specification
 class ProofMacrosTest extends Specification {
 
   "proof" in {
-    Proof( Sequent() :+ ( "goal" -> hof"a -> a" ) ) {
+    Proof(Sequent() :+ ("goal" -> hof"a -> a")) {
       decompose
       trivial
     }
@@ -17,8 +17,8 @@ class ProofMacrosTest extends Specification {
   }
 
   "incomplete proof" in {
-    IncompleteProof( Sequent() :+ ( "goal" -> hof"(a -> a) & b" ) ) {
-      destruct( "goal" )
+    IncompleteProof(Sequent() :+ ("goal" -> hof"(a -> a) & b")) {
+      destruct("goal")
       decompose; trivial
     }
     ok
@@ -27,11 +27,11 @@ class ProofMacrosTest extends Specification {
   "lemma" in {
     implicit val ctx = MutableContext.default()
     ctx += hoc"a: o"
-    val proof = Lemma( Sequent() :+ ( "goal" -> hof"a -> a" ) ) {
+    val proof = Lemma(Sequent() :+ ("goal" -> hof"a -> a")) {
       decompose
       trivial
     }
-    ctx.get[ProofNames].names.keySet must contain( "proof" )
+    ctx.get[ProofNames].names.keySet must contain("proof")
   }
 
 }

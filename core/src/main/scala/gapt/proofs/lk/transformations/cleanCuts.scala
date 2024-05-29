@@ -14,29 +14,35 @@ import gapt.proofs.lk.rules.LogicalAxiom
  */
 object cleanCuts {
 
-  def apply( p: LKProof ): LKProof = cleanCutsVisitor( p, () )
+  def apply(p: LKProof): LKProof = cleanCutsVisitor(p, ())
 
   private object cleanCutsVisitor extends LKVisitor[Unit] {
 
-    override def visitCut( p: CutRule, otherArg: Unit ): ( LKProof, SequentConnector ) = {
-      val CutRule( leftSubProof, aux1, rightSubProof, aux2 ) = p
+    override def visitCut(p: CutRule, otherArg: Unit): (LKProof, SequentConnector) = {
+      val CutRule(leftSubProof, aux1, rightSubProof, aux2) = p
 
-      ( leftSubProof, rightSubProof ) match {
-        case ( LogicalAxiom( _ ), _ ) =>
-          val ( subProofNew, subConnector ) = recurse( rightSubProof, () )
-          ( subProofNew,
+      (leftSubProof, rightSubProof) match {
+        case (LogicalAxiom(_), _) =>
+          val (subProofNew, subConnector) = recurse(rightSubProof, ())
+          (
+            subProofNew,
             subConnector * p.getRightSequentConnector.inv.+(
-              subConnector.child( aux2 ),
-              p.getLeftSequentConnector.child( Ant( 0 ) ) ) )
+              subConnector.child(aux2),
+              p.getLeftSequentConnector.child(Ant(0))
+            )
+          )
 
-        case ( _, LogicalAxiom( _ ) ) =>
-          val ( subProofNew, subConnector ) = recurse( leftSubProof, () )
-          ( subProofNew,
+        case (_, LogicalAxiom(_)) =>
+          val (subProofNew, subConnector) = recurse(leftSubProof, ())
+          (
+            subProofNew,
             subConnector * p.getLeftSequentConnector.inv.+(
-              subConnector.child( aux1 ),
-              p.getRightSequentConnector.child( Suc( 0 ) ) ) )
+              subConnector.child(aux1),
+              p.getRightSequentConnector.child(Suc(0))
+            )
+          )
 
-        case _ => super.visitCut( p, () )
+        case _ => super.visitCut(p, ())
       }
     }
 

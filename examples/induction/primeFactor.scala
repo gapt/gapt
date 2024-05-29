@@ -10,17 +10,17 @@ import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 
 object primeFactor extends TacticsProof {
-  ctx += Sort( "i" )
+  ctx += Sort("i")
 
-  ctx += Const( "0", Ti )
-  ctx += Const( "1", Ti )
-  ctx += Const( "2", Ti )
-  ctx += Const( "+", Ti ->: Ti ->: Ti )
-  ctx += Notation.Infix( "+", Precedence.plusMinus )
-  ctx += Const( "*", Ti ->: Ti ->: Ti )
-  ctx += Notation.Infix( "*", Precedence.timesDiv )
-  ctx += Const( "<", Ti ->: Ti ->: To )
-  ctx += Notation.Infix( "<", Precedence.infixRel )
+  ctx += Const("0", Ti)
+  ctx += Const("1", Ti)
+  ctx += Const("2", Ti)
+  ctx += Const("+", Ti ->: Ti ->: Ti)
+  ctx += Notation.Infix("+", Precedence.plusMinus)
+  ctx += Const("*", Ti ->: Ti ->: Ti)
+  ctx += Notation.Infix("*", Precedence.timesDiv)
+  ctx += Const("<", Ti ->: Ti ->: To)
+  ctx += Notation.Infix("<", Precedence.infixRel)
 
   ctx += hof" div l k = (∃m l * m = k)"
   ctx += hof" prime k = (1 < k ∧ ¬∃l(div(l,k) ∧ 1 < l ∧ l < k))"
@@ -31,38 +31,38 @@ object primeFactor extends TacticsProof {
   ctx += "div_trans" -> fos" div(x, y), div(y, z) :- div(x, z)"
 
   val ax = hof" ∀n (n = 1 ∨ prime(n) ∨ ∃l (div(l,n) ∧ 1 < l ∧ l < n))"
-  def primeDiv( n: FOLTerm ) = hof"∃k ($n < 2 ∨ (div(k,$n) ∧ prime(k)))"
+  def primeDiv(n: FOLTerm) = hof"∃k ($n < 2 ∨ (div(k,$n) ∧ prime(k)))"
 
-  val endSequent = hols"AX: $ax, IND: ∀z(z < n -> ${primeDiv( fov"z" )}) :- GOAL: ${primeDiv( fov"n" )}"
+  val endSequent = hols"AX: $ax, IND: ∀z(z < n -> ${primeDiv(fov"z")}) :- GOAL: ${primeDiv(fov"n")}"
 
-  val proof = Lemma( endSequent ) {
-    allL( "AX", fov"n" ).forget
+  val proof = Lemma(endSequent) {
+    allL("AX", fov"n").forget
     orL
 
     orL
 
-    //Case n = 1
-    exR( foc"0" ).forget
-    eql( "AX", "GOAL" )
+    // Case n = 1
+    exR(foc"0").forget
+    eql("AX", "GOAL")
     decompose
     theory
 
-    //Case n prime
-    exR( fov"n" ).forget
+    // Case n prime
+    exR(fov"n").forget
     orR
-    forget( "GOAL_0" )
+    forget("GOAL_0")
     andR right trivial
-    unfold( "div" ) in "GOAL_1"
-    exR( foc"1" ).forget
+    unfold("div") in "GOAL_1"
+    exR(foc"1").forget
     theory
 
-    //Case n composite
+    // Case n composite
     decompose
-    allL( "IND", fov"l" ).forget
+    allL("IND", fov"l").forget
     impL left trivial
     exL
     orL left theory
-    exR( fov"k" ).forget
+    exR(fov"k").forget
     decompose
     andR; theory; trivial
   }

@@ -22,23 +22,23 @@ import gapt.proofs.lk.LKProof
  * @param aux1 The index of A.
  * @param aux2 The index of B.
  */
-case class OrRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex )
-  extends UnaryLKProof with CommonRule {
+case class OrRightRule(subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex)
+    extends UnaryLKProof with CommonRule {
 
-  validateIndices( premise, Seq(), Seq( aux1, aux2 ) )
+  validateIndices(premise, Seq(), Seq(aux1, aux2))
 
-  val leftDisjunct: Formula = premise( aux1 )
-  val rightDisjunct: Formula = premise( aux2 )
-  val mainFormula: Formula = Or( leftDisjunct, rightDisjunct )
+  val leftDisjunct: Formula = premise(aux1)
+  val rightDisjunct: Formula = premise(aux2)
+  val mainFormula: Formula = Or(leftDisjunct, rightDisjunct)
 
-  override def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux1, aux2 ) )
+  override def auxIndices: Seq[Seq[SequentIndex]] = Seq(Seq(aux1, aux2))
 
   override def name: String = "∨:r"
 
   override def mainFormulaSequent: HOLSequent = Sequent() :+ mainFormula
 }
 
-object OrRightRule extends ConvenienceConstructor( "OrRightRule" ) {
+object OrRightRule extends ConvenienceConstructor("OrRightRule") {
 
   /**
    * Convenience constructor for ∨:r.
@@ -50,12 +50,12 @@ object OrRightRule extends ConvenienceConstructor( "OrRightRule" ) {
    * @param rightDisjunct Index of the right disjunct or the disjunct itself.
    * @return
    */
-  def apply( subProof: LKProof, leftDisjunct: IndexOrFormula, rightDisjunct: IndexOrFormula ): OrRightRule = {
+  def apply(subProof: LKProof, leftDisjunct: IndexOrFormula, rightDisjunct: IndexOrFormula): OrRightRule = {
     val premise = subProof.endSequent
 
-    val ( _, indices ) = findAndValidate( premise )( Seq(), Seq( leftDisjunct, rightDisjunct ) )
+    val (_, indices) = findAndValidate(premise)(Seq(), Seq(leftDisjunct, rightDisjunct))
 
-    new OrRightRule( subProof, Suc( indices( 0 ) ), Suc( indices( 1 ) ) )
+    new OrRightRule(subProof, Suc(indices(0)), Suc(indices(1)))
   }
 
   /**
@@ -66,11 +66,11 @@ object OrRightRule extends ConvenienceConstructor( "OrRightRule" ) {
    * @param mainFormula The formula to be inferred. Must be of the form A ∨ B.
    * @return
    */
-  def apply( subProof: LKProof, mainFormula: Formula ): OrRightRule = mainFormula match {
-    case Or( f, g ) =>
-      val p = apply( subProof, f, g )
-      assert( p.mainFormula == mainFormula )
+  def apply(subProof: LKProof, mainFormula: Formula): OrRightRule = mainFormula match {
+    case Or(f, g) =>
+      val p = apply(subProof, f, g)
+      assert(p.mainFormula == mainFormula)
       p
-    case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not a disjunction." )
+    case _ => throw LKRuleCreationException(s"Proposed main formula $mainFormula is not a disjunction.")
   }
 }

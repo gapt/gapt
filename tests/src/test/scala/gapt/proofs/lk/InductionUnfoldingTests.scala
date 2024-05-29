@@ -2,8 +2,8 @@ package gapt.proofs.lk
 
 import gapt.expr._
 import gapt.expr.subst.Substitution
-import gapt.formats.babel.{ Notation, Precedence }
-import gapt.proofs.gaptic.{ ProofState, _ }
+import gapt.formats.babel.{Notation, Precedence}
+import gapt.proofs.gaptic.{ProofState, _}
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.update.InductiveType
@@ -14,14 +14,14 @@ import org.specs2.mutable._
 
 class InductionUnfoldingOnTreesTest extends Specification {
 
-  def containsInduction( proof: LKProof ): Boolean =
-    proof.subProofs.exists( _.isInstanceOf[InductionRule] )
+  def containsInduction(proof: LKProof): Boolean =
+    proof.subProofs.exists(_.isInstanceOf[InductionRule])
 
   object proofs extends TacticsProof {
-    ctx += InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
-    ctx += InductiveType( "tree", hoc"leaf: tree", hoc"node:tree>tree>nat>tree" )
+    ctx += InductiveType("nat", hoc"0: nat", hoc"s:nat>nat")
+    ctx += InductiveType("tree", hoc"leaf: tree", hoc"node:tree>tree>nat>tree")
     ctx += hoc"'+': nat>nat>nat"
-    ctx += Notation.Infix( "+", Precedence.plusMinus )
+    ctx += Notation.Infix("+", Precedence.plusMinus)
     ctx += hoc"mirror: tree>tree"
     ctx += hoc"size: tree>nat"
 
@@ -31,49 +31,49 @@ class InductionUnfoldingOnTreesTest extends Specification {
       "as1" -> hof"size(leaf) = 0",
       "as2" -> hof"∀t1 ∀t2 ∀x size(node(t1,t2,x)) = size(t1) + size(t2)",
       "am1" -> hof"mirror(leaf) = leaf",
-      "am2" -> hof"∀t1 ∀t2 ∀x mirror(node(t1,t2,x)) = node(mirror(t1),mirror(t2),x)" )
+      "am2" -> hof"∀t1 ∀t2 ∀x mirror(node(t1,t2,x)) = node(mirror(t1),mirror(t2),x)"
+    )
 
     val goal = hof"size(t) = size(mirror(t))"
 
     def general_proof_goal: LKProof = {
-      var proofState = ProofState( axioms ++: Sequent() :+ "goal" -> goal )
-      proofState += induction( hov"t:tree" )
+      var proofState = ProofState(axioms ++: Sequent() :+ "goal" -> goal)
+      proofState += induction(hov"t:tree")
       proofState += escargot
       proofState += escargot
-      regularize( proofState.result )
+      regularize(proofState.result)
     }
 
     val testTerm1: Expr = le"node(node(node(leaf, leaf, 0), node(leaf, leaf, s(0)), 0), node(leaf, leaf, s(s(0))), 0)"
     val testTerm2: Expr = le"leaf"
 
-    val inductiveGroundProof1 = Substitution( hov"t:tree" -> testTerm1 )( general_proof_goal )
+    val inductiveGroundProof1 = Substitution(hov"t:tree" -> testTerm1)(general_proof_goal)
 
-    val inductiveGroundProof2 = Substitution( hov"t:tree" -> testTerm2 )( general_proof_goal )
+    val inductiveGroundProof2 = Substitution(hov"t:tree" -> testTerm2)(general_proof_goal)
   }
   import proofs._
 
   "unfolding induction for base term" in {
-    val inductivePart = inductiveGroundProof2.subProofAt( 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: Nil ).asInstanceOf[InductionRule]
-    val inductionFreeProof = unfoldInduction( inductivePart )
-    if ( containsInduction( inductionFreeProof ) ) {
-      failure( "induction was not eliminated" )
+    val inductivePart = inductiveGroundProof2.subProofAt(0 :: 0 :: 0 :: 0 :: 0 :: 0 :: Nil).asInstanceOf[InductionRule]
+    val inductionFreeProof = unfoldInduction(inductivePart)
+    if (containsInduction(inductionFreeProof)) {
+      failure("induction was not eliminated")
     }
-    if ( !inductionFreeProof.endSequent.multiSetEquals( inductivePart.endSequent ) ) {
-      failure( "the induction free proof does not prove the same end-sequent" )
+    if (!inductionFreeProof.endSequent.multiSetEquals(inductivePart.endSequent)) {
+      failure("the induction free proof does not prove the same end-sequent")
     }
     success
   }
 
   "unfolding induction for complex term" in {
-    val inductivePart = inductiveGroundProof1.subProofAt( 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: Nil ).asInstanceOf[InductionRule]
-    val inductionFreeProof = unfoldInduction( inductivePart )
-    if ( containsInduction( inductionFreeProof ) ) {
-      failure( "induction was not eliminated" )
+    val inductivePart = inductiveGroundProof1.subProofAt(0 :: 0 :: 0 :: 0 :: 0 :: 0 :: Nil).asInstanceOf[InductionRule]
+    val inductionFreeProof = unfoldInduction(inductivePart)
+    if (containsInduction(inductionFreeProof)) {
+      failure("induction was not eliminated")
     }
-    if ( !inductionFreeProof.endSequent.multiSetEquals( inductivePart.endSequent ) ) {
-      failure( "the induction free proof does not prove the same end-sequent" )
+    if (!inductionFreeProof.endSequent.multiSetEquals(inductivePart.endSequent)) {
+      failure("the induction free proof does not prove the same end-sequent")
     }
     success
   }
 }
-

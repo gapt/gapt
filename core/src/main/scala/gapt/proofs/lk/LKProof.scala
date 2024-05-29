@@ -11,8 +11,8 @@ import scala.collection.mutable
 
 abstract class LKProof extends SequentProof[Formula, LKProof] {
 
-  protected def LKRuleCreationException( message: String ): LKRuleCreationException =
-    new LKRuleCreationException( longName, message )
+  protected def LKRuleCreationException(message: String): LKRuleCreationException =
+    new LKRuleCreationException(longName, message)
 
   /**
    * The end-sequent of the rule.
@@ -27,37 +27,37 @@ abstract class LKProof extends SequentProof[Formula, LKProof] {
    * @param succedentIndices Indices that should be in the succedent.
    */
   protected final def validateIndices(
-    premise:           HOLSequent,
-    antecedentIndices: Seq[SequentIndex], succedentIndices: Seq[SequentIndex] ): Unit = {
+      premise: HOLSequent,
+      antecedentIndices: Seq[SequentIndex],
+      succedentIndices: Seq[SequentIndex]
+  ): Unit = {
     val antSet = mutable.HashSet[SequentIndex]()
     val sucSet = mutable.HashSet[SequentIndex]()
 
-    for ( i <- antecedentIndices ) i match {
-      case Ant( _ ) =>
+    for (i <- antecedentIndices) i match {
+      case Ant(_) =>
+        if (!premise.isDefinedAt(i))
+          throw LKRuleCreationException(s"Sequent $premise is not defined at index $i.")
 
-        if ( !premise.isDefinedAt( i ) )
-          throw LKRuleCreationException( s"Sequent $premise is not defined at index $i." )
-
-        if ( antSet contains i )
-          throw LKRuleCreationException( s"Duplicate index $i for sequent $premise." )
+        if (antSet contains i)
+          throw LKRuleCreationException(s"Duplicate index $i for sequent $premise.")
 
         antSet += i
 
-      case Suc( _ ) => throw LKRuleCreationException( s"Index $i should be in the antecedent." )
+      case Suc(_) => throw LKRuleCreationException(s"Index $i should be in the antecedent.")
     }
 
-    for ( i <- succedentIndices ) i match {
-      case Suc( _ ) =>
+    for (i <- succedentIndices) i match {
+      case Suc(_) =>
+        if (!premise.isDefinedAt(i))
+          throw LKRuleCreationException(s"Sequent $premise is not defined at index $i.")
 
-        if ( !premise.isDefinedAt( i ) )
-          throw LKRuleCreationException( s"Sequent $premise is not defined at index $i." )
-
-        if ( sucSet contains i )
-          throw LKRuleCreationException( s"Duplicate index $i for sequent $premise." )
+        if (sucSet contains i)
+          throw LKRuleCreationException(s"Duplicate index $i for sequent $premise.")
 
         sucSet += i
 
-      case Ant( _ ) => throw LKRuleCreationException( s"Index $i should be in the succedent." )
+      case Ant(_) => throw LKRuleCreationException(s"Index $i should be in the succedent.")
     }
   }
 }

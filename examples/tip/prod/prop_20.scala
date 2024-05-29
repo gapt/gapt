@@ -10,13 +10,13 @@ import gapt.provers.viper.aip.AnalyticInductionProver
 object prop_20 extends TacticsProof {
 
   // Sorts
-  ctx += TBase( "sk" )
+  ctx += TBase("sk")
 
   // Inductive types
-  ctx += InductiveType( ty"list", hoc"'nil' :list", hoc"'cons' :sk>list>list" )
-  ctx += InductiveType( ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat" )
+  ctx += InductiveType(ty"list", hoc"'nil' :list", hoc"'cons' :sk>list>list")
+  ctx += InductiveType(ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat")
 
-  //Function constants
+  // Function constants
   ctx += hoc"'length' :list>Nat"
   ctx += hoc"'even' :Nat>o"
   ctx += hoc"'append' :list>list>list"
@@ -39,32 +39,34 @@ object prop_20 extends TacticsProof {
         goal: ∀x even(length(append(x:list, x): list): Nat)
   """
 
-  val lemma = (
-    ( "l0" -> hof"length(nil) = Z" ) +:
-    ( "l1" -> hof"∀y ∀xs length(cons(y, xs)) = S(length(xs))" ) +:
-    ( "a0" -> hof"∀y append(nil, y) = y" ) +:
-    ( "a1" -> hof"∀z ∀xs ∀y append(cons(z, xs), y) = cons(z, append(xs, y))" ) +:
-    Sequent() :+ ( "lemma" -> hof"∀xs ∀ys ∀y length(append(xs, cons(y,ys))) = S(length(append(xs, ys)))" ) )
+  val lemma =
+    (
+      ("l0" -> hof"length(nil) = Z") +:
+        ("l1" -> hof"∀y ∀xs length(cons(y, xs)) = S(length(xs))") +:
+        ("a0" -> hof"∀y append(nil, y) = y") +:
+        ("a1" -> hof"∀z ∀xs ∀y append(cons(z, xs), y) = cons(z, append(xs, y))") +:
+        Sequent() :+ ("lemma" -> hof"∀xs ∀ys ∀y length(append(xs, cons(y,ys))) = S(length(append(xs, ys)))")
+    )
 
-  val lemma_proof = AnalyticInductionProver.singleInduction( lemma, hov"xs:list" )
+  val lemma_proof = AnalyticInductionProver.singleInduction(lemma, hov"xs:list")
 
-  val proof = Lemma( sequent ) {
-    cut( "lemma", hof"∀xs ∀ys ∀y length(append(xs, cons(y,ys))) = S(length(append(xs, ys)))" )
-    insert( lemma_proof )
-    allR; induction( hov"x:list" ); escargot.withDeskolemization.onAllSubGoals
+  val proof = Lemma(sequent) {
+    cut("lemma", hof"∀xs ∀ys ∀y length(append(xs, cons(y,ys))) = S(length(append(xs, ys)))")
+    insert(lemma_proof)
+    allR; induction(hov"x:list"); escargot.withDeskolemization.onAllSubGoals
   }
 
-  val lemma_openind_proof = Lemma( lemma ) {
-    allR; allR; allR; induction( hov"xs:list" )
-    //- BC
-    rewrite.many.ltr( "a0", "l1" ) in "lemma"; refl
-    //- SC
+  val lemma_openind_proof = Lemma(lemma) {
+    allR; allR; allR; induction(hov"xs:list")
+    // - BC
+    rewrite.many.ltr("a0", "l1") in "lemma"; refl
+    // - SC
     escargot
   }
 
-  val openind = Lemma( sequent ) {
-    cut( "lemma", hof"∀xs ∀ys ∀y length(append(xs, cons(y,ys))) = S(length(append(xs, ys)))" )
-    insert( lemma_openind_proof )
-    allR; induction( hov"x:list" ); escargot.withDeskolemization.onAllSubGoals
+  val openind = Lemma(sequent) {
+    cut("lemma", hof"∀xs ∀ys ∀y length(append(xs, cons(y,ys))) = S(length(append(xs, ys)))")
+    insert(lemma_openind_proof)
+    allR; induction(hov"x:list"); escargot.withDeskolemization.onAllSubGoals
   }
 }

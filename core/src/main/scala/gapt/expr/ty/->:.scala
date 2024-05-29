@@ -9,9 +9,9 @@ object ->: {
    * @return Returns Some( (t,r) ) if `ty` = t -> r, otherwise None is
    * returned.
    */
-  def unapply( ty: Ty ): Option[( Ty, Ty )] =
+  def unapply(ty: Ty): Option[(Ty, Ty)] =
     ty match {
-      case TArr( a, b ) => Some( ( a, b ) )
-      case _            => None
+      case TArr(a, b) => Some((a, b))
+      case _          => None
     }
 }

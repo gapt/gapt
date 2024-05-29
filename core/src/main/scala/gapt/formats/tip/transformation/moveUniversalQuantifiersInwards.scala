@@ -9,8 +9,8 @@ import gapt.formats.tip.parser.TipSmtMutualRecursiveFunctionDefinition
 import gapt.formats.tip.parser.TipSmtProblem
 
 object moveUniversalQuantifiersInwards extends TipSmtProblemTransformation {
-  override def transform( problem: TipSmtProblem ): TipSmtProblem =
-    new MoveUniversalQuantifiersInwardsTransformation( problem )()
+  override def transform(problem: TipSmtProblem): TipSmtProblem =
+    new MoveUniversalQuantifiersInwardsTransformation(problem)()
 }
 
 /**
@@ -24,56 +24,62 @@ object moveUniversalQuantifiersInwards extends TipSmtProblemTransformation {
  * @param problem The problem whose function definitions are subject to the
  *                transformation described above.
  */
-class MoveUniversalQuantifiersInwardsTransformation( problem: TipSmtProblem ) {
+class MoveUniversalQuantifiersInwardsTransformation(problem: TipSmtProblem) {
 
   def apply(): TipSmtProblem = {
-    problem.copy( definitions = problem.definitions map {
-      case fun @ TipSmtFunctionDefinition( _, _, _, _, _ ) =>
-        apply( fun )
-      case funDefs @ TipSmtMutualRecursiveFunctionDefinition( _ ) =>
-        funDefs.copy( functions = funDefs.functions.map { apply } )
+    problem.copy(definitions = problem.definitions map {
+      case fun @ TipSmtFunctionDefinition(_, _, _, _, _) =>
+        apply(fun)
+      case funDefs @ TipSmtMutualRecursiveFunctionDefinition(_) =>
+        funDefs.copy(functions = funDefs.functions.map { apply })
       case definition => definition
-    } )
+    })
   }
 
   private def apply(
-    fun: TipSmtFunctionDefinition ): TipSmtFunctionDefinition = {
-    fun.copy( body = moveUniversalQuantifiersInwards( fun.body ) )
+      fun: TipSmtFunctionDefinition
+  ): TipSmtFunctionDefinition = {
+    fun.copy(body = moveUniversalQuantifiersInwards(fun.body))
   }
 
   private def moveUniversalQuantifiersInwards(
-    expression: TipSmtExpression ): TipSmtExpression = {
+      expression: TipSmtExpression
+  ): TipSmtExpression = {
     expression match {
-      case expr @ TipSmtAnd( _ ) =>
-        moveUniversalQuantifiersInwards( expr )
-      case expr @ TipSmtForall( _, _ ) =>
-        moveUniversalQuantifiersInwards( expr )
-      case expr @ TipSmtIte( _, _, _ ) =>
-        moveUniversalQuantifiersInwards( expr )
+      case expr @ TipSmtAnd(_) =>
+        moveUniversalQuantifiersInwards(expr)
+      case expr @ TipSmtForall(_, _) =>
+        moveUniversalQuantifiersInwards(expr)
+      case expr @ TipSmtIte(_, _, _) =>
+        moveUniversalQuantifiersInwards(expr)
       case formula => formula
     }
   }
 
   private def moveUniversalQuantifiersInwards(
-    expression: TipSmtAnd ): TipSmtExpression = {
-    expression.copy( expression.exprs map { moveUniversalQuantifiersInwards } )
+      expression: TipSmtAnd
+  ): TipSmtExpression = {
+    expression.copy(expression.exprs map { moveUniversalQuantifiersInwards })
   }
 
   private def moveUniversalQuantifiersInwards(
-    expression: TipSmtIte ): TipSmtExpression = {
+      expression: TipSmtIte
+  ): TipSmtExpression = {
     TipSmtIte(
       expression.cond,
-      moveUniversalQuantifiersInwards( expression.ifTrue ),
-      moveUniversalQuantifiersInwards( expression.ifFalse ) )
+      moveUniversalQuantifiersInwards(expression.ifTrue),
+      moveUniversalQuantifiersInwards(expression.ifFalse)
+    )
   }
 
   private def moveUniversalQuantifiersInwards(
-    expression: TipSmtForall ): TipSmtExpression = {
+      expression: TipSmtForall
+  ): TipSmtExpression = {
     expression.formula match {
-      case TipSmtAnd( conjuncts ) =>
-        TipSmtAnd( conjuncts
-          .map { TipSmtForall( expression.variables, _ ) }
-          .map { moveUniversalQuantifiersInwards } )
+      case TipSmtAnd(conjuncts) =>
+        TipSmtAnd(conjuncts
+          .map { TipSmtForall(expression.variables, _) }
+          .map { moveUniversalQuantifiersInwards })
       case _ => expression
     }
   }

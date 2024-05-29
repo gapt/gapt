@@ -71,12 +71,13 @@ import gapt.proofs.context.update.InductiveType
 
 import scala.collection.mutable
 
-class TipTransformationCompiler( var problem: TipSmtProblem ) {
+class TipTransformationCompiler(var problem: TipSmtProblem) {
 
-  if ( problem.containsMutuallyRecursiveDatatypes ) {
+  if (problem.containsMutuallyRecursiveDatatypes) {
     throw TipSmtParserException(
       s"cannot compile mutually recursive types: " +
-        s"${problem.mutuallyRecursiveDatatypes.map { _.datatypes.map { _.name }.mkString( "(", ",", ")" ) }.mkString( "; " )}" )
+        s"${problem.mutuallyRecursiveDatatypes.map { _.datatypes.map { _.name }.mkString("(", ",", ")") }.mkString("; ")}"
+    )
   }
 
   val transformation =
@@ -93,16 +94,16 @@ class TipTransformationCompiler( var problem: TipSmtProblem ) {
 
   problem = problem >>: transformation
 
-  ( new ReconstructDatatypes( problem ) )()
-  problem.symbolTable = Some( SymbolTable( problem ) )
+  (new ReconstructDatatypes(problem))()
+  problem.symbolTable = Some(SymbolTable(problem))
 
   var ctx = Context()
 
   val typeDecls = mutable.Map[String, TBase]()
   val funDecls = mutable.Map[String, Const]()
 
-  def declare( t: TBase ): Unit = typeDecls( t.name ) = t
-  def declare( f: Const ): Unit = funDecls( f.name ) = f
+  def declare(t: TBase): Unit = typeDecls(t.name) = t
+  def declare(f: Const): Unit = funDecls(f.name) = f
 
   val datatypes = mutable.Buffer[InductiveType]()
   val functions = mutable.Buffer[TipFun]()
@@ -111,92 +112,107 @@ class TipTransformationCompiler( var problem: TipSmtProblem ) {
   val reductionRules = mutable.Buffer[ReductionRule]()
   val definitions = mutable.Buffer[Formula]()
 
-  typeDecls( "Bool" ) = To
-  datatypes += InductiveType( To, Top(), Bottom() )
+  typeDecls("Bool") = To
+  datatypes += InductiveType(To, Top(), Bottom())
 
-  if ( problem.containsNat ) {
-    declare( Const( "is-succ", TBase( "Nat" ) ->: To ) )
-    declare( Const( "is-zero", TBase( "Nat" ) ->: To ) )
+  if (problem.containsNat) {
+    declare(Const("is-succ", TBase("Nat") ->: To))
+    declare(Const("is-zero", TBase("Nat") ->: To))
   }
 
   private def compileSortDeclaration(
-    tipSmtSortDeclaration: TipSmtSortDeclaration ): Unit = {
+      tipSmtSortDeclaration: TipSmtSortDeclaration
+  ): Unit = {
 
-    val TipSmtSortDeclaration( sort, keywords ) = tipSmtSortDeclaration
+    val TipSmtSortDeclaration(sort, keywords) = tipSmtSortDeclaration
 
-    declareBaseType( sort )
+    declareBaseType(sort)
   }
 
   private def compileDatatypesDeclaration(
-    tipSmtDatatypesDeclaration: TipSmtDatatypesDeclaration ): Unit = {
+      tipSmtDatatypesDeclaration: TipSmtDatatypesDeclaration
+  ): Unit = {
 
-    val TipSmtDatatypesDeclaration( datatypes ) = tipSmtDatatypesDeclaration
+    val TipSmtDatatypesDeclaration(datatypes) = tipSmtDatatypesDeclaration
 
     datatypes foreach { declareDatatype }
   }
 
   private def compileConstantDeclaration(
-    tipSmtConstantDeclaration: TipSmtConstantDeclaration ): Unit = {
+      tipSmtConstantDeclaration: TipSmtConstantDeclaration
+  ): Unit = {
 
     val TipSmtConstantDeclaration(
-      constantName, _, typ ) = tipSmtConstantDeclaration
+      constantName,
+      _,
+      typ
+    ) = tipSmtConstantDeclaration
 
-    val c = Const( constantName, typeDecls( typ.typename ) )
-    declare( c )
+    val c = Const(constantName, typeDecls(typ.typename))
+    declare(c)
     ctx += c
   }
 
   private def compileFunctionDeclaration(
-    tipSmtFunctionDeclaration: TipSmtFunctionDeclaration ): Unit = {
-    val functionConstant = toFunctionConstant( tipSmtFunctionDeclaration )
-    declare( functionConstant )
+      tipSmtFunctionDeclaration: TipSmtFunctionDeclaration
+  ): Unit = {
+    val functionConstant = toFunctionConstant(tipSmtFunctionDeclaration)
+    declare(functionConstant)
     ctx += functionConstant
   }
 
   private def toFunctionConstant(
-    functionDeclaration: TipSmtFunctionDeclaration ): Const =
+      functionDeclaration: TipSmtFunctionDeclaration
+  ): Const =
     toFunctionConstant(
       functionDeclaration.name,
       functionDeclaration.argumentTypes,
-      functionDeclaration.returnType )
+      functionDeclaration.returnType
+    )
 
   private def toFunctionConstant(
-    functionDefinition: TipSmtFunctionDefinition ): Const =
+      functionDefinition: TipSmtFunctionDefinition
+  ): Const =
     toFunctionConstant(
       functionDefinition.name,
       functionDefinition.parameters map { _.typ },
-      functionDefinition.returnType )
+      functionDefinition.returnType
+    )
 
   private def toFunctionConstant(
-    functionName:  String,
-    argumentTypes: Seq[TipSmtType],
-    returnType:    TipSmtType ): Const =
+      functionName: String,
+      argumentTypes: Seq[TipSmtType],
+      returnType: TipSmtType
+  ): Const =
     Const(
       functionName,
       FunctionType(
-        typeDecls( returnType.typename ),
-        argumentTypes map { argType => typeDecls( argType.typename ) } ) )
+        typeDecls(returnType.typename),
+        argumentTypes map { argType => typeDecls(argType.typename) }
+      )
+    )
 
   private def declareFunction(
-    tipSmtFunctionDefinition: TipSmtFunctionDefinition ): Unit = {
-    val functionConstant = toFunctionConstant( tipSmtFunctionDefinition )
-    declare( functionConstant )
+      tipSmtFunctionDefinition: TipSmtFunctionDefinition
+  ): Unit = {
+    val functionConstant = toFunctionConstant(tipSmtFunctionDefinition)
+    declare(functionConstant)
     ctx += functionConstant
   }
 
   private def compileFunctionDefinition(
-    functionDefinition: TipSmtFunctionDefinition ): Unit = {
+      functionDefinition: TipSmtFunctionDefinition
+  ): Unit = {
 
-    val formalParameters: Seq[Var] = for (
-      TipSmtFormalParameter( argName, argType ) <- functionDefinition.parameters
-    ) yield Var( argName, typeDecls( argType.typename ) )
+    val formalParameters: Seq[Var] = for (TipSmtFormalParameter(argName, argType) <- functionDefinition.parameters) yield Var(argName, typeDecls(argType.typename))
 
-    val functionConstant = toFunctionConstant( functionDefinition )
+    val functionConstant = toFunctionConstant(functionDefinition)
 
     val compiledFunctionBody =
       compileFunctionBody(
         functionDefinition.body,
-        formalParameters.map { _.name } )
+        formalParameters.map { _.name }
+      )
 
     //    // declare reduction rules if the defining formulas in the correct form
     //    val reductionRules = compiledFunctionBody.flatMap {
@@ -208,255 +224,303 @@ class TipTransformationCompiler( var problem: TipSmtProblem ) {
 
     functions += TipFun(
       functionConstant,
-      compiledFunctionBody )
+      compiledFunctionBody
+    )
   }
 
-  private def compileAssertion( tipSmtAssertion: TipSmtAssertion ): Unit = {
+  private def compileAssertion(tipSmtAssertion: TipSmtAssertion): Unit = {
 
-    val TipSmtAssertion( keywords, formula ) = tipSmtAssertion
+    val TipSmtAssertion(keywords, formula) = tipSmtAssertion
 
-    val compiledExpression = compileExpression( formula, Nil )
+    val compiledExpression = compileExpression(formula, Nil)
 
-    if ( keywords.contains( TipSmtKeyword( "definition", None ) ) &&
-      keywords.contains( TipSmtKeyword( "lambda", None ) ) ) {
+    if (
+      keywords.contains(TipSmtKeyword("definition", None)) &&
+      keywords.contains(TipSmtKeyword("lambda", None))
+    ) {
       definitions += compiledExpression.asInstanceOf[Formula]
     } else {
-      assumptions += compileExpression( formula, Nil )
+      assumptions += compileExpression(formula, Nil)
         .asInstanceOf[Formula]
     }
   }
 
-  private def compileGoal( tipSmtGoal: TipSmtGoal ): Unit = {
+  private def compileGoal(tipSmtGoal: TipSmtGoal): Unit = {
 
-    val TipSmtGoal( _, formula ) = tipSmtGoal
+    val TipSmtGoal(_, formula) = tipSmtGoal
 
-    goals += compileExpression( formula, Nil )
+    goals += compileExpression(formula, Nil)
       .asInstanceOf[Formula]
   }
 
   private def compileConstructorField(
-    field: TipSmtConstructorField, ofType: Ty ): Const =
-    Const( field.name, ofType ->: typeDecls( field.typ.typename ) )
+      field: TipSmtConstructorField,
+      ofType: Ty
+  ): Const =
+    Const(field.name, ofType ->: typeDecls(field.typ.typename))
 
   def compileFunctionBody(
-    body: TipSmtExpression, freeVars: Seq[String] ): Seq[Formula] = {
+      body: TipSmtExpression,
+      freeVars: Seq[String]
+  ): Seq[Formula] = {
     body match {
-      case TipSmtAnd( conjuncts ) =>
+      case TipSmtAnd(conjuncts) =>
         conjuncts
-          .flatMap { compileFunctionBody( _, freeVars ) }
-      case TipSmtIte( condition, ifTrue, ifFalse ) =>
-        val compiledCondition = compileExpression( condition, freeVars )
-        compileFunctionBody( ifTrue, freeVars )
+          .flatMap { compileFunctionBody(_, freeVars) }
+      case TipSmtIte(condition, ifTrue, ifFalse) =>
+        val compiledCondition = compileExpression(condition, freeVars)
+        compileFunctionBody(ifTrue, freeVars)
           .map { compiledCondition --> _ } ++
-          compileFunctionBody( ifFalse, freeVars )
-          .map { -compiledCondition --> _ }
-      case TipSmtForall( boundVars, formula ) =>
+          compileFunctionBody(ifFalse, freeVars)
+            .map { -compiledCondition --> _ }
+      case TipSmtForall(boundVars, formula) =>
         val bound = boundVars map { v =>
-          Var( v.name, typeDecls( v.typ.typename ) )
+          Var(v.name, typeDecls(v.typ.typename))
         }
         val result = compileFunctionBody(
-          formula, freeVars ++ ( bound map { _.name } ) )
-          .map { All.Block( bound, _ ) }
+          formula,
+          freeVars ++ (bound map { _.name })
+        )
+          .map { All.Block(bound, _) }
         result
       case matchExpression: TipSmtMatch =>
-        And.nAry.unapply( compileExpression( matchExpression, freeVars ).asInstanceOf[Formula] ).get
-      case _ => Seq( compileExpression( body, freeVars ).asInstanceOf[Formula] )
+        And.nAry.unapply(compileExpression(matchExpression, freeVars).asInstanceOf[Formula]).get
+      case _ => Seq(compileExpression(body, freeVars).asInstanceOf[Formula])
     }
   }
 
   def compileExpression(
-    expression: TipSmtExpression, freeVars: Seq[String] ): Expr =
+      expression: TipSmtExpression,
+      freeVars: Seq[String]
+  ): Expr =
     expression match {
-      case expr @ TipSmtForall( _, _ ) =>
-        compileExpression( expr, freeVars )
-      case expr @ TipSmtExists( _, _ ) =>
-        compileExpression( expr, freeVars )
-      case expr @ TipSmtEq( _ ) =>
-        compileExpression( expr, freeVars )
-      case expr @ TipSmtIte( _, _, _ ) =>
-        compileExpression( expr, freeVars )
-      case expr @ TipSmtMatch( _, _ ) =>
-        compileExpression( expr, freeVars )
-      case expr @ TipSmtAnd( _ ) =>
-        compileExpression( expr, freeVars )
-      case expr @ TipSmtOr( _ ) =>
-        compileExpression( expr, freeVars )
-      case expr @ TipSmtNot( _ ) =>
-        compileExpression( expr, freeVars )
-      case expr @ TipSmtImp( _ ) =>
-        compileExpression( expr, freeVars )
-      case expr @ TipSmtIdentifier( _ ) =>
-        compileExpression( expr, freeVars )
-      case expr @ TipSmtFun( _, _ ) =>
-        compileExpression( expr, freeVars )
+      case expr @ TipSmtForall(_, _) =>
+        compileExpression(expr, freeVars)
+      case expr @ TipSmtExists(_, _) =>
+        compileExpression(expr, freeVars)
+      case expr @ TipSmtEq(_) =>
+        compileExpression(expr, freeVars)
+      case expr @ TipSmtIte(_, _, _) =>
+        compileExpression(expr, freeVars)
+      case expr @ TipSmtMatch(_, _) =>
+        compileExpression(expr, freeVars)
+      case expr @ TipSmtAnd(_) =>
+        compileExpression(expr, freeVars)
+      case expr @ TipSmtOr(_) =>
+        compileExpression(expr, freeVars)
+      case expr @ TipSmtNot(_) =>
+        compileExpression(expr, freeVars)
+      case expr @ TipSmtImp(_) =>
+        compileExpression(expr, freeVars)
+      case expr @ TipSmtIdentifier(_) =>
+        compileExpression(expr, freeVars)
+      case expr @ TipSmtFun(_, _) =>
+        compileExpression(expr, freeVars)
       case TipSmtFalse =>
         Bottom()
       case TipSmtTrue =>
         Top()
-      case TipSmtDistinct( _ ) => throw new IllegalArgumentException
+      case TipSmtDistinct(_) => throw new IllegalArgumentException
     }
 
   private def compileExpression(
-    tipSmtAnd: TipSmtAnd, freeVars: Seq[String] ): Expr = {
+      tipSmtAnd: TipSmtAnd,
+      freeVars: Seq[String]
+  ): Expr = {
     And(
       tipSmtAnd.exprs
-        .map { compileExpression( _, freeVars ).asInstanceOf[Formula] } )
+        .map { compileExpression(_, freeVars).asInstanceOf[Formula] }
+    )
   }
 
   private def compileExpression(
-    tipSmtOr: TipSmtOr, freeVars: Seq[String] ): Expr = {
+      tipSmtOr: TipSmtOr,
+      freeVars: Seq[String]
+  ): Expr = {
     Or(
       tipSmtOr.exprs
-        .map { compileExpression( _, freeVars ).asInstanceOf[Formula] } )
+        .map { compileExpression(_, freeVars).asInstanceOf[Formula] }
+    )
   }
 
   private def compileExpression(
-    tipSmtNot: TipSmtNot, freeVars: Seq[String] ): Expr = {
-    Neg( compileExpression( tipSmtNot.expr, freeVars ) )
+      tipSmtNot: TipSmtNot,
+      freeVars: Seq[String]
+  ): Expr = {
+    Neg(compileExpression(tipSmtNot.expr, freeVars))
   }
 
   private def compileExpression(
-    tipSmtImp: TipSmtImp, freeVars: Seq[String] ): Expr = {
+      tipSmtImp: TipSmtImp,
+      freeVars: Seq[String]
+  ): Expr = {
     tipSmtImp.exprs
-      .map { compileExpression( _, freeVars ) } reduceRight { _ --> _ }
+      .map { compileExpression(_, freeVars) } reduceRight { _ --> _ }
   }
 
   private def compileExpression(
-    tipSmtIdentifier: TipSmtIdentifier, freeVars: Seq[String] ): Expr = {
-    if ( freeVars contains tipSmtIdentifier.name ) {
+      tipSmtIdentifier: TipSmtIdentifier,
+      freeVars: Seq[String]
+  ): Expr = {
+    if (freeVars contains tipSmtIdentifier.name) {
       Var(
         tipSmtIdentifier.name,
-        typeDecls( tipSmtIdentifier.datatype.get.name ) )
+        typeDecls(tipSmtIdentifier.datatype.get.name)
+      )
     } else {
-      funDecls( tipSmtIdentifier.name )
+      funDecls(tipSmtIdentifier.name)
     }
   }
 
   private def compileExpression(
-    tipSmtFun: TipSmtFun, freeVars: Seq[String] ): Expr = {
-    funDecls( tipSmtFun.name )(
-      tipSmtFun.arguments map { compileExpression( _, freeVars ) }: _* )
+      tipSmtFun: TipSmtFun,
+      freeVars: Seq[String]
+  ): Expr = {
+    funDecls(tipSmtFun.name)(
+      tipSmtFun.arguments map { compileExpression(_, freeVars) }: _*
+    )
   }
 
   private def compileExpression(
-    tipSmtMatch: TipSmtMatch, freeVars: Seq[String] ): Expr = {
-    val TipSmtMatch( matchedExpression, cases ) = tipSmtMatch
+      tipSmtMatch: TipSmtMatch,
+      freeVars: Seq[String]
+  ): Expr = {
+    val TipSmtMatch(matchedExpression, cases) = tipSmtMatch
     val compiledMatchedExpression =
-      compileExpression( matchedExpression, freeVars )
-    And( cases map {
-      compileCase( _, compiledMatchedExpression, freeVars )
-    } )
+      compileExpression(matchedExpression, freeVars)
+    And(cases map {
+      compileCase(_, compiledMatchedExpression, freeVars)
+    })
   }
 
   private def compileExpression(
-    tipSmtIte: TipSmtIte, freeVars: Seq[String] ): Expr = {
-    val TipSmtIte( cond, ifTrue, ifFalse ) = tipSmtIte
-    val compiledCondition = compileExpression( cond, freeVars )
+      tipSmtIte: TipSmtIte,
+      freeVars: Seq[String]
+  ): Expr = {
+    val TipSmtIte(cond, ifTrue, ifFalse) = tipSmtIte
+    val compiledCondition = compileExpression(cond, freeVars)
     And(
-      compiledCondition --> compileExpression( ifTrue, freeVars ),
-      -compiledCondition --> compileExpression( ifFalse, freeVars ) )
+      compiledCondition --> compileExpression(ifTrue, freeVars),
+      -compiledCondition --> compileExpression(ifFalse, freeVars)
+    )
   }
 
   private def compileExpression(
-    tipSmtEq: TipSmtEq, freeVars: Seq[String] ): Expr = {
-    val exprs = tipSmtEq.exprs map { compileExpression( _, freeVars ) }
-    And( for ( ( a, b ) <- exprs zip exprs.tail )
-      yield if ( exprs.head.ty == To ) a <-> b else a === b )
+      tipSmtEq: TipSmtEq,
+      freeVars: Seq[String]
+  ): Expr = {
+    val exprs = tipSmtEq.exprs map { compileExpression(_, freeVars) }
+    And(for ((a, b) <- exprs zip exprs.tail)
+      yield if (exprs.head.ty == To) a <-> b else a === b)
   }
 
   private def compileExpression(
-    tipSmtForall: TipSmtForall, freeVars: Seq[String] ): Expr = {
-    val TipSmtForall( variables, formula ) = tipSmtForall
+      tipSmtForall: TipSmtForall,
+      freeVars: Seq[String]
+  ): Expr = {
+    val TipSmtForall(variables, formula) = tipSmtForall
     val vars = variables map {
-      case TipSmtVariableDecl( name, typ ) =>
-        Var( name, typeDecls( typ.typename ) )
+      case TipSmtVariableDecl(name, typ) =>
+        Var(name, typeDecls(typ.typename))
     }
     All.Block(
       vars,
       compileExpression(
         formula,
-        freeVars ++ vars.map { _.name } ) )
+        freeVars ++ vars.map { _.name }
+      )
+    )
   }
 
   private def compileExpression(
-    tipSmtExists: TipSmtExists, freeVars: Seq[String] ): Expr = {
-    val TipSmtExists( variables, formula ) = tipSmtExists
+      tipSmtExists: TipSmtExists,
+      freeVars: Seq[String]
+  ): Expr = {
+    val TipSmtExists(variables, formula) = tipSmtExists
     val vars = variables map {
-      case TipSmtVariableDecl( name, typ ) =>
-        Var( name, typeDecls( typ.typename ) )
+      case TipSmtVariableDecl(name, typ) =>
+        Var(name, typeDecls(typ.typename))
     }
     Ex.Block(
       vars,
       compileExpression(
         formula,
-        freeVars ++ vars.map { _.name } ) )
+        freeVars ++ vars.map { _.name }
+      )
+    )
   }
 
   private def compileCase(
-    tipSmtCase:        TipSmtCase,
-    matchedExpression: Expr,
-    freeVars:          Seq[String] ): Expr = {
-    val TipSmtConstructorPattern( constructor, fields ) = tipSmtCase.pattern: @unchecked
-    val constructorType = problem.symbolTable.get.typeOf( constructor.name )
+      tipSmtCase: TipSmtCase,
+      matchedExpression: Expr,
+      freeVars: Seq[String]
+  ): Expr = {
+    val TipSmtConstructorPattern(constructor, fields) = tipSmtCase.pattern: @unchecked
+    val constructorType = problem.symbolTable.get.typeOf(constructor.name)
     val boundVariables =
       fields
-        .zip( constructorType.argumentTypes )
-        .filter { case ( field, _ ) => isVariable( field ) }
-        .map { case ( field, ty ) => Var( field.name, typeDecls( ty.name ) ) }
+        .zip(constructorType.argumentTypes)
+        .filter { case (field, _) => isVariable(field) }
+        .map { case (field, ty) => Var(field.name, typeDecls(ty.name)) }
 
     val newFreeVars = freeVars ++ boundVariables.map { _.name }
 
     val compiledPattern =
       Apps(
-        compileConstructorSymbol( constructor ),
-        compileFields( fields.zip( constructorType.argumentTypes ) ) )
+        compileConstructorSymbol(constructor),
+        compileFields(fields.zip(constructorType.argumentTypes))
+      )
 
     All.Block(
       boundVariables,
-      ( matchedExpression === compiledPattern ) -->
-        compileExpression( tipSmtCase.expr, newFreeVars ) )
+      (matchedExpression === compiledPattern) -->
+        compileExpression(tipSmtCase.expr, newFreeVars)
+    )
   }
 
   private def compileFields(
-    fields: Seq[( TipSmtIdentifier, Datatype )] ): Seq[Expr] = {
+      fields: Seq[(TipSmtIdentifier, Datatype)]
+  ): Seq[Expr] = {
     fields map {
-      case ( f, ty ) =>
-        if ( isVariable( f ) ) {
-          Var( f.name, typeDecls( ty.name ) )
+      case (f, ty) =>
+        if (isVariable(f)) {
+          Var(f.name, typeDecls(ty.name))
         } else {
-          Const( f.name, typeDecls( ty.name ) )
+          Const(f.name, typeDecls(ty.name))
         }
     }
   }
 
-  private def compileConstructorSymbol( id: TipSmtIdentifier ): Expr = {
-    val constructorType = problem.symbolTable.get.typeOf( id.name )
+  private def compileConstructorSymbol(id: TipSmtIdentifier): Expr = {
+    val constructorType = problem.symbolTable.get.typeOf(id.name)
     Const(
       id.name,
       FunctionType(
-        typeDecls( constructorType.returnType.name ),
+        typeDecls(constructorType.returnType.name),
         constructorType.argumentTypes
-          .map { dt => typeDecls( dt.name ) }.toList ) )
+          .map { dt => typeDecls(dt.name) }.toList
+      )
+    )
   }
 
-  private def isVariable( id: TipSmtIdentifier ): Boolean = {
-    !problem.symbolTable.get.contains( id.name )
+  private def isVariable(id: TipSmtIdentifier): Boolean = {
+    !problem.symbolTable.get.contains(id.name)
   }
 
-  private def declareBaseType( sort: String ): Unit = {
-    val baseType = TBase( sort )
-    declare( baseType )
+  private def declareBaseType(sort: String): Unit = {
+    val baseType = TBase(sort)
+    declare(baseType)
     ctx += baseType
   }
 
-  private def declareDatatype( tipSmtDatatype: TipSmtDatatype ): Unit = {
-    val inductiveType = tipSmtDatatypeToInductiveType( tipSmtDatatype )
-    declare( inductiveType.baseType )
+  private def declareDatatype(tipSmtDatatype: TipSmtDatatype): Unit = {
+    val inductiveType = tipSmtDatatypeToInductiveType(tipSmtDatatype)
+    declare(inductiveType.baseType)
     ctx += inductiveType
     datatypes += inductiveType
-    inductiveType.constructorConstants.foreach( declare )
-    inductiveType.constructors.flatMap( _.fields.flatMap( _.projector ) )
-      .foreach( declare )
+    inductiveType.constructorConstants.foreach(declare)
+    inductiveType.constructors.flatMap(_.fields.flatMap(_.projector))
+      .foreach(declare)
   }
 
   def toProblem: TipProblem =
@@ -467,27 +531,29 @@ class TipTransformationCompiler( var problem: TipSmtProblem ) {
       datatypes.toSeq,
       funDecls.values.toSeq diff functions.map { _.fun },
       functions.toSeq,
-      assumptions.toSeq, And( goals ) )
+      assumptions.toSeq,
+      And(goals)
+    )
 
   def compileTipProblem(): TipTransformationCompiler = {
     problem.definitions.foreach {
-      case c @ TipSmtConstantDeclaration( _, _, _ ) =>
-        compileConstantDeclaration( c )
-      case c @ TipSmtSortDeclaration( _, _ ) =>
-        compileSortDeclaration( c )
-      case c @ TipSmtFunctionDeclaration( _, _, _, _ ) =>
-        compileFunctionDeclaration( c )
-      case c @ TipSmtGoal( _, _ ) =>
-        compileGoal( c )
-      case c @ TipSmtAssertion( _, _ ) =>
-        compileAssertion( c )
-      case c @ TipSmtFunctionDefinition( _, _, _, _, _ ) =>
-        declareFunction( c )
-        compileFunctionDefinition( c )
+      case c @ TipSmtConstantDeclaration(_, _, _) =>
+        compileConstantDeclaration(c)
+      case c @ TipSmtSortDeclaration(_, _) =>
+        compileSortDeclaration(c)
+      case c @ TipSmtFunctionDeclaration(_, _, _, _) =>
+        compileFunctionDeclaration(c)
+      case c @ TipSmtGoal(_, _) =>
+        compileGoal(c)
+      case c @ TipSmtAssertion(_, _) =>
+        compileAssertion(c)
+      case c @ TipSmtFunctionDefinition(_, _, _, _, _) =>
+        declareFunction(c)
+        compileFunctionDefinition(c)
       case c @ TipSmtCheckSat() =>
-      case c @ TipSmtDatatypesDeclaration( _ ) =>
-        compileDatatypesDeclaration( c )
-      case c @ TipSmtMutualRecursiveFunctionDefinition( functions ) =>
+      case c @ TipSmtDatatypesDeclaration(_) =>
+        compileDatatypesDeclaration(c)
+      case c @ TipSmtMutualRecursiveFunctionDefinition(functions) =>
         functions foreach { declareFunction }
         functions foreach { compileFunctionDefinition }
     }

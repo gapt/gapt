@@ -7,12 +7,12 @@ import gapt.proofs.gaptic._
 
 object prop_13 extends TacticsProof {
 
-  ctx += TBase( "sk" )
+  ctx += TBase("sk")
 
-  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += InductiveType(ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat")
   ctx += hoc"p:Nat>Nat"
 
-  ctx += InductiveType( ty"list", hoc"nil:list", hoc"cons:sk>list>list" )
+  ctx += InductiveType(ty"list", hoc"nil:list", hoc"cons:sk>list>list")
   ctx += hoc"head:list>sk"
   ctx += hoc"tail:list>list"
 
@@ -31,7 +31,7 @@ object prop_13 extends TacticsProof {
                       goal: ∀n ∀x ∀xs (drop(S(n:Nat): Nat, cons(x:sk, xs:list): list): list) = drop(n, xs)
     """
 
-  val proof = Lemma( sequent ) {
+  val proof = Lemma(sequent) {
     trivial
   }
 }

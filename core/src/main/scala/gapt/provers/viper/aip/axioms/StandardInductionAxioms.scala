@@ -4,7 +4,7 @@ import cats.syntax.all._
 import gapt.expr.Var
 import gapt.expr.formula.Formula
 import gapt.expr.subst.Substitution
-import gapt.expr.{ Const => Con }
+import gapt.expr.{Const => Con}
 import gapt.proofs.LabelledSequent
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
@@ -13,22 +13,23 @@ import gapt.proofs.lk.LKProof
 import gapt.provers.viper.aip._
 
 object StandardInductionAxioms {
-  def apply( variable: Var, formula: Formula )( implicit ctx: Context ): ThrowsError[Axiom] = {
-    apply( ( _, _ ) => variable :: Nil, ( _ ) => Right( formula ) )( Sequent() ).map( _.head )
+  def apply(variable: Var, formula: Formula)(implicit ctx: Context): ThrowsError[Axiom] = {
+    apply((_, _) => variable :: Nil, (_) => Right(formula))(Sequent()).map(_.head)
   }
 }
 
 case class StandardInductionAxioms(
-    variableSelector: VariableSelector = allVariablesSelector( _ )( _ ),
-    formulaSelector:  FormulaSelector  = firstFormulaSelector( _ ) ) extends AxiomFactory {
+    variableSelector: VariableSelector = allVariablesSelector(_)(_),
+    formulaSelector: FormulaSelector = firstFormulaSelector(_)
+) extends AxiomFactory {
 
-  def forAllVariables = copy( variableSelector = allVariablesSelector( _ )( _ ) )
+  def forAllVariables = copy(variableSelector = allVariablesSelector(_)(_))
 
-  def forLabel( label: String ) = copy( formulaSelector = findFormula( _, label ) )
+  def forLabel(label: String) = copy(formulaSelector = findFormula(_, label))
 
-  def forVariables( variables: Var* ) = copy( variableSelector = ( _, _ ) => variables.toList )
+  def forVariables(variables: Var*) = copy(variableSelector = (_, _) => variables.toList)
 
-  def forFormula( formula: Formula ) = copy( formulaSelector = ( _ ) => Right( formula ) )
+  def forFormula(formula: Formula) = copy(formulaSelector = (_) => Right(formula))
 
   /**
    * Computes induction axioms for a given sequent.
@@ -38,11 +39,11 @@ case class StandardInductionAxioms(
    * @return Either a list of induction axioms or a non empty list of strings describing the why induction axioms
    *         could not be generated.
    */
-  override def apply( sequent: LabelledSequent )( implicit ctx: Context ): ThrowsError[List[Axiom]] =
+  override def apply(sequent: LabelledSequent)(implicit ctx: Context): ThrowsError[List[Axiom]] =
     for {
-      formula <- formulaSelector( sequent )
-      variables = variableSelector( formula, ctx )
-      axioms <- variables.traverse[ThrowsError, Axiom]( v => createAxiom( v, formula ) )
+      formula <- formulaSelector(sequent)
+      variables = variableSelector(formula, ctx)
+      axioms <- variables.traverse[ThrowsError, Axiom](v => createAxiom(v, formula))
     } yield axioms
 
   /**
@@ -54,28 +55,30 @@ case class StandardInductionAxioms(
    * @return A standard induction axiom for the specified variable and formula.
    */
   private def createAxiom(
-    inductionVariable: Var, inductionFormula: Formula )( implicit ctx: Context ): ThrowsError[Axiom] = {
+      inductionVariable: Var,
+      inductionFormula: Formula
+  )(implicit ctx: Context): ThrowsError[Axiom] = {
     for {
-      constructors <- getConstructors( baseType( inductionVariable ), ctx )
+      constructors <- getConstructors(baseType(inductionVariable), ctx)
     } yield {
       new Axiom {
 
-        val formula = inductionAxiom( inductionVariable, inductionFormula, constructors )
+        val formula = inductionAxiom(inductionVariable, inductionFormula, constructors)
 
         /**
          * A proof of the validity of this induction axiom.
          * @return An inductive proof of the axiom.
          */
         def proof = {
-          val inductiveCaseProofs = constructors map { inductiveCaseProof( _ ) }
-          var proofState = ProofState( formula )
-          proofState += repeat( allR )
+          val inductiveCaseProofs = constructors map { inductiveCaseProof(_) }
+          var proofState = ProofState(formula)
+          proofState += repeat(allR)
           proofState += impR
-          proofState += allR( inductionVariable )
-          proofState += repeat( andL )
-          proofState += induction( inductionVariable )
+          proofState += allR(inductionVariable)
+          proofState += repeat(andL)
+          proofState += induction(inductionVariable)
           inductiveCaseProofs foreach {
-            proofState += insert( _ )
+            proofState += insert(_)
           }
 
           proofState.result
@@ -86,27 +89,29 @@ case class StandardInductionAxioms(
          * @param constructor The constructor whose associated inductive case is proved.
          * @return A proof of the inductive case associated with the constructor.
          */
-        private def inductiveCaseProof( constructor: Con ): LKProof = {
-          val inductiveCaseFormula = inductionCase( inductionVariable, inductionFormula, constructor )
-          val ( primaryVariables, secondaryVariables, caseConclusion ) =
-            inductionCaseConclusion( inductionVariable, constructor, inductionFormula )
+        private def inductiveCaseProof(constructor: Con): LKProof = {
+          val inductiveCaseFormula = inductionCase(inductionVariable, inductionFormula, constructor)
+          val (primaryVariables, secondaryVariables, caseConclusion) =
+            inductionCaseConclusion(inductionVariable, constructor, inductionFormula)
           val inductionHypotheses = primaryVariables map {
-            primaryVariable => Substitution( inductionVariable -> primaryVariable )( inductionFormula )
+            primaryVariable => Substitution(inductionVariable -> primaryVariable)(inductionFormula)
           }
           var proofState = ProofState(
             Sequent(
               "icf" -> inductiveCaseFormula ::
-                inductionHypotheses.zipWithIndex.map( { case ( hyp, index ) => s"ih$index" -> hyp } ),
-              "goal" -> caseConclusion :: Nil ) )
-          proofState += allL( "icf", primaryVariables: _* ).forget orElse skip
-          proofState += impL( "icf" )
-          if ( primaryVariables.isEmpty )
+                inductionHypotheses.zipWithIndex.map({ case (hyp, index) => s"ih$index" -> hyp }),
+              "goal" -> caseConclusion :: Nil
+            )
+          )
+          proofState += allL("icf", primaryVariables: _*).forget orElse skip
+          proofState += impL("icf")
+          if (primaryVariables.isEmpty)
             proofState += trivial
           else
             primaryVariables foreach {
-              _ => proofState += andR( "icf" ) andThen trivial orElse trivial
+              _ => proofState += andR("icf") andThen trivial orElse trivial
             }
-          proofState += allL( "icf", secondaryVariables: _* ).forget orElse skip
+          proofState += allL("icf", secondaryVariables: _*).forget orElse skip
           proofState += trivial
 
           proofState.result

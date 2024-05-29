@@ -8,49 +8,98 @@ import gapt.expr.formula.fol.FOLFunction
 class Prover9ParserTest extends Specification {
   "The Prover9 language parser" should {
     "handle conjunctions and atoms" in {
-      List( "p(X)", "A", "-p(y)", "-p(Y)",
-        "P(X)", "a", "-P(y)", "-P(Y)",
-        "P(x) & P(b)", "q(x) &q(x) & p(y)", "A&B", "X&Y&Z",
-        "(P(x) & P(b))", "(q(x) &q(x) & p(y))", "(A&B)", "(X&Y&Z)",
-        "q(x) &(q(x) & p(y))", "(X&Y)&Z" ) map { s =>
-          Prover9TermParser.parseFormula( s )
-          ok
-        }
+      List(
+        "p(X)",
+        "A",
+        "-p(y)",
+        "-p(Y)",
+        "P(X)",
+        "a",
+        "-P(y)",
+        "-P(Y)",
+        "P(x) & P(b)",
+        "q(x) &q(x) & p(y)",
+        "A&B",
+        "X&Y&Z",
+        "(P(x) & P(b))",
+        "(q(x) &q(x) & p(y))",
+        "(A&B)",
+        "(X&Y&Z)",
+        "q(x) &(q(x) & p(y))",
+        "(X&Y)&Z"
+      ) map { s =>
+        Prover9TermParser.parseFormula(s)
+        ok
+      }
     }
 
     "handle simple formulas" in {
       List(
-        "p(X)", "A", "-p(y)", "-p(Y)",
-        "P(X)", "a", "-P(y)", "-P(Y)",
-        "P(x) & P(b)", "q(x) &q(x) & p(y)", "A&B", "X&Y&Z",
-        "(P(x) & P(b))", "(q(x) &q(x) & p(y))", "(A&B)", "(X&Y&Z)",
-        "P(x) | P(b)", "q(x) |q(x) | p(y)", "A|B", "X|Y|Z",
-        "(P(x) | P(b))", "(q(x) |q(x) | p(y))", "(A|B)", "(X|Y|Z)",
-        "P(x) -> P(b)", "A->B", // "X->Y->Z", "q(x) ->q(x) -> p(y)",
-        "(P(x) -> P(b))", "(A->B)", //"(X->Y->Z)", "(q(x) ->q(x) -> p(y))",
-        "P(x) <- P(b)", "A<-B", //"X<-Y<-Z", , "q(x) <-q(x) <- p(y)"
-        "(P(x) <- P(b))", "(A<-B)", //"(X<-Y<-Z)", "(q(x) <-q(x) <- p(y))",
-        "P(x) <-> P(b)", "A<->B", //"X<->Y<->Z", "q(x) <->q(x) <-> p(y)",
-        "(P(x) <-> P(b))", "(A<->B)", //"(X<->Y<->Z)", "(q(x) <->q(x) <-> p(y))",
-        "q(x) &(q(x) & p(y))", "(X&Y)&Z",
-        "(all X p(X))", "(exists X p(X))",
-        "-(all X p(X))", "-(exists X p(X))",
-        "-(all X --p(X))", "--(exists X p(X))" ) map { s =>
-          Prover9TermParser.parseFormula( s )
-          ok
-        }
+        "p(X)",
+        "A",
+        "-p(y)",
+        "-p(Y)",
+        "P(X)",
+        "a",
+        "-P(y)",
+        "-P(Y)",
+        "P(x) & P(b)",
+        "q(x) &q(x) & p(y)",
+        "A&B",
+        "X&Y&Z",
+        "(P(x) & P(b))",
+        "(q(x) &q(x) & p(y))",
+        "(A&B)",
+        "(X&Y&Z)",
+        "P(x) | P(b)",
+        "q(x) |q(x) | p(y)",
+        "A|B",
+        "X|Y|Z",
+        "(P(x) | P(b))",
+        "(q(x) |q(x) | p(y))",
+        "(A|B)",
+        "(X|Y|Z)",
+        "P(x) -> P(b)",
+        "A->B", // "X->Y->Z", "q(x) ->q(x) -> p(y)",
+        "(P(x) -> P(b))",
+        "(A->B)", // "(X->Y->Z)", "(q(x) ->q(x) -> p(y))",
+        "P(x) <- P(b)",
+        "A<-B", // "X<-Y<-Z", , "q(x) <-q(x) <- p(y)"
+        "(P(x) <- P(b))",
+        "(A<-B)", // "(X<-Y<-Z)", "(q(x) <-q(x) <- p(y))",
+        "P(x) <-> P(b)",
+        "A<->B", // "X<->Y<->Z", "q(x) <->q(x) <-> p(y)",
+        "(P(x) <-> P(b))",
+        "(A<->B)", // "(X<->Y<->Z)", "(q(x) <->q(x) <-> p(y))",
+        "q(x) &(q(x) & p(y))",
+        "(X&Y)&Z",
+        "(all X p(X))",
+        "(exists X p(X))",
+        "-(all X p(X))",
+        "-(exists X p(X))",
+        "-(all X --p(X))",
+        "--(exists X p(X))"
+      ) map { s =>
+        Prover9TermParser.parseFormula(s)
+        ok
+      }
     }
 
     "handle complex formulas" in {
       List(
-        "(all X (P(X) & Q(X)))", "(all X (P(X) & Q(X) & R(X,X)))",
-        "(exists X (P(X) & Q(X)))", "(exists X (P(X) & Q(X) & R(X,X)))",
-        "(all X (P(X) | Q(X)))", "(all X (P(X) | Q(X) | R(X,X)))",
-        "(exists X (P(X) | Q(X)))", "(exists X (P(X) | Q(X) | R(X,X)))",
-        "(all X (q(X,f(X)) | q(X,g(X))))" ) map { s =>
-          Prover9TermParser.parseFormula( s )
-          ok
-        }
+        "(all X (P(X) & Q(X)))",
+        "(all X (P(X) & Q(X) & R(X,X)))",
+        "(exists X (P(X) & Q(X)))",
+        "(exists X (P(X) & Q(X) & R(X,X)))",
+        "(all X (P(X) | Q(X)))",
+        "(all X (P(X) | Q(X) | R(X,X)))",
+        "(exists X (P(X) | Q(X)))",
+        "(exists X (P(X) | Q(X) | R(X,X)))",
+        "(all X (q(X,f(X)) | q(X,g(X))))"
+      ) map { s =>
+        Prover9TermParser.parseFormula(s)
+        ok
+      }
     }
 
     "goat puzzle endsequent" in {
@@ -72,16 +121,15 @@ class Prover9ParserTest extends Specification {
           | (all V1 (p(north,south,north,north,V1) -> p(south,south,north,south,take_cabbage(V1)))) ->
           | (exists Z p(north,north,north,north,Z))""".stripMargin
 
-      Prover9TermParser.parseFormula( oendsequent )
+      Prover9TermParser.parseFormula(oendsequent)
       ok
     }
 
     "parse infix formulas" in {
-      List( "a = b", "P(1+(X*2))", "f(1+X)= (X*0)+X",
-        "(all X f(1+X)= (X*0)+X)", "(all X f(1+X)= (X*0)+X) | (all X f(1+X)= (X*0)+X)" ) map { s =>
-          Prover9TermParser.parseFormula( s )
-          ok
-        }
+      List("a = b", "P(1+(X*2))", "f(1+X)= (X*0)+X", "(all X f(1+X)= (X*0)+X)", "(all X f(1+X)= (X*0)+X) | (all X f(1+X)= (X*0)+X)") map { s =>
+        Prover9TermParser.parseFormula(s)
+        ok
+      }
     }
 
     "parse large formula 1" in {
@@ -89,7 +137,7 @@ class Prover9ParserTest extends Specification {
 -neq(V,nil) | (all Y (ssList(Y) -> app(W,Y) != X | -totalorderedP(W) | (exists Z (ssItem(Z) & (exists X1 (ssList(X1) &
 app(cons(Z,nil),X1) = Y & (exists X2 (ssItem(X2) & (exists X3 (ssList(X3) & app(X3,cons(X2,nil)) = W &
 leq(X2,Z))))))))))) | nil != X & nil = W | neq(U,nil) & frontsegP(V,U)))))))))"""
-      Prover9TermParser.parseFormula( str )
+      Prover9TermParser.parseFormula(str)
       ok
     }
 
@@ -132,22 +180,22 @@ p101(Y))) & (-(all X (-r1(Y,X) | -(-p2(X) & -p102(X) & p101(X)))) & -(all X (-r1
 (p111(Y) | -p112(Y)) & (p110(Y) | -p111(Y)) & (p109(Y) | -p110(Y)) & (p108(Y) | -p109(Y)) & (p107(Y) | -p108(Y)) &
 (p106(Y) | -p107(Y)) & (p105(Y) | -p106(Y)) & (p104(Y) | -p105(Y)) & (p103(Y) | -p104(Y)) & (p102(Y) | -p103(Y)) &
 (p101(Y) | -p102(Y)) & (p100(Y) | -p101(Y)))) & -p101(X) & p100(X))))"""
-      Prover9TermParser.parseFormula( str )
+      Prover9TermParser.parseFormula(str)
       ok
     }
 
     "parse infix v" in {
-      Prover9TermParser.parseTerm( "a v b" ) must beEqualTo( FOLFunction( "v", List( FOLConst( "a" ), FOLConst( "b" ) ) ) )
+      Prover9TermParser.parseTerm("a v b") must beEqualTo(FOLFunction("v", List(FOLConst("a"), FOLConst("b"))))
     }
 
   }
 
   "issue 719" in {
-    Prover9TermParser.parseTerm( "X'" ) must beEqualTo( le"'\'' X" )
+    Prover9TermParser.parseTerm("X'") must beEqualTo(le"'\'' X")
   }
 
   "infix \\" in {
-    Prover9TermParser.parseTerm( "X \\ Y" ) must_== le"'\\' X Y"
+    Prover9TermParser.parseTerm("X \\ Y") must_== le"'\\' X Y"
   }
 
 }

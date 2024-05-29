@@ -9,13 +9,13 @@ import gapt.formats.llk.loadLLK
  */
 class nTape3 extends AnalysisWithCeresOmega {
 
-  override def proofdb() = loadLLK( ClasspathInputFile( "ntape/ntape3.llk" ) )
+  override def proofdb() = loadLLK(ClasspathInputFile("ntape/ntape3.llk"))
 
   override def root_proof() = "TAPEPROOF"
 
   override def printStatistics() = {
     super.printStatistics()
-    nTapeInstances.printInstances( this.expansion_proof, this.proofdb().Definitions )
+    nTapeInstances.printInstances(this.expansion_proof, this.proofdb().Definitions)
   }
 
 }

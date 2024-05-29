@@ -2,10 +2,10 @@ package gapt.provers.viper
 
 import gapt.expr.formula.Formula
 import gapt.expr.ty.TBase
-import gapt.expr.{ Var, Const => Con }
+import gapt.expr.{Var, Const => Con}
 import gapt.formats.tip.TipProblem
 import gapt.proofs.context.Context
-import gapt.proofs.{ Ant, Sequent }
+import gapt.proofs.{Ant, Sequent}
 
 package object aip {
 
@@ -18,8 +18,8 @@ package object aip {
    * @param ctx The context w.r.t. to which the variable's type is checked.
    * @return Returns true if the variable v is of inductive type in the context ctx, false otherwise.
    */
-  def hasInductiveType( v: Var )( implicit ctx: Context ): Boolean =
-    ctx.getConstructors( v.ty ).isDefined
+  def hasInductiveType(v: Var)(implicit ctx: Context): Boolean =
+    ctx.getConstructors(v.ty).isDefined
 
   /**
    * Converts a TIP problem to sequent with context.
@@ -29,13 +29,14 @@ package object aip {
    *         unique formula in the succedent is labelled "goal". Moreover a context specifying the constants and
    *         types, etc. is returned.
    */
-  def tipProblemToSequent( problem: TipProblem ): ( Sequent[( String, Formula )], Context ) =
+  def tipProblemToSequent(problem: TipProblem): (Sequent[(String, Formula)], Context) =
     (
       problem.toSequent.zipWithIndex.map {
-        case ( f, Ant( i ) ) => s"h$i" -> f
-        case ( f, _ )        => "goal" -> f
+        case (f, Ant(i)) => s"h$i" -> f
+        case (f, _)      => "goal" -> f
       },
-      problem.context )
+      problem.context
+    )
 
   /**
    * Reads the constructors of type `typ` from the context.
@@ -44,11 +45,13 @@ package object aip {
    * @return Either a list containing the constructors of `typ` or a TacticalFailure.
    */
   def getConstructors(
-    typ: TBase, ctx: Context ): ThrowsError[List[Con]] =
-    ( ctx.isType( typ ), ctx.getConstructors( typ ) ) match {
-      case ( true, Some( constructors ) ) => Right( constructors.toList )
-      case ( true, None )                 => Left( s"Type $typ is not inductively defined" )
-      case ( false, _ )                   => Left( s"Type $typ is not defined" )
+      typ: TBase,
+      ctx: Context
+  ): ThrowsError[List[Con]] =
+    (ctx.isType(typ), ctx.getConstructors(typ)) match {
+      case (true, Some(constructors)) => Right(constructors.toList)
+      case (true, None)               => Left(s"Type $typ is not inductively defined")
+      case (false, _)                 => Left(s"Type $typ is not defined")
     }
 
   /**
@@ -57,7 +60,7 @@ package object aip {
    * @param variable A variable.
    * @return The variable's base type.
    */
-  def baseType( variable: Var ): TBase = variable.ty.asInstanceOf[TBase]
+  def baseType(variable: Var): TBase = variable.ty.asInstanceOf[TBase]
 
   /**
    * Finds a formula by label in a labelled sequent.
@@ -67,11 +70,11 @@ package object aip {
    * @return The formula designated by the given label or an error message if the formula
    *         is not be uniquely determined by the label.
    */
-  def findFormula( sequent: Sequent[( String, Formula )], label: String ): ThrowsError[Formula] = {
-    sequent.succedent filter { case ( l, f ) => l == label } match {
-      case Vector( lf ) => Right( lf._2 )
-      case lf +: _      => Left( "Formula could not be uniquely determined" )
-      case _            => Left( s"Label $label not found" )
+  def findFormula(sequent: Sequent[(String, Formula)], label: String): ThrowsError[Formula] = {
+    sequent.succedent filter { case (l, f) => l == label } match {
+      case Vector(lf) => Right(lf._2)
+      case lf +: _    => Left("Formula could not be uniquely determined")
+      case _          => Left(s"Label $label not found")
     }
   }
 }

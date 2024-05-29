@@ -19,96 +19,100 @@ import gapt.examples.sequence.LinearExampleProof
 
 class CutIntroTest extends Specification {
   "deltatable method" in {
-    CutIntroduction( LinearExampleProof( 9 ), method = DeltaTableMethod() ) must beSome
+    CutIntroduction(LinearExampleProof(9), method = DeltaTableMethod()) must beSome
   }
 
   "maxsat method" in {
-    val Some( proof ) = Escargot.getLKProof( hos"!y p(0,y), !x!y (p x (f y) & p x (g y) -> p (s x) y) :- p ${Numeral( 2 )} c" ): @unchecked
-    CutIntroduction( proof, method = MaxSATMethod( 1 ) ) must beSome
+    val Some(proof) = Escargot.getLKProof(hos"!y p(0,y), !x!y (p x (f y) & p x (g y) -> p (s x) y) :- p ${Numeral(2)} c"): @unchecked
+    CutIntroduction(proof, method = MaxSATMethod(1)) must beSome
   }
 
   "reforest method" in {
-    CutIntroduction( LinearExampleProof( 9 ), method = ReforestMethod ) must beSome
+    CutIntroduction(LinearExampleProof(9), method = ReforestMethod) must beSome
   }
 
   "reforest method with interpolation" in {
     CutIntroduction(
-      LinearExampleProof( 24 ),
-      method = ReforestMethod, useInterpolation = true ) must beSome
+      LinearExampleProof(24),
+      method = ReforestMethod,
+      useInterpolation = true
+    ) must beSome
   }
 
   "linear equality example" in {
-    val Some( p ) = Escargot getLKProof hos"!x f (s x) = f x :- f ${Numeral( 9 )} = f 0": @unchecked
-    val Some( q ) = CutIntroduction( p ): @unchecked
-    val cutFormulas = q.subProofs collect { case c: CutRule => c.cutFormula } filter { containsQuantifier( _ ) }
-    cutFormulas must contain( atMost(
+    val Some(p) = Escargot getLKProof hos"!x f (s x) = f x :- f ${Numeral(9)} = f 0": @unchecked
+    val Some(q) = CutIntroduction(p): @unchecked
+    val cutFormulas = q.subProofs collect { case c: CutRule => c.cutFormula } filter { containsQuantifier(_) }
+    cutFormulas must contain(atMost(
       hof"!x f (s (s (s x))) = f x",
-      hof"!x f x = f (s (s (s x)))" ) )
+      hof"!x f x = f (s (s (s x)))"
+    ))
   }
 
   "linear equality example with interpolation" in {
-    val Some( p ) = Escargot.getLKProof( hos"!x f (s x) = f x :- f ${Numeral( 9 )} = f 0" ): @unchecked
-    CutIntroduction( p, useInterpolation = true ) must beSome
+    val Some(p) = Escargot.getLKProof(hos"!x f (s x) = f x :- f ${Numeral(9)} = f 0"): @unchecked
+    CutIntroduction(p, useInterpolation = true) must beSome
   }
 
   "non-prenex proofs" in {
-    val Some( expansion ) = Escargot.getExpansionProof( hof"p 0 & !x (p x -> p (s x)) -> p ${Numeral( 9 )}" ): @unchecked
-    CutIntroduction( expansion ) must beSome
+    val Some(expansion) = Escargot.getExpansionProof(hof"p 0 & !x (p x -> p (s x)) -> p ${Numeral(9)}"): @unchecked
+    CutIntroduction(expansion) must beSome
   }
 
   "delta table with row merging" in {
-    val Some( expansion ) = Escargot getExpansionProof
+    val Some(expansion) = Escargot getExpansionProof
       hos"""
           p 0, q 0,
           !x (p x -> p (s x)),
           !x (q x -> q (s x))
-       :- p ${Numeral( 6 )} & q ${Numeral( 6 )}
+       :- p ${Numeral(6)} & q ${Numeral(6)}
       """: @unchecked
-    CutIntroduction( expansion, method = DeltaTableMethod( subsumedRowMerging = true ) ) must beLike {
-      case Some( lk ) =>
-        weakQuantRulesNumber( lk ) must_== ( 2 * 2 + 3 )
+    CutIntroduction(expansion, method = DeltaTableMethod(subsumedRowMerging = true)) must beLike {
+      case Some(lk) =>
+        weakQuantRulesNumber(lk) must_== (2 * 2 + 3)
     }
   }
 
   "introduce two cuts into linear example proof with improveSolutionLK" in {
-    val us = ( fof"P 0" -> Seq( Seq() ) ) +:
-      ( fof"!x (P x -> P (s x))" -> Seq( Seq( fot"x_1" ), Seq( fot"s x_1" ) ) ) +:
-      Sequent() :+ ( fof"P ${Numeral( 8 )}" -> Seq( Seq() ) )
+    val us = (fof"P 0" -> Seq(Seq())) +:
+      (fof"!x (P x -> P (s x))" -> Seq(Seq(fot"x_1"), Seq(fot"s x_1"))) +:
+      Sequent() :+ (fof"P ${Numeral(8)}" -> Seq(Seq()))
     val ss = Seq(
-      Seq( fov"x_1" ) -> Seq( Seq( fot"x_2" ), Seq( fot"s (s x_2)" ) ),
-      Seq( fov"x_2" ) -> Seq( Seq( fot"0" ), Seq( Numeral( 4 ) ) ) )
-    val sehs = SchematicExtendedHerbrandSequent( us, ss )
+      Seq(fov"x_1") -> Seq(Seq(fot"x_2"), Seq(fot"s (s x_2)")),
+      Seq(fov"x_2") -> Seq(Seq(fot"0"), Seq(Numeral(4)))
+    )
+    val sehs = SchematicExtendedHerbrandSequent(us, ss)
 
-    val solStruct = SolutionStructure( sehs, CutIntroduction.computeCanonicalSolution( sehs ) )
+    val solStruct = SolutionStructure(sehs, CutIntroduction.computeCanonicalSolution(sehs))
     val prover = CutIntroduction.BackgroundTheory.PureFOL.prover
-    val improved = improveSolutionLK( solStruct, prover, hasEquality = false )
-    val pwc = CutIntroduction.buildProofWithCut( improved, prover )
+    val improved = improveSolutionLK(solStruct, prover, hasEquality = false)
+    val pwc = CutIntroduction.buildProofWithCut(improved, prover)
 
     val cf1 = fof"P x_1 -> P (s (s x_1))"
     val cf2 = fof"P x_2 -> P (s (s (s (s x_2))))"
-    improved.formulas must_== Seq( cf1, cf2 )
+    improved.formulas must_== Seq(cf1, cf2)
 
-    quantRulesNumber( pwc ) must_== sehs.size
+    quantRulesNumber(pwc) must_== sehs.size
   }
 
   "introduce weak quantifiers as low as possible" in {
-    val endSequent = hos"!x q(x), q(c)->p(0), !x (p(x)&q(c)->p(s(x))) :- p(${Numeral( 9 )})"
-    val Some( proof ) = Escargot.getLKProof( endSequent ): @unchecked
-    val Some( proofWithCut ) = CutIntroduction( proof ): @unchecked
+    val endSequent = hos"!x q(x), q(c)->p(0), !x (p(x)&q(c)->p(s(x))) :- p(${Numeral(9)})"
+    val Some(proof) = Escargot.getLKProof(endSequent): @unchecked
+    val Some(proofWithCut) = CutIntroduction(proof): @unchecked
 
     // !x q(x) must only be instantiated once, even though it is used in both branches of the cut.
     proofWithCut.treeLike.postOrder.filter {
       case p: ForallLeftRule => p.mainFormula == hof"!x q(x)"
       case _                 => false
-    } must haveSize( 1 )
+    } must haveSize(1)
   }
 
   "filter bottom during beautification" in {
-    val Some( expansion ) = Escargot.getExpansionProof( hos"!x (p x -> p (s x)) :- p 0 -> p ${Numeral( 9 )}" ): @unchecked
+    val Some(expansion) = Escargot.getExpansionProof(hos"!x (p x -> p (s x)) :- p 0 -> p ${Numeral(9)}"): @unchecked
     val weirdExpansion = ExpansionProof(
-      ETWeakening( hof"!x (p x & -p x)", Polarity.InAntecedent ) +:
-        expansion.expansionSequent )
-    CutIntroduction.compressToSolutionStructure( weirdExpansion ) must beNone
+      ETWeakening(hof"!x (p x & -p x)", Polarity.InAntecedent) +:
+        expansion.expansionSequent
+    )
+    CutIntroduction.compressToSolutionStructure(weirdExpansion) must beNone
   }
 }
-

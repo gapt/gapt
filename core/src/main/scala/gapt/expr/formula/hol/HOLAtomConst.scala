@@ -8,10 +8,10 @@ import gapt.expr.ty.Ty
 trait HOLAtomConst extends Const with HOLPartialAtom
 
 object HOLAtomConst {
-  def apply( name: String, argTypes: Ty* ): HOLAtomConst =
-    Const( name, FunctionType( To, argTypes ) ).asInstanceOf[HOLAtomConst]
+  def apply(name: String, argTypes: Ty*): HOLAtomConst =
+    Const(name, FunctionType(To, argTypes)).asInstanceOf[HOLAtomConst]
 
-  def unapply( e: Const with HOLPartialAtom ): Option[( String, Seq[Ty] )] = e match {
-    case Const( name, FunctionType( To, argTypes ), _ ) => Some( name -> argTypes )
+  def unapply(e: Const with HOLPartialAtom): Option[(String, Seq[Ty])] = e match {
+    case Const(name, FunctionType(To, argTypes), _) => Some(name -> argTypes)
   }
 }

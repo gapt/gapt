@@ -10,7 +10,8 @@ import gapt.formats.lisp.SExpression
 import gapt.formats.lisp.SExpressionParser
 
 case class TipSmtParserException(
-    message: String ) extends Exception( message )
+    message: String
+) extends Exception(message)
 
 object TipSmtParser {
 
@@ -20,8 +21,8 @@ object TipSmtParser {
    * @param input The input to be parsed.
    * @return The parsed TIP problem.
    */
-  def parse( input: InputFile ): TipSmtProblem = {
-    parse( SExpressionParser.parse( input ) )
+  def parse(input: InputFile): TipSmtProblem = {
+    parse(SExpressionParser.parse(input))
   }
 
   /**
@@ -33,8 +34,8 @@ object TipSmtParser {
    * @param sexps The expressions to be parsed.
    * @return The parsed TIP problem.
    */
-  def parse( sexps: Seq[SExpression] ): TipSmtProblem = {
-    TipSmtProblem( sexps map { parseCommand } )
+  def parse(sexps: Seq[SExpression]): TipSmtProblem = {
+    TipSmtProblem(sexps map { parseCommand })
   }
 
   /**
@@ -47,35 +48,36 @@ object TipSmtParser {
    * @param sexp The expression to be parsed.
    * @return The parsed command.
    */
-  def parseCommand( sexp: SExpression ): TipSmtCommand = {
+  def parseCommand(sexp: SExpression): TipSmtCommand = {
     sexp match {
-      case LFun( head, _* ) =>
+      case LFun(head, _*) =>
         head match {
           case "declare-sort" =>
-            parseSortDeclaration( sexp )
+            parseSortDeclaration(sexp)
           case "declare-datatype" =>
-            parseDatatypeDeclaration( sexp )
+            parseDatatypeDeclaration(sexp)
           case "declare-datatypes" =>
-            parseDatatypesDeclaration( sexp )
+            parseDatatypesDeclaration(sexp)
           case "declare-const" =>
-            parseConstantDeclaration( sexp )
+            parseConstantDeclaration(sexp)
           case "declare-fun" =>
-            parseFunctionDeclaration( sexp )
+            parseFunctionDeclaration(sexp)
           case "define-fun" | "define-fun-rec" =>
-            parseFunctionDefinition( sexp )
+            parseFunctionDefinition(sexp)
           case "define-funs-rec" =>
-            parseMutuallyRecursiveFunctionDefinition( sexp )
+            parseMutuallyRecursiveFunctionDefinition(sexp)
           case "assert" =>
-            parseAssertion( sexp )
+            parseAssertion(sexp)
           case "prove" | "assert-not" =>
-            parseGoal( sexp )
+            parseGoal(sexp)
           case "check-sat" =>
-            parseCheckSat( sexp )
+            parseCheckSat(sexp)
           case _ => throw TipSmtParserException(
-            "unknown head symbol: " + head )
+              "unknown head symbol: " + head
+            )
         }
       case _ =>
-        throw TipSmtParserException( s"invalid command expression: ${sexp}" )
+        throw TipSmtParserException(s"invalid command expression: ${sexp}")
     }
   }
 
@@ -88,11 +90,11 @@ object TipSmtParser {
    * @param sexp The expression to be parsed.
    * @return The parsed check-sat expression.
    */
-  private def parseCheckSat( sexp: SExpression ): TipSmtCheckSat = {
+  private def parseCheckSat(sexp: SExpression): TipSmtCheckSat = {
     sexp match {
-      case LFun( "check-sat" ) =>
+      case LFun("check-sat") =>
         TipSmtCheckSat()
-      case _ => throw TipSmtParserException( "malformed check-sat expression" )
+      case _ => throw TipSmtParserException("malformed check-sat expression")
     }
   }
 
@@ -105,19 +107,20 @@ object TipSmtParser {
    * @param sexps The keyword sequence.
    * @return A list of parsed keywords.
    */
-  private def parseKeywords( sexps: Seq[SExpression] ): Seq[TipSmtKeyword] =
+  private def parseKeywords(sexps: Seq[SExpression]): Seq[TipSmtKeyword] =
     sexps match {
-      case Seq( LKeyword( keyword ), LSymbol( argument ), rest @ _* ) =>
-        Seq( TipSmtKeyword( keyword, Some( argument ) ) ) ++
-          parseKeywords( rest )
-      case Seq( LKeyword( keyword ), kw @ LKeyword( _ ), rest @ _* ) =>
-        Seq( TipSmtKeyword( keyword, None ) ) ++ parseKeywords( kw +: rest )
-      case Seq( LKeyword( keyword ) ) =>
-        Seq( TipSmtKeyword( keyword, None ) )
+      case Seq(LKeyword(keyword), LSymbol(argument), rest @ _*) =>
+        Seq(TipSmtKeyword(keyword, Some(argument))) ++
+          parseKeywords(rest)
+      case Seq(LKeyword(keyword), kw @ LKeyword(_), rest @ _*) =>
+        Seq(TipSmtKeyword(keyword, None)) ++ parseKeywords(kw +: rest)
+      case Seq(LKeyword(keyword)) =>
+        Seq(TipSmtKeyword(keyword, None))
       case Seq() =>
         Seq()
       case _ => throw TipSmtParserException(
-        "malformed sequence of keywords: " + sexps )
+          "malformed sequence of keywords: " + sexps
+        )
     }
 
   /**
@@ -132,18 +135,20 @@ object TipSmtParser {
    * @return A parsed sort declaration.
    */
   private def parseSortDeclaration(
-    sexp: SExpression ): TipSmtSortDeclaration =
+      sexp: SExpression
+  ): TipSmtSortDeclaration =
     sexp match {
-      case LFun( "declare-sort", LSymbol( sortName ), rest @ _* ) =>
-        if ( rest.isEmpty )
-          throw TipSmtParserException( "" )
+      case LFun("declare-sort", LSymbol(sortName), rest @ _*) =>
+        if (rest.isEmpty)
+          throw TipSmtParserException("")
         rest.last match {
-          case LSymbol( s ) if s forall { _.isDigit } =>
-            TipSmtSortDeclaration( sortName, parseKeywords( rest.init ) )
+          case LSymbol(s) if s forall { _.isDigit } =>
+            TipSmtSortDeclaration(sortName, parseKeywords(rest.init))
           case _ => throw TipSmtParserException(
-            "malformed sort declaration" )
+              "malformed sort declaration"
+            )
         }
-      case _ => throw TipSmtParserException( "malformed sort declaration" )
+      case _ => throw TipSmtParserException("malformed sort declaration")
     }
 
   /**
@@ -156,16 +161,18 @@ object TipSmtParser {
    * @param sexp The expression to be parsed.
    * @return A parsed datatype declaration.
    */
-  private def parseDatatype( sexp: SExpression ): TipSmtDatatype =
+  private def parseDatatype(sexp: SExpression): TipSmtDatatype =
     sexp match {
-      case LList( LSymbol( datatypeName ), rest @ _* ) =>
-        val ( keywords, constructors ) = rest.partition(
-          !_.isInstanceOf[LList] )
+      case LList(LSymbol(datatypeName), rest @ _*) =>
+        val (keywords, constructors) = rest.partition(
+          !_.isInstanceOf[LList]
+        )
         TipSmtDatatype(
           datatypeName,
-          parseKeywords( keywords ),
-          parseConstructors( constructors ) )
-      case _ => throw TipSmtParserException( "malformed datatype expression" )
+          parseKeywords(keywords),
+          parseConstructors(constructors)
+        )
+      case _ => throw TipSmtParserException("malformed datatype expression")
     }
 
   /**
@@ -175,19 +182,21 @@ object TipSmtParser {
    * formed, otherwise an exception is thrown.
    */
   private def parseDatatypesDeclaration(
-    sexp: SExpression ): TipSmtDatatypesDeclaration = sexp match {
-    case LFun( "declare-datatypes", LList( datatypeNames @ _* ), LList( datatypes @ _* ) ) =>
+      sexp: SExpression
+  ): TipSmtDatatypesDeclaration = sexp match {
+    case LFun("declare-datatypes", LList(datatypeNames @ _*), LList(datatypes @ _*)) =>
       val names = datatypeNames map { parseDatatypeName }
-      if ( names.size != datatypes.size ) {
-        throw TipSmtParserException( "malformed datatypes declaration: number of names and datatypes differ" )
+      if (names.size != datatypes.size) {
+        throw TipSmtParserException("malformed datatypes declaration: number of names and datatypes differ")
       }
       TipSmtDatatypesDeclaration(
-        names.zip( datatypes ) map {
-          case ( datatypeName, LList( constructors @ _* ) ) =>
-            TipSmtDatatype( datatypeName, Nil, parseConstructors( constructors ) )
-          case _ => throw TipSmtParserException( s"malformed datatypes declaration ${sexp.toDoc.toString}" )
-        } )
-    case _ => throw TipSmtParserException( "malformed datatypes declaration" )
+        names.zip(datatypes) map {
+          case (datatypeName, LList(constructors @ _*)) =>
+            TipSmtDatatype(datatypeName, Nil, parseConstructors(constructors))
+          case _ => throw TipSmtParserException(s"malformed datatypes declaration ${sexp.toDoc.toString}")
+        }
+      )
+    case _ => throw TipSmtParserException("malformed datatypes declaration")
   }
 
   /**
@@ -197,11 +206,11 @@ object TipSmtParser {
    * `sexp` is of the form "(" Symbol Integer ")". If the input expression is not well formed in the above
    * sense, then an exception is thrown.
    */
-  private def parseDatatypeName( sexp: SExpression ): String = {
+  private def parseDatatypeName(sexp: SExpression): String = {
     sexp match {
-      case LList( LSymbol( name ), LSymbol( i ) ) if i.forall( _.isDigit ) =>
+      case LList(LSymbol(name), LSymbol(i)) if i.forall(_.isDigit) =>
         name
-      case _ => throw TipSmtParserException( "malformed datatype name" )
+      case _ => throw TipSmtParserException("malformed datatype name")
     }
   }
 
@@ -215,10 +224,11 @@ object TipSmtParser {
    * @return The parsed datatype declarations.
    */
   private def parseDatatypeDeclaration(
-    sexp: SExpression ): TipSmtDatatypesDeclaration = sexp match {
-    case LFun( "declare-datatype", LSymbol( datatypeName ), LList( constructors @ _* ) ) =>
-      TipSmtDatatypesDeclaration( TipSmtDatatype( datatypeName, Nil, parseConstructors( constructors ) ) :: Nil )
-    case _ => throw TipSmtParserException( "malformed datatypes declaration" )
+      sexp: SExpression
+  ): TipSmtDatatypesDeclaration = sexp match {
+    case LFun("declare-datatype", LSymbol(datatypeName), LList(constructors @ _*)) =>
+      TipSmtDatatypesDeclaration(TipSmtDatatype(datatypeName, Nil, parseConstructors(constructors)) :: Nil)
+    case _ => throw TipSmtParserException("malformed datatypes declaration")
   }
 
   /**
@@ -231,11 +241,12 @@ object TipSmtParser {
    * @param sexp The type expression to be parsed.
    * @return The parsed type expression.
    */
-  private def parseType( sexp: SExpression ): TipSmtType = sexp match {
-    case LSymbol( typename ) =>
-      TipSmtType( typename )
+  private def parseType(sexp: SExpression): TipSmtType = sexp match {
+    case LSymbol(typename) =>
+      TipSmtType(typename)
     case _ => throw TipSmtParserException(
-      "malformed type expression: " + sexp )
+        "malformed type expression: " + sexp
+      )
   }
 
   /**
@@ -250,15 +261,17 @@ object TipSmtParser {
    * @return The parsed constant expression.
    */
   private def parseConstantDeclaration(
-    sexp: SExpression ): TipSmtConstantDeclaration = sexp match {
-    case LFun( "declare-const", LSymbol( constantName ), rest @ _* ) =>
-      if ( rest.isEmpty )
-        throw TipSmtParserException( "malformed constant declaration" )
+      sexp: SExpression
+  ): TipSmtConstantDeclaration = sexp match {
+    case LFun("declare-const", LSymbol(constantName), rest @ _*) =>
+      if (rest.isEmpty)
+        throw TipSmtParserException("malformed constant declaration")
       TipSmtConstantDeclaration(
         constantName,
-        parseKeywords( rest.init ),
-        parseType( rest.last ) )
-    case _ => throw TipSmtParserException( "malformed constant declaration" )
+        parseKeywords(rest.init),
+        parseType(rest.last)
+      )
+    case _ => throw TipSmtParserException("malformed constant declaration")
   }
 
   /**
@@ -270,12 +283,12 @@ object TipSmtParser {
    * @param sexp The expression to be parsed.
    * @return The parsed parameter types.
    */
-  private def parseArgumentTypeList( sexp: SExpression ): Seq[TipSmtType] =
+  private def parseArgumentTypeList(sexp: SExpression): Seq[TipSmtType] =
     sexp match {
-      case LList( types @ _* ) =>
+      case LList(types @ _*) =>
         types map { parseType }
       case _ =>
-        throw TipSmtParserException( "malformed argument types: " + sexp )
+        throw TipSmtParserException("malformed argument types: " + sexp)
     }
 
   /**
@@ -291,16 +304,18 @@ object TipSmtParser {
    * @return The parsed function declaration.
    */
   private def parseFunctionDeclaration(
-    sexp: SExpression ): TipSmtFunctionDeclaration = sexp match {
-    case LFun( "declare-fun", LSymbol( functionName ), rest @ _* ) =>
-      if ( rest.size < 2 )
-        throw TipSmtParserException( "malformed function declaration" )
+      sexp: SExpression
+  ): TipSmtFunctionDeclaration = sexp match {
+    case LFun("declare-fun", LSymbol(functionName), rest @ _*) =>
+      if (rest.size < 2)
+        throw TipSmtParserException("malformed function declaration")
       TipSmtFunctionDeclaration(
         functionName,
-        parseKeywords( rest.init.init ),
-        parseArgumentTypeList( rest.init.last ),
-        parseType( rest.last ) )
-    case _ => throw TipSmtParserException( "malformed function declaration" )
+        parseKeywords(rest.init.init),
+        parseArgumentTypeList(rest.init.last),
+        parseType(rest.last)
+      )
+    case _ => throw TipSmtParserException("malformed function declaration")
   }
 
   /**
@@ -314,12 +329,14 @@ object TipSmtParser {
    * @return The parsed formal parameter.
    */
   private def parseFormalParameter(
-    sexpr: SExpression ): TipSmtFormalParameter =
+      sexpr: SExpression
+  ): TipSmtFormalParameter =
     sexpr match {
-      case LList( LSymbol( parameter ), paraType ) =>
-        TipSmtFormalParameter( parameter, parseType( paraType ) )
+      case LList(LSymbol(parameter), paraType) =>
+        TipSmtFormalParameter(parameter, parseType(paraType))
       case _ => throw TipSmtParserException(
-        "malformed formal parameter: " + sexpr )
+          "malformed formal parameter: " + sexpr
+        )
     }
 
   /**
@@ -332,11 +349,12 @@ object TipSmtParser {
    * @return The parsed formal parameter list.
    */
   private def parseFormalParameterList(
-    sexp: SExpression ): Seq[TipSmtFormalParameter] = sexp match {
-    case LList( parameters @ _* ) =>
+      sexp: SExpression
+  ): Seq[TipSmtFormalParameter] = sexp match {
+    case LList(parameters @ _*) =>
       parameters map { parseFormalParameter }
     case _ =>
-      throw TipSmtParserException( "malformed formal parameter list: " + sexp )
+      throw TipSmtParserException("malformed formal parameter list: " + sexp)
   }
 
   /**
@@ -351,17 +369,21 @@ object TipSmtParser {
    * @return The parsed function definition.
    */
   private def parseFunctionDefinition(
-    sexp: SExpression ): TipSmtFunctionDefinition = sexp match {
+      sexp: SExpression
+  ): TipSmtFunctionDefinition = sexp match {
     case LFun(
-      "define-fun" | "define-fun-rec", LSymbol( functionName ), rest @ _*
-      ) if rest.size >= 3 =>
+          "define-fun" | "define-fun-rec",
+          LSymbol(functionName),
+          rest @ _*
+        ) if rest.size >= 3 =>
       TipSmtFunctionDefinition(
         functionName,
-        parseKeywords( rest.init.init.init ),
-        parseFormalParameterList( rest.init.init.last ),
-        parseType( rest.init.last ),
-        parseExpression( rest.last ) )
-    case _ => throw TipSmtParserException( "malformed function definition" )
+        parseKeywords(rest.init.init.init),
+        parseFormalParameterList(rest.init.init.last),
+        parseType(rest.init.last),
+        parseExpression(rest.last)
+      )
+    case _ => throw TipSmtParserException("malformed function definition")
   }
 
   /**
@@ -378,38 +400,54 @@ object TipSmtParser {
    * @return The parsed mutually recursive functions definition.
    */
   private def parseMutuallyRecursiveFunctionDefinition(
-    expression: SExpression ): TipSmtMutualRecursiveFunctionDefinition = {
-    def parseFunctionSignature( sexp: SExpression ): ( //
-    String, Seq[TipSmtKeyword], Seq[TipSmtFormalParameter], TipSmtType ) = {
+      expression: SExpression
+  ): TipSmtMutualRecursiveFunctionDefinition = {
+    def parseFunctionSignature(sexp: SExpression): ( //
+        String,
+        Seq[TipSmtKeyword],
+        Seq[TipSmtFormalParameter],
+        TipSmtType
+    ) = {
       sexp match {
-        case LFun( functionName, rest @ _* ) if rest.size >= 2 =>
+        case LFun(functionName, rest @ _*) if rest.size >= 2 =>
           (
             functionName,
-            parseKeywords( rest.init.init ),
-            parseFormalParameterList( rest.init.last ),
-            parseType( rest.last ) )
+            parseKeywords(rest.init.init),
+            parseFormalParameterList(rest.init.last),
+            parseType(rest.last)
+          )
         case _ => throw TipSmtParserException(
-          "malformed function signature: " + sexp )
+            "malformed function signature: " + sexp
+          )
       }
     }
     expression match {
       case LFun(
-        "define-funs-rec", LList( signatures @ _* ), LList( definitions @ _* )
-        ) if ( signatures.size == definitions.size ) =>
+            "define-funs-rec",
+            LList(signatures @ _*),
+            LList(definitions @ _*)
+          ) if (signatures.size == definitions.size) =>
         val functions =
           signatures
             .map { parseFunctionSignature }
-            .zip( definitions.map { parseExpression } )
+            .zip(definitions.map { parseExpression })
             .map {
               case ( //
-                ( functionName, keywords, formalParameters, returnType ),
-                body ) =>
+                    (functionName, keywords, formalParameters, returnType),
+                    body
+                  ) =>
                 TipSmtFunctionDefinition(
-                  functionName, keywords, formalParameters, returnType, body )
+                  functionName,
+                  keywords,
+                  formalParameters,
+                  returnType,
+                  body
+                )
             }
-        TipSmtMutualRecursiveFunctionDefinition( functions )
+        TipSmtMutualRecursiveFunctionDefinition(functions)
       case _ => throw TipSmtParserException(
-        "malformed mutual recursive functions definition" )
+          "malformed mutual recursive functions definition"
+        )
     }
   }
 
@@ -420,7 +458,8 @@ object TipSmtParser {
    * @return The parsed constructor fields
    */
   private def parseConstructorFields(
-    sexps: Seq[SExpression] ): Seq[TipSmtConstructorField] =
+      sexps: Seq[SExpression]
+  ): Seq[TipSmtConstructorField] =
     sexps map { parseConstructorField }
 
   /**
@@ -436,11 +475,13 @@ object TipSmtParser {
    *         not an expression of the form described above.
    */
   private def parseConstructorField(
-    sexp: SExpression ): TipSmtConstructorField = sexp match {
-    case LList( LSymbol( fieldName ), fieldType ) =>
-      TipSmtConstructorField( fieldName, parseType( fieldType ) )
+      sexp: SExpression
+  ): TipSmtConstructorField = sexp match {
+    case LList(LSymbol(fieldName), fieldType) =>
+      TipSmtConstructorField(fieldName, parseType(fieldType))
     case _ => throw TipSmtParserException(
-      "malformed constructor field: " + sexp )
+        "malformed constructor field: " + sexp
+      )
   }
 
   /**
@@ -451,7 +492,8 @@ object TipSmtParser {
    *         expressions is not a constructor.
    */
   private def parseConstructors(
-    sexps: Seq[SExpression] ): Seq[TipSmtConstructor] =
+      sexps: Seq[SExpression]
+  ): Seq[TipSmtConstructor] =
     sexps map { parseConstructor }
 
   /**
@@ -464,15 +506,16 @@ object TipSmtParser {
    * @param sexp The expression to be parsed.
    * @return The parsed constructor.
    */
-  private def parseConstructor( sexp: SExpression ): TipSmtConstructor =
+  private def parseConstructor(sexp: SExpression): TipSmtConstructor =
     sexp match {
-      case LList( LSymbol( constructorName ), rest @ _* ) =>
-        val ( keywords, fields ) = rest partition { !_.isInstanceOf[LList] }
+      case LList(LSymbol(constructorName), rest @ _*) =>
+        val (keywords, fields) = rest partition { !_.isInstanceOf[LList] }
         TipSmtConstructor(
           constructorName,
-          parseKeywords( keywords ),
-          parseConstructorFields( fields ) )
-      case _ => throw TipSmtParserException( "malformed constructor: " + sexp )
+          parseKeywords(keywords),
+          parseConstructorFields(fields)
+        )
+      case _ => throw TipSmtParserException("malformed constructor: " + sexp)
     }
 
   /**
@@ -485,12 +528,14 @@ object TipSmtParser {
    * @return The parsed assertion.
    */
   private def parseAssertion(
-    sexp: SExpression ): TipSmtAssertion = sexp match {
-    case LFun( "assert", rest @ _* ) if rest.nonEmpty =>
+      sexp: SExpression
+  ): TipSmtAssertion = sexp match {
+    case LFun("assert", rest @ _*) if rest.nonEmpty =>
       TipSmtAssertion(
-        parseKeywords( rest.init ),
-        parseExpression( rest.last ) )
-    case _ => throw TipSmtParserException( "malformed assertion" )
+        parseKeywords(rest.init),
+        parseExpression(rest.last)
+      )
+    case _ => throw TipSmtParserException("malformed assertion")
   }
 
   /**
@@ -503,12 +548,14 @@ object TipSmtParser {
    * @return The parsed goal.
    */
   private def parseGoal(
-    sexp: SExpression ): TipSmtGoal = sexp match {
-    case LFun( "prove" | "assert-not", rest @ _* ) if rest.nonEmpty =>
+      sexp: SExpression
+  ): TipSmtGoal = sexp match {
+    case LFun("prove" | "assert-not", rest @ _*) if rest.nonEmpty =>
       TipSmtGoal(
-        parseKeywords( rest.init ),
-        parseExpression( rest.last ) )
-    case _ => throw TipSmtParserException( "malformed assertion" )
+        parseKeywords(rest.init),
+        parseExpression(rest.last)
+      )
+    case _ => throw TipSmtParserException("malformed assertion")
   }
 
   /**
@@ -520,13 +567,14 @@ object TipSmtParser {
    * @param sexp The expression to be parsed.
    * @return The parsed if-then-else expression.
    */
-  def parseIte( sexp: SExpression ): TipSmtIte = sexp match {
-    case LFun( "ite", cond, the, els ) =>
+  def parseIte(sexp: SExpression): TipSmtIte = sexp match {
+    case LFun("ite", cond, the, els) =>
       TipSmtIte(
-        parseExpression( cond ),
-        parseExpression( the ),
-        parseExpression( els ) )
-    case _ => throw TipSmtParserException( "malformed ite-expression: " + sexp )
+        parseExpression(cond),
+        parseExpression(the),
+        parseExpression(els)
+      )
+    case _ => throw TipSmtParserException("malformed ite-expression: " + sexp)
   }
 
   /**
@@ -538,11 +586,12 @@ object TipSmtParser {
    * @param sexp The expression to be parsed
    * @return The parsed match expression.
    */
-  def parseMatch( sexp: SExpression ): TipSmtMatch = sexp match {
-    case LFun( "match", expr, LList( cases @ _* ) ) =>
-      TipSmtMatch( parseExpression( expr ), cases map { parseCase } )
+  def parseMatch(sexp: SExpression): TipSmtMatch = sexp match {
+    case LFun("match", expr, LList(cases @ _*)) =>
+      TipSmtMatch(parseExpression(expr), cases map { parseCase })
     case _ => throw TipSmtParserException(
-      "malformed match-expression: " + sexp )
+        "malformed match-expression: " + sexp
+      )
   }
 
   /**
@@ -554,11 +603,12 @@ object TipSmtParser {
    * @param sexp The expression to be parsed.
    * @return The parsed case expression.
    */
-  def parseCase( sexp: SExpression ): TipSmtCase = sexp match {
-    case LList( pattern, expr ) =>
-      TipSmtCase( parsePattern( pattern ), parseExpression( expr ) )
+  def parseCase(sexp: SExpression): TipSmtCase = sexp match {
+    case LList(pattern, expr) =>
+      TipSmtCase(parsePattern(pattern), parseExpression(expr))
     case _ => throw TipSmtParserException(
-      "malformed case-expression: " + sexp )
+        "malformed case-expression: " + sexp
+      )
   }
 
   /**
@@ -570,16 +620,17 @@ object TipSmtParser {
    * @param sexp The expression to be parsed.
    * @return The parsed pattern.
    */
-  def parsePattern( sexp: SExpression ): TipSmtPattern = sexp match {
-    case LSymbol( "_" ) =>
+  def parsePattern(sexp: SExpression): TipSmtPattern = sexp match {
+    case LSymbol("_") =>
       TipSmtDefault
-    case p @ LSymbol( _ ) =>
-      TipSmtConstructorPattern( parseTipSmtIdentifier( p ), Seq() )
-    case LFun( constructor, identifiers @ _* ) =>
+    case p @ LSymbol(_) =>
+      TipSmtConstructorPattern(parseTipSmtIdentifier(p), Seq())
+    case LFun(constructor, identifiers @ _*) =>
       TipSmtConstructorPattern(
-        TipSmtIdentifier( constructor ),
-        identifiers map { parseTipSmtIdentifier } )
-    case _ => throw TipSmtParserException( "malformed pattern: " + sexp )
+        TipSmtIdentifier(constructor),
+        identifiers map { parseTipSmtIdentifier }
+      )
+    case _ => throw TipSmtParserException("malformed pattern: " + sexp)
   }
 
   /**
@@ -591,11 +642,12 @@ object TipSmtParser {
    * @return The parsed identifier.
    */
   def parseTipSmtIdentifier(
-    sexp: SExpression ): TipSmtIdentifier = sexp match {
-    case LSymbol( identifier ) =>
-      TipSmtIdentifier( identifier )
+      sexp: SExpression
+  ): TipSmtIdentifier = sexp match {
+    case LSymbol(identifier) =>
+      TipSmtIdentifier(identifier)
     case _ =>
-      throw TipSmtParserException( "malformed identifier: " + sexp )
+      throw TipSmtParserException("malformed identifier: " + sexp)
   }
 
   /**
@@ -623,64 +675,69 @@ object TipSmtParser {
    * @param sexp The expression to be parsed.
    * @return The parsed expression.
    */
-  def parseExpression( sexp: SExpression ): TipSmtExpression = sexp match {
-    case LFun( "match", _* ) =>
-      parseMatch( sexp )
-    case LFun( "ite", _* ) =>
-      parseIte( sexp )
-    case LSymbol( "false" ) =>
+  def parseExpression(sexp: SExpression): TipSmtExpression = sexp match {
+    case LFun("match", _*) =>
+      parseMatch(sexp)
+    case LFun("ite", _*) =>
+      parseIte(sexp)
+    case LSymbol("false") =>
       TipSmtFalse
-    case LSymbol( "true" ) =>
+    case LSymbol("true") =>
       TipSmtTrue
-    case expr @ LFun( "forall", _* ) =>
-      parseForallExpression( expr )
-    case expr @ LFun( "exists", _* ) =>
-      parseExistsExpression( expr )
-    case LFun( "and", exprs @ _* ) =>
-      TipSmtAnd( exprs map { parseExpression } )
-    case LFun( "or", exprs @ _* ) =>
-      TipSmtOr( exprs map { parseExpression } )
-    case LFun( "=", exprs @ _* ) =>
-      TipSmtEq( exprs map { parseExpression } )
-    case LFun( "=>", exprs @ _* ) =>
-      TipSmtImp( exprs map { parseExpression } )
-    case expr @ LFun( "not", _* ) =>
-      parseNotExpression( expr )
-    case LFun( "distinct", exprs @ _* ) =>
-      TipSmtDistinct( exprs.map { parseExpression } )
-    case LSymbol( name ) =>
-      TipSmtIdentifier( name )
-    case LFun( name, args @ _* ) =>
-      TipSmtFun( name, args map { parseExpression } )
-    case _ => throw TipSmtParserException( "malformed expression: " + sexp )
+    case expr @ LFun("forall", _*) =>
+      parseForallExpression(expr)
+    case expr @ LFun("exists", _*) =>
+      parseExistsExpression(expr)
+    case LFun("and", exprs @ _*) =>
+      TipSmtAnd(exprs map { parseExpression })
+    case LFun("or", exprs @ _*) =>
+      TipSmtOr(exprs map { parseExpression })
+    case LFun("=", exprs @ _*) =>
+      TipSmtEq(exprs map { parseExpression })
+    case LFun("=>", exprs @ _*) =>
+      TipSmtImp(exprs map { parseExpression })
+    case expr @ LFun("not", _*) =>
+      parseNotExpression(expr)
+    case LFun("distinct", exprs @ _*) =>
+      TipSmtDistinct(exprs.map { parseExpression })
+    case LSymbol(name) =>
+      TipSmtIdentifier(name)
+    case LFun(name, args @ _*) =>
+      TipSmtFun(name, args map { parseExpression })
+    case _ => throw TipSmtParserException("malformed expression: " + sexp)
   }
 
-  private def parseNotExpression( sexp: SExpression ): TipSmtNot =
+  private def parseNotExpression(sexp: SExpression): TipSmtNot =
     sexp match {
-      case LFun( "not", expr ) =>
-        TipSmtNot( parseExpression( expr ) )
+      case LFun("not", expr) =>
+        TipSmtNot(parseExpression(expr))
       case _ => throw TipSmtParserException(
-        "malformed not-expression: " + sexp )
+          "malformed not-expression: " + sexp
+        )
     }
 
-  private def parseExistsExpression( sexp: SExpression ): TipSmtExists =
+  private def parseExistsExpression(sexp: SExpression): TipSmtExists =
     sexp match {
-      case LFun( "exists", LList( variables @ _* ), formula ) =>
+      case LFun("exists", LList(variables @ _*), formula) =>
         TipSmtExists(
           variables map { parseTipSmtVarDecl },
-          parseExpression( formula ) )
+          parseExpression(formula)
+        )
       case _ => throw TipSmtParserException(
-        "malformed exists-expression: " + sexp )
+          "malformed exists-expression: " + sexp
+        )
     }
 
-  private def parseForallExpression( sexp: SExpression ): TipSmtForall =
+  private def parseForallExpression(sexp: SExpression): TipSmtForall =
     sexp match {
-      case LFun( "forall", LList( variables @ _* ), formula ) =>
+      case LFun("forall", LList(variables @ _*), formula) =>
         TipSmtForall(
           variables map { parseTipSmtVarDecl },
-          parseExpression( formula ) )
+          parseExpression(formula)
+        )
       case _ => throw TipSmtParserException(
-        "malformed forall expression: " + sexp )
+          "malformed forall expression: " + sexp
+        )
     }
 
   /**
@@ -692,11 +749,10 @@ object TipSmtParser {
    * @param sexp The expression to be parsed.
    * @return The parsed variable declaration.
    */
-  def parseTipSmtVarDecl( sexp: SExpression ): TipSmtVariableDecl = sexp match {
-    case LList( LSymbol( variableName ), variableType ) =>
-      TipSmtVariableDecl( variableName, parseType( variableType ) )
+  def parseTipSmtVarDecl(sexp: SExpression): TipSmtVariableDecl = sexp match {
+    case LList(LSymbol(variableName), variableType) =>
+      TipSmtVariableDecl(variableName, parseType(variableType))
     case _ =>
-      throw TipSmtParserException( "malformed variable declaration: " + sexp )
+      throw TipSmtParserException("malformed variable declaration: " + sexp)
   }
 }
-

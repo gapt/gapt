@@ -10,10 +10,10 @@ import gapt.proofs.gaptic._
  */
 object prop_38 extends TacticsProof {
 
-  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += InductiveType(ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat")
   ctx += hoc"p:Nat>Nat"
 
-  ctx += InductiveType( ty"list", hoc"nil:list", hoc"cons:Nat>list>list" )
+  ctx += InductiveType(ty"list", hoc"nil:list", hoc"cons:Nat>list>list")
   ctx += hoc"head:list>Nat"
   ctx += hoc"tail:list>list"
 
@@ -41,59 +41,59 @@ object prop_38 extends TacticsProof {
           goal: ∀n ∀xs (count(n:Nat, append(xs:list, cons(n, nil:list): list): list): Nat) = S(count(n, xs))
         """
 
-  val proof = Lemma( sequent ) {
+  val proof = Lemma(sequent) {
     allR
     allR
-    induction( hov"xs:list" )
+    induction(hov"xs:list")
     // base case
-    allL( "def_append_1", le"cons(n:Nat,nil:list)" )
-    allL( "def_count_1", le"n:Nat" )
-    allL( "def_count_3", le"n:Nat", le"n:Nat", le"nil" )
-    eql( "def_append_1_0", "goal" ).fromLeftToRight
-    eql( "def_count_1_0", "goal" )
-    impL( "def_count_3_0" )
-    induction( hov"n:Nat", "def_count_3_0" )
+    allL("def_append_1", le"cons(n:Nat,nil:list)")
+    allL("def_count_1", le"n:Nat")
+    allL("def_count_3", le"n:Nat", le"n:Nat", le"nil")
+    eql("def_append_1_0", "goal").fromLeftToRight
+    eql("def_count_1_0", "goal")
+    impL("def_count_3_0")
+    induction(hov"n:Nat", "def_count_3_0")
     axiomLog
-    allL( "def_equal_4", le"n_0:Nat", le"n_0:Nat" )
+    allL("def_equal_4", le"n_0:Nat", le"n_0:Nat")
     andL
-    impL( "def_equal_4_0_1" )
+    impL("def_equal_4_0_1")
     axiomLog
     axiomLog
-    eql( "def_count_3_0", "goal" )
-    eql( "def_count_1_0", "goal" ).fromLeftToRight
+    eql("def_count_3_0", "goal")
+    eql("def_count_1_0", "goal").fromLeftToRight
     refl
     // inductive case
-    allL( "def_append_2", le"x:Nat", le"xs_0:list", le"cons(n:Nat,nil:list)" )
-    allL( "def_count_2", le"n:Nat", le"x:Nat", le"xs_0:list" )
-    allL( "def_count_3", le"n:Nat", le"x:Nat", le"xs_0:list" )
-    allL( "def_count_2", le"n:Nat", le"x:Nat", le"append(xs_0:list, cons(n:Nat,nil:list))" )
-    allL( "def_count_3", le"n:Nat", le"x:Nat", le"append(xs_0:list, cons(n:Nat,nil:list))" )
-    eql( "def_append_2_0", "goal" )
-    impL( "def_count_3_0" )
-    impL( "def_count_2_0" )
+    allL("def_append_2", le"x:Nat", le"xs_0:list", le"cons(n:Nat,nil:list)")
+    allL("def_count_2", le"n:Nat", le"x:Nat", le"xs_0:list")
+    allL("def_count_3", le"n:Nat", le"x:Nat", le"xs_0:list")
+    allL("def_count_2", le"n:Nat", le"x:Nat", le"append(xs_0:list, cons(n:Nat,nil:list))")
+    allL("def_count_3", le"n:Nat", le"x:Nat", le"append(xs_0:list, cons(n:Nat,nil:list))")
+    eql("def_append_2_0", "goal")
+    impL("def_count_3_0")
+    impL("def_count_2_0")
     negR
     axiomLog
-    eql( "def_count_2_0", "goal" )
-    impL( "def_count_2_1" )
+    eql("def_count_2_0", "goal")
+    impL("def_count_2_1")
     negR
     axiomLog
-    eql( "def_count_2_1", "goal" )
-    eql( "IHxs_0", "goal" ).fromLeftToRight
+    eql("def_count_2_1", "goal")
+    eql("IHxs_0", "goal").fromLeftToRight
     refl
-    impL( "def_count_3_1" )
-    impL( "def_count_2_1" )
+    impL("def_count_3_1")
+    impL("def_count_2_1")
     negR
     axiomLog
-    eql( "def_count_2_1", "goal" )
-    impL( "def_count_2_0" )
+    eql("def_count_2_1", "goal")
+    impL("def_count_2_0")
     negR
     axiomLog
-    eql( "def_count_2_0", "goal" )
-    eql( "IHxs_0", "goal" ).fromLeftToRight
+    eql("def_count_2_0", "goal")
+    eql("IHxs_0", "goal").fromLeftToRight
     refl
-    eql( "def_count_3_1", "goal" )
-    eql( "IHxs_0", "goal" )
-    eql( "def_count_3_0", "goal" ).fromLeftToRight
+    eql("def_count_3_1", "goal")
+    eql("IHxs_0", "goal")
+    eql("def_count_3_0", "goal").fromLeftToRight
     refl
   }
 }

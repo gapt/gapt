@@ -10,13 +10,13 @@ import gapt.proofs.gaptic.tactics.AnalyticInductionTactic._
 object prop_47 extends TacticsProof {
 
   // Sorts
-  ctx += TBase( "sk" )
+  ctx += TBase("sk")
   // Inductive types
-  ctx += InductiveType( ty"Tree", hoc"'Leaf' :Tree", hoc"'Node' :Tree>sk>Tree>Tree" )
-  ctx += InductiveType( ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat" )
-  //Constants
+  ctx += InductiveType(ty"Tree", hoc"'Leaf' :Tree", hoc"'Node' :Tree>sk>Tree>Tree")
+  ctx += InductiveType(ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat")
+  // Constants
 
-  //Function constants
+  // Function constants
   ctx += hoc"'mirror' :Tree>Tree"
   ctx += hoc"'max2' :Nat>Nat>Nat"
   ctx += hoc"'height' :Tree>Nat"
@@ -42,21 +42,23 @@ object prop_47 extends TacticsProof {
 
   val mirror_definition = List(
     "mi1" -> hof"mirror(Leaf) = Leaf",
-    "mi2" -> hof"∀l ∀y ∀r mirror(Node(l, y, r)) = Node(mirror(r), y, mirror(l))" )
+    "mi2" -> hof"∀l ∀y ∀r mirror(Node(l, y, r)) = Node(mirror(r), y, mirror(l))"
+  )
 
   val max_definition = List(
     "ma1" -> hof"∀y max2(Z, y) = y",
     "ma2" -> hof"∀z max2(S(z), Z) = S(z)",
-    "ma3" -> hof"∀z ∀x2 max2(S(z), S(x2)) = S(max2(z, x2))" )
+    "ma3" -> hof"∀z ∀x2 max2(S(z), S(x2)) = S(max2(z, x2))"
+  )
 
   val max_comm_goal = hof"!x !y max2(x,y) = max2(y,x)"
   val max_comm = max_definition ++: Sequent() :+ "goal" -> max_comm_goal
-  val max_comm_proof = Lemma( max_comm ) {
-    analyticInduction withAxioms sequentialAxioms.forAllVariables.forLabel( "goal" )
+  val max_comm_proof = Lemma(max_comm) {
+    analyticInduction withAxioms sequentialAxioms.forAllVariables.forLabel("goal")
   }
 
-  val proof = Lemma( sequent ) {
-    cut( "max_comm", max_comm_goal ); insert( max_comm_proof )
+  val proof = Lemma(sequent) {
+    cut("max_comm", max_comm_goal); insert(max_comm_proof)
     allR; analyticInduction
   }
 

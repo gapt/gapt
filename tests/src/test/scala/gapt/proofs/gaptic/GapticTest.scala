@@ -9,24 +9,26 @@ class GapticTest extends Specification {
 
   "rewrite simple" in {
     Proof(
-      ( "ass" -> hof"P(f(a))" ) +:
-        ( "eq" -> hof"!x f(x) = g(x)" ) +:
+      ("ass" -> hof"P(f(a))") +:
+        ("eq" -> hof"!x f(x) = g(x)") +:
         Sequent()
-        :+ ( "goal" -> hof"P(g(a))" ) ) {
-        rewrite rtl "eq" in "goal"
-        prop
-      }
+        :+ ("goal" -> hof"P(g(a))")
+    ) {
+      rewrite rtl "eq" in "goal"
+      prop
+    }
     ok
   }
   "rewrite addition" in {
     Proof(
-      ( "add0" -> hof"!x x+0 = x" ) +:
-        ( "adds" -> hof"!x!y x+s(y) = s(x+y)" ) +:
+      ("add0" -> hof"!x x+0 = x") +:
+        ("adds" -> hof"!x!y x+s(y) = s(x+y)") +:
         Sequent()
-        :+ ( "goal" -> hof"s(s(0)) + s(s(0)) = s(s(s(s(0))))" ) ) {
-        rewrite.many.ltr( "add0", "adds" ) in "goal"
-        axiomRefl
-      }
+        :+ ("goal" -> hof"s(s(0)) + s(s(0)) = s(s(s(s(0))))")
+    ) {
+      rewrite.many.ltr("add0", "adds") in "goal"
+      axiomRefl
+    }
     ok
   }
 
@@ -41,9 +43,10 @@ class GapticTest extends Specification {
             abc:    !x !y (q x y -> p (f x) (g y))
             :-
             goal:   p(f(f(c)), g(g(d)))
-            """ ) {
-            ForwardChain( "lemma", OnLabel( "target" ) )
-          } must throwA[TacticFailureException]
+            """
+        ) {
+          ForwardChain("lemma", OnLabel("target"))
+        } must throwA[TacticFailureException]
       }
 
       "is in succedent" in {
@@ -53,9 +56,10 @@ class GapticTest extends Specification {
             :-
             lemma:  !x !y (q x y -> p (f x) (g y)),
             goal:   p(f(f(c)), g(g(d)))
-            """ ) {
-            ForwardChain( "lemma", OnLabel( "target" ) )
-          } must throwA[TacticFailureException]
+            """
+        ) {
+          ForwardChain("lemma", OnLabel("target"))
+        } must throwA[TacticFailureException]
       }
 
       "is not of the form !x (P(x) -> Q(x))" in {
@@ -65,9 +69,10 @@ class GapticTest extends Specification {
             lemma:  !x !y (q x y & p (f x) (g y))
             :-
             goal:   p(f(f(c)), g(g(d)))
-            """ ) {
-            ForwardChain( "lemma", OnLabel( "target" ) )
-          } must throwA[TacticFailureException]
+            """
+        ) {
+          ForwardChain("lemma", OnLabel("target"))
+        } must throwA[TacticFailureException]
       }
     }
 
@@ -78,9 +83,10 @@ class GapticTest extends Specification {
             lemma: !x !y (q x y -> p (f x) (g y))
             :-
             goal:  p(f(f(c)), g(g(d)))
-            """ ) {
-            ForwardChain( "lemma" )
-          } must throwA[TacticFailureException]
+            """
+        ) {
+          ForwardChain("lemma")
+        } must throwA[TacticFailureException]
       }
 
       "is in succedent" in {
@@ -90,9 +96,10 @@ class GapticTest extends Specification {
             :-
             target: q(f(c), g(d)),
             goal:   p(f(f(c)), g(g(d)))
-            """ ) {
-            ForwardChain( "lemma" )
-          } must throwA[TacticFailureException]
+            """
+        ) {
+          ForwardChain("lemma")
+        } must throwA[TacticFailureException]
       }
 
       "label does not exist" in {
@@ -102,9 +109,10 @@ class GapticTest extends Specification {
             lemma: !x !y (q x y -> p (f x) (g y))
             :-
             goal:  p(f(f(c)), g(g(d)))
-            """ ) {
-            ForwardChain( "lemma", OnLabel( "target" ) )
-          } must throwA[TacticFailureException]
+            """
+        ) {
+          ForwardChain("lemma", OnLabel("target"))
+        } must throwA[TacticFailureException]
       }
     }
 
@@ -115,10 +123,11 @@ class GapticTest extends Specification {
             lemma:  !x !y (q x y -> p (f x) (g y))
             :-
             goal:   p(f(f(c)), g(g(d)))
-            """ ) {
-          ForwardChain( "lemma", OnLabel( "target" ) )
-          trivial
-        }
+            """
+      ) {
+        ForwardChain("lemma", OnLabel("target"))
+        trivial
+      }
       ok
     }
   }

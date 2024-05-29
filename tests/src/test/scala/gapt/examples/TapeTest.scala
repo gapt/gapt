@@ -7,12 +7,12 @@ class TapeTest extends Specification {
   import tape._
 
   "tape" in {
-    ctx.check( proof )
+    ctx.check(proof)
     ok
   }
 
   "definition elimination" in {
-    eliminateDefinitions( proof )
+    eliminateDefinitions(proof)
     ok
   }
 
@@ -22,12 +22,12 @@ class TapeUrbanTest extends Specification {
   import tapeUrban._
 
   "urban tape" in {
-    ctx.check( sigma )
+    ctx.check(sigma)
     ok
   }
 
   "definition elimination" in {
-    eliminateDefinitions( sigma )
+    eliminateDefinitions(sigma)
     ok
   }
 }

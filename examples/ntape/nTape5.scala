@@ -10,8 +10,8 @@ import gapt.formats.llk.loadLLK
  * for specific upper bounds n. Since the instantiated proofs were generated manually, only nTape5(2) to nTape5(4)
  * work.
  */
-class nTape5( _size: Int ) extends nTape4( _size ) {
-  override def proofdb() = loadLLK( ClasspathInputFile( s"ntape/ntape5-$size.llk" ) )
+class nTape5(_size: Int) extends nTape4(_size) {
+  override def proofdb() = loadLLK(ClasspathInputFile(s"ntape/ntape5-$size.llk"))
 }
 
 /**
@@ -20,15 +20,15 @@ class nTape5( _size: Int ) extends nTape4( _size ) {
  * work.
  */
 object nTape5 {
-  lazy val inst2 = new nTape5( 2 )
-  lazy val inst3 = new nTape5( 3 )
-  lazy val inst4 = new nTape5( 4 )
+  lazy val inst2 = new nTape5(2)
+  lazy val inst3 = new nTape5(3)
+  lazy val inst4 = new nTape5(4)
 
-  def apply( size: Int ) = size match {
+  def apply(size: Int) = size match {
     case 2 => inst2
     case 3 => inst3
     case 4 => inst4
-    case _ => throw new Exception( "We have only instances 2 to 4." )
+    case _ => throw new Exception("We have only instances 2 to 4.")
   }
 }
 
@@ -37,8 +37,8 @@ object nTape5 {
  * In contrast to [[nTape4]] it cuts on instances of the theorem C
  * for specific upper bounds n. Since the instantiated proofs were generated manually, only nTape5Arith(2) works.
  */
-class nTape5Arith( _size: Int ) extends nTape4( _size ) {
-  override def proofdb() = loadLLK( ClasspathInputFile( s"ntape/ntape5-$size-arithmetic-ite.llk" ) )
+class nTape5Arith(_size: Int) extends nTape4(_size) {
+  override def proofdb() = loadLLK(ClasspathInputFile(s"ntape/ntape5-$size-arithmetic-ite.llk"))
 }
 
 /**
@@ -47,10 +47,10 @@ class nTape5Arith( _size: Int ) extends nTape4( _size ) {
  * for specific upper bounds n. Since the instantiated proofs were generated manually, only nTape5Arith(2) works.
  */
 object nTape5Arith {
-  lazy val inst2 = new nTape5Arith( 2 )
+  lazy val inst2 = new nTape5Arith(2)
 
-  def apply( size: Int ) = size match {
+  def apply(size: Int) = size match {
     case 2 => inst2
-    case _ => throw new Exception( "We have only instance 2." )
+    case _ => throw new Exception("We have only instance 2.")
   }
 }

@@ -4,7 +4,7 @@ import gapt.proofs.context.Context
 import gapt.proofs.context.State
 import gapt.proofs.context.update.Update
 
-class ImmutableContext private ( val state: State, val updates: List[Update] ) extends Context {
+class ImmutableContext private (val state: State, val updates: List[Update]) extends Context {
   def toImmutable: ImmutableContext = this
 
   /**
@@ -12,9 +12,9 @@ class ImmutableContext private ( val state: State, val updates: List[Update] ) e
    *
    * If this is not a valid addition, then an exception is thrown.
    */
-  override def +( update: Update ): ImmutableContext =
-    new ImmutableContext( update( this ), update :: updates )
+  override def +(update: Update): ImmutableContext =
+    new ImmutableContext(update(this), update :: updates)
 }
 object ImmutableContext {
-  val empty = new ImmutableContext( State(), Nil )
+  val empty = new ImmutableContext(State(), Nil)
 }

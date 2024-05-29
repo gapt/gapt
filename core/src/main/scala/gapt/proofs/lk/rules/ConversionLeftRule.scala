@@ -26,13 +26,13 @@ import gapt.proofs.lk.LKProof
  * @param aux The index of N in the antecedent.
  * @param mainFormula The formula N.
  */
-case class ConversionLeftRule( subProof: LKProof, aux: SequentIndex, mainFormula: Formula ) extends ConversionRule {
+case class ConversionLeftRule(subProof: LKProof, aux: SequentIndex, mainFormula: Formula) extends ConversionRule {
   override def name: String = "conv:l"
-  override def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux ) )
+  override def auxIndices: Seq[Seq[SequentIndex]] = Seq(Seq(aux))
   override def mainFormulaSequent: HOLSequent = mainFormula +: Sequent()
 }
 
-object ConversionLeftRule extends ConvenienceConstructor( "ConversionLeftRule" ) {
+object ConversionLeftRule extends ConvenienceConstructor("ConversionLeftRule") {
 
   /**
    * Constructs a derivation ending in a conversion left rule.
@@ -50,10 +50,10 @@ object ConversionLeftRule extends ConvenienceConstructor( "ConversionLeftRule" )
    * @param aux The auxiliary formula M or its index in the antecedent.
    * @param mainFormula The main formula N.
    */
-  def apply( subProof: LKProof, aux: IndexOrFormula, mainFormula: Formula ): ConversionLeftRule = {
+  def apply(subProof: LKProof, aux: IndexOrFormula, mainFormula: Formula): ConversionLeftRule = {
     val premise = subProof.endSequent
-    val ( indices, _ ) = findAndValidate( premise )( Seq( aux ), Seq() )
+    val (indices, _) = findAndValidate(premise)(Seq(aux), Seq())
 
-    ConversionLeftRule( subProof, Ant( indices( 0 ) ), mainFormula )
+    ConversionLeftRule(subProof, Ant(indices(0)), mainFormula)
   }
 }

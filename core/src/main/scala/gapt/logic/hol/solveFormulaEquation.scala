@@ -25,28 +25,28 @@ import scala.util.Try
  */
 object solveFormulaEquation {
 
-  private def isHigherOrderPredicateType( t: Ty ) =
+  private def isHigherOrderPredicateType(t: Ty) =
     t match {
-      case FunctionType( To, _ ) => true
-      case _                     => false
+      case FunctionType(To, _) => true
+      case _                   => false
     }
 
-  private def isHigherOrderPredicateVariable( x: Var ) =
-    isHigherOrderPredicateType( x.ty )
+  private def isHigherOrderPredicateVariable(x: Var) =
+    isHigherOrderPredicateType(x.ty)
 
   /**
    * Attempts to solve formula equations.
    * @param f The formula equation `F[X₁,...,Xₙ]` to be solved.
    */
-  def apply( f: Formula ): Try[Substitution] = {
-    val xs = freeVariables( f ).filter( isHigherOrderPredicateVariable ).toSeq
-    val h = Ex.Block( xs, f )
-    dls( h ).flatMap( {
-      case ( substitution, firstOrderPart ) =>
-        if ( Escargot.isValid( BetaReduction.betaNormalize( substitution( firstOrderPart ) ) ) )
-          Success( substitution )
+  def apply(f: Formula): Try[Substitution] = {
+    val xs = freeVariables(f).filter(isHigherOrderPredicateVariable).toSeq
+    val h = Ex.Block(xs, f)
+    dls(h).flatMap({
+      case (substitution, firstOrderPart) =>
+        if (Escargot.isValid(BetaReduction.betaNormalize(substitution(firstOrderPart))))
+          Success(substitution)
         else
-          Failure( new Exception( s"""the given formula equation ${f} is not solvable""" ) )
-    } )
+          Failure(new Exception(s"""the given formula equation ${f} is not solvable"""))
+    })
   }
 }

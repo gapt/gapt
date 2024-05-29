@@ -17,9 +17,9 @@ import gapt.proofs.lk.LKProof
  * @param subProof The subproof π.
  * @param formula The formula A.
  */
-case class WeakeningLeftRule( subProof: LKProof, formula: Formula )
-  extends UnaryLKProof with CommonRule {
-  override def auxIndices: Seq[Seq[Nothing]] = Seq( Seq() )
+case class WeakeningLeftRule(subProof: LKProof, formula: Formula)
+    extends UnaryLKProof with CommonRule {
+  override def auxIndices: Seq[Seq[Nothing]] = Seq(Seq())
   override def name: String = "w:l"
   def mainFormula: Formula = formula
 

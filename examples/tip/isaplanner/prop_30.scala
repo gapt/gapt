@@ -6,10 +6,10 @@ import gapt.proofs.gaptic._
 
 object prop_30 extends TacticsProof {
 
-  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += InductiveType(ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat")
   ctx += hoc"p:Nat>Nat"
 
-  ctx += InductiveType( ty"list", hoc"nil:list", hoc"cons:Nat>list>list" )
+  ctx += InductiveType(ty"list", hoc"nil:list", hoc"cons:Nat>list>list")
   ctx += hoc"head:list>Nat"
   ctx += hoc"tail:list>list"
 
@@ -41,51 +41,51 @@ object prop_30 extends TacticsProof {
       goal: ∀x ∀xs elem(x:Nat, ins(x, xs:list): list)
     """
 
-  val proof = Lemma( sequent ) {
+  val proof = Lemma(sequent) {
     allR
     allR
-    induction( hov"xs:list" )
+    induction(hov"xs:list")
     // base case
-    allL( "def_ins_1", le"x:Nat" )
-    eql( "def_ins_1_0", "goal" )
-    allL( "def_elem_2", le"x:Nat", le"x:Nat", le"nil:list" )
+    allL("def_ins_1", le"x:Nat")
+    eql("def_ins_1_0", "goal")
+    allL("def_elem_2", le"x:Nat", le"x:Nat", le"nil:list")
     andL
-    impL( "def_elem_2_0_1" )
+    impL("def_elem_2_0_1")
     orR
-    induction( hov"x:Nat", "def_elem_2_0_1_0" )
+    induction(hov"x:Nat", "def_elem_2_0_1_0")
     axiomLog
-    allL( "def_equal_4", le"x_0:Nat", le"x_0:Nat" )
+    allL("def_equal_4", le"x_0:Nat", le"x_0:Nat")
     andL
-    impL( "def_equal_4_0_1" )
+    impL("def_equal_4_0_1")
     axiomLog
     axiomLog
     axiomLog
     // inductive case
-    allL( "def_ins_2", le"x:Nat", le"x_0:Nat", le"xs_0:list" )
-    allL( "def_ins_3", le"x:Nat", le"x_0:Nat", le"xs_0:list" )
-    impL( "def_ins_2_0" )
+    allL("def_ins_2", le"x:Nat", le"x_0:Nat", le"xs_0:list")
+    allL("def_ins_3", le"x:Nat", le"x_0:Nat", le"xs_0:list")
+    impL("def_ins_2_0")
     negR
-    impL( "def_ins_3_0" )
+    impL("def_ins_3_0")
     axiomLog
-    eql( "def_ins_3_0", "goal" )
-    allL( "def_elem_2", le"x:Nat", le"x:Nat", le"cons(x_0:Nat, xs_0:list):list" )
+    eql("def_ins_3_0", "goal")
+    allL("def_elem_2", le"x:Nat", le"x:Nat", le"cons(x_0:Nat, xs_0:list):list")
     andL
-    impL( "def_elem_2_0_1" )
+    impL("def_elem_2_0_1")
     orR
     // proof of equal(x,x)
-    induction( hov"x:Nat", "def_elem_2_0_1_0" )
+    induction(hov"x:Nat", "def_elem_2_0_1_0")
     axiomLog
-    allL( "def_equal_4", le"x_1:Nat", le"x_1:Nat" )
+    allL("def_equal_4", le"x_1:Nat", le"x_1:Nat")
     andL
-    impL( "def_equal_4_0_1" )
+    impL("def_equal_4_0_1")
     axiomLog
     axiomLog
 
     axiomLog
-    eql( "def_ins_2_0", "goal" )
-    allL( "def_elem_2", le"x:Nat", le"x_0:Nat", le"ins(x:Nat, xs_0:list):list" )
+    eql("def_ins_2_0", "goal")
+    allL("def_elem_2", le"x:Nat", le"x_0:Nat", le"ins(x:Nat, xs_0:list):list")
     andL
-    impL( "def_elem_2_0_1" )
+    impL("def_elem_2_0_1")
     orR
     axiomLog
     axiomLog

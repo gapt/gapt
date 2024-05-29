@@ -72,21 +72,21 @@ import scala.concurrent.duration._
 import scala.util.Random
 import scala.xml.XML
 
-class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile.getName + "/" + f.getName ) {
-  override def timeout = Some( 10 minutes )
+class TipTestCase(f: java.io.File) extends RegressionTestCase(f.getParentFile.getName + "/" + f.getName) {
+  override def timeout = Some(10 minutes)
 
-  override protected def test( implicit testRun: TestRun ): Unit = {
-    val bench = TipSmtImporter.fixupAndLoad( f ) --- "tip parser"
+  override protected def test(implicit testRun: TestRun): Unit = {
+    val bench = TipSmtImporter.fixupAndLoad(f) --- "tip parser"
 
     implicit val ctx: MutableContext = bench.context.newMutable
     val sequent = bench.toSequent
-    val lkProofWithSk = Viper.getStrategies( sequent, ViperOptions() ).reverse.view.flatMap {
-      case ( duration, strategy ) =>
+    val lkProofWithSk = Viper.getStrategies(sequent, ViperOptions()).reverse.view.flatMap {
+      case (duration, strategy) =>
         try {
-          ( withTimeout( duration ) { strategy.andThen( now )( ProofState( sequent ) ) } match {
-            case Left( error )         => throw new Exception( error.toSigRelativeString )
-            case Right( ( _, state ) ) => state.result
-          } ) --? s"viper $strategy"
+          (withTimeout(duration) { strategy.andThen(now)(ProofState(sequent)) } match {
+            case Left(error)       => throw new Exception(error.toSigRelativeString)
+            case Right((_, state)) => state.result
+          }) --? s"viper $strategy"
         } catch {
           case _: TimeOutException =>
             // Nested withTimeout calls are just fundamentally broken.
@@ -94,44 +94,47 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
           case _: OutOfMemoryError | _: StackOverflowError =>
             None
         }
-    }.headOption.getOrElse( throw new TimeOutException( null, Duration.Inf ) ) --- "viper"
+    }.headOption.getOrElse(throw new TimeOutException(null, Duration.Inf)) --- "viper"
 
-    ctx.check( lkProofWithSk ) --? "checking proof against context"
+    ctx.check(lkProofWithSk) --? "checking proof against context"
 
-    val expProofWithSk = LKToExpansionProof( lkProofWithSk ) --- "LKToExpansionProof"
-    val expProofDesk = deskolemizeET( expProofWithSk ) --- "deskolemization"
-    expProofWithSk.shallow.isSubsetOf( expProofDesk.shallow ) !-- "shallow sequent of deskolemization"
-    Z3.isValid( expProofDesk.deep ) !-- "deskolemized deep formula validity"
-    val proof = ExpansionProofToLK( expProofDesk ).get --- "ExpansionProofToLK on deskolemization"
+    val expProofWithSk = LKToExpansionProof(lkProofWithSk) --- "LKToExpansionProof"
+    val expProofDesk = deskolemizeET(expProofWithSk) --- "deskolemization"
+    expProofWithSk.shallow.isSubsetOf(expProofDesk.shallow) !-- "shallow sequent of deskolemization"
+    Z3.isValid(expProofDesk.deep) !-- "deskolemized deep formula validity"
+    val proof = ExpansionProofToLK(expProofDesk).get --- "ExpansionProofToLK on deskolemization"
 
-    ctx.check( proof ) --? "checking deskolemized proof against context"
+    ctx.check(proof) --? "checking deskolemized proof against context"
 
-    extractRecSchem( proof ) --? "extract recursion scheme"
+    extractRecSchem(proof) --? "extract recursion scheme"
 
-    LKToND( proof ) --? "LKToND"
+    LKToND(proof) --? "LKToND"
 
-    val All.Block( variables, _ ) = sequent.succedent.head
-    val instanceTerms = new EnumeratingInstanceGenerator( variables.map( _.ty ), false, ctx ).
-      generate( lower = 2, upper = 3, num = 1 ).head --- "random instance term"
-    val instProof = instanceProof( proof, instanceTerms )
+    val All.Block(variables, _) = sequent.succedent.head
+    val instanceTerms = new EnumeratingInstanceGenerator(variables.map(_.ty), false, ctx).generate(lower = 2, upper = 3, num = 1).head --- "random instance term"
+    val instProof = instanceProof(proof, instanceTerms)
 
-    val proofName @ Apps( proofNameC @ Const( proofNameStr, _, _ ), _ ) =
-      Atom( ctx.newNameGenerator.fresh( "proof" ), variables ): @unchecked
-    ArithmeticInductionToSchema( proof, proofName ) --? "induction to schema" foreach { _ =>
-      ProofLink( proofName ) --? "create schema proof link"
-      instantiateProof.Instantiate( proofNameC( instanceTerms ) ) --? "schema instance"
-      SchematicStruct( proofNameStr ).get --? "schematic struct" foreach { schemaStruct =>
-        CharFormPRP.PR( CharFormPRP( schemaStruct ) ) --? "characteristic formula"
-        InstanceOfSchematicStruct( CLS(
-          proofNameC( instanceTerms ),
-          proof.endSequent.map( _ => false ) ), schemaStruct ) --? "struct instance"
+    val proofName @ Apps(proofNameC @ Const(proofNameStr, _, _), _) =
+      Atom(ctx.newNameGenerator.fresh("proof"), variables): @unchecked
+    ArithmeticInductionToSchema(proof, proofName) --? "induction to schema" foreach { _ =>
+      ProofLink(proofName) --? "create schema proof link"
+      instantiateProof.Instantiate(proofNameC(instanceTerms)) --? "schema instance"
+      SchematicStruct(proofNameStr).get --? "schematic struct" foreach { schemaStruct =>
+        CharFormPRP.PR(CharFormPRP(schemaStruct)) --? "characteristic formula"
+        InstanceOfSchematicStruct(
+          CLS(
+            proofNameC(instanceTerms),
+            proof.endSequent.map(_ => false)
+          ),
+          schemaStruct
+        ) --? "struct instance"
       }
     }
 
-    normalizeLKt.inductionLK( instProof, debugging = true ) --? "eliminate inductions in instance proof using lkt"
-    inductionNormalForm( instProof ) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
-      indFreeProof.endSequent.multiSetEquals( instProof.endSequent ) !-- "induction elimination does not modify end-sequent"
-      isInductionFree( indFreeProof ) !-- "induction elimination returns induction free proof"
+    normalizeLKt.inductionLK(instProof, debugging = true) --? "eliminate inductions in instance proof using lkt"
+    inductionNormalForm(instProof) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
+      indFreeProof.endSequent.multiSetEquals(instProof.endSequent) !-- "induction elimination does not modify end-sequent"
+      isInductionFree(indFreeProof) !-- "induction elimination returns induction free proof"
     }
   }
 }
@@ -139,241 +142,241 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
 object TheoryTestCase {
   import gapt.examples.theories._
   object AllTheories extends Theory(
-    logic,
-    set,
-    props,
-    nat,
-    natdivisible,
-    natdivision,
-    natorder,
-    list,
-    listlength,
-    listfold,
-    listdrop,
-    natlists,
-    fta )
+        logic,
+        set,
+        props,
+        nat,
+        natdivisible,
+        natdivision,
+        natorder,
+        list,
+        listlength,
+        listfold,
+        listdrop,
+        natlists,
+        fta
+      )
 }
-class TheoryTestCase( name: String, combined: Boolean )
-  extends RegressionTestCase( name + ( if ( combined ) "-combined" else "" ) ) {
-  override def timeout = Some( 5 minutes )
+class TheoryTestCase(name: String, combined: Boolean)
+    extends RegressionTestCase(name + (if (combined) "-combined" else "")) {
+  override def timeout = Some(5 minutes)
 
-  private def testBabelExport( name: String, terms: Set[Expr],
-                               stringifier: Expr => String,
-                               parser:      String => Expr )( implicit testRun: TestRun ): Unit =
-    ( for ( t <- terms ) try
-      require( parser( stringifier( t ) ) == t )
-    catch {
-      case e: Exception =>
-        throw new Exception( stringifier( t ) + "\n\n" + t.toRawString, e )
-    } ) --? name
+  private def testBabelExport(name: String, terms: Set[Expr], stringifier: Expr => String, parser: String => Expr)(implicit testRun: TestRun): Unit =
+    (for (t <- terms)
+      try
+        require(parser(stringifier(t)) == t)
+      catch {
+        case e: Exception =>
+          throw new Exception(stringifier(t) + "\n\n" + t.toRawString, e)
+      }) --? name
 
-  override protected def test( implicit testRun: TestRun ): Unit = {
+  override protected def test(implicit testRun: TestRun): Unit = {
     import TheoryTestCase.AllTheories._
-    val lemmaHandle = LemmaHandle( ctx.get[ProofNames].names( name )._1 )
-    val proof = ( if ( combined ) lemmaHandle.combined() else lemmaHandle.proof ) --- "proof"
+    val lemmaHandle = LemmaHandle(ctx.get[ProofNames].names(name)._1)
+    val proof = (if (combined) lemmaHandle.combined() else lemmaHandle.proof) --- "proof"
 
-    JsonImporter.load[LKProof]( InputFile.fromString( JsonExporter( proof ).render( 80 ) ) ) == proof !-- "json export of lk proof"
+    JsonImporter.load[LKProof](InputFile.fromString(JsonExporter(proof).render(80))) == proof !-- "json export of lk proof"
 
-    LKToND( proof ) --? "LKToND"
-    normalizeLKt.withDebug( proof ) --? "lkt cut-elim"
+    LKToND(proof) --? "LKToND"
+    normalizeLKt.withDebug(proof) --? "lkt cut-elim"
 
-    LKToExpansionProof( proof ) --? "LKToExpansionProof" foreach { expansion =>
-      ExpansionProofToLK( expansion ).get --? "ExpansionProofToLK" foreach { expansionLK =>
-        expansionLK.conclusion.isSubsetOf( proof.conclusion ) !-- "conclusion of ExpansionProofToLK"
-        ctx.check( expansionLK ) --? "context check of ExpansionProofToLK"
-        normalizeLKt.withDebug( expansionLK ) --? "lkt cut-elim (expansion)"
-        LKToND( expansionLK ) --? "LKToND (expansion)"
+    LKToExpansionProof(proof) --? "LKToExpansionProof" foreach { expansion =>
+      ExpansionProofToLK(expansion).get --? "ExpansionProofToLK" foreach { expansionLK =>
+        expansionLK.conclusion.isSubsetOf(proof.conclusion) !-- "conclusion of ExpansionProofToLK"
+        ctx.check(expansionLK) --? "context check of ExpansionProofToLK"
+        normalizeLKt.withDebug(expansionLK) --? "lkt cut-elim (expansion)"
+        LKToND(expansionLK) --? "LKToND (expansion)"
       }
     }
 
-    val terms = proof.subProofs.flatMap( _.endSequent.elements ).flatMap( subTerms( _ ) )
-    testBabelExport( "babel exporter", terms, _.toString, BabelParser.parse( _ )( BabelSignature.defaultSignature ) )
-    testBabelExport( "raw babel exporter", terms, _.toRawString, BabelParser.parse( _ )( BabelSignature.defaultSignature ) )
-    testBabelExport( "babel exporter with sig", terms, _.toSigRelativeString, BabelParser.parse( _ ) )
-    testBabelExport( "raw babel exporter with sig", terms, _.toRawString, BabelParser.parse( _ ) )
+    val terms = proof.subProofs.flatMap(_.endSequent.elements).flatMap(subTerms(_))
+    testBabelExport("babel exporter", terms, _.toString, BabelParser.parse(_)(BabelSignature.defaultSignature))
+    testBabelExport("raw babel exporter", terms, _.toRawString, BabelParser.parse(_)(BabelSignature.defaultSignature))
+    testBabelExport("babel exporter with sig", terms, _.toSigRelativeString, BabelParser.parse(_))
+    testBabelExport("raw babel exporter with sig", terms, _.toRawString, BabelParser.parse(_))
 
-    val All.Block( variables, _ ) = proof.endSequent.succedent.head
-    val instanceTerms = new EnumeratingInstanceGenerator( variables.map( _.ty ), false, ctx ).
-      generate( lower = 2, upper = 3, num = 1 ).head --- "random instance term"
-    val instProof = instanceProof( proof, instanceTerms )
+    val All.Block(variables, _) = proof.endSequent.succedent.head
+    val instanceTerms = new EnumeratingInstanceGenerator(variables.map(_.ty), false, ctx).generate(lower = 2, upper = 3, num = 1).head --- "random instance term"
+    val instProof = instanceProof(proof, instanceTerms)
 
     {
       implicit val mctx: MutableContext = ctx.newMutable
-      val proofName @ Apps( proofNameC @ Const( proofNameStr, _, _ ), _ ) =
-        Atom( mctx.newNameGenerator.fresh( "proof" ), variables ): @unchecked
-      ArithmeticInductionToSchema( proof, proofName ) --? "induction to schema" foreach { _ =>
-        ProofLink( proofName ) --? "create schema proof link"
-        instantiateProof.Instantiate( proofNameC( instanceTerms ) ) --? "schema instance"
-        SchematicStruct( proofNameStr ).get --? "schematic struct" foreach { schemaStruct =>
-          CharFormPRP.PR( CharFormPRP( schemaStruct ) ) --? "characteristic formula"
-          InstanceOfSchematicStruct( CLS( proofNameC( instanceTerms ), proof.endSequent.map( _ => false ) ), schemaStruct ) --? "struct instance"
+      val proofName @ Apps(proofNameC @ Const(proofNameStr, _, _), _) =
+        Atom(mctx.newNameGenerator.fresh("proof"), variables): @unchecked
+      ArithmeticInductionToSchema(proof, proofName) --? "induction to schema" foreach { _ =>
+        ProofLink(proofName) --? "create schema proof link"
+        instantiateProof.Instantiate(proofNameC(instanceTerms)) --? "schema instance"
+        SchematicStruct(proofNameStr).get --? "schematic struct" foreach { schemaStruct =>
+          CharFormPRP.PR(CharFormPRP(schemaStruct)) --? "characteristic formula"
+          InstanceOfSchematicStruct(CLS(proofNameC(instanceTerms), proof.endSequent.map(_ => false)), schemaStruct) --? "struct instance"
         }
       }
     }
 
-    normalizeLKt.inductionLK( instProof, debugging = true ) --? "eliminate inductions in instance proof using lkt"
-    inductionNormalForm( instProof ) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
-      indFreeProof.endSequent.multiSetEquals( instProof.endSequent ) !-- "induction elimination does not modify end-sequent"
+    normalizeLKt.inductionLK(instProof, debugging = true) --? "eliminate inductions in instance proof using lkt"
+    inductionNormalForm(instProof) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
+      indFreeProof.endSequent.multiSetEquals(instProof.endSequent) !-- "induction elimination does not modify end-sequent"
     }
   }
 }
 
-class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile.getName ) {
-  override def timeout = Some( 3 minutes )
+class Prover9TestCase(f: java.io.File) extends RegressionTestCase(f.getParentFile.getName) {
+  override def timeout = Some(3 minutes)
 
-  override def test( implicit testRun: TestRun ) = {
-    val ( robinson, reconstructedEndSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequent( f ) --- "import"
+  override def test(implicit testRun: TestRun) = {
+    val (robinson, reconstructedEndSequent) = Prover9Importer.robinsonProofWithReconstructedEndSequent(f) --- "import"
 
-    ResolutionToExpansionProof( robinson ) --? "RobinsonToExpansionProof" map { E2 =>
-      Z3.isValid( E2.deep ) !-- "toDeep validity of RobinsonToExpansionProof"
-      Z3.isValid( extractInstances( E2 ) ) !-- "extractInstances validity of RobinsonToExpansionProof"
+    ResolutionToExpansionProof(robinson) --? "RobinsonToExpansionProof" map { E2 =>
+      Z3.isValid(E2.deep) !-- "toDeep validity of RobinsonToExpansionProof"
+      Z3.isValid(extractInstances(E2)) !-- "extractInstances validity of RobinsonToExpansionProof"
     }
 
-    BabelParser.parse( reconstructedEndSequent.toImplication.toString ) == reconstructedEndSequent.toImplication !-- "babel round-trip"
+    BabelParser.parse(reconstructedEndSequent.toImplication.toString) == reconstructedEndSequent.toImplication !-- "babel round-trip"
 
-    val p = WeakeningContractionMacroRule( ResolutionToLKProof( robinson ), reconstructedEndSequent ) --- "RobinsonToLK"
+    val p = WeakeningContractionMacroRule(ResolutionToLKProof(robinson), reconstructedEndSequent) --- "RobinsonToLK"
 
-    regularize( p ) --? "regularize"
+    regularize(p) --? "regularize"
 
-    val E = LKToExpansionProof( p ) --- "LKToExpansionProof"
+    val E = LKToExpansionProof(p) --- "LKToExpansionProof"
     val deep = E.deep
 
-    simplifyResolutionProof( robinson ).conclusion.isEmpty !-- "simplifyResolutionProof"
+    simplifyResolutionProof(robinson).conclusion.isEmpty !-- "simplifyResolutionProof"
 
-    ( E.shallow == p.endSequent ) !-- "shallow sequent of expansion proof"
+    (E.shallow == p.endSequent) !-- "shallow sequent of expansion proof"
 
-    LKToND( p ) --? "LKToND"
+    LKToND(p) --? "LKToND"
 
-    Escargot.getLKProof( deep ).get --? "getLKProof( deep )" foreach { ip =>
-      val ( indices1, indices2 ) = ip.endSequent.indices.splitAt( ip.endSequent.size / 2 )
-      ExtractInterpolant( ip, indices1 ) --? "extractInterpolant"
-      ExtractInterpolant( ip, indices2 ) --? "extractInterpolant diff partition"
+    Escargot.getLKProof(deep).get --? "getLKProof( deep )" foreach { ip =>
+      val (indices1, indices2) = ip.endSequent.indices.splitAt(ip.endSequent.size / 2)
+      ExtractInterpolant(ip, indices1) --? "extractInterpolant"
+      ExtractInterpolant(ip, indices2) --? "extractInterpolant diff partition"
     }
 
-    if ( !containsEqualityReasoning( p ) ) {
-      MiniSAT.isValid( deep ) !-- "minisat validity"
-      Sat4j.getResolutionProof( deep ).isDefined !-- "Sat4j proof import"
-      solvePropositional( deep ).isRight !-- "solvePropositional"
+    if (!containsEqualityReasoning(p)) {
+      MiniSAT.isValid(deep) !-- "minisat validity"
+      Sat4j.getResolutionProof(deep).isDefined !-- "Sat4j proof import"
+      solvePropositional(deep).isRight !-- "solvePropositional"
     } else {
-      solveQuasiPropositional( deep ).isRight !-- "solveQuasiPropositional"
+      solveQuasiPropositional(deep).isRight !-- "solveQuasiPropositional"
     }
-    ExpansionProofToLK( E ).isRight !-- "expansionProofToLKProof"
-    Z3.isValid( deep ) !-- "validity of deep formula"
-    SmtInterpol.isValid( deep ) !-- "validity of deep formula (SmtInterpol)"
-    SimpleSmtSolver.isValid( deep ) !-- "SimpleSmtSolver on deep formula"
+    ExpansionProofToLK(E).isRight !-- "expansionProofToLKProof"
+    Z3.isValid(deep) !-- "validity of deep formula"
+    SmtInterpol.isValid(deep) !-- "validity of deep formula (SmtInterpol)"
+    SimpleSmtSolver.isValid(deep) !-- "SimpleSmtSolver on deep formula"
 
-    if ( isFOLPrenexSigma1( p.endSequent ) )
-      extractRecSchem( p ) --? "extractRecSchem" map { recSchem =>
-        Z3.isUnsat( And( recSchem.languageWithDummyParameters ) ) !-- "extractRecSchem language validity"
+    if (isFOLPrenexSigma1(p.endSequent))
+      extractRecSchem(p) --? "extractRecSchem" map { recSchem =>
+        Z3.isUnsat(And(recSchem.languageWithDummyParameters)) !-- "extractRecSchem language validity"
       }
 
-    cutNormal( p ) --? "cut-elim (input)"
-    normalizeLKt.withDebug( p ) --? "lkt cut-elim (input)"
+    cutNormal(p) --? "cut-elim (input)"
+    normalizeLKt.withDebug(p) --? "lkt cut-elim (input)"
 
-    cleanStructuralRules( p ) --? "cleanStructuralRules"
+    cleanStructuralRules(p) --? "cleanStructuralRules"
 
-    if ( isFOLPrenexSigma1( p.endSequent ) )
-      ( CutIntroduction( p ) --? "cut-introduction" flatten ) foreach { q =>
-        val focus = if ( p.endSequent.succedent.isEmpty ) None else Some( Suc( 0 ) )
-        LKToND( q, focus ) --? "LKToND (cut-intro)"
+    if (isFOLPrenexSigma1(p.endSequent))
+      (CutIntroduction(p) --? "cut-introduction" flatten) foreach { q =>
+        val focus = if (p.endSequent.succedent.isEmpty) None else Some(Suc(0))
+        LKToND(q, focus) --? "LKToND (cut-intro)"
 
-        cutNormal( q ) --? "cut-elim (cut-intro)"
-        normalizeLKt.withDebug( q ) --? "lkt cut-elim (cut-intro)"
-        CERES( q ) --? "CERES (cut-intro)"
-        CERES.expansionProof( q ) --? "CERESExpansionProof"
+        cutNormal(q) --? "cut-elim (cut-intro)"
+        normalizeLKt.withDebug(q) --? "lkt cut-elim (cut-intro)"
+        CERES(q) --? "CERES (cut-intro)"
+        CERES.expansionProof(q) --? "CERESExpansionProof"
 
-        LKToExpansionProof( q ) --? "LKToExpansionProof (cut-intro)" foreach { expQ =>
-          Z3.isValid( expQ.deep ) !-- "expansion tree validity with cut (cut-intro)"
-          eliminateCutsET( expQ ) --? "expansion tree cut-elimination (cut-intro)" foreach { expQstar =>
-            Z3.isValid( expQstar.deep ) !-- "cut-elim expansion tree validity (cut-intro)"
+        LKToExpansionProof(q) --? "LKToExpansionProof (cut-intro)" foreach { expQ =>
+          Z3.isValid(expQ.deep) !-- "expansion tree validity with cut (cut-intro)"
+          eliminateCutsET(expQ) --? "expansion tree cut-elimination (cut-intro)" foreach { expQstar =>
+            Z3.isValid(expQstar.deep) !-- "cut-elim expansion tree validity (cut-intro)"
           }
-          ExpansionProofToLK( expQ ).isRight !-- "ExpansionProofToLK (cut-intro)"
+          ExpansionProofToLK(expQ).isRight !-- "ExpansionProofToLK (cut-intro)"
         }
 
-        Z3.isUnsat( And( extractRecSchem( q ).languageWithDummyParameters ) ) !-- "extractRecSchem validity (cut-intro)"
+        Z3.isUnsat(And(extractRecSchem(q).languageWithDummyParameters)) !-- "extractRecSchem validity (cut-intro)"
       }
 
-    folSkolemize( p ) --? "skolemize"
+    folSkolemize(p) --? "skolemize"
   }
 }
 
-class LeanCoPTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile.getName ) {
-  override def timeout = Some( 2 minutes )
+class LeanCoPTestCase(f: java.io.File) extends RegressionTestCase(f.getParentFile.getName) {
+  override def timeout = Some(2 minutes)
 
-  override def test( implicit testRun: TestRun ) = {
-    val E = LeanCoPParser.getExpansionProof( loadExpansionProof.extractFromTSTPCommentsIfNecessary( f ) ).get --- "import"
+  override def test(implicit testRun: TestRun) = {
+    val E = LeanCoPParser.getExpansionProof(loadExpansionProof.extractFromTSTPCommentsIfNecessary(f)).get --- "import"
 
     val deep = E.deep --- "toDeep"
-    VeriT.isValid( deep.toDisjunction ) !-- "verit validity"
+    VeriT.isValid(deep.toDisjunction) !-- "verit validity"
   }
 }
 
-class VeriTTestCase( smtQfUfBenchmark: java.io.File ) extends RegressionTestCase( smtQfUfBenchmark.getName ) {
-  override def timeout: Option[Duration] = Some( 2 minutes )
+class VeriTTestCase(smtQfUfBenchmark: java.io.File) extends RegressionTestCase(smtQfUfBenchmark.getName) {
+  override def timeout: Option[Duration] = Some(2 minutes)
 
-  override def test( implicit testRun: TestRun ) = {
+  override def test(implicit testRun: TestRun) = {
 
     val veriTOutput = runProcess(
-      Seq( "veriT", "--proof=-", "--disable-print-success", "--disable-banner", smtQfUfBenchmark.getAbsolutePath() ) ) --- "proof generation"
+      Seq("veriT", "--proof=-", "--disable-print-success", "--disable-banner", smtQfUfBenchmark.getAbsolutePath())
+    ) --- "proof generation"
 
-    val E = VeriTParser.getExpansionProofWithSymmetry( StringInputFile( veriTOutput ) ).get --- "proof import"
+    val E = VeriTParser.getExpansionProofWithSymmetry(StringInputFile(veriTOutput)).get --- "proof import"
 
     val deep = E.deep --- "toDeep"
-    MiniSAT.isValid( deep.toDisjunction ) !-- "minisat validity"
+    MiniSAT.isValid(deep.toDisjunction) !-- "minisat validity"
   }
 }
 
-class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
-  override def timeout = Some( 2 minutes )
+class TptpTestCase(f: java.io.File) extends RegressionTestCase(f.getName) {
+  override def timeout = Some(2 minutes)
 
-  override def test( implicit testRun: TestRun ) = {
-    val tptpDir = Path( f ) / up / up / up
-    val tptpProblem = TptpImporter.loadWithIncludes( f, path => TptpImporter.loadWithoutIncludes( tptpDir / RelPath( path ) ) ) --- "TptpParser"
+  override def test(implicit testRun: TestRun) = {
+    val tptpDir = Path(f) / up / up / up
+    val tptpProblem = TptpImporter.loadWithIncludes(f, path => TptpImporter.loadWithoutIncludes(tptpDir / RelPath(path))) --- "TptpParser"
 
     val sequent = tptpProblem.toSequent
 
-    val resolution = Escargot.getResolutionProof( sequent ).get --- "Escargot"
+    val resolution = Escargot.getResolutionProof(sequent).get --- "Escargot"
 
-    val expansion = ResolutionToExpansionProof( resolution ) --- "ResolutionToExpansionProof"
+    val expansion = ResolutionToExpansionProof(resolution) --- "ResolutionToExpansionProof"
 
-    deskolemizeET( expansion ) --? "deskolemization" foreach { desk =>
-      desk.shallow.isSubsetOf( expansion.shallow ) !-- "shallow sequent of deskolemization"
-      Z3.isValid( desk.deep ) !-- "deskolemized deep formula validity"
-      ExpansionProofToLK( desk ).get --? "ExpansionProofToLK on deskolemization" foreach { deskLK =>
-        JsonImporter.load[LKProof]( InputFile.fromString( JsonExporter( deskLK ).render( 80 ) ) ) == deskLK !-- "json export of lk proof"
-        LKToND( deskLK ) --? "LKToND (deskolemization)" foreach { nd =>
-          JsonImporter.load[NDProof]( InputFile.fromString( JsonExporter( nd ).render( 80 ) ) ) == nd !-- "json export of lk proof"
+    deskolemizeET(expansion) --? "deskolemization" foreach { desk =>
+      desk.shallow.isSubsetOf(expansion.shallow) !-- "shallow sequent of deskolemization"
+      Z3.isValid(desk.deep) !-- "deskolemized deep formula validity"
+      ExpansionProofToLK(desk).get --? "ExpansionProofToLK on deskolemization" foreach { deskLK =>
+        JsonImporter.load[LKProof](InputFile.fromString(JsonExporter(deskLK).render(80))) == deskLK !-- "json export of lk proof"
+        LKToND(deskLK) --? "LKToND (deskolemization)" foreach { nd =>
+          JsonImporter.load[NDProof](InputFile.fromString(JsonExporter(nd).render(80))) == nd !-- "json export of lk proof"
         }
-        isMaeharaMG3i( deskLK ) --? "isMaeharaMG3i" match {
-          case Some( true ) =>
-            MG3iToLJ( deskLK ) --? "MG3iToLJ"
+        isMaeharaMG3i(deskLK) --? "isMaeharaMG3i" match {
+          case Some(true) =>
+            MG3iToLJ(deskLK) --? "MG3iToLJ"
           case _ =>
         }
       }
     }
 
-    JsonImporter.load[ExpansionProof]( InputFile.fromString( JsonExporter( expansion ).render( 80 ) ) ) == expansion !-- "json export of expansion proof"
+    JsonImporter.load[ExpansionProof](InputFile.fromString(JsonExporter(expansion).render(80))) == expansion !-- "json export of expansion proof"
   }
 }
 
 // Usage: RegressionTests [<test number limit>]
 object RegressionTests extends scala.App {
-  def prover9Proofs = walk( pwd / "testing" / "TSTP" / "prover9" ).filter( _.ext == "s" )
-  def leancopProofs = walk( pwd / "testing" / "TSTP" / "leanCoP" ).filter( _.ext == "s" )
-  def veritBenchmarks = walk( pwd / "testing" / "veriT-SMT-LIB" ).filter( _.ext == "smt2" )
-  def tptpProblems = walk( pwd / "testing" / "TPTP" / "Problems" ).filter( _.ext == "p" )
-  def tipProblems = walk( pwd / "testing" / "TIP" ).filter( _.ext == "smt2" )
+  def prover9Proofs = walk(pwd / "testing" / "TSTP" / "prover9").filter(_.ext == "s")
+  def leancopProofs = walk(pwd / "testing" / "TSTP" / "leanCoP").filter(_.ext == "s")
+  def veritBenchmarks = walk(pwd / "testing" / "veriT-SMT-LIB").filter(_.ext == "smt2")
+  def tptpProblems = walk(pwd / "testing" / "TPTP" / "Problems").filter(_.ext == "p")
+  def tipProblems = walk(pwd / "testing" / "TIP").filter(_.ext == "smt2")
 
-  def prover9TestCases = prover9Proofs map { fn => new Prover9TestCase( fn.toIO ) }
-  def leancopTestCases = leancopProofs map { fn => new LeanCoPTestCase( fn.toIO ) }
-  def veritTestCases = veritBenchmarks map { fn => new VeriTTestCase( fn.toIO ) }
-  def tptpTestCases = tptpProblems.map { fn => new TptpTestCase( fn.toIO ) }
-  def tipTestCases = tipProblems.map { fn => new TipTestCase( fn.toIO ) }
+  def prover9TestCases = prover9Proofs map { fn => new Prover9TestCase(fn.toIO) }
+  def leancopTestCases = leancopProofs map { fn => new LeanCoPTestCase(fn.toIO) }
+  def veritTestCases = veritBenchmarks map { fn => new VeriTTestCase(fn.toIO) }
+  def tptpTestCases = tptpProblems.map { fn => new TptpTestCase(fn.toIO) }
+  def tipTestCases = tipProblems.map { fn => new TipTestCase(fn.toIO) }
   def theoryTestCases =
     for {
-      ( n, _ ) <- TheoryTestCase.AllTheories.allProofs
-      combined <- Seq( false, true )
-    } yield new TheoryTestCase( n, combined )
+      (n, _) <- TheoryTestCase.AllTheories.allProofs
+      combined <- Seq(false, true)
+    } yield new TheoryTestCase(n, combined)
 
   def allTestCases =
     prover9TestCases ++
@@ -383,29 +386,29 @@ object RegressionTests extends scala.App {
       tipTestCases ++
       theoryTestCases
 
-  def findTestCase( pat: String ) = allTestCases.find( _.toString.contains( pat ) ).get
+  def findTestCase(pat: String) = allTestCases.find(_.toString.contains(pat)).get
 
   val testCases = args match {
-    case Array( limit ) =>
-      println( s"Only running $limit random tests." )
-      Random.shuffle( allTestCases ).take( limit toInt )
-    case _ => Random.shuffle( allTestCases )
+    case Array(limit) =>
+      println(s"Only running $limit random tests.")
+      Random.shuffle(allTestCases).take(limit toInt)
+    case _ => Random.shuffle(allTestCases)
   }
 
   val total = testCases.length
   var started = 0
-  val out = new PrintWriter( new FileWriter( pwd / "target" / "regression-test-results.xml" toIO ), true )
+  val out = new PrintWriter(new FileWriter(pwd / "target" / "regression-test-results.xml" toIO), true)
   try {
     out write "<testsuite>\n"
     testCases.par foreach { tc =>
       started += 1
-      println( s"[${( 100 * started ) / total}%] $tc" )
+      println(s"[${(100 * started) / total}%] $tc")
       try {
-        val res = runOutOfProcess( Seq( "-Xmx1G", "-Xss30m" ) ) { tc.run().toJUnitXml }
-        out.synchronized { XML.write( out, res, enc = "", xmlDecl = false, doctype = null ); out.flush() }
+        val res = runOutOfProcess(Seq("-Xmx1G", "-Xss30m")) { tc.run().toJUnitXml }
+        out.synchronized { XML.write(out, res, enc = "", xmlDecl = false, doctype = null); out.flush() }
       } catch {
         case t: Throwable =>
-          println( s"$tc failed:" )
+          println(s"$tc failed:")
           t.printStackTrace()
       }
     }

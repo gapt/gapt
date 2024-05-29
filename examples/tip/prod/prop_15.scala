@@ -4,17 +4,17 @@ import gapt.expr._
 import gapt.expr.ty.TBase
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.Sequent
-import gapt.proofs.gaptic.{ Lemma, TacticsProof, _ }
+import gapt.proofs.gaptic.{Lemma, TacticsProof, _}
 
 object prop_15 extends TacticsProof {
 
   // Sorts
-  ctx += TBase( "sk" )
+  ctx += TBase("sk")
 
   // Inductive types
-  ctx += InductiveType( ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat" )
+  ctx += InductiveType(ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat")
 
-  //Function constants
+  // Function constants
   ctx += hoc"'plus' :Nat>Nat>Nat"
 
   val sequent =
@@ -29,29 +29,29 @@ object prop_15 extends TacticsProof {
 
   val theory = sequent.antecedent ++: Sequent()
 
-  val proof = Lemma( sequent ) {
-    cut( "lemma", hof"!x!y plus(x, S(y)) = S(plus(x,y))" );
-    //- proof lemma
-    forget( "goal" )
-    allR; induction( hov"x:Nat" )
-    //-- BC lemma
+  val proof = Lemma(sequent) {
+    cut("lemma", hof"!x!y plus(x, S(y)) = S(plus(x,y))");
+    // - proof lemma
+    forget("goal")
+    allR; induction(hov"x:Nat")
+    // -- BC lemma
     allR
     rewrite.many ltr "def_plus_0" in "lemma"
     refl
-    //-- IC lemma
+    // -- IC lemma
     allR
     rewrite.many ltr "def_plus_1" in "lemma"
     rewrite.many ltr "IHx_0" in "lemma"
     refl
-    //- proof goal
+    // - proof goal
     allR;
     rewrite.many ltr "lemma" in "goal"
     refl
   }
 
-  val openind = Lemma( sequent ) {
-    allR( hov"x:Nat" )
-    cut( "l", hof"!y plus(x, S y) = S(plus x y)" ) right escrgt
-    forget( "goal" ); anaInd
+  val openind = Lemma(sequent) {
+    allR(hov"x:Nat")
+    cut("l", hof"!y plus(x, S y) = S(plus x y)") right escrgt
+    forget("goal"); anaInd
   }
 }

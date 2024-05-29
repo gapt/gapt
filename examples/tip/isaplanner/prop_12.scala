@@ -8,13 +8,13 @@ import gapt.proofs.gaptic._
 
 object prop_12 extends TacticsProof {
 
-  ctx += TBase( "sk" )
-  ctx += TBase( "fun1" )
+  ctx += TBase("sk")
+  ctx += TBase("fun1")
 
-  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += InductiveType(ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat")
   ctx += hoc"p:Nat>Nat"
 
-  ctx += InductiveType( ty"list", hoc"nil:list", hoc"cons:sk>list>list" )
+  ctx += InductiveType(ty"list", hoc"nil:list", hoc"cons:sk>list>list")
   ctx += hoc"head:list>sk"
   ctx += hoc"tail:list>list"
 
@@ -37,20 +37,20 @@ object prop_12 extends TacticsProof {
                       goal: ∀n ∀f ∀xs (drop(n:Nat, map2(f:fun1, xs:list): list): list) = map2(f, drop(n, xs))
     """
 
-  val proof = Lemma( sequent ) {
+  val proof = Lemma(sequent) {
     allR
     allR
-    induction( hov"n:Nat" )
+    induction(hov"n:Nat")
     // Base case
     allR
-    allL( "def_drop_1", le"map2(f,xs:list):list" )
-    allL( "def_drop_1", le"xs:list" )
-    eql( "def_drop_1_0", "goal" ).fromLeftToRight
-    eql( "def_drop_1_1", "goal" ).fromLeftToRight
+    allL("def_drop_1", le"map2(f,xs:list):list")
+    allL("def_drop_1", le"xs:list")
+    eql("def_drop_1_0", "goal").fromLeftToRight
+    eql("def_drop_1_1", "goal").fromLeftToRight
     refl
     // Step case
     allR
-    induction( hov"xs:list" )
+    induction(hov"xs:list")
     /// Base case
     rewrite.many ltr "def_map2_1"
     rewrite.many ltr "def_drop_2"
@@ -59,6 +59,6 @@ object prop_12 extends TacticsProof {
     /// Step case
     rewrite.many ltr "def_map2_2"
     rewrite.many ltr "def_drop_3"
-    chain( "IHn_0" )
+    chain("IHn_0")
   }
 }

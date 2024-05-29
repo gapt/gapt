@@ -15,14 +15,14 @@ class makeTheoryAxiomsExplicitTest extends Specification with SequentMatchers {
   "tape" in {
     val ax =
       for {
-        ( _, ( lhs, seq ) ) <- tape.ctx.get[ProofNames].names
-        if tape.ctx.get[ProofDefinitions].find( lhs ).isEmpty
-      } yield universalClosure( seq.toDisjunction )
-    val withoutThAx = makeTheoryAxiomsExplicit( ax.toSeq: _* )( tape.proof )
+        (_, (lhs, seq)) <- tape.ctx.get[ProofNames].names
+        if tape.ctx.get[ProofDefinitions].find(lhs).isEmpty
+      } yield universalClosure(seq.toDisjunction)
+    val withoutThAx = makeTheoryAxiomsExplicit(ax.toSeq: _*)(tape.proof)
     withoutThAx.subProofs.filter { _.isInstanceOf[ProofLink] } must_== Set()
-    tape.ctx.check( withoutThAx )
+    tape.ctx.check(withoutThAx)
     // TODO: multiset equality
-    withoutThAx.conclusion must beSetEqual( ax ++: tape.proof.conclusion )
+    withoutThAx.conclusion must beSetEqual(ax ++: tape.proof.conclusion)
   }
 
 }

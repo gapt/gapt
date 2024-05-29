@@ -8,7 +8,7 @@ import gapt.proofs.lk.transformations.unfoldInduction
 import gapt.proofs.SequentConnector
 import gapt.proofs.guessPermutation
 
-class InductionUnfoldingReduction( implicit val ctx: Context ) extends Reduction {
+class InductionUnfoldingReduction(implicit val ctx: Context) extends Reduction {
 
   /**
    * Tries to apply the reduction.
@@ -18,8 +18,8 @@ class InductionUnfoldingReduction( implicit val ctx: Context ) extends Reduction
    * @return If the induction rule could be unfolded a proof of the same end-sequent and a sequent connector
    *         is returned, otherwise None is returned.
    */
-  def applyWithSequentConnector( induction: InductionRule ): Option[( LKProof, SequentConnector )] =
-    this( induction ) map { guessPermutation( induction, _ ) }
+  def applyWithSequentConnector(induction: InductionRule): Option[(LKProof, SequentConnector)] =
+    this(induction) map { guessPermutation(induction, _) }
 
   /**
    * Tries to apply the induction unfolding reduction to a given inference.
@@ -28,9 +28,9 @@ class InductionUnfoldingReduction( implicit val ctx: Context ) extends Reduction
    * @return None if the proof does not end with an induction inference, otherwise see
    *         `inductionUnfoldingReduction.apply(InductionRule)(Context): Option[LKProof]`.
    */
-  def apply( proof: LKProof ): Option[LKProof] = proof match {
-    case ind @ InductionRule( _, _, _ ) => apply( ind )
-    case _: LKProof                     => None
+  def apply(proof: LKProof): Option[LKProof] = proof match {
+    case ind @ InductionRule(_, _, _) => apply(ind)
+    case _: LKProof                   => None
   }
 
   /**
@@ -41,17 +41,17 @@ class InductionUnfoldingReduction( implicit val ctx: Context ) extends Reduction
    * @return If the given induction's term is in constructor form a proof of the same end-sequent for
    *         which the induction inference has been unfolded is returned, otherwise None.
    */
-  def apply( induction: InductionRule ): Option[LKProof] = {
-    if ( isConstructorForm( induction.term ) ) {
-      Some( unfoldInduction( induction ) )
+  def apply(induction: InductionRule): Option[LKProof] = {
+    if (isConstructorForm(induction.term)) {
+      Some(unfoldInduction(induction))
     } else {
       None
     }
   }
 
-  override def reduce( proof: LKProof ): Option[LKProof] =
+  override def reduce(proof: LKProof): Option[LKProof] =
     proof match {
-      case ind @ InductionRule( _, _, _ ) => apply( ind )
-      case _                              => None
+      case ind @ InductionRule(_, _, _) => apply(ind)
+      case _                            => None
     }
 }

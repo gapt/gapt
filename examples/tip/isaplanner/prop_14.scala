@@ -7,10 +7,10 @@ import gapt.proofs.gaptic._
 
 object prop_14 extends TacticsProof {
 
-  ctx += TBase( "sk" )
-  ctx += TBase( "fun1" )
+  ctx += TBase("sk")
+  ctx += TBase("fun1")
 
-  ctx += InductiveType( ty"list", hoc"nil:list", hoc"cons:sk>list>list" )
+  ctx += InductiveType(ty"list", hoc"nil:list", hoc"cons:sk>list>list")
   ctx += hoc"head:list>sk"
   ctx += hoc"tail:list>list"
 
@@ -31,68 +31,64 @@ object prop_14 extends TacticsProof {
                       goal: ∀p ∀xs ∀ys (filter(p:fun1, append(xs:list, ys:list): list): list) = append(filter(p, xs), filter(p, ys))
     """
 
-  val proof = Lemma( sequent ) {
+  val proof = Lemma(sequent) {
     allR
     allR
-    induction( hov"xs:list" )
+    induction(hov"xs:list")
     // base case
     allR
-    allL( "def_filter_1", le"p:fun1" )
-    allL( "def_append_1", le"ys:list" )
-    allL( "def_append_1", le"filter(p:fun1, ys:list):list" )
-    eql( "def_filter_1_0", "goal" ).fromLeftToRight
-    eql( "def_append_1_0", "goal" ).fromLeftToRight
-    eql( "def_append_1_1", "goal" ).fromLeftToRight
+    allL("def_filter_1", le"p:fun1")
+    allL("def_append_1", le"ys:list")
+    allL("def_append_1", le"filter(p:fun1, ys:list):list")
+    eql("def_filter_1_0", "goal").fromLeftToRight
+    eql("def_append_1_0", "goal").fromLeftToRight
+    eql("def_append_1_1", "goal").fromLeftToRight
     refl
     // inductive case
     allR
-    allL( "def_append_2", le"x:sk", le"xs_0:list", le"ys:list" )
-    eql( "def_append_2_0", "goal" )
-    allL( "def_filter_2", le"p:fun1", le"x:sk", le"append(xs_0:list, ys:list):list" )
-    allL( "def_filter_3", le"p:fun1", le"x:sk", le"append(xs_0:list, ys:list):list" )
-    impL( "def_filter_2_0" )
+    allL("def_append_2", le"x:sk", le"xs_0:list", le"ys:list")
+    eql("def_append_2_0", "goal")
+    allL("def_filter_2", le"p:fun1", le"x:sk", le"append(xs_0:list, ys:list):list")
+    allL("def_filter_3", le"p:fun1", le"x:sk", le"append(xs_0:list, ys:list):list")
+    impL("def_filter_2_0")
     negR
-    impL( "def_filter_3_0" )
+    impL("def_filter_3_0")
     axiomLog
 
-    eql( "def_filter_3_0", "goal" )
-    allL( "IHxs_0", le"ys:list" )
-    eql( "IHxs_0_0", "goal" )
-    allL( "def_filter_3", le"p:fun1", le"x:sk", le"xs_0:list" )
-    impL( "def_filter_3_1" )
+    eql("def_filter_3_0", "goal")
+    allL("IHxs_0", le"ys:list")
+    eql("IHxs_0_0", "goal")
+    allL("def_filter_3", le"p:fun1", le"x:sk", le"xs_0:list")
+    impL("def_filter_3_1")
     axiomLog
 
-    eql( "def_filter_3_1", "goal" )
-    allL( "def_append_2", le"x:sk",
-      le"filter(p:fun1, xs_0:list):list",
-      le"filter(p:fun1, ys:list):list" )
-    eql( "def_append_2_1", "goal" ).fromLeftToRight
+    eql("def_filter_3_1", "goal")
+    allL("def_append_2", le"x:sk", le"filter(p:fun1, xs_0:list):list", le"filter(p:fun1, ys:list):list")
+    eql("def_append_2_1", "goal").fromLeftToRight
     refl
 
-    allL( "def_filter_2", le"p:fun1", le"x:sk", le"xs_0:list" )
-    impL( "def_filter_2_1" )
+    allL("def_filter_2", le"p:fun1", le"x:sk", le"xs_0:list")
+    impL("def_filter_2_1")
     negR
-    impL( "def_filter_3_0" )
+    impL("def_filter_3_0")
     axiomLog
 
-    allL( "def_filter_3", le"p:fun1", le"x:sk", le"xs_0:list" )
-    impL( "def_filter_3_1" )
+    allL("def_filter_3", le"p:fun1", le"x:sk", le"xs_0:list")
+    impL("def_filter_3_1")
     axiomLog
 
-    eql( "def_filter_3_1", "goal" )
-    eql( "def_filter_3_0", "goal" )
-    allL( "def_append_2", le"x:sk",
-      le"filter(p:fun1, xs_0:list):list",
-      le"filter(p:fun1, ys:list):list" )
-    eql( "def_append_2_1", "goal" )
-    allL( "IHxs_0", le"ys:list" )
-    eql( "IHxs_0_0", "goal" ).fromLeftToRight
+    eql("def_filter_3_1", "goal")
+    eql("def_filter_3_0", "goal")
+    allL("def_append_2", le"x:sk", le"filter(p:fun1, xs_0:list):list", le"filter(p:fun1, ys:list):list")
+    eql("def_append_2_1", "goal")
+    allL("IHxs_0", le"ys:list")
+    eql("IHxs_0_0", "goal").fromLeftToRight
     refl
 
-    eql( "def_filter_2_1", "goal" )
-    eql( "def_filter_2_0", "goal" )
-    allL( "IHxs_0", le"ys:list" )
-    eql( "IHxs_0_0", "goal" ).fromLeftToRight
+    eql("def_filter_2_1", "goal")
+    eql("def_filter_2_0", "goal")
+    allL("IHxs_0", le"ys:list")
+    eql("IHxs_0_0", "goal").fromLeftToRight
     refl
   }
 }

@@ -7,11 +7,11 @@ class ProofSequencesTest extends Specification {
 
   "proof sequences" should {
     "produce proofs" in {
-      Fragments.foreach( proofSequences ) { proofSequence =>
+      Fragments.foreach(proofSequences) { proofSequence =>
         proofSequence.name in {
-          Fragments.foreach( 0 to 10 ) { i =>
+          Fragments.foreach(0 to 10) { i =>
             s"n = $i" in {
-              proofSequence( i )
+              proofSequence(i)
               ok
             }
           }

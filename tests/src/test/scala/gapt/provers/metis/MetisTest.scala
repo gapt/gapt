@@ -3,44 +3,44 @@ package gapt.provers.metis
 import gapt.expr._
 import gapt.expr.formula.Bottom
 import gapt.expr.formula.Top
-import gapt.expr.formula.fol.{ naive, thresholds }
-import gapt.proofs.{ Clause, HOLSequent, Sequent, SequentMatchers }
+import gapt.expr.formula.fol.{naive, thresholds}
+import gapt.proofs.{Clause, HOLSequent, Sequent, SequentMatchers}
 import gapt.utils.SatMatchers
 import org.specs2.mutable._
 
 class MetisTest extends Specification with SequentMatchers with SatMatchers {
-  args( skipAll = !Metis.isInstalled )
+  args(skipAll = !Metis.isInstalled)
   "Metis" should {
     "prove identity" in {
       val s = Sequent() :+ hof"k=k"
-      Metis.getLKProof( s ) must beLike {
-        case Some( p ) => p.endSequent must beMultiSetEqual( s )
+      Metis.getLKProof(s) must beLike {
+        case Some(p) => p.endSequent must beMultiSetEqual(s)
       }
     }
 
     "prove { A or B :- -(-A and -B)  }" in {
       val s = hof"A | B" +: Sequent() :+ hof"-(-A & -B)"
-      Metis.getLKProof( s ) must beLike {
-        case Some( p ) => p.endSequent must beMultiSetEqual( s )
+      Metis.getLKProof(s) must beLike {
+        case Some(p) => p.endSequent must beMultiSetEqual(s)
       }
     }
 
     "handle quantified antecedents" in {
       val seq = hof"!x 0+x=x" +: hof"!x!y s(x)+y=s(x+y)" +: Sequent() :+ hof"s(0)+s(s(0)) = s(s(s(0)))"
-      Metis.getLKProof( seq ) must beLike {
-        case Some( p ) => p.endSequent must beMultiSetEqual( seq )
+      Metis.getLKProof(seq) must beLike {
+        case Some(p) => p.endSequent must beMultiSetEqual(seq)
       }
     }
 
-    "prove top" in { Metis.getLKProof( HOLSequent( Seq(), Seq( Top() ) ) ) must beSome }
-    "not prove bottom" in { Metis.getLKProof( HOLSequent( Seq(), Seq( Bottom() ) ) ) must beNone }
-    "not refute top" in { Metis.getLKProof( HOLSequent( Seq( Top() ), Seq() ) ) must beNone }
-    "refute bottom" in { Metis.getLKProof( HOLSequent( Seq( Bottom() ), Seq() ) ) must beSome }
+    "prove top" in { Metis.getLKProof(HOLSequent(Seq(), Seq(Top()))) must beSome }
+    "not prove bottom" in { Metis.getLKProof(HOLSequent(Seq(), Seq(Bottom()))) must beNone }
+    "not refute top" in { Metis.getLKProof(HOLSequent(Seq(Top()), Seq())) must beNone }
+    "refute bottom" in { Metis.getLKProof(HOLSequent(Seq(Bottom()), Seq())) must beSome }
 
     "ground sequents" in {
       val seq = hof"x=y" +: Sequent() :+ hof"y=x"
-      Metis.getLKProof( seq ) must beLike {
-        case Some( p ) => p.endSequent must beMultiSetEqual( seq )
+      Metis.getLKProof(seq) must beLike {
+        case Some(p) => p.endSequent must beMultiSetEqual(seq)
       }
     }
 
@@ -50,8 +50,8 @@ class MetisTest extends Specification with SequentMatchers with SatMatchers {
     }
 
     "handle weird sequents" in {
-      val cnf = Set( Clause(), hoa"a" +: Clause() )
-      Metis.getResolutionProof( cnf ) must beSome
+      val cnf = Set(Clause(), hoa"a" +: Clause())
+      Metis.getResolutionProof(cnf) must beSome
     }
   }
 

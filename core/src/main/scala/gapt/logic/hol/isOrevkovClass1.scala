@@ -23,32 +23,32 @@ object isOrevkovClass1 {
   private def pos: Formula => Boolean = {
     case Top() | Bottom() | _: Atom =>
       true
-    case Ex( _, f )  => pos( f )
-    case And( f, g ) => pos( f ) && pos( g )
-    case Or( f, g )  => pos( f ) && pos( g )
-    case _           => false
+    case Ex(_, f)  => pos(f)
+    case And(f, g) => pos(f) && pos(g)
+    case Or(f, g)  => pos(f) && pos(g)
+    case _         => false
   }
 
   private def neg: Formula => Boolean = {
     case Top() | Bottom() | _: Atom =>
       true
-    case Ex( _, f )  => neg( f )
-    case All( _, f ) => neg( f )
-    case And( f, g ) => neg( f ) && neg( g )
-    case Or( f, g )  => neg( f ) && neg( g )
-    case Imp( f, g ) => pos( f ) && neg( g )
-    case Neg( f )    => pos( f )
-    case _           => false
+    case Ex(_, f)  => neg(f)
+    case All(_, f) => neg(f)
+    case And(f, g) => neg(f) && neg(g)
+    case Or(f, g)  => neg(f) && neg(g)
+    case Imp(f, g) => pos(f) && neg(g)
+    case Neg(f)    => pos(f)
+    case _         => false
   }
 
   private def fml: Formula => Boolean = {
-    case Imp( f, g ) => neg( f ) && fml( g )
-    case Neg( f )    => neg( f )
-    case And( f, g ) => fml( f ) && fml( g )
-    case All( _, f ) => fml( f )
-    case f           => pos( f )
+    case Imp(f, g) => neg(f) && fml(g)
+    case Neg(f)    => neg(f)
+    case And(f, g) => fml(f) && fml(g)
+    case All(_, f) => fml(f)
+    case f         => pos(f)
   }
 
-  def apply( formula: Formula ): Boolean = fml( formula )
-  def apply( sequent: HOLSequent ): Boolean = apply( sequent.toImplication )
+  def apply(formula: Formula): Boolean = fml(formula)
+  def apply(sequent: HOLSequent): Boolean = apply(sequent.toImplication)
 }

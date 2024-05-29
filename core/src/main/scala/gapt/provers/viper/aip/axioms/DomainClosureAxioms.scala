@@ -11,7 +11,7 @@ import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.util.rename
 import gapt.expr.Var
-import gapt.expr.{ Const => Con }
+import gapt.expr.{Const => Con}
 import gapt.expr.ExprNameGenerator
 import gapt.proofs.LabelledSequent
 import gapt.proofs.Sequent
@@ -23,9 +23,9 @@ import gapt.proofs.gaptic.induction
 import gapt.provers.viper.aip.ThrowsError
 import gapt.provers.viper.aip.getConstructors
 
-case class DomainClosureAxioms( types: List[TBase] = Nil ) extends AxiomFactory {
+case class DomainClosureAxioms(types: List[TBase] = Nil) extends AxiomFactory {
 
-  def forTypes( types: TBase* ) = copy( types = types.toList )
+  def forTypes(types: TBase*) = copy(types = types.toList)
 
   /**
    * Computes domain closure axioms.
@@ -34,8 +34,8 @@ case class DomainClosureAxioms( types: List[TBase] = Nil ) extends AxiomFactory 
    * @param ctx Defines the constants, types, etc.
    * @return A list of domain closure axioms or an error message if the axioms could not be constructed.
    */
-  override def apply( sequent: LabelledSequent )( implicit ctx: Context ): ThrowsError[List[Axiom]] =
-    types.traverse[ThrowsError, Axiom] { t => domainClosureAxiom( t ) }
+  override def apply(sequent: LabelledSequent)(implicit ctx: Context): ThrowsError[List[Axiom]] =
+    types.traverse[ThrowsError, Axiom] { t => domainClosureAxiom(t) }
 
   /**
    * The domain closure axiom for a given type.
@@ -45,18 +45,18 @@ case class DomainClosureAxioms( types: List[TBase] = Nil ) extends AxiomFactory 
    * @return A domain closure axiom for the specified inductive type or an error message if the given type is
    *         not inductive.
    */
-  private def domainClosureAxiom( caseType: TBase )( implicit ctx: Context ): ThrowsError[Axiom] = {
+  private def domainClosureAxiom(caseType: TBase)(implicit ctx: Context): ThrowsError[Axiom] = {
     for {
-      constructors <- getConstructors( caseType, ctx )
+      constructors <- getConstructors(caseType, ctx)
     } yield new Axiom {
-      val formula = domainClosureAxiom( caseType, constructors )
+      val formula = domainClosureAxiom(caseType, constructors)
       def proof = {
-        var proofState = ProofState( Sequent() :+ formula )
-        val All.Block( Seq( variable, _* ), _ ) = formula: @unchecked
+        var proofState = ProofState(Sequent() :+ formula)
+        val All.Block(Seq(variable, _*), _) = formula: @unchecked
         proofState += allR
-        proofState += induction( variable )
+        proofState += induction(variable)
         constructors foreach {
-          _ => proofState += escargot( ctx.newMutable )
+          _ => proofState += escargot(ctx.newMutable)
         }
         proofState.result
       }
@@ -71,11 +71,12 @@ case class DomainClosureAxioms( types: List[TBase] = Nil ) extends AxiomFactory 
    * @return A first-order formula that asserts that the values of the given type are completely represented
    *         by its constructors.
    */
-  private def domainClosureAxiom( caseType: TBase, constructors: Seq[Con] ): Formula = {
-    val caseVariable = Var( "x", caseType )
+  private def domainClosureAxiom(caseType: TBase, constructors: Seq[Con]): Formula = {
+    val caseVariable = Var("x", caseType)
     All(
       caseVariable,
-      Or( constructors map { constructor => caseDistinction( caseVariable, constructor ) } ) )
+      Or(constructors map { constructor => caseDistinction(caseVariable, constructor) })
+    )
   }
 
   /**
@@ -86,13 +87,13 @@ case class DomainClosureAxioms( types: List[TBase] = Nil ) extends AxiomFactory 
    *                    a constructor of the case variable's base type.
    * @return A first-order formula that asserts that x can be represented by the specified constructor.
    */
-  private def caseDistinction( caseVariable: Var, constructor: Con ): Formula = {
-    val nameGenerator = rename.awayFrom( caseVariable :: Nil )
-    val FunctionType( _, argumentTypes ) = constructor.ty: @unchecked
+  private def caseDistinction(caseVariable: Var, constructor: Con): Formula = {
+    val nameGenerator = rename.awayFrom(caseVariable :: Nil)
+    val FunctionType(_, argumentTypes) = constructor.ty: @unchecked
     val newVariables: List[Var] = argumentTypes map {
-      argumentType => nameGenerator.fresh( Var( "x", argumentType ) )
+      argumentType => nameGenerator.fresh(Var("x", argumentType))
     }
-    Ex.Block( newVariables, Eq( caseVariable, constructor( newVariables ) ) )
+    Ex.Block(newVariables, Eq(caseVariable, constructor(newVariables)))
   }
 
 }

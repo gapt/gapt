@@ -40,7 +40,7 @@ import gapt.proofs.context.update.Definition
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.context.update.Sort
 import gapt.proofs.context.update.Update
-import gapt.proofs.context.update.{ ConstantDeclaration => ConstDecl }
+import gapt.proofs.context.update.{ConstantDeclaration => ConstDecl}
 import gapt.utils.NameGenerator
 
 /**
@@ -101,7 +101,7 @@ trait Context extends BabelSignature {
    * @return A new mutable context that equals this context at the time of
    * calling this method.
    */
-  def newMutable: MutableContext = new MutableContext( toImmutable )
+  def newMutable: MutableContext = new MutableContext(toImmutable)
 
   /**
    * Converts this context to a read-only context.
@@ -136,8 +136,8 @@ trait Context extends BabelSignature {
    */
   def definitions: Map[Const, Expr] =
     for {
-      ( what, by ) <- get[Definitions].definitions
-      whatC <- constant( what )
+      (what, by) <- get[Definitions].definitions
+      whatC <- constant(what)
     } yield whatC -> by
 
   /**
@@ -147,7 +147,7 @@ trait Context extends BabelSignature {
    * @return Returns `Some( c )` where `c.name` equals `name` if the context
    * currently contains such a constant `c`, otherwise `None` is retured.
    */
-  def constant( name: String ): Option[Const] = get[Constants].constants.get( name )
+  def constant(name: String): Option[Const] = get[Constants].constants.get(name)
 
   /**
    * Retrieves constants by name and type parameters.
@@ -158,8 +158,8 @@ trait Context extends BabelSignature {
    * `c` with name `name` and type parameters `params`. Otherwise `None` is
    * returned.
    */
-  def constant( name: String, params: List[Ty] ): Option[Const] =
-    get[Constants].lookup( name, params )
+  def constant(name: String, params: List[Ty]): Option[Const] =
+    get[Constants].lookup(name, params)
 
   /**
    * Retrieves inductive type constructors for a given type.
@@ -168,10 +168,10 @@ trait Context extends BabelSignature {
    * @return Returns `Some( ctrs )` if `ty` is an inductive type having
    * constructors `ctrs`, otherwise `None` is returned.
    */
-  def getConstructors( ty: Ty ): Option[Vector[Const]] =
+  def getConstructors(ty: Ty): Option[Vector[Const]] =
     ty match {
-      case ty @ TBase( _, _ ) => getConstructors( ty )
-      case _                  => None
+      case ty @ TBase(_, _) => getConstructors(ty)
+      case _                => None
     }
 
   /**
@@ -181,12 +181,12 @@ trait Context extends BabelSignature {
    * @return Returns `Some( ctrs )` if `ty` is an inductive type having
    * constructors `ctrs`, otherwise `None` is returned.
    */
-  def getConstructors( ty: TBase ): Option[Vector[Const]] =
+  def getConstructors(ty: TBase): Option[Vector[Const]] =
     for {
-      declT <- get[BaseTypes].baseTypes.get( ty.name )
-      ctrs <- get[StructurallyInductiveTypes].constructors.get( ty.name )
-      subst <- syntacticMatching( declT, ty )
-    } yield ctrs.map( subst( _ ).asInstanceOf[Const] )
+      declT <- get[BaseTypes].baseTypes.get(ty.name)
+      ctrs <- get[StructurallyInductiveTypes].constructors.get(ty.name)
+      subst <- syntacticMatching(declT, ty)
+    } yield ctrs.map(subst(_).asInstanceOf[Const])
 
   /**
    * Checks whether the given base type is defined in this context.
@@ -194,11 +194,12 @@ trait Context extends BabelSignature {
    * @param ty The base type that is to be checked.
    * @return `true` if `ty` is defined in this context, `false` otherwise.
    */
-  def isType( ty: TBase ): Boolean = (
+  def isType(ty: TBase): Boolean = (
     for {
-      declT <- get[BaseTypes].baseTypes.get( ty.name )
-      _ <- syntacticMatching( declT, ty )
-    } yield () ).isDefined
+      declT <- get[BaseTypes].baseTypes.get(ty.name)
+      _ <- syntacticMatching(declT, ty)
+    } yield ()
+  ).isDefined
 
   /**
    * Looks up the definition of a constant.
@@ -209,12 +210,12 @@ trait Context extends BabelSignature {
    * is returned where `definition` is obtained from the definition of `c` by
    * instantiating the type variables according to args.
    */
-  def definition( c: Const ): Option[Expr] =
+  def definition(c: Const): Option[Expr] =
     for {
-      defC <- get[Constants].constants.get( c.name )
-      subst <- syntacticMatching( defC, c )
-      defn <- get[Definitions].definitions.get( c.name )
-    } yield subst( defn )
+      defC <- get[Constants].constants.get(c.name)
+      subst <- syntacticMatching(defC, c)
+      defn <- get[Definitions].definitions.get(c.name)
+    } yield subst(defn)
 
   /**
    * Retrieves all expression-level reduction rules.
@@ -240,8 +241,8 @@ trait Context extends BabelSignature {
    * @return Returns `true` if the given definition is an instance of a
    * definition stored in this context.
    */
-  def contains( defn: Definition ): Boolean =
-    definition( defn.what ).contains( defn.by )
+  def contains(defn: Definition): Boolean =
+    definition(defn.what).contains(defn.by)
 
   /**
    * Retrieves the skolem definition of a constant.
@@ -250,8 +251,8 @@ trait Context extends BabelSignature {
    * @return Returns `Some(definition)` if the constant `skSym` is a skolem
    * function with definition `definition`.
    */
-  def skolemDef( skSym: Const ): Option[Expr] =
-    get[SkolemFunctions].skolemDefs.get( skSym )
+  def skolemDef(skSym: Const): Option[Expr] =
+    get[SkolemFunctions].skolemDefs.get(skSym)
 
   /**
    * Applies an update to this context.
@@ -260,7 +261,7 @@ trait Context extends BabelSignature {
    * @return An immutable context obtained by converting this context to an
    * immutable context and by applying the update to that context.
    */
-  def +( update: Update ): ImmutableContext =
+  def +(update: Update): ImmutableContext =
     toImmutable + update
 
   /**
@@ -277,8 +278,8 @@ trait Context extends BabelSignature {
    * @return An expression obtained by normalizing `expression` according to
    * the reduction rules currently stored in this context.
    */
-  def normalize( expression: Expr ): Expr =
-    normalizer.normalize( expression )
+  def normalize(expression: Expr): Expr =
+    normalizer.normalize(expression)
 
   /**
    * Reduces an expression to WHNF.
@@ -287,8 +288,8 @@ trait Context extends BabelSignature {
    * @return An expression reduced to WHNF according to the reduction rules
    * currently stored in this context.
    */
-  def whnf( expression: Expr ): Expr =
-    normalizer.whnf( expression )
+  def whnf(expression: Expr): Expr =
+    normalizer.whnf(expression)
 
   /**
    * Checks if two expressions normalize to the same expression.
@@ -298,8 +299,8 @@ trait Context extends BabelSignature {
    * @return Returns `true` if and only if `a` and `b` normalize to the same
    * expression in this context.
    */
-  def isDefEq( a: Expr, b: Expr ): Boolean =
-    normalizer.isDefEq( a, b )
+  def isDefEq(a: Expr, b: Expr): Boolean =
+    normalizer.isDefEq(a, b)
 
   /**
    * Checks an object with respect to this context.
@@ -312,8 +313,8 @@ trait Context extends BabelSignature {
    * @param t The object to be checked.
    * @tparam T The type of object to be checked.
    */
-  def check[T: Checkable]( t: T ): Unit =
-    implicitly[Checkable[T]].check( t )( this )
+  def check[T: Checkable](t: T): Unit =
+    implicitly[Checkable[T]].check(t)(this)
 
   /**
    * Applies several updates to the context.
@@ -322,15 +323,15 @@ trait Context extends BabelSignature {
    * @return An immutable context obtained by applying iteratively applying
    * the updates from left to right.
    */
-  def ++( updates: Iterable[Update] ): ImmutableContext =
-    updates.foldLeft( toImmutable )( _ + _ )
+  def ++(updates: Iterable[Update]): ImmutableContext =
+    updates.foldLeft(toImmutable)(_ + _)
 
   /**
    * Retrieves all the names declared in this context.
    *
    * @return All the names currently declared in this context.
    */
-  def names: Iterable[String] = constants.map( _.name ) ++ get[BaseTypes].baseTypes.keySet
+  def names: Iterable[String] = constants.map(_.name) ++ get[BaseTypes].baseTypes.keySet
 
   /**
    * Creates a new name generator for this context.
@@ -338,69 +339,72 @@ trait Context extends BabelSignature {
    * @return A new name generator that avoids all the names currently defined
    * in the context.
    */
-  def newNameGenerator: NameGenerator = new NameGenerator( names )
+  def newNameGenerator: NameGenerator = new NameGenerator(names)
 
-  def signatureLookup( s: String ): BabelSignature.VarConst =
-    constant( s ) match {
-      case Some( c ) => BabelSignature.IsConst( c )
-      case None      => BabelSignature.IsVar
+  def signatureLookup(s: String): BabelSignature.VarConst =
+    constant(s) match {
+      case Some(c) => BabelSignature.IsConst(c)
+      case None    => BabelSignature.IsVar
     }
 
-  def notationsForToken( token: Notation.Token ): Option[Notation] = get[Notations].byToken.get( token )
-  def notationsForConst( const: Notation.ConstName ): List[Notation] = get[Notations].byConst( const )
+  def notationsForToken(token: Notation.Token): Option[Notation] = get[Notations].byToken.get(token)
+  def notationsForConst(const: Notation.ConstName): List[Notation] = get[Notations].byConst(const)
   def defaultTypeToI: Boolean = false
 
   override def toString =
-    s"${state}Updates:\n${updates.view.reverse.map( x => s"  $x\n" ).mkString}"
+    s"${state}Updates:\n${updates.view.reverse.map(x => s"  $x\n").mkString}"
 }
 
 object Context {
 
   val empty: ImmutableContext = ImmutableContext.empty
   def apply(): ImmutableContext = default
-  def apply( updates: Iterable[Update] ): ImmutableContext =
+  def apply(updates: Iterable[Update]): ImmutableContext =
     empty ++ updates
 
   val default: ImmutableContext = empty ++ Seq(
-    InductiveType( To, Top(), Bottom() ),
-    Notation.Alias( "true", TopC ), Notation.Alias( "⊤", TopC ),
-    Notation.Alias( "false", BottomC ), Notation.Alias( "⊥", BottomC ),
-    ConstDecl( NegC() ),
-    Notation.Prefix( "-", NegC, Precedence.neg ),
-    Notation.Prefix( "~", NegC, Precedence.neg ),
-    Notation.Prefix( "¬", NegC, Precedence.neg ),
-    ConstDecl( AndC() ),
-    Notation.Infix( "&", AndC, Precedence.conj ),
-    Notation.Infix( "∧", AndC, Precedence.conj ),
-    ConstDecl( OrC() ),
-    Notation.Infix( "|", OrC, Precedence.disj ),
-    Notation.Infix( "∨", OrC, Precedence.disj ),
-    ConstDecl( ImpC() ),
-    Notation.Infix( "->", ImpC, Precedence.impl, leftAssociative = false ),
-    Notation.Infix( "⊃", ImpC, Precedence.impl, leftAssociative = false ),
-    Notation.Infix( "→", ImpC, Precedence.impl, leftAssociative = false ),
-    Notation.Infix( Notation.Token( "<->" ), Notation.IffName, Precedence.iff ),
-    Notation.Infix( Notation.Token( "↔" ), Notation.IffName, Precedence.iff ),
-    ConstDecl( ForallC( TVar( "x" ) ) ),
-    Notation.Quantifier( Notation.Token( "!" ), ForallC, Precedence.quant ),
-    Notation.Quantifier( Notation.Token( "∀" ), ForallC, Precedence.quant ),
-    ConstDecl( ExistsC( TVar( "x" ) ) ),
-    Notation.Quantifier( Notation.Token( "?" ), ExistsC, Precedence.quant ),
-    Notation.Quantifier( Notation.Token( "∃" ), ExistsC, Precedence.quant ),
-    ConstDecl( EqC( TVar( "x" ) ) ),
-    Notation.Infix( "=", EqC, Precedence.infixRel ),
-    Notation.Infix( "!=", Notation.NeqName, Precedence.infixRel ) )
+    InductiveType(To, Top(), Bottom()),
+    Notation.Alias("true", TopC),
+    Notation.Alias("⊤", TopC),
+    Notation.Alias("false", BottomC),
+    Notation.Alias("⊥", BottomC),
+    ConstDecl(NegC()),
+    Notation.Prefix("-", NegC, Precedence.neg),
+    Notation.Prefix("~", NegC, Precedence.neg),
+    Notation.Prefix("¬", NegC, Precedence.neg),
+    ConstDecl(AndC()),
+    Notation.Infix("&", AndC, Precedence.conj),
+    Notation.Infix("∧", AndC, Precedence.conj),
+    ConstDecl(OrC()),
+    Notation.Infix("|", OrC, Precedence.disj),
+    Notation.Infix("∨", OrC, Precedence.disj),
+    ConstDecl(ImpC()),
+    Notation.Infix("->", ImpC, Precedence.impl, leftAssociative = false),
+    Notation.Infix("⊃", ImpC, Precedence.impl, leftAssociative = false),
+    Notation.Infix("→", ImpC, Precedence.impl, leftAssociative = false),
+    Notation.Infix(Notation.Token("<->"), Notation.IffName, Precedence.iff),
+    Notation.Infix(Notation.Token("↔"), Notation.IffName, Precedence.iff),
+    ConstDecl(ForallC(TVar("x"))),
+    Notation.Quantifier(Notation.Token("!"), ForallC, Precedence.quant),
+    Notation.Quantifier(Notation.Token("∀"), ForallC, Precedence.quant),
+    ConstDecl(ExistsC(TVar("x"))),
+    Notation.Quantifier(Notation.Token("?"), ExistsC, Precedence.quant),
+    Notation.Quantifier(Notation.Token("∃"), ExistsC, Precedence.quant),
+    ConstDecl(EqC(TVar("x"))),
+    Notation.Infix("=", EqC, Precedence.infixRel),
+    Notation.Infix("!=", Notation.NeqName, Precedence.infixRel)
+  )
 
-  def guess( exprs: Iterable[Expr] ): ImmutableContext = {
-    val names = exprs.view.flatMap( containedNames( _ ) ).toSet
-    val tys = names.flatMap( c => baseTypes( c.ty ) )
+  def guess(exprs: Iterable[Expr]): ImmutableContext = {
+    val names = exprs.view.flatMap(containedNames(_)).toSet
+    val tys = names.flatMap(c => baseTypes(c.ty))
     var ctx = default
-    for ( ty <- tys if !ctx.isType( ty ) )
-      ctx += Sort( TBase( ty.name, ty.params.indices.map( i => TVar( s"a_$i" ) ).toList ) )
+    for (ty <- tys if !ctx.isType(ty))
+      ctx += Sort(TBase(ty.name, ty.params.indices.map(i => TVar(s"a_$i")).toList))
     val consts = names.collect { case c: Const => c }
-    for ( ( n, cs ) <- consts.groupBy( _.name ) if ctx.constant( n ).isEmpty ) {
+    for ((n, cs) <- consts.groupBy(_.name) if ctx.constant(n).isEmpty) {
       // HACK, HACK, HACK
-      ctx += ( ctx_ => ctx_.state.update[Constants]( _ + cs.head ) )
+      ctx += (ctx_ => ctx_.state.update[Constants](_ + cs.head))
       //      ctx += ConstDecl( if ( cs.size == 1 ) cs.head else Const( n, TVar( "a" ), List( TVar( "a" ) ) ) )
     }
     ctx

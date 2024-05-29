@@ -3,94 +3,97 @@ import gapt.expr._
 import gapt.expr.subst.Substitution
 import gapt.expr.util.constants
 import gapt.expr.util.freeVariables
-import gapt.formats.babel.{ BabelExporter, MapBabelSignature, Precedence }
+import gapt.formats.babel.{BabelExporter, MapBabelSignature, Precedence}
 import gapt.utils.Doc
 
-private class VtratgExporter( unicode: Boolean, vtratg: VTRATG )
-  extends BabelExporter( unicode, vtratg.babelSignature ) {
+private class VtratgExporter(unicode: Boolean, vtratg: VTRATG)
+    extends BabelExporter(unicode, vtratg.babelSignature) {
   import Doc._
 
-  def csep( docs: List[Doc] ): Doc = wordwrap( docs, "," )
+  def csep(docs: List[Doc]): Doc = wordwrap(docs, ",")
 
   def `export`(): String = {
-    val ntDecl = group( "Non-terminal vectors:" <> nest( line <> csep(
+    val ntDecl = group("Non-terminal vectors:" <> nest(line <> csep(
       vtratg.nonTerminals.toList map { nt =>
-        "(" <> wordwrap( nt map { show( _, false, Map(), Map() )._1.inPrec( 0 ) }, "," ) <> ")"
-      } ) ) )
+        "(" <> wordwrap(nt map { show(_, false, Map(), Map())._1.inPrec(0) }, ",") <> ")"
+      }
+    )))
 
-    val tDecl = group( "Terminals:" <> nest( line <> csep(
-      vtratg.terminals.toList.sortBy { _.name } map { show( _, false, Map(), Map() )._1.inPrec( 0 ) } ) ) )
+    val tDecl = group("Terminals:" <> nest(line <> csep(
+      vtratg.terminals.toList.sortBy { _.name } map { show(_, false, Map(), Map())._1.inPrec(0) }
+    )))
 
     val knownTypes = vtratg.terminals.map { c => c.name -> c }.toMap
 
-    val prods = stack( vtratg.productions.toList
-      sortBy { case ( as, ts ) => ( vtratg.nonTerminals.indexOf( as ), ts.toString ) }
+    val prods = stack(vtratg.productions.toList
+      sortBy { case (as, ts) => (vtratg.nonTerminals.indexOf(as), ts.toString) }
       map {
-        case ( nonTerminals, expressions ) =>
-          group( csep( nonTerminals.lazyZip( expressions ).map( ( a, t ) =>
-            group( show( a, false, Map(), knownTypes )._1.inPrec( Precedence.impl ) </> nest( "→" </>
-              show( t, true, Map(), knownTypes )._1.inPrec( Precedence.impl ) ) ) ) ) ) <> line
-      } )
+        case (nonTerminals, expressions) =>
+          group(csep(nonTerminals.lazyZip(expressions).map((a, t) =>
+            group(show(a, false, Map(), knownTypes)._1.inPrec(Precedence.impl) </> nest("→" </>
+              show(t, true, Map(), knownTypes)._1.inPrec(Precedence.impl)))
+          ))) <> line
+      })
 
-    group( ntDecl <> line <> tDecl <> line <> line <> prods ).render( lineWidth )
+    group(ntDecl <> line <> tDecl <> line <> line <> prods).render(lineWidth)
   }
 
 }
 
 object VTRATG {
   type NonTerminalVect = List[Var]
-  type Production = ( NonTerminalVect, List[Expr] )
+  type Production = (NonTerminalVect, List[Expr])
 }
 
-case class VTRATG( startSymbol: Var, nonTerminals: Seq[VTRATG.NonTerminalVect], productions: Set[VTRATG.Production] ) {
+case class VTRATG(startSymbol: Var, nonTerminals: Seq[VTRATG.NonTerminalVect], productions: Set[VTRATG.Production]) {
   import VTRATG._
 
   def termType = startSymbol.ty
 
-  def startSymbolNT: NonTerminalVect = List( startSymbol )
+  def startSymbolNT: NonTerminalVect = List(startSymbol)
 
-  def productions( nonTerminalVect: NonTerminalVect ): Set[Production] = productions filter ( _._1 == nonTerminalVect )
-  def rightHandSides( nonTerminal: NonTerminalVect ) = productions( nonTerminal ) map ( _._2 )
+  def productions(nonTerminalVect: NonTerminalVect): Set[Production] = productions filter (_._1 == nonTerminalVect)
+  def rightHandSides(nonTerminal: NonTerminalVect) = productions(nonTerminal) map (_._2)
 
-  def terminals: Set[Const] = productions flatMap { p => constants.nonLogical( p._2 ) }
+  def terminals: Set[Const] = productions flatMap { p => constants.nonLogical(p._2) }
 
-  def babelSignature = MapBabelSignature( terminals )
+  def babelSignature = MapBabelSignature(terminals)
 
   productions foreach {
-    case p @ ( a, t ) =>
-      require( nonTerminals contains a, s"unknown non-terminal vector $a in $p" )
-      val i = nonTerminals.indexOf( a )
-      val allowedNonTerminals = nonTerminals.drop( i + 1 ).flatten.toSet
-      t.flatMap( freeVariables( _ ) ) foreach { fv =>
-        require( allowedNonTerminals contains fv, s"acyclicity violated in $p: $fv not in $allowedNonTerminals" )
+    case p @ (a, t) =>
+      require(nonTerminals contains a, s"unknown non-terminal vector $a in $p")
+      val i = nonTerminals.indexOf(a)
+      val allowedNonTerminals = nonTerminals.drop(i + 1).flatten.toSet
+      t.flatMap(freeVariables(_)) foreach { fv =>
+        require(allowedNonTerminals contains fv, s"acyclicity violated in $p: $fv not in $allowedNonTerminals")
       }
-      require( a.size == t.size, s"vector production $p has sides of different length" )
-      for ( ( ai, ti ) <- a zip t )
-        require( ai.ty == ti.ty, s"vector production $p has mismatching types" )
+      require(a.size == t.size, s"vector production $p has sides of different length")
+      for ((ai, ti) <- a zip t)
+        require(ai.ty == ti.ty, s"vector production $p has mismatching types")
   }
-  require( nonTerminals contains startSymbolNT, s"start symbol is unknown non-terminal vector $startSymbol" )
+  require(nonTerminals contains startSymbolNT, s"start symbol is unknown non-terminal vector $startSymbol")
 
   def size = productions.size
 
-  def weightedSize = productions.toSeq.map( _._1.size ).sum
+  def weightedSize = productions.toSeq.map(_._1.size).sum
 
   def language: Set[Expr] = {
-    var lang = Set[Expr]( startSymbol )
+    var lang = Set[Expr](startSymbol)
     nonTerminals.foreach { a =>
-      val P_a = productions( a )
-      if ( P_a.nonEmpty )
+      val P_a = productions(a)
+      if (P_a.nonEmpty)
         lang = P_a.flatMap {
-          case ( nonTerminals, expressions ) =>
-            Substitution( nonTerminals.lazyZip( expressions ) )( lang )
+          case (nonTerminals, expressions) =>
+            Substitution(nonTerminals.lazyZip(expressions))(lang)
         }
     }
-    lang filter ( freeVariables( _ ).isEmpty )
+    lang filter (freeVariables(_).isEmpty)
   }
 
-  override def toString: String = new VtratgExporter( unicode = true, vtratg = this ).`export`()
+  override def toString: String = new VtratgExporter(unicode = true, vtratg = this).`export`()
 }
 
 object TRATG {
-  def apply( startSymbol: Var, nonTerminals: Seq[Var], productions: Iterable[( Var, Expr )] ): VTRATG =
-    VTRATG( startSymbol, nonTerminals.map( List( _ ) ), productions.view.map { case ( lhs, rhs ) => List( lhs ) -> List( rhs ) }.toSet )
+  def apply(startSymbol: Var, nonTerminals: Seq[Var], productions: Iterable[(Var, Expr)]): VTRATG =
+    VTRATG(startSymbol, nonTerminals.map(List(_)), productions.view.map { case (lhs, rhs) => List(lhs) -> List(rhs) }.toSet)
 }

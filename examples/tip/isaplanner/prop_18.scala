@@ -7,8 +7,8 @@ import gapt.proofs.gaptic._
 
 object prop_18 extends TacticsProof {
 
-  ctx += TBase( "sk" )
-  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += TBase("sk")
+  ctx += InductiveType(ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat")
   ctx += hoc"p:Nat>Nat"
   ctx += hoc"'plus' :Nat>Nat>Nat"
   ctx += hoc"'lt' :Nat>Nat>o"
@@ -26,21 +26,21 @@ object prop_18 extends TacticsProof {
           goal: ∀i ∀m lt(i:Nat, S(plus(i, m:Nat): Nat): Nat)
         """
 
-  val proof = Lemma( sequent ) {
+  val proof = Lemma(sequent) {
     allR
-    induction( hov"i:Nat" )
+    induction(hov"i:Nat")
     // Base case
     allR
-    allL( "def_lt_2", le"plus(Z:Nat, m:Nat):Nat" )
+    allL("def_lt_2", le"plus(Z:Nat, m:Nat):Nat")
     axiomLog
     // Inductive case
     allR
-    allL( "IHi_0", le"m:Nat" )
-    allL( "def_lt_3", le"i_0:Nat", le"plus(S(i_0:Nat):Nat, m:Nat)" )
+    allL("IHi_0", le"m:Nat")
+    allL("def_lt_3", le"i_0:Nat", le"plus(S(i_0:Nat):Nat, m:Nat)")
     andL
-    impL( "def_lt_3_0_1" )
-    allL( "def_plus_2", le"i_0:Nat", le"m:Nat" )
-    eql( "def_plus_2_0", "def_lt_3_0_1" )
+    impL("def_lt_3_0_1")
+    allL("def_plus_2", le"i_0:Nat", le"m:Nat")
+    eql("def_plus_2_0", "def_lt_3_0_1")
     axiomLog
 
     axiomLog

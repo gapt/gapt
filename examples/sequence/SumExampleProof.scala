@@ -26,16 +26,16 @@ object SumExampleProof extends ProofSequence {
    * @param n An integer >= 0.
    * @return A proof of P(s^n^(0),0), ∀x,y. P(s(x),y) → P(x,s(y)) :- P(0,s^n^(0))
    */
-  def apply( n: Int ): LKProof = {
-    require( n >= 0, "n must be nonnegative" )
+  def apply(n: Int): LKProof = {
+    require(n >= 0, "n must be nonnegative")
 
-    val num = Utils.numeral( n )
+    val num = Utils.numeral(n)
     val pn0 = foa"P($num,0)"
     val p0n = foa"P(0,$num)"
     val ax = fof" ∀x ∀y (P(s(x),y) -> P(x, s(y)))"
 
-    Proof( Sequent( Seq( "Pn0" -> pn0, "Ax" -> ax ), Seq( "P0n" -> p0n ) ) ) {
-      repeat( chain( "Ax" ) )
+    Proof(Sequent(Seq("Pn0" -> pn0, "Ax" -> ax), Seq("P0n" -> p0n))) {
+      repeat(chain("Ax"))
       prop
     }
   }

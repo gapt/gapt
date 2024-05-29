@@ -3,13 +3,13 @@ package gapt.testing
 import os.FilePath
 import gapt.proofs.expansion.numberOfInstancesET
 import gapt.proofs.loadExpansionProof
-import gapt.utils.{ LogHandler, verbose }
+import gapt.utils.{LogHandler, verbose}
 
 object testTstpImport extends App {
-  val Array( filename ) = args
+  val Array(filename) = args
   verbose {
-    val exp = loadExpansionProof( FilePath( filename ) )
-    println( s"num_insts = ${numberOfInstancesET( exp )}" )
-    println( "OK" )
+    val exp = loadExpansionProof(FilePath(filename))
+    println(s"num_insts = ${numberOfInstancesET(exp)}")
+    println("OK")
   }
 }

@@ -29,12 +29,12 @@ import gapt.utils.Doc
 
 package object `export` {
 
-  def `export`( problem: TipSmtProblem ): Doc = {
-    Doc.stack( toSExpression( problem ).map { _.toDoc } )
+  def `export`(problem: TipSmtProblem): Doc = {
+    Doc.stack(toSExpression(problem).map { _.toDoc })
   }
 
-  def `export`( problem: TipProblem ): Doc = {
-    Doc.stack( toSExpression( problem ).map { _.toDoc } )
+  def `export`(problem: TipProblem): Doc = {
+    Doc.stack(toSExpression(problem).map { _.toDoc })
   }
 
   /**
@@ -49,46 +49,51 @@ package object `export` {
    * @return A document that represents the SMT2 encoding of the sequent and
    * the context.
    */
-  def `export`( sequent: Sequent[Formula], context: Context ): Doc = {
+  def `export`(sequent: Sequent[Formula], context: Context): Doc = {
     `export`(
-      new SequentContextToTipProblemConverter( sequent, context ).convert )
+      new SequentContextToTipProblemConverter(sequent, context).convert
+    )
   }
 
-  def `export`( sequent: HOLSequent )(
-    implicit
-    ctx: Context, dummyImplicit: DummyImplicit ): Doc =
-    `export`( sequent, ctx )
+  def `export`(sequent: HOLSequent)(
+      implicit
+      ctx: Context,
+      dummyImplicit: DummyImplicit
+  ): Doc =
+    `export`(sequent, ctx)
 
-  def `export`( formula: Formula )(
-    implicit
-    ctx: Context ): Doc =
-    `export`( Sequent() :+ formula )
+  def `export`(formula: Formula)(
+      implicit ctx: Context
+  ): Doc =
+    `export`(Sequent() :+ formula)
 
   private class SequentContextToTipProblemConverter(
       sequent: Sequent[Formula],
-      context: Context ) {
+      context: Context
+  ) {
 
-    private def contextSymbols( context: Context ): Set[String] = {
+    private def contextSymbols(context: Context): Set[String] = {
       context.constants.map { _.name }.toSet ++
         context.get[BaseTypes].baseTypes.keys.toSet
     }
 
     private def toInductiveTyp(
-      structurallyInductiveType: ( String, Vector[Const] ) ): InductiveType = {
-      val ( typeName, constructors ) = structurallyInductiveType
-      InductiveType( TBase( typeName ), constructors: _* )
+        structurallyInductiveType: (String, Vector[Const])
+    ): InductiveType = {
+      val (typeName, constructors) = structurallyInductiveType
+      InductiveType(TBase(typeName), constructors: _*)
     }
 
     def convert: TipProblem = {
       val assertions = sequent.antecedent
-      val goal = And( sequent.succedent )
+      val goal = And(sequent.succedent)
       // Fixme: The conversion below could be avoided if the facet would save the
       //        entire inductive type structure.
       val datatypes =
         context.get[StructurallyInductiveTypes]
           .constructors
           .filter {
-            case ( name, _ ) => name != "o"
+            case (name, _) => name != "o"
           }
           .map { toInductiveTyp }
           .toSeq
@@ -104,8 +109,9 @@ package object `export` {
               .get[StructurallyInductiveTypes]
               .constructors
               .keys
-              .toSet )
-          .map { TBase( _, List[Ty]() ) }
+              .toSet
+          )
+          .map { TBase(_, List[Ty]()) }
           .toSeq
 
       val constants =
@@ -118,19 +124,21 @@ package object `export` {
               .constructors
               .values
               .flatten
-              .toSet )
-          .diff( Set(
+              .toSet
+          )
+          .diff(Set(
             NegC(),
             AndC(),
             OrC(),
             ImpC(),
-            ForallC( TVar( "x" ) ),
-            ExistsC( TVar( "x" ) ),
-            EqC( TVar( "x" ) ) ) )
-          .diff( context.get[SkolemFunctions].skolemDefs.keySet )
+            ForallC(TVar("x")),
+            ExistsC(TVar("x")),
+            EqC(TVar("x"))
+          ))
+          .diff(context.get[SkolemFunctions].skolemDefs.keySet)
           .filter {
             c =>
-              !context.get[Definitions].definitions.keySet.contains( c.name )
+              !context.get[Definitions].definitions.keySet.contains(c.name)
           }
 
       TipProblem(
@@ -141,7 +149,8 @@ package object `export` {
         constants.toSeq,
         Seq(),
         assertions,
-        goal )
+        goal
+      )
     }
 
   }

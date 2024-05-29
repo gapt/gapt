@@ -21,21 +21,22 @@ import gapt.proofs.lk.LKProof
  * @param subProof The proof π.
  * @param aux The index of A in the succedent.
  */
-case class NegLeftRule( subProof: LKProof, aux: SequentIndex )
-  extends UnaryLKProof with CommonRule {
+case class NegLeftRule(subProof: LKProof, aux: SequentIndex)
+    extends UnaryLKProof with CommonRule {
 
-  validateIndices( premise, Seq(), Seq( aux ) )
+  validateIndices(premise, Seq(), Seq(aux))
 
-  def auxFormula: Formula = premise( aux )
-  val mainFormula: Formula = Neg( auxFormula )
+  def auxFormula: Formula = premise(aux)
+  val mainFormula: Formula = Neg(auxFormula)
 
-  override def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux ) )
+  override def auxIndices: Seq[Seq[SequentIndex]] = Seq(Seq(aux))
   override def name: String = "¬:l"
 
   override def mainFormulaSequent: HOLSequent = mainFormula +: Sequent()
 }
 
-object NegLeftRule extends ConvenienceConstructor( "NegLeftRule" ) {
+object NegLeftRule extends ConvenienceConstructor("NegLeftRule") {
+
   /**
    * Convenience constructor that automatically uses the first occurrence of supplied aux formula.
    *
@@ -43,11 +44,11 @@ object NegLeftRule extends ConvenienceConstructor( "NegLeftRule" ) {
    * @param auxFormula The formula to be negated.
    * @return
    */
-  def apply( subProof: LKProof, auxFormula: Formula ): NegLeftRule = {
+  def apply(subProof: LKProof, auxFormula: Formula): NegLeftRule = {
     val premise = subProof.endSequent
 
-    val ( _, indices ) = findAndValidate( premise )( Seq(), Seq( auxFormula ) )
+    val (_, indices) = findAndValidate(premise)(Seq(), Seq(auxFormula))
 
-    new NegLeftRule( subProof, Suc( indices( 0 ) ) )
+    new NegLeftRule(subProof, Suc(indices(0)))
   }
 }

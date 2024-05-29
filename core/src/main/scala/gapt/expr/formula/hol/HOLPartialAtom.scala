@@ -7,5 +7,5 @@ import gapt.expr.formula.Atom
 trait HOLPartialAtom extends Expr {
   private[expr] def numberOfArguments: Int
 
-  def apply( that: Expr* )( implicit dummyImplicit: DummyImplicit ): Atom = App( this, that ).asInstanceOf[Atom]
+  def apply(that: Expr*)(implicit dummyImplicit: DummyImplicit): Atom = App(this, that).asInstanceOf[Atom]
 }

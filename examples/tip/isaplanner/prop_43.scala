@@ -11,10 +11,10 @@ import gapt.provers.viper.aip.ProverOptions
 
 object prop_43 extends TacticsProof {
 
-  ctx += TBase( "sk" )
-  ctx += TBase( "fun1" )
+  ctx += TBase("sk")
+  ctx += TBase("fun1")
 
-  ctx += InductiveType( ty"list", hoc"nil:list", hoc"cons:sk>list>list" )
+  ctx += InductiveType(ty"list", hoc"nil:list", hoc"cons:sk>list>list")
   ctx += hoc"head:list>sk"
   ctx += hoc"tail:list>list"
 
@@ -40,6 +40,6 @@ object prop_43 extends TacticsProof {
            goal: ∀p ∀xs (append(takeWhile(p:fun1, xs:list): list, dropWhile(p, xs): list): list) = xs
       """
 
-  val aipOptions = new ProverOptions( Escargot, IndependentInductionAxioms().forVariables( List( hov"xs:list" ) ).forLabel( "goal" ) )
-  val proof1 = new AnalyticInductionProver( aipOptions ) lkProof ( sequent ) get
+  val aipOptions = new ProverOptions(Escargot, IndependentInductionAxioms().forVariables(List(hov"xs:list")).forLabel("goal"))
+  val proof1 = new AnalyticInductionProver(aipOptions) lkProof (sequent) get
 }

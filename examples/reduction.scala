@@ -3,12 +3,12 @@ package gapt.examples
 import gapt.expr._
 import gapt.expr.formula.hol.universalClosure
 import gapt.formats.tptp.TptpFOLExporter
-import gapt.proofs.ceres.{ CharacteristicClauseSet, extractStruct }
+import gapt.proofs.ceres.{CharacteristicClauseSet, extractStruct}
 import gapt.proofs.reduction._
 import gapt.proofs.Sequent
 import gapt.proofs.expansion.eliminateCutsET
 import gapt.proofs.lk.util.AtomicExpansion
-import gapt.proofs.resolution.{ Input, eliminateSplitting, simplifyResolutionProof }
+import gapt.proofs.resolution.{Input, eliminateSplitting, simplifyResolutionProof}
 import gapt.provers.escargot.Escargot
 import gapt.provers.groundFreeVariables
 import gapt.provers.spass.SPASS
@@ -27,15 +27,15 @@ object ReductionDemo extends Script {
       PredicateReductionCNF |>
       ErasureReductionCNF
 
-  val ( redSeq, back ) = reduction forward sequent
-  println( TptpFOLExporter( redSeq ) )
+  val (redSeq, back) = reduction forward sequent
+  println(TptpFOLExporter(redSeq))
   println()
-  var Some( res ) = Vampire getResolutionProof redSeq: @unchecked
-  var res_ = back( simplifyResolutionProof( eliminateSplitting( res ) ) )
-  println( s"Found a proof with ${res_.dagLike.size} inferences:" )
-  println( res_ )
+  var Some(res) = Vampire getResolutionProof redSeq: @unchecked
+  var res_ = back(simplifyResolutionProof(eliminateSplitting(res)))
+  println(s"Found a proof with ${res_.dagLike.size} inferences:")
+  println(res_)
 
-  for ( case Input( seq ) <- res_.subProofs )
-    require( sequent.contains( seq.elements.head, !seq.indices.head.polarity ) )
+  for (case Input(seq) <- res_.subProofs)
+    require(sequent.contains(seq.elements.head, !seq.indices.head.polarity))
 
 }

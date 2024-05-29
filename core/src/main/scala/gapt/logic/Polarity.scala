@@ -19,22 +19,22 @@ package gapt.logic
  * in the antecedent of a clause in a resolution proof has the negative/in-antecedent polarity (as it is in the
  * antecedent of a sequent).  However upon conversion to LK/ET, the polarity switches to positive/in-succedent polarity.
  */
-case class Polarity( inSuc: Boolean ) extends AnyVal {
+case class Polarity(inSuc: Boolean) extends AnyVal {
   def inAnt = !inSuc
 
   def positive = inSuc
   def negative = !positive
 
-  def unary_! : Polarity = Polarity( !inSuc )
+  def unary_! : Polarity = Polarity(!inSuc)
 
-  override def toString = if ( inSuc ) "Positive" else "Negative"
+  override def toString = if (inSuc) "Positive" else "Negative"
 }
 object Polarity {
-  val Positive = Polarity( true )
-  val Negative = Polarity( false )
+  val Positive = Polarity(true)
+  val Negative = Polarity(false)
 
   val InSuccedent = Positive
   val InAntecedent = Negative
 
-  val values = Seq( Negative, Positive )
+  val values = Seq(Negative, Positive)
 }

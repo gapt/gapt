@@ -1,18 +1,17 @@
-
 package gapt.expr.ty
 
 import gapt.formats.babel.BabelExporter
 
 sealed abstract class Ty {
-  def ->:( that: Ty ) = TArr( that, this )
+  def ->:(that: Ty) = TArr(that, this)
 
   override def toString: String =
-    new BabelExporter( unicode = true, sig = implicitly ).`export`( this )
+    new BabelExporter(unicode = true, sig = implicitly).`export`(this)
 }
 
-case class TArr( in: Ty, out: Ty ) extends Ty
+case class TArr(in: Ty, out: Ty) extends Ty
 
-case class TBase( name: String, params: List[Ty] ) extends Ty
+case class TBase(name: String, params: List[Ty]) extends Ty
 
 object TBase {
 
@@ -24,7 +23,7 @@ object TBase {
    * @return A base type of the form (`name` `params`(0) ... `params`(n)),
    * where n is the length of `params`.
    */
-  def apply( name: String, params: Ty* ): TBase = TBase( name, params.toList )
+  def apply(name: String, params: Ty*): TBase = TBase(name, params.toList)
 }
 
-case class TVar( name: String ) extends Ty
+case class TVar(name: String) extends Ty

@@ -8,11 +8,11 @@ import gapt.proofs.gaptic._
 /* This is not a s.i.p. because of the nested induction. */
 object prop_19 extends TacticsProof {
 
-  ctx += TBase( "sk" )
-  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += TBase("sk")
+  ctx += InductiveType(ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat")
   ctx += hoc"p:Nat>Nat"
 
-  ctx += InductiveType( ty"list", hoc"nil:list", hoc"cons:sk>list>list" )
+  ctx += InductiveType(ty"list", hoc"nil:list", hoc"cons:sk>list>list")
   ctx += hoc"head:list>sk"
   ctx += hoc"tail:list>list"
 
@@ -39,41 +39,41 @@ object prop_19 extends TacticsProof {
           goal: ∀n ∀xs (len(drop(n:Nat, xs:list): list): Nat) = minus(len(xs), n)
         """
 
-  val proof = Lemma( sequent ) {
+  val proof = Lemma(sequent) {
     allR
-    induction( hov"n:Nat" )
+    induction(hov"n:Nat")
     // base case
     allR
-    allL( "def_drop_1", le"xs:list" )
-    eql( "def_drop_1_0", "goal" ).fromLeftToRight
-    induction( hov"xs:list" )
-    allL( "def_minus_1", le"Z:Nat" )
-    eql( "def_len_1", "goal" ).fromLeftToRight
-    eql( "def_minus_1_0", "goal" ).fromLeftToRight
+    allL("def_drop_1", le"xs:list")
+    eql("def_drop_1_0", "goal").fromLeftToRight
+    induction(hov"xs:list")
+    allL("def_minus_1", le"Z:Nat")
+    eql("def_len_1", "goal").fromLeftToRight
+    eql("def_minus_1_0", "goal").fromLeftToRight
     refl
 
-    allL( "def_len_2", le"x:sk", le"xs_0:list" )
-    allL( "def_minus_2", le"len(xs_0:list):Nat" )
-    eql( "def_len_2_0", "goal" )
-    eql( "def_minus_2_0", "goal" ).fromLeftToRight
+    allL("def_len_2", le"x:sk", le"xs_0:list")
+    allL("def_minus_2", le"len(xs_0:list):Nat")
+    eql("def_len_2_0", "goal")
+    eql("def_minus_2_0", "goal").fromLeftToRight
     refl
 
     // inductive case
     allR
-    induction( hov"xs:list" )
-    allL( "def_drop_2", le"n_0:Nat" )
-    allL( "def_minus_1", le"S(n_0:Nat):Nat" )
-    eql( "def_drop_2_0", "goal" ).fromLeftToRight
-    eql( "def_len_1", "goal" ).fromLeftToRight
-    eql( "def_minus_1_0", "goal" ).fromLeftToRight
+    induction(hov"xs:list")
+    allL("def_drop_2", le"n_0:Nat")
+    allL("def_minus_1", le"S(n_0:Nat):Nat")
+    eql("def_drop_2_0", "goal").fromLeftToRight
+    eql("def_len_1", "goal").fromLeftToRight
+    eql("def_minus_1_0", "goal").fromLeftToRight
     refl
-    allL( "def_drop_3", le"n_0:Nat", le"x:sk", le"xs_0:list" )
-    allL( "def_len_2", le"x:sk", le"xs_0:list" )
-    allL( "def_minus_3", le"len(xs_0:list):Nat", le"n_0:Nat" )
-    allL( "IHn_0", le"xs_0:list" )
-    eql( "def_drop_3_0", "goal" )
-    eql( "def_len_2_0", "goal" )
-    eql( "def_minus_3_0", "goal" )
+    allL("def_drop_3", le"n_0:Nat", le"x:sk", le"xs_0:list")
+    allL("def_len_2", le"x:sk", le"xs_0:list")
+    allL("def_minus_3", le"len(xs_0:list):Nat", le"n_0:Nat")
+    allL("IHn_0", le"xs_0:list")
+    eql("def_drop_3_0", "goal")
+    eql("def_len_2_0", "goal")
+    eql("def_minus_3_0", "goal")
     axiomLog
   }
 }

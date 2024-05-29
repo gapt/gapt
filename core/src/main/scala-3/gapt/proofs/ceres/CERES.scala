@@ -4,7 +4,7 @@ import gapt.formats.llk.LLKExporter
 import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.lk._
 import gapt.proofs.resolution._
-import gapt.proofs.{ HOLSequent, Sequent }
+import gapt.proofs.{HOLSequent, Sequent}
 import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.And
@@ -23,7 +23,7 @@ import gapt.expr.ty.Ti
 import gapt.expr.util.freeVariables
 import gapt.logic.clauseSubsumption
 import gapt.proofs.context.Context
-import gapt.proofs.expansion.{ ExpansionProof, ExpansionSequent }
+import gapt.proofs.expansion.{ExpansionProof, ExpansionSequent}
 import gapt.proofs.lk.rules.macros.WeakeningContractionMacroRule
 import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.proofs.lk.transformations.cleanStructuralRules
@@ -45,7 +45,7 @@ object CERES extends CERES {
    * In case the only cuts on equations come from a translation of binary equation rules to unary ones,
    * this should provide the same clause sets and projections as the binary rules.
    */
-  def skipEquations: Formula => Boolean = { case Eq( _, _ ) => false; case _ => true }
+  def skipEquations: Formula => Boolean = { case Eq(_, _) => false; case _ => true }
 
   /**
    * True if the formula is propositional and does not contain free variables other than type i.
@@ -56,19 +56,20 @@ object CERES extends CERES {
   def skipPropositional: Formula => Boolean = {
     case Top()    => false
     case Bottom() => false
-    case Atom( HOLAtomConst( _, _ ), args ) =>
-      args.flatMap( freeVariables( _ ) ).exists( _.ty != Ti )
-    case Neg( f )    => skipPropositional( f )
-    case And( l, r ) => skipPropositional( l ) || skipPropositional( r )
-    case Or( l, r )  => skipPropositional( l ) || skipPropositional( r )
-    case Imp( l, r ) => skipPropositional( l ) || skipPropositional( r )
-    case All( _, _ ) => true
-    case Ex( _, _ )  => true
+    case Atom(HOLAtomConst(_, _), args) =>
+      args.flatMap(freeVariables(_)).exists(_.ty != Ti)
+    case Neg(f)    => skipPropositional(f)
+    case And(l, r) => skipPropositional(l) || skipPropositional(r)
+    case Or(l, r)  => skipPropositional(l) || skipPropositional(r)
+    case Imp(l, r) => skipPropositional(l) || skipPropositional(r)
+    case All(_, _) => true
+    case Ex(_, _)  => true
   }
 
 }
 
 class CERES {
+
   /**
    * Applies the CERES method to a first order proof with equality. Internally this is handled by the RobinsoToLK method.
    *
@@ -76,8 +77,8 @@ class CERES {
    *          also each formula must be a FOLFormula, since the prover9 interface returns proofs from the FOL layer
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
-  def apply( p: LKProof ): LKProof = apply( p, Escargot )
-  def apply( p: LKProof, prover: ResolutionProver ): LKProof = apply( p, CERES.skipNothing, prover )
+  def apply(p: LKProof): LKProof = apply(p, Escargot)
+  def apply(p: LKProof, prover: ResolutionProver): LKProof = apply(p, CERES.skipNothing, prover)
 
   /**
    * Applies the CERES method to a first order proof with equality. Internally this is handled by the RobinsoToLK method.
@@ -88,22 +89,23 @@ class CERES {
    *             (e.g. x => containsQuantifiers(x) to keep propositional cuts intact)
    * @return an LK Proof where all cuts are quantifier-free
    */
-  def apply( p: LKProof, pred: Formula => Boolean ): LKProof = apply( p, pred, Escargot )
-  def apply( p: LKProof, pred: Formula => Boolean, prover: ResolutionProver ): LKProof = groundFreeVarsLK.wrap( p ) { p =>
+  def apply(p: LKProof, pred: Formula => Boolean): LKProof = apply(p, pred, Escargot)
+  def apply(p: LKProof, pred: Formula => Boolean, prover: ResolutionProver): LKProof = groundFreeVarsLK.wrap(p) { p =>
     val es = p.endSequent
 
-    val p_ = regularize( skolemizeLK( AtomicExpansion( p ) ) )
-    val cs = CharacteristicClauseSet( StructCreators.extract( p_, pred )( Context() ) )
+    val p_ = regularize(skolemizeLK(AtomicExpansion(p)))
+    val cs = CharacteristicClauseSet(StructCreators.extract(p_, pred)(Context()))
 
-    val proj = Projections( p_, pred )
-    val tapecl = subsumedClausesRemoval( deleteTautologies( cs ).toList )
+    val proj = Projections(p_, pred)
+    val tapecl = subsumedClausesRemoval(deleteTautologies(cs).toList)
 
-    prover.getResolutionProof( tapecl ) match {
+    prover.getResolutionProof(tapecl) match {
       case None => throw new Exception(
-        "The characteristic clause set could not be refuted:\n" +
-          TptpFOLExporter( tapecl ) )
-      case Some( rp ) =>
-        cleanStructuralRules( apply( es, proj, eliminateSplitting( rp ) ) )
+          "The characteristic clause set could not be refuted:\n" +
+            TptpFOLExporter(tapecl)
+        )
+      case Some(rp) =>
+        cleanStructuralRules(apply(es, proj, eliminateSplitting(rp)))
     }
   }
 
@@ -115,10 +117,11 @@ class CERES {
    * @param rp A resolution refutation
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
-  def apply( endsequent: HOLSequent, projections: Set[LKProof], rp: ResolutionProof ) = {
+  def apply(endsequent: HOLSequent, projections: Set[LKProof], rp: ResolutionProof) = {
     WeakeningContractionMacroRule(
-      ResolutionToLKProof( rp, findMatchingProjection( endsequent, projections ) ),
-      endsequent )
+      ResolutionToLKProof(rp, findMatchingProjection(endsequent, projections)),
+      endsequent
+    )
   }
 
   /**
@@ -128,9 +131,9 @@ class CERES {
    *          (i.e. structural rules, cut, logical rules, equational rules but no definitions, schema,higher order)
    * @return an expansion proof of the CERES-normal form computed from the projections and the resolution refutation
    */
-  @deprecated( "Use CERES.expansionProof instead", since = "2.12" )
-  def CERESExpansionProof( p: LKProof, prover: ResolutionProver = Escargot ): ExpansionProof =
-    expansionProof( p, prover = prover )
+  @deprecated("Use CERES.expansionProof instead", since = "2.12")
+  def CERESExpansionProof(p: LKProof, prover: ResolutionProver = Escargot): ExpansionProof =
+    expansionProof(p, prover = prover)
 
   /**
    * Computes the expansion proof of the CERES-normal form using projections and the resolution refutation.
@@ -139,20 +142,21 @@ class CERES {
    *          (i.e. structural rules, cut, logical rules, equational rules but no definitions, schema,higher order)
    * @return an expansion proof of the CERES-normal form computed from the projections and the resolution refutation
    */
-  def expansionProof( p: LKProof, skip: Formula => Boolean = CERES.skipNothing, prover: ResolutionProver = Escargot ): ExpansionProof = {
+  def expansionProof(p: LKProof, skip: Formula => Boolean = CERES.skipNothing, prover: ResolutionProver = Escargot): ExpansionProof = {
     val es = p.endSequent
-    val p_ = regularize( AtomicExpansion( skolemizeLK( p ) ) )
-    val cs = CharacteristicClauseSet( StructCreators.extract( p_, CERES.skipNothing )( Context() ) )
+    val p_ = regularize(AtomicExpansion(skolemizeLK(p)))
+    val cs = CharacteristicClauseSet(StructCreators.extract(p_, CERES.skipNothing)(Context()))
 
-    val proj = Projections( p_, CERES.skipNothing )
-    val tapecl = subsumedClausesRemoval( deleteTautologies( cs ).toList )
+    val proj = Projections(p_, CERES.skipNothing)
+    val tapecl = subsumedClausesRemoval(deleteTautologies(cs).toList)
 
-    prover.getResolutionProof( tapecl ) match {
+    prover.getResolutionProof(tapecl) match {
       case None => throw new Exception(
-        "The characteristic clause set could not be refuted:\n" +
-          TptpFOLExporter( tapecl ) )
-      case Some( rp ) =>
-        ResolutionToExpansionProof( eliminateSplitting( rp ), findPartialExpansionSequent( es, proj ) )
+          "The characteristic clause set could not be refuted:\n" +
+            TptpFOLExporter(tapecl)
+        )
+      case Some(rp) =>
+        ResolutionToExpansionProof(eliminateSplitting(rp), findPartialExpansionSequent(es, proj))
     }
   }
 
@@ -165,15 +169,15 @@ class CERES {
    * @note This method is passed to ResolutionToLKProof, which handles the simulation of the reflexivity introduction
    *       rule by itself.
    */
-  def findMatchingProjection( endsequent: HOLSequent, projections: Set[LKProof] )( input_clause: Input ): LKProof = scala.util.boundary {
+  def findMatchingProjection(endsequent: HOLSequent, projections: Set[LKProof])(input_clause: Input): LKProof = scala.util.boundary {
     val axfs = input_clause.conclusion
     for {
       proj <- projections
-      sub <- clauseSubsumption( proj.endSequent diff endsequent, axfs )
-    } scala.util.boundary.break(WeakeningContractionMacroRule( sub( proj ), endsequent ++ axfs ))
+      sub <- clauseSubsumption(proj.endSequent diff endsequent, axfs)
+    } scala.util.boundary.break(WeakeningContractionMacroRule(sub(proj), endsequent ++ axfs))
 
-    throw new Exception( "Could not find a projection to " + axfs + " in " +
-      projections.map( _.endSequent.diff( endsequent ) ).mkString( "{\n", ";\n", "\n}" ) )
+    throw new Exception("Could not find a projection to " + axfs + " in " +
+      projections.map(_.endSequent.diff(endsequent)).mkString("{\n", ";\n", "\n}"))
   }
 
   /**
@@ -185,31 +189,33 @@ class CERES {
    *         the expansion trees of all formulas in the end-sequent of the projection except of the formulas corresponding
    *         to the input clause).
    */
-  def findPartialExpansionSequent( endsequent: HOLSequent, projections: Set[LKProof] )( input: Input, set: Set[( Substitution, ExpansionSequent )] ): ExpansionSequent = {
-    var expansionSequent = LKToExpansionProof( findMatchingProjection( endsequent, projections )( input ) ).expansionSequent
+  def findPartialExpansionSequent(endsequent: HOLSequent, projections: Set[LKProof])(input: Input, set: Set[(Substitution, ExpansionSequent)]): ExpansionSequent = {
+    var expansionSequent = LKToExpansionProof(findMatchingProjection(endsequent, projections)(input)).expansionSequent
 
-    for ( c <- input.sequent.antecedent ) {
-      expansionSequent.indicesWhere( _.shallow == c ).find( _.isAnt ) match {
+    for (c <- input.sequent.antecedent) {
+      expansionSequent.indicesWhere(_.shallow == c).find(_.isAnt) match {
         case None => throw new Exception(
-          "Clause not contained in expansion sequent" )
-        case Some( index ) =>
-          expansionSequent = expansionSequent.delete( index )
+            "Clause not contained in expansion sequent"
+          )
+        case Some(index) =>
+          expansionSequent = expansionSequent.delete(index)
       }
     }
 
-    for ( c <- input.sequent.succedent ) {
-      expansionSequent.indicesWhere( _.shallow == c ).find( _.isSuc ) match {
+    for (c <- input.sequent.succedent) {
+      expansionSequent.indicesWhere(_.shallow == c).find(_.isSuc) match {
         case None => throw new Exception(
-          "Clause not contained in expansion sequent" )
-        case Some( index ) =>
-          expansionSequent = expansionSequent.delete( index )
+            "Clause not contained in expansion sequent"
+          )
+        case Some(index) =>
+          expansionSequent = expansionSequent.delete(index)
       }
     }
 
     var retSeq: ExpansionSequent = Sequent()
 
-    for ( subst <- set.map( _._1 ) ) {
-      retSeq ++= subst( expansionSequent )
+    for (subst <- set.map(_._1)) {
+      retSeq ++= subst(expansionSequent)
     }
 
     return retSeq

@@ -19,54 +19,58 @@ import gapt.proofs.lk.rules.LogicalAxiom
  * Forall variables cond1 -> cond2 -> ... -> condn -> consequence |- ...
  */
 class AllQuantifiedConditionalAxiomHelper(
-    variables: List[FOLVar], conditions: List[FOLAtom],
-    consequence: FOLFormula ) {
+    variables: List[FOLVar],
+    conditions: List[FOLAtom],
+    consequence: FOLFormula
+) {
+
   /**
    * Returns the full axiom
    */
   val getAxiom: FOLFormula =
-    All.Block( variables, Imp.Block( conditions, consequence ) ).asInstanceOf[FOLFormula]
+    All.Block(variables, Imp.Block(conditions, consequence)).asInstanceOf[FOLFormula]
 
   /**
    * Use axiom with given expressions in proof.
    * Consequence of axiom must appear in current proof.
    * Instantiated conditions will of course remain in the antecedent of the returned proof
    */
-  def apply( expressions: List[FOLTerm], p: LKProof ): LKProof = {
-    assert( expressions.length == variables.length, "Number of expressions doesn't equal number of variables" )
+  def apply(expressions: List[FOLTerm], p: LKProof): LKProof = {
+    assert(expressions.length == variables.length, "Number of expressions doesn't equal number of variables")
 
     // construct implication with instantiated conditions and consequence
-    val ( instantiated_conditions, instantiated_consequence ) =
-      variables.indices.foldLeft( conditions -> consequence ) { ( acc, i ) =>
-        val substitute = ( x: FOLFormula ) => FOLSubstitution( variables( i ), expressions( i ) )( x )
-        ( acc._1.map( substitute ).asInstanceOf[List[FOLAtom]], substitute( acc._2 ) )
+    val (instantiated_conditions, instantiated_consequence) =
+      variables.indices.foldLeft(conditions -> consequence) { (acc, i) =>
+        val substitute = (x: FOLFormula) => FOLSubstitution(variables(i), expressions(i))(x)
+        (acc._1.map(substitute).asInstanceOf[List[FOLAtom]], substitute(acc._2))
       }
 
-    val p1 = apply_conditional_equality( instantiated_conditions, instantiated_consequence, p )
+    val p1 = apply_conditional_equality(instantiated_conditions, instantiated_consequence, p)
 
     // iteratively instantiate all-quantified variables with expression
-    def instantiate_axiom( expressions: List[FOLTerm], axiom: FOLFormula, p: LKProof ): LKProof = {
+    def instantiate_axiom(expressions: List[FOLTerm], axiom: FOLFormula, p: LKProof): LKProof = {
       expressions match {
         case Nil => p
         case head :: tail =>
-          val new_axiom = instantiate( axiom, head )
-          val new_p = instantiate_axiom( tail, new_axiom, p )
+          val new_axiom = instantiate(axiom, head)
+          val new_p = instantiate_axiom(tail, new_axiom, p)
 
-          ForallLeftRule( new_p, axiom, head )
+          ForallLeftRule(new_p, axiom, head)
 
       }
     }
 
     val ax = getAxiom
-    val p2 = instantiate_axiom( expressions, ax, p1 )
+    val p2 = instantiate_axiom(expressions, ax, p1)
 
-    ContractionLeftRule( p2, ax )
+    ContractionLeftRule(p2, ax)
   }
 
-  private def apply_conditional_equality( equalities: List[FOLAtom], result: FOLFormula, p: LKProof ): LKProof =
+  private def apply_conditional_equality(equalities: List[FOLAtom], result: FOLFormula, p: LKProof): LKProof =
     implicationLeftMacro(
       equalities.map { LogicalAxiom(_) },
-      equalities.map { e => LogicalAxiom( e ) -> e }.toMap,
+      equalities.map { e => LogicalAxiom(e) -> e }.toMap,
       result,
-      p )
+      p
+    )
 }

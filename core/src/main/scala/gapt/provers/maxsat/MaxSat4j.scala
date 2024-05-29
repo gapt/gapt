@@ -10,21 +10,21 @@ object MaxSat4j extends MaxSat4j
 class MaxSat4j extends MaxSATSolver {
   import Sat4j._
 
-  override def solve( hard: DIMACS.CNF, soft: Seq[( DIMACS.Clause, Int )] ): Option[DIMACS.Model] = {
-    val threshold = soft.map( _._2 ).sum + 1
+  override def solve(hard: DIMACS.CNF, soft: Seq[(DIMACS.Clause, Int)]): Option[DIMACS.Model] = {
+    val threshold = soft.map(_._2).sum + 1
 
     val solver = org.sat4j.pb.SolverFactory.newDefaultOptimizer()
-    val decorator = new WeightedMaxSatDecorator( solver )
+    val decorator = new WeightedMaxSatDecorator(solver)
 
-    decorator.newVar( DIMACS maxAtom ( hard ++ soft.map( _._1 ) ) )
-    decorator.setTopWeight( BigInteger.valueOf( threshold ) )
+    decorator.newVar(DIMACS maxAtom (hard ++ soft.map(_._1)))
+    decorator.setTopWeight(BigInteger.valueOf(threshold))
 
     try {
-      hard foreach { decorator.addHardClause( _ ) }
-      soft foreach { case ( clause, weight ) => decorator.addSoftClause( weight, clause ) }
+      hard foreach { decorator.addHardClause(_) }
+      soft foreach { case (clause, weight) => decorator.addSoftClause(weight, clause) }
 
-      if ( solver.isSatisfiable ) {
-        Some( solver.model().toIndexedSeq )
+      if (solver.isSatisfiable) {
+        Some(solver.model().toIndexedSeq)
       } else {
         None
       }

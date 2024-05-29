@@ -26,67 +26,75 @@ import gapt.examples.Formulas.TransitivityEq
  * where n is an Integer parameter >= 0.
  */
 object SumOfOnesExampleProof extends ProofSequence {
-  import Utils.{ numeral => num }
+  import Utils.{numeral => num}
 
-  def apply( n: Int ): LKProof = {
-    val goal = if ( n == 0 ) foa"0 = 0" else foa"${sum( n )} = ${num( n )}"
+  def apply(n: Int): LKProof = {
+    val goal = if (n == 0) foa"0 = 0" else foa"${sum(n)} = ${num(n)}"
     val endSequent = Sequent(
       Seq(
         "Refl" -> ReflexivityEq,
         "Trans" -> TransitivityEq,
-        "CongSuc" -> CongUnaryEq( "s" ),
+        "CongSuc" -> CongUnaryEq("s"),
         "ABase" -> Peano.AdditionBase,
-        "ASuc" -> Peano.AdditionSucc ), Seq(
-        "Goal" -> goal ) )
+        "ASuc" -> Peano.AdditionSucc
+      ),
+      Seq(
+        "Goal" -> goal
+      )
+    )
 
     n match {
       case 0 | 1 =>
-        Proof( endSequent ) {
-          allL( "Refl", num( n ) )
+        Proof(endSequent) {
+          allL("Refl", num(n))
           prop
         }
 
       case _ =>
-        val subProof = apply( n - 1 )
-        Proof( endSequent ) {
-          allL( "CongSuc", sum( n - 1 ), num( n - 1 ) )
-          impL( "CongSuc_0" )
-          insert( subProof )
+        val subProof = apply(n - 1)
+        Proof(endSequent) {
+          allL("CongSuc", sum(n - 1), num(n - 1))
+          impL("CongSuc_0")
+          insert(subProof)
 
-          allL( "Trans", sum( n ), FOLFunction( "s", sum( n - 1 ) ), num( n ) ) //Trans_0
-          impL( "Trans_0" )
-          insert( aux_proof( n - 1 ) )
+          allL("Trans", sum(n), FOLFunction("s", sum(n - 1)), num(n)) // Trans_0
+          impL("Trans_0")
+          insert(aux_proof(n - 1))
 
-          impL( "Trans_0" )
-          repeat( trivial )
+          impL("Trans_0")
+          repeat(trivial)
         }
     }
   }
 
   /** constructs proof of: Trans, CongSuc, ASuc, ABase :- sum( k + 1 ) = s( sum( k ) ) */
-  private def aux_proof( n: Int ): LKProof = {
-    val goal = fof"${sum( n + 1 )} = s(${sum( n )})"
+  private def aux_proof(n: Int): LKProof = {
+    val goal = fof"${sum(n + 1)} = s(${sum(n)})"
     val endSequent = Sequent(
       Seq(
         "Trans" -> TransitivityEq,
-        "CongSuc" -> CongUnaryEq( "s" ),
+        "CongSuc" -> CongUnaryEq("s"),
         "ABase" -> Peano.AdditionBase,
-        "ASuc" -> Peano.AdditionSucc ), Seq(
-        "Goal" -> goal ) )
+        "ASuc" -> Peano.AdditionSucc
+      ),
+      Seq(
+        "Goal" -> goal
+      )
+    )
 
-    Proof( endSequent ) {
-      allL( "ABase", sum( n ) ) //ABase_0
-      allL( "ASuc", sum( n ), num( 0 ) ) // ASuc_0
-      allL( "CongSuc", fot"${sum( n )} + 0", sum( n ) ) // CongSuc_0
-      impL( "CongSuc_0" )
+    Proof(endSequent) {
+      allL("ABase", sum(n)) // ABase_0
+      allL("ASuc", sum(n), num(0)) // ASuc_0
+      allL("CongSuc", fot"${sum(n)} + 0", sum(n)) // CongSuc_0
+      impL("CongSuc_0")
       trivial
 
-      allL( "Trans", sum( n + 1 ), fot"s(${sum( n )} +0)", fot"s(${sum( n )})" ) // Trans_0
-      impL( "Trans_0" )
+      allL("Trans", sum(n + 1), fot"s(${sum(n)} +0)", fot"s(${sum(n)})") // Trans_0
+      impL("Trans_0")
       trivial
 
-      impL( "Trans_0" )
-      repeat( trivial )
+      impL("Trans_0")
+      repeat(trivial)
     }
   }
 
@@ -95,8 +103,8 @@ object SumOfOnesExampleProof extends ProofSequence {
    * @param k The size ≥ 1 of the term i.e. the number of occurrences of `1`.
    * @return The term `(...((1 + 1) + 1 ) + ... + 1 )`
    */
-  private def sum( k: Int ): FOLTerm =
-    ( 1 until k ).foldLeft( Utils.numeral( 1 ) ) {
-      case ( sum, _ ) => FOLFunction( "+", sum :: Utils.numeral( 1 ) :: Nil )
+  private def sum(k: Int): FOLTerm =
+    (1 until k).foldLeft(Utils.numeral(1)) {
+      case (sum, _) => FOLFunction("+", sum :: Utils.numeral(1) :: Nil)
     }
 }

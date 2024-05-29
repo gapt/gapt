@@ -27,21 +27,21 @@ import gapt.proofs.lk.LKProof
  * @param eigenVariable The variable α.
  * @param quantifiedVariable The variable x.
  */
-case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable: Var, quantifiedVariable: Var )
-  extends StrongQuantifierRule {
+case class ForallRightRule(subProof: LKProof, aux: SequentIndex, eigenVariable: Var, quantifiedVariable: Var)
+    extends StrongQuantifierRule {
 
-  validateIndices( premise, Seq(), Seq( aux ) )
+  validateIndices(premise, Seq(), Seq(aux))
 
-  val mainFormula: Formula = BetaReduction.betaNormalize( All( quantifiedVariable, subFormula ) )
+  val mainFormula: Formula = BetaReduction.betaNormalize(All(quantifiedVariable, subFormula))
 
   override def name: String = "∀:r"
 
-  def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux ) )
+  def auxIndices: Seq[Seq[SequentIndex]] = Seq(Seq(aux))
 
   override def mainFormulaSequent: HOLSequent = Sequent() :+ mainFormula
 }
 
-object ForallRightRule extends ConvenienceConstructor( "ForallRightRule" ) {
+object ForallRightRule extends ConvenienceConstructor("ForallRightRule") {
 
   /**
    * Convenience constructor for ∀:r that, given a main formula and an eigenvariable,
@@ -52,22 +52,22 @@ object ForallRightRule extends ConvenienceConstructor( "ForallRightRule" ) {
    * @param eigenVariable A variable α such that A[α] occurs in the premise.
    * @return
    */
-  def apply( subProof: LKProof, mainFormula: Formula, eigenVariable: Var ): ForallRightRule = {
-    if ( freeVariables( mainFormula ) contains eigenVariable ) {
-      throw LKRuleCreationException( s"Illegal main formula: Eigenvariable $eigenVariable is free in $mainFormula." )
+  def apply(subProof: LKProof, mainFormula: Formula, eigenVariable: Var): ForallRightRule = {
+    if (freeVariables(mainFormula) contains eigenVariable) {
+      throw LKRuleCreationException(s"Illegal main formula: Eigenvariable $eigenVariable is free in $mainFormula.")
     } else mainFormula match {
-      case All( v, subFormula ) =>
-        val auxFormula = Substitution( v, eigenVariable )( subFormula )
+      case All(v, subFormula) =>
+        val auxFormula = Substitution(v, eigenVariable)(subFormula)
 
         val premise = subProof.endSequent
 
-        val ( _, indices ) = findAndValidate( premise )( Seq(), Seq( auxFormula ) )
+        val (_, indices) = findAndValidate(premise)(Seq(), Seq(auxFormula))
 
-        val p = ForallRightRule( subProof, Suc( indices( 0 ) ), eigenVariable, v )
-        assert( p.mainFormula == mainFormula )
+        val p = ForallRightRule(subProof, Suc(indices(0)), eigenVariable, v)
+        assert(p.mainFormula == mainFormula)
         p
 
-      case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
+      case _ => throw LKRuleCreationException(s"Proposed main formula $mainFormula is not universally quantified.")
     }
   }
 
@@ -78,20 +78,20 @@ object ForallRightRule extends ConvenienceConstructor( "ForallRightRule" ) {
    * @param mainFormula The formula to be inferred. Must be of the form ∀x.A. The premise must contain A.
    * @return
    */
-  def apply( subProof: LKProof, mainFormula: Formula ): ForallRightRule = mainFormula match {
-    case All( v, _ ) =>
-      val p = apply( subProof, mainFormula, v )
-      assert( p.mainFormula == mainFormula )
+  def apply(subProof: LKProof, mainFormula: Formula): ForallRightRule = mainFormula match {
+    case All(v, _) =>
+      val p = apply(subProof, mainFormula, v)
+      assert(p.mainFormula == mainFormula)
       p
 
-    case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
+    case _ => throw LKRuleCreationException(s"Proposed main formula $mainFormula is not universally quantified.")
   }
 
-  def apply( subProof: LKProof, aux: SequentIndex, mainFormula: Formula, eigenVariable: Var ): ForallRightRule =
+  def apply(subProof: LKProof, aux: SequentIndex, mainFormula: Formula, eigenVariable: Var): ForallRightRule =
     mainFormula match {
-      case All( v, _ ) =>
-        val p = ForallRightRule( subProof, aux, eigenVariable, v )
-        assert( p.mainFormula == mainFormula )
+      case All(v, _) =>
+        val p = ForallRightRule(subProof, aux, eigenVariable, v)
+        assert(p.mainFormula == mainFormula)
         p
     }
 }

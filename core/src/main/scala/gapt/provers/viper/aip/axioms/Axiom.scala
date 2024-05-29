@@ -4,6 +4,7 @@ import gapt.expr.formula.Formula
 import gapt.proofs.lk.LKProof
 
 trait Axiom {
+
   /**
    * @return The formula representing the axiom.
    */

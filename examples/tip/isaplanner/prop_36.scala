@@ -7,10 +7,10 @@ import gapt.proofs.gaptic._
 
 object prop_36 extends TacticsProof {
 
-  ctx += TBase( "sk" )
-  ctx += TBase( "fun1" )
+  ctx += TBase("sk")
+  ctx += TBase("fun1")
 
-  ctx += InductiveType( ty"list", hoc"nil:list", hoc"cons:sk>list>list" )
+  ctx += InductiveType(ty"list", hoc"nil:list", hoc"cons:sk>list>list")
   ctx += hoc"head:list>sk"
   ctx += hoc"tail:list>list"
 
@@ -31,23 +31,23 @@ object prop_36 extends TacticsProof {
           goal: ∀xs (takeWhile(lam:fun1, xs:list): list) = xs
         """
 
-  val proof = Lemma( sequent ) {
+  val proof = Lemma(sequent) {
     allR
-    induction( hov"xs:list" )
+    induction(hov"xs:list")
     // base case
-    allL( "def_takeWhile_1", le"lam" )
+    allL("def_takeWhile_1", le"lam")
     axiomLog
     // inductive case
-    allL( "def_apply1_1", le"x:sk" )
-    allL( "def_takeWhile_3", le"lam", le"x:sk", le"xs_0:list" )
+    allL("def_apply1_1", le"x:sk")
+    allL("def_takeWhile_3", le"lam", le"x:sk", le"xs_0:list")
     andL
-    impL( "def_apply1_1_0_1" )
-    forget( "goal" )
+    impL("def_apply1_1_0_1")
+    forget("goal")
     prop // invoking axiomTop instead of prop throws an exception.
-    impL( "def_takeWhile_3_0" )
+    impL("def_takeWhile_3_0")
     axiomLog
-    eql( "def_takeWhile_3_0", "goal" )
-    eql( "IHxs_0", "goal" ).fromLeftToRight
+    eql("def_takeWhile_3_0", "goal")
+    eql("IHxs_0", "goal").fromLeftToRight
     refl
   }
 }

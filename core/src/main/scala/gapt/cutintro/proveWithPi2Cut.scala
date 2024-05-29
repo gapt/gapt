@@ -5,7 +5,7 @@ import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
 import gapt.proofs.Sequent
 import gapt.proofs.gaptic._
-import gapt.proofs.gaptic.{ Lemma, guessLabels, tactics }
+import gapt.proofs.gaptic.{Lemma, guessLabels, tactics}
 import gapt.proofs.gaptic.tactics._
 import gapt.proofs.lk.LKProof
 
@@ -27,18 +27,19 @@ object proveWithPi2Cut {
    * @return Optiontype that contains a proof with Pi2-cut if a Pi2-cut formula exists
    */
   def apply(
-    endSequent:                Sequent[Formula],
-    seHs:                      Pi2SeHs,
-    nameOfExistentialVariable: Var              = fov"yCut",
-    nameOfUniversalVariable:   Var              = fov"xCut" ): ( Option[LKProof] ) = {
+      endSequent: Sequent[Formula],
+      seHs: Pi2SeHs,
+      nameOfExistentialVariable: Var = fov"yCut",
+      nameOfUniversalVariable: Var = fov"xCut"
+  ): (Option[LKProof]) = {
 
-    val ( cutFormulaWithoutQuantifiers: Option[Formula], nameOfExVa: Var, nameOfUnVa: Var ) =
-      introducePi2Cut( seHs, nameOfExistentialVariable, nameOfUniversalVariable )
+    val (cutFormulaWithoutQuantifiers: Option[Formula], nameOfExVa: Var, nameOfUnVa: Var) =
+      introducePi2Cut(seHs, nameOfExistentialVariable, nameOfUniversalVariable)
 
     cutFormulaWithoutQuantifiers match {
-      case Some( t ) => giveProof( t, seHs, endSequent, nameOfExVa, nameOfUnVa )
+      case Some(t) => giveProof(t, seHs, endSequent, nameOfExVa, nameOfUnVa)
       case None => {
-        println( "No cut formula has been found." )
+        println("No cut formula has been found.")
         None
       }
     }
@@ -55,27 +56,28 @@ object proveWithPi2Cut {
    * @return Optiontype that contains a proof with Pi2-cut
    */
   def giveProof(
-    cutFormulaWithoutQuantifiers: Formula,
-    seHs:                         Pi2SeHs,
-    endSequent:                   Sequent[Formula],
-    nameOfExVa:                   Var,
-    nameOfUnVa:                   Var ): ( Option[LKProof] ) = {
+      cutFormulaWithoutQuantifiers: Formula,
+      seHs: Pi2SeHs,
+      endSequent: Sequent[Formula],
+      nameOfExVa: Var,
+      nameOfUnVa: Var
+  ): (Option[LKProof]) = {
 
-    var state = ProofState( endSequent )
-    state += cut( "Cut", All( nameOfUnVa, Ex( nameOfExVa, cutFormulaWithoutQuantifiers ) ) )
-    state += allR( "Cut", seHs.universalEigenvariable )
-    for ( t <- seHs.substitutionsForBetaWithAlpha ) { state += exR( "Cut", t ) }
-    state += haveInstances( seHs.reducedRepresentation )
+    var state = ProofState(endSequent)
+    state += cut("Cut", All(nameOfUnVa, Ex(nameOfExVa, cutFormulaWithoutQuantifiers)))
+    state += allR("Cut", seHs.universalEigenvariable)
+    for (t <- seHs.substitutionsForBetaWithAlpha) { state += exR("Cut", t) }
+    state += haveInstances(seHs.reducedRepresentation)
     state += prop
-    for ( i <- 0 until seHs.multiplicityOfAlpha ) {
-      state += allL( "Cut", seHs.substitutionsForAlpha( i ) )
-      state += exL( "Cut_" + i.toString, seHs.existentialEigenvariables( i ) )
+    for (i <- 0 until seHs.multiplicityOfAlpha) {
+      state += allL("Cut", seHs.substitutionsForAlpha(i))
+      state += exL("Cut_" + i.toString, seHs.existentialEigenvariables(i))
     }
-    state += haveInstances( seHs.reducedRepresentation )
+    state += haveInstances(seHs.reducedRepresentation)
     state += prop
     val proof = state.result
 
-    Some( proof )
+    Some(proof)
   }
 
 }

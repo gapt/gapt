@@ -4,7 +4,7 @@ import cats.syntax.all._
 import gapt.expr.Var
 import gapt.expr.formula.Formula
 import gapt.formats.tip.TipProblem
-import gapt.proofs.gaptic.{ escargot => escargotTactic }
+import gapt.proofs.gaptic.{escargot => escargotTactic}
 import gapt.proofs.gaptic._
 import gapt.proofs.lk.LKProof
 import gapt.proofs.HOLSequent
@@ -18,8 +18,9 @@ import gapt.provers.viper.aip.axioms.AxiomFactory
 import gapt.provers.viper.aip.axioms.SequentialInductionAxioms
 
 case class ProverOptions(
-    prover:       ResolutionProver = Escargot,
-    axiomFactory: AxiomFactory     = SequentialInductionAxioms() )
+    prover: ResolutionProver = Escargot,
+    axiomFactory: AxiomFactory = SequentialInductionAxioms()
+)
 
 object AnalyticInductionProver {
 
@@ -33,12 +34,12 @@ object AnalyticInductionProver {
    *         on the formula `A[x/α]` and variable `α` is returned, otherwise the method does either not terminate or
    *         throws an exception.
    */
-  def singleInduction( sequent: Sequent[( String, Formula )], variable: Var )( implicit ctx: MutableContext ): LKProof = {
-    var state = ProofState( sequent )
-    state += allR( variable );
-    state += induction( on = variable )
+  def singleInduction(sequent: Sequent[(String, Formula)], variable: Var)(implicit ctx: MutableContext): LKProof = {
+    var state = ProofState(sequent)
+    state += allR(variable);
+    state += induction(on = variable)
     state += decompose.onAllSubGoals
-    state += repeat( escargotTactic )
+    state += repeat(escargotTactic)
     state.result
   }
 
@@ -49,14 +50,15 @@ object AnalyticInductionProver {
    * @param prover The internal prover that is to be used for proof search.
    * @return A new analytic induction prover that uses the provided objects for proof search.
    */
-  def apply( axioms: AxiomFactory, prover: ResolutionProver ) = new AnalyticInductionProver(
-    new ProverOptions( prover, axioms ) )
+  def apply(axioms: AxiomFactory, prover: ResolutionProver) = new AnalyticInductionProver(
+    new ProverOptions(prover, axioms)
+  )
 }
 
-class AnalyticInductionProver( options: ProverOptions ) {
+class AnalyticInductionProver(options: ProverOptions) {
 
-  private implicit def labeledSequentToHOLSequent( sequent: Sequent[( String, Formula )] ): Sequent[Formula] =
-    sequent map { case ( _, f ) => f }
+  private implicit def labeledSequentToHOLSequent(sequent: Sequent[(String, Formula)]): Sequent[Formula] =
+    sequent map { case (_, f) => f }
 
   /**
    * Tries to prove a sequent by using analytic induction.
@@ -66,8 +68,8 @@ class AnalyticInductionProver( options: ProverOptions ) {
    * @return true if the sequent is provable with analytic induction, otherwise either false or the method does
    *         not terminate.
    */
-  def isValid( sequent: Sequent[( String, Formula )] )( implicit ctx: MutableContext ) =
-    options.prover.isValid( inductiveSequent( sequent ) )
+  def isValid(sequent: Sequent[(String, Formula)])(implicit ctx: MutableContext) =
+    options.prover.isValid(inductiveSequent(sequent))
 
   /**
    * Tries to compute a LK proof for a sequent by using analytic induction.
@@ -78,7 +80,8 @@ class AnalyticInductionProver( options: ProverOptions ) {
    *         not terminate.
    */
   def lkProof(
-    sequent: Sequent[( String, Formula )] )( implicit ctx: MutableContext ) = options.prover.getLKProof( inductiveSequent( sequent ) )
+      sequent: Sequent[(String, Formula)]
+  )(implicit ctx: MutableContext) = options.prover.getLKProof(inductiveSequent(sequent))
 
   /**
    * Proves a TIP problem by using induction.
@@ -87,8 +90,8 @@ class AnalyticInductionProver( options: ProverOptions ) {
    * @return A proof if the problem is provable with the prover's induction schemes, otherwise None or the
    *         method does not terminate.
    */
-  def proveTipProblem( problem: TipProblem ): Option[LKProof] =
-    inductiveLKProof( tipProblemToSequent( problem )._1 )( problem.context.newMutable )
+  def proveTipProblem(problem: TipProblem): Option[LKProof] =
+    inductiveLKProof(tipProblemToSequent(problem)._1)(problem.context.newMutable)
 
   /**
    * Proves the given sequent by using induction.
@@ -98,13 +101,13 @@ class AnalyticInductionProver( options: ProverOptions ) {
    * @return An inductive proof the sequent is provable with the prover's induction schemes, otherwise None or
    *         the method does not terminate.
    */
-  def inductiveLKProof( sequent: Sequent[( String, Formula )] )( implicit ctx: MutableContext ): Option[LKProof] = {
-    val axioms = validate( options.axiomFactory( sequent ) )
+  def inductiveLKProof(sequent: Sequent[(String, Formula)])(implicit ctx: MutableContext): Option[LKProof] = {
+    val axioms = validate(options.axiomFactory(sequent))
     val prover = options.prover
     for {
-      mainProof <- prover.getLKProof( axioms.map( _.formula ) ++: sequent.map( _._2 ) )
+      mainProof <- prover.getLKProof(axioms.map(_.formula) ++: sequent.map(_._2))
     } yield {
-      cutAxioms( mainProof, axioms )
+      cutAxioms(mainProof, axioms)
     }
   }
 
@@ -116,10 +119,10 @@ class AnalyticInductionProver( options: ProverOptions ) {
    * @param axioms The axioms to be cut out of the proof.
    * @return A proof whose end-sequent does not contain the specified axioms.
    */
-  private def cutAxioms( proof: LKProof, axioms: List[Axiom] ): LKProof =
-    axioms.foldRight( proof ) { ( axiom, mainProof ) =>
-      if ( mainProof.conclusion.antecedent contains axiom.formula )
-        CutRule( axiom.proof, mainProof, axiom.formula )
+  private def cutAxioms(proof: LKProof, axioms: List[Axiom]): LKProof =
+    axioms.foldRight(proof) { (axiom, mainProof) =>
+      if (mainProof.conclusion.antecedent contains axiom.formula)
+        CutRule(axiom.proof, mainProof, axiom.formula)
       else
         mainProof
     }
@@ -132,8 +135,8 @@ class AnalyticInductionProver( options: ProverOptions ) {
    * @return A resolution proof if the sequent is provable with analytic induction, otherwise either None or the
    *         method does not terminate.
    */
-  def resolutionProof( sequent: Sequent[( String, Formula )] )( implicit ctx: MutableContext ) =
-    options.prover.getResolutionProof( inductiveSequent( sequent ) )
+  def resolutionProof(sequent: Sequent[(String, Formula)])(implicit ctx: MutableContext) =
+    options.prover.getResolutionProof(inductiveSequent(sequent))
 
   /**
    * Tries to compute an expansion proof for a sequent by using analytic induction.
@@ -143,8 +146,8 @@ class AnalyticInductionProver( options: ProverOptions ) {
    * @return An expansion proof if the sequent is provable with analytic induction, otherwise either None or the
    *         method does not terminate.
    */
-  def expansionProof( sequent: Sequent[( String, Formula )] )( implicit ctx: MutableContext ) =
-    options.prover.getExpansionProof( inductiveSequent( sequent ) )
+  def expansionProof(sequent: Sequent[(String, Formula)])(implicit ctx: MutableContext) =
+    options.prover.getExpansionProof(inductiveSequent(sequent))
 
   /**
    * Extracts the inductive sequent from a validation value.
@@ -154,8 +157,8 @@ class AnalyticInductionProver( options: ProverOptions ) {
    * @return A sequent.
    * @throws Exception If the validation value represents a validation failure.
    */
-  private def validate[T]( validation: ThrowsError[T] ): T =
-    validation.valueOr( e => throw new Exception( e ) )
+  private def validate[T](validation: ThrowsError[T]): T =
+    validation.valueOr(e => throw new Exception(e))
 
   /**
    * Computes a sequent enriched by induction axioms.
@@ -166,8 +169,9 @@ class AnalyticInductionProver( options: ProverOptions ) {
    *         quantified variables.
    */
   private def inductiveSequent(
-    sequent: Sequent[( String, Formula )] )( implicit ctx: MutableContext ): HOLSequent =
-    validate( prepareSequent( sequent ) )
+      sequent: Sequent[(String, Formula)]
+  )(implicit ctx: MutableContext): HOLSequent =
+    validate(prepareSequent(sequent))
 
   /**
    * Adds induction axioms for a formula to a given sequent.
@@ -179,13 +183,14 @@ class AnalyticInductionProver( options: ProverOptions ) {
    *         Otherwise a string describing the error is returned.
    */
   private def prepareSequent(
-    sequent: Sequent[( String, Formula )] )( implicit ctx: MutableContext ): ThrowsError[HOLSequent] = {
+      sequent: Sequent[(String, Formula)]
+  )(implicit ctx: MutableContext): ThrowsError[HOLSequent] = {
     for {
-      axioms <- options.axiomFactory( sequent )
+      axioms <- options.axiomFactory(sequent)
     } yield {
-      axioms.map( {
+      axioms.map({
         _.formula
-      } ) ++: labeledSequentToHOLSequent( sequent )
+      }) ++: labeledSequentToHOLSequent(sequent)
     }
   }
 }

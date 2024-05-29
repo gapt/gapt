@@ -6,10 +6,10 @@ import gapt.proofs.gaptic._
 
 object prop_27 extends TacticsProof {
 
-  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += InductiveType(ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat")
   ctx += hoc"p:Nat>Nat"
 
-  ctx += InductiveType( ty"list", hoc"nil:list", hoc"cons:Nat>list>list" )
+  ctx += InductiveType(ty"list", hoc"nil:list", hoc"cons:Nat>list>list")
   ctx += hoc"head:list>Nat"
   ctx += hoc"tail:list>list"
 
@@ -36,25 +36,25 @@ object prop_27 extends TacticsProof {
       goal: ∀x ∀xs ∀ys (elem(x:Nat, ys:list) → elem(x, append(xs:list, ys)))
     """
 
-  val proof = Lemma( sequent ) {
+  val proof = Lemma(sequent) {
     allR
     allR
-    induction( hov"xs:list" )
+    induction(hov"xs:list")
     allR
-    allL( "def_append_1", le"ys:list" )
-    eql( "def_append_1_0", "goal" ).fromLeftToRight
+    allL("def_append_1", le"ys:list")
+    eql("def_append_1_0", "goal").fromLeftToRight
     impR
     axiomLog
     allR
-    allL( "def_append_2", le"x_0:Nat", le"xs_0:list", le"ys:list" )
-    eql( "def_append_2_0", "goal" )
-    allL( "def_elem_2", le"x:Nat", le"x_0:Nat", le"append(xs_0:list, ys:list):list" )
-    andL( "def_elem_2_0" )
+    allL("def_append_2", le"x_0:Nat", le"xs_0:list", le"ys:list")
+    eql("def_append_2_0", "goal")
+    allL("def_elem_2", le"x:Nat", le"x_0:Nat", le"append(xs_0:list, ys:list):list")
+    andL("def_elem_2_0")
     impR
-    impL( "def_elem_2_0_1" )
+    impL("def_elem_2_0_1")
     orR
-    allL( "IHxs_0", le"ys:list" )
-    impL( "IHxs_0_0" )
+    allL("IHxs_0", le"ys:list")
+    impL("IHxs_0_0")
     axiomLog
     axiomLog
     axiomLog

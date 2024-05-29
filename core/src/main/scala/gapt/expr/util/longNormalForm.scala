@@ -28,19 +28,21 @@ object longNormalForm {
    * @return The long normal form of `term`. Note that η-expansion is applied
    * only to expressions in β-normal form.
    */
-  def apply( e: Expr ): Expr =
+  def apply(e: Expr): Expr =
     e match {
-      case Abs( v, e_ ) => Abs( v, longNormalForm( e_ ) )
-      case Apps( e, es ) =>
-        ( e.ty: @unchecked ) match {
-          case FunctionType( _, ts ) =>
-            val names = new NameGenerator( freeVariables( e ).map { _.name } )
-            val etaVars = ts.drop( es.length ).map { t => names.fresh( Var( "η", t ) ) }
+      case Abs(v, e_) => Abs(v, longNormalForm(e_))
+      case Apps(e, es) =>
+        (e.ty: @unchecked) match {
+          case FunctionType(_, ts) =>
+            val names = new NameGenerator(freeVariables(e).map { _.name })
+            val etaVars = ts.drop(es.length).map { t => names.fresh(Var("η", t)) }
             Abs.Block(
               etaVars,
               Apps(
                 e,
-                es.map { longNormalForm( _ ) } ++ etaVars.map { longNormalForm( _ ) } ) )
+                es.map { longNormalForm(_) } ++ etaVars.map { longNormalForm(_) }
+              )
+            )
         }
     }
 }

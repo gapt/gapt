@@ -20,43 +20,45 @@ import gapt.utils.linearizeStrictPartialOrder
  * it impossible to deskolemize a formula based on just the Skolem definitions:
  * for example both ∃x ∀y φ and ∃x ¬∃y¬ φ would define their Skolem functions using the same epsilon terms.
  */
-case class SkolemFunctions( skolemDefs: Map[Const, Expr] ) {
+case class SkolemFunctions(skolemDefs: Map[Const, Expr]) {
   def dependencyOrder: Vector[Const] =
     linearizeStrictPartialOrder(
       skolemDefs.keySet,
       for {
-        ( s, d ) <- skolemDefs
-        s_ <- constants.nonLogical( d )
+        (s, d) <- skolemDefs
+        s_ <- constants.nonLogical(d)
         if skolemDefs contains s_
-      } yield s -> s_ ) match {
-        case Right( depOrder ) => depOrder
-        case Left( cycle )     => throw new IllegalArgumentException( s"Cyclic Skolem definitions: $cycle" )
-      }
+      } yield s -> s_
+    ) match {
+      case Right(depOrder) => depOrder
+      case Left(cycle)     => throw new IllegalArgumentException(s"Cyclic Skolem definitions: $cycle")
+    }
 
-  def orderedDefinitions = dependencyOrder.map( c => c -> skolemDefs( c ) )
+  def orderedDefinitions = dependencyOrder.map(c => c -> skolemDefs(c))
 
   def epsilonDefinitions =
-    for ( ( skConst, skDef ) <- orderedDefinitions )
-      yield skConst -> ( skolemDefs( skConst ) match {
-      case Abs.Block( vs, Ex( v, f ) )  => Abs.Block( vs, Epsilon( v, f ) )
-      case Abs.Block( vs, All( v, f ) ) => Abs.Block( vs, Epsilon( v, -f ) )
-    } )
+    for ((skConst, skDef) <- orderedDefinitions)
+      yield skConst -> (skolemDefs(skConst) match {
+        case Abs.Block(vs, Ex(v, f))  => Abs.Block(vs, Epsilon(v, f))
+        case Abs.Block(vs, All(v, f)) => Abs.Block(vs, Epsilon(v, -f))
+      })
 
-  def +( sym: Const, defn: Expr ): SkolemFunctions = {
-    require( !skolemDefs.contains( sym ), s"Skolem symbol $sym already defined as ${skolemDefs( sym )}" )
-    copy( skolemDefs + ( sym -> defn ) )
+  def +(sym: Const, defn: Expr): SkolemFunctions = {
+    require(!skolemDefs.contains(sym), s"Skolem symbol $sym already defined as ${skolemDefs(sym)}")
+    copy(skolemDefs + (sym -> defn))
   }
 
   override def toString =
-    ( for ( ( s, d ) <- orderedDefinitions ) yield s"$s → $d\n" ).mkString
+    (for ((s, d) <- orderedDefinitions) yield s"$s → $d\n").mkString
 }
 object SkolemFunctions {
-  def apply( skolemDefs: Iterable[( Const, Expr )] ): SkolemFunctions =
-    SkolemFunctions( skolemDefs groupBy { _._1 } map {
-      case ( c, ds ) =>
+  def apply(skolemDefs: Iterable[(Const, Expr)]): SkolemFunctions =
+    SkolemFunctions(skolemDefs groupBy { _._1 } map {
+      case (c, ds) =>
         require(
           ds.size == 1,
-          s"Inconsistent skolem symbol $c:\n${ds.map { _._2 }.mkString( "\n" )}" )
+          s"Inconsistent skolem symbol $c:\n${ds.map { _._2 }.mkString("\n")}"
+        )
         c -> ds.head._2
-    } )
+    })
 }

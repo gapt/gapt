@@ -3,8 +3,8 @@ package gapt.formats
 import gapt.expr._
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Formula
-import gapt.proofs.{ DagProof, HOLSequent, SequentIndex }
-import io.circe.{ Decoder, Encoder, KeyDecoder, KeyEncoder }
+import gapt.proofs.{DagProof, HOLSequent, SequentIndex}
+import io.circe.{Decoder, Encoder, KeyDecoder, KeyEncoder}
 import gapt.formats.json.lk.LKProofCodec._
 import gapt.formats.json.nd.NDProofCodec._
 import gapt.formats.json.et.ExpansionTreeCodec._
@@ -12,7 +12,7 @@ import gapt.proofs.lk.LKProof
 import gapt.formats.json.ExprCodec._
 import gapt.formats.json.SequentCodec._
 import gapt.logic.Polarity
-import gapt.proofs.expansion.{ ETt, ExpansionProof, ExpansionSequent, ExpansionTree }
+import gapt.proofs.expansion.{ETt, ExpansionProof, ExpansionSequent, ExpansionTree}
 import gapt.proofs.nd.NDProof
 
 package object json {
@@ -65,13 +65,13 @@ package object json {
   implicit val expansionProofEncoder: Encoder[ExpansionProof] = _expansionProofEncoder
   implicit val expansionProofDecoder: Decoder[ExpansionProof] = _expansionProofDecoder
 
-  private[json] def proofEncoder[P <: DagProof[P]]( proofCollectionEncoder: Encoder[ProofCollection[P]] ): Encoder[P] = proofCollectionEncoder.contramap( ProofCollection( _ ) )
+  private[json] def proofEncoder[P <: DagProof[P]](proofCollectionEncoder: Encoder[ProofCollection[P]]): Encoder[P] = proofCollectionEncoder.contramap(ProofCollection(_))
 
-  private[json] def proofDecoder[P <: DagProof[P]]( proofCollectionDecoder: Decoder[ProofCollection[P]] ): Decoder[P] = proofCollectionDecoder.emap { c =>
-    if ( c.proofMap.isEmpty ) {
-      Left( "No proof found in decoded collection" )
+  private[json] def proofDecoder[P <: DagProof[P]](proofCollectionDecoder: Decoder[ProofCollection[P]]): Decoder[P] = proofCollectionDecoder.emap { c =>
+    if (c.proofMap.isEmpty) {
+      Left("No proof found in decoded collection")
     } else {
-      Right( c.proofMap.maxBy( _._2 )._1 )
+      Right(c.proofMap.maxBy(_._2)._1)
     }
   }
 

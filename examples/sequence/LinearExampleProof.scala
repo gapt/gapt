@@ -17,19 +17,20 @@ import gapt.proofs.lk.LKProof
  * where n is an Integer parameter >= 0.
  */
 object LinearExampleProof extends ProofSequence {
+
   /**
    * @param n An integer >= 0.
    * @return A proof of P(0), ∀x. P(x) → P(s(x)) :- P(s^n^(0))
    */
-  def apply( n: Int ): LKProof = {
-    require( n >= 0, "n must be nonnegative" )
+  def apply(n: Int): LKProof = {
+    require(n >= 0, "n must be nonnegative")
 
-    val num = Utils.numeral( n )
+    val num = Utils.numeral(n)
     val ax = fof"!x (P x -> P (s x))"
     val p0 = foa"P(0)"
     val pn = foa"P($num)"
-    Proof( Sequent( Seq( "P0" -> p0, "Ax" -> ax ), Seq( "Pn" -> pn ) ) ) {
-      repeat( chain( "Ax" ) )
+    Proof(Sequent(Seq("P0" -> p0, "Ax" -> ax), Seq("Pn" -> pn))) {
+      repeat(chain("Ax"))
       prop
     }
   }

@@ -18,12 +18,13 @@ import gapt.expr.ty.Ty
  * As the lambda calculus contains variable binders, substitution can only be defined up to alpha-equivalence.
  * When applying a substitution, bound variables are renamed if needed.
  */
-class Substitution( map: Map[Var, Expr], typeMap: Map[TVar, Ty] = Map() ) extends PreSubstitution( map, typeMap ) {
+class Substitution(map: Map[Var, Expr], typeMap: Map[TVar, Ty] = Map()) extends PreSubstitution(map, typeMap) {
 
-  for ( ( v, t ) <- map )
+  for ((v, t) <- map)
     require(
-      SubstitutableTy.applySubstitution( this, v.ty ) == t.ty,
-      s"Error creating substitution: variable $v has type ${v.ty} but subterm $t has type ${t.ty}" )
+      SubstitutableTy.applySubstitution(this, v.ty) == t.ty,
+      s"Error creating substitution: variable $v has type ${v.ty} but subterm $t has type ${t.ty}"
+    )
 
   /**
    * Applies this substitution to an object.
@@ -34,40 +35,41 @@ class Substitution( map: Map[Var, Expr], typeMap: Map[TVar, Ty] = Map() ) extend
    * @tparam U The type of x substituted.
    * @return
    */
-  def apply[T, U]( x: T )( implicit ev: Substitutable[Substitution, T, U] ): U = ev.applySubstitution( this, x )
+  def apply[T, U](x: T)(implicit ev: Substitutable[Substitution, T, U]): U = ev.applySubstitution(this, x)
 
   // Special-cased for performance
-  override def apply( v: Var ): Expr = super.apply( v )
+  override def apply(v: Var): Expr = super.apply(v)
 
   /** Compose two substitutions such that `(a compose b)(x) == a(b(x))`. */
-  def compose( that: Substitution ): Substitution =
+  def compose(that: Substitution): Substitution =
     Substitution(
-      ( domain ++ that.domain ).map( v => v -> this( that( v ) ) ),
-      ( this.typeMap.keySet ++ that.typeMap.keySet ).map( v => ( v, this( that( v ) ) ) ) )
+      (domain ++ that.domain).map(v => v -> this(that(v))),
+      (this.typeMap.keySet ++ that.typeMap.keySet).map(v => (v, this(that(v))))
+    )
 
-  def restrict( newDomain: Iterable[Var] ): Substitution =
-    Substitution( newDomain.view.map( v => v -> this( v ) ), typeMap )
+  def restrict(newDomain: Iterable[Var]): Substitution =
+    Substitution(newDomain.view.map(v => v -> this(v)), typeMap)
 
-  def isInjectiveOnDomain: Boolean = isInjective( domain )
-  def isInjective( dom: Set[Var] ): Boolean =
+  def isInjectiveOnDomain: Boolean = isInjective(domain)
+  def isInjective(dom: Set[Var]): Boolean =
     dom.forall { x =>
-      val images = ( dom - x ).map( apply( _ ) )
-      def solve( term: Expr ): Boolean =
-        images( term ) || ( term match {
-          case Const( _, _, _ ) => true
-          case App( a, b )      => solve( a ) && solve( b )
-          case Var( _, _ )      => false
-        } )
-      !solve( map( x ) )
+      val images = (dom - x).map(apply(_))
+      def solve(term: Expr): Boolean =
+        images(term) || (term match {
+          case Const(_, _, _) => true
+          case App(a, b)      => solve(a) && solve(b)
+          case Var(_, _)      => false
+        })
+      !solve(map(x))
     }
 
 }
 
 object Substitution {
-  def apply( subs: Iterable[( Var, Expr )], tySubs: Iterable[( TVar, Ty )] = Nil ): Substitution =
-    new Substitution( Map() ++ subs, Map() ++ tySubs )
-  def apply( subs: ( Var, Expr )* ): Substitution = new Substitution( Map() ++ subs )
-  def apply( variable: Var, expression: Expr ): Substitution = new Substitution( Map( variable -> expression ) )
-  def apply( map: Map[Var, Expr] ): Substitution = new Substitution( map )
-  def apply() = new Substitution( Map() )
+  def apply(subs: Iterable[(Var, Expr)], tySubs: Iterable[(TVar, Ty)] = Nil): Substitution =
+    new Substitution(Map() ++ subs, Map() ++ tySubs)
+  def apply(subs: (Var, Expr)*): Substitution = new Substitution(Map() ++ subs)
+  def apply(variable: Var, expression: Expr): Substitution = new Substitution(Map(variable -> expression))
+  def apply(map: Map[Var, Expr]): Substitution = new Substitution(map)
+  def apply() = new Substitution(Map())
 }

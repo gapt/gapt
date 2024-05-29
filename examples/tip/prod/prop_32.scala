@@ -4,18 +4,18 @@ import gapt.expr._
 import gapt.expr.ty.TBase
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.Sequent
-import gapt.proofs.gaptic.{ Lemma, TacticsProof, _ }
+import gapt.proofs.gaptic.{Lemma, TacticsProof, _}
 
 object prop_32 extends TacticsProof {
 
   // Sorts
-  ctx += TBase( "sk" )
+  ctx += TBase("sk")
 
   // Inductive types
-  ctx += InductiveType( ty"list", hoc"'nil' :list", hoc"'cons' :sk>list>list" )
-  ctx += InductiveType( ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat" )
+  ctx += InductiveType(ty"list", hoc"'nil' :list", hoc"'cons' :sk>list>list")
+  ctx += InductiveType(ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat")
 
-  //Function constants
+  // Function constants
   ctx += hoc"'length' :list>Nat"
   ctx += hoc"'append' :list>list>list"
   ctx += hoc"'rotate' :Nat>list>list"
@@ -41,37 +41,37 @@ object prop_32 extends TacticsProof {
   val theory = sequent.antecedent ++: Sequent()
 
   val append_nil_left_id = hof"!xs append(xs,nil) = xs"
-  val append_nil_left_id_proof = Lemma( theory :+
-    ( "append_nil_left_id" -> append_nil_left_id ) ) {
-    allR; induction( hov"xs:list" )
-    //- BC
+  val append_nil_left_id_proof = Lemma(theory :+
+    ("append_nil_left_id" -> append_nil_left_id)) {
+    allR; induction(hov"xs:list")
+    // - BC
     rewrite.many ltr "def_append_0" in "append_nil_left_id"; refl
-    //- IC
+    // - IC
     rewrite.many ltr "def_append_1" in "append_nil_left_id";
     rewrite.many ltr "IHxs_0" in "append_nil_left_id"; refl
   }
 
   val append_comm = hof"!xs!ys!zs append(xs,append(ys,zs)) = append(append(xs,ys),zs)"
-  val append_comm_proof = Lemma( theory :+
-    ( "append_comm" -> append_comm ) ) {
-    allR; induction( hov"xs:list" )
-    //- BC
+  val append_comm_proof = Lemma(theory :+
+    ("append_comm" -> append_comm)) {
+    allR; induction(hov"xs:list")
+    // - BC
     allR; allR;
     rewrite.many ltr "def_append_0" in "append_comm"; refl
-    //- IC
+    // - IC
     allR; allR;
     rewrite.many ltr "def_append_1" in "append_comm"
     rewrite.many ltr "IHxs_0" in "append_comm"; refl
   }
 
-  val rot_gen = ( append_nil_left_id & append_comm ) -->
+  val rot_gen = (append_nil_left_id & append_comm) -->
     hof"!xs!ys rotate(length(xs), append(xs,ys)) = append(ys, xs)"
 
-  val rot_gen_proof = Lemma( theory :+ ( "rot_gen" -> rot_gen ) ) {
-    impR; andL; allR; induction( hov"xs:list" )
-    //- BC
+  val rot_gen_proof = Lemma(theory :+ ("rot_gen" -> rot_gen)) {
+    impR; andL; allR; induction(hov"xs:list")
+    // - BC
     escargot
-    //- IC
+    // - IC
     allR
     rewrite.many ltr "def_length_1" in "rot_gen_1"
     rewrite.many ltr "def_append_1" in "rot_gen_1"
@@ -80,16 +80,16 @@ object prop_32 extends TacticsProof {
 
   val lemma = append_nil_left_id & append_comm & rot_gen
 
-  val lemma_proof = Lemma( theory :+ ( "lemma" -> lemma ) ) {
+  val lemma_proof = Lemma(theory :+ ("lemma" -> lemma)) {
     andR; andR;
-    insert( append_nil_left_id_proof )
-    insert( append_comm_proof )
-    insert( rot_gen_proof )
+    insert(append_nil_left_id_proof)
+    insert(append_comm_proof)
+    insert(rot_gen_proof)
   }
 
-  val proof = Lemma( sequent ) {
-    cut( "lemma", lemma )
-    insert( lemma_proof )
+  val proof = Lemma(sequent) {
+    cut("lemma", lemma)
+    insert(lemma_proof)
     escargot
   }
 }

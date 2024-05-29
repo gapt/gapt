@@ -14,6 +14,7 @@ import gapt.proofs.lk.rules.macros.WeakeningMacroRule
 import gapt.proofs.lk.transformations.eliminateDefinitions
 
 object instantiateProof {
+
   /**
    * Given a proof name found in the context and a set of arguments matching
    * the argument list of the chosen proof name this function constructs an
@@ -23,9 +24,9 @@ object instantiateProof {
    *
    * @param proofName The name of the linkProof
    */
-  def Instantiate( proofName: Expr )( implicit ctx: Context ): LKProof = regularize( eliminateDefinitions( instantiateProof( proofName )( ctx ) ) )
+  def Instantiate(proofName: Expr)(implicit ctx: Context): LKProof = regularize(eliminateDefinitions(instantiateProof(proofName)(ctx)))
 
-  def apply( proofName: Expr )( implicit ctx: Context ): LKProof = withConnector( proofName )._2
+  def apply(proofName: Expr)(implicit ctx: Context): LKProof = withConnector(proofName)._2
 
   /**
    * Given a proof name, returns a maximally instantiated proof.
@@ -33,24 +34,24 @@ object instantiateProof {
    * @return Connector from instantiated proof to the declared sequent of the proof name,
    *         together with the instantiated proof
    */
-  def withConnector( proofName: Expr )( implicit ctx: Context ): ( SequentConnector, LKProof ) = {
-    ctx.get[ProofDefinitions].findWithConnector( proofName ).headOption match {
-      case Some( ( connDefPrf2Link, subst, defPrf ) ) =>
-        val ( instPrf, connInstPrf2SubstDefPrf ) = buildProof.withSequentConnector( subst( defPrf ), ctx )
+  def withConnector(proofName: Expr)(implicit ctx: Context): (SequentConnector, LKProof) = {
+    ctx.get[ProofDefinitions].findWithConnector(proofName).headOption match {
+      case Some((connDefPrf2Link, subst, defPrf)) =>
+        val (instPrf, connInstPrf2SubstDefPrf) = buildProof.withSequentConnector(subst(defPrf), ctx)
         connInstPrf2SubstDefPrf * connDefPrf2Link -> instPrf
       case None =>
-        val Some( sequent ) = ctx.get[ProofNames].lookup( proofName ): @unchecked
-        SequentConnector( sequent ) -> ProofLink( proofName, sequent )
+        val Some(sequent) = ctx.get[ProofNames].lookup(proofName): @unchecked
+        SequentConnector(sequent) -> ProofLink(proofName, sequent)
     }
   }
-  def apply( proof: LKProof )( implicit ctx: Context ): LKProof =
-    buildProof( proof, ctx )
+  def apply(proof: LKProof)(implicit ctx: Context): LKProof =
+    buildProof(proof, ctx)
 
   private object buildProof extends LKVisitor[Context] {
-    override def visitProofLink( link: ProofLink, otherArg: Context ): ( LKProof, SequentConnector ) = {
-      val ( _, instProof ) = instantiateProof.withConnector( link.referencedProof )( otherArg )
-      val finProof = WeakeningMacroRule( instProof, link.referencedSequent )
-      ( finProof, guessInjection( finProof.endSequent, link.referencedSequent ) )
+    override def visitProofLink(link: ProofLink, otherArg: Context): (LKProof, SequentConnector) = {
+      val (_, instProof) = instantiateProof.withConnector(link.referencedProof)(otherArg)
+      val finProof = WeakeningMacroRule(instProof, link.referencedSequent)
+      (finProof, guessInjection(finProof.endSequent, link.referencedSequent))
     }
   }
 

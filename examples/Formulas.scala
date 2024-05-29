@@ -12,6 +12,7 @@ import gapt.expr.formula.fol.FOLVar
  * Contains some commonly used formulas.
  */
 object Formulas {
+
   /**
    *
    * @return A formula expressing the reflexivity of =.
@@ -35,9 +36,9 @@ object Formulas {
    * @param f A function symbol.
    * @return A formula expressing that = is a congruence w.r.t. the unary function symbol f.
    */
-  def CongUnaryEq( f: String ): FOLFormula = {
-    val Seq( x, y ) = safeNames( "=", f )( "x", "y" ) map { FOLVar( _ ) }
-    All.Block( Seq( x, y ), Eq( x, y ) --> Eq( FOLFunction( f, x ), FOLFunction( f, y ) ) )
+  def CongUnaryEq(f: String): FOLFormula = {
+    val Seq(x, y) = safeNames("=", f)("x", "y") map { FOLVar(_) }
+    All.Block(Seq(x, y), Eq(x, y) --> Eq(FOLFunction(f, x), FOLFunction(f, y)))
   }
 
   /**
@@ -45,26 +46,26 @@ object Formulas {
    * @param f A function symbol.
    * @return A formula expressing that = is a congruence w.r.t. the binary function symbol f.
    */
-  def CongBinaryEq( f: String ): FOLFormula = {
-    val Seq( x0, x1, y0, y1 ) = safeNames( "=", f )( "x_0", "x_1", "y0", "y_1" ) map { FOLVar( _ ) }
-    All.Block( Seq( x0, x1, y0, y1 ), Eq( x0, y0 ) --> ( Eq( x1, y1 ) --> Eq( FOLFunction( f, x0, x1 ), FOLFunction( f, y0, y1 ) ) ) )
+  def CongBinaryEq(f: String): FOLFormula = {
+    val Seq(x0, x1, y0, y1) = safeNames("=", f)("x_0", "x_1", "y0", "y_1") map { FOLVar(_) }
+    All.Block(Seq(x0, x1, y0, y1), Eq(x0, y0) --> (Eq(x1, y1) --> Eq(FOLFunction(f, x0, x1), FOLFunction(f, y0, y1))))
   }
 
   /**
    * Contains definitions related to arithmetic.
    */
   object Peano {
-    val zero = FOLConst( "0" )
+    val zero = FOLConst("0")
     val AdditionBase = fof"!x x+0 = x"
     val AdditionSucc = fof"!x!y x + s(y) = s(x+y)"
 
     val AdditionAssoc = fof"!x!y!z (x+y)+z = x+(y+z)"
   }
 
-  private def safeNames( symbs: String* )( names: String* ): Seq[String] = for ( s <- names ) yield {
+  private def safeNames(symbs: String*)(names: String*): Seq[String] = for (s <- names) yield {
     var tmp = s
-    while ( symbs contains tmp ) tmp = tmp + "_0"
+    while (symbs contains tmp) tmp = tmp + "_0"
     tmp
   }
-  private def safeName( symbs: String* )( name: String ): String = safeNames( symbs: _* )( name ).head
+  private def safeName(symbs: String*)(name: String): String = safeNames(symbs: _*)(name).head
 }

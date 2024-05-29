@@ -5,7 +5,7 @@ import gapt.expr.util.ExpressionParseHelper.Splice
 import gapt.formats.babel.Notation
 import gapt.formats.babel.Precedence
 import gapt.proofs.context.update.InductiveType
-import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
+import gapt.proofs.context.update.{PrimitiveRecursiveFunction => PrimRecFun}
 import gapt.proofs.gaptic.TacticsProof
 
 /**
@@ -15,18 +15,18 @@ trait PrimeDefinitions extends TacticsProof {
   def k: Int
 
   // Types
-  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
+  ctx += InductiveType("nat", hoc"0 : nat", hoc"s : nat>nat")
   ctx += hof"1 = s 0"
-  implicit def spliceNum( i: Int ): Splice[Expr] =
-    if ( i == 0 ) le"0" else le"s ${spliceNum( i - 1 )}"
+  implicit def spliceNum(i: Int): Splice[Expr] =
+    if (i == 0) le"0" else le"s ${spliceNum(i - 1)}"
 
   // Constants
   ctx += hoc"'+': nat>nat>nat"
-  ctx += Notation.Infix( "+", Precedence.plusMinus )
+  ctx += Notation.Infix("+", Precedence.plusMinus)
   ctx += hoc"'*': nat>nat>nat"
-  ctx += Notation.Infix( "*", Precedence.timesDiv )
+  ctx += Notation.Infix("*", Precedence.timesDiv)
   ctx += hoc"'<': nat>nat>o"
-  ctx += Notation.Infix( "<", Precedence.infixRel )
+  ctx += Notation.Infix("<", Precedence.infixRel)
 
   // Theory axioms
   ctx += "distrib1" -> hcl":- (x + 1) * y + x + 1 = (x + 1) * (y + 1)"
@@ -49,7 +49,7 @@ trait PrimeDefinitions extends TacticsProof {
   ctx += "distrib2" -> hcl":- x + y1*z + y2*z = x + (y1+y2)*z"
   ctx += "ring1" -> hcl":- k + (n + (k + 1) * l + 1) = n + (k + 1) * (l + 1)"
 
-  //Definitions
+  // Definitions
   ctx += hof" set_1{?a}(k : ?a) = ( λl l = k )"
   ctx += hof" ν(k,l) = ( λm ∃n m = k + n * l )"
   ctx += hof" U k l = ( λm ∃i ((i < l ∧ ¬i = k ) ∧ ν(i,l,m)) )"
@@ -70,11 +70,11 @@ trait PrimeDefinitions extends TacticsProof {
   // Definitions that depend on k
   ctx += hoc"p : nat > nat"
 
-  ctx += PrimRecFun( hoc"P : nat > nat > o", "P 0 = set_1 (p 0)", "P (s i) = union (P i) (set_1 (p (s i)))" )
-  ctx += PrimRecFun( hoc"S : nat > nat > o", "S 0 = ν(0, p 0)", "S (s i) = union (S i) (ν(0, p (s i)))" )
-  ctx += PrimRecFun( hoc"Q: nat > o", "Q 0 = PRIME (p 0)", "Q (s i) = (Q i ∧ PRIME (p (s i)))" )
+  ctx += PrimRecFun(hoc"P : nat > nat > o", "P 0 = set_1 (p 0)", "P (s i) = union (P i) (set_1 (p (s i)))")
+  ctx += PrimRecFun(hoc"S : nat > nat > o", "S 0 = ν(0, p 0)", "S (s i) = union (S i) (ν(0, p (s i)))")
+  ctx += PrimRecFun(hoc"Q: nat > o", "Q 0 = PRIME (p 0)", "Q (s i) = (Q i ∧ PRIME (p (s i)))")
   ctx += hof"R i = (∀y (P i y -> PRIME y))"
-  ctx += PrimRecFun( hoc"prod : nat > nat", "prod 0 = p 0", "prod (s i) = prod i * p (s i)" )
+  ctx += PrimRecFun(hoc"prod : nat > nat", "prod 0 = p 0", "prod (s i) = prod i * p (s i)")
 
   ctx += hof"F k =  (∀l (PRIME(l) <-> P k l))"
 }

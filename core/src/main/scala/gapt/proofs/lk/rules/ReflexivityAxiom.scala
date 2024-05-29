@@ -15,8 +15,8 @@ import gapt.proofs.HOLSequent
  *
  * @param s The term s.
  */
-case class ReflexivityAxiom( s: Expr ) extends InitialSequent {
+case class ReflexivityAxiom(s: Expr) extends InitialSequent {
   override def name: String = "refl"
-  override def conclusion: HOLSequent = HOLSequent( Seq(), Seq( Eq( s, s ) ) )
-  def mainFormula: Formula = Eq( s, s )
+  override def conclusion: HOLSequent = HOLSequent(Seq(), Seq(Eq(s, s)))
+  def mainFormula: Formula = Eq(s, s)
 }

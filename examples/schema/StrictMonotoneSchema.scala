@@ -4,15 +4,15 @@ import gapt.expr._
 import gapt.proofs.Sequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.update.InductiveType
-import gapt.proofs.context.update.{ PrimitiveRecursiveFunction => PrimRecFun }
+import gapt.proofs.context.update.{PrimitiveRecursiveFunction => PrimRecFun}
 import gapt.proofs.context.update.ProofDefinitionDeclaration
 import gapt.proofs.context.update.ProofNameDeclaration
 import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 
 object StrictMonotoneSchema extends TacticsProof {
-  ctx += InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-  ctx += Sort( "i" )
+  ctx += InductiveType("nat", hoc"0 : nat", hoc"s : nat>nat")
+  ctx += Sort("i")
   ctx += hoc"f:i>nat"
   ctx += hoc"suc:i>i"
   ctx += hoc"z:i"
@@ -24,7 +24,7 @@ object StrictMonotoneSchema extends TacticsProof {
 
   ctx += hoc"omega: nat>nat"
   ctx += hoc"phi: nat>nat"
-  ctx += PrimRecFun( hoc"POR:nat>i>o", "POR 0 x = E 0 (f x) ", "POR (s y) x = (E (s y) (f x) ∨ POR y x)" )
+  ctx += PrimRecFun(hoc"POR:nat>i>o", "POR 0 x = E 0 (f x) ", "POR (s y) x = (E (s y) (f x) ∨ POR y x)")
   ctx += "LEDefinition" -> hos"POR(n,a) :- LE(f(a), s(n))"
   ctx += "monotonicity" -> hos"POR(n,a) :- LE(f(suc(a)), s(n))"
   ctx += "NumericTransitivity" -> hos"E(n,f(a)),E(n,f(suc(a))) :- E(f(a), f(suc(a)))"
@@ -33,84 +33,89 @@ object StrictMonotoneSchema extends TacticsProof {
   ctx += "OrderPrinciple" -> hos"LE(f(suc(a)),s(n)) :- E(f(a),f(suc(a))), LE(f(suc(a)),n)"
 
   val esOmega = Sequent(
-    Seq( hof"!x POR(n,x)" ),
-    Seq( hof"?x ( E(f(x), f(suc(x))) )" ) )
-  ctx += ProofNameDeclaration( le"omega n", esOmega )
+    Seq(hof"!x POR(n,x)"),
+    Seq(hof"?x ( E(f(x), f(suc(x))) )")
+  )
+  ctx += ProofNameDeclaration(le"omega n", esOmega)
   val esPhi = Sequent(
-    Seq( hof"?x ( E(f(x), f(suc(x))) | LE(f(suc(x)),n))" ),
-    Seq( hof"?x ( E(f(x), f(suc(x))) )" ) )
-  ctx += ProofNameDeclaration( le"phi n", esPhi )
+    Seq(hof"?x ( E(f(x), f(suc(x))) | LE(f(suc(x)),n))"),
+    Seq(hof"?x ( E(f(x), f(suc(x))) )")
+  )
+  ctx += ProofNameDeclaration(le"phi n", esPhi)
 
-  //The base case of  omega
+  // The base case of  omega
   val esOmegaBc =
     Sequent(
-      Seq( "Ant_0" -> hof"!x POR(0,x)" ),
-      Seq( "Suc_0" -> hof"?x (E(f(x), f(suc(x))))" ) )
-  val omegaBc = Lemma( esOmegaBc ) {
-    cut( "cut", hof"?x ( E(f(x), f(suc(x))) | LE(f(suc(x)),0))" )
-    exR( "cut", hoc"z" )
-    allL( hoc"z" )
-    allL( le"(suc z)" )
-    unfold( "POR" ) atMost 1 in "Ant_0_0"
-    unfold( "POR" ) atMost 1 in "Ant_0_1"
+      Seq("Ant_0" -> hof"!x POR(0,x)"),
+      Seq("Suc_0" -> hof"?x (E(f(x), f(suc(x))))")
+    )
+  val omegaBc = Lemma(esOmegaBc) {
+    cut("cut", hof"?x ( E(f(x), f(suc(x))) | LE(f(suc(x)),0))")
+    exR("cut", hoc"z")
+    allL(hoc"z")
+    allL(le"(suc z)")
+    unfold("POR") atMost 1 in "Ant_0_0"
+    unfold("POR") atMost 1 in "Ant_0_1"
     orR
-    ref( "NumericTransitivity" )
-    ref( "phi" )
+    ref("NumericTransitivity")
+    ref("phi")
   }
-  ctx += ProofDefinitionDeclaration( le"omega 0", omegaBc )
+  ctx += ProofDefinitionDeclaration(le"omega 0", omegaBc)
   val esOmegaSc =
     Sequent(
-      Seq( "Ant_0" -> hof"!x POR(s(n),x)" ),
-      Seq( "Suc_0" -> hof"?x (E(f(x), f(suc(x))))" ) )
-  val omegaSc = Lemma( esOmegaSc ) {
-    cut( "cut", hof"?x ( E(f(x), f(suc(x))) | LE(f(suc(x)),s(n)))" )
-    exR( "cut", hoc"z" )
-    allL( hoc"z" )
-    allL( le"(suc z)" )
-    unfold( "POR" ) atMost 1 in "Ant_0_0"
-    unfold( "POR" ) atMost 1 in "Ant_0_1"
+      Seq("Ant_0" -> hof"!x POR(s(n),x)"),
+      Seq("Suc_0" -> hof"?x (E(f(x), f(suc(x))))")
+    )
+  val omegaSc = Lemma(esOmegaSc) {
+    cut("cut", hof"?x ( E(f(x), f(suc(x))) | LE(f(suc(x)),s(n)))")
+    exR("cut", hoc"z")
+    allL(hoc"z")
+    allL(le"(suc z)")
+    unfold("POR") atMost 1 in "Ant_0_0"
+    unfold("POR") atMost 1 in "Ant_0_1"
     orR
-    orL( "Ant_0_1" )
-    exR( "cut", hoc"z" )
+    orL("Ant_0_1")
+    exR("cut", hoc"z")
     orR
     orL
-    ref( "NumericTransitivity" )
-    ref( "monotonicity" )
-    ref( "LEDefinition" )
-    ref( "phi" )
+    ref("NumericTransitivity")
+    ref("monotonicity")
+    ref("LEDefinition")
+    ref("phi")
   }
-  ctx += ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
+  ctx += ProofDefinitionDeclaration(le"omega (s n)", omegaSc)
 
   val esPhiBc =
     Sequent(
-      Seq( "Ant_0" -> hof"?x ( E(f(x), f(suc(x))) | LE(f(suc(x)),0))" ),
-      Seq( "Suc_0" -> hof"?x (E(f(x), f(suc(x))) )" ) )
-  val phiBc = Lemma( esPhiBc ) {
-    exL( fov"a" )
-    exR( fov"a" )
-    orL( "Ant_0" )
+      Seq("Ant_0" -> hof"?x ( E(f(x), f(suc(x))) | LE(f(suc(x)),0))"),
+      Seq("Suc_0" -> hof"?x (E(f(x), f(suc(x))) )")
+    )
+  val phiBc = Lemma(esPhiBc) {
+    exL(fov"a")
+    exR(fov"a")
+    orL("Ant_0")
     trivial
-    ref( "minimalElement" )
+    ref("minimalElement")
   }
-  ctx += ProofDefinitionDeclaration( le"phi 0", phiBc )
+  ctx += ProofDefinitionDeclaration(le"phi 0", phiBc)
 
   val esPhiSc =
     Sequent(
-      Seq( "Ant_0" -> hof"?x ( E(f(x), f(suc(x))) | LE(f(suc(x)),s(n)))" ),
-      Seq( "Suc_0" -> hof"?x (E(f(x), f(suc(x))) )" ) )
-  val phiSc = Lemma( esPhiSc ) {
-    cut( "cut", hof"?x ( E(f(x), f(suc(x))) | LE(f(suc(x)), n) )" )
-    exL( fov"a" )
-    exR( "cut", fov"a" )
+      Seq("Ant_0" -> hof"?x ( E(f(x), f(suc(x))) | LE(f(suc(x)),s(n)))"),
+      Seq("Suc_0" -> hof"?x (E(f(x), f(suc(x))) )")
+    )
+  val phiSc = Lemma(esPhiSc) {
+    cut("cut", hof"?x ( E(f(x), f(suc(x))) | LE(f(suc(x)), n) )")
+    exL(fov"a")
+    exR("cut", fov"a")
     orR
     orL
-    exR( "cut", fov"a" )
+    exR("cut", fov"a")
     orR
     trivial
-    ref( "OrderPrinciple" )
-    ref( "phi" )
+    ref("OrderPrinciple")
+    ref("phi")
   }
-  ctx += ProofDefinitionDeclaration( le"phi (s n)", phiSc )
+  ctx += ProofDefinitionDeclaration(le"phi (s n)", phiSc)
 
 }
-

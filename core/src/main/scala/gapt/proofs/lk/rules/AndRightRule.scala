@@ -23,25 +23,25 @@ import gapt.proofs.lk.LKProof
  * @param rightSubProof The proof π,,2,,
  * @param aux2 The index of B.
  */
-case class AndRightRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex )
-  extends BinaryLKProof with CommonRule {
+case class AndRightRule(leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex)
+    extends BinaryLKProof with CommonRule {
 
-  validateIndices( leftPremise, Seq(), Seq( aux1 ) )
-  validateIndices( rightPremise, Seq(), Seq( aux2 ) )
+  validateIndices(leftPremise, Seq(), Seq(aux1))
+  validateIndices(rightPremise, Seq(), Seq(aux2))
 
-  val leftConjunct: Formula = leftPremise( aux1 )
-  val rightConjunct: Formula = rightPremise( aux2 )
+  val leftConjunct: Formula = leftPremise(aux1)
+  val rightConjunct: Formula = rightPremise(aux2)
 
-  val mainFormula: Formula = And( leftConjunct, rightConjunct )
+  val mainFormula: Formula = And(leftConjunct, rightConjunct)
 
-  def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux1 ), Seq( aux2 ) )
+  def auxIndices: Seq[Seq[SequentIndex]] = Seq(Seq(aux1), Seq(aux2))
 
   override def name: String = "∧:r"
 
   override def mainFormulaSequent: HOLSequent = Sequent() :+ mainFormula
 }
 
-object AndRightRule extends ConvenienceConstructor( "AndRightRule" ) {
+object AndRightRule extends ConvenienceConstructor("AndRightRule") {
 
   /**
    * Convenience constructor for ∧:r.
@@ -54,14 +54,13 @@ object AndRightRule extends ConvenienceConstructor( "AndRightRule" ) {
    * @param rightConjunct Index of the right conjunct or the conjunct itself.
    * @return
    */
-  def apply( leftSubProof: LKProof, leftConjunct: IndexOrFormula,
-             rightSubProof: LKProof, rightConjunct: IndexOrFormula ): AndRightRule = {
-    val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
+  def apply(leftSubProof: LKProof, leftConjunct: IndexOrFormula, rightSubProof: LKProof, rightConjunct: IndexOrFormula): AndRightRule = {
+    val (leftPremise, rightPremise) = (leftSubProof.endSequent, rightSubProof.endSequent)
 
-    val ( _, leftIndices ) = findAndValidate( leftPremise )( Seq(), Seq( leftConjunct ) )
-    val ( _, rightIndices ) = findAndValidate( rightPremise )( Seq(), Seq( rightConjunct ) )
+    val (_, leftIndices) = findAndValidate(leftPremise)(Seq(), Seq(leftConjunct))
+    val (_, rightIndices) = findAndValidate(rightPremise)(Seq(), Seq(rightConjunct))
 
-    new AndRightRule( leftSubProof, Suc( leftIndices( 0 ) ), rightSubProof, Suc( rightIndices( 0 ) ) )
+    new AndRightRule(leftSubProof, Suc(leftIndices(0)), rightSubProof, Suc(rightIndices(0)))
   }
 
   /**
@@ -73,12 +72,11 @@ object AndRightRule extends ConvenienceConstructor( "AndRightRule" ) {
    * @param mainFormula The formula to be inferred. Must be of the form A ∧ B.
    * @return
    */
-  def apply( leftSubProof: LKProof, rightSubProof: LKProof,
-             mainFormula: Formula ): AndRightRule = mainFormula match {
-    case And( f, g ) =>
-      val p = apply( leftSubProof, f, rightSubProof, g )
-      assert( p.mainFormula == mainFormula )
+  def apply(leftSubProof: LKProof, rightSubProof: LKProof, mainFormula: Formula): AndRightRule = mainFormula match {
+    case And(f, g) =>
+      val p = apply(leftSubProof, f, rightSubProof, g)
+      assert(p.mainFormula == mainFormula)
       p
-    case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not a conjunction." )
+    case _ => throw LKRuleCreationException(s"Proposed main formula $mainFormula is not a conjunction.")
   }
 }

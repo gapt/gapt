@@ -5,23 +5,23 @@ import gapt.proofs.lk.LKProof
 
 trait Reduction {
 
-  def reduce( proof: LKProof ): Option[LKProof]
+  def reduce(proof: LKProof): Option[LKProof]
 
-  def orElse( reduction: Reduction ): Reduction =
+  def orElse(reduction: Reduction): Reduction =
     new Reduction {
-      def reduce( proof: LKProof ): Option[LKProof] =
-        Reduction.this.reduce( proof ) orElse reduction.reduce( proof )
+      def reduce(proof: LKProof): Option[LKProof] =
+        Reduction.this.reduce(proof) orElse reduction.reduce(proof)
     }
 
-  def andThen( reduction: Reduction ): Reduction =
+  def andThen(reduction: Reduction): Reduction =
     new Reduction {
-      def reduce( proof: LKProof ): Option[LKProof] =
-        Reduction.this.reduce( proof ) flatMap reduction.reduce
+      def reduce(proof: LKProof): Option[LKProof] =
+        Reduction.this.reduce(proof) flatMap reduction.reduce
     }
 
-  def isRedex( proof: LKProof ): Boolean =
-    reduce( proof ).nonEmpty
+  def isRedex(proof: LKProof): Boolean =
+    reduce(proof).nonEmpty
 
-  def redexes( proof: LKProof ): Seq[LKProof] =
-    proof.subProofs.filter { isRedex( _ ) }.toSeq
+  def redexes(proof: LKProof): Seq[LKProof] =
+    proof.subProofs.filter { isRedex(_) }.toSeq
 }

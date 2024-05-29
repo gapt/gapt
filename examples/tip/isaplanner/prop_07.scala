@@ -10,7 +10,7 @@ import gapt.provers.viper.aip.axioms.IndependentInductionAxioms
  */
 object prop_07 extends TacticsProof {
 
-  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += InductiveType(ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat")
   ctx += hoc"p:Nat>Nat"
   ctx += hoc"le:Nat>Nat>o"
   ctx += hoc"plus:Nat>Nat>Nat"
@@ -28,37 +28,35 @@ object prop_07 extends TacticsProof {
                          goal: ∀n ∀m minus(plus(n, m), n) = m
   """
 
-  val proof = Lemma( sequent ) {
+  val proof = Lemma(sequent) {
     allR
-    induction( hov"n:Nat" )
+    induction(hov"n:Nat")
     // Base case
     allR
-    allL( "def_plus_1", le"m:Nat" )
-    eql( "def_plus_1_0", "goal" ).fromLeftToRight
-    allL( "def_minus_1", le"Z:Nat" )
-    induction( hov"m:Nat" )
-    //base case
+    allL("def_plus_1", le"m:Nat")
+    eql("def_plus_1_0", "goal").fromLeftToRight
+    allL("def_minus_1", le"Z:Nat")
+    induction(hov"m:Nat")
+    // base case
     axiomLog
-    //inductive case
-    allL( "def_minus_2", le"m_0:Nat" )
+    // inductive case
+    allL("def_minus_2", le"m_0:Nat")
     axiomLog
 
     // Inductive case
     allR
-    forget( "def_pred", "def_plus_1", "def_minus_1", "def_minus_2", "ax_nat_1" )
-    allL( "IHn_0", le"m:Nat" )
-    allL( "def_plus_2", le"n_0:Nat", le"m:Nat" )
-    allL( "def_minus_3", le"plus(n_0:Nat, m:Nat):Nat", le"n_0:Nat" )
-    forget( "def_plus_2", "def_minus_3" )
-    eql( "def_plus_2_0", "goal" )
-    eql( "def_minus_3_0", "goal" )
+    forget("def_pred", "def_plus_1", "def_minus_1", "def_minus_2", "ax_nat_1")
+    allL("IHn_0", le"m:Nat")
+    allL("def_plus_2", le"n_0:Nat", le"m:Nat")
+    allL("def_minus_3", le"plus(n_0:Nat, m:Nat):Nat", le"n_0:Nat")
+    forget("def_plus_2", "def_minus_3")
+    eql("def_plus_2_0", "goal")
+    eql("def_minus_3_0", "goal")
     axiomLog
 
   }
 
-  val proof2 = Lemma( sequent ) {
-    analyticInduction.withAxioms( IndependentInductionAxioms().
-      forVariables( List( hov"n:Nat", hov"m:Nat" ) ).
-      forLabel( "goal" ) )
+  val proof2 = Lemma(sequent) {
+    analyticInduction.withAxioms(IndependentInductionAxioms().forVariables(List(hov"n:Nat", hov"m:Nat")).forLabel("goal"))
   }
 }

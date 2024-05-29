@@ -1,16 +1,17 @@
 package gapt.prooftool
 
 import java.awt.event.MouseEvent
-import java.awt.{ Color, Font }
+import java.awt.{Color, Font}
 
 import scala.collection.mutable
-import gapt.proofs.{ Sequent, SequentIndex, SequentProof }
-import org.scilab.forge.jlatexmath.{ TeXConstants, TeXFormula, TeXIcon }
+import gapt.proofs.{Sequent, SequentIndex, SequentProof}
+import org.scilab.forge.jlatexmath.{TeXConstants, TeXFormula, TeXIcon}
 
 import scala.swing._
-import scala.swing.event.{ MouseClicked, MouseEntered, MouseExited, WindowDeactivated }
+import scala.swing.event.{MouseClicked, MouseEntered, MouseExited, WindowDeactivated}
 
 object DrawSequent {
+
   /**
    * Draws a sequent that is part of a sequent proof.
    * @param parent The DrawSequentProof object that this belongs to.
@@ -21,11 +22,12 @@ object DrawSequent {
    * @tparam F The type of elements of the sequent.
    */
   def apply[F, T <: SequentProof[F, T]](
-    parent:                 DrawSequentProof[F, T],
-    seq:                    Sequent[F],
-    mainAuxIndices:         Set[SequentIndex],
-    cutAncestorIndices:     Set[SequentIndex],
-    sequentElementRenderer: F => String ): DrawSequentInProof[F, T] = new DrawSequentInProof[F, T]( parent, seq, mainAuxIndices, cutAncestorIndices, sequentElementRenderer )
+      parent: DrawSequentProof[F, T],
+      seq: Sequent[F],
+      mainAuxIndices: Set[SequentIndex],
+      cutAncestorIndices: Set[SequentIndex],
+      sequentElementRenderer: F => String
+  ): DrawSequentInProof[F, T] = new DrawSequentInProof[F, T](parent, seq, mainAuxIndices, cutAncestorIndices, sequentElementRenderer)
 
   /**
    * Draws a sequent.
@@ -35,9 +37,10 @@ object DrawSequent {
    * @tparam F The type of elements of the sequent.
    */
   def apply[F, M <: ProofToolViewer[_]](
-    main:                   M,
-    seq:                    Sequent[F],
-    sequentElementRenderer: F => String ): DrawSequent[F, M] = new DrawSequent( main, seq, sequentElementRenderer )
+      main: M,
+      seq: Sequent[F],
+      sequentElementRenderer: F => String
+  ): DrawSequent[F, M] = new DrawSequent(main, seq, sequentElementRenderer)
 }
 
 /**
@@ -48,23 +51,24 @@ object DrawSequent {
  * @tparam F The type of elements of the sequent.
  */
 class DrawSequent[F, M <: ProofToolViewer[_]](
-    val main:                   M,
-    val sequent:                Sequent[F],
-    val sequentElementRenderer: F => String ) extends BoxPanel( Orientation.Horizontal ) {
+    val main: M,
+    val sequent: Sequent[F],
+    val sequentElementRenderer: F => String
+) extends BoxPanel(Orientation.Horizontal) {
   opaque = false // Necessary to draw the proof properly
 
-  val turnstileLabel = new LatexTurnstileLabel( main ) // \u22a2
+  val turnstileLabel = new LatexTurnstileLabel(main) // \u22a2
 
-  val elementLabelSequent = sequent map { f => new LatexFormulaLabel( main, sequentElementRenderer( f ) ) }
-  val commaLabelSequent = sequent map { _ => new CommaLabel( main ) }
+  val elementLabelSequent = sequent map { f => new LatexFormulaLabel(main, sequentElementRenderer(f)) }
+  val commaLabelSequent = sequent map { _ => new CommaLabel(main) }
 
-  contents ++= removeLast( ( elementLabelSequent.antecedent zip commaLabelSequent.antecedent ) flatMap { case ( x, y ) => Seq( x, y ) } )
+  contents ++= removeLast((elementLabelSequent.antecedent zip commaLabelSequent.antecedent) flatMap { case (x, y) => Seq(x, y) })
   contents += turnstileLabel
-  contents ++= removeLast( ( elementLabelSequent.succedent zip commaLabelSequent.succedent ) flatMap { case ( x, y ) => Seq( x, y ) } )
+  contents ++= removeLast((elementLabelSequent.succedent zip commaLabelSequent.succedent) flatMap { case (x, y) => Seq(x, y) })
 
   def width() = size.width
 
-  private def removeLast[S]( xs: Seq[S] ): Seq[S] = xs match {
+  private def removeLast[S](xs: Seq[S]): Seq[S] = xs match {
     case Seq() => Seq()
     case _     => xs.init
   }
@@ -83,57 +87,61 @@ class DrawSequent[F, M <: ProofToolViewer[_]](
  * @tparam F The type of elements of the sequent.
  */
 class DrawSequentInProof[F, T <: SequentProof[F, T]](
-    val parent:             DrawSequentProof[F, T],
-    sequent:                Sequent[F],
-    val mainAuxIndices:     Set[SequentIndex],
+    val parent: DrawSequentProof[F, T],
+    sequent: Sequent[F],
+    val mainAuxIndices: Set[SequentIndex],
     val cutAncestorIndices: Set[SequentIndex],
-    sequentElementRenderer: F => String ) extends DrawSequent[F, SequentProofViewer[F, T]]( parent.main, sequent, sequentElementRenderer ) {
-  require( mainAuxIndices.forall { sequent.isDefinedAt }, s"End sequent $sequent of proof at ${parent.pos} is undefined for some indices in $mainAuxIndices." )
-  require( cutAncestorIndices.forall { sequent.isDefinedAt }, s"End sequent $sequent of proof at ${parent.pos}  is undefined for some indices in $cutAncestorIndices." )
+    sequentElementRenderer: F => String
+) extends DrawSequent[F, SequentProofViewer[F, T]](parent.main, sequent, sequentElementRenderer) {
+  require(mainAuxIndices.forall { sequent.isDefinedAt }, s"End sequent $sequent of proof at ${parent.pos} is undefined for some indices in $mainAuxIndices.")
+  require(
+    cutAncestorIndices.forall { sequent.isDefinedAt },
+    s"End sequent $sequent of proof at ${parent.pos}  is undefined for some indices in $cutAncestorIndices."
+  )
 
   val pos = parent.pos
   val contextIndices = sequent.indices.toSet diff mainAuxIndices
   val mainAuxIndicesAnt = mainAuxIndices filter { _.isAnt }
   val mainAuxIndicesSuc = mainAuxIndices filterNot { _.isAnt }
 
-  listenTo( main.publisher )
+  listenTo(main.publisher)
 
   reactions += {
     case HideSequentContexts =>
-      for ( i <- contextIndices ) {
-        elementLabelSequent( i ).visible = false
-        commaLabelSequent( i ).visible = false
+      for (i <- contextIndices) {
+        elementLabelSequent(i).visible = false
+        commaLabelSequent(i).visible = false
       }
 
-      if ( mainAuxIndicesAnt.size == 1 )
-        commaLabelSequent( mainAuxIndicesAnt.head ).visible = false
+      if (mainAuxIndicesAnt.size == 1)
+        commaLabelSequent(mainAuxIndicesAnt.head).visible = false
 
-      if ( mainAuxIndicesSuc.size == 1 )
-        commaLabelSequent( mainAuxIndicesSuc.head ).visible = false
+      if (mainAuxIndicesSuc.size == 1)
+        commaLabelSequent(mainAuxIndicesSuc.head).visible = false
 
     case ShowAllFormulas =>
-      for ( i <- contextIndices ) {
-        elementLabelSequent( i ).visible = true
-        commaLabelSequent( i ).visible = true
+      for (i <- contextIndices) {
+        elementLabelSequent(i).visible = true
+        commaLabelSequent(i).visible = true
       }
 
-      if ( mainAuxIndicesAnt.size == 1 )
-        commaLabelSequent( mainAuxIndicesAnt.head ).visible = true
+      if (mainAuxIndicesAnt.size == 1)
+        commaLabelSequent(mainAuxIndicesAnt.head).visible = true
 
-      if ( mainAuxIndicesSuc.size == 1 )
-        commaLabelSequent( mainAuxIndicesSuc.head ).visible = true
+      if (mainAuxIndicesSuc.size == 1)
+        commaLabelSequent(mainAuxIndicesSuc.head).visible = true
 
     case MarkCutAncestors =>
-      for ( i <- cutAncestorIndices )
-        elementLabelSequent( i ).mark()
+      for (i <- cutAncestorIndices)
+        elementLabelSequent(i).mark()
 
     case UnmarkCutAncestors =>
-      for ( i <- cutAncestorIndices )
-        elementLabelSequent( i ).unmark()
+      for (i <- cutAncestorIndices)
+        elementLabelSequent(i).unmark()
 
-    case MarkOccurrences( p, is ) if p == pos =>
-      for ( i <- is )
-        elementLabelSequent( i ).mark()
+    case MarkOccurrences(p, is) if p == pos =>
+      for (i <- is)
+        elementLabelSequent(i).mark()
 
     case UnmarkAllFormulas =>
       elementLabelSequent.foreach {
@@ -142,10 +150,10 @@ class DrawSequentInProof[F, T <: SequentProof[F, T]](
   }
 
   // Add reactions to formulas
-  for ( ( f, i ) <- elementLabelSequent.zipWithIndex ) {
+  for ((f, i) <- elementLabelSequent.zipWithIndex) {
     f.reactions += {
       case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 && e.clicks == 1 =>
-        gapt.prooftool.PopupMenu( main, f, pos, i, e.point.x, e.point.y )
+        gapt.prooftool.PopupMenu(main, f, pos, i, e.point.x, e.point.y)
     }
   }
 
@@ -155,9 +163,9 @@ class DrawSequentInProof[F, T <: SequentProof[F, T]](
  * Creates Latex icons from strings.
  */
 object LatexIcon {
-  private val cache = mutable.Map[( String, Font ), TeXIcon]()
+  private val cache = mutable.Map[(String, Font), TeXIcon]()
 
-  def clearCache() = this.synchronized( cache.clear() )
+  def clearCache() = this.synchronized(cache.clear())
 
   /**
    * Turns latex code into an icon.
@@ -165,10 +173,10 @@ object LatexIcon {
    * @param font The font.
    * @return An icon displaying latexText.
    */
-  def apply( latexText: String, font: Font ): TeXIcon = synchronized( cache.getOrElseUpdate(
-    ( latexText, font ),
-    new TeXFormula( latexText ).
-      createTeXIcon( TeXConstants.STYLE_DISPLAY, font.getSize().toFloat, TeXFormula.SANSSERIF ) ) )
+  def apply(latexText: String, font: Font): TeXIcon = synchronized(cache.getOrElseUpdate(
+    (latexText, font),
+    new TeXFormula(latexText).createTeXIcon(TeXConstants.STYLE_DISPLAY, font.getSize().toFloat, TeXFormula.SANSSERIF)
+  ))
 }
 
 object LatexLabel {
@@ -178,13 +186,13 @@ object LatexLabel {
    * @param main The main window that the label will belong to.
    * @param latexText The text the label will display.
    */
-  def apply( main: ProofToolViewer[_], latexText: String ): LatexLabel = {
-    if ( latexText == "," )
-      throw new IllegalArgumentException( "Use `new CommaLabel(main)`" )
-    else if ( latexText == "\\vdash" )
-      new LatexTurnstileLabel( main )
+  def apply(main: ProofToolViewer[_], latexText: String): LatexLabel = {
+    if (latexText == ",")
+      throw new IllegalArgumentException("Use `new CommaLabel(main)`")
+    else if (latexText == "\\vdash")
+      new LatexTurnstileLabel(main)
     else
-      new LatexFormulaLabel( main, latexText )
+      new LatexFormulaLabel(main, latexText)
   }
 }
 
@@ -193,20 +201,20 @@ object LatexLabel {
  * @param main The main Prooftool window that this belongs to.
  * @param latexText The latex code to be displayed.
  */
-class LatexLabel( val main: ProofToolViewer[_], val latexText: String ) extends Label( "", null, Alignment.Center ) {
+class LatexLabel(val main: ProofToolViewer[_], val latexText: String) extends Label("", null, Alignment.Center) {
   background = Color.white
   foreground = Color.black
   opaque = true
   def defaultBorder = Swing.EmptyBorder
   border = defaultBorder
 
-  icon = LatexIcon( latexText, main.font )
+  icon = LatexIcon(latexText, main.font)
 
-  listenTo( main.publisher )
+  listenTo(main.publisher)
 
   reactions += {
     case FontChanged =>
-      icon = LatexIcon( latexText, main.font )
+      icon = LatexIcon(latexText, main.font)
       border = defaultBorder
   }
 }
@@ -219,9 +227,9 @@ class LatexLabel( val main: ProofToolViewer[_], val latexText: String ) extends 
  * @param latexText The latex code to be displayed.
  */
 class LatexFormulaLabel(
-    main:      ProofToolViewer[_],
-    latexText: String )
-  extends LatexLabel( main, latexText ) {
+    main: ProofToolViewer[_],
+    latexText: String
+) extends LatexLabel(main, latexText) {
 
   private var markLevel = 0
 
@@ -231,10 +239,10 @@ class LatexFormulaLabel(
   }
 
   def unmark(): Unit = {
-    markLevel = if ( markLevel == 0 ) 0 else markLevel - 1
-    assert( markLevel >= 0 )
+    markLevel = if (markLevel == 0) 0 else markLevel - 1
+    assert(markLevel >= 0)
 
-    if ( markLevel == 0 ) background = Color.WHITE
+    if (markLevel == 0) background = Color.WHITE
   }
 
   def resetMarkLevel(): Unit = {
@@ -242,20 +250,20 @@ class LatexFormulaLabel(
     background = Color.WHITE
   }
 
-  listenTo( mouse.moves, mouse.clicks )
+  listenTo(mouse.moves, mouse.clicks)
   reactions += {
     case e: MouseEntered => foreground = Color.blue
     case e: MouseExited  => foreground = Color.black
     case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 && e.clicks == 2 =>
       val d = new Dialog {
         resizable = false
-        peer.setUndecorated( true )
-        contents = new TextField( latexText ) {
+        peer.setUndecorated(true)
+        contents = new TextField(latexText) {
           editable = false
-          border = Swing.EmptyBorder( 7 )
+          border = Swing.EmptyBorder(7)
           tooltip = "Select text and right-click to copy."
-          font = font.deriveFont( Font.PLAIN, 14 )
-          listenTo( mouse.clicks )
+          font = font.deriveFont(Font.PLAIN, 14)
+          listenTo(mouse.clicks)
           reactions += {
             case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => copy()
           }
@@ -274,12 +282,12 @@ class LatexFormulaLabel(
  * Label for displaying commas.
  * @param main The main Prooftool window that this belongs to.
  */
-class CommaLabel( val main: ProofToolViewer[_] ) extends Label( ",", icon0 = null, Alignment.Center ) {
-  def defaultBorder = Swing.EmptyBorder( font.getSize / 5, 2, 0, font.getSize / 5 )
+class CommaLabel(val main: ProofToolViewer[_]) extends Label(",", icon0 = null, Alignment.Center) {
+  def defaultBorder = Swing.EmptyBorder(font.getSize / 5, 2, 0, font.getSize / 5)
   border = defaultBorder
   font = main.font
 
-  listenTo( main.publisher )
+  listenTo(main.publisher)
 
   reactions += {
     case FontChanged =>
@@ -292,6 +300,6 @@ class CommaLabel( val main: ProofToolViewer[_] ) extends Label( ",", icon0 = nul
  * Latexlabel for displaying the turnstile symbol (u+22a2, ⊢)
  * @param main The main Prooftool window that this belongs to.
  */
-class LatexTurnstileLabel( main: ProofToolViewer[_] ) extends LatexLabel( main, "\\vdash" ) {
-  override def defaultBorder = Swing.EmptyBorder( font.getSize / 6 )
+class LatexTurnstileLabel(main: ProofToolViewer[_]) extends LatexLabel(main, "\\vdash") {
+  override def defaultBorder = Swing.EmptyBorder(font.getSize / 6)
 }

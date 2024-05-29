@@ -6,10 +6,10 @@ import gapt.proofs.gaptic._
 
 object prop_15 extends TacticsProof {
 
-  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += InductiveType(ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat")
   ctx += hoc"p:Nat>Nat"
 
-  ctx += InductiveType( ty"list", hoc"nil:list", hoc"cons:Nat>list>list" )
+  ctx += InductiveType(ty"list", hoc"nil:list", hoc"cons:Nat>list>list")
   ctx += hoc"head:list>Nat"
   ctx += hoc"tail:list>list"
 
@@ -35,36 +35,36 @@ object prop_15 extends TacticsProof {
                        goal: ∀x ∀xs (len(ins(x:Nat, xs:list): list): Nat) = S(len(xs))
     """
 
-  val proof = Lemma( sequent ) {
+  val proof = Lemma(sequent) {
     allR
     allR
-    induction( hov"xs:list" )
+    induction(hov"xs:list")
     // base case
-    allL( "def_ins_1", le"x:Nat" )
-    allL( "def_len_2", le"x:Nat", le"nil:list" )
-    eql( "def_ins_1_0", "goal" )
-    eql( "def_len_2_0", "goal" ).fromLeftToRight
+    allL("def_ins_1", le"x:Nat")
+    allL("def_len_2", le"x:Nat", le"nil:list")
+    eql("def_ins_1_0", "goal")
+    eql("def_len_2_0", "goal").fromLeftToRight
     refl
     // inductive case
-    allL( "def_len_2", le"x_0:Nat", le"xs_0:list" )
-    allL( "def_ins_2", le"x:Nat", le"x_0:Nat", le"xs_0:list" )
-    allL( "def_ins_3", le"x:Nat", le"x_0:Nat", le"xs_0:list" )
-    eql( "def_len_2_0", "goal" )
-    impL( "def_ins_2_0" )
+    allL("def_len_2", le"x_0:Nat", le"xs_0:list")
+    allL("def_ins_2", le"x:Nat", le"x_0:Nat", le"xs_0:list")
+    allL("def_ins_3", le"x:Nat", le"x_0:Nat", le"xs_0:list")
+    eql("def_len_2_0", "goal")
+    impL("def_ins_2_0")
     negR
-    impL( "def_ins_3_0" )
+    impL("def_ins_3_0")
     axiomLog
 
-    eql( "def_ins_3_0", "goal" )
-    allL( "def_len_2", le"x:Nat", le"cons(x_0:Nat,xs_0:list)" )
-    eql( "def_len_2_1", "goal" )
-    eql( "def_len_2_0", "goal" ).fromLeftToRight
+    eql("def_ins_3_0", "goal")
+    allL("def_len_2", le"x:Nat", le"cons(x_0:Nat,xs_0:list)")
+    eql("def_len_2_1", "goal")
+    eql("def_len_2_0", "goal").fromLeftToRight
     refl
 
-    eql( "def_ins_2_0", "goal" )
-    allL( "def_len_2", le"x_0:Nat", le"ins(x:Nat, xs_0:list):list" )
-    eql( "def_len_2_1", "goal" )
-    eql( "IHxs_0", "goal" ).fromLeftToRight
+    eql("def_ins_2_0", "goal")
+    allL("def_len_2", le"x_0:Nat", le"ins(x:Nat, xs_0:list):list")
+    eql("def_len_2_1", "goal")
+    eql("IHxs_0", "goal").fromLeftToRight
     refl
   }
 

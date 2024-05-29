@@ -4,9 +4,9 @@ import gapt.formats.tip.parser.TipSmtExpression
 import gapt.formats.tip.parser.TipSmtIdentifier
 import gapt.formats.tip.parser.TipSmtProblem
 
-case class Substitution( map: ( TipSmtIdentifier, TipSmtExpression )* ) {
+case class Substitution(map: (TipSmtIdentifier, TipSmtExpression)*) {
 
-  private val substitution = Map( map: _* )
+  private val substitution = Map(map: _*)
 
   /**
    * Creates a new substitution.
@@ -15,8 +15,8 @@ case class Substitution( map: ( TipSmtIdentifier, TipSmtExpression )* ) {
    * @param term A term to be associated with the given variable.
    * @return
    */
-  def this( variable: TipSmtIdentifier, term: TipSmtExpression ) = {
-    this( variable -> term )
+  def this(variable: TipSmtIdentifier, term: TipSmtExpression) = {
+    this(variable -> term)
   }
 
   /**
@@ -27,10 +27,12 @@ case class Substitution( map: ( TipSmtIdentifier, TipSmtExpression )* ) {
    * for which the predicate has evaluated to true.
    */
   def filter(
-    predicate: ( TipSmtIdentifier, TipSmtExpression ) => Boolean ) //
-    : Substitution = {
+      predicate: (TipSmtIdentifier, TipSmtExpression) => Boolean
+  ) //
+      : Substitution = {
     Substitution(
-      substitution.filter { case ( v, t ) => predicate( v, t ) } toSeq: _* )
+      substitution.filter { case (v, t) => predicate(v, t) } toSeq: _*
+    )
   }
 
   /**
@@ -48,12 +50,12 @@ case class Substitution( map: ( TipSmtIdentifier, TipSmtExpression )* ) {
    * @return The set of all free variables occurring the expressions of
    * this substitution
    */
-  def range( implicit problem: TipSmtProblem ): Set[TipSmtIdentifier] = {
+  def range(implicit problem: TipSmtProblem): Set[TipSmtIdentifier] = {
     substitution
       .values
-      .flatMap { freeVariables( problem, _ ) }
+      .flatMap { freeVariables(problem, _) }
       .toSet
-      .map { TipSmtIdentifier( _ ) }
+      .map { TipSmtIdentifier(_) }
   }
 
   /**
@@ -63,7 +65,7 @@ case class Substitution( map: ( TipSmtIdentifier, TipSmtExpression )* ) {
    * @return The associated term if it exists, otherwise the variable is
    * returned unmodified.
    */
-  def get( variable: TipSmtIdentifier ): TipSmtExpression = {
-    substitution.getOrElse( variable, variable )
+  def get(variable: TipSmtIdentifier): TipSmtExpression = {
+    substitution.getOrElse(variable, variable)
   }
 }

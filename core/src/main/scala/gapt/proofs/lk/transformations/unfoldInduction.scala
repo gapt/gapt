@@ -14,6 +14,7 @@ import gapt.proofs.lk.rules.macros.WeakeningMacroRule
 import gapt.proofs.lk.transformations
 
 object unfoldInduction {
+
   /**
    * Unfolds an induction induction inference.
    *
@@ -21,28 +22,30 @@ object unfoldInduction {
    *              The induction must be a ground term in constructor form.
    * @return
    */
-  def apply( induction: InductionRule ): LKProof = new unfoldInduction( induction ).apply
+  def apply(induction: InductionRule): LKProof = new unfoldInduction(induction).apply
 }
 
-class unfoldInduction( induction: InductionRule ) {
+class unfoldInduction(induction: InductionRule) {
 
   def apply: LKProof = {
-    val ( unfoldedProof, _ ) = constructInstanceProof( induction.term )
+    val (unfoldedProof, _) = constructInstanceProof(induction.term)
     WeakeningMacroRule(
-      ContractionMacroRule( unfoldedProof, induction.endSequent, false ),
-      induction.endSequent, false )
+      ContractionMacroRule(unfoldedProof, induction.endSequent, false),
+      induction.endSequent,
+      false
+    )
   }
 
-  private def constructInstanceProof( term: Expr ): ( LKProof, SequentIndex ) = {
-    val Apps( constructor, arguments ) = term
+  private def constructInstanceProof(term: Expr): (LKProof, SequentIndex) = {
+    val Apps(constructor, arguments) = term
     val inductiveArguments = arguments filter { _.ty == induction.term.ty }
-    val Seq( stepProof ) = induction.cases.filter { _.constructor == constructor }
-    val instanceProofs: List[( ( LKProof, SequentIndex ), SequentIndex )] =
-      inductiveArguments.map( constructInstanceProof ).zipWithIndex map {
-        case ( ( proof, hypIndexSuc ), index ) => ( ( proof, hypIndexSuc ), stepProof.hypotheses( index ) )
+    val Seq(stepProof) = induction.cases.filter { _.constructor == constructor }
+    val instanceProofs: List[((LKProof, SequentIndex), SequentIndex)] =
+      inductiveArguments.map(constructInstanceProof).zipWithIndex map {
+        case ((proof, hypIndexSuc), index) => ((proof, hypIndexSuc), stepProof.hypotheses(index))
       }
-    val stepProofInstance = instantiateProof( arguments, stepProof )
-    cutInductionHypotheses( instanceProofs, stepProofInstance, stepProof.conclusion )
+    val stepProofInstance = instantiateProof(arguments, stepProof)
+    cutInductionHypotheses(instanceProofs, stepProofInstance, stepProof.conclusion)
   }
 
   /**
@@ -54,31 +57,32 @@ class unfoldInduction( induction: InductionRule ) {
    *         of the eigenvariables and the terms, i.e. the first eigenvariable is substituted by the first term, and
    *         so on.
    */
-  private def instantiateProof( arguments: Seq[Expr], inductionCase: InductionCase ): LKProof = {
-    val InductionCase( proof, _, _, eigenVariables, _ ) = inductionCase
-    Substitution( eigenVariables zip arguments )( proof )
+  private def instantiateProof(arguments: Seq[Expr], inductionCase: InductionCase): LKProof = {
+    val InductionCase(proof, _, _, eigenVariables, _) = inductionCase
+    Substitution(eigenVariables zip arguments)(proof)
   }
 }
 
 private object cutInductionHypotheses {
   def apply(
-    cuts:            Seq[( ( LKProof, SequentIndex ), SequentIndex )],
-    stepProof:       LKProof,
-    conclusionIndex: SequentIndex ): ( LKProof, SequentIndex ) = {
+      cuts: Seq[((LKProof, SequentIndex), SequentIndex)],
+      stepProof: LKProof,
+      conclusionIndex: SequentIndex
+  ): (LKProof, SequentIndex) = {
     cuts match {
-      case Seq( cut, rest @ _* ) =>
-        val ( ( proofHypothesis, hypothesisInSuc ), hypothesisInAnt ) = cut
-        val intermediaryProof = CutRule( proofHypothesis, hypothesisInSuc, stepProof, hypothesisInAnt )
+      case Seq(cut, rest @ _*) =>
+        val ((proofHypothesis, hypothesisInSuc), hypothesisInAnt) = cut
+        val intermediaryProof = CutRule(proofHypothesis, hypothesisInSuc, stepProof, hypothesisInAnt)
         // keep track of indices for remaining cuts
         val remainingCuts = rest map {
-          case ( hyp, hypInAnt ) => ( hyp, intermediaryProof.getRightSequentConnector.child( hypInAnt ) )
+          case (hyp, hypInAnt) => (hyp, intermediaryProof.getRightSequentConnector.child(hypInAnt))
         }
         transformations.cutInductionHypotheses(
           remainingCuts,
           intermediaryProof,
-          intermediaryProof.getRightSequentConnector.child( conclusionIndex ) )
-      case _ => ( stepProof, conclusionIndex )
+          intermediaryProof.getRightSequentConnector.child(conclusionIndex)
+        )
+      case _ => (stepProof, conclusionIndex)
     }
   }
 }
-

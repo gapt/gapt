@@ -11,7 +11,7 @@ object FunctionType {
    * `from(0)` -> ( `from(1)` -> ( ... (`from(n)` -> `to`)...)),
    * where n is the length of the sequence `from`
    */
-  def apply( to: Ty, from: Seq[Ty] ): Ty = from.foldRight( to )( _ ->: _ )
+  def apply(to: Ty, from: Seq[Ty]): Ty = from.foldRight(to)(_ ->: _)
 
   /**
    * Interprets the given type as function type.
@@ -20,8 +20,8 @@ object FunctionType {
    * @return Returns Some( (from, to) ) such that
    * `ty` = FunctionType(to, from).
    */
-  def unapply( ty: Ty ): Option[( Ty, List[Ty] )] = ty match {
-    case from ->: FunctionType( to, froms ) => Some( to, from :: froms )
-    case _                                  => Some( ty, Nil )
+  def unapply(ty: Ty): Option[(Ty, List[Ty])] = ty match {
+    case from ->: FunctionType(to, froms) => Some(to, from :: froms)
+    case _                                => Some(ty, Nil)
   }
 }

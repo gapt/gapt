@@ -5,7 +5,7 @@ import java.awt.Font._
 import java.awt.image.BufferedImage
 import java.io.File
 
-import os.{ Path, write }
+import os.{Path, write}
 import javax.imageio.ImageIO
 import javax.swing.WindowConstants
 import javax.swing.filechooser.FileFilter
@@ -16,7 +16,6 @@ import scala.swing.Swing.EmptyIcon
 import scala.swing._
 import scala.swing.event.Key
 
-
 /**
  * The main window of the ProofTool application.
  *
@@ -24,9 +23,9 @@ import scala.swing.event.Key
  * @param content The object to be displayed.
  * @tparam T The type of content.
  */
-abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends Reactor {
+abstract class ProofToolViewer[+T](val name: String, val content: T) extends Reactor {
   type MainComponentType <: Component // The type of the mainComponent object (e.g., DrawSequentProof in the case of LK proofs).
-  protected val nLine = sys.props( "line.separator" )
+  protected val nLine = sys.props("line.separator")
   val dnLine = nLine + nLine
   var DEBUG = false
 
@@ -34,36 +33,36 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
   val defaultFontSize = 12
   private var currentFontSize_ = defaultFontSize
   def currentFontSize = currentFontSize_
-  def currentFontSize_=( sz: Int ) = {
+  def currentFontSize_=(sz: Int) = {
     currentFontSize_ = sz
-    font = new Font( SANS_SERIF, PLAIN, sz )
+    font = new Font(SANS_SERIF, PLAIN, sz)
   }
-  private var font_ = new Font( SANS_SERIF, PLAIN, currentFontSize )
+  private var font_ = new Font(SANS_SERIF, PLAIN, currentFontSize)
   def font = font_
-  def font_=( ft: Font ) = {
+  def font_=(ft: Font) = {
     font_ = ft
-    publisher.publish( FontChanged )
+    publisher.publish(FontChanged)
     mainComponent.revalidate()
   }
-  var launcher_history = List[( String, AnyRef, Int )]()
+  var launcher_history = List[(String, AnyRef, Int)]()
   val publisher = new ProofToolPublisher
 
   val mBar = new MenuBar {
     focusable = true
 
-    contents += new Menu( "File" ) {
+    contents += new Menu("File") {
       mnemonic = Key.F
       contents ++= fileMenuContents
     }
 
-    contents += new Menu( "View" ) {
+    contents += new Menu("View") {
       mnemonic = Key.V
       contents ++= viewMenuContents
     }
   }
 
   def showFrame(): Unit = {
-    top.preferredSize = new Dimension( 700, 500 )
+    top.preferredSize = new Dimension(700, 500)
     top.pack()
     top.centerOnScreen()
     top.open()
@@ -79,9 +78,9 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
 
   val mainComponent = createMainComponent
 
-  protected var contentPanel_ = new PTContentPanel( this, name, mainComponent )
+  protected var contentPanel_ = new PTContentPanel(this, name, mainComponent)
   def contentPanel = contentPanel_
-  def contentPanel_=( p: PTContentPanel ) = {
+  def contentPanel_=(p: PTContentPanel) = {
     contentPanel_ = p
     top.contents = mainPanel
   }
@@ -99,8 +98,8 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
    *
    * @param fSize The new font size.
    */
-  def resizeContent( fSize: Int ): Unit = {
-    mainPanel.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
+  def resizeContent(fSize: Int): Unit = {
+    mainPanel.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
     currentFontSize = fSize
     mainPanel.cursor = java.awt.Cursor.getDefaultCursor
   }
@@ -109,14 +108,14 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
    * Opens a proof db and displays all its contents.
    */
   def fOpen(): Unit = {
-    val chooser = createChooser( ".gz", ".ivy", ".lks", ".lksc", ".llk", ".pdf", ".png", ".rs", ".tex", ".tptp", ".xml" )
-    chooser.showOpenDialog( mBar ) match {
+    val chooser = createChooser(".gz", ".ivy", ".lks", ".lksc", ".llk", ".pdf", ".png", ".rs", ".tex", ".tptp", ".xml")
+    chooser.showOpenDialog(mBar) match {
       case FileChooser.Result.Approve =>
-        mainPanel.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-        val parser = new FileParser( this )
-        parser.parseFile( chooser.selectedFile.getPath )
-        for ( ( name, p ) <- parser.getProofs ) prooftool( p, name )
-        for ( ( name, p ) <- parser.getResolutionProofs ) prooftool( p, name )
+        mainPanel.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+        val parser = new FileParser(this)
+        parser.parseFile(chooser.selectedFile.getPath)
+        for ((name, p) <- parser.getProofs) prooftool(p, name)
+        for ((name, p) <- parser.getResolutionProofs) prooftool(p, name)
 
         mainPanel.cursor = java.awt.Cursor.getDefaultCursor
       case _ =>
@@ -128,33 +127,34 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
    *
    * @param component The component to be exported.
    */
-  def fExportPdf( component: Component ): Unit = {
-    val chooser = createChooser( ".pdf" )
-    chooser.showSaveDialog( mBar ) match {
-      case FileChooser.Result.Approve => try {
-        mainPanel.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-        import java.io.FileOutputStream
+  def fExportPdf(component: Component): Unit = {
+    val chooser = createChooser(".pdf")
+    chooser.showSaveDialog(mBar) match {
+      case FileChooser.Result.Approve =>
+        try {
+          mainPanel.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
+          import java.io.FileOutputStream
 
-        import com.itextpdf.text.pdf.PdfWriter
-        import com.itextpdf.text.{ Document, Rectangle => PdfRectangle }
+          import com.itextpdf.text.pdf.PdfWriter
+          import com.itextpdf.text.{Document, Rectangle => PdfRectangle}
 
-        val width = component.size.width
-        val height = component.size.height
-        val document = new Document( new PdfRectangle( width.toFloat, height.toFloat + 20.0f ) )
-        val result = chooser.selectedFile.getPath
-        val path = if ( result.endsWith( ".pdf" ) ) result else result + ".pdf"
-        val writer = PdfWriter.getInstance( document, new FileOutputStream( path ) )
-        document.open()
-        val content = writer.getDirectContent
-        val template = content.createTemplate( width.toFloat, height.toFloat )
-        val g2 = new PdfGraphics2D( template, width.toFloat, height.toFloat, true )
-        component.paint( g2 )
-        g2.dispose()
-        content.addTemplate( template, 0, 10 )
-        document.close()
-      } catch {
-        case e: Throwable => errorMessage( "Can't export to pdf! " + dnLine + getExceptionString( e ) )
-      } finally { mainPanel.cursor = java.awt.Cursor.getDefaultCursor }
+          val width = component.size.width
+          val height = component.size.height
+          val document = new Document(new PdfRectangle(width.toFloat, height.toFloat + 20.0f))
+          val result = chooser.selectedFile.getPath
+          val path = if (result.endsWith(".pdf")) result else result + ".pdf"
+          val writer = PdfWriter.getInstance(document, new FileOutputStream(path))
+          document.open()
+          val content = writer.getDirectContent
+          val template = content.createTemplate(width.toFloat, height.toFloat)
+          val g2 = new PdfGraphics2D(template, width.toFloat, height.toFloat, true)
+          component.paint(g2)
+          g2.dispose()
+          content.addTemplate(template, 0, 10)
+          document.close()
+        } catch {
+          case e: Throwable => errorMessage("Can't export to pdf! " + dnLine + getExceptionString(e))
+        } finally { mainPanel.cursor = java.awt.Cursor.getDefaultCursor }
       case _ =>
     }
   }
@@ -164,25 +164,26 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
    *
    * @param component The component to be exported.
    */
-  def fExportPng( component: Component ): Unit = {
-    val chooser = createChooser( ".png" )
-    chooser.showSaveDialog( mBar ) match {
-      case FileChooser.Result.Approve => try {
-        mainPanel.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
+  def fExportPng(component: Component): Unit = {
+    val chooser = createChooser(".png")
+    chooser.showSaveDialog(mBar) match {
+      case FileChooser.Result.Approve =>
+        try {
+          mainPanel.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
 
-        val width = component.size.width
-        val height = component.size.height
-        val img = new BufferedImage( width, height, BufferedImage.TYPE_INT_RGB )
-        val g = img.createGraphics()
-        g.setBackground( new Color( 255, 255, 255 ) )
-        g.fillRect( 0, 0, width, height )
-        component.paint( g )
-        val result = chooser.selectedFile.getPath
-        val path = if ( result.endsWith( ".png" ) ) result else result + ".png"
-        ImageIO.write( img, "png", new File( path ) )
-      } catch {
-        case e: Throwable => errorMessage( "Can't export to png! " + dnLine + getExceptionString( e ) )
-      } finally { mainPanel.cursor = java.awt.Cursor.getDefaultCursor }
+          val width = component.size.width
+          val height = component.size.height
+          val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
+          val g = img.createGraphics()
+          g.setBackground(new Color(255, 255, 255))
+          g.fillRect(0, 0, width, height)
+          component.paint(g)
+          val result = chooser.selectedFile.getPath
+          val path = if (result.endsWith(".png")) result else result + ".png"
+          ImageIO.write(img, "png", new File(path))
+        } catch {
+          case e: Throwable => errorMessage("Can't export to png! " + dnLine + getExceptionString(e))
+        } finally { mainPanel.cursor = java.awt.Cursor.getDefaultCursor }
       case _ =>
     }
   }
@@ -194,7 +195,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
     currentFontSize * 3 / 2 match {
       case j: Int if j > 72 =>
       case j: Int =>
-        resizeContent( j )
+        resizeContent(j)
     }
   }
 
@@ -205,21 +206,20 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
     currentFontSize / 3 * 2 match {
       case j: Int if j < 1 =>
       case j: Int =>
-        resizeContent( j )
+        resizeContent(j)
     }
   }
 
-  def inputMessage( message: String, values: Seq[String] ) =
-    Dialog.showInput[String]( mainPanel, message, "ProofTool Input", Dialog.Message.Plain, EmptyIcon, values,
-      if ( values.isEmpty ) "" else values.head )
+  def inputMessage(message: String, values: Seq[String]) =
+    Dialog.showInput[String](mainPanel, message, "ProofTool Input", Dialog.Message.Plain, EmptyIcon, values, if (values.isEmpty) "" else values.head)
 
   /**
    * Displays an info message.
    *
    * @param info The text of the message.
    */
-  def infoMessage( info: String ): Unit = {
-    Dialog.showMessage( mainPanel, info, "ProofTool Information" )
+  def infoMessage(info: String): Unit = {
+    Dialog.showMessage(mainPanel, info, "ProofTool Information")
   }
 
   /**
@@ -227,8 +227,8 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
    *
    * @param warning The text of the message.
    */
-  def warningMessage( warning: String ): Unit = {
-    Dialog.showMessage( mainPanel, warning, "ProofTool Warning", Dialog.Message.Warning )
+  def warningMessage(warning: String): Unit = {
+    Dialog.showMessage(mainPanel, warning, "ProofTool Warning", Dialog.Message.Warning)
   }
 
   /**
@@ -236,8 +236,8 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
    *
    * @param error The text of the message.
    */
-  def errorMessage( error: String ): Unit = {
-    Dialog.showMessage( mainPanel, error, "ProofTool Error", Dialog.Message.Error )
+  def errorMessage(error: String): Unit = {
+    Dialog.showMessage(mainPanel, error, "ProofTool Error", Dialog.Message.Error)
   }
 
   /**
@@ -245,60 +245,63 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
    *
    * @param question The text of the question.
    */
-  def questionMessage( question: String ) =
-    Dialog.showConfirmation( mainPanel, question, "ProofTool Question", Dialog.Options.YesNo, Message.Question )
+  def questionMessage(question: String) =
+    Dialog.showConfirmation(mainPanel, question, "ProofTool Question", Dialog.Options.YesNo, Message.Question)
 
-  def getExceptionString( e: Throwable ): String = {
-    val st = e.toString.replaceAll( ",", "," + nLine ) + nLine
+  def getExceptionString(e: Throwable): String = {
+    val st = e.toString.replaceAll(",", "," + nLine) + nLine
     val trace = e.getStackTrace
-    if ( trace.length > 10 )
-      Range( 0, 10 ).map( i => trace.apply( i ) ).foldLeft( st )( ( s, x ) => s + nLine + "   at " + x.toString ) + nLine + "   ......."
+    if (trace.length > 10)
+      Range(0, 10).map(i => trace.apply(i)).foldLeft(st)((s, x) => s + nLine + "   at " + x.toString) + nLine + "   ......."
     else e.getStackTrace.toString
   }
 
-  protected def createChooser( extensions: String* ): FileChooser = new FileChooser {
-    extensions.foreach( fe => peer.addChoosableFileFilter(
-      new FileFilter {
-        def accept( f: File ): Boolean = {
-          if ( f.getName.endsWith( fe ) || f.isDirectory ) true
-          else false
+  protected def createChooser(extensions: String*): FileChooser = new FileChooser {
+    extensions.foreach(fe =>
+      peer.addChoosableFileFilter(
+        new FileFilter {
+          def accept(f: File): Boolean = {
+            if (f.getName.endsWith(fe) || f.isDirectory) true
+            else false
+          }
+          def getDescription = fe
         }
-        def getDescription = fe
-      } ) )
+      )
+    )
 
     fileFilter = acceptAllFileFilter
   }
 
   // Menus and menu items
 
-  protected def openButton = MenuButtons.openButton( this )
+  protected def openButton = MenuButtons.openButton(this)
 
-  protected def exportToPDFButton = MenuButtons.exportToPDFButton( this )
+  protected def exportToPDFButton = MenuButtons.exportToPDFButton(this)
 
-  protected def exportToPNGButton = MenuButtons.exportToPNGButton( this )
+  protected def exportToPNGButton = MenuButtons.exportToPNGButton(this)
 
-  protected def zoomInButton = MenuButtons.increaseFontSizeButton( this )
+  protected def zoomInButton = MenuButtons.increaseFontSizeButton(this)
 
-  protected def zoomOutButton = MenuButtons.decreaseFontSizeButton( this )
+  protected def zoomOutButton = MenuButtons.decreaseFontSizeButton(this)
 
-  protected def showDebugBordersButton = MenuButtons.ShowDebugBordersButton( this )
+  protected def showDebugBordersButton = MenuButtons.ShowDebugBordersButton(this)
 
   /**
    *
    * @return The contents of the "File" menu.
    */
-  def fileMenuContents: Seq[Component] = Seq( openButton, new Separator, exportToPDFButton, exportToPNGButton )
+  def fileMenuContents: Seq[Component] = Seq(openButton, new Separator, exportToPDFButton, exportToPNGButton)
 
   /**
    *
    * @return The contents of the "View" menu.
    */
-  def viewMenuContents: Seq[Component] = Seq( zoomInButton, zoomOutButton )
+  def viewMenuContents: Seq[Component] = Seq(zoomInButton, zoomOutButton)
 
   /**
    * @return The contents of the "Debug" menu.
    */
-  def debugMenuContents: Seq[Component] = Seq( showDebugBordersButton )
+  def debugMenuContents: Seq[Component] = Seq(showDebugBordersButton)
 }
 
 /**
@@ -307,12 +310,12 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
  * @param content The object to be displayed.
  * @tparam T The type of content.
  */
-abstract class ScrollableProofToolViewer[+T]( name: String, content: T ) extends ProofToolViewer( name, content ) {
+abstract class ScrollableProofToolViewer[+T](name: String, content: T) extends ProofToolViewer(name, content) {
 
   lazy val scrollPane = new PTScrollPane
   scrollPane.contentPanel = contentPanel
 
-  override def contentPanel_=( p: PTContentPanel ) = {
+  override def contentPanel_=(p: PTContentPanel) = {
     contentPanel_ = p
     scrollPane.contentPanel = p
   }
@@ -325,27 +328,28 @@ abstract class ScrollableProofToolViewer[+T]( name: String, content: T ) extends
  * @tparam T The type of the content object.
  */
 trait Savable[T] extends ProofToolViewer[T] {
+
   /**
    * Saves an object to disk.
    * @param name
    * @param obj The object to be saved.
    */
-  def fSave( name: String, obj: T ): Unit = {
-    val chooser = createChooser( saveFormats.keys.toList: _* )
-    chooser.showSaveDialog( mBar ) match {
+  def fSave(name: String, obj: T): Unit = {
+    val chooser = createChooser(saveFormats.keys.toList: _*)
+    chooser.showSaveDialog(mBar) match {
       case FileChooser.Result.Approve =>
-        mainPanel.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
+        mainPanel.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
         val result = chooser.selectedFile.getAbsolutePath
         try {
           saveFormats.toList.collectFirst {
-            case ( format, exporter ) if result.endsWith( format ) || chooser.fileFilter.getDescription == format =>
-              val fileName = if ( result.endsWith( format ) ) result else result + format
-              ( fileName, exporter( obj ) )
+            case (format, exporter) if result.endsWith(format) || chooser.fileFilter.getDescription == format =>
+              val fileName = if (result.endsWith(format)) result else result + format
+              (fileName, exporter(obj))
           } match {
-            case Some( ( fileName, content ) ) => write( Path( fileName ), content )
-            case None                          => infoMessage( "Content cannot be saved in this format." )
+            case Some((fileName, content)) => write(Path(fileName), content)
+            case None                      => infoMessage("Content cannot be saved in this format.")
           }
-        } catch { case e: Throwable => errorMessage( "Cannot save the proof! " + dnLine + getExceptionString( e ) ) }
+        } catch { case e: Throwable => errorMessage("Cannot save the proof! " + dnLine + getExceptionString(e)) }
         finally { mainPanel.cursor = java.awt.Cursor.getDefaultCursor }
       case _ =>
     }
@@ -353,6 +357,6 @@ trait Savable[T] extends ProofToolViewer[T] {
 
   def saveFormats: Map[String, T => String]
 
-  private def saveAsButton = MenuButtons.saveAsButton( this )
-  override def fileMenuContents = Seq( openButton, saveAsButton, new Separator, exportToPDFButton, exportToPNGButton )
+  private def saveAsButton = MenuButtons.saveAsButton(this)
+  override def fileMenuContents = Seq(openButton, saveAsButton, new Separator, exportToPDFButton, exportToPNGButton)
 }

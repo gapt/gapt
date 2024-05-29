@@ -7,7 +7,7 @@ import gapt.expr.formula.Formula
 
 trait ExprSubstWithβ1 extends ExprSubstWithβ0 {
   implicit val formulaSubstWithβ: ClosedUnderSub[Formula] =
-    ( sub, formula ) => sub( formula: Expr ).asInstanceOf[Formula]
+    (sub, formula) => sub(formula: Expr).asInstanceOf[Formula]
   implicit val absSubstWithβ: ClosedUnderSub[Abs] =
-    ( sub, abs ) => sub( abs: Expr ).asInstanceOf[Abs]
+    (sub, abs) => sub(abs: Expr).asInstanceOf[Abs]
 }
