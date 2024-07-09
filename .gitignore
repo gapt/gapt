@@ -64,3 +64,9 @@ doc/*.tex.backup
 
 # emacs
 /.ensime*
+
+
+# vscode
+.metals/
+.bsp/
+.vscode/
