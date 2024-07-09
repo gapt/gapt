@@ -18,6 +18,4 @@ import gapt.provers.escargot.Escargot
 import gapt.utils.SatMatchers
 import org.specs2.mutable._
 
-class CeresTest extends Specification with SequentMatchers with SatMatchers {
-
-}
+class CeresTest extends Specification with SequentMatchers with SatMatchers {}

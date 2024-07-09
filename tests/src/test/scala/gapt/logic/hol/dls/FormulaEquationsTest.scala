@@ -38,13 +38,12 @@ class FormulaEquationsTest extends Specification {
       val (secondOrderVariable, formula) = formulaEquation
       s"succeed for $formula" >> {
         Try(new DlsPreprocessor(secondOrderVariable).preprocess(formula)) must beSuccessfulTry({ (result: Set[Disjunct]) =>
-            val multiSetEquals = (s1: Disjunct, s2: Disjunct) => s1.multiSetEquals(s2)
-            result must beSetEqualsWithCustomEquality(
-              expectedResult.map(toDisjunct),
-              multiSetEquals
-            )
-          }
-        )
+          val multiSetEquals = (s1: Disjunct, s2: Disjunct) => s1.multiSetEquals(s2)
+          result must beSetEqualsWithCustomEquality(
+            expectedResult.map(toDisjunct),
+            multiSetEquals
+          )
+        })
       }
     }
 

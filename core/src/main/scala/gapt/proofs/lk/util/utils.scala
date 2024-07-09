@@ -101,10 +101,9 @@ object groundFreeVarsLK {
 
 object cutFormulas {
   def apply(proof: LKProof) = proof.treeLike.postOrder.flatMap({
-      case CutRule(p, o, _, _) => List(p.conclusion(o))
-      case _                   => List()
-    }
-  ).toSet
+    case CutRule(p, o, _, _) => List(p.conclusion(o))
+    case _                   => List()
+  }).toSet
 }
 
 object isRegular {
