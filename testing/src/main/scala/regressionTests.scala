@@ -360,58 +360,60 @@ class TptpTestCase(f: java.io.File) extends RegressionTestCase(f.getName) {
 }
 
 // Usage: RegressionTests [<test number limit>]
-object RegressionTests extends scala.App {
-  def prover9Proofs = walk(pwd / "testing" / "TSTP" / "prover9").filter(_.ext == "s")
-  def leancopProofs = walk(pwd / "testing" / "TSTP" / "leanCoP").filter(_.ext == "s")
-  def veritBenchmarks = walk(pwd / "testing" / "veriT-SMT-LIB").filter(_.ext == "smt2")
-  def tptpProblems = walk(pwd / "testing" / "TPTP" / "Problems").filter(_.ext == "p")
-  def tipProblems = walk(pwd / "testing" / "TIP").filter(_.ext == "smt2")
+object RegressionTests {
+  def main(args: Array[String]): Unit = {
+    def prover9Proofs = walk(pwd / "testing" / "TSTP" / "prover9").filter(_.ext == "s")
+    def leancopProofs = walk(pwd / "testing" / "TSTP" / "leanCoP").filter(_.ext == "s")
+    def veritBenchmarks = walk(pwd / "testing" / "veriT-SMT-LIB").filter(_.ext == "smt2")
+    def tptpProblems = walk(pwd / "testing" / "TPTP" / "Problems").filter(_.ext == "p")
+    def tipProblems = walk(pwd / "testing" / "TIP").filter(_.ext == "smt2")
 
-  def prover9TestCases = prover9Proofs map { fn => new Prover9TestCase(fn.toIO) }
-  def leancopTestCases = leancopProofs map { fn => new LeanCoPTestCase(fn.toIO) }
-  def veritTestCases = veritBenchmarks map { fn => new VeriTTestCase(fn.toIO) }
-  def tptpTestCases = tptpProblems.map { fn => new TptpTestCase(fn.toIO) }
-  def tipTestCases = tipProblems.map { fn => new TipTestCase(fn.toIO) }
-  def theoryTestCases =
-    for {
-      (n, _) <- TheoryTestCase.AllTheories.allProofs
-      combined <- Seq(false, true)
-    } yield new TheoryTestCase(n, combined)
+    def prover9TestCases = prover9Proofs map { fn => new Prover9TestCase(fn.toIO) }
+    def leancopTestCases = leancopProofs map { fn => new LeanCoPTestCase(fn.toIO) }
+    def veritTestCases = veritBenchmarks map { fn => new VeriTTestCase(fn.toIO) }
+    def tptpTestCases = tptpProblems.map { fn => new TptpTestCase(fn.toIO) }
+    def tipTestCases = tipProblems.map { fn => new TipTestCase(fn.toIO) }
+    def theoryTestCases =
+      for {
+        (n, _) <- TheoryTestCase.AllTheories.allProofs
+        combined <- Seq(false, true)
+      } yield new TheoryTestCase(n, combined)
 
-  def allTestCases =
-    prover9TestCases ++
-      leancopTestCases ++
-      veritTestCases ++
-      tptpTestCases ++
-      tipTestCases ++
-      theoryTestCases
+    def allTestCases =
+      prover9TestCases ++
+        leancopTestCases ++
+        veritTestCases ++
+        tptpTestCases ++
+        tipTestCases ++
+        theoryTestCases
 
-  def findTestCase(pat: String) = allTestCases.find(_.toString.contains(pat)).get
+    def findTestCase(pat: String) = allTestCases.find(_.toString.contains(pat)).get
 
-  val testCases = args match {
-    case Array(limit) =>
-      println(s"Only running $limit random tests.")
-      Random.shuffle(allTestCases).take(limit toInt)
-    case _ => Random.shuffle(allTestCases)
-  }
-
-  val total = testCases.length
-  var started = 0
-  val out = new PrintWriter(new FileWriter(pwd / "target" / "regression-test-results.xml" toIO), true)
-  try {
-    out write "<testsuite>\n"
-    testCases.par foreach { tc =>
-      started += 1
-      println(s"[${(100 * started) / total}%] $tc")
-      try {
-        val res = runOutOfProcess(Seq("-Xmx1G", "-Xss30m")) { tc.run().toJUnitXml }
-        out.synchronized { XML.write(out, res, enc = "", xmlDecl = false, doctype = null); out.flush() }
-      } catch {
-        case t: Throwable =>
-          println(s"$tc failed:")
-          t.printStackTrace()
-      }
+    val testCases = args match {
+      case Array(limit) =>
+        println(s"Only running $limit random tests.")
+        Random.shuffle(allTestCases).take(limit toInt)
+      case _ => Random.shuffle(allTestCases)
     }
-    out write "</testsuite>\n"
-  } finally out.close()
+
+    val total = testCases.length
+    var started = 0
+    val out = new PrintWriter(new FileWriter(pwd / "target" / "regression-test-results.xml" toIO), true)
+    try {
+      out write "<testsuite>\n"
+      testCases.par foreach { tc =>
+        started += 1
+        println(s"[${(100 * started) / total}%] $tc")
+        try {
+          val res = runOutOfProcess(Seq("-Xmx1G", "-Xss30m")) { tc.run().toJUnitXml }
+          out.synchronized { XML.write(out, res, enc = "", xmlDecl = false, doctype = null); out.flush() }
+        } catch {
+          case t: Throwable =>
+            println(s"$tc failed:")
+            t.printStackTrace()
+        }
+      }
+      out write "</testsuite>\n"
+    } finally out.close()
+  }
 }
