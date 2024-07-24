@@ -326,7 +326,7 @@ object CASCData {
   /**
    * Creates a list of all problems for all provers
    * @param prefix the path prefix containing the files
-   * @return A list of [[CASCResult]]s (which are an instance of [[FileData]])
+   * @return A list of [[gapt.formats.tptp.statistics.CASCResult]]s (which are an instance of [[gapt.formats.tptp.statistics.FileData]])
    */
   def prepareProblems(prefix: String): Seq[CASCResult] =
     prepareProblems(prefix, provers)
@@ -335,7 +335,7 @@ object CASCData {
    * Creates a list of all problems for a list of provers
    * @param prefix the path prefix containing the files
    * @param provers the provers to look into
-   * @return A list of [[CASCResult]]s (which are an instance of [[FileData]])
+   * @return A list of [[gapt.formats.tptp.statistics.CASCResult]]s (which are an instance of [[gapt.formats.tptp.statistics.FileData]])
    */
   def prepareProblems(prefix: String, provers: List[Prover]): Seq[CASCResult] =
     for (f <- files; p <- provers) yield {

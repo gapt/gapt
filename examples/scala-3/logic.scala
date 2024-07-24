@@ -131,7 +131,7 @@ class Theory0(val imports: List[Theory]) {
 
 /**
  * Models a mathematical theory, i.e. definitions of
- * data types, sorts, constants, etc. (contained in a [[Context]]),
+ * data types, sorts, constants, etc. (contained in a [[gapt.proofs.context.Context]]),
  * together with proofs about these objects.
  * @param imports A list of theories that this theory is based upon.
  */
