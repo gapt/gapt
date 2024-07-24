@@ -97,11 +97,7 @@ lazy val root = project.in(file("."))
       (baseDirectory.value / "doc" / "rootdoc.txt").getAbsolutePath,
       "-sourcepath",
       baseDirectory.value.getAbsolutePath,
-      "-skip-packages:ammonite:ammonite.ops",
-      "-diagrams",
-      "-implicits",
-      "-implicits-show-all",
-      "-skip-packages:scala"
+      "-skip-by-id:ammonite:ammonite.ops:scala"
     ),
     scripts := {
       val runJVMOptions = javaOptions.value ++ Seq(
