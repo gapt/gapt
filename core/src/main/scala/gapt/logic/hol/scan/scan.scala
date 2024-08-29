@@ -32,8 +32,9 @@ import gapt.expr.ty.FunctionType
 import gapt.expr.ty.To
 import gapt.expr.formula.constants.BottomC
 import gapt.logic.hol.dls.simplify
+import gapt.expr.formula.constants.TopC
 
-object scan:
+object scan {
   case class ResolutionCandidate(clause: HOLClause, index: SequentIndex):
     def atom = clause(index)
     def args = atom match
@@ -78,7 +79,7 @@ object scan:
       activeClauses: Set[HOLClause],
       activeCandidate: Option[(ResolutionCandidate, Set[ResolutionCandidate])],
       quantifiedVariables: Set[Var],
-      derivation: Vector[Inference]
+      derivation: Vector[(Set[HOLClause], Inference)]
   )
 
   def apply(input: Set[HOLClause], quantifiedVariables: Set[Var]): (Set[HOLClause], Substitution) =
@@ -125,26 +126,58 @@ object scan:
       case Some((inference @ Inference.Resolution(left, right), state)) => saturate(state.copy(
           activeClauses = inference(state.activeClauses),
           activeCandidate = state.activeCandidate.map { case (c, resolvedClauses) => (c, resolvedClauses + right) },
-          derivation = state.derivation :+ inference
+          derivation = state.derivation :+ (state.activeClauses, inference)
         ))
       case Some((inference @ Inference.Purification(candidate), state)) => saturate(state.copy(
           activeClauses = inference(state.activeClauses),
           activeCandidate = None,
-          derivation = state.derivation :+ inference
+          derivation = state.derivation :+ (state.activeClauses, inference)
         ))
 
-  def witnesses(reverseDerivation: List[Inference], quantifiedVariables: Set[Var]): Substitution =
+  def argCount(v: Var) = v match {
+    case Var(_, FunctionType(_, args)) => args.size
+  }
+
+  def witnesses(reverseDerivation: List[(Set[HOLClause], Inference)], quantifiedVariables: Set[Var]): Substitution =
     reverseDerivation match
       case head :: next => {
         head match
-          case Inference.Resolution(left, right) => witnesses(next, quantifiedVariables)
-          case Inference.Purification(candidate) => {
-            val wits = witnesses(next, quantifiedVariables)
-            val Atom(symbol @ Var(_, _), _) = candidate.atom: @unchecked
-            val reswit = resWitness(candidate)
-            val subst = Substitution(symbol, reswit)
+          case (_, Inference.Resolution(left, right)) => witnesses(next, quantifiedVariables)
+          case (clauseSet, Inference.Purification(candidate)) => {
 
-            val composedWitnesses = wits.compose(subst)
+            val wits = witnesses(next, quantifiedVariables)
+
+            val candidateOccurringClauses = clauseSet.filter { clause =>
+              clause.exists {
+                case Atom(v: Var, _) => quantifiedVariables.contains(v)
+                case _               => false
+              }
+            }
+
+            val witExtension: Substitution =
+              if candidateOccurringClauses.forall { clause =>
+                  clause.succedent.exists {
+                    case Atom(v: Var, _) if candidate.hoVar == v => true
+                    case _                                       => false
+                  }
+                }
+              then {
+                Substitution(candidate.hoVar, Abs.Block(rename.awayFrom(Iterable.empty).freshStream("u").take(argCount(candidate.hoVar)).map(FOLVar(_)), TopC()))
+              } else if candidateOccurringClauses.forall { clause =>
+                  clause.antecedent.exists {
+                    case Atom(v: Var, _) if candidate.hoVar == v => true
+                    case _                                       => false
+                  }
+                }
+              then {
+                Substitution(candidate.hoVar, Abs.Block(rename.awayFrom(Iterable.empty).freshStream("u").take(argCount(candidate.hoVar)).map(FOLVar(_)), BottomC()))
+              } else {
+                val Atom(symbol @ Var(_, _), _) = candidate.atom: @unchecked
+                val reswit = resWitness(candidate)
+                Substitution(symbol, reswit)
+              }
+
+            val composedWitnesses = wits.compose(witExtension)
             val betaNormalized = Substitution(composedWitnesses.map.view.mapValues(e => {
               val Abs.Block(vars, formula: Formula) = betaNormalize(e): @unchecked
               Abs.Block(vars, simplify(formula))
@@ -208,3 +241,4 @@ object scan:
 
     Abs(vars, formula)
   }
+}
