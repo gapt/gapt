@@ -21,8 +21,9 @@ import gapt.formats.InputFile
 import gapt.grammars._
 import gapt.logic._
 import gapt.logic.fol._
-import gapt.logic.hol.{dls => _, _}
+import gapt.logic.hol.{dls => _, scan => _, _}
 import gapt.logic.hol.dls._
+import gapt.logic.hol.scan._
 import gapt.proofs.reduction._
 import gapt.proofs.rup._
 import gapt.proofs.epsilon._
@@ -59,4 +60,4 @@ import gapt.provers.spass._
 import gapt.prooftool._
 import gapt.utils._
 import cats.syntax.all._, cats.instances.all._, EitherHelpers._
-import gapt.cli.GPL.{ apply => copying, printLicense => license }
+import gapt.cli.GPL.{apply => copying, printLicense => license}
