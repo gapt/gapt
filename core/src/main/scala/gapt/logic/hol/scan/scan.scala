@@ -40,6 +40,7 @@ import gapt.formats.leancop.LeanCoPParser.inferences
 import gapt.proofs.ceres.subsumedClausesRemoval
 import gapt.logic.clauseSubsumption
 import gapt.expr.subst.PreSubstitution
+import gapt.proofs.Suc
 
 object scan {
   case class ResolutionCandidate(clause: HOLClause, index: SequentIndex):
@@ -74,6 +75,7 @@ object scan {
 
   enum Inference:
     case Resolution(left: ResolutionCandidate, right: ResolutionCandidate)
+    case Factoring(clause: HOLClause, leftIndex: SequentIndex, rightIndex: SequentIndex)
     case Purification(hoVar: Var, candidate: ResolutionCandidate)
     case Subsumption(subsumer: HOLClause, subsumee: HOLClause, substitution: FOLSubstitution)
 
@@ -86,9 +88,28 @@ object scan {
           val resolventWithoutConstraints = eliminateConstraints(resolvent, leftVars.toSet).map { case a: Atom => a }
           clauses + resolventWithoutConstraints
 
+        case f: Factoring => clauses + factor(f)
+
         case Purification(_, candidate) => clauses - candidate.clause
 
         case Subsumption(subsumer, subsumee, substitution) => clauses - subsumee
+
+  def factor(factoring: Inference.Factoring): HOLClause = {
+    val Inference.Factoring(clause, leftIndex, rightIndex) = factoring
+    val Atom(_, leftArgs) = clause(leftIndex): @unchecked
+    val Atom(_, rightArgs) = clause(rightIndex): @unchecked
+    val constraints = leftArgs.zip(rightArgs).map(Eq(_, _))
+    clause.delete(rightIndex) ++ HOLClause(constraints, Seq.empty)
+  }
+
+  def factors(clause: HOLClause): Set[Inference.Factoring] = {
+    clause.succedent.zipWithIndex.combinations(2).flatMap {
+      case Seq(left @ (Atom(leftHead, _), _: Int), right @ (Atom(rightHead, _), _: Int)) if leftHead == rightHead => Some((left, right))
+      case _                                                                                                      => None
+    }.map[Inference.Factoring] {
+      case ((_, leftIndex), (_, rightIndex)) => Inference.Factoring(clause, Suc(leftIndex), Suc(rightIndex))
+    }.toSet
+  }
 
   case class State(
       activeClauses: Set[HOLClause],
@@ -105,7 +126,7 @@ object scan {
   def subsumptionSubstitution(subsumer: HOLClause, subsumee: HOLClause): Option[FOLSubstitution] = {
     val subsumerHoVarsAsConsts = subsumer.map { case Atom(VarOrConst(v, ty, tys), args) => Atom(Const(v, ty, tys), args) }
     val subsumeeHoVarsAsConsts = subsumee.map { case Atom(VarOrConst(v, ty, tys), args) => Atom(Const(v, ty, tys), args) }
-    clauseSubsumption(subsumerHoVarsAsConsts, subsumeeHoVarsAsConsts).map(_.asFOLSubstitution)
+    clauseSubsumption(subsumerHoVarsAsConsts, subsumeeHoVarsAsConsts, PreSubstitution(), true).map(_.asFOLSubstitution)
   }
 
   def isRedundant(state: State, clause: HOLClause): Boolean = {
@@ -128,12 +149,19 @@ object scan {
       if resolutionInferences(rc, state.activeClauses - rc.clause).forall {
           case Inference.Resolution(left, right) => isRedundant(state, resolve(left, right))
         }
-      then Seq(Inference.Purification(hoVar, rc))
-      else Seq.empty
+      then Some(Inference.Purification(hoVar, rc))
+      else None
     }.headOption
 
+    // do factoring
+    val factoring: Option[Inference.Factoring] = state.activeClauses.flatMap(factors).filter {
+      case f => !isRedundant(state, factor(f))
+    }.headOption
+
+    println(s"factoring: $factoring")
+
     // do resolution
-    subsumption.orElse(purification).orElse {
+    subsumption.orElse(purification).orElse(factoring).orElse {
       var inference: Option[Inference.Resolution] = None
       while inference == None && !state.activeCandidates.isEmpty do {
         val candidate = state.activeCandidates.dequeue()
@@ -192,6 +220,15 @@ object scan {
           derivation = state.derivation :+ (state.activeClauses, inference)
         ))
       }
+      case Some(inference: Inference.Factoring) => {
+        val f = factor(inference)
+        val newCandidates = resolutionCandidates(f)
+        state.activeCandidates.enqueueAll(newCandidates)
+        saturate(state.copy(
+          activeClauses = inference(state.activeClauses),
+          derivation = state.derivation :+ (state.activeClauses, inference)
+        ))
+      }
       case Some(inference: Inference.Purification) => saturate(state.copy(
           activeClauses = inference(state.activeClauses),
           derivation = state.derivation :+ (state.activeClauses, inference)
@@ -209,7 +246,7 @@ object scan {
     reverseDerivation match
       case head :: next => {
         head match
-          case (_, _: Inference.Resolution) | (_, _: Inference.Subsumption) => witnessSubstitution(next, quantifiedVariables)
+          case (_, _: Inference.Resolution) | (_, _: Inference.Subsumption) | (_, _: Inference.Factoring) => witnessSubstitution(next, quantifiedVariables)
           case (clauseSet, Inference.Purification(hoVar, candidate)) => {
             val wits = witnessSubstitution(next, quantifiedVariables)
 
