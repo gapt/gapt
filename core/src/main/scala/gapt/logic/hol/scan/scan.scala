@@ -33,6 +33,13 @@ import gapt.expr.ty.To
 import gapt.expr.formula.constants.BottomC
 import gapt.logic.hol.dls.simplify
 import gapt.expr.formula.constants.TopC
+import gapt.expr.preExpr.Type
+import gapt.utils.NameGenerator
+import gapt.expr.ty.Ty
+import gapt.formats.leancop.LeanCoPParser.inferences
+import gapt.proofs.ceres.subsumedClausesRemoval
+import gapt.logic.clauseSubsumption
+import gapt.expr.subst.PreSubstitution
 
 object scan {
   case class ResolutionCandidate(clause: HOLClause, index: SequentIndex):
@@ -63,6 +70,7 @@ object scan {
   enum Inference:
     case Resolution(left: ResolutionCandidate, right: ResolutionCandidate)
     case Purification(candidate: ResolutionCandidate)
+    case Subsumption(subsumer: HOLClause, subsumee: HOLClause, substitution: FOLSubstitution)
 
     def apply(clauses: Set[HOLClause]): Set[HOLClause] =
       this match
@@ -75,6 +83,8 @@ object scan {
 
         case Purification(candidate) => clauses - candidate.clause
 
+        case Subsumption(subsumer, subsumee, substitution) => clauses - subsumee
+
   case class State(
       activeClauses: Set[HOLClause],
       activeCandidate: Option[(ResolutionCandidate, Set[ResolutionCandidate])],
@@ -82,22 +92,39 @@ object scan {
       derivation: Vector[(Set[HOLClause], Inference)]
   )
 
-  def apply(input: Set[HOLClause], quantifiedVariables: Set[Var]): (Set[HOLClause], Substitution) =
+  def apply(input: Set[HOLClause], quantifiedVariables: Set[Var]): (Set[HOLClause], Substitution, State) =
     val state = saturate(State(input, None, quantifiedVariables, Vector.empty))
-    (state.activeClauses, witnesses(state.derivation.toList, quantifiedVariables))
+    val wits = simplifyWitnessSubstitution(witnessSubstitution(state.derivation.toList, quantifiedVariables))
+    (state.activeClauses, wits, state)
+
+  def subsumptionSubstitution(subsumer: HOLClause, subsumee: HOLClause): Option[FOLSubstitution] = {
+    val subsumerHoVarsAsConsts = subsumer.map { case Atom(VarOrConst(v, ty, tys), args) => Atom(Const(v, ty, tys), args) }
+    val subsumeeHoVarsAsConsts = subsumee.map { case Atom(VarOrConst(v, ty, tys), args) => Atom(Const(v, ty, tys), args) }
+    clauseSubsumption(subsumerHoVarsAsConsts, subsumeeHoVarsAsConsts).map(_.asFOLSubstitution)
+  }
 
   def nextInference(state: State): Option[(Inference, State)] =
-    state.activeCandidate match
-      case None => {
-        pickResolutionCandidate(state) match
-          case None                      => None
-          case Some(resolutionCandidate) => nextInference(state.copy(activeCandidate = Some((resolutionCandidate, Set.empty))))
+    val subsumption = state.activeClauses.toSeq.combinations(2).flatMap {
+      case Seq(left, right) => {
+        val leftSubsumptions = subsumptionSubstitution(left, right).toSeq.map(s => Inference.Subsumption(left, right, s))
+        val rightSubsumptions = subsumptionSubstitution(right, left).toSeq.map(s => Inference.Subsumption(right, left, s))
+        leftSubsumptions ++ rightSubsumptions
       }
-      case Some((resolutionCandidate, resolvedClauses)) => {
-        pickResolutionPartner(resolutionCandidate, state.activeClauses, resolvedClauses) match
-          case None                    => Some((Inference.Purification(resolutionCandidate), state))
-          case Some(resolutionPartner) => Some((Inference.Resolution(resolutionCandidate, resolutionPartner), state))
-      }
+    }.nextOption()
+
+    subsumption match
+      case Some(inference) => Some((inference, state))
+      case None => state.activeCandidate match
+          case None => {
+            pickResolutionCandidate(state) match
+              case None                      => None
+              case Some(resolutionCandidate) => nextInference(state.copy(activeCandidate = Some((resolutionCandidate, Set.empty))))
+          }
+          case Some((resolutionCandidate, resolvedClauses)) => {
+            pickResolutionPartner(resolutionCandidate, state.activeClauses, resolvedClauses) match
+              case None                    => Some((Inference.Purification(resolutionCandidate), state))
+              case Some(resolutionPartner) => Some((Inference.Resolution(resolutionCandidate, resolutionPartner), state))
+          }
 
   def pickResolutionCandidate(state: State): Option[ResolutionCandidate] =
     state.activeClauses.flatMap { clause =>
@@ -123,29 +150,29 @@ object scan {
     val inference = nextInference(state)
     inference match
       case None => state
-      case Some((inference @ Inference.Resolution(left, right), state)) => saturate(state.copy(
+      case Some((inference @ Inference.Resolution(_, right), state)) => saturate(state.copy(
           activeClauses = inference(state.activeClauses),
           activeCandidate = state.activeCandidate.map { case (c, resolvedClauses) => (c, resolvedClauses + right) },
           derivation = state.derivation :+ (state.activeClauses, inference)
         ))
-      case Some((inference @ Inference.Purification(candidate), state)) => saturate(state.copy(
+      case Some((inference: Inference.Purification, state)) => saturate(state.copy(
           activeClauses = inference(state.activeClauses),
           activeCandidate = None,
           derivation = state.derivation :+ (state.activeClauses, inference)
         ))
+      case Some((inference: Inference.Subsumption, state)) => saturate(state.copy(activeClauses = inference(state.activeClauses), derivation = state.derivation :+ (state.activeClauses, inference)))
 
-  def argCount(v: Var) = v match {
-    case Var(_, FunctionType(_, args)) => args.size
-  }
+  def freshArgumentVariables(ty: Ty, varName: String, blacklist: Iterable[VarOrConst] = Iterable.empty) =
+    val FunctionType(_, argTypes) = ty: @unchecked
+    rename.awayFrom(blacklist).freshStream("u").zip(argTypes).map(Var(_, _))
 
-  def witnesses(reverseDerivation: List[(Set[HOLClause], Inference)], quantifiedVariables: Set[Var]): Substitution =
+  def witnessSubstitution(reverseDerivation: List[(Set[HOLClause], Inference)], quantifiedVariables: Set[Var]): Substitution =
     reverseDerivation match
       case head :: next => {
         head match
-          case (_, Inference.Resolution(left, right)) => witnesses(next, quantifiedVariables)
+          case (_, _: Inference.Resolution) | (_, _: Inference.Subsumption) => witnessSubstitution(next, quantifiedVariables)
           case (clauseSet, Inference.Purification(candidate)) => {
-
-            val wits = witnesses(next, quantifiedVariables)
+            val wits = witnessSubstitution(next, quantifiedVariables)
 
             val candidateOccurringClauses = clauseSet.filter { clause =>
               clause.exists {
@@ -153,36 +180,33 @@ object scan {
                 case _               => false
               }
             }
+            val allCandidateOccuringClausesContainCandidatePositively = candidateOccurringClauses.forall { clause =>
+              clause.succedent.exists {
+                case Atom(v: Var, _) if candidate.hoVar == v => true
+                case _                                       => false
+              }
+            }
+            val allCandidateOccuringClausesContainCandidateNegatively = candidateOccurringClauses.forall { clause =>
+              clause.antecedent.exists {
+                case Atom(v: Var, _) if candidate.hoVar == v => true
+                case _                                       => false
+              }
+            }
 
             val witExtension: Substitution =
-              if candidateOccurringClauses.forall { clause =>
-                  clause.succedent.exists {
-                    case Atom(v: Var, _) if candidate.hoVar == v => true
-                    case _                                       => false
-                  }
-                }
+              if allCandidateOccuringClausesContainCandidatePositively
               then {
-                Substitution(candidate.hoVar, Abs.Block(rename.awayFrom(Iterable.empty).freshStream("u").take(argCount(candidate.hoVar)).map(FOLVar(_)), TopC()))
-              } else if candidateOccurringClauses.forall { clause =>
-                  clause.antecedent.exists {
-                    case Atom(v: Var, _) if candidate.hoVar == v => true
-                    case _                                       => false
-                  }
-                }
+                val argumentVariables = freshArgumentVariables(candidate.hoVar.ty, "u")
+                Substitution(candidate.hoVar, Abs.Block(argumentVariables, TopC()))
+              } else if allCandidateOccuringClausesContainCandidateNegatively
               then {
-                Substitution(candidate.hoVar, Abs.Block(rename.awayFrom(Iterable.empty).freshStream("u").take(argCount(candidate.hoVar)).map(FOLVar(_)), BottomC()))
+                val argumentVariables = freshArgumentVariables(candidate.hoVar.ty, "u")
+                Substitution(candidate.hoVar, Abs.Block(argumentVariables, BottomC()))
               } else {
-                val Atom(symbol @ Var(_, _), _) = candidate.atom: @unchecked
-                val reswit = resWitness(candidate)
-                Substitution(symbol, reswit)
+                Substitution(candidate.hoVar, resWitness(candidate))
               }
 
-            val composedWitnesses = wits.compose(witExtension)
-            val betaNormalized = Substitution(composedWitnesses.map.view.mapValues(e => {
-              val Abs.Block(vars, formula: Formula) = betaNormalize(e): @unchecked
-              Abs.Block(vars, simplify(formula))
-            }))
-            betaNormalized
+            wits.compose(witExtension)
           }
       }
       case Nil => Substitution(quantifiedVariables.map {
@@ -190,7 +214,15 @@ object scan {
             (v, Abs.Block(rename.awayFrom(Iterable.empty).freshStream("u").take(args.size).map(FOLVar(_)), BottomC()))
         }.toMap)
 
-  private def freeFOLVariables(expr: HOLClause): Set[FOLVar] =
+  def simplifyWitnessSubstitution(subst: Substitution): Substitution = {
+    val betaNormalized = Substitution(subst.map.view.mapValues(e => {
+      val Abs.Block(vars, formula: Formula) = betaNormalize(e): @unchecked
+      Abs.Block(vars, simplify(formula))
+    }))
+    betaNormalized
+  }
+
+  def freeFOLVariables(expr: HOLClause): Set[FOLVar] =
     (freeVariables(expr) -- freeHOVariables(expr.toFormula)).map { case v: FOLVar => v }
 
   def eliminateConstraints(clause: HOLSequent, keepVariables: Set[FOLVar]): HOLSequent =
