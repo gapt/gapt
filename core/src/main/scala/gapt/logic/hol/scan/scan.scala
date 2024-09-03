@@ -42,6 +42,8 @@ import gapt.logic.clauseSubsumption
 import gapt.expr.subst.PreSubstitution
 import gapt.proofs.Suc
 import os.stat
+import gapt.proofs.Sequent
+import scala.collection.immutable.HashSet
 
 object scan {
   case class ResolutionCandidate(clause: HOLClause, index: SequentIndex):
@@ -84,13 +86,9 @@ object scan {
 
     def apply(clauses: Set[HOLClause]): Set[HOLClause] =
       this match
-        case Resolution(left, right) =>
-          val (leftAbstracted, leftVars) = left.abstracted
-          val (rightAbstracted, _) = right.abstracted
-          val resolvent = resolve(leftAbstracted, rightAbstracted)
-          clauses + resolvent.distinct
+        case Resolution(left, right) => clauses + resolve(left, right)
 
-        case f: Factoring => clauses + factor(f).distinct
+        case f: Factoring => clauses + factor(f)
 
         case Purification(_, candidate) => clauses - candidate.clause
 
@@ -105,7 +103,7 @@ object scan {
     val Atom(_, leftArgs) = clause(leftIndex): @unchecked
     val Atom(_, rightArgs) = clause(rightIndex): @unchecked
     val constraints = leftArgs.zip(rightArgs).map(Eq(_, _))
-    clause.delete(rightIndex) ++ HOLClause(constraints, Seq.empty)
+    (clause.delete(rightIndex) ++ HOLClause(constraints, Seq.empty)).distinct
   }
 
   def factoringInferences(clause: HOLClause): Set[Inference.Factoring] = {
@@ -357,7 +355,7 @@ object scan {
     val rightRenamed = ResolutionCandidate(rightClausesRenamed, right.index)
     val constraints = HOLClause(left.args.zip(rightRenamed.args).map(Eq(_, _)), Seq.empty)
     val resolvent = constraints ++ left.clause.delete(left.index) ++ rightRenamed.clause.delete(rightRenamed.index)
-    resolvent
+    resolvent.distinct
   }
 
   def resWitness(candidate: ResolutionCandidate): Expr = {
@@ -375,5 +373,49 @@ object scan {
         })
 
     Abs(vars, formula)
+  }
+
+  case class InferenceStep(clauseSet: Set[HOLClause], inference: Inference)
+  case class Derivation(inferenceSteps: List[InferenceStep])
+
+  def printer = pprint.copy(additionalHandlers = additionalPrinters)
+
+  def additionalPrinters: PartialFunction[Any, pprint.Tree] = {
+    case clauseSet: Set[_] => pprint.Tree.Apply("", clauseSet.iterator.map(printer.treeify(_, true, true)))
+    case Derivation(inferenceSteps) => pprint.Tree.Apply(
+        "Derivation", {
+          inferenceSteps.flatMap {
+            case InferenceStep(clauses, inference) => Seq(printer.treeify(clauses, true, true), printer.treeify(inference, true, true))
+          }.iterator ++ Iterator(printer.treeify(inferenceSteps.last.inference(inferenceSteps.last.clauseSet), true, true))
+        }
+      )
+    case InferenceStep(clauseSet, inference) => pprint.Tree.Infix(printer.treeify(clauseSet, true, true), "inference: ", printer.treeify(inference, true, true))
+    case rc: ResolutionCandidate             => printResolutionCandidate(rc)
+    case hos: Sequent[_]                     => pprint.Tree.Literal(hos.toString)
+    case Inference.Resolution(left, right) => pprint.Tree.Apply(
+        "Resolution",
+        Iterator(
+          pprint.Tree.KeyValue("left", printer.treeify(left, false, true)),
+          pprint.Tree.KeyValue("right", printer.treeify(right, false, true)),
+          pprint.Tree.KeyValue("resolvent", printer.treeify(resolve(left, right), false, true))
+        )
+      )
+    case Inference.Purification(_, candidate) => pprint.Tree.Apply("Purification", Iterator(additionalPrinters(candidate)))
+    case Inference.ConstraintElimination(clause, index, _) => pprint.Tree.Apply(
+        "ConstraintElimination",
+        Iterator(pprint.Tree.KeyValue("clause", pprint.Tree.Literal(clause.toString)), pprint.Tree.KeyValue("constraint", pprint.Tree.Literal(clause(index).toString)))
+      )
+    case f @ Inference.Factoring(clause, leftIndex, rightIndex) => pprint.Tree.Apply(
+        "Factoring",
+        Iterator(
+          pprint.Tree.KeyValue("left", printer.treeify(clause(leftIndex), false, true)),
+          pprint.Tree.KeyValue("right", printer.treeify(clause(rightIndex), false, true)),
+          pprint.Tree.KeyValue("factor", printer.treeify(factor(f), false, true))
+        )
+      )
+  }
+
+  def printResolutionCandidate(resolutionCandidate: ResolutionCandidate): pprint.Tree = {
+    pprint.Tree.Infix(pprint.Tree.Literal(s"${resolutionCandidate.atom}"), "rc", pprint.Tree.Literal(s"${resolutionCandidate.clause.distinct}"))
   }
 }
