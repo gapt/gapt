@@ -115,13 +115,16 @@ object scan {
       activeClauses: Set[HOLClause],
       activeCandidates: scala.collection.mutable.Queue[ResolutionCandidate],
       quantifiedVariables: Set[Var],
-      derivation: Vector[(Set[HOLClause], Inference)]
+      derivation: Vector[(Set[HOLClause], Inference)],
+      derivationLimit: Option[Int]
   )
 
-  def apply(input: Set[HOLClause], quantifiedVariables: Set[Var]): (Set[HOLClause], Substitution, State) =
-    val state = saturate(State(input, scala.collection.mutable.Queue.from(resolutionCandidates(input)), quantifiedVariables, Vector.empty))
-    val wits = simplifyWitnessSubstitution(witnessSubstitution(state.derivation.toList, quantifiedVariables))
-    (state.activeClauses, wits, state)
+  def apply(input: Set[HOLClause], quantifiedVariables: Set[Var], derivationLimit: Option[Int] = None): Either[State, (Set[HOLClause], Substitution, State)] =
+    assert(derivationLimit.isEmpty || derivationLimit.get >= 0, "derivation limit must be non-negative")
+    for
+      state <- saturate(State(input, scala.collection.mutable.Queue.from(resolutionCandidates(input)), quantifiedVariables, Vector.empty, derivationLimit))
+      wits = simplifyWitnessSubstitution(witnessSubstitution(state.derivation.toList, quantifiedVariables))
+    yield (state.activeClauses, wits, state)
 
   def subsumptionSubstitution(subsumer: HOLClause, subsumee: HOLClause): Option[FOLSubstitution] = {
     val subsumerHoVarsAsConsts = subsumer.map { case Atom(VarOrConst(v, ty, tys), args) => Atom(Const(v, ty, tys), args) }
@@ -157,8 +160,6 @@ object scan {
     val factoring: Option[Inference.Factoring] = state.activeClauses.flatMap(factors).filter {
       case f => !isRedundant(state, factor(f))
     }.headOption
-
-    println(s"factoring: $factoring")
 
     // do resolution
     subsumption.orElse(purification).orElse(factoring).orElse {
@@ -206,37 +207,43 @@ object scan {
       .headOption
   }
 
-  def saturate(state: State): State =
+  def saturate(state: State): Either[State, State] =
     val inference = nextInference(state)
-    inference match
-      case None => state
-      case Some(inference @ Inference.Resolution(left, right)) => {
-        val resolvent = resolve(left, right)
-        val newCandidates = resolutionCandidates(resolvent)
-        state.activeCandidates.enqueueAll(newCandidates)
-        state.activeCandidates.enqueue(left)
-        saturate(state.copy(
-          activeClauses = inference(state.activeClauses),
-          derivation = state.derivation :+ (state.activeClauses, inference)
-        ))
-      }
-      case Some(inference: Inference.Factoring) => {
-        val f = factor(inference)
-        val newCandidates = resolutionCandidates(f)
-        state.activeCandidates.enqueueAll(newCandidates)
-        saturate(state.copy(
-          activeClauses = inference(state.activeClauses),
-          derivation = state.derivation :+ (state.activeClauses, inference)
-        ))
-      }
-      case Some(inference: Inference.Purification) => saturate(state.copy(
-          activeClauses = inference(state.activeClauses),
-          derivation = state.derivation :+ (state.activeClauses, inference)
-        ))
-      case Some(inference: Inference.Subsumption) => saturate(state.copy(
-          activeClauses = inference(state.activeClauses),
-          derivation = state.derivation :+ (state.activeClauses, inference)
-        ))
+    if inference.isDefined && state.derivationLimit.isDefined && state.derivationLimit.get <= 0 then Left(state)
+    else
+      inference match
+        case None => Right(state)
+        case Some(inference @ Inference.Resolution(left, right)) => {
+          val resolvent = resolve(left, right)
+          val newCandidates = resolutionCandidates(resolvent)
+          state.activeCandidates.enqueueAll(newCandidates)
+          state.activeCandidates.enqueue(left)
+          saturate(state.copy(
+            activeClauses = inference(state.activeClauses),
+            derivation = state.derivation :+ (state.activeClauses, inference),
+            derivationLimit = state.derivationLimit.map(d => d - 1)
+          ))
+        }
+        case Some(inference: Inference.Factoring) => {
+          val f = factor(inference)
+          val newCandidates = resolutionCandidates(f)
+          state.activeCandidates.enqueueAll(newCandidates)
+          saturate(state.copy(
+            activeClauses = inference(state.activeClauses),
+            derivation = state.derivation :+ (state.activeClauses, inference),
+            derivationLimit = state.derivationLimit.map(d => d - 1)
+          ))
+        }
+        case Some(inference: Inference.Purification) => saturate(state.copy(
+            activeClauses = inference(state.activeClauses),
+            derivation = state.derivation :+ (state.activeClauses, inference),
+            derivationLimit = state.derivationLimit.map(d => d - 1)
+          ))
+        case Some(inference: Inference.Subsumption) => saturate(state.copy(
+            activeClauses = inference(state.activeClauses),
+            derivation = state.derivation :+ (state.activeClauses, inference),
+            derivationLimit = state.derivationLimit.map(d => d - 1)
+          ))
 
   def freshArgumentVariables(ty: Ty, varName: String, blacklist: Iterable[VarOrConst] = Iterable.empty) =
     val FunctionType(_, argTypes) = ty: @unchecked
