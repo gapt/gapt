@@ -88,11 +88,9 @@ object scan {
           val (leftAbstracted, leftVars) = left.abstracted
           val (rightAbstracted, _) = right.abstracted
           val resolvent = resolve(leftAbstracted, rightAbstracted)
-          val resolventWithoutConstraints = eliminateConstraints(resolvent, leftVars.toSet).map { case a: Atom => a }
-          val withoutDuplicates = resolventWithoutConstraints.distinct
-          clauses + withoutDuplicates
+          clauses + resolvent.distinct
 
-        case f: Factoring => clauses + factor(f)
+        case f: Factoring => clauses + factor(f).distinct
 
         case Purification(_, candidate) => clauses - candidate.clause
 
@@ -100,7 +98,7 @@ object scan {
 
         case TautologyDeletion(clause) => clauses - clause
 
-        case ConstraintElimination(clause, index, substitution) => (clauses - clause) + substitution(clause.delete(index)).map { case a: Atom => a }
+        case ConstraintElimination(clause, index, substitution) => (clauses - clause) + substitution(clause.delete(index)).map { case a: Atom => a }.distinct
 
   def factor(factoring: Inference.Factoring): HOLClause = {
     val Inference.Factoring(clause, leftIndex, rightIndex) = factoring
@@ -110,7 +108,7 @@ object scan {
     clause.delete(rightIndex) ++ HOLClause(constraints, Seq.empty)
   }
 
-  def factors(clause: HOLClause): Set[Inference.Factoring] = {
+  def factoringInferences(clause: HOLClause): Set[Inference.Factoring] = {
     clause.succedent.zipWithIndex.combinations(2).flatMap {
       case Seq(left @ (Atom(leftHead, _), _: Int), right @ (Atom(rightHead, _), _: Int)) if leftHead == rightHead => Some((left, right))
       case _                                                                                                      => None
@@ -168,15 +166,19 @@ object scan {
     // check for purification
     val purification: Option[Inference.Purification] = resolutionCandidates(state.activeClauses).filter(_.isVar).flatMap[Inference.Purification] { rc =>
       val hoVar @ Var(_, _) = rc.hoVar: @unchecked
-      if resolutionInferences(rc, state.activeClauses - rc.clause).forall {
-          case Inference.Resolution(left, right) => isRedundant(state, resolve(left, right))
-        }
+      val allFactorsRedundant = factoringInferences(rc.clause).forall {
+        case inference: Inference.Factoring => isRedundant(state, factor(inference))
+      }
+      val allResolventsRedundant = resolutionInferences(rc, state.activeClauses - rc.clause).forall {
+        case Inference.Resolution(left, right) => isRedundant(state, resolve(left, right))
+      }
+      if allFactorsRedundant && allResolventsRedundant
       then Some(Inference.Purification(hoVar, rc))
       else None
     }.headOption
 
     // do factoring
-    val factoring: Option[Inference.Factoring] = state.activeClauses.flatMap(factors).filter {
+    val factoring: Option[Inference.Factoring] = state.activeClauses.flatMap(factoringInferences).filter {
       case f => !isRedundant(state, factor(f))
     }.headOption
 
@@ -226,7 +228,7 @@ object scan {
       .headOption
   }
 
-  def saturate(state: State): Either[State, State] =
+  def saturate(state: State): Either[State, State] = {
     val inference = nextInference(state)
     if inference.isDefined && state.derivationLimit.isDefined && state.derivationLimit.get <= 0 then Left(state)
     else
@@ -258,12 +260,14 @@ object scan {
             derivation = state.derivation :+ (state.activeClauses, inference),
             derivationLimit = state.derivationLimit.map(d => d - 1)
           ))
+  }
 
-  def freshArgumentVariables(ty: Ty, varName: String, blacklist: Iterable[VarOrConst] = Iterable.empty) =
+  def freshArgumentVariables(ty: Ty, varName: String, blacklist: Iterable[VarOrConst] = Iterable.empty) = {
     val FunctionType(_, argTypes) = ty: @unchecked
     rename.awayFrom(blacklist).freshStream("u").zip(argTypes).map(Var(_, _))
+  }
 
-  def witnessSubstitution(reverseDerivation: List[(Set[HOLClause], Inference)], quantifiedVariables: Set[Var]): Substitution =
+  def witnessSubstitution(reverseDerivation: List[(Set[HOLClause], Inference)], quantifiedVariables: Set[Var]): Substitution = {
     reverseDerivation match
       case head :: next => {
         head match
@@ -310,6 +314,7 @@ object scan {
           case v @ Var(_, FunctionType(To, args)) =>
             (v, Abs.Block(rename.awayFrom(Iterable.empty).freshStream("u").take(args.size).map(FOLVar(_)), BottomC()))
         }.toMap)
+  }
 
   def simplifyWitnessSubstitution(subst: Substitution): Substitution = {
     val betaNormalized = Substitution(subst.map.view.mapValues(e => {
@@ -322,7 +327,7 @@ object scan {
   def freeFOLVariables(expr: HOLClause): Set[FOLVar] =
     (freeVariables(expr) -- freeHOVariables(expr.toFormula)).map { case v: FOLVar => v }
 
-  def eliminateConstraints(clause: HOLSequent, keepVariables: Set[FOLVar]): HOLSequent =
+  def eliminateConstraints(clause: HOLSequent, keepVariables: Set[FOLVar]): HOLSequent = {
     val constraint = clause.antecedent.zipWithIndex.flatMap {
       case (Eq(v @ FOLVar(_), t), i) if !keepVariables.contains(v) => Some((v, t, i))
       case (Eq(t, v @ FOLVar(_)), i) if !keepVariables.contains(v) => Some((v, t, i))
@@ -332,6 +337,7 @@ object scan {
       case None => clause
       case Some((v, t, i)) =>
         eliminateConstraints(Substitution(v, t)(clause.delete(Ant(i))), keepVariables)
+  }
 
   def saturateWithResolutionCandidate(candidate: ResolutionCandidate, resolventSet: Set[HOLClause], resolvedCandidates: Set[ResolutionCandidate]): Set[HOLClause] = {
     val partner = pickResolutionPartner(candidate, resolventSet, resolvedCandidates)
