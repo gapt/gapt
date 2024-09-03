@@ -41,6 +41,7 @@ import gapt.proofs.ceres.subsumedClausesRemoval
 import gapt.logic.clauseSubsumption
 import gapt.expr.subst.PreSubstitution
 import gapt.proofs.Suc
+import os.stat
 
 object scan {
   case class ResolutionCandidate(clause: HOLClause, index: SequentIndex):
@@ -77,7 +78,9 @@ object scan {
     case Resolution(left: ResolutionCandidate, right: ResolutionCandidate)
     case Factoring(clause: HOLClause, leftIndex: SequentIndex, rightIndex: SequentIndex)
     case Purification(hoVar: Var, candidate: ResolutionCandidate)
+    case TautologyDeletion(tautology: HOLClause)
     case Subsumption(subsumer: HOLClause, subsumee: HOLClause, substitution: FOLSubstitution)
+    case ConstraintElimination(clause: HOLClause, index: SequentIndex, substitution: FOLSubstitution)
 
     def apply(clauses: Set[HOLClause]): Set[HOLClause] =
       this match
@@ -86,13 +89,18 @@ object scan {
           val (rightAbstracted, _) = right.abstracted
           val resolvent = resolve(leftAbstracted, rightAbstracted)
           val resolventWithoutConstraints = eliminateConstraints(resolvent, leftVars.toSet).map { case a: Atom => a }
-          clauses + resolventWithoutConstraints
+          val withoutDuplicates = resolventWithoutConstraints.distinct
+          clauses + withoutDuplicates
 
         case f: Factoring => clauses + factor(f)
 
         case Purification(_, candidate) => clauses - candidate.clause
 
         case Subsumption(subsumer, subsumee, substitution) => clauses - subsumee
+
+        case TautologyDeletion(clause) => clauses - clause
+
+        case ConstraintElimination(clause, index, substitution) => (clauses - clause) + substitution(clause.delete(index)).map { case a: Atom => a }
 
   def factor(factoring: Inference.Factoring): HOLClause = {
     val Inference.Factoring(clause, leftIndex, rightIndex) = factoring
@@ -133,10 +141,21 @@ object scan {
   }
 
   def isRedundant(state: State, clause: HOLClause): Boolean = {
-    state.activeClauses.exists(c => subsumptionSubstitution(c, clause).isDefined)
+    clause.isTaut || state.activeClauses.exists(c => subsumptionSubstitution(c, clause).isDefined)
   }
 
   def nextInference(state: State): Option[Inference] = {
+    // check for tautologies
+    val tautologyDeletion: Option[Inference.TautologyDeletion] = state.activeClauses.find(_.isTaut).map(Inference.TautologyDeletion(_))
+
+    // check for eliminable constraints
+    val constraintElimination: Option[Inference.ConstraintElimination] =
+      (for
+        clause <- state.activeClauses
+        case (Eq(left, right), index) <- clause.antecedent.zipWithIndex
+        subst <- syntacticMGU(left, right, freeHOVariables(left) ++ freeHOVariables(right)).map(_.asFOLSubstitution)
+      yield (clause, Ant(index), subst)).map[Inference.ConstraintElimination](Inference.ConstraintElimination(_, _, _)).headOption
+
     // check for subsumption
     val subsumption: Option[Inference.Subsumption] = state.activeClauses.toSeq.combinations(2).flatMap {
       case Seq(left, right) => {
@@ -162,7 +181,7 @@ object scan {
     }.headOption
 
     // do resolution
-    subsumption.orElse(purification).orElse(factoring).orElse {
+    tautologyDeletion.orElse(constraintElimination).orElse(subsumption).orElse(purification).orElse(factoring).orElse {
       var inference: Option[Inference.Resolution] = None
       while inference == None && !state.activeCandidates.isEmpty do {
         val candidate = state.activeCandidates.dequeue()
@@ -234,12 +253,7 @@ object scan {
             derivationLimit = state.derivationLimit.map(d => d - 1)
           ))
         }
-        case Some(inference: Inference.Purification) => saturate(state.copy(
-            activeClauses = inference(state.activeClauses),
-            derivation = state.derivation :+ (state.activeClauses, inference),
-            derivationLimit = state.derivationLimit.map(d => d - 1)
-          ))
-        case Some(inference: Inference.Subsumption) => saturate(state.copy(
+        case Some(inference: (Inference.Purification | Inference.TautologyDeletion | Inference.Subsumption | Inference.ConstraintElimination)) => saturate(state.copy(
             activeClauses = inference(state.activeClauses),
             derivation = state.derivation :+ (state.activeClauses, inference),
             derivationLimit = state.derivationLimit.map(d => d - 1)
@@ -253,7 +267,7 @@ object scan {
     reverseDerivation match
       case head :: next => {
         head match
-          case (_, _: Inference.Resolution) | (_, _: Inference.Subsumption) | (_, _: Inference.Factoring) => witnessSubstitution(next, quantifiedVariables)
+          case (_, _: (Inference.Resolution | Inference.Factoring | Inference.TautologyDeletion | Inference.Subsumption | Inference.ConstraintElimination)) => witnessSubstitution(next, quantifiedVariables)
           case (clauseSet, Inference.Purification(hoVar, candidate)) => {
             val wits = witnessSubstitution(next, quantifiedVariables)
 
