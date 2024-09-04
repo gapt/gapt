@@ -260,11 +260,23 @@ object scan {
             derivationLimit = state.derivationLimit.map(d => d - 1)
           ))
         }
-        case Some(inference: (Inference.Purification | Inference.TautologyDeletion | Inference.Subsumption | Inference.ConstraintElimination)) => saturate(state.copy(
+        case Some(inference: Inference.ConstraintElimination) => {
+          val clause = inference.substitution(inference.clause.delete(inference.index)).map { case a: Atom => a }.distinct
+          val newCandidates = resolutionCandidates(clause)
+          state.activeCandidates.enqueueAll(newCandidates)
+          saturate(state.copy(
             activeClauses = inference(state.activeClauses),
             derivation = Derivation(state.derivation.inferenceSteps :+ InferenceStep(state.activeClauses, inference)),
             derivationLimit = state.derivationLimit.map(d => d - 1)
           ))
+        }
+        case Some(inference: (Inference.Purification | Inference.TautologyDeletion | Inference.Subsumption)) => {
+          saturate(state.copy(
+            activeClauses = inference(state.activeClauses),
+            derivation = Derivation(state.derivation.inferenceSteps :+ InferenceStep(state.activeClauses, inference)),
+            derivationLimit = state.derivationLimit.map(d => d - 1)
+          ))
+        }
   }
 
   def freshArgumentVariables(ty: Ty, varName: String, blacklist: Iterable[VarOrConst] = Iterable.empty) = {
