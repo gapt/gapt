@@ -87,19 +87,14 @@ object scan {
     case Subsumption(subsumer: HOLClause, subsumee: HOLClause, substitution: FOLSubstitution)
     case ConstraintElimination(clause: HOLClause, index: SequentIndex, substitution: FOLSubstitution)
 
-    def apply(clauses: Set[HOLClause]): Set[HOLClause] =
+    def apply(clauses: Set[HOLClause]): (Set[HOLClause], Set[HOLClause]) =
       this match
-        case Resolution(left, right) => clauses + resolve(left, right)
-
-        case f: Factoring => clauses + factor(f)
-
-        case Purification(_, candidate) => clauses - candidate.clause
-
-        case Subsumption(subsumer, subsumee, substitution) => clauses - subsumee
-
-        case TautologyDeletion(clause) => clauses - clause
-
-        case ConstraintElimination(clause, index, substitution) => (clauses - clause) + substitution(clause.delete(index)).map { case a: Atom => a }.distinct
+        case Resolution(left, right)                            => (Set(resolve(left, right)), Set.empty)
+        case f: Factoring                                       => (Set(factor(f)), Set.empty)
+        case Purification(_, candidate)                         => (Set.empty, Set(candidate.clause))
+        case Subsumption(subsumer, subsumee, substitution)      => (Set.empty, Set(subsumee))
+        case TautologyDeletion(clause)                          => (Set.empty, Set(clause))
+        case ConstraintElimination(clause, index, substitution) => (Set(substitution(clause.delete(index)).map { case a: Atom => a }.distinct), Set(clause))
 
   def factor(factoring: Inference.Factoring): HOLClause = {
     val Inference.Factoring(clause, leftIndex, rightIndex) = factoring
@@ -138,7 +133,7 @@ object scan {
   def subsumptionSubstitution(subsumer: HOLClause, subsumee: HOLClause): Option[FOLSubstitution] = {
     val subsumerHoVarsAsConsts = subsumer.map { case Atom(VarOrConst(v, ty, tys), args) => Atom(Const(v, ty, tys), args) }
     val subsumeeHoVarsAsConsts = subsumee.map { case Atom(VarOrConst(v, ty, tys), args) => Atom(Const(v, ty, tys), args) }
-    clauseSubsumption(subsumerHoVarsAsConsts, subsumeeHoVarsAsConsts, PreSubstitution(), true).map(_.asFOLSubstitution)
+    clauseSubsumption(subsumerHoVarsAsConsts, subsumeeHoVarsAsConsts, multisetSubsumption = true).map(_.asFOLSubstitution)
   }
 
   def isRedundant(state: State, clause: HOLClause): Boolean = {
@@ -239,40 +234,25 @@ object scan {
     else
       inference match
         case None => Right(state)
-        case Some(inference @ Inference.Resolution(left, right)) => {
-          val resolvent = resolve(left, right)
-          val newCandidates = resolutionCandidates(resolvent)
+        case Some(inference: Inference.Resolution) => {
+          val (added, removed) = inference(state.activeClauses)
+          assert(added.intersect(removed).isEmpty)
+          val newCandidates = resolutionCandidates(added)
           state.activeCandidates.enqueueAll(newCandidates)
-          state.activeCandidates.enqueue(left)
+          state.activeCandidates.enqueue(inference.left)
           saturate(state.copy(
-            activeClauses = inference(state.activeClauses),
+            activeClauses = (state.activeClauses ++ added) -- removed,
             derivation = Derivation(state.derivation.inferenceSteps :+ InferenceStep(state.activeClauses, inference)),
             derivationLimit = state.derivationLimit.map(d => d - 1)
           ))
         }
-        case Some(inference: Inference.Factoring) => {
-          val f = factor(inference)
-          val newCandidates = resolutionCandidates(f)
+        case Some(inference) => {
+          val (added, removed) = inference(state.activeClauses)
+          assert(added.intersect(removed).isEmpty)
+          val newCandidates = resolutionCandidates(added)
           state.activeCandidates.enqueueAll(newCandidates)
           saturate(state.copy(
-            activeClauses = inference(state.activeClauses),
-            derivation = Derivation(state.derivation.inferenceSteps :+ InferenceStep(state.activeClauses, inference)),
-            derivationLimit = state.derivationLimit.map(d => d - 1)
-          ))
-        }
-        case Some(inference: Inference.ConstraintElimination) => {
-          val clause = inference.substitution(inference.clause.delete(inference.index)).map { case a: Atom => a }.distinct
-          val newCandidates = resolutionCandidates(clause)
-          state.activeCandidates.enqueueAll(newCandidates)
-          saturate(state.copy(
-            activeClauses = inference(state.activeClauses),
-            derivation = Derivation(state.derivation.inferenceSteps :+ InferenceStep(state.activeClauses, inference)),
-            derivationLimit = state.derivationLimit.map(d => d - 1)
-          ))
-        }
-        case Some(inference: (Inference.Purification | Inference.TautologyDeletion | Inference.Subsumption)) => {
-          saturate(state.copy(
-            activeClauses = inference(state.activeClauses),
+            activeClauses = (state.activeClauses ++ added) -- removed,
             derivation = Derivation(state.derivation.inferenceSteps :+ InferenceStep(state.activeClauses, inference)),
             derivationLimit = state.derivationLimit.map(d => d - 1)
           ))
@@ -407,14 +387,16 @@ object scan {
     case clauseSet: Set[_] => pprint.Tree.Apply("ClauseSet", clauseSet.iterator.map(printer.treeify(_, true, true)))
     case Derivation(inferenceSteps) => pprint.Tree.Apply(
         "Derivation", {
+          val (addedLast, removedLast) = inferenceSteps.last.inference(inferenceSteps.last.clauseSet)
+          val lastClauseSet = (inferenceSteps.last.clauseSet ++ addedLast) -- removedLast
           inferenceSteps.flatMap {
             case InferenceStep(clauses, inference) => Seq(printer.treeify(clauses, true, true), printer.treeify(inference, true, true))
-          }.iterator ++ Iterator(printer.treeify(inferenceSteps.last.inference(inferenceSteps.last.clauseSet), true, true))
+          }.iterator ++ Iterator(printer.treeify(lastClauseSet, true, true))
         }
       )
     case InferenceStep(clauseSet, inference) => pprint.Tree.Infix(printer.treeify(clauseSet, true, true), "inference: ", printer.treeify(inference, true, true))
     case rc: ResolutionCandidate             => printResolutionCandidate(rc)
-    case hos: Sequent[_]                     => pprint.Tree.Literal(hos.toString)
+    case hos: Sequent[_]                     => pprint.Tree.Literal(hos.toString.strip())
     case Inference.Resolution(left, right) => pprint.Tree.Apply(
         "Resolution",
         Iterator(
@@ -439,7 +421,14 @@ object scan {
   }
 
   def printResolutionCandidate(resolutionCandidate: ResolutionCandidate): pprint.Tree = {
-    pprint.Tree.Infix(pprint.Tree.Literal(s"${resolutionCandidate.atom}"), "rc", pprint.Tree.Literal(s"${resolutionCandidate.clause.distinct}"))
+    def underlineIndex(atom: Atom, index: SequentIndex) = (atom, index) match {
+      case (a, i) if i == resolutionCandidate.index => s"{${a.toUntypedString}}"
+      case (a, i)                                   => a.toUntypedString
+    }
+    val antecedentStrings = resolutionCandidate.clause.zipWithIndex.antecedent.map(underlineIndex)
+    val succeedentStrings = resolutionCandidate.clause.zipWithIndex.succedent.map(underlineIndex)
+    val clauseString = antecedentStrings.mkString(", ") ++ " ⊢ " ++ succeedentStrings.mkString(", ")
+    pprint.Tree.Literal(clauseString.strip())
   }
 
   def printResult(input: Set[HOLClause], quantifiedVariables: Set[Var], derivationLimit: Option[Int] = None) = {
@@ -466,6 +455,5 @@ object scan {
         else println(" ❌ equivalence does NOT hold ")
       }
     }
-
   }
 }
