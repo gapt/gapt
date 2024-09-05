@@ -212,22 +212,6 @@ object scan {
     }.map(rc => Inference.Resolution(resolutionCandidate, rc))
   }
 
-  def pickResolutionCandidate(state: State): Option[ResolutionCandidate] = {
-    val candidates = resolutionCandidates(state.activeClauses)
-    candidates.iterator.drop(scala.util.Random.nextInt(candidates.size)).nextOption()
-  }
-
-  def pickResolutionPartner(activeCandidate: ResolutionCandidate, activeClauses: Set[HOLClause], resolvedCandidates: Set[ResolutionCandidate]): Option[ResolutionCandidate] = {
-    (activeClauses - activeCandidate.clause).flatMap { clause =>
-      clause.cedent(!activeCandidate.index.polarity).zipWithIndex.filter {
-        case (Atom(v, _), _) => activeCandidate.hoVar == v
-        case _               => false
-      }.map { case (_, index) => (clause, SequentIndex(!activeCandidate.index.polarity, index)) }
-    }.map { case (clause, index) => ResolutionCandidate(clause, index) }
-      .filter { candidate => !resolvedCandidates.contains(candidate) }
-      .headOption
-  }
-
   def saturate(state: State): Either[State, State] = {
     val inference = nextInference(state)
     if inference.isDefined && state.derivationLimit.isDefined && state.derivationLimit.get <= 0 then Left(state)
@@ -350,6 +334,17 @@ object scan {
         val resolventWithoutConstraints = eliminateConstraints(resolvent, candidate.args.map { case x: FOLVar => x }.toSet).map { case a: Atom => a }
         saturateWithResolutionCandidate(candidate, resolventSet + resolventWithoutConstraints, resolvedCandidates + partner)
       }
+  }
+
+  def pickResolutionPartner(activeCandidate: ResolutionCandidate, activeClauses: Set[HOLClause], resolvedCandidates: Set[ResolutionCandidate]): Option[ResolutionCandidate] = {
+    (activeClauses - activeCandidate.clause).flatMap { clause =>
+      clause.cedent(!activeCandidate.index.polarity).zipWithIndex.filter {
+        case (Atom(v, _), _) => activeCandidate.hoVar == v
+        case _               => false
+      }.map { case (_, index) => (clause, SequentIndex(!activeCandidate.index.polarity, index)) }
+    }.map { case (clause, index) => ResolutionCandidate(clause, index) }
+      .filter { candidate => !resolvedCandidates.contains(candidate) }
+      .headOption
   }
 
   def resolve(left: ResolutionCandidate, right: ResolutionCandidate): HOLClause = {
