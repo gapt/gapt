@@ -49,6 +49,8 @@ import gapt.expr.formula.Iff
 import gapt.formats.leancop.LeanCoP21Parser.clause
 
 object scan {
+  case class FormulaEquationClauseSet(quantifiedVariables: Set[Var], clauses: Set[HOLClause])
+
   case class ResolutionCandidate(clause: HOLClause, index: SequentIndex):
     def atom = clause(index)
     def args = atom match
@@ -121,12 +123,18 @@ object scan {
       derivationLimit: Option[Int]
   )
 
-  def apply(input: Set[HOLClause], quantifiedVariables: Set[Var], derivationLimit: Option[Int] = None): Either[Derivation, (Set[HOLClause], Substitution, Derivation)] =
+  def apply(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = None): Either[Derivation, (Set[HOLClause], Substitution, Derivation)] =
     assert(derivationLimit.isEmpty || derivationLimit.get >= 0, "derivation limit must be non-negative")
     val result =
       for
-        state <- saturate(State(input, scala.collection.mutable.Queue.from(resolutionCandidates(input)), quantifiedVariables, Derivation(List.empty), derivationLimit))
-        wits = simplifyWitnessSubstitution(witnessSubstitution(state.derivation, quantifiedVariables))
+        state <- saturate(State(
+          input.clauses,
+          scala.collection.mutable.Queue.from(resolutionCandidates(input.clauses)),
+          input.quantifiedVariables,
+          Derivation(List.empty),
+          derivationLimit
+        ))
+        wits = simplifyWitnessSubstitution(witnessSubstitution(state.derivation, input.quantifiedVariables))
       yield (state.activeClauses, wits, state.derivation)
     result.left.map(state => state.derivation)
 
@@ -136,10 +144,10 @@ object scan {
     clauseSubsumption(subsumerHoVarsAsConsts, subsumeeHoVarsAsConsts, multisetSubsumption = true).map(_.asFOLSubstitution)
   }
 
-  def isRedundant(state: State, clause: HOLClause): Boolean = {
+  def isRedundant(clauses: Set[HOLClause], clause: HOLClause): Boolean = {
     val eliminatedConstraints = eliminateConstraints(clause, Set.empty)
     eliminatedConstraints.isTaut
-    || state.activeClauses.exists(c => subsumptionSubstitution(c, eliminatedConstraints).isDefined)
+    || clauses.exists(c => subsumptionSubstitution(c, eliminatedConstraints).isDefined)
   }
 
   def nextInference(state: State): Option[Inference] = {
@@ -167,10 +175,10 @@ object scan {
     val purification: Option[Inference.Purification] = resolutionCandidates(state.activeClauses).filter(_.isVar).flatMap[Inference.Purification] { rc =>
       val hoVar @ Var(_, _) = rc.hoVar: @unchecked
       val allFactorsRedundant = factoringInferences(rc.clause).forall {
-        case inference: Inference.Factoring => isRedundant(state, factor(inference))
+        case inference: Inference.Factoring => isRedundant(state.activeClauses, factor(inference))
       }
       val allResolventsRedundant = resolutionInferences(rc, state.activeClauses - rc.clause).forall {
-        case Inference.Resolution(left, right) => isRedundant(state, resolve(left, right))
+        case Inference.Resolution(left, right) => isRedundant(state.activeClauses, resolve(left, right))
       }
       if allFactorsRedundant && allResolventsRedundant
       then Some(Inference.Purification(hoVar, rc))
@@ -179,7 +187,7 @@ object scan {
 
     // do factoring
     val factoring: Option[Inference.Factoring] = state.activeClauses.flatMap(factoringInferences).filter {
-      case f => !isRedundant(state, factor(f))
+      case f => !isRedundant(state.activeClauses, factor(f))
     }.headOption
 
     // do resolution
@@ -190,7 +198,7 @@ object scan {
 
         if state.activeClauses.contains(candidate.clause) then {
           inference = resolutionInferences(candidate, state.activeClauses - candidate.clause).find {
-            case Inference.Resolution(left, right) => !isRedundant(state, resolve(left, right))
+            case Inference.Resolution(left, right) => !isRedundant(state.activeClauses, resolve(left, right))
           }
         }
       }
@@ -397,7 +405,7 @@ object scan {
         Iterator(
           pprint.Tree.KeyValue("left", printer.treeify(left, false, true)),
           pprint.Tree.KeyValue("right", printer.treeify(right, false, true)),
-          pprint.Tree.KeyValue("resolvent", printer.treeify(resolve(left, right), false, true))
+          pprint.Tree.KeyValue("resolvent", printer.treeify(scan.resolve(left, right), false, true))
         )
       )
     case Inference.Purification(_, candidate) => pprint.Tree.Apply("Purification", Iterator(additionalPrinters(candidate)))
@@ -410,7 +418,7 @@ object scan {
         Iterator(
           pprint.Tree.KeyValue("left", printer.treeify(clause(leftIndex), false, true)),
           pprint.Tree.KeyValue("right", printer.treeify(clause(rightIndex), false, true)),
-          pprint.Tree.KeyValue("factor", printer.treeify(factor(f), false, true))
+          pprint.Tree.KeyValue("factor", printer.treeify(scan.factor(f), false, true))
         )
       )
   }
@@ -426,15 +434,15 @@ object scan {
     pprint.Tree.Literal(clauseString.strip())
   }
 
-  def printResult(input: Set[HOLClause], quantifiedVariables: Set[Var], derivationLimit: Option[Int] = None) = {
-    scan(input, quantifiedVariables, derivationLimit) match {
+  def printResult(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = Some(100)) = {
+    scan(input, derivationLimit) match {
       case Left(value) => {
         printer.pprintln(value, height = derivationLimit.get * 100)
         println(s"\n ❌ attempt resulted in derivation of length > ${derivationLimit.get}")
       }
       case Right(value @ (clauseSet, witnesses, derivation)) => {
         printer.pprintln(value)
-        val substitutedInput = witnesses(input).map(clause => BetaReduction.betaNormalize(clause.toFormula))
+        val substitutedInput = witnesses(input.clauses).map(clause => BetaReduction.betaNormalize(clause.toFormula))
         val leftFormula = And(substitutedInput)
         val rightFormula = And(clauseSet.map(_.toFormula))
         val equivalence = Iff(All.Block(freeFOLVariables(leftFormula).toSeq, leftFormula), All.Block(freeFOLVariables(rightFormula).toSeq, rightFormula))
