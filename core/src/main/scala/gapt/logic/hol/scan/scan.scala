@@ -41,7 +41,6 @@ import gapt.proofs.ceres.subsumedClausesRemoval
 import gapt.logic.clauseSubsumption
 import gapt.expr.subst.PreSubstitution
 import gapt.proofs.Suc
-import os.stat
 import gapt.proofs.Sequent
 import scala.collection.immutable.HashSet
 import gapt.provers.escargot.Escargot
