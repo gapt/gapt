@@ -22,7 +22,8 @@ class ScanTest extends Specification {
   This is a specification for the scan implementation
 
   It should solve
-    solve equation without quantified variable ${quantifiedVariableNotOccurring must beSolved()}
+    solve equation without quantified variable ${quantifiedVariableNotOccurring must beSolvedWith() { (_, s, _) => s.domain.contains(hov"X:i>o") }}
+    treat variables as predicate constants when not given ${variablesAsConstants must beSolvedWith() { (_, s, _) => s.isEmpty }}
     negation of leibniz equality ${negationOfLeibnizEquality must beSolved()}
     resolution on non-base literals ${resolutionOnNonBaseLiterals must beSolved()}
     simple disjunction ${simpleDisjunction must beSolved()}
@@ -44,11 +45,15 @@ class ScanTest extends Specification {
 
   val defaultLimit = 100
   def beSolved(limit: Int = defaultLimit): Matcher[FormulaEquationClauseSet] = {
+    beSolvedWith(limit)((_, _, _) => true)
+  }
+
+  def beSolvedWith(limit: Int = defaultLimit)(predicate: (Set[HOLClause], Substitution, Derivation) => Boolean): Matcher[FormulaEquationClauseSet] = {
     (input: FormulaEquationClauseSet) =>
       scan(input, Some(limit)) must beRight.like {
         (clauseSet: Set[HOLClause], witnesses: Substitution, derivation: Derivation) =>
           val substitutedInput = witnesses(input.clauses).map(_.toFormula).map(BetaReduction.betaNormalize)
-          substitutedInput must beEquivalentTo(clauseSet.map(_.toFormula))
+          substitutedInput must beEquivalentTo(clauseSet.map(_.toFormula)) and (predicate(clauseSet, witnesses, derivation) must beTrue)
       }
   }
 }

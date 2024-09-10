@@ -174,7 +174,9 @@ object scan {
     }.nextOption()
 
     // check for purification
-    val purification: Option[Inference.Purification] = resolutionCandidates(state.activeClauses).filter(_.isVar).flatMap[Inference.Purification] { rc =>
+    val purification: Option[Inference.Purification] = resolutionCandidates(state.activeClauses).filter { rc =>
+      rc.isVar && state.quantifiedVariables.contains(rc.hoVar.asInstanceOf[Var])
+    }.flatMap[Inference.Purification] { rc =>
       val hoVar @ Var(_, _) = rc.hoVar: @unchecked
       val allFactorsRedundant = factoringInferences(rc.clause).forall {
         case inference: Inference.Factoring => isRedundant(state.activeClauses, factor(inference))
@@ -270,7 +272,7 @@ object scan {
 
               val candidateOccurringClauses = derivation.initialClauseSet.filter { clause =>
                 clause.exists {
-                  case Atom(v: Var, _) => quantifiedVariables.contains(v)
+                  case Atom(v: Var, _) => true
                   case _               => false
                 }
               }

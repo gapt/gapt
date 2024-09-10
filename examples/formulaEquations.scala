@@ -9,17 +9,12 @@ object formulaEquations {
     FormulaEquationClauseSet(vars, clauses)
   }
 
-  def quantifiedVariableNotOccurring = feq(
-    Set(hov"X:i>o"),
-    Set(hcl":- A(u)")
-  )
+  def quantifiedVariableNotOccurring = feq(Set(hov"X:i>o"), Set(hcl":- A(u)"))
+  def variablesAsConstants = feq(Set.empty, Set(hcl":- X(u)"))
 
   def negationOfLeibnizEquality = feq(
     Set(hov"X:i>o"),
-    Set(
-      hcl"X(a), X(b) :-",
-      hcl":- X(a), X(b)"
-    )
+    Set(hcl"X(a), X(b) :-", hcl":- X(a), X(b)")
   )
 
   def resolutionOnNonBaseLiterals = feq(
