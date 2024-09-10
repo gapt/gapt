@@ -12,8 +12,6 @@ import org.specs2.matcher.Matcher
 import gapt.logic.hol.scan.scan.FormulaEquationClauseSet
 import org.specs2.Specification
 import gapt.proofs.resolution.structuralCNF
-import gapt.examples.Pi2Pigeonhole.proof
-import gapt.logic.hol.scan.scan.InferenceStep
 import gapt.logic.hol.scan.scan.ResolutionCandidate
 import gapt.logic.hol.scan.scan.Inference
 
@@ -24,6 +22,7 @@ class ScanTest extends Specification {
   This is a specification for the scan implementation
 
   It should solve
+    solve equation without quantified variable ${quantifiedVariableNotOccurring must beSolved()}
     negation of leibniz equality ${negationOfLeibnizEquality must beSolved()}
     resolution on non-base literals ${resolutionOnNonBaseLiterals must beSolved()}
     simple disjunction ${simpleDisjunction must beSolved()}
