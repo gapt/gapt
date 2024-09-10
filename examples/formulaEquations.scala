@@ -9,7 +9,7 @@ object formulaEquations {
     FormulaEquationClauseSet(vars, clauses)
   }
 
-  def leibnizDisequality = feq(
+  def negationOfLeibnizEquality = feq(
     Set(hov"X:i>o"),
     Set(
       hcl"X(a), X(b) :-",
@@ -29,4 +29,14 @@ object formulaEquations {
 
   def simpleDisjunction = feq(Set(hov"X:i>o"), Set(hcl":- X(a), X(b)"))
   def tripleDisjunction = feq(Set(hov"X:i>o"), Set(hcl":- X(a), X(b), X(c)"))
+
+  def twoVariableExample = feq(
+    Set(hov"X:i>o", hov"Y:i>i>o"),
+    Set(
+      hcl":- Y(a,b)",
+      hcl"Y(u,u) :- X(u)",
+      hcl"Y(u,v) :- Y(v,u)",
+      hcl"X(a) :-"
+    )
+  )
 }

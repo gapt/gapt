@@ -24,10 +24,11 @@ class ScanTest extends Specification {
   This is a specification for the scan implementation
 
   It should solve
-    leibniz disequality ${leibnizDisequality must beSolved()}
+    negation of leibniz equality ${negationOfLeibnizEquality must beSolved()}
     resolution on non-base literals ${resolutionOnNonBaseLiterals must beSolved()}
     simple disjunction ${simpleDisjunction must beSolved()}
     triple disjunction ${tripleDisjunction must beSolved()}
+    two variable example ${twoVariableExample must beSolved()}
   """
 
   def beEquivalentTo(right: Formula): Matcher[Formula] = { (left: Formula) =>
