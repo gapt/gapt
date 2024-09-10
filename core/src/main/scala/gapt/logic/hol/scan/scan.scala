@@ -37,7 +37,6 @@ import gapt.expr.preExpr.Type
 import gapt.utils.NameGenerator
 import gapt.expr.ty.Ty
 import gapt.formats.leancop.LeanCoPParser.inferences
-import gapt.proofs.ceres.subsumedClausesRemoval
 import gapt.logic.clauseSubsumption
 import gapt.expr.subst.PreSubstitution
 import gapt.proofs.Suc
@@ -134,7 +133,7 @@ object scan {
           input.clauses,
           scala.collection.mutable.Queue.from(resolutionCandidates(input.clauses)),
           input.quantifiedVariables,
-          Derivation(List.empty),
+          Derivation(input.clauses, List.empty),
           derivationLimit
         ))
         wits = simplifyWitnessSubstitution(witnessSubstitution(state.derivation, input.quantifiedVariables))
@@ -238,7 +237,7 @@ object scan {
           state.activeCandidates.enqueue(inference.left)
           saturate(state.copy(
             activeClauses = (state.activeClauses ++ added) -- removed,
-            derivation = Derivation(state.derivation.inferenceSteps :+ InferenceStep(state.activeClauses, inference)),
+            derivation = state.derivation.copy(inferences = state.derivation.inferences :+ inference),
             derivationLimit = state.derivationLimit.map(d => d - 1)
           ))
         }
@@ -249,7 +248,7 @@ object scan {
           state.activeCandidates.enqueueAll(newCandidates)
           saturate(state.copy(
             activeClauses = (state.activeClauses ++ added) -- removed,
-            derivation = Derivation(state.derivation.inferenceSteps :+ InferenceStep(state.activeClauses, inference)),
+            derivation = state.derivation.copy(inferences = state.derivation.inferences :+ inference),
             derivationLimit = state.derivationLimit.map(d => d - 1)
           ))
         }
@@ -261,15 +260,15 @@ object scan {
   }
 
   def witnessSubstitution(derivation: Derivation, quantifiedVariables: Set[Var]): Substitution = {
-    def helper(derivation: List[InferenceStep]): Substitution = {
-      derivation match
+    def helper(derivation: Derivation): Substitution = {
+      derivation.inferences match
         case head :: next => {
           head match
-            case InferenceStep(_, _: (Inference.Resolution | Inference.Factoring | Inference.TautologyDeletion | Inference.Subsumption | Inference.ConstraintElimination)) => helper(next)
-            case InferenceStep(clauseSet, Inference.Purification(hoVar, candidate)) => {
-              val wits = helper(next)
+            case i: (Inference.Resolution | Inference.Factoring | Inference.TautologyDeletion | Inference.Subsumption | Inference.ConstraintElimination) => helper(derivation.tail)
+            case Inference.Purification(hoVar, candidate) => {
+              val wits = helper(derivation.tail)
 
-              val candidateOccurringClauses = clauseSet.filter { clause =>
+              val candidateOccurringClauses = derivation.initialClauseSet.filter { clause =>
                 clause.exists {
                   case Atom(v: Var, _) => quantifiedVariables.contains(v)
                   case _               => false
@@ -310,7 +309,7 @@ object scan {
           }.toMap)
     }
 
-    helper(derivation.inferenceSteps)
+    helper(derivation)
   }
 
   def simplifyWitnessSubstitution(subst: Substitution): Substitution = {
@@ -385,25 +384,34 @@ object scan {
     Abs(vars, formula)
   }
 
-  case class InferenceStep(clauseSet: Set[HOLClause], inference: Inference)
-  case class Derivation(inferenceSteps: List[InferenceStep])
+  case class Derivation(initialClauseSet: Set[HOLClause], inferences: List[Inference]):
+    def tail: Derivation = inferences match
+      case head :: next => {
+        val (added, removed) = head(initialClauseSet)
+        Derivation(initialClauseSet ++ added -- removed, next)
+      }
+      case Nil => ???
 
   def printer = pprint.copy(additionalHandlers = additionalPrinters, defaultWidth = 150)
 
   def additionalPrinters: PartialFunction[Any, pprint.Tree] = {
     case clauseSet: Set[_] => pprint.Tree.Apply("ClauseSet", clauseSet.iterator.map(printer.treeify(_, true, true)))
-    case Derivation(inferenceSteps) => pprint.Tree.Apply(
+    case Derivation(initialClauseSet, inferences) => pprint.Tree.Apply(
         "Derivation", {
-          val (addedLast, removedLast) = inferenceSteps.last.inference(inferenceSteps.last.clauseSet)
-          val lastClauseSet = (inferenceSteps.last.clauseSet ++ addedLast) -- removedLast
-          inferenceSteps.flatMap {
-            case InferenceStep(clauses, inference) => Seq(printer.treeify(clauses, true, true), printer.treeify(inference, true, true))
-          }.iterator ++ Iterator(printer.treeify(lastClauseSet, true, true))
+          val clauseSets = inferences.scanLeft(initialClauseSet)((c, i) => {
+            val (added, removed) = i(c)
+            c ++ added -- removed
+          })
+          Iterator(printer.treeify(initialClauseSet, true, true)) ++ inferences.zip(clauseSets.tail).flatMap {
+            case (inference, clauses) => Seq(
+                printer.treeify(clauses, true, true),
+                printer.treeify(inference, true, true)
+              )
+          }.iterator
         }
       )
-    case InferenceStep(clauseSet, inference) => pprint.Tree.Infix(printer.treeify(clauseSet, true, true), "inference: ", printer.treeify(inference, true, true))
-    case rc: ResolutionCandidate             => printResolutionCandidate(rc)
-    case hos: Sequent[_]                     => pprint.Tree.Literal(hos.toString.strip())
+    case rc: ResolutionCandidate => printResolutionCandidate(rc)
+    case hos: Sequent[_]         => pprint.Tree.Literal(hos.toString.strip())
     case Inference.Resolution(left, right) => pprint.Tree.Apply(
         "Resolution",
         Iterator(
