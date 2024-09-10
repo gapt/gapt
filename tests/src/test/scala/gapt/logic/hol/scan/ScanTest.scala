@@ -27,6 +27,7 @@ class ScanTest extends Specification {
     leibniz disequality ${leibnizDisequality must beSolved()}
     resolution on non-base literals ${resolutionOnNonBaseLiterals must beSolved()}
     simple disjunction ${simpleDisjunction must beSolved()}
+    triple disjunction ${tripleDisjunction must beSolved()}
   """
 
   def beEquivalentTo(right: Formula): Matcher[Formula] = { (left: Formula) =>

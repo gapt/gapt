@@ -106,6 +106,10 @@ object scan {
     (clause.delete(rightIndex) ++ HOLClause(constraints, Seq.empty)).distinct
   }
 
+  def isFactorOf(clause: HOLClause, other: HOLClause): Boolean = {
+    factoringInferences(other).exists(i => factor(i) == clause)
+  }
+
   def factoringInferences(clause: HOLClause): Set[Inference.Factoring] = {
     clause.succedent.zipWithIndex.combinations(2).flatMap {
       case Seq(left @ (Atom(leftHead, _), _: Int), right @ (Atom(rightHead, _), _: Int)) if leftHead == rightHead => Some((left, right))
@@ -180,7 +184,8 @@ object scan {
       val allResolventsRedundant = resolutionInferences(rc, state.activeClauses - rc.clause).forall {
         case Inference.Resolution(left, right) => isRedundant(state.activeClauses, resolve(left, right))
       }
-      if allFactorsRedundant && allResolventsRedundant
+      val isAFactor = state.activeClauses.exists(c => isFactorOf(rc.clause, c))
+      if !isAFactor && allFactorsRedundant && allResolventsRedundant
       then Some(Inference.Purification(hoVar, rc))
       else None
     }.headOption
