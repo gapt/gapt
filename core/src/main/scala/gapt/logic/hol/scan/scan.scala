@@ -127,7 +127,7 @@ object scan {
       derivationLimit: Option[Int]
   )
 
-  def apply(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = None): Either[Derivation, (Set[HOLClause], Substitution, Derivation)] =
+  def apply(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = Some(100)): Either[Derivation, (Set[HOLClause], Substitution, Derivation)] =
     assert(derivationLimit.isEmpty || derivationLimit.get >= 0, "derivation limit must be non-negative")
     val result =
       for
