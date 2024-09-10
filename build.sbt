@@ -231,6 +231,7 @@ lazy val core = project.in(file("core")).settings(commonSettings: _*).settings(
     "org.scala-lang.modules" %% "scala-xml" % "2.1.0",
     "org.apache.commons" % "commons-lang3" % "3.12.0",
     "com.lihaoyi" %% "os-lib" % "0.9.3",
+    "com.lihaoyi" %% "pprint" % "0.9.0",
     "de.uni-freiburg.informatik.ultimate" % "smtinterpol" % "2.5",
     "com.github.scopt" %% "scopt" % "4.0.1",
     "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.6",
