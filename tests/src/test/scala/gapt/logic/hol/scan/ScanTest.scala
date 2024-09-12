@@ -14,6 +14,8 @@ import org.specs2.Specification
 import gapt.proofs.resolution.structuralCNF
 import gapt.logic.hol.scan.scan.ResolutionCandidate
 import gapt.logic.hol.scan.scan.Inference
+import gapt.expr.formula.hol.freeHOVariables
+import org.specs2.matcher.MatchResult
 
 class ScanTest extends Specification {
   import gapt.examples.formulaEquations._
@@ -22,8 +24,8 @@ class ScanTest extends Specification {
   This is a specification for the scan implementation
 
   It should solve
-    solve equation without quantified variable ${quantifiedVariableNotOccurring must beSolvedWith() { (_, s, _) => s.domain.contains(hov"X:i>o") }}
-    treat variables as predicate constants when not given ${variablesAsConstants must beSolvedWith() { (_, s, _) => s.isEmpty }}
+    solve equation without quantified variable ${quantifiedVariableNotOccurring must beSolved()}
+    treat variables as predicate constants when not given ${variablesAsConstants must beSolved()}
     negation of leibniz equality ${negationOfLeibnizEquality must beSolved()}
     resolution on non-base literals ${resolutionOnNonBaseLiterals must beSolved()}
     simple disjunction ${simpleDisjunction must beSolved()}
@@ -32,7 +34,7 @@ class ScanTest extends Specification {
   """
 
   def beEquivalentTo(right: Formula): Matcher[Formula] = { (left: Formula) =>
-    Escargot.isValid(Iff(left, right)) must beTrue
+    Escargot.isValid(Iff(left, right)).must(beTrue).mapMessage(_ => s"$left is not equivalent to $right")
   }
 
   def beEquivalentTo(right: Set[Formula]): Matcher[Set[Formula]] = { (left: Set[Formula]) =>
@@ -40,20 +42,26 @@ class ScanTest extends Specification {
     val rightFree = And(right)
     val leftFormula = All.Block(freeFOLVariables(leftFree).toSeq, leftFree)
     val rightFormula = All.Block(freeFOLVariables(rightFree).toSeq, rightFree)
-    leftFormula must beEquivalentTo(rightFormula)
+    (leftFormula must beEquivalentTo(rightFormula)).mapMessage(_ => s"$left is not equivalent to $right")
   }
 
   val defaultLimit = 100
   def beSolved(limit: Int = defaultLimit): Matcher[FormulaEquationClauseSet] = {
-    beSolvedWith(limit)((_, _, _) => true)
-  }
-
-  def beSolvedWith(limit: Int = defaultLimit)(predicate: (Set[HOLClause], Substitution, Derivation) => Boolean): Matcher[FormulaEquationClauseSet] = {
     (input: FormulaEquationClauseSet) =>
       scan(input, Some(limit)) must beRight.like {
-        (clauseSet: Set[HOLClause], witnesses: Substitution, derivation: Derivation) =>
+        case output @ (clauseSet: Set[HOLClause], witnesses: Substitution, derivation: Derivation) =>
           val substitutedInput = witnesses(input.clauses).map(_.toFormula).map(BetaReduction.betaNormalize)
-          substitutedInput must beEquivalentTo(clauseSet.map(_.toFormula)) and (predicate(clauseSet, witnesses, derivation) must beTrue)
+          val beWithoutQuantifiedVariables: Matcher[HOLClause] = { (c: HOLClause) =>
+            {
+              (freeHOVariables(c.toFormula).intersect(input.quantifiedVariables).isEmpty, s"$c contains at least one quantified variable from ${input.quantifiedVariables}")
+            }
+          }
+
+          clauseSet.must(contain(beWithoutQuantifiedVariables).foreach)
+            .and(witnesses.domain.mustEqual(input.quantifiedVariables)
+              .mapMessage(_ => s"domain of substitution is not ${input.quantifiedVariables}"))
+            .and(substitutedInput.must(beEquivalentTo(clauseSet.map(_.toFormula)))
+              .mapMessage(_ => s"substituted input is not equivalent to output clause set"))
       }
   }
 }
