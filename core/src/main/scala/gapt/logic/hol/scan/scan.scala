@@ -465,23 +465,26 @@ object scan {
         printer.pprintln(value, height = derivationLimit.get * 100)
         println(s"\n ❌ attempt resulted in derivation of length > ${derivationLimit.get}")
       }
-      case Right(value @ (clauseSet, witnesses, derivation)) => {
-        printer.pprintln(value)
-        val substitutedInput = witnesses(input.clauses).map(clause => BetaReduction.betaNormalize(clause.toFormula))
-        val leftFormula = And(substitutedInput)
-        val rightFormula = And(clauseSet.map(_.toFormula))
-        val equivalence = Iff(All.Block(freeFOLVariables(leftFormula).toSeq, leftFormula), All.Block(freeFOLVariables(rightFormula).toSeq, rightFormula))
-        println("\nchecking equivalence between")
-        printer.pprintln(input)
-        println("with substitution")
-        printer.pprintln(witnesses)
-        println("and")
-        printer.pprintln(clauseSet)
-        println("")
-        if Escargot.isValid(equivalence)
-        then println(" ✅ equivalence holds")
-        else println(" ❌ equivalence does NOT hold ")
-      }
+      case Right(output) => checkSolution(input, output)
     }
+  }
+
+  def checkSolution(input: FormulaEquationClauseSet, output: (Set[HOLClause], Substitution, Derivation)) = {
+    val (clauseSet, witnesses, derivation) = output
+    printer.pprintln(output)
+    val substitutedInput = witnesses(input.clauses).map(clause => BetaReduction.betaNormalize(clause.toFormula))
+    val leftFormula = And(substitutedInput)
+    val rightFormula = And(clauseSet.map(_.toFormula))
+    val equivalence = Iff(All.Block(freeFOLVariables(leftFormula).toSeq, leftFormula), All.Block(freeFOLVariables(rightFormula).toSeq, rightFormula))
+    println("\nchecking equivalence between")
+    printer.pprintln(input)
+    println("with substitution")
+    printer.pprintln(witnesses)
+    println("and")
+    printer.pprintln(clauseSet)
+    println("")
+    if Escargot.isValid(equivalence)
+    then println(" ✅ equivalence holds")
+    else println(" ❌ equivalence does NOT hold")
   }
 }
