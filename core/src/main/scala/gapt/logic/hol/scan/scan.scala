@@ -406,8 +406,8 @@ object scan {
           })
           Iterator(printer.treeify(initialClauseSet, true, true)) ++ inferences.zip(clauseSets.tail).flatMap {
             case (inference, clauses) => Seq(
-                printer.treeify(clauses, true, true),
-                printer.treeify(inference, true, true)
+                printer.treeify(inference, true, true),
+                printer.treeify(clauses, true, true)
               )
           }.iterator
         }
