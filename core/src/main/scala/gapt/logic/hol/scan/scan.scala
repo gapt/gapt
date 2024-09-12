@@ -413,7 +413,7 @@ object scan {
         }
       )
     case rc: ResolutionCandidate => printResolutionCandidate(rc)
-    case hos: Sequent[_]         => pprint.Tree.Literal(hos.toString.strip())
+    case hos: Sequent[_]         => printSequent(hos)
     case Inference.Resolution(left, right) => pprint.Tree.Apply(
         "Resolution",
         Iterator(
@@ -425,7 +425,7 @@ object scan {
     case Inference.Purification(_, candidate) => pprint.Tree.Apply("Purification", Iterator(additionalPrinters(candidate)))
     case Inference.ConstraintElimination(clause, index, _) => pprint.Tree.Apply(
         "ConstraintElimination",
-        Iterator(pprint.Tree.KeyValue("clause", pprint.Tree.Literal(clause.toString)), pprint.Tree.KeyValue("constraint", pprint.Tree.Literal(clause(index).toString)))
+        Iterator(pprint.Tree.KeyValue("clause", printer.treeify(clause, false, true)), pprint.Tree.KeyValue("constraint", printer.treeify(clause(index), false, true)))
       )
     case f @ Inference.Factoring(clause, leftIndex, rightIndex) => pprint.Tree.Apply(
         "Factoring",
@@ -435,6 +435,17 @@ object scan {
           pprint.Tree.KeyValue("factor", printer.treeify(scan.factor(f), false, true))
         )
       )
+  }
+
+  def printSequent[T](sequent: Sequent[T]): pprint.Tree = {
+    def toStr(e: T) = e match {
+      case e: Expr => e.toUntypedString
+      case e       => e.toString()
+    }
+    val antecedentStrings = sequent.antecedent.map(toStr)
+    val succeedentStrings = sequent.succedent.map(toStr)
+    val clauseString = antecedentStrings.mkString(", ") ++ " ⊢ " ++ succeedentStrings.mkString(", ")
+    pprint.Tree.Literal(clauseString.strip())
   }
 
   def printResolutionCandidate(resolutionCandidate: ResolutionCandidate): pprint.Tree = {
