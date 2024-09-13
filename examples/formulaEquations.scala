@@ -39,4 +39,9 @@ object formulaEquations {
       hcl"X(a) :-"
     )
   )
+
+  def terminatingDerivationWhichRequiresRedundancyInWitnessConstruction = feq(
+    Set(hov"X:i>o"),
+    Set(hcl"A(u):-X(u)", hcl"X(u) :- X(v), A(u)", hcl"X(u) :- B(u)")
+  )
 }
