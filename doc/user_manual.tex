@@ -1553,7 +1553,7 @@ fof(e, axiom, ![X]: exp(X, two) = times(X, X)).
 fof(f, conjecture, ?[X,Y]: (~ i(exp(X, Y)) & i(X) & i(Y))).
 
 gapt> tptp.toSequent
-val res2: gapt.proofs.HOLSequent = i(sr2),
+val res1: gapt.proofs.HOLSequent = i(sr2),
 ¬i(two),
 times(sr2, sr2) = two,
 ∀X ∀Y ∀Z exp(exp(X, Y), Z) = exp(X, times(Y, Z)),
