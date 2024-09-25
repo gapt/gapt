@@ -16,7 +16,7 @@ object help {
   private val (indexURI, localDocs, basePath) = {
 
     if (Files.exists(tarballPathBase))
-      (tarballPathBase.toUri.toString + "/index.h", true, Some(tarballPathBase))
+      (tarballPathBase.toUri.toString, true, Some(tarballPathBase))
     else if (Files.exists(devPathBase))
       (devPathBase.toUri.toString, true, Some(devPathBase))
     else
@@ -59,7 +59,7 @@ object help {
    *
    */
   def apply(): Unit = {
-    openUrl(indexURI + "/index.html")
+    openUrl(indexURI + "index.html")
   }
 
   /**
