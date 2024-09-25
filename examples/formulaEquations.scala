@@ -55,6 +55,27 @@ object formulaEquations {
     Set(hcl"A(u):-X(u)", hcl"X(u) :- X(v), A(u)", hcl"X(u) :- B(u)")
   )
 
+  def subsumptionBasedRedundancyWithInfiniteWitness = feq(
+    Set(hov"X:i>o"),
+    Set(
+      hcl"A(u), B(u,v) :-",
+      hcl"A(u) :- X(u)",
+      hcl"B(u,v), X(u) :- X(v)",
+      hcl"X(u) :- C(u)"
+    )
+  )
+
+  def subsumptionBasedRedundancyWithInfiniteWitness2 = feq(
+    Set(hov"X:i>o"),
+    Set(
+      hcl"A(u), B(u,v) :-",
+      hcl"A(u) :- X(u)",
+      hcl"B(u,v), X(u) :- X(v)",
+      hcl"A(u) :- C(u)",
+      hcl"X(u) :- C(u)"
+    )
+  )
+
   def Q = And(Set(
     fof"!u s(u) != 0",
     fof"!u u + 0 = u",
