@@ -26,6 +26,12 @@ lazy val commonSettings = Seq(
   scalaVersion := "3.3.1",
   developers := List(
     Developer(
+      id = "fachammer",
+      name = "Fabian Achammer",
+      email = "fabian@achammer.dev",
+      url = url("https://fabian.achammer.dev")
+    ),
+    Developer(
       id = "jvierling",
       name = "Jannik Vierling",
       email = "jannik.vierling@gmail.com",
