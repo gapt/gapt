@@ -3,7 +3,7 @@ import java.io.ByteArrayOutputStream
 import org.apache.commons.compress.archivers.tar.{TarArchiveEntry, TarArchiveOutputStream}
 import sys.process._
 
-val Version = "2.17.0-SNAPSHOT"
+val Version = "2.17.0"
 
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
