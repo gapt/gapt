@@ -4,6 +4,9 @@
 
 ## Version 2.17.0 (unreleased)
 
+* Migrate codebase to Scala 3
+* Fix a crash when running under JDK 21
+
 ## Version 2.16.0 (released on 2022-07-21)
 
 * Update prover interfaces: Vampire, iProver, veriT, leanCoP
