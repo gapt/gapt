@@ -47,7 +47,8 @@ object help {
     val command = System.getProperty("os.name") match {
       case os if os.contains("Mac")   => "open"
       case os if os.contains("Linux") => "xdg-open"
-      case os                         => throw UnsupportedOperationException(s"cannot open \"$url\" automatically as the gapt help command does not support the operating system \"$os\" at the moment")
+      case os                         => 
+        throw new UnsupportedOperationException(s"cannot open \"$url\" automatically as the gapt help command does not support the operating system \"$os\" at the moment")
     }
     val pb = new ProcessBuilder(command, url)
     val p = pb.start()
