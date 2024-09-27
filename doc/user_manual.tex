@@ -1688,7 +1688,7 @@ val firstOrderProblem: gapt.proofs.Sequent[gapt.expr.formula.Formula] = ∀x0 (P
 ⊢
 ∃y (P_is_b(y) ∧ f_c = f_f(y))
 val back: gapt.proofs.expansion.ExpansionProof =>
-  gapt.proofs.expansion.ExpansionProof = gapt.proofs.reduction.CombinedReduction$$Lambda/0x00000070021a5470@7ac8cabd
+  gapt.proofs.expansion.ExpansionProof = <function>
 
 gapt> Escargot getExpansionProof firstOrderProblem map back
 val res7: Option[gapt.proofs.expansion.ExpansionProof] = Some(∀x f(f(x:b): b) = x +^{c} (f(f(c)) = c)-
