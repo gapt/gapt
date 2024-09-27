@@ -2,7 +2,7 @@
 
 ## Version 2.18.0 (unreleased)
 
-## Version 2.17.0 (unreleased)
+## Version 2.17.0 (released on 2024-09-27)
 
 * Migrate code base to Scala 3
 * Fix an error when running with a newer JDK version
