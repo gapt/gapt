@@ -6,10 +6,10 @@ import gapt.proofs.gaptic._
 
 object prop_26 extends TacticsProof {
 
-  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += InductiveType(ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat")
   ctx += hoc"p:Nat>Nat"
 
-  ctx += InductiveType( ty"list", hoc"nil:list", hoc"cons:Nat>list>list" )
+  ctx += InductiveType(ty"list", hoc"nil:list", hoc"cons:Nat>list>list")
   ctx += hoc"head:list>Nat"
   ctx += hoc"tail:list>list"
 
@@ -36,41 +36,41 @@ object prop_26 extends TacticsProof {
       goal: ∀x ∀xs ∀ys (elem(x:Nat, xs:list) → elem(x, append(xs, ys:list)))
     """
 
-  val proof = Lemma( sequent ) {
+  val proof = Lemma(sequent) {
     allR
     allR
-    induction( hov"xs:list" )
+    induction(hov"xs:list")
     // base case
     allR
     impR
-    allL( "def_elem_1", le"x:Nat" )
-    negL( "def_elem_1_0" )
+    allL("def_elem_1", le"x:Nat")
+    negL("def_elem_1_0")
     axiomLog
     allR
     impR
-    allL( "def_elem_2", le"x:Nat", le"x_0:Nat", le"xs_0:list" )
-    andL( "def_elem_2_0" )
-    impL( "def_elem_2_0_0" )
+    allL("def_elem_2", le"x:Nat", le"x_0:Nat", le"xs_0:list")
+    andL("def_elem_2_0")
+    impL("def_elem_2_0_0")
     axiomLog
-    orL( "def_elem_2_0_0" )
-    allL( "def_append_2", le"x_0:Nat", le"xs_0:list", le"ys:list" )
-    eql( "def_append_2_0", "goal_1" ).fromLeftToRight
+    orL("def_elem_2_0_0")
+    allL("def_append_2", le"x_0:Nat", le"xs_0:list", le"ys:list")
+    eql("def_append_2_0", "goal_1").fromLeftToRight
 
-    allL( "def_elem_2", le"x:Nat", le"x_0:Nat", le"append(xs_0:list, ys:list):list" )
-    andL( "def_elem_2_1" )
-    impL( "def_elem_2_1_1" )
-    orR( "def_elem_2_1_1" )
+    allL("def_elem_2", le"x:Nat", le"x_0:Nat", le"append(xs_0:list, ys:list):list")
+    andL("def_elem_2_1")
+    impL("def_elem_2_1_1")
+    orR("def_elem_2_1_1")
     axiomLog
     axiomLog
 
-    allL( "def_append_2", le"x_0:Nat", le"xs_0:list", le"ys:list" )
-    eql( "def_append_2_0", "goal_1" ).fromLeftToRight
-    allL( "def_elem_2", le"x:Nat", le"x_0:Nat", le"append(xs_0:list, ys:list):list" )
-    andL( "def_elem_2_1" )
-    impL( "def_elem_2_1_1" )
-    orR( "def_elem_2_1_1" )
-    allL( "IHxs_0", le"ys:list" )
-    impL( "IHxs_0_0" )
+    allL("def_append_2", le"x_0:Nat", le"xs_0:list", le"ys:list")
+    eql("def_append_2_0", "goal_1").fromLeftToRight
+    allL("def_elem_2", le"x:Nat", le"x_0:Nat", le"append(xs_0:list, ys:list):list")
+    andL("def_elem_2_1")
+    impL("def_elem_2_1_1")
+    orR("def_elem_2_1_1")
+    allL("IHxs_0", le"ys:list")
+    impL("IHxs_0_0")
     axiomLog
     axiomLog
     axiomLog

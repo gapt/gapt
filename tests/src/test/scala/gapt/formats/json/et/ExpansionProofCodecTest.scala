@@ -10,17 +10,17 @@ class ExpansionProofCodecTest extends Specification {
 
   "The expansion proof de/serializer" should {
     "serialize and deserialize a small proof" in {
-      val ep: ExpansionProof = LKToExpansionProof( LinearExampleProof( 3 ) )
-      val json = _expansionProofEncoder( ep )
-      val epNew = _expansionProofDecoder.decodeJson( json )
-      epNew must beRight( ep )
+      val ep: ExpansionProof = LKToExpansionProof(LinearExampleProof(3))
+      val json = _expansionProofEncoder(ep)
+      val epNew = _expansionProofDecoder.decodeJson(json)
+      epNew must beRight(ep)
     }
 
     "serialize and deserialize a bigger proof" in {
-      val ep: ExpansionProof = LKToExpansionProof( gapt.examples.theories.nat.add0l.combined() )
-      val json = _expansionProofEncoder( ep )
-      val epNew = _expansionProofDecoder.decodeJson( json )
-      epNew must beRight( ep )
+      val ep: ExpansionProof = LKToExpansionProof(gapt.examples.theories.nat.add0l.combined())
+      val json = _expansionProofEncoder(ep)
+      val epNew = _expansionProofDecoder.decodeJson(json)
+      epNew must beRight(ep)
     }
   }
 }

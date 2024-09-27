@@ -8,8 +8,8 @@ import gapt.proofs.gaptic._
 /* This proof is not a s.i.p. */
 object prop_23 extends TacticsProof {
 
-  ctx += TBase( "sk" )
-  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += TBase("sk")
+  ctx += InductiveType(ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat")
   ctx += hoc"p:Nat>Nat"
   ctx += hoc"'max2' :Nat>Nat>Nat"
 
@@ -24,32 +24,32 @@ object prop_23 extends TacticsProof {
       goal: ∀a ∀b (max2(a:Nat, b:Nat): Nat) = max2(b, a)
     """
 
-  val proof = Lemma( sequent ) {
+  val proof = Lemma(sequent) {
     allR
-    induction( hov"a:Nat" )
+    induction(hov"a:Nat")
     allR
-    allL( "def_max2_1", le"b:Nat" )
-    eql( "def_max2_1_0", "goal" ).fromLeftToRight
-    induction( hov"b:Nat" )
-    allL( "def_max2_1", le"Z:Nat" )
-    eql( "def_max2_1_1", "goal" ).fromLeftToRight
+    allL("def_max2_1", le"b:Nat")
+    eql("def_max2_1_0", "goal").fromLeftToRight
+    induction(hov"b:Nat")
+    allL("def_max2_1", le"Z:Nat")
+    eql("def_max2_1_1", "goal").fromLeftToRight
     refl
-    allL( "def_max2_2", le"b_0:Nat" )
-    eql( "def_max2_2_0", "goal" ).fromLeftToRight
+    allL("def_max2_2", le"b_0:Nat")
+    eql("def_max2_2_0", "goal").fromLeftToRight
     refl
     allR
-    induction( hov"b:Nat" )
-    allL( "def_max2_1", le"S(a_0:Nat):Nat" )
-    allL( "def_max2_2", le"a_0:Nat" )
-    eql( "def_max2_2_0", "goal" ).fromLeftToRight
-    eql( "def_max2_1_0", "goal" ).fromLeftToRight
+    induction(hov"b:Nat")
+    allL("def_max2_1", le"S(a_0:Nat):Nat")
+    allL("def_max2_2", le"a_0:Nat")
+    eql("def_max2_2_0", "goal").fromLeftToRight
+    eql("def_max2_1_0", "goal").fromLeftToRight
     refl
-    allL( "def_max2_3", le"a_0:Nat", le"b_0:Nat" )
-    allL( "def_max2_3", le"b_0:Nat", le"a_0:Nat" )
-    allL( "IHa_0", le"b_0:Nat" )
-    eql( "def_max2_3_0", "goal" )
-    eql( "def_max2_3_1", "goal" )
-    eql( "IHa_0_0", "goal" ).fromLeftToRight
+    allL("def_max2_3", le"a_0:Nat", le"b_0:Nat")
+    allL("def_max2_3", le"b_0:Nat", le"a_0:Nat")
+    allL("IHa_0", le"b_0:Nat")
+    eql("def_max2_3_0", "goal")
+    eql("def_max2_3_1", "goal")
+    eql("IHa_0_0", "goal").fromLeftToRight
     refl
 
   }

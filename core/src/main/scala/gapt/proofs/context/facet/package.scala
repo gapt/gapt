@@ -4,6 +4,6 @@ import gapt.logic.hol.SkolemFunctions
 
 package object facet {
 
-  implicit val skolemFunsFacet: Facet[SkolemFunctions] = Facet[SkolemFunctions]( SkolemFunctions( None ) )
+  implicit val skolemFunsFacet: Facet[SkolemFunctions] = Facet[SkolemFunctions](SkolemFunctions(None))
 
 }

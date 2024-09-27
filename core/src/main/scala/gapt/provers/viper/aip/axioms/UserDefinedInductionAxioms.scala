@@ -7,7 +7,8 @@ import gapt.proofs.context.Context
 import gapt.proofs.gaptic.OpenAssumption
 import gapt.provers.viper.aip.ThrowsError
 
-case class UserDefinedInductionAxioms( axioms: List[String] ) extends AxiomFactory {
+case class UserDefinedInductionAxioms(axioms: List[String]) extends AxiomFactory {
+
   /**
    * Returns user defined induction axioms.
    *
@@ -15,16 +16,17 @@ case class UserDefinedInductionAxioms( axioms: List[String] ) extends AxiomFacto
    * @return Either a list of induction axioms or a non empty list of strings describing why induction axioms
    *         could not be generated.
    */
-  override def apply( sequent: Sequent[( String, Formula )] )( implicit ctx: Context ): ThrowsError[List[Axiom]] =
+  override def apply(sequent: Sequent[(String, Formula)])(implicit ctx: Context): ThrowsError[List[Axiom]] =
     try {
       Right(
         axioms map { s =>
           new Axiom() {
-            val formula = StringContext( s ).hof( s )
-            val proof = new OpenAssumption( Sequent() :+ ( "" -> formula ) )
+            val formula = StringContext(s).hof(s)
+            val proof = new OpenAssumption(Sequent() :+ ("" -> formula))
           }
-        } )
+        }
+      )
     } catch {
-      case e: IllegalArgumentException => Left( e.getMessage() )
+      case e: IllegalArgumentException => Left(e.getMessage())
     }
 }

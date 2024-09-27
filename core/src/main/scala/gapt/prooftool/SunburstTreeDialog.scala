@@ -1,7 +1,7 @@
 package gapt.prooftool
 
 import javax.swing.WindowConstants
-import gapt.proofs.{ DagProof, SequentProof }
+import gapt.proofs.{DagProof, SequentProof}
 
 import scala.swing._
 import scala.swing.event._
@@ -9,60 +9,60 @@ import java.awt.Color
 
 import gapt.expr.formula.Formula
 
-class SunburstTreeDialog[F, T <: SequentProof[F, T]]( val mainWindow: DagProofViewer[T], name: String, proof: DagProof[T], sequent_element_renderer: F => String ) extends Frame {
+class SunburstTreeDialog[F, T <: SequentProof[F, T]](val mainWindow: DagProofViewer[T], name: String, proof: DagProof[T], sequent_element_renderer: F => String) extends Frame {
   title = "Sunburst view of " + name
-  //modal = false
-  preferredSize = new Dimension( 700, 500 )
+  // modal = false
+  preferredSize = new Dimension(700, 500)
   peer setDefaultCloseOperation WindowConstants.DISPOSE_ON_CLOSE
   menuBar = new MenuBar() {
     import javax.swing.KeyStroke
-    import java.awt.event.{ KeyEvent, ActionEvent => JActionEvent }
+    import java.awt.event.{KeyEvent, ActionEvent => JActionEvent}
 
-    val customBorder = Swing.LineBorder( Color.lightGray, 2 ) // .EmptyBorder(5, 3, 5, 3)
-    contents += new Label( "Export as:" ) { border = Swing.EmptyBorder( 5 ) }
+    val customBorder = Swing.LineBorder(Color.lightGray, 2) // .EmptyBorder(5, 3, 5, 3)
+    contents += new Label("Export as:") { border = Swing.EmptyBorder(5) }
     // contents += new Menu("Export") {
     //   mnemonic = Key.E
-    contents += new MenuItem( Action( "PDF" ) { mainWindow.fExportPdf( main ) } ) {
+    contents += new MenuItem(Action("PDF") { mainWindow.fExportPdf(main) }) {
       mnemonic = Key.D
-      this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_D, JActionEvent.CTRL_MASK ) )
+      this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, JActionEvent.CTRL_MASK))
       border = customBorder
-      preferredSize = new Dimension( 50, 20 )
+      preferredSize = new Dimension(50, 20)
     }
     contents += new Separator
-    contents += new MenuItem( Action( "PNG" ) { mainWindow.fExportPng( main ) } ) {
+    contents += new MenuItem(Action("PNG") { mainWindow.fExportPng(main) }) {
       mnemonic = Key.N
-      this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_N, JActionEvent.CTRL_MASK ) )
+      this.peer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, JActionEvent.CTRL_MASK))
       border = customBorder
-      preferredSize = new Dimension( 50, 20 )
+      preferredSize = new Dimension(50, 20)
     }
     contents += Swing.HGlue
     // }
   }
 
-  val main = new SplitPane( Orientation.Vertical ) {
+  val main = new SplitPane(Orientation.Vertical) {
     focusable = true // required to get events from keyboard
     preferredSize = SunburstTreeDialog.this.preferredSize
     dividerLocation = preferredSize.height
 
-    //sunburst model
-    val model = new ReactiveSunburstModel( new ProofNode[T]( proof ), new ProofNodeInfo[T]() )
+    // sunburst model
+    val model = new ReactiveSunburstModel(new ProofNode[T](proof), new ProofNodeInfo[T]())
     val sunView = model.getView()
     // inference information
-    val info = new DrawSingleSequentInference( mainWindow, Orientation.Vertical, sequent_element_renderer )
+    val info = new DrawSingleSequentInference(mainWindow, Orientation.Vertical, sequent_element_renderer)
 
-    sunView.setToolTipEnabled( true )
+    sunView.setToolTipEnabled(true)
     sunView.reactions += {
-      case NodeSelectedEvent( null ) =>
-        info.p_=( Some( model.root.asInstanceOf[ProofNode[T]].proof.asInstanceOf[SequentProof[Nothing, Nothing]] ) )
-      case NodeSelectedEvent( p: ProofNode[_] ) =>
-        info.p_=( Some( p.proof.asInstanceOf[SequentProof[Nothing, Nothing]] ) )
+      case NodeSelectedEvent(null) =>
+        info.p_=(Some(model.root.asInstanceOf[ProofNode[T]].proof.asInstanceOf[SequentProof[Nothing, Nothing]]))
+      case NodeSelectedEvent(p: ProofNode[_]) =>
+        info.p_=(Some(p.proof.asInstanceOf[SequentProof[Nothing, Nothing]]))
     }
-    sunView.setSelectedNode( null )
+    sunView.setSelectedNode(null)
 
-    leftComponent = Component.wrap( sunView )
+    leftComponent = Component.wrap(sunView)
     rightComponent = info
 
-    listenTo( keys, SunburstTreeDialog.this, mainWindow.top, mainWindow.publisher )
+    listenTo(keys, SunburstTreeDialog.this, mainWindow.top, mainWindow.publisher)
     /*reactions += {
       case WindowClosing( mainWindow.top ) => dispose()
       case UIElementResized( source ) =>

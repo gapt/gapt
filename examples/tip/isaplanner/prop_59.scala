@@ -7,10 +7,10 @@ import gapt.proofs.gaptic._
 object prop_59 extends TacticsProof {
 
   // Inductive types
-  ctx += InductiveType( ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat" )
-  ctx += InductiveType( ty"list", hoc"'nil' :list", hoc"'cons' :Nat>list>list" )
+  ctx += InductiveType(ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat")
+  ctx += InductiveType(ty"list", hoc"'nil' :list", hoc"'cons' :Nat>list>list")
 
-  //Function constants
+  // Function constants
   ctx += hoc"'last' :list>Nat"
   ctx += hoc"'append' :list>list>list"
   ctx += hoc"p: Nat>Nat"
@@ -33,8 +33,8 @@ object prop_59 extends TacticsProof {
         goal: ∀xs ∀ys ((ys:list) = nil → (last(append(xs:list, ys): list): Nat) = last(xs))
   """
 
-  val proof_1 = Lemma( sequent ) {
-    introUnivsExcept( 0 )
+  val proof_1 = Lemma(sequent) {
+    introUnivsExcept(0)
     treeGrammarInduction
       .useInterpolation
   }

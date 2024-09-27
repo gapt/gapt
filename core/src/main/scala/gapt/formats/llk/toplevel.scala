@@ -1,8 +1,8 @@
 package gapt.formats.llk
 
-import gapt.expr.{ Expr }
+import gapt.expr.{Expr}
 import gapt.proofs.lk.LKProof
-import ammonite.ops._
+import os._
 import gapt.expr.formula.Formula
 import gapt.formats.InputFile
 
@@ -16,7 +16,7 @@ object loadLLK {
       |
       |Load an LLK proof from path and return its proof database.
       |""".stripMargin
-  def apply( filename: InputFile ): ExtendedProofDatabase = LLKProofParser( filename )
+  def apply(filename: InputFile): ExtendedProofDatabase = LLKProofParser(filename)
 }
 
 object exportLLK {
@@ -29,9 +29,9 @@ object exportLLK {
       |Return the LLK representation of p. Set enable_latex to false for better readability.
       | loadLLK recognizes both styles.
     """.stripMargin
-  def apply( lkproof: LKProof, enable_latex: Boolean ) = LLKExporter( lkproof, enable_latex )
-  def apply( lkproof: LKProof ) = LLKExporter( lkproof, true )
-  def apply( lkproof: LKProof, filename: String ) = write( Path( filename, pwd ), LLKExporter( lkproof, true ) )
+  def apply(lkproof: LKProof, enable_latex: Boolean) = LLKExporter(lkproof, enable_latex)
+  def apply(lkproof: LKProof) = LLKExporter(lkproof, true)
+  def apply(lkproof: LKProof, filename: String) = write(Path(filename, pwd), LLKExporter(lkproof, true))
 }
 
 object parseLLKExp {
@@ -41,7 +41,7 @@ object parseLLKExp {
     |Parse a higher-order expression in the LLK format.
   """.stripMargin
 
-  def apply( s: String ): Expr = { LLKFormulaParser.parse( s ) }
+  def apply(s: String): Expr = { LLKFormulaParser.parse(s) }
 }
 
 object parseLLKFormula {
@@ -51,9 +51,9 @@ object parseLLKFormula {
     |Parse a higher-order formula in the LLK format.
   """.stripMargin
 
-  def apply( s: String ) = {
-    val exp = LLKFormulaParser.parse( s )
-    require( exp.isInstanceOf[Formula], "Expression is no HOL Formula!" )
+  def apply(s: String) = {
+    val exp = LLKFormulaParser.parse(s)
+    require(exp.isInstanceOf[Formula], "Expression is no HOL Formula!")
     exp.asInstanceOf[Formula]
   }
 }
@@ -65,23 +65,23 @@ object parseLLKFormula {
 package short {
   import gapt.formats.llk.LLKTypes.LLKSignature
 
-  object sig { def apply( s: String ): LLKSignature = DeclarationParser.parseDeclaration( s ) }
+  object sig { def apply(s: String): LLKSignature = DeclarationParser.parseDeclaration(s) }
 
   object hot {
-    def apply( s: String )( implicit signature: LLKSignature ) = {
-      DeclarationParser.parseAll( DeclarationParser.formula, s ) match {
-        case DeclarationParser.Success( result, _ ) => LLKFormulaParser.ASTtoHOL( signature.apply, result )
+    def apply(s: String)(implicit signature: LLKSignature) = {
+      DeclarationParser.parseAll(DeclarationParser.formula, s) match {
+        case DeclarationParser.Success(result, _) => LLKFormulaParser.ASTtoHOL(signature.apply, result)
         case failure: DeclarationParser.NoSuccess =>
-          throw new Exception( "Error parsing HOL formula '" +
-            s + "' at position " + failure.next.pos + ". Error message: " + failure.msg )
+          throw new Exception("Error parsing HOL formula '" +
+            s + "' at position " + failure.next.pos + ". Error message: " + failure.msg)
       }
     }
   }
 
   object hof {
-    def apply( s: String )( implicit signature: LLKSignature ) = hot( s )( signature ) match {
+    def apply(s: String)(implicit signature: LLKSignature) = hot(s)(signature) match {
       case f: Formula => f
-      case e: Expr    => throw new Exception( s"ef is an expression of type ${e.ty} but not a formula!" )
+      case e: Expr    => throw new Exception(s"ef is an expression of type ${e.ty} but not a formula!")
     }
   }
 

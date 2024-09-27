@@ -1,17 +1,16 @@
-
 package gapt.integration_tests
 
 import gapt.expr.formula.hol.containsStrongQuantifier
-import gapt.proofs.{ Ant, HOLClause, SequentConnector, Suc }
+import gapt.proofs.{Ant, HOLClause, SequentConnector, Suc}
 import gapt.proofs.expansion.ExpansionSequent
 import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.lk._
 import gapt.provers.prover9._
 import gapt.provers.verit.VeriT
-import gapt.proofs.ceres.{ deleteTautologies, _ }
+import gapt.proofs.ceres.{deleteTautologies, _}
 import gapt.examples.prime
 import java.io.File.separator
-import java.io.{ FileInputStream, FileReader, IOException, InputStreamReader }
+import java.io.{FileInputStream, FileReader, IOException, InputStreamReader}
 import java.util.zip.GZIPInputStream
 
 import gapt.expr.formula.Top
@@ -102,17 +101,17 @@ class PrimeProofTest extends Specification {
     //      Console.println("newUnitSet size: " + newUnitSet.size)
     //      val newUnitSetSubsum = subsumedClausesRemoval(newUnitSet)
     //      Console.println("newUnitSetSubsum size: " + newUnitSetSubsum.size)
-    //*/
+    // */
     //      // done for preserving order
     //      val neg = cssv.filter(x => x.succedent.isEmpty)
     //      val mix = cssv.filter(x => !x.succedent.isEmpty && !x.antecedent.isEmpty)
     //      val pos = cssv.filter(x => x.antecedent.isEmpty)
-    ///*
+    /// *
     //      // done for preserving order
     //      val neg2 = newUnitSetSubsum.filter(x => x.succedent.isEmpty)
     //      val mix2 = newUnitSetSubsum.filter(x => !x.succedent.isEmpty && !x.antecedent.isEmpty)
     //      val pos2 = newUnitSetSubsum.filter(x => x.antecedent.isEmpty)
-    //*/
+    // */
     //      val subsum = sequentNormalize(cssUnit).diff(cssv)
     //      Console.println("subsum size: " + subsum.size)
     //      (new FileWriter("target" + separator + "prime2-cs-subsumed.tex") with SequentsListLatexExporter
@@ -130,64 +129,64 @@ class PrimeProofTest extends Specification {
     // Tuple2("cssv", cssv.toList)::Nil, "target" + separator + "prime2-cs.xml" )
     //    }
 
-    def prime1( n: Int, refute: Boolean ) = {
-      skipped( "higher-order definition elimination fails & prover9 does not understand many-sorted logic" )
+    def prime1(n: Int, refute: Boolean) = {
+      skipped("higher-order definition elimination fails & prover9 does not understand many-sorted logic")
       checkForProverOrSkip
-      if ( !Z3.isInstalled ) skipped
+      if (!Z3.isInstalled) skipped
 
-      val primeN = prime.furstenberg( n )
+      val primeN = prime.furstenberg(n)
       val proof = primeN.proof
 
-      if ( false ) {
-        if ( VeriT.isInstalled ) {
+      if (false) {
+        if (VeriT.isInstalled) {
           // test expansion tree extraction by verifying that the deep formula is a tautology
           // can't extract ETs in the presence of definitions currently
-          val definitionFreeProof = eliminateDefinitions( primeN.ctx.definitions.toMap )( proof )
-          val etSeq = LKToExpansionProof( definitionFreeProof )
+          val definitionFreeProof = eliminateDefinitions(primeN.ctx.definitions.toMap)(proof)
+          val etSeq = LKToExpansionProof(definitionFreeProof)
           val fSequent = etSeq.deep
-          VeriT.isValid( fSequent ) must beTrue
+          VeriT.isValid(fSequent) must beTrue
         }
       }
 
       //      val deproof = DefinitionElimination( proofdb.Definitions )( proof )
-      val proof_sk = folSkolemize( regularize( AtomicExpansion( proof ) ) )
-      println( "es: " + proof_sk.endSequent + " " + containsStrongQuantifier( proof_sk.endSequent ) )
-      val s = extractStruct( proof_sk, CERES.skipEquations )
+      val proof_sk = folSkolemize(regularize(AtomicExpansion(proof)))
+      println("es: " + proof_sk.endSequent + " " + containsStrongQuantifier(proof_sk.endSequent))
+      val s = extractStruct(proof_sk, CERES.skipEquations)
 
-      val cs = deleteTautologies( CharacteristicClauseSet( s ) )
-      val tptp = TptpFOLExporter.tptpProblem( cs.toList )
+      val cs = deleteTautologies(CharacteristicClauseSet(s))
+      val tptp = TptpFOLExporter.tptpProblem(cs.toList)
       //      val writer = new java.io.FileWriter( "target" + separator + "prime1-" + n + "-cs.tptp" )
       //      writer.write( tptp.toString )
       //      writer.flush
-      val projs = Projections( proof_sk, CERES.skipEquations )
+      val projs = Projections(proof_sk, CERES.skipEquations)
       val path = "target" + separator + "prime1-" + n + "-sk.xml"
 
-      if ( refute ) {
-        Prover9.getResolutionProof( cs ) match {
-          case None      => "" must beEqualTo( "refutation of struct cs in tptp format failed" )
-          case Some( _ ) => true must beEqualTo( true )
+      if (refute) {
+        Prover9.getResolutionProof(cs) match {
+          case None    => "" must beEqualTo("refutation of struct cs in tptp format failed")
+          case Some(_) => true must beEqualTo(true)
         }
       }
 
       ok
     }
 
-    def euclid( n: Int ) = {
-      if ( n >= 2 ) skipped( "LK proof construction runs out of memory" )
+    def euclid(n: Int) = {
+      if (n >= 2) skipped("LK proof construction runs out of memory")
 
-      val euclidN = prime.euclid( n )
+      val euclidN = prime.euclid(n)
       import euclidN._
 
-      CERES( eliminateDefinitions( proof ) )
+      CERES(eliminateDefinitions(proof))
       ok
     }
 
-    "euclid 0" in euclid( 0 )
-    "euclid 1" in euclid( 1 )
-    "euclid 2" in euclid( 2 )
+    "euclid 0" in euclid(0)
+    "euclid 1" in euclid(1)
+    "euclid 2" in euclid(2)
 
-    "prime1 0 with refutation" in prime1( 0, true )
-    "prime1 1" in prime1( 1, false )
-    "prime1 2" in prime1( 2, false )
+    "prime1 0 with refutation" in prime1(0, true)
+    "prime1 1" in prime1(1, false)
+    "prime1 2" in prime1(2, false)
   }
 }

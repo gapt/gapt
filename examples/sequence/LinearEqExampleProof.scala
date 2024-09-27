@@ -17,21 +17,22 @@ import gapt.proofs.gaptic.repeat
  * where n is an Integer parameter >= 0.
  */
 object LinearEqExampleProof extends TacticsProof with ProofSequence with ExplicitEqualityTactics {
-  ctx += Sort( "i" )
+  ctx += Sort("i")
   ctx += hoc"f: i>i"
   ctx += hoc"a: i"
 
   // f^k(a)
-  private def fk( k: Int ): Expr =
-    LazyList.iterate( le"a" )( x => le"f $x" )( k )
+  private def fk(k: Int): Expr =
+    LazyList.iterate(le"a")(x => le"f $x")(k)
 
-  def apply( n: Int ) =
+  def apply(n: Int) =
     Proof(
-      ( "refl" -> hof"∀(x:i) x=x" ) +:
-        ( "trans" -> hof"∀(x:i)∀y∀z (x=y ∧ y=z → x=z)" ) +:
-        ( "id" -> hof"∀x f(x)=x" ) +: Sequent()
-        :+ ( "goal" -> hof"${fk( n )} = a" ) ) {
-        repeat( explicitRewriteLeft( "id", "goal" ) )
-        chain( "refl" )
-      }
+      ("refl" -> hof"∀(x:i) x=x") +:
+        ("trans" -> hof"∀(x:i)∀y∀z (x=y ∧ y=z → x=z)") +:
+        ("id" -> hof"∀x f(x)=x") +: Sequent()
+        :+ ("goal" -> hof"${fk(n)} = a")
+    ) {
+      repeat(explicitRewriteLeft("id", "goal"))
+      chain("refl")
+    }
 }

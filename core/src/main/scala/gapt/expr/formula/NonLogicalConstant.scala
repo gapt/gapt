@@ -5,8 +5,8 @@ import gapt.expr.formula.constants.LogicalConstant
 import gapt.expr.ty.Ty
 
 object NonLogicalConstant {
-  def unapply( c: Const ): Option[( String, Ty, List[Ty] )] = c match {
+  def unapply(c: Const): Option[(String, Ty, List[Ty])] = c match {
     case _: LogicalConstant => None
-    case Const( n, t, ps )  => Some( ( n, t, ps ) )
+    case Const(n, t, ps)    => Some((n, t, ps))
   }
 }

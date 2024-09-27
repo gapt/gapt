@@ -27,221 +27,243 @@ import gapt.formats.tip.util.find
 import gapt.formats.tip.util.freeVariables
 
 object toOuterConditionalNormalForm extends TipSmtProblemTransformation {
-  def transform( problem: TipSmtProblem ): TipSmtProblem =
-    new TipOcnf( problem )()
+  def transform(problem: TipSmtProblem): TipSmtProblem =
+    new TipOcnf(problem)()
 }
 
-class TipOcnf( problem: TipSmtProblem ) {
+class TipOcnf(problem: TipSmtProblem) {
 
-  problem.symbolTable = Some( SymbolTable( problem ) )
+  problem.symbolTable = Some(SymbolTable(problem))
 
   def apply(): TipSmtProblem = {
     val newDefinitions = problem.definitions map { definition =>
       definition match {
-        case funDef @ TipSmtFunctionDefinition( _, _, _, _, _ ) =>
-          apply( funDef )
-        case goal @ TipSmtGoal( _, _ ) =>
-          goal.copy( expr = tipOcnf( goal.expr ) )
-        case funDefs @ TipSmtMutualRecursiveFunctionDefinition( _ ) =>
-          funDefs.copy( functions = funDefs.functions.map { apply } )
-        case assertion @ TipSmtAssertion( _, _ ) =>
-          assertion.copy( expr = tipOcnf( assertion.expr ) )
+        case funDef @ TipSmtFunctionDefinition(_, _, _, _, _) =>
+          apply(funDef)
+        case goal @ TipSmtGoal(_, _) =>
+          goal.copy(expr = tipOcnf(goal.expr))
+        case funDefs @ TipSmtMutualRecursiveFunctionDefinition(_) =>
+          funDefs.copy(functions = funDefs.functions.map { apply })
+        case assertion @ TipSmtAssertion(_, _) =>
+          assertion.copy(expr = tipOcnf(assertion.expr))
         case _ => definition
       }
     }
-    TipSmtProblem( newDefinitions )
+    TipSmtProblem(newDefinitions)
   }
 
   private def apply(
-    fun: TipSmtFunctionDefinition ): TipSmtFunctionDefinition = {
-    fun.copy( body = tipOcnf( fun.body ) )
+      fun: TipSmtFunctionDefinition
+  ): TipSmtFunctionDefinition = {
+    fun.copy(body = tipOcnf(fun.body))
   }
 
-  private def tipOcnf( expression: TipSmtExpression ): TipSmtExpression = {
+  private def tipOcnf(expression: TipSmtExpression): TipSmtExpression = {
     expression match {
-      case expr @ TipSmtAnd( _ ) =>
-        ocnfConnective( AndConnective( expr ) )
-      case expr @ TipSmtOr( _ ) =>
-        ocnfConnective( OrConnective( expr ) )
-      case expr @ TipSmtImp( _ ) =>
-        ocnfConnective( ImpConnective( expr ) )
-      case expr @ TipSmtEq( _ ) =>
-        ocnfConnective( EqConnective( expr ) )
-      case expr @ TipSmtForall( _, _ ) => ocnfForall( expr )
-      case expr @ TipSmtExists( _, _ ) => ocnfExists( expr )
-      case expr @ TipSmtIte( _, _, _ ) => ocnfIte( expr )
-      case expr @ TipSmtMatch( _, _ )  => ocnfMatch( expr )
-      case expr @ TipSmtFun( _, _ ) =>
-        ocnfConnective( FunConnective( expr ) )
-      case expr @ TipSmtNot( _ ) => ocnfNot( expr )
-      case TipSmtIdentifier( _ ) => expression
-      case TipSmtTrue            => TipSmtTrue
-      case TipSmtFalse           => TipSmtFalse
-      case TipSmtDistinct( _ )   => throw new IllegalArgumentException()
+      case expr @ TipSmtAnd(_) =>
+        ocnfConnective(AndConnective(expr))
+      case expr @ TipSmtOr(_) =>
+        ocnfConnective(OrConnective(expr))
+      case expr @ TipSmtImp(_) =>
+        ocnfConnective(ImpConnective(expr))
+      case expr @ TipSmtEq(_) =>
+        ocnfConnective(EqConnective(expr))
+      case expr @ TipSmtForall(_, _) => ocnfForall(expr)
+      case expr @ TipSmtExists(_, _) => ocnfExists(expr)
+      case expr @ TipSmtIte(_, _, _) => ocnfIte(expr)
+      case expr @ TipSmtMatch(_, _)  => ocnfMatch(expr)
+      case expr @ TipSmtFun(_, _) =>
+        ocnfConnective(FunConnective(expr))
+      case expr @ TipSmtNot(_) => ocnfNot(expr)
+      case TipSmtIdentifier(_) => expression
+      case TipSmtTrue          => TipSmtTrue
+      case TipSmtFalse         => TipSmtFalse
+      case TipSmtDistinct(_)   => throw new IllegalArgumentException()
     }
   }
 
-  private def ocnfNot( expression: TipSmtNot ): TipSmtExpression = {
-    val newSubExpression = tipOcnf( expression.expr )
+  private def ocnfNot(expression: TipSmtNot): TipSmtExpression = {
+    val newSubExpression = tipOcnf(expression.expr)
     newSubExpression match {
-      case c @ TipSmtIte( _, _, _ ) =>
-        val newIfTrue = tipOcnf( TipSmtNot( c.ifTrue ) )
-        val newIfFalse = tipOcnf( TipSmtNot( c.ifFalse ) )
-        TipSmtIte( c.cond, newIfTrue, newIfFalse )
-      case m @ TipSmtMatch( _, _ ) =>
+      case c @ TipSmtIte(_, _, _) =>
+        val newIfTrue = tipOcnf(TipSmtNot(c.ifTrue))
+        val newIfFalse = tipOcnf(TipSmtNot(c.ifFalse))
+        TipSmtIte(c.cond, newIfTrue, newIfFalse)
+      case m @ TipSmtMatch(_, _) =>
         val newCases = m.cases map { c =>
-          TipSmtCase( c.pattern, tipOcnf( TipSmtNot( c.expr ) ) )
+          TipSmtCase(c.pattern, tipOcnf(TipSmtNot(c.expr)))
         }
-        TipSmtMatch( m.expr, newCases )
+        TipSmtMatch(m.expr, newCases)
       case _ =>
-        TipSmtNot( newSubExpression )
+        TipSmtNot(newSubExpression)
     }
   }
 
-  private def ocnfMatch( expression: TipSmtMatch ): TipSmtExpression = {
-    val newMatchedExpr = tipOcnf( expression.expr )
+  private def ocnfMatch(expression: TipSmtMatch): TipSmtExpression = {
+    val newMatchedExpr = tipOcnf(expression.expr)
     newMatchedExpr match {
-      case c @ TipSmtIte( _, _, _ ) =>
-        val newIfTrue = tipOcnf( TipSmtMatch( c.ifTrue, expression.cases ) )
-        val newIfFalse = tipOcnf( TipSmtMatch( c.ifFalse, expression.cases ) )
-        TipSmtIte( c.cond, newIfTrue, newIfFalse )
-      case m @ TipSmtMatch( _, _ ) =>
-        val matchExpr = captureAvoiding( m, Seq( expression ) )
+      case c @ TipSmtIte(_, _, _) =>
+        val newIfTrue = tipOcnf(TipSmtMatch(c.ifTrue, expression.cases))
+        val newIfFalse = tipOcnf(TipSmtMatch(c.ifFalse, expression.cases))
+        TipSmtIte(c.cond, newIfTrue, newIfFalse)
+      case m @ TipSmtMatch(_, _) =>
+        val matchExpr = captureAvoiding(m, Seq(expression))
         val newCases = matchExpr.cases map { c =>
           TipSmtCase(
             c.pattern,
-            tipOcnf( TipSmtMatch( c.expr, expression.cases ) ) )
+            tipOcnf(TipSmtMatch(c.expr, expression.cases))
+          )
         }
-        TipSmtMatch( matchExpr.expr, newCases )
+        TipSmtMatch(matchExpr.expr, newCases)
       case _ =>
         TipSmtMatch(
           newMatchedExpr,
           expression.cases.map { c =>
-            TipSmtCase( c.pattern, tipOcnf( c.expr ) )
-          } )
+            TipSmtCase(c.pattern, tipOcnf(c.expr))
+          }
+        )
     }
   }
 
-  private def ocnfIte( expression: TipSmtIte ): TipSmtExpression = {
-    val newCond = tipOcnf( expression.cond )
+  private def ocnfIte(expression: TipSmtIte): TipSmtExpression = {
+    val newCond = tipOcnf(expression.cond)
     newCond match {
-      case c @ TipSmtIte( _, _, _ ) =>
+      case c @ TipSmtIte(_, _, _) =>
         val newIfTrue = tipOcnf(
-          TipSmtIte( c.ifTrue, expression.ifTrue, expression.ifFalse ) )
+          TipSmtIte(c.ifTrue, expression.ifTrue, expression.ifFalse)
+        )
         val newIfFalse = tipOcnf(
-          TipSmtIte( c.ifFalse, expression.ifTrue, expression.ifFalse ) )
-        TipSmtIte( c.cond, newIfTrue, newIfFalse )
-      case m @ TipSmtMatch( _, _ ) =>
+          TipSmtIte(c.ifFalse, expression.ifTrue, expression.ifFalse)
+        )
+        TipSmtIte(c.cond, newIfTrue, newIfFalse)
+      case m @ TipSmtMatch(_, _) =>
         val matchExpr =
-          captureAvoiding( m, Seq( expression.ifTrue, expression.ifFalse ) )
+          captureAvoiding(m, Seq(expression.ifTrue, expression.ifFalse))
         val newCases = matchExpr.cases map { c =>
           TipSmtCase(
             c.pattern,
-            tipOcnf( TipSmtIte( c.expr, expression.ifTrue, expression.ifFalse ) ) )
+            tipOcnf(TipSmtIte(c.expr, expression.ifTrue, expression.ifFalse))
+          )
         }
-        TipSmtMatch( matchExpr.expr, newCases )
+        TipSmtMatch(matchExpr.expr, newCases)
       case _ =>
         TipSmtIte(
           newCond,
-          tipOcnf( expression.ifTrue ),
-          tipOcnf( expression.ifFalse ) )
+          tipOcnf(expression.ifTrue),
+          tipOcnf(expression.ifFalse)
+        )
     }
   }
 
-  private def ocnfExists( expression: TipSmtExists ): TipSmtExpression = {
-    TipSmtExists( expression.variables, tipOcnf( expression.formula ) )
+  private def ocnfExists(expression: TipSmtExists): TipSmtExpression = {
+    TipSmtExists(expression.variables, tipOcnf(expression.formula))
   }
 
-  private def ocnfForall( expression: TipSmtForall ): TipSmtExpression = {
-    TipSmtForall( expression.variables, tipOcnf( expression.formula ) )
+  private def ocnfForall(expression: TipSmtForall): TipSmtExpression = {
+    TipSmtForall(expression.variables, tipOcnf(expression.formula))
   }
 
   private abstract class Connective(
-      val subexpressions: Seq[TipSmtExpression] ) {
+      val subexpressions: Seq[TipSmtExpression]
+  ) {
     def toExpression: TipSmtExpression
-    def copy( subexpressions: Seq[TipSmtExpression] ): TipSmtExpression
+    def copy(subexpressions: Seq[TipSmtExpression]): TipSmtExpression
   }
   private case class AndConnective(
-      tipSmtAnd: TipSmtAnd ) extends Connective( tipSmtAnd.exprs ) {
-    def toExpression = TipSmtAnd( subexpressions )
-    def copy( subexpressions: Seq[TipSmtExpression] ): TipSmtAnd =
-      TipSmtAnd( subexpressions )
+      tipSmtAnd: TipSmtAnd
+  ) extends Connective(tipSmtAnd.exprs) {
+    def toExpression = TipSmtAnd(subexpressions)
+    def copy(subexpressions: Seq[TipSmtExpression]): TipSmtAnd =
+      TipSmtAnd(subexpressions)
   }
   private case class OrConnective(
-      tipSmtOr: TipSmtOr ) extends Connective( tipSmtOr.exprs ) {
-    def toExpression = TipSmtOr( subexpressions )
-    def copy( subexpressions: Seq[TipSmtExpression] ): TipSmtOr =
-      TipSmtOr( subexpressions )
+      tipSmtOr: TipSmtOr
+  ) extends Connective(tipSmtOr.exprs) {
+    def toExpression = TipSmtOr(subexpressions)
+    def copy(subexpressions: Seq[TipSmtExpression]): TipSmtOr =
+      TipSmtOr(subexpressions)
   }
   private case class ImpConnective(
-      tipSmtImp: TipSmtImp ) extends Connective( tipSmtImp.exprs ) {
-    def toExpression = TipSmtImp( subexpressions )
-    def copy( subexpressions: Seq[TipSmtExpression] ): TipSmtImp =
-      TipSmtImp( subexpressions )
+      tipSmtImp: TipSmtImp
+  ) extends Connective(tipSmtImp.exprs) {
+    def toExpression = TipSmtImp(subexpressions)
+    def copy(subexpressions: Seq[TipSmtExpression]): TipSmtImp =
+      TipSmtImp(subexpressions)
   }
   private case class EqConnective(
-      tipSmtEq: TipSmtEq ) extends Connective( tipSmtEq.exprs ) {
-    def toExpression = TipSmtEq( subexpressions )
-    def copy( subexpressions: Seq[TipSmtExpression] ): TipSmtEq =
-      TipSmtEq( subexpressions )
+      tipSmtEq: TipSmtEq
+  ) extends Connective(tipSmtEq.exprs) {
+    def toExpression = TipSmtEq(subexpressions)
+    def copy(subexpressions: Seq[TipSmtExpression]): TipSmtEq =
+      TipSmtEq(subexpressions)
   }
   private case class FunConnective(
-      tipSmtFun: TipSmtFun ) extends Connective( tipSmtFun.arguments ) {
-    def toExpression = TipSmtFun( tipSmtFun.name, subexpressions )
-    def copy( subexpressions: Seq[TipSmtExpression] ): TipSmtFun =
-      tipSmtFun.copy( arguments = subexpressions )
+      tipSmtFun: TipSmtFun
+  ) extends Connective(tipSmtFun.arguments) {
+    def toExpression = TipSmtFun(tipSmtFun.name, subexpressions)
+    def copy(subexpressions: Seq[TipSmtExpression]): TipSmtFun =
+      tipSmtFun.copy(arguments = subexpressions)
   }
 
-  private def ocnfConnective( connective: Connective ): TipSmtExpression = {
+  private def ocnfConnective(connective: Connective): TipSmtExpression = {
     val newSubExpressions = connective.subexpressions map tipOcnf
-    if ( newSubExpressions.exists( _.isInstanceOf[TipSmtIte] ) ) {
-      ocnfConnectiveIte( connective, newSubExpressions )
-    } else if ( newSubExpressions.exists( _.isInstanceOf[TipSmtMatch] ) ) {
-      ocnfConnectiveMatch( connective, newSubExpressions )
+    if (newSubExpressions.exists(_.isInstanceOf[TipSmtIte])) {
+      ocnfConnectiveIte(connective, newSubExpressions)
+    } else if (newSubExpressions.exists(_.isInstanceOf[TipSmtMatch])) {
+      ocnfConnectiveMatch(connective, newSubExpressions)
     } else {
-      connective.copy( newSubExpressions )
+      connective.copy(newSubExpressions)
     }
   }
 
   private def ocnfConnectiveIte(
-    connective:        Connective,
-    newSubExpressions: Seq[TipSmtExpression] ): TipSmtExpression = {
-    val Some( ( left, ite, right ) ) =
+      connective: Connective,
+      newSubExpressions: Seq[TipSmtExpression]
+  ): TipSmtExpression = {
+    val Some((left, ite, right)) =
       find(
         newSubExpressions,
-        { expr: TipSmtExpression => expr.isInstanceOf[TipSmtIte] } )
+        { (expr: TipSmtExpression) => expr.isInstanceOf[TipSmtIte] }
+      ): @unchecked
 
-    val TipSmtIte( cond, ifTrue, ifFalse ) = ite
-    val newIfTrue = connective.copy( left ++ Seq( ifTrue ) ++ right )
-    val newIfFalse = connective.copy( left ++ Seq( ifFalse ) ++ right )
-    TipSmtIte( cond, tipOcnf( newIfTrue ), tipOcnf( newIfFalse ) )
+    val TipSmtIte(cond, ifTrue, ifFalse) = ite: @unchecked
+    val newIfTrue = connective.copy(left ++ Seq(ifTrue) ++ right)
+    val newIfFalse = connective.copy(left ++ Seq(ifFalse) ++ right)
+    TipSmtIte(cond, tipOcnf(newIfTrue), tipOcnf(newIfFalse))
   }
 
   private def ocnfConnectiveMatch(
-    connective:        Connective,
-    newSubExpressions: Seq[TipSmtExpression] ): TipSmtExpression = {
-    val Some( ( left, m, right ) ) =
+      connective: Connective,
+      newSubExpressions: Seq[TipSmtExpression]
+  ): TipSmtExpression = {
+    val Some((left, m, right)) =
       find(
         newSubExpressions,
-        { expr: TipSmtExpression => expr.isInstanceOf[TipSmtMatch] } )
+        { (expr: TipSmtExpression) => expr.isInstanceOf[TipSmtMatch] }
+      ): @unchecked
     val matchExpr =
-      captureAvoiding( m.asInstanceOf[TipSmtMatch], left ++ right )
-    val TipSmtMatch( matchedTerm, cases ) = matchExpr
+      captureAvoiding(m.asInstanceOf[TipSmtMatch], left ++ right)
+    val TipSmtMatch(matchedTerm, cases) = matchExpr
     val newCases = cases map {
       cas =>
         TipSmtCase(
           cas.pattern,
-          tipOcnf( connective.copy( left ++ Seq( cas.expr ) ++ right ) ) )
+          tipOcnf(connective.copy(left ++ Seq(cas.expr) ++ right))
+        )
     }
-    TipSmtMatch( matchedTerm, newCases )
+    TipSmtMatch(matchedTerm, newCases)
   }
 
   private def captureAvoiding(
-    tipSmtMatch: TipSmtMatch,
-    expressions: Seq[TipSmtExpression] ): TipSmtMatch = {
-    val blacklist = expressions.flatMap( freeVariables( problem, _ ) )
-    TipSmtMatch( tipSmtMatch.expr, tipSmtMatch.cases map { c =>
-      new Substitute( problem ).awayFrom( c, blacklist )
-    } )
+      tipSmtMatch: TipSmtMatch,
+      expressions: Seq[TipSmtExpression]
+  ): TipSmtMatch = {
+    val blacklist = expressions.flatMap(freeVariables(problem, _))
+    TipSmtMatch(
+      tipSmtMatch.expr,
+      tipSmtMatch.cases map { c =>
+        new Substitute(problem).awayFrom(c, blacklist)
+      }
+    )
   }
 }

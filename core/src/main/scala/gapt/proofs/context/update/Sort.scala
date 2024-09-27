@@ -6,11 +6,11 @@ import gapt.proofs.context.facet.BaseTypes
 import gapt.proofs.context.State
 
 /** Uninterpreted base type. */
-case class Sort( ty: TBase ) extends TypeDefinition {
-  override def apply( ctx: Context ): State =
-    ctx.state.update[BaseTypes]( _ + ty )
+case class Sort(ty: TBase) extends TypeDefinition {
+  override def apply(ctx: Context): State =
+    ctx.state.update[BaseTypes](_ + ty)
 }
 
 object Sort {
-  def apply( tyName: String ): Sort = Sort( TBase( tyName ) )
+  def apply(tyName: String): Sort = Sort(TBase(tyName))
 }

@@ -27,11 +27,11 @@ import gapt.formats.tip.parser.TipSmtSortDeclaration
 import gapt.formats.tip.parser.TipSmtTrue
 
 object eliminateBooleanConstants extends TipSmtProblemTransformation {
-  override def transform( problem: TipSmtProblem ): TipSmtProblem =
-    new BooleanConstantElimination( problem )()
+  override def transform(problem: TipSmtProblem): TipSmtProblem =
+    new BooleanConstantElimination(problem)()
 }
 
-class BooleanConstantElimination( problem: TipSmtProblem ) {
+class BooleanConstantElimination(problem: TipSmtProblem) {
 
   /**
    * Eliminates boolean constants in the given tip problem.
@@ -42,38 +42,43 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
    * @return A tip problem.
    */
   def apply(): TipSmtProblem = {
-    problem.copy( definitions = problem.definitions map {
-      booleanConstantDefinitionVisitor.dispatch( _, () )
-    } )
+    problem.copy(definitions = problem.definitions map {
+      booleanConstantDefinitionVisitor.dispatch(_, ())
+    })
   }
 
   private object booleanConstantDefinitionVisitor
-    extends TipSmtDefinitionTransformation[Unit] {
+      extends TipSmtDefinitionTransformation[Unit] {
 
     override def visit(
-      definition: TipSmtFunctionDefinition,
-      data:       Unit ): TipSmtCommand =
-      apply( definition )
+        definition: TipSmtFunctionDefinition,
+        data: Unit
+    ): TipSmtCommand =
+      apply(definition)
 
     override def visit(
-      definitions: TipSmtMutualRecursiveFunctionDefinition,
-      data:        Unit ): TipSmtCommand =
-      definitions.copy( functions = definitions.functions.map { apply } )
+        definitions: TipSmtMutualRecursiveFunctionDefinition,
+        data: Unit
+    ): TipSmtCommand =
+      definitions.copy(functions = definitions.functions.map { apply })
 
     override def visit(
-      goal: TipSmtGoal,
-      data: Unit ): TipSmtCommand =
-      goal.copy( expr = eliminateBooleanConstants( goal.expr ) )
+        goal: TipSmtGoal,
+        data: Unit
+    ): TipSmtCommand =
+      goal.copy(expr = eliminateBooleanConstants(goal.expr))
 
     override def visit(
-      assertion: TipSmtAssertion,
-      data:      Unit ): TipSmtCommand =
-      assertion.copy( expr = eliminateBooleanConstants( assertion.expr ) )
+        assertion: TipSmtAssertion,
+        data: Unit
+    ): TipSmtCommand =
+      assertion.copy(expr = eliminateBooleanConstants(assertion.expr))
   }
 
   private def apply(
-    fun: TipSmtFunctionDefinition ): TipSmtFunctionDefinition = {
-    fun.copy( body = eliminateBooleanConstants( fun.body ) )
+      fun: TipSmtFunctionDefinition
+  ): TipSmtFunctionDefinition = {
+    fun.copy(body = eliminateBooleanConstants(fun.body))
   }
 
   /**
@@ -85,19 +90,20 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
    * @return A tip expression.
    */
   private def eliminateBooleanConstants(
-    expression: TipSmtExpression ): TipSmtExpression = {
+      expression: TipSmtExpression
+  ): TipSmtExpression = {
     expression match {
-      case expr @ TipSmtAnd( _ )       => eliminateBooleanConstants( expr )
-      case expr @ TipSmtOr( _ )        => eliminateBooleanConstants( expr )
-      case expr @ TipSmtImp( _ )       => eliminateBooleanConstants( expr )
-      case expr @ TipSmtForall( _, _ ) => eliminateBooleanConstants( expr )
-      case expr @ TipSmtExists( _, _ ) => eliminateBooleanConstants( expr )
-      case expr @ TipSmtIte( _, _, _ ) => eliminateBooleanConstants( expr )
-      case expr @ TipSmtEq( _ )        => eliminateBooleanConstants( expr )
-      case expr @ TipSmtFun( _, _ )    => expr
-      case expr @ TipSmtNot( _ )       => eliminateBooleanConstants( expr )
-      case expr @ TipSmtMatch( _, _ )  => eliminateBooleanConstants( expr )
-      case formula                     => formula
+      case expr @ TipSmtAnd(_)       => eliminateBooleanConstants(expr)
+      case expr @ TipSmtOr(_)        => eliminateBooleanConstants(expr)
+      case expr @ TipSmtImp(_)       => eliminateBooleanConstants(expr)
+      case expr @ TipSmtForall(_, _) => eliminateBooleanConstants(expr)
+      case expr @ TipSmtExists(_, _) => eliminateBooleanConstants(expr)
+      case expr @ TipSmtIte(_, _, _) => eliminateBooleanConstants(expr)
+      case expr @ TipSmtEq(_)        => eliminateBooleanConstants(expr)
+      case expr @ TipSmtFun(_, _)    => expr
+      case expr @ TipSmtNot(_)       => eliminateBooleanConstants(expr)
+      case expr @ TipSmtMatch(_, _)  => eliminateBooleanConstants(expr)
+      case formula                   => formula
     }
   }
 
@@ -110,12 +116,14 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
    *         do not contain redundant boolean constants.
    */
   private def eliminateBooleanConstants(
-    smtMatch: TipSmtMatch ): TipSmtExpression = {
+      smtMatch: TipSmtMatch
+  ): TipSmtExpression = {
     smtMatch.copy(
-      expr = eliminateBooleanConstants( smtMatch.expr ),
+      expr = eliminateBooleanConstants(smtMatch.expr),
       cases = smtMatch.cases.map { c =>
-        c.copy( expr = eliminateBooleanConstants( c.expr ) )
-      } )
+        c.copy(expr = eliminateBooleanConstants(c.expr))
+      }
+    )
   }
 
   /**
@@ -126,15 +134,17 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
    * @return An expression without redundant boolean constants.
    */
   private def eliminateBooleanConstants(
-    smtEq: TipSmtEq ): TipSmtExpression = {
+      smtEq: TipSmtEq
+  ): TipSmtExpression = {
     val newSubExpressions = smtEq.exprs.map { eliminateBooleanConstants }
-    if ( newSubExpressions.contains( TipSmtTrue ) ) {
-      eliminateBooleanConstants( TipSmtAnd( newSubExpressions ) )
-    } else if ( newSubExpressions.contains( TipSmtFalse ) ) {
+    if (newSubExpressions.contains(TipSmtTrue)) {
+      eliminateBooleanConstants(TipSmtAnd(newSubExpressions))
+    } else if (newSubExpressions.contains(TipSmtFalse)) {
       eliminateBooleanConstants(
-        TipSmtAnd( newSubExpressions.map { TipSmtNot } ) )
+        TipSmtAnd(newSubExpressions.map { TipSmtNot.apply })
+      )
     } else {
-      TipSmtEq( newSubExpressions )
+      TipSmtEq(newSubExpressions)
     }
   }
 
@@ -145,11 +155,11 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
    *            eliminated.
    * @return An expression without redundant boolean constants.
    */
-  private def eliminateBooleanConstants( not: TipSmtNot ): TipSmtExpression = {
-    eliminateBooleanConstants( not.expr ) match {
+  private def eliminateBooleanConstants(not: TipSmtNot): TipSmtExpression = {
+    eliminateBooleanConstants(not.expr) match {
       case TipSmtFalse => TipSmtTrue
       case TipSmtTrue  => TipSmtFalse
-      case formula     => TipSmtNot( formula )
+      case formula     => TipSmtNot(formula)
     }
   }
 
@@ -160,19 +170,19 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
    *            eliminated.
    * @return An expression without redundant boolean constants.
    */
-  private def eliminateBooleanConstants( and: TipSmtAnd ): TipSmtExpression = {
+  private def eliminateBooleanConstants(and: TipSmtAnd): TipSmtExpression = {
     val remainingExpressions = and.exprs
       .map { eliminateBooleanConstants }
       .filter { _ != TipSmtTrue }
-    if ( remainingExpressions.contains( TipSmtFalse ) ) {
+    if (remainingExpressions.contains(TipSmtFalse)) {
       TipSmtFalse
-    } else if ( remainingExpressions.isEmpty ) {
+    } else if (remainingExpressions.isEmpty) {
       TipSmtTrue
     } else {
-      if ( remainingExpressions.size == 1 )
+      if (remainingExpressions.size == 1)
         remainingExpressions.head
       else
-        TipSmtAnd( remainingExpressions )
+        TipSmtAnd(remainingExpressions)
     }
   }
 
@@ -183,18 +193,18 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
    *           eliminated.
    * @return An expression without redundant boolean constants.
    */
-  private def eliminateBooleanConstants( or: TipSmtOr ): TipSmtExpression = {
+  private def eliminateBooleanConstants(or: TipSmtOr): TipSmtExpression = {
     val remainingExpressions = or.exprs
       .map { eliminateBooleanConstants }
       .filter { _ != TipSmtFalse }
-    if ( remainingExpressions.contains( TipSmtTrue ) ) {
+    if (remainingExpressions.contains(TipSmtTrue)) {
       TipSmtTrue
-    } else if ( remainingExpressions.isEmpty ) {
+    } else if (remainingExpressions.isEmpty) {
       TipSmtFalse
     } else {
       remainingExpressions match {
-        case Seq( expr ) => expr
-        case _           => TipSmtOr( remainingExpressions )
+        case Seq(expr) => expr
+        case _         => TipSmtOr(remainingExpressions)
       }
     }
   }
@@ -206,24 +216,24 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
    *            eliminated.
    * @return An expression without redundant boolean constants.
    */
-  private def eliminateBooleanConstants( imp: TipSmtImp ): TipSmtExpression = {
+  private def eliminateBooleanConstants(imp: TipSmtImp): TipSmtExpression = {
     val newExpressions = imp.exprs map { eliminateBooleanConstants }
     val finalExpressions =
-      newExpressions.init.foldRight( Seq( newExpressions.last ) ) {
-        case ( _, Seq( TipSmtTrue ) ) =>
-          Seq( TipSmtTrue )
-        case ( l, Seq( TipSmtFalse ) ) =>
-          Seq( eliminateBooleanConstants( TipSmtNot( l ) ) )
-        case ( TipSmtTrue, r ) =>
+      newExpressions.init.foldRight(Seq(newExpressions.last)) {
+        case (_, Seq(TipSmtTrue)) =>
+          Seq(TipSmtTrue)
+        case (l, Seq(TipSmtFalse)) =>
+          Seq(eliminateBooleanConstants(TipSmtNot(l)))
+        case (TipSmtTrue, r) =>
           r
-        case ( TipSmtFalse, _ ) =>
-          Seq( TipSmtTrue )
-        case ( l, r ) =>
+        case (TipSmtFalse, _) =>
+          Seq(TipSmtTrue)
+        case (l, r) =>
           l +: r
       }
     finalExpressions match {
-      case Seq( formula ) => formula
-      case _              => TipSmtImp( finalExpressions )
+      case Seq(formula) => formula
+      case _            => TipSmtImp(finalExpressions)
     }
   }
 
@@ -235,11 +245,12 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
    * @return An expression without redundant boolean constants.
    */
   private def eliminateBooleanConstants(
-    forall: TipSmtForall ): TipSmtExpression = {
-    eliminateBooleanConstants( forall.formula ) match {
+      forall: TipSmtForall
+  ): TipSmtExpression = {
+    eliminateBooleanConstants(forall.formula) match {
       case TipSmtTrue  => TipSmtTrue
       case TipSmtFalse => TipSmtFalse
-      case expression  => TipSmtForall( forall.variables, expression )
+      case expression  => TipSmtForall(forall.variables, expression)
     }
   }
 
@@ -251,11 +262,12 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
    * @return An expression without redundant boolean constants.
    */
   private def eliminateBooleanConstants(
-    exists: TipSmtExists ): TipSmtExpression = {
-    eliminateBooleanConstants( exists.formula ) match {
+      exists: TipSmtExists
+  ): TipSmtExpression = {
+    eliminateBooleanConstants(exists.formula) match {
       case TipSmtTrue  => TipSmtTrue
       case TipSmtFalse => TipSmtFalse
-      case expression  => TipSmtExists( exists.variables, expression )
+      case expression  => TipSmtExists(exists.variables, expression)
     }
   }
 
@@ -267,14 +279,16 @@ class BooleanConstantElimination( problem: TipSmtProblem ) {
    * @return An expression without redundant boolean constants.
    */
   private def eliminateBooleanConstants(
-    ite: TipSmtIte ): TipSmtExpression = {
-    eliminateBooleanConstants( ite.cond ) match {
-      case TipSmtTrue  => eliminateBooleanConstants( ite.ifTrue )
-      case TipSmtFalse => eliminateBooleanConstants( ite.ifFalse )
+      ite: TipSmtIte
+  ): TipSmtExpression = {
+    eliminateBooleanConstants(ite.cond) match {
+      case TipSmtTrue  => eliminateBooleanConstants(ite.ifTrue)
+      case TipSmtFalse => eliminateBooleanConstants(ite.ifFalse)
       case newCond => TipSmtIte(
-        newCond,
-        eliminateBooleanConstants( ite.ifTrue ),
-        eliminateBooleanConstants( ite.ifFalse ) )
+          newCond,
+          eliminateBooleanConstants(ite.ifTrue),
+          eliminateBooleanConstants(ite.ifFalse)
+        )
     }
   }
 }

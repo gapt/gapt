@@ -28,27 +28,27 @@ import gapt.proofs.lk.LKProof
  * @param cases A sequence of proofs showing that each type constructor preserves the validity of the main formula.
  * @param formula The formula we want to prove via induction.
  */
-case class InductionRule( cases: Seq[InductionCase], formula: Abs, term: Expr ) extends CommonRule {
-  val Abs( quant @ Var( _, indTy ), qfFormula ) = formula
-  require( term.ty == indTy )
+case class InductionRule(cases: Seq[InductionCase], formula: Abs, term: Expr) extends CommonRule {
+  val Abs(quant @ Var(_, indTy), qfFormula) = formula
+  require(term.ty == indTy)
   cases foreach { c =>
-    require( c.indTy == indTy )
-    c.hypotheses.lazyZip( c.hypVars ).foreach { ( hyp, eigen ) =>
-      require( c.proof.endSequent( hyp ) == Substitution( quant -> eigen )( qfFormula ) )
+    require(c.indTy == indTy)
+    c.hypotheses.lazyZip(c.hypVars).foreach { (hyp, eigen) =>
+      require(c.proof.endSequent(hyp) == Substitution(quant -> eigen)(qfFormula))
     }
-    require( c.proof.endSequent( c.conclusion ) == Substitution( quant -> c.term )( qfFormula ) )
+    require(c.proof.endSequent(c.conclusion) == Substitution(quant -> c.term)(qfFormula))
   }
-  for ( ( cas, ctx ) <- cases zip contexts )
-    require( freeVariables( ctx.elements :+ formula ) intersect cas.eigenVars.toSet isEmpty )
+  for ((cas, ctx) <- cases zip contexts)
+    require(freeVariables(ctx.elements :+ formula) intersect cas.eigenVars.toSet isEmpty)
 
-  val mainFormula: Formula = BetaReduction.betaNormalize( formula( term ).asInstanceOf[Formula] )
+  val mainFormula: Formula = BetaReduction.betaNormalize(formula(term).asInstanceOf[Formula])
   override protected def mainFormulaSequent: HOLSequent = Sequent() :+ mainFormula
   override def auxIndices: Seq[Seq[SequentIndex]] = cases map { c => c.hypotheses :+ c.conclusion }
   override def immediateSubProofs: Seq[LKProof] = cases map { _.proof }
 
   private lazy val product = cases.flatMap { _.productIterator } :+ formula :+ term
   override def productArity: Int = product.size
-  override def productElement( n: Int ): Any = product( n )
+  override def productElement(n: Int): Any = product(n)
 
   override def name: String = "ind"
 }

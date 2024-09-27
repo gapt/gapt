@@ -3,14 +3,14 @@ package gapt.examples.tip.prod
 import gapt.expr._
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.Sequent
-import gapt.proofs.gaptic.{ Lemma, TacticsProof, _ }
+import gapt.proofs.gaptic.{Lemma, TacticsProof, _}
 
 object prop_13 extends TacticsProof {
 
   // Inductive types
-  ctx += InductiveType( ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat" )
+  ctx += InductiveType(ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat")
 
-  //Function constants
+  // Function constants
   ctx += hoc"'plus' :Nat>Nat>Nat"
   ctx += hoc"'half' :Nat>Nat"
 
@@ -31,34 +31,33 @@ object prop_13 extends TacticsProof {
 
   val lem = hof"!y ( plus(x, S(y)) = S(plus(x,y)) & half(plus(x,x)) = x )"
 
-  val lem_proof = Lemma( theory :+ "lem" -> lem ) {
-    induction( hov"x:Nat" )
-    //- base case
+  val lem_proof = Lemma(theory :+ "lem" -> lem) {
+    induction(hov"x:Nat")
+    // - base case
     allR; andR
-    //-- base case: plus_s_comm
+    // -- base case: plus_s_comm
     rewrite.many ltr "def_plus_0" in "lem"
     refl
-    //-- base case: goal
+    // -- base case: goal
     rewrite.many ltr "def_plus_0" in "lem"
     rewrite.many ltr "def_half_0" in "lem"
     refl
-    //- inductive case
+    // - inductive case
     allR; andR
-    //-- inductive case: plus_s_comm
+    // -- inductive case: plus_s_comm
     rewrite.many ltr "def_plus_1" in "lem"
-    allL( "IHx_0", le"y:Nat" )
+    allL("IHx_0", le"y:Nat")
     quasiprop
-    //-- inductive case: goal
+    // -- inductive case: goal
     rewrite.many ltr "def_plus_1" in "lem"
-    allL( "IHx_0", le"x_0:Nat" ); andL
+    allL("IHx_0", le"x_0:Nat"); andL
     rewrite.many ltr "IHx_0_0_0" in "lem"
     rewrite.many ltr "def_half_2" in "lem"
     quasiprop
   }
 
-  val proof = Lemma( sequent ) {
-    allR; cut( "lem", lem ); insert( lem_proof )
+  val proof = Lemma(sequent) {
+    allR; cut("lem", lem); insert(lem_proof)
     escargot.withDeskolemization
   }
 }
-

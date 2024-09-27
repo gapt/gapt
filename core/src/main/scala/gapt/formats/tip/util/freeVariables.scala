@@ -21,61 +21,63 @@ import gapt.formats.tip.parser.TipSmtTrue
 
 object freeVariables {
   def apply(
-    problem:    TipSmtProblem,
-    expression: TipSmtExpression ): Set[String] = {
-    ( new FreeVariablesProblem( problem ) ).freeVariables( expression )
+      problem: TipSmtProblem,
+      expression: TipSmtExpression
+  ): Set[String] = {
+    (new FreeVariablesProblem(problem)).freeVariables(expression)
   }
 }
 
-class FreeVariablesProblem( problem: TipSmtProblem ) {
+class FreeVariablesProblem(problem: TipSmtProblem) {
   def freeVariables(
-    expression: TipSmtExpression ): Set[String] = {
+      expression: TipSmtExpression
+  ): Set[String] = {
     expression match {
-      case expr @ TipSmtAnd( _ ) =>
-        expr.exprs.flatMap( freeVariables ).toSet
+      case expr @ TipSmtAnd(_) =>
+        expr.exprs.flatMap(freeVariables).toSet
 
-      case expr @ TipSmtOr( _ ) =>
-        expr.exprs.flatMap( freeVariables ).toSet
+      case expr @ TipSmtOr(_) =>
+        expr.exprs.flatMap(freeVariables).toSet
 
-      case expr @ TipSmtImp( _ ) =>
-        expr.exprs.flatMap( freeVariables ).toSet
+      case expr @ TipSmtImp(_) =>
+        expr.exprs.flatMap(freeVariables).toSet
 
-      case expr @ TipSmtEq( _ ) =>
-        expr.exprs.flatMap( freeVariables ).toSet
+      case expr @ TipSmtEq(_) =>
+        expr.exprs.flatMap(freeVariables).toSet
 
-      case TipSmtForall( boundVariables, formula ) =>
-        freeVariables( formula ).diff( boundVariables.map {
+      case TipSmtForall(boundVariables, formula) =>
+        freeVariables(formula).diff(boundVariables.map {
           _.name
-        } toSet )
+        } toSet)
 
-      case TipSmtExists( boundVariables, formula ) =>
-        freeVariables( formula ).diff( boundVariables.map {
+      case TipSmtExists(boundVariables, formula) =>
+        freeVariables(formula).diff(boundVariables.map {
           _.name
-        } toSet )
+        } toSet)
 
-      case expr @ TipSmtIte( _, _, _ ) =>
-        freeVariables( expr.cond ) ++
-          freeVariables( expr.ifTrue ) ++
-          freeVariables( expr.ifFalse )
+      case expr @ TipSmtIte(_, _, _) =>
+        freeVariables(expr.cond) ++
+          freeVariables(expr.ifTrue) ++
+          freeVariables(expr.ifFalse)
 
-      case TipSmtMatch( matchedExpression, cases ) =>
-        freeVariables( matchedExpression ) ++
-          cases.flatMap( freeVariablesCase )
+      case TipSmtMatch(matchedExpression, cases) =>
+        freeVariables(matchedExpression) ++
+          cases.flatMap(freeVariablesCase)
 
-      case expr @ TipSmtFun( _, _ ) =>
-        expr.arguments.flatMap( freeVariables ).toSet
+      case expr @ TipSmtFun(_, _) =>
+        expr.arguments.flatMap(freeVariables).toSet
 
-      case expr @ TipSmtNot( _ ) =>
-        freeVariables( expr.expr )
+      case expr @ TipSmtNot(_) =>
+        freeVariables(expr.expr)
 
-      case expr @ TipSmtIdentifier( _ ) =>
-        if ( problem.symbolTable.get.contains( expr.name ) )
+      case expr @ TipSmtIdentifier(_) =>
+        if (problem.symbolTable.get.contains(expr.name))
           Set()
         else
-          Set( expr.name )
+          Set(expr.name)
 
-      case expr @ TipSmtDistinct( _ ) =>
-        expr.expressions.flatMap( freeVariables ).toSet
+      case expr @ TipSmtDistinct(_) =>
+        expr.expressions.flatMap(freeVariables).toSet
 
       case TipSmtTrue  => Set()
       case TipSmtFalse => Set()
@@ -83,15 +85,16 @@ class FreeVariablesProblem( problem: TipSmtProblem ) {
   }
 
   def freeVariablesCase(
-    tipSmtCase: TipSmtCase ): Set[String] = {
-    val TipSmtConstructorPattern( constructor, fields ) = tipSmtCase.pattern
+      tipSmtCase: TipSmtCase
+  ): Set[String] = {
+    val TipSmtConstructorPattern(constructor, fields) = tipSmtCase.pattern: @unchecked
     val boundVariables =
-      ( constructor.name +: fields.map( _.name ) )
-        .filter( isVariable )
+      (constructor.name +: fields.map(_.name))
+        .filter(isVariable)
         .toSet
-    freeVariables( tipSmtCase.expr ).diff( boundVariables )
+    freeVariables(tipSmtCase.expr).diff(boundVariables)
   }
 
-  def isVariable( name: String ): Boolean =
-    !problem.symbolTable.get.contains( name )
+  def isVariable(name: String): Boolean =
+    !problem.symbolTable.get.contains(name)
 }

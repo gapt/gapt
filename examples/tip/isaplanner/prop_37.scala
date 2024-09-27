@@ -6,10 +6,10 @@ import gapt.proofs.gaptic._
 
 object prop_37 extends TacticsProof {
 
-  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += InductiveType(ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat")
   ctx += hoc"p:Nat>Nat"
 
-  ctx += InductiveType( ty"list", hoc"nil:list", hoc"cons:Nat>list>list" )
+  ctx += InductiveType(ty"list", hoc"nil:list", hoc"cons:Nat>list>list")
   ctx += hoc"head:list>Nat"
   ctx += hoc"tail:list>list"
 
@@ -36,35 +36,35 @@ object prop_37 extends TacticsProof {
           goal: ∀x ∀xs ¬elem(x:Nat, delete(x, xs:list): list)
         """
 
-  val proof = Lemma( sequent ) {
+  val proof = Lemma(sequent) {
     allR
     allR
-    induction( hov"xs:list" )
+    induction(hov"xs:list")
     // base case
-    allL( "def_delete_1", le"x:Nat" )
-    allL( "def_elem_1", le"x:Nat" )
-    eql( "def_delete_1_0", "goal" ).fromLeftToRight
+    allL("def_delete_1", le"x:Nat")
+    allL("def_elem_1", le"x:Nat")
+    eql("def_delete_1_0", "goal").fromLeftToRight
     axiomLog
     // inductive case
     decompose
-    allL( "def_delete_2", le"x:Nat", le"x_0:Nat", le"xs_0:list" )
+    allL("def_delete_2", le"x:Nat", le"x_0:Nat", le"xs_0:list")
     impL
     negR
-    allL( "def_delete_3", le"x:Nat", le"x_0:Nat", le"xs_0:list" )
+    allL("def_delete_3", le"x:Nat", le"x_0:Nat", le"xs_0:list")
     impL
     axiomLog
-    eql( "def_delete_3_0", "goal" )
+    eql("def_delete_3_0", "goal")
     axiomLog
-    allL( "def_elem_2", le"x:Nat", le"x_0:Nat", le"delete(x:Nat,xs_0:list)" )
+    allL("def_elem_2", le"x:Nat", le"x_0:Nat", le"delete(x:Nat,xs_0:list)")
     andL
-    impL( "def_elem_2_0_0" )
-    eql( "def_delete_2_0", "goal" )
+    impL("def_elem_2_0_0")
+    eql("def_delete_2_0", "goal")
     axiomLog
     orL
-    allL( "def_delete_3", le"x:Nat", le"x_0:Nat", le"xs_0:list" )
-    impL( "def_delete_3_0" )
+    allL("def_delete_3", le"x:Nat", le"x_0:Nat", le"xs_0:list")
+    impL("def_delete_3_0")
     axiomLog
-    eql( "def_delete_3_0", "goal" )
+    eql("def_delete_3_0", "goal")
     axiomLog
     axiomLog
   }

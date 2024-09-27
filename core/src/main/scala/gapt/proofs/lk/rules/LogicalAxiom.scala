@@ -13,8 +13,8 @@ import gapt.proofs.HOLSequent
  *
  * @param A The atom A.
  */
-case class LogicalAxiom( A: Formula ) extends InitialSequent {
+case class LogicalAxiom(A: Formula) extends InitialSequent {
   override def name: String = "ax"
-  override def conclusion: HOLSequent = HOLSequent( Seq( A ), Seq( A ) )
+  override def conclusion: HOLSequent = HOLSequent(Seq(A), Seq(A))
   def mainFormula: Formula = A
 }

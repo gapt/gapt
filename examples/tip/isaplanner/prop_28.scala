@@ -7,10 +7,10 @@ import gapt.proofs.gaptic._
 /* This is not a s.i.p because of the subinduction for equal(x,x). */
 object prop_28 extends TacticsProof {
 
-  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += InductiveType(ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat")
   ctx += hoc"p:Nat>Nat"
 
-  ctx += InductiveType( ty"list", hoc"nil:list", hoc"cons:Nat>list>list" )
+  ctx += InductiveType(ty"list", hoc"nil:list", hoc"cons:Nat>list>list")
   ctx += hoc"head:list>Nat"
   ctx += hoc"tail:list>list"
 
@@ -37,39 +37,39 @@ object prop_28 extends TacticsProof {
       goal: ∀x ∀xs elem(x:Nat, append(xs:list, cons(x, nil:list): list): list)
     """
 
-  val proof = Lemma( sequent ) {
-    cut( "goal_c", hof"∀xs ∀x elem(x, append(xs, cons(x, nil)))" )
-    forget( "goal" )
+  val proof = Lemma(sequent) {
+    cut("goal_c", hof"∀xs ∀x elem(x, append(xs, cons(x, nil)))")
+    forget("goal")
     allR
-    induction( hov"xs:list" )
+    induction(hov"xs:list")
     allR
-    allL( "def_append_1", le"cons(x:Nat, nil:list):list" )
-    eql( "def_append_1_0", "goal_c" ).fromLeftToRight
-    allL( "def_elem_2", le"x:Nat", le"x:Nat", le"nil:list" )
+    allL("def_append_1", le"cons(x:Nat, nil:list):list")
+    eql("def_append_1_0", "goal_c").fromLeftToRight
+    allL("def_elem_2", le"x:Nat", le"x:Nat", le"nil:list")
     andL
-    impL( "def_elem_2_0_1" )
+    impL("def_elem_2_0_1")
     orR
-    induction( hov"x:Nat", "def_elem_2_0_1_0" )
+    induction(hov"x:Nat", "def_elem_2_0_1_0")
     axiomLog
-    allL( "def_equal_4", le"x_0:Nat", le"x_0:Nat" )
-    andL( "def_equal_4_0" )
-    impL( "def_equal_4_0_1" )
+    allL("def_equal_4", le"x_0:Nat", le"x_0:Nat")
+    andL("def_equal_4_0")
+    impL("def_equal_4_0_1")
     axiomLog
     axiomLog
     axiomLog
     allR
-    allL( "def_append_2", le"x:Nat", le"xs_0:list", le"cons(x_0:Nat, nil:list):list" )
-    eql( "def_append_2_0", "goal_c" )
-    allL( "def_elem_2", le"x_0:Nat", le"x:Nat", le"append(xs_0:list, cons(x_0:Nat, nil:list):list):list" )
-    andL( "def_elem_2_0" )
-    impL( "def_elem_2_0_1" )
+    allL("def_append_2", le"x:Nat", le"xs_0:list", le"cons(x_0:Nat, nil:list):list")
+    eql("def_append_2_0", "goal_c")
+    allL("def_elem_2", le"x_0:Nat", le"x:Nat", le"append(xs_0:list, cons(x_0:Nat, nil:list):list):list")
+    andL("def_elem_2_0")
+    impL("def_elem_2_0_1")
     orR
-    allL( "IHxs_0", le"x_0:Nat" )
+    allL("IHxs_0", le"x_0:Nat")
     axiomLog
     axiomLog
     allR
     allR
-    allL( "goal_c", le"xs:list", le"x:Nat" )
+    allL("goal_c", le"xs:list", le"x:Nat")
     axiomLog
   }
 }

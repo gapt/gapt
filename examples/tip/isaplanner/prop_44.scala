@@ -6,19 +6,19 @@ import gapt.proofs.context.update.InductiveType
 import gapt.proofs.gaptic._
 import gapt.provers.escargot.Escargot
 import gapt.provers.viper.aip.axioms.IndependentInductionAxioms
-import gapt.provers.viper.aip.{ AnalyticInductionProver, ProverOptions }
+import gapt.provers.viper.aip.{AnalyticInductionProver, ProverOptions}
 
 object prop_44 extends TacticsProof {
 
   // Sorts
-  ctx += TBase( "sk" )
+  ctx += TBase("sk")
 
   // Inductive types
-  ctx += InductiveType( ty"list2", hoc"'nil2' :list2", hoc"'cons2' :sk>list2>list2" )
-  ctx += InductiveType( ty"Pair", hoc"'Pair2' :sk>sk>Pair" )
-  ctx += InductiveType( ty"list", hoc"'nil' :list", hoc"'cons' :Pair>list>list" )
+  ctx += InductiveType(ty"list2", hoc"'nil2' :list2", hoc"'cons2' :sk>list2>list2")
+  ctx += InductiveType(ty"Pair", hoc"'Pair2' :sk>sk>Pair")
+  ctx += InductiveType(ty"list", hoc"'nil' :list", hoc"'cons' :Pair>list>list")
 
-  //Function constants
+  // Function constants
   ctx += hoc"'zip' :list2>list2>list"
   ctx += hoc"'zipConcat' :sk>list2>list2>list"
 
@@ -47,6 +47,7 @@ object prop_44 extends TacticsProof {
 
   val aipOptions = new ProverOptions(
     Escargot,
-    IndependentInductionAxioms().forVariables( List( hov"ys:list2" ) ).forLabel( "goal" ) )
-  val proof1 = new AnalyticInductionProver( aipOptions ) lkProof ( sequent ) get
+    IndependentInductionAxioms().forVariables(List(hov"ys:list2")).forLabel("goal")
+  )
+  val proof1 = new AnalyticInductionProver(aipOptions) lkProof (sequent) get
 }

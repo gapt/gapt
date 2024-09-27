@@ -12,41 +12,51 @@ import gapt.formats.tip.parser.TipSmtGoal
 import gapt.formats.tip.parser.TipSmtMutualRecursiveFunctionDefinition
 import gapt.formats.tip.parser.TipSmtSortDeclaration
 
-abstract class TipSmtDefinitionTransformation[T] extends //
-TipSmtDefinitionVisitor[T, TipSmtCommand] {
+abstract class TipSmtDefinitionTransformation[T]
+    extends //
+    TipSmtDefinitionVisitor[T, TipSmtCommand] {
   override def visit(
-    definition: TipSmtFunctionDefinition,
-    data:       T ): TipSmtCommand = definition
+      definition: TipSmtFunctionDefinition,
+      data: T
+  ): TipSmtCommand = definition
 
   override def visit(
-    definition: TipSmtDatatypesDeclaration,
-    data:       T ): TipSmtCommand = definition
+      definition: TipSmtDatatypesDeclaration,
+      data: T
+  ): TipSmtCommand = definition
 
   override def visit(
-    definition: TipSmtSortDeclaration,
-    data:       T ): TipSmtCommand = definition
+      definition: TipSmtSortDeclaration,
+      data: T
+  ): TipSmtCommand = definition
 
   override def visit(
-    definition: TipSmtFunctionDeclaration,
-    data:       T ): TipSmtCommand = definition
+      definition: TipSmtFunctionDeclaration,
+      data: T
+  ): TipSmtCommand = definition
 
   override def visit(
-    definition: TipSmtMutualRecursiveFunctionDefinition,
-    data:       T ): TipSmtCommand = definition
+      definition: TipSmtMutualRecursiveFunctionDefinition,
+      data: T
+  ): TipSmtCommand = definition
 
   override def visit(
-    definition: TipSmtGoal,
-    data:       T ): TipSmtCommand = definition
+      definition: TipSmtGoal,
+      data: T
+  ): TipSmtCommand = definition
 
   override def visit(
-    definition: TipSmtAssertion,
-    data:       T ): TipSmtCommand = definition
+      definition: TipSmtAssertion,
+      data: T
+  ): TipSmtCommand = definition
 
   override def visit(
-    definition: TipSmtCheckSat,
-    data:       T ): TipSmtCommand = definition
+      definition: TipSmtCheckSat,
+      data: T
+  ): TipSmtCommand = definition
 
   override def visit(
-    definition: TipSmtConstantDeclaration,
-    data:       T ): TipSmtCommand = definition
+      definition: TipSmtConstantDeclaration,
+      data: T
+  ): TipSmtCommand = definition
 }

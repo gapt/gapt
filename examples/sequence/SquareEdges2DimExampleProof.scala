@@ -27,19 +27,19 @@ object SquareEdges2DimExampleProof extends ProofSequence {
    * @param n An integer >= 0.
    * @return P(a,b), ∀x,y. P(x,y) → P(s,,x,,(x),y), ∀x,y. P(x,y) → P(x,s,,y,,(y)) :- P(s,,x,,^n^(a),s,,y,,^n^(b))
    */
-  def apply( n: Int ): LKProof = {
-    require( n >= 0, "n must be nonnegative" )
+  def apply(n: Int): LKProof = {
+    require(n >= 0, "n must be nonnegative")
 
-    val sna = Utils.iterateTerm( FOLConst( "a" ), "s_x", n )
-    val snb = Utils.iterateTerm( FOLConst( "b" ), "s_y", n )
+    val sna = Utils.iterateTerm(FOLConst("a"), "s_x", n)
+    val snb = Utils.iterateTerm(FOLConst("b"), "s_y", n)
     val pab = foa"P(a,b)"
     val pnn = foa"P($sna, $snb)"
     val axX = fof"!x!y (P(x,y) -> P(s_x(x), y))"
     val axY = fof"!x!y (P(x,y) -> P(x, s_y(y)))"
 
-    Proof( Sequent( Seq( "Pab" -> pab, "AxX" -> axX, "AxY" -> axY ), Seq( "Pnn" -> pnn ) ) ) {
-      repeat( chain( "AxY" ) )
-      repeat( chain( "AxX" ) )
+    Proof(Sequent(Seq("Pab" -> pab, "AxX" -> axX, "AxY" -> axY), Seq("Pnn" -> pnn))) {
+      repeat(chain("AxY"))
+      repeat(chain("AxX"))
       prop
     }
   }

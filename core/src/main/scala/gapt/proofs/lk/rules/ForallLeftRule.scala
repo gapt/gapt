@@ -27,21 +27,22 @@ import gapt.proofs.lk.LKProof
  * @param term The term t.
  * @param v The variable x.
  */
-case class ForallLeftRule( subProof: LKProof, aux: SequentIndex, A: Formula, term: Expr, v: Var )
-  extends WeakQuantifierRule {
+case class ForallLeftRule(subProof: LKProof, aux: SequentIndex, A: Formula, term: Expr, v: Var)
+    extends WeakQuantifierRule {
 
-  validateIndices( premise, Seq( aux ), Seq() )
+  validateIndices(premise, Seq(aux), Seq())
 
-  val mainFormula: Formula = BetaReduction.betaNormalize( All( v, A ) )
+  val mainFormula: Formula = BetaReduction.betaNormalize(All(v, A))
 
   override def name: String = "∀:l"
 
-  def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux ) )
+  def auxIndices: Seq[Seq[SequentIndex]] = Seq(Seq(aux))
 
   override def mainFormulaSequent: HOLSequent = mainFormula +: Sequent()
 }
 
-object ForallLeftRule extends ConvenienceConstructor( "ForallLeftRule" ) {
+object ForallLeftRule extends ConvenienceConstructor("ForallLeftRule") {
+
   /**
    * Convenience constructor for ∀:l that, given a main formula and a term,
    * will try to construct an inference with that instantiation.
@@ -51,22 +52,22 @@ object ForallLeftRule extends ConvenienceConstructor( "ForallLeftRule" ) {
    * @param term A term t such that A[t] occurs in the premise.
    * @return
    */
-  def apply( subProof: LKProof, mainFormula: Formula, term: Expr ): ForallLeftRule = {
+  def apply(subProof: LKProof, mainFormula: Formula, term: Expr): ForallLeftRule = {
     val premise = subProof.endSequent
 
     mainFormula match {
-      case All( v, subFormula ) =>
-        val auxFormula = BetaReduction.betaNormalize( Substitution( v, term )( subFormula ) )
+      case All(v, subFormula) =>
+        val auxFormula = BetaReduction.betaNormalize(Substitution(v, term)(subFormula))
         val i = premise.antecedent indexOf auxFormula
 
-        if ( i == -1 )
-          throw LKRuleCreationException( s"Formula $auxFormula not found in antecedent of $premise." )
+        if (i == -1)
+          throw LKRuleCreationException(s"Formula $auxFormula not found in antecedent of $premise.")
 
-        val p = ForallLeftRule( subProof, Ant( i ), subFormula, term, v )
-        assert( p.mainFormula == mainFormula )
+        val p = ForallLeftRule(subProof, Ant(i), subFormula, term, v)
+        assert(p.mainFormula == mainFormula)
         p
 
-      case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
+      case _ => throw LKRuleCreationException(s"Proposed main formula $mainFormula is not universally quantified.")
     }
   }
 
@@ -77,20 +78,20 @@ object ForallLeftRule extends ConvenienceConstructor( "ForallLeftRule" ) {
    * @param mainFormula The formula to be inferred. Must be of the form ∀x.A. The premise must contain A.
    * @return
    */
-  def apply( subProof: LKProof, mainFormula: Formula ): ForallLeftRule = mainFormula match {
-    case All( v, _ ) =>
-      val p = apply( subProof, mainFormula, v )
-      assert( p.mainFormula == mainFormula )
+  def apply(subProof: LKProof, mainFormula: Formula): ForallLeftRule = mainFormula match {
+    case All(v, _) =>
+      val p = apply(subProof, mainFormula, v)
+      assert(p.mainFormula == mainFormula)
       p
 
-    case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
+    case _ => throw LKRuleCreationException(s"Proposed main formula $mainFormula is not universally quantified.")
   }
 
-  def apply( subProof: LKProof, aux: SequentIndex, mainFormula: Formula, term: Expr ): ForallLeftRule =
+  def apply(subProof: LKProof, aux: SequentIndex, mainFormula: Formula, term: Expr): ForallLeftRule =
     mainFormula match {
-      case All( v, subFormula ) =>
-        val p = ForallLeftRule( subProof, aux, subFormula, term, v )
-        assert( p.mainFormula == mainFormula )
+      case All(v, subFormula) =>
+        val p = ForallLeftRule(subProof, aux, subFormula, term, v)
+        assert(p.mainFormula == mainFormula)
         p
     }
 }

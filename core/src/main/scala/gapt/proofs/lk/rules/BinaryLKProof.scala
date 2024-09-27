@@ -14,6 +14,7 @@ import gapt.proofs.lk.LKProof
  * </pre>
  */
 abstract class BinaryLKProof extends LKProof {
+
   /**
    * The immediate left subproof of the rule.
    *
@@ -56,10 +57,10 @@ abstract class BinaryLKProof extends LKProof {
    */
   def rightPremise: HOLSequent = rightSubProof.endSequent
 
-  override def immediateSubProofs: Seq[LKProof] = Seq( leftSubProof, rightSubProof )
+  override def immediateSubProofs: Seq[LKProof] = Seq(leftSubProof, rightSubProof)
 }
 
 object BinaryLKProof {
-  def unapply( p: BinaryLKProof ): Some[( HOLSequent, LKProof, LKProof )] =
-    Some( p.endSequent, p.leftSubProof, p.rightSubProof )
+  def unapply(p: BinaryLKProof): Some[(HOLSequent, LKProof, LKProof)] =
+    Some(p.endSequent, p.leftSubProof, p.rightSubProof)
 }

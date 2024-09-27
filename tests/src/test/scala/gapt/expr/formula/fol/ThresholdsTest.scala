@@ -5,15 +5,15 @@ import org.specs2.mutable._
 
 class ThresholdsTest extends Specification with SatMatchers {
   "atMost.oneOf iff exactly.oneOf or noneOf" in {
-    val atoms = ( 0 to 7 ) map { i => FOLAtom( i toString ) }
-    ( thresholds.atMost oneOf atoms ) <-> ( ( thresholds.exactly oneOf atoms ) | ( thresholds.exactly noneOf atoms ) ) must beValid
+    val atoms = (0 to 7) map { i => FOLAtom(i toString) }
+    (thresholds.atMost oneOf atoms) <-> ((thresholds.exactly oneOf atoms) | (thresholds.exactly noneOf atoms)) must beValid
   }
 
   "all are sat" in {
-    val atoms = ( 0 to 7 ) map { i => FOLAtom( i toString ) }
-    ( thresholds.atMost oneOf atoms ) must beSat
-    ( thresholds.exactly oneOf atoms ) must beSat
-    ( thresholds.exactly noneOf atoms ) must beSat
+    val atoms = (0 to 7) map { i => FOLAtom(i toString) }
+    (thresholds.atMost oneOf atoms) must beSat
+    (thresholds.exactly oneOf atoms) must beSat
+    (thresholds.exactly noneOf atoms) must beSat
   }
 
   "zero elements" in {
@@ -23,9 +23,9 @@ class ThresholdsTest extends Specification with SatMatchers {
   }
 
   "one element" in {
-    val a = FOLAtom( "a" )
-    thresholds.atMost oneOf Seq( a ) must beValid
-    thresholds.exactly oneOf Seq( a ) must beSat
-    thresholds.exactly noneOf Seq( a ) must beSat
+    val a = FOLAtom("a")
+    thresholds.atMost oneOf Seq(a) must beValid
+    thresholds.exactly oneOf Seq(a) must beSat
+    thresholds.exactly noneOf Seq(a) must beSat
   }
 }

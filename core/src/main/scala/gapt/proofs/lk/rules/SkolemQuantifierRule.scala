@@ -16,12 +16,12 @@ trait SkolemQuantifierRule extends UnaryLKProof with CommonRule {
 
   //  require( freeVariables( skolemDef ).isEmpty )
 
-  val ( auxFormula, context ) = premise focus aux
+  val (auxFormula, context) = premise focus aux
 
   def quantifiedVariable: Var
   def subFormula: Formula
 
-  val Apps( skolemConst: Const, skolemArgs ) = skolemTerm
+  val Apps(skolemConst: Const, skolemArgs) = skolemTerm: @unchecked
 
   //  {
   //    val expectedMain = BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) )
@@ -30,9 +30,10 @@ trait SkolemQuantifierRule extends UnaryLKProof with CommonRule {
   //  }
 
   {
-    val expectedAux = BetaReduction.betaNormalize( instantiate( mainFormula, skolemTerm ) )
-    if ( expectedAux != auxFormula )
+    val expectedAux = BetaReduction.betaNormalize(instantiate(mainFormula, skolemTerm))
+    if (expectedAux != auxFormula)
       throw LKRuleCreationException(
-        s"Aux formula should be $subFormula[$quantifiedVariable\\$skolemTerm] = $expectedAux, but is $auxFormula." )
+        s"Aux formula should be $subFormula[$quantifiedVariable\\$skolemTerm] = $expectedAux, but is $auxFormula."
+      )
   }
 }

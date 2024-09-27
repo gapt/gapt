@@ -20,11 +20,11 @@ import gapt.proofs.lk.rules.ConversionRule
  * @param v The term by which u is replaced.
  * @param ctx A context.
  */
-case class ReplaceTactic( target: String, u: Expr, v: Expr )( implicit ctx: Context ) extends Tactical1[Unit] {
+case class ReplaceTactic(target: String, u: Expr, v: Expr)(implicit ctx: Context) extends Tactical1[Unit] {
 
-  private def convert( formula: Formula ): Formula = {
-    formula.find( u ).foldLeft[Expr]( formula ) {
-      case ( f: Expr, p: HOLPosition ) => f.replace( p, v )
+  private def convert(formula: Formula): Formula = {
+    formula.find(u).foldLeft[Expr](formula) {
+      case (f: Expr, p: HOLPosition) => f.replace(p, v)
     }.asInstanceOf[Formula]
   }
 
@@ -38,15 +38,15 @@ case class ReplaceTactic( target: String, u: Expr, v: Expr )( implicit ctx: Cont
    * @return A tactic that replaces the given goal by a goal in which the formula indicated by the label target is
    * replaced by the formula obtained by replacing all occurrences of the term u by the term v.
    */
-  override def apply( goal: OpenAssumption ): Tactic[Unit] = {
+  override def apply(goal: OpenAssumption): Tactic[Unit] = {
 
-    if ( !ctx.isDefEq( u, v ) )
-      throw new TacticFailureException( s"expressions $u and $v are not definitionally equal" )
+    if (!ctx.isDefEq(u, v))
+      throw new TacticFailureException(s"expressions $u and $v are not definitionally equal")
 
     for {
-      ( label: String, main: Formula, idx: SequentIndex ) <- findFormula( goal, OnLabel( target ) )
-      newGoal = OpenAssumption( goal.labelledSequent.updated( idx, label -> convert( main ) ) )
-      _ <- replace( ConversionRule( newGoal, idx, main ) )
+      (label: String, main: Formula, idx: SequentIndex) <- findFormula(goal, OnLabel(target))
+      newGoal = OpenAssumption(goal.labelledSequent.updated(idx, label -> convert(main)))
+      _ <- replace(ConversionRule(newGoal, idx, main))
     } yield ()
   }
 

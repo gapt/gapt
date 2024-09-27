@@ -1,8 +1,8 @@
 package gapt.formats.tptp
 
-import ammonite.ops.{ Path, _ }
-import gapt.formats.{ InputFile, csv }
-import gapt.formats.csv.{ CSVConvertible, CSVFile, CSVRow }
+import os.{Path, _}
+import gapt.formats.{InputFile, csv}
+import gapt.formats.csv.{CSVConvertible, CSVFile, CSVRow}
 import gapt.utils.Statistic
 
 package object statistics {
@@ -27,25 +27,25 @@ package object statistics {
   abstract class FileData extends InputFile with Serializable with CSVConvertible[String] {
     override def fileName: String
 
-    def read = ammonite.ops.read ! fileAsPath
+    def read = os.read(fileAsPath)
 
-    def file = FilePath( fileName )
+    def file = FilePath(fileName)
 
-    def fileAsPath: Path = makeAbsolutePath( file )
+    def fileAsPath: Path = makeAbsolutePath(file)
 
-    private def makeAbsolutePath( relativePath: FilePath ): Path =
-      Path( relativePath, pwd )
+    private def makeAbsolutePath(relativePath: FilePath): Path =
+      Path(relativePath, pwd)
   }
 
   case object UnknownFile extends FileData {
     override def fileName: String = {
-      throw new IllegalArgumentException( "File does not exist!" )
+      throw new IllegalArgumentException("File does not exist!")
     }
     override def csvHeader(): CSVRow[String] = {
-      throw new IllegalArgumentException( "File does not exist!" )
+      throw new IllegalArgumentException("File does not exist!")
     }
     override def toCSV(): CSVRow[String] = {
-      throw new IllegalArgumentException( "File does not exist!" )
+      throw new IllegalArgumentException("File does not exist!")
     }
   }
 
@@ -56,24 +56,25 @@ package object statistics {
    * @param path    the path to the TPTP base directory
    * @param problem a TPTP library problem
    */
-  @SerialVersionUID( 7467907234480399719L )
-  case class TptpLibraryProblem( path: String, problem: Problem ) extends FileData with Serializable {
+  @SerialVersionUID(7467907234480399719L)
+  case class TptpLibraryProblem(path: String, problem: Problem) extends FileData with Serializable {
+
     /**
      * The category is encoded in the file name
      */
-    val category = categoryOfFile( problem )
+    val category = categoryOfFile(problem)
 
     /**
      * Extracts the category from the file name i.e. the first 3 letters
      */
-    def categoryOfFile( f: String ) = {
-      require( f.size > 3, "Name must be larger than 3 characters." )
+    def categoryOfFile(f: String) = {
+      require(f.size > 3, "Name must be larger than 3 characters.")
       f take 3
     }
 
     override def fileName = s"$path/Problems/$category/$problem.p"
-    override def csvHeader(): CSVRow[String] = CSVRow( List( "problem" ) )
-    override def toCSV(): CSVRow[String] = CSVRow( List( problem ) )
+    override def csvHeader(): CSVRow[String] = CSVRow(List("problem"))
+    override def toCSV(): CSVRow[String] = CSVRow(List(problem))
   }
 
   /**
@@ -85,19 +86,19 @@ package object statistics {
    * @param problem   The TSTP library problem (see http://www.cs.miami.edu/~tptp/cgi-bin/SystemOnTPTP?TPTPProblem=\$problem )
    * @param extension The file extension
    */
-  case class CASCResult( path: String, prover: Prover, problem: String, extension: String ) extends FileData with Serializable {
+  case class CASCResult(path: String, prover: Prover, problem: String, extension: String) extends FileData with Serializable {
     def fileName = s"$path/$prover-$problem$extension"
 
     override def toString() = fileName
 
-    override def csvHeader(): CSVRow[String] = CSVRow( List( "prover", "problem" ) )
-    override def toCSV(): CSVRow[String] = CSVRow( List( prover, problem ) )
+    override def csvHeader(): CSVRow[String] = CSVRow(List("prover", "problem"))
+    override def toCSV(): CSVRow[String] = CSVRow(List(prover, problem))
   }
 
   object CASCResult {
-    def toCSV( r: CASCResult ) = CSVRow( List( r.fileName, r.prover, r.problem ) )
+    def toCSV(r: CASCResult) = CSVRow(List(r.fileName, r.prover, r.problem))
 
-    val fileHeader = CSVRow( List( "Filename", "Prover", "Problem" ) )
+    val fileHeader = CSVRow(List("Filename", "Prover", "Problem"))
   }
 
   /**
@@ -116,43 +117,44 @@ package object statistics {
    * @param clause_sizes      statistics over the length of clauses in the proof
    * @tparam T a subtype of [[FileData]] that represents the location and metadata of a TSTP file
    */
-  @SerialVersionUID( -2181096749132376641L )
+  @SerialVersionUID(-2181096749132376641L)
   abstract class CommonProofStats[T <: FileData](
-      val name:             T,
-      val dagSize:          BigInt,
-      val treeSize:         BigInt,
-      val depth:            Int,
-      val rule_histogram:   Map[RuleName, Int],
+      val name: T,
+      val dagSize: BigInt,
+      val treeSize: BigInt,
+      val depth: Int,
+      val rule_histogram: Map[RuleName, Int],
       val clause_frequency: Map[ClauseId, Int],
-      val reused_axioms:    Map[RuleName, ( String, Int )], //TODO: change String type back to HOLSequent
-      val reused_derived:   Map[RuleName, ( String, Int )],
-      val clause_sizes:     Statistic[Int],
-      val clause_weights:   Statistic[Int] ) extends Serializable with CSVConvertible[String] {
+      val reused_axioms: Map[RuleName, (String, Int)], // TODO: change String type back to HOLSequent
+      val reused_derived: Map[RuleName, (String, Int)],
+      val clause_sizes: Statistic[Int],
+      val clause_weights: Statistic[Int]
+  ) extends Serializable with CSVConvertible[String] {
     /*
       Invariants:
       dagSize <= treeSize
       depth <= size
-    */
+     */
 
     /**
      * Computes treeSize / dagSize
      */
-    def sizeRatio() = BigDecimal( treeSize ) / BigDecimal( dagSize )
+    def sizeRatio() = BigDecimal(treeSize) / BigDecimal(dagSize)
 
     /**
      * Computes dagSize / depth
      */
-    def dagSizeByDepth() = BigDecimal( dagSize ) / BigDecimal( depth )
+    def dagSizeByDepth() = BigDecimal(dagSize) / BigDecimal(depth)
 
     /**
      * Computes statistics how often axioms are reused
      */
-    def reused_statistics() = Statistic.applyOpt( reused_axioms.toList.map( _._2._2 ) )
+    def reused_statistics() = Statistic.applyOpt(reused_axioms.toList.map(_._2._2))
 
     /**
      * Computes statistics how often derived axioms are reused
      */
-    def derived_statistics() = Statistic.applyOpt( reused_derived.toList.map( _._2._2 ) )
+    def derived_statistics() = Statistic.applyOpt(reused_derived.toList.map(_._2._2))
 
   }
 
@@ -172,41 +174,40 @@ package object statistics {
    * @param clause_sizes      statistics over the length of clauses in the proof
    * @tparam T a subtype of [[FileData]] that represents the location and metadata of a TSTP file
    */
-  @SerialVersionUID( 80112L )
+  @SerialVersionUID(80112L)
   case class RPProofStats[T <: FileData](
-      override val name:             T, // some class representing the input file
-      override val dagSize:          BigInt,
-      override val treeSize:         BigInt,
-      override val depth:            Int,
-      override val rule_histogram:   Map[RuleName, Int],
+      override val name: T, // some class representing the input file
+      override val dagSize: BigInt,
+      override val treeSize: BigInt,
+      override val depth: Int,
+      override val rule_histogram: Map[RuleName, Int],
       override val clause_frequency: Map[ClauseId, Int],
-      override val reused_axioms:    Map[RuleName, ( String, Int )], //TODO: change String type back to HOLSequent
-      override val reused_derived:   Map[RuleName, ( String, Int )],
-      override val clause_sizes:     Statistic[Int],
-      override val clause_weights:   Statistic[Int],
-      val subst_term_sizes:          Option[Statistic[Int]],
-      val subst_term_depths:         Option[Statistic[Int]] )
-    extends CommonProofStats[T]( name, dagSize, treeSize, depth, rule_histogram, clause_frequency,
-      reused_axioms, reused_derived, clause_sizes, clause_weights )
-    with Serializable {
+      override val reused_axioms: Map[RuleName, (String, Int)], // TODO: change String type back to HOLSequent
+      override val reused_derived: Map[RuleName, (String, Int)],
+      override val clause_sizes: Statistic[Int],
+      override val clause_weights: Statistic[Int],
+      val subst_term_sizes: Option[Statistic[Int]],
+      val subst_term_depths: Option[Statistic[Int]]
+  ) extends CommonProofStats[T](name, dagSize, treeSize, depth, rule_histogram, clause_frequency, reused_axioms, reused_derived, clause_sizes, clause_weights)
+      with Serializable {
 
     override def csvHeader() = RPProofStats.csv_header
 
     override def toCSV(): CSVRow[String] = {
-      val ( problem, solver ) = name match {
-        case CASCResult( _, prover, problem, _ ) => ( prover, problem )
-        case other                               => ( "unknown", other.fileName )
+      val (problem, solver) = name match {
+        case CASCResult(_, prover, problem, _) => (prover, problem)
+        case other                             => ("unknown", other.fileName)
       }
       CSVRow(
-        List( problem, solver, dagSize.toString(), treeSize.toString(),
-          sizeRatio().toString(), depth.toString() )
-          ++ Statistic.alsoEmptyDataToCSV( clause_frequency.toList.map( _._2 ) )
-          ++ Statistic.alsoEmptyDataToCSV( rule_histogram.toList.map( _._2 ) )
-          ++ Statistic.optCSV( subst_term_sizes )
-          ++ Statistic.optCSV( subst_term_depths )
-          ++ Statistic.alsoEmptyDataToCSV( reused_axioms.toList.map( _._2._2 ) )
-          ++ Statistic.alsoEmptyDataToCSV( reused_derived.toList.map( _._2._2 ) )
-          ++ clause_sizes.toCSV )
+        List(problem, solver, dagSize.toString(), treeSize.toString(), sizeRatio().toString(), depth.toString())
+          ++ Statistic.alsoEmptyDataToCSV(clause_frequency.toList.map(_._2))
+          ++ Statistic.alsoEmptyDataToCSV(rule_histogram.toList.map(_._2))
+          ++ Statistic.optCSV(subst_term_sizes)
+          ++ Statistic.optCSV(subst_term_depths)
+          ++ Statistic.alsoEmptyDataToCSV(reused_axioms.toList.map(_._2._2))
+          ++ Statistic.alsoEmptyDataToCSV(reused_derived.toList.map(_._2._2))
+          ++ clause_sizes.toCSV
+      )
     }
 
   }
@@ -220,14 +221,15 @@ package object statistics {
      * Static header for CSV export
      */
     val csv_header = CSVRow(
-      List( "solver", "problem", "dagsize", "treesize", "sizeratio", "depth" )
-        ++ Statistic.csv_header( "inference_freq" )
-        ++ Statistic.csv_header( "rules_freq" )
-        ++ Statistic.csv_header( "subterm_size" )
-        ++ Statistic.csv_header( "subterm_depth" )
-        ++ Statistic.csv_header( "reused_axioms" )
-        ++ Statistic.csv_header( "reused_derived" )
-        ++ Statistic.csv_header( "clause_sizes" ) )
+      List("solver", "problem", "dagsize", "treesize", "sizeratio", "depth")
+        ++ Statistic.csv_header("inference_freq")
+        ++ Statistic.csv_header("rules_freq")
+        ++ Statistic.csv_header("subterm_size")
+        ++ Statistic.csv_header("subterm_depth")
+        ++ Statistic.csv_header("reused_axioms")
+        ++ Statistic.csv_header("reused_derived")
+        ++ Statistic.csv_header("clause_sizes")
+    )
 
     /**
      * Creates a `CSVFile` from a map of [[FileData]] problem files to
@@ -239,13 +241,13 @@ package object statistics {
      * @tparam T either [[RPProofStats]] or [[TstpProofStats]]
      * @return a CSV File representing m
      */
-    def toCSVFile[S <: FileData, T <: CSVConvertible[String]]( m: Map[S, T], sep: String = "," ) = {
-      val entries = m.keySet.toSeq.sortBy( _.fileName )
-      val rows = entries.map( m.apply ).map( _.toCSV() )
+    def toCSVFile[S <: FileData, T <: CSVConvertible[String]](m: Map[S, T], sep: String = ",") = {
+      val entries = m.keySet.toSeq.sortBy(_.fileName)
+      val rows = entries.map(m.apply).map(_.toCSV())
 
-      var header = if ( entries.nonEmpty ) m( entries( 0 ) ).csvHeader() else CSVRow( List[String]() )
+      var header = if (entries.nonEmpty) m(entries(0)).csvHeader() else CSVRow(List[String]())
 
-      CSVFile( header, rows, sep )
+      CSVFile(header, rows, sep)
     }
 
   }
@@ -264,37 +266,36 @@ package object statistics {
    * @param clause_sizes     statistics over the length of clauses in the proof
    * @tparam T a subtype of [[FileData]] that represents the location and metadata of a TSTP file
    */
-  //@SerialVersionUID( 80114L )
-  @SerialVersionUID( 833764725943944297L )
+  // @SerialVersionUID( 80114L )
+  @SerialVersionUID(833764725943944297L)
   case class TstpProofStats[T <: FileData](
-      override val name:             T,
-      override val dagSize:          BigInt,
-      override val treeSize:         BigInt,
-      override val depth:            Int,
-      override val rule_histogram:   Map[RuleName, Int],
+      override val name: T,
+      override val dagSize: BigInt,
+      override val treeSize: BigInt,
+      override val depth: Int,
+      override val rule_histogram: Map[RuleName, Int],
       override val clause_frequency: Map[ClauseId, Int],
-      override val reused_axioms:    Map[RuleName, ( String, Int )],
-      override val reused_derived:   Map[RuleName, ( String, Int )],
-      override val clause_sizes:     Statistic[Int],
-      override val clause_weights:   Statistic[Int] )
-    extends CommonProofStats[T]( name, dagSize, treeSize, depth, rule_histogram, clause_frequency,
-      reused_axioms, reused_derived, clause_sizes, clause_weights )
-    with Serializable {
+      override val reused_axioms: Map[RuleName, (String, Int)],
+      override val reused_derived: Map[RuleName, (String, Int)],
+      override val clause_sizes: Statistic[Int],
+      override val clause_weights: Statistic[Int]
+  ) extends CommonProofStats[T](name, dagSize, treeSize, depth, rule_histogram, clause_frequency, reused_axioms, reused_derived, clause_sizes, clause_weights)
+      with Serializable {
 
     override def csvHeader() = TstpProofStats.csv_header
     override def toCSV(): CSVRow[String] = {
-      val ( problem, solver ) = name match {
-        case CASCResult( _, prover, problem, _ ) => ( prover, problem )
-        case other                               => ( "unknown", other.fileName )
+      val (problem, solver) = name match {
+        case CASCResult(_, prover, problem, _) => (prover, problem)
+        case other                             => ("unknown", other.fileName)
       }
       CSVRow(
-        List( problem, solver, dagSize.toString(), treeSize.toString(),
-          sizeRatio().toString(), depth.toString() )
-          ++ Statistic.alsoEmptyDataToCSV( clause_frequency.toList.map( _._2 ) )
-          ++ Statistic.alsoEmptyDataToCSV( rule_histogram.toList.map( _._2 ) )
-          ++ Statistic.alsoEmptyDataToCSV( reused_axioms.toList.map( _._2._2 ) )
-          ++ Statistic.alsoEmptyDataToCSV( reused_derived.toList.map( _._2._2 ) )
-          ++ clause_sizes.toCSV )
+        List(problem, solver, dagSize.toString(), treeSize.toString(), sizeRatio().toString(), depth.toString())
+          ++ Statistic.alsoEmptyDataToCSV(clause_frequency.toList.map(_._2))
+          ++ Statistic.alsoEmptyDataToCSV(rule_histogram.toList.map(_._2))
+          ++ Statistic.alsoEmptyDataToCSV(reused_axioms.toList.map(_._2._2))
+          ++ Statistic.alsoEmptyDataToCSV(reused_derived.toList.map(_._2._2))
+          ++ clause_sizes.toCSV
+      )
     }
 
   }
@@ -304,15 +305,16 @@ package object statistics {
    */
   object TstpProofStats {
     val csv_header = CSVRow(
-      List( "solver", "problem", "dagsize", "treesize", "sizeratio", "depth" )
-        ++ Statistic.csv_header( "inference_freq" )
-        ++ Statistic.csv_header( "rules_freq" )
-        ++ Statistic.csv_header( "reused_axioms" )
-        ++ Statistic.csv_header( "reused_derived" )
-        ++ Statistic.csv_header( "clause_sizes" ) )
+      List("solver", "problem", "dagsize", "treesize", "sizeratio", "depth")
+        ++ Statistic.csv_header("inference_freq")
+        ++ Statistic.csv_header("rules_freq")
+        ++ Statistic.csv_header("reused_axioms")
+        ++ Statistic.csv_header("reused_derived")
+        ++ Statistic.csv_header("clause_sizes")
+    )
 
-    def toCSVFile[S <: FileData, T <: CSVConvertible[String]]( m: Map[S, T], sep: String = "," ) =
-      RPProofStats.toCSVFile( m, sep )
+    def toCSVFile[S <: FileData, T <: CSVConvertible[String]](m: Map[S, T], sep: String = ",") =
+      RPProofStats.toCSVFile(m, sep)
   }
 
   /**
@@ -328,35 +330,41 @@ package object statistics {
    * @param arity_statistics    statistical data about the arities of function symbols (may be empty e.g. for ∀xEy.x=y)
    * @tparam T
    */
-  @SerialVersionUID( -2646726266696413930L )
+  @SerialVersionUID(-2646726266696413930L)
   case class TptpInputStats[T <: FileData](
-      name:                T,
-      axiom_count:         Int,
+      name: T,
+      axiom_count: Int,
       input_formula_count: Int,
-      signature_size:      Int,
-      constants:           Int,
-      unary_funs:          Int,
-      binary_funs:         Int,
-      contains_equality:   Boolean,
-      arity_statistics:    Option[Statistic[Int]] )
-    extends CSVConvertible[String] {
+      signature_size: Int,
+      constants: Int,
+      unary_funs: Int,
+      binary_funs: Int,
+      contains_equality: Boolean,
+      arity_statistics: Option[Statistic[Int]]
+  ) extends CSVConvertible[String] {
     /*
      Invariants:
       axiom_count <= input_formula_count
       constants + unary_funs + binary_funs <= signature_size
-   */
+     */
     override def csvHeader() =
       name.csvHeader() ++ csv.CSVRow(
-        List( "axiom_count", "input_formula_count", //signature size is contained in arity statisticis
-          "constants", "unary_funs", "binary_funs" )
-          ++ Statistic.csv_header( "arities" ) )
+        List(
+          "axiom_count",
+          "input_formula_count", // signature size is contained in arity statisticis
+          "constants",
+          "unary_funs",
+          "binary_funs"
+        )
+          ++ Statistic.csv_header("arities")
+      )
 
     override def toCSV() = {
       val namecol = name.toCSV()
 
       namecol ++ CSVRow(
-        List( axiom_count, input_formula_count, constants, unary_funs, binary_funs ).map( _.toString() ) ++
-          Statistic.optCSV( arity_statistics ) //arity_statistics contains the signature size
+        List(axiom_count, input_formula_count, constants, unary_funs, binary_funs).map(_.toString()) ++
+          Statistic.optCSV(arity_statistics) // arity_statistics contains the signature size
       )
     }
   }
@@ -370,12 +378,13 @@ package object statistics {
    * @param rp_errors   the replay errors that occurred
    * @tparam T the type of input files
    */
-  @SerialVersionUID( 70113L )
+  @SerialVersionUID(70113L)
   case class ResultBundle[T <: FileData](
-      tstp_stats:  Map[T, TstpProofStats[T]],
-      rp_stats:    Map[T, RPProofStats[T]],
+      tstp_stats: Map[T, TstpProofStats[T]],
+      rp_stats: Map[T, RPProofStats[T]],
       tstp_errors: List[TstpError[T]],
-      rp_errors:   List[TstpError[T]] ) extends Serializable {
+      rp_errors: List[TstpError[T]]
+  ) extends Serializable {
 
     /**
      * Write a bundle to a set of files: \$file_prefix-rp-stats.csv, \$file_prefix-tstp-stats.csv,
@@ -385,17 +394,17 @@ package object statistics {
      * @param path        the path where to save the file, default : pwd
      * @return the csv files written to disk
      */
-    def exportCSV( file_prefix: String, path: Path = pwd ) = {
-      val f1 = TstpProofStats.toCSVFile( tstp_stats )
-      val f2 = RPProofStats.toCSVFile( rp_stats )
-      val f3 = CSVFile( CSVRow( Nil ), tstp_errors.map( TstpError.toCSV( _ ) ), "," )
-      val f4 = CSVFile( CSVRow( Nil ), rp_errors.map( TstpError.toCSV( _ ) ), "," )
+    def exportCSV(file_prefix: String, path: Path = pwd) = {
+      val f1 = TstpProofStats.toCSVFile(tstp_stats)
+      val f2 = RPProofStats.toCSVFile(rp_stats)
+      val f3 = CSVFile(CSVRow(Nil), tstp_errors.map(TstpError.toCSV(_)), ",")
+      val f4 = CSVFile(CSVRow(Nil), rp_errors.map(TstpError.toCSV(_)), ",")
 
-      write( Path( s"${file_prefix}-rp_stats.csv", path ), f1.toString() )
-      write( Path( s"${file_prefix}-tstp_stats.csv", path ), f2.toString() )
-      write( Path( s"${file_prefix}-rp_errors.csv", path ), f3.toString() )
-      write( Path( s"${file_prefix}-tstp_errors.csv", path ), f4.toString() )
-      ( f1, f2, f3, f4 )
+      write(Path(s"${file_prefix}-rp_stats.csv", path), f1.toString())
+      write(Path(s"${file_prefix}-tstp_stats.csv", path), f2.toString())
+      write(Path(s"${file_prefix}-rp_errors.csv", path), f3.toString())
+      write(Path(s"${file_prefix}-tstp_errors.csv", path), f4.toString())
+      (f1, f2, f3, f4)
     }
   }
 

@@ -9,13 +9,13 @@ import gapt.proofs.gaptic._
 object prop_05 extends TacticsProof {
 
   // Sorts
-  ctx += TBase( "sk" )
+  ctx += TBase("sk")
 
   // Inductive types
-  ctx += InductiveType( ty"list", hoc"'nil' :list", hoc"'cons' :sk>list>list" )
-  ctx += InductiveType( ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat" )
+  ctx += InductiveType(ty"list", hoc"'nil' :list", hoc"'cons' :sk>list>list")
+  ctx += InductiveType(ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat")
 
-  //Function constants
+  // Function constants
   ctx += hoc"'length' :list>Nat"
   ctx += hoc"'append' :list>list>list"
   ctx += hoc"'rev' :list>list"
@@ -37,22 +37,24 @@ object prop_05 extends TacticsProof {
         goal: ∀x (length(rev(x:list): list): Nat) = length(x)
   """
 
-  val lem_3 = (
-    ( "al2" -> hof"∀y ∀xs length(cons(y, xs)) = S(length(xs))" ) +:
-    ( "al1" -> hof"length(nil) = Z" ) +:
-    ( "aa1" -> hof"∀y append(nil, y) = y" ) +:
-    ( "aa2" -> hof"∀z ∀xs ∀y append(cons(z, xs), y) = cons(z, append(xs, y))" ) +:
-    Sequent() :+ ( "append_one" -> hof"!xs!y length(append(xs,cons(y,nil))) = S(length(xs))" ) )
+  val lem_3 =
+    (
+      ("al2" -> hof"∀y ∀xs length(cons(y, xs)) = S(length(xs))") +:
+        ("al1" -> hof"length(nil) = Z") +:
+        ("aa1" -> hof"∀y append(nil, y) = y") +:
+        ("aa2" -> hof"∀z ∀xs ∀y append(cons(z, xs), y) = cons(z, append(xs, y))") +:
+        Sequent() :+ ("append_one" -> hof"!xs!y length(append(xs,cons(y,nil))) = S(length(xs))")
+    )
 
-  val lem_3_proof = Lemma( lem_3 ) {
-    allR; induction( hov"xs:list" )
-    //- BC
+  val lem_3_proof = Lemma(lem_3) {
+    allR; induction(hov"xs:list")
+    // - BC
     allR
     rewrite ltr "aa1" in "append_one"
     rewrite ltr "al2" in "append_one"
     rewrite.many ltr "al1" in "append_one"
     refl
-    //- IC
+    // - IC
     allR
     rewrite ltr "aa2" in "append_one"
     rewrite.many ltr "al2" in "append_one"
@@ -60,15 +62,15 @@ object prop_05 extends TacticsProof {
     refl
   }
 
-  val proof = Lemma( sequent ) {
-    cut( "lem_3", hof"!xs!y length(append(xs,cons(y,nil))) = S(length(xs))" )
-    insert( lem_3_proof )
-    allR; induction( hov"x:list" )
-    //- BC
+  val proof = Lemma(sequent) {
+    cut("lem_3", hof"!xs!y length(append(xs,cons(y,nil))) = S(length(xs))")
+    insert(lem_3_proof)
+    allR; induction(hov"x:list")
+    // - BC
     rewrite ltr "def_rev_0" in "goal"
     rewrite.many ltr "def_length_0" in "goal"
     refl
-    //- IC
+    // - IC
     rewrite ltr "def_rev_1" in "goal"
     rewrite ltr "lem_3" in "goal"
     rewrite ltr "def_length_1" in "goal"
@@ -76,29 +78,29 @@ object prop_05 extends TacticsProof {
     refl
   }
 
-  val lem_3_proof_openind = Lemma( lem_3 ) {
-    allR; allR; induction( hov"xs:list" )
-    //- BC
+  val lem_3_proof_openind = Lemma(lem_3) {
+    allR; allR; induction(hov"xs:list")
+    // - BC
     rewrite ltr "aa1" in "append_one"
     rewrite ltr "al2" in "append_one"
     rewrite.many ltr "al1" in "append_one"
     refl
-    //- IC
+    // - IC
     rewrite ltr "aa2" in "append_one"
     rewrite.many ltr "al2" in "append_one"
     rewrite ltr "IHxs_0" in "append_one"
     refl
   }
 
-  val openind = Lemma( sequent ) {
-    cut( "lem_3", hof"!xs!y length(append(xs,cons(y,nil))) = S(length(xs))" )
-    insert( lem_3_proof_openind )
-    allR; induction( hov"x:list" )
-    //- BC
+  val openind = Lemma(sequent) {
+    cut("lem_3", hof"!xs!y length(append(xs,cons(y,nil))) = S(length(xs))")
+    insert(lem_3_proof_openind)
+    allR; induction(hov"x:list")
+    // - BC
     rewrite ltr "def_rev_0" in "goal"
     rewrite.many ltr "def_length_0" in "goal"
     refl
-    //- IC
+    // - IC
     rewrite ltr "def_rev_1" in "goal"
     rewrite ltr "lem_3" in "goal"
     rewrite ltr "def_length_1" in "goal"

@@ -4,9 +4,9 @@ import gapt.expr._
 import gapt.proofs.ceres._
 import gapt.proofs.gaptic._
 
-object NiaSchemaRefutation extends TacticsProof( NiaSchema.ctx ) {
-  val SCS: Map[CLS, ( Struct, Set[Var] )] = SchematicStruct( "omega" ).getOrElse( Map() )
-  val CFPRN = CharFormPRN( SCS )
-  CharFormPRN.PR( CFPRN )
-  def sequentForm( input: Expr ) = Viperize( le"omegaSFAF $input" )
+object NiaSchemaRefutation extends TacticsProof(NiaSchema.ctx) {
+  val SCS: Map[CLS, (Struct, Set[Var])] = SchematicStruct("omega").getOrElse(Map())
+  val CFPRN = CharFormPRN(SCS)
+  CharFormPRN.PR(CFPRN)
+  def sequentForm(input: Expr) = Viperize(le"omegaSFAF $input")
 }

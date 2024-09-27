@@ -7,11 +7,11 @@ import gapt.proofs.gaptic._
 
 object prop_11 extends TacticsProof {
 
-  ctx += TBase( "sk" )
-  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += TBase("sk")
+  ctx += InductiveType(ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat")
   ctx += hoc"p:Nat>Nat"
 
-  ctx += InductiveType( ty"list", hoc"nil:list", hoc"cons:sk>list>list" )
+  ctx += InductiveType(ty"list", hoc"nil:list", hoc"cons:sk>list>list")
   ctx += hoc"head:list>sk"
   ctx += hoc"tail:list>list"
 
@@ -30,7 +30,7 @@ object prop_11 extends TacticsProof {
                           goal: ∀xs drop(Z, xs) = xs
     """
 
-  val proof = Lemma( sequent ) {
+  val proof = Lemma(sequent) {
     trivial
   }
 }

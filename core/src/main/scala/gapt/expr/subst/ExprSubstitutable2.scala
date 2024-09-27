@@ -5,5 +5,5 @@ import gapt.expr.formula.Formula
 
 trait ExprSubstitutable2 extends ExprSubstitutable1 {
   implicit val FormulaClosedUnderSub: ClosedUnderSub[Formula] =
-    ( sub, x ) => applySub( sub, x ).asInstanceOf[Formula]
+    (sub, x) => applySub(sub, x).asInstanceOf[Formula]
 }

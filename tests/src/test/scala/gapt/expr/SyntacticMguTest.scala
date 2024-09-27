@@ -11,54 +11,58 @@ import org.specs2.mutable._
 class SyntacticMguTest extends Specification {
 
   "not unify bound variables" in {
-    val x = FOLVar( "x" )
-    val y = FOLVar( "y" )
-    val f = FOLFunctionConst( "f", 2 )
-    val g = FOLFunctionConst( "g", 1 )
+    val x = FOLVar("x")
+    val y = FOLVar("y")
+    val f = FOLFunctionConst("f", 2)
+    val g = FOLFunctionConst("g", 1)
 
     syntacticMGU(
-      Abs( x, Abs( y, f( x, y ) ) ),
-      Abs( x, Abs( y, f( y, x ) ) ) ) must beNone
+      Abs(x, Abs(y, f(x, y))),
+      Abs(x, Abs(y, f(y, x)))
+    ) must beNone
     syntacticMGU(
-      Abs( x, Abs( y, g( x ) ) ),
-      Abs( x, Abs( y, y ) ) ) must beNone
+      Abs(x, Abs(y, g(x))),
+      Abs(x, Abs(y, y))
+    ) must beNone
   }
 
   "handle variables that are both bound and free" in {
-    val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
-    val f = Const( "f", Ti ->: ( Ti ->: Ti ) ->: Ti )
-    val g = FOLFunctionConst( "g", 1 )
-    val c = FOLConst( "c" )
+    val Seq(x, y, z) = Seq("x", "y", "z") map { FOLVar(_) }
+    val f = Const("f", Ti ->: (Ti ->: Ti) ->: Ti)
+    val g = FOLFunctionConst("g", 1)
+    val c = FOLConst("c")
 
     syntacticMGU(
-      f( x, Abs( y, x ) ),
-      f( g( y ), Abs( z, g( c ) ) ) ) must beSome
+      f(x, Abs(y, x)),
+      f(g(y), Abs(z, g(c)))
+    ) must beSome
   }
 
   "FOL Unification" should {
     "P(x_1), P(x_2)" in {
-      syntacticMGU( foa"P x_1", foa"P x_2" ) must_== Some(
-        FOLSubstitution( fov"x_1" -> fot"x_2" ) )
+      syntacticMGU(foa"P x_1", foa"P x_2") must_== Some(
+        FOLSubstitution(fov"x_1" -> fot"x_2")
+      )
     }
-    "a, b" in { syntacticMGU( fot"a", fot"b" ) must beEmpty }
-    "f(a), g(a)" in { syntacticMGU( fot"f a", fot"g a" ) must beEmpty }
+    "a, b" in { syntacticMGU(fot"a", fot"b") must beNone }
+    "f(a), g(a)" in { syntacticMGU(fot"f a", fot"g a") must beNone }
     "empty substitution" in {
-      "constants" in { syntacticMGU( fot"a", fot"a" ) must_== Some( FOLSubstitution() ) }
-      "constants" in { syntacticMGU( fot"f a", fot"f a" ) must_== Some( FOLSubstitution() ) }
+      "constants" in { syntacticMGU(fot"a", fot"a") must_== Some(FOLSubstitution()) }
+      "constants" in { syntacticMGU(fot"f a", fot"f a") must_== Some(FOLSubstitution()) }
     }
-    "x, a" in { syntacticMGU( fot"x", fot"a" ) must_== Some( FOLSubstitution( fov"x" -> fot"a" ) ) }
+    "x, a" in { syntacticMGU(fot"x", fot"a") must_== Some(FOLSubstitution(fov"x" -> fot"a")) }
     "z, f(g(x,a),y,b)" in {
-      syntacticMGU( fot"z", fot"f(g x a, y, b)" ) must_== Some( FOLSubstitution( fov"z" -> fot"f(g x a, y, b)" ) )
+      syntacticMGU(fot"z", fot"f(g x a, y, b)") must_== Some(FOLSubstitution(fov"z" -> fot"f(g x a, y, b)"))
     }
-    "a,f(g(x,a),y,b)" in { syntacticMGU( fot"a", fot"f(g x a, y, b)" ) must beEmpty }
-    "x, f(g(x,a),y,b)" in { syntacticMGU( fot"x", fot"f(g(x,a),y,b)" ) must beEmpty }
+    "a,f(g(x,a),y,b)" in { syntacticMGU(fot"a", fot"f(g x a, y, b)") must beNone }
+    "x, f(g(x,a),y,b)" in { syntacticMGU(fot"x", fot"f(g(x,a),y,b)") must beNone }
 
-    "f(g(c),y), f(y,g(b))" in { syntacticMGU( fot"f(g(c),y)", fot"f(y,g(b))" ) must beEmpty }
+    "f(g(c),y), f(y,g(b))" in { syntacticMGU(fot"f(g(c),y)", fot"f(y,g(b))") must beNone }
     "f(g(x),y), f(y,g(b))" in {
-      syntacticMGU( fot"f(g(x),y)", fot"f(y,g(b))" ) must_== Some( FOLSubstitution( fov"y" -> fot"g b", fov"x" -> fot"b" ) )
+      syntacticMGU(fot"f(g(x),y)", fot"f(y,g(b))") must_== Some(FOLSubstitution(fov"y" -> fot"g b", fov"x" -> fot"b"))
     }
 
-    "f(x,b), f(a,y)" in { syntacticMGU( fot"f x b", fot"f a y" ) must_== Some( FOLSubstitution( fov"x" -> fot"a", fov"y" -> fot"b" ) ) }
+    "f(x,b), f(a,y)" in { syntacticMGU(fot"f x b", fot"f a y") must_== Some(FOLSubstitution(fov"x" -> fot"a", fov"y" -> fot"b")) }
 
     "real-world example" in {
       val t1 = hof"""
@@ -70,30 +74,31 @@ class SyntacticMguTest extends Specification {
           ladr0 = ladr3(ladr2(ladr2(ladr0, ladr2('x_{3}', 'x_{2}')), 'x_{4}'))
         """
 
-      syntacticMGU( t1, t2 ) must_== Some( FOLSubstitution(
+      syntacticMGU(t1, t2) must_== Some(FOLSubstitution(
         fov"#v(B:i)" -> fot"'x_{3}'",
         fov"#v(A:i)" -> fot"'x_{2}'",
-        fov"#v(C:i)" -> fot"'x_{4}'" ) )
+        fov"#v(C:i)" -> fot"'x_{4}'"
+      ))
     }
 
   }
 
-  "f(x, x), f(a, b)" in { syntacticMGU( le"f x x", le"f a b" ) must beEmpty }
+  "f(x, x), f(a, b)" in { syntacticMGU(le"f x x", le"f a b") must beNone }
 
-  "x x" in { syntacticMGU( le"x:i", le"x:?a" ) must beSome }
+  "x x" in { syntacticMGU(le"x:i", le"x:?a") must beSome }
 
   "unify with type variables" in {
     val t1 = le"P(x:?a)"
     val t2 = le"P(c)"
-    val Some( mgu ) = syntacticMGU( t1, t2 )
-    mgu( t1 ) mustEqual mgu( t2 )
+    val Some(mgu) = syntacticMGU(t1, t2): @unchecked
+    mgu(t1) mustEqual mgu(t2)
   }
 
   "unify with type variables and bound variables" in {
     val t1 = le"^x ((x:?a) = y)"
     val t2 = le"^x (x = c)"
-    val Some( mgu ) = syntacticMGU( t1, t2 )
-    mgu( t1 ) must_== mgu( t2 )
+    val Some(mgu) = syntacticMGU(t1, t2): @unchecked
+    mgu(t1) must_== mgu(t2)
   }
 
 }

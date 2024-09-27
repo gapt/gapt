@@ -8,13 +8,13 @@ import gapt.proofs.gaptic._
 object prop_45 extends TacticsProof {
 
   // Sorts
-  ctx += TBase( "sk" )
+  ctx += TBase("sk")
   // Inductive types
-  ctx += InductiveType( ty"list2", hoc"'nil2' :list2", hoc"'cons2' :sk>list2>list2" )
-  ctx += InductiveType( ty"Pair", hoc"'Pair2' :sk>sk>Pair" )
-  ctx += InductiveType( ty"list", hoc"'nil' :list", hoc"'cons' :Pair>list>list" )
+  ctx += InductiveType(ty"list2", hoc"'nil2' :list2", hoc"'cons2' :sk>list2>list2")
+  ctx += InductiveType(ty"Pair", hoc"'Pair2' :sk>sk>Pair")
+  ctx += InductiveType(ty"list", hoc"'nil' :list", hoc"'cons' :Pair>list>list")
 
-  //Function constants
+  // Function constants
   ctx += hoc"'zip' :list2>list2>list"
 
   val sequent =
@@ -34,7 +34,7 @@ object prop_45 extends TacticsProof {
         goal: ∀x   ∀y   ∀xs   ∀ys   (#c(zip: list2>list2>list)(cons2(x:sk, xs:list2): list2, cons2(y, ys)):       list) =     cons(Pair2(x, y): Pair, #c(zip: list2>list2>list)(xs, ys): list)
   """
 
-  val proof = Lemma( sequent ) {
+  val proof = Lemma(sequent) {
     escargot
   }
 }

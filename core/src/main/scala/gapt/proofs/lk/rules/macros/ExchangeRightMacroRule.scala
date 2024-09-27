@@ -16,10 +16,9 @@ import gapt.proofs.lk.rules.WeakeningRightRule
  * </pre>
  */
 object ExchangeRightMacroRule {
-  def apply( subProof: LKProof, aux: SequentIndex ): ContractionRightRule = {
-    require( aux isSuc )
-    require( subProof.endSequent isDefinedAt aux )
-    ContractionRightRule( WeakeningRightRule( subProof, subProof.endSequent( aux ) ), aux,
-      Suc( subProof.endSequent.succedent.size ) )
+  def apply(subProof: LKProof, aux: SequentIndex): ContractionRightRule = {
+    require(aux isSuc)
+    require(subProof.endSequent isDefinedAt aux)
+    ContractionRightRule(WeakeningRightRule(subProof, subProof.endSequent(aux)), aux, Suc(subProof.endSequent.succedent.size))
   }
 }

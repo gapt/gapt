@@ -9,17 +9,17 @@ class LKProofCodecTest extends Specification {
 
   "The LK proof de/serializer" should {
     "serialize and deserialize a small proof" in {
-      val p: LKProof = LinearExampleProof( 3 )
-      val json = _lkProofEncoder( p )
-      val pNew = _lkProofDecoder.decodeJson( json )
-      pNew must beRight( p )
+      val p: LKProof = LinearExampleProof(3)
+      val json = _lkProofEncoder(p)
+      val pNew = _lkProofDecoder.decodeJson(json)
+      pNew must beRight(p)
     }
 
     "serialize and deserialize a bigger proof" in {
       val p: LKProof = gapt.examples.theories.nat.add0l.combined()
-      val json = _lkProofEncoder( p )
-      val pNew = _lkProofDecoder.decodeJson( json )
-      pNew must beRight( p )
+      val json = _lkProofEncoder(p)
+      val pNew = _lkProofDecoder.decodeJson(json)
+      pNew must beRight(p)
     }
   }
 }

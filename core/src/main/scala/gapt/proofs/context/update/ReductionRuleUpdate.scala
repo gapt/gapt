@@ -10,7 +10,8 @@ import gapt.proofs.context.facet.Reductions
 import gapt.proofs.context.State
 
 class ReductionRuleUpdate(
-    private val rules: Seq[ReductionRule] ) extends Update {
+    private val rules: Seq[ReductionRule]
+) extends Update {
 
   /**
    * Adds reduction rules to a context.
@@ -20,8 +21,8 @@ class ReductionRuleUpdate(
    * by appending the reduction rules saved in this update to the `Reductions`
    * facet.
    */
-  override def apply( ctx: Context ): State = {
-    ctx.state.update[Reductions]( _ ++ rules.toVector )
+  override def apply(ctx: Context): State = {
+    ctx.state.update[Reductions](_ ++ rules.toVector)
   }
 }
 
@@ -34,9 +35,10 @@ object ReductionRuleUpdate {
    * @return A reduction rule update containing only the given reduction rule.
    */
   implicit def reductionRuleAsReductionRuleUpdate(
-    rule: ReductionRule ): ReductionRuleUpdate = {
+      rule: ReductionRule
+  ): ReductionRuleUpdate = {
 
-    new ReductionRuleUpdate( Seq( rule ) )
+    new ReductionRuleUpdate(Seq(rule))
   }
 
   /**
@@ -46,9 +48,10 @@ object ReductionRuleUpdate {
    * @return A reduction rule update containing only the given reduction rules.
    */
   implicit def reductionRulesAsReductionRuleUpdate(
-    rules: Seq[ReductionRule] ): ReductionRuleUpdate = {
+      rules: Seq[ReductionRule]
+  ): ReductionRuleUpdate = {
 
-    new ReductionRuleUpdate( rules )
+    new ReductionRuleUpdate(rules)
   }
 
   /**
@@ -63,19 +66,21 @@ object ReductionRuleUpdate {
    * encoded by the given strings.
    */
   def apply(
-    equations: String* )( implicit ctx: Context ): ReductionRuleUpdate = {
+      equations: String*
+  )(implicit ctx: Context): ReductionRuleUpdate = {
 
     new ReductionRuleUpdate(
-      equations.map { parseEquation( _ ) }.map { ReductionRule( _ ) } )
+      equations.map { parseEquation(_) }.map { ReductionRule(_) }
+    )
   }
 
   private def parseEquation(
-    eqn: String )( implicit ctx: Context ): ( Expr, Expr ) = {
+      eqn: String
+  )(implicit ctx: Context): (Expr, Expr) = {
 
-    BabelParser.tryParse( eqn, p => preExpr.TypeAnnotation( p, preExpr.Bool ) ).
-      fold( throw _, identity ) match {
-        case Eq( lhs, rhs ) => lhs -> rhs
-        case _              => throw new IllegalArgumentException( "" )
-      }
+    BabelParser.tryParse(eqn, p => preExpr.TypeAnnotation(p, preExpr.Bool)).fold(throw _, identity) match {
+      case Eq(lhs, rhs) => lhs -> rhs
+      case _            => throw new IllegalArgumentException("")
+    }
   }
 }

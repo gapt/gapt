@@ -8,35 +8,35 @@ import gapt.proofs.gaptic._
 object prop_46 extends TacticsProof {
 
   // Sorts
-  ctx += TBase( "sk" )
-  ctx += TBase( "Any" )
+  ctx += TBase("sk")
+  ctx += TBase("Any")
 
   // Inductive types
-  ctx += InductiveType( ty"pair3", hoc"'pair22' :sk>sk>pair3" )
+  ctx += InductiveType(ty"pair3", hoc"'pair22' :sk>sk>pair3")
   ctx += hoc"'proj1-pair2' :pair3>sk"
   ctx += hoc"'proj2-pair2' :pair3>sk"
 
-  ctx += InductiveType( ty"pair", hoc"'pair2' :Any>sk>pair" )
+  ctx += InductiveType(ty"pair", hoc"'pair2' :Any>sk>pair")
   ctx += hoc"'proj1-pair' :pair>Any"
   ctx += hoc"'proj2-pair' :pair>sk"
 
-  ctx += InductiveType( ty"list4", hoc"'nil4' :list4", hoc"'cons4' :sk>list4>list4" )
+  ctx += InductiveType(ty"list4", hoc"'nil4' :list4", hoc"'cons4' :sk>list4>list4")
   ctx += hoc"'head4' :list4>sk"
   ctx += hoc"'tail4' :list4>list4"
 
-  ctx += InductiveType( ty"list3", hoc"'nil3' :list3", hoc"'cons3' :pair3>list3>list3" )
+  ctx += InductiveType(ty"list3", hoc"'nil3' :list3", hoc"'cons3' :pair3>list3>list3")
   ctx += hoc"'head3' :list3>pair3"
   ctx += hoc"'tail3' :list3>list3"
 
-  ctx += InductiveType( ty"list2", hoc"'nil2' :list2", hoc"'cons2' :pair>list2>list2" )
+  ctx += InductiveType(ty"list2", hoc"'nil2' :list2", hoc"'cons2' :pair>list2>list2")
   ctx += hoc"'head2' :list2>pair"
   ctx += hoc"'tail2' :list2>list2"
 
-  ctx += InductiveType( ty"list", hoc"'nil' :list", hoc"'cons' :Any>list>list" )
+  ctx += InductiveType(ty"list", hoc"'nil' :list", hoc"'cons' :Any>list>list")
   ctx += hoc"'head' :list>Any"
   ctx += hoc"'tail' :list>list"
 
-  //Function constants
+  // Function constants
   ctx += hoc"'zip2' :list4>list4>list3"
   ctx += hoc"'zip' :list>list4>list2"
 
@@ -68,7 +68,7 @@ object prop_46 extends TacticsProof {
     goal: ∀xs (#c(zip: list>list4>list2)(nil:list, xs:list4): list2) = (nil2:list2)
   """
 
-  val proof = Lemma( sequent ) {
+  val proof = Lemma(sequent) {
     trivial
   }
 }

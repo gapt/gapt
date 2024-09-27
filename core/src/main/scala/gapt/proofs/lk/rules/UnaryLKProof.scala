@@ -14,6 +14,7 @@ import gapt.proofs.lk.LKProof
  * </pre>
  */
 abstract class UnaryLKProof extends LKProof {
+
   /**
    * The immediate subproof of the rule.
    *
@@ -35,9 +36,9 @@ abstract class UnaryLKProof extends LKProof {
    */
   def premise: HOLSequent = subProof.endSequent
 
-  override def immediateSubProofs: Seq[LKProof] = Seq( subProof )
+  override def immediateSubProofs: Seq[LKProof] = Seq(subProof)
 }
 
 object UnaryLKProof {
-  def unapply( p: UnaryLKProof ): Some[( HOLSequent, LKProof )] = Some( p.endSequent, p.subProof )
+  def unapply(p: UnaryLKProof): Some[(HOLSequent, LKProof)] = Some(p.endSequent, p.subProof)
 }

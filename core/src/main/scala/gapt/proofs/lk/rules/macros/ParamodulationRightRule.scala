@@ -10,7 +10,7 @@ import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.EqualityRightRule
 import gapt.proofs.lk.rules.WeakeningLeftRule
 
-object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLeftRule" ) {
+object ParamodulationRightRule extends ConvenienceConstructor("ParamodulationLeftRule") {
 
   /**
    * Simulates a binary equation rule, aka paramodulation.
@@ -46,18 +46,19 @@ object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLe
    * @return
    */
   def apply(
-    leftSubProof:  LKProof,
-    eq:            IndexOrFormula,
-    rightSubProof: LKProof,
-    aux:           IndexOrFormula,
-    con:           Abs ): LKProof = {
+      leftSubProof: LKProof,
+      eq: IndexOrFormula,
+      rightSubProof: LKProof,
+      aux: IndexOrFormula,
+      con: Abs
+  ): LKProof = {
 
-    val eqFormula = eq.getFormula( leftSubProof.endSequent )
+    val eqFormula = eq.getFormula(leftSubProof.endSequent)
 
-    val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
-    val p2 = EqualityRightRule( p1, Ant( 0 ), aux, con )
+    val p1 = WeakeningLeftRule(rightSubProof, eqFormula)
+    val p2 = EqualityRightRule(p1, Ant(0), aux, con)
 
-    CutRule( leftSubProof, eq, p2, p2.getSequentConnector.child( Ant( 0 ) ) )
+    CutRule(leftSubProof, eq, p2, p2.getSequentConnector.child(Ant(0)))
   }
 
   /**
@@ -94,17 +95,18 @@ object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLe
    * @return
    */
   def apply(
-    leftSubProof:  LKProof,
-    eq:            IndexOrFormula,
-    rightSubProof: LKProof,
-    aux:           IndexOrFormula,
-    mainFormula:   Formula ): LKProof = {
+      leftSubProof: LKProof,
+      eq: IndexOrFormula,
+      rightSubProof: LKProof,
+      aux: IndexOrFormula,
+      mainFormula: Formula
+  ): LKProof = {
 
-    val eqFormula = eq.getFormula( leftSubProof.endSequent )
+    val eqFormula = eq.getFormula(leftSubProof.endSequent)
 
-    val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
-    val p2 = EqualityRightRule( p1, Ant( 0 ), aux, mainFormula )
+    val p1 = WeakeningLeftRule(rightSubProof, eqFormula)
+    val p2 = EqualityRightRule(p1, Ant(0), aux, mainFormula)
 
-    CutRule( leftSubProof, eq, p2, p2.getSequentConnector.child( Ant( 0 ) ) )
+    CutRule(leftSubProof, eq, p2, p2.getSequentConnector.child(Ant(0)))
   }
 }

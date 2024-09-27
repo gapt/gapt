@@ -9,10 +9,10 @@ import gapt.proofs.gaptic.tactics.AnalyticInductionTactic._
 object prop_48 extends TacticsProof {
 
   // Inductive types
-  ctx += InductiveType( ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat" )
-  ctx += InductiveType( ty"list", hoc"'nil' :list", hoc"'cons' :Nat>list>list" )
+  ctx += InductiveType(ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat")
+  ctx += InductiveType(ty"list", hoc"'nil' :list", hoc"'cons' :Nat>list>list")
 
-  //Function constants
+  // Function constants
   ctx += hoc"'null' :list>o"
   ctx += hoc"'last' :list>Nat"
   ctx += hoc"'butlast' :list>list"
@@ -40,25 +40,25 @@ object prop_48 extends TacticsProof {
   """
 
   val dca_goal = hof"!xs (xs = nil ∨ ?x ?xss xs = cons(x, xss))"
-  val dca = Sequent() :+ ( "goal" -> dca_goal )
-  val dca_proof = Lemma( dca ) {
-    allR; analyticInduction withAxioms standardAxioms.forVariables( hov"xs:list" ).forLabel( "goal" )
+  val dca = Sequent() :+ ("goal" -> dca_goal)
+  val dca_proof = Lemma(dca) {
+    allR; analyticInduction withAxioms standardAxioms.forVariables(hov"xs:list").forLabel("goal")
   }
 
-  val manualProof = Lemma( ( "dca" -> hof"!xs (xs = nil ∨ ?x ?xss xs = cons(x, xss))" ) +: sequent ) {
-    allR; induction( hov"xs:list" )
-    //- IB
+  val manualProof = Lemma(("dca" -> hof"!xs (xs = nil ∨ ?x ?xss xs = cons(x, xss))") +: sequent) {
+    allR; induction(hov"xs:list")
+    // - IB
     impR; negL; axiomLog
-    //- IC
+    // - IC
     impR; negL;
-    allL( "dca", hov"xs_0:list" )
+    allL("dca", hov"xs_0:list")
     orL
-    //- IC - 1
-    eql( "dca_0", "goal_1" ).fromLeftToRight
+    // - IC - 1
+    eql("dca_0", "goal_1").fromLeftToRight
     rewrite.many ltr "def_butlast_1" in "goal_1"
     rewrite.many ltr "def_last_1" in "goal_1"
     rewrite.many ltr "def_append_0" in "goal_1"; refl
-    //- IC - 2
+    // - IC - 2
     exL; exL
     rewrite.many ltr "dca_0" in "goal_1"
     rewrite.many ltr "def_butlast_2" in "goal_1"

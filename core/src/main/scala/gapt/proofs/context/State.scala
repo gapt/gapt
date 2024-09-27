@@ -14,25 +14,25 @@ import scala.reflect.ClassTag
  * finitely many facets still have their initial value.  The [[get]] method returns
  * the value of a facet, the [[update]] method changes the value.
  */
-class State private ( private val facets: Map[Facet[_], Any] ) {
-  def update[T: Facet]( f: T => T ): State =
-    new State( facets.updated( implicitly[Facet[T]], f( get[T] ) ) )
+class State private (private val facets: Map[Facet[_], Any]) {
+  def update[T: Facet](f: T => T): State =
+    new State(facets.updated(implicitly[Facet[T]], f(get[T])))
 
   def get[T: Facet]: T =
-    facets.getOrElse( implicitly[Facet[T]], implicitly[Facet[T]].initial ).asInstanceOf[T]
+    facets.getOrElse(implicitly[Facet[T]], implicitly[Facet[T]].initial).asInstanceOf[T]
 
   def getAll[T: ClassTag]: Iterable[T] =
     facets.values.collect { case t: T => t }
 
   override def toString: String = {
     val s = new StringBuilder
-    for ( ( f, d ) <- facets.toSeq.sortBy( _._1.toString ) ) {
+    for ((f, d) <- facets.toSeq.sortBy(_._1.toString)) {
       s ++= s"$f:"
       val dStr = d.toString
-      if ( dStr.contains( "\n" ) ) {
-        s.append( "\n  " ).append( dStr.replace( "\n", "\n  " ) )
+      if (dStr.contains("\n")) {
+        s.append("\n  ").append(dStr.replace("\n", "\n  "))
       } else {
-        s.append( " " ).append( dStr )
+        s.append(" ").append(dStr)
       }
       s ++= "\n\n"
     }
@@ -40,5 +40,5 @@ class State private ( private val facets: Map[Facet[_], Any] ) {
   }
 }
 object State {
-  def apply(): State = new State( Map() )
+  def apply(): State = new State(Map())
 }

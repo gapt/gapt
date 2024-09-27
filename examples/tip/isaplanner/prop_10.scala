@@ -11,7 +11,7 @@ import gapt.provers.viper.aip.ProverOptions
 
 object prop_10 extends TacticsProof {
 
-  ctx += InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += InductiveType(ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat")
   ctx += hoc"p:Nat>Nat"
   ctx += hoc"plus:Nat>Nat>Nat"
   ctx += hoc"minus:Nat>Nat>Nat"
@@ -26,28 +26,28 @@ object prop_10 extends TacticsProof {
                           goal: ∀m minus(m, m) = Z
     """
 
-  val proof = Lemma( sequent ) {
+  val proof = Lemma(sequent) {
     allR
-    induction( hov"m:Nat" )
+    induction(hov"m:Nat")
     // base case
-    allL( "def_minus_1", le"Z:Nat" )
-    forget( "def_p", "def_minus_1", "def_minus_2", "def_minus_3", "ax_nat_1" )
+    allL("def_minus_1", le"Z:Nat")
+    forget("def_p", "def_minus_1", "def_minus_2", "def_minus_3", "ax_nat_1")
     axiomLog
 
     // Inductive case
-    allL( "def_minus_3", le"m_0:Nat", le"m_0:Nat" )
-    forget( "def_p", "def_minus_1", "def_minus_2", "def_minus_3", "ax_nat_1" )
-    eql( "def_minus_3_0", "goal" )
+    allL("def_minus_3", le"m_0:Nat", le"m_0:Nat")
+    forget("def_p", "def_minus_1", "def_minus_2", "def_minus_3", "ax_nat_1")
+    eql("def_minus_3_0", "goal")
     axiomLog
   }
 
-  val aipOptions1 = new ProverOptions( Escargot, IndependentInductionAxioms().forVariables( List( hov"m:Nat" ) ).forLabel( "goal" ) )
-  val proof2 = new AnalyticInductionProver( aipOptions1 ) lkProof ( sequent ) get
+  val aipOptions1 = new ProverOptions(Escargot, IndependentInductionAxioms().forVariables(List(hov"m:Nat")).forLabel("goal"))
+  val proof2 = new AnalyticInductionProver(aipOptions1) lkProof (sequent) get
 
-  val aipOptions2 = new ProverOptions( Escargot, SequentialInductionAxioms().forVariables( List( hov"m:Nat" ) ).forLabel( "goal" ) )
-  val proof3 = new AnalyticInductionProver( aipOptions2 ) lkProof ( sequent ) get
+  val aipOptions2 = new ProverOptions(Escargot, SequentialInductionAxioms().forVariables(List(hov"m:Nat")).forLabel("goal"))
+  val proof3 = new AnalyticInductionProver(aipOptions2) lkProof (sequent) get
 
-  val proof4 = Lemma( sequent ) {
+  val proof4 = Lemma(sequent) {
     treeGrammarInduction
       .useInterpolation
   }

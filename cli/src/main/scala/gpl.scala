@@ -4,8 +4,8 @@ package gapt.cli
  * An object evaluating to the text of the GPL 3.
  */
 object GPL {
-  def apply = println( copying )
-  def printLicense = println( gpl3 )
+  def apply = println(copying)
+  def printLicense = println(gpl3)
 
   val copying =
     """

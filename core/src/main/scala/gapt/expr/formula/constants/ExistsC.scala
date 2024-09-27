@@ -1,3 +1,3 @@
 package gapt.expr.formula.constants
 
-object ExistsC extends QuantifierC( "∃" )
+object ExistsC extends QuantifierC("∃")

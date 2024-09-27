@@ -10,16 +10,16 @@ import scala.annotation.tailrec
  */
 object num {
   @tailrec
-  def alpha( x: Var, a: Expr, n: Int, acc: Expr => Expr ): Expr = n match {
-    case 0          => acc( x );
-    case n if n > 0 => alpha( x, a, n - 1, e => App( a, acc( e ) ) )
-    case _          => throw new Exception( "Only positive church numerals allowed!" )
+  def alpha(x: Var, a: Expr, n: Int, acc: Expr => Expr): Expr = n match {
+    case 0          => acc(x);
+    case n if n > 0 => alpha(x, a, n - 1, e => App(a, acc(e)))
+    case _          => throw new Exception("Only positive church numerals allowed!")
   }
 
-  def apply( n: Int ) = {
+  def apply(n: Int) = {
     val x = hov"(x:i)"
     val a = hov"(z:i>i)"
-    Abs( a, Abs( x, alpha( x, a, n, identity ) ) )
+    Abs(a, Abs(x, alpha(x, a, n, identity)))
   }
 }
 
@@ -28,51 +28,53 @@ object num {
  */
 object int_of_num {
   @tailrec
-  def count_app( t: Expr, n: Int ): Int = t match {
-    case App( _, t_ ) => count_app( t_, n + 1 );
-    case Var( _, _ )  => n
+  def count_app(t: Expr, n: Int): Int = t match {
+    case App(_, t_) => count_app(t_, n + 1);
+    case Var(_, _)  => n
   }
 
-  def apply( t: Expr ): Int = try {
-    t match {
-      case Abs( _, Abs( _, t_ ) ) => count_app( t_, 0 )
+  def apply(t: Expr): Int =
+    try {
+      t match {
+        case Abs(_, Abs(_, t_)) => count_app(t_, 0)
+      }
+    } catch {
+      case _: MatchError => throw new Exception(s"$t is no church numeral!")
     }
-  } catch {
-    case _: MatchError => throw new Exception( s"$t is no church numeral!" )
-  }
 }
 
 /**
  * Checks if lambda expression is a Church numeral.
  */
 object is_num {
-  def apply( n: Expr ) = try {
-    int_of_num( n ); true
-  } catch {
-    case _: Exception => false
-  }
+  def apply(n: Expr) =
+    try {
+      int_of_num(n); true
+    } catch {
+      case _: Exception => false
+    }
 }
 
 /**
  * Addition of Church numerals. Does not check if the input is a church numeral.
  */
 object plus {
-  def apply( e1: Expr, e2: Expr ) =
-    BetaReduction.betaNormalize( le"^(x:i>i) ^(u:i) $e1 x ($e2 x u)" )
+  def apply(e1: Expr, e2: Expr) =
+    BetaReduction.betaNormalize(le"^(x:i>i) ^(u:i) $e1 x ($e2 x u)")
 }
 
 /**
  * Multiplication of Church numerals. Does not check if the input is a church numeral.
  */
 object times {
-  def apply( e1: Expr, e2: Expr ) =
-    BetaReduction.betaNormalize( le"^u $e2 ($e1 u)" )
+  def apply(e1: Expr, e2: Expr) =
+    BetaReduction.betaNormalize(le"^u $e2 ($e1 u)")
 }
 
 /**
  * Conditional if c = 0 then e1 else e2
  */
 object cond {
-  def apply( e1: Expr, e2: Expr, c: Expr ) =
-    BetaReduction.betaNormalize( le"^(u:i>i) ^(x:i) $c (^(y:i) $e2 u x) ($e1 u x)" )
+  def apply(e1: Expr, e2: Expr, c: Expr) =
+    BetaReduction.betaNormalize(le"^(u:i>i) ^(x:i) $c (^(y:i) $e2 u x) ($e1 u x)")
 }

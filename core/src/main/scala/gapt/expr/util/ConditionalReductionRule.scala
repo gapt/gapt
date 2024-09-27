@@ -21,21 +21,22 @@ import gapt.expr.formula.Formula
  * @param lhs The left hand side of this rewrite rule.
  * @param rhs The right hand side of this rewrite rule.
  */
-case class ConditionalReductionRule( conditions: Seq[Formula], lhs: Expr, rhs: Expr ) {
+case class ConditionalReductionRule(conditions: Seq[Formula], lhs: Expr, rhs: Expr) {
 
   require(
-    ( conditions.flatMap { freeVariables( _ ) } ++
-      freeVariables( rhs ) ).toSet.subsetOf( freeVariables( lhs ) ),
+    (conditions.flatMap { freeVariables(_) } ++
+      freeVariables(rhs)).toSet.subsetOf(freeVariables(lhs)),
     """free variables in conditions and right hand side do not form a
-      |subset of the free variables of the left hand side""".stripMargin )
+      |subset of the free variables of the left hand side""".stripMargin
+  )
 
-  require( !lhs.isInstanceOf[Var], "left hand side must not be a variable" )
+  require(!lhs.isInstanceOf[Var], "left hand side must not be a variable")
 
-  val Apps( lhsHead @ Const( lhsHeadName, _, _ ), lhsArgs ) = lhs
+  val Apps(lhsHead @ Const(lhsHeadName, _, _), lhsArgs) = lhs: @unchecked
   val lhsArgsSize: Int = lhsArgs.size
 }
 
 object ConditionalReductionRule {
-  def apply( rule: ReductionRule ): ConditionalReductionRule =
-    ConditionalReductionRule( List(), rule.lhs, rule.rhs )
+  def apply(rule: ReductionRule): ConditionalReductionRule =
+    ConditionalReductionRule(List(), rule.lhs, rule.rhs)
 }

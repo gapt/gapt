@@ -24,17 +24,17 @@ object SquareDiagonalExampleProof extends ProofSequence {
    * @param n An integer >= 0.
    * @return A proof of P(0,0), ∀x,y. P(x,y) → P(s(x),y), ∀x,y. P(x,y) → P(x,s(y)) :- P(s^n^(0),s^n^(0))
    */
-  def apply( n: Int ): LKProof = {
-    require( n >= 0, "n must be nonnegative" )
+  def apply(n: Int): LKProof = {
+    require(n >= 0, "n must be nonnegative")
 
-    val num = Utils.numeral( n )
+    val num = Utils.numeral(n)
     val p00 = foa"P(0,0)"
     val pnn = foa"P($num, $num)"
     val axX = fof"!x!y (P(x,y) -> P(s(x), y))"
     val axY = fof"!x!y (P(x,y) -> P(x, s(y)))"
 
-    Proof( Sequent( Seq( "P00" -> p00, "AxX" -> axX, "AxY" -> axY ), Seq( "Pnn" -> pnn ) ) ) {
-      repeat( chain( "AxY" ) andThen chain( "AxX" ) )
+    Proof(Sequent(Seq("P00" -> p00, "AxX" -> axX, "AxY" -> axY), Seq("Pnn" -> pnn))) {
+      repeat(chain("AxY") andThen chain("AxX"))
       prop
     }
   }

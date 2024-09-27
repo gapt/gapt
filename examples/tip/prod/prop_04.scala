@@ -9,13 +9,13 @@ import gapt.proofs.gaptic._
 object prop_04 extends TacticsProof {
 
   // Sorts
-  ctx += TBase( "sk" )
+  ctx += TBase("sk")
 
   // Inductive types
-  ctx += InductiveType( ty"list", hoc"'nil' :list", hoc"'cons' :sk>list>list" )
-  ctx += InductiveType( ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat" )
+  ctx += InductiveType(ty"list", hoc"'nil' :list", hoc"'cons' :sk>list>list")
+  ctx += InductiveType(ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat")
 
-  //Function constants
+  // Function constants
   ctx += hoc"'length' :list>Nat"
   ctx += hoc"'double' :Nat>Nat"
   ctx += hoc"'append' :list>list>list"
@@ -41,14 +41,14 @@ object prop_04 extends TacticsProof {
 
   val lem_2 = hof"!xs!zs!y length(append(xs,cons(y,zs))) = S(length(append(xs,zs)))"
 
-  val lem_2_proof = Lemma( theory :+ ( "l2" -> lem_2 ) ) {
-    allR; induction( hov"xs:list" )
-    //- BC
+  val lem_2_proof = Lemma(theory :+ ("l2" -> lem_2)) {
+    allR; induction(hov"xs:list")
+    // - BC
     allR; allR
     rewrite.many ltr "def_append_0" in "l2"
     rewrite.many ltr "def_length_1" in "l2"
     refl
-    //- IC
+    // - IC
     allR; allR
     rewrite.many ltr "def_append_1" in "l2"
     rewrite.many ltr "def_length_1" in "l2"
@@ -56,16 +56,16 @@ object prop_04 extends TacticsProof {
     refl
   }
 
-  val proof = Lemma( sequent ) {
-    cut( "lemma", lem_2 )
-    insert( lem_2_proof )
-    allR; induction( hov"x:list" )
-    //- BC
+  val proof = Lemma(sequent) {
+    cut("lemma", lem_2)
+    insert(lem_2_proof)
+    allR; induction(hov"x:list")
+    // - BC
     rewrite ltr "def_append_0" in "goal"
     rewrite.many ltr "def_length_0" in "goal"
     rewrite ltr "def_double_0" in "goal"
     refl
-    //- IC
+    // - IC
     rewrite ltr "lemma" in "goal"
     rewrite ltr "def_append_1" in "goal"
     rewrite.many ltr "def_length_1" in "goal"
@@ -74,29 +74,29 @@ object prop_04 extends TacticsProof {
     refl
   }
 
-  val lem_2_proof_openind = Lemma( theory :+ ( "l2" -> lem_2 ) ) {
-    allR; allR; allR; induction( hov"xs:list" )
-    //- BC
+  val lem_2_proof_openind = Lemma(theory :+ ("l2" -> lem_2)) {
+    allR; allR; allR; induction(hov"xs:list")
+    // - BC
     rewrite.many ltr "def_append_0" in "l2"
     rewrite.many ltr "def_length_1" in "l2"
     refl
-    //- IC
+    // - IC
     rewrite.many ltr "def_append_1" in "l2"
     rewrite.many ltr "def_length_1" in "l2"
     rewrite.many ltr "IHxs_0" in "l2"
     refl
   }
 
-  val openind = Lemma( sequent ) {
-    cut( "lemma", lem_2 )
-    insert( lem_2_proof_openind )
-    allR; induction( hov"x:list" )
-    //- BC
+  val openind = Lemma(sequent) {
+    cut("lemma", lem_2)
+    insert(lem_2_proof_openind)
+    allR; induction(hov"x:list")
+    // - BC
     rewrite ltr "def_append_0" in "goal"
     rewrite.many ltr "def_length_0" in "goal"
     rewrite ltr "def_double_0" in "goal"
     refl
-    //- IC
+    // - IC
     rewrite ltr "lemma" in "goal"
     rewrite ltr "def_append_1" in "goal"
     rewrite.many ltr "def_length_1" in "goal"

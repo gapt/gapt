@@ -11,29 +11,30 @@ import gapt.formats.tip.parser.TipSmtMutualRecursiveFunctionDefinition
 import gapt.formats.tip.parser.TipSmtProblem
 
 object retrieveDatatypes {
-  def apply( problemAst: TipSmtProblem ): Seq[TipSmtDatatype] = {
+  def apply(problemAst: TipSmtProblem): Seq[TipSmtDatatype] = {
     problemAst.definitions flatMap {
       _ match {
-        case TipSmtDatatypesDeclaration( datatypes ) => datatypes
-        case _                                       => Seq()
+        case TipSmtDatatypesDeclaration(datatypes) => datatypes
+        case _                                     => Seq()
       }
     }
   }
-  def apply( problemAst: TipSmtProblem, datatype: String ): TipSmtDatatype = {
-    apply( problemAst ).find( _.name == datatype ).get
+  def apply(problemAst: TipSmtProblem, datatype: String): TipSmtDatatype = {
+    apply(problemAst).find(_.name == datatype).get
   }
 }
 
 case class Type(
     argumentTypes: Seq[Datatype],
-    returnType:    Datatype )
+    returnType: Datatype
+)
 
-case class SymbolTable( problem: TipSmtProblem ) {
+case class SymbolTable(problem: TipSmtProblem) {
 
   private val symbolMap: Map[String, Type] = computeSymbols()
 
-  def typeOf( symbol: String ): Type = symbolMap( symbol )
-  def contains( symbol: String ): Boolean = symbolMap.contains( symbol )
+  def typeOf(symbol: String): Type = symbolMap(symbol)
+  def contains(symbol: String): Boolean = symbolMap.contains(symbol)
 
   val symbols: Set[String] = symbolMap.keySet
 
@@ -45,16 +46,17 @@ case class SymbolTable( problem: TipSmtProblem ) {
    */
   def constructors: Set[String] =
     problem.definitions flatMap {
-      case dtd @ TipSmtDatatypesDeclaration( _ ) => constructors( dtd )
-      case _                                     => Set[String]()
+      case dtd @ TipSmtDatatypesDeclaration(_) => constructors(dtd)
+      case _                                   => Set[String]()
     } toSet
 
   private def constructors(
-    datatypesDeclaration: TipSmtDatatypesDeclaration ): Set[String] =
+      datatypesDeclaration: TipSmtDatatypesDeclaration
+  ): Set[String] =
     datatypesDeclaration.datatypes flatMap {
-      case TipSmtDatatype( _, _, constructors ) =>
+      case TipSmtDatatype(_, _, constructors) =>
         constructors map { _.name } toSet
-      case _ => Set[String]()
+      case null => Set[String]()
     } toSet
 
   private def computeSymbols(): Map[String, Type] = {
@@ -64,69 +66,77 @@ case class SymbolTable( problem: TipSmtProblem ) {
     problem.definitions foreach {
       _ match {
         case TipSmtFunctionDeclaration(
-          functionName, _, argumentTypes, returnType
-          ) =>
+              functionName,
+              _,
+              argumentTypes,
+              returnType
+            ) =>
           val argTypes = argumentTypes.map {
-            argType => Datatype( argType.typename )
+            argType => Datatype(argType.typename)
           }
           symbols +=
-            ( functionName ->
-              Type( argTypes, Datatype( returnType.typename ) ) )
+            (functionName ->
+              Type(argTypes, Datatype(returnType.typename)))
 
-        case function @ TipSmtFunctionDefinition( _, _, _, _, _ ) =>
-          symbols += extractSymbols( function )
+        case function @ TipSmtFunctionDefinition(_, _, _, _, _) =>
+          symbols += extractSymbols(function)
 
-        case TipSmtMutualRecursiveFunctionDefinition( functions ) =>
+        case TipSmtMutualRecursiveFunctionDefinition(functions) =>
           symbols ++= functions.map { extractSymbols }
 
-        case TipSmtConstantDeclaration( constantName, _, typ ) =>
-          symbols += ( constantName -> Type( Seq(), Datatype( typ.typename ) ) )
+        case TipSmtConstantDeclaration(constantName, _, typ) =>
+          symbols += (constantName -> Type(Seq(), Datatype(typ.typename)))
 
-        case TipSmtDatatypesDeclaration( datatypes ) =>
+        case TipSmtDatatypesDeclaration(datatypes) =>
           datatypes.foreach {
-            symbols ++= datatypeSymbols( _ )
+            symbols ++= datatypeSymbols(_)
           }
 
         case _ =>
       }
     }
 
-    if ( problem.containsNat ) {
-      symbols += "is-zero" -> Type( Datatype( "Nat" ) :: Nil, Datatype( "Bool" ) )
-      symbols += "is-succ" -> Type( Datatype( "Nat" ) :: Nil, Datatype( "Bool" ) )
+    if (problem.containsNat) {
+      symbols += "is-zero" -> Type(Datatype("Nat") :: Nil, Datatype("Bool"))
+      symbols += "is-succ" -> Type(Datatype("Nat") :: Nil, Datatype("Bool"))
     }
 
     symbols
   }
 
-  private def extractSymbols( function: TipSmtFunctionDefinition ): ( String, Type ) = {
-    val TipSmtFunctionDefinition( functionName, _, formalParameters, returnType, _ ) = function
+  private def extractSymbols(function: TipSmtFunctionDefinition): (String, Type) = {
+    val TipSmtFunctionDefinition(functionName, _, formalParameters, returnType, _) = function
     val argTypes = formalParameters map { param =>
-      Datatype( param.typ.typename )
+      Datatype(param.typ.typename)
     }
     functionName ->
-      Type( argTypes, Datatype( returnType.typename ) )
+      Type(argTypes, Datatype(returnType.typename))
   }
 
   private def datatypeSymbols(
-    tipSmtDatatype: TipSmtDatatype ): Map[String, Type] = {
-    val symbols: Seq[( String, Type )] =
+      tipSmtDatatype: TipSmtDatatype
+  ): Map[String, Type] = {
+    val symbols: Seq[(String, Type)] =
       tipSmtDatatype.constructors map {
-        case TipSmtConstructor( constructorName, _, fields ) =>
+        case TipSmtConstructor(constructorName, _, fields) =>
           val fieldTypes: Seq[Datatype] = fields map {
-            field => Datatype( field.typ.typename )
+            field => Datatype(field.typ.typename)
           }
           constructorName -> Type(
-            fieldTypes, Datatype( tipSmtDatatype.name ) )
+            fieldTypes,
+            Datatype(tipSmtDatatype.name)
+          )
       }
-    val projectorSymbols: Seq[( String, Type )] =
+    val projectorSymbols: Seq[(String, Type)] =
       tipSmtDatatype.constructors flatMap {
-        case TipSmtConstructor( _, _, fields ) =>
+        case TipSmtConstructor(_, _, fields) =>
           fields map { f =>
             f.name -> Type(
-              Seq( Datatype( tipSmtDatatype.name ) ), Datatype( f.typ.typename ) )
+              Seq(Datatype(tipSmtDatatype.name)),
+              Datatype(f.typ.typename)
+            )
           }
       }
-    Map( ( symbols ++ projectorSymbols ): _* )
+    Map((symbols ++ projectorSymbols): _*)
   }
 }

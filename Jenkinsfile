@@ -14,13 +14,8 @@ pipeline {
         }
         stage('Formatting') {
             steps {
-                echo 'Formatting...'
-                sh 'sbt ${SBT_FLAGS} format'
-                sh '''
-                  echo "Modified files through scalariform:"
-                  git diff
-                  test -z "$(git ls-files -m)"
-                '''
+                echo 'Check formatting...'
+                sh 'sbt ${SBT_FLAGS} checkFormat'
             }
         }
         stage('Building') {

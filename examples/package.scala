@@ -17,13 +17,14 @@ package object examples {
     SumOfOnesExampleProof,
     UniformAssociativity3ExampleProof,
     FactorialFunctionEqualityExampleProof,
-    FactorialFunctionEqualityExampleProof2 )
+    FactorialFunctionEqualityExampleProof2
+  )
 }
 
 package examples {
 
   class Script extends scala.App {
-    def run() = main( Array() )
+    def run() = main(Array())
   }
 
 }

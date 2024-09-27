@@ -13,4 +13,4 @@ package gapt.expr.formula.constants
  *
  * @param name  The name of this logical constant, e.g. "∀"
  */
-abstract class LogicalC( val name: String )
+abstract class LogicalC(val name: String)

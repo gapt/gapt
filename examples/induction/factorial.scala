@@ -8,7 +8,7 @@ import gapt.provers.smtlib.CVC4
 import gapt.provers.viper.grammars.TreeGrammarProverOptions.Passthru
 
 object factorial extends TacticsProof {
-  ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType("nat", hoc"0: nat", hoc"s: nat>nat")
   ctx += hoc"'*': nat>nat>nat"
   ctx += hoc"fact: nat>nat"
   ctx += hoc"qfact: nat>nat>nat"
@@ -25,14 +25,15 @@ object factorial extends TacticsProof {
           qf0: !y qfact y 0 = y,
           qfs: !x!y qfact y (s x) = qfact (y * s x) x
           :- !x qfact (s 0) x = fact x
-        """ ) {
-      treeGrammarInduction
-        .quantTys( TBase( "nat" ) )
-        .equationalTheory( hof"x*(y*z) = (x*y)*z", hof"x*s(0) = x", hof"s(0)*x = x" )
-        .canSolSize( 1 )
-        .tautCheckSize( 0.5f, 1 ) // exponential blowup of canonical solution...
-        .instanceProver( Prover9.extendToManySortedViaErasure )
-        .smtSolver( new CVC4( "UF", Seq( "--tlimit=300" ), treatUnknownAsSat = true ) )
-        .smtEquationMode( Passthru )
-    }
+        """
+  ) {
+    treeGrammarInduction
+      .quantTys(TBase("nat"))
+      .equationalTheory(hof"x*(y*z) = (x*y)*z", hof"x*s(0) = x", hof"s(0)*x = x")
+      .canSolSize(1)
+      .tautCheckSize(0.5f, 1) // exponential blowup of canonical solution...
+      .instanceProver(Prover9.extendToManySortedViaErasure)
+      .smtSolver(new CVC4("UF", Seq("--tlimit=300"), treatUnknownAsSat = true))
+      .smtEquationMode(Passthru)
+  }
 }

@@ -10,7 +10,7 @@ import gapt.proofs.lk.rules.ConvenienceConstructor
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.WeakeningLeftRule
 
-object EqualityLeftMacroRule extends ConvenienceConstructor( "EqualityLeftMacroRule" ) {
+object EqualityLeftMacroRule extends ConvenienceConstructor("EqualityLeftMacroRule") {
 
   /**
    * Like EqualityLeftRule, but the equation need not exist in the premise.
@@ -22,8 +22,8 @@ object EqualityLeftMacroRule extends ConvenienceConstructor( "EqualityLeftMacroR
    * @param auxFormula Index of the aux formula or the formula itself.
    * @return
    */
-  def apply( subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, con: Abs ): EqualityLeftRule =
-    withSequentConnector( subProof, equation, auxFormula, con )._1
+  def apply(subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, con: Abs): EqualityLeftRule =
+    withSequentConnector(subProof, equation, auxFormula, con)._1
 
   /**
    * Like EqualityLeftRule, but the equation need not exist in the premise. If it doesn't, it will automatically be added via weakening.
@@ -34,27 +34,25 @@ object EqualityLeftMacroRule extends ConvenienceConstructor( "EqualityLeftMacroR
    * @param auxFormula Index of the aux formula or the formula itself.
    * @return An LKProof and an SequentConnector connecting its end sequent with the end sequent of subProof.
    */
-  def withSequentConnector( subProof: LKProof, equation: IndexOrFormula,
-                            auxFormula: IndexOrFormula,
-                            con:        Abs ): ( EqualityLeftRule, SequentConnector ) = {
-    val ( _, indices, _, _ ) =
-      findIndicesOrFormulasInPremise( subProof.endSequent )( Seq( equation, auxFormula ), Seq() )
+  def withSequentConnector(subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, con: Abs): (EqualityLeftRule, SequentConnector) = {
+    val (_, indices, _, _) =
+      findIndicesOrFormulasInPremise(subProof.endSequent)(Seq(equation, auxFormula), Seq())
 
-    ( indices( 0 ), indices( 1 ) ) match {
-      case ( _, -1 ) => // The aux formula has not been found.  We don't allow this case.
-        throw LKRuleCreationException( s"Aux formula has not been found in succedent of ${subProof.endSequent}." )
+    (indices(0), indices(1)) match {
+      case (_, -1) => // The aux formula has not been found.  We don't allow this case.
+        throw LKRuleCreationException(s"Aux formula has not been found in succedent of ${subProof.endSequent}.")
 
-      case ( -1, i ) => // Aux formula has been found at index Ant(i).
-        val IsFormula( e ) = equation
+      case (-1, i) => // Aux formula has been found at index Ant(i).
+        val IsFormula(e) = equation: @unchecked
         // This match cannot fail: if the index of the equation is -1, it cannot have been passed as an index.
-        val subProof_ = WeakeningLeftRule( subProof, e )
+        val subProof_ = WeakeningLeftRule(subProof, e)
         val oc = subProof_.getSequentConnector
-        val proof = EqualityLeftRule( subProof_, subProof_.mainIndices( 0 ), oc.child( Ant( i ) ), con )
-        ( proof, proof.getSequentConnector * oc )
+        val proof = EqualityLeftRule(subProof_, subProof_.mainIndices(0), oc.child(Ant(i)), con)
+        (proof, proof.getSequentConnector * oc)
 
-      case ( _, _ ) => // Both equation and aux formula have been found. Simply construct the inference.
-        val proof = EqualityLeftRule( subProof, equation, auxFormula, con )
-        ( proof, proof.getSequentConnector )
+      case (_, _) => // Both equation and aux formula have been found. Simply construct the inference.
+        val proof = EqualityLeftRule(subProof, equation, auxFormula, con)
+        (proof, proof.getSequentConnector)
     }
   }
 }

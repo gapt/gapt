@@ -1,7 +1,7 @@
 package gapt.prooftool
 
-import ch.randelshofer.tree.sunburst.{ SunburstNode, SunburstTree, SunburstView, SunburstModel }
-import ch.randelshofer.tree.{ NodeInfo, TreeNode }
+import ch.randelshofer.tree.sunburst.{SunburstNode, SunburstTree, SunburstView, SunburstModel}
+import ch.randelshofer.tree.{NodeInfo, TreeNode}
 import scala.swing.Publisher
 import scala.swing.event.Event
 
@@ -13,26 +13,26 @@ trait ReactiveSunburstView extends SunburstView with Publisher {
   var selected: Option[SunburstNode] = None
   var selected_proof: Option[TreeNode] = None
 
-  override def setSelectedNode( newValue: SunburstNode ) = {
-    super.setSelectedNode( newValue )
-    if ( newValue == null ) {
+  override def setSelectedNode(newValue: SunburstNode) = {
+    super.setSelectedNode(newValue)
+    if (newValue == null) {
       selected = None
       selected_proof = None
     } else {
-      selected = Some( newValue )
-      selected_proof = Some( newValue.getNode )
+      selected = Some(newValue)
+      selected_proof = Some(newValue.getNode)
     }
 
-    this.publish( NodeSelectedEvent( selected_proof.getOrElse( null ) ) )
+    this.publish(NodeSelectedEvent(selected_proof.getOrElse(null)))
 
   }
 
 }
 
-case class NodeSelectedEvent( node: TreeNode ) extends Event
+case class NodeSelectedEvent(node: TreeNode) extends Event
 
-class ReactiveSunburstModel( val root: TreeNode, info: NodeInfo )
-  extends SunburstModel( root, info ) {
-  val sunroot = new SunburstTree( root, info )
-  override def getView = new SunburstView( sunroot ) with ReactiveSunburstView
+class ReactiveSunburstModel(val root: TreeNode, info: NodeInfo)
+    extends SunburstModel(root, info) {
+  val sunroot = new SunburstTree(root, info)
+  override def getView = new SunburstView(sunroot) with ReactiveSunburstView
 }

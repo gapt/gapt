@@ -12,14 +12,11 @@ package object expansion {
    *
    * @param sequent The expansion sequent that this wraps around.
    */
-  implicit class RichExpansionSequent( private val sequent: ExpansionSequent ) extends AnyVal {
-    def shallow: HOLSequent = sequent.map( _.shallow )
-    def deep: HOLSequent = sequent.map( _.deep )
+  implicit class RichExpansionSequent(private val sequent: ExpansionSequent) extends AnyVal {
+    def shallow: HOLSequent = sequent.map(_.shallow)
+    def deep: HOLSequent = sequent.map(_.deep)
 
-    def toDisjunction( polarity: Polarity ): ExpansionTree =
-      sequent.map( ETNeg( _ ), identity ).
-        elements.
-        reduceOption( ETOr( _, _ ) ).
-        getOrElse( ETBottom( polarity ) )
+    def toDisjunction(polarity: Polarity): ExpansionTree =
+      sequent.map(ETNeg(_), identity).elements.reduceOption(ETOr(_, _)).getOrElse(ETBottom(polarity))
   }
 }

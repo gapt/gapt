@@ -6,6 +6,7 @@ import gapt.proofs.context.mutable.MutableContext
 import gapt.provers.viper.aip.ThrowsError
 
 trait AxiomFactory {
+
   /**
    * Computes induction axioms for a given sequent.
    *
@@ -14,13 +15,13 @@ trait AxiomFactory {
    * @return Either a list of induction axioms or a non empty list of strings describing the why induction axioms
    *         could not be generated.
    */
-  def apply( sequent: LabelledSequent )( implicit ctx: Context ): ThrowsError[List[Axiom]]
+  def apply(sequent: LabelledSequent)(implicit ctx: Context): ThrowsError[List[Axiom]]
 
-  final def :/\:( otherFactory: AxiomFactory ): AxiomFactory = new AxiomFactory {
-    override def apply( sequent: LabelledSequent )( implicit ctx: Context ): ThrowsError[List[Axiom]] =
+  final def :/\:(otherFactory: AxiomFactory): AxiomFactory = new AxiomFactory {
+    override def apply(sequent: LabelledSequent)(implicit ctx: Context): ThrowsError[List[Axiom]] =
       for {
-        axiomsLeft <- AxiomFactory.this( sequent )
-        axiomsRight <- otherFactory( sequent )
+        axiomsLeft <- AxiomFactory.this(sequent)
+        axiomsRight <- otherFactory(sequent)
       } yield axiomsLeft ::: axiomsRight
   }
 }

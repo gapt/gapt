@@ -6,7 +6,7 @@ import gapt.proofs.gaptic._
 
 object evenodd extends TacticsProof {
 
-  ctx += InductiveType( ty"nat", hoc"0: nat", hoc"s: nat>nat" )
+  ctx += InductiveType(ty"nat", hoc"0: nat", hoc"s: nat>nat")
 
   ctx += hoc"even: nat>o"
   ctx += hoc"odd: nat>o"
@@ -18,10 +18,10 @@ object evenodd extends TacticsProof {
           !x (odd (s x) <-> ~odd x)
           :-
           !x (even x <-> odd (s x))
-        """ ) {
-      treeGrammarInduction
-        .useInterpolation
-    }
+        """
+  ) {
+    treeGrammarInduction
+      .useInterpolation
+  }
 
 }
-

@@ -2,8 +2,8 @@ package gapt.cutintro
 
 import gapt.expr._
 import gapt.expr.formula.hol.lcomp
-import gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
-import gapt.proofs.{ FOLClause, HOLClause, HOLSequent, RichFOLSequent, Sequent }
+import gapt.proofs.resolution.{forgetfulPropParam, forgetfulPropResolve}
+import gapt.proofs.{FOLClause, HOLClause, HOLSequent, RichFOLSequent, RichFormulaSequent, Sequent}
 import gapt.provers.Prover
 import gapt.provers.Session._
 import cats.implicits._
@@ -26,31 +26,27 @@ object improveSolutionLK {
    *
    * Maintains the invariant that the cut-formulas can be realized in an LK proof.
    */
-  def apply( ehs: SolutionStructure, prover: Prover, hasEquality: Boolean,
-             forgetOne:    Boolean = false,
-             minimizeBack: Boolean = false ): SolutionStructure = {
-    val formulasInImprovement = ehs.formulas.to( mutable.Seq )
+  def apply(ehs: SolutionStructure, prover: Prover, hasEquality: Boolean, forgetOne: Boolean = false, minimizeBack: Boolean = false): SolutionStructure = {
+    val formulasInImprovement = ehs.formulas.to(mutable.Seq)
 
-    for ( i <- formulasInImprovement.indices.reverse ) {
-      val eigenVariablesInScope = for ( ( evs, j ) <- ehs.sehs.eigenVariables.zipWithIndex; ev <- evs if i < j ) yield ev
-      val availableInstances = ehs.endSequentInstances filter { inst => freeVariables( inst ) subsetOf eigenVariablesInScope.toSet }
-      val availableCutFormulas = for ( ( cf, j ) <- formulasInImprovement.zipWithIndex if i < j ) yield cf
+    for (i <- formulasInImprovement.indices.reverse) {
+      val eigenVariablesInScope = for ((evs, j) <- ehs.sehs.eigenVariables.zipWithIndex; ev <- evs if i < j) yield ev
+      val availableInstances = ehs.endSequentInstances filter { inst => freeVariables(inst) subsetOf eigenVariablesInScope.toSet }
+      val availableCutFormulas = for ((cf, j) <- formulasInImprovement.zipWithIndex if i < j) yield cf
       val context = availableInstances :++ availableCutFormulas
-      val instances = ehs.sehs.ss( i ) match {
-        case ( ev, instanceTerms ) =>
-          for ( terms <- instanceTerms ) yield FOLSubstitution( ev zip terms )
+      val instances = ehs.sehs.ss(i) match {
+        case (ev, instanceTerms) =>
+          for (terms <- instanceTerms) yield FOLSubstitution(ev zip terms)
       }
-      formulasInImprovement( i ) =
-        improve( context, formulasInImprovement( i ),
-          instances.toSet, prover, hasEquality, forgetOne ).
-          asInstanceOf[FOLFormula]
+      formulasInImprovement(i) =
+        improve(context, formulasInImprovement(i), instances.toSet, prover, hasEquality, forgetOne).asInstanceOf[FOLFormula]
     }
 
-    if ( minimizeBack && formulasInImprovement.size == 1 ) {
-      formulasInImprovement( 0 ) = improveBack( ehs.endSequentInstances, formulasInImprovement( 0 ), prover )
+    if (minimizeBack && formulasInImprovement.size == 1) {
+      formulasInImprovement(0) = improveBack(ehs.endSequentInstances, formulasInImprovement(0), prover)
     }
 
-    ehs.copy( formulas = formulasInImprovement.toSeq )
+    ehs.copy(formulas = formulasInImprovement.toSeq)
   }
 
   /**
@@ -64,40 +60,39 @@ object improveSolutionLK {
    * @param prover  Prover to check the validity of the constraint.
    * @param hasEquality  If set to true, use forgetful paramodulation in addition to resolution.
    */
-  def improve( context: HOLSequent, start: Formula, instances: Set[Substitution], prover: Prover,
-               hasEquality: Boolean, forgetOne: Boolean ): Formula = {
-    val names = containedNames( instances ) ++ containedNames( start ) ++ containedNames( context.elements )
-    val nameGen = rename.awayFrom( names )
-    val grounding = Substitution( for ( v <- freeVariables( start +: context.elements ) ++ instances.flatMap( _.range ) )
-      yield v -> Const( nameGen.fresh( v.name ), v.ty ) )
-    val groundInstances = instances.map( grounding.compose )
+  def improve(context: HOLSequent, start: Formula, instances: Set[Substitution], prover: Prover, hasEquality: Boolean, forgetOne: Boolean): Formula = {
+    val names = containedNames(instances) ++ containedNames(start) ++ containedNames(context.elements)
+    val nameGen = rename.awayFrom(names)
+    val grounding = Substitution(for (v <- freeVariables(start +: context.elements) ++ instances.flatMap(_.range))
+      yield v -> Const(nameGen.fresh(v.name), v.ty))
+    val groundInstances = instances.map(grounding.compose)
     val isSolution = mutable.Map[Set[HOLClause], Boolean]()
 
-    def checkSolution( cnf: Set[HOLClause] ): Session[Unit] = when( !isSolution.contains( cnf ) ) {
-      val clauses = for ( inst <- groundInstances; clause <- cnf ) yield inst( clause.toDisjunction )
+    def checkSolution(cnf: Set[HOLClause]): Session[Unit] = when(!isSolution.contains(cnf)) {
+      val clauses = for (inst <- groundInstances; clause <- cnf) yield inst(clause.toDisjunction)
 
-      withScope( assert( clauses.toList ) *> checkUnsat ).flatMap { isSolOrUnknown =>
-        val isSol = isSolOrUnknown.getOrElse( false )
-        isSolution( cnf ) = isSol
+      withScope(assert(clauses.toList) *> checkUnsat).flatMap { isSolOrUnknown =>
+        val isSol = isSolOrUnknown.getOrElse(false)
+        isSolution(cnf) = isSol
 
-        when( isSol ) {
-          forgetfulPropResolve( cnf ).toList.traverse_( checkSolution ) *>
-            when( hasEquality ) { forgetfulPropParam( cnf ).toList.traverse_( checkSolution ) } *>
-            when( forgetOne ) { cnf.toList.traverse_( c => checkSolution( cnf - c ) ) }
+        when(isSol) {
+          forgetfulPropResolve(cnf).toList.traverse_(checkSolution) *>
+            when(hasEquality) { forgetfulPropParam(cnf).toList.traverse_(checkSolution) } *>
+            when(forgetOne) { cnf.toList.traverse_(c => checkSolution(cnf - c)) }
         }
       }
     }
 
     prover.runSession {
-      declareSymbolsIn( names ++ containedNames( grounding ) ) *>
-        assert( grounding( context.toNegConjunction ) ) *>
-        checkSolution( CNFp( start ).map { _.distinct.sortBy { _.hashCode } } )
+      declareSymbolsIn(names ++ containedNames(grounding)) *>
+        assert(grounding(context.toNegConjunction)) *>
+        checkSolution(CNFp(start).map { _.distinct.sortBy { _.hashCode } })
     }
 
     val solutions = isSolution collect {
-      case ( cnf, true ) => simplifyPropositional( And( cnf map { _.toImplication } ) )
+      case (cnf, true) => simplifyPropositional(And(cnf map { _.toImplication }))
     }
-    solutions minBy { lcomp( _ ) }
+    solutions minBy { lcomp(_) }
   }
 
   /**
@@ -109,26 +104,26 @@ object improveSolutionLK {
    * @param start  Existing solution of the constraint.
    * @param prover  Prover to check the validity of the constraint.
    */
-  private def improveBack( context: Sequent[FOLFormula], start: FOLFormula, prover: Prover ): FOLFormula =
-    simplifyPropositional( And( CNFp( start ) map { improveBack( context, _, prover ).toImplication } ) )
+  private def improveBack(context: Sequent[FOLFormula], start: FOLFormula, prover: Prover): FOLFormula =
+    simplifyPropositional(And(CNFp(start) map { improveBack(context, _, prover).toImplication }))
 
-  private def improveBack( context: Sequent[FOLFormula], start: FOLClause, prover: Prover ): FOLClause = {
+  private def improveBack(context: Sequent[FOLFormula], start: FOLClause, prover: Prover): FOLClause = {
     val isSolution = mutable.Map[FOLClause, Boolean]()
 
-    def checkSolution( clause: FOLClause ): Unit =
-      if ( !isSolution.contains( clause ) ) {
+    def checkSolution(clause: FOLClause): Unit =
+      if (!isSolution.contains(clause)) {
         val condition = context :+ clause.toDisjunction
-        if ( prover isValid condition ) {
-          isSolution( clause ) = true
-          for ( a <- clause.indices ) checkSolution( clause delete a )
+        if (prover isValid condition) {
+          isSolution(clause) = true
+          for (a <- clause.indices) checkSolution(clause delete a)
         } else {
-          isSolution( clause ) = false
+          isSolution(clause) = false
         }
       }
 
-    checkSolution( start )
+    checkSolution(start)
 
-    isSolution collect { case ( clause, true ) => clause } minBy { _.size }
+    isSolution collect { case (clause, true) => clause } minBy { _.size }
   }
 
 }

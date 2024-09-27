@@ -1,4 +1,4 @@
-gapt_version="2.16.0"
+gapt_version="2.17.0"
 
 heap_size="2g"
 stack_size="20m"
@@ -14,7 +14,7 @@ if [[ -z "$java" ]]; then
     exit 1
 fi
 
-for _jar in "$basedir/gapt-$gapt_version.jar" "$basedir/target/scala-2.13/root-assembly-$gapt_version.jar"; do
+for _jar in "$basedir/gapt-$gapt_version.jar" "$basedir/target/scala-3.3.1/root-assembly-$gapt_version.jar"; do
     if [[ -f "$_jar" ]]; then
         gapt_jar="$_jar"
         break

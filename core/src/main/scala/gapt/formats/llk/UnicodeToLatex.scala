@@ -4,9 +4,9 @@ package gapt.formats.llk
  * UnicodeToLatex contains a table of greek unicode symbols and their LaTeX equivalents.
  */
 object UnicodeToLatex {
-  def apply( name: String ) = nameToLatexString( name )
+  def apply(name: String) = nameToLatexString(name)
   // Add more unicode symbols if necessary
-  def nameToLatexString( name: String ) = name match {
+  def nameToLatexString(name: String) = name match {
     case "~"  => """ \sim """
     case "∈"  => """ \in """
     case "ν"  => """ \nu """
@@ -57,16 +57,16 @@ object UnicodeToLatex {
     case "π"  => """ \pi """
     case "ρ"  => """ \rho """
     //    case "ς" => """\sigma"""
-    case "σ"  => """ \sigma """
-    case "τ"  => """ \tau """
-    case "υ"  => " \\upsilon "
-    case "φ"  => """ \varphi """
-    case "χ"  => """ \chi """
-    case "ψ"  => """ \psi """
-    case "ω"  => """ \omega """
-    case "⊥"  => """ \bot """
-    case "⊤"  => """ \top """
-    case _ => //if (!name.matches("""[\w]*|[+]|[=]|[*]|[<]|[>]""")) println(name)
+    case "σ" => """ \sigma """
+    case "τ" => """ \tau """
+    case "υ" => " \\upsilon "
+    case "φ" => """ \varphi """
+    case "χ" => """ \chi """
+    case "ψ" => """ \psi """
+    case "ω" => """ \omega """
+    case "⊥" => """ \bot """
+    case "⊤" => """ \top """
+    case _ => // if (!name.matches("""[\w]*|[+]|[=]|[*]|[<]|[>]""")) println(name)
       name
   }
 

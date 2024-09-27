@@ -10,8 +10,8 @@ import scala.collection.mutable
 
 private class MutableSubstitution {
   var subst = Substitution()
-  def add( v: Var, by: Expr ): Unit =
-    if ( v != by ) subst = subst compose Substitution( v -> by )
+  def add(v: Var, by: Expr): Unit =
+    if (v != by) subst = subst compose Substitution(v -> by)
 }
 
 /**
@@ -59,89 +59,89 @@ private class MergeNode {
 
   def toETt: ETt = {
     var result: ETt = null
-    def write( et: ETt ): Unit =
-      result = if ( result == null ) et else ETtMerge( result, et )
-    if ( hasAtom ) write( ETtAtom )
-    if ( hasNullary ) write( ETtNullary )
-    if ( unary != null ) write( ETtUnary( unary.toETt ) )
-    if ( binaryLeft != null || binaryRight != null )
-      write( ETtBinary( binaryLeft.toETt, binaryRight.toETt ) )
-    if ( weak != null ) write( ETtWeak( Map() ++ weak.view.mapValues( _.toETt ).toMap ) )
-    if ( strongEV != null ) write( ETtStrong( strongEV, strongChild.toETt ) )
-    if ( defs != null ) for ( ( sh, ch ) <- defs ) write( ETtDef( sh, ch.toETt ) )
-    if ( skolems != null ) for ( ( skT, ch ) <- skolems ) write( ETtSkolem( skT, ch.toETt ) )
-    if ( result == null ) ETtWeakening else result
+    def write(et: ETt): Unit =
+      result = if (result == null) et else ETtMerge(result, et)
+    if (hasAtom) write(ETtAtom)
+    if (hasNullary) write(ETtNullary)
+    if (unary != null) write(ETtUnary(unary.toETt))
+    if (binaryLeft != null || binaryRight != null)
+      write(ETtBinary(binaryLeft.toETt, binaryRight.toETt))
+    if (weak != null) write(ETtWeak(Map() ++ weak.view.mapValues(_.toETt).toMap))
+    if (strongEV != null) write(ETtStrong(strongEV, strongChild.toETt))
+    if (defs != null) for ((sh, ch) <- defs) write(ETtDef(sh, ch.toETt))
+    if (skolems != null) for ((skT, ch) <- skolems) write(ETtSkolem(skT, ch.toETt))
+    if (result == null) ETtWeakening else result
   }
 
-  def add( et: ETt )( implicit subst: MutableSubstitution ): Unit =
+  def add(et: ETt)(implicit subst: MutableSubstitution): Unit =
     et match {
       case ETtAtom      => hasAtom = true
       case ETtWeakening =>
-      case ETtMerge( child1, child2 ) =>
-        add( child2 )
-        add( child1 )
+      case ETtMerge(child1, child2) =>
+        add(child2)
+        add(child1)
       case ETtNullary => hasNullary = true
-      case ETtUnary( child ) =>
-        if ( unary == null ) unary = new MergeNode
-        unary.add( child )
-      case ETtBinary( child1, child2 ) =>
-        if ( binaryLeft == null ) { binaryLeft = new MergeNode; binaryRight = new MergeNode }
-        binaryLeft.add( child1 )
-        binaryRight.add( child2 )
-      case ETtWeak( insts ) =>
-        if ( weak == null ) weak = mutable.Map()
-        for ( ( inst, ch ) <- insts )
-          weak.getOrElseUpdate( inst, new MergeNode ).add( ch )
-      case ETtStrong( eigenVar, child ) =>
-        if ( skolems != null ) {
-          val ( skT, merger ) = skolems.head
-          subst.add( eigenVar, skT )
-          merger.add( child )
+      case ETtUnary(child) =>
+        if (unary == null) unary = new MergeNode
+        unary.add(child)
+      case ETtBinary(child1, child2) =>
+        if (binaryLeft == null) { binaryLeft = new MergeNode; binaryRight = new MergeNode }
+        binaryLeft.add(child1)
+        binaryRight.add(child2)
+      case ETtWeak(insts) =>
+        if (weak == null) weak = mutable.Map()
+        for ((inst, ch) <- insts)
+          weak.getOrElseUpdate(inst, new MergeNode).add(ch)
+      case ETtStrong(eigenVar, child) =>
+        if (skolems != null) {
+          val (skT, merger) = skolems.head
+          subst.add(eigenVar, skT)
+          merger.add(child)
         } else {
-          if ( strongEV == null ) {
+          if (strongEV == null) {
             strongEV = eigenVar
             strongChild = new MergeNode
           } else {
-            subst.add( eigenVar, strongEV )
+            subst.add(eigenVar, strongEV)
           }
-          strongChild.add( child )
+          strongChild.add(child)
         }
-      case ETtDef( shallow, child ) =>
-        if ( defs == null ) defs = mutable.Map.empty
-        defs.getOrElseUpdate( shallow, new MergeNode ).add( child )
-      case ETtSkolem( skTerm, child ) =>
-        if ( strongEV != null ) {
-          require( skolems == null )
-          subst.add( strongEV, skTerm )
-          skolems = mutable.Map( skTerm -> strongChild )
+      case ETtDef(shallow, child) =>
+        if (defs == null) defs = mutable.Map.empty
+        defs.getOrElseUpdate(shallow, new MergeNode).add(child)
+      case ETtSkolem(skTerm, child) =>
+        if (strongEV != null) {
+          require(skolems == null)
+          subst.add(strongEV, skTerm)
+          skolems = mutable.Map(skTerm -> strongChild)
           strongChild = null
           strongEV = null
         }
-        if ( skolems == null ) skolems = mutable.Map.empty
-        skolems.getOrElseUpdate( skTerm, new MergeNode ).add( child )
+        if (skolems == null) skolems = mutable.Map.empty
+        skolems.getOrElseUpdate(skTerm, new MergeNode).add(child)
     }
 }
 private object MergeNode {
-  def apply( et: ExpansionTree, subst: MutableSubstitution ): ExpansionTree =
-    et.copy( term = apply( et.term, subst ) )
-  def apply( et: ETt, subst: MutableSubstitution ): ETt = {
+  def apply(et: ExpansionTree, subst: MutableSubstitution): ExpansionTree =
+    et.copy(term = apply(et.term, subst))
+  def apply(et: ETt, subst: MutableSubstitution): ETt = {
     val merger = new MergeNode
-    merger.add( et )( subst )
+    merger.add(et)(subst)
     merger.toETt
   }
 }
 
 /** Reduces merge nodes in an expansion proof. */
 object eliminateMerges {
-  def apply( et: ETt ): ETt = apply( Sequent() :+ et ).succedent.head
-  @tailrec private def go[T: ClosedUnderSub]( t: T )( merge: ( T, MutableSubstitution ) => T ): T = {
+  def apply(et: ETt): ETt = apply(Sequent() :+ et).succedent.head
+  @tailrec private def go[T: ClosedUnderSub](t: T)(merge: (T, MutableSubstitution) => T): T = {
     val subst = new MutableSubstitution
-    val merged = merge( t, subst )
-    if ( subst.subst.isEmpty ) merged else go( subst.subst( merged ) )( merge )
+    val merged = merge(t, subst)
+    if (subst.subst.isEmpty) merged else go(subst.subst(merged))(merge)
   }
-  def apply( es: Sequent[ETt] ): Sequent[ETt] = go( es )( ( es, subst ) => es.map( MergeNode( _, subst ) ) )
-  def apply( es: Sequent[ExpansionTree] )( implicit dummyImplicit: DummyImplicit ): Sequent[ExpansionTree] =
-    go( es )( ( es, subst ) => es.map( MergeNode( _, subst ) ) )
-  def apply( ep: ExpansionProof ): ExpansionProof =
-    ExpansionProof( apply( ep.expansionSequent ) )
+  def apply(es: Sequent[ETt]): Sequent[ETt] = go(es)((es, subst) => es.map(MergeNode(_, subst)))
+  def apply(es: Sequent[ExpansionTree])(implicit dummyImplicit: DummyImplicit): Sequent[ExpansionTree] =
+    go(es)((es, subst) => es.map(MergeNode(_, subst)))
+  def apply(ep: ExpansionProof): ExpansionProof =
+    ExpansionProof(apply(ep.expansionSequent))
 }

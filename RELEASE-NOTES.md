@@ -1,5 +1,12 @@
 # Release notes for GAPT
 
+## Version 2.18.0 (unreleased)
+
+## Version 2.17.0 (released on 2024-09-27)
+
+* Migrate code base to Scala 3
+* Fix an error when running with a newer JDK version
+
 ## Version 2.16.0 (released on 2022-07-21)
 
 * Update prover interfaces: Vampire, iProver, veriT, leanCoP

@@ -1,4 +1,3 @@
-
 package gapt.integration_tests
 
 import gapt.cutintro._
@@ -15,6 +14,7 @@ import gapt.grammars.DeltaTableMethod
 import gapt.proofs._
 import gapt.proofs.expansion.ExpansionProofToLK
 import gapt.proofs.expansion.eliminateCutsET
+import gapt.proofs.expansion.RichExpansionSequent
 import gapt.proofs.lk.rules.ForallLeftRule
 import gapt.proofs.lk.rules.ForallRightRule
 import gapt.proofs.lk.rules.LogicalAxiom
@@ -52,75 +52,75 @@ class MiscTest extends Specification {
 //    */
 
     "perform cut introduction on an example proof" in {
-      val p = LinearExampleProof( 4 )
-      CutIntroduction( p, method = DeltaTableMethod() ) must beSome
+      val p = LinearExampleProof(4)
+      CutIntroduction(p, method = DeltaTableMethod()) must beSome
     }
 
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 9)" in {
-      val p = LinearExampleProof( 9 )
-      val Some( pi ) = CutIntroduction( p, method = DeltaTableMethod() )
-      val pe = cutNormal( pi )
+      val p = LinearExampleProof(9)
+      val Some(pi) = CutIntroduction(p, method = DeltaTableMethod()): @unchecked
+      val pe = cutNormal(pi)
 
-      isCutFree( p ) must beEqualTo( true )
-      isCutFree( pi ) must beEqualTo( false )
-      isCutFree( pe ) must beEqualTo( true )
+      isCutFree(p) must beEqualTo(true)
+      isCutFree(pi) must beEqualTo(false)
+      isCutFree(pe) must beEqualTo(true)
     }
 
     "load Prover9 proof without equality reasoning, introduce a cut and eliminate it via Gentzen" in {
-      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
+      if (!Prover9.isInstalled) skipped("Prover9 is not installed")
 
-      val p1 = lkProofFromClasspath( "SYN726-1.out" )
-      val Some( p2 ) = CutIntroduction( p1, method = DeltaTableMethod() )
-      val p3 = cutNormal( p2 )
+      val p1 = lkProofFromClasspath("SYN726-1.out")
+      val Some(p2) = CutIntroduction(p1, method = DeltaTableMethod()): @unchecked
+      val p3 = cutNormal(p2)
 
-      isCutFree( p2 ) must beEqualTo( false )
-      isCutFree( p3 ) must beEqualTo( true )
+      isCutFree(p2) must beEqualTo(false)
+      isCutFree(p3) must beEqualTo(true)
     }
 
     "extract expansion tree from tape proof" in {
-      val db = LLKProofParser( ClasspathInputFile( "tape3.llk" ) )
+      val db = LLKProofParser(ClasspathInputFile("tape3.llk"))
       // I have no idea why, but this makes the code get the correct proof
-      val p = db.proof( "TAPEPROOF" )
-      val elp = AtomicExpansion( eliminateDefinitions( db.Definitions )( p ) )
-      val reg = regularize( elp )
-      val lksk_proof = skolemizeLK( reg )
+      val p = db.proof("TAPEPROOF")
+      val elp = AtomicExpansion(eliminateDefinitions(db.Definitions)(p))
+      val reg = regularize(elp)
+      val lksk_proof = skolemizeLK(reg)
       // TODO
-      val et = LKToExpansionProof( reg ) // must throwA[IllegalArgumentException] // currently contains problematic definitions
+      val et = LKToExpansionProof(reg) // must throwA[IllegalArgumentException] // currently contains problematic definitions
       ok
     }
 
     "construct proof with expansion sequent extracted from proof (1/2)" in {
-      val y = FOLVar( "y" )
-      val x = FOLVar( "x" )
-      val Py = FOLAtom( "P", y :: Nil )
-      val Px = FOLAtom( "P", x :: Nil )
-      val AllxPx = All( x, Px )
+      val y = FOLVar("y")
+      val x = FOLVar("x")
+      val Py = FOLAtom("P", y :: Nil)
+      val Px = FOLAtom("P", x :: Nil)
+      val AllxPx = All(x, Px)
 
       // test with 1 weak & 1 strong
-      val p1 = LogicalAxiom( Py )
-      val p2 = ForallLeftRule( p1, AllxPx, y )
-      val p3 = ForallRightRule( p2, AllxPx, y )
+      val p1 = LogicalAxiom(Py)
+      val p2 = ForallLeftRule(p1, AllxPx, y)
+      val p3 = ForallRightRule(p2, AllxPx, y)
 
-      val etSeq = eliminateCutsET( LKToExpansionProof( p3 ) )
+      val etSeq = eliminateCutsET(LKToExpansionProof(p3))
 
-      val proof = ExpansionProofToLK( etSeq ) // must not throw exception
+      val proof = ExpansionProofToLK(etSeq) // must not throw exception
       ok
     }
 
     "construct proof with expansion sequent extracted from proof (2/2)" in {
-      val proof = LinearExampleProof( 4 )
+      val proof = LinearExampleProof(4)
 
-      val proofPrime = ExpansionProofToLK( eliminateCutsET( LKToExpansionProof( proof ) ) ) // must not throw exception
+      val proofPrime = ExpansionProofToLK(eliminateCutsET(LKToExpansionProof(proof))) // must not throw exception
       ok
     }
 
     "load Prover9 proof without equality reasoning and eliminate cuts via Gentzen" in {
-      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
+      if (!Prover9.isInstalled) skipped("Prover9 is not installed")
 
-      val p = lkProofFromClasspath( "PUZ002-1.out" )
-      val q = cutNormal( p )
+      val p = lkProofFromClasspath("PUZ002-1.out")
+      val q = cutNormal(p)
 
-      isCutFree( q ) must beEqualTo( true )
+      isCutFree(q) must beEqualTo(true)
     }
 
     "load veriT proof of reflexivity and verify the validity using sat4j" in {
@@ -139,75 +139,75 @@ class MiscTest extends Specification {
           |(step t10 (cl (not false)) :rule false)
           |(step t11 (cl) :rule resolution :premises (t9 t10))
           |""".stripMargin
-      val proof = VeriTParser.getExpansionProofWithSymmetry( StringInputFile( veriTProof ) ).get
-      Sat4j.isValid( proof.deep ) must beTrue
+      val proof = VeriTParser.getExpansionProofWithSymmetry(StringInputFile(veriTProof)).get
+      Sat4j.isValid(proof.deep) must beTrue
     }
 
     "prove quasi-tautology by veriT and verify validity using sat4j (1/2)" in {
-      if ( !VeriT.isInstalled ) skipped( "VeriT is not installed" )
+      if (!VeriT.isInstalled) skipped("VeriT is not installed")
 
       val F = hof"a=b -> b=a"
-      val E = VeriT.getExpansionProof( HOLSequent( Nil, F :: Nil ) ).get
+      val E = VeriT.getExpansionProof(HOLSequent(Nil, F :: Nil)).get
 
       val Edeep = E.deep
-      Sat4j.isValid( Edeep ) must beTrue
+      Sat4j.isValid(Edeep) must beTrue
     }
 
     "prove quasi-tautology by veriT and verify validity using sat4j (2/2)" in {
-      if ( !VeriT.isInstalled ) skipped( "VeriT is not installed" )
+      if (!VeriT.isInstalled) skipped("VeriT is not installed")
 
       val C = hof"f(x_0,y_0) = f(y_0,x_0)"
       val AS = hof"f(x_0,y_0)=x_0 -> ( f(y_0,x_0)=y_0 -> x_0=y_0 )"
-      val s = HOLSequent( C :: Nil, AS :: Nil )
-      val E = VeriT.getExpansionProof( s ).get
+      val s = HOLSequent(C :: Nil, AS :: Nil)
+      val E = VeriT.getExpansionProof(s).get
 
       val Edeep = E.deep
-      Sat4j.isValid( Edeep ) must beTrue
+      Sat4j.isValid(Edeep) must beTrue
     }
 
-    def lkProofFromClasspath( filename: String ) =
-      Prover9Importer lkProof ClasspathInputFile( filename )
+    def lkProofFromClasspath(filename: String) =
+      Prover9Importer lkProof ClasspathInputFile(filename)
 
     "load Prover9 proof without equality reasoning, extract expansion sequent E, verify deep formula of E using sat4j and readback E to LK" in {
-      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
+      if (!Prover9.isInstalled) skipped("Prover9 is not installed")
 
-      val lkproof = lkProofFromClasspath( "PUZ002-1.out" )
-      val expseq = LKToExpansionProof( lkproof )
+      val lkproof = lkProofFromClasspath("PUZ002-1.out")
+      val expseq = LKToExpansionProof(lkproof)
       val deep = expseq.deep
 
-      Sat4j.isValid( deep ) must beTrue
+      Sat4j.isValid(deep) must beTrue
 
-      ExpansionProofToLK( eliminateCutsET( expseq ) ) // must not throw exception
+      ExpansionProofToLK(eliminateCutsET(expseq)) // must not throw exception
       ok
     }
 
     "load Prover9 proof with equality reasoning, extract expansion tree E, verify deep formula of E using veriT" in {
-      if ( !VeriT.isInstalled ) skipped( "VeriT is not installed" )
-      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
+      if (!VeriT.isInstalled) skipped("VeriT is not installed")
+      if (!Prover9.isInstalled) skipped("Prover9 is not installed")
 
-      val lkProof = lkProofFromClasspath( "ALG004-1.out" )
-      val expansionSequent = LKToExpansionProof( lkProof )
+      val lkProof = lkProofFromClasspath("ALG004-1.out")
+      val expansionSequent = LKToExpansionProof(lkProof)
       val deep = expansionSequent.deep
 
-      VeriT.isValid( deep ) must beTrue
+      VeriT.isValid(deep) must beTrue
     }
 
     "load Prover9 proof without equality reasoning, extract expansion tree E, verify deep formula of E using solvePropositional" in {
-      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
+      if (!Prover9.isInstalled) skipped("Prover9 is not installed")
 
-      val lkproof1 = lkProofFromClasspath( "PUZ002-1.out" )
-      val expseq = LKToExpansionProof( lkproof1 )
+      val lkproof1 = lkProofFromClasspath("PUZ002-1.out")
+      val expseq = LKToExpansionProof(lkproof1)
       val deep = expseq.deep
 
-      solvePropositional( deep ).isRight must beTrue
+      solvePropositional(deep).isRight must beTrue
     }
 
     "load Prover9 proof with top and bottom constants, convert it to sequent calculus and extract the deep formula from its expansion sequent" in {
-      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
-      val lkproof1 = lkProofFromClasspath( "NUM484+3.out" )
-      val expseq = LKToExpansionProof( lkproof1 )
+      if (!Prover9.isInstalled) skipped("Prover9 is not installed")
+      val lkproof1 = lkProofFromClasspath("NUM484+3.out")
+      val expseq = LKToExpansionProof(lkproof1)
       val deep = expseq.deep
-      success( "everything worked fine" )
+      success("everything worked fine")
     }
   }
 }

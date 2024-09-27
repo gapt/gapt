@@ -8,9 +8,9 @@ import gapt.proofs.gaptic._
 
 object prop_35 extends TacticsProof {
 
-  ctx += TBase( "sk" )
-  ctx += TBase( "fun1" )
-  ctx += InductiveType( ty"list", hoc"nil:list", hoc"cons:sk>list>list" )
+  ctx += TBase("sk")
+  ctx += TBase("fun1")
+  ctx += InductiveType(ty"list", hoc"nil:list", hoc"cons:sk>list>list")
   ctx += hoc"head:list>sk"
   ctx += hoc"tail:list>list"
   ctx += hoc"'dropWhile' :fun1>list>list"
@@ -35,36 +35,37 @@ object prop_35 extends TacticsProof {
   val domainClosureAxiom = hof"xs = nil ∨ xs = cons(head(xs),tail(xs))"
 
   val proofDca = Lemma(
-    sequent.antecedent ++: Sequent() :+ ( "dca" -> domainClosureAxiom ) ) {
-      induction( hov"xs:list" )
-      orR
-      refl
-      orR
-      forget( "dca_0" )
-      allL( "def_head", le"x:sk", le"xs_0:list" )
-      allL( "def_tail", le"x:sk", le"xs_0:list" )
-      eql( "def_head_0", "dca_1" ).fromLeftToRight
-      eql( "def_tail_0", "dca_1" ).fromLeftToRight
-      refl
+    sequent.antecedent ++: Sequent() :+ ("dca" -> domainClosureAxiom)
+  ) {
+    induction(hov"xs:list")
+    orR
+    refl
+    orR
+    forget("dca_0")
+    allL("def_head", le"x:sk", le"xs_0:list")
+    allL("def_tail", le"x:sk", le"xs_0:list")
+    eql("def_head_0", "dca_1").fromLeftToRight
+    eql("def_tail_0", "dca_1").fromLeftToRight
+    refl
 
-    }
+  }
 
-  val proof = Lemma( sequent ) {
+  val proof = Lemma(sequent) {
     allR
-    cut( "dca", domainClosureAxiom )
-    forget( "goal" )
-    insert( proofDca )
+    cut("dca", domainClosureAxiom)
+    forget("goal")
+    insert(proofDca)
     orL
-    eql( "dca", "goal" )
-    allL( "def_dropWhile_1", le"lam" )
+    eql("dca", "goal")
+    allL("def_dropWhile_1", le"lam")
     axiomLog
-    eql( "dca", "goal" )
-    allL( "def_apply1_1", le"head(xs:list):sk" )
-    allL( "def_dropWhile_2", le"lam", le"head(xs:list):sk", le"tail(xs:list):list" )
-    andL( "def_apply1_1_0" )
-    impL( "def_dropWhile_2_0" )
+    eql("dca", "goal")
+    allL("def_apply1_1", le"head(xs:list):sk")
+    allL("def_dropWhile_2", le"lam", le"head(xs:list):sk", le"tail(xs:list):list")
+    andL("def_apply1_1_0")
+    impL("def_dropWhile_2_0")
     negR
-    impL( "def_apply1_1_0_0" )
+    impL("def_apply1_1_0_0")
     axiomLog
     axiomBot
     axiomLog

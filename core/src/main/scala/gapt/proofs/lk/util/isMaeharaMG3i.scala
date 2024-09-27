@@ -18,21 +18,21 @@ import gapt.proofs.lk.rules.SkolemQuantifierRule
  */
 object isMaeharaMG3i {
 
-  def checkInference( p: LKProof ): Either[Seq[SequentIndex], Unit] =
+  def checkInference(p: LKProof): Either[Seq[SequentIndex], Unit] =
     p match {
       // These are the restrictions listed in Maehara's paper
-      case NegRightRule( q, _ ) =>
-        if ( q.conclusion.succedent.isEmpty ) Right( () )
-        else Left( p.conclusion.indicesSequent.succedent.dropRight( 1 ) )
-      case ImpRightRule( q, _, _ ) =>
-        if ( q.conclusion.succedent.size <= 1 ) Right( () )
-        else Left( p.conclusion.indicesSequent.succedent.dropRight( 1 ) )
-      case ForallRightRule( q, _, _, _ ) =>
-        if ( q.conclusion.succedent.size <= 1 ) Right( () )
-        else Left( p.conclusion.indicesSequent.succedent.dropRight( 1 ) )
+      case NegRightRule(q, _) =>
+        if (q.conclusion.succedent.isEmpty) Right(())
+        else Left(p.conclusion.indicesSequent.succedent.dropRight(1))
+      case ImpRightRule(q, _, _) =>
+        if (q.conclusion.succedent.size <= 1) Right(())
+        else Left(p.conclusion.indicesSequent.succedent.dropRight(1))
+      case ForallRightRule(q, _, _, _) =>
+        if (q.conclusion.succedent.size <= 1) Right(())
+        else Left(p.conclusion.indicesSequent.succedent.dropRight(1))
 
       case p: SkolemQuantifierRule =>
-        Left( p.mainIndices )
+        Left(p.mainIndices)
 
       // The soundness proof is easy enough:
       // we can convert any mG3i-proof of Γ :- Δ into an LJ-proof of Γ :- ∨∆.
@@ -41,16 +41,16 @@ object isMaeharaMG3i {
       // At first, we might assume that we need to restrict induction as well,
       // since it implicitly uses an implication-right rule.  However, we can get around
       // this by changing the induction formula: we just do induction on the formula ∨Δ instead.
-      case InductionRule( _, _, t ) =>
-        if ( t.ty == To ) // let's just make sure we don't do induction on props...
-          Left( p.mainIndices )
+      case InductionRule(_, _, t) =>
+        if (t.ty == To) // let's just make sure we don't do induction on props...
+          Left(p.mainIndices)
         else
-          Right( () )
+          Right(())
 
-      case _ => Right( () )
+      case _ => Right(())
     }
 
-  def apply( p: LKProof ): Boolean =
-    p.subProofs.forall( checkInference( _ ).isRight )
+  def apply(p: LKProof): Boolean =
+    p.subProofs.forall(checkInference(_).isRight)
 
 }

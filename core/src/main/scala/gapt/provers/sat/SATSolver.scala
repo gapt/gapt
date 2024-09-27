@@ -2,74 +2,75 @@ package gapt.provers.sat
 
 import gapt.expr.formula.Formula
 import gapt.expr.formula.hol.HOLAtomConst
-import gapt.formats.dimacs.{ DIMACS, DIMACSEncoding }
+import gapt.formats.dimacs.{DIMACS, DIMACSEncoding}
 import gapt.logic.hol.fastStructuralCNF
 import gapt.models.PropositionalModel
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.lk.LKProof
-import gapt.proofs.resolution.{ Factor, Input, ResolutionProof }
+import gapt.proofs.resolution.{Factor, Input, ResolutionProof}
 import gapt.proofs.rup.RupProof
-import gapt.proofs.{ HOLClause, HOLSequent, Sequent }
-import gapt.provers.{ OneShotProver, ResolutionProver }
+import gapt.proofs.{HOLClause, HOLSequent, Sequent, RichFormulaSequent}
+import gapt.provers.{OneShotProver, ResolutionProver}
 import gapt.utils.Maybe
 
 trait SATSolver extends OneShotProver {
 
-  def solve( cnf: DIMACS.CNF ): Option[DIMACS.Model]
+  def solve(cnf: DIMACS.CNF): Option[DIMACS.Model]
 
-  def solve( cnf: Iterable[HOLClause] ): Option[PropositionalModel] = {
+  def solve(cnf: Iterable[HOLClause]): Option[PropositionalModel] = {
     val encoding = new DIMACSEncoding
-    solve( encoding.encodeCNF( cnf ) ) map { dimacsModel =>
-      encoding.decodeModel( dimacsModel )
+    solve(encoding.encodeCNF(cnf)) map { dimacsModel =>
+      encoding.decodeModel(dimacsModel)
     }
   }
 
-  def solve( formula: Formula ): Option[PropositionalModel] = {
-    val ( cnf, definitions ) = fastStructuralCNF()( formula )
-    solve( cnf ) map { i =>
+  def solve(formula: Formula): Option[PropositionalModel] = {
+    val (cnf, definitions) = fastStructuralCNF()(formula)
+    solve(cnf) map { i =>
       // remove abbreviations for subformulas
-      PropositionalModel( Map() ++ i.assignment.view.filterKeys {
-        case c: HOLAtomConst => !definitions.isDefinedAt( c )
+      PropositionalModel(Map() ++ i.assignment.view.filterKeys {
+        case c: HOLAtomConst => !definitions.isDefinedAt(c)
         case _               => true
-      }.toMap )
+      }.toMap)
     }
   }
 
-  def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = throw new UnsupportedOperationException
-  override def isValid( seq: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean = solve( seq.toNegConjunction ).isEmpty
+  def getLKProof(seq: HOLSequent)(implicit ctx: Maybe[MutableContext]): Option[LKProof] = throw new UnsupportedOperationException
+  override def isValid(seq: HOLSequent)(implicit ctx: Maybe[Context]): Boolean = solve(seq.toNegConjunction).isEmpty
 
   /**
    * Checks whether a set of clauses is propositionally unsatisfiable.
    */
-  override def isUnsat( cnf: Iterable[HOLClause] )( implicit ctx: Maybe[Context] ): Boolean = isValid( cnf ++: Sequent() map { _.toDisjunction } )
+  override def isUnsat(cnf: Iterable[HOLClause])(implicit ctx: Maybe[Context]): Boolean = isValid(cnf ++: Sequent() map { _.toDisjunction })
 }
 
 trait DrupSolver extends SATSolver with ResolutionProver {
 
-  def getDrupProof( cnf: DIMACS.CNF ): Option[RupProof]
+  def getDrupProof(cnf: DIMACS.CNF): Option[RupProof]
 
-  def getDrupProof( formula: Formula ): Option[RupProof] = getDrupProof( Sequent() :+ formula )
-  def getDrupProof( sequent: HOLSequent ): Option[RupProof] =
-    getDrupProof( fastStructuralCNF()( sequent )._1 )
-  def getDrupProof( cnf: Iterable[HOLClause] ): Option[RupProof] = {
+  def getDrupProof(formula: Formula): Option[RupProof] = getDrupProof(Sequent() :+ formula)
+  def getDrupProof(sequent: HOLSequent): Option[RupProof] =
+    getDrupProof(fastStructuralCNF()(sequent)._1)
+  def getDrupProof(cnf: Iterable[HOLClause]): Option[RupProof] = {
     val encoding = new DIMACSEncoding
-    val dimacsCNF = encoding.encodeCNF( cnf )
-    getDrupProof( dimacsCNF )
+    val dimacsCNF = encoding.encodeCNF(cnf)
+    getDrupProof(dimacsCNF)
   }
 
-  override def getResolutionProof( cnf: Iterable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] = {
-    val cnf_ = cnf.map( c => Factor( Input( c ) ) )
+  override def getResolutionProof(cnf: Iterable[HOLClause])(implicit ctx: Maybe[MutableContext]): Option[ResolutionProof] = {
+    val cnf_ = cnf.map(c => Factor(Input(c)))
     val encoding = new DIMACSEncoding
-    val dimacsCNF = encoding.encodeCNF( cnf_.view.map( _.conclusion.asInstanceOf[HOLClause] ) )
-    getDrupProof( dimacsCNF ).map( _.toRes.toResolution(
+    val dimacsCNF = encoding.encodeCNF(cnf_.view.map(_.conclusion.asInstanceOf[HOLClause]))
+    getDrupProof(dimacsCNF).map(_.toRes.toResolution(
       encoding.decodeAtom,
       cls => {
-        val clause = encoding.decodeClause( cls.toSeq )
-        cnf_.find( _.conclusion multiSetEquals clause ).get
-      } ) )
+        val clause = encoding.decodeClause(cls.toSeq)
+        cnf_.find(_.conclusion multiSetEquals clause).get
+      }
+    ))
   }
 
-  override def isValid( seq: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean = super[SATSolver].isValid( seq )
-  override def getLKProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = super[ResolutionProver].getLKProof( sequent )
+  override def isValid(seq: HOLSequent)(implicit ctx: Maybe[Context]): Boolean = super[SATSolver].isValid(seq)
+  override def getLKProof(sequent: HOLSequent)(implicit ctx: Maybe[MutableContext]): Option[LKProof] = super[ResolutionProver].getLKProof(sequent)
 }

@@ -16,7 +16,7 @@ package gapt.proofs
  *
  * @param proofStack
  */
-class ProofBuilder[+Proof]( private val proofStack: List[Proof] ) {
+class ProofBuilder[+Proof](private val proofStack: List[Proof]) {
 
   /**
    * Pushes a proof onto the stack.
@@ -24,7 +24,7 @@ class ProofBuilder[+Proof]( private val proofStack: List[Proof] ) {
    * @param proof An LKProof.
    * @return
    */
-  def c[P >: Proof]( proof: P ): ProofBuilder[P] = new ProofBuilder( proof :: proofStack )
+  def c[P >: Proof](proof: P): ProofBuilder[P] = new ProofBuilder(proof :: proofStack)
 
   /**
    * Applies a unary inference to the top element of the proof stack.
@@ -32,9 +32,9 @@ class ProofBuilder[+Proof]( private val proofStack: List[Proof] ) {
    * @param inference A function LKProof => LKProof.
    * @return
    */
-  def u[P >: Proof]( inference: Proof => P ): ProofBuilder[P] = proofStack match {
-    case p :: rest => new ProofBuilder( inference( p ) :: rest )
-    case _         => throw new Exception( "Cannot apply unary inference to empty stack." )
+  def u[P >: Proof](inference: Proof => P): ProofBuilder[P] = proofStack match {
+    case p :: rest => new ProofBuilder(inference(p) :: rest)
+    case _         => throw new Exception("Cannot apply unary inference to empty stack.")
   }
 
   /**
@@ -43,10 +43,10 @@ class ProofBuilder[+Proof]( private val proofStack: List[Proof] ) {
    * @param inference A function (LKProof, LKProof) => LKProof
    * @return
    */
-  def b[P >: Proof]( inference: ( Proof, Proof ) => P ): ProofBuilder[P] = proofStack match {
-    case Nil              => throw new Exception( "Cannot apply binary inference to empty stack." )
-    case _ :: Nil         => throw new Exception( "Cannot apply binary inference to stack with only one element." )
-    case p2 :: p1 :: rest => new ProofBuilder( inference( p1, p2 ) :: rest )
+  def b[P >: Proof](inference: (Proof, Proof) => P): ProofBuilder[P] = proofStack match {
+    case Nil              => throw new Exception("Cannot apply binary inference to empty stack.")
+    case _ :: Nil         => throw new Exception("Cannot apply binary inference to stack with only one element.")
+    case p2 :: p1 :: rest => new ProofBuilder(inference(p1, p2) :: rest)
   }
 
   /**
@@ -55,11 +55,11 @@ class ProofBuilder[+Proof]( private val proofStack: List[Proof] ) {
    * @param inference A function (NDProof, NDProof, NDProof) => NDProof
    * @return
    */
-  def t[P >: Proof]( inference: ( Proof, Proof, Proof ) => P ): ProofBuilder[P] = proofStack match {
-    case Nil                    => throw new Exception( "Cannot apply ternary inference to empty stack." )
-    case _ :: Nil               => throw new Exception( "Cannot apply ternary inference to stack with only one element." )
-    case _ :: _ :: Nil          => throw new Exception( "Cannot apply ternary inference to stack with only two elements." )
-    case p3 :: p2 :: p1 :: rest => new ProofBuilder( inference( p1, p2, p3 ) :: rest )
+  def t[P >: Proof](inference: (Proof, Proof, Proof) => P): ProofBuilder[P] = proofStack match {
+    case Nil                    => throw new Exception("Cannot apply ternary inference to empty stack.")
+    case _ :: Nil               => throw new Exception("Cannot apply ternary inference to stack with only one element.")
+    case _ :: _ :: Nil          => throw new Exception("Cannot apply ternary inference to stack with only two elements.")
+    case p3 :: p2 :: p1 :: rest => new ProofBuilder(inference(p1, p2, p3) :: rest)
   }
 
   /**
@@ -68,10 +68,10 @@ class ProofBuilder[+Proof]( private val proofStack: List[Proof] ) {
    * @return
    */
   def qed: Proof = proofStack match {
-    case Nil      => throw new Exception( "Proof stack is empty." )
+    case Nil      => throw new Exception("Proof stack is empty.")
     case p :: Nil => p
-    case _        => throw new Exception( "There is more than one proof on the stack." )
+    case _        => throw new Exception("There is more than one proof on the stack.")
   }
 }
 
-object ProofBuilder extends ProofBuilder[Nothing]( Nil )
+object ProofBuilder extends ProofBuilder[Nothing](Nil)

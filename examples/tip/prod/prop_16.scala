@@ -10,12 +10,12 @@ import gapt.provers.viper.aip.AnalyticInductionProver
 object prop_16 extends TacticsProof {
 
   // Sorts
-  ctx += TBase( "sk" )
+  ctx += TBase("sk")
 
   // Inductive types
-  ctx += InductiveType( ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat" )
+  ctx += InductiveType(ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat")
 
-  //Function constants
+  // Function constants
   ctx += hoc"'plus' :Nat>Nat>Nat"
   ctx += hoc"'even' :Nat>o"
 
@@ -32,33 +32,35 @@ object prop_16 extends TacticsProof {
         goal: ∀x even(plus(x:Nat, x): Nat)
   """
 
-  val lemma_1 = (
-    ( "ap1" -> hof"∀y plus(Z, y) = y" ) +:
-    ( "ap2" -> hof"∀z ∀y plus(S(z), y) = S(plus(z, y))" ) +:
-    Sequent() :+ ( "" -> hof"∀x ∀y plus(x, S(y)) = S(plus(x,y))" ) )
+  val lemma_1 =
+    (
+      ("ap1" -> hof"∀y plus(Z, y) = y") +:
+        ("ap2" -> hof"∀z ∀y plus(S(z), y) = S(plus(z, y))") +:
+        Sequent() :+ ("" -> hof"∀x ∀y plus(x, S(y)) = S(plus(x,y))")
+    )
 
-  val lemma_1_proof = AnalyticInductionProver.singleInduction( lemma_1, hov"x:Nat" )
+  val lemma_1_proof = AnalyticInductionProver.singleInduction(lemma_1, hov"x:Nat")
 
-  val proof = Lemma( sequent ) {
-    cut( "lemma_1", hof"∀x ∀y plus(x, S(y)) = S(plus(x,y))" )
-    insert( lemma_1_proof )
-    allR; induction( hov"x:Nat" ); escargot.withDeskolemization.onAllSubGoals
+  val proof = Lemma(sequent) {
+    cut("lemma_1", hof"∀x ∀y plus(x, S(y)) = S(plus(x,y))")
+    insert(lemma_1_proof)
+    allR; induction(hov"x:Nat"); escargot.withDeskolemization.onAllSubGoals
   }
 
-  val lemma_1_proof_openind = Lemma( lemma_1 ) {
-    allR; allR; induction( hov"x:Nat" )
-    //- BC
+  val lemma_1_proof_openind = Lemma(lemma_1) {
+    allR; allR; induction(hov"x:Nat")
+    // - BC
     rewrite.many ltr "ap1"
     refl
-    //- SC
+    // - SC
     rewrite.many ltr "ap2"
     rewrite ltr "IHx_0"
     refl
   }
 
-  val openind = Lemma( sequent ) {
-    cut( "lemma_1", hof"∀x ∀y plus(x, S(y)) = S(plus(x,y))" )
-    insert( lemma_1_proof_openind )
-    allR; induction( hov"x:Nat" ); escargot.withDeskolemization.onAllSubGoals
+  val openind = Lemma(sequent) {
+    cut("lemma_1", hof"∀x ∀y plus(x, S(y)) = S(plus(x,y))")
+    insert(lemma_1_proof_openind)
+    allR; induction(hov"x:Nat"); escargot.withDeskolemization.onAllSubGoals
   }
 }

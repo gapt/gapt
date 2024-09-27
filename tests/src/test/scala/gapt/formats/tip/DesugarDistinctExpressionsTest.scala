@@ -14,7 +14,7 @@ class DesugarDistinctExpressionsTest extends Specification {
 
   "distinct expressions should be desugared everywhere" in {
     val originalProblem = TipSmtParser.parse(
-      StringInputFile( """
+      StringInputFile("""
         | (declare-datatype nat ((Z) (S (p nat))))
         | (define-fun
         |   f1
@@ -26,75 +26,101 @@ class DesugarDistinctExpressionsTest extends Specification {
         |   ( (distinct a b c) ) )
         | (prove  (distinct a b c) )
         | (assert (distinct a b c) )
-      """.stripMargin ) )
+      """.stripMargin)
+    )
     val resultingProblem =
-      desugarDistinctExpressions.transform( originalProblem )
+      desugarDistinctExpressions.transform(originalProblem)
 
-    originalProblem.definitions( 1 ) must_!= resultingProblem.definitions( 1 )
-    originalProblem.definitions( 2 ) must_!= resultingProblem.definitions( 2 )
-    originalProblem.definitions( 3 ) must_!= resultingProblem.definitions( 3 )
-    originalProblem.definitions( 4 ) must_!= resultingProblem.definitions( 4 )
+    originalProblem.definitions(1) must_!= resultingProblem.definitions(1)
+    originalProblem.definitions(2) must_!= resultingProblem.definitions(2)
+    originalProblem.definitions(3) must_!= resultingProblem.definitions(3)
+    originalProblem.definitions(4) must_!= resultingProblem.definitions(4)
   }
 
   "distinct expressions should be desugared correctly" in {
     val originalProblem = TipSmtParser.parse(
-      StringInputFile( """
+      StringInputFile("""
         | (declare-datatype nat ((Z) (S (p nat))))
         | (define-fun
         |   f1
         |   ((x nat))
         |   nat
         |   (distinct a b c d) )
-      """.stripMargin ) )
+      """.stripMargin)
+    )
     val resultingProblem =
-      desugarDistinctExpressions.transform( originalProblem )
+      desugarDistinctExpressions.transform(originalProblem)
 
-    val TipSmtAnd( expressions ) =
-      resultingProblem.definitions( 1 )
+    val TipSmtAnd(expressions) =
+      resultingProblem.definitions(1)
         .asInstanceOf[TipSmtFunctionDefinition]
-        .body
+        .body: @unchecked
 
     expressions.size must_== 6
     expressions.contains(
       TipSmtNot(
         TipSmtEq(
           Seq(
-            TipSmtIdentifier( "a" ),
-            TipSmtIdentifier( "b" ) ) ) ) ) must_== true
+            TipSmtIdentifier("a"),
+            TipSmtIdentifier("b")
+          )
+        )
+      )
+    ) must_== true
 
     expressions.contains(
       TipSmtNot(
         TipSmtEq(
           Seq(
-            TipSmtIdentifier( "a" ),
-            TipSmtIdentifier( "c" ) ) ) ) ) must_== true
+            TipSmtIdentifier("a"),
+            TipSmtIdentifier("c")
+          )
+        )
+      )
+    ) must_== true
 
     expressions.contains(
       TipSmtNot(
         TipSmtEq(
           Seq(
-            TipSmtIdentifier( "a" ),
-            TipSmtIdentifier( "d" ) ) ) ) ) must_== true
+            TipSmtIdentifier("a"),
+            TipSmtIdentifier("d")
+          )
+        )
+      )
+    ) must_== true
 
     expressions.contains(
       TipSmtNot(
         TipSmtEq(
           Seq(
-            TipSmtIdentifier( "b" ),
-            TipSmtIdentifier( "c" ) ) ) ) ) must_== true
+            TipSmtIdentifier("b"),
+            TipSmtIdentifier("c")
+          )
+        )
+      )
+    ) must_== true
 
     expressions.contains(
       TipSmtNot(
         TipSmtEq(
           Seq(
-            TipSmtIdentifier( "b" ),
-            TipSmtIdentifier( "d" ) ) ) ) ) must_== true
+            TipSmtIdentifier("b"),
+            TipSmtIdentifier("d")
+          )
+        )
+      )
+    ) must_== true
 
     expressions.contains(
       TipSmtNot(
         TipSmtEq(
           Seq(
-            TipSmtIdentifier( "c" ),
-            TipSmtIdentifier( "d" ) ) ) ) ) must_== true
+            TipSmtIdentifier("c"),
+            TipSmtIdentifier("d")
+          )
+        )
+      )
+    ) must_== true
   }
 }

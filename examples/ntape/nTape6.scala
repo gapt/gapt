@@ -1,7 +1,8 @@
 package gapt.examples
 
-import java.io._
+import gapt.formats.llk.LLKTypes
 
+import java.io._
 import gapt.formats.llk.short._
 import gapt.formats.tptp.TptpHOLExporter
 import gapt.proofs.HOLSequent
@@ -42,11 +43,12 @@ object nTape6 {
    * Contains all the formulas used.
    */
   object formulas {
-    implicit val signature =
+    implicit val signature: LLKTypes.LLKSignature =
       sig(
         """var X:o; var U,V:i; var H:i>i; var x,y:i;
               const zero:i; const s:i>i;  const h:i>i;
-              const ite : o > (i > (i>i));""" )
+              const ite : o > (i > (i>i));"""
+      )
     val s1 = "(all X all U all V (X -> ite(X,U,V) = U))"
     val s2 = "(all X all U all V (-X -> ite(X,U,V) = V))"
     val s3 = "(all x -(s(x) = zero))"
@@ -61,8 +63,8 @@ object nTape6 {
     val sc1 = "(exists H (H(zero)=s(zero) & H(s(zero))=zero & H(s(s(zero))) = zero))"
     val sc2 = "(exists H (H(zero)=s(zero) & H(s(zero))=zero & H(s(s(zero))) = s(zero)))"
 
-    val List( f1, f2, f3, f4, w1, w2, w3, conclusion0, conclusion1, conclusion2 ) =
-      List( s1, s2, s3, s4, s5, s6, s7, sc, sc1, sc2 ).map( hof( _ ) )
+    val List(f1, f2, f3, f4, w1, w2, w3, conclusion0, conclusion1, conclusion2) =
+      List(s1, s2, s3, s4, s5, s6, s7, sc, sc1, sc2).map(hof(_))
   }
 
   /**
@@ -70,23 +72,23 @@ object nTape6 {
    */
   object sequents {
     import formulas._
-    val s0a = HOLSequent( f1 :: f2 :: Nil, conclusion0 :: Nil )
-    val s0b = HOLSequent( f1 :: f2 :: formulas.w1 :: Nil, conclusion0 :: Nil )
+    val s0a = HOLSequent(f1 :: f2 :: Nil, conclusion0 :: Nil)
+    val s0b = HOLSequent(f1 :: f2 :: formulas.w1 :: Nil, conclusion0 :: Nil)
 
-    val s1a = HOLSequent( f1 :: f2 :: Nil, conclusion1 :: Nil )
-    val s1b = HOLSequent( f1 :: f2 :: formulas.w1 :: Nil, conclusion1 :: Nil )
-    val s1c = HOLSequent( f1 :: f2 :: f3 :: f4 :: formulas.w1 :: Nil, conclusion1 :: Nil )
-    val s1d = HOLSequent( f1 :: f2 :: f3 :: f4 :: Nil, conclusion1 :: Nil )
+    val s1a = HOLSequent(f1 :: f2 :: Nil, conclusion1 :: Nil)
+    val s1b = HOLSequent(f1 :: f2 :: formulas.w1 :: Nil, conclusion1 :: Nil)
+    val s1c = HOLSequent(f1 :: f2 :: f3 :: f4 :: formulas.w1 :: Nil, conclusion1 :: Nil)
+    val s1d = HOLSequent(f1 :: f2 :: f3 :: f4 :: Nil, conclusion1 :: Nil)
 
-    val s2b = HOLSequent( f1 :: f2 :: f4 :: formulas.w2 :: Nil, conclusion2 :: Nil )
-    val s2c = HOLSequent( f1 :: f2 :: f4 :: Nil, conclusion2 :: Nil )
-    val s2d = HOLSequent( f1 :: f2 :: w3 :: Nil, conclusion2 :: Nil )
-    val s2e = HOLSequent( f1 :: f2 :: f3 :: f4 :: w3 :: Nil, conclusion2 :: Nil )
+    val s2b = HOLSequent(f1 :: f2 :: f4 :: formulas.w2 :: Nil, conclusion2 :: Nil)
+    val s2c = HOLSequent(f1 :: f2 :: f4 :: Nil, conclusion2 :: Nil)
+    val s2d = HOLSequent(f1 :: f2 :: w3 :: Nil, conclusion2 :: Nil)
+    val s2e = HOLSequent(f1 :: f2 :: f3 :: f4 :: w3 :: Nil, conclusion2 :: Nil)
 
-    val consistent = HOLSequent( f1 :: f2 :: f3 :: f4 :: formulas.w1 :: conclusion0 :: Nil, Nil )
+    val consistent = HOLSequent(f1 :: f2 :: f3 :: f4 :: formulas.w1 :: conclusion0 :: Nil, Nil)
 
-    val cuts0a = HOLSequent( f1 :: f2 :: f3 :: f4 :: Nil, formulas.w1 :: Nil )
-    val cuts0b = HOLSequent( f3 :: f4 :: formulas.w1 :: Nil, conclusion0 :: Nil )
+    val cuts0a = HOLSequent(f1 :: f2 :: f3 :: f4 :: Nil, formulas.w1 :: Nil)
+    val cuts0b = HOLSequent(f3 :: f4 :: formulas.w1 :: Nil, conclusion0 :: Nil)
   }
 
   import sequents._
@@ -97,10 +99,12 @@ object nTape6 {
    * Problem 0: sequence (0,1)
    */
   val p0 = s0a
+
   /**
    * Problem 1: sequence (1,0,0)
    */
   val p1 = s1a
+
   /**
    * Problem 0: sequence (1,0,1)
    */
@@ -110,14 +114,17 @@ object nTape6 {
    * Problem 0 with witness: sequence (0,1)
    */
   val w0 = s0b
+
   /**
    * Problem 1 with witness : sequence (1,0,0)
    */
   val w1 = s1c
+
   /**
    * Problem 2 with witness: sequence (1,0,1)
    */
   val w2 = s2c
+
   /**
    * Problem 2 with different witness: sequence (1,0,1)
    */
@@ -128,27 +135,27 @@ object nTape6 {
    *
    * @param path
    */
-  def `export`( path: String = ".", separate_axioms: Boolean = false ): Unit = {
+  def `export`(path: String = ".", separate_axioms: Boolean = false): Unit = {
     val f = path + File.separator + fn
-    //sc
-    TptpHOLExporter( s0a, f + "0-minimal.tptp", separate_axioms ) //provable by agsyhol
-    TptpHOLExporter( s0b, f + "0-with-witness.tptp", separate_axioms ) //provable by agsyhol
-    //sc1
-    TptpHOLExporter( s1a, f + "1-minimal.tptp", separate_axioms ) //timeout
-    TptpHOLExporter( s1b, f + "1-withness-no-arith.tptp", separate_axioms ) //timeout
-    TptpHOLExporter( s1c, f + "1-with-witness.tptp", separate_axioms ) //provable by leo 2, satallax, agsyhol
-    TptpHOLExporter( s1d, f + "1-without-witness.tptp", separate_axioms ) //timeout
-    //sc2
-    TptpHOLExporter( s2b, f + "2-with-witness.tptp", separate_axioms ) //provable by leo 2, satallax
-    TptpHOLExporter( s2c, f + "2-without-witness.tptp", separate_axioms ) //timeout
+    // sc
+    TptpHOLExporter(s0a, f + "0-minimal.tptp", separate_axioms) // provable by agsyhol
+    TptpHOLExporter(s0b, f + "0-with-witness.tptp", separate_axioms) // provable by agsyhol
+    // sc1
+    TptpHOLExporter(s1a, f + "1-minimal.tptp", separate_axioms) // timeout
+    TptpHOLExporter(s1b, f + "1-withness-no-arith.tptp", separate_axioms) // timeout
+    TptpHOLExporter(s1c, f + "1-with-witness.tptp", separate_axioms) // provable by leo 2, satallax, agsyhol
+    TptpHOLExporter(s1d, f + "1-without-witness.tptp", separate_axioms) // timeout
+    // sc2
+    TptpHOLExporter(s2b, f + "2-with-witness.tptp", separate_axioms) // provable by leo 2, satallax
+    TptpHOLExporter(s2c, f + "2-without-witness.tptp", separate_axioms) // timeout
 
-    //sc2 with different witness
-    TptpHOLExporter( s2d, f + "2-with-witness2.tptp", separate_axioms ) //provable by leo 2, satallax
-    //TPTPHOLExporter(  s2e , f + "2-with-witness2-help.tptp" , separate_axioms ) //provable by leo 2, satallax
+    // sc2 with different witness
+    TptpHOLExporter(s2d, f + "2-with-witness2.tptp", separate_axioms) // provable by leo 2, satallax
+    // TPTPHOLExporter(  s2e , f + "2-with-witness2-help.tptp" , separate_axioms ) //provable by leo 2, satallax
 
-    //these are some experiments
-    //TPTPHOLExporter(  cuts0a , f + "0-cut1.tptp" , separate_axioms )
-    //TPTPHOLExporter(  cuts0b , f + "0-cut2.tptp" , separate_axioms )
-    //TPTPHOLExporter(  consistent , f + "0-consistent.tptp" , separate_axioms )
+    // these are some experiments
+    // TPTPHOLExporter(  cuts0a , f + "0-cut1.tptp" , separate_axioms )
+    // TPTPHOLExporter(  cuts0b , f + "0-cut2.tptp" , separate_axioms )
+    // TPTPHOLExporter(  consistent , f + "0-consistent.tptp" , separate_axioms )
   }
 }

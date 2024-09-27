@@ -12,27 +12,27 @@ class UnifyInstancesTest extends Specification {
 
   "example" in {
     implicit val ctx = MutableContext.default()
-    ctx += Sort( "i" )
+    ctx += Sort("i")
     ctx += hoc"p: i>o"
     ctx += hoc"q: i>o"
     ctx += hoc"c: i"
 
-    val lk = Lemma( ( "hyp" -> hof"!x!y (p(x) & q(y))" ) +:
+    val lk = Lemma(("hyp" -> hof"!x!y (p(x) & q(y))") +:
       Sequent()
-      :+ ( "conj" -> hof"q(c) & p(c)" ) ) {
+      :+ ("conj" -> hof"q(c) & p(c)")) {
 
-      destruct( "conj" )
+      destruct("conj")
       // two instance vectors:
-      allL( fov"x", le"c" ); prop
-      allL( le"c", fov"y" ); prop
+      allL(fov"x", le"c"); prop
+      allL(le"c", fov"y"); prop
     }
 
-    val exp = LKToExpansionProof( lk )
-    numberOfInstancesET( exp ) must_== 4
+    val exp = LKToExpansionProof(lk)
+    numberOfInstancesET(exp) must_== 4
 
-    val unified = unifyInstancesET( exp )
+    val unified = unifyInstancesET(exp)
     // now just one instance vector:
-    numberOfInstancesET( unified ) must_== 2
+    numberOfInstancesET(unified) must_== 2
   }
 
 }

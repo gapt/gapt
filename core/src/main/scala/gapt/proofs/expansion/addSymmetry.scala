@@ -1,4 +1,3 @@
-
 package gapt.proofs.expansion
 
 import gapt.expr._
@@ -14,20 +13,20 @@ import gapt.logic.Polarity
  */
 object addSymmetry {
 
-  def apply( s: ExpansionSequent ): ExpansionSequent = {
-    val negativePairs = for ( et <- s.elements.view; ETAtom( Eq( l, r ), Polarity.Negative ) <- et.subProofs ) yield l -> r
-    val positivePairs = for ( et <- s.elements.view; ETAtom( Eq( l, r ), Polarity.Positive ) <- et.subProofs ) yield l -> r
+  def apply(s: ExpansionSequent): ExpansionSequent = {
+    val negativePairs = for (et <- s.elements.view; case ETAtom(Eq(l, r), Polarity.Negative) <- et.subProofs) yield l -> r
+    val positivePairs = for (et <- s.elements.view; case ETAtom(Eq(l, r), Polarity.Positive) <- et.subProofs) yield l -> r
 
-    positivePairs.map( _.swap ).toSet.intersect( negativePairs.toSet ).
-      groupBy( _._1.ty ).map {
-        case ( ty, pairs ) =>
-          val Seq( x, y ) = Seq( "x", "y" ).map( Var( _, ty ) )
-          val symmAx = hof"!$x !$y ($x=$y -> $y=$x)"
-          formulaToExpansionTree(
-            symmAx,
-            pairs.map { case ( l, r ) => Substitution( x -> l, y -> r ) },
-            Polarity.InAntecedent )
-      } ++: s
+    positivePairs.map(_.swap).toSet.intersect(negativePairs.toSet).groupBy(_._1.ty).map {
+      case (ty, pairs) =>
+        val Seq(x, y) = Seq("x", "y").map(Var(_, ty))
+        val symmAx = hof"!$x !$y ($x=$y -> $y=$x)"
+        formulaToExpansionTree(
+          symmAx,
+          pairs.map { case (l, r) => Substitution(x -> l, y -> r) },
+          Polarity.InAntecedent
+        )
+    } ++: s
   }
 
 }

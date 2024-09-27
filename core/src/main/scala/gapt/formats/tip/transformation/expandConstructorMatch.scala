@@ -30,8 +30,8 @@ object expandConstructorMatchExpressions extends TipSmtProblemTransformation {
    * @return A problem whose expressions do not contain any constructor
    * match-expressions.
    */
-  def transform( problem: TipSmtProblem ): TipSmtProblem =
-    new ExpandConstructorMatch( problem )()
+  def transform(problem: TipSmtProblem): TipSmtProblem =
+    new ExpandConstructorMatch(problem)()
 }
 
 /**
@@ -56,9 +56,9 @@ object expandConstructorMatchExpressions extends TipSmtProblemTransformation {
  * @param problem The problem whose expressions are subject to the
  * transformation.
  */
-class ExpandConstructorMatch( val problem: TipSmtProblem ) {
+class ExpandConstructorMatch(val problem: TipSmtProblem) {
 
-  problem.symbolTable = Some( SymbolTable( problem ) )
+  problem.symbolTable = Some(SymbolTable(problem))
 
   private val constructorSymbols: Set[String] =
     problem.symbolTable.get.constructors
@@ -69,36 +69,42 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
    * @return A problem whose expressions do not contain any constructor
    * match-expressions.
    */
-  def apply(): TipSmtProblem = problem.copy( definitions =
+  def apply(): TipSmtProblem = problem.copy(definitions =
     problem.definitions map {
-      expandConstructorMatchDefinitionVisitor.dispatch( _, () )
-    } )
+      expandConstructorMatchDefinitionVisitor.dispatch(_, ())
+    }
+  )
 
   private object expandConstructorMatchDefinitionVisitor
-    extends TipSmtDefinitionTransformation[Unit] {
+      extends TipSmtDefinitionTransformation[Unit] {
 
     override def visit(
-      functionDefinition: TipSmtFunctionDefinition,
-      data:               Unit ): TipSmtFunctionDefinition =
+        functionDefinition: TipSmtFunctionDefinition,
+        data: Unit
+    ): TipSmtFunctionDefinition =
       functionDefinition.copy(
-        body = expandConstructorMatch( functionDefinition.body ) )
+        body = expandConstructorMatch(functionDefinition.body)
+      )
 
     override def visit(
-      assertion: TipSmtAssertion,
-      data:      Unit ): TipSmtAssertion =
-      assertion.copy( expr = expandConstructorMatch( assertion.expr ) )
+        assertion: TipSmtAssertion,
+        data: Unit
+    ): TipSmtAssertion =
+      assertion.copy(expr = expandConstructorMatch(assertion.expr))
 
     override def visit(
-      goal: TipSmtGoal,
-      data: Unit ): TipSmtGoal =
-      goal.copy( expr = expandConstructorMatch( goal.expr ) )
+        goal: TipSmtGoal,
+        data: Unit
+    ): TipSmtGoal =
+      goal.copy(expr = expandConstructorMatch(goal.expr))
 
     override def visit(
-      functionDefinitions: TipSmtMutualRecursiveFunctionDefinition,
-      data:                Unit ): TipSmtMutualRecursiveFunctionDefinition =
-      functionDefinitions.copy( functions = functionDefinitions.functions map {
-        visit( _, data )
-      } )
+        functionDefinitions: TipSmtMutualRecursiveFunctionDefinition,
+        data: Unit
+    ): TipSmtMutualRecursiveFunctionDefinition =
+      functionDefinitions.copy(functions = functionDefinitions.functions map {
+        visit(_, data)
+      })
   }
 
   /**
@@ -109,26 +115,27 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
    * @return An expression not containing constructor match-expressions.
    */
   private def expandConstructorMatch(
-    expression: TipSmtExpression ): TipSmtExpression = {
+      expression: TipSmtExpression
+  ): TipSmtExpression = {
     expression match {
-      case e @ TipSmtAnd( _ ) =>
-        expandConstructorMatch( e )
-      case e @ TipSmtOr( _ ) =>
-        expandConstructorMatch( e )
-      case e @ TipSmtImp( _ ) =>
-        expandConstructorMatch( e )
-      case e @ TipSmtEq( _ ) =>
-        expandConstructorMatch( e )
-      case e @ TipSmtForall( _, _ ) =>
-        expandConstructorMatch( e )
-      case e @ TipSmtExists( _, _ ) =>
-        expandConstructorMatch( e )
-      case e @ TipSmtMatch( _, _ ) =>
-        expandConstructorMatch( e )
-      case e @ TipSmtIte( _, _, _ ) =>
-        expandConstructorMatch( e )
-      case e @ TipSmtFun( _, _ ) =>
-        expandConstructorMatch( e )
+      case e @ TipSmtAnd(_) =>
+        expandConstructorMatch(e)
+      case e @ TipSmtOr(_) =>
+        expandConstructorMatch(e)
+      case e @ TipSmtImp(_) =>
+        expandConstructorMatch(e)
+      case e @ TipSmtEq(_) =>
+        expandConstructorMatch(e)
+      case e @ TipSmtForall(_, _) =>
+        expandConstructorMatch(e)
+      case e @ TipSmtExists(_, _) =>
+        expandConstructorMatch(e)
+      case e @ TipSmtMatch(_, _) =>
+        expandConstructorMatch(e)
+      case e @ TipSmtIte(_, _, _) =>
+        expandConstructorMatch(e)
+      case e @ TipSmtFun(_, _) =>
+        expandConstructorMatch(e)
       case _ => expression
     }
   }
@@ -141,30 +148,33 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
    * @return An expression not containing constructor match-expressions.
    */
   private def expandConstructorMatch(
-    matchExpression: TipSmtMatch ): TipSmtExpression =
+      matchExpression: TipSmtMatch
+  ): TipSmtExpression =
     matchExpression.expr match {
-      case TipSmtFun( identifier, expressions ) //
-      if isConstructor( identifier ) =>
-        retrieveCase( matchExpression, identifier ) match {
-          case Some( cas ) =>
-            val TipSmtConstructorPattern( _, variables ) = cas.pattern
-            val substitution = Substitution( variables zip expressions: _* )
+      case TipSmtFun(identifier, expressions) //
+          if isConstructor(identifier) =>
+        retrieveCase(matchExpression, identifier) match {
+          case Some(cas) =>
+            val TipSmtConstructorPattern(_, variables) = cas.pattern: @unchecked
+            val substitution = Substitution(variables zip expressions: _*)
             val newExpression =
-              new Substitute( problem )( cas.expr, substitution )
-            expandConstructorMatch( newExpression )
+              new Substitute(problem)(cas.expr, substitution)
+            expandConstructorMatch(newExpression)
           case _ =>
             TipSmtMatch(
-              expandConstructorMatch( matchExpression.expr ),
-              matchExpression.cases.map { expandConstructorMatch( _ ) } )
+              expandConstructorMatch(matchExpression.expr),
+              matchExpression.cases.map { expandConstructorMatch(_) }
+            )
         }
-      case id @ TipSmtIdentifier( _ ) if isConstructor( id ) =>
-        retrieveCase( matchExpression, id ) match {
-          case Some( c ) => expandConstructorMatch( c.expr )
-          case _         => TipSmtMatch( id, matchExpression.cases.map { expandConstructorMatch } )
+      case id @ TipSmtIdentifier(_) if isConstructor(id) =>
+        retrieveCase(matchExpression, id) match {
+          case Some(c) => expandConstructorMatch(c.expr)
+          case _       => TipSmtMatch(id, matchExpression.cases.map { expandConstructorMatch })
         }
       case _ =>
         matchExpression.copy(
-          cases = matchExpression.cases map { expandConstructorMatch } )
+          cases = matchExpression.cases map { expandConstructorMatch }
+        )
     }
 
   /**
@@ -176,8 +186,9 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
    * contain constructor match-expressions.
    */
   private def expandConstructorMatch(
-    expr: TipSmtCase ): TipSmtCase = {
-    expr.copy( expr = expandConstructorMatch( expr.expr ) )
+      expr: TipSmtCase
+  ): TipSmtCase = {
+    expr.copy(expr = expandConstructorMatch(expr.expr))
   }
 
   /**
@@ -188,8 +199,9 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
    * @return An expression not containing constructor match-expressions.
    */
   private def expandConstructorMatch(
-    expr: TipSmtAnd ): TipSmtExpression =
-    expr.copy( exprs = expr.exprs map { expandConstructorMatch } )
+      expr: TipSmtAnd
+  ): TipSmtExpression =
+    expr.copy(exprs = expr.exprs map { expandConstructorMatch })
 
   /**
    * Expands constructor match-expressions.
@@ -199,8 +211,9 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
    * @return An expression not containing constructor match-expressions.
    */
   private def expandConstructorMatch(
-    expr: TipSmtOr ): TipSmtExpression =
-    expr.copy( exprs = expr.exprs map { expandConstructorMatch } )
+      expr: TipSmtOr
+  ): TipSmtExpression =
+    expr.copy(exprs = expr.exprs map { expandConstructorMatch })
 
   /**
    * Expands constructor match-expressions.
@@ -210,8 +223,9 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
    * @return An expression not containing constructor match-expressions.
    */
   private def expandConstructorMatch(
-    expr: TipSmtEq ): TipSmtExpression =
-    expr.copy( exprs = expr.exprs map { expandConstructorMatch } )
+      expr: TipSmtEq
+  ): TipSmtExpression =
+    expr.copy(exprs = expr.exprs map { expandConstructorMatch })
 
   /**
    * Expands constructor match-expressions.
@@ -221,8 +235,9 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
    * @return An expression not containing constructor match-expressions.
    */
   private def expandConstructorMatch(
-    expr: TipSmtImp ): TipSmtExpression =
-    expr.copy( exprs = expr.exprs map { expandConstructorMatch } )
+      expr: TipSmtImp
+  ): TipSmtExpression =
+    expr.copy(exprs = expr.exprs map { expandConstructorMatch })
 
   /**
    * Expands constructor match-expressions.
@@ -232,11 +247,13 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
    * @return An expression not containing constructor match-expressions.
    */
   private def expandConstructorMatch(
-    expr: TipSmtIte ): TipSmtExpression =
+      expr: TipSmtIte
+  ): TipSmtExpression =
     TipSmtIte(
-      expandConstructorMatch( expr.cond ),
-      expandConstructorMatch( expr.ifTrue ),
-      expandConstructorMatch( expr.ifFalse ) )
+      expandConstructorMatch(expr.cond),
+      expandConstructorMatch(expr.ifTrue),
+      expandConstructorMatch(expr.ifFalse)
+    )
 
   /**
    * Expands constructor match-expressions.
@@ -246,8 +263,9 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
    * @return An expression not containing constructor match-expressions.
    */
   private def expandConstructorMatch(
-    expr: TipSmtExists ): TipSmtExpression =
-    expr.copy( formula = expandConstructorMatch( expr.formula ) )
+      expr: TipSmtExists
+  ): TipSmtExpression =
+    expr.copy(formula = expandConstructorMatch(expr.formula))
 
   /**
    * Expands constructor match-expressions.
@@ -257,8 +275,9 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
    * @return An expression not containing constructor match-expressions.
    */
   private def expandConstructorMatch(
-    expr: TipSmtForall ): TipSmtExpression =
-    expr.copy( formula = expandConstructorMatch( expr.formula ) )
+      expr: TipSmtForall
+  ): TipSmtExpression =
+    expr.copy(formula = expandConstructorMatch(expr.formula))
 
   /**
    * Expands constructor match-expressions.
@@ -268,8 +287,9 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
    * @return An expression not containing constructor match-expressions.
    */
   private def expandConstructorMatch(
-    expr: TipSmtFun ): TipSmtExpression =
-    expr.copy( arguments = expr.arguments map { expandConstructorMatch } )
+      expr: TipSmtFun
+  ): TipSmtExpression =
+    expr.copy(arguments = expr.arguments map { expandConstructorMatch })
 
   /**
    * Retrieves a case-statement of a given match-expression.
@@ -282,8 +302,10 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
    * based on the given constructor symbol.
    */
   private def retrieveCase(
-    matchExpression: TipSmtMatch, constructor: TipSmtIdentifier ): Option[TipSmtCase] =
-    retrieveCase( matchExpression, constructor.name )
+      matchExpression: TipSmtMatch,
+      constructor: TipSmtIdentifier
+  ): Option[TipSmtCase] =
+    retrieveCase(matchExpression, constructor.name)
 
   /**
    * Retrieves a case-statement of a given match-expression.
@@ -296,11 +318,15 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
    * based on the given constructor symbol.
    */
   private def retrieveCase(
-    matchExpression: TipSmtMatch, constructor: String ): Option[TipSmtCase] =
+      matchExpression: TipSmtMatch,
+      constructor: String
+  ): Option[TipSmtCase] =
     matchExpression.cases.find {
       case TipSmtCase(
-        TipSmtConstructorPattern( TipSmtIdentifier( symbol ), _ ), _ ) //
-        if constructor == symbol => true
+            TipSmtConstructorPattern(TipSmtIdentifier(symbol), _),
+            _
+          ) //
+          if constructor == symbol => true
       case _ => false
     }
 
@@ -310,8 +336,8 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
    * @param symbol The identifier to be checked.
    * @return true if the given identifier is a constructor, false otherwise.
    */
-  private def isConstructor( symbol: TipSmtIdentifier ): Boolean =
-    isConstructor( symbol.name )
+  private def isConstructor(symbol: TipSmtIdentifier): Boolean =
+    isConstructor(symbol.name)
 
   /**
    * Checks whether the given string is constructor symbol.
@@ -320,6 +346,6 @@ class ExpandConstructorMatch( val problem: TipSmtProblem ) {
    * @return true if the given symbol is the name of a constructor, false
    * otherwise.
    */
-  private def isConstructor( symbol: String ): Boolean =
-    constructorSymbols.contains( symbol )
+  private def isConstructor(symbol: String): Boolean =
+    constructorSymbols.contains(symbol)
 }

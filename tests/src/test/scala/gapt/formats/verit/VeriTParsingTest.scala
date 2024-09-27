@@ -13,8 +13,8 @@ class VeriTParsingTest extends Specification {
         """
           |unsat
           |""".stripMargin
-      val Some( proof ) = VeriTParser.parseProof( input )
-      proof must_== AletheProof( Nil )
+      val Some(proof) = VeriTParser.parseProof(input): @unchecked
+      proof must_== AletheProof(Nil)
     }
 
     "parse satisfiability statement" in {
@@ -23,8 +23,7 @@ class VeriTParsingTest extends Specification {
           |sat
           |Formula is Satisfiable
           |""".stripMargin
-      VeriTParser.parseProof( input ) must beNone
+      VeriTParser.parseProof(input) must beNone
     }
   }
 }
-

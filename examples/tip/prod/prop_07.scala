@@ -10,13 +10,13 @@ import gapt.provers.viper.aip.AnalyticInductionProver
 object prop_07 extends TacticsProof {
 
   // Sorts
-  ctx += TBase( "sk" )
+  ctx += TBase("sk")
 
   // Inductive types
-  ctx += InductiveType( ty"list", hoc"'nil' :list", hoc"'cons' :sk>list>list" )
-  ctx += InductiveType( ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat" )
+  ctx += InductiveType(ty"list", hoc"'nil' :list", hoc"'cons' :sk>list>list")
+  ctx += InductiveType(ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat")
 
-  //Function constants
+  // Function constants
   ctx += hoc"'qrev' :list>list>list"
   ctx += hoc"'plus' :Nat>Nat>Nat"
   ctx += hoc"'length' :list>Nat"
@@ -38,28 +38,31 @@ object prop_07 extends TacticsProof {
         goal: ∀x ∀y length(qrev(x, y)) = plus(length(x), length(y))
   """
 
-  val lem_1 = ( "ap1" -> hof"∀y plus(Z, y) = y" ) +:
-    ( "ap2" -> hof"∀z ∀y plus(S(z), y) = S(plus(z, y))" ) +:
-    Sequent() :+ ( "lem_1" -> hof"∀x ∀y plus(x,S(y)) = S(plus(x,y))" )
+  val lem_1 = ("ap1" -> hof"∀y plus(Z, y) = y") +:
+    ("ap2" -> hof"∀z ∀y plus(S(z), y) = S(plus(z, y))") +:
+    Sequent() :+ ("lem_1" -> hof"∀x ∀y plus(x,S(y)) = S(plus(x,y))")
 
-  val lem_1_proof = AnalyticInductionProver.singleInduction( lem_1, hov"x:Nat" )
+  val lem_1_proof = AnalyticInductionProver.singleInduction(lem_1, hov"x:Nat")
 
-  val cut_lem = ( "lem_1" -> hof"∀x ∀y plus(x,S(y)) = S(plus(x,y))" ) +: sequent
+  val cut_lem = ("lem_1" -> hof"∀x ∀y plus(x,S(y)) = S(plus(x,y))") +: sequent
 
-  val cut_lem_proof = AnalyticInductionProver.singleInduction( cut_lem, hov"x:list" )
+  val cut_lem_proof = AnalyticInductionProver.singleInduction(cut_lem, hov"x:list")
 
-  val proof = Lemma( sequent ) {
-    cut( "lem_1", hof"∀x ∀y plus(x,S(y)) = S(plus(x,y))" )
-    insert( lem_1_proof )
-    insert( cut_lem_proof )
+  val proof = Lemma(sequent) {
+    cut("lem_1", hof"∀x ∀y plus(x,S(y)) = S(plus(x,y))")
+    insert(lem_1_proof)
+    insert(cut_lem_proof)
   }
 
-  val proof2 = Lemma( sequent ) {
-    cut( "l", hof"""
+  val proof2 = Lemma(sequent) {
+    cut(
+      "l",
+      hof"""
         !x!y (length(qrev x y) = plus(length x, length y) &
               plus(length x, S(length y)) = S(plus(length x, length y)))
-      """ ) right escrgt
-    forget( "goal" ); allR( hov"x:list" )
-    induction( hov"x:list" ) onAll escrgt
+      """
+    ) right escrgt
+    forget("goal"); allR(hov"x:list")
+    induction(hov"x:list") onAll escrgt
   }
 }

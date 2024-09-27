@@ -27,22 +27,21 @@ import gapt.proofs.lk.LKProof
  * @param mainFormula The main formula A[x\s(...)]
  * @param skolemTerm The Skolem term s(...)
  */
-case class ForallSkRightRule( subProof: LKProof, aux: SequentIndex, mainFormula: Formula,
-                              skolemTerm: Expr )
-  extends SkolemQuantifierRule {
+case class ForallSkRightRule(subProof: LKProof, aux: SequentIndex, mainFormula: Formula, skolemTerm: Expr)
+    extends SkolemQuantifierRule {
 
-  validateIndices( premise, Seq(), Seq( aux ) )
+  validateIndices(premise, Seq(), Seq(aux))
 
-  val All( quantifiedVariable, subFormula ) = mainFormula
+  val All(quantifiedVariable, subFormula) = mainFormula: @unchecked
 
   override def name: String = "∀sk:r"
 
-  def auxIndices: Seq[Seq[SequentIndex]] = Seq( Seq( aux ) )
+  def auxIndices: Seq[Seq[SequentIndex]] = Seq(Seq(aux))
 
   override def mainFormulaSequent: HOLSequent = Sequent() :+ mainFormula
 }
 
-object ForallSkRightRule extends ConvenienceConstructor( "ForallSkRightRule" ) {
+object ForallSkRightRule extends ConvenienceConstructor("ForallSkRightRule") {
 
   /**
    * Convenience constructor for ∀sk:r that, given a Skolem term and Skolem definition,
@@ -51,16 +50,16 @@ object ForallSkRightRule extends ConvenienceConstructor( "ForallSkRightRule" ) {
    * @param subProof The subproof.
    * @return
    */
-  def apply( subProof: LKProof, skolemTerm: Expr, skolemDef: Expr ): ForallSkRightRule = {
-    val Apps( _, skolemArgs ) = skolemTerm
-    val mainFormula = BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) ).asInstanceOf[Formula]
-    apply( subProof, mainFormula, skolemTerm )
+  def apply(subProof: LKProof, skolemTerm: Expr, skolemDef: Expr): ForallSkRightRule = {
+    val Apps(_, skolemArgs) = skolemTerm
+    val mainFormula = BetaReduction.betaNormalize(skolemDef(skolemArgs: _*)).asInstanceOf[Formula]
+    apply(subProof, mainFormula, skolemTerm)
   }
 
-  def apply( subProof: LKProof, mainFormula: Formula, skolemTerm: Expr ): ForallSkRightRule = {
-    val auxFormula = instantiate( mainFormula, skolemTerm )
+  def apply(subProof: LKProof, mainFormula: Formula, skolemTerm: Expr): ForallSkRightRule = {
+    val auxFormula = instantiate(mainFormula, skolemTerm)
     val premise = subProof.endSequent
-    val ( _, indices ) = findAndValidate( premise )( Seq(), Seq( auxFormula ) )
-    ForallSkRightRule( subProof, Suc( indices( 0 ) ), mainFormula, skolemTerm )
+    val (_, indices) = findAndValidate(premise)(Seq(), Seq(auxFormula))
+    ForallSkRightRule(subProof, Suc(indices(0)), mainFormula, skolemTerm)
   }
 }

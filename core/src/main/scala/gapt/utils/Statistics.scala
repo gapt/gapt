@@ -12,20 +12,20 @@ package gapt.utils
  * @tparam T the type of elements the collection contains
  */
 
-@SerialVersionUID( 700100L )
+@SerialVersionUID(700100L)
 case class Statistic[T](
-    n:            Int,
-    min:          T,
-    max:          T,
-    avg:          BigDecimal,
-    median:       BigDecimal,
-    sigma_square: Option[BigDecimal] ) extends Serializable {
+    n: Int,
+    min: T,
+    max: T,
+    avg: BigDecimal,
+    median: BigDecimal,
+    sigma_square: Option[BigDecimal]
+) extends Serializable {
 
   /**
    * exports the statistics as a list of strings
    */
-  lazy val toCSV = List( n.toString, min.toString, max.toString, avg.toString, median.toString,
-    sigma_square.map( _.toString ).getOrElse( Statistic.na ) )
+  lazy val toCSV = List(n.toString, min.toString, max.toString, avg.toString, median.toString, sigma_square.map(_.toString).getOrElse(Statistic.na))
 }
 
 /**
@@ -39,12 +39,12 @@ object Statistic {
    * create a list of descriptions of the form tag-min, tag-max etc. that matches the order of Statistic.toCSV
    * @param tag the prefix for the columns
    */
-  def csv_header( tag: String ) = List( "count", "min", "max", "avg", "median", "deviation" ).map( x => s"$tag-$x" )
+  def csv_header(tag: String) = List("count", "min", "max", "avg", "median", "deviation").map(x => s"$tag-$x")
 
   /**
    * static "not applicable" CSV value for a non-existing statistic
    */
-  val na_statistic = Statistic( 0 :: Nil ).toCSV map ( _ => na )
+  val na_statistic = Statistic(0 :: Nil).toCSV map (_ => na)
 
   /**
    * Creates a statistic from a collection of values of type T.
@@ -54,35 +54,35 @@ object Statistic {
    * @tparam T the type of elements
    * @return the statistic belonging to the values
    */
-  def apply[T]( values: Seq[T] )( implicit num: Numeric[T], conv: T => BigDecimal ): Statistic[T] = {
-    require( values.nonEmpty, "Need data to compute statistics" )
+  def apply[T](values: Seq[T])(implicit num: Numeric[T], conv: T => BigDecimal): Statistic[T] = {
+    require(values.nonEmpty, "Need data to compute statistics")
 
     val sorted = values.sorted
 
     val _n = values.size
     val _min: T = values.min
     val _max: T = values.max
-    val _bdvalues = values.map( conv )
-    val _sum: BigDecimal = _bdvalues.sum //convert to big numbers before summing up
+    val _bdvalues = values.map(conv)
+    val _sum: BigDecimal = _bdvalues.sum // convert to big numbers before summing up
 
-    val _avg: BigDecimal = _sum / BigDecimal( _n )
+    val _avg: BigDecimal = _sum / BigDecimal(_n)
 
     val _sigma_square: Option[BigDecimal] =
-      if ( _n >= 2 ) Some( _bdvalues.map( x => ( _avg - x ) pow 2 ).sum / ( _n - 1 ) )
+      if (_n >= 2) Some(_bdvalues.map(x => (_avg - x) pow 2).sum / (_n - 1))
       else None
 
     val _median: BigDecimal = _n % 2 match {
       case 0 =>
-        val m1: BigDecimal = sorted( _n / 2 )
-        val m2: BigDecimal = sorted( ( _n / 2 ) - 1 )
-        ( m1 + m2 ) / 2
+        val m1: BigDecimal = conv(sorted(_n / 2))
+        val m2: BigDecimal = conv(sorted((_n / 2) - 1))
+        (m1 + m2) / 2
       case 1 =>
-        sorted( _n / 2 )
+        conv(sorted(_n / 2))
       case _ =>
-        throw new IllegalArgumentException( "Result of % 2 should always be 0 or 1!" )
+        throw new IllegalArgumentException("Result of % 2 should always be 0 or 1!")
     }
 
-    new Statistic[T]( _n, _min, _max, _avg, _median, _sigma_square )
+    new Statistic[T](_n, _min, _max, _avg, _median, _sigma_square)
   }
 
   /**
@@ -93,8 +93,8 @@ object Statistic {
    * @tparam T the type of elements
    * @return the statistic belonging to the values
    */
-  def applyOpt[T]( values: Seq[T] )( implicit num: Numeric[T], conv: T => BigDecimal ): Option[Statistic[T]] =
-    if ( values.isEmpty ) None else Some( apply( values ) )
+  def applyOpt[T](values: Seq[T])(implicit num: Numeric[T], conv: T => BigDecimal): Option[Statistic[T]] =
+    if (values.isEmpty) None else Some(apply(values))
 
   /**
    * Converts a statistic option to CSV with a default of not applicable
@@ -102,9 +102,9 @@ object Statistic {
    * @tparam T the type of data elements of the statistic
    * @return CSV data for s, if it exists [[na_statistic]] otherwise
    */
-  def optCSV[T]( s: Option[Statistic[T]] ) = s match {
-    case None                    => na_statistic
-    case Some( s: Statistic[T] ) => s.toCSV
+  def optCSV[T](s: Option[Statistic[T]]) = s match {
+    case None                  => na_statistic
+    case Some(s: Statistic[T]) => s.toCSV
   }
 
   /**
@@ -115,16 +115,16 @@ object Statistic {
    * @tparam T the type of data to create statistics on  (must be measurable in terms of num and conv)
    * @return CSV data for s if it is non-empty, [[Statistic.na_statistic]] otherwise
    */
-  def alsoEmptyDataToCSV[T]( s: Seq[T] )( implicit num: Numeric[T], conv: T => BigDecimal ): Seq[String] =
-    if ( s.isEmpty ) na_statistic else Statistic( s ).toCSV
+  def alsoEmptyDataToCSV[T](s: Seq[T])(implicit num: Numeric[T], conv: T => BigDecimal): Seq[String] =
+    if (s.isEmpty) na_statistic else Statistic(s).toCSV
 
-  def print[T]( s: Statistic[T] ) = {
-    println( s"n  : ${s.n}" )
-    println( s"min: ${s.min}" )
-    println( s"max: ${s.max}" )
-    println( s"med: ${s.median}" )
-    println( s"avg: ${s.avg}" )
-    s.sigma_square.map( x => println( s"sd2: $x" ) )
+  def print[T](s: Statistic[T]) = {
+    println(s"n  : ${s.n}")
+    println(s"min: ${s.min}")
+    println(s"max: ${s.max}")
+    println(s"med: ${s.median}")
+    println(s"avg: ${s.avg}")
+    s.sigma_square.map(x => println(s"sd2: $x"))
   }
 
 }

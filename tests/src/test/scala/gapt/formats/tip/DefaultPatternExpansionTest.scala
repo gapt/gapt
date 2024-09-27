@@ -15,21 +15,23 @@ class DefaultPatternExpansionTest extends Specification {
 
   "default cases should be expanded in matched expressions" in {
     val originalProblem = TipSmtParser.parse(
-      StringInputFile( """
+      StringInputFile("""
                          | (declare-datatype nat ((Z) (S (p nat))))
                          | (prove (forall ((x nat)) (match (match x ((_ x))) ((Z Z) ( _ x)))))
-                       """.stripMargin ) )
+                       """.stripMargin)
+    )
     val expectedProblem = TipSmtParser.parse(
-      StringInputFile( """
+      StringInputFile("""
                          | (declare-datatype nat ( (Z) (S (p nat))))
                          | (prove (forall ((x nat)) (match ( match x ((Z x) ( (S x_0) x ) ) ) (( Z Z) ( (S x_0) x) ))))
-                       """.stripMargin ) )
-    expandDefaultPatterns.transform( originalProblem ) must_== expectedProblem
+                       """.stripMargin)
+    )
+    expandDefaultPatterns.transform(originalProblem) must_== expectedProblem
   }
 
   "default cases should be expanded everywhere" in {
     val originalProblem = TipSmtParser.parse(
-      StringInputFile( """
+      StringInputFile("""
         | (declare-datatype nat ((Z) (S (p nat))))
         | (define-fun
         |   f1
@@ -45,9 +47,10 @@ class DefaultPatternExpansionTest extends Specification {
         |   ))
         | (prove (forall ((x nat)) (match x ((Z Z) ( _ x)))))
         | (assert (forall ((x nat)) (match x (( Z Z) ( _ x)))))
-      """.stripMargin ) )
+      """.stripMargin)
+    )
     val expectedProblem = TipSmtParser.parse(
-      StringInputFile( """
+      StringInputFile("""
         | (declare-datatype nat ( (Z) (S (p nat))))
         | (define-fun
         |   f1
@@ -63,40 +66,48 @@ class DefaultPatternExpansionTest extends Specification {
         |   ))
         | (prove (forall ((x nat)) (match x (( Z Z) ( (S x_0) x) ))))
         | (assert (forall ((x nat)) (match x (( Z Z) ( (S x_0) x) ))))
-      """.stripMargin ) )
-    expandDefaultPatterns.transform( originalProblem ) must_== expectedProblem
+      """.stripMargin)
+    )
+    expandDefaultPatterns.transform(originalProblem) must_== expectedProblem
   }
 
   "default case should be replaced by missing constructors" in {
     val originalProblem = TipSmtParser.parse(
-      StringInputFile( """
+      StringInputFile("""
         | (declare-datatype it ((Z) (S1 (p nat)) (S2 (p nat))))
         | (define-fun
         |   f1 ((x it)) it
         |   (forall ((x it)) (match x
         |   (( (S1 x_0) x) ( _ x)))))
-      """.stripMargin ) )
+      """.stripMargin)
+    )
     val expectedProblem = TipSmtParser.parse(
-      StringInputFile( """
+      StringInputFile("""
         | (declare-datatype it ((Z) (S1 (p nat)) (S2 (p nat))))
         | (define-fun
         |   f1 ((x it)) it
         |   (forall ((x it)) (match x
         |   (( (S1 x_0) x) ( Z x) ( (S2 x_0) x)))))
-      """.stripMargin ) )
-    expandDefaultPatterns.transform( originalProblem ) must_== expectedProblem
+      """.stripMargin)
+    )
+    expandDefaultPatterns.transform(originalProblem) must_== expectedProblem
   }
 
   "default case expansion should avoid variable capture" in {
     val originalProblem = TipSmtParser.parse(
-      StringInputFile( """
+      StringInputFile("""
         | (declare-datatype it ((Z) (S1 (p nat)) (S2 (p nat))))
         | (define-fun
         |   f1 ((x_0 it)) it
         |   (forall ((x_0 it)) (match x_0
         |   (( (S1 x_1) x_0) ( _ x_0) ))))
-      """.stripMargin ) )
-    val TipSmtFunctionDefinition( _, _, _, _,
+      """.stripMargin)
+    )
+    val TipSmtFunctionDefinition(
+      _,
+      _,
+      _,
+      _,
       TipSmtForall(
         _,
         TipSmtMatch(
@@ -107,8 +118,15 @@ class DefaultPatternExpansionTest extends Specification {
             TipSmtCase(
               TipSmtConstructorPattern(
                 _,
-                Seq( TipSmtIdentifier( name ) ) ), _ ) ) ) ) ) =
-      expandDefaultPatterns.transform( originalProblem ).definitions( 1 )
+                Seq(TipSmtIdentifier(name))
+              ),
+              _
+            )
+          )
+        )
+      )
+    ) =
+      expandDefaultPatterns.transform(originalProblem).definitions(1): @unchecked
 
     name must_!= "x_0"
   }

@@ -25,12 +25,13 @@ class IntroducePiCutTest extends Specification {
       val C1 = fof"$Pcfy1->$Pcgy2"
       val D = fof"$Pcgy2"
       val Rere = A1 +: B1 +: C1 +: Sequent() :+ D
-      val seHs = new Pi2SeHs( Rere, fov"x", List( fov"y1" ), List( fot"c" ), List( fot"f1(x)" ) )
+      val seHs = new Pi2SeHs(Rere, fov"x", List(fov"y1"), List(fot"c"), List(fot"f1(x)"))
       val xName = fov"xName"
       val yName = fov"yName"
-      introducePi2Cut( seHs, yName, xName ) must beOneOf(
-        ( Option( fof"P($xName)|Q(f($yName))" ), yName, xName ),
-        ( Option( fof"Q(f($yName))|P($xName)" ), yName, xName ) )
+      introducePi2Cut(seHs, yName, xName) must beOneOf(
+        (Option(fof"P($xName)|Q(f($yName))"), yName, xName),
+        (Option(fof"Q(f($yName))|P($xName)"), yName, xName)
+      )
     }
   }
 
@@ -52,10 +53,10 @@ class IntroducePiCutTest extends Specification {
       val C4 = fof"(P(c,f(y1))&P(f(y1),f(y2))&P(f(y2),f(y3)))->P(c,g(y3))"
       val D = fof"P(c,g(y3))"
       val Rere = A4 +: B1 +: B2 +: B3 +: B4 +: C4 +: Sequent() :+ D
-      val seHs = new Pi2SeHs( Rere, fov"x", List( fov"y1", fov"y2", fov"y3" ), List( fot"c", fot"f(y1)", fot"f(y2)" ), List( fot"f1(x)", fot"f2(x)", fot"f3(x)", fot"f4(x)" ) )
+      val seHs = new Pi2SeHs(Rere, fov"x", List(fov"y1", fov"y2", fov"y3"), List(fot"c", fot"f(y1)", fot"f(y2)"), List(fot"f1(x)", fot"f2(x)", fot"f3(x)", fot"f4(x)"))
       val xName = fov"xName"
       val yName = fov"yName"
-      introducePi2Cut( seHs, yName, xName ) must_== ( ( Option( fof"P($xName,f($yName))" ), yName, xName ) )
+      introducePi2Cut(seHs, yName, xName) must_== ((Option(fof"P($xName,f($yName))"), yName, xName))
     }
   }
 
@@ -76,10 +77,10 @@ class IntroducePiCutTest extends Specification {
       val C3 = fof"(P(c,f(y1))&P(f(y1),f(y2)))->P(c,g(y2))"
       val D = fof"P(c,g(y2))"
       val Rere = A3 +: B1 +: B2 +: B3 +: C3 +: Sequent() :+ D
-      val seHs = new Pi2SeHs( Rere, fov"x", List( fov"y1", fov"y2" ), List( fot"c", fot"f(y1)" ), List( fot"f1(x)", fot"f2(x)", fot"f3(x)" ) )
+      val seHs = new Pi2SeHs(Rere, fov"x", List(fov"y1", fov"y2"), List(fot"c", fot"f(y1)"), List(fot"f1(x)", fot"f2(x)", fot"f3(x)"))
       val xName = fov"xName"
       val yName = fov"yName"
-      introducePi2Cut( seHs, yName, xName ) must_== ( ( Option( fof"P($xName,f($yName))" ), yName, xName ) )
+      introducePi2Cut(seHs, yName, xName) must_== ((Option(fof"P($xName,f($yName))"), yName, xName))
     }
   }
 
@@ -113,12 +114,13 @@ class IntroducePiCutTest extends Specification {
       val Ref3 = fof"Pg(f(y1),s(0))->Pg(s(0),f(y1))"
       val Ref4 = fof"Pg(f(y2),s(0))->Pg(s(0),f(y2))"
       val Rere = Ref1 +: Ref2 +: Ref3 +: Ref4 +: Gamma1 +: Gamma21 +: Gamma22 +: Gamma23 +: Gamma24 +: Delta11 +: Delta12 +: Delta13 +: Delta14 +: Delta21 +: Delta22 +: Sequent() :+ T1 :+ T2 :+ I0
-      val seHs = new Pi2SeHs( Rere, fov"x", List( fov"y1", fov"y2" ), List( fot"0", fot"s(y1)" ), List( fot"M(c,x)" ) )
+      val seHs = new Pi2SeHs(Rere, fov"x", List(fov"y1", fov"y2"), List(fot"0", fot"s(y1)"), List(fot"M(c,x)"))
       val xName = fov"xName"
       val yName = fov"yName"
-      introducePi2Cut( seHs, yName, xName ) must beOneOf(
-        ( Option( fof"Pklg($xName,$yName)&Pg(f($yName),s(0))" ), yName, xName ),
-        ( Option( fof"Pg(f($yName),s(0))&Pklg($xName,$yName)" ), yName, xName ) )
+      introducePi2Cut(seHs, yName, xName) must beOneOf(
+        (Option(fof"Pklg($xName,$yName)&Pg(f($yName),s(0))"), yName, xName),
+        (Option(fof"Pg(f($yName),s(0))&Pklg($xName,$yName)"), yName, xName)
+      )
     }
   }
 
@@ -278,6 +280,6 @@ class IntroducePiCutTest extends Specification {
       )
     }
   }
-  */
+   */
 
 }

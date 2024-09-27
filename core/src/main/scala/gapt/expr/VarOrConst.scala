@@ -10,9 +10,9 @@ trait VarOrConst extends Expr {
  * Matches constants and variables, but nothing else.
  */
 object VarOrConst {
-  def unapply( e: VarOrConst ): Some[( String, Ty, List[Ty] )] =
+  def unapply(e: VarOrConst): Some[(String, Ty, List[Ty])] =
     e match {
-      case Const( n, t, p ) => Some( n, t, p )
-      case Var( n, t )      => Some( n, t, Nil )
+      case Const(n, t, p) => Some(n, t, p)
+      case Var(n, t)      => Some(n, t, Nil)
     }
 }

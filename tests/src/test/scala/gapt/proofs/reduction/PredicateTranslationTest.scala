@@ -12,21 +12,21 @@ class PredicateTranslationTest extends Specification with SequentMatchers {
 
   implicit var ctx: Context = Context.default
 
-  val constants = Set( hoc"P : a > o", hoc"f : a > b", hoc"g : a > i" )
-  val sorts = Set( TBase( "a" ), TBase( "b" ), Ti )
+  val constants = Set(hoc"P : a > o", hoc"f : a > b", hoc"g : a > i")
+  val sorts = Set(TBase("a"), TBase("b"), Ti)
 
   sorts.foreach { ctx += _ }
   constants.foreach { ctx += _ }
 
-  val predicateTranslation = PredicateTranslation( ctx )
+  val predicateTranslation = PredicateTranslation(ctx)
 
-  val pa = predicateTranslation.predicateForSort( TBase( "a" ) )
-  val pb = predicateTranslation.predicateForSort( TBase( "b" ) )
-  val pi = predicateTranslation.predicateForSort( TBase( "i" ) )
+  val pa = predicateTranslation.predicateForSort(TBase("a"))
+  val pb = predicateTranslation.predicateForSort(TBase("b"))
+  val pi = predicateTranslation.predicateForSort(TBase("i"))
 
   "predicate translation" should {
     "generate fresh predicate constants" in {
-      constants must not contain ( predicateTranslation.predicates.asInstanceOf[Set[Const]] )
+      constants must not contain (predicateTranslation.predicates.asInstanceOf[Set[Const]])
     }
 
     "generate predicates for all base types except o" in {
@@ -35,35 +35,35 @@ class PredicateTranslationTest extends Specification with SequentMatchers {
 
     "generate a non-emptiness axiom for each sort" in {
       predicateTranslation.nonEmptyAxioms mustEqual sorts.map {
-        s => hof"?x ${predicateTranslation.predicateForSort( s )}( x )"
+        s => hof"?x ${predicateTranslation.predicateForSort(s)}( x )"
       }
     }
 
     "generate function axioms for all function constants" in {
-      predicateTranslation.functionAxiom( hoc"f : a > b" ) mustEqual
+      predicateTranslation.functionAxiom(hoc"f : a > b") mustEqual
         hof"!x0 (${pa}( x0 ) -> ${pb}( f(x0) ))"
-      predicateTranslation.functionAxiom( hoc"g : a > i" ) mustEqual
+      predicateTranslation.functionAxiom(hoc"g : a > i") mustEqual
         hof"!x0 (${pa}( x0 ) -> ${pi}( g(x0) ))"
       predicateTranslation.predicateAxioms.size mustEqual 2
     }
 
     "guard" in {
       "existential quantifiers" in {
-        predicateTranslation.guard( hof"?x P( x : a )" ) mustEqual hof"?x (${pa}(x) & P( x ))"
+        predicateTranslation.guard(hof"?x P( x : a )") mustEqual hof"?x (${pa}(x) & P( x ))"
       }
       "universal quantifiers" in {
-        predicateTranslation.guard( hof"!x P( x : a )" ) mustEqual hof"!x (${pa}(x) -> P( x ))"
+        predicateTranslation.guard(hof"!x P( x : a )") mustEqual hof"!x (${pa}(x) -> P( x ))"
       }
     }
 
     "unguard" in {
       "existential quantifiers" in {
         val f = hof"?x (${pa}(x) & P( x : a ))"
-        predicateTranslation.unguard( f ) mustEqual hof"?x P( x : a )"
+        predicateTranslation.unguard(f) mustEqual hof"?x P( x : a )"
       }
       "universal quantifiers" in {
         val f = hof"!x (${pa}(x) -> P( x : a ))"
-        predicateTranslation.unguard( f ) mustEqual hof"!x P( x : a )"
+        predicateTranslation.unguard(f) mustEqual hof"!x P( x : a )"
       }
     }
   }

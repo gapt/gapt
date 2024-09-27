@@ -26,20 +26,18 @@ import gapt.proofs.lk.LKProof
  *                   (these need to correspond to the order in c)
  * @param conclusion  Index of F(c(x,,1,,,...,x,,n,,,y,,1,,,...,y,,n,,))
  */
-case class InductionCase( proof: LKProof, constructor: Const,
-                          hypotheses: Seq[SequentIndex], eigenVars: Seq[Var],
-                          conclusion: SequentIndex ) {
-  val FunctionType( indTy, fieldTypes ) = constructor.ty
-  require( fieldTypes == eigenVars.map( _.ty ) )
+case class InductionCase(proof: LKProof, constructor: Const, hypotheses: Seq[SequentIndex], eigenVars: Seq[Var], conclusion: SequentIndex) {
+  val FunctionType(indTy, fieldTypes) = constructor.ty: @unchecked
+  require(fieldTypes == eigenVars.map(_.ty))
 
   val hypVars: Seq[Var] = eigenVars filter { _.ty == indTy }
-  require( hypotheses.size == hypVars.size )
+  require(hypotheses.size == hypVars.size)
 
   hypotheses foreach { hyp =>
-    require( hyp.isAnt && proof.endSequent.isDefinedAt( hyp ) )
+    require(hyp.isAnt && proof.endSequent.isDefinedAt(hyp))
   }
 
-  val term: Expr = constructor( eigenVars: _* )
+  val term: Expr = constructor(eigenVars: _*)
 
-  require( conclusion.isSuc && proof.endSequent.isDefinedAt( conclusion ) )
+  require(conclusion.isSuc && proof.endSequent.isDefinedAt(conclusion))
 }

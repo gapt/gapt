@@ -28,7 +28,7 @@ object Facet {
    * @tparam T The type which is to be made an instance of [Facet].
    * @return An instance of [Facet] for the given type `T`.
    */
-  def apply[T: ClassTag]( initialValue: T ): Facet[T] = {
+  def apply[T: ClassTag](initialValue: T): Facet[T] = {
 
     val clazz_ = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
 

@@ -1,6 +1,6 @@
-import ammonite.ops.{read => _, write => _, _}
-import gapt._
-import gapt.examples._
+import os.{read => _, write => _, _}
+import gapt.{prooftool => _, _}
+import gapt.examples.{nd => _, _}
 import gapt.examples.sequence._
 import gapt.expr._
 import gapt.expr.ty._
@@ -15,13 +15,13 @@ import gapt.formats.verit._
 import gapt.formats.smt._
 import gapt.formats.llk._
 import gapt.formats.latex._
-import gapt.formats.json._
+import gapt.formats.json.{nd => _, _}
 import gapt.formats.implicits._
 import gapt.formats.InputFile
 import gapt.grammars._
 import gapt.logic._
 import gapt.logic.fol._
-import gapt.logic.hol._
+import gapt.logic.hol.{dls => _, _}
 import gapt.logic.hol.dls._
 import gapt.proofs.reduction._
 import gapt.proofs.rup._
@@ -56,7 +56,7 @@ import gapt.provers.smtlib._
 import gapt.provers.escargot._
 import gapt.provers.slakje.Slakje
 import gapt.provers.spass._
-import gapt.prooftool.prooftool
+import gapt.prooftool._
 import gapt.utils._
 import cats.syntax.all._, cats.instances.all._, EitherHelpers._
 import gapt.cli.GPL.{ apply => copying, printLicense => license }

@@ -12,7 +12,7 @@ import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.EqualityLeftRule
 import gapt.proofs.lk.rules.WeakeningLeftRule
 
-object ParamodulationLeftRule extends ConvenienceConstructor( "ParamodulationLeftRule" ) {
+object ParamodulationLeftRule extends ConvenienceConstructor("ParamodulationLeftRule") {
 
   /**
    * Simulates a binary equation rule, aka paramodulation.
@@ -47,24 +47,25 @@ object ParamodulationLeftRule extends ConvenienceConstructor( "ParamodulationLef
    * @return
    */
   def apply(
-    leftSubProof:  LKProof,
-    eq:            IndexOrFormula,
-    rightSubProof: LKProof,
-    aux:           IndexOrFormula,
-    con:           Abs ): LKProof = {
+      leftSubProof: LKProof,
+      eq: IndexOrFormula,
+      rightSubProof: LKProof,
+      aux: IndexOrFormula,
+      con: Abs
+  ): LKProof = {
 
-    val eqFormula = eq.getFormula( leftSubProof.endSequent )
+    val eqFormula = eq.getFormula(leftSubProof.endSequent)
 
-    val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
+    val p1 = WeakeningLeftRule(rightSubProof, eqFormula)
     val p2 = aux match {
-      case IsIndex( i ) =>
-        EqualityLeftRule( p1, Ant( 0 ), i + 1, con )
+      case IsIndex(i) =>
+        EqualityLeftRule(p1, Ant(0), i + 1, con)
 
-      case IsFormula( f ) =>
-        EqualityLeftRule( p1, Ant( 0 ), f, con )
+      case IsFormula(f) =>
+        EqualityLeftRule(p1, Ant(0), f, con)
     }
 
-    CutRule( leftSubProof, eq, p2, p2.getSequentConnector.child( Ant( 0 ) ) )
+    CutRule(leftSubProof, eq, p2, p2.getSequentConnector.child(Ant(0)))
   }
 
   /**
@@ -101,23 +102,24 @@ object ParamodulationLeftRule extends ConvenienceConstructor( "ParamodulationLef
    * @return
    */
   def apply(
-    leftSubProof:  LKProof,
-    eq:            IndexOrFormula,
-    rightSubProof: LKProof,
-    aux:           IndexOrFormula,
-    mainFormula:   Formula ): LKProof = {
+      leftSubProof: LKProof,
+      eq: IndexOrFormula,
+      rightSubProof: LKProof,
+      aux: IndexOrFormula,
+      mainFormula: Formula
+  ): LKProof = {
 
-    val eqFormula = eq.getFormula( leftSubProof.endSequent )
+    val eqFormula = eq.getFormula(leftSubProof.endSequent)
 
-    val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
+    val p1 = WeakeningLeftRule(rightSubProof, eqFormula)
     val p2 = aux match {
-      case IsIndex( i ) =>
-        EqualityLeftRule( p1, Ant( 0 ), i + 1, mainFormula )
+      case IsIndex(i) =>
+        EqualityLeftRule(p1, Ant(0), i + 1, mainFormula)
 
-      case IsFormula( f ) =>
-        EqualityLeftRule( p1, Ant( 0 ), f, mainFormula )
+      case IsFormula(f) =>
+        EqualityLeftRule(p1, Ant(0), f, mainFormula)
     }
 
-    CutRule( leftSubProof, eq, p2, p2.getSequentConnector.child( Ant( 0 ) ) )
+    CutRule(leftSubProof, eq, p2, p2.getSequentConnector.child(Ant(0)))
   }
 }

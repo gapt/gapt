@@ -9,24 +9,24 @@ import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLFormula
 import gapt.expr.formula.fol.FOLTerm
 import gapt.expr.formula.fol.FOLVar
-import gapt.expr.formula.fol.{ naive, thresholds }
-import gapt.proofs.{ FOLClause, HOLSequent }
+import gapt.expr.formula.fol.{naive, thresholds}
+import gapt.proofs.{FOLClause, HOLSequent}
 
 /**
  * Creates the n-th formula of a sequence where distributivity-based
  * algorithm produces only exponential CNFs.
  */
 object PQPairs {
-  def apply( n: Int ): FOLFormula = {
-    assert( n >= 1 )
-    if ( n == 1 )
-      And( p( 1 ), q( 1 ) )
+  def apply(n: Int): FOLFormula = {
+    assert(n >= 1)
+    if (n == 1)
+      And(p(1), q(1))
     else
-      Or( apply( n - 1 ), And( p( n ), q( n ) ) )
+      Or(apply(n - 1), And(p(n), q(n)))
   }
 
-  def p( i: Int ) = FOLAtom( "p_" + i, Nil )
-  def q( i: Int ) = FOLAtom( "q_" + i, Nil )
+  def p(i: Int) = FOLAtom("p_" + i, Nil)
+  def q(i: Int) = FOLAtom("q_" + i, Nil)
 }
 
 /**
@@ -34,21 +34,21 @@ object PQPairs {
  * statement about the permutations in S_n.
  */
 object Permutations {
-  def apply( n: Int ): List[FOLClause] = {
-    assert( n >= 2 )
-    val Rord = FOLAtom( "R", List.range( 1, n + 1 ).map( x( _ ) ) )
-    val Rtransp = FOLAtom( "R", x( 2 ) :: x( 1 ) :: List.range( 3, n + 1 ).map( x( _ ) ) )
-    val Rrot = FOLAtom( "R", x( n ) :: List.range( 1, n ).map( x( _ ) ) )
+  def apply(n: Int): List[FOLClause] = {
+    assert(n >= 2)
+    val Rord = FOLAtom("R", List.range(1, n + 1).map(x(_)))
+    val Rtransp = FOLAtom("R", x(2) :: x(1) :: List.range(3, n + 1).map(x(_)))
+    val Rrot = FOLAtom("R", x(n) :: List.range(1, n).map(x(_)))
 
-    val Rord_c = FOLAtom( "R", List.range( 1, n + 1 ).map( c( _ ) ) )
-    val even = List.range( 2, n + 1 ).sliding( 1, 2 ).flatten.toList
-    val odd = List.range( 1, n + 1 ).sliding( 1, 2 ).flatten.toList
-    val Revenodd_c = FOLAtom( "R", ( odd ++ even ).map( c( _ ) ) )
+    val Rord_c = FOLAtom("R", List.range(1, n + 1).map(c(_)))
+    val even = List.range(2, n + 1).sliding(1, 2).flatten.toList
+    val odd = List.range(1, n + 1).sliding(1, 2).flatten.toList
+    val Revenodd_c = FOLAtom("R", (odd ++ even).map(c(_)))
 
-    val Ctransp = FOLClause( Rord :: Nil, Rtransp :: Nil )
-    val Crot = FOLClause( Rord :: Nil, Rrot :: Nil )
-    val Goalpos = FOLClause( Nil, Rord_c :: Nil )
-    val Goalneg = FOLClause( Revenodd_c :: Nil, Nil )
+    val Ctransp = FOLClause(Rord :: Nil, Rtransp :: Nil)
+    val Crot = FOLClause(Rord :: Nil, Rrot :: Nil)
+    val Goalpos = FOLClause(Nil, Rord_c :: Nil)
+    val Goalneg = FOLClause(Revenodd_c :: Nil, Nil)
 
     Ctransp :: Crot :: Goalpos :: Goalneg :: Nil
   }
@@ -56,10 +56,10 @@ object Permutations {
   /**
    * return the set of constants which occur in the n-th clause set
    */
-  def constants( n: Int ): Set[FOLTerm] = List.range( 1, n + 1 ).map( c( _ ) ).toSet
+  def constants(n: Int): Set[FOLTerm] = List.range(1, n + 1).map(c(_)).toSet
 
-  private def x( i: Int ) = FOLVar( "x_" + i )
-  private def c( i: Int ) = FOLConst( "c_" + i )
+  private def x(i: Int) = FOLVar("x_" + i)
+  private def c(i: Int) = FOLConst("c_" + i)
 }
 
 /**
@@ -70,16 +70,16 @@ object Permutations {
  * available from: http://www.math.ucsd.edu/~sbuss/ResearchWeb/index.html
  */
 object BussTautology {
-  def apply( n: Int ): HOLSequent = HOLSequent( Ant( n ), c( n ) :: d( n ) :: Nil )
+  def apply(n: Int): HOLSequent = HOLSequent(Ant(n), c(n) :: d(n) :: Nil)
 
-  def c( i: Int ) = FOLAtom( "c_" + i, Nil )
-  def d( i: Int ) = FOLAtom( "d_" + i, Nil )
-  def F( i: Int ): FOLFormula = if ( i == 1 ) Or( c( 1 ), d( 1 ) ) else And( F( i - 1 ), Or( c( i ), d( i ) ) )
-  def A( i: Int ) = if ( i == 1 ) c( 1 ) else Imp( F( i - 1 ), c( i ) )
-  def B( i: Int ) = if ( i == 1 ) d( 1 ) else Imp( F( i - 1 ), d( i ) )
+  def c(i: Int) = FOLAtom("c_" + i, Nil)
+  def d(i: Int) = FOLAtom("d_" + i, Nil)
+  def F(i: Int): FOLFormula = if (i == 1) Or(c(1), d(1)) else And(F(i - 1), Or(c(i), d(i)))
+  def A(i: Int) = if (i == 1) c(1) else Imp(F(i - 1), c(i))
+  def B(i: Int) = if (i == 1) d(1) else Imp(F(i - 1), d(i))
 
   // the antecedens of the final sequent
-  def Ant( i: Int ): List[FOLFormula] = if ( i == 0 ) Nil else formula.Or( A( i ), B( i ) ) :: Ant( i - 1 )
+  def Ant(i: Int): List[FOLFormula] = if (i == 0) Nil else formula.Or(A(i), B(i)) :: Ant(i - 1)
 }
 
 /**
@@ -91,6 +91,7 @@ object BussTautology {
  * Since we want to avoid empty disjunctions, we assume > 1 pigeons.
  */
 object PigeonHolePrinciple {
+
   /** The binary relation symbol. */
   val rel = "R"
 
@@ -98,16 +99,16 @@ object PigeonHolePrinciple {
    * @param ps the number of pigeons
    * @param hs the number of holes
    */
-  def apply( ps: Int, hs: Int ): FOLFormula =
-    And( ( 1 to ps ).map( p => Or( ( 1 to hs ).map( h => inHole( p, h ) ) ) ) ) -->
-      Or( for ( h <- 1 to hs; p1 <- 1 to ps; p2 <- 1 to ps if p1 < p2 )
-        yield inHole( p1, h ) & inHole( p2, h ) )
+  def apply(ps: Int, hs: Int): FOLFormula =
+    And((1 to ps).map(p => Or((1 to hs).map(h => inHole(p, h))))) -->
+      Or(for (h <- 1 to hs; p1 <- 1 to ps; p2 <- 1 to ps if p1 < p2)
+        yield inHole(p1, h) & inHole(p2, h))
 
-  def inHole( p: Int, h: Int ) = FOLAtom( rel, pigeon( p ), hole( h ) )
+  def inHole(p: Int, h: Int) = FOLAtom(rel, pigeon(p), hole(h))
 
-  def pigeon( i: Int ) = FOLConst( "p_" + i )
+  def pigeon(i: Int) = FOLConst("p_" + i)
 
-  def hole( i: Int ) = FOLConst( "h_" + i )
+  def hole(i: Int) = FOLConst("h_" + i)
 }
 
 /**
@@ -121,7 +122,7 @@ object PigeonHolePrinciple {
  * implementation with threshold formulas.
  */
 object CountingEquivalence {
-  def apply( n: Int ): FOLFormula = {
+  def apply(n: Int): FOLFormula = {
     val as = 0 to n map { i => hof"!x?y ${s"a$i"} x y z" }
     hof"!z ${thresholds.exactly oneOf as} <-> !z ${naive.exactly oneOf as}".asInstanceOf[FOLFormula]
   }

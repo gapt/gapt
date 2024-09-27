@@ -6,6 +6,6 @@ import gapt.expr.ty.Ti
 trait FOLVar extends Var with FOLTerm
 
 object FOLVar {
-  def apply( sym: String ): FOLVar = Var( sym, Ti ).asInstanceOf[FOLVar]
-  def unapply( e: FOLVar ) = Some( e.name )
+  def apply(sym: String): FOLVar = Var(sym, Ti).asInstanceOf[FOLVar]
+  def unapply(e: FOLVar) = Some(e.name)
 }

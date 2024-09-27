@@ -64,3 +64,5 @@ doc/*.tex.backup
 
 # emacs
 /.ensime*
+
+**/.DS_Store

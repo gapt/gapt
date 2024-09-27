@@ -2,7 +2,7 @@ package gapt.examples
 
 import gapt.examples.Script
 import gapt.proofs.ceres.StructCreators
-import java.nio.file.{ Files, Paths }
+import java.nio.file.{Files, Paths}
 
 import gapt.expr.formula.hol._
 import gapt.formats.latex.SequentsListLatexExporter
@@ -68,4 +68,4 @@ object inst extends Script {
   println( "Clause set:" + cl.size )
   println( "Reduced clause set:" + tcl.size )
 }
-*/
+ */

@@ -11,16 +11,16 @@ import gapt.expr.ty.Ty
  *
  * @param name  The name of this logical constant, e.g. "∀"
  */
-class QuantifierC( name: String ) extends LogicalC( name ) {
-  def apply( qtype: Ty ) = Const( name, ( qtype ->: To ) ->: To, List( qtype ) )
+class QuantifierC(name: String) extends LogicalC(name) {
+  def apply(qtype: Ty) = Const(name, (qtype ->: To) ->: To, List(qtype))
 
-  def unapply( e: Expr ): Option[Ty] = e match {
-    case Const( n, t, ps ) => unapply( ( n, t, ps ) )
-    case _                 => None
+  def unapply(e: Expr): Option[Ty] = e match {
+    case Const(n, t, ps) => unapply((n, t, ps))
+    case _               => None
   }
-  def unapply( p: ( String, Ty, List[Ty] ) ): Option[Ty] =
+  def unapply(p: (String, Ty, List[Ty])): Option[Ty] =
     p match {
-      case ( `name`, ( qtype_ ->: To ) ->: To, qtype :: Nil ) if qtype == qtype_ => Some( qtype )
-      case _ => None
+      case (`name`, (qtype_ ->: To) ->: To, qtype :: Nil) if qtype == qtype_ => Some(qtype)
+      case _                                                                 => None
     }
 }

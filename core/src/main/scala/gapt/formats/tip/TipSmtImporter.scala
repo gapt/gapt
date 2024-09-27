@@ -12,29 +12,32 @@ import gapt.utils.runProcess
 
 object TipSmtImporter extends ExternalProgram {
 
-  def load( tipBench: InputFile ): TipProblem = {
-    new TipTransformationCompiler( TipSmtParser.parse( tipBench ) )
+  def load(tipBench: InputFile): TipProblem = {
+    new TipTransformationCompiler(TipSmtParser.parse(tipBench))
       .compileTipProblem()
       .toProblem
   }
 
-  def fixupAndLoad( tipBench: InputFile ): TipProblem =
-    load( StringInputFile( runProcess(
+  def fixupAndLoad(tipBench: InputFile): TipProblem =
+    load(StringInputFile(runProcess(
       Seq(
         "tip",
         "--type-skolem-conjecture",
         "--commute-match",
-        "--lambda-lift", "--axiomatize-lambdas",
+        "--lambda-lift",
+        "--axiomatize-lambdas",
         "--monomorphise",
         "--remove-builtin-bool",
         "--if-to-bool-op",
         "--int-to-nat",
         "--uncurry-theory",
-        "--let-lift" ),
+        "--let-lift"
+      ),
       tipBench.read,
-      catchStderr = true ) ) )
+      catchStderr = true
+    )))
 
   val isInstalled: Boolean =
-    try { runProcess( Seq( "tip", "--help" ) ); true }
+    try { runProcess(Seq("tip", "--help")); true }
     catch { case _: IOException => false }
 }

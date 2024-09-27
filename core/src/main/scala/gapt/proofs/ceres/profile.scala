@@ -162,4 +162,4 @@ object printCutAncs {
     getCutAncestors( p ).foreach( fo => println( fo.formula.toString ) )
   }
 }
-*/ 
+ */
