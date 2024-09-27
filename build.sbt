@@ -14,9 +14,8 @@ lazy val commonSettings = Seq(
   version := Version,
   autoAPIMappings := true,
   publishMavenStyle := true,
-  publishTo :=
-    (if (isSnapshot.value) Opts.resolver.sonatypeOssSnapshots.headOption
-     else Some(Opts.resolver.sonatypeStaging)),
+  publishTo := sonatypePublishToBundle.value,
+  sonatypeProfileName := "at.logic",
   scmInfo := Some(ScmInfo(
     browseUrl = url("https://github.com/gapt/gapt"),
     connection = "scm:git:https://github.com/gapt/gapt.git",
