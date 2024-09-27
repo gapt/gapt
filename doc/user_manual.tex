@@ -228,7 +228,7 @@ sbt console
   it is available as a Maven artifact on Maven Central.  All you need to do is add
   the following line to your \verb,build.sbt,:
 \begin{lstlisting}
-libraryDependencies += "at.logic.gapt" %% "gapt" % "2.16.0"
+libraryDependencies += "at.logic.gapt" %% "gapt" % "2.17.0"
 \end{lstlisting}
 
 \end{enumerate}
@@ -1450,7 +1450,7 @@ val mr: (Map[gapt.proofs.SequentIndex, gapt.expr.Var], gapt.expr.Expr) = (Map(),
 
 \end{clilisting}
 
-Examples of proofs with from which more interesting realizers are extracted by the algorithm can be found in the file \cli{examples/m-realizabilityExamples.scala}. 
+Examples of proofs from which more interesting realizers are extracted by the algorithm can be found in the file \cli{examples/m-realizabilityExamples.scala}. 
 
 \chapter{Input and output}
 GAPT can read from and write to several existing formats, including
@@ -1540,11 +1540,6 @@ val res0: gapt.formats.tptp.TptpFile = fof(ant_0, axiom, p('0')).
 fof(ant_1, axiom, ![X]: (p(X) => p(s(X)))).
 fof(suc_0, conjecture, p(s(s('0')))).
 
-gapt> TptpFOLExporter(sequent)
-val res1: gapt.formats.tptp.TptpFile = fof(ant_0, axiom, p('0')).
-fof(ant_1, axiom, ![X]: (p(X) => p(s(X)))).
-fof(suc_0, conjecture, p(s(s('0')))).
-
 \end{clilisting}
 
 You can also parse TPTP problems:
@@ -1558,7 +1553,7 @@ fof(e, axiom, ![X]: exp(X, two) = times(X, X)).
 fof(f, conjecture, ?[X,Y]: (~ i(exp(X, Y)) & i(X) & i(Y))).
 
 gapt> tptp.toSequent
-val res2: gapt.proofs.HOLSequent = i(sr2),
+val res1: gapt.proofs.HOLSequent = i(sr2),
 ¬i(two),
 times(sr2, sr2) = two,
 ∀X ∀Y ∀Z exp(exp(X, Y), Z) = exp(X, times(Y, Z)),
@@ -2041,8 +2036,8 @@ scripts tries several different strategies to solve the given problem,
 including analytic induction and tree-grammar-based methods.  The
 \texttt{--help} argument shows the available options.
 \begin{lstlisting}
-$ ./viper.sh --treegrammar --cansolsize 2 3 --gramw scomp \
-    examples/induction/prod_prop_31.smt2
+$ ./viper.sh --treegrammar --cansolsize 2 3 --gramw scomp --qtys list \
+    examples/induction/prod_prop_31_monomorphic.smt2
 \end{lstlisting}
 
 You can also use Viper from within GAPT:
