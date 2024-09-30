@@ -9,6 +9,8 @@ import gapt.proofs._
 import gapt.provers.prover9._
 import gapt.formats.lean._
 
+import scala.util.parsing.combinator._
+
 object example extends Script {
   val Equation38 = fof"!x!y f(x,x)=f(x,y)"
   val Equation42 = fof"!x!y!z f(x,y)=f(x,z)"
@@ -67,4 +69,15 @@ object tools {
     rv
   }
 
+  class LeanEqParser extends JavaTokenParsers {
+    def eq: Parser[Any] = term~"="~term
+    def term: Parser[Any] = factor~rep("∘"~factor)
+    def factor: Parser[Any] = "x" | "y" | "z" | "u" | "v" | "w" | "("~term~")"
+  }
+
+  object Importer extends LeanEqParser {
+    def apply( s:String ) = {
+      println( parseAll( eq, s ))
+    }
+  }
 }
