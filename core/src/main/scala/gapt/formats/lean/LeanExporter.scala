@@ -20,7 +20,7 @@ object LeanExporter {
   def apply(proof: LKProof): String = {
     initHypName()
     val LeanHyp = Sequent(Vector(newHypName()), Vector("target"))
-    apply(proof,LeanHyp)
+    apply(proof, LeanHyp)
   }
 
   /**
