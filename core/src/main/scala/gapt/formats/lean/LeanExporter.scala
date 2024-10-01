@@ -170,19 +170,13 @@ object LeanExporter {
     indent + rec
   }
 
-  def exportFormulaWithG(f: Formula): String = f match {
-    case All.Block(xs, FOLAtom("=", as)) => {
-      "∀ (" + getVarListString(xs) + " :G), " + exportFormula(FOLAtom("=", as))
-    }
-  }
-
   def exportFormula(f: Formula): String = f match {
-    case All(x, FOLAtom("=", as)) =>
-      "∀ " + x + ", " + exportFormula(FOLAtom("=", as))
-    case All(x, g) =>
-      "∀ " + x + " " + exportFormula(g)
-    case FOLAtom("=", as) =>
-      exportFOLTerm(as(0)) + " = " + exportFOLTerm(as(1))
+    case All.Block(xs, FOLAtom("=", as)) => {
+      if (xs.isEmpty)
+        exportFOLTerm(as(0)) + " = " + exportFOLTerm(as(1))
+      else
+        "∀ " + getVarListString(xs) + ", " + exportFOLTerm(as(0)) + " = " + exportFOLTerm(as(1))
+    }
   }
 
   def exportFOLTerm(t: FOLTerm): String = t match {
@@ -239,20 +233,10 @@ object LeanExporter {
   }
 
   def getListString(L: List[Int]): String = {
-    // FIXME: there must be a better way to do this in Scala
-    var rv = ""
-    for (i <- 0 until L.length) {
-      rv += " " + L(i)
-    }
-    rv
+    L.mkString(" ")
   }
 
   def getVarListString(L: List[Var]): String = {
-    // FIXME: there must be a better way to do this in Scala
-    var rv = ""
-    for (i <- 0 until L.length) {
-      rv += " " + L(i)
-    }
-    rv
+    L.mkString(" ")
   }
 }
