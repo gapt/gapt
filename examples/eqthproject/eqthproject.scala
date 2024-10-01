@@ -26,7 +26,7 @@ object tools {
   def getLeanProof(goal: HOLSequent): String = {
     println("(DEBUG eqthproj) calling prover9")
 
-    val ( iGoal, constants )= instGoal( goal )
+    val (iGoal, constants) = instGoal(goal)
     Prover9.getLKProof(iGoal) match {
       case Some(p) => {
         println(p)
@@ -40,7 +40,7 @@ object tools {
     }
   }
 
-  def instGoal( goal: HOLSequent ) : ( HOLSequent, List[FOLTerm] ) = {
+  def instGoal(goal: HOLSequent): (HOLSequent, List[FOLTerm]) = {
     val nvars = goal(Suc(0)) match {
       case All.Block(xs, _) => xs.length
     }
@@ -54,7 +54,7 @@ object tools {
     println("(DEBUG eqthproj) goal: " + goal)
     println("(DEBUG eqthproj) instGoal: " + instGoal)
 
-    ( instGoal, constants )
+    (instGoal, constants)
   }
 
   private def getConstants(n: Int): List[FOLTerm] = {
@@ -63,21 +63,21 @@ object tools {
     rv
   }
 
-  private def getConstantNames( L: List[FOLTerm] ): String = {
+  private def getConstantNames(L: List[FOLTerm]): String = {
     var rv = L(0).toString
     for (i <- 1 until L.length) rv += " " + L(i).toString
     rv
   }
 
   class LeanEqParser extends JavaTokenParsers {
-    def eq: Parser[Any] = term~"="~term
-    def term: Parser[Any] = factor~rep("∘"~factor)
-    def factor: Parser[Any] = "x" | "y" | "z" | "u" | "v" | "w" | "("~term~")"
+    def eq: Parser[Any] = term ~ "=" ~ term
+    def term: Parser[Any] = factor ~ rep("∘" ~ factor)
+    def factor: Parser[Any] = "x" | "y" | "z" | "u" | "v" | "w" | "(" ~ term ~ ")"
   }
 
   object Importer extends LeanEqParser {
-    def apply( s:String ) = {
-      println( parseAll( eq, s ))
+    def apply(s: String) = {
+      println(parseAll(eq, s))
     }
   }
 }
