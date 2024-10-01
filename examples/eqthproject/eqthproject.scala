@@ -9,6 +9,8 @@ import gapt.proofs._
 import gapt.provers.prover9._
 import gapt.formats.lean._
 
+import scala.collection.mutable.ArrayBuffer
+import scala.io.Source
 import scala.util.parsing.combinator._
 
 object example extends Script {
@@ -70,14 +72,33 @@ object tools {
   }
 
   class LeanEqParser extends JavaTokenParsers {
-    def eq: Parser[Any] = term ~ "=" ~ term
-    def term: Parser[Any] = factor ~ rep("∘" ~ factor)
-    def factor: Parser[Any] = "x" | "y" | "z" | "u" | "v" | "w" | "(" ~ term ~ ")"
+    def line: Parser[FOLAtom] = opt("--") ~ "equation" ~ wholeNumber ~ ":=" ~ eq ^^
+      { case o~l~n~":="~e => e }
+    def eq: Parser[FOLAtom] = term ~ "=" ~ term ^^
+      { case t1~"="~t2 => FOLAtom( "=", List( t1, t2 )) }
+    def term: Parser[FOLTerm] = factor ~ "∘" ~ factor ^^
+      { case f1~"∘"~f2 => FOLFunction( "f", List( f1, f2 )) }
+      | factor ^^ { case f => f }
+    def factor: Parser[FOLTerm] = "x" ^^ { case s => FOLVar( s ) }
+      | "y" ^^ { case s => FOLVar( s ) }
+      | "z" ^^ { case s => FOLVar( s ) }
+      | "u" ^^ { case s => FOLVar( s ) }
+      | "v" ^^ { case s => FOLVar( s ) }
+      | "w" ^^ { case s => FOLVar( s ) }
+      | "(" ~ term ~ ")" ^^ { case "("~t~")" => t }
   }
 
   object Importer extends LeanEqParser {
-    def apply(s: String) = {
-      println(parseAll(eq, s))
+    /* expects filename of list of equations, return list in gapt format */
+    def apply(fn: String):Array[FOLAtom] = {
+      val buf = ArrayBuffer[FOLAtom]()
+      // add dummy equation at position 0 so that array indices match equation numbers
+      buf += FOLAtom( "=", List( FOLVar("x"), FOLVar("x") ))
+
+      for ( l <- Source.fromFile( fn ).getLines())
+        buf += parseAll(line, l).get
+
+      buf.toArray
     }
   }
 }
