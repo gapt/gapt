@@ -4,7 +4,7 @@ import gapt.expr._
 import gapt.examples.Script
 import gapt.expr.formula._
 import gapt.expr.formula.fol._
-import gapt.expr.formula.hol.instantiate
+import gapt.expr.formula.hol.{instantiate,universalClosure}
 import gapt.proofs._
 import gapt.provers.prover9._
 import gapt.formats.lean._
@@ -14,13 +14,23 @@ import scala.io.Source
 import scala.util.parsing.combinator._
 
 object example extends Script {
-  val Equation38 = fof"!x!y f(x,x)=f(x,y)"
-  val Equation42 = fof"!x!y!z f(x,y)=f(x,z)"
-  val g = Sequent(List(Equation38), List(Equation42))
-  println(tools.getLeanProof(g))
+  val Equations = tools.Importer(
+    "/home/stefan/Uni/Software/gapt-devel/AllEquations.nocomments.lean" )
+  println( tools.getLeanProof( Equations, 2, 5 ))
 }
 
 object tools {
+  /**
+   * Run prover9 on: EqList[from] implies EqList[to], return a Lean proof
+   **/
+  def getLeanProof( EqList: Array[FOLAtom], from:Int, to:Int ): String = {
+    val f_from = universalClosure(EqList(from))
+    val f_to = universalClosure(EqList(to))
+    val g = Sequent(List(f_from), List(f_to))
+    println( "goal is: " + g )
+    getLeanProof( g )
+  }
+
   /*
    * Produces Lean code to prove goal by calling prover9. Expects goal to contain two
    * universally quantified equations, one in the antecedens and one in the consequent.
