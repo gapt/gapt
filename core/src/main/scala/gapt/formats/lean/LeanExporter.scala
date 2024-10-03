@@ -3,13 +3,18 @@ package gapt.formats.lean
 import gapt.expr._
 import gapt.expr.formula._
 import gapt.expr.formula.fol._
+import gapt.expr.formula.hol.universalClosure
 import gapt.proofs._
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules._
+import gapt.proofs.resolution._
 
 object LeanExporter {
 
   var LeanHypCounter = 0
+
+  enum formulaPrinting:
+    case none, commented, full
 
   /**
    * Exports a Lean tactics script from an LKProof of a sequent of the form
@@ -23,8 +28,101 @@ object LeanExporter {
     apply(proof, LeanHyp)
   }
 
+
+  def apply( proof: ResolutionProof, fp: formulaPrinting ): String = {
+    // preprocessing of res proof + adding Lean header...?
+    initHypName()
+
+    val ( initHyps, leanString, hypName ) = apply_rec( proof, fp )
+
+    val concEq = proof.conclusion(Suc(0))
+    println( "(DEBUG): concEq: " + concEq )
+    val concFreeVars = freeVariablesFromLToR( concEq )
+    println( "(DEBUG): concFreeVars: " + concFreeVars )
+    val concEqClosed = All.Block( concFreeVars, concEq )
+    println( "(DEBUG): concEqClosed: " + concEqClosed )
+
+    "theorem EqualityImplication (G: Type*) [Magma G]\n"
+      + "  " + initHyps.mkString("\n  ") + "\n"
+      + "  : " + exportFormulaWithG( concEqClosed, formulaPrinting.full ) + " :=\n"
+      + leanString
+      + "  by exact " + hypName
+  }
+
   /**
-   * Exports a Lean tactics script from a simple equational proof
+   * returns
+   * 1. lean strings for hypotheses
+   * 2. lean string for proof
+   * 3. name of hypothesis of last step
+   **/
+  def apply_rec( proof: ResolutionProof, fp: formulaPrinting ): ( Set[String], String, String ) = {
+    val concEq = proof.conclusion(Suc(0))
+    println( "(DEBUG): concEq: " + concEq )
+    val concFreeVars = freeVariablesFromLToR( concEq )
+    println( "(DEBUG): concFreeVars: " + concFreeVars )
+    val concEqClosed = All.Block( concFreeVars, concEq )
+    println( "(DEBUG): concEqClosed: " + concEqClosed )
+
+    proof match {
+      case AllR( subproof, idx, variable ) => {
+        val hypName = newHypName()
+
+        val str = "(" + hypName + ": " + exportFormulaWithG( concEqClosed, formulaPrinting.full ) + ")"
+        println( "(DEBUG): str: " + str )
+
+        ( Set( str ), "", hypName )
+      }
+
+      case Subst( subproof, subst ) => {
+        val premEq = subproof.conclusion(Suc(0))
+        println( "(DEBUG): premEq: " + premEq )
+        val premFreeVars = freeVariablesFromLToR( premEq )
+        println( "(DEBUG): premFreeVars: " + premFreeVars )
+
+        println( "(DEBUG): subst: " + subst )
+        val instTerms = subst( premFreeVars )
+        println( "(DEBUG): instTerms: " + instTerms )
+
+        val ( initHyps, subLeanString, subHypName ) = apply_rec( subproof, fp )
+
+        println( "(DEBUG): subHypName: " + subHypName )
+
+        val hypName = newHypName()
+
+        val leanLine = "  have " + hypName + ": "
+          + exportFormulaWithG( concEqClosed, fp ) + " := "
+          + "fun (" + concFreeVars.mkString(" ")  +" : G) => "
+          + "show " + exportFormulaWithG( concEq, fp ) + " "
+          + "from " + subHypName + " " + instTerms.mkString(" ") + "\n"
+
+        ( initHyps, subLeanString + leanLine, hypName )
+      }
+
+      case Flip( subproof, idx ) => {
+        val premEq = subproof.conclusion(Suc(0))
+        println( "(DEBUG): premEq: " + premEq )
+        val premFreeVars = freeVariablesFromLToR( premEq )
+        println( "(DEBUG): premFreeVars: " + premFreeVars )
+
+        val ( initHyps, subLeanString, subHypName ) = apply_rec( subproof, fp )
+
+        val hypName = newHypName()
+        val leanLine = "  have " + hypName + ": "
+          + exportFormulaWithG( concEqClosed, fp ) + " := "
+          + "fun (" + concFreeVars.mkString(" ")  +" : G) => "
+          + "show " + exportFormulaWithG( concEq, fp ) + " "
+          + "from Eq.symm (" + subHypName + " "
+          + premFreeVars.mkString(" ") + ")\n"
+
+        ( initHyps, subLeanString + leanLine, hypName )
+      }
+       
+      case _ => ( Set(), "unsupported inference rule has been used", "" )
+    }
+  }
+
+  /**
+   * Exports a Lean tactics script from a simple equational LKProof
    * @param proof the LK proof to be exported
    * @param LeanHyp names of Lean hypotheses
    * @param level the current indentation level
@@ -170,6 +268,22 @@ object LeanExporter {
     indent + rec
   }
 
+  def exportFormulaWithG(f: Formula, fp: formulaPrinting): String = f match {
+    case All.Block(xs, FOLAtom("=", as)) => {
+      val fstring = if (xs.isEmpty)
+        exportFOLTerm(as(0)) + " = " + exportFOLTerm(as(1))
+      else
+        "∀ (" + xs.mkString(" ") + ": G), "
+          + exportFOLTerm(as(0)) + " = " + exportFOLTerm(as(1))
+
+      fp match {
+        case formulaPrinting.none => "_"
+        case formulaPrinting.commented => "_ /- " + fstring + " -/"
+        case formulaPrinting.full => fstring
+      }
+    }
+  }
+
   def exportFormula(f: Formula): String = f match {
     case All.Block(xs, FOLAtom("=", as)) => {
       if (xs.isEmpty)
@@ -238,5 +352,31 @@ object LeanExporter {
 
   def getVarListString(L: List[Var]): String = {
     L.mkString(" ")
+  }
+
+  def freeVariablesFromLToR( F: Formula ): List[Var] = F match {
+    case FOLAtom("=",as) => {
+      var vars = freeVariablesFromLToR(as(0))
+      val varsRight = freeVariablesFromLToR(as(1))
+
+      for ( i <- 0 until varsRight.length )
+        if ( ! vars.contains( varsRight(i) )) vars = vars :+ varsRight(i)
+
+      vars
+    }
+  }
+
+  def freeVariablesFromLToR( t: FOLTerm ): List[Var] = t match {
+    case FOLFunction( "f", as ) => {
+      var vars = freeVariablesFromLToR(as(0))
+      val varsRight = freeVariablesFromLToR(as(1))
+
+      for ( i <- 0 until varsRight.length )
+        if ( ! vars.contains( varsRight(i) )) vars = vars :+ varsRight(i)
+
+      vars
+    }
+    case v @ FOLVar( _ ) => List(v)
+    case FOLConst( c ) => List()
   }
 }
