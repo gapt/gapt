@@ -1,13 +1,15 @@
 package gapt.examples.eqthproject
 
 import gapt.expr._
+import gapt.expr.subst.FOLSubstitution
 import gapt.examples.Script
 import gapt.expr.formula._
 import gapt.expr.formula.fol._
 import gapt.expr.formula.hol.{instantiate, universalClosure}
-import gapt.proofs._
-import gapt.provers.prover9._
 import gapt.formats.lean._
+import gapt.proofs._
+import gapt.proofs.resolution._
+import gapt.provers.prover9._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
@@ -17,9 +19,10 @@ import scala.util.Random
 import java.io.{File, PrintWriter}
 
 object largeScale {
+  // FIXME: don't hardcode this
   // path to the file of all equations (without leading block comment)
   val path_alleq =
-    "/home/stefan/Uni/Software/gapt-devel/AllEquations.nocomments.lean"
+    "/home/stefan/Uni/Software/gapt-devel/equational_theories/AllEquations.nocomments.lean"
 
   /**
    * check (try to prove) the implicaton from => to 
@@ -39,7 +42,7 @@ object largeScale {
    * @param logfn log file name
    **/
   def checkImplicationsFromFile(fn: String, outfn: String, logfn: String) = {
-    val impl = tools.ImplImporter(fn)
+    val impl = tools.PowerfulThmImporter(fn)
     checkImplications(impl, outfn, logfn)
   }
 
@@ -52,7 +55,7 @@ object largeScale {
    **/
   def checkRandomImplicationsFromFile(fn: String, n: Int, outfn: String, logfn: String) = {
     val rand = new scala.util.Random
-    val all_impl = tools.ImplImporter(fn)
+    val all_impl = tools.PowerfulThmImporter(fn)
 
     val buf = ArrayBuffer[(Int, Int)]()
     for (i <- 0 until n)
@@ -75,7 +78,6 @@ object largeScale {
     writer.write("import equational_theories.Magma\n")
     writer.write("import equational_theories.AllEquations\n")
     writer.write("import Mathlib.Tactic\n\n")
-    writer.write("set_option maxHeartbeats 0 -- FIXME: this is probably not a good idea\n\n")
 
     val logWriter = new PrintWriter(new File(logfn))
     var successes = 0
@@ -131,6 +133,42 @@ object tools {
     val goal = Sequent(List(f_from), List(f_to))
 
     val (iGoal, constants) = instGoal(goal)
+    Prover9((_ => Seq("assign(max_seconds, 5)"))).getResolutionProof(iGoal) match {
+      case Some(p) => {
+        val q = simplifyResolutionProof(p)
+        val r = LeanExporter.moveParamodsLeft(q)
+
+        val substMap = Map(
+          FOLVar("x") -> FOLConst("a"),
+          FOLVar("y") -> FOLConst("b"),
+          FOLVar("z") -> FOLConst("c"),
+          FOLVar("w") -> FOLConst("d"),
+          FOLVar("u") -> FOLConst("e"),
+          FOLVar("v") -> FOLConst("f")
+        )
+        val subst = FOLSubstitution(substMap)
+        val s = TermReplacement.undoGrounding(r, subst)
+
+        val thmname = "Equation" + from + "_implies_Equation" + to
+
+        Some("@[equational_result]\n" +
+          "theorem " + thmname + " (G: Type*) [Magma G] (h: Equation"
+          + from + " G): Equation" + to + " G :=\n"
+          + LeanExporter(s, LeanExporter.formulaPrinting.none))
+      }
+      case None => None
+    }
+  }
+
+  /**
+   * Run prover9 on: EqList[from] implies EqList[to], return a Lean proof via LK
+   **/
+  def getLeanProofViaLK(EqList: Array[FOLAtom], from: Int, to: Int): Option[String] = {
+    val f_from = universalClosure(EqList(from))
+    val f_to = universalClosure(EqList(to))
+    val goal = Sequent(List(f_from), List(f_to))
+
+    val (iGoal, constants) = instGoal(goal)
     Prover9((_ => Seq("assign(max_seconds, 5)"))).getLKProof(iGoal) match {
       case Some(p) => {
         val thmname = "Equation" + from + "_implies_Equation" + to
@@ -158,7 +196,7 @@ object tools {
     (instGoal, constants)
   }
 
-  private def getConstants(n: Int): List[FOLTerm] = {
+  private def getConstants(n: Int): List[FOLTerm] = { // FIXME
     val a = FOLConst("a")
     val b = FOLConst("b")
     val c = FOLConst("c")
@@ -169,14 +207,14 @@ object tools {
     List(a, b, c, d, e, f).take(n)
   }
 
-  private def getConstantNames(L: List[FOLTerm]): String = {
+  private def getConstantNames(L: List[FOLTerm]): String = { // FIXME
     L.mkString(" ")
   }
 
   class LeanEqParser extends JavaTokenParsers {
     def line: Parser[FOLAtom] = opt("--") ~ "equation" ~ wholeNumber ~ ":=" ~ eq ^^ { case o ~ l ~ n ~ ":=" ~ e => e }
     def eq: Parser[FOLAtom] = term ~ "=" ~ term ^^ { case t1 ~ "=" ~ t2 => FOLAtom("=", List(t1, t2)) }
-    def term: Parser[FOLTerm] = factor ~ "∘" ~ factor ^^ { case f1 ~ "∘" ~ f2 => FOLFunction("f", List(f1, f2)) }
+    def term: Parser[FOLTerm] = factor ~ "◇" ~ factor ^^ { case f1 ~ "◇" ~ f2 => FOLFunction("f", List(f1, f2)) }
       | factor ^^ { case f => f }
     def factor: Parser[FOLTerm] = "x" ^^ { case s => FOLVar(s) }
       | "y" ^^ { case s => FOLVar(s) }
@@ -207,6 +245,22 @@ object tools {
   }
 
   object ImplImporter extends ImplParser {
+    def apply(fn: String): Array[(Int, Int)] = {
+      val buf = ArrayBuffer[(Int, Int)]()
+
+      for (l <- Source.fromFile(fn).getLines())
+        buf += parseAll(line, l).get
+
+      buf.toArray
+    }
+  }
+
+  class PowerfulThmParser extends JavaTokenParsers {
+    def line: Parser[(Int, Int)] =
+      wholeNumber ~ wholeNumber ~ wholeNumber ^^ { case from ~ to ~ weight => (from.toInt, to.toInt) }
+  }
+
+  object PowerfulThmImporter extends PowerfulThmParser {
     def apply(fn: String): Array[(Int, Int)] = {
       val buf = ArrayBuffer[(Int, Int)]()
 

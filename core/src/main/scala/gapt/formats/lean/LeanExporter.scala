@@ -28,25 +28,21 @@ object LeanExporter {
     apply(proof, LeanHyp)
   }
 
-
-  def apply( proof: ResolutionProof, fp: formulaPrinting ): String = {
-    // preprocessing of res proof + adding Lean header...?
+  /**
+   * Exports a Lean proof from a resolution proof
+   **/
+  // FIXME: currently this expands a dag to a tree -> keep dag form!
+  // TODO refactor: separate the two differnt algorithms into different objects?
+  def apply(proof: ResolutionProof, fp: formulaPrinting): String = {
     initHypName()
 
-    val ( initHyps, leanString, hypName ) = apply_rec( proof, fp )
+    val (initHyps, leanString, hypName) = apply_rec(proof, fp)
 
     val concEq = proof.conclusion(Suc(0))
-    println( "(DEBUG): concEq: " + concEq )
-    val concFreeVars = freeVariablesFromLToR( concEq )
-    println( "(DEBUG): concFreeVars: " + concFreeVars )
-    val concEqClosed = All.Block( concFreeVars, concEq )
-    println( "(DEBUG): concEqClosed: " + concEqClosed )
+    val concFreeVars = freeVariablesFromLToR(concEq)
+    val concEqClosed = All.Block(concFreeVars, concEq)
 
-    "theorem EqualityImplication (G: Type*) [Magma G]\n"
-      + "  " + initHyps.mkString("\n  ") + "\n"
-      + "  : " + exportFormulaWithG( concEqClosed, formulaPrinting.full ) + " :=\n"
-      + leanString
-      + "  by exact " + hypName
+    leanString + "  by exact " + hypName
   }
 
   /**
@@ -55,69 +51,103 @@ object LeanExporter {
    * 2. lean string for proof
    * 3. name of hypothesis of last step
    **/
-  def apply_rec( proof: ResolutionProof, fp: formulaPrinting ): ( Set[String], String, String ) = {
+  def apply_rec(proof: ResolutionProof, fp: formulaPrinting): (Set[String], String, String) = {
     val concEq = proof.conclusion(Suc(0))
-    println( "(DEBUG): concEq: " + concEq )
-    val concFreeVars = freeVariablesFromLToR( concEq )
-    println( "(DEBUG): concFreeVars: " + concFreeVars )
-    val concEqClosed = All.Block( concFreeVars, concEq )
-    println( "(DEBUG): concEqClosed: " + concEqClosed )
+    val concFreeVars = freeVariablesFromLToR(concEq)
+    val concEqClosed = All.Block(concFreeVars, concEq)
 
     proof match {
-      case AllR( subproof, idx, variable ) => {
+      case AllR(subproof, idx, variable) => {
+        // FIXME: this assumes that the entire proof uses only a single equation as assumption
+        val str = "(h: " + exportFormulaWithG(concEqClosed, formulaPrinting.full) + ")"
         val hypName = newHypName()
-
-        val str = "(" + hypName + ": " + exportFormulaWithG( concEqClosed, formulaPrinting.full ) + ")"
-        println( "(DEBUG): str: " + str )
-
-        ( Set( str ), "", hypName )
+        (Set(str), "  have " + hypName + " := h\n", hypName)
       }
 
-      case Subst( subproof, subst ) => {
+      case Subst(subproof, subst) => {
         val premEq = subproof.conclusion(Suc(0))
-        println( "(DEBUG): premEq: " + premEq )
-        val premFreeVars = freeVariablesFromLToR( premEq )
-        println( "(DEBUG): premFreeVars: " + premFreeVars )
+        val premFreeVars = freeVariablesFromLToR(premEq)
+        val instTerms = subst(premFreeVars).asInstanceOf[List[FOLTerm]] // FIXME
 
-        println( "(DEBUG): subst: " + subst )
-        val instTerms = subst( premFreeVars )
-        println( "(DEBUG): instTerms: " + instTerms )
-
-        val ( initHyps, subLeanString, subHypName ) = apply_rec( subproof, fp )
-
-        println( "(DEBUG): subHypName: " + subHypName )
-
-        val hypName = newHypName()
-
-        val leanLine = "  have " + hypName + ": "
-          + exportFormulaWithG( concEqClosed, fp ) + " := "
-          + "fun (" + concFreeVars.mkString(" ")  +" : G) => "
-          + "show " + exportFormulaWithG( concEq, fp ) + " "
-          + "from " + subHypName + " " + instTerms.mkString(" ") + "\n"
-
-        ( initHyps, subLeanString + leanLine, hypName )
-      }
-
-      case Flip( subproof, idx ) => {
-        val premEq = subproof.conclusion(Suc(0))
-        println( "(DEBUG): premEq: " + premEq )
-        val premFreeVars = freeVariablesFromLToR( premEq )
-        println( "(DEBUG): premFreeVars: " + premFreeVars )
-
-        val ( initHyps, subLeanString, subHypName ) = apply_rec( subproof, fp )
+        val (initHyps, subLeanString, subHypName) = apply_rec(subproof, fp)
 
         val hypName = newHypName()
         val leanLine = "  have " + hypName + ": "
-          + exportFormulaWithG( concEqClosed, fp ) + " := "
-          + "fun (" + concFreeVars.mkString(" ")  +" : G) => "
-          + "show " + exportFormulaWithG( concEq, fp ) + " "
-          + "from Eq.symm (" + subHypName + " "
-          + premFreeVars.mkString(" ") + ")\n"
+          + exportFormulaWithG(concEqClosed, fp) + " := "
+          + "fun (" + concFreeVars.mkString(" ") + " : G) =>"
+          + exportShowFormulaFromWithG(concEq, fp)
+          + " " + subHypName + " "
+          + instTerms.map(t => exportFOLTerm(t)).mkString(" ") + " -- subst\n"
 
-        ( initHyps, subLeanString + leanLine, hypName )
+        (initHyps, subLeanString + leanLine, hypName)
       }
-       
-      case _ => ( Set(), "unsupported inference rule has been used", "" )
+
+      case Flip(subproof, idx) => {
+        val premEq = subproof.conclusion(Suc(0))
+        val premFreeVars = freeVariablesFromLToR(premEq)
+
+        val (initHyps, subLeanString, subHypName) = apply_rec(subproof, fp)
+
+        val hypName = newHypName()
+        val leanLine = "  have " + hypName + ": "
+          + exportFormulaWithG(concEqClosed, fp) + " := "
+          + "fun (" + concFreeVars.mkString(" ") + " : G) =>"
+          + exportShowFormulaFromWithG(concEq, fp)
+          + " Eq.symm (" + subHypName + " "
+          + premFreeVars.mkString(" ") + ") -- flip\n"
+
+        (initHyps, subLeanString + leanLine, hypName)
+      }
+
+      case Paramod(leftProof, eqIdx, clockwise, rightProof, auxIdx, context) => {
+        val rightEq = rightProof.conclusion(auxIdx)
+        val rightFreeVars = freeVariablesFromLToR(rightEq)
+        val leftEq = leftProof.conclusion(eqIdx)
+        val leftFreeVars = freeVariablesFromLToR(leftEq)
+        val eqsides = leftEq match { case FOLAtom("=", as) => as }
+        val lhsLean = if (clockwise) eqsides(0) else eqsides(1)
+        val rwpos = getRewritePositions(lhsLean, context.asInstanceOf[Abs]) // FIXME
+        val rwposidcs = getPositiveIndices(rwpos)
+
+        val (leftHyps, leftLeanString, leftHypName) = apply_rec(leftProof, fp)
+        val (rightHyps, rightLeanString, rightHypName) = apply_rec(rightProof, fp)
+        // assert( leftHyps == rightHyps ) // should come from the same unique equation
+
+        val hypName = newHypName()
+        val leanLine = "  have " + hypName + ": "
+          + exportFormulaWithG(concEqClosed, fp) + " := "
+          + "fun (" + concFreeVars.mkString(" ") + " : G) => "
+          + "by (have " + rightHypName + "' := "
+          + rightHypName + " " + rightFreeVars.mkString(" ") + ";"
+          + " nth_rewrite " + rwposidcs.mkString(" ") + " "
+          + "[" + (if (clockwise) "" else "←") + leftHypName + " " + leftFreeVars.mkString(" ") + "]"
+          + " at " + rightHypName + "';"
+          + " exact " + rightHypName + "') -- paramod\n"
+
+        (leftHyps, leftLeanString + rightLeanString + leanLine, hypName)
+      }
+
+      case _ => (Set(), "unsupported inference rule has been used", "")
+    }
+
+  }
+
+  /**
+   * move chain of paramodulations (plus possibly a flip) from the rightmost branch to the left
+   *
+   * This terminates because the rightmost branch decreases in size with each call.
+   **/
+  def moveParamodsLeft(proof: ResolutionProof): ResolutionProof = {
+    proof match {
+      case Paramod(_, _, _, _, _, _)                => proof
+      case Flip(_, _)                               => proof
+      case Resolution(subProof1, idx1, Input(_), _) => subProof1
+      case Resolution(subProof1, idx1, Flip(Input(_), _), _) => {
+        moveParamodsLeft(Flip(subProof1, idx1))
+      }
+      case Resolution(leftProof, leftIdx, Paramod(middleProof, eqIdx, clockwise, rightProof, _, context), _) => {
+        moveParamodsLeft(Resolution(Paramod(middleProof, eqIdx, !clockwise, leftProof, leftIdx, context), Suc(0), rightProof, Ant(0)))
+      }
     }
   }
 
@@ -268,6 +298,12 @@ object LeanExporter {
     indent + rec
   }
 
+  def exportShowFormulaFromWithG(f: Formula, fp: formulaPrinting): String = fp match {
+    case formulaPrinting.none      => ""
+    case formulaPrinting.commented => " show " + exportFormulaWithG(f, fp) + " from"
+    case formulaPrinting.full      => " show " + exportFormulaWithG(f, fp) + " from"
+  }
+
   def exportFormulaWithG(f: Formula, fp: formulaPrinting): String = f match {
     case All.Block(xs, FOLAtom("=", as)) => {
       val fstring = if (xs.isEmpty)
@@ -277,9 +313,9 @@ object LeanExporter {
           + exportFOLTerm(as(0)) + " = " + exportFOLTerm(as(1))
 
       fp match {
-        case formulaPrinting.none => "_"
+        case formulaPrinting.none      => "_"
         case formulaPrinting.commented => "_ /- " + fstring + " -/"
-        case formulaPrinting.full => fstring
+        case formulaPrinting.full      => fstring
       }
     }
   }
@@ -295,7 +331,7 @@ object LeanExporter {
 
   def exportFOLTerm(t: FOLTerm): String = t match {
     case FOLFunction("f", as) =>
-      "( " + exportFOLTerm(as(0)) + " ∘ " + exportFOLTerm(as(1)) + " )"
+      "( " + exportFOLTerm(as(0)) + " ◇ " + exportFOLTerm(as(1)) + " )"
     case FOLVar(v) =>
       v
     case FOLConst(c) =>
@@ -324,6 +360,11 @@ object LeanExporter {
     }
   }
 
+  /**
+   * returns List[Boolean] whose length is the number of occurrences of lhs + the number
+   * of occurrences of v in replTerm. The i-th element of the return value is true
+   * iff the i-th occurrence of either lhs or v is one of v.
+   **/
   def getRewritePositions(lhs: FOLTerm, replTerm: FOLTerm, v: Var): List[Boolean] = {
     if (replTerm == lhs)
       List(false)
@@ -334,6 +375,7 @@ object LeanExporter {
         case FOLFunction("f", as) =>
           getRewritePositions(lhs, as(0), v) ++ getRewritePositions(lhs, as(1), v)
         case FOLConst(_) => List()
+        case FOLVar(_)   => List()
       }
   }
 
@@ -346,37 +388,37 @@ object LeanExporter {
     rv
   }
 
-  def getListString(L: List[Int]): String = {
+  def getListString(L: List[Int]): String = { // FIXME
     L.mkString(" ")
   }
 
-  def getVarListString(L: List[Var]): String = {
+  def getVarListString(L: List[Var]): String = { // FIXME
     L.mkString(" ")
   }
 
-  def freeVariablesFromLToR( F: Formula ): List[Var] = F match {
-    case FOLAtom("=",as) => {
+  def freeVariablesFromLToR(F: Formula): List[Var] = F match {
+    case FOLAtom("=", as) => {
       var vars = freeVariablesFromLToR(as(0))
       val varsRight = freeVariablesFromLToR(as(1))
 
-      for ( i <- 0 until varsRight.length )
-        if ( ! vars.contains( varsRight(i) )) vars = vars :+ varsRight(i)
+      for (i <- 0 until varsRight.length)
+        if (!vars.contains(varsRight(i))) vars = vars :+ varsRight(i)
 
       vars
     }
   }
 
-  def freeVariablesFromLToR( t: FOLTerm ): List[Var] = t match {
-    case FOLFunction( "f", as ) => {
+  def freeVariablesFromLToR(t: FOLTerm): List[Var] = t match {
+    case FOLFunction("f", as) => {
       var vars = freeVariablesFromLToR(as(0))
       val varsRight = freeVariablesFromLToR(as(1))
 
-      for ( i <- 0 until varsRight.length )
-        if ( ! vars.contains( varsRight(i) )) vars = vars :+ varsRight(i)
+      for (i <- 0 until varsRight.length)
+        if (!vars.contains(varsRight(i))) vars = vars :+ varsRight(i)
 
       vars
     }
-    case v @ FOLVar( _ ) => List(v)
-    case FOLConst( c ) => List()
+    case v @ FOLVar(_) => List(v)
+    case FOLConst(c)   => List()
   }
 }
