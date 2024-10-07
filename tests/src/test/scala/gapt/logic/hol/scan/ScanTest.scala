@@ -45,23 +45,27 @@ class ScanTest extends Specification {
     (leftFormula must beEquivalentTo(rightFormula)).mapMessage(_ => s"$left is not equivalent to $right")
   }
 
+  def beCorrectSolutionFor(input: FormulaEquationClauseSet): Matcher[Either[Derivation, (Set[HOLClause], Substitution, Derivation)]] = { (result: Either[Derivation, (Set[HOLClause], Substitution, Derivation)]) =>
+    result must beRight.like {
+      case output @ (clauseSet: Set[HOLClause], witnesses: Substitution, derivation: Derivation) =>
+        val substitutedInput = witnesses(input.clauses).map(_.toFormula).map(BetaReduction.betaNormalize)
+        val beWithoutQuantifiedVariables: Matcher[HOLClause] = { (c: HOLClause) =>
+          {
+            (freeHOVariables(c.toFormula).intersect(input.quantifiedVariables).isEmpty, s"$c contains at least one quantified variable from ${input.quantifiedVariables}")
+          }
+        }
+
+        clauseSet.must(contain(beWithoutQuantifiedVariables).foreach)
+          .and(witnesses.domain.mustEqual(input.quantifiedVariables)
+            .mapMessage(_ => s"domain of substitution is not ${input.quantifiedVariables}"))
+          .and(substitutedInput.must(beEquivalentTo(clauseSet.map(_.toFormula)))
+            .mapMessage(_ => s"substituted input is not equivalent to output clause set"))
+    }
+  }
+
   val defaultLimit = 100
   def beSolved(limit: Int = defaultLimit): Matcher[FormulaEquationClauseSet] = {
     (input: FormulaEquationClauseSet) =>
-      scan(input, Some(limit)) must beRight.like {
-        case output @ (clauseSet: Set[HOLClause], witnesses: Substitution, derivation: Derivation) =>
-          val substitutedInput = witnesses(input.clauses).map(_.toFormula).map(BetaReduction.betaNormalize)
-          val beWithoutQuantifiedVariables: Matcher[HOLClause] = { (c: HOLClause) =>
-            {
-              (freeHOVariables(c.toFormula).intersect(input.quantifiedVariables).isEmpty, s"$c contains at least one quantified variable from ${input.quantifiedVariables}")
-            }
-          }
-
-          clauseSet.must(contain(beWithoutQuantifiedVariables).foreach)
-            .and(witnesses.domain.mustEqual(input.quantifiedVariables)
-              .mapMessage(_ => s"domain of substitution is not ${input.quantifiedVariables}"))
-            .and(substitutedInput.must(beEquivalentTo(clauseSet.map(_.toFormula)))
-              .mapMessage(_ => s"substituted input is not equivalent to output clause set"))
-      }
+      scan(input, Some(limit)).toSeq.must(contain(beCorrectSolutionFor(input)).foreach)
   }
 }

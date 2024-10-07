@@ -119,26 +119,27 @@ object scan {
 
   case class State(
       activeClauses: Set[HOLClause],
-      activeCandidates: scala.collection.mutable.Queue[ResolutionCandidate],
       quantifiedVariables: Set[Var],
       derivation: Derivation,
       derivationLimit: Option[Int]
   )
 
-  def apply(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = Some(100)): Either[Derivation, (Set[HOLClause], Substitution, Derivation)] =
+  def apply(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = Some(100)): Iterator[Either[Derivation, (Set[HOLClause], Substitution, Derivation)]] =
     assert(derivationLimit.isEmpty || derivationLimit.get >= 0, "derivation limit must be non-negative")
-    val result =
-      for
-        state <- saturate(State(
-          input.clauses,
-          scala.collection.mutable.Queue.from(resolutionCandidates(input.clauses)),
-          input.quantifiedVariables,
-          Derivation(input.clauses, List.empty),
-          derivationLimit
-        ))
-        wits = simplifyWitnessSubstitution(witnessSubstitution(state.derivation, input.quantifiedVariables))
-      yield (state.activeClauses, wits, state.derivation)
-    result.left.map(state => state.derivation)
+    val states = saturate(State(
+      input.clauses,
+      input.quantifiedVariables,
+      Derivation(input.clauses, List.empty),
+      derivationLimit
+    ))
+    states.map { state =>
+      val result =
+        for
+          s <- state
+          wits = simplifyWitnessSubstitution(witnessSubstitution(s.derivation, input.quantifiedVariables))
+        yield (s.activeClauses, wits, s.derivation)
+      result.left.map(state => state.derivation)
+    }
 
   def subsumptionSubstitution(subsumer: HOLClause, subsumee: HOLClause): Option[FOLSubstitution] = {
     val subsumerHoVarsAsConsts = subsumer.map { case Atom(VarOrConst(v, ty, tys), args) => Atom(Const(v, ty, tys), args) }
@@ -152,7 +153,7 @@ object scan {
     || clauses.exists(c => subsumptionSubstitution(c, eliminatedConstraints).isDefined)
   }
 
-  def nextInference(state: State): Option[Inference] = {
+  def nextInference(state: State): Seq[Seq[Inference]] = {
     // check for tautologies
     val tautologyDeletion: Option[Inference.TautologyDeletion] = state.activeClauses.find(_.isTaut).map(Inference.TautologyDeletion(_))
 
@@ -173,8 +174,13 @@ object scan {
       }
     }.nextOption()
 
+    // do factoring
+    val factoring: Option[Inference.Factoring] = state.activeClauses.flatMap(factoringInferences).filter {
+      case f => !isRedundant(state.activeClauses, factor(f))
+    }.headOption
+
     // check for purification
-    val purification: Option[Inference.Purification] = resolutionCandidates(state.activeClauses).filter { rc =>
+    val purifications: Seq[Inference.Purification] = resolutionCandidates(state.activeClauses).filter { rc =>
       rc.isVar && state.quantifiedVariables.contains(rc.hoVar.asInstanceOf[Var])
     }.flatMap[Inference.Purification] { rc =>
       val hoVar @ Var(_, _) = rc.hoVar: @unchecked
@@ -188,27 +194,18 @@ object scan {
       if !isAFactor && allFactorsRedundant && allResolventsRedundant
       then Some(Inference.Purification(hoVar, rc))
       else None
-    }.headOption
+    }.toSeq
 
-    // do factoring
-    val factoring: Option[Inference.Factoring] = state.activeClauses.flatMap(factoringInferences).filter {
-      case f => !isRedundant(state.activeClauses, factor(f))
-    }.headOption
+    val singleInference = tautologyDeletion.orElse(constraintElimination).orElse(subsumption).orElse(factoring)
 
-    // do resolution
-    tautologyDeletion.orElse(constraintElimination).orElse(subsumption).orElse(purification).orElse(factoring).orElse {
-      var inference: Option[Inference.Resolution] = None
-      while inference == None && !state.activeCandidates.isEmpty do {
-        val candidate = state.activeCandidates.dequeue()
-
-        if state.activeClauses.contains(candidate.clause) then {
-          inference = resolutionInferences(candidate, state.activeClauses - candidate.clause).find {
-            case Inference.Resolution(left, right) => !isRedundant(state.activeClauses, resolve(left, right))
-          }
+    if singleInference.isDefined then Seq(singleInference.toSeq)
+    else if singleInference.isEmpty && !purifications.isEmpty then purifications.map(Seq(_))
+    else // do resolution
+      Seq(state.activeClauses.flatMap(c => resolutionCandidates(c)).flatMap { candidate =>
+        resolutionInferences(candidate, state.activeClauses - candidate.clause).find {
+          case Inference.Resolution(left, right) => !isRedundant(state.activeClauses, resolve(left, right))
         }
-      }
-      inference
-    }
+      }.toSeq)
   }
 
   def resolutionCandidates(clause: HOLClause): Set[ResolutionCandidate] = {
@@ -225,35 +222,26 @@ object scan {
     }.map(rc => Inference.Resolution(resolutionCandidate, rc))
   }
 
-  def saturate(state: State): Either[State, State] = {
-    val inference = nextInference(state)
-    if inference.isDefined && state.derivationLimit.isDefined && state.derivationLimit.get <= 0 then Left(state)
+  def saturate(state: State): Iterator[Either[State, State]] = {
+    val possibilities = nextInference(state)
+    if possibilities.isEmpty then Iterator(Right(state))
     else
-      inference match
-        case None => Right(state)
-        case Some(inference: Inference.Resolution) => {
-          val (added, removed) = inference(state.activeClauses)
-          assert(added.intersect(removed).isEmpty)
-          val newCandidates = resolutionCandidates(added)
-          state.activeCandidates.enqueueAll(newCandidates)
-          state.activeCandidates.enqueue(inference.left)
-          saturate(state.copy(
-            activeClauses = (state.activeClauses ++ added) -- removed,
-            derivation = state.derivation.copy(inferences = state.derivation.inferences :+ inference),
-            derivationLimit = state.derivationLimit.map(d => d - 1)
-          ))
-        }
-        case Some(inference) => {
-          val (added, removed) = inference(state.activeClauses)
-          assert(added.intersect(removed).isEmpty)
-          val newCandidates = resolutionCandidates(added)
-          state.activeCandidates.enqueueAll(newCandidates)
-          saturate(state.copy(
-            activeClauses = (state.activeClauses ++ added) -- removed,
-            derivation = state.derivation.copy(inferences = state.derivation.inferences :+ inference),
-            derivationLimit = state.derivationLimit.map(d => d - 1)
-          ))
-        }
+      possibilities.iterator.flatMap { inferences =>
+        if !inferences.isEmpty && state.derivationLimit.isDefined && state.derivationLimit.get <= 0 then LazyList(Left(state))
+        else if inferences.isEmpty then Iterator(Right(state))
+        else
+          val updatedState = inferences.foldLeft(state) {
+            case (state, inference) =>
+              val (added, removed) = inference(state.activeClauses)
+              assert(added.intersect(removed).isEmpty)
+              state.copy(
+                activeClauses = (state.activeClauses ++ added) -- removed,
+                derivation = state.derivation.copy(inferences = state.derivation.inferences :+ inference),
+                derivationLimit = state.derivationLimit.map(d => d - 1)
+              )
+          }
+          saturate(updatedState)
+      }
   }
 
   def freshArgumentVariables(ty: Ty, varName: String, blacklist: Iterable[VarOrConst] = Iterable.empty) = {
@@ -460,12 +448,30 @@ object scan {
   }
 
   def printResult(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = Some(100)) = {
-    scan(input, derivationLimit) match {
+    scan(input, derivationLimit).foreach {
       case Left(value) => {
         printer.pprintln(value, height = derivationLimit.get * 100)
         println(s"\n ❌ attempt resulted in derivation of length > ${derivationLimit.get}")
       }
       case Right(output) => checkSolution(input, output)
+    }
+  }
+
+  def printResultInteractive(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = Some(100)) = {
+    val iterator = scan(input, derivationLimit)
+
+    while (iterator.hasNext) {
+      iterator.next() match {
+        case Left(value) => {
+          printer.pprintln(value, height = derivationLimit.get * 100)
+          println(s"\n ❌ attempt resulted in derivation of length > ${derivationLimit.get}")
+        }
+        case Right(output) => {
+          checkSolution(input, output)
+          if iterator.hasNext then
+            scala.io.StdIn.readLine("press enter to show next solution: ")
+        }
+      }
     }
   }
 
