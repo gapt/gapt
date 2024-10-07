@@ -93,6 +93,24 @@ object formulaEquations {
     )
   )
 
+  def modalCorrespondenceReflexivity = feq(
+    Set(hov"X:i>o"),
+    Set(
+      hcl"R(a,v) :- X(v)",
+      hcl"X(a) :-"
+    )
+  )
+
+  def modalCorrespondenceTransitivity = feq(
+    Set(hov"X:i>o"),
+    Set(
+      hcl"R(a,v) :- X(v)",
+      hcl":- R(a,b)",
+      hcl":- R(b,c)",
+      hcl"X(c) :-"
+    )
+  )
+
   def Q = And(Set(
     fof"!u s(u) != 0",
     fof"!u u + 0 = u",
