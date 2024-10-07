@@ -37,6 +37,23 @@ object formulaEquations {
     )
   )
 
+  def example = feq(
+    Set(hov"X:i>o"),
+    Set(
+      hcl"B(v) :- X(v)",
+      hcl"X(u) :- A(u)"
+    )
+  )
+
+  def example2 = feq(
+    Set(hov"X:i>o"),
+    Set(
+      hcl"B(v) :- X(v)",
+      hcl"X(u) :- A(u)",
+      hcl"C(u) :- X(u)"
+    )
+  )
+
   def simpleDisjunction = feq(Set(hov"X:i>o"), Set(hcl":- X(a), X(b)"))
   def tripleDisjunction = feq(Set(hov"X:i>o"), Set(hcl":- X(a), X(b), X(c)"))
 
