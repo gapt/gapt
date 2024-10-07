@@ -52,7 +52,7 @@ object formulaEquations {
 
   def terminatingDerivationWhichRequiresRedundancyInWitnessConstruction = feq(
     Set(hov"X:i>o"),
-    Set(hcl"A(u):-X(u)", hcl"X(u) :- X(v), A(u)", hcl"X(u) :- B(u)")
+    Set(hcl"A(u) :- X(u)", hcl"X(u) :- X(v), A(u)", hcl"X(u) :- B(u)")
   )
 
   def subsumptionBasedRedundancyWithInfiniteWitness = feq(
