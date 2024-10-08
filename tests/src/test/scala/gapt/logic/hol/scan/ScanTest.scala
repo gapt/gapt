@@ -31,6 +31,12 @@ class ScanTest extends Specification {
     simple disjunction ${simpleDisjunction must beSolved()}
     triple disjunction ${tripleDisjunction must beSolved()}
     two variable example ${twoVariableExample must beSolved()}
+    modal correspondence axiom reflexivity ${modalCorrespondenceReflexivity must beSolved()}
+    modal correspondence axiom transitivity ${modalCorrespondenceTransitivity must beSolved()}
+    non-inductive example with two clauses ${example must beSolved()}
+    non-inductive example with three clauses ${example must beSolved()}
+    inductive example with tautology deletion ${exampleRequiringTautologyDeletion must beSolved()}
+    inductive example with subsumption ${exampleRequiringSubsumption must beSolved()}
   """
 
   def beEquivalentTo(right: Formula): Matcher[Formula] = { (left: Formula) =>
