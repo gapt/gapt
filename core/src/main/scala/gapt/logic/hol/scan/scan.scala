@@ -82,19 +82,29 @@ object scan {
   enum Inference:
     case Resolution(left: ResolutionCandidate, right: ResolutionCandidate)
     case Factoring(clause: HOLClause, leftIndex: SequentIndex, rightIndex: SequentIndex)
-    case Purification(hoVar: Var, candidate: ResolutionCandidate)
+    case Purification(candidate: ResolutionCandidate)
     case TautologyDeletion(tautology: HOLClause)
     case Subsumption(subsumer: HOLClause, subsumee: HOLClause, substitution: FOLSubstitution)
     case ConstraintElimination(clause: HOLClause, index: SequentIndex, substitution: FOLSubstitution)
+    case Polarity(hoVar: Var, polarity: gapt.logic.Polarity)
 
     def apply(clauses: Set[HOLClause]): (Set[HOLClause], Set[HOLClause]) =
       this match
         case Resolution(left, right)                            => (Set(resolve(left, right)), Set.empty)
         case f: Factoring                                       => (Set(factor(f)), Set.empty)
-        case Purification(_, candidate)                         => (Set.empty, Set(candidate.clause))
+        case Purification(candidate)                            => (Set.empty, Set(candidate.clause))
         case Subsumption(subsumer, subsumee, substitution)      => (Set.empty, Set(subsumee))
         case TautologyDeletion(clause)                          => (Set.empty, Set(clause))
         case ConstraintElimination(clause, index, substitution) => (Set(substitution(clause.delete(index)).map { case a: Atom => a }.distinct), Set(clause))
+        case Polarity(hoVar, polarity) => {
+          val removed = clauses.filter(c =>
+            c.exists {
+              case Atom(v: Var, _) if v == hoVar => true
+              case _                             => false
+            }
+          )
+          (Set.empty, removed)
+        }
 
   def factor(factoring: Inference.Factoring): HOLClause = {
     val Inference.Factoring(clause, leftIndex, rightIndex) = factoring
@@ -154,6 +164,38 @@ object scan {
   }
 
   def nextInference(state: State): Seq[Seq[Inference]] = {
+    // check for appropriate polarity
+    val polarity: Option[Inference.Polarity] = {
+      state.quantifiedVariables.toSeq.flatMap[Inference.Polarity] { w =>
+        val variableOccurringClauses = state.activeClauses.filter { clause =>
+          clause.exists {
+            case Atom(v: Var, _) if v == w => true
+            case _                         => false
+          }
+        }
+        if variableOccurringClauses.isEmpty then None
+        else
+          val allCandidateOccuringClausesContainCandidatePositively = variableOccurringClauses.forall { clause =>
+            clause.succedent.exists {
+              case Atom(v: Var, _) if w == v => true
+              case _                         => false
+            }
+          }
+          val allCandidateOccuringClausesContainCandidateNegatively = variableOccurringClauses.forall { clause =>
+            clause.antecedent.exists {
+              case Atom(v: Var, _) if w == v => true
+              case _                         => false
+            }
+          }
+
+          val p =
+            if allCandidateOccuringClausesContainCandidatePositively then Some(Polarity(true))
+            else if allCandidateOccuringClausesContainCandidateNegatively then Some(Polarity(false))
+            else None
+          p.map(Inference.Polarity(w, _))
+      }.headOption
+    }
+
     // check for tautologies
     val tautologyDeletion: Option[Inference.TautologyDeletion] = state.activeClauses.find(_.isTaut).map(Inference.TautologyDeletion(_))
 
@@ -192,20 +234,39 @@ object scan {
       }
       val isAFactor = state.activeClauses.exists(c => isFactorOf(rc.clause, c))
       if !isAFactor && allFactorsRedundant && allResolventsRedundant
-      then Some(Inference.Purification(hoVar, rc))
+      then Some(Inference.Purification(rc))
       else None
     }.toSeq
 
-    val singleInference = tautologyDeletion.orElse(constraintElimination).orElse(subsumption).orElse(factoring)
+    val singleInference = polarity.orElse(tautologyDeletion).orElse(constraintElimination).orElse(subsumption).orElse(factoring)
+
+    val (inductivePurifications, nonInductivePurifications) = purifications.partition(i => isInductive(i.candidate))
+
+    val activeClause = state.activeClauses.flatMap(c => resolutionCandidates(c)).filter(c => !isInductive(c) && nonRedundantResolutionInferences(state.activeClauses, c).nonEmpty).headOption
+
+    val resolutions: Seq[Inference.Resolution] = activeClause.toSeq.flatMap { candidate =>
+      nonRedundantResolutionInferences(state.activeClauses, candidate)
+    }
 
     if singleInference.isDefined then Seq(singleInference.toSeq)
-    else if singleInference.isEmpty && !purifications.isEmpty then purifications.map(Seq(_))
-    else // do resolution
-      Seq(state.activeClauses.flatMap(c => resolutionCandidates(c)).flatMap { candidate =>
-        resolutionInferences(candidate, state.activeClauses - candidate.clause).find {
-          case Inference.Resolution(left, right) => !isRedundant(state.activeClauses, resolve(left, right))
-        }
-      }.toSeq)
+    else if singleInference.isEmpty && !nonInductivePurifications.isEmpty then
+      nonInductivePurifications.map(Seq(_))
+    else if singleInference.isEmpty && !resolutions.isEmpty then
+      Seq(resolutions)
+    else inductivePurifications.map(Seq(_))
+  }
+
+  def nonRedundantResolutionInferences(clauses: Set[HOLClause], candidate: ResolutionCandidate) = {
+    resolutionInferences(candidate, clauses - candidate.clause).filter {
+      case Inference.Resolution(left, right) => !isRedundant(clauses, resolve(left, right))
+    }.toSeq
+  }
+
+  def isInductive(candidate: ResolutionCandidate): Boolean = {
+    candidate.clause.cedent(!candidate.index.polarity).exists {
+      case Atom(v @ VarOrConst(_, _, _), _) if v == candidate.hoVar => true
+      case _                                                        => false
+    }
   }
 
   def resolutionCandidates(clause: HOLClause): Set[ResolutionCandidate] = {
@@ -255,7 +316,15 @@ object scan {
         case head :: next => {
           head match
             case i: (Inference.Resolution | Inference.Factoring | Inference.TautologyDeletion | Inference.Subsumption | Inference.ConstraintElimination) => helper(derivation.tail)
-            case Inference.Purification(hoVar, candidate) => {
+            case Inference.Polarity(hoVar, polarity) => {
+              val wits = helper(derivation.tail)
+              val argumentVariables = freshArgumentVariables(hoVar.ty, "u")
+              val wit = if polarity.positive then TopC() else BottomC()
+              val witSubst = Substitution(hoVar, Abs.Block(argumentVariables, wit))
+              wits.map(w => w.compose(witSubst))
+            }
+            case Inference.Purification(candidate) => {
+              val hoVar = candidate.hoVar.asInstanceOf[Var]
               val wits = helper(derivation.tail)
 
               val candidateOccurringClauses = derivation.initialClauseSet.filter { clause =>
@@ -414,7 +483,7 @@ object scan {
           pprint.Tree.KeyValue("resolvent", printer.treeify(scan.resolve(left, right), false, true))
         )
       )
-    case Inference.Purification(_, candidate) => pprint.Tree.Apply("Purification", Iterator(additionalPrinters(candidate)))
+    case Inference.Purification(candidate) => pprint.Tree.Apply("Purification", Iterator(additionalPrinters(candidate)))
     case Inference.ConstraintElimination(clause, index, _) => pprint.Tree.Apply(
         "ConstraintElimination",
         Iterator(pprint.Tree.KeyValue("clause", printer.treeify(clause, false, true)), pprint.Tree.KeyValue("constraint", printer.treeify(clause(index), false, true)))
@@ -469,6 +538,7 @@ object scan {
         case Left(value) => {
           printer.pprintln(value, height = derivationLimit.get * 100)
           println(s"\n ❌ attempt resulted in derivation of length > ${derivationLimit.get}")
+          scala.io.StdIn.readLine("press enter to show next solution: ")
         }
         case Right(output) => {
           checkSolution(input, output)
