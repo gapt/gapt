@@ -69,9 +69,10 @@ class ScanTest extends Specification {
     }
   }
 
-  val defaultLimit = 100
-  def beSolved(limit: Int = defaultLimit): Matcher[FormulaEquationClauseSet] = {
+  val defaultDerivationLimit = 100
+  val defaultPossibilityLimit = 10
+  def beSolved(derivationLimit: Int = defaultDerivationLimit, possibilityLimit: Int = defaultPossibilityLimit): Matcher[FormulaEquationClauseSet] = {
     (input: FormulaEquationClauseSet) =>
-      scan(input, Some(limit)).toSeq.must(contain(beCorrectSolutionFor(input)).foreach)
+      scan(input, Some(derivationLimit)).take(possibilityLimit).toSeq.must(contain(beCorrectSolutionFor(input)))
   }
 }
