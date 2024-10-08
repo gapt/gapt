@@ -242,9 +242,9 @@ object scan {
 
     val (inductivePurifications, nonInductivePurifications) = purifications.partition(i => isInductive(i.candidate))
 
-    val activeClause = state.activeClauses.flatMap(c => resolutionCandidates(c)).filter(c => !isInductive(c) && nonRedundantResolutionInferences(state.activeClauses, c).nonEmpty).headOption
+    val activeClauseCandidates = state.activeClauses.flatMap(c => resolutionCandidates(c)).filter(c => !isInductive(c) && nonRedundantResolutionInferences(state.activeClauses, c).nonEmpty)
 
-    val resolutions: Seq[Inference.Resolution] = activeClause.toSeq.flatMap { candidate =>
+    val resolutions: Seq[Seq[Inference.Resolution]] = activeClauseCandidates.toSeq.map { candidate =>
       nonRedundantResolutionInferences(state.activeClauses, candidate)
     }
 
@@ -252,7 +252,7 @@ object scan {
     else if singleInference.isEmpty && !nonInductivePurifications.isEmpty then
       nonInductivePurifications.map(Seq(_))
     else if singleInference.isEmpty && !resolutions.isEmpty then
-      Seq(resolutions)
+      resolutions
     else inductivePurifications.map(Seq(_))
   }
 
