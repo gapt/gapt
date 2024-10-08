@@ -124,7 +124,7 @@ object scan {
       derivationLimit: Option[Int]
   )
 
-  def apply(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = Some(100)): Iterator[Either[Derivation, (Set[HOLClause], Substitution, Derivation)]] =
+  def apply(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = Some(100), witnessLimit: Int = 100): Iterator[Either[Derivation, (Set[HOLClause], Option[Substitution], Derivation)]] =
     assert(derivationLimit.isEmpty || derivationLimit.get >= 0, "derivation limit must be non-negative")
     val states = saturate(State(
       input.clauses,
@@ -136,7 +136,7 @@ object scan {
       val result =
         for
           s <- state
-          wits = simplifyWitnessSubstitution(witnessSubstitution(s.derivation, input.quantifiedVariables))
+          wits = witnessSubstitution(s.derivation, input.quantifiedVariables, witnessLimit).map(simplifyWitnessSubstitution)
         yield (s.activeClauses, wits, s.derivation)
       result.left.map(state => state.derivation)
     }
@@ -249,8 +249,8 @@ object scan {
     rename.awayFrom(blacklist).freshStream("u").zip(argTypes).map(Var(_, _))
   }
 
-  def witnessSubstitution(derivation: Derivation, quantifiedVariables: Set[Var]): Substitution = {
-    def helper(derivation: Derivation): Substitution = {
+  def witnessSubstitution(derivation: Derivation, quantifiedVariables: Set[Var], limit: Int): Option[Substitution] = {
+    def helper(derivation: Derivation): Option[Substitution] = {
       derivation.inferences match
         case head :: next => {
           head match
@@ -277,26 +277,29 @@ object scan {
                 }
               }
 
-              val witExtension: Substitution =
+              val witExtension: Option[Substitution] =
                 if allCandidateOccuringClausesContainCandidatePositively
                 then {
                   val argumentVariables = freshArgumentVariables(candidate.hoVar.ty, "u")
-                  Substitution(hoVar, Abs.Block(argumentVariables, TopC()))
+                  Some(Substitution(hoVar, Abs.Block(argumentVariables, TopC())))
                 } else if allCandidateOccuringClausesContainCandidateNegatively
                 then {
                   val argumentVariables = freshArgumentVariables(candidate.hoVar.ty, "u")
-                  Substitution(hoVar, Abs.Block(argumentVariables, BottomC()))
+                  Some(Substitution(hoVar, Abs.Block(argumentVariables, BottomC())))
                 } else {
-                  Substitution(hoVar, resWitness(candidate))
+                  resWitness(candidate, limit).map(Substitution(hoVar, _))
                 }
 
-              wits.compose(witExtension)
+              for
+                w <- wits
+                ext <- witExtension
+              yield w.compose(ext)
             }
         }
-        case Nil => Substitution(quantifiedVariables.map {
+        case Nil => Some(Substitution(quantifiedVariables.map {
             case v @ Var(_, FunctionType(To, args)) =>
               (v, Abs.Block(rename.awayFrom(Iterable.empty).freshStream("u").take(args.size).map(FOLVar(_)), BottomC()))
-          }.toMap)
+          }.toMap))
     }
 
     helper(derivation)
@@ -325,15 +328,16 @@ object scan {
         eliminateConstraints(Substitution(v, t)(clause.delete(Ant(i))).map { case a: Atom => a }, keepVariables)
   }
 
-  def saturateWithResolutionCandidate(candidate: ResolutionCandidate, resolventSet: Set[HOLClause], resolvedCandidates: Set[ResolutionCandidate]): Set[HOLClause] = {
+  def saturateWithResolutionCandidate(candidate: ResolutionCandidate, resolventSet: Set[HOLClause], resolvedCandidates: Set[ResolutionCandidate], limit: Int): Option[Set[HOLClause]] = {
     val partner = pickResolutionPartner(candidate, resolventSet, resolvedCandidates)
 
     partner match
-      case None => resolventSet
+      case None                        => Some(resolventSet)
+      case Some(partner) if limit <= 0 => None
       case Some(partner) => {
         val resolvent = resolve(candidate, partner)
         val resolventWithoutConstraints = eliminateConstraints(resolvent, candidate.args.map { case x: FOLVar => x }.toSet).map { case a: Atom => a }
-        saturateWithResolutionCandidate(candidate, resolventSet + resolventWithoutConstraints, resolvedCandidates + partner)
+        saturateWithResolutionCandidate(candidate, resolventSet + resolventWithoutConstraints, resolvedCandidates + partner, limit = limit - 1)
       }
   }
 
@@ -357,21 +361,21 @@ object scan {
     resolvent.distinct
   }
 
-  def resWitness(candidate: ResolutionCandidate): Expr = {
+  def resWitness(candidate: ResolutionCandidate, limit: Int): Option[Expr] = {
     val (abstractedResolutionCandidate, vars) = candidate.abstracted
     val resCandidate = eliminateConstraints(abstractedResolutionCandidate.clause, vars.toSet).map { case a: Atom => a }
 
-    val resolventSet = saturateWithResolutionCandidate(abstractedResolutionCandidate, Set(HOLClause(Seq((abstractedResolutionCandidate.atom, !abstractedResolutionCandidate.index.polarity)))), Set.empty)
-
-    val formula: Formula = abstractedResolutionCandidate.index.polarity match
-      case Polarity(false) => And(resolventSet.map {
-          clause => All.Block((freeFOLVariables(clause.toFormula) -- vars).toSeq, clause.toDisjunction)
-        })
-      case Polarity(true) => Or(resolventSet.map {
-          clause => Ex.Block((freeFOLVariables(clause.toFormula) -- vars).toSeq, clause.toNegConjunction)
-        })
-
-    Abs(vars, formula)
+    val saturationResult = saturateWithResolutionCandidate(abstractedResolutionCandidate, Set(HOLClause(Seq((abstractedResolutionCandidate.atom, !abstractedResolutionCandidate.index.polarity)))), Set.empty, limit)
+    for
+      resolventSet <- saturationResult
+      formula: Formula = abstractedResolutionCandidate.index.polarity match
+        case Polarity(false) => And(resolventSet.map {
+            clause => All.Block((freeFOLVariables(clause.toFormula) -- vars).toSeq, clause.toDisjunction)
+          })
+        case Polarity(true) => Or(resolventSet.map {
+            clause => Ex.Block((freeFOLVariables(clause.toFormula) -- vars).toSeq, clause.toNegConjunction)
+          })
+    yield Abs(vars, formula)
   }
 
   case class Derivation(initialClauseSet: Set[HOLClause], inferences: List[Inference]):
@@ -475,22 +479,26 @@ object scan {
     }
   }
 
-  def checkSolution(input: FormulaEquationClauseSet, output: (Set[HOLClause], Substitution, Derivation)) = {
+  def checkSolution(input: FormulaEquationClauseSet, output: (Set[HOLClause], Option[Substitution], Derivation)) = {
     val (clauseSet, witnesses, derivation) = output
     printer.pprintln(output)
-    val substitutedInput = witnesses(input.clauses).map(clause => BetaReduction.betaNormalize(clause.toFormula))
-    val leftFormula = And(substitutedInput)
-    val rightFormula = And(clauseSet.map(_.toFormula))
-    val equivalence = Iff(All.Block(freeFOLVariables(leftFormula).toSeq, leftFormula), All.Block(freeFOLVariables(rightFormula).toSeq, rightFormula))
-    println("\nchecking equivalence between")
-    printer.pprintln(input)
-    println("with substitution")
-    printer.pprintln(witnesses)
-    println("and")
-    printer.pprintln(clauseSet)
-    println("")
-    if Escargot.isValid(equivalence)
-    then println(" ✅ equivalence holds")
-    else println(" ❌ equivalence does NOT hold")
+    if witnesses.isEmpty then {
+      println("❌ could not construct a finite witness")
+    } else {
+      val substitutedInput = witnesses.get(input.clauses).map(clause => BetaReduction.betaNormalize(clause.toFormula))
+      val leftFormula = And(substitutedInput)
+      val rightFormula = And(clauseSet.map(_.toFormula))
+      val equivalence = Iff(All.Block(freeFOLVariables(leftFormula).toSeq, leftFormula), All.Block(freeFOLVariables(rightFormula).toSeq, rightFormula))
+      println("\nchecking equivalence between")
+      printer.pprintln(input)
+      println("with substitution")
+      printer.pprintln(witnesses)
+      println("and")
+      printer.pprintln(clauseSet)
+      println("")
+      if Escargot.isValid(equivalence)
+      then println(" ✅ equivalence holds")
+      else println(" ❌ equivalence does NOT hold")
+    }
   }
 }

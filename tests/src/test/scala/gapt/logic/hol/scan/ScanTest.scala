@@ -45,9 +45,9 @@ class ScanTest extends Specification {
     (leftFormula must beEquivalentTo(rightFormula)).mapMessage(_ => s"$left is not equivalent to $right")
   }
 
-  def beCorrectSolutionFor(input: FormulaEquationClauseSet): Matcher[Either[Derivation, (Set[HOLClause], Substitution, Derivation)]] = { (result: Either[Derivation, (Set[HOLClause], Substitution, Derivation)]) =>
+  def beCorrectSolutionFor(input: FormulaEquationClauseSet): Matcher[Either[Derivation, (Set[HOLClause], Option[Substitution], Derivation)]] = { (result: Either[Derivation, (Set[HOLClause], Option[Substitution], Derivation)]) =>
     result must beRight.like {
-      case output @ (clauseSet: Set[HOLClause], witnesses: Substitution, derivation: Derivation) =>
+      case output @ (clauseSet: Set[HOLClause], Some(witnesses: Substitution), derivation: Derivation) =>
         val substitutedInput = witnesses(input.clauses).map(_.toFormula).map(BetaReduction.betaNormalize)
         val beWithoutQuantifiedVariables: Matcher[HOLClause] = { (c: HOLClause) =>
           {
