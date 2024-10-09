@@ -236,10 +236,10 @@ def printResult(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = 
   }
 }
 
-def printWitnesses(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = Some(100), tries: Int = 10) = {
+def nonEquivalentWitnesses(input: FormulaEquationClauseSet, derivationLimit: Option[Int], tries: Int): Set[Substitution] = {
   val witnesses = scan(input, derivationLimit).take(tries).collect { case Right(_, Some(wit), _) => wit }.toSet.toSeq
   val initialEquivalenceClasses = Map.from(witnesses.map(w => (w, Set(w))))
-  val nonEquivalentWitnesses = witnesses.combinations(2)
+  witnesses.combinations(2)
     .foldLeft(initialEquivalenceClasses) {
       case (classes, Seq(left, right)) => {
         val leftEquivalentToRight = areEquivalent(left, right)
@@ -253,9 +253,11 @@ def printWitnesses(input: FormulaEquationClauseSet, derivationLimit: Option[Int]
         }
       }
     }.keySet
+}
 
+def printWitnesses(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = Some(100), tries: Int = 10) = {
   println("\nfound witnesses: ")
-  printer.pprintln(nonEquivalentWitnesses)
+  printer.pprintln(nonEquivalentWitnesses(input, derivationLimit, tries))
 }
 
 def areEquivalent(left: Substitution, right: Substitution): Boolean = {
@@ -295,21 +297,24 @@ def checkSolution(input: FormulaEquationClauseSet, output: (Set[HOLClause], Opti
     println("❌ could not construct a finite witness")
     false
   } else {
-    val substitutedInput = witnesses.get(input.clauses).map(clause => BetaReduction.betaNormalize(clause.toFormula))
-    val leftFormula = And(substitutedInput)
-    val rightFormula = And(clauseSet.map(_.toFormula))
-    val equivalence = Iff(All.Block(freeFOLVariables(leftFormula).toSeq, leftFormula), All.Block(freeFOLVariables(rightFormula).toSeq, rightFormula))
-    println("\nchecking equivalence between")
-    printer.pprintln(input)
-    println("with substitution")
-    printer.pprintln(witnesses)
-    println("and")
-    printer.pprintln(clauseSet)
-    println("")
-    val result = Escargot.isValid(equivalence)
-    if result
-    then println(" ✅ equivalence holds")
-    else println(" ❌ equivalence does NOT hold")
-    result
+    checkWitness(And(input.clauses.map(_.toFormula)), And(clauseSet.map(_.toFormula)), witnesses.get)
   }
+}
+
+def checkWitness(input: Formula, output: Formula, witness: Substitution): Boolean = {
+  val leftFormula = BetaReduction.betaNormalize(witness(input))
+  val rightFormula = output
+  val equivalence = Iff(All.Block(freeFOLVariables(leftFormula).toSeq, leftFormula), All.Block(freeFOLVariables(rightFormula).toSeq, rightFormula))
+  println("\nchecking equivalence between")
+  printer.pprintln(input)
+  println("with substitution")
+  printer.pprintln(witness)
+  println("and")
+  printer.pprintln(output)
+  println("")
+  val result = Escargot.isValid(equivalence)
+  if result
+  then println(" ✅ equivalence holds")
+  else println(" ❌ equivalence does NOT hold")
+  result
 }
