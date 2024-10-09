@@ -14,6 +14,10 @@ import gapt.expr.subst.Substitution
 import gapt.expr.formula._
 import gapt.provers.escargot.Escargot
 
+@main def main = {
+  printWitnesses(example2, tries = 100)
+}
+
 private def feq(vars: Set[Var], clauses: Set[HOLClause]) = {
   FormulaEquationClauseSet(vars, clauses)
 }
@@ -308,8 +312,4 @@ def checkSolution(input: FormulaEquationClauseSet, output: (Set[HOLClause], Opti
     else println(" ❌ equivalence does NOT hold")
     result
   }
-}
-
-@main def main() = {
-  printWitnesses(example2, tries = 100)
 }
