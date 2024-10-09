@@ -287,7 +287,9 @@ lazy val examples = project.in(file("examples")).dependsOn(core)
           )
       }
     },
-    dependencyOverrides ++= dependencyConflictResolutions
+    dependencyOverrides ++= dependencyConflictResolutions,
+    Compile / run / connectInput := true,
+    Compile / run / outputStrategy := Some(StdoutOutput)
   )
 
 lazy val tests = project.in(file("tests")).dependsOn(core, examples)

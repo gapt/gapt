@@ -242,18 +242,19 @@ object scan {
 
     val (inductivePurifications, nonInductivePurifications) = purifications.partition(i => isInductive(i.candidate))
 
-    val activeClauseCandidates = state.activeClauses.flatMap(c => resolutionCandidates(c)).filter(c => !isInductive(c) && nonRedundantResolutionInferences(state.activeClauses, c).nonEmpty)
+    val activeClauseCandidates = state.activeClauses
+      .flatMap(c => resolutionCandidates(c))
+      .filter(c => !isInductive(c) && nonRedundantResolutionInferences(state.activeClauses, c).nonEmpty)
 
-    val resolutions: Seq[Seq[Inference.Resolution]] = activeClauseCandidates.toSeq.map { candidate =>
+    val resolutionPossibilities: Seq[Seq[Inference.Resolution]] = activeClauseCandidates.toSeq.map { candidate =>
       nonRedundantResolutionInferences(state.activeClauses, candidate)
     }
 
     if singleInference.isDefined then Seq(singleInference.toSeq)
     else if singleInference.isEmpty && !nonInductivePurifications.isEmpty then
       nonInductivePurifications.map(Seq(_))
-    else if singleInference.isEmpty && !resolutions.isEmpty then
-      resolutions
-    else inductivePurifications.map(Seq(_))
+    else
+      resolutionPossibilities
   }
 
   def nonRedundantResolutionInferences(clauses: Set[HOLClause], candidate: ResolutionCandidate) = {
@@ -455,120 +456,4 @@ object scan {
       }
       case Nil => ???
 
-  def printer = pprint.copy(additionalHandlers = additionalPrinters, defaultWidth = 150)
-
-  def additionalPrinters: PartialFunction[Any, pprint.Tree] = {
-    case clauseSet: Set[_] => pprint.Tree.Apply("ClauseSet", clauseSet.iterator.map(printer.treeify(_, true, true)))
-    case Derivation(initialClauseSet, inferences) => pprint.Tree.Apply(
-        "Derivation", {
-          val clauseSets = inferences.scanLeft(initialClauseSet)((c, i) => {
-            val (added, removed) = i(c)
-            c ++ added -- removed
-          })
-          Iterator(printer.treeify(initialClauseSet, true, true)) ++ inferences.zip(clauseSets.tail).flatMap {
-            case (inference, clauses) => Seq(
-                printer.treeify(inference, true, true),
-                printer.treeify(clauses, true, true)
-              )
-          }.iterator
-        }
-      )
-    case rc: ResolutionCandidate => printResolutionCandidate(rc)
-    case hos: Sequent[_]         => printSequent(hos)
-    case Inference.Resolution(left, right) => pprint.Tree.Apply(
-        "Resolution",
-        Iterator(
-          pprint.Tree.KeyValue("left", printer.treeify(left, false, true)),
-          pprint.Tree.KeyValue("right", printer.treeify(right, false, true)),
-          pprint.Tree.KeyValue("resolvent", printer.treeify(scan.resolve(left, right), false, true))
-        )
-      )
-    case Inference.Purification(candidate) => pprint.Tree.Apply("Purification", Iterator(additionalPrinters(candidate)))
-    case Inference.ConstraintElimination(clause, index, _) => pprint.Tree.Apply(
-        "ConstraintElimination",
-        Iterator(pprint.Tree.KeyValue("clause", printer.treeify(clause, false, true)), pprint.Tree.KeyValue("constraint", printer.treeify(clause(index), false, true)))
-      )
-    case f @ Inference.Factoring(clause, leftIndex, rightIndex) => pprint.Tree.Apply(
-        "Factoring",
-        Iterator(
-          pprint.Tree.KeyValue("left", printer.treeify(clause(leftIndex), false, true)),
-          pprint.Tree.KeyValue("right", printer.treeify(clause(rightIndex), false, true)),
-          pprint.Tree.KeyValue("factor", printer.treeify(scan.factor(f), false, true))
-        )
-      )
-  }
-
-  def printSequent[T](sequent: Sequent[T]): pprint.Tree = {
-    def toStr(e: T) = e match {
-      case e: Expr => e.toUntypedString
-      case e       => e.toString()
-    }
-    val antecedentStrings = sequent.antecedent.map(toStr)
-    val succeedentStrings = sequent.succedent.map(toStr)
-    val clauseString = antecedentStrings.mkString(", ") ++ " ⊢ " ++ succeedentStrings.mkString(", ")
-    pprint.Tree.Literal(clauseString.strip())
-  }
-
-  def printResolutionCandidate(resolutionCandidate: ResolutionCandidate): pprint.Tree = {
-    def underlineIndex(atom: Atom, index: SequentIndex) = (atom, index) match {
-      case (a, i) if i == resolutionCandidate.index => s"{${a.toUntypedString}}"
-      case (a, i)                                   => a.toUntypedString
-    }
-    val antecedentStrings = resolutionCandidate.clause.zipWithIndex.antecedent.map(underlineIndex)
-    val succeedentStrings = resolutionCandidate.clause.zipWithIndex.succedent.map(underlineIndex)
-    val clauseString = antecedentStrings.mkString(", ") ++ " ⊢ " ++ succeedentStrings.mkString(", ")
-    pprint.Tree.Literal(clauseString.strip())
-  }
-
-  def printResult(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = Some(100)) = {
-    scan(input, derivationLimit).foreach {
-      case Left(value) => {
-        printer.pprintln(value, height = derivationLimit.get * 100)
-        println(s"\n ❌ attempt resulted in derivation of length > ${derivationLimit.get}")
-      }
-      case Right(output) => checkSolution(input, output)
-    }
-  }
-
-  def printResultInteractive(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = Some(100)) = {
-    val iterator = scan(input, derivationLimit)
-
-    while (iterator.hasNext) {
-      iterator.next() match {
-        case Left(value) => {
-          printer.pprintln(value, height = derivationLimit.get * 100)
-          println(s"\n ❌ attempt resulted in derivation of length > ${derivationLimit.get}")
-          scala.io.StdIn.readLine("press enter to show next solution: ")
-        }
-        case Right(output) => {
-          checkSolution(input, output)
-          if iterator.hasNext then
-            scala.io.StdIn.readLine("press enter to show next solution: ")
-        }
-      }
-    }
-  }
-
-  def checkSolution(input: FormulaEquationClauseSet, output: (Set[HOLClause], Option[Substitution], Derivation)) = {
-    val (clauseSet, witnesses, derivation) = output
-    printer.pprintln(output)
-    if witnesses.isEmpty then {
-      println("❌ could not construct a finite witness")
-    } else {
-      val substitutedInput = witnesses.get(input.clauses).map(clause => BetaReduction.betaNormalize(clause.toFormula))
-      val leftFormula = And(substitutedInput)
-      val rightFormula = And(clauseSet.map(_.toFormula))
-      val equivalence = Iff(All.Block(freeFOLVariables(leftFormula).toSeq, leftFormula), All.Block(freeFOLVariables(rightFormula).toSeq, rightFormula))
-      println("\nchecking equivalence between")
-      printer.pprintln(input)
-      println("with substitution")
-      printer.pprintln(witnesses)
-      println("and")
-      printer.pprintln(clauseSet)
-      println("")
-      if Escargot.isValid(equivalence)
-      then println(" ✅ equivalence holds")
-      else println(" ❌ equivalence does NOT hold")
-    }
-  }
 }
