@@ -47,7 +47,14 @@ import gapt.expr.formula.Iff
 import gapt.formats.leancop.LeanCoP21Parser.clause
 
 object scan {
-  case class FormulaEquationClauseSet(quantifiedVariables: Set[Var], clauses: Set[HOLClause])
+  case class FormulaEquationClauseSet(quantifiedVariables: Set[Var], clauses: Set[HOLClause]):
+    def toFormula: Formula = Ex.Block(quantifiedVariables.toSeq, clauses.toFormula)
+
+  extension (clauseSet: Set[HOLClause])
+    def toFormula: Formula = {
+      val quantifierFreePart = And(clauseSet.map(_.toFormula))
+      All.Block(freeFOLVariables(quantifierFreePart).toSeq, quantifierFreePart)
+    }
 
   case class ResolutionCandidate(clause: HOLClause, index: SequentIndex):
     def atom = clause(index)
