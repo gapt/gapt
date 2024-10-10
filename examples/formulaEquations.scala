@@ -281,8 +281,8 @@ def printWitnesses(input: FormulaEquationClauseSet, derivationLimit: Option[Int]
   val witnesses = successfulScanRuns.collect { case (_, Some(wit), _) => wit }
   val runsWithoutFiniteWitnesses = successfulScanRuns.size - witnesses.size
   val nonEquivalent = nonEquivalentWitnesses(witnesses.toSet)
-  println(s"tried ${tries} scan runs with derivationlimit $derivationLimit and witness limit $witnessLimit")
-  println(s"${successfulScanRuns.size} (${formatPercentage(successfulScanRuns.size, tries)}) of those succeeded")
+  println(s"tried ${scanOutput.size} scan runs with derivationlimit $derivationLimit and witness limit $witnessLimit")
+  println(s"${successfulScanRuns.size} (${formatPercentage(successfulScanRuns.size, scanOutput.size)}) of those succeeded")
   println(s"${witnesses.size} (${formatPercentage(witnesses.size, successfulScanRuns.size)}) of the successful ones produced a finite witness")
   println(s"${runsWithoutFiniteWitnesses} (${formatPercentage(runsWithoutFiniteWitnesses, successfulScanRuns.size)}) of the successful ones did not produce a finite witness")
   println(s"${nonEquivalent.size} (${formatPercentage(nonEquivalent.size, witnesses.size)}) of the found witnesses are mutually non-equivalent")
