@@ -100,6 +100,14 @@ def exampleWithSymmetryRequiringSubsumption = feq(
   )
 )
 
+val soqeBookDLSStarExample = feq(
+  Set(hov"X:i>o"),
+  Set(
+    hcl"X(y) :- X(x), R(x,y)",
+    hcl":- X(x), X(y), S(x,y)"
+  )
+)
+
 def modalCorrespondenceReflexivity = feq(
   Set(hov"X:i>o"),
   Set(
