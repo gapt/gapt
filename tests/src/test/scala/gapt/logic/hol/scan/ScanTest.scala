@@ -24,17 +24,17 @@ class ScanTest extends Specification {
   This is a specification for the scan implementation
 
   It should solve
-    solve equation without quantified variable ${quantifiedVariableNotOccurring must beSolved()}
-    treat variables as predicate constants when not given ${variablesAsConstants must beSolved()}
+    solve equation without quantified variable ${exampleWithQuantifiedVariableNotOccurring must beSolved()}
+    treat variables as predicate constants when not given ${exampleWithoutQuantifiedVariables must beSolved()}
     negation of leibniz equality ${negationOfLeibnizEquality must beSolved()}
-    resolution on non-base literals ${resolutionOnNonBaseLiterals must beSolved()}
-    simple disjunction ${simpleDisjunction must beSolved()}
-    triple disjunction ${tripleDisjunction must beSolved()}
-    two variable example ${twoVariableExample must beSolved()}
-    modal correspondence axiom reflexivity ${modalCorrespondenceReflexivity must beSolved()}
-    modal correspondence axiom transitivity ${modalCorrespondenceTransitivity must beSolved()}
-    non-inductive example with two clauses ${example must beSolved()}
-    non-inductive example with three clauses ${example must beSolved()}
+    resolution on non-base literals ${exampleThatUsesResolutionOnLiteralsThatAreNotQuantifiedVariables must beSolved()}
+    2-part disjunction ${single2PartDisjunction must beSolved()}
+    3-part disjunction ${single3PartDisjunction must beSolved()}
+    two variable example ${exampleWithTwoVariables must beSolved()}
+    modal correspondence T axiom ${modalCorrespondence.negationOfSecondOrderTranslationOfTAxiom must beSolved()}
+    modal correspondence 4 axiom ${modalCorrespondence.negationOfSecondOrderTranslationOf4Axiom must beSolved()}
+    non-inductive example with two clauses ${exampleWithTwoClauses must beSolved()}
+    non-inductive example with three clauses ${exampleWithTwoClauses must beSolved()}
     inductive example with tautology deletion ${exampleRequiringTautologyDeletion must beSolved()}
     inductive example with subsumption ${exampleRequiringSubsumption must beSolved()}
   """

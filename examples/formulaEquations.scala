@@ -26,20 +26,20 @@ private def feq(vars: Set[Var], clauses: Set[HOLClause]) = {
   FormulaEquationClauseSet(vars, clauses)
 }
 
-def quantifiedVariableNotOccurring = feq(Set(hov"X:i>o"), Set(hcl":- A(u)"))
-def variablesAsConstants = feq(Set.empty, Set(hcl":- X(u)"))
+val exampleWithQuantifiedVariableNotOccurring = feq(Set(hov"X:i>o"), Set(hcl":- A(u)"))
+val exampleWithoutQuantifiedVariables = feq(Set.empty, Set(hcl":- X(u)"))
 
-def exampleWithPolarity = feq(
+val exampleThatCanBeSolvedByPolarityRuleImmediately = feq(
   Set(hov"X:i>o"),
   Set(hcl"A(u) :- X(u)", hcl"B(u,v), X(u) :- X(v)")
 )
 
-def negationOfLeibnizEquality = feq(
+val negationOfLeibnizEquality = feq(
   Set(hov"X:i>o"),
   Set(hcl"X(a), X(b) :-", hcl":- X(a), X(b)")
 )
 
-def resolutionOnNonBaseLiterals = feq(
+val exampleThatUsesResolutionOnLiteralsThatAreNotQuantifiedVariables = feq(
   Set(hov"X:i>o"),
   Set(
     hcl":- B(u,v)",
@@ -49,7 +49,7 @@ def resolutionOnNonBaseLiterals = feq(
   )
 )
 
-def example = feq(
+val exampleWithTwoClauses = feq(
   Set(hov"X:i>o"),
   Set(
     hcl"B(v) :- X(v)",
@@ -57,7 +57,7 @@ def example = feq(
   )
 )
 
-def example2 = feq(
+val exampleWithThreeClauses = feq(
   Set(hov"X:i>o"),
   Set(
     hcl"B(v) :- X(v)",
@@ -66,10 +66,10 @@ def example2 = feq(
   )
 )
 
-def simpleDisjunction = feq(Set(hov"X:i>o"), Set(hcl":- X(a), X(b)"))
-def tripleDisjunction = feq(Set(hov"X:i>o"), Set(hcl":- X(a), X(b), X(c)"))
+val single2PartDisjunction = feq(Set(hov"X:i>o"), Set(hcl":- X(a), X(b)"))
+val single3PartDisjunction = feq(Set(hov"X:i>o"), Set(hcl":- X(a), X(b), X(c)"))
 
-def twoVariableExample = feq(
+val exampleWithTwoVariables = feq(
   Set(hov"X:i>o", hov"Y:i>i>o"),
   Set(
     hcl":- Y(a,b)",
@@ -79,12 +79,12 @@ def twoVariableExample = feq(
   )
 )
 
-def exampleRequiringTautologyDeletion = feq(
+val exampleRequiringTautologyDeletion = feq(
   Set(hov"X:i>o"),
   Set(hcl"A(u) :- X(u)", hcl"X(u) :- X(v), A(u)", hcl"X(u) :- B(u)")
 )
 
-def exampleRequiringSubsumption = feq(
+val exampleRequiringSubsumption = feq(
   Set(hov"X:i>o"),
   Set(
     hcl"A(u), B(u,v) :-",
@@ -94,7 +94,7 @@ def exampleRequiringSubsumption = feq(
   )
 )
 
-def exampleWithSymmetryRequiringSubsumption = feq(
+val exampleWithSymmetryRequiringSubsumption = feq(
   Set(hov"Y:i>i>o"),
   Set(
     hcl"A(u,v), B(u,v) :-",
@@ -112,56 +112,60 @@ val soqeBookDLSStarExample = feq(
   )
 )
 
-def modalCorrespondenceReflexivity = feq(
-  Set(hov"X:i>o"),
-  Set(
-    hcl"R(a,v) :- X(v)",
-    hcl"X(a) :-"
+object modalCorrespondence {
+  def negationOfSecondOrderTranslationOfTAxiom = feq(
+    Set(hov"X:i>o"),
+    Set(
+      hcl"R(a,v) :- X(v)",
+      hcl"X(a) :-"
+    )
   )
-)
 
-def modalCorrespondenceTransitivity = feq(
-  Set(hov"X:i>o"),
-  Set(
-    hcl"R(a,v) :- X(v)",
-    hcl":- R(a,b)",
-    hcl":- R(b,c)",
-    hcl"X(c) :-"
+  def negationOfSecondOrderTranslationOf4Axiom = feq(
+    Set(hov"X:i>o"),
+    Set(
+      hcl"R(a,v) :- X(v)",
+      hcl":- R(a,b)",
+      hcl":- R(b,c)",
+      hcl"X(c) :-"
+    )
   )
-)
-
-def Q = And(Set(
-  fof"!u s(u) != 0",
-  fof"!u u + 0 = u",
-  fof"!u !v u + s(v) = s(u+v)"
-))
-
-def ind(expr: Expr): Formula = {
-  assert(expr.ty == Ti ->: To)
-  BetaReduction.betaNormalize(hof"($expr(0) & !u ($expr(u) -> $expr(s(u)))) -> !u $expr(u)")
 }
 
-def soaFree(v: Var) = {
-  Q & ind(v)
-}
+object induction {
+  def Q = And(Set(
+    fof"!u s(u) != 0",
+    fof"!u u + 0 = u",
+    fof"!u !v u + s(v) = s(u+v)"
+  ))
 
-def inductiveTheorem(theorem: Formula) = {
-  val freshConstant = rename(hoc"P:i>o", freeVariables(theorem))
-  val freshVariable = rename(hov"X:i>o", freeVariables(theorem))
-  val formula = hof"($Q & ${ind(freshConstant)}) -> $theorem"
-  val clauses = cnf(formula)
-  val renamedClauses = clauses.map(c => {
-    c.map {
-      case Atom(head, args) if head == freshConstant => Atom(freshVariable, args)
-      case a                                         => a
-    }
-  })
-  feq(Set(freshVariable), renamedClauses)
-}
+  def ind(expr: Expr): Formula = {
+    assert(expr.ty == Ti ->: To)
+    BetaReduction.betaNormalize(hof"($expr(0) & !u ($expr(u) -> $expr(s(u)))) -> !u $expr(u)")
+  }
 
-def cnf(formula: Formula) = {
-  val sequent = hos"$formula :-"
-  structuralCNF(sequent, structural = false).map(_.conclusion.map(_.asInstanceOf[Atom]))
+  def soaFree(v: Var) = {
+    Q & ind(v)
+  }
+
+  def inductiveTheorem(theorem: Formula) = {
+    val freshConstant = rename(hoc"P:i>o", freeVariables(theorem))
+    val freshVariable = rename(hov"X:i>o", freeVariables(theorem))
+    val formula = hof"($Q & ${ind(freshConstant)}) -> $theorem"
+    val clauses = cnf(formula)
+    val renamedClauses = clauses.map(c => {
+      c.map {
+        case Atom(head, args) if head == freshConstant => Atom(freshVariable, args)
+        case a                                         => a
+      }
+    })
+    feq(Set(freshVariable), renamedClauses)
+  }
+
+  def cnf(formula: Formula) = {
+    val sequent = hos"$formula :-"
+    structuralCNF(sequent, structural = false).map(_.conclusion.map(_.asInstanceOf[Atom]))
+  }
 }
 
 def printer = pprint.copy(additionalHandlers = additionalPrinters, defaultWidth = 150)
