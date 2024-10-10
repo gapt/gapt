@@ -13,9 +13,13 @@ import gapt.expr.util.freeVariables
 import gapt.expr.subst.Substitution
 import gapt.expr.formula._
 import gapt.provers.escargot.Escargot
+import gapt.logic.hol.dls.dls
+import scala.util.Success
 
 @main def main = {
-  printWitnesses(example2, tries = 100)
+  val Right((output, Some(_), _)) = scan(negationOfLeibnizEquality).next(): @unchecked
+  val Success((solution, input)) = dls(negationOfLeibnizEquality.toFormula): @unchecked
+  printWitnesses(negationOfLeibnizEquality)
 }
 
 private def feq(vars: Set[Var], clauses: Set[HOLClause]) = {
@@ -244,7 +248,7 @@ def printResult(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = 
   }
 }
 
-def nonEquivalentWitnesses(input: FormulaEquationClauseSet, derivationLimit: Option[Int], tries: Int): Set[Substitution] = {
+def nonEquivalentWitnesses(input: FormulaEquationClauseSet, derivationLimit: Option[Int], tries: Int): Map[Substitution, Set[Substitution]] = {
   val witnesses = scan(input, derivationLimit).take(tries).collect { case Right(_, Some(wit), _) => wit }.toSet.toSeq
   val initialEquivalenceClasses = Map.from(witnesses.map(w => (w, Set(w))))
   witnesses.combinations(2)
@@ -260,7 +264,7 @@ def nonEquivalentWitnesses(input: FormulaEquationClauseSet, derivationLimit: Opt
           case s                                          => s
         }
       }
-    }.keySet
+    }
 }
 
 def printWitnesses(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = Some(100), tries: Int = 10) = {
@@ -269,7 +273,7 @@ def printWitnesses(input: FormulaEquationClauseSet, derivationLimit: Option[Int]
 }
 
 def areEquivalent(left: Substitution, right: Substitution): Boolean = {
-  left.domain.forall(v => {
+  left.domain == right.domain && left.domain.forall(v => {
     val vars = freshArgumentVariables(v.ty, "u")
     val leftFormula = BetaReduction.betaNormalize(App(left(v), vars)).asInstanceOf[Formula]
     val rightFormula = BetaReduction.betaNormalize(App(right(v), vars)).asInstanceOf[Formula]
