@@ -252,10 +252,9 @@ def printResult(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = 
   }
 }
 
-def nonEquivalentWitnesses(input: FormulaEquationClauseSet, derivationLimit: Option[Int], tries: Int): Map[Substitution, Set[Substitution]] = {
-  val witnesses = scan(input, derivationLimit).take(tries).collect { case Right(_, Some(wit), _) => wit }.toSet.toSeq
+def nonEquivalentWitnesses(witnesses: Set[Substitution]): Map[Substitution, Set[Substitution]] = {
   val initialEquivalenceClasses = Map.from(witnesses.map(w => (w, Set(w))))
-  witnesses.combinations(2)
+  witnesses.toSeq.combinations(2)
     .foldLeft(initialEquivalenceClasses) {
       case (classes, Seq(left, right)) => {
         val leftEquivalentToRight = areEquivalent(left, right)
@@ -271,9 +270,24 @@ def nonEquivalentWitnesses(input: FormulaEquationClauseSet, derivationLimit: Opt
     }
 }
 
-def printWitnesses(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = Some(100), tries: Int = 10) = {
-  println("\nfound witnesses: ")
-  printer.pprintln(nonEquivalentWitnesses(input, derivationLimit, tries))
+def formatPercentage(count: Int, of: Int): String =
+  "%.1f%%".formatLocal(java.util.Locale.UK, (count * 100).floatValue / of)
+
+def printWitnesses(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = Some(100), witnessLimit: Int = 100, tries: Int = 100) = {
+  println("finding witnesses for")
+  printer.pprintln(input.toFormula)
+  val scanOutput = scan(input, derivationLimit, witnessLimit).take(tries).toSeq
+  val successfulScanRuns = scanOutput.collect { case Right(x) => x }
+  val witnesses = successfulScanRuns.collect { case (_, Some(wit), _) => wit }
+  val runsWithoutFiniteWitnesses = successfulScanRuns.size - witnesses.size
+  val nonEquivalent = nonEquivalentWitnesses(witnesses.toSet)
+  println(s"tried ${tries} scan runs with derivationlimit $derivationLimit and witness limit $witnessLimit")
+  println(s"${successfulScanRuns.size} (${formatPercentage(successfulScanRuns.size, tries)}) of those succeeded")
+  println(s"${witnesses.size} (${formatPercentage(witnesses.size, successfulScanRuns.size)}) of the successful ones produced a finite witness")
+  println(s"${runsWithoutFiniteWitnesses} (${formatPercentage(runsWithoutFiniteWitnesses, successfulScanRuns.size)}) of the successful ones did not produce a finite witness")
+  println(s"${nonEquivalent.size} (${formatPercentage(nonEquivalent.size, witnesses.size)}) of the found witnesses are mutually non-equivalent")
+  println("those are: ")
+  nonEquivalent.keySet.foreach(printer.pprintln(_))
 }
 
 def areEquivalent(left: Substitution, right: Substitution): Boolean = {
