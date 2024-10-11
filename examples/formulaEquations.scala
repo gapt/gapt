@@ -17,9 +17,24 @@ import gapt.logic.hol.dls.dls
 import scala.util.Success
 
 @main def main = {
-  val Right((output, Some(_), _)) = scan(negationOfLeibnizEquality).next(): @unchecked
-  val Success((solution, input)) = dls(negationOfLeibnizEquality.toFormula): @unchecked
-  printWitnesses(negationOfLeibnizEquality)
+  // val Right((output, Some(_), _)) = scan(negationOfLeibnizEquality).next(): @unchecked
+  // val result = dls(exampleRequiringSubsumption.toFormula)
+  // println(result)
+  // printResultInteractive(exampleRequiringSubsumption, derivationLimit = Some(20))
+  // printWitnesses(exampleRequiringSubsumption, derivationLimit = Some(20), tries = 1000)
+  printer.pprintln(scanOneByOne(Seq(hov"X:i>o", hov"Y:i>i>o"), exampleWithTwoVariables.clauses))
+}
+
+def scanOneByOne(vars: Seq[Var], clauses: Set[HOLClause]): Option[Seq[(Set[HOLClause], Option[Substitution], Derivation)]] = {
+  vars.foldLeft[Option[Seq[(Set[HOLClause], Option[Substitution], Derivation)]]](Some(Seq((clauses, Some(Substitution()), Derivation(clauses, List.empty))))) {
+    case (None, v) => None
+    case (Some(state), v) => {
+      for result <- scan(feq(Set(v), state.last._1)).take(10).collect {
+          case Right(result) => result
+        }.nextOption()
+      yield state :+ result
+    }
+  }
 }
 
 private def feq(vars: Set[Var], clauses: Set[HOLClause]) = {
