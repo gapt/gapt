@@ -37,6 +37,7 @@ class ScanTest extends Specification {
     non-inductive example with three clauses ${exampleWithTwoClauses must beSolved()}
     inductive example with tautology deletion ${exampleRequiringTautologyDeletion must beSolved()}
     inductive example with subsumption ${exampleRequiringSubsumption must beSolved()}
+    insatisfiable example which requires factoring ${insatisfiableExampleThatRequiresFactoring must beSolved()}
   """
 
   def beEquivalentTo(right: Formula): Matcher[Formula] = { (left: Formula) =>

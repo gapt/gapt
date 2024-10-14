@@ -166,7 +166,9 @@ object scan {
 
   def isRedundant(clauses: Set[HOLClause], clause: HOLClause): Boolean = {
     val eliminatedConstraints = eliminateConstraints(clause, Set.empty)
-    eliminatedConstraints.isTaut
+    clause.isTaut
+    || clauses.exists(c => subsumptionSubstitution(c, clause).isDefined)
+    || eliminatedConstraints.isTaut
     || clauses.exists(c => subsumptionSubstitution(c, eliminatedConstraints).isDefined)
   }
 

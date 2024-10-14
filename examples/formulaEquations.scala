@@ -127,6 +127,15 @@ val soqeBookDLSStarExample = feq(
   )
 )
 
+val insatisfiableExampleThatRequiresFactoring = feq(
+  Set(hov"X:i>i>o"),
+  Set(
+    hcl":- X(u), X(f(u))",
+    hcl"X(u) :- X(f(v))",
+    hcl"X(u), X(f(u)) :-"
+  )
+)
+
 object modalCorrespondence {
   def negationOfSecondOrderTranslationOfTAxiom = feq(
     Set(hov"X:i>o"),
