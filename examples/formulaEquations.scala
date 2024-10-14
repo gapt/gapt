@@ -17,26 +17,7 @@ import gapt.logic.hol.dls.dls
 import scala.util.Success
 
 @main def main = {
-  // val Right((output, Some(_), _)) = scan(negationOfLeibnizEquality).next(): @unchecked
-  // val result = dls(exampleRequiringSubsumption.toFormula)
-  // println(result)
-  // printResultInteractive(exampleRequiringSubsumption, derivationLimit = Some(20))
-  // printWitnesses(exampleRequiringSubsumption, derivationLimit = Some(20), tries = 1000)
-  // printer.pprintln(scanOneByOne(Seq(hov"X:i>o", hov"Y:i>i>o"), exampleWithTwoVariables.clauses))
-
-  // printer.pprintln(factor(Inference.Factoring(hcl":- X(u), X(f(u))", Suc(0), Suc(1))))
   printResultInteractive(insatisfiableExampleThatRequiresFactoring)
-
-  // printer.pprintln(factor(Inference.Factoring(hcl":- X(u), X(f(u))", Suc(0), Suc(1))))
-  // printer.pprintln(scan.isRedundant(
-  //   Set(
-  //     hcl":- X(u), X(f(u))",
-  //     hcl"X(u) :- X(f(v))",
-  //     hcl"X(u), X(f(u)) :-",
-  //     hcl"u=f(u) :- X(u)"
-  //   ),
-  //   factor(Inference.Factoring(hcl":- X(u), X(f(u))", Suc(0), Suc(1)))
-  // ))
 }
 
 def scanOneByOne(vars: Seq[Var], clauses: Set[HOLClause]): Option[Seq[(Set[HOLClause], Option[Substitution], Derivation)]] = {
