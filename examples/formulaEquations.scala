@@ -22,7 +22,21 @@ import scala.util.Success
   // println(result)
   // printResultInteractive(exampleRequiringSubsumption, derivationLimit = Some(20))
   // printWitnesses(exampleRequiringSubsumption, derivationLimit = Some(20), tries = 1000)
-  printer.pprintln(scanOneByOne(Seq(hov"X:i>o", hov"Y:i>i>o"), exampleWithTwoVariables.clauses))
+  // printer.pprintln(scanOneByOne(Seq(hov"X:i>o", hov"Y:i>i>o"), exampleWithTwoVariables.clauses))
+
+  // printer.pprintln(factor(Inference.Factoring(hcl":- X(u), X(f(u))", Suc(0), Suc(1))))
+  printResultInteractive(insatisfiableExampleThatRequiresFactoring)
+
+  // printer.pprintln(factor(Inference.Factoring(hcl":- X(u), X(f(u))", Suc(0), Suc(1))))
+  // printer.pprintln(scan.isRedundant(
+  //   Set(
+  //     hcl":- X(u), X(f(u))",
+  //     hcl"X(u) :- X(f(v))",
+  //     hcl"X(u), X(f(u)) :-",
+  //     hcl"u=f(u) :- X(u)"
+  //   ),
+  //   factor(Inference.Factoring(hcl":- X(u), X(f(u))", Suc(0), Suc(1)))
+  // ))
 }
 
 def scanOneByOne(vars: Seq[Var], clauses: Set[HOLClause]): Option[Seq[(Set[HOLClause], Option[Substitution], Derivation)]] = {
@@ -273,6 +287,10 @@ def printResult(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = 
   val solution = iterator.find {
     case Left(value)   => false
     case Right(output) => checkSolution(input, output)
+  }
+
+  if solution.isEmpty then {
+    println(s"❌ didn't find solution")
   }
 }
 
