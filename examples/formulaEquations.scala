@@ -275,9 +275,10 @@ def printResult(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = 
   }
 }
 
-def nonEquivalentWitnesses(witnesses: Set[Substitution]): Map[Substitution, Set[Substitution]] = {
-  val initialEquivalenceClasses = Map.from(witnesses.map(w => (w, Set(w))))
-  witnesses.toSeq.combinations(2)
+def equivalenceClasses[T](base: Iterable[T])(areEquivalent: (T, T) => Boolean): Map[T, Set[T]] = {
+  val input = base.toSet
+  val initialEquivalenceClasses = Map.from(input.map(w => (w, Set(w))))
+  input.toSeq.combinations(2)
     .foldLeft(initialEquivalenceClasses) {
       case (classes, Seq(left, right)) => {
         val leftEquivalentToRight = areEquivalent(left, right)
@@ -301,9 +302,11 @@ def printWitnesses(input: FormulaEquationClauseSet, derivationLimit: Option[Int]
   printer.pprintln(input.toFormula)
   val scanOutput = scan(input, derivationLimit, witnessLimit).take(tries).toSeq
   val successfulScanRuns = scanOutput.collect { case Right(x) => x }
-  val witnesses = successfulScanRuns.collect { case (_, Some(wit), _) => wit }
+  val witnesses = successfulScanRuns.collect { case (foEquivalent, Some(wit), _) => (foEquivalent.toFormula, wit) }
   val runsWithoutFiniteWitnesses = successfulScanRuns.size - witnesses.size
-  val nonEquivalent = nonEquivalentWitnesses(witnesses.toSet)
+  val nonEquivalent = equivalenceClasses(witnesses) {
+    case ((_, left), (_, right)) => areEquivalent(left, right)
+  }
   println(s"tried ${scanOutput.size} scan runs with derivationlimit $derivationLimit and witness limit $witnessLimit")
   println(s"${successfulScanRuns.size} (${formatPercentage(successfulScanRuns.size, scanOutput.size)}) of those succeeded")
   println(s"${witnesses.size} (${formatPercentage(witnesses.size, successfulScanRuns.size)}) of the successful ones produced a finite witness")
