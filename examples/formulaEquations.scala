@@ -17,8 +17,27 @@ import gapt.logic.hol.dls.dls
 import scala.util.Success
 
 @main def main = {
-  printResultInteractive(insatisfiableExampleThatRequiresFactoring)
+def clauses(formula: Formula): Set[HOLClause] = {
+  val constSubstitution = Substitution(freeHOVariables(formula).map {
+    case v @ Var(name, ty) => (v, Const(name, ty))
+  }.toMap)
+  val sequent = Sequent(Vector(constSubstitution(formula)), Vector.empty)
+
+  val clausesWithConstants = structuralCNF(sequent, structural = false).map(_.conclusion.map(_.asInstanceOf[Atom]))
+
+  clausesWithConstants.map { clause =>
+    clause.map {
+      case Atom(Const(name, ty, tys), args)
+          if constSubstitution.domain.contains(Var(name, ty)) => Atom(Var(name, ty), args)
+      case a => a
+    }
+  }
 }
+
+val negationOfModalAxiom = feq(
+  Set(hov"X:i>o"),
+  clauses(hof"-(!u (!v (R(u,v) -> ((!w (R(v, w) -> X(w))) <-> X(v)))))")
+)
 
 def scanOneByOne(vars: Seq[Var], clauses: Set[HOLClause]): Option[Seq[(Set[HOLClause], Option[Substitution], Derivation)]] = {
   vars.foldLeft[Option[Seq[(Set[HOLClause], Option[Substitution], Derivation)]]](Some(Seq((clauses, Some(Substitution()), Derivation(clauses, List.empty))))) {
@@ -171,8 +190,8 @@ object induction {
     val freshConstant = rename(hoc"P:i>o", freeVariables(theorem))
     val freshVariable = rename(hov"X:i>o", freeVariables(theorem))
     val formula = hof"($Q & ${ind(freshConstant)}) -> $theorem"
-    val clauses = cnf(formula)
-    val renamedClauses = clauses.map(c => {
+    val cs = clauses(formula)
+    val renamedClauses = cs.map(c => {
       c.map {
         case Atom(head, args) if head == freshConstant => Atom(freshVariable, args)
         case a                                         => a
@@ -181,10 +200,6 @@ object induction {
     feq(Set(freshVariable), renamedClauses)
   }
 
-  def cnf(formula: Formula) = {
-    val sequent = hos"$formula :-"
-    structuralCNF(sequent, structural = false).map(_.conclusion.map(_.asInstanceOf[Atom]))
-  }
 }
 
 def printer = pprint.copy(additionalHandlers = additionalPrinters, defaultWidth = 150)
