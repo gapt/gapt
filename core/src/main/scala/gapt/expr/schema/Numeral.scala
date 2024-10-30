@@ -25,11 +25,15 @@ object Pred extends Const("p", Tw ->: Tw, Nil) {
 }
 
 object Numeral {
-  def apply(n : Int): Expr = n match {
-    case 0 => Zero
-    case n if n > 0 => Succ(apply(n-1))
+
+  def apply(n: Int) = Numeral(n, Zero)
+
+  private def apply(n : Int, calculated_sum : Expr): Expr = n match {
+    case 0 => calculated_sum
+    case n if n > 0 => apply(n-1, Succ(calculated_sum))
     case _ => throw new IllegalArgumentException(s"Negative number s{n} does not have a numeral associated!")
   }
+
 
   def unapply(e : Expr) = try {
     Some(convert(e))
@@ -49,6 +53,14 @@ object Numeral {
         throw new IllegalArgumentException(s"Expression ${e} is not a numeral!")
     }
   }
+
+  //TODO: remove at some point, superfluous
+  def apply_nontailrec(n : Int): Expr = n match {
+    case 0 => Zero
+    case n if n > 0 => Succ(apply(n-1))
+    case _ => throw new IllegalArgumentException(s"Negative number s{n} does not have a numeral associated!")
+  }
+
 }
 
 object Debug {

@@ -94,6 +94,7 @@ lazy val root = project.in(file("."))
     ScalaUnidoc / unidoc / scalacOptions ++= Seq(
       "-doc-title",
       "gapt",
+      "gapt",
       "-doc-version",
       version.value,
       "-doc-source-url",
