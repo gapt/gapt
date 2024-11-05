@@ -2,6 +2,8 @@ package gapt.expr.schema
 
 import gapt.expr.ty._
 import gapt.expr.{App, Const, Expr, Var, VarOrConst}
+import gapt.formats.verit.alethe.True
+import gapt.formats.verit.alethe.False
 
 object Zero extends Const("0", Tw, Nil) {
   def unapply(e:Expr) : Option[Unit] = e match {
@@ -26,7 +28,7 @@ object Pred extends Const("p", Tw ->: Tw, Nil) {
 
 object Numeral {
 
-  def apply(n: Int) = Numeral(n, Zero)
+  def apply(n: Int) : Expr = Numeral(n, Zero)
 
   private def apply(n : Int, calculated_sum : Expr): Expr = n match {
     case 0 => calculated_sum
@@ -53,6 +55,22 @@ object Numeral {
         throw new IllegalArgumentException(s"Expression ${e} is not a numeral!")
     }
   }
+
+  /*
+  Check equality of two numerals modulo normalization (??)
+  TODO:
+    - How to check for equality without calling equals again. --> Avoid infinite loop!
+  */
+  def equalsTest(a: Expr, b: Expr): Boolean = {
+      (a, b) match {
+        case (Zero | Pred(_) | Succ(_), Zero | Pred(_) | Succ(_)) => Normalize(a).equals(Normalize(b))
+        case (_,_) => false
+      }
+    }
+  
+
+
+
 
   //TODO: remove at some point, superfluous
   def apply_nontailrec(n : Int): Expr = n match {

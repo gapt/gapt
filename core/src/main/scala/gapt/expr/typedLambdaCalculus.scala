@@ -16,6 +16,11 @@ import gapt.formats.babel.{BabelExporter, BabelSignature}
 
 import scala.annotation.tailrec
 
+import gapt.expr.schema.Succ
+import gapt.expr.schema.Pred
+import gapt.expr.schema.Zero
+import gapt.expr.schema.Numeral
+
 abstract class Expr {
 
   /**
@@ -28,6 +33,7 @@ abstract class Expr {
 
   override def equals(a: Any): Boolean = a match {
     case a: AnyRef if this eq a            => true
+   // case Zero | Succ(_) | Pred(_)          => Numeral.equalsTest(this,a) // TODO: This is obviously not working.
     case e: Expr if e.hashCode != hashCode => false
     case e: Expr                           => this alphaEquals e
     case _                                 => false
