@@ -101,6 +101,7 @@ object Normalize {
     case Succ(Pred(num)) => apply1(num)
     case Pred(pre @ Pred(_)) => Pred(apply1(pre))
     case Succ(succ @ Succ(_)) => Succ(apply1(succ))
-    case _ => e
+    case e if e.ty == Tw => e
+    case _ =>  throw new IllegalArgumentException("Argument must be of type ω!")
   }
 }
