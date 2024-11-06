@@ -30,30 +30,35 @@ object Numeral {
 
   def apply(n: Int) : Expr = Numeral(n, Zero)
 
-  private def apply(n : Int, calculated_sum : Expr): Expr = n match {
-    case 0 => calculated_sum
-    case n if n > 0 => apply(n-1, Succ(calculated_sum))
+  /**
+   * Numeral of the form n + k where n is a series of Succ / Pred applications and k is a variable or constant
+   * @param n the numeral to add to k
+   * @param k the numeral expression
+   * @return an expression of the form Succ(...(Succ(k))) with n nestings of Succ
+   */
+  def apply(n : Int, k : Expr): Expr = n match {
+    case 0 => k
+    case n if n > 0 => apply(n-1, Succ(k))
     case _ => throw new IllegalArgumentException(s"Negative number s{n} does not have a numeral associated!")
   }
 
-
-  def unapply(e : Expr) = try {
-    Some(convert(e))
-  } catch {
-    case _ : Exception => None
+  def eq(a: Expr, b:Expr) = (a,b) match {
+    case (Numeral(n, k), Numeral(m, l)) => n == m && k == l
+    case _ => a == b //TODO: decide if we really want this (as a consequence f(Succ(Pred(Zero))) != f(Zero) but Succ(Pred(Zero)) == Zero)
   }
 
-  def convert(e : Expr): Int = {
+
+  def unapply(e : Expr): Option[(Int, Expr)] =
     e match {
-      case Zero => 0
-      case Succ(num) => convert(num) + 1
+      //case Zero => Some((0, Zero)) // subsumed by default case
+      case Succ(num) =>
+        val Some((nrec, krec)) =  unapply(num)
+        Some((nrec+1, krec))
       case Pred(num)  =>
-        val res = convert(num)
-        require(res > 0, s"Can't compute predecessor of ${num} because its value ${res} <= 0 !")
-        res - 1
-      case _ =>
-        throw new IllegalArgumentException(s"Expression ${e} is not a numeral!")
-    }
+        val Some((nrec, krec)) = unapply(num)
+        require(nrec > 0, s"Can't compute predecessor of ${num} because its value ${nrec} <= 0 !") // TODO: is this really an invariant?
+        Some((nrec - 1, krec))
+      case expr => Some((0, expr))
   }
 
   /*
