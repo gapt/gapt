@@ -15,8 +15,12 @@ import gapt.expr.formula._
 import gapt.provers.escargot.Escargot
 import gapt.logic.hol.dls.dls
 import scala.util.Success
+import gapt.expr.formula.hol.freeHOVariables
 
 @main def main = {
+  printWitnesses(exampleRequiringSubsumption, derivationLimit = Some(100))
+}
+
 def clauses(formula: Formula): Set[HOLClause] = {
   val constSubstitution = Substitution(freeHOVariables(formula).map {
     case v @ Var(name, ty) => (v, Const(name, ty))
@@ -141,7 +145,7 @@ val soqeBookDLSStarExample = feq(
   )
 )
 
-val insatisfiableExampleThatRequiresFactoring = feq(
+val unsatisfiableExampleThatRequiresFactoring = feq(
   Set(hov"X:i>i>o"),
   Set(
     hcl":- X(u), X(f(u))",
