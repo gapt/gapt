@@ -69,7 +69,7 @@ val exampleThatCanBeSolvedByPolarityRuleImmediately = feq(
 
 val negationOfLeibnizEquality = feq(
   Set(hov"X:i>o"),
-  Set(hcl"X(a), X(b) :-", hcl":- X(a), X(b)")
+  clauses(hof"-(X(a) <-> X(b))")
 )
 
 val exampleThatUsesResolutionOnLiteralsThatAreNotQuantifiedVariables = feq(
