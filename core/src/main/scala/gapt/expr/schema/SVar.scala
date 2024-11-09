@@ -1,6 +1,8 @@
 package gapt.expr.schema
 import gapt.expr.Var
 import gapt.expr.ty._
+import gapt.expr.schema.Tw
+import gapt.expr._
 
 //class Lst
 //case object N extends Lst
@@ -39,4 +41,21 @@ object SVar {
     Var(name, FunctionType(Ti, parameters))
   }
 
+
+  /* 
+  
+  Question:
+    - Why can't I check for type Tw in method signature?
+   */
+  def apply(name : String, parameters : Expr*) = {
+    
+    val param = parameters.map(_ => Tw)
+    val svar = Var(name, FunctionType(Ti, param))
+
+    Apps(svar, parameters)
+    
+  }
+
 }
+
+

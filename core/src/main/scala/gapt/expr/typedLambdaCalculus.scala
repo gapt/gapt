@@ -33,7 +33,6 @@ abstract class Expr {
 
   override def equals(a: Any): Boolean = a match {
     case a: AnyRef if this eq a            => true
-   // case Zero | Succ(_) | Pred(_)          => Numeral.equalsTest(this,a) // TODO: This is obviously not working.
     case e: Expr if e.hashCode != hashCode => false
     case e: Expr                           => this alphaEquals e
     case _                                 => false

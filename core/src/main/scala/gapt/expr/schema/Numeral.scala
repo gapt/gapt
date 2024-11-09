@@ -68,7 +68,7 @@ object Numeral {
   */
   def equalsTest(a: Expr, b: Expr): Boolean = {
       (a, b) match {
-        case (Zero | Pred(_) | Succ(_), Zero | Pred(_) | Succ(_)) => Normalize(a).equals(Normalize(b))
+        case (Zero | Pred(_) | Succ(_), Zero | Pred(_) | Succ(_)) => Normalize(a) == Normalize(b)
         case (_,_) => false
       }
     }
