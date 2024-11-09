@@ -42,18 +42,18 @@ object SVar {
   }
 
 
-  /* 
-  
-  Question:
-    - Why can't I check for type Tw in method signature?
+ /**
+   * Creates a new schematic variable with a direct parameterized instantiation of parameters.
+   *
+   * @param name the name of the variable
+   * @param parameters the parameters, might be arbitrary many
+   * @return an instantiated schematic variable
    */
   def apply(name : String, parameters : Expr*) = {
-    
     val param = parameters.map(_ => Tw)
     val svar = Var(name, FunctionType(Ti, param))
 
     Apps(svar, parameters)
-    
   }
 
 }

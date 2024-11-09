@@ -52,11 +52,14 @@ object Numeral {
     e match {
       //case Zero => Some((0, Zero)) // subsumed by default case
       case Succ(num) =>
-        val Some((nrec, krec)) =  unapply(num)
+        val Some((nrec, krec)) =  unapply(num): @unchecked // TODO (Stella): What to do in this case? 
+                                                           // Error message was "pattern's type Some[(Int, gapt.expr.Expr)] is more specialized 
+                                                           //                    than the right hand side expression's type Option[(Int, gapt.expr.Expr)]"
+                                                           // I added this "fix", but I'm not sure if this is the right way to handle this.
         Some((nrec+1, krec))
       case Pred(num)  =>
-        val Some((nrec, krec)) = unapply(num)
-        require(nrec > 0, s"Can't compute predecessor of ${num} because its value ${nrec} <= 0 !") // TODO: is this really an invariant?
+        val Some((nrec, krec)) = unapply(num): @unchecked // Same here 
+        require(nrec > 0, s"Can't compute predecessor of ${num} because its value ${nrec} <= 0 !") // TODO: is this really an invariant? 
         Some((nrec - 1, krec))
       case expr => Some((0, expr))
   }
