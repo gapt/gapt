@@ -28,29 +28,26 @@ object Pred extends Const("p", Tw ->: Tw, Nil) {
 
 object Numeral {
 
-  def apply(n: Int) : Expr = Numeral(n, Zero)
+  def apply
+   (n: Int) : Expr = Numeral(n, Zero)
 
   /**
    * Numeral of the form n + k where n is a series of Succ / Pred applications and k is a variable or constant
    * @param n the numeral to add to k
    * @param k the numeral expression
-   * @return an expression of the form Succ(...(Succ(k))) with n nestings of Succ
+   * @return an expression of the form Succ(...(Succ(k))) or Pred(...(Pred(k))) 
+   *         with n nestings of Succ or Pred
    */
   def apply(n : Int, k : Expr): Expr = n match {
     case 0 => k
     case n if n > 0 => apply(n-1, Succ(k))
-    case _ => throw new IllegalArgumentException(s"Negative number s{n} does not have a numeral associated!")
+    case n if n < 0 => apply(n+1, Pred(k))
+   // case _ => throw new IllegalArgumentException(s"Negative number s{n} does not have a numeral associated!")
   }
-
-  def eq(a: Expr, b:Expr) = (a,b) match {
-    case (Numeral(n, k), Numeral(m, l)) => n == m && k == l
-    case _ => a == b //TODO: decide if we really want this (as a consequence f(Succ(Pred(Zero))) != f(Zero) but Succ(Pred(Zero)) == Zero)
-  }
-
 
   def unapply(e : Expr): Option[(Int, Expr)] =
     e match {
-      //case Zero => Some((0, Zero)) // subsumed by default case
+     // case Zero => Some((0, Zero)) // subsumed by default case
       case Succ(num) =>
         val Some((nrec, krec)) =  unapply(num): @unchecked // TODO (Stella): What to do in this case? 
                                                            // Error message was "pattern's type Some[(Int, gapt.expr.Expr)] is more specialized 
@@ -59,33 +56,33 @@ object Numeral {
         Some((nrec+1, krec))
       case Pred(num)  =>
         val Some((nrec, krec)) = unapply(num): @unchecked // Same here 
-        require(nrec > 0, s"Can't compute predecessor of ${num} because its value ${nrec} <= 0 !") // TODO: is this really an invariant? 
         Some((nrec - 1, krec))
       case expr => Some((0, expr))
   }
 
-  /*
-  Check equality of two numerals modulo normalization (??)
-  TODO:
-    - How to check for equality without calling equals again. --> Avoid infinite loop!
-  */
-  def equalsTest(a: Expr, b: Expr): Boolean = {
+
+
+  def eq(a: Expr, b:Expr) = (a,b) match {
+    case (Numeral(n, k), Numeral(m, l)) => n == m && k == l
+    case _ => a == b //TODO: decide if we really want this (as a consequence f(Succ(Pred(Zero))) != f(Zero) but Succ(Pred(Zero)) == Zero)
+  }
+
+
+  /**
+    * Check equality of two numerals modulo normalization (??)
+    * TODO: So far Succ(x) != Succ(y). Is this really what we want? 
+    *       Works for ground terms as expected.
+    *
+    * @param a Numeral expression
+    * @param b Numeral expression
+    * @return true, if a and b normalize to the same numeral
+    */
+  def eq_norm(a: Expr, b: Expr): Boolean = {
       (a, b) match {
         case (Zero | Pred(_) | Succ(_), Zero | Pred(_) | Succ(_)) => Normalize(a) == Normalize(b)
         case (_,_) => false
       }
     }
-  
-
-
-
-
-  //TODO: remove at some point, superfluous
-  def apply_nontailrec(n : Int): Expr = n match {
-    case 0 => Zero
-    case n if n > 0 => Succ(apply(n-1))
-    case _ => throw new IllegalArgumentException(s"Negative number s{n} does not have a numeral associated!")
-  }
 
 }
 
