@@ -31,17 +31,21 @@ object Numeral {
   def apply
    (n: Int) : Expr = Numeral(n, Zero)
 
+
+
   /**
    * Numeral of the form n + k where n is a series of Succ / Pred applications and k is a variable or constant
    * @param n the numeral to add to k
    * @param k the numeral expression
    * @return an expression of the form Succ(...(Succ(k))) or Pred(...(Pred(k))) 
    *         with n nestings of Succ or Pred
+   * 
+   * TODO: move to seperate object
    */
   def apply(n : Int, k : Expr): Expr = n match {
     case 0 => k
-    case n if n > 0 => apply(n-1, Succ(k))
-    case n if n < 0 => apply(n+1, Pred(k))
+    case n if n > 0 => apply(n-1, Succ(k) )
+    case n if n < 0 => apply(n+1, Pred(k) )
    // case _ => throw new IllegalArgumentException(s"Negative number s{n} does not have a numeral associated!")
   }
 
@@ -79,7 +83,7 @@ object Numeral {
     */
   def eq_norm(a: Expr, b: Expr): Boolean = {
       (a, b) match {
-        case (Zero | Pred(_) | Succ(_), Zero | Pred(_) | Succ(_)) => Normalize(a) == Normalize(b)
+        case (Zero | Pred(_) | Succ(_), Zero | Pred(_) | Succ(_)) => Evaluate(a) == Evaluate(b)
         case (_,_) => false
       }
     }
@@ -93,7 +97,16 @@ object Debug {
   }
 }
 
-object Normalize {
+
+/**
+  * Takes a basic term and returns a numeral containing only Zero and Succ
+  * Takes an expression like Pred(Succ(Zero)) and returns Zero.
+  * 
+  * TODO: In case of a paramter, this method currently returns the parameter itself. 
+  *       In the book this method is defined only for ground terms.
+  *       Decide if we want that.
+  */
+object Evaluate {
   def apply(e: Expr): Expr = {
     apply1(e) match {
       case ne if ne != e => apply(ne)
@@ -102,6 +115,7 @@ object Normalize {
   }
 
   def apply1(e : Expr) : Expr = e match {
+    case Pred(Zero) => Zero
     case Pred(Succ(num)) => apply1(num)
     case Succ(Pred(num)) => apply1(num)
     case Pred(pre @ Pred(_)) => Pred(apply1(pre))
@@ -109,4 +123,30 @@ object Normalize {
     case e if e.ty == Tw => e
     case _ =>  throw new IllegalArgumentException("Argument must be of type ω!")
   }
+}
+
+ /**
+  * Implements Definition 3.1.4 from the book
+  * 
+   * TODO: Maybe use a mapping of parameter/assignment pairs as an argument.
+   */
+object ParameterAssignment {
+
+  def apply(e : Expr, assignment : Expr) : Expr = {
+    Evaluate(apply1(e, assignment)) // TODO: In the def 3.1.4 a parameter assignment returns a numeral. 
+                                    // Hence, only Succ and Zero. 
+                                    // Thats why we evaluate here. 
+                                    // Do we want that?
+  }
+
+  def apply1(e : Expr, assignment : Expr) : Expr = e match {
+    case Zero => Zero
+    case Succ(num) => Succ(apply(num,  assignment))
+    case Pred(num) => Pred(apply(num,  assignment))
+    case e if e.ty == Tw => assignment
+    case _ => throw new IllegalArgumentException("No param!") // TODO: rethink
+   
+
+  }
+
 }
