@@ -26,21 +26,14 @@ object Pred extends Const("p", Tw ->: Tw, Nil) {
   }
 }
 
-object Numeral {
 
-  def apply
-   (n: Int) : Expr = Numeral(n, Zero)
-
-
-
-  /**
-   * Numeral of the form n + k where n is a series of Succ / Pred applications and k is a variable or constant
+object Parameter {
+    /**
+   * Param of the form n + k where n is a series of Succ / Pred applications and k is a variable or constant
    * @param n the numeral to add to k
    * @param k the numeral expression
    * @return an expression of the form Succ(...(Succ(k))) or Pred(...(Pred(k))) 
    *         with n nestings of Succ or Pred
-   * 
-   * TODO: move to seperate object
    */
   def apply(n : Int, k : Expr): Expr = n match {
     case 0 => k
@@ -48,6 +41,7 @@ object Numeral {
     case n if n < 0 => apply(n+1, Pred(k) )
    // case _ => throw new IllegalArgumentException(s"Negative number s{n} does not have a numeral associated!")
   }
+
 
   def unapply(e : Expr): Option[(Int, Expr)] =
     e match {
@@ -64,18 +58,31 @@ object Numeral {
       case expr => Some((0, expr))
   }
 
-
-
   def eq(a: Expr, b:Expr) = (a,b) match {
-    case (Numeral(n, k), Numeral(m, l)) => n == m && k == l
+    case (Parameter(n, k), Parameter(m, l)) => n == m && k == l
     case _ => a == b //TODO: decide if we really want this (as a consequence f(Succ(Pred(Zero))) != f(Zero) but Succ(Pred(Zero)) == Zero)
   }
 
+}
+
+
+object Numeral {
+
+  def apply(n: Int) : Expr = n match {
+    case 0 => Zero
+    case n if n > 0 => Succ(apply(n-1))
+    case n if n < 0 => Pred(apply(n+1))
+  }
+
+
+  def unapply(e : Expr) : Int = e match {
+    case Zero => 0
+    case Succ(num) => unapply(num) +1
+    case Pred(num) => unapply(num) -1
+  }
 
   /**
     * Check equality of two numerals modulo normalization (??)
-    * TODO: So far Succ(x) != Succ(y). Is this really what we want? 
-    *       Works for ground terms as expected.
     *
     * @param a Numeral expression
     * @param b Numeral expression
@@ -90,6 +97,10 @@ object Numeral {
 
 }
 
+
+/**
+  * Remove later.
+  */
 object Debug {
   def apply(e : Expr) : Expr = {
     println(e)
