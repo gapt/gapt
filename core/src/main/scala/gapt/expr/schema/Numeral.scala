@@ -1,5 +1,6 @@
 package gapt.expr.schema
 
+import gapt.expr.subst.{Substitutable, Substitution}
 import gapt.expr.ty._
 import gapt.expr.{App, Const, Expr, Var, VarOrConst}
 import gapt.formats.verit.alethe.True
@@ -27,6 +28,7 @@ object Pred extends Const("p", Tw ->: Tw, Nil) {
 }
 
 
+
 object Parameter {
     /**
    * Param of the form n + k where n is a series of Succ / Pred applications and k is a variable or constant
@@ -47,14 +49,9 @@ object Parameter {
     e match {
      // case Zero => Some((0, Zero)) // subsumed by default case
       case Succ(num) =>
-        val Some((nrec, krec)) =  unapply(num): @unchecked // TODO (Stella): What to do in this case? 
-                                                           // Error message was "pattern's type Some[(Int, gapt.expr.Expr)] is more specialized 
-                                                           //                    than the right hand side expression's type Option[(Int, gapt.expr.Expr)]"
-                                                           // I added this "fix", but I'm not sure if this is the right way to handle this.
-        Some((nrec+1, krec))
+        unapply(num).map { case (nrec, krec) =>   (nrec+1, krec)  }
       case Pred(num)  =>
-        val Some((nrec, krec)) = unapply(num): @unchecked // Same here 
-        Some((nrec - 1, krec))
+        unapply(num).map { case (nrec, krec) =>   (nrec-1, krec)  }
       case expr => Some((0, expr))
   }
 
@@ -136,28 +133,26 @@ object Evaluate {
   }
 }
 
+class ParameterAssignment(map: Map[Var, Expr]) extends Substitution(map, Map()) {
+  //TODO: we inherit the general apply[T,U] version but we can not override it because of the normalization step
+  // for U Var / Const the result doesn't need to be normalized. But e.g. App / Abs cases do not get normalized.
+  // This probably rarely happens but should be dealt with properly.
+  def apply[T](x: T)(implicit ev: Substitutable[ParameterAssignment, T, Expr]): Expr =
+    Evaluate(ev.applySubstitution(this, x))
+
+  // Special-cased for performance
+  override def apply(v: Var): Expr = super.apply(v)
+}
  /**
   * Implements Definition 3.1.4 from the book
   * 
    * TODO: Maybe use a mapping of parameter/assignment pairs as an argument.
    */
 object ParameterAssignment {
-
-  def apply(e : Expr, assignment : Expr) : Expr = {
-    Evaluate(apply1(e, assignment)) // TODO: In the def 3.1.4 a parameter assignment returns a numeral. 
-                                    // Hence, only Succ and Zero. 
-                                    // Thats why we evaluate here. 
-                                    // Do we want that?
-  }
-
-  def apply1(e : Expr, assignment : Expr) : Expr = e match {
-    case Zero => Zero
-    case Succ(num) => Succ(apply(num,  assignment))
-    case Pred(num) => Pred(apply(num,  assignment))
-    case e if e.ty == Tw => assignment
-    case _ => throw new IllegalArgumentException("No param!") // TODO: rethink
-   
-
-  }
+   def apply(subs: Iterable[(Var, Expr)]): ParameterAssignment = new ParameterAssignment(Map() ++ subs)
+   def apply(subs: (Var, Expr)*): ParameterAssignment = new ParameterAssignment(Map() ++ subs)
+   def apply(variable: Var, expression: Expr): ParameterAssignment = new ParameterAssignment(Map(variable -> expression))
+   def apply(map: Map[Var, Expr]): ParameterAssignment = new ParameterAssignment(map)
+   def apply() = new ParameterAssignment(Map())
 
 }
