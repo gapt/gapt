@@ -18,39 +18,17 @@ import scala.util.Success
 import gapt.expr.formula.hol.freeHOVariables
 import gapt.logic.hol.ClauseSetPredicateEliminationProblem
 import gapt.logic.hol.toFormula
+import gapt.logic.hol.skolemize
+import gapt.logic.Polarity
+import gapt.logic.hol.CNFp
+import gapt.proofs.lk.transformations.folSkolemize
+import gapt.logic.hol.PredicateEliminationProblem
 
 @main def main = {
-  printResultInteractive(wernhardUnificationExample)
+  printResultInteractive(wernhardUnificationExample.toClauseSet)
 }
 
-def clauses(formula: Formula): Set[HOLClause] = {
-  // structuralCNF requires that there are no free variables,
-  // but we want to treat free higher-order variables as constants
-  // for this transformation
-  val nameGenerator = rename.awayFrom(containedNames(formula))
-  val newHOVariablesToOldHOVariables = freeHOVariables(formula).map(v => (nameGenerator.fresh(v), v)).toMap
-  val substitutionForConstants = Substitution(
-    newHOVariablesToOldHOVariables.map { case (newVar, oldVar) => (oldVar, Const(newVar.name, newVar.ty, List.empty)) }.toMap
-  )
-  val sequent = Sequent(Vector(substitutionForConstants(formula)), Vector.empty)
-
-  val clausesWithConstants = structuralCNF(sequent, structural = false).map(_.conclusion.map(_.asInstanceOf[Atom]))
-
-  clausesWithConstants.map { clause =>
-    clause.map {
-      case Atom(c @ Const(name, ty, tys), args) => {
-        val atomSymbol = newHOVariablesToOldHOVariables.get(Var(name, ty)).getOrElse(c)
-        Atom(atomSymbol, args)
-      }
-      case a => a
-    }
-  }
-}
-
-val negationOfModalAxiom = feq(
-  Set(hov"X:i>o"),
-  clauses(hof"-(!u (!v (R(u,v) -> ((!w (R(v, w) -> X(w))) <-> X(v)))))")
-)
+val negationOfModalAxiom = pep"?X -(!u (!v (R(u,v) -> ((!w (R(v, w) -> X(w))) <-> X(v)))))"
 
 def scanOneByOne(vars: Seq[Var], clauses: Set[HOLClause]): Option[Seq[(Set[HOLClause], Option[Substitution], Derivation)]] = {
   vars.foldLeft[Option[Seq[(Set[HOLClause], Option[Substitution], Derivation)]]](Some(Seq((clauses, Some(Substitution()), Derivation(clauses, List.empty))))) {
@@ -68,191 +46,153 @@ private def feq(vars: Set[Var], clauses: Set[HOLClause]) = {
   ClauseSetPredicateEliminationProblem(vars, clauses)
 }
 
-val exampleWithQuantifiedVariableNotOccurring = feq(Set(hov"X:i>o"), Set(hcl":- A(u)"))
-val exampleWithoutQuantifiedVariables = feq(Set.empty, Set(hcl":- X(u)"))
+val exampleWithQuantifiedVariableNotOccurring = pep"?(X:i>o) !u A(u)"
+val exampleWithoutQuantifiedVariables = pep"!u X(u)"
+val exampleThatCanBeSolvedByPolarityRuleImmediately = pep"?X(${
+    Set(hcl"A(u) :- X(u)", hcl"B(u,v), X(u) :- X(v)").toFormula
+  })"
+val negationOfLeibnizEquality = pep"?X?u?v -(X(u) <-> X(v))"
 
-val exampleThatCanBeSolvedByPolarityRuleImmediately = feq(
-  Set(hov"X:i>o"),
-  Set(hcl"A(u) :- X(u)", hcl"B(u,v), X(u) :- X(v)")
-)
+val exampleThatUsesResolutionOnLiteralsThatAreNotQuantifiedVariables = pep"?X(${
+    Set(
+      hcl":- B(u,v)",
+      hcl"B(u,v), X(u) :- X(v)",
+      hcl"A(u) :- X(u)",
+      hcl"X(u) :- C(u)"
+    ).toFormula
+  })"
 
-val negationOfLeibnizEquality = feq(
-  Set(hov"X:i>o"),
-  clauses(hof"-(X(a) <-> X(b))")
-)
+val exampleWithTwoClauses = pep"?X(${
+    Set(
+      hcl"B(v) :- X(v)",
+      hcl"X(u) :- A(u)"
+    ).toFormula
+  })"
 
-val exampleThatUsesResolutionOnLiteralsThatAreNotQuantifiedVariables = feq(
-  Set(hov"X:i>o"),
-  Set(
-    hcl":- B(u,v)",
-    hcl"B(u,v), X(u) :- X(v)",
-    hcl"A(u) :- X(u)",
-    hcl"X(u) :- C(u)"
-  )
-)
+val exampleWithThreeClauses = pep"?X(${
+    Set(hcl"B(v) :- X(v)", hcl"X(u) :- A(u)", hcl"C(u) :- X(u)").toFormula
+  })"
 
-val exampleWithTwoClauses = feq(
-  Set(hov"X:i>o"),
-  Set(
-    hcl"B(v) :- X(v)",
-    hcl"X(u) :- A(u)"
-  )
-)
+val single2PartDisjunction = pep"?X(X(a) | X(b))"
+val single3PartDisjunction = pep"?X(X(a) | X(b) | X(c))"
 
-val exampleWithThreeClauses = feq(
-  Set(hov"X:i>o"),
-  Set(
-    hcl"B(v) :- X(v)",
-    hcl"X(u) :- A(u)",
-    hcl"C(u) :- X(u)"
-  )
-)
+val exampleWithTwoVariables = pep"?X?Y(${
+    Set(
+      hcl":- Y(a,b)",
+      hcl"Y(u,u) :- X(u)",
+      hcl"Y(u,v) :- Y(v,u)",
+      hcl"X(a) :-"
+    ).toFormula
+  })"
 
-val single2PartDisjunction = feq(Set(hov"X:i>o"), Set(hcl":- X(a), X(b)"))
-val single3PartDisjunction = feq(Set(hov"X:i>o"), Set(hcl":- X(a), X(b), X(c)"))
+val exampleRequiringTautologyDeletion = pep"?X(${
+    Set(hcl"A(u) :- X(u)", hcl"X(u) :- X(v), A(u)", hcl"X(u) :- B(u)").toFormula
+  })"
 
-val exampleWithTwoVariables = feq(
-  Set(hov"X:i>o", hov"Y:i>i>o"),
-  Set(
-    hcl":- Y(a,b)",
-    hcl"Y(u,u) :- X(u)",
-    hcl"Y(u,v) :- Y(v,u)",
-    hcl"X(a) :-"
-  )
-)
+val exampleRequiringSubsumption = pep"?X(${
+    Set(
+      hcl"A(u), B(u,v) :-",
+      hcl"A(u) :- X(u)",
+      hcl"B(u,v), X(u) :- X(v)",
+      hcl"X(u) :- C(u)"
+    ).toFormula
+  })"
 
-val exampleRequiringTautologyDeletion = feq(
-  Set(hov"X:i>o"),
-  Set(hcl"A(u) :- X(u)", hcl"X(u) :- X(v), A(u)", hcl"X(u) :- B(u)")
-)
+val exampleWithSymmetryRequiringSubsumption = pep"?Y(${
+    Set(
+      hcl"A(u,v), B(u,v) :-",
+      hcl"A(u,v) :- Y(u,v)",
+      hcl"B(u,v), Y(u,v) :- Y(v,u)",
+      hcl"Y(u,v) :- C(u,v)"
+    ).toFormula
+  })"
 
-val exampleRequiringSubsumption = feq(
-  Set(hov"X:i>o"),
-  Set(
-    hcl"A(u), B(u,v) :-",
-    hcl"A(u) :- X(u)",
-    hcl"B(u,v), X(u) :- X(v)",
-    hcl"X(u) :- C(u)"
-  )
-)
+val soqeBookDLSStarExample = pep"?X(${
+    Set(
+      hcl"X(y) :- X(x), R(x,y)",
+      hcl":- X(x), X(y), S(x,y)"
+    ).toFormula
+  })"
 
-val exampleWithSymmetryRequiringSubsumption = feq(
-  Set(hov"Y:i>i>o"),
-  Set(
-    hcl"A(u,v), B(u,v) :-",
-    hcl"A(u,v) :- Y(u,v)",
-    hcl"B(u,v), Y(u,v) :- Y(v,u)",
-    hcl"Y(u,v) :- C(u,v)"
-  )
-)
+val unsatisfiableExampleThatRequiresFactoring = pep"?X(${
+    Set(
+      hcl":- X(u), X(f(u))",
+      hcl"X(u) :- X(f(v))",
+      hcl"X(u), X(f(u)) :-"
+    ).toFormula
+  })"
 
-val soqeBookDLSStarExample = feq(
-  Set(hov"X:i>o"),
-  Set(
-    hcl"X(y) :- X(x), R(x,y)",
-    hcl":- X(x), X(y), S(x,y)"
-  )
-)
+val witnessBlowup = pep"?X(${
+    Set(
+      hcl"X(c) :- ",
+      hcl":- X(a_1), X(b_1)",
+      hcl":- X(a_2), X(b_2)"
+    ).toFormula
+  })"
 
-val unsatisfiableExampleThatRequiresFactoring = feq(
-  Set(hov"X:i>i>o"),
-  Set(
-    hcl":- X(u), X(f(u))",
-    hcl"X(u) :- X(f(v))",
-    hcl"X(u), X(f(u)) :-"
-  )
-)
+val twoStepRedundancy = pep"?X(${
+    Set(
+      hcl"B(a, v), B(v, w) :-",
+      hcl":- X(a)",
+      hcl"B(u,v), X(u) :- X(v)",
+      hcl"X(c) :-"
+    ).toFormula
+  })"
 
-val witnessBlowup = feq(
-  Set(hov"X:i>o"),
-  Set(
-    hcl"X(c) :- ",
-    hcl":- X(a_1), X(b_1)",
-    hcl":- X(a_2), X(b_2)"
-  )
-)
+val subsumptionByXLiteral = pep"?X(${
+    Set(
+      hcl":- X(a,a)",
+      hcl"X(u,v) :- X(v,u), B(u,v)",
+      hcl"X(b,b) :- X(c,c)",
+      hcl"X(d,d) :-"
+    ).toFormula
+  })"
 
-val twoStepRedundancy = feq(
-  Set(hov"X:i>o"),
-  Set(
-    hcl"B(a, v), B(v, w) :-",
-    hcl":- X(a)",
-    hcl"B(u,v), X(u) :- X(v)",
-    hcl"X(c) :-"
-  )
-)
+val badExample = pep"?X(${
+    Set(
+      hcl":- B(b,v)",
+      hcl":- B(c,v)",
+      hcl"X(a) :-",
+      hcl":- X(b), X(c)",
+      hcl"X(u) :- B(u,v), X(v)"
+    ).toFormula
+  })"
 
-val subsumptionByXLiteral = feq(
-  Set(hov"X:i>i>o"),
-  Set(
-    hcl":- X(a,a)",
-    hcl"X(u,v) :- X(v,u), B(u,v)",
-    hcl"X(b,b) :- X(c,c)",
-    hcl"X(d,d) :-"
-  )
-)
+val booleanUnification = pep"?X?Y((!x (#c(Pat:i>o)(x) & ?y (#c(f:i>i>o)(x,y) & X(y) & ?z (#c(s:i>i>o)(x,z) & #c(Severe:i>o)(z))))) <-> (!x (#c(Pat:i>o)(x) & ?y (#c(f:i>i>o)(x,y) & Y(y) & #c(Inj:i>o)(y) & ?z ((#c(f:i>i>o)(x,z) & #c(Head:i>o)(z)))))))"
 
-val badExample = feq(
-  Set(hov"X:i>o"),
-  Set(
-    hcl":- B(b,v)",
-    hcl":- B(c,v)",
-    hcl"X(a) :-",
-    hcl":- X(b), X(c)",
-    hcl"X(u) :- B(u,v), X(v)"
-  )
-)
+val onlyOneSidedClauses = pep"?X(${
+    Set(
+      hcl":- X(u), X(v), R(u,v)",
+      hcl"X(u), X(v) :- Q(u,v)"
+    ).toFormula
+  })"
 
-val booleanUnification = feq(
-  Set(hov"X:i>o", hov"Y:i>o"),
-  clauses(
-    hof"(!x (#c(Pat:i>o)(x) & ?y (#c(f:i>i>o)(x,y) & X(y) & ?z (#c(s:i>i>o)(x,z) & #c(Severe:i>o)(z))))) <-> (!x (#c(Pat:i>o)(x) & ?y (#c(f:i>i>o)(x,y) & Y(y) & #c(Inj:i>o)(y) & ?z ((#c(f:i>i>o)(x,z) & #c(Head:i>o)(z))))))"
-  )
-)
+val wernhardUnificationExample = pep"?X_1?X_2(!u (A(u) -> B(u)) & (!u (X_1(u) -> X_2(u)) & !u (A(u) -> X_2(u)) & !u (X_2(u) -> B(u))))"
 
-val onlyOneSidedClauses = feq(
-  Set(hov"X:i>o"),
-  Set(
-    hcl":- X(u), X(v), R(u,v)",
-    hcl"X(u), X(v) :- Q(u,v)"
-  )
-)
-
-val wernhardUnificationExample = feq(
-  Set(hov"X_1:i>o", hov"X_2:i>o"),
-  clauses(
-    hof"!u (A(u) -> B(u)) & (!u (X_1(u) -> X_2(u)) & !u (A(u) -> X_2(u)) & !u (X_2(u) -> B(u)))"
-  )
-)
-
-val graphReachability = feq(
-  Set(hov"X:i>o"),
-  clauses(hos":- !x (x = a_1 | x = a_2 | x = a_3) & a_1 != a_2 & a_1 != a_3 & a_2 != a_3 & E(a_1,a_2) & E(a_2,a_1) & E(a_3,a_2) & -E(a_1,a_1) & -E(a_2_,a_2) & -E(a_3,a_3) & -E(a_1,a_3) & -E(a_2,a_3) & -E(a_3,a_1) & (X(a_1) & !u!v((X(u) & E(u,v)) -> X(v)) & -X(a_3))".toFormula)
-)
+val graphReachability = pep"?X(${
+    hos":- !x (x = a_1 | x = a_2 | x = a_3) & a_1 != a_2 & a_1 != a_3 & a_2 != a_3 & E(a_1,a_2) & E(a_2,a_1) & E(a_3,a_2) & -E(a_1,a_1) & -E(a_2_,a_2) & -E(a_3,a_3) & -E(a_1,a_3) & -E(a_2,a_3) & -E(a_3,a_1) & (X(a_1) & !u!v((X(u) & E(u,v)) -> X(v)) & -X(a_3))".toFormula
+  })"
 
 object modalCorrespondence {
-  def negationOfSecondOrderTranslationOfTAxiom = feq(
-    Set(hov"X:i>o"),
-    Set(
-      hcl"R(a,v) :- X(v)",
-      hcl"X(a) :-"
-    )
-  )
+  def negationOfSecondOrderTranslationOfTAxiom = pep"?X(${
+      Set(
+        hcl"R(a,v) :- X(v)",
+        hcl"X(a) :-"
+      ).toFormula
+    })"
 
-  def negationOfSecondOrderTranslationOf4Axiom = feq(
-    Set(hov"X:i>o"),
-    Set(
-      hcl"R(a,v) :- X(v)",
-      hcl":- R(a,b)",
-      hcl":- R(b,c)",
-      hcl"X(c) :-"
-    )
-  )
+  def negationOfSecondOrderTranslationOf4Axiom = pep"?X(${
+      Set(
+        hcl"R(a,v) :- X(v)",
+        hcl":- R(a,b)",
+        hcl":- R(b,c)",
+        hcl"X(c) :-"
+      ).toFormula
+    })"
 }
 
 object induction {
-  def Q = And(Set(
-    fof"!u s(u) != 0",
+  def additionDefinition = And(Set(
     fof"!u u + 0 = u",
     fof"!u !v u + s(v) = s(u+v)"
   ))
@@ -262,24 +202,8 @@ object induction {
     BetaReduction.betaNormalize(hof"($expr(0) & !u ($expr(u) -> $expr(s(u)))) -> !u $expr(u)")
   }
 
-  def soaFree(v: Var) = {
-    Q & ind(v)
-  }
-
-  def inductiveTheorem(theorem: Formula) = {
-    val freshConstant = rename(hoc"P:i>o", freeVariables(theorem))
-    val freshVariable = rename(hov"X:i>o", freeVariables(theorem))
-    val formula = hof"($Q & ${ind(freshConstant)}) -> $theorem"
-    val cs = clauses(formula)
-    val renamedClauses = cs.map(c => {
-      c.map {
-        case Atom(head, args) if head == freshConstant => Atom(freshVariable, args)
-        case a                                         => a
-      }
-    })
-    feq(Set(freshVariable), renamedClauses)
-  }
-
+  def inductiveTheorem(theorem: Formula) =
+    pep"?X (($additionDefinition) & (${ind(hov"X:i>o")}) -> $theorem)"
 }
 
 def printer = pprint.copy(additionalHandlers = additionalPrinters, defaultWidth = 150)
