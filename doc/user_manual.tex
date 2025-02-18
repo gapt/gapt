@@ -2357,17 +2357,49 @@ GAPT provides two methods for solving WSOQE that are based on established method
 We start with an input PEP which we can parse from a first-order formula with a second-order existential prefix:
 \begin{clilisting}
 gapt> val inputPep = pep"?X (X(a) & -X(b))"
+val inputPep: gapt.logic.hol.PredicateEliminationProblem = PredicateEliminationProblem(Set(X:i>o),X(a) ∧ ¬X(b))
+
 \end{clilisting}
 
 We transform the PEP into clause form, which clausifies the first-order part of the input:
 \begin{clilisting}
-gapt> val clauseSetPep = pep.clausify(inputPep)
+gapt> val clauseSetPep = inputPep.toClauseSet
+val clauseSetPep: gapt.logic.hol.ClauseSetPredicateEliminationProblem = ClauseSetPredicateEliminationProblem(Set(X:i>o),Set(X(b) ⊢ ,  ⊢ X(a)))
+
 \end{clilisting}
-Note that this transformation is not equivalence-preserving as it might introduce Skolem terms.
+Note that this transformation might not be equivalence-preserving as it can introduce new Skolem terms.
 
 We now run SCAN on this clause set 
 \begin{clilisting}
 gapt> val Success(derivation) = scan(clauseSetPep, limit=Some(100), oneSidedOnly=true): @unchecked
+-- Error: ----------------------------------------------------------------------
+1 |val Success(derivation) = scan(clauseSetPep, limit=Some(100), oneSidedOnly=true): @unchecked
+  |                                             ^^^^^^^^^^^^^^^
+  |method apply in object scan: (input: gapt.logic.hol.ClauseSetPredicateEliminationProblem,
+  |  derivationLimit: Option[Int], witnessLimit: Int):
+  |  Iterator[
+  |    Either[gapt.logic.hol.scan.scan.Derivation, (Set[gapt.proofs.HOLClause],
+  |      Option[gapt.expr.subst.Substitution], gapt.logic.hol.scan.scan.Derivation)
+  |      ]
+  |  ] does not have a parameter limit
+-- Error: ----------------------------------------------------------------------
+1 |val Success(derivation) = scan(clauseSetPep, limit=Some(100), oneSidedOnly=true): @unchecked
+  |                                                              ^^^^^^^^^^^^^^^^^
+  |method apply in object scan: (input: gapt.logic.hol.ClauseSetPredicateEliminationProblem,
+  |  derivationLimit: Option[Int], witnessLimit: Int):
+  |  Iterator[
+  |    Either[gapt.logic.hol.scan.scan.Derivation, (Set[gapt.proofs.HOLClause],
+  |      Option[gapt.expr.subst.Substitution], gapt.logic.hol.scan.scan.Derivation)
+  |      ]
+  |  ] does not have a parameter oneSidedOnly
+-- [E006] Not Found Error: -----------------------------------------------------
+1 |val Success(derivation) = scan(clauseSetPep, limit=Some(100), oneSidedOnly=true): @unchecked
+  |    ^^^^^^^
+  |    Not found: Success
+  |
+  | longer explanation available when compiling with `-explain`
+3 errors found
+
 \end{clilisting}
 The \texttt{limit} parameter controls the number of derivation steps that are to be performed by SCAN.
 If SCAN does not saturate the input clause set within this limit, the method returns with an Error.
@@ -2379,10 +2411,32 @@ The returned derivation stores the input PEP and all performed inference steps d
 Furthermore we can reconstruct the final clause set, which does not contain any of the second-order variables of the input PEP:
 \begin{clilisting}
 gapt> derivation.conclusion
+-- [E006] Not Found Error: -----------------------------------------------------
+1 |derivation.conclusion
+  |^^^^^^^^^^
+  |Not found: derivation
+  |
+  | longer explanation available when compiling with `-explain`
+1 error found
+
 \end{clilisting}
 From the derivation we can also construct the witness substitution for the input PEP. 
 \begin{clilisting}
 gapt> val Success(witness) = wscan.witness(derivation, limit=Some(2)): @unchecked
+-- [E006] Not Found Error: -----------------------------------------------------
+1 |val Success(witness) = wscan.witness(derivation, limit=Some(2)): @unchecked
+  |                       ^^^^^
+  |                       Not found: wscan
+  |
+  | longer explanation available when compiling with `-explain`
+-- [E006] Not Found Error: -----------------------------------------------------
+1 |val Success(witness) = wscan.witness(derivation, limit=Some(2)): @unchecked
+  |    ^^^^^^^
+  |    Not found: Success
+  |
+  | longer explanation available when compiling with `-explain`
+2 errors found
+
 \end{clilisting}
 During the construction of the witness some saturation processes similar to SCAN have to run. 
 The parameter \texttt{witnessLimit} controls how many iterations during every one of these saturation processes we allow.
@@ -2392,16 +2446,32 @@ Passing \texttt{oneSidedOnly=true} when running SCAN ensures that a limit of \te
 We can now use this witness to construct the corresponding WSOQE condition
 \begin{clilisting}
 gapt> val wsoqeCondition = wsoqe.condition(clauseSetPep.toFormula, witness)
+-- [E006] Not Found Error: -----------------------------------------------------
+1 |val wsoqeCondition = wsoqe.condition(clauseSetPep.toFormula, witness)
+  |                     ^^^^^
+  |                     Not found: wsoqe
+  |
+  | longer explanation available when compiling with `-explain`
+1 error found
+
 \end{clilisting}
 and verify that the found witness satisfies it
 \begin{clilisting}
 gapt> Escargot.isValid(wsoqeCondition)
+-- [E006] Not Found Error: -----------------------------------------------------
+1 |Escargot.isValid(wsoqeCondition)
+  |                 ^^^^^^^^^^^^^^
+  |                 Not found: wsoqeCondition
+  |
+  | longer explanation available when compiling with `-explain`
+1 error found
+
 \end{clilisting}
 
-
+% TODO: add parameter for back-tracking
 % TODO: add method that does all these steps in one go for convenience
 % TODO: mention computing multiple witnesses
-% TODO: 
+% TODO: mention where further examples can be found
 
 \subsection{WDLS}
 
