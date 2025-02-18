@@ -194,8 +194,9 @@ object freeHOVariables {
    * @param f the expressions to extract from
    * @return the list of free variables with type != Ti in e
    */
-  def apply(f: Expr): Set[Var] = freeVariables(f).filter(_ match { case Var(_, Ti) => false; case _ => true })
+  def apply(f: Expr): Set[Var] = freeVariables(f).filter(isHOVar)
 
+  def isHOVar(v: Var): Boolean = v match { case Var(_, Ti) => false; case _ => true }
 }
 
 /**
