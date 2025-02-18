@@ -257,8 +257,14 @@ class ExpressionParseHelper(sc: StringContext, file: sourcecode.File, line: sour
 
   /** Parses a string as a [[gapt.logic.hol.PredicateEliminationProblem]] */
   def pep(args: Splice[Expr]*): PredicateEliminationProblem = hof(args: _*) match
-    case Ex.Block(vars, fofPart) if vars.forall(isHOVar) && !containsHOQuantifier(fofPart) => PredicateEliminationProblem(vars.toSet, fofPart)
-    case expr                                                                              => throw new IllegalArgumentException(s"Expression $expr is not of the form ∃X_1...∃X_n F where F is a first-order formula and X_1,...,X_n are second-order variables")
+    case expr @ Ex.Block(vars, foPart) => {
+      val (hoVarsPrefix, varSuffix) = vars.span(isHOVar)
+      val remainder = Ex.Block(varSuffix, foPart)
+      if (containsHOQuantifier(remainder)) {
+        throw new IllegalArgumentException(s"Expression $expr is not of the form ∃X_1...∃X_n F where F is a first-order formula and X_1,...,X_n are second-order variables")
+      }
+      PredicateEliminationProblem(hoVarsPrefix.toSet, remainder)
+    }
 
   private def placeholder = "__qq_"
 }
