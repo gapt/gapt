@@ -2334,6 +2334,76 @@ x_2 → 0
 
 \end{clilisting}
 
+\section{Witnessed Second-Order Quantifier Elimination}
+
+Let $\varphi$ be a first-order formula and $\overline{X}$ a tuple of second-order variables.
+Then \emph{Witnessed Second-Order Quantifier Elimination (WSOQE)} is the problem of finding a tuple of first-order predicates $\overline{\alpha}$ such that the \emph{WSOQE condition} holds:
+$$\models (\exists \overline{X} \varphi) \leftrightarrow \varphi[\overline{X} / \overline{\alpha}].$$
+
+A related problem is (existential) \emph{Second-Order Quantifier Elimination (SOQE)}, i.e. finding a first-order formula $\psi$ such that 
+$$\models (\exists \overline{X} \varphi) \leftrightarrow \psi.$$
+Any solution to WSOQE induces a solution to SOQE, since $\varphi[\overline{X} / \overline{\alpha}]$ is a first-order formula.
+
+Another related problem is \emph{Formula Equations (FEQ)}, i.e. finding a tuple of first-order predicates $\overline{\alpha}$ such that 
+$$\models \varphi[\overline{X}/ \overline{\alpha}].$$
+Note that FEQ can be solved by solving WSOQE and appending a first-order validity check to $\varphi[\overline{X} / \overline{\alpha}]$.
+
+All three problems share the same input structure: a first-order formula together with a set of second-order variables, usually existentially quantified. We call this structure a \emph{Predicate Elimination Problem (PEP)} and provide some methods for working with it.
+
+GAPT provides two methods for solving WSOQE that are based on established methods for solving SOQE: \emph{WSCAN}, based on the SCAN algorithm\footnote{TODO: cite this} and \emph{WDLS}, based on the DLS algorithm\footnote{TODO: cite this}.
+
+\subsection{WSCAN}
+
+We start with an input PEP which we can parse from a first-order formula with a second-order existential prefix:
+\begin{clilisting}
+gapt> val inputPep = pep"?X (X(a) & -X(b))"
+\end{clilisting}
+
+We transform the PEP into clause form, which clausifies the first-order part of the input:
+\begin{clilisting}
+gapt> val clauseSetPep = pep.clausify(inputPep)
+\end{clilisting}
+Note that this transformation is not equivalence-preserving as it might introduce Skolem terms.
+
+We now run SCAN on this clause set 
+\begin{clilisting}
+gapt> val Success(derivation) = scan(clauseSetPep, limit=Some(100), oneSidedOnly=true): @unchecked
+\end{clilisting}
+The \texttt{limit} parameter controls the number of derivation steps that are to be performed by SCAN.
+If SCAN does not saturate the input clause set within this limit, the method returns with an Error.
+One can set \texttt{limit=None} to allow SCAN to run without a limit.
+The option \texttt{oneSidedOnly=true} makes sure only derivations of a certain kind are constructed for which we can guarantee to compute a first-order witness.
+However, this might affect whether a derivation can be found at all.
+
+The returned derivation stores the input PEP and all performed inference steps during the run of SCAN.
+Furthermore we can reconstruct the final clause set, which does not contain any of the second-order variables of the input PEP:
+\begin{clilisting}
+gapt> derivation.conclusion
+\end{clilisting}
+From the derivation we can also construct the witness substitution for the input PEP. 
+\begin{clilisting}
+gapt> val Success(witness) = wscan.witness(derivation, limit=Some(2)): @unchecked
+\end{clilisting}
+During the construction of the witness some saturation processes similar to SCAN have to run. 
+The parameter \texttt{witnessLimit} controls how many iterations during every one of these saturation processes we allow.
+The construction fails if any of these processes does not terminate within the given number of iterations.
+Passing \texttt{oneSidedOnly=true} when running SCAN ensures that a limit of \texttt{Some(2)} will suffice.
+
+We can now use this witness to construct the corresponding WSOQE condition
+\begin{clilisting}
+gapt> val wsoqeCondition = wsoqe.condition(clauseSetPep.toFormula, witness)
+\end{clilisting}
+and verify that the found witness satisfies it
+\begin{clilisting}
+gapt> Escargot.isValid(wsoqeCondition)
+\end{clilisting}
+
+
+% TODO: add method that does all these steps in one go for convenience
+% TODO: mention computing multiple witnesses
+% TODO: 
+
+\subsection{WDLS}
 
 \section{Formula equations}
 A \emph{formula equation} is a first-order formula \(F[X_{1}, \dots, X_{n}]\) with free second-order predicate variables \(X_{1}/k_{1}, \dots, X_{n}/k_{n}\).
