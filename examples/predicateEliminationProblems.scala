@@ -1,4 +1,4 @@
-package gapt.examples.formulaEquations
+package gapt.examples.predicateEliminationProblems
 
 import gapt.expr._
 import gapt.proofs._

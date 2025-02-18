@@ -18,7 +18,7 @@ import gapt.expr.formula.hol.freeHOVariables
 import org.specs2.matcher.MatchResult
 
 class ScanTest extends Specification {
-  import gapt.examples.formulaEquations._
+  import gapt.examples.predicateEliminationProblems._
 
   def is = s2"""
   This is a specification for the scan implementation
