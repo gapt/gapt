@@ -24,17 +24,24 @@ import gapt.logic.hol.toFormula
 }
 
 def clauses(formula: Formula): Set[HOLClause] = {
-  val constSubstitution = Substitution(freeHOVariables(formula).map {
-    case v @ Var(name, ty) => (v, Const(name, ty))
-  }.toMap)
-  val sequent = Sequent(Vector(constSubstitution(formula)), Vector.empty)
+  // structuralCNF requires that there are no free variables,
+  // but we want to treat free higher-order variables as constants
+  // for this transformation
+  val nameGenerator = rename.awayFrom(containedNames(formula))
+  val newHOVariablesToOldHOVariables = freeHOVariables(formula).map(v => (nameGenerator.fresh(v), v)).toMap
+  val substitutionForConstants = Substitution(
+    newHOVariablesToOldHOVariables.map { case (newVar, oldVar) => (oldVar, Const(newVar.name, newVar.ty, List.empty)) }.toMap
+  )
+  val sequent = Sequent(Vector(substitutionForConstants(formula)), Vector.empty)
 
   val clausesWithConstants = structuralCNF(sequent, structural = false).map(_.conclusion.map(_.asInstanceOf[Atom]))
 
   clausesWithConstants.map { clause =>
     clause.map {
-      case Atom(Const(name, ty, tys), args)
-          if constSubstitution.domain.contains(Var(name, ty)) => Atom(Var(name, ty), args)
+      case Atom(c @ Const(name, ty, tys), args) => {
+        val atomSymbol = newHOVariablesToOldHOVariables.get(Var(name, ty)).getOrElse(c)
+        Atom(atomSymbol, args)
+      }
       case a => a
     }
   }
