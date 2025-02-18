@@ -18,7 +18,7 @@ import org.specs2.specification.core.Fragment
 
 import scala.util.Try
 
-class FormulaEquationsTest extends Specification {
+class DlsTest extends Specification {
 
   private def toDisjunct(s: HOLSequent): Disjunct =
     Disjunct(s.antecedent, s.succedent)
