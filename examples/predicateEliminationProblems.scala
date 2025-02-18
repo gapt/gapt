@@ -16,6 +16,8 @@ import gapt.provers.escargot.Escargot
 import gapt.logic.hol.dls.dls
 import scala.util.Success
 import gapt.expr.formula.hol.freeHOVariables
+import gapt.logic.hol.ClauseSetPredicateEliminationProblem
+import gapt.logic.hol.toFormula
 
 @main def main = {
   printResultInteractive(wernhardUnificationExample)
@@ -56,7 +58,7 @@ def scanOneByOne(vars: Seq[Var], clauses: Set[HOLClause]): Option[Seq[(Set[HOLCl
 }
 
 private def feq(vars: Set[Var], clauses: Set[HOLClause]) = {
-  FormulaEquationClauseSet(vars, clauses)
+  ClauseSetPredicateEliminationProblem(vars, clauses)
 }
 
 val exampleWithQuantifiedVariableNotOccurring = feq(Set(hov"X:i>o"), Set(hcl":- A(u)"))
@@ -348,13 +350,13 @@ def printResolutionCandidate(resolutionCandidate: ResolutionCandidate): pprint.T
   pprint.Tree.Literal(clauseString.strip())
 }
 
-def getSolutions(input: FormulaEquationClauseSet, derivationLimit: Option[Int], possibilityLimit: Option[Int]): Iterator[(Set[HOLClause], Option[Substitution], Derivation)] = {
+def getSolutions(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int], possibilityLimit: Option[Int]): Iterator[(Set[HOLClause], Option[Substitution], Derivation)] = {
   val baseIterator = scan(input, derivationLimit)
   val iterator = if possibilityLimit.isDefined then baseIterator.take(possibilityLimit.get) else baseIterator
   iterator.collect { case Right(output) => output }
 }
 
-def printResult(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = Some(100), possibilityLimit: Option[Int] = Some(10)) = {
+def printResult(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int] = Some(100), possibilityLimit: Option[Int] = Some(10)) = {
   val solutions = getSolutions(input, derivationLimit, possibilityLimit)
   if solutions.isEmpty then {
     println(s"❌ didn't find solution")
@@ -384,7 +386,7 @@ def equivalenceClasses[T](base: Iterable[T])(areEquivalent: (T, T) => Boolean): 
 def formatPercentage(count: Int, of: Int): String =
   "%.1f%%".formatLocal(java.util.Locale.UK, (count * 100).floatValue / of)
 
-def printWitnesses(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = Some(100), witnessLimit: Int = 100, tries: Int = 100) = {
+def printWitnesses(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int] = Some(100), witnessLimit: Int = 100, tries: Int = 100) = {
   println("finding witnesses for")
   printer.pprintln(input.toFormula)
   val scanOutput = scan(input, derivationLimit, witnessLimit).take(tries).toSeq
@@ -412,7 +414,7 @@ def areEquivalent(left: Substitution, right: Substitution): Boolean = {
   })
 }
 
-def printResultInteractive(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = Some(100)) = {
+def printResultInteractive(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int] = Some(100)) = {
   val iterator = scan(input, derivationLimit)
 
   while (iterator.hasNext) {
@@ -433,7 +435,7 @@ def printResultInteractive(input: FormulaEquationClauseSet, derivationLimit: Opt
   }
 }
 
-def checkSolution(input: FormulaEquationClauseSet, output: (Set[HOLClause], Option[Substitution], Derivation)): Boolean = {
+def checkSolution(input: ClauseSetPredicateEliminationProblem, output: (Set[HOLClause], Option[Substitution], Derivation)): Boolean = {
   val (clauseSet, witnesses, derivation) = output
   printer.pprintln(output)
   if witnesses.isEmpty then {

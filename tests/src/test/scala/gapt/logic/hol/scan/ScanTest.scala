@@ -8,8 +8,8 @@ import gapt.provers.escargot.Escargot
 import gapt.logic.hol.scan.scan.freeFOLVariables
 import gapt.expr.subst.Substitution
 import gapt.logic.hol.scan.scan.Derivation
+import gapt.logic.hol.ClauseSetPredicateEliminationProblem
 import org.specs2.matcher.Matcher
-import gapt.logic.hol.scan.scan.FormulaEquationClauseSet
 import org.specs2.Specification
 import gapt.proofs.resolution.structuralCNF
 import gapt.logic.hol.scan.scan.ResolutionCandidate
@@ -52,19 +52,19 @@ class ScanTest extends Specification {
     (leftFormula must beEquivalentTo(rightFormula)).mapMessage(_ => s"$left is not equivalent to $right")
   }
 
-  def beCorrectSolutionFor(input: FormulaEquationClauseSet): Matcher[Either[Derivation, (Set[HOLClause], Option[Substitution], Derivation)]] = { (result: Either[Derivation, (Set[HOLClause], Option[Substitution], Derivation)]) =>
+  def beCorrectSolutionFor(input: ClauseSetPredicateEliminationProblem): Matcher[Either[Derivation, (Set[HOLClause], Option[Substitution], Derivation)]] = { (result: Either[Derivation, (Set[HOLClause], Option[Substitution], Derivation)]) =>
     result must beRight.like {
       case output @ (clauseSet: Set[HOLClause], Some(witnesses: Substitution), derivation: Derivation) =>
         val substitutedInput = witnesses(input.clauses).map(_.toFormula).map(BetaReduction.betaNormalize)
         val beWithoutQuantifiedVariables: Matcher[HOLClause] = { (c: HOLClause) =>
           {
-            (freeHOVariables(c.toFormula).intersect(input.quantifiedVariables).isEmpty, s"$c contains at least one quantified variable from ${input.quantifiedVariables}")
+            (freeHOVariables(c.toFormula).intersect(input.variablesToEliminate).isEmpty, s"$c contains at least one quantified variable from ${input.variablesToEliminate}")
           }
         }
 
         clauseSet.must(contain(beWithoutQuantifiedVariables).foreach)
-          .and(witnesses.domain.mustEqual(input.quantifiedVariables)
-            .mapMessage(_ => s"domain of substitution is not ${input.quantifiedVariables}"))
+          .and(witnesses.domain.mustEqual(input.variablesToEliminate)
+            .mapMessage(_ => s"domain of substitution is not ${input.variablesToEliminate}"))
           .and(substitutedInput.must(beEquivalentTo(clauseSet.map(_.toFormula)))
             .mapMessage(_ => s"substituted input is not equivalent to output clause set"))
     }
@@ -72,8 +72,8 @@ class ScanTest extends Specification {
 
   val defaultDerivationLimit = 100
   val defaultPossibilityLimit = 10
-  def beSolved(derivationLimit: Int = defaultDerivationLimit, possibilityLimit: Int = defaultPossibilityLimit): Matcher[FormulaEquationClauseSet] = {
-    (input: FormulaEquationClauseSet) =>
+  def beSolved(derivationLimit: Int = defaultDerivationLimit, possibilityLimit: Int = defaultPossibilityLimit): Matcher[ClauseSetPredicateEliminationProblem] = {
+    (input: ClauseSetPredicateEliminationProblem) =>
       scan(input, Some(derivationLimit)).take(possibilityLimit).toSeq.must(contain(beCorrectSolutionFor(input)))
   }
 }

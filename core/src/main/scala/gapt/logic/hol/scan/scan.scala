@@ -45,16 +45,10 @@ import scala.collection.immutable.HashSet
 import gapt.provers.escargot.Escargot
 import gapt.expr.formula.Iff
 import gapt.formats.leancop.LeanCoP21Parser.clause
+import gapt.logic.hol.PredicateEliminationProblem
+import gapt.logic.hol.ClauseSetPredicateEliminationProblem
 
 object scan {
-  case class FormulaEquationClauseSet(quantifiedVariables: Set[Var], clauses: Set[HOLClause]):
-    def toFormula: Formula = Ex.Block(quantifiedVariables.toSeq, clauses.toFormula)
-
-  extension (clauseSet: Set[HOLClause])
-    def toFormula: Formula = {
-      val quantifierFreePart = And(clauseSet.map(_.toFormula))
-      All.Block(freeFOLVariables(quantifierFreePart).toSeq, quantifierFreePart)
-    }
 
   case class ResolutionCandidate(clause: HOLClause, index: SequentIndex):
     def atom = clause(index)
@@ -141,11 +135,11 @@ object scan {
       derivationLimit: Option[Int]
   )
 
-  def apply(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = Some(100), witnessLimit: Int = 100): Iterator[Either[Derivation, (Set[HOLClause], Option[Substitution], Derivation)]] =
+  def apply(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int] = Some(100), witnessLimit: Int = 100): Iterator[Either[Derivation, (Set[HOLClause], Option[Substitution], Derivation)]] =
     assert(derivationLimit.isEmpty || derivationLimit.get >= 0, "derivation limit must be non-negative")
     val states = saturate(State(
       input.clauses,
-      input.quantifiedVariables,
+      input.variablesToEliminate,
       Derivation(input.clauses, List.empty),
       derivationLimit
     ))
@@ -153,7 +147,7 @@ object scan {
       val result =
         for
           s <- state
-          wits = witnessSubstitution(s.derivation, input.quantifiedVariables, witnessLimit).map(simplifyWitnessSubstitution)
+          wits = witnessSubstitution(s.derivation, input.variablesToEliminate, witnessLimit).map(simplifyWitnessSubstitution)
         yield (s.activeClauses, wits, s.derivation)
       result.left.map(state => state.derivation)
     }
