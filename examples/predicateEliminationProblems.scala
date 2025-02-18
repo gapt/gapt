@@ -2,11 +2,12 @@ package gapt.examples.predicateEliminationProblems
 
 import gapt.expr._
 import gapt.proofs._
-import gapt.logic.hol.scan.scan._
 import gapt.proofs.resolution.structuralCNF
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
-import gapt.logic.hol.scan.scan
+import gapt.logic.hol.scan
+import gapt.logic.hol.scan._
+import gapt.logic.hol.wscan
 import gapt.expr.util.constants
 import gapt.expr.util.rename
 import gapt.expr.util.freeVariables
@@ -34,16 +35,12 @@ def scanOneByOne(vars: Seq[Var], clauses: Set[HOLClause]): Option[Seq[(Set[HOLCl
   vars.foldLeft[Option[Seq[(Set[HOLClause], Option[Substitution], Derivation)]]](Some(Seq((clauses, Some(Substitution()), Derivation(clauses, List.empty))))) {
     case (None, v) => None
     case (Some(state), v) => {
-      for result <- scan(feq(Set(v), state.last._1)).take(10).collect {
+      for (derivation, wit) <- wscan(ClauseSetPredicateEliminationProblem(Set(v), state.last._1)).take(10).collect {
           case Right(result) => result
         }.nextOption()
-      yield state :+ result
+      yield state :+ (derivation.conclusion, wit, derivation)
     }
   }
-}
-
-private def feq(vars: Set[Var], clauses: Set[HOLClause]) = {
-  ClauseSetPredicateEliminationProblem(vars, clauses)
 }
 
 val exampleWithQuantifiedVariableNotOccurring = pep"?(X:i>o) !u A(u)"
@@ -114,7 +111,7 @@ val soqeBookDLSStarExample = pep"?X(${
     ).toFormula
   })"
 
-val unsatisfiableExampleThatRequiresFactoring = pep"?X(${
+val unsatisfiableExampleThatRequiresFactoring = pep"?(X:i>o)(${
     Set(
       hcl":- X(u), X(f(u))",
       hcl"X(u) :- X(f(v))",
@@ -216,10 +213,7 @@ def additionalPrinters: PartialFunction[Any, pprint.Tree] = {
     )
   case Derivation(initialClauseSet, inferences) => pprint.Tree.Apply(
       "Derivation", {
-        val clauseSets = inferences.scanLeft(initialClauseSet)((c, i) => {
-          val (added, removed) = i(c)
-          c ++ added -- removed
-        })
+        val clauseSets = inferences.scanLeft(initialClauseSet)((c, i) => i(c))
         Iterator(printer.treeify(initialClauseSet, true, true)) ++ inferences.zip(clauseSets.tail).flatMap {
           case (inference, clauses) => Seq(
               printer.treeify(inference, true, true),
@@ -230,20 +224,20 @@ def additionalPrinters: PartialFunction[Any, pprint.Tree] = {
     )
   case rc: PointedClause => printResolutionCandidate(rc)
   case hos: Sequent[_]   => printSequent(hos)
-  case Inference.Resolution(left, right) => pprint.Tree.Apply(
+  case DerivationStep.ConstraintResolution(left, right) => pprint.Tree.Apply(
       "Resolution",
       Iterator(
         pprint.Tree.KeyValue("left", printer.treeify(left, false, true)),
         pprint.Tree.KeyValue("right", printer.treeify(right, false, true)),
-        pprint.Tree.KeyValue("resolvent", printer.treeify(scan.resolve(left, right), false, true))
+        pprint.Tree.KeyValue("resolvent", printer.treeify(constraintResolvent(left, right), false, true))
       )
     )
-  case Inference.Purification(candidate) => pprint.Tree.Apply("Purification", Iterator(additionalPrinters(candidate)))
-  case Inference.ConstraintElimination(clause, index, _) => pprint.Tree.Apply(
+  case DerivationStep.PurifiedClauseDeletion(candidate) => pprint.Tree.Apply("Purification", Iterator(additionalPrinters(candidate)))
+  case DerivationStep.ConstraintElimination(clause, index, _) => pprint.Tree.Apply(
       "ConstraintElimination",
       Iterator(pprint.Tree.KeyValue("clause", printer.treeify(clause, false, true)), pprint.Tree.KeyValue("constraint", printer.treeify(clause(index), false, true)))
     )
-  case f @ Inference.Factoring(clause, leftIndex, rightIndex) => pprint.Tree.Apply(
+  case f @ DerivationStep.ConstraintFactoring(clause, leftIndex, rightIndex) => pprint.Tree.Apply(
       "Factoring",
       Iterator(
         pprint.Tree.KeyValue("left", printer.treeify(clause(leftIndex), false, true)),
@@ -281,8 +275,8 @@ def printResolutionCandidate(resolutionCandidate: PointedClause): pprint.Tree = 
   pprint.Tree.Literal(clauseString.strip())
 }
 
-def getSolutions(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int], possibilityLimit: Option[Int]): Iterator[(Set[HOLClause], Option[Substitution], Derivation)] = {
-  val baseIterator = scan(input, derivationLimit)
+def getSolutions(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int], possibilityLimit: Option[Int]): Iterator[(Derivation, Option[Substitution])] = {
+  val baseIterator = wscan(input, derivationLimit)
   val iterator = if possibilityLimit.isDefined then baseIterator.take(possibilityLimit.get) else baseIterator
   iterator.collect { case Right(output) => output }
 }
@@ -317,12 +311,12 @@ def equivalenceClasses[T](base: Iterable[T])(areEquivalent: (T, T) => Boolean): 
 def formatPercentage(count: Int, of: Int): String =
   "%.1f%%".formatLocal(java.util.Locale.UK, (count * 100).floatValue / of)
 
-def printWitnesses(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int] = Some(100), witnessLimit: Int = 100, tries: Int = 100) = {
+def printWitnesses(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int] = Some(100), witnessLimit: Option[Int] = Some(100), tries: Int = 100) = {
   println("finding witnesses for")
   printer.pprintln(input.toFormula)
-  val scanOutput = scan(input, derivationLimit, witnessLimit).take(tries).toSeq
+  val scanOutput = wscan(input, derivationLimit, witnessLimit).take(tries).toSeq
   val successfulScanRuns = scanOutput.collect { case Right(x) => x }
-  val witnesses = successfulScanRuns.collect { case (foEquivalent, Some(wit), _) => (foEquivalent.toFormula, wit) }
+  val witnesses = successfulScanRuns.collect { case (derivation, Some(wit)) => (derivation.conclusion.toFormula, wit) }
   val runsWithoutFiniteWitnesses = successfulScanRuns.size - witnesses.size
   val nonEquivalent = equivalenceClasses(witnesses) {
     case ((_, left), (_, right)) => areEquivalent(left, right)
@@ -338,7 +332,7 @@ def printWitnesses(input: ClauseSetPredicateEliminationProblem, derivationLimit:
 
 def areEquivalent(left: Substitution, right: Substitution): Boolean = {
   left.domain == right.domain && left.domain.forall(v => {
-    val vars = freshArgumentVariables(v.ty, "u")
+    val vars = wscan.freshArgumentVariables(v.ty, "u")
     val leftFormula = BetaReduction.betaNormalize(App(left(v), vars)).asInstanceOf[Formula]
     val rightFormula = BetaReduction.betaNormalize(App(right(v), vars)).asInstanceOf[Formula]
     Escargot.isValid(Iff(leftFormula, rightFormula))
@@ -346,7 +340,7 @@ def areEquivalent(left: Substitution, right: Substitution): Boolean = {
 }
 
 def printResultInteractive(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int] = Some(100)) = {
-  val iterator = scan(input, derivationLimit)
+  val iterator = wscan(input, derivationLimit)
 
   while (iterator.hasNext) {
     iterator.next() match {
@@ -366,14 +360,14 @@ def printResultInteractive(input: ClauseSetPredicateEliminationProblem, derivati
   }
 }
 
-def checkSolution(input: ClauseSetPredicateEliminationProblem, output: (Set[HOLClause], Option[Substitution], Derivation)): Boolean = {
-  val (clauseSet, witnesses, derivation) = output
+def checkSolution(input: ClauseSetPredicateEliminationProblem, output: (Derivation, Option[Substitution])): Boolean = {
+  val (derivation, witness) = output
   printer.pprintln(output)
-  if witnesses.isEmpty then {
+  if witness.isEmpty then {
     println("❌ could not construct a finite witness")
     false
   } else {
-    checkWitness(And(input.clauses.map(_.toFormula)), And(clauseSet.map(_.toFormula)), witnesses.get)
+    checkWitness(And(input.clauses.map(_.toFormula)), derivation.conclusion.toFormula, witness.get)
   }
 }
 

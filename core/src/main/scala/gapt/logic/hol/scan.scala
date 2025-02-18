@@ -1,4 +1,4 @@
-package gapt.logic.hol.scan
+package gapt.logic.hol
 
 import gapt.expr._
 import gapt.proofs.HOLClause
@@ -49,7 +49,6 @@ import gapt.logic.hol.PredicateEliminationProblem
 import gapt.logic.hol.ClauseSetPredicateEliminationProblem
 
 object scan {
-
   case class PointedClause(clause: HOLClause, index: SequentIndex):
     def atom = clause(index)
     def args = atom match
@@ -80,24 +79,24 @@ object scan {
       val sequentIndex = SequentIndex(index.polarity, idx)
       (PointedClause(abstractedClause, sequentIndex), vars)
 
-  enum Inference:
-    case Resolution(left: PointedClause, right: PointedClause)
-    case Factoring(clause: HOLClause, leftIndex: SequentIndex, rightIndex: SequentIndex)
-    case Purification(candidate: PointedClause)
+  enum DerivationStep:
+    case ConstraintResolution(left: PointedClause, right: PointedClause)
+    case ConstraintFactoring(clause: HOLClause, leftIndex: SequentIndex, rightIndex: SequentIndex)
+    case PurifiedClauseDeletion(candidate: PointedClause)
     case TautologyDeletion(tautology: HOLClause)
-    case Subsumption(subsumer: HOLClause, subsumee: HOLClause, substitution: FOLSubstitution)
+    case SubsumptionDeletion(subsumer: HOLClause, subsumee: HOLClause, substitution: FOLSubstitution)
     case ConstraintElimination(clause: HOLClause, index: SequentIndex, substitution: FOLSubstitution)
-    case Polarity(hoVar: Var, polarity: gapt.logic.Polarity)
+    case ExtendendPurityDeletion(hoVar: Var, polarity: gapt.logic.Polarity)
 
-    def apply(clauses: Set[HOLClause]): (Set[HOLClause], Set[HOLClause]) =
+    def addedRemovedClauses(clauses: Set[HOLClause]): (Set[HOLClause], Set[HOLClause]) =
       this match
-        case Resolution(left, right)                            => (Set(resolve(left, right)), Set.empty)
-        case f: Factoring                                       => (Set(factor(f)), Set.empty)
-        case Purification(candidate)                            => (Set.empty, Set(candidate.clause))
-        case Subsumption(subsumer, subsumee, substitution)      => (Set.empty, Set(subsumee))
-        case TautologyDeletion(clause)                          => (Set.empty, Set(clause))
-        case ConstraintElimination(clause, index, substitution) => (Set(substitution(clause.delete(index)).map { case a: Atom => a }.distinct), Set(clause))
-        case Polarity(hoVar, polarity) => {
+        case ConstraintResolution(left, right)                     => (Set(constraintResolvent(left, right)), Set.empty)
+        case f: ConstraintFactoring                                => (Set(factor(f)), Set.empty)
+        case PurifiedClauseDeletion(candidate)                     => (Set.empty, Set(candidate.clause))
+        case SubsumptionDeletion(subsumer, subsumee, substitution) => (Set.empty, Set(subsumee))
+        case TautologyDeletion(clause)                             => (Set.empty, Set(clause))
+        case ConstraintElimination(clause, index, substitution)    => (Set(substitution(clause.delete(index)).map { case a: Atom => a }.distinct), Set(clause))
+        case ExtendendPurityDeletion(hoVar, polarity) => {
           val removed = clauses.filter(c =>
             c.exists {
               case Atom(v: Var, _) if v == hoVar => true
@@ -107,8 +106,12 @@ object scan {
           (Set.empty, removed)
         }
 
-  def factor(factoring: Inference.Factoring): HOLClause = {
-    val Inference.Factoring(clause, leftIndex, rightIndex) = factoring
+    def apply(clauses: Set[HOLClause]): Set[HOLClause] =
+      val (added, removed) = addedRemovedClauses(clauses)
+      (clauses ++ added) -- removed
+
+  def factor(factoring: DerivationStep.ConstraintFactoring): HOLClause = {
+    val DerivationStep.ConstraintFactoring(clause, leftIndex, rightIndex) = factoring
     val Atom(_, leftArgs) = clause(leftIndex): @unchecked
     val Atom(_, rightArgs) = clause(rightIndex): @unchecked
     val constraints = leftArgs.zip(rightArgs).map(Eq(_, _))
@@ -119,14 +122,23 @@ object scan {
     factoringInferences(other).exists(i => factor(i) == clause)
   }
 
-  def factoringInferences(clause: HOLClause): Set[Inference.Factoring] = {
+  def factoringInferences(clause: HOLClause): Set[DerivationStep.ConstraintFactoring] = {
     clause.succedent.zipWithIndex.combinations(2).flatMap {
       case Seq(left @ (Atom(leftHead, _), _: Int), right @ (Atom(rightHead, _), _: Int)) if leftHead == rightHead => Some((left, right))
       case _                                                                                                      => None
-    }.map[Inference.Factoring] {
-      case ((_, leftIndex), (_, rightIndex)) => Inference.Factoring(clause, Suc(leftIndex), Suc(rightIndex))
+    }.map[DerivationStep.ConstraintFactoring] {
+      case ((_, leftIndex), (_, rightIndex)) => DerivationStep.ConstraintFactoring(clause, Suc(leftIndex), Suc(rightIndex))
     }.toSet
   }
+
+  case class Derivation(initialClauseSet: Set[HOLClause], inferences: List[DerivationStep]):
+    def tail: Derivation = inferences match
+      case head :: next => Derivation(head(initialClauseSet), next)
+      case Nil          => throw UnsupportedOperationException("tail of empty derivation")
+
+    def conclusion: Set[HOLClause] = inferences match
+      case Nil          => initialClauseSet
+      case head :: next => Derivation(head(initialClauseSet), next).conclusion
 
   case class State(
       activeClauses: Set[HOLClause],
@@ -135,7 +147,7 @@ object scan {
       derivationLimit: Option[Int]
   )
 
-  def apply(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int] = Some(100), witnessLimit: Int = 100): Iterator[Either[Derivation, (Set[HOLClause], Option[Substitution], Derivation)]] =
+  def apply(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int] = Some(100), witnessLimit: Int = 100): Iterator[Either[Derivation, Derivation]] =
     assert(derivationLimit.isEmpty || derivationLimit.get >= 0, "derivation limit must be non-negative")
     val states = saturate(State(
       input.clauses,
@@ -143,13 +155,8 @@ object scan {
       Derivation(input.clauses, List.empty),
       derivationLimit
     ))
-    states.map { state =>
-      val result =
-        for
-          s <- state
-          wits = witnessSubstitution(s.derivation, input.variablesToEliminate, witnessLimit).map(simplifyWitnessSubstitution)
-        yield (s.activeClauses, wits, s.derivation)
-      result.left.map(state => state.derivation)
+    states.map {
+      state => state.map(_.derivation).left.map(_.derivation)
     }
 
   def subsumptionSubstitution(subsumer: HOLClause, subsumee: HOLClause): Option[FOLSubstitution] = {
@@ -166,10 +173,10 @@ object scan {
     || clauses.exists(c => subsumptionSubstitution(c, eliminatedConstraints).isDefined)
   }
 
-  def nextInference(state: State): Seq[Seq[Inference]] = {
+  def nextInference(state: State): Seq[Seq[DerivationStep]] = {
     // check for appropriate polarity
-    val polarity: Option[Inference.Polarity] = {
-      state.quantifiedVariables.toSeq.flatMap[Inference.Polarity] { w =>
+    val polarity: Option[DerivationStep.ExtendendPurityDeletion] = {
+      state.quantifiedVariables.toSeq.flatMap[DerivationStep.ExtendendPurityDeletion] { w =>
         val variableOccurringClauses = state.activeClauses.filter { clause =>
           clause.exists {
             case Atom(v: Var, _) if v == w => true
@@ -195,49 +202,49 @@ object scan {
             if allCandidateOccuringClausesContainCandidatePositively then Some(Polarity(true))
             else if allCandidateOccuringClausesContainCandidateNegatively then Some(Polarity(false))
             else None
-          p.map(Inference.Polarity(w, _))
+          p.map(DerivationStep.ExtendendPurityDeletion(w, _))
       }.headOption
     }
 
     // check for tautologies
-    val tautologyDeletion: Option[Inference.TautologyDeletion] = state.activeClauses.find(_.isTaut).map(Inference.TautologyDeletion(_))
+    val tautologyDeletion: Option[DerivationStep.TautologyDeletion] = state.activeClauses.find(_.isTaut).map(DerivationStep.TautologyDeletion(_))
 
     // check for eliminable constraints
-    val constraintElimination: Option[Inference.ConstraintElimination] =
+    val constraintElimination: Option[DerivationStep.ConstraintElimination] =
       (for
         clause <- state.activeClauses
         case (Eq(left, right), index) <- clause.antecedent.zipWithIndex
         subst <- syntacticMGU(left, right, freeHOVariables(left) ++ freeHOVariables(right)).map(_.asFOLSubstitution)
-      yield (clause, Ant(index), subst)).map[Inference.ConstraintElimination](Inference.ConstraintElimination(_, _, _)).headOption
+      yield (clause, Ant(index), subst)).map[DerivationStep.ConstraintElimination](DerivationStep.ConstraintElimination(_, _, _)).headOption
 
     // check for subsumption
-    val subsumption: Option[Inference.Subsumption] = state.activeClauses.toSeq.combinations(2).flatMap {
+    val subsumption: Option[DerivationStep.SubsumptionDeletion] = state.activeClauses.toSeq.combinations(2).flatMap {
       case Seq(left, right) => {
-        val leftSubsumptions: Seq[Inference.Subsumption] = subsumptionSubstitution(left, right).toSeq.map(s => Inference.Subsumption(left, right, s))
-        val rightSubsumptions: Seq[Inference.Subsumption] = subsumptionSubstitution(right, left).toSeq.map(s => Inference.Subsumption(right, left, s))
+        val leftSubsumptions: Seq[DerivationStep.SubsumptionDeletion] = subsumptionSubstitution(left, right).toSeq.map(s => DerivationStep.SubsumptionDeletion(left, right, s))
+        val rightSubsumptions: Seq[DerivationStep.SubsumptionDeletion] = subsumptionSubstitution(right, left).toSeq.map(s => DerivationStep.SubsumptionDeletion(right, left, s))
         leftSubsumptions ++ rightSubsumptions
       }
     }.nextOption()
 
     // do factoring
-    val factoring: Option[Inference.Factoring] = state.activeClauses.flatMap(factoringInferences).filter {
+    val factoring: Option[DerivationStep.ConstraintFactoring] = state.activeClauses.flatMap(factoringInferences).filter {
       case f => !isRedundant(state.activeClauses, factor(f))
     }.headOption
 
     // check for purification
-    val purifications: Seq[Inference.Purification] = resolutionCandidates(state.activeClauses).filter { rc =>
+    val purifications: Seq[DerivationStep.PurifiedClauseDeletion] = pointedClauses(state.activeClauses).filter { rc =>
       rc.isVar && state.quantifiedVariables.contains(rc.hoVar.asInstanceOf[Var])
-    }.flatMap[Inference.Purification] { rc =>
+    }.flatMap[DerivationStep.PurifiedClauseDeletion] { rc =>
       val hoVar @ Var(_, _) = rc.hoVar: @unchecked
       val allFactorsRedundant = factoringInferences(rc.clause).forall {
-        case inference: Inference.Factoring => isRedundant(state.activeClauses, factor(inference))
+        case inference: DerivationStep.ConstraintFactoring => isRedundant(state.activeClauses, factor(inference))
       }
       val allResolventsRedundant = resolutionInferences(rc, state.activeClauses - rc.clause).forall {
-        case Inference.Resolution(left, right) => isRedundant(state.activeClauses, resolve(left, right))
+        case DerivationStep.ConstraintResolution(left, right) => isRedundant(state.activeClauses, constraintResolvent(left, right))
       }
       val isAFactor = state.activeClauses.exists(c => isFactorOf(rc.clause, c))
       if !isAFactor && allFactorsRedundant && allResolventsRedundant
-      then Some(Inference.Purification(rc))
+      then Some(DerivationStep.PurifiedClauseDeletion(rc))
       else None
     }.toSeq
 
@@ -246,10 +253,10 @@ object scan {
     val (inductivePurifications, nonInductivePurifications) = purifications.partition(i => isInductive(i.candidate))
 
     val activeClauseCandidates = state.activeClauses
-      .flatMap(c => resolutionCandidates(c))
+      .flatMap(c => pointedClauses(c))
       .filter(c => !isInductive(c) && nonRedundantResolutionInferences(state.activeClauses, c).nonEmpty)
 
-    val resolutionPossibilities: Seq[Seq[Inference.Resolution]] = activeClauseCandidates.toSeq.map { candidate =>
+    val resolutionPossibilities: Seq[Seq[DerivationStep.ConstraintResolution]] = activeClauseCandidates.toSeq.map { candidate =>
       nonRedundantResolutionInferences(state.activeClauses, candidate)
     }
 
@@ -262,7 +269,7 @@ object scan {
 
   def nonRedundantResolutionInferences(clauses: Set[HOLClause], candidate: PointedClause) = {
     resolutionInferences(candidate, clauses - candidate.clause).filter {
-      case Inference.Resolution(left, right) => !isRedundant(clauses, resolve(left, right))
+      case DerivationStep.ConstraintResolution(left, right) => !isRedundant(clauses, constraintResolvent(left, right))
     }.toSeq
   }
 
@@ -273,18 +280,18 @@ object scan {
     }
   }
 
-  def resolutionCandidates(clause: HOLClause): Set[PointedClause] = {
+  def pointedClauses(clause: HOLClause): Set[PointedClause] = {
     clause.indices.map(PointedClause(clause, _)).toSet
   }
 
-  def resolutionCandidates(clauses: Set[HOLClause]): Set[PointedClause] = {
-    clauses.flatMap(resolutionCandidates)
+  def pointedClauses(clauses: Set[HOLClause]): Set[PointedClause] = {
+    clauses.flatMap(pointedClauses)
   }
 
-  def resolutionInferences(resolutionCandidate: PointedClause, clauses: Set[HOLClause]): Set[Inference.Resolution] = {
-    resolutionCandidates(clauses).filter {
+  def resolutionInferences(resolutionCandidate: PointedClause, clauses: Set[HOLClause]): Set[DerivationStep.ConstraintResolution] = {
+    pointedClauses(clauses).filter {
       rc => rc.hoVar == resolutionCandidate.hoVar && rc.index.polarity == !resolutionCandidate.index.polarity
-    }.map(rc => Inference.Resolution(resolutionCandidate, rc))
+    }.map(rc => DerivationStep.ConstraintResolution(resolutionCandidate, rc))
   }
 
   def saturate(state: State): Iterator[Either[State, State]] = {
@@ -297,93 +304,14 @@ object scan {
         else
           val updatedState = inferences.foldLeft(state) {
             case (state, inference) =>
-              val (added, removed) = inference(state.activeClauses)
-              assert(added.intersect(removed).isEmpty)
               state.copy(
-                activeClauses = (state.activeClauses ++ added) -- removed,
+                activeClauses = inference(state.activeClauses),
                 derivation = state.derivation.copy(inferences = state.derivation.inferences :+ inference),
                 derivationLimit = state.derivationLimit.map(d => d - 1)
               )
           }
           saturate(updatedState)
       }
-  }
-
-  def freshArgumentVariables(ty: Ty, varName: String, blacklist: Iterable[VarOrConst] = Iterable.empty) = {
-    val FunctionType(_, argTypes) = ty: @unchecked
-    rename.awayFrom(blacklist).freshStream("u").zip(argTypes).map(Var(_, _))
-  }
-
-  def witnessSubstitution(derivation: Derivation, quantifiedVariables: Set[Var], limit: Int): Option[Substitution] = {
-    def helper(derivation: Derivation): Option[Substitution] = {
-      derivation.inferences match
-        case head :: next => {
-          head match
-            case i: (Inference.Resolution | Inference.Factoring | Inference.TautologyDeletion | Inference.Subsumption | Inference.ConstraintElimination) => helper(derivation.tail)
-            case Inference.Polarity(hoVar, polarity) => {
-              val wits = helper(derivation.tail)
-              val argumentVariables = freshArgumentVariables(hoVar.ty, "u")
-              val wit = if polarity.positive then TopC() else BottomC()
-              val witSubst = Substitution(hoVar, Abs.Block(argumentVariables, wit))
-              wits.map(w => w.compose(witSubst))
-            }
-            case Inference.Purification(candidate) => {
-              val hoVar = candidate.hoVar.asInstanceOf[Var]
-              val wits = helper(derivation.tail)
-
-              val candidateOccurringClauses = derivation.initialClauseSet.filter { clause =>
-                clause.exists {
-                  case Atom(v: Var, _) => true
-                  case _               => false
-                }
-              }
-              val allCandidateOccuringClausesContainCandidatePositively = candidateOccurringClauses.forall { clause =>
-                clause.succedent.exists {
-                  case Atom(v: Var, _) if candidate.hoVar == v => true
-                  case _                                       => false
-                }
-              }
-              val allCandidateOccuringClausesContainCandidateNegatively = candidateOccurringClauses.forall { clause =>
-                clause.antecedent.exists {
-                  case Atom(v: Var, _) if candidate.hoVar == v => true
-                  case _                                       => false
-                }
-              }
-
-              val witExtension: Option[Substitution] =
-                if allCandidateOccuringClausesContainCandidatePositively
-                then {
-                  val argumentVariables = freshArgumentVariables(candidate.hoVar.ty, "u")
-                  Some(Substitution(hoVar, Abs.Block(argumentVariables, TopC())))
-                } else if allCandidateOccuringClausesContainCandidateNegatively
-                then {
-                  val argumentVariables = freshArgumentVariables(candidate.hoVar.ty, "u")
-                  Some(Substitution(hoVar, Abs.Block(argumentVariables, BottomC())))
-                } else {
-                  resWitness(candidate, limit).map(Substitution(hoVar, _))
-                }
-
-              for
-                w <- wits
-                ext <- witExtension
-              yield w.compose(ext)
-            }
-        }
-        case Nil => Some(Substitution(quantifiedVariables.map {
-            case v @ Var(_, FunctionType(To, args)) =>
-              (v, Abs.Block(rename.awayFrom(Iterable.empty).freshStream("u").take(args.size).map(FOLVar(_)), BottomC()))
-          }.toMap))
-    }
-
-    helper(derivation)
-  }
-
-  def simplifyWitnessSubstitution(subst: Substitution): Substitution = {
-    val betaNormalized = Substitution(subst.map.view.mapValues(e => {
-      val Abs.Block(vars, formula: Formula) = betaNormalize(e): @unchecked
-      Abs.Block(vars, simplify(formula))
-    }))
-    betaNormalized
   }
 
   def freeFOLVariables(expr: Expr): Set[FOLVar] =
@@ -401,31 +329,7 @@ object scan {
         eliminateConstraints(Substitution(v, t)(clause.delete(Ant(i))).map { case a: Atom => a }, keepVariables)
   }
 
-  def saturateWithResolutionCandidate(candidate: PointedClause, resolventSet: Set[HOLClause], resolvedCandidates: Set[PointedClause], limit: Int): Option[Set[HOLClause]] = {
-    val partner = pickResolutionPartner(candidate, resolventSet, resolvedCandidates)
-
-    partner match
-      case None                        => Some(resolventSet)
-      case Some(partner) if limit <= 0 => None
-      case Some(partner) => {
-        val resolvent = resolve(candidate, partner)
-        val resolventWithoutConstraints = eliminateConstraints(resolvent, candidate.args.map { case x: FOLVar => x }.toSet).map { case a: Atom => a }
-        saturateWithResolutionCandidate(candidate, resolventSet + resolventWithoutConstraints, resolvedCandidates + partner, limit = limit - 1)
-      }
-  }
-
-  def pickResolutionPartner(activeCandidate: PointedClause, activeClauses: Set[HOLClause], resolvedCandidates: Set[PointedClause]): Option[PointedClause] = {
-    (activeClauses - activeCandidate.clause).flatMap { clause =>
-      clause.cedent(!activeCandidate.index.polarity).zipWithIndex.filter {
-        case (Atom(v, _), _) => activeCandidate.hoVar == v
-        case _               => false
-      }.map { case (_, index) => (clause, SequentIndex(!activeCandidate.index.polarity, index)) }
-    }.map { case (clause, index) => PointedClause(clause, index) }
-      .filter { candidate => !resolvedCandidates.contains(candidate) }
-      .headOption
-  }
-
-  def resolve(left: PointedClause, right: PointedClause): HOLClause = {
+  def constraintResolvent(left: PointedClause, right: PointedClause): HOLClause = {
     val renaming = rename(freeFOLVariables(left.clause.toFormula), freeFOLVariables(right.clause.toFormula))
     val rightClausesRenamed = Substitution(renaming)(right.clause).map { case a: Atom => a }
     val rightRenamed = PointedClause(rightClausesRenamed, right.index)
@@ -433,30 +337,4 @@ object scan {
     val resolvent = constraints ++ left.clause.delete(left.index) ++ rightRenamed.clause.delete(rightRenamed.index)
     resolvent.distinct
   }
-
-  def resWitness(candidate: PointedClause, limit: Int): Option[Expr] = {
-    val (abstractedResolutionCandidate, vars) = candidate.abstracted
-    val resCandidate = eliminateConstraints(abstractedResolutionCandidate.clause, vars.toSet).map { case a: Atom => a }
-
-    val saturationResult = saturateWithResolutionCandidate(abstractedResolutionCandidate, Set(HOLClause(Seq((abstractedResolutionCandidate.atom, !abstractedResolutionCandidate.index.polarity)))), Set.empty, limit)
-    for
-      resolventSet <- saturationResult
-      formula: Formula = abstractedResolutionCandidate.index.polarity match
-        case Polarity(false) => And(resolventSet.map {
-            clause => All.Block((freeFOLVariables(clause.toFormula) -- vars).toSeq, clause.toDisjunction)
-          })
-        case Polarity(true) => Or(resolventSet.map {
-            clause => Ex.Block((freeFOLVariables(clause.toFormula) -- vars).toSeq, clause.toNegConjunction)
-          })
-    yield Abs(vars, formula)
-  }
-
-  case class Derivation(initialClauseSet: Set[HOLClause], inferences: List[Inference]):
-    def tail: Derivation = inferences match
-      case head :: next => {
-        val (added, removed) = head(initialClauseSet)
-        Derivation(initialClauseSet ++ added -- removed, next)
-      }
-      case Nil => ???
-
 }

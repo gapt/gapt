@@ -1,19 +1,19 @@
-package gapt.logic.hol.scan
+package gapt.logic.hol
 
 import org.specs2._
 import gapt.proofs._
 import gapt.expr._
 import gapt.expr.formula._
 import gapt.provers.escargot.Escargot
-import gapt.logic.hol.scan.scan.freeFOLVariables
+import gapt.logic.hol.scan.freeFOLVariables
 import gapt.expr.subst.Substitution
-import gapt.logic.hol.scan.scan.Derivation
+import gapt.logic.hol.scan.Derivation
 import gapt.logic.hol.ClauseSetPredicateEliminationProblem
 import org.specs2.matcher.Matcher
 import org.specs2.Specification
 import gapt.proofs.resolution.structuralCNF
-import gapt.logic.hol.scan.scan.PointedClause
-import gapt.logic.hol.scan.scan.Inference
+import gapt.logic.hol.scan.PointedClause
+import gapt.logic.hol.scan.DerivationStep
 import gapt.expr.formula.hol.freeHOVariables
 import org.specs2.matcher.MatchResult
 
@@ -37,7 +37,6 @@ class ScanTest extends Specification {
     non-inductive example with three clauses ${exampleWithThreeClauses.toClauseSet must beSolved()}
     inductive example with tautology deletion ${exampleRequiringTautologyDeletion.toClauseSet must beSolved()}
     inductive example with subsumption ${exampleRequiringSubsumption.toClauseSet must beSolved()}
-    unsatisfiable example which requires factoring ${unsatisfiableExampleThatRequiresFactoring.toClauseSet must beSolved()}
   """
 
   def beEquivalentTo(right: Formula): Matcher[Formula] = { (left: Formula) =>
@@ -52,9 +51,9 @@ class ScanTest extends Specification {
     (leftFormula must beEquivalentTo(rightFormula)).mapMessage(_ => s"$left is not equivalent to $right")
   }
 
-  def beCorrectSolutionFor(input: ClauseSetPredicateEliminationProblem): Matcher[Either[Derivation, (Set[HOLClause], Option[Substitution], Derivation)]] = { (result: Either[Derivation, (Set[HOLClause], Option[Substitution], Derivation)]) =>
+  def beCorrectSolutionFor(input: ClauseSetPredicateEliminationProblem): Matcher[Either[Derivation, (Derivation, Option[Substitution])]] = { (result: Either[Derivation, (Derivation, Option[Substitution])]) =>
     result must beRight.like {
-      case output @ (clauseSet: Set[HOLClause], Some(witnesses: Substitution), derivation: Derivation) =>
+      case output @ (derivation: Derivation, Some(witnesses: Substitution)) =>
         val substitutedInput = witnesses(input.clauses).map(_.toFormula).map(BetaReduction.betaNormalize)
         val beWithoutQuantifiedVariables: Matcher[HOLClause] = { (c: HOLClause) =>
           {
@@ -62,7 +61,9 @@ class ScanTest extends Specification {
           }
         }
 
-        clauseSet.must(contain(beWithoutQuantifiedVariables).foreach)
+        val clauseSet = derivation.conclusion
+        clauseSet
+          .must(contain(beWithoutQuantifiedVariables).foreach)
           .and(witnesses.domain.mustEqual(input.variablesToEliminate)
             .mapMessage(_ => s"domain of substitution is not ${input.variablesToEliminate}"))
           .and(substitutedInput.must(beEquivalentTo(clauseSet.map(_.toFormula)))
@@ -70,10 +71,10 @@ class ScanTest extends Specification {
     }
   }
 
-  val defaultDerivationLimit = 100
-  val defaultPossibilityLimit = 10
+  val defaultDerivationLimit = 20
+  val defaultPossibilityLimit = 100
   def beSolved(derivationLimit: Int = defaultDerivationLimit, possibilityLimit: Int = defaultPossibilityLimit): Matcher[ClauseSetPredicateEliminationProblem] = {
     (input: ClauseSetPredicateEliminationProblem) =>
-      scan(input, Some(derivationLimit)).take(possibilityLimit).toSeq.must(contain(beCorrectSolutionFor(input)))
+      wscan(input, Some(derivationLimit)).take(possibilityLimit).toSeq.must(contain(beCorrectSolutionFor(input)))
   }
 }

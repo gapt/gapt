@@ -23,7 +23,8 @@ import gapt.logic._
 import gapt.logic.fol._
 import gapt.logic.hol.{dls => _, scan => _, _}
 import gapt.logic.hol.dls._
-import gapt.logic.hol.scan._
+import gapt.logic.hol.scan
+import gapt.logic.hol.wscan
 import gapt.proofs.reduction._
 import gapt.proofs.rup._
 import gapt.proofs.epsilon._
