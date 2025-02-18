@@ -18,7 +18,7 @@ import scala.util.Success
 import gapt.expr.formula.hol.freeHOVariables
 
 @main def main = {
-  printWitnesses(exampleRequiringSubsumption, derivationLimit = Some(100))
+  printResultInteractive(wernhardUnificationExample)
 }
 
 def clauses(formula: Formula): Set[HOLClause] = {
@@ -154,6 +154,73 @@ val unsatisfiableExampleThatRequiresFactoring = feq(
   )
 )
 
+val witnessBlowup = feq(
+  Set(hov"X:i>o"),
+  Set(
+    hcl"X(c) :- ",
+    hcl":- X(a_1), X(b_1)",
+    hcl":- X(a_2), X(b_2)"
+  )
+)
+
+val twoStepRedundancy = feq(
+  Set(hov"X:i>o"),
+  Set(
+    hcl"B(a, v), B(v, w) :-",
+    hcl":- X(a)",
+    hcl"B(u,v), X(u) :- X(v)",
+    hcl"X(c) :-"
+  )
+)
+
+val subsumptionByXLiteral = feq(
+  Set(hov"X:i>i>o"),
+  Set(
+    hcl":- X(a,a)",
+    hcl"X(u,v) :- X(v,u), B(u,v)",
+    hcl"X(b,b) :- X(c,c)",
+    hcl"X(d,d) :-"
+  )
+)
+
+val badExample = feq(
+  Set(hov"X:i>o"),
+  Set(
+    hcl":- B(b,v)",
+    hcl":- B(c,v)",
+    hcl"X(a) :-",
+    hcl":- X(b), X(c)",
+    hcl"X(u) :- B(u,v), X(v)"
+  )
+)
+
+val booleanUnification = feq(
+  Set(hov"X:i>o", hov"Y:i>o"),
+  clauses(
+    hof"(!x (#c(Pat:i>o)(x) & ?y (#c(f:i>i>o)(x,y) & X(y) & ?z (#c(s:i>i>o)(x,z) & #c(Severe:i>o)(z))))) <-> (!x (#c(Pat:i>o)(x) & ?y (#c(f:i>i>o)(x,y) & Y(y) & #c(Inj:i>o)(y) & ?z ((#c(f:i>i>o)(x,z) & #c(Head:i>o)(z))))))"
+  )
+)
+
+val onlyOneSidedClauses = feq(
+  Set(hov"X:i>o"),
+  Set(
+    hcl":- X(u), X(v), R(u,v)",
+    hcl"X(u), X(v) :- Q(u,v)"
+  )
+)
+
+val wernhardUnificationExample = feq(
+  Set(hov"X_1:i>o", hov"X_2:i>o"),
+  clauses(
+    hof"!u (A(u) -> B(u)) & (!u (X_1(u) -> X_2(u)) & !u (A(u) -> X_2(u)) & !u (X_2(u) -> B(u)))"
+  )
+)
+
+val graphReachability = feq(
+  Set(hov"X:i>o"),
+  clauses(hos":- !x (x = a_1 | x = a_2 | x = a_3) & a_1 != a_2 & a_1 != a_3 & a_2 != a_3 & E(a_1,a_2) & E(a_2,a_1) & E(a_3,a_2) & -E(a_1,a_1) & -E(a_2_,a_2) & -E(a_3,a_3) & -E(a_1,a_3) & -E(a_2,a_3) & -E(a_3,a_1) & (X(a_1) & !u!v((X(u) & E(u,v)) -> X(v)) & -X(a_3))".toFormula)
+)
+
 object modalCorrespondence {
   def negationOfSecondOrderTranslationOfTAxiom = feq(
     Set(hov"X:i>o"),
@@ -281,17 +348,18 @@ def printResolutionCandidate(resolutionCandidate: ResolutionCandidate): pprint.T
   pprint.Tree.Literal(clauseString.strip())
 }
 
-def printResult(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = Some(100), possibilityLimit: Option[Int] = Some(10)) = {
+def getSolutions(input: FormulaEquationClauseSet, derivationLimit: Option[Int], possibilityLimit: Option[Int]): Iterator[(Set[HOLClause], Option[Substitution], Derivation)] = {
   val baseIterator = scan(input, derivationLimit)
   val iterator = if possibilityLimit.isDefined then baseIterator.take(possibilityLimit.get) else baseIterator
-  val solution = iterator.find {
-    case Left(value)   => false
-    case Right(output) => checkSolution(input, output)
-  }
+  iterator.collect { case Right(output) => output }
+}
 
-  if solution.isEmpty then {
+def printResult(input: FormulaEquationClauseSet, derivationLimit: Option[Int] = Some(100), possibilityLimit: Option[Int] = Some(10)) = {
+  val solutions = getSolutions(input, derivationLimit, possibilityLimit)
+  if solutions.isEmpty then {
     println(s"❌ didn't find solution")
-  }
+  } else solutions.foreach(checkSolution(input, _))
+
 }
 
 def equivalenceClasses[T](base: Iterable[T])(areEquivalent: (T, T) => Boolean): Map[T, Set[T]] = {
