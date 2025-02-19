@@ -50,14 +50,21 @@ import gapt.logic.hol.ClauseSetPredicateEliminationProblem
 import gapt.logic.hol.scan.{PointedClause, Derivation, DerivationStep, constraintResolvent}
 
 object wscan {
-
   def apply(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int] = Some(100), witnessLimit: Option[Int] = Some(2)): Iterator[Either[Derivation, (Derivation, Option[Substitution])]] = {
-    scan(input, derivationLimit).map { scanRun =>
+    scan.derivationsFrom(input, derivationLimit).map { scanRun =>
       scanRun.map { derivation =>
-        val witness = witnessSubstitution(derivation, quantifiedVariables = input.variablesToEliminate, limit = witnessLimit.get).map(simplifyWitnessSubstitution)
+        val witness = witnessSubstitution(derivation, quantifiedVariables = input.variablesToEliminate, limit = witnessLimit).map(simplifyWitnessSubstitution)
         (derivation, witness)
       }
     }
+  }
+
+  def witness(derivation: Derivation, limit: Option[Int] = Some(2)): Option[Substitution] = {
+    witnessSubstitution(
+      derivation,
+      quantifiedVariables = derivation.initialPep.variablesToEliminate,
+      limit
+    ).map(simplifyWitnessSubstitution)
   }
 
   def freshArgumentVariables(ty: Ty, varName: String, blacklist: Iterable[VarOrConst] = Iterable.empty) = {
@@ -65,7 +72,7 @@ object wscan {
     rename.awayFrom(blacklist).freshStream("u").zip(argTypes).map(Var(_, _))
   }
 
-  def witnessSubstitution(derivation: Derivation, quantifiedVariables: Set[Var], limit: Int): Option[Substitution] = {
+  def witnessSubstitution(derivation: Derivation, quantifiedVariables: Set[Var], limit: Option[Int]): Option[Substitution] = {
     def helper(derivation: Derivation): Option[Substitution] = {
       derivation.inferences match
         case head :: next => {
@@ -82,7 +89,7 @@ object wscan {
               val hoVar = candidate.hoVar.asInstanceOf[Var]
               val wits = helper(derivation.tail)
 
-              val candidateOccurringClauses = derivation.initialClauseSet.filter { clause =>
+              val candidateOccurringClauses = derivation.initialPep.clauses.filter { clause =>
                 clause.exists {
                   case Atom(v: Var, _) => true
                   case _               => false
@@ -152,16 +159,16 @@ object wscan {
         eliminateConstraints(Substitution(v, t)(clause.delete(Ant(i))).map { case a: Atom => a }, keepVariables)
   }
 
-  def saturateWithResolutionCandidate(candidate: PointedClause, resolventSet: Set[HOLClause], resolvedCandidates: Set[PointedClause], limit: Int): Option[Set[HOLClause]] = {
+  def saturateWithResolutionCandidate(candidate: PointedClause, resolventSet: Set[HOLClause], resolvedCandidates: Set[PointedClause], limit: Option[Int]): Option[Set[HOLClause]] = {
     val partner = pickResolutionPartner(candidate, resolventSet, resolvedCandidates)
 
     partner match
-      case None                        => Some(resolventSet)
-      case Some(partner) if limit <= 0 => None
+      case None                                               => Some(resolventSet)
+      case Some(partner) if limit.isDefined && limit.get <= 0 => None
       case Some(partner) => {
         val resolvent = constraintResolvent(candidate, partner)
         val resolventWithoutConstraints = eliminateConstraints(resolvent, candidate.args.map { case x: FOLVar => x }.toSet).map { case a: Atom => a }
-        saturateWithResolutionCandidate(candidate, resolventSet + resolventWithoutConstraints, resolvedCandidates + partner, limit = limit - 1)
+        saturateWithResolutionCandidate(candidate, resolventSet + resolventWithoutConstraints, resolvedCandidates + partner, limit = limit.map(l => l - 1))
       }
   }
 
@@ -176,7 +183,7 @@ object wscan {
       .headOption
   }
 
-  def resWitness(pointedClause: PointedClause, limit: Int): Option[Expr] = {
+  def resWitness(pointedClause: PointedClause, limit: Option[Int]): Option[Expr] = {
     val (abstractedResolutionCandidate, vars) = pointedClause.abstracted
     val resCandidate = eliminateConstraints(abstractedResolutionCandidate.clause, vars.toSet).map { case a: Atom => a }
 

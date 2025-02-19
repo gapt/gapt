@@ -49,6 +49,31 @@ import gapt.logic.hol.PredicateEliminationProblem
 import gapt.logic.hol.ClauseSetPredicateEliminationProblem
 
 object scan {
+  def apply(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int] = Some(100), oneSidedOnly: Boolean = false, attemptLimit: Option[Int] = Some(10)): Either[Iterator[Derivation], Derivation] = {
+    val baseIterator = scan.derivationsFrom(input, derivationLimit, oneSidedOnly)
+    val iterator = attemptLimit.map(l => baseIterator.take(l)).getOrElse(baseIterator)
+
+    val successfulDerivation = iterator
+      .collect { case Right(value) => value }
+      .nextOption()
+    successfulDerivation match
+      case None             => Left(iterator.map(_.merge))
+      case Some(derivation) => Right(derivation)
+  }
+
+  def derivationsFrom(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int] = Some(100), oneSidedOnly: Boolean = false): Iterator[Either[Derivation, Derivation]] = {
+    assert(derivationLimit.isEmpty || derivationLimit.get >= 0, "derivation limit must be non-negative")
+    val states = saturate(State(
+      input.clauses,
+      input.variablesToEliminate,
+      Derivation(input, List.empty),
+      derivationLimit
+    ))
+    states.map {
+      state => state.map(_.derivation).left.map(_.derivation)
+    }
+  }
+
   case class PointedClause(clause: HOLClause, index: SequentIndex):
     def atom = clause(index)
     def args = atom match
@@ -131,14 +156,26 @@ object scan {
     }.toSet
   }
 
-  case class Derivation(initialClauseSet: Set[HOLClause], inferences: List[DerivationStep]):
+  case class Derivation(initialPep: ClauseSetPredicateEliminationProblem, inferences: List[DerivationStep]):
     def tail: Derivation = inferences match
-      case head :: next => Derivation(head(initialClauseSet), next)
-      case Nil          => throw UnsupportedOperationException("tail of empty derivation")
+      case head :: next => Derivation(
+          ClauseSetPredicateEliminationProblem(
+            initialPep.variablesToEliminate,
+            head(initialPep.clauses)
+          ),
+          next
+        )
+      case Nil => throw UnsupportedOperationException("tail of empty derivation")
 
     def conclusion: Set[HOLClause] = inferences match
-      case Nil          => initialClauseSet
-      case head :: next => Derivation(head(initialClauseSet), next).conclusion
+      case Nil => initialPep.clauses
+      case head :: next => Derivation(
+          ClauseSetPredicateEliminationProblem(
+            initialPep.variablesToEliminate,
+            head(initialPep.clauses)
+          ),
+          next
+        ).conclusion
 
   case class State(
       activeClauses: Set[HOLClause],
@@ -146,18 +183,6 @@ object scan {
       derivation: Derivation,
       derivationLimit: Option[Int]
   )
-
-  def apply(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int] = Some(100), witnessLimit: Int = 100): Iterator[Either[Derivation, Derivation]] =
-    assert(derivationLimit.isEmpty || derivationLimit.get >= 0, "derivation limit must be non-negative")
-    val states = saturate(State(
-      input.clauses,
-      input.variablesToEliminate,
-      Derivation(input.clauses, List.empty),
-      derivationLimit
-    ))
-    states.map {
-      state => state.map(_.derivation).left.map(_.derivation)
-    }
 
   def subsumptionSubstitution(subsumer: HOLClause, subsumee: HOLClause): Option[FOLSubstitution] = {
     val subsumerHoVarsAsConsts = subsumer.map { case Atom(VarOrConst(v, ty, tys), args) => Atom(Const(v, ty, tys), args) }

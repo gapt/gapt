@@ -2371,39 +2371,13 @@ Note that this transformation might not be equivalence-preserving as it can intr
 
 We now run SCAN on this clause set 
 \begin{clilisting}
-gapt> val Success(derivation) = scan(clauseSetPep, limit=Some(100), oneSidedOnly=true): @unchecked
--- Error: ----------------------------------------------------------------------
-1 |val Success(derivation) = scan(clauseSetPep, limit=Some(100), oneSidedOnly=true): @unchecked
-  |                                             ^^^^^^^^^^^^^^^
-  |method apply in object scan: (input: gapt.logic.hol.ClauseSetPredicateEliminationProblem,
-  |  derivationLimit: Option[Int], witnessLimit: Int):
-  |  Iterator[
-  |    Either[gapt.logic.hol.scan.scan.Derivation, (Set[gapt.proofs.HOLClause],
-  |      Option[gapt.expr.subst.Substitution], gapt.logic.hol.scan.scan.Derivation)
-  |      ]
-  |  ] does not have a parameter limit
--- Error: ----------------------------------------------------------------------
-1 |val Success(derivation) = scan(clauseSetPep, limit=Some(100), oneSidedOnly=true): @unchecked
-  |                                                              ^^^^^^^^^^^^^^^^^
-  |method apply in object scan: (input: gapt.logic.hol.ClauseSetPredicateEliminationProblem,
-  |  derivationLimit: Option[Int], witnessLimit: Int):
-  |  Iterator[
-  |    Either[gapt.logic.hol.scan.scan.Derivation, (Set[gapt.proofs.HOLClause],
-  |      Option[gapt.expr.subst.Substitution], gapt.logic.hol.scan.scan.Derivation)
-  |      ]
-  |  ] does not have a parameter oneSidedOnly
--- [E006] Not Found Error: -----------------------------------------------------
-1 |val Success(derivation) = scan(clauseSetPep, limit=Some(100), oneSidedOnly=true): @unchecked
-  |    ^^^^^^^
-  |    Not found: Success
-  |
-  | longer explanation available when compiling with `-explain`
-3 errors found
+gapt> val Right(derivation) = scan(clauseSetPep, derivationLimit=Some(10), attemptLimit=Some(10), oneSidedOnly=true): @unchecked
+val derivation: gapt.logic.hol.scan.Derivation = Derivation(ClauseSetPredicateEliminationProblem(Set(X:i>o),Set(X(b) ⊢ ,  ⊢ X(a))),List(ConstraintResolution(PointedClause(X(b) ⊢ ,Ant(0)),PointedClause( ⊢ X(a),Suc(0))), PurifiedClauseDeletion(PointedClause(X(b) ⊢ ,Ant(0))), ExtendendPurityDeletion(X:i>o,Positive)))
 
 \end{clilisting}
-The \texttt{limit} parameter controls the number of derivation steps that are to be performed by SCAN.
-If SCAN does not saturate the input clause set within this limit, the method returns with an Error.
-One can set \texttt{limit=None} to allow SCAN to run without a limit.
+The \texttt{derivationLimit} parameter controls the number of derivation steps that are to be performed by SCAN.
+If SCAN does not eliminate the given predicates within this limit, the method returns tries again with another set of inferences until the number of attempts given by \texttt{attemptLimit} is reached.
+One can set either or both of \texttt{derivationLimit} and \texttt{attempLimit} to \texttt{None} to run SCAN without the respective limit.
 The option \texttt{oneSidedOnly=true} makes sure only derivations of a certain kind are constructed for which we can guarantee to compute a first-order witness.
 However, this might affect whether a derivation can be found at all.
 
@@ -2411,64 +2385,28 @@ The returned derivation stores the input PEP and all performed inference steps d
 Furthermore we can reconstruct the final clause set, which does not contain any of the second-order variables of the input PEP:
 \begin{clilisting}
 gapt> derivation.conclusion
--- [E006] Not Found Error: -----------------------------------------------------
-1 |derivation.conclusion
-  |^^^^^^^^^^
-  |Not found: derivation
-  |
-  | longer explanation available when compiling with `-explain`
-1 error found
+val res0: Set[gapt.proofs.HOLClause] = Set(b = a ⊢ )
 
 \end{clilisting}
 From the derivation we can also construct the witness substitution for the input PEP. 
 \begin{clilisting}
-gapt> val Success(witness) = wscan.witness(derivation, limit=Some(2)): @unchecked
--- [E006] Not Found Error: -----------------------------------------------------
-1 |val Success(witness) = wscan.witness(derivation, limit=Some(2)): @unchecked
-  |                       ^^^^^
-  |                       Not found: wscan
-  |
-  | longer explanation available when compiling with `-explain`
--- [E006] Not Found Error: -----------------------------------------------------
-1 |val Success(witness) = wscan.witness(derivation, limit=Some(2)): @unchecked
-  |    ^^^^^^^
-  |    Not found: Success
-  |
-  | longer explanation available when compiling with `-explain`
-2 errors found
+gapt> val Some(witness) = wscan.witness(derivation, limit=Some(2)): @unchecked
+val witness: gapt.expr.subst.Substitution = Substitution(X:i>o -> λu_0 b != u_0)
 
 \end{clilisting}
 During the construction of the witness some saturation processes similar to SCAN have to run. 
-The parameter \texttt{witnessLimit} controls how many iterations during every one of these saturation processes we allow.
+The parameter \texttt{limit} controls how many iterations during every one of these saturation processes we allow.
 The construction fails if any of these processes does not terminate within the given number of iterations.
 Passing \texttt{oneSidedOnly=true} when running SCAN ensures that a limit of \texttt{Some(2)} will suffice.
 
-We can now use this witness to construct the corresponding WSOQE condition
+By the correctness of SCAN we know that the input formula $\exists X (X(a) \land \neg X(b))$ is equivalent to the conclusion of the SCAN derivation, namely the first-order formula $b \neq a$.
+We can thus check if $b \neq a$ logically equivalent to substituting the computed witness for $X$ in the input formula by constructing the first-order WSOQE-condition and verifying that it is valid:
 \begin{clilisting}
-gapt> val wsoqeCondition = wsoqe.condition(clauseSetPep.toFormula, witness)
--- [E006] Not Found Error: -----------------------------------------------------
-1 |val wsoqeCondition = wsoqe.condition(clauseSetPep.toFormula, witness)
-  |                     ^^^^^
-  |                     Not found: wsoqe
-  |
-  | longer explanation available when compiling with `-explain`
-1 error found
-
-\end{clilisting}
-and verify that the found witness satisfies it
-\begin{clilisting}
-gapt> Escargot.isValid(wsoqeCondition)
--- [E006] Not Found Error: -----------------------------------------------------
-1 |Escargot.isValid(wsoqeCondition)
-  |                 ^^^^^^^^^^^^^^
-  |                 Not found: wsoqeCondition
-  |
-  | longer explanation available when compiling with `-explain`
-1 error found
+gapt> Escargot.isValid(Iff(derivation.conclusion.toFormula, BetaReduction.betaNormalize(witness(clauseSetPep.clauses.toFormula))))
+val res1: Boolean = true
 
 \end{clilisting}
 
-% TODO: add parameter for back-tracking
 % TODO: add method that does all these steps in one go for convenience
 % TODO: mention computing multiple witnesses
 % TODO: mention where further examples can be found

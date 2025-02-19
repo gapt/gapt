@@ -31,8 +31,9 @@ import gapt.logic.hol.PredicateEliminationProblem
 
 val negationOfModalAxiom = pep"?X -(!u (!v (R(u,v) -> ((!w (R(v, w) -> X(w))) <-> X(v)))))"
 
-def scanOneByOne(vars: Seq[Var], clauses: Set[HOLClause]): Option[Seq[(Set[HOLClause], Option[Substitution], Derivation)]] = {
-  vars.foldLeft[Option[Seq[(Set[HOLClause], Option[Substitution], Derivation)]]](Some(Seq((clauses, Some(Substitution()), Derivation(clauses, List.empty))))) {
+def scanOneByOne(inputPep: ClauseSetPredicateEliminationProblem): Option[Seq[(Set[HOLClause], Option[Substitution], Derivation)]] = {
+  val vars = inputPep.variablesToEliminate.toSeq
+  vars.foldLeft[Option[Seq[(Set[HOLClause], Option[Substitution], Derivation)]]](Some(Seq((inputPep.clauses, Some(Substitution()), Derivation(inputPep, List.empty))))) {
     case (None, v) => None
     case (Some(state), v) => {
       for (derivation, wit) <- wscan(ClauseSetPredicateEliminationProblem(Set(v), state.last._1)).take(10).collect {
@@ -213,7 +214,9 @@ def additionalPrinters: PartialFunction[Any, pprint.Tree] = {
     )
   case Derivation(initialClauseSet, inferences) => pprint.Tree.Apply(
       "Derivation", {
-        val clauseSets = inferences.scanLeft(initialClauseSet)((c, i) => i(c))
+        val clauseSets = inferences.scanLeft(initialClauseSet)((c, i) =>
+          ClauseSetPredicateEliminationProblem(c.variablesToEliminate, i(c.clauses))
+        )
         Iterator(printer.treeify(initialClauseSet, true, true)) ++ inferences.zip(clauseSets.tail).flatMap {
           case (inference, clauses) => Seq(
               printer.treeify(inference, true, true),
