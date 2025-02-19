@@ -50,20 +50,31 @@ import gapt.logic.hol.ClauseSetPredicateEliminationProblem
 import gapt.logic.hol.scan.{PointedClause, Derivation, DerivationStep, constraintResolvent}
 
 object wscan {
-  def apply(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int] = Some(100), witnessLimit: Option[Int] = Some(2)): Iterator[Either[Derivation, (Derivation, Option[Substitution])]] = {
-    scan.derivationsFrom(input, derivationLimit).map { scanRun =>
-      scanRun.map { derivation =>
-        val witness = witnessSubstitution(derivation, quantifiedVariables = input.variablesToEliminate, limit = witnessLimit).map(simplifyWitnessSubstitution)
+  def apply(
+      input: ClauseSetPredicateEliminationProblem,
+      oneSidedOnly: Boolean = true,
+      derivationLimit: Option[Int] = Some(100),
+      attemptLimit: Option[Int] = Some(10),
+      witnessLimit: Option[Int] = Some(2)
+  ): Option[(Derivation, Substitution)] = {
+    witnesses(input, oneSidedOnly, derivationLimit, attemptLimit, witnessLimit).nextOption()
+  }
+
+  def witnesses(input: ClauseSetPredicateEliminationProblem, oneSidedOnly: Boolean = true, derivationLimit: Option[Int] = Some(100), attemptLimit: Option[Int] = Some(10), witnessLimit: Option[Int] = Some(2)): Iterator[(Derivation, Substitution)] = {
+    val baseIterator = scan.derivationsFrom(input, oneSidedOnly, derivationLimit)
+    val iterator = attemptLimit.map(l => baseIterator.take(l)).getOrElse(baseIterator)
+    iterator.collect {
+      case Right(derivation) =>
+        val witness = witnessSubstitution(derivation, quantifiedVariables = input.variablesToEliminate, limit = witnessLimit).map(simplifyWitnessSubstitution).get
         (derivation, witness)
-      }
     }
   }
 
-  def witness(derivation: Derivation, limit: Option[Int] = Some(2)): Option[Substitution] = {
+  def witness(derivation: Derivation, witnessLimit: Option[Int] = Some(2)): Option[Substitution] = {
     witnessSubstitution(
       derivation,
       quantifiedVariables = derivation.initialPep.variablesToEliminate,
-      limit
+      witnessLimit
     ).map(simplifyWitnessSubstitution)
   }
 

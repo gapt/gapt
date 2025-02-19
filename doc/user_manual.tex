@@ -2356,15 +2356,15 @@ GAPT provides two methods for solving WSOQE that are based on established method
 
 We start with an input PEP which we can parse from a first-order formula with a second-order existential prefix:
 \begin{clilisting}
-gapt> val inputPep = pep"?X (X(a) & -X(b))"
-val inputPep: gapt.logic.hol.PredicateEliminationProblem = PredicateEliminationProblem(Set(X:i>o),X(a) ∧ ¬X(b))
+gapt> val inputPep = pep"?X (X(a) & X(b) & -X(c))"
+val inputPep: gapt.logic.hol.PredicateEliminationProblem = PredicateEliminationProblem(Set(X:i>o),X(a) ∧ X(b) ∧ ¬X(c))
 
 \end{clilisting}
 
 We transform the PEP into clause form, which clausifies the first-order part of the input:
 \begin{clilisting}
 gapt> val clauseSetPep = inputPep.toClauseSet
-val clauseSetPep: gapt.logic.hol.ClauseSetPredicateEliminationProblem = ClauseSetPredicateEliminationProblem(Set(X:i>o),Set(X(b) ⊢ ,  ⊢ X(a)))
+val clauseSetPep: gapt.logic.hol.ClauseSetPredicateEliminationProblem = ClauseSetPredicateEliminationProblem(Set(X:i>o),Set( ⊢ X(b), X(c) ⊢ ,  ⊢ X(a)))
 
 \end{clilisting}
 Note that this transformation might not be equivalence-preserving as it can introduce new Skolem terms.
@@ -2372,7 +2372,7 @@ Note that this transformation might not be equivalence-preserving as it can intr
 We now run SCAN on this clause set 
 \begin{clilisting}
 gapt> val Right(derivation) = scan(clauseSetPep, derivationLimit=Some(10), attemptLimit=Some(10), oneSidedOnly=true): @unchecked
-val derivation: gapt.logic.hol.scan.Derivation = Derivation(ClauseSetPredicateEliminationProblem(Set(X:i>o),Set(X(b) ⊢ ,  ⊢ X(a))),List(ConstraintResolution(PointedClause(X(b) ⊢ ,Ant(0)),PointedClause( ⊢ X(a),Suc(0))), PurifiedClauseDeletion(PointedClause(X(b) ⊢ ,Ant(0))), ExtendendPurityDeletion(X:i>o,Positive)))
+val derivation: gapt.logic.hol.scan.Derivation = Derivation(ClauseSetPredicateEliminationProblem(Set(X:i>o),Set( ⊢ X(b), X(c) ⊢ ,  ⊢ X(a))),List(ConstraintResolution(PointedClause( ⊢ X(b),Suc(0)),PointedClause(X(c) ⊢ ,Ant(0))), PurifiedClauseDeletion(PointedClause( ⊢ X(b),Suc(0))), ConstraintResolution(PointedClause(X(c) ⊢ ,Ant(0)),PointedClause( ⊢ X(a),Suc(0))), PurifiedClauseDeletion(PointedClause(X(c) ⊢ ,Ant(0))), ExtendendPurityDeletion(X:i>o,Positive)))
 
 \end{clilisting}
 The \texttt{derivationLimit} parameter controls the number of derivation steps that are to be performed by SCAN.
@@ -2385,31 +2385,45 @@ The returned derivation stores the input PEP and all performed inference steps d
 Furthermore we can reconstruct the final clause set, which does not contain any of the second-order variables of the input PEP:
 \begin{clilisting}
 gapt> derivation.conclusion
-val res0: Set[gapt.proofs.HOLClause] = Set(b = a ⊢ )
+val res0: Set[gapt.proofs.HOLClause] = Set(b = c ⊢ , c = a ⊢ )
 
 \end{clilisting}
 From the derivation we can also construct the witness substitution for the input PEP. 
 \begin{clilisting}
-gapt> val Some(witness) = wscan.witness(derivation, limit=Some(2)): @unchecked
-val witness: gapt.expr.subst.Substitution = Substitution(X:i>o -> λu_0 b != u_0)
+gapt> val Some(witness) = wscan.witness(derivation, witnessLimit=Some(2)): @unchecked
+val witness: gapt.expr.subst.Substitution = Substitution(X:i>o -> λu_0 c != u_0 ∨ b = u_0)
 
 \end{clilisting}
 During the construction of the witness some saturation processes similar to SCAN have to run. 
-The parameter \texttt{limit} controls how many iterations during every one of these saturation processes we allow.
+The parameter \texttt{witnessLimit} controls how many iterations during every one of these saturation processes we allow.
 The construction fails if any of these processes does not terminate within the given number of iterations.
 Passing \texttt{oneSidedOnly=true} when running SCAN ensures that a limit of \texttt{Some(2)} will suffice.
 
-By the correctness of SCAN we know that the input formula $\exists X (X(a) \land \neg X(b))$ is equivalent to the conclusion of the SCAN derivation, namely the first-order formula $b \neq a$.
-We can thus check if $b \neq a$ logically equivalent to substituting the computed witness for $X$ in the input formula by constructing the first-order WSOQE-condition and verifying that it is valid:
+By the correctness of SCAN we know that the input formula is equivalent to the conclusion of the SCAN derivation which is a first-order clause set.
+We can thus check if the conclusion is logically equivalent to substituting the computed witness for $X$ in the input formula by constructing the first-order WSOQE-condition and verifying that it is valid using a first-order theorem prover like Escargot:
 \begin{clilisting}
 gapt> Escargot.isValid(Iff(derivation.conclusion.toFormula, BetaReduction.betaNormalize(witness(clauseSetPep.clauses.toFormula))))
 val res1: Boolean = true
 
 \end{clilisting}
 
-% TODO: add method that does all these steps in one go for convenience
-% TODO: mention computing multiple witnesses
-% TODO: mention where further examples can be found
+If one wants to find a derivation and a corresponding witness in one go, one can use
+\begin{clilisting}
+gapt> val Some((derivation, witness)) = wscan(clauseSetPep, oneSidedOnly=true, derivationLimit=Some(10), attemptLimit=Some(10), witnessLimit=Some(2)): @unchecked
+val derivation: gapt.logic.hol.scan.Derivation = Derivation(ClauseSetPredicateEliminationProblem(Set(X:i>o),Set( ⊢ X(b), X(c) ⊢ ,  ⊢ X(a))),List(ConstraintResolution(PointedClause( ⊢ X(b),Suc(0)),PointedClause(X(c) ⊢ ,Ant(0))), PurifiedClauseDeletion(PointedClause( ⊢ X(b),Suc(0))), ConstraintResolution(PointedClause(X(c) ⊢ ,Ant(0)),PointedClause( ⊢ X(a),Suc(0))), PurifiedClauseDeletion(PointedClause(X(c) ⊢ ,Ant(0))), ExtendendPurityDeletion(X:i>o,Positive)))
+val witness: gapt.expr.subst.Substitution = Substitution(X:i>o -> λu_0 c != u_0 ∨ b = u_0)
+
+\end{clilisting}
+
+Finding multiple derivations and corresponding witnesses one can use
+\begin{clilisting}
+gapt> val derivationWitnesses = wscan.witnesses(clauseSetPep, oneSidedOnly=true, derivationLimit=Some(10), attemptLimit=Some(1000), witnessLimit=Some(2)).toSeq
+val derivationWitnesses:
+  Seq[(gapt.logic.hol.scan.Derivation, gapt.expr.subst.Substitution)] = List((Derivation(ClauseSetPredicateEliminationProblem(Set(X:i>o),Set( ⊢ X(b), X(c) ⊢ ,  ⊢ X(a))),List(ConstraintResolution(PointedClause( ⊢ X(b),Suc(0)),PointedClause(X(c) ⊢ ,Ant(0))), PurifiedClauseDeletion(PointedClause( ⊢ X(b),Suc(0))), ConstraintResolution(PointedClause(X(c) ⊢ ,Ant(0)),PointedClause( ⊢ X(a),Suc(0))), PurifiedClauseDeletion(PointedClause(X(c) ⊢ ,Ant(0))), ExtendendPurityDeletion(X:i>o,Positive))),Substitution(X:i>o -> λu_0 c != u_0 ∨ b = u_0)), (Derivation(ClauseSetPredicateEliminationProblem(Set(X:i>o),Set( ⊢ X(b), X(c) ⊢ ,  ⊢ X(a))),List(ConstraintResolution(PointedClause( ⊢ X(b),Suc(0)),PointedClause(X(c) ⊢ ,Ant(0))), PurifiedClauseDeletion(PointedClause( ⊢ X(b),Suc(0))), ConstraintResolution(PointedClause( ⊢ X(a),Suc(0)),PointedCla ... large output truncated, print value to show all
+
+\end{clilisting}
+
+Further examples of predicate elimination problems can be found in the Scala file with the name \texttt{examples/PredicateEliminationProblems.scala}.
 
 \subsection{WDLS}
 
