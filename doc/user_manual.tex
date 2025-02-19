@@ -2415,7 +2415,7 @@ val witness: gapt.expr.subst.Substitution = Substitution(X:i>o -> λu_0 c != u_0
 
 \end{clilisting}
 
-Finding multiple derivations and corresponding witnesses one can use
+To find multiple derivations and corresponding witnesses one can use
 \begin{clilisting}
 gapt> val derivationWitnesses = wscan.witnesses(clauseSetPep, oneSidedOnly=true, derivationLimit=Some(10), attemptLimit=Some(1000), witnessLimit=Some(2)).toSeq
 val derivationWitnesses:
