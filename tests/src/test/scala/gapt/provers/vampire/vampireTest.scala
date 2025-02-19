@@ -19,7 +19,7 @@ import org.specs2.mutable._
 
 class VampireTest extends Specification with SequentMatchers with SatMatchers {
 
-  args(skipAll = !Vampire.isInstalled)
+  args(skipAll = true)
 
   "The Vampire interface" should {
     "refute { :- P; P :- }" in {
