@@ -51,30 +51,41 @@ class ScanTest extends Specification {
     (leftFormula must beEquivalentTo(rightFormula)).mapMessage(_ => s"$left is not equivalent to $right")
   }
 
-  def beCorrectSolutionFor(input: ClauseSetPredicateEliminationProblem): Matcher[Either[Derivation, (Derivation, Option[Substitution])]] = { (result: Either[Derivation, (Derivation, Option[Substitution])]) =>
-    result must beRight.like {
-      case output @ (derivation: Derivation, Some(witnesses: Substitution)) =>
-        val substitutedInput = witnesses(input.clauses).map(_.toFormula).map(BetaReduction.betaNormalize)
-        val beWithoutQuantifiedVariables: Matcher[HOLClause] = { (c: HOLClause) =>
-          {
-            (freeHOVariables(c.toFormula).intersect(input.variablesToEliminate).isEmpty, s"$c contains at least one quantified variable from ${input.variablesToEliminate}")
+  def beCorrectSolutionFor(input: ClauseSetPredicateEliminationProblem): Matcher[Option[(Derivation, Substitution)]] = {
+    (solution: Option[(Derivation, Substitution)]) =>
+      solution must beSome[(Derivation, Substitution)].like {
+        case (derivation: Derivation, witnesses: Substitution) => {
+          val substitutedInput = witnesses(input.clauses).map(_.toFormula).map(BetaReduction.betaNormalize)
+          val beWithoutQuantifiedVariables: Matcher[HOLClause] = {
+            (c: HOLClause) =>
+              {
+                (freeHOVariables(c.toFormula).intersect(input.variablesToEliminate).isEmpty, s"$c contains at least one quantified variable from ${input.variablesToEliminate}")
+              }
           }
-        }
 
-        val clauseSet = derivation.conclusion
-        clauseSet
-          .must(contain(beWithoutQuantifiedVariables).foreach)
-          .and(witnesses.domain.mustEqual(input.variablesToEliminate)
-            .mapMessage(_ => s"domain of substitution is not ${input.variablesToEliminate}"))
-          .and(substitutedInput.must(beEquivalentTo(clauseSet.map(_.toFormula)))
-            .mapMessage(_ => s"substituted input is not equivalent to output clause set"))
-    }
+          val clauseSet = derivation.conclusion
+          clauseSet
+            .must(contain(beWithoutQuantifiedVariables).foreach)
+            .and(witnesses.domain.mustEqual(input.variablesToEliminate)
+              .mapMessage(_ => s"domain of substitution is not ${input.variablesToEliminate}"))
+            .and(substitutedInput.must(beEquivalentTo(clauseSet.map(_.toFormula)))
+              .mapMessage(_ => s"substituted input is not equivalent to output clause set"))
+        }
+      }
   }
 
   val defaultDerivationLimit = 20
-  val defaultPossibilityLimit = 100
-  def beSolved(derivationLimit: Int = defaultDerivationLimit, possibilityLimit: Int = defaultPossibilityLimit): Matcher[ClauseSetPredicateEliminationProblem] = {
+  val defaultAttemptLimit = 100
+  def beSolved(
+      derivationLimit: Int = defaultDerivationLimit,
+      attemptLimit: Int = defaultAttemptLimit
+  ): Matcher[ClauseSetPredicateEliminationProblem] = {
     (input: ClauseSetPredicateEliminationProblem) =>
-      wscan(input, Some(derivationLimit)).take(possibilityLimit).toSeq.must(contain(beCorrectSolutionFor(input)))
+      wscan(
+        input,
+        oneSidedOnly = true,
+        derivationLimit = Some(derivationLimit),
+        attemptLimit = Some(attemptLimit)
+      ).must(beCorrectSolutionFor(input))
   }
 }
