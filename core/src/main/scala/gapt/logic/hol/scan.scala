@@ -49,8 +49,13 @@ import gapt.logic.hol.PredicateEliminationProblem
 import gapt.logic.hol.ClauseSetPredicateEliminationProblem
 
 object scan {
-  def apply(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int] = Some(100), oneSidedOnly: Boolean = false, attemptLimit: Option[Int] = Some(10)): Either[Iterator[Derivation], Derivation] = {
-    val baseIterator = scan.derivationsFrom(input, derivationLimit, oneSidedOnly)
+  def apply(
+      input: ClauseSetPredicateEliminationProblem,
+      oneSidedOnly: Boolean = true,
+      derivationLimit: Option[Int] = Some(100),
+      attemptLimit: Option[Int] = Some(10)
+  ): Either[Iterator[Derivation], Derivation] = {
+    val baseIterator = scan.derivationsFrom(input, oneSidedOnly, derivationLimit)
     val iterator = attemptLimit.map(l => baseIterator.take(l)).getOrElse(baseIterator)
 
     val successfulDerivation = iterator
@@ -61,7 +66,11 @@ object scan {
       case Some(derivation) => Right(derivation)
   }
 
-  def derivationsFrom(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int] = Some(100), oneSidedOnly: Boolean = false): Iterator[Either[Derivation, Derivation]] = {
+  def derivationsFrom(
+      input: ClauseSetPredicateEliminationProblem,
+      oneSidedOnly: Boolean = true,
+      derivationLimit: Option[Int] = Some(100)
+  ): Iterator[Either[Derivation, Derivation]] = {
     assert(derivationLimit.isEmpty || derivationLimit.get >= 0, "derivation limit must be non-negative")
     val states = saturate(State(
       input.clauses,

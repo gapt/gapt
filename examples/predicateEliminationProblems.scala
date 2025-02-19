@@ -30,20 +30,6 @@ import gapt.logic.hol.PredicateEliminationProblem
 }
 
 val negationOfModalAxiom = pep"?X -(!u (!v (R(u,v) -> ((!w (R(v, w) -> X(w))) <-> X(v)))))"
-
-def scanOneByOne(inputPep: ClauseSetPredicateEliminationProblem): Option[Seq[(Set[HOLClause], Option[Substitution], Derivation)]] = {
-  val vars = inputPep.variablesToEliminate.toSeq
-  vars.foldLeft[Option[Seq[(Set[HOLClause], Option[Substitution], Derivation)]]](Some(Seq((inputPep.clauses, Some(Substitution()), Derivation(inputPep, List.empty))))) {
-    case (None, v) => None
-    case (Some(state), v) => {
-      for (derivation, wit) <- wscan(ClauseSetPredicateEliminationProblem(Set(v), state.last._1)).take(10).collect {
-          case Right(result) => result
-        }.nextOption()
-      yield state :+ (derivation.conclusion, wit, derivation)
-    }
-  }
-}
-
 val exampleWithQuantifiedVariableNotOccurring = pep"?(X:i>o) !u A(u)"
 val exampleWithoutQuantifiedVariables = pep"!u X(u)"
 val exampleThatCanBeSolvedByPolarityRuleImmediately = pep"?X(${
@@ -278,18 +264,30 @@ def printResolutionCandidate(resolutionCandidate: PointedClause): pprint.Tree = 
   pprint.Tree.Literal(clauseString.strip())
 }
 
-def getSolutions(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int], possibilityLimit: Option[Int]): Iterator[(Derivation, Option[Substitution])] = {
-  val baseIterator = wscan(input, derivationLimit)
-  val iterator = if possibilityLimit.isDefined then baseIterator.take(possibilityLimit.get) else baseIterator
-  iterator.collect { case Right(output) => output }
+def getSolutions(
+    input: ClauseSetPredicateEliminationProblem,
+    derivationLimit: Option[Int],
+    attemptLimit: Option[Int],
+    witnessLimit: Option[Int]
+): Iterator[(Derivation, Substitution)] = {
+  val baseIterator = scan.derivationsFrom(input, derivationLimit = derivationLimit)
+  val iterator = attemptLimit.map(l => baseIterator.take(l)).getOrElse(baseIterator)
+  iterator.collect {
+    case Right(derivation) =>
+      (derivation, wscan.witness(derivation, witnessLimit = witnessLimit).get)
+  }
 }
 
-def printResult(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int] = Some(100), possibilityLimit: Option[Int] = Some(10)) = {
-  val solutions = getSolutions(input, derivationLimit, possibilityLimit)
+def printResult(
+    input: ClauseSetPredicateEliminationProblem,
+    derivationLimit: Option[Int] = Some(100),
+    attemptLimit: Option[Int] = Some(10),
+    witnessLimit: Option[Int]
+) = {
+  val solutions = getSolutions(input, derivationLimit, attemptLimit, witnessLimit)
   if solutions.isEmpty then {
     println(s"❌ didn't find solution")
   } else solutions.foreach(checkSolution(input, _))
-
 }
 
 def equivalenceClasses[T](base: Iterable[T])(areEquivalent: (T, T) => Boolean): Map[T, Set[T]] = {
@@ -314,15 +312,22 @@ def equivalenceClasses[T](base: Iterable[T])(areEquivalent: (T, T) => Boolean): 
 def formatPercentage(count: Int, of: Int): String =
   "%.1f%%".formatLocal(java.util.Locale.UK, (count * 100).floatValue / of)
 
-def printWitnesses(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int] = Some(100), witnessLimit: Option[Int] = Some(100), tries: Int = 100) = {
+def printWitnesses(
+    input: ClauseSetPredicateEliminationProblem,
+    derivationLimit: Option[Int] = Some(100),
+    witnessLimit: Option[Int] = Some(100),
+    tries: Int = 100
+) = {
   println("finding witnesses for")
   printer.pprintln(input.toFormula)
-  val scanOutput = wscan(input, derivationLimit, witnessLimit).take(tries).toSeq
+  val scanOutput = scan.derivationsFrom(input, derivationLimit = derivationLimit).take(tries).toSeq
   val successfulScanRuns = scanOutput.collect { case Right(x) => x }
-  val witnesses = successfulScanRuns.collect { case (derivation, Some(wit)) => (derivation.conclusion.toFormula, wit) }
+  val witnesses = successfulScanRuns.flatMap { derivation =>
+    wscan.witness(derivation, witnessLimit)
+  }
   val runsWithoutFiniteWitnesses = successfulScanRuns.size - witnesses.size
   val nonEquivalent = equivalenceClasses(witnesses) {
-    case ((_, left), (_, right)) => areEquivalent(left, right)
+    case (left, right) => areEquivalent(left, right)
   }
   println(s"tried ${scanOutput.size} scan runs with derivationlimit $derivationLimit and witness limit $witnessLimit")
   println(s"${successfulScanRuns.size} (${formatPercentage(successfulScanRuns.size, scanOutput.size)}) of those succeeded")
@@ -342,8 +347,15 @@ def areEquivalent(left: Substitution, right: Substitution): Boolean = {
   })
 }
 
-def printResultInteractive(input: ClauseSetPredicateEliminationProblem, derivationLimit: Option[Int] = Some(100)) = {
-  val iterator = wscan(input, derivationLimit)
+def printResultInteractive(
+    input: ClauseSetPredicateEliminationProblem,
+    derivationLimit: Option[Int] = Some(100),
+    witnessLimit: Option[Int] = Some(10)
+) = {
+  val iterator = scan.derivationsFrom(
+    input,
+    derivationLimit = derivationLimit
+  )
 
   while (iterator.hasNext) {
     iterator.next() match {
@@ -353,8 +365,14 @@ def printResultInteractive(input: ClauseSetPredicateEliminationProblem, derivati
         scala.io.StdIn.readLine("press enter to show next solution: ")
         System.out.flush()
       }
-      case Right(output) => {
-        checkSolution(input, output)
+      case Right(derivation) => {
+        printer.pprintln(derivation, height = derivationLimit.get * 100)
+        val witness = wscan.witness(derivation, witnessLimit = witnessLimit)
+        if witness.isEmpty then {
+          println("❌ derivation found, but could not construct a finite witness")
+        } else {
+          checkSolution(input, (derivation, witness.get))
+        }
         if iterator.hasNext then
           scala.io.StdIn.readLine("press enter to show next solution: ")
           System.out.flush()
@@ -363,15 +381,9 @@ def printResultInteractive(input: ClauseSetPredicateEliminationProblem, derivati
   }
 }
 
-def checkSolution(input: ClauseSetPredicateEliminationProblem, output: (Derivation, Option[Substitution])): Boolean = {
+def checkSolution(input: ClauseSetPredicateEliminationProblem, output: (Derivation, Substitution)): Boolean = {
   val (derivation, witness) = output
-  printer.pprintln(output)
-  if witness.isEmpty then {
-    println("❌ could not construct a finite witness")
-    false
-  } else {
-    checkWitness(And(input.clauses.map(_.toFormula)), derivation.conclusion.toFormula, witness.get)
-  }
+  checkWitness(And(input.clauses.map(_.toFormula)), derivation.conclusion.toFormula, witness)
 }
 
 def checkWitness(input: Formula, output: Formula, witness: Substitution): Boolean = {
