@@ -417,7 +417,7 @@ object scan {
     }
   }
 
-  def purifyPointedClause(state: State, pointedClause: PointedClause): Either[State, State] = {
+  def purifyPointedClause(state: State, pointedClause: PointedClause, addFactorsOfNewClauses: Boolean = true): Either[State, State] = {
     if hasReachedLimit(state) then Left(state)
     else
       val resolutionInferences = nonRedundantResolutionInferences(state.activeClauses, pointedClause)
@@ -426,6 +426,7 @@ object scan {
         else Right(state)
       else
         val stateAfterResolvents = applyDerivationSteps(state, resolutionInferences)
+        val stateAfterFactors = if addFactorsOfNewClauses then addFactors(stateAfterResolvents) else stateAfterResolvents
         purifyPointedClause(eliminateRedundancies(addFactors(stateAfterResolvents)), pointedClause)
   }
 

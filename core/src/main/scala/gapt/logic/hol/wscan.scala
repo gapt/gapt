@@ -48,6 +48,9 @@ import gapt.formats.leancop.LeanCoP21Parser.clause
 import gapt.logic.hol.PredicateEliminationProblem
 import gapt.logic.hol.ClauseSetPredicateEliminationProblem
 import gapt.logic.hol.scan.{PointedClause, Derivation, DerivationStep, constraintResolvent}
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFormula
+import gapt.expr.formula.Neg
 
 object wscan {
   def apply(
@@ -201,19 +204,53 @@ object wscan {
   }
 
   def resWitness(pointedClause: PointedClause, limit: Option[Int]): Option[Expr] = {
-    val (abstractedResolutionCandidate, vars) = pointedClause.abstracted
-    val resCandidate = eliminateConstraints(abstractedResolutionCandidate.clause, vars.toSet).map { case a: Atom => a }
 
-    val saturationResult = saturateWithResolutionCandidate(abstractedResolutionCandidate, Set(HOLClause(Seq((abstractedResolutionCandidate.atom, !abstractedResolutionCandidate.index.polarity)))), Set.empty, limit)
-    for
-      resolventSet <- saturationResult
-      formula: Formula = abstractedResolutionCandidate.index.polarity match
-        case Polarity(false) => And(resolventSet.map {
-            clause => All.Block((freeFOLVariables(clause.toFormula) -- vars).toSeq, clause.toDisjunction)
-          })
-        case Polarity(true) => Or(resolventSet.map {
-            clause => Ex.Block((freeFOLVariables(clause.toFormula) -- vars).toSeq, clause.toNegConjunction)
-          })
-    yield Abs(vars, formula)
+    val freshConstants = rename.awayFrom(containedNames(pointedClause.clause)).freshStream("c").take(pointedClause.args.size).map(FOLConst(_)).toList
+
+    val Atom(head, args) = pointedClause.atom: @unchecked
+    val unitClause = HOLClause(Seq((Atom(head, freshConstants), !pointedClause.index.polarity)))
+    val purificationResult = scan.purifyPointedClause(
+      scan.State(
+        activeClauses = Set(unitClause),
+        quantifiedVariables = Set(pointedClause.hoVar.asInstanceOf[Var]),
+        derivation = scan.Derivation(ClauseSetPredicateEliminationProblem(Set(pointedClause.hoVar.asInstanceOf[Var]), Set(unitClause)), List.empty),
+        derivationLimit = limit,
+        oneSidedOnly = false,
+        allowResolutionOnBaseLiterals = false
+      ),
+      pointedClause,
+      addFactorsOfNewClauses = false
+    )
+
+    purificationResult match
+      case Left(_) => None
+      case Right(state) => {
+        val formula = pointedClause.index.polarity match
+          case Polarity(false) => And(state.activeClauses.map {
+              clause => All.Block((freeFOLVariables(clause.toFormula)).toSeq, clause.toDisjunction)
+            })
+          case Polarity(true) => Or(state.activeClauses.map {
+              clause => Ex.Block((freeFOLVariables(clause.toFormula)).toSeq, clause.toNegConjunction)
+            })
+        val freshVars = rename.awayFrom(containedNames(formula)).freshStream("u").take(freshConstants.size).map(FOLVar(_)).toList
+        val renaming = freshConstants.zip(freshVars).toMap
+
+        Some(Abs(freshVars, renameFOLConstToFOLVar(formula, renaming)))
+      }
+  }
+
+  def renameFOLConstToFOLVar(expr: Expr, renaming: Map[FOLConst, FOLVar]): Expr = {
+    expr match
+      case c: FOLConst      => renaming.get(c).getOrElse(c)
+      case Neg(f)           => Neg(renameFOLConstToFOLVar(f, renaming))
+      case And(left, right) => And(renameFOLConstToFOLVar(left, renaming), renameFOLConstToFOLVar(right, renaming))
+      case Or(left, right)  => Or(renameFOLConstToFOLVar(left, renaming), renameFOLConstToFOLVar(right, renaming))
+
+      case All(v, f) => All(v, renameFOLConstToFOLVar(f, renaming))
+      case Ex(v, f)  => Ex(v, renameFOLConstToFOLVar(f, renaming))
+
+      case App(left, right) => App(renameFOLConstToFOLVar(left, renaming), renameFOLConstToFOLVar(right, renaming))
+      case Abs(v, f)        => Abs(v, renameFOLConstToFOLVar(f, renaming))
+      case x                => x
   }
 }
