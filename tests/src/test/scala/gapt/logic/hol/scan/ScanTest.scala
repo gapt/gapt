@@ -27,7 +27,7 @@ class ScanTest extends Specification {
     solve equation without quantified variable ${exampleWithQuantifiedVariableNotOccurring.toClauseSet must beSolved()}
     treat variables as predicate constants when not given ${exampleWithoutQuantifiedVariables.toClauseSet must beSolved()}
     negation of leibniz equality ${negationOfLeibnizEquality.toClauseSet must beSolved()}
-    resolution on non-base literals ${exampleThatUsesResolutionOnLiteralsThatAreNotQuantifiedVariables.toClauseSet must beSolved()}
+    resolution on base literals ${exampleThatUsesResolutionOnLiteralsThatAreNotQuantifiedVariables.toClauseSet must beSolved(allowResolutionOnBaseLiterals = true)}
     2-part disjunction ${single2PartDisjunction.toClauseSet must beSolved()}
     3-part disjunction ${single3PartDisjunction.toClauseSet must beSolved()}
     two variable example ${exampleWithTwoVariables.toClauseSet must beSolved()}
@@ -77,6 +77,7 @@ class ScanTest extends Specification {
   val defaultDerivationLimit = 20
   val defaultAttemptLimit = 100
   def beSolved(
+      allowResolutionOnBaseLiterals: Boolean = false,
       derivationLimit: Int = defaultDerivationLimit,
       attemptLimit: Int = defaultAttemptLimit
   ): Matcher[ClauseSetPredicateEliminationProblem] = {
@@ -84,6 +85,7 @@ class ScanTest extends Specification {
       wscan(
         input,
         oneSidedOnly = true,
+        allowResolutionOnBaseLiterals = allowResolutionOnBaseLiterals,
         derivationLimit = Some(derivationLimit),
         attemptLimit = Some(attemptLimit)
       ).must(beCorrectSolutionFor(input))

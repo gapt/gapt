@@ -53,15 +53,21 @@ object wscan {
   def apply(
       input: ClauseSetPredicateEliminationProblem,
       oneSidedOnly: Boolean = true,
+      allowResolutionOnBaseLiterals: Boolean = false,
       derivationLimit: Option[Int] = Some(100),
       attemptLimit: Option[Int] = Some(10),
       witnessLimit: Option[Int] = Some(2)
   ): Option[(Derivation, Substitution)] = {
-    witnesses(input, oneSidedOnly, derivationLimit, attemptLimit, witnessLimit).nextOption()
+    witnesses(input, oneSidedOnly, allowResolutionOnBaseLiterals, derivationLimit, attemptLimit, witnessLimit).nextOption()
   }
 
-  def witnesses(input: ClauseSetPredicateEliminationProblem, oneSidedOnly: Boolean = true, derivationLimit: Option[Int] = Some(100), attemptLimit: Option[Int] = Some(10), witnessLimit: Option[Int] = Some(2)): Iterator[(Derivation, Substitution)] = {
-    val baseIterator = scan.derivationsFrom(input, oneSidedOnly, derivationLimit)
+  def witnesses(input: ClauseSetPredicateEliminationProblem, oneSidedOnly: Boolean = true, allowResolutionOnBaseLiterals: Boolean = false, derivationLimit: Option[Int] = Some(100), attemptLimit: Option[Int] = Some(10), witnessLimit: Option[Int] = Some(2)): Iterator[(Derivation, Substitution)] = {
+    val baseIterator = scan.derivationsFrom(
+      input,
+      oneSidedOnly = oneSidedOnly,
+      allowResolutionOnBaseLiterals = allowResolutionOnBaseLiterals,
+      derivationLimit = derivationLimit
+    )
     val iterator = attemptLimit.map(l => baseIterator.take(l)).getOrElse(baseIterator)
     iterator.collect {
       case Right(derivation) =>
