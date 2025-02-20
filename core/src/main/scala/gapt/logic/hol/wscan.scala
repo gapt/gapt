@@ -219,7 +219,7 @@ object wscan {
         allowResolutionOnBaseLiterals = false
       ),
       pointedClause,
-      addFactorsOfNewClauses = false
+      addFactorsOfNewClauses = true
     )
 
     purificationResult match
