@@ -87,7 +87,8 @@ class ScanTest extends Specification {
         oneSidedOnly = true,
         allowResolutionOnBaseLiterals = allowResolutionOnBaseLiterals,
         derivationLimit = Some(derivationLimit),
-        attemptLimit = Some(attemptLimit)
+        attemptLimit = Some(attemptLimit),
+        witnessLimit = Some(20)
       ).must(beCorrectSolutionFor(input))
   }
 }
