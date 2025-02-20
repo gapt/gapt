@@ -282,7 +282,7 @@ def printResult(
     input: ClauseSetPredicateEliminationProblem,
     derivationLimit: Option[Int] = Some(100),
     attemptLimit: Option[Int] = Some(10),
-    witnessLimit: Option[Int]
+    witnessLimit: Option[Int] = Some(10)
 ) = {
   val solutions = getSolutions(input, derivationLimit, attemptLimit, witnessLimit)
   if solutions.isEmpty then {
