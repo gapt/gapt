@@ -73,10 +73,11 @@ object scan {
   ): Iterator[Either[Derivation, Derivation]] = {
     assert(derivationLimit.isEmpty || derivationLimit.get >= 0, "derivation limit must be non-negative")
     val states = saturate(State(
-      input.clauses,
-      input.variablesToEliminate,
-      Derivation(input, List.empty),
-      derivationLimit
+      activeClauses = input.clauses,
+      quantifiedVariables = input.variablesToEliminate,
+      derivation = Derivation(input, List.empty),
+      derivationLimit = derivationLimit,
+      oneSidedOnly = oneSidedOnly
     ))
     states.map {
       state => state.map(_.derivation).left.map(_.derivation)
@@ -190,7 +191,8 @@ object scan {
       activeClauses: Set[HOLClause],
       quantifiedVariables: Set[Var],
       derivation: Derivation,
-      derivationLimit: Option[Int]
+      derivationLimit: Option[Int],
+      oneSidedOnly: Boolean
   )
 
   def subsumptionSubstitution(subsumer: HOLClause, subsumee: HOLClause): Option[FOLSubstitution] = {
@@ -276,27 +278,27 @@ object scan {
       val allResolventsRedundant = resolutionInferences(rc, state.activeClauses - rc.clause).forall {
         case DerivationStep.ConstraintResolution(left, right) => isRedundant(state.activeClauses, constraintResolvent(left, right))
       }
-      val isAFactor = state.activeClauses.exists(c => isFactorOf(rc.clause, c))
-      if !isAFactor && allFactorsRedundant && allResolventsRedundant
+      val isFactor = state.activeClauses.exists(c => isFactorOf(rc.clause, c))
+      if !isFactor && allFactorsRedundant && allResolventsRedundant
       then Some(DerivationStep.PurifiedClauseDeletion(rc))
       else None
     }.toSeq
 
     val singleInference = polarity.orElse(tautologyDeletion).orElse(constraintElimination).orElse(subsumption).orElse(factoring)
 
-    val (inductivePurifications, nonInductivePurifications) = purifications.partition(i => isInductive(i.candidate))
+    val (oneSidedPurifications, mixedPurifications) = purifications.partition(i => isOneSided(i.candidate))
 
-    val activeClauseCandidates = state.activeClauses
+    val activePointedClauseCandidates = state.activeClauses
       .flatMap(c => pointedClauses(c))
-      .filter(c => !isInductive(c) && nonRedundantResolutionInferences(state.activeClauses, c).nonEmpty)
+      .filter(c => (!state.oneSidedOnly || isOneSided(c)) && nonRedundantResolutionInferences(state.activeClauses, c).nonEmpty)
 
-    val resolutionPossibilities: Seq[Seq[DerivationStep.ConstraintResolution]] = activeClauseCandidates.toSeq.map { candidate =>
+    val resolutionPossibilities: Seq[Seq[DerivationStep.ConstraintResolution]] = activePointedClauseCandidates.toSeq.map { candidate =>
       nonRedundantResolutionInferences(state.activeClauses, candidate)
     }
 
     if singleInference.isDefined then Seq(singleInference.toSeq)
-    else if singleInference.isEmpty && !nonInductivePurifications.isEmpty then
-      nonInductivePurifications.map(Seq(_))
+    else if singleInference.isEmpty && !oneSidedPurifications.isEmpty then
+      oneSidedPurifications.map(Seq(_))
     else
       resolutionPossibilities
   }
@@ -307,10 +309,9 @@ object scan {
     }.toSeq
   }
 
-  def isInductive(candidate: PointedClause): Boolean = {
-    candidate.clause.cedent(!candidate.index.polarity).exists {
-      case Atom(v @ VarOrConst(_, _, _), _) if v == candidate.hoVar => true
-      case _                                                        => false
+  def isOneSided(pointedClause: PointedClause): Boolean = {
+    pointedClause.clause.cedent(!pointedClause.index.polarity).forall {
+      case Atom(v, _) => v != pointedClause.hoVar
     }
   }
 
