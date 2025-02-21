@@ -135,42 +135,6 @@ object wscan {
   def freeFOLVariables(expr: Expr): Set[FOLVar] =
     (freeVariables(expr) -- freeHOVariables(expr)).map { case v: FOLVar => v }
 
-  def eliminateConstraints(clause: HOLClause, keepVariables: Set[FOLVar]): HOLClause = {
-    val constraint = clause.antecedent.zipWithIndex.flatMap {
-      case (Eq(v @ FOLVar(_), t), i) if !keepVariables.contains(v) => Some((v, t, i))
-      case (Eq(t, v @ FOLVar(_)), i) if !keepVariables.contains(v) => Some((v, t, i))
-      case _                                                       => None
-    }.headOption
-    constraint match
-      case None => clause
-      case Some((v, t, i)) =>
-        eliminateConstraints(Substitution(v, t)(clause.delete(Ant(i))).map { case a: Atom => a }, keepVariables)
-  }
-
-  def saturateWithResolutionCandidate(candidate: PointedClause, resolventSet: Set[HOLClause], resolvedCandidates: Set[PointedClause], limit: Option[Int]): Option[Set[HOLClause]] = {
-    val partner = pickResolutionPartner(candidate, resolventSet, resolvedCandidates)
-
-    partner match
-      case None                                               => Some(resolventSet)
-      case Some(partner) if limit.isDefined && limit.get <= 0 => None
-      case Some(partner) => {
-        val resolvent = constraintResolvent(candidate, partner)
-        val resolventWithoutConstraints = eliminateConstraints(resolvent, candidate.args.map { case x: FOLVar => x }.toSet).map { case a: Atom => a }
-        saturateWithResolutionCandidate(candidate, resolventSet + resolventWithoutConstraints, resolvedCandidates + partner, limit = limit.map(l => l - 1))
-      }
-  }
-
-  def pickResolutionPartner(activeCandidate: PointedClause, activeClauses: Set[HOLClause], resolvedCandidates: Set[PointedClause]): Option[PointedClause] = {
-    (activeClauses - activeCandidate.clause).flatMap { clause =>
-      clause.cedent(!activeCandidate.index.polarity).zipWithIndex.filter {
-        case (Atom(v, _), _) => activeCandidate.hoVar == v
-        case _               => false
-      }.map { case (_, index) => (clause, SequentIndex(!activeCandidate.index.polarity, index)) }
-    }.map { case (clause, index) => PointedClause(clause, index) }
-      .filter { candidate => !resolvedCandidates.contains(candidate) }
-      .headOption
-  }
-
   def pResU(pointedClause: PointedClause, limit: Option[Int]): Option[Expr] = {
 
     val freshConstants = rename.awayFrom(containedNames(pointedClause.clause)).freshStream("c").take(pointedClause.args.size).map(FOLConst(_)).toList
@@ -178,9 +142,11 @@ object wscan {
     val Atom(head, args) = pointedClause.atom: @unchecked
     val unitClause = HOLClause(Seq((Atom(head, freshConstants), !pointedClause.index.polarity)))
     val purificationResult = scan.purifyPointedClause(
-      scan.State(
-        activeClauses = Set(unitClause),
-        derivation = scan.Derivation(ClauseSetPredicateEliminationProblem(Set(pointedClause.hoVar.asInstanceOf[Var]), Set(unitClause)), List.empty),
+      scan.State.initialFrom(
+        ClauseSetPredicateEliminationProblem(
+          Set(pointedClause.hoVar.asInstanceOf[Var]),
+          Set(unitClause)
+        ),
         derivationLimit = limit,
         oneSidedOnly = false,
         allowResolutionOnBaseLiterals = false

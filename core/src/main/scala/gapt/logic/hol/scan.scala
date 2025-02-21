@@ -79,9 +79,8 @@ object scan {
       derivationLimit: Option[Int] = Some(100)
   ): Iterator[Either[Derivation, Derivation]] = {
     assert(derivationLimit.isEmpty || derivationLimit.get >= 0, "derivation limit must be non-negative")
-    val states = saturateByPurification(State(
-      activeClauses = input.clauses,
-      derivation = Derivation(input, List.empty),
+    val states = saturateByPurification(State.initialFrom(
+      input,
       derivationLimit = derivationLimit,
       oneSidedOnly = oneSidedOnly,
       allowResolutionOnBaseLiterals = allowResolutionOnBaseLiterals
@@ -175,6 +174,9 @@ object scan {
           next
         ).conclusion
 
+  object Derivation:
+    def emptyFrom(initialPep: ClauseSetPredicateEliminationProblem): Derivation = Derivation(initialPep, List.empty)
+
   case class State(
       activeClauses: Set[HOLClause],
       derivation: Derivation,
@@ -186,6 +188,21 @@ object scan {
     def isEliminated = activeClauses.forall(c => freeHOVariables(c.toFormula).intersect(variablesToEliminate).isEmpty)
     def isPointedClauseWithEliminationVariable(pointedClause: PointedClause) =
       pointedClause.isVar && variablesToEliminate.contains(pointedClause.hoVar.asInstanceOf[Var])
+
+  object State:
+    def initialFrom(
+        input: ClauseSetPredicateEliminationProblem,
+        derivationLimit: Option[Int],
+        oneSidedOnly: Boolean,
+        allowResolutionOnBaseLiterals: Boolean
+    ): State =
+      State(
+        input.clauses,
+        Derivation.emptyFrom(input),
+        derivationLimit,
+        oneSidedOnly,
+        allowResolutionOnBaseLiterals
+      )
 
   def subsumptionSubstitution(subsumer: HOLClause, subsumee: HOLClause): Option[FOLSubstitution] = {
     val subsumerHoVarsAsConsts = subsumer.map { case Atom(VarOrConst(v, ty, tys), args) => Atom(Const(v, ty, tys), args) }
