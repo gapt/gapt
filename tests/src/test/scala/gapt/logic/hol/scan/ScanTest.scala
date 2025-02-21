@@ -76,10 +76,12 @@ class ScanTest extends Specification {
 
   val defaultDerivationLimit = 20
   val defaultAttemptLimit = 100
+  val defaultWitnessLimit = 2
   def beSolved(
       allowResolutionOnBaseLiterals: Boolean = false,
       derivationLimit: Int = defaultDerivationLimit,
-      attemptLimit: Int = defaultAttemptLimit
+      attemptLimit: Int = defaultAttemptLimit,
+      witnessLimit: Int = defaultWitnessLimit
   ): Matcher[ClauseSetPredicateEliminationProblem] = {
     (input: ClauseSetPredicateEliminationProblem) =>
       wscan(
@@ -88,7 +90,7 @@ class ScanTest extends Specification {
         allowResolutionOnBaseLiterals = allowResolutionOnBaseLiterals,
         derivationLimit = Some(derivationLimit),
         attemptLimit = Some(attemptLimit),
-        witnessLimit = Some(20)
+        witnessLimit = Some(witnessLimit)
       ).must(beCorrectSolutionFor(input))
   }
 }
