@@ -106,50 +106,16 @@ object wscan {
               wits.map(w => w.compose(witSubst))
             }
             case DerivationStep.PurifiedClauseDeletion(candidate) => {
-              val hoVar = candidate.hoVar.asInstanceOf[Var]
-              val wits = helper(derivation.tail)
-
-              val candidateOccurringClauses = derivation.initialPep.clauses.filter { clause =>
-                clause.exists {
-                  case Atom(v: Var, _) => true
-                  case _               => false
-                }
-              }
-              val allCandidateOccuringClausesContainCandidatePositively = candidateOccurringClauses.forall { clause =>
-                clause.succedent.exists {
-                  case Atom(v: Var, _) if candidate.hoVar == v => true
-                  case _                                       => false
-                }
-              }
-              val allCandidateOccuringClausesContainCandidateNegatively = candidateOccurringClauses.forall { clause =>
-                clause.antecedent.exists {
-                  case Atom(v: Var, _) if candidate.hoVar == v => true
-                  case _                                       => false
-                }
-              }
-
-              val witExtension: Option[Substitution] =
-                if allCandidateOccuringClausesContainCandidatePositively
-                then {
-                  val argumentVariables = freshArgumentVariables(candidate.hoVar.ty, "u")
-                  Some(Substitution(hoVar, Abs.Block(argumentVariables, TopC())))
-                } else if allCandidateOccuringClausesContainCandidateNegatively
-                then {
-                  val argumentVariables = freshArgumentVariables(candidate.hoVar.ty, "u")
-                  Some(Substitution(hoVar, Abs.Block(argumentVariables, BottomC())))
-                } else {
-                  resWitness(candidate, limit).map(Substitution(hoVar, _))
-                }
-
               for
-                w <- wits
-                ext <- witExtension
+                w <- helper(derivation.tail)
+                ext <- pResU(candidate, limit).map(Substitution(candidate.hoVar.asInstanceOf[Var], _))
               yield w.compose(ext)
             }
         }
         case Nil => Some(Substitution(derivation.initialPep.variablesToEliminate.map {
-            case v @ Var(_, FunctionType(To, args)) =>
-              (v, Abs.Block(rename.awayFrom(Iterable.empty).freshStream("u").take(args.size).map(FOLVar(_)), BottomC()))
+            case v @ Var(name, ty @ FunctionType(To, args)) =>
+              val predicateVar = rename.awayFrom(containedNames(derivation.initialPep.clauses.toFormula)).fresh(Var(s"W$name", ty))
+              (v, predicateVar)
           }.toMap))
     }
 
@@ -157,10 +123,12 @@ object wscan {
   }
 
   def simplifyWitnessSubstitution(subst: Substitution): Substitution = {
-    val betaNormalized = Substitution(subst.map.view.mapValues(e => {
-      val Abs.Block(vars, formula: Formula) = betaNormalize(e): @unchecked
-      Abs.Block(vars, simplify(formula))
-    }))
+    val betaNormalized = Substitution(subst.map.view.mapValues(e =>
+      betaNormalize(e) match {
+        case Abs.Block(vars, formula: Formula) => Abs.Block(vars, simplify(formula))
+        case x                                 => x
+      }
+    ))
     betaNormalized
   }
 
@@ -203,7 +171,7 @@ object wscan {
       .headOption
   }
 
-  def resWitness(pointedClause: PointedClause, limit: Option[Int]): Option[Expr] = {
+  def pResU(pointedClause: PointedClause, limit: Option[Int]): Option[Expr] = {
 
     val freshConstants = rename.awayFrom(containedNames(pointedClause.clause)).freshStream("c").take(pointedClause.args.size).map(FOLConst(_)).toList
 
