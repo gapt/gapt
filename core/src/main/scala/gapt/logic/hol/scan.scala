@@ -81,7 +81,6 @@ object scan {
     assert(derivationLimit.isEmpty || derivationLimit.get >= 0, "derivation limit must be non-negative")
     val states = saturateByPurification(State(
       activeClauses = input.clauses,
-      quantifiedVariables = input.variablesToEliminate,
       derivation = Derivation(input, List.empty),
       derivationLimit = derivationLimit,
       oneSidedOnly = oneSidedOnly,
@@ -102,23 +101,6 @@ object scan {
       case _: Var => true
       case _      => false
     }
-
-    def abstracted: (PointedClause, Seq[FOLVar]) =
-      val Atom(symbol @ VarOrConst(_, _, _), args) = this.atom: @unchecked
-      val nameGen = rename.awayFrom(freeFOLVariables(clause.toFormula))
-      val vars = nameGen.freshStream("u").take(args.size).map(FOLVar(_)).to(Seq)
-      val constraints = HOLClause(vars.zip(args).map(Eq(_, _)), Seq.empty)
-      val abstractedAtom = Atom(symbol, vars.toList)
-      val abstractedClause: HOLClause =
-        eliminateConstraints(
-          constraints
-            ++ clause.delete(index)
-            ++ HOLClause(Seq((abstractedAtom, index.polarity))),
-          vars.toSet
-        ).map { case a: Atom => a }
-      val idx = abstractedClause.cedent(index.polarity).indexOf(abstractedAtom)
-      val sequentIndex = SequentIndex(index.polarity, idx)
-      (PointedClause(abstractedClause, sequentIndex), vars)
 
   enum DerivationStep:
     case ConstraintResolution(left: PointedClause, right: PointedClause)
@@ -195,12 +177,15 @@ object scan {
 
   case class State(
       activeClauses: Set[HOLClause],
-      quantifiedVariables: Set[Var],
       derivation: Derivation,
       derivationLimit: Option[Int],
       oneSidedOnly: Boolean,
       allowResolutionOnBaseLiterals: Boolean
-  )
+  ):
+    def variablesToEliminate = derivation.initialPep.variablesToEliminate
+    def isEliminated = activeClauses.forall(c => freeHOVariables(c.toFormula).intersect(variablesToEliminate).isEmpty)
+    def isPointedClauseWithEliminationVariable(pointedClause: PointedClause) =
+      pointedClause.isVar && variablesToEliminate.contains(pointedClause.hoVar.asInstanceOf[Var])
 
   def subsumptionSubstitution(subsumer: HOLClause, subsumee: HOLClause): Option[FOLSubstitution] = {
     val subsumerHoVarsAsConsts = subsumer.map { case Atom(VarOrConst(v, ty, tys), args) => Atom(Const(v, ty, tys), args) }
@@ -217,7 +202,7 @@ object scan {
   }
 
   def nextInference(state: State): Seq[Seq[DerivationStep]] = {
-    val extendedPurityDeletion = extendePurityDeletionStep(state)
+    val extendedPurityDeletion = extendedPurityDeletionStep(state)
     val redundancyElimination = redundancyStep(state)
 
     // do factoring
@@ -226,8 +211,8 @@ object scan {
     }.headOption
 
     // check for purification
-    val purifications: Seq[DerivationStep.PurifiedClauseDeletion] = pointedClauses(state.activeClauses).filter { rc =>
-      rc.isVar && state.quantifiedVariables.contains(rc.hoVar.asInstanceOf[Var])
+    val purifications: Seq[DerivationStep.PurifiedClauseDeletion] = pointedClauses(state.activeClauses).filter { p =>
+      state.isPointedClauseWithEliminationVariable(p)
     }.flatMap[DerivationStep.PurifiedClauseDeletion] { rc =>
       val hoVar @ Var(_, _) = rc.hoVar: @unchecked
       val allFactorsRedundant = factoringInferences(rc.clause).forall {
@@ -248,8 +233,8 @@ object scan {
 
     val activePointedClauseCandidates = state.activeClauses
       .flatMap(c => pointedClauses(c))
-      .filter(c => state.allowResolutionOnBaseLiterals || (c.isVar && state.quantifiedVariables.contains(c.hoVar.asInstanceOf[Var])))
-      .filter(c => (!state.oneSidedOnly || isOneSided(c)) && nonRedundantResolutionInferences(state.activeClauses, c).nonEmpty)
+      .filter(p => state.allowResolutionOnBaseLiterals || state.isPointedClauseWithEliminationVariable(p))
+      .filter(p => (!state.oneSidedOnly || isOneSided(p)) && nonRedundantResolutionInferences(state.activeClauses, p).nonEmpty)
 
     val resolutionPossibilities: Seq[Seq[DerivationStep.ConstraintResolution]] = activePointedClauseCandidates.toSeq.map { candidate =>
       nonRedundantResolutionInferences(state.activeClauses, candidate)
@@ -264,7 +249,7 @@ object scan {
 
   def nonRedundantResolutionInferences(clauses: Set[HOLClause], candidate: PointedClause) = {
     resolutionInferences(clauses - candidate.clause, candidate).filter {
-      case DerivationStep.ConstraintResolution(left, right) => !isRedundant(clauses - candidate.clause, constraintResolvent(left, right))
+      case DerivationStep.ConstraintResolution(left, right) => !isRedundant(clauses, constraintResolvent(left, right))
     }.toSeq
   }
 
@@ -290,67 +275,77 @@ object scan {
   }
 
   def saturate(state: State): Iterator[Either[State, State]] = {
-    val possibilities = nextInference(state)
-    if possibilities.isEmpty then Iterator(Right(state))
+    if state.isEliminated then Iterator(Right(state))
     else
+      val possibilities = nextInference(state)
+      assert(possibilities.nonEmpty, s"nextInference returned no possibilities, even though state is not eliminated: $state")
       possibilities.iterator.flatMap { inferences =>
-        if !inferences.isEmpty && state.derivationLimit.isDefined && state.derivationLimit.get <= 0 then LazyList(Left(state))
-        else if inferences.isEmpty then Iterator(Right(state))
-        else
-          val updatedState = inferences.foldLeft(state) {
-            case (state, inference) => state.copy(
-                activeClauses = inference(state.activeClauses),
-                derivation = state.derivation.copy(inferences = state.derivation.inferences :+ inference),
-                derivationLimit = state.derivationLimit.map(d => d - 1)
-              )
-          }
-          saturate(updatedState)
+        assert(inferences.nonEmpty, s"nextInference returned possibility with no inferences, even though state is not eliminated: $state")
+        applyDerivationSteps(state, inferences) match
+          case l @ Left(_)  => Iterator(l)
+          case Right(state) => saturate(state)
       }
+  }
+
+  def purificationCandidates(state: State): Iterator[PointedClause] = {
+    val (oneSidedCandidates, mixedCandidates) = pointedClauses(state.activeClauses)
+      .filter { p =>
+        state.isPointedClauseWithEliminationVariable(p) ||
+        (state.allowResolutionOnBaseLiterals && nonRedundantResolutionInferences(state.activeClauses - p.clause, p).nonEmpty)
+      }
+      .partition(isOneSided)
+    if state.oneSidedOnly && oneSidedCandidates.isEmpty then {
+      println(s"State ${state} is not eliminated, but has no one-sided purification candidates")
+      Iterator.empty
+    } else {
+      val candidates = if state.oneSidedOnly then oneSidedCandidates else (oneSidedCandidates ++ mixedCandidates)
+      candidates.iterator
+    }
   }
 
   def saturateByPurification(state: State): Iterator[Either[State, State]] = {
-    if hasReachedLimit(state) then Iterator(Left(state))
-    else
-      val isEliminated = state.activeClauses.forall(c => freeHOVariables(c.toFormula).intersect(state.quantifiedVariables).isEmpty)
-      if isEliminated then Iterator(Right(state))
-      else {
-        extendePurityDeletionStep(state) match {
-          case Some(step) => saturateByPurification(applyDerivationSteps(state, Seq(step)))
-          case None => {
-            val nextState = eliminateRedundancies(addFactors(state))
-            if hasReachedLimit(nextState) then Iterator(Left(nextState))
-            val (oneSidedCandidates, mixedCandidates) =
-              pointedClauses(nextState.activeClauses)
-                .filter(p => nextState.allowResolutionOnBaseLiterals || (p.isVar && nextState.quantifiedVariables.contains(p.hoVar.asInstanceOf[Var])))
-                .filter(p => (p.isVar && nextState.quantifiedVariables.contains(p.hoVar.asInstanceOf[Var])) || nonRedundantResolutionInferences(nextState.activeClauses - p.clause, p).nonEmpty)
-                .partition(isOneSided)
-            if nextState.oneSidedOnly && oneSidedCandidates.isEmpty then {
-              println(s"State ${nextState} is not eliminated, but has no one-sided purification candidates")
-              Iterator(Left(nextState))
-            } else {
-              (oneSidedCandidates ++ mixedCandidates).iterator.flatMap { pointedClause =>
-                purifyPointedClause(nextState, pointedClause) match
-                  case Left(state)          => Iterator(Left(state))
-                  case Right(purifiedState) => saturateByPurification(purifiedState)
-              }
+    if state.isEliminated then Iterator(Right(state))
+    else {
+      val stateAfterRedundancyElimination = eliminateRedundancies(state) match
+        case l @ Left(_)  => return Iterator(l)
+        case Right(value) => value
+
+      val extendedPurityDeletion = extendedPurityDeletionStep(stateAfterRedundancyElimination)
+      val statesAfterExtendedPurityDeletion = extendedPurityDeletion.map(s => applyDerivationSteps(stateAfterRedundancyElimination, Seq(s))).iterator
+
+      val statesAfterPurifications =
+        for
+          stateAfterFactors <- addFactors(stateAfterRedundancyElimination).flatMap(eliminateRedundancies)
+          candidates = purificationCandidates(stateAfterFactors)
+        yield {
+          candidates.map(p =>
+            val purifiedState = purifyPointedClause(stateAfterFactors, p)
+            purifiedState.flatMap { state =>
+              if !state.isPointedClauseWithEliminationVariable(p) then
+                Right(state)
+              else
+                applyDerivationSteps(state, Seq(DerivationStep.PurifiedClauseDeletion(p)))
             }
-          }
+          )
         }
+
+      val purificationStates = statesAfterPurifications.left.map(l => Iterator(Left(l))).merge
+      val nextStates = statesAfterExtendedPurityDeletion ++ purificationStates
+      nextStates.flatMap {
+        case l @ Left(_)  => Iterator(l)
+        case Right(value) => saturateByPurification(value)
       }
+    }
   }
 
-  def hasReachedLimit(state: State): Boolean = {
-    state.derivationLimit.exists(d => d < 0)
-  }
-
-  def addFactors(state: State): State = {
+  def addFactors(state: State): Either[State, State] = {
     applyDerivationSteps(state, state.activeClauses.flatMap(factoringInferences))
   }
 
-  def eliminateRedundancies(state: State): State = {
+  def eliminateRedundancies(state: State): Either[State, State] = {
     redundancyStep(state) match
-      case None       => state
-      case Some(step) => eliminateRedundancies(applyDerivationSteps(state, Seq(step)))
+      case None       => Right(state)
+      case Some(step) => applyDerivationSteps(state, Seq(step)).flatMap(eliminateRedundancies)
   }
 
   def redundancyStep(state: State): Option[DerivationStep] = {
@@ -376,8 +371,8 @@ object scan {
     tautologyDeletion.orElse(constraintElimination).orElse(subsumption)
   }
 
-  def extendePurityDeletionStep(state: State): Option[DerivationStep] = {
-    state.quantifiedVariables.toSeq.flatMap[DerivationStep.ExtendendPurityDeletion] { w =>
+  def extendedPurityDeletionStep(state: State): Option[DerivationStep] = {
+    state.variablesToEliminate.toSeq.flatMap[DerivationStep.ExtendendPurityDeletion] { w =>
       val variableOccurringClauses = state.activeClauses.filter { clause =>
         clause.exists {
           case Atom(v: Var, _) if v == w => true
@@ -407,27 +402,41 @@ object scan {
     }.headOption
   }
 
-  def applyDerivationSteps(state: State, derivationSteps: Iterable[DerivationStep]): State = {
-    derivationSteps.foldLeft(state) {
-      case (state, derivationStep) => state.copy(
-          activeClauses = derivationStep(state.activeClauses),
-          derivation = state.derivation.copy(inferences = state.derivation.inferences :+ derivationStep),
-          derivationLimit = state.derivationLimit.map(d => d - 1)
-        )
+  def applyDerivationSteps(state: State, derivationSteps: Iterable[DerivationStep]): Either[State, State] = {
+    derivationSteps.foldLeft[Either[State, State]](Right(state)) {
+      case (Left(state), _) => Left[State, State](state)
+      case (Right(state), derivationStep) => {
+        if state.derivationLimit.isDefined && state.derivationLimit.get <= 0 then Left(state)
+        else {
+          // do not count redundancy elimination to the derivation limit
+          val updatedLimit = state.derivationLimit.map { limit =>
+            derivationStep match
+              case _: (DerivationStep.ConstraintResolution
+                    | DerivationStep.ConstraintFactoring
+                    | DerivationStep.PurifiedClauseDeletion
+                    | DerivationStep.ExtendendPurityDeletion) => limit - 1
+              case _ => limit
+          }
+          Right(state.copy(
+            activeClauses = derivationStep(state.activeClauses),
+            derivation = state.derivation.copy(inferences = state.derivation.inferences :+ derivationStep),
+            derivationLimit = updatedLimit
+          ))
+        }
+      }
     }
   }
 
-  def purifyPointedClause(state: State, pointedClause: PointedClause, addFactorsOfNewClauses: Boolean = true): Either[State, State] = {
-    if hasReachedLimit(state) then Left(state)
+  def purifyPointedClause(state: State, pointedClause: PointedClause): Either[State, State] = {
+    val resolutionInferences = nonRedundantResolutionInferences(state.activeClauses, pointedClause)
+    if resolutionInferences.isEmpty then Right(state)
     else
-      val resolutionInferences = nonRedundantResolutionInferences(state.activeClauses, pointedClause)
-      if resolutionInferences.isEmpty then
-        if pointedClause.isVar then Right(applyDerivationSteps(state, Seq(DerivationStep.PurifiedClauseDeletion(pointedClause))))
-        else Right(state)
-      else
-        val stateAfterResolvents = applyDerivationSteps(state, resolutionInferences)
-        val stateAfterFactors = if addFactorsOfNewClauses then addFactors(stateAfterResolvents) else stateAfterResolvents
-        purifyPointedClause(eliminateRedundancies(addFactors(stateAfterResolvents)), pointedClause)
+      for
+        stateAfterResolvents <- applyDerivationSteps(state, resolutionInferences)
+        stateAfterFactors <- addFactors(stateAfterResolvents)
+        stateAfterRedundancyElimination <- eliminateRedundancies(stateAfterFactors)
+        result <- purifyPointedClause(stateAfterRedundancyElimination, pointedClause)
+      yield result
   }
 
   def freeFOLVariables(expr: Expr): Set[FOLVar] =

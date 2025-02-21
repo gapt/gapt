@@ -72,17 +72,17 @@ object wscan {
       derivationLimit = derivationLimit
     )
     val iterator = attemptLimit.map(l => baseIterator.take(l)).getOrElse(baseIterator)
-    iterator.collect {
+    iterator.flatMap {
+      case Left(_) => None
       case Right(derivation) =>
-        val witness = witnessSubstitution(derivation, quantifiedVariables = input.variablesToEliminate, limit = witnessLimit).map(simplifyWitnessSubstitution).get
-        (derivation, witness)
+        val witnessOption = witnessSubstitution(derivation, limit = witnessLimit).map(simplifyWitnessSubstitution)
+        witnessOption.map(w => (derivation, w))
     }
   }
 
   def witness(derivation: Derivation, witnessLimit: Option[Int] = Some(2)): Option[Substitution] = {
     witnessSubstitution(
       derivation,
-      quantifiedVariables = derivation.initialPep.variablesToEliminate,
       witnessLimit
     ).map(simplifyWitnessSubstitution)
   }
@@ -92,7 +92,7 @@ object wscan {
     rename.awayFrom(blacklist).freshStream("u").zip(argTypes).map(Var(_, _))
   }
 
-  def witnessSubstitution(derivation: Derivation, quantifiedVariables: Set[Var], limit: Option[Int]): Option[Substitution] = {
+  def witnessSubstitution(derivation: Derivation, limit: Option[Int]): Option[Substitution] = {
     def helper(derivation: Derivation): Option[Substitution] = {
       derivation.inferences match
         case head :: next => {
@@ -147,7 +147,7 @@ object wscan {
               yield w.compose(ext)
             }
         }
-        case Nil => Some(Substitution(quantifiedVariables.map {
+        case Nil => Some(Substitution(derivation.initialPep.variablesToEliminate.map {
             case v @ Var(_, FunctionType(To, args)) =>
               (v, Abs.Block(rename.awayFrom(Iterable.empty).freshStream("u").take(args.size).map(FOLVar(_)), BottomC()))
           }.toMap))
@@ -212,14 +212,12 @@ object wscan {
     val purificationResult = scan.purifyPointedClause(
       scan.State(
         activeClauses = Set(unitClause),
-        quantifiedVariables = Set(pointedClause.hoVar.asInstanceOf[Var]),
         derivation = scan.Derivation(ClauseSetPredicateEliminationProblem(Set(pointedClause.hoVar.asInstanceOf[Var]), Set(unitClause)), List.empty),
         derivationLimit = limit,
         oneSidedOnly = false,
         allowResolutionOnBaseLiterals = false
       ),
-      pointedClause,
-      addFactorsOfNewClauses = true
+      pointedClause
     )
 
     purificationResult match
