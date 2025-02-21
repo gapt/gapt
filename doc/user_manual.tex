@@ -2390,14 +2390,14 @@ val res0: Set[gapt.proofs.HOLClause] = Set(b = c ⊢ , c = a ⊢ )
 \end{clilisting}
 From the derivation we can also construct the witness substitution for the input PEP. 
 \begin{clilisting}
-gapt> val Some(witness) = wscan.witness(derivation, witnessLimit=Some(2)): @unchecked
+gapt> val Some(witness) = wscan.witness(derivation, witnessLimit=Some(1)): @unchecked
 val witness: gapt.expr.subst.Substitution = Substitution(X:i>o -> λu_0 c != u_0 ∨ b = u_0)
 
 \end{clilisting}
-During the construction of the witness some saturation processes similar to SCAN have to run. 
-The parameter \texttt{witnessLimit} controls how many iterations during every one of these saturation processes we allow.
-The construction fails if any of these processes does not terminate within the given number of iterations.
-Passing \texttt{oneSidedOnly=true} when running SCAN ensures that a limit of \texttt{Some(2)} will suffice.
+During the construction of the witness some saturation processes doing inference steps similar to SCAN have to run. 
+The parameter \texttt{witnessLimit} controls how many inference steps during every one of these saturation processes we allow.
+The construction fails if any of these processes does not terminate within the given number of inference steps.
+Passing \texttt{oneSidedOnly=true} when running SCAN ensures that a limit of \texttt{Some(1)} will suffice.
 
 By the correctness of SCAN we know that the input formula is equivalent to the conclusion of the SCAN derivation which is a first-order clause set.
 We can thus check if the conclusion is logically equivalent to substituting the computed witness for $X$ in the input formula by constructing the first-order WSOQE-condition and verifying that it is valid using a first-order theorem prover like Escargot:
@@ -2409,7 +2409,7 @@ val res1: Boolean = true
 
 If one wants to find a derivation and a corresponding witness in one go, one can use
 \begin{clilisting}
-gapt> val Some((derivation, witness)) = wscan(clauseSetPep, oneSidedOnly=true, derivationLimit=Some(10), attemptLimit=Some(10), witnessLimit=Some(2)): @unchecked
+gapt> val Some((derivation, witness)) = wscan(clauseSetPep, oneSidedOnly=true, derivationLimit=Some(10), attemptLimit=Some(10), witnessLimit=Some(1)): @unchecked
 val derivation: gapt.logic.hol.scan.Derivation = Derivation(ClauseSetPredicateEliminationProblem(Set(X:i>o),Set( ⊢ X(b), X(c) ⊢ ,  ⊢ X(a))),List(ConstraintResolution(PointedClause( ⊢ X(b),Suc(0)),PointedClause(X(c) ⊢ ,Ant(0))), PurifiedClauseDeletion(PointedClause( ⊢ X(b),Suc(0))), ConstraintResolution(PointedClause(X(c) ⊢ ,Ant(0)),PointedClause( ⊢ X(a),Suc(0))), PurifiedClauseDeletion(PointedClause(X(c) ⊢ ,Ant(0))), ExtendendPurityDeletion(X:i>o,Positive)))
 val witness: gapt.expr.subst.Substitution = Substitution(X:i>o -> λu_0 c != u_0 ∨ b = u_0)
 
@@ -2417,9 +2417,9 @@ val witness: gapt.expr.subst.Substitution = Substitution(X:i>o -> λu_0 c != u_0
 
 To find multiple derivations and corresponding witnesses one can use
 \begin{clilisting}
-gapt> val derivationWitnesses = wscan.witnesses(clauseSetPep, oneSidedOnly=true, derivationLimit=Some(10), attemptLimit=Some(1000), witnessLimit=Some(2)).toSeq
+gapt> val derivationWitnesses = wscan.witnesses(clauseSetPep, oneSidedOnly=true, derivationLimit=Some(10), attemptLimit=Some(1000), witnessLimit=Some(1)).toSeq
 val derivationWitnesses:
-  Seq[(gapt.logic.hol.scan.Derivation, gapt.expr.subst.Substitution)] = List((Derivation(ClauseSetPredicateEliminationProblem(Set(X:i>o),Set( ⊢ X(b), X(c) ⊢ ,  ⊢ X(a))),List(ConstraintResolution(PointedClause( ⊢ X(b),Suc(0)),PointedClause(X(c) ⊢ ,Ant(0))), PurifiedClauseDeletion(PointedClause( ⊢ X(b),Suc(0))), ConstraintResolution(PointedClause(X(c) ⊢ ,Ant(0)),PointedClause( ⊢ X(a),Suc(0))), PurifiedClauseDeletion(PointedClause(X(c) ⊢ ,Ant(0))), ExtendendPurityDeletion(X:i>o,Positive))),Substitution(X:i>o -> λu_0 c != u_0 ∨ b = u_0)), (Derivation(ClauseSetPredicateEliminationProblem(Set(X:i>o),Set( ⊢ X(b), X(c) ⊢ ,  ⊢ X(a))),List(ConstraintResolution(PointedClause( ⊢ X(b),Suc(0)),PointedClause(X(c) ⊢ ,Ant(0))), PurifiedClauseDeletion(PointedClause( ⊢ X(b),Suc(0))), ConstraintResolution(PointedClause( ⊢ X(a),Suc(0)),PointedCla ... large output truncated, print value to show all
+  Seq[(gapt.logic.hol.scan.Derivation, gapt.expr.subst.Substitution)] = List((Derivation(ClauseSetPredicateEliminationProblem(Set(X:i>o),Set( ⊢ X(b), X(c) ⊢ ,  ⊢ X(a))),List(ConstraintResolution(PointedClause( ⊢ X(b),Suc(0)),PointedClause(X(c) ⊢ ,Ant(0))), PurifiedClauseDeletion(PointedClause( ⊢ X(b),Suc(0))), ConstraintResolution(PointedClause(X(c) ⊢ ,Ant(0)),PointedClause( ⊢ X(a),Suc(0))), PurifiedClauseDeletion(PointedClause(X(c) ⊢ ,Ant(0))), ExtendendPurityDeletion(X:i>o,Positive))),Substitution(X:i>o -> λu_0 c != u_0 ∨ b = u_0)), (Derivation(ClauseSetPredicateEliminationProblem(Set(X:i>o),Set( ⊢ X(b), X(c) ⊢ ,  ⊢ X(a))),List(ConstraintResolution(PointedClause( ⊢ X(b),Suc(0)),PointedClause(X(c) ⊢ ,Ant(0))), PurifiedClauseDeletion(PointedClause( ⊢ X(b),Suc(0))), ConstraintResolution(PointedClause(X(c) ⊢ ,Ant(0)),PointedCla ... large output truncated, print value to show all
 
 \end{clilisting}
 
