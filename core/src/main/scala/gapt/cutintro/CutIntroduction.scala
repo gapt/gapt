@@ -48,6 +48,7 @@ import gapt.utils.{Logger, Maybe}
 
 import scala.util.Failure
 import scala.util.Success
+import gapt.logic.hol.PredicateEliminationProblem
 
 trait GrammarFindingMethod {
   def findGrammars(lang: Set[Expr]): Option[VTRATG]
@@ -473,8 +474,11 @@ object CutIntroduction {
         case ((vs, tss), x) =>
           x(vs) --> And(tss.map { ts => x(ts) })
       }
-      def schematicExtendedHerbrandSequentToDlsInstance(h: SchematicExtendedHerbrandSequent): Formula =
-        Ex.Block(schematicVariables, (schematicCutImplications ++: formulaInstances).toFormula)
+      def schematicExtendedHerbrandSequentToDlsInstance(h: SchematicExtendedHerbrandSequent): PredicateEliminationProblem =
+        PredicateEliminationProblem(
+          schematicVariables,
+          (schematicCutImplications ++: formulaInstances).toFormula
+        )
       val dlsInstance = schematicExtendedHerbrandSequentToDlsInstance(h)
       val solution = dls(dlsInstance) match {
         case Success(s) => s._1

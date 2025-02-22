@@ -14,6 +14,7 @@ import gapt.grammars.InductionGrammar.Production
 import gapt.proofs.HOLSequent
 import gapt.proofs.RichFormulaSequent
 import gapt.proofs.expansion.InstanceTermEncoding
+import gapt.logic.hol.PredicateEliminationProblem
 
 case class InductionBUP(grammar: InductionGrammar, enc: InstanceTermEncoding, goal: Formula) {
   val X = rename(Var("X", FunctionType(To, Seq(grammar.alpha.ty, grammar.indTy) ++ grammar.gamma.map(_.ty))), containedNames(grammar))
@@ -71,4 +72,5 @@ case class InductionBUP(grammar: InductionGrammar, enc: InstanceTermEncoding, go
   val sequents: Vector[HOLSequent] = bupSequents.map(_.sequent)
 
   val formula: Formula = Ex(X, And(bupSequents.map(_.formula)))
+  val predicateEliminationProblem: PredicateEliminationProblem = PredicateEliminationProblem(Seq(X), And(bupSequents.map(_.formula)))
 }

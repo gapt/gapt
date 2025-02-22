@@ -15,6 +15,7 @@ import gapt.provers.escargot.Escargot
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import gapt.expr.formula.hol.freeHOVariables.isHOVar
 
 /**
  * Takes a formula equation F[X₁,...,Xₙ] and if successful returns a substitution of the second order
@@ -25,28 +26,17 @@ import scala.util.Try
  */
 object solveFormulaEquation {
 
-  private def isHigherOrderPredicateType(t: Ty) =
-    t match {
-      case FunctionType(To, _) => true
-      case _                   => false
-    }
-
-  private def isHigherOrderPredicateVariable(x: Var) =
-    isHigherOrderPredicateType(x.ty)
-
   /**
    * Attempts to solve formula equations.
-   * @param f The formula equation `F[X₁,...,Xₙ]` to be solved.
+   * @param f The formula equation `F[X₁,...,Xₙ]` in form of a predicate elimination problem.
    */
-  def apply(f: Formula): Try[Substitution] = {
-    val xs = freeVariables(f).filter(isHigherOrderPredicateVariable).toSeq
-    val h = Ex.Block(xs, f)
-    dls(h).flatMap({
+  def apply(input: PredicateEliminationProblem): Try[Substitution] = {
+    dls(input).flatMap({
       case (substitution, firstOrderPart) =>
         if (Escargot.isValid(BetaReduction.betaNormalize(substitution(firstOrderPart))))
           Success(substitution)
         else
-          Failure(new Exception(s"""the given formula equation ${f} is not solvable"""))
+          Failure(new Exception(s"""the given formula equation ${input} is not solvable"""))
     })
   }
 }

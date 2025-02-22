@@ -144,7 +144,7 @@ object wscan {
     val purificationResult = scan.purifyPointedClause(
       scan.State.initialFrom(
         ClauseSetPredicateEliminationProblem(
-          Set(pointedClause.hoVar.asInstanceOf[Var]),
+          Seq(pointedClause.hoVar.asInstanceOf[Var]),
           Set(unitClause)
         ),
         derivationLimit = limit,
