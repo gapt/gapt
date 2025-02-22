@@ -20,7 +20,7 @@ import gapt.formats.smt.SmtLibExporter
 import gapt.grammars.{InductionGrammar, findMinimalInductionGrammar}
 import gapt.grammars.InductionGrammar.Production
 import gapt.logic.hol.CNFp
-import gapt.logic.hol.dls.dls
+import gapt.logic.hol.wdls.wdls
 import gapt.logic.hol.skolemize
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.{BaseTypes, StructurallyInductiveTypes}
@@ -71,7 +71,7 @@ sealed trait InductionBupSolver
 object InductionBupSolver {
   case object Interpolation extends InductionBupSolver
   case object Canonical extends InductionBupSolver
-  case object Dls extends InductionBupSolver
+  case object Wdls extends InductionBupSolver
 }
 
 object TreeGrammarProverOptions {
@@ -281,9 +281,9 @@ class TreeGrammarProver(val ctx: Context, val sequent: HOLSequent, val options: 
             metric("bup_solve_failed", true)
             throw new IllegalArgumentException(s"Could not solve:\n${qbupMatrix.toSigRelativeString}")
           }
-        case InductionBupSolver.Dls =>
-          dls(bup.predicateEliminationProblem) match {
-            case Success((s, _)) => s(bup.X)
+        case InductionBupSolver.Wdls =>
+          wdls(bup.predicateEliminationProblem) match {
+            case Success(s) => s(bup.X)
             case Failure(e) =>
               throw new IllegalArgumentException(s"Could not solve BUP ${bup}", e)
           }

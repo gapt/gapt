@@ -31,7 +31,7 @@ import gapt.expr.Abs.Block
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.To
 import gapt.expr.formula.constants.BottomC
-import gapt.logic.hol.dls.simplify
+import gapt.logic.hol.wdls.simplify
 import gapt.expr.formula.constants.TopC
 import gapt.expr.preExpr.Type
 import gapt.utils.NameGenerator
