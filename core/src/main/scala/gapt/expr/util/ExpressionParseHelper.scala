@@ -263,7 +263,7 @@ class ExpressionParseHelper(sc: StringContext, file: sourcecode.File, line: sour
       if (containsHOQuantifier(remainder)) {
         throw new IllegalArgumentException(s"Expression $expr is not of the form ∃X_1...∃X_n F where F is a first-order formula and X_1,...,X_n are second-order variables")
       }
-      PredicateEliminationProblem(hoVarsPrefix.toSet, remainder)
+      PredicateEliminationProblem(hoVarsPrefix, remainder)
     }
 
   private def placeholder = "__qq_"

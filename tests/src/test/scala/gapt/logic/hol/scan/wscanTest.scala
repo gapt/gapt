@@ -59,14 +59,14 @@ class wscanTest extends Specification {
           val beWithoutQuantifiedVariables: Matcher[HOLClause] = {
             (c: HOLClause) =>
               {
-                (freeHOVariables(c.toFormula).intersect(input.variablesToEliminate).isEmpty, s"$c contains at least one quantified variable from ${input.variablesToEliminate}")
+                (freeHOVariables(c.toFormula).intersect(input.variablesToEliminate.toSet).isEmpty, s"$c contains at least one quantified variable from ${input.variablesToEliminate}")
               }
           }
 
           val clauseSet = derivation.conclusion
           clauseSet
             .must(contain(beWithoutQuantifiedVariables).foreach)
-            .and(witnesses.domain.mustEqual(input.variablesToEliminate)
+            .and(witnesses.domain.mustEqual(input.variablesToEliminate.toSet)
               .mapMessage(_ => s"domain of substitution is not ${input.variablesToEliminate}"))
             .and(substitutedInput.must(beEquivalentTo(clauseSet.map(_.toFormula)))
               .mapMessage(_ => s"substituted input is not equivalent to output clause set"))

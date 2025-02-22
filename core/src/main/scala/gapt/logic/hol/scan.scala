@@ -185,7 +185,7 @@ object scan {
       allowResolutionOnBaseLiterals: Boolean
   ):
     def variablesToEliminate = derivation.initialPep.variablesToEliminate
-    def isEliminated = activeClauses.forall(c => freeHOVariables(c.toFormula).intersect(variablesToEliminate).isEmpty)
+    def isEliminated = activeClauses.forall(c => freeHOVariables(c.toFormula).intersect(variablesToEliminate.toSet).isEmpty)
     def isPointedClauseWithEliminationVariable(pointedClause: PointedClause) =
       pointedClause.isVar && variablesToEliminate.contains(pointedClause.hoVar.asInstanceOf[Var])
 

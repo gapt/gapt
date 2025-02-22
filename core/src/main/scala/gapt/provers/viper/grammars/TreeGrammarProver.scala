@@ -282,8 +282,7 @@ class TreeGrammarProver(val ctx: Context, val sequent: HOLSequent, val options: 
             throw new IllegalArgumentException(s"Could not solve:\n${qbupMatrix.toSigRelativeString}")
           }
         case InductionBupSolver.Dls =>
-          val p = bup.formula
-          dls(p) match {
+          dls(bup.predicateEliminationProblem) match {
             case Success((s, _)) => s(bup.X)
             case Failure(e) =>
               throw new IllegalArgumentException(s"Could not solve BUP ${bup}", e)

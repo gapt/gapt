@@ -23,6 +23,8 @@ import gapt.utils.crossProduct
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import gapt.logic.hol.PredicateEliminationProblem
+import gapt.proofs.resolution.Subst
 
 /**
  * Uses the DLS algorithm to find a witness for formula equations of the form
@@ -62,15 +64,21 @@ import scala.util.Try
  */
 object dls {
 
-  def apply(formula: Formula): Try[(Substitution, Formula)] = Try(simplify(formula) match {
-    case Ex(PredicateVariable(x, _), innerFormula) =>
-      val (s_, folPart) = dls(innerFormula).get
-      val folInnerFormula = simplify(util.applySubstitutionBetaReduced(s_, folPart))
-      val w = dls_(folInnerFormula, x)
-      val s = util.updateSubstitutionWithBetaReduction(s_, x -> w)
-      (s, folPart)
-    case f => (Substitution(), f)
-  })
+  def apply(input: PredicateEliminationProblem): Try[(Substitution, Formula)] =
+    val simplifiedInput = PredicateEliminationProblem(
+      input.variablesToEliminate,
+      simplify(input.formula)
+    )
+    Try(input.variablesToEliminate.foldLeft(
+      (Substitution(), simplifiedInput.formula)
+    ) {
+      case ((s_, folPart), x) =>
+        val folInnerFormula = simplify(util.applySubstitutionBetaReduced(s_, folPart))
+        val w = dls_(folInnerFormula, x)
+        val s = util.updateSubstitutionWithBetaReduction(s_, x -> w)
+        (s, folPart)
+
+    })
 
   private def dls_(f: Formula, X: Var): Expr = new dls(X).solve(f)
 }

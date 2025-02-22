@@ -28,10 +28,23 @@ extension (clauseSet: Set[HOLClause])
 def freeFOLVariables(expr: Expr): Set[FOLVar] =
   (freeVariables(expr) -- freeHOVariables(expr)).map { case v: FOLVar => v }
 
-case class PredicateEliminationProblem(variablesToEliminate: Set[Var], formula: Formula):
-  def toFormula: Formula = Ex.Block(variablesToEliminate.toSeq, formula)
+case class PredicateEliminationProblem(
+    variablesToEliminate: Seq[Var],
+    formula: Formula
+):
+  def toFormula: Formula = Ex.Block(variablesToEliminate, formula)
   def toClauseSet: ClauseSetPredicateEliminationProblem =
-    ClauseSetPredicateEliminationProblem(variablesToEliminate, CNFp(folSkolemize(formula, Polarity.InAntecedent)))
+    ClauseSetPredicateEliminationProblem(
+      variablesToEliminate,
+      CNFp(folSkolemize(formula, Polarity.InAntecedent))
+    )
 
-case class ClauseSetPredicateEliminationProblem(variablesToEliminate: Set[Var], clauses: Set[HOLClause]):
-  def toFormula: Formula = PredicateEliminationProblem(variablesToEliminate, clauses.toFormula).toFormula
+case class ClauseSetPredicateEliminationProblem(
+    variablesToEliminate: Seq[Var],
+    clauses: Set[HOLClause]
+):
+  def toFormula: Formula =
+    PredicateEliminationProblem(
+      variablesToEliminate,
+      clauses.toFormula
+    ).toFormula
