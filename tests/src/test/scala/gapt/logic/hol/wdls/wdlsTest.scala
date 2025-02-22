@@ -1,4 +1,4 @@
-package gapt.logic.hol.dls
+package gapt.logic.hol.wdls
 
 import gapt.expr._
 import gapt.expr.formula.fol.FOLVar
@@ -18,8 +18,9 @@ import org.specs2.specification.core.Fragment
 
 import scala.util.Try
 import gapt.logic.hol.PredicateEliminationProblem
+import gapt.proofs.RichFormulaSequent
 
-class DlsTest extends Specification {
+class wdlsTest extends Specification {
 
   private def toDisjunct(s: HOLSequent): Disjunct =
     Disjunct(s.antecedent, s.succedent)
@@ -42,7 +43,7 @@ class DlsTest extends Specification {
       )
       assert(secondOrderVariables.size == 1)
       s"succeed for $formula" >> {
-        Try(new DlsPreprocessor(secondOrderVariables.head).preprocess(formula)) must beSuccessfulTry({ (result: Set[Disjunct]) =>
+        Try(new WdlsPreprocessor(secondOrderVariables.head).preprocess(formula)) must beSuccessfulTry({ (result: Set[Disjunct]) =>
           val multiSetEquals = (s1: Disjunct, s2: Disjunct) => s1.multiSetEquals(s2)
           result must beSetEqualsWithCustomEquality(
             expectedResult.map(toDisjunct),
@@ -107,16 +108,17 @@ class DlsTest extends Specification {
         expectedWitness: Expr
     ): Fragment = {
       s"succeed for $sequent" >> {
+        val formula = And(sequent.antecedent ++ sequent.succedent)
+        val input = PredicateEliminationProblem(Seq(secondOrderVariable), formula)
         val argumentVariables = expectedWitness match {
           case Abs.Block(variables, _) => variables.asInstanceOf[List[FOLVar]]
         }
         val witness =
-          new DlsPartialWitnessExtraction(secondOrderVariable)
+          new WdlsPartialWitnessExtraction(secondOrderVariable)
             .findPartialWitness(argumentVariables, toDisjunct(sequent))
-        val formula = And(sequent.antecedent ++ sequent.succedent)
         val expectedSubstitution = Substitution(secondOrderVariable -> expectedWitness)
         val substitution = Substitution(secondOrderVariable -> Abs(argumentVariables, witness))
-        (substitution, formula) must beAnEquivalentSubstitutionTo(expectedSubstitution)
+        substitution must beAnEquivalentSubstitutionTo(input, expectedSubstitution)
       }
     }
 
@@ -127,7 +129,7 @@ class DlsTest extends Specification {
       s"fail for $sequent" >> {
         val FunctionType(_, argumentTypes) = secondOrderVariable.ty: @unchecked
         val argumentVariables = new NameGenerator(Nil).freshStream(secondOrderVariable.name).take(argumentTypes.length).map(FOLVar(_)).toList
-        new DlsPartialWitnessExtraction(secondOrderVariable)
+        new WdlsPartialWitnessExtraction(secondOrderVariable)
           .findPartialWitness(argumentVariables, toDisjunct(sequent)) must throwA[Exception]
       }
     }
@@ -186,28 +188,20 @@ class DlsTest extends Specification {
     succeedFor(hof"a!=b ∧ b!=a", hof"a!=b")
   }
 
-  "dls" should {
+  "wdls" should {
     def succeedFor(
         formulaEquation: PredicateEliminationProblem,
         expectedEquivalentSubstitution: Substitution
     ): Fragment = {
       s"succeed for $formulaEquation" in {
-        dls(formulaEquation) must
-          beSuccessfulTry(beAnEquivalentSubstitutionTo(expectedEquivalentSubstitution))
-      }
-    }
-
-    def extractCorrectly(formulaEquation: PredicateEliminationProblem, expectedInnerFormula: Formula): Fragment = {
-      s"extract $expectedInnerFormula from $formulaEquation" in {
-        dls(formulaEquation) must beSuccessfulTry((_: (Substitution, Formula)) must beLike {
-          case (_, innerFormula: Formula) => innerFormula must beEqualTo(expectedInnerFormula)
-        })
+        wdls(formulaEquation) must
+          beSuccessfulTry(beAnEquivalentSubstitutionTo(formulaEquation, expectedEquivalentSubstitution))
       }
     }
 
     def failFor(formulaEquation: PredicateEliminationProblem): Fragment = {
       s"fail for $formulaEquation" in {
-        dls(formulaEquation) must beFailedTry
+        wdls(formulaEquation) must beFailedTry
       }
     }
 
@@ -299,7 +293,6 @@ class DlsTest extends Specification {
     succeedFor(pep"∃X ∀x (X(x) ∧ R(x))", Substitution(X -> le"λt ∃x x=t"))
     succeedFor(pep"∃X ∀x (X(f(x)) ∨ R(x))", Substitution(X -> le"λt ∃x (t=f(x) ∧ ¬R(x))"))
     succeedFor(pep"∃X X(a, P:o)", Substitution(hov"X:i>o>o" -> le"λ(t:i) λ(p:o) t=a ∧ p=P"))
-    extractCorrectly(pep"∃X X(a, P:o)", hof"X(a, P:o)")
     succeedFor(pep"∃X ∃x X(x)", Substitution(X -> le"λt ⊤"))
     succeedFor(pep"∃X !x (X(a,x) ∨ X(b,x))", Substitution(hov"X:i>i>o", le"λt_1 λt_2 ⊤"))
     failFor(pep"∃X ∀x (X(x,a) ∨ ∀y ¬X(x, y))")
@@ -389,20 +382,20 @@ class DlsTest extends Specification {
   }
 
   private def beAnEquivalentSubstitutionTo(
+      pep: PredicateEliminationProblem,
       equivalentSubstitution: Substitution
-  ): Matcher[(Substitution, Formula)] = {
-    (input: (Substitution, Formula)) =>
+  ): Matcher[Substitution] = {
+    (substitution: Substitution) =>
       {
-        val (substitution, firstOrderPart) = input
         val substitutedFormula = simplifyPropositional(BetaReduction.betaNormalize(
-          substitution(firstOrderPart)
+          substitution(pep.formula)
         ))
         val equivalentSubstitutedFormula = simplifyPropositional(BetaReduction.betaNormalize(
-          equivalentSubstitution(firstOrderPart)
+          equivalentSubstitution(pep.formula)
         ))
         val isValid = Escargot isValid Iff(substitutedFormula, equivalentSubstitutedFormula)
         val errorMessage =
-          s"""|applying $substitution is not equivalent to applying $equivalentSubstitution to $firstOrderPart
+          s"""|applying $substitution is not equivalent to applying $equivalentSubstitution to $pep.formula
             |applying $substitution
             |gives $substitutedFormula
             |applying $equivalentSubstitution

@@ -1,4 +1,4 @@
-package gapt.logic.hol.dls
+package gapt.logic.hol.wdls
 
 import gapt.expr.Abs
 import gapt.expr.BetaReduction
@@ -62,33 +62,28 @@ import gapt.proofs.resolution.Subst
  * A Success return value does not mean that the returned first-order formula is valid, but only that it's equivalent
  * to the given formula equation.
  */
-object dls {
+object wdls {
 
-  def apply(input: PredicateEliminationProblem): Try[(Substitution, Formula)] =
-    val simplifiedInput = PredicateEliminationProblem(
-      input.variablesToEliminate,
-      simplify(input.formula)
-    )
+  def apply(input: PredicateEliminationProblem): Try[Substitution] =
     Try(input.variablesToEliminate.foldLeft(
-      (Substitution(), simplifiedInput.formula)
+      Substitution()
     ) {
-      case ((s_, folPart), x) =>
-        val folInnerFormula = simplify(util.applySubstitutionBetaReduced(s_, folPart))
-        val w = dls_(folInnerFormula, x)
+      case (s_, x) =>
+        val folInnerFormula = simplify(util.applySubstitutionBetaReduced(s_, input.formula))
+        val w = wdls_(folInnerFormula, x)
         val s = util.updateSubstitutionWithBetaReduction(s_, x -> w)
-        (s, folPart)
-
+        s
     })
 
-  private def dls_(f: Formula, X: Var): Expr = new dls(X).solve(f)
+  private def wdls_(f: Formula, X: Var): Expr = new wdls(X).solve(f)
 }
 
-private class dls(X: Var) {
+private class wdls(X: Var) {
 
   def solve(f: Formula): Expr = findWitness(preprocess(f))
 
   private def preprocess(f: Formula): Set[Disjunct] =
-    new DlsPreprocessor(X).preprocess(f)
+    new WdlsPreprocessor(X).preprocess(f)
 
   private def findWitness(disjuncts: Set[Disjunct]): Expr = {
     val xs = util.freshArgumentVariables(X, disjuncts)
@@ -106,7 +101,7 @@ private class dls(X: Var) {
   }
 
   private def findPartialWitness(xs: Seq[Var], d: Disjunct): Formula =
-    new DlsPartialWitnessExtraction(X).findPartialWitness(xs, d)
+    new WdlsPartialWitnessExtraction(X).findPartialWitness(xs, d)
 
   private def witnessCombination(xs: Seq[Var], fs: Seq[Formula], g: Map[Formula, Formula]): Formula = {
     val fg = fs.map(f => f -> util.applySubstitutionBetaReduced(Substitution(X -> Abs(xs, g(f))), f)).toMap
@@ -143,7 +138,7 @@ private object Disjunct {
  *
  * @param X The predicate variable for which the witness is extracted.
  */
-private class DlsPartialWitnessExtraction(X: Var) {
+private class WdlsPartialWitnessExtraction(X: Var) {
 
   def findPartialWitness(
       argumentVariables: Seq[Var],
@@ -179,7 +174,7 @@ private class DlsPartialWitnessExtraction(X: Var) {
  *
  * @param X The predicate variable with respect to which formulas are preprocessed.
  */
-private class DlsPreprocessor(X: Var) {
+private class WdlsPreprocessor(X: Var) {
 
   def preprocess(f: Formula): Set[Disjunct] =
     separateConjuncts(extractDisjuncts(f)) match {

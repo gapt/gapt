@@ -21,8 +21,8 @@ import gapt.formats.InputFile
 import gapt.grammars._
 import gapt.logic._
 import gapt.logic.fol._
-import gapt.logic.hol.{dls => _, scan => _, _}
-import gapt.logic.hol.dls._
+import gapt.logic.hol.{wdls => _, scan => _, _}
+import gapt.logic.hol.wdls._
 import gapt.logic.hol.scan
 import gapt.logic.hol.wscan
 import gapt.proofs.reduction._

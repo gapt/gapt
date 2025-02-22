@@ -14,7 +14,7 @@ import gapt.expr.util.freeVariables
 import gapt.expr.subst.Substitution
 import gapt.expr.formula._
 import gapt.provers.escargot.Escargot
-import gapt.logic.hol.dls.dls
+import gapt.logic.hol.wdls.wdls
 import scala.util.Success
 import gapt.expr.formula.hol.freeHOVariables
 import gapt.logic.hol.ClauseSetPredicateEliminationProblem
