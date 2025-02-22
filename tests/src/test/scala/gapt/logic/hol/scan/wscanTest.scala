@@ -17,7 +17,7 @@ import gapt.logic.hol.scan.DerivationStep
 import gapt.expr.formula.hol.freeHOVariables
 import org.specs2.matcher.MatchResult
 
-class ScanTest extends Specification {
+class wscanTest extends Specification {
   import gapt.examples.predicateEliminationProblems._
 
   def is = s2"""
