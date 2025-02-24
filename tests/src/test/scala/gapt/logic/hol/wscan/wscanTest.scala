@@ -55,19 +55,19 @@ class wscanTest extends Specification {
     (solution: Option[(Derivation, Substitution)]) =>
       solution must beSome[(Derivation, Substitution)].like {
         case (derivation: Derivation, witnesses: Substitution) => {
-          val substitutedInput = witnesses(input.clauses).map(_.toFormula).map(BetaReduction.betaNormalize)
+          val substitutedInput = witnesses(input.firstOrderClauses).map(_.toFormula).map(BetaReduction.betaNormalize)
           val beWithoutQuantifiedVariables: Matcher[HOLClause] = {
             (c: HOLClause) =>
               {
-                (freeHOVariables(c.toFormula).intersect(input.variablesToEliminate.toSet).isEmpty, s"$c contains at least one quantified variable from ${input.variablesToEliminate}")
+                (freeHOVariables(c.toFormula).intersect(input.varsToEliminate.toSet).isEmpty, s"$c contains at least one quantified variable from ${input.varsToEliminate}")
               }
           }
 
           val clauseSet = derivation.conclusion
           clauseSet
             .must(contain(beWithoutQuantifiedVariables).foreach)
-            .and(witnesses.domain.mustEqual(input.variablesToEliminate.toSet)
-              .mapMessage(_ => s"domain of substitution is not ${input.variablesToEliminate}"))
+            .and(witnesses.domain.mustEqual(input.varsToEliminate.toSet)
+              .mapMessage(_ => s"domain of substitution is not ${input.varsToEliminate}"))
             .and(substitutedInput.must(beEquivalentTo(clauseSet.map(_.toFormula)))
               .mapMessage(_ => s"substituted input is not equivalent to output clause set"))
         }

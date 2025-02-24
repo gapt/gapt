@@ -201,7 +201,7 @@ def additionalPrinters: PartialFunction[Any, pprint.Tree] = {
   case Derivation(initialClauseSet, inferences) => pprint.Tree.Apply(
       "Derivation", {
         val clauseSets = inferences.scanLeft(initialClauseSet)((c, i) =>
-          ClauseSetPredicateEliminationProblem(c.variablesToEliminate, i(c.clauses))
+          ClauseSetPredicateEliminationProblem(c.varsToEliminate, i(c.firstOrderClauses))
         )
         Iterator(printer.treeify(initialClauseSet, true, true)) ++ inferences.zip(clauseSets.tail).flatMap {
           case (inference, clauses) => Seq(
@@ -383,7 +383,7 @@ def printResultInteractive(
 
 def checkSolution(input: ClauseSetPredicateEliminationProblem, output: (Derivation, Substitution)): Boolean = {
   val (derivation, witness) = output
-  checkWitness(And(input.clauses.map(_.toFormula)), derivation.conclusion.toFormula, witness)
+  checkWitness(And(input.firstOrderClauses.map(_.toFormula)), derivation.conclusion.toFormula, witness)
 }
 
 def checkWitness(input: Formula, output: Formula, witness: Substitution): Boolean = {

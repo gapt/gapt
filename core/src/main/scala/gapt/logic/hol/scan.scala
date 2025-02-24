@@ -49,6 +49,22 @@ import gapt.logic.hol.PredicateEliminationProblem
 import gapt.logic.hol.ClauseSetPredicateEliminationProblem
 
 object scan {
+
+  /**
+    * Runs the SCAN algorithm on the input predicate elimination problem in clause form. 
+    * If successful, returns a derivation whose conclusion 
+    * does not contain any of the variables from the input predicate elimination problem.
+    *
+    * @param input predicate elimination problem in clause form
+    * @param oneSidedOnly controls whether during the purification processes of SCAN only one-sided pointed clauses should be purified, i.e. pointed clauses P where the designated literal of P only occurs with a single polarity in P.
+    * @param allowResolutionOnBaseLiterals controls whether resolution on base literals is allowed. Base literals are those literals whose predicate symbol is not in the variables of the input predicate elimination problem
+    * @param derivationLimit controls the maximum number of inferences that 
+    * derivations should have and makes sure that only derivations are returned that satisfy this limit. 
+    * A value of None means that no limit is enforced, but note that this might cause non-termination.
+    * @param attemptLimit controls the maximum number of SCAN runs that are to be performed to find an eliminating derivation. If None is passed no limit is enforced, but note that this might cause non-termination.
+    * @return If an eliminating deirvation D is found within the given attemptLimit whose size is within derivationLimit and which respects the options oneSidedOnly and allowResolutionOnBaseLiterals, then the result is Right(D).
+    * Otherwise Left(I) is returned where I is an iterator over the found derivations that do not the derivationLimit.
+    */
   def apply(
       input: ClauseSetPredicateEliminationProblem,
       oneSidedOnly: Boolean = true,
@@ -72,6 +88,18 @@ object scan {
       case Some(derivation) => Right(derivation)
   }
 
+  /**
+    * Runs the SCAN algorithm on the input predicate elimination problem in clause form and collects different possible derivations in an iterator. 
+    *
+    * @param input predicate elimination problem in clause form
+    * @param oneSidedOnly controls whether during the purification processes of SCAN only one-sided pointed clause should be purified, i.e. a pointed clause P where the designated literal of P only occurs with a single polarity in P.
+    * @param allowResolutionOnBaseLiterals controls whether resolution on base literals is allowed. Base literals are those literals whose predicate symbol is not in the variables to be eliminated in the predicate elimination problem
+    * @param derivationLimit controls the maximum number of inferences that 
+    * derivations should have and makes sure that only derivations are returned that satisfy this limit. 
+    * A value of None means that no limit is enforced, but note that this might cause non-termination.
+    * @return Returns an iterator of derivations found during backtracked runs of SCAN. Finding these multiple derivations is done by backtracking on the different choices of purified pointed clause during the purification process of SCAN.
+    * If a found derivation does not satisfy derivation limit, it is returned as Left, otherwise it is returned as Right.
+    */
   def derivationsFrom(
       input: ClauseSetPredicateEliminationProblem,
       oneSidedOnly: Boolean = true,
@@ -81,36 +109,107 @@ object scan {
     assert(derivationLimit.isEmpty || derivationLimit.get >= 0, "derivation limit must be non-negative")
     val states = saturateByPurification(State.initialFrom(
       input,
-      derivationLimit = derivationLimit,
+      remainingAllowedInferences = derivationLimit,
       oneSidedOnly = oneSidedOnly,
       allowResolutionOnBaseLiterals = allowResolutionOnBaseLiterals
     ))
     states.map(state => state.map(_.derivation).left.map(_.derivation))
   }
 
+  /**
+    * A pointed clause (in analogy to pointed sets in mathematics) is a clause together with a choice of one of its literals, called the designated literal.
+    *
+    * @param clause the underlying clause
+    * @param index the index of the literal within the clause
+    */
   case class PointedClause(clause: HOLClause, index: SequentIndex):
-    def atom = clause(index)
-    def args = atom match
+    /**
+      * Returns the designated literal of the pointed clause
+      */
+    def designatedLiteral = clause(index)
+
+    /**
+      * Returns rguments to the designated literal
+      */
+    def args = designatedLiteral match
       case Atom(_, args) => args
 
-    def hoVar: VarOrConst = atom match
+    /**
+      * Returns the symbol underlying the designated literal of this pointed clause
+      */
+    def symbol: VarOrConst = designatedLiteral match
       case Atom(v @ VarOrConst(_, _, _), _) => v
 
-    def isVar: Boolean = hoVar match {
-      case _: Var => true
-      case _      => false
+    /**
+      * Returns true, if the symbol of the pointed clause is a [[gapt.expr.Var]] and false otherwise
+      */
+    def isVar: Boolean = symbol match {
+      case Var(_, _) => true
+      case _         => false
     }
 
+  /**
+    * One step of a SCAN derivation
+    */
   enum DerivationStep:
+    /**
+      * Constraint resolution step. Pointed clauses are used to indicate not only the clause on which resolution is performed, but also the specific literal.
+      *
+      * @param left left resolution premise
+      * @param right right resolution premise
+      */
     case ConstraintResolution(left: PointedClause, right: PointedClause)
-    case ConstraintFactoring(clause: HOLClause, leftIndex: SequentIndex, rightIndex: SequentIndex)
-    case PurifiedClauseDeletion(candidate: PointedClause)
-    case TautologyDeletion(tautology: HOLClause)
-    case SubsumptionDeletion(subsumer: HOLClause, subsumee: HOLClause, substitution: FOLSubstitution)
-    case ConstraintElimination(clause: HOLClause, index: SequentIndex, substitution: FOLSubstitution)
-    case ExtendendPurityDeletion(hoVar: Var, polarity: gapt.logic.Polarity)
 
-    def addedRemovedClauses(clauses: Set[HOLClause]): (Set[HOLClause], Set[HOLClause]) =
+    /**
+      * Constraint factoring step.
+      *
+      * @param clause Clause to perform factoring on
+      * @param principalIndex index of the literal to remain after the factoring step
+      * @param auxiliaryIndex index of the literal to be removed after the factoring step
+      */
+    case ConstraintFactoring(clause: HOLClause, principalIndex: SequentIndex, rightIndex: SequentIndex)
+
+    /**
+      * Purified clause deletion step.
+      *
+      * @param pointedClause pointed clause to be deleted
+      */
+    case PurifiedClauseDeletion(pointedClause: PointedClause)
+
+    /**
+      * Extended purity deletion step.
+      *
+      * @param variable the variable on which extended purity deletion can be applied
+      * @param polarity the polarity with which extended purity deletion is applied
+      */
+    case ExtendendPurityDeletion(variable: Var, polarity: gapt.logic.Polarity)
+
+    /**
+      * Tautology deletion step.
+      *
+      * @param tautology the clause that is a tautology
+      */
+    case TautologyDeletion(tautology: HOLClause)
+
+    /**
+      * Subsumption deletion step.
+      *
+      * @param subsumer the clause that subsumes subsumee
+      * @param subsumee the clause that is subsumed by subsumer
+      * @param substitution the substitution that shows that subsumer subsumes subsumee
+      */
+    case SubsumptionDeletion(subsumer: HOLClause, subsumee: HOLClause, substitution: FOLSubstitution)
+
+    /**
+      * Constraint elimination step.
+      *
+      * @param clause the clause to apply constraint elimination to
+      * @param constraintIndex the index of the constraint to be eliminated
+      * @param substitution the substitution unifying the arguments in the constraint
+      */
+    case ConstraintElimination(clause: HOLClause, constraintIndex: SequentIndex, substitution: FOLSubstitution)
+
+    private def addedRemovedClauses(clauses: Set[HOLClause]): (Set[HOLClause], Set[HOLClause]) =
       this match
         case ConstraintResolution(left, right)                     => (Set(constraintResolvent(left, right)), Set.empty)
         case f: ConstraintFactoring                                => (Set(factor(f)), Set.empty)
@@ -128,9 +227,124 @@ object scan {
           (Set.empty, removed)
         }
 
+    /**
+      * Applies the derivation step to a given clause set returning the resulting conclusion
+      *
+      * @param clauses the premise of the derivation step
+      * @return the clause set resulting from applying the derivation step to the premise
+      */
     def apply(clauses: Set[HOLClause]): Set[HOLClause] =
       val (added, removed) = addedRemovedClauses(clauses)
       (clauses ++ added) -- removed
+
+  /**
+    * A SCAN derivation
+    *
+    * @param from the initial predicate elimination problem from which we start
+    * @param derivationSteps the derivation steps performed
+    */
+  case class Derivation(
+      from: ClauseSetPredicateEliminationProblem,
+      derivationSteps: List[DerivationStep]
+  ):
+    /**
+      * @return The derivation resulting from this by applying the first derivation step to the input predicate elimination problem and keeping the remaining derivation steps.
+      * Returns [[UnsupportedOperationException]] if there are no derivation steps
+      */
+    def tail: Derivation = derivationSteps match
+      case head :: next => Derivation(
+          ClauseSetPredicateEliminationProblem(
+            from.varsToEliminate,
+            head(from.firstOrderClauses)
+          ),
+          next
+        )
+      case Nil => throw UnsupportedOperationException("tail of empty derivation")
+
+    /**
+      * @return conclusion, i.e. the last clause set, of the derivation
+      */
+    def conclusion: Set[HOLClause] = derivationSteps match
+      case Nil => from.firstOrderClauses
+      case head :: next => Derivation(
+          ClauseSetPredicateEliminationProblem(
+            from.varsToEliminate,
+            head(from.firstOrderClauses)
+          ),
+          next
+        ).conclusion
+
+  object Derivation:
+    /**
+      * @param from predicate elimination problem to start from
+      * @return a derivation without derivation steps, starting from an initial predicate elimination problem
+      */
+    def emptyFrom(from: ClauseSetPredicateEliminationProblem): Derivation =
+      Derivation(from, List.empty)
+
+  /**
+    * Describes the state of the SCAN saturation process at any given time
+    *
+    * @constructor
+    * @param activeClauses the active clause set
+    * @param derivation the current derivation we are at
+    * @param remainingAllowedInferences the remaining number of inference steps. If None, an arbitrary amount of inferences is allowed
+    * @param oneSidedOnly @see oneSidedOnly option of scan
+    * @param allowResolutionOnBaseLiterals @see allowResolutionOnBaseLiterals option of scsan
+    */
+  case class State(
+      activeClauses: Set[HOLClause],
+      derivation: Derivation,
+      remainingAllowedInferences: Option[Int],
+      oneSidedOnly: Boolean,
+      allowResolutionOnBaseLiterals: Boolean
+  ):
+    def variablesToEliminate = derivation.from.varsToEliminate
+    def isEliminated = activeClauses.forall(c => freeHOVariables(c.toFormula).intersect(variablesToEliminate.toSet).isEmpty)
+    def isPointedClauseWithEliminationVariable(pointedClause: PointedClause) =
+      pointedClause.isVar && variablesToEliminate.contains(pointedClause.symbol.asInstanceOf[Var])
+
+  object State:
+    /**
+      * Returns an initial state given a predicate elimination problem and global parameters for the saturation process
+      *
+      * @param input the predicate elimination problem form which to start
+      * @param remainingAllowedInferences @see remainingAllowedInferences field of State
+      * @param oneSidedOnly @see oneSidedOnly option of scan
+      * @param allowResolutionOnBaseLiterals @see allowResolutionOnBaseLiterals option of
+      * @return
+      */
+    def initialFrom(
+        input: ClauseSetPredicateEliminationProblem,
+        remainingAllowedInferences: Option[Int],
+        oneSidedOnly: Boolean,
+        allowResolutionOnBaseLiterals: Boolean
+    ): State = State(
+      input.firstOrderClauses,
+      Derivation.emptyFrom(input),
+      remainingAllowedInferences,
+      oneSidedOnly,
+      allowResolutionOnBaseLiterals
+    )
+
+  /**
+    * Applies the SCAN purification process to a given state with a given pointed clause which need not necessarily be part of the active clauses the given state
+    *
+    * @param state state at which to perform purification
+    * @param pointedClause pointed clause with respect to which to perform purification
+    * @return if the purification process could be completed within the limits given in state, returns Right with the new state, otherwise returns Left with a state where the limit was reached
+    */
+  def purifyPointedClause(state: State, pointedClause: PointedClause): Either[State, State] = {
+    val resolutionInferences = nonRedundantResolutionInferences(state.activeClauses, pointedClause)
+    if resolutionInferences.isEmpty then Right(state)
+    else
+      for
+        stateAfterResolvents <- applyDerivationSteps(state, resolutionInferences)
+        stateAfterFactors <- addFactors(stateAfterResolvents)
+        stateAfterRedundancyElimination <- eliminateRedundancies(stateAfterFactors)
+        result <- purifyPointedClause(stateAfterRedundancyElimination, pointedClause)
+      yield result
+  }
 
   def factor(factoring: DerivationStep.ConstraintFactoring): HOLClause = {
     val DerivationStep.ConstraintFactoring(clause, leftIndex, rightIndex) = factoring
@@ -152,57 +366,6 @@ object scan {
       case ((_, leftIndex), (_, rightIndex)) => DerivationStep.ConstraintFactoring(clause, Suc(leftIndex), Suc(rightIndex))
     }.toSet
   }
-
-  case class Derivation(initialPep: ClauseSetPredicateEliminationProblem, inferences: List[DerivationStep]):
-    def tail: Derivation = inferences match
-      case head :: next => Derivation(
-          ClauseSetPredicateEliminationProblem(
-            initialPep.variablesToEliminate,
-            head(initialPep.clauses)
-          ),
-          next
-        )
-      case Nil => throw UnsupportedOperationException("tail of empty derivation")
-
-    def conclusion: Set[HOLClause] = inferences match
-      case Nil => initialPep.clauses
-      case head :: next => Derivation(
-          ClauseSetPredicateEliminationProblem(
-            initialPep.variablesToEliminate,
-            head(initialPep.clauses)
-          ),
-          next
-        ).conclusion
-
-  object Derivation:
-    def emptyFrom(initialPep: ClauseSetPredicateEliminationProblem): Derivation = Derivation(initialPep, List.empty)
-
-  case class State(
-      activeClauses: Set[HOLClause],
-      derivation: Derivation,
-      derivationLimit: Option[Int],
-      oneSidedOnly: Boolean,
-      allowResolutionOnBaseLiterals: Boolean
-  ):
-    def variablesToEliminate = derivation.initialPep.variablesToEliminate
-    def isEliminated = activeClauses.forall(c => freeHOVariables(c.toFormula).intersect(variablesToEliminate.toSet).isEmpty)
-    def isPointedClauseWithEliminationVariable(pointedClause: PointedClause) =
-      pointedClause.isVar && variablesToEliminate.contains(pointedClause.hoVar.asInstanceOf[Var])
-
-  object State:
-    def initialFrom(
-        input: ClauseSetPredicateEliminationProblem,
-        derivationLimit: Option[Int],
-        oneSidedOnly: Boolean,
-        allowResolutionOnBaseLiterals: Boolean
-    ): State =
-      State(
-        input.clauses,
-        Derivation.emptyFrom(input),
-        derivationLimit,
-        oneSidedOnly,
-        allowResolutionOnBaseLiterals
-      )
 
   def subsumptionSubstitution(subsumer: HOLClause, subsumee: HOLClause): Option[FOLSubstitution] = {
     val subsumerHoVarsAsConsts = subsumer.map { case Atom(VarOrConst(v, ty, tys), args) => Atom(Const(v, ty, tys), args) }
@@ -231,7 +394,7 @@ object scan {
     val purifications: Seq[DerivationStep.PurifiedClauseDeletion] = pointedClauses(state.activeClauses).filter { p =>
       state.isPointedClauseWithEliminationVariable(p)
     }.flatMap[DerivationStep.PurifiedClauseDeletion] { rc =>
-      val hoVar @ Var(_, _) = rc.hoVar: @unchecked
+      val hoVar @ Var(_, _) = rc.symbol: @unchecked
       val allFactorsRedundant = factoringInferences(rc.clause).forall {
         case inference: DerivationStep.ConstraintFactoring => isRedundant(state.activeClauses, factor(inference))
       }
@@ -246,7 +409,7 @@ object scan {
 
     val singleInference = extendedPurityDeletion.orElse(redundancyElimination).orElse(factoring)
 
-    val (oneSidedPurifications, mixedPurifications) = purifications.partition(i => isOneSided(i.candidate))
+    val (oneSidedPurifications, mixedPurifications) = purifications.partition(i => isOneSided(i.pointedClause))
 
     val activePointedClauseCandidates = state.activeClauses
       .flatMap(c => pointedClauses(c))
@@ -272,7 +435,7 @@ object scan {
 
   def isOneSided(pointedClause: PointedClause): Boolean = {
     pointedClause.clause.cedent(!pointedClause.index.polarity).forall {
-      case Atom(v: VarOrConst, _) => v != pointedClause.hoVar
+      case Atom(v: VarOrConst, _) => v != pointedClause.symbol
       case _                      => true
     }
   }
@@ -287,7 +450,7 @@ object scan {
 
   def resolutionInferences(clauses: Set[HOLClause], resolutionCandidate: PointedClause): Set[DerivationStep.ConstraintResolution] = {
     pointedClauses(clauses).filter {
-      rc => rc.hoVar == resolutionCandidate.hoVar && rc.index.polarity == !resolutionCandidate.index.polarity
+      rc => rc.symbol == resolutionCandidate.symbol && rc.index.polarity == !resolutionCandidate.index.polarity
     }.map(rc => DerivationStep.ConstraintResolution(resolutionCandidate, rc))
   }
 
@@ -423,10 +586,10 @@ object scan {
     derivationSteps.foldLeft[Either[State, State]](Right(state)) {
       case (Left(state), _) => Left[State, State](state)
       case (Right(state), derivationStep) => {
-        if state.derivationLimit.isDefined && state.derivationLimit.get <= 0 then Left(state)
+        if state.remainingAllowedInferences.isDefined && state.remainingAllowedInferences.get <= 0 then Left(state)
         else {
           // do not count redundancy elimination to the derivation limit
-          val updatedLimit = state.derivationLimit.map { limit =>
+          val updatedLimit = state.remainingAllowedInferences.map { limit =>
             derivationStep match
               case _: (DerivationStep.ConstraintResolution
                     | DerivationStep.ConstraintFactoring
@@ -436,24 +599,12 @@ object scan {
           }
           Right(state.copy(
             activeClauses = derivationStep(state.activeClauses),
-            derivation = state.derivation.copy(inferences = state.derivation.inferences :+ derivationStep),
-            derivationLimit = updatedLimit
+            derivation = state.derivation.copy(derivationSteps = state.derivation.derivationSteps :+ derivationStep),
+            remainingAllowedInferences = updatedLimit
           ))
         }
       }
     }
-  }
-
-  def purifyPointedClause(state: State, pointedClause: PointedClause): Either[State, State] = {
-    val resolutionInferences = nonRedundantResolutionInferences(state.activeClauses, pointedClause)
-    if resolutionInferences.isEmpty then Right(state)
-    else
-      for
-        stateAfterResolvents <- applyDerivationSteps(state, resolutionInferences)
-        stateAfterFactors <- addFactors(stateAfterResolvents)
-        stateAfterRedundancyElimination <- eliminateRedundancies(stateAfterFactors)
-        result <- purifyPointedClause(stateAfterRedundancyElimination, pointedClause)
-      yield result
   }
 
   def freeFOLVariables(expr: Expr): Set[FOLVar] =

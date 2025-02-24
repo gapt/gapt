@@ -53,6 +53,18 @@ import gapt.expr.formula.fol.FOLFormula
 import gapt.expr.formula.Neg
 
 object wscan {
+
+  /**
+    * Runs WSCAN algorithm on the input predicate elimination problem by running SCAN and attempting to find a WSOQE-witness for the input from a terminating derivation.
+    *
+    * @param input input predicate elimination problem in clause set form
+    * @param oneSidedOnly @see oneSidedOnly option of scan
+    * @param allowResolutionOnBaseLiterals @see allowResolutiononBaseLiterals option of scan
+    * @param derivationLimit @see derivationLimit option of scan
+    * @param attemptLimit @see attemptLimit option of scan
+    * @param witnessLimit controls the amount of inferences to be performed during the saturation process to construct witnesses
+    * @return an eliminating derivation from the input clause set and a substitution satisfying the WSOQE-condition, if successful. Otherwise returns None
+    */
   def apply(
       input: ClauseSetPredicateEliminationProblem,
       oneSidedOnly: Boolean = true,
@@ -64,6 +76,17 @@ object wscan {
     witnesses(input, oneSidedOnly, allowResolutionOnBaseLiterals, derivationLimit, attemptLimit, witnessLimit).nextOption()
   }
 
+  /**
+    * Runs the SCAN algorithm multiple times on the input predicate elimination problem to find several derivations and corresponding witnesses
+    *
+    * @param input input predicate elimination problem in clause set form
+    * @param oneSidedOnly @see oneSidedOnly option of scan
+    * @param allowResolutionOnBaseLiterals @see allowResolutiononBaseLiterals option of scan
+    * @param derivationLimit @see derivationLimit option of scan
+    * @param attemptLimit @see attemptLimit option of scan
+    * @param witnessLimit @see witnessLimit option of wscan
+    * @return an iterator eliminating derivation from the input clause set and a substitution satisfying the WSOQE-condition, if successful
+    */
   def witnesses(input: ClauseSetPredicateEliminationProblem, oneSidedOnly: Boolean = true, allowResolutionOnBaseLiterals: Boolean = false, derivationLimit: Option[Int] = Some(100), attemptLimit: Option[Int] = Some(10), witnessLimit: Option[Int] = Some(2)): Iterator[(Derivation, Substitution)] = {
     val baseIterator = scan.derivationsFrom(
       input,
@@ -94,7 +117,7 @@ object wscan {
 
   def witnessSubstitution(derivation: Derivation, limit: Option[Int]): Option[Substitution] = {
     def helper(derivation: Derivation): Option[Substitution] = {
-      derivation.inferences match
+      derivation.derivationSteps match
         case head :: next => {
           head match
             case i: (DerivationStep.ConstraintResolution | DerivationStep.ConstraintFactoring | DerivationStep.TautologyDeletion | DerivationStep.SubsumptionDeletion | DerivationStep.ConstraintElimination) => helper(derivation.tail)
@@ -108,13 +131,13 @@ object wscan {
             case DerivationStep.PurifiedClauseDeletion(candidate) => {
               for
                 w <- helper(derivation.tail)
-                ext <- pResU(candidate, limit).map(Substitution(candidate.hoVar.asInstanceOf[Var], _))
+                ext <- pResU(candidate, limit).map(Substitution(candidate.symbol.asInstanceOf[Var], _))
               yield w.compose(ext)
             }
         }
-        case Nil => Some(Substitution(derivation.initialPep.variablesToEliminate.map {
+        case Nil => Some(Substitution(derivation.from.varsToEliminate.map {
             case v @ Var(name, ty @ FunctionType(To, args)) =>
-              val predicateVar = rename.awayFrom(containedNames(derivation.initialPep.clauses.toFormula)).fresh(Var(s"W$name", ty))
+              val predicateVar = rename.awayFrom(containedNames(derivation.from.firstOrderClauses.toFormula)).fresh(Var(s"W$name", ty))
               (v, predicateVar)
           }.toMap))
     }
@@ -139,15 +162,15 @@ object wscan {
 
     val freshConstants = rename.awayFrom(containedNames(pointedClause.clause)).freshStream("c").take(pointedClause.args.size).map(FOLConst(_)).toList
 
-    val Atom(head, args) = pointedClause.atom: @unchecked
+    val Atom(head, args) = pointedClause.designatedLiteral: @unchecked
     val unitClause = HOLClause(Seq((Atom(head, freshConstants), !pointedClause.index.polarity)))
     val purificationResult = scan.purifyPointedClause(
       scan.State.initialFrom(
         ClauseSetPredicateEliminationProblem(
-          Seq(pointedClause.hoVar.asInstanceOf[Var]),
+          Seq(pointedClause.symbol.asInstanceOf[Var]),
           Set(unitClause)
         ),
-        derivationLimit = limit,
+        remainingAllowedInferences = limit,
         oneSidedOnly = false,
         allowResolutionOnBaseLiterals = false
       ),

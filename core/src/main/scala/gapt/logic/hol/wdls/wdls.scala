@@ -27,14 +27,13 @@ import gapt.logic.hol.PredicateEliminationProblem
 import gapt.proofs.resolution.Subst
 
 /**
- * Uses the DLS algorithm to find a witness for formula equations of the form
- * ∃X_1 ... ∃X_n φ where φ is a first order formula and X_1,...,X_n are second-order variables.
+ * Uses the DLS algorithm to find a witness for a predicate elimination problem of the form
+ * ∃X₁ ... ∃Xₙ φ where φ is a first order formula and X₁,...,Xₙ are second-order variables.
  *
- * If the method succeeds, the return value is a tuple of a substitution of the second order variables in the
- * formula equation and a first order formula such that applying the substitution to the first-order formula
- * is a first-order formula which is equivalent to the given formula equation.
+ * If the method succeeds, the return value is a substitution of the variables in the
+ * input predicate elimination problem such that applying the substitution to φ gives a first-order formula which is equivalent to ∃X₁ ... ∃Xₙ φ.
  *
- * A sufficient criterion for the success of the method in the case of formula equations of the form ∃X φ is that
+ * A sufficient criterion for the success of the method is
  * φ can be put into the form
  *
  * (α_1(X) ∧ β_1(X)) ∨ ... ∨ (α_n(X) ∧ β_n(X))
@@ -53,23 +52,20 @@ import gapt.proofs.resolution.Subst
  * - distributing conjunctions over disjunctions in subformulae where positive and negative occurrences of X are not
  *   already separated by a conjunction.
  *
- * For formula equations with more than one variable the innermost formula equation is solved first,
- * then reduced to a first-order formula by applying the found substitution.
- * The method is then applied recursively on the resulting formula equation with one variable less.
+ * The method solves the problem for multiple variables by successive elimination of a single variable 
+ * starting with Xₙ, then X_{n-1} and so on.
  *
  * A Failure return value does not mean that the quantifier elimination is impossible.
  * It just means that this algorithm could not find a witness which allows elimination of the second order quantifier.
- * A Success return value does not mean that the returned first-order formula is valid, but only that it's equivalent
- * to the given formula equation.
  */
 object wdls {
 
   def apply(input: PredicateEliminationProblem): Try[Substitution] =
-    Try(input.variablesToEliminate.foldLeft(
+    Try(input.varsToEliminate.foldLeft(
       Substitution()
     ) {
       case (s_, x) =>
-        val folInnerFormula = simplify(util.applySubstitutionBetaReduced(s_, input.formula))
+        val folInnerFormula = simplify(util.applySubstitutionBetaReduced(s_, input.firstOrderPart))
         val w = wdls_(folInnerFormula, x)
         val s = util.updateSubstitutionWithBetaReduction(s_, x -> w)
         s
