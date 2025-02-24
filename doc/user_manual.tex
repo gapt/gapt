@@ -2402,7 +2402,7 @@ Passing \texttt{oneSidedOnly=true} when running SCAN ensures that a limit of \te
 By the correctness of SCAN we know that the input formula is equivalent to the conclusion of the SCAN derivation which is a first-order clause set.
 We can thus check if the conclusion is logically equivalent to substituting the computed witness for $X$ in the input formula by constructing the first-order WSOQE-condition and verifying that it is valid using a first-order theorem prover like Escargot:
 \begin{clilisting}
-gapt> Escargot.isValid(Iff(derivation.conclusion.toFormula, BetaReduction.betaNormalize(witness(clauseSetPep.clauses.toFormula))))
+gapt> Escargot.isValid(Iff(derivation.conclusion.toFormula, BetaReduction.betaNormalize(witness(clauseSetPep.firstOrderClauses.toFormula))))
 val res1: Boolean = true
 
 \end{clilisting}
@@ -2444,7 +2444,7 @@ val solution: gapt.expr.subst.Substitution = Substitution(X:i>o -> λx_0 a = x_0
 The returned value is a substitution such that applying it to the first-order part of the input fulfils \eqref{eq:second-order-elimination-with-witness}.
 Since the input formula is valid this equivalent to the resulting formula being valid
 \begin{clilisting}
-gapt> Escargot.isValid(BetaReduction.betaNormalize(solution(H.formula)))
+gapt> Escargot.isValid(BetaReduction.betaNormalize(solution(H.firstOrderPart)))
 val res2: Boolean = true
 
 \end{clilisting}
@@ -2468,7 +2468,7 @@ val s: gapt.expr.subst.Substitution = Substitution(X:i>o -> λx_0 a = x_0 ∨ b 
 
 On success a substitution is returned, which when applied to the input formula yields a valid formula.
 \begin{clilisting}
-gapt> Escargot.isValid( BetaReduction.betaNormalize( s(F.formula) ) )
+gapt> Escargot.isValid( BetaReduction.betaNormalize( s(F.firstOrderPart) ) )
 val res3: Boolean = true
 
 \end{clilisting}
