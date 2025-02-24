@@ -38,8 +38,8 @@ class wdlsTest extends Specification {
         expectedResult: Set[HOLSequent]
     ): Fragment = {
       val (secondOrderVariables, formula) = (
-        formulaEquation.variablesToEliminate,
-        formulaEquation.formula
+        formulaEquation.varsToEliminate,
+        formulaEquation.firstOrderPart
       )
       assert(secondOrderVariables.size == 1)
       s"succeed for $formula" >> {
@@ -388,10 +388,10 @@ class wdlsTest extends Specification {
     (substitution: Substitution) =>
       {
         val substitutedFormula = simplifyPropositional(BetaReduction.betaNormalize(
-          substitution(pep.formula)
+          substitution(pep.firstOrderPart)
         ))
         val equivalentSubstitutedFormula = simplifyPropositional(BetaReduction.betaNormalize(
-          equivalentSubstitution(pep.formula)
+          equivalentSubstitution(pep.firstOrderPart)
         ))
         val isValid = Escargot isValid Iff(substitutedFormula, equivalentSubstitutedFormula)
         val errorMessage =
