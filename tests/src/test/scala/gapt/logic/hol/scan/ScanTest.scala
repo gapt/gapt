@@ -12,7 +12,7 @@ import gapt.logic.hol.ClauseSetPredicateEliminationProblem
 import org.specs2.matcher.Matcher
 import org.specs2.Specification
 import gapt.proofs.resolution.structuralCNF
-import gapt.logic.hol.scan.scan.ResolutionCandidate
+import gapt.logic.hol.scan.scan.PointedClause
 import gapt.logic.hol.scan.scan.Inference
 import gapt.expr.formula.hol.freeHOVariables
 import org.specs2.matcher.MatchResult

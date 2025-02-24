@@ -228,8 +228,8 @@ def additionalPrinters: PartialFunction[Any, pprint.Tree] = {
         }.iterator
       }
     )
-  case rc: ResolutionCandidate => printResolutionCandidate(rc)
-  case hos: Sequent[_]         => printSequent(hos)
+  case rc: PointedClause => printResolutionCandidate(rc)
+  case hos: Sequent[_]   => printSequent(hos)
   case Inference.Resolution(left, right) => pprint.Tree.Apply(
       "Resolution",
       Iterator(
@@ -270,7 +270,7 @@ def printSequent[T](sequent: Sequent[T]): pprint.Tree = {
   pprint.Tree.Literal(clauseString.strip())
 }
 
-def printResolutionCandidate(resolutionCandidate: ResolutionCandidate): pprint.Tree = {
+def printResolutionCandidate(resolutionCandidate: PointedClause): pprint.Tree = {
   def underlineIndex(atom: Atom, index: SequentIndex) = (atom, index) match {
     case (a, i) if i == resolutionCandidate.index => s"{${a.toUntypedString}}"
     case (a, i)                                   => a.toUntypedString

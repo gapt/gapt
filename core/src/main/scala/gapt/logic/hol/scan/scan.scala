@@ -50,7 +50,7 @@ import gapt.logic.hol.ClauseSetPredicateEliminationProblem
 
 object scan {
 
-  case class ResolutionCandidate(clause: HOLClause, index: SequentIndex):
+  case class PointedClause(clause: HOLClause, index: SequentIndex):
     def atom = clause(index)
     def args = atom match
       case Atom(_, args) => args
@@ -63,7 +63,7 @@ object scan {
       case _      => false
     }
 
-    def abstracted: (ResolutionCandidate, Seq[FOLVar]) =
+    def abstracted: (PointedClause, Seq[FOLVar]) =
       val Atom(symbol @ VarOrConst(_, _, _), args) = this.atom: @unchecked
       val nameGen = rename.awayFrom(freeFOLVariables(clause.toFormula))
       val vars = nameGen.freshStream("u").take(args.size).map(FOLVar(_)).to(Seq)
@@ -78,12 +78,12 @@ object scan {
         ).map { case a: Atom => a }
       val idx = abstractedClause.cedent(index.polarity).indexOf(abstractedAtom)
       val sequentIndex = SequentIndex(index.polarity, idx)
-      (ResolutionCandidate(abstractedClause, sequentIndex), vars)
+      (PointedClause(abstractedClause, sequentIndex), vars)
 
   enum Inference:
-    case Resolution(left: ResolutionCandidate, right: ResolutionCandidate)
+    case Resolution(left: PointedClause, right: PointedClause)
     case Factoring(clause: HOLClause, leftIndex: SequentIndex, rightIndex: SequentIndex)
-    case Purification(candidate: ResolutionCandidate)
+    case Purification(candidate: PointedClause)
     case TautologyDeletion(tautology: HOLClause)
     case Subsumption(subsumer: HOLClause, subsumee: HOLClause, substitution: FOLSubstitution)
     case ConstraintElimination(clause: HOLClause, index: SequentIndex, substitution: FOLSubstitution)
@@ -260,28 +260,28 @@ object scan {
       resolutionPossibilities
   }
 
-  def nonRedundantResolutionInferences(clauses: Set[HOLClause], candidate: ResolutionCandidate) = {
+  def nonRedundantResolutionInferences(clauses: Set[HOLClause], candidate: PointedClause) = {
     resolutionInferences(candidate, clauses - candidate.clause).filter {
       case Inference.Resolution(left, right) => !isRedundant(clauses, resolve(left, right))
     }.toSeq
   }
 
-  def isInductive(candidate: ResolutionCandidate): Boolean = {
+  def isInductive(candidate: PointedClause): Boolean = {
     candidate.clause.cedent(!candidate.index.polarity).exists {
       case Atom(v @ VarOrConst(_, _, _), _) if v == candidate.hoVar => true
       case _                                                        => false
     }
   }
 
-  def resolutionCandidates(clause: HOLClause): Set[ResolutionCandidate] = {
-    clause.indices.map(ResolutionCandidate(clause, _)).toSet
+  def resolutionCandidates(clause: HOLClause): Set[PointedClause] = {
+    clause.indices.map(PointedClause(clause, _)).toSet
   }
 
-  def resolutionCandidates(clauses: Set[HOLClause]): Set[ResolutionCandidate] = {
+  def resolutionCandidates(clauses: Set[HOLClause]): Set[PointedClause] = {
     clauses.flatMap(resolutionCandidates)
   }
 
-  def resolutionInferences(resolutionCandidate: ResolutionCandidate, clauses: Set[HOLClause]): Set[Inference.Resolution] = {
+  def resolutionInferences(resolutionCandidate: PointedClause, clauses: Set[HOLClause]): Set[Inference.Resolution] = {
     resolutionCandidates(clauses).filter {
       rc => rc.hoVar == resolutionCandidate.hoVar && rc.index.polarity == !resolutionCandidate.index.polarity
     }.map(rc => Inference.Resolution(resolutionCandidate, rc))
@@ -401,7 +401,7 @@ object scan {
         eliminateConstraints(Substitution(v, t)(clause.delete(Ant(i))).map { case a: Atom => a }, keepVariables)
   }
 
-  def saturateWithResolutionCandidate(candidate: ResolutionCandidate, resolventSet: Set[HOLClause], resolvedCandidates: Set[ResolutionCandidate], limit: Int): Option[Set[HOLClause]] = {
+  def saturateWithResolutionCandidate(candidate: PointedClause, resolventSet: Set[HOLClause], resolvedCandidates: Set[PointedClause], limit: Int): Option[Set[HOLClause]] = {
     val partner = pickResolutionPartner(candidate, resolventSet, resolvedCandidates)
 
     partner match
@@ -414,27 +414,27 @@ object scan {
       }
   }
 
-  def pickResolutionPartner(activeCandidate: ResolutionCandidate, activeClauses: Set[HOLClause], resolvedCandidates: Set[ResolutionCandidate]): Option[ResolutionCandidate] = {
+  def pickResolutionPartner(activeCandidate: PointedClause, activeClauses: Set[HOLClause], resolvedCandidates: Set[PointedClause]): Option[PointedClause] = {
     (activeClauses - activeCandidate.clause).flatMap { clause =>
       clause.cedent(!activeCandidate.index.polarity).zipWithIndex.filter {
         case (Atom(v, _), _) => activeCandidate.hoVar == v
         case _               => false
       }.map { case (_, index) => (clause, SequentIndex(!activeCandidate.index.polarity, index)) }
-    }.map { case (clause, index) => ResolutionCandidate(clause, index) }
+    }.map { case (clause, index) => PointedClause(clause, index) }
       .filter { candidate => !resolvedCandidates.contains(candidate) }
       .headOption
   }
 
-  def resolve(left: ResolutionCandidate, right: ResolutionCandidate): HOLClause = {
+  def resolve(left: PointedClause, right: PointedClause): HOLClause = {
     val renaming = rename(freeFOLVariables(left.clause.toFormula), freeFOLVariables(right.clause.toFormula))
     val rightClausesRenamed = Substitution(renaming)(right.clause).map { case a: Atom => a }
-    val rightRenamed = ResolutionCandidate(rightClausesRenamed, right.index)
+    val rightRenamed = PointedClause(rightClausesRenamed, right.index)
     val constraints = HOLClause(left.args.zip(rightRenamed.args).map(Eq(_, _)), Seq.empty)
     val resolvent = constraints ++ left.clause.delete(left.index) ++ rightRenamed.clause.delete(rightRenamed.index)
     resolvent.distinct
   }
 
-  def resWitness(candidate: ResolutionCandidate, limit: Int): Option[Expr] = {
+  def resWitness(candidate: PointedClause, limit: Int): Option[Expr] = {
     val (abstractedResolutionCandidate, vars) = candidate.abstracted
     val resCandidate = eliminateConstraints(abstractedResolutionCandidate.clause, vars.toSet).map { case a: Atom => a }
 
