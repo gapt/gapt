@@ -2,6 +2,8 @@
 
 ## Version 2.18.0 (unreleased)
 
+- Implement prototype of WSCAN which solves witnessed second-order quantifier elimination
+
 ## Version 2.17.0 (released on 2024-09-27)
 
 - Migrate code base to Scala 3
