@@ -62,7 +62,7 @@ object scan {
     * derivations should have and makes sure that only derivations are returned that satisfy this limit. 
     * A value of None means that no limit is enforced, but note that this might cause non-termination.
     * @param attemptLimit controls the maximum number of SCAN runs that are to be performed to find an eliminating derivation. If None is passed no limit is enforced, but note that this might cause non-termination.
-    * @return If an eliminating deirvation D is found within the given attemptLimit whose size is within derivationLimit and which respects the options oneSidedOnly and allowResolutionOnBaseLiterals, then the result is Right(D).
+    * @return If an eliminating deirvation D is found within the given attemptLimit whose size is within derivationLimit and which respects the options oneSidedOnly and allowResolutionOnBaseLiterals, then the result is Some(D). Returns None otherwise
     * Otherwise Left(I) is returned where I is an iterator over the found derivations that do not the derivationLimit.
     */
   def apply(
@@ -71,7 +71,7 @@ object scan {
       allowResolutionOnBaseLiterals: Boolean = false,
       derivationLimit: Option[Int] = Some(100),
       attemptLimit: Option[Int] = Some(10)
-  ): Either[Iterator[Derivation], Derivation] = {
+  ): Option[Derivation] = {
     val baseIterator = scan.derivationsFrom(
       input = input,
       oneSidedOnly = oneSidedOnly,
@@ -80,12 +80,9 @@ object scan {
     )
     val iterator = attemptLimit.map(l => baseIterator.take(l)).getOrElse(baseIterator)
 
-    val successfulDerivation = iterator
+    iterator
       .collect { case Right(value) => value }
       .nextOption()
-    successfulDerivation match
-      case None             => Left(iterator.map(_.merge))
-      case Some(derivation) => Right(derivation)
   }
 
   /**

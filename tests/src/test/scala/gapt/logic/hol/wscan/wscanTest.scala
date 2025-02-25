@@ -43,34 +43,18 @@ class wscanTest extends Specification {
     Escargot.isValid(Iff(left, right)).must(beTrue).mapMessage(_ => s"$left is not equivalent to $right")
   }
 
-  def beEquivalentTo(right: Set[Formula]): Matcher[Set[Formula]] = { (left: Set[Formula]) =>
-    val leftFree = And(left)
-    val rightFree = And(right)
-    val leftFormula = All.Block(freeFOLVariables(leftFree).toSeq, leftFree)
-    val rightFormula = All.Block(freeFOLVariables(rightFree).toSeq, rightFree)
-    (leftFormula must beEquivalentTo(rightFormula)).mapMessage(_ => s"$left is not equivalent to $right")
-  }
+  def beCorrectSolutionFor(input: ClauseSetPredicateEliminationProblem, firstOrderEquivalent: Formula): Matcher[Option[Substitution]] = {
 
-  def beCorrectSolutionFor(input: ClauseSetPredicateEliminationProblem): Matcher[Option[(Derivation, Substitution)]] = {
-    (solution: Option[(Derivation, Substitution)]) =>
-      solution must beSome[(Derivation, Substitution)].like {
-        case (derivation: Derivation, witnesses: Substitution) => {
-          val substitutedInput = witnesses(input.firstOrderClauses).map(_.toFormula).map(BetaReduction.betaNormalize)
-          val beWithoutQuantifiedVariables: Matcher[HOLClause] = {
-            (c: HOLClause) =>
-              {
-                (freeHOVariables(c.toFormula).intersect(input.varsToEliminate.toSet).isEmpty, s"$c contains at least one quantified variable from ${input.varsToEliminate}")
-              }
+    (solution: Option[Substitution]) =>
+      solution must beSome[Substitution].like {
+        (witness: Substitution) =>
+          {
+            val substitutedInput = BetaReduction.betaNormalize(witness(input.firstOrderClauses.toFormula))
+            witness.domain.mustEqual(input.varsToEliminate.toSet)
+              .mapMessage(_ => s"domain of substitution is not ${input.varsToEliminate}")
+              .and(substitutedInput.must(beEquivalentTo(firstOrderEquivalent))
+                .mapMessage(_ => s"substituted input is not equivalent to output clause set"))
           }
-
-          val clauseSet = derivation.conclusion
-          clauseSet
-            .must(contain(beWithoutQuantifiedVariables).foreach)
-            .and(witnesses.domain.mustEqual(input.varsToEliminate.toSet)
-              .mapMessage(_ => s"domain of substitution is not ${input.varsToEliminate}"))
-            .and(substitutedInput.must(beEquivalentTo(clauseSet.map(_.toFormula)))
-              .mapMessage(_ => s"substituted input is not equivalent to output clause set"))
-        }
       }
   }
 
@@ -84,6 +68,12 @@ class wscanTest extends Specification {
       witnessLimit: Int = defaultWitnessLimit
   ): Matcher[ClauseSetPredicateEliminationProblem] = {
     (input: ClauseSetPredicateEliminationProblem) =>
+      val firstOrderEquivalent = scan(
+        input,
+        allowResolutionOnBaseLiterals = allowResolutionOnBaseLiterals,
+        derivationLimit = Some(derivationLimit),
+        attemptLimit = Some(attemptLimit)
+      ).toOption.get.conclusion.toFormula
       wscan(
         input,
         oneSidedOnly = true,
@@ -91,6 +81,6 @@ class wscanTest extends Specification {
         derivationLimit = Some(derivationLimit),
         attemptLimit = Some(attemptLimit),
         witnessLimit = Some(witnessLimit)
-      ).must(beCorrectSolutionFor(input))
+      ).must(beCorrectSolutionFor(input, firstOrderEquivalent))
   }
 }
