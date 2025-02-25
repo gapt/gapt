@@ -25,7 +25,7 @@ import gapt.logic.hol.CNFp
 import gapt.proofs.lk.transformations.folSkolemize
 import gapt.logic.hol.PredicateEliminationProblem
 
-val negationOfModalAxiom = clspep"?X -(!u (!v (R(u,v) -> ((!w (R(v, w) -> X(w))) <-> X(v)))))"
+val negationOfModalAxiom = pep"?X -(!u (!v (R(u,v) -> ((!w (R(v, w) -> X(w))) <-> X(v)))))"
 val exampleWithQuantifiedVariableNotOccurring = clspep"?(X:i>o) !u A(u)"
 val exampleWithoutQuantifiedVariables = clspep"!u X(u)"
 val exampleThatCanBeSolvedByPolarityRuleImmediately = clspep"?X(${
@@ -138,7 +138,7 @@ val badExample = clspep"?X(${
     ).toFormula
   })"
 
-val booleanUnification = clspep"?X?Y((!x (#c(Pat:i>o)(x) & ?y (#c(f:i>i>o)(x,y) & X(y) & ?z (#c(s:i>i>o)(x,z) & #c(Severe:i>o)(z))))) <-> (!x (#c(Pat:i>o)(x) & ?y (#c(f:i>i>o)(x,y) & Y(y) & #c(Inj:i>o)(y) & ?z ((#c(f:i>i>o)(x,z) & #c(Head:i>o)(z)))))))"
+val booleanUnification = pep"?X?Y((!x (#c(Pat:i>o)(x) & ?y (#c(f:i>i>o)(x,y) & X(y) & ?z (#c(s:i>i>o)(x,z) & #c(Severe:i>o)(z))))) <-> (!x (#c(Pat:i>o)(x) & ?y (#c(f:i>i>o)(x,y) & Y(y) & #c(Inj:i>o)(y) & ?z ((#c(f:i>i>o)(x,z) & #c(Head:i>o)(z)))))))"
 
 val onlyOneSidedClauses = clspep"?X(${
     Set(
@@ -149,7 +149,7 @@ val onlyOneSidedClauses = clspep"?X(${
 
 val wernhardUnificationExample = clspep"?X_1?X_2(!u (A(u) -> B(u)) & (!u (X_1(u) -> X_2(u)) & !u (A(u) -> X_2(u)) & !u (X_2(u) -> B(u))))"
 
-val graphReachability = clspep"?X(${
+val graphReachability = pep"?X(${
     hos":- !x (x = a_1 | x = a_2 | x = a_3) & a_1 != a_2 & a_1 != a_3 & a_2 != a_3 & E(a_1,a_2) & E(a_2,a_1) & E(a_3,a_2) & -E(a_1,a_1) & -E(a_2_,a_2) & -E(a_3,a_3) & -E(a_1,a_3) & -E(a_2,a_3) & -E(a_3,a_1) & (X(a_1) & !u!v((X(u) & E(u,v)) -> X(v)) & -X(a_3))".toFormula
   })"
 
