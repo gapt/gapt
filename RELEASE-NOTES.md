@@ -1,5 +1,7 @@
 # Release notes for GAPT
 
+## Version 2.19.0-SNAPSHOT (unreleased)
+
 ## Version 2.18.0 (unreleased)
 
 - Implement prototype of WSCAN which solves witnessed second-order quantifier elimination
