@@ -2338,7 +2338,10 @@ x_2 → 0
 
 Let $\varphi$ be a first-order formula and $\overline{X}$ a tuple of second-order variables.
 Then \emph{Witnessed Second-Order Quantifier Elimination (WSOQE)} is the problem of finding a tuple of first-order predicates $\overline{\alpha}$ such that the \emph{WSOQE condition} holds:
-$$\models (\exists \overline{X} \varphi) \leftrightarrow \varphi[\overline{X} / \overline{\alpha}].$$
+\begin{equation}
+  \label{eq:second-order-elimination-with-witness}
+  \models (\exists \overline{X} \varphi) \leftrightarrow \varphi[\overline{X} / \overline{\alpha}].
+\end{equation}
 
 A related problem is (existential) \emph{Second-Order Quantifier Elimination (SOQE)}, i.e. finding a first-order formula $\psi$ such that 
 $$\models (\exists \overline{X} \varphi) \leftrightarrow \psi.$$
