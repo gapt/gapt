@@ -25,19 +25,15 @@ import gapt.logic.hol.CNFp
 import gapt.proofs.lk.transformations.folSkolemize
 import gapt.logic.hol.PredicateEliminationProblem
 
-@main def main = {
-  printResultInteractive(wernhardUnificationExample.toClauseSet)
-}
-
-val negationOfModalAxiom = pep"?X -(!u (!v (R(u,v) -> ((!w (R(v, w) -> X(w))) <-> X(v)))))"
-val exampleWithQuantifiedVariableNotOccurring = pep"?(X:i>o) !u A(u)"
-val exampleWithoutQuantifiedVariables = pep"!u X(u)"
-val exampleThatCanBeSolvedByPolarityRuleImmediately = pep"?X(${
+val negationOfModalAxiom = clspep"?X -(!u (!v (R(u,v) -> ((!w (R(v, w) -> X(w))) <-> X(v)))))"
+val exampleWithQuantifiedVariableNotOccurring = clspep"?(X:i>o) !u A(u)"
+val exampleWithoutQuantifiedVariables = clspep"!u X(u)"
+val exampleThatCanBeSolvedByPolarityRuleImmediately = clspep"?X(${
     Set(hcl"A(u) :- X(u)", hcl"B(u,v), X(u) :- X(v)").toFormula
   })"
 val negationOfLeibnizEquality = pep"?X?u?v -(X(u) <-> X(v))"
 
-val exampleThatUsesResolutionOnLiteralsThatAreNotQuantifiedVariables = pep"?X(${
+val exampleThatUsesResolutionOnLiteralsThatAreNotQuantifiedVariables = clspep"?X(${
     Set(
       hcl":- B(u,v)",
       hcl"B(u,v), X(u) :- X(v)",
@@ -46,21 +42,21 @@ val exampleThatUsesResolutionOnLiteralsThatAreNotQuantifiedVariables = pep"?X(${
     ).toFormula
   })"
 
-val exampleWithTwoClauses = pep"?X(${
+val exampleWithTwoClauses = clspep"?X(${
     Set(
       hcl"B(v) :- X(v)",
       hcl"X(u) :- A(u)"
     ).toFormula
   })"
 
-val exampleWithThreeClauses = pep"?X(${
+val exampleWithThreeClauses = clspep"?X(${
     Set(hcl"B(v) :- X(v)", hcl"X(u) :- A(u)", hcl"C(u) :- X(u)").toFormula
   })"
 
-val single2PartDisjunction = pep"?X(X(a) | X(b))"
-val single3PartDisjunction = pep"?X(X(a) | X(b) | X(c))"
+val single2PartDisjunction = clspep"?X(X(a) | X(b))"
+val single3PartDisjunction = clspep"?X(X(a) | X(b) | X(c))"
 
-val exampleWithTwoVariables = pep"?X?Y(${
+val exampleWithTwoVariables = clspep"?X?Y(${
     Set(
       hcl":- Y(a,b)",
       hcl"Y(u,u) :- X(u)",
@@ -69,11 +65,11 @@ val exampleWithTwoVariables = pep"?X?Y(${
     ).toFormula
   })"
 
-val exampleRequiringTautologyDeletion = pep"?X(${
+val exampleRequiringTautologyDeletion = clspep"?X(${
     Set(hcl"A(u) :- X(u)", hcl"X(u) :- X(v), A(u)", hcl"X(u) :- B(u)").toFormula
   })"
 
-val exampleRequiringSubsumption = pep"?X(${
+val exampleRequiringSubsumption = clspep"?X(${
     Set(
       hcl"A(u), B(u,v) :-",
       hcl"A(u) :- X(u)",
@@ -82,7 +78,7 @@ val exampleRequiringSubsumption = pep"?X(${
     ).toFormula
   })"
 
-val exampleWithSymmetryRequiringSubsumption = pep"?Y(${
+val exampleWithSymmetryRequiringSubsumption = clspep"?Y(${
     Set(
       hcl"A(u,v), B(u,v) :-",
       hcl"A(u,v) :- Y(u,v)",
@@ -91,14 +87,14 @@ val exampleWithSymmetryRequiringSubsumption = pep"?Y(${
     ).toFormula
   })"
 
-val soqeBookDLSStarExample = pep"?X(${
+val soqeBookDLSStarExample = clspep"?X(${
     Set(
       hcl"X(y) :- X(x), R(x,y)",
       hcl":- X(x), X(y), S(x,y)"
     ).toFormula
   })"
 
-val unsatisfiableExampleThatRequiresFactoring = pep"?(X:i>o)(${
+val unsatisfiableExampleThatRequiresFactoring = clspep"?(X:i>o)(${
     Set(
       hcl":- X(u), X(f(u))",
       hcl"X(u) :- X(f(v))",
@@ -106,7 +102,7 @@ val unsatisfiableExampleThatRequiresFactoring = pep"?(X:i>o)(${
     ).toFormula
   })"
 
-val witnessBlowup = pep"?X(${
+val witnessBlowup = clspep"?X(${
     Set(
       hcl"X(c) :- ",
       hcl":- X(a_1), X(b_1)",
@@ -114,7 +110,7 @@ val witnessBlowup = pep"?X(${
     ).toFormula
   })"
 
-val twoStepRedundancy = pep"?X(${
+val twoStepRedundancy = clspep"?X(${
     Set(
       hcl"B(a, v), B(v, w) :-",
       hcl":- X(a)",
@@ -123,7 +119,7 @@ val twoStepRedundancy = pep"?X(${
     ).toFormula
   })"
 
-val subsumptionByXLiteral = pep"?X(${
+val subsumptionByXLiteral = clspep"?X(${
     Set(
       hcl":- X(a,a)",
       hcl"X(u,v) :- X(v,u), B(u,v)",
@@ -132,7 +128,7 @@ val subsumptionByXLiteral = pep"?X(${
     ).toFormula
   })"
 
-val badExample = pep"?X(${
+val badExample = clspep"?X(${
     Set(
       hcl":- B(b,v)",
       hcl":- B(c,v)",
@@ -142,30 +138,30 @@ val badExample = pep"?X(${
     ).toFormula
   })"
 
-val booleanUnification = pep"?X?Y((!x (#c(Pat:i>o)(x) & ?y (#c(f:i>i>o)(x,y) & X(y) & ?z (#c(s:i>i>o)(x,z) & #c(Severe:i>o)(z))))) <-> (!x (#c(Pat:i>o)(x) & ?y (#c(f:i>i>o)(x,y) & Y(y) & #c(Inj:i>o)(y) & ?z ((#c(f:i>i>o)(x,z) & #c(Head:i>o)(z)))))))"
+val booleanUnification = clspep"?X?Y((!x (#c(Pat:i>o)(x) & ?y (#c(f:i>i>o)(x,y) & X(y) & ?z (#c(s:i>i>o)(x,z) & #c(Severe:i>o)(z))))) <-> (!x (#c(Pat:i>o)(x) & ?y (#c(f:i>i>o)(x,y) & Y(y) & #c(Inj:i>o)(y) & ?z ((#c(f:i>i>o)(x,z) & #c(Head:i>o)(z)))))))"
 
-val onlyOneSidedClauses = pep"?X(${
+val onlyOneSidedClauses = clspep"?X(${
     Set(
       hcl":- X(u), X(v), R(u,v)",
       hcl"X(u), X(v) :- Q(u,v)"
     ).toFormula
   })"
 
-val wernhardUnificationExample = pep"?X_1?X_2(!u (A(u) -> B(u)) & (!u (X_1(u) -> X_2(u)) & !u (A(u) -> X_2(u)) & !u (X_2(u) -> B(u))))"
+val wernhardUnificationExample = clspep"?X_1?X_2(!u (A(u) -> B(u)) & (!u (X_1(u) -> X_2(u)) & !u (A(u) -> X_2(u)) & !u (X_2(u) -> B(u))))"
 
-val graphReachability = pep"?X(${
+val graphReachability = clspep"?X(${
     hos":- !x (x = a_1 | x = a_2 | x = a_3) & a_1 != a_2 & a_1 != a_3 & a_2 != a_3 & E(a_1,a_2) & E(a_2,a_1) & E(a_3,a_2) & -E(a_1,a_1) & -E(a_2_,a_2) & -E(a_3,a_3) & -E(a_1,a_3) & -E(a_2,a_3) & -E(a_3,a_1) & (X(a_1) & !u!v((X(u) & E(u,v)) -> X(v)) & -X(a_3))".toFormula
   })"
 
 object modalCorrespondence {
-  def negationOfSecondOrderTranslationOfTAxiom = pep"?X(${
+  def negationOfSecondOrderTranslationOfTAxiom = clspep"?X(${
       Set(
         hcl"R(a,v) :- X(v)",
         hcl"X(a) :-"
       ).toFormula
     })"
 
-  def negationOfSecondOrderTranslationOf4Axiom = pep"?X(${
+  def negationOfSecondOrderTranslationOf4Axiom = clspep"?X(${
       Set(
         hcl"R(a,v) :- X(v)",
         hcl":- R(a,b)",
@@ -187,7 +183,11 @@ object induction {
   }
 
   def inductiveTheorem(theorem: Formula) =
-    pep"?X (($additionDefinition) & (${ind(hov"X:i>o")}) -> $theorem)"
+    val inductionVar = rename.awayFrom(containedNames(theorem)).fresh(hov"X:i>o")
+    Ex(
+      inductionVar,
+      Imp(And(additionDefinition, ind(inductionVar)), theorem)
+    )
 }
 
 def printer = pprint.copy(additionalHandlers = additionalPrinters, defaultWidth = 150)
@@ -262,144 +262,4 @@ def printResolutionCandidate(resolutionCandidate: PointedClause): pprint.Tree = 
   val succeedentStrings = resolutionCandidate.clause.zipWithIndex.succedent.map(underlineIndex)
   val clauseString = antecedentStrings.mkString(", ") ++ " ⊢ " ++ succeedentStrings.mkString(", ")
   pprint.Tree.Literal(clauseString.strip())
-}
-
-def getSolutions(
-    input: ClauseSetPredicateEliminationProblem,
-    derivationLimit: Option[Int],
-    attemptLimit: Option[Int],
-    witnessLimit: Option[Int]
-): Iterator[(Derivation, Substitution)] = {
-  val baseIterator = scan.derivationsFrom(input, derivationLimit = derivationLimit)
-  val iterator = attemptLimit.map(l => baseIterator.take(l)).getOrElse(baseIterator)
-  iterator.collect {
-    case Right(derivation) =>
-      (derivation, wscan.witness(derivation, witnessLimit = witnessLimit).get)
-  }
-}
-
-def printResult(
-    input: ClauseSetPredicateEliminationProblem,
-    derivationLimit: Option[Int] = Some(100),
-    attemptLimit: Option[Int] = Some(10),
-    witnessLimit: Option[Int] = Some(10)
-) = {
-  val solutions = getSolutions(input, derivationLimit, attemptLimit, witnessLimit)
-  if solutions.isEmpty then {
-    println(s"❌ didn't find solution")
-  } else solutions.foreach(checkSolution(input, _))
-}
-
-def equivalenceClasses[T](base: Iterable[T])(areEquivalent: (T, T) => Boolean): Map[T, Set[T]] = {
-  val input = base.toSet
-  val initialEquivalenceClasses = Map.from(input.map(w => (w, Set(w))))
-  input.toSeq.combinations(2)
-    .foldLeft(initialEquivalenceClasses) {
-      case (classes, Seq(left, right)) => {
-        val leftEquivalentToRight = areEquivalent(left, right)
-        classes.updatedWith(left) {
-          case Some(equivalents) if leftEquivalentToRight =>
-            Some(equivalents + right)
-          case s => s
-        }.updatedWith(right) {
-          case Some(equivalents) if leftEquivalentToRight => None
-          case s                                          => s
-        }
-      }
-    }
-}
-
-def formatPercentage(count: Int, of: Int): String =
-  "%.1f%%".formatLocal(java.util.Locale.UK, (count * 100).floatValue / of)
-
-def printWitnesses(
-    input: ClauseSetPredicateEliminationProblem,
-    derivationLimit: Option[Int] = Some(100),
-    witnessLimit: Option[Int] = Some(100),
-    tries: Int = 100
-) = {
-  println("finding witnesses for")
-  printer.pprintln(input.toFormula)
-  val scanOutput = scan.derivationsFrom(input, derivationLimit = derivationLimit).take(tries).toSeq
-  val successfulScanRuns = scanOutput.collect { case Right(x) => x }
-  val witnesses = successfulScanRuns.flatMap { derivation =>
-    wscan.witness(derivation, witnessLimit)
-  }
-  val runsWithoutFiniteWitnesses = successfulScanRuns.size - witnesses.size
-  val nonEquivalent = equivalenceClasses(witnesses) {
-    case (left, right) => areEquivalent(left, right)
-  }
-  println(s"tried ${scanOutput.size} scan runs with derivationlimit $derivationLimit and witness limit $witnessLimit")
-  println(s"${successfulScanRuns.size} (${formatPercentage(successfulScanRuns.size, scanOutput.size)}) of those succeeded")
-  println(s"${witnesses.size} (${formatPercentage(witnesses.size, successfulScanRuns.size)}) of the successful ones produced a finite witness")
-  println(s"${runsWithoutFiniteWitnesses} (${formatPercentage(runsWithoutFiniteWitnesses, successfulScanRuns.size)}) of the successful ones did not produce a finite witness")
-  println(s"${nonEquivalent.size} (${formatPercentage(nonEquivalent.size, witnesses.size)}) of the found witnesses are mutually non-equivalent")
-  println("those are: ")
-  nonEquivalent.keySet.foreach(printer.pprintln(_))
-}
-
-def areEquivalent(left: Substitution, right: Substitution): Boolean = {
-  left.domain == right.domain && left.domain.forall(v => {
-    val vars = wscan.freshArgumentVariables(v.ty, "u")
-    val leftFormula = BetaReduction.betaNormalize(App(left(v), vars)).asInstanceOf[Formula]
-    val rightFormula = BetaReduction.betaNormalize(App(right(v), vars)).asInstanceOf[Formula]
-    Escargot.isValid(Iff(leftFormula, rightFormula))
-  })
-}
-
-def printResultInteractive(
-    input: ClauseSetPredicateEliminationProblem,
-    derivationLimit: Option[Int] = Some(100),
-    witnessLimit: Option[Int] = Some(10)
-) = {
-  val iterator = scan.derivationsFrom(
-    input,
-    derivationLimit = derivationLimit
-  )
-
-  while (iterator.hasNext) {
-    iterator.next() match {
-      case Left(value) => {
-        printer.pprintln(value, height = derivationLimit.get * 100)
-        println(s"\n ❌ attempt resulted in derivation of length > ${derivationLimit.get}")
-        scala.io.StdIn.readLine("press enter to show next solution: ")
-        System.out.flush()
-      }
-      case Right(derivation) => {
-        printer.pprintln(derivation, height = derivationLimit.get * 100)
-        val witness = wscan.witness(derivation, witnessLimit = witnessLimit)
-        if witness.isEmpty then {
-          println("❌ derivation found, but could not construct a finite witness")
-        } else {
-          checkSolution(input, (derivation, witness.get))
-        }
-        if iterator.hasNext then
-          scala.io.StdIn.readLine("press enter to show next solution: ")
-          System.out.flush()
-      }
-    }
-  }
-}
-
-def checkSolution(input: ClauseSetPredicateEliminationProblem, output: (Derivation, Substitution)): Boolean = {
-  val (derivation, witness) = output
-  checkWitness(And(input.firstOrderClauses.map(_.toFormula)), derivation.conclusion.toFormula, witness)
-}
-
-def checkWitness(input: Formula, output: Formula, witness: Substitution): Boolean = {
-  val leftFormula = BetaReduction.betaNormalize(witness(input))
-  val rightFormula = output
-  val equivalence = Iff(All.Block(freeFOLVariables(leftFormula).toSeq, leftFormula), All.Block(freeFOLVariables(rightFormula).toSeq, rightFormula))
-  println("\nchecking equivalence between")
-  printer.pprintln(input)
-  println("with substitution")
-  printer.pprintln(witness)
-  println("and")
-  printer.pprintln(output)
-  println("")
-  val result = Escargot.isValid(equivalence)
-  if result
-  then println(" ✅ equivalence holds")
-  else println(" ❌ equivalence does NOT hold")
-  result
 }

@@ -18,6 +18,8 @@ import gapt.proofs.resolution.structuralCNF
 import gapt.expr.formula.Atom
 import gapt.logic.Polarity
 import gapt.proofs.lk.transformations.folSkolemize
+import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.context.facet.skolemFunsFacet
 
 extension (clauseSet: Set[HOLClause])
   /**
@@ -56,7 +58,23 @@ case class PredicateEliminationProblem(
   def toFormula: Formula = Ex.Block(varsToEliminate, firstOrderPart)
 
   /**
-    * @return The clause set form of the predicate elimination problem by applying skolemization and computing the CNF of the result. 
+    * Returns the clause set form of the predicate elimination problem if it is already skolemized. 
+    * Note that this transformation is not equivalence-preserving as arbitrary new Skolem constants can be introduced.
+    */
+  def toClauseSetIfSkolemized: Option[ClauseSetPredicateEliminationProblem] = {
+    given context: MutableContext = MutableContext.guess(firstOrderPart)
+    val skolemized = gapt.logic.hol.skolemize(firstOrderPart, Polarity.InAntecedent)
+    if context.get[SkolemFunctions].skolemDefs.nonEmpty
+    then None
+    else
+      Some(ClauseSetPredicateEliminationProblem(
+        varsToEliminate,
+        CNFp(skolemized)
+      ))
+  }
+
+  /**
+    * Returns the clause set form of the predicate elimination problem by applying skolemization and computing the CNF of the result. 
     * Note that this transformation is not equivalence-preserving as arbitrary new Skolem constants can be introduced.
     */
   def toClauseSet: ClauseSetPredicateEliminationProblem =

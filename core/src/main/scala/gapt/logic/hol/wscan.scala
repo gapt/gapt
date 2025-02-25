@@ -63,21 +63,21 @@ object wscan {
     * @param derivationLimit @see derivationLimit option of scan
     * @param attemptLimit @see attemptLimit option of scan
     * @param witnessLimit controls the amount of inferences to be performed during the saturation process to construct witnesses
-    * @return an eliminating derivation from the input clause set and a substitution satisfying the WSOQE-condition, if successful. Otherwise returns None
+    * @return a substitution satisfying the WSOQE-condition, if successful. Returns None otherwise
     */
   def apply(
       input: ClauseSetPredicateEliminationProblem,
       oneSidedOnly: Boolean = true,
       allowResolutionOnBaseLiterals: Boolean = false,
       derivationLimit: Option[Int] = Some(100),
-      attemptLimit: Option[Int] = Some(10),
-      witnessLimit: Option[Int] = Some(2)
-  ): Option[(Derivation, Substitution)] = {
+      attemptLimit: Option[Int] = Some(100),
+      witnessLimit: Option[Int] = Some(10)
+  ): Option[Substitution] = {
     witnesses(input, oneSidedOnly, allowResolutionOnBaseLiterals, derivationLimit, attemptLimit, witnessLimit).nextOption()
   }
 
   /**
-    * Runs the SCAN algorithm multiple times on the input predicate elimination problem to find several derivations and corresponding witnesses
+    * Runs the SCAN algorithm multiple times on the input predicate elimination problem to find several derivations returns the corresponding witnesses
     *
     * @param input input predicate elimination problem in clause set form
     * @param oneSidedOnly @see oneSidedOnly option of scan
@@ -85,9 +85,16 @@ object wscan {
     * @param derivationLimit @see derivationLimit option of scan
     * @param attemptLimit @see attemptLimit option of scan
     * @param witnessLimit @see witnessLimit option of wscan
-    * @return an iterator eliminating derivation from the input clause set and a substitution satisfying the WSOQE-condition, if successful
+    * @return an iterator of substitutions satisfying the WSOQE-condition of the given input
     */
-  def witnesses(input: ClauseSetPredicateEliminationProblem, oneSidedOnly: Boolean = true, allowResolutionOnBaseLiterals: Boolean = false, derivationLimit: Option[Int] = Some(100), attemptLimit: Option[Int] = Some(10), witnessLimit: Option[Int] = Some(2)): Iterator[(Derivation, Substitution)] = {
+  def witnesses(
+      input: ClauseSetPredicateEliminationProblem,
+      oneSidedOnly: Boolean = true,
+      allowResolutionOnBaseLiterals: Boolean = false,
+      derivationLimit: Option[Int] = Some(100),
+      attemptLimit: Option[Int] = Some(100),
+      witnessLimit: Option[Int] = Some(10)
+  ): Iterator[Substitution] = {
     val baseIterator = scan.derivationsFrom(
       input,
       oneSidedOnly = oneSidedOnly,
@@ -98,24 +105,62 @@ object wscan {
     iterator.flatMap {
       case Left(_) => None
       case Right(derivation) =>
-        val witnessOption = witnessSubstitution(derivation, limit = witnessLimit).map(simplifyWitnessSubstitution)
-        witnessOption.map(w => (derivation, w))
+        witnessSubstitution(derivation, limit = witnessLimit)
+          .map(simplifyWitnessSubstitution)
     }
   }
 
-  def witness(derivation: Derivation, witnessLimit: Option[Int] = Some(2)): Option[Substitution] = {
+  /**
+    * Runs the SCAN algorithm multiple times on the input predicate elimination problem to find several derivations and corresponding witnesses and only gives back those that are mutually non-equivalent.
+    *
+    * @param input input predicate elimination problem in clause set form
+    * @param oneSidedOnly @see oneSidedOnly option of scan
+    * @param allowResolutionOnBaseLiterals @see allowResolutiononBaseLiterals option of scan
+    * @param derivationLimit @see derivationLimit option of scan
+    * @param attemptLimit @see attemptLimitOption of scan 
+    * @param witnessLimit @see witnessLimit option of wscan
+    * @return an iterator of mutually non-equivalent substitutions satisfying the WSOQE-condition of the given input
+    */
+  def mutuallyNonEquivalent(
+      substitutions: Iterable[Substitution]
+  ): Iterator[Substitution] = {
+    Iterator.unfold((Set.empty[Substitution], substitutions.iterator)) {
+      case (state, iterator) => {
+        val nextNonEquivalentWit = iterator.find(w => state.forall(s => !areEquivalent(w, s)))
+        if nextNonEquivalentWit.isEmpty then
+          None
+        else
+          Some((
+            nextNonEquivalentWit.get,
+            (state + nextNonEquivalentWit.get, iterator)
+          ))
+      }
+    }
+  }
+
+  /**
+    * Computes the WSCAN witness based on a given SCAN derivation.
+    * Returns Some, if the computation succeeds with the given witnessLimit.
+    * Returns None otherwise.
+    *
+    * @param derivation derivation based on which a witness should be computed
+    * @param witnessLimit maximum number of inferences used in each saturation process to compute a witness. If set to None, the method might not terminate
+    * @return an iterator eliminating derivation from the input clause set and a substitution satisfying the WSOQE-condition, if successful
+    */
+  def witness(
+      derivation: Derivation,
+      witnessLimit: Option[Int] = Some(1)
+  ): Option[Substitution] = {
     witnessSubstitution(
       derivation,
       witnessLimit
     ).map(simplifyWitnessSubstitution)
   }
 
-  def freshArgumentVariables(ty: Ty, varName: String, blacklist: Iterable[VarOrConst] = Iterable.empty) = {
-    val FunctionType(_, argTypes) = ty: @unchecked
-    rename.awayFrom(blacklist).freshStream("u").zip(argTypes).map(Var(_, _))
-  }
-
-  def witnessSubstitution(derivation: Derivation, limit: Option[Int]): Option[Substitution] = {
+  private def witnessSubstitution(
+      derivation: Derivation,
+      limit: Option[Int]
+  ): Option[Substitution] = {
     def helper(derivation: Derivation): Option[Substitution] = {
       derivation.derivationSteps match
         case head :: next => {
@@ -145,7 +190,7 @@ object wscan {
     helper(derivation)
   }
 
-  def simplifyWitnessSubstitution(subst: Substitution): Substitution = {
+  private def simplifyWitnessSubstitution(subst: Substitution): Substitution = {
     val betaNormalized = Substitution(subst.map.view.mapValues(e =>
       betaNormalize(e) match {
         case Abs.Block(vars, formula: Formula) => Abs.Block(vars, simplify(formula))
@@ -155,7 +200,7 @@ object wscan {
     betaNormalized
   }
 
-  def freeFOLVariables(expr: Expr): Set[FOLVar] =
+  private def freeFOLVariables(expr: Expr): Set[FOLVar] =
     (freeVariables(expr) -- freeHOVariables(expr)).map { case v: FOLVar => v }
 
   def pResU(pointedClause: PointedClause, limit: Option[Int]): Option[Expr] = {
@@ -194,7 +239,7 @@ object wscan {
       }
   }
 
-  def renameFOLConstToFOLVar(expr: Expr, renaming: Map[FOLConst, FOLVar]): Expr = {
+  private def renameFOLConstToFOLVar(expr: Expr, renaming: Map[FOLConst, FOLVar]): Expr = {
     expr match
       case c: FOLConst      => renaming.get(c).getOrElse(c)
       case Neg(f)           => Neg(renameFOLConstToFOLVar(f, renaming))
@@ -207,5 +252,19 @@ object wscan {
       case App(left, right) => App(renameFOLConstToFOLVar(left, renaming), renameFOLConstToFOLVar(right, renaming))
       case Abs(v, f)        => Abs(v, renameFOLConstToFOLVar(f, renaming))
       case x                => x
+  }
+
+  private def freshArgumentVariables(ty: Ty, varName: String, blacklist: Iterable[VarOrConst] = Iterable.empty) = {
+    val FunctionType(_, argTypes) = ty: @unchecked
+    rename.awayFrom(blacklist).freshStream("u").zip(argTypes).map(Var(_, _))
+  }
+
+  private def areEquivalent(left: Substitution, right: Substitution): Boolean = {
+    left.domain == right.domain && left.domain.forall(v => {
+      val vars = freshArgumentVariables(v.ty, "u")
+      val leftFormula = BetaReduction.betaNormalize(App(left(v), vars)).asInstanceOf[Formula]
+      val rightFormula = BetaReduction.betaNormalize(App(right(v), vars)).asInstanceOf[Formula]
+      Escargot.isValid(Iff(leftFormula, rightFormula))
+    })
   }
 }

@@ -20,7 +20,7 @@ import gapt.proofs.FOLSequent
 import gapt.proofs.HOLClause
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
-import gapt.logic.hol.PredicateEliminationProblem
+import gapt.logic.hol.{PredicateEliminationProblem, ClauseSetPredicateEliminationProblem}
 import gapt.expr.formula.Ex
 import gapt.expr.formula.hol.containsHOQuantifier
 import gapt.expr.formula.hol.freeHOVariables.isHOVar
@@ -264,6 +264,17 @@ class ExpressionParseHelper(sc: StringContext, file: sourcecode.File, line: sour
         throw new IllegalArgumentException(s"Expression $expr is not of the form ∃X_1...∃X_n F where F is a first-order formula and X_1,...,X_n are second-order variables")
       }
       PredicateEliminationProblem(hoVarsPrefix, remainder)
+    }
+
+  /** Parses a string as a [[gapt.logic.hol.ClauseSetPredicateEliminationProblem]] if no skolemization of input formula is required */
+  def clspep(args: Splice[Expr]*): ClauseSetPredicateEliminationProblem =
+    val inputPep = pep(args: _*)
+    inputPep.toClauseSetIfSkolemized match {
+      case None =>
+        throw new IllegalArgumentException(
+          s"Cannot clausify ${inputPep.toFormula} as first-order part is not skolemized"
+        )
+      case Some(clauseSetPep) => clauseSetPep
     }
 
   private def placeholder = "__qq_"
