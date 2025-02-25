@@ -1,4 +1,4 @@
-package gapt.logic.hol.dls
+package gapt.logic.hol.wdls
 
 import gapt.expr._
 import gapt.expr.formula.fol.FOLVar
@@ -17,27 +17,33 @@ import org.specs2.mutable.Specification
 import org.specs2.specification.core.Fragment
 
 import scala.util.Try
+import gapt.logic.hol.PredicateEliminationProblem
+import gapt.proofs.RichFormulaSequent
 
-class FormulaEquationsTest extends Specification {
+class wdlsTest extends Specification {
 
   private def toDisjunct(s: HOLSequent): Disjunct =
     Disjunct(s.antecedent, s.succedent)
 
   "preprocess" should {
     def succeedWithSequents(
-        formulaEquation: (Var, Formula),
+        formulaEquation: PredicateEliminationProblem,
         expectedSequents: Set[HOLSequent]
     ): Fragment = {
       succeedWithExPrefixAndSequents(formulaEquation, expectedSequents)
     }
 
     def succeedWithExPrefixAndSequents(
-        formulaEquation: (Var, Formula),
+        formulaEquation: PredicateEliminationProblem,
         expectedResult: Set[HOLSequent]
     ): Fragment = {
-      val (secondOrderVariable, formula) = formulaEquation
+      val (secondOrderVariables, formula) = (
+        formulaEquation.varsToEliminate,
+        formulaEquation.firstOrderPart
+      )
+      assert(secondOrderVariables.size == 1)
       s"succeed for $formula" >> {
-        Try(new DlsPreprocessor(secondOrderVariable).preprocess(formula)) must beSuccessfulTry({ (result: Set[Disjunct]) =>
+        Try(new WdlsPreprocessor(secondOrderVariables.head).preprocess(formula)) must beSuccessfulTry({ (result: Set[Disjunct]) =>
           val multiSetEquals = (s1: Disjunct, s2: Disjunct) => s1.multiSetEquals(s2)
           result must beSetEqualsWithCustomEquality(
             expectedResult.map(toDisjunct),
@@ -47,7 +53,7 @@ class FormulaEquationsTest extends Specification {
       }
     }
 
-    def formulaEquation(variable: Var, formula: Formula) = (variable, formula)
+    def formulaEquation(variable: Var, formula: Formula) = pep"?${variable} $formula"
 
     def formulaEquationInX(formula: Formula) = formulaEquation(hov"X:i>o", formula)
 
@@ -102,16 +108,17 @@ class FormulaEquationsTest extends Specification {
         expectedWitness: Expr
     ): Fragment = {
       s"succeed for $sequent" >> {
+        val formula = And(sequent.antecedent ++ sequent.succedent)
+        val input = PredicateEliminationProblem(Seq(secondOrderVariable), formula)
         val argumentVariables = expectedWitness match {
           case Abs.Block(variables, _) => variables.asInstanceOf[List[FOLVar]]
         }
         val witness =
-          new DlsPartialWitnessExtraction(secondOrderVariable)
+          new WdlsPartialWitnessExtraction(secondOrderVariable)
             .findPartialWitness(argumentVariables, toDisjunct(sequent))
-        val formula = And(sequent.antecedent ++ sequent.succedent)
         val expectedSubstitution = Substitution(secondOrderVariable -> expectedWitness)
         val substitution = Substitution(secondOrderVariable -> Abs(argumentVariables, witness))
-        (substitution, formula) must beAnEquivalentSubstitutionTo(expectedSubstitution)
+        substitution must beAnEquivalentSubstitutionTo(input, expectedSubstitution)
       }
     }
 
@@ -122,7 +129,7 @@ class FormulaEquationsTest extends Specification {
       s"fail for $sequent" >> {
         val FunctionType(_, argumentTypes) = secondOrderVariable.ty: @unchecked
         val argumentVariables = new NameGenerator(Nil).freshStream(secondOrderVariable.name).take(argumentTypes.length).map(FOLVar(_)).toList
-        new DlsPartialWitnessExtraction(secondOrderVariable)
+        new WdlsPartialWitnessExtraction(secondOrderVariable)
           .findPartialWitness(argumentVariables, toDisjunct(sequent)) must throwA[Exception]
       }
     }
@@ -181,187 +188,178 @@ class FormulaEquationsTest extends Specification {
     succeedFor(hof"a!=b ∧ b!=a", hof"a!=b")
   }
 
-  "dls" should {
+  "wdls" should {
     def succeedFor(
-        formulaEquation: Formula,
+        formulaEquation: PredicateEliminationProblem,
         expectedEquivalentSubstitution: Substitution
     ): Fragment = {
       s"succeed for $formulaEquation" in {
-        dls(formulaEquation) must
-          beSuccessfulTry(beAnEquivalentSubstitutionTo(expectedEquivalentSubstitution))
+        wdls(formulaEquation) must
+          beSuccessfulTry(beAnEquivalentSubstitutionTo(formulaEquation, expectedEquivalentSubstitution))
       }
     }
 
-    def extractCorrectly(formulaEquation: Formula, expectedInnerFormula: Formula): Fragment = {
-      s"extract $expectedInnerFormula from $formulaEquation" in {
-        dls(formulaEquation) must beSuccessfulTry((_: (Substitution, Formula)) must beLike {
-          case (_, innerFormula: Formula) => innerFormula must beEqualTo(expectedInnerFormula)
-        })
-      }
-    }
-
-    def failFor(formulaEquation: Formula): Fragment = {
+    def failFor(formulaEquation: PredicateEliminationProblem): Fragment = {
       s"fail for $formulaEquation" in {
-        dls(formulaEquation) must beFailedTry
+        wdls(formulaEquation) must beFailedTry
       }
     }
 
     val X = hov"X:i>o"
-    succeedFor(hof"∃(X: i>o) R(a)", Substitution(X -> le"λx ⊤"))
-    succeedFor(hof"∃X X(a)", Substitution(X -> le"λx x=a"))
-    succeedFor(hof"∃X (X(a) ∧ ¬X(b))", Substitution(X -> le"λx x=a"))
-    succeedFor(hof"∃X (X(c) -> P(c))", Substitution(X -> le"λt t!=c"))
-    succeedFor(hof"∃X (¬X(c) ∧ P(c))", Substitution(X -> le"λt ⊥"))
+    succeedFor(pep"∃(X: i>o) R(a)", Substitution(X -> le"λx ⊤"))
+    succeedFor(pep"∃X X(a)", Substitution(X -> le"λx x=a"))
+    succeedFor(pep"∃X (X(a) ∧ ¬X(b))", Substitution(X -> le"λx x=a"))
+    succeedFor(pep"∃X (X(c) -> P(c))", Substitution(X -> le"λt t!=c"))
+    succeedFor(pep"∃X (¬X(c) ∧ P(c))", Substitution(X -> le"λt ⊥"))
     succeedFor(
-      hof"∃X ((X(a) ∧ ¬X(f(b))) ∨ (X(f(b)) ∧ ¬X(a)))",
+      pep"∃X ((X(a) ∧ ¬X(f(b))) ∨ (X(f(b)) ∧ ¬X(a)))",
       Substitution(X -> le"λx (¬f(b)=a -> x=a) ∧ ((¬(¬f(b)=a)) ∧ ¬a=f(b) -> x=f(b))")
     )
-    succeedFor(hof"∃X (X(a) ∧ X(b))", Substitution(X -> le"λx x=a ∨ x=b"))
-    succeedFor(hof"∃X (X(a) ∨ X(b))", Substitution(X -> le"λx x=a"))
-    succeedFor(hof"∃X (¬X(a) -> X(b))", Substitution(X -> le"λx x=a"))
-    succeedFor(hof"∃(X: i>o) (R(a) ∧ X(b))", Substitution(X -> le"λx x=b"))
+    succeedFor(pep"∃X (X(a) ∧ X(b))", Substitution(X -> le"λx x=a ∨ x=b"))
+    succeedFor(pep"∃X (X(a) ∨ X(b))", Substitution(X -> le"λx x=a"))
+    succeedFor(pep"∃X (¬X(a) -> X(b))", Substitution(X -> le"λx x=a"))
+    succeedFor(pep"∃(X: i>o) (R(a) ∧ X(b))", Substitution(X -> le"λx x=b"))
     succeedFor(
-      hof"∃X (∃Y (X(a) ∧ Y(b)))",
+      pep"∃X (∃Y (X(a) ∧ Y(b)))",
       Substitution(hov"X:i>o" -> le"λx x=a", hov"Y:i>o" -> le"λx x=b")
     )
     succeedFor(
-      hof"∃X X(a,b)",
+      pep"∃X X(a,b)",
       Substitution(hov"X:i>i>o" -> le"λx_1 (λx_2 x_1 = a ∧ x_2 = b)")
     )
-    succeedFor(hof"∃X ((∀x (X(x) -> R(x))) ∧ X(a))", Substitution(X -> le"λt R(t):o"))
+    succeedFor(pep"∃X ((∀x (X(x) -> R(x))) ∧ X(a))", Substitution(X -> le"λt R(t):o"))
     succeedFor(
-      hof"∃X ((∀x (X(x) -> (∀y R(x, y)))) ∧ X(a))",
+      pep"∃X ((∀x (X(x) -> (∀y R(x, y)))) ∧ X(a))",
       Substitution(X -> le"λt ∀y R(t, y)")
     )
     succeedFor(
-      hof"∃X ((∀x (X(x) -> R(x))) ∧ (X(a) ∨ X(b)))",
+      pep"∃X ((∀x (X(x) -> R(x))) ∧ (X(a) ∨ X(b)))",
       Substitution(X -> le"λt (R:i>o)(t)")
     )
     succeedFor(
-      hof"∃X ((∀x (X(x) -> (∀y R(x, y)))) ∧ (X(a) ∨ X(b)))",
+      pep"∃X ((∀x (X(x) -> (∀y R(x, y)))) ∧ (X(a) ∨ X(b)))",
       Substitution(X -> le"λt ∀y R(t, y)")
     )
     succeedFor(
-      hof"∃X (∀x ((∀y R(x,y)) -> X(x)) ∧ (¬X(a) ∨ ¬X(b)))",
+      pep"∃X (∀x ((∀y R(x,y)) -> X(x)) ∧ (¬X(a) ∨ ¬X(b)))",
       Substitution(X -> le"λt ∀y R(t,y)")
     )
     succeedFor(
-      hof"∃X (∀x ∀y (R(x,y) -> X(x)) ∧ (¬X(a) ∨ ¬X(b)))",
+      pep"∃X (∀x ∀y (R(x,y) -> X(x)) ∧ (¬X(a) ∨ ¬X(b)))",
       Substitution(X -> le"λt ∃y R(t,y)")
     )
     succeedFor(
-      hof"∃X (∀x ∀y (X(x, y) -> R(x, y)) ∧ (X(a, b) ∨ X(b, c)))",
+      pep"∃X (∀x ∀y (X(x, y) -> R(x, y)) ∧ (X(a, b) ∨ X(b, c)))",
       Substitution(hov"X:i>i>o" -> le"R:i>i>o")
     )
     succeedFor(
-      hof"∃X (∀x ((∀y R(x,y)) -> X(x)) ∧ (X(a) ∨ ¬X(b)) ∧ ¬X(c))",
+      pep"∃X (∀x ((∀y R(x,y)) -> X(x)) ∧ (X(a) ∨ ¬X(b)) ∧ ¬X(c))",
       Substitution(X -> le"λt ((¬(c=a ∨ ∀y R(c, y))) -> (t=a ∨ ∀y R(t,y))) ∧ (((c=a ∨ ∀y R(c, y)) ∧ ¬(∀y R(b, y)) ∧ ¬(∀y R(c, y))) -> ∀y R(t, y))")
     )
     succeedFor(
-      hof"∃X (∀x (X(x) ∨ R(x)))",
+      pep"∃X (∀x (X(x) ∨ R(x)))",
       Substitution(hov"X:i>o" -> le"λx ∃t x=t")
     )
     succeedFor(
-      hof"∃X (X(a) ∧ ∃x X(x))",
+      pep"∃X (X(a) ∧ ∃x X(x))",
       Substitution(X -> le"λt ⊤")
     )
     succeedFor(
-      hof"∃X ((∃x X(x)) ∧ ¬R(a))",
+      pep"∃X ((∃x X(x)) ∧ ¬R(a))",
       Substitution(X -> le"λt ⊤")
     )
     succeedFor(
-      hof"∃X ∃x X(x,a)",
+      pep"∃X ∃x X(x,a)",
       Substitution(hov"X:i>i>o" -> le"λt λs ⊤")
     )
     succeedFor(
-      hof"∃X ((R(a) ∧ ∃x X(x)) ∨ ((∃y R(y)) ∨ X(b)))",
+      pep"∃X ((R(a) ∧ ∃x X(x)) ∨ ((∃y R(y)) ∨ X(b)))",
       Substitution(X -> le"λt ⊤")
     )
     succeedFor(
-      hof"∃X ∀x (R(a) ∨ X(x) ∨ R(b))",
+      pep"∃X ∀x (R(a) ∨ X(x) ∨ R(b))",
       Substitution(X -> le"λt ¬R(a) ∧ ¬R(b)")
     )
     succeedFor(
-      hof"∃X (∀x ∃y X(x))",
+      pep"∃X (∀x ∃y X(x))",
       Substitution(X -> le"λt ∃x x=t")
     )
     succeedFor(
-      hof"∃X (∀x (P(x) -> X(x)))",
+      pep"∃X (∀x (P(x) -> X(x)))",
       Substitution(X -> le"P:i>o")
     )
-    succeedFor(hof"∃X (¬X(a, b) ∧ ∀x ∃y X(x, y))", Substitution(hov"X:i>i>o" -> le"λt_1 λt_2 (t_1 != a ∨ t_2 != b)"))
-    succeedFor(hof"∃X ∀x ∃y X(x,y)", Substitution(hov"X:i>i>o" -> le"λt_1 λt_2 ⊤"))
-    succeedFor(hof"∃X ∀x (X(x) ∧ R(x))", Substitution(X -> le"λt ∃x x=t"))
-    succeedFor(hof"∃X ∀x (X(f(x)) ∨ R(x))", Substitution(X -> le"λt ∃x (t=f(x) ∧ ¬R(x))"))
-    succeedFor(hof"∃X X(a, P:o)", Substitution(hov"X:i>o>o" -> le"λ(t:i) λ(p:o) t=a ∧ p=P"))
-    extractCorrectly(hof"∃X X(a, P:o)", hof"X(a, P:o)")
-    succeedFor(hof"∃X ∃x X(x)", Substitution(X -> le"λt ⊤"))
-    succeedFor(hof"∃X !x (X(a,x) ∨ X(b,x))", Substitution(hov"X:i>i>o", le"λt_1 λt_2 ⊤"))
-    failFor(hof"∃X ∀x (X(x,a) ∨ ∀y ¬X(x, y))")
-    failFor(hof"∃X ((∀x ∃y X(x, y)) ∧ (∀x ∃y ¬X(y, x)))")
-    succeedFor(hof"∃X ((¬X(a) ∨ ¬X(b)) ∧ (X(c) ∨ X(d)))", Substitution(X -> le"λt (a!=c ∨ b!=c -> t=c) ∧ (a=c ∧ b=c ∧ (a!=d ∨ b!=d) -> t=d)"))
-    succeedFor(hof"∃X ((X(a) ∧ R(b)) ∨ R(c))", Substitution(X -> le"λt ¬R(c)"))
-    succeedFor(hof"∃X ((X(a) ∨ R(b)) ∧ (X(c) ∨ S(d)))", Substitution(X -> le"λt (t=a ∧ ¬R(b)) ∨ (t=c ∧ ¬S(d))"))
-    succeedFor(hof"∃X (X(a) ∧ ¬X(b))", Substitution(X -> le"λt t=a"))
-    succeedFor(hof"∃X X", Substitution(hov"X:o" -> le"⊤"))
+    succeedFor(pep"∃X (¬X(a, b) ∧ ∀x ∃y X(x, y))", Substitution(hov"X:i>i>o" -> le"λt_1 λt_2 (t_1 != a ∨ t_2 != b)"))
+    succeedFor(pep"∃X ∀x ∃y X(x,y)", Substitution(hov"X:i>i>o" -> le"λt_1 λt_2 ⊤"))
+    succeedFor(pep"∃X ∀x (X(x) ∧ R(x))", Substitution(X -> le"λt ∃x x=t"))
+    succeedFor(pep"∃X ∀x (X(f(x)) ∨ R(x))", Substitution(X -> le"λt ∃x (t=f(x) ∧ ¬R(x))"))
+    succeedFor(pep"∃X X(a, P:o)", Substitution(hov"X:i>o>o" -> le"λ(t:i) λ(p:o) t=a ∧ p=P"))
+    succeedFor(pep"∃X ∃x X(x)", Substitution(X -> le"λt ⊤"))
+    succeedFor(pep"∃X !x (X(a,x) ∨ X(b,x))", Substitution(hov"X:i>i>o", le"λt_1 λt_2 ⊤"))
+    failFor(pep"∃X ∀x (X(x,a) ∨ ∀y ¬X(x, y))")
+    failFor(pep"∃X ((∀x ∃y X(x, y)) ∧ (∀x ∃y ¬X(y, x)))")
+    succeedFor(pep"∃X ((¬X(a) ∨ ¬X(b)) ∧ (X(c) ∨ X(d)))", Substitution(X -> le"λt (a!=c ∨ b!=c -> t=c) ∧ (a=c ∧ b=c ∧ (a!=d ∨ b!=d) -> t=d)"))
+    succeedFor(pep"∃X ((X(a) ∧ R(b)) ∨ R(c))", Substitution(X -> le"λt ¬R(c)"))
+    succeedFor(pep"∃X ((X(a) ∨ R(b)) ∧ (X(c) ∨ S(d)))", Substitution(X -> le"λt (t=a ∧ ¬R(b)) ∨ (t=c ∧ ¬S(d))"))
+    succeedFor(pep"∃X (X(a) ∧ ¬X(b))", Substitution(X -> le"λt t=a"))
+    succeedFor(pep"∃X X", Substitution(hov"X:o" -> le"⊤"))
   }
 
   "solveFormulaEquation" should {
-    def succeedFor(formulaEquation: Formula): Fragment = {
+    def succeedFor(formulaEquation: PredicateEliminationProblem): Fragment = {
       s"succeed for $formulaEquation" in {
         solveFormulaEquation(formulaEquation) must beSuccessfulTry
       }
     }
 
-    def failFor(formulaEquation: Formula): Fragment = {
+    def failFor(formulaEquation: PredicateEliminationProblem): Fragment = {
       s"fail for $formulaEquation" in {
         solveFormulaEquation(formulaEquation) must beFailedTry
       }
     }
 
-    failFor(hof"R(a)")
-    succeedFor(hof"X(a)")
-    failFor(hof"X(a) ∧ ¬X(b)")
-    succeedFor(hof"X(c) -> P(c)")
-    failFor(hof"¬X(c) ∧ P(c)")
-    succeedFor(hof"X(a) ∨ P(a)")
-    failFor(hof"(X(a) ∧ ¬X(f(b))) ∨ (X(f(b)) ∧ ¬X(a))")
-    succeedFor(hof"X(a) ∧ X(b)")
-    succeedFor(hof"X(a) ∨ X(b)")
-    succeedFor(hof"¬X(a) -> X(b)")
-    failFor(hof"R(a) ∧ X(b)")
-    succeedFor(hof"X(a) ∧ Y(b)")
-    succeedFor(hof"X(a,b)")
-    failFor(hof"(∀x (X(x) -> #c(R:i>o)(x))) ∧ X(a)")
-    succeedFor(hof"(∀x (X(x) -> #v(R:i>o)(x))) ∧ X(a)")
-    failFor(hof"(∀x (X(x) -> (∀y R(x, y)))) ∧ X(a)")
-    failFor(hof"(∀x (X(x) -> R(x))) ∧ (X(a) ∨ X(b))")
-    failFor(hof"(∀x (X(x) -> (∀y R(x, y)))) ∧ (X(a) ∨ X(b))")
-    failFor(hof"∀x ((∀y R(x,y)) -> X(x)) ∧ (¬X(a) ∨ ¬X(b))")
-    failFor(hof"∀x ∀y (R(x,y) -> X(x)) ∧ (¬X(a) ∨ ¬X(b))")
-    failFor(hof"∀x ∀y (X(x, y) -> R(x, y)) ∧ (X(a, b) ∨ X(b, c))")
-    failFor(hof"∀x ((∀y R(x,y)) -> X(x)) ∧ (X(a) ∨ ¬X(b)) ∧ ¬X(c)")
-    succeedFor(hof"∀x (X(x) ∨ R(x))")
-    succeedFor(hof"X(a) ∧ ∃x X(x)")
-    failFor(hof"(∃x X(x)) ∧ ¬R(a)")
-    succeedFor(hof"∃x X(x,a)")
-    succeedFor(hof"(R(a) ∧ ∃x X(x)) ∨ ((∃y R(y)) ∨ X(b))")
-    succeedFor(hof"∀x (R(a) ∨ X(x) ∨ R(b))")
-    succeedFor(hof"∀x ∃y X(x)")
-    succeedFor(hof"∀x (P(x) -> X(x))")
-    failFor(hof"¬X(a, b) ∧ ∀x ∃y X(x, y)")
-    succeedFor(hof"∀x ∃y X(x,y)")
-    failFor(hof"∀x (X(x) ∧ R(x))")
-    succeedFor(hof"∀x (X(f(x)) ∨ R(x))")
-    succeedFor(hof"X(a, P:o)")
-    succeedFor(hof"∃x X(x)")
-    succeedFor(hof"!x (X(a,x) ∨ X(b,x))")
-    failFor(hof"∀x (X(x,a) ∨ ∀y ¬X(x, y))")
-    failFor(hof"(∀x ∃y X(x, y)) ∧ (∀x ∃y ¬X(y, x))")
-    failFor(hof"(¬X(a) ∨ ¬X(b)) ∧ (X(c) ∨ X(d))")
-    failFor(hof"(X(a) ∧ R(b)) ∨ R(c)")
-    succeedFor(hof"(X(a) ∨ R(b)) ∧ (X(c) ∨ S(d))")
-    failFor(hof"X(a) ∧ ¬X(b)")
+    failFor(pep"∃X(R(a))")
+    succeedFor(pep"∃X(X(a))")
+    failFor(pep"∃X(X(a) ∧ ¬X(b))")
+    succeedFor(pep"∃X(X(c) -> P(c))")
+    failFor(pep"∃X(¬X(c) ∧ P(c))")
+    succeedFor(pep"∃X(X(a) ∨ P(a))")
+    failFor(pep"∃X((X(a) ∧ ¬X(f(b))) ∨ (X(f(b)) ∧ ¬X(a)))")
+    succeedFor(pep"∃X(X(a) ∧ X(b))")
+    succeedFor(pep"∃X(X(a) ∨ X(b))")
+    succeedFor(pep"∃X(¬X(a) -> X(b))")
+    failFor(pep"∃X(R(a) ∧ X(b))")
+    succeedFor(pep"∃X∃Y(X(a) ∧ Y(b))")
+    succeedFor(pep"∃X(X(a,b))")
+    failFor(pep"∃X((∀x (X(x) -> #c(R:i>o)(x))) ∧ X(a))")
+    succeedFor(pep"∃X∃#v(R:i>o)((∀x (X(x) -> #v(R:i>o)(x))) ∧ X(a))")
+    failFor(pep"∃X((∀x (X(x) -> (∀y R(x, y)))) ∧ X(a))")
+    failFor(pep"∃X((∀x (X(x) -> R(x))) ∧ (X(a) ∨ X(b)))")
+    failFor(pep"∃X((∀x (X(x) -> (∀y R(x, y)))) ∧ (X(a) ∨ X(b)))")
+    failFor(pep"∃X(∀x ((∀y R(x,y)) -> X(x)) ∧ (¬X(a) ∨ ¬X(b)))")
+    failFor(pep"∃X(∀x ∀y (R(x,y) -> X(x)) ∧ (¬X(a) ∨ ¬X(b)))")
+    failFor(pep"∃X(∀x ∀y (X(x, y) -> R(x, y)) ∧ (X(a, b) ∨ X(b, c)))")
+    failFor(pep"∃X(∀x ((∀y R(x,y)) -> X(x)) ∧ (X(a) ∨ ¬X(b)) ∧ ¬X(c))")
+    succeedFor(pep"∃X(∀x (X(x) ∨ R(x)))")
+    succeedFor(pep"∃X(X(a) ∧ ∃x X(x))")
+    failFor(pep"∃X((∃x X(x)) ∧ ¬R(a))")
+    succeedFor(pep"∃X(∃x X(x,a))")
+    succeedFor(pep"∃X((R(a) ∧ ∃x X(x)) ∨ ((∃y R(y)) ∨ X(b)))")
+    succeedFor(pep"∃X(∀x (R(a) ∨ X(x) ∨ R(b)))")
+    succeedFor(pep"∃X(∀x ∃y X(x))")
+    succeedFor(pep"∃X(∀x (P(x) -> X(x)))")
+    failFor(pep"∃X(¬X(a, b) ∧ ∀x ∃y X(x, y))")
+    succeedFor(pep"∃X(∀x ∃y X(x,y))")
+    failFor(pep"∃X(∀x (X(x) ∧ R(x)))")
+    succeedFor(pep"∃X(∀x (X(f(x)) ∨ R(x)))")
+    succeedFor(pep"∃X(X(a, P:o))")
+    succeedFor(pep"∃X(∃x X(x))")
+    succeedFor(pep"∃X(!x (X(a,x) ∨ X(b,x)))")
+    failFor(pep"∃X(∀x (X(x,a) ∨ ∀y ¬X(x, y)))")
+    failFor(pep"∃X((∀x ∃y X(x, y)) ∧ (∀x ∃y ¬X(y, x)))")
+    failFor(pep"∃X((¬X(a) ∨ ¬X(b)) ∧ (X(c) ∨ X(d)))")
+    failFor(pep"∃X((X(a) ∧ R(b)) ∨ R(c))")
+    succeedFor(pep"∃X((X(a) ∨ R(b)) ∧ (X(c) ∨ S(d)))")
+    failFor(pep"∃X(X(a) ∧ ¬X(b))")
   }
 
   private def beSetEqualsWithCustomEquality[A](
@@ -384,20 +382,20 @@ class FormulaEquationsTest extends Specification {
   }
 
   private def beAnEquivalentSubstitutionTo(
+      pep: PredicateEliminationProblem,
       equivalentSubstitution: Substitution
-  ): Matcher[(Substitution, Formula)] = {
-    (input: (Substitution, Formula)) =>
+  ): Matcher[Substitution] = {
+    (substitution: Substitution) =>
       {
-        val (substitution, firstOrderPart) = input
         val substitutedFormula = simplifyPropositional(BetaReduction.betaNormalize(
-          substitution(firstOrderPart)
+          substitution(pep.firstOrderPart)
         ))
         val equivalentSubstitutedFormula = simplifyPropositional(BetaReduction.betaNormalize(
-          equivalentSubstitution(firstOrderPart)
+          equivalentSubstitution(pep.firstOrderPart)
         ))
         val isValid = Escargot isValid Iff(substitutedFormula, equivalentSubstitutedFormula)
         val errorMessage =
-          s"""|applying $substitution is not equivalent to applying $equivalentSubstitution to $firstOrderPart
+          s"""|applying $substitution is not equivalent to applying $equivalentSubstitution to $pep.formula
             |applying $substitution
             |gives $substitutedFormula
             |applying $equivalentSubstitution

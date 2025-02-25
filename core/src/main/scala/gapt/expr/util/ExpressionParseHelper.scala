@@ -20,6 +20,10 @@ import gapt.proofs.FOLSequent
 import gapt.proofs.HOLClause
 import gapt.proofs.HOLSequent
 import gapt.proofs.Sequent
+import gapt.logic.hol.{PredicateEliminationProblem, ClauseSetPredicateEliminationProblem}
+import gapt.expr.formula.Ex
+import gapt.expr.formula.hol.containsHOQuantifier
+import gapt.expr.formula.hol.freeHOVariables.isHOVar
 
 object ExpressionParseHelper {
   abstract class Splice[+ForType] {
@@ -250,6 +254,28 @@ class ExpressionParseHelper(sc: StringContext, file: sourcecode.File, line: sour
 
   /** Parses a string as a [[gapt.proofs.FOLClause]]. */
   def fcl(args: Splice[Expr]*): FOLClause = hos(args: _*).map(_.asInstanceOf[FOLAtom])
+
+  /** Parses a string as a [[gapt.logic.hol.PredicateEliminationProblem]] */
+  def pep(args: Splice[Expr]*): PredicateEliminationProblem = hof(args: _*) match
+    case expr @ Ex.Block(vars, foPart) => {
+      val (hoVarsPrefix, varSuffix) = vars.span(isHOVar)
+      val remainder = Ex.Block(varSuffix, foPart)
+      if (containsHOQuantifier(remainder)) {
+        throw new IllegalArgumentException(s"Expression $expr is not of the form ∃X_1...∃X_n F where F is a first-order formula and X_1,...,X_n are second-order variables")
+      }
+      PredicateEliminationProblem(hoVarsPrefix, remainder)
+    }
+
+  /** Parses a string as a [[gapt.logic.hol.ClauseSetPredicateEliminationProblem]] if no skolemization of input formula is required */
+  def clspep(args: Splice[Expr]*): ClauseSetPredicateEliminationProblem =
+    val inputPep = pep(args: _*)
+    inputPep.toClauseSetIfSkolemized match {
+      case None =>
+        throw new IllegalArgumentException(
+          s"Cannot clausify ${inputPep.toFormula} as first-order part is not skolemized"
+        )
+      case Some(clauseSetPep) => clauseSetPep
+    }
 
   private def placeholder = "__qq_"
 }

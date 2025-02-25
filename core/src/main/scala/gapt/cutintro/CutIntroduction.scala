@@ -22,7 +22,7 @@ import gapt.expr.util.rename
 import gapt.grammars._
 import gapt.grammars.reforest.Reforest
 import gapt.logic.hol.CNFp
-import gapt.logic.hol.dls.dls
+import gapt.logic.hol.wdls.wdls
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
@@ -48,6 +48,7 @@ import gapt.utils.{Logger, Maybe}
 
 import scala.util.Failure
 import scala.util.Success
+import gapt.logic.hol.PredicateEliminationProblem
 
 trait GrammarFindingMethod {
   def findGrammars(lang: Set[Expr]): Option[VTRATG]
@@ -460,7 +461,7 @@ object CutIntroduction {
     state.result
   }
 
-  object computeSolutionViaDls {
+  object computeSolutionViaWdls {
 
     def apply(h: SchematicExtendedHerbrandSequent): Seq[FOLFormula] = {
       val formulaInstances = h.us.flatMap {
@@ -473,13 +474,16 @@ object CutIntroduction {
         case ((vs, tss), x) =>
           x(vs) --> And(tss.map { ts => x(ts) })
       }
-      def schematicExtendedHerbrandSequentToDlsInstance(h: SchematicExtendedHerbrandSequent): Formula =
-        Ex.Block(schematicVariables, (schematicCutImplications ++: formulaInstances).toFormula)
-      val dlsInstance = schematicExtendedHerbrandSequentToDlsInstance(h)
-      val solution = dls(dlsInstance) match {
-        case Success(s) => s._1
+      def schematicExtendedHerbrandSequentToPep(h: SchematicExtendedHerbrandSequent): PredicateEliminationProblem =
+        PredicateEliminationProblem(
+          schematicVariables,
+          (schematicCutImplications ++: formulaInstances).toFormula
+        )
+      val pep = schematicExtendedHerbrandSequentToPep(h)
+      val solution = wdls(pep) match {
+        case Success(s) => s
         case Failure(e) =>
-          throw new Exception("failed to solve schematic extended herbrand sequent via DLS", e)
+          throw new Exception("failed to solve schematic extended herbrand sequent via WDLS", e)
       }
       schematicCutImplications.map {
         c =>

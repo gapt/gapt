@@ -3,7 +3,7 @@ import java.io.ByteArrayOutputStream
 import org.apache.commons.compress.archivers.tar.{TarArchiveEntry, TarArchiveOutputStream}
 import sys.process._
 
-val Version = "2.17.0"
+val Version = "2.18.0"
 
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
@@ -231,6 +231,7 @@ lazy val core = project.in(file("core")).settings(commonSettings: _*).settings(
     "org.scala-lang.modules" %% "scala-xml" % "2.1.0",
     "org.apache.commons" % "commons-lang3" % "3.12.0",
     "com.lihaoyi" %% "os-lib" % "0.9.3",
+    "com.lihaoyi" %% "pprint" % "0.9.0",
     "de.uni-freiburg.informatik.ultimate" % "smtinterpol" % "2.5",
     "com.github.scopt" %% "scopt" % "4.0.1",
     "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.6",
@@ -286,7 +287,9 @@ lazy val examples = project.in(file("examples")).dependsOn(core)
           )
       }
     },
-    dependencyOverrides ++= dependencyConflictResolutions
+    dependencyOverrides ++= dependencyConflictResolutions,
+    Compile / run / connectInput := true,
+    Compile / run / outputStrategy := Some(StdoutOutput)
   )
 
 lazy val tests = project.in(file("tests")).dependsOn(core, examples)

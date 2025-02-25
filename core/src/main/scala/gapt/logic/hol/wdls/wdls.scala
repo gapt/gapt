@@ -1,4 +1,4 @@
-package gapt.logic.hol.dls
+package gapt.logic.hol.wdls
 
 import gapt.expr.Abs
 import gapt.expr.BetaReduction
@@ -23,16 +23,17 @@ import gapt.utils.crossProduct
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import gapt.logic.hol.PredicateEliminationProblem
+import gapt.proofs.resolution.Subst
 
 /**
- * Uses the DLS algorithm to find a witness for formula equations of the form
- * ∃X_1 ... ∃X_n φ where φ is a first order formula and X_1,...,X_n are second-order variables.
+ * Uses the DLS algorithm to find a witness for a predicate elimination problem of the form
+ * ∃X₁ ... ∃Xₙ φ where φ is a first order formula and X₁,...,Xₙ are second-order variables.
  *
- * If the method succeeds, the return value is a tuple of a substitution of the second order variables in the
- * formula equation and a first order formula such that applying the substitution to the first-order formula
- * is a first-order formula which is equivalent to the given formula equation.
+ * If the method succeeds, the return value is a substitution of the variables in the
+ * input predicate elimination problem such that applying the substitution to φ gives a first-order formula which is equivalent to ∃X₁ ... ∃Xₙ φ.
  *
- * A sufficient criterion for the success of the method in the case of formula equations of the form ∃X φ is that
+ * A sufficient criterion for the success of the method is
  * φ can be put into the form
  *
  * (α_1(X) ∧ β_1(X)) ∨ ... ∨ (α_n(X) ∧ β_n(X))
@@ -51,36 +52,34 @@ import scala.util.Try
  * - distributing conjunctions over disjunctions in subformulae where positive and negative occurrences of X are not
  *   already separated by a conjunction.
  *
- * For formula equations with more than one variable the innermost formula equation is solved first,
- * then reduced to a first-order formula by applying the found substitution.
- * The method is then applied recursively on the resulting formula equation with one variable less.
+ * The method solves the problem for multiple variables by successive elimination of a single variable 
+ * starting with Xₙ, then X_{n-1} and so on.
  *
  * A Failure return value does not mean that the quantifier elimination is impossible.
  * It just means that this algorithm could not find a witness which allows elimination of the second order quantifier.
- * A Success return value does not mean that the returned first-order formula is valid, but only that it's equivalent
- * to the given formula equation.
  */
-object dls {
+object wdls {
 
-  def apply(formula: Formula): Try[(Substitution, Formula)] = Try(simplify(formula) match {
-    case Ex(PredicateVariable(x, _), innerFormula) =>
-      val (s_, folPart) = dls(innerFormula).get
-      val folInnerFormula = simplify(util.applySubstitutionBetaReduced(s_, folPart))
-      val w = dls_(folInnerFormula, x)
-      val s = util.updateSubstitutionWithBetaReduction(s_, x -> w)
-      (s, folPart)
-    case f => (Substitution(), f)
-  })
+  def apply(input: PredicateEliminationProblem): Try[Substitution] =
+    Try(input.varsToEliminate.foldLeft(
+      Substitution()
+    ) {
+      case (s_, x) =>
+        val folInnerFormula = simplify(util.applySubstitutionBetaReduced(s_, input.firstOrderPart))
+        val w = wdls_(folInnerFormula, x)
+        val s = util.updateSubstitutionWithBetaReduction(s_, x -> w)
+        s
+    })
 
-  private def dls_(f: Formula, X: Var): Expr = new dls(X).solve(f)
+  private def wdls_(f: Formula, X: Var): Expr = new wdls(X).solve(f)
 }
 
-private class dls(X: Var) {
+private class wdls(X: Var) {
 
   def solve(f: Formula): Expr = findWitness(preprocess(f))
 
   private def preprocess(f: Formula): Set[Disjunct] =
-    new DlsPreprocessor(X).preprocess(f)
+    new WdlsPreprocessor(X).preprocess(f)
 
   private def findWitness(disjuncts: Set[Disjunct]): Expr = {
     val xs = util.freshArgumentVariables(X, disjuncts)
@@ -98,7 +97,7 @@ private class dls(X: Var) {
   }
 
   private def findPartialWitness(xs: Seq[Var], d: Disjunct): Formula =
-    new DlsPartialWitnessExtraction(X).findPartialWitness(xs, d)
+    new WdlsPartialWitnessExtraction(X).findPartialWitness(xs, d)
 
   private def witnessCombination(xs: Seq[Var], fs: Seq[Formula], g: Map[Formula, Formula]): Formula = {
     val fg = fs.map(f => f -> util.applySubstitutionBetaReduced(Substitution(X -> Abs(xs, g(f))), f)).toMap
@@ -135,7 +134,7 @@ private object Disjunct {
  *
  * @param X The predicate variable for which the witness is extracted.
  */
-private class DlsPartialWitnessExtraction(X: Var) {
+private class WdlsPartialWitnessExtraction(X: Var) {
 
   def findPartialWitness(
       argumentVariables: Seq[Var],
@@ -171,7 +170,7 @@ private class DlsPartialWitnessExtraction(X: Var) {
  *
  * @param X The predicate variable with respect to which formulas are preprocessed.
  */
-private class DlsPreprocessor(X: Var) {
+private class WdlsPreprocessor(X: Var) {
 
   def preprocess(f: Formula): Set[Disjunct] =
     separateConjuncts(extractDisjuncts(f)) match {

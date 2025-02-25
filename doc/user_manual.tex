@@ -160,7 +160,7 @@
 {\Huge User manual}
 
 \vspace*{10mm}
-{\Large Version 2.17.0}
+{\Large Version 2.18.0}
 \vspace*{10mm}
 
 {\Large \today}
@@ -228,7 +228,7 @@ sbt console
   it is available as a Maven artifact on Maven Central.  All you need to do is add
   the following line to your \verb,build.sbt,:
 \begin{lstlisting}
-libraryDependencies += "at.logic.gapt" %% "gapt" % "2.17.0"
+libraryDependencies += "at.logic.gapt" %% "gapt" % "2.18.0-SNAPSHOT"
 \end{lstlisting}
 
 \end{enumerate}
@@ -2334,15 +2334,146 @@ x_2 → 0
 
 \end{clilisting}
 
+\section{Witnessed Second-Order Quantifier Elimination and Formula Equations}
 
-\section{Formula equations}
-A \emph{formula equation} is a first-order formula \(F[X_{1}, \dots, X_{n}]\) with free second-order predicate variables \(X_{1}/k_{1}, \dots, X_{n}/k_{n}\).
-A solution of a formula equation \(F[X_{1}, \dots, X_{n}]\) is a vector of first-order formulas \((G_{1}[x_{1}, \dots, x_{k_{1}}], \dots, G_{n}[x_{1}, \dots, x_{k_{n}}])\) such that \(F[X_{1}/G_{1}, \dots, X_{n}/G_{n}]\) is valid.
+Let $\varphi$ be a first-order formula and $\overline{X}$ a tuple of second-order variables.
+Then \emph{Witnessed Second-Order Quantifier Elimination (WSOQE)} is the problem of finding a tuple of first-order predicates $\overline{\alpha}$ such that the \emph{WSOQE condition} holds:
+\begin{equation}
+  \label{eq:second-order-elimination-with-witness}
+  \models (\exists \overline{X} \varphi) \leftrightarrow \varphi[\overline{X} / \overline{\alpha}].
+\end{equation}
+
+A related problem is (existential) \emph{Second-Order Quantifier Elimination (SOQE)}, i.e. finding a first-order formula $\psi$ such that 
+$$\models (\exists \overline{X} \varphi) \leftrightarrow \psi.$$
+Any solution to WSOQE induces a solution to SOQE, since $\varphi[\overline{X} / \overline{\alpha}]$ is a first-order formula.
+
+Another related problem is \emph{Formula Equations (FEQ)}, i.e. finding a tuple of first-order predicates $\overline{\alpha}$ such that 
+$$\models \varphi[\overline{X}/ \overline{\alpha}].$$
+Note that FEQ can be solved by solving WSOQE and appending a first-order validity check to $\varphi[\overline{X} / \overline{\alpha}]$.
+
+All three problems share the same input structure: a first-order formula together with a set of second-order variables, usually existentially quantified. We call this structure a \emph{Predicate Elimination Problem (PEP)} and provide some methods for working with it.
+
+GAPT provides two methods for solving WSOQE that are based on established methods for solving SOQE: \emph{WSCAN}, based on the SCAN algorithm \cite{Gabbay1992Quantifier} and \emph{WDLS}, based on the DLS algorithm \cite{Doherty1997Computing}.
+
+\subsection{WSCAN}
+
+We start with an input PEP which we can parse from a first-order formula with a second-order existential prefix. \texttt{clspep} checks whether the input formula is in PEP form and returns its clause set form, if it can do so without requiring Skolemization:
+\begin{clilisting}
+gapt> val inputPep = clspep"?X (X(a) & X(b) & -X(c))"
+val inputPep: gapt.logic.hol.ClauseSetPredicateEliminationProblem = ClauseSetPredicateEliminationProblem(List(X:i>o),Set( ⊢ X(b), X(c) ⊢ ,  ⊢ X(a)))
+
+\end{clilisting}
+
+To compute a WSOQE witness one can use
+\begin{clilisting}
+gapt> val wit = wscan(inputPep).get
+val wit: gapt.expr.subst.Substitution = Substitution(X:i>o -> λu_0 c != u_0 ∨ b = u_0)
+
+\end{clilisting}
+
+Further examples can be found in \texttt{examples/PredicateEliminationProblems.scala}.
+
+If Skolemization of the input is desired, one can perform it explicitly by using
+\begin{clilisting}
+gapt> val clauseSetPep = pep"?X ?u?v?w (X(u) & X(v) & -X(w))".toClauseSet
+val clauseSetPep: gapt.logic.hol.ClauseSetPredicateEliminationProblem = ClauseSetPredicateEliminationProblem(List(X:i>o),Set( ⊢ X(s_2), X(s_4) ⊢ ,  ⊢ X(s_0)))
+
+\end{clilisting}
+Note that this transformation might not be equivalence-preserving as it can introduce new Skolem terms.
+
+We now show how WSCAN works on a more detailed level.
+First, it runs SCAN on the input clause set to get a derivation
+\begin{clilisting}
+gapt> val derivation = scan(clauseSetPep, derivationLimit=Some(10), attemptLimit=Some(10), oneSidedOnly=true).get
+val derivation: gapt.logic.hol.scan.Derivation = Derivation(ClauseSetPredicateEliminationProblem(List(X:i>o),Set( ⊢ X(s_2), X(s_4) ⊢ ,  ⊢ X(s_0))),List(ConstraintResolution(PointedClause( ⊢ X(s_2),Suc(0)),PointedClause(X(s_4) ⊢ ,Ant(0))), PurifiedClauseDeletion(PointedClause( ⊢ X(s_2),Suc(0))), ConstraintResolution(PointedClause(X(s_4) ⊢ ,Ant(0)),PointedClause( ⊢ X(s_0),Suc(0))), PurifiedClauseDeletion(PointedClause(X(s_4) ⊢ ,Ant(0))), ExtendendPurityDeletion(X:i>o,Positive)))
+
+\end{clilisting}
+The \texttt{derivationLimit} parameter controls the number of derivation steps that are to be performed by SCAN.
+If SCAN does not eliminate the given predicates within this limit, the method tries again with another set of inferences until the number of attempts given by \texttt{attemptLimit} is reached.
+One can set either or both of \texttt{derivationLimit} and \texttt{attempLimit} to \texttt{None} to run SCAN without the respective limit.
+The option \texttt{oneSidedOnly=true} makes sure only derivations of a certain kind are constructed for which we can guarantee to compute a first-order witness.
+However, this might affect whether a derivation can be found at all.
+
+The returned derivation stores the input PEP and all performed inference steps during the run of SCAN.
+Furthermore we can reconstruct the final clause set, which does not contain any of the second-order variables of the input PEP:
+\begin{clilisting}
+gapt> derivation.conclusion
+val res0: Set[gapt.proofs.HOLClause] = Set(s_2 = s_4 ⊢ , s_4 = s_0 ⊢ )
+
+\end{clilisting}
+From the derivation we can also construct the witness substitution for the input PEP. 
+\begin{clilisting}
+gapt> val wit = wscan.witness(derivation, witnessLimit=Some(10)).get
+val wit: gapt.expr.subst.Substitution = Substitution(X:i>o -> λu_0 s_4 != u_0 ∨ s_2 = u_0)
+
+\end{clilisting}
+During the witness construction some SCAN-like saturation processes are performed.
+The parameter \texttt{witnessLimit} controls how many inference steps during every one of these saturation processes we allow.
+The construction fails if any of these processes does not terminate within the given number of inference steps.
+
+By the correctness of SCAN we know that the input formula is equivalent to the conclusion of the SCAN derivation which is a first-order clause set.
+We can thus check if the conclusion is logically equivalent to substituting the computed witness for $X$ in the input formula. We do that by constructing the first-order WSOQE-condition and verifying that it is valid using a first-order theorem prover like Escargot:
+\begin{clilisting}
+gapt> Escargot.isValid(Iff(derivation.conclusion.toFormula, BetaReduction.betaNormalize(wit(clauseSetPep.firstOrderClauses.toFormula))))
+val res1: Boolean = true
+
+\end{clilisting}
+
+All the options illustrated can be used on \texttt{wscan} itself too:
+\begin{clilisting}
+gapt> val derivation = wscan(clauseSetPep, oneSidedOnly=true, derivationLimit=Some(10), attemptLimit=Some(10), witnessLimit=Some(10)).get
+val derivation: gapt.expr.subst.Substitution = Substitution(X:i>o -> λu_0 s_4 != u_0 ∨ s_2 = u_0)
+
+\end{clilisting}
+
+To find multiple witnesses one can use the following:
+\begin{clilisting}
+gapt> val witnesses = wscan.witnesses(clauseSetPep, attemptLimit = Some(10)).toSeq
+val witnesses: Seq[gapt.expr.subst.Substitution] = List(Substitution(X:i>o -> λu_0 s_4 != u_0 ∨ s_2 = u_0), Substitution(X:i>o -> λu_0 (WX(u_0) ∨ s_0 = u_0) ∧ s_4 != u_0 ∨ s_2 = u_0), Substitution(X:i>o -> λu_0 s_0 = u_0 ∨ s_2 = u_0), Substitution(X:i>o -> λu_0 WX(u_0) ∧ s_4 != u_0 ∨ s_0 = u_0 ∨ s_2 = u_0), Substitution(X:i>o -> λu_0 s_4 != u_0), Substitution(X:i>o -> λu_0 s_4 != u_0), Substitution(X:i>o -> λu_0 (WX(u_0) ∨ s_0 = u_0 ∨ s_2 = u_0) ∧ s_4 != u_0), Substitution(X:i>o -> λu_0 s_4 != u_0), Substitution(X:i>o -> λu_0 (WX(u_0) ∨ s_2 = u_0 ∨ s_0 = u_0) ∧ s_4 != u_0), Substitution(X:i>o -> λu_0 s_2 = u_0 ∨ s_0 = u_0))
+
+\end{clilisting}
+
+Note that the \texttt{attemptLimit} parameter controls how many witnesses are found at most.
+If one is only interested in mutually non-equivalent witnesses one can use
+\begin{clilisting}
+gapt> val nonEquivalent = wscan.mutuallyNonEquivalent(witnesses).toSeq
+val nonEquivalent: Seq[gapt.expr.subst.Substitution] = List(Substitution(X:i>o -> λu_0 s_4 != u_0 ∨ s_2 = u_0), Substitution(X:i>o -> λu_0 (WX(u_0) ∨ s_0 = u_0) ∧ s_4 != u_0 ∨ s_2 = u_0), Substitution(X:i>o -> λu_0 s_0 = u_0 ∨ s_2 = u_0), Substitution(X:i>o -> λu_0 WX(u_0) ∧ s_4 != u_0 ∨ s_0 = u_0 ∨ s_2 = u_0), Substitution(X:i>o -> λu_0 s_4 != u_0), Substitution(X:i>o -> λu_0 (WX(u_0) ∨ s_0 = u_0 ∨ s_2 = u_0) ∧ s_4 != u_0))
+
+\end{clilisting}
+which uses \texttt{Escargot} under the hood to check for equivalence between the given witnesses.
+
+\subsection{WDLS}
+
+The \emph{DLS} algorithm \cite{Doherty1997Computing} can eliminate second-order quantifiers for certain formulas by computing equivalent first-order formulas.
+GAPT contains an implementation of a variant of the DLS algorithm that computes actual witnesses for second-order quantifiers.
+For example consider the following PEP
+\begin{clilisting}
+gapt> val H = pep"?X ?Y( X(a) ∧ ¬Y(a) )"
+val H: gapt.logic.hol.PredicateEliminationProblem = PredicateEliminationProblem(List(X:i>o, Y:i>o),X(a) ∧ ¬Y(a))
+
+\end{clilisting}
+We can eliminate the second-order quantifiers and obtain witnesses by
+\begin{clilisting}
+gapt> val scala.util.Success(solution) = wdls(H): @unchecked
+val solution: gapt.expr.subst.Substitution = Substitution(X:i>o -> λx_0 a = x_0, Y:i>o -> λy_0 ⊥)
+
+\end{clilisting}
+The returned value is a substitution such that applying it to the first-order part of the input fulfils \eqref{eq:second-order-elimination-with-witness}.
+Since the input formula is valid this equivalent to the resulting formula being valid
+\begin{clilisting}
+gapt> Escargot.isValid(BetaReduction.betaNormalize(solution(H.firstOrderPart)))
+val res2: Boolean = true
+
+\end{clilisting}
+Failure of the method, i.e. return of a \texttt{Failure}, does not mean that there is no witness such that the equivalence holds, but merely that our algorithm could not find a witness.
+A more detailed description of the formulas that can be solved by our implementation of the DLS algorithm can be found in the documentation of \texttt{dls}.
+
+\subsection{Solving formula equations}
 GAPT supports solving certain classes of formula equations.
 For example let
 \begin{clilisting}
-gapt> val F = hof"X(a) ∧ X(b)"
-val F: gapt.expr.formula.Formula = X(a) ∧ X(b)
+gapt> val F = pep"?X(X(a) ∧ X(b))"
+val F: gapt.logic.hol.PredicateEliminationProblem = PredicateEliminationProblem(List(X:i>o),X(a) ∧ X(b))
 
 \end{clilisting}
 We can solve the formula equation above by
@@ -2354,42 +2485,14 @@ val s: gapt.expr.subst.Substitution = Substitution(X:i>o -> λx_0 a = x_0 ∨ b 
 
 On success a substitution is returned, which when applied to the input formula yields a valid formula.
 \begin{clilisting}
-gapt> Escargot.isValid( BetaReduction.betaNormalize( s(F) ) )
-val res0: Boolean = true
+gapt> Escargot.isValid( BetaReduction.betaNormalize( s(F.firstOrderPart) ) )
+val res3: Boolean = true
 
 \end{clilisting}
 If \texttt{solveFormulaEquation} fails to find a solution, this does not mean that the formula equation is not solvable, but only that the algorithm we use could not find~it.
 
-The function \texttt{solveFormulaEquation} proceeds by a reduction to the related problem of finding first-order formulas $G_{i}$ such that 
-\begin{equation}
-  \label{eq:second-order-elimination-with-witness}
-  \exists X_1 \dots \exists X_n F \leftrightarrow F[X_1/G_1,\dots,X_n/G_n]
-\end{equation}
-is valid.
-This problem is a variant of second-order quantifier elimination.
-The \emph{DLS} algorithm \cite{Doherty1997Computing} can eliminate second-order quantifiers for certain formulas by computing equivalent first-order formulas.
-GAPT contains an implementation of a variant of the DLS algorithm that computes actual witnesses for second-order quantifiers.
-For example consider the following formula
-\begin{clilisting}
-gapt> val H = hof"?X ?Y( X(a) ∧ ¬Y(a) )"
-val H: gapt.expr.formula.Formula = ∃X ∃Y (X(a) ∧ ¬Y(a))
+The function \texttt{solveFormulaEquation} proceeds by solving WSOQE using WDLS and checking whether the resulting formula is valid using \texttt{Escargot.isValid}.
 
-\end{clilisting}
-We can eliminate the second-order quantifiers and obtain witnesses by
-\begin{clilisting}
-gapt> val scala.util.Success( (solution, folPart) ) = dls(H): @unchecked
-val solution: gapt.expr.subst.Substitution = Substitution(X:i>o -> λx_0 a = x_0, Y:i>o -> λy_0 ⊥)
-val folPart: gapt.expr.formula.Formula = X(a) ∧ ¬Y(a)
-
-\end{clilisting}
-The returned value is a tuple of a substitution and the possibly simplified first-order part of the input formula such that applying the substitution to the first-order part fulfils \eqref{eq:second-order-elimination-with-witness}.
-\begin{clilisting}
-gapt> Escargot.isValid(BetaReduction.betaNormalize(solution(folPart)))
-val res1: Boolean = true
-
-\end{clilisting}
-Again, failure of the method does not mean that there is no witness such that the equivalence holds, but merely that our algorithm could not find a witness.
-A more detailed description of the formulas that can be solved by our implementation of the DLS algorithm can be found in the documentation of \texttt{dls}.
 \vfill
 \pagebreak
 \begin{appendix}
