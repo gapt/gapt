@@ -24,19 +24,19 @@ class wscanTest extends Specification {
   This is a specification for the scan implementation
 
   It should solve
-    solve equation without quantified variable ${exampleWithQuantifiedVariableNotOccurring.toClauseSet must beSolved()}
-    treat variables as predicate constants when not given ${exampleWithoutQuantifiedVariables.toClauseSet must beSolved()}
+    solve equation without quantified variable ${exampleWithQuantifiedVariableNotOccurring must beSolved()}
+    treat variables as predicate constants when not given ${exampleWithoutQuantifiedVariables must beSolved()}
     negation of leibniz equality ${negationOfLeibnizEquality.toClauseSet must beSolved()}
-    resolution on base literals ${exampleThatUsesResolutionOnLiteralsThatAreNotQuantifiedVariables.toClauseSet must beSolved(allowResolutionOnBaseLiterals = true)}
-    2-part disjunction ${single2PartDisjunction.toClauseSet must beSolved()}
-    3-part disjunction ${single3PartDisjunction.toClauseSet must beSolved()}
-    two variable example ${exampleWithTwoVariables.toClauseSet must beSolved()}
-    modal correspondence T axiom ${modalCorrespondence.negationOfSecondOrderTranslationOfTAxiom.toClauseSet must beSolved()}
-    modal correspondence 4 axiom ${modalCorrespondence.negationOfSecondOrderTranslationOf4Axiom.toClauseSet must beSolved()}
-    non-inductive example with two clauses ${exampleWithTwoClauses.toClauseSet must beSolved()}
-    non-inductive example with three clauses ${exampleWithThreeClauses.toClauseSet must beSolved()}
-    inductive example with tautology deletion ${exampleRequiringTautologyDeletion.toClauseSet must beSolved()}
-    inductive example with subsumption ${exampleRequiringSubsumption.toClauseSet must beSolved()}
+    resolution on base literals ${exampleThatUsesResolutionOnLiteralsThatAreNotQuantifiedVariables must beSolved(allowResolutionOnBaseLiterals = true)}
+    2-part disjunction ${single2PartDisjunction must beSolved()}
+    3-part disjunction ${single3PartDisjunction must beSolved()}
+    two variable example ${exampleWithTwoVariables must beSolved()}
+    modal correspondence T axiom ${modalCorrespondence.negationOfSecondOrderTranslationOfTAxiom must beSolved()}
+    modal correspondence 4 axiom ${modalCorrespondence.negationOfSecondOrderTranslationOf4Axiom must beSolved()}
+    non-inductive example with two clauses ${exampleWithTwoClauses must beSolved()}
+    non-inductive example with three clauses ${exampleWithThreeClauses must beSolved()}
+    inductive example with tautology deletion ${exampleRequiringTautologyDeletion must beSolved()}
+    inductive example with subsumption ${exampleRequiringSubsumption must beSolved()}
   """
 
   def beEquivalentTo(right: Formula): Matcher[Formula] = { (left: Formula) =>
@@ -73,7 +73,7 @@ class wscanTest extends Specification {
         allowResolutionOnBaseLiterals = allowResolutionOnBaseLiterals,
         derivationLimit = Some(derivationLimit),
         attemptLimit = Some(attemptLimit)
-      ).toOption.get.conclusion.toFormula
+      ).get.conclusion.toFormula
       wscan(
         input,
         oneSidedOnly = true,
