@@ -113,16 +113,11 @@ object wscan {
   /**
     * Runs the SCAN algorithm multiple times on the input predicate elimination problem to find several derivations and corresponding witnesses and only gives back those that are mutually non-equivalent.
     *
-    * @param input input predicate elimination problem in clause set form
-    * @param oneSidedOnly @see oneSidedOnly option of scan
-    * @param allowResolutionOnBaseLiterals @see allowResolutiononBaseLiterals option of scan
-    * @param derivationLimit @see derivationLimit option of scan
-    * @param attemptLimit @see attemptLimitOption of scan 
-    * @param witnessLimit @see witnessLimit option of wscan
+    * @param substitutions an IterableOnce of the substitutions of which to filter out the mutually non-equivalent ones
     * @return an iterator of mutually non-equivalent substitutions satisfying the WSOQE-condition of the given input
     */
   def mutuallyNonEquivalent(
-      substitutions: Iterable[Substitution]
+      substitutions: IterableOnce[Substitution]
   ): Iterator[Substitution] = {
     Iterator.unfold((Set.empty[Substitution], substitutions.iterator)) {
       case (state, iterator) => {
