@@ -171,7 +171,7 @@ object wscan {
             case DerivationStep.PurifiedClauseDeletion(candidate) => {
               for
                 w <- helper(derivation.tail)
-                ext <- pResU(candidate, limit).map(Substitution(candidate.symbol.asInstanceOf[Var], _))
+                ext <- pResU(candidate, limit).map(Substitution(candidate.varOption.get, _))
               yield w.compose(ext)
             }
         }
@@ -207,7 +207,7 @@ object wscan {
     val purificationResult = scan.purifyPointedClause(
       scan.State.initialFrom(
         ClauseSetPredicateEliminationProblem(
-          Seq(pointedClause.symbol.asInstanceOf[Var]),
+          Seq(pointedClause.varOption.get),
           Set(unitClause)
         ),
         remainingAllowedInferences = limit,

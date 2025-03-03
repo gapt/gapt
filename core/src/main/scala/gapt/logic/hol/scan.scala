@@ -138,12 +138,11 @@ object scan {
       case Atom(v @ VarOrConst(_, _, _), _) => v
 
     /**
-      * Returns true, if the symbol of the pointed clause is a [[gapt.expr.Var]] and false otherwise
+      * Returns Some(v), if the symbol of the pointed clause is a [[gapt.expr.Var]] and None otherwise
       */
-    def isVar: Boolean = symbol match {
-      case Var(_, _) => true
-      case _         => false
-    }
+    def varOption: Option[Var] = symbol match
+      case v: Var => Some(v)
+      case _      => None
 
   /**
     * One step of a SCAN derivation
@@ -299,7 +298,7 @@ object scan {
     def variablesToEliminate = derivation.from.varsToEliminate
     def isEliminated = activeClauses.forall(c => freeHOVariables(c.toFormula).intersect(variablesToEliminate.toSet).isEmpty)
     def isPointedClauseWithEliminationVariable(pointedClause: PointedClause) =
-      pointedClause.isVar && variablesToEliminate.contains(pointedClause.symbol.asInstanceOf[Var])
+      pointedClause.varOption.map(variablesToEliminate.contains).getOrElse(false)
 
   object State:
     /**
@@ -391,7 +390,6 @@ object scan {
     val purifications: Seq[DerivationStep.PurifiedClauseDeletion] = pointedClauses(state.activeClauses).filter { p =>
       state.isPointedClauseWithEliminationVariable(p)
     }.flatMap[DerivationStep.PurifiedClauseDeletion] { rc =>
-      val hoVar @ Var(_, _) = rc.symbol: @unchecked
       val allFactorsRedundant = factoringInferences(rc.clause).forall {
         case inference: DerivationStep.ConstraintFactoring => isRedundant(state.activeClauses, factor(inference))
       }
