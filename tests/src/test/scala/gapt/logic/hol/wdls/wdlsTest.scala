@@ -21,21 +21,26 @@ import gapt.logic.hol.PredicateEliminationProblem
 import gapt.proofs.RichFormulaSequent
 
 class wdlsTest extends Specification {
+  private case class StringInterpolation(sc: StringContext) {
+    def disj(args: gapt.expr.util.ExpressionParseHelper.Splice[Expr]*): Disjunct = {
+      val (positive, negative) = stringInterpolationForExpressions(sc).hos(args: _*).toTuple
+      Disjunct(positive, negative)
+    }
+  }
 
-  private def toDisjunct(s: HOLSequent): Disjunct =
-    Disjunct(s.antecedent, s.succedent)
+  private implicit def stringInterpolation(sc: StringContext): StringInterpolation = StringInterpolation(sc)
 
   "preprocess" should {
     def succeedWithSequents(
         formulaEquation: PredicateEliminationProblem,
-        expectedSequents: Set[HOLSequent]
+        expectedSequents: Set[Disjunct]
     ): Fragment = {
       succeedWithExPrefixAndSequents(formulaEquation, expectedSequents)
     }
 
     def succeedWithExPrefixAndSequents(
         formulaEquation: PredicateEliminationProblem,
-        expectedResult: Set[HOLSequent]
+        expectedResult: Set[Disjunct]
     ): Fragment = {
       val (secondOrderVariables, formula) = (
         formulaEquation.varsToEliminate,
@@ -46,7 +51,7 @@ class wdlsTest extends Specification {
         Try(new WdlsPreprocessor(secondOrderVariables.head).preprocess(formula)) must beSuccessfulTry({ (result: Set[Disjunct]) =>
           val multiSetEquals = (s1: Disjunct, s2: Disjunct) => s1.multiSetEquals(s2)
           result must beSetEqualsWithCustomEquality(
-            expectedResult.map(toDisjunct),
+            expectedResult,
             multiSetEquals
           )
         })
@@ -59,24 +64,24 @@ class wdlsTest extends Specification {
 
     val fe = formulaEquationInX _ // alias to shorten test cases
     succeedWithSequents(fe(hof"R(a)"), Set())
-    succeedWithSequents(fe(hof"X(a)"), Set(hos"⊢ X(a)"))
-    succeedWithSequents(fe(hof"¬X(a)"), Set(hos"¬X(a) ⊢"))
-    succeedWithSequents(fe(hof"X(b) ∧ ¬X(a)"), Set(hos"¬X(a) ⊢ X(b)"))
+    succeedWithSequents(fe(hof"X(a)"), Set(disj"⊢ X(a)"))
+    succeedWithSequents(fe(hof"¬X(a)"), Set(disj"¬X(a) ⊢"))
+    succeedWithSequents(fe(hof"X(b) ∧ ¬X(a)"), Set(disj"¬X(a) ⊢ X(b)"))
     succeedWithSequents(
       fe(hof"R(a) ∧ X(b) ∧ ¬X(a)"),
-      Set(hos"¬X(a) ⊢ R(a), X(b)")
+      Set(disj"¬X(a) ⊢ R(a), X(b)")
     )
     succeedWithSequents(
       fe(hof"X(a) ∨ X(b)"),
-      Set(hos"⊢ X(a)", hos"⊢ X(b)")
+      Set(disj"⊢ X(a)", disj"⊢ X(b)")
     )
     succeedWithSequents(
       fe(hof"X(a) ∧ (¬X(b) ∨ X(c))"),
-      Set(hos"¬X(b) ⊢ X(a)", hos"⊢ X(c), X(a)")
+      Set(disj"¬X(b) ⊢ X(a)", disj"⊢ X(c), X(a)")
     )
     succeedWithSequents(
       fe(hof"X(a) ∧ (¬X(b) ∨ X(c)) ∧ ¬X(d)"),
-      Set(hos"¬X(b), ¬X(d) ⊢ X(a)", hos"¬X(d) ⊢ X(c), X(a)")
+      Set(disj"¬X(b), ¬X(d) ⊢ X(a)", disj"¬X(d) ⊢ X(c), X(a)")
     )
     succeedWithSequents(
       fe(hof"Y(a) ∧ (¬Y(b) ∨ Y(c)) ∧ ¬Y(d)"),
@@ -84,38 +89,37 @@ class wdlsTest extends Specification {
     )
     succeedWithSequents(
       fe(hof"∀x (X(x) ∧ X(a))"),
-      Set(hos"⊢ ∀x X(x), ∀x X(a)")
+      Set(disj"⊢ ∀x X(x), ∀x X(a)")
     )
     succeedWithSequents(
       fe(hof"∃x X(x)"),
-      Set(hos"⊢ ∃x X(x)")
+      Set(disj"⊢ ∃x X(x)")
     )
     succeedWithSequents(
       formulaEquation(hov"X:i>i>o", hof"∀x ∃y X(x,y)"),
-      Set(hos"⊢ ∀x ∃y X(x,y)")
+      Set(disj"⊢ ∀x ∃y X(x,y)")
     )
     succeedWithSequents(
       fe(hof"(∀x (X(x) -> (∀y R(x,y)))) ∧ (X(a) ∨ X(b))"),
-      Set(hos"∀x (¬X(x) ∨ (∀y R(x, y))) ⊢ X(a)", hos"∀x (¬X(x) ∨ (∀y R(x, y))) ⊢ X(b)")
+      Set(disj"∀x (¬X(x) ∨ (∀y R(x, y))) ⊢ X(a)", disj"∀x (¬X(x) ∨ (∀y R(x, y))) ⊢ X(b)")
     )
   }
 
   "findPartialWitness" should {
-
     def succeedFor(
         secondOrderVariable: Var,
-        sequent: HOLSequent,
+        disjunct: Disjunct,
         expectedWitness: Expr
     ): Fragment = {
-      s"succeed for $sequent" >> {
-        val formula = And(sequent.antecedent ++ sequent.succedent)
+      s"succeed for $disjunct" >> {
+        val formula = disjunct.toFormula
         val input = PredicateEliminationProblem(Seq(secondOrderVariable), formula)
         val argumentVariables = expectedWitness match {
           case Abs.Block(variables, _) => variables.asInstanceOf[List[FOLVar]]
         }
         val witness =
           new WdlsPartialWitnessExtraction(secondOrderVariable)
-            .findPartialWitness(argumentVariables, toDisjunct(sequent))
+            .findPartialWitness(argumentVariables, disjunct)
         val expectedSubstitution = Substitution(secondOrderVariable -> expectedWitness)
         val substitution = Substitution(secondOrderVariable -> Abs(argumentVariables, witness))
         substitution must beAnEquivalentSubstitutionTo(input, expectedSubstitution)
@@ -124,27 +128,27 @@ class wdlsTest extends Specification {
 
     def failFor(
         secondOrderVariable: Var,
-        sequent: HOLSequent
+        disjunct: Disjunct
     ): Fragment = {
-      s"fail for $sequent" >> {
+      s"fail for $disjunct" >> {
         val FunctionType(_, argumentTypes) = secondOrderVariable.ty: @unchecked
         val argumentVariables = new NameGenerator(Nil).freshStream(secondOrderVariable.name).take(argumentTypes.length).map(FOLVar(_)).toList
         new WdlsPartialWitnessExtraction(secondOrderVariable)
-          .findPartialWitness(argumentVariables, toDisjunct(sequent)) must throwA[Exception]
+          .findPartialWitness(argumentVariables, disjunct) must throwA[Exception]
       }
     }
 
-    succeedFor(hov"X:i>o", hos"R(a) ⊢", le"λt ⊤")
-    succeedFor(hov"X:i>o", hos"⊢ X(a)", le"λt t=a")
-    succeedFor(hov"X:i>o", hos"⊢ ∀x X(x)", le"λt ⊤")
-    succeedFor(hov"X:i>o", hos"⊢ ∀x (X(x) ∨ R(x))", le"λt ¬R(t)")
-    succeedFor(hov"X:i>o", hos"∀x (¬X(x) ∨ (∀y R(x, y))) ⊢ X(a)", le"λt t=a")
-    succeedFor(hov"X:i>o", hos"∀x (¬X(x) ∨ (∀y R(x, y))) ⊢ X(a)", le"λt ∀y R(t, y)")
-    succeedFor(hov"X:i>o", hos"¬X(a) ⊢ ∀x (X(x) ∨ (∀y R(x, y)))", le"λt t!=a")
-    succeedFor(hov"X:i>o", hos"⊢ ∀x X(x)", le"λt ⊤")
-    succeedFor(hov"X:i>o", hos"(∀x (¬X(x) ∨ S(x))) ⊢ (∀x (¬R(x) ∨ X(x)))", le"λt R(t):o")
-    succeedFor(hov"X:i>o", hos"¬X(c) ∨ P(c) ⊢", le"λt t != c")
-    failFor(hov"X:i>o", hos"¬X(c) ∨ ¬X(d) ⊢ X(a) ∨ X(b)")
+    succeedFor(hov"X:i>o", disj"R(a) ⊢", le"λt ⊤")
+    succeedFor(hov"X:i>o", disj"⊢ X(a)", le"λt t=a")
+    succeedFor(hov"X:i>o", disj"⊢ ∀x X(x)", le"λt ⊤")
+    succeedFor(hov"X:i>o", disj"⊢ ∀x (X(x) ∨ R(x))", le"λt ¬R(t)")
+    succeedFor(hov"X:i>o", disj"∀x (¬X(x) ∨ (∀y R(x, y))) ⊢ X(a)", le"λt t=a")
+    succeedFor(hov"X:i>o", disj"∀x (¬X(x) ∨ (∀y R(x, y))) ⊢ X(a)", le"λt ∀y R(t, y)")
+    succeedFor(hov"X:i>o", disj"¬X(a) ⊢ ∀x (X(x) ∨ (∀y R(x, y)))", le"λt t!=a")
+    succeedFor(hov"X:i>o", disj"⊢ ∀x X(x)", le"λt ⊤")
+    succeedFor(hov"X:i>o", disj"(∀x (¬X(x) ∨ S(x))) ⊢ (∀x (¬R(x) ∨ X(x)))", le"λt R(t):o")
+    succeedFor(hov"X:i>o", disj"¬X(c) ∨ P(c) ⊢", le"λt t != c")
+    failFor(hov"X:i>o", disj"¬X(c) ∨ ¬X(d) ⊢ X(a) ∨ X(b)")
   }
 
   "simplify" should {
