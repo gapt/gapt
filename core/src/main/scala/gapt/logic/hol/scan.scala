@@ -144,6 +144,13 @@ object scan {
       case v: Var => Some(v)
       case _      => None
 
+  object PointedClause {
+    def apply(clause: HOLClause, index: SequentIndex): PointedClause = {
+      assert(clause.indices.contains(index), s"clause $clause does not have index $index")
+      new PointedClause(clause, index)
+    }
+  }
+
   /**
     * One step of a SCAN derivation
     */
