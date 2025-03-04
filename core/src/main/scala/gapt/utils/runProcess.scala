@@ -29,7 +29,12 @@ object runProcess {
 
     val p = pb.start()
 
-    val shutdownHook = new Thread { override def run() = p.destroy() }
+    val shutdownHook = new Thread {
+      override def run() = {
+        println("in shutdown hook")
+        p.destroy()
+      }
+    }
     Runtime.getRuntime.addShutdownHook(shutdownHook)
 
     try {
@@ -44,6 +49,7 @@ object runProcess {
         exitValue -> Await.result(stdout, Duration.Inf)
       }
     } finally {
+      println("in finally of witheExitValue")
       p.destroy()
       Runtime.getRuntime.removeShutdownHook(shutdownHook)
     }
