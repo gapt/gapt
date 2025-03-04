@@ -4,7 +4,7 @@ import os._
 
 object withTempFile {
   def apply[T](block: Path => T): T = {
-    val tempFile = temp(prefix = "gapt-")
+    val tempFile = temp(prefix = "gapt-", deleteOnExit = false)
     block(tempFile)
     // finally remove(tempFile)
   }
