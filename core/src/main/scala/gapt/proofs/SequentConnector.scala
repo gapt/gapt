@@ -4,6 +4,8 @@ import gapt.proofs.lk.LKProof
 
 import scala.collection.mutable
 
+case class SequentConnectorException[T](message : String, info : T) extends IllegalArgumentException(message)
+
 /**
  * This class models the connection of formula occurrences between two sequents in a proof.
  *
@@ -234,11 +236,13 @@ object SequentConnector {
       toUpper,
       fromLower.zipWithIndex.map {
         case (atom, newIdx) =>
-          val oldIdx = toUpper.indicesWhere(_ == atom).filterNot(alreadyUsedOldIndices.contains).find(newIdx.sameSideAs).getOrElse(throw new IllegalArgumentException(
+          val oldIdx = toUpper.indicesWhere(_ == atom).filterNot(alreadyUsedOldIndices.contains).find(newIdx.sameSideAs).getOrElse(throw new SequentConnectorException(
             s"Cannot find $atom in ${
                 toUpper.zipWithIndex
                   .filterNot(alreadyUsedOldIndices contains _._2).map(_._1)
-              }"
+              }",
+            (atom, fromLower, toUpper, toUpper.zipWithIndex
+              .filterNot(alreadyUsedOldIndices contains _._2).map(_._1))
           ))
           alreadyUsedOldIndices += oldIdx
           Seq(oldIdx)

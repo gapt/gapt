@@ -1,6 +1,6 @@
 package gapt.proofs.lk.transformations
 
-import gapt.proofs.SequentConnector
+import gapt.proofs.{SequentConnector, SequentConnectorException}
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.LKVisitor
 import gapt.proofs.lk.reductions.Reduction
@@ -79,14 +79,19 @@ class LowerMostRedexReducer(reduction: Reduction) extends RedexReducer {
     override def recurse(proof: LKProof, u: Unit): (LKProof, SequentConnector) = {
       reduction.reduce(proof) match {
         case Some(finalProof) =>
-          foundRedex = true
-          (
-            finalProof,
-            SequentConnector.guessInjection(
-              fromLower = proof.conclusion,
-              toUpper = finalProof.conclusion
-            ).inv
-          )
+          try {
+            foundRedex = true
+            (
+              finalProof,
+              SequentConnector.guessInjection(
+                fromLower = proof.conclusion,
+                toUpper = finalProof.conclusion
+              ).inv
+            )
+          } catch {
+            case SequentConnectorException(msg, _) =>
+              throw SequentConnectorException(msg, (proof, finalProof))
+          }
         case _ => super.recurse(proof, u)
       }
     }

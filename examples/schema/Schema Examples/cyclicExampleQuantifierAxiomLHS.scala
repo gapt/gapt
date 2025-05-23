@@ -254,12 +254,12 @@ object cyclicExampleQuantifierAxiomLHS extends TacticsProof {
   val FullProof3 = instantiateProof(le"phi (s (s (s 0)))")
   val thestruct3 = StructCreators.extract(FullProof3)
   val cs3 = CharacteristicClauseSet(thestruct3)
-  //val redCut3 = cutNormal( FullProof3 )
+  val redCut3 = cutNormal( FullProof3 )
 
   val FullProof6 = instantiateProof(le"phi (s (s (s (s (s (s 0))))))")
   val thestruct6 = StructCreators.extract(FullProof6)
   val cs6 = CharacteristicClauseSet(thestruct6)
-  //val redCut6 = cutNormal( FullProof6 )
+  val redCut6 = cutNormal( FullProof6 )
 
   
 
