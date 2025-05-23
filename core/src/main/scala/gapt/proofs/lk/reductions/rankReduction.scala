@@ -613,7 +613,7 @@ object RightRankDefinitionRightReduction extends CutReduction {
         val aux2Sub = definition.getSequentConnector.parent(cut.aux2)
         val cutSub = CutRule(cut.leftSubProof, cut.aux1, definition.subProof, aux2Sub)
         val aNew = cutSub.getRightSequentConnector.child(a)
-        Some(ConversionLeftRule(cutSub, aNew, m))
+        Some(ConversionRightRule(cutSub, aNew, m))
       case _ => None
     }
 }
