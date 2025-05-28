@@ -36,7 +36,6 @@ import gapt.expr.formula.constants.TopC
 import gapt.expr.preExpr.Type
 import gapt.utils.NameGenerator
 import gapt.expr.ty.Ty
-import gapt.formats.leancop.LeanCoPParser.inferences
 import gapt.logic.clauseSubsumption
 import gapt.expr.subst.PreSubstitution
 import gapt.proofs.Suc
@@ -44,7 +43,6 @@ import gapt.proofs.Sequent
 import scala.collection.immutable.HashSet
 import gapt.provers.escargot.Escargot
 import gapt.expr.formula.Iff
-import gapt.formats.leancop.LeanCoP21Parser.clause
 import gapt.logic.hol.PredicateEliminationProblem
 import gapt.logic.hol.ClauseSetPredicateEliminationProblem
 

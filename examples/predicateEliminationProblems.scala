@@ -3,8 +3,7 @@ package gapt.examples.predicateEliminationProblems
 import gapt.expr._
 import gapt.proofs._
 import gapt.proofs.resolution.structuralCNF
-import gapt.expr.ty.Ti
-import gapt.expr.ty.To
+import gapt.expr.ty._
 import gapt.logic.hol.scan
 import gapt.logic.hol.scan._
 import gapt.logic.hol.wscan
@@ -24,6 +23,8 @@ import gapt.logic.Polarity
 import gapt.logic.hol.CNFp
 import gapt.proofs.lk.transformations.folSkolemize
 import gapt.logic.hol.PredicateEliminationProblem
+import gapt.expr.formula.hol.lcomp
+import gapt.expr.formula.fol.FOLFormula
 
 val negationOfModalAxiom = pep"?X -(!u (!v (R(u,v) -> ((!w (R(v, w) -> X(w))) <-> X(v)))))"
 val exampleWithQuantifiedVariableNotOccurring = clspep"?(X:i>o) !u A(u)"
@@ -263,3 +264,97 @@ def printResolutionCandidate(resolutionCandidate: PointedClause): pprint.Tree = 
   val clauseString = antecedentStrings.mkString(", ") ++ " ⊢ " ++ succeedentStrings.mkString(", ")
   pprint.Tree.Literal(clauseString.strip())
 }
+
+def isWSOQEWitness(input: PredicateEliminationProblem, firstOrderEquivalent: FOLFormula, witness: Substitution): Boolean =
+  witness.domain == input.varsToEliminate.toSet &&
+    Escargot.isValid(Iff(firstOrderEquivalent, BetaReduction.betaNormalize(witness(input.firstOrderPart))))
+
+def inputSize(clauseSet: ClauseSetPredicateEliminationProblem): Int =
+  clauseSet.firstOrderClauses.toSeq.map(c => c.elements.map(numberOfSymbols).sum).sum
+
+def numberOfSymbols(expr: Expr): Int = expr match {
+  case _: VarOrConst => 1
+  case App(f, args)  => numberOfSymbols(f) + numberOfSymbols(args)
+  case Abs(_, inner) => numberOfSymbols(inner)
+}
+
+def witnessSize(substitution: Substitution): Int =
+  substitution.map.values.toSeq.map(numberOfSymbols).sum
+
+def wscanTestExample(example: ClauseSetPredicateEliminationProblem) =
+  val exampleSize = inputSize(example)
+  println(s"Testing example ${example}")
+  val startTime = java.lang.System.nanoTime()
+  val witness = wscan(example)
+  val durationInNanoSeconds = java.lang.System.nanoTime() - startTime
+  val result = (witness, durationInNanoSeconds, exampleSize, witness.map(witnessSize))
+  println(s"Got result ${result}")
+  result
+
+def wscanTest() =
+  val examples: List[ClauseSetPredicateEliminationProblem] = List(
+    negationOfModalAxiom.toClauseSet,
+    exampleWithQuantifiedVariableNotOccurring,
+    exampleWithoutQuantifiedVariables,
+    exampleThatCanBeSolvedByPolarityRuleImmediately,
+    negationOfLeibnizEquality.toClauseSet,
+    exampleThatUsesResolutionOnLiteralsThatAreNotQuantifiedVariables,
+    exampleWithTwoClauses,
+    exampleWithThreeClauses,
+    single2PartDisjunction,
+    single3PartDisjunction,
+    exampleWithTwoVariables,
+    exampleRequiringTautologyDeletion,
+    exampleRequiringSubsumption,
+    exampleWithSymmetryRequiringSubsumption,
+    soqeBookDLSStarExample,
+    unsatisfiableExampleThatRequiresFactoring,
+    witnessBlowup,
+    twoStepRedundancy,
+    subsumptionByXLiteral,
+    badExample,
+    booleanUnification.toClauseSet,
+    onlyOneSidedClauses,
+    wernhardUnificationExample,
+    graphReachability.toClauseSet,
+    modalCorrespondence.negationOfSecondOrderTranslationOfTAxiom,
+    modalCorrespondence.negationOfSecondOrderTranslationOf4Axiom
+  )
+  println(s"Testing ${examples.size} examples")
+
+  val results = examples.map(wscanTestExample)
+
+  val resultsWithWitnesses = results
+    .filter((wit, _, _, _) => wit.isDefined)
+    .map((wit, d, i, s) => (wit.get, d, i, s.get))
+  val foundWitnesses = resultsWithWitnesses.size
+  val successPercentage = (foundWitnesses.toDouble / results.size) * 100.0
+
+  println(s"Tested ${examples.size} examples")
+  println(f"For ${foundWitnesses} a witness could be found ($successPercentage%.2f%%)")
+
+  val minExampleSize = results.minBy(_._3)._3
+  val maxExampleSize = results.maxBy(_._3)._3
+  val averageExampleSize = results.map(_._3).sum.toDouble / results.size
+
+  println(s"min example size: $minExampleSize")
+  println(s"max example size: $maxExampleSize")
+  println(f"avg example size: $averageExampleSize%.2f")
+
+  val minSuccessfulDuration = resultsWithWitnesses.minBy(_._2)._2 / 1000000.0
+  val maxSuccessfulDuration = resultsWithWitnesses.maxBy(_._2)._2 / 1000000.0
+  val averageSuccessfulDuration = resultsWithWitnesses.map(_._2).sum.toDouble / (1000000.0 * results.size)
+
+  println(f"min successful duration: $minSuccessfulDuration%.2f ms")
+  println(f"max successful duration: $maxSuccessfulDuration%.2f ms")
+  println(f"avg successful duration: $averageSuccessfulDuration%.2f ms")
+
+  val minWitnessSize = resultsWithWitnesses.minBy(_._4)._4
+  val maxWitnessSize = resultsWithWitnesses.maxBy(_._4)._4
+  val averageWitnessSize = resultsWithWitnesses.map(_._4).sum.toDouble / results.size
+
+  println(s"min witness size: $minWitnessSize")
+  println(s"max witness size: $maxWitnessSize")
+  println(f"avg witness size: $averageWitnessSize%.2f")
+
+  println("Finished run")
