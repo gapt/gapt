@@ -2,6 +2,7 @@ import java.io.ByteArrayOutputStream
 
 import org.apache.commons.compress.archivers.tar.{TarArchiveEntry, TarArchiveOutputStream}
 import sys.process._
+import xerial.sbt.Sonatype.sonatypeCentralHost
 
 val Version = "2.18.1"
 
@@ -15,6 +16,7 @@ lazy val commonSettings = Seq(
   autoAPIMappings := true,
   publishMavenStyle := true,
   publishTo := sonatypePublishToBundle.value,
+  sonatypeCredentialHost := sonatypeCentralHost,
   sonatypeProfileName := "at.logic",
   scmInfo := Some(ScmInfo(
     browseUrl = url("https://github.com/gapt/gapt"),
