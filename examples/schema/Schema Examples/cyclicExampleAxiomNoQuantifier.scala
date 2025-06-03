@@ -280,30 +280,21 @@ object cyclicExampleAxiomNoQuantifier extends TacticsProof {
   // Run to see the clause set in prooftool
   // prooftool(cs)
  
-  val cutFreeTest = isCutFree(instantiateProof(le"phi (s (s 0)) y  (s (s 0))"))
-
+  
 
 
   
-  val num3 = Numeral(3).toString
-  
-  val st = s"phi ($num3) y ($num3)"
- 
+  val num1 = Numeral(1).toString
+  val st = s"phi ($num1) y ($num1)"
 // Step 1: Remove all type annotations of the form `: type`
   val noTypes = st.replaceAll("""\s*:\s*[^()\s]+""", "")
-
-// Step 2: Add space between function and argument, i.e. change f(x) => f (x)
+  // Step 2: Add space between function and argument
   val spaced = noTypes.replaceAll("""([a-zA-Z0-9_])\(""", "$1 (")
 
+  //val proofTest = instantiateProof(le"$spaced")
+ 
   //val paramExp = le"$spaced"
   //val test = instantiateProof(le"$spaced")
-
- 
-
-
-
-
-
 
  // val FullProofTest = isCutFree(cutNormal(instantiateProof(le"phi 0 y ($num3)")))
 
@@ -311,19 +302,21 @@ object cyclicExampleAxiomNoQuantifier extends TacticsProof {
 
 
 
-  def printMatrixOfTuples(rows: Int, cols: Int): Unit = {
+  def testCutElim(rows: Int, cols: Int): Unit = {
     val matrix = Vector.tabulate(rows, cols)((i, j) => (i, j))
 
     for {
       row <- matrix
       cell <- row
     } {
-      println(s"$cell: hello")
+      println(s"$cell")
 
-      // You can add more logic here
-      // For example:
-      // val sum = cell._1 + cell._2
-      // println(s"Sum of coordinates: $sum")
+      val xParam = Numeral(cell._1).toString
+      val yParam = Numeral(cell._2).toString
+      println(s" x: $xParam , z: $yParam")
+
+      //val cutFreeTest = isCutFree(instantiateProof(le"phi (s (s 0)) y  (s (s 0))"))
+    
     }
   }
 
