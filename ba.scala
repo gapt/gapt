@@ -53,7 +53,16 @@ object proof extends TacticsProof {
     allL("plusinverse",hov"x:i")
     allL("pluscomm",le"-x",hov"x:i")
     impL("plusinverse_0") left by {trivial}
-    
+    andL
+    impL("pluscomm_0") left by {
+      andR left by {trivial}
+      trivial
+    }
+    allL("plusinverse",le"-x")
+    impL("plusinverse_1") left by {trivial}
+    andL
+    eql("plusinverse_0_0","pluscomm_0")
+    eql("plusinverse_1_0","pluscomm_0")
   }
 
   def subReflexivity = Lemma(Sequent() :+ ("ref" -> hof"∀A A ⊆ A")) {
