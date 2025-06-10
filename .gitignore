@@ -1,9 +1,6 @@
 # sbt
 target
 
-# custom scripts
-/*.scala
-
 # proof tarballs
 testing/TSTP/prover9
 testing/TSTP/leanCoP
