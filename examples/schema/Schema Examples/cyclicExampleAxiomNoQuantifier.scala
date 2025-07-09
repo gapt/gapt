@@ -2,6 +2,7 @@
 
 
 import gapt.expr._
+import gapt.expr.formula.{Formula, Top}
 import gapt.proofs.gaptic._
 import gapt.proofs.Sequent
 import gapt.proofs.ceres.CharacteristicClauseSet
@@ -14,10 +15,8 @@ import gapt.proofs.context.update.ProofNameDeclaration
 import gapt.proofs.context.update.Sort
 import gapt.proofs.lk.util.instantiateProof
 import gapt.proofs.lk.transformations.cutNormal
-
 import gapt.proofs.lk.util.isCutFree
 import gapt.proofs.expansion.numberOfInstancesET
-
 import gapt.expr.schema.Numeral
 
 
@@ -31,7 +30,12 @@ object cyclicExampleAxiomNoQuantifier extends TacticsProof {
   ctx += InductiveType("nat", hoc"0 : nat", hoc"s : nat>nat")
   ctx += Sort("i")
 
+  val phiAxioms = Sequent(Seq("Refl" -> hof"!(p:nat)  (p = p) ",
+    "A2Ax" -> hof"!p !q ((s(p)= s(q) ) -> (p = q)) ",
+    "DistinctConstructors" -> hof"!(x:nat) 0 != s(x)"),
+    Nil)
 
+  val phiAxiomsUnlabeled = phiAxioms.map(_._2)
 
   // Primitive Recursive Definitions
   ctx += PrimRecFun(hoc"Add1:nat>nat>nat>o",
@@ -48,14 +52,10 @@ object cyclicExampleAxiomNoQuantifier extends TacticsProof {
 
 
   // Proof End Sequent
-  val esD1 = Sequent(Seq(hof"!(p:nat) (p = p) ",
-    hof"!p !q ((s(p)= s(q) ) -> (p = q)) ",
-    hof"Add1(n,s(y),(z:nat)) "),
+  val esD1 = phiAxiomsUnlabeled ++ Sequent(Seq(hof"Add1(n,s(y),(z:nat)) "),
     Seq(hof"Add1(s(n),y,(z:nat))"))
 
-  val esPhi = Sequent(Seq(hof"!(p:nat) (p = p) ",
-    hof"!p !q ((s(p)= s(q) ) -> (p = q)) ",
-    hof"Add2(n,y,z)"),
+  val esPhi = phiAxiomsUnlabeled ++ Sequent(Seq(hof"Add2(n,y,z)"),
     Seq(hof"Add1(n,y,z)"))
 
   // Proof Declarations
@@ -63,23 +63,18 @@ object cyclicExampleAxiomNoQuantifier extends TacticsProof {
   ctx += ProofNameDeclaration(le"phi n y z", esPhi)
 
   // basecase and stepcase  end sequents
-  val esD1Bc = Sequent(Seq(("Refl" -> hof"!(p:nat)  (p = p) "),
-    ("A2Ax" -> hof"!p !q ((s(p)= s(q) ) -> (p = q)) "),
-    ("Ant_0" -> hof"Add1(0,s(y),z)")),
-    Seq(("Suc_0" -> hof"Add1(s(0),y,z)")))
-  val esD1Sc = Sequent(Seq(("Refl" -> hof"!(p:nat)   (p = p) "),
-    ("A2Ax" -> hof" !p !q ((s(p)= s(q) ) -> (p = q)) "),
-    ("Ant_0" -> hof"Add1(s(n),s(y),s(z))")),
-    Seq(("Suc_0" -> hof"Add1(s(s(n)),y,s(z))")))
+
+  val esD1Bc = phiAxioms ++ Sequent(Seq("Ant_0" -> hof"Add1(0,s(y),z)"),
+    Seq("Suc_0" -> hof"Add1(s(0),y,z)"))
+  val esD1Sc = phiAxioms ++ Sequent(Seq("Ant_0" -> hof"Add1(s(n),s(y),s(z))"),
+    Seq("Suc_0" -> hof"Add1(s(s(n)),y,s(z))"))
+  val esD1ScClash = phiAxioms ++ Sequent(Seq("Ant_0" -> hof"Add1(s(n),s(y),0)"),
+    Seq("Suc_0" -> hof"Add1(s(s(n)),y,0)"))
 
 
-  val esPhiBc = Sequent(Seq(("Refl" -> hof"!(p:nat)  (p = p) "),
-    ("A2Ax" -> hof"!p !q ((s(p)= s(q) ) -> (p = q)) "),
-    ("Ant_0" -> hof"Add2(0,y,z)")),
+  val esPhiBc = phiAxioms ++ Sequent(Seq("Ant_0" -> hof"Add2(0,y,z)"),
     Seq("Suc_0" -> hof"Add1(0,y,z)"))
-  val esPhiSc = Sequent(Seq(("Refl" -> hof"!(p:nat)  (p = p) "),
-    ("A2Ax" -> hof"!p !q ((s(p)= s(q) ) -> (p = q)) "),
-    ("Ant_0" -> hof"Add2(s(n),y,z)")),
+  val esPhiSc = phiAxioms ++ Sequent(Seq("Ant_0" -> hof"Add2(s(n),y,z)"),
     Seq("Suc_0" -> hof"Add1(s(n),y,z)"))
 
 
@@ -169,9 +164,22 @@ object cyclicExampleAxiomNoQuantifier extends TacticsProof {
 
   }
 
+  val D1ScClash = Lemma(esD1ScClash) {
+    forget("Suc_0")
+    forget("Refl")
+    unfold("Add1") atMost 1 in "Ant_0"
+    decompose
+    forget("Ant_0_0_0")
+    forget("Ant_0_1")
+    allL("DistinctConstructors", hov"v:nat")
+    negL("DistinctConstructors_0")
+    trivial
+  }
+
 
   ctx += ProofDefinitionDeclaration(le"d1 0 y z", D1Bc)
   ctx += ProofDefinitionDeclaration(le"d1 (s n) y (s z)", D1Sc) // (s z)
+  ctx += ProofDefinitionDeclaration(le"d1 (s n) y 0", D1ScClash)
 
   // Instantiation
   val d1Zero = instantiateProof(le"d1 0 y 2") // note: 2 is interpreted as a variable here
@@ -244,6 +252,8 @@ object cyclicExampleAxiomNoQuantifier extends TacticsProof {
   val cs1 = CharacteristicClauseSet(thestruct1)
   val redCut1 = cutNormal(FullProof1)
 
+  val FullProof2z0 = instantiateProof(le"phi (s (s 0)) y 0")
+  val FullProof2zsz = instantiateProof(le"phi (s (s 0)) y (s z)")
 
   try {
     val FullProof3 = instantiateProof.applyWithChecking(le"phi (s (s (s 0))) y z")
