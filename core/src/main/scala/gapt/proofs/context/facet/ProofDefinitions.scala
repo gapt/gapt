@@ -24,7 +24,7 @@ case class ProofDefinitions(components: Map[String, Set[ProofDefinition]]) {
   def find(name: Expr): Iterable[(LKProof, Substitution)] =
     for ((_, subst, proof) <- findWithConnector(name)) yield (proof, subst)
   override def toString: String =
-    components.map { case (n, dfs) => dfs.map(_.proofNameTerm).mkString(", ") }.mkString("\n")
+    components.map { case (n, dfs) => dfs.map(_.proofNameTerm).mkString(", ") }.mkString("\n\n")
 }
 object ProofDefinitions {
   implicit val ProofDefinitionsFacet: Facet[ProofDefinitions] = Facet(ProofDefinitions(Map()))
