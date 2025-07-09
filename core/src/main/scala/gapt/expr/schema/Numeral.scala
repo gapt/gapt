@@ -72,10 +72,11 @@ object Numeral {
   }
 
 
-  def unapply(e : Expr) : Int = e match {
-    case Zero => 0
-    case Succ(num) => unapply(num) +1
-    case Pred(num) => unapply(num) -1
+  def unapply(e : Expr) : Option[Int] = e match {
+    case Zero => Some(0)
+    case Succ(num) => unapply(num).map(_ +1)
+    case Pred(num) => unapply(num).map(_ -1)
+    case _ => None
   }
 
   /**
