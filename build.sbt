@@ -23,7 +23,6 @@ lazy val commonSettings = Seq(
     connection = "scm:git:https://github.com/gapt/gapt.git",
     devConnection = Some("scm:git:git@github.com:gapt/gapt.git")
   )),
-  crossScalaVersions := Seq("2.13.12", "3.3.1"),
   scalaVersion := "3.3.1",
   developers := List(
     Developer(
@@ -56,12 +55,9 @@ lazy val commonSettings = Seq(
     "-language:postfixOps",
     "-language:implicitConversions",
     "-feature",
-    "-unchecked"
-  ) ++
-    (CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((3, _)) => Seq("-explain")
-      case _            => Seq()
-    }),
+    "-unchecked",
+    "-explain"
+  ),
   javaOptions ++= Seq("-Xss40m", "-Xmx1g"),
   fork := true,
   run / baseDirectory := file("."),
@@ -238,13 +234,7 @@ lazy val core = project.in(file("core")).settings(commonSettings: _*).settings(
     "com.github.scopt" %% "scopt" % "4.0.1",
     "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.6",
     "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.6"
-  ) ++ {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 13)) =>
-        Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value)
-      case _ => Seq.empty
-    }
-  },
+  ),
   dependencyOverrides ++= dependencyConflictResolutions,
   // UI
   libraryDependencies ++= Seq(
@@ -259,12 +249,7 @@ lazy val core = project.in(file("core")).settings(commonSettings: _*).settings(
     "io.circe" %% "circe-core",
     "io.circe" %% "circe-generic",
     "io.circe" %% "circe-parser"
-  ).map(_ % "0.14.6") ++ {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 13)) => Seq("io.circe" %% "circe-generic-extras" % "0.14.3")
-      case _             => Seq.empty
-    }
-  }
+  ).map(_ % "0.14.6")
 )
 
 lazy val examples = project.in(file("examples")).dependsOn(core)
@@ -276,19 +261,6 @@ lazy val examples = project.in(file("examples")).dependsOn(core)
       val target = (baseDirectory.value / "target").getCanonicalPath
       new SimpleFileFilter(_.getCanonicalPath startsWith target)
     } || "*.scala",
-    Compile / unmanagedSources / excludeFilter := {
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, _)) => new SimpleFileFilter(
-            _.getCanonicalPath startsWith (baseDirectory.value / "scala-3")
-              .getCanonicalPath
-          )
-
-        case _ => new SimpleFileFilter(
-            _.getCanonicalPath startsWith (baseDirectory.value / "scala-2")
-              .getCanonicalPath
-          )
-      }
-    },
     dependencyOverrides ++= dependencyConflictResolutions,
     Compile / run / connectInput := true,
     Compile / run / outputStrategy := Some(StdoutOutput)
@@ -305,11 +277,6 @@ lazy val tests = project.in(file("tests")).dependsOn(core, examples)
 
 lazy val userManual = project.in(file("doc")).dependsOn(cli)
   .settings(commonSettings: _*).settings(
-    Compile / unmanagedSourceDirectories :=
-      (CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, _)) => Seq(baseDirectory.value / "scala-2")
-        case _            => Seq(baseDirectory.value / "scala-3")
-      }),
     publish / skip := true,
     packagedArtifacts := Map(),
     dependencyOverrides ++= dependencyConflictResolutions
@@ -319,14 +286,7 @@ lazy val cli = project.in(file("cli")).dependsOn(core, examples)
   .settings(commonSettings: _*).settings(
     mainClass := Some("gapt.cli.CLIMain"),
     Compile / scalacOptions += "-Xfatal-warnings",
-    libraryDependencies ++= {
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, 13)) =>
-          Seq("org.scala-lang" % "scala-compiler" % scalaVersion.value)
-        case _ =>
-          Seq("org.scala-lang" %% "scala3-compiler" % scalaVersion.value)
-      }
-    },
+    libraryDependencies ++= Seq("org.scala-lang" %% "scala3-compiler" % scalaVersion.value),
     publish / skip := true,
     packagedArtifacts := Map(),
     dependencyOverrides ++= dependencyConflictResolutions
