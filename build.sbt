@@ -277,6 +277,7 @@ lazy val tests = project.in(file("tests")).dependsOn(core, examples)
 
 lazy val userManual = project.in(file("doc")).dependsOn(cli)
   .settings(commonSettings: _*).settings(
+    Compile / unmanagedSourceDirectories := Seq(baseDirectory.value),
     publish / skip := true,
     packagedArtifacts := Map(),
     dependencyOverrides ++= dependencyConflictResolutions
