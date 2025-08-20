@@ -11,11 +11,9 @@ trait LKProofMatchers extends Matchers {
 
   def beSkolemFree: Matcher[LKProof] =
     (actual: LKProof) =>
-      (!actual.subProofs.exists(_.isInstanceOf[SkolemQuantifierRule]),
-        "Proof contains skolem inferences"
-      )
+      (!actual.subProofs.exists(_.isInstanceOf[SkolemQuantifierRule]), "Proof contains skolem inferences")
 
-  def beProofOf[A](expected: Sequent[A])(implicit sig: BabelSignature): Matcher[LKProof] = (proof : LKProof) =>
-  proof.endSequent must SequentMatchers.beMultiSetEqual(expected)
+  def beProofOf[A](expected: Sequent[A])(implicit sig: BabelSignature): Matcher[LKProof] = (proof: LKProof) =>
+    proof.endSequent must SequentMatchers.beMultiSetEqual(expected)
 
 }

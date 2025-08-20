@@ -55,26 +55,26 @@ object soEqToEquiv {
       case ForallRightRule(pi, aux, e, v) =>
         ForallRightRule(soEqToEquiv(pi), soEq2Iff(p.mainFormulas.head), e)
       case ExistsLeftRule(pi, aux, e, v) => ExistsLeftRule(soEqToEquiv(pi), soEq2Iff(p.mainFormulas.head), e)
-      case WeakeningLeftRule(pi, f) => WeakeningLeftRule(soEqToEquiv(pi), soEq2Iff(f))
-      case WeakeningRightRule(pi, f) => WeakeningRightRule(soEqToEquiv(pi), soEq2Iff(f))
-      case EqualityRightRule(pi, eq, aux, Abs(y, c:Formula)) =>
+      case WeakeningLeftRule(pi, f)      => WeakeningLeftRule(soEqToEquiv(pi), soEq2Iff(f))
+      case WeakeningRightRule(pi, f)     => WeakeningRightRule(soEqToEquiv(pi), soEq2Iff(f))
+      case EqualityRightRule(pi, eq, aux, Abs(y, c: Formula)) =>
         EqualityRightRule(apply(pi), soEq2Iff(pi.endSequent(eq)), soEq2Iff(pi.endSequent(aux)), Abs(y, soEq2Iff(c)))
-      case EqualityLeftRule(pi, eq, aux, Abs(y, c:Formula)) =>
+      case EqualityLeftRule(pi, eq, aux, Abs(y, c: Formula)) =>
         EqualityLeftRule(apply(pi), soEq2Iff(pi.endSequent(eq)), soEq2Iff(pi.endSequent(aux)), Abs(y, soEq2Iff(c)))
       case ContractionLeftRule(pi, aux1, aux2) =>
         ContractionLeftRule(apply(pi), soEq2Iff(pi.endSequent(aux1)))
       case ContractionRightRule(pi, aux1, aux2) =>
         ContractionRightRule(apply(pi), soEq2Iff(pi.endSequent(aux1)))
       case ImpLeftRule(l, aux1, r, aux2) => ImpLeftRule(apply(l), soEq2Iff(l.endSequent(aux1)), apply(r), soEq2Iff(r.endSequent(aux2)))
-      case ImpRightRule(pi, aux1, aux2) => ImpRightRule(apply(pi), soEq2Iff(pi.endSequent(aux1)), soEq2Iff(pi.endSequent(aux2)))
-      case NegLeftRule(pi, aux) => NegLeftRule(apply(pi), soEq2Iff(pi.endSequent(aux)))
-      case NegRightRule(pi, aux) => NegRightRule(apply(pi), soEq2Iff(pi.endSequent(aux)))
-      case BottomAxiom => BottomAxiom
-      case TopAxiom => TopAxiom
+      case ImpRightRule(pi, aux1, aux2)  => ImpRightRule(apply(pi), soEq2Iff(pi.endSequent(aux1)), soEq2Iff(pi.endSequent(aux2)))
+      case NegLeftRule(pi, aux)          => NegLeftRule(apply(pi), soEq2Iff(pi.endSequent(aux)))
+      case NegRightRule(pi, aux)         => NegRightRule(apply(pi), soEq2Iff(pi.endSequent(aux)))
+      case BottomAxiom                   => BottomAxiom
+      case TopAxiom                      => TopAxiom
       case ReflexivityAxiom(s) =>
         s.ty match {
-          case FunctionType(To, _) => LogicalAxiom(soEq2Iff(Eq(s,s)))
-          case _ => p 
+          case FunctionType(To, _) => LogicalAxiom(soEq2Iff(Eq(s, s)))
+          case _                   => p
         }
     }
   }
@@ -113,11 +113,11 @@ object soEqToEquiv {
   private def soEq2Iff_(f: Expr): Expr = {
     f match {
       case SoEq(f1, f2, ts) =>
-        val xs = awayFrom(freeVariables(f1) union freeVariables(f2)).freshStream("x").zip(ts).map { (v, t) => Var(v,t) }
+        val xs = awayFrom(freeVariables(f1) union freeVariables(f2)).freshStream("x").zip(ts).map { (v, t) => Var(v, t) }
         All.Block(xs, Iff(betaNormalize(App(f1, xs)), betaNormalize(App(f2, xs))))
       case App(e1, e2) => App(soEq2Iff_(e1), soEq2Iff_(e2))
-      case Abs(x, e) => Abs(x, soEq2Iff_(e))
-      case _ => f
+      case Abs(x, e)   => Abs(x, soEq2Iff_(e))
+      case _           => f
     }
   }
 }
