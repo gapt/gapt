@@ -1,21 +1,11 @@
 package gapt.logic.hol
 
 import gapt.expr.BetaReduction
-import gapt.expr.Var
-import gapt.expr.formula.Ex
-import gapt.expr.formula.Formula
 import gapt.expr.subst.Substitution
-import gapt.expr.ty.FunctionType
-import gapt.expr.ty.To
-import gapt.expr.ty.Ty
-import gapt.expr.util.freeVariables
 import gapt.logic.hol.wdls.wdls
 import gapt.provers.escargot.Escargot
 
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
-import gapt.expr.formula.hol.freeHOVariables.isHOVar
+import scala.util.{Failure, Success, Try}
 
 /**
  * Takes a predicate elimination problem  ∃X₁ ... ∃Xₙ φ and if successful returns a substitution of the second order
