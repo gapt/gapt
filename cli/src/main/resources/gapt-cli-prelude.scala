@@ -2,11 +2,12 @@ import os.{read => _, write => _, _}
 import gapt.{prooftool => _, _}
 import gapt.examples.{nd => _, _}
 import gapt.examples.sequence._
-import gapt.expr._
+import gapt.expr.{given, _}
 import gapt.expr.ty._
 import gapt.expr.formula._
 import gapt.expr.formula.fol._
 import gapt.expr.formula.hol._
+import gapt.expr.subst._
 import gapt.formats.babel.BabelParser.parseFormula
 import gapt.formats.dimacs._
 import gapt.formats.tip._

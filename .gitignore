@@ -65,4 +65,7 @@ doc/*.tex.backup
 # emacs
 /.ensime*
 
+# zed
+/.zed
+
 **/.DS_Store
