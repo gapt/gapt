@@ -7,7 +7,7 @@ import gapt.expr.ty._
 import gapt.expr.formula._
 import gapt.expr.formula.fol._
 import gapt.expr.formula.hol._
-import gapt.expr.subst._
+import gapt.expr.subst.{Substitution, FOLSubstitution}
 import gapt.formats.babel.BabelParser.parseFormula
 import gapt.formats.dimacs._
 import gapt.formats.tip._
