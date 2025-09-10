@@ -38,3 +38,15 @@ extension [S <: Substitution, T, V, E, U](t: T)(using Substitutable[S, T, U])(us
   * Convenience method to apply a substitution given as a sequence of variable-term pairs to a given term/formula/expression as a post-fix operation
   */
   def substitute(subs: (V, E)*) = t.applySubstitution(creationOps.createFromMap(Map() ++ subs))
+
+extension (expr: Expr)
+  /**
+  * Convenience method to apply BetaReduction as a post-fix operation
+  */
+  def betaNormalized: Expr = BetaReduction.betaNormalize(expr)
+
+extension (formula: Formula)
+  /**
+  * Convenience method to apply BetaReduction as a post-fix operation
+  */
+  def betaNormalized: Formula = BetaReduction.betaNormalize(formula)
