@@ -96,10 +96,20 @@ object scan {
       */
     def designatedLiteral = clause(index)
 
+    def decomposed: ((Atom, SequentIndex), Sequent[List[Expr]], Sequent[Atom]) = {
+      val (lit, rem) = clause.focus(index)
+      val (reproduction, remainder) = rem.partition {
+        case (Atom(head, _), p) => p == !index.polarity && head == symbol
+        case _                  => ???
+      }
+      val reproductionArgs = reproduction.map { case Atom(_, args) => args }
+      ((lit, index), reproductionArgs, remainder)
+    }
+
     /**
       * Returns rguments to the designated literal
       */
-    def args = designatedLiteral match
+    def args: List[Expr] = designatedLiteral match
       case Atom(_, args) => args
 
     /**
@@ -114,6 +124,13 @@ object scan {
     def varOption: Option[Var] = symbol match
       case v: Var => Some(v)
       case _      => None
+
+    def subPointedClause(indices: Set[SequentIndex]): PointedClause =
+      val subClause = Sequent(indices.toVector.map(i => (clause(i), i.polarity)))
+      val (antLength, sucLength) = subClause.lengths
+      val newIndex = if index.isAnt then antLength else sucLength
+      val newClause = subClause.insertAt(SequentIndex(index.polarity, newIndex), designatedLiteral)
+      PointedClause(newClause, SequentIndex(index.polarity, newIndex))
 
   object PointedClause {
     def apply(clause: HOLClause, index: SequentIndex): PointedClause = {
@@ -400,7 +417,7 @@ object scan {
       resolutionPossibilities
   }
 
-  def nonRedundantResolutionInferences(clauses: Set[HOLClause], candidate: PointedClause) = {
+  def nonRedundantResolutionInferences(clauses: Set[HOLClause], candidate: PointedClause): Seq[DerivationStep.ConstraintResolution] = {
     resolutionInferences(clauses - candidate.clause, candidate).filter {
       case DerivationStep.ConstraintResolution(left, right) => !isRedundant(clauses, constraintResolvent(left, right))
     }.toSeq
