@@ -17,14 +17,15 @@ object GaptScriptInterpreter {
       )
     )
 
-    val state = repl.runQuietly(readPredefFile)(using repl.initialState)
+    val initialState = repl.initialState.copy(quiet = true)
+    val state = repl.run(readPredefFile)(using initialState)
     // Strip package declaration, the script compiler doesn't like it.
     val packageRegex = """(?s)package [A-Za-z.]+\n(.*)""".r
     val scriptSrc = read(Path(scriptFileName, pwd)) match {
       case packageRegex(restOfScript) => restOfScript
       case scriptWithoutPackage       => scriptWithoutPackage
     }
-    repl.runQuietly(s"""
+    repl.run(s"""
            |val args: Array[String] = Array(${scriptArguments.map(quote).mkString(",")})
            |${scriptSrc}
            |""".stripMargin)(using state)

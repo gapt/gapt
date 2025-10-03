@@ -9,7 +9,7 @@ import java.nio.file.{Files, Paths}
  */
 object help {
   private val tarballPathBase = Paths.get("apidocs").toAbsolutePath
-  private val devPathBase = Paths.get("target", "scala-3.3.1", "unidoc").toAbsolutePath
+  private val devPathBase = Paths.get("target", "scala-3.3.6", "unidoc").toAbsolutePath
 
   private val websitePath = "https://logic.at/gapt/api/"
 
