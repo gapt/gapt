@@ -267,15 +267,11 @@ class newWscanTest extends mutable.Specification {
   }
 
   def resolutionStepWitness(Ps: Seq[PointedClause]): Substitution = {
-    if Ps.isEmpty || Ps.head.varOption.isEmpty then
-      Substitution()
-    else
-      val symbol = Ps.head.varOption.get
-      val otherSymbol = rename.awayFrom(freeHOVariables(Ps.head.clause.toFormula)).fresh(symbol)
-      val expr = Ps.foldRight(symbol.asInstanceOf[Expr]) { (next, acc) =>
-        alphaStep(next, otherSymbol).substitute((otherSymbol, acc))
-      }.simplified
-
-      Substitution((symbol, expr))
+    Ps.foldRight(Substitution()) { (next, acc) =>
+      val nextVar = next.varOption.get
+      val renamedVar = rename.awayFrom(freeHOVariables(next.clause.toFormula)).fresh(nextVar)
+      val expr = alphaStep(next, renamedVar).substitute((renamedVar, acc(nextVar)))
+      Substitution((nextVar, expr.simplified))
+    }
   }
 }
