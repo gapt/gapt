@@ -718,6 +718,128 @@ gapt> prooftool( p6 )
 Also for {\ND} there are several convenience constructors which simplify proof
 construction, which can be found in the API documentation.
 
+\section{Substitutions}
+
+GAPT has a concept of first- and higher-order substitutions.
+First-order substitutions can be created, e.g., like this:
+\begin{clilisting}
+gapt> val subst = FOLSubstitution(fov"x" -> fot"f(a)", fov"y" -> fot"g(x)")
+val subst: gapt.expr.subst.FOLSubstitution = Substitution(x -> f(a), y -> g(x))
+
+\end{clilisting}
+
+They can be directly applied to terms, formulas, sequents and proofs:
+\begin{clilisting}
+gapt> val t = subst(fot"g(x,y)")
+val t: gapt.expr.formula.fol.FOLTerm = #c(g: i>i>i)(f(a), g(x))
+
+gapt> val f = subst(fof"P(x,y) & Q(x)")
+val f: gapt.expr.formula.fol.FOLFormula = P(f(a), g(x)) ∧ Q(f(a))
+
+gapt> val seq = subst(fos"P(x) :- Q(y)")
+val seq: gapt.proofs.Sequent[gapt.expr.formula.fol.FOLFormula] = P(f(a)) ⊢ Q(g(x))
+
+gapt> val p = AndRightRule(LogicalAxiom(fof"A(x)"), fof"A(x)", LogicalAxiom(fof"B(y)"), fof"B(y)")
+val p: gapt.proofs.lk.rules.AndRightRule = [p3] A(x), B(y) ⊢ A(x) ∧ B(y)    (AndRightRule(p1, Suc(0), p2, Suc(0)))
+[p2] B(y) ⊢ B(y)    (LogicalAxiom(B(y): o))
+[p1] A(x) ⊢ A(x)    (LogicalAxiom(A(x): o))
+
+gapt> val ps = subst(p)
+val ps: gapt.proofs.lk.LKProof = [p3] A(f(a)), B(g(x)) ⊢ A(f(a)) ∧ B(g(x))    (AndRightRule(p1, Suc(0), p2, Suc(0)))
+[p2] B(g(x)) ⊢ B(g(x))    (LogicalAxiom(B(g(x)): o))
+[p1] A(f(a)) ⊢ A(f(a))    (LogicalAxiom(A(f(a)): o))
+
+\end{clilisting}
+
+As expected, substiutions respect bound variables:
+\begin{clilisting}
+gapt> subst(fof"(!x P(x)) & Q(x)")
+val res0: gapt.expr.formula.fol.FOLFormula = ∀x_0 P(x_0) ∧ Q(f(a))
+
+\end{clilisting}
+
+Also, free variables in the substitution will not become bound after applying the substitution:
+\begin{clilisting}
+gapt> subst(fof"!x P(x,y)")
+val res1: gapt.expr.formula.fol.FOLFormula = ∀x_0 P(x_0, g(x))
+
+\end{clilisting}
+
+Substitutions can be composed:
+\begin{clilisting}
+gapt> val substLeft = FOLSubstitution(fov"x" -> fot"g(y)")
+val substLeft: gapt.expr.subst.FOLSubstitution = Substitution(x -> g(y))
+
+gapt> val substRight = FOLSubstitution(fov"y" -> fot"f(x)")
+val substRight: gapt.expr.subst.FOLSubstitution = Substitution(y -> f(x))
+
+gapt> substLeft.compose(substRight)
+val res2: gapt.expr.subst.FOLSubstitution = Substitution(x -> g(y), y -> f(g(y)))
+
+\end{clilisting}
+
+Substitutions are composed like functions. This means in the composed substitution the right substitution is applied first and then the left substitution is applied to the result.
+
+GAPT also provides convenience methods to apply an substitution to a given term in post-fix notation:
+\begin{clilisting}
+gapt> fot"g(x,y)".applySubstitution(FOLSubstitution(fov"x" -> fot"f(a)"))
+val res3: gapt.expr.formula.fol.FOLTerm = g(f(a), y)
+
+\end{clilisting}
+
+The \cli{substitute} method makes this even shorter:
+\begin{clilisting}
+gapt> fot"g(x,y)".substitute(fov"x" -> fot"f(a)")
+val res4: gapt.expr.formula.fol.FOLTerm = g(f(a), y)
+
+\end{clilisting}
+
+Note that giving the same variable twice in one \cli{substitute} call will ignore the first substitution pair:
+\begin{clilisting}
+gapt> fot"x".substitute(fov"x" -> fot"f(x)", fov"x" -> foc"b")
+val res5: gapt.expr.formula.fol.FOLTerm = b
+
+\end{clilisting}
+
+Use separate \cli{subsitute} calls for the composed result:
+\begin{clilisting}
+gapt> fot"x".substitute(fov"x" -> fot"f(x)").substitute(fov"x" -> foc"b")
+val res6: gapt.expr.formula.fol.FOLTerm = f(b)
+
+\end{clilisting}
+
+Higher-order substitutions (without the FOL prefix) function similarly, but the terms being substituted are now lambda expressions. Creating higher-order substitutions often involves annotating the types of the expressions explicitly:
+\begin{clilisting}
+gapt> val subst = Substitution(hov"X:i>o" -> le"^u P(u): o", hov"Y:i>i>i" -> le"^u^v u+v")
+val subst: gapt.expr.subst.Substitution = Substitution(X:i>o -> λu P(u): o, Y:i>i>i -> λu λv u + v)
+
+gapt> val p = subst(hof"X(Y(a,b))")
+val p: gapt.expr.formula.Formula = (λu P(u))((λu λv u + v)(a, b): i): o
+
+\end{clilisting}
+
+As the previous example shows, higher-order substitutions usually introduce lambda terms that are not beta-normalized.
+To get the beta-normalized version, one can use the postfix \cli{.betaNormalized}:
+\begin{clilisting}
+gapt> p.betaNormalized
+val res7: gapt.expr.formula.Formula = P(a + b): o
+
+\end{clilisting}
+
+The \cli{substitute} method is also available for higher-order substitutions:
+
+\begin{clilisting}
+gapt> val f = hof"!u X(Y(u,z))"
+val f: gapt.expr.formula.Formula = ∀u X(Y(u, z): i)
+
+gapt> val fs = f.substitute(hov"X:i>o" -> le"^u P(u): o", hov"Y:i>i>i" -> le"^u^v u + v", fov"z" -> fot"g(u)")
+val fs: gapt.expr.formula.Formula = ∀u_0 (λu P(u))((λu λv u + v)(u_0, g(u)): i)
+
+gapt> val fsb = fs.betaNormalized
+val fsb: gapt.expr.formula.Formula = ∀u_0 P(u_0 + g(u))
+
+\end{clilisting}
+
 \section{Contexts}\label{sec:context}
 The \cli{Context} class captures the notion of a logical signature and background
 theory.

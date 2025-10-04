@@ -1,5 +1,6 @@
 package gapt.proofs.lk.reductions
 
+import gapt.expr.formula.hol.isAtom
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
@@ -36,6 +37,7 @@ import gapt.proofs.SequentConnector
 import gapt.proofs.guessPermutation
 import gapt.proofs.lk.rules.macros.ContractionMacroRule
 import gapt.proofs.lk.rules.macros.WeakeningMacroRule
+import gapt.proofs.lk.transformations.atomicEquality
 
 object LeftRankWeakeningLeftReduction extends CutReduction {
   override def reduce(cut: CutRule): Option[LKProof] =
@@ -404,6 +406,8 @@ object LeftRankEqualityRightReduction extends CutReduction {
         val cutSub = CutRule(subProof, conn1.parent(cut.aux1), cut.rightSubProof, cut.aux2)
         val conn2 = cutSub.getLeftSequentConnector
         Some(EqualityRightRule(cutSub, conn2.child(eq), conn2.child(eaux), indicator))
+      case e @ EqualityRightRule(_, _, _, _) if e.mainIndices.head == cut.aux1 && !isAtom(e.auxFormula) =>
+        Some(CutRule(atomicEquality(e), cut.rightSubProof, cut.cutFormula))
       case _ => None
     }
 }
@@ -876,7 +880,8 @@ object RightRankEqualityLeftReduction extends CutReduction {
         val cutSub = CutRule(cut.leftSubProof, cut.aux1, subProof, conn1.parent(cut.aux2))
         val conn2 = cutSub.getRightSequentConnector
         Some(EqualityLeftRule(cutSub, conn2.child(eq), conn2.child(eaux), indicator))
-
+      case r @ EqualityLeftRule(subProof, eq, aux, indicator) if r.mainIndices.head == cut.aux2 && !isAtom(r.auxFormula) =>
+        Some(CutRule(cut.leftSubProof, atomicEquality(r), cut.cutFormula))
       case _ => None
     }
 }
@@ -889,7 +894,6 @@ object RightRankEqualityRightReduction extends CutReduction {
         val cutSub = CutRule(cut.leftSubProof, cut.aux1, subProof, conn1.parent(cut.aux2))
         val conn2 = cutSub.getRightSequentConnector
         Some(EqualityRightRule(cutSub, conn2 child eq, conn2 child eaux, indicator))
-
       case _ => None
     }
 }

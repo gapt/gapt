@@ -1,6 +1,7 @@
 package gapt.proofs.lk.transformations
 
-import gapt.expr.Abs
+import gapt.expr.{Abs, App, Apps}
+import gapt.expr.BetaReduction.betaNormalize
 import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Ex
@@ -732,10 +733,13 @@ object equalityLeftReduction {
       case exists @ ExistsLeftRule(_, _, _, _) =>
         val context =
           if (exists.mainIndices.head == equality.aux) {
-            val Abs(oldVariable, ex @ Ex(_, _)) = equality.replacementContext: @unchecked
-            val newReplVariable = rename(oldVariable, freeVariables(ex) + exists.eigenVariable)
-            val Ex(_, formula) = Substitution(oldVariable, newReplVariable)(ex): @unchecked
-            Abs(newReplVariable, formula)
+            val Abs(v, ex @ Ex(x, f)) = equality.replacementContext: @unchecked
+
+            val f_ = betaNormalize(App(App(Abs(Seq(v, x), f), v), exists.eigenVariable))
+
+            val newReplVariable = rename(v, freeVariables(ex) + exists.eigenVariable)
+            val Ex(_, formula) = Substitution(v, newReplVariable)(ex): @unchecked
+            Abs(v, f_)
           } else {
             equality.replacementContext
           }

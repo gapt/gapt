@@ -623,6 +623,17 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
     reduction.subProofAt(0 :: Nil) must beAnInstanceOf[EqualityLeftRule]
   }
 
+  "equality left; upper sequent intro. by exists left inf.; aux is principal; eigenvariable v is not quantified variable x" in {
+    val proof = (ProofBuilder
+      c OpenAssumption(("" -> hof"s=t") +: ("" -> hof"A(v, s)") +: Sequent())
+      u (ExistsLeftRule(_, Ant(1), hof"?x A(x, s)", hov"v:i"))
+      u (EqualityLeftRule(_, Ant(1), Ant(0), Abs(hov"y", le"?x A(x, y):o"))) qed)
+    val (reduction, weakeningIntro) = equalityLeftReduction(proof.asInstanceOf[EqualityLeftRule]).get
+    reduction.conclusion must beMultiSetEqual(proof.conclusion)
+    reduction must beAnInstanceOf[ExistsLeftRule]
+    reduction.subProofAt(0 :: Nil) must beAnInstanceOf[EqualityLeftRule]
+  }
+
   "equality left; upper sequent intro. by exists left inf.; aux is not principal" in {
     val proof = (ProofBuilder
       c OpenAssumption(("" -> hof"s=t") +: ("" -> hof"A(s)") +: ("" -> hof"B(x)") +: Sequent())

@@ -19,7 +19,6 @@ object inductionNormalForm {
     while ({
       {
         continue = false
-        newProof = pushEqualityInferencesToLeaves(newProof)
         newProof = cutNormal(newProof)
         val inductionUnfolder = new UnfoldInductions
         newProof = inductionUnfolder(newProof)
