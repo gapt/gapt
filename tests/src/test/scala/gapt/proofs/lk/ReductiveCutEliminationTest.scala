@@ -439,16 +439,13 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "reduce cut with left-equality as right proof on the cut formula" in {
     val proof = (ProofBuilder
-      .c( OpenAssumption(Sequent() :+ ("" -> hof"A(s)")))
-      .c( OpenAssumption(Sequent() :+ ("" -> hof"B(s)")))
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"A(s)")))
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"B(s)")))
       .b((p1, p2) => AndRightRule(p1, p2, hof"A(s) & B(s)"))
-
       .c(OpenAssumption(("" -> hof"t = s") +: ("" -> hof"A(t)") +: ("" -> hof"B(t)") +: Sequent()))
       .u(p => AndLeftRule(p, hof"A(t) & B(t)"))
       .u(p => EqualityLeftRule(p, hof"t = s", hof"A(t) & B(t)", hof"A(s) & B(s)"))
-
-      .b((p1, p2) => CutRule(p1, p2, hof"A(s) & B(s)"))
-      qed)
+      .b((p1, p2) => CutRule(p1, p2, hof"A(s) & B(s)")) qed)
     val acnf = cutNormal(proof)
     isAcnf(acnf) must beTrue
   }
@@ -460,12 +457,9 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       .b((p1, p2) => AndRightRule(p1, p2, hof"A(t) & B(t)"))
       .u(p => WeakeningLeftRule(p, hof"s = t"))
       .u(p => EqualityRightRule(p, hof"s = t", hof"A(t) & B(t)", hof"A(s) & B(s)"))
-
       .c(OpenAssumption(("" -> hof"A(s)") +: ("" -> hof"B(s)") +: Sequent()))
       .u(p => AndLeftRule(p, hof"A(s) & B(s)"))
-
-      .b((p1, p2) => CutRule(p1, p2, hof"A(s) & B(s)"))
-      qed)
+      .b((p1, p2) => CutRule(p1, p2, hof"A(s) & B(s)")) qed)
     val acnf = cutNormal(proof)
     isAcnf(acnf) must beTrue
   }

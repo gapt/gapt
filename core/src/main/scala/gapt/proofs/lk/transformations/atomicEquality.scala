@@ -14,16 +14,16 @@ object atomicEquality {
       e
     else
       e match {
-      case EqualityLeftRule(p, _, _, _) =>
-        val a = e.auxFormula
-        val p0 = lkProof(e.equation +: e.mainFormula +: Sequent() :+ e.auxFormula)
-        val p1 = CutRule(p0, p, e.auxFormula)
-        ContractionLeftRule(p1, e.equation)
-      case EqualityRightRule(p,_, _, _) =>
-        val p0 = lkProof(e.equation +: e.auxFormula +: Sequent() :+ e.mainFormula)
-        val p1 = CutRule(p, p0, e.auxFormula)
-        ContractionLeftRule(p1, e.equation)
-    }
+        case EqualityLeftRule(p, _, _, _) =>
+          val a = e.auxFormula
+          val p0 = lkProof(e.equation +: e.mainFormula +: Sequent() :+ e.auxFormula)
+          val p1 = CutRule(p0, p, e.auxFormula)
+          ContractionLeftRule(p1, e.equation)
+        case EqualityRightRule(p, _, _, _) =>
+          val p0 = lkProof(e.equation +: e.auxFormula +: Sequent() :+ e.mainFormula)
+          val p1 = CutRule(p, p0, e.auxFormula)
+          ContractionLeftRule(p1, e.equation)
+      }
 
   /**
    * A skolem-free LK proof of the provable input sequent with atomic equality inferences.
