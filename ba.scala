@@ -7,6 +7,8 @@ import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 import scala.languageFeature.implicitConversions
 
+import gapt.proofs.lk.rules.CutRule
+
 object proof extends TacticsProof {
   ctx += Sort("i")
 
@@ -891,5 +893,12 @@ object proof extends TacticsProof {
     eql("subtrans_1","inverse_1_1").fromRightToLeft
     trivial
   }
-}
 
+  def inverse_acnf = {
+    val p1 = proof.inverse
+    val p2 = eliminateDefinitions(p1)(proof.ctx)
+    val p3 = soEqToEquiv(p2)
+    val p4 = CutRule(gapt.proofs.lk.transformations.atomicEquality.trivialExtensionality, p3)
+    cutNormal(p4)
+  }
+}
