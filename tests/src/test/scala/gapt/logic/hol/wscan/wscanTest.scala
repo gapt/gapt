@@ -8,15 +8,21 @@ import gapt.expr.subst.Substitution
 import org.specs2.matcher.Matcher
 import org.specs2.matcher.MatchResult
 import gapt.logic.hol.wdls.simplify
-import org.specs2.matcher.AlwaysMatcher
 import gapt.expr.util.rename
 import gapt.expr.util.freeVariables
 import gapt.expr.ty.Ty
 import gapt.expr.ty.FunctionType
 import gapt.expr.given
-import org.specs2.main.Arguments
 import org.specs2.specification.core.Fragments
 import gapt.logic.hol.scan.nonRedundantResolutionInferences
+import gapt.proofs.HOLClause
+import gapt.logic.hol.scan.PointedClause
+import gapt.proofs.Ant
+import gapt.proofs.Suc
+import gapt.logic.hol.scan.DerivationStep
+import gapt.expr.formula.hol.freeHOVariables
+import gapt.proofs.RichFormulaSequent
+import gapt.proofs.Sequent
 
 class wscanTest extends Specification {
   import gapt.examples.predicateEliminationProblems._
@@ -228,7 +234,7 @@ class newWscanTest extends mutable.Specification {
       case (name, arg) => Var(name, arg.ty)
     }
     val (designatedLiteral, reproductionArgs, remainder) = P.decomposed
-    val reproductions = Sequent(Vector.empty, reproductionArgs.elements.map(args => Atom(placeholder, args)))
+    val reproductions = Sequent(Vector.empty[Atom], reproductionArgs.elements.map(args => Atom(placeholder, args)))
     val constraint = HOLClause(args.zip(P.args).map((a, b) => Eq(a, b)), Vector.empty[Atom])
     val firstClause = App(P.varOption.get, args).betaNormalized
     val formula: Formula = And(
