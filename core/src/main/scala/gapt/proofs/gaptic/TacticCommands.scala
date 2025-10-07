@@ -808,10 +808,12 @@ trait TacticCommands {
 
   def simp(implicit ctx: Context): SimpTactic = SimpTactic()
 
-  /** `by { tac1; tac2; ...; tacn }` solves the first goal using the provided tactic block, and fails otherwise */
-  inline def by[T](inline tacticsProof: => Tactic[Unit]) = new TacticBlockArgument[Tactic[Unit]] {
+  class TacticBlockArgumentTacticUnit extends TacticBlockArgument[Tactic[Unit]] {
     override def handleTactic(tactic: Tactic[Unit]) = tactic.focused
-  }.applyTactics(tacticsProof)
+  }
+
+  /** `by { tac1; tac2; ...; tacn }` solves the first goal using the provided tactic block, and fails otherwise */
+  inline def by[T](inline tacticsProof: => Tactic[Unit]) = new TacticBlockArgumentTacticUnit().applyTactics(tacticsProof)
 
   def trace(implicit sig: BabelSignature): Tactic[Unit] =
     Tactic(currentGoal.map { g =>
