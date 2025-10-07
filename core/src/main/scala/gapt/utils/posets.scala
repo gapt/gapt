@@ -25,6 +25,8 @@ object linearizeStrictPartialOrder {
         relation.groupBy(_._1).view.mapValues(Nil ++ _.map(_._2)).toMap
     )
 
+  private case class CycleException[T](cycle: Vector[T]) extends Throwable
+
   def apply[T](
       set: Iterable[T],
       relation: T => Iterable[T]
@@ -32,14 +34,12 @@ object linearizeStrictPartialOrder {
     val out = mutable.Buffer[T]()
     val seen = mutable.Set[T]()
 
-    case class CycleException(cycle: Vector[T]) extends Throwable
-
     def go(t: T, stacktrace: List[T], stacktraceSet: Set[T]): Unit = {
       if (seen(t)) {
         return
       }
       if (stacktraceSet(t)) {
-        throw CycleException(
+        throw CycleException[T](
           Vector(t) ++ stacktrace.takeWhile(_ != t).reverseIterator :+ t
         )
       }
@@ -54,7 +54,7 @@ object linearizeStrictPartialOrder {
       for (s <- set) go(s, List(), Set())
       Right(out.toVector)
     } catch {
-      case CycleException(cycle) => Left(cycle)
+      case CycleException[T @unchecked](cycle) => Left(cycle)
     }
   }
 }
