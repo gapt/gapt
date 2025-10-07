@@ -56,7 +56,8 @@ lazy val commonSettings = Seq(
     "-language:implicitConversions",
     "-feature",
     "-unchecked",
-    "-explain"
+    "-explain",
+    "-Wunused:imports"
   ),
   javaOptions ++= Seq("-Xss40m", "-Xmx1g"),
   fork := true,
