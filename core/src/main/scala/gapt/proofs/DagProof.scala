@@ -73,14 +73,15 @@ trait DagProof[Proof <: DagProof[Proof]] extends Product { self: Proof =>
 
   override val hashCode = ScalaRunTime._hashCode(this)
 
-  override def equals(that: Any) = {
-    case class PtrPair(a: AnyRef, b: AnyRef) {
-      override def hashCode = 31 * System.identityHashCode(a) + System.identityHashCode(b)
-      override def equals(that: Any) = that match {
-        case PtrPair(a_, b_) => (a eq a_) && (b eq b_)
-        case _               => false
-      }
+  private case class PtrPair(a: AnyRef, b: AnyRef) {
+    override def hashCode = 31 * System.identityHashCode(a) + System.identityHashCode(b)
+    override def equals(that: Any) = that match {
+      case PtrPair(a_, b_) => (a eq a_) && (b eq b_)
+      case _               => false
     }
+  }
+
+  override def equals(that: Any) = {
 
     val areEqual = mutable.Set[PtrPair]()
     def checkEqual(a: DagProof[_], b: DagProof[_]): Boolean =
