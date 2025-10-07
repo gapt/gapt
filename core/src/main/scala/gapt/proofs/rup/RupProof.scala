@@ -50,7 +50,7 @@ private class Rup2Res extends UnitPropagationListener {
   var conflict: Option[Res] = None
 
   val constrProofs = new util.IdentityHashMap[Constr, Res]()
-  val constrs = new mutable.AnyRefMap[Clause, Constr]()
+  val constrs = new mutable.HashMap[Clause, Constr]()
 
   import LiteralsUtils._
 
