@@ -1,4 +1,4 @@
-package gapt.logic.hol
+package gapt.proofs.lk.transformations
 
 import gapt.expr.{Abs, stringInterpolationForExpressions}
 import gapt.proofs.ProofBuilder
