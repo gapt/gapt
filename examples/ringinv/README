@@ -1,0 +1,8 @@
+
+This folder contains a proof that makes extensive use of set equality reasoning
+in order to show that in a non-commutative ring R with 1: for all a,b \in R: if
+(1-ab) has a right-inverse, then (1-ba) has a right-inverse. By eliminating set
+equality reasoning and cut-elimination gapt computes a witness term.
+
+The details are documented in the bachelor's thesis of Bernhard Öllerer.
+
