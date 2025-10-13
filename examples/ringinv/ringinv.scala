@@ -7,9 +7,7 @@ import gapt.expr.ty.To
 import gapt.proofs.Sequent
 import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
-import gapt.logic.hol.soEqToEquiv
-import gapt.proofs.lk.transformations.eliminateDefinitions
-import gapt.proofs.lk.transformations.cutNormal
+import gapt.proofs.lk.transformations.{eliminateDefinitions,soEqToEquiv,cutNormal}
 import scala.languageFeature.implicitConversions
 
 import gapt.proofs.lk.rules.CutRule

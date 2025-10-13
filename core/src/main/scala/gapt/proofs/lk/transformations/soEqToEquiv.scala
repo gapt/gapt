@@ -1,4 +1,4 @@
-package gapt.logic.hol
+package gapt.proofs.lk.transformations
 
 import gapt.expr.{Abs, App, Expr, Var}
 import gapt.expr.BetaReduction.betaNormalize
@@ -14,7 +14,8 @@ import gapt.proofs.lk.rules.*
 import gapt.provers.escargot.Escargot
 
 /**
- * Replaces second-order equations between formulas by first-order equivalences.
+ * Replaces second-order equations between formulas by first-order equivalences
+ * and equality inferences on second-order equations by cuts.
  */
 object soEqToEquiv {
 
