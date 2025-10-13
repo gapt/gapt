@@ -2,16 +2,36 @@ package gapt.proofs.lk.transformations
 
 import gapt.expr.{Abs, App, Expr, Var}
 import gapt.expr.BetaReduction.betaNormalize
+import gapt.expr.stringInterpolationForExpressions
 import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.{All, Eq, Formula, Iff}
 import gapt.expr.ty.{FunctionType, To, Ty}
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename.awayFrom
-import gapt.proofs.{Ant, Sequent, Suc}
+import gapt.proofs.{ProofBuilder, Ant, Sequent, Suc}
 import gapt.proofs.expansion.{ExpansionProofToLK, deskolemizeET}
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.*
 import gapt.provers.escargot.Escargot
+
+/**
+ * Eliminates equality reasoning on sets including the set extensionality axiom.
+ **/
+object eliminateSetEquality {
+  def apply(p: LKProof): LKProof = CutRule(trivialExtensionality, soEqToEquiv(p))
+
+  val trivialExtensionality: LKProof =
+    ProofBuilder
+      .c(LogicalAxiom(hof"!x (#v(A : i>o)(x) <-> #v(B : i>o)(x))"))
+      .u(p => ImpRightRule(p, hof"!x (#v(A : i>o)(x) <-> #v(B : i>o)(x)) -> !x (#v(A : i>o)(x) <-> #v(B : i>o)(x))"))
+      .c(LogicalAxiom(hof"!x (#v(A : i>o)(x) <-> #v(B : i>o)(x))"))
+      .u(p => ImpRightRule(p, hof"!x (#v(A : i>o)(x) <-> #v(B : i>o)(x)) -> !x (#v(A : i>o)(x) <-> #v(B : i>o)(x))"))
+      .b((p1, p2) => AndRightRule(p1, p2, hof"!x (#v(A : i>o)(x) <-> #v(B : i>o)(x)) <-> !x (#v(A : i>o)(x) <-> #v(B : i>o)(x))"))
+      .u(p => ForallRightRule(p, hof"!B (!x (#v(A : i>o)(x) <-> B(x)) <-> !x (#v(A : i>o)(x) <-> B(x)))"))
+      .u(p => ForallRightRule(p, hof"!A !B (!x (A(x) <-> B(x)) <-> !x (A(x) <-> B(x)))"))
+      .qed
+
+}
 
 /**
  * Replaces second-order equations between formulas by first-order equivalences

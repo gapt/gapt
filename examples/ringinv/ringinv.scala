@@ -7,7 +7,7 @@ import gapt.expr.ty.To
 import gapt.proofs.Sequent
 import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
-import gapt.proofs.lk.transformations.{eliminateDefinitions,soEqToEquiv,cutNormal}
+import gapt.proofs.lk.transformations.{eliminateDefinitions, eliminateSetEquality, cutNormal}
 import scala.languageFeature.implicitConversions
 
 import gapt.proofs.lk.rules.CutRule
@@ -912,8 +912,7 @@ object ringinv extends TacticsProof {
   def proof_acnf = { // executing this code can take a couple of minutes
     val p1 = proof
     val p2 = eliminateDefinitions(p1)(ctx)
-    val p3 = soEqToEquiv(p2)
-    val p4 = CutRule(gapt.proofs.lk.transformations.atomicEquality.trivialExtensionality, p3)
-    cutNormal(p4)
+    val p3 = eliminateSetEquality(p2)
+    cutNormal(p3)
   }
 }

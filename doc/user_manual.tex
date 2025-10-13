@@ -1543,6 +1543,21 @@ A window then opens that displays the shallow sequent of \cli{expansion}.  You
 can selectively expand quantifiers by clicking on them,
 see~\cite{Hetzl13Understanding} for a detailed description.
 
+\section{Elimination of set equality reasoning}
+
+Equational reasoning on sets is realised in gapt by using the $(\mt{=:l})$ and $(\mt{=:r})$
+ rules on equations of the type set.
+In addition, it is often useful to include the axiom of extensionality for sets:
+\[
+\forall A \forall B\, ( A = B  \leftrightarrow \forall x (A(x) \leftrightarrow B(x)) )
+\]
+The transformation \cli{eliminateSetEquality} takes an LK proof as input and eliminates equality
+ reasoning on sets including the set extensionality axiom.
+This is done by replacing set equalities by first-order equivalences throughout the proof
+ including the replacement of set equality inferences by first-order cuts.
+See \cli{examples/ringinv/ringinv.scala} for an example for how to use this transformation.
+
+
 \section{Modified realizability}
 
 The GAPT-system contains an implementation of modified realizability for first-order logic. This is a variant of realizability where the realizers are terms of system T: an extension of the simply typed lambda calculus with inductive types and recursors that allow for recursive computation over terms of those types.

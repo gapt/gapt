@@ -1,8 +1,7 @@
 package gapt.proofs.lk.transformations
 
 import gapt.expr.formula.{Atom, Formula}
-import gapt.expr.stringInterpolationForExpressions
-import gapt.proofs.{ProofBuilder, Sequent}
+import gapt.proofs.Sequent
 import gapt.proofs.expansion.{ExpansionProofToLK, deskolemizeET}
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.{AndRightRule, ContractionLeftRule, CutRule, EqualityLeftRule, EqualityRightRule, EqualityRule, ForallRightRule, ImpRightRule, LogicalAxiom}
@@ -33,16 +32,4 @@ object atomicEquality {
     val Right(lks) = ExpansionProofToLK(eps): @unchecked
     deskolemizeET(lks)
   }
-
-  val trivialExtensionality: LKProof =
-    ProofBuilder
-      .c(LogicalAxiom(hof"!x (#v(A : i>o)(x) <-> #v(B : i>o)(x))"))
-      .u(p => ImpRightRule(p, hof"!x (#v(A : i>o)(x) <-> #v(B : i>o)(x)) -> !x (#v(A : i>o)(x) <-> #v(B : i>o)(x))"))
-      .c(LogicalAxiom(hof"!x (#v(A : i>o)(x) <-> #v(B : i>o)(x))"))
-      .u(p => ImpRightRule(p, hof"!x (#v(A : i>o)(x) <-> #v(B : i>o)(x)) -> !x (#v(A : i>o)(x) <-> #v(B : i>o)(x))"))
-      .b((p1, p2) => AndRightRule(p1, p2, hof"!x (#v(A : i>o)(x) <-> #v(B : i>o)(x)) <-> !x (#v(A : i>o)(x) <-> #v(B : i>o)(x))"))
-      .u(p => ForallRightRule(p, hof"!B (!x (#v(A : i>o)(x) <-> B(x)) <-> !x (#v(A : i>o)(x) <-> B(x)))"))
-      .u(p => ForallRightRule(p, hof"!A !B (!x (A(x) <-> B(x)) <-> !x (A(x) <-> B(x)))"))
-      .qed
-
 }
