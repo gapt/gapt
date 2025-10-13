@@ -7,6 +7,11 @@ import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.{AndRightRule, ContractionLeftRule, CutRule, EqualityLeftRule, EqualityRightRule, EqualityRule, ForallRightRule, ImpRightRule, LogicalAxiom}
 import gapt.provers.escargot.Escargot
 
+/**
+ * Replaces an equality inferences with non-atomic main and auxiliary formula
+ * by a cut whose new subproof introduces only equality inferences with atomic
+ * main and auxiliary formulas.
+ **/
 object atomicEquality {
   def apply(e: EqualityRule): LKProof =
     if (e.auxFormula.isInstanceOf[Atom])
@@ -14,7 +19,6 @@ object atomicEquality {
     else
       e match {
         case EqualityLeftRule(p, _, _, _) =>
-          val a = e.auxFormula
           val p0 = lkProof(e.equation +: e.mainFormula +: Sequent() :+ e.auxFormula)
           val p1 = CutRule(p0, p, e.auxFormula)
           ContractionLeftRule(p1, e.equation)
