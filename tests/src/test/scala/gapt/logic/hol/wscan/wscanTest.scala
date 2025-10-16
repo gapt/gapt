@@ -23,6 +23,7 @@ import gapt.logic.hol.scan.DerivationStep
 import gapt.expr.formula.hol.freeHOVariables
 import gapt.proofs.RichFormulaSequent
 import gapt.proofs.Sequent
+import gapt.logic.hol.scan.constraintResolvent
 
 class wscanTest extends Specification {
   import gapt.examples.predicateEliminationProblems._
@@ -188,6 +189,63 @@ class newWscanTest extends mutable.Specification {
     "witness" >> testWitness(P, N, resolutionStepWitness(Seq(P, P, P_2)))
   }
 
+  "cycle with different steps" >> {
+    val N = Set[HOLClause](
+      hcl":- X(a,b,c)",
+      hcl":- X(b,c,a)"
+    )
+    val P = PointedClause(hcl"X(u,v,w) :- X(v,w,u), X(w,u,v)", Ant(0))
+    testNoMissingResolutionInferences(P, N)
+
+    val P_1 = P.subPointedClause(Set(Suc(0)))
+    val P_2 = P.subPointedClause(Set(Suc(1)))
+    "witness" >> testWitness(P, N, resolutionStepWitness(Seq(P)))
+  }
+
+  "incoming and outgoing from cycle" >> {
+    val N = Set[HOLClause](
+      hcl":- X(a, b)",
+      hcl":- X(f(a), f(b))",
+      hcl":- X(f(b), f(a)), X(f(f(a)), f(f(b)))",
+      hcl":- B(f(f(a)), f(f(b)))"
+    )
+    val P = PointedClause(hcl"X(u,v) :- X(v,u), X(f(u), f(v)), B(u,v)", Ant(0))
+    testNoMissingResolutionInferences(P, N)
+
+    val P_1 = P.subPointedClause(Set(Suc(0)))
+    val P_2 = P.subPointedClause(Set(Suc(1)))
+    val P_3 = P.subPointedClause(Set(Suc(2)))
+    val P_4 = P.subPointedClause(Set(Suc(0), Suc(2)))
+    "witness" >> testWitness(P, N, resolutionStepWitness(Seq(P, P, P_4)))
+  }
+
+  "different cycle lengths between N and P" >> {
+    val N = Set[HOLClause](
+      hcl":- X(a, a, a)"
+    )
+    val P = PointedClause(hcl"X(u,v,w) :- X(v,w,u)", Ant(0))
+    testNoMissingResolutionInferences(P, N)
+
+    "witness" >> testWitness(P, N, resolutionStepWitness(Seq(P, P)))
+  }
+
+  "different cycle lengths in different components" >> {
+    val N = Set[HOLClause](
+      hcl":- X(a_1, a_2, a_3)",
+      hcl":- X(a_2, a_1, a_3)",
+      hcl":- X(a_2, a_3, a_1)",
+      hcl":- X(b, c, d)",
+      hcl":- X(c, b, d)"
+    )
+    val P = PointedClause(hcl"X(u,v,w) :- X(v,u,w), X(u,w,v), X(v,w,u)", Ant(0))
+    val P_1 = P.subPointedClause(Set(Suc(0)))
+    val P_2 = P.subPointedClause(Set(Suc(1)))
+    val P_3 = P.subPointedClause(Set(Suc(2)))
+    testNoMissingResolutionInferences(P, N)
+
+    "witness" >> testWitness(P, N, resolutionStepWitness(Seq(P, P)))
+  }
+
   def testNoMissingResolutionInferences(pointedClause: PointedClause, clauseSet: Set[HOLClause]): Fragments = {
     val missingResolutions = nonRedundantResolutionInferences(clauseSet, pointedClause)
     if missingResolutions.isEmpty then {
@@ -197,7 +255,7 @@ class newWscanTest extends mutable.Specification {
         Fragments.foreach(missingResolutions) {
           case DerivationStep.ConstraintResolution(left, right) =>
             assert(left == pointedClause, s"left was not the pointed clause")
-            step(ko(s"resolution between $left and $right is not redundant"))
+            step(ko(s"resolvent ${{ constraintResolvent(left, right)._1 }} from resolution between $left and $right is not redundant"))
         }
       }
     }
@@ -207,12 +265,17 @@ class newWscanTest extends mutable.Specification {
     val P = pointedClause.clause.toFormula.foUniversalClosure
     val N = clauseSet.toFormula.foUniversalClosure
 
-    Fragments(
-      "N -> N[X<-wit] valid" ! { Escargot.isValid(N --> N.applySubstitution(witness).betaNormalized) },
-      br,
-      "P[X<-wit] valid" ! { Escargot.isValid(P.applySubstitution(witness).betaNormalized) },
-      br
-    )
+    if Escargot.isValid(N --> N.applySubstitution(witness).betaNormalized) then {
+      "N -> N[X<-wit] is valid" in success
+    } else {
+      "N -> N[X<-wit] is not valid" in failure
+    }
+
+    if Escargot.isValid(P.applySubstitution(witness).betaNormalized) then {
+      "P[X<-wit] is valid" in success
+    } else {
+      "P[X<-wit] is not valid" in failure
+    }
   }
 
   extension (f: Formula) {
