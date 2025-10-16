@@ -1,17 +1,10 @@
 package gapt.examples
 
 import gapt.expr._
-import gapt.expr.formula.hol.universalClosure
 import gapt.formats.tptp.TptpFOLExporter
-import gapt.proofs.ceres.{CharacteristicClauseSet, extractStruct}
 import gapt.proofs.reduction._
 import gapt.proofs.Sequent
-import gapt.proofs.expansion.eliminateCutsET
-import gapt.proofs.lk.util.AtomicExpansion
 import gapt.proofs.resolution.{Input, eliminateSplitting, simplifyResolutionProof}
-import gapt.provers.escargot.Escargot
-import gapt.provers.groundFreeVariables
-import gapt.provers.spass.SPASS
 import gapt.provers.vampire.Vampire
 
 object ReductionDemo extends Script {

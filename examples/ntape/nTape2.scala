@@ -9,7 +9,6 @@ import gapt.formats.ClasspathInputFile
 import gapt.proofs.ceres_omega.AnalysisWithCeresOmega
 import gapt.formats.llk.loadLLK
 import gapt.proofs.expansion.{ETAnd, ETImp, ETSkolemQuantifier, ETWeakQuantifier, ExpansionProof, ExpansionTree}
-import gapt.utils.Counter
 
 /**
  * Version 2 of the higher-order n-Tape proof.

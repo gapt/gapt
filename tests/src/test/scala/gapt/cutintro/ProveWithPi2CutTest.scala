@@ -1,7 +1,6 @@
 package gapt.cutintro
 import gapt.expr._
 import gapt.proofs.Sequent
-import gapt.proofs.lk.LKProof
 import org.specs2.mutable.Specification
 
 class ProveWithPi2CutTest extends Specification {

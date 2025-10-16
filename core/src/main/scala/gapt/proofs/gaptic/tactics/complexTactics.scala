@@ -7,8 +7,6 @@ import gapt.proofs.expansion.{ExpansionProofToLK, deskolemizeET}
 import gapt.proofs.gaptic._
 import gapt.proofs.lk._
 import gapt.provers.{Prover, ResolutionProver}
-import gapt.provers.escargot.Escargot
-import gapt.provers.prover9.Prover9
 import gapt.provers.viper.aip.AnalyticInductionProver
 import gapt.provers.viper.aip.axioms._
 import cats.syntax.all._
@@ -24,7 +22,6 @@ import gapt.expr.ty.TBase
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.expr.util.syntacticMatching
-import gapt.formats.tip.TipProblem
 import gapt.logic.Polarity
 import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext

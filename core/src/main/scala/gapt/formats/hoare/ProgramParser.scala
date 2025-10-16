@@ -4,9 +4,8 @@ import gapt.expr._
 import gapt.expr.formula.fol.FOLFormula
 import gapt.expr.formula.fol.FOLTerm
 import gapt.proofs.hoare._
-import gapt.formats.prover9.{Prover9TermParserA, Prover9TermParserLadrStyle}
+import gapt.formats.prover9.Prover9TermParserA
 
-import scala.util.parsing.combinator.PackratParsers
 
 trait ProgramParserA extends Prover9TermParserA {
   def program: PackratParser[Program] = singleStmt ~ rep(";" ~> program) ^^ {

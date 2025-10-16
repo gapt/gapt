@@ -15,7 +15,7 @@ import gapt.expr.formula.constants.ImpC
 import gapt.expr.formula.constants.MonomorphicLogicalC
 import gapt.expr.formula.constants.NegC
 import gapt.expr.formula.constants.OrC
-import gapt.expr.ty.{->:, TArr, TBase, TVar, Ty}
+import gapt.expr.ty.{TArr, TBase, TVar, Ty}
 import gapt.expr.util.freeVariables
 import gapt.formats.babel.BabelSignature
 import gapt.formats.babel.Notation

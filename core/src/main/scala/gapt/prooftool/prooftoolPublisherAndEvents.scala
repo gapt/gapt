@@ -1,11 +1,10 @@
 package gapt.prooftool
 
-import java.awt.Color
 
-import gapt.proofs.{DagProof, SequentIndex, SequentProof}
+import gapt.proofs.SequentIndex
 
 import scala.swing.event.Event
-import scala.swing.{Color, Component, Publisher, Reactor}
+import scala.swing.Publisher
 
 class ProofToolPublisher extends Publisher
 

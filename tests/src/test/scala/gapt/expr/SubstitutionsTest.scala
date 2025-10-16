@@ -13,7 +13,6 @@ import gapt.expr.ty.TVar
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
 import gapt.expr.util.rename
-import org.specs2.execute.Success
 
 class SubstitutionsTest extends Specification {
 

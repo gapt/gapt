@@ -2,7 +2,6 @@ package gapt.provers.viper.aip.axioms
 
 import gapt.proofs.LabelledSequent
 import gapt.proofs.context.Context
-import gapt.proofs.context.mutable.MutableContext
 import gapt.provers.viper.aip.ThrowsError
 
 trait AxiomFactory {

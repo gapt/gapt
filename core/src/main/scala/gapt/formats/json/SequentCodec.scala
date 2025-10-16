@@ -1,6 +1,6 @@
 package gapt.formats.json
 
-import gapt.proofs.{Ant, HOLSequent, SequentIndex, Suc}
+import gapt.proofs.{HOLSequent, SequentIndex}
 import io.circe._
 import io.circe.generic.semiauto._
 

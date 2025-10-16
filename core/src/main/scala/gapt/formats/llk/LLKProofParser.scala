@@ -4,7 +4,6 @@ import gapt.expr._
 import gapt.formats.llk.ast.LambdaAST
 import gapt.proofs.HOLSequent
 import gapt.proofs.lk.LKProof
-import java.io.FileReader
 
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Formula

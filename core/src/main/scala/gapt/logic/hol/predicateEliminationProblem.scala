@@ -11,11 +11,6 @@ import gapt.expr.Expr
 import gapt.expr.formula.fol.FOLVar
 import gapt.expr.util.freeVariables
 import gapt.expr.formula.hol.freeHOVariables
-import gapt.expr.subst.Substitution
-import gapt.expr.Const
-import gapt.proofs.Sequent
-import gapt.proofs.resolution.structuralCNF
-import gapt.expr.formula.Atom
 import gapt.logic.Polarity
 import gapt.proofs.lk.transformations.folSkolemize
 import gapt.proofs.context.mutable.MutableContext

@@ -5,7 +5,7 @@ import java.io.IOException
 import gapt.expr._
 import gapt.formats.StringInputFile
 import gapt.proofs.context.mutable.MutableContext
-import gapt.formats.tptp.{TptpFOLExporter, TptpProofParser, TptpToString}
+import gapt.formats.tptp.{TptpFOLExporter, TptpProofParser}
 import gapt.proofs.resolution.{ResolutionProof, resolutionProofsAreReplaceable}
 import gapt.proofs.{FOLClause, HOLClause}
 import gapt.proofs.sketch.RefutationSketchToResolution

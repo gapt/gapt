@@ -2,7 +2,6 @@ package gapt.utils
 
 import scala.concurrent._
 import scala.concurrent.duration._
-import scala.util.DynamicVariable
 
 class TimeOutException(cause: Throwable, val duration: Duration)
     extends Exception(s"Timeout of $duration exceeded.", cause)

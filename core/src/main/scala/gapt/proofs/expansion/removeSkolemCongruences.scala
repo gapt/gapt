@@ -5,7 +5,6 @@ import gapt.expr.formula.All
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Imp
 import gapt.expr.formula.fol.flatSubterms
-import gapt.expr.formula.hol.instantiate
 import gapt.provers.escargot.LPO
 import gapt.provers.verit.VeriT
 import gapt.utils.zipped

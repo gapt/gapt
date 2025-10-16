@@ -4,7 +4,6 @@ import gapt.expr._
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.Sequent
 import gapt.proofs.gaptic._
-import gapt.proofs.gaptic.tactics.ForwardChain
 
 object simp_expr_unambig1 extends TacticsProof {
 

@@ -2,28 +2,17 @@ package gapt.examples.predicateEliminationProblems
 
 import gapt.expr._
 import gapt.proofs._
-import gapt.proofs.resolution.structuralCNF
 import gapt.expr.ty._
 import gapt.logic.hol.scan
 import gapt.logic.hol.scan._
 import gapt.logic.hol.wscan
-import gapt.expr.util.constants
 import gapt.expr.util.rename
-import gapt.expr.util.freeVariables
 import gapt.expr.subst.Substitution
 import gapt.expr.formula._
 import gapt.provers.escargot.Escargot
-import gapt.logic.hol.wdls.wdls
-import scala.util.Success
-import gapt.expr.formula.hol.freeHOVariables
 import gapt.logic.hol.ClauseSetPredicateEliminationProblem
 import gapt.logic.hol.toFormula
-import gapt.logic.hol.skolemize
-import gapt.logic.Polarity
-import gapt.logic.hol.CNFp
-import gapt.proofs.lk.transformations.folSkolemize
 import gapt.logic.hol.PredicateEliminationProblem
-import gapt.expr.formula.hol.lcomp
 import gapt.expr.formula.fol.FOLFormula
 
 val negationOfModalAxiom = pep"?X -(!u (!v (R(u,v) -> ((!w (R(v, w) -> X(w))) <-> X(v)))))"

@@ -25,7 +25,7 @@ import gapt.expr.util.syntacticMatching
 import gapt.logic.hol.simplifyPropositional
 import gapt.logic.hol.toNNF
 import gapt.provers.maxsat.{MaxSATSolver, bestAvailableMaxSatSolver}
-import gapt.utils.{Logger, UNone, UOption, USome}
+import gapt.utils.Logger
 
 import scala.collection.{Iterable, mutable}
 

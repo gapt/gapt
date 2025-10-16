@@ -1,6 +1,5 @@
 package gapt.formats.verit
 
-import gapt.formats.ClasspathInputFile
 import gapt.formats.verit.alethe.AletheProof
 import org.specs2.mutable._
 

@@ -1,6 +1,5 @@
 package gapt.proofs.nd
 
-import gapt.examples.Script
 import gapt.expr._
 import gapt.expr.ty.TBase
 import gapt.proofs._

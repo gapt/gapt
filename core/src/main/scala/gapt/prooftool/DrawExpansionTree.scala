@@ -4,12 +4,10 @@ import gapt.expr._
 
 import swing._
 import scala.swing.event.{MouseClicked, MouseEntered, MouseExited}
-import java.awt.{Color, Font}
+import java.awt.Color
 import java.awt.event.MouseEvent
 
 import gapt.proofs.expansion._
-import org.scilab.forge.jlatexmath.{TeXConstants, TeXFormula}
-import java.awt.image.BufferedImage
 
 import gapt.expr.formula.All
 import gapt.expr.formula.And

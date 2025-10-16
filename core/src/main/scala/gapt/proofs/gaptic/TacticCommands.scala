@@ -11,7 +11,6 @@ import gapt.expr.util.syntacticMatching
 import gapt.formats.babel.BabelSignature
 import gapt.logic.Polarity
 import gapt.proofs._
-import gapt.proofs.context
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.context.mutable.MutableContext

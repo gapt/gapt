@@ -4,7 +4,6 @@ import java.io.IOException
 
 import gapt.formats.InputFile
 import gapt.formats.StringInputFile
-import gapt.formats.tip.compiler.TipSmtToTipProblemCompiler
 import gapt.formats.tip.compiler.TipTransformationCompiler
 import gapt.formats.tip.parser.TipSmtParser
 import gapt.utils.ExternalProgram

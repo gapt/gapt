@@ -5,7 +5,7 @@ import gapt.formats.{InputFile, StringInputFile}
 import gapt.formats.leancop.LeanCoPParser
 import gapt.formats.tptp.TptpProofParser
 import gapt.formats.verit.VeriTParser
-import gapt.proofs.expansion.{ExpansionProof, addSymmetry}
+import gapt.proofs.expansion.ExpansionProof
 import gapt.proofs.resolution.{ResolutionProof, ResolutionToExpansionProof, containsEquationalReasoning, numberOfLogicalInferencesRes, simplifyResolutionProof}
 import gapt.proofs.sketch.RefutationSketchToResolution
 import gapt.provers.prover9.Prover9Importer

@@ -2,7 +2,6 @@ package gapt.logic.hol
 
 import gapt.expr._
 import gapt.proofs.HOLClause
-import gapt.proofs.FOLClause
 import gapt.proofs.SequentIndex
 import gapt.expr.util.rename
 import gapt.expr.util.freeVariables
@@ -15,36 +14,10 @@ import gapt.expr.util.syntacticMGU
 import gapt.expr.formula.Eq
 import gapt.proofs.Ant
 import gapt.expr.subst.FOLSubstitution
-import gapt.expr.formula.fol.FOLTerm
-import gapt.proofs.HOLSequent
-import gapt.expr.ty.Ti
 import gapt.logic.Polarity
-import gapt.logic.hol.AndOr
-import gapt.expr.formula.Formula
-import gapt.expr.formula.Top
-import gapt.expr.formula.And
-import gapt.expr.formula.Or
-import gapt.expr.formula.All
-import gapt.expr.formula.Ex
-import gapt.expr.BetaReduction.betaNormalize
-import gapt.expr.Abs.Block
-import gapt.expr.ty.FunctionType
-import gapt.expr.ty.To
-import gapt.expr.formula.constants.BottomC
-import gapt.logic.hol.wdls.simplify
-import gapt.expr.formula.constants.TopC
-import gapt.expr.preExpr.Type
-import gapt.utils.NameGenerator
-import gapt.expr.ty.Ty
 import gapt.logic.clauseSubsumption
-import gapt.expr.subst.PreSubstitution
 import gapt.proofs.Suc
 import gapt.proofs.Sequent
-import scala.collection.immutable.HashSet
-import gapt.provers.escargot.Escargot
-import gapt.expr.formula.Iff
-import gapt.logic.hol.PredicateEliminationProblem
-import gapt.logic.hol.ClauseSetPredicateEliminationProblem
 
 object scan {
 

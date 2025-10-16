@@ -11,7 +11,7 @@ import gapt.expr.formula.fol.FOLVar
 import gapt.expr.ty.TBase
 import gapt.logic.Polarity
 import gapt.proofs.context.Context
-import gapt.proofs.{Ant, ProofBuilder, Sequent, SequentMatchers, Suc}
+import gapt.proofs.{Ant, ProofBuilder, SequentMatchers, Suc}
 import gapt.proofs.expansion._
 import gapt.proofs.lk.rules.ContractionLeftRule
 import gapt.proofs.lk.rules.ContractionRightRule

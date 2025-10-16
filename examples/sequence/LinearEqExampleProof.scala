@@ -1,7 +1,6 @@
 package gapt.examples.sequence
 
 import gapt.expr._
-import gapt.expr.Expr
 import gapt.proofs.Sequent
 import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic.Proof

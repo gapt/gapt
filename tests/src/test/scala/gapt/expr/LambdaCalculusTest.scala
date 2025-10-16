@@ -12,7 +12,6 @@ import gapt.expr.util.rename
 import org.specs2.mutable._
 
 import scala.collection.immutable.{HashMap, HashSet}
-import scala.math.signum
 
 class LambdaCalculusTest extends Specification {
 

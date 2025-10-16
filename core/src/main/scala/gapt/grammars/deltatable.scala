@@ -7,7 +7,6 @@ import gapt.expr.ty.Ti
 import gapt.expr.util.expressionSize
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
-import gapt.utils.{UNone, UOption, USome}
 
 import scala.collection.mutable
 

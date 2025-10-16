@@ -9,8 +9,6 @@ import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.hol.HOLPosition
-import gapt.expr.util
-import gapt.expr.util.LambdaPosition
 
 object FOLPosition {
   def apply(is: Int*) = new FOLPosition(is.toList)

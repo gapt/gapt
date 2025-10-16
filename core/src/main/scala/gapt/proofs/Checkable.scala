@@ -1,11 +1,10 @@
 package gapt.proofs
 
 import gapt.expr._
-import gapt.expr.ty.{->:, TArr, TBase, TVar, Ty}
+import gapt.expr.ty.{TArr, TBase, TVar, Ty}
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.context.update.Update
-import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.BottomAxiom
@@ -30,7 +29,6 @@ import gapt.proofs.lk.rules.StrongQuantifierRule
 import gapt.proofs.lk.rules.TopAxiom
 import gapt.proofs.lk.rules.WeakeningLeftRule
 import gapt.proofs.lk.rules.WeakeningRightRule
-import gapt.proofs.resolution.ResolutionProof
 
 import scala.collection.mutable
 
@@ -98,7 +96,7 @@ object Checkable {
       sequent.foreach(context.check(_))
   }
 
-  implicit object lkIsCheckable extends Checkable[LKProof] {
+  implicit object lkIsCheckable extends Checkable[gapt.proofs.lk.LKProof] {
     import gapt.proofs.lk._
 
     def check(p: LKProof)(implicit ctx: Context): Unit = {
@@ -141,7 +139,7 @@ object Checkable {
     }
   }
 
-  implicit object resolutionIsCheckable extends Checkable[ResolutionProof] {
+  implicit object resolutionIsCheckable extends Checkable[gapt.proofs.resolution.ResolutionProof] {
     import gapt.proofs.resolution._
 
     def check(p: ResolutionProof)(implicit ctx: Context): Unit = {

@@ -2,18 +2,13 @@ package gapt.formats.tip.transformation
 
 import gapt.formats.tip.parser.TipSmtAnd
 import gapt.formats.tip.parser.TipSmtAssertion
-import gapt.formats.tip.parser.TipSmtCheckSat
 import gapt.formats.tip.parser.TipSmtCommand
-import gapt.formats.tip.parser.TipSmtConstantDeclaration
-import gapt.formats.tip.parser.TipSmtDatatypesDeclaration
-import gapt.formats.tip.parser.TipSmtDefinitionVisitor
 import gapt.formats.tip.parser.TipSmtEq
 import gapt.formats.tip.parser.TipSmtExists
 import gapt.formats.tip.parser.TipSmtExpression
 import gapt.formats.tip.parser.TipSmtFalse
 import gapt.formats.tip.parser.TipSmtForall
 import gapt.formats.tip.parser.TipSmtFun
-import gapt.formats.tip.parser.TipSmtFunctionDeclaration
 import gapt.formats.tip.parser.TipSmtFunctionDefinition
 import gapt.formats.tip.parser.TipSmtGoal
 import gapt.formats.tip.parser.TipSmtImp
@@ -23,7 +18,6 @@ import gapt.formats.tip.parser.TipSmtMutualRecursiveFunctionDefinition
 import gapt.formats.tip.parser.TipSmtNot
 import gapt.formats.tip.parser.TipSmtOr
 import gapt.formats.tip.parser.TipSmtProblem
-import gapt.formats.tip.parser.TipSmtSortDeclaration
 import gapt.formats.tip.parser.TipSmtTrue
 
 object eliminateBooleanConstants extends TipSmtProblemTransformation {

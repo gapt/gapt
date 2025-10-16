@@ -6,7 +6,7 @@ import gapt.expr.formula.hol.universalClosure
 import gapt.expr.formula.{All, Atom, Eq, Neg, Or}
 import gapt.expr.subst.Substitution
 import gapt.formats.leancop.{LeanCoP21Parser, LeanCoPParser}
-import gapt.proofs.expansion.{ETWeakQuantifierBlock, ExpansionProof, ExpansionProofToLK, ExpansionSequent, formulaToExpansionTree}
+import gapt.proofs.expansion.{ETWeakQuantifierBlock, ExpansionProof, ExpansionProofToLK, formulaToExpansionTree}
 import gapt.formats.tptp.TptpFOLExporter
 import gapt.logic.{Polarity, clauseSubsumption}
 import gapt.proofs.{Clause, HOLClause, HOLSequent, Sequent, RichFormulaSequent}

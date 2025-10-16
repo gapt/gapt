@@ -1,9 +1,7 @@
 package gapt.cli
 
 import gapt.examples.Script
-import gapt.formats.ClasspathInputFile
 
-import os._
 
 object CLIMain {
 

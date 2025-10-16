@@ -1,6 +1,5 @@
 package gapt
 
-import gapt.expr.VarOrConst
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLVar
 import gapt.expr.subst.FOLSubstitution

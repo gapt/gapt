@@ -3,7 +3,6 @@ package gapt.proofs.lk.transformations
 import gapt.expr.{Abs, App, Expr, Var}
 import gapt.expr.BetaReduction.betaNormalize
 import gapt.expr.stringInterpolationForExpressions
-import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.{All, Eq, Formula, Iff}
 import gapt.expr.ty.{FunctionType, To, Ty}
 import gapt.expr.util.freeVariables

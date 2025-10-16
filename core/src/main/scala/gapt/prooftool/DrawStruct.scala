@@ -4,7 +4,6 @@ import scala.reflect.Selectable.reflectiveSelectable
 import scala.swing._
 import event._
 import BorderPanel._
-import java.awt.Font._
 import java.awt.{BasicStroke, RenderingHints}
 import java.awt.event.{MouseEvent, MouseMotionListener}
 

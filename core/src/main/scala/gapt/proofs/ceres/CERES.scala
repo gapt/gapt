@@ -1,6 +1,5 @@
 package gapt.proofs.ceres
 
-import gapt.formats.llk.LLKExporter
 import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.lk._
 import gapt.proofs.resolution._

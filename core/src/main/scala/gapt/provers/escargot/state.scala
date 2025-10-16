@@ -4,7 +4,6 @@ import gapt.expr.formula.hol.universalClosure
 import gapt.proofs.{ContextSection, HOLClause, HOLSequent, Sequent, RichFormulaSequent}
 import gapt.proofs.resolution._
 import gapt.provers.escargot.{LPO, TermOrdering}
-import gapt.provers.viper.spin._
 import gapt.provers.sat.Sat4j
 import gapt.utils.Logger
 import org.sat4j.minisat.SolverFactory
@@ -12,7 +11,7 @@ import Sat4j._
 import gapt.expr.formula.And
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Formula
-import gapt.expr.util.{constants, expressionSize, freeVariables, variables}
+import gapt.expr.util.{expressionSize, freeVariables}
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.rup.RupProof
 import gapt.provers.viper.aip.axioms.Axiom

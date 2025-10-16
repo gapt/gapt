@@ -1,20 +1,11 @@
 package gapt.logic.hol
 
 import org.specs2._
-import gapt.proofs._
 import gapt.expr._
 import gapt.expr.formula._
 import gapt.provers.escargot.Escargot
-import gapt.logic.hol.scan.freeFOLVariables
 import gapt.expr.subst.Substitution
-import gapt.logic.hol.scan.Derivation
-import gapt.logic.hol.ClauseSetPredicateEliminationProblem
 import org.specs2.matcher.Matcher
-import org.specs2.Specification
-import gapt.proofs.resolution.structuralCNF
-import gapt.logic.hol.scan.PointedClause
-import gapt.logic.hol.scan.DerivationStep
-import gapt.expr.formula.hol.freeHOVariables
 import org.specs2.matcher.MatchResult
 
 class wscanTest extends Specification {

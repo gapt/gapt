@@ -3,7 +3,7 @@ package gapt.proofs.sketch
 import gapt.proofs.resolution._
 import gapt.proofs.{FOLClause, HOLClause, SequentConnector, SequentProof}
 import gapt.provers.ResolutionProver
-import gapt.provers.escargot.{Escargot, NonSplittingEscargot}
+import gapt.provers.escargot.NonSplittingEscargot
 import gapt.provers.sat.Sat4j
 
 import scala.collection.mutable

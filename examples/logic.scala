@@ -35,7 +35,6 @@ import gapt.proofs.context.update.{SkolemFunction => SkolemFun}
 import gapt.proofs.epsilon.EpsilonC
 import gapt.proofs.gaptic._
 import gapt.proofs.lk._
-import gapt.proofs.lk.rules
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.ExistsSkLeftRule

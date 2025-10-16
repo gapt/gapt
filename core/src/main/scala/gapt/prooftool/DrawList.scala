@@ -1,7 +1,6 @@
 package gapt.prooftool
 
-import java.awt.{Color, Font}
-import Font._
+import java.awt.Color
 
 import gapt.proofs.{HOLSequent, Sequent}
 import gapt.expr._

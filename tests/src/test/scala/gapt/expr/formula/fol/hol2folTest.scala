@@ -5,22 +5,10 @@
 package gapt.expr.formula.fol
 
 import gapt.expr._
-import gapt.expr.formula
-import gapt.expr.formula.All
-import gapt.expr.formula.And
-import gapt.expr.formula.Atom
 import gapt.expr.formula.Formula
-import gapt.expr.formula.Imp
-import gapt.expr.formula.constants.ImpC
-import gapt.expr.formula.hol.HOLFunction
-import gapt.expr.subst.Substitution
 import gapt.expr.ty.Ti
-import gapt.expr.ty.To
 import gapt.expr.ty.Ty
-import gapt.expr.util
-import gapt.expr.util.constants
 import gapt.expr.util.subTerms
-import gapt.utils.Counter
 import org.specs2.mutable._
 
 class hol2folTest extends Specification {

@@ -1,6 +1,5 @@
 package gapt.utils
 
-import org.specs2.execute.{Failure, Success}
 import org.specs2.mutable.Specification
 import org.specs2.matcher.Matchers._
 

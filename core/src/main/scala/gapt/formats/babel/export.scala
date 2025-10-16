@@ -4,7 +4,6 @@ import gapt.expr._
 import gapt.proofs.HOLSequent
 import gapt.utils.Doc
 import Doc._
-import gapt.expr.VarOrConst
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Iff
 import gapt.expr.formula.Neg

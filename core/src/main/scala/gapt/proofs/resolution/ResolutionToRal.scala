@@ -5,12 +5,12 @@ import gapt.expr.formula.Eq
 import gapt.expr.formula.Formula
 import gapt.expr.formula.fol.Hol2FolDefinitions
 import gapt.expr.formula.fol.undoHol2Fol.Signature
-import gapt.expr.formula.fol.{replaceAbstractions, undoHol2Fol}
+import gapt.expr.formula.fol.undoHol2Fol
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.To
 import gapt.expr.ty.Ty
 import gapt.expr.util.toVNF
-import gapt.proofs.{Ant, Suc}
+import gapt.proofs.Suc
 
 object ResolutionToRal extends ResolutionToRal {
   /* One of our heuristics maps higher-order types into first-order ones. When the proof is converted to Ral,

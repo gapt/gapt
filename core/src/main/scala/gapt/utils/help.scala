@@ -1,6 +1,6 @@
 package gapt.utils
 
-import java.net.{HttpURLConnection, URI, URL}
+import java.net.{HttpURLConnection, URI}
 import java.nio.file.{Files, Paths}
 
 /**

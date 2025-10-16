@@ -8,7 +8,6 @@ import gapt.expr.formula.Ex
 import gapt.expr.formula.Top
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLTerm
-import gapt.expr.formula.hol.instantiate
 import gapt.expr.subst.FOLSubstitution
 import gapt.expr.util.syntacticMatching
 import gapt.logic.clauseSubsumption

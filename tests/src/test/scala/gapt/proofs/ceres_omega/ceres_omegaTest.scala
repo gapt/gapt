@@ -6,7 +6,7 @@ import gapt.expr.formula.Atom
 import gapt.expr.formula.Formula
 import gapt.expr.formula.fol.Hol2FolDefinitions
 import gapt.expr.formula.fol.replaceAbstractions
-import gapt.expr.formula.hol.{HOLOrdering, containsQuantifierOnLogicalLevel, freeHOVariables}
+import gapt.expr.formula.hol.{containsQuantifierOnLogicalLevel, freeHOVariables}
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To

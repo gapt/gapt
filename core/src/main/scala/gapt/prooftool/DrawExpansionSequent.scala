@@ -3,10 +3,10 @@ package gapt.prooftool
 // The code in this file displays expansion sequents.
 
 import swing._
-import java.awt.{Color, Dimension, Font}
+import java.awt.{Color, Font}
 import java.awt.Font._
 
-import scala.swing.event.{Event, MouseClicked, MouseEntered, MouseExited, UIElementResized}
+import scala.swing.event.{Event, MouseClicked, MouseEntered, MouseExited}
 import gapt.proofs.expansion._
 import java.awt.event.MouseEvent
 

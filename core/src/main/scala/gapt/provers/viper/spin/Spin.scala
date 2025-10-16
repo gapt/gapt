@@ -12,7 +12,6 @@ import gapt.expr.util.LambdaPosition.Choice
 import gapt.expr.util.constants
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
-import gapt.formats.tip.TipProblem
 import gapt.logic.hol.skolemize
 import gapt.proofs.ContextSection
 import gapt.proofs.HOLClause
@@ -21,7 +20,6 @@ import gapt.proofs.Sequent
 import gapt.proofs.RichFormulaSequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.BaseTypes
-import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.simplificationRules
 import gapt.proofs.lk.LKProof

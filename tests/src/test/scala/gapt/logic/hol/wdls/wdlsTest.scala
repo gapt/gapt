@@ -2,14 +2,12 @@ package gapt.logic.hol.wdls
 
 import gapt.expr._
 import gapt.expr.formula.fol.FOLVar
-import gapt.expr.formula.And
 import gapt.expr.formula.Formula
 import gapt.expr.formula.Iff
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.FunctionType
 import gapt.logic.hol.simplifyPropositional
 import gapt.logic.hol.solveFormulaEquation
-import gapt.proofs.HOLSequent
 import gapt.provers.escargot.Escargot
 import gapt.utils.NameGenerator
 import org.specs2.matcher.Matcher
@@ -18,7 +16,6 @@ import org.specs2.specification.core.Fragment
 
 import scala.util.Try
 import gapt.logic.hol.PredicateEliminationProblem
-import gapt.proofs.RichFormulaSequent
 
 class wdlsTest extends Specification {
   private case class StringInterpolation(sc: StringContext) {

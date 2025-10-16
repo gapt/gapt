@@ -1,10 +1,8 @@
 package gapt.formats.tip
 
 import gapt.expr._
-import gapt.expr.ty.TBase
 import gapt.expr.ty.To
-import gapt.formats.{InputFile, StringInputFile}
-import gapt.formats.tip.compiler.TipTransformationCompiler
+import gapt.formats.StringInputFile
 import gapt.formats.tip.compiler.TipTransformationCompiler
 import gapt.formats.tip.parser.TipSmtParser
 import gapt.proofs.context.update.InductiveType

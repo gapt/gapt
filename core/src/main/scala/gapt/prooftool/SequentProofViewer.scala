@@ -1,6 +1,5 @@
 package gapt.prooftool
 
-import os._
 import gapt.expr.formula.Formula
 import gapt.formats.json._
 import gapt.formats.latex.LatexExporter

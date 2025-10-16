@@ -3,9 +3,6 @@ package gapt.proofs.gaptic
 import gapt.formats.babel.BabelSignature
 
 import language.experimental.macros
-import scala.quoted.Expr
-import scala.quoted.Quotes
-import gapt.expr.formula.Formula
 
 trait LemmaHelper[T] {
   inline def applyTactics[U](inline tacticsProof: => Tactic[U]) = LemmaMacros.applyTactics(this, tacticsProof)

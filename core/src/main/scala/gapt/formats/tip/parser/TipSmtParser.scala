@@ -1,7 +1,6 @@
 package gapt.formats.tip.parser
 
 import gapt.formats.InputFile
-import gapt.formats.StringInputFile
 import gapt.formats.lisp.LFun
 import gapt.formats.lisp.LKeyword
 import gapt.formats.lisp.LList

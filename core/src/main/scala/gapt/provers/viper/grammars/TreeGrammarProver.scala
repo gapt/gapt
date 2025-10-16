@@ -2,7 +2,6 @@ package gapt.provers.viper.grammars
 
 import gapt.expr._
 import gapt.expr.formula.All
-import gapt.expr.formula.And
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
 import gapt.expr.formula.fol.{flatSubterms, folTermSize}
@@ -23,10 +22,9 @@ import gapt.logic.hol.CNFp
 import gapt.logic.hol.wdls.wdls
 import gapt.logic.hol.skolemize
 import gapt.proofs.context.Context
-import gapt.proofs.context.facet.{BaseTypes, StructurallyInductiveTypes}
+import gapt.proofs.context.facet.BaseTypes
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.expansion.{ExpansionProof, InstanceTermEncoding, freeVariablesET, minimalExpansionSequent}
-import gapt.proofs.gaptic.Tactical1
 import gapt.proofs.lk.{LKProof, lkProofReplaceable}
 import gapt.proofs.lk.util.EquationalLKProver
 import gapt.proofs.{HOLSequent, Sequent, withSection, RichFormulaSequent}
@@ -344,7 +342,7 @@ class TreeGrammarProver(val ctx: Context, val sequent: HOLSequent, val options: 
 
 }
 
-class TreeGrammarInductionTactic(options: TreeGrammarProverOptions = TreeGrammarProverOptions())(implicit ctx: Context) extends Tactical1[Unit] {
+class TreeGrammarInductionTactic(options: TreeGrammarProverOptions = TreeGrammarProverOptions())(implicit ctx: Context) extends gapt.proofs.gaptic.Tactical1[Unit] {
   import gapt.proofs.gaptic._
 
   def copy(options: TreeGrammarProverOptions) = new TreeGrammarInductionTactic(options)

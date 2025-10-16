@@ -24,7 +24,6 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 import gapt.logic.hol.PredicateEliminationProblem
-import gapt.proofs.resolution.Subst
 
 /**
  * Uses the DLS algorithm to find a witness for a predicate elimination problem of the form

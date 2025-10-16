@@ -1,6 +1,6 @@
 package gapt.doc
 
-import java.io.{ByteArrayOutputStream, PrintStream, PrintWriter, Writer}
+import java.io.{ByteArrayOutputStream, PrintStream, Writer}
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
 

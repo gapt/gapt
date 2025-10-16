@@ -15,7 +15,6 @@ import gapt.expr.formula.hol.HOLAtomConst
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.logic.Polarity
-import gapt.logic.hol.SkolemFunctions
 import gapt.proofs._
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.Definition

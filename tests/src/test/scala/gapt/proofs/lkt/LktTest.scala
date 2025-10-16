@@ -1,8 +1,8 @@
 package gapt.proofs.lkt
 
 import gapt.cutintro.CutIntroduction
-import gapt.examples.{Pi2Pigeonhole, Pi3Pigeonhole, nTape4}
-import gapt.expr.{normalize => norm, _}
+import gapt.examples.{Pi2Pigeonhole, Pi3Pigeonhole}
+import gapt.expr.{normalize => _, _}
 import gapt.expr.formula.hol.containsQuantifierOnLogicalLevel
 import gapt.proofs.context.Context
 import gapt.proofs.lk.transformations.eliminateDefinitions

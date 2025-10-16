@@ -17,7 +17,6 @@ import gapt.expr.formula.hol.{HOLPosition, instantiate}
 import gapt.expr.subst.Substitution
 import gapt.formats.babel.BabelSignature
 import gapt.logic.Polarity
-import gapt.logic.hol.SkolemFunctions
 import gapt.proofs.{Checkable, DagProof, HOLSequent, Sequent}
 import gapt.proofs.context.Context
 import gapt.utils.{Doc, Maybe}

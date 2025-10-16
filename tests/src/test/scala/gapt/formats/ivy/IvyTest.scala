@@ -2,7 +2,6 @@ package gapt.formats.ivy
 
 import org.specs2.mutable._
 import gapt.formats.lisp._
-import java.io.File.separator
 
 import gapt.formats.{ClasspathInputFile, StringInputFile}
 

@@ -3,7 +3,6 @@ package gapt.formats.lisp
 import gapt.formats.StringInputFile
 import org.specs2.mutable._
 
-import scala.util.{Failure, Success}
 
 class SExpressionParserTest extends Specification {
 

@@ -8,12 +8,10 @@ import gapt.expr.util.constants
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.logic.clauseSubsumption
-import gapt.logic.hol.CNFn
 import gapt.proofs._
 import gapt.provers.escargot.{Escargot, NonSplittingEscargot}
 import gapt.provers.{ResolutionProver, groundFreeVariables}
 
-import scala.collection.immutable.HashMap
 
 /**
  *  Sometimes, we have a resolution refutation R of a set of clauses C
