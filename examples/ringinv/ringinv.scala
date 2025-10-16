@@ -3,14 +3,10 @@ package gapt.examples
 import gapt.expr._
 import gapt.formats.babel.{Notation, Precedence}
 import gapt.expr.ty.Ti
-import gapt.expr.ty.To
 import gapt.proofs.Sequent
 import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 import gapt.proofs.lk.transformations.{eliminateDefinitions, eliminateSetEquality, cutNormal}
-import scala.languageFeature.implicitConversions
-
-import gapt.proofs.lk.rules.CutRule
 
 object ringinv extends TacticsProof {
   ctx += Sort("i")

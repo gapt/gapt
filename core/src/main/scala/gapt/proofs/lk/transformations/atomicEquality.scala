@@ -4,7 +4,7 @@ import gapt.expr.formula.{Atom, Formula}
 import gapt.proofs.Sequent
 import gapt.proofs.expansion.{ExpansionProofToLK, deskolemizeET}
 import gapt.proofs.lk.LKProof
-import gapt.proofs.lk.rules.{AndRightRule, ContractionLeftRule, CutRule, EqualityLeftRule, EqualityRightRule, EqualityRule, ForallRightRule, ImpRightRule, LogicalAxiom}
+import gapt.proofs.lk.rules.{ContractionLeftRule, CutRule, EqualityLeftRule, EqualityRightRule, EqualityRule}
 import gapt.provers.escargot.Escargot
 
 /**
