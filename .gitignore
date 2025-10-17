@@ -65,4 +65,7 @@ doc/*.tex.backup
 # zed
 /.zed
 
+# metals
+/.metals
+
 **/.DS_Store
