@@ -59,7 +59,7 @@ object StructCreators {
     And(CharacteristicClauseSet(s).toSeq map (_.toDisjunction))
 
   def extract(p: LKProof)(implicit ctx: Context): Struct =
-    extract(p, p.endSequent.map(_ => false))(x => true, ctx)
+    extract(p, p.endSequent.map(_ => false))(_ => true, ctx)
 
   def extract(p: LKProof, predicate: Formula => Boolean)(implicit ctx: Context): Struct =
     extract(p, p.endSequent.map(_ => false))(predicate, ctx)
@@ -69,7 +69,6 @@ object StructCreators {
 
   def extract(p: LKProof, cut_occs: Sequent[Boolean])(implicit pred: Formula => Boolean, ctx: Context): Struct = {
     val cutanc_es = p.endSequent.zip(cut_occs).filter(_._2).map(_._1)
-    val es = p.endSequent
     val result: Struct = p match {
       case ReflexivityAxiom(e) =>
         if (cut_occs(Suc(0)))

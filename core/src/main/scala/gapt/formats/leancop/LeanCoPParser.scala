@@ -175,7 +175,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
 
     type DefinitionalTuple = (FOLFormula, List[FOLFormula])
 
-    var unusedPredicates: mutable.Set[LeanPredicate] = mutable.Set(leanPredicates: _*)
+    val unusedPredicates: mutable.Set[LeanPredicate] = mutable.Set(leanPredicates: _*)
 
     def definitionalTuple(f: FOLFormula, insideConjunction: Boolean): DefinitionalTuple =
       f match {

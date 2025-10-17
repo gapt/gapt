@@ -53,7 +53,7 @@ object soEqToEquiv {
             val lk = lkProof(e +: chi +: Sequent() :+ chi_)
             CutRule(p_, lk, chi)
         }
-        val Vector(i1, i2) = cut.endSequent.zipWithIndex.antecedent.filter { (f, i) => e == f } map {
+        val Vector(i1, i2) = cut.endSequent.zipWithIndex.antecedent.filter { (f, _) => e == f } map {
           _._2
         } take 2
         ContractionLeftRule(cut, i1, i2)

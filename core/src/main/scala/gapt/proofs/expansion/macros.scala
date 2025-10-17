@@ -83,7 +83,6 @@ object ETInduction {
     }
 
     def toCase(et: ExpansionTree, constrs: Seq[Const]): Seq[Case] = {
-      val eisp = et.immediateSubProofs
       constrs.zip(ETAnd.Flat(et)).map {
         case (constr, indCase) =>
           val FunctionType(indTy, argTypes) = constr.ty: @unchecked

@@ -677,7 +677,7 @@ object introducePi2Cut {
       seHs: Pi2SeHs
   ): ((Set[ClauseWithIndexLists], Option[Formula])) = {
 
-    var allowedClausesWithIndexListsMutable = scala.collection.mutable.Set[ClauseWithIndexLists]()
+    val allowedClausesWithIndexListsMutable = scala.collection.mutable.Set[ClauseWithIndexLists]()
     val literalsWithIndexListsMutable = scala.collection.mutable.Set(literalsWithIndexLists.toList: _*)
 
     for (literalWithIndexLists <- literalsWithIndexLists) {

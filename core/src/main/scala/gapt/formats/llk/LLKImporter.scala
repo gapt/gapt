@@ -1480,7 +1480,7 @@ trait TokenToLKConverter {
     axiomconj match {
       case Atom(c @ Const(n, To, _), List()) =>
         val pi = proveInstanceFrom(axiom, instance, sub, axiomproof)
-        val d = definitions.find(_.what == c).getOrElse(
+        definitions.find(_.what == c).getOrElse(
           throw new Exception(
             s"could not find a definition for $c in ${definitions.map(_.what).sortBy(_.name)}"
           )

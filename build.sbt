@@ -57,7 +57,7 @@ lazy val commonSettings = Seq(
     "-feature",
     "-unchecked",
     "-explain",
-    "-Wunused:imports,privates"
+    "-Wunused:imports,privates,locals"
   ),
   javaOptions ++= Seq("-Xss40m", "-Xmx1g"),
   fork := true,

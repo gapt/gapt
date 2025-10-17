@@ -383,7 +383,6 @@ class OccurrencesFinder()(implicit ctx: Context) {
       case Apps(c: Const, rhsArgs) if !allPositions.isDefinedAt(c) =>
         rhsArgs.zipWithIndex.foldLeft[Groups]((Seq(), Seq(), Seq())) {
           case ((prim, accs, pass), (e, i)) =>
-            val p = newPos(i, rhsArgs.size, pos)
             val (l, m, r) = go(e, newPos(i, rhsArgs.size, pos), inPrimary)
             (l ++ prim, m ++ accs, r ++ pass)
         }
