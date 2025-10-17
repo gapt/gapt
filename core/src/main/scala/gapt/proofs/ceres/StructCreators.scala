@@ -55,8 +55,6 @@ object StructCreators {
     case EmptyTimesJunction() => n
   }
 
-  private val nLine = sys.props("line.separator")
-
   def toFormula(s: Struct): Formula =
     And(CharacteristicClauseSet(s).toSeq map (_.toDisjunction))
 

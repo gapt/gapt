@@ -549,7 +549,7 @@ class FormulaTester(acceptNotNormalized: Boolean, numberTestTerms: Int)(implicit
       ctx.conditionalReductionRules.toSet ++ reflRules.conditionalRefl(ctx) ++ simplificationRules.conditionalRules ++
         constructorRules(ctx).map(ConditionalReductionRule(_))
     )
-  private var normalized = mutable.Map.empty[Formula, Formula]
+  private val normalized = mutable.Map.empty[Formula, Formula]
   private val origConstants: Set[Const] = Context().constants.toSet
   private val sat = new Sat4j()
 

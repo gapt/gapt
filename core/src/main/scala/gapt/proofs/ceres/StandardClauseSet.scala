@@ -51,8 +51,6 @@ class CharacteristicClauseSet {
     case _ => throw new Exception("Unhandled case: " + struct)
   }
 
-  private def compose[T](fs1: Sequent[T], fs2: Sequent[T]) = fs1 ++ fs2
-
   /* Like compose, but does not duplicate common terms */
   private def delta_compose[T](fs1: SetSequent[T], fs2: SetSequent[T]): Option[SetSequent[T]] = {
     val ante1 = fs1.sequent.antecedent.distinct.toSet ++ fs2.sequent.antecedent.distinct.toSet.diff(fs1.sequent.antecedent.distinct.toSet)

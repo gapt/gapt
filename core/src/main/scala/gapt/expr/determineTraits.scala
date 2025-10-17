@@ -49,7 +49,6 @@ import gapt.expr.ty.Ty
  */
 private[expr] object determineTraits {
   private class Var_with_FOLVar(s: String, t: Ty) extends Var(s, t) with FOLVar
-  private class Var_with_Formula(s: String, t: Ty) extends Var(s, t) with Formula
   private class Var_with_Atom(s: String, t: Ty) extends Var(s, t) with Atom
   private class Var_with_HOLPartialAtom(s: String, t: Ty, override val numberOfArguments: Int) extends Var(s, t) with HOLPartialAtom
 
@@ -66,7 +65,6 @@ private[expr] object determineTraits {
   private class Const_with_FOLConst(s: String, t: Ty, ps: List[Ty]) extends Const(s, t, ps) with FOLConst
   private class Const_with_PropAtom(s: String, t: Ty, ps: List[Ty]) extends Const(s, t, ps) with PropAtom
   private class Const_with_PropConnective(s: String, t: Ty, ps: List[Ty], override val numberOfArguments: Int) extends Const(s, t, ps) with PropConnective
-  private class Const_with_PropPartialFormula(s: String, t: Ty, ps: List[Ty], override val numberOfArguments: Int) extends Const(s, t, ps) with PropPartialFormula
   private class Const_with_FOLFunctionConst(s: String, t: Ty, ps: List[Ty], override val numberOfArguments: Int) extends Const(s, t, ps) with FOLFunctionConst
   private class Const_with_FOLAtomConst(s: String, t: Ty, ps: List[Ty], override val numberOfArguments: Int) extends Const(s, t, ps) with FOLAtomConst
   private class Const_with_HOLAtomConst(s: String, t: Ty, ps: List[Ty], override val numberOfArguments: Int) extends Const(s, t, ps) with HOLAtomConst

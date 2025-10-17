@@ -37,9 +37,6 @@ object SingleProjection {
   def apply(proof: LKProof): LKProof =
     apply(proof, proof.endSequent.map(_ => false), _ => true)._2
 
-  private def apply(proof: LKProof, pred: Formula => Boolean): LKProof =
-    apply(proof, proof.endSequent.map(_ => false), pred)._2
-
   private def apply(proof: LKProof, cut_ancs: Sequent[Boolean], pred: Formula => Boolean): (Option[SequentIndex], LKProof) = {
     apply_(proof, cut_ancs, pred)
   }
@@ -176,10 +173,6 @@ object SingleProjection {
     else if (form2.nonEmpty) (Some(preProof.endSequent.indexOfInSuc(form2.get)), preProof)
     else (None, preProof)
   }
-
-  private def getESAncs(proof: LKProof, cut_ancs: Sequent[Boolean]): HOLSequent =
-    // use cut_ancs as characteristic function to filter the the cut-ancestors from the current sequent
-    (proof.endSequent zip cut_ancs).filterNot(_._2).map(_._1)
 
   // Handles the case of a binary rule operating on a cut-ancestor.
   def handleBinaryCutAnc(s1: (Option[SequentIndex], LKProof), s2: (Option[SequentIndex], LKProof)): (Option[SequentIndex], LKProof) = {

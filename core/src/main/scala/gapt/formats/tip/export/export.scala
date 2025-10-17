@@ -71,12 +71,6 @@ package object `export` {
       sequent: Sequent[Formula],
       context: Context
   ) {
-
-    private def contextSymbols(context: Context): Set[String] = {
-      context.constants.map { _.name }.toSet ++
-        context.get[BaseTypes].baseTypes.keys.toSet
-    }
-
     private def toInductiveTyp(
         structurallyInductiveType: (String, Vector[Const])
     ): InductiveType = {

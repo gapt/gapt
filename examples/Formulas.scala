@@ -67,5 +67,4 @@ object Formulas {
     while (symbs contains tmp) tmp = tmp + "_0"
     tmp
   }
-  private def safeName(symbs: String*)(name: String): String = safeNames(symbs: _*)(name).head
 }

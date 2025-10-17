@@ -449,9 +449,6 @@ object TstpStatistics {
     rule_histogram(r) = rule_histogram.getOrElse(r, 0) + 1
   }
 
-  private def fst_map[U, V, W, X](m: mutable.Map[U, (V, W, X)]) =
-    m.map(x => (x._1, (x._2._1, x._2._2))).toMap
-
   // can't serialize sequents so we convert them to strings
   private def fst_map_c[U, V, W, X](m: mutable.Map[U, (V, W, X)]) =
     m.map(x => (x._1, (x._2._1.toString, x._2._2))).toMap
