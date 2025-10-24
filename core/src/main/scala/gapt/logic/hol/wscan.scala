@@ -228,7 +228,7 @@ object wscan {
 
   private def freshArgumentVariables(ty: Ty, varName: String, blacklist: Iterable[VarOrConst] = Iterable.empty) = {
     val FunctionType(_, argTypes) = ty: @unchecked
-    rename.awayFrom(blacklist).freshStream("u").zip(argTypes).map(Var(_, _))
+    rename.awayFrom(blacklist).freshStream(varName).zip(argTypes).map(Var(_, _))
   }
 
   private def areEquivalent(left: Substitution, right: Substitution): Boolean = {

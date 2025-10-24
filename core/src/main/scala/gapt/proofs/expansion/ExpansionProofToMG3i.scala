@@ -67,12 +67,27 @@ class ExpansionProofToMG3i(theorySolver: HOLClause => Option[LKProof])(implicit 
   }
 
   private def solve(theory: Theory, expSeq: ExpansionSequent): UnprovableOrLKProof = {
-    None.orElse(tryAxiom(theory, expSeq)).orElse(tryDef(theory, expSeq)).orElse(tryMerge(theory, expSeq)).orElse(tryWeakening(theory, expSeq)).orElse(tryNullary(theory, expSeq)).orElse(tryInvStrongQ(theory, expSeq)).orElse(tryWeakQ(theory, expSeq)).orElse(tryInvUnary(theory, expSeq)).orElse(tryInvBinary(theory, expSeq)).orElse(trySimpNegL(theory, expSeq)).orElse(trySimpImpL(theory, expSeq)).orElse(tryPropag(theory, expSeq)).orElse(tryNonInv(theory, expSeq)).orElse(tryCut(theory, expSeq)).orElse(tryTheory(theory, expSeq)).getOrElse(Left(theory -> expSeq)).map {
-      ContractionMacroRule(_).ensuring { _.conclusion isSubsetOf expSeq.shallow }
-    }
+    None.orElse(tryAxiom(expSeq))
+      .orElse(tryDef(theory, expSeq))
+      .orElse(tryMerge(theory, expSeq))
+      .orElse(tryWeakening(theory, expSeq))
+      .orElse(tryNullary(expSeq))
+      .orElse(tryInvStrongQ(theory, expSeq))
+      .orElse(tryWeakQ(theory, expSeq))
+      .orElse(tryInvUnary(theory, expSeq))
+      .orElse(tryInvBinary(theory, expSeq))
+      .orElse(trySimpNegL(theory, expSeq))
+      .orElse(trySimpImpL(theory, expSeq))
+      .orElse(tryPropag(theory, expSeq))
+      .orElse(tryNonInv(theory, expSeq))
+      .orElse(tryCut(theory, expSeq))
+      .orElse(tryTheory(expSeq))
+      .getOrElse(Left(theory -> expSeq)).map {
+        ContractionMacroRule(_).ensuring { _.conclusion isSubsetOf expSeq.shallow }
+      }
   }
 
-  private def tryAxiom(theory: Theory, expSeq: ExpansionSequent): Option[UnprovableOrLKProof] = {
+  private def tryAxiom(expSeq: ExpansionSequent): Option[UnprovableOrLKProof] = {
     val shallowSequent = expSeq.shallow
     if (shallowSequent.isTaut)
       Some(Right(LogicalAxiom(shallowSequent.antecedent intersect shallowSequent.succedent head)))
@@ -80,7 +95,7 @@ class ExpansionProofToMG3i(theorySolver: HOLClause => Option[LKProof])(implicit 
       None
   }
 
-  private def tryTheory(theory: Theory, expSeq: ExpansionSequent): Option[UnprovableOrLKProof] =
+  private def tryTheory(expSeq: ExpansionSequent): Option[UnprovableOrLKProof] =
     quiet(theorySolver(expSeq collect { case ETAtom(atom: Atom, _) => atom })).map {
       Right(_)
     }
@@ -99,7 +114,7 @@ class ExpansionProofToMG3i(theorySolver: HOLClause => Option[LKProof])(implicit 
       case (ETMerge(a, b), i: Suc) => solve(theory, expSeq.delete(i) :+ a :+ b)
     }
 
-  private def tryNullary(theory: Theory, expSeq: ExpansionSequent): Option[UnprovableOrLKProof] =
+  private def tryNullary(expSeq: ExpansionSequent): Option[UnprovableOrLKProof] =
     expSeq.zipWithIndex.elements collectFirst {
       case (ETTop(_), _: Suc)    => Right(TopAxiom)
       case (ETBottom(_), _: Ant) => Right(BottomAxiom)

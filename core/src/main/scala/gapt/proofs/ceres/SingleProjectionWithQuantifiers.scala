@@ -76,9 +76,9 @@ object SingleProjectionWithQuantifiers {
       case WeakeningRightRule(p, m)        => handleWeakeningRule(proof, p, m, WeakeningRightRule.apply, pred)
 
       /* Logical rules */
-      case AndRightRule(p1, a1, p2, a2) => handleBinaryRule(proof, p1, p2, a1, a2, AndRightRule.apply, pred)
-      case OrLeftRule(p1, a1, p2, a2)   => handleBinaryRule(proof, p1, p2, a1, a2, OrLeftRule.apply, pred)
-      case ImpLeftRule(p1, a1, p2, a2)  => handleBinaryRule(proof, p1, p2, a1, a2, ImpLeftRule.apply, pred)
+      case AndRightRule(p1, a1, p2, a2) => handleBinaryRule(proof, p1, p2, AndRightRule.apply, pred)
+      case OrLeftRule(p1, a1, p2, a2)   => handleBinaryRule(proof, p1, p2, OrLeftRule.apply, pred)
+      case ImpLeftRule(p1, a1, p2, a2)  => handleBinaryRule(proof, p1, p2, ImpLeftRule.apply, pred)
       case NegLeftRule(p, a)            => handleNegRule(proof, p, a, NegLeftRule.apply, pred)
       case NegRightRule(p, a)           => handleNegRule(proof, p, a, NegRightRule.apply, pred)
       case OrRightRule(p, a1, a2)       => handleUnaryRule(proof, p, a1, a2, OrRightRule.apply, pred)
@@ -86,8 +86,8 @@ object SingleProjectionWithQuantifiers {
       case ImpRightRule(p, a1, a2)      => handleUnaryRule(proof, p, a1, a2, ImpRightRule.apply, pred)
 
       /* quantifier rules  */
-      case ForallRightRule(p, _, _, _)    => handleStrongQuantRule(proof, p, ForallRightRule.apply, pred)
-      case ExistsLeftRule(p, _, _, _)     => handleStrongQuantRule(proof, p, ExistsLeftRule.apply, pred)
+      case ForallRightRule(p, _, _, _)    => handleStrongQuantRule(proof, p, pred)
+      case ExistsLeftRule(p, _, _, _)     => handleStrongQuantRule(proof, p, pred)
       case ForallLeftRule(p, a, f, t, v)  => handleWeakQuantRule(proof, p, a, f, t, v, ForallLeftRule.apply, pred)
       case ExistsRightRule(p, a, f, t, v) => handleWeakQuantRule(proof, p, a, f, t, v, ExistsRightRule.apply, pred)
       case ForallSkRightRule(p, a, m, t)  => handleSkQuantRule(proof, p, a, m, t, ForallSkRightRule.apply, pred)
@@ -360,8 +360,6 @@ object SingleProjectionWithQuantifiers {
       proof: LKProof,
       p1: LKProof,
       p2: LKProof,
-      a1: SequentIndex,
-      a2: SequentIndex,
       constructor: (LKProof, SequentIndex, LKProof, SequentIndex) => LKProof,
       pred: Formula => Boolean
   )(implicit cut_ancs: Sequent[Boolean]): (Option[SequentIndex], LKProof) = {
@@ -432,7 +430,7 @@ object SingleProjectionWithQuantifiers {
     }
   }
 
-  private def handleStrongQuantRule(proof: LKProof, p: LKProof, constructor: (LKProof, SequentIndex, Var, Var) => LKProof, pred: Formula => Boolean)(implicit cut_ancs: Sequent[Boolean]): (Option[SequentIndex], LKProof) = {
+  private def handleStrongQuantRule(proof: LKProof, p: LKProof, pred: Formula => Boolean)(implicit cut_ancs: Sequent[Boolean]): (Option[SequentIndex], LKProof) = {
     val s = apply(p, copySetToAncestor(proof.occConnectors.head, cut_ancs), pred)
     if (cut_ancs(proof.mainIndices.head)) s
     else throw new Exception("The proof is not skolemized!")

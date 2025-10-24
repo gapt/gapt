@@ -65,12 +65,27 @@ class ExpansionProofToLK(
   }
 
   private def solve(theory: Theory, expSeq: ExpansionSequent): UnprovableOrLKProof = {
-    None.orElse(tryAxiom(theory, expSeq)).orElse(tryDef(theory, expSeq)).orElse(tryMerge(theory, expSeq)).orElse(tryWeakening(theory, expSeq)).orElse(tryNullary(theory, expSeq)).orElse(tryStrongQ(theory, expSeq)).orElse(tryWeakQ(theory, expSeq)).orElse(tryUnary(theory, expSeq, intuitionisticHeuristics)).orElse(tryCut(theory, expSeq)).orElse(tryInduction(theory, expSeq)).orElse(tryBinary(theory, expSeq, intuitionisticHeuristics)).orElse(if (intuitionisticHeuristics) tryIntuitionisticImpLeft(theory, expSeq) else None).orElse(if (intuitionisticHeuristics) tryUnary(theory, expSeq, intuitionistic = false) else None).orElse(if (intuitionisticHeuristics) tryBinary(theory, expSeq, intuitionistic = false) else None).orElse(tryTheory(theory, expSeq)).getOrElse(Left(theory -> expSeq)).map {
-      ContractionMacroRule(_).ensuring { _.conclusion isSubsetOf expSeq.shallow }
-    }
+    None.orElse(tryAxiom(expSeq))
+      .orElse(tryDef(theory, expSeq))
+      .orElse(tryMerge(theory, expSeq))
+      .orElse(tryWeakening(theory, expSeq))
+      .orElse(tryNullary(expSeq))
+      .orElse(tryStrongQ(theory, expSeq))
+      .orElse(tryWeakQ(theory, expSeq))
+      .orElse(tryUnary(theory, expSeq, intuitionisticHeuristics))
+      .orElse(tryCut(theory, expSeq))
+      .orElse(tryInduction(theory, expSeq))
+      .orElse(tryBinary(theory, expSeq, intuitionisticHeuristics))
+      .orElse(if (intuitionisticHeuristics) tryIntuitionisticImpLeft(theory, expSeq) else None)
+      .orElse(if (intuitionisticHeuristics) tryUnary(theory, expSeq, intuitionistic = false) else None)
+      .orElse(if (intuitionisticHeuristics) tryBinary(theory, expSeq, intuitionistic = false) else None)
+      .orElse(tryTheory(expSeq))
+      .getOrElse(Left(theory -> expSeq)).map {
+        ContractionMacroRule(_).ensuring { _.conclusion isSubsetOf expSeq.shallow }
+      }
   }
 
-  private def tryAxiom(theory: Theory, expSeq: ExpansionSequent): Option[UnprovableOrLKProof] = {
+  private def tryAxiom(expSeq: ExpansionSequent): Option[UnprovableOrLKProof] = {
     val shallowSequent = expSeq.shallow
     if (shallowSequent.isTaut)
       Some(Right(LogicalAxiom(shallowSequent.antecedent intersect shallowSequent.succedent head)))
@@ -78,7 +93,7 @@ class ExpansionProofToLK(
       None
   }
 
-  private def tryTheory(theory: Theory, expSeq: ExpansionSequent): Option[UnprovableOrLKProof] =
+  private def tryTheory(expSeq: ExpansionSequent): Option[UnprovableOrLKProof] =
     quiet(theorySolver(expSeq collect { case ETAtom(atom: Atom, _) => atom })).map {
       Right(_)
     }
@@ -97,7 +112,7 @@ class ExpansionProofToLK(
       case (e @ ETMerge(a, b), i: Suc) => solve(theory, expSeq.delete(i) :+ a :+ b)
     }
 
-  private def tryNullary(theory: Theory, expSeq: ExpansionSequent): Option[UnprovableOrLKProof] =
+  private def tryNullary(expSeq: ExpansionSequent): Option[UnprovableOrLKProof] =
     expSeq.zipWithIndex.elements collectFirst {
       case (ETTop(_), i: Suc)    => Right(TopAxiom)
       case (ETBottom(_), i: Ant) => Right(BottomAxiom)

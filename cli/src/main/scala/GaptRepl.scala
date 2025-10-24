@@ -20,7 +20,7 @@ case class GaptRepl() {
     override protected def promptStr: String = "gapt"
   }
 
-  class GaptReplDriver(out: PrintStream = Console.out, classLoader: Option[ClassLoader] = None) extends ReplDriver(Array(
+  class GaptReplDriver(out: PrintStream = Console.out) extends ReplDriver(Array(
         "-usejavacp",
         "-feature",
         "-deprecation",

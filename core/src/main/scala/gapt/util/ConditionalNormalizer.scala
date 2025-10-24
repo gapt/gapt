@@ -31,7 +31,7 @@ case class ConditionalNormalizer(rewriteRules: Set[ConditionalReductionRule]) {
   private def normalize_(e: Expr): Expr = scala.util.boundary {
     for {
       ConditionalReductionRule(conditions, lhs, rhs) <- conditionalRules
-      (instance, position) <- findInstances(e, lhs, Nil)
+      (instance, position) <- findInstances(e, lhs)
     } {
       if (conditions.map { instance(_) }.map { normalize(_) }.forall { _ == Top() }) {
         scala.util.boundary.break(normalize(e.replace(position, instance(rhs))))
@@ -40,7 +40,7 @@ case class ConditionalNormalizer(rewriteRules: Set[ConditionalReductionRule]) {
     e
   }
 
-  private def findInstances(e: Expr, l: Expr, position: List[Int]): Set[(Substitution, LambdaPosition)] = {
+  private def findInstances(e: Expr, l: Expr): Set[(Substitution, LambdaPosition)] = {
     subterms(e).flatMap {
       case (t, p) =>
         for {

@@ -26,18 +26,18 @@ object loadExpansionProof {
       val p = ExpansionProof(expSeq)
       p -> CutIntroduction.BackgroundTheory.guess(p.shallow)
     case fileName if fileName contains "/Prover9" =>
-      val (resProof, endSequent) = Prover9Importer.robinsonProofWithReconstructedEndSequent(file)
-      loadResolutionProof(resProof, endSequent)
+      val (resProof, _) = Prover9Importer.robinsonProofWithReconstructedEndSequent(file)
+      loadResolutionProof(resProof)
     case _ => // try tstp format
       val tstpOutput = file.read
 
       logger.metric("tstp_is_cnf_ref", tstpOutput contains "CNFRefutation")
 
-      val (endSequent, sketch) = TptpProofParser.parse(StringInputFile(tstpOutput), ignoreStrongQuants = true)
+      val (_, sketch) = TptpProofParser.parse(StringInputFile(tstpOutput), ignoreStrongQuants = true)
       logger.metric("tstp_sketch_size", sketch.subProofs.size)
 
       val Right(resProof) = RefutationSketchToResolution(sketch): @unchecked
-      loadResolutionProof(resProof, endSequent)
+      loadResolutionProof(resProof)
   }
 
   def extractFromTSTPCommentsIfNecessary(file: InputFile): StringInputFile = {
@@ -49,7 +49,7 @@ object loadExpansionProof {
       StringInputFile(output)
   }
 
-  private def loadResolutionProof(resProof: ResolutionProof, endSequent: HOLSequent) = {
+  private def loadResolutionProof(resProof: ResolutionProof) = {
     logger.metric("resinf_input", numberOfLogicalInferencesRes(simplifyResolutionProof(resProof)))
     val backgroundTheory =
       if (containsEquationalReasoning(resProof))

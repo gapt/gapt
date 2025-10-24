@@ -122,7 +122,7 @@ class ReconstructDatatypes(problem: TipSmtProblem) {
     case TipSmtMatch(expr, cases) =>
       reconstructTypes(expr, variables)
       cases foreach {
-        reconstructTypesCase(expr.datatype.get, _, variables)
+        reconstructTypesCase(_, variables)
       }
       expression.datatype = cases.head.expr.datatype
 
@@ -132,7 +132,6 @@ class ReconstructDatatypes(problem: TipSmtProblem) {
   }
 
   private def reconstructTypesCase(
-      matchedType: Datatype,
       tipSmtCase: TipSmtCase,
       variables: Map[String, Datatype]
   ): Unit = {
