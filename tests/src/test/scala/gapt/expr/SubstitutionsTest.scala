@@ -152,9 +152,7 @@ class SubstitutionsTest extends Specification {
       (sub(term1.term)) must beEqualTo(term2)
     }
     "not substitute terms with different types" in {
-      val x = Var("x", Ti)
       val f = Var("f", Ti ->: Ti)
-      val e = App(f, x)
       val g = Var("g", Ti)
       Substitution(f -> g) must throwAn[IllegalArgumentException]
     }

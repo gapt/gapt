@@ -27,7 +27,6 @@ import gapt.formats.tip.parser.TipSmtAssertion
 import gapt.formats.tip.parser.TipSmtCase
 import gapt.formats.tip.parser.TipSmtCheckSat
 import gapt.formats.tip.parser.TipSmtConstantDeclaration
-import gapt.formats.tip.parser.TipSmtConstructorField
 import gapt.formats.tip.parser.TipSmtConstructorPattern
 import gapt.formats.tip.parser.TipSmtDatatype
 import gapt.formats.tip.parser.TipSmtDatatypesDeclaration
@@ -252,12 +251,6 @@ class TipTransformationCompiler(var problem: TipSmtProblem) {
     goals += compileExpression(formula, Nil)
       .asInstanceOf[Formula]
   }
-
-  private def compileConstructorField(
-      field: TipSmtConstructorField,
-      ofType: Ty
-  ): Const =
-    Const(field.name, ofType ->: typeDecls(field.typ.typename))
 
   def compileFunctionBody(
       body: TipSmtExpression,

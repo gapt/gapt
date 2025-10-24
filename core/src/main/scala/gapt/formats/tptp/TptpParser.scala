@@ -18,10 +18,6 @@ import gapt.expr.formula.Top
 import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLVar
-import gapt.expr.ty.TBase
-import gapt.expr.ty.Ti
-import gapt.expr.ty.To
-import gapt.expr.ty.Ty
 
 import scala.util.{Failure, Success}
 
@@ -124,17 +120,6 @@ class TptpParser(val input: ParserInput) extends Parser {
   private def do_char = rule { capture(do_char_pred) | ("\\\\" ~ push("\\")) | ("\\\"" ~ push("\"")) }
   private val sg_char_pred = CharPredicate(' ' to '&', '(' to '[', ']' to '~')
   private def sg_char = rule { capture(sg_char_pred) | ("\\\\" ~ push("\\")) | ("\\'" ~ push("'")) }
-
-  private def complex_type = rule { basic_type | (">" ~ push((t1: Ty, t2: Ty) => t1 -> t2)) }
-  private def basic_type = rule {
-    atomic_word ~> (name =>
-      name match {
-        case "$o" => To
-        case "$i" => Ti
-        case name => TBase(name)
-      }
-    )
-  }
 }
 
 object TptpImporter {

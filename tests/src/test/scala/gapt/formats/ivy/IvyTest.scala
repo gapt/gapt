@@ -91,12 +91,9 @@ class IvyTest extends Specification {
       val proof = result.head
       proof match {
         case LList(input1, input2, instantiate8, paramod3, input4, input5, instantiate9, resolve6, resolve7) =>
-          val pinput1 = IvyParser.parse(LList(input1))
-          // debug(pinput1)
-          val pinput2 = IvyParser.parse(LList(input2))
-          // debug(pinput2)
-          val pinput3 = IvyParser.parse(LList(input1, instantiate8))
-        // debug(pinput3)
+          IvyParser.parse(LList(input1))
+          IvyParser.parse(LList(input2))
+          IvyParser.parse(LList(input1, instantiate8))
 
         case _ =>
           //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
@@ -111,17 +108,8 @@ class IvyTest extends Specification {
       val proof = result.head
       proof match {
         case LList(input1, input2, instantiate8, paramod3, input4, input5, instantiate9, resolve6, resolve7, instantiate10) =>
-          val pinput3 = IvyParser.parse(LList(paramod3, instantiate9))
-          // debug(pinput3)
-          val pinput4 = IvyParser.parse(LList(instantiate10))
-        // debug(pinput4)
-        /*
-            pinput4 match {
-              case Instantiate(id, exp, sub, clause, parent) =>
-                "instantiate" must beEqualTo("instantiate")
-              case _ =>
-                "last inference must be instantiate" must beEqualTo("failed")
-            } */
+          IvyParser.parse(LList(paramod3, instantiate9))
+          IvyParser.parse(LList(instantiate10))
 
         case _ =>
           //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
@@ -136,16 +124,10 @@ class IvyTest extends Specification {
       val proof = result.head
       proof match {
         case l @ LList(input0, input1, flip2, input3, para4a, inst6, resolve4) =>
-          val pinput3 = IvyParser.parse(LList(input1, flip2))
-          // debug(pinput3)
-          val pinput4 = IvyParser.parse(l)
-        // println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        // println(pinput4)
-        // println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+          IvyParser.parse(LList(input1, flip2))
+          IvyParser.parse(l)
 
         case LList(list @ _*) =>
-          // println(list)
-          // println(list.length)
           "The proof in flip.ivy must have 7, not " + list.length + " inferences" must beEqualTo("failed")
         case _ =>
           "The proof in flip.ivy must be a nonempty list" must beEqualTo("failed")
@@ -159,11 +141,9 @@ class IvyTest extends Specification {
       val proof = result.head
       proof match {
         case LList(input1, input2, instantiate8, paramod3, input4, input5, instantiate9, resolve6, resolve7) =>
-          val pinput = IvyParser.parse(proof)
-        // debug("resolution: "+pinput)
+          IvyParser.parse(proof)
 
         case _ =>
-          //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
           "The proof in resolution.ivy must have 9 inferences" must beEqualTo("failed")
       }
       ok
@@ -174,9 +154,7 @@ class IvyTest extends Specification {
       result must not beEmpty
       val proof = result.head
       proof match {
-        case LList(_*) =>
-          val pinput = IvyParser.parse(proof)
-        // debug("resolution: "+pinput)
+        case LList(_*) => IvyParser.parse(proof)
 
         case _ =>
           "The proof in factor.ivy must have some inferences" must beEqualTo("failed")
@@ -186,9 +164,7 @@ class IvyTest extends Specification {
       result2 must not beEmpty
       val proof2 = result2.head
       proof2 match {
-        case LList(_*) =>
-          val pinput = IvyParser.parse(proof2)
-        // debug("resolution: "+pinput)
+        case LList(_*) => IvyParser.parse(proof2)
 
         case _ =>
           "The proof in factor.ivy must have some inferences" must beEqualTo("failed")
@@ -201,19 +177,16 @@ class IvyTest extends Specification {
       result must not beEmpty
       val proof = result.head
       proof match {
-        case LList(_*) =>
-          val pinput = IvyParser.parse(proof)
-        // debug("resolution: "+pinput)
+        case LList(_*) => IvyParser.parse(proof)
 
         case _ =>
-          //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
           "The proof in manyliterals.ivy must have some inferences" must beEqualTo("failed")
       }
       ok
     }
 
     " parse the test file simple2.ivy " in {
-      val result = (parseClasspathFile("simple2.ivy"))
+      parseClasspathFile("simple2.ivy")
       ok
     }
   }
@@ -223,9 +196,7 @@ class IvyTest extends Specification {
     result must not beEmpty
     val proof = result.head
     proof match {
-      case LList(_*) =>
-        val pinput = IvyParser.parse(proof)
-      // debug("resolution: "+pinput)
+      case LList(_*) => IvyParser.parse(proof)
 
       case _ =>
         //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
@@ -239,12 +210,9 @@ class IvyTest extends Specification {
     result must not beEmpty
     val proof = result.head
     proof match {
-      case LList(_*) =>
-        val pinput = IvyParser.parse(proof)
-      // debug("resolution: "+pinput)
+      case LList(_*) => IvyParser.parse(proof)
 
       case _ =>
-        //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
         "The proof in manyliterals.ivy must have some inferences" must beEqualTo("failed")
     }
     ok
@@ -255,12 +223,9 @@ class IvyTest extends Specification {
     result must not beEmpty
     val proof = result.head
     proof match {
-      case LList(_*) =>
-        val pinput = IvyParser.parse(proof)
-      // debug("resolution: "+pinput)
+      case LList(_*) => IvyParser.parse(proof)
 
       case _ =>
-        //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")
         "The proof in GEO037-2.ivy must have some inferences" must beEqualTo("failed")
     }
     ok
@@ -271,9 +236,7 @@ class IvyTest extends Specification {
     result must not beEmpty
     val proof = result.head
     proof match {
-      case LList(_*) =>
-        val pinput = IvyParser.parse(proof)
-      // debug("resolution: "+pinput)
+      case LList(_*) => IvyParser.parse(proof)
 
       case _ =>
         //            "The first two rules of simple.ivy must parse correctly" must beEqualTo("failed")

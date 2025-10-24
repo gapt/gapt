@@ -68,7 +68,6 @@ object StructCreators {
     conn.parents(cut_occs).map(_.headOption getOrElse default)
 
   def extract(p: LKProof, cut_occs: Sequent[Boolean])(implicit pred: Formula => Boolean, ctx: Context): Struct = {
-    val cutanc_es = p.endSequent.zip(cut_occs).filter(_._2).map(_._1)
     val result: Struct = p match {
       case ReflexivityAxiom(e) =>
         if (cut_occs(Suc(0)))

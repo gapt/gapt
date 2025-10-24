@@ -8,7 +8,6 @@ import gapt.expr.formula.constants.EqC
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.To
 import gapt.expr.ty.arity
-import gapt.expr.ty.baseTypes
 import gapt.expr.util.constants
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
@@ -31,7 +30,6 @@ object Escargot extends Escargot(splitting = true, equality = true, propositiona
     val consts = constants.nonLogical(cnf flatMap { _.elements }) ++ extraConsts
 
     val boolOnTermLevel = consts exists { case Const(_, FunctionType(_, from), _) => from contains To }
-    val types = consts flatMap { c => baseTypes(c.ty) }
 
     val atoms = for (c <- consts; FunctionType(to, _) = c.ty: @unchecked if to == To) yield c
     val eqs = atoms collect { case c @ EqC(_) => c }

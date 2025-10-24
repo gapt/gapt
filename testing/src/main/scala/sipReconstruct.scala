@@ -206,7 +206,7 @@ object sipReconstruct extends Script {
         minInstProof = minProof,
         bupSolver = if (interp) InductionBupSolver.Interpolation else InductionBupSolver.Canonical
       )
-      val indp = verbose.only(TreeGrammarProver.logger) {
+      verbose.only(TreeGrammarProver.logger) {
         if (atp) TreeGrammarProver(sip.endSequent, opts)
         else indElimReversal(sip, opts)
       }

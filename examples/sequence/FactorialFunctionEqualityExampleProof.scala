@@ -120,8 +120,6 @@ object FactorialFunctionEqualityExampleProof extends ProofSequence {
     )
     val p1 = all_axioms.foldLeft[LKProof](axiom)((proof, elem) => WeakeningLeftRule(proof, elem))
 
-    val n_num = Utils.numeral(n)
-
     /**
      * Returns (( ([start_value*]n)*(n-1) ) * ... * ) k
      */

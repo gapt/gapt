@@ -771,12 +771,6 @@ object introducePi2Cut {
             (x, seHs.universalEigenvariable),
             (y, seHs.substitutionsForBetaWithAlpha(existsIndex))
           )(literal) +: Sequent())
-      val substitutedLiteralAsSequentListBeta =
-        for (forallIndex <- 0 until seHs.multiplicityOfAlpha)
-          yield forallIndex -> (Neg(Substitution(
-            (x, seHs.substitutionsForAlpha(forallIndex)),
-            (y, seHs.existentialEigenvariables(forallIndex))
-          )(literal)) +: Sequent())
 
       for (leaf <- nonTautologicalLeaves) {
 

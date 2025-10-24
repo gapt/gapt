@@ -245,7 +245,7 @@ package object statistics {
       val entries = m.keySet.toSeq.sortBy(_.fileName)
       val rows = entries.map(m.apply).map(_.toCSV())
 
-      var header = if (entries.nonEmpty) m(entries(0)).csvHeader() else CSVRow(List[String]())
+      val header = if (entries.nonEmpty) m(entries(0)).csvHeader() else CSVRow(List[String]())
 
       CSVFile(header, rows, sep)
     }

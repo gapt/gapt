@@ -2,7 +2,6 @@ package gapt.examples
 
 import gapt.expr.formula.fol.FOLAtom
 import gapt.proofs.{Ant, Suc}
-import gapt.proofs.ceres.Projections
 import gapt.proofs.lk._
 import gapt.proofs.lk.rules.CutRule
 import gapt.proofs.lk.rules.ImpLeftRule
@@ -31,7 +30,6 @@ object philsci {
     val r10 = ImpLeftRule(r8, Suc(0), r9, Ant(0))
     val r11 = CutRule(r6, Suc(0), r10, Ant(0))
 
-    val proj = Projections(r11).toList
     // TODO: switch to CERES
     //    val acnf1 = CutRule( proj( 0 ), proj( 1 ), proj( 0 ).root.succedent( 1 ), proj( 1 ).root.antecedent( 0 ) )
     //    val acnf2 = ContractionLeftRule( acnf1, acnf1.root.antecedent( 2 ), acnf1.root.antecedent( 4 ) )

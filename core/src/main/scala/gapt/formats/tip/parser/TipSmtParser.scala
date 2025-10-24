@@ -151,30 +151,6 @@ object TipSmtParser {
     }
 
   /**
-   * Parses an SMT2 datatype declaration.
-   *
-   * Accepted datatype declarations are s-expressions of the form:
-   * datatype_declaration
-   *     ::= "(" type_name keyword_sequence { constructor_declaration } ")"
-   * where type_name is a symbol.
-   * @param sexp The expression to be parsed.
-   * @return A parsed datatype declaration.
-   */
-  private def parseDatatype(sexp: SExpression): TipSmtDatatype =
-    sexp match {
-      case LList(LSymbol(datatypeName), rest @ _*) =>
-        val (keywords, constructors) = rest.partition(
-          !_.isInstanceOf[LList]
-        )
-        TipSmtDatatype(
-          datatypeName,
-          parseKeywords(keywords),
-          parseConstructors(constructors)
-        )
-      case _ => throw TipSmtParserException("malformed datatype expression")
-    }
-
-  /**
    * Parses a declaration of mutually dependent datatypes.
    * @param sexp The expression to be parsed.
    * @return A declaration of mutually dependent datatypes if sexp is well

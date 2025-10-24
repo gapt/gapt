@@ -169,8 +169,6 @@ class LambdaCalculusTest extends Specification {
       val t2 = App(Const("P", Ti ->: To), Var("y", Ti))
       val t3 = Abs(Var("x", Ti), t1)
       val t4 = Abs(Var("y", Ti), t2)
-      val t5 = Abs(Var("x", Ti), t1)
-      val t6 = Abs(Var("y", Ti), t2)
 
       val map = HashMap[Expr, Int]()
       val set = HashSet[Expr]()

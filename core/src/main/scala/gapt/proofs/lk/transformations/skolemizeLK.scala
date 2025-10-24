@@ -96,7 +96,6 @@ private class skolemizeLK(
   // We maintain the invariant that subst(info.map(_.generalizedFormula)) is beta-delta-equal to the end-sequent of the resulting proof.
   def apply(p: LKProof, info: Sequent[Info], subst: Substitution): LKProof = {
     def sub(e: Expr): Expr = BetaReduction.betaNormalize(subst(e))
-    def suba(f: Atom): Atom = sub(f).asInstanceOf[Atom]
     def subf(f: Formula): Formula = sub(f).asInstanceOf[Formula]
 
     p match {
