@@ -104,7 +104,7 @@ class newWscanTest extends mutable.Specification {
       hcl":- B(f(b), f(a))"
     )
     val P = PointedClause(hcl"X(v_1, v_2) :- X(v_2, v_1), X(f(v_1), f(v_2)), B(v_1, v_2)", Ant(0))
-    testNoMissingResolutionInferences(P, N)
+    testPurifiedClauseDeletionAssumptions(P, N)
     val P_1 = P.subPointedClause(Set(Suc(0), Suc(2)))
     val P_2 = P.subPointedClause(Set(Suc(1), Suc(2)))
     val P_3 = P.subPointedClause(Set(Suc(2)))
@@ -124,7 +124,7 @@ class newWscanTest extends mutable.Specification {
       hcl":- X(f(g(c)), f(g(d)))"
     )
     val P = PointedClause(hcl"X(v_1, v_2) :- X(v_2, v_1), X(f(v_1), f(v_2)), X(g(v_1), g(v_2))", Ant(0))
-    testNoMissingResolutionInferences(P, N)
+    testPurifiedClauseDeletionAssumptions(P, N)
     val P_1 = P.subPointedClause(Set(Suc(0)))
     val P_2 = P.subPointedClause(Set(Suc(1)))
     val P_3 = P.subPointedClause(Set(Suc(2)))
@@ -143,7 +143,7 @@ class newWscanTest extends mutable.Specification {
       hcl":- X(f(f(d)), f(f(c)))"
     )
     val P = PointedClause(hcl"X(v_1, v_2) :- X(v_2, v_1), X(f(v_1), f(v_2))", Ant(0))
-    testNoMissingResolutionInferences(P, N)
+    testPurifiedClauseDeletionAssumptions(P, N)
     val P_1 = P.subPointedClause(Set(Suc(0)))
     val P_2 = P.subPointedClause(Set(Suc(1)))
     val P_3 = P.subPointedClause(Set(Suc(0), Suc(1)))
@@ -163,7 +163,7 @@ class newWscanTest extends mutable.Specification {
       hcl":- X(f(f(c_1)), f(f(a_1)), f(f(b_1)))"
     )
     val P = PointedClause(hcl"X(v_1, v_2, v_3) :- X(v_2, v_3, v_1), X(f(v_1), f(v_2), f(v_3)), X(g(v_1), g(v_2), g(v_3))", Ant(0))
-    testNoMissingResolutionInferences(P, N)
+    testPurifiedClauseDeletionAssumptions(P, N)
 
     val P_1 = P.subPointedClause(Set(Suc(0)))
     val P_2 = P.subPointedClause(Set(Suc(1)))
@@ -182,7 +182,7 @@ class newWscanTest extends mutable.Specification {
       hcl":- B(g(a))"
     )
     val P = PointedClause(hcl"X(v) :- X(f(v)), X(g(v)), B(v)", Ant(0))
-    testNoMissingResolutionInferences(P, N)
+    testPurifiedClauseDeletionAssumptions(P, N)
 
     val P_1 = P.subPointedClause(Set(Suc(0), Suc(1)))
     val P_2 = P.subPointedClause(Set(Suc(2)))
@@ -195,7 +195,7 @@ class newWscanTest extends mutable.Specification {
       hcl":- X(b,c,a)"
     )
     val P = PointedClause(hcl"X(u,v,w) :- X(v,w,u), X(w,u,v)", Ant(0))
-    testNoMissingResolutionInferences(P, N)
+    testPurifiedClauseDeletionAssumptions(P, N)
 
     val P_1 = P.subPointedClause(Set(Suc(0)))
     val P_2 = P.subPointedClause(Set(Suc(1)))
@@ -210,7 +210,7 @@ class newWscanTest extends mutable.Specification {
       hcl":- B(f(f(a)), f(f(b)))"
     )
     val P = PointedClause(hcl"X(u,v) :- X(v,u), X(f(u), f(v)), B(u,v)", Ant(0))
-    testNoMissingResolutionInferences(P, N)
+    testPurifiedClauseDeletionAssumptions(P, N)
 
     val P_1 = P.subPointedClause(Set(Suc(0)))
     val P_2 = P.subPointedClause(Set(Suc(1)))
@@ -224,7 +224,7 @@ class newWscanTest extends mutable.Specification {
       hcl":- X(a, a, a)"
     )
     val P = PointedClause(hcl"X(u,v,w) :- X(v,w,u)", Ant(0))
-    testNoMissingResolutionInferences(P, N)
+    testPurifiedClauseDeletionAssumptions(P, N)
 
     "witness" >> testWitness(P, N, resolutionStepWitness(Seq(P, P)))
   }
@@ -241,23 +241,56 @@ class newWscanTest extends mutable.Specification {
     val P_1 = P.subPointedClause(Set(Suc(0)))
     val P_2 = P.subPointedClause(Set(Suc(1)))
     val P_3 = P.subPointedClause(Set(Suc(2)))
-    testNoMissingResolutionInferences(P, N)
+    testPurifiedClauseDeletionAssumptions(P, N)
 
     "witness" >> testWitness(P, N, resolutionStepWitness(Seq(P, P)))
   }
 
-  def testNoMissingResolutionInferences(pointedClause: PointedClause, clauseSet: Set[HOLClause]): Fragments = {
-    val missingResolutions = nonRedundantResolutionInferences(clauseSet, pointedClause)
-    if missingResolutions.isEmpty then {
-      "no missing resolvents" in success
-    } else {
-      "missing resolvents" >> {
-        Fragments.foreach(missingResolutions) {
-          case DerivationStep.ConstraintResolution(left, right) =>
-            assert(left == pointedClause, s"left was not the pointed clause")
-            step(ko(s"resolvent ${{ constraintResolvent(left, right)._1 }} from resolution between $left and $right is not redundant"))
+  "example where clause set required to subsume witness substitution in P" >> {
+    val N = Set[HOLClause](
+      hcl":- X(f(f(w)))"
+    )
+    val P = PointedClause(hcl"X(v) :- X(f(v))", Ant(0))
+    testPurifiedClauseDeletionAssumptions(P, N)
+
+    "witness" >> testWitness(P, N, resolutionStepWitness(Seq(P)))
+  }
+
+  def testPurifiedClauseDeletionAssumptions(pointedClause: PointedClause, clauseSet: Set[HOLClause]): Fragments = {
+    "purified clause deletion assumptions" >> {
+      val missingResolutions = nonRedundantResolutionInferences(clauseSet, pointedClause)
+      if missingResolutions.isEmpty then {
+        "no missing resolvents" in success
+      } else {
+        "missing resolvents" >> {
+          Fragments.foreach(missingResolutions) {
+            case DerivationStep.ConstraintResolution(left, right) =>
+              assert(left == pointedClause, s"left was not the pointed clause")
+              step(ko(s"resolvent ${{ constraintResolvent(left, right)._1 }} from resolution between $left and $right is not redundant"))
+          }
         }
       }
+
+      def isRedundancyEliminated(clauses: Set[HOLClause]): Boolean = {
+        scan.redundancyStep(scan.State(
+          clauses,
+          scan.Derivation.emptyFrom(
+            ClauseSetPredicateEliminationProblem(Seq(hov"X"), clauses)
+          ),
+          remainingAllowedInferences = None,
+          oneSidedOnly = false,
+          allowResolutionOnBaseLiterals = true
+        )).isEmpty
+      }
+
+      if isRedundancyEliminated(clauseSet + pointedClause.clause) then {
+        "N + P is redundancy eliminated" >> success
+      } else {
+        step(ko(s"N + P is not redundancy eliminated"))
+      }
+
+      // TODO: check that all clauses are in avelim-NF
+
     }
   }
 
@@ -271,10 +304,10 @@ class newWscanTest extends mutable.Specification {
       "N -> N[X<-wit] is not valid" in failure
     }
 
-    if Escargot.isValid(P.applySubstitution(witness).betaNormalized) then {
-      "P[X<-wit] is valid" in success
+    if Escargot.isValid(N --> P.applySubstitution(witness).betaNormalized) then {
+      "N -> P[X<-wit] is valid" in success
     } else {
-      "P[X<-wit] is not valid" in failure
+      "N -> P[X<-wit] is not valid" in failure
     }
   }
 
