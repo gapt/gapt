@@ -20,11 +20,13 @@ import gapt.proofs.expansion.numberOfInstancesET
 import gapt.expr.schema.Numeral
 
 
-object hydraSchema extends TacticsProof{
+object hydraSchemaPred extends TacticsProof{
   
   // Type
-  ctx += InductiveType("nat", hoc"0 : nat", hoc"s : nat>nat")
+  ctx += InductiveType("nat", hoc"0 : nat", hoc"s : nat>nat", hoc"p : nat>nat")
   ctx += Sort("i")
+
+
 
   // Introduce predicate symbols 
   ctx += hoc"P: nat>nat>o" // predicate of arity 1
@@ -36,14 +38,14 @@ object hydraSchema extends TacticsProof{
 
   // Proof End Sequent
   val esHydraProof = Sequent(Seq(hof"!(n:nat) (P(0,0) & P(s(0),0) & P(n,s(0)) ) ", 
-                         hof"!(n:nat) !(m:nat) ( P(n,m) -> P(s(n), s(s(m))) ) ", 
-                         hof"!(m:nat) (P(s(m),m) -> P(0, s(s(m))) )",
-                         hof"!(n:nat) (P(s(n), n)  -> P(s(s(n)),0))"),
-                     Seq(hof"P(p,q)"))
+                         hof"!(n:nat) !(m:nat) ( P(p(n),p(p(m))) -> P(n, m ) )", 
+                         hof"!(m:nat) (P(p(m),p(p(m))) -> P(0, m) )",
+                         hof"!(n:nat) (P(p(n), p(p(n)))  -> P(n,0))"),
+                     Seq(hof"P(u,v)"))
 
 
   // Proof Declarations
-  ctx += ProofNameDeclaration(le"hydraProof p q", esHydraProof)
+  ctx += ProofNameDeclaration(le"hydraProof u v", esHydraProof)
 
 
 
@@ -51,40 +53,40 @@ object hydraSchema extends TacticsProof{
 // End-sequents of the subproofs (formerly BC and SC, now 6 cases)
 
     val esHa1 = Sequent(Seq(("HaAx" -> hof"!(n:nat) (P(0,0) & P(s(0),0) & P(n,s(0)) ) "), 
-                            ("HbAx" -> hof"!(n:nat) !(m:nat) ( P(n,m) -> P(s(n), s(s(m))) ) "), 
-                            ("HcAx" -> hof"!(m:nat) (P(s(m),m) -> P(0, s(s(m))) )"),
-                            ("HdAx" -> hof"!(n:nat) (P(s(n), n)  -> P(s(s(n)),0))")),
+                            ("HbAx" -> hof"!(n:nat) !(m:nat) ( P(p(n),p(p(m))) -> P(n, m )) "), 
+                            ("HcAx" -> hof"!(m:nat) (P(p(m),p(p(m))) -> P(0, m) )"),
+                            ("HdAx" -> hof"!(n:nat) (P(p(n), p(p(n)))  -> P(n,0))")),
                         Seq(("Suc_0" -> hof"P(0,0)")))
 
     val esHa2 = Sequent(Seq(("HaAx" -> hof"!(n:nat) (P(0,0) & P(s(0),0) & P(n,s(0)) ) "), 
-                            ("HbAx" -> hof"!n !m ( P(n,m) -> P(s(n), s(s(m))) ) "), 
-                            ("HcAx" -> hof"!m (P(s(m),m) -> P(0, s(s(m))) )"),
-                            ("HdAx" -> hof"!n (P(s(n), n)  -> P(s(s(n)),0))")),
+                            ("HbAx" -> hof"!(n:nat) !(m:nat) ( P(p(n),p(p(m))) -> P(n, m )) "), 
+                            ("HcAx" -> hof"!(m:nat) (P(p(m),p(p(m))) -> P(0, m) )"),
+                            ("HdAx" -> hof"!(n:nat) (P(p(n), p(p(n)))  -> P(n,0))")),
                         Seq(("Suc_0" ->hof"P(s(0),0)")))
 
     val esHa3 = Sequent(Seq(("HaAx" -> hof"!(n:nat) (P(0,0) & P(s(0),0) & P(n,s(0)) ) "), 
-                            ("HbAx" -> hof"!n !m ( P(n,m) -> P(s(n), s(s(m))) ) "), 
-                            ("HcAx" -> hof"!m (P(s(m),m) -> P(0, s(s(m))) )"),
-                            ("HdAx" -> hof"!n (P(s(n), n)  -> P(s(s(n)),0))")),
-                        Seq(("Suc_0" ->hof"P(p,s(0))")))
+                            ("HbAx" -> hof"!(n:nat) !(m:nat) ( P(p(n),p(p(m))) -> P(n, m )) "), 
+                            ("HcAx" -> hof"!(m:nat) (P(p(m),p(p(m))) -> P(0, m) )"),
+                            ("HdAx" -> hof"!(n:nat) (P(p(n), p(p(n)))  -> P(n,0))")),
+                        Seq(("Suc_0" ->hof"P(u,s(0))")))
 
     val esD4 = Sequent(Seq(("HaAx" -> hof"!(n:nat) (P(0,0) & P(s(0),0) & P(n,s(0)) ) "), 
-                            ("HbAx" -> hof"!n !m ( P(n,m) -> P(s(n), s(s(m))) ) "), 
-                            ("HcAx" -> hof"!m (P(s(m),m) -> P(0, s(s(m))) )"),
-                            ("HdAx" -> hof"!n (P(s(n), n)  -> P(s(s(n)),0))")),
-                        Seq(("Suc_0" ->hof"P(s(s(p)),0)")))
+                            ("HbAx" -> hof"!(n:nat) !(m:nat) ( P(p(n),p(p(m))) -> P(n, m )) "), 
+                            ("HcAx" -> hof"!(m:nat) (P(p(m),p(p(m))) -> P(0, m) )"),
+                            ("HdAx" -> hof"!(n:nat) (P(p(n), p(p(n)))  -> P(n,0))")),
+                        Seq(("Suc_0" ->hof"P(u,0)")))
 
     val esC3 = Sequent(Seq(("HaAx" -> hof"!(n:nat) (P(0,0) & P(s(0),0) & P(n,s(0)) ) "), 
-                            ("HbAx" -> hof"!n !m ( P(n,m) -> P(s(n), s(s(m))) ) "), 
-                            ("HcAx" -> hof"!m (P(s(m),m) -> P(0, s(s(m))) )"),
-                            ("HdAx" -> hof"!n (P(s(n), n)  -> P(s(s(n)),0))")),
-                        Seq(("Suc_0" ->hof"P(0,s(s(q)))")))
+                            ("HbAx" -> hof"!(n:nat) !(m:nat) ( P(p(n),p(p(m))) -> P(n, m )) "), 
+                            ("HcAx" -> hof"!(m:nat) (P(p(m),p(p(m))) -> P(0, m) )"),
+                            ("HdAx" -> hof"!(n:nat) (P(p(n), p(p(n)))  -> P(n,0))")),
+                        Seq(("Suc_0" ->hof"P(0,v)")))
 
     val esB2 = Sequent(Seq(("HaAx" -> hof"!(n:nat) (P(0,0) & P(s(0),0) & P(n,s(0)) ) "), 
-                            ("HbAx" -> hof"!n !m ( P(n,m) -> P(s(n), s(s(m))) ) "), 
-                            ("HcAx" -> hof"!m (P(s(m),m) -> P(0, s(s(m))) )"),
-                            ("HdAx" -> hof"!n (P(s(n), n)  -> P(s(s(n)),0))")),
-                        Seq(("Suc_0" ->hof"P(s(p),s(s(q)))")))
+                            ("HbAx" -> hof"!(n:nat) !(m:nat) ( P(p(n),p(p(m))) -> P(n, m )) "), 
+                            ("HcAx" -> hof"!(m:nat) (P(p(m),p(p(m))) -> P(0, m) )"),
+                            ("HdAx" -> hof"!(n:nat) (P(p(n), p(p(n)))  -> P(n,0))")),
+                        Seq(("Suc_0" ->hof"P(u,v)")))
 
                         
 
@@ -95,21 +97,24 @@ object hydraSchema extends TacticsProof{
         andL("HaAx_0_0")
         trivial
     }
+    
     val Ha2 = Lemma(esHa2) {
         allL("HaAx" , le"(z:nat)") 
         andL("HaAx_0")
         andL("HaAx_0_0")
         trivial
     }
+    
     val Ha3 = Lemma(esHa3) {
-        allL("HaAx" , le"(p:nat)") 
+        allL("HaAx" , le"(u:nat)") 
         andL("HaAx_0")
         andL("HaAx_0_0")
         trivial
     }
+    
     val D4 = Lemma(esD4) {
-        allL("HdAx" , le"(p:nat)") 
-        cut("cutLink", hof"P(s(p),p)")
+        allL("HdAx" , le"(u:nat)") 
+        cut("cutLink", hof"P(p(u),p(p(u)))")
         focus(1)
 
         impL("HdAx_0")
@@ -133,8 +138,8 @@ object hydraSchema extends TacticsProof{
     }
 
     val C3 = Lemma(esC3) {
-        allL("HcAx" , le"(q:nat)") 
-        cut("cutLink", hof"P(s(q),q)")
+        allL("HcAx" , le"(v:nat)") 
+        cut("cutLink", hof"P(p(v),p(p(v)))")
         focus(1)
 
         impL("HcAx_0")
@@ -158,9 +163,9 @@ object hydraSchema extends TacticsProof{
     }
 
     val B2 = Lemma(esB2) {
-        allL("HbAx" , le"(p:nat)") 
-        allL("HbAx_0" , le"(q:nat)") 
-        cut("cutLink", hof"P(p,q)")
+        allL("HbAx" , le"(u:nat)") 
+        allL("HbAx_0" , le"(v:nat)") 
+        cut("cutLink", hof"P(p(u),p(p(v)))")
         focus(1)
 
         impL("HbAx_0_0")
@@ -183,15 +188,23 @@ object hydraSchema extends TacticsProof{
         ref("hydraProof")
     }
   
-
+/*
 
   ctx += ProofDefinitionDeclaration(le"hydraProof 0 0", Ha1) 
   ctx += ProofDefinitionDeclaration(le"hydraProof (s 0) 0", Ha2) 
-  ctx += ProofDefinitionDeclaration(le"hydraProof p (s 0)", Ha3) 
-  ctx += ProofDefinitionDeclaration(le"hydraProof (s (s p)) 0", D4) 
-  ctx += ProofDefinitionDeclaration(le"hydraProof 0 (s (s q))", C3) 
-  ctx += ProofDefinitionDeclaration(le"hydraProof (s p) (s (s q))", B2) 
+  ctx += ProofDefinitionDeclaration(le"hydraProof u (s 0)", Ha3) 
+  ctx += ProofDefinitionDeclaration(le"hydraProof (s (s u)) 0", D4) 
+  ctx += ProofDefinitionDeclaration(le"hydraProof 0 (s (s v))", C3) 
+  ctx += ProofDefinitionDeclaration(le"hydraProof (s u) (s (s v))", B2) 
   
+
+
+*/
+
+/*
+
+
+
 
   // Only Axiom Cases  
   val FullProof_00 = instantiateProof(le"hydraProof 0 0")
@@ -215,6 +228,6 @@ object hydraSchema extends TacticsProof{
   val cs = CharacteristicClauseSet(thestruct)
 
 
-
+*/
 
 }

@@ -44,10 +44,10 @@ def simulateHydra(h1: Int, h2: Int, steps: Int): List[(Int, Int)] = {
       case _      => false
     }
 
-  def nextState(n: Int, m: Int): Option[((Int, Int), Int)] = {
-    if (n >= 1 && m >= 2) Some(((n - 1, m - 2), 2))
-    else if (n == 0 && m >= 2) Some(((m - 1, m - 2), 3))
-    else if (m == 0 && n >= 2) Some(((n - 1, n - 2), 4))
+  def nextState(n: Int, m: Int): Option[((Int, Int), String)] = {
+    if (n >= 1 && m >= 2) Some(((n - 1, m - 2), "B2"))
+    else if (n == 0 && m >= 2) Some(((m - 1, m - 2), "C3"))
+    else if (m == 0 && n >= 2) Some(((n - 1, n - 2), "D4"))
     else None
   }
 

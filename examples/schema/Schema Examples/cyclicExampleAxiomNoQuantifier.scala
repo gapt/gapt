@@ -237,6 +237,9 @@ object cyclicExampleAxiomNoQuantifier extends TacticsProof {
   val FullProof_0y0 = instantiateProof(le"phi 0 y 0")
   val redCut_0y0 = cutNormal(FullProof_0y0)
 
+  val FullProof_2y0 = instantiateProof(le"phi (s (s 0)) y  0")
+  val redCut_2y0 = cutNormal( FullProof_2y0 )
+
   val FullProof_2y2 = instantiateProof(le"phi (s (s 0)) y  (s (s 0))")
   val redCut_2y2 = cutNormal(FullProof_2y2)
 
