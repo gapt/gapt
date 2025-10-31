@@ -129,9 +129,10 @@ case class ExpansionTree(term: ETt, polarity: Polarity, shallow: Formula) extend
             ctx.foreach(Checkable.requireDefEq(sh, child.shallow)(_))
             go(child)
         }
-        ctx.foreach(_.check(shallow))
-        go(this)
     }
+
+    ctx.foreach(_.check(shallow))
+    go(this)
   }
 
   def toDoc(implicit sig: BabelSignature): Doc = new ExpansionTreePrettyPrinter(sig).`export`(this)
