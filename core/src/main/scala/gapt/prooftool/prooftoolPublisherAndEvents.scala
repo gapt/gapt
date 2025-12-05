@@ -1,6 +1,5 @@
 package gapt.prooftool
 
-
 import gapt.proofs.SequentIndex
 
 import scala.swing.event.Event

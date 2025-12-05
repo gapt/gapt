@@ -6,7 +6,6 @@ import cats.kernel.Monoid
 import gapt.expr.formula.Formula
 import gapt.logic.Polarity
 
-
 /**
  * Represents an index of an element in a sequent.
  *

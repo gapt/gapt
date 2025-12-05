@@ -12,7 +12,6 @@ import gapt.proofs._
 import gapt.provers.escargot.{Escargot, NonSplittingEscargot}
 import gapt.provers.{ResolutionProver, groundFreeVariables}
 
-
 /**
  *  Sometimes, we have a resolution refutation R of a set of clauses C
  *  and want a refutation R' of a set C' such that C implies C'.

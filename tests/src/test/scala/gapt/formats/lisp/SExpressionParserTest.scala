@@ -3,7 +3,6 @@ package gapt.formats.lisp
 import gapt.formats.StringInputFile
 import org.specs2.mutable._
 
-
 class SExpressionParserTest extends Specification {
 
   "quoted symbols" in {
