@@ -24,6 +24,7 @@ import gapt.expr.formula.hol.freeHOVariables
 import gapt.proofs.RichFormulaSequent
 import gapt.proofs.Sequent
 import gapt.logic.hol.scan.constraintResolvent
+import gapt.logic.hol.scan.State
 
 class wscanTest extends Specification {
   import gapt.examples.predicateEliminationProblems._
@@ -32,19 +33,44 @@ class wscanTest extends Specification {
   This is a specification for the scan implementation
 
   It should solve
-    solve equation without quantified variable ${exampleWithQuantifiedVariableNotOccurring must beSolved()}
-    treat variables as predicate constants when not given ${exampleWithoutQuantifiedVariables must beSolved()}
-    negation of leibniz equality ${negationOfLeibnizEquality.toClauseSet must beSolved()}
-    resolution on base literals ${exampleThatUsesResolutionOnLiteralsThatAreNotQuantifiedVariables must beSolved(allowResolutionOnBaseLiterals = true)}
+    solve equation without quantified variable ${exampleWithQuantifiedVariableNotOccurring must
+      beSolved(equivalentTo = Set(hcl":- A(u)"))}
+    treat variables as predicate constants when not given ${exampleWithoutQuantifiedVariables must
+      beSolved(equivalentTo = Set(hcl":- X(u)"))}
+    negation of leibniz equality ${negationOfLeibnizEquality.toClauseSet must
+      beSolved(equivalentTo = Set(hcl"s_0 = s_2 :-"))}
+    resolution on base literals ${exampleThatUsesResolutionOnLiteralsThatAreNotQuantifiedVariables must
+      beSolved(
+        allowResolutionOnBaseLiterals = true,
+        equivalentTo = Set(hcl"A(u) :- C(v)", hcl":- B(u,v)")
+      )}
     2-part disjunction ${single2PartDisjunction must beSolved()}
     3-part disjunction ${single3PartDisjunction must beSolved()}
-    two variable example ${exampleWithTwoVariables must beSolved()}
-    modal correspondence T axiom ${modalCorrespondence.negationOfSecondOrderTranslationOfTAxiom must beSolved()}
-    modal correspondence 4 axiom ${modalCorrespondence.negationOfSecondOrderTranslationOf4Axiom must beSolved()}
-    non-inductive example with two clauses ${exampleWithTwoClauses must beSolved()}
-    non-inductive example with three clauses ${exampleWithThreeClauses must beSolved()}
-    inductive example with tautology deletion ${exampleRequiringTautologyDeletion must beSolved()}
-    inductive example with subsumption ${exampleRequiringSubsumption must beSolved()}
+    two variable example ${exampleWithTwoVariables must beSolved(
+      equivalentTo = Set(hcl"a = b :-")
+    )}
+    modal correspondence T axiom ${
+      modalCorrespondence.negationOfSecondOrderTranslationOfTAxiom must
+        beSolved(equivalentTo = Set(hcl"R(a,a) :-"))
+    }
+    modal correspondence 4 axiom ${
+      modalCorrespondence.negationOfSecondOrderTranslationOf4Axiom must
+        beSolved(equivalentTo = Set(hcl":- R(a,b)", hcl":- R(b,c)", hcl"R(a,c) :- "))
+    }
+    non-inductive example with two clauses ${
+      exampleWithTwoClauses must beSolved(equivalentTo = Set(hcl"B(u) :- A(u)"))
+    }
+    non-inductive example with three clauses ${
+      exampleWithThreeClauses must beSolved(equivalentTo = Set(hcl"C(u) :- A(u)", hcl"B(u) :- A(u)"))
+    }
+    inductive example with tautology deletion ${
+      exampleRequiringTautologyDeletion must beSolved(equivalentTo = Set(hcl"A(u) :- B(u)"))
+    }
+    inductive example with subsumption ${
+      exampleRequiringSubsumption must beSolved(equivalentTo = Set(hcl"A(u) :- C(u)", hcl"A(u), B(u,v) :-"))
+    }
+    simplest valid graph reachability ${graphReachability(3, 1, 3, 1 -> 2) must beSolved(equivalentTo = graphReachability.graph(3, 1 -> 2))}
+    unsatisfiable graph reachability ${graphReachability(3, 1, 3, 1 -> 2, 2 -> 3) must beSolved(equivalentTo = Set(hcl":-"))}
   """
 
   def beEquivalentTo(right: Formula): Matcher[Formula] = { (left: Formula) =>
@@ -73,7 +99,8 @@ class wscanTest extends Specification {
       allowResolutionOnBaseLiterals: Boolean = false,
       derivationLimit: Int = defaultDerivationLimit,
       attemptLimit: Int = defaultAttemptLimit,
-      witnessLimit: Int = defaultWitnessLimit
+      witnessLimit: Int = defaultWitnessLimit,
+      equivalentTo: Set[HOLClause] = Set.empty
   ): Matcher[ClauseSetPredicateEliminationProblem] = {
     (input: ClauseSetPredicateEliminationProblem) =>
       val firstOrderEquivalent = scan(
@@ -89,7 +116,7 @@ class wscanTest extends Specification {
         derivationLimit = Some(derivationLimit),
         attemptLimit = Some(attemptLimit),
         witnessLimit = Some(witnessLimit)
-      ).must(beCorrectSolutionFor(input, firstOrderEquivalent))
+      ).must(beCorrectSolutionFor(input, firstOrderEquivalent)) and (equivalentTo.toFormula must beEquivalentTo(firstOrderEquivalent))
   }
 }
 
@@ -104,7 +131,7 @@ class newWscanTest extends mutable.Specification {
       hcl":- B(f(b), f(a))"
     )
     val P = PointedClause(hcl"X(v_1, v_2) :- X(v_2, v_1), X(f(v_1), f(v_2)), B(v_1, v_2)", Ant(0))
-    testPurifiedClauseDeletionAssumptions(P, N)
+    testPurifiedClauseDeletionAssumptions(P, N.clspepState(hov"X:i>i>o"))
     val P_1 = P.subPointedClause(Set(Suc(0), Suc(2)))
     val P_2 = P.subPointedClause(Set(Suc(1), Suc(2)))
     val P_3 = P.subPointedClause(Set(Suc(2)))
@@ -124,7 +151,7 @@ class newWscanTest extends mutable.Specification {
       hcl":- X(f(g(c)), f(g(d)))"
     )
     val P = PointedClause(hcl"X(v_1, v_2) :- X(v_2, v_1), X(f(v_1), f(v_2)), X(g(v_1), g(v_2))", Ant(0))
-    testPurifiedClauseDeletionAssumptions(P, N)
+    testPurifiedClauseDeletionAssumptions(P, N.clspepState(hov"X:i>i>o"))
     val P_1 = P.subPointedClause(Set(Suc(0)))
     val P_2 = P.subPointedClause(Set(Suc(1)))
     val P_3 = P.subPointedClause(Set(Suc(2)))
@@ -143,7 +170,7 @@ class newWscanTest extends mutable.Specification {
       hcl":- X(f(f(d)), f(f(c)))"
     )
     val P = PointedClause(hcl"X(v_1, v_2) :- X(v_2, v_1), X(f(v_1), f(v_2))", Ant(0))
-    testPurifiedClauseDeletionAssumptions(P, N)
+    testPurifiedClauseDeletionAssumptions(P, N.clspepState(hov"X:i>i>o"))
     val P_1 = P.subPointedClause(Set(Suc(0)))
     val P_2 = P.subPointedClause(Set(Suc(1)))
     val P_3 = P.subPointedClause(Set(Suc(0), Suc(1)))
@@ -163,7 +190,7 @@ class newWscanTest extends mutable.Specification {
       hcl":- X(f(f(c_1)), f(f(a_1)), f(f(b_1)))"
     )
     val P = PointedClause(hcl"X(v_1, v_2, v_3) :- X(v_2, v_3, v_1), X(f(v_1), f(v_2), f(v_3)), X(g(v_1), g(v_2), g(v_3))", Ant(0))
-    testPurifiedClauseDeletionAssumptions(P, N)
+    testPurifiedClauseDeletionAssumptions(P, N.clspepState(hov"X:i>i>i>o"))
 
     val P_1 = P.subPointedClause(Set(Suc(0)))
     val P_2 = P.subPointedClause(Set(Suc(1)))
@@ -182,7 +209,7 @@ class newWscanTest extends mutable.Specification {
       hcl":- B(g(a))"
     )
     val P = PointedClause(hcl"X(v) :- X(f(v)), X(g(v)), B(v)", Ant(0))
-    testPurifiedClauseDeletionAssumptions(P, N)
+    testPurifiedClauseDeletionAssumptions(P, N.clspepState(hov"X:i>o"))
 
     val P_1 = P.subPointedClause(Set(Suc(0), Suc(1)))
     val P_2 = P.subPointedClause(Set(Suc(2)))
@@ -195,7 +222,7 @@ class newWscanTest extends mutable.Specification {
       hcl":- X(b,c,a)"
     )
     val P = PointedClause(hcl"X(u,v,w) :- X(v,w,u), X(w,u,v)", Ant(0))
-    testPurifiedClauseDeletionAssumptions(P, N)
+    testPurifiedClauseDeletionAssumptions(P, N.clspepState(hov"X:i>i>i>o"))
 
     val P_1 = P.subPointedClause(Set(Suc(0)))
     val P_2 = P.subPointedClause(Set(Suc(1)))
@@ -210,7 +237,7 @@ class newWscanTest extends mutable.Specification {
       hcl":- B(f(f(a)), f(f(b)))"
     )
     val P = PointedClause(hcl"X(u,v) :- X(v,u), X(f(u), f(v)), B(u,v)", Ant(0))
-    testPurifiedClauseDeletionAssumptions(P, N)
+    testPurifiedClauseDeletionAssumptions(P, N.clspepState(hov"X:i>i>o"))
 
     val P_1 = P.subPointedClause(Set(Suc(0)))
     val P_2 = P.subPointedClause(Set(Suc(1)))
@@ -224,7 +251,7 @@ class newWscanTest extends mutable.Specification {
       hcl":- X(a, a, a)"
     )
     val P = PointedClause(hcl"X(u,v,w) :- X(v,w,u)", Ant(0))
-    testPurifiedClauseDeletionAssumptions(P, N)
+    testPurifiedClauseDeletionAssumptions(P, N.clspepState(hov"X:i>i>i>o"))
 
     "witness" >> testWitness(P, N, resolutionStepWitness(Seq(P, P)))
   }
@@ -241,7 +268,8 @@ class newWscanTest extends mutable.Specification {
     val P_1 = P.subPointedClause(Set(Suc(0)))
     val P_2 = P.subPointedClause(Set(Suc(1)))
     val P_3 = P.subPointedClause(Set(Suc(2)))
-    testPurifiedClauseDeletionAssumptions(P, N)
+
+    testPurifiedClauseDeletionAssumptions(P, N.clspepState(hov"X:i>i>i>o"))
 
     "witness" >> testWitness(P, N, resolutionStepWitness(Seq(P, P)))
   }
@@ -251,14 +279,14 @@ class newWscanTest extends mutable.Specification {
       hcl":- X(f(f(w)))"
     )
     val P = PointedClause(hcl"X(v) :- X(f(v))", Ant(0))
-    testPurifiedClauseDeletionAssumptions(P, N)
+    testPurifiedClauseDeletionAssumptions(P, N.clspepState(hov"X:i>o"))
 
     "witness" >> testWitness(P, N, resolutionStepWitness(Seq(P)))
   }
 
-  def testPurifiedClauseDeletionAssumptions(pointedClause: PointedClause, clauseSet: Set[HOLClause]): Fragments = {
+  def testPurifiedClauseDeletionAssumptions(pointedClause: PointedClause, state: State): Fragments = {
     "purified clause deletion assumptions" >> {
-      val missingResolutions = nonRedundantResolutionInferences(clauseSet, pointedClause)
+      val missingResolutions = nonRedundantResolutionInferences(state, pointedClause)
       if missingResolutions.isEmpty then {
         "no missing resolvents" in success
       } else {
@@ -274,7 +302,7 @@ class newWscanTest extends mutable.Specification {
       def isRedundancyEliminated(clauses: Set[HOLClause]): Boolean = {
         scan.redundancyStep(scan.State(
           clauses,
-          scan.Derivation.emptyFrom(
+          derivation = scan.Derivation.emptyFrom(
             ClauseSetPredicateEliminationProblem(Seq(hov"X"), clauses)
           ),
           remainingAllowedInferences = None,
@@ -283,7 +311,7 @@ class newWscanTest extends mutable.Specification {
         )).isEmpty
       }
 
-      if isRedundancyEliminated(clauseSet + pointedClause.clause) then {
+      if isRedundancyEliminated(state.activeClauses + pointedClause.clause) then {
         "N + P is redundancy eliminated" >> success
       } else {
         step(ko(s"N + P is not redundancy eliminated"))
@@ -376,4 +404,12 @@ class newWscanTest extends mutable.Specification {
       Substitution((nextVar, expr.simplified))
     }
   }
+
+  extension (clauses: Set[HOLClause])
+    def clspepState(vars: Var*): State = State.initialFrom(
+      ClauseSetPredicateEliminationProblem(vars, clauses),
+      None,
+      false,
+      true
+    )
 }
