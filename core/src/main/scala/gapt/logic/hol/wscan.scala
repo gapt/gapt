@@ -54,7 +54,7 @@ object wscan {
   }
 
   /**
-    * Runs the SCAN algorithm multiple times on the input predicate elimination problem to find several derivations returns the corresponding witnesses
+    * Runs the SCAN algorithm multiple times on the input predicate elimination problem to find several derivations and returns the corresponding witnesses
     *
     * @param input input predicate elimination problem in clause set form
     * @param oneSidedOnly @see oneSidedOnly option of scan
@@ -94,11 +94,12 @@ object wscan {
     * @return an iterator of mutually non-equivalent substitutions satisfying the WSOQE-condition of the given input
     */
   def mutuallyNonEquivalent(
-      substitutions: IterableOnce[Substitution]
+      substitutions: IterableOnce[Substitution],
+      firstOrderEquivalent: Formula
   ): Iterator[Substitution] = {
     Iterator.unfold((Set.empty[Substitution], substitutions.iterator)) {
       case (state, iterator) => {
-        val nextNonEquivalentWit = iterator.find(w => state.forall(s => !areEquivalent(w, s)))
+        val nextNonEquivalentWit = iterator.find(w => state.forall(s => !areEquivalent(firstOrderEquivalent, w, s)))
         if nextNonEquivalentWit.isEmpty then
           None
         else
@@ -231,12 +232,12 @@ object wscan {
     rename.awayFrom(blacklist).freshStream(varName).zip(argTypes).map(Var(_, _))
   }
 
-  private def areEquivalent(left: Substitution, right: Substitution): Boolean = {
+  private def areEquivalent(backgroundTheory: Formula, left: Substitution, right: Substitution): Boolean = {
     left.domain == right.domain && left.domain.forall(v => {
       val vars = freshArgumentVariables(v.ty, "u")
       val leftFormula = BetaReduction.betaNormalize(App(left(v), vars)).asInstanceOf[Formula]
       val rightFormula = BetaReduction.betaNormalize(App(right(v), vars)).asInstanceOf[Formula]
-      Escargot.isValid(Iff(leftFormula, rightFormula))
+      Escargot.isValid(backgroundTheory --> Iff(leftFormula, rightFormula))
     })
   }
 }
