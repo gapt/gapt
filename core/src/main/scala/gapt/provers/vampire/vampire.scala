@@ -1,7 +1,6 @@
 package gapt.provers.vampire
 
 import java.io.IOException
-
 import gapt.formats.StringInputFile
 import gapt.formats.tptp.TptpFOLExporter
 import gapt.formats.tptp.TptpProofParser
@@ -11,6 +10,7 @@ import gapt.proofs.resolution.resolutionProofsAreReplaceable
 import gapt.proofs.sketch.RefutationSketchToResolution
 import gapt.proofs.FOLClause
 import gapt.proofs.HOLClause
+import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.provers.ResolutionProver
 import gapt.provers.extractIntroducedDefinitions
@@ -23,6 +23,17 @@ object Vampire extends Vampire(commandName = "vampire", extraArgs = Seq()) {
 import Vampire.logger.time
 object VampireCASC extends Vampire(commandName = "vampire", extraArgs = Seq("--mode", "casc"))
 class Vampire(commandName: String = "vampire", extraArgs: Seq[String] = Seq()) extends ResolutionProver with ExternalProgram {
+  override def isUnsat(cnf: Iterable[HOLClause])(implicit ctx: Maybe[Context]): Boolean =
+    val labelledCNF = cnf.zipWithIndex.map { case (clause, index) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
+    val tptpIn = TptpFOLExporter.exportLabelledCNF(labelledCNF).toString
+    val output = time("vampire") {
+      runProcess.withTempInputFile(
+        commandName +: "-p" +: "tptp" +: extraArgs,
+        tptpIn
+      ).split("\n")
+    }
+    output.exists(_.startsWith("% SZS status Unsatisfiable "))
+
   override def getResolutionProof(seq: Iterable[HOLClause])(implicit ctx: Maybe[MutableContext]): Option[ResolutionProof] =
     renameConstantsToFi.wrap(seq.toSeq)((renaming, cnf: Seq[HOLClause]) => {
       val labelledCNF = cnf.zipWithIndex.map { case (clause, index) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
