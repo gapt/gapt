@@ -14,6 +14,11 @@ import gapt.logic.hol.ClauseSetPredicateEliminationProblem
 import gapt.logic.hol.toFormula
 import gapt.logic.hol.PredicateEliminationProblem
 import gapt.expr.formula.fol.FOLFormula
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLVar
+import gapt.utils.runProcess
+import gapt.logic.Polarity
+import gapt.utils.withTimeout
 
 val negationOfModalAxiom = pep"?X -(!u (!v (R(u,v) -> ((!w (R(v, w) -> X(w))) <-> X(v)))))"
 val exampleWithQuantifiedVariableNotOccurring = clspep"?(X:i>o) !u A(u)"
@@ -139,10 +144,6 @@ val onlyOneSidedClauses = clspep"?X(${
 
 val wernhardUnificationExample = clspep"?X_1?X_2(!u (A(u) -> B(u)) & (!u (X_1(u) -> X_2(u)) & !u (A(u) -> X_2(u)) & !u (X_2(u) -> B(u))))"
 
-val graphReachability = pep"?X(${
-    hos":- !x (x = a_1 | x = a_2 | x = a_3) & a_1 != a_2 & a_1 != a_3 & a_2 != a_3 & E(a_1,a_2) & E(a_2,a_1) & E(a_3,a_2) & -E(a_1,a_1) & -E(a_2_,a_2) & -E(a_3,a_3) & -E(a_1,a_3) & -E(a_2,a_3) & -E(a_3,a_1) & (X(a_1) & !u!v((X(u) & E(u,v)) -> X(v)) & -X(a_3))".toFormula
-  })"
-
 object modalCorrespondence {
   def negationOfSecondOrderTranslationOfTAxiom = clspep"?X(${
       Set(
@@ -178,6 +179,143 @@ object induction {
       inductionVar,
       Imp(And(additionDefinition, ind(inductionVar)), theorem)
     )
+}
+
+object graphReachability {
+
+  def const(node: Int): FOLConst = FOLConst(s"a_$node")
+
+  def edge(from: Int, to: Int): Atom = foa"E(${const(from)}, ${const(to)})"
+
+  def existsPath(from: Int, to: Int, length: Int): FOLFormula = {
+    require(length >= 0)
+    def pathFrom(from: FOLVar | FOLConst, l: Int): FOLFormula = l match {
+      case 0 => Eq(from, const(to))
+      case n => {
+        val v = FOLVar(s"v_$n")
+        fof"?$v (E($from, $v) & ${pathFrom(v, l - 1)})"
+      }
+    }
+
+    pathFrom(const(from), length)
+  }
+
+  def graph(size: Int, edges: (Int, Int)*): Set[HOLClause] = {
+    require(size >= 0, "size of graph must be non-negative")
+    for (from, to) <- edges do
+      require(1 <= from && from <= size, s"edge ($from, $to) starting point is not in range [1, $size]")
+      require(1 <= to && to <= size, s"edge ($from, $to) end point is not in range [1, $size]")
+
+    val constants = (1 to size).map(i => Const(s"a_$i", Ti))
+    def a(i: Int): Const = constants(i - 1)
+
+    val exhaustiveness = HOLClause(Iterable.empty, constants.map(c => Eq(c, fov"u")))
+    val distinctness =
+      for
+        i <- 1 to size
+        j <- 1 until i
+      yield HOLClause(Seq(Eq(a(i), a(j))), Iterable.empty)
+    val edgesAndNonEdges =
+      for
+        i <- 1 to size
+        j <- 1 to size
+      yield
+        val polarity = Polarity(edges.contains((i, j)))
+        HOLClause(Seq((Atom(le"E:i>i>o", a(i), a(j)), polarity)))
+
+    (distinctness ++ edgesAndNonEdges :+ exhaustiveness).toSet
+  }
+
+  def apply(size: Int, mustContain: Int, mustAvoid: Int, edges: (Int, Int)*): ClauseSetPredicateEliminationProblem = {
+    val constants = (1 to size).map(i => Const(s"a_$i", Ti))
+    def a(i: Int): Const = constants(i - 1)
+
+    val graphTheory = graph(size, edges*)
+    val contain = hcl":- X(${a(mustContain)})"
+    val avoid = hcl"X(${a(mustAvoid)}) :-"
+    val edgeClosure = hcl"X(u), E(u,v) :- X(v)"
+
+    ClauseSetPredicateEliminationProblem(
+      Seq(hov"X:i>o"),
+      graphTheory + contain + avoid + edgeClosure
+    )
+  }
+}
+
+def exportToScan(varsToEliminate: Seq[Var], clauses: Seq[HOLClause]): String = {
+  val predList = varsToEliminate.map(v => v.name).mkString(", ")
+  val cls = clauses.map { clause =>
+    val foVariables = freeFOLVariables(clause.toFormula)
+    def atomToScan(a: Atom): String = a match {
+      case Eq(left, right) => s"$left=$right"
+      case a               => a.toUntypedAsciiString
+    }
+    val negativeLiterals = clause.antecedent.map(atomToScan).map(a => s"-($a)")
+    val positiveLiterals = clause.succedent.map(atomToScan)
+    val quantifierFreePart = s"(${(negativeLiterals ++ positiveLiterals).mkString(" | ")})"
+    if foVariables.isEmpty then {
+      s"$quantifierFreePart."
+    } else {
+      s"all ${foVariables.toSeq.mkString(" ")} $quantifierFreePart."
+    }
+  }
+  s"""
+  pred_list[$predList].
+  %set(unskolemize).
+  %set(negate).
+  ;.
+  set(binary_res).
+  set(for_sub).
+  set(back_sub).
+  set(very_verbose).
+  assign(max_seconds, 5).
+
+  % 1.assign(check_redundancy_time,s).
+  % try to prove each generated clause in s seconds from rest
+  % of clause set minus pure clause. Drop clause if it can be proven.
+  % No redundancy check if s = 0.
+  assign(check_redundancy_time, 0).
+
+  % 2.assign(minimize_at_end_time,s).
+  % after Scan has finished, try to prove each remaining
+  % clause from the other clauses in s seconds, starting with long clauses.
+  % Drop clause if it can be proven. No minimization if s = 0
+  assign(minimize_at_end_time,0).
+
+  %% comments on the search
+  %%clear(very_verbose).
+  %clear(print_kept).
+  %clear(print_given).
+  %clear(print_back_sub).
+  %%
+  %clear(print_new_demod).
+  %clear(print_back_demod).
+  %clear(print_proofs).
+
+  set(print_lists_at_end).
+
+  %formula_list(usable).
+  %end_of_list.
+
+  formula_list(sos).
+
+  ${cls.mkString("\n")}
+
+  end_of_list.
+  """.stripMargin
+}
+
+def runScan(varsToEliminate: Seq[Var], clauses: Seq[HOLClause]): Int = {
+  import scala.concurrent._
+  import scala.concurrent.duration._
+  import scala.io._
+  val scanInput = exportToScan(varsToEliminate, clauses)
+  val (exitValue, stdout) =
+    runProcess.withExitValue(Seq("docker", "run", "-i", "scan-app"), stdin = scanInput)
+  println(stdout)
+  if exitValue == 127 then
+    println("exit value is 127. is docker running?")
+  exitValue
 }
 
 def printer = pprint.copy(additionalHandlers = additionalPrinters, defaultWidth = 150)
@@ -239,7 +377,7 @@ def printSequent[T](sequent: Sequent[T]): pprint.Tree = {
   }
   val antecedentStrings = sequent.antecedent.map(toStr)
   val succeedentStrings = sequent.succedent.map(toStr)
-  val clauseString = antecedentStrings.mkString(", ") ++ " ⊢ " ++ succeedentStrings.mkString(", ")
+  val clauseString = (antecedentStrings.mkString(", ") ++ Seq("⊢") ++ succeedentStrings.mkString(", ")).mkString(" ")
   pprint.Tree.Literal(clauseString.strip())
 }
 
@@ -305,7 +443,7 @@ def wscanTest() =
     booleanUnification.toClauseSet,
     onlyOneSidedClauses,
     wernhardUnificationExample,
-    graphReachability.toClauseSet,
+    graphReachability(3, 0, 2, 0 -> 1),
     modalCorrespondence.negationOfSecondOrderTranslationOfTAxiom,
     modalCorrespondence.negationOfSecondOrderTranslationOf4Axiom
   )
