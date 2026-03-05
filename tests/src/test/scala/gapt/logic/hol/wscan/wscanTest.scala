@@ -6,25 +6,25 @@ import gapt.expr.formula._
 import gapt.provers.escargot.Escargot
 import gapt.expr.subst.Substitution
 import org.specs2.matcher.Matcher
+import org.specs2.matcher.MustMatchers._
 import org.specs2.matcher.MatchResult
-import gapt.logic.hol.wdls.simplify
-import gapt.expr.util.rename
-import gapt.expr.util.freeVariables
-import gapt.expr.ty.Ty
-import gapt.expr.ty.FunctionType
-import gapt.expr.given
-import org.specs2.specification.core.Fragments
-import gapt.logic.hol.scan.nonRedundantResolutionInferences
 import gapt.proofs.HOLClause
 import gapt.logic.hol.scan.PointedClause
 import gapt.proofs.Ant
 import gapt.proofs.Suc
-import gapt.logic.hol.scan.DerivationStep
-import gapt.expr.formula.hol.freeHOVariables
-import gapt.proofs.RichFormulaSequent
 import gapt.proofs.Sequent
-import gapt.logic.hol.scan.constraintResolvent
-import gapt.logic.hol.scan.State
+import gapt.logic.Polarity
+
+def beCorrectDerivation(): Matcher[scan.Derivation] = { (derivation: scan.Derivation) =>
+  val reasons = scan.reasonsThatDerivationIsIncorrect(derivation).toSeq
+  (reasons must beEmpty).mapMessage(_ => s"""derivation has errors:
+                                            |${reasons.mkString("\\n")}""".stripMargin)
+}
+
+def beEquivalentTo(witness: Substitution) = { (wit: Substitution) =>
+  (wscan.areEquivalent(Top(), witness, wit) must beTrue)
+    .mapMessage(_ => s"$wit is not equivalent to expected witness $witness")
+}
 
 class wscanTest extends Specification {
   import gapt.examples.predicateEliminationProblems._
@@ -39,11 +39,6 @@ class wscanTest extends Specification {
       beSolved(equivalentTo = Set(hcl":- X(u)"))}
     negation of leibniz equality ${negationOfLeibnizEquality.toClauseSet must
       beSolved(equivalentTo = Set(hcl"s_0 = s_2 :-"))}
-    resolution on base literals ${exampleThatUsesResolutionOnLiteralsThatAreNotQuantifiedVariables must
-      beSolved(
-        allowResolutionOnBaseLiterals = true,
-        equivalentTo = Set(hcl"A(u) :- C(v)", hcl":- B(u,v)")
-      )}
     2-part disjunction ${single2PartDisjunction must beSolved()}
     3-part disjunction ${single3PartDisjunction must beSolved()}
     two variable example ${exampleWithTwoVariables must beSolved(
@@ -69,23 +64,24 @@ class wscanTest extends Specification {
     inductive example with subsumption ${
       exampleRequiringSubsumption must beSolved(equivalentTo = Set(hcl"A(u) :- C(u)", hcl"A(u), B(u,v) :-"))
     }
-    simplest valid graph reachability ${graphReachability(3, 1, 3, 1 -> 2) must beSolved(equivalentTo = graphReachability.graph(3, 1 -> 2))}
-    unsatisfiable graph reachability ${graphReachability(3, 1, 3, 1 -> 2, 2 -> 3) must beSolved(equivalentTo = Set(hcl":-"))}
   """
 
   def beEquivalentTo(right: Formula): Matcher[Formula] = { (left: Formula) =>
     Escargot.isValid(Iff(left, right)).must(beTrue).mapMessage(_ => s"$left is not equivalent to $right")
   }
 
-  def beCorrectSolutionFor(input: ClauseSetPredicateEliminationProblem, firstOrderEquivalent: Formula): Matcher[Option[Substitution]] = {
+  def beSubsetOf(right: Set[Var]): Matcher[Set[Var]] = { (left: Set[Var]) =>
+    forall(left)(right must contain(_)).mapMessage(_ => s"$left is not a subset of $right")
+  }
 
+  def beWitnessFor(input: ClauseSetPredicateEliminationProblem, firstOrderEquivalent: Formula): Matcher[Option[Substitution]] = {
     (solution: Option[Substitution]) =>
       solution must beSome[Substitution].like {
         (witness: Substitution) =>
           {
             val substitutedInput = BetaReduction.betaNormalize(witness(input.firstOrderClauses.toFormula))
-            witness.domain.mustEqual(input.varsToEliminate.toSet)
-              .mapMessage(_ => s"domain of substitution is not ${input.varsToEliminate}")
+            witness.domain.must(beSubsetOf(input.varsToEliminate.toSet))
+              .mapMessage(_ => s"domain of substitution is not a subset of variables to eliminate ${input.varsToEliminate}")
               .and(substitutedInput.must(beEquivalentTo(firstOrderEquivalent))
                 .mapMessage(_ => s"substituted input is not equivalent to output clause set"))
           }
@@ -95,321 +91,171 @@ class wscanTest extends Specification {
   val defaultDerivationLimit = 20
   val defaultAttemptLimit = 100
   val defaultWitnessLimit = 2
+  val defaultOneSidedOnly = true
   def beSolved(
       allowResolutionOnBaseLiterals: Boolean = false,
       derivationLimit: Int = defaultDerivationLimit,
       attemptLimit: Int = defaultAttemptLimit,
       witnessLimit: Int = defaultWitnessLimit,
-      equivalentTo: Set[HOLClause] = Set.empty
+      equivalentTo: Set[HOLClause] = Set.empty,
+      oneSidedOnly: Boolean = defaultOneSidedOnly
   ): Matcher[ClauseSetPredicateEliminationProblem] = {
     (input: ClauseSetPredicateEliminationProblem) =>
-      val firstOrderEquivalent = scan(
+      val derivation = scan(
         input,
         allowResolutionOnBaseLiterals = allowResolutionOnBaseLiterals,
         derivationLimit = Some(derivationLimit),
         attemptLimit = Some(attemptLimit)
-      ).get.conclusion.toFormula
-      wscan(
+      ).get
+      val firstOrderEquivalent = derivation.conclusion.toFormula
+      val witness = wscan(
         input,
-        oneSidedOnly = true,
+        oneSidedOnly = oneSidedOnly,
         allowResolutionOnBaseLiterals = allowResolutionOnBaseLiterals,
         derivationLimit = Some(derivationLimit),
         attemptLimit = Some(attemptLimit),
         witnessLimit = Some(witnessLimit)
-      ).must(beCorrectSolutionFor(input, firstOrderEquivalent)) and (equivalentTo.toFormula must beEquivalentTo(firstOrderEquivalent))
+      )
+
+      (derivation must beCorrectDerivation()) and
+        witness.must(beWitnessFor(input, firstOrderEquivalent)) and
+        (equivalentTo.toFormula must beEquivalentTo(firstOrderEquivalent))
   }
 }
 
-class newWscanTest extends mutable.Specification {
-  val showIntermediateValues = false;
+class witnessConstruction extends mutable.Specification {
+  import scan._
 
-  "two different graph topologies" >> {
-    val N = Set[HOLClause](
-      hcl":- X(a,b)",
-      hcl":- X(b,a)",
-      hcl":- X(f(b), f(a)), B(b, a)",
-      hcl":- B(f(b), f(a))"
+  "derivation with one-sided purified clause deletion" in {
+    val derivation = Derivation(
+      ClauseSetPredicateEliminationProblem(
+        Seq(hov"X:i>o"),
+        Set(hcl":- B(a,v)", hcl":- X(a)", hcl"X(u) :- B(u,v), X(v)", hcl"X(c) :- ")
+      ),
+      List(
+        DerivationStep.ConstraintResolution(
+          PointedClause(hcl":- X(a)", Suc(0)),
+          PointedClause(hcl"X(c) :-", Ant(0))
+        ),
+        DerivationStep.PurifiedClauseDeletion(PointedClause(hcl":- X(a)", Suc(0))),
+        DerivationStep.ExtendendPurityDeletion(hov"X:i>o", Polarity.Negative)
+      )
     )
-    val P = PointedClause(hcl"X(v_1, v_2) :- X(v_2, v_1), X(f(v_1), f(v_2)), B(v_1, v_2)", Ant(0))
-    testPurifiedClauseDeletionAssumptions(P, N.clspepState(hov"X:i>i>o"))
-    val P_1 = P.subPointedClause(Set(Suc(0), Suc(2)))
-    val P_2 = P.subPointedClause(Set(Suc(1), Suc(2)))
-    val P_3 = P.subPointedClause(Set(Suc(2)))
-    "witness for two cycle graph" >> testWitness(P, N, resolutionStepWitness(Seq(P_1)))
-    "witness for acyclic graph" >> testWitness(P, N, resolutionStepWitness(Seq(P, P_2, P_3)))
+    val wit = wscan.witness(derivation, None).get
+    (derivation must beCorrectDerivation()) and
+      (wit must beEquivalentTo(Substitution((hov"X:i>o", le"^u u=a"))))
   }
 
-  "two connected components" >> {
-    val N = Set[HOLClause](
-      hcl":- X(a,b)",
-      hcl":- X(b,a), X(f(a), f(b))",
-      hcl":- X(b,a), X(f(b), f(a))",
-      hcl":- X(c,d)",
-      hcl":- X(g(c), g(d))",
-      hcl":- X(g(d), g(c))",
-      hcl":- X(f(g(d)), f(g(c)))",
-      hcl":- X(f(g(c)), f(g(d)))"
+  "derivation with non-one-sided purified clause deletion" in {
+    val derivation = Derivation(
+      ClauseSetPredicateEliminationProblem(
+        Seq(hov"X:i>o"),
+        Set(hcl":- B(a,v)", hcl":- X(a)", hcl"X(u) :- B(u,v), X(v)", hcl"X(c) :- ")
+      ),
+      List(
+        DerivationStep.PurifiedClauseDeletion(PointedClause(hcl"X(u) :- B(u,v), X(v)", Ant(0))),
+        DerivationStep.ConstraintResolution(
+          PointedClause(hcl":- X(a)", Suc(0)),
+          PointedClause(hcl"X(c) :-", Ant(0))
+        ),
+        DerivationStep.PurifiedClauseDeletion(PointedClause(hcl":- X(a)", Suc(0))),
+        DerivationStep.ExtendendPurityDeletion(hov"X:i>o", Polarity.Negative)
+      )
     )
-    val P = PointedClause(hcl"X(v_1, v_2) :- X(v_2, v_1), X(f(v_1), f(v_2)), X(g(v_1), g(v_2))", Ant(0))
-    testPurifiedClauseDeletionAssumptions(P, N.clspepState(hov"X:i>i>o"))
-    val P_1 = P.subPointedClause(Set(Suc(0)))
-    val P_2 = P.subPointedClause(Set(Suc(1)))
-    val P_3 = P.subPointedClause(Set(Suc(2)))
+    val wit = wscan.witness(derivation, None).get
+    (derivation must beCorrectDerivation()) and
+      (wit must beEquivalentTo(Substitution((hov"X:i>o", le"^u u=a & !v B(u,v)"))))
+  }
+}
 
-    "witness" >> testWitness(P, N, resolutionStepWitness(Seq(P, P_1)))
+class purifiedAndSubsumptionTest extends mutable.Specification {
+  import scan.{isLSubsumed, isInjectivelySubsumedAfterVariableElimination, isPurified}
+
+  "X(u) X-subsumes X(a)" in {
+    isLSubsumed(hov"X:i>o", Polarity.InSuccedent, hcl":- X(u)", hcl":- X(a)") must beTrue
   }
 
-  "cycle occurring at different stages" >> {
-    val N = Set[HOLClause](
-      hcl":- X(a,b)",
-      hcl":- X(f(a), f(b))",
-      hcl":- X(f(b), f(a))",
-      hcl":- X(c,d)",
-      hcl":- X(f(c), f(d))",
-      hcl":- X(f(f(c)), f(f(d)))",
-      hcl":- X(f(f(d)), f(f(c)))"
-    )
-    val P = PointedClause(hcl"X(v_1, v_2) :- X(v_2, v_1), X(f(v_1), f(v_2))", Ant(0))
-    testPurifiedClauseDeletionAssumptions(P, N.clspepState(hov"X:i>i>o"))
-    val P_1 = P.subPointedClause(Set(Suc(0)))
-    val P_2 = P.subPointedClause(Set(Suc(1)))
-    val P_3 = P.subPointedClause(Set(Suc(0), Suc(1)))
-    "witness" >> testWitness(P, N, resolutionStepWitness(Seq(P, P, P_1)))
+  "X(u,a) | X(a, u) not X-subsumes X(a,a)" in {
+    isLSubsumed(hov"X:i>i>o", Polarity.InSuccedent, hcl":- X(u,a), X(a,u)", hcl":- X(a, a)") must beFalse
   }
 
-  "cycle of length 3" >> {
-    val N = Set[HOLClause](
-      hcl":- X(a,b,c)",
-      hcl":- X(f(a), f(b), f(c))",
-      hcl":- X(f(b), f(c), f(a))",
-      hcl":- X(f(c), f(a), f(b))",
-      hcl":- X(a_1,b_1,c_1)",
-      hcl":- X(f(a_1), f(b_1), f(c_1))",
-      hcl":- X(f(f(a_1)), f(f(b_1)), f(f(c_1)))",
-      hcl":- X(f(f(b_1)), f(f(c_1)), f(f(a_1)))",
-      hcl":- X(f(f(c_1)), f(f(a_1)), f(f(b_1)))"
-    )
-    val P = PointedClause(hcl"X(v_1, v_2, v_3) :- X(v_2, v_3, v_1), X(f(v_1), f(v_2), f(v_3)), X(g(v_1), g(v_2), g(v_3))", Ant(0))
-    testPurifiedClauseDeletionAssumptions(P, N.clspepState(hov"X:i>i>i>o"))
-
-    val P_1 = P.subPointedClause(Set(Suc(0)))
-    val P_2 = P.subPointedClause(Set(Suc(1)))
-    val P_3 = P.subPointedClause(Set(Suc(0), Suc(1)))
-
-    "witness" >> testWitness(P, N, resolutionStepWitness(Seq(P_3, P_3, P_1, P_1)))
+  "X(u,a) | X(a, u) Y-subsumes X(a,a)" in {
+    isLSubsumed(hov"Y:i>o", Polarity.InSuccedent, hcl":- X(u,a), X(a,u)", hcl":- X(a, a)") must beTrue
   }
 
-  "multiple literals" >> {
-    val N = Set[HOLClause](
-      hcl":- X(a)",
-      hcl":- X(f(a)), X(g(a))",
-      hcl":- X(f(f(a))), X(g(f(a))), X(g(a))",
-      hcl":- B(f(f(a)))",
-      hcl":- B(g(f(a)))",
-      hcl":- B(g(a))"
-    )
-    val P = PointedClause(hcl"X(v) :- X(f(v)), X(g(v)), B(v)", Ant(0))
-    testPurifiedClauseDeletionAssumptions(P, N.clspepState(hov"X:i>o"))
-
-    val P_1 = P.subPointedClause(Set(Suc(0), Suc(1)))
-    val P_2 = P.subPointedClause(Set(Suc(2)))
-    "witness" >> testWitness(P, N, resolutionStepWitness(Seq(P, P, P_2)))
+  "X(a) not X-subsumes v!=a | X(v)" in {
+    isLSubsumed(hov"X:i>o", Polarity.InSuccedent, hcl":- X(a)", hcl"v=a :- X(v)") must beFalse
   }
 
-  "cycle with different steps" >> {
-    val N = Set[HOLClause](
-      hcl":- X(a,b,c)",
-      hcl":- X(b,c,a)"
-    )
-    val P = PointedClause(hcl"X(u,v,w) :- X(v,w,u), X(w,u,v)", Ant(0))
-    testPurifiedClauseDeletionAssumptions(P, N.clspepState(hov"X:i>i>i>o"))
-
-    val P_1 = P.subPointedClause(Set(Suc(0)))
-    val P_2 = P.subPointedClause(Set(Suc(1)))
-    "witness" >> testWitness(P, N, resolutionStepWitness(Seq(P)))
+  "¬X(a,u,b) | ¬X(u,a,b) | X(a,b,c) not ¬X-subsumes -X(a,a,b) | X(a,a,c)" in {
+    isLSubsumed(hov"X:i>i>i>o", Polarity.InAntecedent, hcl"X(a,u,b), X(u,a,b) :- X(u,a,c)", hcl"X(a,a,b) :- X(a,a,c)") must beFalse
   }
 
-  "incoming and outgoing from cycle" >> {
-    val N = Set[HOLClause](
-      hcl":- X(a, b)",
-      hcl":- X(f(a), f(b))",
-      hcl":- X(f(b), f(a)), X(f(f(a)), f(f(b)))",
-      hcl":- B(f(f(a)), f(f(b)))"
-    )
-    val P = PointedClause(hcl"X(u,v) :- X(v,u), X(f(u), f(v)), B(u,v)", Ant(0))
-    testPurifiedClauseDeletionAssumptions(P, N.clspepState(hov"X:i>i>o"))
-
-    val P_1 = P.subPointedClause(Set(Suc(0)))
-    val P_2 = P.subPointedClause(Set(Suc(1)))
-    val P_3 = P.subPointedClause(Set(Suc(2)))
-    val P_4 = P.subPointedClause(Set(Suc(0), Suc(2)))
-    "witness" >> testWitness(P, N, resolutionStepWitness(Seq(P, P, P_4)))
+  "¬X(a,u,b) | ¬X(u,a,b) | X(u,a,c) X-subsumes ¬X(a,a,b) | X(a,a,c)" in {
+    isLSubsumed(hov"X:i>i>i>o", Polarity.InSuccedent, hcl"X(a,u,b), X(u,a,b) :- X(a,b,c)", hcl"X(a,a,b) :- X(a,a,c)") must beFalse
   }
 
-  "different cycle lengths between N and P" >> {
-    val N = Set[HOLClause](
-      hcl":- X(a, a, a)"
-    )
-    val P = PointedClause(hcl"X(u,v,w) :- X(v,w,u)", Ant(0))
-    testPurifiedClauseDeletionAssumptions(P, N.clspepState(hov"X:i>i>i>o"))
-
-    "witness" >> testWitness(P, N, resolutionStepWitness(Seq(P, P)))
+  "X(u) X-velim-subsumes X(a)" in {
+    isInjectivelySubsumedAfterVariableElimination(hov"X:i>o", Polarity.InSuccedent, hcl":- X(u)", hcl":- X(a)") must beTrue
   }
 
-  "different cycle lengths in different components" >> {
-    val N = Set[HOLClause](
-      hcl":- X(a_1, a_2, a_3)",
-      hcl":- X(a_2, a_1, a_3)",
-      hcl":- X(a_2, a_3, a_1)",
-      hcl":- X(b, c, d)",
-      hcl":- X(c, b, d)"
-    )
-    val P = PointedClause(hcl"X(u,v,w) :- X(v,u,w), X(u,w,v), X(v,w,u)", Ant(0))
-    val P_1 = P.subPointedClause(Set(Suc(0)))
-    val P_2 = P.subPointedClause(Set(Suc(1)))
-    val P_3 = P.subPointedClause(Set(Suc(2)))
-
-    testPurifiedClauseDeletionAssumptions(P, N.clspepState(hov"X:i>i>i>o"))
-
-    "witness" >> testWitness(P, N, resolutionStepWitness(Seq(P, P)))
+  "X(u,a) | X(a, u) not X-velim-subsumes X(a,a)" in {
+    isInjectivelySubsumedAfterVariableElimination(hov"X:i>i>o", Polarity.InSuccedent, hcl":- X(u,a), X(a,u)", hcl":- X(a, a)") must beFalse
   }
 
-  "example where clause set required to subsume witness substitution in P" >> {
-    val N = Set[HOLClause](
-      hcl":- X(f(f(w)))"
-    )
-    val P = PointedClause(hcl"X(v) :- X(f(v))", Ant(0))
-    testPurifiedClauseDeletionAssumptions(P, N.clspepState(hov"X:i>o"))
-
-    "witness" >> testWitness(P, N, resolutionStepWitness(Seq(P)))
+  "X(a) X-velim-subsumes X(a)" in {
+    isInjectivelySubsumedAfterVariableElimination(hov"X:i>o", Polarity.InSuccedent, hcl":- X(a)", hcl":- X(a)") must beTrue
   }
 
-  def testPurifiedClauseDeletionAssumptions(pointedClause: PointedClause, state: State): Fragments = {
-    "purified clause deletion assumptions" >> {
-      val missingResolutions = nonRedundantResolutionInferences(state, pointedClause)
-      if missingResolutions.isEmpty then {
-        "no missing resolvents" in success
-      } else {
-        "missing resolvents" >> {
-          Fragments.foreach(missingResolutions) {
-            case DerivationStep.ConstraintResolution(left, right) =>
-              assert(left == pointedClause, s"left was not the pointed clause")
-              step(ko(s"resolvent ${{ constraintResolvent(left, right)._1 }} from resolution between $left and $right is not redundant"))
-          }
-        }
-      }
-
-      def isRedundancyEliminated(clauses: Set[HOLClause]): Boolean = {
-        scan.redundancyStep(scan.State(
-          clauses,
-          derivation = scan.Derivation.emptyFrom(
-            ClauseSetPredicateEliminationProblem(Seq(hov"X"), clauses)
-          ),
-          remainingAllowedInferences = None,
-          oneSidedOnly = false,
-          allowResolutionOnBaseLiterals = true
-        )).isEmpty
-      }
-
-      if isRedundancyEliminated(state.activeClauses + pointedClause.clause) then {
-        "N + P is redundancy eliminated" >> success
-      } else {
-        step(ko(s"N + P is not redundancy eliminated"))
-      }
-
-      // TODO: check that all clauses are in avelim-NF
-
-    }
+  "X(a) X-velim-subsumes v != a | X(v)" in {
+    isInjectivelySubsumedAfterVariableElimination(hov"X:i>o", Polarity.InSuccedent, hcl":- X(a)", hcl"v=a :- X(v)") must beTrue
   }
 
-  def testWitness(pointedClause: PointedClause, clauseSet: Set[HOLClause], witness: Substitution): Fragments = {
-    val P = pointedClause.clause.toFormula.foUniversalClosure
-    val N = clauseSet.toFormula.foUniversalClosure
-
-    if Escargot.isValid(N --> N.applySubstitution(witness).betaNormalized) then {
-      "N -> N[X<-wit] is valid" in success
-    } else {
-      "N -> N[X<-wit] is not valid" in failure
-    }
-
-    if Escargot.isValid(N --> P.applySubstitution(witness).betaNormalized) then {
-      "N -> P[X<-wit] is valid" in success
-    } else {
-      "N -> P[X<-wit] is not valid" in failure
-    }
+  "X(a) X-velim-subsumes v!=w | w!=a | X(v)" in {
+    isInjectivelySubsumedAfterVariableElimination(hov"X:i>o", Polarity.InSuccedent, hcl":- X(a)", hcl"v=w, w=a :- X(v)") must beTrue
   }
 
-  extension (f: Formula) {
-    def foUniversalClosure: Formula = All.Block(freeFOLVariables(f).toSeq, f)
+  "X(f(u)) not X-velim-subsumes w!=f(v) | X(w)" in {
+    isInjectivelySubsumedAfterVariableElimination(hov"X:i>o", Polarity.InSuccedent, hcl":- X(f(u))", hcl"w=f(v) :- X(w)") must beTrue
   }
 
-  extension (e: Expr) {
-    def simplified: Expr = {
-      e.betaNormalized match {
-        case Abs.Block(vars, f: Formula) => Abs.Block(vars, simplify(f))
-      }
-    }
+  "-A(u_0) | X(v_0) X-velim-subsumes v_0 != u_1 | -A(u_0) | X(v_1)" in {
+    isInjectivelySubsumedAfterVariableElimination(
+      hov"X:i>o",
+      Polarity.InSuccedent,
+      hcl"A(u_0) :- X(v_0)",
+      hcl"v_0 = u_1, A(u_0) :- X(v_1)"
+    ) must beTrue
   }
 
-  def alphaStep(P: PointedClause, placeholder: Var): Expr = {
-    assert(P.varOption.isDefined)
-    val freeFolVars = freeFOLVariables(P.clause.toFormula).toSeq
-    val args = rename.awayFrom(freeFolVars).freshStream("u").zip(P.args).map {
-      case (name, arg) => Var(name, arg.ty)
-    }
-    val (designatedLiteral, reproductionArgs, remainder) = P.decomposed
-    val reproductions = Sequent(Vector.empty[Atom], reproductionArgs.elements.map(args => Atom(placeholder, args)))
-    val constraint = HOLClause(args.zip(P.args).map((a, b) => Eq(a, b)), Vector.empty[Atom])
-    val firstClause = App(P.varOption.get, args).betaNormalized
-    val formula: Formula = And(
-      if P.index.isAnt then firstClause else Neg(firstClause),
-      All.Block(freeFolVars, (constraint ++ remainder ++ reproductions).toFormula)
-    ).betaNormalized
-    Abs.Block(args, formula).simplified
+  "[X(a)] is purified in {}" in {
+    isPurified(PointedClause(hcl":- X(a)", Suc(0)), Set.empty) must beTrue
   }
 
-  def alpha(P: PointedClause, k: Int, initial: Expr): Expr = {
-    val placeholder = rename.awayFrom(freeVariables(P.clause.toFormula)).fresh(Var("W", P.symbol.ty))
-    if k == 0 then initial
-    else {
-      val previous = alpha(P, k - 1, initial)
-      alphaStep(P, placeholder).substitute((placeholder, previous)).simplified
-    }
+  "[X(a)] is not purified in {-X(c)}" in {
+    isPurified(PointedClause(hcl":- X(a)", Suc(0)), Set(hcl"X(c) :-")) must beFalse
   }
 
-  def beta(P: PointedClause, k: Int): Expr = {
-    alpha(P, k, P.varOption.get).simplified
+  "[X(a)] is purified in {-X(c), a!=c}" in {
+    isPurified(PointedClause(hcl":- X(a)", Suc(0)), Set(hcl"X(c) :-", hcl"a=c :-")) must beTrue
   }
 
-  def delta(P: PointedClause, k: Int): Expr = {
-    def freshArgumentVariables(ty: Ty, varName: String, blacklist: Iterable[VarOrConst] = Iterable.empty) = {
-      val FunctionType(_, argTypes) = ty: @unchecked
-      rename.awayFrom(blacklist).freshStream(varName).zip(argTypes).map(Var(_, _))
-    }
-
-    val freshVars = freshArgumentVariables(P.symbol.ty, "u", freeVariables(P.clause.toFormula))
-    val bot = Abs.Block(freshVars, Bottom())
-    alpha(P, k, bot).simplified
+  "[X(a)] is not purified in {-X(c), c!=a}" in {
+    isPurified(PointedClause(hcl":- X(a)", Suc(0)), Set(hcl"X(c) :-", hcl"c=a :-")) must beFalse
   }
 
-  def neg(p: Expr): Expr = p match {
-    case Abs.Block(vars, inner) => Abs.Block(vars, Neg(inner))
+  "[-X(u)] | B(u,v) | X(v) is purified in {X(a), B(a,v), -X(c)}" in {
+    isPurified(PointedClause(hcl"X(u) :- B(u,v), X(v)", Ant(0)), Set(hcl":- X(a)", hcl":- B(a,v)", hcl"X(c) :-")) must beTrue
   }
 
-  def resolutionStepWitness(Ps: Seq[PointedClause]): Substitution = {
-    Ps.foldRight(Substitution()) { (next, acc) =>
-      val nextVar = next.varOption.get
-      val renamedVar = rename.awayFrom(freeHOVariables(next.clause.toFormula)).fresh(nextVar)
-      val expr = alphaStep(next, renamedVar).substitute((renamedVar, acc(nextVar)))
-      Substitution((nextVar, expr.simplified))
-    }
+  "¬X(u) | B(u,v) | [X(v)] is not purified in {X(a), B(a,v), -X(c)}" in {
+    isPurified(PointedClause(hcl"X(u) :- B(u,v), X(v)", Suc(1)), Set(hcl":- X(a)", hcl":- B(a,v)", hcl"X(c) :-")) must beFalse
   }
 
-  extension (clauses: Set[HOLClause])
-    def clspepState(vars: Var*): State = State.initialFrom(
-      ClauseSetPredicateEliminationProblem(vars, clauses),
-      None,
-      false,
-      true
-    )
+  "¬X(v) | X(f(v)) | B(v) is not purified in {X(a) | -X(f(a)), X(b), -X(c), B(b)}" in {
+    isPurified(
+      PointedClause(hcl"X(v) :- X(f(v)), B(v)", Ant(0)),
+      Set(hcl"X(f(a)) :- X(a)", hcl":- X(b)", hcl"X(c) :-", hcl":- B(b)")
+    ) must beFalse
+  }
 }

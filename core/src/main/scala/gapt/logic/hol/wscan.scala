@@ -6,7 +6,6 @@ import gapt.expr.util.rename
 import gapt.expr.util.freeVariables
 import gapt.expr.subst.Substitution
 import gapt.expr.formula.Atom
-import gapt.expr.formula.hol.freeHOVariables
 import gapt.expr.formula.fol.FOLVar
 import gapt.proofs.RichFormulaSequent
 import gapt.logic.Polarity
@@ -15,9 +14,9 @@ import gapt.expr.formula.And
 import gapt.expr.formula.Or
 import gapt.expr.formula.All
 import gapt.expr.formula.Ex
+import gapt.expr.formula.Eq
 import gapt.expr.BetaReduction.betaNormalize
 import gapt.expr.ty.FunctionType
-import gapt.expr.ty.To
 import gapt.expr.formula.constants.BottomC
 import gapt.logic.hol.wdls.simplify
 import gapt.expr.formula.constants.TopC
@@ -28,6 +27,7 @@ import gapt.expr.formula.Iff
 import gapt.logic.hol.scan.{PointedClause, Derivation, DerivationStep}
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.Neg
+import gapt.expr.given
 
 object wscan {
 
@@ -134,33 +134,35 @@ object wscan {
       derivation: Derivation,
       limit: Option[Int]
   ): Option[Substitution] = {
-    def helper(derivation: Derivation): Option[Substitution] = {
-      derivation.derivationSteps match
-        case head :: next => {
-          head match
-            case i: (DerivationStep.ConstraintResolution | DerivationStep.ConstraintFactoring | DerivationStep.TautologyDeletion | DerivationStep.SubsumptionDeletion | DerivationStep.ConstraintElimination) => helper(derivation.tail)
-            case DerivationStep.ExtendendPurityDeletion(hoVar, polarity) => {
-              val wits = helper(derivation.tail)
-              val argumentVariables = freshArgumentVariables(hoVar.ty, "u")
-              val wit = if polarity.positive then TopC() else BottomC()
-              val witSubst = Substitution(hoVar, Abs.Block(argumentVariables, wit))
-              wits.map(w => w.compose(witSubst))
-            }
-            case DerivationStep.PurifiedClauseDeletion(candidate) => {
-              for
-                w <- helper(derivation.tail)
-                ext <- pResU(candidate, limit).map(Substitution(candidate.varOption.get, _))
-              yield w.compose(ext)
-            }
-        }
-        case Nil => Some(Substitution(derivation.from.varsToEliminate.map {
-            case v @ Var(name, ty @ FunctionType(To, args)) =>
-              val predicateVar = rename.awayFrom(containedNames(derivation.from.firstOrderClauses.toFormula)).fresh(Var(s"W$name", ty))
-              (v, predicateVar)
-          }.toMap))
-    }
+    derivation.derivationSteps match {
+      case Nil => Some(Substitution())
+      case head :: next => {
+        head match
+          case i: (DerivationStep.ConstraintResolution |
+                DerivationStep.ConstraintFactoring |
+                DerivationStep.TautologyDeletion |
+                DerivationStep.SubsumptionDeletion |
+                DerivationStep.VariableElimination) => witnessSubstitution(derivation.tail, limit)
 
-    helper(derivation)
+          case DerivationStep.ExtendendPurityDeletion(hoVar, polarity) => {
+            val wits = witnessSubstitution(derivation.tail, limit)
+            val argumentVariables = freshArgumentVariables(hoVar.ty, "u")
+            val wit = if polarity.positive then TopC() else BottomC()
+            val witSubst = Substitution(hoVar, Abs.Block(argumentVariables, wit))
+            wits.map(w => w.compose(witSubst))
+          }
+
+          case DerivationStep.PurifiedClauseDeletion(candidate) => {
+            val conclusion = head(derivation.from.firstOrderClauses)
+            for
+              w <- witnessSubstitution(derivation.tail, limit)
+              ext <- purifiedClauseDeletionSubstitution(candidate, conclusion, limit)
+            yield {
+              w.compose(ext)
+            }
+          }
+      }
+    }
   }
 
   private def simplifyWitnessSubstitution(subst: Substitution): Substitution = {
@@ -173,12 +175,189 @@ object wscan {
     betaNormalized
   }
 
-  private def freeFOLVariables(expr: Expr): Set[FOLVar] =
-    (freeVariables(expr) -- freeHOVariables(expr)).map { case v: FOLVar => v }
+  def purifiedClauseDeletionSubstitution(
+      pointedClause: PointedClause,
+      clauseSet: Set[HOLClause],
+      limit: Option[Int]
+  ): Option[Substitution] = {
+    val degree = minAcyclicPurificationDegree(pointedClause, clauseSet)
+    if degree.isDefined then
+      Some(acyclicWitness(pointedClause, degree.get))
+    else {
+      Some(Substitution((pointedClause.varOption.get, lResU(pointedClause, limit).get)))
+    }
+  }
 
-  def pResU(pointedClause: PointedClause, limit: Option[Int]): Option[Expr] = {
+  type PurificationSubsumption = Map[PointedClause, HOLClause]
+  def minAcyclicPurificationDegree(
+      pointedClause: PointedClause,
+      clauseSet: Set[HOLClause]
+  ): Option[Int] = {
+    (for
+      subsumption <- purificationSubsumptions(clauseSet, pointedClause)
+      degree <- acyclicDegree(clauseSet, pointedClause, subsumption)
+    yield degree).minOption
+  }
 
-    val freshConstants = rename.awayFrom(containedNames(pointedClause.clause)).freshStream("c").take(pointedClause.args.size).map(FOLConst(_)).toList
+  def purificationSubsumptions(
+      clauseSet: Set[HOLClause],
+      pointedClause: PointedClause
+  ): Seq[PurificationSubsumption] = {
+    val subsumerCandidatesPerClause = scan.resolutionInferences(clauseSet, pointedClause).toSeq
+      .map(inference => {
+        val resolvent = scan.constraintResolvent(inference.left, inference.right)
+        injectivelySubsumingClauses(pointedClause.symbol, !pointedClause.polarity, clauseSet, resolvent)
+          .map(s => (inference.right, s)).toSeq
+      })
+
+    cartesianProduct(subsumerCandidatesPerClause).map(_.toMap).toSeq
+  }
+
+  private def cartesianProduct[A](xss: Seq[Seq[A]]): Iterator[Seq[A]] = {
+    xss.foldLeft(Iterator(Seq.empty[A])) { (acc, xs) =>
+      for {
+        a <- acc
+        x <- xs.iterator
+      } yield a :+ x
+    }
+  }
+
+  def injectivelySubsumingClauses(symbol: VarOrConst, polarity: Polarity, clauseSet: Set[HOLClause], clause: HOLClause): Set[HOLClause] = {
+    clauseSet.filter(c => scan.isInjectivelySubsumedAfterVariableElimination(symbol, polarity, c, clause))
+  }
+
+  def acyclicDegree(
+      clauseSet: Set[HOLClause],
+      pointedClause: PointedClause,
+      purificationSubsumption: PurificationSubsumption
+  ): Option[Int] = {
+    import scala.collection.mutable
+    val degrees: mutable.Map[HOLClause, Int] = mutable.Map()
+
+    def computeDegree(start: HOLClause, visited: Set[HOLClause]): Option[Int] = {
+      if visited.contains(start) then
+        // we've already visited this node, this means there is a path from
+        // start to itself, i.e., the graph is cyclic, thus return None
+        return None
+
+      val computedDegree = degrees.get(start)
+      if computedDegree.isDefined then
+        return computedDegree
+      else {
+        val startPointedClauses = pointedClausesWithPolarity(start, pointedClause.symbol, !pointedClause.index.polarity)
+        if startPointedClauses.isEmpty then
+          degrees.update(start, 0)
+          return Some(0)
+        else
+          val maxDegree = (for
+            pointedClause <- startPointedClauses
+            degree <- computeDegree(purificationSubsumption(pointedClause), visited + start)
+          yield degree).maxOption
+
+          if maxDegree.isEmpty then
+            return None
+
+          val startDegree = maxDegree.get + 1
+          degrees.update(start, startDegree)
+          return Some(startDegree)
+      }
+    }
+
+    for clause <- clauseSet do
+      computeDegree(clause, Set.empty)
+
+    if !clauseSet.subsetOf(degrees.keySet) then
+      // this means there are clauses that don't have associated degrees, i.e.,
+      // clauses that are part of a cycle, i.e., the graph is cyclic
+      None
+    else
+      degrees.values.maxOption
+  }
+
+  def pointedClausesWithPolarity(clause: HOLClause, symbol: VarOrConst, polarity: Polarity): Seq[PointedClause] = {
+    clause.zipWithIndex.flatMap {
+      case (Atom(head, _), index) if index.polarity == polarity && head == symbol => Seq(PointedClause(clause, index))
+      case _                                                                      => Seq.empty
+    }.elements.toSeq
+  }
+
+  def acyclicWitness(
+      pointedClause: PointedClause,
+      degree: Int
+  ): Substitution = {
+    val Abs.Block(vars, formula) = alpha(
+      pointedClause,
+      degree,
+      Abs.Block(freshArgumentVariables(pointedClause.symbol.ty, "u"), BottomC())
+    )
+    val wit =
+      if pointedClause.polarity.inAnt then
+        formula
+      else Neg(formula)
+
+    Substitution((
+      pointedClause.varOption.get,
+      Abs.Block(vars, wit)
+    ))
+  }
+
+  extension (e: Expr) {
+    def simplified: Expr = {
+      e.betaNormalized match {
+        case Abs.Block(vars, f: Formula) => Abs.Block(vars, simplify(f))
+      }
+    }
+  }
+
+  import gapt.proofs.SequentIndex
+  case class PointedClauseDecomposition(
+      pointedAtom: Atom,
+      pointedIndex: SequentIndex,
+      oppositePolarityArgs: Sequent[List[Expr]],
+      remainder: HOLClause
+  )
+  extension (pointedClause: PointedClause)
+    def decomposition: PointedClauseDecomposition = {
+      val (lit, rem) = pointedClause.clause.focus(pointedClause.index)
+      val (reproduction, remainder) = rem.partition {
+        case (Atom(head, _), p) => p == !pointedClause.index.polarity && head == pointedClause.symbol
+        case _                  => ???
+      }
+      val reproductionArgs = reproduction.map { case Atom(_, args) => args }
+      PointedClauseDecomposition(lit, pointedClause.index, reproductionArgs, remainder)
+    }
+
+  def alphaStep(P: PointedClause, placeholder: Var): Expr = {
+    assert(P.varOption.isDefined)
+    val freeFolVars = freeFOLVariables(P.clause.toFormula).toSeq
+    val args = rename.awayFrom(freeFolVars).freshStream("u").zip(P.args).map {
+      case (name, arg) => Var(name, arg.ty)
+    }
+    val PointedClauseDecomposition(_, _, reproductionArgs, remainder) = P.decomposition
+    val reproductions = Sequent(Vector.empty[Atom], reproductionArgs.elements.map(args => Atom(placeholder, args)))
+    val constraint = HOLClause(args.zip(P.args).map((a, b) => Eq(a, b)), Vector.empty[Atom])
+    val firstClause = App(P.varOption.get, args).betaNormalized
+    val formula: Formula = And(
+      if P.index.isAnt then firstClause else Neg(firstClause),
+      All.Block(freeFolVars, (constraint ++ remainder ++ reproductions).toFormula)
+    ).betaNormalized
+    Abs.Block(args, formula).simplified
+  }
+
+  def alpha(P: PointedClause, k: Int, initial: Expr): Expr = {
+    val placeholder = rename.awayFrom(freeVariables(P.clause.toFormula)).fresh(Var("W", P.symbol.ty))
+    if k == 0 then initial
+    else {
+      val previous = alpha(P, k - 1, initial)
+      alphaStep(P, placeholder).substitute((placeholder, previous)).simplified
+    }
+  }
+
+  def lResU(pointedClause: PointedClause, limit: Option[Int]): Option[Expr] = {
+    val freshConstants = rename.awayFrom(containedNames(pointedClause.clause))
+      .freshStream("c")
+      .take(pointedClause.args.size)
+      .map(FOLConst(_)).toList
 
     val Atom(head, args) = pointedClause.designatedLiteral: @unchecked
     val unitClause = HOLClause(Seq((Atom(head, freshConstants), !pointedClause.index.polarity)))
@@ -232,7 +411,7 @@ object wscan {
     rename.awayFrom(blacklist).freshStream(varName).zip(argTypes).map(Var(_, _))
   }
 
-  private def areEquivalent(backgroundTheory: Formula, left: Substitution, right: Substitution): Boolean = {
+  def areEquivalent(backgroundTheory: Formula, left: Substitution, right: Substitution): Boolean = {
     left.domain == right.domain && left.domain.forall(v => {
       val vars = freshArgumentVariables(v.ty, "u")
       val leftFormula = BetaReduction.betaNormalize(App(left(v), vars)).asInstanceOf[Formula]

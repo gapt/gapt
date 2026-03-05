@@ -7,9 +7,16 @@ import gapt.expr.Var
 import gapt.expr.formula.hol.HOLPartialAtom
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.To
+import gapt.expr.VarOrConst
 
 trait Atom extends Formula with HOLPartialAtom {
   private[expr] override def numberOfArguments: Int = 0
+
+  def head: VarOrConst = this match
+    case Atom(head, _) => head
+
+  def args: List[Expr] = this match
+    case Atom(_, args) => args
 }
 
 object Atom {
@@ -23,7 +30,7 @@ object Atom {
   def apply(head: Expr, args: List[Expr]): Atom =
     Apps(head, args).asInstanceOf[Atom]
 
-  def unapply(e: Atom): Option[(Expr, List[Expr])] = e match {
+  def unapply(e: Atom): Option[(VarOrConst, List[Expr])] = e match {
     case Apps(head @ (Const(_, _, _) | Var(_, _)), args) if e.ty == To => Some(head, args)
     case _                                                             => None
   }

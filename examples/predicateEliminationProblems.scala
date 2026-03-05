@@ -18,7 +18,6 @@ import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLVar
 import gapt.utils.runProcess
 import gapt.logic.Polarity
-import gapt.utils.withTimeout
 
 val negationOfModalAxiom = pep"?X -(!u (!v (R(u,v) -> ((!w (R(v, w) -> X(w))) <-> X(v)))))"
 val exampleWithQuantifiedVariableNotOccurring = clspep"?(X:i>o) !u A(u)"
@@ -53,10 +52,9 @@ val single3PartDisjunction = clspep"?X(X(a) | X(b) | X(c))"
 
 val exampleWithTwoVariables = clspep"?X?Y(${
     Set(
-      hcl":- Y(a,b)",
-      hcl"Y(u,u) :- X(u)",
-      hcl"Y(u,v) :- Y(v,u)",
-      hcl"X(a) :-"
+      hcl":- Y(a)",
+      hcl"Y(u) :- X(u)",
+      hcl"X(b) :-"
     ).toFormula
   })"
 
@@ -268,7 +266,7 @@ def exportToScan(varsToEliminate: Seq[Var], clauses: Seq[HOLClause]): String = {
   set(for_sub).
   set(back_sub).
   set(very_verbose).
-  assign(max_seconds, 5).
+  assign(max_seconds, 1).
 
   % 1.assign(check_redundancy_time,s).
   % try to prove each generated clause in s seconds from rest
@@ -306,9 +304,6 @@ def exportToScan(varsToEliminate: Seq[Var], clauses: Seq[HOLClause]): String = {
 }
 
 def runScan(varsToEliminate: Seq[Var], clauses: Seq[HOLClause]): Int = {
-  import scala.concurrent._
-  import scala.concurrent.duration._
-  import scala.io._
   val scanInput = exportToScan(varsToEliminate, clauses)
   val (exitValue, stdout) =
     runProcess.withExitValue(Seq("docker", "run", "-i", "scan-app"), stdin = scanInput)
@@ -350,8 +345,8 @@ def additionalPrinters: PartialFunction[Any, pprint.Tree] = {
       )
     )
   case DerivationStep.PurifiedClauseDeletion(candidate) => pprint.Tree.Apply("Purification", Iterator(additionalPrinters(candidate)))
-  case DerivationStep.ConstraintElimination(clause, index, _) => pprint.Tree.Apply(
-      "ConstraintElimination",
+  case DerivationStep.VariableElimination(clause, index, _) => pprint.Tree.Apply(
+      "VariableElimination",
       Iterator(pprint.Tree.KeyValue("clause", printer.treeify(clause, false, true)), pprint.Tree.KeyValue("constraint", printer.treeify(clause(index), false, true)))
     )
   case f @ DerivationStep.ConstraintFactoring(clause, leftIndex, rightIndex) => pprint.Tree.Apply(
