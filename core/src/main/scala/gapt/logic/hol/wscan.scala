@@ -88,30 +88,6 @@ object wscan {
   }
 
   /**
-    * Runs the SCAN algorithm multiple times on the input predicate elimination problem to find several derivations and corresponding witnesses and only gives back those that are mutually non-equivalent.
-    *
-    * @param substitutions an IterableOnce of the substitutions of which to filter out the mutually non-equivalent ones
-    * @return an iterator of mutually non-equivalent substitutions satisfying the WSOQE-condition of the given input
-    */
-  def mutuallyNonEquivalent(
-      substitutions: IterableOnce[Substitution],
-      firstOrderEquivalent: Formula
-  ): Iterator[Substitution] = {
-    Iterator.unfold((Set.empty[Substitution], substitutions.iterator)) {
-      case (state, iterator) => {
-        val nextNonEquivalentWit = iterator.find(w => state.forall(s => !areEquivalent(firstOrderEquivalent, w, s)))
-        if nextNonEquivalentWit.isEmpty then
-          None
-        else
-          Some((
-            nextNonEquivalentWit.get,
-            (state + nextNonEquivalentWit.get, iterator)
-          ))
-      }
-    }
-  }
-
-  /**
     * Computes the WSCAN witness based on a given SCAN derivation.
     * Returns Some, if the computation succeeds with the given witnessLimit.
     * Returns None otherwise.
@@ -128,6 +104,75 @@ object wscan {
       derivation,
       witnessLimit
     ).map(simplifyWitnessSubstitution)
+  }
+
+  /**
+    * Runs the SCAN algorithm multiple times on the input predicate elimination problem to find several derivations and corresponding witnesses and only gives back those that are mutually non-equivalent.
+    *
+    * @param substitutions an IterableOnce of the substitutions of which to filter out the mutually non-equivalent ones
+    * @return an iterator of mutually non-equivalent substitutions satisfying the WSOQE-condition of the given input
+    */
+  def mutuallyNonEquivalentWitnesses(
+      input: ClauseSetPredicateEliminationProblem,
+      oneSidedOnly: Boolean = true,
+      allowResolutionOnBaseLiterals: Boolean = false,
+      derivationLimit: Option[Int] = Some(100),
+      attemptLimit: Option[Int] = Some(100),
+      witnessLimit: Option[Int] = Some(10)
+  ): Iterator[Substitution] = {
+    val baseIterator = scan.derivationsFrom(
+      input,
+      oneSidedOnly = oneSidedOnly,
+      allowResolutionOnBaseLiterals = allowResolutionOnBaseLiterals,
+      derivationLimit = derivationLimit
+    )
+    val iterator = attemptLimit.map(l => baseIterator.take(l)).getOrElse(baseIterator)
+    val witnesses = iterator.flatMap {
+      case Left(_) => None
+      case Right(derivation) =>
+        witnessSubstitution(derivation, limit = witnessLimit)
+          .map(simplifyWitnessSubstitution)
+          .map(w => (derivation, w))
+    }
+
+    val (firstOrderEquivalent, firstWitness) = witnesses.nextOption() match {
+      case None                    => return Iterator.empty
+      case Some((derivation, wit)) => (derivation.conclusion.toFormula, wit)
+    }
+    return MutuallyNonEquivalentWitnessIterator(
+      Iterator(firstWitness) ++ witnesses.map(_._2),
+      firstOrderEquivalent
+    )
+  }
+
+  private case class MutuallyNonEquivalentWitnessIterator(
+      val witnessIterator: Iterator[Substitution],
+      val firstOrderEquivalent: Formula
+  ) extends Iterator[Substitution] {
+    private val state: scala.collection.mutable.Set[Substitution] = scala.collection.mutable.Set.empty
+    private var nextWitness: Option[Substitution] = None
+    def hasNext: Boolean =
+      try
+        nextWitness = Some(next())
+        true
+      catch { case _: NoSuchElementException => false }
+    def next(): Substitution = {
+      nextWitness match {
+        case Some(wit) => {
+          nextWitness = None
+          return wit
+        }
+        case None =>
+      }
+
+      val nextNonEquivalentWit = witnessIterator.filter(w =>
+        state.forall(s => !areEquivalent(firstOrderEquivalent, w, s))
+      )
+
+      val nextWit = nextNonEquivalentWit.next()
+      state.add(nextWit)
+      nextWit
+    }
   }
 
   private def witnessSubstitution(
