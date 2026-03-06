@@ -1103,4 +1103,7 @@ object scan {
 
   def isDerivationCorrect(derivation: Derivation): Boolean =
     reasonsThatDerivationIsIncorrect(derivation).isEmpty
+
+  def isEliminating(derivation: Derivation): Boolean =
+    freeHOVariables(derivation.conclusion.toFormula).intersect(derivation.from.varsToEliminate.toSet).isEmpty
 }

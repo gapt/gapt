@@ -54,28 +54,6 @@ class wscanTest extends Specification {
     }
   """
 
-  def beEquivalentTo(right: Formula): Matcher[Formula] = { (left: Formula) =>
-    Escargot.isValid(Iff(left, right)).must(beTrue).mapMessage(_ => s"$left is not equivalent to $right")
-  }
-
-  def beSubsetOf(right: Set[Var]): Matcher[Set[Var]] = { (left: Set[Var]) =>
-    forall(left)(right must contain(_)).mapMessage(_ => s"$left is not a subset of $right")
-  }
-
-  def beWitnessFor(input: ClauseSetPredicateEliminationProblem, firstOrderEquivalent: Formula): Matcher[Option[Substitution]] = {
-    (solution: Option[Substitution]) =>
-      solution must beSome[Substitution].like {
-        (witness: Substitution) =>
-          {
-            val substitutedInput = BetaReduction.betaNormalize(witness(input.firstOrderClauses.toFormula))
-            witness.domain.must(beSubsetOf(input.varsToEliminate.toSet))
-              .mapMessage(_ => s"domain of substitution is not a subset of variables to eliminate ${input.varsToEliminate}")
-              .and(substitutedInput.must(beEquivalentTo(firstOrderEquivalent))
-                .mapMessage(_ => s"substituted input is not equivalent to output clause set"))
-          }
-      }
-  }
-
   val defaultDerivationLimit = 20
   val defaultAttemptLimit = 100
   val defaultWitnessLimit = 2
@@ -105,19 +83,42 @@ class wscanTest extends Specification {
         witnessLimit = Some(witnessLimit)
       )
 
-      (derivation must beCorrectDerivation()) and
-        witness.must(beWitnessFor(input, firstOrderEquivalent)) and
+      (derivation must beEliminatingDerivation) and
+        (witness must beSome[Substitution].like { wit => wit must beWitnessFor(input, firstOrderEquivalent) }) and
         (firstOrderEquivalent must beEquivalentTo(equivalentTo))
   }
 }
 
-def beCorrectDerivation(): Matcher[scan.Derivation] = { (derivation: scan.Derivation) =>
+def beCorrectDerivation: Matcher[scan.Derivation] = { (derivation: scan.Derivation) =>
   val reasons = scan.reasonsThatDerivationIsIncorrect(derivation).toSeq
   (reasons must beEmpty).mapMessage(_ => s"""derivation has errors:
                                             |${reasons.mkString("\n")}
                                             |
                                             |derivation:
                                             |${gapt.examples.predicateEliminationProblems.printer(derivation)}""".stripMargin)
+}
+
+def beEliminatingDerivation: Matcher[scan.Derivation] = { (derivation: scan.Derivation) =>
+  (derivation must beCorrectDerivation) && (scan.isEliminating(derivation) must beTrue)
+}
+
+def beEquivalentTo(right: Formula): Matcher[Formula] = { (left: Formula) =>
+  Escargot.isValid(Iff(left, right)).must(beTrue).mapMessage(_ => s"$left is not equivalent to $right")
+}
+
+def beSubsetOf(right: Set[Var]): Matcher[Set[Var]] = { (left: Set[Var]) =>
+  forall(left)(right must contain(_)).mapMessage(_ => s"$left is not a subset of $right")
+}
+
+def beWitnessFor(input: ClauseSetPredicateEliminationProblem, firstOrderEquivalent: Formula): Matcher[Substitution] = {
+  (witness: Substitution) =>
+    {
+      val substitutedInput = BetaReduction.betaNormalize(witness(input.firstOrderClauses.toFormula))
+      witness.domain.must(beSubsetOf(input.varsToEliminate.toSet))
+        .mapMessage(err => s"domain of substitution is not a subset of variables to eliminate ${input.varsToEliminate}: $err")
+        .and(substitutedInput.must(beEquivalentTo(firstOrderEquivalent))
+          .mapMessage(_ => s"substituted input is not equivalent to output clause set"))
+    }
 }
 
 def beEquivalentTo(witness: Substitution) = { (wit: Substitution) =>
@@ -129,11 +130,12 @@ class witnessConstruction extends mutable.Specification {
   import scan._
 
   "derivation with one-sided purified clause deletion" in {
+    val input = ClauseSetPredicateEliminationProblem(
+      Seq(hov"X:i>o"),
+      Set(hcl":- B(a,v)", hcl":- X(a)", hcl"X(u) :- B(u,v), X(v)", hcl"X(c) :- ")
+    )
     val derivation = Derivation(
-      ClauseSetPredicateEliminationProblem(
-        Seq(hov"X:i>o"),
-        Set(hcl":- B(a,v)", hcl":- X(a)", hcl"X(u) :- B(u,v), X(v)", hcl"X(c) :- ")
-      ),
+      input,
       List(
         DerivationStep.ConstraintResolution(
           PointedClause(hcl":- X(a)", Suc(0)),
@@ -144,16 +146,18 @@ class witnessConstruction extends mutable.Specification {
       )
     )
     val wit = wscan.witness(derivation, witnessLimit = None).get
-    (derivation must beCorrectDerivation()) and
+    (derivation must beEliminatingDerivation) and
+      (wit must beWitnessFor(input, derivation.conclusion.toFormula)) and
       (wit must beEquivalentTo(Substitution((hov"X:i>o", le"^u u=a"))))
   }
 
   "derivation with non-one-sided purified clause deletion" in {
+    val input = ClauseSetPredicateEliminationProblem(
+      Seq(hov"X:i>o"),
+      Set(hcl":- B(a,v)", hcl":- X(a)", hcl"X(u) :- B(u,v), X(v)", hcl"X(c) :- ")
+    )
     val derivation = Derivation(
-      ClauseSetPredicateEliminationProblem(
-        Seq(hov"X:i>o"),
-        Set(hcl":- B(a,v)", hcl":- X(a)", hcl"X(u) :- B(u,v), X(v)", hcl"X(c) :- ")
-      ),
+      input,
       List(
         DerivationStep.PurifiedClauseDeletion(PointedClause(hcl"X(u) :- B(u,v), X(v)", Ant(0))),
         DerivationStep.ConstraintResolution(
@@ -165,11 +169,12 @@ class witnessConstruction extends mutable.Specification {
       )
     )
     val wit = wscan.witness(derivation, witnessLimit = None).get
-    (derivation must beCorrectDerivation()) and
+    (derivation must beEliminatingDerivation) and
+      (wit must beWitnessFor(input, derivation.conclusion.toFormula)) and
       (wit must beEquivalentTo(Substitution((hov"X:i>o", le"^u u=a & !v B(u,v)"))))
   }
 
-  "derivation where purification subsumption graph is cyclic should not yield witness" in {
+  "derivation with cylcic purification subsumption graph and finite witness construction should not yield witness" in {
     val derivation = Derivation(
       ClauseSetPredicateEliminationProblem(
         Seq(hov"X:i>o"),
@@ -181,7 +186,7 @@ class witnessConstruction extends mutable.Specification {
       )
     )
     val wit = wscan.witness(derivation, witnessLimit = Some(10))
-    (derivation must beCorrectDerivation()) and
+    (derivation must beEliminatingDerivation) and
       (wit must beNone)
   }
 }
@@ -208,7 +213,7 @@ class scanDerivationsCorrectTest extends mutable.Specification {
       derivations(example, derivationLimit = Some(15), derivationCount = Some(5))
       // and shallow ones
         ++ derivations(example, derivationLimit = Some(5), derivationCount = Some(20))
-    ) must forall(beCorrectDerivation())
+    ) must forall(beCorrectDerivation)
   }
 }
 
