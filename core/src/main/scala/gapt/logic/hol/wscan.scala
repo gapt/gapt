@@ -184,7 +184,7 @@ object wscan {
     if degree.isDefined then
       Some(acyclicWitness(pointedClause, degree.get))
     else
-      lResU(pointedClause, limit).map {
+      lRes(pointedClause, limit).map {
         wit => Substitution((pointedClause.varOption.get, wit))
       }
   }
@@ -354,7 +354,7 @@ object wscan {
     }
   }
 
-  def lResU(pointedClause: PointedClause, limit: Option[Int]): Option[Expr] = {
+  def lRes(pointedClause: PointedClause, limit: Option[Int]): Option[Expr] = {
     val freshConstants = rename.awayFrom(containedNames(pointedClause.clause))
       .freshStream("c")
       .take(pointedClause.args.size)
