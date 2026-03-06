@@ -326,10 +326,16 @@ def additionalPrinters: PartialFunction[Any, pprint.Tree] = {
         val clauseSets = inferences.scanLeft(initialClauseSet)((c, i) =>
           ClauseSetPredicateEliminationProblem(c.varsToEliminate, i(c.firstOrderClauses))
         )
-        Iterator(printer.treeify(initialClauseSet, true, true)) ++ inferences.zip(clauseSets.tail).flatMap {
-          case (inference, clauses) => Seq(
-              printer.treeify(inference, true, true),
-              printer.treeify(clauses, true, true)
+        Iterator(printer.treeify(initialClauseSet, true, true)) ++ inferences.zip(clauseSets.tail).zipWithIndex.flatMap {
+          case ((inference, clauses), index) => Seq(
+              pprint.Tree.Apply(
+                "Step",
+                Iterator(
+                  printer.treeify(index + 1, true, true),
+                  printer.treeify(inference, true, true)
+                )
+              ),
+              pprint.treeify(clauses, true, true)
             )
         }.iterator
       }
@@ -413,35 +419,36 @@ def wscanTestExample(example: ClauseSetPredicateEliminationProblem) =
   println(s"Got result ${result}")
   result
 
+val examples: List[ClauseSetPredicateEliminationProblem] = List(
+  negationOfModalAxiom.toClauseSet,
+  exampleWithQuantifiedVariableNotOccurring,
+  exampleWithoutQuantifiedVariables,
+  exampleThatCanBeSolvedByPolarityRuleImmediately,
+  negationOfLeibnizEquality.toClauseSet,
+  exampleThatUsesResolutionOnLiteralsThatAreNotQuantifiedVariables,
+  exampleWithTwoClauses,
+  exampleWithThreeClauses,
+  single2PartDisjunction,
+  single3PartDisjunction,
+  exampleWithTwoVariables,
+  exampleRequiringTautologyDeletion,
+  exampleRequiringSubsumption,
+  exampleWithSymmetryRequiringSubsumption,
+  soqeBookDLSStarExample,
+  unsatisfiableExampleThatRequiresFactoring,
+  // witnessBlowup,
+  twoStepRedundancy,
+  subsumptionByXLiteral,
+  // badExample,
+  booleanUnification.toClauseSet,
+  onlyOneSidedClauses,
+  wernhardUnificationExample,
+  graphReachability(3, 1, 2, 1 -> 2),
+  modalCorrespondence.negationOfSecondOrderTranslationOfTAxiom,
+  modalCorrespondence.negationOfSecondOrderTranslationOf4Axiom
+)
 def wscanTest() =
-  val examples: List[ClauseSetPredicateEliminationProblem] = List(
-    negationOfModalAxiom.toClauseSet,
-    exampleWithQuantifiedVariableNotOccurring,
-    exampleWithoutQuantifiedVariables,
-    exampleThatCanBeSolvedByPolarityRuleImmediately,
-    negationOfLeibnizEquality.toClauseSet,
-    exampleThatUsesResolutionOnLiteralsThatAreNotQuantifiedVariables,
-    exampleWithTwoClauses,
-    exampleWithThreeClauses,
-    single2PartDisjunction,
-    single3PartDisjunction,
-    exampleWithTwoVariables,
-    exampleRequiringTautologyDeletion,
-    exampleRequiringSubsumption,
-    exampleWithSymmetryRequiringSubsumption,
-    soqeBookDLSStarExample,
-    unsatisfiableExampleThatRequiresFactoring,
-    witnessBlowup,
-    twoStepRedundancy,
-    subsumptionByXLiteral,
-    badExample,
-    booleanUnification.toClauseSet,
-    onlyOneSidedClauses,
-    wernhardUnificationExample,
-    graphReachability(3, 0, 2, 0 -> 1),
-    modalCorrespondence.negationOfSecondOrderTranslationOfTAxiom,
-    modalCorrespondence.negationOfSecondOrderTranslationOf4Axiom
-  )
+
   println(s"Testing ${examples.size} examples")
 
   val results = examples.map(wscanTestExample)

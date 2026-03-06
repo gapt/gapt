@@ -8,61 +8,49 @@ import gapt.expr.subst.Substitution
 import org.specs2.matcher.Matcher
 import org.specs2.matcher.MustMatchers._
 import org.specs2.matcher.MatchResult
-import gapt.proofs.HOLClause
 import gapt.logic.hol.scan.PointedClause
 import gapt.proofs.Ant
 import gapt.proofs.Suc
 import gapt.proofs.Sequent
 import gapt.logic.Polarity
 
-def beCorrectDerivation(): Matcher[scan.Derivation] = { (derivation: scan.Derivation) =>
-  val reasons = scan.reasonsThatDerivationIsIncorrect(derivation).toSeq
-  (reasons must beEmpty).mapMessage(_ => s"""derivation has errors:
-                                            |${reasons.mkString("\\n")}""".stripMargin)
-}
-
-def beEquivalentTo(witness: Substitution) = { (wit: Substitution) =>
-  (wscan.areEquivalent(Top(), witness, wit) must beTrue)
-    .mapMessage(_ => s"$wit is not equivalent to expected witness $witness")
-}
-
 class wscanTest extends Specification {
   import gapt.examples.predicateEliminationProblems._
 
   def is = s2"""
-  This is a specification for the scan implementation
+  This is a specification for the wscan implementation
 
   It should solve
     solve equation without quantified variable ${exampleWithQuantifiedVariableNotOccurring must
-      beSolved(equivalentTo = Set(hcl":- A(u)"))}
+      beSolved(equivalentTo = hof"!u A(u)")}
     treat variables as predicate constants when not given ${exampleWithoutQuantifiedVariables must
-      beSolved(equivalentTo = Set(hcl":- X(u)"))}
+      beSolved(equivalentTo = hof"!u X(u)")}
     negation of leibniz equality ${negationOfLeibnizEquality.toClauseSet must
-      beSolved(equivalentTo = Set(hcl"s_0 = s_2 :-"))}
-    2-part disjunction ${single2PartDisjunction must beSolved()}
-    3-part disjunction ${single3PartDisjunction must beSolved()}
+      beSolved(equivalentTo = hof"s_0 != s_2")}
+    2-part disjunction ${single2PartDisjunction must beSolved(equivalentTo = Top())}
+    3-part disjunction ${single3PartDisjunction must beSolved(equivalentTo = Top())}
     two variable example ${exampleWithTwoVariables must beSolved(
-      equivalentTo = Set(hcl"a = b :-")
+      equivalentTo = hof"a!=b"
     )}
     modal correspondence T axiom ${
       modalCorrespondence.negationOfSecondOrderTranslationOfTAxiom must
-        beSolved(equivalentTo = Set(hcl"R(a,a) :-"))
+        beSolved(equivalentTo = hof"-R(a,a)")
     }
     modal correspondence 4 axiom ${
       modalCorrespondence.negationOfSecondOrderTranslationOf4Axiom must
-        beSolved(equivalentTo = Set(hcl":- R(a,b)", hcl":- R(b,c)", hcl"R(a,c) :- "))
+        beSolved(equivalentTo = hof"R(a,b) & R(b,c) & -R(a,c)")
     }
     non-inductive example with two clauses ${
-      exampleWithTwoClauses must beSolved(equivalentTo = Set(hcl"B(u) :- A(u)"))
+      exampleWithTwoClauses must beSolved(equivalentTo = hof"!u(B(u) -> A(u))")
     }
     non-inductive example with three clauses ${
-      exampleWithThreeClauses must beSolved(equivalentTo = Set(hcl"C(u) :- A(u)", hcl"B(u) :- A(u)"))
+      exampleWithThreeClauses must beSolved(equivalentTo = hof"!u(C(u) -> A(u)) & !u(B(u) -> A(u))")
     }
     inductive example with tautology deletion ${
-      exampleRequiringTautologyDeletion must beSolved(equivalentTo = Set(hcl"A(u) :- B(u)"))
+      exampleRequiringTautologyDeletion must beSolved(equivalentTo = hof"!u(A(u) -> B(u))")
     }
     inductive example with subsumption ${
-      exampleRequiringSubsumption must beSolved(equivalentTo = Set(hcl"A(u) :- C(u)", hcl"A(u), B(u,v) :-"))
+      exampleRequiringSubsumption must beSolved(equivalentTo = hof"!u(A(u) -> C(u)) & !u!v(-A(u) | -B(u,v))")
     }
   """
 
@@ -93,11 +81,11 @@ class wscanTest extends Specification {
   val defaultWitnessLimit = 2
   val defaultOneSidedOnly = true
   def beSolved(
+      equivalentTo: Formula,
       allowResolutionOnBaseLiterals: Boolean = false,
       derivationLimit: Int = defaultDerivationLimit,
       attemptLimit: Int = defaultAttemptLimit,
       witnessLimit: Int = defaultWitnessLimit,
-      equivalentTo: Set[HOLClause] = Set.empty,
       oneSidedOnly: Boolean = defaultOneSidedOnly
   ): Matcher[ClauseSetPredicateEliminationProblem] = {
     (input: ClauseSetPredicateEliminationProblem) =>
@@ -119,8 +107,22 @@ class wscanTest extends Specification {
 
       (derivation must beCorrectDerivation()) and
         witness.must(beWitnessFor(input, firstOrderEquivalent)) and
-        (equivalentTo.toFormula must beEquivalentTo(firstOrderEquivalent))
+        (firstOrderEquivalent must beEquivalentTo(equivalentTo))
   }
+}
+
+def beCorrectDerivation(): Matcher[scan.Derivation] = { (derivation: scan.Derivation) =>
+  val reasons = scan.reasonsThatDerivationIsIncorrect(derivation).toSeq
+  (reasons must beEmpty).mapMessage(_ => s"""derivation has errors:
+                                            |${reasons.mkString("\n")}
+                                            |
+                                            |derivation:
+                                            |${gapt.examples.predicateEliminationProblems.printer(derivation)}""".stripMargin)
+}
+
+def beEquivalentTo(witness: Substitution) = { (wit: Substitution) =>
+  (wscan.areEquivalent(Top(), witness, wit) must beTrue)
+    .mapMessage(_ => s"$wit is not equivalent to expected witness $witness")
 }
 
 class witnessConstruction extends mutable.Specification {
@@ -165,6 +167,32 @@ class witnessConstruction extends mutable.Specification {
     val wit = wscan.witness(derivation, None).get
     (derivation must beCorrectDerivation()) and
       (wit must beEquivalentTo(Substitution((hov"X:i>o", le"^u u=a & !v B(u,v)"))))
+  }
+}
+
+class scanDerivationsCorrectTest extends mutable.Specification {
+  def derivations(
+      example: ClauseSetPredicateEliminationProblem,
+      derivationLimit: Option[Int],
+      derivationCount: Option[Int]
+  ): Seq[scan.Derivation] = {
+    val derivationIter = scan.derivationsFrom(example, derivationLimit = derivationLimit).map(_.merge)
+    val iter = derivationCount match
+      case Some(count) => derivationIter.take(count)
+      case None        => derivationIter
+
+    iter.toSeq
+  }
+
+  "scan derivations must be correct" in {
+    import gapt.examples.predicateEliminationProblems.examples
+
+    examples.flatMap(example =>
+      // test deep derivations
+      derivations(example, derivationLimit = Some(15), derivationCount = Some(5))
+      // and shallow ones
+        ++ derivations(example, derivationLimit = Some(5), derivationCount = Some(20))
+    ) must forall(beCorrectDerivation())
   }
 }
 

@@ -355,22 +355,24 @@ object scan {
           }
       }
 
-      val stateWithoutRedundancies = eliminateRedundancies(stateAfterExtendedPurityDeletion) match {
-        case Left(s)      => return Left(s)
-        case Right(state) => state
+      val stateAfterFactors =
+        for
+          redElimination <- eliminateRedundancies(stateAfterExtendedPurityDeletion)
+          factoring <- addFactors(redElimination)
+          redElimination <- eliminateRedundancies(factoring)
+        yield redElimination
+
+      val stateAfterRedundancyEliminatedFactors = stateAfterFactors match {
+        case Left(s)  => return Left(s)
+        case Right(s) => s
       }
 
-      if stateWithoutRedundancies.isEliminated then
-        return Right(stateWithoutRedundancies)
+      if stateAfterRedundancyEliminatedFactors.isEliminated then
+        return Right(stateAfterRedundancyEliminatedFactors)
 
-      val stateWithFactors = addFactors(stateWithoutRedundancies) match {
-        case Left(state)  => return Left(state)
-        case Right(state) => state
-      }
-
-      val candidatePointedClauses = purificationCandidates(stateWithFactors).toSeq
+      val candidatePointedClauses = purificationCandidates(stateAfterRedundancyEliminatedFactors).toSeq
       val statesAfterPurification = candidatePointedClauses
-        .map(purifyPointedClause(stateWithFactors, _))
+        .map(purifyPointedClause(stateAfterRedundancyEliminatedFactors, _))
 
       stack.addAll(statesAfterPurification)
       next()
@@ -435,15 +437,15 @@ object scan {
     * @return if the purification process could be completed within the limits given in state, returns Right with the new state, otherwise returns Left with a state where the limit was reached
     */
   def purifyPointedClause(state: State, pointedClause: PointedClause): Either[State, State] = {
-    val nonRedundantResolvents = nonRedundantResolutionInferences(pointedClause, state.activeClauses - pointedClause.clause)
-    if nonRedundantResolvents.isEmpty then
+    val resolutionInferences = nonRedundantResolutionInferences(pointedClause, state.activeClauses - pointedClause.clause)
+    if resolutionInferences.isEmpty then
       if state.isPointedClauseWithEliminationVariable(pointedClause) then
         applyDerivationSteps(state, Seq(DerivationStep.PurifiedClauseDeletion(pointedClause)))
       else
         Right(state) // do not delete pointed clause if resolution is performed on base symbols
     else
       for
-        stateWithResolvents <- applyDerivationSteps(state, nonRedundantResolvents)
+        stateWithResolvents <- applyDerivationSteps(state, resolutionInferences)
         stateAfterVariableElimination <- eliminateVariableConstraints(stateWithResolvents)
         purifiedState <- purifyPointedClause(stateAfterVariableElimination, pointedClause)
       yield purifiedState
@@ -526,7 +528,7 @@ object scan {
     val tautologyDeletion: Option[DerivationStep.TautologyDeletion] = state.activeClauses.find(_.isTaut).map(DerivationStep.TautologyDeletion(_))
 
     // check for eliminable constraints
-    val constraintElimination = variableEliminationStep(state)
+    val variableElimination: Option[DerivationStep.VariableElimination] = variableEliminationStep(state)
 
     // check for subsumption
     val subsumption: Option[DerivationStep.SubsumptionDeletion] = state.activeClauses.toSeq.combinations(2).flatMap {
@@ -536,7 +538,7 @@ object scan {
         leftSubsumptions ++ rightSubsumptions
       }
     }.nextOption()
-    tautologyDeletion.orElse(constraintElimination).orElse(subsumption)
+    tautologyDeletion.orElse(variableElimination).orElse(subsumption)
   }
 
   def extendedPurityDeletionStep(state: State): Option[DerivationStep] = {
