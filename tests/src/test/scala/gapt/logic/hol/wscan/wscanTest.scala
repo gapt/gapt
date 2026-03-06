@@ -217,6 +217,35 @@ class witnessConstruction extends mutable.Specification {
       (wit must beWitnessFor(input, derivation.conclusion.toFormula)) and
       (wit must beEquivalentTo(Substitution((hov"X:i>i>o", le"^u^v (u != c | v != d) & (u != d | v != c)"))))
   }
+
+  "should construct finite witness where purification subsumption graph has multiple overlapping paths" in {
+    val input = ClauseSetPredicateEliminationProblem(
+      Seq(hov"X:i>o"),
+      Set(
+        hcl"X(u) :- B(u,v,w), X(v), X(w)",
+        hcl":- X(a)",
+        hcl":- B(a, v, w), X(v), X(w)",
+        hcl":- B(a, v, w), B(v, v_1, w_1)",
+        hcl":- B(a, v, w), B(w, v_1, w_1), X(w_1)",
+        hcl":- B(a, v, w), B(w, v_1, w_1), B(w_1, v_2, w_2)"
+      )
+    )
+    val derivation = Derivation(
+      input,
+      List(
+        DerivationStep.PurifiedClauseDeletion(PointedClause(hcl"X(u) :- B(u,v,w), X(v), X(w)", Ant(0))),
+        DerivationStep.ExtendendPurityDeletion(hov"X:i>o", Polarity.Positive)
+      )
+    )
+    val wit = wscan.witness(derivation, witnessLimit = None).get
+    (derivation must beEliminatingDerivation) and
+      // (wit must beWitnessFor(input, derivation.conclusion.toFormula)) and
+      // we avoid checking the above condition here since it takes a long time
+      (wit must beEquivalentTo(Substitution((
+        hov"X:i>o",
+        le"^u !v!w(B(u, v, w) | !v_1!w_1 (B(v, v_1, w_1) | !v_2!w_2 B(v_1, v_2, w_2) | !v_2!w_2 B(w_1, v_2, w_2)) | !v_1!w_1 (B(w, v_1, w_1) | !v_2!w_2 B(v_1, v_2, w_2) | !v_2!w_2 B(w_1, v_2, w_2)))"
+      ))))
+  }
 }
 
 class scanDerivationsCorrectTest extends mutable.Specification {
