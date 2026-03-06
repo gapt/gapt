@@ -3,7 +3,6 @@ package gapt.utils
 import org.specs2.mutable.Specification
 import org.specs2.matcher.Matchers._
 import scala.concurrent.duration._
-import java.util.concurrent.TimeoutException
 
 def catCommandExists: Boolean =
   os.exists(os.root / "bin" / "cat")
@@ -127,15 +126,17 @@ class timeoutTest extends Specification {
     "should interrupt on sub millisecond timeouts after about 1 millisecond" in {
       var started = false
       var ended = false
+      val start = System.nanoTime();
       try {
-        val start = System.nanoTime();
         withTimeout(10.micros) { aborter ?=>
           started = true
           val start = System.nanoTime()
           // run for 1 millisecond
-          while (System.nanoTime() - start < 1000.microseconds.toNanos) {}
+          while (System.nanoTime() - start < 1.milliseconds.toNanos) {}
 
           // should throw an exception as Thread should have been interrupted now
+          // however this is not completely in our control as os threads might
+          // not be interrupted at exactly the time when interrupt is called
           aborter.abortIfNotified();
           ended = true
         }
@@ -145,8 +146,10 @@ class timeoutTest extends Specification {
           (started must beTrue) and
           (ended must beTrue)
       } catch {
-        case e: TimeoutException => {
-          (started must beTrue) and
+        case e: TimeOutException => {
+          val delta = System.nanoTime() - start
+          (delta must beGreaterThanOrEqualTo(1.milliseconds.toNanos)) and
+            (started must beTrue) and
             (ended must beFalse)
         }
       }
