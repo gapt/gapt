@@ -368,7 +368,7 @@ object scan {
         case Right(state) => state
       }
 
-      val candidatePointedClauses = purificationCandidates(stateWithFactors)
+      val candidatePointedClauses = purificationCandidates(stateWithFactors).toSeq
       val statesAfterPurification = candidatePointedClauses
         .map(purifyPointedClause(stateWithFactors, _))
 
@@ -382,10 +382,9 @@ object scan {
   }
 
   def nonRedundantResolutionInferences(
-      state: State,
-      pointedClause: PointedClause
+      pointedClause: PointedClause,
+      clauseSet: Set[HOLClause]
   ): Iterator[DerivationStep.ConstraintResolution] = {
-    val remainingClauseSet = state.activeClauses - pointedClause.clause
     def forwardSubsumes(clause: HOLClause, resolvent: HOLClause): Boolean = {
       isInjectivelySubsumedAfterVariableElimination(
         pointedClause.symbol,
@@ -395,10 +394,10 @@ object scan {
       )
     }
 
-    resolutionInferences(remainingClauseSet, pointedClause).iterator.filter {
+    resolutionInferences(clauseSet, pointedClause).iterator.filter {
       case DerivationStep.ConstraintResolution(left, right) =>
         val resolvent = constraintResolvent(left, right)
-        remainingClauseSet.forall(c => !forwardSubsumes(c, resolvent))
+        clauseSet.forall(c => !forwardSubsumes(c, resolvent))
     }
   }
 
@@ -436,7 +435,7 @@ object scan {
     * @return if the purification process could be completed within the limits given in state, returns Right with the new state, otherwise returns Left with a state where the limit was reached
     */
   def purifyPointedClause(state: State, pointedClause: PointedClause): Either[State, State] = {
-    val nonRedundantResolvents = nonRedundantResolutionInferences(state, pointedClause)
+    val nonRedundantResolvents = nonRedundantResolutionInferences(pointedClause, state.activeClauses - pointedClause.clause)
     if nonRedundantResolvents.isEmpty then
       if state.isPointedClauseWithEliminationVariable(pointedClause) then
         applyDerivationSteps(state, Seq(DerivationStep.PurifiedClauseDeletion(pointedClause)))
@@ -622,13 +621,7 @@ object scan {
   }
 
   def isPurified(pointedClause: PointedClause, clauseSet: Set[HOLClause]): Boolean = {
-    resolutionInferences(clauseSet, pointedClause).forall {
-      case DerivationStep.ConstraintResolution(left, right) => {
-        clauseSet.exists(c =>
-          isInjectivelySubsumedAfterVariableElimination(pointedClause.symbol, !pointedClause.polarity, c, constraintResolvent(left, right))
-        )
-      }
-    }
+    nonRedundantResolutionInferences(pointedClause, clauseSet).isEmpty
   }
 
   def isInjectivelySubsumedAfterVariableElimination(
