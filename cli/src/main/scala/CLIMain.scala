@@ -2,7 +2,6 @@ package gapt.cli
 
 import gapt.examples.Script
 
-
 object CLIMain {
 
   class ScriptsResultHolder(var result: Seq[Script] = Seq()) {

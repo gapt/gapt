@@ -6,7 +6,6 @@ import gapt.expr.formula.fol.FOLTerm
 import gapt.proofs.hoare._
 import gapt.formats.prover9.Prover9TermParserA
 
-
 trait ProgramParserA extends Prover9TermParserA {
   def program: PackratParser[Program] = singleStmt ~ rep(";" ~> program) ^^ {
     case p ~ ps => Sequence(p :: ps)

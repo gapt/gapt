@@ -7,7 +7,6 @@ import scala.swing._
 import scala.swing.event._
 import java.awt.Color
 
-
 class SunburstTreeDialog[F, T <: SequentProof[F, T]](val mainWindow: DagProofViewer[T], name: String, proof: DagProof[T], sequent_element_renderer: F => String) extends Frame {
   title = "Sunburst view of " + name
   // modal = false

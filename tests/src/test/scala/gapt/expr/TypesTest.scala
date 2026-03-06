@@ -13,7 +13,6 @@ import gapt.expr.ty.Ti
 import gapt.expr.ty.To
 import org.specs2.mutable._
 
-
 class TypesTest extends Specification {
   "Types" should {
     "produce a binary function type ( i -> (i -> o ) )" in {
