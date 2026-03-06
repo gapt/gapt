@@ -183,9 +183,10 @@ object wscan {
     val degree = minAcyclicPurificationDegree(pointedClause, clauseSet)
     if degree.isDefined then
       Some(acyclicWitness(pointedClause, degree.get))
-    else {
-      Some(Substitution((pointedClause.varOption.get, lResU(pointedClause, limit).get)))
-    }
+    else
+      lResU(pointedClause, limit).map {
+        wit => Substitution((pointedClause.varOption.get, wit))
+      }
   }
 
   type PurificationSubsumption = Map[PointedClause, HOLClause]

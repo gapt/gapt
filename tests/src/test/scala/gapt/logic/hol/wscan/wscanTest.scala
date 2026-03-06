@@ -143,7 +143,7 @@ class witnessConstruction extends mutable.Specification {
         DerivationStep.ExtendendPurityDeletion(hov"X:i>o", Polarity.Negative)
       )
     )
-    val wit = wscan.witness(derivation, None).get
+    val wit = wscan.witness(derivation, witnessLimit = None).get
     (derivation must beCorrectDerivation()) and
       (wit must beEquivalentTo(Substitution((hov"X:i>o", le"^u u=a"))))
   }
@@ -164,9 +164,25 @@ class witnessConstruction extends mutable.Specification {
         DerivationStep.ExtendendPurityDeletion(hov"X:i>o", Polarity.Negative)
       )
     )
-    val wit = wscan.witness(derivation, None).get
+    val wit = wscan.witness(derivation, witnessLimit = None).get
     (derivation must beCorrectDerivation()) and
       (wit must beEquivalentTo(Substitution((hov"X:i>o", le"^u u=a & !v B(u,v)"))))
+  }
+
+  "derivation where purification subsumption graph is cyclic should not yield witness" in {
+    val derivation = Derivation(
+      ClauseSetPredicateEliminationProblem(
+        Seq(hov"X:i>o"),
+        Set(hcl"X(v) :- X(f(v))", hcl":- X(f(f(v)))")
+      ),
+      List(
+        DerivationStep.PurifiedClauseDeletion(PointedClause(hcl"X(v) :- X(f(v))", Ant(0))),
+        DerivationStep.PurifiedClauseDeletion(PointedClause(hcl":- X(f(f(v)))", Suc(0)))
+      )
+    )
+    val wit = wscan.witness(derivation, witnessLimit = Some(10))
+    (derivation must beCorrectDerivation()) and
+      (wit must beNone)
   }
 }
 
