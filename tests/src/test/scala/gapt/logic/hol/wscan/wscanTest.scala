@@ -189,6 +189,34 @@ class witnessConstruction extends mutable.Specification {
     (derivation must beEliminatingDerivation) and
       (wit must beNone)
   }
+
+  "non-one-sided derivation with cyclic purification subsumption graph and finite lRes should produce witness" in {
+    val input = ClauseSetPredicateEliminationProblem(
+      Seq(hov"X:i>i>o"),
+      Set(hcl"X(u,v) :- X(v,u)", hcl":- X(a,b)", hcl":- X(b,a)", hcl"X(c,d) :-")
+    )
+    val derivation = Derivation(
+      input,
+      List(
+        DerivationStep.PurifiedClauseDeletion(PointedClause(hcl"X(u,v) :- X(v,u)", Ant(0))),
+        DerivationStep.ConstraintResolution(
+          PointedClause(hcl"X(c,d) :-", Ant(0)),
+          PointedClause(hcl":- X(a,b)", Suc(0))
+        ),
+        DerivationStep.ConstraintResolution(
+          PointedClause(hcl"X(c,d) :-", Ant(0)),
+          PointedClause(hcl":- X(b,a)", Suc(0))
+        ),
+        DerivationStep.PurifiedClauseDeletion(PointedClause(hcl"X(c,d) :-", Ant(0))),
+        DerivationStep.PurifiedClauseDeletion(PointedClause(hcl":- X(a,b)", Suc(0))),
+        DerivationStep.PurifiedClauseDeletion(PointedClause(hcl":- X(b,a)", Suc(0)))
+      )
+    )
+    val wit = wscan.witness(derivation, witnessLimit = Some(10)).get
+    (derivation must beEliminatingDerivation) and
+      (wit must beWitnessFor(input, derivation.conclusion.toFormula)) and
+      (wit must beEquivalentTo(Substitution((hov"X:i>i>o", le"^u^v (u != c | v != d) & (u != d | v != c)"))))
+  }
 }
 
 class scanDerivationsCorrectTest extends mutable.Specification {
