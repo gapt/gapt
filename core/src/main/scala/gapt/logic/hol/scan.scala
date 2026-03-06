@@ -358,7 +358,7 @@ object scan {
       val stateAfterFactors =
         for
           redElimination <- eliminateRedundancies(stateAfterExtendedPurityDeletion)
-          factoring <- addFactors(redElimination)
+          factoring <- addNonRedundantFactors(redElimination)
           redElimination <- eliminateRedundancies(factoring)
         yield redElimination
 
@@ -483,6 +483,21 @@ object scan {
     succeedentInferences ++ antecedentInferences
   }
 
+  def isRedundant(clauses: Set[HOLClause], clause: HOLClause): Boolean = {
+    if clause.isTaut then return true
+
+    val varEliminations = variableEliminations(clause)
+    return clauses.exists(c => varEliminations.exists(elim => c.subsumes(elim)))
+  }
+
+  def nonRedundantFactoringInferences(state: State, clause: HOLClause): Set[DerivationStep.ConstraintFactoring] = {
+    factoringInferences(state, clause).filterNot(f => isRedundant(state.activeClauses, factor(f)))
+  }
+
+  extension (c: HOLClause)
+    def subsumes(other: HOLClause): Boolean =
+      subsumptionSubstitution(c, other).nonEmpty
+
   def subsumptionSubstitution(subsumer: HOLClause, subsumee: HOLClause): Option[FOLSubstitution] = {
     val subsumerHoVarsAsConsts = subsumer.map { case Atom(VarOrConst(v, ty, tys), args) => Atom(Const(v, ty, tys), args) }
     val subsumeeHoVarsAsConsts = subsumee.map { case Atom(VarOrConst(v, ty, tys), args) => Atom(Const(v, ty, tys), args) }
@@ -503,8 +518,11 @@ object scan {
     }.map(rc => DerivationStep.ConstraintResolution(resolutionCandidate, rc))
   }
 
-  def addFactors(state: State): Either[State, State] = {
-    applyDerivationSteps(state, state.activeClauses.flatMap(factoringInferences(state, _)))
+  def addNonRedundantFactors(state: State): Either[State, State] = {
+    val factorStep = state.activeClauses.iterator.flatMap(nonRedundantFactoringInferences(state, _)).nextOption()
+    factorStep match
+      case None       => Right(state)
+      case Some(step) => applyDerivationSteps(state, Iterator(step)).flatMap(addNonRedundantFactors)
   }
 
   def eliminateRedundancies(state: State): Either[State, State] = {
