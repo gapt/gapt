@@ -3,23 +3,15 @@ package gapt.examples.predicateEliminationProblems
 import gapt.expr._
 import gapt.proofs._
 import gapt.expr.ty._
-import gapt.logic.hol.scan
-import gapt.logic.hol.scan._
-import gapt.logic.hol.wscan
-import gapt.expr.util.rename
-import gapt.expr.subst.Substitution
 import gapt.expr.formula._
-import gapt.provers.escargot.Escargot
 import gapt.logic.hol.ClauseSetPredicateEliminationProblem
 import gapt.logic.hol.toFormula
-import gapt.logic.hol.PredicateEliminationProblem
 import gapt.expr.formula.fol.FOLFormula
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLVar
-import gapt.utils.runProcess
 import gapt.logic.Polarity
+import gapt.expr.formula.constants.BottomC
 
-val negationOfModalAxiom = pep"?X -(!u (!v (R(u,v) -> ((!w (R(v, w) -> X(w))) <-> X(v)))))"
 val exampleWithQuantifiedVariableNotOccurring = clspep"?(X:i>o) !u A(u)"
 val exampleWithoutQuantifiedVariables = clspep"!u X(u)"
 val exampleThatCanBeSolvedByPolarityRuleImmediately = clspep"?X(${
@@ -80,13 +72,6 @@ val exampleWithSymmetryRequiringSubsumption = clspep"?Y(${
     ).toFormula
   })"
 
-val soqeBookDLSStarExample = clspep"?X(${
-    Set(
-      hcl"X(y) :- X(x), R(x,y)",
-      hcl":- X(x), X(y), S(x,y)"
-    ).toFormula
-  })"
-
 val unsatisfiableExampleThatRequiresFactoring = clspep"?(X:i>o)(${
     Set(
       hcl":- X(u), X(f(u))",
@@ -140,17 +125,39 @@ val onlyOneSidedClauses = clspep"?X(${
     ).toFormula
   })"
 
-val wernhardUnificationExample = clspep"?X_1?X_2(!u (A(u) -> B(u)) & (!u (X_1(u) -> X_2(u)) & !u (A(u) -> X_2(u)) & !u (X_2(u) -> B(u))))"
+val wernhardExample06Implicative = pep"?X_1?X_2((!u (A(u) -> B(u))) -> (!u(X_1(u) -> X_2(u)) & !u(A(u) -> X_2(u)) & !u(X_2(u) -> B(u))))".toClauseSet
+val wernhardExample06Conjunctive = clspep"?X_1?X_2(!u(A(u) -> B(u)) & !u(X_1(u) -> X_2(u)) & !u(A(u) -> X_2(u)) & !u(X_2(u) -> B(u)))"
+val wernhardExample06WithoutFirstOrderAssumption = clspep"?X_1?X_2(!u(X_1(u) -> X_2(u)) & !u(A(u) -> X_2(u)) & !u(X_2(u) -> B(u)))"
+
+val soqeBookExample5_4 = pep"?P!x!y?z((-P(a) | Q(x)) & (P(y) | Q(a)) & P(z))".toClauseSet
+val soqeBookExample5_7 = clspep"?P?Q(!x(-P(x) | P(f(x)) | Q(x)) & P(a) & Q(b) & -P(b))"
+val soqeBookExample6_2_16 = clspep"?X(!x(X(x) -> !y R(x,y)) & (X(a) | X(b)))"
+val soqeBookExample6_2_17 = clspep"?X(!x!y(R(x,y) -> X(x)) & (-X(a) | -X(b)))"
+val soqeBookExample6_3 = clspep"?X(!x!y(X(x,y) -> R(x,y)) & (X(a,b) | X(b,c)))"
+val soqeBookExample6_4 = clspep"?X(!x!y(R(x,y) -> X(x)) & (X(a) | -X(b)) & -X(c))"
+val soqeBookExample6_5 = pep"?X(!x?y X(x,y) & !x?y -X(x,y))".toClauseSet
+val soqeBookExample6_6 = clspep"?X(!x!y(R(x,y) | X(x) | -X(y)) & !x!y(S(x,y) | X(x) | X(y)))"
+val soqeBookExample6_23 = clspep"?X(!x!y(X(y) -> (X(x) | R(x,y))) & !x!y(X(x) | X(y) | S(x,y)))"
+
+val gabbayOhlbachIntroductionExample_1 = clspep"?P((P | Q) & (-P | R))"
+val gabbayOhlbachIntroductionExample_2 = clspep"?P((P | Q) & (-P | R) & (-P | S))"
+val gabbayOhlbachIntroductionExample_3 = clspep"?P((P(a) | Q) & (-P(b) | R))"
+val gabbayOhlbachSymmetryExample = clspep"?P!x!y((P(x,y) -> P(y,x)) & (P(x,y) <-> Q(x,y)))"
+val gabbayOhlbachSection3Example = clspep"?P!x!y((P(x,a) | P(a,x) | C(x)) & (-P(y,a) | -P(a,y) | D(y)))"
+
+val eberhardHetzlWellerExample_4 = clspep"?X((X(a) & -X(f(b))) | (X(f(b)) & -X(a)))"
+
+val kloibhoferHetzlExample_42 = clspep"?X?Y(X(a) & !u!v((X(u) & X(v)) -> Y(f(u,v))) & !w(Y(w) -> ${BottomC()}))"
 
 object modalCorrespondence {
-  def negationOfSecondOrderTranslationOfTAxiom = clspep"?X(${
+  val negationOfModalAxiom = pep"?X -(!u (!v (R(u,v) -> ((!w (R(v, w) -> X(w))) <-> X(v)))))"
+  val negationOfSecondOrderTranslationOfTAxiom = clspep"?X(${
       Set(
         hcl"R(a,v) :- X(v)",
         hcl"X(a) :-"
       ).toFormula
     })"
-
-  def negationOfSecondOrderTranslationOf4Axiom = clspep"?X(${
+  val negationOfSecondOrderTranslationOf4Axiom = clspep"?X(${
       Set(
         hcl"R(a,v) :- X(v)",
         hcl":- R(a,b)",
@@ -160,31 +167,9 @@ object modalCorrespondence {
     })"
 }
 
-object induction {
-  def additionDefinition = And(Set(
-    fof"!u u + 0 = u",
-    fof"!u !v u + s(v) = s(u+v)"
-  ))
-
-  def ind(expr: Expr): Formula = {
-    assert(expr.ty == Ti ->: To)
-    BetaReduction.betaNormalize(hof"($expr(0) & !u ($expr(u) -> $expr(s(u)))) -> !u $expr(u)")
-  }
-
-  def inductiveTheorem(theorem: Formula) =
-    val inductionVar = rename.awayFrom(containedNames(theorem)).fresh(hov"X:i>o")
-    Ex(
-      inductionVar,
-      Imp(And(additionDefinition, ind(inductionVar)), theorem)
-    )
-}
-
 object graphReachability {
-
   def const(node: Int): FOLConst = FOLConst(s"a_$node")
-
   def edge(from: Int, to: Int): Atom = foa"E(${const(from)}, ${const(to)})"
-
   def existsPath(from: Int, to: Int, length: Int): FOLFormula = {
     require(length >= 0)
     def pathFrom(from: FOLVar | FOLConst, l: Int): FOLFormula = l match {
@@ -239,251 +224,3 @@ object graphReachability {
     )
   }
 }
-
-def exportToScan(varsToEliminate: Seq[Var], clauses: Seq[HOLClause]): String = {
-  val predList = varsToEliminate.map(v => v.name).mkString(", ")
-  val cls = clauses.map { clause =>
-    val foVariables = freeFOLVariables(clause.toFormula)
-    def atomToScan(a: Atom): String = a match {
-      case Eq(left, right) => s"$left=$right"
-      case a               => a.toUntypedAsciiString
-    }
-    val negativeLiterals = clause.antecedent.map(atomToScan).map(a => s"-($a)")
-    val positiveLiterals = clause.succedent.map(atomToScan)
-    val quantifierFreePart = s"(${(negativeLiterals ++ positiveLiterals).mkString(" | ")})"
-    if foVariables.isEmpty then {
-      s"$quantifierFreePart."
-    } else {
-      s"all ${foVariables.toSeq.mkString(" ")} $quantifierFreePart."
-    }
-  }
-  s"""
-  pred_list[$predList].
-  %set(unskolemize).
-  %set(negate).
-  ;.
-  set(binary_res).
-  set(for_sub).
-  set(back_sub).
-  set(very_verbose).
-  assign(max_seconds, 1).
-
-  % 1.assign(check_redundancy_time,s).
-  % try to prove each generated clause in s seconds from rest
-  % of clause set minus pure clause. Drop clause if it can be proven.
-  % No redundancy check if s = 0.
-  assign(check_redundancy_time, 0).
-
-  % 2.assign(minimize_at_end_time,s).
-  % after Scan has finished, try to prove each remaining
-  % clause from the other clauses in s seconds, starting with long clauses.
-  % Drop clause if it can be proven. No minimization if s = 0
-  assign(minimize_at_end_time,0).
-
-  %% comments on the search
-  %%clear(very_verbose).
-  %clear(print_kept).
-  %clear(print_given).
-  %clear(print_back_sub).
-  %%
-  %clear(print_new_demod).
-  %clear(print_back_demod).
-  %clear(print_proofs).
-
-  set(print_lists_at_end).
-
-  %formula_list(usable).
-  %end_of_list.
-
-  formula_list(sos).
-
-  ${cls.mkString("\n")}
-
-  end_of_list.
-  """.stripMargin
-}
-
-def runScan(varsToEliminate: Seq[Var], clauses: Seq[HOLClause]): Int = {
-  val scanInput = exportToScan(varsToEliminate, clauses)
-  val (exitValue, stdout) =
-    runProcess.withExitValue(Seq("docker", "run", "-i", "scan-app"), stdin = scanInput)
-  println(stdout)
-  if exitValue == 127 then
-    println("exit value is 127. is docker running?")
-  exitValue
-}
-
-def printer = pprint.copy(additionalHandlers = additionalPrinters, defaultWidth = 150)
-
-def additionalPrinters: PartialFunction[Any, pprint.Tree] = {
-  case clauseSet: Set[_] =>
-    pprint.Tree.Apply(
-      "Set",
-      clauseSet.iterator.map(printer.treeify(_, true, true))
-    )
-  case Derivation(initialClauseSet, inferences) => pprint.Tree.Apply(
-      "Derivation", {
-        val clauseSets = inferences.scanLeft(initialClauseSet)((c, i) =>
-          ClauseSetPredicateEliminationProblem(c.varsToEliminate, i(c.firstOrderClauses))
-        )
-        Iterator(printer.treeify(initialClauseSet, true, true)) ++ inferences.zip(clauseSets.tail).zipWithIndex.flatMap {
-          case ((inference, clauses), index) => Seq(
-              pprint.Tree.Apply(
-                "Step",
-                Iterator(
-                  printer.treeify(index + 1, true, true),
-                  printer.treeify(inference, true, true)
-                )
-              ),
-              pprint.treeify(clauses, true, true)
-            )
-        }.iterator
-      }
-    )
-  case rc: PointedClause => printResolutionCandidate(rc)
-  case hos: Sequent[_]   => printSequent(hos)
-  case DerivationStep.ConstraintResolution(left, right) => pprint.Tree.Apply(
-      "Resolution",
-      Iterator(
-        pprint.Tree.KeyValue("left", printer.treeify(left, false, true)),
-        pprint.Tree.KeyValue("right", printer.treeify(right, false, true)),
-        pprint.Tree.KeyValue("resolvent", printer.treeify(constraintResolvent(left, right), false, true))
-      )
-    )
-  case DerivationStep.PurifiedClauseDeletion(candidate) => pprint.Tree.Apply("Purification", Iterator(additionalPrinters(candidate)))
-  case DerivationStep.VariableElimination(clause, index, _) => pprint.Tree.Apply(
-      "VariableElimination",
-      Iterator(pprint.Tree.KeyValue("clause", printer.treeify(clause, false, true)), pprint.Tree.KeyValue("constraint", printer.treeify(clause(index), false, true)))
-    )
-  case f @ DerivationStep.ConstraintFactoring(clause, leftIndex, rightIndex) => pprint.Tree.Apply(
-      "Factoring",
-      Iterator(
-        pprint.Tree.KeyValue("left", printer.treeify(clause(leftIndex), false, true)),
-        pprint.Tree.KeyValue("right", printer.treeify(clause(rightIndex), false, true)),
-        pprint.Tree.KeyValue("factor", printer.treeify(scan.factor(f), false, true))
-      )
-    )
-  case s: Substitution => pprint.Tree.Apply(
-      "Substitution",
-      s.map.map { (v, expr) =>
-        pprint.Tree.Infix(printer.treeify(v, false, true), "->", printer.treeify(expr, false, true))
-      }.iterator
-    )
-}
-
-def printSequent[T](sequent: Sequent[T]): pprint.Tree = {
-  def toStr(e: T) = e match {
-    case e: Expr => e.toUntypedString
-    case e       => e.toString()
-  }
-  val antecedentStrings = sequent.antecedent.map(toStr)
-  val succeedentStrings = sequent.succedent.map(toStr)
-  val clauseString = (antecedentStrings.mkString(", ") ++ Seq("⊢") ++ succeedentStrings.mkString(", ")).mkString(" ")
-  pprint.Tree.Literal(clauseString.strip())
-}
-
-def printResolutionCandidate(resolutionCandidate: PointedClause): pprint.Tree = {
-  def underlineIndex(atom: Atom, index: SequentIndex) = (atom, index) match {
-    case (a, i) if i == resolutionCandidate.index => s"{${a.toUntypedString}}"
-    case (a, i)                                   => a.toUntypedString
-  }
-  val antecedentStrings = resolutionCandidate.clause.zipWithIndex.antecedent.map(underlineIndex)
-  val succeedentStrings = resolutionCandidate.clause.zipWithIndex.succedent.map(underlineIndex)
-  val clauseString = antecedentStrings.mkString(", ") ++ " ⊢ " ++ succeedentStrings.mkString(", ")
-  pprint.Tree.Literal(clauseString.strip())
-}
-
-def isWSOQEWitness(input: PredicateEliminationProblem, firstOrderEquivalent: FOLFormula, witness: Substitution): Boolean =
-  witness.domain == input.varsToEliminate.toSet &&
-    Escargot.isValid(Iff(firstOrderEquivalent, BetaReduction.betaNormalize(witness(input.firstOrderPart))))
-
-def inputSize(clauseSet: ClauseSetPredicateEliminationProblem): Int =
-  clauseSet.firstOrderClauses.toSeq.map(c => c.elements.map(numberOfSymbols).sum).sum
-
-def numberOfSymbols(expr: Expr): Int = expr match {
-  case _: VarOrConst => 1
-  case App(f, args)  => numberOfSymbols(f) + numberOfSymbols(args)
-  case Abs(_, inner) => numberOfSymbols(inner)
-}
-
-def witnessSize(substitution: Substitution): Int =
-  substitution.map.values.toSeq.map(numberOfSymbols).sum
-
-def wscanTestExample(example: ClauseSetPredicateEliminationProblem) =
-  val exampleSize = inputSize(example)
-  println(s"Testing example ${example}")
-  val startTime = java.lang.System.nanoTime()
-  val witness = wscan(example)
-  val durationInNanoSeconds = java.lang.System.nanoTime() - startTime
-  val result = (witness, durationInNanoSeconds, exampleSize, witness.map(witnessSize))
-  println(s"Got result ${result}")
-  result
-
-val examples: List[ClauseSetPredicateEliminationProblem] = List(
-  negationOfModalAxiom.toClauseSet,
-  exampleWithQuantifiedVariableNotOccurring,
-  exampleWithoutQuantifiedVariables,
-  exampleThatCanBeSolvedByPolarityRuleImmediately,
-  negationOfLeibnizEquality.toClauseSet,
-  exampleThatUsesResolutionOnLiteralsThatAreNotQuantifiedVariables,
-  exampleWithTwoClauses,
-  exampleWithThreeClauses,
-  single2PartDisjunction,
-  single3PartDisjunction,
-  exampleWithTwoVariables,
-  exampleRequiringTautologyDeletion,
-  exampleRequiringSubsumption,
-  exampleWithSymmetryRequiringSubsumption,
-  soqeBookDLSStarExample,
-  unsatisfiableExampleThatRequiresFactoring,
-  // witnessBlowup,
-  twoStepRedundancy,
-  subsumptionByXLiteral,
-  // badExample,
-  booleanUnification.toClauseSet,
-  onlyOneSidedClauses,
-  wernhardUnificationExample,
-  graphReachability(3, 1, 2, 1 -> 2),
-  modalCorrespondence.negationOfSecondOrderTranslationOfTAxiom,
-  modalCorrespondence.negationOfSecondOrderTranslationOf4Axiom
-)
-def wscanTest() =
-
-  println(s"Testing ${examples.size} examples")
-
-  val results = examples.map(wscanTestExample)
-
-  val resultsWithWitnesses = results
-    .filter((wit, _, _, _) => wit.isDefined)
-    .map((wit, d, i, s) => (wit.get, d, i, s.get))
-  val foundWitnesses = resultsWithWitnesses.size
-  val successPercentage = (foundWitnesses.toDouble / results.size) * 100.0
-
-  println(s"Tested ${examples.size} examples")
-  println(f"For ${foundWitnesses} a witness could be found ($successPercentage%.2f%%)")
-
-  val minExampleSize = results.minBy(_._3)._3
-  val maxExampleSize = results.maxBy(_._3)._3
-  val averageExampleSize = results.map(_._3).sum.toDouble / results.size
-
-  println(s"min example size: $minExampleSize")
-  println(s"max example size: $maxExampleSize")
-  println(f"avg example size: $averageExampleSize%.2f")
-
-  val minSuccessfulDuration = resultsWithWitnesses.minBy(_._2)._2 / 1000000.0
-  val maxSuccessfulDuration = resultsWithWitnesses.maxBy(_._2)._2 / 1000000.0
-  val averageSuccessfulDuration = resultsWithWitnesses.map(_._2).sum.toDouble / (1000000.0 * results.size)
-
-  println(f"min successful duration: $minSuccessfulDuration%.2f ms")
-  println(f"max successful duration: $maxSuccessfulDuration%.2f ms")
-  println(f"avg successful duration: $averageSuccessfulDuration%.2f ms")
-
-  val minWitnessSize = resultsWithWitnesses.minBy(_._4)._4
-  val maxWitnessSize = resultsWithWitnesses.maxBy(_._4)._4
-  val averageWitnessSize = resultsWithWitnesses.map(_._4).sum.toDouble / results.size
-
-  println(s"min witness size: $minWitnessSize")
-  println(s"max witness size: $maxWitnessSize")
-  println(f"avg witness size: $averageWitnessSize%.2f")
-
-  println("Finished run")

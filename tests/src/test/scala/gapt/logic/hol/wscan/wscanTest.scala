@@ -263,7 +263,52 @@ class scanDerivationsCorrectTest extends mutable.Specification {
   }
 
   "scan derivations must be correct" in {
-    import gapt.examples.predicateEliminationProblems.examples
+    import gapt.examples.predicateEliminationProblems._
+    val examples: Vector[ClauseSetPredicateEliminationProblem] = Vector(
+      exampleWithQuantifiedVariableNotOccurring,
+      exampleWithoutQuantifiedVariables,
+      exampleThatCanBeSolvedByPolarityRuleImmediately,
+      negationOfLeibnizEquality.toClauseSet,
+      exampleThatUsesResolutionOnLiteralsThatAreNotQuantifiedVariables,
+      exampleWithTwoClauses,
+      exampleWithThreeClauses,
+      single2PartDisjunction,
+      single3PartDisjunction,
+      exampleWithTwoVariables,
+      exampleRequiringTautologyDeletion,
+      exampleRequiringSubsumption,
+      exampleWithSymmetryRequiringSubsumption,
+      unsatisfiableExampleThatRequiresFactoring,
+      witnessBlowup,
+      twoStepRedundancy,
+      subsumptionByXLiteral,
+      badExample,
+      booleanUnification.toClauseSet,
+      onlyOneSidedClauses,
+      graphReachability(3, 1, 2, 1 -> 2),
+      modalCorrespondence.negationOfModalAxiom.toClauseSet,
+      modalCorrespondence.negationOfSecondOrderTranslationOfTAxiom,
+      modalCorrespondence.negationOfSecondOrderTranslationOf4Axiom,
+      wernhardExample06Implicative,
+      wernhardExample06Conjunctive,
+      wernhardExample06WithoutFirstOrderAssumption,
+      soqeBookExample5_4,
+      soqeBookExample5_7,
+      soqeBookExample6_2_16,
+      soqeBookExample6_2_17,
+      soqeBookExample6_3,
+      soqeBookExample6_4,
+      soqeBookExample6_5,
+      soqeBookExample6_6,
+      soqeBookExample6_23,
+      gabbayOhlbachIntroductionExample_1,
+      gabbayOhlbachIntroductionExample_2,
+      gabbayOhlbachIntroductionExample_3,
+      gabbayOhlbachSymmetryExample,
+      gabbayOhlbachSection3Example,
+      eberhardHetzlWellerExample_4,
+      kloibhoferHetzlExample_42
+    )
 
     examples.flatMap(example =>
       // test deep derivations
