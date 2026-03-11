@@ -17,6 +17,7 @@ import gapt.utils.{Logger}
 import gapt.expr.formula.constants.EqC
 import gapt.expr.formula.fol.FOLTerm
 import scala.annotation.tailrec
+import gapt.utils.Aborter
 
 object scan {
 
@@ -41,9 +42,9 @@ object scan {
       input: ClauseSetPredicateEliminationProblem,
       oneSidedOnly: Boolean = true,
       allowResolutionOnBaseLiterals: Boolean = false,
-      derivationLimit: Option[Int] = Some(100),
+      derivationLimit: Option[Int] = Some(30),
       attemptLimit: Option[Int] = Some(10)
-  ): Option[Derivation] = {
+  )(using Aborter): Option[Derivation] = {
     val baseIterator = scan.derivationsFrom(
       input = input,
       oneSidedOnly = oneSidedOnly,
@@ -74,7 +75,7 @@ object scan {
       oneSidedOnly: Boolean = true,
       allowResolutionOnBaseLiterals: Boolean = false,
       derivationLimit: Option[Int] = Some(100)
-  ): Iterator[Either[Derivation, Derivation]] = {
+  )(using Aborter): Iterator[Either[Derivation, Derivation]] = {
     assert(derivationLimit.isEmpty || derivationLimit.get >= 0, "derivation limit must be non-negative")
     logger.info(s"input clause set: ${input.firstOrderClauses}")
     val states = runScan(
@@ -327,9 +328,11 @@ object scan {
   }
 
   import scala.collection.mutable.Stack
-  private case class StateIterator(val stack: Stack[Either[State, State]]) extends Iterator[Either[State, State]] {
+  private case class StateIterator(val stack: Stack[Either[State, State]])(using a: Aborter) extends Iterator[Either[State, State]] {
     def hasNext: Boolean = !stack.isEmpty
     @tailrec final def next(): Either[State, State] = {
+      a.abortIfNotified()
+
       if stack.isEmpty then
         throw new NoSuchElementException("no more states")
 
@@ -379,7 +382,7 @@ object scan {
     }
   }
 
-  def runScan(state: State): Iterator[Either[State, State]] = {
+  def runScan(state: State)(using Aborter): Iterator[Either[State, State]] = {
     return StateIterator(Stack(Right(state)))
   }
 
@@ -518,14 +521,14 @@ object scan {
     }.map(rc => DerivationStep.ConstraintResolution(resolutionCandidate, rc))
   }
 
-  def addNonRedundantFactors(state: State): Either[State, State] = {
+  def addNonRedundantFactors(state: State)(using Aborter): Either[State, State] = {
     val factorStep = state.activeClauses.iterator.flatMap(nonRedundantFactoringInferences(state, _)).nextOption()
     factorStep match
       case None       => Right(state)
       case Some(step) => applyDerivationSteps(state, Iterator(step)).flatMap(addNonRedundantFactors)
   }
 
-  def eliminateRedundancies(state: State): Either[State, State] = {
+  def eliminateRedundancies(state: State)(using Aborter): Either[State, State] = {
     redundancyStep(state) match
       case None       => Right(state)
       case Some(step) => applyDerivationSteps(state, Seq(step)).flatMap(eliminateRedundancies)
@@ -590,10 +593,11 @@ object scan {
     }.headOption
   }
 
-  def applyDerivationSteps(state: State, derivationSteps: Iterator[DerivationStep]): Either[State, State] = {
+  def applyDerivationSteps(state: State, derivationSteps: Iterator[DerivationStep])(using a: Aborter): Either[State, State] = {
     derivationSteps.foldLeft[Either[State, State]](Right(state)) {
       case (Left(state), _) => Left[State, State](state)
       case (Right(state), derivationStep) => {
+        a.abortIfNotified()
         if state.remainingAllowedInferences.isDefined && state.remainingAllowedInferences.get <= 0 then {
           logger.info("limit of allowed inferences reached")
           Left(state)
@@ -624,7 +628,7 @@ object scan {
   def applyDerivationSteps(
       state: State,
       derivationSteps: Iterable[DerivationStep]
-  ): Either[State, State] = {
+  )(using Aborter): Either[State, State] = {
     applyDerivationSteps(state, derivationSteps.iterator)
   }
 
