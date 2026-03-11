@@ -217,7 +217,8 @@ def runWscanBenchmark() = {
     gabbayOhlbachSymmetryExample,
     gabbayOhlbachSection3Example,
     eberhardHetzlWellerExample_4,
-    kloibhoferHetzlExample_42
+    kloibhoferHetzlExample_42,
+    bachmairGanzingerExample
   )
   import java.util.Locale
   Locale.setDefault(Locale.US)

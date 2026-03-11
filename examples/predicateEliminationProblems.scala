@@ -149,6 +149,8 @@ val eberhardHetzlWellerExample_4 = clspep"?X((X(a) & -X(f(b))) | (X(f(b)) & -X(a
 
 val kloibhoferHetzlExample_42 = clspep"?X?Y(X(a) & !u!v((X(u) & X(v)) -> Y(f(u,v))) & !w(Y(w) -> ${BottomC()}))"
 
+val bachmairGanzingerExample = pep"?P?Q?u!x!y((-P(x) | R(x,x)) & (Q(u,x) | -R(x,u)) & (P(x) | P(y) | -Q(x,y)))".toClauseSet
+
 object modalCorrespondence {
   val negationOfModalAxiom = pep"?X -(!u (!v (R(u,v) -> ((!w (R(v, w) -> X(w))) <-> X(v)))))"
   val negationOfSecondOrderTranslationOfTAxiom = clspep"?X(${

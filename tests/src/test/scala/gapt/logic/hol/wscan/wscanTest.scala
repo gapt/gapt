@@ -307,7 +307,8 @@ class scanDerivationsCorrectTest extends mutable.Specification {
       gabbayOhlbachSymmetryExample,
       gabbayOhlbachSection3Example,
       eberhardHetzlWellerExample_4,
-      kloibhoferHetzlExample_42
+      kloibhoferHetzlExample_42,
+      bachmairGanzingerExample
     )
 
     examples.flatMap(example =>
