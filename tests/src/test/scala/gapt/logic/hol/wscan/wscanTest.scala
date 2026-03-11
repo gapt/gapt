@@ -95,7 +95,7 @@ def beCorrectDerivation: Matcher[scan.Derivation] = { (derivation: scan.Derivati
                                             |${reasons.mkString("\n")}
                                             |
                                             |derivation:
-                                            |${gapt.examples.predicateEliminationProblems.printer(derivation)}""".stripMargin)
+                                            |${scan.prettyPrintString(derivation)}""".stripMargin)
 }
 
 def beEliminatingDerivation: Matcher[scan.Derivation] = { (derivation: scan.Derivation) =>
