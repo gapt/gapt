@@ -3,7 +3,6 @@ package gapt.logic.hol
 import gapt.expr.*
 import gapt.proofs.{Ant, HOLClause, RichFormulaSequent, Sequent, SequentIndex, Suc}
 import gapt.expr.util.rename
-import gapt.expr.util.freeVariables
 import gapt.expr.subst.Substitution
 import gapt.expr.formula.{Atom, Eq}
 import gapt.expr.formula.hol.freeHOVariables
@@ -18,6 +17,7 @@ import gapt.expr.formula.constants.EqC
 import gapt.expr.formula.fol.FOLTerm
 import scala.annotation.tailrec
 import gapt.utils.Aborter
+import gapt.expr.formula.hol.freeFOLVariables
 
 object scan {
 
@@ -631,9 +631,6 @@ object scan {
   )(using Aborter): Either[State, State] = {
     applyDerivationSteps(state, derivationSteps.iterator)
   }
-
-  def freeFOLVariables(expr: Expr): Set[FOLVar] =
-    (freeVariables(expr) -- freeHOVariables(expr)).map { case v: FOLVar => v }
 
   def constraintResolvent(left: PointedClause, right: PointedClause): HOLClause = {
     val renaming = rename(freeFOLVariables(right.clause.toFormula), freeFOLVariables(left.clause.toFormula))

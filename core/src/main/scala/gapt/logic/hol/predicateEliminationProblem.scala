@@ -8,13 +8,11 @@ import gapt.expr.formula.And
 import gapt.expr.formula.All
 import gapt.proofs.RichFormulaSequent
 import gapt.expr.Expr
-import gapt.expr.formula.fol.FOLVar
-import gapt.expr.util.freeVariables
-import gapt.expr.formula.hol.freeHOVariables
 import gapt.logic.Polarity
 import gapt.proofs.lk.transformations.folSkolemize
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.facet.skolemFunsFacet
+import gapt.expr.formula.hol.freeFOLVariables
 
 extension (clauseSet: Set[HOLClause])
   /**
@@ -24,13 +22,6 @@ extension (clauseSet: Set[HOLClause])
     val quantifierFreePart = And(clauseSet.map(_.toFormula))
     All.Block(freeFOLVariables(quantifierFreePart).toSeq, quantifierFreePart)
   }
-
-/**
-  * @param expr expression to get the free first-order variables of
-  * @return the set of first-order variables in [[expr]]
-  */
-def freeFOLVariables(expr: Expr): Set[FOLVar] =
-  (freeVariables(expr) -- freeHOVariables(expr)).map { case v: FOLVar => v }
 
 /**
   * A predicate elimination problem describes a formula of the form ∃X₁ ... ∃Xₙ φ where φ is first-order

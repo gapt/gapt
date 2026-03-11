@@ -9,6 +9,7 @@ import gapt.expr.formula.Atom
 import gapt.expr.formula.fol.FOLVar
 import gapt.proofs.RichFormulaSequent
 import gapt.logic.Polarity
+import gapt.expr.formula.hol.freeFOLVariables
 import gapt.expr.formula.Formula
 import gapt.expr.formula.And
 import gapt.expr.formula.Or
