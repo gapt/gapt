@@ -53,7 +53,13 @@ def runWscanTestExample(example: ClauseSetPredicateEliminationProblem, timeout: 
   val derivation =
     try
       withTimeout(timeout) {
-        scan(example, derivationLimit = Some(70), attemptLimit = Some(10), allowResolutionOnBaseLiterals = true)
+        scan(
+          example,
+          derivationLimit = Some(70),
+          attemptLimit = Some(10),
+          allowResolutionOnBaseLiterals = false,
+          oneSidedOnly = false
+        )
       }
     catch
       case e: gapt.utils.TimeOutException => None
@@ -116,6 +122,13 @@ case class TestRunResult(results: Seq[ExampleTestResult]):
     avgSuccessfulScanDuration
   ) = minMaxMedAvgDouble(resultsWithDerivations)(_.scanDuration.toUnit(TimeUnit.MILLISECONDS))
   val (
+    minDerivationLength,
+    maxDerivationLength,
+    medDerivationLength,
+    avgDerivationLength
+  ) = minMaxMedAvgDouble(resultsWithDerivations)(_.derivationLength.get)
+
+  val (
     minSuccessfulWitnessDuration,
     maxSuccessfulWitnessDuration,
     medSuccessfulWitnessDuration,
@@ -140,13 +153,19 @@ case class TestRunResult(results: Seq[ExampleTestResult]):
   |min: $minExampleSize
   |max: $maxExampleSize
   |med: $medExampleSize
-  |avg: $avgExampleSize%.2f
+  |avg: $avgExampleSize%.3f
   |
   |successful scan duration:
   |min: $minSuccessfulScanDuration%.3f ms
   |max: $maxSuccessfulScanDuration%.3f ms
   |med: $medSuccessfulScanDuration%.3f ms
   |avg: $avgSuccessfulScanDuration%.3f ms
+  |
+  |derivation lengths:
+  |min: $minDerivationLength
+  |max: $maxDerivationLength
+  |med: $medDerivationLength
+  |avg: $avgDerivationLength%.3f
   |
   |witness duration:
   |min: $minSuccessfulWitnessDuration%.3f ms
@@ -158,7 +177,7 @@ case class TestRunResult(results: Seq[ExampleTestResult]):
   |min: $minWitnessSize
   |max: $maxWitnessSize
   |med: $medWitnessSize
-  |avg: $avgWitnessSize%.2f
+  |avg: $avgWitnessSize%.3f
   |
   |${failedExamples.size}/${results.size} failed examples:
   |${failedExamples.map(_.statisticsString).mkString("\n\n")}
@@ -222,10 +241,10 @@ def runWscanBenchmark() = {
   )
   import java.util.Locale
   Locale.setDefault(Locale.US)
-  val timeout = 10.seconds
-  for i <- 0 until 2 do
-    println(s"Running warmup run $i")
-    runWscanTest(examples, timeout)
+  val timeout = 30.seconds
+
+  println(s"Running warmup run")
+  runWscanTest(examples, timeout)
 
   println(s"Running test run")
   runWscanTest(examples, timeout)
