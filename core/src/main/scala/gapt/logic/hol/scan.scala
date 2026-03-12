@@ -439,7 +439,8 @@ object scan {
     * @param pointedClause pointed clause with respect to which to perform purification
     * @return if the purification process could be completed within the limits given in state, returns Right with the new state, otherwise returns Left with a state where the limit was reached
     */
-  def purifyPointedClause(state: State, pointedClause: PointedClause): Either[State, State] = {
+  def purifyPointedClause(state: State, pointedClause: PointedClause)(using a: Aborter): Either[State, State] = {
+    a.abortIfNotified()
     val resolutionInferences = nonRedundantResolutionInferences(pointedClause, state.activeClauses - pointedClause.clause)
     if resolutionInferences.isEmpty then
       if state.isPointedClauseWithEliminationVariable(pointedClause) then
