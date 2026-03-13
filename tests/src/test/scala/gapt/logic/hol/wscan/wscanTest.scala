@@ -13,6 +13,7 @@ import gapt.proofs.Ant
 import gapt.proofs.Suc
 import gapt.proofs.Sequent
 import gapt.logic.Polarity
+import gapt.logic.hol.scan.Derivation
 
 class wscanTest extends Specification {
   import gapt.examples.predicateEliminationProblems._
@@ -51,6 +52,11 @@ class wscanTest extends Specification {
     }
     inductive example with subsumption ${
       exampleRequiringSubsumption must beSolved(equivalentTo = hof"!u(A(u) -> C(u)) & !u!v(-A(u) | -B(u,v))")
+    }
+    uses reflexivity constraint elimination ${
+      scan(clspep"a != a") must beSome[Derivation].like { derivation =>
+        derivation.conclusion must beEqualTo(Set(hcl":-"))
+      }
     }
   """
 

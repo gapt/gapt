@@ -161,6 +161,15 @@ object scan {
     case ConstraintFactoring(clause: HOLClause, principalIndex: SequentIndex, rightIndex: SequentIndex)
 
     /**
+    * Constraint elimination step
+    *
+    * @param clause Clause to perform constraint elimination on
+    * @param constraintIndex index of the constraint which is to be eliminated
+    * @param unifier unifier used to unify the terms of the constraint. must be a most general unifier
+    */
+    case ConstraintElimination(clause: HOLClause, constraintIndex: SequentIndex, unifier: FOLSubstitution)
+
+    /**
       * Purified clause deletion step.
       *
       * @param pointedClause pointed clause to be deleted
@@ -202,12 +211,13 @@ object scan {
 
     def addedRemovedClauses(clauses: Set[HOLClause]): (Set[HOLClause], Set[HOLClause]) =
       this match
-        case ConstraintResolution(left, right)                     => (Set(constraintResolvent(left, right)), Set.empty)
-        case f: ConstraintFactoring                                => (Set(factor(f)), Set.empty)
-        case PurifiedClauseDeletion(candidate)                     => (Set.empty, Set(candidate.clause))
-        case SubsumptionDeletion(subsumer, subsumee, substitution) => (Set.empty, Set(subsumee))
-        case TautologyDeletion(clause)                             => (Set.empty, Set(clause))
-        case VariableElimination(clause, index, substitution)      => (Set(substitution(clause.delete(index)).map { case a: Atom => a }.distinct), Set(clause))
+        case ConstraintResolution(left, right)                            => (Set(constraintResolvent(left, right)), Set.empty)
+        case f: ConstraintFactoring                                       => (Set(factor(f)), Set.empty)
+        case ConstraintElimination(clause, constraintIndex, substitution) => (Set(substitution(clause.delete(constraintIndex)).distinct), Set.empty)
+        case PurifiedClauseDeletion(candidate)                            => (Set.empty, Set(candidate.clause))
+        case SubsumptionDeletion(subsumer, subsumee, substitution)        => (Set.empty, Set(subsumee))
+        case TautologyDeletion(clause)                                    => (Set.empty, Set(clause))
+        case VariableElimination(clause, constraintIndex, substitution)   => (Set(substitution(clause.delete(constraintIndex)).distinct), Set(clause))
         case ExtendendPurityDeletion(hoVar, polarity) => {
           val removed = clauses.filter(c =>
             c.exists {
@@ -383,7 +393,10 @@ object scan {
   }
 
   def runScan(state: State)(using Aborter): Iterator[Either[State, State]] = {
-    return StateIterator(Stack(Right(state)))
+    return StateIterator(Stack(Right(state))).map {
+      case Left(s)  => Left(s)
+      case Right(s) => Right(eliminateRedundancies(s).merge)
+    }
   }
 
   def nonRedundantResolutionInferences(
@@ -531,8 +544,8 @@ object scan {
 
   def eliminateRedundancies(state: State)(using Aborter): Either[State, State] = {
     redundancyStep(state) match
-      case None       => Right(state)
-      case Some(step) => applyDerivationSteps(state, Seq(step)).flatMap(eliminateRedundancies)
+      case steps if steps.isEmpty => Right(state)
+      case steps                  => applyDerivationSteps(state, steps).flatMap(eliminateRedundancies)
   }
 
   def eliminateVariableConstraints(state: State): Either[State, State] = {
@@ -545,12 +558,40 @@ object scan {
     state.activeClauses.flatMap { clause => oneStepVariableEliminationSteps(clause) }.headOption
   }
 
-  def redundancyStep(state: State): Option[DerivationStep] = {
+  def redundancyStep(state: State): Iterable[DerivationStep] = {
     // check for tautologies
-    val tautologyDeletion: Option[DerivationStep.TautologyDeletion] = state.activeClauses.find(_.isTaut).map(DerivationStep.TautologyDeletion(_))
+    val tautologyDeletions: Iterable[DerivationStep.TautologyDeletion] = state.activeClauses.filter(_.isTaut).map(DerivationStep.TautologyDeletion(_))
+    if tautologyDeletions.nonEmpty then
+      return tautologyDeletions
 
     // check for eliminable constraints
     val variableElimination: Option[DerivationStep.VariableElimination] = variableEliminationStep(state)
+    if variableElimination.isDefined then
+      return variableElimination.toSeq
+
+    // check for reflexivity constraints
+    val reflexivityConstraintEliminations: Iterable[DerivationStep] =
+      state.activeClauses.toSeq.flatMap { clause =>
+        clause.zipWithIndex.antecedent.collect[DerivationStep.ConstraintElimination] {
+          case (Eq(left, right), index) if left == right =>
+            DerivationStep.ConstraintElimination(clause, index, FOLSubstitution())
+        }.groupBy {
+          case step => step.clause
+        }.toSeq.flatMap {
+          case (c, steps) => steps.headOption.toSeq
+        }.flatMap {
+          case step => Seq(
+              step,
+              DerivationStep.SubsumptionDeletion(
+                step.clause.delete(step.constraintIndex),
+                step.clause,
+                FOLSubstitution()
+              )
+            )
+        }
+      }
+    if reflexivityConstraintEliminations.nonEmpty then
+      return reflexivityConstraintEliminations.toSeq
 
     // check for subsumption
     val subsumption: Option[DerivationStep.SubsumptionDeletion] = state.activeClauses.toSeq.combinations(2).flatMap {
@@ -560,7 +601,10 @@ object scan {
         leftSubsumptions ++ rightSubsumptions
       }
     }.nextOption()
-    tautologyDeletion.orElse(variableElimination).orElse(subsumption)
+    if subsumption.isDefined then
+      return subsumption
+
+    return None
   }
 
   def extendedPurityDeletionStep(state: State): Option[DerivationStep] = {
@@ -867,6 +911,85 @@ object scan {
             report(s"""conclusion contains unexpected clauses
                           |expected conclusion: $expectedConclusion
                           |unexpected clauses: $unexpectedClauses""".stripMargin)
+        }
+
+        case DerivationStep.ConstraintElimination(clause, constraintIndex, unifier) => {
+          if !premise.contains(clause) then
+            report(s"""premise does not contain clause to be eliminated
+                        |premise: $premise
+                        |clause: $clause""".stripMargin)
+
+          if !clause.indices.contains(constraintIndex) then
+            report(s"""clause does not contain constraint index
+                      |clause: $clause
+                      |constraint index: $constraintIndex""".stripMargin)
+            break
+
+          if !constraintIndex.isAnt then
+            report(s"""constraint is not in the antecedent
+                      |constraint index: $constraintIndex""".stripMargin)
+
+          val constraint = clause(constraintIndex)
+          if constraint.head != EqC(Ti) then
+            report(s"""constraint literal is not an equality literal
+                    |clause: $clause
+                    |constraint literal: $constraint""".stripMargin)
+            break
+
+          val (left, right) = constraint.args match {
+            case List(left: FOLTerm, right: FOLTerm) => (left, right)
+            case c =>
+              throw new IllegalStateException(
+                s"""equality has fewer than 2 or more than 2 arguments passed to it which should not occur and we do not handle
+                   |got constraints: $c""".stripMargin
+              )
+          }
+
+          val leftAfterUnifier = unifier(left)
+          val rightAfterUnifier = unifier(right)
+          if leftAfterUnifier != rightAfterUnifier then
+            report(s"""substitution does not unify left and right term
+                      |clause: $clause
+                      |constraint: $constraint
+                      |left: $left
+                      |right: $right
+                      |unifier: $unifier
+                      |left after unifier: $leftAfterUnifier
+                      |right after unifier: $rightAfterUnifier""".stripMargin)
+            break
+
+          val furtherMgu = syntacticMGU(leftAfterUnifier, rightAfterUnifier).get
+          if !furtherMgu.isIdentity then
+            report(s"""substitution unifies left and right, but is not a most general unifier
+                      |clause: $clause
+                      |constraint: $constraint
+                      |left: $left
+                      |right: $right
+                      |unifier: $unifier
+                      |left after substitution: $leftAfterUnifier
+                      |right after substitution: $rightAfterUnifier
+                      |further non-trivial unification by: $furtherMgu""".stripMargin)
+
+          val clauseAfterConstraintElimination = unifier(clause.delete(constraintIndex)).distinct
+          val expectedConclusion = premise + clauseAfterConstraintElimination
+          if !conclusion.contains(clauseAfterConstraintElimination) then
+            report(s"""conclusion does not contain clause after eliminated constraint
+                      |conclusion: $conclusion
+                      |clause after constraint elimination: $clauseAfterConstraintElimination""".stripMargin)
+
+          val nonReplacedClausesInPremiseButNotConclusion = premise -- conclusion
+          if nonReplacedClausesInPremiseButNotConclusion.nonEmpty then
+            report(s"""conclusion does not contain premise clauses
+                       |conclusion: $conclusion
+                       |premise without clause to be removed: $premise
+                       |clauses in premise, but not in conclusion: $nonReplacedClausesInPremiseButNotConclusion""")
+
+          val unexpectedClauses = conclusion -- expectedConclusion
+          if unexpectedClauses.nonEmpty then
+            report(s"""conclusion contains unexpected clauses
+                      |conclusion: $conclusion
+                      |expected conclusion: $expectedConclusion
+                      |unexpected clauses: $unexpectedClauses""".stripMargin)
         }
 
         case DerivationStep.VariableElimination(clause, constraintIndex, substitution) => {

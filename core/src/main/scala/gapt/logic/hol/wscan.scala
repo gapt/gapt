@@ -186,6 +186,7 @@ object wscan {
         head match
           case i: (DerivationStep.ConstraintResolution |
                 DerivationStep.ConstraintFactoring |
+                DerivationStep.ConstraintElimination |
                 DerivationStep.TautologyDeletion |
                 DerivationStep.SubsumptionDeletion |
                 DerivationStep.VariableElimination) => witnessSubstitution(derivation.tail, limit)
