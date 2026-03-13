@@ -55,8 +55,8 @@ def runWscanTestExample(example: ClauseSetPredicateEliminationProblem, timeout: 
       withTimeout(timeout) {
         scan(
           example,
-          derivationLimit = Some(70),
-          attemptLimit = Some(10),
+          derivationLimit = Some(25),
+          attemptLimit = Some(100),
           allowResolutionOnBaseLiterals = false,
           oneSidedOnly = false
         )
@@ -241,7 +241,7 @@ def runWscanBenchmark() = {
   )
   import java.util.Locale
   Locale.setDefault(Locale.US)
-  val timeout = 30.seconds
+  val timeout = 10.seconds
 
   println(s"Running warmup run")
   runWscanTest(examples, timeout)
