@@ -258,19 +258,10 @@ object wscan {
           .map(s => (inference.right, s)).toSeq
       })
 
-    cartesianProduct(subsumerCandidatesPerClause).map(_.toMap).toSeq
+    gapt.utils.cartesianProduct(subsumerCandidatesPerClause).map(_.toMap).toSeq
   }
 
-  private def cartesianProduct[A](xss: Seq[Seq[A]]): Iterator[Seq[A]] = {
-    xss.foldLeft(Iterator(Seq.empty[A])) { (acc, xs) =>
-      for {
-        a <- acc
-        x <- xs.iterator
-      } yield a :+ x
-    }
-  }
-
-  def injectivelySubsumingClauses(symbol: VarOrConst, polarity: Polarity, clauseSet: Set[HOLClause], clause: HOLClause): Set[HOLClause] = {
+  private def injectivelySubsumingClauses(symbol: VarOrConst, polarity: Polarity, clauseSet: Set[HOLClause], clause: HOLClause): Set[HOLClause] = {
     clauseSet.filter(c => scan.isInjectivelySubsumedAfterVariableElimination(symbol, polarity, c, clause))
   }
 
