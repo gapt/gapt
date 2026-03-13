@@ -31,25 +31,25 @@ object scan {
     * @param input predicate elimination problem in clause form
     * @param oneSidedOnly controls whether during the purification processes of SCAN only one-sided pointed clauses should be purified, i.e. pointed clauses P where the designated literal of P only occurs with a single polarity in P.
     * @param allowResolutionOnBaseLiterals controls whether resolution on base literals is allowed. Base literals are those literals whose predicate symbol is not in the variables of the input predicate elimination problem
-    * @param derivationLimit controls the maximum number of inferences that
+    * @param inferenceLimit controls the maximum number of inferences that
     * derivations should have and makes sure that only derivations are returned that satisfy this limit.
     * A value of None means that no limit is enforced, but note that this might cause non-termination.
     * @param attemptLimit controls the maximum number of SCAN runs that are to be performed to find an eliminating derivation. If None is passed no limit is enforced, but note that this might cause non-termination.
-    * @return If an eliminating deirvation D is found within the given attemptLimit whose size is within derivationLimit and which respects the options oneSidedOnly and allowResolutionOnBaseLiterals, then the result is Some(D). Returns None otherwise
-    * Otherwise Left(I) is returned where I is an iterator over the found derivations that do not the derivationLimit.
+    * @return If an eliminating deirvation D is found within the given attemptLimit whose size is within inferenceLimit and which respects the options oneSidedOnly and allowResolutionOnBaseLiterals, then the result is Some(D). Returns None otherwise
+    * Otherwise Left(I) is returned where I is an iterator over the found derivations that do not the inferenceLimit.
     */
   def apply(
       input: ClauseSetPredicateEliminationProblem,
       oneSidedOnly: Boolean = true,
       allowResolutionOnBaseLiterals: Boolean = false,
-      derivationLimit: Option[Int] = Some(30),
+      inferenceLimit: Option[Int] = Some(30),
       attemptLimit: Option[Int] = Some(10)
   )(using Aborter): Option[Derivation] = {
     val baseIterator = scan.derivationsFrom(
       input = input,
       oneSidedOnly = oneSidedOnly,
       allowResolutionOnBaseLiterals = allowResolutionOnBaseLiterals,
-      derivationLimit = derivationLimit
+      inferenceLimit = inferenceLimit
     )
     val iterator = attemptLimit.map(l => baseIterator.take(l)).getOrElse(baseIterator)
 
@@ -64,7 +64,7 @@ object scan {
     * @param input predicate elimination problem in clause form
     * @param oneSidedOnly controls whether during the purification processes of SCAN only one-sided pointed clause should be purified, i.e. a pointed clause P where the designated literal of P only occurs with a single polarity in P.
     * @param allowResolutionOnBaseLiterals controls whether resolution on base literals is allowed. Base literals are those literals whose predicate symbol is not in the variables to be eliminated in the predicate elimination problem
-    * @param derivationLimit controls the maximum number of inferences that
+    * @param inferenceLimit controls the maximum number of inferences that
     * derivations should have and makes sure that only derivations are returned that satisfy this limit.
     * A value of None means that no limit is enforced, but note that this might cause non-termination.
     * @return Returns an iterator of derivations found during backtracked runs of SCAN. Finding these multiple derivations is done by backtracking on the different choices of purified pointed clause during the purification process of SCAN.
@@ -74,14 +74,14 @@ object scan {
       input: ClauseSetPredicateEliminationProblem,
       oneSidedOnly: Boolean = true,
       allowResolutionOnBaseLiterals: Boolean = false,
-      derivationLimit: Option[Int] = Some(100)
+      inferenceLimit: Option[Int] = Some(100)
   )(using Aborter): Iterator[Either[Derivation, Derivation]] = {
-    assert(derivationLimit.isEmpty || derivationLimit.get >= 0, "derivation limit must be non-negative")
+    assert(inferenceLimit.isEmpty || inferenceLimit.get >= 0, "derivation limit must be non-negative")
     logger.info(s"input clause set: ${input.firstOrderClauses}")
     val states = runScan(
       State.initialFrom(
         input,
-        remainingAllowedInferences = derivationLimit,
+        remainingAllowedInferences = inferenceLimit,
         oneSidedOnly = oneSidedOnly,
         allowResolutionOnBaseLiterals = allowResolutionOnBaseLiterals
       )
