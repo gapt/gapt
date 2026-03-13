@@ -55,8 +55,8 @@ def runWscanTestExample(example: ClauseSetPredicateEliminationProblem, timeout: 
       withTimeout(timeout) {
         scan(
           example,
-          inferenceLimit = Some(25),
-          attemptLimit = Some(100),
+          stepLimit = Some(50),
+          attemptLimit = None,
           allowResolutionOnBaseLiterals = false,
           oneSidedOnly = false
         )

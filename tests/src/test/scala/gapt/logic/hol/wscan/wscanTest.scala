@@ -60,14 +60,14 @@ class wscanTest extends Specification {
     }
   """
 
-  val defaultInferenceLimit = 20
+  val defaultStepLimit = 30
   val defaultAttemptLimit = 100
   val defaultWitnessLimit = 2
   val defaultOneSidedOnly = true
   def beSolved(
       equivalentTo: Formula,
       allowResolutionOnBaseLiterals: Boolean = false,
-      inferenceLimit: Int = defaultInferenceLimit,
+      stepLimit: Int = defaultStepLimit,
       attemptLimit: Int = defaultAttemptLimit,
       witnessLimit: Int = defaultWitnessLimit,
       oneSidedOnly: Boolean = defaultOneSidedOnly
@@ -76,7 +76,7 @@ class wscanTest extends Specification {
       val derivation = scan(
         input,
         allowResolutionOnBaseLiterals = allowResolutionOnBaseLiterals,
-        inferenceLimit = Some(inferenceLimit),
+        stepLimit = Some(stepLimit),
         attemptLimit = Some(attemptLimit)
       ).get
       val firstOrderEquivalent = derivation.conclusion.toFormula
@@ -84,7 +84,7 @@ class wscanTest extends Specification {
         input,
         oneSidedOnly = oneSidedOnly,
         allowResolutionOnBaseLiterals = allowResolutionOnBaseLiterals,
-        inferenceLimit = Some(inferenceLimit),
+        stepLimit = Some(stepLimit),
         attemptLimit = Some(attemptLimit),
         witnessLimit = Some(witnessLimit)
       )
@@ -257,10 +257,10 @@ class witnessConstruction extends mutable.Specification {
 class scanDerivationsCorrectTest extends mutable.Specification {
   def derivations(
       example: ClauseSetPredicateEliminationProblem,
-      inferenceLimit: Option[Int],
+      stepLimit: Option[Int],
       derivationCount: Option[Int]
   ): Seq[scan.Derivation] = {
-    val derivationIter = scan.derivationsFrom(example, inferenceLimit = inferenceLimit).map(_.merge)
+    val derivationIter = scan.derivationsFrom(example, stepLimit = stepLimit).map(_.merge)
     val iter = derivationCount match
       case Some(count) => derivationIter.take(count)
       case None        => derivationIter
@@ -319,9 +319,9 @@ class scanDerivationsCorrectTest extends mutable.Specification {
 
     examples.flatMap(example =>
       // test deep derivations
-      derivations(example, inferenceLimit = Some(15), derivationCount = Some(5))
+      derivations(example, stepLimit = Some(15), derivationCount = Some(5))
       // and shallow ones
-        ++ derivations(example, inferenceLimit = Some(5), derivationCount = Some(20))
+        ++ derivations(example, stepLimit = Some(5), derivationCount = Some(20))
     ) must forall(beCorrectDerivation)
   }
 }

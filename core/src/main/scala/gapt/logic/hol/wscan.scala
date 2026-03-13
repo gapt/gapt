@@ -38,7 +38,7 @@ object wscan {
     * @param input input predicate elimination problem in clause set form
     * @param oneSidedOnly @see oneSidedOnly option of scan
     * @param allowResolutionOnBaseLiterals @see allowResolutiononBaseLiterals option of scan
-    * @param inferenceLimit @see inferenceLimit option of scan
+    * @param stepLimit @see stepLimit option of scan
     * @param attemptLimit @see attemptLimit option of scan
     * @param witnessLimit controls the amount of inferences to be performed during the saturation process to construct witnesses
     * @return a substitution satisfying the WSOQE-condition, if successful. Returns None otherwise
@@ -47,11 +47,11 @@ object wscan {
       input: ClauseSetPredicateEliminationProblem,
       oneSidedOnly: Boolean = true,
       allowResolutionOnBaseLiterals: Boolean = false,
-      inferenceLimit: Option[Int] = Some(100),
+      stepLimit: Option[Int] = Some(100),
       attemptLimit: Option[Int] = Some(100),
       witnessLimit: Option[Int] = Some(10)
   ): Option[Substitution] = {
-    witnesses(input, oneSidedOnly, allowResolutionOnBaseLiterals, inferenceLimit, attemptLimit, witnessLimit).nextOption()
+    witnesses(input, oneSidedOnly, allowResolutionOnBaseLiterals, stepLimit, attemptLimit, witnessLimit).nextOption()
   }
 
   /**
@@ -60,7 +60,7 @@ object wscan {
     * @param input input predicate elimination problem in clause set form
     * @param oneSidedOnly @see oneSidedOnly option of scan
     * @param allowResolutionOnBaseLiterals @see allowResolutiononBaseLiterals option of scan
-    * @param inferenceLimit @see inferenceLimit option of scan
+    * @param stepLimit @see stepLimit option of scan
     * @param attemptLimit @see attemptLimit option of scan
     * @param witnessLimit @see witnessLimit option of wscan
     * @return an iterator of substitutions satisfying the WSOQE-condition of the given input
@@ -69,7 +69,7 @@ object wscan {
       input: ClauseSetPredicateEliminationProblem,
       oneSidedOnly: Boolean = true,
       allowResolutionOnBaseLiterals: Boolean = false,
-      inferenceLimit: Option[Int] = Some(100),
+      stepLimit: Option[Int] = Some(100),
       attemptLimit: Option[Int] = Some(100),
       witnessLimit: Option[Int] = Some(10)
   ): Iterator[Substitution] = {
@@ -77,7 +77,7 @@ object wscan {
       input,
       oneSidedOnly = oneSidedOnly,
       allowResolutionOnBaseLiterals = allowResolutionOnBaseLiterals,
-      inferenceLimit = inferenceLimit
+      stepLimit = stepLimit
     )
     val iterator = attemptLimit.map(l => baseIterator.take(l)).getOrElse(baseIterator)
     iterator.flatMap {
@@ -117,7 +117,7 @@ object wscan {
       input: ClauseSetPredicateEliminationProblem,
       oneSidedOnly: Boolean = true,
       allowResolutionOnBaseLiterals: Boolean = false,
-      inferenceLimit: Option[Int] = Some(100),
+      stepLimit: Option[Int] = Some(100),
       attemptLimit: Option[Int] = Some(100),
       witnessLimit: Option[Int] = Some(10)
   ): Iterator[Substitution] = {
@@ -125,7 +125,7 @@ object wscan {
       input,
       oneSidedOnly = oneSidedOnly,
       allowResolutionOnBaseLiterals = allowResolutionOnBaseLiterals,
-      inferenceLimit = inferenceLimit
+      stepLimit = stepLimit
     )
     val iterator = attemptLimit.map(l => baseIterator.take(l)).getOrElse(baseIterator)
     val witnesses = iterator.flatMap {
@@ -406,7 +406,7 @@ object wscan {
           Seq(pointedClause.varOption.get),
           Set(unitClause)
         ),
-        remainingAllowedInferences = limit,
+        remainingAllowedSteps = limit,
         oneSidedOnly = false,
         allowResolutionOnBaseLiterals = false
       ),
