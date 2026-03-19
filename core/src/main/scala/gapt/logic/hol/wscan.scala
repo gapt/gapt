@@ -32,6 +32,8 @@ import gapt.expr.given
 
 object wscan {
 
+  val defaultWitnessLimit: Option[Int] = Some(10)
+
   /**
     * Runs WSCAN algorithm on the input predicate elimination problem by running SCAN and attempting to find a WSOQE-witness for the input from a terminating derivation.
     *
@@ -45,11 +47,11 @@ object wscan {
     */
   def apply(
       input: ClauseSetPredicateEliminationProblem,
-      oneSidedOnly: Boolean = true,
-      allowResolutionOnBaseLiterals: Boolean = false,
-      stepLimit: Option[Int] = Some(100),
-      attemptLimit: Option[Int] = Some(100),
-      witnessLimit: Option[Int] = Some(10)
+      oneSidedOnly: Boolean = scan.defaultOneSidedOnly,
+      allowResolutionOnBaseLiterals: Boolean = scan.defaultAllowResolutionOnBaseLiterals,
+      stepLimit: Option[Int] = scan.defaultStepLimit,
+      attemptLimit: Option[Int] = scan.defaultAttemptLimit,
+      witnessLimit: Option[Int] = defaultWitnessLimit
   ): Option[Substitution] = {
     witnesses(input, oneSidedOnly, allowResolutionOnBaseLiterals, stepLimit, attemptLimit, witnessLimit).nextOption()
   }
@@ -67,11 +69,11 @@ object wscan {
     */
   def witnesses(
       input: ClauseSetPredicateEliminationProblem,
-      oneSidedOnly: Boolean = true,
-      allowResolutionOnBaseLiterals: Boolean = false,
-      stepLimit: Option[Int] = Some(100),
-      attemptLimit: Option[Int] = Some(100),
-      witnessLimit: Option[Int] = Some(10)
+      oneSidedOnly: Boolean = scan.defaultOneSidedOnly,
+      allowResolutionOnBaseLiterals: Boolean = scan.defaultAllowResolutionOnBaseLiterals,
+      stepLimit: Option[Int] = scan.defaultStepLimit,
+      attemptLimit: Option[Int] = scan.defaultAttemptLimit,
+      witnessLimit: Option[Int] = defaultWitnessLimit
   ): Iterator[Substitution] = {
     val baseIterator = scan.derivationsFrom(
       input,
@@ -99,7 +101,7 @@ object wscan {
     */
   def witness(
       derivation: Derivation,
-      witnessLimit: Option[Int] = Some(1)
+      witnessLimit: Option[Int] = defaultWitnessLimit
   ): Option[Substitution] = {
     witnessSubstitution(
       derivation,
@@ -115,11 +117,11 @@ object wscan {
     */
   def mutuallyNonEquivalentWitnesses(
       input: ClauseSetPredicateEliminationProblem,
-      oneSidedOnly: Boolean = true,
-      allowResolutionOnBaseLiterals: Boolean = false,
-      stepLimit: Option[Int] = Some(100),
-      attemptLimit: Option[Int] = Some(100),
-      witnessLimit: Option[Int] = Some(10)
+      oneSidedOnly: Boolean = scan.defaultOneSidedOnly,
+      allowResolutionOnBaseLiterals: Boolean = scan.defaultAllowResolutionOnBaseLiterals,
+      stepLimit: Option[Int] = scan.defaultStepLimit,
+      attemptLimit: Option[Int] = scan.defaultAttemptLimit,
+      witnessLimit: Option[Int] = defaultWitnessLimit
   ): Iterator[Substitution] = {
     val baseIterator = scan.derivationsFrom(
       input,
