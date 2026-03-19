@@ -11,7 +11,7 @@ import scala.collection.mutable
 private class MutableSubstitution {
   var subst = Substitution()
   def add(v: Var, by: Expr): Unit =
-    if (v != by) subst = subst compose Substitution(v -> by)
+    if (v != by) subst = subst `compose` Substitution(v -> by)
 }
 
 /**
@@ -43,19 +43,19 @@ private class MergeNode {
   var hasAtom = false
   var hasNullary = false
 
-  var unary: MergeNode = _
+  var unary: MergeNode = scala.compiletime.uninitialized
 
-  var binaryLeft: MergeNode = _
-  var binaryRight: MergeNode = _
+  var binaryLeft: MergeNode = scala.compiletime.uninitialized
+  var binaryRight: MergeNode = scala.compiletime.uninitialized
 
-  var weak: mutable.Map[Expr, MergeNode] = _
+  var weak: mutable.Map[Expr, MergeNode] = scala.compiletime.uninitialized
 
-  var strongEV: Var = _
-  var strongChild: MergeNode = _
+  var strongEV: Var = scala.compiletime.uninitialized
+  var strongChild: MergeNode = scala.compiletime.uninitialized
 
-  var defs: mutable.Map[Formula, MergeNode] = _
+  var defs: mutable.Map[Formula, MergeNode] = scala.compiletime.uninitialized
 
-  var skolems: mutable.Map[Expr, MergeNode] = _
+  var skolems: mutable.Map[Expr, MergeNode] = scala.compiletime.uninitialized
 
   def toETt: ETt = {
     var result: ETt = null

@@ -20,10 +20,10 @@ object ReductionDemo extends Script {
       PredicateReductionCNF |>
       ErasureReductionCNF
 
-  val (redSeq, back) = reduction forward sequent
+  val (redSeq, back) = reduction `forward` sequent
   println(TptpFOLExporter(redSeq))
   println()
-  var Some(res) = Vampire getResolutionProof redSeq: @unchecked
+  var Some(res) = Vampire `getResolutionProof` redSeq: @unchecked
   var res_ = back(simplifyResolutionProof(eliminateSplitting(res)))
   println(s"Found a proof with ${res_.dagLike.size} inferences:")
   println(res_)

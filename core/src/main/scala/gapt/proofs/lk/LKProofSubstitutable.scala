@@ -1,7 +1,7 @@
 package gapt.proofs.lk
 
 import gapt.expr._
-import BetaReduction.{betaNormalize, _}
+import BetaReduction.betaNormalize
 import gapt.expr.formula.All
 import gapt.expr.formula.Ex
 import gapt.expr.subst.Substitutable

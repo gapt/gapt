@@ -48,7 +48,7 @@ class leastGeneralGeneralization {
     val Apps(fa, as) = a
     val Apps(fb, bs) = b
     if (fa.isInstanceOf[Const] && fa == fb) {
-      fa(as.lazyZip(bs).map { apply }: _*)
+      fa(as.lazyZip(bs).map { apply }*)
     } else {
       vars.getOrElseUpdate(
         a -> b, {
@@ -76,7 +76,7 @@ object leastGeneralGeneralization1 extends GeneralLeastGeneralGeneralization {
       if (fa.isInstanceOf[Const] && fa == fb) {
         val (as_, s_) = as.lazyZip(bs).map(lgg).unzip
         if (s_.flatten.distinct.size <= 1) {
-          (fa(as_ : _*), s_.flatten.headOption)
+          (fa(as_*), s_.flatten.headOption)
         } else {
           (Var("x", a.ty), Some((a, b)))
         }

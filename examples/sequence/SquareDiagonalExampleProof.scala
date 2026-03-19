@@ -34,7 +34,7 @@ object SquareDiagonalExampleProof extends ProofSequence {
     val axY = fof"!x!y (P(x,y) -> P(x, s(y)))"
 
     Proof(Sequent(Seq("P00" -> p00, "AxX" -> axX, "AxY" -> axY), Seq("Pnn" -> pnn))) {
-      repeat(chain("AxY") andThen chain("AxX"))
+      repeat(chain("AxY") `andThen` chain("AxX"))
       prop
     }
   }

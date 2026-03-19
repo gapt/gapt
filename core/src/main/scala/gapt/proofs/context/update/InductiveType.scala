@@ -83,7 +83,7 @@ object InductiveType {
     new InductiveTypeLegacyParser(baseType, constructors).parse
 
   def apply(tyName: String, constructors: Const*): InductiveType =
-    InductiveType(TBase(tyName), constructors: _*)
+    InductiveType(TBase(tyName), constructors*)
 
   def apply(name: String, parameters: Seq[TVar], constructors: ConstructorDefinition*): InductiveType =
     new InductiveTypeInternalParser(name, parameters, constructors).parse
@@ -99,9 +99,9 @@ trait InductiveTypeParser {
 
 class InductiveTypeLegacyParser(ty: Ty, constructors: Seq[Const]) extends InductiveTypeParser {
 
-  private var parameters: Seq[TVar] = _
-  private var baseType: TBase = _
-  private var constructorDefs: Seq[ConstructorDefinition] = _
+  private var parameters: Seq[TVar] = scala.compiletime.uninitialized
+  private var baseType: TBase = scala.compiletime.uninitialized
+  private var constructorDefs: Seq[ConstructorDefinition] = scala.compiletime.uninitialized
 
   override def parse: InductiveType = {
     parseBaseType()
@@ -178,7 +178,7 @@ class InductiveTypeInternalParser(
     constructorDefinitions: Seq[ConstructorDefinition]
 ) extends InductiveTypeParser {
 
-  private val baseType: TBase = TBase(name, typeParameters: _*)
+  private val baseType: TBase = TBase(name, typeParameters*)
 
   override def parse: InductiveType = {
     val inductiveType = assembleInductiveType()

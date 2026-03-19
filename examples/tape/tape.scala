@@ -30,7 +30,7 @@ object tape extends TacticsProof {
     forget("I0")
     exR("I1", fov"x_0")
     forget("I1")
-    unfold("A") in "A"
+    unfold("A") `in` "A"
     allL(fot"x_0 + x_1")
     forget("A")
     destruct("A_0")
@@ -40,7 +40,7 @@ object tape extends TacticsProof {
 
   val rhs = Lemma(("Iv" -> fof"I(v)") +: Sequent()
     :+ ("C" -> fof"?x?y (x != y & f x = f y)")) {
-    unfold("I") in "Iv"
+    unfold("I") `in` "Iv"
     allL(fot"0")
     exL("Iv_0", fov"y_0")
     allL(fot"y_0 + 1")
@@ -51,14 +51,14 @@ object tape extends TacticsProof {
     destruct("C_0")
     negR
     foTheory
-    rewrite rtl "Iv_1" in "Iv_0"
+    rewrite `rtl` "Iv_1" `in` "Iv_0"
     foTheory
   }
 
   val proof = Lemma(("A" -> fof"A") +: Sequent()
     :+ ("C" -> fof"?x?y (x != y & f x = f y)")) {
-    cut("I1", fof"I(1)") right insert(rhs)
-    cut("I0", fof"I(0)") right insert(rhs)
+    cut("I1", fof"I(1)") `right` insert(rhs)
+    cut("I0", fof"I(0)") `right` insert(rhs)
     insert(lhs)
   }
 }

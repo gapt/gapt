@@ -20,12 +20,12 @@ object randomInstance {
   def generate(ty: TBase, nameGen: NameGenerator)(implicit ctx: Context): Expr = {
     ctx.getConstructors(ty) match {
       case None =>
-        Var(nameGen freshWithIndex "x", ty)
+        Var(nameGen `freshWithIndex` "x", ty)
       case Some(ctrs) =>
         val ctr = ctrs(Random.nextInt(ctrs.size))
         val FunctionType(_, argTypes) = ctr.ty: @unchecked
         val args = argTypes.map { at => generate(at.asInstanceOf[TBase], nameGen) }
-        ctr(args: _*)
+        ctr(args*)
     }
   }
 

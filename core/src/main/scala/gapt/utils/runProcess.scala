@@ -23,7 +23,7 @@ object runProcess {
     ExecutionContext.fromExecutor(runnable => new Thread(runnable).start())
 
   def withExitValue(cmd: Seq[String], stdin: String = "", catchStderr: Boolean = false): (Int, String) = {
-    val pb = new ProcessBuilder(cmd: _*)
+    val pb = new ProcessBuilder(cmd*)
 
     if (catchStderr) pb.redirectErrorStream(true)
 

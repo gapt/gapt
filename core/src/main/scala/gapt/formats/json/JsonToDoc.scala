@@ -66,7 +66,7 @@ object JsonToDoc {
 
     override def onObject(value: JsonObject): Doc = {
       ("{" <>
-        (zeroWidthLine <> Doc.sep(value.toList.map((entryToDoc _).tupled), "," <> line)).nest(2) <>
+        (zeroWidthLine <> Doc.sep(value.toList.map((entryToDoc).tupled), "," <> line)).nest(2) <>
         zeroWidthLine <> "}").group
     }
 

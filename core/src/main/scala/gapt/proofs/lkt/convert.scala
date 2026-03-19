@@ -234,11 +234,11 @@ object LKtToLK {
 
   private def withMap(b: Bound1, lctx: LocalCtx): (LKProof, Sequent[Hyp]) = withMap(b.p, lctx, b.aux)
   private def withMap(b: Bound2, lctx: LocalCtx): (LKProof, Sequent[Hyp]) = withMap(b.p, lctx, b.aux1, b.aux2)
-  private def withMap(b: BoundN, lctx: LocalCtx): (LKProof, Sequent[Hyp]) = withMap(b.p, lctx, b.auxs: _*)
+  private def withMap(b: BoundN, lctx: LocalCtx): (LKProof, Sequent[Hyp]) = withMap(b.p, lctx, b.auxs*)
   private def withMap(p: LKt, lctx: LocalCtx, toBeWeakenedIn: Hyp*): (LKProof, Sequent[Hyp]) =
     toBeWeakenedIn match {
       case h +: hs =>
-        val (r1, s1) = withMap(p, lctx, hs: _*)
+        val (r1, s1) = withMap(p, lctx, hs*)
         if (s1.contains(h)) (r1, s1)
         else {
           val r2 = if (h.inAnt) WeakeningLeftRule(r1, lctx(h)) else WeakeningRightRule(r1, lctx(h))

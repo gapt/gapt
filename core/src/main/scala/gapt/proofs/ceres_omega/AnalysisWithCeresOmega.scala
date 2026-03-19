@@ -6,7 +6,6 @@ import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.fol.Hol2FolDefinitions
 import gapt.formats.tptp.TptpHOLExporter
 import gapt.proofs.expansion._
-import gapt.proofs.lk._
 import gapt.expr.formula.fol.{reduceHolToFol, replaceAbstractions, undoHol2Fol}
 import gapt.formats.llk.ExtendedProofDatabase
 import gapt.proofs.ceres._
@@ -232,7 +231,7 @@ abstract class AnalysisWithCeresOmega {
    * The proof of the deep formula of the [[expansion_proof]].
    */
   lazy val reproved_deep = renameConstantsToFi.wrap(expansion_proof_fol_deep) { (_, mangled: Formula) =>
-    EProver getResolutionProof mangled match {
+    EProver `getResolutionProof` mangled match {
       case None    => throw new Exception("Could not reprove deep formula!")
       case Some(p) => p
     }

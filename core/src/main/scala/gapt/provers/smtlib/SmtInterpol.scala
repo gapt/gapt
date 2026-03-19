@@ -83,7 +83,7 @@ object SmtInterpolLogger extends Logger("SMTInterpol") { l =>
     def fatal(msg: String, params: AnyRef*): Unit =
       l.warn((msg +: params).mkString(" "))
     def fatal(msg: scala.Any): Unit =
-      fatal(msg.toString, Seq(): _*)
+      fatal(msg.toString, Seq()*)
 
     def outOfMemory(msg: String): Unit = throw new OutOfMemoryError
 
@@ -91,13 +91,13 @@ object SmtInterpolLogger extends Logger("SMTInterpol") { l =>
     def error(msg: String, params: AnyRef*): Unit =
       l.warn((msg +: params).mkString(" "))
     def error(msg: scala.Any): Unit =
-      error(msg.toString, Seq(): _*)
+      error(msg.toString, Seq()*)
 
     def isWarnEnabled: Boolean = true
     def warn(msg: String, params: AnyRef*): Unit =
       l.warn((msg +: params).mkString(" "))
     def warn(msg: scala.Any): Unit =
-      warn(msg.toString, Seq(): _*)
+      warn(msg.toString, Seq()*)
 
     def isInfoEnabled: Boolean = false
     def info(msg: String, params: AnyRef*): Unit = ()
@@ -192,7 +192,7 @@ class SmtInterpolSession(val script: Script) extends SessionRunner {
       case All(_, _) => ???
       case Ex(_, _)  => ???
       case Apps(c: Const, args) =>
-        script.term(funNames(c), args.map(term): _*)
+        script.term(funNames(c), args.map(term)*)
     }
 
   def sort(t: Ty): Sort =
@@ -208,8 +208,8 @@ class SmtInterpolSession(val script: Script) extends SessionRunner {
           case "=" =>
             val Seq(a, b) = ps
             if (a.ty == To) a <-> b else a === b
-          case "or"  => Or.nAry(ps: _*)
-          case "and" => And.nAry(ps: _*)
+          case "or"  => Or.nAry(ps*)
+          case "and" => And.nAry(ps*)
           case "=>" =>
             val Seq(a, b) = ps
             a --> b

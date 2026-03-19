@@ -40,19 +40,19 @@ object LSymbol extends (String => LAtom) {
 }
 
 case class LList(elements: SExpression*) extends SExpression {
-  def ::(head: SExpression) = LList(head +: elements: _*)
-  def ++(list2: LList) = LList(elements ++ list2.elements: _*)
+  def ::(head: SExpression) = LList(head +: elements*)
+  def ++(list2: LList) = LList(elements ++ list2.elements*)
 
   def toDoc =
     (Doc.text("(") <> Doc.wordwrap2(elements.map(_.toDoc), "") <> ")").nest(2).group
 }
 object LList {
   def apply(elements: Iterable[SExpression]): LList =
-    LList(elements.toSeq: _*)
+    LList(elements.toSeq*)
 }
 object LFun {
   def apply(head: String, args: SExpression*): LList =
-    LList((LSymbol(head) +: args): _*)
+    LList((LSymbol(head) +: args)*)
   def unapplySeq(list: LList): Option[(String, Seq[SExpression])] = list match {
     case LList(LSymbol(head), args @ _*) => Some(head, args)
     case _                               => None

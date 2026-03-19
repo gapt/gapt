@@ -10,7 +10,7 @@ object RGBColorChooser extends Dialog {
   resizable = false
   modal = true
   peer.setUndecorated(true)
-  peer setDefaultCloseOperation WindowConstants.DISPOSE_ON_CLOSE
+  peer `setDefaultCloseOperation` WindowConstants.DISPOSE_ON_CLOSE
 
   private val red = new Spinner[Int](new SpinnerNumberModel(255, 0, 255, 1))
   private val green = new Spinner[Int](new SpinnerNumberModel(255, 0, 255, 1))

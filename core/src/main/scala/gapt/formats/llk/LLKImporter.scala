@@ -795,7 +795,7 @@ trait TokenToLKConverter {
     val contr = ContractionMacroRule(right, fs, strict = false)
 
     require(
-      contr.endSequent multiSetEquals fs,
+      contr.endSequent `multiSetEquals` fs,
       "Could not create target sequent " + fs + " by a series of negations from " + top.endSequent +
         " but got " + contr.endSequent + " instead!"
     )
@@ -1033,7 +1033,7 @@ trait TokenToLKConverter {
     require(current_proof.size > 1, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
     val rightproof :: leftproof :: stack = current_proof: @unchecked
 
-    val auxsequent = (leftproof.endSequent ++ rightproof.endSequent) diff fs
+    val auxsequent = (leftproof.endSequent ++ rightproof.endSequent) `diff` fs
     require(
       auxsequent.antecedent.size == 1 && auxsequent.succedent.size == 1,
       "Need exactly one formula in the antecedent and in the succedent of the parents!" + f(auxsequent)
@@ -1054,7 +1054,7 @@ trait TokenToLKConverter {
     )
     val inf = CutRule(leftproof, rightproof, cutformula)
     require(
-      inf.endSequent multiSetEquals fs,
+      inf.endSequent `multiSetEquals` fs,
       "Inferred sequent " + inf.endSequent + " is what was not expected: " + fs
     )
     inf :: stack
@@ -1117,17 +1117,17 @@ trait TokenToLKConverter {
       val ax = normalize(sub(ax2))
       // println("Trying:"+f(ax)+" against "+f(auxf))
       val r1 = syntacticMatching(ax, auxf) match {
-        case Some(sub) if sub(ax) syntaxEquals auxf => (name, ax1, sub) :: Nil
+        case Some(sub) if sub(ax) `syntaxEquals` auxf => (name, ax1, sub) :: Nil
         case Some(sub) =>
           val sub2 = Substitution(sub.map.filter(x => x._1 != x._2))
-          if (sub2(ax) syntaxEquals auxf)
+          if (sub2(ax) `syntaxEquals` auxf)
             (name, ax1, sub2) :: Nil
           else
             Nil
         case None => Nil
       }
 
-      if (sub(ax) syntaxEquals auxf) {
+      if (sub(ax) `syntaxEquals` auxf) {
         debug("User specified sub works!" + f(sub))
         (name, ax1, sub) :: r1
       } else r1
@@ -1147,8 +1147,8 @@ trait TokenToLKConverter {
 
     val Eq(s, t) = auxf: @unchecked
 
-    val auxsequent = oldproof.endSequent diff fs
-    val mainsequent = fs diff (oldproof.endSequent ++ axioms_prove_sequent)
+    val auxsequent = oldproof.endSequent `diff` fs
+    val mainsequent = fs `diff` (oldproof.endSequent ++ axioms_prove_sequent)
     require(mainsequent.formulas.size == 1, "Exactly one main formula required, not " + f(mainsequent))
     require(auxsequent.formulas.size == 1, "Excatly one auxiliary formula needed in parent, not " + f(auxsequent))
     val newproof = (auxsequent: @unchecked) match {
@@ -1181,8 +1181,8 @@ trait TokenToLKConverter {
     val oldproof :: rest = current_proof: @unchecked
     // require(auxterm.isDefined, "Error creating an stantiate axiom rule: Need instantiation annotation!")
     // val auxf = c(LLKFormulaParser.ASTtoHOL(naming, auxterm.get))
-    val auxsequent = oldproof.endSequent diff fs
-    val mainsequent = fs diff (oldproof.endSequent ++ axioms_prove_sequent)
+    val auxsequent = oldproof.endSequent `diff` fs
+    val mainsequent = fs `diff` (oldproof.endSequent ++ axioms_prove_sequent)
 
     require(
       mainsequent.formulas.isEmpty,
@@ -1209,10 +1209,10 @@ trait TokenToLKConverter {
       val ax = betaNormalize(sub(ax2))
       // println("Trying: "+ f(ax))
       val r1 = syntacticMatching(ax, auxf) match {
-        case Some(sub) if sub(ax) syntaxEquals auxf => (name, ax1, sub) :: Nil
+        case Some(sub) if sub(ax) `syntaxEquals` auxf => (name, ax1, sub) :: Nil
         case Some(sub2) =>
           val sub = Substitution(sub2.map.filterNot(x => x._1 == x._2))
-          if (sub(ax) syntaxEquals auxf) {
+          if (sub(ax) `syntaxEquals` auxf) {
             (name, ax1, sub) :: Nil
           } else {
             info("wrong sub found!" + f(sub(ax)) + " for " + f(auxf) + " sub=" + f(sub) + " ax=" + f(ax))
@@ -1222,7 +1222,7 @@ trait TokenToLKConverter {
         //        case Some(sub) => (ax,sub)::Nil
         case None => Nil
       }
-      if (sub(ax) syntaxEquals auxf) {
+      if (sub(ax) `syntaxEquals` auxf) {
         debug("User specified sub works!" + f(sub))
         (name, ax1, sub) :: r1
       } else r1
@@ -1317,10 +1317,10 @@ trait TokenToLKConverter {
    *                   sequent with auxiliary and uncontracted formulas,
    *                   context sequent) */
   def filterContext(fs_old: HOLSequent, fs_new: HOLSequent): (HOLSequent, HOLSequent, HOLSequent) = {
-    val ndiff = fs_new diff fs_old
-    val odiff = fs_old diff fs_new
+    val ndiff = fs_new `diff` fs_old
+    val odiff = fs_old `diff` fs_new
 
-    val csequent = fs_new diff ndiff
+    val csequent = fs_new `diff` ndiff
 
     try {
       require(
@@ -1517,7 +1517,7 @@ trait TokenToLKConverter {
       case All(v, s) =>
         val (aux, uproof) = proveInstance_(s, instance, sub, axiomproof)
         (c(sub(axiom)), ForallLeftRule(uproof, c(sub(axiom)), sub.map(v)))
-      case f if normalize(sub(f)) syntaxEquals instance =>
+      case f if normalize(sub(f)) `syntaxEquals` instance =>
         (instance, axiomproof)
       case _ => throw new Exception(
           "Implementation error! Could not de++ " + f(axiom) + " subterm=" + sub(axiom) + " need=" + f(instance)

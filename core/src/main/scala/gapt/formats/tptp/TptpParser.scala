@@ -48,8 +48,8 @@ class TptpParser(val input: ParserInput) extends Parser {
   private def typed_logic_formula = rule { logic_formula } // add type annotation
   private def logic_formula: Rule1[Formula] = rule { unitary_formula ~ (binary_nonassoc_part | or_formula_part | and_formula_part).? }
   private def binary_nonassoc_part = rule { binary_connective ~ unitary_formula ~> ((a: Formula, c: (Expr, Expr) => Formula, b: Formula) => c(a, b)) }
-  private def or_formula_part = rule { ("|" ~ Ws ~ unitary_formula).+ ~> ((a: Formula, as: Seq[Formula]) => Or.leftAssociative(a +: as: _*)) }
-  private def and_formula_part = rule { ("&" ~ Ws ~ unitary_formula).+ ~> ((a: Formula, as: Seq[Formula]) => And.leftAssociative(a +: as: _*)) }
+  private def or_formula_part = rule { ("|" ~ Ws ~ unitary_formula).+ ~> ((a: Formula, as: Seq[Formula]) => Or.leftAssociative(a +: as*)) }
+  private def and_formula_part = rule { ("&" ~ Ws ~ unitary_formula).+ ~> ((a: Formula, as: Seq[Formula]) => And.leftAssociative(a +: as*)) }
   private def unitary_formula: Rule1[Formula] = rule { quantified_formula | unary_formula | atomic_formula | "(" ~ Ws ~ logic_formula ~ ")" ~ Ws }
   private def quantified_formula = rule { fol_quantifier ~ "[" ~ Ws ~ variable_list ~ "]" ~ Ws ~ Colon ~ unitary_formula ~> ((q: QuantifierHelper, vs, m) => q.Block(vs, m)) }
   private def variable_list = rule { (variable ~ (Colon ~ name).? ~> ((a, b) => a)).+.separatedBy(Comma) }

@@ -32,7 +32,7 @@ object testInduction extends App {
     }
   }
 
-  def resolveStrategy(strategyName: String)(implicit ctx: MutableContext): Tactic[_] =
+  def resolveStrategy(strategyName: String)(implicit ctx: MutableContext): Tactic[?] =
     strategyName match {
       case "ana_indep"  => AnalyticInductionTactic(IndependentInductionAxioms(), Escargot)
       case "ana_seq"    => AnalyticInductionTactic(SequentialInductionAxioms(), Escargot)
@@ -52,7 +52,7 @@ object testInduction extends App {
           goal <- currentGoal
           eqTheory = eqs.map(i => goal.conclusion(Ant(i))).collect { case All.Block(_, eq @ Eq(_, _)) => eq }
           _ <- pickQuant(quant)
-          _ <- treeGrammarInduction.maxsatSolver(OpenWBO).equationalTheory(eqTheory: _*).smtSolver(new CVC4("UF", Seq("--tlimit=300"), treatUnknownAsSat = true)).smtEquationMode(Passthru)
+          _ <- treeGrammarInduction.maxsatSolver(OpenWBO).equationalTheory(eqTheory*).smtSolver(new CVC4("UF", Seq("--tlimit=300"), treatUnknownAsSat = true)).smtEquationMode(Passthru)
         } yield ()
     }
 

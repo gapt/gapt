@@ -215,19 +215,19 @@ object alethe {
             }
             Or.nAry(ts.map {
               convertToExpr(_, Some(To), bindings)
-            }: _*)
+            }*)
           case Application("and", ts) =>
             if (exptype.isDefined && exptype.get != To) {
               throw AletheException(s"Expected type ${exptype.get} but got ${To} in '${term}'")
             }
             And.nAry(ts.map {
               convertToExpr(_, Some(To), bindings)
-            }: _*)
+            }*)
           case Application("distinct", ts) =>
             if (exptype.isDefined && exptype.get != To) {
               throw AletheException(s"Expected type ${exptype.get} but got ${To} in '${term}'")
             }
-            AllDistinct(ts.map { convertToExpr(_, None, bindings) }: _*)
+            AllDistinct(ts.map { convertToExpr(_, None, bindings) }*)
           case Application(f, as) =>
             val as_ = as.map {
               convertToExpr(_, None, bindings)

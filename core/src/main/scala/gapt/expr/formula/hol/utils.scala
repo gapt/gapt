@@ -517,7 +517,7 @@ object inductionPrinciple {
         vars,
         vars.filter {
           _.ty == indty
-        }.foldRight(pred(constr(vars: _*)))((v, f) => pred(v) --> f)
+        }.foldRight(pred(constr(vars*)))((v, f) => pred(v) --> f)
       )
     }
 

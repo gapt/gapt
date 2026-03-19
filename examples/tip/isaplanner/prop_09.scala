@@ -71,12 +71,12 @@ object prop_09 extends TacticsProof {
   import gapt.proofs.gaptic.tactics.AnalyticInductionTactic.sequentialAxioms
 
   val proof4 = Lemma(sequent) {
-    analyticInduction withAxioms
+    analyticInduction `withAxioms`
       sequentialAxioms.forAllVariables.forLabel("goal")
   }
 
   val proof5 = Lemma(sequent) {
-    analyticInduction withAxioms
+    analyticInduction `withAxioms`
       sequentialAxioms.forAllVariables.forLabel("goal") :/\: independentAxioms.forVariables(hov"i:Nat")
   }
 }

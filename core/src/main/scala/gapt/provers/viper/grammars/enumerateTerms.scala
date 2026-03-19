@@ -62,11 +62,11 @@ object enumerateTerms {
     ++ (ctx.get[BaseTypes].baseTypes -- ctx.get[StructurallyInductiveTypes].constructors.keySet).values.map(Var("x", _)))
 
   def forType(ty: Ty*)(implicit ctx: Context): LazyList[Expr] =
-    forType(freeConstructors = false, ty: _*)
+    forType(freeConstructors = false, ty*)
 
   def forType(freeConstructors: Boolean, ty: Ty*)(implicit ctx: Context): LazyList[Expr] =
-    withSymbols(if (freeConstructors) freeConstructorsForType(ty: _*)
-    else constructorsForType(ty: _*))
+    withSymbols(if (freeConstructors) freeConstructorsForType(ty*)
+    else constructorsForType(ty*))
 
   def withSymbols(syms: Set[VarOrConst]): LazyList[Expr] = {
     val nonConstantCtrs = syms.filter(sym => sym.isInstanceOf[Const] && !sym.ty.isInstanceOf[TBase])

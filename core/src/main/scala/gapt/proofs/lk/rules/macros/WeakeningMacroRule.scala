@@ -61,11 +61,11 @@ object WeakeningMacroRule extends ConvenienceConstructor("WeakeningMacroRule") {
   def withSequentConnector(p: LKProof, targetSequent: HOLSequent, strict: Boolean = true): (LKProof, SequentConnector) = {
     val currentSequent = p.endSequent
 
-    if (strict & !(currentSequent isSubMultisetOf targetSequent))
+    if (strict & !(currentSequent `isSubMultisetOf` targetSequent))
       throw LKRuleCreationException("Sequent " + targetSequent + " cannot be reached from " +
         currentSequent + " by weakenings.")
 
-    val (antDiff, sucDiff) = (targetSequent diff currentSequent).toTuple
+    val (antDiff, sucDiff) = (targetSequent `diff` currentSequent).toTuple
 
     WeakeningMacroRule.withSequentConnector(p, antDiff, sucDiff)
   }

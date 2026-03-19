@@ -108,6 +108,6 @@ package object logic {
 
   object AllDistinct {
     def apply(ts: Expr*): Formula =
-      And.nAry(unorderedPairsOf(ts).map { case (t1, t2) => Neg(Eq(t1, t2)) }.toList: _*)
+      And.nAry(unorderedPairsOf(ts).map { case (t1, t2) => Neg(Eq(t1, t2)) }.toList*)
   }
 }

@@ -31,9 +31,9 @@ case class InductionBUP(grammar: InductionGrammar, enc: InstanceTermEncoding, go
 
     val indHyps: Vector[Formula] =
       for (gam <- gammas; nui <- nu if nui.ty == grammar.indTy)
-        yield X(grammar.alpha, nui)(gam: _*).asInstanceOf[Formula]
+        yield X(grammar.alpha, nui)(gam*).asInstanceOf[Formula]
 
-    val indConcl: Formula = X(grammar.alpha, constructor(nu))(grammar.gamma: _*).asInstanceOf[Formula]
+    val indConcl: Formula = X(grammar.alpha, constructor(nu))(grammar.gamma*).asInstanceOf[Formula]
 
     val sequent: HOLSequent = indHyps ++: theoryFormulas :+ indConcl
 
@@ -43,7 +43,7 @@ case class InductionBUP(grammar: InductionGrammar, enc: InstanceTermEncoding, go
   case class EndCut(theoryFormulas: HOLSequent, gammas: Vector[List[Expr]]) extends BupSequent {
     val indFormulaInstances: Vector[Formula] =
       for (gam <- gammas)
-        yield X(grammar.alpha, grammar.alpha)(gam: _*).asInstanceOf[Formula]
+        yield X(grammar.alpha, grammar.alpha)(gam*).asInstanceOf[Formula]
 
     val sequent: HOLSequent = indFormulaInstances ++: theoryFormulas :+ goal
 

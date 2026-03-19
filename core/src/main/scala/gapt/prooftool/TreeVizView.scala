@@ -1,6 +1,5 @@
 package gapt.prooftool
 
-import gapt.proofs.lk._
 import gapt.proofs.{DagProof, HOLSequent, SequentProof}
 
 import scala.swing.Action
@@ -168,7 +167,7 @@ class ProofWeighter[T <: DagProof[T]] extends Weighter {
     else
       throw new Exception("Proof Weighter only works for ProofTrees!")
 
-  def getWeight(path: TreePath2[_]): Float = {
+  def getWeight(path: TreePath2[?]): Float = {
     1.0f
   }
 

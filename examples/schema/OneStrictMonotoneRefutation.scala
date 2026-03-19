@@ -73,15 +73,15 @@ object OneStrictMonotoneRefutation extends TacticsProof(OneStrictMonotoneSchema.
   ctx += ProofNameDeclaration(le"Next n", esNext)
   val esPRBc = Sequent(Seq("Ant_0" -> hof"omegaSFAF(0)"), Seq())
   val PRBc: LKProof = Lemma(esPRBc) {
-    unfold("omegaSFAF") in "Ant_0"
-    unfold("phiSFAT") in "Ant_0"
+    unfold("omegaSFAF") `in` "Ant_0"
+    unfold("phiSFAT") `in` "Ant_0"
     escargot
   }
   ctx += ProofDefinitionDeclaration(le"Top 0", PRBc)
 
   val esPRSc = Sequent(Seq("Ant_0" -> hof"omegaSFAF(s(n))"), Seq())
   val PRSc: LKProof = Lemma(esPRSc) {
-    unfold("omegaSFAF") in "Ant_0"
+    unfold("omegaSFAF") `in` "Ant_0"
     andL
     andL
     cut("cut", hof"SEQ1(s(n),s(n)) & SEQ2(s(n),s(n))")
@@ -102,11 +102,11 @@ object OneStrictMonotoneRefutation extends TacticsProof(OneStrictMonotoneSchema.
     Seq()
   )
   val NextBc: LKProof = Lemma(esNextBc) {
-    unfold("phiSFAT") in "Ant_0"
-    unfold("SEQ1") in "Ant_1"
-    unfold("SEQ2") in "Ant_2"
-    unfold("SW") in "Ant_1"
-    unfold("SW") in "Ant_2"
+    unfold("phiSFAT") `in` "Ant_0"
+    unfold("SEQ1") `in` "Ant_1"
+    unfold("SEQ2") `in` "Ant_2"
+    unfold("SW") `in` "Ant_1"
+    unfold("SW") `in` "Ant_2"
     escargot
   }
   ctx += ProofDefinitionDeclaration(le"Next 0", NextBc)
@@ -119,15 +119,15 @@ object OneStrictMonotoneRefutation extends TacticsProof(OneStrictMonotoneSchema.
     Seq()
   )
   val NextSc: LKProof = Lemma(esNextSc) {
-    unfold("phiSFAT") in "Ant_0"
+    unfold("phiSFAT") `in` "Ant_0"
     andL
     andL
     andL
     cut("cut", hof"SEQ1(n,n) & SEQ2(n,n)")
     andR
-    unfold("SEQ1") in "Ant_1"
+    unfold("SEQ1") `in` "Ant_1"
     andL
-    unfold("SEQ2") in "Ant_2"
+    unfold("SEQ2") `in` "Ant_2"
     andL
     allL("Ant_0_0_0", le"(SW (s n))")
     orL("Ant_2_0")
@@ -137,21 +137,21 @@ object OneStrictMonotoneRefutation extends TacticsProof(OneStrictMonotoneSchema.
     trivial
     negL
     trivial
-    unfold("SW") in "Ant_1_0"
+    unfold("SW") `in` "Ant_1_0"
     allL("Ant_0_0_1_1", le"(SW n)")
     orL("Ant_0_0_1_1_0")
     negL
     trivial
     ref("Seq1Make2")
-    unfold("SW") in "Ant_2_0"
+    unfold("SW") `in` "Ant_2_0"
     allL("Ant_0_0_1_1", le"(SW n)")
     orL("Ant_0_0_1_1_0")
     negL
     trivial
     ref("Seq1Make2")
-    unfold("SEQ1") in "Ant_1"
+    unfold("SEQ1") `in` "Ant_1"
     andL
-    unfold("SEQ2") in "Ant_2"
+    unfold("SEQ2") `in` "Ant_2"
     andL
     allL("Ant_0_0_0", le"(SW (s n))")
     orL("Ant_2_0")
@@ -180,12 +180,12 @@ object OneStrictMonotoneRefutation extends TacticsProof(OneStrictMonotoneSchema.
     )
   )
   val Seq2Make2Bc: LKProof = Lemma(esSeq2Make2Bc) {
-    unfold("SEQ1") in "Ant_0"
-    unfold("SEQ2") in "Ant_1"
-    unfold("SEQ2") in "Suc_0"
-    unfold("SW") in "Ant_0"
-    unfold("SW") in "Ant_1"
-    unfold("SW") in "Suc_0"
+    unfold("SEQ1") `in` "Ant_0"
+    unfold("SEQ2") `in` "Ant_1"
+    unfold("SEQ2") `in` "Suc_0"
+    unfold("SW") `in` "Ant_0"
+    unfold("SW") `in` "Ant_1"
+    unfold("SW") `in` "Suc_0"
     escargot
   }
   ctx += ProofDefinitionDeclaration(le"Seq2Make2 0 n", Seq2Make2Bc)
@@ -202,14 +202,14 @@ object OneStrictMonotoneRefutation extends TacticsProof(OneStrictMonotoneSchema.
     )
   )
   val Seq2Make2Sc: LKProof = Lemma(esSeq2Make2Sc) {
-    unfold("SEQ1") in "Ant_0"
-    unfold("SW") in "Ant_0"
+    unfold("SEQ1") `in` "Ant_0"
+    unfold("SW") `in` "Ant_0"
     andL
-    unfold("SEQ2") in "Ant_1"
-    unfold("SW") in "Ant_1"
+    unfold("SEQ2") `in` "Ant_1"
+    unfold("SW") `in` "Ant_1"
     andL
-    unfold("SEQ2") in "Suc_0"
-    unfold("SW") in "Suc_0"
+    unfold("SEQ2") `in` "Suc_0"
+    unfold("SW") `in` "Suc_0"
     andR
     orL("Ant_1_0")
     orL("Ant_0_0")
@@ -252,13 +252,13 @@ object OneStrictMonotoneRefutation extends TacticsProof(OneStrictMonotoneSchema.
     )
   )
   val Seq1Make2Bc: LKProof = Lemma(esSeq1Make2Bc) {
-    unfold("SEQ1") in "Ant_0"
-    unfold("SEQ2") in "Ant_1"
-    unfold("SEQ1") in "Suc_0"
-    unfold("SW") in "Ant_0"
-    unfold("SW") in "Ant_1"
-    unfold("SW") in "Suc_0"
-    unfold("SW") in "Ant_4"
+    unfold("SEQ1") `in` "Ant_0"
+    unfold("SEQ2") `in` "Ant_1"
+    unfold("SEQ1") `in` "Suc_0"
+    unfold("SW") `in` "Ant_0"
+    unfold("SW") `in` "Ant_1"
+    unfold("SW") `in` "Suc_0"
+    unfold("SW") `in` "Ant_4"
     escargot
   }
   ctx += ProofDefinitionDeclaration(le"Seq1Make2 0 n", Seq1Make2Bc)
@@ -276,15 +276,15 @@ object OneStrictMonotoneRefutation extends TacticsProof(OneStrictMonotoneSchema.
     )
   )
   val Seq1Make2Sc: LKProof = Lemma(esSeq1Make2Sc) {
-    unfold("SW") in "Ant_4"
-    unfold("SEQ1") in "Ant_0"
-    unfold("SW") in "Ant_0"
+    unfold("SW") `in` "Ant_4"
+    unfold("SEQ1") `in` "Ant_0"
+    unfold("SW") `in` "Ant_0"
     andL
-    unfold("SEQ2") in "Ant_1"
-    unfold("SW") in "Ant_1"
+    unfold("SEQ2") `in` "Ant_1"
+    unfold("SW") `in` "Ant_1"
     andL
-    unfold("SEQ1") in "Suc_0"
-    unfold("SW") in "Suc_0"
+    unfold("SEQ1") `in` "Suc_0"
+    unfold("SW") `in` "Suc_0"
     andR
     orR
     orL("Ant_4")
@@ -323,8 +323,8 @@ object OneStrictMonotoneRefutation extends TacticsProof(OneStrictMonotoneSchema.
     )
   )
   val Seq1MakeBc: LKProof = Lemma(esSeq1MakeBc) {
-    unfold("SEQ1") in "Suc_0"
-    unfold("SW") in "Suc_0"
+    unfold("SEQ1") `in` "Suc_0"
+    unfold("SW") `in` "Suc_0"
     escargot
   }
   ctx += ProofDefinitionDeclaration(le"Seq1Make 0 n ", Seq1MakeBc)
@@ -335,8 +335,8 @@ object OneStrictMonotoneRefutation extends TacticsProof(OneStrictMonotoneSchema.
     )
   )
   val Seq1MakeSc: LKProof = Lemma(esSeq1MakeSc) {
-    unfold("SEQ1") in "Suc_0"
-    unfold("SW") in "Suc_0"
+    unfold("SEQ1") `in` "Suc_0"
+    unfold("SW") `in` "Suc_0"
     andR
     allL(le"(suc (SW k))")
     orR
@@ -354,8 +354,8 @@ object OneStrictMonotoneRefutation extends TacticsProof(OneStrictMonotoneSchema.
     )
   )
   val Seq2MakeBc: LKProof = Lemma(esSeq2MakeBc) {
-    unfold("SEQ2") in "Suc_0"
-    unfold("SW") in "Suc_0"
+    unfold("SEQ2") `in` "Suc_0"
+    unfold("SW") `in` "Suc_0"
     escargot
   }
   ctx += ProofDefinitionDeclaration(le"Seq2Make 0 n ", Seq2MakeBc)
@@ -366,8 +366,8 @@ object OneStrictMonotoneRefutation extends TacticsProof(OneStrictMonotoneSchema.
     )
   )
   val Seq2MakeSc: LKProof = Lemma(esSeq2MakeSc) {
-    unfold("SEQ2") in "Suc_0"
-    unfold("SW") in "Suc_0"
+    unfold("SEQ2") `in` "Suc_0"
+    unfold("SW") `in` "Suc_0"
     andR
     allL(le"(suc (SW k))")
     orR

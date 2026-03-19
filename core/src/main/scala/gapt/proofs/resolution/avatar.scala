@@ -32,7 +32,7 @@ case class AvatarSplit(subProof: ResolutionProof, indices: Set[SequentIndex], co
     freeVariables(thisComponent) intersect freeVariables(rest) isEmpty,
     s"error splitting ${subProof.conclusion}:\nfree variables of $thisComponent and $rest intersect"
   )
-  require(thisComponent isSubMultisetOf component.clause)
+  require(thisComponent `isSubMultisetOf` component.clause)
 
   override def auxIndices = Seq(indices.toSeq)
   override def mainFormulaSequent = Sequent()
@@ -50,7 +50,7 @@ object AvatarSplit {
         val indices = getIndices(toFind.delete(i))
         subProof.conclusion.indices.find(j => !indices.contains(j) && i.sameSideAs(j) && toFind(i) == subProof.conclusion(j)).fold(indices)(indices + _)
       }
-    require(subProof.conclusion.delete(getIndices(component.clause).toSeq: _*) == subProof.conclusion.diff(component.clause))
+    require(subProof.conclusion.delete(getIndices(component.clause).toSeq*) == subProof.conclusion.diff(component.clause))
     AvatarSplit(subProof, getIndices(component.clause), component)
   }
 
@@ -61,14 +61,14 @@ object AvatarSplit {
     def findComp(c: HOLSequent): HOLSequent = {
       val fvs = freeVariables(c)
       val c_ = clause.filter(freeVariables(_) intersect fvs nonEmpty)
-      if (c_ isSubsetOf c) c else findComp(c ++ c_ distinct)
+      if (c_ `isSubsetOf` c) c else findComp(c ++ c_ distinct)
     }
 
     if (clause.isEmpty) {
       Nil
     } else {
       val c = findComp(clause.map(_ +: Clause(), Clause() :+ _).elements.head)
-      c :: getComponents(clause diff c)
+      c :: getComponents(clause `diff` c)
     }
   }
 }

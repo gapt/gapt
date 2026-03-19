@@ -893,7 +893,7 @@ object RightRankEqualityRightReduction extends CutReduction {
         val conn1 = r.getSequentConnector
         val cutSub = CutRule(cut.leftSubProof, cut.aux1, subProof, conn1.parent(cut.aux2))
         val conn2 = cutSub.getRightSequentConnector
-        Some(EqualityRightRule(cutSub, conn2 child eq, conn2 child eaux, indicator))
+        Some(EqualityRightRule(cutSub, conn2 `child` eq, conn2 `child` eaux, indicator))
       case _ => None
     }
 }

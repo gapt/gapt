@@ -370,7 +370,7 @@ case class Simplifier(lemmas: Seq[SimpProc]) {
   def getLambdaPositions(exp: Expr): Map[Expr, Seq[LambdaPosition]] = {
     val poss = mutable.Map[Expr, Seq[LambdaPosition]]().withDefaultValue(Seq())
     def walk(exp: Expr, pos: List[Choice]): Unit = {
-      poss(exp) :+= LambdaPosition(pos.reverse: _*)
+      poss(exp) :+= LambdaPosition(pos.reverse*)
       exp match {
         case App(a, b) =>
           walk(a, LambdaPosition.Left :: pos)
@@ -554,7 +554,7 @@ case class SimpTactic(
   def h = copy(useAssumptions = true)
   def on(label: String) = copy(onLabel = Some(label))
   def apply(lemmas: String*) = copy(extraLemmasList = extraLemmasList ++ lemmas)
-  def w(lemmas: String*) = apply(lemmas: _*)
+  def w(lemmas: String*) = apply(lemmas*)
   def wo(lemmas: String*) = copy(excludedLemmasList = excludedLemmasList ++ lemmas)
 
   private def mkSimpLemmas(goal: OpenAssumption): Seq[SimpProc] = {

@@ -14,7 +14,7 @@ import scala.reflect.ClassTag
  * finitely many facets still have their initial value.  The [[get]] method returns
  * the value of a facet, the [[update]] method changes the value.
  */
-class State private (private val facets: Map[Facet[_], Any]) {
+class State private (private val facets: Map[Facet[?], Any]) {
   def update[T: Facet](f: T => T): State =
     new State(facets.updated(implicitly[Facet[T]], f(get[T])))
 

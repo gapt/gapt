@@ -20,7 +20,7 @@ case class SequentConnector(lowerSizes: (Int, Int), upperSizes: (Int, Int), pare
     parentsSequent.sizes == lowerSizes,
     s"Sizes ${parentsSequent.sizes} of parents sequent $parentsSequent don't agree with lower sizes $lowerSizes."
   )
-  require(parentsSequent.elements.flatten.forall { _ withinSizes upperSizes })
+  require(parentsSequent.elements.flatten.forall { _ `withinSizes` upperSizes })
 
   val (antL, sucL) = lowerSizes
   val (antU, sucU) = upperSizes
@@ -31,7 +31,7 @@ case class SequentConnector(lowerSizes: (Int, Int), upperSizes: (Int, Int), pare
    * @return A sequent of lists of indices such that for each index i of upperSequent, childrenSequent(i)
    *                       is the list of indices of the children of i in lowerSequent.
    */
-  def childrenSequent: Sequent[Seq[SequentIndex]] = Sequent(antU, sucU) map children
+  def childrenSequent: Sequent[Seq[SequentIndex]] = Sequent(antU, sucU) `map` children
 
   /**
    * Given a SequentIndex for the lower sequent, this returns the list of parents of that occurrence in
@@ -107,7 +107,7 @@ case class SequentConnector(lowerSizes: (Int, Int), upperSizes: (Int, Int), pare
    * @return The list of children of idx.
    */
   def children(idx: SequentIndex): Seq[SequentIndex] =
-    if (idx withinSizes upperSizes)
+    if (idx `withinSizes` upperSizes)
       parentsSequent indicesWhere { _ contains idx }
     else
       throw new IndexOutOfBoundsException
@@ -176,8 +176,8 @@ case class SequentConnector(lowerSizes: (Int, Int), upperSizes: (Int, Int), pare
    * @return A new SequentConnector in which parents(child) contains parent.
    */
   def +(child: SequentIndex, parent: SequentIndex) = {
-    require(child withinSizes lowerSizes)
-    require(parent withinSizes upperSizes)
+    require(child `withinSizes` lowerSizes)
+    require(parent `withinSizes` upperSizes)
     SequentConnector(lowerSizes, upperSizes, parentsSequent.updated(child, parents(child) :+ parent distinct))
   }
 
@@ -188,8 +188,8 @@ case class SequentConnector(lowerSizes: (Int, Int), upperSizes: (Int, Int), pare
    * @return A new SequentConnector in which parents(child) no longer contains parent.
    */
   def -(child: SequentIndex, parent: SequentIndex) = {
-    require(child withinSizes lowerSizes)
-    require(parent withinSizes upperSizes)
+    require(child `withinSizes` lowerSizes)
+    require(parent `withinSizes` upperSizes)
     SequentConnector(lowerSizes, upperSizes, parentsSequent.updated(child, parents(child) diff Seq(parent)))
   }
 }
@@ -202,12 +202,12 @@ object SequentConnector {
    * @param sequent A sequent.
    * @return An SequentConnector that connects every index of sequent to itself.
    */
-  def apply(sequent: Sequent[_]): SequentConnector = SequentConnector(sequent, sequent, sequent.indicesSequent map { Seq(_) })
+  def apply(sequent: Sequent[?]): SequentConnector = SequentConnector(sequent, sequent, sequent.indicesSequent map { Seq(_) })
 
   /**
    * Connects two given sequents via a given parentsSequent.
    */
-  def apply(lowerSequent: Sequent[_], upperSequent: Sequent[_], parentsSequent: Sequent[Seq[SequentIndex]]): SequentConnector =
+  def apply(lowerSequent: Sequent[?], upperSequent: Sequent[?], parentsSequent: Sequent[Seq[SequentIndex]]): SequentConnector =
     SequentConnector(lowerSequent.sizes, upperSequent.sizes, parentsSequent)
 
   /**

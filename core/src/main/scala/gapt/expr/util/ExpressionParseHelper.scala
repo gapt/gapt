@@ -51,7 +51,7 @@ class ExpressionParseHelper(sc: StringContext, file: sourcecode.File, line: sour
     def repl(expr: preExpr.Expr): preExpr.Expr = expr match {
       case preExpr.LocAnnotation(e, loc)                            => preExpr.LocAnnotation(repl(e), loc)
       case preExpr.TypeAnnotation(e, ty)                            => preExpr.TypeAnnotation(repl(e), ty)
-      case preExpr.Ident(name, _, _) if name startsWith placeholder => repls(name)
+      case preExpr.Ident(name, _, _) if name `startsWith` placeholder => repls(name)
       case expr: preExpr.Ident                                      => expr
       case preExpr.Abs(v, sub) =>
         repl(v) match {
@@ -117,7 +117,7 @@ class ExpressionParseHelper(sc: StringContext, file: sourcecode.File, line: sour
    * @param args
    * @return
    */
-  def hoa(args: Splice[Expr]*): Atom = hof(args: _*) match {
+  def hoa(args: Splice[Expr]*): Atom = hof(args*) match {
     case atom: Atom => atom
     case expr =>
       throw new IllegalArgumentException(s"Expression $expr appears not to be a HOL atom. Parse it with hof.")
@@ -129,7 +129,7 @@ class ExpressionParseHelper(sc: StringContext, file: sourcecode.File, line: sour
    * @param args
    * @return
    */
-  def hov(args: Splice[Expr]*): Var = le(args: _*) match {
+  def hov(args: Splice[Expr]*): Var = le(args*) match {
     case v: Var => v
     case expr =>
       throw new IllegalArgumentException(s"Expression $expr cannot be read as a variable. Parse it with le.")
@@ -141,7 +141,7 @@ class ExpressionParseHelper(sc: StringContext, file: sourcecode.File, line: sour
    * @param args
    * @return
    */
-  def hoc(args: Splice[Expr]*): Const = le(args: _*) match {
+  def hoc(args: Splice[Expr]*): Const = le(args*) match {
     case c: Const  => c
     case Var(n, t) => Const(n, t)
     case expr =>
@@ -156,7 +156,7 @@ class ExpressionParseHelper(sc: StringContext, file: sourcecode.File, line: sour
    * @param args
    * @return
    */
-  def foe(args: Splice[FOLExpression]*): FOLExpression = le(args: _*) match {
+  def foe(args: Splice[FOLExpression]*): FOLExpression = le(args*) match {
     case folExpression: FOLExpression => folExpression
     case expr =>
       throw new IllegalArgumentException(s"Expression $expr appears not to be a FOL expression. Parse it with le.")
@@ -168,7 +168,7 @@ class ExpressionParseHelper(sc: StringContext, file: sourcecode.File, line: sour
    * @param args
    * @return
    */
-  def fof(args: Splice[FOLExpression]*): FOLFormula = hof(args: _*) match {
+  def fof(args: Splice[FOLExpression]*): FOLFormula = hof(args*) match {
     case formula: FOLFormula => formula
     case expr =>
       throw new IllegalArgumentException(s"Formula $expr appears not to be a FOL formula. Parse it with hof.")
@@ -180,7 +180,7 @@ class ExpressionParseHelper(sc: StringContext, file: sourcecode.File, line: sour
    * @param args
    * @return
    */
-  def foa(args: Splice[FOLExpression]*): FOLAtom = fof(args: _*) match {
+  def foa(args: Splice[FOLExpression]*): FOLAtom = fof(args*) match {
     case atom: FOLAtom => atom
     case expr =>
       throw new IllegalArgumentException(s"Formula $expr appears not to be an atom. Parse it with fof.")
@@ -192,7 +192,7 @@ class ExpressionParseHelper(sc: StringContext, file: sourcecode.File, line: sour
    * @param args
    * @return
    */
-  def fot(args: Splice[FOLTerm]*): FOLTerm = le(args: _*) match {
+  def fot(args: Splice[FOLTerm]*): FOLTerm = le(args*) match {
     case term: FOLTerm => term
     case expr =>
       throw new IllegalArgumentException(s"Expression $expr appears not to be FOL term. Parse it with le.")
@@ -204,7 +204,7 @@ class ExpressionParseHelper(sc: StringContext, file: sourcecode.File, line: sour
    * @param args
    * @return
    */
-  def fov(args: Splice[FOLTerm]*): FOLVar = le(args: _*) match {
+  def fov(args: Splice[FOLTerm]*): FOLVar = le(args*) match {
     case Var(n, _) => FOLVar(n)
     case expr =>
       throw new IllegalArgumentException(s"Term $expr cannot be read as a FOL variable. Parse it with fot.")
@@ -216,7 +216,7 @@ class ExpressionParseHelper(sc: StringContext, file: sourcecode.File, line: sour
    * @param args
    * @return
    */
-  def foc(args: Splice[FOLTerm]*): FOLConst = fot(args: _*) match {
+  def foc(args: Splice[FOLTerm]*): FOLConst = fot(args*) match {
     case c: FOLConst => c
     case expr =>
       throw new IllegalArgumentException(s"Term $expr cannot be read as a FOL constant. Parse it with fot.")
@@ -247,16 +247,16 @@ class ExpressionParseHelper(sc: StringContext, file: sourcecode.File, line: sour
   }
 
   /** Parses a string as a [[gapt.proofs.HOLClause]]. */
-  def hcl(args: Splice[Expr]*): HOLClause = hos(args: _*).map(_.asInstanceOf[Atom])
+  def hcl(args: Splice[Expr]*): HOLClause = hos(args*).map(_.asInstanceOf[Atom])
 
   /** Parses a string as a [[gapt.proofs.FOLSequent]]. */
-  def fos(args: Splice[Expr]*): FOLSequent = hos(args: _*).map(_.asInstanceOf[FOLFormula])
+  def fos(args: Splice[Expr]*): FOLSequent = hos(args*).map(_.asInstanceOf[FOLFormula])
 
   /** Parses a string as a [[gapt.proofs.FOLClause]]. */
-  def fcl(args: Splice[Expr]*): FOLClause = hos(args: _*).map(_.asInstanceOf[FOLAtom])
+  def fcl(args: Splice[Expr]*): FOLClause = hos(args*).map(_.asInstanceOf[FOLAtom])
 
   /** Parses a string as a [[gapt.logic.hol.PredicateEliminationProblem]] */
-  def pep(args: Splice[Expr]*): PredicateEliminationProblem = hof(args: _*) match
+  def pep(args: Splice[Expr]*): PredicateEliminationProblem = hof(args*) match
     case expr @ Ex.Block(vars, foPart) => {
       val (hoVarsPrefix, varSuffix) = vars.span(isHOVar)
       val remainder = Ex.Block(varSuffix, foPart)
@@ -268,7 +268,7 @@ class ExpressionParseHelper(sc: StringContext, file: sourcecode.File, line: sour
 
   /** Parses a string as a [[gapt.logic.hol.ClauseSetPredicateEliminationProblem]] if no skolemization of input formula is required */
   def clspep(args: Splice[Expr]*): ClauseSetPredicateEliminationProblem =
-    val inputPep = pep(args: _*)
+    val inputPep = pep(args*)
     inputPep.toClauseSetIfSkolemized match {
       case None =>
         throw new IllegalArgumentException(

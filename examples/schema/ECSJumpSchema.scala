@@ -276,7 +276,7 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_0" -> hof"?x (iLEQ(x,g(x)) -> E(f(s(0),x), f(s(0),g(x))) )")
     )
   val phiBc = Lemma(esPhiBc) {
-    unfold("CutDistinct") atMost 1 in "Ant_0"
+    unfold("CutDistinct") `atMost` 1 `in` "Ant_0"
     exL(fov"a")
     allL("Ant_0", fov"a")
     exR(fov"a")
@@ -289,12 +289,12 @@ object ECSJumpSchema extends TacticsProof {
     impL("Ant_0_1")
     trivial
     allL("Ant_1", le"(g a)")
-    unfold("TopFuncDef") atMost 1 in "Ant_1_0"
+    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_0"
     cut("cut1", hof"E(0, f(s(0), g(a)))")
     ref("TransitivityE")
     cut("cut2", hof"E(0, f(s(0), a))")
     allL("Ant_1", le"a")
-    unfold("TopFuncDef") atMost 1 in "Ant_1_1"
+    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_1"
     ref("TransitivityE")
     ref("NumericTransitivity")
     ref("minimalElement")
@@ -315,7 +315,7 @@ object ECSJumpSchema extends TacticsProof {
     cut("cut", hof"?x CutDistinct(0,n,x)")
     cut("cut1", hof"?x !y ( iLEQ(x,y) -> E(s(n),f(0,y)) )")
     cut("cut2", hof"?x ( LE(f(0,x),s(n)) )")
-    unfold("CutDistinct") atMost 1 in "Ant_0"
+    unfold("CutDistinct") `atMost` 1 `in` "Ant_0"
     exL(fov"a")
     exR("cut1", fov"a")
     allR("cut1_0", fov"b")
@@ -328,7 +328,7 @@ object ECSJumpSchema extends TacticsProof {
     trivial
     trivial
     exL("cut2", fov"a")
-    unfold("CutDistinct") atMost 1 in "cut"
+    unfold("CutDistinct") `atMost` 1 `in` "cut"
     exR("cut", fov"a")
     allR("cut_0", fov"b")
     orR
@@ -348,12 +348,12 @@ object ECSJumpSchema extends TacticsProof {
     ref("reflexivity")
     impR
     allL("Ant_1", le"(g a)")
-    unfold("TopFuncDef") atMost 1 in "Ant_1_0"
+    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_0"
     cut("cut11", hof"E(s(n), f(s(0), g(a)))")
     ref("TransitivityE")
     cut("cut22", hof"E(s(n), f(s(0), a))")
     allL("Ant_1", le"a")
-    unfold("TopFuncDef") atMost 1 in "Ant_1_1"
+    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_1"
     ref("TransitivityE")
     ref("NumericTransitivity")
     ref("phi")
@@ -430,9 +430,9 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_0" -> hof"CutDistinct(0,0,x)")
     )
   val muBc2 = Lemma(esMuBc2) {
-    unfold("CutDistinct") atMost 1 in "Suc_0"
-    unfold("PAND") atMost 1 in "Ant_0"
-    unfold("POR") atMost 1 in "Ant_0"
+    unfold("CutDistinct") `atMost` 1 `in` "Suc_0"
+    unfold("PAND") `atMost` 1 `in` "Ant_0"
+    unfold("POR") `atMost` 1 `in` "Ant_0"
     allR("Suc_0", fov"a")
     orR
     impR
@@ -446,8 +446,8 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_0" -> hof" CutDistinct(s(m),0,x)")
     )
   val muSc2 = Lemma(esMuSc2) {
-    unfold("PAND") atMost 1 in "Ant_0"
-    unfold("CutDistinct") atMost 1 in "Suc_0"
+    unfold("PAND") `atMost` 1 `in` "Ant_0"
+    unfold("CutDistinct") `atMost` 1 `in` "Suc_0"
     andL
     andR
     ref("mu")
@@ -455,7 +455,7 @@ object ECSJumpSchema extends TacticsProof {
     orR
     impR
     allL("Ant_0_0", fov"a")
-    unfold("POR") atMost 1 in "Ant_0_0_0"
+    unfold("POR") `atMost` 1 `in` "Ant_0_0_0"
     trivial
   }
   ctx += ProofDefinitionDeclaration(le"mu (s m) 0 x", muSc2)
@@ -466,9 +466,9 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_0" -> hof"CutDistinct(0,(s n),x)")
     )
   val muBc = Lemma(esMuBc) {
-    unfold("PAND") atMost 1 in "Ant_0"
-    unfold("POR") atMost 1 in "Ant_0"
-    unfold("CutDistinct") atMost 1 in "Suc_0"
+    unfold("PAND") `atMost` 1 `in` "Ant_0"
+    unfold("POR") `atMost` 1 `in` "Ant_0"
+    unfold("CutDistinct") `atMost` 1 `in` "Suc_0"
     allR("Suc_0", fov"a")
     orR
     impR
@@ -485,10 +485,10 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_0" -> hof"CutDistinct(s(m),s(n),x)")
     )
   val muSc = Lemma(esMuSc) {
-    unfold("PAND") atMost 1 in "Ant_0"
+    unfold("PAND") `atMost` 1 `in` "Ant_0"
     andL
-    unfold("POR") atMost 1 in "Ant_0_0"
-    unfold("CutDistinct") atMost 1 in "Suc_0"
+    unfold("POR") `atMost` 1 `in` "Ant_0_0"
+    unfold("CutDistinct") `atMost` 1 `in` "Suc_0"
     andR
     ref("mu")
     allR("Suc_0", fov"a")
@@ -527,8 +527,8 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_2" -> hof"E(f(k, x), f(k, g(x)))")
     )
   val thetaBc = Lemma(esthetaBc) {
-    unfold("CutDistinct") atMost 1 in "Ant_3"
-    unfold("TopFuncDef") atMost 1 in "Ant_1"
+    unfold("CutDistinct") `atMost` 1 `in` "Ant_3"
+    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1"
     allL("Ant_3", le"x")
     orL
     impL
@@ -551,8 +551,8 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_2" -> hof"E(f(k, x), f(k, g(x)))")
     )
   val thetaBc2 = Lemma(esthetaBc2) {
-    unfold("CutDistinct") atMost 1 in "Ant_3"
-    unfold("TopFuncDef") atMost 1 in "Ant_1"
+    unfold("CutDistinct") `atMost` 1 `in` "Ant_3"
+    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1"
     andL
     allL("Ant_3_1", le"x")
     orL("Ant_3_1_0")
@@ -594,8 +594,8 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_2" -> hof"E(f(k, x), f(k, g(x)))")
     )
   val EpsilonBc = Lemma(esEpsilonBc) {
-    unfold("CutDistinct") atMost 1 in "Ant_3"
-    unfold("TopFuncDef") atMost 1 in "Ant_1"
+    unfold("CutDistinct") `atMost` 1 `in` "Ant_3"
+    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1"
     allL("Ant_3", le"(g x)")
     orL
     impL
@@ -618,8 +618,8 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_2" -> hof"E(f(k, x), f(k, g(x)))")
     )
   val EpsilonBc2 = Lemma(esEpsilonBc2) {
-    unfold("CutDistinct") atMost 1 in "Ant_3"
-    unfold("TopFuncDef") atMost 1 in "Ant_1"
+    unfold("CutDistinct") `atMost` 1 `in` "Ant_3"
+    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1"
     andL
     allL("Ant_3_1", le"(g x)")
     orL("Ant_3_1_0")
@@ -659,9 +659,9 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_2" -> hof"E(f(k, x), f(k, g(x)))")
     )
   val GammaBc = Lemma(esGammaBc) {
-    unfold("CutDistinct") atMost 1 in "Ant_3"
-    unfold("TopFuncDef") atMost 1 in "Ant_0"
-    unfold("TopFuncDef") atMost 1 in "Ant_1"
+    unfold("CutDistinct") `atMost` 1 `in` "Ant_3"
+    unfold("TopFuncDef") `atMost` 1 `in` "Ant_0"
+    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1"
     allL("Ant_3", le"x")
     orL
     impL
@@ -691,17 +691,17 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_2" -> hof"E(f(k, x), f(k, g(x)))")
     )
   val GammaBc2 = Lemma(esGammaBc2) {
-    unfold("TopFuncDef") atMost 1 in "Ant_0"
-    unfold("TopFuncDef") atMost 1 in "Ant_1"
+    unfold("TopFuncDef") `atMost` 1 `in` "Ant_0"
+    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1"
     orL("Ant_0")
     orL
     focus(2)
     orL
     focus(1)
-    unfold("CutDistinct") atMost 1 in "Ant_3"
+    unfold("CutDistinct") `atMost` 1 `in` "Ant_3"
     andL
     ref("gamma")
-    unfold("CutDistinct") atMost 1 in "Ant_3"
+    unfold("CutDistinct") `atMost` 1 `in` "Ant_3"
     andL
     allL("Ant_3_1", le"x")
     orL
@@ -712,7 +712,7 @@ object ECSJumpSchema extends TacticsProof {
     cut("cut1", hof"E(0, f(k, x))")
     ref("TransitivityE")
     ref("epsilon")
-    unfold("CutDistinct") atMost 1 in "Ant_3"
+    unfold("CutDistinct") `atMost` 1 `in` "Ant_3"
     andL
     allL("Ant_3_1", le"x")
     orL
@@ -729,7 +729,7 @@ object ECSJumpSchema extends TacticsProof {
     ref("NumericTransitivity")
     ref("minimalElement")
     ref("minimalElement")
-    unfold("CutDistinct") atMost 1 in "Ant_3"
+    unfold("CutDistinct") `atMost` 1 `in` "Ant_3"
     andL
     allL("Ant_3_1", le"(g x)")
     orL
@@ -773,8 +773,8 @@ object ECSJumpSchema extends TacticsProof {
       )
     )
   val deltaBc = Lemma(esdeltaBc) {
-    unfold("CutDistinct") atMost 1 in "Ant_0"
-    unfold("CutDistinct") atMost 1 in "Suc_1"
+    unfold("CutDistinct") `atMost` 1 `in` "Ant_0"
+    unfold("CutDistinct") `atMost` 1 `in` "Suc_1"
     allR(fov"b")
     orR
     impR
@@ -783,7 +783,7 @@ object ECSJumpSchema extends TacticsProof {
     impL
     trivial
     exR("Suc_0", fov"b")
-    unfold("CutConstant") atMost 1 in "Suc_0_0"
+    unfold("CutConstant") `atMost` 1 `in` "Suc_0_0"
     allR(fov"c")
     impR
     allL(fov"c")
@@ -813,9 +813,9 @@ object ECSJumpSchema extends TacticsProof {
       )
     )
   val deltaSc = Lemma(esdeltaSc) {
-    unfold("CutDistinct") atMost 1 in "Ant_0"
-    unfold("CutDistinct") atMost 1 in "Ant_0"
-    unfold("CutDistinct") atMost 1 in "Suc_1"
+    unfold("CutDistinct") `atMost` 1 `in` "Ant_0"
+    unfold("CutDistinct") `atMost` 1 `in` "Ant_0"
+    unfold("CutDistinct") `atMost` 1 `in` "Suc_1"
     andR
     focus(1)
     allR(fov"b")
@@ -823,7 +823,7 @@ object ECSJumpSchema extends TacticsProof {
     impR
     andL
     exR("Suc_0", fov"b")
-    unfold("CutConstant") atMost 1 in "Suc_0_0"
+    unfold("CutConstant") `atMost` 1 `in` "Suc_0_0"
     andR
     focus(1)
     allR(fov"c")
@@ -838,7 +838,7 @@ object ECSJumpSchema extends TacticsProof {
     ref("sigma")
     andL
     exR("Suc_0", fov"a")
-    unfold("CutConstant") atMost 1 in "Suc_0_0"
+    unfold("CutConstant") `atMost` 1 `in` "Suc_0_0"
     andR
     focus(1)
     allR(fov"b")
@@ -877,7 +877,7 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_0" -> hof"CutLess(0, n, a)")
     )
   val PiBc = Lemma(esPiBc) {
-    unfold("CutLess") atMost 1 in "Suc_0"
+    unfold("CutLess") `atMost` 1 `in` "Suc_0"
     trivial
   }
   ctx += ProofDefinitionDeclaration(le"pi 0 n 0 a", PiBc)
@@ -888,7 +888,7 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_0" -> hof"CutLess(s(k), n, a)")
     )
   val PiBc2 = Lemma(esPiBc2) {
-    unfold("CutLess") atMost 1 in "Suc_0"
+    unfold("CutLess") `atMost` 1 `in` "Suc_0"
     orR
     trivial
   }
@@ -900,7 +900,7 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_0" -> hof"CutLess(s(k), n, a)")
     )
   val PiSc = Lemma(esPiSc) {
-    unfold("CutLess") atMost 1 in "Suc_0"
+    unfold("CutLess") `atMost` 1 `in` "Suc_0"
     orR
     ref("pi")
   }
@@ -936,8 +936,8 @@ object ECSJumpSchema extends TacticsProof {
       )
     )
   val SigmaBc = Lemma(esSigmaBc) {
-    unfold("CutDistinct") atMost 1 in "Ant_0"
-    unfold("CutConstant") atMost 1 in "Suc_1"
+    unfold("CutDistinct") `atMost` 1 `in` "Ant_0"
+    unfold("CutConstant") `atMost` 1 `in` "Suc_1"
     allR(fov"c")
     impR
     allL(fov"c")
@@ -962,9 +962,9 @@ object ECSJumpSchema extends TacticsProof {
       )
     )
   val SigmaSc = Lemma(esSigmaSc) {
-    unfold("CutDistinct") atMost 1 in "Ant_0"
+    unfold("CutDistinct") `atMost` 1 `in` "Ant_0"
     andL
-    unfold("CutConstant") atMost 1 in "Suc_1"
+    unfold("CutConstant") `atMost` 1 `in` "Suc_1"
     andR
     ref("sigma")
     allR(fov"c")
@@ -1010,8 +1010,8 @@ object ECSJumpSchema extends TacticsProof {
       )
     )
   val PsiBc = Lemma(esPsiBc) {
-    unfold("CutDistinct") atMost 1 in "Ant_0"
-    unfold("CutConstant") atMost 1 in "Suc_1"
+    unfold("CutDistinct") `atMost` 1 `in` "Ant_0"
+    unfold("CutConstant") `atMost` 1 `in` "Suc_1"
     allR(fov"b")
     impR
     allL(fov"b")
@@ -1033,9 +1033,9 @@ object ECSJumpSchema extends TacticsProof {
       )
     )
   val PsiSc = Lemma(esPsiSc) {
-    unfold("CutDistinct") atMost 1 in "Ant_0"
+    unfold("CutDistinct") `atMost` 1 `in` "Ant_0"
     andL
-    unfold("CutConstant") atMost 1 in "Suc_1"
+    unfold("CutConstant") `atMost` 1 `in` "Suc_1"
     andR
     ref("psi")
     allR(fov"b")
@@ -1061,9 +1061,9 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_0" -> hof" E(f(k,a), f(k,g(a))) ")
     )
   val ZetaBc = Lemma(esZetaBc) {
-    unfold("CutConstant") atMost 1 in "Ant_0"
-    unfold("TopFuncDef") atMost 1 in "Ant_2"
-    unfold("TopFuncDef") atMost 1 in "Ant_3"
+    unfold("CutConstant") `atMost` 1 `in` "Ant_0"
+    unfold("TopFuncDef") `atMost` 1 `in` "Ant_2"
+    unfold("TopFuncDef") `atMost` 1 `in` "Ant_3"
     allL("Ant_0", fov"a")
     impL
     ref("reflexivity")
@@ -1089,9 +1089,9 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_0" -> hof" E(f(k,a), f(k,g(a))) ")
     )
   val ZetaSc = Lemma(esZetaSc) {
-    unfold("CutConstant") atMost 1 in "Ant_0"
-    unfold("TopFuncDef") atMost 1 in "Ant_2"
-    unfold("TopFuncDef") atMost 1 in "Ant_3"
+    unfold("CutConstant") `atMost` 1 `in` "Ant_0"
+    unfold("TopFuncDef") `atMost` 1 `in` "Ant_2"
+    unfold("TopFuncDef") `atMost` 1 `in` "Ant_3"
     andL
     allL("Ant_0_1", fov"a")
     orL("Ant_2")
@@ -1130,8 +1130,8 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_0" -> hof" E(f(k,a), f(k,g(a))) ")
     )
   val xiBc = Lemma(esXiBc) {
-    unfold("CutConstant") atMost 1 in "Ant_0"
-    unfold("TopFuncDef") atMost 1 in "Ant_3"
+    unfold("CutConstant") `atMost` 1 `in` "Ant_0"
+    unfold("TopFuncDef") `atMost` 1 `in` "Ant_3"
     allL("Ant_0", le"(g a)")
     impL
     trivial
@@ -1152,9 +1152,9 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_0" -> hof" E(f(k,a), f(k,g(a))) ")
     )
   val xiSc = Lemma(esXiSc) {
-    unfold("CutConstant") atMost 1 in "Ant_0"
+    unfold("CutConstant") `atMost` 1 `in` "Ant_0"
     andL
-    unfold("TopFuncDef") atMost 1 in "Ant_3"
+    unfold("TopFuncDef") `atMost` 1 `in` "Ant_3"
     orL
     allL("Ant_0_1", le"(g a)")
     impL
@@ -1177,8 +1177,8 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_0" -> hof" E(f(k,a), f(k,g(a))) ")
     )
   val chiBc = Lemma(esChiBc) {
-    unfold("CutConstant") atMost 1 in "Ant_0"
-    unfold("TopFuncDef") atMost 1 in "Ant_3"
+    unfold("CutConstant") `atMost` 1 `in` "Ant_0"
+    unfold("TopFuncDef") `atMost` 1 `in` "Ant_3"
     allL("Ant_0", le"a")
     impL
     ref("reflexivity")
@@ -1199,9 +1199,9 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_0" -> hof" E(f(k,a), f(k,g(a))) ")
     )
   val chiSc = Lemma(esChiSc) {
-    unfold("CutConstant") atMost 1 in "Ant_0"
+    unfold("CutConstant") `atMost` 1 `in` "Ant_0"
     andL
-    unfold("TopFuncDef") atMost 1 in "Ant_3"
+    unfold("TopFuncDef") `atMost` 1 `in` "Ant_3"
     orL
     allL("Ant_0_1", le"a")
     impL
@@ -1219,7 +1219,7 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_0" -> hof"CutDistinct(0,n,a)")
     )
   val betaBc = Lemma(esBetaBc) {
-    unfold("CutDistinct") atMost 1 in "Suc_0"
+    unfold("CutDistinct") `atMost` 1 `in` "Suc_0"
     allR("Suc_0", fov"b")
     orR
     impR
@@ -1233,7 +1233,7 @@ object ECSJumpSchema extends TacticsProof {
       Seq("Suc_0" -> hof"CutDistinct(s(m),n,a)")
     )
   val betaSc = Lemma(esBetaSc) {
-    unfold("CutDistinct") atMost 1 in "Suc_0"
+    unfold("CutDistinct") `atMost` 1 `in` "Suc_0"
     andR
     ref("beta")
     allR("Suc_0", fov"b")
@@ -1255,7 +1255,7 @@ object ECSJumpSchema extends TacticsProof {
       )
     )
   val alphaBc = Lemma(esAlphaBc) {
-    unfold("CutLess") atMost 1 in "Ant_0"
+    unfold("CutLess") `atMost` 1 `in` "Ant_0"
     ref("ordCondition")
 
   }
@@ -1273,7 +1273,7 @@ object ECSJumpSchema extends TacticsProof {
       )
     )
   val alphaSc = Lemma(esAlphaSc) {
-    unfold("CutLess") atMost 1 in "Ant_0"
+    unfold("CutLess") `atMost` 1 `in` "Ant_0"
     orL
     ref("alpha")
     ref("ordCondition")

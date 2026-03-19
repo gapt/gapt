@@ -293,7 +293,7 @@ object isConstructorForm {
   def apply(term: Expr)(implicit ctx: Context): Boolean = {
     val constructors = ctx.getConstructors(term.ty.asInstanceOf[TBase]).get
     val Apps(head, arguments) = term
-    constructors.contains(head) && arguments.filter(_.ty == term.ty).forall(apply _)
+    constructors.contains(head) && arguments.filter(_.ty == term.ty).forall(apply)
   }
 }
 

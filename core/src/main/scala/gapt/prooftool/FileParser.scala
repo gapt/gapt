@@ -2,13 +2,12 @@ package gapt.prooftool
 
 import gapt.formats.ivy.IvyParser
 import gapt.formats.ivy.conversion.IvyToResolution
-import gapt.expr._
 import gapt.formats.llk.{ExtendedProofDatabase, loadLLK}
 import gapt.proofs.resolution.ResolutionProof
 
 import os._
 
-class FileParser(main: ProofToolViewer[_]) {
+class FileParser(main: ProofToolViewer[?]) {
 
   def ivyFileReader(path: String): Unit = {
     val ivy = IvyToResolution(IvyParser(FilePath(path)))

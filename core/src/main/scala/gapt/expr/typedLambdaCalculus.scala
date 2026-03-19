@@ -29,7 +29,7 @@ abstract class Expr {
   override def equals(a: Any): Boolean = a match {
     case a: AnyRef if this eq a            => true
     case e: Expr if e.hashCode != hashCode => false
-    case e: Expr                           => this alphaEquals e
+    case e: Expr                           => this `alphaEquals` e
     case _                                 => false
   }
 
@@ -191,7 +191,7 @@ class Var private[expr] (val name: String, val ty: Ty) extends VarOrConst {
     that match {
       case that: Var =>
         (thisCtx.getOrElse(this, -1), thatCtx.getOrElse(that, -1)) match {
-          case (-1, -1)         => this syntaxEquals that // not bound
+          case (-1, -1)         => this `syntaxEquals` that // not bound
           case (i, j) if i == j => true // both bound to the same local constant
           case _                => false
         }
@@ -210,7 +210,7 @@ class Const private[expr] (val name: String, val ty: Ty, val params: List[Ty]) e
   }
 
   private[expr] override def alphaEquals(that: Expr, lcBound: Int, thisCtx: Map[Var, Int], thatCtx: Map[Var, Int]): Boolean =
-    this syntaxEquals that
+    this `syntaxEquals` that
 
   override val hashCode: Int = (41 * name.hashCode) + ty.hashCode
   override def alphaEquivalentHashCode: Int = hashCode

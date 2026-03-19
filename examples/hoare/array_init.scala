@@ -35,7 +35,7 @@ object array_init extends Script {
   val proof = Prover9.getLKProof(instanceSeq).get
 
   val expansionSequent = LKToExpansionProof(proof).expansionSequent
-  extractInstances(expansionSequent) foreach println
+  extractInstances(expansionSequent) `foreach` println
 
   val deepSequent = expansionSequent map { _.deep }
   deepSequent.antecedent.foreach(println(_))

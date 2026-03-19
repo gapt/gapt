@@ -59,7 +59,7 @@ case class ProofState private (
       throw new IllegalArgumentException(s"Cannot replace non-existing open subgoal: $index")
     )
     require(
-      proofSegment.conclusion isSubsetOf subGoal.conclusion,
+      proofSegment.conclusion `isSubsetOf` subGoal.conclusion,
       s"Conclusion of proof segment is not a subset of subgoal:\n${proofSegment.conclusion}\nis not a subset of\n${subGoal.conclusion}\n"
         + s"Extra formulas:\n${proofSegment.conclusion.distinct.diff(subGoal.conclusion)}"
     )
@@ -94,9 +94,9 @@ case class ProofState private (
       finishedSubGoals.get(p.index) match {
         case Some(segment) =>
           val subProof = recurse(segment, ())._1
-          require(subProof.conclusion multiSetEquals segment.conclusion)
+          require(subProof.conclusion `multiSetEquals` segment.conclusion)
           val segment_ = WeakeningContractionMacroRule(subProof, p.conclusion)
-          require(segment_.conclusion multiSetEquals p.conclusion)
+          require(segment_.conclusion `multiSetEquals` p.conclusion)
           (segment_, SequentConnector.guessInjection(fromLower = p.conclusion, toUpper = segment_.conclusion).inv)
         case None =>
           if (failOnMissingSubgoal)
@@ -126,7 +126,7 @@ case class ProofState private (
  * The globally unique index of an open assumption in a proof state.
  */
 class OpenAssumptionIndex {
-  override def toString = Integer toHexString hashCode() take 3
+  override def toString = Integer `toHexString` hashCode() take 3
 }
 
 /**
@@ -182,20 +182,20 @@ case object AnyFormula extends TacticApplyMode {
   def forall(p: String => Boolean): Boolean = true
 }
 
-case class TacticFailure(tactic: Tactic[_], state: Option[ProofState], message: String) {
+case class TacticFailure(tactic: Tactic[?], state: Option[ProofState], message: String) {
   def defaultState(proofState: ProofState): TacticFailure =
     copy(state = Some(state.getOrElse(proofState)))
 
   override def toString = toSigRelativeString
   def toSigRelativeString(implicit sig: BabelSignature) =
     s"$tactic:\n$message:\n\n${state.map(_.toSigRelativeString).getOrElse("")}"
-  def reassignTactic(newTactical: Tactic[_]) =
+  def reassignTactic(newTactical: Tactic[?]) =
     TacticFailure(newTactical, state, s"$tactic:\n$message")
 }
 object TacticFailure {
-  def apply(tactical: Tactic[_], state: ProofState, message: String): TacticFailure =
+  def apply(tactical: Tactic[?], state: ProofState, message: String): TacticFailure =
     TacticFailure(tactical, Some(state), message)
-  def apply(tactical: Tactic[_], message: String): TacticFailure =
+  def apply(tactical: Tactic[?], message: String): TacticFailure =
     TacticFailure(tactical, None, message)
 }
 
@@ -236,7 +236,7 @@ trait Tactic[+T] { self =>
     override def toString = s"$self.flatMap(<${file.value}:${line.value}>)"
   }
 
-  private def applyToSubgoal(proofState: ProofState, subGoal: OpenAssumptionIndex, tacticToBlame: Tactic[_] = this): Either[TacticFailure, (T, ProofState)] =
+  private def applyToSubgoal(proofState: ProofState, subGoal: OpenAssumptionIndex, tacticToBlame: Tactic[?] = this): Either[TacticFailure, (T, ProofState)] =
     proofState.subGoals.indexWhere(_.index == subGoal) match {
       case -1 => Left(TacticFailure(tacticToBlame, proofState, "Did not find specified subgoal"))
       case i =>
@@ -301,7 +301,7 @@ trait Tactic[+T] { self =>
   }
   def verboseOnly(loggers: Logger*): Tactic[T] = new Tactic[T] {
     override def apply(proofState: ProofState) =
-      gapt.utils.verbose.only(loggers: _*) { self(proofState) }
+      gapt.utils.verbose.only(loggers*) { self(proofState) }
 
     override def toString: String = s"${self.toString}.verboseOnly(${loggers.mkString(",")})"
   }
@@ -314,7 +314,7 @@ trait Tactic[+T] { self =>
   }
   def quietOnly(loggers: Logger*): Tactic[T] = new Tactic[T] {
     override def apply(proofState: ProofState) =
-      gapt.utils.quiet.only(loggers: _*) { self(proofState) }
+      gapt.utils.quiet.only(loggers*) { self(proofState) }
 
     override def toString: String = s"${self.toString}.quietOnly(${loggers.mkString(",")})"
   }
@@ -397,6 +397,9 @@ trait Tactical1[+T] extends Tactic[T] { self =>
 
     def flatMap[U](func: Val => Tactic[U]): Tactic[U] =
       withFilter(_ => true).flatMap(func)
+
+    def map[U](func: Val => U): Tactic[U] =
+      withFilter(_ => true).map(func)
   }
 }
 
@@ -408,13 +411,13 @@ trait BinaryTactic[+T] extends Tactic[T] {
   /**
    * Synonym for `andThen`.
    */
-  def left(that: Tactic[Unit]): Tactic[Unit] = this andThen that.focused
+  def left(that: Tactic[Unit]): Tactic[Unit] = this `andThen` that.focused
 
   /**
    * Creates a new Tactical by first applying `this` to the current subgoal and then `that` to the new right subgoal.
    * @param that A Tactical.
    */
-  def right(that: Tactic[Unit]): Tactic[Unit] = this andThen focus(1) andThen that.focused
+  def right(that: Tactic[Unit]): Tactic[Unit] = this `andThen` focus(1) `andThen` that.focused
 }
 
 /**
@@ -435,7 +438,7 @@ object NewLabels {
     // Get integer subscripts (i.e 1, 2, 3 for x_1, x_2, x_3)
     val usedVariableSubscripts = {
       for ((label, _) <- sequent.elements; m <- regex findFirstMatchIn label)
-        yield Integer parseInt (m group 1)
+        yield Integer `parseInt` (m group 1)
     }.toSet
 
     for (i <- LazyList from 0 if !usedVariableSubscripts(i)) yield f"$fromLabel%s_$i%d"

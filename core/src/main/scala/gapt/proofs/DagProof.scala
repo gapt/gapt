@@ -84,7 +84,7 @@ trait DagProof[Proof <: DagProof[Proof]] extends Product { self: Proof =>
   override def equals(that: Any) = {
 
     val areEqual = mutable.Set[PtrPair]()
-    def checkEqual(a: DagProof[_], b: DagProof[_]): Boolean =
+    def checkEqual(a: DagProof[?], b: DagProof[?]): Boolean =
       if (a eq b) true
       else if (a.hashCode != b.hashCode) false
       else if (a.getClass != b.getClass) false
@@ -119,7 +119,7 @@ object DagProof {
      * Iterate over all sub-proofs including this in post-order.
      */
     def foreach(f: Proof => Unit): Unit = {
-      for (p <- self.immediateSubProofs) p.treeLike foreach f
+      for (p <- self.immediateSubProofs) p.treeLike `foreach` f
       f(self)
     }
 

@@ -45,7 +45,7 @@ import scala.collection.mutable
 object preExpr {
 
   class MetaTypeIdx {
-    override def toString = Integer toHexString hashCode() take 3
+    override def toString = Integer `toHexString` hashCode() take 3
   }
 
   sealed trait Type

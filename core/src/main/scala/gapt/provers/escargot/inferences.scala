@@ -75,7 +75,7 @@ object getFOPositions {
   def apply(exp: Expr): Map[Expr, Seq[LambdaPosition]] = {
     val poss = mutable.Map[Expr, Seq[LambdaPosition]]().withDefaultValue(Seq())
     def walk(exp: Expr, pos: List[Choice]): Unit = {
-      poss(exp) :+= LambdaPosition(pos.reverse: _*)
+      poss(exp) :+= LambdaPosition(pos.reverse*)
       walkApp(exp, pos)
     }
     def walkApp(exp: Expr, pos: List[Choice]): Unit = exp match {
@@ -159,7 +159,7 @@ class StandardInferences(state: EscargotState, propositional: Boolean) {
     fastSubsumption(a.clause, b.clause, a.featureVec, b.featureVec, a.literalFeatureVecs, b.literalFeatureVecs)
   def subsume(a: HOLSequent, b: HOLSequent): Option[Substitution] =
     if (propositional) {
-      if (a isSubMultisetOf b) Some(Substitution())
+      if (a `isSubMultisetOf` b) Some(Substitution())
       else None
     } else clauseSubsumption(a, b, multisetSubsumption = true)
   def unify(a: Expr, b: Expr): Option[Substitution] =
@@ -177,7 +177,7 @@ class StandardInferences(state: EscargotState, propositional: Boolean) {
     subProof match {
       case _ if substitution.isIdentity => subProof
       case Subst(subProof2, substitution2) =>
-        Subst(subProof2, substitution compose substitution2)
+        Subst(subProof2, substitution `compose` substitution2)
       case _ => gapt.proofs.resolution.Subst(subProof, substitution)
     }
 
@@ -246,7 +246,7 @@ class StandardInferences(state: EscargotState, propositional: Boolean) {
         None
       } else {
         var p = `given`.proof
-        for (e <- toFlip) p = Flip(p, p.conclusion indexOf e)
+        for (e <- toFlip) p = Flip(p, p.conclusion `indexOf` e)
         Some(SimpCls(`given`, p) -> Set())
       }
     }
@@ -422,7 +422,7 @@ class StandardInferences(state: EscargotState, propositional: Boolean) {
         if !c2.maximal.exists { i2_ => i2_ != i2 && termOrdering.lt(mgu(p2_.conclusion(i2)), mgu(p2_.conclusion(i2_))) }
         (p1__, conn1) = Factor.withOccConn(Subst(c1.proof, mgu))
         (p2__, conn2) = Factor.withOccConn(Subst(p2_, mgu))
-      } yield DerivedCls(c1, c2, Resolution(p2__, conn2 child i2, p1__, conn1 child i1))
+      } yield DerivedCls(c1, c2, Resolution(p2__, conn2 `child` i2, p1__, conn1 `child` i1))
     }
   }
 

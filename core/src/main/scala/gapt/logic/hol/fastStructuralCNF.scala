@@ -62,7 +62,7 @@ case class fastStructuralCNF(propositional: Boolean = true, bidirectionalDefs: B
         skolemizedFormula,
         Const(mkSkolemSym(), FunctionType(x.ty, fvs map { _.ty }))
       )
-      (skolemConst(fvs: _*), skolemizedFormula)
+      (skolemConst(fvs*), skolemizedFormula)
     }
 
     // We do a clausification similar to forward proof search in Ral.
@@ -81,7 +81,7 @@ case class fastStructuralCNF(propositional: Boolean = true, bidirectionalDefs: B
     def expand(seq: HOLSequent): Unit = {
       val ant = mutable.Set[Formula]()
       val suc = mutable.Set[Formula]()
-      lazy val freeVars = mutable.Set[Var](freeVariables(seq).toSeq: _*)
+      lazy val freeVars = mutable.Set[Var](freeVariables(seq).toSeq*)
       var trivial = false
 
       def left(f: Formula): Unit = f match {
@@ -171,9 +171,9 @@ case class fastStructuralCNF(propositional: Boolean = true, bidirectionalDefs: B
       val alreadyDefined = defs isDefinedAt Abs(fvs, f)
       val const = defs.getOrElseUpdate(
         Abs(fvs, f),
-        formula.hol.HOLAtomConst(mkAbbrevSym(), fvs map { _.ty }: _*)
+        formula.hol.HOLAtomConst(mkAbbrevSym(), fvs map { _.ty }*)
       )
-      val repl = const(fvs: _*)
+      val repl = const(fvs*)
       if (!alreadyDefined) {
         if (i.isAnt || bidirectionalDefs) expand(Sequent(Seq(f), Seq(repl)))
         if (i.isSuc || bidirectionalDefs) expand(Sequent(Seq(repl), Seq(f)))

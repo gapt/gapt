@@ -53,7 +53,7 @@ class PTScrollPane extends ScrollPane {
  * @param content An object that displays some content, e.g., a DrawSequentProof
  */
 class PTContentPanel(
-    val main: ProofToolViewer[_],
+    val main: ProofToolViewer[?],
     val str: String,
     val content: Component
 ) extends BorderPanel with MouseMotionListener {

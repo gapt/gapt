@@ -31,7 +31,7 @@ object unifyInstancesET {
       (b, j) <- group.zipWithIndex
       if i < j
       mgu <- syntacticMGU(a, b)
-    } scala.util.boundary.break(unifyInstances(mgu(instances)) compose mgu)
+    } scala.util.boundary.break(unifyInstances(mgu(instances)) `compose` mgu)
 
     Substitution()
   }

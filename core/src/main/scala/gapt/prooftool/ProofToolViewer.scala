@@ -73,7 +73,7 @@ abstract class ProofToolViewer[+T](val name: String, val content: T) extends Rea
     title = "ProofTool"
     menuBar = mBar
     contents = new BorderPanel
-    peer setDefaultCloseOperation WindowConstants.DISPOSE_ON_CLOSE
+    peer `setDefaultCloseOperation` WindowConstants.DISPOSE_ON_CLOSE
   }
 
   val mainComponent = createMainComponent
@@ -335,7 +335,7 @@ trait Savable[T] extends ProofToolViewer[T] {
    * @param obj The object to be saved.
    */
   def fSave(name: String, obj: T): Unit = {
-    val chooser = createChooser(saveFormats.keys.toList: _*)
+    val chooser = createChooser(saveFormats.keys.toList*)
     chooser.showSaveDialog(mBar) match {
       case FileChooser.Result.Approve =>
         mainPanel.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)

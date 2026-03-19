@@ -61,8 +61,8 @@ object prop_07 extends TacticsProof {
         !x!y (length(qrev x y) = plus(length x, length y) &
               plus(length x, S(length y)) = S(plus(length x, length y)))
       """
-    ) right escrgt
+    ) `right` escrgt
     forget("goal"); allR(hov"x:list")
-    induction(hov"x:list") onAll escrgt
+    induction(hov"x:list") `onAll` escrgt
   }
 }

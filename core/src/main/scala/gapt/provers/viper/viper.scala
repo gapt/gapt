@@ -178,7 +178,7 @@ object ViperOptions {
 object Viper {
   val logger = Logger("Viper")
 
-  def getStrategies(sequent: HOLSequent, opts: ViperOptions)(implicit ctx: MutableContext): List[(Duration, Tactic[_])] =
+  def getStrategies(sequent: HOLSequent, opts: ViperOptions)(implicit ctx: MutableContext): List[(Duration, Tactic[?])] =
     opts.mode match {
       case "untrusted_funind" =>
         List(Duration.Inf -> AnalyticInductionTactic(UntrustedFunctionalInductionAxioms, Escargot)
@@ -273,7 +273,7 @@ object Viper {
   def apply(sequent: HOLSequent, opts: ViperOptions)(implicit ctx: MutableContext): Option[LKProof] =
     apply(sequent, opts.verbosity, getStrategies(sequent, opts))
 
-  def apply(sequent: HOLSequent, verbosity: Int, strategies: List[(Duration, Tactic[_])])(
+  def apply(sequent: HOLSequent, verbosity: Int, strategies: List[(Duration, Tactic[?])])(
       implicit ctx: MutableContext
   ): Option[LKProof] = LogHandler.scope {
     LogHandler.verbosity.value = LogHandler.verbosity.value.increase(math.max(0, verbosity - 2))
@@ -331,8 +331,8 @@ object Viper {
 
     apply(problem.toSequent, opts.copy(tipProblem = Some(problem))) match {
       case Some(proof) =>
-        ctx check proof
-        require(proof.conclusion isSubsetOf problem.toSequent)
+        ctx `check` proof
+        require(proof.conclusion `isSubsetOf` problem.toSequent)
         logger.metric("success", true)
         println("proof found")
         import gapt.prooftool.LKProofViewable

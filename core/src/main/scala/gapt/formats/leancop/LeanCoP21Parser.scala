@@ -41,7 +41,7 @@ object LeanCoP21Parser {
     }
 
   def clause[X: P]: P[Clause] =
-    P("[" ~ lit.rep(sep = ",") ~ "]").map(Clause(_: _*))
+    P("[" ~ lit.rep(sep = ",") ~ "]").map(Clause(_*))
 
   def lit[X: P]: P[Lit] = P(pos | neg | hash | negHash)
   def pos[X: P]: P[Lit] = P(atom).map(Pos.apply)

@@ -16,16 +16,16 @@ object tautSchema extends TacticsProof {
   ctx += ProofNameDeclaration(le"taut n", es)
   val esBc = Sequent(Seq("Ant_0" -> hof"PAND(0)"), Seq("Suc_0" -> hof"PAND(0)"))
   val bc = Lemma(esBc) {
-    unfold("PAND") atMost 1 in "Ant_0"
-    unfold("PAND") atMost 1 in "Suc_0"
+    unfold("PAND") `atMost` 1 `in` "Ant_0"
+    unfold("PAND") `atMost` 1 `in` "Suc_0"
     trivial
   }
   ctx += ProofDefinitionDeclaration(le"taut 0", bc)
 
   val esSc = Sequent(Seq("Ant_0" -> hof"PAND(s(n))"), Seq("Suc_0" -> hof"PAND(s(n))"))
   val sc = Lemma(esSc) {
-    unfold("PAND") atMost 1 in "Ant_0"
-    unfold("PAND") atMost 1 in "Suc_0"
+    unfold("PAND") `atMost` 1 `in` "Ant_0"
+    unfold("PAND") `atMost` 1 `in` "Suc_0"
     andL
     andR
     ref("taut")

@@ -20,11 +20,11 @@ object clauseSubsumption {
     if (from isEmpty) return Some(alreadyFixed.toSubstitution)
     val chosenFrom = from.indices.head
     for {
-      chosenTo <- to.indices if chosenTo sameSideAs chosenFrom
+      chosenTo <- to.indices if chosenTo `sameSideAs` chosenFrom
       newSubst <- syntacticMatching(from(chosenFrom), to(chosenTo), alreadyFixed)
       subsumption <- apply(
-        from delete chosenFrom,
-        if (multisetSubsumption) to delete chosenTo else to,
+        from `delete` chosenFrom,
+        if (multisetSubsumption) to `delete` chosenTo else to,
         newSubst,
         multisetSubsumption
       )
@@ -49,12 +49,12 @@ object clauseSubsumption {
     if (from isEmpty) return Some(alreadyFixed.toSubstitution)
     val chosenFrom = from.indices.head
     for {
-      chosenTo <- to.indices if chosenTo sameSideAs chosenFrom
+      chosenTo <- to.indices if chosenTo `sameSideAs` chosenFrom
       toE <- eqVariants(to(chosenTo))
       newSubst <- syntacticMatching(from(chosenFrom), toE, alreadyFixed)
       subsumption <- modEqSymm(
-        from delete chosenFrom,
-        if (multisetSubsumption) to delete chosenTo else to,
+        from `delete` chosenFrom,
+        if (multisetSubsumption) to `delete` chosenTo else to,
         newSubst,
         multisetSubsumption
       )

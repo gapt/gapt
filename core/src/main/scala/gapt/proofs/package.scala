@@ -1,6 +1,5 @@
 package gapt
 
-import gapt.expr._
 import gapt.expr.formula.And
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Bottom

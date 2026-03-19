@@ -6,7 +6,7 @@ import os._
 import gapt.proofs.rup.RupProof
 
 object Glucose extends Glucose("glucose")
-class Glucose(command: String*) extends ExternalSATSolver(command: _*) with DrupSolver {
+class Glucose(command: String*) extends ExternalSATSolver(command*) with DrupSolver {
   def runForProof(dimacsInput: String): Option[String] =
     withTempFile.fromString(dimacsInput) { dimacsInputFile =>
       withTempFile { dimacsOutputFile =>

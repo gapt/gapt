@@ -75,7 +75,7 @@ object folSkolemize {
     case Ex(x, f) if pol.inSuc => Ex(x, folSkolemize(f, pol, context :+ x, skolemSymbols))
     case Ex(x, f) if pol.inAnt =>
       val sym = Const(skolemSymbols.head, FunctionType(x.ty, context.map(_.ty)))
-      val skolemFunction = sym(context: _*)
+      val skolemFunction = sym(context*)
       folSkolemize(Substitution(x -> skolemFunction)(f), pol, context, skolemSymbols.tail)
     case All(x, f) if pol.inAnt => All(x, folSkolemize(f, pol, context :+ x, skolemSymbols))
     case All(x, f) if pol.inSuc => folSkolemize(Ex(x, -f), !pol, context, skolemSymbols) match { case Neg(f_) => f_ }
@@ -237,7 +237,7 @@ object folSkolemize {
       contextAndSymbols(proof.mainIndices.head) match {
         case Some((context, skolemSymbols)) =>
           val sym = Const(skolemSymbols.head, FunctionType(eigen.ty, context.map(_.ty)))
-          val skolemFunction = sym(context: _*)
+          val skolemFunction = sym(context*)
           val subProof_ = apply(
             subProof,
             proof.getSequentConnector.parents(contextAndSymbols).map(_.head)
@@ -252,7 +252,7 @@ object folSkolemize {
       contextAndSymbols(proof.mainIndices.head) match {
         case Some((context, skolemSymbols)) =>
           val sym = Const(skolemSymbols.head, FunctionType(eigen.ty, context.map(_.ty)))
-          val skolemFunction = sym(context: _*)
+          val skolemFunction = sym(context*)
           val subProof_ = apply(
             subProof,
             proof.getSequentConnector.parents(contextAndSymbols).map(_.head)

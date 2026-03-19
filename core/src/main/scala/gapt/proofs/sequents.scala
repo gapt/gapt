@@ -107,7 +107,7 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
       new BabelExporter(unicode = true, sig = sig).`export`(this.asInstanceOf[HOLSequent])
     } else {
       val stringified = this map { _.toString }
-      val multiLine = stringified.exists { _ contains "\n" } || stringified.elements.map { _.length + 2 }.sum > 80
+      val multiLine = stringified.exists { _ `contains` "\n" } || stringified.elements.map { _.length + 2 }.sum > 80
       if (multiLine)
         s"${stringified.antecedent.mkString(",\n")}\n:-\n${stringified.succedent.mkString(",\n")}"
       else
@@ -117,12 +117,12 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
   /**
    * Equality treating each side of the sequent as a set.
    */
-  def setEquals[B](other: Sequent[B]): Boolean = (other isSubsetOf this) && (this isSubsetOf other)
+  def setEquals[B](other: Sequent[B]): Boolean = (other `isSubsetOf` this) && (this `isSubsetOf` other)
 
   /**
    * Equality treating each side of the sequent as a multiset.
    */
-  def multiSetEquals[B](other: Sequent[B]): Boolean = (other isSubMultisetOf this) && (this isSubMultisetOf other)
+  def multiSetEquals[B](other: Sequent[B]): Boolean = (other `isSubMultisetOf` this) && (this `isSubMultisetOf` other)
 
   /**
    * Sequence of elements of the sequent.
@@ -167,13 +167,13 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
    */
   def distinct = Sequent(antecedent.distinct, succedent.distinct)
 
-  def isSubMultisetOf[B >: A](other: Sequent[B]) = (this diff other).isEmpty
+  def isSubMultisetOf[B >: A](other: Sequent[B]) = (this `diff` other).isEmpty
 
   /**
    * @param other Another Sequent.
    * @return True iff other contains this pair of sets.
    */
-  def isSubsetOf[B >: A](other: Sequent[B]) = (this.distinct diff other.distinct).isEmpty
+  def isSubsetOf[B >: A](other: Sequent[B]) = (this.distinct `diff` other.distinct).isEmpty
 
   def tautFormulas: Vector[A] = antecedent.intersect(succedent)
 
@@ -266,7 +266,7 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
    * @param p A function of type A => Boolean.
    * @return The sequent consisting of only those elements not satisfying p.
    */
-  def filterNot(p: A => Boolean): Sequent[A] = this filter (!p(_))
+  def filterNot(p: A => Boolean): Sequent[A] = this `filter` (!p(_))
 
   /**
    * The number of elements in the sequent.

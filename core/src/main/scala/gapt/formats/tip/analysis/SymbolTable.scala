@@ -137,6 +137,6 @@ case class SymbolTable(problem: TipSmtProblem) {
             )
           }
       }
-    Map((symbols ++ projectorSymbols): _*)
+    Map((symbols ++ projectorSymbols)*)
   }
 }

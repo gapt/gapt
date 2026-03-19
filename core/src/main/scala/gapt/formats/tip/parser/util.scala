@@ -223,7 +223,7 @@ object toSExpression {
       "declare-sort",
       LSymbol(definition.name) +:
         keywordsToSExpression(definition.keywords) :+
-        LSymbol("0"): _*
+        LSymbol("0")*
     )
   }
 
@@ -267,7 +267,7 @@ object toSExpression {
         keywordsToSExpression(definition.keywords) :+
         formalParameterListToSExpression(definition.parameters) :+
         toSExpression(definition.returnType) :+
-        toSExpression(definition.body): _*
+        toSExpression(definition.body)*
     )
   }
 
@@ -277,7 +277,7 @@ object toSExpression {
       LSymbol(definition.name) +:
         keywordsToSExpression(definition.keywords) :+
         LList(definition.argumentTypes map { toSExpression(_) }) :+
-        toSExpression(definition.returnType): _*
+        toSExpression(definition.returnType)*
     )
   }
 
@@ -293,7 +293,7 @@ object toSExpression {
     LFun(
       datatype.name,
       keywordsToSExpression(datatype.keywords) ++:
-        datatype.constructors.map { toSExpression(_) }: _*
+        datatype.constructors.map { toSExpression(_) }*
     )
   }
 
@@ -301,7 +301,7 @@ object toSExpression {
     LFun(
       constructor.name,
       keywordsToSExpression(constructor.keywords) ++:
-        constructor.fields.map { toSExpression(_) }: _*
+        constructor.fields.map { toSExpression(_) }*
     )
   }
 
@@ -314,7 +314,7 @@ object toSExpression {
       "declare-const",
       LSymbol(definition.name) +:
         keywordsToSExpression(definition.keywords) :+
-        toSExpression(definition.typ): _*
+        toSExpression(definition.typ)*
     )
   }
 
@@ -333,7 +333,7 @@ object toSExpression {
       function.name,
       keywordsToSExpression(function.keywords) :+
         formalParameterListToSExpression(function.parameters) :+
-        toSExpression(function.returnType): _*
+        toSExpression(function.returnType)*
     )
   }
 
@@ -341,7 +341,7 @@ object toSExpression {
     LFun(
       "prove",
       keywordsToSExpression(definition.keywords) :+
-        toSExpression(definition.expr): _*
+        toSExpression(definition.expr)*
     )
   }
 
@@ -349,7 +349,7 @@ object toSExpression {
     LFun(
       "assert",
       keywordsToSExpression(definition.keywords) :+
-        toSExpression(definition.expr): _*
+        toSExpression(definition.expr)*
     )
   }
 
@@ -391,19 +391,19 @@ object toSExpression {
   }
 
   def apply(expression: TipSmtAnd): SExpression = {
-    LFun("and", expression.exprs.map { toSExpression(_) }: _*)
+    LFun("and", expression.exprs.map { toSExpression(_) }*)
   }
 
   def apply(expression: TipSmtOr): SExpression = {
-    LFun("or", expression.exprs.map { toSExpression(_) }: _*)
+    LFun("or", expression.exprs.map { toSExpression(_) }*)
   }
 
   def apply(expression: TipSmtEq): SExpression = {
-    LFun("=", expression.exprs.map { toSExpression(_) }: _*)
+    LFun("=", expression.exprs.map { toSExpression(_) }*)
   }
 
   def apply(expression: TipSmtImp): SExpression = {
-    LFun("=>", expression.exprs.map { toSExpression(_) }: _*)
+    LFun("=>", expression.exprs.map { toSExpression(_) }*)
   }
 
   def apply(expression: TipSmtForall): SExpression = {
@@ -430,7 +430,7 @@ object toSExpression {
     LFun(
       "match",
       toSExpression(expression.expr) +:
-        expression.cases.map { toSExpression(_) }: _*
+        expression.cases.map { toSExpression(_) }*
     )
   }
 
@@ -447,7 +447,7 @@ object toSExpression {
       case TipSmtDefault =>
         LSymbol("default")
       case p @ TipSmtConstructorPattern(_, _) =>
-        LFun(p.constructor.name, p.identifiers map { toSExpression(_) }: _*)
+        LFun(p.constructor.name, p.identifiers map { toSExpression(_) }*)
     }
   }
 
@@ -465,10 +465,10 @@ object toSExpression {
   }
 
   def apply(expression: TipSmtFun): SExpression = {
-    LFun(expression.name, expression.arguments.map { toSExpression(_) }: _*)
+    LFun(expression.name, expression.arguments.map { toSExpression(_) }*)
   }
 
   def apply(expression: TipSmtDistinct): SExpression = {
-    LFun("distinct", expression.expressions.map { toSExpression(_) }: _*)
+    LFun("distinct", expression.expressions.map { toSExpression(_) }*)
   }
 }

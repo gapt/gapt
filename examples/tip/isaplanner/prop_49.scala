@@ -71,7 +71,7 @@ object prop_49 extends TacticsProof {
   val append_nil_proof = Lemma(append_axioms ++:
     Sequent() :+
     ("goal" -> append_nil_goal)) {
-    analyticInduction withAxioms sequentialAxioms.forVariables(hov"xs:list").forLabel("goal")
+    analyticInduction `withAxioms` sequentialAxioms.forVariables(hov"xs:list").forLabel("goal")
   }
 
   val butlast_append_nil_goal = hof"!xs !x butlast(append(xs,cons(x,nil))) = xs"
@@ -103,10 +103,10 @@ object prop_49 extends TacticsProof {
     allR
     induction(hov"ys:list")
     // IB
-    rewrite ltr "def_butlastConcat_0" in "goal"
-    analyticInduction withAxioms sequentialAxioms.forVariables(hov"xs:list").forFormula(hof"!xs append(xs,nil) = xs")
+    rewrite `ltr` "def_butlastConcat_0" `in` "goal"
+    analyticInduction `withAxioms` sequentialAxioms.forVariables(hov"xs:list").forFormula(hof"!xs append(xs,nil) = xs")
     // IS
-    rewrite ltr "def_butlastConcat_1" in "goal"
+    rewrite `ltr` "def_butlastConcat_1" `in` "goal"
     induction(hov"xs:list")
     // IS - IB
     escargot
@@ -118,20 +118,20 @@ object prop_49 extends TacticsProof {
     insert(proof_list_domain_closure)
     orL("list_domain_closure")
     // subgoal 1 ( xs_0 = nil )
-    rewrite.many ltr "list_domain_closure" in "goal"
-    rewrite.many ltr "def_append_0" in "goal"
+    rewrite.many `ltr` "list_domain_closure" `in` "goal"
+    rewrite.many `ltr` "def_append_0" `in` "goal"
     escargot
     // subgoal 2 ( ?v ?vs xs_0 = cons(v,vs) )
     exL("list_domain_closure")
     exL("list_domain_closure")
-    rewrite ltr "list_domain_closure" in "goal"
-    rewrite ltr "def_append_1" in "goal"
-    rewrite ltr "def_append_1" in "goal"
-    rewrite ltr "def_butlast_2" in "goal"
-    rewrite rtl "def_append_1" in "goal"
-    rewrite rtl "list_domain_closure" in "goal"
-    rewrite ltr "IHxs_0" in "goal"
-    rewrite rtl "def_append_1" in "goal"
+    rewrite `ltr` "list_domain_closure" `in` "goal"
+    rewrite `ltr` "def_append_1" `in` "goal"
+    rewrite `ltr` "def_append_1" `in` "goal"
+    rewrite `ltr` "def_butlast_2" `in` "goal"
+    rewrite `rtl` "def_append_1" `in` "goal"
+    rewrite `rtl` "list_domain_closure" `in` "goal"
+    rewrite `ltr` "IHxs_0" `in` "goal"
+    rewrite `rtl` "def_append_1" `in` "goal"
     refl
   }
 
@@ -139,7 +139,7 @@ object prop_49 extends TacticsProof {
   val append_inner_shift_proof = Lemma(append_axioms ++:
     Sequent() :+
     ("goal" -> append_inner_shift_goal)) {
-    analyticInduction withAxioms sequentialAxioms.forVariables(hov"xs:list").forLabel("goal")
+    analyticInduction `withAxioms` sequentialAxioms.forVariables(hov"xs:list").forLabel("goal")
   }
 
   val butlast_inner_append_goal = hof"!ys !xs !y butlast(append(xs, cons(y,ys))) = append(xs, butlast(cons(y,ys)))"
@@ -149,7 +149,7 @@ object prop_49 extends TacticsProof {
     ("lem_ani" -> append_nil_goal) +:
     Sequent() :+
     ("goal" -> butlast_inner_append_goal)) {
-    analyticInduction withAxioms sequentialAxioms.forVariables(hov"ys:list").forLabel("goal")
+    analyticInduction `withAxioms` sequentialAxioms.forVariables(hov"ys:list").forLabel("goal")
   }
 
   val proof = Lemma(sequent) {
@@ -160,11 +160,11 @@ object prop_49 extends TacticsProof {
     cut("main_lemma", butlast_inner_append_goal); insert(butlast_inner_append_proof)
     allR; allR
     induction(hov"ys:list")
-    rewrite ltr "def_butlastConcat_0" in "goal"
-    rewrite ltr "append_lemma" in "goal"
+    rewrite `ltr` "def_butlastConcat_0" `in` "goal"
+    rewrite `ltr` "append_lemma" `in` "goal"
     refl
-    rewrite ltr "def_butlastConcat_1" in "goal"
-    rewrite ltr "main_lemma" in "goal"
+    rewrite `ltr` "def_butlastConcat_1" `in` "goal"
+    rewrite `ltr` "main_lemma" `in` "goal"
     refl
   }
 }

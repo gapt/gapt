@@ -19,7 +19,7 @@ import gapt.logic.hol.CNFn
 import gapt.logic.hol.CNFp
 import gapt.proofs.resolution.{AvatarDefinition, AvatarGroundComp, AvatarNonGroundComp, AvatarSplit}
 import gapt.proofs.sketch._
-import gapt.proofs.{FOLClause, HOLClause, HOLSequent, Sequent}
+import gapt.proofs.{FOLClause, HOLSequent, Sequent}
 
 import scala.collection.mutable
 

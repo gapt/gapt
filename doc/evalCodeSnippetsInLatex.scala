@@ -8,7 +8,6 @@ import os._
 import gapt.cli
 import gapt.formats.ClasspathInputFile
 
-import scala.collection.parallel.CollectionConverters._
 import dotty.tools.repl.{ReplDriver, State}
 import scala.util.matching.Regex
 

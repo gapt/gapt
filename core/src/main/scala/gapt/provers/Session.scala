@@ -265,7 +265,7 @@ object Session {
         case DeclareSort(sort) => tell(LFun("declare-sort", LSymbol(typeRenaming(sort).name), LSymbol(0.toString)))
         case DeclareFun(fun) => termRenaming(fun) match {
             case Const(name, FunctionType(TBase(retType, Nil), argTypes), _) =>
-              tell(LFun("declare-fun", LSymbol(name), LList(argTypes map convert: _*), LSymbol(retType)))
+              tell(LFun("declare-fun", LSymbol(name), LList(argTypes map convert*), LSymbol(retType)))
             case _ => () // do not declare applications or abstractions. TODO: check if we need to recurse into the term
           }
         case Assert(formula) => tell(LFun("assert", convert(formula)))
@@ -277,7 +277,7 @@ object Session {
             case unknown          => Left(unknown)
           }
         case SetLogic(logic)         => tell(LFun("set-logic", LSymbol(logic)))
-        case SetOption(option, args) => tell(LFun("set-option", LKeyword(option) +: args.map(LSymbol): _*))
+        case SetOption(option, args) => tell(LFun("set-option", LKeyword(option) +: args.map(LSymbol)*))
         case Ask(input)              => ask(input)
         case Tell(input)             => tell(input)
       }
@@ -288,7 +288,7 @@ object Session {
         case TBase(argType, Nil) => LSymbol(argType)
         case FunctionType(to, from) =>
           val ts = (from :+ to) map convert
-          LFun("->", ts: _*)
+          LFun("->", ts*)
       }
 
       object typeRenaming {
@@ -337,7 +337,7 @@ object Session {
           val smtVar = s"x${boundVars.size}"
           LFun("lambda", LList(LFun(smtVar, convert(typeRenaming(ty)))), convert(a, boundVars + (x -> smtVar)))
         case Apps(c, args) =>
-          LList((c :: args) map { convert(_, boundVars) }: _*)
+          LList((c :: args) map { convert(_, boundVars) }*)
       }
 
     }
@@ -347,19 +347,19 @@ object Session {
      * @param command The command & list of options used to start the external program.
      */
     class ExternalSMTLibSessionRunner(command: String*) extends SMTLibSessionRunner {
-      val process = new ProcessBuilder(command: _*).redirectError(Redirect.INHERIT).start()
+      val process = new ProcessBuilder(command*).redirectError(Redirect.INHERIT).start()
       val in = new PrintWriter(process.getOutputStream)
       val out = new BufferedReader(new InputStreamReader(process.getInputStream))
       var debug = false
 
       protected def tell(input: SExpression) = {
         if (debug) println(input)
-        in println input.toDoc.render(Int.MaxValue)
+        in `println` input.toDoc.render(Int.MaxValue)
       }
 
       protected def ask(input: SExpression) = {
         if (debug) println(input)
-        in println input.toDoc.render(Int.MaxValue)
+        in `println` input.toDoc.render(Int.MaxValue)
         in.flush()
         val res = out.readLine()
         if (debug) println(s"-> $res")

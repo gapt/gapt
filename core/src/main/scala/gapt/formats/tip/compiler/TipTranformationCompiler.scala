@@ -16,7 +16,6 @@ import gapt.expr.formula.Top
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.TBase
 import gapt.expr.ty.To
-import gapt.expr.ty.Ty
 import gapt.formats.tip.TipFun
 import gapt.formats.tip.TipProblem
 import gapt.formats.tip.analysis.SymbolTable
@@ -370,7 +369,7 @@ class TipTransformationCompiler(var problem: TipSmtProblem) {
       freeVars: Seq[String]
   ): Expr = {
     funDecls(tipSmtFun.name)(
-      tipSmtFun.arguments map { compileExpression(_, freeVars) }: _*
+      tipSmtFun.arguments map { compileExpression(_, freeVars) }*
     )
   }
 

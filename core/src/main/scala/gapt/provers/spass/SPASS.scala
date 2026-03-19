@@ -111,8 +111,8 @@ class SPASS extends ResolutionProver with ExternalProgram {
         val nameGen = rename.awayFrom(consts)
 
         class SpassSplit(splittingClause: RefutationSketch, part1: FOLClause) {
-          require(part1 isSubMultisetOf splittingClause.conclusion)
-          val part2 = splittingClause.conclusion diff part1
+          require(part1 `isSubMultisetOf` splittingClause.conclusion)
+          val part2 = splittingClause.conclusion `diff` part1
 
           val splitAtom1 = FOLAtom(nameGen.freshWithIndex("_split1"))
           val splitAtom2 = FOLAtom(nameGen.freshWithIndex("_split2"))

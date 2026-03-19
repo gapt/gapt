@@ -34,7 +34,7 @@ object resolutionToTptp {
     val FunctionType(_, argtypes) = defConst.ty: @unchecked
     val vars = for ((t, i) <- argtypes.zipWithIndex) yield Var(s"X$i", t)
 
-    AnnotatedFormula("fof", label, "definition", BetaReduction.betaNormalize(All.Block(vars, defConst(vars: _*) <-> defn(vars: _*))), Seq())
+    AnnotatedFormula("fof", label, "definition", BetaReduction.betaNormalize(All.Block(vars, defConst(vars*) <-> defn(vars*))), Seq())
   }
 
   private def convertSkolemDefinition(

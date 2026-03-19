@@ -45,7 +45,7 @@ object eliminateDefinitions {
    * Creates a new `eliminateDefinitions` object.
    * @param dmap The definitions to be eliminated.
    */
-  def apply(dmap: Map[_ <: Const, _ <: Expr]): eliminateDefinitions =
+  def apply(dmap: Map[? <: Const, ? <: Expr]): eliminateDefinitions =
     new eliminateDefinitions(Normalizer(dmap.map[ReductionRule](ReductionRule.apply)))
 
   /**
@@ -77,7 +77,7 @@ class eliminateDefinitions private (normalizer: Normalizer) extends Function[Exp
 
     case ReflexivityAxiom(term) => ReflexivityAxiom(apply(term))
 
-    case ProofLink(name, seq) => ProofLink(apply(name), seq map apply)
+    case ProofLink(name, seq) => ProofLink(apply(name), seq `map` apply)
 
     // structural rules
     case CutRule(leftSubProof, aux1, rightSubProof, aux2) =>

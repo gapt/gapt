@@ -1,6 +1,5 @@
 package gapt.provers.maxsat
 
-import gapt.expr._
 import gapt.expr.formula.Formula
 import gapt.formats.dimacs._
 import gapt.logic.hol.CNFp

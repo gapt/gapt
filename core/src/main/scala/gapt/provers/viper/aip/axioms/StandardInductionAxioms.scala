@@ -103,15 +103,15 @@ case class StandardInductionAxioms(
               "goal" -> caseConclusion :: Nil
             )
           )
-          proofState += allL("icf", primaryVariables: _*).forget orElse skip
+          proofState += allL("icf", primaryVariables*).forget `orElse` skip
           proofState += impL("icf")
           if (primaryVariables.isEmpty)
             proofState += trivial
           else
             primaryVariables foreach {
-              _ => proofState += andR("icf") andThen trivial orElse trivial
+              _ => proofState += andR("icf") `andThen` trivial `orElse` trivial
             }
-          proofState += allL("icf", secondaryVariables: _*).forget orElse skip
+          proofState += allL("icf", secondaryVariables*).forget `orElse` skip
           proofState += trivial
 
           proofState.result

@@ -7,7 +7,6 @@ import gapt.proofs.HOLClause
 import gapt.expr.formula.And
 import gapt.expr.formula.All
 import gapt.proofs.RichFormulaSequent
-import gapt.expr.Expr
 import gapt.logic.Polarity
 import gapt.proofs.lk.transformations.folSkolemize
 import gapt.proofs.context.mutable.MutableContext

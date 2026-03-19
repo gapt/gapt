@@ -42,14 +42,14 @@ object IvyToResolution {
               q2,
               Ant(q2.conclusion.antecedent indexOf parent2.conclusion(lit2))
             )
-        case IPropositional(id, exp, clause, parent) if clause isSubMultisetOf parent.conclusion =>
+        case IPropositional(id, exp, clause, parent) if clause `isSubMultisetOf` parent.conclusion =>
           Factor(convert(parent), clause)
         case IPropositional(id, exp, clause, parent) =>
           val Some(subst) = clauseSubsumption(parent.conclusion, clause): @unchecked
           Factor(Subst(convert(parent), subst), clause)
         case IFlip(id, exp, unflipped, clause, parent) =>
           val q = convert(parent)
-          Flip(q, q.conclusion.indicesWhere(_ == parent.conclusion(unflipped)).filter(_ sameSideAs unflipped).head)
+          Flip(q, q.conclusion.indicesWhere(_ == parent.conclusion(unflipped)).filter(_ `sameSideAs` unflipped).head)
         case IParamodulation(id, exp, pos, eq, lit, newLit, orientation, clause, parent1, parent2) =>
           val q1 = convert(parent1)
           val q2 = convert(parent2)
@@ -65,7 +65,7 @@ object IvyToResolution {
           // insert a new axiom, will be later removed
           Input(clause)
       }
-    ) ensuring { res => res.conclusion multiSetEquals p.conclusion }
+    ) ensuring { res => res.conclusion `multiSetEquals` p.conclusion }
 
     val proof = convert(ivy)
 

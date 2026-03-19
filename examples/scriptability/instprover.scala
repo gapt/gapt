@@ -24,8 +24,8 @@ object instprover extends Script {
   val cnf = justifications map { _.conclusion.asInstanceOf[FOLClause] }
 
   val done = mutable.Set[FOLClause]()
-  val todo = mutable.Queue[FOLClause](cnf.toSeq: _*)
-  while (Sat4j solve (done ++ todo) isDefined) {
+  val todo = mutable.Queue[FOLClause](cnf.toSeq*)
+  while (Sat4j `solve` (done ++ todo) isDefined) {
     val next = todo.dequeue()
     if (!done.contains(next)) for {
       clause2 <- done

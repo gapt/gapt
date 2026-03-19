@@ -99,7 +99,7 @@ case class RecursionScheme(startSymbol: Const, nonTerminals: Set[Const], rules: 
   def languageWithDummyParameters: Set[Expr] =
     (startSymbol.ty: @unchecked) match {
       case FunctionType(_, argtypes) =>
-        parametricLanguage(argtypes.zipWithIndex.map { case (t, i) => Const(s"dummy$i", t) }: _*)
+        parametricLanguage(argtypes.zipWithIndex.map { case (t, i) => Const(s"dummy$i", t) }*)
     }
 
   def rulesFrom(nonTerminal: Const): Set[Rule] =
@@ -107,7 +107,7 @@ case class RecursionScheme(startSymbol: Const, nonTerminals: Set[Const], rules: 
 
   def parametricLanguage(params: Expr*): Set[Expr] = {
     require(params.size == arity(startSymbol))
-    generatedTerms(startSymbol(params: _*))
+    generatedTerms(startSymbol(params*))
   }
 
   def generatedTerms(from: Expr): Set[Expr] = {
@@ -197,7 +197,7 @@ class RecSchemGenLangFormula(
     val edges = mutable.ArrayBuffer[(Target, Rule, Target)]()
     val goals = mutable.Set[Target]()
 
-    val queue = mutable.Queue(targets.toSeq: _*)
+    val queue = mutable.Queue(targets.toSeq*)
     val alreadyDone = mutable.Set[Target]()
     while (queue nonEmpty) {
       val target @ (from, to) = queue.dequeue()
@@ -219,7 +219,7 @@ class RecSchemGenLangFormula(
       alreadyDone += target
     }
 
-    val reachable = mutable.Set[Target](goals.toSeq: _*)
+    val reachable = mutable.Set[Target](goals.toSeq*)
     var changed = true
     while (changed) {
       changed = false
@@ -261,7 +261,7 @@ object minimizeRecursionScheme {
   def apply(recSchem: RecursionScheme, targets: Iterable[(Expr, Expr)], targetFilter: TargetFilter.Type = TargetFilter.default, solver: MaxSATSolver = bestAvailableMaxSatSolver, weight: Rule => Int = _ => 1) = {
     val fvs = freeVariables(targets.map(_._1)) union freeVariables(targets.map(_._2))
     val nameGen = rename.awayFrom(constants.nonLogical(targets.map(_._1)) union constants.nonLogical(targets.map(_._2)))
-    val grounding = Substitution(for (v @ Var(name, ty) <- fvs) yield v -> Const(nameGen fresh name, ty))
+    val grounding = Substitution(for (v @ Var(name, ty) <- fvs) yield v -> Const(nameGen `fresh` name, ty))
     val targets_ = grounding(targets.toSet)
 
     val formula = new RecSchemGenLangFormula(recSchem, targetFilter)
@@ -269,13 +269,13 @@ object minimizeRecursionScheme {
     debug(s"Logical complexity of the minimization formula: ${lcomp(simplifyPropositional(toNNF(hard)))}")
     val soft = recSchem.rules map { rule => Neg(formula.ruleIncluded(rule)) -> weight(rule) }
     val interp = time("maxsat") { solver.solve(hard, soft).get }
-    RecursionScheme(recSchem.startSymbol, recSchem.nonTerminals, recSchem.rules.filter { rule => interp(formula ruleIncluded rule) })
+    RecursionScheme(recSchem.startSymbol, recSchem.nonTerminals, recSchem.rules.filter { rule => interp(formula `ruleIncluded` rule) })
   }
 
   def viaInst(recSchem: RecursionScheme, targets: Iterable[(Expr, Expr)], targetFilter: TargetFilter.Type = TargetFilter.default, solver: MaxSATSolver = bestAvailableMaxSatSolver, weight: Rule => Int = _ => 1) = {
     val fvs = freeVariables(targets.map(_._1)) union freeVariables(targets.map(_._2))
     val nameGen = rename.awayFrom(constants.nonLogical(targets.map(_._1)) union constants.nonLogical(targets.map(_._2)))
-    val grounding = Substitution(for (v @ Var(name, ty) <- fvs) yield v -> Const(nameGen fresh name, ty))
+    val grounding = Substitution(for (v @ Var(name, ty) <- fvs) yield v -> Const(nameGen `fresh` name, ty))
     val targets_ = grounding(targets.toSet)
 
     val instTerms = targets_.map { _._1 }.flatMap { case Apps(_, as) => as }.flatMap { flatSubterms(_) }
@@ -293,7 +293,7 @@ object minimizeRecursionScheme {
     debug(s"Logical complexity of the minimization formula: ${lcomp(simplifyPropositional(toNNF(hard)))}")
     val soft = recSchem.rules map { rule => Neg(formula.ruleIncluded(rule)) -> weight(rule) }
     val interp = solver.solve(hard, soft).get
-    RecursionScheme(recSchem.startSymbol, recSchem.nonTerminals, recSchem.rules.filter { rule => interp(formula ruleIncluded rule) })
+    RecursionScheme(recSchem.startSymbol, recSchem.nonTerminals, recSchem.rules.filter { rule => interp(formula `ruleIncluded` rule) })
   }
 }
 
@@ -308,7 +308,7 @@ case class RecSchemTemplate(startSymbol: Const, template: Set[(Expr, Expr)]) {
     case nt @ Const(_, FunctionType(_, argTypes), _) =>
       nt -> argTypes.zipWithIndex.map { case (t, i) => Var(s"${nt}_$i", t) }
   } toMap
-  val states = canonicalArgs map { case (nt, args) => nt(args: _*) }
+  val states = canonicalArgs map { case (nt, args) => nt(args*) }
   val constraints: Map[(Const, Const), Formula] = {
     val cache = mutable.Map[(Const, Const), Formula]()
 
@@ -504,7 +504,7 @@ object RecSchemTemplate {
 object recSchemToVTRATG {
   def orderedNonTerminals(rs: RecursionScheme): Seq[Const] = {
     val ntDeps = rs.nonTerminals map { nt =>
-      nt -> (rs rulesFrom nt map { _.rhs } flatMap { constants.nonLogical(_) } intersect rs.nonTerminals)
+      nt -> (rs `rulesFrom` nt map { _.rhs } flatMap { constants.nonLogical(_) } intersect rs.nonTerminals)
     } toMap
 
     var nts = Seq[Const]()
@@ -552,7 +552,7 @@ object simplePi1RecSchemTempl {
     val startSymbolArgs2 = for ((t, i) <- startSymbolArgTys.zipWithIndex) yield Var(s"x_$i", t)
 
     val indLemmaNT = Const(
-      nameGen fresh "B",
+      nameGen `fresh` "B",
       FunctionType(instTT, startSymbolArgTys ++ startSymbolArgTys ++ pi1QTys)
     )
 
@@ -572,7 +572,7 @@ object simplePi1RecSchemTempl {
               val lhs = indLemmaNT(startSymbolArgs)(
                 startSymbolArgs2.take(indLemmaArgIdx)
               )(
-                ctr(ctrArgs: _*)
+                ctr(ctrArgs*)
               )(
                 startSymbolArgs2.drop(indLemmaArgIdx + 1)
               )(
@@ -614,7 +614,7 @@ object qbupForRecSchem {
       recSchem.rulesFrom(nt).flatMap {
         case Rule(Apps(_, as), _) => as.zipWithIndex.filterNot { _._1.isInstanceOf[Var] }.map { _._2 }
       }.toSeq match {
-        case Seq() => Some(nt(args: _*))
+        case Seq() => Some(nt(args*))
         case idcs =>
           val newArgs =
             for (case (_: TBase, idx) <- argTypes.zipWithIndex)
@@ -627,12 +627,12 @@ object qbupForRecSchem {
                     ctr <- ctrs.toList
                     FunctionType(_, ctrArgTys) = ctr.ty: @unchecked
                   } yield ctr(
-                    (for ((t, i) <- ctrArgTys.zipWithIndex) yield Var(s"x${idx}_$i", t)): _*
+                    (for ((t, i) <- ctrArgTys.zipWithIndex) yield Var(s"x${idx}_$i", t))*
                   )
                 }
           import cats.instances.list._
           import cats.syntax.traverse._
-          newArgs.traverse(identity).map(nt(_: _*))
+          newArgs.traverse(identity).map(nt(_*))
       }
     }
 
@@ -640,7 +640,7 @@ object qbupForRecSchem {
     def convert(term: Expr): Formula = term match {
       case Apps(ax, args) if ax == recSchem.startSymbol => instantiate(conj, args)
       case Apps(nt @ Const(name, ty, _), args) if recSchem.nonTerminals contains nt =>
-        Atom(Var(s"X_$name", ty)(args: _*))
+        Atom(Var(s"X_$name", ty)(args*))
       case formula: Formula => formula
     }
 

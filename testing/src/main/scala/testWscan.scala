@@ -4,7 +4,7 @@ import gapt.expr.{Expr, VarOrConst, App, Abs}
 import gapt.expr.subst.{Substitution}
 import gapt.logic.hol.ClauseSetPredicateEliminationProblem
 import gapt.logic.hol.{scan, wscan}
-import gapt.logic.hol.scan.{Derivation, _}
+import gapt.logic.hol.scan.Derivation
 import gapt.utils.{withTimeout}
 import scala.concurrent.duration.{Duration, given}
 import java.util.concurrent.TimeUnit

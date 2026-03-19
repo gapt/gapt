@@ -27,6 +27,6 @@ object fol1 extends TacticsProof {
     exL("C_0")
     exR("R", fot"b", fov"y")
     destruct("C_0")
-    repeat(decompose andThen axiomLog)
+    repeat(decompose `andThen` axiomLog)
   }
 }

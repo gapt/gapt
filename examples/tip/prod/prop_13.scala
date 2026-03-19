@@ -36,23 +36,23 @@ object prop_13 extends TacticsProof {
     // - base case
     allR; andR
     // -- base case: plus_s_comm
-    rewrite.many ltr "def_plus_0" in "lem"
+    rewrite.many `ltr` "def_plus_0" `in` "lem"
     refl
     // -- base case: goal
-    rewrite.many ltr "def_plus_0" in "lem"
-    rewrite.many ltr "def_half_0" in "lem"
+    rewrite.many `ltr` "def_plus_0" `in` "lem"
+    rewrite.many `ltr` "def_half_0" `in` "lem"
     refl
     // - inductive case
     allR; andR
     // -- inductive case: plus_s_comm
-    rewrite.many ltr "def_plus_1" in "lem"
+    rewrite.many `ltr` "def_plus_1" `in` "lem"
     allL("IHx_0", le"y:Nat")
     quasiprop
     // -- inductive case: goal
-    rewrite.many ltr "def_plus_1" in "lem"
+    rewrite.many `ltr` "def_plus_1" `in` "lem"
     allL("IHx_0", le"x_0:Nat"); andL
-    rewrite.many ltr "IHx_0_0_0" in "lem"
-    rewrite.many ltr "def_half_2" in "lem"
+    rewrite.many `ltr` "IHx_0_0_0" `in` "lem"
+    rewrite.many `ltr` "def_half_2" `in` "lem"
     quasiprop
   }
 

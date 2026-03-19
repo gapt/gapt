@@ -41,7 +41,7 @@ object constructSIP {
       "lem",
       All.Block(
         nu +: g.gamma,
-        BetaReduction.betaNormalize(solution(g.alpha, nu)(g.gamma: _*)).asInstanceOf[Formula]
+        BetaReduction.betaNormalize(solution(g.alpha, nu)(g.gamma*)).asInstanceOf[Formula]
       )
     )
 

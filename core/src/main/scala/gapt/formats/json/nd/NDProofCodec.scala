@@ -1,6 +1,6 @@
 package gapt.formats.json.nd
 
-import gapt.formats.json.{ndProofDecoder => _, ndProofEncoder => _, _}
+import gapt.formats.json._
 import gapt.proofs.nd._
 import io.circe.Decoder.Result
 import io.circe._

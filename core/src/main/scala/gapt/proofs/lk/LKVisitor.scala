@@ -201,49 +201,49 @@ trait LKVisitor[T] {
   }
 
   protected def visitContractionLeft(proof: ContractionLeftRule, otherArg: T): (LKProof, SequentConnector) =
-    one2one(proof, otherArg) { case Seq((subProof, subConn)) => ContractionLeftRule(subProof, subConn child proof.aux1, subConn child proof.aux2) }
+    one2one(proof, otherArg) { case Seq((subProof, subConn)) => ContractionLeftRule(subProof, subConn `child` proof.aux1, subConn `child` proof.aux2) }
 
   protected def visitContractionRight(proof: ContractionRightRule, otherArg: T): (LKProof, SequentConnector) =
-    one2one(proof, otherArg) { case Seq((subProof, subConn)) => ContractionRightRule(subProof, subConn child proof.aux1, subConn child proof.aux2) }
+    one2one(proof, otherArg) { case Seq((subProof, subConn)) => ContractionRightRule(subProof, subConn `child` proof.aux1, subConn `child` proof.aux2) }
 
   protected def visitCut(proof: CutRule, otherArg: T): (LKProof, SequentConnector) =
     one2one(proof, otherArg) {
       case Seq((subProof1, subConn1), (subProof2, subConn2)) =>
-        CutRule(subProof1, subConn1 child proof.aux1, subProof2, subConn2 child proof.aux2)
+        CutRule(subProof1, subConn1 `child` proof.aux1, subProof2, subConn2 `child` proof.aux2)
     }
 
   protected def visitNegLeft(proof: NegLeftRule, otherArg: T): (LKProof, SequentConnector) =
-    one2one(proof, otherArg) { case Seq((subProof, subConn)) => NegLeftRule(subProof, subConn child proof.aux) }
+    one2one(proof, otherArg) { case Seq((subProof, subConn)) => NegLeftRule(subProof, subConn `child` proof.aux) }
 
   protected def visitNegRight(proof: NegRightRule, otherArg: T): (LKProof, SequentConnector) =
-    one2one(proof, otherArg) { case Seq((subProof, subConn)) => NegRightRule(subProof, subConn child proof.aux) }
+    one2one(proof, otherArg) { case Seq((subProof, subConn)) => NegRightRule(subProof, subConn `child` proof.aux) }
 
   protected def visitAndLeft(proof: AndLeftRule, otherArg: T): (LKProof, SequentConnector) =
-    one2one(proof, otherArg) { case Seq((subProof, subConn)) => AndLeftRule(subProof, subConn child proof.aux1, subConn child proof.aux2) }
+    one2one(proof, otherArg) { case Seq((subProof, subConn)) => AndLeftRule(subProof, subConn `child` proof.aux1, subConn `child` proof.aux2) }
 
   protected def visitAndRight(proof: AndRightRule, otherArg: T): (LKProof, SequentConnector) =
     one2one(proof, otherArg) {
       case Seq((subProof1, subConn1), (subProof2, subConn2)) =>
-        AndRightRule(subProof1, subConn1 child proof.aux1, subProof2, subConn2 child proof.aux2)
+        AndRightRule(subProof1, subConn1 `child` proof.aux1, subProof2, subConn2 `child` proof.aux2)
     }
 
   protected def visitOrLeft(proof: OrLeftRule, otherArg: T): (LKProof, SequentConnector) =
     one2one(proof, otherArg) {
       case Seq((subProof1, subConn1), (subProof2, subConn2)) =>
-        OrLeftRule(subProof1, subConn1 child proof.aux1, subProof2, subConn2 child proof.aux2)
+        OrLeftRule(subProof1, subConn1 `child` proof.aux1, subProof2, subConn2 `child` proof.aux2)
     }
 
   protected def visitOrRight(proof: OrRightRule, otherArg: T): (LKProof, SequentConnector) =
-    one2one(proof, otherArg) { case Seq((subProof, subConn)) => OrRightRule(subProof, subConn child proof.aux1, subConn child proof.aux2) }
+    one2one(proof, otherArg) { case Seq((subProof, subConn)) => OrRightRule(subProof, subConn `child` proof.aux1, subConn `child` proof.aux2) }
 
   protected def visitImpLeft(proof: ImpLeftRule, otherArg: T): (LKProof, SequentConnector) =
     one2one(proof, otherArg) {
       case Seq((subProof1, subConn1), (subProof2, subConn2)) =>
-        ImpLeftRule(subProof1, subConn1 child proof.aux1, subProof2, subConn2 child proof.aux2)
+        ImpLeftRule(subProof1, subConn1 `child` proof.aux1, subProof2, subConn2 `child` proof.aux2)
     }
 
   protected def visitImpRight(proof: ImpRightRule, otherArg: T): (LKProof, SequentConnector) =
-    one2one(proof, otherArg) { case Seq((subProof, subConn)) => ImpRightRule(subProof, subConn child proof.aux1, subConn child proof.aux2) }
+    one2one(proof, otherArg) { case Seq((subProof, subConn)) => ImpRightRule(subProof, subConn `child` proof.aux1, subConn `child` proof.aux2) }
 
   protected def visitForallLeft(proof: ForallLeftRule, otherArg: T): (LKProof, SequentConnector) =
     one2one(proof, otherArg) {

@@ -76,13 +76,13 @@ object prop_34 extends TacticsProof {
     allR; induction(hov"x:Nat")
     // - IB
     decompose
-    rewrite ltr "ap1" in "goal"
-    rewrite ltr "pzn" in "goal"; refl
+    rewrite `ltr` "ap1" `in` "goal"
+    rewrite `ltr` "pzn" `in` "goal"; refl
     // - IS
     decompose
-    rewrite ltr "ap2" in "goal"
-    rewrite ltr "IHx_0" in "goal"
-    rewrite ltr "prs" in "goal"; refl
+    rewrite `ltr` "ap2" `in` "goal"
+    rewrite `ltr` "IHx_0" `in` "goal"
+    rewrite `ltr` "prs" `in` "goal"; refl
   }
 
   val lemma_24_goal = hof"!x !y !z plus(x,plus(y,z)) = plus(plus(x,y),z)"
@@ -103,16 +103,16 @@ object prop_34 extends TacticsProof {
     allR; induction(hov"x:Nat")
     // - IB
     decompose
-    rewrite ltr "am1" in "goal"
-    rewrite ltr "am21" in "goal"
-    rewrite ltr "ap1" in "goal"; refl
+    rewrite `ltr` "am1" `in` "goal"
+    rewrite `ltr` "am21" `in` "goal"
+    rewrite `ltr` "ap1" `in` "goal"; refl
     // - IS
     decompose
-    rewrite ltr "am2" in "goal"
-    rewrite ltr "am22" in "goal"
-    rewrite ltr "pcm" in "goal" subst (hov"y:Nat" -> le"mult(x_0:Nat,y:Nat)")
-    rewrite rtl "l24" in "goal"
-    rewrite ltr "IHx_0" in "goal"; refl
+    rewrite `ltr` "am2" `in` "goal"
+    rewrite `ltr` "am22" `in` "goal"
+    rewrite `ltr` "pcm" `in` "goal" `subst` (hov"y:Nat" -> le"mult(x_0:Nat,y:Nat)")
+    rewrite `rtl` "l24" `in` "goal"
+    rewrite `ltr` "IHx_0" `in` "goal"; refl
   }
 
   val proof = Lemma(sequent) {

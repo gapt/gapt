@@ -20,7 +20,7 @@ class CVC4(val logic: String, val extraArgs: Seq[String] = Seq(), override val t
     }
 
   override def runSession[A](program: Session[A]) = {
-    val runner = new ExternalSMTLibSessionRunner(Seq("cvc4", "--lang", "smt", "--incremental") ++ extraArgs: _*)
+    val runner = new ExternalSMTLibSessionRunner(Seq("cvc4", "--lang", "smt", "--incremental") ++ extraArgs*)
     val result = runner.run(setLogic(logic) *> program)
     runner.process.destroy()
 

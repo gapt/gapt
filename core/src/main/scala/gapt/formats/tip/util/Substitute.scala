@@ -230,7 +230,7 @@ class Substitute(private val problem: TipSmtProblem) {
           .zip(
             newQuantifiedVariables
               .map { v => TipSmtIdentifier(v.name) }
-          ): _*
+          )*
       )
 
     val newFormula = apply(formula, variableSubstitution)
@@ -274,7 +274,7 @@ class Substitute(private val problem: TipSmtProblem) {
     }
 
     val variableSubstitution: Substitution =
-      Substitution(boundVariables zip newBoundVariables: _*)
+      Substitution(boundVariables zip newBoundVariables*)
 
     val newExpr = apply(cas.expr, variableSubstitution)
 
@@ -310,7 +310,7 @@ class Substitute(private val problem: TipSmtProblem) {
         Substitution(
           oldNames
             .map { TipSmtIdentifier.apply }
-            .zip(newBoundNames map { TipSmtIdentifier.apply }): _*
+            .zip(newBoundNames map { TipSmtIdentifier.apply })*
         )
       )
     TipSmtCase(newPattern, newExpression)

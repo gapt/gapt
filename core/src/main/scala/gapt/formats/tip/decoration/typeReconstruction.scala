@@ -52,7 +52,7 @@ class ReconstructDatatypes(problem: TipSmtProblem) {
       case TipSmtFormalParameter(name, typ) =>
         name -> Datatype(typ.typename)
     }
-    reconstructTypes(fun.body, Map(context: _*))
+    reconstructTypes(fun.body, Map(context*))
   }
 
   private def reconstructTypes(
@@ -78,7 +78,7 @@ class ReconstructDatatypes(problem: TipSmtProblem) {
       }
       reconstructTypes(
         subexpression,
-        Map(context: _*) ++ variables
+        Map(context*) ++ variables
       )
       expression.datatype = Some(Datatype("bool"))
 
@@ -89,7 +89,7 @@ class ReconstructDatatypes(problem: TipSmtProblem) {
       }
       reconstructTypes(
         subexpression,
-        Map(context: _*) ++ variables
+        Map(context*) ++ variables
       )
       expression.datatype = Some(Datatype("bool"))
 
@@ -150,7 +150,7 @@ class ReconstructDatatypes(problem: TipSmtProblem) {
         }
         reconstructTypes(
           tipSmtCase.expr,
-          Map(context: _*) ++ variables
+          Map(context*) ++ variables
         )
     }
   }

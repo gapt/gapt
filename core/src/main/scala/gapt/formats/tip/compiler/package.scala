@@ -13,6 +13,6 @@ package object compiler {
             Some(f.name) -> TBase(f.typ.typename)
         }
     }
-    InductiveType(datatype.name, Nil, constructorDefinitions: _*)
+    InductiveType(datatype.name, Nil, constructorDefinitions*)
   }
 }

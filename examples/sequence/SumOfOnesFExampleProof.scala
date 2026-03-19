@@ -30,8 +30,8 @@ object SumOfOnesFExampleProof extends TacticsProof with ProofSequence with Expli
         :+ ("goal" -> hof"f ${Numeral(n)} = ${Numeral(n)}")
     ) {
       repeat(
-        explicitRewriteLeft("fs", "goal") andThen
-          explicitRewriteLeft("plus1", "goal") andThen
+        explicitRewriteLeft("fs", "goal") `andThen`
+          explicitRewriteLeft("plus1", "goal") `andThen`
           chain("congsuc")
       )
       chain("f0")

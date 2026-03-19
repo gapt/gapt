@@ -30,7 +30,7 @@ object ExpansionTreeState extends Enumeration {
  * @param outerQuantifier The object drawing the innermost enclosing quantifier (if any).
  */
 abstract class DrawExpansionTree(
-    val main: ProofToolViewer[_],
+    val main: ProofToolViewer[?],
     val expansionTree: ExpansionTree,
     val outerQuantifier: Option[DrawETQuantifierBlock] = None
 ) extends BoxPanel(Orientation.Horizontal) {
@@ -203,7 +203,7 @@ abstract class DrawExpansionTree(
  */
 object DrawExpansionTree {
   def apply(
-      main: ProofToolViewer[_],
+      main: ProofToolViewer[?],
       expansionTree: ExpansionTree,
       outerQuantifier: Option[DrawETQuantifierBlock] = None
   ): DrawExpansionTree = expansionTree match {
@@ -221,7 +221,7 @@ object DrawExpansionTree {
  * @param outerQuantifier The object drawing the quantifier imeediately outside this one (if any).
  */
 class DrawETQuantifierBlock(
-    main: ProofToolViewer[_],
+    main: ProofToolViewer[?],
     expansionTree: ExpansionTree,
     outerQuantifier: Option[DrawETQuantifierBlock] = None
 ) extends DrawExpansionTree(main, expansionTree, outerQuantifier) {
@@ -436,7 +436,7 @@ class DrawETQuantifierBlock(
  * @param outerQuantifier The object drawing the quantifier immediately outside this one (if any).
  */
 class DrawETNonQuantifier(
-    main: ProofToolViewer[_],
+    main: ProofToolViewer[?],
     expansionTree: ExpansionTree,
     outerQuantifier: Option[DrawETQuantifierBlock] = None
 ) extends DrawExpansionTree(main, expansionTree, outerQuantifier) {

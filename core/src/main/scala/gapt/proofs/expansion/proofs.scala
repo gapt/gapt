@@ -128,7 +128,7 @@ object ExpansionProof {
       if (subst.domain intersect expansionProof.eigenVariables nonEmpty) {
         applySubstitution(Substitution(subst.map -- expansionProof.eigenVariables), expansionProof)
       } else {
-        val substWithRenaming = subst compose Substitution(
+        val substWithRenaming = subst `compose` Substitution(
           rename(
             expansionProof.eigenVariables intersect subst.range,
             expansionProof.eigenVariables union subst.range

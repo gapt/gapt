@@ -44,7 +44,7 @@ object LemmaMacros {
     }
 
     tacticTerms.foldLeft(proofState) { (proofState, tactic) =>
-      '{ LemmaMacros.use($proofState, ${ tactic.asExprOf[Tactic[_]] }) }
+      '{ LemmaMacros.use($proofState, ${ tactic.asExprOf[Tactic[?]] }) }
     }
   }
 

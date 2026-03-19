@@ -37,14 +37,14 @@ object ContractionMacroRule extends ConvenienceConstructor("ContractionMacroRule
     val targetAnt = targetSequent.antecedent
     val targetSuc = targetSequent.succedent
 
-    val assertion = ((targetSequent isSubMultisetOf currentSequent)
-      && (currentSequent isSubsetOf targetSequent))
+    val assertion = ((targetSequent `isSubMultisetOf` currentSequent)
+      && (currentSequent `isSubsetOf` targetSequent))
 
     if (strict & !assertion) {
       throw LKRuleCreationException(
         s"""Sequent $targetSequent cannot be reached from $currentSequent by contractions.
            |It is missing the following formulas:
-           |${(targetSequent diff currentSequent) ++ (currentSequent.distinct diff targetSequent.distinct)}
+           |${(targetSequent `diff` currentSequent) ++ (currentSequent.distinct `diff` targetSequent.distinct)}
          """.stripMargin
       )
     }

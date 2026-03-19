@@ -3,7 +3,6 @@ import gapt.expr.Expr
 import io.circe.{Decoder, Encoder}
 import gapt.formats.json._
 import gapt.proofs.expansion._
-import gapt.formats.json.ExprCodec._
 import gapt.proofs.Sequent
 import io.circe.derivation._
 

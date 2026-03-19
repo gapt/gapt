@@ -6,7 +6,7 @@ import gapt.formats.tip.parser.TipSmtProblem
 
 case class Substitution(map: (TipSmtIdentifier, TipSmtExpression)*) {
 
-  private val substitution = Map(map: _*)
+  private val substitution = Map(map*)
 
   /**
    * Creates a new substitution.
@@ -31,7 +31,7 @@ case class Substitution(map: (TipSmtIdentifier, TipSmtExpression)*) {
   ) //
       : Substitution = {
     Substitution(
-      substitution.filter { case (v, t) => predicate(v, t) } toSeq: _*
+      substitution.filter { case (v, t) => predicate(v, t) } toSeq*
     )
   }
 

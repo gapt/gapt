@@ -36,22 +36,22 @@ object prop_15 extends TacticsProof {
     allR; induction(hov"x:Nat")
     // -- BC lemma
     allR
-    rewrite.many ltr "def_plus_0" in "lemma"
+    rewrite.many `ltr` "def_plus_0" `in` "lemma"
     refl
     // -- IC lemma
     allR
-    rewrite.many ltr "def_plus_1" in "lemma"
-    rewrite.many ltr "IHx_0" in "lemma"
+    rewrite.many `ltr` "def_plus_1" `in` "lemma"
+    rewrite.many `ltr` "IHx_0" `in` "lemma"
     refl
     // - proof goal
     allR;
-    rewrite.many ltr "lemma" in "goal"
+    rewrite.many `ltr` "lemma" `in` "goal"
     refl
   }
 
   val openind = Lemma(sequent) {
     allR(hov"x:Nat")
-    cut("l", hof"!y plus(x, S y) = S(plus x y)") right escrgt
+    cut("l", hof"!y plus(x, S y) = S(plus x y)") `right` escrgt
     forget("goal"); anaInd
   }
 }

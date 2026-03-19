@@ -135,7 +135,7 @@ object hSolveQBUP {
     val conseqs = quiet(findConseq(start, searchConds, prover, equations))
 
     val xGenArgs = for ((a, i) <- xInstArgs.zipWithIndex) yield Var(s"x$i", a.ty)
-    val xGen = x(xGenArgs: _*)
+    val xGen = x(xGenArgs*)
     val Some(matching) = syntacticMatching(xGen, xInst): @unchecked
     def checkSolutionMatrix(matrix: Formula) = {
       val sol = Abs(xGenArgs, matrix)

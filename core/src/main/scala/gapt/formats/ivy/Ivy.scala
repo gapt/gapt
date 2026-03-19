@@ -198,7 +198,7 @@ object IvyParser {
         (e: @unchecked) match {
           case LList(vexp, texp @ _*) =>
             val v = parse_term(vexp)
-            val t = parse_term(LList(texp: _*))
+            val t = parse_term(LList(texp*))
 
             v.asInstanceOf[FOLVar] -> t
           case LCons(vexp, texp) =>

@@ -62,7 +62,7 @@ case class SketchComponentIntro(component: AvatarDefinition) extends RefutationS
 }
 case class SketchComponentElim(subProof: RefutationSketch, component: AvatarDefinition) extends RefutationSketch {
   def immediateSubProofs = Seq(subProof)
-  val conclusion = subProof.conclusion diff component.clause
+  val conclusion = subProof.conclusion `diff` component.clause
 }
 
 case class SketchSplitCombine(splitCases: Seq[RefutationSketch]) extends RefutationSketch {

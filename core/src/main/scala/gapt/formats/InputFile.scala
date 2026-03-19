@@ -45,6 +45,6 @@ case class ClasspathInputFile(fileName: String, classLoader: ClassLoader) extend
 object ClasspathInputFile {
   def apply(fileName: String): ClasspathInputFile =
     ClasspathInputFile(fileName, Thread.currentThread.getContextClassLoader)
-  def apply(fileName: String, relativeToClass: Class[_]): ClasspathInputFile =
+  def apply(fileName: String, relativeToClass: Class[?]): ClasspathInputFile =
     ClasspathInputFile(fileName, relativeToClass.getClassLoader)
 }

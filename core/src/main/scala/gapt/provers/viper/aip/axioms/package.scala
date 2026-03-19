@@ -106,7 +106,7 @@ package object axioms {
     val (primaryVariables, secondaryVariables) = newVariables partition {
       _.ty == freeVariable.ty
     }
-    (primaryVariables, secondaryVariables, Substitution(freeVariable -> constructor(newVariables: _*))(formula))
+    (primaryVariables, secondaryVariables, Substitution(freeVariable -> constructor(newVariables*))(formula))
   }
 
   def inductionCaseConclusion(
@@ -130,6 +130,6 @@ package object axioms {
     val (primaryVariables, secondaryVariables) = newVariables partition {
       _.ty == freeVariable.ty
     }
-    (primaryVariables, secondaryVariables, Substitution(freeVariable -> constructor(newVariables: _*))(formula))
+    (primaryVariables, secondaryVariables, Substitution(freeVariable -> constructor(newVariables*))(formula))
   }
 }

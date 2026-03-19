@@ -92,7 +92,7 @@ object ResolutionToLKProof {
     def contract(p: ResolutionProof, q: LKProof) =
       ContractionMacroRule(
         q,
-        ((p.conclusion ++ p.assertions) diff q.endSequent.distinct) ++ q.endSequent.distinct
+        ((p.conclusion ++ p.assertions) `diff` q.endSequent.distinct) ++ q.endSequent.distinct
       )
 
     def f(p: ResolutionProof): LKProof = memo.getOrElseUpdate(
@@ -269,7 +269,7 @@ object ResolutionToLKProof {
         one2one(proof, isAncestor) {
           case Seq((subProof, subConn)) =>
             if (subConn.children(proof.aux1).isEmpty) scala.util.boundary.break((subProof, subConn))
-            ContractionLeftRule(subProof, subConn child proof.aux1, subConn child proof.aux2)
+            ContractionLeftRule(subProof, subConn `child` proof.aux1, subConn `child` proof.aux2)
         }
       }
       override def visitContractionRight(proof: ContractionRightRule, isAncestor: Sequent[Boolean]): (LKProof, SequentConnector) =
@@ -277,7 +277,7 @@ object ResolutionToLKProof {
           one2one(proof, isAncestor) {
             case Seq((subProof, subConn)) =>
               if (subConn.children(proof.aux1).isEmpty) scala.util.boundary.break((subProof, subConn))
-              ContractionRightRule(subProof, subConn child proof.aux1, subConn child proof.aux2)
+              ContractionRightRule(subProof, subConn `child` proof.aux1, subConn `child` proof.aux2)
           }
         }
     }.apply(proof, proof.conclusion.indicesSequent.map(_ == idx))

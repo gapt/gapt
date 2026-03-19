@@ -3,7 +3,6 @@ package gapt.proofs.ceres
 import gapt.expr.formula.Formula
 import gapt.proofs._
 import gapt.proofs.lk.LKProof
-import gapt.proofs.lk._
 import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.ContractionLeftRule

@@ -36,7 +36,7 @@ object DrawSequent {
    * @param sequentElementRenderer The function that turns elements of the sequent into strings.
    * @tparam F The type of elements of the sequent.
    */
-  def apply[F, M <: ProofToolViewer[_]](
+  def apply[F, M <: ProofToolViewer[?]](
       main: M,
       seq: Sequent[F],
       sequentElementRenderer: F => String
@@ -50,7 +50,7 @@ object DrawSequent {
  * @param sequentElementRenderer The function that turns elements of the sequent into strings.
  * @tparam F The type of elements of the sequent.
  */
-class DrawSequent[F, M <: ProofToolViewer[_]](
+class DrawSequent[F, M <: ProofToolViewer[?]](
     val main: M,
     val sequent: Sequent[F],
     val sequentElementRenderer: F => String
@@ -186,7 +186,7 @@ object LatexLabel {
    * @param main The main window that the label will belong to.
    * @param latexText The text the label will display.
    */
-  def apply(main: ProofToolViewer[_], latexText: String): LatexLabel = {
+  def apply(main: ProofToolViewer[?], latexText: String): LatexLabel = {
     if (latexText == ",")
       throw new IllegalArgumentException("Use `new CommaLabel(main)`")
     else if (latexText == "\\vdash")
@@ -201,7 +201,7 @@ object LatexLabel {
  * @param main The main Prooftool window that this belongs to.
  * @param latexText The latex code to be displayed.
  */
-class LatexLabel(val main: ProofToolViewer[_], val latexText: String) extends Label("", null, Alignment.Center) {
+class LatexLabel(val main: ProofToolViewer[?], val latexText: String) extends Label("", null, Alignment.Center) {
   background = Color.white
   foreground = Color.black
   opaque = true
@@ -227,7 +227,7 @@ class LatexLabel(val main: ProofToolViewer[_], val latexText: String) extends La
  * @param latexText The latex code to be displayed.
  */
 class LatexFormulaLabel(
-    main: ProofToolViewer[_],
+    main: ProofToolViewer[?],
     latexText: String
 ) extends LatexLabel(main, latexText) {
 
@@ -282,7 +282,7 @@ class LatexFormulaLabel(
  * Label for displaying commas.
  * @param main The main Prooftool window that this belongs to.
  */
-class CommaLabel(val main: ProofToolViewer[_]) extends Label(",", icon0 = null, Alignment.Center) {
+class CommaLabel(val main: ProofToolViewer[?]) extends Label(",", icon0 = null, Alignment.Center) {
   def defaultBorder = Swing.EmptyBorder(font.getSize / 5, 2, 0, font.getSize / 5)
   border = defaultBorder
   font = main.font
@@ -300,6 +300,6 @@ class CommaLabel(val main: ProofToolViewer[_]) extends Label(",", icon0 = null, 
  * Latexlabel for displaying the turnstile symbol (u+22a2, ⊢)
  * @param main The main Prooftool window that this belongs to.
  */
-class LatexTurnstileLabel(main: ProofToolViewer[_]) extends LatexLabel(main, "\\vdash") {
+class LatexTurnstileLabel(main: ProofToolViewer[?]) extends LatexLabel(main, "\\vdash") {
   override def defaultBorder = Swing.EmptyBorder(font.getSize / 6)
 }

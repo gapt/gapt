@@ -33,7 +33,7 @@ object addition extends Script {
 
   println(nLine + "Expansion sequent:")
   val expansionSequent = LKToExpansionProof(proof).expansionSequent
-  extractInstances(expansionSequent) foreach println
+  extractInstances(expansionSequent) `foreach` println
 
   println(nLine + "Deep sequent:")
   val deepSequent = expansionSequent map {

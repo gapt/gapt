@@ -130,17 +130,17 @@ object WeakeningContractionMacroRule extends ConvenienceConstructor("WeakeningCo
     val targetAnt = targetSequent.antecedent
     val targetSuc = targetSequent.succedent
 
-    if (strict && !(currentSequent isSubsetOf targetSequent))
+    if (strict && !(currentSequent `isSubsetOf` targetSequent))
       throw LKRuleCreationException(
         s"""Sequent $targetSequent cannot be reached from $currentSequent by weakenings and contractions:
            |It is missing the following formulas:
-           |${currentSequent.distinct diff targetSequent.distinct}
+           |${currentSequent.distinct `diff` targetSequent.distinct}
          """.stripMargin
       )
 
     val antList = targetAnt.distinct map (f => (f, targetAnt.count(_ == f)))
     val sucList = targetSuc.distinct map (f => (f, targetSuc.count(_ == f)))
 
-    withSequentConnector(p, Map(antList: _*), Map(sucList: _*), strict)
+    withSequentConnector(p, Map(antList*), Map(sucList*), strict)
   }
 }

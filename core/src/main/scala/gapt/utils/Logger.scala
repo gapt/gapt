@@ -6,7 +6,6 @@ import scala.concurrent.duration._
 import scala.util.DynamicVariable
 
 trait LogHandler {
-  import LogHandler._
 
   def message(domain: String, verbosity: VerbosityLevel, msg: => Any): Unit
 

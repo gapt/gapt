@@ -35,7 +35,7 @@ object fixDerivation {
           case _                                             => scala.util.boundary.break(None)
         }
 
-      for (case ((a, true), i) <- p.conclusion zip needToFlip zipWithIndex)
+      for (case ((a, true), i) <- p.conclusion `zip` needToFlip zipWithIndex)
         p = Flip(p, p.conclusion.indexOf(a, i.polarity))
 
       p = Factor(p)
@@ -106,7 +106,7 @@ object findDerivationViaResolution {
    * @param prover Prover to obtain a resolution refutation of the consequence bs |= a from.
    * @return Resolution proof ending in a subclause of a, or None if the prover couldn't prove the consequence.
    */
-  def apply(a: HOLClause, bs: Set[_ <: HOLClause], prover: ResolutionProver = NonSplittingEscargot): Option[ResolutionProof] = {
+  def apply(a: HOLClause, bs: Set[? <: HOLClause], prover: ResolutionProver = NonSplittingEscargot): Option[ResolutionProof] = {
     val grounding = groundFreeVariables.getGroundingMap(
       freeVariables(a),
       (a.formulas ++ bs.flatMap(_.formulas)).flatMap(constants.nonLogical(_)).toSet

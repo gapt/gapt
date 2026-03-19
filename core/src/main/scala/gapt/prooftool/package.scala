@@ -61,7 +61,7 @@ package object prooftool extends ProoftoolInstances2 {
    */
   @implicitNotFound("Prooftool cannot show objects of type ${T}.\n(To support the type ${T}, add an implicit instance of ProoftoolViewable[${T}].)")
   trait ProoftoolViewable[-T] {
-    def display(x: T, name: String): List[ProofToolViewer[_]]
+    def display(x: T, name: String): List[ProofToolViewer[?]]
   }
 
   object ProoftoolViewable {

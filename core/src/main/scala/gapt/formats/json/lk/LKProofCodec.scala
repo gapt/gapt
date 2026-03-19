@@ -1,6 +1,6 @@
 package gapt.formats.json.lk
 
-import gapt.formats.json.{lkProofDecoder => _, lkProofEncoder => _, _}
+import gapt.formats.json._
 import gapt.proofs.lk._
 import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule

@@ -434,7 +434,7 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
       )
     }
     functionConstant(
-      tipSmtFun.arguments.zip(argumentTypes) map { case (arg, ty) => compileExpression(arg, ctxVars, Some(ty)) }: _*
+      tipSmtFun.arguments.zip(argumentTypes) map { case (arg, ty) => compileExpression(arg, ctxVars, Some(ty)) }*
     )
   }
 

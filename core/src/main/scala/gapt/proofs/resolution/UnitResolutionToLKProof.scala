@@ -71,7 +71,7 @@ object UnitResolutionToLKProof {
     val expectedConclusion = proof.subProofs.collect { case Input(seq) => seq.swapped }.flattenS
 
     require(
-      lk.conclusion isSubMultisetOf expectedConclusion,
+      lk.conclusion `isSubMultisetOf` expectedConclusion,
       s"$expectedConclusion\n$proof\n$lk"
     )
 

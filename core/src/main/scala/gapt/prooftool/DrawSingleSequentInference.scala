@@ -10,7 +10,7 @@ import gapt.proofs.lk.rules.ForallLeftRule
 import scala.swing._
 
 class DrawSingleSequentInference[F, T <: SequentProof[F, T]](
-    main: ProofToolViewer[_],
+    main: ProofToolViewer[?],
     var orientation: Orientation.Value,
     sequent_element_renderer: F => String
 ) extends ScrollPane {

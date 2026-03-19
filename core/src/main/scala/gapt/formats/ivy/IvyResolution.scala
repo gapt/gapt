@@ -2,7 +2,6 @@ package gapt.formats.ivy
 
 import gapt.proofs._
 import gapt.formats.lisp.SExpression
-import gapt.expr._
 import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLTerm
@@ -87,7 +86,7 @@ case class Resolution(
     t2: IvyResolutionProof
 ) extends IvyResolutionProof {
   require(t1.conclusion(lit1) == t2.conclusion(lit2))
-  require(!(lit1 sameSideAs lit2))
+  require(!(lit1 `sameSideAs` lit2))
   override def immediateSubProofs = Seq(t1, t2)
 }
 

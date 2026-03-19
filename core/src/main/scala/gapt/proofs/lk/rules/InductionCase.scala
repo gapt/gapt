@@ -37,7 +37,7 @@ case class InductionCase(proof: LKProof, constructor: Const, hypotheses: Seq[Seq
     require(hyp.isAnt && proof.endSequent.isDefinedAt(hyp))
   }
 
-  val term: Expr = constructor(eigenVars: _*)
+  val term: Expr = constructor(eigenVars*)
 
   require(conclusion.isSuc && proof.endSequent.isDefinedAt(conclusion))
 }

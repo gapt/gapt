@@ -55,7 +55,7 @@ object StrongStrictMonotoneSchema extends TacticsProof {
     orR
     impR
     allL("Ant_0", fov"a")
-    unfold("POR") atMost 1 in "Ant_0_0"
+    unfold("POR") `atMost` 1 `in` "Ant_0_0"
     trivial
     ref("phi")
   }
@@ -72,7 +72,7 @@ object StrongStrictMonotoneSchema extends TacticsProof {
     orR
     impR
     allL("Ant_0", fov"a")
-    unfold("POR") atMost 1 in "Ant_0_0"
+    unfold("POR") `atMost` 1 `in` "Ant_0_0"
     orL
     trivial
     ref("LEDefinition")

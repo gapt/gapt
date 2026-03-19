@@ -26,7 +26,7 @@ class RandomInstanceGenerator(val paramTys: Seq[TBase], implicit val ctx: Contex
   }
 }
 class EnumeratingInstanceGenerator(val paramTys: Seq[Ty], val freeConstructors: Boolean, implicit val ctx: Context) extends InstanceTermGenerator {
-  val terms = enumerateTerms.forType(freeConstructors, paramTys: _*).take(10000).map(t => t -> folTermSize(t))
+  val terms = enumerateTerms.forType(freeConstructors, paramTys*).take(10000).map(t => t -> folTermSize(t))
 
   override def generate(lower: Float, upper: Float, num: Int): Set[Seq[Expr]] =
     if (paramTys.isEmpty) Set(Seq())

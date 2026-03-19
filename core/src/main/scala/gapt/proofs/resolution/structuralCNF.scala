@@ -79,7 +79,7 @@ class Clausifier(
     val fvs = freeVariables(f).toSeq
     val skolemizedFormula = Abs(fvs, f)
     val skolemConst = skConsts.getOrElseUpdate(skolemizedFormula, ctx.addSkolemSym(skolemizedFormula, mkSkolemSym()))
-    (skolemConst(fvs: _*), skolemizedFormula)
+    (skolemConst(fvs*), skolemizedFormula)
   }
 
   val subExprs: mutable.Map[Expr, Int] = mutable.Map()

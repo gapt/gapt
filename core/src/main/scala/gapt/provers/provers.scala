@@ -1,6 +1,5 @@
 package gapt.provers
 
-import gapt.expr._
 import gapt.expr.formula.Formula
 import gapt.expr.formula.hol.existentialClosure
 import gapt.proofs.epsilon.EpsilonProof

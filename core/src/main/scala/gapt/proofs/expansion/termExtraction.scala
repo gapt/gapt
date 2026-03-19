@@ -74,7 +74,7 @@ object extractInstances {
   }
 
   def apply(expansionSequent: ExpansionSequent): HOLSequent =
-    expansionSequent flatMap apply
+    expansionSequent `flatMap` apply
 
   def apply(expansionProof: ExpansionProof): HOLSequent =
     apply(expansionProof.expansionSequent)
@@ -155,7 +155,7 @@ class InstanceTermEncoding private (val endSequent: HOLSequent, val instanceTerm
       case Ant(i) => s"a$i"
       case Suc(i) => s"s$i"
     }
-    nameGen fresh s"$idxPart:${matrices(idx).toUntypedAsciiString.replaceAll("\\s", "").take(30)}"
+    nameGen `fresh` s"$idxPart:${matrices(idx).toUntypedAsciiString.replaceAll("\\s", "").take(30)}"
   }
 
   /**
@@ -174,7 +174,7 @@ class InstanceTermEncoding private (val endSequent: HOLSequent, val instanceTerm
 
   def encodeOption(signedInstance: Formula): Option[Expr] =
     findInstance(signedInstance) map {
-      case (esFormula, terms) => symbols(esFormula)(terms: _*)
+      case (esFormula, terms) => symbols(esFormula)(terms*)
     }
 
   def encode(signedInstance: Formula): Expr = encodeOption(signedInstance).getOrElse {
@@ -205,7 +205,7 @@ class InstanceTermEncoding private (val endSequent: HOLSequent, val instanceTerm
   /**
    * Maps a function symbol to the index of its corresponding formula in the end-sequent.
    */
-  def findESIndex(sym: Const): Option[SequentIndex] = symbols indexOfOption sym
+  def findESIndex(sym: Const): Option[SequentIndex] = symbols `indexOfOption` sym
 
   /**
    * Maps a function symbol to its corresponding formula in the end-sequent.
@@ -252,9 +252,9 @@ class InstanceTermEncoding private (val endSequent: HOLSequent, val instanceTerm
       recursionScheme.rules map { r =>
         (r: @unchecked) match {
           case Rule(Apps(lhsNT: Const, lhsArgs), Apps(rhsNT: Const, rhsArgs)) if encodedNTs contains rhsNT =>
-            Rule(encodedNTs(lhsNT)(lhsArgs: _*), encodedNTs(rhsNT)(rhsArgs: _*))
+            Rule(encodedNTs(lhsNT)(lhsArgs*), encodedNTs(rhsNT)(rhsArgs*))
           case Rule(Apps(lhsNT: Const, lhsArgs), instance: Formula) =>
-            Rule(encodedNTs(lhsNT)(lhsArgs: _*), encode(instance))
+            Rule(encodedNTs(lhsNT)(lhsArgs*), encode(instance))
         }
       }
     )
@@ -271,9 +271,9 @@ class InstanceTermEncoding private (val endSequent: HOLSequent, val instanceTerm
       recursionScheme.rules map { r =>
         (r: @unchecked) match {
           case Rule(Apps(lhsNT: Const, lhsArgs), Apps(rhsNT: Const, rhsArgs)) if decodedNTs contains rhsNT =>
-            Rule(decodedNTs(lhsNT)(lhsArgs: _*), decodedNTs(rhsNT)(rhsArgs: _*))
+            Rule(decodedNTs(lhsNT)(lhsArgs*), decodedNTs(rhsNT)(rhsArgs*))
           case Rule(Apps(lhsNT: Const, lhsArgs), term) =>
-            Rule(decodedNTs(lhsNT)(lhsArgs: _*), decodeToSignedFormula(term))
+            Rule(decodedNTs(lhsNT)(lhsArgs*), decodeToSignedFormula(term))
         }
       }
     )

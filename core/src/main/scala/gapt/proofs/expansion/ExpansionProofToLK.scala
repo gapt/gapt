@@ -81,7 +81,7 @@ class ExpansionProofToLK(
       .orElse(if (intuitionisticHeuristics) tryBinary(theory, expSeq, intuitionistic = false) else None)
       .orElse(tryTheory(expSeq))
       .getOrElse(Left(theory -> expSeq)).map {
-        ContractionMacroRule(_).ensuring { _.conclusion isSubsetOf expSeq.shallow }
+        ContractionMacroRule(_).ensuring { _.conclusion `isSubsetOf` expSeq.shallow }
       }
   }
 
@@ -120,9 +120,9 @@ class ExpansionProofToLK(
 
   private def tryWeakening(theory: Theory, expSeq: ExpansionSequent): Option[UnprovableOrLKProof] =
     expSeq.zipWithIndex.elements collectFirst {
-      case (ETWeakening(_, _), i) => solve(theory, expSeq delete i)
-      case (ETTop(_), i: Ant)     => solve(theory, expSeq delete i)
-      case (ETBottom(_), i: Suc)  => solve(theory, expSeq delete i)
+      case (ETWeakening(_, _), i) => solve(theory, expSeq `delete` i)
+      case (ETTop(_), i: Ant)     => solve(theory, expSeq `delete` i)
+      case (ETBottom(_), i: Suc)  => solve(theory, expSeq `delete` i)
     }
 
   private def tryUnary(theory: Theory, expSeq: ExpansionSequent, intuitionistic: Boolean): Option[UnprovableOrLKProof] =

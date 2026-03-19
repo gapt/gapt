@@ -42,7 +42,7 @@ object prop_48 extends TacticsProof {
   val dca_goal = hof"!xs (xs = nil ∨ ?x ?xss xs = cons(x, xss))"
   val dca = Sequent() :+ ("goal" -> dca_goal)
   val dca_proof = Lemma(dca) {
-    allR; analyticInduction withAxioms standardAxioms.forVariables(hov"xs:list").forLabel("goal")
+    allR; analyticInduction `withAxioms` standardAxioms.forVariables(hov"xs:list").forLabel("goal")
   }
 
   val manualProof = Lemma(("dca" -> hof"!xs (xs = nil ∨ ?x ?xss xs = cons(x, xss))") +: sequent) {
@@ -55,14 +55,14 @@ object prop_48 extends TacticsProof {
     orL
     // - IC - 1
     eql("dca_0", "goal_1").fromLeftToRight
-    rewrite.many ltr "def_butlast_1" in "goal_1"
-    rewrite.many ltr "def_last_1" in "goal_1"
-    rewrite.many ltr "def_append_0" in "goal_1"; refl
+    rewrite.many `ltr` "def_butlast_1" `in` "goal_1"
+    rewrite.many `ltr` "def_last_1" `in` "goal_1"
+    rewrite.many `ltr` "def_append_0" `in` "goal_1"; refl
     // - IC - 2
     exL; exL
-    rewrite.many ltr "dca_0" in "goal_1"
-    rewrite.many ltr "def_butlast_2" in "goal_1"
-    rewrite.many ltr "def_last_2" in "goal_1"
-    rewrite.many ltr "def_append_1" in "goal_1"; escargot
+    rewrite.many `ltr` "dca_0" `in` "goal_1"
+    rewrite.many `ltr` "def_butlast_2" `in` "goal_1"
+    rewrite.many `ltr` "def_last_2" `in` "goal_1"
+    rewrite.many `ltr` "def_append_1" `in` "goal_1"; escargot
   }
 }

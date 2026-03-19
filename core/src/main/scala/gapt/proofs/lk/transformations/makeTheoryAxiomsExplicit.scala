@@ -46,10 +46,10 @@ object makeTheoryAxiomsExplicit {
    * `proof'`.
    */
   def apply(formulas: Formula*)(proof: LKProof): LKProof =
-    withSequentConnector(formulas: _*)(proof)._1
+    withSequentConnector(formulas*)(proof)._1
 
   def apply(proof: LKProof)(implicit ctx: Context): LKProof =
-    apply(ctx.get[ProofNames].sequents.toSeq map { s => universalClosure(s.toFormula) }: _*)(proof)
+    apply(ctx.get[ProofNames].sequents.toSeq map { s => universalClosure(s.toFormula) }*)(proof)
 
   private object explicitTheoryAxiomsVisitor extends LKVisitor[Seq[Formula]] {
 

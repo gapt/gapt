@@ -31,19 +31,19 @@ object sipReconstruct extends Script {
 
   // do not do this at home
   def tip(name: String, proofs: String*) = {
-    val baseClass: Class[_] = gapt.examples.tip.`package`.getClass
+    val baseClass: Class[?] = gapt.examples.tip.`package`.getClass
     val className = s"${baseClass.getPackage.getName}.$name$$"
     getProofs(
       name,
       baseClass.getClassLoader.loadClass(className).getField("MODULE$").get(null).asInstanceOf[TacticsProof],
-      proofs: _*
+      proofs*
     )
   }
 
   def getIsaplanner(name: String, proofs: String*) =
-    tip(s"isaplanner.prop_$name", proofs: _*)
+    tip(s"isaplanner.prop_$name", proofs*)
   def getProd(name: String, proofs: String*) =
-    tip(s"prod.prop_$name", proofs: _*)
+    tip(s"prod.prop_$name", proofs*)
 
   def inlineLast(thy: Theory)(lem: thy.LemmaHandle): LKProof =
     if (lem.usedLemmas.isEmpty) lem.proof

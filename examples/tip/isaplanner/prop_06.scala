@@ -34,7 +34,7 @@ object prop_06 extends TacticsProof {
   val baseCase = Lemma(theory :+ ("goal" -> hof"∀y 0-(0+y) = 0")) {
     allR
     forget("p0_", "ps_", "ms0", "mss")
-    rewrite.many ltr "m0_"
+    rewrite.many `ltr` "m0_"
     refl
   }
 
@@ -60,10 +60,10 @@ object prop_06 extends TacticsProof {
   val target = theory :+ ("goal" -> hof"∀x ∀y x-(x+y) = 0")
 
   val aipOptions1 = new ProverOptions(Escargot, IndependentInductionAxioms().forVariables(List(hov"x:nat")).forLabel("goal"))
-  val proof2 = new AnalyticInductionProver(aipOptions1) lkProof (target) get
+  val proof2 = new AnalyticInductionProver(aipOptions1) `lkProof` (target) get
 
   val aipOptions2 = new ProverOptions(Escargot, SequentialInductionAxioms().forVariables(List(hov"x:nat")).forLabel("goal"))
-  val proof3 = new AnalyticInductionProver(aipOptions2) lkProof (target) get
+  val proof3 = new AnalyticInductionProver(aipOptions2) `lkProof` (target) get
 
   val proof4 = AnalyticInductionProver.singleInduction(target, hov"m:nat")
 

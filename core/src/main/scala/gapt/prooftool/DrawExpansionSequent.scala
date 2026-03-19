@@ -4,7 +4,6 @@ package gapt.prooftool
 
 import swing._
 import java.awt.{Color, Font}
-import java.awt.Font._
 
 import scala.swing.event.{Event, MouseClicked, MouseEntered, MouseExited}
 import gapt.proofs.expansion._

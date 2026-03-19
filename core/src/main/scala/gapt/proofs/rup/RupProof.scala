@@ -282,7 +282,6 @@ sealed trait Res extends DagProof[Res] {
   }
 
   def toLK(atom: Int => Formula, input: Clause => LKProof): LKProof = {
-    import gapt.proofs.lk._
     val memo = mutable.Map[Res, LKProof]()
     def go(p: Res): LKProof =
       memo.getOrElseUpdate(

@@ -28,9 +28,9 @@ object acnf {
     def reduce(proof: CutRule): Option[LKProof] = proof match {
       case cut @ CutRule(lsb, l, rsb, _) if !isAtom(lsb.endSequent(l)) && isAcnf(lsb) && isAcnf(rsb) =>
         if (isAtom(lsb.endSequent(l)))
-          (leftRankReduction orElse rightRankReduction).reduce(cut)
+          (leftRankReduction `orElse` rightRankReduction).reduce(cut)
         else
-          (gradeReduction orElse leftRankReduction orElse rightRankReduction).reduce(cut)
+          (gradeReduction `orElse` leftRankReduction `orElse` rightRankReduction).reduce(cut)
       case _ => None
     }
   }
@@ -72,12 +72,12 @@ object acnfTop {
             if (introOrCut(lsb, lsb.endSequent(l)))
               rightRankReduction.reduce(cut)
             else
-              (leftRankReduction orElse rightRankReduction).reduce(cut)
+              (leftRankReduction `orElse` rightRankReduction).reduce(cut)
           } else {
             None
           }
         case cut @ CutRule(lsb, _, rsb, _) if isAcnfTop(lsb) && isAcnfTop(rsb) =>
-          (gradeReduction orElse leftRankReduction orElse rightRankReduction).reduce(cut)
+          (gradeReduction `orElse` leftRankReduction `orElse` rightRankReduction).reduce(cut)
         case _ => None
       }
   }

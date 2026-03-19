@@ -214,7 +214,7 @@ class Theory(imports: Theory*) extends Theory0(imports.toList) {
 
   protected def indTy(ty0: Ty, ctrs: Const*): Unit = {
     val ty = ty0.asInstanceOf[TBase]
-    addNow(InductiveType(ty, ctrs: _*))
+    addNow(InductiveType(ty, ctrs*))
 
     // c_1(x_1, ..., x_n), ...
     val freeTerms = Map() ++ ctrs.map {
@@ -264,7 +264,7 @@ class Theory(imports: Theory*) extends Theory0(imports.toList) {
   }
 
   protected def fun(c: Const, equations: String*): Unit = {
-    val prf = PrimRecFun(c, equations: _*)
+    val prf = PrimRecFun(c, equations*)
     addNow(prf)
     val PrimRecFun(_, _, _, eqns) = prf
     val Some(ctrs) = ctx.getConstructors(prf.recursionType): @unchecked
@@ -390,7 +390,7 @@ class Theory(imports: Theory*) extends Theory0(imports.toList) {
     val formula = All.Block(fvs, openFormula)
     def handleTacticBlock(block: ProofState => ProofState): LemmaHandle = {
       val proofName = addLemma(name.value, formula, ForallRightBlock(Lemma.finish(block(ProofState(openFormula)), incompleteOk = false), formula, fvs))
-      attr(attributes: _*)(name.value)
+      attr(attributes*)(name.value)
       LemmaHandle(proofName)
     }
   }
@@ -446,8 +446,8 @@ object logic extends Theory {
   }
 
   fun(hoc"ite{?a}:o>?a>?a>?a", "ite true a b = a", "ite false a b = b")
-  val itepos = lemma(hof"p -> ite p a b = a", "simp", "nocombine") { induction(hov"p:o") onAll simp.w("ite") }
-  val iteneg = lemma(hof"-p -> ite p a b = b", "simp", "nocombine") { induction(hov"p:o") onAll simp.w("ite") }
+  val itepos = lemma(hof"p -> ite p a b = a", "simp", "nocombine") { induction(hov"p:o") `onAll` simp.w("ite") }
+  val iteneg = lemma(hof"-p -> ite p a b = b", "simp", "nocombine") { induction(hov"p:o") `onAll` simp.w("ite") }
   val iteeq = lemma(hof"ite p a a = a", "simp") { cut("", hof"p:o").onAll(simp.h) }
 
   dfn(hof"compose{?a?b?c} (g:?b>?c) (f:?a>?b) x = g (f x)")
@@ -456,8 +456,8 @@ object logic extends Theory {
   val propext = axiom(hof"!p!q ((p <-> q) -> p = q)")
   val funext = axiom(hof"!f!g (!x f(x) = g(x) -> f = g)")
 
-  val propextiff = lemma(hof"(p = q) <-> (p <-> q)") { andR onAll impR onAll simp.h("propext") }
-  val funextiff = lemma(hof"(f = g) <-> (!x f(x) = g(x))") { andR onAll impR onAll simp.h("funext") }
+  val propextiff = lemma(hof"(p = q) <-> (p <-> q)") { andR `onAll` impR `onAll` simp.h("propext") }
+  val funextiff = lemma(hof"(f = g) <-> (!x f(x) = g(x))") { andR `onAll` impR `onAll` simp.h("funext") }
 
 }
 

@@ -75,7 +75,7 @@ package object `export` {
         structurallyInductiveType: (String, Vector[Const])
     ): InductiveType = {
       val (typeName, constructors) = structurallyInductiveType
-      InductiveType(TBase(typeName), constructors: _*)
+      InductiveType(TBase(typeName), constructors*)
     }
 
     def convert: TipProblem = {

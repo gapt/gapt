@@ -15,5 +15,5 @@ import gapt.proofs.HOLSequent
 case object BottomAxiom extends InitialSequent {
   override def name: String = "⊥:l"
   override def conclusion: HOLSequent = HOLSequent(Seq(Bottom()), Nil)
-  def mainFormula: PropFormula with Const = Bottom()
+  def mainFormula: PropFormula & Const = Bottom()
 }

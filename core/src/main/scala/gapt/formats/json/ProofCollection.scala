@@ -50,7 +50,7 @@ private[json] object ProofCollectionCodec {
       encodeProof(numEncoder)(p).mapObject(("name", Json.fromString(s"${p.longName}")) +: _)
 
     Encoder.encodeMap[Int, P](implicitly, encodeProofWithName)(
-      ListMap(coll.proofMap.toVector.map(_.swap).sortBy(_._1): _*)
+      ListMap(coll.proofMap.toVector.map(_.swap).sortBy(_._1)*)
     )
   }
 

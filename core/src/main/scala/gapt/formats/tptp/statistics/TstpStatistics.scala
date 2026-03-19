@@ -2,13 +2,12 @@ package gapt.formats.tptp.statistics
 
 import os.{Path, exists}
 import gapt.expr._
-import gapt.expr.formula.Formula
 import gapt.expr.subst.Substitution
 import gapt.expr.util.expressionDepth
 import gapt.expr.util.expressionSize
 import gapt.formats.csv.{CSVFile, CSVRow}
 import gapt.formats.tptp._
-import gapt.proofs.{HOLSequent, Sequent}
+import gapt.proofs.HOLSequent
 import gapt.proofs.resolution._
 import gapt.proofs.sketch.{RefutationSketch, RefutationSketchToResolution}
 import gapt.utils.{Statistic, TimeOutException, withTimeout}

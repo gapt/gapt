@@ -54,7 +54,7 @@ object ExistsSkLeftRule extends ConvenienceConstructor("ExistsSkLeftRule") {
    */
   def apply(subProof: LKProof, skolemTerm: Expr, skolemDef: Expr): ExistsSkLeftRule = {
     val Apps(_, skolemArgs) = skolemTerm
-    val mainFormula = BetaReduction.betaNormalize(skolemDef(skolemArgs: _*)).asInstanceOf[Formula]
+    val mainFormula = BetaReduction.betaNormalize(skolemDef(skolemArgs*)).asInstanceOf[Formula]
     apply(subProof, mainFormula, skolemTerm)
   }
 

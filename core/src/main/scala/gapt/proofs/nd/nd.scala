@@ -880,7 +880,7 @@ case class BottomElimRule(subProof: NDProof, mainFormula: Formula)
 case class ForallIntroRule(subProof: NDProof, eigenVariable: Var, quantifiedVariable: Var)
     extends UnaryNDProof with CommonRule with Eigenvariable {
 
-  val (auxFormula, context) = premise focus Suc(0)
+  val (auxFormula, context) = premise `focus` Suc(0)
 
   // eigenvariable condition
   if (freeVariables(context) contains eigenVariable)
@@ -1090,9 +1090,9 @@ case class ExistsElimRule(leftSubProof: NDProof, rightSubProof: NDProof, aux: Se
 
   validateIndices(rightPremise, Seq(aux))
 
-  val (existentialFormula, leftContext) = leftPremise focus Suc(0)
+  val (existentialFormula, leftContext) = leftPremise `focus` Suc(0)
 
-  val (auxFormula, rightContext) = rightPremise focus aux
+  val (auxFormula, rightContext) = rightPremise `focus` aux
 
   // eigenvariable condition
   if (freeVariables(rightContext) contains eigenVariable)
@@ -1301,7 +1301,7 @@ case class InductionCase(proof: NDProof, constructor: Const, hypotheses: List[Se
     require(hyp.isAnt && proof.endSequent.isDefinedAt(hyp))
   }
 
-  val term = constructor(eigenVars: _*)
+  val term = constructor(eigenVars*)
 
   require(proof.endSequent.isDefinedAt(Suc(0)))
 }

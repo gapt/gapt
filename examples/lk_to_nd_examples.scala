@@ -643,8 +643,8 @@ object classicalPairing extends Script {
 object issue687 extends Script {
   import gapt.proofs.gaptic._
   val lk = Proof(hols"A ∨ B, C → ¬B, C ⊢ A") {
-    orL left trivial
-    impL left trivial
+    orL `left` trivial
+    impL `left` trivial
     negL; trivial
   }
   println(lk)

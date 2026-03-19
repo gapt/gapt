@@ -311,8 +311,8 @@ object ExponentialCompression extends TacticsProof {
   )
 
   val tauBc = Lemma(esTauBc) {
-    unfold("Disjunction") atMost 1 in "Ant_0"
-    unfold("Conjunction") atMost 1 in "Suc_0"
+    unfold("Disjunction") `atMost` 1 `in` "Ant_0"
+    unfold("Conjunction") `atMost` 1 `in` "Suc_0"
     allL("Ant_0", le"f a")
     allL("Ant_1", le"f a")
     allL("Ant_1_0", le"fn 0 (f a)")
@@ -366,10 +366,10 @@ object ExponentialCompression extends TacticsProof {
     focus(1)
     exR("Suc_0", le"f alpha:i")
     exR("Suc_0_0", le"beta:i")
-    unfold("Conjunction") atMost 1 in "Cut"
+    unfold("Conjunction") `atMost` 1 `in` "Cut"
     trivial
-    unfold("Conjunction") atMost 1 in "Cut"
-    unfold("Conjunction") atMost 1 in "Ant_1_0_0"
+    unfold("Conjunction") `atMost` 1 `in` "Cut"
+    unfold("Conjunction") `atMost` 1 `in` "Ant_1_0_0"
     trivial
   }
 
@@ -395,10 +395,10 @@ object ExponentialCompression extends TacticsProof {
     focus(1)
     exR("Suc_0", le"f alpha:i")
     exR("Suc_0_0", le"beta:i")
-    unfold("Conjunction") atMost 1 in "Cut"
+    unfold("Conjunction") `atMost` 1 `in` "Cut"
     trivial
-    unfold("Conjunction") atMost 1 in "Cut"
-    unfold("Conjunction") atMost 1 in "Ant_1_0_0"
+    unfold("Conjunction") `atMost` 1 `in` "Cut"
+    unfold("Conjunction") `atMost` 1 `in` "Ant_1_0_0"
     trivial
   }
 
@@ -418,7 +418,7 @@ object ExponentialCompression extends TacticsProof {
     exR("CutF", le"fn 0 alpha:i")
     allL("Ant_2", fot"alpha:i")
     allL("Ant_2_0", le"fn 0 alpha:i")
-    unfold("Disjunction") atMost 1 in "Ant_alpha"
+    unfold("Disjunction") `atMost` 1 `in` "Ant_alpha"
     impL("Ant_2_0_0")
     trivial
     trivial
@@ -437,7 +437,7 @@ object ExponentialCompression extends TacticsProof {
   )
 
   val phiSc = Lemma(esPhiSc) {
-    unfold("Disjunction") atMost 1 in "Ant_alpha"
+    unfold("Disjunction") `atMost` 1 `in` "Ant_alpha"
     orL("Ant_alpha")
     ref("phi")
     exR("CutF", le"fn ( s n ) alpha:i")
@@ -461,7 +461,7 @@ object ExponentialCompression extends TacticsProof {
   )
 
   val xhiBc = Lemma(esXhiBc) {
-    unfold("Conjunction") atMost 1 in "Suc_1"
+    unfold("Conjunction") `atMost` 1 `in` "Suc_1"
     exR("Suc_1", fot"beta2:i")
     trivial
   }
@@ -486,7 +486,7 @@ object ExponentialCompression extends TacticsProof {
     trivial
     forget("CutF1")
     ref("xhi")
-    unfold("Conjunction") atMost 1 in "Suc_1"
+    unfold("Conjunction") `atMost` 1 `in` "Suc_1"
     ref("preXhi")
   }
 

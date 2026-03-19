@@ -16,7 +16,7 @@ trait SkolemQuantifierRule extends UnaryLKProof with CommonRule {
 
   //  require( freeVariables( skolemDef ).isEmpty )
 
-  val (auxFormula, context) = premise focus aux
+  val (auxFormula, context) = premise `focus` aux
 
   def quantifiedVariable: Var
   def subFormula: Formula

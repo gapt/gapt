@@ -53,7 +53,7 @@ object FirstSchema4 extends TacticsProof {
   // refer to them in the tactic proof. we construct a tactic proof with the follow command. Try to run the following
   // in  gapt by typing FirstSchema.chiBc after loading the file and see what happens:
   val chiBc = Lemma(esChiBc) {
-    unfold("POR") atMost 1 in "Suc_0"
+    unfold("POR") `atMost` 1 `in` "Suc_0"
   }
 
   // You should get the following:

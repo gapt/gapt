@@ -32,7 +32,7 @@ object FunctionIterationSchema extends TacticsProof {
     Seq("Suc_0" -> hof"P(if(s(n),a))")
   )
   val phiSc = Lemma(esPhiSc) {
-    cut("cut", hof"!x (-P(x) | P(f(x)))") left by {
+    cut("cut", hof"!x (-P(x) | P(f(x)))") `left` by {
       allR("cut", fov"A")
       allL("Ant_1", fov"A")
       orL
@@ -52,7 +52,7 @@ object FunctionIterationSchema extends TacticsProof {
       ref("phi")
     }
     by {
-      unfold("if") atMost 1 in "Suc_0"
+      unfold("if") `atMost` 1 `in` "Suc_0"
       trivial
     }
   }
@@ -65,7 +65,7 @@ object FunctionIterationSchema extends TacticsProof {
     Seq("Suc_0" -> hof"P(if(0,a))")
   )
   val phiBc = Lemma(esPhiBc) {
-    unfold("if") atMost 1 in "Suc_0"
+    unfold("if") `atMost` 1 `in` "Suc_0"
     trivial
   }
   ctx += ProofDefinitionDeclaration(le"phi 0", phiBc)

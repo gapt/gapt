@@ -92,7 +92,7 @@ object PCNF {
   }
 
   def containsClauseN(formula: Formula, clause: HOLSequent): Boolean =
-    CNFn(formula) exists { _ isSubMultisetOf clause }
+    CNFn(formula) exists { _ `isSubMultisetOf` clause }
   def containsClauseP(formula: Formula, clause: HOLSequent): Boolean =
-    CNFp(formula) exists { _ isSubMultisetOf clause }
+    CNFp(formula) exists { _ `isSubMultisetOf` clause }
 }

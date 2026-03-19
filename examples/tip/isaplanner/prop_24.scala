@@ -139,5 +139,5 @@ object prop_24 extends TacticsProof {
   }
 
   val options = new ProverOptions(Escargot, SequentialInductionAxioms().forAllVariables.forLabel("goal"))
-  val proof2 = new AnalyticInductionProver(options) lkProof (("refl" -> hof"!x equal(x,x)") +: sequent) get
+  val proof2 = new AnalyticInductionProver(options) `lkProof` (("refl" -> hof"!x equal(x,x)") +: sequent) get
 }

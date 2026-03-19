@@ -26,7 +26,7 @@ object help {
   private def docPageExists(name: String): Boolean = {
     if (localDocs) {
       val classNamePath = (name.replace('.', '/') ++ ".html").split('/')
-      val filePath = Paths.get(classNamePath.head, classNamePath.tail: _*)
+      val filePath = Paths.get(classNamePath.head, classNamePath.tail*)
       val path = basePath.map(p => p.resolve(filePath))
       path.fold(false)(Files.exists(_))
     } else {
@@ -70,7 +70,7 @@ object help {
    */
   def apply(a: AnyRef): Unit = {
     val className_ = a.getClass.getName
-    val (className, objectName) = if (className_ endsWith "$") {
+    val (className, objectName) = if (className_ `endsWith` "$") {
       (className_.init, className_)
     } else {
       (className_, className_ ++ "$")

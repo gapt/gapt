@@ -52,7 +52,7 @@ object ForallSkRightRule extends ConvenienceConstructor("ForallSkRightRule") {
    */
   def apply(subProof: LKProof, skolemTerm: Expr, skolemDef: Expr): ForallSkRightRule = {
     val Apps(_, skolemArgs) = skolemTerm
-    val mainFormula = BetaReduction.betaNormalize(skolemDef(skolemArgs: _*)).asInstanceOf[Formula]
+    val mainFormula = BetaReduction.betaNormalize(skolemDef(skolemArgs*)).asInstanceOf[Formula]
     apply(subProof, mainFormula, skolemTerm)
   }
 
