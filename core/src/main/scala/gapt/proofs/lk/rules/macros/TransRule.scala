@@ -44,7 +44,6 @@ object TransRule {
     val Trans = All(xv, All(yv, All(zv, Imp(And(Eq(xv, yv), Eq(yv, zv)), Eq(xv, zv)))))
     def TransX(x: FOLTerm) = All(yv, All(zv, Imp(And(Eq(x, yv), Eq(yv, zv)), Eq(x, zv))))
     def TransXY(x: FOLTerm, y: FOLTerm) = All(zv, Imp(And(Eq(x, y), Eq(y, zv)), Eq(x, zv)))
-    def TransXYZ(x: FOLTerm, y: FOLTerm, z: FOLTerm) = Imp(And(Eq(x, y), Eq(y, z)), Eq(x, z))
 
     val xy = Eq(x, y)
     val yz = Eq(y, z)

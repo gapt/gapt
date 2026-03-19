@@ -1,7 +1,6 @@
 package gapt.formats.lisp
 
 import org.specs2.mutable._
-import scala.util.{Success, Failure}
 
 class SExpressionTest extends Specification {
 

@@ -4,14 +4,13 @@ import gapt.expr._
 import gapt.formats.babel.{Notation, Precedence}
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.expansion.InstanceTermEncoding
-import gapt.proofs.gaptic.TacticsProof
 import gapt.proofs.lk.util.extractInductionGrammar
 import gapt.utils.SatMatchers
 import org.specs2.mutable.Specification
 
 class ExtractInductionGrammarTest extends Specification with SatMatchers {
 
-  object example extends TacticsProof {
+  object example extends gapt.proofs.gaptic.TacticsProof {
     import gapt.proofs.gaptic._
     ctx += InductiveType("nat", hoc"0: nat", hoc"s: nat>nat")
     ctx += hoc"'+': nat>nat>nat"

@@ -1,80 +1,60 @@
 package gapt.logic.hol
 
-import gapt.expr._
-import gapt.proofs.HOLClause
-import gapt.proofs.FOLClause
-import gapt.proofs.SequentIndex
+import gapt.expr.*
+import gapt.proofs.{Ant, HOLClause, RichFormulaSequent, Sequent, SequentIndex, Suc}
 import gapt.expr.util.rename
-import gapt.expr.util.freeVariables
 import gapt.expr.subst.Substitution
-import gapt.expr.formula.Atom
+import gapt.expr.formula.{Atom, Eq}
 import gapt.expr.formula.hol.freeHOVariables
 import gapt.expr.formula.fol.FOLVar
-import gapt.proofs.RichFormulaSequent
 import gapt.expr.util.syntacticMGU
-import gapt.expr.formula.Eq
-import gapt.proofs.Ant
 import gapt.expr.subst.FOLSubstitution
-import gapt.expr.formula.fol.FOLTerm
-import gapt.proofs.HOLSequent
-import gapt.expr.ty.Ti
 import gapt.logic.Polarity
-import gapt.logic.hol.AndOr
-import gapt.expr.formula.Formula
-import gapt.expr.formula.Top
-import gapt.expr.formula.And
-import gapt.expr.formula.Or
-import gapt.expr.formula.All
-import gapt.expr.formula.Ex
-import gapt.expr.BetaReduction.betaNormalize
-import gapt.expr.Abs.Block
-import gapt.expr.ty.FunctionType
-import gapt.expr.ty.To
-import gapt.expr.formula.constants.BottomC
-import gapt.logic.hol.wdls.simplify
-import gapt.expr.formula.constants.TopC
-import gapt.expr.preExpr.Type
-import gapt.utils.NameGenerator
-import gapt.expr.ty.Ty
 import gapt.logic.clauseSubsumption
-import gapt.expr.subst.PreSubstitution
-import gapt.proofs.Suc
-import gapt.proofs.Sequent
-import scala.collection.immutable.HashSet
-import gapt.provers.escargot.Escargot
-import gapt.expr.formula.Iff
-import gapt.logic.hol.PredicateEliminationProblem
-import gapt.logic.hol.ClauseSetPredicateEliminationProblem
+import gapt.utils.{Logger}
+
+import gapt.expr.formula.constants.EqC
+import gapt.expr.formula.fol.FOLTerm
+import scala.annotation.tailrec
+import gapt.utils.Aborter
+import gapt.expr.formula.hol.freeFOLVariables
 
 object scan {
 
+  val logger = Logger("scan")
+
+  val defaultOneSidedOnly: Boolean = true
+  val defaultAllowResolutionOnBaseLiterals: Boolean = false
+  val defaultStepLimit: Option[Int] = Some(50)
+  val defaultAttemptLimit: Option[Int] = Some(100)
+
   /**
-    * Runs the SCAN algorithm on the input predicate elimination problem in clause form. 
-    * If successful, returns a derivation whose conclusion 
+    * Runs the SCAN algorithm on the input predicate elimination problem in clause form.
+    * If successful, returns a derivation whose conclusion
     * does not contain any of the variables from the input predicate elimination problem.
     *
     * @param input predicate elimination problem in clause form
     * @param oneSidedOnly controls whether during the purification processes of SCAN only one-sided pointed clauses should be purified, i.e. pointed clauses P where the designated literal of P only occurs with a single polarity in P.
     * @param allowResolutionOnBaseLiterals controls whether resolution on base literals is allowed. Base literals are those literals whose predicate symbol is not in the variables of the input predicate elimination problem
-    * @param derivationLimit controls the maximum number of inferences that 
-    * derivations should have and makes sure that only derivations are returned that satisfy this limit. 
+    * @param stepLimit controls the maximum number of derivations that
+    * derivations should have and makes sure that only derivations are returned that satisfy this limit.
     * A value of None means that no limit is enforced, but note that this might cause non-termination.
     * @param attemptLimit controls the maximum number of SCAN runs that are to be performed to find an eliminating derivation. If None is passed no limit is enforced, but note that this might cause non-termination.
-    * @return If an eliminating deirvation D is found within the given attemptLimit whose size is within derivationLimit and which respects the options oneSidedOnly and allowResolutionOnBaseLiterals, then the result is Some(D). Returns None otherwise
-    * Otherwise Left(I) is returned where I is an iterator over the found derivations that do not the derivationLimit.
+    * @return If an eliminating deirvation D is found within the given attemptLimit whose size is within stepLimit and which respects the options oneSidedOnly and allowResolutionOnBaseLiterals, then the result is Some(D). Returns None otherwise
+    * Otherwise Left(I) is returned where I is an iterator over the found derivations that do not eliminate the predicates stepLimit steps.
     */
   def apply(
       input: ClauseSetPredicateEliminationProblem,
-      oneSidedOnly: Boolean = true,
-      allowResolutionOnBaseLiterals: Boolean = false,
-      derivationLimit: Option[Int] = Some(100),
-      attemptLimit: Option[Int] = Some(10)
-  ): Option[Derivation] = {
+      oneSidedOnly: Boolean = defaultOneSidedOnly,
+      allowResolutionOnBaseLiterals: Boolean = defaultAllowResolutionOnBaseLiterals,
+      stepLimit: Option[Int] = defaultStepLimit,
+      attemptLimit: Option[Int] = defaultAttemptLimit
+  )(using Aborter): Option[Derivation] = {
     val baseIterator = scan.derivationsFrom(
       input = input,
       oneSidedOnly = oneSidedOnly,
       allowResolutionOnBaseLiterals = allowResolutionOnBaseLiterals,
-      derivationLimit = derivationLimit
+      stepLimit = stepLimit
     )
     val iterator = attemptLimit.map(l => baseIterator.take(l)).getOrElse(baseIterator)
 
@@ -84,30 +64,33 @@ object scan {
   }
 
   /**
-    * Runs the SCAN algorithm on the input predicate elimination problem in clause form and collects different possible derivations in an iterator. 
+    * Runs the SCAN algorithm on the input predicate elimination problem in clause form and collects different possible derivations in an iterator.
     *
     * @param input predicate elimination problem in clause form
     * @param oneSidedOnly controls whether during the purification processes of SCAN only one-sided pointed clause should be purified, i.e. a pointed clause P where the designated literal of P only occurs with a single polarity in P.
     * @param allowResolutionOnBaseLiterals controls whether resolution on base literals is allowed. Base literals are those literals whose predicate symbol is not in the variables to be eliminated in the predicate elimination problem
-    * @param derivationLimit controls the maximum number of inferences that 
-    * derivations should have and makes sure that only derivations are returned that satisfy this limit. 
+    * @param stepLimit controls the maximum number of inferences that
+    * derivations should have and makes sure that only derivations are returned that satisfy this limit.
     * A value of None means that no limit is enforced, but note that this might cause non-termination.
     * @return Returns an iterator of derivations found during backtracked runs of SCAN. Finding these multiple derivations is done by backtracking on the different choices of purified pointed clause during the purification process of SCAN.
     * If a found derivation does not satisfy derivation limit, it is returned as Left, otherwise it is returned as Right.
     */
   def derivationsFrom(
       input: ClauseSetPredicateEliminationProblem,
-      oneSidedOnly: Boolean = true,
-      allowResolutionOnBaseLiterals: Boolean = false,
-      derivationLimit: Option[Int] = Some(100)
-  ): Iterator[Either[Derivation, Derivation]] = {
-    assert(derivationLimit.isEmpty || derivationLimit.get >= 0, "derivation limit must be non-negative")
-    val states = saturateByPurification(State.initialFrom(
-      input,
-      remainingAllowedInferences = derivationLimit,
-      oneSidedOnly = oneSidedOnly,
-      allowResolutionOnBaseLiterals = allowResolutionOnBaseLiterals
-    ))
+      oneSidedOnly: Boolean = defaultOneSidedOnly,
+      allowResolutionOnBaseLiterals: Boolean = defaultAllowResolutionOnBaseLiterals,
+      stepLimit: Option[Int] = defaultStepLimit
+  )(using Aborter): Iterator[Either[Derivation, Derivation]] = {
+    assert(stepLimit.isEmpty || stepLimit.get >= 0, "stepLimit must be non-negative")
+    logger.info(s"input clause set: ${input.firstOrderClauses}")
+    val states = runScan(
+      State.initialFrom(
+        input,
+        remainingAllowedSteps = stepLimit,
+        oneSidedOnly = oneSidedOnly,
+        allowResolutionOnBaseLiterals = allowResolutionOnBaseLiterals
+      )
+    )
     states.map(state => state.map(_.derivation).left.map(_.derivation))
   }
 
@@ -117,16 +100,19 @@ object scan {
     * @param clause the underlying clause
     * @param index the index of the literal within the clause
     */
-  case class PointedClause(clause: HOLClause, index: SequentIndex):
+  case class PointedClause(clause: HOLClause, index: SequentIndex) {
+
     /**
       * Returns the designated literal of the pointed clause
       */
     def designatedLiteral = clause(index)
 
+    def polarity = index.polarity
+
     /**
-      * Returns rguments to the designated literal
+      * Returns arguments to the designated literal
       */
-    def args = designatedLiteral match
+    def args: List[Expr] = designatedLiteral match
       case Atom(_, args) => args
 
     /**
@@ -136,17 +122,32 @@ object scan {
       case Atom(v @ VarOrConst(_, _, _), _) => v
 
     /**
-      * Returns true, if the symbol of the pointed clause is a [[gapt.expr.Var]] and false otherwise
+      * Returns Some(v), if the symbol of the pointed clause is a [[gapt.expr.Var]] and None otherwise
       */
-    def isVar: Boolean = symbol match {
-      case Var(_, _) => true
-      case _         => false
+    def varOption: Option[Var] = symbol match
+      case v: Var => Some(v)
+      case _      => None
+
+    def isOneSided: Boolean = {
+      clause.cedent(!index.polarity).forall {
+        case Atom(v: VarOrConst, _) => v != symbol
+        case _                      => true
+      }
     }
+  }
+
+  object PointedClause {
+    def apply(clause: HOLClause, index: SequentIndex): PointedClause = {
+      assert(clause.indices.contains(index), s"clause $clause does not have index $index")
+      new PointedClause(clause, index)
+    }
+  }
 
   /**
     * One step of a SCAN derivation
     */
-  enum DerivationStep:
+  enum DerivationStep {
+
     /**
       * Constraint resolution step. Pointed clauses are used to indicate not only the clause on which resolution is performed, but also the specific literal.
       *
@@ -163,6 +164,15 @@ object scan {
       * @param auxiliaryIndex index of the literal to be removed after the factoring step
       */
     case ConstraintFactoring(clause: HOLClause, principalIndex: SequentIndex, rightIndex: SequentIndex)
+
+    /**
+    * Constraint elimination step
+    *
+    * @param clause Clause to perform constraint elimination on
+    * @param constraintIndex index of the constraint which is to be eliminated
+    * @param unifier unifier used to unify the terms of the constraint. must be a most general unifier
+    */
+    case ConstraintElimination(clause: HOLClause, constraintIndex: SequentIndex, unifier: FOLSubstitution)
 
     /**
       * Purified clause deletion step.
@@ -202,16 +212,17 @@ object scan {
       * @param constraintIndex the index of the constraint to be eliminated
       * @param substitution the substitution unifying the arguments in the constraint
       */
-    case ConstraintElimination(clause: HOLClause, constraintIndex: SequentIndex, substitution: FOLSubstitution)
+    case VariableElimination(clause: HOLClause, constraintIndex: SequentIndex, substitution: FOLSubstitution)
 
-    private def addedRemovedClauses(clauses: Set[HOLClause]): (Set[HOLClause], Set[HOLClause]) =
+    def addedRemovedClauses(clauses: Set[HOLClause]): (Set[HOLClause], Set[HOLClause]) =
       this match
-        case ConstraintResolution(left, right)                     => (Set(constraintResolvent(left, right)), Set.empty)
-        case f: ConstraintFactoring                                => (Set(factor(f)), Set.empty)
-        case PurifiedClauseDeletion(candidate)                     => (Set.empty, Set(candidate.clause))
-        case SubsumptionDeletion(subsumer, subsumee, substitution) => (Set.empty, Set(subsumee))
-        case TautologyDeletion(clause)                             => (Set.empty, Set(clause))
-        case ConstraintElimination(clause, index, substitution)    => (Set(substitution(clause.delete(index)).map { case a: Atom => a }.distinct), Set(clause))
+        case ConstraintResolution(left, right)                            => (Set(constraintResolvent(left, right)), Set.empty)
+        case f: ConstraintFactoring                                       => (Set(factor(f)), Set.empty)
+        case ConstraintElimination(clause, constraintIndex, substitution) => (Set(substitution(clause.delete(constraintIndex)).distinct), Set.empty)
+        case PurifiedClauseDeletion(candidate)                            => (Set.empty, Set(candidate.clause))
+        case SubsumptionDeletion(subsumer, subsumee, substitution)        => (Set.empty, Set(subsumee))
+        case TautologyDeletion(clause)                                    => (Set.empty, Set(clause))
+        case VariableElimination(clause, constraintIndex, substitution)   => (Set(substitution(clause.delete(constraintIndex)).distinct), Set(clause))
         case ExtendendPurityDeletion(hoVar, polarity) => {
           val removed = clauses.filter(c =>
             c.exists {
@@ -231,6 +242,7 @@ object scan {
     def apply(clauses: Set[HOLClause]): Set[HOLClause] =
       val (added, removed) = addedRemovedClauses(clauses)
       (clauses ++ added) -- removed
+  }
 
   /**
     * A SCAN derivation
@@ -241,7 +253,8 @@ object scan {
   case class Derivation(
       from: ClauseSetPredicateEliminationProblem,
       derivationSteps: List[DerivationStep]
-  ):
+  ) {
+
     /**
       * @return The derivation resulting from this by applying the first derivation step to the input predicate elimination problem and keeping the remaining derivation steps.
       * Returns [[UnsupportedOperationException]] if there are no derivation steps
@@ -268,14 +281,17 @@ object scan {
           ),
           next
         ).conclusion
+  }
 
-  object Derivation:
+  object Derivation {
+
     /**
       * @param from predicate elimination problem to start from
       * @return a derivation without derivation steps, starting from an initial predicate elimination problem
       */
     def emptyFrom(from: ClauseSetPredicateEliminationProblem): Derivation =
       Derivation(from, List.empty)
+  }
 
   /**
     * Describes the state of the SCAN saturation process at any given time
@@ -290,16 +306,19 @@ object scan {
   case class State(
       activeClauses: Set[HOLClause],
       derivation: Derivation,
-      remainingAllowedInferences: Option[Int],
+      remainingAllowedSteps: Option[Int],
       oneSidedOnly: Boolean,
       allowResolutionOnBaseLiterals: Boolean
-  ):
+  ) {
     def variablesToEliminate = derivation.from.varsToEliminate
     def isEliminated = activeClauses.forall(c => freeHOVariables(c.toFormula).intersect(variablesToEliminate.toSet).isEmpty)
     def isPointedClauseWithEliminationVariable(pointedClause: PointedClause) =
-      pointedClause.isVar && variablesToEliminate.contains(pointedClause.symbol.asInstanceOf[Var])
+      pointedClause.varOption.map(variablesToEliminate.contains).getOrElse(false)
+    def isFirstOrder(expr: Expr): Boolean = freeHOVariables(expr).intersect(variablesToEliminate.toSet).isEmpty
+  }
 
-  object State:
+  object State {
+
     /**
       * Returns an initial state given a predicate elimination problem and global parameters for the saturation process
       *
@@ -311,16 +330,125 @@ object scan {
       */
     def initialFrom(
         input: ClauseSetPredicateEliminationProblem,
-        remainingAllowedInferences: Option[Int],
+        remainingAllowedSteps: Option[Int],
         oneSidedOnly: Boolean,
         allowResolutionOnBaseLiterals: Boolean
     ): State = State(
       input.firstOrderClauses,
       Derivation.emptyFrom(input),
-      remainingAllowedInferences,
+      remainingAllowedSteps,
       oneSidedOnly,
       allowResolutionOnBaseLiterals
     )
+  }
+
+  import scala.collection.mutable.Stack
+  private case class StateIterator(val stack: Stack[Either[State, State]])(using a: Aborter) extends Iterator[Either[State, State]] {
+    def hasNext: Boolean = !stack.isEmpty
+    @tailrec final def next(): Either[State, State] = {
+      a.abortIfNotified()
+
+      if stack.isEmpty then
+        throw new NoSuchElementException("no more states")
+
+      val s = stack.pop()
+      val state = s match {
+        case Left(s)      => return Left(s)
+        case Right(state) => state
+      }
+
+      if state.isEliminated then
+        return Right(state)
+
+      val stateAfterExtendedPurityDeletion = extendedPurityDeletionStep(state) match {
+        case None => state
+        case Some(step) => applyDerivationSteps(state, Seq(step)) match {
+            case Left(s) => return Left(s)
+            case Right(s) => {
+              // push this state and return next to perform further extended
+              // purity deletion steps
+              stack.push(Right(s))
+              return next()
+            }
+          }
+      }
+
+      val stateAfterFactors =
+        for
+          redElimination <- eliminateRedundancies(stateAfterExtendedPurityDeletion)
+          factoring <- addNonRedundantFactors(redElimination)
+          redElimination <- eliminateRedundancies(factoring)
+        yield redElimination
+
+      val stateAfterRedundancyEliminatedFactors = stateAfterFactors match {
+        case Left(s)  => return Left(s)
+        case Right(s) => s
+      }
+
+      if stateAfterRedundancyEliminatedFactors.isEliminated then
+        return Right(stateAfterRedundancyEliminatedFactors)
+
+      val candidatePointedClauses = purificationCandidates(stateAfterRedundancyEliminatedFactors).toSeq
+      val statesAfterPurification = candidatePointedClauses
+        .map(purifyPointedClause(stateAfterRedundancyEliminatedFactors, _))
+
+      stack.addAll(statesAfterPurification)
+      next()
+    }
+  }
+
+  def runScan(state: State)(using Aborter): Iterator[Either[State, State]] = {
+    return StateIterator(Stack(Right(state))).map {
+      case Left(s)  => Left(s)
+      case Right(s) => Right(eliminateRedundancies(s).merge)
+    }
+  }
+
+  def nonRedundantResolutionInferences(
+      pointedClause: PointedClause,
+      clauseSet: Set[HOLClause]
+  ): Iterator[DerivationStep.ConstraintResolution] = {
+    def forwardSubsumes(clause: HOLClause, resolvent: HOLClause): Boolean = {
+      isInjectivelySubsumedAfterVariableElimination(
+        pointedClause.symbol,
+        !pointedClause.index.polarity,
+        clause,
+        resolvent
+      )
+    }
+
+    resolutionInferences(clauseSet, pointedClause).iterator.filter {
+      case DerivationStep.ConstraintResolution(left, right) =>
+        val resolvent = constraintResolvent(left, right)
+        clauseSet.forall(c => !forwardSubsumes(c, resolvent))
+    }
+  }
+
+  def purificationCandidates(state: State): Iterator[PointedClause] = {
+    val purifiablePointedClauses = pointedClauses(state.activeClauses)
+      .filter(state.isPointedClauseWithEliminationVariable)
+
+    // order pointed clauses where already purified clauses are preferred
+    // over ones that need purification and then one-sided ones are preferred
+    // over mixed ones
+    val orderedPurifiablePointedClauses = purifiablePointedClauses.toSeq.sortBy {
+      case p => (isPurified(p, state.activeClauses - p.clause), p.isOneSided) match {
+          case (true, true)   => 0
+          case (true, false)  => 1
+          case (false, true)  => 2
+          case (false, false) => 3
+        }
+    }
+
+    val (oneSidedCandidates, mixedCandidates) = orderedPurifiablePointedClauses.partition(_.isOneSided)
+    if state.oneSidedOnly && oneSidedCandidates.isEmpty then {
+      logger.warn(s"no one-sided purification candidates available, but only allowed to use one-sided resolution")
+      Iterator.empty
+    } else {
+      val candidates = if state.oneSidedOnly then oneSidedCandidates else orderedPurifiablePointedClauses
+      candidates.iterator
+    }
+  }
 
   /**
     * Applies the SCAN purification process to a given state with a given pointed clause which need not necessarily be part of the active clauses the given state
@@ -329,16 +457,20 @@ object scan {
     * @param pointedClause pointed clause with respect to which to perform purification
     * @return if the purification process could be completed within the limits given in state, returns Right with the new state, otherwise returns Left with a state where the limit was reached
     */
-  def purifyPointedClause(state: State, pointedClause: PointedClause): Either[State, State] = {
-    val resolutionInferences = nonRedundantResolutionInferences(state.activeClauses, pointedClause)
-    if resolutionInferences.isEmpty then Right(state)
+  def purifyPointedClause(state: State, pointedClause: PointedClause)(using a: Aborter): Either[State, State] = {
+    a.abortIfNotified()
+    val resolutionInferences = nonRedundantResolutionInferences(pointedClause, state.activeClauses - pointedClause.clause)
+    if resolutionInferences.isEmpty then
+      if state.isPointedClauseWithEliminationVariable(pointedClause) then
+        applyDerivationSteps(state, Seq(DerivationStep.PurifiedClauseDeletion(pointedClause)))
+      else
+        Right(state) // do not delete pointed clause if resolution is performed on base symbols
     else
       for
-        stateAfterResolvents <- applyDerivationSteps(state, resolutionInferences)
-        stateAfterFactors <- addFactors(stateAfterResolvents)
-        stateAfterRedundancyElimination <- eliminateRedundancies(stateAfterFactors)
-        result <- purifyPointedClause(stateAfterRedundancyElimination, pointedClause)
-      yield result
+        stateWithResolvents <- applyDerivationSteps(state, resolutionInferences)
+        stateAfterVariableElimination <- eliminateVariableConstraints(stateWithResolvents)
+        purifiedState <- purifyPointedClause(stateAfterVariableElimination, pointedClause)
+      yield purifiedState
   }
 
   def factor(factoring: DerivationStep.ConstraintFactoring): HOLClause = {
@@ -349,90 +481,49 @@ object scan {
     (clause.delete(rightIndex) ++ HOLClause(constraints, Seq.empty)).distinct
   }
 
-  def isFactorOf(clause: HOLClause, other: HOLClause): Boolean = {
-    factoringInferences(other).exists(i => factor(i) == clause)
+  def isFactorOf(state: State, clause: HOLClause, other: HOLClause): Boolean = {
+    factoringInferences(state, other).exists(i => factor(i) == clause)
   }
 
-  def factoringInferences(clause: HOLClause): Set[DerivationStep.ConstraintFactoring] = {
-    clause.succedent.zipWithIndex.combinations(2).flatMap {
-      case Seq(left @ (Atom(leftHead, _), _: Int), right @ (Atom(rightHead, _), _: Int)) if leftHead == rightHead => Some((left, right))
-      case _                                                                                                      => None
+  def factoringInferences(state: State, clause: HOLClause): Set[DerivationStep.ConstraintFactoring] = {
+    val succeedentInferences = clause.succedent.zipWithIndex.combinations(2).flatMap {
+      case Seq(left @ (Atom(leftHead, _), _: Int), right @ (Atom(rightHead, _), _: Int))
+          if leftHead == rightHead && state.variablesToEliminate.contains(leftHead) => Some((left, right))
+      case _ => None
     }.map[DerivationStep.ConstraintFactoring] {
       case ((_, leftIndex), (_, rightIndex)) => DerivationStep.ConstraintFactoring(clause, Suc(leftIndex), Suc(rightIndex))
     }.toSet
+    val antecedentInferences =
+      clause.antecedent.zipWithIndex.combinations(2).flatMap {
+        case Seq(left @ (Atom(leftHead, _), _: Int), right @ (Atom(rightHead, _), _: Int))
+            if leftHead == rightHead && state.variablesToEliminate.contains(leftHead) => Some((left, right))
+        case _ => None
+      }.map[DerivationStep.ConstraintFactoring] {
+        case ((_, leftIndex), (_, rightIndex)) => DerivationStep.ConstraintFactoring(clause, Ant(leftIndex), Ant(rightIndex))
+      }.toSet
+
+    succeedentInferences ++ antecedentInferences
   }
+
+  def isRedundant(clauses: Set[HOLClause], clause: HOLClause): Boolean = {
+    if clause.isTaut then return true
+
+    val varEliminations = variableEliminations(clause)
+    return clauses.exists(c => varEliminations.exists(elim => c.subsumes(elim)))
+  }
+
+  def nonRedundantFactoringInferences(state: State, clause: HOLClause): Set[DerivationStep.ConstraintFactoring] = {
+    factoringInferences(state, clause).filterNot(f => isRedundant(state.activeClauses, factor(f)))
+  }
+
+  extension (c: HOLClause)
+    def subsumes(other: HOLClause): Boolean =
+      subsumptionSubstitution(c, other).nonEmpty
 
   def subsumptionSubstitution(subsumer: HOLClause, subsumee: HOLClause): Option[FOLSubstitution] = {
     val subsumerHoVarsAsConsts = subsumer.map { case Atom(VarOrConst(v, ty, tys), args) => Atom(Const(v, ty, tys), args) }
     val subsumeeHoVarsAsConsts = subsumee.map { case Atom(VarOrConst(v, ty, tys), args) => Atom(Const(v, ty, tys), args) }
     clauseSubsumption(subsumerHoVarsAsConsts, subsumeeHoVarsAsConsts, multisetSubsumption = true).map(_.asFOLSubstitution)
-  }
-
-  def isRedundant(clauses: Set[HOLClause], clause: HOLClause): Boolean = {
-    val eliminatedConstraints = eliminateConstraints(clause, Set.empty)
-    clause.isTaut
-    || clauses.exists(c => subsumptionSubstitution(c, clause).isDefined)
-    || eliminatedConstraints.isTaut
-    || clauses.exists(c => subsumptionSubstitution(c, eliminatedConstraints).isDefined)
-  }
-
-  def nextInference(state: State): Seq[Seq[DerivationStep]] = {
-    val extendedPurityDeletion = extendedPurityDeletionStep(state)
-    val redundancyElimination = redundancyStep(state)
-
-    // do factoring
-    val factoring: Option[DerivationStep.ConstraintFactoring] = state.activeClauses.flatMap(factoringInferences).filter {
-      case f => !isRedundant(state.activeClauses, factor(f))
-    }.headOption
-
-    // check for purification
-    val purifications: Seq[DerivationStep.PurifiedClauseDeletion] = pointedClauses(state.activeClauses).filter { p =>
-      state.isPointedClauseWithEliminationVariable(p)
-    }.flatMap[DerivationStep.PurifiedClauseDeletion] { rc =>
-      val hoVar @ Var(_, _) = rc.symbol: @unchecked
-      val allFactorsRedundant = factoringInferences(rc.clause).forall {
-        case inference: DerivationStep.ConstraintFactoring => isRedundant(state.activeClauses, factor(inference))
-      }
-      val allResolventsRedundant = resolutionInferences(state.activeClauses - rc.clause, rc).forall {
-        case DerivationStep.ConstraintResolution(left, right) => isRedundant(state.activeClauses, constraintResolvent(left, right))
-      }
-      val isFactor = state.activeClauses.exists(c => isFactorOf(rc.clause, c))
-      if !isFactor && allFactorsRedundant && allResolventsRedundant
-      then Some(DerivationStep.PurifiedClauseDeletion(rc))
-      else None
-    }.toSeq
-
-    val singleInference = extendedPurityDeletion.orElse(redundancyElimination).orElse(factoring)
-
-    val (oneSidedPurifications, mixedPurifications) = purifications.partition(i => isOneSided(i.pointedClause))
-
-    val activePointedClauseCandidates = state.activeClauses
-      .flatMap(c => pointedClauses(c))
-      .filter(p => state.allowResolutionOnBaseLiterals || state.isPointedClauseWithEliminationVariable(p))
-      .filter(p => (!state.oneSidedOnly || isOneSided(p)) && nonRedundantResolutionInferences(state.activeClauses, p).nonEmpty)
-
-    val resolutionPossibilities: Seq[Seq[DerivationStep.ConstraintResolution]] = activePointedClauseCandidates.toSeq.map { candidate =>
-      nonRedundantResolutionInferences(state.activeClauses, candidate)
-    }
-
-    if singleInference.isDefined then Seq(singleInference.toSeq)
-    else if singleInference.isEmpty && !oneSidedPurifications.isEmpty then
-      oneSidedPurifications.map(Seq(_))
-    else
-      resolutionPossibilities
-  }
-
-  def nonRedundantResolutionInferences(clauses: Set[HOLClause], candidate: PointedClause) = {
-    resolutionInferences(clauses - candidate.clause, candidate).filter {
-      case DerivationStep.ConstraintResolution(left, right) => !isRedundant(clauses, constraintResolvent(left, right))
-    }.toSeq
-  }
-
-  def isOneSided(pointedClause: PointedClause): Boolean = {
-    pointedClause.clause.cedent(!pointedClause.index.polarity).forall {
-      case Atom(v: VarOrConst, _) => v != pointedClause.symbol
-      case _                      => true
-    }
   }
 
   def pointedClauses(clause: HOLClause): Set[PointedClause] = {
@@ -449,91 +540,63 @@ object scan {
     }.map(rc => DerivationStep.ConstraintResolution(resolutionCandidate, rc))
   }
 
-  def saturate(state: State): Iterator[Either[State, State]] = {
-    if state.isEliminated then Iterator(Right(state))
-    else
-      val possibilities = nextInference(state)
-      assert(possibilities.nonEmpty, s"nextInference returned no possibilities, even though state is not eliminated: $state")
-      possibilities.iterator.flatMap { inferences =>
-        assert(inferences.nonEmpty, s"nextInference returned possibility with no inferences, even though state is not eliminated: $state")
-        applyDerivationSteps(state, inferences) match
-          case l @ Left(_)  => Iterator(l)
-          case Right(state) => saturate(state)
-      }
-  }
-
-  def purificationCandidates(state: State): Iterator[PointedClause] = {
-    val (oneSidedCandidates, mixedCandidates) = pointedClauses(state.activeClauses)
-      .filter { p =>
-        state.isPointedClauseWithEliminationVariable(p) ||
-        (state.allowResolutionOnBaseLiterals && nonRedundantResolutionInferences(state.activeClauses - p.clause, p).nonEmpty)
-      }
-      .partition(isOneSided)
-    if state.oneSidedOnly && oneSidedCandidates.isEmpty then {
-      println(s"State ${state} is not eliminated, but has no one-sided purification candidates")
-      Iterator.empty
-    } else {
-      val candidates = if state.oneSidedOnly then oneSidedCandidates else (oneSidedCandidates ++ mixedCandidates)
-      candidates.iterator
-    }
-  }
-
-  def saturateByPurification(state: State): Iterator[Either[State, State]] = {
-    if state.isEliminated then Iterator(Right(state))
-    else {
-      val stateAfterRedundancyElimination = eliminateRedundancies(state) match
-        case l @ Left(_)  => return Iterator(l)
-        case Right(value) => value
-
-      val extendedPurityDeletion = extendedPurityDeletionStep(stateAfterRedundancyElimination)
-      val statesAfterExtendedPurityDeletion = extendedPurityDeletion.map(s => applyDerivationSteps(stateAfterRedundancyElimination, Seq(s))).iterator
-
-      val statesAfterPurifications =
-        for
-          stateAfterFactors <- addFactors(stateAfterRedundancyElimination).flatMap(eliminateRedundancies)
-          candidates = purificationCandidates(stateAfterFactors)
-        yield {
-          candidates.map(p =>
-            val purifiedState = purifyPointedClause(stateAfterFactors, p)
-            purifiedState.flatMap { state =>
-              if !state.isPointedClauseWithEliminationVariable(p) then
-                Right(state)
-              else
-                applyDerivationSteps(state, Seq(DerivationStep.PurifiedClauseDeletion(p)))
-            }
-          )
-        }
-
-      val purificationStates = statesAfterPurifications.left.map(l => Iterator(Left(l))).merge
-      val nextStates = statesAfterExtendedPurityDeletion ++ purificationStates
-      nextStates.flatMap {
-        case l @ Left(_)  => Iterator(l)
-        case Right(value) => saturateByPurification(value)
-      }
-    }
-  }
-
-  def addFactors(state: State): Either[State, State] = {
-    applyDerivationSteps(state, state.activeClauses.flatMap(factoringInferences))
-  }
-
-  def eliminateRedundancies(state: State): Either[State, State] = {
-    redundancyStep(state) match
+  def addNonRedundantFactors(state: State)(using Aborter): Either[State, State] = {
+    val factorStep = state.activeClauses.iterator.flatMap(nonRedundantFactoringInferences(state, _)).nextOption()
+    factorStep match
       case None       => Right(state)
-      case Some(step) => applyDerivationSteps(state, Seq(step)).flatMap(eliminateRedundancies)
+      case Some(step) => applyDerivationSteps(state, Iterator(step)).flatMap(addNonRedundantFactors)
   }
 
-  def redundancyStep(state: State): Option[DerivationStep] = {
+  def eliminateRedundancies(state: State)(using Aborter): Either[State, State] = {
+    redundancyStep(state) match
+      case steps if steps.isEmpty => Right(state)
+      case steps                  => applyDerivationSteps(state, steps).flatMap(eliminateRedundancies)
+  }
+
+  def eliminateVariableConstraints(state: State): Either[State, State] = {
+    variableEliminationStep(state) match
+      case None       => Right(state)
+      case Some(step) => applyDerivationSteps(state, Seq(step)).flatMap(eliminateVariableConstraints)
+  }
+
+  def variableEliminationStep(state: State): Option[DerivationStep.VariableElimination] = {
+    state.activeClauses.flatMap { clause => oneStepVariableEliminationSteps(clause) }.headOption
+  }
+
+  def redundancyStep(state: State): Iterable[DerivationStep] = {
     // check for tautologies
-    val tautologyDeletion: Option[DerivationStep.TautologyDeletion] = state.activeClauses.find(_.isTaut).map(DerivationStep.TautologyDeletion(_))
+    val tautologyDeletions: Iterable[DerivationStep.TautologyDeletion] = state.activeClauses.filter(_.isTaut).map(DerivationStep.TautologyDeletion(_))
+    if tautologyDeletions.nonEmpty then
+      return tautologyDeletions
 
     // check for eliminable constraints
-    val constraintElimination: Option[DerivationStep.ConstraintElimination] =
-      (for
-        clause <- state.activeClauses
-        case (Eq(left, right), index) <- clause.antecedent.zipWithIndex
-        subst <- syntacticMGU(left, right, freeHOVariables(left) ++ freeHOVariables(right)).map(_.asFOLSubstitution)
-      yield (clause, Ant(index), subst)).map[DerivationStep.ConstraintElimination](DerivationStep.ConstraintElimination(_, _, _)).headOption
+    val variableElimination: Option[DerivationStep.VariableElimination] = variableEliminationStep(state)
+    if variableElimination.isDefined then
+      return variableElimination.toSeq
+
+    // check for reflexivity constraints
+    val reflexivityConstraintEliminations: Iterable[DerivationStep] =
+      state.activeClauses.toSeq.flatMap { clause =>
+        clause.zipWithIndex.antecedent.collect[DerivationStep.ConstraintElimination] {
+          case (Eq(left, right), index) if left == right =>
+            DerivationStep.ConstraintElimination(clause, index, FOLSubstitution())
+        }.groupBy {
+          case step => step.clause
+        }.toSeq.flatMap {
+          case (c, steps) => steps.headOption.toSeq
+        }.flatMap {
+          case step => Seq(
+              step,
+              DerivationStep.SubsumptionDeletion(
+                step.clause.delete(step.constraintIndex),
+                step.clause,
+                FOLSubstitution()
+              )
+            )
+        }
+      }
+    if reflexivityConstraintEliminations.nonEmpty then
+      return reflexivityConstraintEliminations.toSeq
 
     // check for subsumption
     val subsumption: Option[DerivationStep.SubsumptionDeletion] = state.activeClauses.toSeq.combinations(2).flatMap {
@@ -543,7 +606,10 @@ object scan {
         leftSubsumptions ++ rightSubsumptions
       }
     }.nextOption()
-    tautologyDeletion.orElse(constraintElimination).orElse(subsumption)
+    if subsumption.isDefined then
+      return subsumption
+
+    return None
   }
 
   def extendedPurityDeletionStep(state: State): Option[DerivationStep] = {
@@ -577,44 +643,35 @@ object scan {
     }.headOption
   }
 
-  def applyDerivationSteps(state: State, derivationSteps: Iterable[DerivationStep]): Either[State, State] = {
+  def applyDerivationSteps(state: State, derivationSteps: Iterator[DerivationStep])(using a: Aborter): Either[State, State] = {
     derivationSteps.foldLeft[Either[State, State]](Right(state)) {
       case (Left(state), _) => Left[State, State](state)
       case (Right(state), derivationStep) => {
-        if state.remainingAllowedInferences.isDefined && state.remainingAllowedInferences.get <= 0 then Left(state)
-        else {
-          // do not count redundancy elimination to the derivation limit
-          val updatedLimit = state.remainingAllowedInferences.map { limit =>
-            derivationStep match
-              case _: (DerivationStep.ConstraintResolution
-                    | DerivationStep.ConstraintFactoring
-                    | DerivationStep.PurifiedClauseDeletion
-                    | DerivationStep.ExtendendPurityDeletion) => limit - 1
-              case _ => limit
-          }
-          Right(state.copy(
-            activeClauses = derivationStep(state.activeClauses),
+        a.abortIfNotified()
+        if state.remainingAllowedSteps.isDefined && state.remainingAllowedSteps.get <= 0 then {
+          logger.info("limit of allowed inferences reached")
+          Left(state)
+        } else {
+          logger.info(s"applying $derivationStep")
+          val updatedLimit = state.remainingAllowedSteps.map(limit => limit - 1)
+          val updatedActiveClauses = derivationStep(state.activeClauses)
+          val updatedState = state.copy(
+            activeClauses = updatedActiveClauses,
             derivation = state.derivation.copy(derivationSteps = state.derivation.derivationSteps :+ derivationStep),
-            remainingAllowedInferences = updatedLimit
-          ))
+            remainingAllowedSteps = updatedLimit
+          )
+          logger.info(s"active clause set: ${updatedState.activeClauses}")
+          Right(updatedState)
         }
       }
     }
   }
 
-  def freeFOLVariables(expr: Expr): Set[FOLVar] =
-    (freeVariables(expr) -- freeHOVariables(expr)).map { case v: FOLVar => v }
-
-  def eliminateConstraints(clause: HOLClause, keepVariables: Set[FOLVar]): HOLClause = {
-    val constraint = clause.antecedent.zipWithIndex.flatMap {
-      case (Eq(v @ FOLVar(_), t), i) if !keepVariables.contains(v) => Some((v, t, i))
-      case (Eq(t, v @ FOLVar(_)), i) if !keepVariables.contains(v) => Some((v, t, i))
-      case _                                                       => None
-    }.headOption
-    constraint match
-      case None => clause
-      case Some((v, t, i)) =>
-        eliminateConstraints(Substitution(v, t)(clause.delete(Ant(i))).map { case a: Atom => a }, keepVariables)
+  def applyDerivationSteps(
+      state: State,
+      derivationSteps: Iterable[DerivationStep]
+  )(using Aborter): Either[State, State] = {
+    applyDerivationSteps(state, derivationSteps.iterator)
   }
 
   def constraintResolvent(left: PointedClause, right: PointedClause): HOLClause = {
@@ -624,5 +681,634 @@ object scan {
     val constraints = HOLClause(left.args.zip(rightRenamed.args).map(Eq(_, _)), Seq.empty)
     val resolvent = constraints ++ left.clause.delete(left.index) ++ rightRenamed.clause.delete(rightRenamed.index)
     resolvent.distinct
+  }
+
+  def isPurified(pointedClause: PointedClause, clauseSet: Set[HOLClause]): Boolean = {
+    nonRedundantResolutionInferences(pointedClause, clauseSet).isEmpty
+  }
+
+  def isInjectivelySubsumedAfterVariableElimination(
+      symbol: VarOrConst,
+      polarity: Polarity,
+      left: HOLClause,
+      right: HOLClause
+  ): Boolean =
+    variableEliminations(right).exists(c => isLSubsumed(symbol, polarity, left, c))
+
+  def oneStepVariableEliminationSteps(clause: HOLClause): Set[DerivationStep.VariableElimination] = {
+    val variableConstraints = clause.antecedent.zipWithIndex.collect {
+      case (Eq(v: FOLVar, t: FOLTerm), i) if !isProperSubterm(v, t) => (i, v, t)
+      case (Eq(t: FOLTerm, v: FOLVar), i) if !isProperSubterm(v, t) => (i, v, t)
+    }
+
+    variableConstraints.map[DerivationStep.VariableElimination] { (i, v, t) =>
+      DerivationStep.VariableElimination(clause, Ant(i), FOLSubstitution(v, t))
+    }.toSet
+  }
+
+  def oneStepVariableEliminations(clause: HOLClause): Set[HOLClause] = {
+    oneStepVariableEliminationSteps(clause).flatMap(i => i(Set(clause)))
+  }
+
+  def variableEliminations(clause: HOLClause): Set[HOLClause] =
+    val oneStepEliminations = oneStepVariableEliminations(clause)
+    Set(clause) ++ oneStepEliminations.flatMap(e => variableEliminations(e))
+
+  def isProperSubterm(left: FOLTerm, right: FOLTerm): Boolean =
+    left != right && right.contains(left)
+
+  def injectiveSubsumptions(
+      symbol: VarOrConst,
+      polarity: Polarity,
+      left: HOLClause,
+      right: HOLClause
+  ): Seq[Substitution] = {
+    def argsWithSymbolAndPolarity(clause: HOLClause): Seq[(SequentIndex, List[FOLTerm])] = {
+      clause.zipWithIndex.cedent(polarity).collect {
+        case (Atom(head, args), i) if head == symbol => (i, args.asInstanceOf[List[FOLTerm]])
+      }
+    }
+
+    val leftArgsWithSymbolAndPolarity = argsWithSymbolAndPolarity(left)
+    val rightArgsWithSymbolAndPolarity = argsWithSymbolAndPolarity(right)
+    val leftSize = leftArgsWithSymbolAndPolarity.size
+    val rightSize = rightArgsWithSymbolAndPolarity.size
+    if leftSize > rightSize then
+      return Seq.empty
+
+    val blacklist = containedNames(left) ++ containedNames(right) + symbol
+    val nameGenerator = rename.awayFrom(blacklist)
+    val freshPredicateSymbols = nameGenerator
+      .freshStream(symbol.name)
+      .map(v => Var(v, symbol.ty))
+      .take(rightSize)
+      .toVector
+
+    def clauseWithFreshSymbols(clause: HOLClause, f: Map[Int, Int]) = {
+      val indexWithArgs = argsWithSymbolAndPolarity(clause)
+      clause.delete(indexWithArgs.map(_._1)) ++
+        Sequent(indexWithArgs.zipWithIndex.map {
+          case ((seqIndex, args), i) => {
+            (Atom(freshPredicateSymbols(f(i)), args), seqIndex.polarity)
+          }
+        })
+    }
+
+    val idPairs = (0 to (rightSize - 1)).map(i => (i, i))
+    val rightWithFreshSymbols = clauseWithFreshSymbols(right, Map(idPairs*))
+
+    injectiveMappings(leftSize, rightSize).flatMap(f => {
+      val leftWithFreshSymbols = clauseWithFreshSymbols(left, f)
+      val hoVars = freeHOVariables(leftWithFreshSymbols.toFormula) ++
+        freeHOVariables(rightWithFreshSymbols.toFormula)
+      val hoVarsAsConsts = hoVars.map {
+        case v @ Var(name, ty) => (v, Const(nameGenerator.fresh(name), ty))
+      }.toMap
+      val leftHoVarsAsConsts = leftWithFreshSymbols.map {
+        case Atom(v: Var, args) => Atom(hoVarsAsConsts(v), args)
+        case a                  => a
+      }
+      val rightHoVarsAsConsts = rightWithFreshSymbols.map {
+        case Atom(v: Var, args) => Atom(hoVarsAsConsts(v), args)
+        case a                  => a
+      }
+      clauseSubsumption(leftHoVarsAsConsts, rightHoVarsAsConsts).map(_.asFOLSubstitution)
+    })
+  }
+
+  def isLSubsumed(symbol: VarOrConst, polarity: Polarity, left: HOLClause, right: HOLClause): Boolean = {
+    injectiveSubsumptions(symbol, polarity, left, right).nonEmpty
+  }
+
+  def injectiveMappings(fromSize: Int, toSize: Int): Seq[Map[Int, Int]] =
+    assert(fromSize >= 0)
+    assert(toSize >= 0)
+    if fromSize == 0 then return Seq(Map.empty)
+    if fromSize > toSize then return Seq.empty
+
+    val smallerMappings = injectiveMappings(fromSize - 1, toSize)
+    smallerMappings.flatMap(m => {
+      val choicesLeft = (0 to (toSize - 1)).toSet -- m.values.toSet
+      choicesLeft.map(j => m.updated(fromSize - 1, j))
+    })
+
+  def reasonsThatDerivationStepIsIncorrect(
+      step: DerivationStep,
+      premise: Set[HOLClause],
+      conclusion: Set[HOLClause]
+  ): Seq[String] = {
+    import scala.util.boundary
+    import gapt.expr.ty.Ti
+
+    def break(using scala.util.boundary.Label[Unit]) = boundary.break(())
+    val reasons = scala.collection.mutable.Buffer[String]()
+    def report(reason: String) = reasons += reason
+    boundary {
+      step match {
+        case DerivationStep.ConstraintResolution(left, right) => {
+          if !premise.contains(left.clause) then
+            report(s"""premise does not contain left clause of resolution inference
+                          |premise: $premise
+                          |left: ${left.clause}""".stripMargin)
+          if !premise.contains(right.clause) then
+            report(s"""premise does not contain right clause of resolution inference
+                          |premise: $premise
+                          |right: ${right.clause}""".stripMargin)
+
+          val arePolaritiesSame = left.polarity == right.polarity
+          val areSymbolsSame = left.symbol == right.symbol
+          if arePolaritiesSame then
+            report(s"""polarity of left and right pointed clause are the same, but should be different
+                          |left: $left
+                          |right: $right""".stripMargin)
+          if !areSymbolsSame then
+            report(s"""symbol of left and right pointed clause are the same, but should be different
+                          |left: $left
+                          |right: $right""".stripMargin)
+
+          if arePolaritiesSame || !areSymbolsSame then
+            break
+
+          val resolvent = constraintResolvent(left, right)
+          val expectedConclusion = premise + resolvent
+          if !conclusion.contains(resolvent) then
+            report(s"""conclusion does not contain constraint resolvent
+                          |conclusion: $conclusion
+                          |left: $left
+                          |right: $right
+                          |resolvent: $resolvent""".stripMargin)
+
+          val nonPresentPremiseClauses = premise -- conclusion
+          if nonPresentPremiseClauses.nonEmpty then
+            report(s"""conclusion does not contain premise clauses
+                          |conclusion: $conclusion
+                          |premise: $premise
+                          |clauses in premise, but not in conclusion: $nonPresentPremiseClauses""")
+
+          val unexpectedClauses = conclusion -- expectedConclusion
+          if unexpectedClauses.nonEmpty then
+            report(s"""conclusion contains unexpected clauses
+                        |conclusion: $conclusion
+                        |expected conclusion: $expectedConclusion
+                        |unexpected clauses: $unexpectedClauses""".stripMargin)
+        }
+        case f @ DerivationStep.ConstraintFactoring(clause, principalIndex, auxiliaryIndex) => {
+          if !premise.contains(clause) then
+            report("""premise does not contain clause to be factored
+                          |premise: $premise
+                          |clause: $clause""".stripMargin)
+
+          val containsPrincipalIndex = clause.indices.contains(principalIndex)
+          if !containsPrincipalIndex then
+            report(s"""clause to be factored does not contain the principal index
+                          |clause: $clause
+                          |principalIndex: $principalIndex""".stripMargin)
+
+          val containsAuxiliaryIndex = clause.indices.contains(auxiliaryIndex)
+          if !containsAuxiliaryIndex then
+            report(s"""clause to be factored does not contain the auxiliary index
+                          |clause: $clause
+                          |auxiliary index: $auxiliaryIndex""".stripMargin)
+
+          val polaritiesAreSame = principalIndex.polarity == auxiliaryIndex.polarity
+          if !polaritiesAreSame then
+            report(s"""polarities of the factoring literals do not match
+                          |clause: $clause
+                          |principal index: $principalIndex
+                          |auxiliary index: $auxiliaryIndex""".stripMargin)
+
+          if !containsPrincipalIndex || !containsAuxiliaryIndex then
+            break
+
+          val principalLiteral = clause(principalIndex)
+          val auxiliaryLiteral = clause(auxiliaryIndex)
+          if principalLiteral.head != auxiliaryLiteral.head then
+            report(s"""literals to be factored on don't have the same head symbol
+                          |principal literal: $principalLiteral
+                          |auxiliary literal: $auxiliaryLiteral""".stripMargin)
+            break
+
+          val constraintFactor = factor(f)
+          if !conclusion.contains(constraintFactor) then
+            report(s"""conclusion does not contain constraint factor
+                          |conclusion: $conclusion
+                          |clause to factor: $clause
+                          |factor: $constraintFactor""".stripMargin)
+
+          val expectedConclusion = premise + constraintFactor
+          val clausesInPremiseButNotConclusion = premise -- conclusion
+          if clausesInPremiseButNotConclusion.nonEmpty then
+            report(s"""conclusion does not contain premise clauses
+                          |conclusion: $conclusion
+                          |premise: $premise
+                          |clauses in premise, but not in conclusion: $clausesInPremiseButNotConclusion""")
+
+          val unexpectedClauses = conclusion -- expectedConclusion
+          if unexpectedClauses.nonEmpty then
+            report(s"""conclusion contains unexpected clauses
+                          |expected conclusion: $expectedConclusion
+                          |unexpected clauses: $unexpectedClauses""".stripMargin)
+        }
+
+        case DerivationStep.ConstraintElimination(clause, constraintIndex, unifier) => {
+          if !premise.contains(clause) then
+            report(s"""premise does not contain clause to be eliminated
+                        |premise: $premise
+                        |clause: $clause""".stripMargin)
+
+          if !clause.indices.contains(constraintIndex) then
+            report(s"""clause does not contain constraint index
+                      |clause: $clause
+                      |constraint index: $constraintIndex""".stripMargin)
+            break
+
+          if !constraintIndex.isAnt then
+            report(s"""constraint is not in the antecedent
+                      |constraint index: $constraintIndex""".stripMargin)
+
+          val constraint = clause(constraintIndex)
+          if constraint.head != EqC(Ti) then
+            report(s"""constraint literal is not an equality literal
+                    |clause: $clause
+                    |constraint literal: $constraint""".stripMargin)
+            break
+
+          val (left, right) = constraint.args match {
+            case List(left: FOLTerm, right: FOLTerm) => (left, right)
+            case c =>
+              throw new IllegalStateException(
+                s"""equality has fewer than 2 or more than 2 arguments passed to it which should not occur and we do not handle
+                   |got constraints: $c""".stripMargin
+              )
+          }
+
+          val leftAfterUnifier = unifier(left)
+          val rightAfterUnifier = unifier(right)
+          if leftAfterUnifier != rightAfterUnifier then
+            report(s"""substitution does not unify left and right term
+                      |clause: $clause
+                      |constraint: $constraint
+                      |left: $left
+                      |right: $right
+                      |unifier: $unifier
+                      |left after unifier: $leftAfterUnifier
+                      |right after unifier: $rightAfterUnifier""".stripMargin)
+            break
+
+          val furtherMgu = syntacticMGU(leftAfterUnifier, rightAfterUnifier).get
+          if !furtherMgu.isIdentity then
+            report(s"""substitution unifies left and right, but is not a most general unifier
+                      |clause: $clause
+                      |constraint: $constraint
+                      |left: $left
+                      |right: $right
+                      |unifier: $unifier
+                      |left after substitution: $leftAfterUnifier
+                      |right after substitution: $rightAfterUnifier
+                      |further non-trivial unification by: $furtherMgu""".stripMargin)
+
+          val clauseAfterConstraintElimination = unifier(clause.delete(constraintIndex)).distinct
+          val expectedConclusion = premise + clauseAfterConstraintElimination
+          if !conclusion.contains(clauseAfterConstraintElimination) then
+            report(s"""conclusion does not contain clause after eliminated constraint
+                      |conclusion: $conclusion
+                      |clause after constraint elimination: $clauseAfterConstraintElimination""".stripMargin)
+
+          val nonReplacedClausesInPremiseButNotConclusion = premise -- conclusion
+          if nonReplacedClausesInPremiseButNotConclusion.nonEmpty then
+            report(s"""conclusion does not contain premise clauses
+                       |conclusion: $conclusion
+                       |premise without clause to be removed: $premise
+                       |clauses in premise, but not in conclusion: $nonReplacedClausesInPremiseButNotConclusion""")
+
+          val unexpectedClauses = conclusion -- expectedConclusion
+          if unexpectedClauses.nonEmpty then
+            report(s"""conclusion contains unexpected clauses
+                      |conclusion: $conclusion
+                      |expected conclusion: $expectedConclusion
+                      |unexpected clauses: $unexpectedClauses""".stripMargin)
+        }
+
+        case DerivationStep.VariableElimination(clause, constraintIndex, substitution) => {
+          if !premise.contains(clause) then
+            report(s"""premise does not contain clause to be eliminated
+                          |premise: $premise
+                          |clause: $clause""".stripMargin)
+
+          if !clause.indices.contains(constraintIndex) then
+            report(s"""clause does not contain constraint index
+                        |clause: $clause
+                        |constraint index: $constraintIndex""".stripMargin)
+            break
+
+          if !constraintIndex.isAnt then
+            report(s"""constraint is not in the antecedent
+                        |constraint index: $constraintIndex""".stripMargin)
+
+          val constraint = clause(constraintIndex)
+          if constraint.head != EqC(Ti) then
+            report(s"""constraint literal is not an equality literal
+                      |clause: $clause
+                      |constraint literal: $constraint""".stripMargin)
+            break
+
+          val (left, right) = constraint.args match {
+            case List(left: FOLTerm, right: FOLTerm) => (left, right)
+            case c =>
+              throw new IllegalStateException(
+                s"""equality has fewer than 2 or more than 2 arguments passed to it which should not occur and we do not handle
+                     |got constraints: $c""".stripMargin
+              )
+          }
+
+          val leftAfterSubstitution = substitution(left)
+          val rightAfterSubstitution = substitution(right)
+          if leftAfterSubstitution != rightAfterSubstitution then
+            report(s"""substitution does not unify left and right term
+                        |clause: $clause
+                        |constraint: $constraint
+                        |left: $left
+                        |right: $right
+                        |substitution: $substitution
+                        |left after substitution: $leftAfterSubstitution
+                        |right after substitution: $rightAfterSubstitution""".stripMargin)
+            break
+
+          val furtherMgu = syntacticMGU(leftAfterSubstitution, rightAfterSubstitution).get
+          if !furtherMgu.isIdentity then
+            report(s"""substitution unifies left and right, but is not a most general unifier
+                        |clause: $clause
+                        |constraint: $constraint
+                        |left: $left
+                        |right: $right
+                        |substitution: $substitution
+                        |left after substitution: $leftAfterSubstitution
+                        |right after substitution: $rightAfterSubstitution
+                        |further non-trivial unification by: $furtherMgu""".stripMargin)
+
+          val clauseAfterConstraintElimination = substitution(clause.delete(constraintIndex)).map { case a: Atom => a }.distinct
+          val nonReplacedPremise = premise - clause
+          val expectedConclusion = nonReplacedPremise + clauseAfterConstraintElimination
+          if !conclusion.contains(clauseAfterConstraintElimination) then
+            report(s"""conclusion does not contain clause after eliminated constraint
+                        |conclusion: $conclusion
+                        |clause after constraint elimination: $clauseAfterConstraintElimination""".stripMargin)
+
+          val nonReplacedClausesInPremiseButNotConclusion = nonReplacedPremise -- conclusion
+          if nonReplacedClausesInPremiseButNotConclusion.nonEmpty then
+            report(s"""conclusion does not contain premise clauses
+                         |conclusion: $conclusion
+                         |premise without clause to be removed: $nonReplacedPremise
+                         |clauses in premise, but not in conclusion: $nonReplacedClausesInPremiseButNotConclusion""")
+
+          val unexpectedClauses = conclusion -- expectedConclusion
+          if unexpectedClauses.nonEmpty then
+            report(s"""conclusion contains unexpected clauses
+                        |conclusion: $conclusion
+                        |expected conclusion: $expectedConclusion
+                        |unexpected clauses: $unexpectedClauses""".stripMargin)
+        }
+        case DerivationStep.ExtendendPurityDeletion(variable, polarity) => {
+          val clausesContainingVariable = premise.filter(c => containedNames(c).contains(variable))
+          val (clausesContainingVariableWithPolarity, clausesContainingVariableNotWithPolarity) =
+            clausesContainingVariable.partition(c =>
+              c.cedent(polarity).exists {
+                case Atom(head, _) => head == variable
+                case _             => false
+              }
+            )
+
+          if clausesContainingVariableNotWithPolarity.nonEmpty then
+            report(s"""side condition violated: there are clauses that contain variable, but only with opposite polarity
+                        |premise: $premise
+                        |variable: $variable
+                        |polarity: $polarity
+                        |clauses containing variable with only opposite variable: $clausesContainingVariableNotWithPolarity""".stripMargin)
+
+          val expectedConclusion = premise -- clausesContainingVariable
+          val missingClauses = expectedConclusion -- conclusion
+          if missingClauses.nonEmpty then
+            report(s"""conclusion is missing clauses
+                        |conclusion: $conclusion
+                        |expected conclusion: $expectedConclusion
+                        |missing clauses: $missingClauses""".stripMargin)
+
+          val unexpectedClauses = conclusion -- expectedConclusion
+          if unexpectedClauses.nonEmpty then
+            report(s"""conclusion contains unexpected clauses
+                        |conclusion: $conclusion
+                        |expected conclusion: $expectedConclusion
+                        |unexpected clauses: $unexpectedClauses""".stripMargin)
+        }
+        case DerivationStep.TautologyDeletion(tautology) => {
+          if !premise.contains(tautology) then
+            report(s"""premise does not contain tautology to be eliminated
+                        |premise: $premise
+                        |tautology: $tautology""".stripMargin)
+
+          if !tautology.isTaut then
+            report(s"""tautology candidate is not a tautology
+                        |candidate: $tautology""".stripMargin)
+
+          val expectedConclusion = premise - tautology
+
+          val missingClauses = expectedConclusion -- conclusion
+          if missingClauses.nonEmpty then
+            report(s"""conclusion is missing clauses
+                        |conclusion: $conclusion
+                        |expected conclusion: $expectedConclusion
+                        |missing clauses: $missingClauses""".stripMargin)
+
+          val unexpectedClauses = conclusion -- expectedConclusion
+          if unexpectedClauses.nonEmpty then
+            report(s"""conclusion contains unexpected clauses
+                        |conclusion: $conclusion
+                        |expected conclusion: $expectedConclusion
+                        |unexpected clauses: $unexpectedClauses""".stripMargin)
+        }
+
+        case DerivationStep.SubsumptionDeletion(subsumer, subsumee, substitution) => {
+          if !premise.contains(subsumer) then
+            report(s"""premise does not contain subsumer
+                        |premise: $premise
+                        |subsumer: $subsumer""".stripMargin)
+
+          if !premise.contains(subsumee) then
+            report(s"""premise does not contain subsumee
+                        |premise: $premise
+                        |subsumee: $subsumee""".stripMargin)
+
+          if subsumer == subsumee then
+            report(s"""subsumer and subsumee must be different
+                        |subsumer: $subsumer
+                        |subsumee: $subsumee""".stripMargin)
+
+          val subsumerAfterSubstitution = substitution(subsumer)
+          if !subsumerAfterSubstitution.isSubsetOf(subsumee) then
+            report(s"""subsumer after substitution is not a subset of subsumee
+                        |subsumer: $subsumer
+                        |subsumee: $subsumee
+                        |substitution: $substitution
+                        |subsumer after substitution: $subsumerAfterSubstitution""".stripMargin)
+
+          val expectedConclusion = premise - subsumee
+          val missingClauses = expectedConclusion -- conclusion
+          if missingClauses.nonEmpty then
+            report(s"""conclusion is missing clauses
+                        |conclusion: $conclusion
+                        |expected conclusion: $expectedConclusion
+                        |missing clauses: $missingClauses""".stripMargin)
+
+          val unexpectedClauses = conclusion -- expectedConclusion
+          if unexpectedClauses.nonEmpty then
+            report(s"""conclusion contains unexpected clauses
+                        |conclusion: $conclusion
+                        |expected conclusion: $expectedConclusion
+                        |unexpected clauses: $unexpectedClauses""".stripMargin)
+        }
+
+        case DerivationStep.PurifiedClauseDeletion(pointedClause) => {
+          if !premise.contains(pointedClause.clause) then
+            report(s"""premise does not contain pointed clause
+                        |premise: $premise
+                        |pointed clause: ${pointedClause.clause}""".stripMargin)
+
+          val expectedConclusion = premise - pointedClause.clause
+          val missingClauses = expectedConclusion -- conclusion
+          if missingClauses.nonEmpty then
+            report(s"""conclusion is missing clauses
+                        |conclusion: $conclusion
+                        |expected conclusion: $expectedConclusion
+                        |missing clauses: $missingClauses""".stripMargin)
+
+          val unexpectedClauses = conclusion -- expectedConclusion
+          if unexpectedClauses.nonEmpty then
+            report(s"""conclusion contains unexpected clauses
+                        |conclusion: $conclusion
+                        |expected conclusion: $expectedConclusion
+                        |unexpected clauses: $unexpectedClauses""".stripMargin)
+
+          if !isPurified(pointedClause, expectedConclusion) then
+            report(s"""side condition violated: pointed clause is not purified in remaining clauses
+                        |premise without pointed clause: $expectedConclusion
+                        |pointed clause: $pointedClause""".stripMargin)
+        }
+      }
+    }
+
+    reasons.toSeq
+  }
+
+  def isDerivationStepCorrect(
+      step: DerivationStep,
+      premise: Set[HOLClause],
+      conclusion: Set[HOLClause]
+  ): Boolean =
+    reasonsThatDerivationStepIsIncorrect(step, premise, conclusion).isEmpty
+
+  def reasonsThatDerivationIsIncorrect(derivation: Derivation): Iterator[String] = {
+    def go(derivation: Derivation, index: Int): Iterator[String] = {
+      derivation.derivationSteps match {
+        case Nil => Iterator.empty
+        case step :: next =>
+          val premise = derivation.from.firstOrderClauses
+          val conclusion = step(premise)
+          reasonsThatDerivationStepIsIncorrect(step, premise, conclusion).map(r =>
+            s"""at step $index:
+               |$r""".stripMargin
+          ).iterator ++ go(derivation.tail, index + 1)
+      }
+    }
+
+    go(derivation, 1)
+  }
+
+  def isDerivationCorrect(derivation: Derivation): Boolean =
+    reasonsThatDerivationIsIncorrect(derivation).isEmpty
+
+  def isEliminating(derivation: Derivation): Boolean =
+    freeHOVariables(derivation.conclusion.toFormula).intersect(derivation.from.varsToEliminate.toSet).isEmpty
+
+  def prettyPrint(x: Any) = printer.pprintln(x)
+  def prettyPrintString(x: Any) = printer(x)
+
+  private def printer = pprint.copy(additionalHandlers = additionalPrinters, defaultWidth = 150)
+
+  private def additionalPrinters: PartialFunction[Any, pprint.Tree] = {
+    case clauseSet: Set[_] =>
+      pprint.Tree.Apply(
+        "Set",
+        clauseSet.iterator.map(printer.treeify(_, true, true))
+      )
+    case Derivation(initialClauseSet, inferences) => pprint.Tree.Apply(
+        "Derivation", {
+          val clauseSets = inferences.scanLeft(initialClauseSet)((c, i) =>
+            ClauseSetPredicateEliminationProblem(c.varsToEliminate, i(c.firstOrderClauses))
+          )
+          Iterator(printer.treeify(initialClauseSet, true, true)) ++ inferences.zip(clauseSets.tail).zipWithIndex.flatMap {
+            case ((inference, clauses), index) => Seq(
+                pprint.Tree.Apply(
+                  "Step",
+                  Iterator(
+                    printer.treeify(index + 1, true, true),
+                    printer.treeify(inference, true, true)
+                  )
+                ),
+                pprint.treeify(clauses, true, true)
+              )
+          }.iterator
+        }
+      )
+    case p: PointedClause => printPointedClause(p)
+    case hos: Sequent[_]  => printSequent(hos)
+    case DerivationStep.ConstraintResolution(left, right) => pprint.Tree.Apply(
+        "Resolution",
+        Iterator(
+          pprint.Tree.KeyValue("left", printer.treeify(left, false, true)),
+          pprint.Tree.KeyValue("right", printer.treeify(right, false, true)),
+          pprint.Tree.KeyValue("resolvent", printer.treeify(constraintResolvent(left, right), false, true))
+        )
+      )
+    case DerivationStep.PurifiedClauseDeletion(candidate) => pprint.Tree.Apply("Purification", Iterator(additionalPrinters(candidate)))
+    case DerivationStep.VariableElimination(clause, index, _) => pprint.Tree.Apply(
+        "VariableElimination",
+        Iterator(pprint.Tree.KeyValue("clause", printer.treeify(clause, false, true)), pprint.Tree.KeyValue("constraint", printer.treeify(clause(index), false, true)))
+      )
+    case f @ DerivationStep.ConstraintFactoring(clause, leftIndex, rightIndex) => pprint.Tree.Apply(
+        "Factoring",
+        Iterator(
+          pprint.Tree.KeyValue("left", printer.treeify(clause(leftIndex), false, true)),
+          pprint.Tree.KeyValue("right", printer.treeify(clause(rightIndex), false, true)),
+          pprint.Tree.KeyValue("factor", printer.treeify(scan.factor(f), false, true))
+        )
+      )
+    case s: Substitution => pprint.Tree.Apply(
+        "Substitution",
+        s.map.map { (v, expr) =>
+          pprint.Tree.Infix(printer.treeify(v, false, true), "->", printer.treeify(expr, false, true))
+        }.iterator
+      )
+  }
+
+  def printSequent[T](sequent: Sequent[T]): pprint.Tree = {
+    def toStr(e: T) = e match {
+      case e: Expr => e.toUntypedString
+      case e       => e.toString()
+    }
+    val antecedentStrings = sequent.antecedent.map(toStr)
+    val succeedentStrings = sequent.succedent.map(toStr)
+    val clauseString = (antecedentStrings.mkString(", ") ++ Seq("⊢") ++ succeedentStrings.mkString(", ")).mkString(" ")
+    pprint.Tree.Literal(clauseString.strip())
+  }
+
+  def printPointedClause(p: PointedClause): pprint.Tree = {
+    def underlineIndex(atom: Atom, index: SequentIndex) = (atom, index) match {
+      case (a, i) if i == p.index => s"{${a.toUntypedString}}"
+      case (a, i)                 => a.toUntypedString
+    }
+    val antecedentStrings = p.clause.zipWithIndex.antecedent.map(underlineIndex)
+    val succeedentStrings = p.clause.zipWithIndex.succedent.map(underlineIndex)
+    val clauseString = antecedentStrings.mkString(", ") ++ " ⊢ " ++ succeedentStrings.mkString(", ")
+    pprint.Tree.Literal(clauseString.strip())
   }
 }

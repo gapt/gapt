@@ -1,6 +1,5 @@
 package gapt.examples
 import gapt.expr._
-import gapt.expr.formula
 import gapt.expr.formula.And
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Or

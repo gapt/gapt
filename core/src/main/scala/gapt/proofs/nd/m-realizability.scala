@@ -89,8 +89,6 @@ object MRealizability {
     }
 
     // add conjuctive type, pairs, projections and their reduction rules
-    val a = TVar("a")
-    val b = TVar("b")
     val conj = ty"conj ?a ?b"
     val pair = hoc"pair{?a ?b}: ?a > ?b > (conj ?a ?b)"
     systemT += InductiveType(conj, pair)

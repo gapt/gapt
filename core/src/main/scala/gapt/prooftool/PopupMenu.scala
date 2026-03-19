@@ -29,7 +29,6 @@ object PopupMenu {
 
   // PopupMenu for LKProofs.
   def apply[T <: DagProof[T]](main: DagProofViewer[T], tproof: DagProof[T], component: Component, x: Int, y: Int): Unit = {
-    lazy val proof = tproof.asInstanceOf[LKProof]
     val popupMenu = new PopupMenu {
       contents += new MenuItem(Action("Save Subproof as...") { /*main.fSave( ( proof.name, proof ) )*/ })
     }

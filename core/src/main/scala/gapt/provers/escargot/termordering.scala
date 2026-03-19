@@ -4,8 +4,6 @@ import gapt.expr._
 import gapt.expr.ty.Ty
 import gapt.expr.ty.arity
 
-import scala.collection.mutable
-
 trait TermOrdering {
   def lt(e1: Expr, e2: Expr): Boolean = lt(e1, e2, treatVarsAsConsts = false)
   def lt(e1: Expr, e2: Expr, treatVarsAsConsts: Boolean): Boolean

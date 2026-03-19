@@ -19,8 +19,7 @@ import gapt.proofs.lk.util.extractInductionGrammar
 import gapt.proofs.lk.util.instanceProof
 import gapt.provers.viper.grammars.InductionBupSolver
 import gapt.provers.viper.grammars.{TreeGrammarProver, TreeGrammarProverOptions, indElimReversal}
-import gapt.utils.LogHandler.VerbosityLevel
-import gapt.utils.{LogHandler, Logger, MetricsPrinter, MetricsPrinterWithMessages, verbose}
+import gapt.utils.{LogHandler, Logger, MetricsPrinterWithMessages, verbose}
 
 object sipReconstruct extends Script {
 
@@ -207,7 +206,7 @@ object sipReconstruct extends Script {
         minInstProof = minProof,
         bupSolver = if (interp) InductionBupSolver.Interpolation else InductionBupSolver.Canonical
       )
-      val indp = verbose.only(TreeGrammarProver.logger) {
+      verbose.only(TreeGrammarProver.logger) {
         if (atp) TreeGrammarProver(sip.endSequent, opts)
         else indElimReversal(sip, opts)
       }

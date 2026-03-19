@@ -112,7 +112,7 @@ class TermReplacementTest extends Specification {
 
       initial.conclusion must_== (r1 +: r2 +: Clause() :+ r3)
 
-      val more = TermReplacement(proof4.q6, map)
+      val _ = TermReplacement(proof4.q6, map)
 
       ok
     }

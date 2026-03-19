@@ -1,13 +1,9 @@
 package gapt.prooftool
 
-import os._
-
 import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.{HOLSequent, Sequent, RichFormulaSequent}
 
 import gapt.expr.formula.hol.existentialClosure
-
-import scala.swing.{Action, FileChooser, Menu, Separator}
 
 class ListViewer(name: String, list: List[HOLSequent]) extends ScrollableProofToolViewer[List[HOLSequent]](name, list) with Savable[List[HOLSequent]] {
   override type MainComponentType = DrawList

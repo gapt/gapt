@@ -5,7 +5,6 @@ import gapt.expr.subst.Substitution
 import gapt.formats.babel.{Notation, Precedence}
 import gapt.proofs.gaptic.{ProofState, _}
 import gapt.proofs.Sequent
-import gapt.proofs.context.Context
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.lk.rules.InductionRule
 import gapt.proofs.lk.transformations.unfoldInduction

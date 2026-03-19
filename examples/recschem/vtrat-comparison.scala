@@ -12,7 +12,7 @@ import gapt.grammars._
 import gapt.logic.hol.simplifyPropositional
 import gapt.logic.hol.toNNF
 import gapt.provers.maxsat.bestAvailableMaxSatSolver
-import gapt.utils.{LogHandler, time, verbose}
+import gapt.utils.{time, verbose}
 
 object vtrat_comparison extends Script {
   verbose {

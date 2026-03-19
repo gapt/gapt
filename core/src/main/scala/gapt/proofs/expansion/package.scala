@@ -1,6 +1,5 @@
 package gapt.proofs
 
-import gapt.expr._
 import gapt.logic.Polarity
 
 package object expansion {

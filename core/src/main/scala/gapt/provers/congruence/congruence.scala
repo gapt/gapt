@@ -45,7 +45,7 @@ final class MutCC private (
       repr = (0 until n).to(Array),
       klass = (0 until n).view.map(i => Vector(i): Vector[Int]).to(Array),
       use = (0 until n).view.map(_ => Vector.empty[Eqn]: Vector[Eqn]).to(Array),
-      lookup = mutable.AnyRefMap[(Int, Int), Eqn](),
+      lookup = mutable.HashMap[(Int, Int), Eqn](),
       pending = mutable.Stack[Pending](),
       parent = (0 until n).to(Array),
       reason = new Array[Pending](n)

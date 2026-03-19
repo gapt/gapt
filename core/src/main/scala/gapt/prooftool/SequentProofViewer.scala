@@ -1,6 +1,5 @@
 package gapt.prooftool
 
-import os._
 import gapt.expr.formula.Formula
 import gapt.formats.json._
 import gapt.formats.latex.LatexExporter
@@ -101,8 +100,6 @@ class SequentProofViewer[F, T <: SequentProof[F, T]](name: String, proof: Sequen
    */
   def markDescendants(pos: List[Int], is: Set[SequentIndex]): Unit = {
     publisher.publish(MarkOccurrences(pos, is))
-
-    val p = proof.subProofAt(pos)
 
     pos match {
       case Nil => // reached the bottom of the proof

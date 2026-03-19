@@ -6,8 +6,6 @@ import cats.kernel.Monoid
 import gapt.expr.formula.Formula
 import gapt.logic.Polarity
 
-import scala.collection.GenIterable
-
 /**
  * Represents an index of an element in a sequent.
  *
@@ -463,6 +461,10 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
 
   def groupBy[B](f: A => B): Sequent[(B, Vector[A])] =
     Sequent(antecedent groupBy f toVector, succedent groupBy f toVector)
+
+  def partition(f: (A, Polarity) => Boolean): (Sequent[A], Sequent[A]) =
+    val (left, right) = polarizedElements.partition((a, p) => f(a, p))
+    (Sequent(left), Sequent(right))
 }
 
 object Sequent {

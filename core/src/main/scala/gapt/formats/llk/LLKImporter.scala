@@ -20,7 +20,6 @@ import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.fol.FOLAtom
-import gapt.expr.formula.hol.HOLFunction
 import gapt.expr.subst.Substitution
 import gapt.expr.ty.To
 import gapt.expr.ty.Ty
@@ -1481,7 +1480,7 @@ trait TokenToLKConverter {
     axiomconj match {
       case Atom(c @ Const(n, To, _), List()) =>
         val pi = proveInstanceFrom(axiom, instance, sub, axiomproof)
-        val d = definitions.find(_.what == c).getOrElse(
+        definitions.find(_.what == c).getOrElse(
           throw new Exception(
             s"could not find a definition for $c in ${definitions.map(_.what).sortBy(_.name)}"
           )

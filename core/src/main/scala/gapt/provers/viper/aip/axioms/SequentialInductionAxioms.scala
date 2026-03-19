@@ -10,7 +10,6 @@ import gapt.expr.formula.All
 import gapt.expr.formula.Formula
 import gapt.expr.util.freeVariables
 import gapt.proofs.context.Context
-import gapt.proofs.context.mutable.MutableContext
 
 /**
  * Generates sequential induction axioms.

@@ -32,7 +32,7 @@ class FirstOrderLogicTest extends Specification {
       val args = var1 :: var2 :: const1 :: Nil
       val atom1 = FOLAtom("A", args)
       val var3 = FOLAtom("X3")
-      val and1 = And(atom1, var3)
+      val _ = And(atom1, var3)
       true
     }
     "construct correctly a forall using the factory" in {
@@ -41,7 +41,7 @@ class FirstOrderLogicTest extends Specification {
       val var2 = FOLVar("x2")
       val args = var1 :: var2 :: const1 :: Nil
       val atom1 = FOLAtom("A", args)
-      val all1 = All(var1, atom1)
+      val _ = All(var1, atom1)
       true
     }
 

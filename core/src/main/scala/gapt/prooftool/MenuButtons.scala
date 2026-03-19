@@ -5,7 +5,7 @@ import java.awt.event.{ActionEvent, KeyEvent}
 import javax.swing.KeyStroke
 
 import scala.swing.event.Key
-import scala.swing.{Action, CheckMenuItem, FileChooser, MenuItem}
+import scala.swing.{Action, CheckMenuItem, MenuItem}
 
 /**
  * An object that contains some common menu buttons.

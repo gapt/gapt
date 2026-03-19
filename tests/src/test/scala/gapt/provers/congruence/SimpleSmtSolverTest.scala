@@ -1,10 +1,6 @@
 package gapt.provers.congruence
 
 import gapt.expr._
-import gapt.expr.formula.fol.Numeral
-import gapt.proofs._
-import gapt.proofs.expansion.minimalExpansionSequent
-import gapt.provers.escargot.Escargot
 import org.specs2.mutable.Specification
 
 class SimpleSmtSolverTest extends Specification {

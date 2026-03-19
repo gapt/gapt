@@ -1,7 +1,6 @@
 package gapt.proofs.lk.transformations
 
 import gapt.expr.formula.All
-import gapt.expr.formula.And
 import gapt.expr.formula.Formula
 import gapt.expr.formula.hol.containsStrongQuantifier
 import gapt.expr.formula.hol.isPrenex
@@ -76,9 +75,6 @@ object makeTheoryAxiomsExplicit {
 
           val All.Block(vars, matrix) = formula
           val cnf = CNFp(matrix)
-          val cnfFormula = And(cnf map {
-            _.toDisjunction
-          })
           val subs = cnf map {
             clauseSubsumption(_, sequent)
           }

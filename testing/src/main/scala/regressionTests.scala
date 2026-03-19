@@ -387,8 +387,6 @@ object RegressionTests {
         tipTestCases ++
         theoryTestCases
 
-    def findTestCase(pat: String) = allTestCases.find(_.toString.contains(pat)).get
-
     val testCases = args match {
       case Array(limit) =>
         println(s"Only running $limit random tests.")

@@ -13,7 +13,6 @@ import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
 import gapt.expr.util.syntacticMGU
 import gapt.expr.util.syntacticMatching
-import gapt.grammars.{RecSchemTemplate, RecursionScheme, Rule}
 import gapt.logic.hol.CNFp
 import gapt.logic.hol.simplifyPropositional
 import gapt.logic.hol.skolemize

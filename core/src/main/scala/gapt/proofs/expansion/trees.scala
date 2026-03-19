@@ -17,7 +17,6 @@ import gapt.expr.formula.hol.{HOLPosition, instantiate}
 import gapt.expr.subst.Substitution
 import gapt.formats.babel.BabelSignature
 import gapt.logic.Polarity
-import gapt.logic.hol.SkolemFunctions
 import gapt.proofs.{Checkable, DagProof, HOLSequent, Sequent}
 import gapt.proofs.context.Context
 import gapt.utils.{Doc, Maybe}
@@ -130,9 +129,10 @@ case class ExpansionTree(term: ETt, polarity: Polarity, shallow: Formula) extend
             ctx.foreach(Checkable.requireDefEq(sh, child.shallow)(_))
             go(child)
         }
-        ctx.foreach(_.check(shallow))
-        go(this)
     }
+
+    ctx.foreach(_.check(shallow))
+    go(this)
   }
 
   def toDoc(implicit sig: BabelSignature): Doc = new ExpansionTreePrettyPrinter(sig).`export`(this)

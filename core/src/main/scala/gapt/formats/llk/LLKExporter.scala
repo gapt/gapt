@@ -13,7 +13,7 @@ import gapt.expr.formula.Or
 import gapt.expr.formula.constants.EqC
 import gapt.expr.formula.constants.LogicalConstant
 import gapt.expr.formula.hol.HOLFunction
-import gapt.expr.ty.{->:, TArr, Ti, To, Ty}
+import gapt.expr.ty.{TArr, Ti, To, Ty}
 import gapt.proofs.lk._
 import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule

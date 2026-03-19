@@ -1,7 +1,6 @@
 package gapt.proofs.lk
 
 import gapt.expr._
-import gapt.expr.formula
 import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Eq
@@ -15,7 +14,6 @@ import gapt.expr.formula.fol.FOLFunction
 import gapt.expr.formula.fol.FOLFunctionConst
 import gapt.expr.formula.fol.FOLTerm
 import gapt.expr.formula.fol.FOLVar
-import gapt.expr.formula.hol.HOLPosition
 import gapt.proofs._
 import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule

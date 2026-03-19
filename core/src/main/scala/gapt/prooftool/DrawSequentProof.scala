@@ -2,7 +2,7 @@ package gapt.prooftool
 
 import java.awt.Font._
 import java.awt.event.{MouseEvent, MouseMotionListener}
-import java.awt.{BasicStroke, Color, RenderingHints, Stroke}
+import java.awt.{Color, RenderingHints}
 
 import gapt.expr.Expr
 import gapt.formats.latex.LatexExporter

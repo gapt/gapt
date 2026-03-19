@@ -199,6 +199,15 @@ object freeHOVariables {
   def isHOVar(v: Var): Boolean = v match { case Var(_, Ti) => false; case _ => true }
 }
 
+object freeFOLVariables {
+
+  /**
+  * @param expr expression to get the free first-order variables of the expression
+  * @return the set of first-order variables in [[expr]]
+  */
+  def apply(expr: Expr): Set[FOLVar] = freeVariables(expr).collect { case v @ Var(sym, Ti) => FOLVar(sym) }
+}
+
 /**
  * Return the list of all atoms in the given argument.
  */

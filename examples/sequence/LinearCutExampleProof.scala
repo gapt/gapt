@@ -9,13 +9,10 @@ import gapt.proofs.gaptic.Proof
 import gapt.proofs.gaptic.allR
 import gapt.proofs.gaptic.chain
 import gapt.proofs.gaptic.impR
-import gapt.proofs.gaptic.include
-import gapt.proofs.gaptic.prop
 import gapt.proofs.gaptic.repeat
 import gapt.proofs.gaptic.trivial
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.LogicalAxiom
 import gapt.proofs.lk.rules.macros.WeakeningMacroRule
 
 /**

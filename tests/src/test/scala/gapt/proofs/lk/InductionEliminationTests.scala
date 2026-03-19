@@ -4,13 +4,10 @@ import gapt.expr._
 import gapt.examples.tip.isaplanner.{prop_08, prop_15, prop_59}
 import gapt.expr.subst.Substitution
 import gapt.formats.babel.{Notation, Precedence}
-import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.InductiveType
 import gapt.proofs.{Sequent, SequentMatchers}
 import gapt.proofs.gaptic.{Lemma, ProofState, allR, cut, escargot, induction, insert, refl, rewrite}
-import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.InductionRule
 import gapt.proofs.lk.transformations.inductionNormalForm
 import gapt.proofs.lk.util.instanceProof
 import gapt.proofs.lk.util.isInductionFree

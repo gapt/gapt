@@ -1,6 +1,6 @@
 package gapt.formats.leancop
 
-import gapt.expr.formula.{Atom, Eq}
+import gapt.expr.formula.Eq
 import gapt.expr.formula.fol.{FOLAtom, FOLFunction, FOLTerm}
 import gapt.proofs.FOLClause
 

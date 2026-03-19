@@ -4,7 +4,7 @@ vim:spell spelllang=en:
 ## GAPT: General Architecture for Proof Theory
 
 [![Join the chat at https://gitter.im/gapt/gapt](https://badges.gitter.im/gapt/gapt.svg)](https://gitter.im/gapt/gapt?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build Status](https://travis-ci.org/gapt/gapt.svg?branch=master)](https://travis-ci.org/gapt/gapt) [![codecov.io](https://codecov.io/github/gapt/gapt/coverage.svg?branch=master)](https://codecov.io/github/gapt/gapt?branch=master)
+[![Build Status](https://clogic92.dmg.tuwien.ac.at/buildStatus/icon?job=gapt)](https://clogic92.dmg.tuwien.ac.at/job/gapt/) [![codecov.io](https://codecov.io/github/gapt/gapt/coverage.svg?branch=master)](https://codecov.io/github/gapt/gapt?branch=master)
 
 GAPT is a proof theory framework developed primarily at the Vienna University
 of Technology. GAPT contains data structures, algorithms, parsers and other
@@ -42,9 +42,9 @@ into the [API documentation](http://logic.at/gapt/api/) for reference as well.
 There are [binary distributions](https://logic.at/gapt) available, you only
 need to have Java installed to run them:
 ```
-wget https://logic.at/gapt/downloads/gapt-2.18.1.tar.gz
-tar xf gapt-2.18.1.tar.gz
-cd gapt-2.18.1
+wget https://logic.at/gapt/downloads/gapt-2.19.0.tar.gz
+tar xf gapt-2.19.0.tar.gz
+cd gapt-2.19.0
 ./gapt.sh
 ```
 This will drop you into a scala REPL with GAPT pre-loaded.
@@ -52,7 +52,7 @@ This will drop you into a scala REPL with GAPT pre-loaded.
 If you want to use GAPT in your project, all you have to do is add the following line to
 your SBT build file:
 ```scala
-libraryDependencies += "at.logic.gapt" %% "gapt" % "2.18.1"
+libraryDependencies += "at.logic.gapt" %% "gapt" % "2.19.0"
 ```
 
 If you want to use the unstable git version of GAPT, you can use `sbt

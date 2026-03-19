@@ -102,7 +102,6 @@ object TptpToString {
 
   private val lowerWordRegex = "[a-z][A-Za-z0-9_]*".r
   private val definedOrSystemWord = "[$][$]?[A-Za-z0-9_]*".r
-  private val singleQuoteAllowedRegex = """[\]-~ -&(-\[\\']+""".r
   def atomic_word(name: String): String = name match {
     case lowerWordRegex()      => name
     case definedOrSystemWord() => name

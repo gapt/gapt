@@ -2,7 +2,6 @@ package gapt.provers.maxsat
 
 import gapt.expr._
 import gapt.expr.formula.Formula
-import gapt.expr.formula.hol._
 import gapt.formats.dimacs._
 import gapt.logic.hol.CNFp
 import gapt.logic.hol.fastStructuralCNF

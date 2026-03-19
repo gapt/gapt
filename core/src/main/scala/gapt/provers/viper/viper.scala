@@ -3,7 +3,6 @@ package gapt.provers.viper
 import os._
 import gapt.expr.formula.All
 import gapt.expr.formula.Formula
-import gapt.expr.formula.fol.folTermSize
 import gapt.expr.formula.hol.containsQuantifierOnLogicalLevel
 import gapt.expr.ty.TBase
 import gapt.expr.util.freeVariables
@@ -11,7 +10,6 @@ import gapt.formats.InputFile
 import gapt.formats.StdinInputFile
 import gapt.formats.tip.TipProblem
 import gapt.formats.tip.TipSmtImporter
-import gapt.grammars.InductionGrammar
 import gapt.proofs.HOLSequent
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.gaptic._
@@ -35,7 +33,7 @@ import gapt.provers.vampire.Vampire
 import gapt.provers.viper.aip.axioms._
 import gapt.provers.viper.grammars._
 import gapt.provers.viper.spin.SpinOptions
-import gapt.utils.{LogHandler, Logger, MetricsPrinter, MetricsPrinterWithMessages, TimeOutException, withTimeout}
+import gapt.utils.{LogHandler, Logger, MetricsPrinterWithMessages, TimeOutException, withTimeout}
 import scala.concurrent.duration.Duration
 import scala.util.Failure
 import scala.util.Success

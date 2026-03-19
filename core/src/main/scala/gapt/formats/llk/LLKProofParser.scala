@@ -4,7 +4,6 @@ import gapt.expr._
 import gapt.formats.llk.ast.LambdaAST
 import gapt.proofs.HOLSequent
 import gapt.proofs.lk.LKProof
-import java.io.FileReader
 
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Formula
@@ -141,7 +140,7 @@ trait LatexReplacementParser extends DeclarationParser {
   lazy val reservedset = Set("\\neg", "\\land", "\\lor", "\\impl", "\\forall", "\\exists")
   override lazy val atomsymb: Parser[String] = atomsymb2.^?(
     { case x if !(reservedset contains x) => x },
-    (x => "error: \\neg,\\land,\\lor,\\impl,\\forall,\\exists are reserved names")
+    (_ => "error: \\neg,\\land,\\lor,\\impl,\\forall,\\exists are reserved names")
   )
 
   lazy val atomsymb2: Parser[String] = atomregexp

@@ -18,10 +18,6 @@ import gapt.expr.formula.Top
 import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLVar
-import gapt.expr.ty.TBase
-import gapt.expr.ty.Ti
-import gapt.expr.ty.To
-import gapt.expr.ty.Ty
 
 import scala.util.{Failure, Success}
 
@@ -55,8 +51,8 @@ class TptpParser(val input: ParserInput) extends Parser {
   private def or_formula_part = rule { ("|" ~ Ws ~ unitary_formula).+ ~> ((a: Formula, as: Seq[Formula]) => Or.leftAssociative(a +: as: _*)) }
   private def and_formula_part = rule { ("&" ~ Ws ~ unitary_formula).+ ~> ((a: Formula, as: Seq[Formula]) => And.leftAssociative(a +: as: _*)) }
   private def unitary_formula: Rule1[Formula] = rule { quantified_formula | unary_formula | atomic_formula | "(" ~ Ws ~ logic_formula ~ ")" ~ Ws }
-  private def quantified_formula = rule { fol_quantifier ~ "[" ~ Ws ~ variable_list ~ "]" ~ Ws ~ ":" ~ Ws ~ unitary_formula ~> ((q: QuantifierHelper, vs, m) => q.Block(vs, m)) }
-  private def variable_list = rule { (variable ~ (":" ~ Ws ~ name).? ~> ((a, b) => a)).+.separatedBy(Comma) }
+  private def quantified_formula = rule { fol_quantifier ~ "[" ~ Ws ~ variable_list ~ "]" ~ Ws ~ Colon ~ unitary_formula ~> ((q: QuantifierHelper, vs, m) => q.Block(vs, m)) }
+  private def variable_list = rule { (variable ~ (Colon ~ name).? ~> ((a, b) => a)).+.separatedBy(Comma) }
   private def unary_formula = rule { "~" ~ Ws ~ unitary_formula ~> (Neg(_)) }
 
   private def atomic_formula = rule { defined_prop | infix_formula | plain_atomic_formula | (distinct_object ~> (FOLAtom(_))) }
@@ -85,7 +81,7 @@ class TptpParser(val input: ParserInput) extends Parser {
   private def general_list: Rule1[Seq[Expr]] = rule { "[" ~ Ws ~ general_term.*.separatedBy(Comma) ~ "]" ~ Ws }
   private def general_terms = rule { general_term.+.separatedBy(Comma) }
   private def general_term: Rule1[Expr] = rule {
-    general_data ~ (":" ~ Ws ~ general_term).? ~> ((d, to) => to.fold(d)(t => GeneralColon(d, t))) |
+    general_data ~ (Colon ~ general_term).? ~> ((d, to) => to.fold(d)(t => GeneralColon(d, t))) |
       general_list ~> (GeneralList(_: Seq[Expr]))
   }
   private def general_data: Rule1[Expr] = rule {
@@ -124,17 +120,6 @@ class TptpParser(val input: ParserInput) extends Parser {
   private def do_char = rule { capture(do_char_pred) | ("\\\\" ~ push("\\")) | ("\\\"" ~ push("\"")) }
   private val sg_char_pred = CharPredicate(' ' to '&', '(' to '[', ']' to '~')
   private def sg_char = rule { capture(sg_char_pred) | ("\\\\" ~ push("\\")) | ("\\'" ~ push("'")) }
-
-  private def complex_type = rule { basic_type | (">" ~ push((t1: Ty, t2: Ty) => t1 -> t2)) }
-  private def basic_type = rule {
-    atomic_word ~> (name =>
-      name match {
-        case "$o" => To
-        case "$i" => Ti
-        case name => TBase(name)
-      }
-    )
-  }
 }
 
 object TptpImporter {

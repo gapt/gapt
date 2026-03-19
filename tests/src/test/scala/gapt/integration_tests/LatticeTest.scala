@@ -5,12 +5,10 @@ package gapt.integration_tests
 
 import gapt.examples.lattice
 import gapt.expr.formula.hol.isAtom
-import gapt.proofs.{HOLClause, SequentMatchers}
+import gapt.proofs.SequentMatchers
 import gapt.proofs.ceres._
 import gapt.proofs.lk._
 import gapt.provers.escargot.Escargot
-import gapt.provers.prover9._
-import java.io.File.separator
 
 import gapt.proofs.lk.rules.CutRule
 import org.specs2.mutable._

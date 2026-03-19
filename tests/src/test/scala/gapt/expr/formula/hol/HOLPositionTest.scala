@@ -13,7 +13,6 @@ class HOLPositionTest extends Specification {
   "HOLPositions" should {
     "be computed correctly" in {
       val x = Var("x", Ti)
-      val y = Var("y", Ti)
       val f = Const("f", Ti ->: Ti)
       val c = Const("c", Ti)
       val P = Const("P", Ti ->: To)

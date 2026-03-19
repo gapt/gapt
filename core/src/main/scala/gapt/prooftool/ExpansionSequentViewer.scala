@@ -3,7 +3,7 @@ package gapt.prooftool
 import gapt.proofs.expansion.{ExpansionProof, ExpansionProofToLK, ExpansionSequent}
 import gapt.formats.json._
 
-import scala.swing.{Separator, Menu, Action, MenuItem}
+import scala.swing.{Separator, Action, MenuItem}
 
 /**
  * ProofToolViewer for expansion sequents.

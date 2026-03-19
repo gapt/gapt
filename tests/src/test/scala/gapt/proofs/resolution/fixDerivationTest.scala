@@ -9,7 +9,7 @@ import gapt.expr.formula.fol.FOLVar
 import gapt.expr.subst.Substitution
 import gapt.logic.clauseSubsumption
 import gapt.proofs._
-import gapt.provers.escargot.{Escargot, NonSplittingEscargot}
+import gapt.provers.escargot.NonSplittingEscargot
 import org.specs2.mutable._
 
 class FixDerivationTest extends Specification with SequentMatchers {

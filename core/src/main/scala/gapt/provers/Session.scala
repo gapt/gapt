@@ -24,7 +24,7 @@ import gapt.expr.formula.Or
 import gapt.expr.formula.Top
 import gapt.expr.formula.constants.EqC
 import gapt.expr.formula.constants.LogicalConstant
-import gapt.expr.ty.{->:, FunctionType, TArr, TBase, To, Ty, baseTypes}
+import gapt.expr.ty.{FunctionType, TArr, TBase, To, Ty, baseTypes}
 import gapt.expr.util.constants
 
 import scala.collection.mutable

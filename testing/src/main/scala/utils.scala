@@ -3,10 +3,9 @@ package gapt.testing
 import java.io._
 import java.nio.channels.ClosedByInterruptException
 
-import gapt.utils.{TimeOutException, runProcess, withTempFile, withTimeout}
+import gapt.utils.{TimeOutException, withTempFile, withTimeout}
 import org.apache.commons.lang3.exception.ExceptionUtils
 
-import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.xml.Elem
 import scala.sys.process._

@@ -1,9 +1,8 @@
 package gapt.integration_tests
 
 import gapt.formats.llk.ExtendedProofDatabase
-import gapt.proofs.{FOLClause, HOLClause, HOLSequent}
+import gapt.proofs.HOLSequent
 import gapt.proofs.ceres_omega._
-import gapt.proofs.ceres.{CharacteristicClauseSet, deleteTautologies}
 import gapt.examples.primediv
 import gapt.expr._
 import gapt.provers.prover9.Prover9
@@ -12,7 +11,6 @@ import BetaReduction._
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Formula
 import gapt.expr.subst.Substitution
-import gapt.proofs.lk.util.regularize
 
 object PDAnalysis extends AnalysisWithCeresOmega {
   val pdb = ExtendedProofDatabase(Map(hoa"THEPROOF" -> primediv.proof), Map(), primediv.ctx.definitions)

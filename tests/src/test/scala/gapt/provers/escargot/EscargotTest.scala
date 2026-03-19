@@ -1,7 +1,6 @@
 package gapt.provers.escargot
 
 import gapt.examples.{BussTautology, CountingEquivalence, Permutations, PigeonHolePrinciple}
-import gapt.expr.formula.fol.{naive, thresholds}
 import gapt.expr._
 import gapt.expr.formula.hol.existentialClosure
 import gapt.formats.babel.BabelParser

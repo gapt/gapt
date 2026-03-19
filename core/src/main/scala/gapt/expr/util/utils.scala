@@ -12,13 +12,7 @@ import gapt.expr.Expr
 import gapt.expr.Var
 import gapt.expr.ExprNameGenerator
 import gapt.expr.VarOrConst
-import gapt.expr.formula.All
-import gapt.expr.formula.And
-import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
-import gapt.expr.formula.Imp
-import gapt.expr.formula.Neg
-import gapt.expr.formula.Or
 import gapt.expr.formula.constants.EqC
 import gapt.expr.formula.constants.LogicalConstant
 import gapt.expr.formula.fol.FOLConst
@@ -26,7 +20,7 @@ import gapt.expr.formula.fol.FOLExpression
 import gapt.expr.formula.fol.FOLFormula
 import gapt.expr.formula.fol.FOLVar
 import gapt.expr.subst.Substitution
-import gapt.expr.ty.{->:, TArr, TBase, TVar, To, Ty}
+import gapt.expr.ty.{TArr, TBase, TVar, Ty}
 import gapt.proofs._
 import gapt.proofs.context.Context
 import gapt.utils.NameGenerator

@@ -4,7 +4,6 @@ import gapt.expr._
 import gapt.expr.ty.TBase
 import gapt.proofs.gaptic._
 import gapt.proofs.Sequent
-import gapt.proofs.context.Context
 import gapt.proofs.context.update.InductiveType
 
 /* This proof is not a s.i.p. because of the subinduction on xs */

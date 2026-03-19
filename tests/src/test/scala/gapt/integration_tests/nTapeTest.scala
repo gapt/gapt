@@ -1,8 +1,7 @@
 package gapt.integration_tests
 
 import gapt.examples._
-import gapt.proofs.Sequent
-import gapt.proofs.expansion.{eliminateMerges, findMerges}
+import gapt.proofs.expansion.findMerges
 import gapt.provers.eprover.EProver
 import gapt.provers.prover9.Prover9
 import org.specs2.mutable._

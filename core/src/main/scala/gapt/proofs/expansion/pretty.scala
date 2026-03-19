@@ -1,10 +1,9 @@
 package gapt.proofs.expansion
 
 import gapt.expr._
-import gapt.formats.babel.{BabelExporter, BabelSignature, Precedence}
+import gapt.formats.babel.{BabelSignature, Precedence}
 import gapt.utils.Doc
 import Doc._
-import gapt.expr.VarOrConst
 
 class ExpansionTreePrettyPrinter(sig: BabelSignature) extends ETtPrettyPrinter(sig) {
   def `export`(et: ExpansionTree): Doc =

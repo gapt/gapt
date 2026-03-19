@@ -3,7 +3,7 @@ package gapt.testing
 import os.FilePath
 import gapt.proofs.expansion.numberOfInstancesET
 import gapt.proofs.loadExpansionProof
-import gapt.utils.{LogHandler, verbose}
+import gapt.utils.verbose
 
 object testTstpImport extends App {
   val Array(filename) = args

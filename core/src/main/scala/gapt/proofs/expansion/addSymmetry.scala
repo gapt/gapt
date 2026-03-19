@@ -2,7 +2,6 @@ package gapt.proofs.expansion
 
 import gapt.expr._
 import gapt.expr.formula.Eq
-import gapt.expr.formula.fol._
 import gapt.expr.subst.Substitution
 import gapt.logic.Polarity
 

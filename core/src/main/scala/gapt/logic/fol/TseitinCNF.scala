@@ -83,7 +83,7 @@ class TseitinCNF {
         subformulaMap(f)
       } else {
         auxCounter += 1
-        var auxsym = s"$hc$auxCounter"
+        val auxsym = s"$hc$auxCounter"
         if (fsyms.contains(auxsym)) {
           addIfNotExists(f)
         } else {

@@ -27,13 +27,11 @@ import gapt.expr.util.freeVariables
 import gapt.expr.util.syntacticMatching
 import gapt.formats.tip.TipFun
 import gapt.formats.tip.TipProblem
-import gapt.formats.tip.parser.Datatype
 import gapt.formats.tip.parser.TipSmtAnd
 import gapt.formats.tip.parser.TipSmtAssertion
 import gapt.formats.tip.parser.TipSmtCase
 import gapt.formats.tip.parser.TipSmtCheckSat
 import gapt.formats.tip.parser.TipSmtConstantDeclaration
-import gapt.formats.tip.parser.TipSmtConstructorField
 import gapt.formats.tip.parser.TipSmtConstructorPattern
 import gapt.formats.tip.parser.TipSmtDatatype
 import gapt.formats.tip.parser.TipSmtDatatypesDeclaration
@@ -179,8 +177,7 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
 
     val functionConstant = toFunctionConstant(functionDefinition)
 
-    val typeParameters = functionDefinition.parameters.map { p => TVar(p.name) }
-    val returnType = compileTipType(functionDefinition.returnType, typeParameters)
+    val returnType = compileTipType(functionDefinition.returnType)
     val compiledFunctionBody = compileExpression(functionDefinition.body, formalParameters, Some(returnType))
 
     ctx += splitReductionRules(ReductionRule(functionConstant(formalParameters), compiledFunctionBody))
@@ -234,12 +231,6 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
     goals += compileExpression(formula, Nil, Some(To))
       .asInstanceOf[Formula]
   }
-
-  private def compileConstructorField(
-      field: TipSmtConstructorField,
-      ofType: Ty
-  ): Const =
-    Const(field.name, ofType ->: typeDecls(field.typ.typename))
 
   def compileExpression(
       expression: TipSmtExpression,
@@ -375,7 +366,7 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
     if (ctxVars.exists(_.name == identifier.name)) {
       lookupVariable(identifier, ctxVars, expectedType)
     } else {
-      lookupConstant(identifier, ctxVars, expectedType)
+      lookupConstant(identifier, expectedType)
     }
   }
 
@@ -393,7 +384,7 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
   }
 
   // try to lookup and check a constant from the context
-  private def lookupConstant(identifier: TipSmtIdentifier, ctxVars: Seq[Var], expectedType: Option[Ty]): Expr = {
+  private def lookupConstant(identifier: TipSmtIdentifier, expectedType: Option[Ty]): Expr = {
     ctx.constant(identifier.name) match {
       case Some(c) =>
         expectedType match {
@@ -462,8 +453,8 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
       throw TipSmtParserException("matching expression with non-inductive base type")
     }
     val matchedType: TBase = compiledMatchedExpression.ty.asInstanceOf[TBase]
-    val completedMatchCases = fixupMatchCases(matchedType, cases, freeVars)
-    val (compiledCases, resultType) = compileCases(completedMatchCases, freeVars, matchedType, expectedType)
+    val completedMatchCases = fixupMatchCases(matchedType, cases)
+    val (compiledCases, resultType) = compileCases(completedMatchCases, freeVars, expectedType)
     val Some(matchConstant) = ctx.constant(matchConstantName(matchedType), List(resultType)): @unchecked
     Apps(matchConstant, compiledMatchedExpression +: compiledCases)
   }
@@ -487,8 +478,7 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
 
   private def fixupMatchCases(
       matchedType: TBase,
-      tipCases: Seq[TipSmtCase],
-      ctxVars: Seq[Var]
+      tipCases: Seq[TipSmtCase]
   ): Seq[(Const, Seq[Var], TipSmtExpression)] = {
 
     val constructors = ctx.getConstructors(matchedType).get
@@ -559,7 +549,6 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
   private def compileCases(
       cases: Seq[(Const, Seq[Var], TipSmtExpression)],
       ctxVars: Seq[Var],
-      matchedType: TBase,
       expectedType: Option[Ty]
   ): (Seq[Expr], Ty) = {
 
@@ -619,7 +608,7 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
       case _ =>
     }
     val variables =
-      tipSmtForall.variables.map { case TipSmtVariableDecl(name, ty) => Var(name, compileTipType(ty, Seq())) }
+      tipSmtForall.variables.map { case TipSmtVariableDecl(name, ty) => Var(name, compileTipType(ty)) }
 
     All.Block(
       variables,
@@ -627,7 +616,7 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
     )
   }
 
-  private def compileTipType(ty: TipSmtType, typeVariables: Seq[TVar]): Ty = {
+  private def compileTipType(ty: TipSmtType): Ty = {
     ty match {
       case TipSmtType("Bool") => To
       case TipSmtType(name)   =>
@@ -655,41 +644,12 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
     }
     val variables = tipSmtExists.variables.map {
       case TipSmtVariableDecl(name, ty) =>
-        Var(name, compileTipType(ty, Seq()))
+        Var(name, compileTipType(ty))
     }
     Ex.Block(
       variables,
       compileExpression(tipSmtExists.formula, variables ++ freeVars, Some(To))
     )
-  }
-
-  private def compileFields(
-      fields: Seq[(TipSmtIdentifier, Datatype)]
-  ): Seq[Expr] = {
-    fields map {
-      case (f, ty) =>
-        if (isVariable(f)) {
-          Var(f.name, typeDecls(ty.name))
-        } else {
-          Const(f.name, typeDecls(ty.name))
-        }
-    }
-  }
-
-  private def compileConstructorSymbol(id: TipSmtIdentifier): Expr = {
-    val constructorType = problem.symbolTable.get.typeOf(id.name)
-    Const(
-      id.name,
-      FunctionType(
-        typeDecls(constructorType.returnType.name),
-        constructorType.argumentTypes
-          .map { dt => typeDecls(dt.name) }.toList
-      )
-    )
-  }
-
-  private def isVariable(id: TipSmtIdentifier): Boolean = {
-    !problem.symbolTable.get.contains(id.name)
   }
 
   private def declareBaseType(sort: String): Unit = {

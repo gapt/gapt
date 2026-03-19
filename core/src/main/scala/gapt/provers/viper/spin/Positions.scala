@@ -38,14 +38,6 @@ case class Positions(rules: Set[ConditionalReductionRule], allPositions: Map[Con
 }
 
 object Positions {
-  private def apply(rules: Set[ConditionalReductionRule], c: Const, allPositions: Map[Const, Positions]): Option[Positions] = {
-    val rs = rules.filter(_.lhsHead == c)
-    if (rs.isEmpty)
-      None
-    else
-      Some(Positions(rs, allPositions))
-  }
-
   def splitRules(rules: Set[ConditionalReductionRule]): Map[Const, Positions] = {
     var allPositions = Map.empty[Const, Positions]
     val symbols = rules.map(_.lhsHead)

@@ -4,7 +4,6 @@ import gapt.examples.CountingEquivalence
 import gapt.expr._
 import gapt.expr.formula.Bottom
 import gapt.expr.formula.Top
-import gapt.expr.formula.fol.{naive, thresholds}
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.resolution.{AvatarComponent, AvatarNegNonGroundComp, ResolutionToLKProof}
 import gapt.proofs.{Clause, HOLSequent, Sequent, SequentMatchers}

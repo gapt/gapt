@@ -3,7 +3,7 @@ package gapt.prooftool
 import gapt.proofs.lk._
 import gapt.proofs.{DagProof, HOLSequent, SequentProof}
 
-import scala.swing.{Action, BorderPanel}
+import scala.swing.Action
 import ch.randelshofer.tree._
 import javax.swing.event.ChangeListener
 import java.awt.Color

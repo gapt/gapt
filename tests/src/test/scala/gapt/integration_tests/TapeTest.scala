@@ -6,7 +6,6 @@ import gapt.expr.formula.fol.FOLAtom
 import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.SequentMatchers
 import gapt.proofs.ceres._
-import gapt.proofs.ceres.deleteTautologies
 import gapt.proofs.context.Context
 import gapt.proofs.lk._
 import gapt.proofs.lk.transformations.skolemizeLK

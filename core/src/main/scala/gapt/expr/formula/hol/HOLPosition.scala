@@ -8,8 +8,6 @@ import gapt.expr.formula.Formula
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
-import gapt.expr.util
-import gapt.expr.util
 import gapt.expr.util.LambdaPosition
 
 object HOLPosition {

@@ -214,8 +214,6 @@ case object PrimitiveRecursiveFunctions {
 
   private def batch(
       parsedDefinitions: Iterable[PrimitiveRecursiveFunction]
-  )(
-      implicit ctx: Context
   ): Iterable[PrimitiveRecursiveFunction] = {
 
     val ordering = sortConstants(

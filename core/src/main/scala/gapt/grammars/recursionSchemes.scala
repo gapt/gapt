@@ -12,9 +12,6 @@ import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.Top
-import gapt.expr.formula.fol.FOLAtom
-import gapt.expr.formula.fol.FOLFormula
-import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.hol._
 import gapt.expr.subst.FOLSubstitution
 import gapt.expr.subst.Substitution

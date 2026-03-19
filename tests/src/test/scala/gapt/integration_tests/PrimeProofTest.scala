@@ -1,8 +1,6 @@
 package gapt.integration_tests
 
 import gapt.expr.formula.hol.containsStrongQuantifier
-import gapt.proofs.{Ant, HOLClause, SequentConnector, Suc}
-import gapt.proofs.expansion.ExpansionSequent
 import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.lk._
 import gapt.provers.prover9._
@@ -10,10 +8,7 @@ import gapt.provers.verit.VeriT
 import gapt.proofs.ceres.{deleteTautologies, _}
 import gapt.examples.prime
 import java.io.File.separator
-import java.io.{FileInputStream, FileReader, IOException, InputStreamReader}
-import java.util.zip.GZIPInputStream
 
-import gapt.expr.formula.Top
 import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.proofs.lk.transformations.eliminateDefinitions
 import gapt.proofs.lk.transformations.folSkolemize

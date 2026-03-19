@@ -254,9 +254,6 @@ object Projections {
     //    require( cut_ancs( e_idx_conclusion ) == true, "This is not a proof from the old calculus!" )
     val aux_ca = cut_ancs(proof.mainIndices(0))
     val eq_ca = cut_ancs(e_idx_conclusion)
-    val mainf = proof.endSequent(proof.mainIndices(0))
-    val eqf = proof.endSequent(e_idx_conclusion)
-    // println( s"main formula: $mainf $aux_ca eq: $eqf $eq_ca" )
     (aux_ca, eq_ca) match {
       case (true, true) =>
         // println( "eq t t" )

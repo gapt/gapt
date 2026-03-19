@@ -5,8 +5,6 @@ import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
 import gapt.proofs.Sequent
 import gapt.proofs.gaptic._
-import gapt.proofs.gaptic.{Lemma, guessLabels, tactics}
-import gapt.proofs.gaptic.tactics._
 import gapt.proofs.lk.LKProof
 
 /**

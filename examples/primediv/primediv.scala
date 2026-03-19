@@ -1,7 +1,6 @@
 package gapt.examples
 import gapt.expr._
 import gapt.formats.babel.{Notation, Precedence}
-import gapt.proofs.context.Context
 import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
 

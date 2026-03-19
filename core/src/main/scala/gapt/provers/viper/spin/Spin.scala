@@ -12,7 +12,6 @@ import gapt.expr.util.LambdaPosition.Choice
 import gapt.expr.util.constants
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
-import gapt.formats.tip.TipProblem
 import gapt.logic.hol.skolemize
 import gapt.proofs.ContextSection
 import gapt.proofs.HOLClause
@@ -21,7 +20,6 @@ import gapt.proofs.Sequent
 import gapt.proofs.RichFormulaSequent
 import gapt.proofs.context.Context
 import gapt.proofs.context.facet.BaseTypes
-import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.simplificationRules
 import gapt.proofs.lk.LKProof
@@ -385,7 +383,6 @@ class OccurrencesFinder()(implicit ctx: Context) {
       case Apps(c: Const, rhsArgs) if !allPositions.isDefinedAt(c) =>
         rhsArgs.zipWithIndex.foldLeft[Groups]((Seq(), Seq(), Seq())) {
           case ((prim, accs, pass), (e, i)) =>
-            val p = newPos(i, rhsArgs.size, pos)
             val (l, m, r) = go(e, newPos(i, rhsArgs.size, pos), inPrimary)
             (l ++ prim, m ++ accs, r ++ pass)
         }
@@ -551,7 +548,7 @@ class FormulaTester(acceptNotNormalized: Boolean, numberTestTerms: Int)(implicit
       ctx.conditionalReductionRules.toSet ++ reflRules.conditionalRefl(ctx) ++ simplificationRules.conditionalRules ++
         constructorRules(ctx).map(ConditionalReductionRule(_))
     )
-  private var normalized = mutable.Map.empty[Formula, Formula]
+  private val normalized = mutable.Map.empty[Formula, Formula]
   private val origConstants: Set[Const] = Context().constants.toSet
   private val sat = new Sat4j()
 

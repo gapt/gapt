@@ -5,8 +5,6 @@ import gapt.expr.formula.Eq
 import gapt.expr.formula.Imp
 import gapt.expr.util.syntacticMatching
 import gapt.proofs.gaptic._
-import gapt.proofs.gaptic.chain
-import gapt.proofs.gaptic.focus
 
 trait ExplicitEqualityTactics {
 
