@@ -110,11 +110,11 @@ case class ReforestState(
     val newRHS1s = mutable.Set[Expr]()
     val newRHS2s = mutable.Set[Expr]()
 
-    for (Apps(f, Seq()) <- rhss) {
+    for (case Apps(f, Seq()) <- rhss) {
       rhss -= f
       newRHS1s += f
     }
-    for (rhs @ Apps(f, as) <- rhss.toSet if as.size == argtypes.size) {
+    for (case rhs @ Apps(f, as) <- rhss.toSet if as.size == argtypes.size) {
       args1 += as
       newRHS2s += f(newArgs: _*)
       rhss -= rhs
@@ -219,7 +219,7 @@ object Reforest {
 
   def full(start: ReforestState): ReforestState = {
     def f(s: ReforestState): ReforestState = scala.util.boundary {
-      for ((nt @ Apps(_, Seq()), rhss) <- s.rules if rhss.size > 1) {
+      for (case (nt @ Apps(_, Seq()), rhss) <- s.rules if rhss.size > 1) {
         val next = s.decompose(nt)
         val simpl = compress(next.expandDeterministic)
         if (simpl.prodSize < s.prodSize) scala.util.boundary.break(f(simpl))

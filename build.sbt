@@ -23,7 +23,7 @@ lazy val commonSettings = Seq(
     connection = "scm:git:https://github.com/gapt/gapt.git",
     devConnection = Some("scm:git:git@github.com:gapt/gapt.git")
   )),
-  scalaVersion := "3.3.6",
+  scalaVersion := "3.8.2",
   developers := List(
     Developer(
       id = "fachammer",
@@ -221,7 +221,7 @@ val dependencyConflictResolutions = Seq("com.lihaoyi" %% "geny" % "1.0.0")
 lazy val core = project.in(file("core")).settings(commonSettings: _*).settings(
   name := "gapt",
   description := "General Architecture for Proof Theory",
-  Compile / scalacOptions += "-Xfatal-warnings",
+  Compile / scalacOptions += "-Werror",
   libraryDependencies ++= Seq(
     "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.4",
     "org.scala-lang.modules" %% "scala-parser-combinators" % "2.1.1",
@@ -289,8 +289,11 @@ lazy val userManual = project.in(file("doc")).dependsOn(cli)
 lazy val cli = project.in(file("cli")).dependsOn(core, examples)
   .settings(commonSettings: _*).settings(
     mainClass := Some("gapt.cli.CLIMain"),
-    Compile / scalacOptions += "-Xfatal-warnings",
-    libraryDependencies ++= Seq("org.scala-lang" %% "scala3-compiler" % scalaVersion.value),
+    Compile / scalacOptions += "-Werror",
+    libraryDependencies ++= Seq(
+      "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
+      "org.scala-lang" %% "scala3-repl" % scalaVersion.value
+    ),
     publish / skip := true,
     packagedArtifacts := Map(),
     dependencyOverrides ++= dependencyConflictResolutions
@@ -303,7 +306,7 @@ lazy val testing = project.in(file("testing")).dependsOn(core, examples)
   .settings(commonSettings: _*).settings(
     name := "gapt-testing",
     description := "gapt extended regression tests",
-    Compile / scalacOptions += "-Xfatal-warnings",
+    Compile / scalacOptions += "-Werror",
     publish / skip := true,
     packagedArtifacts := Map(),
     dependencyOverrides ++= dependencyConflictResolutions

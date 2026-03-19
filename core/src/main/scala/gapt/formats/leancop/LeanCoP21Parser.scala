@@ -61,7 +61,7 @@ object LeanCoP21Parser {
   def ident[X: P]: P[String] = P(CharsWhile(c => c.isLetterOrDigit || c == '_', 1).!)
 
   def parse(stdout: String): Either[String, Proof] =
-    fastparse.parse(stdout, LeanCoP21Parser.stdout(_)) match {
+    fastparse.parse(stdout, LeanCoP21Parser.stdout(using _)) match {
       case Parsed.Success(prf, _) => Right(prf)
       case fail: Parsed.Failure   => Left(fail.msg)
     }

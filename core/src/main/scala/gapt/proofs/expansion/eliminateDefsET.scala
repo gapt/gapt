@@ -40,15 +40,15 @@ object eliminateDefsET {
         ETAtom(definitionConst(as).asInstanceOf[Atom], pol)
       )
 
-    val insts0 = for {
-      case ETWeakQuantifierBlock(`definitionFormula`, n, insts) <- ep.expansionSequent.antecedent
-      (as, inst) <- insts
-      // DO NOT INLINE THIS!  (otherwise the value of repls changes?!?!?)
-      negRepls = inst(negReplPos)
-      posRepls = inst(posReplPos)
-      repls = negRepls ++ posRepls
-      repl <- repls
-    } yield as -> repl
+    val insts0 = ep.expansionSequent.antecedent.flatMap {
+      case ETWeakQuantifierBlock(`definitionFormula`, n, insts) => insts
+      case _                                                    => Seq.empty
+    }.flatMap {
+      case (as, inst) => {
+        val repls = inst(negReplPos) ++ inst(posReplPos)
+        repls.map { repl => as -> repl }
+      }
+    }
 
     var insts = Map() ++ insts0.groupBy(_._1).view.mapValues(_.map(_._2)).toMap
 

@@ -187,7 +187,7 @@ object BabelParser {
       text: String,
       astTransformer: preExpr.Expr => preExpr.Expr = identity
   )(implicit sig: BabelSignature): Either[BabelParseError, Expr] = {
-    (fastparse.parse(text, ExprAndNothingElse(_)): @unchecked) match {
+    (fastparse.parse(text, ExprAndNothingElse(using _)): @unchecked) match {
       case Parsed.Success(expr, _) =>
         val transformedExpr = astTransformer(expr)
         preExpr.toRealExpr(transformedExpr, sig).leftMap(ppElabError(text, _))
@@ -205,7 +205,7 @@ object BabelParser {
     tryParse(text, preExpr.TypeAnnotation(_, preExpr.Bool)).fold(throw _, _.asInstanceOf[Formula])
 
   def tryParseType(text: String): Either[BabelParseError, Ty] = {
-    fastparse.parse(text, TypeAndNothingElse(_)) match {
+    fastparse.parse(text, TypeAndNothingElse(using _)) match {
       case Parsed.Success(expr, _) =>
         Right(preExpr.toRealType(expr, Map()))
       case parseError: Parsed.Failure =>
@@ -219,7 +219,7 @@ object BabelParser {
   )(
       implicit sig: BabelSignature
   ): Either[BabelParseError, Sequent[Expr]] = {
-    fastparse.parse(text, SequentAndNothingElse(_)) match {
+    fastparse.parse(text, SequentAndNothingElse(using _)) match {
       case Parsed.Success(exprSequent, _) =>
         val transformed = exprSequent.map(astTransformer)
         preExpr.toRealExprs(transformed.elements, sig).leftMap(ppElabError(text, _)).map { sequentElements =>
@@ -237,7 +237,7 @@ object BabelParser {
   )(
       implicit sig: BabelSignature
   ): Either[BabelParseError, Sequent[(String, Formula)]] = {
-    fastparse.parse(text, LabelledSequentAndNothingElse(_)) match {
+    fastparse.parse(text, LabelledSequentAndNothingElse(using _)) match {
       case Parsed.Success(exprSequent, _) =>
         val transformed = for ((l, f) <- exprSequent)
           yield l -> preExpr.TypeAnnotation(astTransformer(f), preExpr.Bool)
