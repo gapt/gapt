@@ -29,11 +29,11 @@ case class GaptRepl() {
       )) {
 
     override def runUntilQuit(using initialState: State = initialState)(): State = {
-      // Most of this implementation is copied from the scala compiler version 3.3.6
-      // (see https://github.com/scala/scala3/blob/release-3.3.6/compiler/src/dotty/tools/repl/ReplDriver.scala)
+      // Most of this implementation is copied from the scala repl version 3.8.2
+      // (see https://github.com/scala/scala3/blob/release-3.8.2/repl/src/dotty/tools/repl/ReplDriver.scala)
       // This is necessary since the ReplDriver implementation is not extensible
       // enough to allow setting the prompt string and welcome message.
-      // However, this means that future changes in the scala compiler might have to be incorporated here.
+      // However, this means that future changes in the scala repl might have to be incorporated here.
 
       // These first two lines are new
       val terminal = new GaptTerminal
@@ -77,16 +77,40 @@ case class GaptRepl() {
           val line = terminal.readLine(completer)
           ParseResult(line)
         } catch {
-          case _: EndOfFileException |
-              _: UserInterruptException => // Ctrl+D or Ctrl+C
+          case _: EndOfFileException => // Ctrl+D
             Quit
+          case _: UserInterruptException => // Ctrl+C at prompt - clear and continue
+            SigKill
         }
       }
 
       @tailrec def loop(using state: State)(): State = {
         val res = readLine()
         if (res == Quit) state
-        else loop(using interpret(res))()
+        else if (res == SigKill) loop(using state)()
+        else {
+          var firstCtrlCEntered = false
+          val thread = Thread.currentThread()
+
+          ReplBytecodeInstrumentation.setStopFlag(replClassLoader(using state.context), false)
+
+          val newState = terminal.withMonitoringCtrlC(
+            handler = () =>
+              if (!firstCtrlCEntered) {
+                firstCtrlCEntered = true
+                ReplBytecodeInstrumentation.setStopFlag(replClassLoader(using state.context), true)
+                thread.interrupt()
+                out.println("\nAttempting to interrupt running REPL command")
+              } else {
+                out.println("\nTerminating REPL Process...")
+                System.exit(130)
+              }
+          ) {
+            interpret(res)
+          }
+
+          loop(using newState)()
+        }
       }
 
       try runBody { loop() }
@@ -98,6 +122,26 @@ case class GaptRepl() {
         label.drop(1).dropRight(1)
       else
         label
+
+    // ReplDriver uses Rendering.classLoader(), but that helper is package-private.
+    // Keep a local copy of the 3.8.2 logic here so the interrupt instrumentation
+    // behaves like upstream while preserving our custom prompt/welcome handling.
+    private def replClassLoader(using ctx: Context): ClassLoader =
+      if (rendering.myClassLoader != null) rendering.myClassLoader
+      else {
+        val compilerClasspath = ctx.platform.classPath(using ctx).asURLs
+        val baseClassLoader = ClassLoader.getSystemClassLoader.getParent
+        val parent = new java.net.URLClassLoader(compilerClasspath.toArray, baseClassLoader)
+
+        rendering.myClassLoader = new AbstractFileClassLoader(
+          ctx.settings.outputDir.value,
+          parent,
+          AbstractFileClassLoader.InterruptInstrumentation.fromString(
+            ctx.settings.XreplInterruptInstrumentation.value
+          )
+        )
+        rendering.myClassLoader
+      }
   }
 
   def run(): Unit =
