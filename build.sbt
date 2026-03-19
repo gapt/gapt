@@ -4,7 +4,7 @@ import org.apache.commons.compress.archivers.tar.{TarArchiveEntry, TarArchiveOut
 import sys.process._
 import xerial.sbt.Sonatype.sonatypeCentralHost
 
-val Version = "2.19.0-SNAPSHOT"
+val Version = "2.20.0-SNAPSHOT"
 
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",

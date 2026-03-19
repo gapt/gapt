@@ -1,5 +1,7 @@
 # Release notes for GAPT
 
+## Version 2.20.0 (unreleased)
+
 ## Version 2.19.0 (unreleased)
 
 ## Version 2.18.1 (released on 2025-05-28)
