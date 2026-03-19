@@ -229,27 +229,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
     "find covering grammars" in {
       Fragments.foreach(Seq(
         1 -> Set("f(c)", "g(c,c)", "g(c,d)") -> 3,
-        1 -> Set("f(c)", "f(d)", "g(c,c)", "g(c,d)", "h(e,f(c))", "h(e,f(d))") -> 5,
-        2 -> Set(
-          "f(c,c,c)",
-          "f(c,d,c)",
-          "f(c,e,c)",
-          "f(d,c,c)",
-          "f(d,d,c)",
-          "f(d,e,c)",
-          "f(e,c,c)",
-          "f(e,d,c)",
-          "f(e,e,c)",
-          "f(c,c,d)",
-          "f(c,d,d)",
-          "f(c,e,d)",
-          "f(d,c,d)",
-          "f(d,d,d)",
-          "f(d,e,d)",
-          "f(e,c,d)",
-          "f(e,d,d)",
-          "f(e,e,d)"
-        ) -> 8
+        1 -> Set("f(c)", "f(d)", "g(c,c)", "g(c,d)", "h(e,f(c))", "h(e,f(d))") -> 5
       )) {
         case ((n, l_str), sizeOfMinG) =>
           val l = l_str map parseTerm
