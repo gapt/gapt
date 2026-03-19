@@ -91,7 +91,7 @@ class AnalyticInductionProver(options: ProverOptions) {
    *         method does not terminate.
    */
   def proveTipProblem(problem: TipProblem): Option[LKProof] =
-    inductiveLKProof(tipProblemToSequent(problem)._1)(problem.context.newMutable)
+    inductiveLKProof(tipProblemToSequent(problem)._1)(using problem.context.newMutable)
 
   /**
    * Proves the given sequent by using induction.

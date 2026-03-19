@@ -88,7 +88,7 @@ object preExpr {
       case Ident(name, ty, Some(ps)) => s"($name{${ps.map(apply).mkString(" ")}:${apply(ty)})"
       case Abs(v, sub)               => s"(^${apply(v)} ${apply(sub)})"
       case App(a, b)                 => s"(${apply(a)} ${apply(b)})"
-      case Quoted(e, ty, fvs)        => s"#quote(${e.toSigRelativeString(sig)}, ${apply(ty)}${fvs map { case (n, t) => s", $n -> ${apply(t)}" } mkString})"
+      case Quoted(e, ty, fvs)        => s"#quote(${e.toSigRelativeString(using sig)}, ${apply(ty)}${fvs map { case (n, t) => s", $n -> ${apply(t)}" } mkString})"
       case FlatOps(children) => children.map {
           case Left((op, _)) => op
           case Right(a)      => apply(a)
@@ -241,7 +241,7 @@ object preExpr {
   def infer(expr: Expr, env: Env)(implicit loc: Option[Location], sig: BabelSignature): Elab[(Expr, Type)] =
     expr match {
       case LocAnnotation(e, loc_) =>
-        infer(e, env)(Some(loc_), sig)
+        infer(e, env)(using Some(loc_), sig)
       case TypeAnnotation(e, t) =>
         for {
           ei <- infer(e, env); (_, et) = ei
@@ -318,14 +318,14 @@ object preExpr {
     }
 
   def elabError[T](msg: String, atExpr: Expr)(implicit loc: Option[Location]): Elab[T] =
-    elabError(msg)(locOf(atExpr).orElse(loc))
+    elabError(msg)(using locOf(atExpr).orElse(loc))
 
   def elabError[T](msg: String)(implicit loc: Option[Location]): Elab[T] =
     StateT.apply[ElabResult, ElabState, T](assg => Left(ElabError(loc, msg, None, None, assg)))
 
   def elabIdent(e: Expr)(implicit loc: Option[Location]): Elab[Ident] =
     e match {
-      case LocAnnotation(e2, loc_) => elabIdent(e2)(Some(loc_))
+      case LocAnnotation(e2, loc_) => elabIdent(e2)(using Some(loc_))
       case TypeAnnotation(e2, ty) =>
         for {
           res <- elabIdent(e2)
@@ -509,7 +509,7 @@ object preExpr {
           Some(i -> freshMetaType())
       }
     }
-    infers(expr, startingEnv)(None, sig).run(Map()).map {
+    infers(expr, startingEnv)(using None, sig).run(Map()).map {
       case (assg, expr_) =>
         val exprs = expr_.map(_._1)
         val nameGen = new NameGenerator((exprs.view.flatMap(types) ++ assg.values).flatMap(typeVars))

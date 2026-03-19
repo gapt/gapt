@@ -58,7 +58,7 @@ class ContextSection(ctx: MutableContext) {
   def revert[T: ClosedUnderReplacement](t: T): T = {
     val updatesSinceSectionBegin = ctx.updates.dropRight(initialCtx.updates.size)
     ctx.ctx = initialCtx
-    val repl = revertParameters(updatesSinceSectionBegin, parameters.toMap, tyParameters.toMap)(ctx)
+    val repl = revertParameters(updatesSinceSectionBegin, parameters.toMap, tyParameters.toMap)(using ctx)
     TermReplacement(t, repl._1, repl._2)
   }
 }

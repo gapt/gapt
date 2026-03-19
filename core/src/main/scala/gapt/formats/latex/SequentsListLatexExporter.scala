@@ -94,7 +94,7 @@ trait SequentsListLatexExporter {
     getOutput.write("\\subsection{Variable Types}" + nLine)
 
     getOutput.write("\\[\\begin{array}{ll}" + nLine)
-    for ((key, set) <- vmap.toList.sortBy(_._1)(TAOrdering)) {
+    for ((key, set) <- vmap.toList.sortBy(_._1)(using TAOrdering)) {
       var set_ = set.toList.sorted
       while (set_.nonEmpty) {
         val (ten, rest) = set_.splitAt(10)
@@ -107,7 +107,7 @@ trait SequentsListLatexExporter {
 
     getOutput.write("\\subsection{Constant Types}" + nLine)
     getOutput.write("\\[\\begin{array}{ll}" + nLine)
-    for ((key, set) <- cmap.toList.sortBy(_._1)(TAOrdering)) {
+    for ((key, set) <- cmap.toList.sortBy(_._1)(using TAOrdering)) {
       var set_ = set.toList.sorted
       while (set_.nonEmpty) {
         val (ten, rest) = set_.splitAt(10)

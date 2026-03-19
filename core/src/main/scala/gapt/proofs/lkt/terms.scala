@@ -388,17 +388,17 @@ trait ImplicitInstances {
 
   implicit object replaceableBnd1 extends ClosedUnderReplacement[Bound1] {
     def replace(bnd: Bound1, repl: PartialFunction[Expr, Expr]): Bound1 =
-      bnd.copy(p = TermReplacement(bnd.p, repl)(replaceable))
+      bnd.copy(p = TermReplacement(bnd.p, repl)(using replaceable))
     def names(bnd: Bound1): Set[VarOrConst] = containedNames(bnd.p)
   }
   implicit object replaceableBnd2 extends ClosedUnderReplacement[Bound2] {
     def replace(bnd: Bound2, repl: PartialFunction[Expr, Expr]): Bound2 =
-      bnd.copy(p = TermReplacement(bnd.p, repl)(replaceable))
+      bnd.copy(p = TermReplacement(bnd.p, repl)(using replaceable))
     def names(bnd: Bound2): Set[VarOrConst] = containedNames(bnd.p)
   }
   implicit object replaceableBndN extends ClosedUnderReplacement[BoundN] {
     def replace(bnd: BoundN, repl: PartialFunction[Expr, Expr]): BoundN =
-      bnd.copy(p = TermReplacement(bnd.p, repl)(replaceable))
+      bnd.copy(p = TermReplacement(bnd.p, repl)(using replaceable))
     def names(bnd: BoundN): Set[VarOrConst] = containedNames(bnd.p)
   }
   implicit object replaceableIndCase extends ClosedUnderReplacement[IndCase] {

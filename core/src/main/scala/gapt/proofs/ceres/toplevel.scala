@@ -8,6 +8,6 @@ object extractStruct {
   def apply(p: LKProof): Struct =
     apply(p, CERES.skipNothing)
   def apply(p: LKProof, predicate: Formula => Boolean): Struct =
-    StructCreators.extract(p, predicate)(Context())
+    StructCreators.extract(p, predicate)(using Context())
 
 }

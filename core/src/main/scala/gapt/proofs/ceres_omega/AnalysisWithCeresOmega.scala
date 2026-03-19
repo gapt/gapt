@@ -225,7 +225,7 @@ abstract class AnalysisWithCeresOmega {
   /**
    * A first-order conversion of the deep formula of the [[expansion_proof]].
    */
-  lazy val expansion_proof_fol_deep = reduceHolToFol(replaceAbstractions(expansion_proof.expansionSequent.deep.toImplication)(new Hol2FolDefinitions))(new Hol2FolDefinitions)
+  lazy val expansion_proof_fol_deep = reduceHolToFol(replaceAbstractions(expansion_proof.expansionSequent.deep.toImplication)(using new Hol2FolDefinitions))(using new Hol2FolDefinitions)
 
   /**
    * The proof of the deep formula of the [[expansion_proof]].

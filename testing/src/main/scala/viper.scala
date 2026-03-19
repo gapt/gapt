@@ -43,8 +43,8 @@ object testViper extends App {
   // This turns the cuts into induction inferences
   def cleanProof(prf: LKProof)(implicit ctx: Context): LKProof = {
     val prf1 = cleanStructuralRules(prf)
-    val expPrf = LKToExpansionProof(prf1)(ctx)
-    ExpansionProofToLK(expPrf)(ctx).toOption.get
+    val expPrf = LKToExpansionProof(prf1)(using ctx)
+    ExpansionProofToLK(expPrf)(using ctx).toOption.get
   }
 
   def removeOuterAlls(e: Expr): Expr =
@@ -121,13 +121,13 @@ object testViper extends App {
     prf match {
       case None =>
       case Some(prf1) =>
-        val prf2 = cleanProof(prf1)(problem.context)
+        val prf2 = cleanProof(prf1)(using problem.context)
         val (inds, depth) = countInductions(prf2)
 
         logger.metric("inductions", inds)
         logger.metric("induction_depth", depth)
 
-        val axs = extractInductionAxioms(prf2)(problem.context)
+        val axs = extractInductionAxioms(prf2)(using problem.context)
         val targets = axs.map(inductionTarget)
 
         val atomic = targets.count(e => isExtendedAtom(e.asInstanceOf[Formula]))

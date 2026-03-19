@@ -29,7 +29,7 @@ class LeanCoP extends OneShotProver with ExternalProgram {
   private val nLine = sys.props("line.separator")
 
   override def isValid(s: HOLSequent)(implicit ctx: Maybe[Context]): Boolean =
-    getExpansionProof(s)(ctx.map(_.newMutable)).isDefined
+    getExpansionProof(s)(using ctx.map(_.newMutable)).isDefined
 
   override def getExpansionProof(s: HOLSequent)(implicit ctx: Maybe[MutableContext]): Option[ExpansionProof] = scala.util.boundary {
     val cnf = structuralCNF(s).map(c => universalClosure(c.conclusion.toDisjunction) -> c).toMap

@@ -66,7 +66,7 @@ object Sat4j extends Sat4j {
     new VecInt(clause toArray)
 
   implicit def cnf2sat4j(cnf: DIMACS.CNF): IVec[IVecInt] =
-    new Vec(cnf.map { implicitly[IVecInt](_) }.toArray)
+    new Vec(cnf.map { implicitly[IVecInt](using _) }.toArray)
 
   implicit def sat4j2clause(constr: IConstr): DIMACS.Clause =
     for (i <- 0 until constr.size()) yield LiteralsUtils.toDimacs(constr `get` i)

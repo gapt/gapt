@@ -93,7 +93,7 @@ class CERES {
     val es = p.endSequent
 
     val p_ = regularize(skolemizeLK(AtomicExpansion(p)))
-    val cs = CharacteristicClauseSet(StructCreators.extract(p_, pred)(Context()))
+    val cs = CharacteristicClauseSet(StructCreators.extract(p_, pred)(using Context()))
 
     val proj = Projections(p_, pred)
     val tapecl = subsumedClausesRemoval(deleteTautologies(cs).toList)
@@ -144,7 +144,7 @@ class CERES {
   def expansionProof(p: LKProof, skip: Formula => Boolean = CERES.skipNothing, prover: ResolutionProver = Escargot): ExpansionProof = {
     val es = p.endSequent
     val p_ = regularize(AtomicExpansion(skolemizeLK(p)))
-    val cs = CharacteristicClauseSet(StructCreators.extract(p_, CERES.skipNothing)(Context()))
+    val cs = CharacteristicClauseSet(StructCreators.extract(p_, CERES.skipNothing)(using Context()))
 
     val proj = Projections(p_, CERES.skipNothing)
     val tapecl = subsumedClausesRemoval(deleteTautologies(cs).toList)

@@ -19,11 +19,11 @@ object StandardInductionAxioms {
 }
 
 case class StandardInductionAxioms(
-    variableSelector: VariableSelector = allVariablesSelector(_)(_),
+    variableSelector: VariableSelector = allVariablesSelector(_)(using _),
     formulaSelector: FormulaSelector = firstFormulaSelector(_)
 ) extends AxiomFactory {
 
-  def forAllVariables = copy(variableSelector = allVariablesSelector(_)(_))
+  def forAllVariables = copy(variableSelector = allVariablesSelector(_)(using _))
 
   def forLabel(label: String) = copy(formulaSelector = findFormula(_, label))
 

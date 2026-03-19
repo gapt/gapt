@@ -43,7 +43,7 @@ abstract class RegressionTestCase(val name: String) extends Serializable {
    */
   def run(): TestRun = {
     val testRun = new TestRun()
-    try testRun.runStep(None, timeout)(test(testRun))
+    try testRun.runStep(None, timeout)(test(using testRun))
     catch { case _: Throwable => () }
     testRun
   }

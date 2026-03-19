@@ -69,7 +69,7 @@ case class TipDomainClosureAxioms(types: List[InductiveType] = Nil) extends Axio
       datatype.constructors.foreach { _ =>
         forget(s"IH${variable}_0")
         proofState += repeat(orR)
-        proofState += escargot(ctx.newMutable)
+        proofState += escargot(using ctx.newMutable)
       }
       proofState.result
     }

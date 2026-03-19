@@ -102,7 +102,7 @@ object elemAtIndex extends TacticsProof {
     hoc"'+': nat>nat>nat",
     "0 + x = x",
     "s(x) + y = s(x + y)"
-  )(ctx)
+  )(using ctx)
   ctx += InductiveType(
     ty"list ?a",
     hoc"nil{?a}: list ?a",

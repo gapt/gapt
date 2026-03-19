@@ -18,11 +18,11 @@ import gapt.provers.viper.aip._
  * @param fsel The formula of a sequent for which axioms are generated.
  */
 case class IndependentInductionAxioms(
-    vsel: VariableSelector = allVariablesSelector(_)(_),
+    vsel: VariableSelector = allVariablesSelector(_)(using _),
     fsel: FormulaSelector = firstFormulaSelector(_)
 ) extends AxiomFactory {
 
-  def forAllVariables = copy(vsel = allVariablesSelector(_)(_))
+  def forAllVariables = copy(vsel = allVariablesSelector(_)(using _))
 
   def forVariables(variables: List[Var]) = copy(vsel = (_, _) => variables)
 

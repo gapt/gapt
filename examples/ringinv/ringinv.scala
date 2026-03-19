@@ -907,7 +907,7 @@ object ringinv extends TacticsProof {
 
   def proof_acnf = { // executing this code can take a couple of minutes
     val p1 = proof
-    val p2 = eliminateDefinitions(p1)(ctx)
+    val p2 = eliminateDefinitions(p1)(using ctx)
     val p3 = eliminateSetEquality(p2)
     cutNormal(p3)
   }

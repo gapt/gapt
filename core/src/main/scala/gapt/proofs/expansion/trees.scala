@@ -122,11 +122,11 @@ case class ExpansionTree(term: ETt, polarity: Polarity, shallow: Formula) extend
             val Apps(skConst: Const, skArgs) = skT: @unchecked
             ctx.foreach { ctx =>
               val Some(skD) = ctx.skolemDef(skConst): @unchecked
-              Checkable.requireDefEq(skD(skArgs), sh)(ctx)
+              Checkable.requireDefEq(skD(skArgs), sh)(using ctx)
             }
             go(child)
           case ETDefinition(sh, child) =>
-            ctx.foreach(Checkable.requireDefEq(sh, child.shallow)(_))
+            ctx.foreach(Checkable.requireDefEq(sh, child.shallow)(using _))
             go(child)
         }
     }
@@ -156,7 +156,7 @@ object ExpansionTree {
   }
 
   implicit object checkable extends Checkable[ExpansionTree] {
-    def check(et: ExpansionTree)(implicit ctx: Context): Unit = et.check()(ctx)
+    def check(et: ExpansionTree)(implicit ctx: Context): Unit = et.check()(using ctx)
   }
 }
 

@@ -91,10 +91,10 @@ class Spin(opts: SpinOptions) {
 
       // Perform an initial induction while the goal has not been split across several clauses
       val goals = ground.succedent
-      val goalAxioms = goals flatMap (goal => clauseAxioms(skolemize(goal) +: Sequent())(ctx))
+      val goalAxioms = goals flatMap (goal => clauseAxioms(skolemize(goal) +: Sequent())(using ctx))
       val goalGround = goalAxioms.map(_.formula) ++: ground
 
-      val cnf = structuralCNF(goalGround)(ctx)
+      val cnf = structuralCNF(goalGround)(using ctx)
       val cnfMap = cnf.view.map(p => p.conclusion -> p).toMap
 
       val clauses = cnfMap.keySet.map(_.map(_.asInstanceOf[Atom]))
@@ -235,11 +235,11 @@ class Spin(opts: SpinOptions) {
     private def generatePotentialInductionAxioms(`given`: Cls): Unit = {
       // TODO: this should probably be less restrictive now that we perform more subgoal generalization
       if (
-        performGeneralization || `given`.clause.exists(constants.nonLogical(_) exists (isInductive(_)(ctx))) &&
+        performGeneralization || `given`.clause.exists(constants.nonLogical(_) exists (isInductive(_)(using ctx))) &&
         !inductedClauses.contains(`given`.clause)
       ) {
         EscargotLogger.time("axiom_gen") {
-          clauseAxioms(`given`.clause)(ctx) foreach (possibleAxioms.enqueue(_))
+          clauseAxioms(`given`.clause)(using ctx) foreach (possibleAxioms.enqueue(_))
         }
         inductedClauses += `given`.clause
       }
@@ -253,10 +253,10 @@ class AxiomGenerator(options: SpinOptions) {
 
   def axioms(cls: HOLSequent)(implicit ctx: Context): Seq[Axiom] = {
     val f = negate(cls.toFormula)
-    val occs = occurrences(f)(ctx)
+    val occs = occurrences(f)(using ctx)
 
     val underSame = occs.underSame.map(_.filter { t =>
-      asInductiveConst(t)(ctx).isDefined ||
+      asInductiveConst(t)(using ctx).isDefined ||
       // Only generalise function-headed subterms with at least two primary occurences
       (options.performGeneralization && funHeaded(t) && occs.primary(t).size >= 2)
     })
@@ -276,7 +276,7 @@ class AxiomGenerator(options: SpinOptions) {
 
         findOrFilter(testFormula(_, List(v))) flatMap { targ =>
           val target = universalClosureExcept(quantifyAccumulators(targ, occs), Set(v))
-          StandardInductionAxioms(v, target)(ctx).toOption.map(Seq(_))
+          StandardInductionAxioms(v, target)(using ctx).toOption.map(Seq(_))
         }
       case ts =>
         // These terms appear together so we need to induct on all of them together for the definitions to reduce.
@@ -295,12 +295,12 @@ class AxiomGenerator(options: SpinOptions) {
         }
 
         // Also generate targets where we don't generalise subterms, in case all of those fail tests.
-        val targets = buildTargets(ts) ++ buildTargets(ts.flatMap(asInductiveConst(_)(ctx)))
+        val targets = buildTargets(ts) ++ buildTargets(ts.flatMap(asInductiveConst(_)(using ctx)))
 
         targets.find { case (vs, target) => testFormula(target, vs.toList) } flatMap {
           case (vs, targ) =>
             val target = universalClosureExcept(quantifyAccumulators(targ, occs), vs.toSet)
-            SequentialInductionAxioms()(Sequent() :+ ("axiom", target))(ctx).toOption
+            SequentialInductionAxioms()(Sequent() :+ ("axiom", target))(using ctx).toOption
         }
     } flatten
   }
@@ -309,10 +309,10 @@ class AxiomGenerator(options: SpinOptions) {
     All.Block((freeVariables(f) -- vars).toSeq, f)
 
   private def occurrences(f: Formula)(implicit ctx: Context): Occurences =
-    new OccurrencesFinder()(ctx).apply(f)
+    new OccurrencesFinder()(using ctx).apply(f)
 
   private def testFormula(f: Formula, xs: List[Var])(implicit ctx: Context): Boolean =
-    new FormulaTester(options.acceptNotNormalized, options.sampleTestTerms)(ctx).apply(f, xs)
+    new FormulaTester(options.acceptNotNormalized, options.sampleTestTerms)(using ctx).apply(f, xs)
 
   private def funHeaded(e: Expr)(implicit ctx: Context): Boolean =
     e match {
@@ -340,7 +340,7 @@ class AxiomGenerator(options: SpinOptions) {
   }
 
   private def quantifyAccumulators(f: Formula, occs: Occurences)(implicit ctx: Context): Formula = {
-    val accsPoses = occs.accumulators.view.filterKeys(asInductiveConst(_)(ctx).isDefined).toMap
+    val accsPoses = occs.accumulators.view.filterKeys(asInductiveConst(_)(using ctx).isDefined).toMap
 
     accsPoses.foldLeft(f) {
       case (g, (acc, _)) =>
@@ -408,7 +408,7 @@ class OccurrencesFinder()(implicit ctx: Context) {
         }
 
         // Gather subterms that occur together in primary position under the same defined symbol
-        if (inPrimary && !isConstructor(c)(ctx)) {
+        if (inPrimary && !isConstructor(c)(using ctx)) {
           val directSame = primaryArgs map rhsArgs
 
           // Consider all of e1, e2 and e3 under the same symbol in f(e1, f(e2, e3))
@@ -586,7 +586,7 @@ class FormulaTester(acceptNotNormalized: Boolean, numberTestTerms: Int)(implicit
     subs match {
       case List() => LazyList(f)
       case v :: vs =>
-        val termStream = enumerateTerms.forType(v.ty)(ctx)
+        val termStream = enumerateTerms.forType(v.ty)(using ctx)
         val terms = termStream filter (_.ty == v.ty) take numberTestTerms
         terms.flatMap(t => makeSampleFormulas(f, vs) map (replaceExpr(_, v, t)))
     }
@@ -595,7 +595,7 @@ class FormulaTester(acceptNotNormalized: Boolean, numberTestTerms: Int)(implicit
   // Some terms, like `sk_0 == sk_0` do not reduce even though any instantiation of the skolem terms reduces
   // to the same value. Attempt to unblock such terms by testing for all constructor forms of the terms involved.
   private def unblock(nf: Formula)(implicit ctx: Context): Boolean = {
-    val skolems = constants.nonLogical(nf).flatMap(asInductiveConst(_)(ctx))
+    val skolems = constants.nonLogical(nf).flatMap(asInductiveConst(_)(using ctx))
 
     if (skolems.isEmpty)
       return false
@@ -615,14 +615,14 @@ class FormulaTester(acceptNotNormalized: Boolean, numberTestTerms: Int)(implicit
     normalized.get(f) match {
       case Some(nf) => nf
       case None =>
-        val nf = orientEqualities(normalizer.normalize(unfoldQuantifiers(f)(ctx)).asInstanceOf[Formula])
+        val nf = orientEqualities(normalizer.normalize(unfoldQuantifiers(f)(using ctx)).asInstanceOf[Formula])
         normalized += f -> nf
         nf
     }
   }
 
   private def isEvaluable(f: Formula)(implicit ctx: Context): Boolean =
-    constants.nonLogical(f).forall(c => origConstants.contains(c) || isConstructor(c)(ctx))
+    constants.nonLogical(f).forall(c => origConstants.contains(c) || isConstructor(c)(using ctx))
 
   private def isValid(f: Formula): Boolean = sat.isValid(f)
 

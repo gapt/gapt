@@ -48,7 +48,7 @@ import scala.collection.mutable
 
 object ExpansionProofToMG3i {
   def apply(expansionProof: ExpansionProof)(implicit ctx: Context = MutableContext.guess(expansionProof.deep)): Either[(Theory, ExpansionSequent), LKProof] =
-    new ExpansionProofToMG3i(Escargot.getAtomicLKProof)(ctx.newMutable).apply(expansionProof)
+    new ExpansionProofToMG3i(Escargot.getAtomicLKProof)(using ctx.newMutable).apply(expansionProof)
 }
 
 class ExpansionProofToMG3i(theorySolver: HOLClause => Option[LKProof])(implicit ctx: MutableContext) extends SolveUtils {

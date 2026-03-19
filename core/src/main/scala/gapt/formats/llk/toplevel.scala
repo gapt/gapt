@@ -79,7 +79,7 @@ package short {
   }
 
   object hof {
-    def apply(s: String)(implicit signature: LLKSignature) = hot(s)(signature) match {
+    def apply(s: String)(implicit signature: LLKSignature) = hot(s)(using signature) match {
       case f: Formula => f
       case e: Expr    => throw new Exception(s"ef is an expression of type ${e.ty} but not a formula!")
     }

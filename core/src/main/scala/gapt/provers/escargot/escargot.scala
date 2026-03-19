@@ -139,7 +139,7 @@ class Escargot(splitting: Boolean, equality: Boolean, propositional: Boolean) ex
     implicit val ctx: MutableContext = ctx0.getOrElse(MutableContext.guess(sequent)).newMutable
     withSection { section =>
       val seq = section.groundSequent(sequent)
-      getResolutionProof(seq.map(_.asInstanceOf[Atom]).map(Sequent() :+ _, _ +: Sequent()).elements)(ctx) map { resolution =>
+      getResolutionProof(seq.map(_.asInstanceOf[Atom]).map(Sequent() :+ _, _ +: Sequent()).elements)(using ctx) map { resolution =>
         UnitResolutionToLKProof(resolution)
       }
     }

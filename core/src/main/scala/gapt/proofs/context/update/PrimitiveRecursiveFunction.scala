@@ -170,7 +170,7 @@ object PrimitiveRecursiveFunction {
       implicit ctx: Context
   ): PrimitiveRecursiveFunction = {
     val temporaryContext = ctx + c
-    apply(c, equations.map { parseDefinitionalEquation(c, _)(temporaryContext) })
+    apply(c, equations.map { parseDefinitionalEquation(c, _)(using temporaryContext) })
   }
 }
 
@@ -203,7 +203,7 @@ case object PrimitiveRecursiveFunctions {
     val parsedDefinitions: Iterable[PrimitiveRecursiveFunction] =
       rawDefinitions.map {
         case (const, equations) =>
-          (const, equations.map { parseDefinitionalEquation(const, _)(parsingContext) })
+          (const, equations.map { parseDefinitionalEquation(const, _)(using parsingContext) })
       }.map {
         case (const, equations) =>
           PrimitiveRecursiveFunction(const, equations)

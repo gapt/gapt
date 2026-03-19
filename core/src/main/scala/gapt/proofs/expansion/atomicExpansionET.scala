@@ -58,7 +58,7 @@ object atomicExpansionET {
     apply(ep, definedAtoms, purelyPropositional = false)
 
   def apply(ep: ExpansionProof, definedAtoms: Set[Const], purelyPropositional: Boolean)(implicit ctx: Context): ExpansionProof =
-    loop(ep, definedAtoms, purelyPropositional)(ctx.newMutable)
+    loop(ep, definedAtoms, purelyPropositional)(using ctx.newMutable)
 
   private def loop(ep: ExpansionProof, definedAtoms: Set[Const], purelyPropositional: Boolean)(implicit ctx: MutableContext): ExpansionProof =
     if (definedAtoms.isEmpty) ep

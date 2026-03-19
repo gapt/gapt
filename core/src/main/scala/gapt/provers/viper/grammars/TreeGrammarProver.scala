@@ -291,7 +291,7 @@ class TreeGrammarProver(val ctx: Context, val sequent: HOLSequent, val options: 
 
     val formula = BetaReduction.betaNormalize(instantiate(qbup, solution))
     metric("solution", solution.toSigRelativeString)
-    require(smtSolver.isValid(skolemize(formula))(ctx = Maybe.None), "Solution not valid")
+    require(smtSolver.isValid(skolemize(formula))(using ctx = Maybe.None), "Solution not valid")
 
     solution
   }
@@ -303,7 +303,7 @@ class TreeGrammarProver(val ctx: Context, val sequent: HOLSequent, val options: 
       bup,
       solution,
       if (options.equationalTheory.isEmpty) EquationalLKProver else Escargot
-    )(ctx.newMutable)
+    )(using ctx.newMutable)
     info(s"Found proof with ${proof.dagLike.size} inferences")
     metric("ind_pr_size", proof.dagLike.size)
 
@@ -333,7 +333,7 @@ class TreeGrammarProver(val ctx: Context, val sequent: HOLSequent, val options: 
     info(s"Instance proof for ${inst.toSigRelativeString}:")
     info(instProof.toSigRelativeString)
     info("Language:")
-    encoding.encode(instProof).toSeq.map(_.toUntypedString(BabelSignature.defaultSignature)).sorted.foreach(info(_))
+    encoding.encode(instProof).toSeq.map(_.toUntypedString(using BabelSignature.defaultSignature)).sorted.foreach(info(_))
 
     // FIXME: still broken for uninterpreted sorts
     val grounding = Substitution(freeVariablesET(instProof).diff(freeVariables(inst)).map(v => v -> mkGroundTerm(v.ty)))

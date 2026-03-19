@@ -17,14 +17,14 @@ case class ProofDefinitionDeclaration(lhs: Expr, referencedProof: LKProof) exten
     val Apps(c: Const, vs) = lhs: @unchecked
     vs.foreach(ctx.check(_))
     val declSeq = ctx.get[ProofNames].lookup(lhs)
-      .getOrElse(throw new IllegalArgumentException(s"Proof name ${lhs.toSigRelativeString(ctx)} is not defined"))
+      .getOrElse(throw new IllegalArgumentException(s"Proof name ${lhs.toSigRelativeString(using ctx)} is not defined"))
     require(
       referencedProof.conclusion.isSubMultisetOf(declSeq),
       "End-sequent of proof definition does not match declaration.\n" +
-        "Given sequent: " + referencedProof.endSequent.toSigRelativeString(ctx) + "\n" +
-        "Expected sequent: " + declSeq.toSigRelativeString(ctx) + "\n" +
+        "Given sequent: " + referencedProof.endSequent.toSigRelativeString(using ctx) + "\n" +
+        "Expected sequent: " + declSeq.toSigRelativeString(using ctx) + "\n" +
         "Extraneous formulas: " +
-        referencedProof.endSequent.diff(declSeq).toSigRelativeString(ctx)
+        referencedProof.endSequent.diff(declSeq).toSigRelativeString(using ctx)
     )
     val conn = SequentConnector.guessInjection(fromLower = referencedProof.conclusion, toUpper = declSeq)
     val defn = ProofDefinition(lhs, conn, referencedProof)

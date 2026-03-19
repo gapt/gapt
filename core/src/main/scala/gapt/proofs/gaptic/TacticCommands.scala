@@ -43,7 +43,7 @@ trait TacticCommands {
   /**
    * Applies the `LogicalAxiom` tactic to the current subgoal: A subgoal of the form `A, Γ :- Δ, A` will be closed.
    */
-  def ref(proofName: String)(implicit ctx: Context) = ProofLinkTactic(proofName)(ctx)
+  def ref(proofName: String)(implicit ctx: Context) = ProofLinkTactic(proofName)(using ctx)
 
   /**
    * Applies the `LogicalAxiom` tactic to the current subgoal: A subgoal of the form `A, Γ :- Δ, A` will be closed.

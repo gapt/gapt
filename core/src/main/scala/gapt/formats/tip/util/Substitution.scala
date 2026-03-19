@@ -31,7 +31,7 @@ case class Substitution(map: (TipSmtIdentifier, TipSmtExpression)*) {
   ) //
       : Substitution = {
     Substitution(
-      substitution.filter { case (v, t) => predicate(v, t) } toSeq*
+      substitution.filter { case (v, t) => predicate(v, t) }.toSeq*
     )
   }
 

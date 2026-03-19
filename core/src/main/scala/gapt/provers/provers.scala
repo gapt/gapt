@@ -80,13 +80,13 @@ trait Prover {
 
   def getEpsilonProof(seq: HOLSequent)(implicit ctx0: Maybe[MutableContext]): Option[EpsilonProof] = {
     implicit val ctx = ctx0.getOrElse(MutableContext.guess(seq))
-    getExpansionProof(seq)(ctx).map(ExpansionProofToEpsilon(_))
+    getExpansionProof(seq)(using ctx).map(ExpansionProofToEpsilon(_))
   }
   def getEpsilonProof(formula: Formula)(implicit ctx: Maybe[MutableContext]): Option[EpsilonProof] =
     getEpsilonProof(Sequent() :+ formula)
 
   def getInterpolant(tree: Tree[Formula])(implicit ctx: Maybe[Context]): Option[Tree[Formula]] =
-    getLKProof(tree.postOrder ++: Sequent())(ctx.map(_.newMutable)).map(ContractionMacroRule(_)).map(p => ExtractInterpolant(p, tree.map(p.conclusion.indexOf)))
+    getLKProof(tree.postOrder ++: Sequent())(using ctx.map(_.newMutable)).map(ContractionMacroRule(_)).map(p => ExtractInterpolant(p, tree.map(p.conclusion.indexOf)))
 
   /**
    * Method for running a session.

@@ -18,11 +18,11 @@ import gapt.proofs.context.Context
  * @param fsel The formula of a sequent for which induction axioms are generated.
  */
 case class SequentialInductionAxioms(
-    vsel: VariableSelector = allVariablesSelector(_)(_),
+    vsel: VariableSelector = allVariablesSelector(_)(using _),
     fsel: FormulaSelector = firstFormulaSelector(_)
 ) extends AxiomFactory {
 
-  def forAllVariables = copy(vsel = allVariablesSelector(_)(_))
+  def forAllVariables = copy(vsel = allVariablesSelector(_)(using _))
 
   def forVariables(variables: List[Var]) = copy(vsel = (_, _) => variables)
 

@@ -59,10 +59,10 @@ object StructCreators {
     And(CharacteristicClauseSet(s).toSeq map (_.toDisjunction))
 
   def extract(p: LKProof)(implicit ctx: Context): Struct =
-    extract(p, p.endSequent.map(_ => false))(_ => true, ctx)
+    extract(p, p.endSequent.map(_ => false))(using _ => true, ctx)
 
   def extract(p: LKProof, predicate: Formula => Boolean)(implicit ctx: Context): Struct =
-    extract(p, p.endSequent.map(_ => false))(predicate, ctx)
+    extract(p, p.endSequent.map(_ => false))(using predicate, ctx)
 
   private def mapToUpperProof[Formula](conn: SequentConnector, cut_occs: Sequent[Boolean], default: Boolean) =
     conn.parents(cut_occs).map(_.headOption getOrElse default)

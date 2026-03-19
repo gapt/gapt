@@ -36,7 +36,7 @@ object SchematicStruct {
             (
               CLS(placeHolder, theActualConfig),
               (
-                StructCreators.extract(assocProof, theActualConfig)(_ => true, ctx),
+                StructCreators.extract(assocProof, theActualConfig)(using _ => true, ctx),
                 EigenVariablesLK(assocProof)
               )
             )

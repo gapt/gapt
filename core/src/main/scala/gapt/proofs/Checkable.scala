@@ -134,7 +134,7 @@ object Checkable {
         case _: ContractionRule | _: WeakeningLeftRule | _: WeakeningRightRule =>
         case _: CutRule                                                        =>
         case d: ConversionRule =>
-          requireDefEq(d.mainFormula, d.auxFormula)(ctx)
+          requireDefEq(d.mainFormula, d.auxFormula)(using ctx)
       }
     }
   }
@@ -145,7 +145,7 @@ object Checkable {
     def check(p: ResolutionProof)(implicit ctx: Context): Unit = {
       def checkAvatarDef(comp: AvatarDefinition): Unit =
         for ((df, by) <- comp.inducedDefinitions)
-          requireDefEq(df, by)(ctx)
+          requireDefEq(df, by)(using ctx)
 
       p.subProofs.foreach {
         case Input(sequent)             => ctx.check(sequent)
@@ -158,7 +158,7 @@ object Checkable {
           require(BetaReduction.betaNormalize(skolemDef(q.skolemArgs)) == q.subProof.conclusion(q.idx))
           ctx.check(q.skolemTerm)
         case DefIntro(_, _, definition, _) =>
-          requireDefEq(definition.what, definition.by)(ctx)
+          requireDefEq(definition.what, definition.by)(using ctx)
         case _: PropositionalResolutionRule                               =>
         case AvatarComponent(defn)                                        => checkAvatarDef(defn)
         case AvatarSplit(_, _, defn)                                      => checkAvatarDef(defn)

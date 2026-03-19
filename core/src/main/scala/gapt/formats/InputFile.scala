@@ -20,7 +20,7 @@ object InputFile {
   implicit def fromFileName(fileName: String): InputFile = fromPath(FilePath(fileName))
 
   def readStream(stream: InputStream): String =
-    scala.io.Source.fromInputStream(stream)(Codec.UTF8).mkString
+    scala.io.Source.fromInputStream(stream)(using Codec.UTF8).mkString
 }
 case class StringInputFile(content: String) extends InputFile {
   def fileName = "<string>"

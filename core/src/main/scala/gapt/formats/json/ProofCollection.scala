@@ -49,7 +49,7 @@ private[json] object ProofCollectionCodec {
     val encodeProofWithName: Encoder[P] = p =>
       encodeProof(numEncoder)(p).mapObject(("name", Json.fromString(s"${p.longName}")) +: _)
 
-    Encoder.encodeMap[Int, P](implicitly, encodeProofWithName)(
+    Encoder.encodeMap[Int, P](using implicitly, encodeProofWithName)(
       ListMap(coll.proofMap.toVector.map(_.swap).sortBy(_._1)*)
     )
   }

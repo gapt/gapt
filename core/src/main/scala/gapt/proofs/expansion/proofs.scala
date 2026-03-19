@@ -148,7 +148,7 @@ object ExpansionProof {
 
   implicit object checkable extends Checkable[ExpansionProof] {
     def check(ep: ExpansionProof)(implicit ctx: Context): Unit =
-      ep.expansionSequent.foreach(_.check()(ctx))
+      ep.expansionSequent.foreach(_.check()(using ctx))
   }
 }
 

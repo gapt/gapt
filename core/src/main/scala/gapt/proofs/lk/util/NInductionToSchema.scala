@@ -50,7 +50,7 @@ object CreateASchemaVersion extends LKVisitor[MutableContext] {
                 sigma(endSequentLeft)
               )
             })
-            ArithmeticInductionToSchema(finProof, sigma(proofName))(ctx)
+            ArithmeticInductionToSchema(finProof, sigma(proofName))(using ctx)
         }
         val newProofName = proofName.replace(proofName.find(newVarForDef).head, typeTerm)
         withIdentitySequentConnector(ProofLink(newProofName, proof.endSequent))

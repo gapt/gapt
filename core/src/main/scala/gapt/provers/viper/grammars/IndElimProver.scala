@@ -31,7 +31,7 @@ case class IndElimProver(
   def apply(ts: Seq[Expr]): (LKt, LocalCtx) = {
     val subst = Substitution(xs zip ts)
     val lctx1 = subst(lctx)
-    normalizeLKt.induction(subst(proofTerm), lctx1)(ctx) -> lctx1
+    normalizeLKt.induction(subst(proofTerm), lctx1)(using ctx) -> lctx1
   }
 
   def getLKtProof(seq: HOLSequent): (LKt, LocalCtx) = {

@@ -64,7 +64,7 @@ object MRealizability {
       val indType = systemT.get[BaseTypes].baseTypes(name)
 
       val resultTypeVariable = TVar(new NameGenerator(typeVariables(indType) map (_.name)).fresh("a"))
-      val rec @ Const(_, FunctionType(_, recCaseTypes :+ _), _) = recursor(indType, resultTypeVariable)(ctx): @unchecked
+      val rec @ Const(_, FunctionType(_, recCaseTypes :+ _), _) = recursor(indType, resultTypeVariable)(using ctx): @unchecked
 
       val ngTermVariableNames = new NameGenerator(systemT.constants map (_.name))
 
@@ -101,13 +101,13 @@ object MRealizability {
       List(
         (pi1(pair(x, y)) -> x)
       )
-    )(systemT)
+    )(using systemT)
     systemT += PrimRecFun(
       pi2,
       List(
         (pi2(pair(x, y)) -> y)
       )
-    )(systemT)
+    )(using systemT)
 
     // add sum type
     val sum = ty"sum ?a ?b"
@@ -123,7 +123,7 @@ object MRealizability {
         (matchSum(inl(x), w1, w2) -> w1(x)),
         (matchSum(inr(y), w1, w2) -> w2(y))
       )
-    )(systemT)
+    )(using systemT)
 
     // add a term+type to represent the empty program
     systemT += InductiveType(
@@ -152,10 +152,10 @@ object MRealizability {
     val ng = new NameGenerator(freeVariablesND(proof).map(_.name))
     val varsAnt = proof.conclusion.zipWithIndex.antecedent.map(x => (x._2, Var(ng.fresh("y"), flat(x._1)))).toMap
 
-    val mrealizer = mrealizeCases(proof, varsAnt, ng)(context)
+    val mrealizer = mrealizeCases(proof, varsAnt, ng)(using context)
 
     if (re)
-      (varsAnt map (x => (x._1, Var(x._2.name, remEmpProgType(x._2.ty)(context)))), remEmpProg(mrealizer)(context))
+      (varsAnt map (x => (x._1, Var(x._2.name, remEmpProgType(x._2.ty)(using context)))), remEmpProg(mrealizer)(using context))
     else (varsAnt, mrealizer)
   }
 

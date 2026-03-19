@@ -113,7 +113,7 @@ object syntacticMatching {
   def apply(
       pairs: Iterable[(Ty, Ty)]
   )(implicit dummyImplicit: DummyImplicit, dummyImplicit2: DummyImplicit): Option[Substitution] =
-    apply(pairs, PreSubstitution())(DummyImplicit.dummyImplicit)
+    apply(pairs, PreSubstitution())(using DummyImplicit.dummyImplicit)
 
   def apply(
       pairs: Iterable[(Ty, Ty)],

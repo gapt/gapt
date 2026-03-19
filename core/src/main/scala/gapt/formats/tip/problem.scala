@@ -127,7 +127,7 @@ case class TipProblem(
     !lhs.isInstanceOf[Var]
   }
 
-  override def toString: String = toSequent.toSigRelativeString(context)
+  override def toString: String = toSequent.toSigRelativeString(using context)
 }
 
 object subterms {

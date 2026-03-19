@@ -33,7 +33,7 @@ trait ResolutionProver extends OneShotProver { self =>
     implicit val ctx: MutableContext = ctx0.getOrElse(MutableContext.guess(seq0))
     withSection { section =>
       val seq = section.groundSequent(seq0)
-      getResolutionProof(seq)(ctx) map { resolution =>
+      getResolutionProof(seq)(using ctx) map { resolution =>
         val lk = ResolutionToLKProof(resolution)
         if (addWeakenings) WeakeningContractionMacroRule(lk, seq)
         else lk
@@ -42,7 +42,7 @@ trait ResolutionProver extends OneShotProver { self =>
   }
 
   override def isValid(seq: HOLSequent)(implicit ctx: Maybe[Context]): Boolean =
-    getResolutionProof(seq)(ctx.map(_.newMutable)).isDefined
+    getResolutionProof(seq)(using ctx.map(_.newMutable)).isDefined
 
   def getResolutionProof(cnf: Iterable[ResolutionProof])(implicit ctx: Maybe[MutableContext], dummyImplicit: DummyImplicit): Option[ResolutionProof] = {
     val cnfMap = cnf.view.map(p => p.conclusion -> p).toMap
@@ -52,7 +52,7 @@ trait ResolutionProver extends OneShotProver { self =>
   }
 
   def getResolutionProof(sequentSet: Iterable[HOLSequent])(implicit ctx0: Maybe[MutableContext], dummyImplicit1: DummyImplicit, dummyImplicit2: DummyImplicit): Option[ResolutionProof] = {
-    implicit val ctx = ctx0.getOrElse(MutableContext.guess(sequentSet)(dummyImplicit1))
+    implicit val ctx = ctx0.getOrElse(MutableContext.guess(sequentSet)(using dummyImplicit1))
     val cnf = structuralCNF.onProofs(
       sequentSet.map(Input.apply).toSet,
       propositional = false,
@@ -60,7 +60,7 @@ trait ResolutionProver extends OneShotProver { self =>
       bidirectionalDefs = false,
       cse = false
     )
-    getResolutionProof(cnf)(ctx, dummyImplicit1)
+    getResolutionProof(cnf)(using ctx, dummyImplicit1)
   }
 
   def getResolutionProof(formula: Formula)(implicit ctx: Maybe[MutableContext]): Option[ResolutionProof] = getResolutionProof(Sequent() :+ formula)
@@ -70,8 +70,8 @@ trait ResolutionProver extends OneShotProver { self =>
     val section = new ContextSection(ctx)
     val ground = section.groundSequent(seq)
 
-    val cnf = structuralCNF(ground, propositional = false)(ctx)
-    getResolutionProof(cnf)(ctx, implicitly)
+    val cnf = structuralCNF(ground, propositional = false)(using ctx)
+    getResolutionProof(cnf)(using ctx, implicitly)
   }
 
   def getResolutionProof(seq: Iterable[HOLClause])(implicit ctx: Maybe[MutableContext]): Option[ResolutionProof]
@@ -79,7 +79,7 @@ trait ResolutionProver extends OneShotProver { self =>
   override def getExpansionProof(seq: HOLSequent)(implicit ctx0: Maybe[MutableContext]): Option[ExpansionProof] = {
     implicit val ctx: MutableContext = ctx0.getOrElse(MutableContext.guess(seq))
     withSection { section =>
-      getResolutionProof(section.groundSequent(seq))(ctx).map(ResolutionToExpansionProof(_)(ctx))
+      getResolutionProof(section.groundSequent(seq))(using ctx).map(ResolutionToExpansionProof(_)(using ctx))
     }
   }
 
@@ -88,7 +88,7 @@ trait ResolutionProver extends OneShotProver { self =>
     override def isValid(sequent: HOLSequent)(implicit ctx: Maybe[Context]): Boolean = {
       val reduction = CNFReductionLKRes |> PredicateReductionCNF |> ErasureReductionCNF
       val (folProblem, _) = reduction `forward` sequent
-      self.getResolutionProof(folProblem)(ctx.map(_.newMutable)).isDefined
+      self.getResolutionProof(folProblem)(using ctx.map(_.newMutable)).isDefined
     }
 
     override def getExpansionProof(sequent: HOLSequent)(implicit ctx: Maybe[MutableContext]): Option[ExpansionProof] = {
@@ -117,7 +117,7 @@ trait ResolutionProver extends OneShotProver { self =>
     override def isValid(sequent: HOLSequent)(implicit ctx: Maybe[Context]): Boolean = {
       val reduction = CNFReductionLKRes |> ErasureReductionCNF
       val (folProblem, _) = reduction `forward` sequent
-      self.getResolutionProof(folProblem)(ctx.map(_.newMutable)).isDefined
+      self.getResolutionProof(folProblem)(using ctx.map(_.newMutable)).isDefined
     }
 
     override def getExpansionProof(sequent: HOLSequent)(implicit ctx: Maybe[MutableContext]): Option[ExpansionProof] = {
@@ -146,7 +146,7 @@ trait ResolutionProver extends OneShotProver { self =>
     override def isValid(sequent: HOLSequent)(implicit ctx: Maybe[Context]): Boolean = {
       val reduction = CNFReductionLKRes |> TagReductionCNF
       val (folProblem, _) = reduction `forward` sequent
-      self.getResolutionProof(folProblem)(ctx.map(_.newMutable)).isDefined
+      self.getResolutionProof(folProblem)(using ctx.map(_.newMutable)).isDefined
     }
 
     override def getExpansionProof(sequent: HOLSequent)(implicit ctx: Maybe[MutableContext]): Option[ExpansionProof] = {

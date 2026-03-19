@@ -87,13 +87,13 @@ object check {
         require(isAll == main.inSuc)
         for (ctx_ <- ctx) {
           val Some(skDef) = ctx_.skolemDef(skSym): @unchecked
-          Checkable.requireDefEq(skDef(skArgs), m)(ctx_)
+          Checkable.requireDefEq(skDef(skArgs), m)(using ctx_)
         }
         check(q.p, lctx.up1(p))
       case Def(main, f0, q) =>
         val f = lctx.subst(f0)
         for (ctx_ <- ctx)
-          Checkable.requireDefEq(lctx(main), f)(ctx_)
+          Checkable.requireDefEq(lctx(main), f)(using ctx_)
         check(q.p, lctx.up1(p))
       case p @ Ind(main, f0, t0, cases) =>
         val (f: Abs, t) = lctx.subst((f0, t0)): @unchecked

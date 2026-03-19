@@ -24,7 +24,7 @@ object instantiateProof {
    *
    * @param proofName The name of the linkProof
    */
-  def Instantiate(proofName: Expr)(implicit ctx: Context): LKProof = regularize(eliminateDefinitions(instantiateProof(proofName)(ctx)))
+  def Instantiate(proofName: Expr)(implicit ctx: Context): LKProof = regularize(eliminateDefinitions(instantiateProof(proofName)(using ctx)))
 
   def apply(proofName: Expr)(implicit ctx: Context): LKProof = withConnector(proofName)._2
 
@@ -49,7 +49,7 @@ object instantiateProof {
 
   private object buildProof extends LKVisitor[Context] {
     override def visitProofLink(link: ProofLink, otherArg: Context): (LKProof, SequentConnector) = {
-      val (_, instProof) = instantiateProof.withConnector(link.referencedProof)(otherArg)
+      val (_, instProof) = instantiateProof.withConnector(link.referencedProof)(using otherArg)
       val finProof = WeakeningMacroRule(instProof, link.referencedSequent)
       (finProof, guessInjection(finProof.endSequent, link.referencedSequent))
     }

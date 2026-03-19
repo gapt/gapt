@@ -126,7 +126,7 @@ private object MergeNode {
     et.copy(term = apply(et.term, subst))
   def apply(et: ETt, subst: MutableSubstitution): ETt = {
     val merger = new MergeNode
-    merger.add(et)(subst)
+    merger.add(et)(using subst)
     merger.toETt
   }
 }

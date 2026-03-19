@@ -53,7 +53,7 @@ class Cls(val state: EscargotState, val proof: ResolutionProof, val index: Int) 
   val literalFeatureVecs = clause.map(TermFeatureVec(_))
   val featureVec = ClauseFeatureVec(literalFeatureVecs)
 
-  override def toString = s"[$index] ${proof.stringifiedConclusion(state.ctx)}   (max = ${maximal mkString ", "}) (sel = ${selected mkString ", "}) (w = $weight)"
+  override def toString = s"[$index] ${proof.stringifiedConclusion(using state.ctx)}   (max = ${maximal mkString ", "}) (sel = ${selected mkString ", "}) (w = $weight)"
   override def hashCode = index
 }
 
@@ -332,7 +332,7 @@ class EscargotState(val ctx: MutableContext) {
   def axiomClause(section: ContextSection, axiom: Axiom): (Set[Cls], Map[HOLSequent, ResolutionProof]) = {
     val seq = axiom.formula +: Sequent()
     val ground = section `groundSequent` seq
-    val cnf = structuralCNF(ground)(ctx)
+    val cnf = structuralCNF(ground)(using ctx)
 
     val cnfMap = cnf.view.map(p => p.conclusion -> p).toMap
     val clauses = cnfMap.keySet.map(_.map(_.asInstanceOf[Atom]))

@@ -56,7 +56,7 @@ case class DomainClosureAxioms(types: List[TBase] = Nil) extends AxiomFactory {
         proofState += allR
         proofState += induction(variable)
         constructors foreach {
-          _ => proofState += escargot(ctx.newMutable)
+          _ => proofState += escargot(using ctx.newMutable)
         }
         proofState.result
       }

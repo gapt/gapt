@@ -45,7 +45,7 @@ package object utils {
       next += start
 
       while (next.nonEmpty) {
-        val n = next.minBy({ n => cost.get(n) })(comparator)
+        val n = next.minBy({ n => cost.get(n) })(using comparator)
         next.remove(n)
         workedOff += n
         val ns = neighbors(n).filter { !workedOff.contains(_) }

@@ -190,8 +190,8 @@ class TheoryTestCase(name: String, combined: Boolean)
     }
 
     val terms = proof.subProofs.flatMap(_.endSequent.elements).flatMap(subTerms(_))
-    testBabelExport("babel exporter", terms, _.toString, BabelParser.parse(_)(BabelSignature.defaultSignature))
-    testBabelExport("raw babel exporter", terms, _.toRawString, BabelParser.parse(_)(BabelSignature.defaultSignature))
+    testBabelExport("babel exporter", terms, _.toString, BabelParser.parse(_)(using BabelSignature.defaultSignature))
+    testBabelExport("raw babel exporter", terms, _.toRawString, BabelParser.parse(_)(using BabelSignature.defaultSignature))
     testBabelExport("babel exporter with sig", terms, _.toSigRelativeString, BabelParser.parse(_))
     testBabelExport("raw babel exporter with sig", terms, _.toRawString, BabelParser.parse(_))
 

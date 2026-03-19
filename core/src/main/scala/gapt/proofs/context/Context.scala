@@ -314,7 +314,7 @@ trait Context extends BabelSignature {
    * @tparam T The type of object to be checked.
    */
   def check[T: Checkable](t: T): Unit =
-    implicitly[Checkable[T]].check(t)(this)
+    implicitly[Checkable[T]].check(t)(using this)
 
   /**
    * Applies several updates to the context.
