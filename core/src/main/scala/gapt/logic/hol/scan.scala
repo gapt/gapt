@@ -23,6 +23,11 @@ object scan {
 
   val logger = Logger("scan")
 
+  val defaultOneSidedOnly: Boolean = true
+  val defaultAllowResolutionOnBaseLiterals: Boolean = false
+  val defaultStepLimit: Option[Int] = Some(50)
+  val defaultAttemptLimit: Option[Int] = Some(100)
+
   /**
     * Runs the SCAN algorithm on the input predicate elimination problem in clause form.
     * If successful, returns a derivation whose conclusion
@@ -40,10 +45,10 @@ object scan {
     */
   def apply(
       input: ClauseSetPredicateEliminationProblem,
-      oneSidedOnly: Boolean = true,
-      allowResolutionOnBaseLiterals: Boolean = false,
-      stepLimit: Option[Int] = Some(30),
-      attemptLimit: Option[Int] = Some(10)
+      oneSidedOnly: Boolean = defaultOneSidedOnly,
+      allowResolutionOnBaseLiterals: Boolean = defaultAllowResolutionOnBaseLiterals,
+      stepLimit: Option[Int] = defaultStepLimit,
+      attemptLimit: Option[Int] = defaultAttemptLimit
   )(using Aborter): Option[Derivation] = {
     val baseIterator = scan.derivationsFrom(
       input = input,
@@ -72,9 +77,9 @@ object scan {
     */
   def derivationsFrom(
       input: ClauseSetPredicateEliminationProblem,
-      oneSidedOnly: Boolean = true,
-      allowResolutionOnBaseLiterals: Boolean = false,
-      stepLimit: Option[Int] = Some(100)
+      oneSidedOnly: Boolean = defaultOneSidedOnly,
+      allowResolutionOnBaseLiterals: Boolean = defaultAllowResolutionOnBaseLiterals,
+      stepLimit: Option[Int] = defaultStepLimit
   )(using Aborter): Iterator[Either[Derivation, Derivation]] = {
     assert(stepLimit.isEmpty || stepLimit.get >= 0, "stepLimit must be non-negative")
     logger.info(s"input clause set: ${input.firstOrderClauses}")

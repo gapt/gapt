@@ -2,7 +2,11 @@
 
 ## Version 2.20.0 (unreleased)
 
-## Version 2.19.0 (unreleased)
+## Version 2.19.0 (released on 2026-03-19)
+
+- Add elimination of set equality reasoning from an LK proof by replacing set equalities by first-order equivalences including the replacement of set equality inferences by first-order cuts
+- Improve WSCAN to compute finite witnesses for more kinds of SCAN derivations
+- Add a proof of: If R is a (not necessarily commutative) ring with 1 and a,b ∈ R such that 1-ab has a multiplicative inverse x in R, then 1-ba has a multiplicative inverse y in R. Then uses cut-elimination to give a witness term for y from x.
 
 ## Version 2.18.1 (released on 2025-05-28)
 

@@ -102,7 +102,7 @@ case class GaptRepl() {
 
   def run(): Unit =
     val repl = new GaptReplDriver
-    val initialState = repl.initialState.copy(quiet = true)
+    val initialState = repl.initialState
     val state = repl.run(readPredefFile)(using initialState)
     repl.runUntilQuit(using state)()
 
