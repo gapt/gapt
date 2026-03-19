@@ -62,7 +62,9 @@ lazy val commonSettings = Seq(
   javaOptions ++= Seq("-Xss40m", "-Xmx1g"),
   fork := true,
   run / baseDirectory := file("."),
-  sourcesInBase := false // people like to keep scripts lying around
+  sourcesInBase := false, // people like to keep scripts lying around
+  semanticdbEnabled := true,
+  semanticdbVersion := scalafixSemanticdb.revision
 )
 
 val specs2Version = "4.16.0"

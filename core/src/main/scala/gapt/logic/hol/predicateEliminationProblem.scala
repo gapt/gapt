@@ -8,13 +8,11 @@ import gapt.expr.formula.And
 import gapt.expr.formula.All
 import gapt.proofs.RichFormulaSequent
 import gapt.expr.Expr
-import gapt.expr.formula.fol.FOLVar
-import gapt.expr.util.freeVariables
-import gapt.expr.formula.hol.freeHOVariables
 import gapt.logic.Polarity
 import gapt.proofs.lk.transformations.folSkolemize
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.facet.skolemFunsFacet
+import gapt.expr.formula.hol.freeFOLVariables
 
 extension (clauseSet: Set[HOLClause])
   /**
@@ -26,21 +24,14 @@ extension (clauseSet: Set[HOLClause])
   }
 
 /**
-  * @param expr expression to get the free first-order variables of
-  * @return the set of first-order variables in [[expr]]
-  */
-def freeFOLVariables(expr: Expr): Set[FOLVar] =
-  (freeVariables(expr) -- freeHOVariables(expr)).map { case v: FOLVar => v }
-
-/**
   * A predicate elimination problem describes a formula of the form ∃X₁ ... ∃Xₙ φ where φ is first-order
   * and we have separated the first-order part from the second-order quantifiers.
-  * 
+  *
   * This is a common data structure used that describes the input for algorithms solving (witnessed) second-order quantifier elimination and formula equations
   *
   * @param varsToEliminate the variables that are quantified over and are to be eliminated
   * @param firstOrderPart first-order part of the predicate elimination problem that is not allowed to contain second-order quantifiers
-  * 
+  *
   * Since [[firstOrderPart]] needs to contain the second-order variables of the predicate elimination problem we cannot enforce that formula is a [[gapt.expr.formula.fol.FOLFormula]]
   */
 case class PredicateEliminationProblem(
@@ -53,7 +44,7 @@ case class PredicateEliminationProblem(
   def toFormula: Formula = Ex.Block(varsToEliminate, firstOrderPart)
 
   /**
-    * Returns the clause set form of the predicate elimination problem if it is already skolemized. 
+    * Returns the clause set form of the predicate elimination problem if it is already skolemized.
     * Note that this transformation is not equivalence-preserving as arbitrary new Skolem constants can be introduced.
     */
   def toClauseSetIfSkolemized: Option[ClauseSetPredicateEliminationProblem] = {
@@ -69,7 +60,7 @@ case class PredicateEliminationProblem(
   }
 
   /**
-    * Returns the clause set form of the predicate elimination problem by applying skolemization and computing the CNF of the result. 
+    * Returns the clause set form of the predicate elimination problem by applying skolemization and computing the CNF of the result.
     * Note that this transformation is not equivalence-preserving as arbitrary new Skolem constants can be introduced.
     */
   def toClauseSet: ClauseSetPredicateEliminationProblem =
