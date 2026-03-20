@@ -58,84 +58,87 @@ private object ndStats {
   }
 }
 
-object testLKToND extends scala.App {
-  val logger = Logger("testLKToND")
-  import logger._
+object testLKToND {
+  def main(args: Array[String]): Unit = {
+    val logger = Logger("testLKToND")
+    import logger._
 
-  val metricsPrinter = new MetricsPrinter
-  LogHandler.current.value = metricsPrinter
+    val metricsPrinter = new MetricsPrinter
+    LogHandler.current.value = metricsPrinter
 
-  try time("total") {
+    try time("total") {
 
-      val Seq(fileName) = args.toSeq
-      metric("file", fileName)
+        val Seq(fileName) = args.toSeq
+        metric("file", fileName)
 
-      val expansion = time("import") { loadExpansionProof(FilePath(fileName)) }
-      metric("size_exp", expansion.size)
+        val expansion = time("import") { loadExpansionProof(FilePath(fileName)) }
+        metric("size_exp", expansion.size)
 
-      val Right(lk) = time("exp2lk") { ExpansionProofToLK.withIntuitionisticHeuristics(expansion) }: @unchecked
-      lkStats(lk, logger)
+        val Right(lk) = time("exp2lk") { ExpansionProofToLK.withIntuitionisticHeuristics(expansion) }: @unchecked
+        lkStats(lk, logger)
 
-      val nd = time("lk2nd") { LKToND(lk) }
-      ndStats(nd, logger)
+        val nd = time("lk2nd") { LKToND(lk) }
+        ndStats(nd, logger)
 
-      metric("status", "ok")
+        metric("status", "ok")
 
+      }
+    catch {
+      case t: Throwable =>
+        metric("status", "exception")
+        metric("exception", t.toString)
     }
-  catch {
-    case t: Throwable =>
-      metric("status", "exception")
-      metric("exception", t.toString)
   }
-
 }
 
-object testLKToND2 extends scala.App {
-  val logger = Logger("testLKToND2")
-  import logger._
-  val metricsPrinter = new MetricsPrinter
-  LogHandler.current.value = metricsPrinter
+object testLKToND2 {
+  def main(args: Array[String]): Unit = {
+    val logger = Logger("testLKToND2")
+    import logger._
+    val metricsPrinter = new MetricsPrinter
+    LogHandler.current.value = metricsPrinter
 
-  try time("total") {
-      val Seq(fileName) = args.toSeq
-      metric("file", fileName)
+    try time("total") {
+        val Seq(fileName) = args.toSeq
+        metric("file", fileName)
 
-      val tptp = time("tptp") { TptpImporter.loadWithIncludes(FilePath(fileName)) }
-      val problem = tptp.toSequent
-      implicit val ctx: MutableContext = MutableContext.guess(problem)
-      val cnf = time("clausifier") { structuralCNF(problem) }
-      time("prover") {
-        new EProver(
-          Seq("--auto-schedule", "--soft-cpu-limit=120", "--memory-limit=2048")
-        ).getResolutionProof(cnf)
-      } match {
-        case Some(resolution) =>
-          val expansion = time("res2exp") { ResolutionToExpansionProof(resolution) }
-          metric("size_exp", expansion.size)
+        val tptp = time("tptp") { TptpImporter.loadWithIncludes(FilePath(fileName)) }
+        val problem = tptp.toSequent
+        implicit val ctx: MutableContext = MutableContext.guess(problem)
+        val cnf = time("clausifier") { structuralCNF(problem) }
+        time("prover") {
+          new EProver(
+            Seq("--auto-schedule", "--soft-cpu-limit=120", "--memory-limit=2048")
+          ).getResolutionProof(cnf)
+        } match {
+          case Some(resolution) =>
+            val expansion = time("res2exp") { ResolutionToExpansionProof(resolution) }
+            metric("size_exp", expansion.size)
 
-          val desk = time("desk") { deskolemizeET(expansion) }
+            val desk = time("desk") { deskolemizeET(expansion) }
 
-          time("exp2lk") { ExpansionProofToLK.withIntuitionisticHeuristics(desk) } match {
-            case Right(lk) =>
-              lkStats(lk, logger)
+            time("exp2lk") { ExpansionProofToLK.withIntuitionisticHeuristics(desk) } match {
+              case Right(lk) =>
+                lkStats(lk, logger)
 
-              val nd = time("lk2nd") { LKToND(lk) }
-              ndStats(nd, logger)
+                val nd = time("lk2nd") { LKToND(lk) }
+                ndStats(nd, logger)
 
-              metric("status", "ok")
+                metric("status", "ok")
 
-            case Left(_) =>
-              metric("status", "desk_wo_eq")
-          }
+              case Left(_) =>
+                metric("status", "desk_wo_eq")
+            }
 
-        case None =>
-          metric("status", "unprovable")
+          case None =>
+            metric("status", "unprovable")
+        }
+
       }
-
+    catch {
+      case t: Throwable =>
+        metric("status", "exception")
+        metric("exception", t.toString.take(100))
     }
-  catch {
-    case t: Throwable =>
-      metric("status", "exception")
-      metric("exception", t.toString.take(100))
   }
 }

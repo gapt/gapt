@@ -5,11 +5,13 @@ import gapt.proofs.expansion.numberOfInstancesET
 import gapt.proofs.loadExpansionProof
 import gapt.utils.verbose
 
-object testTstpImport extends App {
-  val Array(filename) = args
-  verbose {
-    val exp = loadExpansionProof(FilePath(filename))
-    println(s"num_insts = ${numberOfInstancesET(exp)}")
-    println("OK")
+object testTstpImport {
+  def main(args: Array[String]): Unit = {
+    val Array(filename) = args
+    verbose {
+      val exp = loadExpansionProof(FilePath(filename))
+      println(s"num_insts = ${numberOfInstancesET(exp)}")
+      println("OK")
+    }
   }
 }

@@ -28,114 +28,116 @@ object parseMode {
   }
 }
 
-object testViper extends App {
-  def countInductions(prf: LKProof): (Int, Int) = {
-    val (n, d) = prf.immediateSubProofs.map(countInductions).foldLeft((0, 0)) {
-      case ((n1, d1), (n2, d2)) => (n1 + n2, d1 max d2)
+object testViper {
+  def main(args: Array[String]): Unit = {
+    def countInductions(prf: LKProof): (Int, Int) = {
+      val (n, d) = prf.immediateSubProofs.map(countInductions).foldLeft((0, 0)) {
+        case ((n1, d1), (n2, d2)) => (n1 + n2, d1 max d2)
+      }
+
+      prf match {
+        case InductionRule(_, _, _) => (n + 1, d + 1)
+        case _                      => (n, d)
+      }
     }
 
-    prf match {
-      case InductionRule(_, _, _) => (n + 1, d + 1)
-      case _                      => (n, d)
-    }
-  }
-
-  // This turns the cuts into induction inferences
-  def cleanProof(prf: LKProof)(implicit ctx: Context): LKProof = {
-    val prf1 = cleanStructuralRules(prf)
-    val expPrf = LKToExpansionProof(prf1)(using ctx)
-    ExpansionProofToLK(expPrf)(using ctx).toOption.get
-  }
-
-  def removeOuterAlls(e: Expr): Expr =
-    e match {
-      case All(_, e1) => removeOuterAlls(e1)
-      case _          => e
+    // This turns the cuts into induction inferences
+    def cleanProof(prf: LKProof)(implicit ctx: Context): LKProof = {
+      val prf1 = cleanStructuralRules(prf)
+      val expPrf = LKToExpansionProof(prf1)(using ctx)
+      ExpansionProofToLK(expPrf)(using ctx).toOption.get
     }
 
-  def inductionTarget(e: Expr): Expr =
-    removeOuterAlls(e) match {
-      case Imp(_, e1) => removeOuterAlls(e1)
-    }
+    def removeOuterAlls(e: Expr): Expr =
+      e match {
+        case All(_, e1) => removeOuterAlls(e1)
+        case _          => e
+      }
 
-  val logger = Logger("testViper")
+    def inductionTarget(e: Expr): Expr =
+      removeOuterAlls(e) match {
+        case Imp(_, e1) => removeOuterAlls(e1)
+      }
 
-  val (fileName, mode) =
-    (args.toList: @unchecked) match {
-      case Seq(f, m) => (f, m)
-    }
+    val logger = Logger("testViper")
 
-  val metricsPrinter = new MetricsPrinter
-  LogHandler.current.value = metricsPrinter
-  logger.metric("file", fileName)
-  logger.metric("mode", mode)
+    val (fileName, mode) =
+      (args.toList: @unchecked) match {
+        case Seq(f, m) => (f, m)
+      }
 
-  logger.time("total") {
-    val problem =
-      try logger.time("parse") {
-          TipSmtImporter.fixupAndLoad(fileName)
+    val metricsPrinter = new MetricsPrinter
+    LogHandler.current.value = metricsPrinter
+    logger.metric("file", fileName)
+    logger.metric("mode", mode)
+
+    logger.time("total") {
+      val problem =
+        try logger.time("parse") {
+            TipSmtImporter.fixupAndLoad(fileName)
+          }
+        catch {
+          case e: Throwable =>
+            logger.metric(
+              "status",
+              e match {
+                case _: OutOfMemoryError   => "parsing_out_of_memory"
+                case _: StackOverflowError => "parsing_stack_overflow"
+                case _: Throwable          => "parsing_other_exception"
+              }
+            )
+            logger.metric("exception", e.toString)
+            throw e
+        }
+
+      val options = parseMode(mode)
+
+      var prf: Option[LKProof] = None
+
+      try logger.time("viper") {
+          withTimeout(120 seconds) {
+            Viper(problem, options) match {
+              case Some(prf1) =>
+                logger.metric("status", "ok")
+                prf = Some(prf1)
+              case None => logger.metric("status", "saturated")
+            }
+          }
         }
       catch {
         case e: Throwable =>
           logger.metric(
             "status",
             e match {
-              case _: OutOfMemoryError   => "parsing_out_of_memory"
-              case _: StackOverflowError => "parsing_stack_overflow"
-              case _: Throwable          => "parsing_other_exception"
+              case _: OutOfMemoryError   => "viper_out_of_memory"
+              case _: StackOverflowError => "viper_stack_overflow"
+              case _: TimeOutException   => "viper_timeout"
+              case _: Throwable          => "viper_other_exception"
             }
           )
           logger.metric("exception", e.toString)
           throw e
       }
 
-    val options = parseMode(mode)
+      prf match {
+        case None =>
+        case Some(prf1) =>
+          val prf2 = cleanProof(prf1)(using problem.context)
+          val (inds, depth) = countInductions(prf2)
 
-    var prf: Option[LKProof] = None
+          logger.metric("inductions", inds)
+          logger.metric("induction_depth", depth)
 
-    try logger.time("viper") {
-        withTimeout(120 seconds) {
-          Viper(problem, options) match {
-            case Some(prf1) =>
-              logger.metric("status", "ok")
-              prf = Some(prf1)
-            case None => logger.metric("status", "saturated")
-          }
-        }
+          val axs = extractInductionAxioms(prf2)(using problem.context)
+          val targets = axs.map(inductionTarget)
+
+          val atomic = targets.count(e => isExtendedAtom(e.asInstanceOf[Formula]))
+          val quantified = targets.count(e => containsQuantifier(e.asInstanceOf[Formula]))
+
+          logger.metric("atomic", atomic)
+          logger.metric("quantified", quantified)
       }
-    catch {
-      case e: Throwable =>
-        logger.metric(
-          "status",
-          e match {
-            case _: OutOfMemoryError   => "viper_out_of_memory"
-            case _: StackOverflowError => "viper_stack_overflow"
-            case _: TimeOutException   => "viper_timeout"
-            case _: Throwable          => "viper_other_exception"
-          }
-        )
-        logger.metric("exception", e.toString)
-        throw e
+
     }
-
-    prf match {
-      case None =>
-      case Some(prf1) =>
-        val prf2 = cleanProof(prf1)(using problem.context)
-        val (inds, depth) = countInductions(prf2)
-
-        logger.metric("inductions", inds)
-        logger.metric("induction_depth", depth)
-
-        val axs = extractInductionAxioms(prf2)(using problem.context)
-        val targets = axs.map(inductionTarget)
-
-        val atomic = targets.count(e => isExtendedAtom(e.asInstanceOf[Formula]))
-        val quantified = targets.count(e => containsQuantifier(e.asInstanceOf[Formula]))
-
-        logger.metric("atomic", atomic)
-        logger.metric("quantified", quantified)
-    }
-
   }
 }
