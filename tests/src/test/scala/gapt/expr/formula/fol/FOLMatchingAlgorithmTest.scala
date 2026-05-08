@@ -26,11 +26,11 @@ class FOLMatchingAlgorithmTest extends Specification {
       syntacticMatching(le"#c(a:i>i)", le"#c(a:i)") must beNone
     }
 
-    "match correctly the lambda expressions f(x, x) and f(a,b)" in {
+    "not match correctly the lambda expressions f(x, x) and f(a,b)" in {
       val term = FOLFunction("f", x :: x :: Nil)
       val posInstance = FOLFunction("f", a :: b :: Nil)
       val sub = syntacticMatching(term, posInstance)
-      sub must beEqualTo(sub)
+      sub must beNone
     }
 
     "match correctly the lambda expressions f(x1, x2, c) and f(a,b,c)" in {
@@ -83,17 +83,14 @@ class FOLMatchingAlgorithmTest extends Specification {
       sub must beEqualTo(None)
     }
 
-    "match the FOL formulas P(x1,f(x1, g(x1,x3), x3)) and P(c,f(x1, g(x1,a), x3))" in {
+    "not match the FOL formulas All(x1, P(x1,f(x1, g(x1,x3), x3))) and All(x1, P(c,f(x1, g(x1,a), x3)))" in {
       val gx1x3 = FOLFunction("g", x1 :: x3 :: Nil)
       val gx1a = FOLFunction("g", x1 :: a :: Nil)
       val term1 = FOLFunction("f", x1 :: gx1x3 :: x3 :: Nil)
       val term2 = FOLFunction("f", c :: gx1a :: x3 :: Nil)
       val P1 = All(x1, FOLAtom("P", x1 :: term1 :: Nil))
       val P2 = All(x1, FOLAtom("P", c :: term2 :: Nil))
-      val sub = syntacticMatching(P1, P2)
-      (sub.get(fov"x1") must beEqualTo(c)).and(
-        sub.get(fov"x3") must beEqualTo(a)
-      )
+      syntacticMatching(P1, P2) must beNone
     }
 
     "match the FOL formulas And(P(x1,f(x1, g(x1,x3), x3)),Q(x1)) and And(P(c,f(c, g(x1,a), x3)),Q(c))" in {
