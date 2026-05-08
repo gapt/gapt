@@ -61,7 +61,6 @@ object testInduction {
 
     val metricsPrinter = new MetricsPrinter
     LogHandler.current.value = metricsPrinter
-    def phase: String = metricsPrinter.data.getOrElse("phase", "").toString
 
     logger.metric("filename", fileName)
     logger.metric("strategy", strategyName)
@@ -76,7 +75,7 @@ object testInduction {
         logger.metric("status", "ok")
       }
     catch {
-      case t: StrategyNotApplicable =>
+      case _: StrategyNotApplicable =>
         logger.metric("status", "na")
       case t: Throwable =>
         logger.metric("exception", t.toString)
@@ -98,7 +97,7 @@ object computeStrategies {
         val All.Block(goalQuants, _) = sequent.succedent.head
         val inductiveGoalQuantIdcs =
           for {
-            (q @ Var(_, t), i) <- goalQuants.zipWithIndex
+            (Var(_, t), i) <- goalQuants.zipWithIndex
             if context.getConstructors(t).isDefined
           } yield i
         val equationIdcs = for (case (All.Block(_, Eq(_, _)), i) <- sequent.antecedent.zipWithIndex) yield i

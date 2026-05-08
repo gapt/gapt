@@ -134,7 +134,7 @@ abstract class RegressionTestCase(val name: String) extends Serializable {
      */
     def --?(name: String)(implicit testRun: TestRun) =
       testRun.runStep(Some(name))(block) match {
-        case Left(t)    => None
+        case Left(_)    => None
         case Right(res) => Some(res)
       }
   }

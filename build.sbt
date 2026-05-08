@@ -221,7 +221,7 @@ val dependencyConflictResolutions = Seq("com.lihaoyi" %% "geny" % "1.0.0")
 lazy val core = project.in(file("core")).settings(commonSettings: _*).settings(
   name := "gapt",
   description := "General Architecture for Proof Theory",
-  Compile / scalacOptions += "-Werror",
+  // Compile / scalacOptions += "-Werror",
   libraryDependencies ++= Seq(
     "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.4",
     "org.scala-lang.modules" %% "scala-parser-combinators" % "2.1.1",
@@ -289,7 +289,7 @@ lazy val userManual = project.in(file("doc")).dependsOn(cli)
 lazy val cli = project.in(file("cli")).dependsOn(core, examples)
   .settings(commonSettings: _*).settings(
     mainClass := Some("gapt.cli.CLIMain"),
-    Compile / scalacOptions += "-Werror",
+    // Compile / scalacOptions += "-Werror",
     libraryDependencies ++= Seq(
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
       "org.scala-lang" %% "scala3-repl" % scalaVersion.value

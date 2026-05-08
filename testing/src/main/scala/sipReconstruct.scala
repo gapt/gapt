@@ -196,7 +196,7 @@ object sipReconstruct extends Script {
       val indG = extractInductionGrammar(sip)
       println(s"SIP with induction grammar:\n$indG")
       logger.metric("sip_ind_gram_size", indG.size)
-      for (case InductionRule(_, Abs(x, f), _) <- sip.subProofs)
+      for (case InductionRule(_, Abs(_, f), _) <- sip.subProofs)
         logger.metric("sip_ind_form", f.toSigRelativeString)
       val qtys = indG.gamma.map { case Var(_, t @ TBase(_, _)) => t }
       logger.metric("sip_prob", sip.endSequent.succedent.head.toSigRelativeString)

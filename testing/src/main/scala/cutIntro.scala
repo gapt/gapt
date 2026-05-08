@@ -262,8 +262,8 @@ object findNonTrivialTSTPExamples {
     }
     csv.close()
 
-    var instance_per_formula = interesting map { s => s.size.toFloat / s.numFuns } sum
-    var ts_size = interesting map { _.size } sum
+    val instance_per_formula = interesting map { s => s.size.toFloat / s.numFuns } sum
+    val ts_size = interesting map { _.size } sum
     val avg_inst_per_form = instance_per_formula / interesting.size
     val avg_ts_size = ts_size.toFloat / interesting.size.toFloat
 

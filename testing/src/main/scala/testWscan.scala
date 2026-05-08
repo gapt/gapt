@@ -62,7 +62,7 @@ def runWscanTestExample(example: ClauseSetPredicateEliminationProblem, timeout: 
         )
       }
     catch
-      case e: gapt.utils.TimeOutException => None
+      case _: gapt.utils.TimeOutException => None
 
   val scanTime = nanoTime()
   val witness = derivation.flatMap(wscan.witness(_, witnessLimit = Some(10)))
