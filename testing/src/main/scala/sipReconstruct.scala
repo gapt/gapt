@@ -1,6 +1,5 @@
 package gapt.testing
 import cats.{Eval, Later}
-import gapt.examples.Script
 import gapt.examples.theories._
 import gapt.expr._
 import gapt.expr.formula.All
@@ -21,7 +20,7 @@ import gapt.provers.viper.grammars.InductionBupSolver
 import gapt.provers.viper.grammars.{TreeGrammarProver, TreeGrammarProverOptions, indElimReversal}
 import gapt.utils.{LogHandler, Logger, MetricsPrinterWithMessages, verbose}
 
-object sipReconstruct extends Script {
+@main def sipReconstruct(args: String*): Unit = {
 
   def accessField(obj: AnyRef, fieldName: String): AnyRef =
     obj.getClass.getMethod(fieldName).invoke(obj)
@@ -220,5 +219,4 @@ object sipReconstruct extends Script {
         throw e
     }
   }
-
 }

@@ -1,6 +1,5 @@
 package gapt.examples.hoare
 
-import gapt.examples.Script
 import gapt.expr.formula.Neg
 import gapt.expr.formula.fol.FOLAtom
 import gapt.formats.hoare.ProgramParser
@@ -10,7 +9,7 @@ import gapt.formats.prover9.Prover9TermParserLadrStyle._
 import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.provers.prover9.Prover9
 
-object array_init extends Script {
+@main def array_init(): Unit = {
   val p = ProgramParser.parseProgram("for y < z do x := set(x, s(y), get(x, y)) od")
   val f = parseFormula("k <= z -> get(x,k) = get(x,0)")
   val g_s = parseFormula("(all x (s(x) != 0))")

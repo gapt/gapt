@@ -1,6 +1,5 @@
 package gapt.examples.hoare
 
-import gapt.examples.Script
 import gapt.expr.formula.Neg
 import gapt.formats.hoare.ProgramParser
 import gapt.proofs.expansion.extractInstances
@@ -9,7 +8,7 @@ import gapt.formats.prover9.Prover9TermParserLadrStyle._
 import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.provers.prover9.Prover9
 
-object addition extends Script {
+@main def addition(): Unit = {
   val p = ProgramParser.parseProgram("for y < z do x := s(x) od")
   val A = parseFormula("x = k")
   val B = parseFormula("x = k + z")
@@ -17,11 +16,9 @@ object addition extends Script {
   val g_ps = parseFormula("(all x (all y (s(x+y) = x + s(y))))")
   val g = List(g_p0, g_ps)
 
-  val f = parseFormula("k + y = x")
-
   val slp = SimpleLoopProblem(p.asInstanceOf[ForLoop], g, A, B)
 
-  private val nLine = sys.props("line.separator")
+  val nLine = sys.props("line.separator")
 
   println(slp.loop.body)
   println(slp.programVariables)
@@ -41,5 +38,4 @@ object addition extends Script {
   }
   deepSequent.antecedent.foreach(println(_))
   deepSequent.succedent.foreach(f => println(Neg(f)))
-
 }

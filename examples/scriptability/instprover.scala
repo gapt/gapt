@@ -16,7 +16,7 @@ import gapt.provers.sat.Sat4j
 
 import scala.collection.mutable
 
-object instprover extends Script {
+@main def instprover(): Unit = {
 
   val endSequent = LazyList.continually(Console.in.readLine()).takeWhile(_ != null).map(_.trim).filter(_.nonEmpty).map(parseFormula).map(universalClosure(_).asInstanceOf[FOLFormula]) ++: Sequent()
 

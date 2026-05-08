@@ -1,6 +1,5 @@
 package gapt.examples.recschem
 
-import gapt.examples.Script
 import gapt.expr._
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLFunction
@@ -14,7 +13,7 @@ import gapt.logic.hol.toNNF
 import gapt.provers.maxsat.bestAvailableMaxSatSolver
 import gapt.utils.{time, verbose}
 
-object vtrat_comparison extends Script {
+@main def vtrat_comparison(): Unit = {
   verbose {
     val N = 11
     val terms = (0 until N).map { i => FOLFunction("r", Numeral(i), Numeral(N - i)) }.toSet

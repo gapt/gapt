@@ -7,7 +7,7 @@ import gapt.utils.verbose
 import sequence.LinearExampleProof
 import sequence.SumExampleProof
 
-object ReforestDemo extends Script {
+@main def ReforestDemo(): Unit = {
   val (lang, _) = InstanceTermEncoding(
     LinearExampleProof(32)
   )

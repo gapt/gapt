@@ -1,12 +1,6 @@
 package gapt.cli
 
-import gapt.examples.Script
-
 object CLIMain {
-
-  class ScriptsResultHolder(var result: Seq[Script] = Seq()) {
-    def add(script: Script): Unit = result :+= script
-  }
 
   def main(args: Array[String]): Unit = {
 

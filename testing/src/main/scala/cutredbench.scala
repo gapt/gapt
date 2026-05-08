@@ -86,7 +86,7 @@ object CutReductionBenchmarkTools {
   val methods = List(LKReductive, LKCERES, CERESEXP, BogoElim, ExpCutElim, LKtNorm, LKtNormA, LKtNormP)
 }
 
-object cutReductionBenchmark extends Script {
+@main def cutReductionBenchmark(): Unit = {
   import CutReductionBenchmarkTools._
 
   def turnEqualityIntoPredicate[A: ClosedUnderReplacement](a: A): A =
@@ -129,7 +129,7 @@ object cutReductionBenchmark extends Script {
   for (n <- 0 to 8) bench("linear", n, LinearCutExampleProof(n))
 }
 
-object primeCutElimBench extends Script {
+@main def primeCutElimBench(): Unit = {
   import CutReductionBenchmarkTools._
 
   def furstenbergProof(n: Int): LKProof = {
@@ -154,7 +154,7 @@ object primeCutElimBench extends Script {
   }
 }
 
-object indElimBench extends Script {
+@main def indElimBench(): Unit = {
   import gapt.examples.theories._
   object AllTheories extends Theory(
         logic,
@@ -201,7 +201,7 @@ object indElimBench extends Script {
   def mkNum(n: Int): Expr = if (n == 0) le"0" else le"s ${mkNum(n - 1)}"
   def mkList(n: Int, x: String): Expr = if (n == 0) le"nil:list ?a" else le"cons ${Var(s"${x}n", ty"?a")} ${mkList(n - 1, x)}"
 
-  def benchn(name: String, lk: LKProof, n: Int, exclude: Set[Method] = Set()): Unit = {
+  def benchn(name: String, lk: LKProof, n: Int, exclude: Set[Method]): Unit = {
     val times = indMethods.map {
       case m if exclude(m) => "NaN"
       case m               => m.robustlyMeasureElimination(lk).toUnit(SECONDS).toString

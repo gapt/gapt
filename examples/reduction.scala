@@ -7,7 +7,7 @@ import gapt.proofs.Sequent
 import gapt.proofs.resolution.{Input, eliminateSplitting, simplifyResolutionProof}
 import gapt.provers.vampire.Vampire
 
-object ReductionDemo extends Script {
+@main def ReductionDemo(): Unit = {
   //  val sequent = groundFreeVariables( nTape3.expansion_proof.deep )._1
   //  val sequent = CharacteristicClauseSet( extractStruct( AtomicExpansion( prime.prime( 3 ).proof ) ) ).map { cls => univclosure( cls.toImplication ) } ++: Sequent()
   val sequent = hof"∀f P(f) = f(c)" +: Sequent() :+ hof"P(λx h(h(x))) = h(h(c))"
@@ -23,12 +23,11 @@ object ReductionDemo extends Script {
   val (redSeq, back) = reduction `forward` sequent
   println(TptpFOLExporter(redSeq))
   println()
-  var Some(res) = Vampire `getResolutionProof` redSeq: @unchecked
-  var res_ = back(simplifyResolutionProof(eliminateSplitting(res)))
+  val Some(res) = Vampire `getResolutionProof` redSeq: @unchecked
+  val res_ = back(simplifyResolutionProof(eliminateSplitting(res)))
   println(s"Found a proof with ${res_.dagLike.size} inferences:")
   println(res_)
 
   for (case Input(seq) <- res_.subProofs)
     require(sequent.contains(seq.elements.head, !seq.indices.head.polarity))
-
 }

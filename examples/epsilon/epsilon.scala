@@ -6,7 +6,7 @@ import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.epsilon.epsilonize
 import gapt.provers.escargot.Escargot
 
-object epsilon extends Script {
+@main def epsilon(): Unit = {
   implicit val ctx: MutableContext = MutableContext.default()
   ctx += hoc"ε{?a} : (?a>o)>?a"
   ctx += Ti

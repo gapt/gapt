@@ -1,5 +1,4 @@
 package gapt.examples.nd
-import gapt.examples.Script
 import gapt.expr._
 import gapt.expr.formula.Eq
 import gapt.expr.formula.fol.FOLAtom
@@ -36,7 +35,7 @@ import gapt.proofs.lk.rules.WeakeningRightRule
 import gapt.proofs.lk.transformations.LKToND
 
 // Example 0.1.6
-object ex0_1_6 extends Script {
+@main def ex0_1_6(): Unit = {
   val s1 = LogicalAxiom(hof"A")
   val s2 = WeakeningLeftRule(s1, hof"B")
   val s3 = WeakeningRightRule(s2, hof"B")
@@ -55,7 +54,7 @@ object ex0_1_6 extends Script {
 }
 
 // Example 0.1.6 short
-object ex0_1_6_short extends Script {
+@main def ex0_1_6_short(): Unit = {
   val s1 = LogicalAxiom(hof"A")
   val s2 = WeakeningLeftRule(s1, hof"B")
   val s3 = WeakeningRightRule(s2, hof"B")
@@ -72,7 +71,7 @@ object ex0_1_6_short extends Script {
   // prooftool( nd )
 }
 
-object demorgan1 extends Script {
+@main def demorgan1(): Unit = {
   val s1 = LogicalAxiom(hof"A")
   val s2 = WeakeningRightRule(s1, hof"B")
   val s3 = OrRightRule(s2, hof"A | B")
@@ -93,7 +92,7 @@ object demorgan1 extends Script {
   println(nd)
 }
 
-object demorgan2 extends Script {
+@main def demorgan2(): Unit = {
   val s1 = LogicalAxiom(hof"A")
   val s2 = NegLeftRule(s1, hof"A")
   val s3 = WeakeningLeftRule(s2, hof"B")
@@ -113,7 +112,7 @@ object demorgan2 extends Script {
   println(nd)
 }
 
-object orLeft1 extends Script {
+@main def orLeft1(): Unit = {
   val l1 = LogicalAxiom(hof"A")
   val r1 = LogicalAxiom(hof"B")
   val p = OrLeftRule(l1, r1, hof"A | B")
@@ -123,7 +122,7 @@ object orLeft1 extends Script {
   println(nd)
 }
 
-object orLeft2 extends Script {
+@main def orLeft2(): Unit = {
   val l1 = LogicalAxiom(hof"A")
   val r1 = LogicalAxiom(hof"A")
   val p = OrLeftRule(l1, r1, hof"A | A")
@@ -133,7 +132,7 @@ object orLeft2 extends Script {
   println(nd)
 }
 
-object orLeft3 extends Script {
+@main def orLeft3(): Unit = {
   val l1 = LogicalAxiom(hof"A")
   val r1 = LogicalAxiom(hof"B")
   val r2 = WeakeningRightRule(r1, hof"C")
@@ -145,7 +144,7 @@ object orLeft3 extends Script {
   println(nd)
 }
 
-object orLeft4 extends Script {
+@main def orLeft4(): Unit = {
   val l1 = LogicalAxiom(hof"A")
   val l2 = WeakeningRightRule(l1, hof"C")
   val r1 = LogicalAxiom(hof"B")
@@ -158,7 +157,7 @@ object orLeft4 extends Script {
   println(nd)
 }
 
-object orLeft5 extends Script {
+@main def orLeft5(): Unit = {
   val l1 = LogicalAxiom(hof"A")
   val l2 = WeakeningLeftRule(l1, hof"A")
   val l3 = NegRightRule(l2, hof"A")
@@ -171,7 +170,7 @@ object orLeft5 extends Script {
   println(nd)
 }
 
-object impRight1 extends Script {
+@main def impRight1(): Unit = {
   val p1 = LogicalAxiom(hof"A")
   val p2 = WeakeningRightRule(p1, hof"B")
   val p3 = ImpRightRule(p2, hof"A -> B")
@@ -181,7 +180,7 @@ object impRight1 extends Script {
   println(nd)
 }
 
-object impRight2 extends Script {
+@main def impRight2(): Unit = {
   val p1 = LogicalAxiom(hof"A")
   val p2 = WeakeningRightRule(p1, hof"B")
   val p3 = ImpRightRule(p2, hof"A -> B")
@@ -191,7 +190,7 @@ object impRight2 extends Script {
   println(nd)
 }
 
-object orRight1 extends Script {
+@main def orRight1(): Unit = {
   val r1 = LogicalAxiom(hof"A")
   val r2 = WeakeningRightRule(r1, hof"B")
   val p = OrRightRule(r2, hof"A | B")
@@ -201,7 +200,7 @@ object orRight1 extends Script {
   println(nd)
 }
 
-object orRight2 extends Script {
+@main def orRight2(): Unit = {
   val p1 = LogicalAxiom(hof"A")
   val p2 = WeakeningLeftRule(p1, hof"B")
   val p3 = NegRightRule(p2, hof"B")
@@ -212,7 +211,7 @@ object orRight2 extends Script {
   println(nd)
 }
 
-object negLeftRight1 extends Script {
+@main def negLeftRight1(): Unit = {
   val p1 = LogicalAxiom(hof"A")
   val p2 = NegLeftRule(p1, hof"A")
   val p = NegRightRule(p2, hof"-A")
@@ -223,7 +222,7 @@ object negLeftRight1 extends Script {
   println(nd)
 }
 
-object negRight1 extends Script {
+@main def negRight1(): Unit = {
   val p1 = LogicalAxiom(hof"A")
   val p2 = WeakeningLeftRule(p1, hof"B")
   val p = NegRightRule(p2, hof"B")
@@ -234,7 +233,7 @@ object negRight1 extends Script {
   println(nd)
 }
 
-object weakenContractRight1 extends Script {
+@main def weakenContractRight1(): Unit = {
   val p1 = LogicalAxiom(hof"A")
   val p2 = WeakeningRightRule(p1, hof"A")
   val p = ContractionRightRule(p2, hof"A")
@@ -245,7 +244,7 @@ object weakenContractRight1 extends Script {
   println(nd)
 }
 
-object cut1 extends Script {
+@main def cut1(): Unit = {
   val p1 = LogicalAxiom(hof"A")
   val p2 = LogicalAxiom(hof"A")
   val p = CutRule(p1, Suc(0), p2, Ant(0))
@@ -256,7 +255,7 @@ object cut1 extends Script {
   println(nd)
 }
 
-object cut2 extends Script {
+@main def cut2(): Unit = {
   val l1 = LogicalAxiom(hof"A")
   val l2 = WeakeningLeftRule(l1, hof"B")
   val r1 = LogicalAxiom(hof"A")
@@ -269,7 +268,7 @@ object cut2 extends Script {
   println(nd)
 }
 
-object impLeft1 extends Script {
+@main def impLeft1(): Unit = {
   val l1 = LogicalAxiom(hof"A")
   val l2 = WeakeningRightRule(l1, hof"C")
   val r1 = LogicalAxiom(hof"B")
@@ -283,7 +282,7 @@ object impLeft1 extends Script {
   println(nd)
 }
 
-object impLeft2 extends Script {
+@main def impLeft2(): Unit = {
   val l1 = LogicalAxiom(hof"A")
   val r1 = LogicalAxiom(hof"B")
   val r2 = NegLeftRule(r1, hof"B")
@@ -296,7 +295,7 @@ object impLeft2 extends Script {
   println(nd)
 }
 
-object lem extends Script {
+@main def lem(): Unit = {
   val s1 = LogicalAxiom(hof"A")
   val s2 = NegRightRule(s1, hof"A")
   val s3 = OrRightRule(s2, hof"A | -A")
@@ -306,7 +305,7 @@ object lem extends Script {
   println(nd)
 }
 
-object dne extends Script {
+@main def dne(): Unit = {
   val s1 = LogicalAxiom(hof"A")
   val s2 = NegRightRule(s1, hof"A")
   val s3 = NegLeftRule(s2, hof"-A")
@@ -317,7 +316,7 @@ object dne extends Script {
   println(nd)
 }
 
-object weakeningRight1 extends Script {
+@main def weakeningRight1(): Unit = {
   val p1 = LogicalAxiom(hof"A")
   val p2 = WeakeningRightRule(p1, hof"A")
   val p3 = WeakeningRightRule(p2, hof"B")
@@ -328,7 +327,7 @@ object weakeningRight1 extends Script {
   println(nd)
 }
 
-object weakeningRight2 extends Script {
+@main def weakeningRight2(): Unit = {
   val p1 = LogicalAxiom(hof"A")
   val p2 = WeakeningRightRule(p1, hof"A")
   val p3 = WeakeningRightRule(p2, hof"B")
@@ -339,7 +338,7 @@ object weakeningRight2 extends Script {
   println(nd)
 }
 
-object example1 extends Script {
+@main def example1(): Unit = {
   val lk = ProofBuilder.c(LogicalAxiom(hof"A")).u(WeakeningRightRule(_, hof"B")).u(WeakeningRightRule(_, hof"C")).u(WeakeningRightRule(_, hof"D")).u(OrRightRule(_, hof"A | B")).u(NegLeftRule(_, hof"A | B")).u(OrRightRule(_, hof"C | D")).qed
   println(lk)
 
@@ -348,7 +347,7 @@ object example1 extends Script {
   println(nd)
 }
 
-object negLeftFollowedByNegRight extends Script {
+@main def negLeftFollowedByNegRight(): Unit = {
   val lk = ProofBuilder.c(LogicalAxiom(hof"A")).u(NegLeftRule(_, hof"A")).u(NegRightRule(_, hof"-A")).qed
 
   val focus = Suc(0)
@@ -358,7 +357,7 @@ object negLeftFollowedByNegRight extends Script {
   println(nd)
 }
 
-object contractRightWithWrongFocus extends Script {
+@main def contractRightWithWrongFocus(): Unit = {
   val lk = ProofBuilder.c(LogicalAxiom(hof"B")).u(WeakeningRightRule(_, hof"B")).u(WeakeningRightRule(_, hof"C")).u(ContractionRightRule(_, hof"B")).qed
 
   val focus = Suc(0)
@@ -368,7 +367,7 @@ object contractRightWithWrongFocus extends Script {
   println(nd)
 }
 
-object weakeningRightWithWrongFocus extends Script {
+@main def weakeningRightWithWrongFocus(): Unit = {
   val lk = ProofBuilder.c(LogicalAxiom(hof"B")).u(WeakeningRightRule(_, hof"A")).qed
 
   val focus = Suc(0)
@@ -379,7 +378,7 @@ object weakeningRightWithWrongFocus extends Script {
   println(nd)
 }
 
-object equalityLeft extends Script {
+@main def equalityLeft(): Unit = {
   val c = FOLConst("c")
   val d = FOLConst("d")
   val Pc = FOLAtom("P", c)
@@ -396,7 +395,7 @@ object equalityLeft extends Script {
   println(nd)
 }
 
-object equalityRight extends Script {
+@main def equalityRight(): Unit = {
   val c = FOLConst("c")
   val d = FOLConst("d")
   val Pc = FOLAtom("P", c)
@@ -411,7 +410,7 @@ object equalityRight extends Script {
   println(nd)
 }
 
-object induction extends Script {
+@main def induction(): Unit = {
   val x = FOLVar("x")
   val y = FOLVar("y")
   val zero = FOLConst("0")
@@ -441,7 +440,7 @@ object induction extends Script {
   println(nd)
 }
 
-object equalityLeftEmptySuc extends Script {
+@main def equalityLeftEmptySuc(): Unit = {
   val c = FOLConst("c")
   val d = FOLConst("d")
   val Pc = FOLAtom("P", c)
@@ -456,7 +455,7 @@ object equalityLeftEmptySuc extends Script {
   println(nd)
 }
 
-object weakeningRight extends Script {
+@main def weakeningRight(): Unit = {
   val lk = WeakeningRightRule(BottomAxiom, hof"p")
 
   val focus = Suc(0)
@@ -466,7 +465,7 @@ object weakeningRight extends Script {
   println(nd)
 }
 
-object negLeft extends Script {
+@main def negLeft(): Unit = {
   val lk = WeakeningRightRule(NegLeftRule(LogicalAxiom(hof"q"), Suc(0)), hof"p")
 
   val focus = Suc(0)
@@ -477,7 +476,7 @@ object negLeft extends Script {
   println(nd)
 }
 
-object proofLink extends Script {
+@main def proofLink(): Unit = {
   implicit var ctx: Context = Context.default
   ctx += Sort("i")
   ctx += hoc"'<': i>i>o"
@@ -496,7 +495,7 @@ object proofLink extends Script {
   println(nd)
 }
 
-object proofLink2 extends Script {
+@main def proofLink2(): Unit = {
   implicit var ctx: Context = Context.default
   ctx += Sort("i")
   ctx += hoc"'<': i>i>o"
@@ -515,7 +514,7 @@ object proofLink2 extends Script {
   println(nd)
 }
 
-object proofLink3 extends Script {
+@main def proofLink3(): Unit = {
   implicit var ctx: Context = Context.default
   ctx += Sort("i")
   ctx += hoc"'<': i>i>o"
@@ -534,7 +533,7 @@ object proofLink3 extends Script {
   println(nd)
 }
 
-object AndLeftWithEmptySuccedent extends Script {
+@main def AndLeftWithEmptySuccedent(): Unit = {
   val lk = ProofBuilder.c(LogicalAxiom(hof"A")).u(NegLeftRule(_, hof"A")).u(AndLeftRule(_, hof"A & -A")).qed
 
   val focus = None
@@ -544,7 +543,7 @@ object AndLeftWithEmptySuccedent extends Script {
   println(nd)
 }
 
-object OrLeftWithEmptySuccedent extends Script {
+@main def OrLeftWithEmptySuccedent(): Unit = {
   val lk = ProofBuilder.c(LogicalAxiom(hof"A")).u(NegLeftRule(_, hof"A")).c(LogicalAxiom(hof"B")).u(NegLeftRule(_, hof"B")).b(OrLeftRule(_, _, hof"A | B")).qed
 
   val focus = None
@@ -554,7 +553,7 @@ object OrLeftWithEmptySuccedent extends Script {
   println(nd)
 }
 
-object inductionRule extends Script {
+@main def inductionRule(): Unit = {
   val x = FOLVar("x")
   val zero = FOLConst("0")
   val Sx = FOLFunction("s", List(x))
@@ -590,7 +589,7 @@ object inductionRule extends Script {
   println(nd)
 }
 
-object definitionLeftRule extends Script {
+@main def definitionLeftRule(): Unit = {
   val lk = ProofBuilder.c(LogicalAxiom(hof"A")).u(WeakeningLeftRule(_, hof"B")).u(ConversionLeftRule(_, Ant(0), hof"C")).qed
 
   val focus = Some(Suc(0))
@@ -600,7 +599,7 @@ object definitionLeftRule extends Script {
   println(nd)
 }
 
-object definitionRightRule extends Script {
+@main def definitionRightRule(): Unit = {
   val lk = ProofBuilder.c(LogicalAxiom(hof"A")).u(WeakeningRightRule(_, hof"B")).u(ConversionRightRule(_, Suc(1), hof"C")).qed
 
   val focus = Some(Suc(0))
@@ -610,7 +609,7 @@ object definitionRightRule extends Script {
   println(nd)
 }
 
-object definitionRightRule2 extends Script {
+@main def definitionRightRule2(): Unit = {
   val lk = ProofBuilder.c(LogicalAxiom(hof"A")).u(WeakeningRightRule(_, hof"B")).u(ConversionRightRule(_, Suc(1), hof"C")).qed
 
   val focus = Some(Suc(1))
@@ -620,7 +619,7 @@ object definitionRightRule2 extends Script {
   println(nd)
 }
 
-object classicalPairing extends Script {
+@main def classicalPairing(): Unit = {
   val p1 = LogicalAxiom(hof"x")
   val p2 = LogicalAxiom(hof"y")
   val p3 = BottomAxiom
@@ -640,7 +639,7 @@ object classicalPairing extends Script {
   println(nd)
 }
 
-object issue687 extends Script {
+@main def issue687(): Unit = {
   import gapt.proofs.gaptic._
   val lk = Proof(hols"A ∨ B, C → ¬B, C ⊢ A") {
     orL `left` trivial
@@ -652,7 +651,7 @@ object issue687 extends Script {
   println(nd)
 }
 
-object issue688 extends Script {
+@main def issue688(): Unit = {
   val lk = ProofBuilder.c(LogicalAxiom(hof"P(x)")).u(WeakeningLeftRule(_, hof"x=y")).u(EqualityLeftRule(_, Ant(0), Ant(1), le"^x (P x: o)".asInstanceOf[Abs])).qed
   println(lk)
   val nd = LKToND(lk)

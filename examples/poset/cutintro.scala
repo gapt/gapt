@@ -1,13 +1,12 @@
 package gapt.examples.poset
 
 import gapt.cutintro.CutIntroduction
-import gapt.examples.Script
 import gapt.grammars.DeltaTableMethod
 import gapt.proofs.expansion._
 import gapt.proofs.lk.transformations.LKToExpansionProof
 import gapt.utils.verbose
 
-object cutintro extends Script {
+@main def cutintro(): Unit = {
 
   val constructedProof = eliminateCutsET(LKToExpansionProof(proof.cycleImpliesEqual4))
 
@@ -17,5 +16,4 @@ object cutintro extends Script {
       method = DeltaTableMethod(singleQuantifier = false, subsumedRowMerging = true, keyLimit = Some(3))
     )
   }
-
 }
