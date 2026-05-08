@@ -17,6 +17,7 @@ class UtilTests extends Specification {
         case (2, 3) => 1
         case (3, 4) => 1
         case (2, 4) => 3
+        case edge   => throw new IllegalArgumentException(s"unexpected edge: $edge")
       }
       shortestPath[Int](1, 4, edges, weights) must beSome(Seq(1, 2, 3, 4))
     }
