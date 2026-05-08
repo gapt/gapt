@@ -61,7 +61,7 @@ object nTapeInstances {
       case ETImp(
             ETAnd(
               ETWeakQuantifier(_, base_instances),
-              ETSkolemQuantifier(_, _, ETImp(_, ETWeakQuantifier(f, step_instances)))
+              ETSkolemQuantifier(_, _, ETImp(_, ETWeakQuantifier(_, step_instances)))
             ),
             _
           ) =>
@@ -74,7 +74,7 @@ object nTapeInstances {
       case ETImp(
             ETAnd(
               ETWeakQuantifier(_, base_instances),
-              ETSkolemQuantifier(_, _, ETImp(_, ETWeakQuantifier(f, step_instances)))
+              ETSkolemQuantifier(_, _, ETImp(_, ETWeakQuantifier(_, step_instances)))
             ),
             _
           ) =>

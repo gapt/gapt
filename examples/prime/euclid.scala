@@ -59,7 +59,7 @@ case class euclid(k: Int) extends PrimeDefinitions {
 
     unfold("F") `in` "fk"
     allL("fk", le"p $i").forget; decompose; destruct("fk_1")
-    Tactic.sequence(for (j <- i to k reverse) yield unfold("P", "union", "set_1") `in` "fk_1")
+    Tactic.sequence(for (_ <- i to k reverse) yield unfold("P", "union", "set_1") `in` "fk_1")
     decompose; trivial
     unfold("PRIME") `in` "fk_1"; decompose
 

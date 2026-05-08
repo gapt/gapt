@@ -101,8 +101,8 @@ object CASCEvaluation {
   }
 
   def eval[T <: CASCResult](bundle: ResultBundle[T]) = {
-    val (rstatsByProver, rstatsByProblem, rallSolved) = TstpStatistics.bagResults(bundle.rp_stats)
-    val (sstatsByProver, sstatsByProblem, sallSolved) = TstpStatistics.bagResults(bundle.tstp_stats)
+    val (rstatsByProver, _, _) = TstpStatistics.bagResults(bundle.rp_stats)
+    val (sstatsByProver, _, _) = TstpStatistics.bagResults(bundle.tstp_stats)
 
     println("=== reconstruction statistics")
     eval_errors(
@@ -232,7 +232,7 @@ object CASCEvaluation {
    * @tparam T the type of data points in the statistic
    * @return a CSVRow with the trincated strings
    */
-  def roundedStatisticCSV[T](s: Statistic[T])(implicit num: Numeric[T], conv: T => BigDecimal) = {
+  def roundedStatisticCSV[T](s: Statistic[T])(implicit conv: T => BigDecimal) = {
     val n = s.n
     val min = conv(s.min)
     val max = conv(s.max)
@@ -254,7 +254,7 @@ object CASCEvaluation {
   def eval_rp_stats[T <: FileData](rp_stats: Set[RPProofStats[T]]) = {
     implicit def conv(v: BigInt): BigDecimal = BigDecimal(v)
     def maxavgh(x: String) = List(s"${x}_max", s"${x}_avg")
-    def maxavgsCSV[T](s: Statistic[T])(implicit num: Numeric[T], conv: T => BigDecimal) = {
+    def maxavgsCSV[T](s: Statistic[T])(implicit conv: T => BigDecimal) = {
       val csv = roundedStatisticCSV(s)
       List(csv.cells(2), csv.cells(3))
     }

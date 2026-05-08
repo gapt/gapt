@@ -21,7 +21,7 @@ trait ExplicitEqualityTactics {
       goal <- currentGoal
       All.Block(Seq(_, transVar, _), _) = goal(transitivity)
       All.Block(_, Imp.Block(_, Eq(eqL, eqR))) = goal(equation): @unchecked
-      Eq(tgtL, tgtR) = goal(targetEq): @unchecked
+      Eq(tgtL, _) = goal(targetEq): @unchecked
       subst <- syntacticMatching(eqL, tgtL).toTactic(s"cannot match equation $equation to formula $targetEq")
       _ <- chain(transitivity).at(targetEq).subst(transVar -> subst(eqR))
       _ <- chain(equation).at(targetEq)
@@ -40,7 +40,7 @@ trait ExplicitEqualityTactics {
       goal <- currentGoal
       All.Block(Seq(_, transVar, _), _) = goal(transitivity)
       All.Block(_, Imp.Block(_, Eq(eqL, eqR))) = goal(equation): @unchecked
-      Eq(tgtL, tgtR) = goal(targetEq): @unchecked
+      Eq(_, tgtR) = goal(targetEq): @unchecked
       subst <- syntacticMatching(eqR, tgtR).toTactic(s"cannot match equation $equation to formula $targetEq")
       _ <- chain(transitivity).at(targetEq).subst(transVar -> subst(eqL))
       _ <- focus(1)

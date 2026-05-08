@@ -70,7 +70,10 @@ object Theory {
       DelayedProofResult(proofNameInst, subst(usedLemmas), subst(proof))
     }
 
-    def usedLemmaNames: Seq[String] = usedLemmas.map { case (Apps(Const(n, _, _), _), _) => n }
+    def usedLemmaNames: Seq[String] = usedLemmas.map {
+      case (Apps(Const(n, _, _), _), _) => n
+      case (lemma, _)                   => throw new IllegalArgumentException(s"unexpected lemma name: $lemma")
+    }
 
     def proofWithLinks: LKProof = {
       var p = proof
