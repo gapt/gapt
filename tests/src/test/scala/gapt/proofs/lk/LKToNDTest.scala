@@ -522,7 +522,6 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
     "translate EqualityRight multiple replacements" in {
       val c = FOLConst("c")
       val d = FOLConst("d")
-      val Pc = FOLAtom("P", c)
       val Pd = FOLAtom("P", d)
       val Pccc = FOLAtom("P", c, c, c)
       val Pccd = FOLAtom("P", c, c, d)

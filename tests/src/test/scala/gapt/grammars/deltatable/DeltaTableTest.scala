@@ -10,8 +10,8 @@ import org.specs2.mutable.Specification
 class DeltaTableTest extends Specification {
 
   "key subsumption" should {
-    val Seq(x1, x2, x3, x4) = 1 to 4 map { i => FOLVar(s"x$i") }
-    val Seq(c1, c2, c3, c4) = 1 to 4 map { i => FOLConst(s"c$i") }
+    val Seq(x1, x2, x3) = 1 to 3 map { i => FOLVar(s"x$i") }
+    val Seq(c1, c2, c3) = 1 to 3 map { i => FOLConst(s"c$i") }
 
     "renaming" in {
       val k1 = Set(
@@ -44,7 +44,7 @@ class DeltaTableTest extends Specification {
       val table = deltaTableAlgorithm.createTable(lang.toSet)
 
       table must contain(atLeast(beLike[(Set[Substitution], deltaTableAlgorithm.Row)] {
-        case (s, decomps) if s.size == 5 => ok
+        case (s, _) if s.size == 5 => ok
       }))
       ok
     }

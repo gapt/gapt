@@ -1,7 +1,6 @@
 package gapt.utils
 
 import org.specs2.mutable.Specification
-import org.specs2.matcher.Matchers._
 
 class AborterTest extends Specification {
   "abortable" in {
@@ -36,7 +35,7 @@ class AborterTest extends Specification {
       val gotAborted = abortable(true, true) { aborter ?=>
         try aborter.abortIfNotified()
         catch
-          case t: Throwable => {
+          case _: Throwable => {
             // this consumes the special exception thrown by abortIfNotified
             // so the abort will not take place
           }

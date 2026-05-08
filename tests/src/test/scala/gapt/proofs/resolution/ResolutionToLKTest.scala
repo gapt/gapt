@@ -10,7 +10,6 @@ import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.fol.{naive, thresholds}
 import gapt.expr.subst.FOLSubstitution
 import gapt.expr.subst.Substitution
-import gapt.proofs.lk._
 import gapt.proofs._
 import gapt.proofs.lk.rules.LogicalAxiom
 import gapt.provers.escargot.Escargot

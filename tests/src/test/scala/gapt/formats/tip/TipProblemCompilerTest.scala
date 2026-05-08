@@ -46,8 +46,6 @@ class TipProblemCompilerTest extends Specification {
       """.stripMargin)
     )).compileTipProblem().toProblem
 
-    implicit val ctx: Context = inputProblem.context
-
     inputProblem.datatypes.toSet must
       contain(Set(
         InductiveType("Nat", Nil, "Z" -> Nil, "S" -> Seq(Some("P") -> ty"Nat")),
@@ -70,8 +68,6 @@ class TipProblemCompilerTest extends Specification {
       )
         .compileTipProblem()
         .toProblem
-
-    implicit val ctx: Context = inputProblem.context
 
     inputProblem.datatypes.toSet must
       contain(
@@ -170,7 +166,7 @@ class TipProblemCompilerTest extends Specification {
   }
 
   "Repeated matches on same variable should be allowed" in {
-    val inputProblem = new TipTransformationCompiler(TipSmtParser.parse(
+    new TipTransformationCompiler(TipSmtParser.parse(
       StringInputFile("""
         |(declare-datatypes ((Nat 0))
         |  (( (Z) (S (P Nat)))))
@@ -191,7 +187,7 @@ class TipProblemCompilerTest extends Specification {
   }
 
   "Distinct-expression should be compiled" in {
-    val inputProblem = new TipTransformationCompiler(TipSmtParser.parse(
+    new TipTransformationCompiler(TipSmtParser.parse(
       StringInputFile("""
         |(declare-datatypes ((Nat 0))
         |  (( (Z) (S (P Nat)))))

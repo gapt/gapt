@@ -9,7 +9,7 @@ import org.specs2.mutable.Specification
 class LggTest extends Specification {
   "leastGeneralGeneralization" should {
     "compute lgg of first-order terms" in {
-      val (lgg, substs) = leastGeneralGeneralization(le"f c c", le"f d d")
+      val (lgg, _) = leastGeneralGeneralization(le"f c c", le"f d d")
       val Seq(x) = freeVariables(lgg).toSeq
       lgg must_== le"f $x $x"
     }

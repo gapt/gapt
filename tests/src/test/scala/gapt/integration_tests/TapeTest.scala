@@ -7,7 +7,6 @@ import gapt.formats.tptp.TptpFOLExporter
 import gapt.proofs.SequentMatchers
 import gapt.proofs.ceres._
 import gapt.proofs.context.Context
-import gapt.proofs.lk._
 import gapt.proofs.lk.transformations.skolemizeLK
 import gapt.provers.escargot.Escargot
 import gapt.provers.prover9.Prover9
@@ -28,7 +27,7 @@ class TapeTest extends Specification with SequentMatchers {
       //      println( cs_.size )
       val cs = deleteTautologies(cs_)
       //      cs.map( x => println( s"Clause: $x" ) )
-      val tptp = TptpFOLExporter.tptpProblem(cs.toList)
+      TptpFOLExporter.tptpProblem(cs.toList)
       //      println( s"tptp string:\n$tptp" )
       //      val writer = new java.io.FileWriter( "target" + separator + "tape-cs.tptp" )
       //      writer.write( tptp.toString )

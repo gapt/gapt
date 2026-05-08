@@ -19,7 +19,7 @@ class IvyToResolutionTest extends Specification {
     proof match {
       case LList(_*) =>
         val pinput = IvyParser.parse(proof)
-        val rinput = IvyToResolution(pinput)
+        IvyToResolution(pinput)
         ok
       case _ =>
         ko(s"The proof in $file must have some inferences")

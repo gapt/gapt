@@ -27,7 +27,7 @@ class MRealizabilityTest extends Specification {
       )
 
       {
-        implicit var systemT: Context = MRealizability.systemT(ctx)
+        implicit val systemT: Context = MRealizability.systemT(ctx)
 
         val plusTwo = le"natRec(s(s(0)))(^z1 ^z2 (s(z2)))"
 
@@ -54,7 +54,7 @@ class MRealizabilityTest extends Specification {
       )
 
       {
-        implicit var systemT = MRealizability.systemT(ctx)
+        implicit val systemT = MRealizability.systemT(ctx)
 
         val sumPair = le"conjjRec (^(x:nat) ^(y:nat) (x + y) )"
 
@@ -128,7 +128,7 @@ class MRealizabilityTest extends Specification {
     )
 
     {
-      implicit var systemT = MRealizability.systemT(ctx)
+      implicit val systemT = MRealizability.systemT(ctx)
 
       "emptyType" in {
         MRealizability.remEmpProgType(ty"1") must_== ty"1"
@@ -208,15 +208,12 @@ class MRealizabilityTest extends Specification {
 
     def list(ty: Ty) = TBase("list", ty)
     def nil(ty: Ty) = Const("nil", list(ty), List(ty))
-    def cons(ty: Ty) = Const("cons", ty ->: list(ty), List(ty))
     val sumList = Const("sumList", list(nat) ->: nat)
 
     def listRec(listType: Ty, resultType: Ty) =
       Const("listRec", resultType ->: (listType ->: list(listType) ->: resultType ->: resultType) ->: list(listType) ->: resultType, List(listType, resultType))
 
     def bitree(ty: Ty) = TBase("bitree", ty)
-    def leaf(ty: Ty) = Const("leaf", ty ->: bitree(ty), List(ty))
-    def node(ty: Ty) = Const("node", bitree(ty) ->: bitree(ty) ->: bitree(ty), List(ty))
     def bitreeRec(bitreeType: Ty, resultType: Ty) =
       Const(
         "bitreeRec",

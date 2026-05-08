@@ -7,7 +7,6 @@ import gapt.examples.lattice
 import gapt.expr.formula.hol.isAtom
 import gapt.proofs.SequentMatchers
 import gapt.proofs.ceres._
-import gapt.proofs.lk._
 import gapt.provers.escargot.Escargot
 
 import gapt.proofs.lk.rules.CutRule
@@ -26,14 +25,14 @@ class LatticeTest extends Specification with SequentMatchers {
     "parse, skolemize and apply CERES to the lattice proof" in {
       val acnf = CERES(lattice.p, CERES.skipNothing, Escargot)
       acnf.endSequent must beMultiSetEqual(lattice.p.endSequent)
-      for (case CutRule(p1, a1, p2, a2) <- acnf.subProofs) isAtom(p1.endSequent(a1)) must beTrue
+      for (case CutRule(p1, a1, _, _) <- acnf.subProofs) isAtom(p1.endSequent(a1)) must beTrue
       ok
     }
 
     "parse, skolemize and apply CERES to the lattice proof, skipping equational inferences" in {
       val acnf = CERES(lattice.p, CERES.skipEquations, Escargot)
       acnf.endSequent must beMultiSetEqual(lattice.p.endSequent)
-      for (case CutRule(p1, a1, p2, a2) <- acnf.subProofs) isAtom(p1.endSequent(a1)) must beTrue
+      for (case CutRule(p1, a1, _, _) <- acnf.subProofs) isAtom(p1.endSequent(a1)) must beTrue
       ok
     }
 

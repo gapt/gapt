@@ -90,9 +90,10 @@ class FOLMatchingAlgorithmTest extends Specification {
       val term2 = FOLFunction("f", c :: gx1a :: x3 :: Nil)
       val P1 = All(x1, FOLAtom("P", x1 :: term1 :: Nil))
       val P2 = All(x1, FOLAtom("P", c :: term2 :: Nil))
-      val sub1 = syntacticMatching(P1, P2)
-      // ??
-      0 must beEqualTo(0)
+      val sub = syntacticMatching(P1, P2)
+      (sub.get(fov"x1") must beEqualTo(c)).and(
+        sub.get(fov"x3") must beEqualTo(a)
+      )
     }
 
     "match the FOL formulas And(P(x1,f(x1, g(x1,x3), x3)),Q(x1)) and And(P(c,f(c, g(x1,a), x3)),Q(c))" in {

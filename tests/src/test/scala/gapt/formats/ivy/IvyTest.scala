@@ -90,7 +90,7 @@ class IvyTest extends Specification {
       result must not beEmpty
       val proof = result.head
       proof match {
-        case LList(input1, input2, instantiate8, paramod3, input4, input5, instantiate9, resolve6, resolve7) =>
+        case LList(input1, input2, instantiate8, _, _, _, _, _, _) =>
           IvyParser.parse(LList(input1))
           IvyParser.parse(LList(input2))
           IvyParser.parse(LList(input1, instantiate8))
@@ -107,7 +107,7 @@ class IvyTest extends Specification {
       result must not beEmpty
       val proof = result.head
       proof match {
-        case LList(input1, input2, instantiate8, paramod3, input4, input5, instantiate9, resolve6, resolve7, instantiate10) =>
+        case LList(_, _, _, paramod3, _, _, instantiate9, _, _, instantiate10) =>
           IvyParser.parse(LList(paramod3, instantiate9))
           IvyParser.parse(LList(instantiate10))
 
@@ -123,7 +123,7 @@ class IvyTest extends Specification {
       result must not beEmpty
       val proof = result.head
       proof match {
-        case l @ LList(input0, input1, flip2, input3, para4a, inst6, resolve4) =>
+        case l @ LList(_, input1, flip2, _, _, _, _) =>
           IvyParser.parse(LList(input1, flip2))
           IvyParser.parse(l)
 
@@ -140,7 +140,7 @@ class IvyTest extends Specification {
       result must not beEmpty
       val proof = result.head
       proof match {
-        case LList(input1, input2, instantiate8, paramod3, input4, input5, instantiate9, resolve6, resolve7) =>
+        case LList(_, _, _, _, _, _, _, _, _) =>
           IvyParser.parse(proof)
 
         case _ =>

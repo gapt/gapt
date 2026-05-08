@@ -2,7 +2,6 @@ package gapt.integration_tests
 
 import gapt.expr.formula.hol.containsStrongQuantifier
 import gapt.formats.tptp.TptpFOLExporter
-import gapt.proofs.lk._
 import gapt.provers.prover9._
 import gapt.provers.verit.VeriT
 import gapt.proofs.ceres.{deleteTautologies, _}
@@ -149,12 +148,12 @@ class PrimeProofTest extends Specification {
       val s = extractStruct(proof_sk, CERES.skipEquations)
 
       val cs = deleteTautologies(CharacteristicClauseSet(s))
-      val tptp = TptpFOLExporter.tptpProblem(cs.toList)
+      TptpFOLExporter.tptpProblem(cs.toList)
       //      val writer = new java.io.FileWriter( "target" + separator + "prime1-" + n + "-cs.tptp" )
       //      writer.write( tptp.toString )
       //      writer.flush
-      val projs = Projections(proof_sk, CERES.skipEquations)
-      val path = "target" + separator + "prime1-" + n + "-sk.xml"
+      Projections(proof_sk, CERES.skipEquations)
+      "target" + separator + "prime1-" + n + "-sk.xml"
 
       if (refute) {
         Prover9.getResolutionProof(cs) match {

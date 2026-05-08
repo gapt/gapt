@@ -6,7 +6,6 @@ package gapt.formats.llk
 import org.specs2.mutable._
 
 import util.parsing.input.Position
-import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Ex
@@ -322,7 +321,7 @@ p101(Y))) & (-(all X (-r1(Y,X) | -(-p2(X) & -p102(X) & p101(X)))) & -(all X (-r1
       str map { x =>
         val f = LLKFormulaParser.parseFormula(x)
         f match {
-          case All(x, Imp(Atom(p, px :: Nil), Ex(y, Atom(q, List(qx, qy))))) =>
+          case All(_, Imp(Atom(_, _ :: Nil), Ex(_, Atom(_, List(_, _))))) =>
             "success" mustEqual ("success")
           case _ =>
             f mustEqual ("(fails)")

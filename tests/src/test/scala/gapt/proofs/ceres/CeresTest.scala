@@ -7,7 +7,6 @@ import gapt.expr.formula.fol.Numeral
 import gapt.expr.formula.hol.isAtom
 import gapt.formats.ClasspathInputFile
 import gapt.formats.llk._
-import gapt.proofs.context.Context
 import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.Sort
 import gapt.proofs.lk.rules.CutRule
@@ -93,7 +92,7 @@ class CeresTest extends Specification with SequentMatchers with SatMatchers {
     val Some(proof) = Escargot.getLKProof(hos"f 0 = t, !x (f (s x) = f x) :- f ${Numeral(9)} = t"): @unchecked
     val Some(proofWithCut) = CutIntroduction(proof): @unchecked
     val acnf = CERES(proofWithCut)
-    for (case CutRule(p1, a1, p2, a2) <- acnf.subProofs) isAtom(p1.endSequent(a1)) must beTrue
+    for (case CutRule(p1, a1, _, _) <- acnf.subProofs) isAtom(p1.endSequent(a1)) must beTrue
     ok
   }
 

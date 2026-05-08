@@ -539,7 +539,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "issue 684" in {
     val Some(p) = Escargot.getLKProof(hof"¬(∀x x = c0 ∧ ∃x f0(x) != f1(x))"): @unchecked
-    val q = cutNormal(p)
+    cutNormal(p)
     ok
   }
 

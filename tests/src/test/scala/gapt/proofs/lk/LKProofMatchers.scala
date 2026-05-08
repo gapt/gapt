@@ -4,7 +4,6 @@ import gapt.expr.formula.Atom
 import gapt.formats.babel.BabelSignature
 import gapt.proofs.lk.rules.{EqualityRule, SkolemQuantifierRule}
 import gapt.proofs.{Sequent, SequentMatchers}
-import org.specs2.matcher.Matchers.pairFunctionToMatcher
 import org.specs2.matcher.MustMatchers.theValue
 import org.specs2.matcher.{Matcher, Matchers}
 

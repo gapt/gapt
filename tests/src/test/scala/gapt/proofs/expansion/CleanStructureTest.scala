@@ -1,6 +1,5 @@
 package gapt.proofs.expansion
 
-import gapt.expr._
 import gapt.expr.formula.All
 import gapt.expr.formula.And
 import gapt.expr.formula.Imp

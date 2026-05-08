@@ -22,7 +22,7 @@ class UtilTests extends Specification {
     }
 
     "detect unreachable target" in {
-      shortestPath[Int](1, 4, Set(), { case (n, m) => 1 }) must beNone
+      shortestPath[Int](1, 4, Set(), { case (_, _) => 1 }) must beNone
     }
   }
 }

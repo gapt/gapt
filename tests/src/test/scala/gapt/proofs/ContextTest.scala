@@ -169,7 +169,7 @@ class ContextTest extends Specification {
   "propext" in {
     implicit val ctx: MutableContext = MutableContext.default()
     import gapt.proofs.gaptic._
-    val propext = Lemma(Sequent() :+ ("goal" -> hof"!p!q ((p <-> q) -> p = q)")) {
+    Lemma(Sequent() :+ ("goal" -> hof"!p!q ((p <-> q) -> p = q)")) {
       repeat(allR)
       induction(hov"p: o").onAll(induction(hov"q: o"))
       quasiprop.onAllSubGoals

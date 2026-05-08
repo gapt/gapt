@@ -13,10 +13,7 @@ class ProofBuilderTest extends Specification {
   "ProofBuilder" should {
     val A = FOLAtom("A", Nil)
     val B = FOLAtom("B", Nil)
-    val C = FOLAtom("C", Nil)
     val D = FOLAtom("D", Nil)
-    val E = FOLAtom("E", Nil)
-    val F = FOLAtom("F", Nil)
 
     "allow adding constant proofs" in {
       (ProofBuilder

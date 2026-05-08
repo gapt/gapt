@@ -24,7 +24,7 @@ class LambdaCalculusTest extends Specification {
       val v2 = Var("y", Ti)
       val f = Var("f", Ti ->: Ti ->: To)
       (Abs(v1 :: v2 :: Nil, f) match {
-        case Abs(v1, Abs(v2, f)) => true
+          case Abs(_, Abs(_, _)) => true
         case _                   => false
       }) must beEqualTo(true)
     }
@@ -33,7 +33,7 @@ class LambdaCalculusTest extends Specification {
       val v2 = Var("y", Ti)
       val f = Var("f", Ti ->: Ti ->: To)
       (App(f, List(v1, v2)) match {
-        case App(App(f, v1), v2) => true
+          case App(App(_, _), _) => true
         case _                   => false
       }) must beEqualTo(true)
     }

@@ -1,7 +1,6 @@
 package gapt.utils
 
 import org.specs2.mutable.Specification
-import org.specs2.matcher.Matchers._
 import scala.concurrent.duration._
 
 def catCommandExists: Boolean =
@@ -113,7 +112,7 @@ class timeoutTest extends Specification {
         }
         (started must beTrue) and (ended must beTrue)
       } catch {
-        case e: TimeOutException =>
+        case _: TimeOutException =>
           val delta = System.nanoTime() - start
           // we make sure that the TimeOutException was not triggered before
           // one millisecond has passed
@@ -146,7 +145,7 @@ class timeoutTest extends Specification {
           (started must beTrue) and
           (ended must beTrue)
       } catch {
-        case e: TimeOutException => {
+        case _: TimeOutException => {
           val delta = System.nanoTime() - start
           (delta must beGreaterThanOrEqualTo(1.milliseconds.toNanos)) and
             (started must beTrue) and

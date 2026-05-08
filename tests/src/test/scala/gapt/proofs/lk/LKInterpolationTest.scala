@@ -442,8 +442,6 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a single unary inference with not p with Neg( p )" in {
     val proof = WeakeningRightRule(LogicalAxiom(hof"p"), hof"q")
     val proof1 = OrRightRule(proof, hof"p", hof"q")
-    val npart = Seq(Suc(0))
-    val ppart = Seq(Ant(0))
     val (nproof, pproof, ipl) = Interpolate(proof1, Seq(true) :- Seq(false))
 
     ipl must beEqualTo(Neg(hof"p"))
@@ -454,7 +452,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing OrLeftRule with (Bottom ∨ Bottom)" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = OrLeftRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, proof4.endSequent.indicesSequent.map(_ => false))
@@ -467,7 +465,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing OrLeftRule (different partition) with (p ∨ q)" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = OrLeftRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, proof4.endSequent.indicesSequent.map(_.isSuc))
@@ -480,7 +478,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing OrLeftRule (yet another partition) with (Neg( p ) ∧ Neg( q ))" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = OrLeftRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, proof4.endSequent.indicesSequent.map(_.isAnt))
@@ -493,7 +491,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing OrLeftRule (and another partition) with (Top ∧ Top)" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = OrLeftRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, proof4.endSequent.indicesSequent.map(_ => true))
@@ -506,7 +504,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing OrLeftRule (and again another partition) with (Bottom ∨ q)" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = OrLeftRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, Seq(false) :- Seq(false, true))
@@ -519,7 +517,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing OrLeftRule (and again and again...) with (Top ∧ Neg( q ))" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = OrLeftRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, Seq(true) :- Seq(true, false))
@@ -532,7 +530,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing OrLeftRule (and again and again...) with (Neg( p ) ∧ Top)" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = OrLeftRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, Seq(true) :- Seq(false, true))
@@ -545,7 +543,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing OrLeftRule (and again and again...) with (p ∨ Bottom)" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = OrLeftRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, Seq(false) :- Seq(true, false))
@@ -558,7 +556,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing AndRightRule with (Bottom ∨ Bottom)" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = AndRightRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, proof4.endSequent.indicesSequent.map(_ => false))
@@ -571,7 +569,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing AndRightRule (different partition) with (p ∧ q)" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = AndRightRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, proof4.endSequent.indicesSequent.map(_.isSuc))
@@ -584,7 +582,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing AndRightRule (yet another partition) with (Neg( p ) ∧ Neg( q ))" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = AndRightRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, proof4.endSequent.indicesSequent.map(_.isAnt))
@@ -597,7 +595,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing AndRightRule (and another partition) with (Top ∧ Top)" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = AndRightRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, proof4.endSequent.indicesSequent.map(_ => true))
@@ -610,7 +608,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing AndRightRule (and again another partition) with (Neg( p ) ∨ Bottom)" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = AndRightRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, Seq(true, false) :- Seq(false))
@@ -623,7 +621,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing AndRightRule (and again and again...) with (Top ∧ q)" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = AndRightRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, Seq(true, false) :- Seq(true))
@@ -636,7 +634,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing AndRightRule (and again and again...) with (p ∧ Top)" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = AndRightRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, Seq(false, true) :- Seq(true))
@@ -649,7 +647,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing AndRightRule (and again and again...) with (Bottom ∨ Neg( q ))" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = AndRightRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, Seq(false, true) :- Seq(false))
@@ -662,7 +660,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing ImpLeftRule with (Bottom ∨ Bottom)" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = ImpLeftRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, proof4.endSequent.indicesSequent.map(_ => false))
@@ -675,7 +673,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing ImpLeftRule (different partition) with (Bottom ∨ q)" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = ImpLeftRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, proof4.endSequent.indicesSequent.map(_.isSuc))
@@ -688,7 +686,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing ImpLefttRule (yet another partition) with (Top ∧ Neg( q ))" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = ImpLeftRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, proof4.endSequent.indicesSequent.map(_.isAnt))
@@ -701,7 +699,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing ImpLeftRule (and another partition) with (Top ∧ Top)" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = ImpLeftRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, proof4.endSequent.indicesSequent.map(_ => true))
@@ -714,7 +712,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing ImpLeftRule (and again another partition) with (p ∧ Neg( q ))" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = ImpLeftRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, Seq(true, false) :- Seq(false))
@@ -727,7 +725,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing ImpLeftRule (and again and again...) with (p ∧ Top)" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = ImpLeftRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, Seq(true, false) :- Seq(true))
@@ -740,7 +738,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing ImpLeftRule (and again and again...) with (Neg( p ) ∨ q)" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = ImpLeftRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, Seq(false, true) :- Seq(true))
@@ -753,7 +751,7 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   "correctly interpolate a proof containing ImpLeftRule (and again and again...) with (Neg( p ) ∨ Bottom)" in {
     val proof = WeakeningLeftRule(LogicalAxiom(hof"p"), hof"p")
     val proof1 = WeakeningRightRule(LogicalAxiom(hof"q"), hof"q")
-    val proof2 = ContractionRightRule(proof1, hof"q")
+    ContractionRightRule(proof1, hof"q")
     val proof3 = ContractionLeftRule(proof, hof"p")
     val proof4 = ImpLeftRule(proof3, hof"p", LogicalAxiom(hof"q"), hof"q")
     val (nproof, pproof, ipl) = Interpolate(proof4, Seq(false, true) :- Seq(false))
@@ -779,7 +777,6 @@ class LKInterpolationTest extends Specification with SequentMatchers {
 
   "correctly interpolate a proof containing EqualityLeft with Bottom" in {
     val axpa = LogicalAxiom(hof"P a")
-    val axpb = LogicalAxiom(hof"P b")
     val proof = WeakeningLeftRule(axpa, hof"a=b")
     val proof1 = EqualityLeftRule(proof, hof"a=b", Ant(1), hof"P b")
 
@@ -792,7 +789,6 @@ class LKInterpolationTest extends Specification with SequentMatchers {
 
   "correctly interpolate a proof containing EqualityLeft with Top" in {
     val axpa = LogicalAxiom(hof"P a")
-    val axpb = LogicalAxiom(hof"P b")
     val proof = WeakeningLeftRule(axpa, hof"a=b")
     val proof1 = EqualityLeftRule(proof, hof"a=b", Ant(1), hof"P b")
 
@@ -805,7 +801,6 @@ class LKInterpolationTest extends Specification with SequentMatchers {
 
   "correctly interpolate a proof containing EqualityLeft with P(a)" in {
     val axpa = LogicalAxiom(hof"P a")
-    val axpb = LogicalAxiom(hof"P b")
     val proof = WeakeningLeftRule(axpa, hof"a=b")
     val proof1 = EqualityLeftRule(proof, hof"a=b", Ant(1), hof"P b")
 
@@ -818,7 +813,6 @@ class LKInterpolationTest extends Specification with SequentMatchers {
 
   "correctly interpolate a proof containing EqualityLeft with Neg( P(a) )" in {
     val axpa = LogicalAxiom(hof"P a")
-    val axpb = LogicalAxiom(hof"P b")
     val proof = WeakeningLeftRule(axpa, hof"a=b")
     val proof1 = EqualityLeftRule(proof, hof"a=b", Ant(1), hof"P b")
 
@@ -831,7 +825,6 @@ class LKInterpolationTest extends Specification with SequentMatchers {
 
   "correctly interpolate a proof containing EqualityLeft with a=b → P(a)" in {
     val axpa = LogicalAxiom(hof"P a")
-    val axpb = LogicalAxiom(hof"P b")
     val proof = WeakeningLeftRule(axpa, hof"a=b")
     val proof1 = EqualityLeftRule(proof, hof"a=b", Ant(1), hof"P b")
 
@@ -844,7 +837,6 @@ class LKInterpolationTest extends Specification with SequentMatchers {
 
   "correctly interpolate a proof containing EqualityLeft with a=b ∧ Top" in {
     val axpa = LogicalAxiom(hof"P a")
-    val axpb = LogicalAxiom(hof"P b")
     val proof = WeakeningLeftRule(axpa, hof"a=b")
     val proof1 = EqualityLeftRule(proof, hof"a=b", Ant(1), hof"P b")
 
@@ -857,7 +849,6 @@ class LKInterpolationTest extends Specification with SequentMatchers {
 
   "correctly interpolate a proof containing EqualityLeft with a=b ∧ Neg( P(a) )" in {
     val axpa = LogicalAxiom(hof"P a")
-    val axpb = LogicalAxiom(hof"P b")
     val proof = WeakeningLeftRule(axpa, hof"a=b")
     val proof1 = EqualityLeftRule(proof, hof"a=b", Ant(1), hof"P b")
 
@@ -870,7 +861,6 @@ class LKInterpolationTest extends Specification with SequentMatchers {
 
   "correctly interpolate a proof containing EqualityLeft with a=b → Bottom" in {
     val axpa = LogicalAxiom(hof"P a")
-    val axpb = LogicalAxiom(hof"P b")
     val proof = WeakeningLeftRule(axpa, hof"a=b")
     val proof1 = EqualityLeftRule(proof, hof"a=b", Ant(1), hof"P b")
 
@@ -883,7 +873,6 @@ class LKInterpolationTest extends Specification with SequentMatchers {
 
   "correctly interpolate a proof containing EqualityRight with Bottom" in {
     val axpa = LogicalAxiom(hof"P a")
-    val axpb = LogicalAxiom(hof"P b")
     val proof = WeakeningLeftRule(axpa, hof"a=b")
     val proof1 = EqualityRightRule(proof, hof"a=b", Suc(0), hof"P b")
 
@@ -896,7 +885,6 @@ class LKInterpolationTest extends Specification with SequentMatchers {
 
   "correctly interpolate a proof containing EqualityRight with Top" in {
     val axpa = LogicalAxiom(hof"P a")
-    val axpb = LogicalAxiom(hof"P b")
     val proof = WeakeningLeftRule(axpa, hof"a=b")
     val proof1 = EqualityRightRule(proof, hof"a=b", Suc(0), hof"P b")
 
@@ -909,7 +897,6 @@ class LKInterpolationTest extends Specification with SequentMatchers {
 
   "correctly interpolate a proof containing EqualityRight with a=b ∧ P(a)" in {
     val axpa = LogicalAxiom(hof"P a")
-    val axpb = LogicalAxiom(hof"P b")
     val proof = WeakeningLeftRule(axpa, hof"a=b")
     val proof1 = EqualityRightRule(proof, hof"a=b", Suc(0), hof"P b")
 
@@ -922,7 +909,6 @@ class LKInterpolationTest extends Specification with SequentMatchers {
 
   "correctly interpolate a proof containing EqualityRight with a=b → Neg( P(a) )" in {
     val axpa = LogicalAxiom(hof"P a")
-    val axpb = LogicalAxiom(hof"P b")
     val proof = WeakeningLeftRule(axpa, hof"a=b")
     val proof1 = EqualityRightRule(proof, hof"a=b", Suc(0), hof"P b")
 
@@ -935,7 +921,6 @@ class LKInterpolationTest extends Specification with SequentMatchers {
 
   "correctly interpolate a proof containing EqualityRight with P(a)" in {
     val axpa = LogicalAxiom(hof"P a")
-    val axpb = LogicalAxiom(hof"P b")
     val proof = WeakeningLeftRule(axpa, hof"a=b")
     val proof1 = EqualityRightRule(proof, hof"a=b", Suc(0), hof"P b")
 
@@ -948,7 +933,6 @@ class LKInterpolationTest extends Specification with SequentMatchers {
 
   "correctly interpolate a proof containing EqualityRight with a=b → Bottom" in {
     val axpa = LogicalAxiom(hof"P a")
-    val axpb = LogicalAxiom(hof"P b")
     val proof = WeakeningLeftRule(axpa, hof"a=b")
     val proof1 = EqualityRightRule(proof, hof"a=b", Suc(0), hof"P b")
 
@@ -961,7 +945,6 @@ class LKInterpolationTest extends Specification with SequentMatchers {
 
   "correctly interpolate a proof containing EqualityRight with Neg( P(a) )" in {
     val axpa = LogicalAxiom(hof"P a")
-    val axpb = LogicalAxiom(hof"P b")
     val proof = WeakeningLeftRule(axpa, hof"a=b")
     val proof1 = EqualityRightRule(proof, hof"a=b", Suc(0), hof"P b")
 
@@ -973,7 +956,6 @@ class LKInterpolationTest extends Specification with SequentMatchers {
   }
 
   "correctly interpolate a proof containing EqualityRight with a=b → Bottom" in {
-    val axpb = LogicalAxiom(hof"P b")
     val proof = WeakeningLeftRule(LogicalAxiom(hof"P a"), hof"a=b")
     val proof1 = EqualityRightRule(proof, hof"a=b", Suc(0), hof"P b")
 
@@ -1147,9 +1129,6 @@ class LKInterpolationTest extends Specification with SequentMatchers {
     val proof9 = ContractionLeftRule(proof8, hof"a=b")
     val proof10 = ImpRightRule(proof9, hof"a=b", And(Imp(hof"P a", hof"P b"), Imp(hof"P b", hof"P a")))
 
-    val npart = Seq[SequentIndex]()
-    val ppart = Seq(Suc(0))
-
     val (nproof, pproof, ipl) = Interpolate(proof10, Seq() :- Seq(true))
 
     val Il = And(Top(), Top())
@@ -1180,9 +1159,6 @@ class LKInterpolationTest extends Specification with SequentMatchers {
     val proof8 = AndRightRule(proof3, Imp(hof"P b", hof"P a"), proof7, Imp(hof"P a", hof"P b"))
     val proof9 = ContractionLeftRule(proof8, hof"a=b")
     val proof10 = ImpRightRule(proof9, hof"a=b", And(Imp(hof"P b", hof"P a"), Imp(hof"P a", hof"P b")))
-
-    val npart = Seq(Suc(0))
-    val ppart = Seq[SequentIndex]()
 
     val (nproof, pproof, ipl) = Interpolate(proof10, Seq() :- Seq(false))
 

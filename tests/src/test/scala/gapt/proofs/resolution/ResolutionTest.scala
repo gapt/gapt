@@ -142,7 +142,7 @@ class ResolutionTest extends Specification with SatMatchers {
   "daglike performance" in {
     def proof(n: Int) = {
       var p: ResolutionProof = Taut(hoa"a")
-      0 until n foreach { i =>
+      0 until n foreach { _ =>
         p = Resolution(p, Suc(0), p, Ant(0))
       }
       p

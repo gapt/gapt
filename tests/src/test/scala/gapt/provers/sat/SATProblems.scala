@@ -1,7 +1,6 @@
 package gapt.provers.sat
 
 import gapt.examples.PigeonHolePrinciple
-import gapt.expr._
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or
 import gapt.expr.formula.fol.FOLAtom

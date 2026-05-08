@@ -22,7 +22,7 @@ class FirstOrderLogicTest extends Specification {
       val List(p, x, y, f, c) = List("P", "x", "y", "f", "c")
       val Pc = Const(p, Ti ->: Ti ->: Ti ->: To)
       FOLAtom(p, FOLVar(x) :: FOLFunction(f, FOLVar(y) :: Nil) :: FOLConst(c) :: Nil) must beLike {
-        case App(App(App(Pc, FOLVar(x)), App(fc, FOLVar(y))), FOLConst(c)) => ok
+        case App(App(App(`Pc`, FOLVar(_)), App(_, FOLVar(_))), FOLConst(_)) => ok
       }
     }
     "construct correctly an atom using the factory" in {
@@ -114,7 +114,7 @@ class FirstOrderLogicTest extends Specification {
 
     "work for quantifiers" in {
       val List(a, b) = List("a", "b") map (FOLConst(_))
-      val List(x, y) = List("x", "y") map (FOLVar(_))
+      val List(x, _) = List("x", "y") map (FOLVar(_))
       val p = "P"
       val pab = FOLAtom(p, List(a, b))
 
@@ -200,37 +200,37 @@ class FirstOrderLogicTest extends Specification {
       val all = All(t2, a2)
       val ex = Ex(t2, a2)
       neg match {
-        case Neg(b1) =>
+        case Neg(_) =>
           ok
         case _ => ko("HOL created negation did not match against fol conjunction!")
       }
       conj match {
-        case And(b1, b2) =>
+        case And(_, _) =>
           ok
         case _ => ko("HOL created conjunction did not match against fol conjunction!")
       }
       or match {
-        case Or(b1, b2) =>
+        case Or(_, _) =>
           ok
         case _ => ko("HOL created disjunction did not match against fol conjunction!")
       }
       imp match {
-        case Imp(b1, b2) =>
+        case Imp(_, _) =>
           ok
         case _ => ko("HOL created implication did not match against fol conjunction!")
       }
       eq match {
-        case Eq(b1, b2) =>
+        case Eq(_, _) =>
           ok
         case _ => ko("HOL created equation did not match against fol conjunction!")
       }
       all match {
-        case All(b1, b2) =>
+        case All(_, _) =>
           ok
         case _ => ko("HOL created universal quantification did not match against fol conjunction!")
       }
       ex match {
-        case Ex(b1, b2) =>
+        case Ex(_, _) =>
           ok
         case _ => ko("HOL created existential quantification did not match against fol conjunction!")
       }

@@ -83,9 +83,9 @@ class MiscTest extends Specification {
       val p = db.proof("TAPEPROOF")
       val elp = AtomicExpansion(eliminateDefinitions(db.Definitions)(p))
       val reg = regularize(elp)
-      val lksk_proof = skolemizeLK(reg)
+      skolemizeLK(reg)
       // TODO
-      val et = LKToExpansionProof(reg) // must throwA[IllegalArgumentException] // currently contains problematic definitions
+      LKToExpansionProof(reg) // must throwA[IllegalArgumentException] // currently contains problematic definitions
       ok
     }
 
@@ -103,14 +103,14 @@ class MiscTest extends Specification {
 
       val etSeq = eliminateCutsET(LKToExpansionProof(p3))
 
-      val proof = ExpansionProofToLK(etSeq) // must not throw exception
+      ExpansionProofToLK(etSeq) // must not throw exception
       ok
     }
 
     "construct proof with expansion sequent extracted from proof (2/2)" in {
       val proof = LinearExampleProof(4)
 
-      val proofPrime = ExpansionProofToLK(eliminateCutsET(LKToExpansionProof(proof))) // must not throw exception
+      ExpansionProofToLK(eliminateCutsET(LKToExpansionProof(proof))) // must not throw exception
       ok
     }
 
@@ -206,7 +206,7 @@ class MiscTest extends Specification {
       if (!Prover9.isInstalled) skipped("Prover9 is not installed")
       val lkproof1 = lkProofFromClasspath("NUM484+3.out")
       val expseq = LKToExpansionProof(lkproof1)
-      val deep = expseq.deep
+      expseq.deep
       success("everything worked fine")
     }
   }

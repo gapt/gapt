@@ -67,11 +67,11 @@ class LLKTest extends Specification {
       LLKProofParser.parseAll(LLKProofParser.rules, p1) match {
         case LLKProofParser.Success(r: List[Token], _) =>
           // println(r)
-          val lterms: List[LambdaAST] = r.flatMap(_ match {
+          r.flatMap(_ match {
             case RToken(_, _, a, s, _) => a ++ s
             case TToken(_, _, _)       => Nil
             case AToken(_, _, a, s)    => a ++ s
-          })
+          }): List[LambdaAST]
 
           // println(lterms.flatMap(_.varnames).toSet)
 
@@ -83,7 +83,7 @@ class LLKTest extends Specification {
     }
 
     "accept the proof outline with the parse interface" in {
-      val r = LLKProofParser.parse(p1)
+      LLKProofParser.parse(p1)
       ok
     }
 
@@ -114,8 +114,7 @@ class LLKTest extends Specification {
     }
 
     "load the simple example from file and parse it" in {
-      val p = llkFromClasspath("simple.llk")
-      // println(p)
+      llkFromClasspath("simple.llk")
 
       ok
     }

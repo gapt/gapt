@@ -11,7 +11,6 @@ import org.specs2.matcher.MatchResult
 import gapt.logic.hol.scan.PointedClause
 import gapt.proofs.Ant
 import gapt.proofs.Suc
-import gapt.proofs.Sequent
 import gapt.logic.Polarity
 import gapt.logic.hol.scan.Derivation
 

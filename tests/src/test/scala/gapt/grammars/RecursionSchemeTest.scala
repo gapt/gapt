@@ -20,7 +20,10 @@ class RecursionSchemeTest extends Specification with SatMatchers {
 
   "RecSchemGenLangFormula" should {
     "first-order" in {
-      val Seq(x, y, y1, y2, y3, z) = Seq("x", "y", "y1", "y2", "y3", "z") map { FOLVar(_) }
+      val x = FOLVar("x")
+      val y1 = FOLVar("y1")
+      val y2 = FOLVar("y2")
+      val y3 = FOLVar("y3")
       val Seq(c, d, e) = Seq("c", "d", "e") map { FOLConst(_) }
       val q = FOLFunctionConst("q", 1)
       val r = FOLFunctionConst("r", 2)

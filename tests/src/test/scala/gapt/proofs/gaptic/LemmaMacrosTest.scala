@@ -5,6 +5,7 @@ import gapt.proofs.context.facet.ProofNames
 import gapt.proofs.Sequent
 import gapt.proofs.context.mutable.MutableContext
 import org.specs2.mutable.Specification
+import scala.annotation.unused
 
 class ProofMacrosTest extends Specification {
 
@@ -27,6 +28,7 @@ class ProofMacrosTest extends Specification {
   "lemma" in {
     implicit val ctx = MutableContext.default()
     ctx += hoc"a: o"
+    @unused("kept because the Lemma macro uses 'proof' as name in ProofNames")
     val proof = Lemma(Sequent() :+ ("goal" -> hof"a -> a")) {
       decompose
       trivial

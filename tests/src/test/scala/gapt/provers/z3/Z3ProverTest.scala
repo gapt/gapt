@@ -5,7 +5,6 @@
 package gapt.provers.z3
 
 import gapt.examples.BussTautology
-import gapt.expr._
 import gapt.expr.formula.Bottom
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or

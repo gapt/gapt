@@ -7,7 +7,6 @@ package gapt.provers.maxsat
 import gapt.models.PropositionalModel
 import gapt.proofs.HOLClause
 import org.specs2.mutable._
-import gapt.expr._
 import gapt.expr.formula.And
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or

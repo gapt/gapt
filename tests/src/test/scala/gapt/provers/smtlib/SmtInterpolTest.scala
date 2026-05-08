@@ -5,7 +5,6 @@
 package gapt.provers.smtlib
 
 import gapt.examples.BussTautology
-import gapt.expr._
 import gapt.expr.formula.Bottom
 import gapt.expr.formula.Neg
 import gapt.expr.formula.Or

@@ -70,17 +70,6 @@ class ceres_omegaTest extends Specification with SequentMatchers {
     r6
   }
 
-  def refutation2(cs: Set[HOLSequent]) = {
-    val Some(c1) = cs.find(x => (x.antecedent.size == 1) && (x.succedent.size == 1)): @unchecked
-    val Some(c2) = cs.find(x => (x.antecedent.size == 1) && (x.succedent.size == 0)): @unchecked
-    val Some(c3) = cs.find(x => (x.antecedent.size == 0) && (x.succedent.size == 1)): @unchecked
-
-    val r1 = Input(c1)
-    val r2 = Input(c2)
-    val r3 = Input(c3)
-
-  }
-
   "Ceres omega Projections" should {
     "be computed for a cut-free proof" in {
       val filename = "tape3ex.llk"
@@ -153,11 +142,11 @@ class ceres_omegaTest extends Specification with SequentMatchers {
 
   "Ceres_omega" should {
     "handle a proof with a manual refutation (1)" in {
-      val (p, cs, struct, proj) = prepareProof("llk/simple-leibnizeq.llk", "THEPROOF")
+      val (p, cs, _, proj) = prepareProof("llk/simple-leibnizeq.llk", "THEPROOF")
       val rp = refutation1(cs)
 
       val acnf = CERES(p.conclusion, proj, rp)
-      val et = LKToExpansionProof(acnf)
+      LKToExpansionProof(acnf)
       ok
     }
 
