@@ -161,8 +161,7 @@ object insertDefinition {
         val shallowNew = definitionApplied
         val instancesNew: Map[Expr, ExpansionTree] = (for {
           (t, e) <- instances
-          ctxNew = instReplCtx(replacementContext, t)
-          treeNew = insertDefinition(e, defn, ctxNew)
+          treeNew = insertDefinition(e, defn, instReplCtx(replacementContext, t))
         } yield (t, treeNew)).toMap
 
         ETWeakQuantifier(shallowNew, instancesNew)
