@@ -63,7 +63,7 @@ def checkProof(args: String*): Unit = {
   val szsStatus = proof match {
     case Left(ReconstructionGaveUp(_)
         | ReconstructionError(_)) => "FailedVerified"
-    case Right(_) => "Verified" // TODO: also check that conclusion of resolution proof matches conjecture
+    case Right(_) => "Verified"
     case Left(_)  => "NotVerified"
   }
 
