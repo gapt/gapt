@@ -117,8 +117,7 @@ class ProofCheckerTest extends Specification with BeforeAll {
           proofCheckerProcess(example.toString).!!!
 
         exitCode must_== 0
-        stdout.linesIterator.toSeq.last must startWith("%SZS status Verified")
-        stderr must beEmpty
+        stdout must_== "%SZS status Verified"
       }
     }
 
@@ -130,8 +129,7 @@ class ProofCheckerTest extends Specification with BeforeAll {
           proofCheckerProcess(example.toString).!!!
 
         exitCode must_== 0
-        stdout.linesIterator.toSeq.last must startWith("%SZS status FailedVerified")
-        stderr must beEmpty
+        stdout must_== "%SZS status FailedVerified"
       }
     }
   }
