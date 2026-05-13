@@ -13,20 +13,29 @@ case class ProofFile(path: Path) extends FileData {
   override def toCSV(): CSVRow[String] = CSVRow(List(path.toString))
 }
 
+val usage = """
+|check-proof <PROOF>
+|
+|Checks the correctness of a given proof.
+|PROOF is a path to a TSTP proof file""".stripMargin.strip
+
 @main
 def checkProof(args: String*): Unit = {
-  if args.size == 0 then {
-    println(
-      """check-proof PROOF
-      |
-      |Checks the correctness of a given proof.
-      |PROOF is a path to a TSTP proof file""".stripMargin
-    )
-    sys.exit(0)
-    return
+  val input = args match {
+    case Seq() => {
+      System.err.println(usage)
+      sys.exit(1)
+      return
+    }
+    case Seq("--help") => {
+      System.out.println(usage)
+      sys.exit(0)
+      return
+    }
+    case Seq(file) => file
   }
 
-  val path = os.Path(args(0), os.pwd)
+  val path = os.Path(input, os.pwd)
   val (sketch, proof) = TstpStatistics.loadFile(
     ProofFile(path),
     print_statistics = true

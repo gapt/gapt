@@ -9,10 +9,11 @@ import scala.sys.process._
 
 class ProofCheckerTest extends Specification with BeforeAll {
   private val usageText =
-    """check-proof PROOF
+    """
+      |check-proof <PROOF>
       |
       |Checks the correctness of a given proof.
-      |PROOF is a path to a TSTP proof file""".stripMargin
+      |PROOF is a path to a TSTP proof file""".stripMargin.strip
 
   trait Cwd { def path: Path }
   object TestCwd extends Cwd { def path: Path = os.pwd }
@@ -62,21 +63,31 @@ class ProofCheckerTest extends Specification with BeforeAll {
   "checkProof" should {
     given cwd: Cwd = RepoRoot
 
-    "exit zero on no input file" in {
+    "exit non-zero on no input file" in {
       val exitCode = proofCheckerProcess().!
+      exitCode must beGreaterThan(0)
+    }
+
+    "exit zero on --help" in {
+      val exitCode = proofCheckerProcess("--help").!
       exitCode must_== 0
     }
 
     "print usage on no input file" in {
-      val output = proofCheckerProcess().!!
-      output must startWith(usageText)
+      val (_, _, stderr) = proofCheckerProcess().!!!
+      stderr must startWith(usageText)
+    }
+
+    "print usage on --help" in {
+      val (_, stdout, _) = proofCheckerProcess("--help").!!!
+      stdout must startWith(usageText)
     }
 
     "fail on a non-existent path" in {
       val (exitCode, stdout, stderr) =
         proofCheckerProcess("./examples/proover_competition/proofs/non_existing_file.p").!!!
 
-      exitCode must not(be_==(0))
+      exitCode must beGreaterThan(0)
       stdout must beEmpty
       stderr must startWith("file not found")
     }
