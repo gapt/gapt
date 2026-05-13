@@ -122,9 +122,9 @@ case class LambdaPosition(list: List[Choice]) {
 
   def get(exp: Expr): Option[Expr] = exp match {
     case _ if isEmpty                              => Some(exp)
-    case App(f, a) if head == LambdaPosition.Left  => tail.get(f)
-    case App(f, a) if head == LambdaPosition.Right => tail.get(a)
-    case Abs(v, t) if head == LambdaPosition.Left  => tail.get(t)
+    case App(f, _) if head == LambdaPosition.Left  => tail.get(f)
+    case App(_, a) if head == LambdaPosition.Right => tail.get(a)
+    case Abs(_, t) if head == LambdaPosition.Left  => tail.get(t)
     case _                                         => None
   }
 }

@@ -62,29 +62,29 @@ class IntegerToNaturalConversion(problem: TipSmtProblem) {
 
   private def convertIntegersToNaturals(expression: TipSmtExpression): TipSmtExpression = {
     expression match {
-      case expr @ TipSmtAnd(es) =>
+      case TipSmtAnd(es) =>
         TipSmtAnd(es map { convertIntegersToNaturals(_) })
-      case expr @ TipSmtOr(es) =>
+      case TipSmtOr(es) =>
         TipSmtOr(es map { convertIntegersToNaturals(_) })
-      case expr @ TipSmtImp(es) =>
+      case TipSmtImp(es) =>
         TipSmtImp(es map { convertIntegersToNaturals(_) })
-      case expr @ TipSmtForall(vs, f) =>
+      case TipSmtForall(vs, f) =>
         TipSmtForall(vs, convertIntegersToNaturals(f))
-      case expr @ TipSmtExists(vs, f) =>
+      case TipSmtExists(vs, f) =>
         TipSmtExists(vs, convertIntegersToNaturals(f))
-      case expr @ TipSmtIte(cond, ifTrue, ifFalse) =>
+      case TipSmtIte(cond, ifTrue, ifFalse) =>
         TipSmtIte(
           convertIntegersToNaturals(cond),
           convertIntegersToNaturals(ifTrue),
           convertIntegersToNaturals(ifFalse)
         )
-      case expr @ TipSmtEq(es) =>
+      case TipSmtEq(es) =>
         TipSmtEq(es map { convertIntegersToNaturals })
-      case expr @ TipSmtFun(f, as) =>
+      case TipSmtFun(f, as) =>
         TipSmtFun(f, as map { convertIntegersToNaturals })
-      case expr @ TipSmtNot(f) =>
+      case TipSmtNot(f) =>
         TipSmtNot(convertIntegersToNaturals(f))
-      case expr @ TipSmtMatch(e, cases) =>
+      case TipSmtMatch(e, cases) =>
         TipSmtMatch(
           convertIntegersToNaturals(e),
           cases map { c => c.copy(expr = convertIntegersToNaturals(c.expr)) }

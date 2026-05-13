@@ -595,12 +595,6 @@ object introducePi2Cut {
       case None    =>
     }
 
-    /// Only for additional data ///
-    ////////////////////////////////
-    var numberOfAllowedClauses: Option[Int] = None
-    var numberOfCheckedFormulas: Int = literalsWithIndexLists.size
-    ////////////////////////////////
-
     if (literalsWithIndexLists.size > 1) {
 
       val allowedClausesWithIndexListsOrAndSolution: (Set[ClauseWithIndexLists], Option[Formula]) =
@@ -616,12 +610,6 @@ object introducePi2Cut {
         case None    =>
       }
 
-      /// Only for additional data ///
-      ////////////////////////////////
-      numberOfAllowedClauses = Option(allowedClausesWithIndexLists.size)
-      numberOfCheckedFormulas = allowedClausesWithIndexLists.size
-      ////////////////////////////////
-
       for (numberOfClauses <- 2 to allowedClausesWithIndexLists.size) {
         for (subset <- allowedClausesWithIndexLists.subsets(numberOfClauses)) {
           val clausesWithIndexLists = new ClausesWithIndexLists(subset.toList)
@@ -632,44 +620,11 @@ object introducePi2Cut {
               nameOfUniversalVariableChecked
             ))
           }
-
-          /// Only for additional data ///
-          ////////////////////////////////
-          numberOfCheckedFormulas += 1
-          ////////////////////////////////
         }
       }
     }
 
-    /// Prints the most interesting data ///
-    ////////////////////////////////////////
-
-    /*
-    println( "Number of non-tautological leaves" )
-    println( seHs.dualNonTautologicalAxioms.length )
-    println( "Non-tautological leaves" )
-    println( seHs.dualNonTautologicalAxioms )
-    println( "Substitution pairs alpha" )
-    println( seHs.substitutionPairsAlpha )
-    println( "Substitution pairs beta" )
-    println( seHs.substitutionPairsBeta )
-    println( "Number of unified literals" )
-    println( unifiedLiterals.size )
-    println( "Unified literals" )
-    println( unifiedLiterals )
-    numberOfAllowedClauses match {
-      case Some( t ) => {
-        println( "Number of allowed clauses" )
-        println( t )
-      }
-      case None => println( "No 'allowed clauses' were computed" )
-    }
-    println( "Number of checked Formulas" )
-    println( numberOfCheckedFormulas )
-     */
-
     (None, nameOfExistentialVariableChecked, nameOfUniversalVariableChecked)
-
   }
 
   private def checkAndBuildAllowedClausesHead(

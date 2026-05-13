@@ -186,7 +186,7 @@ object wscan {
       case Nil => Some(Substitution())
       case head :: next => {
         head match
-          case i: (DerivationStep.ConstraintResolution |
+          case _: (DerivationStep.ConstraintResolution |
                 DerivationStep.ConstraintFactoring |
                 DerivationStep.ConstraintElimination |
                 DerivationStep.TautologyDeletion |
@@ -400,7 +400,7 @@ object wscan {
       .take(pointedClause.args.size)
       .map(FOLConst(_)).toList
 
-    val Atom(head, args) = pointedClause.designatedLiteral: @unchecked
+    val Atom(head, _) = pointedClause.designatedLiteral: @unchecked
     val unitClause = HOLClause(Seq((Atom(head, freshConstants), !pointedClause.index.polarity)))
     val purificationResult = scan.purifyPointedClause(
       scan.State.initialFrom(

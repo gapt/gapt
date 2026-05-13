@@ -473,12 +473,12 @@ object CutIntroduction {
         case ((vs, tss), x) =>
           x(vs) --> And(tss.map { ts => x(ts) })
       }
-      def schematicExtendedHerbrandSequentToPep(h: SchematicExtendedHerbrandSequent): PredicateEliminationProblem =
+      def schematicExtendedHerbrandSequentToPep: PredicateEliminationProblem =
         PredicateEliminationProblem(
           schematicVariables,
           (schematicCutImplications ++: formulaInstances).toFormula
         )
-      val pep = schematicExtendedHerbrandSequentToPep(h)
+      val pep = schematicExtendedHerbrandSequentToPep
       val solution = wdls(pep) match {
         case Success(s) => s
         case Failure(e) =>

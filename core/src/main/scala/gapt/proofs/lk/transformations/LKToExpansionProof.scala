@@ -107,7 +107,7 @@ object LKToExpansionProof {
       val (subCuts, subSequent) = extract(subProof)
       subCuts -> (subSequent.delete(aux1, aux2) :+ ETMerge(subSequent(aux1), subSequent(aux2)))
 
-    case c @ CutRule(leftSubProof, aux1, rightSubProof, aux2) =>
+    case CutRule(leftSubProof, aux1, rightSubProof, aux2) =>
       val (leftCuts, leftSequent) = extract(leftSubProof)
       val (rightCuts, rightSequent) = extract(rightSubProof)
       val tree1 = leftSequent(aux1)
@@ -206,7 +206,7 @@ object LKToExpansionProof {
 
       (subCuts, subSequent.delete(aux) :+ ETDefinition(main, subSequent(aux)))
 
-    case p @ InductionRule(_, _, _) =>
+    case InductionRule(_, _, _) =>
       // TODO: remove makeInductionExplicit and construct expansion tree here
       ???
   }

@@ -184,10 +184,10 @@ class LKProofSubstitutable(preserveEigenvariables: Boolean) extends Substitutabl
       val Ex(newV, newF) = substitution(p.mainFormula): @unchecked
       ExistsRightRule(subProofNew, aux, betaNormalize(newF), betaNormalize(substitution(term)), newV)
 
-    case p @ ExistsSkLeftRule(subProof, aux, main, skT) =>
+    case ExistsSkLeftRule(subProof, aux, main, skT) =>
       ExistsSkLeftRule(go(substitution, subProof), aux, BetaReduction.betaNormalize(substitution(main)), substitution(skT))
 
-    case p @ ForallSkRightRule(subProof, aux, main, skT) =>
+    case ForallSkRightRule(subProof, aux, main, skT) =>
       ForallSkRightRule(go(substitution, subProof), aux, BetaReduction.betaNormalize(substitution(main)), substitution(skT))
 
     case EqualityLeftRule(subProof, eq, aux, con) =>

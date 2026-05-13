@@ -76,14 +76,14 @@ trait SequentsListLatexExporter {
   private def getFSVars(fs: HOLSequent): Set[Var] = fs.formulas.toSet.flatMap(getVars)
   private def getVars(l: Expr): Set[Var] = l match {
     case v: Var    => Set(v)
-    case c: Const  => Set()
+    case _: Const  => Set()
     case Abs(x, t) => getVars(t) ++ getVars(x)
     case App(s, t) => getVars(s) ++ getVars(t)
   }
 
   private def getFSConsts(fs: HOLSequent): Set[Const] = fs.formulas.toSet.flatMap(getConsts)
   private def getConsts(l: Expr): Set[Const] = l match {
-    case v: Var    => Set()
+    case _: Var    => Set()
     case c: Const  => Set(c)
     case Abs(x, t) => getConsts(t) ++ getConsts(x)
     case App(s, t) => getConsts(s) ++ getConsts(t)

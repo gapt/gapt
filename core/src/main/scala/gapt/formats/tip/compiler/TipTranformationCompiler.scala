@@ -545,7 +545,7 @@ class TipTransformationCompiler(var problem: TipSmtProblem) {
       case c @ TipSmtCheckSat() =>
       case c @ TipSmtDatatypesDeclaration(_) =>
         compileDatatypesDeclaration(c)
-      case c @ TipSmtMutualRecursiveFunctionDefinition(functions) =>
+      case TipSmtMutualRecursiveFunctionDefinition(functions) =>
         functions foreach { declareFunction }
         functions foreach { compileFunctionDefinition }
     }

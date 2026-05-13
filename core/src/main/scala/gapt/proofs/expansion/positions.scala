@@ -154,7 +154,7 @@ object insertDefinition {
         val shallowNew = definitionApplied
         ETStrongQuantifier(shallowNew, eigen, insertDefinition(child, defn, instReplCtx(replacementContext, eigen)))
 
-      case (ETSkolemQuantifier(shallow, skolemTerm, child), Quant(x, f, _)) =>
+      case (ETSkolemQuantifier(_, _, _), Quant(_, _, _)) =>
         throw new IllegalArgumentException("Skolem nodes are not handled at this time.")
 
       case (ETWeakQuantifier(shallow, instances), Quant(_, _, _)) =>

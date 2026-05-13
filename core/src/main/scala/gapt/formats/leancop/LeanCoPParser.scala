@@ -415,5 +415,5 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
 
   def integer: Parser[Int] = """\d+""".r ^^ { _.toInt }
 
-  def comment: Parser[String] = """[%](.*)\n""".r ^^ { case s => "" }
+  def comment: Parser[String] = """[%](.*)\n""".r ^^ { _ => "" }
 }

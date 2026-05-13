@@ -185,7 +185,7 @@ class TptpHOLExporter {
       if (sym != s) {
         print("%   ")
         print(sym)
-        for (i <- sym.length to (width + 1)) print(" ")
+        for (_ <- sym.length to (width + 1)) print(" ")
         print(" -> ")
         print(s)
         println()
@@ -202,7 +202,7 @@ class TptpHOLExporter {
       if (sym != s) {
         print("%   ")
         print(sym)
-        for (i <- sym.length to (width + 1)) print(" ")
+        for (_ <- sym.length to (width + 1)) print(" ")
         print(" -> ")
         print(s)
         println()
@@ -356,7 +356,7 @@ class TptpHOLExporter {
     case t @ NonLogicalConstant(_, _, _) => set + t
     case Var(_, _)                       => set
     case App(s, t)                       => getConsts(s, getConsts(t, set))
-    case Abs(x, t)                       => getConsts(t, set)
+    case Abs(_, t)                       => getConsts(t, set)
   }
 
   def simplify_antecedent(es: ExpansionSequent): ExpansionSequent = {

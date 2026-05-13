@@ -92,9 +92,7 @@ object InstantiateStruct extends StructVisitor[Struct, (Substitution, Map[CLS, (
     )
     recurse(theStruct, Transform, (sigma, sss, usedNames))
   }
-  def aF(f: Formula, info: (Substitution, Map[CLS, (Struct, Set[Var])], Set[Var]))(
-      implicit ctx: Context
-  ): Struct =
+  def aF(f: Formula, info: (Substitution, Map[CLS, (Struct, Set[Var])], Set[Var])): Struct =
     A(info._1(f))
   def cF(pn: Expr, cc: Sequent[Boolean], info: (Substitution, Map[CLS, (Struct, Set[Var])], Set[Var]))(
       implicit ctx: Context

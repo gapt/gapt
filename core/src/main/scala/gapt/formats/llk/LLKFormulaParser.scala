@@ -143,7 +143,7 @@ class LLKASTParser extends JavaTokenParsers with PackratParsers {
   lazy val atomsymb: Parser[String] = atomregexp
   lazy val atomregexp = """(\\?)([a-zA-Z0-9']+([_^](\{[a-zA-Z0-9']+\})?)*(\[[a-zA-Z0-9']+\])*)+""".r
 
-  lazy val topbottom: PackratParser[LambdaAST] = "$" ~> ("T" ^^ (x => ast.Top()) | "F" ^^ (x => ast.Bottom()))
+  lazy val topbottom: PackratParser[LambdaAST] = "$" ~> ("T" ^^ (_ => ast.Top()) | "F" ^^ (_ => ast.Bottom()))
 
   def flattenApps(f: ast.LambdaAST): ast.LambdaAST = f match {
     case ast.App(ast.App(list) :: rest) => ast.App(((list ++ rest) map flattenApps))

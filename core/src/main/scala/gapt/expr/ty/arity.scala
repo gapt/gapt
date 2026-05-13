@@ -11,8 +11,8 @@ object arity {
    * @return The arity of the functions represented by this type.
    */
   def apply(t: Ty): Int = t match {
-    case t1 ->: t2 => 1 + arity(t2)
-    case _         => 0
+    case _ ->: t2 => 1 + arity(t2)
+    case _        => 0
   }
 
   /**

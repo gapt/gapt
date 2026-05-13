@@ -108,14 +108,14 @@ class ExpansionProofToLK(
 
   private def tryMerge(theory: Theory, expSeq: ExpansionSequent): Option[UnprovableOrLKProof] =
     expSeq.zipWithIndex.elements collectFirst {
-      case (e @ ETMerge(a, b), i: Ant) => solve(theory, a +: b +: expSeq.delete(i))
-      case (e @ ETMerge(a, b), i: Suc) => solve(theory, expSeq.delete(i) :+ a :+ b)
+      case (ETMerge(a, b), i: Ant) => solve(theory, a +: b +: expSeq.delete(i))
+      case (ETMerge(a, b), i: Suc) => solve(theory, expSeq.delete(i) :+ a :+ b)
     }
 
   private def tryNullary(expSeq: ExpansionSequent): Option[UnprovableOrLKProof] =
     expSeq.zipWithIndex.elements collectFirst {
-      case (ETTop(_), i: Suc)    => Right(TopAxiom)
-      case (ETBottom(_), i: Ant) => Right(BottomAxiom)
+      case (ETTop(_), _: Suc)    => Right(TopAxiom)
+      case (ETBottom(_), _: Ant) => Right(BottomAxiom)
     }
 
   private def tryWeakening(theory: Theory, expSeq: ExpansionSequent): Option[UnprovableOrLKProof] =

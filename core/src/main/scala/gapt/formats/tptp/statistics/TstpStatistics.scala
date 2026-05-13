@@ -52,7 +52,7 @@ object TstpError {
     }
 
     val row = e.file match {
-      case r @ CASCResult(path, prover, problem, extension) =>
+      case CASCResult(path, prover, problem, extension) =>
         Seq(prover, problem)
       case r: FileData =>
         Seq(r.fileName)
@@ -299,22 +299,22 @@ object TstpStatistics {
         Right(TptpProofParser.parse(v.file, true)._2)
       }
     } catch {
-      case e: TimeOutException =>
+      case _: TimeOutException =>
         if (print_statistics) {
           println(s"parser timeout $v")
         }
         Left(ReconstructionTimeout(v))
-      case e: MalformedInputFileException =>
+      case _: MalformedInputFileException =>
         if (print_statistics) {
           println(s"malformed file: $v")
         }
         Left(MalformedFile(v))
-      case e: Exception =>
+      case _: Exception =>
         if (print_statistics) {
           println(s"parser error $v")
         }
         Left(ParsingError(v))
-      case e: java.lang.StackOverflowError =>
+      case _: java.lang.StackOverflowError =>
         if (print_statistics) {
           println(s"parser timeout $v")
         }
@@ -337,7 +337,7 @@ object TstpStatistics {
       try {
         withTimeout(120.seconds) {
           RefutationSketchToResolution(sketch) match {
-            case Left(unprovable) =>
+            case Left(_) =>
               if (print_statistics) {
                 println(s"can't reconstruct $v")
               }
@@ -347,13 +347,13 @@ object TstpStatistics {
           }
         }
       } catch {
-        case e: TimeOutException =>
+        case _: TimeOutException =>
           if (print_statistics) {
             println()
             println(s"reconstruction timeout $v")
           }
           Left(ReconstructionTimeout(v))
-        case e: MalformedInputFileException =>
+        case _: MalformedInputFileException =>
           if (print_statistics) {
             println()
             println(s"malformed input file $v")
@@ -366,7 +366,7 @@ object TstpStatistics {
             e.printStackTrace()
           }
           Left(ReconstructionError(v))
-        case e: StackOverflowError =>
+        case _: StackOverflowError =>
           if (print_statistics) {
             println()
             println(s"reconstruction error $v (stack overflow)")

@@ -373,9 +373,9 @@ object toSExpression {
         toSExpression(e)
       case e @ TipSmtDistinct(_) =>
         toSExpression(e)
-      case e @ TipSmtTrue =>
+      case TipSmtTrue =>
         LSymbol("true")
-      case e @ TipSmtFalse =>
+      case TipSmtFalse =>
         LSymbol("false")
       case e @ TipSmtFun(_, _) =>
         toSExpression(e)

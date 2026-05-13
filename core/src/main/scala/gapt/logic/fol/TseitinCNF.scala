@@ -48,7 +48,7 @@ class TseitinCNF {
    * @return List of all atom symbols used in f
    */
   def getAtomSymbols(f: FOLFormula): List[String] = f match {
-    case FOLAtom(h, args) => List(h)
+    case FOLAtom(h, _)    => List(h)
     case Top() | Bottom() => List()
     case Neg(f2)          => getAtomSymbols(f2)
     case And(f1, f2)      => getAtomSymbols(f1) ::: getAtomSymbols(f2)
@@ -77,7 +77,7 @@ class TseitinCNF {
   private var auxCounter: Int = 0
   @tailrec
   private def addIfNotExists(f: FOLFormula): FOLAtom = f match {
-    case f @ FOLAtom(h, args) => f
+    case f @ FOLAtom(_, _) => f
     case _ =>
       if (subformulaMap.isDefinedAt(f)) {
         subformulaMap(f)

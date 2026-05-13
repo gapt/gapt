@@ -49,10 +49,10 @@ class ExpressionParseHelper(sc: StringContext, file: sourcecode.File, line: sour
     def repls(name: String): preExpr.Expr =
       expressions(name.drop(placeholder.length).toInt).spliceIn
     def repl(expr: preExpr.Expr): preExpr.Expr = expr match {
-      case preExpr.LocAnnotation(e, loc)                            => preExpr.LocAnnotation(repl(e), loc)
-      case preExpr.TypeAnnotation(e, ty)                            => preExpr.TypeAnnotation(repl(e), ty)
+      case preExpr.LocAnnotation(e, loc)                              => preExpr.LocAnnotation(repl(e), loc)
+      case preExpr.TypeAnnotation(e, ty)                              => preExpr.TypeAnnotation(repl(e), ty)
       case preExpr.Ident(name, _, _) if name `startsWith` placeholder => repls(name)
-      case expr: preExpr.Ident                                      => expr
+      case expr: preExpr.Ident                                        => expr
       case preExpr.Abs(v, sub) =>
         repl(v) match {
           case vNew @ preExpr.Ident(_, _, _) => // If repl(v) = v.
@@ -87,7 +87,7 @@ class ExpressionParseHelper(sc: StringContext, file: sourcecode.File, line: sour
     }
   }
 
-  def ty(args: Nothing*): Ty =
+  def ty(): Ty =
     BabelParser.tryParseType(sc.parts.mkString) match {
       case Left(error) => throw new IllegalArgumentException(
           s"Parse error at ${file.value}:${line.value}:\n${error.getMessage}"

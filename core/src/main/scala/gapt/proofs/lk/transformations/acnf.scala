@@ -115,7 +115,7 @@ object introOrCut {
    */
   def apply(proof: LKProof, formula: Formula): Boolean = proof match {
     case LogicalAxiom(_)             => true
-    case CutRule(lsb, l, rsb, r)     => true
+    case CutRule(_, _, _, _)         => true
     case WeakeningRightRule(_, main) => if (main == formula) true else false
     case WeakeningLeftRule(_, main)  => if (main == formula) true else false
     case _                           => false

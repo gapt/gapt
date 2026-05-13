@@ -129,8 +129,8 @@ class InstanceTermEncoding private (val endSequent: HOLSequent, val instanceTerm
   private def getWeakQuantVars(esFormula: Formula, pol: Polarity): Seq[Var] = esFormula match {
     case All(x, t) if pol.inAnt => x +: getWeakQuantVars(t, pol)
     case Ex(x, t) if pol.inSuc  => x +: getWeakQuantVars(t, pol)
-    case All(x, t) if pol.inSuc => getWeakQuantVars(t, pol)
-    case Ex(x, t) if pol.inAnt  => getWeakQuantVars(t, pol)
+    case All(_, t) if pol.inSuc => getWeakQuantVars(t, pol)
+    case Ex(_, t) if pol.inAnt  => getWeakQuantVars(t, pol)
     case And(t, s)              => getWeakQuantVars(t, pol) ++ getWeakQuantVars(s, pol)
     case Or(t, s)               => getWeakQuantVars(t, pol) ++ getWeakQuantVars(s, pol)
     case Imp(t, s)              => getWeakQuantVars(t, !pol) ++ getWeakQuantVars(s, pol)

@@ -132,9 +132,9 @@ object undoHol2Fol {
       case Var(ivy_varname(name), Ti) =>
         logger.debug("Guessing that the variable " + name + " comes from ivy, assigning type i.")
         Var(name, Ti).asInstanceOf[Var]
-      case Var(name, Ti) =>
+      case Var(_, Ti) =>
         throw new Exception("No signature information for variable " + e)
-      case Const(name, _, _) =>
+      case Const(_, _, _) =>
         throw new Exception("No signature information for const " + e)
       case _ =>
         throw new Exception("Could not convert subterm " + e)

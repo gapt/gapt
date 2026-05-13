@@ -95,7 +95,7 @@ object flatSubterms {
 
 object folTermSize {
   def apply(t: Expr): Int =
-    t match { case Apps(hd, as) => 1 + apply(as) }
+    t match { case Apps(_, as) => 1 + apply(as) }
 
   def apply(ts: Iterable[Expr]): Int =
     ts.view.map(apply).sum
@@ -177,8 +177,8 @@ object getArityOfConstants {
     case Or(x, y)  => getArityOfConstants(x) ++ getArityOfConstants(y)
     case Imp(x, y) => getArityOfConstants(x) ++ getArityOfConstants(y)
     case Neg(x)    => getArityOfConstants(x)
-    case Ex(x, f)  => getArityOfConstants(f)
-    case All(x, f) => getArityOfConstants(f)
+    case Ex(_, f)  => getArityOfConstants(f)
+    case All(_, f) => getArityOfConstants(f)
   }
 }
 

@@ -73,7 +73,7 @@ object TptpToString {
     case Neg(f)                           => parenIf(p, prio.unitary_formula, s"~ ${expression(f, prio.unitary_formula + 1)}")
     case Eq(a, b)                         => binExpr(a, b, p, prio.infix_formula, "=")
     case And(_, _)                        => binAssocExpr(expr, p, "&", And)
-    case Or(a, b)                         => binAssocExpr(expr, p, "|", Or)
+    case Or(_, _)                         => binAssocExpr(expr, p, "|", Or)
     case Imp(a, b)                        => binExpr(a, b, p, prio.binary_formula, "=>")
     case All.Block(vs, bd) if vs.nonEmpty => quant(vs, bd, p, "!")
     case Ex.Block(vs, bd) if vs.nonEmpty  => quant(vs, bd, p, "?")

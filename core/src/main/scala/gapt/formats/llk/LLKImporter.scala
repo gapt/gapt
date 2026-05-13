@@ -109,11 +109,10 @@ trait TokenToLKConverter {
 
     var l = List[HOLSequent]()
 
-    for (case RToken(name, argname, antecedent, succedent, _) <- rules) {
+    for (case RToken(_, _, antecedent, succedent, _) <- rules) {
       val ant = antecedent.map(x => c(LLKFormulaParser.ASTtoHOL(naming, x)))
       val suc = succedent.map(x => c(LLKFormulaParser.ASTtoHOL(naming, x)))
       val fs = HOLSequent(ant, suc)
-      // println(name + ": "+fs)
       l = fs :: l
     }
 
@@ -129,8 +128,8 @@ trait TokenToLKConverter {
       case _                     => false;
     }.asInstanceOf[(List[RToken], List[Token])] // need to cast because partition returns Tokens
     val (ttokens, atokens) = tatokens.partition {
-      case TToken(_, _, _)        => true;
-      case t @ AToken(_, _, _, _) => false;
+      case TToken(_, _, _)    => true;
+      case AToken(_, _, _, _) => false;
       case t: Token => throw new Exception(
           "Severe error: rule tokens were already filtered out, but rule " + t + " still contained!"
         )
@@ -156,7 +155,7 @@ trait TokenToLKConverter {
             (Nil, current._2 + ((nformula, current._1.reverse)))
           } catch {
             case e: Exception => throw new HybridLatexParserException(
-                "Error in parsing CONTINUEWITH{" + name + "}{" + a + "}{" + s"}: " + e.getMessage,
+                "Error in parsing CONTINUEWITH{" + name + "}{" + a + "}{" + s + "}: " + e.getMessage,
                 e
               )
           }
@@ -809,7 +808,7 @@ trait TokenToLKConverter {
 
     // In the case the main formula is the same as an auxiliariy formula, filterContext cannot infer the main formula
     // we doe this now by hand
-    def eqfilter(x: Formula): Boolean = x match { case Eq(s, t) => true; case _ => false }
+    def eqfilter(x: Formula): Boolean = x match { case Eq(_, _) => true; case _ => false }
     def canReplace(s: Expr, t: Expr, exp1: Expr, exp2: Expr): Boolean = {
       (checkReplacement(s, t, exp1, exp2), checkReplacement(t, s, exp1, exp2)) match {
         case (EqualModuloEquality(_), _) => true
@@ -850,7 +849,7 @@ trait TokenToLKConverter {
                 try {
                   ContractionMacroRule(rule, fs) :: Nil
                 } catch {
-                  case e: Exception => Nil
+                  case _: Exception => Nil
                 }
               case _ =>
                 Nil
@@ -864,7 +863,7 @@ trait TokenToLKConverter {
                 try {
                   ContractionMacroRule(rule, fs, strict = false) :: Nil
                 } catch {
-                  case e: Exception => Nil
+                  case _: Exception => Nil
                 }
               case _ =>
                 Nil
@@ -916,7 +915,7 @@ trait TokenToLKConverter {
                 try {
                   ContractionMacroRule(rule, fs, strict = false) :: Nil
                 } catch {
-                  case e: Exception => Nil
+                  case _: Exception => Nil
                 }
               case _ =>
                 Nil
@@ -933,7 +932,7 @@ trait TokenToLKConverter {
                 try {
                   ContractionMacroRule(rule, fs, strict = false) :: Nil
                 } catch {
-                  case e: Exception => Nil
+                  case _: Exception => Nil
                 }
 
               case _ =>
@@ -983,7 +982,7 @@ trait TokenToLKConverter {
           try {
             ConversionRightRule(parent, aux, main);
             false
-          } catch { case e: Exception => true }
+          } catch { case _: Exception => true }
         ) match {
           case d :: _ => ConversionRightRule(parent, aux, main)
           case _ =>
@@ -1279,7 +1278,7 @@ trait TokenToLKConverter {
               case Nil =>
                 throw new HybridLatexParserException("Could not find a matching dependency for proof " + f
                   + " in: " + proofnames.mkString(","))
-              case l @ List(d) =>
+              case l @ List(_) =>
                 l
               case _ =>
                 throw new HybridLatexParserException("Found more than one matching dependency for proof " + f
@@ -1295,7 +1294,7 @@ trait TokenToLKConverter {
               case Nil =>
                 throw new HybridLatexParserException("Could not find a matching dependency for proof " + f
                   + " in: " + proofnames.mkString(","))
-              case l @ List(d) =>
+              case l @ List(_) =>
                 l
               case _ =>
                 throw new HybridLatexParserException("Found more than one matching dependency for proof " + f
@@ -1343,7 +1342,7 @@ trait TokenToLKConverter {
    * supposed to be passed on to EQAXIOM and INSTAXIOM rules */
   def createAxioms(naming: String => Expr, l: List[AToken]): Map[Formula, Formula] = {
     l.filter(_.rule == "AXIOMDEC").foldLeft(Map[Formula, Formula]())((map, token) => {
-      val AToken(rulename, aname, antecedent, succedent) = token
+      val AToken(_, aname, antecedent, succedent) = token
       require(aname.nonEmpty, "Axiom declaration " + token + " needs a name!")
       val aformula: Formula = c(LLKFormulaParser.ASTtoHOL(naming, aname.get))
       val ant = antecedent.map(x => c(LLKFormulaParser.ASTtoHOL(naming, x)))
@@ -1478,7 +1477,7 @@ trait TokenToLKConverter {
 
   def getAxiomLookupProof(name: Formula, axiom: Formula, instance: Formula, axiomconj: Formula, axiomproof: LKProof, sub: Substitution, definitions: List[Definition]): (Formula, LKProof) = {
     axiomconj match {
-      case Atom(c @ Const(n, To, _), List()) =>
+      case Atom(c @ Const(_, To, _), List()) =>
         val pi = proveInstanceFrom(axiom, instance, sub, axiomproof)
         definitions.find(_.what == c).getOrElse(
           throw new Exception(

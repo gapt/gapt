@@ -440,7 +440,7 @@ object scan {
         }
     }
 
-    val (oneSidedCandidates, mixedCandidates) = orderedPurifiablePointedClauses.partition(_.isOneSided)
+    val oneSidedCandidates = orderedPurifiablePointedClauses.filter(_.isOneSided)
     if state.oneSidedOnly && oneSidedCandidates.isEmpty then {
       logger.warn(s"no one-sided purification candidates available, but only allowed to use one-sided resolution")
       Iterator.empty
@@ -583,7 +583,7 @@ object scan {
         }.groupBy {
           case step => step.clause
         }.toSeq.flatMap {
-          case (c, steps) => steps.headOption.toSeq
+          case (_, steps) => steps.headOption.toSeq
         }.flatMap {
           case step => Seq(
               step,
@@ -1070,8 +1070,8 @@ object scan {
         }
         case DerivationStep.ExtendendPurityDeletion(variable, polarity) => {
           val clausesContainingVariable = premise.filter(c => containedNames(c).contains(variable))
-          val (clausesContainingVariableWithPolarity, clausesContainingVariableNotWithPolarity) =
-            clausesContainingVariable.partition(c =>
+          val clausesContainingVariableNotWithPolarity =
+            clausesContainingVariable.filterNot(c =>
               c.cedent(polarity).exists {
                 case Atom(head, _) => head == variable
                 case _             => false
@@ -1302,9 +1302,9 @@ object scan {
   }
 
   def printPointedClause(p: PointedClause): pprint.Tree = {
-    def underlineIndex(atom: Atom, index: SequentIndex) = (atom, index) match {
-      case (a, i) if i == p.index => s"{${a.toUntypedString}}"
-      case (a, i)                 => a.toUntypedString
+    def underlineIndex(atom: Atom, index: SequentIndex) = {
+      if index == p.index then s"{${atom.toUntypedString}}"
+      else atom.toUntypedString
     }
     val antecedentStrings = p.clause.zipWithIndex.antecedent.map(underlineIndex)
     val succeedentStrings = p.clause.zipWithIndex.succedent.map(underlineIndex)

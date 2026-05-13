@@ -205,7 +205,7 @@ object freeFOLVariables {
   * @param expr expression to get the free first-order variables of the expression
   * @return the set of first-order variables in [[expr]]
   */
-  def apply(expr: Expr): Set[FOLVar] = freeVariables(expr).collect { case v @ Var(sym, Ti) => FOLVar(sym) }
+  def apply(expr: Expr): Set[FOLVar] = freeVariables(expr).collect { case Var(sym, Ti) => FOLVar(sym) }
 }
 
 /**
@@ -238,8 +238,8 @@ object numOfAtoms {
     case Imp(f1, f2)      => apply(f1) + apply(f2)
     case And(f1, f2)      => apply(f1) + apply(f2)
     case Or(f1, f2)       => apply(f1) + apply(f2)
-    case Ex(x, g)         => apply(g)
-    case All(x, g)        => apply(g)
+    case Ex(_, g)         => apply(g)
+    case All(_, g)        => apply(g)
     case Neg(g)           => apply(g)
     case _                => throw new Exception("ERROR: Unexpected case while counting the number of atoms.")
   }

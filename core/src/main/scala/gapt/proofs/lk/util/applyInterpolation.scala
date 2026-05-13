@@ -338,7 +338,7 @@ object Interpolate {
           (up_nproof2, up_pproof3, ipl)
       }
 
-    case p @ ForallLeftRule(subProof, aux, main, term, quantVar) =>
+    case p @ ForallLeftRule(subProof, aux, _, term, _) =>
       val (nproof, pproof, interpolant) = apply(subProof, p.getSequentConnector.parent(color))
 
       if (!color(p.mainIndices.head))
@@ -346,7 +346,7 @@ object Interpolate {
       else
         (nproof, ForallLeftRule(pproof, p.mainFormula, term), interpolant)
 
-    case p @ ExistsRightRule(subProof, aux, main, term, quantVar) =>
+    case p @ ExistsRightRule(subProof, aux, _, term, _) =>
       val (nproof, pproof, interpolant) = apply(subProof, p.getSequentConnector.parent(color))
 
       if (!color(p.mainIndices.head))

@@ -40,9 +40,9 @@ object TptpProofParser {
         false
       case AnnotatedFormula(_, _, _, _, TptpTerm("introduced", FOLConst(avatar), _) +: _) if avatar.startsWith("avatar") =>
         false
-      case AnnotatedFormula(_, label, "conjecture", formula, _) =>
+      case AnnotatedFormula(_, _, "conjecture", formula, _) =>
         containsStrongQuantifier(formula, Polarity.InSuccedent)
-      case AnnotatedFormula(_, label, _, formula, _) =>
+      case AnnotatedFormula(_, _, _, formula, _) =>
         containsStrongQuantifier(formula, Polarity.InAntecedent)
       case _ => false
     }.collect { case f: AnnotatedFormula => f.name }.toSet
@@ -51,7 +51,7 @@ object TptpProofParser {
     else
       TptpFile(tptpFile.inputs.collect { case f: AnnotatedFormula if !stepsWithStrongQuants(f.name) => f }.map {
         case f @ AnnotatedFormula(_, _, _, _, just +: _) if getParents(just).toSet.intersect(stepsWithStrongQuants).isEmpty => f
-        case f @ AnnotatedFormula(_, label, "conjecture", formula, _) =>
+        case AnnotatedFormula(_, label, "conjecture", formula, _) =>
           AnnotatedFormula("fof", label, "conjecture", formula, Seq())
         case f => AnnotatedFormula("fof", f.name, "axiom", f.formula, Seq())
       })
@@ -66,9 +66,9 @@ object TptpProofParser {
   }
 
   def inventSources(stepList: TptpFile): TptpFile = TptpFile(stepList.inputs map {
-    case af @ AnnotatedFormula(lang, label, role @ ("axiom" | "hypothesis" | "conjecture" | "negated_conjecture"), formula, Seq()) =>
+    case af @ AnnotatedFormula(_, label, role @ ("axiom" | "hypothesis" | "conjecture" | "negated_conjecture"), formula, Seq()) =>
       af.copy(annotations = Seq(TptpTerm("file", TptpTerm("unknown"), TptpTerm(s"source_$label"))))
-    case af @ AnnotatedFormula(lang, label, role @ ("axiom" | "hypothesis" | "conjecture" | "negated_conjecture"), formula, Seq(TptpTerm("file", _, TptpTerm("unknown")), _*)) =>
+    case af @ AnnotatedFormula(_, label, role @ ("axiom" | "hypothesis" | "conjecture" | "negated_conjecture"), formula, Seq(TptpTerm("file", _, TptpTerm("unknown")), _*)) =>
       af.copy(annotations = Seq(TptpTerm("file", TptpTerm("unknown"), TptpTerm(s"source_$label"))))
     case other => other
   })

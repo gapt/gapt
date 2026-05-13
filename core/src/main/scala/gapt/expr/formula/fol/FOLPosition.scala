@@ -102,10 +102,10 @@ object FOLPosition {
           (pos.head == 1 && definesFOLPosition(l)(rest)) ||
           (pos.head == 2 && definesFOLPosition(r)(rest))
 
-        case All(x, f) =>
+        case All(_, f) =>
           pos.head == 1 && definesFOLPosition(f)(rest)
 
-        case Ex(x, f) =>
+        case Ex(_, f) =>
           pos.head == 1 && definesFOLPosition(f)(rest)
       }
     }
@@ -144,10 +144,10 @@ object FOLPosition {
         case BinaryConnective(_, r) if pos.head == 2 =>
           2 :: toFOLPosition(r)(pos.tail)
 
-        case All(x, f) if pos.head == 1 =>
+        case All(_, f) if pos.head == 1 =>
           1 :: toFOLPosition(f)(pos.tail)
 
-        case Ex(x, f) if pos.head == 1 =>
+        case Ex(_, f) if pos.head == 1 =>
           1 :: toFOLPosition(f)(pos.tail)
 
         case _ => throw new Exception("Can't convert position " + pos + " for expression " + exp + " to FOLPosition.")
@@ -178,10 +178,10 @@ object FOLPosition {
       case BinaryConnective(_, r) if pos.head == 2 =>
         2 :: toHOLPosition(r)(pos.tail)
 
-      case All(x, f) if pos.head == 1 =>
+      case All(_, f) if pos.head == 1 =>
         1 :: toHOLPosition(f)(pos.tail)
 
-      case Ex(x, f) if pos.head == 1 =>
+      case Ex(_, f) if pos.head == 1 =>
         1 :: toHOLPosition(f)(pos.tail)
 
       case _ => throw new Exception("Can't convert position " + pos + " for expression " + exp + " to FOLPosition.")
@@ -211,10 +211,10 @@ object FOLPosition {
       case BinaryConnective(_, r) if pos.head == 2 =>
         Some(2 :: toHOLPosition(r)(pos.tail))
 
-      case All(x, f) if pos.head == 1 =>
+      case All(_, f) if pos.head == 1 =>
         Some(1 :: toHOLPosition(f)(pos.tail))
 
-      case Ex(x, f) if pos.head == 1 =>
+      case Ex(_, f) if pos.head == 1 =>
         Some(1 :: toHOLPosition(f)(pos.tail))
 
       case _ => None

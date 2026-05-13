@@ -53,7 +53,7 @@ object EquationVerifier {
           case (Equal, EqualModuloEquality(path)) => EqualModuloEquality(2 :: path)
           case _                                  => Different
         }
-      case (Abs(v1 @ Var(name1, expt1), t1), Abs(v2 @ Var(name2, expt2), t2)) =>
+      case (Abs(v1 @ Var(_, expt1), t1), Abs(v2 @ Var(_, expt2), t2)) =>
         if (expt1 != expt2)
           Different
         else {

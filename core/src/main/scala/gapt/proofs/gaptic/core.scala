@@ -263,7 +263,7 @@ trait Tactic[+T] { self =>
       self(proofState.setSubGoals(focusedGoal)).flatMap {
         case (res, newState) if newState.subGoals.isEmpty =>
           Right((res, newState.setSubGoals(proofState.subGoals diff focusedGoal)))
-        case (res, newState) =>
+        case (_, newState) =>
           Left(TacticFailure(this, newState, "focused goal not solved"))
       }
     }

@@ -81,7 +81,7 @@ private[json] object ProofCollectionCodec {
     }
 
     val resultList: Result[List[(P, Int)]] = forced.traverse[Result, (P, Int)] {
-      case (Left(f), i)  => Left(f)
+      case (Left(f), _)  => Left(f)
       case (Right(p), i) => Right((p, i))
     }
 

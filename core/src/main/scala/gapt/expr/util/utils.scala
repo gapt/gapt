@@ -40,7 +40,7 @@ object isInVNF {
     def check(e: Expr): Boolean = e match {
       case _: Var | _: Const            => true
       case App(a, b)                    => check(a) && check(b)
-      case Abs(v, a) if seen contains v => false
+      case Abs(v, _) if seen contains v => false
       case Abs(v, a)                    => seen += v; check(a)
     }
 
