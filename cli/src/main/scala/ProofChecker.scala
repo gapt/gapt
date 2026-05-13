@@ -23,12 +23,12 @@ val usage = """
 def checkProof(args: String*): Unit = {
   val input = args match {
     case Seq() => {
-      System.err.println(usage)
+      Console.err.println(usage)
       sys.exit(1)
       return
     }
     case Seq("--help") => {
-      System.out.println(usage)
+      Console.out.println(usage)
       sys.exit(0)
       return
     }
