@@ -337,9 +337,9 @@ object TstpStatistics {
       try {
         withTimeout(120.seconds) {
           RefutationSketchToResolution(sketch) match {
-            case Left(_) =>
+            case Left(inference) =>
               if (print_statistics) {
-                println(s"can't reconstruct $v")
+                println(s"can't reconstruct $v:\n$inference")
               }
               Left(ReconstructionGaveUp(v))
             case Right(proof) =>
