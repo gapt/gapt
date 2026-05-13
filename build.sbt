@@ -316,6 +316,8 @@ lazy val userManual = project.in(file("doc")).dependsOn(cli)
 lazy val cli = project.in(file("cli")).dependsOn(core, examples)
   .settings(commonSettings: _*).settings(
     mainClass := Some("gapt.cli.CLIMain"),
+    Compile / scalacOptions += "-Werror",
+    Compile / run / outputStrategy := Some(StdoutOutput),
     libraryDependencies ++= Seq(
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
       "org.scala-lang" %% "scala3-repl" % scalaVersion.value
