@@ -94,28 +94,27 @@ class ProofCheckerTest extends Specification with BeforeAll {
 
     "accept relative paths" in {
       val exitCode =
-        proofCheckerProcess("./examples/proover_competition/proofs/example1_c_proof.p").!
+        proofCheckerProcess("./examples/proover_competition/proofs/correct/example1_c_proof.p").!
 
       exitCode must_== 0
     }
 
     "accept absolute paths" in {
       val exitCode =
-        proofCheckerProcess(s"${cwd.path}/examples/proover_competition/proofs/example1_c_proof.p").!
+        proofCheckerProcess(s"${cwd.path}/examples/proover_competition/proofs/correct/example1_c_proof.p").!
 
       exitCode must_== 0
     }
 
-    val correctProofExamples = Seq(
-      "example1_c_proof.p",
-      "example2_c_proof.p",
-      "example3_c_proof.p"
-    )
+    def selectProofsFromDirectory(dir: Path) =
+      os.list(dir).filterNot(_.last.startsWith("skip"))
+
+    val correctProofExamples = selectProofsFromDirectory(cwd.path / "examples" / "proover_competition" / "proofs" / "correct")
     Fragments.foreach(correctProofExamples) { example =>
       given Cwd = ProoverCompetitionRoot
       s"verify $example correctly" in {
-        val (exitCode, stdout, stderr) =
-          proofCheckerProcess(s"./proofs/$example").!!!
+        val (exitCode, stdout, _) =
+          proofCheckerProcess(example.toString).!!!
 
         exitCode must_== 0
         stdout.linesIterator.toSeq.last must startWith("%SZS status Verified")
@@ -123,17 +122,12 @@ class ProofCheckerTest extends Specification with BeforeAll {
       }
     }
 
-    val incorrectProofExamples = Seq(
-      "example1_e_proof.p",
-      "example2_e_proof.p",
-      "example3_e_proof.p",
-      "example4_e_proof.p"
-    )
+    val incorrectProofExamples = selectProofsFromDirectory(cwd.path / "examples" / "proover_competition" / "proofs" / "incorrect")
     Fragments.foreach(incorrectProofExamples) { example =>
       given Cwd = ProoverCompetitionRoot
       s"fail verification of $example" in {
-        val (exitCode, stdout, stderr) =
-          proofCheckerProcess(s"./proofs/$example").!!!
+        val (exitCode, stdout, _) =
+          proofCheckerProcess(example.toString).!!!
 
         exitCode must_== 0
         stdout.linesIterator.toSeq.last must startWith("%SZS status FailedVerified")
