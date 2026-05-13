@@ -36,10 +36,12 @@ def checkProof(args: String*): Unit = {
   }
 
   val path = os.Path(input, os.pwd)
-  val (sketch, proof) = TstpStatistics.loadFile(
-    ProofFile(path),
-    print_statistics = true
-  )
+  val (sketch, proof) = Console.withOut(Console.err) {
+    TstpStatistics.loadFile(
+      ProofFile(path),
+      print_statistics = true
+    )
+  }
 
   sketch match {
     case Left(error) => {
