@@ -97,9 +97,10 @@ class checkTstpProofTest extends Specification with BeforeAll {
     val correctProofExamples = os.list(cwd.path / "examples" / "proover_competition" / "proofs" / "correct")
     Fragments.foreach(correctProofExamples) { example =>
       given Cwd = ProoverCompetitionRoot
-      s"verify $example correctly" in {
+      val relativePath = example.relativeTo(cwd.path)
+      s"verify $relativePath correctly" in {
         if example.last.startsWith("skip") then
-          skipped(s"not testing $example as it is marked skipped")
+          skipped(s"not testing $relativePath as it is marked skipped")
         val (exitCode, stdout, _) =
           proofCheckerProcess(example.toString).!!!
 
@@ -111,9 +112,10 @@ class checkTstpProofTest extends Specification with BeforeAll {
     val incorrectProofExamples = os.list(cwd.path / "examples" / "proover_competition" / "proofs" / "incorrect")
     Fragments.foreach(incorrectProofExamples) { example =>
       given Cwd = ProoverCompetitionRoot
-      s"fail verification of $example" in {
+      val relativePath = example.relativeTo(cwd.path)
+      s"fail verification of $relativePath" in {
         if example.last.startsWith("skip") then
-          skipped(s"not testing $example as it is marked skipped")
+          skipped(s"not testing $relativePath as it is marked skipped")
         val (exitCode, stdout, _) =
           proofCheckerProcess(example.toString).!!!
 
