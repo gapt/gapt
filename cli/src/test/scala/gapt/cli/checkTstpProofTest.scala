@@ -7,7 +7,7 @@ import org.specs2.specification.core.Fragments
 import os.Path
 import scala.sys.process._
 
-class ProofCheckerTest extends Specification with BeforeAll {
+class checkTstpProofTest extends Specification with BeforeAll {
   private val usageText =
     """
       |check-proof <PROOF>
@@ -21,27 +21,15 @@ class ProofCheckerTest extends Specification with BeforeAll {
   object ProoverCompetitionRoot extends Cwd {
     def path: Path = RepoRoot.path / "examples" / "proover_competition"
   }
+  val checkTstpProofJarPath = RepoRoot.path / "cli" / "target" / "check-tstp-proof.jar"
 
-  private def assemble(): Unit = {
-    println("assembling proof checker")
-    val exitCode = Process(
-      Seq(
-        "sbt",
-        "--error",
-        "--batch",
-        """set cli / assembly / mainClass := Some("gapt.cli.checkProof")""",
-        """set cli / assembly / assemblyOutputPath := target.value / "proof-checker.jar"""",
-        "cli / assembly"
-      ),
-      RepoRoot.path.toIO
-    ).!
-    assert(os.exists(RepoRoot.path / "target" / "proof-checker.jar"))
-    assert(exitCode == 0, "expected a zero exit code, but got non-zero")
+  private def assertExistsProofChecker(): Unit = {
+    assert(os.exists(checkTstpProofJarPath))
   }
 
   private def proofCheckerProcess(args: String*)(using cwd: Cwd): ProcessBuilder =
     Process(
-      Seq("java", "-jar", (RepoRoot.path / "target" / "proof-checker.jar").toString) ++ args,
+      Seq("java", "-jar", checkTstpProofJarPath.toString) ++ args,
       cwd.path.toIO
     )
 
@@ -58,18 +46,18 @@ class ProofCheckerTest extends Specification with BeforeAll {
   extension (pb: ProcessBuilder)
     private def !!! : (Int, String, String) = runWithExitCodeStdoutStderr(pb)
 
-  override def beforeAll(): Unit = assemble()
+  override def beforeAll(): Unit = assertExistsProofChecker()
 
   "checkProof" should {
     given cwd: Cwd = RepoRoot
 
     "exit non-zero on no input file" in {
-      val exitCode = proofCheckerProcess().!
+      val (exitCode, _, _) = proofCheckerProcess().!!!
       exitCode must beGreaterThan(0)
     }
 
     "exit zero on --help" in {
-      val exitCode = proofCheckerProcess("--help").!
+      val (exitCode, _, _) = proofCheckerProcess("--help").!!!
       exitCode must_== 0
     }
 
@@ -93,15 +81,15 @@ class ProofCheckerTest extends Specification with BeforeAll {
     }
 
     "accept relative paths" in {
-      val exitCode =
-        proofCheckerProcess("./examples/proover_competition/proofs/correct/example1_c_proof.p").!
+      val (exitCode, _, _) =
+        proofCheckerProcess("./examples/proover_competition/proofs/correct/example1_c_proof.p").!!!
 
       exitCode must_== 0
     }
 
     "accept absolute paths" in {
-      val exitCode =
-        proofCheckerProcess(s"${cwd.path}/examples/proover_competition/proofs/correct/example1_c_proof.p").!
+      val (exitCode, _, _) =
+        proofCheckerProcess(s"${cwd.path}/examples/proover_competition/proofs/correct/example1_c_proof.p").!!!
 
       exitCode must_== 0
     }
