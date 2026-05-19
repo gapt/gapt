@@ -35,6 +35,12 @@ def checkTstpProof(args: String*): Unit = {
   }
 
   val path = os.Path(input, os.pwd)
+  if !os.exists(path) then {
+    Console.err.println(s"file not found: $path")
+    sys.exit(1)
+    return
+  }
+
   val tptpFile = TptpImporter.loadWithoutIncludes(ProofFile(path))
   val szsStatus = checkProof(tptpFile)
 
