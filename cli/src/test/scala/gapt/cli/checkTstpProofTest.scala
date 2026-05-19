@@ -1,8 +1,12 @@
 package gapt.cli
 
-import org.specs2.mutable.Specification
+import org.specs2.Specification
+import org.specs2.execute.Result
 import org.specs2.specification.BeforeAll
+import org.specs2.specification.core.Execution
+import org.specs2.specification.core.Fragment
 import org.specs2.specification.core.Fragments
+import org.specs2.specification.core.SpecStructure
 
 import os.Path
 import scala.sys.process._
@@ -48,30 +52,30 @@ class checkTstpProofTest extends Specification with BeforeAll {
 
   override def beforeAll(): Unit = assertExistsProofChecker()
 
-  "checkProof" should {
+  def is: SpecStructure = {
     given cwd: Cwd = RepoRoot
 
-    "exit non-zero on no input file" in {
+    def noInputFile: Result = {
       val (exitCode, _, _) = proofCheckerProcess().!!!
       exitCode must beGreaterThan(0)
     }
 
-    "exit zero on --help" in {
+    def help: Result = {
       val (exitCode, _, _) = proofCheckerProcess("--help").!!!
       exitCode must_== 0
     }
 
-    "print usage on no input file" in {
+    def usageOnNoInputFile: Result = {
       val (_, _, stderr) = proofCheckerProcess().!!!
       stderr must startWith(usageText)
     }
 
-    "print usage on --help" in {
+    def usageOnHelp: Result = {
       val (_, stdout, _) = proofCheckerProcess("--help").!!!
       stdout must startWith(usageText)
     }
 
-    "fail on a non-existent path" in {
+    def nonExistentPath: Result = {
       val (exitCode, stdout, stderr) =
         proofCheckerProcess("./examples/proover_competition/proofs/non_existing_file.p").!!!
 
@@ -80,48 +84,77 @@ class checkTstpProofTest extends Specification with BeforeAll {
       stderr must startWith("file not found")
     }
 
-    "accept relative paths" in {
+    def relativePaths: Result = {
       val (exitCode, _, _) =
         proofCheckerProcess("./examples/proover_competition/proofs/correct/example1_c_proof.p").!!!
 
       exitCode must_== 0
     }
 
-    "accept absolute paths" in {
+    def absolutePaths: Result = {
       val (exitCode, _, _) =
         proofCheckerProcess(s"${cwd.path}/examples/proover_competition/proofs/correct/example1_c_proof.p").!!!
 
       exitCode must_== 0
     }
 
-    val correctProofExamples = os.list(cwd.path / "examples" / "proover_competition" / "proofs" / "correct")
-    Fragments.foreach(correctProofExamples) { example =>
+    def verifyCorrect(example: Path): Result = {
       given Cwd = ProoverCompetitionRoot
-      val relativePath = example.relativeTo(cwd.path)
-      s"verify $relativePath correctly" in {
-        if example.last.startsWith("skip") then
-          skipped(s"not testing $relativePath as it is marked skipped")
-        val (exitCode, stdout, _) =
-          proofCheckerProcess(example.toString).!!!
+      val (exitCode, stdout, _) =
+        proofCheckerProcess(example.toString).!!!
 
-        exitCode must_== 0
-        stdout must_== "%SZS status Verified"
+      exitCode must_== 0
+      stdout must_== "%SZS status Verified"
+    }
+
+    def failVerification(example: Path): Result = {
+      given Cwd = ProoverCompetitionRoot
+      val (exitCode, stdout, _) =
+        proofCheckerProcess(example.toString).!!!
+
+      exitCode must_== 0
+      stdout must_== "%SZS status FailedVerified"
+    }
+
+    def foreachPath(directory: Path)(f: Path => Fragment): Fragments = {
+      val paths = os.list(directory)
+      Fragments.foreach(paths) { path =>
+        val fragment = f(path)
+        val relativePath = path.relativeTo(cwd.path)
+        val pathFragment =
+          if path.last.startsWith("skip") then
+            fragment.setExecution(Execution.result(skipped(s"not testing $relativePath as it is marked skipped")))
+          else fragment
+        pathFragment ^ br
       }
     }
 
-    val incorrectProofExamples = os.list(cwd.path / "examples" / "proover_competition" / "proofs" / "incorrect")
-    Fragments.foreach(incorrectProofExamples) { example =>
-      given Cwd = ProoverCompetitionRoot
-      val relativePath = example.relativeTo(cwd.path)
-      s"fail verification of $relativePath" in {
-        if example.last.startsWith("skip") then
-          skipped(s"not testing $relativePath as it is marked skipped")
-        val (exitCode, stdout, _) =
-          proofCheckerProcess(example.toString).!!!
-
-        exitCode must_== 0
-        stdout must_== "%SZS status FailedVerified"
+    val correctProofs =
+      foreachPath(cwd.path / "examples" / "proover_competition" / "proofs" / "correct") { example =>
+        val relativePath = example.relativeTo(cwd.path)
+        s"verify $relativePath correctly" ! verifyCorrect(example)
       }
-    }
+
+    val incorrectProofs =
+      foreachPath(cwd.path / "examples" / "proover_competition" / "proofs" / "incorrect") { example =>
+        val relativePath = example.relativeTo(cwd.path)
+        s"fail verification of $relativePath" ! failVerification(example)
+      }
+
+    s2"""
+      |exit non-zero on no input file $noInputFile
+      |exit zero on --help $help
+      |print usage on no input file $usageOnNoInputFile
+      |print usage on --help $usageOnHelp
+      |fail on a non-existent path $nonExistentPath
+      |accept relative paths $relativePaths
+      |accept absolute paths $absolutePaths
+      |
+      |verify correct proofs
+      |$correctProofs
+      |
+      |fail incorrect proofs
+      |$incorrectProofs
+    """.stripMargin
   }
 }
