@@ -287,17 +287,30 @@ lazy val userManual = project.in(file("doc")).dependsOn(cli)
     dependencyOverrides ++= dependencyConflictResolutions
   )
 
+lazy val MainCLI = config("Main")
+lazy val CheckProofCLI = config("CheckProof")
 lazy val cli = project.in(file("cli")).dependsOn(core, examples)
-  .settings(commonSettings: _*).settings(
-    mainClass := Some("gapt.cli.CLIMain"),
+  .settings(commonSettings: _*)
+  .settings(testSettings: _*)
+  .configs(CheckProofCLI)
+  .settings(
+    inConfig(MainCLI)(baseAssemblySettings ++ Seq(
+      assembly / mainClass := Some("gapt.cli.CLIMain")
+    )),
+    inConfig(CheckProofCLI)(baseAssemblySettings ++ Seq(
+      assembly / mainClass := Some("gapt.cli.checkTstpProof"),
+      assembly / assemblyJarName := "check-tstp-proof.jar",
+      assembly / assemblyOutputPath := target.value / "check-tstp-proof.jar",
+      Test / test := (Test / test).dependsOn(assembly).value
+    )),
     Compile / scalacOptions += "-Werror",
-    Compile / run / outputStrategy := Some(StdoutOutput),
     libraryDependencies ++= Seq(
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
       "org.scala-lang" %% "scala3-repl" % scalaVersion.value
     ),
-    publish / skip := true,
+    Compile / run / outputStrategy := Some(StdoutOutput),
     packagedArtifacts := Map(),
+    publish / skip := true,
     dependencyOverrides ++= dependencyConflictResolutions
   )
 
