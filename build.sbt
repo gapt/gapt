@@ -299,7 +299,6 @@ lazy val cli = project.in(file("cli")).dependsOn(core, examples)
     )),
     inConfig(CheckProofCLI)(baseAssemblySettings ++ Seq(
       assembly / mainClass := Some("gapt.cli.checkTstpProof"),
-      assembly / assemblyJarName := "check-tstp-proof.jar",
       assembly / assemblyOutputPath := target.value / "check-tstp-proof.jar",
       Test / test := (Test / test).dependsOn(assembly).value
     )),
