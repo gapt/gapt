@@ -125,7 +125,7 @@ class checkTstpProofTest extends Specification with BeforeAll {
           if path.last.startsWith("skip") then
             fragment.setExecution(Execution.result(skipped(s"not testing $relativePath as it is marked skipped")))
           else fragment
-        pathFragment ^ br
+        br ^ t ^ pathFragment ^ bt ^ br
       }
     }
 
@@ -152,7 +152,6 @@ class checkTstpProofTest extends Specification with BeforeAll {
       |
       |verify correct proofs
       |$correctProofs
-      |
       |fail incorrect proofs
       |$incorrectProofs
     """.stripMargin
