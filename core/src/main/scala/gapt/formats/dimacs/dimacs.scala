@@ -91,10 +91,10 @@ object readDRUP {
     drupOutput.trim.split("\n").toSeq flatMap {
       case line if line `startsWith` "s "    => None
       case line if line `startsWith` "%RUPD" => None
-      case ""                              => None
-      case "UNSAT"                         => None
-      case "f DRUP"                        => None
-      case "o proof DRUP"                  => None
+      case ""                                => None
+      case "UNSAT"                           => None
+      case "f DRUP"                          => None
+      case "o proof DRUP"                    => None
       case line if line.startsWith("d ") =>
         Some(RupProof.Delete(line.substring(2).split(" ").toSeq.map(_.toInt).dropRight(1)))
       case line =>

@@ -240,7 +240,11 @@ private class skolemizeLK(
           ctx.addSkolemSym(skolemDef, nameGen `freshWithIndex` "s", !proofTheoretic)
         )
         val skolemTerm = skolemConst(argVars*)
-        val q_ = apply(q, p.occConnectors.head.parent(info).updated(a, info(p.mainIndices.head).instantiateQuantifier(skolemTerm)), subst `compose` Substitution(eigen -> skolemTerm))
+        val q_ = apply(
+          q,
+          p.occConnectors.head.parent(info).updated(a, info(p.mainIndices.head).instantiateQuantifier(skolemTerm)),
+          subst `compose` Substitution(eigen -> skolemTerm)
+        )
         if (pol) ForallSkRightRule(q_, a, subf(p.mainFormulas.head), sub(skolemTerm))
         else ExistsSkLeftRule(q_, a, subf(p.mainFormulas.head), sub(skolemTerm))
     }

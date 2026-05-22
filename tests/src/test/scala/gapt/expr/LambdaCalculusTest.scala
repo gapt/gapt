@@ -24,8 +24,8 @@ class LambdaCalculusTest extends Specification {
       val v2 = Var("y", Ti)
       val f = Var("f", Ti ->: Ti ->: To)
       (Abs(v1 :: v2 :: Nil, f) match {
-          case Abs(_, Abs(_, _)) => true
-        case _                   => false
+        case Abs(_, Abs(_, _)) => true
+        case _                 => false
       }) must beEqualTo(true)
     }
     "create N-ary applications (AppN) correctly" in {
@@ -33,8 +33,8 @@ class LambdaCalculusTest extends Specification {
       val v2 = Var("y", Ti)
       val f = Var("f", Ti ->: Ti ->: To)
       (App(f, List(v1, v2)) match {
-          case App(App(_, _), _) => true
-        case _                   => false
+        case App(App(_, _), _) => true
+        case _                 => false
       }) must beEqualTo(true)
     }
   }

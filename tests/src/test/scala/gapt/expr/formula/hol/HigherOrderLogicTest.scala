@@ -34,14 +34,14 @@ class HigherOrderLogicTest extends Specification {
 
     "mix correctly the formula trait (1)" in {
       val result = a1 match {
-          case _: Formula => true
+        case _: Formula => true
         case _          => false
       }
       result must beTrue
     }
     "mix correctly the formula trait (2)" in {
       val result = a22 match {
-          case _: Formula => true
+        case _: Formula => true
         case _          => false
       }
       result must beTrue
@@ -50,7 +50,7 @@ class HigherOrderLogicTest extends Specification {
       val at1 = Atom(Var("P", c2.ty ->: a22.ty ->: To), c2 :: a22 :: Nil)
       // Another way to construct P's type is: FunctionType(To, args.map(a => a.exptype) )
       val result = at1 match {
-          case _: Formula => true
+        case _: Formula => true
         case null       => false
       }
       result must beTrue
@@ -59,8 +59,8 @@ class HigherOrderLogicTest extends Specification {
       val c1 = Atom(Const("a", To))
       val c2 = Atom(Const("b", To))
       val result = And(c1, c2) match {
-          case App(App(_, _), _) => true
-        case _                      => false
+        case App(App(_, _), _) => true
+        case _                 => false
       }
       result must beTrue
     }
@@ -68,8 +68,8 @@ class HigherOrderLogicTest extends Specification {
       val c1 = Atom(Const("a", To))
       val c2 = Atom(Const("b", To))
       val result = Or(c1, c2) match {
-          case App(App(_, _), _) => true
-        case _                     => false
+        case App(App(_, _), _) => true
+        case _                 => false
       }
       result must beTrue
     }
@@ -77,8 +77,8 @@ class HigherOrderLogicTest extends Specification {
       val c1 = Atom(Var("a", To))
       val c2 = Atom(Var("b", To))
       val result = Imp(c1, c2) match {
-          case App(App(_, _), _) => true
-        case _                      => false
+        case App(App(_, _), _) => true
+        case _                 => false
       }
       result must beTrue
     }
@@ -86,8 +86,8 @@ class HigherOrderLogicTest extends Specification {
       "return the right formula" in {
         val c1 = Atom(Var("a", To))
         val result = Neg(c1) match {
-            case App(_, _) => true
-          case _             => false
+          case App(_, _) => true
+          case _         => false
         }
         result must beTrue
       }
@@ -193,7 +193,7 @@ class HigherOrderLogicTest extends Specification {
           val P3 = Atom(Var("P", sCTn.ty ->: a.ty ->: To), sCTn :: a :: Nil)
           val s = sub(f)
           val result = s match {
-              case Ex(_, Imp(P3, P2)) => true
+            case Ex(_, Imp(P3, P2)) => true
             case _                  => false
           }
           result must beTrue
