@@ -1,12 +1,14 @@
 package gapt.formats.tptp.check
 
+import gapt.formats.InputFile
+import gapt.formats.tptp.*
+import gapt.proofs.sketch.RefutationSketchToResolution
 import gapt.expr.formula.Formula
 import gapt.proofs.Sequent
 import gapt.expr.formula.Neg
 import gapt.utils.withTimeout
 import gapt.provers.escargot.Escargot
 import gapt.utils.TimeOutException
-import gapt.formats.tptp._
 
 enum SzsStatus {
   case Verified
@@ -22,7 +24,27 @@ enum SzsStatus {
   def statusLine: String = s"%SZS status ${this.toString()}"
 }
 
-def checkProof(tptpFile: TptpFile): SzsStatus = {
+def checkProof(file: InputFile): SzsStatus = checkProof1(file)
+
+// implementation of checkProof that checks the input by constructing a resolution proof from the input
+def checkProof1(file: InputFile): SzsStatus = {
+  val (_, sketch) = TptpProofParser.parse(file)
+  val proof = RefutationSketchToResolution(sketch)
+  proof match {
+    case Left(_)  => SzsStatus.NotVerified
+    case Right(_) => SzsStatus.Verified
+  }
+}
+
+// implementation of checkProof that only performs the proof checking without constructing the proof
+def checkProof2(file: InputFile): SzsStatus = {
+  val tptpFile = TptpImporter.loadWithoutIncludes(file)
+  if !tptpFile.inputs.exists {
+      case AnnotatedFormula(_, _, "conjecture", _, _) => true
+      case _                                          => false
+    }
+  then throw IllegalArgumentException("No conjecture found")
+
   val formulaLabels = tptpFile.inputs.foldLeft(Map.empty[String, Formula]) { (acc, input) =>
     input match
       case AnnotatedFormula(_, name, _, formula, _) => acc + (name -> formula)
@@ -32,6 +54,7 @@ def checkProof(tptpFile: TptpFile): SzsStatus = {
   def getFormulaFromTerm(term: GeneralTerm): Formula = term match {
     case TptpTerm(name) => formulaLabels(name)
   }
+
   val inferences: Seq[(TptpInput, Sequent[Formula])] = tptpFile.inputs.flatMap { input =>
     input match
       case AnnotatedFormula(
@@ -63,10 +86,6 @@ def checkProof(tptpFile: TptpFile): SzsStatus = {
               )
             )
           ) => {
-        pprint.err.log(new_symbols(0).toRawAsciiString)
-        pprint.err.log(skolemizedVariable.toRawAsciiString)
-        pprint.err.log((bindVariable.toRawAsciiString, bindSymbol.toAsciiString))
-        pprint.err.log(parents)
         ???
       }
       case AnnotatedFormula(
@@ -80,8 +99,6 @@ def checkProof(tptpFile: TptpFile): SzsStatus = {
       }
       case _ => None
   }
-
-  pprint.err.log(inferences)
 
   import scala.concurrent.duration._
   val verifications = inferences.map {
@@ -98,38 +115,10 @@ def checkProof(tptpFile: TptpFile): SzsStatus = {
   }
 
   val verified = verifications.filter(_._3.contains(true))
-  pprint.err.log(verified)
   val failed = verifications.filter(_._3.contains(false))
-  pprint.err.log(failed)
   val unverified = verifications.filter(_._3.isEmpty)
-  pprint.err.log(unverified)
 
   if failed.nonEmpty then SzsStatus.FailedVerified
   else if unverified.nonEmpty then SzsStatus.NotVerified
   else SzsStatus.Verified
-
-  // sketch match {
-  //   case Left(error) => {
-  //     val errorMessage = error match {
-  //       case FileNotFound(f)             => s"file not found: ${f.fileName}"
-  //       case ParsingError(file)          => s"parsing error: ${file.fileName}"
-  //       case MalformedFile(file)         => s"malformed file: ${file.fileName}"
-  //       case StackOverflow(file)         => s"stack overflow when parsing: ${file.fileName}"
-  //       case ReconstructionTimeout(file) => s"reconstruction timeout: ${file.fileName}"
-  //       case _                           => "unknown error"
-  //     }
-  //     Console.err.println(errorMessage)
-  //     sys.exit(1)
-  //     return
-  //   }
-  //   case Right(_) => {}
-  // }
-
-  // val szsStatus = proof match {
-  //   case Left(ReconstructionGaveUp(_)
-  //       | ReconstructionError(_)) => "FailedVerified"
-  //   case Right(_) => "Verified"
-  //   case Left(_)  => "NotVerified"
-  // }
-
 }

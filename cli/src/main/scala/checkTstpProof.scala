@@ -1,16 +1,7 @@
 package gapt.cli
 
-import gapt.formats.csv.CSVRow
-import gapt.formats.tptp.TptpImporter
 import gapt.formats.tptp.check._
-import gapt.formats.tptp.statistics.FileData
-import os.Path
-
-case class ProofFile(path: Path) extends FileData {
-  override def fileName: String = path.toString
-  override def csvHeader(): CSVRow[String] = CSVRow(List("proof"))
-  override def toCSV(): CSVRow[String] = CSVRow(List(path.toString))
-}
+import gapt.formats.OnDiskInputFile
 
 val usage = """
 |check-proof <PROOF>
@@ -41,8 +32,6 @@ def checkTstpProof(args: String*): Unit = {
     return
   }
 
-  val tptpFile = TptpImporter.loadWithoutIncludes(ProofFile(path))
-  val szsStatus = checkProof(tptpFile)
-
-  println(szsStatus.statusLine)
+  val szsStatus = checkProof(OnDiskInputFile(path))
+  Console.out.println(szsStatus.statusLine)
 }
