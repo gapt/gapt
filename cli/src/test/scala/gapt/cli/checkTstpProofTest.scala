@@ -20,10 +20,9 @@ class checkTstpProofTest extends Specification with BeforeAll {
       |PROOF is a path to a TSTP proof file""".stripMargin.strip
 
   trait Cwd { def path: Path }
-  object TestCwd extends Cwd { def path: Path = os.pwd }
   object RepoRoot extends Cwd { def path: Path = os.pwd / os.up }
   object ProoverCompetitionRoot extends Cwd {
-    def path: Path = RepoRoot.path / "examples" / "proover_competition"
+    def path: Path = RepoRoot.path / "tests" / "src" / "test" / "resources" / "proover_competition"
   }
   val checkTstpProofJarPath = RepoRoot.path / "cli" / "target" / "check-tstp-proof.jar"
 
@@ -53,7 +52,7 @@ class checkTstpProofTest extends Specification with BeforeAll {
   override def beforeAll(): Unit = assertExistsProofChecker()
 
   def is: SpecStructure = {
-    given cwd: Cwd = RepoRoot
+    given cwd: Cwd = ProoverCompetitionRoot
 
     def noInputFile: Result = {
       val (exitCode, _, _) = proofCheckerProcess().!!!
@@ -77,50 +76,48 @@ class checkTstpProofTest extends Specification with BeforeAll {
 
     def nonExistentPath: Result = {
       val (exitCode, stdout, stderr) =
-        proofCheckerProcess("./examples/proover_competition/proofs/non_existing_file.p").!!!
+        proofCheckerProcess("./proofs/non_existing_file.p").!!!
 
-      exitCode must beGreaterThan(0)
-      stdout must beEmpty
-      stderr must startWith("file not found")
+      (exitCode must beGreaterThan(0)) and
+        (stdout must beEmpty) and
+        (stderr must startWith("file not found"))
     }
 
     def relativePaths: Result = {
       val (exitCode, _, _) =
-        proofCheckerProcess("./examples/proover_competition/proofs/correct/example1_c_proof.p").!!!
+        proofCheckerProcess("./proofs/correct/example1_c_proof.p").!!!
 
       exitCode must_== 0
     }
 
     def absolutePaths: Result = {
       val (exitCode, _, _) =
-        proofCheckerProcess(s"${cwd.path}/examples/proover_competition/proofs/correct/example1_c_proof.p").!!!
+        proofCheckerProcess(s"${cwd.path}/proofs/correct/example1_c_proof.p").!!!
 
       exitCode must_== 0
     }
 
     def verifyCorrect(example: Path): Result = {
-      given Cwd = ProoverCompetitionRoot
       val (exitCode, stdout, _) =
         proofCheckerProcess(example.toString).!!!
 
-      exitCode must_== 0
-      stdout must_== "%SZS status Verified"
+      (exitCode must_== 0) and
+        (stdout must_== "%SZS status Verified")
     }
 
     def failVerification(example: Path): Result = {
-      given Cwd = ProoverCompetitionRoot
       val (exitCode, stdout, _) =
         proofCheckerProcess(example.toString).!!!
 
-      exitCode must_== 0
-      stdout must_== "%SZS status FailedVerified"
+      (exitCode must_== 0) and
+        (stdout must_== "%SZS status FailedVerified")
     }
 
     def foreachPath(directory: Path)(f: Path => Fragment): Fragments = {
       val paths = os.list(directory)
       Fragments.foreach(paths) { path =>
         val fragment = f(path)
-        val relativePath = path.relativeTo(cwd.path)
+        val relativePath = path.relativeTo(ProoverCompetitionRoot.path)
         val pathFragment =
           if path.last.startsWith("skip") then
             fragment.setExecution(Execution.result(skipped(s"not testing $relativePath as it is marked skipped")))
@@ -130,14 +127,14 @@ class checkTstpProofTest extends Specification with BeforeAll {
     }
 
     val correctProofs =
-      foreachPath(cwd.path / "examples" / "proover_competition" / "proofs" / "correct") { example =>
-        val relativePath = example.relativeTo(cwd.path)
+      foreachPath(ProoverCompetitionRoot.path / "proofs" / "correct") { example =>
+        val relativePath = example.relativeTo(ProoverCompetitionRoot.path)
         s"verify $relativePath correctly" ! verifyCorrect(example)
       }
 
     val incorrectProofs =
-      foreachPath(cwd.path / "examples" / "proover_competition" / "proofs" / "incorrect") { example =>
-        val relativePath = example.relativeTo(cwd.path)
+      foreachPath(ProoverCompetitionRoot.path / "proofs" / "incorrect") { example =>
+        val relativePath = example.relativeTo(ProoverCompetitionRoot.path)
         s"fail verification of $relativePath" ! failVerification(example)
       }
 
