@@ -9,6 +9,8 @@ import gapt.expr.formula.Neg
 import gapt.utils.withTimeout
 import gapt.provers.escargot.Escargot
 import gapt.utils.TimeOutException
+import gapt.proofs.sketch.UnprovableSketchInference
+import scala.concurrent.duration._
 
 enum SzsStatus {
   case Verified
@@ -27,12 +29,30 @@ enum SzsStatus {
 def checkProof(file: InputFile): SzsStatus = checkProof1(file)
 
 // implementation of checkProof that checks the input by constructing a resolution proof from the input
-def checkProof1(file: InputFile): SzsStatus = {
-  val (_, sketch) = TptpProofParser.parse(file)
-  val proof = RefutationSketchToResolution(sketch)
-  proof match {
-    case Left(_)  => SzsStatus.NotVerified
-    case Right(_) => SzsStatus.Verified
+def checkProof1(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
+  import scala.util.boundary
+  boundary {
+    try withTimeout(timeout) {
+        val tptpRefutationSketch = TptpProofParser.parseTptpRefutationSketch(file)
+        tptpRefutationSketch.conjectureNegatedConjecturePair match {
+          case Some((conjecture, negatedConjecture)) =>
+            if !Escargot.isValid(Neg(conjecture) --> negatedConjecture) then
+              boundary.break(SzsStatus.FailedVerified)
+          case None =>
+        }
+
+        val sketch = tptpRefutationSketch.refutationSketch
+        val proof = RefutationSketchToResolution(sketch)
+        proof match {
+          case Left(UnprovableSketchInference(_)) => SzsStatus.FailedVerified
+          case Right(_)                           => SzsStatus.Verified
+        }
+      }
+    catch {
+      case _: TimeOutException => {
+        SzsStatus.NotVerified
+      }
+    }
   }
 }
 

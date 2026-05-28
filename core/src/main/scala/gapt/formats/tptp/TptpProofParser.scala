@@ -23,12 +23,177 @@ import gapt.proofs.{FOLClause, HOLSequent, Sequent}
 
 import scala.collection.mutable
 
+sealed trait TptpProofStep {
+  def name: String
+  def formula: Formula
+}
+
+enum InferenceStatus {
+  case Thm
+  case Cth
+  case Esa
+}
+
+sealed trait TptpInference extends TptpProofStep {
+  def status: InferenceStatus
+  def parents: Seq[String]
+}
+
+case class TptpAxiomStep(
+    val name: String,
+    val formula: Formula
+) extends TptpProofStep
+case class TptpConjectureStep(
+    val name: String,
+    val formula: Formula
+) extends TptpProofStep
+case class TptpNegatedConjectureStep(
+    val name: String,
+    val formula: Formula,
+    val status: InferenceStatus,
+    val conjectureStep: TptpConjectureStep
+) extends TptpInference {
+  def parents: Seq[String] = Seq(conjectureStep.name)
+}
+case class TptpPlainInfenreceStep(
+    val name: String,
+    val formula: Formula,
+    val status: InferenceStatus,
+    val premises: Seq[TptpProofStep]
+) extends TptpInference {
+  def parents: Seq[String] = premises.map(_.name)
+}
+case class TptpPlainSkolemizationInferenceStep(
+    val name: String,
+    val formula: Formula,
+    val status: InferenceStatus,
+    val skolemSymbol: Const,
+    val boundVariable: Var,
+    val skolemParameters: Seq[Var],
+    val premise: TptpProofStep
+) extends TptpInference {
+  def parents: Seq[String] = Seq.empty
+}
+
+case class TptpRefutationSketch(
+    val refutationSketch: RefutationSketch,
+    // this is None if the negated conjecture is not used in the refutation sketch
+    val conjectureNegatedConjecturePair: Option[(Formula, Formula)]
+)
+
 /**
  * Represents a malformed input file e.g. one that contains an unknown parent step
  */
 class MalformedInputFileException(s: String) extends IllegalArgumentException(s)
 
+case class TptpInferenceRecord(val name: String, val usefulInfo: Seq[GeneralTerm], val parents: Seq[String])
+
+extension (inference: TptpInferenceRecord) {
+  def statuses: Seq[InferenceStatus] = {
+    inference.usefulInfo.collect {
+      case TptpTerm("status", TptpAtomicWord(s)) => s match {
+          case "thm" => InferenceStatus.Thm
+          case "cth" => InferenceStatus.Cth
+          case "esa" => InferenceStatus.Esa
+        }
+    }
+  }
+}
+
+case class TptpAtomicWord(val name: String)
+
+object TptpAtomicWord {
+  def unapply(term: GeneralTerm): Option[String] = term match {
+    case TptpTerm(name, _, _) => Some(name)
+    case _                    => None
+  }
+}
+
+extension (formula: AnnotatedFormula) {
+  def asConjectureStep: Option[TptpConjectureStep] = {
+    formula.role match {
+      case "conjecture" => Some(TptpConjectureStep(formula.name, formula.formula))
+      case _            => None
+    }
+  }
+
+  def isConjectureStep: Boolean = asConjectureStep.isDefined
+
+  def claimsIsNegatedConjectureStep: Boolean = formula.role == "negated_conjecture"
+
+  def inferenceRecords: Seq[TptpInferenceRecord] = {
+    formula.annotations.collect {
+      case TptpTerm("inference", TptpAtomicWord(name), GeneralList(info*), GeneralList(ps*)) => {
+        val parents = ps.map {
+          case TptpAtomicWord(pName) => pName
+        }
+        TptpInferenceRecord(name, info, parents)
+      }
+    }
+  }
+}
+
+extension (using tptpFile: TptpFile)(a: AnnotatedFormula) {
+  // assumes that parents of a actually occur in tptpFile
+  def parents: Seq[AnnotatedFormula] = {
+    val inferenceRecord = a.inferenceRecords match {
+      case Seq()   => return Seq.empty
+      case Seq(xs) => xs
+      case _       => throw IllegalArgumentException("Expected at most one inference record, got " + a.inferenceRecords.size)
+    }
+    inferenceRecord.parents.map(p =>
+      tptpFile.inputs.collect {
+        case af @ AnnotatedFormula(_, name, _, _, _) if name == p => af
+      }.single
+    )
+  }
+  def ancestors: Seq[AnnotatedFormula] = {
+    // TODO: catch cycles
+    a.parents ++ a.parents.flatMap(_.ancestors)
+  }
+  def isUsedInDerivationOf(b: AnnotatedFormula): Boolean = {
+    a == b || a.ancestors.contains(b)
+  }
+  def isConjectureOf(b: AnnotatedFormula): Boolean = {
+    // a.isConjectureStep
+    // && b.claimsIsNegatedConjectureStep
+    b.parents.contains(a)
+  }
+}
+
+extension [T](a: IterableOnce[T]) {
+  def single: T = a.iterator.take(2).toSeq match {
+    case Seq()  => throw new NoSuchElementException
+    case Seq(x) => x
+    case _      => throw new IllegalArgumentException("Expected at most one element, got " + a)
+  }
+}
+
 object TptpProofParser {
+  def parseTptpRefutationSketch(input: InputFile): TptpRefutationSketch = {
+    val (_, sketch) = parse(input)
+    given tptpFile: TptpFile = TptpImporter.loadWithoutIncludes(input)
+    val refutationHead = tptpFile.inputs.collect {
+      case a @ AnnotatedFormula(_, _, _, Bottom(), _) => a
+    }.single
+    val usedNegatedConjectures = tptpFile.inputs.collect {
+      case a @ AnnotatedFormula(_, _, "negated_conjecture", _, _) if a.isUsedInDerivationOf(refutationHead) => a
+    }
+
+    if usedNegatedConjectures.isEmpty then
+      return TptpRefutationSketch(sketch, None)
+
+    if usedNegatedConjectures.size > 1 then
+      throw new IllegalArgumentException("Expected exactly one negated conjecture used in the refutation sketch, got " + usedNegatedConjectures.size)
+
+    val negatedConjecture = usedNegatedConjectures.head
+    val conjectures = tptpFile.inputs.collect {
+      case a @ AnnotatedFormula(_, _, "conjecture", _, _) => a
+    }
+    val conjecture = conjectures.head
+    TptpRefutationSketch(sketch, Some((conjecture.formula, negatedConjecture.formula)))
+  }
+
   def parse(out: InputFile, labelledCNF: Map[String, Seq[FOLClause]]): RefutationSketch =
     parseSteps(TptpImporter.loadWithoutIncludes(out), labelledCNF)
 
@@ -57,12 +222,17 @@ object TptpProofParser {
       })
   }
 
-  def parse(out: InputFile, ignoreStrongQuants: Boolean = false): (Sequent[FOLFormula], RefutationSketch) = {
-    var tptpFile = TptpImporter.loadWithoutIncludes(out)
+  def parse(tptp: TptpFile, ignoreStrongQuants: Boolean): (Sequent[FOLFormula], RefutationSketch) = {
+    var tptpFile = tptp
     if (ignoreStrongQuants) tptpFile = removeStrongQuants(tptpFile)
     tptpFile = inventSources(tptpFile)
     val (endSequent, labelledCNF) = extractEndSequentAndCNF(tptpFile)
     endSequent -> parseSteps(tptpFile, labelledCNF)
+  }
+
+  def parse(out: InputFile, ignoreStrongQuants: Boolean = false): (Sequent[FOLFormula], RefutationSketch) = {
+    val tptpFile = TptpImporter.loadWithoutIncludes(out)
+    parse(tptpFile, ignoreStrongQuants)
   }
 
   def inventSources(stepList: TptpFile): TptpFile = TptpFile(stepList.inputs.map {
