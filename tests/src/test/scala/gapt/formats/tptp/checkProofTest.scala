@@ -93,6 +93,9 @@ class checkProofUnitTest extends mutable.Specification {
       "should fail on proof with inference steps that form a cycle" in todo
       "should throw exception on proof with invalid tptp syntax" in todo
 
+      // we do this for now to avoid having to do a big refactor of the parsers
+      "should not verify proof that contains inference parents which are not simple names" in todo
+
       "should fail on negated conjecture if negation of conjecture is not implied by conclusion" in todo("specify")
       "should do X on a proof that doesn't use negated conjecture" in todo("specify")
       "should do X if input has not negated conjecture" in todo("specify")
