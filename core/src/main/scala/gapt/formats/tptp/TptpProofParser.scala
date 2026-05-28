@@ -91,7 +91,7 @@ case class TptpInferenceRecord(val name: String, val usefulInfo: Seq[GeneralTerm
 extension (inference: TptpInferenceRecord) {
   def statuses: Seq[InferenceStatus] = {
     inference.usefulInfo.collect {
-      case TptpTerm("status", AtomicWord(s)) => s match {
+      case TptpTerm("status", TptpTerm(s)) => s match {
           case "thm" => InferenceStatus.Thm
           case "cth" => InferenceStatus.Cth
           case "esa" => InferenceStatus.Esa
@@ -112,15 +112,16 @@ extension (formula: AnnotatedFormula) {
 
   def claimsIsNegatedConjectureStep: Boolean = formula.role == "negated_conjecture"
 
-  def inferenceRecords: Seq[TptpInferenceRecord] = {
-    formula.annotations.collect {
-      case TptpTerm("inference", AtomicWord(name), GeneralList(info*), GeneralList(ps*)) => {
-        val parents = ps.map {
-          case AtomicWord(pName) => pName
-        }
-        TptpInferenceRecord(name, info, parents)
-      }
+  def inferenceRecords: Seq[InferenceRecord] = {
+    val f: AnnotatedFormula2 = formula
+    val source = f.annotations match {
+      case None    => return Seq.empty
+      case Some(a) => a.source
     }
+    if source.isInstanceOf[InferenceRecord] then
+      Seq(source.asInstanceOf[InferenceRecord])
+    else
+      Seq.empty
   }
 }
 
@@ -134,7 +135,7 @@ extension (using tptpFile: TptpFile)(a: AnnotatedFormula) {
     }
     inferenceRecord.parents.map(p =>
       tptpFile.inputs.collect {
-        case af @ AnnotatedFormula(_, name, _, _, _) if name == p => af
+        case af @ AnnotatedFormula(_, name, _, _, _) if AtomicWord(name) == p.source => af
       }.single
     )
   }
