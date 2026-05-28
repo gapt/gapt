@@ -13,6 +13,7 @@ import gapt.proofs._
 package object tptp {
 
   type GeneralTerm = Expr
+  type GeneralList = Seq[GeneralTerm]
   type FormulaRole = String
   type InfoItem = GeneralTerm
 
@@ -43,12 +44,67 @@ package object tptp {
       (names, sequent)
 
     }
-
   }
   sealed trait TptpInput {
     override def toString = TptpToString.tptpInput(this)
   }
-  case class AnnotatedFormula(language: String, name: String, role: FormulaRole, formula: Formula, annotations: Seq[GeneralTerm]) extends TptpInput
+  case object Unknown
+  type Source = DagSource | Unknown.type
+  type DagSource = TptpName | InferenceRecord
+  type TptpName = AtomicWord | Int
+  type ParentDetails = Option[GeneralTerm]
+  case class ParentInfo(source: Source, details: ParentDetails)
+  case class InferenceRecord(inference_rule: AtomicWord, usefulInfo: GeneralList, parents: Seq[ParentInfo])
+  sealed trait Annotations {
+    def source: Source
+    def optionalInfo: GeneralList
+  }
+
+  case class AtomicWord(inner: String)
+  given Conversion[String, AtomicWord] = (s: String) => AtomicWord(s)
+
+  object AtomicWord {
+    def unapply(term: GeneralTerm): Option[String] = term match {
+      case TptpTerm(name, _, _) => Some(name)
+      case _                    => None
+    }
+  }
+
+  def termToParentInfo(term: GeneralTerm): ParentInfo = term match {
+    case GeneralColon(source, parentDetails) => ParentInfo(termToSource(source), Some(parentDetails))
+    case t                                   => ParentInfo(termToSource(t), None)
+  }
+
+  def termToSource(term: GeneralTerm): Source = term match {
+    case TptpTerm("inference", TptpTerm(rule), GeneralList(usefulInfo*), GeneralList(parents*)) =>
+      InferenceRecord(rule, usefulInfo, parents.map(termToParentInfo))
+    case TptpTerm(t) => AtomicWord(t)
+    case _           => Unknown
+  }
+  given Conversion[GeneralTerm, Source] = termToSource
+
+  // these conversion will be removed once the parser refactor has finished
+  given Conversion[GeneralList, Annotations] = (generalList: GeneralList) => {
+    generalList match {
+      case Seq() => new Annotations {
+          def source: Source = Unknown
+          def optionalInfo: GeneralList = generalList
+        }
+      case Seq(s, optInfo*) => new Annotations {
+          def source: Source = termToSource(s)
+          def optionalInfo: GeneralList = optInfo
+        }
+    }
+
+  }
+  given Conversion[Annotations, GeneralList] = (annotations: Annotations) => annotations.optionalInfo
+  case class AnnotatedFormula(language: String, name: String, role: FormulaRole, formula: Formula, annotations: Annotations) extends TptpInput
+
+  object AnnotatedFormula {
+    def unapply(annotatedFormula: AnnotatedFormula): Option[(String, String, FormulaRole, Formula, GeneralList)] =
+      Some((annotatedFormula.language, annotatedFormula.name, annotatedFormula.role, annotatedFormula.formula, annotatedFormula.annotations.optionalInfo))
+  }
+
   case class IncludeDirective(fileName: String, formulaSelection: Option[Seq[String]]) extends TptpInput
 
   object TptpTerm {

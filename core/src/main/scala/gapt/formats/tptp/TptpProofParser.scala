@@ -91,21 +91,12 @@ case class TptpInferenceRecord(val name: String, val usefulInfo: Seq[GeneralTerm
 extension (inference: TptpInferenceRecord) {
   def statuses: Seq[InferenceStatus] = {
     inference.usefulInfo.collect {
-      case TptpTerm("status", TptpAtomicWord(s)) => s match {
+      case TptpTerm("status", AtomicWord(s)) => s match {
           case "thm" => InferenceStatus.Thm
           case "cth" => InferenceStatus.Cth
           case "esa" => InferenceStatus.Esa
         }
     }
-  }
-}
-
-case class TptpAtomicWord(val name: String)
-
-object TptpAtomicWord {
-  def unapply(term: GeneralTerm): Option[String] = term match {
-    case TptpTerm(name, _, _) => Some(name)
-    case _                    => None
   }
 }
 
@@ -123,9 +114,9 @@ extension (formula: AnnotatedFormula) {
 
   def inferenceRecords: Seq[TptpInferenceRecord] = {
     formula.annotations.collect {
-      case TptpTerm("inference", TptpAtomicWord(name), GeneralList(info*), GeneralList(ps*)) => {
+      case TptpTerm("inference", AtomicWord(name), GeneralList(info*), GeneralList(ps*)) => {
         val parents = ps.map {
-          case TptpAtomicWord(pName) => pName
+          case AtomicWord(pName) => pName
         }
         TptpInferenceRecord(name, info, parents)
       }

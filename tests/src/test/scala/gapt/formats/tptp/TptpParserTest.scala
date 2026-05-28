@@ -2,6 +2,8 @@ package gapt.formats.tptp
 
 import gapt.formats.ClasspathInputFile
 import org.specs2.mutable.Specification
+import gapt.expr.formula.fol.FOLConst
+import gapt.formats.InputFile
 
 class TptpParserTest extends Specification {
 
@@ -21,4 +23,15 @@ class TptpParserTest extends Specification {
     ok
   }
 
+  "TPTP parser" should {
+    "import inference record" in {
+      val input = "fof(name, plain, p, inference(abc, [status(thm)], [a]))."
+      val tptpFile = TptpImporter.loadWithoutIncludes(InputFile.fromString(input))
+      tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations.source must_== InferenceRecord(
+        "abc",
+        Seq(TptpTerm("status", FOLConst("thm"))),
+        Seq(ParentInfo("a", None))
+      )
+    }
+  }
 }
