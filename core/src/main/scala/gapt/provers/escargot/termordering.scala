@@ -60,7 +60,7 @@ case class KBO(precedence: Seq[Const], constWeights: Map[Const, Int] = Map()) ex
     val w2 = weight(e2)
 
     if (w1 > w2) return false
-    if (!treatVarsAsConsts) if (occs(e1) diff occs(e2) nonEmpty) return false
+    if (!treatVarsAsConsts) if (occs(e1).diff(occs(e2)) nonEmpty) return false
 
     if (w1 < w2) return true
 

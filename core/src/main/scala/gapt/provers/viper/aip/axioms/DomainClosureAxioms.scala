@@ -75,7 +75,7 @@ case class DomainClosureAxioms(types: List[TBase] = Nil) extends AxiomFactory {
     val caseVariable = Var("x", caseType)
     All(
       caseVariable,
-      Or(constructors map { constructor => caseDistinction(caseVariable, constructor) })
+      Or(constructors.map { constructor => caseDistinction(caseVariable, constructor) })
     )
   }
 
@@ -90,7 +90,7 @@ case class DomainClosureAxioms(types: List[TBase] = Nil) extends AxiomFactory {
   private def caseDistinction(caseVariable: Var, constructor: Con): Formula = {
     val nameGenerator = rename.awayFrom(caseVariable :: Nil)
     val FunctionType(_, argumentTypes) = constructor.ty: @unchecked
-    val newVariables: List[Var] = argumentTypes map {
+    val newVariables: List[Var] = argumentTypes.map {
       argumentType => nameGenerator.fresh(Var("x", argumentType))
     }
     Ex.Block(newVariables, Eq(caseVariable, constructor(newVariables)))

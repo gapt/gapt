@@ -17,53 +17,53 @@ class ProofBuilderTest extends Specification {
 
     "allow adding constant proofs" in {
       (ProofBuilder
-        c LogicalAxiom(A)
-        c LogicalAxiom(B))
+        .c(LogicalAxiom(A))
+        .c(LogicalAxiom(B)))
       success
     }
 
     "apply unary inferences" in {
       (ProofBuilder
-        c LogicalAxiom(A)
-        u (WeakeningLeftRule(_, B))
-        u (WeakeningRightRule(_, D)))
+        .c(LogicalAxiom(A))
+        .u(WeakeningLeftRule(_, B))
+        .u(WeakeningRightRule(_, D)))
 
       success
     }
 
     "apply binary inferences" in {
       (ProofBuilder
-        c LogicalAxiom(A)
-        c LogicalAxiom(B)
-        b (AndRightRule(_, _, And(A, B))))
+        .c(LogicalAxiom(A))
+        .c(LogicalAxiom(B))
+        .b(AndRightRule(_, _, And(A, B))))
 
       success
     }
 
     "return if there is only one proof on the stack" in {
       (ProofBuilder
-        c LogicalAxiom(A) qed)
+        .c(LogicalAxiom(A)) qed)
       success
     }
     "refuse to apply a unary inference to empty stack" in {
       (ProofBuilder
-        u (WeakeningLeftRule(_, A))) must throwAn[Exception]
+        .u(WeakeningLeftRule(_, A))) must throwAn[Exception]
     }
 
     "refuse to apply a binary inference to stack with < 2 elements" in {
       (ProofBuilder
-        b (AndRightRule(_, _, And(A, B)))) must throwAn[Exception]
+        .b(AndRightRule(_, _, And(A, B)))) must throwAn[Exception]
 
       (ProofBuilder
-        c LogicalAxiom(A)
-        b (AndRightRule(_, _, And(A, B)))) must throwAn[Exception]
+        .c(LogicalAxiom(A))
+        .b(AndRightRule(_, _, And(A, B)))) must throwAn[Exception]
     }
 
     "refuse to return if there are too many or too few proofs on the stack" in {
       (ProofBuilder qed: AnyRef) must throwAn[Exception]
       (ProofBuilder
-        c LogicalAxiom(A)
-        c LogicalAxiom(B) qed) must throwAn[Exception]
+        .c(LogicalAxiom(A))
+        .c(LogicalAxiom(B)) qed) must throwAn[Exception]
     }
   }
 }

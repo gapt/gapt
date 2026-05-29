@@ -68,18 +68,18 @@ object VeryWeakPHPSeqTwoSchema extends TacticsProof {
     )
   val omegaBc = Lemma(esOmegaBc) {
     cut("cut", hof"CutDistinct(s(0),0)")
-    unfold("CutDistinct") `atMost` 1 `in` "cut"
-    unfold("PAND") `atMost` 1 `in` "Ant_0"
+    unfold("CutDistinct").`atMost`(1).`in`("cut")
+    unfold("PAND").`atMost`(1).`in`("Ant_0")
     andL
-    unfold("PAND") `atMost` 1 `in` "Ant_0_1"
+    unfold("PAND").`atMost`(1).`in`("Ant_0_1")
     andR
-    unfold("CutDistinct") `atMost` 1 `in` "cut"
+    unfold("CutDistinct").`atMost`(1).`in`("cut")
     orR
     exR("cut_0", le"z")
     allL("Ant_0_1", le"z")
     allL("Ant_0_1", le"(suc z)")
-    unfold("POR") `atMost` 1 `in` "Ant_0_1_0"
-    unfold("POR") `atMost` 1 `in` "Ant_0_1_1"
+    unfold("POR").`atMost`(1).`in`("Ant_0_1_0")
+    unfold("POR").`atMost`(1).`in`("Ant_0_1_1")
     andR
     trivial
     trivial
@@ -87,8 +87,8 @@ object VeryWeakPHPSeqTwoSchema extends TacticsProof {
     exR("cut_0", le"z")
     allL("Ant_0_0", le"z")
     allL("Ant_0_0", le"(suc z)")
-    unfold("POR") `atMost` 1 `in` "Ant_0_0_0"
-    unfold("POR") `atMost` 1 `in` "Ant_0_0_1"
+    unfold("POR").`atMost`(1).`in`("Ant_0_0_0")
+    unfold("POR").`atMost`(1).`in`("Ant_0_0_1")
     andR
     trivial
     trivial
@@ -108,19 +108,19 @@ object VeryWeakPHPSeqTwoSchema extends TacticsProof {
     )
   val OmegaSc = Lemma(esOmegaSc) {
     cut("cut", hof"CutDistinct(s(0),s(n))")
-    unfold("CutDistinct") `atMost` 1 `in` "cut"
-    unfold("PAND") `atMost` 1 `in` "Ant_0"
+    unfold("CutDistinct").`atMost`(1).`in`("cut")
+    unfold("PAND").`atMost`(1).`in`("Ant_0")
     andL
-    unfold("PAND") `atMost` 1 `in` "Ant_0_1"
+    unfold("PAND").`atMost`(1).`in`("Ant_0_1")
     andR
-    unfold("CutDistinct") `atMost` 1 `in` "cut"
+    unfold("CutDistinct").`atMost`(1).`in`("cut")
     orR
     allR("cut_1", fov"a")
     exR("cut_0", le"a")
     allL("Ant_0_1", le"a")
     allL("Ant_0_1", le"(suc a)")
-    unfold("POR") `atMost` 1 `in` "Ant_0_1_0"
-    unfold("POR") `atMost` 1 `in` "Ant_0_1_1"
+    unfold("POR").`atMost`(1).`in`("Ant_0_1_0")
+    unfold("POR").`atMost`(1).`in`("Ant_0_1_1")
     orL("Ant_0_1_0")
     orL
     andR
@@ -134,8 +134,8 @@ object VeryWeakPHPSeqTwoSchema extends TacticsProof {
     exR("cut_0", le"a")
     allL("Ant_0_0", le"a")
     allL("Ant_0_0", le"(suc a)")
-    unfold("POR") `atMost` 1 `in` "Ant_0_0_0"
-    unfold("POR") `atMost` 1 `in` "Ant_0_0_1"
+    unfold("POR").`atMost`(1).`in`("Ant_0_0_0")
+    unfold("POR").`atMost`(1).`in`("Ant_0_0_1")
     orL("Ant_0_0_0")
     orL
     andR
@@ -156,16 +156,16 @@ object VeryWeakPHPSeqTwoSchema extends TacticsProof {
       Seq("Suc_0" -> hof"?x (E(f(s(s(0)),x), f(s(s(0)),suc(x))) )")
     )
   val phiBc3 = Lemma(esPhiBc3) {
-    unfold("CutDistinct") `atMost` 1 `in` "Ant_0"
+    unfold("CutDistinct").`atMost`(1).`in`("Ant_0")
     andL
     orL
     exL(fov"a")
     andL
     allL(fov"a")
-    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_0"
+    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_0")
     orL
     allL(le"(suc a)")
-    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_1"
+    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_1")
     orL
     cut("cut2", hof"E(0, f((s (s 0)),a))")
     ref("TransitivityE")
@@ -175,8 +175,8 @@ object VeryWeakPHPSeqTwoSchema extends TacticsProof {
     ref("NumericTransitivity")
     cut("cut2", hof"E(0, f((s (s 0)),a))")
     ref("TransitivityE")
-    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_1"
-    unfold("CutDistinct") `atMost` 1 `in` "Ant_0_0"
+    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_1")
+    unfold("CutDistinct").`atMost`(1).`in`("Ant_0_0")
     orL
     exL(fov"b")
     andL
@@ -186,21 +186,21 @@ object VeryWeakPHPSeqTwoSchema extends TacticsProof {
     ref("NumericTransitivity")
     allL("Ant_0_0", fov"a")
     ref("minimalElement")
-    unfold("CutDistinct") `atMost` 1 `in` "Ant_0_0"
+    unfold("CutDistinct").`atMost`(1).`in`("Ant_0_0")
     orL
     exL(fov"b")
     andL
-    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_0"
+    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_0")
     cut("cut1", hof"E(0, f((s (s 0)),a))")
     ref("StrongTransitivityE0")
     allL("Ant_1", le"(suc a)")
-    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_1"
+    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_1")
     orL
     cut("cut1", hof"E(0, f((s (s 0)),(suc a)))")
     ref("TransitivityE")
     exR(fov"a")
     ref("NumericTransitivity")
-    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_1"
+    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_1")
     cut("cut1", hof" E(0, f((s (s 0)),(suc a)))")
     ref("StrongTransitivityE0")
     exR(fov"a")
@@ -222,12 +222,12 @@ object VeryWeakPHPSeqTwoSchema extends TacticsProof {
     )
   val phiSc = Lemma(esPhiSc) {
     cut("cut", hof"CutDistinct(s(0),n)")
-    unfold("CutDistinct") `atMost` 1 `in` "Ant_0"
-    unfold("CutDistinct") `atMost` 1 `in` "cut"
+    unfold("CutDistinct").`atMost`(1).`in`("Ant_0")
+    unfold("CutDistinct").`atMost`(1).`in`("cut")
     andL
     andR
-    unfold("CutDistinct") `atMost` 1 `in` "Ant_0_0"
-    unfold("CutDistinct") `atMost` 1 `in` "cut"
+    unfold("CutDistinct").`atMost`(1).`in`("Ant_0_0")
+    unfold("CutDistinct").`atMost`(1).`in`("cut")
     orR
     allR(fov"a")
     orL("Ant_0_0")
@@ -239,8 +239,8 @@ object VeryWeakPHPSeqTwoSchema extends TacticsProof {
     andL("Ant_0_1")
     allL("Ant_1", fov"b")
     allL("Ant_1", le"(suc b)")
-    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_0"
-    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_1"
+    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_0")
+    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_1")
     orL("Ant_1_0")
     orL("Ant_1_1")
     cut("cut1", hof"E(s(n), f((s (s 0)),b))")
@@ -248,21 +248,21 @@ object VeryWeakPHPSeqTwoSchema extends TacticsProof {
     cut("cut1", hof"E(s(n), f((s (s 0)),(suc b)))")
     ref("StrongTransitivityE1")
     ref("NumericTransitivity")
-    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_1"
+    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_1")
     cut("cut1", hof"E(s(n), f((s (s 0)),b))")
     ref("StrongTransitivityE1")
     cut("cut2", hof"E(s(n), f((s (s 0)),(suc b)))")
     ref("TransitivityE")
     ref("NumericTransitivity")
     orL
-    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_0"
+    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_0")
     cut("cut1", hof"E(s(n), f((s (s 0)),b))")
     ref("TransitivityE")
     cut("cut2", hof"E(s(n), f((s (s 0)),(suc b)))")
     ref("StrongTransitivityE1")
     ref("NumericTransitivity")
-    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_0"
-    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_1"
+    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_0")
+    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_1")
     cut("cut1", hof"E(s(n), f((s (s 0)),b))")
     ref("TransitivityE")
     cut("cut2", hof"E(s(n), f((s (s 0)),(suc b)))")
@@ -280,7 +280,7 @@ object VeryWeakPHPSeqTwoSchema extends TacticsProof {
     ref("ordcon")
     allL("Ant_0_0", le"(suc a)")
     ref("ordcon2")
-    unfold("CutDistinct") `atMost` 1 `in` "Ant_0_0"
+    unfold("CutDistinct").`atMost`(1).`in`("Ant_0_0")
     orR
     allR("cut_1", fov"a")
     exR("cut_0", fov"a")
@@ -293,31 +293,31 @@ object VeryWeakPHPSeqTwoSchema extends TacticsProof {
     exR("Suc_0", fov"d")
     allL("Ant_1", fov"d")
     allL("Ant_1", le"(suc d)")
-    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_0"
+    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_0")
     orL
-    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_1"
+    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_1")
     orL
     cut("cut1", hof"E(s(n), f((s (s 0)),d))")
     ref("StrongTransitivityE1")
     cut("cut1", hof"E(s(n), f((s (s 0)),(suc d)))")
     ref("StrongTransitivityE1")
     ref("NumericTransitivity")
-    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_1"
+    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_1")
     cut("cut1", hof"E(s(n), f((s (s 0)),d))")
     ref("StrongTransitivityE1")
     cut("cut2", hof"E(s(n), f((s (s 0)),(suc d)))")
     ref("TransitivityE")
     ref("NumericTransitivity")
-    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_1"
+    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_1")
     orL
-    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_0"
+    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_0")
     cut("cut1", hof"E(s(n), f((s (s 0)),d))")
     ref("TransitivityE")
     cut("cut2", hof"E(s(n), f((s (s 0)),(suc d)))")
     ref("StrongTransitivityE1")
     ref("NumericTransitivity")
-    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_0"
-    unfold("TopFuncDef") `atMost` 1 `in` "Ant_1_1"
+    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_0")
+    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_1")
     cut("cut1", hof"E(s(n), f((s (s 0)),d))")
     ref("TransitivityE")
     cut("cut2", hof"E(s(n), f((s (s 0)),(suc d)))")

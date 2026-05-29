@@ -46,7 +46,7 @@ class IProverTest extends Specification with SequentMatchers with SatMatchers {
 
     "treat variables in sequents as constants" in {
       val seq = hof"P(x)" +: Sequent() :+ hof"P(c)"
-      IProver getExpansionProof seq must beNone
+      IProver.getExpansionProof(seq) must beNone
     }
 
     "handle weird sequents" in {

@@ -27,7 +27,7 @@ object desugarDistinctExpressions extends TipSmtProblemTransformation {
 class DesugarDistinctExpression(problem: TipSmtProblem) {
 
   def apply(): TipSmtProblem = {
-    problem.copy(definitions = problem.definitions map {
+    problem.copy(definitions = problem.definitions.map {
       case d @ TipSmtFunctionDefinition(_, _, _, _, _) =>
         apply(d)
       case d @ TipSmtMutualRecursiveFunctionDefinition(_) =>
@@ -48,13 +48,13 @@ class DesugarDistinctExpression(problem: TipSmtProblem) {
   ): TipSmtExpression = {
     expression match {
       case e @ TipSmtAnd(_) =>
-        e.copy(exprs = e.exprs map { desugarDistinctConstruct })
+        e.copy(exprs = e.exprs.map { desugarDistinctConstruct })
       case e @ TipSmtOr(_) =>
-        e.copy(exprs = e.exprs map { desugarDistinctConstruct })
+        e.copy(exprs = e.exprs.map { desugarDistinctConstruct })
       case e @ TipSmtImp(_) =>
-        e.copy(exprs = e.exprs map { desugarDistinctConstruct })
+        e.copy(exprs = e.exprs.map { desugarDistinctConstruct })
       case e @ TipSmtEq(_) =>
-        e.copy(exprs = e.exprs map { desugarDistinctConstruct })
+        e.copy(exprs = e.exprs.map { desugarDistinctConstruct })
       case e @ TipSmtForall(_, _) =>
         e.copy(formula = desugarDistinctConstruct(e.formula))
       case e @ TipSmtExists(_, _) =>
@@ -74,7 +74,7 @@ class DesugarDistinctExpression(problem: TipSmtProblem) {
       case e @ TipSmtMatch(_, _) =>
         e.copy(
           expr = desugarDistinctConstruct(e.expr),
-          cases = e.cases map { desugarDistinctConstruct }
+          cases = e.cases.map { desugarDistinctConstruct }
         )
       case e => e
     }
@@ -84,7 +84,7 @@ class DesugarDistinctExpression(problem: TipSmtProblem) {
       expression: TipSmtDistinct
   ): TipSmtExpression = {
     val newExpressions = expression.expressions.map { desugarDistinctConstruct }
-    TipSmtAnd(pairAll(newExpressions) map {
+    TipSmtAnd(pairAll(newExpressions).map {
       case (l, r) => TipSmtNot(TipSmtEq(Seq(l, r)))
     })
   }

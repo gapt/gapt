@@ -59,21 +59,21 @@ class GrammarFindingTest extends Specification with SatMatchers {
 
   "normalForms" should {
     "find strong normal forms" in {
-      val nfs = stableTerms(Seq("f(c)", "f(d)") map parseTerm, Seq(FOLVar("x")))
-      nfs must beEqualTo(Set("f(c)", "f(d)", "f(x)", "x") map parseTerm)
+      val nfs = stableTerms(Seq("f(c)", "f(d)").map(parseTerm), Seq(FOLVar("x")))
+      nfs must beEqualTo(Set("f(c)", "f(d)", "f(x)", "x").map(parseTerm))
     }
     "not find half-weak normal forms" in {
-      val nfs = stableTerms(Seq("r(c,f(c))", "r(d,f(d))") map parseTerm, Seq(FOLVar("x")))
-      nfs must beEqualTo(Set("x", "r(x,f(x))", "r(c,f(c))", "r(d,f(d))") map parseTerm)
+      val nfs = stableTerms(Seq("r(c,f(c))", "r(d,f(d))").map(parseTerm), Seq(FOLVar("x")))
+      nfs must beEqualTo(Set("x", "r(x,f(x))", "r(c,f(c))", "r(d,f(d))").map(parseTerm))
     }
     "not introduce equations between non-terminals" in {
-      val nfs = stableTerms(Seq("f(c,c)", "f(d,d)") map parseTerm, Seq(FOLVar("x")))
-      nfs must beEqualTo(Set("f(x,x)", "f(c,c)", "f(d,d)", "x") map parseTerm)
+      val nfs = stableTerms(Seq("f(c,c)", "f(d,d)").map(parseTerm), Seq(FOLVar("x")))
+      nfs must beEqualTo(Set("f(x,x)", "f(c,c)", "f(d,d)", "x").map(parseTerm))
     }
     "not fall prey to replacements bug" in {
       val l = Seq("tuple2(0 + 0)", "tuple2(s(0) + s(0))")
       val nfs = Set("x", "tuple2(x)", "tuple2(x + x)", "tuple2(0 + 0)", "tuple2(s(0) + s(0))")
-      stableTerms(l map parseTerm, Seq(FOLVar("x"))) must beEqualTo(nfs map parseTerm)
+      stableTerms(l.map(parseTerm), Seq(FOLVar("x"))) must beEqualTo(nfs.map(parseTerm))
     }
   }
 
@@ -83,7 +83,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
         Set("y", "z", "r(y, f(y))", "r(z, f(z))").map(parseTerm)
     }
     "many-sorted stable terms" in {
-      val Seq(a, b, c, d) = Seq("A", "B", "C", "D") map { TBase(_) }
+      val Seq(a, b, c, d) = Seq("A", "B", "C", "D").map { TBase(_) }
       val r = Const("r", a ->: b ->: c)
       val f = Const("f", a ->: b)
       val x = Var("x", a)
@@ -127,7 +127,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
         Seq("y->c"),
         Seq("z->d")
       )
-      val p = List("z->d") map parseProduction unzip
+      val p = List("z->d").map(parseProduction) unzip
 
       val f = new VtratgTermGenerationFormula(g, parseTerm("r(c)"))
       And(f.formula, Neg(f.vectProductionIsIncluded(p))) must beSat
@@ -151,7 +151,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
       doesNotCover(g, "d")
     }
     "generate term if only tau-productions are allowed" in {
-      val l = Seq("f(c)", "f(d)", "g(c)", "g(d)") map parseTerm
+      val l = Seq("f(c)", "f(d)", "g(c)", "g(d)").map(parseTerm)
       val g = stableVTRATG(l toSet, Seq(1, 1, 1, 1))
       val formula = new VectGrammarMinimizationFormula(g)
       val onlyTauProd = And(g.productions.toList.filter(_._1 != g.startSymbolNT).map { p => Neg(formula.productionIsIncluded(p)) })
@@ -195,7 +195,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
   "minimizeGrammar" should {
     "remove redundant productions" in {
       val g = tg("x->c", "x->d")
-      val minG = minimizeVTRATG(g, Set("c") map parseTerm)
+      val minG = minimizeVTRATG(g, Set("c").map(parseTerm))
       minG.productions must_== Set(List(fov"x") -> List(fot"c"))
     }
   }
@@ -208,7 +208,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
         Seq("x->f(y)"),
         Seq("y->c")
       )
-      val minG = minimizeVTRATG(g, Set("f(c)") map parseTerm, weight = prod => if (prod == List(parseProduction("x->f(c)")).unzip) 3 else 1)
+      val minG = minimizeVTRATG(g, Set("f(c)").map(parseTerm), weight = prod => if (prod == List(parseProduction("x->f(c)")).unzip) 3 else 1)
       minG must_== vtg(
         Seq("x", "y"),
         Seq("x->f(y)"),
@@ -232,11 +232,11 @@ class GrammarFindingTest extends Specification with SatMatchers {
         1 -> Set("f(c)", "f(d)", "g(c,c)", "g(c,d)", "h(e,f(c))", "h(e,f(d))") -> 5
       )) {
         case ((n, l_str), sizeOfMinG) =>
-          val l = l_str map parseTerm
+          val l = l_str.map(parseTerm)
           s"for $l with $n non-terminals" in {
             val g = findMinimalVTRATG(l.toSet, (1 to n).map(_ => 1))
             g.productions.size must_== sizeOfMinG
-            (l.toSet diff g.language) must_== Set()
+            (l.toSet.diff(g.language)) must_== Set()
           }
       }
     }
@@ -248,7 +248,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
     }
 
   def tg(prods: String*) = {
-    val ps = prods map parseProduction
+    val ps = prods.map(parseProduction)
     val nts = ps.map(_._1).distinct.map(List(_))
     VTRATG(FOLVar("x"), nts, ps.map { case (l, r) => List(l) -> List(r) }.toSet)
   }
@@ -256,9 +256,9 @@ class GrammarFindingTest extends Specification with SatMatchers {
   def vtg(nts: Seq[String], prods: Seq[String]*) =
     VTRATG(
       FOLVar("x"),
-      nts map { nt => nt.split(",").map(FOLVar(_)).toList },
-      prods map { vect =>
-        vect.toList map parseProduction unzip
+      nts.map { nt => nt.split(",").map(FOLVar(_)).toList },
+      prods.map { vect =>
+        vect.toList.map(parseProduction) unzip
       } toSet
     )
 

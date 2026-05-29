@@ -166,7 +166,7 @@ class MiscTest extends Specification {
     }
 
     def lkProofFromClasspath(filename: String) =
-      Prover9Importer lkProof ClasspathInputFile(filename)
+      Prover9Importer.lkProof(ClasspathInputFile(filename))
 
     "load Prover9 proof without equality reasoning, extract expansion sequent E, verify deep formula of E using sat4j and readback E to LK" in {
       if (!Prover9.isInstalled) skipped("Prover9 is not installed")

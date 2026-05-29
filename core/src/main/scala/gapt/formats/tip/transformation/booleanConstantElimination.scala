@@ -36,7 +36,7 @@ class BooleanConstantElimination(problem: TipSmtProblem) {
    * @return A tip problem.
    */
   def apply(): TipSmtProblem = {
-    problem.copy(definitions = problem.definitions map {
+    problem.copy(definitions = problem.definitions.map {
       booleanConstantDefinitionVisitor.dispatch(_, ())
     })
   }
@@ -211,7 +211,7 @@ class BooleanConstantElimination(problem: TipSmtProblem) {
    * @return An expression without redundant boolean constants.
    */
   private def eliminateBooleanConstants(imp: TipSmtImp): TipSmtExpression = {
-    val newExpressions = imp.exprs map { eliminateBooleanConstants }
+    val newExpressions = imp.exprs.map { eliminateBooleanConstants }
     val finalExpressions =
       newExpressions.init.foldRight(Seq(newExpressions.last)) {
         case (_, Seq(TipSmtTrue)) =>

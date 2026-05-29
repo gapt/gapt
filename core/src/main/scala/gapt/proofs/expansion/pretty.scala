@@ -59,7 +59,7 @@ class ExpansionTreePrettyPrinter(sig: BabelSignature) extends ETtPrettyPrinter(s
     case ETWeakQuantifierBlock(sh, n, insts) if n > 0 =>
       val (sh_, t1) = show(sh, true, Map(), t0)
       var t2 = t1
-      val insts_ = insts.toList map {
+      val insts_ = insts.toList.map {
         case (terms, child) =>
           val (terms_, t3) = shows(terms.toList, true, Map(), t2)
           val (child_, t4) = show(child, t3)

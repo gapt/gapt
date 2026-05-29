@@ -100,7 +100,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
 
     // Instances of the original formula of the given name.
     val instances: Map[Name, List[FOLSubstitution]] =
-      children map {
+      children.map {
         case (name, lst_int) =>
           val leanClauses = lst_int.map(_.cls).toList
           // New predicates used in the def clausal translation and arity

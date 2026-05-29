@@ -23,7 +23,7 @@ case class SolutionStructure(sehs: SchematicExtendedHerbrandSequent, formulas: S
     require(freeVariables(f) subsetOf allowedVars.toSet)
   }
 
-  def endSequent = sehs.us map { _._1 }
+  def endSequent = sehs.us.map { _._1 }
 
   def cutFormulas = for ((evs, f) <- sehs.eigenVariables zip formulas) yield All.Block(evs, f)
 
@@ -31,7 +31,7 @@ case class SolutionStructure(sehs: SchematicExtendedHerbrandSequent, formulas: S
   def endSequentInstances = sehs.endSequentInstances
 
   def toExpansionProof = {
-    val nonCutPart: Sequent[ExpansionTree] = sehs.us.zipWithIndex map {
+    val nonCutPart: Sequent[ExpansionTree] = sehs.us.zipWithIndex.map {
       case ((u, insts), idx) =>
         val Some((vs, f)) = if (idx.isAnt) All.Block.unapply(u) else Ex.Block.unapply(u)
         ETWeakQuantifierBlock(u, vs.size, for (inst <- insts) yield inst -> formulaToExpansionTree(Substitution(vs zip inst)(f), idx.polarity))

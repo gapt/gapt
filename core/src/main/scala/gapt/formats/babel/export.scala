@@ -52,7 +52,7 @@ class BabelExporter(unicode: Boolean, sig: BabelSignature, omitTypes: Boolean = 
 
   def show(sequent: HOLSequent, bound: Map[String, Var], t0: Map[String, VarOrConst]): (Doc, Map[String, VarOrConst]) = {
     var t1 = t0
-    val docSequent = sequent map { formula =>
+    val docSequent = sequent.map { formula =>
       val (formulaDoc, t1_) = show(formula, true, bound, t1)
       t1 = t1_
       formulaDoc.inPrec(0)

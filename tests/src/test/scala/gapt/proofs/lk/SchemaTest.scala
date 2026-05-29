@@ -29,20 +29,20 @@ class proofes(initialContext: ImmutableContext) extends TacticsProof(initialCont
   def prove0(SCS: Map[CLS, (Struct, Set[Var])]): LKProof = {
     val es = Sequent(Seq("Ant_0" -> hof"omegaSFAF(0)"), Seq())
     Lemma(es) {
-      unfold("omegaSFAF") atMost 1 in "Ant_0"
-      unfold("chiSTAF") atMost 2 in "Ant_0"
-      unfold("phiSFAT") atMost 2 in "Ant_0"
-      unfold("chiSTAF") atMost 2 in "Ant_0"
+      unfold("omegaSFAF").atMost(1) in "Ant_0"
+      unfold("chiSTAF").atMost(2) in "Ant_0"
+      unfold("phiSFAT").atMost(2) in "Ant_0"
+      unfold("chiSTAF").atMost(2) in "Ant_0"
       escargot
     }
   }
   def prove1(SCS: Map[CLS, (Struct, Set[Var])]): LKProof = {
     val es = Sequent(Seq("Ant_0" -> hof"omegaSFAF(s(0))"), Seq())
     Lemma(es) {
-      unfold("omegaSFAF") atMost 1 in "Ant_0"
-      unfold("chiSTAF") atMost 10 in "Ant_0"
-      unfold("phiSFAT") atMost 10 in "Ant_0"
-      unfold("chiSTAF") atMost 10 in "Ant_0"
+      unfold("omegaSFAF").atMost(1) in "Ant_0"
+      unfold("chiSTAF").atMost(10) in "Ant_0"
+      unfold("phiSFAT").atMost(10) in "Ant_0"
+      unfold("chiSTAF").atMost(10) in "Ant_0"
       escargot
     }
   }
@@ -50,20 +50,20 @@ class proofes(initialContext: ImmutableContext) extends TacticsProof(initialCont
   def prove0p(SCS: Map[CLS, (Struct, Set[Var])]): LKProof = {
     val es = Sequent(Seq(), Seq("Suc_0" -> hof"omegaSFAF(0)"))
     Lemma(es) {
-      unfold("omegaSFAF") atMost 1 in "Suc_0"
-      unfold("chiSTAF") atMost 2 in "Suc_0"
-      unfold("phiSFAT") atMost 2 in "Suc_0"
-      unfold("chiSTAF") atMost 2 in "Suc_0"
+      unfold("omegaSFAF").atMost(1) in "Suc_0"
+      unfold("chiSTAF").atMost(2) in "Suc_0"
+      unfold("phiSFAT").atMost(2) in "Suc_0"
+      unfold("chiSTAF").atMost(2) in "Suc_0"
       escargot
     }
   }
   def prove1p(SCS: Map[CLS, (Struct, Set[Var])]): LKProof = {
     val es = Sequent(Seq(), Seq("Suc_0" -> hof"omegaSFAF(s(0))"))
     Lemma(es) {
-      unfold("omegaSFAF") atMost 1 in "Suc_0"
-      unfold("chiSTAF") atMost 10 in "Suc_0"
-      unfold("phiSFAT") atMost 10 in "Suc_0"
-      unfold("chiSTAF") atMost 10 in "Suc_0"
+      unfold("omegaSFAF").atMost(1) in "Suc_0"
+      unfold("chiSTAF").atMost(10) in "Suc_0"
+      unfold("phiSFAT").atMost(10) in "Suc_0"
+      unfold("chiSTAF").atMost(10) in "Suc_0"
       escargot
     }
   }

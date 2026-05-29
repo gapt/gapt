@@ -115,7 +115,7 @@ object findDerivationViaResolution {
     val groundingSubst = grounding
     val negatedClausesA = a.map(groundingSubst(_)).map(_.asInstanceOf[Atom]).map(Clause() :+ _, _ +: Clause()).elements
 
-    prover.getResolutionProof(bs ++ negatedClausesA) map { refutation =>
+    prover.getResolutionProof(bs ++ negatedClausesA).map { refutation =>
       val tautologified = tautologifyInitialUnitClauses(eliminateSplitting(refutation), negatedClausesA.toSet)
 
       val toUnusedVars = rename(grounding.domain, containedNames(tautologified))

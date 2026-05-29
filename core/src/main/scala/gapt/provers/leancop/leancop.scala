@@ -86,7 +86,7 @@ class LeanCoP extends OneShotProver with ExternalProgram {
   }
 
   override def getLKProof(seq: HOLSequent)(implicit ctx: Maybe[MutableContext]): Option[LKProof] =
-    getExpansionProof(seq) map { ExpansionProofToLK(_).get }
+    getExpansionProof(seq).map { ExpansionProofToLK(_).get }
 
   override val isInstalled: Boolean =
     try runProcess.withExitValue(Seq("leancop"))._1 == 2

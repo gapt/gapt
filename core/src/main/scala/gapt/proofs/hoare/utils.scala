@@ -42,7 +42,7 @@ object substVariables {
   def apply(t: FOLFormula, f: FOLVar => FOLTerm): FOLFormula = makeSubstitution(t, f)(t)
 
   private def makeSubstitution(t: FOLExpression, f: FOLVar => FOLTerm) =
-    FOLSubstitution(freeVariables(t).toList map ((x: FOLVar) => x -> f(x)))
+    FOLSubstitution(freeVariables(t).toList.map((x: FOLVar) => x -> f(x)))
 }
 
 object LoopFree {

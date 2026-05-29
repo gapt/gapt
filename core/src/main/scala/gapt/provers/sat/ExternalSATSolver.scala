@@ -21,14 +21,14 @@ class ExternalSATSolver(val command: String*) extends SATSolver with ExternalPro
     }
 
   override def solve(cnf: DIMACS.CNF): Option[DIMACS.Model] =
-    runProgram(writeDIMACS(cnf)) map { readDIMACS(_) }
+    runProgram(writeDIMACS(cnf)).map { readDIMACS(_) }
 
   override val isInstalled: Boolean =
     try solve(Top()).isDefined
     catch { case _: IOException => false }
 
   override def toString: String = {
-    val commandString: String = command map { c => "\"" + c + "\"" } mkString ", "
+    val commandString: String = command.map { c => "\"" + c + "\"" } mkString ", "
     s"ExternalSATSolver($commandString)"
   }
 }

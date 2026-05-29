@@ -152,11 +152,11 @@ abstract class AnalysisWithCeresOmega {
     /* map types to first order*/
     val fol_css = abs_css.map { s => s.map { reduceHolToFol(_) } }
     /* converting to clause form, this is cleaner than casting */
-    val fol_ccs = fol_css map {
+    val fol_ccs = fol_css.map {
       case Sequent(ant, succ) =>
         HOLClause(
-          ant map { case atom @ FOLAtom(_, _) => atom },
-          succ map { case atom @ FOLAtom(_, _) => atom }
+          ant.map { case atom @ FOLAtom(_, _) => atom },
+          succ.map { case atom @ FOLAtom(_, _) => atom }
         )
     }
     (abs_consts, fol_ccs)
@@ -231,7 +231,7 @@ abstract class AnalysisWithCeresOmega {
    * The proof of the deep formula of the [[expansion_proof]].
    */
   lazy val reproved_deep = renameConstantsToFi.wrap(expansion_proof_fol_deep) { (_, mangled: Formula) =>
-    EProver `getResolutionProof` mangled match {
+    EProver.`getResolutionProof`(mangled) match {
       case None    => throw new Exception("Could not reprove deep formula!")
       case Some(p) => p
     }

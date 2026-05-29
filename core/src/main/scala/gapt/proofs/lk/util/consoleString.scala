@@ -48,7 +48,7 @@ object consoleString {
   }
 
   private def sequentToString(sequent: HOLSequent, highlightedFormulas: Seq[SequentIndex]): String = {
-    val stringSequent = sequent map { _.toString() }
+    val stringSequent = sequent.map { _.toString() }
     highlightedFormulas.foldLeft(stringSequent) { (acc, i) =>
       val currentString = acc(i)
       val newString = "[" + currentString + "]"

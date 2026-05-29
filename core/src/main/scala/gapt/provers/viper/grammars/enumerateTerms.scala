@@ -51,7 +51,7 @@ object enumerateTerms {
     ts.flatMap(t =>
       ctx.getConstructors(t) match {
         case Some(ctrs) =>
-          ctrs ++ (ctrs.map(_.ty).flatMap(baseTypes(_)).toSet[Ty] diff ts.toSet).map(Var("x", _))
+          ctrs ++ (ctrs.map(_.ty).flatMap(baseTypes(_)).toSet[Ty].diff(ts.toSet)).map(Var("x", _))
         case None =>
           Seq(Var("x", t))
       }
@@ -72,7 +72,7 @@ object enumerateTerms {
     val nonConstantCtrs = syms.filter(sym => sym.isInstanceOf[Const] && !sym.ty.isInstanceOf[TBase])
 
     val terms = mutable.Set[Expr]()
-    terms ++= (syms diff nonConstantCtrs)
+    terms ++= (syms.diff(nonConstantCtrs))
 
     def take(tys: Seq[Ty]): Seq[Seq[Expr]] =
       tys.toList.traverse(t => terms.filter(_.ty == t).toList)

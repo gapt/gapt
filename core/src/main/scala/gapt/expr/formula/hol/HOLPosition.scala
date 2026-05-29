@@ -25,10 +25,10 @@ object HOLPosition {
    * @return Positions of subexpressions satisfying pred.
    */
   def getPositions(exp: Expr, pred: Expr => Boolean = _ => true): List[HOLPosition] = {
-    LambdaPosition.filterPositions {
+    (LambdaPosition.filterPositions {
       case e: Expr => pred(e)
       case null    => false
-    }(exp) filter { definesHOLPosition(exp) } map { toHOLPosition(exp) }
+    }(exp) filter { definesHOLPosition(exp) }).map { toHOLPosition(exp) }
   }
 
   /**
@@ -58,7 +58,7 @@ object HOLPosition {
    * @param exp2 The second expression.
    * @return The list of outermost positions at which exp1 and exp2 differ.
    */
-  def differingPositions(exp1: Expr, exp2: Expr): List[HOLPosition] = LambdaPosition.differingPositions(exp1, exp2) map { toHOLPosition(exp1) }
+  def differingPositions(exp1: Expr, exp2: Expr): List[HOLPosition] = LambdaPosition.differingPositions(exp1, exp2).map { toHOLPosition(exp1) }
 
   /**
    * Converts a HOLPosition into the corresponding LambdaPosition.

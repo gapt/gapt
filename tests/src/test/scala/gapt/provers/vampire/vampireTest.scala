@@ -26,7 +26,7 @@ class VampireTest extends Specification with SequentMatchers with SatMatchers {
       val p = FOLAtom("P", Nil)
       val s1 = HOLSequent(Nil, p :: Nil)
       val s2 = HOLSequent(p :: Nil, Nil)
-      Vampire getResolutionProof (s1 :: s2 :: Nil) must beSome
+      Vampire.getResolutionProof(s1 :: s2 :: Nil) must beSome
     }
   }
 
@@ -58,7 +58,7 @@ class VampireTest extends Specification with SequentMatchers with SatMatchers {
       val s2 = HOLSequent(Nil, List(k))
       val s3 = HOLSequent(Nil, List(s))
       val t1 = HOLSequent(List(skk_i), Nil)
-      Vampire getResolutionProof List(s1, s2, s3, t1) must beSome
+      Vampire.getResolutionProof(List(s1, s2, s3, t1)) must beSome
     }
   }
 
@@ -66,7 +66,7 @@ class VampireTest extends Specification with SequentMatchers with SatMatchers {
     "not refute { :- P; Q :- }" in {
       val s1 = HOLSequent(Nil, List(FOLAtom("P", Nil)))
       val t1 = HOLSequent(List(FOLAtom("Q", Nil)), Nil)
-      Vampire getResolutionProof List(s1, t1) must beNone
+      Vampire.getResolutionProof(List(s1, t1)) must beNone
     }
   }
 
@@ -114,15 +114,15 @@ class VampireTest extends Specification with SequentMatchers with SatMatchers {
       Vampire.getResolutionProof(cnf) must beSome
     }
 
-    "large cnf" in { Vampire getResolutionProof CountingEquivalence(2) must beSome }
+    "large cnf" in { Vampire.getResolutionProof(CountingEquivalence(2)) must beSome }
 
     "smt splitting" in {
       val smtVampire = new Vampire(extraArgs = Seq("-sas", "z3"))
       if (!smtVampire.isInstalled) skipped
-      smtVampire getExpansionProof hof"""
+      smtVampire.getExpansionProof(hof"""
           a=b | b=c | c=d | !x f x = g x ->
             f a = f b | f b = f c | f c = f d | f a = g a
-        """ must beLike {
+        """) must beLike {
         case Some(proof) => proof.deep must beEValidSequent
       }
     }

@@ -43,16 +43,25 @@ object MonoidCancellation extends TacticsProof {
     val plus_cancel = mkAux(hof"a = c -> b = d -> a * b = c * d")
 
     Tactic {
-      include("plus_unit_p", plus_unit_p) `andThen`
-        include("plus_assoc_p1", plus_assoc_p1) `andThen`
-        include("plus_assoc_p2", plus_assoc_p2) `andThen`
-        include("plus_comm_p", plus_comm_p) `andThen`
-        include("plus_unit_c", plus_unit_c) `andThen`
-        include("plus_assoc_c1", plus_assoc_c1) `andThen`
-        include("plus_assoc_c2", plus_assoc_c2) `andThen`
-        include("plus_comm_c", plus_comm_c) `andThen`
-        include("plus_cancel", plus_cancel) `andThen`
+      include("plus_unit_p", plus_unit_p).`andThen`(
+        include("plus_assoc_p1", plus_assoc_p1)
+      ).`andThen`(
+        include("plus_assoc_p2", plus_assoc_p2)
+      ).`andThen`(
+        include("plus_comm_p", plus_comm_p)
+      ).`andThen`(
+        include("plus_unit_c", plus_unit_c)
+      ).`andThen`(
+        include("plus_assoc_c1", plus_assoc_c1)
+      ).`andThen`(
+        include("plus_assoc_c2", plus_assoc_c2)
+      ).`andThen`(
+        include("plus_comm_c", plus_comm_c)
+      ).`andThen`(
+        include("plus_cancel", plus_cancel)
+      ).`andThen`(
         skip
+      )
     }
   }
 
@@ -75,8 +84,9 @@ object MonoidCancellation extends TacticsProof {
   }
 
   val solve: Tactic[Unit] = Tactic {
-    setup `andThen`
+    setup.`andThen`(
       repeat(refl `orElse` cancel)
+    )
   }
 
   Proof(hols":- a*(b*c) = (b*a)*c") { solve }

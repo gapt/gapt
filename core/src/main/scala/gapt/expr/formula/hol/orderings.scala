@@ -9,7 +9,7 @@ import gapt.expr.ty.{TArr, TBase, Ty}
 object HOLOrdering extends HOLOrdering
 class HOLOrdering extends Ordering[Expr] {
   override def compare(x: Expr, y: Expr): Int = (x, y) match {
-    case (x, y) if x `syntaxEquals` y => 0
+    case (x, y) if x.`syntaxEquals`(y) => 0
     case (Var(s1, t1), Var(s2, t2)) =>
       s1.toString() compare s2.toString() match {
         case 0 => TAOrdering.compare(t1, t2)

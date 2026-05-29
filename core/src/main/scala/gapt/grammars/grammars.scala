@@ -14,20 +14,20 @@ private class VtratgExporter(unicode: Boolean, vtratg: VTRATG)
 
   def `export`(): String = {
     val ntDecl = group("Non-terminal vectors:" <> nest(line <> csep(
-      vtratg.nonTerminals.toList map { nt =>
-        "(" <> wordwrap(nt map { show(_, false, Map(), Map())._1.inPrec(0) }, ",") <> ")"
+      vtratg.nonTerminals.toList.map { nt =>
+        "(" <> wordwrap(nt.map { show(_, false, Map(), Map())._1.inPrec(0) }, ",") <> ")"
       }
     )))
 
     val tDecl = group("Terminals:" <> nest(line <> csep(
-      vtratg.terminals.toList.sortBy { _.name } map { show(_, false, Map(), Map())._1.inPrec(0) }
+      vtratg.terminals.toList.sortBy { _.name }.map { show(_, false, Map(), Map())._1.inPrec(0) }
     )))
 
     val knownTypes = vtratg.terminals.map { c => c.name -> c }.toMap
 
-    val prods = stack(vtratg.productions.toList
-      sortBy { case (as, ts) => (vtratg.nonTerminals.indexOf(as), ts.toString) }
-      map {
+    val prods = stack((vtratg.productions.toList
+      sortBy { case (as, ts) => (vtratg.nonTerminals.indexOf(as), ts.toString) })
+      .map {
         case (nonTerminals, expressions) =>
           group(csep(nonTerminals.lazyZip(expressions).map((a, t) =>
             group(show(a, false, Map(), knownTypes)._1.inPrec(Precedence.impl) </> nest("→" </>
@@ -53,7 +53,7 @@ case class VTRATG(startSymbol: Var, nonTerminals: Seq[VTRATG.NonTerminalVect], p
   def startSymbolNT: NonTerminalVect = List(startSymbol)
 
   def productions(nonTerminalVect: NonTerminalVect): Set[Production] = productions filter (_._1 == nonTerminalVect)
-  def rightHandSides(nonTerminal: NonTerminalVect) = productions(nonTerminal) map (_._2)
+  def rightHandSides(nonTerminal: NonTerminalVect) = productions(nonTerminal).map(_._2)
 
   def terminals: Set[Const] = productions flatMap { p => constants.nonLogical(p._2) }
 

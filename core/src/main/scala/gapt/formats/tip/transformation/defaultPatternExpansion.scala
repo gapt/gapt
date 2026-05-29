@@ -49,7 +49,7 @@ class TipSmtDefaultPatternExpansion(problem: TipSmtProblem) {
    * place in the input problem.
    */
   def apply(): TipSmtProblem = {
-    problem.copy(definitions = problem.definitions map {
+    problem.copy(definitions = problem.definitions.map {
       _ match {
         case fun @ TipSmtFunctionDefinition(_, _, _, _, _) =>
           apply(fun)
@@ -71,7 +71,7 @@ class TipSmtDefaultPatternExpansion(problem: TipSmtProblem) {
   private def apply(
       fun: TipSmtFunctionDefinition
   ): TipSmtFunctionDefinition = {
-    val context = fun.parameters map {
+    val context = fun.parameters.map {
       _.name
     }
     fun.copy(body = expandDefaultPatterns(fun.body, context))
@@ -189,7 +189,7 @@ class TipSmtDefaultPatternExpansion(problem: TipSmtProblem) {
       expr: TipSmtOr,
       visibleVariables: Seq[String]
   ): TipSmtExpression = {
-    expr.copy(expr.exprs map {
+    expr.copy(expr.exprs.map {
       expandDefaultPatterns(_, visibleVariables)
     })
   }
@@ -198,7 +198,7 @@ class TipSmtDefaultPatternExpansion(problem: TipSmtProblem) {
       expr: TipSmtAnd,
       visibleVariables: Seq[String]
   ): TipSmtExpression = {
-    expr.copy(expr.exprs map {
+    expr.copy(expr.exprs.map {
       expandDefaultPatterns(_, visibleVariables)
     })
   }
@@ -207,7 +207,7 @@ class TipSmtDefaultPatternExpansion(problem: TipSmtProblem) {
       expr: TipSmtImp,
       visibleVariables: Seq[String]
   ): TipSmtExpression = {
-    expr.copy(expr.exprs map {
+    expr.copy(expr.exprs.map {
       expandDefaultPatterns(_, visibleVariables)
     })
   }
@@ -216,7 +216,7 @@ class TipSmtDefaultPatternExpansion(problem: TipSmtProblem) {
       expr: TipSmtFun,
       visibleVariables: Seq[String]
   ): TipSmtExpression = {
-    expr.copy(arguments = expr.arguments map {
+    expr.copy(arguments = expr.arguments.map {
       expandDefaultPatterns(_, visibleVariables)
     })
   }
@@ -283,7 +283,7 @@ class TipSmtDefaultPatternExpansion(problem: TipSmtProblem) {
       case TipSmtCase(TipSmtDefault, _) => true
       case _                            => false
     }.head.expr
-    val generatedCases = missingConstructors map {
+    val generatedCases = missingConstructors.map {
       generateCase(_, visibleVariables, defaultExpr)
     }
     val oldCases = tipSmtMatch.cases filter { _.pattern != TipSmtDefault }
@@ -330,11 +330,11 @@ class TipSmtDefaultPatternExpansion(problem: TipSmtProblem) {
   private def coveredConstrs(
       cases: Seq[TipSmtCase]
   ): Seq[String] = {
-    cases map { _.pattern } filter {
+    (cases.map { _.pattern } filter {
       case TipSmtDefault => false
       case TipSmtConstructorPattern(constructor, _) =>
         problem.symbolTable.get.contains(constructor.name)
-    } map {
+    }).map {
       case TipSmtConstructorPattern(constructor, _) =>
         constructor.name
       case _ => throw new IllegalStateException()

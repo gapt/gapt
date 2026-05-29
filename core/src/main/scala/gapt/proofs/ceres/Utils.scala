@@ -99,7 +99,7 @@ object Pickrule {
    */
   def pickrule(p: LKProof, old_parents: Seq[LKProof], new_parents: Seq[LKProof], old_aux: List[SequentIndex]): List[SequentIndex] = {
     // debug("Pick for rule: "+p.name)
-    val s = new_parents map (_.endSequent.zipWithIndex)
+    val s = new_parents.map(_.endSequent.zipWithIndex)
     p match {
       // Unary rules
       case _: WeakeningLeftRule =>

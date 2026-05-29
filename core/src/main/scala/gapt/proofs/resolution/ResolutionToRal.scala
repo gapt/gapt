@@ -34,7 +34,7 @@ abstract class ResolutionToRal {
   def convert_context(con: Abs): Abs
 
   def apply(p: ResolutionProof): ResolutionProof = p match {
-    case Input(cls)         => Input(cls `map` convert_formula)
+    case Input(cls)         => Input(cls.`map`(convert_formula))
     case Taut(f)            => Taut(convert_formula(f))
     case Refl(t)            => convert_formula(t === t) match { case Eq(t_, _) => Refl(t_) }
     case Factor(p1, i1, i2) => Factor(apply(p1), i1, i2)

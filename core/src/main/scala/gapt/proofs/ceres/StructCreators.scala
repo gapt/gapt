@@ -56,7 +56,7 @@ object StructCreators {
   }
 
   def toFormula(s: Struct): Formula =
-    And(CharacteristicClauseSet(s).toSeq map (_.toDisjunction))
+    And(CharacteristicClauseSet(s).toSeq.map(_.toDisjunction))
 
   def extract(p: LKProof)(implicit ctx: Context): Struct =
     extract(p, p.endSequent.map(_ => false))(using _ => true, ctx)

@@ -244,7 +244,7 @@ class TreeGrammarProver(val ctx: Context, val sequent: HOLSequent, val options: 
       info(s"Checking validity for instance ${inst.toSigRelativeString}: $ok")
       ok
     }.headOption
-    failedInstOption map { failedInst =>
+    failedInstOption.map { failedInst =>
       val minimalCounterExample = (
         flatSubterms(failedInst).filter(_.ty == indTy).toList.filterNot(checkInst)
           :+ failedInst
@@ -273,7 +273,7 @@ class TreeGrammarProver(val ctx: Context, val sequent: HOLSequent, val options: 
           info(s"Canonical solution at ${xInst.toSigRelativeString}:")
           val canSol = hSolveQBUP.canonicalSolution(qbupMatrix, xInst)
           for (cls <- CNFp(canSol))
-            info(cls map { _.toSigRelativeString })
+            info(cls.map { _.toSigRelativeString })
 
           hSolveQBUP(qbupMatrix, xInst, smtSolver, options.equationalTheory).getOrElse {
             metric("bup_solve_failed", true)

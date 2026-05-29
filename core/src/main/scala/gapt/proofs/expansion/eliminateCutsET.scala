@@ -101,10 +101,10 @@ object eliminateCutsET {
         generatedUpperSetInPO(child.term.eigenVariables ++ eigenVariables, dependencyRelation) -- eigenVariables
       val nameGen = rename.awayFrom(freeVars)
       val renamings = for (_ <- 0 until instances.size)
-        yield Substitution(eigenVarsToRename map { ev => ev -> nameGen.fresh(ev) })
+        yield Substitution(eigenVarsToRename.map { ev => ev -> nameGen.fresh(ev) })
       val substs =
         for ((renaming, (term, instance)) <- renamings zip instances)
-          yield Substitution(eigenVariables zip term) `compose` renaming
+          yield Substitution(eigenVariables zip term).`compose`(renaming)
 
       val matchingSubstOption = substs.find(s =>
         (substs zip instances.values).forall(inst =>

@@ -86,13 +86,13 @@ object prop_33 extends TacticsProof {
     allR; induction(hov"x:Nat")
     // - IB
     decompose
-    rewrite `ltr` "ap1" `in` "goal"
-    rewrite `ltr` "pzn" `in` "goal"; refl
+    rewrite.`ltr`("ap1").`in`("goal")
+    rewrite.`ltr`("pzn").`in`("goal"); refl
     // - IS
     decompose
-    rewrite `ltr` "ap2" `in` "goal"
-    rewrite `ltr` "IHx_0" `in` "goal"
-    rewrite `ltr` "prs" `in` "goal"; refl
+    rewrite.`ltr`("ap2").`in`("goal")
+    rewrite.`ltr`("IHx_0").`in`("goal")
+    rewrite.`ltr`("prs").`in`("goal"); refl
   }
 
   val plus_assoc_goal = hof"!x !y !z plus(plus(x,y),z) = plus(x,plus(y,z))"
@@ -113,11 +113,11 @@ object prop_33 extends TacticsProof {
   val mult_dist_law_1_proof = Lemma(mult_dist_law_1) {
     allR; induction(hov"x:Nat")
     decompose
-    rewrite.many `ltr` "am1" `in` "goal"
-    rewrite.many `ltr` "ap1" `in` "goal"; refl
+    rewrite.many.`ltr`("am1").`in`("goal")
+    rewrite.many.`ltr`("ap1").`in`("goal"); refl
     // - IS
     decompose
-    rewrite.many `ltr` "am2" `in` "goal"
+    rewrite.many.`ltr`("am2").`in`("goal")
     escargot
   }
 
@@ -130,16 +130,16 @@ object prop_33 extends TacticsProof {
     allR; induction(hov"x:Nat")
     // - IB
     decompose
-    rewrite.many `ltr` "am1" `in` "goal"
-    rewrite.many `ltr` "ap1" `in` "goal"
+    rewrite.many.`ltr`("am1").`in`("goal")
+    rewrite.many.`ltr`("ap1").`in`("goal")
     refl
     // - IS
     decompose
-    rewrite.many `ltr` "am2" `in` "goal"
-    rewrite.many `ltr` "ap2" `in` "goal"
-    rewrite.many `ltr` "plus_assoc" `in` "goal"
-    rewrite.many `rtl` "IHx_0" `in` "goal"
-    rewrite.many `ltr` "am2" `in` "goal"
+    rewrite.many.`ltr`("am2").`in`("goal")
+    rewrite.many.`ltr`("ap2").`in`("goal")
+    rewrite.many.`ltr`("plus_assoc").`in`("goal")
+    rewrite.many.`rtl`("IHx_0").`in`("goal")
+    rewrite.many.`ltr`("am2").`in`("goal")
     refl
   }
 
@@ -160,16 +160,16 @@ object prop_33 extends TacticsProof {
     allR; induction(hov"x:Nat")
     // - IB
     decompose
-    rewrite `ltr` "am1" `in` "goal"
+    rewrite.`ltr`("am1").`in`("goal")
     escargot
     // - IS
     decompose
-    rewrite `ltr` "am2" `in` "goal"
-    rewrite `ltr` "IHx_0" `in` "goal"
-    allL("m1i", le"y:Nat"); rewrite `rtl` "m1i_0" `in` "goal"
-    rewrite `rtl` "md1" `in` "goal"
-    rewrite `ltr` "ap2" `in` "goal"
-    rewrite `ltr` "ap1" `in` "goal"; refl
+    rewrite.`ltr`("am2").`in`("goal")
+    rewrite.`ltr`("IHx_0").`in`("goal")
+    allL("m1i", le"y:Nat"); rewrite.`rtl`("m1i_0").`in`("goal")
+    rewrite.`rtl`("md1").`in`("goal")
+    rewrite.`ltr`("ap2").`in`("goal")
+    rewrite.`ltr`("ap1").`in`("goal"); refl
   }
 
   val lemma_23_goal = hof"!x !y !z mult(x,mult(y,z)) = mult(mult(x,y),z)"
@@ -181,9 +181,9 @@ object prop_33 extends TacticsProof {
     allR; induction(hov"x:Nat")
     escargot
     allR; allR
-    rewrite.many `ltr` "am2" `in` "goal"
-    rewrite `ltr` "IHx_0" `in` "goal"
-    rewrite `ltr` "dl2" `in` "goal"
+    rewrite.many.`ltr`("am2").`in`("goal")
+    rewrite.`ltr`("IHx_0").`in`("goal")
+    rewrite.`ltr`("dl2").`in`("goal")
     refl
   }
 
@@ -200,17 +200,17 @@ object prop_33 extends TacticsProof {
     allR; induction(hov"x:Nat")
     // - IB
     allR
-    rewrite `ltr` "af1" `in` "goal"
-    rewrite `ltr` "aq1" `in` "goal"
-    rewrite `ltr` "am2" `in` "goal"
-    rewrite `ltr` "am1" `in` "goal"
+    rewrite.`ltr`("af1").`in`("goal")
+    rewrite.`ltr`("aq1").`in`("goal")
+    rewrite.`ltr`("am2").`in`("goal")
+    rewrite.`ltr`("am1").`in`("goal")
     escargot
     // - IS
     allR
-    rewrite `ltr` "af2" `in` "goal"
-    rewrite `ltr` "aq2" `in` "goal"
-    rewrite.many `ltr` "am2" `in` "goal"
-    rewrite `rtl` "IHx_0" `in` "goal"
+    rewrite.`ltr`("af2").`in`("goal")
+    rewrite.`ltr`("aq2").`in`("goal")
+    rewrite.many.`ltr`("am2").`in`("goal")
+    rewrite.`rtl`("IHx_0").`in`("goal")
     escargot
   }
 

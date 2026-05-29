@@ -92,7 +92,7 @@ object BabelParserCombinators {
   )
   def Lam[X: P]: P[preExpr.Expr] = MarkPos(P((("^" | "λ") ~/ BoundVar ~ Lam).map(x => preExpr.Abs(x._1, x._2)) | TypeAnnotation))
 
-  def TypeAnnotation[X: P]: P[preExpr.Expr] = MarkPos(P((FlatOps ~/ (":" ~ Type).?) map {
+  def TypeAnnotation[X: P]: P[preExpr.Expr] = MarkPos(P((FlatOps ~/ (":" ~ Type).?).map {
     case (expr, Some(ty)) => preExpr.TypeAnnotation(expr, ty)
     case (expr, None)     => expr
   }))
@@ -112,11 +112,11 @@ object BabelParserCombinators {
 
   def Parens[X: P] = MarkPos(P("(" ~/ Expr ~/ ")"))
 
-  def Var[X: P] = P(Name ~ ":" ~ Type) map {
+  def Var[X: P] = P(Name ~ ":" ~ Type).map {
     case (name, ty) => real.Var(name, preExpr.toRealType(ty, Map()))
   }
   def TyParams[X: P] = P("{" ~ Type.rep ~ "}")
-  def Const[X: P] = P(Name ~ TyParams.? ~ ":" ~ Type) map {
+  def Const[X: P] = P(Name ~ TyParams.? ~ ":" ~ Type).map {
     case (name, ps, ty) => real.Const(name, preExpr.toRealType(ty, Map()), ps.getOrElse(Nil).toList.map(preExpr.toRealType(_, Map())))
   }
   def VarLiteral[X: P] = MarkPos(P(("#v(" ~/ Var ~ ")").map { preExpr.QuoteBlackbox }))

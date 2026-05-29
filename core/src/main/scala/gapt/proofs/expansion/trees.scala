@@ -334,12 +334,12 @@ object ETWeakQuantifier {
 object ETWeakQuantifierBlock {
   def apply(shallow: Formula, blockSize: Int, instances: Iterable[(Seq[Expr], ExpansionTree)]): ExpansionTree =
     if (blockSize == 0) {
-      ETMerge(instances map { _._2 })
+      ETMerge(instances.map { _._2 })
     } else {
       ETWeakQuantifier(
         shallow,
         Map() ++ instances.groupBy(_._1.head).view.mapValues { children =>
-          apply(instantiate(shallow, children.head._1.head), blockSize - 1, children map { case (ts, et) => ts.tail -> et })
+          apply(instantiate(shallow, children.head._1.head), blockSize - 1, children.map { case (ts, et) => ts.tail -> et })
         }.toMap
       )
     }

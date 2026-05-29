@@ -240,13 +240,13 @@ object findNonTrivialTSTPExamples {
 
     val p9Files = walk(pwd / "testing" / "TSTP" / "prover9").filter(_.ext == "s")
 
-    val stats = p9Files map { fn =>
+    val stats = p9Files.map { fn =>
       try {
         println(fn)
         withTimeout(60 seconds) {
           val p = Prover9Importer.expansionProof(fn)
           val terms = InstanceTermEncoding(p.shallow).encode(p)
-          val functions = terms map { case Apps(f, _) => f }
+          val functions = terms.map { case Apps(f, _) => f }
 
           Success(TermSetStats(fn, terms.size, functions.size))
         }
@@ -262,8 +262,8 @@ object findNonTrivialTSTPExamples {
     }
     csv.close()
 
-    val instance_per_formula = interesting map { s => s.size.toFloat / s.numFuns } sum
-    val ts_size = interesting map { _.size } sum
+    val instance_per_formula = interesting.map { s => s.size.toFloat / s.numFuns } sum
+    val ts_size = interesting.map { _.size } sum
     val avg_inst_per_form = instance_per_formula / interesting.size
     val avg_ts_size = ts_size.toFloat / interesting.size.toFloat
 

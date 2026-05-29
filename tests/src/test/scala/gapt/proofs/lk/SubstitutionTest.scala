@@ -81,12 +81,12 @@ class SubstitutionTest extends Specification with SequentMatchers {
     ctx += hoc"B:list>o"
     ctx += hoc"t:list"
     val proof = (ProofBuilder
-      c LogicalAxiom(hof"B(nil:list)")
-      u (WeakeningLeftRule(_, hof"C(x_0:sk, xs_0:list)"))
-      c LogicalAxiom(hof"A")
-      u (WeakeningLeftRule(_, hof"B(xs_1:list)"))
-      u (WeakeningRightRule(_, hof"B(cons(x_1:sk, xs_1:list):list)"))
-      b ((left: LKProof, right: LKProof) =>
+      .c(LogicalAxiom(hof"B(nil:list)"))
+      .u(WeakeningLeftRule(_, hof"C(x_0:sk, xs_0:list)"))
+      .c(LogicalAxiom(hof"A"))
+      .u(WeakeningLeftRule(_, hof"B(xs_1:list)"))
+      .u(WeakeningRightRule(_, hof"B(cons(x_1:sk, xs_1:list):list)"))
+      .b((left: LKProof, right: LKProof) =>
         InductionRule(
           InductionCase(left, hoc"nil: list", Nil, Nil, Suc(0)) ::
             InductionCase(right, hoc"cons:sk>list>list", Ant(0) :: Nil, hov"x_1:sk" :: hov"xs_1:list" :: Nil, Suc(1)) :: Nil,

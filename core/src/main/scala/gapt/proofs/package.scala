@@ -26,7 +26,7 @@ package object proofs {
    * @return The sequent obtained from the given sequent by dropping the labels.
    */
   implicit def labelledSequentToSequent(sequent: LabelledSequent): Sequent[Formula] =
-    sequent map { _._2 }
+    sequent.map { _._2 }
 
   implicit class RichFormulaSequent(private val sequent: HOLSequent) extends AnyVal {
     def formulas = sequent.elements

@@ -162,10 +162,10 @@ object regularize {
     protected override def visitInduction(proof: InductionRule, arg: Unit) = {
       val InductionRule(cases, _, term) = proof
 
-      val newCasesConnectors = cases map { c =>
+      val newCasesConnectors = cases.map { c =>
         val renaming = for (ev <- c.eigenVars) yield ev -> nameGen.fresh(ev)
         val (subProofNew, subConnector) = recurse(Substitution(renaming)(c.proof), ())
-        c.copy(proof = subProofNew, eigenVars = c.eigenVars map renaming.toMap) -> subConnector
+        c.copy(proof = subProofNew, eigenVars = c.eigenVars.map(renaming.toMap)) -> subConnector
       }
 
       val (casesNew, subConnectors) = newCasesConnectors.unzip

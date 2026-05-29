@@ -96,7 +96,7 @@ class InductionGrammarTest extends Specification with SatMatchers {
       gamma = List(hov"γ: nat")
     )
     for ((n, ts) <- indexedTermset)
-      ts diff stableGrammar.instanceLanguage(n) must beEmpty
+      ts.diff(stableGrammar.instanceLanguage(n)) must beEmpty
     val Some(minimal) = minimizeInductionGrammar(stableGrammar, indexedTermset): @unchecked
     minimal.size must_== 1
   }

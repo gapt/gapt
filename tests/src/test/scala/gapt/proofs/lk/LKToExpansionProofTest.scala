@@ -82,17 +82,17 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
     }
 
     "contractions on strong quantifiers" in {
-      val Seq(x, y) = Seq("x", "y") map { FOLVar(_) }
+      val Seq(x, y) = Seq("x", "y").map { FOLVar(_) }
       val p = FOLAtomConst("p", 1)
 
       val proof = (ProofBuilder
-        c LogicalAxiom(p(x))
-        c LogicalAxiom(p(y))
-        b (OrLeftRule(_, Ant(0), _, Ant(0)))
-        u (ForallLeftBlock(_, All(x, All(y, p(x) | p(y))), Seq(x, y)))
-        u (ForallRightRule(_, All(x, p(x)), x))
-        u (ForallRightRule(_, All(x, p(x)), y))
-        u (ContractionRightRule(_, Suc(0), Suc(1))) qed)
+        .c(LogicalAxiom(p(x)))
+        .c(LogicalAxiom(p(y)))
+        .b(OrLeftRule(_, Ant(0), _, Ant(0)))
+        .u(ForallLeftBlock(_, All(x, All(y, p(x) | p(y))), Seq(x, y)))
+        .u(ForallRightRule(_, All(x, p(x)), x))
+        .u(ForallRightRule(_, All(x, p(x)), y))
+        .u(ContractionRightRule(_, Suc(0), Suc(1))) qed)
 
       val expansion = LKToExpansionProof(proof)
 
@@ -100,7 +100,7 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
     }
 
     "non-atomic initial sequents" in {
-      val Seq(x, y) = Seq("x", "y") map { FOLVar(_) }
+      val Seq(x, y) = Seq("x", "y").map { FOLVar(_) }
       val p = FOLAtomConst("p", 2)
 
       val proof = LogicalAxiom(All(x, Ex(y, p(x, y))))
@@ -119,18 +119,18 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
 
     "equality on weakened formulas" in {
       val proof = (ProofBuilder
-        c ReflexivityAxiom(le"t")
-        u (WeakeningLeftRule(_, hof"t=s"))
-        u (EqualityRightRule(_, eq = hof"t=s", aux = hof"t=t", mainFormula = hof"s=t")) qed)
+        .c(ReflexivityAxiom(le"t"))
+        .u(WeakeningLeftRule(_, hof"t=s"))
+        .u(EqualityRightRule(_, eq = hof"t=s", aux = hof"t=t", mainFormula = hof"s=t")) qed)
 
       LKToExpansionProof(proof).deep must beEValidSequent
     }
 
     "replacement contexts" in {
-      val lk = (ProofBuilder c ReflexivityAxiom(le"c")
-        u (ExistsRightRule(_, hof"∃x x=c", le"c"))
-        u (WeakeningLeftRule(_, hof"c=d"))
-        u (EqualityRightRule(_, Ant(0), Suc(0), le"λx ∃y y=x".asInstanceOf[Abs])) qed)
+      val lk = (ProofBuilder.c(ReflexivityAxiom(le"c"))
+        .u(ExistsRightRule(_, hof"∃x x=c", le"c"))
+        .u(WeakeningLeftRule(_, hof"c=d"))
+        .u(EqualityRightRule(_, Ant(0), Suc(0), le"λx ∃y y=x".asInstanceOf[Abs])) qed)
       LKToExpansionProof(lk).shallow must_== lk.conclusion
     }
 

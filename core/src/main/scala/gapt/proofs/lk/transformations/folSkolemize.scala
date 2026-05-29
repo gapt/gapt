@@ -50,7 +50,7 @@ import gapt.utils.StreamUtils.even
 
 object folSkolemize {
   private[lk] class SkolemSymbolFactory(usedConstants: Iterable[Const]) {
-    private var skolem_symbol_stream = new NameGenerator(usedConstants map { _.name }).freshStream("s")
+    private var skolem_symbol_stream = new NameGenerator(usedConstants.map { _.name }).freshStream("s")
 
     def getSkolemSymbols: LazyList[String] = {
       val stream = even(skolem_symbol_stream)
@@ -141,8 +141,8 @@ object folSkolemize {
       val subProof_ = apply(
         subProof,
         proof.getSequentConnector.parents(contextAndSymbols).map(_.head)
-          .updated(aux1, ctxAndSym map { case (context, symbols) => context -> even(symbols) })
-          .updated(aux2, ctxAndSym map { case (context, symbols) => context -> odd(symbols) })
+          .updated(aux1, ctxAndSym.map { case (context, symbols) => context -> even(symbols) })
+          .updated(aux2, ctxAndSym.map { case (context, symbols) => context -> odd(symbols) })
       )
       AndLeftRule(subProof_, aux1, aux2)
     case proof @ AndRightRule(subProof1, aux1, subProof2, aux2) =>
@@ -150,12 +150,12 @@ object folSkolemize {
       val subProof1_ = apply(
         subProof1,
         proof.getLeftSequentConnector.parents(contextAndSymbols).map(_.head)
-          .updated(aux1, ctxAndSym map { case (context, symbols) => context -> even(symbols) })
+          .updated(aux1, ctxAndSym.map { case (context, symbols) => context -> even(symbols) })
       )
       val subProof2_ = apply(
         subProof2,
         proof.getRightSequentConnector.parents(contextAndSymbols).map(_.head)
-          .updated(aux2, ctxAndSym map { case (context, symbols) => context -> odd(symbols) })
+          .updated(aux2, ctxAndSym.map { case (context, symbols) => context -> odd(symbols) })
       )
       AndRightRule(subProof1_, aux1, subProof2_, aux2)
     case proof @ OrLeftRule(subProof1, aux1, subProof2, aux2) =>
@@ -163,12 +163,12 @@ object folSkolemize {
       val subProof1_ = apply(
         subProof1,
         proof.getLeftSequentConnector.parents(contextAndSymbols).map(_.head)
-          .updated(aux1, ctxAndSym map { case (context, symbols) => context -> even(symbols) })
+          .updated(aux1, ctxAndSym.map { case (context, symbols) => context -> even(symbols) })
       )
       val subProof2_ = apply(
         subProof2,
         proof.getRightSequentConnector.parents(contextAndSymbols).map(_.head)
-          .updated(aux2, ctxAndSym map { case (context, symbols) => context -> odd(symbols) })
+          .updated(aux2, ctxAndSym.map { case (context, symbols) => context -> odd(symbols) })
       )
       OrLeftRule(subProof1_, aux1, subProof2_, aux2)
     case proof @ OrRightRule(subProof, aux1, aux2) =>
@@ -176,8 +176,8 @@ object folSkolemize {
       val subProof_ = apply(
         subProof,
         proof.getSequentConnector.parents(contextAndSymbols).map(_.head)
-          .updated(aux1, ctxAndSym map { case (context, symbols) => context -> even(symbols) })
-          .updated(aux2, ctxAndSym map { case (context, symbols) => context -> odd(symbols) })
+          .updated(aux1, ctxAndSym.map { case (context, symbols) => context -> even(symbols) })
+          .updated(aux2, ctxAndSym.map { case (context, symbols) => context -> odd(symbols) })
       )
       OrRightRule(subProof_, aux1, aux2)
     case proof @ ImpLeftRule(subProof1, aux1, subProof2, aux2) =>
@@ -185,12 +185,12 @@ object folSkolemize {
       val subProof1_ = apply(
         subProof1,
         proof.getLeftSequentConnector.parents(contextAndSymbols).map(_.head)
-          .updated(aux1, ctxAndSym map { case (context, symbols) => context -> even(symbols) })
+          .updated(aux1, ctxAndSym.map { case (context, symbols) => context -> even(symbols) })
       )
       val subProof2_ = apply(
         subProof2,
         proof.getRightSequentConnector.parents(contextAndSymbols).map(_.head)
-          .updated(aux2, ctxAndSym map { case (context, symbols) => context -> odd(symbols) })
+          .updated(aux2, ctxAndSym.map { case (context, symbols) => context -> odd(symbols) })
       )
       ImpLeftRule(subProof1_, aux1, subProof2_, aux2)
     case proof @ ImpRightRule(subProof, aux1, aux2) =>
@@ -198,8 +198,8 @@ object folSkolemize {
       val subProof_ = apply(
         subProof,
         proof.getSequentConnector.parents(contextAndSymbols).map(_.head)
-          .updated(aux1, ctxAndSym map { case (context, symbols) => context -> even(symbols) })
-          .updated(aux2, ctxAndSym map { case (context, symbols) => context -> odd(symbols) })
+          .updated(aux1, ctxAndSym.map { case (context, symbols) => context -> even(symbols) })
+          .updated(aux2, ctxAndSym.map { case (context, symbols) => context -> odd(symbols) })
       )
       ImpRightRule(subProof_, aux1, aux2)
 
@@ -218,7 +218,7 @@ object folSkolemize {
       val subProof_ = apply(
         subProof,
         proof.getSequentConnector.parents(contextAndSymbols).map(_.head)
-          .updated(aux, ctxAndSym map { case (context, symbols) => (context :+ term) -> symbols })
+          .updated(aux, ctxAndSym.map { case (context, symbols) => (context :+ term) -> symbols })
       )
       val All(v_, matrix_) = maybeSkolemize(proof.mainFormula, Polarity.InAntecedent, ctxAndSym): @unchecked
       ForallLeftRule(subProof_, aux, matrix_, term, v)
@@ -227,7 +227,7 @@ object folSkolemize {
       val subProof_ = apply(
         subProof,
         proof.getSequentConnector.parents(contextAndSymbols).map(_.head)
-          .updated(aux, ctxAndSym map { case (context, symbols) => (context :+ term) -> symbols })
+          .updated(aux, ctxAndSym.map { case (context, symbols) => (context :+ term) -> symbols })
       )
       val Ex(v_, matrix_) = maybeSkolemize(proof.mainFormula, Polarity.InSuccedent, ctxAndSym): @unchecked
       ExistsRightRule(subProof_, aux, matrix_, term, v)

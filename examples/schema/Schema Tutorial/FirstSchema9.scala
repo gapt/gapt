@@ -74,7 +74,7 @@ object FirstSchema9 extends TacticsProof {
 
   val NuBc = Lemma(esNuBc) {
     allL("Ant_3", le"g(A)")
-    unfold("Ech") `atMost` 1 `in` "Suc_0"
+    unfold("Ech").`atMost`(1).`in`("Suc_0")
     exL(fov"B")
     exR(fov"B")
     andL
@@ -84,7 +84,7 @@ object FirstSchema9 extends TacticsProof {
   }
   val NuSc = Lemma(esNuSc) {
     allL("Ant_3", le"g(A)")
-    unfold("Ech") `atMost` 1 `in` "Suc_0"
+    unfold("Ech").`atMost`(1).`in`("Suc_0")
     exL(fov"B")
     exR(fov"B")
     andL
@@ -96,22 +96,22 @@ object FirstSchema9 extends TacticsProof {
   }
   val NuPrimeBc = Lemma(esNuPrimeBc) {
     allL("Ant_3", le"g(A)")
-    unfold("Ech") `atMost` 1 `in` "Suc_0"
+    unfold("Ech").`atMost`(1).`in`("Suc_0")
     exL(fov"B")
     exR(fov"B")
     andL
     andR
     foTheory
-    unfold("POR") `atMost` 1 `in` "Ant_3_0_1"
+    unfold("POR").`atMost`(1).`in`("Ant_3_0_1")
     foTheory
   }
   val NuPrimeSc = Lemma(esNuPrimeSc) {
     allL("Ant_3", le"g(A)")
-    unfold("Ech") `atMost` 1 `in` "Suc_0"
+    unfold("Ech").`atMost`(1).`in`("Suc_0")
     exL(fov"B")
     exR(fov"B")
     andL
-    unfold("POR") `atMost` 1 `in` "Ant_3_0_1"
+    unfold("POR").`atMost`(1).`in`("Ant_3_0_1")
     andR
     andR
     ref("nuPrime")
@@ -125,7 +125,7 @@ object FirstSchema9 extends TacticsProof {
     allL("Ant_2", le"(g B)")
     exL(fov"A")
     exR(fov"B")
-    unfold("Ech") `atMost` 1 `in` "Suc_0_0"
+    unfold("Ech").`atMost`(1).`in`("Suc_0_0")
     exR("Suc_0_0", fov"A")
     andL("Ant_2_1")
     andL
@@ -139,7 +139,7 @@ object FirstSchema9 extends TacticsProof {
     allL("Ant_2", le"(g B)")
     exL(fov"A")
     exR(fov"B")
-    unfold("Ech") `atMost` 1 `in` "Suc_0_0"
+    unfold("Ech").`atMost`(1).`in`("Suc_0_0")
     exR("Suc_0_0", fov"A")
     andL("Ant_2_1")
     andL
@@ -156,7 +156,7 @@ object FirstSchema9 extends TacticsProof {
     allL("Ant_2", le"(g B)")
     exL(fov"A")
     exR(fov"B")
-    unfold("Ech") `atMost` 1 `in` "Suc_0_0"
+    unfold("Ech").`atMost`(1).`in`("Suc_0_0")
     exR("Suc_0_0", fov"A")
     andL("Ant_2_1")
     andL
@@ -170,7 +170,7 @@ object FirstSchema9 extends TacticsProof {
     allL("Ant_2", le"(g B)")
     exL(fov"A")
     exR(fov"B")
-    unfold("Ech") `atMost` 1 `in` "Suc_0_0"
+    unfold("Ech").`atMost`(1).`in`("Suc_0_0")
     exR("Suc_0_0", fov"A")
     andL("Ant_2_1")
     andL
@@ -181,13 +181,13 @@ object FirstSchema9 extends TacticsProof {
     foTheory
   }
   val chiBc = Lemma(esChiBc) {
-    unfold("POR") `atMost` 1 `in` "Suc_0"
-    unfold("POR") `atMost` 1 `in` "Ant_2"
+    unfold("POR").`atMost`(1).`in`("Suc_0")
+    unfold("POR").`atMost`(1).`in`("Ant_2")
     trivial
   }
   val chiSc = Lemma(esChiSc) {
-    unfold("POR") `atMost` 1 `in` "Suc_0"
-    unfold("POR") `atMost` 1 `in` "Ant_2"
+    unfold("POR").`atMost`(1).`in`("Suc_0")
+    unfold("POR").`atMost`(1).`in`("Ant_2")
     orR
     orL
     trivial
@@ -200,7 +200,7 @@ object FirstSchema9 extends TacticsProof {
     exL(fov"A")
     exR(fov"A")
     andL("Ant_2_1")
-    unfold("POR") `atMost` 1 `in` "Ant_2_1_1"
+    unfold("POR").`atMost`(1).`in`("Ant_2_1_1")
     ref("nuPrime")
   }
   val esphiSc = Sequent(
@@ -223,7 +223,7 @@ object FirstSchema9 extends TacticsProof {
     andR("cut1_0")
     foTheory
     foTheory
-    unfold("POR") `atMost` 1 `in` "Ant_2_0_1"
+    unfold("POR").`atMost`(1).`in`("Ant_2_0_1")
     orL
     trivial
     andR("cut1_0")
@@ -244,7 +244,7 @@ object FirstSchema9 extends TacticsProof {
     allR(fov"A")
     allL("Ant_2", fov"A")
     exR("cut", fov"A")
-    unfold("POR") `atMost` 1 `in` "Ant_2_0"
+    unfold("POR").`atMost`(1).`in`("Ant_2_0")
     andR
     foTheory
     trivial

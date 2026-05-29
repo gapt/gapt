@@ -54,14 +54,14 @@ object FirstSchema7 extends TacticsProof {
 
   // Proof of chi basecase
   val chiBc = Lemma(esChiBc) {
-    unfold("POR") `atMost` 1 `in` "Suc_0"
-    unfold("POR") `atMost` 1 `in` "Ant_0"
+    unfold("POR").`atMost`(1).`in`("Suc_0")
+    unfold("POR").`atMost`(1).`in`("Ant_0")
     trivial
   }
   // Proof of chi Stepcase
   val chiSc = Lemma(esChiSc) {
-    unfold("POR") `atMost` 1 `in` "Suc_0"
-    unfold("POR") `atMost` 1 `in` "Ant_0"
+    unfold("POR").`atMost`(1).`in`("Suc_0")
+    unfold("POR").`atMost`(1).`in`("Ant_0")
     orR
     orL
     trivial
@@ -81,8 +81,8 @@ object FirstSchema7 extends TacticsProof {
     andL
     andR
     foTheory
-    unfold("POR") `atMost` 1 `in` "Ant_0_0_1"
-    unfold("POR") `atMost` 1 `in` "Ant_0_1_1"
+    unfold("POR").`atMost`(1).`in`("Ant_0_0_1")
+    unfold("POR").`atMost`(1).`in`("Ant_0_1_1")
     foTheory
   }
   // The step case of phi
@@ -100,7 +100,7 @@ object FirstSchema7 extends TacticsProof {
     andR("cut1_0")
     foTheory
     foTheory
-    unfold("POR") `atMost` 1 `in` "Ant_0_0_1"
+    unfold("POR").`atMost`(1).`in`("Ant_0_0_1")
     orL
     trivial
     andR("cut1_0")

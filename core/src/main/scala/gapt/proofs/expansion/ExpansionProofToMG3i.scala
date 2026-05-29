@@ -256,7 +256,7 @@ class ExpansionProofToMG3i(theorySolver: HOLClause => Option[LKProof])(implicit 
     def handle(i: SequentIndex, e: ExpansionTree, f: ExpansionTree, g: ExpansionTree, rule: (LKProof, LKProof, Formula) => LKProof) =
       solve(theory, if (f.polarity.inSuc) expSeq.delete(i) :+ f else f +: expSeq.delete(i)) flatMap { p1 =>
         if (!p1.conclusion.contains(f.shallow, f.polarity)) Right(p1)
-        else solve(theory, if (g.polarity.inSuc) expSeq.delete(i) :+ g else g +: expSeq.delete(i)) map { p2 =>
+        else solve(theory, if (g.polarity.inSuc) expSeq.delete(i) :+ g else g +: expSeq.delete(i)).map { p2 =>
           if (!p2.conclusion.contains(g.shallow, g.polarity)) p2
           else rule(p1, p2, e.shallow)
         }
@@ -334,7 +334,7 @@ class ExpansionProofToMG3i(theorySolver: HOLClause => Option[LKProof])(implicit 
         if (i isSuc) newExpSeq :++= insts_.values
         else newExpSeq ++:= insts_.values
 
-        scala.util.boundary.break(Some(solve(theory, newExpSeq) map { p0 =>
+        scala.util.boundary.break(Some(solve(theory, newExpSeq).map { p0 =>
           insts_.foldLeft(p0) {
             case (p, (t, child)) =>
               if (!p.conclusion.contains(child.shallow, i.polarity))
@@ -361,7 +361,7 @@ class ExpansionProofToMG3i(theorySolver: HOLClause => Option[LKProof])(implicit 
         val newCuts = theory.cuts.zipWithIndex.filter { _._2 != i }.map { _._1 }
         solve(Theory(newCuts, theory.inductions), expSeq :+ cut1) flatMap { p1 =>
           if (!p1.conclusion.contains(cut1.shallow, Polarity.InSuccedent)) Right(p1)
-          else solve(Theory(newCuts, theory.inductions), cut2 +: expSeq) map { p2 =>
+          else solve(Theory(newCuts, theory.inductions), cut2 +: expSeq).map { p2 =>
             if (!p2.conclusion.contains(cut2.shallow, Polarity.InAntecedent)) p2
             else CutRule(p1, p2, cut1.shallow)
           }

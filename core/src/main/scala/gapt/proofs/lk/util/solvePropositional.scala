@@ -35,7 +35,7 @@ trait SolveUtils {
    * Applies the function f, if maybeProof is Right(proof) and formula is present in polarity pol in proof.
    */
   protected final def mapIf(maybeProof: UnprovableOrLKProof, formula: Formula, pol: Polarity)(f: LKProof => LKProof) =
-    maybeProof map { p => if (p.conclusion.contains(formula, pol)) f(p) else p }
+    maybeProof.map { p => if (p.conclusion.contains(formula, pol)) f(p) else p }
 
   /**
    * Applies the function f, if maybeProof is Right(proof) and one of formula{1,2} is present in polarity pol{1,2} in proof.
@@ -47,7 +47,7 @@ trait SolveUtils {
       formula2: Formula,
       pol2: Polarity
   )(f: LKProof => LKProof) =
-    maybeProof map { p =>
+    maybeProof.map { p =>
       if (p.conclusion.contains(formula1, pol1) || p.conclusion.contains(formula2, pol2)) f(p)
       else p
     }
@@ -65,7 +65,7 @@ class solvePropositional(
     apply(Sequent() :+ formula)
 
   def apply(seq: HOLSequent): UnprovableOrLKProof =
-    solve(seq) map { WeakeningMacroRule(_, seq) }
+    solve(seq).map { WeakeningMacroRule(_, seq) }
 
   private def solve(seq0: HOLSequent): UnprovableOrLKProof = {
     val seq = seq0.distinct
@@ -109,7 +109,7 @@ class solvePropositional(
     def handle(i: SequentIndex, e: Formula, f: Formula, fPol: Polarity, g: Formula, gPol: Polarity, rule: (LKProof, LKProof, Formula) => LKProof) =
       solve(if (fPol.inSuc) seq.delete(i) :+ f else f +: seq.delete(i)) flatMap { p1 =>
         if (!p1.conclusion.contains(f, fPol)) Right(p1)
-        else solve(if (gPol.inSuc) seq.delete(i) :+ g else g +: seq.delete(i)) map { p2 =>
+        else solve(if (gPol.inSuc) seq.delete(i) :+ g else g +: seq.delete(i)).map { p2 =>
           if (!p2.conclusion.contains(g, gPol)) p2
           else rule(p1, p2, e)
         }

@@ -55,14 +55,14 @@ object prop_48 extends TacticsProof {
     orL
     // - IC - 1
     eql("dca_0", "goal_1").fromLeftToRight
-    rewrite.many `ltr` "def_butlast_1" `in` "goal_1"
-    rewrite.many `ltr` "def_last_1" `in` "goal_1"
-    rewrite.many `ltr` "def_append_0" `in` "goal_1"; refl
+    rewrite.many.`ltr`("def_butlast_1").`in`("goal_1")
+    rewrite.many.`ltr`("def_last_1").`in`("goal_1")
+    rewrite.many.`ltr`("def_append_0").`in`("goal_1"); refl
     // - IC - 2
     exL; exL
-    rewrite.many `ltr` "dca_0" `in` "goal_1"
-    rewrite.many `ltr` "def_butlast_2" `in` "goal_1"
-    rewrite.many `ltr` "def_last_2" `in` "goal_1"
-    rewrite.many `ltr` "def_append_1" `in` "goal_1"; escargot
+    rewrite.many.`ltr`("dca_0").`in`("goal_1")
+    rewrite.many.`ltr`("def_butlast_2").`in`("goal_1")
+    rewrite.many.`ltr`("def_last_2").`in`("goal_1")
+    rewrite.many.`ltr`("def_append_1").`in`("goal_1"); escargot
   }
 }

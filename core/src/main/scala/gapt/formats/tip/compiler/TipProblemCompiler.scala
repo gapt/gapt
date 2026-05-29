@@ -144,7 +144,7 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
   ): Const =
     toFunctionConstant(
       functionDefinition.name,
-      functionDefinition.parameters map { _.typ },
+      functionDefinition.parameters.map { _.typ },
       functionDefinition.returnType
     )
 
@@ -157,7 +157,7 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
       functionName,
       FunctionType(
         typeDecls(returnType.typename),
-        argumentTypes map { argType => typeDecls(argType.typename) }
+        argumentTypes.map { argType => typeDecls(argType.typename) }
       )
     )
 
@@ -434,7 +434,7 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
       )
     }
     functionConstant(
-      tipSmtFun.arguments.zip(argumentTypes) map { case (arg, ty) => compileExpression(arg, ctxVars, Some(ty)) }*
+      tipSmtFun.arguments.zip(argumentTypes).map { case (arg, ty) => compileExpression(arg, ctxVars, Some(ty)) }*
     )
   }
 
@@ -552,7 +552,7 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
       expectedType: Option[Ty]
   ): (Seq[Expr], Ty) = {
 
-    val compiledCases = cases map {
+    val compiledCases = cases.map {
       case (c, xs, e) =>
         (c, xs, compileExpression(e, xs ++ ctxVars, expectedType))
     }
@@ -561,7 +561,7 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
     if (resultTypes.size > 1) {
       throw new TipSmtParserException(s"match: cases have differing types ${resultTypes.mkString}")
     }
-    (compiledCases map { case (_, xs, e) => Abs(xs, e) }, resultTypes.head)
+    (compiledCases.map { case (_, xs, e) => Abs(xs, e) }, resultTypes.head)
   }
 
   private def compileExpression(
@@ -590,7 +590,7 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
         }
       case _ =>
     }
-    val exprs = tipSmtEq.exprs map { compileExpression(_, freeVars, None) }
+    val exprs = tipSmtEq.exprs.map { compileExpression(_, freeVars, None) }
     And(for ((a, b) <- exprs zip exprs.tail)
       yield if (exprs.head.ty == To) a <-> b else a === b)
   }
@@ -750,9 +750,9 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
     TipProblem(
       ctx,
       Nil,
-      typeDecls.values.toSeq diff datatypes.map { _.baseType },
+      typeDecls.values.toSeq.diff(datatypes.map { _.baseType }),
       datatypes.toSeq,
-      funDecls.values.toSeq diff functions.map { _.fun },
+      funDecls.values.toSeq.diff(functions.map { _.fun }),
       functions.toSeq,
       assumptions.toSeq,
       And(goals)

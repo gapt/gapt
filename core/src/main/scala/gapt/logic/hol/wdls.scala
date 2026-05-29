@@ -118,7 +118,7 @@ private case class Disjunct(as: Seq[Formula], bs: Seq[Formula]) {
   private val sequent = HOLSequent(as, bs)
   def toFormula = And(as ++ bs)
   def variables = gapt.expr.util.variables(toFormula)
-  def multiSetEquals(other: Disjunct): Boolean = sequent `multiSetEquals` other.sequent
+  def multiSetEquals(other: Disjunct): Boolean = sequent.`multiSetEquals`(other.sequent)
 }
 
 private object Disjunct {
@@ -371,7 +371,7 @@ private object polarityOccurrenceWitness {
 
 object vectorEq {
   def apply(expressionsA: Iterable[Expr], expressionsB: Iterable[Expr]): Formula = {
-    And(expressionsA.zip(expressionsB) map { case (a, b) => Eq(a, b) })
+    And(expressionsA.zip(expressionsB).map { case (a, b) => Eq(a, b) })
   }
 }
 

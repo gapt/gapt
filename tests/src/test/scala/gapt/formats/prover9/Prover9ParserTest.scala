@@ -27,7 +27,7 @@ class Prover9ParserTest extends Specification {
         "(X&Y&Z)",
         "q(x) &(q(x) & p(y))",
         "(X&Y)&Z"
-      ) map { s =>
+      ).map { s =>
         Prover9TermParser.parseFormula(s)
         ok
       }
@@ -79,7 +79,7 @@ class Prover9ParserTest extends Specification {
         "-(exists X p(X))",
         "-(all X --p(X))",
         "--(exists X p(X))"
-      ) map { s =>
+      ).map { s =>
         Prover9TermParser.parseFormula(s)
         ok
       }
@@ -96,7 +96,7 @@ class Prover9ParserTest extends Specification {
         "(exists X (P(X) | Q(X)))",
         "(exists X (P(X) | Q(X) | R(X,X)))",
         "(all X (q(X,f(X)) | q(X,g(X))))"
-      ) map { s =>
+      ).map { s =>
         Prover9TermParser.parseFormula(s)
         ok
       }
@@ -126,7 +126,7 @@ class Prover9ParserTest extends Specification {
     }
 
     "parse infix formulas" in {
-      List("a = b", "P(1+(X*2))", "f(1+X)= (X*0)+X", "(all X f(1+X)= (X*0)+X)", "(all X f(1+X)= (X*0)+X) | (all X f(1+X)= (X*0)+X)") map { s =>
+      List("a = b", "P(1+(X*2))", "f(1+X)= (X*0)+X", "(all X f(1+X)= (X*0)+X)", "(all X f(1+X)= (X*0)+X) | (all X f(1+X)= (X*0)+X)").map { s =>
         Prover9TermParser.parseFormula(s)
         ok
       }

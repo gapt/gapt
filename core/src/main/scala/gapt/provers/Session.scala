@@ -265,7 +265,7 @@ object Session {
         case DeclareSort(sort) => tell(LFun("declare-sort", LSymbol(typeRenaming(sort).name), LSymbol(0.toString)))
         case DeclareFun(fun) => termRenaming(fun) match {
             case Const(name, FunctionType(TBase(retType, Nil), argTypes), _) =>
-              tell(LFun("declare-fun", LSymbol(name), LList(argTypes map convert*), LSymbol(retType)))
+              tell(LFun("declare-fun", LSymbol(name), LList(argTypes.map(convert)*), LSymbol(retType)))
             case _ => () // do not declare applications or abstractions. TODO: check if we need to recurse into the term
           }
         case Assert(formula) => tell(LFun("assert", convert(formula)))
@@ -287,7 +287,7 @@ object Session {
       def convert(ty: Ty): SExpression = (ty: @unchecked) match {
         case TBase(argType, Nil) => LSymbol(argType)
         case FunctionType(to, from) =>
-          val ts = (from :+ to) map convert
+          val ts = (from :+ to).map(convert)
           LFun("->", ts*)
       }
 
@@ -337,7 +337,7 @@ object Session {
           val smtVar = s"x${boundVars.size}"
           LFun("lambda", LList(LFun(smtVar, convert(typeRenaming(ty)))), convert(a, boundVars + (x -> smtVar)))
         case Apps(c, args) =>
-          LList((c :: args) map { convert(_, boundVars) }*)
+          LList((c :: args).map { convert(_, boundVars) }*)
       }
 
     }

@@ -62,7 +62,7 @@ class VariableMatchExpansion(problem: TipSmtProblem) {
    * @return A problem without variable-match expressions.
    */
   def apply(): TipSmtProblem = {
-    problem.copy(definitions = problem.definitions map {
+    problem.copy(definitions = problem.definitions.map {
       _ match {
         case fun @ TipSmtFunctionDefinition(_, _, _, _, body) =>
           apply(fun)
@@ -168,7 +168,7 @@ class VariableMatchExpansion(problem: TipSmtProblem) {
           .map { expandCaseStatement(identifier, _, polarity) }
           .map { expandVariableMatch(_, variables) })
 
-      case _ => tipSmtMatch.copy(cases = tipSmtMatch.cases map {
+      case _ => tipSmtMatch.copy(cases = tipSmtMatch.cases.map {
           expandVariableMatch
         })
     }

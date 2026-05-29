@@ -51,7 +51,7 @@ case class fastStructuralCNF(propositional: Boolean = true, bidirectionalDefs: B
     val defs = mutable.Map[Expr, HOLAtomConst]()
     val skConsts = mutable.Map[Expr, Const]()
 
-    val nameGen = new NameGenerator(constants.nonLogical(endSequent) map { _.name })
+    val nameGen = new NameGenerator(constants.nonLogical(endSequent).map { _.name })
     def mkSkolemSym() = nameGen.freshWithIndex("s")
     def mkAbbrevSym() = nameGen.freshWithIndex("D")
 
@@ -60,7 +60,7 @@ case class fastStructuralCNF(propositional: Boolean = true, bidirectionalDefs: B
       val skolemizedFormula = Abs(fvs, f)
       val skolemConst = skConsts.getOrElseUpdate(
         skolemizedFormula,
-        Const(mkSkolemSym(), FunctionType(x.ty, fvs map { _.ty }))
+        Const(mkSkolemSym(), FunctionType(x.ty, fvs.map { _.ty }))
       )
       (skolemConst(fvs*), skolemizedFormula)
     }
@@ -171,7 +171,7 @@ case class fastStructuralCNF(propositional: Boolean = true, bidirectionalDefs: B
       val alreadyDefined = defs isDefinedAt Abs(fvs, f)
       val const = defs.getOrElseUpdate(
         Abs(fvs, f),
-        formula.hol.HOLAtomConst(mkAbbrevSym(), fvs map { _.ty }*)
+        formula.hol.HOLAtomConst(mkAbbrevSym(), fvs.map { _.ty }*)
       )
       val repl = const(fvs*)
       if (!alreadyDefined) {

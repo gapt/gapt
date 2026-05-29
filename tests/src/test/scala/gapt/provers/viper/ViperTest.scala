@@ -52,7 +52,7 @@ class ViperTest extends Specification with SequentMatchers {
         val (Nil, options) = ViperOptions.parse(extractOptions(file.read), opts0): @unchecked
         val problem = if (options.fixup) TipSmtImporter.fixupAndLoad(file) else TipSmtImporter.load(file)
         val lk = new TreeGrammarProver(problem.context, problem.toSequent, options.treeGrammarProverOptions).solve()
-        problem.context check lk
+        problem.context.check(lk)
         lk.conclusion.distinct.diff(problem.toSequent) must_== Sequent()
       }
     }

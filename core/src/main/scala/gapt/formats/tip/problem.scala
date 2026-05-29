@@ -244,11 +244,11 @@ object tipScalaEncoding {
 
   private def compileFunctionConstants(problem: TipProblem): String = {
     "\n//Function constants\n" +
-      (problem.functions map { f => "ctx += " + compileConst(f.fun) } mkString ("\n"))
+      (problem.functions.map { f => "ctx += " + compileConst(f.fun) } mkString ("\n"))
   }
 
   private def compileInductiveTypes(problem: TipProblem): Seq[String] = {
-    problem.datatypes.tail map compileInductiveType
+    problem.datatypes.tail.map(compileInductiveType)
   }
 
   private def compileInductiveType(datatype: InductiveType): String = {
@@ -266,7 +266,7 @@ object tipScalaEncoding {
   }
 
   private def compileSorts(problem: TipProblem): Seq[String] =
-    problem.sorts map {
+    problem.sorts.map {
       sort => s"ctx += TBase(${"\"" + sort.name + "\""})"
     }
 

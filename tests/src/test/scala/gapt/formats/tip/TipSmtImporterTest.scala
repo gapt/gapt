@@ -21,7 +21,7 @@ class TipSmtImporterTest extends Specification {
           identity,
           instantiate(_, Seq(one, one, oneAnd(oneAnd(one))))
         )
-    Escargot getResolutionProof instanceSequent must beSome
+    Escargot.getResolutionProof(instanceSequent) must beSome
   }
 
 }

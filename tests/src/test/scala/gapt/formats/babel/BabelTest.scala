@@ -101,15 +101,15 @@ class BabelTest extends Specification {
 
         val expr2 = BabelParser.parse(expr.toString)
         require(expr == expr2)
-        expr syntaxEquals expr2 must beTrue
+        expr.syntaxEquals(expr2) must beTrue
 
         val expr3 = BabelParser.parse(expr.toAsciiString)
         require(expr == expr3)
-        expr syntaxEquals expr3 must beTrue
+        expr.syntaxEquals(expr3) must beTrue
 
         val expr4 = BabelParser.parse(expr.toRawString)
         require(expr == expr4)
-        expr syntaxEquals expr4 must beTrue
+        expr.syntaxEquals(expr4) must beTrue
       }
     }
   }
@@ -118,7 +118,7 @@ class BabelTest extends Specification {
     val strings = Seq("ößfð", "'fßðf fßð'", "^z!x?y (true & false & x -> y & -z | x & x!=x)", "'\\u0000'")
     Fragments.foreach(strings) { string =>
       string in {
-        val expr = BabelParser parse string
+        val expr = BabelParser.parse(string)
         expr.toAsciiString must beMatching("""\p{ASCII}+""".r)
       }
     }

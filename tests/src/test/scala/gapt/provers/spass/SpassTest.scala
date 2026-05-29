@@ -48,7 +48,7 @@ class SpassTest extends Specification with SequentMatchers with SatMatchers {
 
     "treat variables in sequents as constants" in {
       val seq = hof"P(x)" +: Sequent() :+ hof"P(c)"
-      SPASS getExpansionProof seq must beNone
+      SPASS.getExpansionProof(seq) must beNone
     }
 
     "handle weird sequents" in {
@@ -57,11 +57,11 @@ class SpassTest extends Specification with SequentMatchers with SatMatchers {
     }
 
     "large cnf" in {
-      SPASS getExpansionProof CountingEquivalence(3) must beLike { case Some(p) => p.deep must beValidSequent }
+      SPASS.getExpansionProof(CountingEquivalence(3)) must beLike { case Some(p) => p.deep must beValidSequent }
     }
 
     "bug with quantified splitting" in {
-      SPASS getExpansionProof CountingEquivalence(2) must beLike { case Some(p) => p.deep must beValidSequent }
+      SPASS.getExpansionProof(CountingEquivalence(2)) must beLike { case Some(p) => p.deep must beValidSequent }
     }
 
     "bug with ground parts in quantified splits" in {

@@ -28,11 +28,11 @@ class Z3SessionTest extends Specification {
 
     val n = 10
 
-    val getUnsatCore = ask(LFun("get-unsat-core")) map {
+    val getUnsatCore = ask(LFun("get-unsat-core")).map {
       e =>
         (e: @unchecked) match {
           case LList(labels @ _*) =>
-            labels map { e => (e: @unchecked) match { case LSymbol(l) => l } }
+            labels.map { e => (e: @unchecked) match { case LSymbol(l) => l } }
         }
     }
 
@@ -55,6 +55,6 @@ class Z3SessionTest extends Specification {
 
     satInner must_== false
     satOuter must_== true
-    labels must contain(exactly(0 until n map { i => s"hyp$i" }: _*))
+    labels must contain(exactly((0 until n).map { i => s"hyp$i" }: _*))
   }
 }

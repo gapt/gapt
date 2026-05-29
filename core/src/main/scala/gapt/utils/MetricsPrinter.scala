@@ -17,7 +17,7 @@ class MetricsPrinter extends LogHandler {
     case l: Double  => JDouble(l)
     case l: Float   => JDouble(l)
     case b: Boolean => JBool(b)
-    case l: Seq[_]  => JArray(l map jsonify toList)
+    case l: Seq[_]  => JArray(l.map(jsonify) toList)
     case s          => JString(s toString)
   }
 

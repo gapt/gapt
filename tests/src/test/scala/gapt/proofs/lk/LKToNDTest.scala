@@ -683,8 +683,8 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
     "translate issue687 intuitionistically" in {
       import gapt.proofs.gaptic._
       val lk = Proof(hols"A ∨ B, C → ¬B, C ⊢ A") {
-        orL left trivial
-        impL left trivial
+        orL.left(trivial)
+        impL.left(trivial)
         negL; trivial
       }
       val focus = Some(Suc(0))

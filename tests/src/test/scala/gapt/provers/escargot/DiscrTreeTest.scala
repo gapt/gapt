@@ -33,14 +33,14 @@ class DiscrTreeTest extends Specification {
     for (t1 <- terms) {
       val expected = terms.filter(syntacticMatching(_, t1).isDefined)
       val actual = tree.generalizations(t1).toSet
-      val diff = expected diff actual
+      val diff = expected.diff(actual)
       require(diff.isEmpty)
       diff must beEmpty
     }
     for (t1 <- terms) {
       val expected = terms.filter(syntacticMGU(_, t1).isDefined)
       val actual = tree.unifiable(t1).toSet
-      val diff = expected diff actual
+      val diff = expected.diff(actual)
       require(diff.isEmpty)
       diff must beEmpty
     }

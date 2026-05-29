@@ -152,11 +152,11 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
   val phiBc = Lemma(esPhiBc) {
     orL
     exL(fov"a")
-    unfold("CSeq") `atMost` 1 `in` "Ant_0"
+    unfold("CSeq").`atMost`(1).`in`("Ant_0")
     exR(fov"a")
-    unfold("JumpSeq") `atMost` 1 `in` "Suc_0_0"
-    unfold("EndSeq") `atMost` 1 `in` "Suc_0_0"
-    unfold("iNum") `atMost` 1 `in` "Ant_0"
+    unfold("JumpSeq").`atMost`(1).`in`("Suc_0_0")
+    unfold("EndSeq").`atMost`(1).`in`("Suc_0_0")
+    unfold("iNum").`atMost`(1).`in`("Ant_0")
     ref("NumericTransitivityBase")
     allL(foc"z")
     ref("minimalElement")
@@ -170,10 +170,10 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
   val phiBcm = Lemma(esPhiBcm) {
     orL
     exL(fov"a")
-    unfold("CSeq") `atMost` 1 `in` "Ant_0"
+    unfold("CSeq").`atMost`(1).`in`("Ant_0")
     exR(fov"a")
-    unfold("JumpSeq") `atMost` 1 `in` "Suc_0_0"
-    unfold("EndSeq") `atMost` 1 `in` "Suc_0_0"
+    unfold("JumpSeq").`atMost`(1).`in`("Suc_0_0")
+    unfold("EndSeq").`atMost`(1).`in`("Suc_0_0")
     andR
     andL
     ref("psi")
@@ -192,19 +192,19 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
   val phiBc1 = Lemma(esPhiBc1) {
     orL
     exL(fov"a")
-    unfold("CSeq") `atMost` 1 `in` "Ant_0"
+    unfold("CSeq").`atMost`(1).`in`("Ant_0")
     exR(fov"a")
-    unfold("JumpSeq") `atMost` 1 `in` "Suc_0_0"
-    unfold("EndSeq") `atMost` 1 `in` "Suc_0_0"
+    unfold("JumpSeq").`atMost`(1).`in`("Suc_0_0")
+    unfold("EndSeq").`atMost`(1).`in`("Suc_0_0")
     andR
-    unfold("iNum") `atMost` 1 `in` "Ant_0"
+    unfold("iNum").`atMost`(1).`in`("Ant_0")
     ref("NumericTransitivityBase")
     cut("cut2", hof"?x (iLEQ(suc(a),suc(x)) & CSeq(0,0,x)) | !y (iLEQ(suc(a),suc(y))  & LE(f(y),0))")
     orR
     exR("cut2_0", fov"a")
     andR
     ref("reflexive")
-    unfold("CSeq") `atMost` 1 `in` "cut2_0_0"
+    unfold("CSeq").`atMost`(1).`in`("cut2_0_0")
     trivial
     ref("chi")
     allL(foc"z")
@@ -220,11 +220,11 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
   val phiBc1m = Lemma(esPhiBc1m) {
     orL
     exL(fov"a")
-    unfold("CSeq") `atMost` 1 `in` "Ant_0"
+    unfold("CSeq").`atMost`(1).`in`("Ant_0")
     andL
     exR(fov"a")
-    unfold("JumpSeq") `atMost` 1 `in` "Suc_0_0"
-    unfold("EndSeq") `atMost` 1 `in` "Suc_0_0"
+    unfold("JumpSeq").`atMost`(1).`in`("Suc_0_0")
+    unfold("EndSeq").`atMost`(1).`in`("Suc_0_0")
     andR
     andR
     ref("delta")
@@ -234,11 +234,11 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     exR("cut2_0", fov"a")
     andR
     ref("reflexive")
-    unfold("CSeq") `atMost` 1 `in` "cut2_0_0"
+    unfold("CSeq").`atMost`(1).`in`("cut2_0_0")
     andR
     trivial
-    unfold("CSeq") `atMost` 1 `in` "cut2_0_0"
-    unfold("CSeq") `atMost` 1 `in` "Ant_0_1"
+    unfold("CSeq").`atMost`(1).`in`("cut2_0_0")
+    unfold("CSeq").`atMost`(1).`in`("Ant_0_1")
     trivial
     ref("chi")
     allL(foc"z")
@@ -255,16 +255,16 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     orR
     orL
     exL(fov"a")
-    unfold("CSeq") `atMost` 1 `in` "Ant_0"
+    unfold("CSeq").`atMost`(1).`in`("Ant_0")
     exR("Suc_0", fov"a")
-    unfold("JumpSeq") `atMost` 1 `in` "Suc_0_0"
-    unfold("EndSeq") `atMost` 1 `in` "Suc_0_0"
-    unfold("iNum") `atMost` 1 `in` "Ant_0"
+    unfold("JumpSeq").`atMost`(1).`in`("Suc_0_0")
+    unfold("EndSeq").`atMost`(1).`in`("Suc_0_0")
+    unfold("iNum").`atMost`(1).`in`("Ant_0")
     ref("NumericTransitivityBase")
     allR(fov"b")
     exR("cut_0", fov"b")
     allL(le"(iNum 0 b)")
-    unfold("CSeq") `atMost` 1 `in` "cut_0_0"
+    unfold("CSeq").`atMost`(1).`in`("cut_0_0")
     ref("ordcon")
     ref("phi")
   }
@@ -280,18 +280,18 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     orR
     orL
     exL(fov"a")
-    unfold("CSeq") `atMost` 1 `in` "Ant_0"
+    unfold("CSeq").`atMost`(1).`in`("Ant_0")
     andL
     exR("Suc_0", fov"a")
-    unfold("JumpSeq") `atMost` 1 `in` "Suc_0_0"
-    unfold("EndSeq") `atMost` 1 `in` "Suc_0_0"
+    unfold("JumpSeq").`atMost`(1).`in`("Suc_0_0")
+    unfold("EndSeq").`atMost`(1).`in`("Suc_0_0")
     andR
     ref("delta")
     ref("mu")
     allR(fov"b")
     exR("cut_0", fov"b")
     allL(le"(iNum (s m) b)")
-    unfold("CSeq") `atMost` 1 `in` "cut_0_0"
+    unfold("CSeq").`atMost`(1).`in`("cut_0_0")
     andR
     ref("ordcon")
     ref("theta")
@@ -310,25 +310,25 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     orR
     orL
     exL(fov"a")
-    unfold("CSeq") `atMost` 1 `in` "Ant_0"
+    unfold("CSeq").`atMost`(1).`in`("Ant_0")
     exR("Suc_0", fov"a")
-    unfold("JumpSeq") `atMost` 1 `in` "Suc_0_0"
+    unfold("JumpSeq").`atMost`(1).`in`("Suc_0_0")
     andR
-    unfold("EndSeq") `atMost` 1 `in` "Suc_0_0"
-    unfold("iNum") `atMost` 1 `in` "Ant_0"
+    unfold("EndSeq").`atMost`(1).`in`("Suc_0_0")
+    unfold("iNum").`atMost`(1).`in`("Ant_0")
     ref("NumericTransitivityBase")
     cut("cut2", hof"?x (iLEQ(suc(a),suc(x)) & CSeq(0,s(n),x) ) | !y (iLEQ(suc(a),suc(y)) & LE(f(y),s(n)))")
     orR
     exR("cut2_0", fov"a")
     andR
     ref("reflexive")
-    unfold("CSeq") `atMost` 1 `in` "cut2_0_0"
+    unfold("CSeq").`atMost`(1).`in`("cut2_0_0")
     trivial
     ref("chi")
     allR(fov"b")
     exR("cut_0", fov"b")
     allL(le"(iNum 0 b)")
-    unfold("CSeq") `atMost` 1 `in` "cut_0_0"
+    unfold("CSeq").`atMost`(1).`in`("cut_0_0")
     ref("ordcon")
     ref("phi")
   }
@@ -344,11 +344,11 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     orR
     orL
     exL(fov"a")
-    unfold("CSeq") `atMost` 1 `in` "Ant_0"
+    unfold("CSeq").`atMost`(1).`in`("Ant_0")
     exR("Suc_0", fov"a")
-    unfold("JumpSeq") `atMost` 1 `in` "Suc_0_0"
+    unfold("JumpSeq").`atMost`(1).`in`("Suc_0_0")
     andR
-    unfold("EndSeq") `atMost` 1 `in` "Suc_0_0"
+    unfold("EndSeq").`atMost`(1).`in`("Suc_0_0")
     andL
     andR
     ref("psi")
@@ -358,13 +358,13 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     exR("cut2_0", fov"a")
     andR
     ref("reflexive")
-    unfold("CSeq") `atMost` 1 `in` "cut2_0_0"
+    unfold("CSeq").`atMost`(1).`in`("cut2_0_0")
     trivial
     ref("chi")
     allR(fov"b")
     exR("cut_0", fov"b")
     allL(le"(iNum (s m) b)")
-    unfold("CSeq") `atMost` 1 `in` "cut_0_0"
+    unfold("CSeq").`atMost`(1).`in`("cut_0_0")
     andR
     ref("ordcon")
     ref("theta")
@@ -381,14 +381,14 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
   val chiBc = Lemma(esChiBc) {
     orL
     exL(fov"b")
-    unfold("CSeq") `atMost` 1 `in` "Ant_0"
+    unfold("CSeq").`atMost`(1).`in`("Ant_0")
     exR(fov"b")
     andL
     andR
     trivial
-    unfold("JumpSeq") `in` "Suc_0_0"
-    unfold("EndSeq") `atMost` 1 `in` "Suc_0_0"
-    unfold("iNum") `atMost` 1 `in` "Ant_0_1"
+    unfold("JumpSeq").`in`("Suc_0_0")
+    unfold("EndSeq").`atMost`(1).`in`("Suc_0_0")
+    unfold("iNum").`atMost`(1).`in`("Ant_0_1")
     ref("NumericTransitivityBase")
     allL(foc"z")
     andL
@@ -405,12 +405,12 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     orL
     exL(fov"b")
     andL
-    unfold("CSeq") `atMost` 1 `in` "Ant_0_1"
+    unfold("CSeq").`atMost`(1).`in`("Ant_0_1")
     exR(fov"b")
     andR
     trivial
-    unfold("JumpSeq") `in` "Suc_0_0"
-    unfold("EndSeq") `atMost` 1 `in` "Suc_0_0"
+    unfold("JumpSeq").`in`("Suc_0_0")
+    unfold("EndSeq").`atMost`(1).`in`("Suc_0_0")
     andR
     andL
     ref("delta")
@@ -431,13 +431,13 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     orL
     exL(fov"b")
     andL
-    unfold("CSeq") `atMost` 1 `in` "Ant_0_1"
+    unfold("CSeq").`atMost`(1).`in`("Ant_0_1")
     exR(fov"b")
     andR
     trivial
-    unfold("JumpSeq") `in` "Suc_0_0"
-    unfold("EndSeq") `atMost` 1 `in` "Suc_0_0"
-    unfold("iNum") `atMost` 1 `in` "Ant_0_1"
+    unfold("JumpSeq").`in`("Suc_0_0")
+    unfold("EndSeq").`atMost`(1).`in`("Suc_0_0")
+    unfold("iNum").`atMost`(1).`in`("Ant_0_1")
     andR
     ref("NumericTransitivityBase")
     cut("cut2", hof"?x (iLEQ(suc(b),suc(x)) & CSeq(0,0,x)) | !y (iLEQ(suc(b),suc(y))  & LE(f(y),0))")
@@ -445,8 +445,8 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     exR("cut2_0", fov"b")
     andR
     ref("reflexive")
-    unfold("CSeq") `atMost` 1 `in` "cut2_0_0"
-    unfold("iNum") `atMost` 1 `in` "cut2_0_0"
+    unfold("CSeq").`atMost`(1).`in`("cut2_0_0")
+    unfold("iNum").`atMost`(1).`in`("cut2_0_0")
     trivial
     ref("chi")
     allL(foc"z")
@@ -464,13 +464,13 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     orL
     exL(fov"b")
     andL
-    unfold("CSeq") `atMost` 1 `in` "Ant_0_1"
+    unfold("CSeq").`atMost`(1).`in`("Ant_0_1")
     andL
     exR(fov"b")
     andR
     trivial
-    unfold("JumpSeq") `atMost` 1 `in` "Suc_0_0"
-    unfold("EndSeq") `atMost` 1 `in` "Suc_0_0"
+    unfold("JumpSeq").`atMost`(1).`in`("Suc_0_0")
+    unfold("EndSeq").`atMost`(1).`in`("Suc_0_0")
     andR
     andR
     ref("delta")
@@ -480,9 +480,9 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     exR("cut2_0", fov"b")
     andR
     ref("reflexive")
-    unfold("CSeq") `atMost` 1 `in` "cut2_0_0"
+    unfold("CSeq").`atMost`(1).`in`("cut2_0_0")
     andR
-    unfold("CSeq") `atMost` 1 `in` "cut2_0_0"
+    unfold("CSeq").`atMost`(1).`in`("cut2_0_0")
     trivial
     trivial
     ref("chi")
@@ -502,22 +502,22 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     orR
     orL
     exL(fov"b")
-    unfold("CSeq") `atMost` 1 `in` "Ant_0"
+    unfold("CSeq").`atMost`(1).`in`("Ant_0")
     andL
     exR("Suc_0", fov"b")
     andR
     trivial
-    unfold("JumpSeq") `atMost` 1 `in` "Suc_0_0"
-    unfold("EndSeq") `atMost` 1 `in` "Suc_0_0"
-    unfold("iNum") `atMost` 1 `in` "Ant_0_1"
+    unfold("JumpSeq").`atMost`(1).`in`("Suc_0_0")
+    unfold("EndSeq").`atMost`(1).`in`("Suc_0_0")
+    unfold("iNum").`atMost`(1).`in`("Ant_0_1")
     ref("NumericTransitivityBase")
 
     allR(fov"c")
     exR("cut_0", fov"c")
     allL(le"(iNum 0 c)")
-    unfold("CSeq") `atMost` 1 `in` "cut_0_0"
+    unfold("CSeq").`atMost`(1).`in`("cut_0_0")
     andL
-    unfold("iNum") `atMost` 1 `in` "Ant_0_0_0"
+    unfold("iNum").`atMost`(1).`in`("Ant_0_0_0")
     andR("cut_1")
     trivial
     andR("cut_0_0")
@@ -538,14 +538,14 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     orR
     orL
     exL(fov"b")
-    unfold("CSeq") `atMost` 1 `in` "Ant_0"
+    unfold("CSeq").`atMost`(1).`in`("Ant_0")
     andL
     andL
     exR("Suc_0", fov"b")
     andR
     trivial
-    unfold("JumpSeq") `atMost` 1 `in` "Suc_0_0"
-    unfold("EndSeq") `atMost` 1 `in` "Suc_0_0"
+    unfold("JumpSeq").`atMost`(1).`in`("Suc_0_0")
+    unfold("EndSeq").`atMost`(1).`in`("Suc_0_0")
     andR
     ref("delta")
     ref("mu")
@@ -553,7 +553,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     allR(fov"c")
     exR("cut_0", fov"c")
     allL(le"(iNum (s m) c)")
-    unfold("CSeq") `atMost` 1 `in` "cut_0_0"
+    unfold("CSeq").`atMost`(1).`in`("cut_0_0")
     andL
     andR("cut_1")
     allL(fov"c")
@@ -581,22 +581,22 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     orR
     orL
     exL(fov"b")
-    unfold("CSeq") `atMost` 1 `in` "Ant_0"
+    unfold("CSeq").`atMost`(1).`in`("Ant_0")
     andL
     exR("Suc_0", fov"b")
     andR
     trivial
-    unfold("JumpSeq") `atMost` 1 `in` "Suc_0_0"
-    unfold("EndSeq") `atMost` 1 `in` "Suc_0_0"
+    unfold("JumpSeq").`atMost`(1).`in`("Suc_0_0")
+    unfold("EndSeq").`atMost`(1).`in`("Suc_0_0")
     andR
-    unfold("iNum") `atMost` 1 `in` "Ant_0_1"
+    unfold("iNum").`atMost`(1).`in`("Ant_0_1")
     ref("NumericTransitivityBase")
     cut("cut2", hof"?x (iLEQ(suc(b),suc(x)) & CSeq(0,s(n),x) ) | !y (iLEQ(suc(b),suc(y)) & LE(f(y),s(n)))")
     orR
     exR("cut2_0", fov"b")
     andR
     ref("reflexive")
-    unfold("CSeq") `atMost` 1 `in` "cut2_0_0"
+    unfold("CSeq").`atMost`(1).`in`("cut2_0_0")
     trivial
     ref("chi")
     allR(fov"b")
@@ -609,7 +609,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     andL
     andR
     trivial
-    unfold("CSeq") `atMost` 1 `in` "cut_0_0"
+    unfold("CSeq").`atMost`(1).`in`("cut_0_0")
     ref("ordcon")
     forget("Ant_0")
     ref("chi")
@@ -626,16 +626,16 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     orR
     orL
     exL(fov"b")
-    unfold("CSeq") `atMost` 1 `in` "Ant_0"
+    unfold("CSeq").`atMost`(1).`in`("Ant_0")
     andL
     andL
-    unfold("JumpSeq") `atMost` 1 `in` "Suc_0"
+    unfold("JumpSeq").`atMost`(1).`in`("Suc_0")
     exR("Suc_0", fov"b")
-    unfold("JumpSeq") `atMost` 1 `in` "Suc_0_0"
-    unfold("EndSeq") `atMost` 1 `in` "Suc_0_0"
+    unfold("JumpSeq").`atMost`(1).`in`("Suc_0_0")
+    unfold("EndSeq").`atMost`(1).`in`("Suc_0_0")
     andR
     trivial
-    unfold("JumpSeq") `atMost` 1 `in` "Suc_0_0"
+    unfold("JumpSeq").`atMost`(1).`in`("Suc_0_0")
     andR
     andR
     ref("delta")
@@ -646,7 +646,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     exR("cut2_0", fov"b")
     andR
     ref("reflexive")
-    unfold("CSeq") `atMost` 1 `in` "cut2_0_0"
+    unfold("CSeq").`atMost`(1).`in`("cut2_0_0")
     andR("cut2_0_0")
     trivial
     trivial
@@ -661,7 +661,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     andL
     andR
     trivial
-    unfold("CSeq") `atMost` 1 `in` "cut_0_0"
+    unfold("CSeq").`atMost`(1).`in`("cut_0_0")
     andR
     ref("ordcon")
     ref("xi")
@@ -680,10 +680,10 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     )
   )
   val deltaBc = Lemma(esDeltaBc) {
-    unfold("CSeq") `atMost` 1 `in` "Ant_1"
-    unfold("iNum") `atMost` 1 `in` "Ant_1"
-    unfold("iNum") `in` "Suc_0"
-    unfold("iNum") `in` "Ant_0"
+    unfold("CSeq").`atMost`(1).`in`("Ant_1")
+    unfold("iNum").`atMost`(1).`in`("Ant_1")
+    unfold("iNum").`in`("Suc_0")
+    unfold("iNum").`in`("Ant_0")
 
     ref("NumericTransitivity")
   }
@@ -698,7 +698,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     )
   )
   val deltaSc = Lemma(esDeltaSc) {
-    unfold("CSeq") `atMost` 1 `in` "Ant_1"
+    unfold("CSeq").`atMost`(1).`in`("Ant_1")
     andL
     cut("cut", hof"E(f(a), f(iNum(s(k), a)))")
     ref("delta")
@@ -712,10 +712,10 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
       Seq("Suc_0" -> hof"EndSeq(0,a)")
     )
   val muBc = Lemma(esmuBc) {
-    unfold("CSeq") `atMost` 1 `in` "Ant_0"
-    unfold("EndSeq") `atMost` 1 `in` "Suc_0"
-    unfold("iNum") `atMost` 1 `in` "Suc_0"
-    unfold("iNum") `atMost` 1 `in` "Ant_0"
+    unfold("CSeq").`atMost`(1).`in`("Ant_0")
+    unfold("EndSeq").`atMost`(1).`in`("Suc_0")
+    unfold("iNum").`atMost`(1).`in`("Suc_0")
+    unfold("iNum").`atMost`(1).`in`("Ant_0")
     ref("NumericTransitivityBase")
   }
   ctx += ProofDefinitionDeclaration(le"mu 0 n a", muBc)
@@ -726,8 +726,8 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
       Seq("Suc_0" -> hof"EndSeq(s(k),a)")
     )
   val muSc = Lemma(esmuSc) {
-    unfold("CSeq") `atMost` 1 `in` "Ant_0"
-    unfold("EndSeq") `atMost` 1 `in` "Suc_0"
+    unfold("CSeq").`atMost`(1).`in`("Ant_0")
+    unfold("EndSeq").`atMost`(1).`in`("Suc_0")
     andL
     andR
     ref("delta")
@@ -744,8 +744,8 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     )
   )
   val epsilonBc = Lemma(esEpsilonBc) {
-    unfold("POR") `atMost` 1 `in` "Ant_2"
-    unfold("POR") `atMost` 1 `in` "Ant_2"
+    unfold("POR").`atMost`(1).`in`("Ant_2")
+    unfold("POR").`atMost`(1).`in`("Ant_2")
     ref("LEDefinitionSingle")
   }
   ctx += ProofDefinitionDeclaration(le"epsilon 0 m k a", epsilonBc)
@@ -758,7 +758,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     )
   )
   val epsilonSc = Lemma(esEpsilonSc) {
-    unfold("POR") `atMost` 1 `in` "Ant_2"
+    unfold("POR").`atMost`(1).`in`("Ant_2")
     orL
     ref("LEDefinitionSingle")
     ref("epsilon")
@@ -776,8 +776,8 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
   )
   val nuBc = Lemma(esNuBc) {
     allL(le"(iNum 0 a)")
-    unfold("POR") `atMost` 1 `in` "Ant_0_0"
-    unfold("CSeq") `atMost` 1 `in` "Suc_0"
+    unfold("POR").`atMost`(1).`in`("Ant_0_0")
+    unfold("CSeq").`atMost`(1).`in`("Suc_0")
     trivial
   }
   ctx += ProofDefinitionDeclaration(le"nu 0 0 a", nuBc)
@@ -792,8 +792,8 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
   )
   val nu1Bc = Lemma(esNu1Bc) {
     allL(le"(iNum 0 a)")
-    unfold("POR") `atMost` 1 `in` "Ant_0_0"
-    unfold("CSeq") `atMost` 1 `in` "Suc_0"
+    unfold("POR").`atMost`(1).`in`("Ant_0_0")
+    unfold("CSeq").`atMost`(1).`in`("Suc_0")
     orL
     trivial
     ref("epsilon")
@@ -810,8 +810,8 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
   )
   val nu2Bc = Lemma(esNu2Bc) {
     allL(le"(iNum (s m) a)")
-    unfold("POR") `atMost` 1 `in` "Ant_0_0"
-    unfold("CSeq") `atMost` 1 `in` "Suc_0"
+    unfold("POR").`atMost`(1).`in`("Ant_0_0")
+    unfold("CSeq").`atMost`(1).`in`("Suc_0")
     andR
     trivial
     ref("nu")
@@ -828,8 +828,8 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
   )
   val nuSc = Lemma(esNuSc) {
     allL(le"(iNum (s m) a)")
-    unfold("POR") `atMost` 1 `in` "Ant_0_0"
-    unfold("CSeq") `atMost` 1 `in` "Suc_0"
+    unfold("POR").`atMost`(1).`in`("Ant_0_0")
+    unfold("CSeq").`atMost`(1).`in`("Suc_0")
     orL
     andR
     trivial
@@ -850,10 +850,10 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     )
   )
   val psiBc = Lemma(esPsiBc) {
-    unfold("CSeq") `atMost` 1 `in` "Ant_1"
-    unfold("iNum") `atMost` 1 `in` "Ant_1"
-    unfold("iNum") `in` "Suc_0"
-    unfold("iNum") `in` "Ant_0"
+    unfold("CSeq").`atMost`(1).`in`("Ant_1")
+    unfold("iNum").`atMost`(1).`in`("Ant_1")
+    unfold("iNum").`in`("Suc_0")
+    unfold("iNum").`in`("Ant_0")
 
     ref("NumericTransitivity")
   }
@@ -868,7 +868,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
     )
   )
   val psiSc = Lemma(esPsiSc) {
-    unfold("CSeq") `atMost` 1 `in` "Ant_1"
+    unfold("CSeq").`atMost`(1).`in`("Ant_1")
     andL
     cut("cut", hof"E(f(a), f(iNum(s(k), a)))")
     ref("delta")
@@ -882,10 +882,10 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
       Seq("Suc_0" -> hof"EndSeq(0,a)")
     )
   val zetaBc = Lemma(esZetaBc) {
-    unfold("CSeq") `atMost` 1 `in` "Ant_0"
-    unfold("EndSeq") `atMost` 1 `in` "Suc_0"
-    unfold("iNum") `atMost` 1 `in` "Suc_0"
-    unfold("iNum") `atMost` 1 `in` "Ant_0"
+    unfold("CSeq").`atMost`(1).`in`("Ant_0")
+    unfold("EndSeq").`atMost`(1).`in`("Suc_0")
+    unfold("iNum").`atMost`(1).`in`("Suc_0")
+    unfold("iNum").`atMost`(1).`in`("Ant_0")
     ref("NumericTransitivityBase")
   }
   ctx += ProofDefinitionDeclaration(le"zeta 0 n a", zetaBc)
@@ -896,8 +896,8 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
       Seq("Suc_0" -> hof"EndSeq(s(k),a)")
     )
   val zetaSc = Lemma(esZetaSc) {
-    unfold("CSeq") `atMost` 1 `in` "Ant_0"
-    unfold("EndSeq") `atMost` 1 `in` "Suc_0"
+    unfold("CSeq").`atMost`(1).`in`("Ant_0")
+    unfold("EndSeq").`atMost`(1).`in`("Suc_0")
     andL
     andR
     ref("delta")
@@ -914,7 +914,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
       )
     )
   val thetaBc = Lemma(esThetaBc) {
-    unfold("CSeq") `atMost` 1 `in` "Suc_0"
+    unfold("CSeq").`atMost`(1).`in`("Suc_0")
     allL(le"(iNum 0 a)")
     ref("ordcon")
   }
@@ -929,7 +929,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
       )
     )
   val thetaSc = Lemma(esThetaSc) {
-    unfold("CSeq") `atMost` 1 `in` "Suc_0"
+    unfold("CSeq").`atMost`(1).`in`("Suc_0")
     andR
     allL(le"(iNum (s k) a)")
     ref("ordcon")
@@ -946,7 +946,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
       )
     )
   val xiBc = Lemma(esXiBc) {
-    unfold("CSeq") `atMost` 1 `in` "Suc_0"
+    unfold("CSeq").`atMost`(1).`in`("Suc_0")
     allL(le"(iNum 0 c)")
     andL
     ref("ordcon")
@@ -962,7 +962,7 @@ object GradedStrictMonotoneSequenceSchema extends TacticsProof {
       )
     )
   val xiSc = Lemma(esXiSc) {
-    unfold("CSeq") `atMost` 1 `in` "Suc_0"
+    unfold("CSeq").`atMost`(1).`in`("Suc_0")
     andR
     allL(le"(iNum (s k) c)")
     andL

@@ -24,7 +24,7 @@ package object logic {
   }
 
   def projectorDefinitionRules(it: InductiveType): Iterable[ReductionRule] =
-    projectorDefinitions(it) map {
+    projectorDefinitions(it).map {
       case All.Block(_, Eq(lhs, rhs)) => ReductionRule(lhs, rhs)
     }
 

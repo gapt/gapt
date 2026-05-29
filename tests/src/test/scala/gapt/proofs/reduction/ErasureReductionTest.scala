@@ -35,7 +35,7 @@ class ErasureReductionTest extends Specification with SatMatchers {
     val c3 = hoa"P x y" +: Clause() :+ hoa"Q x"
     val c4 = hoa"Q (s (s (s (s 0))))" +: Clause()
 
-    val Seq(ec1, ec2, ec3, ec4) = Seq(c1, c2, c3, c4) map { red.forward }
+    val Seq(ec1, ec2, ec3, ec4) = Seq(c1, c2, c3, c4).map { red.forward }
 
     val p1 = Input(ec2)
     val p2 = MguResolution(p1, Suc(0), p1, Ant(0))
@@ -149,7 +149,7 @@ class ReductionTest extends Specification {
           HOFunctionReduction()
       val (tffDeep, _) = reductionForChecking.forward(proof.deep)
 
-      Escargot isValid tffDeep must_== true
+      Escargot.isValid(tffDeep) must_== true
 
       val z3WithQuantifiers = new Z3("UF")
       if (!z3WithQuantifiers.isInstalled) skipped
@@ -174,7 +174,7 @@ class ReductionTest extends Specification {
           HOFunctionReduction()
       val (tffDeep, _) = reductionForChecking.forward(proof.deep)
 
-      Escargot isValid tffDeep must_== true
+      Escargot.isValid(tffDeep) must_== true
 
       val z3WithQuantifiers = new Z3("UF")
       if (!z3WithQuantifiers.isInstalled) skipped

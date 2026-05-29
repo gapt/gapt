@@ -10,7 +10,7 @@ trait SequentProof[+Formula, This <: SequentProof[Formula, This]] extends DagPro
   /**
    * The list of main formulas of the rule.
    */
-  def mainFormulas: Seq[Formula] = mainIndices map { conclusion(_) }
+  def mainFormulas: Seq[Formula] = mainIndices.map { conclusion(_) }
 
   /**
    * A list of lists of SequentIndices denoting the auxiliary formula(s) of the rule.
@@ -26,7 +26,7 @@ trait SequentProof[+Formula, This <: SequentProof[Formula, This]] extends DagPro
   /**
    * The upper sequents of the rule.
    */
-  def premises: Seq[Sequent[Formula]] = immediateSubProofs map (_.conclusion)
+  def premises: Seq[Sequent[Formula]] = immediateSubProofs.map(_.conclusion)
 
   /**
    * A list of lists containing the auxiliary formulas of the rule.

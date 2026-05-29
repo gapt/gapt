@@ -169,7 +169,7 @@ object GradeReductionEquality extends CutReduction {
 object gradeReduction extends CutReduction {
 
   def applyWithSequentConnector(cut: CutRule): Option[(LKProof, SequentConnector)] =
-    this(cut) map { guessPermutation(cut, _) }
+    this(cut).map { guessPermutation(cut, _) }
 
   /**
    * Reduces the logical complexity of the cut formula or removes the cut.

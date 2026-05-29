@@ -24,14 +24,14 @@ object FunctionIterationRefutation extends TacticsProof(FunctionIterationSchema.
   ctx += ProofNameDeclaration(le"rho n", esrho)
   val esPRSc = Sequent(Seq("Ant_0" -> hof"phiSFAFF(s(n))"), Seq())
   val PRSc: LKProof = Lemma(esPRSc) {
-    unfold("phiSFAFF") `in` "Ant_0"
+    unfold("phiSFAFF").`in`("Ant_0")
     andL
     ref("chi")
   }
   ctx += ProofDefinitionDeclaration(le"Top (s n)", PRSc)
   val esPRBc = Sequent(Seq("Ant_0" -> hof"phiSFAFF(0)"), Seq())
   val PRBc: LKProof = Lemma(esPRBc) {
-    unfold("phiSFAFF") `in` "Ant_0"
+    unfold("phiSFAFF").`in`("Ant_0")
     trivial
   }
   ctx += ProofDefinitionDeclaration(le"Top 0", PRBc)
@@ -43,7 +43,7 @@ object FunctionIterationRefutation extends TacticsProof(FunctionIterationSchema.
     Seq()
   )
   val ChiSc: LKProof = Lemma(esChiSc) {
-    unfold("phiSFATF") `in` "Ant_1"
+    unfold("phiSFATF").`in`("Ant_1")
     andL
     allL("Ant_0", le"(if n a)")
     orL
@@ -61,7 +61,7 @@ object FunctionIterationRefutation extends TacticsProof(FunctionIterationSchema.
     Seq()
   )
   val ChiBc: LKProof = Lemma(esChiBc) {
-    unfold("phiSFATF") `in` "Ant_1"
+    unfold("phiSFATF").`in`("Ant_1")
     trivial
   }
   ctx += ProofDefinitionDeclaration(le"chi 0", ChiBc)
@@ -73,8 +73,8 @@ object FunctionIterationRefutation extends TacticsProof(FunctionIterationSchema.
     Seq("Suc_0" -> hof"P(if(s(n), a))")
   )
   val RhoSc: LKProof = Lemma(esRhoSc) {
-    unfold("phiSTATF") `in` "Ant_1"
-    unfold("if") `in` "Suc_0"
+    unfold("phiSTATF").`in`("Ant_1")
+    unfold("if").`in`("Suc_0")
     allL("Ant_0", le"(if n a)")
     orL
     negL("Ant_0_0")
@@ -90,8 +90,8 @@ object FunctionIterationRefutation extends TacticsProof(FunctionIterationSchema.
     Seq("Suc_0" -> hof"P(if(0, a))")
   )
   val RhoBc: LKProof = Lemma(esRhoBc) {
-    unfold("phiSTATF") `in` "Ant_1"
-    unfold("if") `in` "Suc_0"
+    unfold("phiSTATF").`in`("Ant_1")
+    unfold("if").`in`("Suc_0")
     trivial
   }
   ctx += ProofDefinitionDeclaration(le"rho 0", RhoBc)

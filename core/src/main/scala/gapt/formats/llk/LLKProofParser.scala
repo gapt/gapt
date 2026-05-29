@@ -26,7 +26,7 @@ case class ExtendedProofDatabase(
     }
   ).toList
   val Definitions = edefinitions
-  val axioms = eaxioms.values.toList map (x => HOLSequent(Nil, x :: Nil))
+  val axioms = eaxioms.values.toList.map(x => HOLSequent(Nil, x :: Nil))
 
   def proof(name: String) = proofs.find(_._1 == name).get._2
 }

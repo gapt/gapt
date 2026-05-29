@@ -58,7 +58,7 @@ class Substitute(private val problem: TipSmtProblem) {
       constructor.name +: (oldNames ++ blacklist)
     )
     val newNames =
-      oldNames map { oldName =>
+      oldNames.map { oldName =>
         if (blacklist.contains(oldName)) {
           nameGenerator.fresh(oldName)
         } else {
@@ -82,20 +82,20 @@ class Substitute(private val problem: TipSmtProblem) {
   ): TipSmtExpression = {
     expr match {
       case expr @ TipSmtAnd(_) =>
-        TipSmtAnd(expr.exprs map { apply(_, substitution) })
+        TipSmtAnd(expr.exprs.map { apply(_, substitution) })
 
       case expr @ TipSmtOr(_) =>
-        TipSmtOr(expr.exprs map { apply(_, substitution) })
+        TipSmtOr(expr.exprs.map { apply(_, substitution) })
 
       case expr @ TipSmtImp(_) =>
-        TipSmtImp(expr.exprs map { apply(_, substitution) })
+        TipSmtImp(expr.exprs.map { apply(_, substitution) })
 
       case expr @ TipSmtEq(_) =>
-        TipSmtEq(expr.exprs map { apply(_, substitution) })
+        TipSmtEq(expr.exprs.map { apply(_, substitution) })
 
       case expr @ TipSmtDistinct(_) =>
         TipSmtDistinct(
-          expr.expressions map { apply(_, substitution) }
+          expr.expressions.map { apply(_, substitution) }
         )
 
       case expr @ TipSmtForall(_, _) =>
@@ -123,7 +123,7 @@ class Substitute(private val problem: TipSmtProblem) {
       case TipSmtFun(funName, arguments) =>
         TipSmtFun(
           funName,
-          arguments map { apply(_, substitution) }
+          arguments.map { apply(_, substitution) }
         )
 
       case expr @ TipSmtNot(_) =>
@@ -154,7 +154,7 @@ class Substitute(private val problem: TipSmtProblem) {
   ): TipSmtExpression =
     TipSmtMatch(
       apply(expr.expr, substitution),
-      expr.cases map { substCase(_, substitution) }
+      expr.cases.map { substCase(_, substitution) }
     )
 
   /**
@@ -265,7 +265,7 @@ class Substitute(private val problem: TipSmtProblem) {
           freeVariables(problem, cas.expr)
       )
 
-    val newBoundVariables = boundVariables map {
+    val newBoundVariables = boundVariables.map {
       boundName =>
         if (substFreeVars.contains(boundName.name))
           TipSmtIdentifier(nameGenerator.fresh(boundName.name))
@@ -310,7 +310,7 @@ class Substitute(private val problem: TipSmtProblem) {
         Substitution(
           oldNames
             .map { TipSmtIdentifier.apply }
-            .zip(newBoundNames map { TipSmtIdentifier.apply })*
+            .zip(newBoundNames.map { TipSmtIdentifier.apply })*
         )
       )
     TipSmtCase(newPattern, newExpression)

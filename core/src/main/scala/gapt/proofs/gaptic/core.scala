@@ -94,9 +94,9 @@ case class ProofState private (
       finishedSubGoals.get(p.index) match {
         case Some(segment) =>
           val subProof = recurse(segment, ())._1
-          require(subProof.conclusion `multiSetEquals` segment.conclusion)
+          require(subProof.conclusion.`multiSetEquals`(segment.conclusion))
           val segment_ = WeakeningContractionMacroRule(subProof, p.conclusion)
-          require(segment_.conclusion `multiSetEquals` p.conclusion)
+          require(segment_.conclusion.`multiSetEquals`(p.conclusion))
           (segment_, SequentConnector.guessInjection(fromLower = p.conclusion, toUpper = segment_.conclusion).inv)
         case None =>
           if (failOnMissingSubgoal)
@@ -139,7 +139,7 @@ case class OpenAssumption(
   override def name = "ass"
 
   def labels = labelledSequent.map(_._1)
-  override def conclusion = labelledSequent map { labelledFormula => labelledFormula._2 }
+  override def conclusion = labelledSequent.map { labelledFormula => labelledFormula._2 }
 
   def apply(label: String): Formula = labelledSequent.elements.find(_._1 == label).get._2
 
@@ -227,7 +227,7 @@ trait Tactic[+T] { self =>
   }
 
   def map[S](f: T => S)(implicit file: sourcecode.File, line: sourcecode.Line): Tactic[S] = new Tactic[S] {
-    def apply(proofState: ProofState) = self(proofState) map { x => f(x._1) -> x._2 }
+    def apply(proofState: ProofState) = self(proofState).map { x => f(x._1) -> x._2 }
     override def toString = s"$self.map(<${file.value}:${line.value}>)"
   }
 
@@ -262,7 +262,7 @@ trait Tactic[+T] { self =>
       val focusedGoal = proofState.currentSubGoalOption.toList
       self(proofState.setSubGoals(focusedGoal)).flatMap {
         case (res, newState) if newState.subGoals.isEmpty =>
-          Right((res, newState.setSubGoals(proofState.subGoals diff focusedGoal)))
+          Right((res, newState.setSubGoals(proofState.subGoals.diff(focusedGoal))))
         case (_, newState) =>
           Left(TacticFailure(this, newState, "focused goal not solved"))
       }
@@ -411,13 +411,13 @@ trait BinaryTactic[+T] extends Tactic[T] {
   /**
    * Synonym for `andThen`.
    */
-  def left(that: Tactic[Unit]): Tactic[Unit] = this `andThen` that.focused
+  def left(that: Tactic[Unit]): Tactic[Unit] = this.`andThen`(that.focused)
 
   /**
    * Creates a new Tactical by first applying `this` to the current subgoal and then `that` to the new right subgoal.
    * @param that A Tactical.
    */
-  def right(that: Tactic[Unit]): Tactic[Unit] = this `andThen` focus(1) `andThen` that.focused
+  def right(that: Tactic[Unit]): Tactic[Unit] = this.`andThen`(focus(1)).`andThen`(that.focused)
 }
 
 /**

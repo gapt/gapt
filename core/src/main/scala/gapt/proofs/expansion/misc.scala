@@ -53,7 +53,7 @@ object numberOfInstancesET {
     result
   }
   def apply(t: ExpansionTree): Int = apply(t.term)
-  def apply(s: ExpansionSequent): Int = s.elements map apply sum
+  def apply(s: ExpansionSequent): Int = s.elements.map(apply) sum
   def apply(ep: ExpansionProof): Int = apply(ep.expansionSequent)
 }
 

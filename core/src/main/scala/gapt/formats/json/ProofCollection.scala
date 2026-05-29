@@ -59,8 +59,8 @@ private[json] object ProofCollectionCodec {
    */
   private[json] def proofCollectionDecoder[P <: DagProof[P]](
       decodeProof: (String, ACursor, Decoder[P]) => Result[P]
-  ): Decoder[ProofCollection[P]] = Decoder.decodeMap[Int, Json] emap { jsonMap =>
-    lazy val proofMap: Map[Int, Eval[Result[P]]] = jsonMap map { case (i, json) => (i, Later(json.as[P])) }
+  ): Decoder[ProofCollection[P]] = Decoder.decodeMap[Int, Json].emap { jsonMap =>
+    lazy val proofMap: Map[Int, Eval[Result[P]]] = jsonMap.map { case (i, json) => (i, Later(json.as[P])) }
     lazy val numDecoder: Decoder[P] = Decoder.decodeInt.emap { i =>
       proofMap.get(i) match {
         case Some(e) => e.value.leftMap(_.message)

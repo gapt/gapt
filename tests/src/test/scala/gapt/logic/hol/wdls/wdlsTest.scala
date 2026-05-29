@@ -394,7 +394,7 @@ class wdlsTest extends Specification {
         val equivalentSubstitutedFormula = simplifyPropositional(BetaReduction.betaNormalize(
           equivalentSubstitution(pep.firstOrderPart)
         ))
-        val isValid = Escargot isValid Iff(substitutedFormula, equivalentSubstitutedFormula)
+        val isValid = Escargot.isValid(Iff(substitutedFormula, equivalentSubstitutedFormula))
         val errorMessage =
           s"""|applying $substitution is not equivalent to applying $equivalentSubstitution to $pep.formula
             |applying $substitution

@@ -131,7 +131,7 @@ case class Dual(sub: Struct) extends Struct {
 case class A(fo: Formula) extends Struct { // Atomic Struct
   override def toString(): String = fo.toString
   override def formula_equal(s: Struct) = s match {
-    case A(x) => fo `syntaxEquals` (x)
+    case A(x) => fo.`syntaxEquals`(x)
     case _    => false
   }
 

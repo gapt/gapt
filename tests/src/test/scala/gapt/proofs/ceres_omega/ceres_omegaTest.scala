@@ -74,7 +74,7 @@ class ceres_omegaTest extends Specification with SequentMatchers {
     "be computed for a cut-free proof" in {
       val filename = "tape3ex.llk"
       val pdb = LLKProofParser(ClasspathInputFile(filename))
-      val elp = AtomicExpansion(eliminateDefinitions(pdb.Definitions)(regularize(pdb proof "INFTAPE")))
+      val elp = AtomicExpansion(eliminateDefinitions(pdb.Definitions)(regularize(pdb.proof("INFTAPE"))))
       val selp = skolemizeLK(elp)
       val proj = Projections(selp, CERES.skipPropositional)
       val struct = extractStruct(selp, CERES.skipPropositional)
@@ -87,7 +87,7 @@ class ceres_omegaTest extends Specification with SequentMatchers {
     "be computed for the ntape proof" in {
       val filename = "tape3ex.llk"
       val pdb = LLKProofParser(ClasspathInputFile(filename))
-      val elp = AtomicExpansion(eliminateDefinitions(pdb.Definitions)(regularize(pdb proof "TAPEPROOF")))
+      val elp = AtomicExpansion(eliminateDefinitions(pdb.Definitions)(regularize(pdb.proof("TAPEPROOF"))))
       val selp = skolemizeLK(elp)
       val proj = Projections(selp, CERES.skipPropositional)
       val struct = extractStruct(selp, CERES.skipPropositional)
@@ -127,7 +127,7 @@ class ceres_omegaTest extends Specification with SequentMatchers {
     "be computed for the first-order permutation example" in {
       val filename = "perm.llk"
       val pdb = LLKProofParser(ClasspathInputFile(filename))
-      val elp = AtomicExpansion(eliminateDefinitions(pdb.Definitions)(regularize(pdb proof "AxProof")))
+      val elp = AtomicExpansion(eliminateDefinitions(pdb.Definitions)(regularize(pdb.proof("AxProof"))))
       val selp = skolemizeLK(elp)
 
       val cutformulas = selp.dagLike.breadthFirst.filter({ case CutRule(_, _, _, _) => true; case _ => false })

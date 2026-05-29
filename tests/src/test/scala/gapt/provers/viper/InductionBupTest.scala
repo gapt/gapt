@@ -33,8 +33,8 @@ class InductionBupTest extends Specification with SatMatchers {
       Map(hoc"nil" -> List(), hoc"cons" -> List(hov"ν1: i", hov"ν2: list")),
       List(hov"γ: w"),
       Vector(
-        Production(tau, enc encode hof"p γ nil"),
-        Production(tau, enc encode hof"p (f γ) ν2 -> p (g γ) ν2 -> p γ (cons ν1 ν2)"),
+        Production(tau, enc.encode(hof"p γ nil")),
+        Production(tau, enc.encode(hof"p (f γ) ν2 -> p (g γ) ν2 -> p γ (cons ν1 ν2)")),
         Production(hov"γ:w", le"f γ"),
         Production(hov"γ:w", le"g γ"),
         Production(hov"γ:w", le"c")

@@ -26,7 +26,7 @@ class SubstitutionsTest extends Specification {
       val e2 = App(g, y)
       val sub1 = Substitution(x, e1)
       val sub2 = Substitution(x, e2)
-      val sub = sub1 compose sub2
+      val sub = sub1.compose(sub2)
       sub must beEqualTo(sub2)
     }
     "substitute correctly when Substitution is applied (1)" in {

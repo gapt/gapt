@@ -28,7 +28,7 @@ object PDAnalysis extends AnalysisWithCeresOmega {
     css.map(_.map(subf))
   }
 
-  lazy val fol_css_ = css_ map (_.map(_ match {
+  lazy val fol_css_ = css_.map(_.map(_ match {
     case x: Atom => x
     case x: Any  => throw new Exception(s"$x is not an atom!")
   }))

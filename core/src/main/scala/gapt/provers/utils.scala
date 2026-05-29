@@ -73,7 +73,7 @@ object groundFreeVariables {
     // TODO(gabriel): fresh base types
     val tyGround = Substitution(Map(), tyVars.map(v => v -> TBase(v.name)))
     Substitution(
-      vars.toSeq map { v =>
+      vars.toSeq.map { v =>
         v -> Const(nameGen `fresh` v.name, tyGround(v.ty))
       },
       tyGround.typeMap

@@ -36,7 +36,7 @@ object replacementContext {
    * @return See `replacementContext.apply()`.
    */
   def apply(ty: Ty, exp: Expr, positions: Iterable[HOLPosition])(implicit d: DummyImplicit): ReplacementContext =
-    apply(ty, exp, positions map { HOLPosition.toLambdaPosition(exp) })
+    apply(ty, exp, positions.map { HOLPosition.toLambdaPosition(exp) })
 
   /**
    * Creates a replacement context.

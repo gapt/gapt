@@ -102,7 +102,7 @@ private class skolemizeLK(
       case LogicalAxiom(atom)     => LogicalAxiom(subf(atom))
       case ReflexivityAxiom(term) => ReflexivityAxiom(sub(term))
 
-      case ProofLink(name, seq) => ProofLink(subst(name), seq `map` subf)
+      case ProofLink(name, seq) => ProofLink(subst(name), seq.`map`(subf))
 
       case TopAxiom    => TopAxiom
       case BottomAxiom => BottomAxiom
@@ -207,7 +207,7 @@ private class skolemizeLK(
         val q_ = apply(
           q,
           p.occConnectors.head.parent(info).updated(a, info(p.mainIndices.head).instantiateWeakQuantifier(freshVar).addGeneralization(q.conclusion(a))),
-          subst `compose` Substitution(freshVar -> term)
+          subst.`compose`(Substitution(freshVar -> term))
         )
         val Quant(v, matrix, _) = subf(p.mainFormulas.head): @unchecked
         if (pol) ExistsRightRule(q_, a, matrix, sub(term), v)
@@ -218,7 +218,7 @@ private class skolemizeLK(
         val q_ = apply(
           p.subProof,
           p.occConnectors.head.parent(info).updated(p.aux, info(p.mainIndices.head).instantiateQuantifier(freshVar)),
-          subst `compose` Substitution(freshVar -> p.skolemTerm)
+          subst.`compose`(Substitution(freshVar -> p.skolemTerm))
         )
         if (p.aux.isSuc) ForallSkRightRule(q_, p.aux, subf(p.mainFormula), sub(p.skolemTerm))
         else ExistsSkLeftRule(q_, p.aux, subf(p.mainFormula), sub(p.skolemTerm))
@@ -243,7 +243,7 @@ private class skolemizeLK(
         val q_ = apply(
           q,
           p.occConnectors.head.parent(info).updated(a, info(p.mainIndices.head).instantiateQuantifier(skolemTerm)),
-          subst `compose` Substitution(eigen -> skolemTerm)
+          subst.`compose`(Substitution(eigen -> skolemTerm))
         )
         if (pol) ForallSkRightRule(q_, a, subf(p.mainFormulas.head), sub(skolemTerm))
         else ExistsSkLeftRule(q_, a, subf(p.mainFormulas.head), sub(skolemTerm))

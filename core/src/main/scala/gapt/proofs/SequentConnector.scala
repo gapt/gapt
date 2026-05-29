@@ -31,7 +31,7 @@ case class SequentConnector(lowerSizes: (Int, Int), upperSizes: (Int, Int), pare
    * @return A sequent of lists of indices such that for each index i of upperSequent, childrenSequent(i)
    *                       is the list of indices of the children of i in lowerSequent.
    */
-  def childrenSequent: Sequent[Seq[SequentIndex]] = Sequent(antU, sucU) `map` children
+  def childrenSequent: Sequent[Seq[SequentIndex]] = Sequent(antU, sucU).`map`(children)
 
   /**
    * Given a SequentIndex for the lower sequent, this returns the list of parents of that occurrence in
@@ -83,7 +83,7 @@ case class SequentConnector(lowerSizes: (Int, Int), upperSizes: (Int, Int), pare
    */
   def parents[T](lowerTs: Sequent[T]): Sequent[Seq[T]] = {
     require(lowerTs.sizes == lowerSizes)
-    childrenSequent map { _ map { lowerTs(_) } }
+    childrenSequent.map { _.map { lowerTs(_) } }
   }
 
   /**
@@ -91,7 +91,7 @@ case class SequentConnector(lowerSizes: (Int, Int), upperSizes: (Int, Int), pare
    * sequent that contains the unique parent of the Ts in lowerTs, or default otherwise.
    */
   def parent[T](lowerTs: Sequent[T], default: => T = ???): Sequent[T] =
-    parents(lowerTs) map {
+    parents(lowerTs).map {
       case Seq(t) => t
       case _      => default
     }
@@ -140,7 +140,7 @@ case class SequentConnector(lowerSizes: (Int, Int), upperSizes: (Int, Int), pare
    */
   def *(that: SequentConnector) = {
     require(this.upperSizes == that.lowerSizes)
-    SequentConnector(this.lowerSizes, that.upperSizes, this.parentsSequent map { _ flatMap that.parents distinct })
+    SequentConnector(this.lowerSizes, that.upperSizes, this.parentsSequent.map { _ flatMap that.parents distinct })
   }
 
   /**
@@ -190,7 +190,7 @@ case class SequentConnector(lowerSizes: (Int, Int), upperSizes: (Int, Int), pare
   def -(child: SequentIndex, parent: SequentIndex) = {
     require(child `withinSizes` lowerSizes)
     require(parent `withinSizes` upperSizes)
-    SequentConnector(lowerSizes, upperSizes, parentsSequent.updated(child, parents(child) diff Seq(parent)))
+    SequentConnector(lowerSizes, upperSizes, parentsSequent.updated(child, parents(child).diff(Seq(parent))))
   }
 }
 
@@ -202,7 +202,7 @@ object SequentConnector {
    * @param sequent A sequent.
    * @return An SequentConnector that connects every index of sequent to itself.
    */
-  def apply(sequent: Sequent[?]): SequentConnector = SequentConnector(sequent, sequent, sequent.indicesSequent map { Seq(_) })
+  def apply(sequent: Sequent[?]): SequentConnector = SequentConnector(sequent, sequent, sequent.indicesSequent.map { Seq(_) })
 
   /**
    * Connects two given sequents via a given parentsSequent.

@@ -72,7 +72,7 @@ object NdiffSchema extends TacticsProof {
     cut("cut", hof"?x ?y (LEQ(AP(s(0),x),y) &  E(f(y),s(0)))")
     allL("Ant_0", fov"K")
     exR("cut", fov"K")
-    unfold("bloc") `atMost` 1 `in` "Ant_0_0"
+    unfold("bloc").`atMost`(1).`in`("Ant_0_0")
     exR("cut_0", le"AP(s(0), K)")
     andR
     theory
@@ -80,9 +80,9 @@ object NdiffSchema extends TacticsProof {
     exL(fov"K")
     exL(fov"B")
     allL(fov"K")
-    unfold("bloc") `atMost` 1 `in` "Ant_0_0"
+    unfold("bloc").`atMost`(1).`in`("Ant_0_0")
     exR(fov"B")
-    unfold("DIFF") `atMost` 1 `in` "Suc_0_0"
+    unfold("DIFF").`atMost`(1).`in`("Suc_0_0")
     exR("Suc_0_0", fov"A")
     negR
     andL
@@ -102,7 +102,7 @@ object NdiffSchema extends TacticsProof {
   )
   val phiSc = Lemma(esphiSc) {
     cut("cut", hof"?x ?y (LEQ(AP(n,x),y) &  E(f(y),n))")
-    unfold("bloc") `atMost` 1 `in` "Ant_1"
+    unfold("bloc").`atMost`(1).`in`("Ant_1")
     allL("Ant_1", fov"t")
     andL("Ant_1_0")
     andL("Ant_1_0_0")
@@ -114,8 +114,8 @@ object NdiffSchema extends TacticsProof {
     forget("Ant_1_0_0_0_0")
     forget("Suc_0")
     ref("chi")
-    unfold("DIFF") `atMost` 1 `in` "Suc_0"
-    unfold("bloc") `atMost` 1 `in` "Ant_1"
+    unfold("DIFF").`atMost`(1).`in`("Suc_0")
+    unfold("bloc").`atMost`(1).`in`("Ant_1")
     allL("Ant_1", fov"t")
     andL("Ant_1_0")
     andL("Ant_1_0_0")
@@ -138,8 +138,8 @@ object NdiffSchema extends TacticsProof {
     Seq("Suc_0" -> hof"DIFF(0, B)")
   )
   val phiBc = Lemma(esphiBc) {
-    unfold("DIFF") `atMost` 1 `in` "Suc_0"
-    unfold("bloc") `atMost` 1 `in` "Ant_1"
+    unfold("DIFF").`atMost`(1).`in`("Suc_0")
+    unfold("bloc").`atMost`(1).`in`("Ant_1")
     allL("Ant_1", fov"A")
     andL("Ant_1_0")
     exR("Suc_0", fov"A")
@@ -155,7 +155,7 @@ object NdiffSchema extends TacticsProof {
   val chiBc1 = Lemma(eschiBc1) {
     exR("Suc_0", fov"K")
     exR("Suc_0_0", fov"B")
-    unfold("bloc") `atMost` 1 `in` "Ant_0"
+    unfold("bloc").`atMost`(1).`in`("Ant_0")
     allL("Ant_0", fov"B")
     andL("Ant_0_0")
     andL("Ant_0_0_0")
@@ -170,7 +170,7 @@ object NdiffSchema extends TacticsProof {
     Seq("Suc_0" -> hof"∃x ∃y ( LEQ(AP(k,x), y) & E(f(y), k))")
   )
   val chiSc = Lemma(eschiSc) {
-    unfold("bloc") `atMost` 1 `in` "Ant_0"
+    unfold("bloc").`atMost`(1).`in`("Ant_0")
     allL("Ant_0", fov"B")
     andL("Ant_0_0")
     andL("Ant_0_0_0")
@@ -187,7 +187,7 @@ object NdiffSchema extends TacticsProof {
 
     exR("Suc_0", fov"K")
     exR("Suc_0_0", fov"B")
-    unfold("bloc") `atMost` 1 `in` "Ant_0"
+    unfold("bloc").`atMost`(1).`in`("Ant_0")
     allL("Ant_0", fov"B")
     andL("Ant_0_0")
     andL("Ant_0_0_0")
@@ -206,7 +206,7 @@ object NdiffSchema extends TacticsProof {
 
     exR("Suc_0", fov"K")
     exR("Suc_0_0", le"AP(s(m), K)")
-    unfold("bloc") `atMost` 1 `in` "Ant_0"
+    unfold("bloc").`atMost`(1).`in`("Ant_0")
     allL("Ant_0", le"AP(k, K)")
     andL("Ant_0_0")
     andL("Ant_0_0_0")

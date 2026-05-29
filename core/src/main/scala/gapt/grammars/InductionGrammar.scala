@@ -210,9 +210,9 @@ private class IndGExporter(unicode: Boolean, g: InductionGrammar)
           case (c, nu) => show(c(nu), true, Map(), knownTypes)._1.inPrec(0)
         })
 
-    val prods = stack(g.productions.toList
-      sortBy { case Production(as, ts) => (g.nonTerminals.indexOf(as), ts.toString) }
-      map { p =>
+    val prods = stack((g.productions.toList
+      sortBy { case Production(as, ts) => (g.nonTerminals.indexOf(as), ts.toString) })
+      .map { p =>
         group(csep(p.zipped.map {
           case (a, t) =>
             group(group(show(a, false, Map(), knownTypes)._1.inPrec(Precedence.impl) </> "→") </> nest(

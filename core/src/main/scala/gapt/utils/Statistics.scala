@@ -44,7 +44,7 @@ object Statistic {
   /**
    * static "not applicable" CSV value for a non-existing statistic
    */
-  val na_statistic = Statistic(0 :: Nil).toCSV map (_ => na)
+  val na_statistic = Statistic(0 :: Nil).toCSV.map(_ => na)
 
   /**
    * Creates a statistic from a collection of values of type T.

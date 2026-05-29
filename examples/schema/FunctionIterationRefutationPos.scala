@@ -28,14 +28,14 @@ object FunctionIterationRefutationPos extends TacticsProof(FunctionIterationSche
 
   val esPRSc = Sequent(Seq(), Seq("Suc_0" -> hof"phiSFAFF(s(n))"))
   val PRSc: LKProof = Lemma(esPRSc) {
-    unfold("phiSFAFF") `in` "Suc_0"
+    unfold("phiSFAFF").`in`("Suc_0")
     orR
     ref("chi")
   }
   ctx += ProofDefinitionDeclaration(le"Top (s n)", PRSc)
   val esPRBc = Sequent(Seq(), Seq("Suc_0" -> hof"phiSFAFF(0)"))
   val PRBc: LKProof = Lemma(esPRBc) {
-    unfold("phiSFAFF") `in` "Suc_0"
+    unfold("phiSFAFF").`in`("Suc_0")
     trivial
   }
   ctx += ProofDefinitionDeclaration(le"Top 0", PRBc)
@@ -47,7 +47,7 @@ object FunctionIterationRefutationPos extends TacticsProof(FunctionIterationSche
     )
   )
   val ChiSc: LKProof = Lemma(esChiSc) {
-    unfold("phiSFATF") `in` "Suc_1"
+    unfold("phiSFATF").`in`("Suc_1")
     orR
     exR("Suc_0", le"(if n a)")
     andR
@@ -64,15 +64,15 @@ object FunctionIterationRefutationPos extends TacticsProof(FunctionIterationSche
     )
   )
   val ChiBc: LKProof = Lemma(esChiBc) {
-    unfold("phiSFATF") `in` "Suc_1"
+    unfold("phiSFATF").`in`("Suc_1")
     trivial
   }
   ctx += ProofDefinitionDeclaration(le"chi 0", ChiBc)
 
   val esRhoSc = Sequent(Seq(), Seq("Suc_0" -> hof"?A (P(A) & -P(f(A)))", "Suc_1" -> hof"P(if(s(n), a))", "Suc_2" -> hof"phiSTATF(s(n))"))
   val RhoSc: LKProof = Lemma(esRhoSc) {
-    unfold("phiSTATF") `in` "Suc_2"
-    unfold("if") `in` "Suc_1"
+    unfold("phiSTATF").`in`("Suc_2")
+    unfold("if").`in`("Suc_1")
     exR("Suc_0", le"(if n a)")
     andR
     ref("rho")
@@ -82,8 +82,8 @@ object FunctionIterationRefutationPos extends TacticsProof(FunctionIterationSche
   ctx += ProofDefinitionDeclaration(le"rho (s n)", RhoSc)
   val esRhoBc = Sequent(Seq(), Seq("Suc_0" -> hof"?A (P(A) & -P(f(A)))", "Suc_1" -> hof"P(if(0, a))", "Suc_2" -> hof"phiSTATF(0)"))
   val RhoBc: LKProof = Lemma(esRhoBc) {
-    unfold("phiSTATF") `in` "Suc_2"
-    unfold("if") `in` "Suc_1"
+    unfold("phiSTATF").`in`("Suc_2")
+    unfold("if").`in`("Suc_1")
     negR
     trivial
   }

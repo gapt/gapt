@@ -276,7 +276,7 @@ object toSExpression {
       "declare-fun",
       LSymbol(definition.name) +:
         keywordsToSExpression(definition.keywords) :+
-        LList(definition.argumentTypes map { toSExpression(_) }) :+
+        LList(definition.argumentTypes.map { toSExpression(_) }) :+
         toSExpression(definition.returnType)*
     )
   }
@@ -409,7 +409,7 @@ object toSExpression {
   def apply(expression: TipSmtForall): SExpression = {
     LFun(
       "forall",
-      LList(expression.variables map { toSExpression(_) }),
+      LList(expression.variables.map { toSExpression(_) }),
       toSExpression(expression.formula)
     )
   }
@@ -421,7 +421,7 @@ object toSExpression {
   def apply(expression: TipSmtExists): SExpression = {
     LFun(
       "exists",
-      LList(expression.variables map { toSExpression(_) }),
+      LList(expression.variables.map { toSExpression(_) }),
       toSExpression(expression.formula)
     )
   }
@@ -447,7 +447,7 @@ object toSExpression {
       case TipSmtDefault =>
         LSymbol("default")
       case p @ TipSmtConstructorPattern(_, _) =>
-        LFun(p.constructor.name, p.identifiers map { toSExpression(_) }*)
+        LFun(p.constructor.name, p.identifiers.map { toSExpression(_) }*)
     }
   }
 

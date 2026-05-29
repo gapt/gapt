@@ -83,12 +83,12 @@ object extractInstances {
 
 object groundTerms {
   def apply(term: Expr): Expr =
-    Substitution(freeVariables(term) map { case v @ Var(name, ty) => v -> Const(name, ty) })(term)
+    Substitution(freeVariables(term).map { case v @ Var(name, ty) => v -> Const(name, ty) })(term)
 
-  def apply(lang: Set[Expr]): Set[Expr] = lang map apply
+  def apply(lang: Set[Expr]): Set[Expr] = lang.map(apply)
 
   def apply(term: FOLTerm): FOLTerm = apply(term.asInstanceOf[Expr]).asInstanceOf[FOLTerm]
-  def apply(lang: Set[FOLTerm])(implicit dummyImplicit: DummyImplicit): Set[FOLTerm] = lang map apply
+  def apply(lang: Set[FOLTerm])(implicit dummyImplicit: DummyImplicit): Set[FOLTerm] = lang.map(apply)
 }
 
 /**
@@ -119,7 +119,7 @@ class InstanceTermEncoding private (val endSequent: HOLSequent, val instanceTerm
   /**
    * The propositional matrices phi of the end-sequent.
    */
-  val matrices = endSequent map { removeAllQuantifiers(_) }
+  val matrices = endSequent.map { removeAllQuantifiers(_) }
 
   /**
    * The propositional matrices of the end-sequent, where the formulas in the succedent are negated.
@@ -162,10 +162,10 @@ class InstanceTermEncoding private (val endSequent: HOLSequent, val instanceTerm
    * The function symbols used to encode the instances of each formula in the end-sequent.
    */
   val symbols = for ((vars, idx) <- quantVars.zipWithIndex)
-    yield Const(mkSym(idx), FunctionType(instanceTermType, vars map { _.ty }))
+    yield Const(mkSym(idx), FunctionType(instanceTermType, vars.map { _.ty }))
 
   private def instanceTerms(signedInstance: Formula, esFormula: SequentIndex) =
-    syntacticMatching(signedMatrices(esFormula), signedInstance) map { subst =>
+    syntacticMatching(signedMatrices(esFormula), signedInstance).map { subst =>
       esFormula -> subst(quantVars(esFormula))
     }
 
@@ -173,7 +173,7 @@ class InstanceTermEncoding private (val endSequent: HOLSequent, val instanceTerm
     endSequent.indices.flatMap { instanceTerms(signedInstance, _) }.headOption
 
   def encodeOption(signedInstance: Formula): Option[Expr] =
-    findInstance(signedInstance) map {
+    findInstance(signedInstance).map {
       case (esFormula, terms) => symbols(esFormula)(terms*)
     }
 
@@ -185,7 +185,7 @@ class InstanceTermEncoding private (val endSequent: HOLSequent, val instanceTerm
    * Encodes a sequent consisting of instances of an instance sequent.
    */
   def encode(instance: HOLSequent): Set[Expr] =
-    instance.map(identity, -_).elements map encode toSet
+    instance.map(identity, -_).elements.map(encode) toSet
 
   /**
    * Encodes an expansion sequent (of an instance proof).
@@ -210,11 +210,11 @@ class InstanceTermEncoding private (val endSequent: HOLSequent, val instanceTerm
   /**
    * Maps a function symbol to its corresponding formula in the end-sequent.
    */
-  def findESFormula(sym: Const): Option[Formula] = findESIndex(sym) map { endSequent(_) }
+  def findESFormula(sym: Const): Option[Formula] = findESIndex(sym).map { endSequent(_) }
 
   def decodeOption(term: Expr): Option[(SequentIndex, Substitution)] = term match {
     case Apps(f: Const, args) =>
-      findESIndex(f) map { idx => idx -> Substitution(quantVars(idx) zip args) }
+      findESIndex(f).map { idx => idx -> Substitution(quantVars(idx) zip args) }
     case _ => None
   }
 
@@ -224,18 +224,18 @@ class InstanceTermEncoding private (val endSequent: HOLSequent, val instanceTerm
    * The resulting instance can contain alpha in the inductive case.
    */
   def decodeToPolarizedFormula(term: Expr): (Formula, Polarity) =
-    decodeOption(term) map { case (idx, subst) => subst(matrices(idx)) -> idx.polarity } get
+    decodeOption(term).map { case (idx, subst) => subst(matrices(idx)) -> idx.polarity } get
 
   def decodeToSignedFormula(term: Expr): Formula =
-    decodeOption(term) map { case (idx, subst) => subst(signedMatrices(idx)) } get
+    decodeOption(term).map { case (idx, subst) => subst(signedMatrices(idx)) } get
 
   def decodeToInstanceSequent(terms: Iterable[Expr]): HOLSequent =
-    Sequent(terms map decodeToPolarizedFormula toSeq)
+    Sequent(terms.map(decodeToPolarizedFormula) toSeq)
 
   def decodeToExpansionSequent(terms: Iterable[Expr]): ExpansionSequent =
-    Sequent(terms flatMap decodeOption groupBy { _._1 } map {
+    Sequent((terms flatMap decodeOption groupBy { _._1 }).map {
       case (idx, instances) =>
-        formulaToExpansionTree(endSequent(idx), instances map { _._2 } toList, idx.polarity) -> idx.polarity
+        formulaToExpansionTree(endSequent(idx), instances.map { _._2 } toList, idx.polarity) -> idx.polarity
     } toSeq)
 
   def decodeToExpansionProof(terms: Iterable[Expr]): ExpansionProof =
@@ -249,7 +249,7 @@ class InstanceTermEncoding private (val endSequent: HOLSequent, val instanceTerm
     RecursionScheme(
       encodedNTs(recursionScheme.startSymbol),
       encodedNTs.values.toSet,
-      recursionScheme.rules map { r =>
+      recursionScheme.rules.map { r =>
         (r: @unchecked) match {
           case Rule(Apps(lhsNT: Const, lhsArgs), Apps(rhsNT: Const, rhsArgs)) if encodedNTs contains rhsNT =>
             Rule(encodedNTs(lhsNT)(lhsArgs*), encodedNTs(rhsNT)(rhsArgs*))
@@ -268,7 +268,7 @@ class InstanceTermEncoding private (val endSequent: HOLSequent, val instanceTerm
     RecursionScheme(
       decodedNTs(recursionScheme.startSymbol),
       decodedNTs.values.toSet,
-      recursionScheme.rules map { r =>
+      recursionScheme.rules.map { r =>
         (r: @unchecked) match {
           case Rule(Apps(lhsNT: Const, lhsArgs), Apps(rhsNT: Const, rhsArgs)) if decodedNTs contains rhsNT =>
             Rule(decodedNTs(lhsNT)(lhsArgs*), decodedNTs(rhsNT)(rhsArgs*))
@@ -284,7 +284,7 @@ object InstanceTermEncoding {
   def defaultType = TBase("_Inst", Nil)
 
   def apply(endSequent: HOLSequent, instanceTermType: Ty = defaultType): InstanceTermEncoding =
-    new InstanceTermEncoding(endSequent map { toVNF(_) }, instanceTermType)
+    new InstanceTermEncoding(endSequent.map { toVNF(_) }, instanceTermType)
 
   def apply(expansionSequent: ExpansionSequent): (Set[Expr], InstanceTermEncoding) = {
     val encoding = InstanceTermEncoding(expansionSequent.shallow)

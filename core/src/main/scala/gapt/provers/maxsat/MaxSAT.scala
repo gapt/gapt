@@ -33,8 +33,8 @@ abstract class MaxSATSolver {
     debug(s"${hard.size} hard clauses with ${hard.toSeq.map(_.size).sum} literals and ${hard.flatMap(_.elements).toSet.size} unique variables")
     solve(
       encoding.encodeCNF(hard),
-      soft map { case (clause, weight) => encoding.encodeClause(clause) -> weight } toSeq
-    ) map { dimacsModel =>
+      soft.map { case (clause, weight) => encoding.encodeClause(clause) -> weight } toSeq
+    ).map { dimacsModel =>
       encoding.decodeModel(dimacsModel)
     }
   }

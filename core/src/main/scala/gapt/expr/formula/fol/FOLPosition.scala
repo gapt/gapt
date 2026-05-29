@@ -25,7 +25,7 @@ object FOLPosition {
    * @return Positions of subexpressions satisfying pred.
    */
   def getPositions(exp: FOLExpression, pred: FOLExpression => Boolean = _ => true): List[FOLPosition] = {
-    HOLPosition.getPositions(
+    (HOLPosition.getPositions(
       exp,
       {
         case e: FOLExpression => pred(e)
@@ -33,7 +33,7 @@ object FOLPosition {
       }
     ) filter {
       definesFOLPosition(exp)
-    } map {
+    }).map {
       toFOLPosition(exp)
     }
   }
@@ -68,7 +68,7 @@ object FOLPosition {
    * @param exp2 The second expression.
    * @return The list of outermost positions at which exp1 and exp2 differ.
    */
-  def differingPositions(exp1: FOLExpression, exp2: FOLExpression): List[FOLPosition] = HOLPosition.differingPositions(exp1, exp2) map { toFOLPosition(exp1) }
+  def differingPositions(exp1: FOLExpression, exp2: FOLExpression): List[FOLPosition] = HOLPosition.differingPositions(exp1, exp2).map { toFOLPosition(exp1) }
 
   def definesFOLPosition(exp: FOLExpression)(pos: HOLPosition): Boolean = {
     if (pos.isEmpty)

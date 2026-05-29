@@ -36,7 +36,7 @@ class TipOcnf(problem: TipSmtProblem) {
   problem.symbolTable = Some(SymbolTable(problem))
 
   def apply(): TipSmtProblem = {
-    val newDefinitions = problem.definitions map { definition =>
+    val newDefinitions = problem.definitions.map { definition =>
       definition match {
         case funDef @ TipSmtFunctionDefinition(_, _, _, _, _) =>
           apply(funDef)
@@ -90,7 +90,7 @@ class TipOcnf(problem: TipSmtProblem) {
         val newIfFalse = tipOcnf(TipSmtNot(c.ifFalse))
         TipSmtIte(c.cond, newIfTrue, newIfFalse)
       case m @ TipSmtMatch(_, _) =>
-        val newCases = m.cases map { c =>
+        val newCases = m.cases.map { c =>
           TipSmtCase(c.pattern, tipOcnf(TipSmtNot(c.expr)))
         }
         TipSmtMatch(m.expr, newCases)
@@ -108,7 +108,7 @@ class TipOcnf(problem: TipSmtProblem) {
         TipSmtIte(c.cond, newIfTrue, newIfFalse)
       case m @ TipSmtMatch(_, _) =>
         val matchExpr = captureAvoiding(m, Seq(expression))
-        val newCases = matchExpr.cases map { c =>
+        val newCases = matchExpr.cases.map { c =>
           TipSmtCase(
             c.pattern,
             tipOcnf(TipSmtMatch(c.expr, expression.cases))
@@ -139,7 +139,7 @@ class TipOcnf(problem: TipSmtProblem) {
       case m @ TipSmtMatch(_, _) =>
         val matchExpr =
           captureAvoiding(m, Seq(expression.ifTrue, expression.ifFalse))
-        val newCases = matchExpr.cases map { c =>
+        val newCases = matchExpr.cases.map { c =>
           TipSmtCase(
             c.pattern,
             tipOcnf(TipSmtIte(c.expr, expression.ifTrue, expression.ifFalse))
@@ -206,7 +206,7 @@ class TipOcnf(problem: TipSmtProblem) {
   }
 
   private def ocnfConnective(connective: Connective): TipSmtExpression = {
-    val newSubExpressions = connective.subexpressions map tipOcnf
+    val newSubExpressions = connective.subexpressions.map(tipOcnf)
     if (newSubExpressions.exists(_.isInstanceOf[TipSmtIte])) {
       ocnfConnectiveIte(connective, newSubExpressions)
     } else if (newSubExpressions.exists(_.isInstanceOf[TipSmtMatch])) {
@@ -244,7 +244,7 @@ class TipOcnf(problem: TipSmtProblem) {
     val matchExpr =
       captureAvoiding(m.asInstanceOf[TipSmtMatch], left ++ right)
     val TipSmtMatch(matchedTerm, cases) = matchExpr
-    val newCases = cases map {
+    val newCases = cases.map {
       cas =>
         TipSmtCase(
           cas.pattern,
@@ -261,7 +261,7 @@ class TipOcnf(problem: TipSmtProblem) {
     val blacklist = expressions.flatMap(freeVariables(problem, _))
     TipSmtMatch(
       tipSmtMatch.expr,
-      tipSmtMatch.cases map { c =>
+      tipSmtMatch.cases.map { c =>
         new Substitute(problem).awayFrom(c, blacklist)
       }
     )

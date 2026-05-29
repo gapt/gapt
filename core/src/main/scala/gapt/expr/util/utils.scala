@@ -262,7 +262,7 @@ object expressionDepth {
  */
 object rename {
   def awayFrom(blacklist: Iterable[VarOrConst]): NameGenerator =
-    new NameGenerator(blacklist map { _.name })
+    new NameGenerator(blacklist.map { _.name })
 
   def apply(v: Var, blackList: Iterable[VarOrConst]): Var = awayFrom(blackList).fresh(v)
   def apply(v: FOLVar, blackList: Iterable[VarOrConst]): FOLVar = awayFrom(blackList).fresh(v)
@@ -274,11 +274,11 @@ object rename {
    */
   def apply(vs: Iterable[FOLVar], blackList: Iterable[VarOrConst]): Map[FOLVar, FOLVar] = {
     val nameGen = awayFrom(blackList)
-    vs map { v => v -> nameGen.fresh(v) } toMap
+    vs.map { v => v -> nameGen.fresh(v) } toMap
   }
   def apply(vs: Iterable[Var], blackList: Iterable[VarOrConst])(implicit dummyImplicit: DummyImplicit): Map[Var, Var] = {
     val nameGen = awayFrom(blackList)
-    vs map { (v: Var) => v -> nameGen.fresh(v) } toMap
+    vs.map { (v: Var) => v -> nameGen.fresh(v) } toMap
   }
 }
 

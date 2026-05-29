@@ -48,7 +48,7 @@ class ReconstructDatatypes(problem: TipSmtProblem) {
   }
 
   private def apply(fun: TipSmtFunctionDefinition): Unit = {
-    val context = fun.parameters map {
+    val context = fun.parameters.map {
       case TipSmtFormalParameter(name, typ) =>
         name -> Datatype(typ.typename)
     }
@@ -72,7 +72,7 @@ class ReconstructDatatypes(problem: TipSmtProblem) {
       reconstructTypes(subexpression, variables)
       expression.datatype = Some(Datatype("bool"))
     case TipSmtForall(vars, subexpression) =>
-      val context: Seq[(String, Datatype)] = vars map {
+      val context: Seq[(String, Datatype)] = vars.map {
         v =>
           v.name -> Datatype(v.typ.typename)
       }
@@ -83,7 +83,7 @@ class ReconstructDatatypes(problem: TipSmtProblem) {
       expression.datatype = Some(Datatype("bool"))
 
     case TipSmtExists(vars, subexpression) =>
-      val context: Seq[(String, Datatype)] = vars map {
+      val context: Seq[(String, Datatype)] = vars.map {
         v =>
           v.name -> Datatype(v.typ.typename)
       }
@@ -144,7 +144,7 @@ class ReconstructDatatypes(problem: TipSmtProblem) {
           case (identifier, _) =>
             !problem.symbolTable.get.contains(identifier.name)
         }
-        val context = matchVariables map {
+        val context = matchVariables.map {
           case (identifier, index) =>
             (identifier.name, constructorType.argumentTypes(index))
         }

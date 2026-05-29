@@ -70,7 +70,7 @@ case class StandardInductionAxioms(
          * @return An inductive proof of the axiom.
          */
         def proof = {
-          val inductiveCaseProofs = constructors map { inductiveCaseProof(_) }
+          val inductiveCaseProofs = constructors.map { inductiveCaseProof(_) }
           var proofState = ProofState(formula)
           proofState += repeat(allR)
           proofState += impR
@@ -93,7 +93,7 @@ case class StandardInductionAxioms(
           val inductiveCaseFormula = inductionCase(inductionVariable, inductionFormula, constructor)
           val (primaryVariables, secondaryVariables, caseConclusion) =
             inductionCaseConclusion(inductionVariable, constructor, inductionFormula)
-          val inductionHypotheses = primaryVariables map {
+          val inductionHypotheses = primaryVariables.map {
             primaryVariable => Substitution(inductionVariable -> primaryVariable)(inductionFormula)
           }
           var proofState = ProofState(
@@ -109,7 +109,7 @@ case class StandardInductionAxioms(
             proofState += trivial
           else
             primaryVariables foreach {
-              _ => proofState += andR("icf") `andThen` trivial `orElse` trivial
+              _ => proofState += andR("icf").`andThen`(trivial) `orElse` trivial
             }
           proofState += allL("icf", secondaryVariables*).forget `orElse` skip
           proofState += trivial

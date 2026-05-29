@@ -1406,7 +1406,7 @@ class LKTest extends Specification {
   }
 
   "exchange rules" should {
-    val Seq(a, b) = Seq("a", "b") map { FOLAtom(_) }
+    val Seq(a, b) = Seq("a", "b").map { FOLAtom(_) }
     "ExchangeLeftMacroRule" in {
       val p1 = LogicalAxiom(a)
       val p2 = WeakeningLeftRule(p1, b)

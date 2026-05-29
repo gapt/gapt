@@ -55,20 +55,20 @@ case class ReforestState(
     def abbr(t: Expr): Expr = t match {
       case Apps(digram.c1, as1_) =>
         // Innermost-first rewriting is really important here!
-        val as1 = as1_ map abbr
+        val as1 = as1_.map(abbr)
         as1(digram.i) match {
           case Apps(digram.c2, as2) =>
-            newNT(as1.take(digram.i) ++ as2 ++ as1.drop(digram.i + 1) map abbr*)
-          case _ => digram.c1(as1 map abbr*)
+            newNT((as1.take(digram.i) ++ as2 ++ as1.drop(digram.i + 1)).map(abbr)*)
+          case _ => digram.c1(as1.map(abbr)*)
         }
-      case Apps(f, as) => f(as map abbr*)
+      case Apps(f, as) => f(as.map(abbr)*)
     }
 
     copy(
       rules = Map(newNT(newNTArgs*) -> Set(digram.c1(newNTArgs.take(digram.i)
         ++ Seq(digram.c2(newNTArgs.slice(digram.i, digram.i + ts2.size)*))
         ++ newNTArgs.drop(digram.i + ts2.size)*))) ++
-        rules.view.mapValues { _ map abbr }.toMap,
+        rules.view.mapValues { _.map(abbr) }.toMap,
       highestNTIndex = highestNTIndex + 1
     )
   }
@@ -81,8 +81,8 @@ case class ReforestState(
 
     def abbr(t: Expr): Expr = t match {
       case Apps(rigidTrigram.c, as) if as(rigidTrigram.i) == as(rigidTrigram.j) =>
-        newNT(as.take(rigidTrigram.j) ++ as.drop(rigidTrigram.j + 1) map abbr*)
-      case Apps(f, as) => f(as map abbr*)
+        newNT((as.take(rigidTrigram.j) ++ as.drop(rigidTrigram.j + 1)).map(abbr)*)
+      case Apps(f, as) => f(as.map(abbr)*)
     }
 
     copy(
@@ -91,7 +91,7 @@ case class ReforestState(
           Seq(newNTArgs(rigidTrigram.i)) ++
           newNTArgs.drop(rigidTrigram.j)*
       ))) ++
-        rules.view.mapValues { _ map abbr }.toMap,
+        rules.view.mapValues { _.map(abbr) }.toMap,
       highestNTIndex = highestNTIndex + 1
     )
   }
@@ -102,7 +102,7 @@ case class ReforestState(
     require(freeVariables(nonTerminal).isEmpty) // TODO
 
     val maxArity = rhss.map { case Apps(c: Const, as) => as.size }.max
-    val argtypes = (0 until maxArity) map { _ => Ti } // TODO
+    val argtypes = (0 until maxArity).map { _ => Ti } // TODO
     val newNT = Const(s"B$highestNTIndex", FunctionType(startSymbol.ty, argtypes))
     val newArgs = for ((t, i) <- argtypes.zipWithIndex) yield Var(s"x$i", t)
 
@@ -121,14 +121,14 @@ case class ReforestState(
     }
 
     def subsume(as: Seq[Expr], bs: Seq[Expr]): Option[Seq[Int]] =
-      if (as diff bs isEmpty) Some {
+      if (as.diff(bs) isEmpty) Some {
         for (a <- as) yield bs indexOf a
       }
       else None
 
     while (rhss.nonEmpty) {
       for (rhs @ Apps(f, as) <- rhss.toSet; subs <- args1.flatMap { subsume(as, _) }.headOption) {
-        newRHS2s += f(subs map { newArgs(_) }*)
+        newRHS2s += f(subs.map { newArgs(_) }*)
         rhss -= rhs
       }
 
@@ -156,7 +156,7 @@ case class ReforestState(
     if (ss isEmpty) return this
 
     val newArgs = ss.head.domain.toSeq.sortBy { _.toString }
-    val newNT = Const(s"B$highestNTIndex", FunctionType(nonTerminal.ty, newArgs map { _.ty }))
+    val newNT = Const(s"B$highestNTIndex", FunctionType(nonTerminal.ty, newArgs.map { _.ty }))
 
     copy(
       rules = rules + (nonTerminal -> ss.map { s => newNT(s(newArgs)*) }) + (newNT(newArgs*) -> us),
@@ -190,7 +190,7 @@ case class ReforestState(
   def expandDeterministic: ReforestState =
     expand(for ((nt, rhs) <- rules if rhs.size == 1) yield nt)
 
-  def prodSize: Int = rules.values map { _.size } sum
+  def prodSize: Int = rules.values.map { _.size } sum
 
   override def toString =
     (for ((lhs, rhss) <- rules; rhs <- rhss) yield s"$lhs -> $rhs\n").toSeq.sorted.mkString

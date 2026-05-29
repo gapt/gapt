@@ -32,7 +32,7 @@ case class AvatarSplit(subProof: ResolutionProof, indices: Set[SequentIndex], co
     freeVariables(thisComponent) intersect freeVariables(rest) isEmpty,
     s"error splitting ${subProof.conclusion}:\nfree variables of $thisComponent and $rest intersect"
   )
-  require(thisComponent `isSubMultisetOf` component.clause)
+  require(thisComponent.`isSubMultisetOf`(component.clause))
 
   override def auxIndices = Seq(indices.toSeq)
   override def mainFormulaSequent = Sequent()
@@ -68,7 +68,7 @@ object AvatarSplit {
       Nil
     } else {
       val c = findComp(clause.map(_ +: Clause(), Clause() :+ _).elements.head)
-      c :: getComponents(clause `diff` c)
+      c :: getComponents(clause.`diff`(c))
     }
   }
 }

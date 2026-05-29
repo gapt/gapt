@@ -85,24 +85,24 @@ case class CombinedReduction[-P1, P2, +P3, +S1, S2, -S3](
 }
 
 private class ErasureReductionHelper(constants: Set[Const]) {
-  val termErasure = constants map {
+  val termErasure = constants.map {
     case c @ Const(name, FunctionType(_, argTypes), _) =>
       c -> FOLFunctionConst(s"f_$name", argTypes.size)
   } toMap
-  val termReification = termErasure map { _.swap }
+  val termReification = termErasure.map { _.swap }
 
   val predicateErasure = constants collect {
     case c @ HOLAtomConst(name, argTypes) =>
       c -> FOLAtomConst(s"P_$name", argTypes.size)
   } toMap
-  val predicateReification = predicateErasure map { _.swap }
+  val predicateReification = predicateErasure.map { _.swap }
 
   private def renameFreeVars(vs: Set[Var]) =
     vs.toSeq.zipWithIndex.map { case (v, i) => v -> FOLVar(s"${v.name}_$i") }.toMap
 
-  def forward(sequent: HOLSequent): FOLSequent = sequent map { f => forward(f, renameFreeVars(freeVariables(f))) }
+  def forward(sequent: HOLSequent): FOLSequent = sequent.map { f => forward(f, renameFreeVars(freeVariables(f))) }
   def forward(clause: HOLClause)(implicit dummyImplicit: DummyImplicit): HOLClause = forward(clause, renameFreeVars(freeVariables(clause)))
-  def forward(clause: HOLClause, freeVars: Map[Var, FOLVar]): FOLClause = clause map { forward(_, freeVars).asInstanceOf[FOLAtom] }
+  def forward(clause: HOLClause, freeVars: Map[Var, FOLVar]): FOLClause = clause.map { forward(_, freeVars).asInstanceOf[FOLAtom] }
 
   def forward(formula: Formula, freeVars: Map[Var, FOLVar]): FOLFormula = formula match {
     case f @ Top()    => f
@@ -119,12 +119,12 @@ private class ErasureReductionHelper(constants: Set[Const]) {
       Ex(y, forward(f, freeVars + (x -> y)))
     case Eq(t, s) => Eq(forward(t, freeVars), forward(s, freeVars))
     case Apps(c: HOLAtomConst, args) =>
-      predicateErasure(c)(args map { forward(_, freeVars) }*)
+      predicateErasure(c)(args.map { forward(_, freeVars) }*)
   }
 
   def forward(term: Expr, freeVars: Map[Var, FOLVar]): FOLTerm = term match {
     case Apps(c: Const, args) =>
-      termErasure(c)(args map { forward(_, freeVars) }*)
+      termErasure(c)(args.map { forward(_, freeVars) }*)
     case v: Var => freeVars(v)
   }
 
@@ -181,7 +181,7 @@ private class ErasureReductionHelper(constants: Set[Const]) {
     val memo = mutable.Map[(ResolutionProof, Map[FOLVar, Var]), ResolutionProof]()
 
     def f(p: ResolutionProof, vars: Map[FOLVar, Var]): ResolutionProof = {
-      g(p, freeVariables(p.conclusion) map { case v: FOLVar => v -> vars(v) } toMap)
+      g(p, freeVariables(p.conclusion).map { case v: FOLVar => v -> vars(v) } toMap)
     }
 
     def g(p: ResolutionProof, vars: Map[FOLVar, Var]): ResolutionProof = memo.getOrElseUpdate(
@@ -208,7 +208,7 @@ private class ErasureReductionHelper(constants: Set[Const]) {
               )
           }.toMap
           val subProof_ = f(subProof, subProofVars)
-          val newSubst = Substitution(freeVariables(subProof.conclusion) map {
+          val newSubst = Substitution(freeVariables(subProof.conclusion).map {
             case v @ FOLVar(_) =>
               subProofVars(v) -> back(subst(v).asInstanceOf[FOLTerm], vars)
           })
@@ -299,7 +299,7 @@ private class ErasureReductionHelper(constants: Set[Const]) {
 
   def back(t: FOLTerm, freeVars: Map[FOLVar, Var]): Expr = t match {
     case v: FOLVar                       => freeVars(v)
-    case Apps(c: FOLFunctionConst, args) => termReification(c)(args map { _.asInstanceOf[FOLTerm] } map { back(_, freeVars) }*)
+    case Apps(c: FOLFunctionConst, args) => termReification(c)(args.map { _.asInstanceOf[FOLTerm] }.map { back(_, freeVars) }*)
   }
 
   def back(formula: FOLFormula, freeVars: Map[FOLVar, Var]): Formula = formula match {
@@ -310,7 +310,7 @@ private class ErasureReductionHelper(constants: Set[Const]) {
     case Or(a, b)     => Or(back(a, freeVars), back(b, freeVars))
     case Eq(a, b)     => Eq(back(a, freeVars), back(b, freeVars))
     case Apps(c: FOLAtomConst, args) =>
-      predicateReification(c)(args map { _.asInstanceOf[FOLTerm] } map { back(_, freeVars) }*)
+      predicateReification(c)(args.map { _.asInstanceOf[FOLTerm] }.map { back(_, freeVars) }*)
   }
 
   def back(atom: FOLAtom, freeVars: Map[FOLVar, Var]): Atom =
@@ -325,7 +325,7 @@ private class ErasureReductionHelper(constants: Set[Const]) {
 case object ErasureReductionCNF extends Reduction_[Set[HOLClause], ResolutionProof] {
   override def forward(problem: Set[HOLClause]): (Set[HOLClause], (ResolutionProof) => ResolutionProof) = {
     val helper = new ErasureReductionHelper(problem flatMap { constants.nonLogical(_) })
-    (problem map helper.forward, helper.back(_, problem))
+    (problem.map(helper.forward), helper.back(_, problem))
   }
 }
 
@@ -359,8 +359,8 @@ case class PredicateTranslation(context: Context) {
 
   val functionAxiom: Map[Const, Formula] = context.constants.collect {
     case c @ Const(_, FunctionType(retType: TBase, argTypes), _) if retType != To =>
-      val xs = argTypes.zipWithIndex map { case (t, i) => Var(s"x$i", t) }
-      c -> universalClosure(And(xs map { x => predicateForSort(x.ty)(x) }) -->
+      val xs = argTypes.zipWithIndex.map { case (t, i) => Var(s"x$i", t) }
+      c -> universalClosure(And(xs.map { x => predicateForSort(x.ty)(x) }) -->
         predicateForSort(retType)(c(xs*)))
   }.toMap
 
@@ -472,7 +472,7 @@ case object PredicateReductionET extends Reduction_[HOLSequent, ExpansionProof] 
         case ETWeakQuantifier(shallow, insts) =>
           ETWeakQuantifier(
             predicateTranslation.unguard(shallow),
-            insts map {
+            insts.map {
               x =>
                 (x: @unchecked) match {
                   case (t, ETImp(_, inst)) if et.polarity.inAnt => t -> unguard(inst)
@@ -730,10 +730,10 @@ private class LambdaEliminationReductionHelper(constants: Set[Const], lambdas: S
     case And(g, h)        => And(delambdaify(g), delambdaify(h))
     case Or(g, h)         => Or(delambdaify(g), delambdaify(h))
     case Imp(g, h)        => Imp(delambdaify(g), delambdaify(h))
-    case Apps(hd, args)   => hd(args map delambdaify*).asInstanceOf[Formula]
+    case Apps(hd, args)   => hd(args.map(delambdaify)*).asInstanceOf[Formula]
   }
 
-  def forward(sequent: HOLSequent): HOLSequent = extraAxioms ++: sequent `map` delambdaify
+  def forward(sequent: HOLSequent): HOLSequent = (extraAxioms ++: sequent).`map`(delambdaify)
 
   def forward(cnf: Set[HOLSequent]): Set[HOLSequent] =
     cnf.map(_.map(delambdaify).map(_.asInstanceOf[Atom])) ++ extraAxiomClauses
@@ -796,10 +796,10 @@ case class LambdaEliminationReductionCNFRes(extraAxioms: Boolean = true) extends
 
 private class HOFunctionReductionHelper(names: Set[VarOrConst], addExtraAxioms: Boolean) {
   private val nameGen = rename.awayFrom(names)
-  val baseTys = names map { _.ty } flatMap { baseTypes(_) }
+  val baseTys = names.map { _.ty } flatMap { baseTypes(_) }
   private val typeNameGen = new NameGenerator(baseTys.map { _.name })
 
-  val partialAppTypes = names map { _.ty } flatMap {
+  val partialAppTypes = (names.map { _.ty } flatMap {
     t =>
       {
         val FunctionType(_, argTypes) = t: @unchecked
@@ -807,7 +807,7 @@ private class HOFunctionReductionHelper(names: Set[VarOrConst], addExtraAxioms: 
           _.isInstanceOf[TBase]
         }
       }
-  } map { t => (TBase(typeNameGen `freshWithIndex` "fun"), t) } toMap
+  }).map { t => (TBase(typeNameGen `freshWithIndex` "fun"), t) } toMap
 
   def equalOrEquivalent(a: Expr, b: Expr) =
     if (a.ty == To) a <-> b else a === b
@@ -827,7 +827,7 @@ private class HOFunctionReductionHelper(names: Set[VarOrConst], addExtraAxioms: 
     } yield (
       Const(
         nameGen `freshWithIndex` "partial",
-        FunctionType(partialAppType, gArgTypes.dropRight(argTypes.size) map reduceArgTy)
+        FunctionType(partialAppType, gArgTypes.dropRight(argTypes.size).map(reduceArgTy))
       ),
       g,
       funType
@@ -844,8 +844,8 @@ private class HOFunctionReductionHelper(names: Set[VarOrConst], addExtraAxioms: 
       case (partialApplicationFun @ Const(_, FunctionType(`partialAppType`, pappArgTypes), _), g, _) <- partialApplicationFuns
     } yield {
       val varGen = rename.awayFrom(Set[Var]())
-      val gArgVars = pappArgTypes map { Var(varGen `freshWithIndex` "x", _) }
-      val fArgVars = argTypes map { Var(varGen `freshWithIndex` "y", _) }
+      val gArgVars = pappArgTypes.map { Var(varGen `freshWithIndex` "x", _) }
+      val fArgVars = argTypes.map { Var(varGen `freshWithIndex` "y", _) }
       universalClosure(equalOrEquivalent(
         applyFunctions(partialAppType)(partialApplicationFun(gArgVars*))(fArgVars*),
         newConstants(g)(gArgVars*)(fArgVars*)
@@ -855,7 +855,7 @@ private class HOFunctionReductionHelper(names: Set[VarOrConst], addExtraAxioms: 
 
   def reduceFunTy(t: Ty): Ty = {
     val FunctionType(ret, args) = t: @unchecked
-    FunctionType(ret, args map reduceArgTy)
+    FunctionType(ret, args.map(reduceArgTy))
   }
   def reduceArgTy(t: Ty): TBase = t match {
     case t: TBase => t
@@ -875,11 +875,11 @@ private class HOFunctionReductionHelper(names: Set[VarOrConst], addExtraAxioms: 
     case Var(n, t)         => Var(n, reduceArgTy(t))
     case Apps(f: Const, args) if partiallyAppedTypes.contains(e.ty) =>
       val Some((p, _, _)) = partialApplicationFuns find { paf => paf._2 == f && paf._3 == e.ty }: @unchecked
-      p(args map reduce*)
+      p(args.map(reduce)*)
     case Apps(f: Var, args) =>
-      applyFunctions(reduceArgTy(f.ty))(reduce(f))(args map reduce*)
+      applyFunctions(reduceArgTy(f.ty))(reduce(f))(args.map(reduce)*)
     case Apps(f: Const, args) =>
-      newConstants(f)(args map reduce*)
+      newConstants(f)(args.map(reduce)*)
   }
 
   def forward(sequent: HOLSequent): HOLSequent = extraAxioms ++: sequent.map(reduce)
@@ -902,7 +902,7 @@ private class HOFunctionReductionHelper(names: Set[VarOrConst], addExtraAxioms: 
       partialApplicationFuns.find { _._1 == f }.get._2(args.map(back))
     case Apps(app, Seq(f, args @ _*)) if applyFunctions.exists { _._2 == app } =>
       back(f)(args.map(back))
-    case Apps(f: Const, args) => newConstants.map(_.swap).getOrElse(f, f)(args map back)
+    case Apps(f: Const, args) => newConstants.map(_.swap).getOrElse(f, f)(args.map(back))
 
     case Var(n, t: TBase) => Var(n, partiallyAppedTypes.map(_.swap).getOrElse(t, t))
 

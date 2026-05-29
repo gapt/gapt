@@ -11,8 +11,8 @@ import org.specs2.mutable._
 class EscargotTest extends Specification {
   import BabelParser.parseFormula
 
-  def parse(formulas: String*) = existentialClosure { (formulas map parseFormula) ++: Sequent() }
-  def test(formulas: String*) = Escargot getResolutionProof parse(formulas: _*)
+  def parse(formulas: String*) = existentialClosure { (formulas.map(parseFormula)) ++: Sequent() }
+  def test(formulas: String*) = Escargot.getResolutionProof(parse(formulas: _*))
 
   "simple" in { test("P(x)", "-P(c)") must beSome }
 
@@ -28,9 +28,9 @@ class EscargotTest extends Specification {
   "double" in { test("f(x) = g(g(x))", "g(g(g(x))) = x", "g(c) != f(f(c))") must beSome }
   "cond eq" in { test("p(c)", "p(x) -> p(f(x))", "p(x) -> f(x) = g(x)", "f(f(c)) != g(g(c))") must beSome }
 
-  "buss taut" in { Escargot getResolutionProof BussTautology(4) must beSome }
-  "php" in { Escargot getResolutionProof PigeonHolePrinciple(3, 2) must beSome }
-  "perms" in { Escargot getResolutionProof Permutations(5) must beSome }
+  "buss taut" in { Escargot.getResolutionProof(BussTautology(4)) must beSome }
+  "php" in { Escargot.getResolutionProof(PigeonHolePrinciple(3, 2)) must beSome }
+  "perms" in { Escargot.getResolutionProof(Permutations(5)) must beSome }
 
   "los" in {
     test(
@@ -45,11 +45,11 @@ class EscargotTest extends Specification {
 
   "davis putnam" in { test("-(?x ?y !z ((f(x,y) -> f(y,z) & f(z,z)) & (f(x,y) & g(x,y) -> g(x,z) & g(z,z))))") must beSome }
 
-  "large cnf" in { Escargot getResolutionProof CountingEquivalence(5) must beSome }
+  "large cnf" in { Escargot.getResolutionProof(CountingEquivalence(5)) must beSome }
 
-  "drinker" in { Escargot getResolutionProof hof"?x (p(x) -> !y p(y))" must beSome }
+  "drinker" in { Escargot.getResolutionProof(hof"?x (p(x) -> !y p(y))") must beSome }
   "unicode drinker" in { Escargot.getResolutionProof(hof"∃ 🙋 (🍷 🙋 → ∀ 🙍 (🍷 🙍))") must beSome }
-  "barber" in { Escargot getResolutionProof hof"- ?x !y (shaves(x,y) <-> -shaves(y,y))" must beSome }
+  "barber" in { Escargot.getResolutionProof(hof"- ?x !y (shaves(x,y) <-> -shaves(y,y))") must beSome }
 
   "two plus two" in { test("x + 0 = x", "x + s(y) = s(x+y)", "s(s(0)) + s(s(0)) != s(s(s(s(0))))") must beSome }
   "two times two" in { test("x + 0 = x", "x + s(y) = s(x+y)", "x * 0 = 0", "x*s(y) = (x*y) + x", "s(s(0)) * s(s(0)) != s(s(s(s(0))))") must beSome }

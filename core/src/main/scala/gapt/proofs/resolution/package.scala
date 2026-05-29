@@ -34,7 +34,7 @@ package object resolution {
       def f(p: ResolutionProof): ResolutionProof = memo.getOrElseUpdate(
         p,
         p match {
-          case Input(sequent)             => Input(TermReplacement(sequent, repl) `map` BetaReduction.betaNormalize)
+          case Input(sequent)             => Input(TermReplacement(sequent, repl).`map`(BetaReduction.betaNormalize))
           case Refl(term)                 => Refl(BetaReduction `betaNormalize` TermReplacement(term, repl))
           case Taut(formula)              => Taut(BetaReduction `betaNormalize` TermReplacement(formula, repl))
           case Defn(defConst, definition) => Defn(TermReplacement(defConst, repl).asInstanceOf[HOLAtomConst], TermReplacement(definition, repl))

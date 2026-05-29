@@ -116,7 +116,7 @@ object aletheQfUf {
   case class TransitivityInstance(t1: Expr, t2: Expr, t3: Expr)
 
   def transitivityInstances(proof: AletheProof, renaming: Map[String, Const]): Set[FormulaInstance] = {
-    collectTransitivityInstances(proof)(renaming) map {
+    collectTransitivityInstances(proof)(renaming).map {
       case TransitivityInstance(t1, t2, t3) =>
         FormulaInstance(EqualityTransitivity.formula(t1.ty), Seq(t1, t2, t3))
     }
@@ -155,7 +155,7 @@ object aletheQfUf {
   case class ReflexivityInstance(t: Expr)
 
   def reflexivityInstances(proof: AletheProof, renaming: Map[String, Const]): Set[FormulaInstance] = {
-    collectReflexivityInstances(proof)(renaming) map {
+    collectReflexivityInstances(proof)(renaming).map {
       case ReflexivityInstance(t) =>
         FormulaInstance(EqualityReflexivity.formula(t.ty), Seq(t))
     }

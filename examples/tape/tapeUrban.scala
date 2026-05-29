@@ -36,25 +36,25 @@ object tapeUrban extends TacticsProof {
     ("M_1" -> hof"M_1") +: ("M_2" -> hof"M_2") +: ("A" -> hof"A") +:
       Sequent() :+ ("I0" -> hof"I 0") :+ ("I1" -> hof"I 1")
   ) {
-    unfold("I") `in` "I1"
+    unfold("I").`in`("I1")
     allR("I1", fov"n_")
-    unfold("I") `in` "I0"
+    unfold("I").`in`("I0")
     allR("I0", fov"n")
     exR("I0", le"max n n_")
     exR("I1", le"max n n_")
     forget("I0", "I1")
     andR("I1_0")
     forget("A", "M_1", "I0_0")
-    unfold("M_2") `in` "M_2"
+    unfold("M_2").`in`("M_2")
     chain("M_2")
 
     andR("I0_0")
     forget("A", "M_2", "I1_0")
-    unfold("M_1") `in` "M_1"
+    unfold("M_1").`in`("M_1")
     chain("M_1")
 
     forget("M_1", "M_2")
-    unfold("A") `in` "A"
+    unfold("A").`in`("A")
     allL("A", le"max n n_")
     prop
   }
@@ -63,13 +63,13 @@ object tapeUrban extends TacticsProof {
     ("Ii" -> hof"I i") +: ("S" -> hof"S") +: ("T" -> hof"T") +:
       Sequent() :+ ("P" -> hof"P")
   ) {
-    unfold("I") `in` "Ii"
+    unfold("I").`in`("Ii")
     allL("Ii", le"0")
     exL("Ii_0", fov"n")
     allL("Ii", le"s n")
     exL("Ii_1", fov"m")
     forget("Ii")
-    unfold("P") `in` "P"
+    unfold("P").`in`("P")
     exR("P", fov"n", fov"m")
     forget("P")
     andL("Ii_0")
@@ -78,13 +78,13 @@ object tapeUrban extends TacticsProof {
     andR("P_0")
     by {
       forget("Ii_1_1", "Ii_0_1", "T")
-      unfold("S") `in` "S"
+      unfold("S").`in`("S")
       chain("S")
       trivial
     }
     by {
       forget("Ii_1_0", "S")
-      unfold("T") `in` "T"
+      unfold("T").`in`("T")
       chain("T")
       trivial
       trivial
@@ -95,10 +95,10 @@ object tapeUrban extends TacticsProof {
     ("M_1" -> hof"M_1") +: ("M_2" -> hof"M_2") +: ("S" -> hof"S") +: ("T" -> hof"T") +: ("A" -> hof"A") +:
       Sequent() :+ ("P" -> hof"P")
   ) {
-    cut("I0", hof"I 0") `left` by {
-      cut("I1", hof"I 1") `left` insert(tau)
+    cut("I0", hof"I 0").`left`(by {
+      cut("I1", hof"I 1").`left`(insert(tau))
       insert(epsilon_i)
-    }
+    })
     insert(epsilon_i)
   }
 

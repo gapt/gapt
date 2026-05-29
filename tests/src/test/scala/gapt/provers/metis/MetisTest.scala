@@ -45,7 +45,7 @@ class MetisTest extends Specification with SequentMatchers with SatMatchers {
 
     "treat variables in sequents as constants" in {
       val seq = hof"P(x)" +: Sequent() :+ hof"P(c)"
-      Metis getExpansionProof seq must beNone
+      Metis.getExpansionProof(seq) must beNone
     }
 
     "handle weird sequents" in {

@@ -102,7 +102,7 @@ class LLKASTParserTest extends Specification {
         "--(exists X p(X))"
       )
 
-      cases map ((s: String) =>
+      cases.map((s: String) =>
         LLKASTParser.parseAll(LLKASTParser.formula, s) match {
           case LLKASTParser.Success(result, _) =>
             true must beEqualTo(true)
@@ -129,7 +129,7 @@ class LLKASTParserTest extends Specification {
         "(\\\\X=>\\X(\\X))"
       )
 
-      cases map ((s: String) =>
+      cases.map((s: String) =>
         LLKASTParser.parseAll(LLKASTParser.formula, s) match {
           case LLKASTParser.Success(result, _) =>
             true must beEqualTo(true)
@@ -147,7 +147,7 @@ class LLKASTParserTest extends Specification {
         "(@ P x y(z))"
       )
 
-      cases map ((s: String) =>
+      cases.map((s: String) =>
         LLKASTParser.parseAll(LLKASTParser.formula, s) match {
           case LLKASTParser.Success(result, _) =>
             true must beEqualTo(true)
@@ -172,7 +172,7 @@ class LLKASTParserTest extends Specification {
         "(all X (q(X,f(X)) | q(X,g(X))))"
       )
 
-      cases map ((s: String) =>
+      cases.map((s: String) =>
         LLKASTParser.parseAll(LLKASTParser.formula, s) match {
           case LLKASTParser.Success(result, _) =>
             true must beEqualTo(true)
@@ -318,7 +318,7 @@ p101(Y))) & (-(all X (-r1(Y,X) | -(-p2(X) & -p102(X) & p101(X)))) & -(all X (-r1
         "const P : i>o; const Q : i>i>o; var x,y:i; (all x (P(x) -> (exists y Q(x,y) )))"
       )
 
-      str map { x =>
+      str.map { x =>
         val f = LLKFormulaParser.parseFormula(x)
         f match {
           case All(_, Imp(Atom(_, _ :: Nil), Ex(_, Atom(_, List(_, _))))) =>

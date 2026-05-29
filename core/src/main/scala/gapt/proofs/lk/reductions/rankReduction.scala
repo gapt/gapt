@@ -415,7 +415,7 @@ object LeftRankEqualityRightReduction extends CutReduction {
 object LeftRankInductionReduction extends CutReduction {
 
   def applyWithSequentConnector(cut: CutRule): Option[(LKProof, SequentConnector)] =
-    this(cut) map { guessPermutation(cut, _) }
+    this(cut).map { guessPermutation(cut, _) }
 
   /**
    * Reduces a cut by moving the cut towards the proof's leaves.
@@ -431,7 +431,7 @@ object LeftRankInductionReduction extends CutReduction {
           if ind.mainIndices.head != cut.aux1 &&
             (contextVariables(cut) intersect inductionEigenvariables(ind) nonEmpty) =>
         val newEigenvariables = rename(inductionEigenvariables(ind), contextVariables(cut))
-        val newInductionCases = ind.cases map { inductionCase =>
+        val newInductionCases = ind.cases.map { inductionCase =>
           val newCaseEigenvariables = inductionCase.eigenVars.map(newEigenvariables)
           val renaming = Substitution(inductionCase.eigenVars.map { ev => (ev, newEigenvariables(ev)) })
           inductionCase.copy(proof = renaming(inductionCase.proof), eigenVars = newCaseEigenvariables)
@@ -440,7 +440,7 @@ object LeftRankInductionReduction extends CutReduction {
         apply(cut.copy(leftSubProof = newLeftSubProof))
 
       case ind @ InductionRule(inductionCases, inductionFormula, inductionTerm) if ind.mainIndices.head != cut.aux1 =>
-        val newInductionCases = inductionCases zip ind.occConnectors map {
+        val newInductionCases = (inductionCases zip ind.occConnectors).map {
           case (inductionCase, connector) =>
             if (connector.parentOption(cut.aux1).nonEmpty) {
               val subProof = CutRule(
@@ -449,7 +449,7 @@ object LeftRankInductionReduction extends CutReduction {
                 cut.rightSubProof,
                 cut.aux2
               )
-              val hypotheses = inductionCase.hypotheses map { subProof.getLeftSequentConnector.child(_) }
+              val hypotheses = inductionCase.hypotheses.map { subProof.getLeftSequentConnector.child(_) }
               val conclusion = subProof.getLeftSequentConnector.child(inductionCase.conclusion)
               inductionCase.copy(proof = subProof, hypotheses = hypotheses, conclusion = conclusion)
             } else {
@@ -470,7 +470,7 @@ object LeftRankInductionReduction extends CutReduction {
 object leftRankReduction extends CutReduction {
 
   def applyWithSequentConnector(cut: CutRule): Option[(LKProof, SequentConnector)] =
-    this(cut) map { guessPermutation(cut, _) }
+    this(cut).map { guessPermutation(cut, _) }
 
   /**
    * Reduces the rank of the cut by permuting it upwards on the left-hand side.
@@ -903,7 +903,7 @@ object RightRankInductionReduction extends CutReduction {
   override def reduce(cut: CutRule): Option[LKProof] = apply(cut)
 
   def applyWithSequentConnector(cut: CutRule): Option[(LKProof, SequentConnector)] =
-    this(cut) map { guessPermutation(cut, _) }
+    this(cut).map { guessPermutation(cut, _) }
 
   /**
    * Reduces the complexity of a cut w.r.t. to an induction inference by
@@ -917,7 +917,7 @@ object RightRankInductionReduction extends CutReduction {
 
       case ind @ InductionRule(_, _, _) if contextVariables(cut) intersect inductionEigenvariables(ind) nonEmpty =>
         val newEigenvariables = rename(inductionEigenvariables(ind), contextVariables(cut))
-        val newInductionCases = ind.cases map { inductionCase =>
+        val newInductionCases = ind.cases.map { inductionCase =>
           val newCaseEigenvariables = inductionCase.eigenVars.map(newEigenvariables)
           val renaming = Substitution(inductionCase.eigenVars.map { ev => (ev, newEigenvariables(ev)) })
           inductionCase.copy(proof = renaming(inductionCase.proof), eigenVars = newCaseEigenvariables)
@@ -927,7 +927,7 @@ object RightRankInductionReduction extends CutReduction {
 
       case ind @ InductionRule(_, indFormula, indTerm) =>
         val targetCase = ind.cases.filter(_.proof.endSequent.antecedent.contains(cut.cutFormula)).head
-        val newIndCases = ind.cases map {
+        val newIndCases = ind.cases.map {
           indCase =>
             if (indCase == targetCase) {
               val subProof = CutRule(cut.leftSubProof, indCase.proof, cut.cutFormula)
@@ -952,7 +952,7 @@ object rightRankReduction extends CutReduction {
   def reduce(cut: CutRule): Option[LKProof] = apply(cut)
 
   def applyWithSequentConnector(cut: CutRule)(implicit ctx: Context): Option[(LKProof, SequentConnector)] =
-    this(cut) map { guessPermutation(cut, _) }
+    this(cut).map { guessPermutation(cut, _) }
 
   /**
    * Reduces the rank of the cut by permuting it upwards on the right-hand side.

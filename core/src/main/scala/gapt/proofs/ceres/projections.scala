@@ -272,7 +272,7 @@ object Projections {
         s1 ++ wax
       case (false, true) =>
         // println( "eq f t" )
-        s1 map (pm => {
+        s1.map(pm => {
           // println( p.endSequent( e ) )
           // we first pick our aux formula
           val candidates = a match {
@@ -294,7 +294,7 @@ object Projections {
         })
       case (false, false) =>
         // println( "eq f f" )
-        s1 map (pm => {
+        s1.map(pm => {
           // println( p.endSequent( e ) )
           val List(a1_, a2_) = pickrule(proof, List(p), List(pm), List(e, a))
           constructor(pm, a1_, a2_, con)

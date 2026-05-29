@@ -50,11 +50,11 @@ object prop_16 extends TacticsProof {
   val lemma_1_proof_openind = Lemma(lemma_1) {
     allR; allR; induction(hov"x:Nat")
     // - BC
-    rewrite.many `ltr` "ap1"
+    rewrite.many.`ltr`("ap1")
     refl
     // - SC
-    rewrite.many `ltr` "ap2"
-    rewrite `ltr` "IHx_0"
+    rewrite.many.`ltr`("ap2")
+    rewrite.`ltr`("IHx_0")
     refl
   }
 

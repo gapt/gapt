@@ -54,7 +54,7 @@ object EventuallyConstantSchema extends TacticsProof {
     orR
     impR
     allL("Ant_0", fov"a")
-    unfold("POR") `atMost` 1 `in` "Ant_0_0"
+    unfold("POR").`atMost`(1).`in`("Ant_0_0")
     trivial
   }
   ctx += ProofDefinitionDeclaration(le"omega 0", omegaBc)
@@ -70,8 +70,8 @@ object EventuallyConstantSchema extends TacticsProof {
     orR
     impR
     allL("Ant_0", fov"a")
-    unfold("POR") `atMost` 1 `in` "Ant_0_0"
-    orL `left` trivial; foTheory
+    unfold("POR").`atMost`(1).`in`("Ant_0_0")
+    orL.`left`(trivial); foTheory
   }
   ctx += ProofDefinitionDeclaration(le"omega (s n)", omegaSc)
   val esPhiBc =
@@ -90,11 +90,11 @@ object EventuallyConstantSchema extends TacticsProof {
 
     impL("Ant_0_0")
     by {
-      impL("Ant_0_1") `left` foTheory
+      impL("Ant_0_1").`left`(foTheory)
       foTheory
     }
     by {
-      impL("Ant_0_1") `left` trivial
+      impL("Ant_0_1").`left`(trivial)
       foTheory
     }
   }
@@ -106,8 +106,8 @@ object EventuallyConstantSchema extends TacticsProof {
     )
   val phiSc = Lemma(esPhiSc) {
     cut("cut", hof"?x !y ((iLEQ(x,y) -> E(n,f(y))) | LE(f(y),n))") `right` ref("phi")
-    cut("cut1", hof"?x !y ( iLEQ(x,y) -> E(s(n),f(y)) )") `left` by {
-      cut("cut2", hof"?x ( LE(f(x),s(n)) )") `left` by {
+    cut("cut1", hof"?x !y ( iLEQ(x,y) -> E(s(n),f(y)) )").`left`(by {
+      cut("cut2", hof"?x ( LE(f(x),s(n)) )").`left`(by {
         forget("cut")
         exL(fov"a")
         exR("cut1", fov"a")
@@ -115,7 +115,7 @@ object EventuallyConstantSchema extends TacticsProof {
         allL(fov"b")
         exR("cut2", fov"b")
         prop
-      }
+      })
       by {
         exL("cut2", fov"a")
         exR("cut", fov"a")
@@ -124,16 +124,16 @@ object EventuallyConstantSchema extends TacticsProof {
         impR
         foTheory
       }
-    }
+    })
 
     exL("cut1", fov"a")
     allL(fov"a")
     allL(le"(g a)")
     exR("Suc_0", fov"a")
-    impL("cut1_1") left {
-      impL `onAll` by { impR; trivial }
+    impL("cut1_1").left {
+      impL.`onAll`(by { impR; trivial })
     }
-    impL("cut1_0") `left` foTheory
+    impL("cut1_0").`left`(foTheory)
     impR
     foTheory
   }

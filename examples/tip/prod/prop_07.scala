@@ -63,6 +63,6 @@ object prop_07 extends TacticsProof {
       """
     ) `right` escrgt
     forget("goal"); allR(hov"x:list")
-    induction(hov"x:list") `onAll` escrgt
+    induction(hov"x:list").`onAll`(escrgt)
   }
 }

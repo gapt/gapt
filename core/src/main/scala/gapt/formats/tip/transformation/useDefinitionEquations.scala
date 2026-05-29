@@ -40,7 +40,7 @@ class UseDefinitionEquations(problem: TipSmtProblem) {
       case fun @ TipSmtFunctionDefinition(name, _, parameters, _, body) =>
         apply(fun)
       case funDefs @ TipSmtMutualRecursiveFunctionDefinition(_) =>
-        funDefs.copy(functions = funDefs.functions map { apply })
+        funDefs.copy(functions = funDefs.functions.map { apply })
       case definition => definition
     })
   }
@@ -51,7 +51,7 @@ class UseDefinitionEquations(problem: TipSmtProblem) {
     val TipSmtFunctionDefinition(name, _, parameters, _, body) = fun
     val boundVariables =
       parameters.map { p => TipSmtVariableDecl(p.name, p.typ) }
-    val arguments = parameters map { p => TipSmtIdentifier(p.name) }
+    val arguments = parameters.map { p => TipSmtIdentifier(p.name) }
     fun.copy(body =
       if (boundVariables.isEmpty)
         TipSmtEq(Seq(TipSmtFun(name, arguments), body))

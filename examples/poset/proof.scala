@@ -48,7 +48,7 @@ object proof extends TacticsProof {
       include("asymm", asymm)
 
       // right side of the cut
-      decompose; destruct("goal_1") `onAll` (chain("asymm") `andThen` prop)
+      decompose; destruct("goal_1").`onAll`(chain("asymm").`andThen`(prop))
 
       // f(b,a)=b
       chain("trans").subst(fov"y" -> le"c"); repeat(prop)
@@ -73,7 +73,7 @@ object proof extends TacticsProof {
 
       // now show the final goals
       repeat(destruct("goal_1"))
-      (chain("asymm") `andThen` prop).onAllSubGoals
+      (chain("asymm").`andThen`(prop)).onAllSubGoals
 
       // f(b,a)=b
       chain("trans").subst(fov"y" -> le"c"); repeat(prop)

@@ -49,7 +49,7 @@ case class TipDomainClosureAxioms(types: List[InductiveType] = Nil) extends Axio
       val caseVariable = Var("x", datatype.baseType)
       All(
         caseVariable,
-        Or(datatype.constructors map {
+        Or(datatype.constructors.map {
           caseDistinction(caseVariable, _)
         })
       )

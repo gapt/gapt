@@ -20,7 +20,7 @@ import gapt.utils.{time, verbose}
 
     val A = FOLConst("A")
     val B = FOLFunctionConst("B", 2)
-    val Seq(x, y, z) = Seq("x", "y", "z") map { FOLVar(_) }
+    val Seq(x, y, z) = Seq("x", "y", "z").map { FOLVar(_) }
     val rst = RecSchemTemplate(A, A -> B(x, y), A -> z, B(x, y) -> z)
     val targets = terms.map(A -> _).toSet[(Expr, Expr)]
     val nfRecSchem = rst.stableRecSchem(targets)
@@ -32,7 +32,7 @@ import gapt.utils.{time, verbose}
 
     val minimized = time { minimizeRecursionScheme(nfRecSchem, targets, solver = bestAvailableMaxSatSolver) }
     println(minimized)
-    println(terms.toSet diff minimized.language)
+    println(terms.toSet.diff(minimized.language))
     println(recSchemToVTRATG(minimized))
 
     val minG = time { minimizeVTRATG(nfG, terms.toSet, bestAvailableMaxSatSolver) }

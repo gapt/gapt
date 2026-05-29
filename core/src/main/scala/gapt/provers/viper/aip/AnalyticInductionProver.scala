@@ -58,7 +58,7 @@ object AnalyticInductionProver {
 class AnalyticInductionProver(options: ProverOptions) {
 
   private implicit def labeledSequentToHOLSequent(sequent: Sequent[(String, Formula)]): Sequent[Formula] =
-    sequent map { case (_, f) => f }
+    sequent.map { case (_, f) => f }
 
   /**
    * Tries to prove a sequent by using analytic induction.

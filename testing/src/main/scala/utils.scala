@@ -91,7 +91,7 @@ abstract class RegressionTestCase(val name: String) extends Serializable {
     def toJUnitXml: Elem =
       <testsuite>
         {
-        steps map { step =>
+        steps.map { step =>
           val testCaseName = RegressionTestCase.this.getClass.getSimpleName
           val className = s"$testCaseName.${step.name.getOrElse("<all>")}"
           // This prevents name clashes in jenkins as both + and - are replaced by _

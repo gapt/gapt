@@ -34,7 +34,7 @@ object TipSmtParser {
    * @return The parsed TIP problem.
    */
   def parse(sexps: Seq[SExpression]): TipSmtProblem = {
-    TipSmtProblem(sexps map { parseCommand })
+    TipSmtProblem(sexps.map { parseCommand })
   }
 
   /**
@@ -160,12 +160,12 @@ object TipSmtParser {
       sexp: SExpression
   ): TipSmtDatatypesDeclaration = sexp match {
     case LFun("declare-datatypes", LList(datatypeNames @ _*), LList(datatypes @ _*)) =>
-      val names = datatypeNames map { parseDatatypeName }
+      val names = datatypeNames.map { parseDatatypeName }
       if (names.size != datatypes.size) {
         throw TipSmtParserException("malformed datatypes declaration: number of names and datatypes differ")
       }
       TipSmtDatatypesDeclaration(
-        names.zip(datatypes) map {
+        names.zip(datatypes).map {
           case (datatypeName, LList(constructors @ _*)) =>
             TipSmtDatatype(datatypeName, Nil, parseConstructors(constructors))
           case _ => throw TipSmtParserException(s"malformed datatypes declaration ${sexp.toDoc.toString}")
@@ -261,7 +261,7 @@ object TipSmtParser {
   private def parseArgumentTypeList(sexp: SExpression): Seq[TipSmtType] =
     sexp match {
       case LList(types @ _*) =>
-        types map { parseType }
+        types.map { parseType }
       case _ =>
         throw TipSmtParserException("malformed argument types: " + sexp)
     }
@@ -327,7 +327,7 @@ object TipSmtParser {
       sexp: SExpression
   ): Seq[TipSmtFormalParameter] = sexp match {
     case LList(parameters @ _*) =>
-      parameters map { parseFormalParameter }
+      parameters.map { parseFormalParameter }
     case _ =>
       throw TipSmtParserException("malformed formal parameter list: " + sexp)
   }
@@ -435,7 +435,7 @@ object TipSmtParser {
   private def parseConstructorFields(
       sexps: Seq[SExpression]
   ): Seq[TipSmtConstructorField] =
-    sexps map { parseConstructorField }
+    sexps.map { parseConstructorField }
 
   /**
    * Parses a constructor field.
@@ -469,7 +469,7 @@ object TipSmtParser {
   private def parseConstructors(
       sexps: Seq[SExpression]
   ): Seq[TipSmtConstructor] =
-    sexps map { parseConstructor }
+    sexps.map { parseConstructor }
 
   /**
    * Parses a constructor.
@@ -563,7 +563,7 @@ object TipSmtParser {
    */
   def parseMatch(sexp: SExpression): TipSmtMatch = sexp match {
     case LFun("match", expr, LList(cases @ _*)) =>
-      TipSmtMatch(parseExpression(expr), cases map { parseCase })
+      TipSmtMatch(parseExpression(expr), cases.map { parseCase })
     case _ => throw TipSmtParserException(
         "malformed match-expression: " + sexp
       )
@@ -603,7 +603,7 @@ object TipSmtParser {
     case LFun(constructor, identifiers @ _*) =>
       TipSmtConstructorPattern(
         TipSmtIdentifier(constructor),
-        identifiers map { parseTipSmtIdentifier }
+        identifiers.map { parseTipSmtIdentifier }
       )
     case _ => throw TipSmtParserException("malformed pattern: " + sexp)
   }
@@ -664,13 +664,13 @@ object TipSmtParser {
     case expr @ LFun("exists", _*) =>
       parseExistsExpression(expr)
     case LFun("and", exprs @ _*) =>
-      TipSmtAnd(exprs map { parseExpression })
+      TipSmtAnd(exprs.map { parseExpression })
     case LFun("or", exprs @ _*) =>
-      TipSmtOr(exprs map { parseExpression })
+      TipSmtOr(exprs.map { parseExpression })
     case LFun("=", exprs @ _*) =>
-      TipSmtEq(exprs map { parseExpression })
+      TipSmtEq(exprs.map { parseExpression })
     case LFun("=>", exprs @ _*) =>
-      TipSmtImp(exprs map { parseExpression })
+      TipSmtImp(exprs.map { parseExpression })
     case expr @ LFun("not", _*) =>
       parseNotExpression(expr)
     case LFun("distinct", exprs @ _*) =>
@@ -678,7 +678,7 @@ object TipSmtParser {
     case LSymbol(name) =>
       TipSmtIdentifier(name)
     case LFun(name, args @ _*) =>
-      TipSmtFun(name, args map { parseExpression })
+      TipSmtFun(name, args.map { parseExpression })
     case _ => throw TipSmtParserException("malformed expression: " + sexp)
   }
 
@@ -695,7 +695,7 @@ object TipSmtParser {
     sexp match {
       case LFun("exists", LList(variables @ _*), formula) =>
         TipSmtExists(
-          variables map { parseTipSmtVarDecl },
+          variables.map { parseTipSmtVarDecl },
           parseExpression(formula)
         )
       case _ => throw TipSmtParserException(
@@ -707,7 +707,7 @@ object TipSmtParser {
     sexp match {
       case LFun("forall", LList(variables @ _*), formula) =>
         TipSmtForall(
-          variables map { parseTipSmtVarDecl },
+          variables.map { parseTipSmtVarDecl },
           parseExpression(formula)
         )
       case _ => throw TipSmtParserException(

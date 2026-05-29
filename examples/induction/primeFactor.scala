@@ -52,16 +52,16 @@ object primeFactor extends TacticsProof {
     orR
     forget("GOAL_0")
     andR `right` trivial
-    unfold("div") `in` "GOAL_1"
+    unfold("div").`in`("GOAL_1")
     exR(foc"1").forget
     theory
 
     // Case n composite
     decompose
     allL("IND", fov"l").forget
-    impL `left` trivial
+    impL.`left`(trivial)
     exL
-    orL `left` theory
+    orL.`left`(theory)
     exR(fov"k").forget
     decompose
     andR; theory; trivial

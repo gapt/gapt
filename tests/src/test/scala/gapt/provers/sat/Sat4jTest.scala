@@ -41,9 +41,9 @@ class Sat4jTest extends Specification {
   "bug 652" in { Sat4j.getDrupProof(fos":- a <-> (a <-> true)") must beSome }
 
   "proof import" in {
-    "pigeonhole 4 3" in { Sat4j getResolutionProof PigeonHolePrinciple(4, 3) must beSome }
-    "buss 5" in { Sat4j getResolutionProof BussTautology(5) must beSome }
-    "to be or not to be" in { Sat4j getResolutionProof hof"be ∨ ¬be" must beSome }
+    "pigeonhole 4 3" in { Sat4j.getResolutionProof(PigeonHolePrinciple(4, 3)) must beSome }
+    "buss 5" in { Sat4j.getResolutionProof(BussTautology(5)) must beSome }
+    "to be or not to be" in { Sat4j.getResolutionProof(hof"be ∨ ¬be") must beSome }
     "unfactored clauses" in { Sat4j.getResolutionProof(Seq(hcl":- a,a", hcl"a :-")) must beSome }
   }
 }

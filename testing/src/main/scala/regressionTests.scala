@@ -226,7 +226,7 @@ class Prover9TestCase(f: java.io.File) extends RegressionTestCase(f.getParentFil
   override def test(implicit testRun: TestRun) = {
     val (robinson, reconstructedEndSequent) = Prover9Importer.robinsonProofWithReconstructedEndSequent(f) --- "import"
 
-    ResolutionToExpansionProof(robinson) --? "RobinsonToExpansionProof" map { E2 =>
+    (ResolutionToExpansionProof(robinson) --? "RobinsonToExpansionProof").map { E2 =>
       Z3.isValid(E2.deep) !-- "toDeep validity of RobinsonToExpansionProof"
       Z3.isValid(extractInstances(E2)) !-- "extractInstances validity of RobinsonToExpansionProof"
     }
@@ -265,7 +265,7 @@ class Prover9TestCase(f: java.io.File) extends RegressionTestCase(f.getParentFil
     SimpleSmtSolver.isValid(deep) !-- "SimpleSmtSolver on deep formula"
 
     if (isFOLPrenexSigma1(p.endSequent))
-      extractRecSchem(p) --? "extractRecSchem" map { recSchem =>
+      (extractRecSchem(p) --? "extractRecSchem").map { recSchem =>
         Z3.isUnsat(And(recSchem.languageWithDummyParameters)) !-- "extractRecSchem language validity"
       }
 
@@ -368,9 +368,9 @@ object RegressionTests {
     def tptpProblems = walk(pwd / "testing" / "TPTP" / "Problems").filter(_.ext == "p")
     def tipProblems = walk(pwd / "testing" / "TIP").filter(_.ext == "smt2")
 
-    def prover9TestCases = prover9Proofs map { fn => new Prover9TestCase(fn.toIO) }
-    def leancopTestCases = leancopProofs map { fn => new LeanCoPTestCase(fn.toIO) }
-    def veritTestCases = veritBenchmarks map { fn => new VeriTTestCase(fn.toIO) }
+    def prover9TestCases = prover9Proofs.map { fn => new Prover9TestCase(fn.toIO) }
+    def leancopTestCases = leancopProofs.map { fn => new LeanCoPTestCase(fn.toIO) }
+    def veritTestCases = veritBenchmarks.map { fn => new VeriTTestCase(fn.toIO) }
     def tptpTestCases = tptpProblems.map { fn => new TptpTestCase(fn.toIO) }
     def tipTestCases = tipProblems.map { fn => new TipTestCase(fn.toIO) }
     def theoryTestCases =

@@ -26,7 +26,7 @@ class MaximumGradeSelector(reduction: CutReduction) extends Selector {
 
 object maximumGrade {
   def apply(reduction: CutReduction, proof: LKProof): Option[Int] = {
-    val cuts: Seq[CutRule] = reduction.redexes(proof) map {
+    val cuts: Seq[CutRule] = reduction.redexes(proof).map {
       _ match {
         case cut @ CutRule(_, _, _, _) => cut
       }
@@ -37,7 +37,7 @@ object maximumGrade {
   def maxGrade(cuts: Seq[CutRule]): Option[Int] = {
     cuts match {
       case Seq() => None
-      case _     => Some(cuts map { cut => logicalComplexity(cut.cutFormula.asInstanceOf[FOLFormula]) } max)
+      case _     => Some(cuts.map { cut => logicalComplexity(cut.cutFormula.asInstanceOf[FOLFormula]) } max)
     }
   }
 }

@@ -79,14 +79,14 @@ class VeriT extends OneShotProver with ExternalProgram {
     }
   }
 
-  override def getLKProof(s: HOLSequent)(implicit ctx: Maybe[MutableContext]): Option[LKProof] = getExpansionProof(s) map { ep =>
+  override def getLKProof(s: HOLSequent)(implicit ctx: Maybe[MutableContext]): Option[LKProof] = getExpansionProof(s).map { ep =>
     val Right(p) = PropositionalExpansionProofToLK(ep): @unchecked
     p
   }
 
   def addEquationalAxioms(epwc: ExpansionProof): Option[ExpansionProof] =
     for (ExpansionProof(veritExpansion) <- getExpansionProof(epwc.deep)) yield {
-      val equationalAxioms = veritExpansion filter { t => containsQuantifier(t.shallow) } map { t =>
+      val equationalAxioms = (veritExpansion filter { t => containsQuantifier(t.shallow) }).map { t =>
         freeVariables(t.shallow).foldLeft(t)((t_, fv) => ETWeakQuantifier(All(fv, t_.shallow), Map(fv -> t_)))
       }
       epwc.copy(expansionSequent = equationalAxioms ++ epwc.expansionSequent)

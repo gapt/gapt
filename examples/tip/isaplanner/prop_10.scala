@@ -42,10 +42,10 @@ object prop_10 extends TacticsProof {
   }
 
   val aipOptions1 = new ProverOptions(Escargot, IndependentInductionAxioms().forVariables(List(hov"m:Nat")).forLabel("goal"))
-  val proof2 = new AnalyticInductionProver(aipOptions1) `lkProof` (sequent) get
+  val proof2 = (new AnalyticInductionProver(aipOptions1)).`lkProof`(sequent) get
 
   val aipOptions2 = new ProverOptions(Escargot, SequentialInductionAxioms().forVariables(List(hov"m:Nat")).forLabel("goal"))
-  val proof3 = new AnalyticInductionProver(aipOptions2) `lkProof` (sequent) get
+  val proof3 = (new AnalyticInductionProver(aipOptions2)).`lkProof`(sequent) get
 
   val proof4 = Lemma(sequent) {
     treeGrammarInduction

@@ -55,24 +55,24 @@ class InductionEliminationTests extends Specification with SequentMatchers {
       induction(hov"x:nat")
       induction(hov"y:nat")
       refl
-      rewrite ltr "ap2" in "goal"
-      rewrite rtl "IHy_0" in "goal"
-      rewrite.many ltr "ap1" in "goal"
+      rewrite.ltr("ap2") in "goal"
+      rewrite.rtl("IHy_0") in "goal"
+      rewrite.many.ltr("ap1") in "goal"
       refl
       induction(hov"y:nat")
-      rewrite ltr "ap2" in "goal"
-      rewrite ltr "ap1" in "goal"
+      rewrite.ltr("ap2") in "goal"
+      rewrite.ltr("ap1") in "goal"
       cut("cf", hof"x_0 + 0 = x_0")
       induction(hov"x_0:nat", "cf")
-      rewrite ltr "ap1" in "cf"
+      rewrite.ltr("ap1") in "cf"
       refl
-      rewrite ltr "ap2" in "cf"
-      rewrite ltr "IHx_0_0" in "cf"
+      rewrite.ltr("ap2") in "cf"
+      rewrite.ltr("IHx_0_0") in "cf"
       refl
-      rewrite ltr "cf" in "goal"
+      rewrite.ltr("cf") in "goal"
       refl
-      rewrite.many ltr "ap2" in "goal"
-      rewrite rtl "IHy_0" in "goal"
+      rewrite.many.ltr("ap2") in "goal"
+      rewrite.rtl("IHy_0") in "goal"
       cut("cf", hof"x_0 + s(y_0) = s(x_0) + y_0")
       induction(hov"x_0:nat", "cf")
       escargot
@@ -107,27 +107,27 @@ class InductionEliminationTests extends Specification with SequentMatchers {
       allR
       induction(hov"x:nat")
       allR
-      rewrite ltr "ap2" in "goal"
-      rewrite.many ltr "ap1" in "goal"
+      rewrite.ltr("ap2") in "goal"
+      rewrite.many.ltr("ap1") in "goal"
       refl
       allR
-      rewrite ltr "ap2" in "goal"
-      rewrite ltr "IHx_0" in "goal"
-      rewrite rtl "ap2" in "goal"
+      rewrite.ltr("ap2") in "goal"
+      rewrite.ltr("IHx_0") in "goal"
+      rewrite.rtl("ap2") in "goal"
       refl
     }
 
     val lemma_1 = hof"!x x + 0 = x"
     var lemma_1_state = ProofState(axioms ++: Sequent() :+ ("goal" -> lemma_1))
     lemma_1_state += allR
-    lemma_1_state += cut("1", lemma_2) andThen insert(lemma_2_proof)
-    lemma_1_state += cut("2", lemma_2) andThen insert(lemma_2_proof)
-    lemma_1_state += cut("3", lemma_2) andThen insert(lemma_2_proof)
+    lemma_1_state += cut("1", lemma_2).andThen(insert(lemma_2_proof))
+    lemma_1_state += cut("2", lemma_2).andThen(insert(lemma_2_proof))
+    lemma_1_state += cut("3", lemma_2).andThen(insert(lemma_2_proof))
     lemma_1_state += induction(hov"x:nat", "goal")
-    lemma_1_state += rewrite ltr "ap1" in "goal"
+    lemma_1_state += rewrite.ltr("ap1") in "goal"
     lemma_1_state += refl
-    lemma_1_state += rewrite ltr "ap2" in "goal"
-    lemma_1_state += rewrite ltr "IHx_0" in "goal"
+    lemma_1_state += rewrite.ltr("ap2") in "goal"
+    lemma_1_state += rewrite.ltr("IHx_0") in "goal"
     lemma_1_state += refl
     val lemma_1_proof = lemma_1_state.partialProof
 
@@ -135,15 +135,15 @@ class InductionEliminationTests extends Specification with SequentMatchers {
     proof_state += allR
     proof_state += allR
     proof_state += induction(hov"x:nat")
-    proof_state += rewrite ltr "ap1" in "goal"
-    proof_state += cut("l1", lemma_1) andThen insert(lemma_1_proof)
-    proof_state += rewrite ltr "l1" in "goal"
+    proof_state += rewrite.ltr("ap1") in "goal"
+    proof_state += cut("l1", lemma_1).andThen(insert(lemma_1_proof))
+    proof_state += rewrite.ltr("l1") in "goal"
     proof_state += refl
-    proof_state += cut("l1", lemma_1) andThen insert(lemma_1_proof)
-    proof_state += cut("l2", lemma_2) andThen insert(lemma_2_proof)
-    proof_state += rewrite ltr "l2" in "goal"
-    proof_state += rewrite.many ltr "ap2" in "goal"
-    proof_state += rewrite ltr "IHx_0" in "goal"
+    proof_state += cut("l1", lemma_1).andThen(insert(lemma_1_proof))
+    proof_state += cut("l2", lemma_2).andThen(insert(lemma_2_proof))
+    proof_state += rewrite.ltr("l2") in "goal"
+    proof_state += rewrite.many.ltr("ap2") in "goal"
+    proof_state += rewrite.ltr("IHx_0") in "goal"
     proof_state += refl
 
     val proof = proof_state.partialProof

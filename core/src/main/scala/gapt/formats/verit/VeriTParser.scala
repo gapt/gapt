@@ -22,7 +22,7 @@ object VeriTParser extends RegexParsers with AletheParser {
   }
 
   def getExpansionProof(in: Reader): Option[ExpansionSequent] = {
-    parseProof(in) map { aletheProof =>
+    parseProof(in).map { aletheProof =>
       val inputFormulas = aletheQfUf.collectUsedInputFormulas(aletheProof, Map())
       val equalityInstances = aletheQfUf.collectEqualityInstances(aletheProof, Map())
       val equalityExpansionTrees = equalityInstances
@@ -41,7 +41,7 @@ object VeriTParser extends RegexParsers with AletheParser {
   }
 
   def getExpansionProofWithSymmetry(file: InputFile): Option[ExpansionSequent] =
-    getExpansionProof(file) map { addSymmetry(_) }
+    getExpansionProof(file).map { addSymmetry(_) }
 
   def isUnsat(file: InputFile): Boolean =
     isUnsat(new StringReader(file.read))

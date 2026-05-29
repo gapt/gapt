@@ -53,17 +53,15 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     val x = FOLVar("x")
 
     val proof = (ProofBuilder
-      c LogicalAxiom(p(x))
-      c LogicalAxiom(q)
-      b (ImpLeftRule(_, Suc(0), _, Ant(0)))
-      u (ForallLeftRule(_, Ant(0), p(x) --> q, x, x))
-      u (ExistsLeftRule(_, Ant(1), x, x))
-
-      c LogicalAxiom(q)
-      c LogicalAxiom(p(x))
-      b (ImpLeftRule(_, Suc(0), _, Ant(0)))
-
-      b (CutRule(_, Suc(0), _, Ant(1))) qed)
+      .c(LogicalAxiom(p(x)))
+      .c(LogicalAxiom(q))
+      .b(ImpLeftRule(_, Suc(0), _, Ant(0)))
+      .u(ForallLeftRule(_, Ant(0), p(x) --> q, x, x))
+      .u(ExistsLeftRule(_, Ant(1), x, x))
+      .c(LogicalAxiom(q))
+      .c(LogicalAxiom(p(x)))
+      .b(ImpLeftRule(_, Suc(0), _, Ant(0)))
+      .b(CutRule(_, Suc(0), _, Ant(1))) qed)
 
     val proof_ = cutNormal(proof)
 
@@ -260,12 +258,12 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "right cut formula introduced by weakening" in {
     val proof = (ProofBuilder
-      c LogicalAxiom(hof"D")
-      u (WeakeningRightRule(_, hof"A"))
-      c LogicalAxiom(hof"B")
-      u (WeakeningRightRule(_, hof"C"))
-      u (WeakeningLeftRule(_, hof"A"))
-      b (CutRule(_, _, hof"A")) qed)
+      .c(LogicalAxiom(hof"D"))
+      .u(WeakeningRightRule(_, hof"A"))
+      .c(LogicalAxiom(hof"B"))
+      .u(WeakeningRightRule(_, hof"C"))
+      .u(WeakeningLeftRule(_, hof"A"))
+      .b(CutRule(_, _, hof"A")) qed)
     val cut = proof.asInstanceOf[CutRule]
 
     rightRankReduction(cut).get.endSequent must beMultiSetEqual(cut.endSequent)
@@ -273,11 +271,11 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "left cut formula introduced by weakening" in {
     val proof = (ProofBuilder
-      c LogicalAxiom(hof"B")
-      u (WeakeningRightRule(_, hof"A"))
-      c LogicalAxiom(hof"C")
-      u (WeakeningLeftRule(_, hof"A"))
-      b (CutRule(_, _, hof"A")) qed)
+      .c(LogicalAxiom(hof"B"))
+      .u(WeakeningRightRule(_, hof"A"))
+      .c(LogicalAxiom(hof"C"))
+      .u(WeakeningLeftRule(_, hof"A"))
+      .b(CutRule(_, _, hof"A")) qed)
     val cut = proof.asInstanceOf[CutRule]
 
     gradeReduction(cut).get.endSequent must beMultiSetEqual(cut.endSequent)
@@ -292,12 +290,12 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     context += hoc"F:nat>o"
 
     val proof = (ProofBuilder
-      c LogicalAxiom(hof"A")
-      u (WeakeningRightRule(_, hof"F(0)"))
-      c LogicalAxiom(hof"A")
-      u (WeakeningLeftRule(_, hof"F(x)"))
-      u (WeakeningRightRule(_, hof"F(s(x))"))
-      b ((ib, ic) =>
+      .c(LogicalAxiom(hof"A"))
+      .u(WeakeningRightRule(_, hof"F(0)"))
+      .c(LogicalAxiom(hof"A"))
+      .u(WeakeningLeftRule(_, hof"F(x)"))
+      .u(WeakeningRightRule(_, hof"F(s(x))"))
+      .b((ib, ic) =>
         InductionRule(
           InductionCase(ib, hoc"0:nat", Nil, Nil, Suc(1)) ::
             InductionCase(ic, hoc"s:nat>nat", Ant(0) :: Nil, hov"x:nat" :: Nil, Suc(1)) :: Nil,
@@ -305,8 +303,8 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
           hov"x:nat"
         )
       )
-      c LogicalAxiom(hof"A")
-      b (CutRule(_, _, hof"A")) qed)
+      .c(LogicalAxiom(hof"A"))
+      .b(CutRule(_, _, hof"A")) qed)
     val reduced = LeftRankInductionReduction(proof.asInstanceOf[CutRule]).get
 
     if (!reduced.endSequent.multiSetEquals(proof.endSequent)) {
@@ -326,13 +324,13 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     context += hoc"F:nat>o"
 
     val proof = (ProofBuilder
-      c LogicalAxiom(hof"A")
-      c LogicalAxiom(hof"A")
-      u (WeakeningRightRule(_, hof"F(0)"))
-      c LogicalAxiom(hof"A")
-      u (WeakeningLeftRule(_, hof"F(x)"))
-      u (WeakeningRightRule(_, hof"F(s(x))"))
-      b ((ib, ic) =>
+      .c(LogicalAxiom(hof"A"))
+      .c(LogicalAxiom(hof"A"))
+      .u(WeakeningRightRule(_, hof"F(0)"))
+      .c(LogicalAxiom(hof"A"))
+      .u(WeakeningLeftRule(_, hof"F(x)"))
+      .u(WeakeningRightRule(_, hof"F(s(x))"))
+      .b((ib, ic) =>
         InductionRule(
           InductionCase(ib, hoc"0:nat", Nil, Nil, Suc(1)) ::
             InductionCase(ic, hoc"s:nat>nat", Ant(0) :: Nil, hov"x:nat" :: Nil, Suc(1)) :: Nil,
@@ -340,7 +338,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
           hov"x:nat"
         )
       )
-      b (CutRule(_, _, hof"A")) qed)
+      .b(CutRule(_, _, hof"A")) qed)
     val reduced = RightRankInductionReduction(proof.asInstanceOf[CutRule]).get
 
     if (!reduced.endSequent.multiSetEquals(proof.endSequent)) {
@@ -406,33 +404,33 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "reduce cut with left-equality as left upper sequent " in {
     val proof = (ProofBuilder
-      c LogicalAxiom(hof"P(b)")
-      u (WeakeningLeftRule(_, hof"a = b"))
-      u (EqualityLeftRule(_, Ant(0), Ant(1), Abs(hov"x", le"P(x):o")))
-      c OpenAssumption(Sequent(("" -> hof"P(b)") :: Nil, ("" -> hof"F") :: Nil))
-      b (CutRule(_, _, hof"P(b)")) qed)
+      .c(LogicalAxiom(hof"P(b)"))
+      .u(WeakeningLeftRule(_, hof"a = b"))
+      .u(EqualityLeftRule(_, Ant(0), Ant(1), Abs(hov"x", le"P(x):o")))
+      .c(OpenAssumption(Sequent(("" -> hof"P(b)") :: Nil, ("" -> hof"F") :: Nil)))
+      .b(CutRule(_, _, hof"P(b)")) qed)
     val reduction = leftRankReduction(proof.asInstanceOf[CutRule]).get
     proof.conclusion must beSetEqual(reduction.conclusion)
   }
 
   "reduce cut with right-equality as left upper sequent" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent(Nil, "" -> hof"P(b)" :: Nil))
-      u (WeakeningLeftRule(_, hof"a = b"))
-      u (WeakeningRightRule(_, hof"B"))
-      u (EqualityRightRule(_, Ant(0), Suc(0), Abs(hov"x", le"P(x):o")))
-      c OpenAssumption(Sequent(("" -> hof"B") :: Nil, ("" -> hof"F") :: Nil))
-      b (CutRule(_, _, hof"B")) qed)
+      .c(OpenAssumption(Sequent(Nil, "" -> hof"P(b)" :: Nil)))
+      .u(WeakeningLeftRule(_, hof"a = b"))
+      .u(WeakeningRightRule(_, hof"B"))
+      .u(EqualityRightRule(_, Ant(0), Suc(0), Abs(hov"x", le"P(x):o")))
+      .c(OpenAssumption(Sequent(("" -> hof"B") :: Nil, ("" -> hof"F") :: Nil)))
+      .b(CutRule(_, _, hof"B")) qed)
     val reduction = leftRankReduction(proof.asInstanceOf[CutRule]).get
     proof.conclusion must beSetEqual(reduction.conclusion)
   }
 
   "reduce cut with left-equality as right upper sequent" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent(Nil, ("" -> hof"A") :: Nil))
-      c OpenAssumption(Sequent("" -> hof"A" :: "" -> hof"a = b" :: "" -> hof"P(b)" :: Nil, Nil))
-      u (EqualityLeftRule(_, Ant(1), Ant(2), Abs(hov"x", le"P(x):o")))
-      b (CutRule(_, _, hof"A")) qed)
+      .c(OpenAssumption(Sequent(Nil, ("" -> hof"A") :: Nil)))
+      .c(OpenAssumption(Sequent("" -> hof"A" :: "" -> hof"a = b" :: "" -> hof"P(b)" :: Nil, Nil)))
+      .u(EqualityLeftRule(_, Ant(1), Ant(2), Abs(hov"x", le"P(x):o")))
+      .b(CutRule(_, _, hof"A")) qed)
     val reduction = rightRankReduction(proof.asInstanceOf[CutRule]).get
     proof.conclusion must beSetEqual(reduction.conclusion)
   }
@@ -466,72 +464,72 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "reduce cut with right-equality as right upper sequent" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent(Nil, ("" -> hof"A") :: Nil))
-      c OpenAssumption(Sequent("" -> hof"A" :: "" -> hof"a = b" :: Nil, "" -> hof"P(b)" :: Nil))
-      u (EqualityRightRule(_, Ant(1), Suc(0), Abs(hov"x", le"P(x):o")))
-      b (CutRule(_, _, hof"A")) qed)
+      .c(OpenAssumption(Sequent(Nil, ("" -> hof"A") :: Nil)))
+      .c(OpenAssumption(Sequent("" -> hof"A" :: "" -> hof"a = b" :: Nil, "" -> hof"P(b)" :: Nil)))
+      .u(EqualityRightRule(_, Ant(1), Suc(0), Abs(hov"x", le"P(x):o")))
+      .b(CutRule(_, _, hof"A")) qed)
     val reduction = rightRankReduction(proof.asInstanceOf[CutRule]).get
     proof.conclusion must beSetEqual(reduction.conclusion)
   }
 
   "right rank reduction: forall right" in {
     val proof = (ProofBuilder
-      c LogicalAxiom(hof"C(x)")
-      u (WeakeningRightRule(_, hof"B"))
-      c (LogicalAxiom(hof"D"))
-      u (WeakeningRightRule(_, hof"A(x)"))
-      u (WeakeningLeftRule(_, hof"B"))
-      u (ForallRightRule(_, hof"!x A(x)"))
-      b (CutRule(_, _, hof"B")) qed)
+      .c(LogicalAxiom(hof"C(x)"))
+      .u(WeakeningRightRule(_, hof"B"))
+      .c(LogicalAxiom(hof"D"))
+      .u(WeakeningRightRule(_, hof"A(x)"))
+      .u(WeakeningLeftRule(_, hof"B"))
+      .u(ForallRightRule(_, hof"!x A(x)"))
+      .b(CutRule(_, _, hof"B")) qed)
     val reducedProof = rightRankReduction(proof.asInstanceOf[CutRule]).get
     proof.conclusion must beMultiSetEqual(reducedProof.conclusion)
   }
 
   "right rank reduction: exists left" in {
     val proof = (ProofBuilder
-      c LogicalAxiom(hof"C(x)")
-      u (WeakeningRightRule(_, hof"B"))
-      c (LogicalAxiom(hof"D"))
-      u (WeakeningLeftRule(_, hof"A(x)"))
-      u (WeakeningLeftRule(_, hof"B"))
-      u (ExistsLeftRule(_, hof"?x A(x)"))
-      b (CutRule(_, _, hof"B")) qed)
+      .c(LogicalAxiom(hof"C(x)"))
+      .u(WeakeningRightRule(_, hof"B"))
+      .c(LogicalAxiom(hof"D"))
+      .u(WeakeningLeftRule(_, hof"A(x)"))
+      .u(WeakeningLeftRule(_, hof"B"))
+      .u(ExistsLeftRule(_, hof"?x A(x)"))
+      .b(CutRule(_, _, hof"B")) qed)
     val reducedProof = rightRankReduction(proof.asInstanceOf[CutRule]).get
     proof.conclusion must beMultiSetEqual(reducedProof.conclusion)
   }
 
   "left rank reduction: forall right" in {
     val proof = (ProofBuilder
-      c LogicalAxiom(hof"B")
-      u (WeakeningRightRule(_, hof"F"))
-      u (WeakeningRightRule(_, hof"A(x)"))
-      u (ForallRightRule(_, hof"!x A(x)"))
-      c (LogicalAxiom(hof"C(x)"))
-      u (WeakeningLeftRule(_, hof"F"))
-      b (CutRule(_, _, hof"F")) qed)
+      .c(LogicalAxiom(hof"B"))
+      .u(WeakeningRightRule(_, hof"F"))
+      .u(WeakeningRightRule(_, hof"A(x)"))
+      .u(ForallRightRule(_, hof"!x A(x)"))
+      .c(LogicalAxiom(hof"C(x)"))
+      .u(WeakeningLeftRule(_, hof"F"))
+      .b(CutRule(_, _, hof"F")) qed)
     val reducedProof = leftRankReduction(proof.asInstanceOf[CutRule]).get
     proof.conclusion must beMultiSetEqual(reducedProof.conclusion)
   }
 
   "left rank reduction: exists left" in {
     val proof = (ProofBuilder
-      c LogicalAxiom(hof"B")
-      u (WeakeningLeftRule(_, hof"A(x)"))
-      u (ExistsLeftRule(_, hof"?x A(x)"))
-      c (LogicalAxiom(hof"C(x)"))
-      u (WeakeningLeftRule(_, hof"B"))
-      b (CutRule(_, _, hof"B")) qed)
+      .c(LogicalAxiom(hof"B"))
+      .u(WeakeningLeftRule(_, hof"A(x)"))
+      .u(ExistsLeftRule(_, hof"?x A(x)"))
+      .c(LogicalAxiom(hof"C(x)"))
+      .u(WeakeningLeftRule(_, hof"B"))
+      .b(CutRule(_, _, hof"B")) qed)
     val reducedProof = leftRankReduction(proof.asInstanceOf[CutRule]).get
     reducedProof.conclusion must beMultiSetEqual(proof.conclusion)
   }
 
   "grade reduction with equality inferences having the same auxiliary formula" in {
     val proof = (ProofBuilder
-      c OpenAssumption(("" -> hof"s = t") +: Sequent() :+ ("" -> hof"A(s)"))
-      u (EqualityRightRule(_, Ant(0), Suc(0), Abs(hov"x", le"A(x):o")))
-      c OpenAssumption(("" -> hof"s = t") +: ("" -> hof"A(s)") +: Sequent())
-      u (EqualityLeftRule(_, Ant(0), Ant(1), Abs(hov"x", le"A(x):o")))
-      b (CutRule(_, _, hof"A(t)")) qed)
+      .c(OpenAssumption(("" -> hof"s = t") +: Sequent() :+ ("" -> hof"A(s)")))
+      .u(EqualityRightRule(_, Ant(0), Suc(0), Abs(hov"x", le"A(x):o")))
+      .c(OpenAssumption(("" -> hof"s = t") +: ("" -> hof"A(s)") +: Sequent()))
+      .u(EqualityLeftRule(_, Ant(0), Ant(1), Abs(hov"x", le"A(x):o")))
+      .b(CutRule(_, _, hof"A(t)")) qed)
     val reduction = gradeReduction(proof.asInstanceOf[CutRule]).get
     proof.conclusion must beMultiSetEqual(reduction.conclusion)
     reduction.subProofAt(0 :: Nil) must beAnInstanceOf[OpenAssumption]
@@ -545,12 +543,12 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "cut left equality-right left" in {
     val proof = (ProofBuilder
-      c OpenAssumption(("" -> hof"s=t") +: Sequent() :+ ("" -> hof"B(s)") :+ ("" -> hof"A"))
-      u (EqualityRightRule(_, Ant(0), Suc(0), Abs(hov"x", le"B(x):o")))
-      c OpenAssumption(("" -> hof"B(t)") +: Sequent())
-      b (CutRule(_, _, hof"B(t)"))
-      c OpenAssumption(("" -> hof"A") +: Sequent())
-      b (CutRule(_, _, hof"A")) qed)
+      .c(OpenAssumption(("" -> hof"s=t") +: Sequent() :+ ("" -> hof"B(s)") :+ ("" -> hof"A")))
+      .u(EqualityRightRule(_, Ant(0), Suc(0), Abs(hov"x", le"B(x):o")))
+      .c(OpenAssumption(("" -> hof"B(t)") +: Sequent()))
+      .b(CutRule(_, _, hof"B(t)"))
+      .c(OpenAssumption(("" -> hof"A") +: Sequent()))
+      .b(CutRule(_, _, hof"A")) qed)
     val Some(newProof) = StuckCutReduction.Left.reduce(proof): @unchecked
     newProof.endSequent must beMultiSetEqual(proof.endSequent)
     newProof.subProofAt(0 :: 0 :: Nil) must beAnInstanceOf[CutRule]
@@ -558,12 +556,12 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "cut left equality-right right should reduce" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent() :+ ("" -> hof"s=t"))
-      c OpenAssumption(("" -> hof"s=t") +: Sequent() :+ ("" -> hof"B(s)") :+ ("" -> hof"A"))
-      u (EqualityRightRule(_, Ant(0), Suc(0), Abs(hov"x", le"B(x):o")))
-      b (CutRule(_, _, hof"s=t"))
-      c OpenAssumption(("" -> hof"A") +: Sequent())
-      b (CutRule(_, _, hof"A")) qed)
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"s=t")))
+      .c(OpenAssumption(("" -> hof"s=t") +: Sequent() :+ ("" -> hof"B(s)") :+ ("" -> hof"A")))
+      .u(EqualityRightRule(_, Ant(0), Suc(0), Abs(hov"x", le"B(x):o")))
+      .b(CutRule(_, _, hof"s=t"))
+      .c(OpenAssumption(("" -> hof"A") +: Sequent()))
+      .b(CutRule(_, _, hof"A")) qed)
     val Some(newProof) = StuckCutReduction.Left.reduce(proof): @unchecked
     newProof.endSequent must beMultiSetEqual(proof.endSequent)
     newProof.subProofAt(0 :: 1 :: Nil) must beAnInstanceOf[CutRule]
@@ -571,110 +569,110 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "cut left equality-left right should not reduce" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent() :+ ("" -> hof"s=t"))
-      c OpenAssumption(("" -> hof"s=t") +: Sequent() :+ ("" -> hof"B(s)") :+ ("" -> hof"A"))
-      u (EqualityRightRule(_, Ant(0), Suc(0), Abs(hov"x", le"B(x):o")))
-      b (CutRule(_, _, hof"s=t"))
-      c OpenAssumption(("" -> hof"B(t)") +: Sequent())
-      b (CutRule(_, _, hof"B(t)")) qed)
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"s=t")))
+      .c(OpenAssumption(("" -> hof"s=t") +: Sequent() :+ ("" -> hof"B(s)") :+ ("" -> hof"A")))
+      .u(EqualityRightRule(_, Ant(0), Suc(0), Abs(hov"x", le"B(x):o")))
+      .b(CutRule(_, _, hof"s=t"))
+      .c(OpenAssumption(("" -> hof"B(t)") +: Sequent()))
+      .b(CutRule(_, _, hof"B(t)")) qed)
     StuckCutReduction.Left.reduce(proof).isEmpty must_== true
   }
 
   "cut left equality-left left should reduce" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent() :+ ("" -> hof"s=t"))
-      c OpenAssumption(("" -> hof"s=t") +: ("" -> hof"B(s)") +: Sequent() :+ ("" -> hof"A"))
-      u (EqualityLeftRule(_, Ant(0), Ant(1), Abs(hov"x", le"B(x):o")))
-      b (CutRule(_, _, hof"s=t"))
-      c OpenAssumption(("" -> hof"A") +: Sequent())
-      b (CutRule(_, _, hof"A")) qed)
-    val Some(newProof) = StuckCutReduction.Left reduce proof: @unchecked
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"s=t")))
+      .c(OpenAssumption(("" -> hof"s=t") +: ("" -> hof"B(s)") +: Sequent() :+ ("" -> hof"A")))
+      .u(EqualityLeftRule(_, Ant(0), Ant(1), Abs(hov"x", le"B(x):o")))
+      .b(CutRule(_, _, hof"s=t"))
+      .c(OpenAssumption(("" -> hof"A") +: Sequent()))
+      .b(CutRule(_, _, hof"A")) qed)
+    val Some(newProof) = StuckCutReduction.Left.reduce(proof): @unchecked
     newProof.endSequent must beMultiSetEqual(proof.endSequent)
     newProof.subProofAt(0 :: 1 :: Nil) must beAnInstanceOf[CutRule]
   }
 
   "cut right equality-left right should not reduce 1" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent() :+ ("" -> hof"B(t)"))
-      c OpenAssumption(Sequent() :+ ("" -> hof"s=t"))
-      c OpenAssumption(("" -> hof"s=t") +: ("" -> hof"B(s)") +: Sequent())
-      u (EqualityLeftRule(_, Ant(0), Ant(1), Abs(hov"x", le"B(x):o")))
-      b (CutRule(_, _, hof"s=t"))
-      b (CutRule(_, _, hof"B(t)")) qed)
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"B(t)")))
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"s=t")))
+      .c(OpenAssumption(("" -> hof"s=t") +: ("" -> hof"B(s)") +: Sequent()))
+      .u(EqualityLeftRule(_, Ant(0), Ant(1), Abs(hov"x", le"B(x):o")))
+      .b(CutRule(_, _, hof"s=t"))
+      .b(CutRule(_, _, hof"B(t)")) qed)
     StuckCutReduction.Right.reduce(proof).isEmpty must_== true
   }
 
   "cut right equality-left right should not reduce 2" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent() :+ ("" -> hof"s=t"))
-      c OpenAssumption(Sequent() :+ ("" -> hof"B(t)"))
-      c OpenAssumption(("" -> hof"s=t") +: ("" -> hof"B(s)") +: Sequent())
-      u (EqualityLeftRule(_, Ant(0), Ant(1), Abs(hov"x", le"B(x):o")))
-      b (CutRule(_, _, hof"B(t)"))
-      b (CutRule(_, _, hof"s=t")) qed)
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"s=t")))
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"B(t)")))
+      .c(OpenAssumption(("" -> hof"s=t") +: ("" -> hof"B(s)") +: Sequent()))
+      .u(EqualityLeftRule(_, Ant(0), Ant(1), Abs(hov"x", le"B(x):o")))
+      .b(CutRule(_, _, hof"B(t)"))
+      .b(CutRule(_, _, hof"s=t")) qed)
     StuckCutReduction.Right.reduce(proof).isEmpty must_== true
   }
 
   "cut right equality-left right should reduce" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent() :+ ("" -> hof"A"))
-      c OpenAssumption(Sequent() :+ ("" -> hof"B(t)"))
-      c OpenAssumption(("" -> hof"A") +: ("" -> hof"s=t") +: ("" -> hof"B(s)") +: Sequent())
-      u (EqualityLeftRule(_, Ant(1), Ant(2), Abs(hov"x", le"B(x):o")))
-      b (CutRule(_, _, hof"B(t)"))
-      b (CutRule(_, _, hof"A")) qed)
-    val Some(newProof) = StuckCutReduction.Right reduce proof: @unchecked
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"A")))
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"B(t)")))
+      .c(OpenAssumption(("" -> hof"A") +: ("" -> hof"s=t") +: ("" -> hof"B(s)") +: Sequent()))
+      .u(EqualityLeftRule(_, Ant(1), Ant(2), Abs(hov"x", le"B(x):o")))
+      .b(CutRule(_, _, hof"B(t)"))
+      .b(CutRule(_, _, hof"A")) qed)
+    val Some(newProof) = StuckCutReduction.Right.reduce(proof): @unchecked
     newProof.endSequent must beMultiSetEqual(proof.endSequent)
     newProof.subProofAt(0 :: 1 :: Nil) must beAnInstanceOf[CutRule]
   }
 
   "cut right equality-right left should not reduce" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent() :+ ("" -> hof"s=t"))
-      c OpenAssumption(("" -> hof"s=t") +: Sequent() :+ ("" -> hof"B(s)"))
-      u (EqualityRightRule(_, Ant(0), Suc(0), Abs(hov"x", le"B(x):o")))
-      c OpenAssumption(("" -> hof"B(t)") +: Sequent())
-      b (CutRule(_, _, hof"B(t)"))
-      b (CutRule(_, _, hof"s=t")) qed)
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"s=t")))
+      .c(OpenAssumption(("" -> hof"s=t") +: Sequent() :+ ("" -> hof"B(s)")))
+      .u(EqualityRightRule(_, Ant(0), Suc(0), Abs(hov"x", le"B(x):o")))
+      .c(OpenAssumption(("" -> hof"B(t)") +: Sequent()))
+      .b(CutRule(_, _, hof"B(t)"))
+      .b(CutRule(_, _, hof"s=t")) qed)
     StuckCutReduction.Right.reduce(proof).isEmpty must_== true
   }
 
   "cut right equality-right left should reduce" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent() :+ ("" -> hof"A"))
-      c OpenAssumption(("" -> hof"A") +: ("" -> hof"s=t") +: Sequent() :+ ("" -> hof"B(s)"))
-      u (EqualityRightRule(_, Ant(1), Suc(0), Abs(hov"x", le"B(x):o")))
-      c OpenAssumption(("" -> hof"B(t)") +: Sequent())
-      b (CutRule(_, _, hof"B(t)"))
-      b (CutRule(_, _, hof"A")) qed)
-    val Some(newProof) = StuckCutReduction.Right reduce proof: @unchecked
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"A")))
+      .c(OpenAssumption(("" -> hof"A") +: ("" -> hof"s=t") +: Sequent() :+ ("" -> hof"B(s)")))
+      .u(EqualityRightRule(_, Ant(1), Suc(0), Abs(hov"x", le"B(x):o")))
+      .c(OpenAssumption(("" -> hof"B(t)") +: Sequent()))
+      .b(CutRule(_, _, hof"B(t)"))
+      .b(CutRule(_, _, hof"A")) qed)
+    val Some(newProof) = StuckCutReduction.Right.reduce(proof): @unchecked
     newProof.endSequent must beMultiSetEqual(proof.endSequent)
     newProof.subProofAt(0 :: 0 :: Nil) must beAnInstanceOf[CutRule]
   }
 
   "cut right equality-right right should reduce" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent() :+ ("" -> hof"A"))
-      c OpenAssumption(Sequent() :+ ("" -> hof"s=t"))
-      c OpenAssumption(("" -> hof"A") +: ("" -> hof"s=t") +: Sequent() :+ ("" -> hof"B(s)"))
-      u (EqualityRightRule(_, Ant(1), Suc(0), Abs(hov"x", le"B(x):o")))
-      b (CutRule(_, _, hof"s=t"))
-      b (CutRule(_, _, hof"A")) qed)
-    val Some(newProof) = StuckCutReduction.Right reduce proof: @unchecked
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"A")))
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"s=t")))
+      .c(OpenAssumption(("" -> hof"A") +: ("" -> hof"s=t") +: Sequent() :+ ("" -> hof"B(s)")))
+      .u(EqualityRightRule(_, Ant(1), Suc(0), Abs(hov"x", le"B(x):o")))
+      .b(CutRule(_, _, hof"s=t"))
+      .b(CutRule(_, _, hof"A")) qed)
+    val Some(newProof) = StuckCutReduction.Right.reduce(proof): @unchecked
     newProof.endSequent must beMultiSetEqual(proof.endSequent)
     newProof.subProofAt(0 :: 1 :: Nil) must beAnInstanceOf[CutRule]
   }
 
   "left cut cut equality-right 1 should reduce" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent() :+ ("" -> hof"s=t"))
-      c OpenAssumption(("" -> hof"s=t") +: Sequent() :+ ("" -> hof"B(s)") :+ ("" -> hof"A"))
-      u (EqualityRightRule(_, Ant(0), Suc(0), Abs(hov"x", le"B(x):o")))
-      b (CutRule(_, _, hof"s=t"))
-      c OpenAssumption(("" -> hof"B(t)") +: Sequent())
-      b (CutRule(_, _, hof"B(t)"))
-      c OpenAssumption(("" -> hof"A") +: Sequent())
-      b (CutRule(_, _, hof"A")) qed)
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"s=t")))
+      .c(OpenAssumption(("" -> hof"s=t") +: Sequent() :+ ("" -> hof"B(s)") :+ ("" -> hof"A")))
+      .u(EqualityRightRule(_, Ant(0), Suc(0), Abs(hov"x", le"B(x):o")))
+      .b(CutRule(_, _, hof"s=t"))
+      .c(OpenAssumption(("" -> hof"B(t)") +: Sequent()))
+      .b(CutRule(_, _, hof"B(t)"))
+      .c(OpenAssumption(("" -> hof"A") +: Sequent()))
+      .b(CutRule(_, _, hof"A")) qed)
     val Some(newProof) = StuckCutReduction.Left.reduce(proof): @unchecked
     newProof.endSequent must beMultiSetEqual(proof.endSequent)
     newProof.subProofAt(0 :: 1 :: 0 :: Nil) must beAnInstanceOf[CutRule]
@@ -682,14 +680,14 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "left cut cut equality-right 2 should reduce" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent() :+ ("" -> hof"s=t"))
-      c OpenAssumption(("" -> hof"s=t") +: Sequent() :+ ("" -> hof"B(s)") :+ ("" -> hof"A"))
-      u (EqualityRightRule(_, Ant(0), Suc(0), Abs(hov"x", le"B(x):o")))
-      c OpenAssumption(("" -> hof"B(t)") +: Sequent())
-      b (CutRule(_, _, hof"B(t)"))
-      b (CutRule(_, _, hof"s=t"))
-      c OpenAssumption(("" -> hof"A") +: Sequent())
-      b (CutRule(_, _, hof"A")) qed)
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"s=t")))
+      .c(OpenAssumption(("" -> hof"s=t") +: Sequent() :+ ("" -> hof"B(s)") :+ ("" -> hof"A")))
+      .u(EqualityRightRule(_, Ant(0), Suc(0), Abs(hov"x", le"B(x):o")))
+      .c(OpenAssumption(("" -> hof"B(t)") +: Sequent()))
+      .b(CutRule(_, _, hof"B(t)"))
+      .b(CutRule(_, _, hof"s=t"))
+      .c(OpenAssumption(("" -> hof"A") +: Sequent()))
+      .b(CutRule(_, _, hof"A")) qed)
     val Some(newProof) = StuckCutReduction.Left.reduce(proof): @unchecked
     newProof.endSequent must beMultiSetEqual(proof.endSequent)
     newProof.subProofAt(0 :: 0 :: 1 :: Nil) must beAnInstanceOf[CutRule]
@@ -697,14 +695,14 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "left cut cut equality-left should reduce" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent() :+ ("" -> hof"B(t)"))
-      c OpenAssumption(Sequent() :+ ("" -> hof"s=t"))
-      c OpenAssumption(("" -> hof"s=t") +: ("" -> hof"B(s)") +: Sequent() :+ ("" -> hof"A"))
-      u (EqualityLeftRule(_, Ant(0), Ant(1), Abs(hov"x", le"B(x):o")))
-      b (CutRule(_, _, hof"s=t"))
-      b (CutRule(_, _, hof"B(t)"))
-      c OpenAssumption(("" -> hof"A") +: Sequent())
-      b (CutRule(_, _, hof"A")) qed)
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"B(t)")))
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"s=t")))
+      .c(OpenAssumption(("" -> hof"s=t") +: ("" -> hof"B(s)") +: Sequent() :+ ("" -> hof"A")))
+      .u(EqualityLeftRule(_, Ant(0), Ant(1), Abs(hov"x", le"B(x):o")))
+      .b(CutRule(_, _, hof"s=t"))
+      .b(CutRule(_, _, hof"B(t)"))
+      .c(OpenAssumption(("" -> hof"A") +: Sequent()))
+      .b(CutRule(_, _, hof"A")) qed)
     val Some(newProof) = StuckCutReduction.Left.reduce(proof): @unchecked
     newProof.endSequent must beMultiSetEqual(proof.endSequent)
     newProof.subProofAt(0 :: 1 :: 1 :: Nil) must beAnInstanceOf[CutRule]
@@ -712,14 +710,14 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "right cut cut equality-left should reduce" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent() :+ ("" -> hof"A"))
-      c OpenAssumption(Sequent() :+ ("" -> hof"B(t)"))
-      c OpenAssumption(Sequent() :+ ("" -> hof"s=t"))
-      c OpenAssumption(("" -> hof"s=t") +: ("" -> hof"B(s)") +: ("" -> hof"A") +: Sequent())
-      u (EqualityLeftRule(_, Ant(0), Ant(1), Abs(hov"x", le"B(x):o")))
-      b (CutRule(_, _, hof"s=t"))
-      b (CutRule(_, _, hof"B(t)"))
-      b (CutRule(_, _, hof"A")) qed)
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"A")))
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"B(t)")))
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"s=t")))
+      .c(OpenAssumption(("" -> hof"s=t") +: ("" -> hof"B(s)") +: ("" -> hof"A") +: Sequent()))
+      .u(EqualityLeftRule(_, Ant(0), Ant(1), Abs(hov"x", le"B(x):o")))
+      .b(CutRule(_, _, hof"s=t"))
+      .b(CutRule(_, _, hof"B(t)"))
+      .b(CutRule(_, _, hof"A")) qed)
     val Some(newProof) = StuckCutReduction.Right.reduce(proof): @unchecked
     newProof.endSequent must beMultiSetEqual(proof.endSequent)
     newProof.subProofAt(0 :: 1 :: 1 :: Nil) must beAnInstanceOf[CutRule]
@@ -727,14 +725,14 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "right cut cut equality-right 1 should reduce" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent() :+ ("" -> hof"A"))
-      c OpenAssumption(Sequent() :+ ("" -> hof"s = t"))
-      c OpenAssumption(("" -> hof"A") +: ("" -> hof"s=t") +: Sequent() :+ ("" -> hof"B(s)"))
-      u (EqualityRightRule(_, Ant(1), Suc(0), Abs(hov"x", le"B(x):o")))
-      c OpenAssumption(("" -> hof"B(t)") +: Sequent())
-      b (CutRule(_, _, hof"B(t)"))
-      b (CutRule(_, _, hof"s=t"))
-      b (CutRule(_, _, hof"A")) qed)
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"A")))
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"s = t")))
+      .c(OpenAssumption(("" -> hof"A") +: ("" -> hof"s=t") +: Sequent() :+ ("" -> hof"B(s)")))
+      .u(EqualityRightRule(_, Ant(1), Suc(0), Abs(hov"x", le"B(x):o")))
+      .c(OpenAssumption(("" -> hof"B(t)") +: Sequent()))
+      .b(CutRule(_, _, hof"B(t)"))
+      .b(CutRule(_, _, hof"s=t"))
+      .b(CutRule(_, _, hof"A")) qed)
     val Some(newProof) = StuckCutReduction.Right.reduce(proof): @unchecked
     newProof.endSequent must beMultiSetEqual(proof.endSequent)
     newProof.subProofAt(0 :: 0 :: 1 :: Nil) must beAnInstanceOf[CutRule]
@@ -742,14 +740,14 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "right cut cut equality-right 2 should reduce" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent() :+ ("" -> hof"A"))
-      c OpenAssumption(Sequent() :+ ("" -> hof"s = t"))
-      c OpenAssumption(("" -> hof"A") +: ("" -> hof"s=t") +: Sequent() :+ ("" -> hof"B(s)"))
-      u (EqualityRightRule(_, Ant(1), Suc(0), Abs(hov"x", le"B(x):o")))
-      b (CutRule(_, _, hof"s=t"))
-      c OpenAssumption(("" -> hof"B(t)") +: Sequent())
-      b (CutRule(_, _, hof"B(t)"))
-      b (CutRule(_, _, hof"A")) qed)
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"A")))
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"s = t")))
+      .c(OpenAssumption(("" -> hof"A") +: ("" -> hof"s=t") +: Sequent() :+ ("" -> hof"B(s)")))
+      .u(EqualityRightRule(_, Ant(1), Suc(0), Abs(hov"x", le"B(x):o")))
+      .b(CutRule(_, _, hof"s=t"))
+      .c(OpenAssumption(("" -> hof"B(t)") +: Sequent()))
+      .b(CutRule(_, _, hof"B(t)"))
+      .b(CutRule(_, _, hof"A")) qed)
     val Some(newProof) = StuckCutReduction.Right.reduce(proof): @unchecked
     newProof.endSequent must beMultiSetEqual(proof.endSequent)
     newProof.subProofAt(0 :: 1 :: 0 :: Nil) must beAnInstanceOf[CutRule]
@@ -757,52 +755,52 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "stuck cut left forall-sk should reduce" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent() :+ ("" -> hof"A(s)") :+ ("" -> hof"B"))
-      u (ForallSkRightRule(_, Suc(0), hof"!x A(x)", le"s"))
-      c OpenAssumption(("" -> hof"!x A(x)") +: Sequent())
-      b (CutRule(_, _, hof"!x A(x)"))
-      c OpenAssumption(("" -> hof"B") +: Sequent())
-      b (CutRule(_, _, hof"B")) qed)
-    val Some(newProof) = StuckCutReduction.Left reduce proof: @unchecked
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"A(s)") :+ ("" -> hof"B")))
+      .u(ForallSkRightRule(_, Suc(0), hof"!x A(x)", le"s"))
+      .c(OpenAssumption(("" -> hof"!x A(x)") +: Sequent()))
+      .b(CutRule(_, _, hof"!x A(x)"))
+      .c(OpenAssumption(("" -> hof"B") +: Sequent()))
+      .b(CutRule(_, _, hof"B")) qed)
+    val Some(newProof) = StuckCutReduction.Left.reduce(proof): @unchecked
     newProof.endSequent must beMultiSetEqual(proof.endSequent)
     newProof.subProofAt(0 :: 0 :: Nil) must beAnInstanceOf[CutRule]
   }
 
   "stuck cut left exists-sk should reduce" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent() :+ ("" -> hof"?x A(x)"))
-      c OpenAssumption(("" -> hof"A(s)") +: Sequent() :+ ("" -> hof"B"))
-      u (ExistsSkLeftRule(_, Ant(0), hof"?x A(x)", le"s"))
-      b (CutRule(_, _, hof"?x A(x)"))
-      c OpenAssumption(("" -> hof"B") +: Sequent())
-      b (CutRule(_, _, hof"B")) qed)
-    val Some(newProof) = StuckCutReduction.Left reduce proof: @unchecked
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"?x A(x)")))
+      .c(OpenAssumption(("" -> hof"A(s)") +: Sequent() :+ ("" -> hof"B")))
+      .u(ExistsSkLeftRule(_, Ant(0), hof"?x A(x)", le"s"))
+      .b(CutRule(_, _, hof"?x A(x)"))
+      .c(OpenAssumption(("" -> hof"B") +: Sequent()))
+      .b(CutRule(_, _, hof"B")) qed)
+    val Some(newProof) = StuckCutReduction.Left.reduce(proof): @unchecked
     newProof.endSequent must beMultiSetEqual(proof.endSequent)
     newProof.subProofAt(0 :: 1 :: Nil) must beAnInstanceOf[CutRule]
   }
 
   "stuck cut right forall-sk should reduce" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent() :+ ("" -> hof"B"))
-      c OpenAssumption(("" -> hof"B") +: Sequent() :+ ("" -> hof"A(s)"))
-      u (ForallSkRightRule(_, Suc(0), hof"!x A(x)", le"s"))
-      c OpenAssumption(("" -> hof"!x A(x)") +: Sequent())
-      b (CutRule(_, _, hof"!x A(x)"))
-      b (CutRule(_, _, hof"B")) qed)
-    val Some(newProof) = StuckCutReduction.Right reduce proof: @unchecked
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"B")))
+      .c(OpenAssumption(("" -> hof"B") +: Sequent() :+ ("" -> hof"A(s)")))
+      .u(ForallSkRightRule(_, Suc(0), hof"!x A(x)", le"s"))
+      .c(OpenAssumption(("" -> hof"!x A(x)") +: Sequent()))
+      .b(CutRule(_, _, hof"!x A(x)"))
+      .b(CutRule(_, _, hof"B")) qed)
+    val Some(newProof) = StuckCutReduction.Right.reduce(proof): @unchecked
     newProof.endSequent must beMultiSetEqual(proof.endSequent)
     newProof.subProofAt(0 :: 0 :: Nil) must beAnInstanceOf[CutRule]
   }
 
   "stuck cut right exists-sk should reduce" in {
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent() :+ ("" -> hof"B"))
-      c OpenAssumption(Sequent() :+ ("" -> hof"?x A(x)"))
-      c OpenAssumption(("" -> hof"B") +: ("" -> hof"A(s)") +: Sequent())
-      u (ExistsSkLeftRule(_, Ant(1), hof"?x A(x)", le"s"))
-      b (CutRule(_, _, hof"?x A(x)"))
-      b (CutRule(_, _, hof"B")) qed)
-    val Some(newProof) = StuckCutReduction.Right reduce proof: @unchecked
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"B")))
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"?x A(x)")))
+      .c(OpenAssumption(("" -> hof"B") +: ("" -> hof"A(s)") +: Sequent()))
+      .u(ExistsSkLeftRule(_, Ant(1), hof"?x A(x)", le"s"))
+      .b(CutRule(_, _, hof"?x A(x)"))
+      .b(CutRule(_, _, hof"B")) qed)
+    val Some(newProof) = StuckCutReduction.Right.reduce(proof): @unchecked
     newProof.endSequent must beMultiSetEqual(proof.endSequent)
     newProof.subProofAt(0 :: 1 :: Nil) must beAnInstanceOf[CutRule]
   }
@@ -813,11 +811,11 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     context += hoc"F:nat>o"
     context += hoc"A:o"
     val proof = (ProofBuilder
-      c LogicalAxiom(hof"F(0)")
-      c LogicalAxiom(hof"A")
-      u (WeakeningLeftRule(_, hof"F(x)"))
-      u (WeakeningRightRule(_, hof"F(s(x))"))
-      b ((base, step) => {
+      .c(LogicalAxiom(hof"F(0)"))
+      .c(LogicalAxiom(hof"A"))
+      .u(WeakeningLeftRule(_, hof"F(x)"))
+      .u(WeakeningRightRule(_, hof"F(s(x))"))
+      .b((base, step) => {
         InductionRule(
           InductionCase(base, hoc"0:nat", Nil, Nil, Suc(0)) ::
             InductionCase(step, hoc"s:nat>nat", Ant(0) :: Nil, hov"x:nat" :: Nil, Suc(1)) ::
@@ -826,9 +824,9 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
           le"s(s(0))"
         )
       })
-      c OpenAssumption(("" -> hof"F(s(s(0)))") +: Sequent())
-      b (CutRule(_, _, hof"F(s(s(0)))")) qed)
-    val Some(newProof) = new LeftRankInductionUnfoldingReduction reduce proof: @unchecked
+      .c(OpenAssumption(("" -> hof"F(s(s(0)))") +: Sequent()))
+      .b(CutRule(_, _, hof"F(s(s(0)))")) qed)
+    val Some(newProof) = (new LeftRankInductionUnfoldingReduction).reduce(proof): @unchecked
     newProof.endSequent must beMultiSetEqual(proof.endSequent)
     isInductionFree(newProof) must_== true
   }
@@ -839,11 +837,11 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     context += hoc"F:nat>o"
     context += hoc"A:o"
     val proof = (ProofBuilder
-      c LogicalAxiom(hof"F(0)")
-      c LogicalAxiom(hof"A")
-      u (WeakeningLeftRule(_, hof"F(x)"))
-      u (WeakeningRightRule(_, hof"F(s(x))"))
-      b ((base, step) => {
+      .c(LogicalAxiom(hof"F(0)"))
+      .c(LogicalAxiom(hof"A"))
+      .u(WeakeningLeftRule(_, hof"F(x)"))
+      .u(WeakeningRightRule(_, hof"F(s(x))"))
+      .b((base, step) => {
         InductionRule(
           InductionCase(base, hoc"0:nat", Nil, Nil, Suc(0)) ::
             InductionCase(step, hoc"s:nat>nat", Ant(0) :: Nil, hov"x:nat" :: Nil, Suc(1)) ::
@@ -852,10 +850,10 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
           hov"x:nat"
         )
       })
-      c OpenAssumption(("" -> hof"F(x)") +: Sequent())
-      b (CutRule(_, _, hof"F(x)"))
-      c OpenAssumption(("" -> hof"A") +: Sequent())
-      b (CutRule(_, _, hof"A")) qed)
+      .c(OpenAssumption(("" -> hof"F(x)") +: Sequent()))
+      .b(CutRule(_, _, hof"F(x)"))
+      .c(OpenAssumption(("" -> hof"A") +: Sequent()))
+      .b(CutRule(_, _, hof"A")) qed)
     val Some(newProof) = StuckCutReduction.Left.reduce(proof): @unchecked
     newProof.endSequent must beMultiSetEqual(proof.endSequent)
     newProof.subProofAt(1 :: 0 :: Nil) must beAnInstanceOf[CutRule]
@@ -867,12 +865,12 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     context += hoc"F:nat>o"
     context += hoc"A:o"
     val proof = (ProofBuilder
-      c OpenAssumption(Sequent() :+ ("" -> hof"A"))
-      c LogicalAxiom(hof"F(0)")
-      c LogicalAxiom(hof"A")
-      u (WeakeningLeftRule(_, hof"F(x)"))
-      u (WeakeningRightRule(_, hof"F(s(x))"))
-      b ((base, step) => {
+      .c(OpenAssumption(Sequent() :+ ("" -> hof"A")))
+      .c(LogicalAxiom(hof"F(0)"))
+      .c(LogicalAxiom(hof"A"))
+      .u(WeakeningLeftRule(_, hof"F(x)"))
+      .u(WeakeningRightRule(_, hof"F(s(x))"))
+      .b((base, step) => {
         InductionRule(
           InductionCase(base, hoc"0:nat", Nil, Nil, Suc(0)) ::
             InductionCase(step, hoc"s:nat>nat", Ant(0) :: Nil, hov"x:nat" :: Nil, Suc(1)) ::
@@ -881,9 +879,9 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
           hov"x:nat"
         )
       })
-      c OpenAssumption(("" -> hof"F(x)") +: Sequent())
-      b (CutRule(_, _, hof"F(x)"))
-      b (CutRule(_, _, hof"A")) qed)
+      .c(OpenAssumption(("" -> hof"F(x)") +: Sequent()))
+      .b(CutRule(_, _, hof"F(x)"))
+      .b(CutRule(_, _, hof"A")) qed)
     val Some(newProof) = StuckCutReduction.Right.reduce(proof): @unchecked
     newProof.endSequent must beMultiSetEqual(proof.endSequent)
     newProof.subProofAt(1 :: 0 :: Nil) must beAnInstanceOf[CutRule]
@@ -891,18 +889,18 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "cut should reduce over multiple stuck cuts 1" in {
     val proof = (ProofBuilder
-      c OpenAssumption(hols":- e:E")
-      c OpenAssumption(hols":- c:C")
-      c OpenAssumption(hols":- a:A")
-      c OpenAssumption(hols"a: A, c:C :- b:B, d:D")
-      u (WeakeningLeftRule(_, hof"E"))
-      b (CutRule(_, _, hof"A"))
-      c OpenAssumption(hols"b: B :-")
-      b (CutRule(_, _, hof"B"))
-      b (CutRule(_, _, hof"C"))
-      c OpenAssumption(hols"d:D :-")
-      b (CutRule(_, _, hof"D"))
-      b (CutRule(_, _, hof"E")) qed)
+      .c(OpenAssumption(hols":- e:E"))
+      .c(OpenAssumption(hols":- c:C"))
+      .c(OpenAssumption(hols":- a:A"))
+      .c(OpenAssumption(hols"a: A, c:C :- b:B, d:D"))
+      .u(WeakeningLeftRule(_, hof"E"))
+      .b(CutRule(_, _, hof"A"))
+      .c(OpenAssumption(hols"b: B :-"))
+      .b(CutRule(_, _, hof"B"))
+      .b(CutRule(_, _, hof"C"))
+      .c(OpenAssumption(hols"d:D :-"))
+      .b(CutRule(_, _, hof"D"))
+      .b(CutRule(_, _, hof"E")) qed)
     val newProof = cutNormal(proof)
     proof.endSequent must beMultiSetEqual(newProof.endSequent)
     (proof.subProofs.filter(_.isInstanceOf[CutRule]).size >
@@ -911,20 +909,20 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "cut should reduce over multiple stuck cuts 2" in {
     val proof = (ProofBuilder
-      c OpenAssumption(hols":- e:E")
-      c OpenAssumption(hols":- c:C")
-      c OpenAssumption(hols":- a:A")
-      c OpenAssumption(hols"a: A, c:C, e:E :- b:B, d:D")
-      u (WeakeningRightRule(_, hof"F"))
-      b (CutRule(_, _, hof"A"))
-      c OpenAssumption(hols"b: B :-")
-      b (CutRule(_, _, hof"B"))
-      b (CutRule(_, _, hof"C"))
-      c OpenAssumption(hols"d:D :-")
-      b (CutRule(_, _, hof"D"))
-      b (CutRule(_, _, hof"E"))
-      c OpenAssumption(hols"f:F :- x:X")
-      b (CutRule(_, _, hof"F")) qed)
+      .c(OpenAssumption(hols":- e:E"))
+      .c(OpenAssumption(hols":- c:C"))
+      .c(OpenAssumption(hols":- a:A"))
+      .c(OpenAssumption(hols"a: A, c:C, e:E :- b:B, d:D"))
+      .u(WeakeningRightRule(_, hof"F"))
+      .b(CutRule(_, _, hof"A"))
+      .c(OpenAssumption(hols"b: B :-"))
+      .b(CutRule(_, _, hof"B"))
+      .b(CutRule(_, _, hof"C"))
+      .c(OpenAssumption(hols"d:D :-"))
+      .b(CutRule(_, _, hof"D"))
+      .b(CutRule(_, _, hof"E"))
+      .c(OpenAssumption(hols"f:F :- x:X"))
+      .b(CutRule(_, _, hof"F")) qed)
     val newProof = cutNormal(proof)
     proof.endSequent must beMultiSetEqual(newProof.endSequent)
     (proof.subProofs.filter(_.isInstanceOf[CutRule]).size >

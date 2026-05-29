@@ -143,7 +143,7 @@ class LKToLKskTest extends Specification {
   "higher order tape proof" in {
     def load(fn: String): LKProof = {
       val pdb = loadLLK(ClasspathInputFile(fn))
-      AtomicExpansion(eliminateDefinitions(pdb.Definitions)(pdb proof "TAPEPROOF"))
+      AtomicExpansion(eliminateDefinitions(pdb.Definitions)(pdb.proof("TAPEPROOF")))
     }
 
     "2 copies tape proof" in {

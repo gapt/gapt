@@ -159,7 +159,7 @@ class StandardInferences(state: EscargotState, propositional: Boolean) {
     fastSubsumption(a.clause, b.clause, a.featureVec, b.featureVec, a.literalFeatureVecs, b.literalFeatureVecs)
   def subsume(a: HOLSequent, b: HOLSequent): Option[Substitution] =
     if (propositional) {
-      if (a `isSubMultisetOf` b) Some(Substitution())
+      if (a.`isSubMultisetOf`(b)) Some(Substitution())
       else None
     } else clauseSubsumption(a, b, multisetSubsumption = true)
   def unify(a: Expr, b: Expr): Option[Substitution] =
@@ -177,7 +177,7 @@ class StandardInferences(state: EscargotState, propositional: Boolean) {
     subProof match {
       case _ if substitution.isIdentity => subProof
       case Subst(subProof2, substitution2) =>
-        Subst(subProof2, substitution `compose` substitution2)
+        Subst(subProof2, substitution.`compose`(substitution2))
       case _ => gapt.proofs.resolution.Subst(subProof, substitution)
     }
 

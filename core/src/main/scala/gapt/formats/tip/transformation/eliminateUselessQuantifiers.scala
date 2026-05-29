@@ -47,13 +47,13 @@ class EliminateUselessQuantifiers(problem: TipSmtProblem) {
    * @return A TIP problem not containing useless quantifiers.
    */
   def apply(): TipSmtProblem = {
-    problem.copy(definitions = problem.definitions map {
+    problem.copy(definitions = problem.definitions.map {
       case fun @ TipSmtFunctionDefinition(_, _, _, _, _) =>
         apply(fun)
       case goal @ TipSmtGoal(_, formula) =>
         goal.copy(expr = this(formula))
       case funDefs @ TipSmtMutualRecursiveFunctionDefinition(_) =>
-        funDefs.copy(functions = funDefs.functions map { apply })
+        funDefs.copy(functions = funDefs.functions.map { apply })
       case assertion @ TipSmtAssertion(_, formula) =>
         assertion.copy(expr = this(formula))
       case definition => definition
@@ -114,7 +114,7 @@ class EliminateUselessQuantifiers(problem: TipSmtProblem) {
           this(expr.ifFalse)
         )
       case expr @ TipSmtMatch(_, _) =>
-        expr.copy(cases = expr.cases map { c =>
+        expr.copy(cases = expr.cases.map { c =>
           TipSmtCase(c.pattern, this(c.expr))
         })
       case expr @ TipSmtNot(_) =>

@@ -33,5 +33,5 @@ package object spin {
   def lambdaType(t: String): Boolean = t.matches("fun[0-9]+")
 
   private[spin] implicit def labeledSequentToHOLSequent(sequent: Sequent[(String, Formula)]): Sequent[Formula] =
-    sequent map { case (_, f) => f }
+    sequent.map { case (_, f) => f }
 }

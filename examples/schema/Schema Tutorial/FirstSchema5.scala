@@ -46,8 +46,8 @@ object FirstSchema5 extends TacticsProof {
   val esChiBc = Sequent(Seq("Ant_0" -> hof" POR(0,a)"), Seq("Suc_0" -> hof"POR(0,a)"))
   // Proof of chi basecase
   val chiBc = Lemma(esChiBc) {
-    unfold("POR") `atMost` 1 `in` "Suc_0"
-    unfold("POR") `atMost` 1 `in` "Ant_0"
+    unfold("POR").`atMost`(1).`in`("Suc_0")
+    unfold("POR").`atMost`(1).`in`("Ant_0")
     trivial
   }
   // If, after loading the file, we run  FirstSchema.chiBc we should get a proof.
@@ -76,8 +76,8 @@ res1: gapt.proofs.lk.LKProof =
   // be addressed later.
 
   val chiSc = Lemma(esChiSc) {
-    unfold("POR") `atMost` 1 `in` "Suc_0"
-    unfold("POR") `atMost` 1 `in` "Ant_0"
+    unfold("POR").`atMost`(1).`in`("Suc_0")
+    unfold("POR").`atMost`(1).`in`("Ant_0")
     orR
     orL
   }

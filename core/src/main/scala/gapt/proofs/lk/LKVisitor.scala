@@ -297,7 +297,7 @@ trait LKVisitor[T] {
     one2one(proof, otherArg) { subProofs =>
       InductionRule(
         for ((c, (subProof, subConn)) <- proof.cases zip subProofs)
-          yield InductionCase(subProof, c.constructor, c.hypotheses map subConn.child, c.eigenVars, subConn.child(c.conclusion)),
+          yield InductionCase(subProof, c.constructor, c.hypotheses.map(subConn.child), c.eigenVars, subConn.child(c.conclusion)),
         proof.formula,
         proof.term
       )
@@ -333,13 +333,13 @@ trait LKVisitor[T] {
 
     val (leftProof, leftConn) = newFormulas.antecedent.foldLeft((subProof, SequentConnector(subProof.endSequent))) { (acc, indices) =>
       val (p, c) = acc
-      val (pNew, cNew) = ContractionLeftMacroRule.withSequentConnector(p, indices map { c.child })
+      val (pNew, cNew) = ContractionLeftMacroRule.withSequentConnector(p, indices.map { c.child })
       (pNew, cNew * c)
     }
 
     val (rightProof, rightConn) = newFormulas.succedent.foldLeft((leftProof, leftConn)) { (acc, indices) =>
       val (p, c) = acc
-      val (pNew, cNew) = ContractionRightMacroRule.withSequentConnector(p, indices map { c.child })
+      val (pNew, cNew) = ContractionRightMacroRule.withSequentConnector(p, indices.map { c.child })
       (pNew, cNew * c)
     }
 

@@ -52,8 +52,8 @@ class DIMACSEncoding {
 
   def decodeModel(model: DIMACS.Model) =
     PropositionalModel(model.flatMap {
-      case l if l > 0 => decodeAtomOption(l) map { _ -> true }
-      case l if l < 0 => decodeAtomOption(-l) map { _ -> false }
+      case l if l > 0 => decodeAtomOption(l).map { _ -> true }
+      case l if l < 0 => decodeAtomOption(-l).map { _ -> false }
     })
 
   override def toString = s"DIMACSEncoding(${atomMap.map(x => s"${x._1} -> ${x._2}").mkString(", ")})"

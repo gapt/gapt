@@ -40,7 +40,7 @@ object minimalExpansionSequent {
     new Minimizer(sequent, prover).computeAMinimal()
 
   def apply(proof: ExpansionProof, prover: Prover): Option[ExpansionProof] =
-    apply(proof.expansionSequent, prover) map { ExpansionProof(_) }
+    apply(proof.expansionSequent, prover).map { ExpansionProof(_) }
 }
 
 /**
@@ -65,7 +65,7 @@ private[expansion] class Minimizer(val sequent: ExpansionSequent, val prover: Pr
     // Invariant: the stack only contains valid expansion sequents.
     val stack = mutable.Stack[ExpansionSequent]()
 
-    if (prover.isValid(sequent map { _.deep })) {
+    if (prover.isValid(sequent.map { _.deep })) {
       debug("The starting sequent is tautological.")
       stack.push(sequent) // The sequent under consideration is placed on the stack if it is valid.
       // The input sequent is assigned number 0 to denote that no instances at all have been removed from it.
@@ -88,7 +88,7 @@ private[expansion] class Minimizer(val sequent: ExpansionSequent, val prover: Pr
       for (i <- 1 to m) { // Iterate over the generated successors
         val s = newSequents(i - 1)
         debug("Testing validity [" + i + "/" + m + "] ...")
-        if (prover.isValid(s map { _.deep })) {
+        if (prover.isValid(s.map { _.deep })) {
           if (i >= n) // This is the core of the optimization: Avoid pushing sequents on the stack multiple times.
             stack.push(s) // Push valid sequents on the stack
 
@@ -112,7 +112,7 @@ private[expansion] class Minimizer(val sequent: ExpansionSequent, val prover: Pr
    * @return a minimal expansion sequent, or None if sequent is not valid.
    */
   def computeAMinimal(): Option[ExpansionSequent] = {
-    if (prover.isValid(sequent map { _.deep }))
+    if (prover.isValid(sequent.map { _.deep }))
       Some(computeAMinimal_(sequent))
     else
       None
@@ -127,7 +127,7 @@ private[expansion] class Minimizer(val sequent: ExpansionSequent, val prover: Pr
    */
   private def computeAMinimal_(mes: ExpansionSequent): ExpansionSequent = {
     debug("Minimizing an ExpansionSequent with " + numberOfInstancesET(mes) + " instances...")
-    val suc_opt = generateSuccessors(mes).find({ s => prover.isValid(s map { _.deep }) })
+    val suc_opt = generateSuccessors(mes).find({ s => prover.isValid(s.map { _.deep }) })
     if (suc_opt.isDefined)
       computeAMinimal_(suc_opt.get)
     else
@@ -272,7 +272,7 @@ private[expansion] class Minimizer(val sequent: ExpansionSequent, val prover: Pr
             case _                              => false
           }
           if (containsWeakQ) {
-            generateSuccessorTrees(child) map { succ => ETWeakQuantifier(f, inst.updated(term, succ)) }
+            generateSuccessorTrees(child).map { succ => ETWeakQuantifier(f, inst.updated(term, succ)) }
           } else {
             // In this case we are in a bottommost weak quantifier node,
             // which means that we will actually remove instances.

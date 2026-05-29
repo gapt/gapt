@@ -37,5 +37,5 @@ object simplificationRules {
   }
 
   val conditionalRules: Set[ConditionalReductionRule] =
-    rules map { case ReductionRule(lhs, rhs) => util.ConditionalReductionRule(List(), lhs, rhs) }
+    rules.map { case ReductionRule(lhs, rhs) => util.ConditionalReductionRule(List(), lhs, rhs) }
 }

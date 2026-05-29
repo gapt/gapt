@@ -57,7 +57,7 @@ trait Prover {
   /**
    * Checks whether a set of clauses is unsatisfiable.
    */
-  def isUnsat(cnf: Iterable[HOLClause])(implicit ctx: Maybe[Context]): Boolean = isValid(existentialClosure(cnf ++: Sequent() map { _.toDisjunction }))
+  def isUnsat(cnf: Iterable[HOLClause])(implicit ctx: Maybe[Context]): Boolean = isValid(existentialClosure((cnf ++: Sequent()).map { _.toDisjunction }))
 
   /**
    * @param formula The formula that should be proved.
@@ -76,7 +76,7 @@ trait Prover {
     getExpansionProof(Sequent() :+ formula)
 
   def getExpansionProof(seq: HOLSequent)(implicit ctx: Maybe[MutableContext]): Option[ExpansionProof] =
-    getLKProof(seq) map { LKToExpansionProof(_) } map { eliminateCutsET(_) }
+    getLKProof(seq).map { LKToExpansionProof(_) }.map { eliminateCutsET(_) }
 
   def getEpsilonProof(seq: HOLSequent)(implicit ctx0: Maybe[MutableContext]): Option[EpsilonProof] = {
     implicit val ctx = ctx0.getOrElse(MutableContext.guess(seq))

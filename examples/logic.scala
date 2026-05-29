@@ -449,8 +449,8 @@ object logic extends Theory {
   }
 
   fun(hoc"ite{?a}:o>?a>?a>?a", "ite true a b = a", "ite false a b = b")
-  val itepos = lemma(hof"p -> ite p a b = a", "simp", "nocombine") { induction(hov"p:o") `onAll` simp.w("ite") }
-  val iteneg = lemma(hof"-p -> ite p a b = b", "simp", "nocombine") { induction(hov"p:o") `onAll` simp.w("ite") }
+  val itepos = lemma(hof"p -> ite p a b = a", "simp", "nocombine") { induction(hov"p:o").`onAll`(simp.w("ite")) }
+  val iteneg = lemma(hof"-p -> ite p a b = b", "simp", "nocombine") { induction(hov"p:o").`onAll`(simp.w("ite")) }
   val iteeq = lemma(hof"ite p a a = a", "simp") { cut("", hof"p:o").onAll(simp.h) }
 
   dfn(hof"compose{?a?b?c} (g:?b>?c) (f:?a>?b) x = g (f x)")
@@ -459,8 +459,8 @@ object logic extends Theory {
   val propext = axiom(hof"!p!q ((p <-> q) -> p = q)")
   val funext = axiom(hof"!f!g (!x f(x) = g(x) -> f = g)")
 
-  val propextiff = lemma(hof"(p = q) <-> (p <-> q)") { andR `onAll` impR `onAll` simp.h("propext") }
-  val funextiff = lemma(hof"(f = g) <-> (!x f(x) = g(x))") { andR `onAll` impR `onAll` simp.h("funext") }
+  val propextiff = lemma(hof"(p = q) <-> (p <-> q)") { andR.`onAll`(impR).`onAll`(simp.h("propext")) }
+  val funextiff = lemma(hof"(f = g) <-> (!x f(x) = g(x))") { andR.`onAll`(impR).`onAll`(simp.h("funext")) }
 
 }
 

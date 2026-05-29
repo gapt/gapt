@@ -41,7 +41,7 @@ class unfoldInduction(induction: InductionRule) {
     val inductiveArguments = arguments filter { _.ty == induction.term.ty }
     val Seq(stepProof) = induction.cases.filter { _.constructor == constructor }
     val instanceProofs: List[((LKProof, SequentIndex), SequentIndex)] =
-      inductiveArguments.map(constructInstanceProof).zipWithIndex map {
+      inductiveArguments.map(constructInstanceProof).zipWithIndex.map {
         case ((proof, hypIndexSuc), index) => ((proof, hypIndexSuc), stepProof.hypotheses(index))
       }
     val stepProofInstance = instantiateProof(arguments, stepProof)
@@ -74,7 +74,7 @@ private object cutInductionHypotheses {
         val ((proofHypothesis, hypothesisInSuc), hypothesisInAnt) = cut
         val intermediaryProof = CutRule(proofHypothesis, hypothesisInSuc, stepProof, hypothesisInAnt)
         // keep track of indices for remaining cuts
-        val remainingCuts = rest map {
+        val remainingCuts = rest.map {
           case (hyp, hypInAnt) => (hyp, intermediaryProof.getRightSequentConnector.child(hypInAnt))
         }
         transformations.cutInductionHypotheses(

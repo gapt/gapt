@@ -146,7 +146,7 @@ class LLKASTParser extends JavaTokenParsers with PackratParsers {
   lazy val topbottom: PackratParser[LambdaAST] = "$" ~> ("T" ^^ (_ => ast.Top()) | "F" ^^ (_ => ast.Bottom()))
 
   def flattenApps(f: ast.LambdaAST): ast.LambdaAST = f match {
-    case ast.App(ast.App(list) :: rest) => ast.App(((list ++ rest) map flattenApps))
+    case ast.App(ast.App(list) :: rest) => ast.App(((list ++ rest).map(flattenApps)))
     case ast.App(Nil)                   => throw new Exception("Applications need at least one parameter!")
 
     case ast.Abs(x, t)    => ast.Abs(x, flattenApps(t))
@@ -187,11 +187,11 @@ class DeclarationParser extends LLKASTParser {
       (complexType | parens(complexType))) ^^ { case t1 ~ _ ~ t2 => t1 ->: t2 } | simpleType
 
   lazy val constdecl: PackratParser[LLKSignature] = "const" ~ rep1sep(symbolnames, ",") ~ ":" ~ complexType ^^ {
-    case _ ~ varnames ~ _ ~ exptype => emptyLLKSignature ++ (varnames map (x => (x, Const(x, exptype))))
+    case _ ~ varnames ~ _ ~ exptype => emptyLLKSignature ++ (varnames.map(x => (x, Const(x, exptype))))
   }
 
   lazy val vardecl: PackratParser[Map[String, Expr]] = "var" ~ rep1sep(symbolnames, ",") ~ ":" ~ complexType ^^ {
-    case _ ~ varnames ~ _ ~ exptype => emptyLLKSignature ++ (varnames map (x => (x, Var(x, exptype))))
+    case _ ~ varnames ~ _ ~ exptype => emptyLLKSignature ++ (varnames.map(x => (x, Var(x, exptype))))
   }
 
   // declaration lists e.g.: var x,y :i; const a,b : i; const P : i > i > o

@@ -193,7 +193,7 @@ object IvyParser {
 
   // Note:substitution are sometimes given as lists of cons and sometimes as two-element list...
   def parse_substitution_(exp: Seq[SExpression]): List[(FOLVar, FOLTerm)] =
-    exp.toList map {
+    exp.toList.map {
       e =>
         (e: @unchecked) match {
           case LList(vexp, texp @ _*) =>
@@ -292,7 +292,7 @@ object IvyParser {
   }
 
   def parse_atom(name: String, args: Seq[SExpression]) = {
-    val argterms = args map parse_term
+    val argterms = args.map(parse_term)
     if (name == "=") {
       require(args.length == 2, "Error parsing equality: = must be a binary predicate!")
       Eq(argterms(0), argterms(1))

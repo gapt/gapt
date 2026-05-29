@@ -19,9 +19,9 @@ class AtomicExpansionTest extends Specification {
   def test(f: Formula) = AtomicExpansion(f).endSequent must_== (f +: Sequent() :+ f)
 
   "atomic expansion" should {
-    val Seq(p, q) = Seq("p", "q") map { FOLAtom(_) }
+    val Seq(p, q) = Seq("p", "q").map { FOLAtom(_) }
     val r = FOLAtomConst("r", 2)
-    val Seq(x, y) = Seq("x", "y") map { FOLVar(_) }
+    val Seq(x, y) = Seq("x", "y").map { FOLVar(_) }
 
     "atom" in { test(p) }
     "equality" in { test(Eq(x, x)) }

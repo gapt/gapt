@@ -13,7 +13,7 @@ import org.specs2.mutable._
 class RecursionSchemeTest extends Specification with SatMatchers {
 
   def covers(rs: RecursionScheme, ts: Expr*) =
-    (new RecSchemGenLangFormula(rs))(ts map { rs.startSymbol -> _ }) aka s"$rs generates $ts" must beSat
+    (new RecSchemGenLangFormula(rs))(ts.map { rs.startSymbol -> _ }) aka s"$rs generates $ts" must beSat
 
   def doesNotCover(rs: RecursionScheme, t: Expr) =
     (new RecSchemGenLangFormula(rs))(Set(rs.startSymbol -> t)) aka s"$rs generates $t" must beUnsat
@@ -24,7 +24,7 @@ class RecursionSchemeTest extends Specification with SatMatchers {
       val y1 = FOLVar("y1")
       val y2 = FOLVar("y2")
       val y3 = FOLVar("y3")
-      val Seq(c, d, e) = Seq("c", "d", "e") map { FOLConst(_) }
+      val Seq(c, d, e) = Seq("c", "d", "e").map { FOLConst(_) }
       val q = FOLFunctionConst("q", 1)
       val r = FOLFunctionConst("r", 2)
       val f = FOLFunctionConst("f", 2)
@@ -129,13 +129,13 @@ class RecursionSchemeTest extends Specification with SatMatchers {
       val o = FOLConst("o")
       val s = FOLFunctionConst("s", 1)
       val r = FOLFunctionConst("r", 1)
-      val terms = 0 until (4 * 4) map { LazyList.iterate[Expr](o)(s(_))(_) } map { r(_) }
+      val terms = (0 until (4 * 4)).map { LazyList.iterate[Expr](o)(s(_))(_) }.map { r(_) }
 
       val A = FOLConst("A")
       val B = FOLFunctionConst("B", 1)
-      val Seq(x, y) = Seq("x", "y") map { FOLVar(_) }
+      val Seq(x, y) = Seq("x", "y").map { FOLVar(_) }
       val template = RecSchemTemplate(A, A -> y, A -> B(x), B(x) -> y)
-      val rs = template.findMinimalCover(terms map { A -> _ } toSet)
+      val rs = template.findMinimalCover(terms.map { A -> _ } toSet)
       covers(rs, terms: _*)
       rs.rules must haveSize(4 + 4)
     }
@@ -143,14 +143,14 @@ class RecursionSchemeTest extends Specification with SatMatchers {
       val o = FOLConst("o")
       val s = FOLFunctionConst("s", 1)
       val r = FOLAtomConst("r", 1)
-      val terms = 0 until (4 * 4) map { LazyList.iterate[Expr](o)(s(_))(_) } map { r(_) }
+      val terms = (0 until (4 * 4)).map { LazyList.iterate[Expr](o)(s(_))(_) }.map { r(_) }
 
       val A = FOLAtomConst("A", 0)
       val B = FOLAtomConst("B", 1)
       val x = FOLVar("x")
       val y = Var("y", To)
       val template = RecSchemTemplate(A, A -> y, A -> B(x), B(x) -> y)
-      val rs = template.findMinimalCover(terms map { A -> _ } toSet)
+      val rs = template.findMinimalCover(terms.map { A -> _ } toSet)
       covers(rs, terms: _*)
       rs.rules must haveSize(4 + 4)
     }

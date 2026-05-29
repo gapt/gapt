@@ -55,13 +55,13 @@ object deltaTableAlgorithm {
   }
 
   def keySubsumption(a: Set[Substitution], b: Set[Substitution]): Set[Map[Var, Var]] =
-    keySubsumption(a map { _.map }, b map { _.map }, Map())
+    keySubsumption(a.map { _.map }, b.map { _.map }, Map())
 
   def keySubsumption[K1, K2, V](a: Set[Map[K1, V]], b: Set[Map[K2, V]], alreadyFixed: Map[K1, K2]): Set[Map[K1, K2]] = {
     if (a.size > b.size) return Set()
     if (a.head.size > b.head.size) return Set()
 
-    val nextKs = a.head.keySet diff alreadyFixed.keySet
+    val nextKs = a.head.keySet.diff(alreadyFixed.keySet)
     if (nextKs isEmpty) return Set(alreadyFixed)
 
     val chosenK = nextKs.head
@@ -128,8 +128,8 @@ object deltaTableAlgorithm {
 
         // Case 1, pivot is included.
         minimizeRow(
-          termSet diff pivot._2,
-          row map { x => x._1 -> x._2.diff(pivot._2) } filter { _._2.nonEmpty },
+          termSet.diff(pivot._2),
+          row.map { x => x._1 -> x._2.diff(pivot._2) } filter { _._2.nonEmpty },
           alreadyIncluded + pivot._1,
           s
         )
@@ -143,7 +143,7 @@ object deltaTableAlgorithm {
 
     for ((s, decomps) <- deltatable.toSeq sortBy { -_._1.toSeq.flatMap { _.map.values }.map { expressionSize(_) }.sum }) {
       val coveredTerms = decomps flatMap { _._2 }
-      minimizeRow(coveredTerms, decomps, termSet diff coveredTerms, s)
+      minimizeRow(coveredTerms, decomps, termSet.diff(coveredTerms), s)
     }
 
     if (subsumeMinimalGrammars) for {

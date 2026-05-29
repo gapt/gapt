@@ -29,7 +29,7 @@ import gapt.provers.escargot.Escargot
           ∃x∃y (¬rat(x) ∧ ¬rat(y) ∧ rat(pow x y))"""
   println(s"Formalization: $irratProblem\n")
   println("Proof:")
-  val Some(irratProof) = Escargot `getEpsilonProof` irratProblem: @unchecked
+  val Some(irratProof) = Escargot.`getEpsilonProof`(irratProblem): @unchecked
   println(irratProof)
 
   require(Escargot.isValid(irratProof.deep))

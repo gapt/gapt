@@ -33,7 +33,7 @@ class TptpProofParserTest extends Specification {
         ResolutionToLKProof(fixed)
 
       val expansion = ResolutionToExpansionProof(fixed)
-      Escargot isValid expansion.deep must_== true
+      Escargot.isValid(expansion.deep) must_== true
     }
   }
 }

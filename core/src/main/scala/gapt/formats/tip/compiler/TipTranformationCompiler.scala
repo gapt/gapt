@@ -173,7 +173,7 @@ class TipTransformationCompiler(var problem: TipSmtProblem) {
   ): Const =
     toFunctionConstant(
       functionDefinition.name,
-      functionDefinition.parameters map { _.typ },
+      functionDefinition.parameters.map { _.typ },
       functionDefinition.returnType
     )
 
@@ -186,7 +186,7 @@ class TipTransformationCompiler(var problem: TipSmtProblem) {
       functionName,
       FunctionType(
         typeDecls(returnType.typename),
-        argumentTypes map { argType => typeDecls(argType.typename) }
+        argumentTypes.map { argType => typeDecls(argType.typename) }
       )
     )
 
@@ -266,12 +266,12 @@ class TipTransformationCompiler(var problem: TipSmtProblem) {
           compileFunctionBody(ifFalse, freeVars)
             .map { -compiledCondition --> _ }
       case TipSmtForall(boundVars, formula) =>
-        val bound = boundVars map { v =>
+        val bound = boundVars.map { v =>
           Var(v.name, typeDecls(v.typ.typename))
         }
         val result = compileFunctionBody(
           formula,
-          freeVars ++ (bound map { _.name })
+          freeVars ++ (bound.map { _.name })
         )
           .map { All.Block(bound, _) }
         result
@@ -369,7 +369,7 @@ class TipTransformationCompiler(var problem: TipSmtProblem) {
       freeVars: Seq[String]
   ): Expr = {
     funDecls(tipSmtFun.name)(
-      tipSmtFun.arguments map { compileExpression(_, freeVars) }*
+      tipSmtFun.arguments.map { compileExpression(_, freeVars) }*
     )
   }
 
@@ -380,7 +380,7 @@ class TipTransformationCompiler(var problem: TipSmtProblem) {
     val TipSmtMatch(matchedExpression, cases) = tipSmtMatch
     val compiledMatchedExpression =
       compileExpression(matchedExpression, freeVars)
-    And(cases map {
+    And(cases.map {
       compileCase(_, compiledMatchedExpression, freeVars)
     })
   }
@@ -401,7 +401,7 @@ class TipTransformationCompiler(var problem: TipSmtProblem) {
       tipSmtEq: TipSmtEq,
       freeVars: Seq[String]
   ): Expr = {
-    val exprs = tipSmtEq.exprs map { compileExpression(_, freeVars) }
+    val exprs = tipSmtEq.exprs.map { compileExpression(_, freeVars) }
     And(for ((a, b) <- exprs zip exprs.tail)
       yield if (exprs.head.ty == To) a <-> b else a === b)
   }
@@ -411,7 +411,7 @@ class TipTransformationCompiler(var problem: TipSmtProblem) {
       freeVars: Seq[String]
   ): Expr = {
     val TipSmtForall(variables, formula) = tipSmtForall
-    val vars = variables map {
+    val vars = variables.map {
       case TipSmtVariableDecl(name, typ) =>
         Var(name, typeDecls(typ.typename))
     }
@@ -429,7 +429,7 @@ class TipTransformationCompiler(var problem: TipSmtProblem) {
       freeVars: Seq[String]
   ): Expr = {
     val TipSmtExists(variables, formula) = tipSmtExists
-    val vars = variables map {
+    val vars = variables.map {
       case TipSmtVariableDecl(name, typ) =>
         Var(name, typeDecls(typ.typename))
     }
@@ -473,7 +473,7 @@ class TipTransformationCompiler(var problem: TipSmtProblem) {
   private def compileFields(
       fields: Seq[(TipSmtIdentifier, Datatype)]
   ): Seq[Expr] = {
-    fields map {
+    fields.map {
       case (f, ty) =>
         if (isVariable(f)) {
           Var(f.name, typeDecls(ty.name))
@@ -519,9 +519,9 @@ class TipTransformationCompiler(var problem: TipSmtProblem) {
     TipProblem(
       ctx,
       definitions.toSeq,
-      typeDecls.values.toSeq diff datatypes.map { _.baseType },
+      typeDecls.values.toSeq.diff(datatypes.map { _.baseType }),
       datatypes.toSeq,
-      funDecls.values.toSeq diff functions.map { _.fun },
+      funDecls.values.toSeq.diff(functions.map { _.fun }),
       functions.toSeq,
       assumptions.toSeq,
       And(goals)

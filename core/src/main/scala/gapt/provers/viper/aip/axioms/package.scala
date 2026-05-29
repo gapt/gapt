@@ -54,7 +54,7 @@ package object axioms {
    *         case for each of the constructors.
    */
   def inductionAxiom(inductionVariable: Var, formula: Formula, constructors: Seq[Con])(implicit ctx: Context) =
-    And(constructors map { inductionCase(inductionVariable, formula, _) }) -->
+    And(constructors.map { inductionCase(inductionVariable, formula, _) }) -->
       All(inductionVariable, formula)
 
   /**
@@ -92,7 +92,7 @@ package object axioms {
   ): (List[Var], List[Var], Formula) = {
     val FunctionType(_, argumentTypes) = constructor.ty: @unchecked
     val nameGenerator = rename.awayFrom(freeVariables(formula))
-    val newVariables = argumentTypes map {
+    val newVariables = argumentTypes.map {
       argumentType =>
         val newName =
           nameGenerator.fresh(
@@ -116,7 +116,7 @@ package object axioms {
   ): (List[Var], List[Var], Expr) = {
     val FunctionType(_, argumentTypes) = constructor.ty: @unchecked
     val nameGenerator = rename.awayFrom(freeVariables(formula))
-    val newVariables = argumentTypes map {
+    val newVariables = argumentTypes.map {
       argumentType =>
         val newName =
           nameGenerator.fresh(

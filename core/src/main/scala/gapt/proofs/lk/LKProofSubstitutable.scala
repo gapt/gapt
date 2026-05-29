@@ -200,7 +200,7 @@ class LKProofSubstitutable(preserveEigenvariables: Boolean) extends Substitutabl
 
     case InductionRule(cases, main, term) =>
       InductionRule(
-        cases map {
+        cases.map {
           indCase(substitution, _)
         },
         substitution(main).asInstanceOf[Abs],
@@ -226,7 +226,7 @@ class LKProofSubstitutable(preserveEigenvariables: Boolean) extends Substitutabl
         subst,
         c.copy(
           applySubstitution(Substitution(renaming), c.proof),
-          eigenVars = c.eigenVars map renaming
+          eigenVars = c.eigenVars.map(renaming)
         )
       )
     } else {

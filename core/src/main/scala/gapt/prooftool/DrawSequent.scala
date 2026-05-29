@@ -59,8 +59,8 @@ class DrawSequent[F, M <: ProofToolViewer[?]](
 
   val turnstileLabel = new LatexTurnstileLabel(main) // \u22a2
 
-  val elementLabelSequent = sequent map { f => new LatexFormulaLabel(main, sequentElementRenderer(f)) }
-  val commaLabelSequent = sequent map { _ => new CommaLabel(main) }
+  val elementLabelSequent = sequent.map { f => new LatexFormulaLabel(main, sequentElementRenderer(f)) }
+  val commaLabelSequent = sequent.map { _ => new CommaLabel(main) }
 
   contents ++= removeLast((elementLabelSequent.antecedent zip commaLabelSequent.antecedent) flatMap { case (x, y) => Seq(x, y) })
   contents += turnstileLabel
@@ -100,7 +100,7 @@ class DrawSequentInProof[F, T <: SequentProof[F, T]](
   )
 
   val pos = parent.pos
-  val contextIndices = sequent.indices.toSet diff mainAuxIndices
+  val contextIndices = sequent.indices.toSet.diff(mainAuxIndices)
   val mainAuxIndicesAnt = mainAuxIndices filter { _.isAnt }
   val mainAuxIndicesSuc = mainAuxIndices filterNot { _.isAnt }
 

@@ -47,7 +47,7 @@ case class GeneralInductionAxioms(
   )(implicit ctx: Context): ThrowsError[Axiom] = {
     val closedVariables = inductionVariables filter { _ != variable }
     val inductionFormula = All.Block(closedVariables, formula)
-    StandardInductionAxioms(variable, inductionFormula) map { axiom =>
+    StandardInductionAxioms(variable, inductionFormula).map { axiom =>
       new Axiom {
         val formula = axiom.formula
         def proof = { axiom.proof }

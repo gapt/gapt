@@ -88,7 +88,7 @@ object preExpr {
       case Ident(name, ty, Some(ps)) => s"($name{${ps.map(apply).mkString(" ")}:${apply(ty)})"
       case Abs(v, sub)               => s"(^${apply(v)} ${apply(sub)})"
       case App(a, b)                 => s"(${apply(a)} ${apply(b)})"
-      case Quoted(e, ty, fvs)        => s"#quote(${e.toSigRelativeString(using sig)}, ${apply(ty)}${fvs map { case (n, t) => s", $n -> ${apply(t)}" } mkString})"
+      case Quoted(e, ty, fvs)        => s"#quote(${e.toSigRelativeString(using sig)}, ${apply(ty)}${fvs.map { case (n, t) => s", $n -> ${apply(t)}" } mkString})"
       case FlatOps(children) => children.map {
           case Left((op, _)) => op
           case Right(a)      => apply(a)

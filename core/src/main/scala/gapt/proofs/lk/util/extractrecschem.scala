@@ -34,7 +34,7 @@ object extractRecSchem {
       includeTheoryAxioms: Boolean = true,
       includeEqTheory: Boolean = false
   ): RecursionScheme = {
-    val symbols = p.endSequent.zipWithIndex map {
+    val symbols = p.endSequent.zipWithIndex.map {
       case (All.Block(vars, matrix), Ant(_)) => Abs(vars, matrix)
       case (Ex.Block(vars, matrix), Suc(_))  => Abs(vars, -matrix)
     }
@@ -47,7 +47,7 @@ object extractRecSchem {
         startSymbol(context*),
         symbols.map(Some(_)),
         context
-      ) map {
+      ).map {
         case Rule(lhs, rhs) => Rule(lhs, BetaReduction.betaNormalize(rhs))
       }
     )

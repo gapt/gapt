@@ -26,7 +26,7 @@ class Glucose(command: String*) extends ExternalSATSolver(command*) with DrupSol
 
   def getDrupProof(cnf: DIMACS.CNF): Option[RupProof] = {
     if (cnf.isEmpty) return None
-    runForProof(writeDIMACS(cnf)) map { readDRUP(cnf, _) }
+    runForProof(writeDIMACS(cnf)).map { readDRUP(cnf, _) }
   }
 
 }

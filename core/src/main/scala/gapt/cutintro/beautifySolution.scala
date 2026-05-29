@@ -21,7 +21,7 @@ import scala.collection.mutable
 object beautifySolution {
 
   def apply(ehs: SolutionStructure): SolutionStructure = {
-    val esCNFs = ehs.endSequent.zipWithIndex map {
+    val esCNFs = ehs.endSequent.zipWithIndex.map {
       case (All.Block(vs, f), _: Ant) => vs -> CNFp(f)
       case (Ex.Block(vs, f), _: Suc)  => vs -> CNFn(f)
     }
@@ -29,7 +29,7 @@ object beautifySolution {
 
     val addUs = mutable.Buffer[(SequentIndex, List[FOLTerm])]()
 
-    val newCFs = ehs.formulas.zipWithIndex map {
+    val newCFs = ehs.formulas.zipWithIndex.map {
       case (cf, k) =>
         var cnf = CNFp(cf)
 
@@ -50,7 +50,7 @@ object beautifySolution {
         }
 
         // unit resolution
-        cnf = cnf map {
+        cnf = cnf.map {
           _.zipWithIndex filter {
             case (atom, i) =>
               val possibleAxioms = for {
@@ -69,7 +69,7 @@ object beautifySolution {
           } map { _._1 }
         }
 
-        simplifyPropositional(And(cnf map { _.toImplication }))
+        simplifyPropositional(And(cnf.map { _.toImplication }))
     }
 
     val newUs = for (((u, uInst), j) <- ehs.sehs.us.zipWithIndex) yield u -> (uInst ++ addUs.filter { _._1 == j }.map { _._2 })

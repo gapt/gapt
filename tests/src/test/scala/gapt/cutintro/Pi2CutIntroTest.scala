@@ -23,7 +23,7 @@ class Pi2CutIntroTest extends Specification {
     ctx += hoc"c:i"
 
     val p = Lemma(hols"h: !x (P x (f x) | P x (g x) | P x (h x) | P x (i x)) :- ?x?y?z (P x y & P y z)") {
-      cut("c", hof"!x?y P x y") left by { forget("g"); escrgt }
+      cut("c", hof"!x?y P x y").left(by { forget("g"); escrgt })
       forget("h"); escrgt
     }
 

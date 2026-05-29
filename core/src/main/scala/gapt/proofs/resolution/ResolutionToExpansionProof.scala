@@ -192,7 +192,7 @@ object ResolutionToExpansionProof {
         propgm2(p, q, oc.parent(_))
       case p @ Subst(q, subst) =>
         val subFVs = freeVariables(q.conclusion)
-        propg(p, q, _.map(_.map1(_ `compose` subst `restrict` subFVs)))
+        propg(p, q, _.map(_.map1(_.`compose`(subst) `restrict` subFVs)))
       case p @ Resolution(q1, _, q2, _) =>
         val Seq(oc1, oc2) = p.occConnectors
         propg_(p, q1, _.map(es => es._1 -> oc1.parent(es._2, ETtAtom)))

@@ -40,7 +40,7 @@ import gapt.proofs.lk.util.freeVariablesLK
  * Modifies an LK proof to introduce strong quantifiers as soon as possible.
  */
 object moveStrongQuantifierRulesDown {
-  def apply(p: LKProof): LKProof = apply(p, p.conclusion map { _ => Seq() })._1
+  def apply(p: LKProof): LKProof = apply(p, p.conclusion.map { _ => Seq() })._1
 
   private def isUnderInduction(p: LKProof, idx: Suc, quantNum: Int): Boolean = p match {
     case p @ ForallRightRule(subProof, aux: Suc, _, _) if p.mainIndices contains idx =>
@@ -117,10 +117,10 @@ object moveStrongQuantifierRulesDown {
 
           case p @ InductionRule(cases, main, term) =>
             p.copy(cases.lazyZip(qs).lazyZip(oc).map { (c, q, o) =>
-              c.copy(proof = q, hypotheses = c.hypotheses map o.child, conclusion = o.child(c.conclusion))
+              c.copy(proof = q, hypotheses = c.hypotheses.map(o.child), conclusion = o.child(c.conclusion))
             })
         }
-        (q, q.occConnectors.lazyZip(oc).lazyZip(p.occConnectors) map { _ * _ * _.inv } reduce { _ + _ })
+        (q, q.occConnectors.lazyZip(oc).lazyZip(p.occConnectors).map { _ * _ * _.inv }.reduce { _ + _ })
     }
   }
 }

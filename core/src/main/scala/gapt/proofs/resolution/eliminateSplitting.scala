@@ -44,7 +44,7 @@ object eliminateSplitting {
    */
   private def project(p: ResolutionProof, splAtom: Atom): (ResolutionProof, Seq[Var], HOLSequent) = {
     val ngc = p.subProofs.collect { case AvatarSplit(_, _, comp @ AvatarNonGroundComp(`splAtom`, _, _)) => comp }.head
-    val newVs = ngc.vars map rename(ngc.vars, containedNames(p))
+    val newVs = ngc.vars.map(rename(ngc.vars, containedNames(p)))
     val newClause = Substitution(ngc.vars zip newVs)(ngc.clause)
 
     val visitor = new ResolutionProofVisitor {

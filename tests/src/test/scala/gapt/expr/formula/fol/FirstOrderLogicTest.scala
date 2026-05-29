@@ -87,7 +87,7 @@ class FirstOrderLogicTest extends Specification {
 
   "First order formulas matching against higher order contructors" should {
     "work for propositional logical operators" in {
-      val List(x, y) = List("x", "y") map (FOLVar(_))
+      val List(x, y) = List("x", "y").map(FOLVar(_))
       val p = "P"
       val pab = FOLAtom(p, List(x, y))
 
@@ -113,8 +113,8 @@ class FirstOrderLogicTest extends Specification {
     }
 
     "work for quantifiers" in {
-      val List(a, b) = List("a", "b") map (FOLConst(_))
-      val List(x, _) = List("x", "y") map (FOLVar(_))
+      val List(a, b) = List("a", "b").map(FOLConst(_))
+      val List(x, _) = List("x", "y").map(FOLVar(_))
       val p = "P"
       val pab = FOLAtom(p, List(a, b))
 

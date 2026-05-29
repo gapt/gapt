@@ -56,14 +56,14 @@ object prop_06 extends TacticsProof {
     allR; induction(hov"xs:list")
     // - BC
     decompose
-    rewrite.many `ltr` "aa1" `in` "append_left_cons"
-    rewrite.many `ltr` "al2" `in` "append_left_cons"
+    rewrite.many.`ltr`("aa1").`in`("append_left_cons")
+    rewrite.many.`ltr`("al2").`in`("append_left_cons")
     refl
     // - IC
     decompose
-    rewrite.many `ltr` "aa2" `in` "append_left_cons"
-    rewrite.many `ltr` "al2" `in` "append_left_cons"
-    rewrite.many `ltr` "IHxs_0" `in` "append_left_cons"
+    rewrite.many.`ltr`("aa2").`in`("append_left_cons")
+    rewrite.many.`ltr`("al2").`in`("append_left_cons")
+    rewrite.many.`ltr`("IHxs_0").`in`("append_left_cons")
     refl
   }
 
@@ -80,16 +80,16 @@ object prop_06 extends TacticsProof {
     cut("lem_2", hof"∀xs∀y∀zs length(append(xs,cons(y,zs))) = S(length(append(xs,zs)))")
     insert(lem_2_proof)
     decompose
-    rewrite `ltr` "lem_2" `in` "append_one"
+    rewrite.`ltr`("lem_2").`in`("append_one")
     induction(hov"xs:list")
     // - BC
-    rewrite `ltr` "aa1" `in` "append_one"
-    rewrite.many `ltr` "al1" `in` "append_one"
+    rewrite.`ltr`("aa1").`in`("append_one")
+    rewrite.many.`ltr`("al1").`in`("append_one")
     refl
     // - IC
-    rewrite `ltr` "aa2" `in` "append_one"
-    rewrite.many `ltr` "al2" `in` "append_one"
-    rewrite `ltr` "IHxs_0" `in` "append_one"
+    rewrite.`ltr`("aa2").`in`("append_one")
+    rewrite.many.`ltr`("al2").`in`("append_one")
+    rewrite.`ltr`("IHxs_0").`in`("append_one")
     refl
   }
 
@@ -109,13 +109,13 @@ object prop_06 extends TacticsProof {
     insert(lem_3_proof)
     allR; induction(hov"x:list")
     // - BC
-    rewrite `ltr` "ar1" `in` "length_rev_inv"
+    rewrite.`ltr`("ar1").`in`("length_rev_inv")
     refl
     // - IC
-    rewrite `ltr` "ar2" `in` "length_rev_inv"
-    rewrite `ltr` "lem_3" `in` "length_rev_inv"
-    rewrite `ltr` "al2" `in` "length_rev_inv"
-    rewrite `ltr` "IHx_0" `in` "length_rev_inv"
+    rewrite.`ltr`("ar2").`in`("length_rev_inv")
+    rewrite.`ltr`("lem_3").`in`("length_rev_inv")
+    rewrite.`ltr`("al2").`in`("length_rev_inv")
+    rewrite.`ltr`("IHx_0").`in`("length_rev_inv")
     refl
   }
 
@@ -123,23 +123,23 @@ object prop_06 extends TacticsProof {
     allR; induction(hov"x:list")
     // - BC
     allR
-    rewrite `ltr` "def_append_0" `in` "goal"
-    rewrite `ltr` "def_length_0" `in` "goal"
-    rewrite `ltr` "def_plus_0" `in` "goal"
+    rewrite.`ltr`("def_append_0").`in`("goal")
+    rewrite.`ltr`("def_length_0").`in`("goal")
+    rewrite.`ltr`("def_plus_0").`in`("goal")
     cut("prop_05", hof"∀x length(rev(x)) = length(x)")
     insert(prop_05_proof)
-    rewrite `ltr` "prop_05" `in` "goal"
+    rewrite.`ltr`("prop_05").`in`("goal")
     refl
     // - IC
     decompose
-    rewrite `ltr` "def_append_1" `in` "goal"
-    rewrite `ltr` "def_rev_1" `in` "goal"
-    rewrite `ltr` "def_length_1" `in` "goal"
-    rewrite `ltr` "def_plus_1" `in` "goal"
+    rewrite.`ltr`("def_append_1").`in`("goal")
+    rewrite.`ltr`("def_rev_1").`in`("goal")
+    rewrite.`ltr`("def_length_1").`in`("goal")
+    rewrite.`ltr`("def_plus_1").`in`("goal")
     cut("lem_3", hof"!xs!y length(append(xs,cons(y,nil))) = S(length(xs))")
     insert(lem_3_proof)
-    rewrite `ltr` "lem_3" `in` "goal"
-    rewrite `ltr` "IHx_0" `in` "goal"
+    rewrite.`ltr`("lem_3").`in`("goal")
+    rewrite.`ltr`("IHx_0").`in`("goal")
     refl
   }
 }

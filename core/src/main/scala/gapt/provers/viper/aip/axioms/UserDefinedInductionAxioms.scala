@@ -19,7 +19,7 @@ case class UserDefinedInductionAxioms(axioms: List[String]) extends AxiomFactory
   override def apply(sequent: Sequent[(String, Formula)])(implicit ctx: Context): ThrowsError[List[Axiom]] =
     try {
       Right(
-        axioms map { s =>
+        axioms.map { s =>
           new Axiom() {
             val formula = StringContext(s).hof(s)
             val proof = new OpenAssumption(Sequent() :+ ("" -> formula))

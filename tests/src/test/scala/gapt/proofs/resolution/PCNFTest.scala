@@ -13,11 +13,11 @@ import org.specs2.mutable._
 class PCNFTest extends Specification {
   def checkPCNF(sequent: HOLSequent, clause: HOLClause) = {
     val projection = PCNF(sequent, clause)
-    projection.endSequent isSubMultisetOf (sequent ++ clause) aka s"${projection.endSequent} isSubMultisetOf ($sequent ++ $clause)" must_== true
+    projection.endSequent.isSubMultisetOf(sequent ++ clause) aka s"${projection.endSequent} isSubMultisetOf ($sequent ++ $clause)" must_== true
   }
 
   "PCNF" should {
-    val Seq(p, q, r, s) = Seq("P", "Q", "R", "S") map { FOLAtomConst(_, 1) }
+    val Seq(p, q, r, s) = Seq("P", "Q", "R", "S").map { FOLAtomConst(_, 1) }
     val a = FOLConst("a")
     "an atom Pa in the CNF(-s) where s is the sequent" in {
       "|- ¬Pa" in { checkPCNF(Sequent() :+ -p(a), Clause() :+ p(a)) }
@@ -35,7 +35,7 @@ class PCNFTest extends Specification {
       "|- ∃xPx" in { checkPCNF(Sequent() :+ Ex(x, -p(x)), Clause() :+ p(x)) }
     }
     "weird bug" in {
-      val Seq(a, b, c, d, e, f, g, h, i, j) = 'a' to 'j' map { _.toString } map { FOLAtom(_) }
+      val Seq(a, b, c, d, e, f, g, h, i, j) = ('a' to 'j').map { _.toString }.map { FOLAtom(_) }
       val formula = (((((((a & b) & ((c | -d) | -e)) & d) & f) & g) & e) & h) & (((i | -f) | -i) | -j)
       val clause = d +: e +: Clause() :+ c
       checkPCNF(formula +: Sequent(), clause)

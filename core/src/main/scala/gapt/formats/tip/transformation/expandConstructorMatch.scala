@@ -70,7 +70,7 @@ class ExpandConstructorMatch(val problem: TipSmtProblem) {
    * match-expressions.
    */
   def apply(): TipSmtProblem = problem.copy(definitions =
-    problem.definitions map {
+    problem.definitions.map {
       expandConstructorMatchDefinitionVisitor.dispatch(_, ())
     }
   )
@@ -102,7 +102,7 @@ class ExpandConstructorMatch(val problem: TipSmtProblem) {
         functionDefinitions: TipSmtMutualRecursiveFunctionDefinition,
         data: Unit
     ): TipSmtMutualRecursiveFunctionDefinition =
-      functionDefinitions.copy(functions = functionDefinitions.functions map {
+      functionDefinitions.copy(functions = functionDefinitions.functions.map {
         visit(_, data)
       })
   }
@@ -173,7 +173,7 @@ class ExpandConstructorMatch(val problem: TipSmtProblem) {
         }
       case _ =>
         matchExpression.copy(
-          cases = matchExpression.cases map { expandConstructorMatch }
+          cases = matchExpression.cases.map { expandConstructorMatch }
         )
     }
 
@@ -201,7 +201,7 @@ class ExpandConstructorMatch(val problem: TipSmtProblem) {
   private def expandConstructorMatch(
       expr: TipSmtAnd
   ): TipSmtExpression =
-    expr.copy(exprs = expr.exprs map { expandConstructorMatch })
+    expr.copy(exprs = expr.exprs.map { expandConstructorMatch })
 
   /**
    * Expands constructor match-expressions.
@@ -213,7 +213,7 @@ class ExpandConstructorMatch(val problem: TipSmtProblem) {
   private def expandConstructorMatch(
       expr: TipSmtOr
   ): TipSmtExpression =
-    expr.copy(exprs = expr.exprs map { expandConstructorMatch })
+    expr.copy(exprs = expr.exprs.map { expandConstructorMatch })
 
   /**
    * Expands constructor match-expressions.
@@ -225,7 +225,7 @@ class ExpandConstructorMatch(val problem: TipSmtProblem) {
   private def expandConstructorMatch(
       expr: TipSmtEq
   ): TipSmtExpression =
-    expr.copy(exprs = expr.exprs map { expandConstructorMatch })
+    expr.copy(exprs = expr.exprs.map { expandConstructorMatch })
 
   /**
    * Expands constructor match-expressions.
@@ -237,7 +237,7 @@ class ExpandConstructorMatch(val problem: TipSmtProblem) {
   private def expandConstructorMatch(
       expr: TipSmtImp
   ): TipSmtExpression =
-    expr.copy(exprs = expr.exprs map { expandConstructorMatch })
+    expr.copy(exprs = expr.exprs.map { expandConstructorMatch })
 
   /**
    * Expands constructor match-expressions.
@@ -289,7 +289,7 @@ class ExpandConstructorMatch(val problem: TipSmtProblem) {
   private def expandConstructorMatch(
       expr: TipSmtFun
   ): TipSmtExpression =
-    expr.copy(arguments = expr.arguments map { expandConstructorMatch })
+    expr.copy(arguments = expr.arguments.map { expandConstructorMatch })
 
   /**
    * Retrieves a case-statement of a given match-expression.

@@ -44,7 +44,7 @@ class EProverTest extends Specification with SequentMatchers {
 
     "treat variables in sequents as constants" in {
       val seq = hof"P(x)" +: Sequent() :+ hof"P(c)"
-      EProver getExpansionProof seq must beNone
+      EProver.getExpansionProof(seq) must beNone
     }
 
     "handle weird sequents" in {

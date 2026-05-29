@@ -91,7 +91,7 @@ class VtratgTermGenerationFormula(g: VTRATG, t: Expr) {
 
     // we try not generate the formulas for all subterms, but only for those which are needed
     val possibleAssignments = mutable.Set[(Int, List[Expr])]()
-    val containingNTIdx = g.nonTerminals.zipWithIndex.flatMap { case (ns, i) => ns map { _ -> i } }.toMap
+    val containingNTIdx = g.nonTerminals.zipWithIndex.flatMap { case (ns, i) => ns.map { _ -> i } }.toMap
     val handledPAs = mutable.Set[Map[Var, Expr]]()
     def discoverAssignments(pa: Map[Var, Expr]): Unit =
       if (pa.nonEmpty && !handledPAs.contains(pa)) {
@@ -113,7 +113,7 @@ class VtratgTermGenerationFormula(g: VTRATG, t: Expr) {
     def Match(ntIdx: Int, t: List[Expr], s: List[Expr]) =
       syntacticMatching(s zip t filter { _._2 != notASubTerm }) match {
         case Some(matching) =>
-          And(matching.map.toSeq map {
+          And(matching.map.toSeq.map {
             case (beta, r) if possibleValues(beta) contains r =>
               valueOfNonTerminal(beta, r)
             case _ => Bottom()
@@ -123,7 +123,7 @@ class VtratgTermGenerationFormula(g: VTRATG, t: Expr) {
 
     def Case(ntIdx: Int, t: List[Expr]) =
       if (t forall { _ == notASubTerm }) Top()
-      else And((g.nonTerminals(ntIdx).lazyZip(t)).map(valueOfNonTerminal)) --> Or(g.productions(g.nonTerminals(ntIdx)).toSeq map {
+      else And((g.nonTerminals(ntIdx).lazyZip(t)).map(valueOfNonTerminal)) --> Or(g.productions(g.nonTerminals(ntIdx)).toSeq.map {
         case p @ (_, s) =>
           vectProductionIsIncluded(p) & Match(ntIdx, t, s)
       })
@@ -138,10 +138,10 @@ class VtratgTermGenerationFormula(g: VTRATG, t: Expr) {
     }
 
     for ((x, ts) <- possibleValues)
-      cs += atMost `oneOf` (ts + notASubTerm).toSeq.map { valueOfNonTerminal(x, _) }
+      cs += atMost.`oneOf`((ts + notASubTerm).toSeq.map { valueOfNonTerminal(x, _) })
 
     for ((i, assignments) <- possibleAssignments groupBy { _._1 })
-      cs += exactly `oneOf` (assignments.toSeq map { assignment => And(g.nonTerminals(i).lazyZip(assignment._2).map(valueOfNonTerminal)) })
+      cs += exactly.`oneOf`(assignments.toSeq.map { assignment => And(g.nonTerminals(i).lazyZip(assignment._2).map(valueOfNonTerminal)) })
 
     And(cs.result())
   }
@@ -160,7 +160,7 @@ class VectGrammarMinimizationFormula(g: VTRATG) {
       VectGrammarMinimizationFormula.this.valueOfNonTerminal(t, n, value)
   }.formula
 
-  def coversLanguage(lang: Iterable[Expr]) = And(lang map generatesTerm)
+  def coversLanguage(lang: Iterable[Expr]) = And(lang.map(generatesTerm))
 }
 
 object stableVTRATG {

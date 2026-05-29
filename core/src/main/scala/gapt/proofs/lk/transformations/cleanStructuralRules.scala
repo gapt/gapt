@@ -172,7 +172,7 @@ object cleanStructuralRules {
             val (subProofNew, subConnector) = (subProofsNew(i), subConnectors(i))
             val (subProofNew_, subConnector_) =
               introduceWeakenings(c.proof, subProofNew, subConnector, c.hypotheses :+ c.conclusion)
-            val hypothesesNew = c.hypotheses map { h => subConnector_.child(h) }
+            val hypothesesNew = c.hypotheses.map { h => subConnector_.child(h) }
             val conclusionNew = subConnector_.child(c.conclusion)
 
             (InductionCase(subProofNew_, c.constructor, hypothesesNew, c.eigenVars, conclusionNew), subConnector_)

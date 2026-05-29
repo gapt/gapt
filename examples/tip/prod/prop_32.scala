@@ -45,10 +45,10 @@ object prop_32 extends TacticsProof {
     ("append_nil_left_id" -> append_nil_left_id)) {
     allR; induction(hov"xs:list")
     // - BC
-    rewrite.many `ltr` "def_append_0" `in` "append_nil_left_id"; refl
+    rewrite.many.`ltr`("def_append_0").`in`("append_nil_left_id"); refl
     // - IC
-    rewrite.many `ltr` "def_append_1" `in` "append_nil_left_id";
-    rewrite.many `ltr` "IHxs_0" `in` "append_nil_left_id"; refl
+    rewrite.many.`ltr`("def_append_1").`in`("append_nil_left_id");
+    rewrite.many.`ltr`("IHxs_0").`in`("append_nil_left_id"); refl
   }
 
   val append_comm = hof"!xs!ys!zs append(xs,append(ys,zs)) = append(append(xs,ys),zs)"
@@ -57,11 +57,11 @@ object prop_32 extends TacticsProof {
     allR; induction(hov"xs:list")
     // - BC
     allR; allR;
-    rewrite.many `ltr` "def_append_0" `in` "append_comm"; refl
+    rewrite.many.`ltr`("def_append_0").`in`("append_comm"); refl
     // - IC
     allR; allR;
-    rewrite.many `ltr` "def_append_1" `in` "append_comm"
-    rewrite.many `ltr` "IHxs_0" `in` "append_comm"; refl
+    rewrite.many.`ltr`("def_append_1").`in`("append_comm")
+    rewrite.many.`ltr`("IHxs_0").`in`("append_comm"); refl
   }
 
   val rot_gen = (append_nil_left_id & append_comm) -->
@@ -73,8 +73,8 @@ object prop_32 extends TacticsProof {
     escargot
     // - IC
     allR
-    rewrite.many `ltr` "def_length_1" `in` "rot_gen_1"
-    rewrite.many `ltr` "def_append_1" `in` "rot_gen_1"
+    rewrite.many.`ltr`("def_length_1").`in`("rot_gen_1")
+    rewrite.many.`ltr`("def_append_1").`in`("rot_gen_1")
     escargot
   }
 

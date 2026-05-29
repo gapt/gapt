@@ -337,7 +337,7 @@ class EscargotState(val ctx: MutableContext) {
     val cnfMap = cnf.view.map(p => p.conclusion -> p).toMap
     val clauses = cnfMap.keySet.map(_.map(_.asInstanceOf[Atom]))
 
-    (clauses map InputCls, cnfMap)
+    (clauses.map(InputCls), cnfMap)
   }
 
   protected def handleEmptyClauses(): Option[ResolutionProof] = scala.util.boundary {

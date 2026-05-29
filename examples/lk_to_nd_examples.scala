@@ -642,8 +642,8 @@ import gapt.proofs.lk.transformations.LKToND
 @main def issue687(): Unit = {
   import gapt.proofs.gaptic._
   val lk = Proof(hols"A ∨ B, C → ¬B, C ⊢ A") {
-    orL `left` trivial
-    impL `left` trivial
+    orL.`left`(trivial)
+    impL.`left`(trivial)
     negL; trivial
   }
   println(lk)

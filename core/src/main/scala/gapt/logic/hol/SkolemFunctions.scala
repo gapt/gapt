@@ -53,7 +53,7 @@ case class SkolemFunctions(skolemDefs: Map[Const, Expr]) {
 }
 object SkolemFunctions {
   def apply(skolemDefs: Iterable[(Const, Expr)]): SkolemFunctions =
-    SkolemFunctions(skolemDefs groupBy { _._1 } map {
+    SkolemFunctions((skolemDefs groupBy { _._1 }).map {
       case (c, ds) =>
         require(
           ds.size == 1,

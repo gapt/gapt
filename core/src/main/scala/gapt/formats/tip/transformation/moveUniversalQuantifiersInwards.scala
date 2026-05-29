@@ -27,7 +27,7 @@ object moveUniversalQuantifiersInwards extends TipSmtProblemTransformation {
 class MoveUniversalQuantifiersInwardsTransformation(problem: TipSmtProblem) {
 
   def apply(): TipSmtProblem = {
-    problem.copy(definitions = problem.definitions map {
+    problem.copy(definitions = problem.definitions.map {
       case fun @ TipSmtFunctionDefinition(_, _, _, _, _) =>
         apply(fun)
       case funDefs @ TipSmtMutualRecursiveFunctionDefinition(_) =>
@@ -59,7 +59,7 @@ class MoveUniversalQuantifiersInwardsTransformation(problem: TipSmtProblem) {
   private def moveUniversalQuantifiersInwards(
       expression: TipSmtAnd
   ): TipSmtExpression = {
-    expression.copy(expression.exprs map { moveUniversalQuantifiersInwards })
+    expression.copy(expression.exprs.map { moveUniversalQuantifiersInwards })
   }
 
   private def moveUniversalQuantifiersInwards(

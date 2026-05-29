@@ -55,7 +55,7 @@ case class SymbolTable(problem: TipSmtProblem) {
   ): Set[String] =
     datatypesDeclaration.datatypes flatMap {
       case TipSmtDatatype(_, _, constructors) =>
-        constructors map { _.name } toSet
+        constructors.map { _.name } toSet
       case null => Set[String]()
     } toSet
 
@@ -106,7 +106,7 @@ case class SymbolTable(problem: TipSmtProblem) {
 
   private def extractSymbols(function: TipSmtFunctionDefinition): (String, Type) = {
     val TipSmtFunctionDefinition(functionName, _, formalParameters, returnType, _) = function
-    val argTypes = formalParameters map { param =>
+    val argTypes = formalParameters.map { param =>
       Datatype(param.typ.typename)
     }
     functionName ->
@@ -117,9 +117,9 @@ case class SymbolTable(problem: TipSmtProblem) {
       tipSmtDatatype: TipSmtDatatype
   ): Map[String, Type] = {
     val symbols: Seq[(String, Type)] =
-      tipSmtDatatype.constructors map {
+      tipSmtDatatype.constructors.map {
         case TipSmtConstructor(constructorName, _, fields) =>
-          val fieldTypes: Seq[Datatype] = fields map {
+          val fieldTypes: Seq[Datatype] = fields.map {
             field => Datatype(field.typ.typename)
           }
           constructorName -> Type(
@@ -130,7 +130,7 @@ case class SymbolTable(problem: TipSmtProblem) {
     val projectorSymbols: Seq[(String, Type)] =
       tipSmtDatatype.constructors flatMap {
         case TipSmtConstructor(_, _, fields) =>
-          fields map { f =>
+          fields.map { f =>
             f.name -> Type(
               Seq(Datatype(tipSmtDatatype.name)),
               Datatype(f.typ.typename)

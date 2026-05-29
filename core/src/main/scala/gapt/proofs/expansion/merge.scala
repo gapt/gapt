@@ -11,7 +11,7 @@ import scala.collection.mutable
 private class MutableSubstitution {
   var subst = Substitution()
   def add(v: Var, by: Expr): Unit =
-    if (v != by) subst = subst `compose` Substitution(v -> by)
+    if (v != by) subst = subst.`compose`(Substitution(v -> by))
 }
 
 /**

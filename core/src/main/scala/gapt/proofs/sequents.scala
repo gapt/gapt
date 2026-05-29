@@ -106,7 +106,7 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
     if (forall { _.isInstanceOf[Formula] }) {
       new BabelExporter(unicode = true, sig = sig).`export`(this.asInstanceOf[HOLSequent])
     } else {
-      val stringified = this map { _.toString }
+      val stringified = this.map { _.toString }
       val multiLine = stringified.exists { _ `contains` "\n" } || stringified.elements.map { _.length + 2 }.sum > 80
       if (multiLine)
         s"${stringified.antecedent.mkString(",\n")}\n:-\n${stringified.succedent.mkString(",\n")}"
@@ -122,7 +122,7 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
   /**
    * Equality treating each side of the sequent as a multiset.
    */
-  def multiSetEquals[B](other: Sequent[B]): Boolean = (other `isSubMultisetOf` this) && (this `isSubMultisetOf` other)
+  def multiSetEquals[B](other: Sequent[B]): Boolean = (other.`isSubMultisetOf`(this)) && (this.`isSubMultisetOf`(other))
 
   /**
    * Sequence of elements of the sequent.
@@ -150,7 +150,7 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
   /**
    * Takes the multiset difference between two sequents, i.e. each side separately.
    */
-  def diff[B >: A](other: Sequent[B]) = Sequent(this.antecedent diff other.antecedent, this.succedent diff other.succedent)
+  def diff[B >: A](other: Sequent[B]) = Sequent(this.antecedent.diff(other.antecedent), this.succedent.diff(other.succedent))
 
   /**
    * Computes the intersection of two sequents.
@@ -167,13 +167,13 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
    */
   def distinct = Sequent(antecedent.distinct, succedent.distinct)
 
-  def isSubMultisetOf[B >: A](other: Sequent[B]) = (this `diff` other).isEmpty
+  def isSubMultisetOf[B >: A](other: Sequent[B]) = (this.`diff`(other)).isEmpty
 
   /**
    * @param other Another Sequent.
    * @return True iff other contains this pair of sets.
    */
-  def isSubsetOf[B >: A](other: Sequent[B]) = (this.distinct `diff` other.distinct).isEmpty
+  def isSubsetOf[B >: A](other: Sequent[B]) = (this.distinct.`diff`(other.distinct)).isEmpty
 
   def tautFormulas: Vector[A] = antecedent.intersect(succedent)
 
@@ -247,7 +247,7 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
    * @tparam B The return type of f and g.
    * @return The sequent of type B that results from mapping f and g over the antecedent and succedent, respectively.
    */
-  def map[B](f: (A) => B, g: (A) => B) = Sequent(antecedent map f, succedent map g)
+  def map[B](f: (A) => B, g: (A) => B) = Sequent(antecedent.map(f), succedent.map(g))
 
   def flatMap[B](f: A => IterableOnce[B], g: A => IterableOnce[B]): Sequent[B] =
     Sequent(antecedent flatMap f, succedent flatMap g)
@@ -330,7 +330,7 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
     }
   }
 
-  def apply(is: Seq[SequentIndex]): Seq[A] = is map this.apply
+  def apply(is: Seq[SequentIndex]): Seq[A] = is.map(this.apply)
 
   /**
    * Tests whether the sequent is defined at the supplied SequentIndex.
@@ -390,7 +390,7 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
   def delete(i: SequentIndex): Sequent[A] = delete(Seq(i))
 
   def delete(is: Seq[SequentIndex]): Sequent[A] =
-    zipWithIndex filterNot { is contains _._2 } map { _._1 }
+    (zipWithIndex filterNot { is contains _._2 }).map { _._1 }
 
   def delete(is: SequentIndex*)(implicit d: DummyImplicit): Sequent[A] = delete(is)
 

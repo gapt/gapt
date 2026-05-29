@@ -92,7 +92,7 @@ object ResolutionToLKProof {
     def contract(p: ResolutionProof, q: LKProof) =
       ContractionMacroRule(
         q,
-        ((p.conclusion ++ p.assertions) `diff` q.endSequent.distinct) ++ q.endSequent.distinct
+        ((p.conclusion ++ p.assertions).`diff`(q.endSequent.distinct)) ++ q.endSequent.distinct
       )
 
     def f(p: ResolutionProof): LKProof = memo.getOrElseUpdate(

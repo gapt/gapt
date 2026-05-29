@@ -59,7 +59,7 @@ object NiaSchema extends TacticsProof {
     allR(fov"A")
     allL("Ant_2", fov"A")
     exR("cut", fov"A")
-    unfold("POR") `atMost` 1 `in` "Ant_2_0"
+    unfold("POR").`atMost`(1).`in`("Ant_2_0")
     andR
     foTheory
     trivial
@@ -108,8 +108,8 @@ object NiaSchema extends TacticsProof {
     )
   )
   val chiBc = Lemma(esChiBc) {
-    unfold("POR") `atMost` 1 `in` "Suc_0"
-    unfold("POR") `atMost` 1 `in` "Ant_2"
+    unfold("POR").`atMost`(1).`in`("Suc_0")
+    unfold("POR").`atMost`(1).`in`("Ant_2")
     trivial
   }
   ctx += ProofDefinitionDeclaration(le"chi 0 a", chiBc)
@@ -124,8 +124,8 @@ object NiaSchema extends TacticsProof {
     )
   )
   val chiSc = Lemma(esChiSc) {
-    unfold("POR") `atMost` 1 `in` "Suc_0"
-    unfold("POR") `atMost` 1 `in` "Ant_2"
+    unfold("POR").`atMost`(1).`in`("Suc_0")
+    unfold("POR").`atMost`(1).`in`("Ant_2")
     orR
     orL
     trivial
@@ -153,8 +153,8 @@ object NiaSchema extends TacticsProof {
     andL
     andR
     foTheory
-    unfold("POR") `atMost` 1 `in` "Ant_2_0_1"
-    unfold("POR") `atMost` 1 `in` "Ant_2_1_1"
+    unfold("POR").`atMost`(1).`in`("Ant_2_0_1")
+    unfold("POR").`atMost`(1).`in`("Ant_2_1_1")
     foTheory
   }
   ctx += ProofDefinitionDeclaration(le"phi 0", phiBc)
@@ -181,7 +181,7 @@ object NiaSchema extends TacticsProof {
     andR("cut1_0")
     foTheory
     foTheory
-    unfold("POR") `atMost` 1 `in` "Ant_2_0_1"
+    unfold("POR").`atMost`(1).`in`("Ant_2_0_1")
     orL
     trivial
     andR("cut1_0")

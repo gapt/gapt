@@ -19,7 +19,7 @@ class InductionUnfoldingReduction(implicit val ctx: Context) extends Reduction {
    *         is returned, otherwise None is returned.
    */
   def applyWithSequentConnector(induction: InductionRule): Option[(LKProof, SequentConnector)] =
-    this(induction) map { guessPermutation(induction, _) }
+    this(induction).map { guessPermutation(induction, _) }
 
   /**
    * Tries to apply the induction unfolding reduction to a given inference.

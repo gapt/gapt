@@ -21,7 +21,7 @@ class ExtractInductionGrammarTest extends Specification with SatMatchers {
 
     ctx += hoc"P: nat>nat>o"; ctx += hoc"f:nat>nat"; ctx += hoc"g:nat>nat"
     val general = Lemma(hols"!y P(0,y), !x!y (P(x,f(y))&P(x,g(y)) -> P(s(x),y)) :- !x P(x,0)") {
-      cut("c", hof"!x!y P(x,y)").right(allR andThen chain("c"))
+      cut("c", hof"!x!y P(x,y)").right(allR.andThen(chain("c")))
       forget("g"); allR; induction(hov"x:nat").onAll(escargot.withDeskolemization)
     }
   }

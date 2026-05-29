@@ -114,7 +114,7 @@ class FixDerivationTest extends Specification with SequentMatchers {
 
   "mapInputs" should {
     "factor reordered clauses" in {
-      val Seq(x, y) = Seq("x", "y") map { FOLVar(_) }
+      val Seq(x, y) = Seq("x", "y").map { FOLVar(_) }
       val c = FOLConst("c")
       val p = FOLAtomConst("p", 1)
 

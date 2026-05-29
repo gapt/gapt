@@ -49,18 +49,18 @@ class ExpansionProofTest extends Specification with SatMatchers with SequentMatc
 
   "pi2 pigeonhole" in {
     val e = LKToExpansionProof(Pi2Pigeonhole.proof)
-    Escargot isValid e.deep must_== true
-    Escargot isValid eliminateCutsET(e).deep must_== true
+    Escargot.isValid(e.deep) must_== true
+    Escargot.isValid(eliminateCutsET(e).deep) must_== true
   }
 
   "tape proof cut elimination" in {
     val pdb = LLKProofParser(ClasspathInputFile("tape3ex.llk"))
-    val lk = eliminateDefinitions(pdb.Definitions)(pdb proof "TAPEPROOF")
+    val lk = eliminateDefinitions(pdb.Definitions)(pdb.proof("TAPEPROOF"))
     val expansion = LKToExpansionProof(lk)
     val cutfree = eliminateCutsET(expansion)
     if (!VeriT.isInstalled) skipped
-    VeriT isValid expansion.deep must_== true
-    VeriT isValid cutfree.deep must_== true
+    VeriT.isValid(expansion.deep) must_== true
+    VeriT.isValid(cutfree.deep) must_== true
   }
 
   "weird cuts" in {

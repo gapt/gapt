@@ -37,10 +37,10 @@ class Prover9(val extraCommands: (Map[Const, Const] => Seq[String]) = _ => Seq()
         case (0, out) => Some(parseProof(out))
         case (2, _)   => None
       }
-    }) map {
+    }).map {
       mapInputClauses(_) { clause =>
         cnf.view flatMap { ourClause =>
-          syntacticMatching(ourClause.toDisjunction, clause.toDisjunction) map { Subst(Input(ourClause), _) }
+          syntacticMatching(ourClause.toDisjunction, clause.toDisjunction).map { Subst(Input(ourClause), _) }
         } head
       }
     }
@@ -61,7 +61,7 @@ class Prover9(val extraCommands: (Map[Const, Const] => Seq[String]) = _ => Seq()
     commands ++= extraCommands(renaming)
 
     commands += "formulas(sos)"
-    commands ++= cnf map toP9Input
+    commands ++= cnf.map(toP9Input)
     commands += "end_of_list"
 
     commands.map(_ + "." + sys.props("line.separator")).mkString

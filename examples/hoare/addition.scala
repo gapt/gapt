@@ -33,7 +33,7 @@ import gapt.provers.prover9.Prover9
   extractInstances(expansionSequent) `foreach` println
 
   println(nLine + "Deep sequent:")
-  val deepSequent = expansionSequent map {
+  val deepSequent = expansionSequent.map {
     _.deep
   }
   deepSequent.antecedent.foreach(println(_))

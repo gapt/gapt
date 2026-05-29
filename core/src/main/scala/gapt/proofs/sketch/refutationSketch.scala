@@ -21,9 +21,9 @@ import gapt.logic.clauseSubsumption
  * These two cases are modelled as [[SketchAxiom]] and [[SketchInference]].
  */
 sealed trait RefutationSketch extends SequentProof[FOLAtom, RefutationSketch] {
-  override def occConnectors = immediateSubProofs map { p => SequentConnector(conclusion, p.conclusion, p.conclusion map { _ => Seq() }) }
+  override def occConnectors = immediateSubProofs.map { p => SequentConnector(conclusion, p.conclusion, p.conclusion.map { _ => Seq() }) }
   override def mainIndices = Seq()
-  override def auxIndices = immediateSubProofs map { _ => Seq() }
+  override def auxIndices = immediateSubProofs.map { _ => Seq() }
 }
 
 /**
@@ -62,7 +62,7 @@ case class SketchComponentIntro(component: AvatarDefinition) extends RefutationS
 }
 case class SketchComponentElim(subProof: RefutationSketch, component: AvatarDefinition) extends RefutationSketch {
   def immediateSubProofs = Seq(subProof)
-  val conclusion = subProof.conclusion `diff` component.clause
+  val conclusion = subProof.conclusion.`diff`(component.clause)
 }
 
 case class SketchSplitCombine(splitCases: Seq[RefutationSketch]) extends RefutationSketch {
@@ -120,7 +120,7 @@ object RefutationSketchToResolution {
           Right(AvatarComponent(comp))
       }
     )
-    solve(sketch) map { simplifyResolutionProof(_) }
+    solve(sketch).map { simplifyResolutionProof(_) }
   }
 
 }

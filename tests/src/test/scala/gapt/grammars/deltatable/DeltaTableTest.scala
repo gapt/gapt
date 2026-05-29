@@ -10,8 +10,8 @@ import org.specs2.mutable.Specification
 class DeltaTableTest extends Specification {
 
   "key subsumption" should {
-    val Seq(x1, x2, x3) = 1 to 3 map { i => FOLVar(s"x$i") }
-    val Seq(c1, c2, c3) = 1 to 3 map { i => FOLConst(s"c$i") }
+    val Seq(x1, x2, x3) = (1 to 3).map { i => FOLVar(s"x$i") }
+    val Seq(c1, c2, c3) = (1 to 3).map { i => FOLConst(s"c$i") }
 
     "renaming" in {
       val k1 = Set(
@@ -28,8 +28,8 @@ class DeltaTableTest extends Specification {
 
   "delta table creation" in {
     "many aus" in {
-      val Seq(a, b, c, d) = Seq("a", "b", "c", "d") map { FOLConst(_) }
-      val Seq(f, g) = Seq("f", "g") map { FOLFunctionConst(_, 3) }
+      val Seq(a, b, c, d) = Seq("a", "b", "c", "d").map { FOLConst(_) }
+      val Seq(f, g) = Seq("f", "g").map { FOLFunctionConst(_, 3) }
       val lang = for {
         h <- Seq(f, g)
         t <- Seq(

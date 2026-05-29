@@ -1203,9 +1203,9 @@ class LKInterpolationTest extends Specification with SequentMatchers {
 
   "correctly interpolate a proof with weak quantifiers" in {
     val proof = (ProofBuilder
-      c LogicalAxiom(hof"p c")
-      u (ForallLeftRule(_, hof"!x p(x)", le"c"))
-      u (ExistsRightRule(_, hof"?x p(x)", le"c")) qed)
+      .c(LogicalAxiom(hof"p c"))
+      .u(ForallLeftRule(_, hof"!x p(x)", le"c"))
+      .u(ExistsRightRule(_, hof"?x p(x)", le"c")) qed)
 
     "forall in negative part" in {
       val (negProof, posProof, interpolant) = Interpolate(proof, Seq(false) :- Seq(true))

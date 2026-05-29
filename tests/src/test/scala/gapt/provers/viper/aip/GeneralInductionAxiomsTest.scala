@@ -20,13 +20,13 @@ class GeneralInductionAxiomsTest extends Specification with ThrownMessages {
   val axioms = axiomFactory.apply(Sequent() :+ ("" -> hof"P(a,b)"))
 
   val formulas: List[Formula] = axioms match {
-    case Right(list) => list map {
+    case Right(list) => list.map {
         _.formula
       }
     case _ => fail("failed to obtain induction axioms")
   }
   val proofs: List[LKProof] = axioms match {
-    case Right(list) => list map {
+    case Right(list) => list.map {
         _.proof
       }
     case _ => fail("failed to obtain induction axioms")

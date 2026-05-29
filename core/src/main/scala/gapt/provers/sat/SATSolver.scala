@@ -20,14 +20,14 @@ trait SATSolver extends OneShotProver {
 
   def solve(cnf: Iterable[HOLClause]): Option[PropositionalModel] = {
     val encoding = new DIMACSEncoding
-    solve(encoding.encodeCNF(cnf)) map { dimacsModel =>
+    solve(encoding.encodeCNF(cnf)).map { dimacsModel =>
       encoding.decodeModel(dimacsModel)
     }
   }
 
   def solve(formula: Formula): Option[PropositionalModel] = {
     val (cnf, definitions) = fastStructuralCNF()(formula)
-    solve(cnf) map { i =>
+    solve(cnf).map { i =>
       // remove abbreviations for subformulas
       PropositionalModel(Map() ++ i.assignment.view.filterKeys {
         case c: HOLAtomConst => !definitions.isDefinedAt(c)
@@ -42,7 +42,7 @@ trait SATSolver extends OneShotProver {
   /**
    * Checks whether a set of clauses is propositionally unsatisfiable.
    */
-  override def isUnsat(cnf: Iterable[HOLClause])(implicit ctx: Maybe[Context]): Boolean = isValid(cnf ++: Sequent() map { _.toDisjunction })
+  override def isUnsat(cnf: Iterable[HOLClause])(implicit ctx: Maybe[Context]): Boolean = isValid((cnf ++: Sequent()).map { _.toDisjunction })
 }
 
 trait DrupSolver extends SATSolver with ResolutionProver {
@@ -66,7 +66,7 @@ trait DrupSolver extends SATSolver with ResolutionProver {
       encoding.decodeAtom,
       cls => {
         val clause = encoding.decodeClause(cls.toSeq)
-        cnf_.find(_.conclusion `multiSetEquals` clause).get
+        cnf_.find(_.conclusion.`multiSetEquals`(clause)).get
       }
     ))
   }

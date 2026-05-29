@@ -54,14 +54,14 @@ object FirstSchema8 extends TacticsProof {
   val esOmegaSc = Sequent(Seq("Ant_2" -> hof"!x POR(s(n),x)"), Seq("Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q))) "))
   // Proof of chi basecase
   val chiBc = Lemma(esChiBc) {
-    unfold("POR") `atMost` 1 `in` "Suc_0"
-    unfold("POR") `atMost` 1 `in` "Ant_0"
+    unfold("POR").`atMost`(1).`in`("Suc_0")
+    unfold("POR").`atMost`(1).`in`("Ant_0")
     trivial
   }
   // Proof of chi Stepcase
   val chiSc = Lemma(esChiSc) {
-    unfold("POR") `atMost` 1 `in` "Suc_0"
-    unfold("POR") `atMost` 1 `in` "Ant_0"
+    unfold("POR").`atMost`(1).`in`("Suc_0")
+    unfold("POR").`atMost`(1).`in`("Ant_0")
     orR
     orL
     trivial
@@ -81,8 +81,8 @@ object FirstSchema8 extends TacticsProof {
     andL
     andR
     foTheory
-    unfold("POR") `atMost` 1 `in` "Ant_0_0_1"
-    unfold("POR") `atMost` 1 `in` "Ant_0_1_1"
+    unfold("POR").`atMost`(1).`in`("Ant_0_0_1")
+    unfold("POR").`atMost`(1).`in`("Ant_0_1_1")
     foTheory
   }
   // The step case of phi
@@ -100,7 +100,7 @@ object FirstSchema8 extends TacticsProof {
     andR("cut1_0")
     foTheory
     foTheory
-    unfold("POR") `atMost` 1 `in` "Ant_0_0_1"
+    unfold("POR").`atMost`(1).`in`("Ant_0_0_1")
     orL
     trivial
     andR("cut1_0")
@@ -147,7 +147,7 @@ object FirstSchema8 extends TacticsProof {
     allR(fov"A")
     allL("Ant_2", fov"A")
     exR("cut", fov"A")
-    unfold("POR") `atMost` 1 `in` "Ant_2_0"
+    unfold("POR").`atMost`(1).`in`("Ant_2_0")
     andR
     foTheory
     trivial

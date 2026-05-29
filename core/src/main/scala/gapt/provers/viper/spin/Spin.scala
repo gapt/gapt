@@ -101,7 +101,7 @@ class Spin(opts: SpinOptions) {
 
       val prf = getResolutionProofWithAxioms(clauses)
 
-      prf map {
+      prf.map {
         case (resolution, prfAxioms, indMap) =>
           val axioms = goalAxioms ++ prfAxioms.toSeq
           val res = mapInputClauses(resolution)(cnfMap ++ indMap)
@@ -289,7 +289,7 @@ class AxiomGenerator(options: SpinOptions) {
               vsfs.flatMap {
                 case (vs, g) =>
                   val (v, ts) = getTargets(t, g, occs)
-                  ts map ((v +: vs, _))
+                  ts.map((v +: vs, _))
               }
           }
         }
@@ -409,14 +409,14 @@ class OccurrencesFinder()(implicit ctx: Context) {
 
         // Gather subterms that occur together in primary position under the same defined symbol
         if (inPrimary && !isConstructor(c)(using ctx)) {
-          val directSame = primaryArgs map rhsArgs
+          val directSame = primaryArgs.map(rhsArgs)
 
           // Consider all of e1, e2 and e3 under the same symbol in f(e1, f(e2, e3))
           // when f is primary in both positions.
           def collectNestedSame(exprs: Set[Expr]): Set[Expr] = {
             exprs.flatMap {
               case Apps(d: Const, nestedArgs) if c == d =>
-                val here = primaryArgs map nestedArgs
+                val here = primaryArgs.map(nestedArgs)
                 val there = collectNestedSame(here)
                 here ++ there
               case _ => List()
@@ -484,7 +484,7 @@ object constructorRules {
       val lhsArgs = makeArgs(constr.ty)
       val rhsArgs = makeArgs(constr.ty)
 
-      val res = And(lhsArgs.zip(rhsArgs) map { case (l, r) => Eq(l, r) })
+      val res = And(lhsArgs.zip(rhsArgs).map { case (l, r) => Eq(l, r) })
 
       ReductionRule(Eq(Apps(constr, lhsArgs), Apps(constr, rhsArgs)), res)
     }
@@ -588,7 +588,7 @@ class FormulaTester(acceptNotNormalized: Boolean, numberTestTerms: Int)(implicit
       case v :: vs =>
         val termStream = enumerateTerms.forType(v.ty)(using ctx)
         val terms = termStream filter (_.ty == v.ty) take numberTestTerms
-        terms.flatMap(t => makeSampleFormulas(f, vs) map (replaceExpr(_, v, t)))
+        terms.flatMap(t => makeSampleFormulas(f, vs).map(replaceExpr(_, v, t)))
     }
   }
 
@@ -635,8 +635,8 @@ class FormulaTester(acceptNotNormalized: Boolean, numberTestTerms: Int)(implicit
 
     def go(f: Formula): Formula =
       f match {
-        case Ex(x, f)  => Or(samples(x, f) map go)
-        case All(x, f) => And(samples(x, f) map go)
+        case Ex(x, f)  => Or(samples(x, f).map(go))
+        case All(x, f) => And(samples(x, f).map(go))
         case Neg(a)    => Neg(go(a))
         case And(a, b) => And(go(a), go(b))
         case Or(a, b)  => Or(go(a), go(b))

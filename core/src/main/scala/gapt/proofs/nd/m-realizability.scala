@@ -63,10 +63,10 @@ object MRealizability {
     for ((name, constructors) <- systemT.get[StructurallyInductiveTypes].constructors.filter(_._1 != "o")) {
       val indType = systemT.get[BaseTypes].baseTypes(name)
 
-      val resultTypeVariable = TVar(new NameGenerator(typeVariables(indType) map (_.name)).fresh("a"))
+      val resultTypeVariable = TVar(new NameGenerator(typeVariables(indType).map(_.name)).fresh("a"))
       val rec @ Const(_, FunctionType(_, recCaseTypes :+ _), _) = recursor(indType, resultTypeVariable)(using ctx): @unchecked
 
-      val ngTermVariableNames = new NameGenerator(systemT.constants map (_.name))
+      val ngTermVariableNames = new NameGenerator(systemT.constants.map(_.name))
 
       val constrArgVars = constructors.map {
         case constr @ Const(_, FunctionType(_, argTypes), _) =>
@@ -155,7 +155,7 @@ object MRealizability {
     val mrealizer = mrealizeCases(proof, varsAnt, ng)(using context)
 
     if (re)
-      (varsAnt map (x => (x._1, Var(x._2.name, remEmpProgType(x._2.ty)(using context)))), remEmpProg(mrealizer)(using context))
+      (varsAnt.map(x => (x._1, Var(x._2.name, remEmpProgType(x._2.ty)(using context)))), remEmpProg(mrealizer)(using context))
     else (varsAnt, mrealizer)
   }
 
@@ -378,7 +378,7 @@ object MRealizability {
       case App(App(App(Const("matchSum", TArr(TBase("sum", sumparams), TArr(leftType, TArr(rightType, resultType))), params), in), left), right) =>
         val leftR = remEmpProg(left)
         val rightR = remEmpProg(right)
-        val ng = new NameGenerator((freeVariables(left) ++ freeVariables(right)) map (_.name))
+        val ng = new NameGenerator((freeVariables(left) ++ freeVariables(right)).map(_.name))
         val leftRN = if (remEmpProgType(sumparams(0)) == emptyType) Abs(Var(ng.fresh("x"), ty"1"), leftR) else leftR
         val rightRN = if (remEmpProgType(sumparams(1)) == emptyType) Abs(Var(ng.fresh("x"), ty"1"), rightR) else rightR
         val resultTypeR = remEmpProgType(resultType)

@@ -37,7 +37,7 @@ class TapeTest extends Specification with SequentMatchers {
       //      println( LatexLLKExporter( projs.toList( 0 ), true ) )
       cs.map(x => {
         //        print( s"projection for clause $x " )
-        projs.exists(_.endSequent.diff(proof_sk.endSequent) setEquals x) match {
+        projs.exists(_.endSequent.diff(proof_sk.endSequent).setEquals(x)) match {
           case true =>
           //            println( " found!" );
           case false =>
@@ -46,7 +46,7 @@ class TapeTest extends Specification with SequentMatchers {
         // cs.asInstanceOf[Set[HOLSequent]].contains( pes ) must beTrue
       })
 
-      Escargot getResolutionProof cs must beSome
+      Escargot.getResolutionProof(cs) must beSome
     }
 
     "apply the full CERES method" in {

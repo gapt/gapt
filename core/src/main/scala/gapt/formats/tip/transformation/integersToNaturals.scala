@@ -27,7 +27,7 @@ object integersToNaturals extends TipSmtProblemTransformation {
 class IntegerToNaturalConversion(problem: TipSmtProblem) {
 
   def apply(): TipSmtProblem = {
-    problem.copy(definitions = problem.definitions map {
+    problem.copy(definitions = problem.definitions.map {
       integersToNaturalsDefinitionVisitor.dispatch(_, ())
     })
   }
@@ -63,11 +63,11 @@ class IntegerToNaturalConversion(problem: TipSmtProblem) {
   private def convertIntegersToNaturals(expression: TipSmtExpression): TipSmtExpression = {
     expression match {
       case TipSmtAnd(es) =>
-        TipSmtAnd(es map { convertIntegersToNaturals(_) })
+        TipSmtAnd(es.map { convertIntegersToNaturals(_) })
       case TipSmtOr(es) =>
-        TipSmtOr(es map { convertIntegersToNaturals(_) })
+        TipSmtOr(es.map { convertIntegersToNaturals(_) })
       case TipSmtImp(es) =>
-        TipSmtImp(es map { convertIntegersToNaturals(_) })
+        TipSmtImp(es.map { convertIntegersToNaturals(_) })
       case TipSmtForall(vs, f) =>
         TipSmtForall(vs, convertIntegersToNaturals(f))
       case TipSmtExists(vs, f) =>
@@ -79,15 +79,15 @@ class IntegerToNaturalConversion(problem: TipSmtProblem) {
           convertIntegersToNaturals(ifFalse)
         )
       case TipSmtEq(es) =>
-        TipSmtEq(es map { convertIntegersToNaturals })
+        TipSmtEq(es.map { convertIntegersToNaturals })
       case TipSmtFun(f, as) =>
-        TipSmtFun(f, as map { convertIntegersToNaturals })
+        TipSmtFun(f, as.map { convertIntegersToNaturals })
       case TipSmtNot(f) =>
         TipSmtNot(convertIntegersToNaturals(f))
       case TipSmtMatch(e, cases) =>
         TipSmtMatch(
           convertIntegersToNaturals(e),
-          cases map { c => c.copy(expr = convertIntegersToNaturals(c.expr)) }
+          cases.map { c => c.copy(expr = convertIntegersToNaturals(c.expr)) }
         )
       case TipSmtIdentifier(n) if n.matches("[0-9][0-9]*") =>
         numeral(n.toInt)

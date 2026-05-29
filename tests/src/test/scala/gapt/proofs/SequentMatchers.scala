@@ -19,7 +19,7 @@ object SequentMatchers {
   def beMultiSetEqual[A](expected: Sequent[A])(implicit sig: BabelSignature): Matcher[Sequent[A]] = {
     (actual: Sequent[A]) =>
       (
-        actual multiSetEquals expected,
+        actual.multiSetEquals(expected),
         s"""
          | Sequent
          |   ${actual.toSigRelativeString}
@@ -27,9 +27,9 @@ object SequentMatchers {
          |   ${expected.toSigRelativeString}
          |
          | Additional elements in actual:
-         |   ${actual diff expected toSigRelativeString}
+         |   ${actual.diff(expected) toSigRelativeString}
          | Additional elements in expected:
-         |   ${expected diff actual toSigRelativeString}
+         |   ${expected.diff(actual) toSigRelativeString}
          """.stripMargin
       )
   }

@@ -43,8 +43,8 @@ case class InductionRule(cases: Seq[InductionCase], formula: Abs, term: Expr) ex
 
   val mainFormula: Formula = BetaReduction.betaNormalize(formula(term).asInstanceOf[Formula])
   override protected def mainFormulaSequent: HOLSequent = Sequent() :+ mainFormula
-  override def auxIndices: Seq[Seq[SequentIndex]] = cases map { c => c.hypotheses :+ c.conclusion }
-  override def immediateSubProofs: Seq[LKProof] = cases map { _.proof }
+  override def auxIndices: Seq[Seq[SequentIndex]] = cases.map { c => c.hypotheses :+ c.conclusion }
+  override def immediateSubProofs: Seq[LKProof] = cases.map { _.proof }
 
   private lazy val product = cases.flatMap { _.productIterator } :+ formula :+ term
   override def productArity: Int = product.size

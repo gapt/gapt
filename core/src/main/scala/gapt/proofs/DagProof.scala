@@ -215,7 +215,7 @@ object DagProof {
     def size: Int = self.subProofs.size
 
     override def toString = {
-      val steps = self.dagLike.postOrder.zipWithIndex map { case (p, i) => (p, s"p${i + 1}") }
+      val steps = self.dagLike.postOrder.zipWithIndex.map { case (p, i) => (p, s"p${i + 1}") }
       val subProofLabels: Map[Any, String] = steps.toMap
 
       val output = new StringBuilder()

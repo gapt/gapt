@@ -14,7 +14,7 @@ class GapticTest extends Specification {
         Sequent()
         :+ ("goal" -> hof"P(g(a))")
     ) {
-      rewrite rtl "eq" in "goal"
+      rewrite.rtl("eq") in "goal"
       prop
     }
     ok

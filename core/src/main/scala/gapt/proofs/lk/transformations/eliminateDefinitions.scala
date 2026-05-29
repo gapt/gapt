@@ -77,7 +77,7 @@ class eliminateDefinitions private (normalizer: Normalizer) extends Function[Exp
 
     case ReflexivityAxiom(term) => ReflexivityAxiom(apply(term))
 
-    case ProofLink(name, seq) => ProofLink(apply(name), seq `map` apply)
+    case ProofLink(name, seq) => ProofLink(apply(name), seq.`map`(apply))
 
     // structural rules
     case CutRule(leftSubProof, aux1, rightSubProof, aux2) =>
@@ -163,6 +163,6 @@ class eliminateDefinitions private (normalizer: Normalizer) extends Function[Exp
         ConversionRightRule(apply(subProof), aux, apply(proof.mainFormula))
 
     case InductionRule(cases, main, term) =>
-      InductionRule(cases map { cs => cs.copy(proof = apply(cs.proof)) }, apply(main).asInstanceOf[Abs], apply(term))
+      InductionRule(cases.map { cs => cs.copy(proof = apply(cs.proof)) }, apply(main).asInstanceOf[Abs], apply(term))
   }
 }

@@ -49,7 +49,7 @@ object makeTheoryAxiomsExplicit {
     withSequentConnector(formulas*)(proof)._1
 
   def apply(proof: LKProof)(implicit ctx: Context): LKProof =
-    apply(ctx.get[ProofNames].sequents.toSeq map { s => universalClosure(s.toFormula) }*)(proof)
+    apply(ctx.get[ProofNames].sequents.toSeq.map { s => universalClosure(s.toFormula) }*)(proof)
 
   private object explicitTheoryAxiomsVisitor extends LKVisitor[Seq[Formula]] {
 
@@ -75,7 +75,7 @@ object makeTheoryAxiomsExplicit {
 
           val All.Block(vars, matrix) = formula
           val cnf = CNFp(matrix)
-          val subs = cnf map {
+          val subs = cnf.map {
             clauseSubsumption(_, sequent)
           }
           val maybeSub = subs.find(_.nonEmpty)

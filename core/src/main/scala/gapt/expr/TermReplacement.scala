@@ -221,14 +221,14 @@ object TermReplacement {
   def apply[T: ClosedUnderReplacement](t: T, replacements: Map[Const, Expr], tyReplacements: Map[TBase, Ty]): T = {
     def replTyInN(n: VarOrConst): VarOrConst =
       n match {
-        case Const(n, t, ps) => Const(n, replTy(t), ps map replTy)
+        case Const(n, t, ps) => Const(n, replTy(t), ps.map(replTy))
         case Var(n, t)       => Var(n, replTy(t))
       }
     def replTy(t: Ty): Ty =
       t match {
         case t: TVar => t
         case t @ TBase(n, ps) =>
-          tyReplacements.getOrElse(t, TBase(n, ps map replTy))
+          tyReplacements.getOrElse(t, TBase(n, ps.map(replTy)))
         case TArr(t1, t2) =>
           replTy(t1) ->: replTy(t2)
       }

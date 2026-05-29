@@ -34,7 +34,7 @@ class StructTest extends Specification {
 
       def compare(c1: Set[HOLSequent], c2: Set[HOLSequent]): Set[(HOLSequent, Boolean)] = {
         c1.map(x => {
-          val r = c2.exists(y => (x multiSetEquals y))
+          val r = c2.exists(y => (x.multiSetEquals(y)))
           //          println( s"Testing $x : $r" )
           (x, r)
         })

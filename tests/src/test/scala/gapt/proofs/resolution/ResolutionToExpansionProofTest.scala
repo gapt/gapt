@@ -33,7 +33,7 @@ class ResolutionToExpansionProofTest extends Specification with SatMatchers with
       )
 
     "extract expansion sequent" in {
-      val Some(robinson) = Escargot getResolutionProof es: @unchecked
+      val Some(robinson) = Escargot.getResolutionProof(es): @unchecked
       val expansion = ResolutionToExpansionProof(robinson)
       expansion.deep must beValidSequent
     }
@@ -43,7 +43,7 @@ class ResolutionToExpansionProofTest extends Specification with SatMatchers with
     val p = FOLAtom("p")
     val endSequent = Sequent() :+ ((p --> -(-p)) & (-(-p) --> p))
     val cnf = CNFn(endSequent.toDisjunction)
-    val Some(robinson) = Escargot getResolutionProof cnf: @unchecked
+    val Some(robinson) = Escargot.getResolutionProof(cnf): @unchecked
     val expansion = ResolutionToExpansionProof(fixDerivation(robinson, endSequent))
     expansion.shallow must_== endSequent
     expansion.deep must beValidSequent
@@ -51,11 +51,11 @@ class ResolutionToExpansionProofTest extends Specification with SatMatchers with
 
   "complicated formula with structural CNF" in {
     val x = FOLVar("x")
-    val Seq(c, d) = Seq("c", "d") map { FOLConst(_) }
-    val as = (0 to 12) map { i => FOLAtomConst(s"a$i", 1) }
-    val endSequent = thresholds.atMost.oneOf(as map { a => Ex(x, a(x)) }) +: Sequent() :+ (as(0)(c) --> -as(1)(d))
+    val Seq(c, d) = Seq("c", "d").map { FOLConst(_) }
+    val as = (0 to 12).map { i => FOLAtomConst(s"a$i", 1) }
+    val endSequent = thresholds.atMost.oneOf(as.map { a => Ex(x, a(x)) }) +: Sequent() :+ (as(0)(c) --> -as(1)(d))
 
-    val Some(ref) = Escargot getResolutionProof endSequent: @unchecked
+    val Some(ref) = Escargot.getResolutionProof(endSequent): @unchecked
     val expansion = ResolutionToExpansionProof(ref)
     expansion.shallow must_== endSequent
     expansion.deep must beValidSequent
@@ -64,20 +64,20 @@ class ResolutionToExpansionProofTest extends Specification with SatMatchers with
   "quantified definitions" in {
     val endSequent = Sequent() :+ CountingEquivalence(2)
 
-    val Some(ref) = Escargot getResolutionProof endSequent: @unchecked
+    val Some(ref) = Escargot.getResolutionProof(endSequent): @unchecked
     val expansion = ResolutionToExpansionProof(ref)
     expansion.shallow must_== endSequent
     expansion.deep must beValidSequent
   }
 
   "duplicate bound variables" in {
-    val Seq(p, q) = Seq("p", "q") map { FOLAtomConst(_, 1) }
-    val Seq(c, d) = Seq("c", "d") map { FOLConst(_) }
+    val Seq(p, q) = Seq("p", "q").map { FOLAtomConst(_, 1) }
+    val Seq(c, d) = Seq("c", "d").map { FOLConst(_) }
     val x = FOLVar("x")
 
     val endSequent = Sequent() :+ ((All(x, p(x)) | All(x, q(x))) --> (p(c) | q(d)))
 
-    val Some(ref) = Escargot getResolutionProof endSequent: @unchecked
+    val Some(ref) = Escargot.getResolutionProof(endSequent): @unchecked
     val expansion = ResolutionToExpansionProof(ref)
     expansion.shallow must_== endSequent
     expansion.deep must beValidSequent

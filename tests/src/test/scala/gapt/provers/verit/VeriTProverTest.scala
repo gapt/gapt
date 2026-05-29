@@ -62,22 +62,22 @@ class VeriTProverTest extends Specification with SatMatchers {
 
     "handle predicate named exists" in {
       val seq = FOLAtom("exists") +: Sequent() :+ FOLAtom("exists")
-      VeriT isValid seq must_== true
-      VeriT getExpansionProof seq must beSome
+      VeriT.isValid(seq) must_== true
+      VeriT.getExpansionProof(seq) must beSome
     }
 
     "handle unicode names" in {
       val sequent = (Eq(FOLConst("α"), FOLConst("β")) +:
         Sequent()
         :+ Eq(FOLFunction("f", FOLConst("α")), FOLFunction("f", FOLConst("β"))))
-      Sat4j.isValid((VeriT getExpansionProof sequent get).deep) must_== true
+      Sat4j.isValid((VeriT.getExpansionProof(sequent) get).deep) must_== true
     }
 
     "term level booleans" in {
       val f = Const("f", To ->: Ti)
       val p = FOLAtomConst("p", 1)
       val formula = (f(Top()) === f(Bottom())) --> (p(f(Bottom())) <-> p(f(Top())))
-      val Some(expansion) = VeriT getExpansionProof (Sequent() :+ formula): @unchecked
+      val Some(expansion) = VeriT.getExpansionProof(Sequent() :+ formula): @unchecked
       expansion.deep must beValidSequent
     }
   }

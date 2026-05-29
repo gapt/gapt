@@ -21,7 +21,7 @@ import scala.collection.mutable
   val endSequent = LazyList.continually(Console.in.readLine()).takeWhile(_ != null).map(_.trim).filter(_.nonEmpty).map(parseFormula).map(universalClosure(_).asInstanceOf[FOLFormula]) ++: Sequent()
 
   val justifications = structuralCNF(endSequent)
-  val cnf = justifications map { _.conclusion.asInstanceOf[FOLClause] }
+  val cnf = justifications.map { _.conclusion.asInstanceOf[FOLClause] }
 
   val done = mutable.Set[FOLClause]()
   val todo = mutable.Queue[FOLClause](cnf.toSeq*)

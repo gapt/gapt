@@ -512,7 +512,7 @@ trait TacticCommands {
   def include(label: String, proof: LKProof): Tactic[Unit] = Tactic {
     for {
       goal <- currentGoal
-      diff = proof.conclusion `diff` goal.conclusion
+      diff = proof.conclusion.`diff`(goal.conclusion)
       cutFormula = diff.toDisjunction
       _ <- cut(label, cutFormula)
       _ <- insert(proof)
@@ -521,7 +521,7 @@ trait TacticCommands {
 
   def include(names: Expr*)(implicit ctx: Context): Tactic[Unit] = Tactic(
     Tactic.sequence(for (case l @ Apps(Const(n, _, _), _) <- names) yield include(n, ProofLink(l)))
-      `andThen` TacticMonad.pure(())
+      .`andThen`(TacticMonad.pure(()))
   )
 
   def include(labels: String*)(implicit ctx: Context, dummyImplicit: DummyImplicit): Tactic[Unit] =
@@ -759,11 +759,11 @@ trait TacticCommands {
 
   def anaInd(implicit ctx: Context): Tactic[Unit] = {
     implicit val mutCtx = ctx.newMutable
-    repeat(allR) `andThen` AnalyticInductionTactic(StandardInductionAxioms(), Escargot.withDeskolemization)
+    repeat(allR).`andThen`(AnalyticInductionTactic(StandardInductionAxioms(), Escargot.withDeskolemization))
   }
   def anaIndG(implicit ctx: Context): Tactic[Unit] = {
     implicit val mutCtx = ctx.newMutable
-    repeat(allR) `andThen` AnalyticInductionTactic(GeneralInductionAxioms(), Escargot.withDeskolemization)
+    repeat(allR).`andThen`(AnalyticInductionTactic(GeneralInductionAxioms(), Escargot.withDeskolemization))
   }
 
   def escrgt(implicit ctx: Context): Tactic[Unit] = {
@@ -824,13 +824,13 @@ trait TacticCommands {
   def subst1(hyp: String): SubstTactic = SubstTactic(OnLabel(hyp))
   def substAll: Tactic[Unit] = Tactic(repeat(SubstTactic(AnyFormula)))
   def subst(hyps: String*): Tactic[Unit] =
-    Tactic(Tactic.sequence(for (hyp <- hyps) yield subst1(hyp)) `andThen` skip)
+    Tactic(Tactic.sequence(for (hyp <- hyps) yield subst1(hyp)).`andThen`(skip))
 
   def cases(lemma: String, terms: Expr*)(implicit ctx: Context): Tactic[Unit] = casesW(lemma, lemma, terms*)
   def casesW(label: String, lemma: String, terms: Expr*)(implicit ctx: Context): Tactic[Unit] = Tactic {
     def substOr(l: String): Tactic[Unit] =
-      (orL(l) `onAll` substOr(l)) `orElse`
-        (exL(l) `onAll` substOr(l)) `orElse`
+      (orL(l).`onAll`(substOr(l))) `orElse`
+        (exL(l).`onAll`(substOr(l))) `orElse`
         subst1(l) `orElse` skip
     for {
       _ <- include(label, ProofLink(lemma))

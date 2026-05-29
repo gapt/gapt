@@ -49,12 +49,12 @@ class LeanCoPProverTest extends Specification with SatMatchers {
   }
 
   "linear example" in {
-    LeanCoP getExpansionProof hof"p 0 & !x (p x -> p (s x)) -> p (s (s (s 0)))" must beSome(havingTautDeepSequent)
+    LeanCoP.getExpansionProof(hof"p 0 & !x (p x -> p (s x)) -> p (s (s (s 0)))") must beSome(havingTautDeepSequent)
   }
 
   "validate the buss tautology for n=2" in { LeanCoP.isValid(BussTautology(2)) must beTrue }
 
-  "not prove a or b" in { LeanCoP getExpansionProof hof"a | b" must beNone }
+  "not prove a or b" in { LeanCoP.getExpansionProof(hof"a | b") must beNone }
 
   "prove top" in { LeanCoP.getLKProof(Sequent() :+ Top()) must beSome }
   "not prove bottom" in { LeanCoP.getLKProof(Sequent() :+ Bottom()) must beNone }

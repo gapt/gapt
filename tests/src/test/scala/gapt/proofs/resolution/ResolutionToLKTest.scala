@@ -72,26 +72,26 @@ class ResolutionToLKTest extends Specification with SequentMatchers with SatMatc
     }
 
     "duplicate bound variables" in {
-      val Seq(p, q) = Seq("p", "q") map { FOLAtomConst(_, 1) }
-      val Seq(c, d) = Seq("c", "d") map { FOLConst(_) }
+      val Seq(p, q) = Seq("p", "q").map { FOLAtomConst(_, 1) }
+      val Seq(c, d) = Seq("c", "d").map { FOLConst(_) }
       val x = FOLVar("x")
 
       val endSequent = Sequent() :+ ((All(x, p(x)) | All(x, q(x))) --> (p(c) | q(d)))
 
-      val Some(ref) = Escargot getResolutionProof endSequent: @unchecked
+      val Some(ref) = Escargot.getResolutionProof(endSequent): @unchecked
       val expansion = ResolutionToExpansionProof(ref)
       expansion.shallow must_== endSequent
       expansion.deep must beValidSequent
     }
 
     "structural cnf with definitions" in {
-      val Some(p) = Escargot getLKProof BussTautology(3): @unchecked
+      val Some(p) = Escargot.getLKProof(BussTautology(3)): @unchecked
       p.conclusion must beMultiSetEqual(BussTautology(3))
     }
     "structural cnf 2" in {
-      val as = 0 to 3 map { i => FOLAtom(s"a$i") }
+      val as = (0 to 3).map { i => FOLAtom(s"a$i") }
       val endSequent = thresholds.exactly.oneOf(as) +: Sequent() :+ naive.exactly.oneOf(as)
-      val Some(p) = Escargot getLKProof endSequent: @unchecked
+      val Some(p) = Escargot.getLKProof(endSequent): @unchecked
       p.conclusion must beMultiSetEqual(endSequent)
     }
 

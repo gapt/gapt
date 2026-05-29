@@ -44,10 +44,10 @@ class SPASS extends ResolutionProver with ExternalProgram {
     case All(v, a)          => s"forall([${v.name}],${expr2dfg(a)})"
     case Eq(t, s)           => s"equal(${expr2dfg(t)}, ${expr2dfg(s)})"
     case FOLAtom(n, Seq())  => n
-    case FOLAtom(n, as)     => s"$n(${as map expr2dfg mkString ","})"
+    case FOLAtom(n, as)     => s"$n(${as.map(expr2dfg) mkString ","})"
     case FOLVar(n)          => n
     case FOLConst(n)        => n
-    case FOLFunction(f, as) => s"$f(${as map expr2dfg mkString ","})"
+    case FOLFunction(f, as) => s"$f(${as.map(expr2dfg) mkString ","})"
   }
 
   def cls2dfg(cls: FOLClause): String = {
@@ -62,7 +62,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
       val list_of_formulae =
         s"""
          |list_of_formulae(axioms).
-         |${cnf.asInstanceOf[Iterable[FOLClause]] map cls2dfg mkString "\n"}
+         |${cnf.asInstanceOf[Iterable[FOLClause]].map(cls2dfg) mkString "\n"}
          |end_of_list.
        """.stripMargin
 
@@ -72,10 +72,10 @@ class SPASS extends ResolutionProver with ExternalProgram {
         buf append "list_of_symbols.\n"
 
         val funs = consts filter { _.isInstanceOf[FOLPartialTerm] }
-        if (funs nonEmpty) buf append s"functions[${funs map { _.name } mkString ","}].\n"
+        if (funs nonEmpty) buf append s"functions[${funs.map { _.name } mkString ","}].\n"
 
         val preds = consts - EqC(Ti) filter { _.isInstanceOf[FOLPartialAtom] }
-        if (preds nonEmpty) buf append s"predicates[${preds map { _.name } mkString ","}].\n"
+        if (preds nonEmpty) buf append s"predicates[${preds.map { _.name } mkString ","}].\n"
 
         buf append "end_of_list.\n"
         buf.toString()
@@ -106,13 +106,13 @@ class SPASS extends ResolutionProver with ExternalProgram {
       if (lines contains "SPASS beiseite: Proof found.") {
         val proof = lines.dropWhile(!_.startsWith("Here is a proof ")).drop(1).takeWhile(!_.startsWith("Formulae used "))
 
-        val inferences = proof map InferenceParser.parseInference
+        val inferences = proof.map(InferenceParser.parseInference)
 
         val nameGen = rename.awayFrom(consts)
 
         class SpassSplit(splittingClause: RefutationSketch, part1: FOLClause) {
-          require(part1 `isSubMultisetOf` splittingClause.conclusion)
-          val part2 = splittingClause.conclusion `diff` part1
+          require(part1.`isSubMultisetOf`(splittingClause.conclusion))
+          val part2 = splittingClause.conclusion.`diff`(part1)
 
           val splitAtom1 = FOLAtom(nameGen.freshWithIndex("_split1"))
           val splitAtom2 = FOLAtom(nameGen.freshWithIndex("_split2"))
@@ -127,7 +127,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
           val groundNegPart1 =
             for ((a, i) <- comp1.componentClause.zipWithIndex.elements if freeVariables(a).isEmpty)
               yield AvatarNegNonGroundComp(comp1.atom, comp1.definition, comp1.vars, i)
-          val addAxioms2 = Seq(comp2) ++ groundNegPart1 map { SketchComponentIntro(_) }
+          val addAxioms2 = (Seq(comp2) ++ groundNegPart1).map { SketchComponentIntro(_) }
         }
 
         val inference2sketch = mutable.Map[Int, RefutationSketch]()
@@ -143,7 +143,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
         inferences foreach {
           case (num, 0, "Inp", _, clause) =>
             val Some(clauseInOurCNF) = cnf.find(clauseSubsumption.modEqSymm(_, clause).isDefined): @unchecked
-            inference2sketch(num) = SketchInference(clause, Seq(SketchAxiom(clauseInOurCNF map { _.asInstanceOf[FOLAtom] })))
+            inference2sketch(num) = SketchInference(clause, Seq(SketchAxiom(clauseInOurCNF.map { _.asInstanceOf[FOLAtom] })))
             if (clause isEmpty) splitCases += inference2sketch(num)
           case (num, splitLevel, "Spt", Seq(splitClauseNum), part1) =>
             val splitClause = inference2sketch(splitClauseNum).conclusion
@@ -158,7 +158,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
             val split = splitStack.top._2
             inference2sketch(num) = SketchInference(clause, split.addAxioms2)
           case (num, splitLevel, _, premises, clause) =>
-            val p = SketchInference(clause, premises map inference2sketch)
+            val p = SketchInference(clause, premises.map(inference2sketch))
             inference2sketch(num) = p
 
             if (clause isEmpty) {

@@ -20,10 +20,10 @@ import gapt.provers.vampire.Vampire
       PredicateReductionCNF |>
       ErasureReductionCNF
 
-  val (redSeq, back) = reduction `forward` sequent
+  val (redSeq, back) = reduction.`forward`(sequent)
   println(TptpFOLExporter(redSeq))
   println()
-  val Some(res) = Vampire `getResolutionProof` redSeq: @unchecked
+  val Some(res) = Vampire.`getResolutionProof`(redSeq): @unchecked
   val res_ = back(simplifyResolutionProof(eliminateSplitting(res)))
   println(s"Found a proof with ${res_.dagLike.size} inferences:")
   println(res_)

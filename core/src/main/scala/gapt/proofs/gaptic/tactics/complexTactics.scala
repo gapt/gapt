@@ -94,7 +94,7 @@ case class ForwardChain(
   }
 
   private def applyInstantiatedLemma(instanceLabel: String): Tactic[Unit] =
-    ImpLeftTactic(OnLabel(instanceLabel)) `andThen` LogicalAxiomTactic
+    ImpLeftTactic(OnLabel(instanceLabel)).`andThen`(LogicalAxiomTactic)
 
   private def matchingLemma(lemma: Formula, formula: Formula): Option[Substitution] = {
     val fixedVariables = freeVariables(lemma).map { v => v -> v }
@@ -151,7 +151,7 @@ case class ChainTactic(hyp: String, target: TacticApplyMode = UniqueFormula, sub
                   ImpLeftRule(premiseLeft, premiseRight, Imp(lhs, rhs))
 
                 case (_, formula) =>
-                  WeakeningMacroRule(LogicalAxiom(formula), curGoal map { _._2 })
+                  WeakeningMacroRule(LogicalAxiom(formula), curGoal.map { _._2 })
               }
             }
 
@@ -205,7 +205,7 @@ case class RewriteTactic(
         else EqualityLeftRule(p2, Ant(0), newTgt, tgt)
         p4 = ForallLeftBlock(p3, quantEq, subst(vs))
         p5 = ContractionLeftRule(p4, quantEq)
-        _ = require(p5.conclusion `multiSetEquals` goal.conclusion)
+        _ = require(p5.conclusion.`multiSetEquals`(goal.conclusion))
       } yield p5
     }
     if (once) TacticFailure(this, "cannot rewrite at least once") else Tactic.pure(goal)
@@ -251,8 +251,8 @@ case class InductionTactic(mode: TacticApplyMode, v: Var, eigenVariables: Map[Co
       cases = constrs.map { constr =>
         val FunctionType(_, argTypes) = constr.ty: @unchecked
         val nameGen: ExprNameGenerator = rename.awayFrom(freeVariables(goal.conclusion))
-        val evs = eigenVariables.getOrElse(constr, argTypes map { at => nameGen.fresh(if (at == v.ty) v else Var("x", at)) })
-        val hyps = NewLabels(goal.labelledSequent, s"IH${v.name}") zip (evs filter { _.ty == v.ty } map { ev => Substitution(v -> ev)(formula) })
+        val evs = eigenVariables.getOrElse(constr, argTypes.map { at => nameGen.fresh(if (at == v.ty) v else Var("x", at)) })
+        val hyps = NewLabels(goal.labelledSequent, s"IH${v.name}") zip ((evs filter { _.ty == v.ty }).map { ev => Substitution(v -> ev)(formula) })
         val subGoal = hyps ++: goal.labelledSequent.delete(idx) :+ (label -> Substitution(v -> constr(evs*))(formula))
         InductionCase(OpenAssumption(subGoal), constr, subGoal.indices.take(hyps.size), evs, subGoal.indices.last)
       }
@@ -264,7 +264,7 @@ case class UnfoldTacticHelper(definitions: Seq[String], maxSteps: Option[Int] = 
   def atMost(steps: Int): UnfoldTacticHelper = copy(maxSteps = Some(steps))
 
   def in(labels: String*) = labels.foldLeft[Tactic[Unit]](skip) {
-    (acc, l) => acc `andThen` UnfoldTactic(l, definitions, maxSteps)
+    (acc, l) => acc.`andThen`(UnfoldTactic(l, definitions, maxSteps))
   }
 }
 

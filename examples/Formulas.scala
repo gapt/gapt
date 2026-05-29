@@ -37,7 +37,7 @@ object Formulas {
    * @return A formula expressing that = is a congruence w.r.t. the unary function symbol f.
    */
   def CongUnaryEq(f: String): FOLFormula = {
-    val Seq(x, y) = safeNames("=", f)("x", "y") map { FOLVar(_) }
+    val Seq(x, y) = safeNames("=", f)("x", "y").map { FOLVar(_) }
     All.Block(Seq(x, y), Eq(x, y) --> Eq(FOLFunction(f, x), FOLFunction(f, y)))
   }
 
@@ -47,7 +47,7 @@ object Formulas {
    * @return A formula expressing that = is a congruence w.r.t. the binary function symbol f.
    */
   def CongBinaryEq(f: String): FOLFormula = {
-    val Seq(x0, x1, y0, y1) = safeNames("=", f)("x_0", "x_1", "y0", "y_1") map { FOLVar(_) }
+    val Seq(x0, x1, y0, y1) = safeNames("=", f)("x_0", "x_1", "y0", "y_1").map { FOLVar(_) }
     All.Block(Seq(x0, x1, y0, y1), Eq(x0, y0) --> (Eq(x1, y1) --> Eq(FOLFunction(f, x0, x1), FOLFunction(f, y0, y1))))
   }
 

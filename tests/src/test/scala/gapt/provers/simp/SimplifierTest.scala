@@ -15,7 +15,7 @@ class SimplifierTest extends Specification {
     val simp = Simplifier(simpLemmas.toSeq)
     val res = simp.simpIff(seq.succedent.head, Polarity.InSuccedent)
     res.rhs must_== Top()
-    (CutRule(TopAxiom, res.proof, Top()).endSequent.distinct diff seq) must_== Sequent()
+    (CutRule(TopAxiom, res.proof, Top()).endSequent.distinct.diff(seq)) must_== Sequent()
   }
 
   "compute" in {

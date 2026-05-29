@@ -35,7 +35,7 @@ object Escargot extends Escargot(splitting = true, equality = true, propositiona
     val eqs = atoms collect { case c @ EqC(_) => c }
     val functions = for (c <- consts; FunctionType(to, _) = c.ty: @unchecked if to != To) yield c
 
-    val precedence = functions.toSeq.sortBy { arity(_) } ++ eqs ++ (atoms diff eqs).toSeq.sortBy { arity(_) }
+    val precedence = functions.toSeq.sortBy { arity(_) } ++ eqs ++ (atoms.diff(eqs)).toSeq.sortBy { arity(_) }
 
     LPO(precedence.map(_.name).distinct, (_, t) => !boolOnTermLevel && t == To)
   }
@@ -139,7 +139,7 @@ class Escargot(splitting: Boolean, equality: Boolean, propositional: Boolean) ex
     implicit val ctx: MutableContext = ctx0.getOrElse(MutableContext.guess(sequent)).newMutable
     withSection { section =>
       val seq = section.groundSequent(sequent)
-      getResolutionProof(seq.map(_.asInstanceOf[Atom]).map(Sequent() :+ _, _ +: Sequent()).elements)(using ctx) map { resolution =>
+      getResolutionProof(seq.map(_.asInstanceOf[Atom]).map(Sequent() :+ _, _ +: Sequent()).elements)(using ctx).map { resolution =>
         UnitResolutionToLKProof(resolution)
       }
     }

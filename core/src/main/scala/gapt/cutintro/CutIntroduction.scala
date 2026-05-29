@@ -106,7 +106,7 @@ case class SchematicExtendedHerbrandSequent(us: Sequent[(FOLFormula, Seq[Seq[FOL
   /** Number of eigenvariables that occur in this seHs. */
   def numVars = eigenVariables.length
 
-  def language = us map {
+  def language = us.map {
     case (u, uInst) =>
       var instances = uInst
       ss foreach {
@@ -146,9 +146,9 @@ case class SchematicExtendedHerbrandSequent(us: Sequent[(FOLFormula, Seq[Seq[FOL
 
 object vtratgToSEHS {
   def apply(encoding: InstanceTermEncoding, g: VTRATG): SchematicExtendedHerbrandSequent = {
-    val us = encoding.endSequent `zip` encoding.symbols map {
+    val us = (encoding.endSequent `zip` encoding.symbols).map {
       case (u, sym) =>
-        u.asInstanceOf[FOLFormula] -> g.rightHandSides(g.startSymbolNT).map(_.head).toList.collect { case Apps(`sym`, args) => args map { _.asInstanceOf[FOLTerm] } }
+        u.asInstanceOf[FOLFormula] -> g.rightHandSides(g.startSymbolNT).map(_.head).toList.collect { case Apps(`sym`, args) => args.map { _.asInstanceOf[FOLTerm] } }
     }
     val slist = g.nonTerminals.filter(_ != g.startSymbolNT).map { a => a.map(_.asInstanceOf[FOLVar]) -> g.rightHandSides(a).toList.map(_.map(_.asInstanceOf[FOLTerm])) }.filter(_._2.nonEmpty).toList
 
@@ -162,15 +162,15 @@ object sehsToVTRATG {
     val startSymbol = rename(Var("x", encoding.instanceTermType), freeVars)
     val nonTerminals = sehs.eigenVariables.map(_.toList)
     val instances = for ((f, us) <- sehs.us; u <- us) yield instantiate(f, u)
-    val productionsFromAx = for (t <- encoding `encode` instances) yield List(startSymbol) -> List(t)
+    val productionsFromAx = for (t <- encoding.`encode`(instances)) yield List(startSymbol) -> List(t)
     val otherProds = for ((ev, ss) <- sehs.ss; s <- ss) yield ev -> s
     val productions = productionsFromAx ++ otherProds
 
-    val grounding = FOLSubstitution(freeVariables(productions flatMap { _._2 }) diff nonTerminals.flatten.toSet map {
+    val grounding = FOLSubstitution((freeVariables(productions flatMap { _._2 }).diff(nonTerminals.flatten.toSet)).map {
       case FOLVar(n) => FOLVar(n) -> FOLConst(n)
     })
 
-    VTRATG(startSymbol, List(startSymbol) +: nonTerminals, productions map { p => p._1.toList -> grounding(p._2).toList })
+    VTRATG(startSymbol, List(startSymbol) +: nonTerminals, productions.map { p => p._1.toList -> grounding(p._2).toList })
   }
 }
 
@@ -203,15 +203,15 @@ object CutIntroduction {
           else new Escargot(splitting = true, equality = true, propositional = true)
 
         override def runSession[A](program: Session[A]) = smtSolver.runSession(program)
-        override def isValid(s: HOLSequent)(implicit ctx: Maybe[Context]): Boolean = smtSolver `isValid` s
-        override def getLKProof(s: HOLSequent)(implicit ctx: Maybe[MutableContext]) = EquationalLKProver `getLKProof` s
+        override def isValid(s: HOLSequent)(implicit ctx: Maybe[Context]): Boolean = smtSolver.`isValid`(s)
+        override def getLKProof(s: HOLSequent)(implicit ctx: Maybe[MutableContext]) = EquationalLKProver.`getLKProof`(s)
       }
     }
     case object PureFOL extends BackgroundTheory {
       val hasEquality = false
       object prover extends OneShotProver {
-        override def getLKProof(seq: HOLSequent)(implicit ctx: Maybe[MutableContext]) = LKProver `getLKProof` seq
-        override def isValid(seq: HOLSequent)(implicit ctx: Maybe[Context]) = Sat4j `isValid` seq
+        override def getLKProof(seq: HOLSequent)(implicit ctx: Maybe[MutableContext]) = LKProver.`getLKProof`(seq)
+        override def isValid(seq: HOLSequent)(implicit ctx: Maybe[Context]) = Sat4j.`isValid`(seq)
       }
     }
 
@@ -277,12 +277,12 @@ object CutIntroduction {
 
     /********** Term set Extraction **********/
     val encoding = InstanceTermEncoding(endSequent)
-    val termset = groundTerms(encoding `encode` ep)
+    val termset = groundTerms(encoding.`encode`(ep))
     val weightedTermsetSize = termset.view.map { case Apps(_, args) => args.size }.sum
 
     logger.metric("termset", termset.size)
     logger.metric("termset_wsize", weightedTermsetSize)
-    logger.metric("termset_scomp", termset.toSeq map { expressionSize(_) } sum)
+    logger.metric("termset_scomp", termset.toSeq.map { expressionSize(_) } sum)
     logger.metric("termset_trivial", termset.size == termset.map { case Apps(r, _) => r }.size)
     info(s"Size of term set: ${termset.size} (weighted by root symbol arity = $weightedTermsetSize)")
 
@@ -312,7 +312,7 @@ object CutIntroduction {
 
       logger.metric("grammar_size", vtratGrammar.size)
       logger.metric("grammar_wsize", vtratGrammar.weightedSize)
-      logger.metric("grammar_scomp", vtratGrammar.productions.toSeq flatMap { _._2 } map { expressionSize(_) } sum)
+      logger.metric("grammar_scomp", (vtratGrammar.productions.toSeq flatMap { _._2 }).map { expressionSize(_) } sum)
 
       info(s"Smallest grammar of size ${vtratGrammar.size} (weighted by vector size = ${vtratGrammar.weightedSize}):\n$vtratGrammar")
 
@@ -344,7 +344,7 @@ object CutIntroduction {
       val beauGrammar = sehsToVTRATG(encoding, beautifiedSS.sehs)
       logger.metric("beaugrammar_size", beauGrammar.size)
       logger.metric("beaugrammar_wsize", beauGrammar.weightedSize)
-      logger.metric("beaugrammar_scomp", beauGrammar.productions.toSeq flatMap { _._2 } map { expressionSize(_) } sum)
+      logger.metric("beaugrammar_scomp", (beauGrammar.productions.toSeq flatMap { _._2 }).map { expressionSize(_) } sum)
       logger.metric("beausol", beautifiedSS.formulas.map(_.toString))
 
       if (beautifiedSS.formulas.nonEmpty) {
@@ -436,7 +436,7 @@ object CutIntroduction {
     )
 
     def addNewInstances(instances: FOLSequent) =
-      currentGoal.flatMap(curGoal => haveInstances(instances.distinct `diff` curGoal.conclusion))
+      currentGoal.flatMap(curGoal => haveInstances(instances.distinct.`diff`(curGoal.conclusion)))
 
     def insertProofOfSolutionCondition(i: Int) = {
       val solCond = solStruct.instantiatedSolutionCondition(i)

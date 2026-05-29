@@ -65,12 +65,12 @@ class SolveTest extends Specification with SequentMatchers {
     }
 
     "equality" in {
-      val Some(expansion) = Escargot getExpansionProof existentialClosure(
+      val Some(expansion) = Escargot.getExpansionProof(existentialClosure(
         hof"x+(y+z) = (x+y)+z" +:
           hof"x+y = y+x" +:
           Sequent()
           :+ hof"(a+(b+c))+(d+e) = (c+(d+(a+e)))+b"
-      ): @unchecked
+      )): @unchecked
       val Right(lk) = ExpansionProofToLK(expansion): @unchecked
       lk.conclusion must beMultiSetEqual(expansion.shallow)
     }
@@ -124,7 +124,7 @@ class SolveTest extends Specification with SequentMatchers {
 
     "skolem quantifiers" in {
       val formula = hof"?x!y p(x,y) -> !y?x p(x,y)"
-      val Some(skolemExpansion) = Escargot getExpansionProof formula: @unchecked
+      val Some(skolemExpansion) = Escargot.getExpansionProof(formula): @unchecked
       ExpansionProofToLK(skolemExpansion) must beLike {
         case Right(p) => p.conclusion must_== (Sequent() :+ formula)
       }

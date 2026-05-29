@@ -144,7 +144,7 @@ object undoHol2Fol {
   val ivy_varname: Regex = """(v[0-9]+)""".r
 
   def getSignature[F, T <: SequentProof[F, T]](proof: SequentProof[F, T], extract: F => Expr): Signature = {
-    val exprs = for (p <- proof.subProofs; f <- p.conclusion.elements map extract) yield f
+    val exprs = for (p <- proof.subProofs; f <- p.conclusion.elements.map(extract)) yield f
     getSignature(exprs.toList)
   }
 
