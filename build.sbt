@@ -6,6 +6,7 @@ import xerial.sbt.Sonatype.sonatypeCentralHost
 
 val Version = "2.20.0-SNAPSHOT"
 
+Global / onChangedBuildSource := ReloadOnSourceChanges
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
   homepage := Some(url("https://logic.at/gapt/")),
