@@ -71,11 +71,10 @@ class SubstitutionTest extends Specification with SequentMatchers {
       val pfa = All(y, P(y, x))
       p_s.endSequent must beMultiSetEqual(pfa +: Sequent() :+ pfa)
     }
-
   }
 
   "induction" in {
-    var ctx = Context()
+    implicit var ctx = Context.default
     ctx += Sort("sk")
     ctx += InductiveType("list", hoc"nil: list", hoc"cons:sk>list>list")
     ctx += hoc"B:list>o"
