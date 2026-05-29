@@ -33,7 +33,7 @@ object UnitResolutionToLKProof {
       case Resolution(left, _, right, _) =>
         val sucEq = maybeFlip(right.conclusion(Ant(0)), shouldFlip(right))
         val antEq = maybeFlip(left.conclusion(Suc(0)), shouldFlip(left))
-        (antEq, sucEq) match {
+        (antEq, sucEq).runtimeChecked match {
           case (x, y) if x == y => LogicalAxiom(x)
           case (Eq(t, s), Eq(s_, t_)) if t == t_ && s == s_ =>
             ResolutionToLKProof.mkSymmProof(t, s)
@@ -62,7 +62,7 @@ object UnitResolutionToLKProof {
       }
 
       if (lk.conclusion.isTaut) {
-        lk = LogicalAxiom(lk.conclusion.antecedent intersect lk.conclusion.succedent head)
+        lk = LogicalAxiom(lk.conclusion.antecedent.intersect(lk.conclusion.succedent) head)
       } else {
         lk = ContractionMacroRule(lk)
       }

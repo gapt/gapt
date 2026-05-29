@@ -112,7 +112,7 @@ object cleanStructuralRules {
       val (rightSubProofNew, rightSubConnector) = apply_(rightSubProof, reductive)
 
       if (reductive) // We may throw away subproofs
-        (leftSubConnector.children(aux1), rightSubConnector.children(aux2)) match {
+        (leftSubConnector.children(aux1), rightSubConnector.children(aux2)).runtimeChecked match {
 
           case (Seq(a1), Seq(a2)) => // Neither cut formula is weak → just do it
             val proofNew = CutRule(leftSubProofNew, a1, rightSubProofNew, a2)
@@ -235,7 +235,7 @@ object cleanStructuralRules {
       val (rightSubProofNew, rightSubConnector) = apply_(rightSubProof, reductive)
 
       if (reductive) // We may throw away subproofs
-        (leftSubConnector.children(aux1), rightSubConnector.children(aux2)) match {
+        (leftSubConnector.children(aux1), rightSubConnector.children(aux2)).runtimeChecked match {
 
           case (Seq(a1), Seq(a2)) => // Neither conjunct is weak → just do it
             val proofNew = AndRightRule(leftSubProofNew, a1, rightSubProofNew, a2)
@@ -271,7 +271,7 @@ object cleanStructuralRules {
       val (rightSubProofNew, rightSubConnector) = apply_(rightSubProof, reductive)
 
       if (reductive) // We may throw away subproofs
-        (leftSubConnector.children(aux1), rightSubConnector.children(aux2)) match {
+        (leftSubConnector.children(aux1), rightSubConnector.children(aux2)).runtimeChecked match {
 
           case (Seq(a1), Seq(a2)) => // Neither disjunct is weak → just do it
             val proofNew = OrLeftRule(leftSubProofNew, a1, rightSubProofNew, a2)
@@ -325,8 +325,8 @@ object cleanStructuralRules {
       val (leftSubProofNew, leftSubConnector) = apply_(leftSubProof, reductive)
       val (rightSubProofNew, rightSubConnector) = apply_(rightSubProof, reductive)
 
-      if (reductive) // We may throw away subproofs
-        (leftSubConnector.children(aux1), rightSubConnector.children(aux2)) match {
+      if (reductive) { // We may throw away subproofs
+        (leftSubConnector.children(aux1), rightSubConnector.children(aux2)).runtimeChecked match {
 
           case (Seq(a1), Seq(a2)) => // Neither aux formula is weak → just do it
             val proofNew = ImpLeftRule(leftSubProofNew, a1, rightSubProofNew, a2)
@@ -342,7 +342,7 @@ object cleanStructuralRules {
           case (Seq(a1), Seq()) => // The conclusion is weak → throw away the left proof
             (rightSubProofNew, rightSubConnector * p.getRightSequentConnector.inv)
         }
-      else { // Not allowed to throw away subproofs, so we have to perform some weakenings
+      } else { // Not allowed to throw away subproofs, so we have to perform some weakenings
         val (leftSubProofNew_, leftSubConnector_) =
           introduceWeakenings(leftSubProof, leftSubProofNew, leftSubConnector, Seq(aux1))
         val (rightSubProofNew_, rightSubConnector_) =

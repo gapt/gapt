@@ -117,7 +117,7 @@ object LeftRankCutReduction extends CutReduction {
       case l @ CutRule(leftSubProof, a1, rightSubProof, a2) =>
         val aux1Left = l.getLeftSequentConnector.parents(cut.aux1)
         val aux1Right = l.getRightSequentConnector.parents(cut.aux1)
-        (aux1Left, aux1Right) match {
+        (aux1Left, aux1Right).runtimeChecked match {
           case (Seq(aux1Sub), Seq()) => // The left cut formula is in the left subproof of the binary inference
             val cutSub = CutRule(leftSubProof, aux1Sub, cut.rightSubProof, cut.aux2)
             Some(CutRule(cutSub, cutSub.getLeftSequentConnector.child(a1), rightSubProof, a2))
@@ -176,7 +176,7 @@ object LeftRankAndRightReduction extends CutReduction {
       case l @ AndRightRule(leftSubProof, a1, rightSubProof, a2) if cut.leftSubProof.mainIndices.head != cut.aux1 =>
         val aux1Left = l.getLeftSequentConnector.parents(cut.aux1)
         val aux1Right = l.getRightSequentConnector.parents(cut.aux1)
-        (aux1Left, aux1Right) match {
+        (aux1Left, aux1Right).runtimeChecked match {
           case (Seq(aux1Sub), Seq()) => // The left cut formula is in the left subproof of the binary inference
             val cutSub = CutRule(leftSubProof, aux1Sub, cut.rightSubProof, cut.aux2)
             Some(AndRightRule(cutSub, cutSub.getLeftSequentConnector.child(a1), rightSubProof, a2))
@@ -196,7 +196,7 @@ object LeftRankOrLeftReduction extends CutReduction {
       case l @ OrLeftRule(leftSubProof, a1, rightSubProof, a2) =>
         val aux1Left = l.getLeftSequentConnector.parents(cut.aux1)
         val aux1Right = l.getRightSequentConnector.parents(cut.aux1)
-        (aux1Left, aux1Right) match {
+        (aux1Left, aux1Right).runtimeChecked match {
           case (Seq(aux1Sub), Seq()) => // The left cut formula is in the left subproof of the binary inference
             val cutSub = CutRule(leftSubProof, aux1Sub, cut.rightSubProof, cut.aux2)
             Some(OrLeftRule(cutSub, cutSub.getLeftSequentConnector.child(a1), rightSubProof, a2))
@@ -230,7 +230,7 @@ object LeftRankImpLeftReduction extends CutReduction {
       case l @ ImpLeftRule(leftSubProof, a1, rightSubProof, a2) =>
         val aux1Left = l.getLeftSequentConnector.parents(cut.aux1)
         val aux1Right = l.getRightSequentConnector.parents(cut.aux1)
-        (aux1Left, aux1Right) match {
+        (aux1Left, aux1Right).runtimeChecked match {
           case (Seq(aux1Sub), Seq()) => // The left cut formula is in the left subproof of the binary inference
             val cutSub = CutRule(leftSubProof, aux1Sub, cut.rightSubProof, cut.aux2)
             Some(ImpLeftRule(cutSub, cutSub.getLeftSequentConnector.child(a1), rightSubProof, a2))
@@ -429,7 +429,7 @@ object LeftRankInductionReduction extends CutReduction {
     cut.leftSubProof match {
       case ind @ InductionRule(_, _, _)
           if ind.mainIndices.head != cut.aux1 &&
-            (contextVariables(cut) intersect inductionEigenvariables(ind) nonEmpty) =>
+            (contextVariables(cut).intersect(inductionEigenvariables(ind)) nonEmpty) =>
         val newEigenvariables = rename(inductionEigenvariables(ind), contextVariables(cut))
         val newInductionCases = ind.cases.map { inductionCase =>
           val newCaseEigenvariables = inductionCase.eigenVars.map(newEigenvariables)
@@ -440,7 +440,7 @@ object LeftRankInductionReduction extends CutReduction {
         apply(cut.copy(leftSubProof = newLeftSubProof))
 
       case ind @ InductionRule(inductionCases, inductionFormula, inductionTerm) if ind.mainIndices.head != cut.aux1 =>
-        val newInductionCases = (inductionCases zip ind.occConnectors).map {
+        val newInductionCases = (inductionCases.zip(ind.occConnectors)).map {
           case (inductionCase, connector) =>
             if (connector.parentOption(cut.aux1).nonEmpty) {
               val subProof = CutRule(
@@ -479,29 +479,51 @@ object leftRankReduction extends CutReduction {
    * @return A reduced proof or None if the left rank reduction could not be applied.
    */
   def apply(cut: CutRule): Option[LKProof] =
-    LeftRankWeakeningLeftReduction.reduce(cut) orElse
-      LeftRankWeakeningRightReduction.reduce(cut) orElse
-      LeftRankContractionLeftReduction.reduce(cut) orElse
-      LeftRankContractionRightReduction.reduce(cut) orElse
-      LeftRankCutReduction.reduce(cut) orElse
-      LeftRankDefinitionLeftReduction.reduce(cut) orElse
-      LeftRankDefinitionRightReduction.reduce(cut) orElse
-      LeftRankAndLeftReduction.reduce(cut) orElse
-      LeftRankAndRightReduction.reduce(cut) orElse
-      LeftRankOrLeftReduction.reduce(cut) orElse
-      LeftRankOrRightReduction.reduce(cut) orElse
-      LeftRankImpLeftReduction.reduce(cut) orElse
-      LeftRankImpRightReduction.reduce(cut) orElse
-      LeftRankNegLeftReduction.reduce(cut) orElse
-      LeftRankNegRightReduction.reduce(cut) orElse
-      LeftRankForallLeftReduction.reduce(cut) orElse
-      LeftRankForallRightReduction.reduce(cut) orElse
-      LeftRankForallSkRightReduction.reduce(cut) orElse
-      LeftRankExistsLeftReduction.reduce(cut) orElse
-      LeftRankExistsSkLeftReduction.reduce(cut) orElse
-      LeftRankExistsRightReduction.reduce(cut) orElse
-      LeftRankEqualityLeftReduction.reduce(cut) orElse
+    LeftRankWeakeningLeftReduction.reduce(cut).orElse(
+      LeftRankWeakeningRightReduction.reduce(cut)
+    ).orElse(
+      LeftRankContractionLeftReduction.reduce(cut)
+    ).orElse(
+      LeftRankContractionRightReduction.reduce(cut)
+    ).orElse(
+      LeftRankCutReduction.reduce(cut)
+    ).orElse(
+      LeftRankDefinitionLeftReduction.reduce(cut)
+    ).orElse(
+      LeftRankDefinitionRightReduction.reduce(cut)
+    ).orElse(
+      LeftRankAndLeftReduction.reduce(cut)
+    ).orElse(
+      LeftRankAndRightReduction.reduce(cut)
+    ).orElse(
+      LeftRankOrLeftReduction.reduce(cut)
+    ).orElse(
+      LeftRankOrRightReduction.reduce(cut)
+    ).orElse(
+      LeftRankImpLeftReduction.reduce(cut)
+    ).orElse(
+      LeftRankImpRightReduction.reduce(cut)
+    ).orElse(
+      LeftRankNegLeftReduction.reduce(cut)
+    ).orElse(
+      LeftRankNegRightReduction.reduce(cut)
+    ).orElse(
+      LeftRankForallLeftReduction.reduce(cut)
+    ).orElse(
+      LeftRankForallRightReduction.reduce(cut)
+    ).orElse(
+      LeftRankForallSkRightReduction.reduce(cut)
+    ).orElse(
+      LeftRankExistsLeftReduction.reduce(cut)
+    ).orElse(
+      LeftRankExistsSkLeftReduction.reduce(cut)
+    ).orElse(
+      LeftRankExistsRightReduction.reduce(cut)
+    ).orElse(
+      LeftRankEqualityLeftReduction.reduce(cut)
+    ).orElse(
       LeftRankEqualityRightReduction.reduce(cut)
+    )
 
   override def reduce(proof: CutRule): Option[LKProof] = apply(proof)
 }
@@ -586,7 +608,7 @@ object RightRankCutReduction extends CutReduction {
       case upperCut @ CutRule(leftSubProof, a1, rightSubProof, a2) =>
         val aux2Left = upperCut.getLeftSequentConnector.parents(cut.aux2)
         val aux2Right = upperCut.getRightSequentConnector.parents(cut.aux2)
-        (aux2Left, aux2Right) match {
+        (aux2Left, aux2Right).runtimeChecked match {
           case (Seq(aux2Sub), Seq()) => // The right cut formula is in the left subproof of the binary inference
             val cutSub = CutRule(cut.leftSubProof, cut.aux1, leftSubProof, aux2Sub)
             Some(CutRule(cutSub, cutSub.getRightSequentConnector.child(a1), rightSubProof, a2))
@@ -642,7 +664,7 @@ object RightRankAndRightReduction extends CutReduction {
         val aux2Left = r.getLeftSequentConnector.parents(cut.aux2)
         val aux2Right = r.getRightSequentConnector.parents(cut.aux2)
 
-        (aux2Left, aux2Right) match {
+        (aux2Left, aux2Right).runtimeChecked match {
           // The right cut formula is in the left subproof of the binary inference
           case (Seq(aux2Sub), Seq()) =>
             val cutSub = CutRule(
@@ -674,7 +696,7 @@ object RightRankOrLeftReduction extends CutReduction {
         val aux2Left = r.getLeftSequentConnector.parents(cut.aux2)
         val aux2Right = r.getRightSequentConnector.parents(cut.aux2)
 
-        (aux2Left, aux2Right) match {
+        (aux2Left, aux2Right).runtimeChecked match {
           // The right cut formula is in the left subproof of the binary inference
           case (Seq(aux2Sub), Seq()) =>
             val cutSub = CutRule(cut.leftSubProof, cut.aux1, leftSubProof, aux2Sub)
@@ -711,7 +733,7 @@ object RightRankImpLeftReduction extends CutReduction {
         val aux2Left = r.getLeftSequentConnector.parents(cut.aux2)
         val aux2Right = r.getRightSequentConnector.parents(cut.aux2)
 
-        (aux2Left, aux2Right) match {
+        (aux2Left, aux2Right).runtimeChecked match {
           // The right cut formula is in the left subproof of the binary inference
           case (Seq(aux2Sub), Seq()) =>
             val cutSub = CutRule(cut.leftSubProof, cut.aux1, leftSubProof, aux2Sub)
@@ -893,7 +915,7 @@ object RightRankEqualityRightReduction extends CutReduction {
         val conn1 = r.getSequentConnector
         val cutSub = CutRule(cut.leftSubProof, cut.aux1, subProof, conn1.parent(cut.aux2))
         val conn2 = cutSub.getRightSequentConnector
-        Some(EqualityRightRule(cutSub, conn2 `child` eq, conn2 `child` eaux, indicator))
+        Some(EqualityRightRule(cutSub, conn2.`child`(eq), conn2.`child`(eaux), indicator))
       case _ => None
     }
 }
@@ -915,7 +937,7 @@ object RightRankInductionReduction extends CutReduction {
 
     cut.rightSubProof match {
 
-      case ind @ InductionRule(_, _, _) if contextVariables(cut) intersect inductionEigenvariables(ind) nonEmpty =>
+      case ind @ InductionRule(_, _, _) if contextVariables(cut).intersect(inductionEigenvariables(ind)) nonEmpty =>
         val newEigenvariables = rename(inductionEigenvariables(ind), contextVariables(cut))
         val newInductionCases = ind.cases.map { inductionCase =>
           val newCaseEigenvariables = inductionCase.eigenVars.map(newEigenvariables)
@@ -961,27 +983,49 @@ object rightRankReduction extends CutReduction {
    * @return A reduced proof or None if no right reduction could be applied to the proof.
    */
   def apply(cut: CutRule): Option[LKProof] =
-    RightRankWeakeningLeftReduction.reduce(cut) orElse
-      RightRankWeakeningRightReduction.reduce(cut) orElse
-      RightRankContractionLeftReduction.reduce(cut) orElse
-      RightRankContractionRightReduction.reduce(cut) orElse
-      RightRankCutReduction.reduce(cut) orElse
-      RightRankDefinitionLeftReduction.reduce(cut) orElse
-      RightRankDefinitionRightReduction.reduce(cut) orElse
-      RightRankAndLeftReduction.reduce(cut) orElse
-      RightRankAndRightReduction.reduce(cut) orElse
-      RightRankOrLeftReduction.reduce(cut) orElse
-      RightRankOrRightReduction.reduce(cut) orElse
-      RightRankImpLeftReduction.reduce(cut) orElse
-      RightRankImpRightReduction.reduce(cut) orElse
-      RightRankNegLeftReduction.reduce(cut) orElse
-      RightRankNegRightReduction.reduce(cut) orElse
-      RightRankForallLeftReduction.reduce(cut) orElse
-      RightRankForallRightReduction.reduce(cut) orElse
-      RightRankForallSkRightReduction.reduce(cut) orElse
-      RightRankExistsLeftReduction.reduce(cut) orElse
-      RightRankExistsSkLeftReduction.reduce(cut) orElse
-      RightRankExistsRightReduction.reduce(cut) orElse
-      RightRankEqualityLeftReduction.reduce(cut) orElse
+    RightRankWeakeningLeftReduction.reduce(cut).orElse(
+      RightRankWeakeningRightReduction.reduce(cut)
+    ).orElse(
+      RightRankContractionLeftReduction.reduce(cut)
+    ).orElse(
+      RightRankContractionRightReduction.reduce(cut)
+    ).orElse(
+      RightRankCutReduction.reduce(cut)
+    ).orElse(
+      RightRankDefinitionLeftReduction.reduce(cut)
+    ).orElse(
+      RightRankDefinitionRightReduction.reduce(cut)
+    ).orElse(
+      RightRankAndLeftReduction.reduce(cut)
+    ).orElse(
+      RightRankAndRightReduction.reduce(cut)
+    ).orElse(
+      RightRankOrLeftReduction.reduce(cut)
+    ).orElse(
+      RightRankOrRightReduction.reduce(cut)
+    ).orElse(
+      RightRankImpLeftReduction.reduce(cut)
+    ).orElse(
+      RightRankImpRightReduction.reduce(cut)
+    ).orElse(
+      RightRankNegLeftReduction.reduce(cut)
+    ).orElse(
+      RightRankNegRightReduction.reduce(cut)
+    ).orElse(
+      RightRankForallLeftReduction.reduce(cut)
+    ).orElse(
+      RightRankForallRightReduction.reduce(cut)
+    ).orElse(
+      RightRankForallSkRightReduction.reduce(cut)
+    ).orElse(
+      RightRankExistsLeftReduction.reduce(cut)
+    ).orElse(
+      RightRankExistsSkLeftReduction.reduce(cut)
+    ).orElse(
+      RightRankExistsRightReduction.reduce(cut)
+    ).orElse(
+      RightRankEqualityLeftReduction.reduce(cut)
+    ).orElse(
       RightRankEqualityRightReduction.reduce(cut)
+    )
 }

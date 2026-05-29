@@ -207,7 +207,7 @@ class Hol2FolDefinitions(implicit val context: Context = Context.default) {
     definitions.toSet.map { lambdaCloseDefinitionPair }
 
   private def lambdaCloseDefinitionPair(definitionPair: (Expr, Expr)): (Expr, Expr) =
-    definitionPair match {
+    definitionPair.runtimeChecked match {
       case (d @ Apps(_: Const, xs), e) =>
         Abs.Block(xs.asInstanceOf[List[Var]], d) -> Abs.Block(xs.asInstanceOf[List[Var]], e)
     }
@@ -219,13 +219,19 @@ class Hol2FolDefinitions(implicit val context: Context = Context.default) {
 
   def toMap: Map[Expr, Expr] = definitions
 
-  def toLegacyMap: Map[Expr, String] = definitions.map {
-    case (Apps(Const(n, _, _), _), e) => e -> n
+  def toLegacyMap: Map[Expr, String] = definitions.map { d =>
+    d.runtimeChecked match {
+      case (Apps(Const(n, _, _), _), e) => e -> n
+    }
   }
 
   def lookupByName(name: String): Option[Expr] =
     definitions
-      .find { case (Apps(c: Const, _), _) => c.name == name }
+      .find { d =>
+        d.runtimeChecked match {
+          case (Apps(c: Const, _), _) => c.name == name
+        }
+      }
       .map { _._2 }
 }
 

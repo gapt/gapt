@@ -94,11 +94,11 @@ private[lk] class extractRecSchem(includeTheoryAxioms: Boolean, includeEqTheory:
     case p @ InductionRule(_, _, _) if p.mainIndices contains occ =>
       findEigenVars(p.cases.head.conclusion, p.cases.head.proof)
     case p: ContractionRule if !p.mainIndices.contains(occ) =>
-      findEigenVars(p.getSequentConnector `parent` occ, p.subProof)
+      findEigenVars(p.getSequentConnector.`parent`(occ), p.subProof)
     case p: CutRule =>
-      p.getLeftSequentConnector `parents` occ match {
+      p.getLeftSequentConnector.`parents`(occ) match {
         case Seq(pocc) => findEigenVars(pocc, p.leftSubProof)
-        case _ => p.getRightSequentConnector `parents` occ match {
+        case _ => p.getRightSequentConnector.`parents`(occ) match {
             case Seq(pocc) => findEigenVars(pocc, p.rightSubProof)
             case _         => throw new IllegalArgumentException
           }
@@ -153,7 +153,7 @@ private[lk] class extractRecSchem(includeTheoryAxioms: Boolean, includeEqTheory:
       val rules2 = getRules(q2, startSymbol, occConn2.parent(symbols, Some(symbol)), context)
       rules1 ++ rules2
     case p @ InductionRule(cases, main, term) =>
-      val symbol = (startSymbol, p.formula) match {
+      val symbol = (startSymbol, p.formula).runtimeChecked match {
         case (Apps(Const(_, ty, _), args), Abs(_, All.Block(vs, _))) =>
           Const(mkFreshSymbol(), ty)(args.dropRight(vs.size + 1))
       }
@@ -172,19 +172,19 @@ private[lk] class extractRecSchem(includeTheoryAxioms: Boolean, includeEqTheory:
 
       caseRules.toSet + Rule(startSymbol, symbol(p.term)(findEigenVars(p.mainIndices.head, p)))
     case p: EqualityRule if !includeEqTheory =>
-      getRules(p.subProof, startSymbol, p.getSequentConnector `parent` symbols, context) ++
+      getRules(p.subProof, startSymbol, p.getSequentConnector.`parent`(symbols), context) ++
         symbols(p.eqInConclusion).map(Rule(startSymbol, _))
     case p: EqualityLeftRule if includeEqTheory =>
-      getRules(p.subProof, startSymbol, p.getSequentConnector `parent` symbols, context) ++
+      getRules(p.subProof, startSymbol, p.getSequentConnector.`parent`(symbols), context) ++
         symbols(p.eqInConclusion).map(Rule(startSymbol, _)) +
         Rule(startSymbol, (p.equation & p.mainFormula) --> p.auxFormula)
     case p: EqualityRightRule if includeEqTheory =>
-      getRules(p.subProof, startSymbol, p.getSequentConnector `parent` symbols, context) ++
+      getRules(p.subProof, startSymbol, p.getSequentConnector.`parent`(symbols), context) ++
         symbols(p.eqInConclusion).map(Rule(startSymbol, _)) +
         Rule(startSymbol, (p.equation & p.auxFormula) --> p.mainFormula)
     case _ =>
       (for (
-        (q, occConn) <- p.immediateSubProofs zip p.occConnectors;
+        (q, occConn) <- p.immediateSubProofs.zip(p.occConnectors);
         rule <- getRules(q, startSymbol, occConn.parent(symbols, None), context)
       ) yield rule).toSet
   }
