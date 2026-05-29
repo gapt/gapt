@@ -7,6 +7,8 @@ import xerial.sbt.Sonatype.sonatypeCentralHost
 val Version = "2.20.0-SNAPSHOT"
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
+Global / semanticdbEnabled := true
+Global / semanticdbVersion := scalafixSemanticdb.revision
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
   homepage := Some(url("https://logic.at/gapt/")),
@@ -63,9 +65,8 @@ lazy val commonSettings = Seq(
   javaOptions ++= Seq("-Xss40m", "-Xmx1g"),
   fork := true,
   run / baseDirectory := file("."),
-  sourcesInBase := false, // people like to keep scripts lying around
-  semanticdbEnabled := true,
-  semanticdbVersion := scalafixSemanticdb.revision
+  sourcesInBase := false // people like to keep scripts lying around
+
 )
 
 val specs2Version = "4.16.0"
