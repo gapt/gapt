@@ -30,23 +30,23 @@ class extractInductionAxiomsTest extends Specification {
     allR
     induction(hov"x:nat")
     allR
-    rewrite.ltr("ap1") in "goal"
+    rewrite.ltr("ap1").in("goal")
     induction(hov"y:nat")
-    rewrite.ltr("ap1") in "goal"
+    rewrite.ltr("ap1").in("goal")
     refl
-    rewrite.ltr("ap2") in "goal"
+    rewrite.ltr("ap2").in("goal")
     quasiprop
     allR
     induction(hov"y:nat")
-    rewrite.ltr("ap2") in "goal"
-    rewrite.ltr("IHx_0") in "goal"
-    rewrite.many.ltr("ap1") in "goal"
+    rewrite.ltr("ap2").in("goal")
+    rewrite.ltr("IHx_0").in("goal")
+    rewrite.many.ltr("ap1").in("goal")
     refl
-    rewrite.many.ltr("ap2") in "goal"
-    rewrite.ltr("IHx_0") in "goal"
-    rewrite.rtl("IHy_0") in "goal"
-    rewrite.many.ltr("ap2") in "goal"
-    rewrite.ltr("IHx_0") in "goal"
+    rewrite.many.ltr("ap2").in("goal")
+    rewrite.ltr("IHx_0").in("goal")
+    rewrite.rtl("IHy_0").in("goal")
+    rewrite.many.ltr("ap2").in("goal")
+    rewrite.ltr("IHx_0").in("goal")
     refl
   }
 
@@ -54,10 +54,10 @@ class extractInductionAxiomsTest extends Specification {
     val proof = Lemma(plus_axioms ++: Sequent() :+
       ("goal" -> hof"x + (y + z) = (x + y) + z")) {
       induction(hov"x:nat")
-      rewrite.many.ltr("ap1") in "goal"
+      rewrite.many.ltr("ap1").in("goal")
       refl
-      rewrite.many.ltr("ap2") in "goal"
-      rewrite.ltr("IHx_0") in "goal"
+      rewrite.many.ltr("ap2").in("goal")
+      rewrite.ltr("IHx_0").in("goal")
       refl
     }
     freeVariables(extractInductionAxioms(proof)(using ctx)(0)) must beEqualTo(

@@ -14,7 +14,7 @@ class GapticTest extends Specification {
         Sequent()
         :+ ("goal" -> hof"P(g(a))")
     ) {
-      rewrite.rtl("eq") in "goal"
+      rewrite.rtl("eq").in("goal")
       prop
     }
     ok
@@ -26,7 +26,7 @@ class GapticTest extends Specification {
         Sequent()
         :+ ("goal" -> hof"s(s(0)) + s(s(0)) = s(s(s(s(0))))")
     ) {
-      rewrite.many.ltr("add0", "adds") in "goal"
+      rewrite.many.ltr("add0", "adds").in("goal")
       axiomRefl
     }
     ok

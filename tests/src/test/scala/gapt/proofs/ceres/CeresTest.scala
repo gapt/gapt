@@ -80,7 +80,7 @@ class CeresTest extends Specification with SequentMatchers with SatMatchers {
       cut("cut", hof"∀x ∀y (P(x, g(g y)) → P(f(f x), y))"); forget("goal")
       decompose; repeat(chain("pf")); trivial
 
-      unfold("in", "Q") in "goal"
+      unfold("in", "Q").in("goal")
       exR(le"c").forget
       repeat(chain("cut")); chain("pc")
     }

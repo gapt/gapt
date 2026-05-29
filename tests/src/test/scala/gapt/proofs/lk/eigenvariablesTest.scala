@@ -27,10 +27,10 @@ class eigenvariablesTest extends Specification {
     ("goal" -> hof"!x x + (y + z) = (x + y) + z")) {
     allR
     induction(hov"x:nat")
-    rewrite.many.ltr("ap1") in "goal"
+    rewrite.many.ltr("ap1").in("goal")
     refl
-    rewrite.many.ltr("ap2") in "goal"
-    rewrite.ltr("IHx_0") in "goal"
+    rewrite.many.ltr("ap2").in("goal")
+    rewrite.ltr("IHx_0").in("goal")
     refl
   }
 
