@@ -236,7 +236,7 @@ trait Tactic[+T] { self =>
     override def toString = s"$self.flatMap(<${file.value}:${line.value}>)"
   }
 
-  private def applyToSubgoal(proofState: ProofState, subGoal: OpenAssumptionIndex, tacticToBlame: Tactic[?] = this): Either[TacticFailure, (T, ProofState)] =
+  private def applyToSubgoal(proofState: ProofState, subGoal: OpenAssumptionIndex, tacticToBlame: Tactic[?]): Either[TacticFailure, (T, ProofState)] =
     proofState.subGoals.indexWhere(_.index == subGoal) match {
       case -1 => Left(TacticFailure(tacticToBlame, proofState, "Did not find specified subgoal"))
       case i =>

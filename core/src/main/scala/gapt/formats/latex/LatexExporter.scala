@@ -200,7 +200,7 @@ object LatexExporter {
 
   // LaTeX documents
 
-  private def documentWrapper(body: String, extraPreamble: String = "") =
+  private def documentWrapper(body: String, extraPreamble: String) =
     s"""
      |\\documentclass[a4paper,10pt,landscape]{scrartcl}
      |\\usepackage[margin=1cm]{geometry}
