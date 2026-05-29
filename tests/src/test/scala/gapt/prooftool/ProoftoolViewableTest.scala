@@ -9,6 +9,7 @@ import gapt.proofs.lk.rules.ImpRightRule
 import gapt.proofs.resolution.ResolutionProof
 import gapt.proofs.sketch.RefutationSketch
 import org.specs2.mutable.Specification
+import scala.annotation.nowarn
 
 class ProoftoolViewableTest extends Specification {
 
@@ -18,6 +19,8 @@ class ProoftoolViewableTest extends Specification {
     implicitly[ProoftoolViewable[RefutationSketch]]
     implicitly[ProoftoolViewable[ImpRightRule]]
 
+    // unused but we leave this here for type checking
+    @nowarn("name=UnusedSymbol")
     def forall[Viewable: ProoftoolViewable, Error] = {
       implicitly[ProoftoolViewable[Option[Viewable]]]
       implicitly[ProoftoolViewable[Either[Error, Viewable]]]
