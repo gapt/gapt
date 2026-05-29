@@ -129,7 +129,7 @@ class SchemaTest extends Specification {
     " Nia-schema Clause Set Extraction Instance 3" in {
       val proof = instantiateProof.Instantiate(le"omega ${natMaker(3)}")
       ctx.check(proof)
-      val thestruct = StructCreators.extract(proof)(ctx)
+      val thestruct = StructCreators.extract(proof)(using ctx)
       CharacteristicClauseSet(thestruct)
 
       ok
@@ -137,7 +137,7 @@ class SchemaTest extends Specification {
     " Nia-schema Characteristic Formula Extraction Instance 1" in {
       val proof = instantiateProof.Instantiate(le"omega ${natMaker(3)}")
       ctx.check(proof)
-      val thestruct = StructCreators.extract(proof)(ctx)
+      val thestruct = StructCreators.extract(proof)(using ctx)
       val Form = CharFormN(thestruct)
       subsumedClausesRemoval(CNFp(Form).toList)
       ok
@@ -146,65 +146,65 @@ class SchemaTest extends Specification {
     " Nia-schema Clause Set Refutation  Instance 1" in {
       val proof = instantiateProof.Instantiate(le"omega ${natMaker(1)}")
       ctx.check(proof)
-      val thestruct = StructCreators.extract(proof)(ctx)
+      val thestruct = StructCreators.extract(proof)(using ctx)
       val cs = CharacteristicClauseSet(thestruct)
       val refutation = Escargot.getResolutionProof(cs)
       refutation must beSome
     }
     " Proof Nia-schema Characteristic Formula Instance 0" in {
-      val SCS = SchematicStruct("omega")(ctx).getOrElse(Map())
+      val SCS = SchematicStruct("omega")(using ctx).getOrElse(Map())
       val ctx2 = ctx.newMutable
-      CharFormPRN.PR(CharFormPRN(SCS))(ctx2)
+      CharFormPRN.PR(CharFormPRN(SCS))(using ctx2)
       val proof = new proofes(ctx2.toImmutable).prove0(SCS)
       ctx2.check(proof)
       ok
     }
     " Proof Nia-schema Characteristic Formula Instance 1" in {
-      val SCS = SchematicStruct("omega")(ctx).getOrElse(Map())
+      val SCS = SchematicStruct("omega")(using ctx).getOrElse(Map())
       val ctx2 = ctx.newMutable
-      CharFormPRN.PR(CharFormPRN(SCS))(ctx2)
+      CharFormPRN.PR(CharFormPRN(SCS))(using ctx2)
       val proof = new proofes(ctx2.toImmutable).prove1(SCS)
       ctx2.check(proof)
       ok
     }
     " Proof Nia-schema Positive Characteristic Formula Instance 0" in {
-      val SCS = SchematicStruct("omega")(ctx).getOrElse(Map())
+      val SCS = SchematicStruct("omega")(using ctx).getOrElse(Map())
       val ctx2 = ctx.newMutable
-      CharFormPRP.PR(CharFormPRP(SCS))(ctx2)
+      CharFormPRP.PR(CharFormPRP(SCS))(using ctx2)
       val proof = new proofes(ctx2.toImmutable).prove0p(SCS)
       ctx2.check(proof)
       ok
     }
     " Proof Nia-schema Positive Characteristic Formula Instance 1" in {
-      val SCS = SchematicStruct("omega")(ctx).getOrElse(Map())
+      val SCS = SchematicStruct("omega")(using ctx).getOrElse(Map())
       val ctx2 = ctx.newMutable
-      CharFormPRP.PR(CharFormPRP(SCS))(ctx2)
+      CharFormPRP.PR(CharFormPRP(SCS))(using ctx2)
       val proof = new proofes(ctx2.toImmutable).prove1p(SCS)
       ctx2.check(proof)
       ok
     }
     " Extracting the Schematic Characteristic Clause Set of the Niaschema" in {
-      SchematicStruct("omega")(ctx) must beSome
+      SchematicStruct("omega")(using ctx) must beSome
       ok
     }
     " Extracting the Schematic Characteristic Clause Set Checking number of symbols" in {
-      val SCS = SchematicStruct("omega")(ctx).getOrElse(Map())
+      val SCS = SchematicStruct("omega")(using ctx).getOrElse(Map())
       SCS.keySet.size must beEqualTo(6)
     }
 
     "Extraction of a Schematic Clause set, size 7 from NiaSchema" in {
-      val SCS = SchematicStruct("omega")(ctx).getOrElse(Map())
+      val SCS = SchematicStruct("omega")(using ctx).getOrElse(Map())
       val top = CLS(le"omega ${natMaker(7)}", SCS.keySet.find(x => x.proof.toString.contains("omega")).get.config)
-      InstanceOfSchematicStruct(top, SCS)(ctx)
+      InstanceOfSchematicStruct(top, SCS)(using ctx)
       ok
     }
     "Schematic Clause set equivalent to non schematic" in {
-      val SCS = SchematicStruct("omega")(ctx).getOrElse(Map())
+      val SCS = SchematicStruct("omega")(using ctx).getOrElse(Map())
       val top = CLS(le"omega ${natMaker(3)}", SCS.keySet.find(x => x.proof.toString.contains("omega")).get.config)
-      val st = InstanceOfSchematicStruct(top, SCS)(ctx)
+      val st = InstanceOfSchematicStruct(top, SCS)(using ctx)
       val Sclauseset = subsumedClausesRemoval(CharacteristicClauseSet(st).toList)
       val proof = instantiateProof.Instantiate(le"omega ${natMaker(3)}")
-      val thestruct = StructCreators.extract(proof)(ctx)
+      val thestruct = StructCreators.extract(proof)(using ctx)
       val nonclauseset = subsumedClausesRemoval(CharacteristicClauseSet(thestruct).toList)
       val fin =
         (Sclauseset.forall(s => nonclauseset.exists(clauseSubsumption(_, s).isDefined)) ||
@@ -212,12 +212,12 @@ class SchemaTest extends Specification {
       fin must beEqualTo(true)
     }
     "Schematic Clause set equivalent to Characteristic formula Clause Set" in {
-      val SCS = SchematicStruct("omega")(ctx).getOrElse(Map())
+      val SCS = SchematicStruct("omega")(using ctx).getOrElse(Map())
       val top = CLS(le"omega ${natMaker(3)}", SCS.keySet.find(x => x.proof.toString.contains("omega")).get.config)
-      val st = InstanceOfSchematicStruct(top, SCS)(ctx)
+      val st = InstanceOfSchematicStruct(top, SCS)(using ctx)
       val Sclauseset = subsumedClausesRemoval(CharacteristicClauseSet(st).toList)
       val proof = instantiateProof.Instantiate(le"omega ${natMaker(3)}")
-      val thestruct = StructCreators.extract(proof)(ctx)
+      val thestruct = StructCreators.extract(proof)(using ctx)
       val nonclauseset = subsumedClausesRemoval(CNFp(CharFormN(thestruct)).toList)
       val fin =
         (Sclauseset.forall(s => nonclauseset.exists(clauseSubsumption(_, s).isDefined)) ||
@@ -225,15 +225,15 @@ class SchemaTest extends Specification {
       fin must beEqualTo(true)
     }
     "Schematic Formula Construction" in {
-      val SCS = SchematicStruct("omega")(ctx).getOrElse(Map())
+      val SCS = SchematicStruct("omega")(using ctx).getOrElse(Map())
       val SchemForm = CharFormPRN(SCS)
       SCS.size must beEqualTo(SchemForm.size)
     }
     "Schematic Formula Construction PR Form" in {
-      val SCS = SchematicStruct("omega")(ctx).getOrElse(Map())
+      val SCS = SchematicStruct("omega")(using ctx).getOrElse(Map())
       val SchemForm = CharFormPRN(SCS)
       val muCtx = ctx.newMutable
-      CharFormPRN.PR(SchemForm)(muCtx)
+      CharFormPRN.PR(SchemForm)(using muCtx)
       muCtx.get[Reductions].normalizer.rules.size must beEqualTo(8)
     }
   }
@@ -302,12 +302,12 @@ class SchemaTest extends Specification {
       IsKSimple(result) must_== true
     }
     "Schematic Clause set equivalent to non schematic" in {
-      val SCS = SchematicStruct("omega")(ctx).getOrElse(Map())
+      val SCS = SchematicStruct("omega")(using ctx).getOrElse(Map())
       val top = CLS(le"omega ${natMaker(3)} ${natMaker(3)}", SCS.keySet.find(x => x.proof.toString.contains("omega")).get.config)
-      val theStructWeNeed = InstanceOfSchematicStruct(top, SCS)(ctx)
+      val theStructWeNeed = InstanceOfSchematicStruct(top, SCS)(using ctx)
       val SClauseSet = subsumedClausesRemoval(CharacteristicClauseSet(theStructWeNeed).toList)
       val proof = instantiateProof.Instantiate(le"omega ${natMaker(3)}  ${natMaker(3)}")
-      val theStruct = StructCreators.extract(proof)(ctx)
+      val theStruct = StructCreators.extract(proof)(using ctx)
       val nonClauseSet = subsumedClausesRemoval(CharacteristicClauseSet(theStruct).toList)
       val fin =
         (SClauseSet.forall(s => nonClauseSet.exists(clauseSubsumption(_, s).isDefined)) ||
@@ -316,12 +316,12 @@ class SchemaTest extends Specification {
     }
 
     "Schematic Clause set equivalent to Characteristic formula Clause Set" in {
-      val SCS = SchematicStruct("omega")(ctx).getOrElse(Map())
+      val SCS = SchematicStruct("omega")(using ctx).getOrElse(Map())
       val top = CLS(le"omega ${natMaker(3)} ${natMaker(3)}", SCS.keySet.find(x => x.proof.toString.contains("omega")).get.config)
-      val theStructWeNeed = InstanceOfSchematicStruct(top, SCS)(ctx)
+      val theStructWeNeed = InstanceOfSchematicStruct(top, SCS)(using ctx)
       val SClauseSet = subsumedClausesRemoval(CharacteristicClauseSet(theStructWeNeed).toList)
       val proof = instantiateProof.Instantiate(le"omega ${natMaker(3)}  ${natMaker(3)}")
-      val theStruct = StructCreators.extract(proof)(ctx)
+      val theStruct = StructCreators.extract(proof)(using ctx)
       val nonClauseSet = subsumedClausesRemoval(CNFp(CharFormN(theStruct)).toList)
       val fin =
         (SClauseSet.forall(s => nonClauseSet.exists(clauseSubsumption(_, s).isDefined)) ||
@@ -329,15 +329,15 @@ class SchemaTest extends Specification {
       fin must beEqualTo(true)
     }
     "Schematic Formula Construction" in {
-      val SCS = SchematicStruct("omega")(ctx).getOrElse(Map())
+      val SCS = SchematicStruct("omega")(using ctx).getOrElse(Map())
       val SchemForm = CharFormPRN(SCS)
       SCS.size must beEqualTo(SchemForm.size)
     }
     "Schematic Formula Construction PR Form" in {
-      val SCS = SchematicStruct("omega")(ctx).getOrElse(Map())
+      val SCS = SchematicStruct("omega")(using ctx).getOrElse(Map())
       val SchemForm = CharFormPRN(SCS)
       val muCtx = ctx.newMutable
-      CharFormPRN.PR(SchemForm)(muCtx)
+      CharFormPRN.PR(SchemForm)(using muCtx)
       muCtx.get[Reductions].normalizer.rules.size must beEqualTo(18)
     }
   }

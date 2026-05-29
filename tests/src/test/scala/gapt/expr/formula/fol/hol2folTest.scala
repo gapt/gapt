@@ -144,7 +144,7 @@ class hol2folTest extends Specification {
     }
     "leave abstractions of quantifiers intact" in {
       val f: Formula = hof"!x x = x & ?y y = y"
-      val r = replaceAbstractions(f)(new Hol2FolDefinitions())
+      val r = replaceAbstractions(f)(using new Hol2FolDefinitions())
       r mustEqual f
     }
   }

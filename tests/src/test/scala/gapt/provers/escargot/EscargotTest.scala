@@ -12,7 +12,7 @@ class EscargotTest extends Specification {
   import BabelParser.parseFormula
 
   def parse(formulas: String*) = existentialClosure { (formulas.map(parseFormula)) ++: Sequent() }
-  def test(formulas: String*) = Escargot.getResolutionProof(parse(formulas: _*))
+  def test(formulas: String*) = Escargot.getResolutionProof(parse(formulas*))
 
   "simple" in { test("P(x)", "-P(c)") must beSome }
 

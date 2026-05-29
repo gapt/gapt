@@ -18,7 +18,7 @@ class makeTheoryAxiomsExplicitTest extends Specification with SequentMatchers {
         (_, (lhs, seq)) <- tape.ctx.get[ProofNames].names
         if tape.ctx.get[ProofDefinitions].find(lhs).isEmpty
       } yield universalClosure(seq.toDisjunction)
-    val withoutThAx = makeTheoryAxiomsExplicit(ax.toSeq: _*)(tape.proof)
+    val withoutThAx = makeTheoryAxiomsExplicit(ax.toSeq*)(tape.proof)
     withoutThAx.subProofs.filter { _.isInstanceOf[ProofLink] } must_== Set()
     tape.ctx.check(withoutThAx)
     // TODO: multiset equality

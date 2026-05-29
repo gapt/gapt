@@ -7,7 +7,7 @@ import org.specs2.matcher.Matchers.pairFunctionToMatcher
 trait SequentMatchers extends Matchers {
 
   def beMultiSetEqual[A](expected: Sequent[A])(implicit sig: BabelSignature): Matcher[Sequent[A]] =
-    SequentMatchers.beMultiSetEqual(expected)(sig)
+    SequentMatchers.beMultiSetEqual(expected)(using sig)
 
   def beSetEqual[A](expected: Sequent[A])(implicit sig: BabelSignature): Matcher[Sequent[A]] =
     beMultiSetEqual(expected.distinct) ^^ { (actual: Sequent[A]) => actual.distinct }

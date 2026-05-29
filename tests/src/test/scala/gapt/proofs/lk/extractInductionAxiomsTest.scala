@@ -60,7 +60,7 @@ class extractInductionAxiomsTest extends Specification {
       rewrite.ltr("IHx_0") in "goal"
       refl
     }
-    freeVariables(extractInductionAxioms(proof)(ctx)(0)) must beEqualTo(
+    freeVariables(extractInductionAxioms(proof)(using ctx)(0)) must beEqualTo(
       Set(hov"y:nat", hov"z:nat")
     )
   }

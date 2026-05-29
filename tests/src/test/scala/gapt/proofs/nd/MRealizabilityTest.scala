@@ -47,7 +47,7 @@ class MRealizabilityTest extends Specification {
         hoc"'+': nat>nat>nat",
         "0 + x = x",
         "s(x) + y = s(x + y)"
-      )(ctx)
+      )(using ctx)
       ctx += InductiveType(
         ty"conjj ?c  ?b",
         hoc"pairr{?c ?b}: ?c > ?b > conjj ?c ?b"
@@ -95,7 +95,7 @@ class MRealizabilityTest extends Specification {
         hoc"'+': nat>nat>nat",
         "0 + x = x",
         "s(x) + y = s(x + y)"
-      )(ctx)
+      )(using ctx)
       ctx += InductiveType(
         ty"list ?a",
         hoc"nil{?a}: list ?a",
@@ -162,7 +162,7 @@ class MRealizabilityTest extends Specification {
       hoc"'+': nat>nat>nat",
       "0 + x = x",
       "s(x) + y = s(x + y)"
-    )(ctx)
+    )(using ctx)
     ctx += InductiveType(
       ty"list ?a",
       hoc"nil{?a}: list ?a",
@@ -184,7 +184,7 @@ class MRealizabilityTest extends Specification {
       hoc"node{?a}: bitree ?a > bitree ?a > bitree ?a"
     )
 
-    def mrealizer(proof: NDProof) = MRealizability.mrealize(proof, false)(ctx)._2
+    def mrealizer(proof: NDProof) = MRealizability.mrealize(proof, false)(using ctx)._2
 
     val one = TBase("1")
     val i = Const("i", one)

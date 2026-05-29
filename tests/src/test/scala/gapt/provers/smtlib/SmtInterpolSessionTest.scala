@@ -76,6 +76,6 @@ class SmtInterpolSessionTest extends Specification {
 
     satInner must_== false
     satOuter must_== true
-    labels must contain(exactly((0 until n).map { i => s"hyp$i" }: _*))
+    labels must contain(exactly((0 until n).map { i => s"hyp$i" }*))
   }
 }

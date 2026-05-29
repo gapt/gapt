@@ -221,7 +221,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
     "find covering grammar of minimal size" in {
       val l = Seq("g(c,c)", "g(d,d)", "g(e,e)", "f(c,c)", "f(d,d)", "f(e,e)")
       val g = findMinimalVTRATG(l.map(parseTerm).toSet, Seq(1))
-      covers(g, l: _*)
+      covers(g, l*)
       g.productions.size must beEqualTo(2 + 3)
       g.language must_== l.map(parseTerm).toSet
     }

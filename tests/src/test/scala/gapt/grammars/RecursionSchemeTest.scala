@@ -136,7 +136,7 @@ class RecursionSchemeTest extends Specification with SatMatchers {
       val Seq(x, y) = Seq("x", "y").map { FOLVar(_) }
       val template = RecSchemTemplate(A, A -> y, A -> B(x), B(x) -> y)
       val rs = template.findMinimalCover(terms.map { A -> _ } toSet)
-      covers(rs, terms: _*)
+      covers(rs, terms*)
       rs.rules must haveSize(4 + 4)
     }
     "minimize two-sorted linear example" in {
@@ -151,7 +151,7 @@ class RecursionSchemeTest extends Specification with SatMatchers {
       val y = Var("y", To)
       val template = RecSchemTemplate(A, A -> y, A -> B(x), B(x) -> y)
       val rs = template.findMinimalCover(terms.map { A -> _ } toSet)
-      covers(rs, terms: _*)
+      covers(rs, terms*)
       rs.rules must haveSize(4 + 4)
     }
   }

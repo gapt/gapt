@@ -131,7 +131,7 @@ class FixDerivationTest extends Specification with SequentMatchers {
   }
 
   "findDerivationViaResolution" should {
-    def check(a: HOLClause, bs: Set[_ <: HOLClause]) = {
+    def check(a: HOLClause, bs: Set[? <: HOLClause]) = {
       findDerivationViaResolution(a, bs, prover = NonSplittingEscargot) must beLike {
         case Some(p) =>
           p.conclusion.isSubMultisetOf(a).aka(s"${p.conclusion} subclause of $a") must_== true

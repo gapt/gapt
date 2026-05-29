@@ -41,7 +41,7 @@ class AxiomsTest extends Specification {
     "be top for one argument" in { AllDistinct() must_== hof"⊤" }
     "contain a disequality for each unordered  pair of the arguments" in {
       val terms = List(hov"x : i", hov"y: i", hov"z : i")
-      val And.nAry(conjuncts) = AllDistinct(terms: _*)
+      val And.nAry(conjuncts) = AllDistinct(terms*)
       conjuncts.map { case Neg(Eq(t1, t2)) => (t1, t2) } must_== unorderedPairsOf(terms)
     }
   }

@@ -45,7 +45,7 @@ class InductionBupTest extends Specification with SatMatchers {
     val solution = le"^(α:list)^ν^γ p γ ν"
     val instBup = normalize(instantiate(bup.formula, solution)).asInstanceOf[Formula]
     skolemize(instBup) must beValid
-    val lk = constructSIP(sequent, Vector(), bup, solution, Sat4j)(ctx.newMutable)
+    val lk = constructSIP(sequent, Vector(), bup, solution, Sat4j)(using ctx.newMutable)
     ctx.check(lk)
     ok
   }

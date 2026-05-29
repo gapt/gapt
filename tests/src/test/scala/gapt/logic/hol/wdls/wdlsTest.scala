@@ -20,7 +20,7 @@ import gapt.logic.hol.PredicateEliminationProblem
 class wdlsTest extends Specification {
   private case class StringInterpolation(sc: StringContext) {
     def disj(args: gapt.expr.util.ExpressionParseHelper.Splice[Expr]*): Disjunct = {
-      val (positive, negative) = stringInterpolationForExpressions(sc).hos(args: _*).toTuple
+      val (positive, negative) = stringInterpolationForExpressions(sc).hos(args*).toTuple
       Disjunct(positive, negative)
     }
   }
@@ -59,7 +59,7 @@ class wdlsTest extends Specification {
 
     def formulaEquationInX(formula: Formula) = formulaEquation(hov"X:i>o", formula)
 
-    val fe = formulaEquationInX _ // alias to shorten test cases
+    val fe = formulaEquationInX // alias to shorten test cases
     succeedWithSequents(fe(hof"R(a)"), Set())
     succeedWithSequents(fe(hof"X(a)"), Set(disj"⊢ X(a)"))
     succeedWithSequents(fe(hof"¬X(a)"), Set(disj"¬X(a) ⊢"))
