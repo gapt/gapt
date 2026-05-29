@@ -78,10 +78,10 @@ lazy val testSettings = Seq(
     "org.specs2" %% "specs2-junit" %
       specs2Version, // needed for junitxml output
     "org.specs2" %% "specs2-matcher" % specs2Version
-  ) map (_ % Test)
+  ).map(_ % Test)
 )
 
-lazy val BuildSbtConfig = config("buildsbt") extend Compile
+lazy val BuildSbtConfig = config("buildsbt").extend(Compile)
 
 lazy val root = project.in(file("."))
   .aggregate(core, examples, tests, userManual, cli, testing)
@@ -262,7 +262,7 @@ lazy val examples = project.in(file("examples")).dependsOn(core)
     Compile / resourceDirectory := baseDirectory.value,
     Compile / unmanagedResources / excludeFilter := {
       val target = (baseDirectory.value / "target").getCanonicalPath
-      new SimpleFileFilter(_.getCanonicalPath startsWith target)
+      new SimpleFileFilter(_.getCanonicalPath.startsWith(target))
     } || "*.scala",
     dependencyOverrides ++= dependencyConflictResolutions,
     Compile / run / connectInput := true,

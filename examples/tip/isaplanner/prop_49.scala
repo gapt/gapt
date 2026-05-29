@@ -71,7 +71,7 @@ object prop_49 extends TacticsProof {
   val append_nil_proof = Lemma(append_axioms ++:
     Sequent() :+
     ("goal" -> append_nil_goal)) {
-    analyticInduction `withAxioms` sequentialAxioms.forVariables(hov"xs:list").forLabel("goal")
+    analyticInduction.`withAxioms`(sequentialAxioms.forVariables(hov"xs:list").forLabel("goal"))
   }
 
   val butlast_append_nil_goal = hof"!xs !x butlast(append(xs,cons(x,nil))) = xs"
@@ -104,7 +104,7 @@ object prop_49 extends TacticsProof {
     induction(hov"ys:list")
     // IB
     rewrite.`ltr`("def_butlastConcat_0").`in`("goal")
-    analyticInduction `withAxioms` sequentialAxioms.forVariables(hov"xs:list").forFormula(hof"!xs append(xs,nil) = xs")
+    analyticInduction.`withAxioms`(sequentialAxioms.forVariables(hov"xs:list").forFormula(hof"!xs append(xs,nil) = xs"))
     // IS
     rewrite.`ltr`("def_butlastConcat_1").`in`("goal")
     induction(hov"xs:list")
@@ -139,7 +139,7 @@ object prop_49 extends TacticsProof {
   val append_inner_shift_proof = Lemma(append_axioms ++:
     Sequent() :+
     ("goal" -> append_inner_shift_goal)) {
-    analyticInduction `withAxioms` sequentialAxioms.forVariables(hov"xs:list").forLabel("goal")
+    analyticInduction.`withAxioms`(sequentialAxioms.forVariables(hov"xs:list").forLabel("goal"))
   }
 
   val butlast_inner_append_goal = hof"!ys !xs !y butlast(append(xs, cons(y,ys))) = append(xs, butlast(cons(y,ys)))"
@@ -149,7 +149,7 @@ object prop_49 extends TacticsProof {
     ("lem_ani" -> append_nil_goal) +:
     Sequent() :+
     ("goal" -> butlast_inner_append_goal)) {
-    analyticInduction `withAxioms` sequentialAxioms.forVariables(hov"ys:list").forLabel("goal")
+    analyticInduction.`withAxioms`(sequentialAxioms.forVariables(hov"ys:list").forLabel("goal"))
   }
 
   val proof = Lemma(sequent) {

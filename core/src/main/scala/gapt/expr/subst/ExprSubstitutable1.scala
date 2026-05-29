@@ -56,7 +56,7 @@ trait ExprSubstitutable1 {
       go(Substitution(sub.map - v, sub.typeMap), t)
     case Abs(v, s) if sub.range contains sub.applyToTypeOnly(v) =>
       // It is safe to rename the bound variable to any variable that is not in freeVariables(s).
-      val newV = rename(v, freeVariables(s) union sub.range)
+      val newV = rename(v, freeVariables(s).union(sub.range))
       applySub(sub, Abs(newV, applySub(Substitution(v -> newV), s)))
     case Abs(v, s) =>
       val newV = sub.applyToTypeOnly(v)

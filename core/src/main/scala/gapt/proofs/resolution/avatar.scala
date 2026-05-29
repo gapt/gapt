@@ -24,12 +24,12 @@ import gapt.proofs.context.update.Definition
  */
 case class AvatarSplit(subProof: ResolutionProof, indices: Set[SequentIndex], component: AvatarDefinition) extends LocalResolutionRule {
   require(!component.introOnly)
-  require(indices subsetOf subProof.conclusion.indices.toSet)
+  require(indices.subsetOf(subProof.conclusion.indices.toSet))
 
   val thisComponent = subProof.conclusion.zipWithIndex.filter(indices contains _._2).map(_._1)
   val rest = subProof.conclusion.zipWithIndex.filterNot(indices contains _._2).map(_._1)
   require(
-    freeVariables(thisComponent) intersect freeVariables(rest) isEmpty,
+    freeVariables(thisComponent).intersect(freeVariables(rest)) isEmpty,
     s"error splitting ${subProof.conclusion}:\nfree variables of $thisComponent and $rest intersect"
   )
   require(thisComponent.`isSubMultisetOf`(component.clause))
@@ -60,8 +60,8 @@ object AvatarSplit {
   def getComponents(clause: HOLSequent): List[HOLSequent] = {
     def findComp(c: HOLSequent): HOLSequent = {
       val fvs = freeVariables(c)
-      val c_ = clause.filter(freeVariables(_) intersect fvs nonEmpty)
-      if (c_ `isSubsetOf` c) c else findComp(c ++ c_ distinct)
+      val c_ = clause.filter(freeVariables(_).intersect(fvs) nonEmpty)
+      if (c_.`isSubsetOf`(c)) c else findComp(c ++ c_ distinct)
     }
 
     if (clause.isEmpty) {
@@ -102,7 +102,7 @@ abstract class AvatarGeneralNonGroundComp extends AvatarDefinition {
   protected val AvatarNonGroundComp.DefinitionFormula(canonVars, canonicalClause) = definition
   require(definition == AvatarNonGroundComp.DefinitionFormula(canonVars, canonicalClause))
 
-  protected val subst = Substitution(canonVars zip vars)
+  protected val subst = Substitution(canonVars.zip(vars))
   require(vars.size == canonVars.size)
   require(subst isInjectiveRenaming)
 
@@ -136,7 +136,7 @@ object AvatarNonGroundComp {
     def apply(clause: HOLSequent): Formula =
       apply(freeVariables(clause).toSeq, clause)
     def apply(vars: Seq[Var], clause: HOLSequent) = {
-      require(vars.toSet subsetOf freeVariables(clause))
+      require(vars.toSet.subsetOf(freeVariables(clause)))
       All.Block(vars, clause.toDisjunction)
     }
     def unapply(f: Formula): Some[(Seq[Var], HOLSequent)] = f match {

@@ -133,31 +133,31 @@ package object nd {
       case AndElim2Rule(q)      => names(q)
       case AndIntroRule(q1, q2) => names(q1).union(names(q2))
 
-      case OrElimRule(maj, min1, a1, min2, a2) => names(maj) union names(min1) union names(min2)
+      case OrElimRule(maj, min1, a1, min2, a2) => names(maj).union(names(min1)).union(names(min2))
       case OrIntro1Rule(q, f)                  => names(q)
       case OrIntro2Rule(q, f)                  => names(q)
 
-      case NegElimRule(maj, min) => names(maj) union names(min)
+      case NegElimRule(maj, min) => names(maj).union(names(min))
       case NegIntroRule(q, a)    => names(q)
 
-      case ImpElimRule(maj, min) => names(maj) union names(min)
+      case ImpElimRule(maj, min) => names(maj).union(names(min))
       case ImpIntroRule(q, a)    => names(q)
 
       case TopIntroRule             => Set.empty
-      case BottomElimRule(maj, min) => names(maj) union containedNames(min)
+      case BottomElimRule(maj, min) => names(maj).union(containedNames(min))
 
       case EqualityIntroRule(t)             => containedNames(t)
-      case EqualityElimRule(maj, min, f, x) => names(maj) union names(min)
+      case EqualityElimRule(maj, min, f, x) => names(maj).union(names(min))
 
-      case ExcludedMiddleRule(c1, a1, c2, a2) => names(c1) union names(c2)
+      case ExcludedMiddleRule(c1, a1, c2, a2) => names(c1).union(names(c2))
 
       case ForallIntroRule(q, ev, qv) => names(q) + ev + qv
-      case ForallElimRule(q, t)       => names(q) union containedNames(t)
+      case ForallElimRule(q, t)       => names(q).union(containedNames(t))
 
-      case ExistsIntroRule(q, a, t, v)     => names(q) union containedNames(a) union containedNames(t) + v
-      case ExistsElimRule(maj, min, a, ev) => names(maj) union names(min) + ev
+      case ExistsIntroRule(q, a, t, v)     => names(q).union(containedNames(a)).union(containedNames(t) + v)
+      case ExistsElimRule(maj, min, a, ev) => names(maj).union(names(min) + ev)
 
-      case InductionRule(cases, f, t) => containedNames(cases) union containedNames(f) union containedNames(t)
+      case InductionRule(cases, f, t) => containedNames(cases).union(containedNames(f)).union(containedNames(t))
     }
   }
 

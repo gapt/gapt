@@ -35,7 +35,7 @@ object fixDerivation {
           case _                                             => scala.util.boundary.break(None)
         }
 
-      for (case ((a, true), i) <- p.conclusion `zip` needToFlip zipWithIndex)
+      for (case ((a, true), i) <- p.conclusion.`zip`(needToFlip) zipWithIndex)
         p = Flip(p, p.conclusion.indexOf(a, i.polarity))
 
       p = Factor(p)
@@ -65,7 +65,7 @@ object fixDerivation {
     mapInputClauses(p) { seq =>
       val cls = seq.map(_.asInstanceOf[Atom])
       tryDeriveTrivial(cls, cs).orElse(findFirstSome(cs)(tryDeriveBySubsumptionModEq(cls, _))).orElse(tryDeriveViaResolution(cls, cs)).getOrElse {
-        throw new IllegalArgumentException(s"Could not derive $cls from\n${cs mkString "\n"}")
+        throw new IllegalArgumentException(s"Could not derive $cls from\n${cs.mkString("\n")}")
       }
     }
 

@@ -103,18 +103,18 @@ object eliminateCutsET {
       val renamings = for (_ <- 0 until instances.size)
         yield Substitution(eigenVarsToRename.map { ev => ev -> nameGen.fresh(ev) })
       val substs =
-        for ((renaming, (term, instance)) <- renamings zip instances)
-          yield Substitution(eigenVariables zip term).`compose`(renaming)
+        for ((renaming, (term, instance)) <- renamings.zip(instances))
+          yield Substitution(eigenVariables.zip(term)).`compose`(renaming)
 
       val matchingSubstOption = substs.find(s =>
-        (substs zip instances.values).forall(inst =>
+        (substs.zip(instances.values)).forall(inst =>
           s(inst._2.shallow) == inst._1(child.shallow)
         )
       )
-      val matchingSubst = matchingSubstOption getOrElse Substitution()
+      val matchingSubst = matchingSubstOption.getOrElse(Substitution())
       val needExtraCopy = matchingSubstOption.isEmpty
 
-      val newCuts = for ((subst, (term, instance)) <- substs zip instances) yield {
+      val newCuts = for ((subst, (term, instance)) <- substs.zip(instances)) yield {
         if (instance.polarity.positive) ETCut.Cut(matchingSubst(instance), subst(child))
         else ETCut.Cut(subst(child), matchingSubst(instance))
       }
@@ -123,7 +123,7 @@ object eliminateCutsET {
       (newCuts ++ (for (c <- rest; s <- substs_) yield s(c)), for (tree <- expansionSequent) yield ETMerge(substs_.map(_(tree))))
     }
 
-    Some((cut1, cut2)) collect {
+    Some((cut1, cut2)).collect {
       case (ETWeakQuantifierBlock(_, n, instances), ETStrongQuantifierBlock(_, eigenVariables, child)) if n > 0 && eigenVariables.size == n =>
         quantifiedCut(instances, eigenVariables, child)
       case (ETStrongQuantifierBlock(_, eigenVariables, child), ETWeakQuantifierBlock(_, n, instances)) if n > 0 && eigenVariables.size == n =>

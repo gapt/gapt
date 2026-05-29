@@ -58,7 +58,7 @@ object ForallLeftRule extends ConvenienceConstructor("ForallLeftRule") {
     mainFormula match {
       case All(v, subFormula) =>
         val auxFormula = BetaReduction.betaNormalize(Substitution(v, term)(subFormula))
-        val i = premise.antecedent indexOf auxFormula
+        val i = premise.antecedent.indexOf(auxFormula)
 
         if (i == -1)
           throw LKRuleCreationException(s"Formula $auxFormula not found in antecedent of $premise.")

@@ -51,7 +51,7 @@ object primeFactor extends TacticsProof {
     exR(fov"n").forget
     orR
     forget("GOAL_0")
-    andR `right` trivial
+    andR.`right`(trivial)
     unfold("div").`in`("GOAL_1")
     exR(foc"1").forget
     theory

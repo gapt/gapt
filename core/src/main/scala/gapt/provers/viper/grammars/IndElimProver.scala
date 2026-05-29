@@ -29,14 +29,14 @@ case class IndElimProver(
   val quantSequent = instSeq.copy(succedent = Vector(All.Block(xs, goal)))
 
   def apply(ts: Seq[Expr]): (LKt, LocalCtx) = {
-    val subst = Substitution(xs zip ts)
+    val subst = Substitution(xs.zip(ts))
     val lctx1 = subst(lctx)
     normalizeLKt.induction(subst(proofTerm), lctx1)(using ctx) -> lctx1
   }
 
   def getLKtProof(seq: HOLSequent): (LKt, LocalCtx) = {
     val Some(subst) = syntacticMatching(goal, seq(Suc(0))): @unchecked
-    require(subst(instSeq) `isSubsetOf` seq)
+    require(subst(instSeq).`isSubsetOf`(seq))
     apply(subst(xs))
   }
 

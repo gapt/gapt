@@ -143,7 +143,7 @@ class LKProofSubstitutable(preserveEigenvariables: Boolean) extends Substitutabl
 
     case ForallRightRule(subProof, aux, eigen, quant) if substitution.range contains eigen =>
       require(!preserveEigenvariables, s"Cannot apply substitution: Eigenvariable $eigen is in range of substitution")
-      val renamedEigen = rename(eigen, substitution.range union freeVariables(subProof.conclusion))
+      val renamedEigen = rename(eigen, substitution.range.union(freeVariables(subProof.conclusion)))
       applySubstitution(
         substitution,
         ForallRightRule(
@@ -162,7 +162,7 @@ class LKProofSubstitutable(preserveEigenvariables: Boolean) extends Substitutabl
 
     case ExistsLeftRule(subProof, aux, eigen, quant) if substitution.range contains eigen =>
       require(!preserveEigenvariables, s"Cannot apply substitution: Eigenvariable $eigen is in range of substitution")
-      val renamedEigen = rename(eigen, substitution.range union freeVariables(subProof.conclusion))
+      val renamedEigen = rename(eigen, substitution.range.union(freeVariables(subProof.conclusion)))
       applySubstitution(
         substitution,
         ExistsLeftRule(
@@ -217,9 +217,9 @@ class LKProofSubstitutable(preserveEigenvariables: Boolean) extends Substitutabl
   }
 
   private def indCase(subst: Substitution, c: InductionCase): InductionCase =
-    if (subst.domain intersect c.eigenVars.toSet nonEmpty) {
+    if (subst.domain.intersect(c.eigenVars.toSet) nonEmpty) {
       indCase(Substitution(subst.map -- c.eigenVars.toSet, subst.typeMap), c)
-    } else if (subst.range intersect c.eigenVars.toSet nonEmpty) {
+    } else if (subst.range.intersect(c.eigenVars.toSet) nonEmpty) {
       require(!preserveEigenvariables)
       val renaming = rename(c.eigenVars, freeVariables(c.proof.endSequent) -- c.eigenVars ++ subst.range)
       indCase(
@@ -232,7 +232,7 @@ class LKProofSubstitutable(preserveEigenvariables: Boolean) extends Substitutabl
     } else {
       val newEigens = subst(c.eigenVars).map(_.asInstanceOf[Var])
       c.copy(
-        go(Substitution(subst.map ++ (c.eigenVars zip newEigens), subst.typeMap), c.proof),
+        go(Substitution(subst.map ++ (c.eigenVars.zip(newEigens)), subst.typeMap), c.proof),
         constructor = subst(c.constructor).asInstanceOf[Const],
         eigenVars = newEigens
       )

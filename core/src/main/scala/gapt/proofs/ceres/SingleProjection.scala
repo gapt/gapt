@@ -144,7 +144,7 @@ object SingleProjection {
   /* traces the ancestor relationship to infer cut-formulas in the parent proof. if a formula does not have parents,
      use default */
   private def mapToUpperProof[Formula](conn: SequentConnector, cut_occs: Sequent[Boolean], default: Boolean) =
-    conn.parents(cut_occs).map(_.headOption getOrElse default)
+    conn.parents(cut_occs).map(_.headOption.getOrElse(default))
 
   private def handleBinaryESAnc(
       proof: LKProof,

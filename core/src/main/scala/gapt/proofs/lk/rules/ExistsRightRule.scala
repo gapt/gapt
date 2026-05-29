@@ -58,7 +58,7 @@ object ExistsRightRule extends ConvenienceConstructor("ExistsRightRule") {
     mainFormula match {
       case Ex(v, subFormula) =>
         val auxFormula = BetaReduction.betaNormalize(Substitution(v, term)(subFormula))
-        val i = premise.succedent indexOf auxFormula
+        val i = premise.succedent.indexOf(auxFormula)
 
         if (i == -1)
           throw LKRuleCreationException(s"Formula $auxFormula not found in succedent of $premise.")

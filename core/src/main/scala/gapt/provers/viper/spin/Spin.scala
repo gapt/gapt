@@ -91,7 +91,7 @@ class Spin(opts: SpinOptions) {
 
       // Perform an initial induction while the goal has not been split across several clauses
       val goals = ground.succedent
-      val goalAxioms = goals flatMap (goal => clauseAxioms(skolemize(goal) +: Sequent())(using ctx))
+      val goalAxioms = goals.flatMap(goal => clauseAxioms(skolemize(goal) +: Sequent())(using ctx))
       val goalGround = goalAxioms.map(_.formula) ++: ground
 
       val cnf = structuralCNF(goalGround)(using ctx)
@@ -235,11 +235,11 @@ class Spin(opts: SpinOptions) {
     private def generatePotentialInductionAxioms(`given`: Cls): Unit = {
       // TODO: this should probably be less restrictive now that we perform more subgoal generalization
       if (
-        performGeneralization || `given`.clause.exists(constants.nonLogical(_) exists (isInductive(_)(using ctx))) &&
+        performGeneralization || `given`.clause.exists(constants.nonLogical(_).exists(isInductive(_)(using ctx))) &&
         !inductedClauses.contains(`given`.clause)
       ) {
         EscargotLogger.time("axiom_gen") {
-          clauseAxioms(`given`.clause)(using ctx) foreach (possibleAxioms.enqueue(_))
+          clauseAxioms(`given`.clause)(using ctx).foreach(possibleAxioms.enqueue(_))
         }
         inductedClauses += `given`.clause
       }
@@ -274,7 +274,7 @@ class AxiomGenerator(options: SpinOptions) {
         def findOrFilter(f: Formula => Boolean): Seq[Formula] =
           if (options.acceptNotNormalized) targets.filter(f) else targets.find(f).toSeq
 
-        findOrFilter(testFormula(_, List(v))) flatMap { targ =>
+        findOrFilter(testFormula(_, List(v))).flatMap { targ =>
           val target = universalClosureExcept(quantifyAccumulators(targ, occs), Set(v))
           StandardInductionAxioms(v, target)(using ctx).toOption.map(Seq(_))
         }
@@ -297,7 +297,7 @@ class AxiomGenerator(options: SpinOptions) {
         // Also generate targets where we don't generalise subterms, in case all of those fail tests.
         val targets = buildTargets(ts) ++ buildTargets(ts.flatMap(asInductiveConst(_)(using ctx)))
 
-        targets.find { case (vs, target) => testFormula(target, vs.toList) } flatMap {
+        targets.find { case (vs, target) => testFormula(target, vs.toList) }.flatMap {
           case (vs, targ) =>
             val target = universalClosureExcept(quantifyAccumulators(targ, occs), vs.toSet)
             SequentialInductionAxioms()(Sequent() :+ ("axiom", target))(using ctx).toOption
@@ -394,14 +394,14 @@ class OccurrencesFinder()(implicit ctx: Context) {
             .getOrElse(rhsArgs.zipWithIndex.map(_._2).toSet, Set(), Set())
 
         // Anything occurring as a passive argument becomes passive, even subterms that appear in primary position.
-        val pass1 = passiveArgs.toSeq flatMap { i =>
+        val pass1 = passiveArgs.toSeq.flatMap { i =>
           val p = newPos(i, rhsArgs.size, pos)
           val (l, m, r) = go(rhsArgs(i), p, inPrimary = false)
           (rhsArgs(i), p) +: (l ++ m ++ r)
         }
 
         // Treat passive and accumulator subterms of accumulator arguments as accumulators.
-        val accs1 = accumulatorArgs.toSeq flatMap { i =>
+        val accs1 = accumulatorArgs.toSeq.flatMap { i =>
           val p = newPos(i, rhsArgs.size, pos)
           val (l, m, _) = go(rhsArgs(i), p, inPrimary = false)
           (rhsArgs(i), p) +: (l ++ m)
@@ -428,11 +428,11 @@ class OccurrencesFinder()(implicit ctx: Context) {
           // If any of the ones we just found appear in another cluster, we should merge that cluster and this one
           underSame.filter(_.intersect(same).nonEmpty) match {
             case existings =>
-              existings foreach {
+              existings.foreach {
                 underSame -= _
               }
               // The current expr may be in one of the clusters, so remove it as it is replaced by subterms
-              underSame += existings.foldLeft(same) { case (acc, set) => acc union set } - expr
+              underSame += existings.foldLeft(same) { case (acc, set) => acc.union(set) } - expr
           }
         }
 
@@ -587,7 +587,7 @@ class FormulaTester(acceptNotNormalized: Boolean, numberTestTerms: Int)(implicit
       case List() => LazyList(f)
       case v :: vs =>
         val termStream = enumerateTerms.forType(v.ty)(using ctx)
-        val terms = termStream filter (_.ty == v.ty) take numberTestTerms
+        val terms = termStream.filter(_.ty == v.ty).take(numberTestTerms)
         terms.flatMap(t => makeSampleFormulas(f, vs).map(replaceExpr(_, v, t)))
     }
   }

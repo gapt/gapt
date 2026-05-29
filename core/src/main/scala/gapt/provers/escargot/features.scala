@@ -117,7 +117,7 @@ object fastSubsumption {
       val lf1 = lfv1.succedent.head
       return c2.succedent.lazyZip(lfv2.succedent).view.filter(lf1 <= _._2).map(_._1).flatMap(syntacticMatching(l1, _)).headOption
     }
-    apply(c1 `zip` lfv1, c2 `zip` lfv2, PreSubstitution())
+    apply(c1.`zip`(lfv1), c2.`zip`(lfv2), PreSubstitution())
   }
 
   def apply(
@@ -130,11 +130,11 @@ object fastSubsumption {
     val (fromExpr, fromFV) = from(chosenFrom)
     (for {
       chosenTo <- to.indices.view
-      if chosenTo `sameSideAs` chosenFrom
+      if chosenTo.`sameSideAs`(chosenFrom)
       (toExpr, toFV) = to(chosenTo)
       if fromFV <= toFV
       newSubst <- syntacticMatching(fromExpr, toExpr, subst)
-      subsumption <- apply(from `delete` chosenFrom, to `delete` chosenTo, newSubst)
+      subsumption <- apply(from.`delete`(chosenFrom), to.`delete`(chosenTo), newSubst)
     } yield subsumption).headOption
   }
 }

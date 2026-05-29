@@ -28,7 +28,7 @@ class ExternalSATSolver(val command: String*) extends SATSolver with ExternalPro
     catch { case _: IOException => false }
 
   override def toString: String = {
-    val commandString: String = command.map { c => "\"" + c + "\"" } mkString ", "
+    val commandString: String = command.map { c => "\"" + c + "\"" }.mkString(", ")
     s"ExternalSATSolver($commandString)"
   }
 }

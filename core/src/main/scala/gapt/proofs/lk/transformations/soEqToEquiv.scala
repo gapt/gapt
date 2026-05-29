@@ -55,7 +55,7 @@ object soEqToEquiv {
         }
         val Vector(i1, i2) = cut.endSequent.zipWithIndex.antecedent.filter { (f, _) => e == f }.map {
           _._2
-        } take 2
+        }.take(2)
         ContractionLeftRule(cut, i1, i2)
       case LogicalAxiom(f) => LogicalAxiom(soEq2Iff(f))
       case AndRightRule(l, aux1, r, aux2) =>
@@ -133,7 +133,7 @@ object soEqToEquiv {
   private def soEq2Iff_(f: Expr): Expr = {
     f match {
       case SoEq(f1, f2, ts) =>
-        val xs = awayFrom(freeVariables(f1) union freeVariables(f2)).freshStream("x").zip(ts).map { (v, t) => Var(v, t) }
+        val xs = awayFrom(freeVariables(f1).union(freeVariables(f2))).freshStream("x").zip(ts).map { (v, t) => Var(v, t) }
         All.Block(xs, Iff(betaNormalize(App(f1, xs)), betaNormalize(App(f2, xs))))
       case App(e1, e2) => App(soEq2Iff_(e1), soEq2Iff_(e2))
       case Abs(x, e)   => Abs(x, soEq2Iff_(e))

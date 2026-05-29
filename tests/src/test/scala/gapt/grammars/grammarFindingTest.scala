@@ -263,15 +263,15 @@ class GrammarFindingTest extends Specification with SatMatchers {
     )
 
   def covers(g: VTRATG, terms: String*): MatchResult[Any] = {
-    terms foreach { term =>
-      new VtratgTermGenerationFormula(g, parseTerm(term)).formula aka s"$g generates $term" must beSat
+    terms.foreach { term =>
+      new VtratgTermGenerationFormula(g, parseTerm(term)).formula.aka(s"$g generates $term") must beSat
     }
     ok
   }
 
   def doesNotCover(g: VTRATG, terms: String*): MatchResult[Any] = {
-    terms foreach { term =>
-      new VtratgTermGenerationFormula(g, parseTerm(term)).formula aka s"$g does NOT generate $term" must beUnsat
+    terms.foreach { term =>
+      new VtratgTermGenerationFormula(g, parseTerm(term)).formula.aka(s"$g does NOT generate $term") must beUnsat
     }
     ok
   }

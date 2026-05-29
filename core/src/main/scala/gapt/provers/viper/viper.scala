@@ -332,7 +332,7 @@ object Viper {
     apply(problem.toSequent, opts.copy(tipProblem = Some(problem))) match {
       case Some(proof) =>
         ctx.`check`(proof)
-        require(proof.conclusion `isSubsetOf` problem.toSequent)
+        require(proof.conclusion.`isSubsetOf`(problem.toSequent))
         logger.metric("success", true)
         println("proof found")
         import gapt.prooftool.LKProofViewable

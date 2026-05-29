@@ -86,7 +86,7 @@ class extractInductionAxiomsTest extends Specification {
     if (expectedAxioms.size != axioms.size) {
       failure("too many or too few axioms were extracted")
     }
-    axioms foreach { axiom =>
+    axioms.foreach { axiom =>
       if (expectedAxioms.filter(_.alphaEquals(axiom)).isEmpty) {
         failure(s"$axiom does not correspond to any expected axiom")
       }

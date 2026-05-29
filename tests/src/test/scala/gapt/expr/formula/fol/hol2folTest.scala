@@ -95,7 +95,7 @@ class hol2folTest extends Specification {
       implicit val d: Hol2FolDefinitions = new Hol2FolDefinitions
       val t: Expr = le"(^x x)(^x (f x))"
       val r = replaceAbstractions(t)
-      subTerms(r) foreach { case _: Abs => failure; case _ => }
+      subTerms(r).foreach { case _: Abs => failure; case _ => }
       ok
     }
     "should introduce one constant per abstraction modulo uniformity" in {

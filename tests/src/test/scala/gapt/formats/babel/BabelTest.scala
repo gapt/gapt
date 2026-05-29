@@ -193,7 +193,7 @@ class BabelTest extends Specification {
       "f(1+X)= (X*0)+X"
     )
 
-    formulas foreach BabelParser.parse
+    formulas.foreach(BabelParser.parse)
 
     ok
   }

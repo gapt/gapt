@@ -57,7 +57,7 @@ case class LocalCtx(hyps: Map[Hyp, Formula], subst: Substitution) extends ALCtx[
       if (subst.domain(p.ev)) {
         copy(subst = Substitution(subst.map - p.ev, subst.typeMap)).up1_(p)
       } else {
-        val ev = rename(p.ev, subst.range union subst.domain union freeVars)
+        val ev = rename(p.ev, subst.range.union(subst.domain).union(freeVars))
         copy(subst = subst.`compose`(Substitution(p.ev -> ev))).up(instantiate(hyps(p.main), ev))
       }
     case AllSk(main, term, _) => up(instantiate(hyps(main), subst(term)))
@@ -77,11 +77,11 @@ case class LocalCtx(hyps: Map[Hyp, Formula], subst: Substitution) extends ALCtx[
       if (c.evs.toSet.intersect(subst.domain).nonEmpty) {
         copy(subst = Substitution(subst.map -- c.evs, subst.typeMap)).upn_(p, n)
       } else {
-        val evs = c.evs.map(rename(c.evs, subst.range union subst.domain union freeVars))
+        val evs = c.evs.map(rename(c.evs, subst.range.union(subst.domain).union(freeVars)))
         val ihs = for (ev <- evs if ev.ty == p.indTy)
           yield Substitution(f.variable -> ev)(f.term).asInstanceOf[Formula]
         val goal = Substitution(f.variable -> c.ctr(evs))(f.term).asInstanceOf[Formula]
-        copy(subst = subst.`compose`(Substitution(c.evs zip evs))).up(goal +: ihs)
+        copy(subst = subst.`compose`(Substitution(c.evs.zip(evs)))).up(goal +: ihs)
       }
   }
 

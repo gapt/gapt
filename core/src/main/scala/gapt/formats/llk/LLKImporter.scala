@@ -1254,7 +1254,7 @@ trait TokenToLKConverter {
       leaflist
     } else {
       // remove leaves from the graph
-      val rest = nonleaves.map(el => (el._1, el._2 filterNot (leaflist contains _)))
+      val rest = nonleaves.map(el => (el._1, el._2.filterNot(leaflist contains _)))
       leaflist ++ getOrdering(rest)
     }
   }

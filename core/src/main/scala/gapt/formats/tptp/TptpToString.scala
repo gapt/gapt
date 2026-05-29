@@ -54,11 +54,11 @@ object TptpToString {
   }
   private def quant(vs: Seq[Var], bd: Expr, p: Int, q: String) = {
     val (vs_, bd_) = renameVars(vs, bd)
-    parenIf(p, prio.unitary_formula, s"$q[${vs_.map(expression) mkString ","}]: ${expression(bd_, prio.unitary_formula + 1)}")
+    parenIf(p, prio.unitary_formula, s"$q[${vs_.map(expression).mkString(",")}]: ${expression(bd_, prio.unitary_formula + 1)}")
   }
   private def expression(expr: Expr, p: Int): String = expr match {
     case GeneralList(elements @ _*) =>
-      s"[${elements.map(expression) mkString ", "}]"
+      s"[${elements.map(expression).mkString(", ")}]"
     case GeneralColon(a, b) =>
       s"${expression(a, prio.term)}:${expression(b, prio.term)}"
 
@@ -78,7 +78,7 @@ object TptpToString {
     case All.Block(vs, bd) if vs.nonEmpty => quant(vs, bd, p, "!")
     case Ex.Block(vs, bd) if vs.nonEmpty  => quant(vs, bd, p, "?")
     case Apps(Const(hd, _, _), args) if expr.ty.isInstanceOf[TBase] =>
-      s"${atomic_word(hd)}(${args.map(expression) mkString ", "})"
+      s"${atomic_word(hd)}(${args.map(expression).mkString(", ")})"
     case App(a, b) => binExpr(a, b, p, prio.term, s"@")
   }
 
@@ -95,7 +95,7 @@ object TptpToString {
   def renameVars(vars: Seq[Var], body: Expr): (Seq[Var], Expr) = {
     val nameGen = rename.awayFrom(freeVariables(body) -- vars)
     val newVars = for (fv <- vars) yield nameGen.fresh(renameVar(fv))
-    (newVars, Substitution(vars zip newVars)(body))
+    (newVars, Substitution(vars.zip(newVars))(body))
   }
   def renameVars(f: Formula): Formula =
     renameVars(freeVariables(f).toSeq, f)._2.asInstanceOf[Formula]

@@ -20,7 +20,7 @@ case class SequentConnector(lowerSizes: (Int, Int), upperSizes: (Int, Int), pare
     parentsSequent.sizes == lowerSizes,
     s"Sizes ${parentsSequent.sizes} of parents sequent $parentsSequent don't agree with lower sizes $lowerSizes."
   )
-  require(parentsSequent.elements.flatten.forall { _ `withinSizes` upperSizes })
+  require(parentsSequent.elements.flatten.forall { _.`withinSizes`(upperSizes) })
 
   val (antL, sucL) = lowerSizes
   val (antU, sucU) = upperSizes
@@ -107,8 +107,8 @@ case class SequentConnector(lowerSizes: (Int, Int), upperSizes: (Int, Int), pare
    * @return The list of children of idx.
    */
   def children(idx: SequentIndex): Seq[SequentIndex] =
-    if (idx `withinSizes` upperSizes)
-      parentsSequent indicesWhere { _ contains idx }
+    if (idx.`withinSizes`(upperSizes))
+      parentsSequent.indicesWhere { _ contains idx }
     else
       throw new IndexOutOfBoundsException
 
@@ -140,7 +140,7 @@ case class SequentConnector(lowerSizes: (Int, Int), upperSizes: (Int, Int), pare
    */
   def *(that: SequentConnector) = {
     require(this.upperSizes == that.lowerSizes)
-    SequentConnector(this.lowerSizes, that.upperSizes, this.parentsSequent.map { _ flatMap that.parents distinct })
+    SequentConnector(this.lowerSizes, that.upperSizes, this.parentsSequent.map { _.flatMap(that.parents) distinct })
   }
 
   /**
@@ -176,8 +176,8 @@ case class SequentConnector(lowerSizes: (Int, Int), upperSizes: (Int, Int), pare
    * @return A new SequentConnector in which parents(child) contains parent.
    */
   def +(child: SequentIndex, parent: SequentIndex) = {
-    require(child `withinSizes` lowerSizes)
-    require(parent `withinSizes` upperSizes)
+    require(child.`withinSizes`(lowerSizes))
+    require(parent.`withinSizes`(upperSizes))
     SequentConnector(lowerSizes, upperSizes, parentsSequent.updated(child, parents(child) :+ parent distinct))
   }
 
@@ -188,8 +188,8 @@ case class SequentConnector(lowerSizes: (Int, Int), upperSizes: (Int, Int), pare
    * @return A new SequentConnector in which parents(child) no longer contains parent.
    */
   def -(child: SequentIndex, parent: SequentIndex) = {
-    require(child `withinSizes` lowerSizes)
-    require(parent `withinSizes` upperSizes)
+    require(child.`withinSizes`(lowerSizes))
+    require(parent.`withinSizes`(upperSizes))
     SequentConnector(lowerSizes, upperSizes, parentsSequent.updated(child, parents(child).diff(Seq(parent))))
   }
 }
@@ -217,8 +217,8 @@ object SequentConnector {
    */
   def findEquals[A](firstSequent: Sequent[A], secondSequent: Sequent[A]): SequentConnector = {
     val parentsSequent = firstSequent.map(
-      x => secondSequent.indicesWhere(_ == x) filter { _.isAnt },
-      x => secondSequent.indicesWhere(_ == x) filter { _.isSuc }
+      x => secondSequent.indicesWhere(_ == x).filter { _.isAnt },
+      x => secondSequent.indicesWhere(_ == x).filter { _.isSuc }
     )
 
     SequentConnector(firstSequent, secondSequent, parentsSequent)

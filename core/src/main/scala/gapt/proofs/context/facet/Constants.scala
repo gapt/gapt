@@ -22,7 +22,7 @@ case class Constants(constants: Map[String, Const]) {
     constants.get(name).flatMap {
       case c @ Const(_, _, Nil) if params.isEmpty => Some(c)
       case Const(_, ty, declPs) if declPs.size == params.size =>
-        val subst = Substitution(Nil, declPs.asInstanceOf[List[TVar]] zip params)
+        val subst = Substitution(Nil, declPs.asInstanceOf[List[TVar]].zip(params))
         Some(Const(name, subst(ty), params))
       case _ => None
     }

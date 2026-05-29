@@ -69,7 +69,7 @@ package object statistics {
      */
     def categoryOfFile(f: String) = {
       require(f.size > 3, "Name must be larger than 3 characters.")
-      f take 3
+      f.take(3)
     }
 
     override def fileName = s"$path/Problems/$category/$problem.p"

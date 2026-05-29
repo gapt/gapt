@@ -53,7 +53,7 @@ class Cls(val state: EscargotState, val proof: ResolutionProof, val index: Int) 
   val literalFeatureVecs = clause.map(TermFeatureVec(_))
   val featureVec = ClauseFeatureVec(literalFeatureVecs)
 
-  override def toString = s"[$index] ${proof.stringifiedConclusion(using state.ctx)}   (max = ${maximal mkString ", "}) (sel = ${selected mkString ", "}) (w = $weight)"
+  override def toString = s"[$index] ${proof.stringifiedConclusion(using state.ctx)}   (max = ${maximal.mkString(", ")}) (sel = ${selected.mkString(", ")}) (w = $weight)"
   override def hashCode = index
 }
 
@@ -286,17 +286,17 @@ class EscargotState(val ctx: MutableContext) {
   /** Chooses the next clause from usable. */
   def choose(): Cls = {
     strategy = (strategy + 1) % 6
-    if (strategy < 1) usable minBy { _.index }
+    if (strategy < 1) usable.minBy { _.index }
     else if (strategy < 3) {
-      val pos = usable filter { _.clause.antecedent.isEmpty }
+      val pos = usable.filter { _.clause.antecedent.isEmpty }
       if (pos isEmpty) choose()
-      else pos minBy { cls => (cls.weight, cls.index) }
+      else pos.minBy { cls => (cls.weight, cls.index) }
     } else if (strategy < 5) {
-      val nonPos = usable filter { _.clause.antecedent.nonEmpty }
+      val nonPos = usable.filter { _.clause.antecedent.nonEmpty }
       if (nonPos isEmpty) choose()
-      else nonPos minBy { cls => (cls.weight, cls.index) }
+      else nonPos.minBy { cls => (cls.weight, cls.index) }
     } else {
-      usable minBy { cls => (cls.weight, cls.index) }
+      usable.minBy { cls => (cls.weight, cls.index) }
     }
   }
 
@@ -331,7 +331,7 @@ class EscargotState(val ctx: MutableContext) {
 
   def axiomClause(section: ContextSection, axiom: Axiom): (Set[Cls], Map[HOLSequent, ResolutionProof]) = {
     val seq = axiom.formula +: Sequent()
-    val ground = section `groundSequent` seq
+    val ground = section.`groundSequent`(seq)
     val cnf = structuralCNF(ground)(using ctx)
 
     val cnfMap = cnf.view.map(p => p.conclusion -> p).toMap
@@ -341,7 +341,7 @@ class EscargotState(val ctx: MutableContext) {
   }
 
   protected def handleEmptyClauses(): Option[ResolutionProof] = scala.util.boundary {
-    if (!(usable exists { _.clause.isEmpty }))
+    if (!(usable.exists { _.clause.isEmpty }))
       return None
     for (cls <- usable if cls.clause.isEmpty && cls.assertion.isEmpty)
       scala.util.boundary.break(Some(cls.proof))

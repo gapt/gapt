@@ -98,7 +98,7 @@ class TreeListPanel(main: ExpansionSequentViewer, trees: Seq[ExpansionTree]) ext
 
   private def drawLines(): Unit = {
     contents.clear()
-    val lines = numLabels zip drawnTrees
+    val lines = numLabels.zip(drawnTrees)
 
     for ((iLabel, det) <- lines) {
       val line = new BoxPanel(Orientation.Horizontal) {

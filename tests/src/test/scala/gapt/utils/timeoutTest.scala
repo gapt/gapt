@@ -14,15 +14,17 @@ class timeoutTest extends Specification {
     "should interrupt an otherwise infinite loop that calls the aborter" in {
       var started = false
       var ended = false
-      withTimeout(10 millis) { aborter ?=>
+      (withTimeout(10 millis) { aborter ?=>
         started = true
         while (true) {
           aborter.abortIfNotified()
         }
         ended = true
-      } must throwA[TimeOutException] and
-        (started must beTrue) and
-        (ended must beFalse)
+      } must throwA[TimeOutException]).and(
+        started must beTrue
+      ).and(
+        ended must beFalse
+      )
     }
 
     "should interrupt a sleeping thread" in {
@@ -32,11 +34,12 @@ class timeoutTest extends Specification {
         started = true
         Thread.sleep(20)
         ended = true
-      } must throwA[TimeOutException]) and
-        (started must beTrue) and {
-          Thread.sleep(20)
-          ended must beFalse
-        }
+      } must throwA[TimeOutException]).and(
+        started must beTrue
+      ).and {
+        Thread.sleep(20)
+        ended must beFalse
+      }
     }
 
     "should interrupt waiting for external process" in {
@@ -47,13 +50,15 @@ class timeoutTest extends Specification {
       else {
         var started = false
         var ended = false
-        withTimeout(1000 millis) {
+        (withTimeout(1000 millis) {
           started = true
           runProcess(Seq("cat", "/dev/urandom"))
           ended = true
-        } must throwA[TimeOutException] and
-          (started must beTrue) and
-          (ended must beFalse)
+        } must throwA[TimeOutException]).and(
+          started must beTrue
+        ).and(
+          ended must beFalse
+        )
 
         success
       }
@@ -74,23 +79,27 @@ class timeoutTest extends Specification {
         t.join()
 
         ended = true
-      } must throwA[TimeOutException]) and
-        (started must beTrue) and
-        (ended must beFalse)
+      } must throwA[TimeOutException]).and(
+        started must beTrue
+      ).and(
+        ended must beFalse
+      )
     }
 
     "should NOT interrupt a loop that does not check for abort" in {
       var started = false
       var ended = false
-      withTimeout(10 millis) {
+      (withTimeout(10 millis) {
         started = true
         val start = System.currentTimeMillis()
         // run longer than timeout to check that TimeOutException was not triggered
         while (System.currentTimeMillis() - start < 20.milliseconds.toMillis) {}
         ended = true
-      } must not(throwAn[Exception]) and
-        (started must beTrue) and
-        (ended must beTrue)
+      } must not(throwAn[Exception])).and(
+        started must beTrue
+      ).and(
+        ended must beTrue
+      )
     }
 
     "if interrupted on sub millisecond timeouts then actual time passed is more than 1 millisecond" in {
@@ -110,15 +119,17 @@ class timeoutTest extends Specification {
           aborter.abortIfNotified();
           ended = true
         }
-        (started must beTrue) and (ended must beTrue)
+        (started must beTrue).and(ended must beTrue)
       } catch {
         case _: TimeOutException =>
           val delta = System.nanoTime() - start
           // we make sure that the TimeOutException was not triggered before
           // one millisecond has passed
-          (delta must beGreaterThanOrEqualTo(1.milliseconds.toNanos)) and
-            (started must beTrue) and
-            (ended must beFalse)
+          (delta must beGreaterThanOrEqualTo(1.milliseconds.toNanos)).and(
+            started must beTrue
+          ).and(
+            ended must beFalse
+          )
       }
     }
 
@@ -141,25 +152,30 @@ class timeoutTest extends Specification {
         }
 
         val delta = System.nanoTime() - start
-        (delta must beGreaterThanOrEqualTo(1.milliseconds.toNanos)) and
-          (started must beTrue) and
-          (ended must beTrue)
+        (delta must beGreaterThanOrEqualTo(1.milliseconds.toNanos)).and(
+          started must beTrue
+        ).and(
+          ended must beTrue
+        )
       } catch {
         case _: TimeOutException => {
           val delta = System.nanoTime() - start
-          (delta must beGreaterThanOrEqualTo(1.milliseconds.toNanos)) and
-            (started must beTrue) and
-            (ended must beFalse)
+          (delta must beGreaterThanOrEqualTo(1.milliseconds.toNanos)).and(
+            started must beTrue
+          ).and(
+            ended must beFalse
+          )
         }
       }
     }
 
     "should throw immediately on zero timeout and not run body" in {
       var started = false
-      withTimeout(0.seconds) {
+      (withTimeout(0.seconds) {
         started = true
-      } must throwA[TimeOutException] and
-        (started must beFalse)
+      } must throwA[TimeOutException]).and(
+        started must beFalse
+      )
     }
   }
 }

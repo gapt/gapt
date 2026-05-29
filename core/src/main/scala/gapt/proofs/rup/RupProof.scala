@@ -183,7 +183,7 @@ private class Rup2Res extends UnitPropagationListener {
     propagate()
     val Some(p) = conflict: @unchecked
     cancel()
-    require(p.clause subsetOf cls)
+    require(p.clause.subsetOf(cls))
     p
   }
 
@@ -309,7 +309,7 @@ object Res {
   }
   case class Resolve(a: Res, b: Res, v: Int) extends Res {
     require(v > 0)
-    val clause = (a.clause - v) union (b.clause - (-v))
+    val clause = (a.clause - v).union(b.clause - (-v))
     def immediateSubProofs: Seq[Res] = Seq(a, b)
   }
   object Resolve {

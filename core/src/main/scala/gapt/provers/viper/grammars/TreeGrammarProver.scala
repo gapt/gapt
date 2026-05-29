@@ -220,7 +220,7 @@ class TreeGrammarProver(val ctx: Context, val sequent: HOLSequent, val options: 
     for ((inst, terms) <- indexedTermset) {
       val genLang = grammar.instanceLanguage(inst)
       require(
-        terms subsetOf genLang,
+        terms.subsetOf(genLang),
         s"Terms not covered by induction grammar in $inst:\n${terms.map(_.toSigRelativeString).mkString("\n")}"
       )
     }

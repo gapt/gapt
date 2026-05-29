@@ -99,9 +99,9 @@ object InductionGrammar {
 
   case class Production(lhs: NonTerminalVect, rhs: List[Expr]) {
     require(lhs.size == rhs.size, s"sides of production have nonequal size: $this")
-    for ((l, r) <- lhs zip rhs) require(l.ty == r.ty)
+    for ((l, r) <- lhs.zip(rhs)) require(l.ty == r.ty)
 
-    def zipped: List[(Var, Expr)] = lhs zip rhs
+    def zipped: List[(Var, Expr)] = lhs.zip(rhs)
   }
 
   object Production {
@@ -141,7 +141,7 @@ object InductionGrammar {
       for (case ctr @ Const(_, FunctionType(_, argTypes), _) <- ctrs) {
         val nu = g.nus(ctr)
         require(nu.size == argTypes.size)
-        for ((nui, argType) <- nu zip argTypes)
+        for ((nui, argType) <- nu.zip(argTypes))
           require(nui.ty == argType)
       }
     }
@@ -157,8 +157,8 @@ object InductionGrammar {
       val prodCase = correspondingCase(prod)
       subterms.flatMap {
         case st @ Apps(c: Const, ss) if prodCase.forall(_ == c) =>
-          val rhs = Substitution(List(alpha -> term) ++ (nus(c) zip ss) ++
-            (gamma zip instGammas(st)))(prod.rhs)
+          val rhs = Substitution(List(alpha -> term) ++ (nus(c).zip(ss)) ++
+            (gamma.zip(instGammas(st))))(prod.rhs)
           (prod.lhs: @unchecked) match {
             case List(`tau`)            => List(List(tau) -> rhs)
             case g if containsOnlyAlpha => List(instGammas(st) -> rhs)
@@ -211,7 +211,7 @@ private class IndGExporter(unicode: Boolean, g: InductionGrammar)
         })
 
     val prods = stack((g.productions.toList
-      sortBy { case Production(as, ts) => (g.nonTerminals.indexOf(as), ts.toString) })
+      .sortBy { case Production(as, ts) => (g.nonTerminals.indexOf(as), ts.toString) })
       .map { p =>
         group(csep(p.zipped.map {
           case (a, t) =>

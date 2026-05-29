@@ -193,12 +193,12 @@ object Session {
    * Declares all symbols (sorts and functions) in a list of Exprs.
    */
   def declareSymbolsIn(expressions: IterableOnce[Expr]): Session[Unit] = {
-    val cs = expressions.iterator.to(Set) flatMap { constants.nonLogical(_) } filter {
+    val cs = (expressions.iterator.to(Set).flatMap { constants.nonLogical(_) }).filter {
       case EqC(_)             => false
       case _: LogicalConstant => false
       case _                  => true
     }
-    val ts = cs flatMap { c => baseTypes(c.ty) } filter {
+    val ts = (cs.flatMap { c => baseTypes(c.ty) }).filter {
       case To => false
       case _  => true
     }
@@ -354,12 +354,12 @@ object Session {
 
       protected def tell(input: SExpression) = {
         if (debug) println(input)
-        in `println` input.toDoc.render(Int.MaxValue)
+        in.`println`(input.toDoc.render(Int.MaxValue))
       }
 
       protected def ask(input: SExpression) = {
         if (debug) println(input)
-        in `println` input.toDoc.render(Int.MaxValue)
+        in.`println`(input.toDoc.render(Int.MaxValue))
         in.flush()
         val res = out.readLine()
         if (debug) println(s"-> $res")
@@ -379,7 +379,7 @@ object Session {
       def getBenchmark() = benchmark.result()
 
       protected def tell(input: SExpression) =
-        benchmark append (input.toDoc <> "\n").render(lineWidth)
+        benchmark.append((input.toDoc <> "\n").render(lineWidth))
       protected def ask(input: SExpression) = {
         tell(input)
         input match {
@@ -399,7 +399,7 @@ object Session {
 
       protected def interpretCommand[A](command: SessionCommand[A]): Id[A] = command match {
         case Push =>
-          formulaStack push assertedFormulas; ()
+          formulaStack.push(assertedFormulas); ()
         case Pop =>
           assertedFormulas = formulaStack.pop(); ()
         case Assert(formula) =>

@@ -27,7 +27,7 @@ object Viperize {
   def apply(top: Expr)(implicit ctx: MutableContext): Sequent[Formula] = {
     val newAnte = ctx.normalizer.rules.map(x => {
       val pattern = new Regex("\\S+S[TF]*A[TF]*")
-      if ((pattern findAllIn x.lhs.toString).nonEmpty) {
+      if ((pattern.findAllIn(x.lhs.toString)).nonEmpty) {
         val matrix = Iff(x.lhs, x.rhs)
         All.Block(freeVariables(matrix).toSeq, matrix)
       } else if (!(x.lhs.ty.toString.matches("o"))) {
@@ -38,7 +38,7 @@ object Viperize {
       } else Bottom()
     })
     val newSuc = All.Block(freeVariables(top).toSeq, Imp(top, Bottom()))
-    Sequent(newAnte.toSeq filterNot (x => x.alphaEquals(Bottom())), Seq(newSuc))
+    Sequent(newAnte.toSeq.filterNot(x => x.alphaEquals(Bottom())), Seq(newSuc))
   }
 }
 object CharFormN extends StructVisitor[Formula, Unit] {

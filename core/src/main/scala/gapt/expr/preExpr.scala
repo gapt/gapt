@@ -45,7 +45,7 @@ import scala.collection.mutable
 object preExpr {
 
   class MetaTypeIdx {
-    override def toString = Integer `toHexString` hashCode() take 3
+    override def toString = Integer.`toHexString`(hashCode()).take(3)
   }
 
   sealed trait Type
@@ -150,13 +150,13 @@ object preExpr {
   def freeMetas(t: Type): Set[MetaTypeIdx] = t match {
     case BaseType(_, params) => params.view.flatMap(freeMetas).toSet
     case VarType(_)          => Set()
-    case ArrType(a, b)       => freeMetas(a) union freeMetas(b)
+    case ArrType(a, b)       => freeMetas(a).union(freeMetas(b))
     case MetaType(idx)       => Set(idx)
   }
   def typeVars(t: Type): Set[String] = t match {
     case BaseType(_, params) => params.view.flatMap(typeVars).toSet
     case VarType(n)          => Set(n)
-    case ArrType(a, b)       => typeVars(a) union typeVars(b)
+    case ArrType(a, b)       => typeVars(a).union(typeVars(b))
     case MetaType(_)         => Set()
   }
 
@@ -236,7 +236,7 @@ object preExpr {
   def unifys(as: List[Type], bs: List[Type], mkErr: UnificationError => ElabError): Elab[Unit] =
     if (as.size != bs.size) StateT.inspectF(assg_ => Left(mkErr(new UnificationError { override def assg: Assg = assg_ })))
     else
-      (as zip bs).traverse { case (a, b) => unify(a, b, mkErr) }.map(_ => ())
+      (as.zip(bs)).traverse { case (a, b) => unify(a, b, mkErr) }.map(_ => ())
 
   def infer(expr: Expr, env: Env)(implicit loc: Option[Location], sig: BabelSignature): Elab[(Expr, Type)] =
     expr match {
@@ -454,7 +454,7 @@ object preExpr {
     case TypeAnnotation(e, _) => freeIdentifers(e)
     case Ident(name, _, _)    => Set(name)
     case Abs(v, sub)          => freeIdentifers(sub) - v.name
-    case App(a, b)            => freeIdentifers(a) union freeIdentifers(b)
+    case App(a, b)            => freeIdentifers(a).union(freeIdentifers(b))
     case Quoted(_, _, fvs)    => fvs.keySet
     case FlatOps(children) => children.view.flatMap {
         case Left((id, _)) => Set(id)

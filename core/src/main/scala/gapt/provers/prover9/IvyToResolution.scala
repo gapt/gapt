@@ -31,16 +31,16 @@ object IvyToResolution {
           if (lit1 isAnt)
             Resolution(
               q2,
-              Suc(q2.conclusion.succedent indexOf parent2.conclusion(lit2)),
+              Suc(q2.conclusion.succedent.indexOf(parent2.conclusion(lit2))),
               q1,
-              Ant(q1.conclusion.antecedent indexOf parent1.conclusion(lit1))
+              Ant(q1.conclusion.antecedent.indexOf(parent1.conclusion(lit1)))
             )
           else
             Resolution(
               q1,
-              Suc(q1.conclusion.succedent indexOf parent1.conclusion(lit1)),
+              Suc(q1.conclusion.succedent.indexOf(parent1.conclusion(lit1))),
               q2,
-              Ant(q2.conclusion.antecedent indexOf parent2.conclusion(lit2))
+              Ant(q2.conclusion.antecedent.indexOf(parent2.conclusion(lit2)))
             )
         case IPropositional(id, exp, clause, parent) if clause.`isSubMultisetOf`(parent.conclusion) =>
           Factor(convert(parent), clause)
@@ -49,27 +49,27 @@ object IvyToResolution {
           Factor(Subst(convert(parent), subst), clause)
         case IFlip(id, exp, unflipped, clause, parent) =>
           val q = convert(parent)
-          Flip(q, q.conclusion.indicesWhere(_ == parent.conclusion(unflipped)).filter(_ `sameSideAs` unflipped).head)
+          Flip(q, q.conclusion.indicesWhere(_ == parent.conclusion(unflipped)).filter(_.`sameSideAs`(unflipped)).head)
         case IParamodulation(id, exp, pos, eq, lit, newLit, orientation, clause, parent1, parent2) =>
           val q1 = convert(parent1)
           val q2 = convert(parent2)
 
           val litIdx = if (lit isSuc)
-            Suc(q2.conclusion.succedent indexOf parent2.conclusion(lit))
+            Suc(q2.conclusion.succedent.indexOf(parent2.conclusion(lit)))
           else
-            Ant(q2.conclusion.antecedent indexOf parent2.conclusion(lit))
-          val eqIdx = Suc(q1.conclusion.succedent indexOf parent1.conclusion(eq))
+            Ant(q2.conclusion.antecedent.indexOf(parent2.conclusion(lit)))
+          val eqIdx = Suc(q1.conclusion.succedent.indexOf(parent1.conclusion(eq)))
 
           Paramod.withMain(q1, eqIdx, q2, litIdx, newLit)
         case NewSymbol(id, exp, lit, new_symbol, replacement_term, clause, parent) =>
           // insert a new axiom, will be later removed
           Input(clause)
       }
-    ) ensuring { res => res.conclusion.`multiSetEquals`(p.conclusion) }
+    ).ensuring { res => res.conclusion.`multiSetEquals`(p.conclusion) }
 
     val proof = convert(ivy)
 
-    val variablesInProof = proof.subProofs flatMap { p => freeVariables(p.conclusion) }
+    val variablesInProof = proof.subProofs.flatMap { p => freeVariables(p.conclusion) }
     val (newSymbols, justifications) = ivy.subProofs.collect {
       case NewSymbol(_, _, _, sym, rt, _, parent) =>
         val justification = convert(parent)
@@ -87,7 +87,7 @@ object IvyToResolution {
     val justificationsWithoutNewSymbols = justifications.map { TermReplacement(_, newSymbols.toMap[Expr, Expr]) }
 
     mapInputClauses(proofWithoutNewSymbols) { cls =>
-      justificationsWithoutNewSymbols.find { _.conclusion == cls } getOrElse { Input(cls) }
+      justificationsWithoutNewSymbols.find { _.conclusion == cls }.getOrElse { Input(cls) }
     }
   }
 }

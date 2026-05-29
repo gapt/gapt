@@ -274,7 +274,7 @@ class Substitute(private val problem: TipSmtProblem) {
     }
 
     val variableSubstitution: Substitution =
-      Substitution(boundVariables zip newBoundVariables*)
+      Substitution(boundVariables.zip(newBoundVariables)*)
 
     val newExpr = apply(cas.expr, variableSubstitution)
 

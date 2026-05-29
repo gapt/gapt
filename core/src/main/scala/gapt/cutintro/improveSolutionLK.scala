@@ -31,12 +31,12 @@ object improveSolutionLK {
 
     for (i <- formulasInImprovement.indices.reverse) {
       val eigenVariablesInScope = for ((evs, j) <- ehs.sehs.eigenVariables.zipWithIndex; ev <- evs if i < j) yield ev
-      val availableInstances = ehs.endSequentInstances filter { inst => freeVariables(inst) subsetOf eigenVariablesInScope.toSet }
+      val availableInstances = ehs.endSequentInstances.filter { inst => freeVariables(inst).subsetOf(eigenVariablesInScope.toSet) }
       val availableCutFormulas = for ((cf, j) <- formulasInImprovement.zipWithIndex if i < j) yield cf
       val context = availableInstances :++ availableCutFormulas
       val instances = ehs.sehs.ss(i) match {
         case (ev, instanceTerms) =>
-          for (terms <- instanceTerms) yield FOLSubstitution(ev zip terms)
+          for (terms <- instanceTerms) yield FOLSubstitution(ev.zip(terms))
       }
       formulasInImprovement(i) =
         improve(context, formulasInImprovement(i), instances.toSet, prover, hasEquality, forgetOne).asInstanceOf[FOLFormula]
@@ -89,10 +89,10 @@ object improveSolutionLK {
         checkSolution(CNFp(start).map { _.distinct.sortBy { _.hashCode } })
     }
 
-    val solutions = isSolution collect {
+    val solutions = isSolution.collect {
       case (cnf, true) => simplifyPropositional(And(cnf.map { _.toImplication }))
     }
-    solutions minBy { lcomp(_) }
+    solutions.minBy { lcomp(_) }
   }
 
   /**
@@ -115,7 +115,7 @@ object improveSolutionLK {
         val condition = context :+ clause.toDisjunction
         if (prover.`isValid`(condition)) {
           isSolution(clause) = true
-          for (a <- clause.indices) checkSolution(clause `delete` a)
+          for (a <- clause.indices) checkSolution(clause.`delete`(a))
         } else {
           isSolution(clause) = false
         }
@@ -123,7 +123,7 @@ object improveSolutionLK {
 
     checkSolution(start)
 
-    isSolution collect { case (clause, true) => clause } minBy { _.size }
+    isSolution.collect { case (clause, true) => clause }.minBy { _.size }
   }
 
 }

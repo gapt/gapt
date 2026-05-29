@@ -68,7 +68,7 @@ object Statistic {
     val _avg: BigDecimal = _sum / BigDecimal(_n)
 
     val _sigma_square: Option[BigDecimal] =
-      if (_n >= 2) Some(_bdvalues.map(x => (_avg - x) pow 2).sum / (_n - 1))
+      if (_n >= 2) Some(_bdvalues.map(x => (_avg - x).pow(2)).sum / (_n - 1))
       else None
 
     val _median: BigDecimal = _n % 2 match {

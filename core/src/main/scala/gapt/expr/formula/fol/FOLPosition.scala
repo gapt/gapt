@@ -31,7 +31,7 @@ object FOLPosition {
         case e: FOLExpression => pred(e)
         case _                => false
       }
-    ) filter {
+    ).filter {
       definesFOLPosition(exp)
     }).map {
       toFOLPosition(exp)

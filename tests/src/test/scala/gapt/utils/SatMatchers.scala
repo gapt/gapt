@@ -17,13 +17,14 @@ trait SatMatchers extends OptionMatchers {
   def beUnsat = beNone ^^ { (f: Formula) => Sat4j.solve(f) }
 
   def beSat =
-    beNone ^^ { (f: Formula) =>
+    (beNone ^^ { (f: Formula) =>
       renameConstantsToFi.wrap(f)((_, mangled: Formula) =>
         new Escargot(splitting = false, equality = false, propositional = true)
           .getResolutionProof(mangled)
       )
-    } and
+    }).and(
       (beSome[PropositionalModel]) ^^ { (f: Formula) => Sat4j.solve(f) }
+    )
   def beValid = beUnsat ^^ { (f: Formula) => -f }
   def beValidSequent = beValid ^^ { (sequent: HOLSequent) => sequent.toDisjunction }
 

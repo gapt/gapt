@@ -48,7 +48,7 @@ object EventuallyConstantSchema extends TacticsProof {
       Seq("Suc_0" -> hof"?x (iLEQ(x,g(x)) -> E(f(x), f(g(x))))")
     )
   val omegaBc = Lemma(esOmegaBc) {
-    cut("cut", hof"?x !y ((iLEQ(x,y) -> E(0,f(y))) | LE(f(y),0))") `right` ref("phi")
+    cut("cut", hof"?x !y ((iLEQ(x,y) -> E(0,f(y))) | LE(f(y),0))").`right`(ref("phi"))
     exR("cut", hoc"z")
     allR("cut_0", fov"a")
     orR
@@ -64,7 +64,7 @@ object EventuallyConstantSchema extends TacticsProof {
       Seq("Suc_0" -> hof"?x (iLEQ(x,g(x)) -> E(f(x), f(g(x))))")
     )
   val omegaSc = Lemma(esOmegaSc) {
-    cut("cut", hof"?x !y ((iLEQ(x,y) -> E(s(n),f(y))) | LE(f(y),s(n)))") `right` ref("phi")
+    cut("cut", hof"?x !y ((iLEQ(x,y) -> E(s(n),f(y))) | LE(f(y),s(n)))").`right`(ref("phi"))
     exR("cut", hoc"z")
     allR("cut_0", fov"a")
     orR
@@ -85,8 +85,8 @@ object EventuallyConstantSchema extends TacticsProof {
     allL(le"(g a)")
     exR(fov"a")
     impR
-    orL("Ant_0_0") `right` foTheory
-    orL("Ant_0_1") `right` foTheory
+    orL("Ant_0_0").`right`(foTheory)
+    orL("Ant_0_1").`right`(foTheory)
 
     impL("Ant_0_0")
     by {
@@ -105,7 +105,7 @@ object EventuallyConstantSchema extends TacticsProof {
       Seq("Suc_0" -> hof"?x (iLEQ(x,g(x)) -> E(f(x), f(g(x))) )")
     )
   val phiSc = Lemma(esPhiSc) {
-    cut("cut", hof"?x !y ((iLEQ(x,y) -> E(n,f(y))) | LE(f(y),n))") `right` ref("phi")
+    cut("cut", hof"?x !y ((iLEQ(x,y) -> E(n,f(y))) | LE(f(y),n))").`right`(ref("phi"))
     cut("cut1", hof"?x !y ( iLEQ(x,y) -> E(s(n),f(y)) )").`left`(by {
       cut("cut2", hof"?x ( LE(f(x),s(n)) )").`left`(by {
         forget("cut")

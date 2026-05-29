@@ -45,7 +45,7 @@ trait InferenceRule extends PreprocessingRule {
     for (c <- newlyInferred) {
       val (i, d) = apply(c, existing)
       inferred ++= i
-      for ((dc, r) <- d if r subsetOf dc.ass)
+      for ((dc, r) <- d if r.subsetOf(dc.ass))
         deleted += dc
     }
 
@@ -214,7 +214,7 @@ class StandardInferences(state: EscargotState, propositional: Boolean) {
 
   object EqualityResolution extends SimplificationRule {
     def simplify(`given`: Cls, existing: IndexedClsSet): Option[(Cls, Set[Int])] = {
-      val refls = `given`.clause.antecedent collect { case Eq(t, t_) if t == t_ => t }
+      val refls = `given`.clause.antecedent.collect { case Eq(t, t_) if t == t_ => t }
       if (refls.isEmpty) None
       else Some(SimpCls(
         `given`,
@@ -228,7 +228,7 @@ class StandardInferences(state: EscargotState, propositional: Boolean) {
   object ReflexivityDeletion extends RedundancyRule {
     def isRedundant(`given`: Cls, existing: IndexedClsSet): Option[Set[Int]] =
       if (
-        `given`.clause.succedent exists {
+        `given`.clause.succedent.exists {
           case Eq(t, t_) if t == t_ => true
           case _                    => false
         }
@@ -238,7 +238,7 @@ class StandardInferences(state: EscargotState, propositional: Boolean) {
 
   object OrderEquations extends SimplificationRule {
     def simplify(`given`: Cls, existing: IndexedClsSet): Option[(Cls, Set[Int])] = {
-      val toFlip = `given`.clause filter {
+      val toFlip = `given`.clause.filter {
         case Eq(t, s) => termOrdering.lt(s, t)
         case _        => false
       }
@@ -246,7 +246,7 @@ class StandardInferences(state: EscargotState, propositional: Boolean) {
         None
       } else {
         var p = `given`.proof
-        for (e <- toFlip) p = Flip(p, p.conclusion `indexOf` e)
+        for (e <- toFlip) p = Flip(p, p.conclusion.`indexOf`(e))
         Some(SimpCls(`given`, p) -> Set())
       }
     }
@@ -292,7 +292,7 @@ class StandardInferences(state: EscargotState, propositional: Boolean) {
           (subterm, pos) <- getFOPositions(e) if !didRewrite
           if !subterm.isInstanceOf[Var]
           (t_, s_, _, c1) <- eqs.generalizations(subterm) if !didRewrite
-          if c1.ass subsetOf assertion
+          if c1.ass.subsetOf(assertion)
           subst <- matching(t_, subterm)
           if termOrdering.lt(subst(s_), subterm, treatVarsAsConsts = true)
         } {
@@ -323,7 +323,7 @@ class StandardInferences(state: EscargotState, propositional: Boolean) {
         cls1 <- interreduced
         cls2 <- interreduced if cls1 != cls2
         if interreduced contains cls1
-        if cls2.ass subsetOf cls1.ass
+        if cls2.ass.subsetOf(cls1.ass)
         _ <- subsume(cls2, cls1)
       } interreduced -= cls1
       interreduced.toSet
@@ -357,7 +357,7 @@ class StandardInferences(state: EscargotState, propositional: Boolean) {
           (subterm, pos) <- getFOPositions(p.conclusion(i)) if !didRewrite
           if !subterm.isInstanceOf[Var]
           (t_, s_, leftToRight, c1) <- unitRwrLhs.generalizations(subterm) if !didRewrite
-          if c1.ass subsetOf `given`.ass // FIXME: large performance difference? e.g. ALG200+1
+          if c1.ass.subsetOf(`given`.ass) // FIXME: large performance difference? e.g. ALG200+1
           subst <- matching(t_, subterm)
           if termOrdering.lt(subst(s_), subterm)
         } {
@@ -422,7 +422,7 @@ class StandardInferences(state: EscargotState, propositional: Boolean) {
         if !c2.maximal.exists { i2_ => i2_ != i2 && termOrdering.lt(mgu(p2_.conclusion(i2)), mgu(p2_.conclusion(i2_))) }
         (p1__, conn1) = Factor.withOccConn(Subst(c1.proof, mgu))
         (p2__, conn2) = Factor.withOccConn(Subst(p2_, mgu))
-      } yield DerivedCls(c1, c2, Resolution(p2__, conn2 `child` i2, p1__, conn1 `child` i1))
+      } yield DerivedCls(c1, c2, Resolution(p2__, conn2.`child`(i2), p1__, conn1.`child`(i1)))
     }
   }
 

@@ -271,7 +271,7 @@ class Theory(imports: Theory*) extends Theory0(imports.toList) {
     addNow(prf)
     val PrimRecFun(_, _, _, eqns) = prf
     val Some(ctrs) = ctx.getConstructors(prf.recursionType): @unchecked
-    val lems = for ((ctr, (lhs, rhs)) <- ctrs zip eqns)
+    val lems = for ((ctr, (lhs, rhs)) <- ctrs.zip(eqns))
       yield auxEqnLemma(s"${asciify(c.name)}${ctr.name}", c.name, lhs, rhs, nocombine = true)
     val auxP = lems.map(ProofLink(_)).reduce[LKProof](AndRightRule(_, Suc(0), _, Suc(0)))
     auxLemma(asciify(c.name), auxP.endSequent.succedent.head, auxP)

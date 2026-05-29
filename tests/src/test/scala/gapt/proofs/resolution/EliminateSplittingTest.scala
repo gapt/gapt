@@ -11,7 +11,7 @@ class EliminateSplittingTest extends Specification {
   "example" in {
     val Some(proofWithSplitting) = Escargot.getResolutionProof(hof"!x p x | !x q x -> !x (p x | q x) & ${BussTautology(2).toImplication}"): @unchecked
     val proofWithoutSplitting = eliminateSplitting(proofWithSplitting)
-    proofWithoutSplitting.subProofs foreach {
+    proofWithoutSplitting.subProofs.foreach {
       case AvatarContradiction(_) => ko
       case AvatarComponent(_)     => ko
       case AvatarSplit(_, _, _)   => ko

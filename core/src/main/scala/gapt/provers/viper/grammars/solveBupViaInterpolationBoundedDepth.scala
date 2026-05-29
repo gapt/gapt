@@ -40,7 +40,7 @@ object solveBupViaInterpolationBoundedDepth {
         if i > 0 || cas.indHyps.isEmpty
         nus = cas.nu.map(nameGen.fresh(_))
       } {
-        val subst = Substitution((cas.nu zip nus) ++ (bup.grammar.gamma zip gam))
+        val subst = Substitution((cas.nu.zip(nus)) ++ (bup.grammar.gamma.zip(gam)))
         bgth += subst(cas.theoryFormulas.toNegConjunction)
         for {
           gamTerm <- cas.gammas
@@ -123,7 +123,7 @@ object solveBupViaInterpolationConcreteTerms {
       val Apps(ctr, args) = t
       val Some(cas) = bup.indCases.find(_.constructor == ctr): @unchecked
       val nus = cas.nu.map(nameGen.fresh(_))
-      val subst = Substitution((cas.nu zip nus) ++ (bup.grammar.gamma zip gam))
+      val subst = Substitution((cas.nu.zip(nus)) ++ (bup.grammar.gamma.zip(gam)))
       bgth += subst(cas.theoryFormulas.toNegConjunction)
       for {
         gamTerm <- cas.gammas
@@ -131,7 +131,7 @@ object solveBupViaInterpolationConcreteTerms {
       } {
         for ((g, t) <- gam_.zip(subst(gamTerm)))
           bgth += Eq(g, t)
-        for ((nu_, a) <- nus zip args if nu_.ty == bup.grammar.indTy)
+        for ((nu_, a) <- nus.zip(args) if nu_.ty == bup.grammar.indTy)
           children += u(nu_, gam_, a)
       }
       caseEqs += Eq(nu, cas.constructor(nus))
@@ -216,7 +216,7 @@ object solveBupViaInterpolationConcreteTerms {
       while (insts.size < args.size)
         insts += (nu +: bup.grammar.gamma).map(nameGen.fresh(_))
 
-      And(for ((is, as) <- insts zip args; (i, a) <- is zip as) yield i === a)
+      And(for ((is, as) <- insts.zip(args); (i, a) <- is.zip(as)) yield i === a)
     }
 
     contexts +=
@@ -229,17 +229,17 @@ object solveBupViaInterpolationConcreteTerms {
       cas <- bup.indCases if cas.constructor == ctr
     } contexts +=
       (cas.theoryFormulas.toNegConjunction & And(
-        for ((nui, t_) <- cas.nu zip parArgs if nui.ty == bup.grammar.indTy)
+        for ((nui, t_) <- cas.nu.zip(parArgs) if nui.ty == bup.grammar.indTy)
           yield
             if (t_ == t)
               getInsts(cas.gammas.map(nui +: _))
             else
               And(for (gam <- cas.gammas)
-                yield Substitution((nu -> nui) +: (bup.grammar.gamma zip gam))(interps(t_)))
+                yield Substitution((nu -> nui) +: (bup.grammar.gamma.zip(gam)))(interps(t_)))
       )) -->
         Substitution(nu -> ctr(cas.nu))(f)
 
-    improve(And(contexts), interps(t), Set() ++ (for (is <- insts) yield Substitution((nu +: bup.grammar.gamma) zip is)), Z3, hasEquality = true, forgetOne = true)
+    improve(And(contexts), interps(t), Set() ++ (for (is <- insts) yield Substitution((nu +: bup.grammar.gamma).zip(is))), Z3, hasEquality = true, forgetOne = true)
   }
 
   def improve(interps: Map[Expr, Formula], bup: InductionBUP, nu: Var): Map[Expr, Formula] =

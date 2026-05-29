@@ -258,7 +258,7 @@ class LambdaCalculusTest extends Specification {
       val fv = freeVariables(M)
       val fv_correct = Set(x, z)
 
-      fv must be equalTo (fv_correct)
+      fv must beEqualTo(fv_correct)
     }
 
     "extract free variables correctly" in {
@@ -269,7 +269,7 @@ class LambdaCalculusTest extends Specification {
       val fv = freeVariables(M)
       val fv_correct = Set(z)
 
-      fv must be equalTo (fv_correct)
+      fv must beEqualTo(fv_correct)
     }
 
     "deal correctly with bound variables in the Abs extractor" in {

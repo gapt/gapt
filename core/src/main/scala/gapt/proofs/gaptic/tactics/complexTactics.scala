@@ -193,13 +193,13 @@ case class RewriteTactic(
       case ((`target`, tgt), tgtIdx) <- goal.labelledSequent.zipWithIndex.elements
       case (`eqLabel`, quantEq @ All.Block(vs, eq @ Eq(t, s))) <- goal.labelledSequent.antecedent
       (t_, s_) = if (leftToRight) (t, s) else (s, t)
-      pos <- HOLPosition `getPositions` tgt
+      pos <- HOLPosition.`getPositions`(tgt)
       subst <- syntacticMatching(List(t_ -> tgt(pos)), PreSubstitution(fixedSubst ++ freeVariables(quantEq).map { v => v -> v }))
     } scala.util.boundary.break {
       val newTgt = tgt.replace(pos, subst(s_))
       val newGoal = OpenAssumption(goal.labelledSequent.updated(tgtIdx, target -> newTgt))
       for {
-        p1 <- if (once) Tactic.pure(newGoal) else apply(newGoal, target) `orElse` Tactic.pure(newGoal)
+        p1 <- if (once) Tactic.pure(newGoal) else apply(newGoal, target).`orElse`(Tactic.pure(newGoal))
         p2 = WeakeningLeftRule(p1, subst(eq))
         p3 = if (tgtIdx isSuc) EqualityRightRule(p2, Ant(0), newTgt, tgt)
         else EqualityLeftRule(p2, Ant(0), newTgt, tgt)
@@ -252,7 +252,7 @@ case class InductionTactic(mode: TacticApplyMode, v: Var, eigenVariables: Map[Co
         val FunctionType(_, argTypes) = constr.ty: @unchecked
         val nameGen: ExprNameGenerator = rename.awayFrom(freeVariables(goal.conclusion))
         val evs = eigenVariables.getOrElse(constr, argTypes.map { at => nameGen.fresh(if (at == v.ty) v else Var("x", at)) })
-        val hyps = NewLabels(goal.labelledSequent, s"IH${v.name}") zip ((evs filter { _.ty == v.ty }).map { ev => Substitution(v -> ev)(formula) })
+        val hyps = NewLabels(goal.labelledSequent, s"IH${v.name}").zip((evs.filter { _.ty == v.ty }).map { ev => Substitution(v -> ev)(formula) })
         val subGoal = hyps ++: goal.labelledSequent.delete(idx) :+ (label -> Substitution(v -> constr(evs*))(formula))
         InductionCase(OpenAssumption(subGoal), constr, subGoal.indices.take(hyps.size), evs, subGoal.indices.last)
       }
@@ -374,7 +374,7 @@ object AnalyticInductionTactic {
  */
 case class AnalyticInductionTactic(axioms: AxiomFactory, prover: ResolutionProver)(implicit ctx: MutableContext) extends Tactical1[Unit] {
   override def apply(goal: OpenAssumption) =
-    AnalyticInductionProver(axioms, prover) `inductiveLKProof` (goal.labelledSequent) match {
+    AnalyticInductionProver(axioms, prover).`inductiveLKProof`(goal.labelledSequent) match {
       case None     => TacticFailure(this, "analytic induction prover failed")
       case Some(lk) => replace(lk)
     }

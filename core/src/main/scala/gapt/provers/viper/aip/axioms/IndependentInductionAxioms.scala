@@ -77,7 +77,7 @@ case class IndependentInductionAxioms(
       variable: Var,
       formula: Formula
   )(implicit ctx: Context): ThrowsError[Axiom] = {
-    val auxiliaryVariables = inductionVariables filter { _ != variable }
+    val auxiliaryVariables = inductionVariables.filter { _ != variable }
     val inductionFormula = inductionQuantifierForm(inductionVariables, formula)
     StandardInductionAxioms(variable, inductionFormula).map { axiom =>
       new Axiom {

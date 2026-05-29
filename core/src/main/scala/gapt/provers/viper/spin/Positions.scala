@@ -18,7 +18,7 @@ case class Positions(rules: Set[ConditionalReductionRule], allPositions: Map[Con
     val defined = rules.flatMap(Positions.passiveArgs(_, allPositions))
     defined.headOption match {
       case None       => Set()
-      case Some(args) => defined.foldLeft(args)((acc, pass) => acc intersect pass)
+      case Some(args) => defined.foldLeft(args)((acc, pass) => acc.intersect(pass))
     }
   }
 
@@ -27,7 +27,7 @@ case class Positions(rules: Set[ConditionalReductionRule], allPositions: Map[Con
     val defined = rules.flatMap(Positions.accumulatorArgs(_, allPositions))
     defined.headOption match {
       case None       => Set()
-      case Some(args) => defined.foldLeft(args)((acc, pass) => acc intersect pass)
+      case Some(args) => defined.foldLeft(args)((acc, pass) => acc.intersect(pass))
     }
   }
 
@@ -69,8 +69,8 @@ object Positions {
           val mutual = groups -- independent.keys
 
           // Map mutually inductive calls to null. Currently we treat every argument as primary in this case.
-          mutual foreach { case (c, _) => allPositions += c -> null }
-          mutual foreach {
+          mutual.foreach { case (c, _) => allPositions += c -> null }
+          mutual.foreach {
             case (c, ruleGroup) =>
               allPositions += c -> Positions(ruleGroup, allPositions)
               groups -= c
@@ -96,9 +96,9 @@ object Positions {
           val immediate = rule.lhsArgs.zipWithIndex.collect {
             case (l, i) if passVars.intersect(variables(l)).nonEmpty => i
           }
-          val nested = rhsArgs flatMap go
+          val nested = rhsArgs.flatMap(go)
           immediate.toSet.intersect(nested.toSet)
-        case App(a, b) => go(a) intersect go(b)
+        case App(a, b) => go(a).intersect(go(b))
         case _         => allArgs(rule)
       }
 
@@ -116,7 +116,7 @@ object Positions {
           val immediate = rule.lhsArgs.zipWithIndex.collect {
             case (l, i) if primVars.intersect(variables(l)).nonEmpty => i
           }
-          val nested = prims flatMap go
+          val nested = prims.flatMap(go)
           immediate.toSet ++ nested
         case App(a, b) => go(a) ++ go(b)
         case _         => Set()
@@ -134,7 +134,7 @@ object Positions {
     def go(e: Expr): Option[Set[Int]] =
       e match {
         case Apps(f, rhsArgs) if f == rule.lhsHead =>
-          val args = rule.lhsArgs.zip(rhsArgs).zipWithIndex collect {
+          val args = rule.lhsArgs.zip(rhsArgs).zipWithIndex.collect {
             case ((l, r), i) if l == r => i
           }
           Some(args.toSet)
@@ -152,9 +152,9 @@ object Positions {
   // Positions of arguments that are self-passive and also passive in calls to other functions.
   def passiveArgs(rule: ConditionalReductionRule, allPositions: Map[Const, Positions]): Option[Set[Int]] = {
     val conds = rule.conditions.foldLeft(allArgs(rule))((acc, cond) =>
-      acc intersect passivesIn(cond, rule, allPositions)
+      acc.intersect(passivesIn(cond, rule, allPositions))
     )
-    selfPassiveArgs(rule, allPositions).map(_ intersect conds).map(_ -- primariesIn(rule.rhs, rule, allPositions))
+    selfPassiveArgs(rule, allPositions).map(_.intersect(conds)).map(_ -- primariesIn(rule.rhs, rule, allPositions))
   }
 
   // Positions of non-passive arguments which are not matched on or None if no recursive calls on the rhs.

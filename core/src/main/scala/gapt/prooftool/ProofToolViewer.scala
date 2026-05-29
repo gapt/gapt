@@ -73,7 +73,7 @@ abstract class ProofToolViewer[+T](val name: String, val content: T) extends Rea
     title = "ProofTool"
     menuBar = mBar
     contents = new BorderPanel
-    peer `setDefaultCloseOperation` WindowConstants.DISPOSE_ON_CLOSE
+    peer.`setDefaultCloseOperation`(WindowConstants.DISPOSE_ON_CLOSE)
   }
 
   val mainComponent = createMainComponent

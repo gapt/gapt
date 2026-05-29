@@ -221,11 +221,11 @@ class ExpansionProofToMG3iViaSAT(val expansionProof: ExpansionProof) {
     def minimizeCtx(ctx: Set[Int], upper: Set[Int]): Set[Int] = {
       def go(todo: List[Int], ctx: Set[Int]): Set[Int] =
         todo match {
-          case t :: ts if !solver.isSatisfiable(upper union (ctx - t)) => go(ts, ctx - t)
-          case _ :: ts                                                 => go(ts, ctx)
-          case Nil                                                     => ctx
+          case t :: ts if !solver.isSatisfiable(upper.union(ctx - t)) => go(ts, ctx - t)
+          case _ :: ts                                                => go(ts, ctx)
+          case Nil                                                    => ctx
         }
-      require(!solver.isSatisfiable(upper union ctx))
+      require(!solver.isSatisfiable(upper.union(ctx)))
       val ctx_ = ctx.intersect(solver.unsatExplanation())
       go(ctx_.toList.sortBy(-math.abs(_)), ctx_)
     }
@@ -401,7 +401,7 @@ class ExpansionProofToMG3iViaSAT(val expansionProof: ExpansionProof) {
       case Right(()) =>
         val goal = clause(expansionProof.expansionSequent.shallow).toSet
         val drupP = RupProof((drup :+ RupProof.Rup(goal)).filterNot(_.clause.contains(-classical)))
-        val replayed = (drupP.lines.map(_.clause) zip drupP.toResProofs).reverse.toMap
+        val replayed = (drupP.lines.map(_.clause).zip(drupP.toResProofs)).reverse.toMap
         def toLK(clause: Set[Int]): LKProof =
           replayed(clause).toLK(
             atomToSh,

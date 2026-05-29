@@ -141,7 +141,7 @@ object TipSmtParser {
         if (rest.isEmpty)
           throw TipSmtParserException("")
         rest.last match {
-          case LSymbol(s) if s forall { _.isDigit } =>
+          case LSymbol(s) if s.forall { _.isDigit } =>
             TipSmtSortDeclaration(sortName, parseKeywords(rest.init))
           case _ => throw TipSmtParserException(
               "malformed sort declaration"
@@ -484,7 +484,7 @@ object TipSmtParser {
   private def parseConstructor(sexp: SExpression): TipSmtConstructor =
     sexp match {
       case LList(LSymbol(constructorName), rest @ _*) =>
-        val (keywords, fields) = rest partition { !_.isInstanceOf[LList] }
+        val (keywords, fields) = rest.partition { !_.isInstanceOf[LList] }
         TipSmtConstructor(
           constructorName,
           parseKeywords(keywords),

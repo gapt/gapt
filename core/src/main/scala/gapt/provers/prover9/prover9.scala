@@ -39,7 +39,7 @@ class Prover9(val extraCommands: (Map[Const, Const] => Seq[String]) = _ => Seq()
       }
     }).map {
       mapInputClauses(_) { clause =>
-        cnf.view flatMap { ourClause =>
+        cnf.view.flatMap { ourClause =>
           syntacticMatching(ourClause.toDisjunction, clause.toDisjunction).map { Subst(Input(ourClause), _) }
         } head
       }
@@ -100,11 +100,11 @@ object Prover9Importer extends ExternalProgram {
       loadExpansionProof.extractFromTSTPCommentsIfNecessary(p9Output).read
     )
 
-    Prover9 `parseProof` fixedP9Output
+    Prover9.`parseProof`(fixedP9Output)
   }
 
   private def reconstructEndSequent(p9Output: String): HOLSequent = {
-    val lines = p9Output `split` "\n" toSeq
+    val lines = p9Output.`split`("\n") toSeq
 
     val parser = if (lines contains "set(prolog_style_variables).")
       Prover9TermParser
@@ -113,20 +113,20 @@ object Prover9Importer extends ExternalProgram {
 
     val proof_start = """=+ (PROOF) =+""".r
     val proof_end = """=+ (end) of proof =+""".r
-    val linesInProof = lines dropWhile {
+    val linesInProof = lines.dropWhile {
       case proof_start(_) => false
       case _              => true
-    } drop 1 takeWhile {
+    }.drop(1).takeWhile {
       case proof_end(_) => false
       case _            => true
     }
     val assumption = """(\d+) ([^#.]+).*\[assumption\]\.""".r
-    val assumptions = linesInProof collect {
-      case assumption(id, formula) => parser `parseFormula` formula
+    val assumptions = linesInProof.collect {
+      case assumption(id, formula) => parser.`parseFormula`(formula)
     }
     val goal = """(\d+) ([^#.]+).*\[goal\]\.""".r
-    val goals = linesInProof collect {
-      case goal(id, formula) => parser `parseFormula` formula
+    val goals = linesInProof.collect {
+      case goal(id, formula) => parser.`parseFormula`(formula)
     }
 
     assumptions ++: Sequent() :++ goals distinct

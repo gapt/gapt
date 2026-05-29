@@ -49,7 +49,7 @@ class Normalizer[LC <: ALCtx[LC]](skipCut: Formula => Boolean) {
       case AllR(main, ev, q) if main != hyp =>
         if (!by.p.freeVars(ev)) AllR.f(main, ev, apply(q, lctx.up1_(p)))
         else {
-          val ev_ = rename(ev, by.p.freeVars union p.freeVars)
+          val ev_ = rename(ev, by.p.freeVars.union(p.freeVars))
           apply(AllR.f(main, ev_, Substitution(ev -> ev_)(q)), lctx)
         }
       case Eql(main, eq, ltr, rwCtx, q) if main != hyp && eq != hyp =>

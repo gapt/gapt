@@ -57,8 +57,8 @@ object tape extends TacticsProof {
 
   val proof = Lemma(("A" -> fof"A") +: Sequent()
     :+ ("C" -> fof"?x?y (x != y & f x = f y)")) {
-    cut("I1", fof"I(1)") `right` insert(rhs)
-    cut("I0", fof"I(0)") `right` insert(rhs)
+    cut("I1", fof"I(1)").`right`(insert(rhs))
+    cut("I0", fof"I(0)").`right`(insert(rhs))
     insert(lhs)
   }
 }

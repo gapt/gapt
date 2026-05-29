@@ -9,7 +9,7 @@ import gapt.proofs.lk.rules.WeakQuantifierRule
 
 object quantRulesNumber {
   def apply(p: LKProof): Int =
-    p.treeLike.postOrder count {
+    p.treeLike.postOrder.count {
       case StrongQuantifierRule(_, _, _, _, _)  => true
       case WeakQuantifierRule(_, _, _, _, _, _) => true
       case _                                    => false
@@ -18,7 +18,7 @@ object quantRulesNumber {
 
 object weakQuantRulesNumber {
   def apply(p: LKProof): Int =
-    p.treeLike.postOrder count {
+    p.treeLike.postOrder.count {
       case WeakQuantifierRule(_, _, _, _, _, _) => true
       case _                                    => false
     }
@@ -26,7 +26,7 @@ object weakQuantRulesNumber {
 
 object strongQuantRulesNumber {
   def apply(p: LKProof): Int =
-    p.treeLike.postOrder count {
+    p.treeLike.postOrder.count {
       case StrongQuantifierRule(_, _, _, _, _) => true
       case _                                   => false
     }
@@ -34,7 +34,7 @@ object strongQuantRulesNumber {
 
 object cutsNumber {
   def apply(p: LKProof): Int =
-    p.treeLike.postOrder count {
+    p.treeLike.postOrder.count {
       case CutRule(_, _, _, _) => true
       case _                   => false
     }
@@ -42,7 +42,7 @@ object cutsNumber {
 
 object inductionsNumber {
   def apply(p: LKProof): Int =
-    p.treeLike.postOrder count {
+    p.treeLike.postOrder.count {
       case InductionRule(_, _, _) => true
       case _                      => false
     }

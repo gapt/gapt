@@ -88,9 +88,9 @@ class wscanTest extends Specification {
         witnessLimit = Some(witnessLimit)
       )
 
-      (derivation must beEliminatingDerivation) and
-        (witness must beSome[Substitution].like { wit => wit must beWitnessFor(input, firstOrderEquivalent) }) and
-        (firstOrderEquivalent must beEquivalentTo(equivalentTo))
+      (derivation must beEliminatingDerivation)
+        .and(witness must beSome[Substitution].like { wit => wit must beWitnessFor(input, firstOrderEquivalent) })
+        .and(firstOrderEquivalent must beEquivalentTo(equivalentTo))
   }
 }
 
@@ -151,9 +151,11 @@ class witnessConstruction extends mutable.Specification {
       )
     )
     val wit = wscan.witness(derivation, witnessLimit = None).get
-    (derivation must beEliminatingDerivation) and
-      (wit must beWitnessFor(input, derivation.conclusion.toFormula)) and
-      (wit must beEquivalentTo(Substitution((hov"X:i>o", le"^u u=a"))))
+    (derivation must beEliminatingDerivation).and(
+      wit must beWitnessFor(input, derivation.conclusion.toFormula)
+    ).and(
+      wit must beEquivalentTo(Substitution((hov"X:i>o", le"^u u=a")))
+    )
   }
 
   "derivation with non-one-sided purified clause deletion" in {
@@ -174,9 +176,11 @@ class witnessConstruction extends mutable.Specification {
       )
     )
     val wit = wscan.witness(derivation, witnessLimit = None).get
-    (derivation must beEliminatingDerivation) and
-      (wit must beWitnessFor(input, derivation.conclusion.toFormula)) and
-      (wit must beEquivalentTo(Substitution((hov"X:i>o", le"^u u=a & !v B(u,v)"))))
+    (derivation must beEliminatingDerivation).and(
+      wit must beWitnessFor(input, derivation.conclusion.toFormula)
+    ).and(
+      wit must beEquivalentTo(Substitution((hov"X:i>o", le"^u u=a & !v B(u,v)")))
+    )
   }
 
   "derivation with cylcic purification subsumption graph and finite witness construction should not yield witness" in {
@@ -191,8 +195,9 @@ class witnessConstruction extends mutable.Specification {
       )
     )
     val wit = wscan.witness(derivation, witnessLimit = Some(10))
-    (derivation must beEliminatingDerivation) and
-      (wit must beNone)
+    (derivation must beEliminatingDerivation).and(
+      wit must beNone
+    )
   }
 
   "non-one-sided derivation with cyclic purification subsumption graph and finite lRes should produce witness" in {
@@ -218,9 +223,11 @@ class witnessConstruction extends mutable.Specification {
       )
     )
     val wit = wscan.witness(derivation, witnessLimit = Some(10)).get
-    (derivation must beEliminatingDerivation) and
-      (wit must beWitnessFor(input, derivation.conclusion.toFormula)) and
-      (wit must beEquivalentTo(Substitution((hov"X:i>i>o", le"^u^v (u != c | v != d) & (u != d | v != c)"))))
+    (derivation must beEliminatingDerivation).and(
+      wit must beWitnessFor(input, derivation.conclusion.toFormula)
+    ).and(
+      wit must beEquivalentTo(Substitution((hov"X:i>i>o", le"^u^v (u != c | v != d) & (u != d | v != c)")))
+    )
   }
 
   "should construct finite witness where purification subsumption graph has multiple overlapping paths" in {
@@ -243,13 +250,14 @@ class witnessConstruction extends mutable.Specification {
       )
     )
     val wit = wscan.witness(derivation, witnessLimit = None).get
-    (derivation must beEliminatingDerivation) and
+    (derivation must beEliminatingDerivation).and(
       // (wit must beWitnessFor(input, derivation.conclusion.toFormula)) and
       // we avoid checking the above condition here since it takes a long time
-      (wit must beEquivalentTo(Substitution((
+      wit must beEquivalentTo(Substitution((
         hov"X:i>o",
         le"^u !v!w(B(u, v, w) | !v_1!w_1 (B(v, v_1, w_1) | !v_2!w_2 B(v_1, v_2, w_2) | !v_2!w_2 B(w_1, v_2, w_2)) | !v_1!w_1 (B(w, v_1, w_1) | !v_2!w_2 B(v_1, v_2, w_2) | !v_2!w_2 B(w_1, v_2, w_2)))"
-      ))))
+      )))
+    )
   }
 }
 

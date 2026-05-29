@@ -117,7 +117,7 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
   /**
    * Equality treating each side of the sequent as a set.
    */
-  def setEquals[B](other: Sequent[B]): Boolean = (other `isSubsetOf` this) && (this `isSubsetOf` other)
+  def setEquals[B](other: Sequent[B]): Boolean = (other.`isSubsetOf`(this)) && (this.`isSubsetOf`(other))
 
   /**
    * Equality treating each side of the sequent as a multiset.
@@ -158,7 +158,7 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
    * @param other
    * @return
    */
-  def intersect[B >: A](other: Sequent[B]) = Sequent(antecedent intersect other.antecedent, succedent intersect other.succedent)
+  def intersect[B >: A](other: Sequent[B]) = Sequent(antecedent.intersect(other.antecedent), succedent.intersect(other.succedent))
 
   /**
    * Removes duplicate formulas from both cedents.
@@ -221,9 +221,9 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
 
   def ++[B >: A](that: Sequent[B]) = Sequent(this.antecedent ++ that.antecedent, this.succedent ++ that.succedent)
 
-  def removeFromAntecedent[B](e: B) = Sequent(antecedent filterNot (_ == e), succedent)
+  def removeFromAntecedent[B](e: B) = Sequent(antecedent.filterNot(_ == e), succedent)
 
-  def removeFromSuccedent[B](e: B) = Sequent(antecedent, succedent filterNot (_ == e))
+  def removeFromSuccedent[B](e: B) = Sequent(antecedent, succedent.filterNot(_ == e))
 
   /**
    * Maps a function over both cedents
@@ -237,7 +237,7 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
   def flatMap[B](f: A => IterableOnce[B]): Sequent[B] = flatMap(f, f)
 
   def collect[B](f: PartialFunction[A, B]): Sequent[B] =
-    Sequent(antecedent collect f, succedent collect f)
+    Sequent(antecedent.collect(f), succedent.collect(f))
 
   /**
    * Maps two functions over the antecedent and succedent, respectively.
@@ -250,7 +250,7 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
   def map[B](f: (A) => B, g: (A) => B) = Sequent(antecedent.map(f), succedent.map(g))
 
   def flatMap[B](f: A => IterableOnce[B], g: A => IterableOnce[B]): Sequent[B] =
-    Sequent(antecedent flatMap f, succedent flatMap g)
+    Sequent(antecedent.flatMap(f), succedent.flatMap(g))
 
   /**
    * The sub-sequent of elements satisfying some predicate.
@@ -258,7 +258,7 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
    * @param p A function of type A => Boolean.
    * @return The sequent consisting of only those elements satisfying p.
    */
-  def filter(p: A => Boolean): Sequent[A] = Sequent(antecedent filter p, succedent filter p)
+  def filter(p: A => Boolean): Sequent[A] = Sequent(antecedent.filter(p), succedent.filter(p))
 
   /**
    * The sub-sequent of elements not satisfying some predicate.
@@ -266,7 +266,7 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
    * @param p A function of type A => Boolean.
    * @return The sequent consisting of only those elements not satisfying p.
    */
-  def filterNot(p: A => Boolean): Sequent[A] = this `filter` (!p(_))
+  def filterNot(p: A => Boolean): Sequent[A] = this.`filter`(!p(_))
 
   /**
    * The number of elements in the sequent.
@@ -297,7 +297,7 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
   def sizes = lengths
 
   def sorted[B >: A](implicit ordering: Ordering[B]) = Sequent(antecedent.sorted(using ordering), succedent.sorted(using ordering))
-  def sortBy[B](f: A => B)(implicit ord: Ordering[B]): Sequent[A] = sorted(using ord on f)
+  def sortBy[B](f: A => B)(implicit ord: Ordering[B]): Sequent[A] = sorted(using ord.on(f))
 
   /**
    * Returns true iff the sequent contains some element in either cedent.
@@ -363,10 +363,10 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
    * @param p A function of type A => Boolean.
    * @return
    */
-  def indicesWhere(p: A => Boolean): Vector[SequentIndex] = indices filter { i => p(this(i)) }
+  def indicesWhere(p: A => Boolean): Vector[SequentIndex] = indices.filter { i => p(this(i)) }
 
   def indicesWherePol(p: A => Boolean, pol: Polarity): Vector[SequentIndex] =
-    indices filter { i => (i.polarity == pol) && p(this(i)) }
+    indices.filter { i => (i.polarity == pol) && p(this(i)) }
 
   /**
    * Focuses on one element of the sequent, i.e. returns element at index and the rest of the sequent.
@@ -390,7 +390,7 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
   def delete(i: SequentIndex): Sequent[A] = delete(Seq(i))
 
   def delete(is: Seq[SequentIndex]): Sequent[A] =
-    (zipWithIndex filterNot { is contains _._2 }).map { _._1 }
+    (zipWithIndex.filterNot { is contains _._2 }).map { _._1 }
 
   def delete(is: SequentIndex*)(implicit d: DummyImplicit): Sequent[A] = delete(is)
 
@@ -440,7 +440,7 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
   def forall(p: A => Boolean): Boolean = antecedent.forall(p) && succedent.forall(p)
 
   def zip[B](that: Sequent[B]): Sequent[(A, B)] =
-    Sequent(this.antecedent zip that.antecedent, this.succedent zip that.succedent)
+    Sequent(this.antecedent.zip(that.antecedent), this.succedent.zip(that.succedent))
 
   def replaceAt[B >: A](i: SequentIndex, el: B) = delete(i).insertAt(i, el)
 
@@ -453,14 +453,14 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
   }
 
   def foreach[U](f: A => U): Unit = {
-    antecedent foreach f
-    succedent foreach f
+    antecedent.foreach(f)
+    succedent.foreach(f)
   }
 
   def withFilter(p: A => Boolean): Sequent[A] = filter(p)
 
   def groupBy[B](f: A => B): Sequent[(B, Vector[A])] =
-    Sequent(antecedent groupBy f toVector, succedent groupBy f toVector)
+    Sequent(antecedent.groupBy(f) toVector, succedent.groupBy(f) toVector)
 
   def partition(f: (A, Polarity) => Boolean): (Sequent[A], Sequent[A]) =
     val (left, right) = polarizedElements.partition((a, p) => f(a, p))

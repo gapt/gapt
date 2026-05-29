@@ -63,7 +63,7 @@ class unfoldInduction(simp: SimpAdapter, ctx0: ImmutableContext) {
     case AllSk(main, term, q)                     => AllSk(main, term, apply(q))
     case Def(main, f, q)                          => Def(main, f, apply(q))
     case p @ Ind(main, f, term, cases0) =>
-      val cases = cases0.map(c => c.copy(q = c.q.rename_(simpHyps union p.freeHyps)))
+      val cases = cases0.map(c => c.copy(q = c.q.rename_(simpHyps.union(p.freeHyps))))
       val Some(ctrs) = ctx.getConstructors(p.indTy): @unchecked
       assert(!simpHyps(main))
       term match {
@@ -72,7 +72,7 @@ class unfoldInduction(simp: SimpAdapter, ctx0: ImmutableContext) {
           // we need a proof of ⊢ main: φ(c(as))
           val i = ctrs.indexOf(ctr)
           val ci = cases(i)
-          var r = apply(Substitution(ci.evs zip as)(ci.q.p.replace(ci.q.auxs.head, main)))
+          var r = apply(Substitution(ci.evs.zip(as))(ci.q.p.replace(ci.q.auxs.head, main)))
           for ((aux, recOcc) <- ci.q.auxs.tail.zip(as.filter(_.ty == p.indTy)))
             r = Cut(
               BetaReduction.betaNormalize(f(recOcc)).asInstanceOf[Formula],
@@ -83,7 +83,7 @@ class unfoldInduction(simp: SimpAdapter, ctx0: ImmutableContext) {
         case _ =>
           simp.simpEq(term) match {
             case Some((simpPrf, newTerm)) =>
-              val eqHyp = (p.freeHyps union simpHyps).freshAnt
+              val eqHyp = (p.freeHyps.union(simpHyps)).freshAnt
               Cut(
                 term === newTerm,
                 simpPrf,

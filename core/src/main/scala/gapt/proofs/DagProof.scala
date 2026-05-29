@@ -40,7 +40,7 @@ trait DagProof[Proof <: DagProof[Proof]] extends Product { self: Proof =>
   /**
    * Set of all (transitive) sub-proofs including this.
    */
-  def subProofs: Set[Proof] = dagLike foreach { _ => () }
+  def subProofs: Set[Proof] = dagLike.foreach { _ => () }
 
   /**
    * Returns the subproof at the given position: p.subProofAt(Nil) is p itself; p.subProofAt(i :: is) is the ith
@@ -50,7 +50,7 @@ trait DagProof[Proof <: DagProof[Proof]] extends Product { self: Proof =>
     case Nil => this
     case i :: is =>
       val sub = subProofAt(is)
-      require(sub.immediateSubProofs isDefinedAt i, s"Proof $sub does not have an immediate subproof with index $i.")
+      require(sub.immediateSubProofs.isDefinedAt(i), s"Proof $sub does not have an immediate subproof with index $i.")
       sub.immediateSubProofs(i)
   }
 
@@ -91,7 +91,7 @@ trait DagProof[Proof <: DagProof[Proof]] extends Product { self: Proof =>
       else if (areEqual contains PtrPair(a, b)) true
       else if (a.productArity != b.productArity) false
       else {
-        val allElementsEqual = (a.productIterator zip b.productIterator) forall {
+        val allElementsEqual = (a.productIterator.zip(b.productIterator)).forall {
           case (a1: DagProof[_], b1: DagProof[_]) => checkEqual(a1, b1)
           case (a1, b1)                           => a1 == b1
         }
@@ -119,7 +119,7 @@ object DagProof {
      * Iterate over all sub-proofs including this in post-order.
      */
     def foreach(f: Proof => Unit): Unit = {
-      for (p <- self.immediateSubProofs) p.treeLike `foreach` f
+      for (p <- self.immediateSubProofs) p.treeLike.`foreach`(f)
       f(self)
     }
 
@@ -171,7 +171,7 @@ object DagProof {
 
       def traverse(p: Proof): Unit =
         if (!(seen contains p)) {
-          p.immediateSubProofs foreach traverse
+          p.immediateSubProofs.foreach(traverse)
           seen += p
           f(p)
         }
@@ -219,7 +219,7 @@ object DagProof {
       val subProofLabels: Map[Any, String] = steps.toMap
 
       val output = new StringBuilder()
-      steps.reverse foreach {
+      steps.reverse.foreach {
         case (step, number) =>
           output ++= s"[$number] ${step.stepString(subProofLabels)}\n"
       }

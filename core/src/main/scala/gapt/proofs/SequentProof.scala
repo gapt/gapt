@@ -32,7 +32,7 @@ trait SequentProof[+Formula, This <: SequentProof[Formula, This]] extends DagPro
    * A list of lists containing the auxiliary formulas of the rule.
    * The first list constains the auxiliary formulas in the first premise and so on.
    */
-  def auxFormulas: Seq[Seq[Formula]] = for ((p, is) <- premises zip auxIndices) yield p(is)
+  def auxFormulas: Seq[Seq[Formula]] = for ((p, is) <- premises.zip(auxIndices)) yield p(is)
 
   /**
    * A list of occurrence connectors, one for each immediate subproof.
@@ -49,7 +49,7 @@ trait ContextRule[Formula, This <: SequentProof[Formula, This]] extends SequentP
 
   protected def mainFormulaSequent: Sequent[Formula]
 
-  protected def contexts = for ((p, is) <- premises zip formulasToBeDeleted) yield p.delete(is)
+  protected def contexts = for ((p, is) <- premises.zip(formulasToBeDeleted)) yield p.delete(is)
 
   override lazy val conclusion = mainFormulaSequent.antecedent ++: contexts.flattenS :++ mainFormulaSequent.succedent
 
@@ -59,7 +59,7 @@ trait ContextRule[Formula, This <: SequentProof[Formula, This]] extends SequentP
       mainFormulaSequent.succedent.map(_ => true)).indicesWhere(_ == true)
 
   private val contextIndices =
-    for ((p, is) <- premises zip formulasToBeDeleted)
+    for ((p, is) <- premises.zip(formulasToBeDeleted))
       yield p.indicesSequent.delete(is)
 
   override def occConnectors = for (i <- contextIndices.indices) yield {

@@ -11,13 +11,13 @@ class HOLOrdering extends Ordering[Expr] {
   override def compare(x: Expr, y: Expr): Int = (x, y) match {
     case (x, y) if x.`syntaxEquals`(y) => 0
     case (Var(s1, t1), Var(s2, t2)) =>
-      s1.toString() compare s2.toString() match {
+      s1.toString().compare(s2.toString()) match {
         case 0 => TAOrdering.compare(t1, t2)
         case x => x
       }
 
     case (Const(s1, t1, _), Const(s2, t2, _)) =>
-      s1.toString() compare s2.toString() match {
+      s1.toString().compare(s2.toString()) match {
         case 0 => TAOrdering.compare(t1, t2)
         case x => x
       }
@@ -65,6 +65,6 @@ class TAOrdering extends Ordering[Ty] {
     case (_, TArr(_, _)) => -1
     case (TArr(_, _), _) => 1
 
-    case (TBase(x_, _), TBase(y_, _)) => x_ compare y_
+    case (TBase(x_, _), TBase(y_, _)) => x_.compare(y_)
   }
 }

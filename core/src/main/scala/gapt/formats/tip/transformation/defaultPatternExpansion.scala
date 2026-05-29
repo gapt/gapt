@@ -286,7 +286,7 @@ class TipSmtDefaultPatternExpansion(problem: TipSmtProblem) {
     val generatedCases = missingConstructors.map {
       generateCase(_, visibleVariables, defaultExpr)
     }
-    val oldCases = tipSmtMatch.cases filter { _.pattern != TipSmtDefault }
+    val oldCases = tipSmtMatch.cases.filter { _.pattern != TipSmtDefault }
 
     TipSmtMatch(tipSmtMatch.expr, oldCases ++ generatedCases)
   }
@@ -330,7 +330,7 @@ class TipSmtDefaultPatternExpansion(problem: TipSmtProblem) {
   private def coveredConstrs(
       cases: Seq[TipSmtCase]
   ): Seq[String] = {
-    (cases.map { _.pattern } filter {
+    (cases.map { _.pattern }.filter {
       case TipSmtDefault => false
       case TipSmtConstructorPattern(constructor, _) =>
         problem.symbolTable.get.contains(constructor.name)

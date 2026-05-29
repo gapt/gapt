@@ -10,7 +10,7 @@ object numberOfLogicalInferencesRes {
 }
 
 object containsEquationalReasoning {
-  def apply(p: ResolutionProof): Boolean = p.subProofs exists {
+  def apply(p: ResolutionProof): Boolean = p.subProofs.exists {
     case _: Paramod => true
     case _: Refl    => true
     case _          => false

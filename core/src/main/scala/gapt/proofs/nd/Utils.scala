@@ -10,7 +10,7 @@ object freeVariablesND {
     case ForallIntroRule(subProof, eigenVariable, _) =>
       apply(subProof) - eigenVariable
     case InductionRule(cases, main, term) =>
-      freeVariables(p.conclusion) ++ (cases flatMap { c =>
+      freeVariables(p.conclusion) ++ (cases.flatMap { c =>
         apply(c.proof) -- c.eigenVars
       })
     case _ =>

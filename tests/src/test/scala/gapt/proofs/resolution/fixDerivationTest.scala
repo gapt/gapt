@@ -134,7 +134,7 @@ class FixDerivationTest extends Specification with SequentMatchers {
     def check(a: HOLClause, bs: Set[_ <: HOLClause]) = {
       findDerivationViaResolution(a, bs, prover = NonSplittingEscargot) must beLike {
         case Some(p) =>
-          p.conclusion.isSubMultisetOf(a) aka s"${p.conclusion} subclause of $a" must_== true
+          p.conclusion.isSubMultisetOf(a).aka(s"${p.conclusion} subclause of $a") must_== true
           val inputClauses = p.subProofs.collect { case Input(seq) => seq }
           foreach(inputClauses) { inputClause =>
             bs.toSet[HOLSequent] must contain(inputClause)

@@ -40,7 +40,7 @@ object removeSkolemCongruences {
       skTs.subsets(2).map(_.toList).flatMap { s =>
         {
           val List(Apps(_, as), Apps(_, bs)) = s
-          as zip bs
+          as.zip(bs)
         }
       }
     ).toVector

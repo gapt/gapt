@@ -87,7 +87,7 @@ class SequentProofViewer[F, T <: SequentProof[F, T]](name: String, proof: Sequen
 
     for (j <- p.immediateSubProofs.indices) {
       val subPos = j :: pos
-      val parents = is flatMap { p.occConnectors(j).parents }
+      val parents = is.flatMap { p.occConnectors(j).parents }
       if (parents.nonEmpty)
         markAncestors(subPos, parents)
     }
@@ -105,7 +105,7 @@ class SequentProofViewer[F, T <: SequentProof[F, T]](name: String, proof: Sequen
       case Nil => // reached the bottom of the proof
       case j :: js =>
         val s = proof.subProofAt(js)
-        val children = is flatMap { s.occConnectors(j).children }
+        val children = is.flatMap { s.occConnectors(j).children }
         if (children.nonEmpty)
           markDescendants(js, children)
     }

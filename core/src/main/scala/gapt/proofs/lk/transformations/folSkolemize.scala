@@ -100,7 +100,7 @@ object folSkolemize {
     }
 
   def apply(proof: LKProof): LKProof = {
-    val factory = new SkolemSymbolFactory(proof.subProofs flatMap { _.conclusion.elements } flatMap { constants.nonLogical(_) })
+    val factory = new SkolemSymbolFactory(proof.subProofs.flatMap { _.conclusion.elements }.flatMap { constants.nonLogical(_) })
     val contextAndSymbols = proof.endSequent.map { _ => Some(Seq() -> factory.getSkolemSymbols) }
     cleanStructuralRules(apply(proof, contextAndSymbols))
   }

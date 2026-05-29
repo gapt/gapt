@@ -13,7 +13,7 @@ import io.circe.{Decoder, Encoder, KeyDecoder, KeyEncoder}
 object ExprCodec {
   private[json] val _varEncoder: Encoder[Var] = Encoder.encodeString.contramap[Var](_.toString)
   private[json] val _varDecoder: Decoder[Var] = Decoder.decodeString.emap { s =>
-    BabelParser.tryParse(s).left.map(_.getMessage) flatMap {
+    BabelParser.tryParse(s).left.map(_.getMessage).flatMap {
       case v: Var => Right(v)
       case e      => Left(s"Expression $e cannot be read as a variable.")
     }
@@ -21,7 +21,7 @@ object ExprCodec {
 
   private[json] val _absEncoder: Encoder[Abs] = Encoder.encodeString.contramap[Abs](_.toString)
   private[json] val _absDecoder: Decoder[Abs] = Decoder.decodeString.emap { s =>
-    BabelParser.tryParse(s).left.map(_.getMessage) flatMap {
+    BabelParser.tryParse(s).left.map(_.getMessage).flatMap {
       case a: Abs => Right(a)
       case e      => Left(s"Expression $e is not an abstraction.")
     }
@@ -29,7 +29,7 @@ object ExprCodec {
 
   private[json] val _constEncoder: Encoder[Const] = Encoder.encodeString.contramap[Const](_.toString)
   private[json] val _constDecoder: Decoder[Const] = Decoder.decodeString.emap { s =>
-    BabelParser.tryParse(s).left.map(_.getMessage) flatMap {
+    BabelParser.tryParse(s).left.map(_.getMessage).flatMap {
       case c: Const => Right(c)
       case e        => Left(s"Expression $e cannot be read as a constant.")
     }
@@ -51,7 +51,7 @@ object ExprCodec {
 
   private[json] val _atomEncoder: Encoder[Atom] = Encoder.encodeString.contramap[Atom](_.toString)
   private[json] val _atomDecoder: Decoder[Atom] = Decoder.decodeString.emap { s =>
-    BabelParser.tryParse(s).left.map(_.getMessage) flatMap {
+    BabelParser.tryParse(s).left.map(_.getMessage).flatMap {
       case a: Atom => Right(a)
       case e       => Left(s"Expression $e cannot be read as an atom.")
     }

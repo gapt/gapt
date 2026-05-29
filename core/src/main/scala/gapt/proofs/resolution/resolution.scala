@@ -206,7 +206,7 @@ case class Defn(defConst: HOLAtomConst, definition: Expr) extends InitialClause 
  * }}}
  */
 case class Factor(subProof: ResolutionProof, idx1: SequentIndex, idx2: SequentIndex) extends LocalResolutionRule {
-  require(idx1 `sameSideAs` idx2)
+  require(idx1.`sameSideAs`(idx2))
   require(idx1 < idx2)
   requireEq(subProof.conclusion(idx1), subProof.conclusion(idx2))
   override def mainFormulaSequent =
@@ -229,7 +229,7 @@ object Factor {
     )
     var p_ = p
     for ((a, i) <- p.conclusion.diff(newConclusion).zipWithIndex) {
-      val Seq(j1, j2, _*) = p_.conclusion.zipWithIndex.elements.filter(_._2 `sameSideAs` i).filter(_._1 == a).map(_._2): @unchecked
+      val Seq(j1, j2, _*) = p_.conclusion.zipWithIndex.elements.filter(_._2.`sameSideAs`(i)).filter(_._1 == a).map(_._2): @unchecked
       p_ = Factor(p_, j1, j2)
     }
     p_
@@ -238,7 +238,7 @@ object Factor {
     var p_ = p
     var conn = SequentConnector(p_.conclusion)
     for ((a, i) <- p.conclusion.diff(p.conclusion.distinct).zipWithIndex) {
-      val Seq(j1, j2, _*) = p_.conclusion.zipWithIndex.elements.filter(_._2 `sameSideAs` i).filter(_._1 == a).map(_._2): @unchecked
+      val Seq(j1, j2, _*) = p_.conclusion.zipWithIndex.elements.filter(_._2.`sameSideAs`(i)).filter(_._1 == a).map(_._2): @unchecked
       p_ = Factor(p_, j1, j2)
       conn = p_.occConnectors.head * conn
     }

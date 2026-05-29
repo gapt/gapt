@@ -6,7 +6,7 @@ import org.specs2.mutable.Specification
 class SchemaTutorialTest extends Specification {
 
   def throwQedFailure =
-    throwAn[ExceptionInInitializerError] like {
+    throwAn[ExceptionInInitializerError].like {
       case ex =>
         ex.getCause must beAnInstanceOf[QedFailureException]
     }

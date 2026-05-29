@@ -45,13 +45,13 @@ object eliminateSplitting {
   private def project(p: ResolutionProof, splAtom: Atom): (ResolutionProof, Seq[Var], HOLSequent) = {
     val ngc = p.subProofs.collect { case AvatarSplit(_, _, comp @ AvatarNonGroundComp(`splAtom`, _, _)) => comp }.head
     val newVs = ngc.vars.map(rename(ngc.vars, containedNames(p)))
-    val newClause = Substitution(ngc.vars zip newVs)(ngc.clause)
+    val newClause = Substitution(ngc.vars.zip(newVs))(ngc.clause)
 
     val visitor = new ResolutionProofVisitor {
       override def visitAvatarSplit(p: AvatarSplit): ResolutionProof =
         p.component match {
           case AvatarNonGroundComp(`splAtom`, _, vs) =>
-            Subst(recurse(p.subProof), Substitution(vs zip newVs))
+            Subst(recurse(p.subProof), Substitution(vs.zip(newVs)))
           case _ => super.visitAvatarSplit(p)
         }
     }
@@ -68,7 +68,7 @@ object eliminateSplitting {
       override def visitAvatarComponent(p: AvatarComponent): ResolutionProof =
         p.component match {
           case AvatarNonGroundComp(`splAtom`, _, vs) =>
-            Subst(proj, Substitution(projVars zip vs))
+            Subst(proj, Substitution(projVars.zip(vs)))
           case _ => p
         }
     }.apply(p)

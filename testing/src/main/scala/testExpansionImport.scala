@@ -45,7 +45,7 @@ object testExpansionImport {
               )
             }
             metric("size_withdefs", expansionWithDefs.size)
-            val defConsts = resolution.subProofs collect { case d: DefIntro => d.defConst: Const }
+            val defConsts = resolution.subProofs.collect { case d: DefIntro => d.defConst: Const }
             val withDefsCE = time("cutelim1") { eliminateCutsET(expansionWithDefs) }
             val withoutDefs = time("defelim") { eliminateDefsET(withDefsCE, !equational, defConsts) }
             val expansion = time("cutelim2") { eliminateCutsET(withoutDefs) }

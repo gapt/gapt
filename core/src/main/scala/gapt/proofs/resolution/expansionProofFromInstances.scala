@@ -13,7 +13,7 @@ object expansionProofFromInstances {
       justifications: Set[ResolutionProof],
       pureFOLwithoutEquality: Boolean = false
   )(implicit ctx: Maybe[Context]): ExpansionProof = {
-    require(substitutions.keySet.toSet[HOLSequent] subsetOf justifications.map(_.conclusion))
+    require(substitutions.keySet.toSet[HOLSequent].subsetOf(justifications.map(_.conclusion)))
 
     val proofs = for {
       (clause, substs) <- substitutions

@@ -110,7 +110,7 @@ object prop_34 extends TacticsProof {
     decompose
     rewrite.`ltr`("am2").`in`("goal")
     rewrite.`ltr`("am22").`in`("goal")
-    rewrite.`ltr`("pcm").`in`("goal") `subst` (hov"y:Nat" -> le"mult(x_0:Nat,y:Nat)")
+    rewrite.`ltr`("pcm").`in`("goal").`subst`(hov"y:Nat" -> le"mult(x_0:Nat,y:Nat)")
     rewrite.`rtl`("l24").`in`("goal")
     rewrite.`ltr`("IHx_0").`in`("goal"); refl
   }

@@ -103,7 +103,7 @@ package object axioms {
           )
         Var(newName, argumentType)
     }
-    val (primaryVariables, secondaryVariables) = newVariables partition {
+    val (primaryVariables, secondaryVariables) = newVariables.partition {
       _.ty == freeVariable.ty
     }
     (primaryVariables, secondaryVariables, Substitution(freeVariable -> constructor(newVariables*))(formula))
@@ -127,7 +127,7 @@ package object axioms {
           )
         Var(newName, argumentType)
     }
-    val (primaryVariables, secondaryVariables) = newVariables partition {
+    val (primaryVariables, secondaryVariables) = newVariables.partition {
       _.ty == freeVariable.ty
     }
     (primaryVariables, secondaryVariables, Substitution(freeVariable -> constructor(newVariables*))(formula))

@@ -34,7 +34,7 @@ object beautifySolution {
         var cnf = CNFp(cf)
 
         // subsumption
-        cnf = cnf filter { cls =>
+        cnf = cnf.filter { cls =>
           val subsumingFormulas = for {
             ((vs, cnfs), j) <- esCNFs.zipWithIndex.elements
             esCNF <- cnfs
@@ -43,7 +43,7 @@ object beautifySolution {
           subsumingFormulas.headOption match {
             case Some((j, inst)) =>
               for (s <- ehs.sehs.ss(k)._2)
-                addUs += j -> FOLSubstitution(ehs.sehs.ss(k)._1 zip s)(inst)
+                addUs += j -> FOLSubstitution(ehs.sehs.ss(k)._1.zip(s))(inst)
               false
             case None => true
           }
@@ -51,7 +51,7 @@ object beautifySolution {
 
         // unit resolution
         cnf = cnf.map {
-          _.zipWithIndex filter {
+          _.zipWithIndex.filter {
             case (atom, i) =>
               val possibleAxioms = for {
                 ((vs, axs), j) <- unitAxioms.zipWithIndex.elements
@@ -66,7 +66,7 @@ object beautifySolution {
                 case None =>
                   true
               }
-          } map { _._1 }
+          }.map { _._1 }
         }
 
         simplifyPropositional(And(cnf.map { _.toImplication }))

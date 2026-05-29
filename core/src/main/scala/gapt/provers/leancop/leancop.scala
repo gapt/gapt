@@ -79,7 +79,7 @@ class LeanCoP extends OneShotProver with ExternalProgram {
             (formula @ All.Block(vars, _), clause) <- cnf
             if formula == shallow
           } yield clause.conclusion.asInstanceOf[HOLClause] ->
-            insts.keys.map(s => Substitution(vars zip s)).toSet
+            insts.keys.map(s => Substitution(vars.zip(s))).toSet
 
         expansionProofFromInstances(substs.toMap, cnf.values.toSet, !hasEquality)
     }

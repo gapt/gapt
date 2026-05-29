@@ -81,25 +81,25 @@ class ExpansionProofToLK(
       .orElse(if (intuitionisticHeuristics) tryBinary(theory, expSeq, intuitionistic = false) else None)
       .orElse(tryTheory(expSeq))
       .getOrElse(Left(theory -> expSeq)).map {
-        ContractionMacroRule(_).ensuring { _.conclusion `isSubsetOf` expSeq.shallow }
+        ContractionMacroRule(_).ensuring { _.conclusion.`isSubsetOf`(expSeq.shallow) }
       }
   }
 
   private def tryAxiom(expSeq: ExpansionSequent): Option[UnprovableOrLKProof] = {
     val shallowSequent = expSeq.shallow
     if (shallowSequent.isTaut)
-      Some(Right(LogicalAxiom(shallowSequent.antecedent intersect shallowSequent.succedent head)))
+      Some(Right(LogicalAxiom(shallowSequent.antecedent.intersect(shallowSequent.succedent) head)))
     else
       None
   }
 
   private def tryTheory(expSeq: ExpansionSequent): Option[UnprovableOrLKProof] =
-    quiet(theorySolver(expSeq collect { case ETAtom(atom: Atom, _) => atom })).map {
+    quiet(theorySolver(expSeq.collect { case ETAtom(atom: Atom, _) => atom })).map {
       Right(_)
     }
 
   private def tryDef(theory: Theory, expSeq: ExpansionSequent): Option[UnprovableOrLKProof] =
-    expSeq.zipWithIndex.elements collectFirst {
+    expSeq.zipWithIndex.elements.collectFirst {
       case (ETDefinition(sh, ch), i) =>
         mapIf(solve(theory, expSeq.updated(i, ch)), ch.shallow, i.polarity) {
           ConversionRule(_, ch.shallow, sh, i.polarity)
@@ -107,26 +107,26 @@ class ExpansionProofToLK(
     }
 
   private def tryMerge(theory: Theory, expSeq: ExpansionSequent): Option[UnprovableOrLKProof] =
-    expSeq.zipWithIndex.elements collectFirst {
+    expSeq.zipWithIndex.elements.collectFirst {
       case (ETMerge(a, b), i: Ant) => solve(theory, a +: b +: expSeq.delete(i))
       case (ETMerge(a, b), i: Suc) => solve(theory, expSeq.delete(i) :+ a :+ b)
     }
 
   private def tryNullary(expSeq: ExpansionSequent): Option[UnprovableOrLKProof] =
-    expSeq.zipWithIndex.elements collectFirst {
+    expSeq.zipWithIndex.elements.collectFirst {
       case (ETTop(_), _: Suc)    => Right(TopAxiom)
       case (ETBottom(_), _: Ant) => Right(BottomAxiom)
     }
 
   private def tryWeakening(theory: Theory, expSeq: ExpansionSequent): Option[UnprovableOrLKProof] =
-    expSeq.zipWithIndex.elements collectFirst {
-      case (ETWeakening(_, _), i) => solve(theory, expSeq `delete` i)
-      case (ETTop(_), i: Ant)     => solve(theory, expSeq `delete` i)
-      case (ETBottom(_), i: Suc)  => solve(theory, expSeq `delete` i)
+    expSeq.zipWithIndex.elements.collectFirst {
+      case (ETWeakening(_, _), i) => solve(theory, expSeq.`delete`(i))
+      case (ETTop(_), i: Ant)     => solve(theory, expSeq.`delete`(i))
+      case (ETBottom(_), i: Suc)  => solve(theory, expSeq.`delete`(i))
     }
 
   private def tryUnary(theory: Theory, expSeq: ExpansionSequent, intuitionistic: Boolean): Option[UnprovableOrLKProof] =
-    expSeq.zipWithIndex.elements.reverseIterator collectFirst {
+    expSeq.zipWithIndex.elements.reverseIterator.collectFirst {
       case (ETNeg(f), i: Ant) if !intuitionistic =>
         mapIf(solve(theory, expSeq.delete(i) :+ f), f.shallow, !i.polarity) {
           NegLeftRule(_, f.shallow)
@@ -151,7 +151,7 @@ class ExpansionProofToLK(
 
   private def tryBinary(theory: Theory, expSeq: ExpansionSequent, intuitionistic: Boolean): Option[UnprovableOrLKProof] = {
     def handle(i: SequentIndex, e: ExpansionTree, f: ExpansionTree, g: ExpansionTree, rule: (LKProof, LKProof, Formula) => LKProof) =
-      solve(theory, if (f.polarity.inSuc) expSeq.delete(i) :+ f else f +: expSeq.delete(i)) flatMap { p1 =>
+      solve(theory, if (f.polarity.inSuc) expSeq.delete(i) :+ f else f +: expSeq.delete(i)).flatMap { p1 =>
         if (!p1.conclusion.contains(f.shallow, f.polarity)) Right(p1)
         else solve(theory, if (g.polarity.inSuc) expSeq.delete(i) :+ g else g +: expSeq.delete(i)).map { p2 =>
           if (!p2.conclusion.contains(g.shallow, g.polarity)) p2
@@ -159,7 +159,7 @@ class ExpansionProofToLK(
         }
       }
 
-    expSeq.zipWithIndex.swapped.elements collectFirst {
+    expSeq.zipWithIndex.swapped.elements.collectFirst {
       case (e @ ETAnd(f, g), i: Suc)                    => handle(i, e, f, g, AndRightRule(_, _, _))
       case (e @ ETOr(f, g), i: Ant)                     => handle(i, e, f, g, OrLeftRule(_, _, _))
       case (e @ ETImp(f, g), i: Ant) if !intuitionistic => handle(i, e, f, g, ImpLeftRule(_, _, _))
@@ -181,7 +181,7 @@ class ExpansionProofToLK(
     }.headOption
 
   private def tryStrongQ(theory: Theory, expSeq: ExpansionSequent): Option[UnprovableOrLKProof] =
-    expSeq.zipWithIndex.elements collectFirst {
+    expSeq.zipWithIndex.elements.collectFirst {
       case (ETStrongQuantifier(sh, ev, f), i: Ant) =>
         mapIf(solve(theory, expSeq.updated(i, f)), f.shallow, i.polarity) {
           ExistsLeftRule(_, sh, ev)
@@ -206,7 +206,7 @@ class ExpansionProofToLK(
       case ETStrongQuantifier(_, ev, _) <- et.subProofs
     } yield ev).toSet
     def possibleInsts(insts: Map[Expr, ExpansionTree]) =
-      Map() ++ insts.view.filterKeys(t => freeVariables(t) intersect upcomingEVs isEmpty).toMap
+      Map() ++ insts.view.filterKeys(t => freeVariables(t).intersect(upcomingEVs) isEmpty).toMap
 
     for (case (ETWeakQuantifier(sh, insts), i) <- expSeq.zipWithIndex.elements) {
       val insts_ = possibleInsts(insts)
@@ -242,10 +242,10 @@ class ExpansionProofToLK(
       case ETStrongQuantifier(_, ev, _) <- et.subProofs
     } yield ev).toSet
 
-    theory.cuts.zipWithIndex collectFirst {
-      case (ETCut.Cut(cut1, cut2), i) if freeVariables(cut1.shallow) intersect upcomingEVs isEmpty =>
+    theory.cuts.zipWithIndex.collectFirst {
+      case (ETCut.Cut(cut1, cut2), i) if freeVariables(cut1.shallow).intersect(upcomingEVs) isEmpty =>
         val newCuts = theory.cuts.zipWithIndex.filter { _._2 != i }.map { _._1 }
-        solve(Theory(newCuts, theory.inductions), expSeq :+ cut1) flatMap { p1 =>
+        solve(Theory(newCuts, theory.inductions), expSeq :+ cut1).flatMap { p1 =>
           if (!p1.conclusion.contains(cut1.shallow, Polarity.InSuccedent)) Right(p1)
           else solve(Theory(newCuts, theory.inductions), cut2 +: expSeq).map { p2 =>
             if (!p2.conclusion.contains(cut2.shallow, Polarity.InAntecedent)) p2
@@ -262,12 +262,12 @@ class ExpansionProofToLK(
     } yield ev).toSet
 
     theory.inductions.zipWithIndex.collectFirst {
-      case (ETInduction.Induction(etCases, hyps, suc), i) if freeVariables(hyps.shallow) intersect upcomingEVs isEmpty =>
+      case (ETInduction.Induction(etCases, hyps, suc), i) if freeVariables(hyps.shallow).intersect(upcomingEVs) isEmpty =>
         val newTheory = Theory(theory.cuts, theory.inductions.zipWithIndex.filter { _._2 != i }.map { _._1 })
         def recCases(etCases: Seq[ETInduction.Case], lkCases: Seq[InductionCase]): UnprovableOrLKProof = {
           etCases match {
             case ETInduction.Case(c, evs, auxiliary) +: tail =>
-              solve(newTheory, expSeq ++ auxiliary) flatMap { p =>
+              solve(newTheory, expSeq ++ auxiliary).flatMap { p =>
                 if (p.conclusion.intersect(auxiliary.shallow).isEmpty) Right(p)
                 else {
                   val pWkn = WeakeningMacroRule(p, auxiliary.shallow, strict = false)

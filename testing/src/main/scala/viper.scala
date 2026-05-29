@@ -32,7 +32,7 @@ object testViper {
   def main(args: Array[String]): Unit = {
     def countInductions(prf: LKProof): (Int, Int) = {
       val (n, d) = prf.immediateSubProofs.map(countInductions).foldLeft((0, 0)) {
-        case ((n1, d1), (n2, d2)) => (n1 + n2, d1 max d2)
+        case ((n1, d1), (n2, d2)) => (n1 + n2, d1.max(d2))
       }
 
       prf match {

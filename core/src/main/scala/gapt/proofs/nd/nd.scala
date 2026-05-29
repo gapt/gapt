@@ -880,7 +880,7 @@ case class BottomElimRule(subProof: NDProof, mainFormula: Formula)
 case class ForallIntroRule(subProof: NDProof, eigenVariable: Var, quantifiedVariable: Var)
     extends UnaryNDProof with CommonRule with Eigenvariable {
 
-  val (auxFormula, context) = premise `focus` Suc(0)
+  val (auxFormula, context) = premise.`focus`(Suc(0))
 
   // eigenvariable condition
   if (freeVariables(context) contains eigenVariable)
@@ -1090,9 +1090,9 @@ case class ExistsElimRule(leftSubProof: NDProof, rightSubProof: NDProof, aux: Se
 
   validateIndices(rightPremise, Seq(aux))
 
-  val (existentialFormula, leftContext) = leftPremise `focus` Suc(0)
+  val (existentialFormula, leftContext) = leftPremise.`focus`(Suc(0))
 
-  val (auxFormula, rightContext) = rightPremise `focus` aux
+  val (auxFormula, rightContext) = rightPremise.`focus`(aux)
 
   // eigenvariable condition
   if (freeVariables(rightContext) contains eigenVariable)
@@ -1294,10 +1294,10 @@ case class InductionCase(proof: NDProof, constructor: Const, hypotheses: List[Se
   val FunctionType(indTy, fieldTypes) = constructor.ty: @unchecked
   require(fieldTypes == eigenVars.map(_.ty))
 
-  val hypVars = eigenVars filter { _.ty == indTy }
+  val hypVars = eigenVars.filter { _.ty == indTy }
   require(hypotheses.size == hypVars.size)
 
-  hypotheses foreach { hyp =>
+  hypotheses.foreach { hyp =>
     require(hyp.isAnt && proof.endSequent.isDefinedAt(hyp))
   }
 
@@ -1325,15 +1325,16 @@ case class InductionCase(proof: NDProof, constructor: Const, hypotheses: List[Se
 case class InductionRule(cases: Seq[InductionCase], formula: Abs, term: Expr) extends CommonRule {
   val Abs(quant @ Var(_, indTy), qfFormula) = formula
   require(term.ty == indTy)
-  cases foreach { c =>
+  cases.foreach { c =>
     require(c.indTy == indTy)
-    c.hypotheses.lazyZip(c.hypVars) foreach { (hyp, eigen) =>
+    c.hypotheses.lazyZip(c.hypVars).foreach { (hyp, eigen) =>
       require(c.proof.endSequent(hyp) == Substitution(quant -> eigen)(qfFormula))
     }
     require(c.proof.endSequent(Suc(0)) == Substitution(quant -> c.term)(qfFormula))
   }
-  require(freeVariables(contexts.flatMap(_.elements) :+ formula) intersect
-    cases.flatMap(_.eigenVars).toSet isEmpty)
+  require(freeVariables(contexts.flatMap(_.elements) :+ formula).intersect(
+    cases.flatMap(_.eigenVars).toSet
+  ) isEmpty)
 
   val mainFormula = BetaReduction.betaNormalize(formula(term).asInstanceOf[Formula])
   override protected def mainFormulaSequent = Sequent() :+ mainFormula
@@ -1489,7 +1490,7 @@ class ConvenienceConstructor(val longName: String) {
   protected def validateIndices(premise: HOLSequent)(antFormulas: Seq[Formula], antIndices: Seq[Int]) = {
     val antMap = scala.collection.mutable.HashMap.empty[Formula, Int]
 
-    for ((f, i) <- antFormulas zip antIndices) {
+    for ((f, i) <- antFormulas.zip(antIndices)) {
       val count = antMap.getOrElse(f, 0)
 
       if (i == -1)

@@ -301,9 +301,9 @@ object CASCEvaluation {
 
   def get_prop_to_minprop_graph[T <: CASCResult, U](bundle: ResultBundle[T], prop: RPProofStats[T] => U)(implicit num: Numeric[U]) = {
     val provers = bundle.rp_stats.keySet.map(_.prover).toList.sorted
-    val prover_no = Map[Prover, Int]() ++ (provers zip (1 to provers.size))
+    val prover_no = Map[Prover, Int]() ++ (provers.zip(1 to provers.size))
     val byProblem = TstpStatistics.bagResults(bundle.rp_stats)._2
-    val problem_no = Map[Problem, Int]() ++ (byProblem.keySet.toList zip (1 to byProblem.keySet.size))
+    val problem_no = Map[Problem, Int]() ++ (byProblem.keySet.toList.zip(1 to byProblem.keySet.size))
     val minValues: Map[Problem, U] = byProblem.map(x => (x._1, x._2.map(prop).min))
 
     val data = bundle.rp_stats.toList.map(x =>

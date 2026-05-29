@@ -70,7 +70,7 @@ object deltaTableAlgorithm {
     for {
       case (corrK, `chosenV`) <- b.flatten
       newAlreadyFixed = alreadyFixed + (chosenK -> corrK)
-      if a.map(Map() ++ _.view.filterKeys(newAlreadyFixed.keySet).toMap) subsetOf b.map(bi => Map() ++ newAlreadyFixed.view.mapValues(bi).toMap)
+      if a.map(Map() ++ _.view.filterKeys(newAlreadyFixed.keySet).toMap).subsetOf(b.map(bi => Map() ++ newAlreadyFixed.view.mapValues(bi).toMap))
       solution <- keySubsumption(a, b, newAlreadyFixed)
     } yield solution
   }
@@ -88,13 +88,13 @@ object deltaTableAlgorithm {
             subst = Substitution(subs)
             (u2, t2) <- row2
           } newRow += subst(u2) -> t2
-          newRow = newRow.groupBy { _._1 }.view.mapValues { _ flatMap { _._2 } toSet }.toMap.to(mutable.Set)
+          newRow = newRow.groupBy { _._1 }.view.mapValues { _.flatMap { _._2 } toSet }.toMap.to(mutable.Set)
           for {
             e1 @ (u1, t1) <- newRow
             e2 @ (u2, t2) <- newRow
             if newRow contains e1
             if e1 != e2
-            if t2 subsetOf t1
+            if t2.subsetOf(t1)
           } newRow -= e2
           s1 -> newRow.toSet
         }
@@ -124,25 +124,25 @@ object deltaTableAlgorithm {
       } else if (row isEmpty) {
         throw new IllegalArgumentException
       } else {
-        val pivot = row maxBy { _._2.size }
+        val pivot = row.maxBy { _._2.size }
 
         // Case 1, pivot is included.
         minimizeRow(
           termSet.diff(pivot._2),
-          row.map { x => x._1 -> x._2.diff(pivot._2) } filter { _._2.nonEmpty },
+          row.map { x => x._1 -> x._2.diff(pivot._2) }.filter { _._2.nonEmpty },
           alreadyIncluded + pivot._1,
           s
         )
 
         // Case 2, pivot is not included.
-        val restRow = row filterNot { _._2 subsetOf pivot._2 }
-        val restLang = restRow flatMap { _._2 }
-        if (termSet subsetOf restLang)
+        val restRow = row.filterNot { _._2.subsetOf(pivot._2) }
+        val restLang = restRow.flatMap { _._2 }
+        if (termSet.subsetOf(restLang))
           minimizeRow(termSet, restRow, alreadyIncluded, s)
       }
 
-    for ((s, decomps) <- deltatable.toSeq sortBy { -_._1.toSeq.flatMap { _.map.values }.map { expressionSize(_) }.sum }) {
-      val coveredTerms = decomps flatMap { _._2 }
+    for ((s, decomps) <- deltatable.toSeq.sortBy { -_._1.toSeq.flatMap { _.map.values }.map { expressionSize(_) }.sum }) {
+      val coveredTerms = decomps.flatMap { _._2 }
       minimizeRow(coveredTerms, decomps, termSet.diff(coveredTerms), s)
     }
 
@@ -157,7 +157,7 @@ object deltaTableAlgorithm {
     } minimizeRow(termSet, row, Set(), s)
 
     if (minGrammars isEmpty) termSet -> Set()
-    else minGrammars minBy { g => g._1.size + g._2.size }
+    else minGrammars.minBy { g => g._1.size + g._2.size }
   }
 
   def grammarToVTRATG(us: Set[Expr], s: Set[Substitution]): VTRATG = {
@@ -167,7 +167,7 @@ object deltaTableAlgorithm {
       tau,
       Seq(List(tau), alpha),
       (for (subst <- s) yield alpha -> alpha.map { subst(_) })
-        union (for (u <- us) yield List(tau) -> List(u))
+        .union(for (u <- us) yield List(tau) -> List(u))
     )
   }
 
@@ -192,10 +192,10 @@ case class DeltaTableMethod(
 
   def name = {
     val n = new StringBuilder
-    n append (if (singleQuantifier) "1" else "many")
-    n append "_dtable"
-    if (subsumedRowMerging) n append "_ss"
-    for (l <- keyLimit) n append s"_lim$l"
+    n.append(if (singleQuantifier) "1" else "many")
+    n.append("_dtable")
+    if (subsumedRowMerging) n.append("_ss")
+    for (l <- keyLimit) n.append(s"_lim$l")
     n.result()
   }
 }

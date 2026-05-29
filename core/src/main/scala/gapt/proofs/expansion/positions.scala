@@ -93,7 +93,7 @@ object commuteReplacementCtxWithDefEq {
     (c, a) match {
       case _ if Substitution(x -> t)(c) == a => c
       case (Apps(fn1, as1), Apps(fn2, as2)) if fn1 == fn2 && !freeVariables(fn1).contains(x) =>
-        fn1(for ((a1, a2) <- as1 zip as2) yield apply(x, a1, t, a2))
+        fn1(for ((a1, a2) <- as1.zip(as2)) yield apply(x, a1, t, a2))
       case (c @ Quant(y1, _, pol1), a @ Quant(y2, _, pol2)) if y1.ty == y2.ty && pol1 == pol2 =>
         val y = rename(y1, freeVariables(c) ++ freeVariables(a) ++ freeVariables(t) + x)
         Quant(y, apply(x, instantiate(c, y), t, instantiate(a, y)).asInstanceOf[Formula], pol1)

@@ -51,7 +51,7 @@ object prop_15 extends TacticsProof {
 
   val openind = Lemma(sequent) {
     allR(hov"x:Nat")
-    cut("l", hof"!y plus(x, S y) = S(plus x y)") `right` escrgt
+    cut("l", hof"!y plus(x, S y) = S(plus x y)").`right`(escrgt)
     forget("goal"); anaInd
   }
 }

@@ -32,7 +32,7 @@ object solutionViaInterpolation {
         val vss = for (_ <- sehs.ss(i)._2)
           yield sehs.ss(i)._1.map(v => Const(nameGen.fresh(v.name), v.ty))
         val children = for (vs <- vss)
-          yield mkAss(i - 1, subst.`compose`(Substitution(sehs.ss(i)._1 zip vs)))
+          yield mkAss(i - 1, subst.`compose`(Substitution(sehs.ss(i)._1.zip(vs))))
         val eqs = for ((s, v) <- subst(sehs.ss(i)._2).flatten.zip(vss.flatten)) yield v === s
         Tree((i + 1, subst, And(eqs) & insts), children.toVector)
       }

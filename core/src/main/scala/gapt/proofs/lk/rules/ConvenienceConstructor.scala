@@ -112,7 +112,7 @@ class ConvenienceConstructor(val longName: String) {
     val antMap = scala.collection.mutable.HashMap.empty[Formula, Int]
     val sucMap = scala.collection.mutable.HashMap.empty[Formula, Int]
 
-    for ((f, i) <- antFormulas zip antIndices) {
+    for ((f, i) <- antFormulas.zip(antIndices)) {
       val count = antMap.getOrElse(f, 0)
 
       if (i == -1)
@@ -121,7 +121,7 @@ class ConvenienceConstructor(val longName: String) {
       antMap += f -> (count + 1)
     }
 
-    for ((f, i) <- sucFormulas zip sucIndices) {
+    for ((f, i) <- sucFormulas.zip(sucIndices)) {
       val count = sucMap.getOrElse(f, 0)
 
       if (i == -1)

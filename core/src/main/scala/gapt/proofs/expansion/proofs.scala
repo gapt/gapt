@@ -125,13 +125,13 @@ object ExpansionProof {
 
   implicit object closedUnderSubst extends ClosedUnderSub[ExpansionProof] {
     override def applySubstitution(subst: Substitution, expansionProof: ExpansionProof): ExpansionProof =
-      if (subst.domain intersect expansionProof.eigenVariables nonEmpty) {
+      if (subst.domain.intersect(expansionProof.eigenVariables) nonEmpty) {
         applySubstitution(Substitution(subst.map -- expansionProof.eigenVariables), expansionProof)
       } else {
         val substWithRenaming = subst.`compose`(Substitution(
           rename(
-            expansionProof.eigenVariables intersect subst.range,
-            expansionProof.eigenVariables union subst.range
+            expansionProof.eigenVariables.intersect(subst.range),
+            expansionProof.eigenVariables.union(subst.range)
           )
         ))
         ExpansionProof(substWithRenaming(expansionProof.expansionSequent))
@@ -168,7 +168,7 @@ object freeVariablesET {
 
   /** Note: also includes variables contained in eigenvariable nodes. */
   def apply(expansionTree: ExpansionTree): Set[Var] =
-    apply(expansionTree.term) union freeVariables(expansionTree.shallow)
+    apply(expansionTree.term).union(freeVariables(expansionTree.shallow))
 
   /** Note: also includes variables contained in eigenvariable nodes. */
   def apply(et: ETt): Set[Var] = {

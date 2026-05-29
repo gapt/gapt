@@ -49,9 +49,9 @@ object moveStrongQuantifierRulesDown {
     case p @ InductionRule(_, _, _) if p.mainIndices contains idx => true
     case _ =>
       (for (
-        (q, o) <- p.immediateSubProofs zip p.occConnectors;
+        (q, o) <- p.immediateSubProofs.zip(p.occConnectors);
         aux <- o.parents(idx)
-      ) yield isUnderInduction(q, aux.asInstanceOf[Suc], quantNum)) exists identity
+      ) yield isUnderInduction(q, aux.asInstanceOf[Suc], quantNum)).exists(identity)
   }
 
   private def apply(p: LKProof, eigenVariables: Sequent[Seq[Var]]): (LKProof, SequentConnector) = p.conclusion.zipWithIndex.elements.view.collect {
@@ -67,7 +67,7 @@ object moveStrongQuantifierRulesDown {
       val (q, oc) = apply(p, eigenVariables.updated(i, eigenVariables(i) :+ eigen))
       val q_ = ExistsLeftRule(q, oc.child(i), eigen, v)
       (q_, q_.getSequentConnector * oc)
-  }.headOption getOrElse {
+  }.headOption.getOrElse {
     p match {
       case StrongQuantifierRule(subProof, aux, eigen, quant, isSuc) =>
         val newEigen = eigenVariables(p.mainIndices.head).head
@@ -89,8 +89,8 @@ object moveStrongQuantifierRulesDown {
         (q, (q.getSequentConnector * oc * p.getSequentConnector.inv).+(q.mainIndices.head, p.mainIndices.head))
 
       case _ =>
-        val (qs, oc) = (for ((subProof, occConn) <- p.immediateSubProofs zip p.occConnectors)
-          yield apply(subProof, occConn.parents(eigenVariables).map(_.headOption getOrElse Seq()))).unzip
+        val (qs, oc) = (for ((subProof, occConn) <- p.immediateSubProofs.zip(p.occConnectors))
+          yield apply(subProof, occConn.parents(eigenVariables).map(_.headOption.getOrElse(Seq())))).unzip
         val q = p match {
           case ContractionLeftRule(_, aux1, aux2)  => ContractionLeftRule(qs(0), oc(0).child(aux1), oc(0).child(aux2))
           case ContractionRightRule(_, aux1, aux2) => ContractionRightRule(qs(0), oc(0).child(aux1), oc(0).child(aux2))

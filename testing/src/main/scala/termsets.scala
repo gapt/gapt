@@ -26,7 +26,7 @@ object dumpTermset {
 
     def termToString(t: FOLTerm): String = t match {
       case FOLConst(f)          => s"$f"
-      case FOLFunction(f, args) => s"$f(${args.map(termToString) mkString ","})"
+      case FOLFunction(f, args) => s"$f(${args.map(termToString).mkString(",")})"
     }
 
     def writeTermset(outFile: Path, termset: Set[FOLTerm]) =

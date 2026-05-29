@@ -27,12 +27,12 @@ import gapt.utils.Maybe
 
 object Escargot extends Escargot(splitting = true, equality = true, propositional = false) {
   def lpoHeuristic(cnf: Iterable[HOLSequent], extraConsts: Iterable[Const]): LPO = {
-    val consts = constants.nonLogical(cnf flatMap { _.elements }) ++ extraConsts
+    val consts = constants.nonLogical(cnf.flatMap { _.elements }) ++ extraConsts
 
-    val boolOnTermLevel = consts exists { case Const(_, FunctionType(_, from), _) => from contains To }
+    val boolOnTermLevel = consts.exists { case Const(_, FunctionType(_, from), _) => from contains To }
 
     val atoms = for (c <- consts; FunctionType(to, _) = c.ty: @unchecked if to == To) yield c
-    val eqs = atoms collect { case c @ EqC(_) => c }
+    val eqs = atoms.collect { case c @ EqC(_) => c }
     val functions = for (c <- consts; FunctionType(to, _) = c.ty: @unchecked if to != To) yield c
 
     val precedence = functions.toSeq.sortBy { arity(_) } ++ eqs ++ (atoms.diff(eqs)).toSeq.sortBy { arity(_) }

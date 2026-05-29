@@ -67,7 +67,7 @@ object generatedUpperSetInPO {
         upper += el
         for (case (`el`, next) <- rel) walk(next)
       }
-    gen foreach walk
+    gen.foreach(walk)
     upper.toSet
   }
 }

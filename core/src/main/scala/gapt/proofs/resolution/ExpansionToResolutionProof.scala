@@ -48,14 +48,17 @@ object ExpansionToResolutionProof {
   private def tryNAry(es: ExpansionSequent, p: ResolutionProof): Option[Set[ResolutionProof]] =
     es.zipWithIndex.elements.collectFirst {
       case (ETAnd(a, b), i: Suc) =>
-        clausify(es.delete(i) :+ a, AndR1(p, i)) union
+        clausify(es.delete(i) :+ a, AndR1(p, i)).union(
           clausify(es.delete(i) :+ b, AndR2(p, i))
+        )
       case (ETOr(a, b), i: Ant) =>
-        clausify(a +: es.delete(i), OrL1(p, i)) union
+        clausify(a +: es.delete(i), OrL1(p, i)).union(
           clausify(b +: es.delete(i), OrL2(p, i))
+        )
       case (ETImp(a, b), i: Ant) =>
-        clausify(es.delete(i) :+ a, ImpL1(p, i)) union
+        clausify(es.delete(i) :+ a, ImpL1(p, i)).union(
           clausify(b +: es.delete(i), ImpL2(p, i))
+        )
 
       case (ETWeakQuantifier(sh @ Quant(v, _, isForall), insts), i) =>
         val ev = rename(v, freeVariables(p.conclusion))

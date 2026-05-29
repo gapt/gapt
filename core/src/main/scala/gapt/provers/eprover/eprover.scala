@@ -27,7 +27,7 @@ class EProver(extraArgs: Seq[String]) extends ResolutionProver with ExternalProg
           require(lines.contains("# SZS status Unsatisfiable") || lines.contains("# SZS status ContradictoryAxioms"))
           logger.time("eprover_import") {
             val sketch = TptpProofParser.parse(
-              StringInputFile(lines.filterNot(_ `startsWith` "#").mkString("\n")),
+              StringInputFile(lines.filterNot(_.`startsWith`("#")).mkString("\n")),
               labelledCNF.view.mapValues(Seq(_)).toMap
             )
             Some(RefutationSketchToResolution(sketch).getOrElse(throw new Exception("Could not reconstruct proof")))

@@ -65,7 +65,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     case p: CutRule =>
       List(cutAncestorIndices.flatMap(proof.occConnectors.head.parents) + p.aux1, cutAncestorIndices.flatMap(proof.occConnectors.tail.head.parents) + p.aux2)
     case _ =>
-      for ((p, i) <- proof.immediateSubProofs.zipWithIndex) yield cutAncestorIndices flatMap proof.occConnectors(i).parents
+      for ((p, i) <- proof.immediateSubProofs.zipWithIndex) yield cutAncestorIndices.flatMap(proof.occConnectors(i).parents)
   }
 
   val subProofs = for ((p, i) <- proof.immediateSubProofs.zipWithIndex) yield {
@@ -169,7 +169,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     case HideEndSequent(p) if p == pos =>
       endSequentPanel.visible = false
 
-    case ShowAllRules(p) if pos endsWith p =>
+    case ShowAllRules(p) if pos.endsWith(p) =>
       showLine()
       endSequentPanel.visible = true
 

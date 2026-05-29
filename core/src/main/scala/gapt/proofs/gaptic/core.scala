@@ -59,7 +59,7 @@ case class ProofState private (
       throw new IllegalArgumentException(s"Cannot replace non-existing open subgoal: $index")
     )
     require(
-      proofSegment.conclusion `isSubsetOf` subGoal.conclusion,
+      proofSegment.conclusion.`isSubsetOf`(subGoal.conclusion),
       s"Conclusion of proof segment is not a subset of subgoal:\n${proofSegment.conclusion}\nis not a subset of\n${subGoal.conclusion}\n"
         + s"Extra formulas:\n${proofSegment.conclusion.distinct.diff(subGoal.conclusion)}"
     )
@@ -73,11 +73,11 @@ case class ProofState private (
     for ((idx, oas) <- newOpenAssumptions.groupBy(_.index))
       require(oas.size == 1, s"Different new open assumptions with same index:\n${oas.mkString("\n")}")
     require(
-      newOpenAssumptions intersect subGoals_ isEmpty,
+      newOpenAssumptions.intersect(subGoals_) isEmpty,
       s"New open assumption contains already open subgoal"
     )
     require(
-      newOpenAssumptions.map(_.index).toSet intersect finishedSubGoals.keySet isEmpty,
+      newOpenAssumptions.map(_.index).toSet.intersect(finishedSubGoals.keySet) isEmpty,
       s"New open assumption contains already finished subgoal"
     )
 
@@ -126,7 +126,7 @@ case class ProofState private (
  * The globally unique index of an open assumption in a proof state.
  */
 class OpenAssumptionIndex {
-  override def toString = Integer `toHexString` hashCode() take 3
+  override def toString = Integer.`toHexString`(hashCode()).take(3)
 }
 
 /**
@@ -145,9 +145,9 @@ case class OpenAssumption(
 
   def toPrettyString(implicit sig: BabelSignature) = {
     val builder = new StringBuilder
-    for ((l, f) <- labelledSequent.antecedent) builder append s"$l: ${f.toSigRelativeString}\n"
-    builder append ":-\n"
-    for ((l, f) <- labelledSequent.succedent) builder append s"$l: ${f.toSigRelativeString}\n"
+    for ((l, f) <- labelledSequent.antecedent) builder.append(s"$l: ${f.toSigRelativeString}\n")
+    builder.append(":-\n")
+    for ((l, f) <- labelledSequent.succedent) builder.append(s"$l: ${f.toSigRelativeString}\n")
     builder.toString
   }
 }
@@ -222,7 +222,7 @@ trait Tactic[+T] { self =>
   }
 
   def andThen[S](t2: => Tactic[S]): Tactic[S] = new Tactic[S] {
-    def apply(proofState: ProofState) = self(proofState) flatMap { x => t2(x._2) }
+    def apply(proofState: ProofState) = self(proofState).flatMap { x => t2(x._2) }
     override def toString = s"$self andThen $t2"
   }
 
@@ -232,7 +232,7 @@ trait Tactic[+T] { self =>
   }
 
   def flatMap[S](f: T => Tactic[S])(implicit file: sourcecode.File, line: sourcecode.Line): Tactic[S] = new Tactic[S] {
-    def apply(proofState: ProofState) = self(proofState) flatMap { x => f(x._1)(x._2) }
+    def apply(proofState: ProofState) = self(proofState).flatMap { x => f(x._1)(x._2) }
     override def toString = s"$self.flatMap(<${file.value}:${line.value}>)"
   }
 
@@ -437,11 +437,11 @@ object NewLabels {
 
     // Get integer subscripts (i.e 1, 2, 3 for x_1, x_2, x_3)
     val usedVariableSubscripts = {
-      for ((label, _) <- sequent.elements; m <- regex findFirstMatchIn label)
-        yield Integer `parseInt` (m group 1)
+      for ((label, _) <- sequent.elements; m <- regex.findFirstMatchIn(label))
+        yield Integer.`parseInt`(m.group(1))
     }.toSet
 
-    for (i <- LazyList from 0 if !usedVariableSubscripts(i)) yield f"$fromLabel%s_$i%d"
+    for (i <- LazyList.from(0) if !usedVariableSubscripts(i)) yield f"$fromLabel%s_$i%d"
   }
 }
 

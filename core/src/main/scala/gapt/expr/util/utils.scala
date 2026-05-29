@@ -92,9 +92,9 @@ object variables {
 
   def apply(t: FOLExpression): Set[FOLVar] = apply(t.asInstanceOf[Expr]).asInstanceOf[Set[FOLVar]]
   def apply(s: HOLSequent): Set[Var] = (s.antecedent ++ s.succedent).foldLeft(Set[Var]())((x, y) => x ++ apply(y))
-  def apply(s: Sequent[FOLFormula])(implicit dummyImplicit: DummyImplicit, dummyImplicit2: DummyImplicit): Set[FOLVar] = s.elements flatMap apply toSet
+  def apply(s: Sequent[FOLFormula])(implicit dummyImplicit: DummyImplicit, dummyImplicit2: DummyImplicit): Set[FOLVar] = s.elements.flatMap(apply) toSet
   def apply[Fml <: Expr, Proof <: SequentProof[Fml, Proof]](p: SequentProof[Fml, Proof]): Set[Var] =
-    p.subProofs flatMap { _.conclusion.elements } flatMap { variables(_) }
+    p.subProofs.flatMap { _.conclusion.elements }.flatMap { variables(_) }
 }
 
 /**
@@ -116,9 +116,9 @@ object boundVariables {
 
   def apply(t: FOLExpression): Set[FOLVar] = apply(t.asInstanceOf[Expr]).asInstanceOf[Set[FOLVar]]
   def apply(s: HOLSequent): Set[Var] = (s.antecedent ++ s.succedent).foldLeft(Set[Var]())((x, y) => x ++ apply(y))
-  def apply(s: Sequent[FOLFormula])(implicit dummyImplicit: DummyImplicit, dummyImplicit2: DummyImplicit): Set[FOLVar] = s.elements flatMap apply toSet
+  def apply(s: Sequent[FOLFormula])(implicit dummyImplicit: DummyImplicit, dummyImplicit2: DummyImplicit): Set[FOLVar] = s.elements.flatMap(apply) toSet
   def apply[Fml <: Expr, Proof <: SequentProof[Fml, Proof]](p: SequentProof[Fml, Proof]): Set[Var] =
-    p.subProofs flatMap { _.conclusion.elements } flatMap { variables(_) }
+    p.subProofs.flatMap { _.conclusion.elements }.flatMap { variables(_) }
 }
 
 /**
@@ -250,7 +250,7 @@ object expressionDepth {
   def apply(t: Expr): Int = t match {
     case Var(_, _) | Const(_, _, _) => 1
     case Abs(_, s)                  => apply(s) + 1
-    case App(a, b)                  => (apply(a) max apply(b)) + 1
+    case App(a, b)                  => (apply(a).max(apply(b))) + 1
   }
 
 }

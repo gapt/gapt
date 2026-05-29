@@ -74,7 +74,7 @@ case class ExpansionTree(term: ETt, polarity: Polarity, shallow: Formula) extend
   def apply(pos: HOLPosition): Set[ExpansionTree] =
     if (pos.isEmpty) Set(this)
     else ((pos.head, this): @unchecked) match {
-      case (_, ETMerge(a, b)) => a.apply(pos) union b.apply(pos)
+      case (_, ETMerge(a, b)) => a.apply(pos).union(b.apply(pos))
 
       case (1, ETNeg(ch)) => ch.apply(pos.tail)
 
@@ -152,7 +152,7 @@ object ExpansionTree {
       ExpansionTree(TermReplacement(et.term, p), et.polarity, TermReplacement(et.shallow, p))
 
     def names(et: ExpansionTree): Set[VarOrConst] =
-      containedNames(et.term) union containedNames(et.shallow)
+      containedNames(et.term).union(containedNames(et.shallow))
   }
 
   implicit object checkable extends Checkable[ExpansionTree] {

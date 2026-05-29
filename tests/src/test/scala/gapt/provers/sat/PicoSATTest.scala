@@ -29,8 +29,8 @@ class PicoSATTest extends Specification {
   }
 
   "deal correctly with the pigeonhole problem" in {
-    SATProblems.getProblem6a() foreach { f => PicoSAT.isValid(f) must beFalse }
-    SATProblems.getProblem6b() foreach { f => PicoSAT.isValid(f) must beTrue }
+    SATProblems.getProblem6a().foreach { f => PicoSAT.isValid(f) must beFalse }
+    SATProblems.getProblem6b().foreach { f => PicoSAT.isValid(f) must beTrue }
     ok
   }
 

@@ -16,7 +16,7 @@ object runProcess {
   def apply(cmd: Seq[String], stdin: String = "", catchStderr: Boolean = false): String =
     withExitValue(cmd, stdin, catchStderr) match {
       case (0, out)         => out
-      case (exitValue, out) => throw new IOException(s"${cmd mkString " "} exited with value $exitValue:\n$out")
+      case (exitValue, out) => throw new IOException(s"${cmd.mkString(" ")} exited with value $exitValue:\n$out")
     }
 
   private implicit val newThreadExecutionContext: ExecutionContext =

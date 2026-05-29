@@ -42,7 +42,7 @@ class CutIntroTest extends Specification {
   "linear equality example" in {
     val Some(p) = Escargot.getLKProof(hos"!x f (s x) = f x :- f ${Numeral(9)} = f 0"): @unchecked
     val Some(q) = CutIntroduction(p): @unchecked
-    val cutFormulas = q.subProofs collect { case c: CutRule => c.cutFormula } filter { containsQuantifier(_) }
+    val cutFormulas = (q.subProofs.collect { case c: CutRule => c.cutFormula }).filter { containsQuantifier(_) }
     cutFormulas must contain(atMost(
       hof"!x f (s (s (s x))) = f x",
       hof"!x f x = f (s (s (s x)))"

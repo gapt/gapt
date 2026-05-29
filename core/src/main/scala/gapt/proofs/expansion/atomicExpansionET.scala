@@ -107,8 +107,8 @@ object atomicExpansionET {
           val (neg, pos) = mkNew(fml)
 
           val ep_ = mapDefinedAtom(ep) {
-            case (_, Apps(`d`, as), Negative) => Substitution(xs zip as)(neg)
-            case (_, Apps(`d`, as), Positive) => Substitution(xs zip as)(pos)
+            case (_, Apps(`d`, as), Negative) => Substitution(xs.zip(as))(neg)
+            case (_, Apps(`d`, as), Positive) => Substitution(xs.zip(as))(pos)
           }
 
           loop(ep_, definedAtoms - d ++ newDefs, purelyPropositional)

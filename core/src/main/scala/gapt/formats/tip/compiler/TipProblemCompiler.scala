@@ -104,7 +104,7 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
 
     val TipSmtDatatypesDeclaration(datatypes) = tipSmtDatatypesDeclaration
 
-    datatypes foreach { declareDatatype }
+    datatypes.foreach { declareDatatype }
   }
 
   private def compileConstantDeclaration(
@@ -355,7 +355,7 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
       case _ =>
     }
     tipSmtImp.exprs
-      .map { compileExpression(_, freeVars, Some(To)) } reduceRight { _ --> _ }
+      .map { compileExpression(_, freeVars, Some(To)) }.reduceRight { _ --> _ }
   }
 
   private def compileExpression(
@@ -591,7 +591,7 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
       case _ =>
     }
     val exprs = tipSmtEq.exprs.map { compileExpression(_, freeVars, None) }
-    And(for ((a, b) <- exprs zip exprs.tail)
+    And(for ((a, b) <- exprs.zip(exprs.tail))
       yield if (exprs.head.ty == To) a <-> b else a === b)
   }
 
@@ -778,8 +778,8 @@ class TipSmtToTipProblemCompiler(var problem: TipSmtProblem) {
       case c @ TipSmtDatatypesDeclaration(_) =>
         compileDatatypesDeclaration(c)
       case TipSmtMutualRecursiveFunctionDefinition(functions) =>
-        functions foreach { declareFunction }
-        functions foreach { compileFunctionDefinition }
+        functions.foreach { declareFunction }
+        functions.foreach { compileFunctionDefinition }
     }
     this
   }

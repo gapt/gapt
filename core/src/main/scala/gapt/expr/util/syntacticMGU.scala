@@ -108,7 +108,7 @@ object syntacticMGU {
             val x_ @ Var(_, _) = subst.toSubstitution(x): @unchecked
             if (x_ == t_) {
               USome(subst)
-            } else if (freeVariables(t_) intersect (bound + x_) nonEmpty) {
+            } else if (freeVariables(t_).intersect(bound + x_) nonEmpty) {
               UNone()
             } else if (x_.ty == t_.ty) {
               val subst1 = Substitution(x -> t_ :: Nil, subst.typeMap.toSeq)
@@ -129,7 +129,7 @@ object syntacticMGU {
 
   def apply(exprs: Iterable[Expr])(implicit dummyImplicit: DummyImplicit): Option[Substitution] = {
     val exprs_ = exprs.toSeq
-    apply(exprs_ zip exprs_.tail)
+    apply(exprs_.zip(exprs_.tail))
   }
   def apply(eqs: Iterable[(Expr, Expr)], alreadyAssigned: PreSubstitution): Option[Substitution] = {
     var subst: UOption[PreSubstitution] = USome(alreadyAssigned)

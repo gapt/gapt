@@ -136,7 +136,7 @@ case class fastStructuralCNF(propositional: Boolean = true, bidirectionalDefs: B
     // In order to combat exponential blow-up, we do something special if there are two or more such elements:
     // we introduce a definition for the first one.
     def split(seq: HOLSequent): Unit = {
-      (seq.zipWithIndex.elements collect {
+      (seq.zipWithIndex.elements.collect {
         case (And(a, b), i: Suc) => i
         case (Or(a, b), i: Ant)  => i
         case (Imp(a, b), i: Ant) => i
@@ -168,7 +168,7 @@ case class fastStructuralCNF(propositional: Boolean = true, bidirectionalDefs: B
     def abbrev(seq: HOLSequent, i: SequentIndex): Unit = {
       val f = seq(i)
       val fvs = if (propositional) Seq() else freeVariables(f).toSeq
-      val alreadyDefined = defs isDefinedAt Abs(fvs, f)
+      val alreadyDefined = defs.isDefinedAt(Abs(fvs, f))
       val const = defs.getOrElseUpdate(
         Abs(fvs, f),
         formula.hol.HOLAtomConst(mkAbbrevSym(), fvs.map { _.ty }*)

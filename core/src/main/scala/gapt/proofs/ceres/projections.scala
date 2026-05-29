@@ -142,7 +142,7 @@ object Projections {
   /* traces the ancestor relationship to infer cut-formulas in the parent proof. if a formula does not have parents,
      use default */
   private def mapToUpperProof[Formula](conn: SequentConnector, cut_occs: Sequent[Boolean], default: Boolean) =
-    conn.parents(cut_occs).map(_.headOption getOrElse default)
+    conn.parents(cut_occs).map(_.headOption.getOrElse(default))
 
   def handleBinaryESAnc(proof: LKProof, parent1: LKProof, parent2: LKProof, s1: Set[LKProof], s2: Set[LKProof], constructor: (LKProof, SequentIndex, LKProof, SequentIndex) => LKProof) =
     s1.foldLeft(Set.empty[LKProof])((s, p1) =>
@@ -154,7 +154,7 @@ object Projections {
 
   def getESAncs(proof: LKProof, cut_ancs: Sequent[Boolean]): HOLSequent =
     // use cut_ancs as characteristic function to filter the the cut-ancestors from the current sequent
-    (proof.endSequent `zip` cut_ancs).filterNot(_._2).map(_._1)
+    (proof.endSequent.`zip`(cut_ancs)).filterNot(_._2).map(_._1)
 
   // Handles the case of a binary rule operating on a cut-ancestor.
   def handleBinaryCutAnc(proof: LKProof, p1: LKProof, p2: LKProof, s1: Set[LKProof], s2: Set[LKProof], cut_ancs1: Sequent[Boolean], cut_ancs2: Sequent[Boolean]): Set[LKProof] = {

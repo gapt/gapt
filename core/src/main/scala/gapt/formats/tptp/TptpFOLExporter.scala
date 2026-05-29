@@ -15,17 +15,17 @@ object TptpFOLExporter {
 
     val file = Seq.newBuilder[TptpInput]
 
-    sequent.antecedent.zipWithIndex foreach {
+    sequent.antecedent.zipWithIndex.foreach {
       case (formula, i) =>
         file += AnnotatedFormula("fof", s"ant_$i", "axiom", formula, Seq())
     }
 
     if (sequent.succedent.size <= 1) {
-      sequent.succedent foreach (formula =>
+      sequent.succedent.foreach(formula =>
         file += AnnotatedFormula("fof", "suc_0", "conjecture", formula, Seq())
       )
     } else {
-      sequent.succedent.zipWithIndex foreach {
+      sequent.succedent.zipWithIndex.foreach {
         case (formula, i) =>
           file += AnnotatedFormula("fof", s"suc_$i", "axiom", -formula, Seq())
       }

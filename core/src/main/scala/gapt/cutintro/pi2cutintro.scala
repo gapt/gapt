@@ -58,7 +58,7 @@ object Pi2CutIntroduction {
       metric("alpha_prods", grammar.productions.count(_._1 == grammar.alpha))
       metric("pi1_grammarsize", grammar.tratg.size)
       metric("genlangsize", grammar.language.size)
-      metric("covers_lang", lang subsetOf grammar.language)
+      metric("covers_lang", lang.subsetOf(grammar.language))
       val sehs = pi2GrammarToSEHS(grammar, enc)
       val (cutFormulaOpt, x, y) = introducePi2Cut(sehs)
       cutFormulaOpt.flatMap { cutFormula =>

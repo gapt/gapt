@@ -100,7 +100,7 @@ class ReductionTest extends Specification {
       val Some(folProof) = Escargot.getResolutionProof(folCNF): @unchecked
 
       val proof = back(eliminateSplitting(folProof))
-      proof.subProofs foreach {
+      proof.subProofs.foreach {
         case Input(Sequent(Seq(conj), Seq()))  => conj must_== sequent.succedent.head
         case Input(Sequent(Seq(), Seq(axiom))) => axiom must_== sequent.antecedent.head
         case Input(_)                          => ko
@@ -121,7 +121,7 @@ class ReductionTest extends Specification {
       val Some(folProof) = Escargot.getResolutionProof(folCNF): @unchecked
 
       val proof = back(eliminateSplitting(folProof))
-      proof.subProofs foreach {
+      proof.subProofs.foreach {
         case Input(Sequent(Seq(conj), Seq()))  => conj must_== sequent.succedent.head
         case Input(Sequent(Seq(), Seq(axiom))) => axiom must_== sequent.antecedent.head
         case Input(_)                          => ko

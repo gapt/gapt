@@ -12,7 +12,7 @@ import gapt.formats.tip.parser.TipSmtProblem
 
 object retrieveDatatypes {
   def apply(problemAst: TipSmtProblem): Seq[TipSmtDatatype] = {
-    problemAst.definitions flatMap {
+    problemAst.definitions.flatMap {
       _ match {
         case TipSmtDatatypesDeclaration(datatypes) => datatypes
         case _                                     => Seq()
@@ -45,7 +45,7 @@ case class SymbolTable(problem: TipSmtProblem) {
    * problem.
    */
   def constructors: Set[String] =
-    problem.definitions flatMap {
+    problem.definitions.flatMap {
       case dtd @ TipSmtDatatypesDeclaration(_) => constructors(dtd)
       case _                                   => Set[String]()
     } toSet
@@ -53,7 +53,7 @@ case class SymbolTable(problem: TipSmtProblem) {
   private def constructors(
       datatypesDeclaration: TipSmtDatatypesDeclaration
   ): Set[String] =
-    datatypesDeclaration.datatypes flatMap {
+    datatypesDeclaration.datatypes.flatMap {
       case TipSmtDatatype(_, _, constructors) =>
         constructors.map { _.name } toSet
       case null => Set[String]()
@@ -63,7 +63,7 @@ case class SymbolTable(problem: TipSmtProblem) {
 
     var symbols: Map[String, Type] = Map()
 
-    problem.definitions foreach {
+    problem.definitions.foreach {
       _ match {
         case TipSmtFunctionDeclaration(
               functionName,
@@ -128,7 +128,7 @@ case class SymbolTable(problem: TipSmtProblem) {
           )
       }
     val projectorSymbols: Seq[(String, Type)] =
-      tipSmtDatatype.constructors flatMap {
+      tipSmtDatatype.constructors.flatMap {
         case TipSmtConstructor(_, _, fields) =>
           fields.map { f =>
             f.name -> Type(

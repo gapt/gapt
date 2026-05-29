@@ -117,7 +117,7 @@ object ringinv extends TacticsProof {
     allL("compplus_0", hov"b:i").forget
     impL("compplus_0").`left`(by { trivial })
     exR(hov"a:i", hov"b:i").forget
-    andR `right` by { trivial }
+    andR.`right`(by { trivial })
     andR.`left`(by { trivial })
     trivial
   }
@@ -131,7 +131,7 @@ object ringinv extends TacticsProof {
     decompose
     allL("compmult_0", hov"a:i").forget
     exR(hov"a:i").forget
-    andR `right` by { trivial }
+    andR.`right`(by { trivial })
     impL("compmult_0").`left`(by { trivial })
     trivial
   }

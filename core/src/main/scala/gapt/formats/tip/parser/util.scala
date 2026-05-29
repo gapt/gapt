@@ -232,7 +232,7 @@ object toSExpression {
   }
 
   def keywordsToSExpression(keywords: Seq[TipSmtKeyword]): Seq[SExpression] = {
-    keywords flatMap { toSExpression(_) }
+    keywords.flatMap { toSExpression(_) }
   }
 
   def apply(keyword: TipSmtKeyword): Seq[SExpression] = {

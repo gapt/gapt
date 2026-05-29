@@ -38,7 +38,7 @@ class unfoldInduction(induction: InductionRule) {
 
   private def constructInstanceProof(term: Expr): (LKProof, SequentIndex) = {
     val Apps(constructor, arguments) = term
-    val inductiveArguments = arguments filter { _.ty == induction.term.ty }
+    val inductiveArguments = arguments.filter { _.ty == induction.term.ty }
     val Seq(stepProof) = induction.cases.filter { _.constructor == constructor }
     val instanceProofs: List[((LKProof, SequentIndex), SequentIndex)] =
       inductiveArguments.map(constructInstanceProof).zipWithIndex.map {
@@ -59,7 +59,7 @@ class unfoldInduction(induction: InductionRule) {
    */
   private def instantiateProof(arguments: Seq[Expr], inductionCase: InductionCase): LKProof = {
     val InductionCase(proof, _, _, eigenVariables, _) = inductionCase
-    Substitution(eigenVariables zip arguments)(proof)
+    Substitution(eigenVariables.zip(arguments))(proof)
   }
 }
 

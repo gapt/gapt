@@ -108,14 +108,14 @@ private class skolemizeLK(
       case BottomAxiom => BottomAxiom
 
       case p @ ContractionLeftRule(q, a1, a2) =>
-        ContractionLeftRule(apply(q, p.getSequentConnector `parent` info, subst), a1, a2)
+        ContractionLeftRule(apply(q, p.getSequentConnector.`parent`(info), subst), a1, a2)
       case p @ ContractionRightRule(q, a1, a2) =>
-        ContractionRightRule(apply(q, p.getSequentConnector `parent` info, subst), a1, a2)
+        ContractionRightRule(apply(q, p.getSequentConnector.`parent`(info), subst), a1, a2)
 
       case p @ WeakeningLeftRule(q, f) =>
-        WeakeningLeftRule(apply(q, p.getSequentConnector `parent` info, subst), subf(f))
+        WeakeningLeftRule(apply(q, p.getSequentConnector.`parent`(info), subst), subf(f))
       case p @ WeakeningRightRule(q, f) =>
-        WeakeningRightRule(apply(q, p.getSequentConnector `parent` info, subst), subf(f))
+        WeakeningRightRule(apply(q, p.getSequentConnector.`parent`(info), subst), subf(f))
 
       case p @ NegLeftRule(q, a) =>
         NegLeftRule(apply(q, p.getSequentConnector.parent(info).updated(a, info(p.mainIndices.head).atPosition(1)), subst), a)
@@ -203,7 +203,7 @@ private class skolemizeLK(
         ConversionRightRule(qNew, a, subst(m))
 
       case p @ WeakQuantifierRule(q, a, _, term, bound, pol) =>
-        val freshVar = nameGen `fresh` bound
+        val freshVar = nameGen.`fresh`(bound)
         val q_ = apply(
           q,
           p.occConnectors.head.parent(info).updated(a, info(p.mainIndices.head).instantiateWeakQuantifier(freshVar).addGeneralization(q.conclusion(a))),
@@ -214,7 +214,7 @@ private class skolemizeLK(
         else ForallLeftRule(q_, a, matrix, sub(term), v)
 
       case p: SkolemQuantifierRule =>
-        val freshVar = nameGen `fresh` p.quantifiedVariable
+        val freshVar = nameGen.`fresh`(p.quantifiedVariable)
         val q_ = apply(
           p.subProof,
           p.occConnectors.head.parent(info).updated(p.aux, info(p.mainIndices.head).instantiateQuantifier(freshVar)),
@@ -237,7 +237,7 @@ private class skolemizeLK(
         val skolemDef = Abs(argVars, genFormula)
         val skolemConst = skolemDefs.getOrElseUpdate(
           (skolemDef, if (proofTheoretic) info(p.mainIndices.head).position else Seq()),
-          ctx.addSkolemSym(skolemDef, nameGen `freshWithIndex` "s", !proofTheoretic)
+          ctx.addSkolemSym(skolemDef, nameGen.`freshWithIndex`("s"), !proofTheoretic)
         )
         val skolemTerm = skolemConst(argVars*)
         val q_ = apply(

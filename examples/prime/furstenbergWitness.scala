@@ -17,7 +17,7 @@ object furstenbergWitness {
     def apply(t: T): Int = countingMap.getOrElse(t, 0)
     def +(that: Multiset[T]): Multiset[T] =
       Multiset(Map() ++
-        (this.countingMap.keySet union that.countingMap.keySet).view.map(k => k -> (this(k) + that(k))))
+        (this.countingMap.keySet.union(that.countingMap.keySet)).view.map(k => k -> (this(k) + that(k))))
 
     def toSeq: Seq[T] =
       countingMap.view.flatMap {
@@ -33,7 +33,7 @@ object furstenbergWitness {
   case class ZZMPolynomial[V] private (coeffsMap: Map[Multiset[V], Int]) {
     def coeff(v: Multiset[V]): Int = coeffsMap.getOrElse(v, 0)
     def +(that: ZZMPolynomial[V]): ZZMPolynomial[V] = ZZMPolynomial {
-      for (m <- this.coeffsMap.keySet union that.coeffsMap.keySet)
+      for (m <- this.coeffsMap.keySet.union(that.coeffsMap.keySet))
         yield m -> (this.coeff(m) + that.coeff(m))
     }
     def *(that: ZZMPolynomial[V]): ZZMPolynomial[V] = ZZMPolynomial {

@@ -55,7 +55,7 @@ object extractInductionGrammar {
     val gamma = gamma0.map(nameGen.fresh(_))
     val subst = Substitution(ind.constructorsSteps.flatMap { c =>
       val ETStrongQuantifierBlock(_, gammaC, _) = c.auxiliary.succedent.head
-      gammaC zip gamma
+      gammaC.zip(gamma)
     })
     require(p.expansionSequent.succedent.size == 1, s"Not exactly 1 expansion tree in succedent")
     val Seq(ETStrongQuantifier(_, alpha, _)) = p.expansionSequent.succedent: @unchecked

@@ -65,7 +65,7 @@ object StructCreators {
     extract(p, p.endSequent.map(_ => false))(using predicate, ctx)
 
   private def mapToUpperProof[Formula](conn: SequentConnector, cut_occs: Sequent[Boolean], default: Boolean) =
-    conn.parents(cut_occs).map(_.headOption getOrElse default)
+    conn.parents(cut_occs).map(_.headOption.getOrElse(default))
 
   def extract(p: LKProof, cut_occs: Sequent[Boolean])(implicit pred: Formula => Boolean, ctx: Context): Struct = {
     val result: Struct = p match {

@@ -178,20 +178,33 @@ object gradeReduction extends CutReduction {
    * @return A reduced proof or None if the reduction could not be applied to the given proof.
    */
   def apply(cut: CutRule): Option[LKProof] =
-    GradeReductionAxiomLeft.reduce(cut) orElse
-      GradeReductionAxiomRight.reduce(cut) orElse
-      GradeReductionAxiomTop.reduce(cut) orElse
-      GradeReductionAxiomBottom.reduce(cut) orElse
-      GradeReductionWeakeningLeft.reduce(cut) orElse
-      GradeReductionWeakeningRight.reduce(cut) orElse
-      GradeReductionAnd.reduce(cut) orElse
-      GradeReductionOr.reduce(cut) orElse
-      GradeReductionImp.reduce(cut) orElse
-      GradeReductionNeg.reduce(cut) orElse
-      GradeReductionForall.reduce(cut) orElse
-      GradeReductionExists.reduce(cut) orElse
-      GradeReductionDefinition.reduce(cut) orElse
+    GradeReductionAxiomLeft.reduce(cut).orElse(
+      GradeReductionAxiomRight.reduce(cut)
+    ).orElse(
+      GradeReductionAxiomTop.reduce(cut)
+    ).orElse(
+      GradeReductionAxiomBottom.reduce(cut)
+    ).orElse(
+      GradeReductionWeakeningLeft.reduce(cut)
+    ).orElse(
+      GradeReductionWeakeningRight.reduce(cut)
+    ).orElse(
+      GradeReductionAnd.reduce(cut)
+    ).orElse(
+      GradeReductionOr.reduce(cut)
+    ).orElse(
+      GradeReductionImp.reduce(cut)
+    ).orElse(
+      GradeReductionNeg.reduce(cut)
+    ).orElse(
+      GradeReductionForall.reduce(cut)
+    ).orElse(
+      GradeReductionExists.reduce(cut)
+    ).orElse(
+      GradeReductionDefinition.reduce(cut)
+    ).orElse(
       GradeReductionEquality.reduce(cut)
+    )
 
   override def reduce(proof: CutRule): Option[LKProof] = apply(proof)
 }

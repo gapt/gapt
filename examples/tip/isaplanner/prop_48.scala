@@ -42,7 +42,7 @@ object prop_48 extends TacticsProof {
   val dca_goal = hof"!xs (xs = nil ∨ ?x ?xss xs = cons(x, xss))"
   val dca = Sequent() :+ ("goal" -> dca_goal)
   val dca_proof = Lemma(dca) {
-    allR; analyticInduction `withAxioms` standardAxioms.forVariables(hov"xs:list").forLabel("goal")
+    allR; analyticInduction.`withAxioms`(standardAxioms.forVariables(hov"xs:list").forLabel("goal"))
   }
 
   val manualProof = Lemma(("dca" -> hof"!xs (xs = nil ∨ ?x ?xss xs = cons(x, xss))") +: sequent) {

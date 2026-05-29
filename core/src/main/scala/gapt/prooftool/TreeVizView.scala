@@ -120,7 +120,7 @@ class ProofNodeInfo[T <: DagProof[T]] extends NodeInfo {
   def getTooltip(path: TreePath2[TreeNode]) =
     path.getLastPathComponent.asInstanceOf[ProofNode[T]].proof match {
       case p: SequentProof[_, _] => p.conclusion.toString
-      case p                     => s"${p.productPrefix}(${p.productIterator mkString ", "})"
+      case p                     => s"${p.productPrefix}(${p.productIterator.mkString(", ")})"
     }
 
   def getActions(path: TreePath2[TreeNode]) = {

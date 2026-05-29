@@ -11,7 +11,7 @@ class SunburstTreeDialog[F, T <: SequentProof[F, T]](val mainWindow: DagProofVie
   title = "Sunburst view of " + name
   // modal = false
   preferredSize = new Dimension(700, 500)
-  peer `setDefaultCloseOperation` WindowConstants.DISPOSE_ON_CLOSE
+  peer.`setDefaultCloseOperation`(WindowConstants.DISPOSE_ON_CLOSE)
   menuBar = new MenuBar() {
     import javax.swing.KeyStroke
     import java.awt.event.{KeyEvent, ActionEvent => JActionEvent}

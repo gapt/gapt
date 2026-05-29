@@ -40,7 +40,7 @@ object fta extends Theory(natlists, listlength, natdivisible) {
     }
     by { // case 2: x in d2
       cut("pd2", hof"prod(d2) = prod(cons(x, del(x, d2)))"); by { forget("g_1"); include("prodperm"); chain("prodperm"); simp.h("elem") }
-      cut("g", hof"!(k:nat) (cnt k d1_0 <= cnt k (del x d2) <-> cnt k (cons x d1_0) <= cnt k d2)") `right` by { simp.h("primene0", "lalldel") }; forget("g_1")
+      cut("g", hof"!(k:nat) (cnt k d1_0 <= cnt k (del x d2) <-> cnt k (cons x d1_0) <= cnt k d2)").`right`(by { simp.h("primene0", "lalldel") }); forget("g_1")
       forget("IHd1_0"); allR; cut("kx", hof"k=(x:nat)").`onAll`(simp.h)
     }
   }

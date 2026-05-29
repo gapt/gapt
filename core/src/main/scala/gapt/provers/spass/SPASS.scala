@@ -44,10 +44,10 @@ class SPASS extends ResolutionProver with ExternalProgram {
     case All(v, a)          => s"forall([${v.name}],${expr2dfg(a)})"
     case Eq(t, s)           => s"equal(${expr2dfg(t)}, ${expr2dfg(s)})"
     case FOLAtom(n, Seq())  => n
-    case FOLAtom(n, as)     => s"$n(${as.map(expr2dfg) mkString ","})"
+    case FOLAtom(n, as)     => s"$n(${as.map(expr2dfg).mkString(",")})"
     case FOLVar(n)          => n
     case FOLConst(n)        => n
-    case FOLFunction(f, as) => s"$f(${as.map(expr2dfg) mkString ","})"
+    case FOLFunction(f, as) => s"$f(${as.map(expr2dfg).mkString(",")})"
   }
 
   def cls2dfg(cls: FOLClause): String = {
@@ -62,22 +62,22 @@ class SPASS extends ResolutionProver with ExternalProgram {
       val list_of_formulae =
         s"""
          |list_of_formulae(axioms).
-         |${cnf.asInstanceOf[Iterable[FOLClause]].map(cls2dfg) mkString "\n"}
+         |${cnf.asInstanceOf[Iterable[FOLClause]].map(cls2dfg).mkString("\n")}
          |end_of_list.
        """.stripMargin
 
       val consts = cnf.view.flatMap(constants.nonLogical(_)).toSet
       val list_of_symbols = {
         val buf = new StringBuilder
-        buf append "list_of_symbols.\n"
+        buf.append("list_of_symbols.\n")
 
-        val funs = consts filter { _.isInstanceOf[FOLPartialTerm] }
-        if (funs nonEmpty) buf append s"functions[${funs.map { _.name } mkString ","}].\n"
+        val funs = consts.filter { _.isInstanceOf[FOLPartialTerm] }
+        if (funs nonEmpty) buf.append(s"functions[${funs.map { _.name }.mkString(",")}].\n")
 
-        val preds = consts - EqC(Ti) filter { _.isInstanceOf[FOLPartialAtom] }
-        if (preds nonEmpty) buf append s"predicates[${preds.map { _.name } mkString ","}].\n"
+        val preds = (consts - EqC(Ti)).filter { _.isInstanceOf[FOLPartialAtom] }
+        if (preds nonEmpty) buf.append(s"predicates[${preds.map { _.name }.mkString(",")}].\n")
 
-        buf append "end_of_list.\n"
+        buf.append("end_of_list.\n")
         buf.toString()
       }
 
@@ -136,11 +136,11 @@ class SPASS extends ResolutionProver with ExternalProgram {
         def finishSplit(infNum: Int, splitLevel: Int): Unit =
           if (splitLevel > 0) splitStack.pop() match {
             case (splitCls, split, None) =>
-              splitStack push ((splitCls, split, Some(infNum)))
+              splitStack.push((splitCls, split, Some(infNum)))
             case (splitCls, split, Some(case1)) =>
               finishSplit(infNum, splitLevel - 1)
           }
-        inferences foreach {
+        inferences.foreach {
           case (num, 0, "Inp", _, clause) =>
             val Some(clauseInOurCNF) = cnf.find(clauseSubsumption.modEqSymm(_, clause).isDefined): @unchecked
             inference2sketch(num) = SketchInference(clause, Seq(SketchAxiom(clauseInOurCNF.map { _.asInstanceOf[FOLAtom] })))
@@ -152,7 +152,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
             val correctPart1 = subst.asFOLSubstitution(part1)
             val split = new SpassSplit(inference2sketch(splitClauseNum), correctPart1)
             splitCases += split.emptyClause
-            splitStack push ((splitClauseNum, split, None))
+            splitStack.push((splitClauseNum, split, None))
             inference2sketch(num) = SketchInference(splitClause, split.addAxioms1)
           case (num, splitLevel, "Spt", _, clause) =>
             val split = splitStack.top._2
@@ -224,7 +224,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
       val parser = new InferenceParser(in)
       parser.Inference.run() match {
         case Failure(error: ParseError) =>
-          throw new IllegalArgumentException(parser formatError error)
+          throw new IllegalArgumentException(parser.formatError(error))
         case Failure(exception) => throw exception
         case Success(value)     => value
       }

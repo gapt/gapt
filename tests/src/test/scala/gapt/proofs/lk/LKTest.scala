@@ -67,22 +67,22 @@ class LKTest extends Specification {
 
   private def testParents(o: SequentConnector, ruleName: String)(sequent: HOLSequent, parents: Seq[SequentIndex]*): Success = {
     val (m, n) = sequent.sizes
-    for ((i, ps) <- sequent.indices zip parents) {
-      o.parents(i) aka s"$ruleName: Parents of $i in $sequent should be $ps" must beEqualTo(ps)
+    for ((i, ps) <- sequent.indices.zip(parents)) {
+      o.parents(i).aka(s"$ruleName: Parents of $i in $sequent should be $ps") must beEqualTo(ps)
     }
-    o.parents(Ant(m)) aka s"Parents of ${Ant(m)} in $sequent" must throwAn[IndexOutOfBoundsException]
-    o.parents(Suc(n)) aka s"Parents of ${Suc(n)} in $sequent" must throwAn[IndexOutOfBoundsException]
+    o.parents(Ant(m)).aka(s"Parents of ${Ant(m)} in $sequent") must throwAn[IndexOutOfBoundsException]
+    o.parents(Suc(n)).aka(s"Parents of ${Suc(n)} in $sequent") must throwAn[IndexOutOfBoundsException]
     success
   }
 
   private def testChildren(o: SequentConnector, ruleName: String)(sequent: HOLSequent, children: Seq[SequentIndex]*): Success = {
     val (m, n) = sequent.sizes
-    for ((i, cs) <- sequent.indices zip children) {
-      o.children(i) aka s"$ruleName: Children of $i in $sequent should be $cs" must beEqualTo(cs)
+    for ((i, cs) <- sequent.indices.zip(children)) {
+      o.children(i).aka(s"$ruleName: Children of $i in $sequent should be $cs") must beEqualTo(cs)
     }
 
-    o.children(Ant(m)) aka s"Parents of ${Ant(m)} in $sequent" must throwAn[IndexOutOfBoundsException]
-    o.children(Suc(n)) aka s"Parents of ${Suc(n)} in $sequent" must throwAn[IndexOutOfBoundsException]
+    o.children(Ant(m)).aka(s"Parents of ${Ant(m)} in $sequent") must throwAn[IndexOutOfBoundsException]
+    o.children(Suc(n)).aka(s"Parents of ${Suc(n)} in $sequent") must throwAn[IndexOutOfBoundsException]
     success
   }
 

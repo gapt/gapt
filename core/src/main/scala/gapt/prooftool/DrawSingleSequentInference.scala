@@ -69,7 +69,7 @@ class DrawSingleSequentInference[F, T <: SequentProof[F, T]](
     rule.contents += Swing.Glue
 
     auxiliaries.contents.clear()
-    val aux = for (proof <- p().toList; (auxIndices, premise) <- proof.auxIndices zip proof.premises)
+    val aux = for (proof <- p().toList; (auxIndices, premise) <- proof.auxIndices.zip(proof.premises))
       yield for ((f, i) <- premise.zipWithIndex if auxIndices contains i) yield f
     for (x <- aux) auxiliaries.contents += DrawSequent(main, x, sequent_element_renderer)
     auxiliaries.contents += Swing.Glue

@@ -77,7 +77,7 @@ object TptpProofParser {
     var endSequent = Sequent[FOLFormula]()
     val labelledCNF = mutable.Map[String, Seq[FOLClause]]().withDefaultValue(Seq())
 
-    stepList.inputs foreach {
+    stepList.inputs.foreach {
       case AnnotatedFormula("fof", _, "conjecture", formula: FOLFormula, Seq(TptpTerm("file", _, TptpTerm(label)))) =>
         endSequent :+= formula
         labelledCNF(label) ++= CNFn(formula).toSeq
@@ -92,7 +92,7 @@ object TptpProofParser {
 
   def getParents(justification: GeneralTerm): Seq[String] = justification match {
     case TptpTerm("file", _, _)                                 => Seq()
-    case TptpTerm("inference", _, _, GeneralList(parents @ _*)) => parents flatMap getParents
+    case TptpTerm("inference", _, _, GeneralList(parents @ _*)) => parents.flatMap(getParents)
     case TptpTerm("introduced", _, _)                           => Seq()
     case TptpTerm("theory", TptpTerm("equality", _*), _*)       => Seq()
     case GeneralColon(TptpTerm(label), _)                       => Seq(label)
@@ -156,7 +156,7 @@ object TptpProofParser {
           case AnnotatedFormula("fof", _, "plain", And(Imp(defn, Neg(splAtom: FOLAtom)), _), TptpTerm("introduced", TptpTerm("sat_splitting_component"), _) +: _) =>
             convertAvatarDefinition(defn, splAtom)
           case AnnotatedFormula("fof", _, "plain", Bottom(), (justification @ TptpTerm("inference", TptpTerm("sat_splitting_refutation"), _, _)) +: _) =>
-            val sketchParents = getParents(justification) flatMap convert
+            val sketchParents = getParents(justification).flatMap(convert)
             val splitParents = sketchParents.map { parent0 =>
               var parent = parent0
               for {
@@ -178,7 +178,7 @@ object TptpProofParser {
             convertAvatarDefinition(defn, splAtom)
           case AnnotatedFormula("fof", _, "plain", disj, (justification @ TptpTerm("inference", FOLVar("AVATAR_split_clause") | FOLConst("avatar_split_clause"), _, _)) +: _) =>
             val Seq(assertion) = CNFp(disj).toSeq
-            val Seq(splittedClause, _*) = getParents(justification) flatMap convert: @unchecked
+            val Seq(splittedClause, _*) = getParents(justification).flatMap(convert): @unchecked
 
             var p = splittedClause
             for {
@@ -234,11 +234,11 @@ object TptpProofParser {
           case AnnotatedFormula(_, _, _, conclusion: FOLFormula, justification +: _) =>
             CNFp(conclusion).toSeq match {
               case Seq(conclusionClause) =>
-                val sketchParents = getParents(justification) flatMap convert
+                val sketchParents = getParents(justification).flatMap(convert)
                 val conclusionClause_ = filterVampireSplits(conclusionClause)
                 val sketchParents_ = sketchParents.find(p => clauseSubsumption(p.conclusion, conclusionClause_).isDefined).fold(sketchParents)(Seq(_))
                 Seq(SketchInference(conclusionClause_, sketchParents_))
-              case clauses => getParents(justification) flatMap convert
+              case clauses => getParents(justification).flatMap(convert)
             }
         }
       )

@@ -81,7 +81,7 @@ object Pickrule {
   def pick1(es: HOLSequent, aux: SequentIndex, candidates: Seq[zipIndex]): (SequentIndex, Seq[zipIndex]) = {
     val auxformula = es(aux)
     candidates.find(_._1 == auxformula) match {
-      case Some((_, index)) => (index, candidates filterNot (_._2 == index))
+      case Some((_, index)) => (index, candidates.filterNot(_._2 == index))
       case None             => throw new Exception("Can not find suitable occurrence for " + auxformula + " in " + candidates.toString)
     }
   }

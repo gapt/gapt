@@ -66,26 +66,32 @@ object MonoidCancellation extends TacticsProof {
   }
 
   lazy val iterRight: Tactic[Unit] = Tactic {
-    chain("plus_unit_c") `orElse`
-      chain("plus_assoc_c1").andThen(iterRight) `orElse`
-      chain("plus_assoc_c2").andThen(iterRight) `orElse`
+    chain("plus_unit_c").`orElse`(
+      chain("plus_assoc_c1").andThen(iterRight)
+    ).`orElse`(
+      chain("plus_assoc_c2").andThen(iterRight)
+    ).`orElse`(
       chain("plus_cancel").andThen(refl)
+    )
   }
 
   lazy val iterLeft: Tactic[Unit] = Tactic {
-    chain("plus_unit_p") `orElse`
-      chain("plus_assoc_p1").andThen(iterRight) `orElse`
-      chain("plus_assoc_p2").andThen(iterRight) `orElse`
-      iterRight `orElse` chain("plus_comm_p").andThen(iterRight)
+    chain("plus_unit_p").`orElse`(
+      chain("plus_assoc_p1").andThen(iterRight)
+    ).`orElse`(
+      chain("plus_assoc_p2").andThen(iterRight)
+    ).`orElse`(
+      iterRight
+    ).`orElse`(chain("plus_comm_p").andThen(iterRight))
   }
 
   lazy val cancel: Tactic[Unit] = Tactic {
-    iterLeft `orElse` chain("plus_comm_c").andThen(iterLeft)
+    iterLeft.`orElse`(chain("plus_comm_c").andThen(iterLeft))
   }
 
   val solve: Tactic[Unit] = Tactic {
     setup.`andThen`(
-      repeat(refl `orElse` cancel)
+      repeat(refl.`orElse`(cancel))
     )
   }
 

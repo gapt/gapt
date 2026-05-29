@@ -89,7 +89,7 @@ object computeStrategies {
     def printStrategy(fileName: String, strategy: String): Unit =
       println(s"$fileName $strategy")
 
-    args foreach { fileName =>
+    args.foreach { fileName =>
       try {
         val problem = TipSmtImporter.fixupAndLoad(FilePath(fileName))
         import problem.context

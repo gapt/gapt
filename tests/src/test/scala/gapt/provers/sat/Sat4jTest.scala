@@ -27,8 +27,8 @@ class Sat4jTest extends Specification {
   }
 
   "deal correctly with the pigeonhole problem" in {
-    SATProblems.getProblem6a() foreach { f => Sat4j.isValid(f) must beFalse }
-    SATProblems.getProblem6b() foreach { f => Sat4j.isValid(f) must beTrue }
+    SATProblems.getProblem6a().foreach { f => Sat4j.isValid(f) must beFalse }
+    SATProblems.getProblem6b().foreach { f => Sat4j.isValid(f) must beTrue }
     ok
   }
 

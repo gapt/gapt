@@ -431,7 +431,7 @@ object TstpStatistics {
     val re = mutable.Set[ReconstructionError[T]]()
     val so: mutable.Set[StackOverflow[T]] = mutable.Set()
 
-    errors foreach {
+    errors.foreach {
       case e @ FileNotFound(file)          => nf.add(e)
       case e @ MalformedFile(file)         => mf.add(e)
       case e @ ParsingError(file)          => pe.add(e)
@@ -481,8 +481,8 @@ object TstpStatistics {
     val subproof_count = rp.subProofs.size
     val ids = (1 to subproof_count).map("node" + _)
 
-    val names = mutable.Map[ClauseId, ResolutionProof]() ++ (ids zip rp.subProofs)
-    val rnames = mutable.Map[ResolutionProof, ClauseId]() ++ (rp.subProofs zip ids)
+    val names = mutable.Map[ClauseId, ResolutionProof]() ++ (ids.zip(rp.subProofs))
+    val rnames = mutable.Map[ResolutionProof, ClauseId]() ++ (rp.subProofs.zip(ids))
 
     require(rnames.size == subproof_count)
 
@@ -547,8 +547,8 @@ object TstpStatistics {
     val subproof_count = rp.subProofs.size
     val ids = (1 to subproof_count).map("node" + _)
 
-    val names = mutable.Map[ClauseId, RefutationSketch]() ++ (ids zip rp.subProofs)
-    val rnames = mutable.Map[RefutationSketch, ClauseId]() ++ (rp.subProofs zip ids)
+    val names = mutable.Map[ClauseId, RefutationSketch]() ++ (ids.zip(rp.subProofs))
+    val rnames = mutable.Map[RefutationSketch, ClauseId]() ++ (rp.subProofs.zip(ids))
 
     require(rnames.size == subproof_count)
 

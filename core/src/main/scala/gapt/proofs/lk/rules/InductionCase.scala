@@ -30,10 +30,10 @@ case class InductionCase(proof: LKProof, constructor: Const, hypotheses: Seq[Seq
   val FunctionType(indTy, fieldTypes) = constructor.ty: @unchecked
   require(fieldTypes == eigenVars.map(_.ty))
 
-  val hypVars: Seq[Var] = eigenVars filter { _.ty == indTy }
+  val hypVars: Seq[Var] = eigenVars.filter { _.ty == indTy }
   require(hypotheses.size == hypVars.size)
 
-  hypotheses foreach { hyp =>
+  hypotheses.foreach { hyp =>
     require(hyp.isAnt && proof.endSequent.isDefinedAt(hyp))
   }
 

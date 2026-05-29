@@ -122,7 +122,7 @@ case class ReforestState(
 
     def subsume(as: Seq[Expr], bs: Seq[Expr]): Option[Seq[Int]] =
       if (as.diff(bs) isEmpty) Some {
-        for (a <- as) yield bs indexOf a
+        for (a <- as) yield bs.indexOf(a)
       }
       else None
 
@@ -177,7 +177,7 @@ case class ReforestState(
     def visit(t: Expr): Unit = t match {
       case Apps(f: Const, as) =>
         constFreq(f) += 1
-        as foreach visit
+        as.foreach(visit)
       case _ =>
     }
     for (rhss <- rules.values; rhs <- rhss) visit(rhs)
@@ -213,7 +213,7 @@ object Reforest {
     val stats = s.stats
     if (stats.isEmpty) return s
     val (feat, freq) = stats.maxBy { _._2 }
-    if (freq > 1) compress(s `abbreviate` feat)
+    if (freq > 1) compress(s.`abbreviate`(feat))
     else s
   }
 

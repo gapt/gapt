@@ -174,7 +174,7 @@ private[expansion] class Minimizer(val sequent: ExpansionSequent, val prover: Pr
         } else {
           val instanceNumbers = (instanceCounter + 1) to (instanceCounter + newTrees.length)
 
-          for ((t, k) <- newTrees zip instanceNumbers) {
+          for ((t, k) <- newTrees.zip(instanceNumbers)) {
             // k denotes the instance that was removed from tree in order to produce t.
             val newS = ExpansionSequent(fst ++ Seq(t) ++ snd, suc)
             // We combine an expansion tree with the rest of the antecedent and the succedent
@@ -212,7 +212,7 @@ private[expansion] class Minimizer(val sequent: ExpansionSequent, val prover: Pr
         } else {
           val instanceNumbers = (instanceCounter + 1) to (instanceCounter + newTrees.length)
 
-          for ((t, k) <- newTrees zip instanceNumbers) {
+          for ((t, k) <- newTrees.zip(instanceNumbers)) {
             val newS = ExpansionSequent(ant, fst ++ Seq(t) ++ snd)
 
             if (!maxRemovedInstance.contains(newS))
@@ -265,9 +265,9 @@ private[expansion] class Minimizer(val sequent: ExpansionSequent, val prover: Pr
       generateSuccessorTrees(sel).map(ETSkolemQuantifier.apply(f, st, _))
 
     case ETWeakQuantifier(f, inst) =>
-      inst.toList flatMap {
+      inst.toList.flatMap {
         case (term, child) =>
-          val containsWeakQ = child.subProofs exists {
+          val containsWeakQ = child.subProofs.exists {
             case ETWeakQuantifier(_, grandkids) => grandkids.nonEmpty
             case _                              => false
           }

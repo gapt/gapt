@@ -31,15 +31,15 @@ import gapt.proofs.lk.LKProof
 case class InductionRule(cases: Seq[InductionCase], formula: Abs, term: Expr) extends CommonRule {
   val Abs(quant @ Var(_, indTy), qfFormula) = formula
   require(term.ty == indTy)
-  cases foreach { c =>
+  cases.foreach { c =>
     require(c.indTy == indTy)
     c.hypotheses.lazyZip(c.hypVars).foreach { (hyp, eigen) =>
       require(c.proof.endSequent(hyp) == Substitution(quant -> eigen)(qfFormula))
     }
     require(c.proof.endSequent(c.conclusion) == Substitution(quant -> c.term)(qfFormula))
   }
-  for ((cas, ctx) <- cases zip contexts)
-    require(freeVariables(ctx.elements :+ formula) intersect cas.eigenVars.toSet isEmpty)
+  for ((cas, ctx) <- cases.zip(contexts))
+    require(freeVariables(ctx.elements :+ formula).intersect(cas.eigenVars.toSet) isEmpty)
 
   val mainFormula: Formula = BetaReduction.betaNormalize(formula(term).asInstanceOf[Formula])
   override protected def mainFormulaSequent: HOLSequent = Sequent() :+ mainFormula

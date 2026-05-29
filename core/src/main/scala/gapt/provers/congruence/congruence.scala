@@ -158,19 +158,20 @@ final class MutCC private (
       else explainCache.getOrElseUpdate(
         (a, b), {
           val c = nearestCommonAncestor(a, b)
-          explainAlongPath(a, c) union explainAlongPath(b, c)
+          explainAlongPath(a, c).union(explainAlongPath(b, c))
         }
       )
     private def explainAlongPath(a: Int, b: Int): Set[Int] =
       if (a == b) Set.empty
       else
-        explainAlongPath(parent(a), b) union
-          (reason(a) match {
+        explainAlongPath(parent(a), b).union(
+          reason(a) match {
             case InputEq(_, _, ref) =>
               Set(ref)
             case PropagEq(e1, e2) =>
-              explain(e1.l, e2.l) union explain(e1.r, e2.r)
-          })
+              explain(e1.l, e2.l).union(explain(e1.r, e2.r))
+          }
+        )
     def ancestors(a: Int): List[Int] =
       a :: (parent(a) match {
         case `a` => Nil
@@ -179,7 +180,7 @@ final class MutCC private (
     private def nearestCommonAncestor(a: Int, b: Int): Int = {
       val as = ancestors(a)
       val bs = ancestors(b)
-      as.find(as.toSet intersect bs.toSet).get
+      as.find(as.toSet.intersect(bs.toSet)).get
     }
   }
 

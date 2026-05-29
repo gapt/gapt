@@ -70,30 +70,30 @@ class solvePropositional(
   private def solve(seq0: HOLSequent): UnprovableOrLKProof = {
     val seq = seq0.distinct
     None.orElse(tryAxiom(seq)).orElse(tryWeakening(seq)).orElse(tryNullary(seq)).orElse(tryUnary(seq)).orElse(tryBinary(seq)).orElse(tryTheory(seq)).getOrElse(Left(seq)).map {
-      ContractionMacroRule(_).ensuring { _.conclusion `isSubsetOf` seq }
+      ContractionMacroRule(_).ensuring { _.conclusion.`isSubsetOf`(seq) }
     }
   }
 
   private def tryAxiom(seq: HOLSequent): Option[UnprovableOrLKProof] =
     if (seq.isTaut)
-      Some(Right(LogicalAxiom(seq.antecedent intersect seq.succedent head)))
+      Some(Right(LogicalAxiom(seq.antecedent.intersect(seq.succedent) head)))
     else
       None
 
   private def tryNullary(seq: HOLSequent): Option[UnprovableOrLKProof] =
-    seq.zipWithIndex.elements collectFirst {
+    seq.zipWithIndex.elements.collectFirst {
       case (Top(), i: Suc)    => Right(TopAxiom)
       case (Bottom(), i: Ant) => Right(BottomAxiom)
     }
 
   private def tryWeakening(seq: HOLSequent): Option[UnprovableOrLKProof] =
-    seq.zipWithIndex.elements collectFirst {
-      case (Top(), i: Ant)    => solve(seq `delete` i)
-      case (Bottom(), i: Suc) => solve(seq `delete` i)
+    seq.zipWithIndex.elements.collectFirst {
+      case (Top(), i: Ant)    => solve(seq.`delete`(i))
+      case (Bottom(), i: Suc) => solve(seq.`delete`(i))
     }
 
   private def tryUnary(seq: HOLSequent): Option[UnprovableOrLKProof] =
-    seq.zipWithIndex.elements collectFirst {
+    seq.zipWithIndex.elements.collectFirst {
       case (Neg(f), i: Ant) => mapIf(solve(seq.delete(i) :+ f), f, !i.polarity) { NegLeftRule(_, f) }
       case (Neg(f), i: Suc) => mapIf(solve(f +: seq.delete(i)), f, !i.polarity) { NegRightRule(_, f) }
 
@@ -107,7 +107,7 @@ class solvePropositional(
 
   private def tryBinary(seq: HOLSequent): Option[UnprovableOrLKProof] = {
     def handle(i: SequentIndex, e: Formula, f: Formula, fPol: Polarity, g: Formula, gPol: Polarity, rule: (LKProof, LKProof, Formula) => LKProof) =
-      solve(if (fPol.inSuc) seq.delete(i) :+ f else f +: seq.delete(i)) flatMap { p1 =>
+      solve(if (fPol.inSuc) seq.delete(i) :+ f else f +: seq.delete(i)).flatMap { p1 =>
         if (!p1.conclusion.contains(f, fPol)) Right(p1)
         else solve(if (gPol.inSuc) seq.delete(i) :+ g else g +: seq.delete(i)).map { p2 =>
           if (!p2.conclusion.contains(g, gPol)) p2
@@ -115,7 +115,7 @@ class solvePropositional(
         }
       }
 
-    seq.zipWithIndex.elements collectFirst {
+    seq.zipWithIndex.elements.collectFirst {
       case (e @ And(f, g), i: Suc) => handle(i, e, f, i.polarity, g, i.polarity, AndRightRule(_, _, _))
       case (e @ Or(f, g), i: Ant)  => handle(i, e, f, i.polarity, g, i.polarity, OrLeftRule(_, _, _))
       case (e @ Imp(f, g), i: Ant) => handle(i, e, f, !i.polarity, g, i.polarity, ImpLeftRule(_, _, _))
@@ -123,6 +123,6 @@ class solvePropositional(
   }
 
   private def tryTheory(seq: HOLSequent): Option[UnprovableOrLKProof] =
-    theorySolver(seq collect { case atom: Atom => atom }).map(Right(_))
+    theorySolver(seq.collect { case atom: Atom => atom }).map(Right(_))
 
 }

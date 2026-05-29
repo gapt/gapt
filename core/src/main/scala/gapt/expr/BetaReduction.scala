@@ -15,7 +15,7 @@ case class ReductionRule(lhs: Expr, rhs: Expr) {
   require(
     freeVariables(rhs).subsetOf(freeVariables(lhs)),
     s"Right-hand side of rule contains variables ${
-        freeVariables(rhs) -- freeVariables(lhs) mkString ", "
+        (freeVariables(rhs) -- freeVariables(lhs)).mkString(", ")
       } which are not in the left hand side:\n"
       + (lhs === rhs)
   )
@@ -97,7 +97,7 @@ case class Normalizer(rules: Set[ReductionRule]) {
     hd match {
       case Abs.Block(vs, hd_) if vs.nonEmpty && as.nonEmpty =>
         val n = math.min(as.size, vs.size)
-        Some(Apps(Substitution(vs.take(n) zip as.take(n))(Abs.Block(vs.drop(n), hd_)), as.drop(n)))
+        Some(Apps(Substitution(vs.take(n).zip(as.take(n)))(Abs.Block(vs.drop(n), hd_)), as.drop(n)))
       case hd @ Const(c, _, _) =>
         headMap.get(c).flatMap {
           case (rs, whnfArgs, normalizeArgs) =>

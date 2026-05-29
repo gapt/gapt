@@ -69,7 +69,7 @@ object findMerges {
  * Returns the eigenvariables in an expansion tree or expansion sequent.
  */
 object eigenVariablesET {
-  def apply(tree: ExpansionTree): Set[Var] = tree.subProofs collect { case ETStrongQuantifier(_, v, _) => v }
+  def apply(tree: ExpansionTree): Set[Var] = tree.subProofs.collect { case ETStrongQuantifier(_, v, _) => v }
   def apply(s: ExpansionSequent): Set[Var] = s.elements.flatMap { apply }.toSet
 }
 

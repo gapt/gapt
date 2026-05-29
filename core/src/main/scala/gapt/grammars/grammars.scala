@@ -26,7 +26,7 @@ private class VtratgExporter(unicode: Boolean, vtratg: VTRATG)
     val knownTypes = vtratg.terminals.map { c => c.name -> c }.toMap
 
     val prods = stack((vtratg.productions.toList
-      sortBy { case (as, ts) => (vtratg.nonTerminals.indexOf(as), ts.toString) })
+      .sortBy { case (as, ts) => (vtratg.nonTerminals.indexOf(as), ts.toString) })
       .map {
         case (nonTerminals, expressions) =>
           group(csep(nonTerminals.lazyZip(expressions).map((a, t) =>
@@ -52,23 +52,23 @@ case class VTRATG(startSymbol: Var, nonTerminals: Seq[VTRATG.NonTerminalVect], p
 
   def startSymbolNT: NonTerminalVect = List(startSymbol)
 
-  def productions(nonTerminalVect: NonTerminalVect): Set[Production] = productions filter (_._1 == nonTerminalVect)
+  def productions(nonTerminalVect: NonTerminalVect): Set[Production] = productions.filter(_._1 == nonTerminalVect)
   def rightHandSides(nonTerminal: NonTerminalVect) = productions(nonTerminal).map(_._2)
 
-  def terminals: Set[Const] = productions flatMap { p => constants.nonLogical(p._2) }
+  def terminals: Set[Const] = productions.flatMap { p => constants.nonLogical(p._2) }
 
   def babelSignature = MapBabelSignature(terminals)
 
-  productions foreach {
+  productions.foreach {
     case p @ (a, t) =>
       require(nonTerminals contains a, s"unknown non-terminal vector $a in $p")
       val i = nonTerminals.indexOf(a)
       val allowedNonTerminals = nonTerminals.drop(i + 1).flatten.toSet
-      t.flatMap(freeVariables(_)) foreach { fv =>
+      t.flatMap(freeVariables(_)).foreach { fv =>
         require(allowedNonTerminals contains fv, s"acyclicity violated in $p: $fv not in $allowedNonTerminals")
       }
       require(a.size == t.size, s"vector production $p has sides of different length")
-      for ((ai, ti) <- a zip t)
+      for ((ai, ti) <- a.zip(t))
         require(ai.ty == ti.ty, s"vector production $p has mismatching types")
   }
   require(nonTerminals contains startSymbolNT, s"start symbol is unknown non-terminal vector $startSymbol")
@@ -87,7 +87,7 @@ case class VTRATG(startSymbol: Var, nonTerminals: Seq[VTRATG.NonTerminalVect], p
             Substitution(nonTerminals.lazyZip(expressions))(lang)
         }
     }
-    lang filter (freeVariables(_).isEmpty)
+    lang.filter(freeVariables(_).isEmpty)
   }
 
   override def toString: String = new VtratgExporter(unicode = true, vtratg = this).`export`()

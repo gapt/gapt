@@ -67,8 +67,8 @@ object MaxSATMethod {
 
 case object ReforestMethod extends GrammarFindingMethod {
   def findGrammars(lang: Set[Expr]) = {
-    var state = Reforest `start` lang
-    state = Reforest `full` state
+    var state = Reforest.`start`(lang)
+    state = Reforest.`full`(state)
     Some(state.toVTRATG)
   }
 
@@ -84,12 +84,12 @@ case object ReforestMethod extends GrammarFindingMethod {
 case class SchematicExtendedHerbrandSequent(us: Sequent[(FOLFormula, Seq[Seq[FOLTerm]])], ss: Seq[(Seq[FOLVar], Seq[Seq[FOLTerm]])]) {
   require(ss.forall { case (vars, inst) => inst.forall { case termlist => vars.length == termlist.length } })
 
-  us.antecedent foreach {
+  us.antecedent.foreach {
     case (All.Block(vs, f), insts) =>
       require(!containsQuantifier(f))
       for (i <- insts) require(i.size == vs.size)
   }
-  us.succedent foreach {
+  us.succedent.foreach {
     case (Ex.Block(vs, f), insts) =>
       require(!containsQuantifier(f))
       for (i <- insts) require(i.size == vs.size)
@@ -101,7 +101,7 @@ case class SchematicExtendedHerbrandSequent(us: Sequent[(FOLFormula, Seq[Seq[FOL
   /** Eigenvariables that occur in the seHs. */
   def eigenVariables = ss.map(_._1)
 
-  def substitutions = for ((evs, insts) <- ss) yield insts.map(inst => FOLSubstitution(evs zip inst))
+  def substitutions = for ((evs, insts) <- ss) yield insts.map(inst => FOLSubstitution(evs.zip(inst)))
 
   /** Number of eigenvariables that occur in this seHs. */
   def numVars = eigenVariables.length
@@ -109,10 +109,10 @@ case class SchematicExtendedHerbrandSequent(us: Sequent[(FOLFormula, Seq[Seq[FOL
   def language = us.map {
     case (u, uInst) =>
       var instances = uInst
-      ss foreach {
+      ss.foreach {
         case (sVars, sInstances) =>
           instances = for (instance <- instances; sInstance <- sInstances)
-            yield FOLSubstitution(sVars zip sInstance)(instance).toList
+            yield FOLSubstitution(sVars.zip(sInstance))(instance).toList
       }
       u -> instances
   }
@@ -125,20 +125,20 @@ case class SchematicExtendedHerbrandSequent(us: Sequent[(FOLFormula, Seq[Seq[FOL
 
   def esInstancesInScope(i: Int): FOLSequent = {
     val evsInScope = eigenVariables.drop(i).flatten.toSet
-    endSequentInstances.filter(freeVariables(_) subsetOf evsInScope)
+    endSequentInstances.filter(freeVariables(_).subsetOf(evsInScope))
   }
 
   override def toString: String = {
     val out = new StringBuilder
-    out append s"U:\n"
+    out.append(s"U:\n")
     for ((f, insts) <- us) {
-      out append s"  $f:\n"
-      for (inst <- insts) out append s"    $inst\n"
+      out.append(s"  $f:\n")
+      for (inst <- insts) out.append(s"    $inst\n")
     }
-    out append s"S:\n"
+    out.append(s"S:\n")
     for ((v, insts) <- ss) {
-      out append s"  $v:\n"
-      for (inst <- insts) out append s"    $inst\n"
+      out.append(s"  $v:\n")
+      for (inst <- insts) out.append(s"    $inst\n")
     }
     out.result()
   }
@@ -146,7 +146,7 @@ case class SchematicExtendedHerbrandSequent(us: Sequent[(FOLFormula, Seq[Seq[FOL
 
 object vtratgToSEHS {
   def apply(encoding: InstanceTermEncoding, g: VTRATG): SchematicExtendedHerbrandSequent = {
-    val us = (encoding.endSequent `zip` encoding.symbols).map {
+    val us = (encoding.endSequent.`zip`(encoding.symbols)).map {
       case (u, sym) =>
         u.asInstanceOf[FOLFormula] -> g.rightHandSides(g.startSymbolNT).map(_.head).toList.collect { case Apps(`sym`, args) => args.map { _.asInstanceOf[FOLTerm] } }
     }
@@ -166,7 +166,7 @@ object sehsToVTRATG {
     val otherProds = for ((ev, ss) <- sehs.ss; s <- ss) yield ev -> s
     val productions = productionsFromAx ++ otherProds
 
-    val grounding = FOLSubstitution((freeVariables(productions flatMap { _._2 }).diff(nonTerminals.flatten.toSet)).map {
+    val grounding = FOLSubstitution((freeVariables(productions.flatMap { _._2 }).diff(nonTerminals.flatten.toSet)).map {
       case FOLVar(n) => FOLVar(n) -> FOLConst(n)
     })
 
@@ -305,14 +305,14 @@ object CutIntroduction {
     }.flatMap { vtratGrammar =>
       val generatedLanguage = vtratGrammar.language
       logger.metric("grammar_lang_size", generatedLanguage.size)
-      termset foreach { term =>
+      termset.foreach { term =>
         if (!(generatedLanguage contains term))
           throw new NonCoveringGrammarException(vtratGrammar, term)
       }
 
       logger.metric("grammar_size", vtratGrammar.size)
       logger.metric("grammar_wsize", vtratGrammar.weightedSize)
-      logger.metric("grammar_scomp", (vtratGrammar.productions.toSeq flatMap { _._2 }).map { expressionSize(_) } sum)
+      logger.metric("grammar_scomp", (vtratGrammar.productions.toSeq.flatMap { _._2 }).map { expressionSize(_) } sum)
 
       info(s"Smallest grammar of size ${vtratGrammar.size} (weighted by vector size = ${vtratGrammar.weightedSize}):\n$vtratGrammar")
 
@@ -344,7 +344,7 @@ object CutIntroduction {
       val beauGrammar = sehsToVTRATG(encoding, beautifiedSS.sehs)
       logger.metric("beaugrammar_size", beauGrammar.size)
       logger.metric("beaugrammar_wsize", beauGrammar.weightedSize)
-      logger.metric("beaugrammar_scomp", (beauGrammar.productions.toSeq flatMap { _._2 }).map { expressionSize(_) } sum)
+      logger.metric("beaugrammar_scomp", (beauGrammar.productions.toSeq.flatMap { _._2 }).map { expressionSize(_) } sum)
       logger.metric("beausol", beautifiedSS.formulas.map(_.toString))
 
       if (beautifiedSS.formulas.nonEmpty) {
@@ -423,7 +423,7 @@ object CutIntroduction {
     lazy val canSol: LazyList[FOLFormula] =
       for (idx <- sehs.eigenVariables.indices.to(LazyList))
         yield And(esInstancesPerCut.getOrElse(idx, Seq()) ++
-          (if (idx == 0) Seq() else sehs.ss(idx - 1)._2.map { s => FOLSubstitution(sehs.ss(idx - 1)._1 zip s)(canSol(idx - 1)) }))
+          (if (idx == 0) Seq() else sehs.ss(idx - 1)._2.map { s => FOLSubstitution(sehs.ss(idx - 1)._1.zip(s))(canSol(idx - 1)) }))
     canSol.toList
   }
 

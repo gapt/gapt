@@ -61,7 +61,7 @@ case class ProofLinkTactic(proofName: String)(implicit ctx: Context) extends Tac
  */
 case object LogicalAxiomTactic extends Tactical1[Unit] {
   def apply(goal: OpenAssumption) = {
-    val candidates = goal.conclusion.antecedent intersect goal.conclusion.succedent
+    val candidates = goal.conclusion.antecedent.intersect(goal.conclusion.succedent)
 
     candidates match {
       case Seq(formula, _*) => replace(LogicalAxiom(formula))
@@ -147,7 +147,7 @@ case class WeakeningLeftTactic(applyToLabel: String) extends Tactical1[Unit] {
   def apply(goal: OpenAssumption) =
     for {
       case (_, _, i: Ant) <- findFormula(goal, OnLabel(applyToLabel))
-      _ <- replace(OpenAssumption(goal.labelledSequent `delete` i))
+      _ <- replace(OpenAssumption(goal.labelledSequent.`delete`(i)))
     } yield ()
 }
 
@@ -160,7 +160,7 @@ case class WeakeningRightTactic(applyToLabel: String) extends Tactical1[Unit] {
   def apply(goal: OpenAssumption) =
     for {
       case (_, _, i: Suc) <- findFormula(goal, OnLabel(applyToLabel))
-      _ <- replace(OpenAssumption(goal.labelledSequent `delete` i))
+      _ <- replace(OpenAssumption(goal.labelledSequent.`delete`(i)))
     } yield ()
 }
 
@@ -418,8 +418,8 @@ case class EqualityTactic(equationLabel: String, formulaLabel: String, private v
             if (sAux.isEmpty && tAux.isEmpty)
               false
             else {
-              val tToS = sMain intersect tAux
-              val sToT = tMain intersect sAux
+              val tToS = sMain.intersect(tAux)
+              val sToT = tMain.intersect(sAux)
 
               if (tToS.isEmpty) {
                 val mainNew = sToT.foldLeft(auxFormula) { (acc, p) => HOLPosition.replace(acc, p, t) }

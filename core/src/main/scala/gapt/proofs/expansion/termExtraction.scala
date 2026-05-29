@@ -46,7 +46,7 @@ object extractInstances {
       case ETMerge(t, s)     => extractInstances(t) ++ extractInstances(s)
       case ETWeakening(_, _) => Set()
       case ETWeakQuantifier(_, instances) =>
-        instances flatMap { i => extractInstances(i._2) } toSet
+        instances.flatMap { i => extractInstances(i._2) } toSet
       case ETStrongQuantifier(_, _, t)           => extractInstances(t)
       case ETSkolemQuantifier(_, _, t)           => extractInstances(t)
       case ETAnd(t, s)                           => for ((ti, si) <- apply(t, s)) yield ti & si
@@ -74,7 +74,7 @@ object extractInstances {
   }
 
   def apply(expansionSequent: ExpansionSequent): HOLSequent =
-    expansionSequent `flatMap` apply
+    expansionSequent.`flatMap`(apply)
 
   def apply(expansionProof: ExpansionProof): HOLSequent =
     apply(expansionProof.expansionSequent)
@@ -112,7 +112,7 @@ object groundTerms {
 class InstanceTermEncoding private (val endSequent: HOLSequent, val instanceTermType: Ty) {
   private val nameGen = rename.awayFrom(constants.nonLogical(endSequent))
 
-  endSequent.elements foreach { formula =>
+  endSequent.elements.foreach { formula =>
     require(isInVNF(formula), s"$formula is not in variable normal form")
   }
 
@@ -155,7 +155,7 @@ class InstanceTermEncoding private (val endSequent: HOLSequent, val instanceTerm
       case Ant(i) => s"a$i"
       case Suc(i) => s"s$i"
     }
-    nameGen `fresh` s"$idxPart:${matrices(idx).toUntypedAsciiString.replaceAll("\\s", "").take(30)}"
+    nameGen.`fresh`(s"$idxPart:${matrices(idx).toUntypedAsciiString.replaceAll("\\s", "").take(30)}")
   }
 
   /**
@@ -205,7 +205,7 @@ class InstanceTermEncoding private (val endSequent: HOLSequent, val instanceTerm
   /**
    * Maps a function symbol to the index of its corresponding formula in the end-sequent.
    */
-  def findESIndex(sym: Const): Option[SequentIndex] = symbols `indexOfOption` sym
+  def findESIndex(sym: Const): Option[SequentIndex] = symbols.`indexOfOption`(sym)
 
   /**
    * Maps a function symbol to its corresponding formula in the end-sequent.
@@ -214,7 +214,7 @@ class InstanceTermEncoding private (val endSequent: HOLSequent, val instanceTerm
 
   def decodeOption(term: Expr): Option[(SequentIndex, Substitution)] = term match {
     case Apps(f: Const, args) =>
-      findESIndex(f).map { idx => idx -> Substitution(quantVars(idx) zip args) }
+      findESIndex(f).map { idx => idx -> Substitution(quantVars(idx).zip(args)) }
     case _ => None
   }
 
@@ -233,7 +233,7 @@ class InstanceTermEncoding private (val endSequent: HOLSequent, val instanceTerm
     Sequent(terms.map(decodeToPolarizedFormula) toSeq)
 
   def decodeToExpansionSequent(terms: Iterable[Expr]): ExpansionSequent =
-    Sequent((terms flatMap decodeOption groupBy { _._1 }).map {
+    Sequent((terms.flatMap(decodeOption).groupBy { _._1 }).map {
       case (idx, instances) =>
         formulaToExpansionTree(endSequent(idx), instances.map { _._2 } toList, idx.polarity) -> idx.polarity
     } toSeq)

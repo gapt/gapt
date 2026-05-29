@@ -74,9 +74,9 @@ object writeDIMACS {
   def apply(cnf: DIMACS.CNF): String = {
     val dimacsInput = new StringBuilder
 
-    dimacsInput ++= s"p cnf ${DIMACS `maxAtom` cnf} ${cnf size}\n"
-    cnf foreach { clause =>
-      dimacsInput ++= s"${clause mkString " "} 0\n"
+    dimacsInput ++= s"p cnf ${DIMACS.`maxAtom`(cnf)} ${cnf size}\n"
+    cnf.foreach { clause =>
+      dimacsInput ++= s"${clause.mkString(" ")} 0\n"
     }
 
     dimacsInput.result()
@@ -88,13 +88,13 @@ object readDRUP {
     RupProof(cnf.map(RupProof.Input(_)) ++ apply(drupOutput))
 
   def apply(drupOutput: String): Seq[RupProof.Line] =
-    drupOutput.trim.split("\n").toSeq flatMap {
-      case line if line `startsWith` "s "    => None
-      case line if line `startsWith` "%RUPD" => None
-      case ""                                => None
-      case "UNSAT"                           => None
-      case "f DRUP"                          => None
-      case "o proof DRUP"                    => None
+    drupOutput.trim.split("\n").toSeq.flatMap {
+      case line if line.`startsWith`("s ")    => None
+      case line if line.`startsWith`("%RUPD") => None
+      case ""                                 => None
+      case "UNSAT"                            => None
+      case "f DRUP"                           => None
+      case "o proof DRUP"                     => None
       case line if line.startsWith("d ") =>
         Some(RupProof.Delete(line.substring(2).split(" ").toSeq.map(_.toInt).dropRight(1)))
       case line =>
@@ -105,10 +105,10 @@ object readDRUP {
 object writeWDIMACS {
   def apply(wcnf: Seq[(DIMACS.Clause, Int)], threshold: Int): String = {
     val dimacsInput = new StringBuilder
-    dimacsInput ++= s"p wcnf ${DIMACS `maxAtom` wcnf.map(_._1)} ${wcnf size} $threshold\n"
-    wcnf foreach {
+    dimacsInput ++= s"p wcnf ${DIMACS.`maxAtom`(wcnf.map(_._1))} ${wcnf size} $threshold\n"
+    wcnf.foreach {
       case (clause, weight) =>
-        dimacsInput ++= s"$weight ${clause mkString " "} 0\n"
+        dimacsInput ++= s"$weight ${clause.mkString(" ")} 0\n"
     }
     dimacsInput.result()
   }
@@ -122,10 +122,10 @@ object writeWDIMACS {
 object readWDIMACS {
   def apply(dimacsOutput: String): Option[DIMACS.Model] = {
     val lines = dimacsOutput.split("\n")
-    if (lines exists { _ `startsWith` "o " }) {
+    if (lines.exists { _.`startsWith`("o ") }) {
       Some(lines
-        .filter { _ `startsWith` "v " }
-        .map { _ `substring` 2 trim }
+        .filter { _.`startsWith`("v ") }
+        .map { _.`substring`(2) trim }
         .flatMap[String] { _.split(" ") }
         .map { _.replace("x", "") } // toysat :-(
         .filter { _ nonEmpty }

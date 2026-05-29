@@ -83,8 +83,8 @@ case class PrimitiveRecursiveFunction(
         val (lhs, rhs) = input
 
         require(lhs.ty == rhs.ty)
-        require(typeVariables(lhs.ty) subsetOf typeVars)
-        require(typeVariables(rhs.ty) subsetOf typeVars)
+        require(typeVariables(lhs.ty).subsetOf(typeVars))
+        require(typeVariables(rhs.ty).subsetOf(typeVars))
 
         val Apps(`c`, lhsArgs) = lhs: @unchecked
         require(lhsArgs.size == nArgs)

@@ -55,7 +55,7 @@ case class furstenberg(k: Int) extends PrimeDefinitions {
       forget("h_1")
       unfold("subset").`in`("h_0")
       allL("h_0", hov"n:nat").forget
-      impL `right` trivial
+      impL.`right`(trivial)
 
       forget("g_1_1")
       unfold("ν").in("g_1_0", "h_0")
@@ -68,7 +68,7 @@ case class furstenberg(k: Int) extends PrimeDefinitions {
       forget("h_0")
       unfold("subset").`in`("h_1")
       allL("h_1", hov"n:nat").forget
-      impL `right` trivial
+      impL.`right`(trivial)
 
       forget("g_1_1")
       unfold("ν").in("g_1_0", "h_1")
@@ -128,7 +128,7 @@ case class furstenberg(k: Int) extends PrimeDefinitions {
         decompose
         unfold("U").`in`("CF_1")
         exR(hov"k:nat").forget
-        andR `right` trivial
+        andR.`right`(trivial)
 
         andR.`left`(trivial)
 
@@ -143,11 +143,11 @@ case class furstenberg(k: Int) extends PrimeDefinitions {
     forget("REM")
 
     // TODO: congruence lemmas
-    cut("g_2", hof"O(U 0 l)") `right` by {
+    cut("g_2", hof"O(U 0 l)").`right`(by {
       unfold("O", "subset").in("g", "g_2")
       unfold("=_s").in("CF")
       simp.w("CF").on("g_2")
-    }
+    })
     forget("g"); renameLabel("g_2").to("g")
 
     forget("CF")
@@ -243,7 +243,7 @@ case class furstenberg(k: Int) extends PrimeDefinitions {
 
     forget("nonempty")
     exL
-    cut("CF", hof"INF(ν(n, l+1))") `right` insert(infiniteSubset)
+    cut("CF", hof"INF(ν(n, l+1))").`right`(insert(infiniteSubset))
 
     // Left subproof: ν(n, l+1) is infinite
     forget("open", "infinite")
@@ -445,7 +445,7 @@ case class furstenberg(k: Int) extends PrimeDefinitions {
           unfold("Q").`in`("Qn")
           unfold("R").`in`("Rn")
           allL(le"p 0").forget
-          impL `right` trivial
+          impL.`right`(trivial)
 
           unfold("P", "set_1").`in`("Rn")
           trivial
@@ -460,7 +460,7 @@ case class furstenberg(k: Int) extends PrimeDefinitions {
             impR
             unfold("R").`in`("Rn")
             allL(hov"y:nat").forget
-            impL `right` trivial
+            impL.`right`(trivial)
 
             unfold("P").atMost(1).`in`("Rn")
             unfold("union").`in`("Rn")
@@ -472,7 +472,7 @@ case class furstenberg(k: Int) extends PrimeDefinitions {
           forget("Rn1")
           unfold("R").`in`("Rn")
           allL(le"p $n").forget
-          impL `right` trivial
+          impL.`right`(trivial)
 
           unfold("P").atMost(1).`in`("Rn")
           unfold("union", "set_1").`in`("Rn")
@@ -538,20 +538,20 @@ case class furstenberg(k: Int) extends PrimeDefinitions {
 
   val proof: LKProof =
     Lemma(hols"F $k, REM, PRE, 'PRIME-DIV' :-") {
-      cut("INF {1}", hof" INF (set_1 1)") `right` insert(singletonFinite)
+      cut("INF {1}", hof" INF (set_1 1)").`right`(insert(singletonFinite))
       cut("nonempty {1}", hof" ¬ empty (set_1 1)").`left`(insert(singletonNonempty))
 
-      cut("O {1}", hof" O (set_1 1)") `right` insert(phi2)
-      cut("C compN{1}", hof" C (compN(set_1 1))") `right` insert(openClosedProof)
+      cut("O {1}", hof" O (set_1 1)").`right`(insert(phi2))
+      cut("C compN{1}", hof" C (compN(set_1 1))").`right`(insert(openClosedProof))
       cut("CF", hof" S $k =_s compN(set_1 1)").`left`(insert(psi1))
 
       // TODO: congruence lemmas
-      cut("C", hof"C (S $k)") `right` by {
+      cut("C", hof"C (S $k)").`right`(by {
         unfold("=_s", "compN").in("CF")
         unfold("C", "O", "subset", "compN").in("C", "C compN{1}")
         simp.w("CF").on("C")
         simp.on("C compN{1}")
-      }
+      })
       forget("C compN{1}"); renameLabel("C").to("C compN{1}")
 
       insert(psi2)

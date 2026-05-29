@@ -130,14 +130,14 @@ sealed trait LKt {
   }
 
   val freeHyps: Set[Hyp] = this match {
-    case Cut(_, q1, q2)         => q1.freeHyps union q2.freeHyps
+    case Cut(_, q1, q2)         => q1.freeHyps.union(q2.freeHyps)
     case Ax(main1, main2)       => Set(main1, main2)
     case Rfl(main)              => Set(main)
     case TopR(main)             => Set(main)
     case NegL(main, q)          => q.freeHyps + main
     case NegR(main, q)          => q.freeHyps + main
     case AndL(main, q)          => q.freeHyps + main
-    case AndR(main, q1, q2)     => q1.freeHyps union q2.freeHyps + main
+    case AndR(main, q1, q2)     => q1.freeHyps.union(q2.freeHyps + main)
     case AllL(main, _, q)       => q.freeHyps + main
     case AllR(main, _, q)       => q.freeHyps + main
     case Eql(main, eq, _, _, q) => q.freeHyps + main + eq
@@ -164,17 +164,17 @@ sealed trait LKt {
   }
 
   val freeVars: Set[Var] = this match {
-    case Cut(f, q1, q2)              => freeVariables(f) union q1.p.freeVars union q2.p.freeVars
+    case Cut(f, q1, q2)              => freeVariables(f).union(q1.p.freeVars).union(q2.p.freeVars)
     case Ax(_, _) | Rfl(_) | TopR(_) => Set()
     case NegR(_, q)                  => q.p.freeVars
     case NegL(_, q)                  => q.p.freeVars
-    case AndR(_, q1, q2)             => q1.p.freeVars union q2.p.freeVars
+    case AndR(_, q1, q2)             => q1.p.freeVars.union(q2.p.freeVars)
     case AndL(_, q)                  => q.p.freeVars
-    case AllL(_, term, q)            => q.p.freeVars union freeVariables(term)
+    case AllL(_, term, q)            => q.p.freeVars.union(freeVariables(term))
     case AllR(_, ev, q)              => q.p.freeVars - ev
-    case Eql(_, _, _, rwCtx, q)      => q.p.freeVars union freeVariables(rwCtx)
+    case Eql(_, _, _, rwCtx, q)      => q.p.freeVars.union(freeVariables(rwCtx))
     case AllSk(_, _, q)              => q.p.freeVars
-    case Def(_, f, q)                => q.p.freeVars union freeVariables(f)
+    case Def(_, f, q)                => q.p.freeVars.union(freeVariables(f))
     case Ind(_, _, _, cs)            => cs.view.flatMap(c => c.q.p.freeVars -- c.evs).toSet
     case Link(_, name)               => freeVariables(name)
   }
@@ -359,7 +359,7 @@ trait ImplicitInstances {
       if (sub.domain.intersect(indCase.evs.toSet).nonEmpty)
         Substitution(sub.map -- indCase.evs, sub.typeMap)(indCase)
       else if (sub.range.intersect(indCase.evs.toSet).nonEmpty) {
-        val renaming = rename(indCase.evs, indCase.q.p.freeVars union sub.range union sub.domain)
+        val renaming = rename(indCase.evs, indCase.q.p.freeVars.union(sub.range).union(sub.domain))
         IndCase(indCase.ctr, indCase.evs.map(renaming), Substitution(sub.map ++ renaming, sub.typeMap)(indCase.q))
       } else
         indCase.copy(q = sub(indCase.q))
@@ -376,7 +376,7 @@ trait ImplicitInstances {
         case AllR(_, ev, _) if sub.domain.contains(ev) =>
           Substitution(sub.map - ev, sub.typeMap)(p)
         case AllR(main, ev, q) if sub.range.contains(ev) =>
-          val ev_ = rename(ev, q.p.freeVars union sub.range union sub.domain)
+          val ev_ = rename(ev, q.p.freeVars.union(sub.range).union(sub.domain))
           AllR(main, ev_, Substitution(sub.map + (ev -> ev_), sub.typeMap)(q))
         case AllR(main, ev, q)            => AllR(main, ev, sub(q))
         case Eql(main, eq, ltr, rwCtx, q) => Eql(main, eq, ltr, sub(rwCtx), sub(q))
@@ -430,18 +430,18 @@ trait ImplicitInstances {
       }
     override def names(p: LKt): Set[VarOrConst] =
       p match {
-        case Cut(f, q1, q2)              => containedNames(f) union containedNames(q1) union containedNames(q2)
+        case Cut(f, q1, q2)              => containedNames(f).union(containedNames(q1)).union(containedNames(q2))
         case Ax(_, _) | Rfl(_) | TopR(_) => Set()
         case NegR(_, q)                  => containedNames(q)
         case NegL(_, q)                  => containedNames(q)
-        case AndR(_, q1, q2)             => containedNames(q1) union containedNames(q2)
+        case AndR(_, q1, q2)             => containedNames(q1).union(containedNames(q2))
         case AndL(_, q)                  => containedNames(q)
-        case AllL(_, term, q)            => containedNames(q) union containedNames(term)
+        case AllL(_, term, q)            => containedNames(q).union(containedNames(term))
         case AllR(_, ev, q)              => containedNames(q) + ev
-        case Eql(_, _, _, rwCtx, q)      => containedNames(q) union containedNames(rwCtx)
-        case AllSk(_, term, q)           => containedNames(q) union containedNames(term)
-        case Def(_, f, q)                => containedNames(q) union containedNames(f)
-        case Ind(_, f, t, cases)         => containedNames(cases) union containedNames(f) union containedNames(t)
+        case Eql(_, _, _, rwCtx, q)      => containedNames(q).union(containedNames(rwCtx))
+        case AllSk(_, term, q)           => containedNames(q).union(containedNames(term))
+        case Def(_, f, q)                => containedNames(q).union(containedNames(f))
+        case Ind(_, f, t, cases)         => containedNames(cases).union(containedNames(f)).union(containedNames(t))
         case Link(_, name)               => containedNames(name)
       }
   }

@@ -54,7 +54,7 @@ object IvyParser {
     var lastStep: IvyResolutionProof = null
     val found_steps = mutable.Map[ProofId, IvyResolutionProof]()
 
-    exp foreach { step =>
+    exp.foreach { step =>
       lastStep = parse_step(step, found_steps)
       found_steps(lastStep.id) = lastStep
     }

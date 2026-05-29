@@ -157,8 +157,8 @@ trait TipProblemDefinition {
   def goal: Formula
   def loadProblem: TipProblem = {
     var ctx = Context()
-    sorts foreach { ctx += _ }
-    datatypes foreach {
+    sorts.foreach { ctx += _ }
+    datatypes.foreach {
       dt =>
         {
           if (!ctx.isType(dt.baseType)) {
@@ -170,12 +170,12 @@ trait TipProblemDefinition {
           projectors.foreach { ctx += _ }
         }
     }
-    uninterpretedConsts foreach { constant =>
+    uninterpretedConsts.foreach { constant =>
       if (ctx.constant(constant.name).isEmpty) {
         ctx += constant
       }
     }
-    functions foreach { function =>
+    functions.foreach { function =>
       ctx += function.fun
     }
     TipProblem(ctx, Nil, sorts, datatypes, uninterpretedConsts, functions, assumptions, goal)
@@ -244,7 +244,7 @@ object tipScalaEncoding {
 
   private def compileFunctionConstants(problem: TipProblem): String = {
     "\n//Function constants\n" +
-      (problem.functions.map { f => "ctx += " + compileConst(f.fun) } mkString ("\n"))
+      (problem.functions.map { f => "ctx += " + compileConst(f.fun) }.mkString("\n"))
   }
 
   private def compileInductiveTypes(problem: TipProblem): Seq[String] = {
@@ -252,7 +252,7 @@ object tipScalaEncoding {
   }
 
   private def compileInductiveType(datatype: InductiveType): String = {
-    val constructors = datatype.constructorConstants.map { c => compileConst(c) } mkString (", ")
+    val constructors = datatype.constructorConstants.map { c => compileConst(c) }.mkString(", ")
     val projectors = compileProjectors(datatype.constructors.flatMap(_.fields.flatMap(_.projector)))
     s"ctx += InductiveType(ty${"\"" + datatype.baseType.name + "\""}, ${constructors})" + "\n" + projectors
   }

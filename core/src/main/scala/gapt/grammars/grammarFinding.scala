@@ -58,15 +58,15 @@ object stsSubsumedByLGG {
 
   private def apply(lgg: Expr, ntsToDo: Set[Var], nts: Set[Var], allPositions: List[List[LambdaPosition]]): Set[Expr] = allPositions match {
     case positions :: otherPositions =>
-      positions.flatMap { lgg.get(_) }.headOption.filterNot(freeVariables(_) subsetOf nts).map { st =>
-        ntsToDo filter { _.ty == st.ty } flatMap { nt =>
+      positions.flatMap { lgg.get(_) }.headOption.filterNot(freeVariables(_).subsetOf(nts)).map { st =>
+        ntsToDo.filter { _.ty == st.ty }.flatMap { nt =>
           var generalization = lgg
           for (pos <- positions) generalization = generalization.replace(pos, nt)
           apply(generalization, ntsToDo - nt, nts, otherPositions)
         }
       }.getOrElse(Set()) ++ apply(lgg, ntsToDo, nts, otherPositions)
-    case Nil if freeVariables(lgg) subsetOf nts => Set(lgg)
-    case _                                      => Set()
+    case Nil if freeVariables(lgg).subsetOf(nts) => Set(lgg)
+    case _                                       => Set()
   }
 }
 
@@ -76,7 +76,7 @@ object stableTerms {
 
   def apply(lang: Iterable[Expr], nonTerminals: Seq[Var]): Set[Expr] = {
     val lggs = subsetLGGs(lang, nonTerminals.size + 1)
-    lggs flatMap { stsSubsumedByLGG(_, nonTerminals.toSet) }
+    lggs.flatMap { stsSubsumedByLGG(_, nonTerminals.toSet) }
   }
 }
 
@@ -97,9 +97,9 @@ class VtratgTermGenerationFormula(g: VTRATG, t: Expr) {
       if (pa.nonEmpty && !handledPAs.contains(pa)) {
         val lowestNTVectIdx = pa.keys.map(containingNTIdx).min
         val lowestNTVect = g.nonTerminals(lowestNTVectIdx)
-        g.productions(lowestNTVect) foreach { p =>
+        g.productions(lowestNTVect).foreach { p =>
           val pairs = for ((nt, s) <- p._1.lazyZip(p._2); t <- pa.get(nt)) yield s -> t
-          syntacticMatching(pairs.toList, PreSubstitution(pa)) foreach { matching =>
+          syntacticMatching(pairs.toList, PreSubstitution(pa)).foreach { matching =>
             discoverAssignments(matching.map -- lowestNTVect)
           }
         }
@@ -111,7 +111,7 @@ class VtratgTermGenerationFormula(g: VTRATG, t: Expr) {
     val possibleValues = Map() ++ handledPAs.toSet.flatten.groupBy(_._1).view.mapValues(_.map(_._2)).toMap
 
     def Match(ntIdx: Int, t: List[Expr], s: List[Expr]) =
-      syntacticMatching(s zip t filter { _._2 != notASubTerm }) match {
+      syntacticMatching(s.zip(t).filter { _._2 != notASubTerm }) match {
         case Some(matching) =>
           And(matching.map.toSeq.map {
             case (beta, r) if possibleValues(beta) contains r =>
@@ -122,7 +122,7 @@ class VtratgTermGenerationFormula(g: VTRATG, t: Expr) {
       }
 
     def Case(ntIdx: Int, t: List[Expr]) =
-      if (t forall { _ == notASubTerm }) Top()
+      if (t.forall { _ == notASubTerm }) Top()
       else And((g.nonTerminals(ntIdx).lazyZip(t)).map(valueOfNonTerminal)) --> Or(g.productions(g.nonTerminals(ntIdx)).toSeq.map {
         case p @ (_, s) =>
           vectProductionIsIncluded(p) & Match(ntIdx, t, s)
@@ -133,14 +133,14 @@ class VtratgTermGenerationFormula(g: VTRATG, t: Expr) {
     // value of startSymbol must be t
     cs += valueOfNonTerminal(g.startSymbol, t)
 
-    possibleAssignments foreach { assignment =>
+    possibleAssignments.foreach { assignment =>
       cs += simplifyPropositional(Case(assignment._1, assignment._2))
     }
 
     for ((x, ts) <- possibleValues)
       cs += atMost.`oneOf`((ts + notASubTerm).toSeq.map { valueOfNonTerminal(x, _) })
 
-    for ((i, assignments) <- possibleAssignments groupBy { _._1 })
+    for ((i, assignments) <- possibleAssignments.groupBy { _._1 })
       cs += exactly.`oneOf`(assignments.toSeq.map { assignment => And(g.nonTerminals(i).lazyZip(assignment._2).map(valueOfNonTerminal)) })
 
     And(cs.result())
@@ -207,7 +207,7 @@ object minimizeVTRATG {
     val atomsInHard = atoms(hard)
     val soft = for {
       p <- g.productions
-      atom = formula `productionIsIncluded` p
+      atom = formula.`productionIsIncluded`(p)
       if atomsInHard contains atom
     } yield -atom -> weight(p)
     logger.time("maxsat") { maxSATSolver.solve(hard, soft) } match {

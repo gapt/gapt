@@ -73,7 +73,7 @@ trait TacticCommands {
   /**
    * Attempts to apply the tactics `axiomTop`, `axiomBot`, `axiomRefl`, and `axiomLog`.
    */
-  def trivial: Tactic[Unit] = Tactic { axiomTop `orElse` axiomBot `orElse` axiomRefl `orElse` axiomLog }.cut("Not a valid initial sequent")
+  def trivial: Tactic[Unit] = Tactic { axiomTop.`orElse`(axiomBot).`orElse`(axiomRefl).`orElse`(axiomLog) }.cut("Not a valid initial sequent")
 
   /**
    * Applies the `NegLeft` tactic to the current subgoal: The goal
@@ -536,7 +536,7 @@ trait TacticCommands {
   def foTheory(implicit ctx: Context): Tactic[Unit] = Tactic {
     for {
       goal <- currentGoal
-      theoryAxiom <- FOTheoryMacroRule.option(goal.conclusion collect { case a: Atom => a }).toTactic("does not follow from theory")
+      theoryAxiom <- FOTheoryMacroRule.option(goal.conclusion.collect { case a: Atom => a }).toTactic("does not follow from theory")
       _ <- insert(theoryAxiom)
     } yield ()
   }
@@ -593,18 +593,24 @@ trait TacticCommands {
    */
   def decompose: Tactic[Unit] = Tactic {
     repeat {
-      NegLeftTactic(AnyFormula) `orElse` NegRightTactic(AnyFormula) `orElse`
-        AndLeftTactic(AnyFormula) `orElse` OrRightTactic(AnyFormula) `orElse` ImpRightTactic(AnyFormula) `orElse`
-        ForallRightTactic(AnyFormula) `orElse` ExistsLeftTactic(AnyFormula)
+      NegLeftTactic(AnyFormula).`orElse`(NegRightTactic(AnyFormula)).`orElse`(
+        AndLeftTactic(AnyFormula)
+      ).`orElse`(OrRightTactic(AnyFormula)).`orElse`(ImpRightTactic(AnyFormula)).`orElse`(
+        ForallRightTactic(AnyFormula)
+      ).`orElse`(ExistsLeftTactic(AnyFormula))
     }
   }
 
   def destruct(label: String): Tactic[Any] = Tactic {
-    allR(label) `orElse` exL(label) `orElse`
-      andL(label) `orElse` andR(label) `orElse`
-      orL(label) `orElse` orR(label) `orElse`
-      impL(label) `orElse` impR(label) `orElse`
-      negL(label) `orElse` negR(label)
+    allR(label).`orElse`(exL(label)).`orElse`(
+      andL(label)
+    ).`orElse`(andR(label)).`orElse`(
+      orL(label)
+    ).`orElse`(orR(label)).`orElse`(
+      impL(label)
+    ).`orElse`(impR(label)).`orElse`(
+      negL(label)
+    ).`orElse`(negR(label))
   }.cut(s"Cannot destruct $label")
 
   def chain(h: String) = ChainTactic(h)
@@ -829,9 +835,11 @@ trait TacticCommands {
   def cases(lemma: String, terms: Expr*)(implicit ctx: Context): Tactic[Unit] = casesW(lemma, lemma, terms*)
   def casesW(label: String, lemma: String, terms: Expr*)(implicit ctx: Context): Tactic[Unit] = Tactic {
     def substOr(l: String): Tactic[Unit] =
-      (orL(l).`onAll`(substOr(l))) `orElse`
-        (exL(l).`onAll`(substOr(l))) `orElse`
-        subst1(l) `orElse` skip
+      (orL(l).`onAll`(substOr(l))).`orElse`(
+        exL(l).`onAll`(substOr(l))
+      ).`orElse`(
+        subst1(l)
+      ).`orElse`(skip)
     for {
       _ <- include(label, ProofLink(lemma))
       _ <- allL(label, terms*).forget

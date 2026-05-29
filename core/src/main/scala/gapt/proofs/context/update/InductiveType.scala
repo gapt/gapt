@@ -255,7 +255,7 @@ class InductiveTypeValidator(inductiveType: InductiveType) {
     require(constructor.params == inductiveType.typeParameters)
 
   private def typeVariablesMustBeSubsetOfTypeParameters(constructor: Const): Unit =
-    require(typeVariables(constructor) subsetOf inductiveType.typeParameters.toSet)
+    require(typeVariables(constructor).subsetOf(inductiveType.typeParameters.toSet))
 
   private def requireDistinctConstructorNames(): Unit =
     require(

@@ -33,7 +33,7 @@ class ReconstructDatatypes(problem: TipSmtProblem) {
 
   def apply(): TipSmtProblem = {
 
-    problem.definitions foreach {
+    problem.definitions.foreach {
       case fun @ TipSmtFunctionDefinition(_, _, _, _, _) =>
         apply(fun)
       case funDefs @ TipSmtMutualRecursiveFunctionDefinition(_) =>
@@ -60,13 +60,13 @@ class ReconstructDatatypes(problem: TipSmtProblem) {
       variables: Map[String, Datatype]
   ): Unit = expression match {
     case TipSmtAnd(subexpressions) =>
-      subexpressions foreach { reconstructTypes(_, variables) }
+      subexpressions.foreach { reconstructTypes(_, variables) }
       expression.datatype = Some(Datatype("bool"))
     case TipSmtOr(subexpressions) =>
-      subexpressions foreach { reconstructTypes(_, variables) }
+      subexpressions.foreach { reconstructTypes(_, variables) }
       expression.datatype = Some(Datatype("bool"))
     case TipSmtImp(subexpressions) =>
-      subexpressions foreach { reconstructTypes(_, variables) }
+      subexpressions.foreach { reconstructTypes(_, variables) }
       expression.datatype = Some(Datatype("bool"))
     case TipSmtNot(subexpression) =>
       reconstructTypes(subexpression, variables)
@@ -98,7 +98,7 @@ class ReconstructDatatypes(problem: TipSmtProblem) {
         .getOrElse(identifier, problem.symbolTable.get.typeOf(identifier).returnType))
 
     case TipSmtFun(functionName, arguments) =>
-      arguments foreach { arg => reconstructTypes(arg, variables) }
+      arguments.foreach { arg => reconstructTypes(arg, variables) }
       expression.datatype = Some(
         problem.symbolTable.get.typeOf(functionName).returnType
       )
@@ -116,12 +116,12 @@ class ReconstructDatatypes(problem: TipSmtProblem) {
       expression.datatype = expr2.datatype
 
     case TipSmtEq(subexpressions) =>
-      subexpressions foreach { reconstructTypes(_, variables) }
+      subexpressions.foreach { reconstructTypes(_, variables) }
       expression.datatype = Some(Datatype("bool"))
 
     case TipSmtMatch(expr, cases) =>
       reconstructTypes(expr, variables)
-      cases foreach {
+      cases.foreach {
         reconstructTypesCase(_, variables)
       }
       expression.datatype = cases.head.expr.datatype

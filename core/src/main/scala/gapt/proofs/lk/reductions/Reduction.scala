@@ -9,13 +9,13 @@ trait Reduction {
   def orElse(reduction: Reduction): Reduction =
     new Reduction {
       def reduce(proof: LKProof): Option[LKProof] =
-        Reduction.this.reduce(proof) orElse reduction.reduce(proof)
+        Reduction.this.reduce(proof).orElse(reduction.reduce(proof))
     }
 
   def andThen(reduction: Reduction): Reduction =
     new Reduction {
       def reduce(proof: LKProof): Option[LKProof] =
-        Reduction.this.reduce(proof) flatMap reduction.reduce
+        Reduction.this.reduce(proof).flatMap(reduction.reduce)
     }
 
   def isRedex(proof: LKProof): Boolean =

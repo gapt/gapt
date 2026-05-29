@@ -27,15 +27,15 @@ trait ReplaceableInstances0 {
   implicit object exprReplaceable extends ClosedUnderReplacement[Expr] {
     def replace(term: Expr, map: PartialFunction[Expr, Expr]): Expr =
       term match {
-        case _ if map isDefinedAt term => map(term)
+        case _ if map.isDefinedAt(term) => map(term)
 
         // special case polymorphic constants so that we can do type-changing replacements
         // but only if the user doesn't specify any replacement for the logical constants
-        case Eq(s, t) if !(map isDefinedAt EqC(s.ty)) =>
+        case Eq(s, t) if !(map.isDefinedAt(EqC(s.ty))) =>
           Eq(replace(s, map), replace(t, map))
-        case All(x, t) if !(map isDefinedAt ForallC(x.ty)) =>
+        case All(x, t) if !(map.isDefinedAt(ForallC(x.ty))) =>
           All(replace(x, map).asInstanceOf[Var], replace(t, map))
-        case Ex(x, t) if !(map isDefinedAt ExistsC(x.ty)) =>
+        case Ex(x, t) if !(map.isDefinedAt(ExistsC(x.ty))) =>
           Ex(replace(x, map).asInstanceOf[Var], replace(t, map))
 
         case App(s, t) =>
@@ -47,7 +47,7 @@ trait ReplaceableInstances0 {
       }
 
     def names(term: Expr): Set[VarOrConst] =
-      constants.nonLogical(term).toSet[VarOrConst] union variables(term).toSet
+      constants.nonLogical(term).toSet[VarOrConst].union(variables(term).toSet)
   }
 
   implicit object structReplaceable extends ClosedUnderReplacement[Struct] {
@@ -62,11 +62,11 @@ trait ReplaceableInstances0 {
       }
     def names(st: Struct): Set[VarOrConst] =
       st match {
-        case A(x)        => constants.nonLogical(x).toSet[VarOrConst] union variables(x).toSet
-        case CLS(x, y)   => constants.nonLogical(x).toSet[VarOrConst] union variables(x).toSet
+        case A(x)        => constants.nonLogical(x).toSet[VarOrConst].union(variables(x).toSet)
+        case CLS(x, y)   => constants.nonLogical(x).toSet[VarOrConst].union(variables(x).toSet)
         case Dual(x)     => names(x)
-        case Times(x, y) => names(x) union names(y)
-        case Plus(x, y)  => names(x) union names(y)
+        case Times(x, y) => names(x).union(names(y))
+        case Plus(x, y)  => names(x).union(names(y))
         case _           => Set()
       }
 
@@ -88,7 +88,7 @@ trait ReplaceableInstances2 extends ReplaceableInstances1 {
       override def replace(obj: Seq[I], p: PartialFunction[Expr, Expr]): Seq[O] =
         obj.map { TermReplacement(_, p) }
 
-      def names(obj: Seq[I]): Set[VarOrConst] = obj flatMap { containedNames(_) } toSet
+      def names(obj: Seq[I]): Set[VarOrConst] = obj.flatMap { containedNames(_) } toSet
     }
 }
 
@@ -106,7 +106,7 @@ object Replaceable extends ReplaceableInstances2 {
       Substitution(for ((l, r) <- subst.map) yield TermReplacement(l, p).asInstanceOf[Var] -> TermReplacement(r, p))
 
     def names(obj: Substitution): Set[VarOrConst] =
-      obj.map.keySet ++ obj.map.values flatMap { containedNames(_) }
+      (obj.map.keySet ++ obj.map.values).flatMap { containedNames(_) }
   }
 
   implicit object definitionReplaceable extends ClosedUnderReplacement[Definition] {
@@ -114,7 +114,7 @@ object Replaceable extends ReplaceableInstances2 {
       Definition(TermReplacement(definition.what, p).asInstanceOf[Const], TermReplacement(definition.by, p))
 
     def names(obj: Definition): Set[VarOrConst] =
-      Set[VarOrConst](obj.what) union exprReplaceable.names(obj.by)
+      Set[VarOrConst](obj.what).union(exprReplaceable.names(obj.by))
   }
 
   implicit def listReplaceable[I, O](implicit ev: Replaceable[I, O]): Replaceable[List[I], List[O]] =
@@ -122,7 +122,7 @@ object Replaceable extends ReplaceableInstances2 {
       override def replace(obj: List[I], p: PartialFunction[Expr, Expr]): List[O] =
         obj.map { TermReplacement(_, p) }
 
-      def names(obj: List[I]): Set[VarOrConst] = obj flatMap { containedNames(_) } toSet
+      def names(obj: List[I]): Set[VarOrConst] = obj.flatMap { containedNames(_) } toSet
     }
 
   implicit def vectorReplaceable[I, O](implicit ev: Replaceable[I, O]): Replaceable[Vector[I], Vector[O]] =
@@ -130,7 +130,7 @@ object Replaceable extends ReplaceableInstances2 {
       override def replace(obj: Vector[I], p: PartialFunction[Expr, Expr]): Vector[O] =
         obj.map { TermReplacement(_, p) }
 
-      def names(obj: Vector[I]): Set[VarOrConst] = obj flatMap { containedNames(_) } toSet
+      def names(obj: Vector[I]): Set[VarOrConst] = obj.flatMap { containedNames(_) } toSet
     }
 
   implicit def sequentReplaceable[I, O](implicit ev: Replaceable[I, O]): Replaceable[Sequent[I], Sequent[O]] =
@@ -138,7 +138,7 @@ object Replaceable extends ReplaceableInstances2 {
       override def replace(obj: Sequent[I], p: PartialFunction[Expr, Expr]): Sequent[O] =
         obj.map { TermReplacement(_, p) }
 
-      def names(obj: Sequent[I]): Set[VarOrConst] = obj.elements flatMap { containedNames(_) } toSet
+      def names(obj: Sequent[I]): Set[VarOrConst] = obj.elements.flatMap { containedNames(_) } toSet
     }
 
   implicit def setReplaceable[I, O](implicit ev: Replaceable[I, O]): Replaceable[Set[I], Set[O]] =
@@ -146,7 +146,7 @@ object Replaceable extends ReplaceableInstances2 {
       override def replace(obj: Set[I], p: PartialFunction[Expr, Expr]): Set[O] =
         obj.map { TermReplacement(_, p) }
 
-      def names(obj: Set[I]): Set[VarOrConst] = obj flatMap { containedNames(_) }
+      def names(obj: Set[I]): Set[VarOrConst] = obj.flatMap { containedNames(_) }
     }
 
   implicit def optionReplaceable[I, O](implicit ev: Replaceable[I, O]): Replaceable[Option[I], Option[O]] =
@@ -154,7 +154,7 @@ object Replaceable extends ReplaceableInstances2 {
       override def replace(obj: Option[I], p: PartialFunction[Expr, Expr]): Option[O] =
         obj.map { TermReplacement(_, p) }
 
-      def names(obj: Option[I]): Set[VarOrConst] = obj.toSet[I] flatMap { containedNames(_) }
+      def names(obj: Option[I]): Set[VarOrConst] = obj.toSet[I].flatMap { containedNames(_) }
     }
 
   implicit def tupleReplaceable[I1, I2, O1, O2](implicit ev1: Replaceable[I1, O1], ev2: Replaceable[I2, O2]): Replaceable[(I1, I2), (O1, O2)] =
@@ -162,7 +162,7 @@ object Replaceable extends ReplaceableInstances2 {
       override def replace(obj: (I1, I2), p: PartialFunction[Expr, Expr]): (O1, O2) =
         (ev1.replace(obj._1, p), ev2.replace(obj._2, p))
 
-      def names(obj: (I1, I2)): Set[VarOrConst] = containedNames(obj._1) union containedNames(obj._2)
+      def names(obj: (I1, I2)): Set[VarOrConst] = containedNames(obj._1).union(containedNames(obj._2))
     }
 
   implicit def mapReplaceable[I1, I2, O1, O2](implicit ev1: Replaceable[I1, O1], ev2: Replaceable[I2, O2]): Replaceable[Map[I1, I2], Map[O1, O2]] =
@@ -211,7 +211,7 @@ object TermReplacement {
     val namesInObj = containedNames(obj)
     val namesInRange = partialMap.values.flatMap { containedNames(_) }.toSet
 
-    val needToRename = namesInObj intersect namesInRange -- partialMap.keySet
+    val needToRename = namesInObj.intersect(namesInRange -- partialMap.keySet)
     val nameGen = rename.awayFrom(namesInObj ++ namesInRange ++ partialMap.keySet)
     val renaming = for (n <- needToRename) yield n -> nameGen.fresh(n)
 

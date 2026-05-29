@@ -18,7 +18,7 @@ object loadExpansionProof {
   def apply(file: InputFile): ExpansionProof = withBackgroundTheory(file)._1
 
   def withBackgroundTheory(file: InputFile): (ExpansionProof, CutIntroduction.BackgroundTheory) = file.fileName match {
-    case fileName if fileName `endsWith` ".proof_flat" =>
+    case fileName if fileName.`endsWith`(".proof_flat") =>
       val Some(expSeq) = VeriTParser.getExpansionProofWithSymmetry(FilePath(fileName)): @unchecked
       ExpansionProof(expSeq) -> CutIntroduction.BackgroundTheory.PureFOL
     case fileName if fileName `contains` "/leanCoP" =>
@@ -44,7 +44,7 @@ object loadExpansionProof {
     val output = file.read
     val lines = output.split("\n")
     if (lines contains "%----ERROR: Could not form TPTP format derivation")
-      StringInputFile(lines.toSeq.dropWhile(_ != "%----ORIGINAL SYSTEM OUTPUT").drop(1).takeWhile(!_.startsWith("%-----")).dropRight(1).map { _ `substring` 2 }.filterNot(_ `startsWith` "% SZS").filterNot(_ `startsWith` "\\n% SZS").mkString("", "\n", "\n"))
+      StringInputFile(lines.toSeq.dropWhile(_ != "%----ORIGINAL SYSTEM OUTPUT").drop(1).takeWhile(!_.startsWith("%-----")).dropRight(1).map { _.`substring`(2) }.filterNot(_.`startsWith`("% SZS")).filterNot(_.`startsWith`("\\n% SZS")).mkString("", "\n", "\n"))
     else
       StringInputFile(output)
   }

@@ -77,7 +77,7 @@ case class StandardInductionAxioms(
           proofState += allR(inductionVariable)
           proofState += repeat(andL)
           proofState += induction(inductionVariable)
-          inductiveCaseProofs foreach {
+          inductiveCaseProofs.foreach {
             proofState += insert(_)
           }
 
@@ -103,15 +103,15 @@ case class StandardInductionAxioms(
               "goal" -> caseConclusion :: Nil
             )
           )
-          proofState += allL("icf", primaryVariables*).forget `orElse` skip
+          proofState += allL("icf", primaryVariables*).forget.`orElse`(skip)
           proofState += impL("icf")
           if (primaryVariables.isEmpty)
             proofState += trivial
           else
-            primaryVariables foreach {
-              _ => proofState += andR("icf").`andThen`(trivial) `orElse` trivial
+            primaryVariables.foreach {
+              _ => proofState += andR("icf").`andThen`(trivial).`orElse`(trivial)
             }
-          proofState += allL("icf", secondaryVariables*).forget `orElse` skip
+          proofState += allL("icf", secondaryVariables*).forget.`orElse`(skip)
           proofState += trivial
 
           proofState.result

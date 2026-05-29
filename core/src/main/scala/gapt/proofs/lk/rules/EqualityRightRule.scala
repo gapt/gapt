@@ -96,8 +96,8 @@ object EqualityRightRule extends ConvenienceConstructor("EqualityRightRule") {
           throw LKRuleCreationException("Nontrivial equation, but aux and main formula are equal.")
 
         } else {
-          val contextS = replacementContext(s.ty, auxFormula, auxFormula.find(s) intersect mainFormula.find(t))
-          val contextT = replacementContext(t.ty, auxFormula, auxFormula.find(t) intersect mainFormula.find(s))
+          val contextS = replacementContext(s.ty, auxFormula, auxFormula.find(s).intersect(mainFormula.find(t)))
+          val contextT = replacementContext(t.ty, auxFormula, auxFormula.find(t).intersect(mainFormula.find(s)))
 
           val Abs(vS, restS) = contextS
           val Abs(vT, restT) = contextT

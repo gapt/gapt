@@ -16,12 +16,12 @@ class MaxSat4j extends MaxSATSolver {
     val solver = org.sat4j.pb.SolverFactory.newDefaultOptimizer()
     val decorator = new WeightedMaxSatDecorator(solver)
 
-    decorator.newVar(DIMACS `maxAtom` (hard ++ soft.map(_._1)))
+    decorator.newVar(DIMACS.`maxAtom`(hard ++ soft.map(_._1)))
     decorator.setTopWeight(BigInteger.valueOf(threshold))
 
     try {
-      hard foreach { decorator.addHardClause(_) }
-      soft foreach { case (clause, weight) => decorator.addSoftClause(weight, clause) }
+      hard.foreach { decorator.addHardClause(_) }
+      soft.foreach { case (clause, weight) => decorator.addSoftClause(weight, clause) }
 
       if (solver.isSatisfiable) {
         Some(solver.model().toIndexedSeq)

@@ -66,7 +66,7 @@ object EigenVariablesLK {
       apply(subProof) ++ Set(eigen)
     case InductionRule(cases, _, _) =>
       cases.flatMap { c => c.eigenVars }.toSet ++
-        (cases flatMap { c => apply(c.proof) })
+        (cases.flatMap { c => apply(c.proof) })
     case _ =>
       p.immediateSubProofs.flatMap(apply).toSet
   }
@@ -77,7 +77,7 @@ object freeVariablesLK {
     case StrongQuantifierRule(subProof, _, eigen, _, _) =>
       apply(subProof) - eigen
     case InductionRule(cases, _, term) =>
-      freeVariables(p.conclusion) ++ freeVariables(term) ++ (cases flatMap { c =>
+      freeVariables(p.conclusion) ++ freeVariables(term) ++ (cases.flatMap { c =>
         apply(c.proof) -- c.eigenVars
       })
     case _ =>
@@ -88,7 +88,7 @@ object freeVariablesLK {
 object groundFreeVarsLK {
   def getMap(p: LKProof): Set[(Var, Const)] = {
     val nameGen = rename.awayFrom(containedNames(p))
-    for (v @ Var(n, t) <- freeVariablesLK(p)) yield v -> Const(nameGen `fresh` n, t)
+    for (v @ Var(n, t) <- freeVariablesLK(p)) yield v -> Const(nameGen.`fresh`(n), t)
   }
 
   def apply(p: LKProof): LKProof = Substitution(getMap(p))(p)
@@ -115,11 +115,11 @@ object isRegular {
    * @return true iff proof is regular.
    */
   def apply(proof: LKProof): Boolean = {
-    val eigenvariables: Seq[Var] = proof.subProofs.toSeq flatMap {
+    val eigenvariables: Seq[Var] = proof.subProofs.toSeq.flatMap {
       case ExistsLeftRule(_, _, eigenvariable, _)  => Seq(eigenvariable)
       case ForallRightRule(_, _, eigenvariable, _) => Seq(eigenvariable)
       case InductionRule(inductionCases, _, _) =>
-        inductionCases flatMap { _.eigenVars }
+        inductionCases.flatMap { _.eigenVars }
       case _ => Seq()
     }
     eigenvariables == eigenvariables.distinct

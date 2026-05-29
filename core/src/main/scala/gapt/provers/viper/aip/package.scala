@@ -71,7 +71,7 @@ package object aip {
    *         is not be uniquely determined by the label.
    */
   def findFormula(sequent: Sequent[(String, Formula)], label: String): ThrowsError[Formula] = {
-    sequent.succedent filter { case (l, f) => l == label } match {
+    sequent.succedent.filter { case (l, f) => l == label } match {
       case Vector(lf) => Right(lf._2)
       case lf +: _    => Left("Formula could not be uniquely determined")
       case _          => Left(s"Label $label not found")

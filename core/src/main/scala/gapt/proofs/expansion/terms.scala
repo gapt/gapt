@@ -142,14 +142,14 @@ object ETt {
 
     def names(tree: ETt): Set[VarOrConst] = tree match {
       case ETtAtom | ETtNullary | ETtWeakening => Set.empty
-      case ETtMerge(a, b)                      => names(a) union names(b)
+      case ETtMerge(a, b)                      => names(a).union(names(b))
       case ETtUnary(a)                         => names(a)
-      case ETtBinary(a, b)                     => names(a) union names(b)
+      case ETtBinary(a, b)                     => names(a).union(names(b))
       case ETtWeak(insts) =>
         (insts.keys.flatMap(containedNames(_)) ++ insts.values.flatMap(names)).toSet
       case ETtStrong(eigenVar, child) => names(child) + eigenVar
-      case ETtSkolem(skTerm, child)   => names(child) union containedNames(skTerm)
-      case ETtDef(shallow, child)     => names(child) union containedNames(shallow)
+      case ETtSkolem(skTerm, child)   => names(child).union(containedNames(skTerm))
+      case ETtDef(shallow, child)     => names(child).union(containedNames(shallow))
     }
   }
 }

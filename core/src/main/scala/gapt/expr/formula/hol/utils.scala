@@ -214,9 +214,9 @@ object freeFOLVariables {
 object atoms {
   def apply(f: Formula): Set[Atom] = f match {
     case f: Atom          => Set(f)
-    case And(x, y)        => apply(x) union apply(y)
-    case Or(x, y)         => apply(x) union apply(y)
-    case Imp(x, y)        => apply(x) union apply(y)
+    case And(x, y)        => apply(x).union(apply(y))
+    case Or(x, y)         => apply(x).union(apply(y))
+    case Imp(x, y)        => apply(x).union(apply(y))
     case Neg(x)           => apply(x)
     case Top() | Bottom() => Set()
     case Ex(_, y)         => apply(y)

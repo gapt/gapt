@@ -54,8 +54,8 @@ object structuralCNF {
       implicit ctx: MutableContext = MutableContext.guess(proofs)
   ): Set[ResolutionProof] = {
     val clausifier = new Clausifier(propositional, structural, bidirectionalDefs, cse, ctx, ctx.newNameGenerator)
-    if (cse) proofs foreach clausifier.analyze
-    proofs foreach clausifier.expand
+    if (cse) proofs.foreach(clausifier.analyze)
+    proofs.foreach(clausifier.expand)
     clausifier.cnf.toSet
   }
 }
@@ -180,7 +180,7 @@ class Clausifier(
   // In order to combat exponential blow-up, we do something special if there are two or more such elements:
   // we introduce a definition for the first one.
   def split(p: ResolutionProof): Unit = {
-    (p.conclusion.zipWithIndex.elements collect {
+    (p.conclusion.zipWithIndex.elements.collect {
       case (And(a, b), i: Suc) => i
       case (Or(a, b), i: Ant)  => i
       case (Imp(a, b), i: Ant) => i

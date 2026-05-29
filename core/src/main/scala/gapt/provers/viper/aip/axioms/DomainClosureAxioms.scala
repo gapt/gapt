@@ -55,7 +55,7 @@ case class DomainClosureAxioms(types: List[TBase] = Nil) extends AxiomFactory {
         val All.Block(Seq(variable, _*), _) = formula: @unchecked
         proofState += allR
         proofState += induction(variable)
-        constructors foreach {
+        constructors.foreach {
           _ => proofState += escargot(using ctx.newMutable)
         }
         proofState.result

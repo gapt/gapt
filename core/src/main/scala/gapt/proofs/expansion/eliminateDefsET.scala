@@ -36,7 +36,7 @@ object eliminateDefsET {
 
     def mkDefAtom(as: Seq[Expr], pol: Polarity) =
       ETDefinition(
-        Substitution(vs zip as)(definedFormula),
+        Substitution(vs.zip(as))(definedFormula),
         ETAtom(definitionConst(as).asInstanceOf[Atom], pol)
       )
 
@@ -58,7 +58,7 @@ object eliminateDefsET {
 
     if (!pureFolWithoutEq) {
       val newRepl = Vector() ++ (for ((_, is) <- insts; i <- is) yield generalizeET(i, definedFormula))
-      insts = for ((as, _) <- insts) yield as -> Substitution(vs zip as)(newRepl).toVector
+      insts = for ((as, _) <- insts) yield as -> Substitution(vs.zip(as))(newRepl).toVector
     }
 
     insts =

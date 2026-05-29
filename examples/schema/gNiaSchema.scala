@@ -143,8 +143,8 @@ object gniaSchema extends TacticsProof {
     exR("Suc_0_0", fov"A")
     andL("Ant_2_1")
     andL
-    andR `right` foTheory
-    andR `right` foTheory
+    andR.`right`(foTheory)
+    andR.`right`(foTheory)
     ref("nu")
   }
   ctx += ProofDefinitionDeclaration(le"mubase (s m)", mubaseSc)
@@ -180,8 +180,8 @@ object gniaSchema extends TacticsProof {
     exL(fov"B")
     exR(fov"B")
     andL
-    andR `right` foTheory
-    andR `right` foTheory
+    andR.`right`(foTheory)
+    andR.`right`(foTheory)
     ref("nu")
   }
   ctx += ProofDefinitionDeclaration(le"nu (s m) n  A", NuSc)
@@ -221,8 +221,8 @@ object gniaSchema extends TacticsProof {
     exR(fov"B")
     andL
     unfold("POR").`atMost`(1).`in`("Ant_3_0_1")
-    andR `right` foTheory
-    andR `right` foTheory
+    andR.`right`(foTheory)
+    andR.`right`(foTheory)
     ref("nuPrime")
   }
   ctx += ProofDefinitionDeclaration(le"nuPrime (s m) A", NuPrimeSc)
@@ -265,8 +265,8 @@ object gniaSchema extends TacticsProof {
     exR("Suc_0_0", fov"A")
     andL("Ant_2_1")
     andL
-    andR `right` foTheory
-    andR `right` foTheory
+    andR.`right`(foTheory)
+    andR.`right`(foTheory)
     ref("nu")
   }
   ctx += ProofDefinitionDeclaration(le"mu (s m) n ", muSc)
@@ -333,8 +333,8 @@ object gniaSchema extends TacticsProof {
     Seq("Suc_0" -> hof"?p Ech(m,p)")
   )
   val phiSc = Lemma(esphiSc) {
-    cut("cut", hof"!x?y (LEQ(x,y) & E(f(y),s(n)))") `right` ref("mu")
-    cut("cut1", hof"!x?y (LEQ(x,y) & POR(n,y))") `right` ref("phi")
+    cut("cut", hof"!x?y (LEQ(x,y) & E(f(y),s(n)))").`right`(ref("mu"))
+    cut("cut1", hof"!x?y (LEQ(x,y) & POR(n,y))").`right`(ref("phi"))
     allR("cut", fov"B")
     allR("cut1", fov"A")
     allL("Ant_2", le"max(A,B)")
@@ -360,7 +360,7 @@ object gniaSchema extends TacticsProof {
     Seq(("Suc_0" -> hof"?p Ech(m,p)"))
   )
   val omegaBc = Lemma(esOmegaBc) {
-    cut("cut", hof"!x?y (LEQ(x,y) & E(f(y),0))") `right` ref("mubase")
+    cut("cut", hof"!x?y (LEQ(x,y) & E(f(y),0))").`right`(ref("mubase"))
     allR(fov"A")
     allL("Ant_2", fov"A")
     exR("cut", fov"A")
@@ -377,7 +377,7 @@ object gniaSchema extends TacticsProof {
     Seq(("Suc_0" -> hof"?p Ech(m,p)"))
   )
   val omegaSc = Lemma(esOmegaSc) {
-    cut("cut", hof"!x?y (LEQ(x,y) & POR(s(n),y))") `right` ref("phi")
+    cut("cut", hof"!x?y (LEQ(x,y) & POR(s(n),y))").`right`(ref("phi"))
     allR(fov"A")
     allL("Ant_2", fov"A")
     exR("cut", fov"A")

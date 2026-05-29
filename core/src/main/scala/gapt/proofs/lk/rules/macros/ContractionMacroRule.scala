@@ -38,7 +38,7 @@ object ContractionMacroRule extends ConvenienceConstructor("ContractionMacroRule
     val targetSuc = targetSequent.succedent
 
     val assertion = ((targetSequent.`isSubMultisetOf`(currentSequent))
-      && (currentSequent `isSubsetOf` targetSequent))
+      && (currentSequent.`isSubsetOf`(targetSequent)))
 
     if (strict & !assertion) {
       throw LKRuleCreationException(

@@ -31,7 +31,7 @@ object parseMethod {
 
     case "reforest" => ReforestMethod
 
-    case _ if methodName `endsWith` "_maxsat" =>
+    case _ if methodName.`endsWith`("_maxsat") =>
       val vectorSizes = methodName.dropRight("_maxsat".length).split("_").map(_.toInt)
       MaxSATMethod(OpenWBO, vectorSizes.toIndexedSeq*)
   }
@@ -253,12 +253,12 @@ object findNonTrivialTSTPExamples {
       } catch { case t: Throwable => Failure(t) }
     }
 
-    val interesting = stats flatMap { _.toOption } filter { s => s.size > s.numFuns }
-    val trivial = stats flatMap { _.toOption } filter { s => s.size <= s.numFuns }
+    val interesting = (stats.flatMap { _.toOption }).filter { s => s.size > s.numFuns }
+    val trivial = (stats.flatMap { _.toOption }).filter { s => s.size <= s.numFuns }
 
     val csv = new PrintWriter("testing/resultsCutIntro/tstp_non_trivial_termset.csv")
-    interesting.sortBy(_.file.toString) foreach { s =>
-      csv.println(s"${s.file relativeTo pwd},${s.numFuns},${s.size}")
+    interesting.sortBy(_.file.toString).foreach { s =>
+      csv.println(s"${s.file.relativeTo(pwd)},${s.numFuns},${s.size}")
     }
     csv.close()
 

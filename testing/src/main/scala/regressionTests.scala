@@ -116,10 +116,10 @@ class TipTestCase(f: java.io.File) extends RegressionTestCase(f.getParentFile.ge
 
     val proofName @ Apps(proofNameC @ Const(proofNameStr, _, _), _) =
       Atom(ctx.newNameGenerator.fresh("proof"), variables): @unchecked
-    ArithmeticInductionToSchema(proof, proofName) --? "induction to schema" foreach { _ =>
+    (ArithmeticInductionToSchema(proof, proofName) --? "induction to schema").foreach { _ =>
       ProofLink(proofName) --? "create schema proof link"
       instantiateProof.Instantiate(proofNameC(instanceTerms)) --? "schema instance"
-      SchematicStruct(proofNameStr).get --? "schematic struct" foreach { schemaStruct =>
+      (SchematicStruct(proofNameStr).get --? "schematic struct").foreach { schemaStruct =>
         CharFormPRP.PR(CharFormPRP(schemaStruct)) --? "characteristic formula"
         InstanceOfSchematicStruct(
           CLS(
@@ -132,7 +132,7 @@ class TipTestCase(f: java.io.File) extends RegressionTestCase(f.getParentFile.ge
     }
 
     normalizeLKt.inductionLK(instProof, debugging = true) --? "eliminate inductions in instance proof using lkt"
-    inductionNormalForm(instProof) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
+    (inductionNormalForm(instProof) --? "eliminate inductions in instance proof").foreach { indFreeProof =>
       indFreeProof.endSequent.multiSetEquals(instProof.endSequent) !-- "induction elimination does not modify end-sequent"
       isInductionFree(indFreeProof) !-- "induction elimination returns induction free proof"
     }
@@ -180,8 +180,8 @@ class TheoryTestCase(name: String, combined: Boolean)
     LKToND(proof) --? "LKToND"
     normalizeLKt.withDebug(proof) --? "lkt cut-elim"
 
-    LKToExpansionProof(proof) --? "LKToExpansionProof" foreach { expansion =>
-      ExpansionProofToLK(expansion).get --? "ExpansionProofToLK" foreach { expansionLK =>
+    (LKToExpansionProof(proof) --? "LKToExpansionProof").foreach { expansion =>
+      (ExpansionProofToLK(expansion).get --? "ExpansionProofToLK").foreach { expansionLK =>
         expansionLK.conclusion.isSubsetOf(proof.conclusion) !-- "conclusion of ExpansionProofToLK"
         ctx.check(expansionLK) --? "context check of ExpansionProofToLK"
         normalizeLKt.withDebug(expansionLK) --? "lkt cut-elim (expansion)"
@@ -203,10 +203,10 @@ class TheoryTestCase(name: String, combined: Boolean)
       implicit val mctx: MutableContext = ctx.newMutable
       val proofName @ Apps(proofNameC @ Const(proofNameStr, _, _), _) =
         Atom(mctx.newNameGenerator.fresh("proof"), variables): @unchecked
-      ArithmeticInductionToSchema(proof, proofName) --? "induction to schema" foreach { _ =>
+      (ArithmeticInductionToSchema(proof, proofName) --? "induction to schema").foreach { _ =>
         ProofLink(proofName) --? "create schema proof link"
         instantiateProof.Instantiate(proofNameC(instanceTerms)) --? "schema instance"
-        SchematicStruct(proofNameStr).get --? "schematic struct" foreach { schemaStruct =>
+        (SchematicStruct(proofNameStr).get --? "schematic struct").foreach { schemaStruct =>
           CharFormPRP.PR(CharFormPRP(schemaStruct)) --? "characteristic formula"
           InstanceOfSchematicStruct(CLS(proofNameC(instanceTerms), proof.endSequent.map(_ => false)), schemaStruct) --? "struct instance"
         }
@@ -214,7 +214,7 @@ class TheoryTestCase(name: String, combined: Boolean)
     }
 
     normalizeLKt.inductionLK(instProof, debugging = true) --? "eliminate inductions in instance proof using lkt"
-    inductionNormalForm(instProof) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
+    (inductionNormalForm(instProof) --? "eliminate inductions in instance proof").foreach { indFreeProof =>
       indFreeProof.endSequent.multiSetEquals(instProof.endSequent) !-- "induction elimination does not modify end-sequent"
     }
   }
@@ -246,7 +246,7 @@ class Prover9TestCase(f: java.io.File) extends RegressionTestCase(f.getParentFil
 
     LKToND(p) --? "LKToND"
 
-    Escargot.getLKProof(deep).get --? "getLKProof( deep )" foreach { ip =>
+    (Escargot.getLKProof(deep).get --? "getLKProof( deep )").foreach { ip =>
       val (indices1, indices2) = ip.endSequent.indices.splitAt(ip.endSequent.size / 2)
       ExtractInterpolant(ip, indices1) --? "extractInterpolant"
       ExtractInterpolant(ip, indices2) --? "extractInterpolant diff partition"
@@ -275,7 +275,7 @@ class Prover9TestCase(f: java.io.File) extends RegressionTestCase(f.getParentFil
     cleanStructuralRules(p) --? "cleanStructuralRules"
 
     if (isFOLPrenexSigma1(p.endSequent))
-      (CutIntroduction(p) --? "cut-introduction" flatten) foreach { q =>
+      (CutIntroduction(p) --? "cut-introduction" flatten).foreach { q =>
         val focus = if (p.endSequent.succedent.isEmpty) None else Some(Suc(0))
         LKToND(q, focus) --? "LKToND (cut-intro)"
 
@@ -284,9 +284,9 @@ class Prover9TestCase(f: java.io.File) extends RegressionTestCase(f.getParentFil
         CERES(q) --? "CERES (cut-intro)"
         CERES.expansionProof(q) --? "CERESExpansionProof"
 
-        LKToExpansionProof(q) --? "LKToExpansionProof (cut-intro)" foreach { expQ =>
+        (LKToExpansionProof(q) --? "LKToExpansionProof (cut-intro)").foreach { expQ =>
           Z3.isValid(expQ.deep) !-- "expansion tree validity with cut (cut-intro)"
-          eliminateCutsET(expQ) --? "expansion tree cut-elimination (cut-intro)" foreach { expQstar =>
+          (eliminateCutsET(expQ) --? "expansion tree cut-elimination (cut-intro)").foreach { expQstar =>
             Z3.isValid(expQstar.deep) !-- "cut-elim expansion tree validity (cut-intro)"
           }
           ExpansionProofToLK(expQ).isRight !-- "ExpansionProofToLK (cut-intro)"
@@ -339,12 +339,12 @@ class TptpTestCase(f: java.io.File) extends RegressionTestCase(f.getName) {
 
     val expansion = ResolutionToExpansionProof(resolution) --- "ResolutionToExpansionProof"
 
-    deskolemizeET(expansion) --? "deskolemization" foreach { desk =>
+    (deskolemizeET(expansion) --? "deskolemization").foreach { desk =>
       desk.shallow.isSubsetOf(expansion.shallow) !-- "shallow sequent of deskolemization"
       Z3.isValid(desk.deep) !-- "deskolemized deep formula validity"
-      ExpansionProofToLK(desk).get --? "ExpansionProofToLK on deskolemization" foreach { deskLK =>
+      (ExpansionProofToLK(desk).get --? "ExpansionProofToLK on deskolemization").foreach { deskLK =>
         JsonImporter.load[LKProof](InputFile.fromString(JsonExporter(deskLK).render(80))) == deskLK !-- "json export of lk proof"
-        LKToND(deskLK) --? "LKToND (deskolemization)" foreach { nd =>
+        (LKToND(deskLK) --? "LKToND (deskolemization)").foreach { nd =>
           JsonImporter.load[NDProof](InputFile.fromString(JsonExporter(nd).render(80))) == nd !-- "json export of lk proof"
         }
         isMaeharaMG3i(deskLK) --? "isMaeharaMG3i" match {
@@ -398,8 +398,8 @@ object RegressionTests {
     var started = 0
     val out = new PrintWriter(new FileWriter(pwd / "target" / "regression-test-results.xml" toIO), true)
     try {
-      out `write` "<testsuite>\n"
-      testCases.par foreach { tc =>
+      out.`write`("<testsuite>\n")
+      testCases.par.foreach { tc =>
         started += 1
         println(s"[${(100 * started) / total}%] $tc")
         try {
@@ -411,7 +411,7 @@ object RegressionTests {
             t.printStackTrace()
         }
       }
-      out `write` "</testsuite>\n"
+      out.`write`("</testsuite>\n")
     } finally out.close()
   }
 }

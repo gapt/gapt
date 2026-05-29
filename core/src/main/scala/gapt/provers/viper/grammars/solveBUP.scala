@@ -72,7 +72,7 @@ object hSolveQBUP {
       }
     for (case (cnf, true) <- isSolution.toSeq) forgetClauses(cnf)
 
-    isSolution collect { case (sol, true) => simplifyPropositional(And(sol.map { _.toImplication })) } toSet
+    isSolution.collect { case (sol, true) => simplifyPropositional(And(sol.map { _.toImplication })) } toSet
   }
 
   def getSequents(qbupMatrix: Formula, x: Var): Seq[HOLSequent] = {

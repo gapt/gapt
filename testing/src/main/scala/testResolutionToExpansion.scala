@@ -65,7 +65,7 @@ object testResolutionToExpansion {
               }
               metric("size_withdefs", expansionWithDefs.size)
               // none of the stuff below should actually happen with prover9 proofs
-              val defConsts = resolution.subProofs collect { case d: DefIntro => d.defConst: Const }
+              val defConsts = resolution.subProofs.collect { case d: DefIntro => d.defConst: Const }
               val withDefsCE = time("cutelim1") { eliminateCutsET(expansionWithDefs) }
               val withoutDefs = time("defelim") { eliminateDefsET(withDefsCE, !equational, defConsts) }
               time("cutelim2") { eliminateCutsET(withoutDefs) }
