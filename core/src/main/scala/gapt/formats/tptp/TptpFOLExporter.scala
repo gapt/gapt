@@ -8,7 +8,7 @@ import gapt.proofs.{HOLClause, HOLSequent, RichFormulaSequent}
 
 object TptpFOLExporter {
   def apply(formula: Formula): TptpFile =
-    TptpFile(Seq(AnnotatedFormula("fof", "formula", "conjecture", formula, Seq())))
+    TptpFile(Seq(AnnotatedFormula("fof", "formula", "conjecture", formula, None)))
 
   def apply(sequent: HOLSequent): TptpFile = {
     require(freeVariables(sequent).isEmpty, s"Sequent $sequent is not ground! ")
@@ -17,17 +17,17 @@ object TptpFOLExporter {
 
     sequent.antecedent.zipWithIndex.foreach {
       case (formula, i) =>
-        file += AnnotatedFormula("fof", s"ant_$i", "axiom", formula, Seq())
+        file += AnnotatedFormula("fof", s"ant_$i", "axiom", formula, None)
     }
 
     if (sequent.succedent.size <= 1) {
       sequent.succedent.foreach(formula =>
-        file += AnnotatedFormula("fof", "suc_0", "conjecture", formula, Seq())
+        file += AnnotatedFormula("fof", "suc_0", "conjecture", formula, None)
       )
     } else {
       sequent.succedent.zipWithIndex.foreach {
         case (formula, i) =>
-          file += AnnotatedFormula("fof", s"suc_$i", "axiom", -formula, Seq())
+          file += AnnotatedFormula("fof", s"suc_$i", "axiom", -formula, None)
       }
     }
 
@@ -36,7 +36,7 @@ object TptpFOLExporter {
 
   def apply(sequentSet: Iterable[HOLSequent]): TptpFile =
     TptpFile(for ((seq, i) <- sequentSet.toSeq.zipWithIndex)
-      yield AnnotatedFormula("fof", s"seq_$i", "axiom", universalClosure(seq.toDisjunction), Seq()))
+      yield AnnotatedFormula("fof", s"seq_$i", "axiom", universalClosure(seq.toDisjunction), None))
 
   def exportLabelledCNF(cnf: Iterable[(String, HOLClause)]): TptpFile =
     TptpFile(cnf.toSeq.map(c => exportClause(c._2, c._1)))
@@ -46,7 +46,7 @@ object TptpFOLExporter {
 
   def exportClause(clause: HOLClause, name: String): TptpInput = {
     val (_, disj: Formula) = TptpToString.renameVars(freeVariables(clause).toSeq, clause.toDisjunction): @unchecked
-    AnnotatedFormula("cnf", name, "axiom", disj, Seq())
+    AnnotatedFormula("cnf", name, "axiom", disj, None)
   }
 
   /**

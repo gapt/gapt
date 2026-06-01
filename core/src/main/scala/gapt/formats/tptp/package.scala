@@ -59,14 +59,33 @@ package object tptp {
   case class ParentInfo(source: TptpName, details: ParentDetails)
   case class InferenceRecord(inference_rule: AtomicWord, usefulInfo: GeneralListNew, parents: Seq[ParentInfo])
   case class File(fileName: AtomicWord, fileInfo: Option[TptpName])
-  case class Annotations(source: Source, optionalInfo: GeneralListNew)
+  case class Annotations(source: Expr, optionalInfo: Seq[GeneralTerm])
   case class AtomicWord(inner: String)
 
-  case class AnnotatedFormula(language: String, name: String, role: FormulaRole, formula: Formula, annotations: Seq[GeneralTerm]) extends TptpInput
-  case class AnnotatedFormula2(language: String, name: String, role: FormulaRole, formula: Formula, annotations: Option[Annotations])
+  case class AnnotatedFormula(language: String, name: String, role: FormulaRole, formula: Formula, annotations: Option[Annotations]) extends TptpInput
+  // case class AnnotatedFormula2(language: String, name: String, role: FormulaRole, formula: Formula, annotations: Option[Annotations])
 
-  given Conversion[AnnotatedFormula, AnnotatedFormula2] = (af: AnnotatedFormula) =>
-    AnnotatedFormula2(af.language, af.name, af.role, af.formula, generalListToOptionalAnnotations(af.annotations))
+  // given Conversion[Seq[GeneralTerm], Option[Annotations]] = s =>
+  //   s match {
+  //     case Seq()            => None
+  //     case Seq(s, optInfo*) => Some(Annotations(s, optInfo))
+  //   }
+
+  @deprecated("this should not be used. instead use the new annotations interface")
+  def seqGeneralTermToOptionAnnotations(seq: Seq[GeneralTerm]): Option[Annotations] = seq match {
+    case Seq()            => None
+    case Seq(s, optInfo*) => Some(Annotations(s, optInfo))
+  }
+
+  @deprecated("this should not be used. instead use the new annotations interface")
+  def optionalAnnotationsToGeneralList(annots: Option[Annotations]): GeneralListNew = annots.map(annotationsToGeneralList).getOrElse(Seq.empty)
+  def annotationsToGeneralList(a: Annotations): GeneralListNew = a.source +: a.optionalInfo
+
+  // given Conversion[Option[Annotations], Seq[GeneralTerm]] = s =>
+  //   s match {
+  //     case None      => Seq()
+  //     case Some(ann) => ann.source +: ann.optionalInfo
+  //   }
 
   // for backwards compatibility
   // these will be removed once the parser refactor is finished
@@ -74,72 +93,72 @@ package object tptp {
   //   def unapply(annotatedFormula: AnnotatedFormula): Option[(String, String, FormulaRole, Formula, GeneralListNew)] =
   //     Some((annotatedFormula.language, annotatedFormula.name, annotatedFormula.role, annotatedFormula.formula, optionalAnnotationsToGeneralList(annotatedFormula.annotations)))
   // }
-  def tptpNameToTerm(name: TptpName): GeneralTerm = {
-    name match {
-      case AtomicWord(inner) => TptpTerm(inner)
-      case _                 => throw new NotImplementedError("cannot handle integer names yet")
-    }
-  }
-  def annotationsToGeneralList(a: Annotations): GeneralListNew = {
-    val sourceExpr = a.source match {
-      case Unknown => TptpTerm("unknown")
-      case InferenceRecord(name, usefulInfo, parents) => TptpTerm(
-          "inference",
-          tptpNameToTerm(name),
-          GeneralList(usefulInfo*),
-          GeneralList(parents.map(p => tptpNameToTerm(p.source))*)
-        )
-      case File(fileName, fileInfo) => fileInfo match {
-          case None    => TptpTerm("file", tptpNameToTerm(fileName))
-          case Some(f) => TptpTerm("file", tptpNameToTerm(fileName), tptpNameToTerm(f))
-        }
-      case Introduced(introType, usefulInfo, parents) => TptpTerm(
-          "introduced",
-          tptpNameToTerm(introType),
-          GeneralList(usefulInfo*),
-          GeneralList(parents.map(p => tptpNameToTerm(p.source))*)
-        )
-      case s => throw new NotImplementedError(s"cannot handle this yet. got $s")
-    }
-    sourceExpr +: a.optionalInfo
-  }
+  // def tptpNameToTerm(name: TptpName): GeneralTerm = {
+  //   name match {
+  //     case AtomicWord(inner) => TptpTerm(inner)
+  //     case _                 => throw new NotImplementedError("cannot handle integer names yet")
+  //   }
+  // }
+  // def annotationsToGeneralList(a: Annotations): GeneralListNew = {
+  //   val sourceExpr = a.source match {
+  //     case Unknown => TptpTerm("unknown")
+  //     case InferenceRecord(name, usefulInfo, parents) => TptpTerm(
+  //         "inference",
+  //         tptpNameToTerm(name),
+  //         GeneralList(usefulInfo*),
+  //         GeneralList(parents.map(p => tptpNameToTerm(p.source))*)
+  //       )
+  //     case File(fileName, fileInfo) => fileInfo match {
+  //         case None    => TptpTerm("file", tptpNameToTerm(fileName))
+  //         case Some(f) => TptpTerm("file", tptpNameToTerm(fileName), tptpNameToTerm(f))
+  //       }
+  //     case Introduced(introType, usefulInfo, parents) => TptpTerm(
+  //         "introduced",
+  //         tptpNameToTerm(introType),
+  //         GeneralList(usefulInfo*),
+  //         GeneralList(parents.map(p => tptpNameToTerm(p.source))*)
+  //       )
+  //     case s => throw new NotImplementedError(s"cannot handle this yet. got $s")
+  //   }
+  //   sourceExpr +: a.optionalInfo
+  // }
 
-  def optionalAnnotationsToGeneralList = (annotations: Option[Annotations]) => annotations.map(annotationsToGeneralList).getOrElse(Seq.empty)
-  def generalListToOptionalAnnotations(list: GeneralListNew) = list match {
-    case Seq()            => None
-    case Seq(s, optInfo*) => Some(Annotations(termToSource(s), optInfo))
-  }
+  // def optionalAnnotationsToGeneralList = (annotations: Option[Annotations]) => annotations.map(annotationsToGeneralList).getOrElse(Seq.empty)
+  // def generalListToOptionalAnnotations(list: GeneralListNew) = list match {
+  //   case Seq()            => None
+  //   case Seq(s, optInfo*) => Some(Annotations(termToSource(s), optInfo))
+  // }
 
-  def termToParentInfo(term: GeneralTerm): ParentInfo = term match {
-    case GeneralColon(TptpTerm(source), parentDetails) => ParentInfo(source, Some(parentDetails))
-    case TptpTerm(source)                              => ParentInfo(source, None)
-    case GeneralColon(_, _)                            => throw new IllegalArgumentException(s"cannot handle parents that are not names. got: $term")
-  }
-  def termToSource(term: GeneralTerm): Source = term match {
-    case TptpTerm("inference", TptpTerm(rule), GeneralList(usefulInfo*), GeneralList(parents*)) =>
-      InferenceRecord(rule, usefulInfo, parents.map(termToParentInfo))
+  // def termToParentInfo(term: GeneralTerm): ParentInfo = term match {
+  //   case GeneralColon(TptpTerm(source), parentDetails) => ParentInfo(source, Some(parentDetails))
+  //   case TptpTerm(source)                              => ParentInfo(source, None)
+  //   case GeneralColon(_, _)                            => throw new IllegalArgumentException(s"cannot handle parents that are not names. got: $term")
+  // }
+  // def termToSource(term: GeneralTerm): Source = term match {
+  //   case TptpTerm("inference", TptpTerm(rule), GeneralList(usefulInfo*), GeneralList(parents*)) =>
+  //     InferenceRecord(rule, usefulInfo, parents.map(termToParentInfo))
 
-    case TptpTerm("file", TptpTerm(fileName)) =>
-      File(fileName, None)
+  //   case TptpTerm("file", TptpTerm(fileName)) =>
+  //     File(fileName, None)
 
-    case TptpTerm("file", TptpTerm(fileName), TptpTerm(label)) =>
-      File(fileName, Some(label))
+  //   case TptpTerm("file", TptpTerm(fileName), TptpTerm(label)) =>
+  //     File(fileName, Some(label))
 
-    case TptpTerm("introduced", TptpTerm(introType), GeneralList(usefulInfo*)) =>
-      Introduced(introType, usefulInfo, Seq.empty)
+  //   case TptpTerm("introduced", TptpTerm(introType), GeneralList(usefulInfo*)) =>
+  //     Introduced(introType, usefulInfo, Seq.empty)
 
-    case TptpTerm("introduced", TptpTerm(introType), GeneralList(usefulInfo*), GeneralList(parents*)) =>
-      Introduced(introType, usefulInfo, parents.map(termToParentInfo))
+  //   case TptpTerm("introduced", TptpTerm(introType), GeneralList(usefulInfo*), GeneralList(parents*)) =>
+  //     Introduced(introType, usefulInfo, parents.map(termToParentInfo))
 
-    case TptpTerm("unknown") =>
-      Unknown
+  //   case TptpTerm("unknown") =>
+  //     Unknown
 
-    case TptpTerm(t) =>
-      AtomicWord(t)
+  //   case TptpTerm(t) =>
+  //     AtomicWord(t)
 
-    case _ =>
-      throw new UnsupportedOperationException(s"cannot handle term: $term")
-  }
+  //   case _ =>
+  //     throw new UnsupportedOperationException(s"cannot handle term: $term")
+  // }
   // object AtomicWord {
   //   def unapply(term: GeneralTerm): Option[String] = term match {
   //     case TptpTerm(name, _, _) => Some(name)

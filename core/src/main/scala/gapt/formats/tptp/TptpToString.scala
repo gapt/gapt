@@ -30,7 +30,10 @@ object TptpToString {
       s"include(${single_quoted(fileName)}, ${args}).\n"
   }
 
-  def annotations(annots: Seq[Expr]): String = annots.map(expression).map(", " + _).mkString
+  def annotations(annots: Option[Annotations]): String = annots match {
+    case None    => ""
+    case Some(a) => (a.source +: a.optionalInfo).map(expression).map(", " + _).mkString
+  }
 
   def expression(expr: Expr): String = expression(expr, prio.max)
 
