@@ -9,7 +9,7 @@ import scala.collection.mutable
 
 class sequentProofToTptp[Proof <: SequentProof[Formula, Proof]] {
 
-  def line(label: String, role: FormulaRole, inf: Proof, annotations: Seq[GeneralTerm]): TptpInput =
+  def line(label: String, role: FormulaRole, inf: Proof, annotations: Option[Annotations]): TptpInput =
     AnnotatedFormula("fof", label, role, universalClosure(inf.conclusion.toFormula), annotations)
 
   private def convertInference(
@@ -26,7 +26,7 @@ class sequentProofToTptp[Proof <: SequentProof[Formula, Proof]] {
 
         val parents = p.immediateSubProofs.map(labelMap)
 
-        line(label, "plain", inf, Seq(TptpTerm("inference", FOLConst(inferenceName), GeneralList(), GeneralList(parents.map(FOLConst(_))))))
+        line(label, "plain", inf, Some(Annotations(TptpTerm("inference", FOLConst(inferenceName), GeneralList(), GeneralList(parents.map(FOLConst(_)))), Seq.empty)))
     }
   }
 

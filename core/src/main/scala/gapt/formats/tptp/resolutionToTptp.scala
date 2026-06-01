@@ -16,7 +16,7 @@ import gapt.proofs.{RichFormulaSequent}
 import scala.collection.mutable
 
 object resolutionToTptp {
-  def fofOrCnf(label: String, role: FormulaRole, inf: ResolutionProof, annotations: Seq[GeneralTerm]): TptpInput = {
+  def fofOrCnf(label: String, role: FormulaRole, inf: ResolutionProof, annotations: Option[Annotations]): TptpInput = {
     val disj = if (inf.assertions.isEmpty) inf.conclusion.toDisjunction
     else inf.conclusion.toDisjunction | inf.assertions.toDisjunction
     if (inf.conclusion.forall(_.isInstanceOf[Atom])) {
@@ -34,7 +34,7 @@ object resolutionToTptp {
     val FunctionType(_, argtypes) = defConst.ty: @unchecked
     val vars = for ((t, i) <- argtypes.zipWithIndex) yield Var(s"X$i", t)
 
-    AnnotatedFormula("fof", label, "definition", BetaReduction.betaNormalize(All.Block(vars, defConst(vars*) <-> defn(vars*))), Seq())
+    AnnotatedFormula("fof", label, "definition", BetaReduction.betaNormalize(All.Block(vars, defConst(vars*) <-> defn(vars*))), None)
   }
 
   private def convertSkolemDefinition(
@@ -56,7 +56,7 @@ object resolutionToTptp {
           case All(_, _) => instf --> quantf
         }
       ),
-      Seq()
+      None
     )
   }
 
@@ -68,7 +68,7 @@ object resolutionToTptp {
     val label = labelMap(inf)
     inf match {
       case Input(sequent) =>
-        fofOrCnf(label, "axiom", inf, Seq())
+        fofOrCnf(label, "axiom", inf, None)
 
       case p =>
         val inferenceName = p.longName.flatMap {
@@ -80,7 +80,7 @@ object resolutionToTptp {
           p.introducedDefinitions.keys.map(defMap) ++
           Some(p).collect { case p: SkolemQuantResolutionRule => defMap(p.skolemConst) }
 
-        fofOrCnf(label, "plain", inf, Seq(TptpTerm("inference", FOLConst(inferenceName), GeneralList(), GeneralList(parents.map(FOLConst(_))))))
+        fofOrCnf(label, "plain", inf, Some(Annotations(TptpTerm("inference", FOLConst(inferenceName), GeneralList(), GeneralList(parents.map(FOLConst(_)))), Seq.empty)))
     }
   }
 

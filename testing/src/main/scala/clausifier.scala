@@ -15,7 +15,7 @@ object clausifier {
     val inputClauses = TptpProblemToResolution(tptp)
     val cnf = structuralCNF.onProofs(inputClauses)
     val tptpCNF = TptpFile(for ((cls, i) <- cnf.toSeq.zipWithIndex)
-      yield resolutionToTptp.fofOrCnf(s"cls_$i", "axiom", cls, Seq()))
+      yield resolutionToTptp.fofOrCnf(s"cls_$i", "axiom", cls, None))
     println(tptpCNF)
   }
 }

@@ -82,7 +82,7 @@ def checkProof2(file: InputFile): SzsStatus = {
             _,
             "negated_conjecture",
             formula,
-            Seq(TptpTerm("inference", _, _, GeneralList(parents @ _*)))
+            Some(Annotations(TptpTerm("inference", _, _, GeneralList(parents @ _*)), _))
           ) =>
         // TODO: assert that parent is conjecture?
         Some((input, Sequent(parents.map(p => Neg(getFormulaFromTerm(p))), Seq(formula))))
@@ -91,7 +91,7 @@ def checkProof2(file: InputFile): SzsStatus = {
             _,
             _,
             formula,
-            Seq(
+            Some(Annotations(
               TptpTerm(
                 "inference",
                 TptpTerm("skolemize"),
@@ -103,8 +103,9 @@ def checkProof2(file: InputFile): SzsStatus = {
                   TptpTerm("bind", bindVariable, bindSymbol)
                 ),
                 GeneralList(parents @ _*)
-              )
-            )
+              ),
+              _
+            ))
           ) => {
         ???
       }
@@ -113,7 +114,7 @@ def checkProof2(file: InputFile): SzsStatus = {
             _,
             _,
             formula,
-            Seq(TptpTerm("inference", _, _, GeneralList(parents @ _*)))
+            Some(Annotations(TptpTerm("inference", _, _, GeneralList(parents @ _*)), _))
           ) => {
         Some((input, Sequent(parents.map(getFormulaFromTerm), Seq(formula))))
       }
@@ -134,7 +135,7 @@ def checkProof2(file: InputFile): SzsStatus = {
       (input, sequent, verification)
   }
 
-  val verified = verifications.filter(_._3.contains(true))
+  // val  = verifications.filter(_._3.contains(true))
   val failed = verifications.filter(_._3.contains(false))
   val unverified = verifications.filter(_._3.isEmpty)
 
