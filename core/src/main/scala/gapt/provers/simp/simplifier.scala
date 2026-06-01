@@ -68,6 +68,7 @@ import gapt.utils.Logger
 import gapt.utils.Maybe
 
 import scala.collection.mutable
+import scala.annotation.nowarn
 
 sealed trait SimpIffResult {
   def proof: LKProof
@@ -134,8 +135,9 @@ object SimpEqResult {
 
 trait SimpProc {
   def freeVars: Set[Var] = Set()
-  def simpIff(target: Formula, polarity: Polarity)(implicit simp: Simplifier): SimpIffResult = SimpIffResult.Refl(target, polarity)
-  def simpEq(target: Expr)(implicit simp: Simplifier): SimpEqResult = SimpEqResult.Refl(target)
+
+  def simpIff(target: Formula, polarity: Polarity)(implicit @nowarn("name=UnusedSymbol") simp: Simplifier): SimpIffResult = SimpIffResult.Refl(target, polarity)
+  def simpEq(target: Expr)(implicit @nowarn("name=UnusedSymbol") simp: Simplifier): SimpEqResult = SimpEqResult.Refl(target)
 }
 
 case class SimpLemmaProjection(proof: LKProof, conds: HOLSequent, idx: SequentIndex, fixed: PreSubstitution) {

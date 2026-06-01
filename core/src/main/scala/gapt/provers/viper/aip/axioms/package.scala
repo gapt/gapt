@@ -53,7 +53,7 @@ package object axioms {
    * @return An induction axiom representing an induction on the specified variable and formula with one induction
    *         case for each of the constructors.
    */
-  def inductionAxiom(inductionVariable: Var, formula: Formula, constructors: Seq[Con])(implicit ctx: Context) =
+  def inductionAxiom(inductionVariable: Var, formula: Formula, constructors: Seq[Con]) =
     And(constructors.map { inductionCase(inductionVariable, formula, _) }) -->
       All(inductionVariable, formula)
 

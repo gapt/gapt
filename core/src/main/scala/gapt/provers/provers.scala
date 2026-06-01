@@ -44,7 +44,7 @@ trait Prover {
    * @param seq The sequent whose validity should be checked.
    * @return True if the formula is valid.
    */
-  def isValid(seq: HOLSequent)(implicit ctx: Maybe[Context]): Boolean = getLKProof(seq) match {
+  def isValid(seq: HOLSequent)(using ctx: Maybe[Context]): Boolean = getLKProof(seq)(using ctx.map(_.newMutable)) match {
     case Some(_) => true
     case None    => false
   }

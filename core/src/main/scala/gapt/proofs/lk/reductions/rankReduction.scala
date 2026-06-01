@@ -4,7 +4,6 @@ import gapt.expr.formula.hol.isAtom
 import gapt.expr.subst.Substitution
 import gapt.expr.util.freeVariables
 import gapt.expr.util.rename
-import gapt.proofs.context.Context
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.LKProofSubstitutableDefault
 import gapt.proofs.lk.rules.AndLeftRule
@@ -973,7 +972,7 @@ object rightRankReduction extends CutReduction {
 
   def reduce(cut: CutRule): Option[LKProof] = apply(cut)
 
-  def applyWithSequentConnector(cut: CutRule)(implicit ctx: Context): Option[(LKProof, SequentConnector)] =
+  def applyWithSequentConnector(cut: CutRule): Option[(LKProof, SequentConnector)] =
     this(cut).map { guessPermutation(cut, _) }
 
   /**

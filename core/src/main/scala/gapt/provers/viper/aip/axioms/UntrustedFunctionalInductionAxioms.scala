@@ -44,7 +44,7 @@ case object UntrustedFunctionalInductionAxioms extends AxiomFactory {
     All(motive, And(premises) --> conclusion)
   }
 
-  def guessSchemes(sequent: HOLSequent)(implicit ctx: Context): Map[Const, Formula] =
+  def guessSchemes(sequent: HOLSequent): Map[Const, Formula] =
     Map() ++ sequent.antecedent.collect {
       case All.Block(vs, Imp.Block(conds, Eq(lhs @ Apps(c: Const, _), rhs))) =>
         (c, conds, lhs, rhs)

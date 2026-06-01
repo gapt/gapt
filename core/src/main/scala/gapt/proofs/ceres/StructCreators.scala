@@ -152,7 +152,7 @@ object StructCreators {
     result
   }
 
-  def handleProofLink(so: HOLSequent, cut_occs: Sequent[Boolean], proofLink: Expr)(implicit ctx: Context): Struct =
+  def handleProofLink(so: HOLSequent, cut_occs: Sequent[Boolean], proofLink: Expr): Struct =
     if (
       Set(so.zipWithIndex.filter(x => cut_occs(x._2)).map(_._1)).map(y =>
         y.antecedent.exists(x => y.succedent.contains(x))
@@ -163,7 +163,7 @@ object StructCreators {
   def handleAxiom(
       so: HOLSequent,
       cut_occs: Sequent[Boolean]
-  )(implicit ctx: Context): Struct = {
+  ): Struct = {
 
     val cutanc_seq: HOLSequent = so.zipWithIndex.filter(x => cut_occs(x._2)).map(_._1)
     val tautology_projection = cutanc_seq.antecedent.exists(x => cutanc_seq.succedent.contains(x))
