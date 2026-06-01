@@ -30,7 +30,7 @@ import gapt.utils.Doc
 package object `export` {
 
   def `export`(problem: TipSmtProblem): Doc = {
-    Doc.stack(toSExpression(problem).map { _.toDoc })
+    Doc.stack(toSExpression.problemToSExpression(problem).map { _.toDoc })
   }
 
   def `export`(problem: TipProblem): Doc = {

@@ -231,7 +231,7 @@ class BabelExporter(unicode: Boolean, sig: BabelSignature, omitTypes: Boolean = 
   def notationForConst(const: Notation.ConstName): Option[Notation] =
     sig.notationsForConst(const).find(not => unicodeSafe(not.token))
 
-  def showTyParams(params: List[Ty], always: Boolean = false): Doc =
+  def showTyParams(params: List[Ty]): Doc =
     params match {
       case List()      => ""
       case List(param) => "{" <> show(param, needParens = false) <> "}"

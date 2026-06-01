@@ -119,7 +119,7 @@ trait SequentsListLatexExporter {
     getOutput.write("""\end{array}\]""")
   }
 
-  def typeToString(t: Ty, outermost: Boolean = true): String = t match {
+  def typeToString(t: Ty): String = t match {
     case TBase(name, _) => name
     case TArr(t1, t2) =>
       typeToString_(t1) +

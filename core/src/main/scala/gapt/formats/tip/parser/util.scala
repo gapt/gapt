@@ -182,43 +182,43 @@ object toSExpression {
         f.definitions.map { d => TipSmtAssertion(Seq(), toTipAst(d)) }
     }
 
-    sortsDeclarations.map { toSExpression(_) }
-      .:+(toSExpression(TipSmtDatatypesDeclaration(datatypeDeclarations)))
-      .++(constantDeclarations.map { toSExpression(_) })
-      .++(functionConstantDeclarations.map { toSExpression(_) })
-      .++(functionDeclarations.map { toSExpression(_) })
-      .++(assumptions.map { toSExpression(_) })
-      .:+(toSExpression(goal))
+    sortsDeclarations.map { sortDeclarationToSExpression(_) }
+      .:+(datatypesDeclarationToSExpression(TipSmtDatatypesDeclaration(datatypeDeclarations)))
+      .++(constantDeclarations.map { constantDeclarationToSExpression(_) })
+      .++(functionConstantDeclarations.map { functionDeclarationToSExpression(_) })
+      .++(functionDeclarations.map { functionDeclarationToSExpression(_) })
+      .++(assumptions.map { assertionToSExpression(_) })
+      .:+(goalToSExpression(goal))
   }
 
-  def apply(problem: TipSmtProblem): Seq[SExpression] = {
-    problem.definitions.map { toSExpression(_) }
+  def problemToSExpression(problem: TipSmtProblem): Seq[SExpression] = {
+    problem.definitions.map { commandToSExpression(_) }
   }
 
-  def apply(definition: TipSmtCommand): SExpression = {
+  def commandToSExpression(definition: TipSmtCommand): SExpression = {
     definition match {
       case d @ TipSmtFunctionDefinition(_, _, _, _, _) =>
-        toSExpression(d)
+        functionDefinitionToSExpression(d)
       case d @ TipSmtFunctionDeclaration(_, _, _, _) =>
-        toSExpression(d)
+        functionDeclarationToSExpression(d)
       case d @ TipSmtMutualRecursiveFunctionDefinition(_) =>
-        toSExpression(d)
+        mutualRecursiveFunctionDefinitionToSExpression(d)
       case d @ TipSmtDatatypesDeclaration(_) =>
-        toSExpression(d)
+        datatypesDeclarationToSExpression(d)
       case d @ TipSmtConstantDeclaration(_, _, _) =>
-        toSExpression(d)
+        constantDeclarationToSExpression(d)
       case d @ TipSmtGoal(_, _) =>
-        toSExpression(d)
+        goalToSExpression(d)
       case d @ TipSmtAssertion(_, _) =>
-        toSExpression(d)
+        assertionToSExpression(d)
       case d @ TipSmtCheckSat() =>
-        toSExpression(d)
+        checkSatToSExpression()
       case d @ TipSmtSortDeclaration(_, _) =>
-        toSExpression(d)
+        sortDeclarationToSExpression(d)
     }
   }
 
-  def apply(definition: TipSmtSortDeclaration): SExpression = {
+  def sortDeclarationToSExpression(definition: TipSmtSortDeclaration): SExpression = {
     LFun(
       "declare-sort",
       LSymbol(definition.name) +:
@@ -227,15 +227,15 @@ object toSExpression {
     )
   }
 
-  def apply(definition: TipSmtCheckSat): SExpression = {
+  def checkSatToSExpression(): SExpression = {
     LFun("check-sat")
   }
 
   def keywordsToSExpression(keywords: Seq[TipSmtKeyword]): Seq[SExpression] = {
-    keywords.flatMap { toSExpression(_) }
+    keywords.flatMap { keywordToSExpression(_) }
   }
 
-  def apply(keyword: TipSmtKeyword): Seq[SExpression] = {
+  def keywordToSExpression(keyword: TipSmtKeyword): Seq[SExpression] = {
     keyword.argument match {
       case Some(argument) =>
         Seq(LKeyword(keyword.name), LSymbol(argument))
@@ -247,84 +247,84 @@ object toSExpression {
   private def formalParameterListToSExpression(
       formalParameterList: Seq[TipSmtFormalParameter]
   ): SExpression = {
-    LList(formalParameterList.map { toSExpression(_) })
+    LList(formalParameterList.map { formalParameterToSExpression(_) })
   }
 
-  private def apply(
+  private def formalParameterToSExpression(
       formalParameter: TipSmtFormalParameter
   ): SExpression = {
-    LList(LSymbol(formalParameter.name), toSExpression(formalParameter.typ))
+    LList(LSymbol(formalParameter.name), typeToSExpression(formalParameter.typ))
   }
 
-  def apply(typ: TipSmtType): SExpression = {
+  def typeToSExpression(typ: TipSmtType): SExpression = {
     LSymbol(typ.typename)
   }
 
-  def apply(definition: TipSmtFunctionDefinition): SExpression = {
+  def functionDefinitionToSExpression(definition: TipSmtFunctionDefinition): SExpression = {
     LFun(
       "define-fun-rec",
       LSymbol(definition.name) +:
         keywordsToSExpression(definition.keywords) :+
         formalParameterListToSExpression(definition.parameters) :+
-        toSExpression(definition.returnType) :+
-        toSExpression(definition.body)*
+        typeToSExpression(definition.returnType) :+
+        expressionToSExpression(definition.body)*
     )
   }
 
-  def apply(definition: TipSmtFunctionDeclaration): SExpression = {
+  def functionDeclarationToSExpression(definition: TipSmtFunctionDeclaration): SExpression = {
     LFun(
       "declare-fun",
       LSymbol(definition.name) +:
         keywordsToSExpression(definition.keywords) :+
-        LList(definition.argumentTypes.map { toSExpression(_) }) :+
-        toSExpression(definition.returnType)*
+        LList(definition.argumentTypes.map { typeToSExpression(_) }) :+
+        typeToSExpression(definition.returnType)*
     )
   }
 
-  def apply(definition: TipSmtDatatypesDeclaration): SExpression = {
+  def datatypesDeclarationToSExpression(definition: TipSmtDatatypesDeclaration): SExpression = {
     LFun(
       "declare-datatypes",
       LList(),
-      LList(definition.datatypes.map { toSExpression(_) })
+      LList(definition.datatypes.map { datatypeToSExpression(_) })
     )
   }
 
-  def apply(datatype: TipSmtDatatype): SExpression = {
+  def datatypeToSExpression(datatype: TipSmtDatatype): SExpression = {
     LFun(
       datatype.name,
       keywordsToSExpression(datatype.keywords) ++:
-        datatype.constructors.map { toSExpression(_) }*
+        datatype.constructors.map { constructorToSExpression(_) }*
     )
   }
 
-  def apply(constructor: TipSmtConstructor): SExpression = {
+  def constructorToSExpression(constructor: TipSmtConstructor): SExpression = {
     LFun(
       constructor.name,
       keywordsToSExpression(constructor.keywords) ++:
-        constructor.fields.map { toSExpression(_) }*
+        constructor.fields.map { constructorFieldToSExpression(_) }*
     )
   }
 
-  def apply(field: TipSmtConstructorField): SExpression = {
-    LFun(field.name, toSExpression(field.typ))
+  def constructorFieldToSExpression(field: TipSmtConstructorField): SExpression = {
+    LFun(field.name, typeToSExpression(field.typ))
   }
 
-  def apply(definition: TipSmtConstantDeclaration): SExpression = {
+  def constantDeclarationToSExpression(definition: TipSmtConstantDeclaration): SExpression = {
     LFun(
       "declare-const",
       LSymbol(definition.name) +:
         keywordsToSExpression(definition.keywords) :+
-        toSExpression(definition.typ)*
+        typeToSExpression(definition.typ)*
     )
   }
 
-  def apply(
+  def mutualRecursiveFunctionDefinitionToSExpression(
       definition: TipSmtMutualRecursiveFunctionDefinition
   ): SExpression = {
     LFun(
       "define-funs-rec",
       LList(definition.functions.map { sexprFunctionHeader }),
-      LList(definition.functions.map { f => toSExpression(f.body) })
+      LList(definition.functions.map { f => expressionToSExpression(f.body) })
     )
   }
 
@@ -333,142 +333,142 @@ object toSExpression {
       function.name,
       keywordsToSExpression(function.keywords) :+
         formalParameterListToSExpression(function.parameters) :+
-        toSExpression(function.returnType)*
+        typeToSExpression(function.returnType)*
     )
   }
 
-  def apply(definition: TipSmtGoal): SExpression = {
+  def goalToSExpression(definition: TipSmtGoal): SExpression = {
     LFun(
       "prove",
       keywordsToSExpression(definition.keywords) :+
-        toSExpression(definition.expr)*
+        expressionToSExpression(definition.expr)*
     )
   }
 
-  def apply(definition: TipSmtAssertion): SExpression = {
+  def assertionToSExpression(definition: TipSmtAssertion): SExpression = {
     LFun(
       "assert",
       keywordsToSExpression(definition.keywords) :+
-        toSExpression(definition.expr)*
+        expressionToSExpression(definition.expr)*
     )
   }
 
-  def apply(expression: TipSmtExpression): SExpression = {
+  def expressionToSExpression(expression: TipSmtExpression): SExpression = {
     expression match {
       case e @ TipSmtAnd(_) =>
-        toSExpression(e)
+        andToSExpression(e)
       case e @ TipSmtOr(_) =>
-        toSExpression(e)
+        orToSExpression(e)
       case e @ TipSmtImp(_) =>
-        toSExpression(e)
+        impToSExpression(e)
       case e @ TipSmtEq(_) =>
-        toSExpression(e)
+        eqToSExpression(e)
       case e @ TipSmtIte(_, _, _) =>
-        toSExpression(e)
+        iteToSExpression(e)
       case e @ TipSmtMatch(_, _) =>
-        toSExpression(e)
+        matchToSExpression(e)
       case e @ TipSmtForall(_, _) =>
-        toSExpression(e)
+        forallToSExpression(e)
       case e @ TipSmtExists(_, _) =>
-        toSExpression(e)
+        existsToSExpression(e)
       case e @ TipSmtDistinct(_) =>
-        toSExpression(e)
+        distinctToSExpression(e)
       case TipSmtTrue =>
         LSymbol("true")
       case TipSmtFalse =>
         LSymbol("false")
       case e @ TipSmtFun(_, _) =>
-        toSExpression(e)
+        funToSExpression(e)
       case e @ TipSmtIdentifier(_) =>
-        toSExpression(e)
+        identifierToSExpression(e)
       case e @ TipSmtNot(_) =>
-        toSExpression(e)
+        notToSExpression(e)
     }
   }
 
-  def apply(expression: TipSmtNot): SExpression = {
-    LFun("not", toSExpression(expression.expr))
+  def notToSExpression(expression: TipSmtNot): SExpression = {
+    LFun("not", expressionToSExpression(expression.expr))
   }
 
-  def apply(expression: TipSmtAnd): SExpression = {
-    LFun("and", expression.exprs.map { toSExpression(_) }*)
+  def andToSExpression(expression: TipSmtAnd): SExpression = {
+    LFun("and", expression.exprs.map { expressionToSExpression(_) }*)
   }
 
-  def apply(expression: TipSmtOr): SExpression = {
-    LFun("or", expression.exprs.map { toSExpression(_) }*)
+  def orToSExpression(expression: TipSmtOr): SExpression = {
+    LFun("or", expression.exprs.map { expressionToSExpression(_) }*)
   }
 
-  def apply(expression: TipSmtEq): SExpression = {
-    LFun("=", expression.exprs.map { toSExpression(_) }*)
+  def eqToSExpression(expression: TipSmtEq): SExpression = {
+    LFun("=", expression.exprs.map { expressionToSExpression(_) }*)
   }
 
-  def apply(expression: TipSmtImp): SExpression = {
-    LFun("=>", expression.exprs.map { toSExpression(_) }*)
+  def impToSExpression(expression: TipSmtImp): SExpression = {
+    LFun("=>", expression.exprs.map { expressionToSExpression(_) }*)
   }
 
-  def apply(expression: TipSmtForall): SExpression = {
+  def forallToSExpression(expression: TipSmtForall): SExpression = {
     LFun(
       "forall",
-      LList(expression.variables.map { toSExpression(_) }),
-      toSExpression(expression.formula)
+      LList(expression.variables.map { variableDeclToSExpression(_) }),
+      expressionToSExpression(expression.formula)
     )
   }
 
-  def apply(variableDecl: TipSmtVariableDecl): SExpression = {
-    LList(LSymbol(variableDecl.name), toSExpression(variableDecl.typ))
+  def variableDeclToSExpression(variableDecl: TipSmtVariableDecl): SExpression = {
+    LList(LSymbol(variableDecl.name), typeToSExpression(variableDecl.typ))
   }
 
-  def apply(expression: TipSmtExists): SExpression = {
+  def existsToSExpression(expression: TipSmtExists): SExpression = {
     LFun(
       "exists",
-      LList(expression.variables.map { toSExpression(_) }),
-      toSExpression(expression.formula)
+      LList(expression.variables.map { variableDeclToSExpression(_) }),
+      expressionToSExpression(expression.formula)
     )
   }
 
-  def apply(expression: TipSmtMatch): SExpression = {
+  def matchToSExpression(expression: TipSmtMatch): SExpression = {
     LFun(
       "match",
-      toSExpression(expression.expr) +:
-        expression.cases.map { toSExpression(_) }*
+      expressionToSExpression(expression.expr) +:
+        expression.cases.map { caseToSExpression(_) }*
     )
   }
 
-  def apply(caseStatement: TipSmtCase): SExpression = {
+  def caseToSExpression(caseStatement: TipSmtCase): SExpression = {
     LFun(
       "case",
-      toSExpression(caseStatement.pattern),
-      toSExpression(caseStatement.expr)
+      patternToSExpression(caseStatement.pattern),
+      expressionToSExpression(caseStatement.expr)
     )
   }
 
-  def apply(pattern: TipSmtPattern): SExpression = {
+  def patternToSExpression(pattern: TipSmtPattern): SExpression = {
     pattern match {
       case TipSmtDefault =>
         LSymbol("default")
       case p @ TipSmtConstructorPattern(_, _) =>
-        LFun(p.constructor.name, p.identifiers.map { toSExpression(_) }*)
+        LFun(p.constructor.name, p.identifiers.map { identifierToSExpression(_) }*)
     }
   }
 
-  def apply(identifier: TipSmtIdentifier): SExpression = {
+  def identifierToSExpression(identifier: TipSmtIdentifier): SExpression = {
     LSymbol(identifier.name)
   }
 
-  def apply(expression: TipSmtIte): SExpression = {
+  def iteToSExpression(expression: TipSmtIte): SExpression = {
     LFun(
       "ite",
-      toSExpression(expression.cond),
-      toSExpression(expression.ifTrue),
-      toSExpression(expression.ifFalse)
+      expressionToSExpression(expression.cond),
+      expressionToSExpression(expression.ifTrue),
+      expressionToSExpression(expression.ifFalse)
     )
   }
 
-  def apply(expression: TipSmtFun): SExpression = {
-    LFun(expression.name, expression.arguments.map { toSExpression(_) }*)
+  def funToSExpression(expression: TipSmtFun): SExpression = {
+    LFun(expression.name, expression.arguments.map { expressionToSExpression(_) }*)
   }
 
-  def apply(expression: TipSmtDistinct): SExpression = {
-    LFun("distinct", expression.expressions.map { toSExpression(_) }*)
+  def distinctToSExpression(expression: TipSmtDistinct): SExpression = {
+    LFun("distinct", expression.expressions.map { expressionToSExpression(_) }*)
   }
 }

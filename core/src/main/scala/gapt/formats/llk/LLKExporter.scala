@@ -405,9 +405,8 @@ object toLatexString {
 
   }
 
-  def nameToLatexString(s: String, escapebrack: Boolean = true): String = {
+  def nameToLatexString(s: String): String = {
     val s1 = UnicodeToLatex.nameToLatexString(s)
-    // val s2 = if (escapebrack) s1.replaceAll("\\[","(").replaceAll("\\]",")") else s1
     val s2 = if (s == "!=") "\\neq" else s1
     val s3 = if (s2 != "-") s2.replaceAll("-", "") else s2
     s3
